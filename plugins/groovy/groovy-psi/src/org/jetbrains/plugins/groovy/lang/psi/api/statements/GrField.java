@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 import java.util.Map;
 
-/**
- * @author ven
- */
 public interface GrField extends GrVariable, GrMember, PsiField, GrDocCommentOwner {
   GrField[] EMPTY_ARRAY = new GrField[0];
 
@@ -36,8 +33,7 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrDocCommentOwn
   @Nullable
   GrAccessorMethod getSetter();
 
-  @NotNull
-  GrAccessorMethod[] getGetters();
+  GrAccessorMethod @NotNull [] getGetters();
 
   @NotNull
   Map<String, NamedArgumentDescriptor> getNamedParameters();

@@ -1,0 +1,7 @@
+// "Make 'OpenA2' not open" "true"
+// WITH_STDLIB
+// K2_ERROR: VALUE_CLASS_OPEN
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+<caret>open value class OpenA2(val i: Int)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

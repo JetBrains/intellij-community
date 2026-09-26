@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
 
   public void testRedeclaredClass() {
@@ -172,15 +177,41 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
   // PY-23003
   public void testVariableUsedInElIf() {
     doTestByText(
-      "for file in ['test_file']:\n" +
-      "    block = False\n" +
-      "    if a:\n" +
-      "        block = True\n" +
-      "    elif block and b:\n" +
-      "        block = False\n" +
-      "    else:\n" +
-      "        print(c)"
+      """
+        for file in ['test_file']:
+            block = False
+            if a:
+                block = True
+            elif block and b:
+                block = False
+            else:
+                print(c)"""
     );
+  }
+
+  // PY-22117
+  public void testForwardTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22117
+  public void testTypeDeclarationAfterDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22117
+  public void testTypeDeclarationPrecedesRedeclaredDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-48760
+  public void testNotReportedForNameRedeclarationInOrPattern() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testPatternBindsAndRepeatsName() {
+    doTest();
   }
 
   @NotNull

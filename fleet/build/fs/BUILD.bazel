@@ -1,0 +1,73 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.build.fs` start
+create_kotlinc_options(
+    name = "custom_fs",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "fs",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_fs",
+    module_name = "fleet.build.fs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:slf4j-api",
+        "@lib//:fleet-github-luben-zstd-jni",
+        "@lib//:fleet-tukaani-xz",
+        "//libraries/commons/compress",
+        "//libraries/commons/io",
+        "//libraries/commons/lang3",
+    ],
+)
+
+jvm_library(
+    name = "fs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_fs",
+    module_name = "fleet.build.fs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":fs",
+        "//libraries/commons/compress:compress_test_lib",
+        "//libraries/commons/io:io_test_lib",
+        "//libraries/commons/lang3:lang3_test_lib",
+    ],
+)
+### auto-generated section `build fleet.build.fs` end
+
+### auto-generated section `iml fleet.build.fs` start
+exports_files(
+    [
+        "fleet.build.fs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.build.fs` end

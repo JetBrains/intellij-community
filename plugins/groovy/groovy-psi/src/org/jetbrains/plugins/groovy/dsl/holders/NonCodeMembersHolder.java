@@ -1,61 +1,77 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.dsl.ClosureDescriptor;
+import org.jetbrains.plugins.groovy.dsl.Descriptor;
+import org.jetbrains.plugins.groovy.dsl.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
+import org.jetbrains.plugins.groovy.dsl.MethodDescriptor;
+import org.jetbrains.plugins.groovy.dsl.NamedParameterDescriptor;
+import org.jetbrains.plugins.groovy.dsl.VariableDescriptor;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
+import org.jetbrains.plugins.groovy.extensions.impl.NamedArgumentDescriptorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
-/**
- * @author peter
- */
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessProperties;
+
 public class NonCodeMembersHolder implements CustomMembersHolder {
-  public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
-  public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
-  private final List<PsiElement> myDeclarations = new ArrayList<>();
 
-  public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
-    Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
-      place, () -> {
-        final Map<List<Map>, NonCodeMembersHolder> map1 = ContainerUtil.createConcurrentSoftMap();
+  private static final Logger LOG = Logger.getInstance(NonCodeMembersHolder.class);
+
+  public static final Key<@Nls String> DOCUMENTATION = Key.create("GdslDocumentation");
+  public static final Key<@NlsSafe String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
+
+  private final List<PsiVariable> myVariables = new ArrayList<>();
+  private final List<PsiMethod> myMethods = new ArrayList<>();
+  private final List<ClosureDescriptor> myClosureDescriptors = new ArrayList<>();
+
+  public static NonCodeMembersHolder generateMembers(@NotNull List<? extends Descriptor> methods, @NotNull PsiFile file) {
+    Map<List<? extends Descriptor>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
+      file, () -> {
+        final Map<List<? extends Descriptor>, NonCodeMembersHolder> map1 = CollectionFactory.createConcurrentSoftMap();
         return CachedValueProvider.Result.create(map1, PsiModificationTracker.MODIFICATION_COUNT);
       });
 
     NonCodeMembersHolder result = map.get(methods);
     if (result == null) {
-      map.put(methods, result = new NonCodeMembersHolder(methods, place));
+      map.put(methods, result = new NonCodeMembersHolder(methods, file));
     }
     return result;
   }
@@ -63,139 +79,106 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public NonCodeMembersHolder() {
   }
 
-  private NonCodeMembersHolder(List<Map> data, PsiElement place) {
-    final PsiManager manager = place.getManager();
-    for (Map prop : data) {
-      final Object decltype = prop.get("declarationType");
-      if (decltype == DeclarationType.CLOSURE) {
-        PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
-        if (closureDescriptor != null) {
-          addDeclaration(closureDescriptor);
-        }
+  private NonCodeMembersHolder(@NotNull List<? extends Descriptor> data, @NotNull PsiFile file) {
+    final PsiManager manager = file.getManager();
+    for (Descriptor descriptor : data) {
+      if (descriptor instanceof ClosureDescriptor) {
+        myClosureDescriptors.add((ClosureDescriptor)descriptor);
       }
-      else if (decltype == DeclarationType.VARIABLE) {
-        addDeclaration(createVariable(prop, place, manager));
+      else if (descriptor instanceof VariableDescriptor) {
+        myVariables.add(createVariable((VariableDescriptor)descriptor, file, manager));
       }
       else {
         //declarationType == DeclarationType.METHOD
-        final PsiElement method = createMethod(prop, place, manager);
-        addDeclaration(method);
+        myMethods.add(createMethod((MethodDescriptor)descriptor, file, manager));
       }
     }
   }
 
   public void addDeclaration(@NotNull PsiElement element) {
-    myDeclarations.add(element);
+    if (element instanceof PsiMethod) {
+      myMethods.add((PsiMethod)element);
+    }
+    else if (element instanceof PsiVariable) {
+      myVariables.add((PsiVariable)element);
+    }
+    else {
+      LOG.error("Unknown declaration: " + element);
+    }
   }
 
-  private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
-    String name = String.valueOf(prop.get("name"));
-    final String type = String.valueOf(prop.get("type"));
+  private static PsiVariable createVariable(@NotNull VariableDescriptor descriptor, PsiElement place, PsiManager manager) {
+    String name = descriptor.getName();
+    final String type = descriptor.getType();
     return new GrLightVariable(manager, name, type, Collections.emptyList(), place.getContainingFile());
   }
 
-  @Nullable
-  private static PsiElement createClosureDescriptor(Map prop, PsiElement place, PsiManager manager) {
-    final ClosureDescriptor closure = new ClosureDescriptor(manager);
+  private static GrLightMethodBuilder createMethod(@NonNls MethodDescriptor descriptor, PsiElement place, PsiManager manager) {
+    final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, descriptor.getName()).addModifier(PsiModifier.PUBLIC);
 
-    final Object method = prop.get("method");
-    if (!(method instanceof Map)) return null;
-
-    closure.setMethod(((Map)method));
-
-//    closure.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
-    final Object closureParams = prop.get("params");
-    if (closureParams instanceof Map) {
-      boolean first = true;
-      for (Object paramName : ((Map)closureParams).keySet()) {
-        Object value = ((Map)closureParams).get(paramName);
-        boolean isNamed = first && value instanceof List;
-        first = false;
-        String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-        closure.addParameter(typeName, String.valueOf(paramName));
-      }
-    }
-
-    Object doc = prop.get("doc");
-    if (doc instanceof String) {
-      closure.putUserData(DOCUMENTATION, (String)doc);
-    }
-
-    Object docUrl = prop.get("docUrl");
-    if (docUrl instanceof String) {
-      closure.putUserData(DOCUMENTATION_URL, (String)docUrl);
-    }
-
-
-    return closure;
-  }
-
-  private static GrLightMethodBuilder createMethod(Map prop, PsiElement place, PsiManager manager) {
-    String name = String.valueOf(prop.get("name"));
-
-    final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, name).addModifier(PsiModifier.PUBLIC);
-
-    if (Boolean.TRUE.equals(prop.get("constructor"))) {
+    if (descriptor.isConstructor()) {
       method.setConstructor(true);
-    } else {
-      method.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+    }
+    else {
+      method.setReturnType(convertToPsiType(descriptor.getReturnType(), place));
     }
 
-    final Object params = prop.get("params");
-    if (params instanceof Map) {
-      boolean first = true;
-      for (Object paramName : ((Map)params).keySet()) {
-        Object value = ((Map)params).get(paramName);
-        boolean isNamed = first && value instanceof List;
-        first = false;
-        String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-        method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
-
-        if (isNamed) {
-          Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();
-          for (Object o : (List)value) {
-            if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
-              namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,
-                              ((CustomMembersGenerator.ParameterDescriptor)o).descriptor);
+    List<NamedParameterDescriptor> descriptorNamedParams = descriptor.getNamedParameters();
+    if (!descriptorNamedParams.isEmpty()) {
+      Map<String, NamedArgumentDescriptor> namedParams = new HashMap<>();
+      for (NamedParameterDescriptor paramDescriptor : descriptorNamedParams) {
+        String typeString = paramDescriptor.getType();
+        GdslNamedParameter parameter = new GdslNamedParameter(
+          paramDescriptor.getName(), paramDescriptor.getDoc(), place, typeString
+        );
+        namedParams.put(
+          paramDescriptor.getName(),
+          new NamedArgumentDescriptorImpl(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP, parameter) {
+            @Override
+            public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
+              return ClassContextFilter.isSubtype(type, context.getContainingFile(), typeString);
             }
           }
-          method.setNamedParameters(namedParams);
-        }
+        );
       }
+      method.addParameter("args", convertToPsiType(CommonClassNames.JAVA_UTIL_MAP, place));
+      method.setNamedParameters(namedParams);
     }
 
-    if (Boolean.TRUE.equals(prop.get("isStatic"))) {
+    for (VariableDescriptor paramDescriptor : descriptor.getParameters()) {
+      method.addParameter(paramDescriptor.getName(), convertToPsiType(paramDescriptor.getType(), place));
+    }
+
+    if (descriptor.isStatic()) {
       method.addModifier(PsiModifier.STATIC);
     }
 
-    final Object bindsTo = prop.get("bindsTo");
-    if (bindsTo instanceof PsiElement) {
-      method.setNavigationElement((PsiElement)bindsTo);
+    final PsiElement bindsTo = descriptor.getBindsTo();
+    if (bindsTo != null) {
+      method.setNavigationElement(bindsTo);
     }
 
-    final Object toThrow = prop.get(CustomMembersGenerator.THROWS);
-    if (toThrow instanceof List) {
-      for (Object o : ((List)toThrow)) {
-        final PsiType psiType = convertToPsiType(String.valueOf(o), place);
-        if (psiType instanceof PsiClassType) {
-          method.addException((PsiClassType)psiType);
-        }
+    final List<String> toThrow = descriptor.getThrows();
+    for (String o : toThrow) {
+      final PsiType psiType = convertToPsiType(o, place);
+      if (psiType instanceof PsiClassType) {
+        method.addException((PsiClassType)psiType);
       }
     }
 
-    Object doc = prop.get("doc");
-    if (doc instanceof String) {
-      method.putUserData(DOCUMENTATION, (String)doc);
+    String doc = descriptor.getDoc();
+    if (doc != null) {
+      method.putUserData(DOCUMENTATION, doc);
     }
 
-    Object docUrl = prop.get("docUrl");
-    if (docUrl instanceof String) {
-      method.putUserData(DOCUMENTATION_URL, (String)docUrl);
+    String docUrl = descriptor.getDocUrl();
+    if (docUrl != null) {
+      method.putUserData(DOCUMENTATION_URL, docUrl);
     }
 
-    Object qName = prop.get("containingClass");
-    if (qName instanceof String) {
-      PsiClass foundClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(((String)qName), place.getResolveScope());
+    String qName = descriptor.getContainingClass();
+    if (qName != null) {
+      PsiClass foundClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, place.getResolveScope());
       if (foundClass != null) {
         method.setContainingClass(foundClass);
       }
@@ -209,23 +192,34 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   @Override
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(_processor)) {
-      String hint = ResolveUtil.getNameHint(each);
-      for (PsiElement declaration : myDeclarations) {
-        if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
+    String hint = ResolveUtil.getNameHint(_processor);
+    ElementClassHint classHint = _processor.getHint(ElementClassHint.KEY);
+    if (shouldProcessMethods(classHint)) {
+      for (PsiMethod declaration : myMethods) {
+        if (checkName(hint, declaration) && !_processor.execute(declaration, state)) return false;
+      }
+    }
+    if (shouldProcessProperties(classHint)) {
+      for (PsiVariable declaration : myVariables) {
+        if (checkName(hint, declaration) && !_processor.execute(declaration, state)) return false;
       }
     }
     return true;
   }
 
-  private static boolean checkName(String hint, PsiElement declaration) {
-    if (hint != null && declaration instanceof PsiNamedElement && !isConstructor(declaration)) {
-      return hint.equals(((PsiNamedElement)declaration).getName());
+  private static boolean checkName(String hint, PsiNamedElement declaration) {
+    if (hint != null && !isConstructor(declaration)) {
+      return hint.equals(declaration.getName());
     }
     return true;
   }
 
   private static boolean isConstructor(PsiElement declaration) {
     return declaration instanceof PsiMethod && ((PsiMethod)declaration).isConstructor();
+  }
+
+  @Override
+  public void consumeClosureDescriptors(GroovyClassDescriptor descriptor, Consumer<? super ClosureDescriptor> consumer) {
+    myClosureDescriptors.forEach(consumer);
   }
 }

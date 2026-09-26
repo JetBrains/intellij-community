@@ -1,0 +1,3 @@
+from types import ModuleType
+
+def load_json(msg_type: str, package: str | ModuleType | None = None): ...

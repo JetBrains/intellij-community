@@ -3,19 +3,23 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceParameter/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceParameterTest extends PyIntroduceTestCase {
   public void testSimple() {
     doTest();
   }
 
   public void testReferencedParameter() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
   public void testParameter() {
@@ -31,27 +35,27 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
   }
 
   public void testLocalVariable() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
   public void testLocalVariable1() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
   public void testLocalVariableParam() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
   public void testNonLocal() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"), LanguageLevel.PYTHON34);
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"), LanguageLevel.PYTHON34);
   }
 
   public void testGlobal() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
   public void testFunctionDef() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"));
+    doTestCannotPerform(PyPsiBundle.message("refactoring.introduce.selection.error"));
   }
 
 

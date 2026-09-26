@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 
@@ -34,6 +35,6 @@ public class HtmlDocumentImpl extends XmlDocumentImpl {
 
   @Override
   public XmlTag getRootTag() {
-    return (XmlTag)findElementByTokenType(XmlElementType.HTML_TAG);
+    return PsiTreeUtil.findChildOfType(this, XmlTag.class);
   }
 }

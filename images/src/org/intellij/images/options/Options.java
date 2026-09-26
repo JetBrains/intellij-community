@@ -15,6 +15,9 @@
  */
 package org.intellij.images.options;
 
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
+
 import java.beans.PropertyChangeListener;
 
 /**
@@ -23,31 +26,27 @@ import java.beans.PropertyChangeListener;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface Options extends Cloneable {
-    EditorOptions getEditorOptions();
+  @NotNull
+  EditorOptions getEditorOptions();
 
-    ExternalEditorOptions getExternalEditorOptions();
+  @NotNull
+  ExternalEditorOptions getExternalEditorOptions();
 
-    /**
-     * Option injection from other options.
-     *
-     * @param options Other options
-     */
-    void inject(Options options);
+  /**
+   * Option injection from other options.
+   *
+   * @param options Other options
+   */
+  void inject(@NotNull Options options);
 
-    void addPropertyChangeListener(PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parent);
 
-    void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
-
-    void removePropertyChangeListener(PropertyChangeListener listener);
-
-    void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
-
-    /**
-     * Set option by string representation.
-     *
-     * @param name  Name of option
-     * @param value Value
-     * @return {@code true} if option is matched and setted.
-     */
-    boolean setOption(String name, Object value);
+  /**
+   * Set option by string representation.
+   *
+   * @param name  Name of option
+   * @param value Value
+   * @return {@code true} if option is matched and setted.
+   */
+  boolean setOption(@NotNull String name, Object value);
 }

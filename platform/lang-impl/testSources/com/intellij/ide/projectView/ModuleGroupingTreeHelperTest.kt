@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView
 
 import com.intellij.ide.projectView.impl.ModuleGroup
@@ -21,16 +7,21 @@ import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
 import com.intellij.openapi.util.Pair
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import java.util.*
+import java.util.HashMap
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import kotlin.collections.List
+import kotlin.collections.dropLast
+import kotlin.collections.emptyList
+import kotlin.collections.find
+import kotlin.collections.forEach
+import kotlin.collections.map
+import kotlin.collections.none
 
-/**
- * @author nik
- */
 class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   private lateinit var tree: Tree
   private lateinit var root: MockModuleTreeNode
@@ -41,6 +32,7 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     root = MockModuleTreeNode("root")
     model = DefaultTreeModel(root)
     tree = Tree(model)
+    TreeTestUtil.assertTreeUI(tree)
   }
 
   fun `test disabled grouping`() {
@@ -442,7 +434,7 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun assertTreeEqual(expected: String) {
-    TreeUtil.expandAll(tree)
+    PlatformTestUtil.expandAll(tree)
     PlatformTestUtil.assertTreeEqual(tree, expected.trimIndent() + "\n")
   }
 
@@ -457,8 +449,8 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.checkConsistency(nodeToBeMovedFilter: (MockModuleTreeNode) -> Boolean) {
-    val expectedNodeForGroup = HashMap<ModuleGroup, MockModuleTreeNode>(getNodeForGroupMap())
-    val expectedNodeVirtualGroupToChildNode = HashMap<ModuleGroup, MockModuleTreeNode>(getVirtualGroupToChildNodeMap())
+    val expectedNodeForGroup = HashMap(getNodeForGroupMap())
+    val expectedNodeVirtualGroupToChildNode = HashMap(getVirtualGroupToChildNodeMap())
     val expectedGroupByNode = HashMap<MockModuleTreeNode, ModuleGroup>(getGroupByNodeMap())
     val expectedModuleByNode = HashMap<MockModuleTreeNode, MockModule>(getModuleByNodeMap())
     TreeUtil.treeNodeTraverser(root).postOrderDfsTraversal().forEach { o ->

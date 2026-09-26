@@ -1,65 +1,59 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
+import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
+import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * @author Vladislav.Soroka
- * @since 12/24/2014
- */
-public class DefaultFileCollectionDependency extends AbstractExternalDependency implements FileCollectionDependency {
-
+public final class DefaultFileCollectionDependency extends AbstractExternalDependency implements FileCollectionDependency {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final DefaultExternalDependencyId id;
-  private final Collection<File> files;
+  private Collection<File> files;
+  private boolean excludedFromIndexing;
 
   public DefaultFileCollectionDependency() {
-    this(new ArrayList<File>());
+    this(new ArrayList<>());
   }
 
   public DefaultFileCollectionDependency(Collection<File> files) {
-    this.files = new ArrayList<File>(files);
-    id = new DefaultExternalDependencyId(null, files.toString(), null);
+    super(new DefaultExternalDependencyId(null, getDependencyName(files), null));
+    setFiles(files);
+    excludedFromIndexing = false;
   }
 
   public DefaultFileCollectionDependency(FileCollectionDependency dependency) {
     super(dependency);
-    files = new ArrayList<File>(dependency.getFiles());
-    id = new DefaultExternalDependencyId(null, files.toString(), null);
+    setFiles(dependency.getFiles());
+    excludedFromIndexing = dependency.isExcludedFromIndexing();
   }
 
-  @NotNull
   @Override
-  public Collection<File> getFiles() {
+  public @NotNull Collection<File> getFiles() {
     return files;
   }
 
-  @NotNull
+  public void setFiles(@NotNull Collection<File> files) {
+    this.files = new ArrayList<>(files);
+    setName(getDependencyName(this.files));
+  }
+
+  private static @NotNull String getDependencyName(@NotNull Collection<?> files) {
+    return files.toString();
+  }
+
   @Override
-  public DefaultExternalDependencyId getId() {
-    return id;
+  public boolean isExcludedFromIndexing() {
+    return excludedFromIndexing;
+  }
+
+  public void setExcludedFromIndexing(boolean excludedFromIndexing) {
+    this.excludedFromIndexing = excludedFromIndexing;
   }
 
   @Override
@@ -68,12 +62,17 @@ public class DefaultFileCollectionDependency extends AbstractExternalDependency 
     if (!(o instanceof DefaultFileCollectionDependency)) return false;
     if (!super.equals(o)) return false;
     DefaultFileCollectionDependency that = (DefaultFileCollectionDependency)o;
-    return Objects.equal(files, that.files);
+    return GradleContainerUtil.match(files.iterator(), that.files.iterator(), new BooleanBiFunction<File, File>() {
+      @Override
+      public Boolean fun(File o1, File o2) {
+        return Objects.equal(o1.getPath(), o2.getPath());
+      }
+    });
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), files);
+    return Objects.hashCode(super.hashCode(), calcFilesPathsHashCode(files));
   }
 
   @Override

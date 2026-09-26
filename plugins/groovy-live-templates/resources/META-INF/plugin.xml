@@ -1,0 +1,29 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>org.intellij.groovy.live.templates</id>
+  <name>Groovy Live Templates</name>
+  <description><![CDATA[
+  Adds support for Groovy in IDE live templates.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.groovy.scripting"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.groovy"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <!-- endregion -->
+  </dependencies>
+  <content namespace="jetbrains"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <liveTemplateMacro implementation="com.intellij.groovy.live.templates.GroovyScriptMacro"/>
+  </extensions>
+</idea-plugin>

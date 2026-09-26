@@ -1,0 +1,9 @@
+// "Specify 'CharSequence' return type for enclosing function 'test'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun test(x: CharSequence) {
+    if (true) return "foo"<caret>
+    return x
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

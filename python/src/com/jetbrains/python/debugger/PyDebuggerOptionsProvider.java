@@ -1,55 +1,126 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.components.*;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PyConsoleOptions;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
+
+@Service(Service.Level.PROJECT)
 @State(
   name = "PyDebuggerOptionsProvider",
-  storages = {
-    @Storage(StoragePathMacros.WORKSPACE_FILE)
-  }
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
-  private final State myState = new State();
-
-  @NotNull
-  private final Project myProject;
+@ApiStatus.Internal
+public final class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
+  private @NotNull State myState = new State();
+  private final @NotNull Project myProject;
 
   public PyDebuggerOptionsProvider(@NotNull Project project) {
     myProject = project;
   }
 
   public static PyDebuggerOptionsProvider getInstance(Project project) {
-    return ServiceManager.getService(project, PyDebuggerOptionsProvider.class);
+    return project.getService(PyDebuggerOptionsProvider.class);
+  }
+
+  /**
+   * IPython in the Debug Console.
+   * <p>
+   * Falls back to the Python Console value while the Debug Console keeps none of its own, so a project
+   * configured before the two consoles were split behaves as it did. See PY-91913.
+   */
+  public boolean isDebugConsoleIpythonEnabled() {
+    Boolean own = myState.myDebugConsoleIpythonEnabled;
+    return own != null ? own : PyConsoleOptions.getInstance(myProject).isIpythonEnabled();
+  }
+
+  public void setDebugConsoleIpythonEnabled(boolean enabled) {
+    myState.myDebugConsoleIpythonEnabled = enabled;
+  }
+
+  /**
+   * The command queue in the Debug Console.
+   * <p>
+   * Falls back to the Python Console value, see {@link #isDebugConsoleIpythonEnabled}.
+   */
+  public boolean isDebugConsoleCommandQueueEnabled() {
+    Boolean own = myState.myDebugConsoleCommandQueueEnabled;
+    return own != null ? own : PyConsoleOptions.getInstance(myProject).isCommandQueueEnabled();
+  }
+
+  /**
+   * Deliberately does not call {@code CommandQueueForPythonConsoleService.disableCommandQueue}, unlike
+   * {@link PyConsoleOptions#setCommandQueueEnabled}. That method clears every queue in the project and disables
+   * every console panel, so it would switch the Python Console queue off together with this one. Commands already
+   * queued for the Debug Console drain as usual, and nothing new is queued once the setting is off.
+   */
+  public void setDebugConsoleCommandQueueEnabled(boolean enabled) {
+    myState.myDebugConsoleCommandQueueEnabled = enabled;
+  }
+
+  /** The script the Debug Console runs when it starts. */
+  public @NotNull String getDebugConsoleStartScript() {
+    return myState.myDebugConsoleStartScript;
+  }
+
+  public void setDebugConsoleStartScript(@NotNull String script) {
+    myState.myDebugConsoleStartScript = script;
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myState.myAttachToSubprocess = state.myAttachToSubprocess;
-    myState.mySaveCallSignatures = state.mySaveCallSignatures;
-    myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
-    myState.mySupportQtDebugging = state.mySupportQtDebugging;
-    myState.myPyQtBackend = state.myPyQtBackend;
-    myState.myAttachProcessFilter = state.myAttachProcessFilter;
+    myState = state;
   }
 
   public static class State {
     public boolean myAttachToSubprocess = true;
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
+    public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
-    public String myPyQtBackend = "Auto";
-    public String myAttachProcessFilter = "python";
+    public @NonNls String myPyQtBackend = "auto";
+    public boolean myRunDebuggerInServerMode = true;
+    public int myDebuggerPort = 29781;
+    public @NonNls String myAttachProcessFilter = "python";
+    public int myEvaluationResponseTimeout = 60_000;
+    public @NonNls String myDebuggerBackend = DEFAULT_BACKEND_MARKER;
+
+    /**
+     * Stays {@code null} until the user sets it, and {@link #isDebugConsoleIpythonEnabled} then reads the
+     * Python Console value instead.
+     */
+    public Boolean myDebugConsoleIpythonEnabled = null;
+
+    public Boolean myDebugConsoleCommandQueueEnabled = null;
+
+    public @NonNls String myDebugConsoleStartScript = PythonDebugLanguageConsoleView.DEBUG_CONSOLE_START_COMMAND;
   }
 
 
@@ -77,6 +148,14 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     myState.mySupportGeventDebugging = supportGeventDebugging;
   }
 
+  public boolean isDropIntoDebuggerOnFailedTest() {
+    return myState.myDropIntoDebuggerOnFailedTests;
+  }
+
+  public void setDropIntoDebuggerOnFailedTest(boolean dropIntoDebuggerOnFailedTest) {
+    myState.myDropIntoDebuggerOnFailedTests = dropIntoDebuggerOnFailedTest;
+  }
+
   public boolean isSupportQtDebugging() {
     return myState.mySupportQtDebugging;
   }
@@ -86,11 +165,30 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
   }
 
   public String getPyQtBackend() {
+    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend)) {
+      return "auto";
+    }
     return myState.myPyQtBackend;
   }
 
   public void setPyQtBackend(String backend) {
     myState.myPyQtBackend = backend;
+  }
+
+  public boolean isRunDebuggerInServerMode() {
+    return myState.myRunDebuggerInServerMode;
+  }
+
+  public void setRunDebuggerInServerMode(boolean runDebuggerInServerMode) {
+    myState.myRunDebuggerInServerMode = runDebuggerInServerMode;
+  }
+
+  public int getDebuggerPort() {
+    return myState.myDebuggerPort;
+  }
+
+  public void setDebuggerPort(int port) {
+    myState.myDebuggerPort = port;
   }
 
   public String getAttachProcessFilter() {
@@ -100,5 +198,86 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
   public void setAttachProcessFilter(String filter) {
     myState.myAttachProcessFilter = filter;
   }
-}
 
+  public int getEvaluationResponseTimeout() {
+    return myState.myEvaluationResponseTimeout;
+  }
+
+  public void setEvaluationResponseTimeout(int timeout) {
+    myState.myEvaluationResponseTimeout = timeout;
+  }
+
+  /**
+   * Storage marker for "user has not made an explicit choice; use the global default
+   * {@link PyDebugBackendRunnerKt#DEFAULT_PY_DEBUGGER_BACKEND}". Distinct from any {@link PyDebuggerBackend}
+   * enum name so that explicit user picks and "default" can be told apart in {@code workspace.xml}.
+   */
+  public static final String DEFAULT_BACKEND_MARKER = "DEFAULT";
+
+  /**
+   * Returns the backend that is selected: an explicit user choice if any, otherwise the
+   * current global default {@link PyDebugBackendRunnerKt#DEFAULT_PY_DEBUGGER_BACKEND}. Never returns
+   * a value outside the {@link PyDebuggerBackend} enum.
+   * NOTE: This only stores the selected backend and does not check for its applicability. To resolve the effective backend
+   * please use {@link PyDebugBackendRunnerKt#resolveEffectiveBackend(PyDebuggerBackend, boolean)}.
+   */
+  public @NotNull PyDebuggerBackend getSelectedBackend() {
+    if (myState.myDebuggerBackend.equals(DEFAULT_BACKEND_MARKER)) {
+      return PyDebugBackendRunnerKt.DEFAULT_PY_DEBUGGER_BACKEND;
+    }
+    try {
+      return PyDebuggerBackend.valueOf(myState.myDebuggerBackend);
+    }
+    catch (IllegalArgumentException e) {
+      return PyDebugBackendRunnerKt.DEFAULT_PY_DEBUGGER_BACKEND;
+    }
+  }
+
+  public void setSelectedBackend(@NotNull PyDebuggerBackend backend) {
+    myState.myDebuggerBackend = backend.name();
+  }
+
+  public static boolean hasActivePythonSessions(@NotNull Project project) {
+    return ContainerUtil.exists(
+      XDebuggerManager.getInstance(project).getDebugSessions(),
+      session -> session.getRunProfile() instanceof AbstractPythonRunConfiguration
+    );
+  }
+
+  /**
+   * Switches to {@code newBackend} and restarts active Python debug sessions if any.
+   */
+  @ApiStatus.Internal
+  public static void switchBackendWithRestart(@NotNull Project project, @NotNull PyDebuggerBackend newBackend) {
+    PyDebuggerBackend oldBackend = getInstance(project).getSelectedBackend();
+    getInstance(project).setSelectedBackend(newBackend);
+    if (oldBackend != newBackend) {
+      project.getMessageBus().syncPublisher(PyDebuggerBackendSwitchedListener.TOPIC).backendSwitched(project, oldBackend, newBackend);
+    }
+    restartAllPythonSessions(project);
+  }
+
+  public static void restartAllPythonSessions(@NotNull Project project) {
+    List<XDebugSession> sessions = ContainerUtil.filter(
+      XDebuggerManager.getInstance(project).getDebugSessions(),
+      session -> session.getRunProfile() instanceof AbstractPythonRunConfiguration
+    );
+
+    for (XDebugSession session : sessions) {
+      RunnerAndConfigurationSettings settings = session.getExecutionEnvironment() != null
+                                               ? session.getExecutionEnvironment().getRunnerAndConfigurationSettings() : null;
+      if (settings != null) {
+        session.addSessionListener(new XDebugSessionListener() {
+          @Override
+          public void sessionStopped() {
+            // sessionStopped fires on a non-EDT thread (stopAsync callback); dispatch to EDT for executeConfiguration
+            ApplicationManager.getApplication().invokeLater(
+              () -> ProgramRunnerUtil.executeConfiguration(settings, DefaultDebugExecutor.getDebugExecutorInstance())
+            );
+          }
+        });
+      }
+      session.stop();
+    }
+  }
+}

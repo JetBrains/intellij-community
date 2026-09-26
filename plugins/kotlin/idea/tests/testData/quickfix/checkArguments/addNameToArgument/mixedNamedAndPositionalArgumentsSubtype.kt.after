@@ -1,0 +1,12 @@
+// "Add name to argument: 'b = B()'" "true"
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+
+open class A {}
+open class B : A() {}
+
+fun f(a: A, b: A, c: A) {}
+fun g() {
+     f(c=A(), b = B(), a=A())
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

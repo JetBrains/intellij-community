@@ -1,30 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.Component;
+import java.util.Objects;
 
 /**
  * Pins any kind of tab in context: editor tab, toolwindow tab or other tabs.
  *
  * todo drop TW and EW, both are only for menu|Window tab/editor sub-menus.
  */
-public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
-
-  public static abstract class Handler {
+@ApiStatus.Internal
+public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+  @ApiStatus.Internal
+  public abstract static class Handler {
     public final boolean isPinned;
     public final boolean isActiveTab;
 
@@ -37,12 +50,12 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Handler handler = getHandler(e);
     if (handler == null) return;
     boolean selected = !handler.isPinned;
     handler.setPinned(selected);
-    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+    Toggleable.setSelected(e.getPresentation(), selected);
   }
 
   @Override
@@ -52,53 +65,51 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     boolean selected = enabled && handler.isPinned;
 
     e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.General.Pin_tab : null);
-    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
-
-    String text;
-    // add the word "active" if the target tab is not current
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || handler != null && !handler.isActiveTab) {
-      text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
-    }
-    else {
-      text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
-    }
-    e.getPresentation().setText(text);
+    Toggleable.setSelected(e.getPresentation(), selected);
+    e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected Handler getHandler(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EditorWindow currentWindow = e.getData(EditorWindow.DATA_KEY);
 
-    Content content = currentWindow != null ? null : getContentFromEvent(e);
+    Content content = currentWindow == null ? getContentFromEvent(e) : null;
     if (content != null && content.isPinnable()) {
       return createHandler(content);
     }
 
-    final EditorWindow window = currentWindow != null ? currentWindow :
-                                project != null ? FileEditorManagerEx.getInstanceEx(project).getCurrentWindow() : null;
-    VirtualFile selectedFile = window == null ? null : getFileFromEvent(e, window);
-    if (selectedFile != null) {
-      return createHandler(window, selectedFile);
+    EditorWindow window;
+    if (currentWindow == null) {
+      window = project == null ? null : FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
     }
-    return null;
+    else {
+      window = currentWindow;
+    }
+
+    VirtualFile selectedFile = window == null ? null : getFileFromEvent(e, window);
+    return selectedFile == null ? null : createHandler(window, selectedFile);
   }
 
-  @Nullable
-  protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    return getFileInWindow(e, window);
+  protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    return getFileInWindow(window);
   }
 
-  @Nullable
-  protected Content getContentFromEvent(@NotNull AnActionEvent e) {
+  protected @Nullable Content getContentFromEvent(@NotNull AnActionEvent e) {
     Content content = getNonToolWindowContent(e);
-    if (content == null) content = getToolWindowContent(e);
+    if (content == null) {
+      content = getToolWindowContent(e);
+    }
     return content != null && content.isValid() ? content : null;
   }
 
-  @NotNull
-  private static Handler createHandler(final Content content) {
-    return new Handler(content.isPinned(), content.getManager().getSelectedContent() == content) {
+  private static @NotNull Handler createHandler(final Content content) {
+    return new Handler(content.isPinned(), Objects.requireNonNull(content.getManager()).getSelectedContent() == content) {
       @Override
       void setPinned(boolean value) {
         content.setPinned(value);
@@ -106,9 +117,8 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     };
   }
 
-  @NotNull
-  private static Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
-    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getSelectedFile())) {
+  private static @NotNull Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
+    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getContextFile())) {
       @Override
       void setPinned(boolean value) {
         window.setFilePinned(selectedFile, value);
@@ -116,39 +126,47 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     };
   }
 
-  @Nullable
-  private static Content getNonToolWindowContent(@NotNull AnActionEvent e) {
+  private static @Nullable Content getNonToolWindowContent(@NotNull AnActionEvent e) {
     Content result = null;
     Content[] contents = e.getData(ViewContext.CONTENT_KEY);
-    if (contents != null && contents.length == 1) result = contents[0];
-    if (result != null && result.isPinnable()) return result;
+    if (contents != null && contents.length == 1) {
+      result = contents[0];
+    }
+    if (result != null && result.isPinnable()) {
+      return result;
+    }
 
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     result = contentManager != null? contentManager.getSelectedContent() : null;
-    if (result != null && result.isPinnable()) return result;
-    return null;
+    return (result != null && result.isPinnable()) ? result : null;
   }
 
-  @Nullable
-  private static Content getToolWindowContent(@NotNull AnActionEvent e) {
+  private static @Nullable Content getToolWindowContent(@NotNull AnActionEvent e) {
     // note to future readers: TW tab "pinned" icon is shown when content.getUserData(TW.SHOW_CONTENT_ICON) is true
-    ToolWindow window = PlatformDataKeys.TOOL_WINDOW.getData(e.getDataContext());
-    Content result = window != null ? window.getContentManager().getSelectedContent() : null;
+    ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
+    if (window == null) return null;
+
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    BaseLabel obj = ComponentUtil.getParentOfType(BaseLabel.class, component);
+    Content result = obj == null ? null : obj.getContent();
+    if (result == null) {
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
+      if (decorator != null) {
+        result = decorator.getContentManager().getSelectedContent();
+      }
+    }
     return result != null && result.isPinnable() ? result : null;
   }
 
-  @Nullable
-  private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) file = window.getSelectedFile();
-    if (file != null && window.isFileOpen(file)) return file;
-    return null;
+  private static @Nullable VirtualFile getFileInWindow(@NotNull EditorWindow window) {
+    VirtualFile file = window.getContextFile();
+    return file != null && window.isFileOpen(file) ? file : null;
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
   public static class TW extends PinActiveTabAction {
-    @Nullable
     @Override
-    protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+    protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
       return null;
     }
 
@@ -158,16 +176,19 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
     }
   }
 
-  public static class EW extends PinActiveTabAction {
-    @Nullable
+  static final class EW extends PinActiveTabAction {
     @Override
-    protected VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-      return window.getSelectedFile();
+    protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
+      return window.getContextFile();
     }
 
     @Override
     protected Content getContentFromEvent(@NotNull AnActionEvent e) {
       return null;
     }
+  }
+
+  @ApiStatus.Internal
+  public static final class Toggle extends PinActiveTabAction implements Toggleable {
   }
 }

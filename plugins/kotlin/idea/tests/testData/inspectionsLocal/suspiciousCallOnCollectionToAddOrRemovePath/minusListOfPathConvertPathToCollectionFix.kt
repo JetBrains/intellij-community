@@ -1,0 +1,15 @@
+// PROBLEM: 'minus' call iterates over the argument instead of removing it as a single element
+// FIX: Convert argument to explicit Collection
+// PRIORITY: LOW
+
+// WITH_STDLIB
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
+
+class Path {
+    fun toSet(): Set<Path> = TODO()
+}
+
+fun test(list: List<Path>, path: Path) {
+    list <caret>- path
+}

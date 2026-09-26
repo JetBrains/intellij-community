@@ -1,6 +1,8 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,7 +17,7 @@ import java.util.List;
 public interface VcsLogRefManager {
 
   /**
-   * Returns the comparator which compares two given references, which represent heads (leafs) of the log graph,
+   * Returns the comparator which compares two given references, which represent heads (leaves) of the log graph,
    * by their expected position in the log graph.
    * <p/>
    * The comparison result is used in graph layout to choose which branch should be laid at the left, and which - at the right.
@@ -61,14 +63,15 @@ public interface VcsLogRefManager {
    * <p>Groups must be pre-sorted in the order which they are to be painted on the panel.</p>
    */
   @NotNull
-  List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs);
+  @Unmodifiable
+  List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs);
 
   /**
    * Groups VCS references to show them in graph table.
    * All references given to this method are from the same commit.
    */
   @NotNull
-  List<RefGroup> groupForTable(@NotNull Collection<VcsRef> refs, boolean compact, boolean showTagNames);
+  @Unmodifiable List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames);
 
   /**
    * Writes given reference type to the output.

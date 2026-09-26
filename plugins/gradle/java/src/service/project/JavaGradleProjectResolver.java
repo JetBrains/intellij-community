@@ -1,136 +1,547 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.externalSystem.JavaModuleData;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
+import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
+import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
+import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData.AnnotationProcessorOutput;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
-import org.jetbrains.plugins.gradle.service.notification.ApplyGradlePluginCallback;
-import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
-import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 /**
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
+public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
+
+  private static final Logger LOG = Logger.getInstance(JavaGradleProjectResolver.class);
+
+  private static final Key<Map<String, Optional<Sdk>>> SDK_BY_NAME_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByNameCache");
+  private static final Key<Map<String, Optional<Sdk>>> SDK_BY_PATH_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByPathCache");
+  private static final Key<Map<JavaVersion, Optional<Sdk>>> SDK_BY_VERSION_CACHE =
+    Key.create("JavaGradleProjectResolver.sdkByVersionCache");
+
+  private final HashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
+    new HashMap<>();
+
+  @Override
+  public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
+    buildScriptEntriesMap.clear();
+
+    resolverCtx.putUserData(SDK_BY_NAME_CACHE, null);
+    resolverCtx.putUserData(SDK_BY_PATH_CACHE, null);
+    resolverCtx.putUserData(SDK_BY_VERSION_CACHE, null);
+  }
+
+  @Override
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
+    return Set.of(AnnotationProcessingModel.class, ProjectDependencies.class);
+  }
+
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
-    // import java project data
-
-    final String projectDirPath = resolverCtx.getProjectPath();
-    final IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
-
-    // Gradle API doesn't expose gradleProject compile output path yet.
-    JavaProjectData javaProjectData = new JavaProjectData(GradleConstants.SYSTEM_ID, projectDirPath + "/build/classes");
-    javaProjectData.setJdkVersion(ideaProject.getJdkName());
-    LanguageLevel resolvedLanguageLevel = null;
-    // org.gradle.tooling.model.idea.IdeaLanguageLevel.getLevel() returns something like JDK_1_6
-    final String languageLevel = ideaProject.getLanguageLevel().getLevel();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      if (level.name().equals(languageLevel)) {
-        resolvedLanguageLevel = level;
-        break;
-      }
-    }
-    if (resolvedLanguageLevel != null) {
-      javaProjectData.setLanguageLevel(resolvedLanguageLevel);
-    }
-    else {
-      javaProjectData.setLanguageLevel(languageLevel);
-    }
-
-    ideProject.createChild(JavaProjectData.KEY, javaProjectData);
-
+    populateJavaProjectCompilerSettings(gradleProject, ideProject);
     nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
   @Override
   public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
-    final BuildScriptClasspathModel buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
-    final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
-    if (buildScriptClasspathModel != null) {
-      classpathEntries = ContainerUtil.map(
-        buildScriptClasspathModel.getClasspath(),
-        (Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>)model -> new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc()));
-    }
-    else {
-      classpathEntries = ContainerUtil.emptyList();
-    }
-    BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
-    buildScriptClasspathData.setGradleHomeDir(buildScriptClasspathModel != null ? buildScriptClasspathModel.getGradleHomeDir() : null);
-    ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
-
+    populateJavaModuleCompilerSettings(gradleModule, ideModule);
+    populateBuildScriptClasspathData(gradleModule, ideModule);
+    populateAnnotationProcessorData(gradleModule, ideModule);
+    populateDependenciesGraphData(gradleModule, ideModule);
     nextResolver.populateModuleExtraModels(gradleModule, ideModule);
   }
 
-  @NotNull
-  @Override
-  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
-                                                      @NotNull String projectPath,
-                                                      @Nullable String buildFilePath) {
-    ExternalSystemException friendlyError = new JavaProjectImportErrorHandler().getUserFriendlyError(error, projectPath, buildFilePath);
-    if (friendlyError != null) {
-      return friendlyError;
+  private void populateAnnotationProcessorData(@NotNull IdeaModule gradleModule,
+                                               @NotNull DataNode<ModuleData> ideModule) {
+    var apModel = resolverCtx.getProjectModel(gradleModule, AnnotationProcessingModel.class);
+    if (apModel == null) {
+      return;
     }
-    return super.getUserFriendlyError(error, projectPath, buildFilePath);
+    if (!resolverCtx.isResolveModulePerSourceSet()) {
+      var apData = getMergedAnnotationProcessingData(apModel);
+      var dataNode = ideModule.createChild(AnnotationProcessingData.KEY, apData);
+      populateAnnotationProcessingOutput(dataNode, apModel);
+    }
+    else {
+      for (var node : ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)) {
+        var apData = getAnnotationProcessingData(apModel, node.getData().getModuleName());
+        if (apData != null) {
+          var dataNode = node.createChild(AnnotationProcessingData.KEY, apData);
+          populateAnnotationProcessorOutput(dataNode, apModel, node.getData().getModuleName());
+        }
+      }
+    }
   }
 
-  private static class JavaProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
-    @Nullable
-    @Override
-    public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
-                                                        @NotNull String projectPath,
-                                                        @Nullable String buildFilePath) {
-      GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
-      ExternalSystemException friendlyError = executionErrorHandler.getUserFriendlyError();
-      if (friendlyError != null) {
-        return friendlyError;
-      }
+  private static void populateAnnotationProcessorOutput(
+    @NotNull DataNode<AnnotationProcessingData> parent,
+    @NotNull AnnotationProcessingModel apModel,
+    @NotNull String sourceSetName
+  ) {
+    var config = apModel.bySourceSetName(sourceSetName);
+    if (config != null && config.getProcessorOutput() != null) {
+      var annotationProcessorOutput = new AnnotationProcessorOutput(config.getProcessorOutput(), config.isTestSources());
+      parent.createChild(AnnotationProcessingData.OUTPUT_KEY, annotationProcessorOutput);
+    }
+  }
 
-      Throwable rootCause = executionErrorHandler.getRootCause();
-      String location = executionErrorHandler.getLocation();
-      if (location == null && !StringUtil.isEmpty(buildFilePath)) {
-        location = String.format("Build file: '%1$s'", buildFilePath);
+  private static void populateAnnotationProcessingOutput(
+    @NotNull DataNode<AnnotationProcessingData> parent,
+    @NotNull AnnotationProcessingModel apModel
+  ) {
+    for (var config : apModel.allConfigs().values()) {
+      if (config.getProcessorOutput() != null) {
+        var annotationProcessorOutput = new AnnotationProcessorOutput(config.getProcessorOutput(), config.isTestSources());
+        parent.createChild(AnnotationProcessingData.OUTPUT_KEY, annotationProcessorOutput);
       }
+    }
+  }
 
-      final String rootCauseText = rootCause.toString();
-      if (StringUtil.startsWith(rootCauseText, "org.gradle.api.internal.MissingMethodException")) {
-        String method = parseMissingMethod(rootCauseText);
-        String msg = "Build script error, unsupported Gradle DSL method found: '" + method + "'!";
-        msg += (EMPTY_LINE + "Possible causes could be:  ");
-        msg += String.format(
-          "%s  - you are using Gradle version where the method is absent (<a href=\"%s\">Fix Gradle settings</a>)",
-          '\n', OpenGradleSettingsCallback.ID);
-        msg += String.format(
-          "%s  - you didn't apply Gradle plugin which provides the method (<a href=\"%s\">Apply Gradle plugin</a>)",
-          '\n', ApplyGradlePluginCallback.ID);
-        msg += String.format(
-          "%s  - or there is a mistake in a build script (<a href=\"%s\">Goto source</a>)",
-          '\n', GotoSourceNotificationCallback.ID);
-        return createUserFriendlyError(
-          msg, location, OpenGradleSettingsCallback.ID, ApplyGradlePluginCallback.ID, GotoSourceNotificationCallback.ID);
-      }
+  private static @NotNull AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
+    var mergedAnnotationProcessorPath = new LinkedHashSet<String>();
+    for (var config : apModel.allConfigs().values()) {
+      mergedAnnotationProcessorPath.addAll(config.getAnnotationProcessorPath());
+    }
 
+    var apArguments = new ArrayList<String>();
+    var mainConfig = apModel.bySourceSetName("main");
+    if (mainConfig != null) {
+      apArguments.addAll(mainConfig.getAnnotationProcessorArguments());
+    }
+
+    return AnnotationProcessingData.create(mergedAnnotationProcessorPath, apArguments);
+  }
+
+  private static @Nullable AnnotationProcessingData getAnnotationProcessingData(
+    @NotNull AnnotationProcessingModel apModel,
+    @NotNull String sourceSetName
+  ) {
+    var config = apModel.bySourceSetName(sourceSetName);
+    if (config == null) {
       return null;
     }
+    return AnnotationProcessingData.create(config.getAnnotationProcessorPath(), config.getAnnotationProcessorArguments());
+  }
+
+  private void populateBuildScriptClasspathData(
+    @NotNull IdeaModule gradleModule,
+    @NotNull DataNode<ModuleData> ideModule
+  ) {
+    var buildScriptClasspathModel = resolverCtx.getProjectModel(gradleModule, GradleBuildScriptClasspathModel.class);
+    var classpathEntries = ContainerUtil.<BuildScriptClasspathData.ClasspathEntry>emptyList();
+    if (buildScriptClasspathModel != null) {
+      classpathEntries = buildScriptEntriesMap.computeIfAbsent(buildScriptClasspathModel, model ->
+        ContainerUtil.map(model.getClasspath(), it ->
+          BuildScriptClasspathData.ClasspathEntry.create(it.getClasses(), it.getSources(), it.getJavadoc())
+        )
+      );
+    }
+    var buildScriptClasspathData = new BuildScriptClasspathData(SYSTEM_ID, classpathEntries);
+    buildScriptClasspathData.setGradleHomeDir(buildScriptClasspathModel != null ? buildScriptClasspathModel.getGradleHomeDir() : null);
+    ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
+  }
+
+  private void populateDependenciesGraphData(
+    @NotNull IdeaModule gradleModule,
+    @NotNull DataNode<ModuleData> ideModule
+  ) {
+    var projectDependencies = resolverCtx.getProjectModel(gradleModule, ProjectDependencies.class);
+    if (projectDependencies != null) {
+      ideModule.createChild(ProjectKeys.DEPENDENCIES_GRAPH, projectDependencies);
+    }
+  }
+
+  @VisibleForTesting
+  public void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {
+    projectNode.createChild(JavaProjectData.KEY, createProjectData(ideaProject));
+    projectNode.createChild(ProjectSdkData.KEY, createProjectSdkData(ideaProject));
+  }
+
+  private @NotNull JavaProjectData createProjectData(@NotNull IdeaProject ideaProject) {
+    var compileOutputPath = getProjectCompileOutputPath();
+    var languageLevel = getProjectLanguageLevel(ideaProject);
+    var targetBytecodeVersion = getProjectTargetBytecodeVersion(ideaProject);
+    var compilerArguments = getProjectCompilerArguments(ideaProject);
+    var javaProjectData = new JavaProjectData(SYSTEM_ID, compileOutputPath, languageLevel, targetBytecodeVersion, compilerArguments);
+
+    javaProjectData.setJdkName(ideaProject.getJdkName());
+
+    return javaProjectData;
+  }
+
+  private @NotNull String getProjectCompileOutputPath() {
+    // Gradle API doesn't expose gradleProject compile output path yet.
+    return resolverCtx.getProjectPath() + "/build/classes";
+  }
+
+  @VisibleForTesting
+  public void populateJavaModuleCompilerSettings(@NotNull IdeaModule ideaModule, @NotNull DataNode<ModuleData> moduleNode) {
+    var sourceSetModel = resolverCtx.getProjectModel(ideaModule, GradleSourceSetModel.class);
+    if (sourceSetModel == null) return;
+
+    if (resolverCtx.isResolveModulePerSourceSet()) {
+      var sourceSets = findSourceSets(ideaModule, sourceSetModel, moduleNode);
+      for (var entry : sourceSets.entrySet()) {
+        var sourceSet = entry.getKey();
+        var sourceSetDataNode = entry.getValue();
+
+        sourceSetDataNode.createChild(JavaModuleData.KEY, createSourceSetModuleData(ideaModule, sourceSet));
+        sourceSetDataNode.createChild(ModuleSdkData.KEY, createSourceSetModuleSdkData(ideaModule, sourceSet));
+      }
+    }
+    moduleNode.createChild(JavaModuleData.KEY, createHolderModuleData(ideaModule, sourceSetModel));
+    moduleNode.createChild(ModuleSdkData.KEY, createHolderModuleSdkData(ideaModule, sourceSetModel));
+  }
+
+  private static @NotNull JavaModuleData createHolderModuleData(
+    @NotNull IdeaModule ideaModule,
+    @NotNull GradleSourceSetModel sourceSetModel
+  ) {
+    var languageLevel = getHolderModuleLanguageLevel(ideaModule, sourceSetModel);
+    var targetBytecodeVersion = getHolderTargetBytecodeVersion(ideaModule, sourceSetModel);
+    var compilerArguments = getHolderCompilerArguments(sourceSetModel);
+    return new JavaModuleData(SYSTEM_ID, languageLevel, targetBytecodeVersion, compilerArguments);
+  }
+
+  private static @NotNull JavaModuleData createSourceSetModuleData(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
+    var languageLevel = getSourceSetModuleLanguageLevel(ideaModule, sourceSet);
+    var targetBytecodeVersion = getSourceSetTargetBytecodeVersion(ideaModule, sourceSet);
+    var compilerArguments = getSourceSetCompilerArguments(sourceSet);
+    return new JavaModuleData(SYSTEM_ID, languageLevel, targetBytecodeVersion, compilerArguments);
+  }
+
+  private @NotNull Map<ExternalSourceSet, DataNode<GradleSourceSetData>> findSourceSets(
+    @NotNull IdeaModule ideaModule,
+    @NotNull GradleSourceSetModel sourceSetModel,
+    @NotNull DataNode<ModuleData> moduleNode
+  ) {
+    var sourceSetNodes = ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY);
+    var sourceSetIndex = new LinkedHashMap<String, DataNode<GradleSourceSetData>>();
+    for (var sourceSetNode : sourceSetNodes) {
+      sourceSetIndex.put(sourceSetNode.getData().getId(), sourceSetNode);
+    }
+    var result = new LinkedHashMap<ExternalSourceSet, DataNode<GradleSourceSetData>>();
+    for (var sourceSet : sourceSetModel.getSourceSets().values()) {
+      var moduleId = GradleProjectResolverUtil.getModuleId(resolverCtx, ideaModule, sourceSet);
+      var sourceSetNode = sourceSetIndex.get(moduleId);
+      if (sourceSetNode == null) continue;
+      result.put(sourceSet, sourceSetNode);
+    }
+    return result;
+  }
+
+  private @NotNull Stream<? extends Pair<? extends IdeaModule, ? extends GradleSourceSetModel>> collectAllSourceSetModels(
+    @NotNull IdeaProject ideaProject
+  ) {
+    return ideaProject.getModules().stream()
+      .map(it -> ObjectUtils.doIfNotNull(resolverCtx.getProjectModel(it, GradleSourceSetModel.class), m -> new Pair<>(it, m)))
+      .filter(Objects::nonNull);
+  }
+
+  private @Nullable LanguageLevel getProjectLanguageLevel(@NotNull IdeaProject ideaProject) {
+    var languageLevel = collectAllSourceSetModels(ideaProject)
+      .map(it -> getHolderModuleLanguageLevel(it.first, it.second))
+      .filter(Objects::nonNull)
+      .min(Comparator.naturalOrder())
+      .orElse(null);
+    if (languageLevel != null) return languageLevel;
+    var javaLanguageSettings = ideaProject.getJavaLanguageSettings();
+    var isPreview = getProjectCompilerArguments(ideaProject).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+    return getLanguageLevel(javaLanguageSettings, isPreview);
+  }
+
+  private static @Nullable LanguageLevel getHolderModuleLanguageLevel(
+    @NotNull IdeaModule ideaModule,
+    @NotNull GradleSourceSetModel sourceSetModel
+  ) {
+    var isPreview = getHolderCompilerArguments(sourceSetModel).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+    var languageLevel = parseLanguageLevel(sourceSetModel.getSourceCompatibility(), isPreview);
+    if (languageLevel != null) return languageLevel;
+    var javaLanguageSettings = ideaModule.getJavaLanguageSettings();
+    return getLanguageLevel(javaLanguageSettings, isPreview);
+  }
+
+  private static @Nullable LanguageLevel getSourceSetModuleLanguageLevel(
+    @NotNull IdeaModule ideaModule,
+    @NotNull ExternalSourceSet sourceSet
+  ) {
+    var isPreview = getSourceSetCompilerArguments(sourceSet).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+    var languageLevel = parseLanguageLevel(sourceSet.getSourceCompatibility(), isPreview);
+    if (languageLevel != null) return languageLevel;
+    var javaLanguageSettings = ideaModule.getJavaLanguageSettings();
+    return getLanguageLevel(javaLanguageSettings, isPreview);
+  }
+
+  private static @Nullable LanguageLevel getLanguageLevel(@Nullable IdeaJavaLanguageSettings languageSettings, boolean isPreview) {
+    if (languageSettings == null) return null;
+    var languageLevel = languageSettings.getLanguageLevel();
+    if (languageLevel == null) return null;
+    return parseLanguageLevel(languageLevel.toString(), isPreview);
+  }
+
+  private static @Nullable LanguageLevel parseLanguageLevel(@Nullable String languageLevelString, boolean isPreview) {
+    var languageLevel = LanguageLevel.parse(languageLevelString);
+    if (languageLevel == null) return null;
+    return setPreview(languageLevel, isPreview);
+  }
+
+  private static @NotNull LanguageLevel setPreview(@NotNull LanguageLevel languageLevel, boolean isPreview) {
+    if (languageLevel.isPreview() == isPreview) return languageLevel;
+    var javaVersion = languageLevel.toJavaVersion();
+    return LanguageLevel.getEntries().stream()
+      .filter(it -> it.isPreview() == isPreview)
+      .filter(it -> it.toJavaVersion().equals(javaVersion))
+      .findFirst()
+      .orElse(languageLevel);
+  }
+
+  private @Nullable String getProjectTargetBytecodeVersion(@NotNull IdeaProject ideaProject) {
+    var targetBytecodeVersion = collectAllSourceSetModels(ideaProject)
+      .map(it -> getHolderTargetBytecodeVersion(it.first, it.second))
+      .filter(Objects::nonNull)
+      .min(Comparator.naturalOrder())
+      .orElse(null);
+    if (targetBytecodeVersion != null) return targetBytecodeVersion;
+    var javaLanguageSettings = ideaProject.getJavaLanguageSettings();
+    return getTargetBytecodeVersion(javaLanguageSettings);
+  }
+
+  private static @Nullable String getHolderTargetBytecodeVersion(
+    @NotNull IdeaModule ideaModule,
+    @NotNull GradleSourceSetModel sourceSetModel
+  ) {
+    var targetCompatibility = sourceSetModel.getTargetCompatibility();
+    if (targetCompatibility != null) return targetCompatibility;
+    var javaLanguageSettings = ideaModule.getJavaLanguageSettings();
+    return getTargetBytecodeVersion(javaLanguageSettings);
+  }
+
+  private static @Nullable String getSourceSetTargetBytecodeVersion(
+    @NotNull IdeaModule ideaModule,
+    @NotNull ExternalSourceSet sourceSet
+  ) {
+    var targetCompatibility = sourceSet.getTargetCompatibility();
+    if (targetCompatibility != null) return targetCompatibility;
+    var javaLanguageSettings = ideaModule.getJavaLanguageSettings();
+    return getTargetBytecodeVersion(javaLanguageSettings);
+  }
+
+  private static @Nullable String getTargetBytecodeVersion(@Nullable IdeaJavaLanguageSettings languageSettings) {
+    if (languageSettings == null) return null;
+    var targetByteCodeVersion = languageSettings.getTargetBytecodeVersion();
+    if (targetByteCodeVersion == null) return null;
+    return targetByteCodeVersion.toString();
+  }
+
+  private @NotNull List<String> getProjectCompilerArguments(@NotNull IdeaProject ideaProject) {
+    return collectAllSourceSetModels(ideaProject)
+      .map(it -> getHolderCompilerArguments(it.getSecond()))
+      .min(Comparator.comparing(it -> it.size()))
+      .orElse(Collections.emptyList());
+  }
+
+  private static @NotNull List<String> getHolderCompilerArguments(@NotNull GradleSourceSetModel sourceSetModel) {
+    return sourceSetModel.getSourceSets().values().stream()
+      .map(it -> getSourceSetCompilerArguments(it))
+      .min(Comparator.comparing(it -> it.size()))
+      .orElse(Collections.emptyList());
+  }
+
+  private static @NotNull List<String> getSourceSetCompilerArguments(@NotNull ExternalSourceSet sourceSet) {
+    return sourceSet.getCompilerArguments();
+  }
+
+  private @NotNull ProjectSdkData createProjectSdkData(@NotNull IdeaProject ideaProject) {
+    var sdk = lookupProjectSdk(ideaProject);
+    var sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
+    return new ProjectSdkData(sdkName);
+  }
+
+  private @NotNull ModuleSdkData createHolderModuleSdkData(@NotNull IdeaModule ideaModule, @NotNull GradleSourceSetModel sourceSetModel) {
+    var sdk = lookupHolderModuleSdk(ideaModule, sourceSetModel);
+    var sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
+    return new ModuleSdkData(sdkName);
+  }
+
+  private @NotNull ModuleSdkData createSourceSetModuleSdkData(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
+    var sdk = lookupSourceSetModuleSdk(ideaModule, sourceSet);
+    var sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
+    return new ModuleSdkData(sdkName);
+  }
+
+  private @Nullable Sdk lookupProjectSdk(@NotNull IdeaProject ideaProject) {
+    var sdk = collectAllSourceSetModels(ideaProject)
+      .map(it -> lookupHolderModuleSdk(it.first, it.second))
+      .filter(Objects::nonNull)
+      .min(JavaSdkVersionUtil.naturalJavaSdkOrder(false))
+      .orElse(null);
+    if (sdk != null) {
+      return sdk;
+    }
+    var sdkName = ideaProject.getJdkName();
+    if (sdkName != null) {
+      return lookupSdkByName(sdkName);
+    }
+    return null;
+  }
+
+  private @Nullable Sdk lookupHolderModuleSdk(@NotNull IdeaModule ideaModule, @NotNull GradleSourceSetModel sourceSetModel) {
+    var sdkName = ideaModule.getJdkName();
+    if (sdkName != null) {
+      var sdk = lookupSdkByName(sdkName);
+      LOG.debug("Module '" + ideaModule.getName() + "' SDK: resolved by module JDK name '" + sdkName + "' to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    var toolchainVersion = sourceSetModel.getToolchainVersion();
+    if (toolchainVersion != null) {
+      var sdk = lookupSdkByVersion(JavaVersion.compose(toolchainVersion));
+      LOG.debug("Module '" + ideaModule.getName() + "' SDK: resolved by toolchain version " + toolchainVersion + " to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      var sdk = lookupSdkByName(projectSdkName);
+      LOG.debug("Module '" + ideaModule.getName() + "' SDK: resolved by project JDK name '" + projectSdkName + "' to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    LOG.debug("Module '" + ideaModule.getName() + "' SDK: no SDK resolved (no JDK name, toolchain version, or project JDK)");
+    return null;
+  }
+
+  private @Nullable Sdk lookupSourceSetModuleSdk(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
+    var moduleName = ideaModule.getName() + "/" + sourceSet.getName();
+    var sdkName = ideaModule.getJdkName();
+    if (sdkName != null) {
+      var sdk = lookupSdkByName(sdkName);
+      LOG.debug("SourceSet '" + moduleName + "' SDK: resolved by module JDK name '" + sdkName + "' to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    var javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
+    if (javaToolchainHome != null) {
+      var sdk = lookupSdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
+      LOG.debug("SourceSet '" + moduleName + "' SDK: resolved by toolchain home '" + javaToolchainHome + "' to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      var sdk = lookupSdkByName(projectSdkName);
+      LOG.debug("SourceSet '" + moduleName + "' SDK: resolved by project JDK name '" + projectSdkName + "' to '" + (sdk != null ? sdk.getName() : "null") + "'");
+      return sdk;
+    }
+    LOG.debug("SourceSet '" + moduleName + "' SDK: no SDK resolved (no JDK name, toolchain, or project JDK)");
+    return null;
+  }
+
+  private @Nullable Sdk lookupSdkByName(@NotNull String sdkName) {
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_NAME_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkName, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(JavaVersion.tryParse(key)))
+          .or(() -> Optional.ofNullable(ExternalSystemJdkUtil.lookupJdkByName(resolverCtx.getProject(), key)))
+      ).orElse(null);
+  }
+
+  private @Nullable Sdk lookupSdkByPath(@NotNull String sdkHome) {
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_PATH_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkHome, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(ExternalSystemJdkUtil.getJavaVersion(key)))
+          .or(() -> Optional.of(ExternalSystemJdkUtil.lookupJdkByPath(resolverCtx.getProject(), key)))
+      ).orElse(null);
+  }
+
+  private @Nullable Sdk lookupSdkByVersion(@NotNull JavaVersion sdkVersion) {
+    return resolverCtx.putUserDataIfAbsent(SDK_BY_VERSION_CACHE, new HashMap<>())
+      .computeIfAbsent(sdkVersion, key ->
+        Optional.ofNullable(lookupGradleJvmIfMatches(key))
+          .or(() -> Optional.ofNullable(ExternalSystemJdkUtil.lookupJdkByVersion(resolverCtx.getProject(), key)))
+      ).orElse(null);
+  }
+
+  private @Nullable Sdk lookupGradleJvmIfMatches(@Nullable JavaVersion versionRequirement) {
+    if (versionRequirement == null) {
+      return null;
+    }
+    var projectSettings = getProjectSettings();
+    if (projectSettings == null) {
+      return null;
+    }
+    var gradleJvmReference = projectSettings.getGradleJvm();
+    if (gradleJvmReference == null) {
+      return null;
+    }
+    var gradleJvm = ExternalSystemJdkUtil.resolveJdkName(resolverCtx.getProject(), gradleJvmReference);
+    var gradleJvmVersion = ObjectUtils.doIfNotNull(gradleJvm, it -> it.getVersionString());
+    var gradleJvmPresentation = "Module SDK lookup: Gradle JVM '%s' (version %s)".formatted(gradleJvmReference, gradleJvmVersion);
+    if (gradleJvm == null) {
+      LOG.debug("%s is unresolved; proceeding with separate SDK search", gradleJvmPresentation);
+      return null;
+    }
+    if (!ExternalSystemJdkUtil.matchJavaVersion(versionRequirement, gradleJvmVersion)) {
+      LOG.debug("%s does not satisfy requirement %s; proceeding with separate SDK search", gradleJvmPresentation, versionRequirement);
+      return null;
+    }
+    if (!ExternalSystemJdkUtil.isSdkRegisteredInSdkTable(resolverCtx.getProject(), gradleJvm)) {
+      LOG.debug("%s is not registered in SDK table; proceeding with separate SDK search", gradleJvmPresentation);
+      return null;
+    }
+    LOG.debug("%s satisfies requirement %s; reusing it as module SDK", gradleJvmPresentation, versionRequirement);
+    return gradleJvm;
+  }
+
+  private @Nullable GradleProjectSettings getProjectSettings() {
+    return GradleSettings.getInstance(resolverCtx.getProject())
+      .getLinkedProjectSettings(resolverCtx.getProjectPath());
   }
 }

@@ -1,0 +1,10 @@
+fun f(v: String){}
+
+fun test() {
+    val isEmpty = false
+    <caret>if (!(isEmpty ?: true)) {
+        f("Not empty")
+    } else {
+        f("Empty")
+    }
+}

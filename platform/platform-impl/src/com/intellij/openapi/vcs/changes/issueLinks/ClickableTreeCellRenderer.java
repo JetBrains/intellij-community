@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeCellRenderer;
 
+@ApiStatus.Internal
 public interface ClickableTreeCellRenderer extends TreeCellRenderer {
   @Nullable
   Object getTag();

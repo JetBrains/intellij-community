@@ -1,0 +1,27 @@
+================ Step #1 =================
+Cleaning output files:
+  constants/B.class
+End of files
+Compiling files:
+  java/fieldProperties/mutualConstants/a/constants/B.java
+End of files
+Cleaning output files:
+  constants/A.class
+End of files
+Compiling files:
+  java/fieldProperties/mutualConstants/a/constants/A.java
+End of files
+Cleaning output files:
+  constants/B.class
+End of files
+Compiling files:
+  java/fieldProperties/mutualConstants/a/constants/B.java
+End of files
+Cleaning output files:
+  constants/PrintConst.class
+End of files
+Compiling files:
+  java/fieldProperties/mutualConstants/a/constants/PrintConst.java
+End of files
+------------------------------------------
+Exit code: OK

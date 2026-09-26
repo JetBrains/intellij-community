@@ -1,4 +1,4 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 import java.util.*;
 
@@ -10,12 +10,11 @@ public class Main {
             // 4
             "bar",
 
-            "baz"// 7
-// 8
+            "baz" // 7
+            // 8
             ,
-            "foo"/*3*/ // 2
+            "foo" /*3*/ // 2
             // 5
-
 
     );
   }

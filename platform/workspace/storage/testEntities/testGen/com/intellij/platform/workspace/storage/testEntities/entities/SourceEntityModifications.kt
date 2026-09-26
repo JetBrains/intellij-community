@@ -1,0 +1,47 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("SourceEntityModifications")
+
+package com.intellij.platform.workspace.storage.testEntities.entities
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SourceEntityImpl
+
+@GeneratedCodeApiVersion(3)
+interface SourceEntityBuilder : WorkspaceEntityBuilder<SourceEntity> {
+  override var entitySource: EntitySource
+  var data: String
+  var children: List<ChildSourceEntityBuilder>
+}
+
+internal object SourceEntityType : EntityType<SourceEntity, SourceEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = SourceEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = SourceEntityImpl.Builder::class.java
+  operator fun invoke(
+    data: String,
+    entitySource: EntitySource,
+    init: (SourceEntityBuilder.() -> Unit)? = null,
+  ): SourceEntityBuilder {
+    val builder = builder()
+    builder.data = data
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifySourceEntity(
+  entity: SourceEntity,
+  modification: SourceEntityBuilder.() -> Unit,
+): SourceEntity = modifyEntity(SourceEntityBuilder::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createSourceEntity")
+fun SourceEntity(
+  data: String,
+  entitySource: EntitySource,
+  init: (SourceEntityBuilder.() -> Unit)? = null,
+): SourceEntityBuilder = SourceEntityType(data, entitySource, init)

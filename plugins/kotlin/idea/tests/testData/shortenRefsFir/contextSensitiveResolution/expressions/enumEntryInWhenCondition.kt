@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+package test
+
+enum class MyEnum { A, B }
+
+fun test(e: MyEnum) {
+    when (e) {
+        <selection>MyEnum.A</selection> -> {}
+        else -> {}
+    }
+}

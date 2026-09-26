@@ -1,5 +1,0 @@
-class X {
-  void m() {
-    System.out.println("\101<spot>\102</spot>\103");
-  }
-}

@@ -1,23 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -30,13 +24,14 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -46,16 +41,15 @@ import java.util.Map;
  * shown during normal execution).
  * @author Kirill Likhodedov
  */
-public class HgMockVcsHelper extends AbstractVcsHelper {
-
-  private final Collection<VcsHelperListener> myListeners = new THashSet<>();
+public final class HgMockVcsHelper extends AbstractVcsHelper {
+  private final Collection<VcsHelperListener> myListeners = new HashSet<>();
 
   public HgMockVcsHelper(@NotNull Project project) {
     super(project);
   }
 
   @Override
-  public void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
+  public void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
   }
 
   @Override
@@ -76,44 +70,40 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
+  public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title) {
   }
 
   @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists) {
+  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
   }
 
   @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
+  public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                          @NotNull RepositoryLocation location,
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent) {
   }
 
   @Override
-  public void showChangesBrowser(CommittedChangesProvider provider,
-                                 RepositoryLocation location,
-                                 @Nls String title,
-                                 @Nullable Component parent) {
-  }
-
-  @Override
-  public void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title) {
-  }
-
-  @Override
-  public void openCommittedChangesTab(AbstractVcs vcs, VirtualFile root, ChangeBrowserSettings settings, int maxCount, String title) {
-  }
-
-  @Override
-  public void openCommittedChangesTab(CommittedChangesProvider provider,
-                                      RepositoryLocation location,
-                                      ChangeBrowserSettings settings,
+  public void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                      @NotNull RepositoryLocation location,
+                                      @NotNull ChangeBrowserSettings settings,
                                       int maxCount,
-                                      String title) {
+                                      @Nullable String title) {
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return null;
+  public MergeDialogResult showMergeDialogWithResult(@NotNull List<? extends VirtualFile> files,
+                                                     @NotNull MergeProvider provider,
+                                                     @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    return new MergeDialogResult() {
+      @Override
+      public @NotNull List<VirtualFile> getProcessedFiles() { return ContainerUtil.emptyList(); }
+
+      @Override
+      public boolean shouldFinishMerge() { return true; }
+    };
   }
 
   @Override
@@ -127,36 +117,46 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                               @NotNull AbstractVcs vcs) {
   }
 
-  @Override
-  public void showRollbackChangesDialog(List<Change> changes) {
-  }
-
   @Nullable
   @Override
-  public Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
+  public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
                                                       String title,
                                                       @Nullable String prompt,
                                                       String singleFileTitle,
                                                       String singleFilePromptTemplate,
-                                                      VcsShowConfirmationOption confirmationOption) {
+                                                      @NotNull VcsShowConfirmationOption confirmationOption) {
     notifyListeners();
     return null;
   }
-  
+
   @Nullable
   @Override
-  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                        String title,
                                                        @Nullable String prompt,
                                                        String singleFileTitle,
                                                        String singleFilePromptTemplate,
-                                                       VcsShowConfirmationOption confirmationOption) {
+                                                       @NotNull VcsShowConfirmationOption confirmationOption) {
+    notifyListeners();
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
+                                                       String title,
+                                                       @Nullable String prompt,
+                                                       @Nullable String singleFileTitle,
+                                                       @Nullable String singleFilePromptTemplate,
+                                                       @NotNull VcsShowConfirmationOption confirmationOption,
+                                                       @Nullable String okActionName,
+                                                       @Nullable String cancelActionName) {
     notifyListeners();
     return null;
   }
 
   @Override
-  public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
+  public boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
     throw new UnsupportedOperationException();
   }
@@ -180,5 +180,4 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
       listener.dialogInvoked();
     }
   }
-
 }

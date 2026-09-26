@@ -1,0 +1,43 @@
+MODULES
+project.consumer
+
+project.consumer.androidHostTest
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android:1.0 (TEST)
+
+project.consumer.androidMain
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-android:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-android:1.0 (COMPILE)
+
+project.consumer.commonMain
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere:commonMain:1.0 (COMPILE)
+
+project.consumer.commonTest
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere:commonMain:1.0 (TEST)
+
+project.consumer.jvmAndAndroidMain
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-jvm:1.0 (COMPILE)
+
+project.consumer.jvmMain
+    expectedInJvmOnly.main (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-jvm:1.0 (COMPILE)
+
+project.consumer.jvmTest
+    expectedInJvmOnly.main (TEST)
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-jvm:1.0 (TEST)
+
+project.consumer.linuxX64Main
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:1.0 (COMPILE)
+
+project.consumer.linuxX64Test
+    org.jetbrains.kotlin.mpp.tests:expectedEverywhere-linuxx64:1.0 (TEST)
+
+
+Test configuration:
+- showing only modules matching .*consumer.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*consumer.*
+- dependencies order is not checked

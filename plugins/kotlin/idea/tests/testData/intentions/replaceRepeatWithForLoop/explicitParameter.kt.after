@@ -1,0 +1,10 @@
+// WITH_STDLIB
+fun foo() {
+    val it = "outer"
+    val i = "i"
+    for (i1 in 0..<5) {
+        println(i1)
+        println(i)
+        println(i1.toString())
+    }
+}

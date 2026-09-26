@@ -1,0 +1,34 @@
+<html>
+<body>
+Reports <code>if</code> statements with three or more branches that can be replaced with the <code>when</code> expression with a subject.
+<p><b>Example:</b></p>
+<pre><code>
+  fun translateNumber(n: Int): String {
+    return if (n == 1) {
+      "one"
+    } else if (n == 2) {
+      "two"
+    } else {
+      "???"
+    }
+  }
+</code></pre>
+<p>The quick-fix converts the <code>if</code> expression to <code>when</code>:</p>
+<pre><code>
+  fun translateNumber(n: Int): String {
+    return when (n) {
+      1 -> {
+        "one"
+      }
+      2 -> {
+        "two"
+      }
+      else -> {
+        "???"
+      }
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

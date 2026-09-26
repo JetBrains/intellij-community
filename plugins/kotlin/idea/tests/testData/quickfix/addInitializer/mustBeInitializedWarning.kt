@@ -1,0 +1,14 @@
+// "Add initializer" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:-ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor
+class Foo {
+    constructor()
+    constructor(x: Int)
+    <caret>var x: String
+        set(value) {}
+
+    init {
+        x = ""
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializePropertyModCommandAction

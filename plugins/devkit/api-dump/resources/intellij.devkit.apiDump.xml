@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.ApiDumpBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileIconProvider implementation="com.intellij.devkit.apiDump.ApiDumpFileIconProvider"/>
+    <generatedSourcesFilter implementation="com.intellij.devkit.apiDump.ApiDumpGeneratedSourcesFilter"/>
+  </extensions>
+
+</idea-plugin>

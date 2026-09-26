@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the list of name/value elements for an annotation.
  *
- * @author ven
  * @see PsiAnnotation
  */
 public interface PsiAnnotationParameterList extends PsiElement {
@@ -29,6 +28,5 @@ public interface PsiAnnotationParameterList extends PsiElement {
    *
    * @return the array of name/value pairs.
    */
-  @NotNull
-  PsiNameValuePair[] getAttributes();
+  PsiNameValuePair @NotNull [] getAttributes();
 }

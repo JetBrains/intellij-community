@@ -1,0 +1,13 @@
+// "Change type argument to String" "true"
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
+
+class String
+
+interface Foo<T> { val x: T}
+
+class FooImpl : Foo<Int> {
+    override val x: <caret>kotlin.String = ""
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeSuperTypeListEntryTypeArgumentFixFactory$ChangeSuperTypeListEntryTypeArgumentFix

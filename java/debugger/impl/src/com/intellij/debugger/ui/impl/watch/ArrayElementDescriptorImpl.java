@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -14,18 +14,27 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
+public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor {
   private final int myIndex;
   private final ArrayReference myArray;
+  private Ref<Value> myPresetValue;
 
   public ArrayElementDescriptorImpl(Project project, ArrayReference array, int index) {
     super(project);
@@ -34,19 +43,30 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     setLvalue(true);
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
 
+  @Override
   public ArrayReference getArray() {
     return myArray;
   }
 
+  @Override
   public String getName() {
     return String.valueOf(myIndex);
   }
 
+  public void setValue(Value value) {
+    myPresetValue = Ref.create(value);
+  }
+
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    if (myPresetValue != null) {
+      return myPresetValue.get();
+    }
     return getArrayElement(myArray, myIndex);
   }
 
@@ -59,8 +79,9 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText("this[" + myIndex + "]", null);
     }
@@ -79,13 +100,14 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
         if (array != null) {
           if (VirtualMachineProxyImpl.isCollected(array)) {
             // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-            Messages.showWarningDialog(getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n" + DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
-            //node.getParent().calcValue();
+            Messages.showWarningDialog(getProject(), JavaDebuggerBundle.message("evaluation.error.array.collected") + "\n" + JavaDebuggerBundle
+              .message("warning.recalculate"), JavaDebuggerBundle.message("title.set.value"));
             return;
           }
           final ArrayType arrType = (ArrayType)array.referenceType();
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
               array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, getLType()));
@@ -97,9 +119,8 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
               return arrType.classLoader();
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws ClassNotLoadedException {
+            public @NotNull Type getLType() throws ClassNotLoadedException {
               return arrType.componentType();
             }
           });

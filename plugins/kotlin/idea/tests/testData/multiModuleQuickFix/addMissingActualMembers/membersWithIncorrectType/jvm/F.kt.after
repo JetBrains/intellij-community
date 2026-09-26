@@ -1,0 +1,15 @@
+// "Add missing actual members" "true"
+// SHOULD_FAIL_WITH: Some types are not accessible:,class M {…} -&gt; Type &lt;Unknown&gt; is not accessible from target module
+// DISABLE_ERRORS
+// IGNORE_K2
+
+actual class <caret>F<T> {
+    actual val a: List<T>
+        get() = TODO("Not yet implemented")
+    actual val b: T
+        get() = TODO("Not yet implemented")
+
+    actual fun <F> c(t: T): F {
+        TODO("Not yet implemented")
+    }
+}

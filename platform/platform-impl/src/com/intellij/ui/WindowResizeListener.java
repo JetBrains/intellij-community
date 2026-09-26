@@ -1,32 +1,32 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.Icon;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 
-import static java.awt.Cursor.*;
+import static java.awt.Cursor.CUSTOM_CURSOR;
+import static java.awt.Cursor.DEFAULT_CURSOR;
+import static java.awt.Cursor.E_RESIZE_CURSOR;
+import static java.awt.Cursor.NE_RESIZE_CURSOR;
+import static java.awt.Cursor.NW_RESIZE_CURSOR;
+import static java.awt.Cursor.N_RESIZE_CURSOR;
+import static java.awt.Cursor.SE_RESIZE_CURSOR;
+import static java.awt.Cursor.SW_RESIZE_CURSOR;
+import static java.awt.Cursor.S_RESIZE_CURSOR;
+import static java.awt.Cursor.W_RESIZE_CURSOR;
 import static javax.swing.SwingUtilities.convertPointFromScreen;
 
-/**
- * @author Sergey Malenkov
- */
 public class WindowResizeListener extends WindowMouseListener {
   private final Insets myBorder;
   private final Icon myCorner;
@@ -81,6 +81,11 @@ public class WindowResizeListener extends WindowMouseListener {
       convertPointFromScreen(location, parent);
     }
     Rectangle bounds = view.getBounds();
+    boolean isWayland = StartupUiUtil.isWaylandToolkit();
+    if (isWayland) {
+      // The view needs to be in the same coordinate space as the location of the mouse event.
+      bounds.setLocation(view.getLocationOnScreen());
+    }
     JBInsets.removeFrom(bounds, getResizeOffset(view));
 
     int top = location.y - bounds.y;
@@ -98,8 +103,8 @@ public class WindowResizeListener extends WindowMouseListener {
     if (myCorner != null && right < myCorner.getIconWidth() && bottom < myCorner.getIconHeight()) {
       return DEFAULT_CURSOR;
     }
-    Insets expected = getResizeBorder(view);
-    if (expected != null) {
+    Insets resizeArea = getResizeBorder(view);
+    if (resizeArea != null) {
       if (view instanceof Frame) {
         int state = ((Frame)view).getExtendedState();
         if (isStateSet(Frame.MAXIMIZED_HORIZ, state)) {
@@ -111,26 +116,8 @@ public class WindowResizeListener extends WindowMouseListener {
           bottom = Integer.MAX_VALUE;
         }
       }
-      if (top < expected.top) {
-        if (left < expected.left * 2) return NW_RESIZE_CURSOR;
-        if (right < expected.right * 2) return NE_RESIZE_CURSOR;
-        return N_RESIZE_CURSOR;
-      }
-      if (bottom < expected.bottom) {
-        if (left < expected.left * 2) return SW_RESIZE_CURSOR;
-        if (right < expected.right * 2) return SE_RESIZE_CURSOR;
-        return S_RESIZE_CURSOR;
-      }
-      if (left < expected.left) {
-        if (top < expected.top * 2) return NW_RESIZE_CURSOR;
-        if (bottom < expected.bottom * 2) return SW_RESIZE_CURSOR;
-        return W_RESIZE_CURSOR;
-      }
-      if (right < expected.right) {
-        if (top < expected.top * 2) return NE_RESIZE_CURSOR;
-        if (bottom < expected.bottom * 2) return SE_RESIZE_CURSOR;
-        return E_RESIZE_CURSOR;
-      }
+
+      return support.getResizeCursor(top, left, bottom, right, resizeArea);
     }
     return CUSTOM_CURSOR;
   }
@@ -138,18 +125,19 @@ public class WindowResizeListener extends WindowMouseListener {
   @Override
   void updateBounds(Rectangle bounds, Component view, int dx, int dy) {
     Dimension minimum = view.getMinimumSize();
-    if (myType == NE_RESIZE_CURSOR || myType == E_RESIZE_CURSOR || myType == SE_RESIZE_CURSOR || myType == DEFAULT_CURSOR) {
+    var myCursorType = getCursorType();
+    if (myCursorType == NE_RESIZE_CURSOR || myCursorType == E_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.width += fixMinSize(dx, bounds.width, minimum.width);
     }
-    else if (myType == NW_RESIZE_CURSOR || myType == W_RESIZE_CURSOR || myType == SW_RESIZE_CURSOR) {
+    else if (myCursorType == NW_RESIZE_CURSOR || myCursorType == W_RESIZE_CURSOR || myCursorType == SW_RESIZE_CURSOR) {
       dx = fixMinSize(-dx, bounds.width, minimum.width);
       bounds.x -= dx;
       bounds.width += dx;
     }
-    if (myType == SW_RESIZE_CURSOR || myType == S_RESIZE_CURSOR || myType == SE_RESIZE_CURSOR || myType == DEFAULT_CURSOR) {
+    if (myCursorType == SW_RESIZE_CURSOR || myCursorType == S_RESIZE_CURSOR || myCursorType == SE_RESIZE_CURSOR || myCursorType == DEFAULT_CURSOR) {
       bounds.height += fixMinSize(dy, bounds.height, minimum.height);
     }
-    else if (myType == NW_RESIZE_CURSOR || myType == N_RESIZE_CURSOR || myType == NE_RESIZE_CURSOR) {
+    else if (myCursorType == NW_RESIZE_CURSOR || myCursorType == N_RESIZE_CURSOR || myCursorType == NE_RESIZE_CURSOR) {
       dy = fixMinSize(-dy, bounds.height, minimum.height);
       bounds.y -= dy;
       bounds.height += dy;

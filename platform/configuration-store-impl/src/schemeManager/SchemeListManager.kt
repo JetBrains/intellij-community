@@ -1,35 +1,75 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore.schemeManager
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.SchemeManagerImpl
 import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.util.Condition
-import com.intellij.util.containers.ConcurrentList
+import com.intellij.openapi.options.Scheme
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.filterSmart
 import com.intellij.util.text.UniqueNameGenerator
-import gnu.trove.THashSet
+import java.util.IdentityHashMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
-  private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
+internal class SchemeCollection<T : Any>(
+  @JvmField val list: MutableList<T>,
+  // the scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
+  @JvmField val schemeToInfo: MutableMap<T, ExternalInfo> = ConcurrentCollectionFactory.createConcurrentIdentityMap()
+) {
+  fun putSchemeInfo(scheme: T, externalInfo: ExternalInfo): ExternalInfo? {
+    return schemeToInfo.put(scheme, externalInfo)
+  }
+}
 
-  val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
+private fun <T : Any> newSchemeCollection(): SchemeCollection<T> {
+  return SchemeCollection(list = ContainerUtil.createLockFreeCopyOnWriteList(),
+                          schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap())
+}
 
-  val schemes: ConcurrentList<T>
-    get() = schemesRef.get()
+internal fun <T : Any> toSchemeCollection(list: List<T>, schemeToInfo: Map<T, ExternalInfo>): SchemeCollection<T> {
+  return SchemeCollection(list = ContainerUtil.createLockFreeCopyOnWriteList(list),
+                          schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>().also {
+                            it.putAll(schemeToInfo)
+                          })
+}
 
-  fun replaceSchemeList(oldList: ConcurrentList<T>, newList: List<T>) {
-    if (!schemesRef.compareAndSet(oldList, ContainerUtil.createLockFreeCopyOnWriteList(newList) as ConcurrentList<T>)) {
+internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeManagerImpl<T, *>) {
+  private val schemeListRef: AtomicReference<SchemeCollection<T>> = AtomicReference(newSchemeCollection())
+
+  internal val readOnlyExternalizableSchemes: MutableMap<String, T> = ConcurrentHashMap()
+
+  val schemes: MutableList<T>
+    get() = schemeListRef.get().list
+
+  val data: SchemeCollection<T>
+    get() = schemeListRef.get()
+
+  fun replaceSchemeList(oldList: SchemeCollection<T>, newList: SchemeCollection<T>) {
+    if (!schemeListRef.compareAndSet(oldList, newList)) {
       throw IllegalStateException("Scheme list was modified")
     }
+    schemeManager.incModificationCount()
   }
+
+  inline fun mutate(task: (schemes: MutableList<T>,
+                    schemeToInfo: MutableMap<T, ExternalInfo>,
+                    readOnlyExternalizableSchemes: MutableMap<String, T>) -> Unit) {
+    val old = schemeListRef.get()
+    val list = ArrayList(old.list)
+    val schemeToInfo = IdentityHashMap(old.schemeToInfo)
+    task(list, schemeToInfo, readOnlyExternalizableSchemes)
+    replaceSchemeList(old, toSchemeCollection(list, schemeToInfo))
+  }
+
+  fun getExternalInfo(scheme: T): ExternalInfo? = schemeListRef.get().schemeToInfo.get(scheme)
 
   fun addScheme(scheme: T, replaceExisting: Boolean) {
     var toReplace = -1
     val schemes = schemes
     val processor = schemeManager.processor
-    val schemeToInfo = schemeManager.schemeToInfo
+    val schemeToInfo = schemeListRef.get().schemeToInfo
     for ((index, existing) in schemes.withIndex()) {
       if (processor.getSchemeKey(existing) != processor.getSchemeKey(scheme)) {
         continue
@@ -37,12 +77,12 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
 
       toReplace = index
       if (existing === scheme) {
-        // do not just return, below scheme will be removed from filesToDelete list
+        // do not just return, below a scheme will be removed from `filesToDelete` list
         break
       }
 
       if (existing.javaClass != scheme.javaClass) {
-        LOG.warn("'${processor.getSchemeKey(scheme)}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
+        LOG.warn("'${processor.getSchemeKey(scheme)}' ${existing.javaClass} replaced with ${scheme.javaClass}")
       }
 
       if (replaceExisting && processor.isExternalizable(existing)) {
@@ -62,11 +102,11 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
         }
       }
       else -> {
-        (scheme as ExternalizableScheme).renameScheme(
-          UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
+        (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, collectExistingNames(schemes)))
         schemes.add(scheme)
       }
     }
+    schemeManager.incModificationCount()
 
     if (processor.isExternalizable(scheme) && schemeManager.filesToDelete.isNotEmpty()) {
       schemeToInfo.get(scheme)?.let {
@@ -77,30 +117,40 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     schemeManager.processPendingCurrentSchemeName(scheme)
   }
 
-  fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
-    if (schemes.isNotEmpty()) {
-      if (removeCondition == null) {
-        schemes.clear()
-      }
-      else {
-        // we must not use remove or removeAll to avoid "equals" call
-        schemesRef.set(ContainerUtil.createConcurrentList(schemes.filterSmart { !removeCondition.value(it) }))
-      }
+  fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: ((T) -> Boolean)?) {
+    val oldList = schemeListRef.get()
+    if (LOG.isDebugEnabled) {
+      LOG.debug("setSchemes: old = ${oldList.list.size} schemes, ${collectExistingNames(oldList.list)}")
+      LOG.debug("setSchemes: new = ${newSchemes.size} schemes, ${collectExistingNames(newSchemes)}")
     }
 
-    schemes.addAll(newSchemes)
+    // we must not use remove or removeAll to avoid "equals" call
+    val newSchemesMutable = if (removeCondition == null) {
+      ContainerUtil.createConcurrentList(newSchemes)
+    }
+    else {
+      val list = ContainerUtil.createConcurrentList<T>()
+      oldList.list.filterTo(list) { !removeCondition(it) }
+      list.addAll(newSchemes)
+      list
+    }
+    val newSchemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>().also {
+      it.putAll(oldList.schemeToInfo)
+    }
+    schemeManager.retainExternalInfo(isScheduleToDelete = true, schemeToInfo = newSchemeToInfo, newSchemes = newSchemesMutable)
+
+    val newList = SchemeCollection(list = ContainerUtil.createConcurrentList(newSchemesMutable), schemeToInfo = newSchemeToInfo)
+    replaceSchemeList(oldList, newList)
 
     val oldCurrentScheme = schemeManager.activeScheme
-    schemeManager.retainExternalInfo()
-
     if (oldCurrentScheme != newCurrentScheme) {
       val newScheme: T?
       if (newCurrentScheme != null) {
         schemeManager.activeScheme = newCurrentScheme
         newScheme = newCurrentScheme
       }
-      else if (oldCurrentScheme != null && !schemes.contains(oldCurrentScheme)) {
-        newScheme = schemes.firstOrNull()
+      else if (!newSchemesMutable.contains(oldCurrentScheme)) {
+        newScheme = newSchemesMutable.firstOrNull()
         schemeManager.activeScheme = newScheme
       }
       else {
@@ -108,36 +158,21 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
       }
 
       if (oldCurrentScheme != newScheme) {
-        schemeManager.processor.onCurrentSchemeSwitched(oldCurrentScheme, newScheme)
+        schemeManager.processor.onCurrentSchemeSwitched(oldScheme = oldCurrentScheme,
+                                                        newScheme = newScheme,
+                                                        processChangeSynchronously = false)
       }
     }
   }
 
   private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
-    val result = THashSet<String>(schemes.size)
-    schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
-    return result
+    return schemes.mapTo(HashSet(schemes.size)) { schemeManager.processor.getSchemeKey(it) }
   }
+}
 
-  fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
-    val iterator = schemes.iterator()
-    for (scheme in iterator) {
-      if (!condition(scheme)) {
-        continue
-      }
-
-      if (schemeManager.activeScheme === scheme) {
-        schemeManager.activeScheme = null
-      }
-
-      iterator.remove()
-
-      if (scheduleDelete && schemeManager.processor.isExternalizable(scheme)) {
-        schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
-      }
-      return scheme
-    }
-
-    return null
+private fun ExternalizableScheme.renameScheme(newName: String) {
+  if (newName != name) {
+    name = newName
+    LOG.assertTrue(newName == name)
   }
 }

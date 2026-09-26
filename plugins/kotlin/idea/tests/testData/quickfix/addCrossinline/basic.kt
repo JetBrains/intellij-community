@@ -1,0 +1,16 @@
+// "Add 'crossinline' to parameter 'block'" "true"
+// K2_ERROR: NON_LOCAL_RETURN_NOT_ALLOWED
+
+interface I {
+    fun foo()
+}
+
+inline fun bar(block: () -> Unit) {
+    object : I {
+        override fun foo() {
+            <caret>block()
+        }
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddInlineModifierFixFactories$AddInlineModifierFix

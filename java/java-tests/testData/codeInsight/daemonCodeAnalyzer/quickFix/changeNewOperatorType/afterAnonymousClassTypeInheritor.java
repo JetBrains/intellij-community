@@ -1,4 +1,4 @@
-// "Change 'new FooImpl<short[]>() {...}' to 'new Boo.FooImpl<String>()'" "true"
+// "Change 'new FooImpl<short[]>() {...}' to 'new Boo.FooImpl<String>()'" "true-preview"
 
 class Boo {
     abstract class Foo<T>{}

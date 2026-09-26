@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.renameProject;
 
 import com.intellij.ide.IdeBundle;
@@ -23,10 +9,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.PrimaryModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.InputValidator;
@@ -38,10 +26,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RenameProjectHandler implements RenameHandler, TitledHandler {
+@ApiStatus.Internal
+@InternalIgnoreDependencyViolation
+public final class RenameProjectHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameProjectHandler.class);
 
   @Override
@@ -55,11 +46,6 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
   public String getActionTitle() {
     return RefactoringBundle.message("rename.project.handler.title");
   }
@@ -70,7 +56,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     LOG.assertTrue(project instanceof ProjectEx);
 
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
@@ -82,9 +68,9 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   }
 
 
-  protected static class MyInputValidator implements InputValidator {
+  protected static final class MyInputValidator implements InputValidator {
     private final ProjectEx myProject;
-    @Nullable private final Module myModule;
+    private final @Nullable Module myModule;
 
     public MyInputValidator(ProjectEx project, @Nullable Module module) {
       myProject = project;
@@ -93,7 +79,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override
@@ -140,6 +126,6 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
       return module == ModuleAttachProcessor.getPrimaryModule(project);
     }
 
-    return module == ModuleAttachProcessor.findModuleInBaseDir(project);
+    return module == PrimaryModuleManager.findPrimaryModule(project);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTarget;
@@ -25,14 +11,22 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.InputVerifier;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -41,14 +35,13 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
 
   private final JBCheckBox myRepositoryCheckbox;
   private final PushTargetPanel<T> myDestPushTargetPanelComponent;
-  private final JBLabel myLocalBranch;
-  private final JLabel myArrowLabel;
-  private final JLabel myRepositoryLabel;
+  private final @Nls String myRepositoryName;
+  private final @Nls String mySourceName;
   private final ColoredTreeCellRenderer myTextRenderer;
-  @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull String repoName,
-                                   @NotNull String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
+  public RepositoryWithBranchPanel(final @NotNull Project project, @NotNull @Nls String repoName,
+                                   @NotNull @Nls String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
     myRepositoryCheckbox = new JBCheckBox();
@@ -61,11 +54,11 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
         fireOnSelectionChange(myRepositoryCheckbox.isSelected());
       }
     });
-    myRepositoryLabel = new JLabel(repoName);
-    myLocalBranch = new JBLabel(sourceName);
-    myArrowLabel = new JLabel(" " + UIUtil.rightArrow() + " ");
+    myRepositoryName = repoName;
+    mySourceName = sourceName;
     myDestPushTargetPanelComponent = destPushTargetPanelComponent;
     myTextRenderer = new ColoredTreeCellRenderer() {
+      @Override
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
@@ -103,43 +96,47 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     add(panel, BorderLayout.CENTER);
   }
 
-  @NotNull
-  public String getRepositoryName() {
-    return myRepositoryLabel.getText();
+  public @Nls @NotNull String getRepositoryName() {
+    return myRepositoryName;
   }
 
-  public String getSourceName() {
-    return myLocalBranch.getText();
+  public @Nls String getSourceName() {
+    return mySourceName;
   }
 
-  public String getArrow() {
-    return myArrowLabel.getText();
+  public @Nls String getArrow() {
+    return " " + UIUtil.rightArrow() + " ";
   }
 
-  @NotNull
-  public Component getTreeCellEditorComponent(JTree tree,
-                                              Object value,
-                                              boolean selected,
-                                              boolean expanded,
-                                              boolean leaf,
-                                              int row,
-                                              boolean hasFocus) {
+  public @NotNull Component getTreeCellEditorComponent(JTree tree,
+                                                       Object value,
+                                                       boolean selected,
+                                                       boolean expanded,
+                                                       boolean leaf,
+                                                       int row,
+                                                       boolean hasFocus) {
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-    if (!(value instanceof SingleRepositoryNode)) {
+    if (value instanceof SingleRepositoryNode) {
+      myTextRenderer.setIpad(JBUI.insetsLeft(10));
+      myRepositoryCheckbox.setVisible(false);
+    } else {
       RepositoryNode node = (RepositoryNode)value;
       myRepositoryCheckbox.setSelected(node.isChecked());
       myRepositoryCheckbox.setVisible(true);
+      myTextRenderer.setIpad(JBUI.emptyInsets());
       myTextRenderer.append(getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       myTextRenderer.appendTextPadding(120);
     }
-    else {
-      myRepositoryCheckbox.setVisible(false);
-      myTextRenderer.append(" ");
+
+    if (myDestPushTargetPanelComponent.showSourceWhenEditing()) {
+      if (value instanceof SingleRepositoryNode) {
+        myTextRenderer.append(" ");
+      }
+      myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }
@@ -155,7 +152,8 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     myListeners.add(listener);
     myDestPushTargetPanelComponent.addTargetEditorListener(new PushTargetEditorListener() {
 
-      public void onTargetInEditModeChanged(@NotNull String value) {
+      @Override
+      public void onTargetInEditModeChanged(@NotNull @Nls String value) {
         for (RepositoryNodeListener listener : myListeners) {
           listener.onTargetInEditMode(value);
         }

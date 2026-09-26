@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/E.class
+End of files
+Compiling files:
+  java/enums/enumToClass/a/ppp/E.java
+End of files
+Cleaning output files:
+  qqq/Switcher$1.class
+  qqq/Switcher.class
+  qqq/Vals.class
+End of files
+Compiling files:
+  java/enums/enumToClass/a/qqq/Switcher.java
+  java/enums/enumToClass/a/qqq/Vals.java
+End of files
+------------------------------------------
+Exit code: ERROR

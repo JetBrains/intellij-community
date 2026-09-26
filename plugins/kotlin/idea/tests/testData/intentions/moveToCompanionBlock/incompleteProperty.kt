@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+
+class Foo {
+    val <caret>bar: Int =
+}

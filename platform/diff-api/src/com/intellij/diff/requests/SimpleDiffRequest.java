@@ -1,53 +1,53 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.requests;
 
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.diff.impl.AssignmentTracker;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Default {@link DiffRequest} implementation suitable for most purposes.
+ * <p>
+ * {@link com.intellij.diff.DiffTool} implementations are encouraged to cast to the {@link ContentDiffRequest} instead.
+ *
+ * @see DiffContentFactory
+ * @see com.intellij.diff.DiffManager
+ */
 public class SimpleDiffRequest extends ContentDiffRequest {
-  @Nullable private final String myTitle;
-  @NotNull private final List<DiffContent> myContents;
-  @NotNull private final List<String> myContentTitles;
+  private final @Nullable @NlsContexts.DialogTitle String myTitle;
+  private final @NotNull List<DiffContent> myContents;
+  private final @NotNull List<String> myContentTitles;
 
-  public SimpleDiffRequest(@Nullable String title,
+  /**
+   * Pass {@link DiffContentFactory#createEmpty()} to create request for additions/deletions.
+   */
+  public SimpleDiffRequest(@Nullable @NlsContexts.DialogTitle String title,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,
-                           @Nullable String title1,
-                           @Nullable String title2) {
-    this(title, ContainerUtil.list(content1, content2), ContainerUtil.list(title1, title2));
+                           @Nullable @NlsContexts.Label String title1,
+                           @Nullable @NlsContexts.Label String title2) {
+    this(title, Arrays.asList(content1, content2), Arrays.asList(title1, title2));
   }
 
-  public SimpleDiffRequest(@Nullable String title,
+  public SimpleDiffRequest(@Nullable @NlsContexts.DialogTitle String title,
                            @NotNull DiffContent content1,
                            @NotNull DiffContent content2,
                            @NotNull DiffContent content3,
-                           @Nullable String title1,
-                           @Nullable String title2,
-                           @Nullable String title3) {
-    this(title, ContainerUtil.list(content1, content2, content3), ContainerUtil.list(title1, title2, title3));
+                           @Nullable @NlsContexts.Label String title1,
+                           @Nullable @NlsContexts.Label String title2,
+                           @Nullable @NlsContexts.Label String title3) {
+    this(title, Arrays.asList(content1, content2, content3), Arrays.asList(title1, title2, title3));
   }
 
-  public SimpleDiffRequest(@Nullable String title,
+  public SimpleDiffRequest(@Nullable @NlsContexts.DialogTitle String title,
                            @NotNull List<DiffContent> contents,
-                           @NotNull List<String> titles) {
+                           @NotNull List<@NlsContexts.Label String> titles) {
     assert contents.size() == titles.size();
 
     myTitle = title;
@@ -55,28 +55,28 @@ public class SimpleDiffRequest extends ContentDiffRequest {
     myContentTitles = titles;
   }
 
-  @NotNull
   @Override
-  public List<DiffContent> getContents() {
+  public @NotNull List<DiffContent> getContents() {
     return myContents;
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myContentTitles;
   }
 
-  @Nullable
   @Override
-  public String getTitle() {
+  public @NlsContexts.DialogTitle @Nullable String getTitle() {
     return myTitle;
   }
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    for (DiffContent content : myContents) {
-      content.onAssigned(isAssigned);
-    }
+    AssignmentTracker.onContentsAssigned(myContents, isAssigned);
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + ":" + getContents();
   }
 }

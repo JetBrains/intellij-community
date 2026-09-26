@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  SamInterface.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodAddedSamAdapter/a/SamInterface.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_samConversions_methodAddedSamAdapter-a.kotlin_module
+  UsageWithMemberKt.class
+  UsageWithStaticKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodAddedSamAdapter/a/usageWithMember.kt
+  kotlin/withJava/javaUsedInKotlin/samConversions/methodAddedSamAdapter/a/usageWithStatic.kt
+End of files
+------------------------------------------
+Exit code: ERROR

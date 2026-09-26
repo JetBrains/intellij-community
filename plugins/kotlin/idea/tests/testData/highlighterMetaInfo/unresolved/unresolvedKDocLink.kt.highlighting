@@ -1,0 +1,28 @@
+// FIR_IDENTICAL
+
+// HIGHLIGHT_WARNINGS
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocUnresolvedReferenceInspection
+
+class A {}
+
+/**
+ * [A]
+ */
+fun resolved() {}
+
+/**
+ * bar should be marked as unresolved, but A should not
+ * [A.<!HIGHLIGHTING("severity='WARNING'; descr='Cannot resolve link 'bar''; textAttributesKey='WARNING_ATTRIBUTES'")!>bar<!>]
+ */
+fun partiallyResolved(){}
+
+/**
+ * [<!HIGHLIGHTING("severity='WARNING'; descr='Cannot resolve link 'unresolvedLink''; textAttributesKey='WARNING_ATTRIBUTES'")!>unresolvedLink<!>]
+ */
+fun unresolved() {}
+
+/**
+ * @sample samples
+ * @sample <!HIGHLIGHTING("severity='WARNING'; descr='Cannot resolve link 'someRandomName''; textAttributesKey='WARNING_ATTRIBUTES'")!>someRandomName<!>
+ */
+fun samples() {}

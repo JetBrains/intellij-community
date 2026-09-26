@@ -1,0 +1,34 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load(":defs.bzl", _ide_build_number = "ide_build_number", _ide_stability_level = "ide_stability_level", _ij_plugin_version = "ij_plugin_version")
+
+# Specifies the build number of the IDE being built; consists of two or more numbers separated by dots.
+# It's used by `ij_plugin` rule to set `since-build` and `until-build` attributes.
+# If not set, the snapshot number from `build.txt` file is used.
+_ide_build_number(
+    name = "ide_build_number",
+    build_setting_default = "",
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)
+
+# Specifies the version of plugins built by `ij_plugin` rule. Must follow the SemVer format.
+# If not set, the build number of the IDE being built is used as the plugin version.
+_ij_plugin_version(
+    name = "ij_plugin_version",
+    build_setting_default = "",
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)
+
+# Specifies the stability level of the IDE being built.
+# It's used by `ij_plugin` rule to determine `since-build` and `until-build` attributes.
+_ide_stability_level(
+    name = "ide_stability_level",
+    build_setting_default = "snapshot",
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)
+
+# If set, forces `ij_plugin` rule to set `until-build` attribute to the same value as `since-build`.
+bool_flag(
+    name = "ij_plugin_force_exact_build_compatibility",
+    build_setting_default = False,
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
+)

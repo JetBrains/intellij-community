@@ -6,20 +6,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
-import static com.intellij.util.PlatformUtils.IDEA_PREFIX;
-
 /**
  * @author Vladislav.Soroka
  */
-public class JavaGradleSettingsControlProvider extends GradleSettingsControlProvider {
+public final class JavaGradleSettingsControlProvider extends GradleSettingsControlProvider {
   @Override
   public String getPlatformPrefix() {
-    return PlatformUtils.isIdeaUltimate() ? IDEA_PREFIX : PlatformUtils.IDEA_CE_PREFIX;
+    return PlatformUtils.isIntelliJ() ? PlatformUtils.getPlatformPrefix() : PlatformUtils.IDEA_CE_PREFIX;
   }
 
   @Override
   public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
-    return new IdeaGradleSystemSettingsControlBuilder(initialSettings);
+    IdeaGradleSystemSettingsControlBuilder result = new IdeaGradleSystemSettingsControlBuilder(initialSettings);
+    if (initialSettings.getProject().isDefault()) {
+      result.dropStoreExternallyCheckBox();
+    }
+    else {
+      result.dropDefaultProjectSettings();
+    }
+    return result;
   }
 
   @Override

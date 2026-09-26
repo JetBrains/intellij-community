@@ -1,0 +1,27 @@
+Original text:
+---------------
+class API:
+    def get(self):
+        return "get"
+
+    def post(self):
+        return "post"
+---------------
+Subtree: Language: Python
+---------------
+class API:
+    <reparse>def get(self):
+        return "get"
+
+    def put(self):
+        return "put"
+
+    def delete(self):
+        return "delete"
+
+    def patch(self):
+        return "patch"
+
+    def post(self):
+        return "post"</reparse>
+---------------

@@ -1,0 +1,53 @@
+// FILE: build.gradle.kts
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":module1"))
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: build.gradle.kts.highlighting
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>plugins<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>repositories<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>mavenCentral<!>()
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>dependencies<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
+}
+
+// FILE: build.gradle.kts.highlighting.k2
+<!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'")!>plugins<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>repositories<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>mavenCentral<!>()
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>dependencies<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: module1/build.gradle.kts
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

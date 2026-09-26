@@ -1,0 +1,841 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.fir.testGenerator
+
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import org.jetbrains.fir.uast.test.AbstractFirLegacyUastDeclarationTest
+import org.jetbrains.fir.uast.test.AbstractFirLegacyUastIdentifiersTest
+import org.jetbrains.fir.uast.test.AbstractFirLegacyUastResolveEverythingTest
+import org.jetbrains.fir.uast.test.AbstractFirLegacyUastTypesTest
+import org.jetbrains.fir.uast.test.AbstractFirLegacyUastValuesTest
+import org.jetbrains.fir.uast.test.AbstractFirUastDeclarationTest
+import org.jetbrains.fir.uast.test.AbstractFirUastTypesTest
+import org.jetbrains.fir.uast.test.AbstractFirUastValuesTest
+import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
+import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.AbstractIdeKotlinAnnotationsResolverTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents.AbstractModuleDependentsTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceCallExpressionCalleeResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceDotQualifiedExpressionReceiverResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServiceDotQualifiedExpressionSelectorResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.file.structure.AbstractDeclarationModificationServicePropertyDeclarationInitializerResilienceTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractDirectInheritorsProviderTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractSealedInheritorsProviderTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.projectStructure.scopes.AbstractResolutionScopeStructureTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractGlobalSessionInvalidationTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractLocalSessionInvalidationTest
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractProjectWideSourceKotlinModificationTrackerTest
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeContainsTest
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeStructureTest
+import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
+import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
+import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
+import org.jetbrains.kotlin.idea.fir.actions.AbstractK2BytecodeToolWindowTest
+import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2ErrorDescriptorTest
+import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractFirDumbCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractFirWithLibBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractFirWithMppStdlibCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileSmartCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2CompiledKotlinInJavaCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionFullJdkTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionStdlibDuplicationTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2JvmBasicCompletionTestWithResolveExtension
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2KotlinInJavaCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2KotlinSourceInJavaWithMockLibCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2LiveTemplateCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2MultiPlatformCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2SmartCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2TypeCodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.kmpBasic.AbstractKotlinKmpCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelSmartCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
+import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractBasicCompletionWeigherTest
+import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractSmartCompletionWeigherTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
+import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
+import org.jetbrains.kotlin.idea.fir.editor.AbstractK2EnterHandlerTest
+import org.jetbrains.kotlin.idea.fir.editor.commenter.AbstractK2KotlinCommenterTest
+import org.jetbrains.kotlin.idea.fir.editor.editor.backspaceHandler.AbstractK2BackspaceHandlerTest
+import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesMultiModuleFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFeaturesFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinGroupUsagesBySimilarityFirTest
+import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinScriptFindUsagesFirTest
+import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
+import org.jetbrains.kotlin.idea.fir.formatter.AbstractK2FormatterTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportAliasTest53
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AddImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoDeclarationTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoRelatedSymbolMultiModuleTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirMoveToNextMethodTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirNavigateJavaSourceToLibrarySourceTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirNavigateJavaSourceToLibraryTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirNavigateToDecompiledLibraryTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirNavigateToLibrarySourceTest
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirNavigateToLibrarySourceTestWithJS
+import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirMultilineParameterInfoTest
+import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
+import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractAdditionalKDocResolutionProviderTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompiledLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsInSourceTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCompiledLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCompilerPluginsWithLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithCrossLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractK2MultiModuleHighlightingTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractK2ReferenceResolveWithResolveExtensionTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractReferenceResolveInLibrarySourcesFirTest
+import org.jetbrains.kotlin.idea.fir.run.AbstractKotlinTestNavigationTest
+import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+import org.jetbrains.kotlin.idea.fir.search.AbstractKotlinBuiltInsResolveScopeEnlargerTest
+import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
+import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.highlighter.AbstractUsageHighlightingTest
+import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.idea.k2.resolve.AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest
+import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
+import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFullJDKTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2TextJavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
+import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.COMPLETION
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.FIND_USAGES
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.J2K
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.NAVIGATION
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.RENAME_REFACTORING
+import org.jetbrains.kotlin.testGenerator.model.Junit5Suite
+import org.jetbrains.kotlin.testGenerator.model.MutableTSuite
+import org.jetbrains.kotlin.testGenerator.model.Patterns
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
+import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.TWorkspace
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.or
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
+import org.jetbrains.kotlin.testGenerator.model.workspace
+
+fun main(@Suppress("UNUSED_PARAMETER", "unused") args: Array<String>) {
+    generateK2Tests()
+}
+
+fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
+
+fun generateK2Tests(isUpToDateCheck: Boolean = false) {
+    System.setProperty("java.awt.headless", "true")
+    TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
+}
+
+private fun assembleWorkspace(): TWorkspace = workspace() {
+    generateK2CodeInsightTests()
+    generateK2NavigationTests()
+    generateK2DebuggerTests()
+    generateK2DebuggerTestsWithCompilerPlugins()
+    generateK2HighlighterTests()
+    generateK2GradleBuildScriptHighlighterTests()
+    generateK2RefactoringsTests()
+    generateK2SearchTests()
+    generateK2RefIndexTests()
+    generateK2InjectionTests()
+    generateProjectStructureTest()
+    generateK2GradleTests()
+
+    testGroup("base/fir/analysis-api-platform") {
+        testClass<AbstractProjectWideSourceKotlinModificationTrackerTest> {
+            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
+        }
+
+        testClass<AbstractLocalSessionInvalidationTest> {
+            model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractGlobalSessionInvalidationTest> {
+            model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractIdeKotlinAnnotationsResolverTest> {
+            model("annotationsResolver", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractModuleDependentsTest> {
+            model("moduleDependents", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractDirectInheritorsProviderTest> {
+            model("directInheritors", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractSealedInheritorsProviderTest> {
+            model("sealedInheritors", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractResolutionScopeStructureTest> {
+            model("resolutionScopes", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractDeclarationModificationServiceCallExpressionCalleeResilienceTest> {
+            model("declarationModificationPsiResilience/callExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServiceDotQualifiedExpressionReceiverResilienceTest> {
+            model("declarationModificationPsiResilience/dotQualifiedExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServiceDotQualifiedExpressionSelectorResilienceTest> {
+            model("declarationModificationPsiResilience/dotQualifiedExpression", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractDeclarationModificationServicePropertyDeclarationInitializerResilienceTest> {
+            model("declarationModificationPsiResilience/propertyDeclaration", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("base/fir/project-structure") {
+        testClass<AbstractCombinedSourceAndClassRootsScopeStructureTest> {
+            model("combinedSourceAndClassRootsScope", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractCombinedSourceAndClassRootsScopeContainsTest> {
+            model("combinedSourceAndClassRootsScope", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("compiler-plugins/parcelize/tests/k2", testDataPath = "../testData", category = QUICKFIXES) {
+        testClass<AbstractParcelizeK2QuickFixTest> {
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+        }
+    }
+
+    testGroup("lombok/tests", category = CODE_INSIGHT) {
+        testClass<AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest> {
+            model("resolve/referenceWithCompilerPluginsInSource", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = CODE_INSIGHT) {
+        testClass<AbstractKotlinTestNavigationTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
+            model("navigation/navigateToTestFromView", pattern = Patterns.forRegex("^([^.]+)\\.(kt|java)$"))
+        }
+
+        testClass<AbstractK2AddImportActionTest> {
+            model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2AddImportTest> {
+            model("addImport", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2AddImportAliasTest53> {
+            model("addImportAlias", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractFirReferenceResolveTest> {
+            model("resolve/references", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractFirReferenceResolveWithLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompiledLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCrossLibTest> {
+            model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithCompiledLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsInSourceTest> {
+            model("resolve/referenceWithCompilerPluginsInSource", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractReferenceResolveInLibrarySourcesFirTest> {
+            model("resolve/referenceInLib", isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveInJavaTest> {
+            model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
+            model("resolve/referenceInJava/sourceOnly", pattern = JAVA)
+        }
+
+        testClass<AbstractFirReferenceToCompiledKotlinResolveInJavaTest> {
+            model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
+        }
+
+        testClass<AbstractFirLiteralTextToKotlinCopyPasteTest> {
+            model("copyPaste/plainTextLiteral", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
+        }
+
+        testClass<AbstractFirLiteralKotlinToKotlinCopyPasteTest> {
+            model("copyPaste/literal", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
+        }
+
+        testClass<AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest> {
+            model("copyPaste/multiDollar", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
+        }
+
+        testClass<AbstractFirShortenRefsTest> {
+            model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/java", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+        }
+
+        testClass<AbstractK2EnterHandlerTest> {
+            model(
+                "editor/enterHandler",
+                pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""),
+                testMethodName = "doNewlineTest",
+                testClassName = "DirectSettings"
+            )
+            model(
+                "editor/enterHandler",
+                pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doNewlineTestWithInvert",
+                testClassName = "InvertedSettings"
+            )
+        }
+
+        testClass<AbstractK2BackspaceHandlerTest> {
+            model("editor/backspaceHandler")
+        }
+
+        testClass<AbstractK2KotlinCommenterTest> {
+            model("editor/commenter", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2FormatterTest> {
+            model("formatter", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""))
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^.]+)\.call\.after\.kt.*$"""),
+                testMethodName = "doTestCallSite",
+                testClassName = "FormatterCallSite"
+            )
+            model(
+                "formatter",
+                pattern = Patterns.forRegex("""^([^.]+)\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInverted",
+                testClassName = "FormatterInverted"
+            )
+            model(
+                "formatter/trailingComma",
+                pattern = Patterns.forRegex("""^([^.]+)\.call\.after\.inv\.kt.*$"""),
+                testMethodName = "doTestInvertedCallSite",
+                testClassName = "FormatterInvertedCallSite",
+            )
+        }
+
+        run {
+            fun MutableTSuite.parameterInfoModel() {
+                model(
+                    "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
+                    excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
+                )
+            }
+            testClass<AbstractFirParameterInfoTest> {
+                parameterInfoModel()
+            }
+            testClass<AbstractFirMultilineParameterInfoTest> {
+                parameterInfoModel()
+            }
+        }
+
+
+        testClass<AbstractK2AutoImportTest> {
+            model(
+                "editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
+        testClass<AbstractK2FilteringAutoImportTest> {
+            model(
+                "editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
+        testClass<AbstractK2JvmOptimizeImportsTest> {
+            model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
+            model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2JsOptimizeImportsTest> {
+            model("editor/optimizeImports/js", pattern = KT_WITHOUT_DOTS)
+            model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2BytecodeToolWindowTest> {
+            model("internal/toolWindow", isRecursive = false, pattern = DIRECTORY)
+        }
+
+        testClass<AbstractK2ExternalAnnotationTest> {
+            model("externalAnnotations", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = NAVIGATION) {
+        testClass<AbstractFirGotoTypeDeclarationTest> {
+            model("navigation/gotoTypeDeclaration", pattern = TEST)
+        }
+
+        testClass<AbstractFirMoveToNextMethodTest> {
+            model("navigation/moveToNextMethod", pattern = TEST, testMethodName = "doTest")
+        }
+
+        testClass<AbstractFirGotoTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
+            model("navigation/gotoClass", testMethodName = "doClassTest")
+            model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
+        }
+
+        testClass<AbstractFirGotoRelatedSymbolMultiModuleTest> {
+            model("navigation/relatedSymbols/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+
+
+        testClass<AbstractFirGotoDeclarationTest> {
+            model("navigation/gotoDeclaration", pattern = TEST)
+        }
+
+        testClass<AbstractFirNavigateToLibrarySourceTest> {
+            model("decompiler/navigation/usercode")
+        }
+
+        testClass<AbstractFirNavigateJavaSourceToLibraryTest> {
+            model("decompiler/navigation/userJavaCode", pattern = Patterns.forRegex("^(.+)\\.java$"))
+        }
+
+        testClass<AbstractFirNavigateJavaSourceToLibrarySourceTest> {
+            model("navigation/javaSource", pattern = Patterns.forRegex("^(.+)\\.java$"))
+        }
+
+        testClass<AbstractFirNavigateToLibrarySourceTestWithJS> {
+            model("decompiler/navigation/usercode", testClassName = "UsercodeWithJSModule")
+        }
+
+        testClass<AbstractFirNavigateToDecompiledLibraryTest> {
+            model("decompiler/navigation/usercode")
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../completion/testData", category = COMPLETION) {
+        testClass<AbstractK2JvmBasicCompletionTest> {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/skipRangeTo", pattern = KT_WITHOUT_DOTS)
+            model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
+        }
+
+        testClass<AbstractK2TypeCodeFragmentCompletionTest> {
+            model("basic/typeFragments", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2JvmBasicCompletionFullJdkTest> {
+            model("basic/fullJdk", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2JvmBasicCompletionStdlibDuplicationTest> {
+            model(
+                path = "stdlibDuplication/noElementDuplication",
+                pattern = KT_WITHOUT_FIR_PREFIX,
+                isRecursive = false,
+            )
+        }
+
+        testClass<AbstractKotlinKmpCompletionTest>(
+            platforms = listOf(
+                KMPTestPlatform.Js,
+                KMPTestPlatform.NativeLinux,
+                KMPTestPlatform.CommonNativeJvm,
+            ),
+        ) {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.K2KDocCompletionTestGenerated") {
+            model("kdoc", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2LiveTemplateCompletionTest> {
+            model("liveTemplates", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2JsBasicCompletionLegacyStdlibTest> {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
+        }
+
+        testClass<AbstractHighLevelBasicCompletionHandlerTest> {
+            model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+            model("handlers/basic/enum", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+            model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
+        }
+
+        testClass<AbstractHighLevelSmartCompletionHandlerTest> {
+            model("handlers/smart", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractHighLevelJavaCompletionHandlerTest> {
+            model("handlers/injava", pattern = JAVA)
+        }
+
+        testClass<AbstractK2CompiledKotlinInJavaCompletionTest> {
+            model("inJavaWithMockLib", pattern = JAVA, isRecursive = false)
+        }
+
+        testClass<AbstractK2KotlinSourceInJavaWithMockLibCompletionTest> {
+            model("inJavaWithMockLib", pattern = JAVA, isRecursive = false)
+        }
+
+        testClass<AbstractK2KotlinInJavaCompletionTest> {
+            model("inJava", pattern = JAVA, isRecursive = true)
+        }
+
+        testClass<AbstractFirKeywordCompletionHandlerTest> {
+            model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractFirDumbCompletionTest> {
+            model("dumb")
+        }
+
+        testClass<AbstractBasicCompletionWeigherTest> {
+            model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractSmartCompletionWeigherTest> {
+            model("weighers/smart", pattern = KT_OR_KTS_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
+            model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractHighLevelMultiFileSmartCompletionTest> {
+            model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractK2MultiPlatformCompletionTest> {
+            model("multiPlatform/actualDeclaration", isRecursive = false, pattern = DIRECTORY)
+            model("multiPlatform/classDeclaration", isRecursive = false, pattern = DIRECTORY)
+            model("multiPlatform/functionDeclaration", isRecursive = false, pattern = DIRECTORY)
+        }
+
+        testClass<AbstractK2CompletionCharFilterTest> {
+            model("handlers/charFilter", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractFirKeywordCompletionTest> {
+            model("keywords", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+        testClass<AbstractFirWithLibBasicCompletionTest> {
+            model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractFirWithMppStdlibCompletionTest> {
+            model("basic/stdlibWithCommon", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        testClass<AbstractK2SmartCompletionTest> {
+            model("smart", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
+        // Smart completion does not work in K2, see KTIJ-26166
+        testClass<AbstractK2CompletionIncrementalResolveTest> {
+            model("incrementalResolve", excludedDirectories = listOf("smart"))
+        }
+    }
+
+    testGroup("fir/tests", category = HIGHLIGHTING, testDataPath = "../../code-insight/testData") {
+        testClass<AbstractK2MultiModuleLineMarkerTest> {
+            model("linemarkers", isRecursive = false, pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = CODE_INSIGHT) {
+        testClass<AbstractK2ProjectViewTest> {
+            model("projectView", pattern = TEST)
+        }
+
+        testClass<AbstractFirFoldingTest> {
+            model("folding/noCollapse")
+            model("folding/checkCollapse", testMethodName = "doSettingsFoldingTest")
+        }
+
+        testClass<AbstractUsageHighlightingTest>(generatedClassName = "org.jetbrains.kotlin.idea.fir.highlighter.UsageHighlightingTestGenerated") {
+            model("usageHighlighter")
+        }
+    }
+
+    testGroup("refactorings/rename.k2", category = RENAME_REFACTORING) {
+        testClass<AbstractFirRenameTest> {
+            model("rename", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2InplaceRenameTest> {
+            model("rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
+        }
+        testClass<AbstractFirMultiModuleRenameTest> {
+            model("renameMultiModule", pattern = TEST, flatten = true)
+        }
+    }
+
+    testGroup("coverage/tests") {
+        testClass<AbstractKotlinCoverageOutputFilesTest> {
+            model("outputFiles")
+        }
+    }
+
+    testGroup("maven/tests") {
+        testClass<AbstractMavenConfigureProjectByChangingFileTest> {
+            model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
+        }
+
+        testClass<AbstractKotlinMavenInspectionTest>(
+            junit5 = Junit5Suite(
+                constructorParams = "mavenVersion: String, modelVersion: String",
+                superConstructorArgs = "mavenVersion, modelVersion",
+                classAnnotations = listOf("ParameterizedClass", "ArgumentsSource(MavenVersionArguments::class)"),
+                imports = listOf(
+                    "com.intellij.maven.testFramework.fixtures.MavenVersionArguments",
+                    "org.junit.jupiter.params.ParameterizedClass",
+                    "org.junit.jupiter.params.provider.ArgumentsSource",
+                ),
+            ),
+        ) {
+            model("maven-inspections", pattern = Patterns.forRegex("^([\\w\\-]+).xml$"), isRecursive = false)
+        }
+    }
+
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData/findUsages", category = FIND_USAGES) {
+        testClass<AbstractFindUsagesFirTest> {
+            model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
+            model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
+            model("propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""))
+        }
+
+        testClass<AbstractFindUsagesFirTest>(
+            platforms = listOf(
+                KMPTestPlatform.Js,
+                KMPTestPlatform.NativeLinux,
+                //KMPTestPlatform.CommonNativeJvm, TODO should be enabled after KTIJ-29715 is fixed
+            ),
+            generatedPackagePostfix = "kmpFindUsages",
+        ) {
+            model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
+        }
+
+        testClass<AbstractFindUsagesWithDisableComponentSearchFirTest> {
+            model("kotlin/conventions/components", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
+        }
+
+        testClass<AbstractKotlinFindUsagesWithLibraryFirTest> {
+            model("libraryUsages", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|java)$"""))
+        }
+
+        testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {
+            model("stdlibUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
+        }
+
+        testClass<AbstractKotlinGroupUsagesBySimilarityFirTest> {
+            model("similarity/grouping", pattern = KT)
+        }
+
+        testClass<AbstractKotlinGroupUsagesBySimilarityFeaturesFirTest> {
+            model("similarity/features", pattern = KT)
+        }
+
+        testClass<AbstractKotlinScriptFindUsagesFirTest> {
+            model("kotlinScript", pattern = Patterns.forRegex("""^(.+)\.0\.kts$"""))
+        }
+
+        testClass<AbstractFindUsagesMultiModuleFirTest> {
+            model("../multiModuleFindUsages", isRecursive = false, pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("fir/tests", category = CODE_INSIGHT) {
+        testClass<AbstractK2ErrorDescriptorTest> {
+            model("../../../idea/tests/testData/editor/errorDescription", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+
+        testClass<AbstractFirQuickDocTest> {
+            model(
+                "../../../idea/tests/testData/editor/quickDoc",
+                pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""),
+                isRecursive = false
+            )
+            model(
+                "../../../idea/tests/testData/editor/quickDoc/misc",
+                pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""),
+                isRecursive = true,
+                excludedDirectories = listOf("dependencies")
+            )
+        }
+        testClass<AbstractFirQuickDocMultiplatformTest> {
+            model("../../../idea/tests/testData/editor/quickDoc/multiplatform", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+    }
+
+    testGroup("fir/tests") {
+        testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
+            model("extensions/references", pattern = KT_WITHOUT_DOTS)
+        }
+        testClass<AbstractAdditionalKDocResolutionProviderTest> {
+            model("resolve/additionalKDocReference", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("fir/tests", category = HIGHLIGHTING) {
+        testClass<AbstractHLImplementationSearcherTest> {
+            model("search/implementations", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractScopeEnlargerTest> {
+            model("search/scopeEnlarger", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractKotlinBuiltInsResolveScopeEnlargerTest> {
+            model("search/builtInsScopeEnlarger", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2MultiModuleHighlightingTest> {
+            model("resolve/anchors", isRecursive = false, pattern = Patterns.forRegex("^([^\\._]+)$"))
+        }
+
+        testClass<AbstractK2KmpLightFixtureHighlightingTest> {
+            model("kmp/highlighting", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("fir/tests", category = COMPLETION) {
+        testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
+            model("extensions/completion", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("uast/uast-kotlin-fir/tests") {
+        testClass<AbstractFirUastDeclarationTest> {
+            model("declaration", pattern = KT_OR_KTS)
+        }
+
+        testClass<AbstractFirUastTypesTest> {
+            model("type")
+        }
+
+        testClass<AbstractFirUastValuesTest> {
+            model("value")
+        }
+    }
+
+    testGroup("uast/uast-kotlin-fir/tests", testDataPath = "../../uast-kotlin/tests/testData") {
+        testClass<AbstractFirLegacyUastDeclarationTest> {
+            model("")
+        }
+
+        testClass<AbstractFirLegacyUastIdentifiersTest> {
+            model("")
+        }
+
+        testClass<AbstractFirLegacyUastResolveEverythingTest> {
+            model("")
+        }
+
+        testClass<AbstractFirLegacyUastTypesTest> {
+            model("")
+        }
+
+        testClass<AbstractFirLegacyUastValuesTest> {
+            model("")
+        }
+    }
+
+    testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData", category = CODE_INSIGHT) {
+        testClass<AbstractFirUpdateKotlinCopyrightTest> {
+            model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
+        }
+    }
+
+    testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData", category = J2K) {
+        testClass<AbstractK2JavaToKotlinConverterSingleFileTest> {
+            model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterSingleFileFullJDKTest> {
+            model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterPartialTest> {
+            model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
+            model("multiFile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractK2JavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2TextJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
+        }
+    }
+}

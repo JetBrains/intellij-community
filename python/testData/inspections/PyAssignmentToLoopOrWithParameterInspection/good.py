@@ -58,20 +58,20 @@ for b in [1,2]:
 
 for item in range(5):
     want_to_import = False
-    print want_to_import
+    print(want_to_import)
     want_to_import = 2          #No error should be here
     if True:
         pass
 
 for ((a, b), (c, d)) in {(1, 2): (3, 4)}.items():
-    print b
+    print(b)
 
 x = [1]
 for x[0] in range(1,2):
-    print i
+    print(i)
 
 for x[i] in range(1,2):
-    print i
+    print(i)
 
 x = [[1]]
 for x[0][0] in range(1,2):
@@ -93,7 +93,7 @@ def contains_even_number(l):
     See: PY-12367
     """
     for elt in range(10):
-        print elt
+        print(elt)
     else:
         for elt in range(10):
             pass

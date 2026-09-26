@@ -1,96 +1,72 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.CoroutinesKt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnimatedIcon.Blinking;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.Dispatchers;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.concurrent.Future;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Cursor;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author ksafonov
- */
-class IdeErrorsIcon extends JLabel {
-  private final LayeredIcon myIcon;
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
+
+final class IdeErrorsIcon extends JLabel {
+  private static final int TIMEOUT = (int)TimeUnit.SECONDS.toMillis(Registry.intValue("ea.indicator.blinking.timeout", -1));
+
   private final boolean myEnableBlink;
+  private final @Nullable UpdateQueue<MessagePool.State> myBlinkTimeoutQueue;
 
-  private Future myBlinker;
-
-  IdeErrorsIcon(boolean enableBlink) {
-    myEnableBlink = enableBlink;
-    setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
-
-    myIcon = new LayeredIcon(AllIcons.Ide.FatalError, AllIcons.Ide.FatalError_read, AllIcons.Ide.EmptyFatalError) {
-      @Override
-      public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-        super.paintIcon(c, g, x, y);
-      }
-
-      @Override
-      public synchronized void setLayerEnabled(int layer, boolean enabled) {
-        super.setLayerEnabled(layer, enabled);
-      }
-    };
-    setIcon(myIcon);
+  IdeErrorsIcon(boolean canBlink) {
+    myEnableBlink = canBlink && TIMEOUT != 0;
+    myBlinkTimeoutQueue = myEnableBlink && TIMEOUT > 0
+      ? DebouncedUpdates.<MessagePool.State>forComponent(this, "ide-error-icon-blink-timeout", TIMEOUT)
+          .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+          .restartTimerOnAdd(true)
+          .runLatest(state -> stopBlinking(state))
+      : null;
   }
 
-  void setState(MessagePool.State state) {
-    switch (state) {
-      case UnreadErrors:
-        myIcon.setLayerEnabled(0, true);
-        myIcon.setLayerEnabled(1, false);
-        myIcon.setLayerEnabled(2, false);
-        startBlinker();
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
-        break;
+  private void stopBlinking(MessagePool.State state) {
+    if (state == MessagePool.State.UnreadErrors) {
+      setIcon(AllIcons.Ide.FatalError);
+    }
+  }
 
-      case ReadErrors:
-        stopBlinker();
-        myIcon.setLayerEnabled(0, false);
-        myIcon.setLayerEnabled(1, true);
-        myIcon.setLayerEnabled(2, false);
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
-        break;
+  private static @NotNull Icon getUnreadIcon() {
+    return ApplicationInfo.getInstance().isEAP() ?
+           AllIcons.Ide.FatalError : AllIcons.Ide.FatalErrorRead; // let's be less annoying in releases
+  }
 
-      case NoErrors:
-        stopBlinker();
-        myIcon.setLayerEnabled(0, false);
-        myIcon.setLayerEnabled(1, false);
-        myIcon.setLayerEnabled(2, true);
+  void setState(@NotNull MessagePool.State state) {
+    Icon myUnreadIcon = myEnableBlink ? new Blinking(AllIcons.Ide.FatalError) : getUnreadIcon();
+    if (state != MessagePool.State.NoErrors) {
+      setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalErrorRead : myUnreadIcon);
+      setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
+      getAccessibleContext().setAccessibleDescription(StringUtil.removeHtmlTags(DiagnosticBundle.message("error.notification.tooltip")));
+      if (!myEnableBlink) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
+    }
+    else {
+      setIcon(ICON_16);
+      setToolTipText(null);
+      if (!myEnableBlink) {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        setToolTipText(null);
-        break;
+      }
     }
 
-    repaint();
-  }
-
-  private synchronized void startBlinker() {
-    if (myEnableBlink && myBlinker == null) {
-      myBlinker = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-        private boolean enabled = false;
-
-        @Override
-        public void run() {
-          myIcon.setLayerEnabled(0, enabled);
-          myIcon.setLayerEnabled(1, false);
-          myIcon.setLayerEnabled(2, !enabled);
-          repaint();
-          enabled = !enabled;
-        }
-      }, 1, 1, TimeUnit.SECONDS);
-    }
-  }
-
-  private synchronized void stopBlinker() {
-    if (myBlinker != null) {
-      myBlinker.cancel(true);
-      myBlinker = null;
+    if (myBlinkTimeoutQueue != null) {
+      myBlinkTimeoutQueue.queue(state);
     }
   }
 }

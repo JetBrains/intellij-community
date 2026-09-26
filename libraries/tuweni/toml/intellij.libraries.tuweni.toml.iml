@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="tuweni-toml" type="repository">
+        <properties maven-id="io.consensys.tuweni:tuweni-toml:2.8.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0.jar">
+              <sha256sum>74671f0645b77a2037d817c48d3ce7a47f6b1d3112527979e00bb133a3db8b5a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar">
+              <sha256sum>bd7f7b5d07bc0b047f10915b32ca4bb1de9e57d8049098882e4453c88c076a5d</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.antlr:antlr4" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2.8.0/tuweni-toml-2.8.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.13.0/antlr4-runtime-4.13.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

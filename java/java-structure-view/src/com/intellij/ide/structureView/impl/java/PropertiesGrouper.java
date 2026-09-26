@@ -1,45 +1,34 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class PropertiesGrouper implements Grouper{
-  @NonNls public static final String ID = "SHOW_PROPERTIES";
+public final class PropertiesGrouper implements Grouper {
+  public static final @NonNls String ID = "SHOW_PROPERTIES";
 
   @Override
-  @NotNull
-  public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
+  public @NotNull Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
-    Map<Group,Group> result = new THashMap<>();
+    Map<Group,Group> result = new HashMap<>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {
-        PsiElement element = ((JavaClassTreeElementBase)o).getElement();
+        PsiElement element = ((JavaClassTreeElementBase<?>)o).getElement();
         PropertyGroup group = PropertyGroup.createOn(element, o);
         if (group != null) {
           PropertyGroup existing = (PropertyGroup)result.get(group);
@@ -62,14 +51,12 @@ public class PropertiesGrouper implements Grouper{
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
+  public @NotNull ActionPresentation getPresentation() {
+    return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.properties"), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property));
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 }

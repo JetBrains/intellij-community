@@ -1,0 +1,5 @@
+val result = buildSet {
+    addAll(setOf(1,2))
+    listOf(3).mapTo(this) { it + 1 }
+    remove(4)
+}

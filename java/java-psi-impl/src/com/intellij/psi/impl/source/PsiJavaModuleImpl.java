@@ -1,17 +1,28 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -24,6 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.DO_NOT_RESOLVE_BY_DEFAULT;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_DEPRECATED;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_DEPRECATED_FOR_REMOVAL;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.WARN_INCUBATING;
+import static com.intellij.util.BitUtil.isSet;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
@@ -34,9 +50,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     super(node);
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiRequiresStatement> getRequires() {
+  public @NotNull Iterable<PsiRequiresStatement> getRequires() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
@@ -46,9 +61,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getExports() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
@@ -60,9 +74,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.OPENS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
@@ -74,9 +87,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiUsesStatement> getUses() {
+  public @NotNull Iterable<PsiUsesStatement> getUses() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.USES_STATEMENT, PsiUsesStatement.EMPTY_ARRAY));
@@ -86,9 +98,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiProvidesStatement> getProvides() {
+  public @NotNull Iterable<PsiProvidesStatement> getProvides() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.PROVIDES_STATEMENT, PsiProvidesStatement.EMPTY_ARRAY));
@@ -98,15 +109,13 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameIdentifier() {
+  public @NotNull PsiJavaModuleReferenceElement getNameIdentifier() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReferenceElement.class);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
@@ -117,15 +126,59 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   }
 
   @Override
+  public boolean doNotResolveByDefault() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), DO_NOT_RESOLVE_BY_DEFAULT);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnDeprecated() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_DEPRECATED);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnDeprecatedForRemoval() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_DEPRECATED_FOR_REMOVAL);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnIncubating() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_INCUBATING);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiJavaModuleReferenceElement newName = PsiElementFactory.SERVICE.getInstance(getProject()).createModuleReferenceFromText(name);
+    PsiJavaModuleReferenceElement newName = PsiElementFactory.getInstance(getProject()).createModuleReferenceFromText(name, null);
     getNameIdentifier().replace(newName);
     return this;
   }
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
@@ -134,9 +187,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return PsiTreeUtil.getChildOfType(this, PsiDocComment.class);
   }
 
@@ -151,11 +203,19 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   }
 
   @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return JavaResolveUtil.processJavaModuleExports(this, processor, state, lastParent, place);
+  }
+
+  @Override
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, () -> {
       JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
       PsiJavaModule result = helper != null ? helper.getOriginalModule(this) : this;
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -169,9 +229,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ProjectScope.getProjectScope(getProject());
   }
 

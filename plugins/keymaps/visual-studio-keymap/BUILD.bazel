@@ -1,0 +1,64 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.keymap.visualStudio` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/keymap-visualStudio.jar": ["intellij.keymap.visualStudio"],
+    },
+    main_module = "intellij.keymap.visualStudio",
+)
+### auto-generated section `dev intellij.keymap.visualStudio` end
+
+### auto-generated section `build intellij.keymap.visualStudio` start
+jvm_library(
+    name = "keymap-visualStudio",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudio",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "keymap-visualStudio_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.visualStudio",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-visualStudio",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "keymap-visualStudio_plugin",
+    descriptor_module = ":keymap-visualStudio",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.keymap.visualStudio` end
+
+### auto-generated section `iml intellij.keymap.visualStudio` start
+exports_files(
+    [
+        "intellij.keymap.visualStudio.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/Visual Studio OSX.xml",
+        "resources/keymaps/Visual Studio.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.keymap.visualStudio` end

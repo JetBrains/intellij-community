@@ -1,0 +1,4 @@
+var value: Int = 0
+    set(`T _ T`) {
+        field = `T _ T`
+    }

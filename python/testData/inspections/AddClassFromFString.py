@@ -1,2 +1,2 @@
 def f():
-    print(f'{<warning descr="Unresolved reference 'MyClass'">My<caret>Class</warning>()}')
+    print(f'{<error descr="Unresolved reference 'MyClass'">My<caret>Class</error>()}')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.RunManager;
@@ -9,14 +9,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactory {
+
+public final class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactoryEx {
   @Override
-  public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName, boolean singleton) {
+  public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName) {
     RunnerAndConfigurationSettings settings = createRunConfiguration(module, PythonConfigurationType.getInstance().getFactory());
-    settings.setSingleton(singleton);
     PythonRunConfigurationParams configuration = (PythonRunConfigurationParams)settings.getConfiguration();
     configuration.setScriptName(scriptName);
     return configuration;
@@ -32,9 +29,8 @@ public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactory {
     return settings;
   }
 
-  private static RunnerAndConfigurationSettings createConfigurationSettings(ConfigurationFactory factory, @NotNull final Module module) {
-    final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(module.getProject()).createRunConfiguration(module.getName(), factory);
+  private static RunnerAndConfigurationSettings createConfigurationSettings(ConfigurationFactory factory, final @NotNull Module module) {
+    final RunnerAndConfigurationSettings settings = RunManager.getInstance(module.getProject()).createConfiguration(module.getName(), factory);
     ModuleBasedConfiguration configuration = (ModuleBasedConfiguration) settings.getConfiguration();
     configuration.setModule(module);
     return settings;

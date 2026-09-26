@@ -1,0 +1,29 @@
+// "EXPECTED-SUGGESTION": libs, libs.plugins.my.plugin.aaa, customLibs, customLibs.plugins.my.plugin.bbb
+// "SUGGESTION-INDEX-TO-APPLY": 2
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+// FILE: build.gradle.kts
+plugins {
+    alias(lib<caret>)
+}
+
+// FILE: build.gradle.after.kts
+plugins {
+    alias(customLibs<caret>)
+}
+
+// FILE: gradle/libs.versions.toml
+[plugins]
+my-plugin-aaa = "my.plugin.aaa:1.0.0"
+
+// FILE: customPath/customLibs.toml
+[plugins]
+my-plugin-bbb = "my.plugin.bbb:1.0.0"
+
+// FILE: settings.gradle.kts
+dependencyResolutionManagement {
+    dependencyResolutionManagement {
+        versionCatalogs {
+            create("customLibs") { from(files("customPath/customLibs.toml")) }
+        }
+    }
+}

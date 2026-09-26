@@ -19,10 +19,11 @@ import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class MetaModel {
     return myTarget;
   }
 
-  public String getTag() {
+  public @NlsSafe String getTag() {
     return myTag;
   }
 

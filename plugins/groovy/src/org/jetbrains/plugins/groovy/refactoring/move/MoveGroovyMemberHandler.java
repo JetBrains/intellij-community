@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
@@ -20,7 +6,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
@@ -29,7 +23,11 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.EnumConstantsUtil;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -56,21 +54,19 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
-public class MoveGroovyMemberHandler implements MoveMemberHandler {
+public final class MoveGroovyMemberHandler implements MoveMemberHandler {
   @Override
   public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
     final PsiElement element = usage.getElement();
     if (element == null || !element.isValid()) return true;
 
-    if (usage.reference instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)usage.reference;
+    if (usage.reference instanceof GrReferenceExpression refExpr) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         if (usage.qualifierClass != null) {
@@ -91,8 +87,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @NotNull
-  public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
+  public @NotNull PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     GroovyChangeContextUtil.encodeContextInfo(member);
 
     final PsiDocComment docComment;
@@ -228,19 +223,17 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, Set<PsiMember> membersToMove) {
+  public @Nullable PsiElement getAnchor(final @NotNull PsiMember member, final @NotNull PsiClass targetClass, Set<PsiMember> membersToMove) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();
       if (psiExpression != null) {
         psiExpression.accept(new GroovyRecursiveElementVisitor() {
           @Override
-          public void visitReferenceExpression(@NotNull final GrReferenceExpression expression) {
+          public void visitReferenceExpression(final @NotNull GrReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
-            if (psiElement instanceof GrField) {
-              final GrField grField = (GrField)psiElement;
+            if (psiElement instanceof GrField grField) {
               if (grField.getContainingClass() == targetClass && !referencedFields.contains(grField)) {
                 referencedFields.add(grField);
               }
@@ -249,7 +242,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
         });
       }
       if (!referencedFields.isEmpty()) {
-        Collections.sort(referencedFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
+        referencedFields.sort((o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return referencedFields.get(0);
       }
     }
@@ -264,8 +257,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   }
 
   private static PsiElement addEnumConstant(PsiClass targetClass, GrEnumConstant constant, @Nullable PsiElement anchor) {
-    if (targetClass instanceof GrEnumTypeDefinition) {
-      final GrEnumTypeDefinition enumeration = (GrEnumTypeDefinition)targetClass;
+    if (targetClass instanceof GrEnumTypeDefinition enumeration) {
       final GrEnumConstantList constantList = enumeration.getEnumConstantList();
       if (constantList != null) {
         ASTNode node = constantList.getNode();
@@ -288,8 +280,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
                                                             @NotNull Set<PsiMember> membersToMove,
                                                             @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
-    if (ref instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)ref;
+    if (ref instanceof GrReferenceExpression refExpr) {
       GrExpression qualifier = refExpr.getQualifier();
       if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
         // both member and the reference to it will be in target class
@@ -339,7 +330,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
                                                    RefactoringUIUtil.getDescription(member, false),
                                                    visibility,
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-        conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(member, StringUtil.capitalize(message));
       }
     }
   }

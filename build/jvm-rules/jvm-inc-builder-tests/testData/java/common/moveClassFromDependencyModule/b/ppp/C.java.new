@@ -1,0 +1,2 @@
+package ppp;
+public class C { public static int f() { return 1; } }  // identical source, now in the consuming module

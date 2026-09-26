@@ -1,40 +1,51 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
- * The general idea of 'external system' integration is to provide management facilities for the project structure defined in
- * terms over than IntelliJ (e.g. maven, gradle, eclipse etc).
+ * The general idea of External System Integration is providing management facilities for the project structure defined in
+ * terms other than IntelliJ (e.g. Maven, Gradle, Eclipse, etc).
  * <p/>
- * This class serves as an id of a system which defines project structure, i.e. it might be any external system or the ide itself.
- * 
- * @author Denis Zhdanov
- * @since 2/14/12 12:59 PM
+ * This class serves as an ID of a system which defines project structure, i.e. it might be any external system or the IDE itself.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/external-system-integration.html">External System Integration (IntelliJ Platform Docs)</a>
  */
-public class ProjectSystemId implements Serializable {
+public final class ProjectSystemId implements Serializable {
+  private static final long serialVersionUID = 2L;
+  private static final Map<String, ProjectSystemId> ourExistingIds = new ConcurrentHashMap<>();
 
-  private static final long serialVersionUID = 1L;
-  
-  @NotNull public static final ProjectSystemId IDE = new ProjectSystemId("IDE");
+  public static final @NotNull ProjectSystemId IDE = new ProjectSystemId("IDE");
 
-  @NotNull private final String myId;
-  @NotNull private final String myReadableName;
+  private final @NotNull @NonNls String id;
+  private final @NotNull @Nls(capitalization = Title) String readableName;
 
-  public ProjectSystemId(@NotNull String id) {
-    this(id, StringUtil.capitalize(id.toLowerCase()));
+  public ProjectSystemId(@NotNull @NlsSafe String id) {
+    this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
   }
 
-  public ProjectSystemId(@NotNull String id, @NotNull String readableName) {
-    myId = id;
-    myReadableName = readableName;
+  @PropertyMapping({"id", "readableName"})
+  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Title) String readableName) {
+    this.id = id;
+    this.readableName = readableName;
+    ourExistingIds.putIfAbsent(id, this);
   }
 
   @Override
   public int hashCode() {
-    return myId.hashCode();
+    return id.hashCode();
   }
 
   @Override
@@ -44,21 +55,38 @@ public class ProjectSystemId implements Serializable {
 
     ProjectSystemId owner = (ProjectSystemId)o;
 
-    return myId.equals(owner.myId);
+    return id.equals(owner.id);
   }
 
-  @NotNull
-  public String getId() {
-    return myId;
+  public @NotNull String getId() {
+    return id;
   }
 
-  @NotNull
-  public String getReadableName() {
-    return myReadableName;
+  public @NotNull @Nls(capitalization = Title) String getReadableName() {
+    return readableName;
   }
-  
+
   @Override
   public String toString() {
-    return myId;
+    return id;
+  }
+
+  public @NotNull ProjectSystemId intern() {
+    ProjectSystemId current = ourExistingIds.putIfAbsent(this.id, this);
+    return current == null ? this : current;
+  }
+
+  public static @Nullable ProjectSystemId findById(@NotNull String id) {
+    return ourExistingIds.get(id);
+  }
+
+  private Object readResolve() {
+    ProjectSystemId cached = ourExistingIds.get(id);
+    if (cached != null) {
+      return cached;
+    }
+    else {
+      return this;
+    }
   }
 }

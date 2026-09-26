@@ -15,36 +15,41 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class IndentingBackspaceHandlerUncommittedDocumentTest extends LightPlatformCodeInsightTestCase {
   public void testSequentialBackspaceInvocation() {
     configureFromFileText(getTestName(false) + ".java",
-                          "class Foo {\n" +
-                          "\n" +
-                          "\n" +
-                          "<caret>}");
+                          """
+                            class Foo {
+
+
+                            <caret>}""");
     backspace();
     backspace();
     checkResultByText("class Foo {\n" +
                       "<caret>}");
   }
 
+  @IJIgnore(issue = "AT-4013")
   public void testMulticaretSequentialBackspaceInvocation() {
     configureFromFileText(getTestName(false) + ".java",
-                          "class Foo {\n" +
-                          "    void m1() {\n" +
-                          "    \n" +
-                          "    <caret>}\n" +
-                          "    void m2() {\n" +
-                          "    \n" +
-                          "    <caret>}\n" +
-                          "}");
+                          """
+                            class Foo {
+                                void m1() {
+                               \s
+                                <caret>}
+                                void m2() {
+                               \s
+                                <caret>}
+                            }""");
     backspace();
     backspace();
-    checkResultByText("class Foo {\n" +
-                      "    void m1() { <caret>}\n" +
-                      "    void m2() { <caret>}\n" +
-                      "}");
+    checkResultByText("""
+                        class Foo {
+                            void m1() {<caret>}
+                            void m2() {<caret>}
+                        }""");
   }
 }

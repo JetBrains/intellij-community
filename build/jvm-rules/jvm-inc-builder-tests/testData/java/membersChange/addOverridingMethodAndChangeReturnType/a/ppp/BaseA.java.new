@@ -1,0 +1,7 @@
+package ppp;
+
+public class BaseA {
+  public boolean process(int a) {
+    return Boolean.TRUE;
+  }
+}

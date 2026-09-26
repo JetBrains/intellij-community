@@ -1,0 +1,177 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.breakpoints
+
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.BreakpointFileProhibitionPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asPromise
+
+object XBreakpointUtil {
+  /**
+   * The forcibly shortened version of [XBreakpointType.getShortText].
+   */
+  @JvmStatic
+  fun getShortText(breakpoint: XBreakpoint<*>): @Nls String {
+    val len = 70
+    return StringUtil.shortenTextWithEllipsis(breakpoint.shortText, len, len / 2)
+  }
+
+  /**
+   * @see XBreakpointType.getDisplayText
+   */
+  @JvmStatic
+  fun getDisplayText(breakpoint: XBreakpoint<*>): @Nls String =
+    breakpoint.displayText
+
+  /**
+   * @see XBreakpointType.getGeneralDescription
+   */
+  @JvmStatic
+  fun getGeneralDescription(breakpoint: XBreakpoint<*>): @Nls String =
+    breakpoint.generalDescription
+
+  /**
+   * @see XBreakpointType.getPropertyXMLDescriptions
+   */
+  @JvmStatic
+  fun getPropertyXMLDescriptions(breakpoint: XBreakpoint<*>): List<String> =
+    breakpoint.propertyXMLDescriptions
+
+  /**
+   * @see XBreakpointType.hasCustomCondition
+   */
+  @JvmStatic
+  fun hasCustomCondition(breakpoint: XBreakpoint<*>): Boolean {
+    return breakpoint.hasCustomCondition
+  }
+
+  @JvmStatic
+  fun findType(id: @NonNls String): XBreakpointType<*, *>? =
+    breakpointTypes().find { it.id == id }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun breakpointTypes(): List<XBreakpointType<*, *>> =
+    XBreakpointType.EXTENSION_POINT_NAME.extensionList
+
+  /**
+   * Toggle line breakpoint with editor support:
+   * - unfolds folded block on the line
+   * - if folded, checks if line breakpoints could be toggled inside folded text
+   *
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("use {@link #toggleLineBreakpoint(Project, XSourcePosition, boolean, Editor, boolean, boolean, boolean)}")
+  @JvmStatic
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    editor: Editor,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> =
+    toggleLineBreakpoint(project, position, true, editor, temporary, moveCaret, canRemove)
+
+  /**
+   * Toggle line breakpoint with editor support:
+   * - unfolds folded block on the line
+   * - if folded, checks if line breakpoints could be toggled inside folded text
+   */
+  @JvmStatic
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    selectVariantByPositionColumn: Boolean,
+    editor: Editor,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> {
+    return XBreakpointUIUtil.toggleLineBreakpointAsync(project,
+                                                       position,
+                                                       selectVariantByPositionColumn,
+                                                       editor,
+                                                       temporary,
+                                                       moveCaret,
+                                                       canRemove).asPromise()
+      .then { proxy ->
+        if (proxy == null) return@then null
+        val monolithBreakpoint = XDebuggerEntityConverter.getBreakpoint(proxy.id)
+        monolithBreakpoint as? XLineBreakpoint<*>
+      }
+  }
+
+  @ApiStatus.Internal
+  fun getAvailableLineBreakpointTypes(
+    project: Project,
+    position: XSourcePosition,
+    editor: Editor? = null,
+    selectTypeByPositionColumn: Boolean = false,
+  ): List<XLineBreakpointType<*>> {
+    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    val virtualFile = position.file
+    if (BreakpointFileProhibitionPolicy.isBreakpointProhibited(virtualFile)) {
+      return emptyList()
+    }
+    val breakpointInfo = XBreakpointUIUtil.getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
+                                                                          XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
+                                                                          { type, line -> breakpointManager.findBreakpointAtLine(type,
+                                                                                                                                 virtualFile, line) },
+                                                                          { type -> type.priority },
+                                                                          { callback -> callback() },
+                                                                          { type, line -> type.canPutAt(virtualFile, line, project) }
+    )
+    return breakpointInfo.first
+  }
+}
+
+val XBreakpoint<*>.shortText: @Nls String
+  get() {
+    @Suppress("UNCHECKED_CAST") val t = type as XBreakpointType<XBreakpoint<*>, *>
+    return t.getShortText(this)
+  }
+
+val XBreakpoint<*>.displayText: @Nls String
+  get() {
+    @Suppress("UNCHECKED_CAST") val t = type as XBreakpointType<XBreakpoint<*>, *>
+    return t.getDisplayText(this)
+  }
+
+val XBreakpoint<*>.generalDescription: @Nls String
+  get() {
+    @Suppress("UNCHECKED_CAST") val t = type as XBreakpointType<XBreakpoint<*>, *>
+    return t.getGeneralDescription(this)
+  }
+
+val XBreakpoint<*>.propertyXMLDescriptions: List<@Nls String>
+  get() {
+    @Suppress("UNCHECKED_CAST") val t = type as XBreakpointType<XBreakpoint<*>, *>
+    return t.getPropertyXMLDescriptions(this)
+  }
+
+val XBreakpoint<*>.hasCustomCondition: Boolean
+  get() {
+    @Suppress("UNCHECKED_CAST")
+    return (this.type as XBreakpointType<XBreakpoint<*>, *>).hasCustomCondition(this)
+  }
+
+
+val <P : XBreakpointProperties<*>> XLineBreakpoint<P>.highlightRange: TextRange?
+  get() =
+    type.getHighlightRange(this)

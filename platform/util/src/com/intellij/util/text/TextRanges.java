@@ -1,42 +1,21 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.UnmodifiableIterator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
-public class TextRanges implements Iterable<TextRange> {
-  private static final Comparator<TextRange> START_COMP = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      return Comparing.compare(o1.getStartOffset(), o2.getStartOffset());
-    }
-  };
-  private static final Comparator<TextRange> END_COMP = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      return Comparing.compare(o1.getEndOffset(), o2.getEndOffset());
-    }
-  };
-  private final List<TextRange> myRanges = ContainerUtil.newArrayList();
+public final class TextRanges implements Iterable<TextRange> {
+  private static final Comparator<TextRange> START_COMP = Comparator.comparingInt(TextRange::getStartOffset);
+  private static final Comparator<TextRange> END_COMP = Comparator.comparingInt(TextRange::getEndOffset);
+  private final List<TextRange> myRanges = new ArrayList<>();
 
   public TextRanges union(@Nullable TextRange range) {
     if (range == null || range.isEmpty()) return this;
@@ -62,7 +41,7 @@ public class TextRanges implements Iterable<TextRange> {
 
   @Override
   public Iterator<TextRange> iterator() {
-    return new UnmodifiableIterator<TextRange>(myRanges.iterator());
+    return new UnmodifiableIterator<>(myRanges.iterator());
   }
 
   public Iterator<TextRange> revIterator() {

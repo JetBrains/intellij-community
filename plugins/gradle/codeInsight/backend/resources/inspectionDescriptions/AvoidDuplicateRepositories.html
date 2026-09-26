@@ -1,0 +1,18 @@
+<html>
+<body>
+<p>Detects duplicate repository declarations in Gradle scripts.</p>
+<p>Offers an intention to navigate to duplicates.</p>
+<p><b>Inspection reporting example:</b></p>
+<pre><code lang="kotlin">
+repositories {
+    // the following two repositories will be reported
+    maven { url = uri("https://repo1.maven.org/maven2/") }
+    maven {
+        url = uri("https://repo1.maven.org/maven2/")
+        // some comment
+    }
+    maven { url = uri("https://some.other.repo/") } // will not be reported
+}
+</code></pre>
+</body>
+</html>

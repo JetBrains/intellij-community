@@ -1,0 +1,3 @@
+androidx/compose/runtime/Composer
+androidx/compose/runtime/MutableState
+org/jetbrains/compose/swing/modifier/SwingModifier

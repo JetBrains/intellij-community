@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,10 +7,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CommitPlaceholderProvider;
+import com.intellij.tasks.TaskApiBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
@@ -34,58 +20,210 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.Consumer;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.HttpProxyConfigurable;
+import com.intellij.util.net.ProxyConfiguration;
+import com.intellij.util.net.ProxySettings;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.lang.reflect.Method;
+import java.util.ResourceBundle;
 
 /**
  * @author Dmitry Avdeev
  */
 public class BaseRepositoryEditor<T extends BaseRepository> extends TaskRepositoryEditor implements PanelWithAnchor {
 
-  protected JBLabel myUrlLabel;
-  protected JTextField myURLText;
-  protected JTextField myUserNameText;
-  protected JBLabel myUsernameLabel;
-  protected JCheckBox myShareUrlCheckBox;
-  protected JPasswordField myPasswordText;
-  protected JBLabel myPasswordLabel;
+  protected final JBLabel myUrlLabel;
+  protected final JTextField myURLText;
+  protected final JTextField myUserNameText;
+  protected final JBLabel myUsernameLabel;
+  protected final JCheckBox myShareUrlCheckBox;
+  protected final JPasswordField myPasswordText;
+  protected final JBLabel myPasswordLabel;
 
-  protected JButton myTestButton;
-  private JPanel myPanel;
-  private JBCheckBox myUseProxy;
-  private JButton myProxySettingsButton;
-  protected JCheckBox myUseHttpAuthenticationCheckBox;
+  protected final JButton myTestButton;
+  private final JPanel myPanel;
+  private final JBCheckBox myUseProxy;
+  private final JButton myProxySettingsButton;
+  protected final JCheckBox myUseHttpAuthenticationCheckBox;
 
-  protected JPanel myCustomPanel;
-  private JBCheckBox myAddCommitMessage;
-  private JBLabel myComment;
-  private JPanel myEditorPanel;
-  protected JBCheckBox myLoginAnonymouslyJBCheckBox;
-  protected JBTabbedPane myTabbedPane;
-  private JTextPane myAdvertiser;
+  protected final JPanel myCustomPanel;
+  private final JBCheckBox myAddCommitMessage;
+  private final JBLabel myComment;
+  private final JPanel myEditorPanel;
+  protected final JBCheckBox myLoginAnonymouslyJBCheckBox;
+  protected final JBTabbedPane myTabbedPane;
+  private final JTextPane myAdvertiser;
 
   private boolean myApplying;
   protected Project myProject;
   protected final T myRepository;
-  private final Consumer<T> myChangeListener;
+  private final Consumer<? super T> myChangeListener;
   private final Document myDocument;
   private final Editor myEditor;
   private JComponent myAnchor;
 
-  public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
+  public BaseRepositoryEditor(final Project project, final T repository, Consumer<? super T> changeListener) {
     myProject = project;
     myRepository = repository;
     myChangeListener = changeListener;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.setMaximumSize(new Dimension(-1, -1));
+      myPanel.setMinimumSize(new Dimension(480, 265));
+      myPanel.setPreferredSize(new Dimension(-1, -1));
+      myTabbedPane = new JBTabbedPane();
+      myPanel.add(myTabbedPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(9, 4, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.setMaximumSize(new Dimension(-1, -1));
+      panel1.setMinimumSize(new Dimension(-1, -1));
+      panel1.setPreferredSize(new Dimension(-1, -1));
+      myTabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "general"), panel1);
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myUrlLabel = new JBLabel();
+      myUrlLabel.setHorizontalAlignment(4);
+      this.$$$loadLabelText$$$(myUrlLabel, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "server.u.rl"));
+      panel1.add(myUrlLabel,
+                 new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myURLText = new JTextField();
+      panel1.add(myURLText, new GridConstraints(1, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                new Dimension(150, -1), null, 0, false));
+      myCustomPanel = new JPanel();
+      myCustomPanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myCustomPanel, new GridConstraints(5, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myUseProxy = new JBCheckBox();
+      myUseProxy.setHorizontalAlignment(4);
+      this.$$$loadButtonText$$$(myUseProxy, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "use.prox.y"));
+      panel1.add(myUseProxy,
+                 new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myProxySettingsButton = new JButton();
+      this.$$$loadButtonText$$$(myProxySettingsButton, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "pr.oxy.settings"));
+      panel1.add(myProxySettingsButton, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUseHttpAuthenticationCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myUseHttpAuthenticationCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "use.http.authentication"));
+      panel1.add(myUseHttpAuthenticationCheckBox, new GridConstraints(6, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                      GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                      null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel1.add(spacer2, new GridConstraints(6, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myTestButton = new JButton();
+      this.$$$loadButtonText$$$(myTestButton, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "te.st"));
+      panel1.add(myTestButton, new GridConstraints(7, 3, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myShareUrlCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myShareUrlCheckBox, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "sh.are.url"));
+      panel1.add(myShareUrlCheckBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myLoginAnonymouslyJBCheckBox = new JBCheckBox();
+      this.$$$loadButtonText$$$(myLoginAnonymouslyJBCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "lo.gin.anonymously"));
+      panel1.add(myLoginAnonymouslyJBCheckBox,
+                 new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUsernameLabel = new JBLabel();
+      myUsernameLabel.setHorizontalAlignment(4);
+      this.$$$loadLabelText$$$(myUsernameLabel, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "userna.me"));
+      panel1.add(myUsernameLabel,
+                 new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUserNameText = new JTextField();
+      myUserNameText.setToolTipText(
+        this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "use.domain.login.format.for.ntlm.authentication"));
+      panel1.add(myUserNameText, new GridConstraints(3, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                     new Dimension(150, -1), null, 0, false));
+      myPasswordLabel = new JBLabel();
+      myPasswordLabel.setHorizontalAlignment(4);
+      this.$$$loadLabelText$$$(myPasswordLabel, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "password"));
+      panel1.add(myPasswordLabel,
+                 new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPasswordText = new JPasswordField();
+      panel1.add(myPasswordText, new GridConstraints(4, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                     new Dimension(150, -1), null, 0, false));
+      myAdvertiser = new JTextPane();
+      myAdvertiser.setEditable(false);
+      myAdvertiser.setEnabled(true);
+      myAdvertiser.setText(this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "not.youtrack.customer.yet.get.youtrack"));
+      panel1.add(myAdvertiser, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                   0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.setMaximumSize(new Dimension(-1, -1));
+      panel2.setMinimumSize(new Dimension(-1, -1));
+      panel2.setPreferredSize(new Dimension(-1, -1));
+      myTabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "commit.message"), panel2);
+      myComment = new JBLabel();
+      myComment.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      myComment.setFontColor(UIUtil.FontColor.BRIGHTER);
+      this.$$$loadLabelText$$$(myComment, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "use"));
+      panel2.add(myComment, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAddCommitMessage = new JBCheckBox();
+      this.$$$loadButtonText$$$(myAddCommitMessage, this.$$$getMessageFromBundle$$$("messages/TaskApiBundle", "add.commit.message"));
+      panel2.add(myAddCommitMessage,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myEditorPanel = new JPanel();
+      myEditorPanel.setLayout(new BorderLayout(0, 0));
+      panel2.add(myEditorPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myUrlLabel.setLabelFor(myURLText);
+      myUsernameLabel.setLabelFor(myUserNameText);
+      myPasswordLabel.setLabelFor(myPasswordText);
+    }
 
     myTestButton.addActionListener(new ActionListener() {
       @Override
@@ -97,7 +235,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myProxySettingsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        HttpConfigurable.editConfigurable(myPanel);
+        HttpProxyConfigurable.editConfigurable(myPanel);
         enableButtons();
         doApply();
       }
@@ -126,6 +264,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    myEditor.getContentComponent().setFocusable(true);
 
     setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();
@@ -161,21 +300,94 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
   }
 
-  private void setupPlaceholdersComment() {
-    StringBuilder comment = new StringBuilder(myRepository.getComment());
+  private static Method $$$cachedGetBundleMethod$$$ = null;
 
-    CommitPlaceholderProvider[] extensions = Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME);
-    for (CommitPlaceholderProvider extension : extensions) {
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
+  private void setupPlaceholdersComment() {
+    StringBuilder comment = new StringBuilder();
+    for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(myRepository);
       for (String placeholder : placeholders) {
-        comment.append(", {").append(placeholder).append("}");
+        if (!comment.isEmpty()) {
+          comment.append(", ");
+        }
+        comment.append("{").append(placeholder).append("}");
         String description = extension.getPlaceholderDescription(placeholder);
         if (description != null) {
           comment.append(" (").append(description).append(")");
         }
       }
     }
-    myComment.setText("Available placeholders: " + comment);
+    myComment.setText(TaskApiBundle.message("label.html.available.placeholders.html", comment));
   }
 
 
@@ -196,8 +408,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUseHttpAuthenticationCheckBox.setEnabled(enabled);
   }
 
-  @Nullable
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     return null;
   }
 
@@ -205,8 +416,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   protected void enableButtons() {
-    myUseProxy.setEnabled(HttpConfigurable.getInstance().USE_HTTP_PROXY);
-    if (!HttpConfigurable.getInstance().USE_HTTP_PROXY) {
+    var useHttpProxy = ProxySettings.getInstance().getProxyConfiguration() instanceof ProxyConfiguration.StaticProxyConfiguration;
+    myUseProxy.setEnabled(useHttpProxy);
+    if (!useHttpProxy) {
       myUseProxy.setSelected(false);
     }
   }
@@ -223,7 +435,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected void installListener(JTextField textField) {
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> doApply());
       }
     });
@@ -243,7 +455,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   protected void installListener(final Document document) {
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+      public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
         doApply();
       }
     });
@@ -258,6 +470,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       try {
         myApplying = true;
         apply();
+        myChangeListener.consume(myRepository);
         enableEditor();
       }
       finally {
@@ -293,6 +506,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUsername(myUserNameText.getText().trim());
     //noinspection deprecation
     myRepository.setPassword(myPasswordText.getText());
+    myRepository.storeCredentials();
     myRepository.setShared(myShareUrlCheckBox.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHttpAuthenticationCheckBox.isSelected());
@@ -300,8 +514,6 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());
     myRepository.setCommitMessageFormat(myDocument.getText());
-
-    myChangeListener.consume(myRepository);
   }
 
   @Override
@@ -310,7 +522,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     myAnchor = anchor;
     myUrlLabel.setAnchor(anchor);
     myUsernameLabel.setAnchor(anchor);

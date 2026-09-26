@@ -1,0 +1,119 @@
+====
+ hg
+====
+
+---------------------------------------
+Mercurial source code management system
+---------------------------------------
+
+:Author:         Olivia Mackall <olivia@selenic.com>
+:Organization:   Mercurial
+:Manual section: 1
+:Manual group:   Mercurial Manual
+
+.. contents::
+   :backlinks: top
+   :class: htmlonly
+   :depth: 1
+
+
+Synopsis
+""""""""
+**hg** *command* [*option*]... [*argument*]...
+
+Description
+"""""""""""
+The **hg** command provides a command line interface to the Mercurial
+system.
+
+Command Elements
+""""""""""""""""
+
+files...
+    indicates one or more filename or relative path filenames; see
+    `File Name Patterns`_ for information on pattern matching
+
+path
+    indicates a path on the local machine
+
+revision
+    indicates a changeset which can be specified as a changeset
+    revision number, a tag, or a unique substring of the changeset
+    hash value
+
+repository path
+    either the pathname of a local repository or the URI of a remote
+    repository.
+
+.. include:: hg.1.gendoc.txt
+
+Files
+"""""
+
+``/etc/mercurial/hgrc``, ``$HOME/.hgrc``, ``.hg/hgrc``
+    This file contains defaults and configuration. Values in
+    ``.hg/hgrc`` override those in ``$HOME/.hgrc``, and these override
+    settings made in the global ``/etc/mercurial/hgrc`` configuration.
+    See |hgrc(5)|_ for details of the contents and format of these
+    files.
+
+``.hgignore``
+    This file contains regular expressions (one per line) that
+    describe file names that should be ignored by **hg**. For details,
+    see |hgignore(5)|_.
+
+``.hgsub``
+    This file defines the locations of all subrepositories, and
+    tells where the subrepository checkouts came from. For details, see
+    :hg:`help subrepos`.
+
+``.hgsubstate``
+    This file is where Mercurial stores all nested repository states. *NB: This
+    file should not be edited manually.*
+
+``.hgtags``
+    This file contains changeset hash values and text tag names (one
+    of each separated by spaces) that correspond to tagged versions of
+    the repository contents. The file content is encoded using UTF-8.
+
+``.hg/last-message.txt``
+    This file is used by :hg:`commit` to store a backup of the commit message
+    in case the commit fails.
+
+``.hg/localtags``
+    This file can be used to define local tags which are not shared among
+    repositories. The file format is the same as for ``.hgtags``, but it is
+    encoded using the local system encoding.
+
+Some commands (e.g. revert) produce backup files ending in ``.orig``,
+if the ``.orig`` file already exists and is not tracked by Mercurial,
+it will be overwritten.
+
+Bugs
+""""
+Probably lots, please post them to the mailing list (see Resources_
+below) when you find them.
+
+See Also
+""""""""
+|hgignore(5)|_, |hgrc(5)|_
+
+Author
+""""""
+Written by Olivia Mackall <olivia@selenic.com>
+
+Resources
+"""""""""
+Main Web Site: https://mercurial-scm.org/
+
+Source code repository: https://www.mercurial-scm.org/repo/hg
+
+Mailing list: https://www.mercurial-scm.org/mailman/listinfo/mercurial/
+
+Copying
+"""""""
+Copyright (C) 2005-2024 Olivia Mackall.
+Free use of this software is granted under the terms of the GNU General
+Public License version 2 or any later version.
+
+.. include:: common.txt

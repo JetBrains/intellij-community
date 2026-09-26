@@ -10,6 +10,6 @@ class XY {
     }
 
     public static void main(String[] args) {
-            <ref>getLocalizedObject(null,   "");
+            <caret>getLocalizedObject(null,   "");
     }
 }

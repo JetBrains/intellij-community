@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifilePackagePartMethodAdded-a.kotlin_module
+  Utils.class
+  Utils__PartAKt.class
+  Utils__PartBKt.class
+  Utils__PartCKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifilePackagePartMethodAdded/a/partA.kt
+  kotlin/withJava/other/multifilePackagePartMethodAdded/a/partB.kt
+  kotlin/withJava/other/multifilePackagePartMethodAdded/a/partC.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifilePackagePartMethodAdded-a.kotlin_module
+  UseFooFKt.class
+  UseFooGKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifilePackagePartMethodAdded/a/useFooF.kt
+  kotlin/withJava/other/multifilePackagePartMethodAdded/a/useFooG.kt
+End of files
+------------------------------------------
+Exit code: OK

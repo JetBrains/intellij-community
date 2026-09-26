@@ -1,8 +1,8 @@
-// "Insert '(NodeInfo)parent' declaration" "true"
+// "Insert '(NodeInfo)parent' declaration" "true-preview"
 public abstract class A {
     public void getNodeElements(Object parent) {
         if (!(parent instanceof NodeInfo)) return;
-        NodeInfo parent1 = (NodeInfo) parent;
+        NodeInfo nodeInfo = (NodeInfo) parent;
         <caret>
     }
 

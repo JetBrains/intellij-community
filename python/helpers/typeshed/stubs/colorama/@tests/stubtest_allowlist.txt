@@ -1,0 +1,46 @@
+# These are defined as ints, but later are converted to strings via magic:
+colorama.ansi.AnsiBack.BLACK
+colorama.ansi.AnsiBack.BLUE
+colorama.ansi.AnsiBack.CYAN
+colorama.ansi.AnsiBack.GREEN
+colorama.ansi.AnsiBack.LIGHTBLACK_EX
+colorama.ansi.AnsiBack.LIGHTBLUE_EX
+colorama.ansi.AnsiBack.LIGHTCYAN_EX
+colorama.ansi.AnsiBack.LIGHTGREEN_EX
+colorama.ansi.AnsiBack.LIGHTMAGENTA_EX
+colorama.ansi.AnsiBack.LIGHTRED_EX
+colorama.ansi.AnsiBack.LIGHTWHITE_EX
+colorama.ansi.AnsiBack.LIGHTYELLOW_EX
+colorama.ansi.AnsiBack.MAGENTA
+colorama.ansi.AnsiBack.RED
+colorama.ansi.AnsiBack.RESET
+colorama.ansi.AnsiBack.WHITE
+colorama.ansi.AnsiBack.YELLOW
+colorama.ansi.AnsiFore.BLACK
+colorama.ansi.AnsiFore.BLUE
+colorama.ansi.AnsiFore.CYAN
+colorama.ansi.AnsiFore.GREEN
+colorama.ansi.AnsiFore.LIGHTBLACK_EX
+colorama.ansi.AnsiFore.LIGHTBLUE_EX
+colorama.ansi.AnsiFore.LIGHTCYAN_EX
+colorama.ansi.AnsiFore.LIGHTGREEN_EX
+colorama.ansi.AnsiFore.LIGHTMAGENTA_EX
+colorama.ansi.AnsiFore.LIGHTRED_EX
+colorama.ansi.AnsiFore.LIGHTWHITE_EX
+colorama.ansi.AnsiFore.LIGHTYELLOW_EX
+colorama.ansi.AnsiFore.MAGENTA
+colorama.ansi.AnsiFore.RED
+colorama.ansi.AnsiFore.RESET
+colorama.ansi.AnsiFore.WHITE
+colorama.ansi.AnsiFore.YELLOW
+colorama.ansi.AnsiStyle.BRIGHT
+colorama.ansi.AnsiStyle.DIM
+colorama.ansi.AnsiStyle.NORMAL
+colorama.ansi.AnsiStyle.RESET_ALL
+
+# These are defined as None, but on initialization are set to correct values:
+colorama.initialise.wrapped_stderr
+colorama.initialise.wrapped_stdout
+
+# Not planning on writing stubs for tests:
+colorama.tests.*

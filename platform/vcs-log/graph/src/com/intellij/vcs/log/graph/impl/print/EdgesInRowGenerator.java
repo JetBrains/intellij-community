@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.print;
 
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class EdgesInRowGenerator {
   private static final int CACHE_SIZE = 10;
   private static final int BLOCK_SIZE = 40;
 
   private final int WALK_SIZE;
 
-  @NotNull private final LinearGraph myGraph;
+  private final @NotNull LinearGraph myGraph;
 
-  @NotNull private final SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
-  @NotNull private final SLRUMap<Integer, GraphEdges> cacheND = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
+  private final @NotNull SLRUMap<Integer, GraphEdges> cacheNU = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
+  private final @NotNull SLRUMap<Integer, GraphEdges> cacheND = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
 
   public EdgesInRowGenerator(@NotNull LinearGraph graph) {
     this(graph, 1000);
@@ -45,8 +32,7 @@ public class EdgesInRowGenerator {
     WALK_SIZE = walk_size;
   }
 
-  @NotNull
-  public Set<GraphEdge> getEdgesInRow(int rowIndex) {
+  public @NotNull Set<GraphEdge> getEdgesInRow(int rowIndex) {
     GraphEdges neighborU = getNeighborU(rowIndex);
     while (neighborU.myRow < rowIndex) {
       neighborU = oneDownStep(neighborU);
@@ -67,8 +53,7 @@ public class EdgesInRowGenerator {
     cacheND.clear();
   }
 
-  @NotNull
-  private GraphEdges getNeighborU(int rowIndex) {
+  private @NotNull GraphEdges getNeighborU(int rowIndex) {
     int upNeighborIndex = getUpNeighborIndex(rowIndex);
     GraphEdges graphEdges = cacheNU.get(upNeighborIndex);
     if (graphEdges == null) {
@@ -78,8 +63,7 @@ public class EdgesInRowGenerator {
     return graphEdges.copyInstance();
   }
 
-  @NotNull
-  private GraphEdges getNeighborD(int rowIndex) {
+  private @NotNull GraphEdges getNeighborD(int rowIndex) {
     int downNeighborIndex = getUpNeighborIndex(rowIndex) + BLOCK_SIZE;
 
     if (downNeighborIndex >= myGraph.nodesCount()) {
@@ -98,8 +82,7 @@ public class EdgesInRowGenerator {
     return (rowIndex / BLOCK_SIZE) * BLOCK_SIZE;
   }
 
-  @NotNull
-  private GraphEdges getUCorrectEdges(int rowIndex) {
+  private @NotNull GraphEdges getUCorrectEdges(int rowIndex) {
     int startCalculateIndex = Math.max(rowIndex - WALK_SIZE, 0);
     GraphEdges graphEdges = new GraphEdges(startCalculateIndex);
 
@@ -109,8 +92,7 @@ public class EdgesInRowGenerator {
     return graphEdges;
   }
 
-  @NotNull
-  private GraphEdges getDCorrectEdges(int rowIndex) {
+  private @NotNull GraphEdges getDCorrectEdges(int rowIndex) {
     int endCalculateIndex = Math.min(rowIndex + WALK_SIZE, myGraph.nodesCount() - 1);
     GraphEdges graphEdges = new GraphEdges(endCalculateIndex);
 
@@ -120,38 +102,28 @@ public class EdgesInRowGenerator {
     return graphEdges;
   }
 
-  @NotNull
-  private GraphEdges oneDownStep(@NotNull GraphEdges graphEdges) {
+  private @NotNull GraphEdges oneDownStep(@NotNull GraphEdges graphEdges) {
     Set<GraphEdge> edgesInCurrentRow = graphEdges.myEdges;
     int currentRow = graphEdges.myRow;
 
-    edgesInCurrentRow.addAll(createDownEdges(currentRow));
-    edgesInCurrentRow.removeAll(createUpEdges(currentRow + 1));
+    edgesInCurrentRow.addAll(myGraph.getAdjacentEdges(currentRow, EdgeFilter.NORMAL_DOWN));
+    edgesInCurrentRow.removeAll(myGraph.getAdjacentEdges(currentRow + 1, EdgeFilter.NORMAL_UP));
 
     return new GraphEdges(edgesInCurrentRow, currentRow + 1);
   }
 
-  @NotNull
-  private GraphEdges oneUpStep(@NotNull GraphEdges graphEdges) {
+  private @NotNull GraphEdges oneUpStep(@NotNull GraphEdges graphEdges) {
     Set<GraphEdge> edgesInCurrentRow = graphEdges.myEdges;
     int currentRow = graphEdges.myRow;
 
-    edgesInCurrentRow.addAll(createUpEdges(currentRow));
-    edgesInCurrentRow.removeAll(createDownEdges(currentRow - 1));
+    edgesInCurrentRow.addAll(myGraph.getAdjacentEdges(currentRow, EdgeFilter.NORMAL_UP));
+    edgesInCurrentRow.removeAll(myGraph.getAdjacentEdges(currentRow - 1, EdgeFilter.NORMAL_DOWN));
     return new GraphEdges(edgesInCurrentRow, currentRow - 1);
   }
 
-  public List<GraphEdge> createUpEdges(int nodeIndex) {
-    return myGraph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_UP);
-  }
-
-  public List<GraphEdge> createDownEdges(int nodeIndex) {
-    return myGraph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN);
-  }
-
-  private static class GraphEdges {
+  private static final class GraphEdges {
     // this must be mutably set
-    @NotNull private final Set<GraphEdge> myEdges;
+    private final @NotNull Set<GraphEdge> myEdges;
     private final int myRow;
 
     private GraphEdges(int row) {

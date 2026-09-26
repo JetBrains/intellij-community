@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -33,9 +34,9 @@ public class RegexpFilterTest {
     createFilter(FILE);
     String line = "C:\\Work\\SampleProjects\\makeOutput.cmd";
     Filter.Result result = applyFilter(line);
-    assertEquals(0, result.highlightStartOffset);
-    assertEquals(line.length(), result.highlightEndOffset);
-    HLInfo info = (HLInfo)result.hyperlinkInfo;
+    assertEquals(0, result.getResultItems().get(0).getHighlightStartOffset());
+    assertEquals(line.length(), result.getResultItems().get(0).getHighlightEndOffset());
+    HLInfo info = (HLInfo)result.getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo(line, 0, 0);
   }
 
@@ -44,9 +45,9 @@ public class RegexpFilterTest {
     createFilter(FILE + "x" + LINE + "y" + COLUMN);
     String fileName = "C:\\file";
     Filter.Result result = applyFilter(fileName + "x12y34");
-    assertEquals(0, result.highlightStartOffset);
-    assertEquals(fileName.length(), result.highlightEndOffset);
-    HLInfo info = (HLInfo) result.hyperlinkInfo;
+    assertEquals(0, result.getResultItems().get(0).getHighlightStartOffset());
+    assertEquals(fileName.length(), result.getResultItems().get(0).getHighlightEndOffset());
+    HLInfo info = (HLInfo) result.getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo(fileName, 11, 33);
   }
 
@@ -55,9 +56,9 @@ public class RegexpFilterTest {
     createFilter(FILE + ":" + LINE + ":" + COLUMN + ".*");
     String fileName = "C:/file";
     Filter.Result result = applyFilter(fileName + ":12:34.1tail2");
-    assertEquals(0, result.highlightStartOffset);
-    assertEquals(fileName.length(), result.highlightEndOffset);
-    HLInfo info = (HLInfo) result.hyperlinkInfo;
+    assertEquals(0, result.getResultItems().get(0).getHighlightStartOffset());
+    assertEquals(fileName.length(), result.getResultItems().get(0).getHighlightEndOffset());
+    HLInfo info = (HLInfo) result.getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo(fileName, 11, 33);
   }
 
@@ -67,7 +68,7 @@ public class RegexpFilterTest {
     String fileName = "C:/work/dev/C3C/V9_9_9_9/src/java/strata/p_switch/ss5e/dataSync/BFGParser.java";
     String line = fileName + ":544:13:544:13:";
     Filter.Result result = applyFilter(line);
-    HLInfo info = (HLInfo) result.hyperlinkInfo;
+    HLInfo info = (HLInfo) result.getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo(fileName, 543, 12);
   }
 
@@ -76,7 +77,7 @@ public class RegexpFilterTest {
     createFilter("$FILE_PATH$\\s+\\($LINE$\\:$COLUMN$\\)");
     String line = "C:\\d ir\\file.ext (1:2)message";
     Filter.Result result = applyFilter(line);
-    HLInfo info = (HLInfo)result.hyperlinkInfo;
+    HLInfo info = (HLInfo)result.getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo("C:\\d ir\\file.ext", 0, 1);
   }
 
@@ -90,7 +91,7 @@ public class RegexpFilterTest {
   @Test
   public void testUnixPathWithSemicolonPrefix() {
     createFilter("$FILE_PATH$");
-    HLInfo info = (HLInfo)applyFilter("error:/usr/local/bar").hyperlinkInfo;
+    HLInfo info = (HLInfo)applyFilter("error:/usr/local/bar").getResultItems().get(0).getHyperlinkInfo();
     info.checkInfo("/usr/local/bar", 0, 0);
   }
 
@@ -116,14 +117,14 @@ public class RegexpFilterTest {
     public int myLine;
     public int myColumn;
 
-    public HLInfo(String fileName, int line, int column) {
+    HLInfo(String fileName, int line, int column) {
       myColumn = column;
       myFileName = fileName;
       myLine = line;
     }
 
     @Override
-    public void navigate(Project project) { }
+    public void navigate(@NotNull Project project) { }
 
     public void checkInfo(String fileName, int line, int column) {
       assertEquals(fileName, myFileName);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.searches;
 
@@ -14,7 +14,6 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -22,17 +21,24 @@ import org.jetbrains.annotations.Nullable;
  * have been searched and class inheritors for the class.
  *
  */
-public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
+public final class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
+  public static final ExtensionPointName<QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
   public static final DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
-  
-  static {
-    final QueryExecutor[] OLD_EXECUTORS = DefinitionsSearch.EP_NAME.getExtensions();
-    for (final QueryExecutor executor : OLD_EXECUTORS) {
-      INSTANCE.registerExecutor((queryParameters, consumer) -> executor.execute(queryParameters.getElement(), consumer));
-    }
- }
+  private static final @NotNull ExtensionPointName<QueryExecutor<PsiElement, PsiElement>> DEFINITIONS_SEARCH_EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
 
+  private DefinitionsScopedSearch() {
+    super(EP_NAME);
+  }
+
+  static {
+    INSTANCE.registerExecutor((queryParameters, consumer) -> {
+      for (QueryExecutor<PsiElement, PsiElement> executor : DEFINITIONS_SEARCH_EP_NAME.getExtensionList()) {
+        if (!executor.execute(queryParameters.getElement(), consumer))
+          return false;
+      }
+      return true;
+    });
+  }
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf));
@@ -50,15 +56,15 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
                                          final boolean checkDeep) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf, searchScope, checkDeep));
   }
-  
+
   public static class SearchParameters implements QueryParameters {
     private final PsiElement myElement;
     private final SearchScope myScope;
     private final boolean myCheckDeep;
     private final Project myProject;
 
-    public SearchParameters(@NotNull final PsiElement element) {
-      this(element, ReadAction.compute(element::getUseScope), true);
+    public SearchParameters(@NotNull PsiElement element) {
+      this(element, ReadAction.computeBlocking(element::getUseScope), true);
     }
 
     public SearchParameters(@NotNull PsiElement element, @NotNull SearchScope scope, final boolean checkDeep) {
@@ -68,8 +74,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       myProject = PsiUtilCore.getProjectInReadAction(myElement);
     }
 
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
@@ -77,9 +82,8 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       return myCheckDeep;
     }
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -88,9 +92,8 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       return myElement.isValid();
     }
 
-    @NotNull
-    public SearchScope getScope() {
-      return ReadAction.compute(() -> {
+    public @NotNull SearchScope getScope() {
+      return ReadAction.computeBlocking(() -> {
         PsiFile file = myElement.getContainingFile();
         return myScope.intersectWith(
           PsiSearchHelper.getInstance(myElement.getProject()).getUseScope(file != null ? file : myElement));

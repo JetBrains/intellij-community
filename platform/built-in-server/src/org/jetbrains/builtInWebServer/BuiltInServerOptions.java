@@ -1,34 +1,32 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SimpleConfigurable;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
-import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerBundle;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.io.CustomPortServerManagerBase;
 
-import java.util.Collection;
-import java.util.Collections;
-
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage("other.xml")
+  category =  SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
 )
-public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
+public final class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;
 
   @Attribute
@@ -40,29 +38,11 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   public boolean allowUnsignedRequests = false;
 
   public static BuiltInServerOptions getInstance() {
-    return ServiceManager.getService(BuiltInServerOptions.class);
+    return ApplicationManager.getApplication().getService(BuiltInServerOptions.class);
   }
 
   @Override
-  public BuiltInServerOptions get() {
-    return this;
-  }
-
-  static final class BuiltInServerDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
-    @NotNull
-    @Override
-    public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
-      if (category == DebuggerSettingsCategory.GENERAL) {
-        return Collections.singletonList(SimpleConfigurable.create("builtInServer", XmlBundle
-          .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, getInstance()));
-      }
-      return Collections.emptyList();
-    }
-  }
-
-  @Nullable
-  @Override
-  public BuiltInServerOptions getState() {
+  public @NotNull BuiltInServerOptions getState() {
     return this;
   }
 
@@ -72,7 +52,7 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   public int getEffectiveBuiltInServerPort() {
-    MyCustomPortServerManager portServerManager = CustomPortServerManager.EP_NAME.findExtension(MyCustomPortServerManager.class);
+    MyCustomPortServerManager portServerManager = CustomPortServerManager.EP_NAME.findExtensionOrFail(MyCustomPortServerManager.class);
     if (!portServerManager.isBound()) {
       return BuiltInServerManager.getInstance().getPort();
     }
@@ -81,12 +61,9 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
 
   public static final class MyCustomPortServerManager extends CustomPortServerManagerBase {
     @Override
-    public void cannotBind(Exception e, int port) {
-      BuiltInServerManagerImpl.NOTIFICATION_GROUP.getValue().createNotification("Cannot start built-in HTTP server on custom port " +
-                                                                                port + ". " +
-                                                                                "Please ensure that port is free (or check your firewall settings) and restart " +
-                                                                                ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                                                NotificationType.ERROR).notify(null);
+    public void cannotBind(@NotNull Exception e, int port) {
+      String message = BuiltInServerBundle.message("notification.content.cannot.start.built.in.http.server.on.custom.port", port, ApplicationNamesInfo.getInstance().getFullProductName());
+      new Notification(BuiltInServerManagerImpl.NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(null);
     }
 
     @Override
@@ -102,6 +79,10 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   public static void onBuiltInServerPortChanged() {
-    CustomPortServerManager.EP_NAME.findExtension(MyCustomPortServerManager.class).portChanged();
+    CustomPortServerManager.EP_NAME.forEachExtensionSafe(extension -> {
+      if (extension instanceof CustomPortServerManagerBase baseManager) {
+        baseManager.portChanged();
+      }
+    });
   }
 }

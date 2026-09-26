@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.components;
 
-import javax.swing.*;
+import javax.swing.ListModel;
 
 /**
  * @author Konstantin Bulenkov

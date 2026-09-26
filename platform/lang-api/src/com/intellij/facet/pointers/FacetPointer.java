@@ -22,12 +22,13 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public interface FacetPointer<F extends Facet> {
 
   @NotNull
@@ -36,14 +37,11 @@ public interface FacetPointer<F extends Facet> {
   @Nullable
   F getFacet();
 
-  @NotNull
-  String getModuleName();
+  @NotNull @NlsSafe String getModuleName();
 
-  @NotNull
-  String getFacetName();
+  @NotNull @NlsSafe String getFacetName();
 
-  @NotNull
-  String getId();
+  @NotNull @NonNls String getId();
 
   @Nullable
   FacetType<F, ?> getFacetType();
@@ -51,12 +49,9 @@ public interface FacetPointer<F extends Facet> {
   @Nullable
   F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
 
-  @NotNull
-  String getFacetTypeId();
+  @NotNull @NonNls String getFacetTypeId();
 
-  @NotNull
-  String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
+  @NotNull @NlsSafe String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider);
 
-  @NotNull 
-  String getModuleName(@Nullable ModifiableModuleModel moduleModel);
+  @NotNull @NlsSafe String getModuleName(@Nullable ModifiableModuleModel moduleModel);
 }

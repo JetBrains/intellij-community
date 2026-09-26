@@ -1,6 +1,6 @@
 interface Producer<T> {
 
-  <E extends Exception> void drainTo( Consumer<? super T, E> consumer, Object someParameter ) throws E;
+  <E extends Exception> @Anno String drainTo( Consumer<? super T, E> consumer, Object someParameter ) throws E;
 
 }
 

@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+
+class A {
+    private val _items = mutableSetOf<Int>()
+    val items: Set<Int>
+        get() = _items
+
+    fun test() {
+        val _items = mutableListOf<Int>()
+        this._items.forEach(::println)
+    }
+}

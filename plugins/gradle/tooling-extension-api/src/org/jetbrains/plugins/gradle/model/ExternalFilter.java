@@ -16,15 +16,11 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalFilter extends Serializable {
   @NotNull

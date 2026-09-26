@@ -1,0 +1,54 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.groovy.rt.classLoader` start
+jvm_library(
+    name = "classLoader",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.groovy.rt.classLoader",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//platform/util-rt",
+    ],
+)
+
+jvm_library(
+    name = "classLoader_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.groovy.rt.classLoader",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":classLoader",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+    ],
+)
+### auto-generated section `build intellij.groovy.rt.classLoader` end
+
+### auto-generated section `iml intellij.groovy.rt.classLoader` start
+exports_files(
+    [
+        "intellij.groovy.rt.classLoader.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.groovy.rt.classLoader` end

@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
-import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-private const val BUNDLE = "messages.Decompiler"
+private const val BUNDLE = "messages.IdeaDecompilerBundle"
 
-object IdeaDecompilerBundle : AbstractBundle(BUNDLE) {
-  @JvmStatic fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
-    return getMessage(key, *params)
-  }
+object IdeaDecompilerBundle  {
+  private val bundle = DynamicBundle(IdeaDecompilerBundle::class.java, BUNDLE)
+
+  @JvmStatic @Nls
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = bundle.getMessage(key, *params)
 }

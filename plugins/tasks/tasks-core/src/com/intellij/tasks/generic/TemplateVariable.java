@@ -1,5 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +22,14 @@ import org.jetbrains.annotations.NotNull;
 public class TemplateVariable {
   private String myName = "";
   private String myValue = "";
-  private String myDescription = "";
+  private @NlsContexts.Tooltip String myDescription = "";
   private boolean myReadOnly;
   private boolean myHidden;
   private boolean myShownOnFirstTab;
 
   public TemplateVariable(@NotNull @NonNls String name, @NotNull @NonNls String value) {
     myName = name;
-    myValue = String.valueOf(value);
+    myValue = value;
     myReadOnly = false;
     myDescription = "";
   }
@@ -34,7 +37,6 @@ public class TemplateVariable {
   /**
    * Serialization constructor
    */
-  @SuppressWarnings("unusedDesclaration")
   public TemplateVariable() {
     // empty
   }
@@ -59,23 +61,20 @@ public class TemplateVariable {
     myValue = value;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull @NlsSafe String getValue() {
     return myValue;
   }
 
   // TODO: actually not used in UI
-  @NotNull
-  public String getDescription() {
+  public @NotNull @NlsContexts.Tooltip String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@NotNull @NonNls String description) {
+  public void setDescription(@NotNull @NlsContexts.Tooltip String description) {
     myDescription = description;
   }
 
@@ -106,6 +105,7 @@ public class TemplateVariable {
     myShownOnFirstTab = shownOnFirstTab;
   }
 
+  @Override
   public TemplateVariable clone() {
     return new TemplateVariable(this);
   }
@@ -133,9 +133,8 @@ public class TemplateVariable {
     }
 
 
-    @NotNull
     @Override
-    public abstract String getValue();
+    public abstract @NotNull String getValue();
 
     @Override
     public final void setName(@NotNull String name) {

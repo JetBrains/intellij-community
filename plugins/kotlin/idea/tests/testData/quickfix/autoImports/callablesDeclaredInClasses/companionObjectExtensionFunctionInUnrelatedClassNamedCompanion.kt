@@ -1,0 +1,21 @@
+// "Import extension function 'Foo.baz'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+package p
+
+open class A {
+    companion object Foo {
+        fun foo() {}
+    }
+}
+
+open class B {
+    fun A.Foo.baz() {}
+}
+
+object BObject : B()
+
+fun usage() {
+    A.<caret>baz()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

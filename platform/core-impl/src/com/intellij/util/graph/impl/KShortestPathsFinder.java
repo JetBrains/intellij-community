@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,20 +7,31 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.Graph;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.graph.InboundSemiGraph;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
- *
- * @author nik
  */
-public class KShortestPathsFinder<Node> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.graph.impl.KShortestPathsFinder");
-  private final Graph<Node> myGraph;
+@ApiStatus.Internal
+public final class KShortestPathsFinder<Node> {
+  private static final Logger LOG = Logger.getInstance(KShortestPathsFinder.class);
+  private final InboundSemiGraph<Node> myGraph;
   private final Node myStart;
   private final Node myFinish;
   private final ProgressIndicator myProgressIndicator;
@@ -30,18 +41,25 @@ public class KShortestPathsFinder<Node> {
   private Map<Node, HeapNode<Node>> myOutRoots;
   private Map<Node,Heap<Node>> myHeaps;
 
-  public KShortestPathsFinder(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, @NotNull ProgressIndicator progressIndicator) {
+  public KShortestPathsFinder(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, @NotNull ProgressIndicator progress) {
+    this(((InboundSemiGraph<Node>)graph), start, finish, progress);
+  }
+
+  public KShortestPathsFinder(@NotNull InboundSemiGraph<Node> graph,
+                              @NotNull Node start,
+                              @NotNull Node finish,
+                              @NotNull ProgressIndicator progress) {
     myGraph = graph;
     myStart = start;
     myFinish = finish;
-    myProgressIndicator = progressIndicator;
+    myProgressIndicator = progress;
   }
 
   private void computeDistancesToTarget() {
     myNonTreeEdges = new MultiMap<>();
     mySortedNodes = new ArrayList<>();
     myNextNodes = new HashMap<>();
-    TObjectIntHashMap<Node> distances = new TObjectIntHashMap<>();
+    Object2IntMap<Node> distances = new Object2IntOpenHashMap<>();
     Deque<Node> nodes = new ArrayDeque<>();
     nodes.addLast(myFinish);
     distances.put(myFinish, 0);
@@ -49,12 +67,12 @@ public class KShortestPathsFinder<Node> {
       myProgressIndicator.checkCanceled();
       Node node = nodes.removeFirst();
       mySortedNodes.add(node);
-      int d = distances.get(node) + 1;
+      int d = distances.getInt(node) + 1;
       Iterator<Node> iterator = myGraph.getIn(node);
       while (iterator.hasNext()) {
         Node prev = iterator.next();
         if (distances.containsKey(prev)) {
-          int dPrev = distances.get(prev);
+          int dPrev = distances.getInt(prev);
           myNonTreeEdges.putValue(prev, new GraphEdge<>(prev, node, d - dPrev));
           continue;
         }
@@ -81,7 +99,6 @@ public class KShortestPathsFinder<Node> {
           root = heapNode;
         }
       }
-      LOG.assertTrue(root != null);
       heapNodes.remove(root);
       myOutRoots.put(node, root);
       if (!heapNodes.isEmpty()) {
@@ -161,7 +178,7 @@ public class KShortestPathsFinder<Node> {
 
       final Heap<Node> heap = myHeaps.get(myStart);
       if (heap != null) {
-        queue.add(new Sidetracks<>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
+        queue.add(new Sidetracks<>(0, FList.singleton(heap.getRoot())));
         for (int i = 2; i <= k; i++) {
           if (queue.isEmpty()) break;
           myProgressIndicator.checkCanceled();
@@ -219,7 +236,7 @@ public class KShortestPathsFinder<Node> {
     return result;
   }
 
-  private static class Sidetracks<Node> implements Comparable<Sidetracks> {
+  private static final class Sidetracks<Node> implements Comparable<Sidetracks> {
     private final int myLength;
     private final FList<HeapNode<Node>> myEdges;
 
@@ -238,7 +255,7 @@ public class KShortestPathsFinder<Node> {
     private final int mySize;
     private final HeapNode<Node> myRoot;
 
-    public Heap(HeapNode<Node> root) {
+    Heap(HeapNode<Node> root) {
       myRoot = root;
       mySize = 1;
     }
@@ -300,7 +317,7 @@ public class KShortestPathsFinder<Node> {
       myChildren = new HeapNode[3];
     }
 
-    public HeapNode(HeapNode<Node> node) {
+    HeapNode(HeapNode<Node> node) {
       myEdge = node.myEdge;
       myChildren = node.myChildren.clone();
     }

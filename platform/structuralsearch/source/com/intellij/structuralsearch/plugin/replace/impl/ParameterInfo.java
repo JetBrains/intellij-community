@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-public final class ParameterInfo {
-  private final String name;
+public final class ParameterInfo extends UserDataHolderBase {
+  private final @NotNull String name;
   private final int startIndex;
   private final boolean replacementVariable;
   private boolean argumentContext;
-  private boolean methodParameterContext;
   private boolean statementContext;
   private int afterDelimiterPos;
   private boolean hasCommaBefore;
@@ -16,13 +17,13 @@ public final class ParameterInfo {
   private boolean hasCommaAfter;
   private PsiElement myElement;
 
-  public ParameterInfo(String name, int startIndex, boolean replacementVariable) {
+  public ParameterInfo(@NotNull String name, int startIndex, boolean replacementVariable) {
     this.name = name;
     this.startIndex = startIndex;
     this.replacementVariable = replacementVariable;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -36,14 +37,6 @@ public final class ParameterInfo {
 
   public void setArgumentContext(boolean argumentContext) {
     this.argumentContext = argumentContext;
-  }
-
-  public boolean isMethodParameterContext() {
-    return methodParameterContext;
-  }
-
-  public void setMethodParameterContext(boolean methodParameterContext) {
-    this.methodParameterContext = methodParameterContext;
   }
 
   public boolean isStatementContext() {
@@ -94,7 +87,7 @@ public final class ParameterInfo {
     return myElement;
   }
 
-  public void setElement(PsiElement element) {
+  public void setElement(@NotNull PsiElement element) {
     myElement = element;
   }
 }

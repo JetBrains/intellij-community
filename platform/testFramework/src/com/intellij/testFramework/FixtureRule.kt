@@ -1,14 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.idea.IdeaTestApplication
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runUndoTransparentWriteAction
-import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -17,105 +24,160 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
-import com.intellij.util.SmartList
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.containers.forEachGuaranteed
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.sanitizeFileName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
+import java.lang.annotation.Inherited
 import java.nio.file.Files
-import java.util.concurrent.atomic.AtomicBoolean
+import java.nio.file.Path
+import java.util.function.Consumer
 
 private var sharedModule: Module? = null
 
-open class ApplicationRule : ExternalResource() {
+open class ApplicationRule : TestRule {
   companion object {
     init {
       Logger.setFactory(TestLoggerFactory::class.java)
     }
   }
 
-  override public final fun before() {
-    IdeaTestApplication.getInstance()
-    TestRunnerUtil.replaceIdeEventQueueSafely()
-    (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
+  final override fun apply(base: Statement, description: Description): Statement = object : Statement() {
+    override fun evaluate() {
+      before(description)
+      try {
+        base.evaluate()
+      }
+      finally {
+        after()
+      }
+    }
+  }
+
+  protected open fun before(description: Description) {
+    TestApplicationManager.getInstance()
+  }
+
+  protected open fun after() { }
+}
+
+/**
+ * A JUnit4 rule which runs tests inside this class with the corresponding [ApplicationManagerEx.isInStressTest] flag,
+ * using [ApplicationManagerEx.runInStressTest] method.
+ * Stress tests have special words in their name, see [TestFrameworkUtil.isStressTest] for details.
+ *        E.g. tests `foo()`,`fooStress()` are run with `isStressTest=false`,`isStressTest=true` correspondingly.
+ * Usage example:
+ * ```
+ * class MyTest {
+ *   // run stress tests, e.g. `testStress` or 'myPerforemanceTest` with `inStressTest=true`, all other tests with `inStressTest=false`
+ *   @Rule stressTestRule = new StressTestRule();
+ * }
+ * ```
+ * For JUnit5, use the `com.intellij.testFramework.junit5.StressTestApplication` annotation instead.
+ *
+ * @param forceIsStressTest if specified, all tests are run with this flag regardless of their name.
+ *        E.g.:
+ *
+ *        class MyTest {
+ *          // run all tests with `inStressTest=true`
+ *          @Rule stressTestRule = new StressTestRule(true);
+ *        }
+ */
+class StressTestRule(val forceIsStressTest:Boolean?=null) : TestRule {
+  override fun apply(
+    base: Statement,
+    description: Description,
+  ): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        val stressTest = forceIsStressTest ?: TestFrameworkUtil.isStressTest(description.methodName, description.testClass)
+        ApplicationManagerEx.runInStressTest<RuntimeException>(stressTest) { base.evaluate() }
+      }
+    }
   }
 }
 
 /**
- * Project created on request, so, could be used as a bare (only application).
+ * Rule should be used only and only if you open projects in a custom way in test cases and cannot use [ProjectRule].
  */
-class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
-  companion object {
-    private var sharedProject: ProjectEx? = null
-    private val projectOpened = AtomicBoolean()
-
-    private fun createLightProject(): ProjectEx {
-      (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
-
-      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-      val projectPath = projectFile.systemIndependentPath
-
-      val buffer = ByteArrayOutputStream()
-      Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
-
-      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
-      PlatformTestUtil.registerProjectCleanup {
-        try {
-          disposeProject()
-        }
-        finally {
-          Files.deleteIfExists(projectFile)
-        }
+class ProjectTrackingRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement = object : Statement() {
+    override fun evaluate() {
+      (ProjectManager.getInstance() as TestProjectManager).startTracking().use {
+        base.evaluate()
       }
-
-      // TODO uncomment and figure out where to put this statement
-//      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
-      return project
-    }
-
-    private fun disposeProject() {
-      val project = sharedProject ?: return
-      sharedProject = null
-      sharedModule = null
-      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, true)
-      // TODO uncomment and figure out where to put this statement
-//      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).assertPointersAreDisposed()
     }
   }
+}
 
-  override public fun after() {
-    if (projectOpened.compareAndSet(true, false)) {
-      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false) } }
-    }
+private class ProjectObject(
+  private val runPostStartUpActivities: Boolean = false,
+  private val preloadServices: Boolean = false,
+  private val projectDescriptor: LightProjectDescriptor? = null,
+) {
+  private var sharedProject: ProjectEx? = null
+  var testClassName: String? = null
+  private var virtualFilePointerTracker: VirtualFilePointerTracker? = null
+  private var libraryTracker: LibraryTableTracker? = null
+  var projectTracker: AccessToken? = null
+
+  fun createProject(): ProjectEx {
+    val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
+    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
+      .copy(preloadServices = preloadServices)
+      .copy(projectName = testClassName)
+    val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
+    virtualFilePointerTracker = VirtualFilePointerTracker()
+    libraryTracker = LibraryTableTracker()
+    return project
+  }
+
+  fun catchAndRethrow(action: () -> Unit) {
+    runAll(
+      action,
+      { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } },
+      { projectTracker?.finish() },
+      { virtualFilePointerTracker?.assertPointersAreDisposed() },
+      { libraryTracker?.assertDisposed() },
+      {
+        sharedProject = null
+        sharedModule = null
+      },
+    )
   }
 
   val projectIfOpened: ProjectEx?
-    get() = if (projectOpened.get()) sharedProject else null
+    get() = sharedProject
 
   val project: ProjectEx
     get() {
       var result = sharedProject
       if (result == null) {
-        synchronized(IdeaTestApplication.getInstance()) {
+        synchronized(this) {
           result = sharedProject
           if (result == null) {
-            result = createLightProject()
+            result = createProject()
             sharedProject = result
           }
         }
-      }
-
-      if (projectOpened.compareAndSet(false, true)) {
-        runInEdtAndWait { ProjectManagerEx.getInstanceEx().openTestProject(project) }
       }
       return result!!
     }
@@ -125,7 +187,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
-          projectDescriptor.setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+          (projectDescriptor ?: LightProjectDescriptor()).setUpProject(project, object : LightProjectDescriptor.SetupHandler {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
@@ -135,6 +197,39 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       }
       return result!!
     }
+}
+
+class ProjectRule(
+  private val runPostStartUpActivities: Boolean = false,
+  preloadServices: Boolean = false,
+  projectDescriptor: LightProjectDescriptor? = null,
+) : ApplicationRule() {
+  companion object {
+    @JvmStatic
+    fun withRunningStartUpActivities(): ProjectRule = ProjectRule(runPostStartUpActivities = true)
+  }
+
+  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
+
+  override fun before(description: Description) {
+    super.before(description)
+
+    projectObject.testClassName = sanitizeFileName(description.className.substringAfterLast('.'))
+    projectObject.projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
+  }
+
+  override fun after() {
+    projectObject.catchAndRethrow {
+      super.after()
+    }
+  }
+
+  val projectIfOpened: ProjectEx?
+    get() = projectObject.projectIfOpened
+  val project: ProjectEx
+    get() = projectObject.project
+  val module: Module
+    get() = projectObject.module
 }
 
 /**
@@ -157,18 +252,18 @@ class RuleChain(vararg val rules: TestRule) : TestRule {
   }
 }
 
-private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>) = getAnnotation(annotationClass) ?: testClass?.getAnnotation(annotationClass)
+private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass: Class<T>): T? =
+  getAnnotation(annotationClass) ?: testClass?.getAnnotation(annotationClass)
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-annotation class RunsInEdt
+@Inherited
+annotation class RunsInEdt(val writeIntent: Boolean = true)
 
 class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(RunsInEdt::class.java) == null) {
-      base
-    }
-    else {
-      statement { runInEdtAndWait { base.evaluate() } }
+    val annotation = description.getOwnOrClassAnnotation(RunsInEdt::class.java)
+    return if (annotation == null) base else statement {
+      runInEdtAndWait(annotation.writeIntent) { base.evaluate() }
     }
   }
 }
@@ -184,26 +279,25 @@ inline fun statement(crossinline runnable: () -> Unit): Statement = object : Sta
 }
 
 /**
- * Do not optimise test load speed.
- * @see IProjectStore.setOptimiseTestLoadSpeed
+ * Do not optimize test load speed.
+ * @see IProjectStore.isOptimiseTestLoadSpeed
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 annotation class RunsInActiveStoreMode
 
 class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
-      base
-    }
-    else {
-      statement { projectRule.project.runInLoadComponentStateMode { base.evaluate() } }
+  override fun apply(base: Statement, description: Description): Statement = when {
+    description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null -> base
+    else -> statement {
+      projectRule.project.runInLoadComponentStateMode { base.evaluate() }
     }
   }
 }
 
 /**
- * In test mode component state is not loaded. Project or module store will load component state if project/module file exists.
- * So must be a strong reason to explicitly use this method.
+ * In a test mode component state is not loaded.
+ * Project or module store will load the component state if a project/module file exists.
+ * So there must be a strong reason to explicitly use this method.
  */
 inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   val store = stateStore
@@ -221,25 +315,112 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
-
-fun Project.use(task: (Project) -> Unit) {
-  val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+/**
+ * Closes a project after [action].
+ */
+inline fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
-    runInEdtAndWait { projectManager.openTestProject(this) }
-    task(this)
+    return action(this)
   }
   finally {
-    runInEdtAndWait { projectManager.forceCloseProject(this, true) }
+    closeProject(save)
   }
 }
 
+/**
+ * Closes a project asynchronously after [action].
+ */
+suspend fun <T> Project.useProjectAsync(save: Boolean = false, action: suspend (Project) -> T): T {
+  try {
+    return action(this)
+  }
+  finally {
+    closeProjectAsync(save)
+  }
+}
+
+/**
+ * Closes a project asynchronously only if [action] is failed.
+ */
+suspend fun Project.withProjectAsync(action: suspend (Project) -> Unit): Project {
+  try {
+    action(this)
+  }
+  catch (e: Throwable) {
+    try {
+      closeProjectAsync()
+    }
+    catch (closeException: Throwable) {
+      e.addSuppressed(closeException)
+    }
+    throw e
+  }
+  return this
+}
+
+suspend fun <R> closeOpenedProjectsIfFailAsync(action: suspend () -> R): R = closeOpenedProjectsIfFailImpl({ closeProjectAsync() }, { action() })
+
+fun <R> closeOpenedProjectsIfFail(action: () -> R): R = closeOpenedProjectsIfFailImpl({ closeProject() }, { action() })
+
+private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() -> Unit, action: () -> R): R {
+  val projectManager = ProjectManager.getInstance()
+  val oldOpenedProjects = projectManager.openProjects.toHashSet()
+  try {
+    return action()
+  }
+  catch (ex: Throwable) {
+    for (project in projectManager.openProjects) {
+      if (project !in oldOpenedProjects) {
+        try {
+          project.closeProject()
+        }
+        catch (closeException: Throwable) {
+          ex.addSuppressed(closeException)
+        }
+      }
+    }
+    throw ex
+  }
+}
+
+@PublishedApi
+internal fun Project.closeProject(save: Boolean = false) {
+  invokeAndWaitIfNeeded {
+    if (save) {
+      saveWorkspaceModel()
+    }
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project = this, save)
+  }
+}
+
+suspend fun Project.closeProjectAsync(save: Boolean = false) {
+  withContext(NonCancellable) {
+    if (save) {
+      saveWorkspaceModel()
+    }
+    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project = this@closeProjectAsync, save)
+  }
+}
+
+suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {
+  return closeOpenedProjectsIfFailAsync {
+    ProjectUtil.openOrImportAsync(path)!!
+  }.withProjectAsync { project ->
+    for (activity in activities) {
+      activity.execute(project)
+    }
+  }
+}
+suspend fun openProjectAsync(virtualFile: VirtualFile, vararg activities: ProjectActivity): Project = openProjectAsync(virtualFile.toNioPath(), *activities)
+
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
-    val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
-    projectManager?.openProjects?.forEachGuaranteed {
+    val projectManager = ProjectManagerEx.getInstanceExIfCreated() ?: return
+    projectManager.openProjects.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
-        runInEdtAndWait { projectManager.forceCloseProject(it, true) }
+        ApplicationManager.getApplication().invokeAndWait {
+          projectManager.forceCloseProject(it)
+        }
       }
     }
   }
@@ -247,77 +428,203 @@ class DisposeNonLightProjectsRule : ExternalResource() {
 
 class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
   override fun after() {
-    projectRule.projectIfOpened?.let {
-      val moduleManager = ModuleManager.getInstance(it)
-      runInEdtAndWait {
-        moduleManager.modules.forEachGuaranteed {
-          if (!it.isDisposed && it !== sharedModule) {
-            moduleManager.disposeModule(it)
-          }
+    val project = projectRule.projectIfOpened ?: return
+    val moduleManager = ModuleManager.getInstance(project)
+    ApplicationManager.getApplication().invokeAndWait {
+      moduleManager.modules.forEachGuaranteed {
+        if (!it.isDisposed && it !== sharedModule) {
+          moduleManager.disposeModule(it)
         }
       }
     }
   }
 }
 
-/**
- * Only and only if "before" logic in case of exception doesn't require "after" logic - must be no side effects if "before" finished abnormally.
- * So, should be one task per rule.
- */
-class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override fun apply(base: Statement, description: Description): Statement = statement {
-    val after = before()
-    try {
-      base.evaluate()
-    }
-    finally {
-      after()
+fun createProjectAndUseInLoadComponentStateMode(
+  tempDirManager: TemporaryDirectory,
+  directoryBased: Boolean = false,
+  useDefaultProjectSettings: Boolean = true,
+  task: (Project) -> Unit,
+) {
+  val file = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
+  val options = createTestOpenProjectOptions()
+  val project = ProjectManagerEx.getInstanceEx().openProject(file, options.copy(
+    isNewProject = true,
+    useDefaultProjectAsTemplate = useDefaultProjectSettings,
+    beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
+  ))!!
+  project.useProject {
+    project.runInLoadComponentStateMode {
+      task(project)
     }
   }
 }
 
-fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
+suspend fun loadAndUseProjectInLoadComponentStateMode(
+  tempDirManager: TemporaryDirectory,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  task: suspend (Project) -> Unit,
+) {
+  createOrLoadProject(tempDirManager, projectCreator, directoryBased = false, loadComponentState = true, task = task)
 }
 
-fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
+fun refreshProjectConfigDir(project: Project) {
+  VirtualFileManager.getInstance().findFileByNioPath(project.stateStore.directoryStorePath!!)!!.refresh(false, true)
 }
 
-fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: (Project) -> Unit) {
-  runInEdtAndWait {
-    val filePath = if (projectCreator == null) {
-      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
-    }
-    else {
-      runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
-    }
+fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: () -> T): T =
+  CommandProcessor.getInstance().withUndoTransparentAction().use {
+    @Suppress("ForbiddenInSuspectContextMethod")
+    ApplicationManager.getApplication().runWriteAction(Computable {
+      val result = runnable()
+      val documentReference = DocumentReferenceManager.getInstance().create(file)
+      val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+      undoManager.nonundoableActionPerformed(documentReference, false)
+      result
+    })
+  }
 
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+suspend fun createOrLoadProject(
+  tempDirManager: TemporaryDirectory,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  directoryBased: Boolean = true,
+  loadComponentState: Boolean = false,
+  useDefaultProjectSettings: Boolean = true,
+  runPostStartUpActivities: Boolean = false,
+  task: suspend (Project) -> Unit,
+) {
+  var options = createTestOpenProjectOptions(runPostStartUpActivities).copy(
+    useDefaultProjectAsTemplate = useDefaultProjectSettings,
+    isNewProject = projectCreator == null,
+  )
+  if (loadComponentState) {
+    options = options.copy(beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
+  }
+  createOrLoadProject(tempDirManager, options, projectCreator, directoryBased, task = task)
+}
+
+suspend fun createOrLoadProject(
+  tempDirManager: TemporaryDirectory,
+  options: OpenProjectTask,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  directoryBased: Boolean = true,
+  loadComponentState: Boolean = false,
+  task: suspend (Project) -> Unit,
+) {
+  val projectPath = if (projectCreator == null) {
+    tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = false)
+  }
+  else {
+    val dir = tempDirManager.createVirtualDir()
+    withContext(Dispatchers.EDT) {
+      runNonUndoableWriteAction(dir) {
+        projectCreator(dir)
+      }
+    }
+  }
+  createOrLoadProject(projectPath, loadComponentState, options, task)
+}
+
+private fun Project.saveWorkspaceModel() {
+  val workspaceModelCache = WorkspaceModelCache.getInstance(this)
+  requireNotNull(workspaceModelCache) {
+    "WorkspaceModelCache should be enabled explicitly if you need to save the project in tests."
+  }
+  workspaceModelCache.saveCacheNow()
+}
+
+private suspend fun createOrLoadProject(projectPath: Path, loadComponentState: Boolean, options: OpenProjectTask, task: suspend (Project) -> Unit) {
+  ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, options)!!.useProjectAsync { project ->
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
-        project.use(task)
+        task(project)
       }
     }
     else {
-      project.use(task)
+      task(project)
     }
   }
 }
 
-fun ComponentManager.saveStore() {
-  stateStore.save(SmartList(), true)
+suspend fun loadProject(projectPath: Path, beforeInit: (Project) -> Unit = {}, task: suspend (Project) -> Unit) {
+  var options = createTestOpenProjectOptions()
+  options = options.copy(beforeInitTasks = options.beforeInitTasks +  {
+      it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+      beforeInit(it)
+    }
+  )
+  createOrLoadProject(projectPath, loadComponentState = true, options, task)
 }
 
-class DisposableRule : ExternalResource() {
+/**
+ * Copy files from [projectPaths] directories to a temp directory, load a project from it and pass it to [checkProject].
+ */
+suspend fun loadProjectAndCheckResults(
+  projectPaths: List<Path>,
+  tempDirectory: TemporaryDirectory,
+  beforeOpen: Consumer<Project>? = null,
+  checkProject: suspend (Project) -> Unit,
+) {
+  val projectCreator = fun(targetDir: VirtualFile): Path {
+    val projectDir = targetDir.toNioPath()
+    var projectFileName: String? = null
+    for (projectPath in projectPaths) {
+      val dir = if (Files.isDirectory(projectPath)) {
+        projectPath
+      }
+      else {
+        projectFileName = projectPath.fileName.toString()
+        projectPath.parent
+      }
+      FileUtil.copyDir(dir.toFile(), projectDir.toFile())
+    }
+    VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
+    return if (projectFileName == null) projectDir else projectDir.resolve(projectFileName)
+  }
+  val directoryBased = projectPaths.all { Files.isDirectory(it) }
+  var options = createTestOpenProjectOptions(beforeOpen = beforeOpen)
+  options = options.copy(
+    useDefaultProjectAsTemplate = false,
+    isNewProject = false,
+    beforeInitTasks = options.beforeInitTasks + { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) }
+  )
+  createOrLoadProject(tempDirectory, options, projectCreator, directoryBased, loadComponentState = true, task = checkProject)
+}
+
+open class DisposableRule : ExternalResource() {
   private var _disposable = lazy { Disposer.newDisposable() }
 
   val disposable: Disposable
     get() = _disposable.value
 
-  override fun after() {
+
+  @Suppress("ObjectLiteralToLambda")
+  inline fun register(crossinline disposable: () -> Unit) {
+    Disposer.register(this.disposable, object : Disposable {
+      override fun dispose() {
+        disposable()
+      }
+    })
+  }
+
+  public override fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
+      _disposable = lazy { Disposer.newDisposable() }
+    }
+  }
+}
+
+class SystemPropertyRule(private val name: String, private val value: String) : ExternalResource() {
+  override fun apply(base: Statement, description: Description): Statement = object: Statement() {
+    override fun evaluate() {
+      before()
+      try {
+        PlatformTestUtil.withSystemProperty<RuntimeException>(name, value) { base.evaluate() }
+      }
+      finally {
+        after()
+      }
     }
   }
 }

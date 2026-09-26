@@ -1,0 +1,171 @@
+<root>
+  <item
+    name='javax.lang.model.element.AnnotationMirror java.util.Map&lt;? extends javax.lang.model.element.ExecutableElement,? extends javax.lang.model.element.AnnotationValue&gt; getElementValues()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.AnnotationMirror javax.lang.model.type.DeclaredType getAnnotationType()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.Element A getAnnotation(java.lang.Class&lt;A&gt;)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.element.Element A[] getAnnotationsByType(java.lang.Class&lt;A&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='javax.lang.model.element.Element A[] getAnnotationsByType(java.lang.Class&lt;A&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.Element R accept(javax.lang.model.element.ElementVisitor&lt;R,P&gt;, P) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.Element java.util.List&lt;? extends javax.lang.model.element.AnnotationMirror&gt; getAnnotationMirrors()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.Element java.util.List&lt;? extends javax.lang.model.element.Element&gt; getEnclosedElements()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.Element java.util.Set&lt;javax.lang.model.element.Modifier&gt; getModifiers()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='javax.lang.model.element.Element javax.lang.model.element.ElementKind getKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.Element javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.ExecutableElement java.util.List&lt;? extends javax.lang.model.element.TypeParameterElement&gt; getTypeParameters()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
+    name='javax.lang.model.element.ExecutableElement java.util.List&lt;? extends javax.lang.model.element.VariableElement&gt; getParameters()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement java.util.List&lt;? extends javax.lang.model.type.TypeMirror&gt; getThrownTypes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement javax.lang.model.element.AnnotationValue getDefaultValue()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement javax.lang.model.element.Element getEnclosingElement()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement javax.lang.model.type.TypeMirror getReceiverType()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.ExecutableElement javax.lang.model.type.TypeMirror getReturnType()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.ModuleElement java.util.List&lt;? extends javax.lang.model.element.Element&gt; getEnclosedElements()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
+    name='javax.lang.model.element.ModuleElement java.util.List&lt;? extends javax.lang.model.element.ModuleElement.Directive&gt; getDirectives()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.ModuleElement javax.lang.model.element.Element getEnclosingElement()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.element.ModuleElement javax.lang.model.element.Name getQualifiedName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.ModuleElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.ModuleElement.Directive R accept(javax.lang.model.element.ModuleElement.DirectiveVisitor&lt;R,P&gt;, P) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.ModuleElement.Directive javax.lang.model.element.ModuleElement.DirectiveKind getKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.PackageElement java.util.List&lt;? extends javax.lang.model.element.Element&gt; getEnclosedElements()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.PackageElement javax.lang.model.element.Element getEnclosingElement()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.element.PackageElement javax.lang.model.element.Name getQualifiedName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.PackageElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='javax.lang.model.element.Parameterizable java.util.List&lt;? extends javax.lang.model.element.TypeParameterElement&gt; getTypeParameters()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.QualifiedNameable javax.lang.model.element.Name getQualifiedName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.RecordComponentElement javax.lang.model.element.Element getEnclosingElement()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.RecordComponentElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement java.util.List&lt;? extends javax.lang.model.element.Element&gt; getEnclosedElements()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
+    name='javax.lang.model.element.TypeElement java.util.List&lt;? extends javax.lang.model.element.RecordComponentElement&gt; getRecordComponents()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
+    name='javax.lang.model.element.TypeElement java.util.List&lt;? extends javax.lang.model.element.TypeParameterElement&gt; getTypeParameters()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement java.util.List&lt;? extends javax.lang.model.type.TypeMirror&gt; getInterfaces()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
+    name='javax.lang.model.element.TypeElement java.util.List&lt;? extends javax.lang.model.type.TypeMirror&gt; getPermittedSubclasses()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement javax.lang.model.element.Name getQualifiedName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement javax.lang.model.element.NestingKind getNestingKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.TypeElement javax.lang.model.type.TypeMirror getSuperclass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.TypeParameterElement java.util.List&lt;? extends javax.lang.model.type.TypeMirror&gt; getBounds()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='javax.lang.model.element.TypeParameterElement javax.lang.model.element.Element getGenericElement()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.lang.model.element.VariableElement java.lang.Object getConstantValue()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='javax.lang.model.element.VariableElement javax.lang.model.element.Name getSimpleName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

@@ -22,10 +22,16 @@ public interface RegExpBoundary extends RegExpAtom {
      * Boundary type enumeration.
      */
     enum Type  {
-        LINE_START, LINE_END,
-        WORD, UNICODE_EXTENDED_GRAPHEME, NON_WORD,
-        BEGIN, END, END_NO_LINE_TERM,
-        PREVIOUS_MATCH
+      /** ^     */ LINE_START,
+      /** $     */ LINE_END,
+      /** \b    */ WORD,
+      /** \b{g} */ UNICODE_EXTENDED_GRAPHEME,
+      /** \B    */ NON_WORD,
+      /** \A    */ BEGIN,
+      /** \z    */ END,
+      /** \Z    */ END_NO_LINE_TERM,
+      /** \G    */ PREVIOUS_MATCH,
+      /** \K    */ RESET_MATCH,
     }
 
     @NotNull

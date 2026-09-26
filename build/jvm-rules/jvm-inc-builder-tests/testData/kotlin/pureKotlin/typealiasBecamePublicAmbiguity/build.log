@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasBecamePublicAmbiguity-a.kotlin_module
+  lib2/AliasKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasBecamePublicAmbiguity/a/lib2/alias.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasBecamePublicAmbiguity-a.kotlin_module
+  app/UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasBecamePublicAmbiguity/a/app/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

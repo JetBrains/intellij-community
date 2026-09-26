@@ -1,0 +1,120 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_andel",
+    module_name = "fleet.andel",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/bifurcan:wasmjs_module_lib",
+        "@community//fleet/openmap:wasmjs_module_lib",
+    ],
+    deps = [
+        "@community//fleet/fastutil:wasmjs_module_lib",
+        "@community//fleet/util/codepoints:wasmjs_module_lib",
+        "@community//fleet/util/core:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
+
+### auto-generated section `dev fleet.andel` start
+content_module_jar(module = ":andel")
+### auto-generated section `dev fleet.andel` end
+
+### auto-generated section `build fleet.andel` start
+create_kotlinc_options(
+    name = "custom_andel",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
+)
+
+jvm_library(
+    name = "andel",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_andel",
+    module_name = "fleet.andel",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/bifurcan",
+        "//fleet/openmap",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/jetbrains/annotations",
+        "//fleet/util/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//fleet/util/codepoints",
+        "//fleet/bifurcan",
+        "//fleet/fastutil",
+        "//fleet/openmap",
+    ],
+)
+
+jvm_library(
+    name = "andel_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_andel",
+    module_name = "fleet.andel",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/bifurcan",
+        "//fleet/bifurcan:bifurcan_test_lib",
+        "//fleet/openmap",
+        "//fleet/openmap:openmap_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":andel",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//fleet/util/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//fleet/util/codepoints:codepoints_test_lib",
+        "//fleet/bifurcan:bifurcan_test_lib",
+        "//fleet/fastutil:fastutil_test_lib",
+        "//fleet/openmap:openmap_test_lib",
+    ],
+)
+### auto-generated section `build fleet.andel` end
+
+### auto-generated section `iml fleet.andel` start
+exports_files(
+    [
+        "fleet.andel.iml",
+        "resources/fleet.andel.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.andel` end

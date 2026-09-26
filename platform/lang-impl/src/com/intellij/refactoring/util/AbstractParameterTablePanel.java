@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.project.Project;
@@ -24,17 +11,26 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.DefaultCellEditor;
+import javax.swing.InputMap;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
@@ -82,13 +78,15 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.setCellSelectionEnabled(true);
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(250, myTable.getRowHeight() * 5));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(250, -1));
+    myTable.setVisibleRowCount(5);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
-    @NonNls final InputMap inputMap = myTable.getInputMap();
+    final @NonNls InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    @NonNls final ActionMap actionMap = myTable.getActionMap();
+    final @NonNls ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -111,6 +109,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
 
     // make ESCAPE work when the table has focus
     actionMap.put("doCancel", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null) {
@@ -132,34 +131,34 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
 
   public void init(P[] parameterData) {
     myParameterData = parameterData;
-    myTableModel.setItems(Arrays.asList(parameterData));
+    myTableModel.setItems(new ArrayList<>(Arrays.asList(parameterData)));
     if (parameterData.length > 1) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
   }
 
 
+  @Override
   public void setEnabled(boolean enabled) {
     myTable.setEnabled(enabled);
     super.setEnabled(enabled);
   }
 
   public static class NameColumnInfo extends ColumnInfo<AbstractVariableData, String> {
-    private final Predicate<String> myNameValidator;
+    private final Predicate<? super String> myNameValidator;
 
-    public NameColumnInfo(Predicate<String> nameValidator) {
-      super("Name");
+    public NameColumnInfo(Predicate<? super String> nameValidator) {
+      super(CommonBundle.message("title.name"));
       myNameValidator = nameValidator;
     }
 
     public NameColumnInfo(Language lang, Project project) {
-      super("Name");
-      myNameValidator = (paramName) -> LanguageNamesValidation.INSTANCE.forLanguage(lang).isIdentifier(paramName, project);
+      super(CommonBundle.message("title.name"));
+      myNameValidator = (paramName) -> LanguageNamesValidation.isIdentifier(lang, paramName, project);
     }
 
-    @Nullable
     @Override
-    public String valueOf(AbstractVariableData data) {
+    public @Nullable String valueOf(AbstractVariableData data) {
       return data.getName();
     }
 
@@ -181,15 +180,13 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
       super("");
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(AbstractVariableData data) {
+    public @Nullable TableCellRenderer getRenderer(AbstractVariableData data) {
       return new BooleanTableCellRenderer();
     }
 
-    @Nullable
     @Override
-    public Boolean valueOf(AbstractVariableData data) {
+    public @Nullable Boolean valueOf(AbstractVariableData data) {
       return data.isPassAsParameter();
     }
 
@@ -210,7 +207,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
   }
 
   private class MyTableModel extends ListTableModel<AbstractVariableData> implements EditableModel {
-    public MyTableModel(@NotNull ColumnInfo... columnInfos) {
+    MyTableModel(ColumnInfo @NotNull ... columnInfos) {
       super(columnInfos);
     }
 
@@ -232,7 +229,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
       final P currentItem = getVariableData()[row];
       AbstractParameterTablePanel.this.exchangeRows(row, targetRow, currentItem);
 
-      myTableModel.fireTableRowsUpdated(Math.min(targetRow, row), Math.max(targetRow, row));
+      super.exchangeRows(row, targetRow);
       myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
       updateSignature();
     }

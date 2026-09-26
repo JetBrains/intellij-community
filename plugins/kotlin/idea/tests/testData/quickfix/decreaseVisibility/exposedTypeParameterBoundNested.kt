@@ -1,0 +1,16 @@
+// "Make 'PrivateInFileClass' private" "false"
+// ACTION: Create test
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Import members from 'PrivateInFileClass'
+// ACTION: Inline type parameter
+// ACTION: Introduce import alias
+// ACTION: Make 'PrivateInnerClass' 'open'
+// ACTION: Make 'PrivateInnerClass' public
+// ACTION: Remove final upper bound
+// ERROR: 'private-in-file' generic exposes its 'private-in-class' parameter bound type PrivateInnerClass
+// K2_AFTER_ERROR: EXPOSED_TYPE_PARAMETER_BOUND
+// K2_ERROR: EXPOSED_TYPE_PARAMETER_BOUND
+
+private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass> {
+    private class PrivateInnerClass
+}

@@ -1,0 +1,82 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.rpc.backend` start
+content_module_jar(module = ":rpc.backend")
+### auto-generated section `dev intellij.platform.rpc.backend` end
+
+### auto-generated section `build intellij.platform.rpc.backend` start
+jvm_library(
+    name = "rpc.backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rpc.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/kernel/rpc",
+        "//fleet/rpc.server",
+    ],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//platform/util",
+        "//platform/extensions",
+        "//platform/kernel/rpc",
+        "//fleet/rpc.server",
+        "//platform/core-api:core",
+        "//platform/kernel/rpc.lite",
+    ],
+)
+
+jvm_library(
+    name = "rpc.backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.rpc.backend",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/kernel/rpc",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//fleet/rpc.server",
+        "//fleet/rpc.server:rpc.server_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":rpc.backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//fleet/rpc.server:rpc.server_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.rpc.backend` end
+
+### auto-generated section `iml intellij.platform.rpc.backend` start
+exports_files(
+    [
+        "intellij.platform.rpc.backend.iml",
+        "resources/intellij.platform.rpc.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.rpc.backend` end

@@ -1,50 +1,97 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.application.PathManager
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
-import java.io.File
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.intellij.build.images.sync.findProjectHomePath
+import org.jetbrains.intellij.build.images.sync.jpsProject
+import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Path
 
-fun main(args: Array<String>) {
-  val homePath = PathManager.getHomePath()
-  val home = File(homePath)
-  val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
-
-  val util = project.modules.find { it.name == "intellij.platform.util" } ?: throw IllegalStateException("Can't load module 'util'")
-
-  val generator = IconsClassGenerator(home, util)
-  project.modules.forEach { module ->
-    generator.processModule(module)
+fun main() {
+  try {
+    generateIconClasses()
   }
-  generator.printStats()
-
-  val optimizer = ImageSizeOptimizer(home)
-  project.modules.forEach { module ->
-    optimizer.optimizeIcons(module)
+  finally {
+    shutdownAppScheduledExecutorService()
   }
-  optimizer.printStats()
+}
+
+data class IntellijIconClassGeneratorModuleConfig(
+  /**
+   * The package name for icon class.
+   */
+  val packageName: String? = null,
+  /**
+   * The top-level icon class name.
+   */
+  val className: String? = null,
+  /**
+   * The directory where icons are located relative to resource root.
+   */
+  val iconDirectory: String? = null,
+  /**
+   * Exclude specified packages from icon processing
+   */
+  val excludePackages: List<String> = emptyList(),
+  /**
+   * Enables generation of icon keys for Jewel.
+   */
+  val generateJewelIcons: Boolean = false,
+  /**
+   * Enables generation of a new-API Kotlin icon class. The class uses `imageIcon`.
+   */
+  val generateNewApiKotlinIcons: Boolean = false
+)
+
+abstract class IconClasses {
+  open val homePath: String
+    get() = findProjectHomePath()
+
+  open val modules: List<JpsModule>
+    get() = jpsProject(homePath).modules
+
+  internal open fun generator(home: Path, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
+
+  open fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? = null
+}
+
+internal fun generateIconClasses(config: IconClasses = IntellijIconClassGeneratorConfig()) {
+  val home = Path.of(config.homePath)
+
+  val modules = config.modules
+    // Toolbox icons are not based on IJ Platform
+    .filter { !it.name.startsWith("toolbox.") }
+
+  // TODO: update copyright into svg icons
+
+  if (System.getenv("OPTIMIZE_ICONS") != "false") {
+    val optimizer = ImageSizeOptimizer(home)
+    modules.parallelStream().forEach { optimizer.optimizeIcons(it, config.getConfigForModule(it.name)) }
+    optimizer.printStats()
+  }
+
+  if (System.getenv("GENERATE_ICONS") != "false") {
+    val generator = config.generator(home, modules)
+    modules.parallelStream().forEach { generator.processModule(it, config.getConfigForModule(it.name)) }
+    generator.printStats()
+  }
 
   val checker = ImageSanityChecker(home)
-  project.modules.forEach { module ->
-    checker.check(module)
-  }
-//  checker.printInfo()
+  modules.parallelStream().forEach { checker.check(it, config.getConfigForModule(it.name)) }
   checker.printWarnings()
 
-  println()
-  println("Done")
+  println("\nDone")
+}
+
+/**
+ * Initialized in [com.intellij.util.SVGLoader]
+ */
+internal fun shutdownAppScheduledExecutorService() {
+  try {
+    AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+  }
+  catch (e: Exception) {
+    System.err.println("Failed during executor service shutdown:")
+    e.printStackTrace(System.err)
+  }
 }

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
+import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED;
 
 public class MergeInfoUpdatesListener {
-  private final static int DELAY = 300;
+  private static final int DELAY = 300;
 
   private final Project myProject;
   private final MessageBusConnection myConnection;
@@ -51,7 +37,7 @@ public class MergeInfoUpdatesListener {
       myMergeInfoRefreshActions = new ArrayList<>();
       myMergeInfoRefreshActions.add(action);
 
-      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, (project, vcsRoot) -> callReloadMergeInfo());
+      myConnection.subscribe(BRANCHES_CHANGED, (project, vcsRoot) -> callReloadMergeInfo());
       final Consumer<Boolean> reloadConsumer = aBoolean -> {
         if (Boolean.TRUE.equals(aBoolean)) {
           callReloadMergeInfo();
@@ -66,9 +52,11 @@ public class MergeInfoUpdatesListener {
       myConnection.subscribe(VCS_CONFIGURATION_CHANGED, () -> callReloadMergeInfo());
 
       myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, new CommittedChangesTreeBrowser.CommittedChangesReloadListener() {
+        @Override
         public void itemsReloaded() {
           reloadRunnable.run();
         }
+        @Override
         public void emptyRefresh() {
         }
       });
@@ -97,7 +85,7 @@ public class MergeInfoUpdatesListener {
       }
     });
   }
-  
+
   private void callReloadMergeInfo() {
     doForEachInitialized(rootsAndBranches -> {
       rootsAndBranches.reloadPanels();

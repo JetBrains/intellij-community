@@ -1,0 +1,11 @@
+// "Change return type of called function 'A.component2' to 'Int'" "true"
+// K2_ERROR: COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
+abstract class A {
+    abstract operator fun component1(): Int
+    abstract operator fun component2(): String
+}
+
+fun foo(a: A) {
+    val (w: Int, x: Int) = a<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

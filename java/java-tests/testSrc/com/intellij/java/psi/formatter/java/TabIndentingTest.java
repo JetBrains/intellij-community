@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 
@@ -38,50 +26,50 @@ public class TabIndentingTest extends LightIdeaTestCase {
   }
 
   public void testSmartTab4() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
 
     doTest("Test.java", "SmartTab4_after.java");
   }
 
   public void testSmartTab2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 2;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 2;
 
     doTest("Test.java", "SmartTab2_after.java");
   }
 
   public void testSmartTab8() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 8;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).SMART_TABS = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 8;
 
     doTest("Test.java", "SmartTab8_after.java");
   }
 
   public void testTab2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 2;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 2;
 
     doTest("Test.java", "Tab2_after.java");
   }
 
   public void testTab4() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
 
     doTest("Test.java", "Tab4_after.java");
   }
 
   public void testTab8() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
-    settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 8;
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 8;
 
     doTest("Test.java", "Tab8_after.java");
   }
@@ -94,6 +82,15 @@ public class TabIndentingTest extends LightIdeaTestCase {
     doTest("moreTabsInComments.java", "moreTabsInComments_after.java");
   }
 
+  public void testAlignmentWithTabs() throws Exception {
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(JavaFileType.INSTANCE).TAB_SIZE = 4;
+    settings.getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS = true;
+    doTest("methodAlignment.java", "methodAlignment_after.java");
+  }
+
   private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
     String text = loadFile(fileNameBefore);
     final PsiFile file = createFile(fileNameBefore, text);
@@ -102,7 +99,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
         CodeStyleManager.getInstance(getProject()).reformat(file);
       }
       catch (IncorrectOperationException e) {
-        assertTrue(false);
+        throw new AssertionError(e);
       }
     }), null, null);
 
@@ -124,7 +121,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
     }
   }
 
-  private String loadFile(String name) throws Exception {
+  private static String loadFile(String name) throws Exception {
     String fullName = BASE_PATH + File.separatorChar + name;
     String text = FileUtil.loadFile(new File(fullName));
     text = StringUtil.convertLineSeparators(text);

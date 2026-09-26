@@ -1,10 +1,10 @@
-// "Replace 'for each' loop with iterator 'for' loop" "true"
+// "Replace 'for each' loop with iterator 'for' loop" "true-preview"
 import java.util.Iterator;
 
 public class EmptyBody {
     void foo(Iterator<Integer> it) {
-        for (Iterator<Integer> it1 = it; it1.hasNext(); ) {
-            Integer integer = it1.next();
+        for (Iterator<Integer> iter = it; iter.hasNext(); ) {
+            Integer integer = iter.next();
         }
     }
 }

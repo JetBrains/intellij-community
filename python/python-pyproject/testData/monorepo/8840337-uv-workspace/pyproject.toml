@@ -1,0 +1,12 @@
+[project]
+name = "8840337-uv-workspace"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+
+[tool.uv.workspace]
+members = ["libs/*", "apps/*"]
+
+[tool.uv.sources]
+myorg-core = { workspace = true }

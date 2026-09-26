@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EngravedTextGraphics;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.content.Content;
@@ -12,21 +13,31 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.ComponentOrientation;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+@DirtyUI
 public class BaseLabel extends JLabel {
   protected ToolWindowContentUi myUi;
 
   private Color myActiveFg;
   private Color myPassiveFg;
+  private Color myTabColor;
   private boolean myBold;
 
-  public BaseLabel(ToolWindowContentUi ui, boolean bold) {
+  public BaseLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
     setOpaque(false);
     myBold = bold;
@@ -40,6 +51,11 @@ public class BaseLabel extends JLabel {
         repaint();
       }
     });
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
+
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
+    }
   }
 
   @Override
@@ -60,12 +76,8 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getOverrideLafFonts()) {
-      return UIUtil.getLabelFont().deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
-    }
-
-    return JBUI.CurrentTheme.ToolWindow.headerFont();
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
+    return font.deriveFont(font.getSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
   }
 
   public void setActiveFg(final Color fg) {
@@ -76,10 +88,10 @@ public class BaseLabel extends JLabel {
     myPassiveFg = passiveFg;
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
-    final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
+    final Color fore = myUi.window.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
 
     if (isFocusOwner()) {
@@ -109,15 +121,17 @@ public class BaseLabel extends JLabel {
     return myPassiveFg;
   }
 
-  protected void updateTextAndIcon(Content content, boolean isSelected) {
+  protected void updateTextAndIcon(Content content, boolean isSelected, boolean isBold) {
     if (content == null) {
       setText(null);
       setIcon(null);
+      myTabColor = null;
     }
     else {
-      setText(content.getDisplayName());
+      setText(showLabelText(content) ? content.getDisplayName() : null);
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
+      myTabColor = content.getTabColor();
 
       setToolTipText(content.getDescription());
 
@@ -127,26 +141,35 @@ public class BaseLabel extends JLabel {
         if(componentOrientation != null) {
           setComponentOrientation(componentOrientation);
         }
-        Icon icon = content.getIcon();
-        if (icon instanceof OffsetIcon) {
-          icon = ((OffsetIcon)icon).getIcon();
-        }
+        Icon icon = OffsetIcon.getOriginalIcon(content.getIcon());
         if (isSelected) {
           setIcon(icon);
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          var userValueIsTransparent = content.getUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT);
+          var isTransparent = userValueIsTransparent != null ? userValueIsTransparent : true;
+
+          var labelIcon = icon != null ? (isTransparent ? new WatermarkIcon(icon, .5f) : icon) : null;
+          setIcon(labelIcon);
         }
       }
       else {
         setIcon(null);
       }
 
-      myBold = false; //isSelected;
+      myBold = isBold;
     }
   }
 
-  public Content getContent() {
+  boolean showLabelText(@NotNull Content content) {
+    return true;
+  }
+
+  public @Nullable Color getTabColor() {
+    return myTabColor;
+  }
+
+  public @Nullable Content getContent() {
     return null;
   }
 
@@ -158,6 +181,7 @@ public class BaseLabel extends JLabel {
     return accessibleContext;
   }
 
+  @ApiStatus.Internal
   protected class AccessibleBaseLabel extends AccessibleJLabel {
   }
 }

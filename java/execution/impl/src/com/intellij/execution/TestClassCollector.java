@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.testframework.TestSearchScope;
@@ -21,13 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathsList;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nullable;
@@ -35,23 +19,28 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TestClassCollector {
-
+public final class TestClassCollector {
   private static final Logger LOG = Logger.getInstance(TestClassCollector.class);
 
   public static String[] collectClassFQNames(String packageName,
                                              @Nullable Path rootPath,
                                              JavaTestConfigurationBase configuration,
-                                             Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
-    Module module = configuration.getConfigurationModule().getModule();
+                                             Function<? super ClassLoader, ? extends Predicate<Class<?>>> predicateProducer) {
     ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();
     try {
@@ -71,7 +60,7 @@ public class TestClassCollector {
         if (rootPath != null && !baseDir.startsWith(rootPath)) continue;
 
         String pathSeparator = baseDir.getFileSystem().getSeparator();
-        Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(baseDir, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             ProgressManager.checkCanceled();
@@ -82,14 +71,14 @@ public class TestClassCollector {
               try {
                 Path relativePath = baseDir.relativize(file.getParent());
                 String subpackageName = StringUtil.getQualifiedName(relativePath.toString().replace(pathSeparator, "."),
-                                                                    FileUtil.getNameWithoutExtension(fName));
+                                                                    FileUtilRt.getNameWithoutExtension(fName));
                 String fqName = StringUtil.getQualifiedName(packageName, subpackageName);
                 Class<?> aClass = Class.forName(fqName, false, classLoader);
                 //is potential junit 4
                 int modifiers = aClass.getModifiers();
                 if (Modifier.isAbstract(modifiers) ||
                     !Modifier.isPublic(modifiers) ||
-                   aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
+                    aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
                   return result;
                 }
                 if (classPredicate.test(aClass)) {
@@ -97,7 +86,7 @@ public class TestClassCollector {
                 }
               }
               catch (Throwable e) {
-                LOG.info("error processing: " + fName + " of " + baseDir.toString(), e);
+                LOG.info("error processing: " + fName + " of " + baseDir, e);
               }
             }
             return result;
@@ -112,39 +101,31 @@ public class TestClassCollector {
       LOG.error(e);
     }
 
-    return ArrayUtil.toStringArray(classes);
+    return ArrayUtilRt.toStringArray(classes);
   }
 
   public static ClassLoader createUsersClassLoader(JavaTestConfigurationBase configuration) {
     Module module = configuration.getConfigurationModule().getModule();
-    List<URL> urls = new ArrayList<>();
+    List<Path> files = new ArrayList<>();
 
     PathsList pathsList = ReadAction
       .compute(() -> (module == null || configuration.getTestSearchScope() == TestSearchScope.WHOLE_PROJECT ? OrderEnumerator
         .orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
       .runtimeOnly().recursively().getPathsList()); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
     for (VirtualFile file : pathsList.getVirtualFiles()) {
-      try {
-        urls.add(VfsUtilCore.virtualToIoFile(file).toURI().toURL());
-      }
-      catch (MalformedURLException ignored) {
-        LOG.info(ignored);
-      }
+      files.add(file.toNioPath());
     }
-
-    return UrlClassLoader.build().allowLock().useCache().urls(urls).get();
+    return UrlClassLoader.build().files(files).get();
   }
 
-  @Nullable
-  public static Path getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile @Nullable [] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
-      CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension != null) {
-        VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
-        if (tests != null) {
-          return Paths.get(VfsUtilCore.virtualToIoFile(tests).toURI());
-        }
-      }
+      return OrderEnumerator.orderEntries(module)
+        .withoutSdk()
+        .withoutLibraries()
+        .withoutDepModules()
+        .classes()
+        .getRoots();
     }
     return null;
   }

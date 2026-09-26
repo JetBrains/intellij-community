@@ -1,40 +1,49 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author nik
- */
+import static com.intellij.project.IntelliJProjectConfiguration.getLocalMavenRepo;
+
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
+  private static final RemoteRepository mavenLocal;
+
+  static {
+    System.setProperty("org.jetbrains.idea.maven.aether.strictValidation", "true");
+    File mavenLocalDir = getLocalMavenRepo().toFile();
+    mavenLocal = new RemoteRepository
+      .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
+      .build();
+  }
+
   private ArtifactRepositoryManager myRepositoryManager;
+  private File localRepository;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
-    myRepositoryManager = new ArtifactRepositoryManager(localRepo);
+    localRepository = new File(FileUtil.getTempDirectory());
+    List<RemoteRepository> repositories = new ArrayList<>();
+    repositories.add(mavenLocal);
+    repositories.addAll(ArtifactRepositoryManager.createDefaultRemoteRepositories());
+    myRepositoryManager = new ArtifactRepositoryManager(localRepository, repositories, ProgressConsumer.DEAF);
   }
 
   public void testResolveTransitively() throws Exception {
@@ -76,9 +85,154 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactDependencyNode second = result.getDependencies().get(1);
     assertCoordinates(first.getArtifact(), "org.apache.httpcomponents", "httpclient", "4.5.5");
     assertCoordinates(second.getArtifact(), "commons-logging", "commons-logging", "1.2");
-    assertEquals(2, first.getDependencies().size());
+    assertEquals(3, first.getDependencies().size());
     assertCoordinates(first.getDependencies().get(0).getArtifact(), "org.apache.httpcomponents", "httpcore", "4.4.9");
-    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
+    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-logging", "commons-logging", "1.2");
+    assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
+  }
+
+  public void testResolveAvailableOptionalArtifacts() throws Exception {
+    Path remoteRepository = Files.createTempDirectory("aether-optional-artifacts");
+    Path isolatedLocalRepository = Files.createTempDirectory("aether-optional-artifacts-local");
+    try {
+      writeTestArtifact(remoteRepository, "root", "pom", "", pom("root", "first", "second"));
+      writeTestArtifact(remoteRepository, "first", "pom", "", pom("first"));
+      writeTestArtifact(remoteRepository, "second", "pom", "", pom("second"));
+      writeTestArtifact(remoteRepository, "root", "jar", "sources", "root sources");
+      writeTestArtifact(remoteRepository, "first", "jar", "sources", "first sources");
+
+      RemoteRepository remote = new RemoteRepository.Builder("test", "default", remoteRepository.toUri().toString()).build();
+      ArtifactRepositoryManager manager = new ArtifactRepositoryManager(isolatedLocalRepository.toFile(), List.of(remote), ProgressConsumer.DEAF);
+      Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact("test", "root", "1", EnumSet.of(ArtifactKind.SOURCES),
+                                                                          true, Collections.emptyList());
+
+      assertSameElements(ContainerUtil.map(artifacts, artifact -> artifact.getFile().getName()),
+                         "root-1-sources.jar", "first-1-sources.jar");
+    }
+    finally {
+      NioFiles.deleteRecursively(remoteRepository);
+      NioFiles.deleteRecursively(isolatedLocalRepository);
+    }
+  }
+
+  public void testTransitiveSnapshotDependenciesExcluded() throws Exception {
+    // version of this excluded dependency is [0.8.1,)
+    String excludedArtifact = "sshj";
+    List<String> excluded = Collections.singletonList("net.schmizz:" + excludedArtifact);
+    myRepositoryManager.resolveDependency("com.jcraft", "jsch.agentproxy.sshj", "0.0.9", true, excluded);
+    try (Stream<Path> files = Files.walk(localRepository.toPath())) {
+      assertEmpty(files.filter(file -> {
+        String fileName = file.getFileName().toString();
+        return fileName.startsWith(excludedArtifact + "-") &&
+               (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
+      }).collect(Collectors.toList()));
+    }
+  }
+
+  public void testThePropertyRepositoryAnswersFirst() throws Exception {
+    Path priority = createTestRepository("from the priority repository");
+    try {
+      assertEquals("from the priority repository", resolveWithPriorityProperty(priority.toUri().toString()));
+    }
+    finally {
+      NioFiles.deleteRecursively(priority);
+    }
+  }
+
+  public void testABlankPropertyAddsNoRepository() throws Exception {
+    assertEquals("from the requested repository", resolveWithPriorityProperty("  "));
+  }
+
+  public void testNoPropertyAddsNoRepository() throws Exception {
+    assertEquals("from the requested repository", resolveWithPriorityProperty(null));
+  }
+
+  /**
+   * Gives the manager one directory that holds the artifact, and sets
+   * {@link ArtifactRepositoryManager#PRIORITY_REPOSITORY_URL_PROPERTY} to the given value. The
+   * content of the resolved file tells you which repository answered. The test needs no network.
+   *
+   * @param propertyValue the value of the property, or null for no property
+   */
+  private static String resolveWithPriorityProperty(@Nullable String propertyValue) throws Exception {
+    Path requested = createTestRepository("from the requested repository");
+    Path local = Files.createTempDirectory("aether-priority-local");
+    try {
+      if (propertyValue != null) {
+        System.setProperty(ArtifactRepositoryManager.PRIORITY_REPOSITORY_URL_PROPERTY, propertyValue);
+      }
+      try {
+        return Files.readString(resolveSingleArtifact(local, requested).toPath());
+      }
+      finally {
+        System.clearProperty(ArtifactRepositoryManager.PRIORITY_REPOSITORY_URL_PROPERTY);
+      }
+    }
+    finally {
+      NioFiles.deleteRecursively(requested);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  private static Path createTestRepository(String jarContent) throws Exception {
+    Path repository = Files.createTempDirectory("aether-repository");
+    writeTestArtifact(repository, "single", "pom", "", pom("single"));
+    writeTestArtifact(repository, "single", "jar", "", jarContent);
+    return repository;
+  }
+
+  /**
+   * The priority repository helps only because Aether keeps the order of the list. This test locks
+   * the order down. It uses two local directories, so it needs no network.
+   */
+  public void testTheFirstRepositoryOfTheListAnswers() throws Exception {
+    // Both repositories hold the artifact. Only the content tells you which one answered.
+    Path first = createTestRepository("from the first repository");
+    Path second = createTestRepository("from the second repository");
+    Path local = Files.createTempDirectory("aether-order-local");
+    try {
+      File file = resolveSingleArtifact(local, first, second);
+      assertEquals("single-1.jar", file.getName());
+      assertEquals("from the first repository", Files.readString(file.toPath()));
+    }
+    finally {
+      NioFiles.deleteRecursively(first);
+      NioFiles.deleteRecursively(second);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  /**
+   * A priority repository that holds no artifact must not break the resolution. Aether reads the
+   * next repository of the list.
+   */
+  public void testTheNextRepositoryAnswersWhenTheFirstOneMisses() throws Exception {
+    // The first repository stays empty.
+    Path first = Files.createTempDirectory("aether-fallback-first");
+    Path second = createTestRepository("from the second repository");
+    Path local = Files.createTempDirectory("aether-fallback-local");
+    try {
+      File file = resolveSingleArtifact(local, first, second);
+      assertEquals("single-1.jar", file.getName());
+      assertEquals("from the second repository", Files.readString(file.toPath()));
+    }
+    finally {
+      NioFiles.deleteRecursively(first);
+      NioFiles.deleteRecursively(second);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  private static File resolveSingleArtifact(Path localRepository, Path... repositories) throws Exception {
+    List<RemoteRepository> remoteRepositories = new ArrayList<>();
+    for (Path repository : repositories) {
+      remoteRepositories.add(
+        new RemoteRepository.Builder("test-" + remoteRepositories.size(), "default", repository.toUri().toString()).build());
+    }
+    ArtifactRepositoryManager manager =
+      new ArtifactRepositoryManager(localRepository.toFile(), remoteRepositories, ProgressConsumer.DEAF);
+    Collection<File> files = manager.resolveDependency("test", "single", "1", false, Collections.emptyList());
+    return assertOneElement(files);
   }
 
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {
@@ -89,5 +243,20 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
 
   private static void assertFileNames(Collection<File> files, String... expectedNames) {
     assertSameElements(ContainerUtil.map(files, File::getName), expectedNames);
+  }
+
+  private static String pom(String artifactId, String... dependencies) {
+    String dependencyXml = Stream.of(dependencies)
+      .map(dependency -> "<dependency><groupId>test</groupId><artifactId>" + dependency + "</artifactId><version>1</version></dependency>")
+      .collect(Collectors.joining());
+    return "<project><modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>" + artifactId +
+           "</artifactId><version>1</version><dependencies>" + dependencyXml + "</dependencies></project>";
+  }
+
+  private static void writeTestArtifact(Path repository, String artifactId, String extension, String classifier, String content) throws Exception {
+    Path directory = repository.resolve("test").resolve(artifactId).resolve("1");
+    Files.createDirectories(directory);
+    String classifierSuffix = classifier.isEmpty() ? "" : "-" + classifier;
+    Files.writeString(directory.resolve(artifactId + "-1" + classifierSuffix + "." + extension), content);
   }
 }

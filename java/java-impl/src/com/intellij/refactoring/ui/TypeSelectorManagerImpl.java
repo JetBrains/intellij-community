@@ -1,44 +1,55 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.indexing.DumbModeAccessType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author dsl
- */
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
+  private final Project myProject;
   private SmartTypePointer myPointer;
   private PsiType myDefaultType;
   private final PsiExpression myMainOccurrence;
@@ -56,7 +67,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myProject = project;
+    myFactory = JavaPsiFacade.getElementFactory(myProject);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = null;
@@ -85,15 +97,30 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
                                  PsiMethod containingMethod,
                                  PsiExpression mainOccurrence,
                                  PsiExpression[] occurrences) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myProject = project;
+    myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = mainOccurrence;
     myOccurrences = occurrences;
 
     myOccurrenceClassProvider = createOccurrenceClassProvider();
-    myTypesForMain = getTypesForMain();
-    myTypesForAll = getTypesForAll(true);
+
+    Ref<PsiType[]> mainTypes = new Ref<>();
+    Ref<PsiType[]> allTypes = new Ref<>();
+    Runnable calculateTypes = () -> ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
+      mainTypes.set(getTypesForMain());
+      allTypes.set(getTypesForAll(true));
+    }));
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(calculateTypes, JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
+    }
+    else {
+      calculateTypes.run();
+    }
+
+    myTypesForMain = mainTypes.get();
+    myTypesForAll = allTypes.get();
 
     if (containingMethod != null) {
       if (PsiUtil.resolveClassInType(type) != null) {
@@ -152,14 +179,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
     final Set<PsiClass> occurrenceClasses = new HashSet<>();
-    for (final PsiExpression occurrence : myOccurrences) {
-      final PsiType occurrenceType = occurrence.getType();
-      collectOccurrenceClasses(occurrenceClasses, occurrenceType);
-    }
+    DumbService.getInstance(myProject)
+      .withAlternativeResolveEnabled(() -> {
+        for (final PsiExpression occurrence : myOccurrences) {
+          final PsiType occurrenceType = occurrence.getType();
+          collectOccurrenceClasses(occurrenceClasses, occurrenceType);
+        }
+      });
     return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
-  private static void collectOccurrenceClasses(Set<PsiClass> occurrenceClasses, PsiType occurrenceType) {
+  private static void collectOccurrenceClasses(Set<? super PsiClass> occurrenceClasses, PsiType occurrenceType) {
     if (occurrenceType instanceof PsiIntersectionType) {
       for (PsiType type : ((PsiIntersectionType)occurrenceType).getConjuncts()) {
         collectOccurrenceClasses(occurrenceClasses, type);
@@ -179,7 +209,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -192,7 +222,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes.length > 0) {
-          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type,
+                                                                             TailTypes.noneType());
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);
@@ -212,7 +243,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<? super PsiType> allowedTypes) {
     for (ExpectedTypeInfo info : expectedTypes) {
       if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
         allowedTypes.add(info.getDefaultType());
@@ -230,7 +261,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -268,7 +299,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return false;
   }
 
-  private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
+  private ArrayList<PsiType> normalizeTypeList(final ArrayList<? extends PsiType> typeList) {
     ArrayList<PsiType> result = new ArrayList<>();
     TypeListCreatingVisitor visitor = new TypeListCreatingVisitor(result, myFactory);
     for (PsiType psiType : typeList) {
@@ -322,7 +353,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     if (defaultType instanceof PsiPrimitiveType) return defaultType;
 
-    Map<String, PsiType> map = new THashMap<>();
+    Map<String, PsiType> map = new HashMap<>();
     for (final PsiType type : types) {
       map.put(serialize(type), type);
     }
@@ -358,12 +389,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+  public static void typeSelected(final @NotNull PsiType type, final @Nullable PsiType defaultType) {
     if (defaultType == null) return;
-    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
+    ReadAction.nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;
+    })).finishOnUiThread(ModalityState.nonModal(), stat -> {
+      if (stat == null) return;
+      StatisticsManager.getInstance().incUseCount(stat);
+    }).submit(NonUrgentExecutor.getInstance());
   }
 
-  private static String getStatsKey(final PsiType defaultType) {
+  private static @NonNls String getStatsKey(final PsiType defaultType) {
     if (defaultType == null) {
       return "IntroduceVariable##";
     }

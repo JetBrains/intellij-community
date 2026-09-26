@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 class Example {
   public void m() {
   }
@@ -6,7 +6,10 @@ class Example {
   {
     Runnable r = () -> {
       //my comments here
-      m<caret>();
+      m<caret>()
+      //1
+      //2
+      ;
     }
   }
 }

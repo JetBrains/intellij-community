@@ -1,4 +1,4 @@
-// "Change 'new Foo<Integer>(...)' to 'new Foo<Number>()'" "true"
+// "Change 'new Foo<Integer>(...)' to 'new Foo<Number>()'" "true-preview"
 
 class Foo<T> {
         Foo(T t) {}

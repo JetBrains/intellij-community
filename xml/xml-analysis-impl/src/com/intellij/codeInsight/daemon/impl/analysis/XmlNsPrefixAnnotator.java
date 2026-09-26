@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -36,6 +37,7 @@ import java.util.List;
 public class XmlNsPrefixAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (PsiUtilCore.getElementType(element) != XmlTokenType.XML_NAME) return;
     PsiElement parent = element.getParent();
     if (!(parent instanceof XmlTag) && !(parent instanceof XmlAttribute)) return;
@@ -46,7 +48,7 @@ public class XmlNsPrefixAnnotator implements Annotator {
       if (rangeInElement.isEmpty()) continue;
       TextRange range = rangeInElement.shiftRight(ref.getElement().getTextRange().getStartOffset());
       if (!range.intersects(elementRange)) continue;
-      holder.createInfoAnnotation(range, null).setTextAttributes(XmlHighlighterColors.XML_NS_PREFIX);
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(XmlHighlighterColors.XML_NS_PREFIX).create();
     }
   }
 }

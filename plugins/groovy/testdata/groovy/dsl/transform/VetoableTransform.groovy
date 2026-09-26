@@ -6,4 +6,4 @@ class MyBean {
 
 def bean = new MyBean()
 
-bean.fire<caret>
+bean.fireC<caret>

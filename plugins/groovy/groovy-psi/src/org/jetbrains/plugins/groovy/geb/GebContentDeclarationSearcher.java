@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.pom.PomDeclarationSearcher;
@@ -16,12 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
+public final class GebContentDeclarationSearcher extends PomDeclarationSearcher {
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
     PsiElement grCall = element.getParent();
     if (!(grCall instanceof GrMethodCall)) return;
 
@@ -29,9 +26,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     if (!(grClosure instanceof GrClosableBlock)) return;
 
     PsiElement contentField = grClosure.getParent();
-    if (!(contentField instanceof GrField)) return;
+    if (!(contentField instanceof GrField field)) return;
 
-    GrField field = (GrField)contentField;
     if (!"content".equals(field.getName()) || !field.hasModifierProperty(PsiModifier.STATIC)) return;
 
     PsiClass containingClass = field.getContainingClass();
@@ -41,8 +37,8 @@ public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
     Map<String, PsiMember> contentElements = GebUtil.getContentElements(containingClass);
 
     for (PsiMember contentElement : contentElements.values()) {
-      if (contentElement.getNavigationElement() == element) {
-        consumer.consume(contentElement);
+      if (contentElement.getNavigationElement() == element && contentElement instanceof PomTarget) {
+        consumer.consume((PomTarget)contentElement);
         return;
       }
     }

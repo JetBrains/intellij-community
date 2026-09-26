@@ -21,15 +21,12 @@ Groovy script
   PsiElement(new line)('\n')
   NEW expression
     PsiElement(new)('new')
-    PsiErrorElement:identifier expected, got 'as'
-      <empty list>
-  PsiWhiteSpace(' ')
-  PsiElement(as)('as')
-  Parenthesized expression
-    PsiElement(()('(')
-    PsiErrorElement:<expression> expected, got ')'
-      <empty list>
-    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(as)('as')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')
   PsiElement(new line)('\n')
   GrInExpressionImpl(IN_EXPRESSION)
     NEW expression
@@ -46,14 +43,9 @@ Groovy script
   PsiElement(new line)('\n')
   NEW expression
     PsiElement(new)('new')
-    PsiErrorElement:identifier expected, got 'trait'
-      <empty list>
-  PsiWhiteSpace(' ')
-  PsiElement(trait)('trait')
-  PsiErrorElement:identifier expected, got '('
-    <empty list>
-  Parenthesized expression
-    PsiElement(()('(')
-    PsiErrorElement:<expression> expected, got ')'
-      <empty list>
-    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(trait)('trait')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

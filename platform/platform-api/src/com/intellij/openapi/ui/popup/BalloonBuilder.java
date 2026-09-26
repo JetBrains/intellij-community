@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 
 /**
@@ -78,7 +67,7 @@ public interface BalloonBuilder {
   BalloonBuilder setDialogMode(boolean dialogMode);
 
   @NotNull
-  BalloonBuilder setTitle(@Nullable String title);
+  BalloonBuilder setTitle(@Nullable @PopupTitle String title);
 
   @NotNull
   BalloonBuilder setContentInsets(Insets insets);
@@ -98,11 +87,13 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setRequestFocus(boolean requestFocus);
 
-  @NotNull
-  default BalloonBuilder setPointerSize(Dimension size) { return this; }
+  default @NotNull BalloonBuilder setPointerSize(Dimension size) { return this; }
 
-  @NotNull
-  default BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+  default @NotNull BalloonBuilder setCornerToPointerDistance(int distance) { return this; }
+
+  default BalloonBuilder setCornerRadius(int radius) { return this; }
+
+  default BalloonBuilder setPointerShiftedToStart(boolean pointerShiftedToStart) { return this; }
 
   BalloonBuilder setHideOnCloseClick(boolean hideOnCloseClick);
 

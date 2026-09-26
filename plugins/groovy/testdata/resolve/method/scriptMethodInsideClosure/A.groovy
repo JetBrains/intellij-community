@@ -1,6 +1,6 @@
 def foo() {}
 
 Closure c = {
-    this.<ref>foo()
+    this.<caret>foo()
 }
 c.call()

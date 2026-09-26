@@ -15,14 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author ven
- */
 public class LightReferenceList extends LightElement implements PsiReferenceList {
   protected LightReferenceList(PsiManager manager) {
     super(manager, GroovyLanguage.INSTANCE);
@@ -33,17 +35,18 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitReferenceList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
   }
 
@@ -52,6 +55,7 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     return Role.THROWS_LIST;
   }
 
+  @Override
   public String toString() {
     return "Light Reference List";
   }

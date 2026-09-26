@@ -1,0 +1,15 @@
+// "Opt in for 'MyOptIn' on statement" "true"
+// WITH_STDLIB
+// K2_ERROR: OPT_IN_USAGE_ERROR
+
+@RequiresOptIn
+annotation class MyOptIn
+
+@MyOptIn
+fun foo(): String = "Hello"
+
+fun main() {
+    println(<caret>foo())
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

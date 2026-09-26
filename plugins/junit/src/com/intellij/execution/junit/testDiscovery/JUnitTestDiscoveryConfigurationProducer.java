@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -13,19 +14,25 @@ import com.intellij.execution.junit.TestsPattern;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
-  protected JUnitTestDiscoveryConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
+public final class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
+  @Override
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 
   @Override
@@ -47,21 +54,60 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
     return JUnitUtil.isTestMethod(testMethod);
   }
 
-  @NotNull
   @Override
-  public RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
-                                       Module module,
-                                       RunConfiguration configuration,
-                                       ExecutionEnvironment environment) {
+  public @NotNull RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
+                                                Module module,
+                                                RunConfiguration configuration,
+                                                ExecutionEnvironment environment) {
     JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
-    data.setPatterns(
-      Arrays.stream(testMethods)
-            .map(method -> {
-              Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
-              return ancestors.next().getPsiElement().getQualifiedName() + "," + method.getPsiElement().getName();
-            })
-            .collect(Collectors.toCollection(LinkedHashSet::new)));
+    data.setPatterns(collectMethodPatterns(testMethods));
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
-    return new TestsPattern((JUnitConfiguration)configuration, environment);
+    Map<Module, Module> toRoot = splitModulesIntoChunks(testMethods, module);
+    return new TestsPattern((JUnitConfiguration)configuration, environment) {
+      @Override
+      protected boolean forkPerModule() {
+        return module == null;
+      }
+
+      @Override
+      protected void fillForkModule(Map<Module, List<String>> perModule, Module module, String name) {
+        super.fillForkModule(perModule, toRoot.get(module), name);
+      }
+    };
+  }
+
+  private static Map<Module, Module> splitModulesIntoChunks(Location<PsiMethod> @NotNull [] testMethods, Module module) {
+    Map<Module, Module> toRoot = new HashMap<>();
+    if (module == null) {
+      Set<Module> usedModules = Arrays.stream(testMethods).map(Location::getModule).collect(Collectors.toSet());
+      while (!usedModules.isEmpty()) {
+        Map<Module, Set<Module>> allDeps = new HashMap<>();
+        for (Module usedModule : usedModules) {
+          List<Module> rootModules = ModuleUtilCore.getAllDependentModules(usedModule);
+          for (Module rootModule : rootModules) {
+            allDeps.computeIfAbsent(rootModule, _ -> new LinkedHashSet<>()).add(usedModule);
+          }
+          allDeps.computeIfAbsent(usedModule, _ -> new LinkedHashSet<>()).add(usedModule);
+        }
+
+
+        Optional<Map.Entry<Module, Set<Module>>> maxDependency =
+          allDeps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size()));
+
+        if (maxDependency.isPresent()) {
+          Map.Entry<Module, Set<Module>> entry = maxDependency.get();
+          Module rootModule = entry.getKey();
+          Set<Module> srcModules = entry.getValue();
+          for (Module srcModule : srcModules) {
+            toRoot.put(srcModule, rootModule);
+          }
+          usedModules.removeAll(srcModules);
+        }
+        else {
+          break;
+        }
+      }
+    }
+    return toRoot;
   }
 }

@@ -4,7 +4,7 @@ import one.util.streamex.StreamEx;
 
 public class HeadTail {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = StreamEx.of(1, 2, 3, 4).headTail((head, tail) -> tail, () -> StreamEx.of(0)).count();
     System.out.println(count);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UastLiteralUtils")
 
 package org.jetbrains.uast
@@ -20,6 +6,8 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.expressions.UInjectionHost
 
 /**
  * Checks if the [UElement] is a null literal.
@@ -54,13 +42,23 @@ fun UElement.isFalseLiteral(): Boolean = this is ULiteralExpression && this.isBo
  *
  * @return true if the receiver is a [String] literal, false otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("isInjectionHost()"))
 fun UElement.isStringLiteral(): Boolean = this is ULiteralExpression && this.isString
+
+/**
+ * Checks if the [UElement] is a [PsiLanguageInjectionHost] holder.
+ *
+ * NOTE: It is a transitional function until everything will migrate to [UInjectionHost]
+ */
+fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UExpression && this.sourceInjectionHost != null)
 
 /**
  * Returns the [String] literal value.
  *
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("UExpression.evaluateString()"))
+@Suppress("DEPRECATION")
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
@@ -103,10 +101,65 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
 }
 
 /**
- * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
+ * @return corresponding [PsiLanguageInjectionHost] for this [UExpression] if it exists.
+ * Tries to not return same [PsiLanguageInjectionHost] for different UElement-s, thus returns `null` if host could be obtained from
+ * another [UExpression].
+ */
+val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
+  get() {
+    (this.sourcePsi as? PsiLanguageInjectionHost)?.let { return it }
+    // following is a handling of KT-27283
+    if (this !is ULiteralExpression) return null
+    val parent = this.uastParent
+    if (parent is UPolyadicExpression && parent.sourcePsi is PsiLanguageInjectionHost) return null
+    (this.sourcePsi?.parent as? PsiLanguageInjectionHost)?.let { return it }
+    return null
+  }
+
+val UExpression.allPsiLanguageInjectionHosts: List<PsiLanguageInjectionHost>
+  @ApiStatus.Experimental
+  get() {
+    sourceInjectionHost?.let { return listOf(it) }
+    (this as? UPolyadicExpression)?.let { return this.operands.mapNotNull { it.sourceInjectionHost } }
+    return emptyList()
+  }
+
+@ApiStatus.Experimental
+fun isConcatenation(uExpression: UElement?): Boolean {
+  if (uExpression !is UPolyadicExpression) return false
+
+  return uExpression.operator == UastBinaryOperator.PLUS
+}
+
+/**
+ * @return a non-strict parent [PsiLanguageInjectionHost] for [ULiteralExpression.sourcePsi] of given literal expression if it exists.
+ *
+ * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
-  get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+  get() = this.sourcePsi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+
+/**
+ * @return if given [uElement] is an [ULiteralExpression] but not a [UInjectionHost]
+ * (which could happen because of "KotlinULiteralExpression and PsiLanguageInjectionHost mismatch", see KT-27283 )
+ * then tries to convert it to [UInjectionHost] and return it,
+ * otherwise return [uElement] itself
+ *
+ * NOTE: when `kotlin.uast.force.uinjectionhost` flag is `true` this method is useless because there is no mismatch anymore
+ */
+@ApiStatus.Experimental
+fun wrapULiteral(uElement: UExpression): UExpression {
+  if (uElement is ULiteralExpression && uElement !is UInjectionHost) {
+    uElement.sourceInjectionHost.toUElementOfType<UInjectionHost>()?.let { return it }
+  }
+  return uElement
+}
+
+
+val UInjectionHost.injectedReferences: Iterable<PsiReference>
+  get() {
+    return psiLanguageInjectionHost.injectedReferences
+  }
 
 /**
  * @return all references injected into this [ULiteralExpression]
@@ -115,8 +168,30 @@ val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
  */
 val ULiteralExpression.injectedReferences: Iterable<PsiReference>
   get() {
-    val element = this.psiLanguageInjectionHost ?: return emptyList()
-    val references = element.references.asSequence()
-    val innerReferences = element.children.asSequence().flatMap { e -> e.references.asSequence() }
+    return psiLanguageInjectionHost?.injectedReferences ?: return emptyList()
+  }
+
+private val PsiLanguageInjectionHost.injectedReferences: Iterable<PsiReference>
+  get() {
+    val references = references.asSequence()
+    val innerReferences = children.asSequence().flatMap { e -> e.references.asSequence() }
     return (references + innerReferences).asIterable()
   }
+
+@JvmOverloads
+fun deepLiteralSearch(expression: UExpression, maxDepth: Int = 5): Sequence<ULiteralExpression> {
+  val visited = HashSet<UExpression>()
+  fun deepLiteralSearchInner(expression: UExpression, maxDepth: Int): Sequence<ULiteralExpression> {
+    if (maxDepth <= 0 || !visited.add(expression)) return emptySequence()
+    return when (expression) {
+      is ULiteralExpression -> sequenceOf(expression)
+      is UPolyadicExpression -> expression.operands.asSequence().flatMap { deepLiteralSearchInner(it, maxDepth - 1) }
+      is UReferenceExpression -> expression.resolve()
+        .toUElementOfType<UVariable>()
+        ?.uastInitializer
+        ?.let { deepLiteralSearchInner(it, maxDepth - 1) }.orEmpty()
+      else -> emptySequence()
+    }
+  }
+  return deepLiteralSearchInner(expression, maxDepth)
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.SerializationFilter;
@@ -8,16 +8,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @author mike
- */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
 public @interface Property {
   boolean surroundWithTag() default true;
 
   /**
-   * Serialize into parent element. Allowed only for bean properties (not primitive types).
+   * Serialize into a parent element. Allowed only for bean properties (not primitive types).
    */
   boolean flat() default false;
 
@@ -40,4 +37,9 @@ public @interface Property {
    * Applicable only on class level.
    */
   Style style() default Style.OPTION_TAG;
+
+  /**
+   * Whether to assert that class has at least one serializable property.
+   */
+  boolean assertIfNoBindings() default true;
 }

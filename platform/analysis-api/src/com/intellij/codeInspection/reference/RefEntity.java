@@ -15,18 +15,18 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**
  * Base class for nodes in the reference graph built during the global inspection pass.
  *
  * @author anna
- * @since 6.0
  * @see RefManager
  */
 public interface RefEntity extends UserDataHolder {
@@ -38,9 +38,11 @@ public interface RefEntity extends UserDataHolder {
    * @return the name of the node.
    */
   @NotNull
+  @NlsSafe
   String getName();
 
   @NotNull
+  @NlsSafe
   String getQualifiedName();
 
   /**
@@ -70,6 +72,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the user-readable name.
    */
+  @NlsSafe
   String getExternalName();
 
   /**

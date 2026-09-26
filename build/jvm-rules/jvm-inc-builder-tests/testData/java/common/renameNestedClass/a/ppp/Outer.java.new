@@ -1,0 +1,2 @@
+package ppp;
+public class Outer { public static class D { public static int f() { return 1; } } }  // C renamed to D under same outer

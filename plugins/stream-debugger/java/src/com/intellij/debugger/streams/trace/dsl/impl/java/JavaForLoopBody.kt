@@ -1,0 +1,18 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.debugger.streams.trace.dsl.impl.java
+
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.ForLoopBody
+import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+
+private val BREAK = TextExpression("break")
+
+/**
+ * @author Vitaliy.Bibaev
+ */
+class JavaForLoopBody(statementFactory: StatementFactory, override val loopVariable: Variable)
+  : JavaCodeBlock(statementFactory), ForLoopBody {
+  override fun breakIteration(): Expression = BREAK
+}

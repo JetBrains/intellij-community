@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Gen.class
+End of files
+Compiling files:
+  java/generics/addInterfaceBound/a/ppp/Gen.java
+End of files
+Cleaning output files:
+  qqq/Use.class
+End of files
+Compiling files:
+  java/generics/addInterfaceBound/a/qqq/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

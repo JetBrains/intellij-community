@@ -1,78 +1,66 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
-import com.intellij.ide.ui.AppearanceOptionsTopHitProvider;
-import com.intellij.ide.ui.OptionsTopHitProvider;
+import com.intellij.ide.ui.AppearanceOptionsTopHitProviderKt;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.FileColorManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
-public final class FileColorsOptionsTopHitProvider extends OptionsTopHitProvider {
+final class FileColorsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
   @Override
-  public String getId() {
-    return AppearanceOptionsTopHitProvider.ID;
+  public @NotNull String getId() {
+    return AppearanceOptionsTopHitProviderKt.APPEARANCE_ID;
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions(@Nullable Project project) {
-    if (project != null) {
-      FileColorManager manager = FileColorManager.getInstance(project);
-      if (manager != null) {
-        BooleanOptionDescription enabled = new Option(manager, "File Colors enabled", "isEnabled", "setEnabled");
-        return !enabled.isOptionEnabled()
-               ? Collections.singletonList(enabled)
-               : Collections.unmodifiableCollection(Arrays.asList(
-                 enabled,
-                 new Option(manager, "Use File Colors in Editor Tabs", "isEnabledForTabs", "setEnabledForTabs"),
-                 new Option(manager, "Use File Colors in Project View", "isEnabledForProjectView", "setEnabledForProjectView")));
+  public @NotNull Collection<OptionDescription> getOptions(@NotNull Project project) {
+    BooleanOptionDescription enabled = new PublicMethodBasedOptionDescription(LangBundle.message("label.file.colors.enabled"),
+                                                                              "reference.settings.ide.settings.file-colors",
+                                                                              "isEnabled", "setEnabled",
+                                                                              () -> FileColorManager.getInstance(project)) {
+      @Override
+      protected void fireUpdated() {
+        UISettings.getInstance().fireUISettingsChanged();
       }
-    }
-    return Collections.emptyList();
-  }
-
-  private static class Option extends PublicMethodBasedOptionDescription {
-    private final FileColorManager myManager;
-
-    public Option(FileColorManager manager, String option, String getter, String setter) {
-      super(option, "reference.settings.ide.settings.file-colors", getter, setter);
-      myManager = manager;
+    };
+    if (!enabled.isOptionEnabled()) {
+      return Collections.singletonList(enabled);
     }
 
-    @Override
-    public Object getInstance() {
-      return myManager;
-    }
+    return List.of(
+      enabled,
+      new BooleanOptionDescription(LangBundle.message("label.use.file.colors.in.editor.tabs"), "reference.settings.ide.settings.file-colors") {
+        @Override
+        public boolean isOptionEnabled() {
+          return FileColorManagerImpl._isEnabledForTabs();
+        }
 
-    @Override
-    protected void fireUpdated() {
-      UISettings.getInstance().fireUISettingsChanged();
-    }
+        @Override
+        public void setOptionState(boolean value) {
+          FileColorManagerImpl.setEnabledForTabs(value);
+        }
+      },
+      new BooleanOptionDescription(LangBundle.message("label.use.file.colors.in.project.view"), "reference.settings.ide.settings.file-colors") {
+        @Override
+        public boolean isOptionEnabled() {
+          return FileColorManagerImpl._isEnabledForProjectView();
+        }
+
+        @Override
+        public void setOptionState(boolean value) {
+          FileColorManagerImpl.setEnabledForProjectView(value);
+        }
+      }
+    );
   }
 }

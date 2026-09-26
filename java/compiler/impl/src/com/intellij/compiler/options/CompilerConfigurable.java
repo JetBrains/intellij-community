@@ -1,46 +1,44 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompilerSettingsFactory;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Collection;
+import java.util.List;
 
-public class CompilerConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
+public class CompilerConfigurable implements SearchableConfigurable.Parent, BackedByPersistentState {
+  static final String CONFIGURABLE_ID = "project.propCompiler";
 
-  private final Project myProject;
-  private final CompilerUIConfigurable myCompilerUIConfigurable;
-  private Configurable[] myKids;
+  private final CompilerUIConfigurableKt myCompilerUIConfigurable;
 
   public CompilerConfigurable(Project project) {
-    myProject = project;
-    myCompilerUIConfigurable = new CompilerUIConfigurable(myProject);
+    myCompilerUIConfigurable = new CompilerUIConfigurableKt(project);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(
+      (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myCompilerUIConfigurable.getProject()),
+      CompilerWorkspaceConfiguration.getInstance(myCompilerUIConfigurable.getProject())
+    );
+  }
+
+  @Override
   public String getDisplayName() {
-    return CompilerBundle.message("compiler.configurable.display.name");
+    return JavaCompilerBundle.message("compiler.configurable.display.name");
   }
 
   @Override
@@ -48,44 +46,48 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return "project.propCompiler";
   }
 
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
+  @Override
+  public @NotNull String getId() {
+    return CONFIGURABLE_ID;
   }
 
+  @Override
   public JComponent createComponent() {
     return myCompilerUIConfigurable.createComponent();
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
+  @Override
   public boolean isModified() {
     return myCompilerUIConfigurable.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myCompilerUIConfigurable.apply();
   }
 
+  @Override
   public void reset() {
     myCompilerUIConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myCompilerUIConfigurable.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
-    if (myKids == null) {
-      final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);
-      myKids = ContainerUtil.mapNotNull(factories,
-                                        (NullableFunction<CompilerSettingsFactory, Configurable>)factory -> factory.create(myProject), new Configurable[0]);
-    }
+  public Configurable @NotNull [] getConfigurables() {
+    return new Configurable[0];
+  }
 
-    return myKids;
+  @NotNull
+  CompilerUIConfigurableKt getCompilerUIConfigurable() {
+    return myCompilerUIConfigurable;
   }
 }

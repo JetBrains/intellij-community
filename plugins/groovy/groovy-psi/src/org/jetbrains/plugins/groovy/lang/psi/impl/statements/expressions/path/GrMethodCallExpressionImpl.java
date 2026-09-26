@@ -15,15 +15,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMethodCallImpl;
 
-/**
- * @author ilyas
- */
+import static com.intellij.psi.util.PsiTreeUtil.getChildrenOfTypeAsList;
+
 public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMethodCallExpression, GrCallExpression {
 
   public GrMethodCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Method call";
   }
@@ -63,8 +63,7 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
   }
 
   @Override
-  @NotNull
-  public GrClosableBlock[] getClosureArguments() {
-    return findChildrenByClass(GrClosableBlock.class);
+  public GrClosableBlock @NotNull [] getClosureArguments() {
+    return getChildrenOfTypeAsList(this, GrClosableBlock.class).toArray(GrClosableBlock.EMPTY_ARRAY);
   }
 }

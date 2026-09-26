@@ -1,20 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
-import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.Nullability
+import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.TailTypes
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImplicitClass
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
-import com.intellij.psi.impl.compiled.ClsClassImpl
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.TypeAnnotationProvider
+import com.intellij.psi.impl.source.PsiClassImpl
+import com.intellij.psi.util.PsiTypesUtil
 
 @ModifierConstant
 internal fun JvmModifier.toPsiModifier(): String = when (this) {
@@ -39,31 +55,49 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
 internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
-  if (this !is PsiClass) return null
-  if (this is PsiTypeParameter) return null
-  if (this is ClsClassImpl) return null
-  if (this.language != JavaLanguage.INSTANCE) return null
-  return this
+  if (this is PsiClassImpl || this is PsiImplicitClass) {
+    if (language == JavaLanguage.INSTANCE) {
+      return this
+    }
+  }
+  return JavaTemplateCodeInsightSupport.getActionClass(this)
 }
 
-internal val visibilityModifiers = setOf(
+internal val visibilityModifiers: Set<JvmModifier> = setOf(
   JvmModifier.PUBLIC,
   JvmModifier.PROTECTED,
   JvmModifier.PACKAGE_LOCAL,
   JvmModifier.PRIVATE
 )
 
-internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes): List<ExpectedTypeInfo> {
-  return expectedTypes.mapNotNull {
-    toExpectedTypeInfo(project, it)
+internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes, context:PsiElement): List<ExpectedTypeInfo> {
+  return expectedTypes.map {
+    toExpectedTypeInfo(project, it, context)
   }
 }
 
-private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType): ExpectedTypeInfo? {
+private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType, context: PsiElement): ExpectedTypeInfo {
   if (expectedType is ExpectedJavaType) return expectedType.info
   val helper = JvmPsiConversionHelper.getInstance(project)
-  val psiType = helper.convertType(expectedType.theType) ?: return null
-  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailType.NONE)
+  var psiType = PsiTypesUtil.removeExternalAnnotations(helper.convertType(expectedType.theType))
+  if (expectedType is ExpectedTypeWithNullability) {
+    psiType =
+    when (expectedType.nullability) {
+      Nullability.NOT_NULL -> annotate(psiType, NullableNotNullManager.getInstance(project).defaultNotNull, project, context)
+      Nullability.NULLABLE -> annotate(psiType, NullableNotNullManager.getInstance(project).defaultNullable, project, context)
+      Nullability.UNKNOWN -> psiType
+    }
+  }
+  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.noneType())
+}
+
+private fun annotate(psiType: PsiType,
+                     annoFqn: String,
+                     project: Project,
+                     context: PsiElement): PsiType {
+  return if (AnnotationUtil.isAnnotatingApplicable(context, annoFqn) && psiType !is PsiPrimitiveType)
+    psiType.annotate(TypeAnnotationProvider.Static.create(arrayOf(JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@"+annoFqn, context))))
+  else psiType
 }
 
 @ExpectedTypeInfo.Type
@@ -79,10 +113,10 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun PsiType.toExpectedType() = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
+internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailTypes.noneType())
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
-  if (isEmpty() || get(0).type == PsiType.VOID) {
+  if (isEmpty() || get(0).type == PsiTypes.voidType()) {
     return listOf(PsiType.getJavaLangObject(context.manager, context.resolveScope).toExpectedType())
   }
   return this

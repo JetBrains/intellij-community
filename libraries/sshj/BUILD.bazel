@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.sshj` start
+content_module_jar(
+    libraries = ["@lib//:libraries-sshj-_s_s_h_j"],
+    module = ":sshj",
+)
+### auto-generated section `dev intellij.libraries.sshj` end
+
+### auto-generated section `build intellij.libraries.sshj` start
+jvm_library(
+    name = "sshj",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sshj",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+    runtime_deps = ["@lib//:libraries-sshj-_s_s_h_j"],
+)
+
+jvm_library(
+    name = "sshj_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sshj",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sshj-_s_s_h_j"],
+    runtime_deps = [":sshj"],
+)
+### auto-generated section `build intellij.libraries.sshj` end
+
+### auto-generated section `iml intellij.libraries.sshj` start
+exports_files(
+    [
+        "intellij.libraries.sshj.iml",
+        "resources/intellij.libraries.sshj.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.sshj` end

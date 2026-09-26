@@ -1,0 +1,72 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.build.s3` start
+create_kotlinc_options(
+    name = "custom_s3",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "s3",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_s3",
+    module_name = "fleet.build.s3",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/build/platform",
+        "//fleet/build/fs",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:fleet-aws-sdk-kotlin-s3-jvm",
+        "@lib//:slf4j-api",
+    ],
+)
+
+jvm_library(
+    name = "s3_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_s3",
+    module_name = "fleet.build.s3",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":s3",
+        "//fleet/build/platform:platform_test_lib",
+        "//fleet/build/fs:fs_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build fleet.build.s3` end
+
+### auto-generated section `iml fleet.build.s3` start
+exports_files(
+    [
+        "fleet.build.s3.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.build.s3` end

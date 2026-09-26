@@ -12,4 +12,4 @@ class Upper(object):
         pass
 
     def foo(self):
-        print self.prop
+        print(self.prop)

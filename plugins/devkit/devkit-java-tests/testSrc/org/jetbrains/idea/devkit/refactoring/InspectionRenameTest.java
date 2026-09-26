@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -21,8 +18,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.nio.file.Paths;
-
 @TestDataPath("$CONTENT_ROOT/testData/refactoring/renameInspection")
 public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -34,33 +29,29 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     super.tuneFixture(moduleBuilder);
 
-    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
-    moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
-      .resolveSibling("intellij.platform.resources").toString());
-    moduleBuilder.addLibrary("platform-api", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
+    moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Attribute.class));
   }
 
   public void testRenameInspectionWithoutGetShortName() {
-    doTestRenameInspection("MyInspectionWithoutGetShortName", "/withoutGetShortName/", "NewMyInspectionWithoutGetShortName.html");
+    doTestRenameInspection("MyInspectionWithoutGetShortName", "withoutGetShortName/", "NewMyInspectionWithoutGetShortName.html");
   }
 
   public void testRenameInspectionWithGetShortName() {
-    doTestRenameInspection("MyInspectionWithGetShortName", "/withGetShortName/", "someSpecificShortName.html");
+    doTestRenameInspection("MyInspectionWithGetShortName", "withGetShortName/", "someSpecificShortName.html");
   }
 
   public void testRenameNonStandardNamedInspection() {
-    doTestRenameInspection("MyInspectionWithSpecificName", "MyInspectionWithSpecificName", "/nonStandardNamed/", "someShortName.html");
+    doTestRenameInspection("MyInspectionWithSpecificName", "MyInspectionWithSpecificName", "nonStandardNamed/", "someShortName.html");
   }
-
 
   private void doTestRenameInspection(String name, String testDataSubPath, String expectedDescriptionFileName) {
     doTestRenameInspection(name, name + "Inspection", testDataSubPath, expectedDescriptionFileName);
   }
 
-  private void doTestRenameInspection(String name, String inspectionName, String testDataSubPath,
-                                      String expectedDescriptionFileName) {
+  private void doTestRenameInspection(String name, String inspectionName, String testDataSubPath, String expectedDescriptionFileName) {
     myFixture.configureByFile(testDataSubPath + name + ".xml");
     myFixture.copyFileToProject(testDataSubPath + inspectionName + ".java");
     myFixture.copyDirectoryToProject(testDataSubPath + "inspectionDescriptions", "inspectionDescriptions");
@@ -70,7 +61,7 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(inspectionName, inspectionClass);
 
     RenameProcessor processor = new RenameProcessor(getProject(), inspectionClass, "New" + inspectionName, true, true);
-    for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       processor.addRenamerFactory(factory);
     }
     processor.run();

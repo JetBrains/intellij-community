@@ -9,7 +9,6 @@ from _pydevd_bundle.pydevd_constants import dict_items
 from _pydevd_bundle.pydevd_custom_frames import update_custom_frame, remove_custom_frame, add_custom_frame
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
-from pydevd_tracing import SetTrace
 import stackless  # @UnresolvedImport
 
 
@@ -186,12 +185,12 @@ def _schedule_callback(prev, next):
             # Ok, making next runnable: set the tracing facility in it.
             debugger = get_global_debugger()
             if debugger is not None:
-                next.trace_function = debugger.trace_dispatch
+                next.trace_function = debugger.get_thread_local_trace_func()
                 frame = next.frame
                 if frame is current_frame:
                     frame = frame.f_back
                 if hasattr(frame, 'f_trace'):  # Note: can be None (but hasattr should cover for that too).
-                    frame.f_trace = debugger.trace_dispatch
+                    frame.f_trace = debugger.get_thread_local_trace_func()
 
             debugger = None
 
@@ -266,7 +265,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
                 debugger = get_global_debugger()
                 if debugger is not None and next.frame:
                     if hasattr(next.frame, 'f_trace'):
-                        next.frame.f_trace = debugger.trace_dispatch
+                        next.frame.f_trace = debugger.get_thread_local_trace_func()
                 debugger = None
 
             if prev:
@@ -328,7 +327,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
 
             debugger = get_global_debugger()
             if debugger is not None:
-                SetTrace(debugger.trace_dispatch)
+                debugger.enable_tracing()
 
             debugger = None
 
@@ -368,7 +367,7 @@ if not hasattr(stackless.tasklet, "trace_function"):
     def run(*args, **kwargs):
         debugger = get_global_debugger()
         if debugger is not None:
-            SetTrace(debugger.trace_dispatch)
+            debugger.enable_tracing()
         debugger = None
 
         return _original_run(*args, **kwargs)

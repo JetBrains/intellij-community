@@ -5,6 +5,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiUtil
 
-internal fun <T : PsiModifierListOwner> T.setStatic(isStatic: Boolean) = apply {
+internal fun <T : PsiModifierListOwner> T.setStatic(isStatic: Boolean): T = apply {
   PsiUtil.setModifierProperty(this, PsiModifier.STATIC, isStatic)
 }

@@ -1,25 +1,32 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -27,25 +34,29 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerationUtil;
 import org.jetbrains.java.generate.template.TemplateResource;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsHelper implements Runnable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
-  @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
-  @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
-  @NonNls private static final String SUPER_PARAM_NAME = "superParamName";
-  @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
-  @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
-  @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
+  static final @NonNls String INSTANCE_NAME = "instanceBaseName";
+  private static final @NonNls String BASE_PARAM_NAME = "baseParamName";
+  private static final @NonNls String SUPER_PARAM_NAME = "superParamName";
+  private static final @NonNls String SUPER_HAS_EQUALS = "superHasEquals";
+  private static final @NonNls String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
+  private static final @NonNls String SUPER_HAS_HASH_CODE = "superHasHashCode";
 
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;
@@ -86,7 +97,7 @@ public class GenerateEqualsHelper implements Runnable {
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
     final PsiManager manager = PsiManager.getInstance(project);
 
-    myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
     myCodeStyleManager = CodeStyleManager.getInstance(manager.getProject());
@@ -96,7 +107,7 @@ public class GenerateEqualsHelper implements Runnable {
   private static boolean shouldAddOverrideAnnotation(PsiElement context) {
     JavaCodeStyleSettings style = JavaCodeStyleSettings.getInstance(context.getContainingFile());
 
-    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
+    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, context);
   }
 
   @Override
@@ -115,13 +126,13 @@ public class GenerateEqualsHelper implements Runnable {
   public Collection<PsiMethod> generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
     if (myEqualsFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())))) {
-      equals = createEquals();
+      equals = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> createEquals());
     }
 
     PsiMethod hashCode = null;
     if (myHashCodeFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getHashCodeSignature()))) {
       if (myHashCodeFields.length > 0) {
-        hashCode = createHashCode();
+        hashCode = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> createHashCode());
       }
       else {
         if (!mySuperHasHashCode) {
@@ -153,58 +164,56 @@ public class GenerateEqualsHelper implements Runnable {
   public static Map<String, PsiType> getEqualsImplicitVars(Project project) {
     final Map<String, PsiType> map = new LinkedHashMap<>();
     final PsiType stringType = project != null ? PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project))
-                                               : PsiType.NULL;
-    map.put(INSTANCE_NAME, stringType);
+                                               : (PsiPrimitiveType)PsiTypes.nullType();
     map.put(BASE_PARAM_NAME, stringType);
     map.put(SUPER_PARAM_NAME, stringType);
-    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiType.BOOLEAN);
-    map.put(SUPER_HAS_EQUALS, PsiType.BOOLEAN);
+    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiTypes.booleanType());
+    map.put(SUPER_HAS_EQUALS, PsiTypes.booleanType());
     return map;
   }
 
   public static Map<String, PsiType> getHashCodeImplicitVars() {
     final Map<String, PsiType> map = new LinkedHashMap<>();
-    map.put(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN);
+    map.put(SUPER_HAS_HASH_CODE, PsiTypes.booleanType());
     return map;
   }
-  
+
   private PsiMethod createEquals() throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
     JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(myClass.getContainingFile());
     ArrayList<PsiField> equalsFields = new ArrayList<>();
     ContainerUtil.addAll(equalsFields, myEqualsFields);
-    Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
+    equalsFields.sort(EqualsFieldsComparator.INSTANCE);
 
     final HashMap<String, Object> contextMap = new HashMap<>();
 
     final PsiType classType = JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
-    String[] nameSuggestions = codeStyleManager
-      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
-    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : "that";
+    String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
+    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10
+                              ? nameSuggestions[0]
+                              : styleSettings.LOCAL_VARIABLE_NAME_PREFIX + "that" + styleSettings.LOCAL_VARIABLE_NAME_SUFFIX;
     contextMap.put(INSTANCE_NAME, instanceBaseName);
 
     final PsiType objectType = PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope());
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
-    final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
+    final String objectBaseName = nameSuggestions.length > 0
+                                  ? nameSuggestions[0]
+                                  : styleSettings.PARAMETER_NAME_PREFIX + "object" + styleSettings.PARAMETER_NAME_SUFFIX;
     contextMap.put(BASE_PARAM_NAME, objectBaseName);
     final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
 
     PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
-    if (superEquals != null) {
-      contextMap.put(SUPER_PARAM_NAME, superEquals.getParameterList().getParameters()[0].getName());
-    }
-    
+    contextMap.put(SUPER_PARAM_NAME, superEquals == null ? "obj" : superEquals.getParameterList().getParameters()[0].getName());
+
     contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
     contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<>(), contextMap,
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false, myUseAccessors);
-    buffer.append(methodText);
     PsiMethod result;
     try {
-      result = myFactory.createMethodFromText(buffer.toString(), myClass);
+      result = myFactory.createMethodFromText(methodText, myClass);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -229,7 +238,7 @@ public class GenerateEqualsHelper implements Runnable {
     PsiClass containingClass = superEquals.getContainingClass();
     //implicit equals e.g. generated by lombok
     if (containingClass == myClass) {
-      return Arrays.stream(superEquals.findSuperMethods()).anyMatch(superMethod -> {
+      return ContainerUtil.exists(superEquals.findSuperMethods(), superMethod -> {
         PsiClass superClass = superMethod.getContainingClass();
         return !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
                 superClass != null &&
@@ -242,18 +251,15 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private PsiMethod createHashCode() throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
-
     final HashMap<String, Object> contextMap = new HashMap<>();
     contextMap.put(SUPER_HAS_HASH_CODE, mySuperHasHashCode);
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<>(), contextMap,
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false, myUseAccessors);
-    buffer.append(methodText);
     PsiMethod hashCode;
     try {
-      hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+      hashCode = myFactory.createMethodFromText(methodText, null);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -284,7 +290,7 @@ public class GenerateEqualsHelper implements Runnable {
       if (className != null) {
         PsiClass usedClass = JavaPsiFacade.getInstance(myClass.getProject()).findClass(className, myClass.getResolveScope());
         if (usedClass == null || PsiUtil.getLanguageLevel(myClass).isLessThan(PsiUtil.getLanguageLevel(usedClass))) {
-          manager.setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+          manager.setDefaultTemplate(EqualsHashCodeTemplatesManagerBase.INTELLI_J_DEFAULT);
         }
       }
       run();
@@ -294,7 +300,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  static class EqualsFieldsComparator implements Comparator<PsiField> {
+  private static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
     @Override

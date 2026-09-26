@@ -1,0 +1,10 @@
+// "Change type to '(String) -> Int'" "true"
+// K2_ERROR: VAR_TYPE_MISMATCH_ON_OVERRIDE
+interface A {
+    var x: (String) -> Int
+}
+interface B : A {
+    override var x: (String) -> Int
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -28,100 +30,87 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
-import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE;
+import static com.intellij.ui.SimpleTextAttributes.fromTextAttributes;
 
 /**
  * @author gregsh
  */
-public class JumpToColorsAndFontsAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class JumpToColorsAndFontsAction extends DumbAwareAction {
 
   public JumpToColorsAndFontsAction() {
     setInjectedContext(true);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     e.getPresentation().setEnabledAndVisible(project != null && editor != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     // todo handle ColorKey's as well
     Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return;
-    Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = ContainerUtil.newHashMap();
-    Processor<RangeHighlighterEx> processor = r -> {
-      HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
-      TextAttributesKey key = info != null
-                              ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
-                              : null;
+
+    Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = new HashMap<>();
+    List<TextAttributesKey> keys = getTextAttributesKeys(project, editor);
+    for (TextAttributesKey key : keys) {
       Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
         key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
       if (p != null) keyMap.put(key, p);
-      return true;
-    };
-    JBIterable<Editor> editors = editor instanceof EditorWindow ? JBIterable.of(editor, ((EditorWindow)editor).getDelegate()) : JBIterable.of(editor);
-    for (Editor ed : editors) {
-      TextRange selection = EditorUtil.getSelectionInAnyMode(ed);
-      MarkupModel forDocument = DocumentMarkupModel.forDocument(ed.getDocument(), project, false);
-      if (forDocument != null) {
-        ((MarkupModelEx)forDocument).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
-      }
-      ((MarkupModelEx)ed.getMarkupModel()).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
-      EditorHighlighter highlighter = ed instanceof EditorEx ? ((EditorEx)ed).getHighlighter() : null;
-      SyntaxHighlighter syntaxHighlighter = highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
-      if (syntaxHighlighter != null) {
-        HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
-        while (!iterator.atEnd()) {
-          for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
-            Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
-              key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
-            if (p != null) keyMap.put(key, p);
-          }
-          if (iterator.getEnd() >= selection.getEndOffset()) break;
-          iterator.advance();
-        }
-      }
     }
 
     if (keyMap.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No text attributes found");
+      HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.no.text.attributes.found"));
     }
     else if (keyMap.size() == 1) {
       Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p = keyMap.values().iterator().next();
       if (!openSettingsAndSelectKey(project, p.first, p.second)) {
-        HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
+        HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.no.appropriate.settings.page.found"));
       }
     }
     else {
-      ArrayList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> attrs = ContainerUtil.newArrayList(keyMap.values());
-      Collections.sort(attrs, (o1, o2) -> StringUtil.naturalCompare(
+      ArrayList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> attrs = new ArrayList<>(keyMap.values());
+      attrs.sort((o1, o2) -> StringUtil.naturalCompare(
         o1.first.getDisplayName() + o1.second.getDisplayName(), o2.first.getDisplayName() + o2.second.getDisplayName()));
 
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
       ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> renderer =
-        new ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>>() {
+        new ColoredListCellRenderer<>() {
           @Override
           protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list,
                                                Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> value,
@@ -141,8 +130,12 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
               saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
               if (last) append(" ", saCur);
               append(split.get(i), saCur);
-              if (last) append(" ", saCur);
-              else append(" > ", GRAYED_ATTRIBUTES);
+              if (last) {
+                append(" ", saCur);
+              }
+              else {
+                append(" > ", GRAYED_ATTRIBUTES);
+              }
             }
             Color stripeColor = ta.getErrorStripeColor();
             boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();
@@ -164,14 +157,67 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
         .setRequestFocus(true)
         .setItemChosenCallback((p) -> {
           if (!openSettingsAndSelectKey(project, p.first, p.second)) {
-            HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
+            HintManager.getInstance().showErrorHint(editor, LangBundle.message("hint.text.no.appropriate.settings.page.found"));
           }
         })
         .createPopup().showInBestPositionFor(editor);
     }
   }
 
-  private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorAndFontDescriptorsProvider page, @NotNull AttributesDescriptor descriptor) {
-    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null, descriptor.getDisplayName(), page.getDisplayName());
+  /**
+   * Includes attributes at selection start, doesn't include at end.
+   */
+  @VisibleForTesting
+  public static @NotNull List<TextAttributesKey> getTextAttributesKeys(@NotNull Project project, @NotNull Editor editor) {
+    List<TextAttributesKey> keys = new ArrayList<>();
+    Ref<TextRange> selectionRef = new Ref<>();
+    Ref<Boolean> hasEraseMarkerRef = new Ref<>();
+    Processor<RangeHighlighterEx> processor = r -> {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
+      boolean relevant =
+        selectionRef.get().getStartOffset() < r.getEndOffset() &&
+        (selectionRef.get().getLength() == 0 || r.getStartOffset() < selectionRef.get().getEndOffset());
+      TextAttributesKey key = info != null && relevant
+                              ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
+                              : null;
+      if (r.getForcedTextAttributes() == TextAttributes.ERASE_MARKER) {
+        hasEraseMarkerRef.set(true);
+      }
+      else if (key != null) {
+        keys.add(key);
+      }
+      return true;
+    };
+    JBIterable<Editor> editors = editor instanceof EditorWindow ? JBIterable.of(editor, ((EditorWindow)editor).getDelegate()) : JBIterable.of(
+      editor);
+    for (Editor ed : editors) {
+      TextRange selection = EditorUtil.getSelectionInAnyMode(ed);
+      selectionRef.set(selection);
+      hasEraseMarkerRef.set(false);
+      MarkupModel forDocument = DocumentMarkupModel.forDocument(ed.getDocument(), project, false);
+      if (forDocument != null) {
+        ((MarkupModelEx)forDocument).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
+      }
+      ((MarkupModelEx)ed.getMarkupModel()).processRangeHighlightersOverlappingWith(selection.getStartOffset(), selection.getEndOffset(), processor);
+      EditorHighlighter highlighter = editor.getHighlighter();
+      SyntaxHighlighter syntaxHighlighter = highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
+      if (syntaxHighlighter != null && !hasEraseMarkerRef.get()) {
+        HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
+        while (!iterator.atEnd()) {
+          IElementType type = iterator.getTokenType();
+          keys.addAll(Arrays.asList(type == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type)));
+          if (iterator.getEnd() >= selection.getEndOffset()) break;
+          iterator.advance();
+        }
+      }
+    }
+    return keys;
+  }
+
+  private static boolean openSettingsAndSelectKey(@NotNull Project project,
+                                                  @NotNull ColorAndFontDescriptorsProvider page,
+                                                  @NotNull AttributesDescriptor descriptor) {
+    return selectOrEditColor(SimpleDataContext.getProjectContext(project),
+                             descriptor.getDisplayName(), page.getDisplayName());
   }
 }

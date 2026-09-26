@@ -16,20 +16,21 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement
 
-/**
- * @author nik
- */
 class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfigurable: BaseLibrariesConfigurable,
                                                      context: StructureConfigurableContext)
   : ConvertToRepositoryLibraryActionBase(context) {
 
   override fun getSelectedLibrary(): LibraryEx? = (librariesConfigurable.selectedElement as? LibraryProjectStructureElement)?.library as? LibraryEx
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun replaceLibrary(library: Library, configureNewLibrary: (LibraryEditorBase) -> Unit) {
     val name = library.name
@@ -42,6 +43,6 @@ class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfig
 
     val editor = modifiableModel.getLibraryEditor(newLibrary)
     configureNewLibrary(editor)
-    ProjectStructureConfigurable.getInstance(project).selectProjectOrGlobalLibrary(newLibrary, true)
+    librariesConfigurable.projectStructureConfigurable.selectProjectOrGlobalLibrary(newLibrary, true)
   }
 }

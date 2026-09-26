@@ -1,10 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpPattern;
@@ -16,16 +20,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EmptyAlternationBranchInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return "Empty branch in alternation";
-  }
-
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new EmptyAlternationBranchVisitor(holder);
   }
 
@@ -33,7 +29,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public EmptyAlternationBranchVisitor(ProblemsHolder holder) {
+    EmptyAlternationBranchVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -58,23 +54,20 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
           // empty branch at end allowed, if no empty branch at beginning
           continue;
         }
-        myHolder.registerProblem(branch.getPrevSibling(), "Empty branch in alternation", new DuplicateAlternationBranchFix());
+        myHolder.registerProblem(branch.getPrevSibling(), RegExpBundle.message("inspection.warning.empty.branch.in.alternation"),
+                                 new EmptyAlternationBranchFix());
       }
     }
   }
 
-  private static class DuplicateAlternationBranchFix implements LocalQuickFix {
-
-    @Nls
-    @NotNull
+  private static class EmptyAlternationBranchFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
-      return "Remove empty branch";
+    public @Nls @NotNull String getFamilyName() {
+      return RegExpBundle.message("inspection.quick.fix.remove.empty.branch");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element.getParent() instanceof RegExpPattern)) return;
       element.getNextSibling().delete();
       element.delete();

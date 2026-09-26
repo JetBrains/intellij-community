@@ -1,0 +1,9 @@
+// WITH_STDLIB
+fun test() {
+    listOf(listOf(1, 2, 3)).onEach { inner ->
+        inner.forEach { item ->
+            if (item == 2) return@forEach
+        }
+    }
+}
+

@@ -1,0 +1,26 @@
+LineBreakpoint created at basicFlow.kt:12
+LineBreakpoint created at basicFlow.kt:29
+Run Java
+Connected to the target VM
+basicFlow.kt:12
+basicFlow.kt:29
+basicFlow.kt:30
+basicFlow.kt:12
+basicFlow.kt:13
+basicFlow.kt:29
+basicFlow.kt:30
+basicFlow.kt:13
+basicFlow.kt:14
+basicFlow.kt:29
+basicFlow.kt:30
+basicFlow.kt:14
+basicFlow.kt:15
+basicFlow.kt:29
+basicFlow.kt:30
+basicFlow.kt:20
+basicFlow.kt:27
+basicFlow.kt:31
+basicFlow.kt:24
+Disconnected from the target VM
+
+Process finished with exit code 0

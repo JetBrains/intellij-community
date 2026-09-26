@@ -1,0 +1,11 @@
+// "Replace with safe (?.) call" "true"
+// K2_ERROR: UNSAFE_OPERATOR_CALL
+class A {
+    operator fun plusAssign(other: A) {}
+}
+
+fun foo(b: A) {
+    var a: A? = A()
+    a <caret>+= b
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

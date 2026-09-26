@@ -17,14 +17,17 @@ package com.intellij.designer.designSurface.feedbacks;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas
  */
 public class AbstractTextFeedback extends SimpleColoredComponent {
-  public final void bold(String text) {
+  public final void bold(@Nls String text) {
     append(text, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
   }
 

@@ -1,49 +1,72 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.ui.HintHint;
+import com.intellij.structuralsearch.plugin.ui.filters.ShortFilterTextProvider;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
-public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
+public final class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
   private static final Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
-  private static final TooltipGroup SS_INFO_TOOLTIP_GROUP = new TooltipGroup("SS_INFO_TOOLTIP_GROUP", 0);
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
-  @Nullable private final Consumer<String> myCurrentVariableCallback;
+  private final ShortFilterTextProvider myShortFilterTextProvider;
+  private final boolean myCanBeReplace;
+  private final @Nullable Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
+  private final Map<String, Inlay<FilterRenderer>> inlays = new HashMap<>();
 
-  SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<String> currentVariableCallback) {
+  private SubstitutionShortInfoHandler(@NotNull Editor _editor, ShortFilterTextProvider provider, boolean canBeReplace,
+                                       @Nullable Consumer<? super String> currentVariableCallback) {
     editor = _editor;
+    myShortFilterTextProvider = provider;
+    myCanBeReplace = canBeReplace;
     myCurrentVariableCallback = currentVariableCallback;
   }
 
   @Override
-  public void mouseMoved(EditorMouseEvent e) {
-    LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
-
-    handleInputFocusMovement(position, false);
+  public void mouseMoved(@NotNull EditorMouseEvent e) {
+    handleInputFocusMovement(e.getLogicalPosition(), false);
   }
 
   private void handleInputFocusMovement(LogicalPosition position, boolean caret) {
@@ -51,68 +74,59 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     if (configuration == null) {
       return;
     }
-    checkModelValidity();
-    final int offset = editor.logicalPositionToOffset(position);
     final Document document = editor.getDocument();
-    final int length = document.getTextLength();
-    final CharSequence elements = document.getCharsSequence();
+    final int lineCount = document.getLineCount();
+    if (position.line >= lineCount) {
+      return;
+    }
+    final int lineStart = document.getLineStartOffset(position.line);
+    final int lineEnd = document.getLineEndOffset(position.line);
+    final CharSequence patternText = document.getCharsSequence().subSequence(lineStart, lineEnd);
 
-    int start = offset-1;
-    while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
-
-    String text = "";
-    int end = -1;
-    if (start >= 0 && elements.charAt(start) == '$') {
-      end = offset;
-
-      while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
-      if (end < length && elements.charAt(end) == '$') {
-        final String variableName = elements.subSequence(start + 1, end).toString();
-
-        if (variables.contains(variableName)) {
-          final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-          text = getShortParamString(variable);
-          final boolean replacementVariable =
-            variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
-          final String currentVariableName = replacementVariable
-                              ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
-                              : variableName;
-          configuration.setCurrentVariableName(currentVariableName);
-          if (myCurrentVariableCallback != null && caret) {
-            myCurrentVariableCallback.accept(currentVariableName);
-            caret = false;
-          }
+    final TextRange variableRange = TemplateImplUtil.findVariableAtOffset(patternText, position.column);
+    if (variableRange == null) {
+      if (caret) {
+        if (myCurrentVariableCallback != null) {
+          myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
         }
       }
+      return;
     }
-    if (myCurrentVariableCallback != null && caret) {
-      myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
-    }
-
-    if (!text.isEmpty()) {
-      showTooltip(editor, start, end + 1, text);
-    }
-    else {
-      TooltipController.getInstance().cancelTooltips();
+    final String variableName = variableRange.subSequence(patternText).toString();
+    final NamedScriptableDefinition variable = configuration.findVariable(variableName);
+    final boolean replacementVariable =
+      variable instanceof ReplacementVariableDefinition ||
+      myCanBeReplace && variable == null && configuration instanceof ReplaceConfiguration;
+    final String currentVariableName = replacementVariable
+                                       ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
+                                       : variableName;
+    if (caret) {
+      if (myCurrentVariableCallback != null) {
+        myCurrentVariableCallback.accept(currentVariableName);
+      }
     }
   }
 
   private void checkModelValidity() {
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     if (modificationTimeStamp != document.getModificationStamp()) {
       variables.clear();
-      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).keySet());
+      variables.addAll(TemplateImplUtil.parseVariableNames(document.getCharsSequence()));
       modificationTimeStamp = document.getModificationStamp();
+      updateEditorInlays();
     }
   }
 
   @Override
-  public void mouseDragged(EditorMouseEvent e) {
+  public void caretPositionChanged(@NotNull CaretEvent e) {
+    handleInputFocusMovement(e.getNewPosition(), true);
   }
 
   @Override
-  public void caretPositionChanged(CaretEvent e) {
-    handleInputFocusMovement(e.getNewPosition(), true);
+  public void documentChanged(@NotNull DocumentEvent event) {
+    // to handle backspace & delete (backspace strangely is not reported to the caret listener)
+    handleInputFocusMovement(editor.getCaretModel().getLogicalPosition(), true);
+    updateEditorInlays();
   }
 
   public List<String> getVariables() {
@@ -120,116 +134,130 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return variables;
   }
 
-  @NotNull
-  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition) {
-    if (namedScriptableDefinition == null) {
-      return SSRBundle.message("no.constraints.specified.tooltip.message");
-    }
-
-    final StringBuilder buf = new StringBuilder();
-
-    if (namedScriptableDefinition instanceof MatchVariableConstraint) {
-      final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
-      if (constraint.isPartOfSearchResults()) {
-        append(buf, SSRBundle.message("target.tooltip.message"));
-      }
-      if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
-        append(buf, SSRBundle.message("text.tooltip.message",
-                                      constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "", constraint.getRegExp()));
-      }
-      if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
-        append(buf, SSRBundle.message("within.hierarchy.tooltip.message"));
-      }
-      if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
-        append(buf, SSRBundle.message("reference.target.tooltip.message",
-                                      constraint.isInvertReference() ? SSRBundle.message("not.tooltip.message") : "", text));
-      }
-
-      if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
-        append(buf, SSRBundle.message("exprtype.tooltip.message",
-                                     constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
-                                     constraint.getNameOfExprType(),
-                                     constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
-      }
-
-      if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
-        append(buf, SSRBundle.message("expected.type.tooltip.message",
-                                      constraint.isInvertFormalType() ? SSRBundle.message("not.tooltip.message") : "",
-                                      constraint.getNameOfFormalArgType(),
-                                      constraint.isFormalArgTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
-      }
-
-      if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
-        final String text = StringUtil.unquoteString(constraint.getWithinConstraint());
-        append(buf, constraint.isInvertWithinConstraint()
-                    ? SSRBundle.message("not.within.constraints.tooltip.message", text)
-                    : SSRBundle.message("within.constraints.tooltip.message", text));
-      }
-
-      final String name = constraint.getName();
-      if (!Configuration.CONTEXT_VAR_NAME.equals(name)) {
-        if (constraint.getMinCount() == constraint.getMaxCount()) {
-          append(buf, SSRBundle.message("occurs.tooltip.message", constraint.getMinCount()));
-        }
-        else {
-          append(buf, SSRBundle.message("min.occurs.tooltip.message", constraint.getMinCount(),
-                                        constraint.getMaxCount() == Integer.MAX_VALUE ?
-                                        StringUtil.decapitalize(SSRBundle.message("editvarcontraints.unlimited")) :
-                                        constraint.getMaxCount()));
-        }
-      }
-    }
-
-    final String script = namedScriptableDefinition.getScriptCodeConstraint();
-    if (script != null && script.length() > 2) {
-      final String str = SSRBundle.message("script.tooltip.message", StringUtil.unquoteString(script));
-      append(buf, str);
-    }
-
-    if (buf.length() == 0) {
-      return SSRBundle.message("no.constraints.specified.tooltip.message");
-    }
-    return buf.toString();
-  }
-
-  private static void append(final StringBuilder buf, final String str) {
-    if (buf.length() > 0) buf.append(", ");
-    buf.append(str);
-  }
-
-  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
-    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
-    final int documentLength = editor.getDocument().getTextLength();
-    if (end >= documentLength) end = documentLength;
-    final Point right = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
-
-    final Point bestPoint = new Point(left.x + (right.x - left.x) / 2, right.y + editor.getLineHeight() / 2);
-
-    if (visibleArea.x > bestPoint.x) {
-      bestPoint.x = visibleArea.x;
-    }
-    else if (visibleArea.x + visibleArea.width < bestPoint.x) {
-      bestPoint.x = visibleArea.x + visibleArea.width - 5;
-    }
-
-    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint,
-                                                editor.getComponent().getRootPane().getLayeredPane());
-    final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setShowImmediately(true)
-      .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    TooltipController.getInstance().showTooltip(editor, p, StringUtil.escapeXml(text), visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
-  }
-
   static SubstitutionShortInfoHandler retrieve(Editor editor) {
-    return editor.getUserData(LISTENER_KEY);
+    return editor == null ? null : editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, @Nullable Consumer<String> currentVariableCallback) {
-    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
-    editor.addEditorMouseMotionListener(handler);
-    editor.getDocument().addDocumentListener(handler);
-    editor.getCaretModel().addCaretListener(handler);
+  static void install(Editor editor, ShortFilterTextProvider provider, Disposable disposable) {
+    install(editor, provider, null, disposable, false);
+  }
+
+  static void install(Editor editor, ShortFilterTextProvider provider, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
+    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, provider, replace, currentVariableCallback);
+    editor.addEditorMouseMotionListener(handler, disposable);
+    editor.getDocument().addDocumentListener(handler, disposable);
+    editor.getCaretModel().addCaretListener(handler, disposable);
     editor.putUserData(LISTENER_KEY, handler);
+  }
+
+  static void updateEditorInlays(Editor editor) {
+    final SubstitutionShortInfoHandler handler = retrieve(editor);
+    if (handler != null) {
+      handler.updateEditorInlays();
+    }
+  }
+
+  void updateEditorInlays() {
+    final Project project = editor.getProject();
+    if (project == null) {
+      return;
+    }
+    final String text = editor.getDocument().getText();
+    final Template template = TemplateManager.getInstance(project).createTemplate("", "", text);
+    final int segmentsCount = template.getSegmentsCount();
+    final InlayModel inlayModel = editor.getInlayModel();
+    final HashSet<String> variables = new HashSet<>(inlays.keySet());
+    final Configuration configuration = editor.getUserData(CURRENT_CONFIGURATION_KEY);
+    if (configuration == null) return;
+    int variableNameLength = 0;
+    for (int i = 0; i < segmentsCount; i++) {
+      final int offset = template.getSegmentOffset(i);
+      final String name = template.getSegmentName(i);
+      variableNameLength += name.length() + 2;
+      final NamedScriptableDefinition variable = configuration.findVariable(name);
+      final String labelText = myShortFilterTextProvider.getShortFilterText(variable);
+      if (labelText.isEmpty()) {
+        continue;
+      }
+      variables.remove(name);
+      final Inlay<FilterRenderer> inlay = inlays.get(name);
+      if (inlay == null) {
+        inlays.put(name, inlayModel.addInlineElement(offset + variableNameLength, new FilterRenderer(labelText)));
+      }
+      else {
+        final FilterRenderer renderer = inlay.getRenderer();
+        renderer.setText(labelText);
+        inlay.update();
+      }
+    }
+    final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
+    final String labelText = myShortFilterTextProvider.getShortFilterText(contextVariable);
+    if (!labelText.isEmpty()) {
+      variables.remove(Configuration.CONTEXT_VAR_NAME);
+      final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
+      if (inlay == null) {
+        inlays.put(Configuration.CONTEXT_VAR_NAME,
+                   inlayModel.addBlockElement(text.length() + variableNameLength, true, false, 0,
+                                              new FilterRenderer("whole template: " + labelText)));
+      }
+      else {
+        final FilterRenderer renderer = inlay.getRenderer();
+        renderer.setText("whole template: " + labelText);
+        inlay.update();
+      }
+    }
+    for (String variable : variables) {
+      Disposer.dispose(inlays.remove(variable));
+    }
+  }
+
+  private static class FilterRenderer implements EditorCustomElementRenderer {
+
+    private String myText;
+
+    FilterRenderer(String text) {
+      myText = text;
+    }
+
+    public void setText(String text) {
+      myText = text;
+    }
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return getFontMetrics(inlay.getEditor()).stringWidth(myText) + 12;
+    }
+
+    private static Font getFont() {
+      return UIManager.getFont("Label.font");
+    }
+
+    private static FontMetrics getFontMetrics(Editor editor) {
+      return editor.getContentComponent().getFontMetrics(getFont()) ;
+    }
+
+    @Override
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      final Editor editor = inlay.getEditor();
+      final TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+      if (attributes == null) {
+        return;
+      }
+      final FontMetrics metrics = getFontMetrics(editor);
+      final Color backgroundColor = attributes.getBackgroundColor();
+      if (backgroundColor != null) {
+        final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+        GraphicsUtil.paintWithAlpha(g, 0.55f);
+        g.setColor(backgroundColor);
+        g.fillRoundRect(r.x + 2, r.y, r.width - 4, r.height, 8, 8);
+        config.restore();
+      }
+      final Color foregroundColor = attributes.getForegroundColor();
+      if (foregroundColor != null) {
+        g.setColor(foregroundColor);
+        g.setFont(getFont());
+        g.drawString(myText, r.x + 6, r.y + metrics.getAscent());
+      }
+    }
   }
 }

@@ -1,71 +1,76 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Collections;
 
-/**
- * @author yole
- */
-public class PyGotoClassContributor implements GotoClassContributor {
-  @NotNull
-  public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    Set<String> results = new HashSet<>();
-    results.addAll(PyClassNameIndex.allKeys(project));
-    results.addAll(PyModuleNameIndex.getAllKeys(project));
-    return ArrayUtil.toStringArray(results);
-  }
 
-  @NotNull
-  public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project,
-                                         final boolean includeNonProjectItems) {
-    final List<NavigationItem> results = new ArrayList<>();
-    results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
-    results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
-    return results.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
-  }
-
-  @Nullable
+public class PyGotoClassContributor implements GotoClassContributor, ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
-  public String getQualifiedName(NavigationItem item) {
-    return null;
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
+      if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
+      FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter);
+    });
   }
 
-  @Nullable
   @Override
-  public String getQualifiedNameSeparator() {
-    return null;
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<? super NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    Project project = parameters.getProject();
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
+    IdFilter filter = parameters.getIdFilter();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
+      FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
+        PsiFile psiFile = psiManager.findFile(file);
+        return !(psiFile instanceof PyFile) || processor.process(psiFile);
+      }, scope);
+    });
   }
 
-  @Nullable
   @Override
-  public Language getElementLanguage() {
+  public @Nullable String getQualifiedName(@NotNull NavigationItem item) {
+    return item instanceof PyQualifiedNameOwner qNameOwner ? qNameOwner.getQualifiedName() : null;
+  }
+
+  @Override
+  public @Nullable String getQualifiedNameSeparator() {
+    return ".";
+  }
+
+  @Override
+  public @Nullable Language getElementLanguage() {
     return PythonLanguage.getInstance();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 }

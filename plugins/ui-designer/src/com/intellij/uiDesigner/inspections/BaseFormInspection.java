@@ -1,30 +1,34 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.ErrorAnalyzer;
+import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
+import com.intellij.uiDesigner.PsiPropertiesProvider;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspectionTool implements FormInspectionTool {
   private final String myInspectionKey;
 
@@ -33,19 +37,13 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nls @NotNull
-  public String getDisplayName() {
-    return "";
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");
   }
 
   @Override
-  @NotNull @NonNls public String getShortName() {
+  public @NotNull
+  @NonNls String getShortName() {
     return myInspectionKey;
   }
 
@@ -61,9 +59,8 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (!file.getFileType().equals(GuiFormFileType.INSTANCE)) {
       return null;
     }
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -107,8 +104,7 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nullable
-  public ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
+  public ErrorInfo @Nullable [] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
     FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
     checkComponentProperties(component.getModule(), component, collector);
     return collector.result();

@@ -1,0 +1,4 @@
+fun foo() {
+    val bar = "bar"
+    val baz = <spot>$$"$$bar boo $${1 + 2}$"</spot>
+}

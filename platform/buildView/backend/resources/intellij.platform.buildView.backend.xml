@@ -1,0 +1,21 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.buildView"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildTreeApiProvider"
+                                            apiInterfaces="com.intellij.platform.buildView.BuildTreeApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.buildView.backend.BuildViewApiProvider"
+                                            apiInterfaces="com.intellij.platform.buildView.BuildViewApi"/>
+  </extensions>
+</idea-plugin>

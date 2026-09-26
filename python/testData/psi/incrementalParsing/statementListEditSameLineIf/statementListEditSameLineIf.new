@@ -1,0 +1,4 @@
+def foo():
+    if True: print(1)
+    if False: print(3)
+    return

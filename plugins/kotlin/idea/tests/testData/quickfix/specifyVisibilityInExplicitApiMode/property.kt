@@ -1,0 +1,9 @@
+// "Make 'bar' public explicitly" "true"
+// PRIORITY: HIGH
+// COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
+
+public class Foo(val <caret>bar: Int, private var bar2: String, internal var bar3: Long, public var bar4: Int)
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

@@ -1,0 +1,5 @@
+// PROBLEM: Modifiers should be placed directly before the relevant element
+annotation class Test
+
+@Test
+internal abstract /* this is a test */ class MyTest

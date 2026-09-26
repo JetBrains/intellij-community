@@ -1,0 +1,4 @@
+
+fun testHighOrderFunctionCallLabel() {
+    run {}
+}

@@ -1,42 +1,44 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.java.impl.template.JavaTemplateFormattingSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class SurroundWithUtil {
-  
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil");
+public final class SurroundWithUtil {
+
+  private static final Logger LOG = Logger.getInstance(SurroundWithUtil.class);
 
   private SurroundWithUtil() {
   }
@@ -44,52 +46,55 @@ public class SurroundWithUtil {
   public static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
     try{
       PsiManager psiManager = block.getManager();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
-        if (statement instanceof PsiDeclarationStatement) {
-          PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-          if (needToDeclareOut(statements, declaration)) {
-            PsiElement[] elements = declaration.getDeclaredElements();
-            for (PsiElement element : elements) {
-              PsiVariable var = (PsiVariable)element;
-              PsiExpression initializer = var.getInitializer();
-              if (initializer != null) {
-                String name = var.getName();
-                PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
-                assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
-                PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
-                expr.getRExpression().replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
-                assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
-                array.add(assignment);
-              }
+        if (statement instanceof PsiDeclarationStatement declaration && needToDeclareOut(statements, declaration)) {
+          PsiElement[] elements = declaration.getDeclaredElements();
+          for (PsiElement element : elements) {
+            PsiVariable var = (PsiVariable)element;
+            PsiExpression initializer = var.getInitializer();
+            if (initializer != null) {
+              String name = var.getName();
+              PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
+              assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
+              PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
+              expr.getRExpression().replace(CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
+              assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
+              array.add(assignment);
             }
-            PsiDeclarationStatement newDeclaration;
-            if (!array.isEmpty()) {
-              PsiElement firstStatement = array.get(0);
-              newDeclaration = (PsiDeclarationStatement)block.addBefore(declaration, firstStatement);
-              declaration.delete();
-            }
-            else {
-              newDeclaration = declaration;
-            }
-            elements = newDeclaration.getDeclaredElements();
-            for (PsiElement element1 : elements) {
-              PsiVariable var = (PsiVariable)element1;
-              PsiExpression initializer = var.getInitializer();
-              if (initializer != null) {
-                if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
-                  initializer.delete();
-                }
-                else {
-                  String defaultValue = PsiTypesUtil.getDefaultValueOfType(var.getType());
-                  PsiExpression expr = factory.createExpressionFromText(defaultValue, null);
-                  initializer.replace(expr);
-                }
-              }
-            }
-            continue;
           }
+          PsiDeclarationStatement newDeclaration;
+          if (!array.isEmpty()) {
+            PsiElement firstStatement = array.get(0);
+            newDeclaration = (PsiDeclarationStatement)block.addBefore(declaration, firstStatement);
+            declaration.delete();
+          }
+          else {
+            newDeclaration = declaration;
+          }
+          elements = newDeclaration.getDeclaredElements();
+          for (PsiElement element1 : elements) {
+            PsiVariable var = (PsiVariable)element1;
+            PsiExpression initializer = var.getInitializer();
+            if (initializer != null) {
+              PsiTypeElement typeElement = var.getTypeElement();
+              if (typeElement != null &&
+                  typeElement.isInferredType() &&
+                  PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+                continue;
+              }
+              if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
+                initializer.delete();
+              }
+              else {
+                String defaultValue = PsiTypesUtil.getDefaultValueOfType(var.getType());
+                PsiExpression expr = factory.createExpressionFromText(defaultValue, null);
+                initializer.replace(expr);
+              }
+            }
+          }
+          continue;
         }
         array.add(statement);
       }
@@ -130,13 +135,16 @@ public class SurroundWithUtil {
       return new TextRange(offset, offset);
     }
     PsiJavaToken rBrace = block.getRBrace();
+    if (rBrace == null) {
+      throw new IncorrectOperationException("Malformed block");
+    }
     PsiElement last = rBrace.getPrevSibling();
     if (last instanceof PsiWhiteSpace) {
       last = last.getPrevSibling();
     }
     final int startOffset = first.getTextRange().getStartOffset();
     final int endOffset = last.getTextRange().getEndOffset();
-    return startOffset <= endOffset ? new TextRange(startOffset, endOffset) 
+    return startOffset <= endOffset ? new TextRange(startOffset, endOffset)
                                     : new TextRange(startOffset, startOffset);
   }
 
@@ -155,11 +163,11 @@ public class SurroundWithUtil {
    * will not be moved if that setting is checked.
    * <p/>
    * Current method handles that situation.
-   * 
+   *
    * @param container     code block that surrounds target statements
    * @param statements    target statements being surrounded
    */
-  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, @Nullable PsiElement[] statements) {
+  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, PsiElement @Nullable [] statements) {
     if (statements == null || statements.length <= 0) {
       return;
     }
@@ -171,7 +179,7 @@ public class SurroundWithUtil {
     }
 
     ASTNode commentWsText = node.getTreePrev();
-    if (commentWsText == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
+    if (commentWsText == null || !JavaTemplateFormattingSupport.isWhitespace(commentWsText.getElementType())) {
       return;
     }
 
@@ -186,17 +194,17 @@ public class SurroundWithUtil {
     if (indent <= 0) {
       return;
     }
-    
+
     PsiElement codeBlockWsElement = null;
     ASTNode codeBlockWsNode = null;
     boolean lbraceFound = false;
-    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(container.getProject());
+    final PsiParserFacade parserFacade = PsiParserFacade.getInstance(container.getProject());
     for (PsiElement codeBlockChild = container.getFirstChild(); codeBlockChild != null; codeBlockChild = codeBlockChild.getNextSibling()) {
       ASTNode childNode = codeBlockChild.getNode();
       if (childNode == null) {
         continue;
       }
-      
+
       if (!lbraceFound) {
         if (JavaTokenType.LBRACE == childNode.getElementType()) {
           lbraceFound = true;
@@ -204,7 +212,7 @@ public class SurroundWithUtil {
         continue;
       }
 
-      if (JavaJspElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
+      if (JavaTemplateFormattingSupport.isWhitespace(childNode.getElementType())) {
         codeBlockWsElement = codeBlockChild;
         codeBlockWsNode = childNode;
         break;
@@ -224,7 +232,7 @@ public class SurroundWithUtil {
         }
       }
       String newWsText = text.subSequence(text.length() - indent, text.length()).toString();
-      
+
       // Add white spaces from all lines except the last one.
       if (existingWhiteSpaceEndOffset < existingWhiteSpaceText.length()) {
         newWsText = existingWhiteSpaceText.subSequence(0, existingWhiteSpaceEndOffset + 1).toString() + newWsText;

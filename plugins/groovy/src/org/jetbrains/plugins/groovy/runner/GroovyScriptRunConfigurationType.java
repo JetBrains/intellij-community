@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -21,16 +6,14 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class GroovyScriptRunConfigurationType implements ConfigurationType {
+public final class GroovyScriptRunConfigurationType implements ConfigurationType {
   private final GroovyFactory myConfigurationFactory;
 
   public GroovyScriptRunConfigurationType() {
@@ -38,13 +21,13 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   }
 
   @Override
-  public String getDisplayName() {
-    return "Groovy";
+  public @NotNull String getDisplayName() {
+    return GroovyBundle.message("script.runner.display.name");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "Groovy Class or Script";
+    return GroovyBundle.message("script.runner.description");
   }
 
   @Override
@@ -53,10 +36,12 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getId() {
+  public @NonNls @NotNull String getId() {
     return "GroovyScriptRunConfiguration";
+  }
+
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return myConfigurationFactory;
   }
 
   @Override
@@ -64,25 +49,28 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{myConfigurationFactory};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.GroovyScriptRunConfiguration";
+  }
+
   public static GroovyScriptRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(GroovyScriptRunConfigurationType.class);
   }
 
   private static class GroovyFactory extends ConfigurationFactory {
-    public GroovyFactory(ConfigurationType type) {
+    GroovyFactory(ConfigurationType type) {
       super(type);
     }
 
     @Override
-    public boolean isApplicable(@NotNull Project project) {
-      return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
+    public @NotNull String getId() {
+      return "Groovy";
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new GroovyScriptRunConfiguration("Groovy Script", project, this);
     }
-
   }
 }

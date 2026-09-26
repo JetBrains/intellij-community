@@ -1,0 +1,1505 @@
+JsonFile: Broken.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"properties"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonArray
+        PsiElement([)('[')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable all endpoints."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.all.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.all.jmx.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable all endpoints as JMX MBeans."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.all.web.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable all endpoints as Web endpoints."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.configprops.keys-to-sanitize"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.String[]"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"sourceType"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"org.springframework.boot.actuate.endpoint.ConfigurationPropertiesReportEndpoint"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Keys that should be sanitized. Keys can be simple strings that the property ends with or regex expressions."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonArray
+              PsiElement([)('[')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"password"')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"secret"')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"key"')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"token"')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('".*credentials.*"')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"vcap_services"')
+              PsiWhiteSpace('\n    ')
+              PsiElement(])(']')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.env.keys-to-sanitize"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.String[]"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"sourceType"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"org.springframework.boot.actuate.endpoint.EnvironmentEndpoint"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('""')
+          PsiErrorElement:',' or '}' expected, got 'ption'
+            <empty list>
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('ption')
+            PsiErrorElement:':' expected, got '": "'
+              <empty list>
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('": "')
+            PsiErrorElement:':' expected, got 'Keys'
+              <empty list>
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('Keys')
+            PsiErrorElement:':' expected, got 'that'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('that')
+            PsiErrorElement:':' expected, got 'should'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('should')
+            PsiErrorElement:':' expected, got 'be'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('be')
+            PsiErrorElement:':' expected, got 'sanitized.'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('sanitized.')
+            PsiErrorElement:':' expected, got 'Keys'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('Keys')
+            PsiErrorElement:':' expected, got 'can'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('can')
+            PsiErrorElement:':' expected, got 'be'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('be')
+            PsiErrorElement:':' expected, got 'simple'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('simple')
+            PsiErrorElement:':' expected, got 'strings'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('strings')
+            PsiErrorElement:':' expected, got 'that'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('that')
+            PsiErrorElement:':' expected, got 'the'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('the')
+            PsiErrorElement:':' expected, got 'property'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('property')
+            PsiErrorElement:':' expected, got 'ends'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('ends')
+            PsiErrorElement:':' expected, got 'with'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('with')
+            PsiErrorElement:':' expected, got 'or'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('or')
+            PsiErrorElement:':' expected, got 'regex'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('regex')
+            PsiErrorElement:':' expected, got 'expressions.'
+              <empty list>
+          PsiWhiteSpace(' ')
+          JsonProperty
+            JsonReferenceExpression
+              PsiElement(IDENTIFIER)('expressions.')
+            PsiErrorElement:':' expected, got '",'
+              <empty list>
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('",')
+            PsiErrorElement:':' expected, got '"defaultValue"'
+              <empty list>
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonArray
+              PsiElement([)('[')
+              PsiWhiteSpace('\n      ')
+              PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+                PsiElement(,)(',')
+              PsiErrorElement:<value> or ']' expected, got 'DOUBLE_QUOTED_STRING'
+                <empty list>
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"secret"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"key"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"token"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('".*credentials.*"')
+              PsiErrorElement:',' unexpected
+                PsiElement(,)(',')
+              PsiWhiteSpace('\n    ')
+              JsonStringLiteral
+                PsiElement(DOUBLE_QUOTED_STRING)('"vcap_services"')
+              PsiWhiteSpace('\n  ')
+              PsiElement(])(']')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.metrics.filter.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable the metrics servlet filter."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"endpoints.trace.filter.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable the trace servlet filter."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"info"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.util.Map<java.lang.String,java.lang.Object>"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Arbitrary properties to add to the info endpoint."')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.cloudfoundry.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable extended Cloud Foundry actuator endpoints."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.cloudfoundry.skip-ssl-validation"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Skip SSL verification for Cloud Foundry actuator endpoint security calls."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(false)('false')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.cassandra.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable cassandra health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.couchbase.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          PsiErrorElement:':' unexpected
+            PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.db.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable database health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.defaults.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable default health indicators."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        PsiErrorElement:',' unexpected
+          PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.elasticsearch.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable elasticsearch health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.jms.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable JMS health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.ldap.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable LDAP health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        PsiErrorElement:',' unexpected
+          PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.rabbit.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable RabbitMQ health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+              <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable Redis health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.solr.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable Solr health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.health.mail.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable Mail health check."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        PsiErrorElement:',' unexpected
+          PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.info.build.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable build info."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.info.defaults.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+              <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable default info contributors."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.info.env.enabled"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.Boolean"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Enable environment info."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonBooleanLiteral
+              PsiElement(true)('true')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        PsiErrorElement:',' unexpected
+          PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.info.git.mode"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"simple"')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"management.security.sessions"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"defaultValue"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"stateless"')
+          PsiWhiteSpace('\n  ')
+          PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n  ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"spring.git.properties"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"type"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"java.lang.String"')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"description"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"Resource reference to a generated git info properties file."')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"deprecation"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonObject
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              JsonProperty
+                JsonStringLiteral
+                  PsiElement(DOUBLE_QUOTED_STRING)('"replacement"')
+                PsiErrorElement:':' expected, got '"hints"'
+                  <empty list>
+              JsonProperty
+                JsonStringLiteral
+                  PsiElement(DOUBLE_QUOTED_STRING)('"hints"')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                JsonArray
+                  PsiElement([)('[')
+                  PsiWhiteSpace('\n        ')
+                  PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+                    PsiElement(,)(',')
+                  PsiErrorElement:<value> or ']' expected, got '{'
+                    <empty list>
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+                        <empty list>
+                    PsiWhiteSpace(' ')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        JsonBooleanLiteral
+                          PsiElement(false)('false')
+                        PsiErrorElement:',' or ']' expected, got '{'
+                          <empty list>
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"*"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiWhiteSpace('\n  ')
+                    PsiElement(})('}')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"management.endpoints.cors.allowed-origins"')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"*"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiWhiteSpace('\n    ')
+                        PsiElement(])(']')
+                    PsiWhiteSpace('\n  ')
+                    PsiElement(})('}')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiWhiteSpace('\n  ')
+                  JsonObject
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"management.health.status.order"')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace('\n    ')
+                    JsonProperty
+                      JsonStringLiteral
+                        PsiElement(DOUBLE_QUOTED_STRING)('"values"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      JsonArray
+                        PsiElement([)('[')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"UNKNOWN"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        JsonObject
+                          PsiElement({)('{')
+                          PsiWhiteSpace('\n        ')
+                          JsonProperty
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"value"')
+                            PsiElement(:)(':')
+                            PsiWhiteSpace(' ')
+                            JsonStringLiteral
+                              PsiElement(DOUBLE_QUOTED_STRING)('"UP"')
+                          PsiWhiteSpace('\n      ')
+                          PsiElement(})('}')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        PsiErrorElement:',' unexpected
+                          PsiElement(,)(',')
+                        PsiWhiteSpace('\n      ')
+                        JsonReferenceExpression
+                          PsiElement(IDENTIFIER)('CE')
+                        PsiErrorElement:',' or ']' expected, got '"'
+                          <empty list>
+                        JsonStringLiteral
+                          PsiElement(DOUBLE_QUOTED_STRING)('"')
+                        PsiErrorElement:',' or ']' expected, got '}'
+                          <empty list>
+                        PsiWhiteSpace('\n      ')
+                        PsiErrorElement:<literal>, IDENTIFIER, '[', ']' or '{' expected, got '}'
+                          PsiElement(})('}')
+                    PsiErrorElement:',' or '}' expected
+                      <empty list>
+                  PsiWhiteSpace('\n    ')
+                  PsiElement(])(']')
+                  PsiErrorElement:',' unexpected
+                    PsiElement(,)(',')
+                  PsiElement(DUMMY_BLOCK)
+                    PsiWhiteSpace('\n    ')
+                    PsiElement(DOUBLE_QUOTED_STRING)('"providers"')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    PsiElement([)('[')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(DUMMY_BLOCK)
+                    PsiElement({)('{')
+                    PsiElement(DUMMY_BLOCK)
+                      PsiWhiteSpace('\n        ')
+                      PsiElement(DOUBLE_QUOTED_STRING)('"name"')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      PsiElement(DOUBLE_QUOTED_STRING)('"any"')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace('\n    ')
+                  PsiElement(])(']')
+                  PsiWhiteSpace('\n  ')
+                  PsiElement(})('}')
+              PsiErrorElement:',' or '}' expected
+                <empty list>
+          PsiWhiteSpace('\n')
+          PsiErrorElement:',' or '}' expected, got ']'
+            PsiElement(])(']')
+          PsiElement(})('}')
+        PsiErrorElement:',' or ']' expected
+          <empty list>
+    PsiErrorElement:',' or '}' expected
+      <empty list>

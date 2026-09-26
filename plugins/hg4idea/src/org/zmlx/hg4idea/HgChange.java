@@ -12,15 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public final class HgChange {
 
-  @NotNull private HgFile beforeFile;
-  @NotNull private HgFile afterFile;
-  @NotNull private HgFileStatusEnum status;
+  private @NotNull HgFile beforeFile;
+  private @NotNull HgFile afterFile;
+  private @NotNull HgFileStatusEnum status;
 
   public HgChange(@NotNull HgFile hgFile, @NotNull HgFileStatusEnum status) {
     this.beforeFile = hgFile;
@@ -28,18 +29,15 @@ public final class HgChange {
     this.status = status;
   }
 
-  @NotNull
-  public HgFile beforeFile() {
+  public @NotNull HgFile beforeFile() {
     return beforeFile;
   }
 
-  @NotNull
-  public HgFile afterFile() {
+  public @NotNull HgFile afterFile() {
     return afterFile;
   }
 
-  @NotNull
-  public HgFileStatusEnum getStatus() {
+  public @NotNull HgFileStatusEnum getStatus() {
     return status;
   }
 
@@ -86,7 +84,7 @@ public final class HgChange {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("HgChange#%s %s => %s", status, beforeFile, afterFile);
   }
 }

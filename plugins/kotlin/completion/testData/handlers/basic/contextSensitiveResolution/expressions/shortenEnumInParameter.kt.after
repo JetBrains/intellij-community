@@ -1,0 +1,15 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+package test
+
+enum class Color { RED, GREEN, BLUE }
+
+fun take(c: Color) {}
+
+fun test() {
+    take(RED<caret>)
+}
+
+// ELEMENT: RED
+
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution

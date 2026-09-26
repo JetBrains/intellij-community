@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jsch.agent.proxy` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+    module = ":jsch-agent-proxy",
+)
+### auto-generated section `dev intellij.libraries.jsch.agent.proxy` end
+
+### auto-generated section `build intellij.libraries.jsch.agent.proxy` start
+jvm_library(
+    name = "jsch-agent-proxy",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsch.agent.proxy",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+    runtime_deps = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+)
+
+jvm_library(
+    name = "jsch-agent-proxy_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jsch.agent.proxy",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+    runtime_deps = [":jsch-agent-proxy"],
+)
+### auto-generated section `build intellij.libraries.jsch.agent.proxy` end
+
+### auto-generated section `iml intellij.libraries.jsch.agent.proxy` start
+exports_files(
+    [
+        "intellij.libraries.jsch.agent.proxy.iml",
+        "resources/intellij.libraries.jsch.agent.proxy.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jsch.agent.proxy` end

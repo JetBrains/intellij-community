@@ -17,7 +17,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 
-import com.intellij.codeInspection.dataFlow.WorkingTimeMeasurer
 import com.intellij.openapi.util.registry.Registry
 
 internal class WorkCounter {

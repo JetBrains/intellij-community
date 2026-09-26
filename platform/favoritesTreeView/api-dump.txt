@@ -1,0 +1,9 @@
+f:com.intellij.ide.favoritesTreeView.FavoritesManager
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>(com.intellij.openapi.project.Project):V
+- getAvailableFavoritesListNames():java.util.List
+- getFavoritesListRootUrls(java.lang.String):java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.favoritesTreeView.FavoritesManager
+- getState():org.jdom.Element
+- loadState(org.jdom.Element):V
+- noStateLoaded():V

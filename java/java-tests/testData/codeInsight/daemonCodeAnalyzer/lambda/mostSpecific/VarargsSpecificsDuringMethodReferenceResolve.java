@@ -1,7 +1,7 @@
 import java.util.function.Consumer;
 
 class Test {
-    public static void main(String[] args) {
+    public static void main() {
         Consumer<String> ref = Test::method;
         System.out.println(ref);
     }

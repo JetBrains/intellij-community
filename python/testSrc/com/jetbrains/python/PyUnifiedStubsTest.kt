@@ -3,6 +3,10 @@
  */
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.fixtures.PyTestCase
@@ -15,6 +19,9 @@ import com.jetbrains.python.psi.PyFile
  *
  * @author traff
  */
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 class PyUnifiedStubsTest : PyTestCase() {
   override fun getTestDataPath() = PythonTestUtil.getTestDataPath()!!
 
@@ -50,7 +57,7 @@ class PyUnifiedStubsTest : PyTestCase() {
     doTest { level, file ->
       val functionStub = file.topLevelFunctions[0].stub
       val paramListStub: StubElement<*> = functionStub!!.childrenStubs[0]
-      assertNotNull("Function should contain star argument stub", paramListStub.findChildStubByType(PyElementTypes.SINGLE_STAR_PARAMETER))
+      assertNotNull("Function should contain star argument stub", paramListStub.findChildStubByType(PyStubElementTypes.SINGLE_STAR_PARAMETER))
       level.isPython2
     }
   }
@@ -58,7 +65,7 @@ class PyUnifiedStubsTest : PyTestCase() {
   fun testAnnotations() {
     doTest { level, file ->
       val functionStub = file.topLevelFunctions[0].stub
-      assertNotNull("Function should contain annotation stub", functionStub!!.findChildStubByType(PyElementTypes.ANNOTATION))
+      assertNotNull("Function should contain annotation stub", functionStub!!.findChildStubByType(PyStubElementTypes.ANNOTATION))
       level.isPython2
     }
   }

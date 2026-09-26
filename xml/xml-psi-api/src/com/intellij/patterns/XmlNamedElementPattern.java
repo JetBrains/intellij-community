@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiNamedElement;
@@ -24,12 +10,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElement,Self extends XmlNamedElementPattern<T,Self>> extends XmlElementPattern<T,Self>{
 
-  public XmlNamedElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  public XmlNamedElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -45,19 +28,19 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   }
 
   public Self withLocalName(final ElementPattern<String> localName) {
-    return with(new PsiNamePatternCondition<T>("withLocalName", localName) {
+    return with(new PsiNamePatternCondition<>("withLocalName", localName) {
       @Override
-      public String getPropertyValue(@NotNull final Object o) {
+      public String getPropertyValue(final @NotNull Object o) {
         return o instanceof XmlElement ? getLocalName((T)o) : null;
       }
     });
   }
 
-  public Self withNamespace(@NonNls final String namespace) {
+  public Self withNamespace(final @NonNls String namespace) {
     return withNamespace(StandardPatterns.string().equalTo(namespace));
   }
 
-  public Self withNamespace(@NonNls final String... namespaces) {
+  public Self withNamespace(final @NonNls String... namespaces) {
     return withNamespace(StandardPatterns.string().oneOf(namespaces));
   }
 
@@ -66,7 +49,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<String, ProcessingContext> processor) {
+                                   PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(getNamespace(t), context);
       }
     });
@@ -74,9 +57,9 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
 
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
-      super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
+      super(new InitialPatternCondition<>(XmlAttribute.class) {
         @Override
-        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
           return o instanceof XmlAttribute;
         }
       });
@@ -97,7 +80,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
         @Override
         public boolean processValues(XmlAttribute t,
                                      ProcessingContext context,
-                                     PairProcessor<String, ProcessingContext> processor) {
+                                     PairProcessor<? super String, ? super ProcessingContext> processor) {
           return processor.process(t.getValue(), context);
         }
       });

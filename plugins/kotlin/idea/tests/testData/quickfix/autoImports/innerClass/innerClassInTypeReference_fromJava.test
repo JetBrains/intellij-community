@@ -1,0 +1,26 @@
+// FILE: first.before.kt
+// "Import class 'Some'" "true"
+// ERROR: Unresolved reference: Some
+
+package test
+
+fun test(some: <caret>Some) {}
+
+
+// FILE: some/Outer.java
+package some;
+
+public class Outer {
+    public class Some {}
+}
+
+
+// FILE: first.after.kt
+// "Import class 'Some'" "true"
+// ERROR: Unresolved reference: Some
+
+package test
+
+import some.Outer
+
+fun test(some: <caret>Outer.Some) {}

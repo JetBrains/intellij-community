@@ -15,12 +15,13 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {
@@ -43,6 +44,7 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     }
   }
 
+  @Override
   public String toString(){
     return "PsiIdentifier:" + getText();
   }

@@ -1,0 +1,6 @@
+seaborn._core.scales.(Pipeline|TransFuncs)  # aliases defined in `if TYPE_CHECKING` block
+seaborn.external.docscrape.NumpyDocString.__str__  # weird signature
+
+seaborn.axisgrid.Grid.tight_layout  # the method doesn't really take pos args but runtime has *args
+
+seaborn.external.appdirs.unicode

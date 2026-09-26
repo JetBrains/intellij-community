@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -66,9 +67,7 @@ public class SFormsFastMapDirect {
         int[] arrnext = next[i];
 
         @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
-        int[] arrnextnew = new int[length];
-
-        System.arraycopy(arrnext, 0, arrnextnew, 0, length);
+        int[] arrnextnew = Arrays.copyOf(arrnext, length);
 
         mapelements[i] = arrnew;
         mapnext[i] = arrnextnew;
@@ -310,6 +309,7 @@ public class SFormsFastMapDirect {
     }
   }
 
+  @Override
   public String toString() {
 
     StringBuilder buffer = new StringBuilder("{");
@@ -343,19 +343,22 @@ public class SFormsFastMapDirect {
         if (ent != null) {
           final int key = i == 0 ? ikey : (i == 1 ? ikey + VarExprent.STACK_BASE : -ikey);
 
-          list.add(new Entry<Integer, FastSparseSet<Integer>>() {
+          list.add(new Entry<>() {
 
             private final Integer var = key;
             private final FastSparseSet<Integer> val = ent;
 
+            @Override
             public Integer getKey() {
               return var;
             }
 
+            @Override
             public FastSparseSet<Integer> getValue() {
               return val;
             }
 
+            @Override
             public FastSparseSet<Integer> setValue(FastSparseSet<Integer> newvalue) {
               return null;
             }

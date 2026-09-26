@@ -1,10 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
@@ -21,9 +25,8 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
     myAcceptedExtension = acceptedExtension;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
     if (!(value instanceof String)) return PsiReference.EMPTY_ARRAY;
     return getReferences(element, preprocessValue((String)value), myAcceptedExtension);
@@ -37,11 +40,9 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (directory == null) return PsiReference.EMPTY_ARRAY;
     final boolean startsWithSlash = value.startsWith("/");
-    final VirtualFileSystem fs = directory.getVirtualFile().getFileSystem();
-    final FileReferenceSet fileReferenceSet = new FileReferenceSet(value, element, 1, null, fs.isCaseSensitive()) {
-      @NotNull
+    final FileReferenceSet fileReferenceSet = new FileReferenceSet(value, element, 1, null, directory.getVirtualFile().isCaseSensitive()) {
       @Override
-      public Collection<PsiFileSystemItem> getDefaultContexts() {
+      public @NotNull Collection<PsiFileSystemItem> getDefaultContexts() {
         if (startsWithSlash || !directory.isValid()) {
           return super.getDefaultContexts();
         }

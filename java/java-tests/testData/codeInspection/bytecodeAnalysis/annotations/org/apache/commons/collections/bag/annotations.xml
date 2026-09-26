@@ -181,7 +181,6 @@
     </item>
     <item name='org.apache.commons.collections.bag.SynchronizedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -220,7 +219,6 @@
     </item>
     <item name='org.apache.commons.collections.bag.SynchronizedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -252,7 +250,6 @@
     </item>
     <item name='org.apache.commons.collections.bag.TransformedBag org.apache.commons.collections.Bag decorate(org.apache.commons.collections.Bag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -281,7 +278,6 @@
     </item>
     <item name='org.apache.commons.collections.bag.TransformedSortedBag org.apache.commons.collections.SortedBag decorate(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

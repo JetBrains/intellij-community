@@ -1,0 +1,101 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.grazie.markdown` start
+content_module_jar(
+    libraries = ["@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm"],
+    module = ":markdown",
+)
+### auto-generated section `dev intellij.grazie.markdown` end
+
+### auto-generated section `build intellij.grazie.markdown` start
+jvm_library(
+    name = "markdown",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.markdown",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/ai-grazie-semantic-engine",
+        "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
+        "//plugins/grazie/src:core",
+        "//libraries/ai.grazie.spell.gec.engine.local",
+        "//plugins/markdown/core:markdown",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/ide-core-impl",
+        "//platform/util",
+        "//platform/util-ex",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/statistics",
+        "//platform/lang-impl",
+        "//platform/ide-core",
+        "//plugins/markdown/core/backend",
+        "//platform/util:util-ui",
+        "//platform/lang-api:lang",
+    ],
+)
+
+jvm_library(
+    name = "markdown_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.grazie.markdown",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":markdown",
+        "//libraries/ai-grazie-semantic-engine:ai-grazie-semantic-engine_test_lib",
+        "//plugins/grazie/src:core_test_lib",
+        "//libraries/ai.grazie.spell.gec.engine.local:ai.grazie.spell.gec.engine.local_test_lib",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//plugins/markdown/core/backend:backend_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/lang-api:lang_test_lib",
+    ],
+)
+### auto-generated section `build intellij.grazie.markdown` end
+
+### auto-generated section `iml intellij.grazie.markdown` start
+exports_files(
+    [
+        "intellij.grazie.markdown.iml",
+        "src/main/resources/intellij.grazie.markdown.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.grazie.markdown` end

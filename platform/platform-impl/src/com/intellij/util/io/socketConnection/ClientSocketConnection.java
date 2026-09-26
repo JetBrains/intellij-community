@@ -15,9 +15,8 @@
  */
 package com.intellij.util.io.socketConnection;
 
-/**
- * @author nik
- */
+import org.jetbrains.annotations.ApiStatus;
+@ApiStatus.Internal
 public interface ClientSocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnection<Request, Response> {
   void startPolling();
 }

@@ -1,0 +1,671 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+/**
+ * Content Module Embedding: Scrambling-Aware Plugin Descriptor Processing
+ *
+ * This file implements scrambling-aware content module descriptor embedding for plugin builds.
+ * It solves two critical issues with code obfuscation:
+ *
+ * 1. Scrambling doesn't modify class names in CDATA sections
+ * 2. Files modified by scrambling weren't being respected in final descriptors
+ *
+ * The solution uses conditional embedding that occurs AFTER scrambling, ensuring that
+ * scrambled class names are correctly embedded in plugin descriptors.
+ *
+ * For detailed architecture, diagrams, and implementation details, see:
+ * [CONTENT_MODULE_EMBEDDING.md](../../CONTENT_MODULE_EMBEDDING.md)
+ *
+ * @see embedContentModules
+ * @see resolveAndEmbedContentModuleDescriptor
+ */
+package org.jetbrains.intellij.build.classPath
+
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
+import org.jdom.CDATA
+import org.jdom.Element
+import org.jdom.Namespace
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DescriptorDependencyWalk
+import org.jetbrains.intellij.build.DescriptorSearchPass
+import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
+import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
+import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.LayoutPatcher
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.buildProductContentXml
+import org.jetbrains.intellij.build.readDescriptor
+import java.nio.file.Path
+
+/**
+ * Defines a search scope for resolving XInclude references in plugin descriptors.
+ *
+ * Associates a set of JPS module names with their cached descriptor container,
+ * allowing the XInclude resolver to find descriptor files (like plugin.xml)
+ * within the specified modules.
+ *
+ * @property modules JPS module names that define this search scope
+ * @property descriptorCache The cache containing pre-processed descriptors for these modules
+ * @property searchInDependencies Whether to search in module dependencies
+ */
+internal data class DescriptorSearchScope(
+  @JvmField val modules: Collection<String>,
+  @JvmField val descriptorCache: ScopedCachedDescriptorContainer,
+  @JvmField val searchInDependencies: SearchMode = SearchMode.WITH_DEPENDENCIES,
+) {
+  enum class SearchMode {
+    WITH_DEPENDENCIES,
+    WITHOUT_DEPENDENCIES,
+    PLUGIN_COLLECTOR,
+  }
+}
+
+/**
+ * Embeds content module descriptors as CDATA in a plugin's root descriptor.
+ *
+ * This function is called **only for plugins that have scrambling enabled** (i.e., `pathsToScramble.isEmpty() == false`).
+ * It reads content module descriptors from the cache **after scrambling has occurred**, ensuring that
+ * scrambled class names are correctly embedded in the final plugin descriptor.
+ *
+ * Process:
+ * 1. Iterates through all `<content>/<module>` elements in the root descriptor
+ * 2. For each module, resolves its descriptor from the post-scrambling cache
+ * 3. Applies optional modifications (e.g., `separate-jar` attribute for plugin modules)
+ * 4. Embeds the resolved descriptor as CDATA in the module element
+ *
+ * For non-scrambled plugins, content modules remain as xi:include references for runtime resolution.
+ *
+ * See [CONTENT_MODULE_EMBEDDING.md](../../CONTENT_MODULE_EMBEDDING.md) for architecture details.
+ *
+ * @param rootElement The root plugin descriptor element (e.g., plugin.xml)
+ * @param pluginLayout The plugin layout configuration
+ * @param pluginDescriptorContainer The scoped cache containing post-scrambling descriptors
+ * @param xIncludeResolver The resolver for xi:include elements
+ * @param context The build context
+ */
+internal fun embedContentModules(
+  rootElement: Element,
+  pluginLayout: PluginLayout,
+  pluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  xIncludeResolver: XIncludeElementResolverImpl,
+  context: BuildContext,
+) {
+  val frontendModuleFilter = context.getFrontendModuleFilter()
+  val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+  for (contentElement in rootElement.getChildren("content")) {
+    for (moduleElement in contentElement.getChildren("module")) {
+      val moduleName = moduleElement.getAttributeValue("name") ?: continue
+      embedContentModule(
+        moduleElement = moduleElement,
+        pluginDescriptorContainer = pluginDescriptorContainer,
+        xIncludeResolver = xIncludeResolver,
+        moduleName = moduleName,
+        dependencyHelper = dependencyHelper,
+        pluginLayout = pluginLayout,
+        frontendModuleFilter = frontendModuleFilter,
+        outputProvider = context.outputProvider,
+      )
+    }
+  }
+}
+
+/**
+ * Instructs the build scripts to resolve xi:include tags and inline content modules for the core plugin descriptor of a separate product embedded in an IDE.
+ * This is used only for embedded variants of JetBrains Client and Gateway.
+ */
+fun deprecatedResolveDescriptorForEmbeddedProduct(
+  spec: PluginLayout.PluginLayoutSpec,
+  clientModuleName: String,
+  relativePath: String,
+  embeddedProductSpecEvaluator: (BuildContext) -> ProductModulesContentSpec?,
+  additionalSearchModules: Collection<String> = emptyList(),
+) {
+  val layoutPatcherIfNoScrambling: LayoutPatcher = { moduleOutputPatcher, platformLayout, context ->
+    val productModulesContentSpec = embeddedProductSpecEvaluator(context)
+    val xml = if (productModulesContentSpec != null) {
+      loadXmlFromEmbeddedProductSpec(productModulesContentSpec, context)
+    }
+    else {
+      // Sources first, then the module's own output: a build assembling from Bazel outputs has no checkout to read
+      // sources from, and the descriptor it wants is the one that module compiled into its jar.
+      val file = context.findFileInModuleSources(clientModuleName, relativePath)
+      if (file == null) {
+        val module = context.outputProvider.findRequiredModule(clientModuleName)
+        val content = findUnprocessedDescriptorContent(module = module, path = relativePath, outputProvider = context.outputProvider)
+                      ?: error("File not found: $relativePath in module $clientModuleName sources or output")
+        JDOMUtil.load(content)
+      }
+      else {
+        JDOMUtil.load(file)
+      }
+    }
+    val pluginLayout = PluginLayout.pluginAuto(clientModuleName) {}
+    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
+
+    val patchedXmlContent = resolveAndCacheDescriptorForEmbeddedProduct(
+      xml = xml,
+      clientModuleName = clientModuleName,
+      additionalSearchModules = additionalSearchModules,
+      platformLayout = platformLayout,
+      platformDescriptorContainer = descriptorContainer,
+      pluginLayout = pluginLayout,
+      pluginDescriptorContainer = descriptorContainer,
+      targetPluginDescriptorContainer = descriptorContainer,
+      context = context,
+    )
+    moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = patchedXmlContent)
+  }
+
+  spec.withDeprecatedPostProcessor(DevPluginLayoutAssetSpec.OMITTED, layoutPatcherIfNoScrambling) { zipFileName, data, pluginLayout, platformLayout, pluginDescriptorContainer, context ->
+    if (zipFileName != relativePath) {
+      return@withDeprecatedPostProcessor null
+    }
+    val embeddedProductSpec = embeddedProductSpecEvaluator(context)
+    val xml = if (embeddedProductSpec != null) {
+      //this is used only for JetBrains Client now, and it doesn't contain scrambled modules inside the embedded descriptor, so it's ok to use the original content from the spec
+      //todo it seems that we don't need to patch descriptors after scrambling at all, because Gateway also don't contain scrambled classes
+      loadXmlFromEmbeddedProductSpec(embeddedProductSpec, context)
+    }
+    else {
+      JDOMUtil.load(data)
+    }
+
+    val platformDescriptorContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
+    resolveAndCacheDescriptorForEmbeddedProduct(
+      xml = xml,
+      clientModuleName = clientModuleName,
+      additionalSearchModules = additionalSearchModules,
+      platformLayout = platformLayout,
+      platformDescriptorContainer = platformDescriptorContainer,
+      pluginLayout = pluginLayout,
+      pluginDescriptorContainer = pluginDescriptorContainer,
+      targetPluginDescriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName)),
+      context = context,
+    )
+  }
+}
+
+private fun loadXmlFromEmbeddedProductSpec(
+  embeddedProductSpec: ProductModulesContentSpec,
+  context: BuildContext,
+): Element {
+  val buildResult = buildProductContentXml(
+    spec = embeddedProductSpec,
+    outputProvider = context.outputProvider,
+    inlineXmlIncludes = true,
+    inlineModuleSets = true,
+    metadataBuilder = { sb ->
+      sb.append("  <id>com.intellij</id>\n")
+    },
+  )
+  return JDOMUtil.load(buildResult.xml)
+}
+
+internal fun resolveAndCacheDescriptorForEmbeddedProduct(
+  xml: Element,
+  clientModuleName: String,
+  additionalSearchModules: Collection<String>,
+  platformLayout: PlatformLayout,
+  platformDescriptorContainer: ScopedCachedDescriptorContainer,
+  pluginLayout: PluginLayout,
+  pluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  targetPluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  context: BuildContext,
+): ByteArray {
+  val xIncludeResolver = XIncludeElementResolverImpl(
+    searchPath = listOf(
+      DescriptorSearchScope(listOf(clientModuleName), pluginDescriptorContainer),
+      DescriptorSearchScope(additionalSearchModules, pluginDescriptorContainer),
+      DescriptorSearchScope(
+        modules = platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
+        descriptorCache = platformDescriptorContainer
+      ),
+    ),
+    context = descriptorResolveContext(context),
+  )
+
+  resolveIncludes(element = xml, elementResolver = xIncludeResolver)
+
+  for (contentElement in xml.getChildren("content")) {
+    for (moduleElement in contentElement.getChildren("module")) {
+      val moduleName = moduleElement.getAttributeValue("name") ?: continue
+      embedContentModule(
+        moduleElement = moduleElement,
+        pluginDescriptorContainer = pluginDescriptorContainer,
+        xIncludeResolver = xIncludeResolver,
+        moduleName = moduleName,
+        dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+        pluginLayout = pluginLayout,
+        frontendModuleFilter = context.getFrontendModuleFilter(),
+        outputProvider = context.outputProvider,
+      )
+    }
+  }
+  val patchedContent = JDOMUtil.write(xml).encodeToByteArray()
+  targetPluginDescriptorContainer.put(PLUGIN_XML_RELATIVE_PATH, patchedContent)
+  return patchedContent
+}
+
+/**
+ * Returns a temporary directory which is used to store descriptors for a product embedded in the IDE.
+ * They are used to include modules from such a product to the runtime module repository.
+ */
+internal fun getEmbeddedProductTempPluginDir(buildContext: BuildContext, coreDescriptorModule: String): Path {
+  return buildContext.paths.tempDir.resolve("embedded-product-$coreDescriptorModule-plugin-dir")
+}
+
+internal fun embedContentModule(
+  moduleElement: Element,
+  pluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  xIncludeResolver: XIncludeElementResolverImpl,
+  moduleName: String,
+  dependencyHelper: JarPackagerDependencyHelper,
+  pluginLayout: PluginLayout,
+  frontendModuleFilter: FrontendModuleFilter,
+  outputProvider: ModuleOutputProvider,
+) {
+  resolveAndEmbedContentModuleDescriptor(
+    moduleElement = moduleElement,
+    descriptorCache = pluginDescriptorContainer,
+    xIncludeResolver = xIncludeResolver,
+    outputProvider = outputProvider,
+    descriptorModifier = { descriptor ->
+      // `if (subRaw.`package` == null || subRaw.isSeparateJar) {` - separate-jar attribute matters only if the embedded descriptor has a package.
+      if (descriptor.getAttributeValue("package") == null) {
+        return@resolveAndEmbedContentModuleDescriptor
+      }
+
+      val jpsModuleName = moduleName.substringBeforeLast('/')
+      if (jpsModuleName == moduleName &&
+          dependencyHelper.isPluginModulePackedIntoSeparateJar(
+            module = outputProvider.findRequiredModule(jpsModuleName),
+            layout = pluginLayout,
+            frontendModuleFilter = frontendModuleFilter,
+          )) {
+        descriptor.setAttribute("separate-jar", "true")
+      }
+    }
+  )
+}
+
+private fun resolveContentModuleDescriptor(
+  moduleName: String,
+  descriptorCache: ScopedCachedDescriptorContainer,
+  xIncludeResolver: XIncludeElementResolverImpl,
+  outputProvider: ModuleOutputProvider,
+): Element {
+  val descriptorFilename = contentModuleNameToDescriptorFileName(moduleName)
+  val data = descriptorCache.getCachedFileData(descriptorFilename)
+  val element = if (data == null) {
+    val jpsModuleName = moduleName.substringBeforeLast('/')
+    val data = requireNotNull(
+      findUnprocessedDescriptorContent(
+        module = outputProvider.findRequiredModule(jpsModuleName),
+        path = descriptorFilename,
+        outputProvider = outputProvider,
+      )
+    ) {
+      "Cannot find file $descriptorFilename in module $jpsModuleName"
+    }
+    descriptorCache.putIfAbsent(descriptorFilename, data)
+    JDOMUtil.load(data)
+  }
+  else {
+    JDOMUtil.load(data)
+  }
+  resolveIncludes(element, xIncludeResolver)
+  return element
+}
+
+internal fun resolveAndEmbedContentModuleDescriptor(
+  moduleElement: Element,
+  descriptorCache: ScopedCachedDescriptorContainer,
+  xIncludeResolver: XIncludeElementResolverImpl,
+  outputProvider: ModuleOutputProvider,
+  descriptorModifier: ((Element) -> Unit)? = null,
+) {
+  val moduleName = moduleElement.getAttributeValue("name") ?: return
+  // The resolve also caches the descriptor, and the runtime module repository reads that cache for every module of
+  // the published `<content>` list. So a module that already holds a body still resolves, and only keeps its body.
+  val descriptor = resolveContentModuleDescriptor(
+    moduleName = moduleName,
+    descriptorCache = descriptorCache,
+    xIncludeResolver = xIncludeResolver.copyWithExtraSearchPath(moduleName, descriptorCache),
+    outputProvider = outputProvider,
+  )
+  if (!moduleElement.content.isEmpty()) {
+    return
+  }
+
+  descriptorModifier?.invoke(descriptor)
+  moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))
+}
+
+/**
+ * What [XIncludeElementResolverImpl] reads from the build.
+ *
+ * The resolver needs a module output and one product name. It does not need a build context, a plugin layout or a
+ * platform layout. A descriptor patch that runs with no JPS project model supplies its own implementation, and it
+ * pre-seeds every descriptor cache so that [outputProvider] is never asked.
+ */
+internal interface DescriptorResolveContext {
+  val outputProvider: ModuleOutputProvider
+
+  /** Controls module lookup. Library descriptors remain available after the source lookup. */
+  val searchPasses: List<DescriptorSearchPass>
+    get() = DescriptorSearchPass.entries
+
+  /** The simple name of the product-properties class. */
+  val productPropertiesName: String
+}
+
+/** Reads the two facts of [DescriptorResolveContext] out of a build context. */
+internal fun descriptorResolveContext(context: BuildContext): DescriptorResolveContext {
+  return descriptorResolveContext(context.outputProvider, context.productProperties::class.java.simpleName)
+}
+
+internal fun descriptorResolveContext(
+  outputProvider: ModuleOutputProvider,
+  productPropertiesName: String,
+  sourceOnly: Boolean = false,
+): DescriptorResolveContext {
+  return object : DescriptorResolveContext {
+    override val outputProvider: ModuleOutputProvider = outputProvider
+    override val productPropertiesName: String = productPropertiesName
+    override val searchPasses: List<DescriptorSearchPass> =
+      if (sourceOnly) listOf(DescriptorSearchPass.PRODUCTION_SOURCES) else DescriptorSearchPass.entries
+  }
+}
+
+internal class XIncludeElementResolverImpl(
+  private val searchPath: List<DescriptorSearchScope>,
+  private val context: DescriptorResolveContext,
+) {
+  fun copyWithExtraSearchPath(moduleName: String, container: ScopedCachedDescriptorContainer): XIncludeElementResolverImpl {
+    for (scope in searchPath) {
+      if (scope.modules.contains(moduleName)) {
+        // mostly all our products have incorrect layout (especially rider or clion), so, check only IDEA for now
+        if (context.productPropertiesName == "org.jetbrains.intellij.build.IdeaUltimateProperties") {
+          require(scope.descriptorCache == container) {
+            "Module '$moduleName' is already in search path with a different descriptor cache container. " +
+            "Expected the same container instance, but found a mismatch. This indicates an inconsistency in descriptor caching."
+          }
+        }
+        return this
+      }
+    }
+    return XIncludeElementResolverImpl(listOf(DescriptorSearchScope(
+      modules = listOf(moduleName),
+      descriptorCache = container,
+      // extra search path is needed when we want to resolve xi:include references in the content module itself, we should not search in dependencies
+      searchInDependencies = DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES,
+    )) + searchPath, context)
+  }
+
+  fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
+    if (isOptional || isDynamic) {
+      // It isn't safe to resolve includes at build time if they're optional.
+      // This could lead to issues when running another product using this distribution.
+      // E.g., if the corresponding module is somehow being excluded on runtime.
+      return null
+    }
+
+    val loadPath = LoadPathUtil.toLoadPath(relativePath)
+
+    // The whole search runs in the checkout first and only then in module output. A scope here can name every module
+    // of the platform layout, and in `MODULE_OUTPUT` a *miss* still resolves that module's Bazel output - which is
+    // what declares it as an input of a dev-distribution fragment. See `DescriptorSearchPass`.
+    for (pass in context.searchPasses) {
+      for (searchPath in searchPath) {
+        val descriptorCache = searchPath.descriptorCache
+        descriptorCache.getCachedFileData(loadPath)?.let {
+          return JDOMUtil.load(it)
+        }
+
+        val outputProvider = context.outputProvider
+        for (module in searchPath.modules) {
+          readDescriptor(
+            module = outputProvider.findRequiredModule(module),
+            path = loadPath,
+            outputProvider = outputProvider,
+            pass = pass,
+          )?.let { data ->
+            descriptorCache.putIfAbsent(loadPath, data)
+            return JDOMUtil.load(data)
+          }
+        }
+
+        val searchInDependencies = searchPath.searchInDependencies
+        // search in module deps only if we cannot find in modules
+        if (searchInDependencies != DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES) {
+          // The plugin collector reads a platform dependency but does not go into it. Every other mode reads the
+          // direct dependencies alone.
+          val walk = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) {
+            DescriptorDependencyWalk(excludeRecursionPrefix = "intellij.platform.")
+          }
+          else {
+            DescriptorDependencyWalk(recursive = false)
+          }
+
+          // Fresh per pass: a set shared with the sources pass would make the output pass skip every module it visited.
+          val processedModules = HashSet(searchPath.modules)
+          for (module in searchPath.modules) {
+            val jpsModule = outputProvider.findRequiredModule(module)
+            // A library has no source root, so it can only answer the output pass - and it answers from the jars this
+            // build declares, so asking costs no declaration.
+            val libraryData = if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
+              findFileInModuleLibraryDependencies(jpsModule, loadPath, outputProvider)
+            }
+            else {
+              null
+            }
+            val data = libraryData ?: findFileInModuleDependenciesRecursive(
+              module = jpsModule,
+              relativePath = loadPath,
+              provider = outputProvider,
+              processedModules = processedModules,
+              pass = pass,
+              walk = walk,
+            )
+            if (data != null) {
+              descriptorCache.putIfAbsent(loadPath, data)
+              return JDOMUtil.load(data)
+            }
+          }
+        }
+      }
+      if (pass == DescriptorSearchPass.PRODUCTION_SOURCES && searchPath.isNotEmpty()) {
+        // Generated module-set descriptors may be materialized under the module that owns the generated source,
+        // while an xi:include still names the product module whose output used to receive a copy. Search the complete
+        // source model before falling back to any compiled jar. This is the same deterministic last-resort scope the
+        // generated dev-distribution plan validates, and it keeps ordinary module byte changes out of unrelated
+        // fragment keys.
+        val outputProvider = context.outputProvider
+        val alreadySearched = searchPath.flatMapTo(HashSet(), DescriptorSearchScope::modules)
+        for (module in outputProvider.findModulesWithSourceFile(loadPath).sortedBy { it.name }) {
+          if (!alreadySearched.add(module.name)) continue
+          readDescriptor(
+            module = module,
+            path = loadPath,
+            outputProvider = outputProvider,
+            pass = DescriptorSearchPass.PRODUCTION_SOURCES,
+          )?.let { data ->
+            searchPath.first().descriptorCache.putIfAbsent(loadPath, data)
+            return JDOMUtil.load(data)
+          }
+        }
+      }
+    }
+
+    if (DescriptorSearchPass.MODULE_OUTPUT !in context.searchPasses) {
+      for ((modules, descriptorCache, searchInDependencies) in searchPath) {
+        if (searchInDependencies == DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES) {
+          continue
+        }
+        for (module in modules) {
+          val data = findFileInModuleLibraryDependencies(context.outputProvider.findRequiredModule(module), loadPath, context.outputProvider) ?: continue
+          descriptorCache.putIfAbsent(loadPath, data)
+          return JDOMUtil.load(data)
+        }
+      }
+    }
+
+    if (searchPath.singleOrNull()?.searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) {
+      val requestor = searchPath.singleOrNull()?.modules?.singleOrNull()
+      if (shouldSkipPluginCollectorInclude(loadPath, requestor)) {
+        return null
+      }
+    }
+    throw IllegalStateException("Cannot resolve '$loadPath' in $searchPath")
+  }
+}
+
+private fun shouldSkipPluginCollectorInclude(loadPath: String, requestor: String?): Boolean {
+  if (badIncludesForPluginCollector.contains(loadPath)) {
+    return true
+  }
+
+  //  run CodeServerBuildTest
+  if (loadPath.startsWith("META-INF/bdide-")) {
+    return true
+  }
+  return requestor != null && (requestor.startsWith("intellij.android.") ||
+                               requestor == "intellij.rustrover.plugin")
+}
+
+private fun isIncludeElementFor(element: Element): Boolean {
+  return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
+}
+
+internal fun resolveIncludes(element: Element, elementResolver: XIncludeElementResolverImpl) {
+  check(!isIncludeElementFor(element))
+  doResolveNonXIncludeElementFromCache(original = element, elementResolver = elementResolver)
+}
+
+@Suppress("DuplicatedCode")
+private fun resolveXIncludeElement(
+  element: Element,
+  elementResolver: XIncludeElementResolverImpl,
+): MutableList<Element>? {
+  val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
+
+  val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
+  if (baseAttribute != null) {
+    throw UnsupportedOperationException("`base` attribute is not supported")
+  }
+
+  val fallbackElement = element.getChild("fallback", element.namespace)
+  val isDynamic = element.getAttribute("includeUnless") != null || element.getAttribute("includeIf") != null
+  val remoteElement = elementResolver.resolveElement(
+    relativePath = href,
+    isOptional = fallbackElement != null,
+    isDynamic = isDynamic,
+  ) ?: return null
+
+  val remoteParsed = extractNeededChildrenFor(element, remoteElement)
+
+  // Process all children, recursively resolving any nested xi:include elements
+  var i = 0
+  while (i < remoteParsed.size) {
+    val child = remoteParsed[i]
+    if (isIncludeElementFor(child)) {
+      val elements = resolveXIncludeElement(element = child, elementResolver = elementResolver)
+      if (elements != null) {
+        if (elements.isEmpty()) {
+          // Remove the xi:include element that resolves to nothing
+          remoteParsed.removeAt(i)
+          i--  // Adjust index since we removed an element
+        }
+        else {
+          // Replace the xi:include element with resolved elements
+          remoteParsed.removeAt(i)
+          remoteParsed.addAll(i, elements)
+          // Skip over the newly inserted elements (loop will increment i by 1)
+          i += elements.size - 1
+        }
+      }
+    }
+    else {
+      doResolveNonXIncludeElementFromCache(original = child, elementResolver = elementResolver)
+    }
+
+    i++
+  }
+
+  for (elementToDetach in remoteParsed) {
+    elementToDetach.detach()
+  }
+  return remoteParsed
+}
+
+private fun doResolveNonXIncludeElementFromCache(original: Element, elementResolver: XIncludeElementResolverImpl) {
+  val contentList = original.content
+  for (i in contentList.size - 1 downTo 0) {
+    val content = contentList[i]
+    if (content is Element) {
+      if (isIncludeElementFor(content)) {
+        val result = resolveXIncludeElement(element = content, elementResolver = elementResolver)
+        if (result != null) {
+          original.setContent(i, result)
+        }
+      }
+      else {
+        // process child element to resolve possible includes
+        doResolveNonXIncludeElementFromCache(original = content, elementResolver = elementResolver)
+      }
+    }
+  }
+}
+
+@Suppress("DuplicatedCode")
+private fun extractNeededChildrenFor(element: Element, remoteElement: Element): MutableList<Element> {
+  val xpointer = element.getAttributeValue("xpointer") ?: "xpointer(/idea-plugin/*)"
+
+  var matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported XPointer: $xpointer")
+  }
+
+  val pointer = matcher.group(1)
+  matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported pointer: $pointer")
+  }
+
+  val rootTagName = matcher.group(1)
+
+  var e = remoteElement
+  if (e.name != rootTagName) {
+    return mutableListOf()
+  }
+
+  val subTagName = matcher.group(2)
+  if (subTagName != null) {
+    // cut off the slash
+    e = requireNotNull(e.getChild(subTagName.substring(1))) { "Child element not found: ${subTagName.substring(1)}" }
+  }
+  return e.children.toMutableList()
+}
+
+private val badIncludesForPluginCollector = hashSetOf(
+  // rider includes some CWM files
+  "META-INF/designer-gradle.xml",
+  // android module does not have dependency at all in iml
+  "META-INF/screenshot-testing-gradle.xml",
+  "META-INF/screenshot-testing.xml",
+  "META-INF/server-flags.xml",
+  // intellij.bigdatatools.core doesn't depend on intellij.bigdatatools.aws
+  "META-INF/bigdataide-aws.xml",
+  "META-INF/app-servers-service-view-integration.xml",
+  "META-INF/js-plugin.xml",
+)

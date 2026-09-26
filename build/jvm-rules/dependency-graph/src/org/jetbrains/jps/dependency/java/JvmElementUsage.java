@@ -1,0 +1,65 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jps.dependency.java;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
+import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
+
+import java.io.IOException;
+
+@ApiStatus.Internal
+public abstract class JvmElementUsage implements Usage {
+  private final @NotNull JvmNodeReferenceID myOwner;
+
+  JvmElementUsage(@NotNull JvmNodeReferenceID owner) {
+    myOwner = GraphElementInterner.intern(owner);
+  }
+
+  JvmElementUsage(GraphDataInput in) throws IOException {
+    myOwner = GraphElementInterner.intern(new JvmNodeReferenceID(in));
+  }
+
+  static @NotNull JvmNodeReferenceID toOnDemandScope(@NotNull JvmNodeReferenceID scopeId) {
+    // transform '$' used in names of inner classes into '/' delimiter to reflect inner classes nesting
+    String name = scopeId.getNodeName();
+    String canonical = name.replace('$', '/');
+    //noinspection StringEquality,StringEqualitySSR
+    return canonical == name? scopeId : new JvmNodeReferenceID(canonical);
+  }
+
+  @Override
+  public void write(GraphDataOutput out) throws IOException {
+    myOwner.write(out);
+  }
+
+  @Override
+  public @NotNull JvmNodeReferenceID getElementOwner() {
+    return myOwner;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final JvmElementUsage jvmUsage = (JvmElementUsage)o;
+
+    if (!myOwner.equals(jvmUsage.myOwner)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myOwner.hashCode();
+  }
+}

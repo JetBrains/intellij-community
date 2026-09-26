@@ -1,17 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.intention.EmptyIntentionAction
-import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.util.ExecUtil
-import com.intellij.lang.annotation.Annotation
+import com.intellij.java.JavaBundle
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -34,24 +34,21 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
-import com.sun.tools.doclint.DocLint
 import java.io.File
 
-class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
-  data class Info(val file: PsiFile)
-  data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
-  data class Result(val annotations: List<Anno>)
+public class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
+  public data class Info(val file: PsiFile)
+  public data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
+  public data class Result(val annotations: List<Anno>)
 
   override fun getPairedBatchInspectionShortName(): String = JavadocHtmlLintInspection.SHORT_NAME
 
-  override fun collectInformation(file: PsiFile): Info? =
-    runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
+  override fun collectInformation(psiFile: PsiFile): Info? =
+    runReadAction { if (isJava8SourceFile(psiFile) && "/**" in psiFile.text) Info(psiFile) else null }
 
   override fun doAnnotate(collectedInfo: Info): Result? {
-    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null }
-    if (text == null) return null
-
-    val file = collectedInfo.file.virtualFile!!
+    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null } ?: return null
+    val file = collectedInfo.file.virtualFile ?: return null
     val copy = createTempFile(text.toByteArray(file.charset))
 
     try {
@@ -77,29 +74,30 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     }
   }
 
-  override fun apply(file: PsiFile, annotationResult: Result, holder: AnnotationHolder) {
-    val text = file.text
+  override fun apply(psiFile: PsiFile, annotationResult: Result, holder: AnnotationHolder) {
+    val text = psiFile.text
     val offsets = text.foldIndexed(mutableListOf(0)) { i, offsets, c -> if (c == '\n') offsets += (i + 1); offsets }
 
     for ((row, col, error, message) in annotationResult.annotations) {
       if (row < offsets.size) {
         val offset = offsets[row] + col
-        val element = file.findElementAt(offset)
+        val element = psiFile.findElementAt(offset)
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)
-          val annotation = if (error) holder.createErrorAnnotation(range, description) else holder.createWarningAnnotation(range, description)
-          registerFix(annotation)
+          val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
+          holder.newAnnotation(severity, description).range(range)
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value!!).registerFix()
+            .create()
         }
       }
     }
   }
 
   //<editor-fold desc="Helpers">
+  private val key: Lazy<HighlightDisplayKey?> = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
-  private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
-
-  private val lintOptions = "${DocLint.XMSGS_CUSTOM_PREFIX}html/private,accessibility/private"
+  private val lintOptions = "-Xmsgs:html/private,accessibility/private"
   private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
 
   private fun isJava8SourceFile(file: PsiFile) =
@@ -107,7 +105,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     file is PsiJavaFile &&
     file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
     file.virtualFile != null &&
-    ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
+    ProjectFileIndex.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")
@@ -128,7 +126,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
-    parameters.mainClass = DocLint::class.qualifiedName
+    parameters.mainClass = if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_16)) "jdk.javadoc.internal.doclint.DocLint" else "com.sun.tools.doclint.DocLint"
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 
@@ -138,7 +136,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   private fun findJdk(file: VirtualFile, project: Project): Sdk {
     val rootManager = ProjectRootManager.getInstance(project)
 
-    val module = rootManager.fileIndex.getModuleForFile(file)
+    val module = runReadAction { rootManager.fileIndex.getModuleForFile(file) }
     if (module != null) {
       val sdk = ModuleRootManager.getInstance(module).sdk
       if (isJdk8(sdk)) return sdk!!
@@ -160,7 +158,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     while (i.hasNext()) {
       val line = i.next()
       val matcher = lintPattern.matcher(line)
-      if (matcher.matches() && i.hasNext() && !i.next().isEmpty() && i.hasNext()) {
+      if (matcher.matches() && i.hasNext() && i.next().isNotEmpty() && i.hasNext()) {
         val row = matcher.group(1).toInt() - 1
         val col = i.next().indexOf('^')
         val error = matcher.group(2) == "error"
@@ -191,9 +189,6 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     return range
   }
-
-  private fun registerFix(annotation: Annotation) =
-    annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
 
   //</editor-fold>
 }

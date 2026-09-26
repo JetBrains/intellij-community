@@ -1,0 +1,81 @@
+<html>
+<head>
+<title>Binding Test - Part 2</title>
+<script language="JavaScript">
+
+function toggleButton() {
+  window.cefQuery({
+    request: 'hasExtension',
+    onSuccess: function(response) {
+      document.getElementById('jcefOn').disabled = true;
+      document.getElementById('jcefOff').disabled = false;
+    },
+    onFailure: function(error_code, error_message) {
+      document.getElementById('jcefOn').disabled = false;
+      document.getElementById('jcefOff').disabled = true;
+    }
+  });
+}
+
+function execute(cmd) {
+  window.cefQuery({
+    request: cmd,
+    onSuccess: function(response) {
+      location.reload();
+    },
+    onFailure: function(error_code, error_message) {
+      document.getElementById('result').value = 'Error: '+error_message;
+    }
+  });
+}
+
+function getJavaVersion() {
+  if ("myQuery" in window) {
+    window.myQuery({
+      request: 'jcefJava',
+      onSuccess: function(response) {
+        document.getElementById('result').value = 'Java Version: '+response;
+      },
+      onFailure: function(error_code, error_message) {
+        document.getElementById('result').value = 'Error: '+error_message;
+      }
+    });
+  } else {
+    document.getElementById('result').value = 'Error: myQuery isn\'t enabled';
+  }
+}
+
+</script>
+<head>
+
+<body bgcolor="white" onload="toggleButton()">
+
+<form>
+<h1>JavaScript Binding Test - Part 2</h1>
+<p>While this page was loaded, the JavaScript function
+<pre>window.cefRequest(request: 'hasExtension')</pre>
+was executed for enabling/disabling the buttons below.
+<br/>&nbsp;<br/>
+If you press "Enable myQuery", the JavaScript function
+<pre>window.cefRequest(request: 'enableExt')</pre>
+is executed. This causes Java to create a second instance of  
+<pre>CefMessageRouter</pre>
+In this case the name of the JavaScript query function is set to "myQuery" and
+<br/>a handler for the request 'jcefJava' is registered. Pressing the "Test" 
+<br/>button will execute the JavaScript code
+<pre>window.myRequest(request: 'jcefJava')</pre>
+which returns your current Java version on success or an error message in case
+<br/>of an error.
+</p>
+<p><b>Please note:</b> If you leave this page (myQuery enabled) and you return
+<br/>after a while - without closing the browser - the JavaScript binding is 
+<br/>still enabled.</p>
+Second message router: 
+<input type="button" id="jcefOn" value="Enable myQuery" onclick="execute('enableExt');" />
+<input type="button" id="jcefOff" value="Disable myQuery" onclick="execute('disableExt');" />
+<br/><input type="button" onclick="getJavaVersion();" value="Test"/>
+<input type="text" id="result" size="80" readonly />
+</form>
+</body>
+</html>
+

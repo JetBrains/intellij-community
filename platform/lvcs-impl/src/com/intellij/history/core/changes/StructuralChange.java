@@ -17,18 +17,20 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
+import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public abstract class StructuralChange extends Change {
   protected final String myPath;
@@ -40,13 +42,13 @@ public abstract class StructuralChange extends Change {
 
   protected StructuralChange(DataInput in) throws IOException {
     super(in);
-    myPath = StreamUtil.readString(in);
+    myPath = DataStreamUtil.readString(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeString(out, myPath);
+    DataStreamUtil.writeString(out, myPath);
   }
 
   protected void removeEntry(Entry e) {
@@ -92,11 +94,8 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(Pattern pattern) {
-    for (String each : getAffectedPaths()) {
-      if ( pattern.matcher(Paths.getNameOf(each)).matches()) return true;
-    }
-    return false;
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
+    return ContainerUtil.exists(getAffectedPaths(), historyPathFilter::affectsMatching);
   }
 
   protected String[] getAffectedPaths() {
@@ -113,6 +112,7 @@ public abstract class StructuralChange extends Change {
     return Collections.emptyList();
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + myPath;
   }

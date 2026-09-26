@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.module.Module;
@@ -20,20 +6,36 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtilImpl;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,40 +52,42 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 
-public class GrRefactoringConflictsUtil {
+public final class GrRefactoringConflictsUtil {
   private GrRefactoringConflictsUtil() { }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<GrMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends GrMember> membersToMove,
                                                    @NotNull PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility) {
     analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
   }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<GrMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<? extends GrMember> membersToMove,
                                                    @Nullable PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility,
                                                    @NotNull PsiElement context,
-                                                   @Nullable Set<PsiMethod> abstractMethods) {
+                                                   @Nullable Set<? extends PsiMethod> abstractMethods) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
 
     for (GrMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
-      RefactoringConflictsUtil.checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts);
+      RefactoringConflictsUtilImpl
+        .checkAccessibilityConflictsAfterMove(member, newVisibility, targetClass, membersToMove, conflicts, Conditions.alwaysTrue());
     }
   }
 
   public static void checkUsedElements(PsiMember member,
                                        PsiElement scope,
-                                       @NotNull Set<GrMember> membersToMove,
-                                       @Nullable Set<PsiMethod> abstractMethods,
+                                       @NotNull Set<? extends GrMember> membersToMove,
+                                       @Nullable Set<? extends PsiMethod> abstractMethods,
                                        @Nullable PsiClass targetClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
@@ -91,41 +95,38 @@ public class GrRefactoringConflictsUtil {
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
-    if (scope instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)scope;
+    if (scope instanceof GrReferenceExpression refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
           GrExpression qualifier = refExpr.getQualifierExpression();
           PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(
             qualifier).getElement() : null);
-          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }
     }
-    else if (scope instanceof GrNewExpression) {
-      final GrNewExpression newExpression = (GrNewExpression)scope;
+    else if (scope instanceof GrNewExpression newExpression) {
       final GrAnonymousClassDefinition anonymousClass = newExpression.getAnonymousClassDefinition();
       if (anonymousClass != null) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
-          RefactoringConflictsUtil.checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove(anonymousClass, context, anonymousClass, member, conflicts);
         }
       }
       else {
         final PsiMethod refElement = newExpression.resolveMethod();
         if (refElement != null) {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-            RefactoringConflictsUtil.checkAccessibility(refElement, context, null, member, conflicts);
+            RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove(refElement, context, null, member, conflicts);
           }
         }
       }
     }
-    else if (scope instanceof GrCodeReferenceElement) {
-      GrCodeReferenceElement refExpr = (GrCodeReferenceElement)scope;
+    else if (scope instanceof GrCodeReferenceElement refExpr) {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove((PsiMember)refElement, context, null, member, conflicts);
         }
       }
     }
@@ -152,7 +153,7 @@ public class GrRefactoringConflictsUtil {
       ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<>(GroovyPsiElement.class));
     analyzeModuleConflicts(project, groovyScopes, usages, vFile, conflicts);
     scopes.removeAll(groovyScopes);
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
+    RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
   }
 
   public static void analyzeModuleConflicts(final Project project,
@@ -195,7 +196,7 @@ public class GrRefactoringConflictsUtil {
                                                              RefactoringUIUtil.getDescription(resolved, true),
                                                              scopeDescription,
                                                              CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
-            conflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));
+            conflicts.putValue(resolved, StringUtil.capitalize(message));
             reported.add(resolved);
           }
         }
@@ -248,7 +249,7 @@ public class GrRefactoringConflictsUtil {
                                                     scopeDescription,
                                                     CommonRefactoringUtil.htmlEmphasize(module.getName()));
               }
-              conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(referencedElement, StringUtil.capitalize(message));
             }
           }
         }

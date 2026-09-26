@@ -1,0 +1,10 @@
+// BULK
+// SHORTEN: test.A dependency.A
+// STRATEGY: DO_NOT_SHORTEN
+package test
+
+class A
+
+fun usage(a: dependency.A) {}
+
+fun usage(a: test.A) {}

@@ -1,0 +1,60 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.lsp.ui.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.lsp.ui.frontend"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.lsp.ui.frontend"],
+    jars = {
+        "lib/lsp-ui-plugin.jar": ["intellij.lsp.ui.plugin"],
+    },
+    main_module = "intellij.lsp.ui.plugin",
+)
+### auto-generated section `dev intellij.lsp.ui.plugin` end
+
+### auto-generated section `build intellij.lsp.ui.plugin` start
+jvm_library(
+    name = "lsp.ui.plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.ui.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "lsp.ui.plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.ui.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lsp.ui.plugin"],
+)
+
+ij_plugin(
+    name = "lsp.ui.plugin_plugin",
+    descriptor_module = ":lsp.ui.plugin",
+    content_modules = ["//plugins/lsp.ui/lsp.ui.frontend"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.lsp.ui.plugin` end
+
+### auto-generated section `iml intellij.lsp.ui.plugin` start
+exports_files(
+    [
+        "intellij.lsp.ui.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.lsp.ui.plugin` end

@@ -1,0 +1,5 @@
+// "Add SOURCE retention" "true"
+// K2_ERROR: RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION_ERROR
+<caret>@Target(AnnotationTarget.EXPRESSION)
+annotation class Ann
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSourceRetentionFix

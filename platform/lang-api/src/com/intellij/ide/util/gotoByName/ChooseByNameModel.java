@@ -1,43 +1,47 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ListCellRenderer;
 
-public interface ChooseByNameModel {
+public interface ChooseByNameModel extends PossiblyDumbAware {
+
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getPromptText();
 
+  @NotNull
+  @NlsContexts.Label
   String getNotInMessage();
+
+  @NotNull
+  @NlsContexts.Label
   String getNotFoundMessage();
-  /** return null to hide checkbox panel */
-  @Nullable String getCheckBoxName();
+
+  /**
+   * return null to hide checkbox panel
+   */
+  @Nullable
+  @NlsContexts.Label
+  String getCheckBoxName();
 
   /**
    * @deprecated Mark mnemonic char with '&' ('&&' for mac if mnemonic char is 'N') in checkbox name instead
    */
-  char getCheckBoxMnemonic();
+  @Deprecated
+  default char getCheckBoxMnemonic() { return 0; }
 
 
   boolean loadInitialCheckBoxState();
+
   void saveInitialCheckBoxState(boolean state);
 
+  @NotNull
   ListCellRenderer getListCellRenderer();
 
   /**
@@ -45,20 +49,18 @@ public interface ChooseByNameModel {
    *
    * @param checkBoxState the current state of the chooser checkbox (for example, [x] Include non-project classes for Ctrl-N)
    * @return the names to show. All items in the returned array must be non-null.
-   *
    */
-  @NotNull
-  String[] getNames(boolean checkBoxState);
-  @NotNull
-  Object[] getElementsByName(String name, boolean checkBoxState, final String pattern);
-  @Nullable
-  String getElementName(Object element);
+  String @NotNull @Nls [] getNames(boolean checkBoxState);
 
-  @NotNull
-  String[] getSeparators();
+  Object @NotNull [] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern);
 
   @Nullable
-  String getFullName(Object element);
+  String getElementName(@NotNull Object element);
+
+  String @NotNull [] getSeparators();
+
+  @Nullable
+  String getFullName(@NotNull Object element);
 
   @Nullable @NonNls
   String getHelpId();

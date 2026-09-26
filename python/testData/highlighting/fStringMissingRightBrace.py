@@ -1,10 +1,1 @@
-f'{42}'
-f'{42!r}'
-f'{42!r:03}'
-f'{42:03}'
-f'{42!r:{y}.{z}}'
-f'<error descr="'}' is expected">{</error>'
-f'<error descr="'}' is expected">{42:{</error>'
-f'<error descr="'}' is expected">{42!r:{</error>'
-f'{{'
-f'{{<error descr="'}' is expected">{</error>'
+f'{<error descr="Missing closing quote [']"><error descr="Python version 3.6 does not allow nesting of string literals with the same quote type inside f-strings">'</error></error><EOLError descr="Type conversion, ':' or '}' expected"></EOLError><EOLError descr="' expected"></EOLError>

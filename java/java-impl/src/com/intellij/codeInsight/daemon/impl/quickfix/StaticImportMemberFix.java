@@ -1,148 +1,217 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
+import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-public abstract class StaticImportMemberFix<T extends PsiMember> implements IntentionAction, HintAction {
-  // we keep max 2 candidates
-  private List<T> candidates;
+// will import elements of type T which are referenced by elements of type R (e.g., will import PsiMethods referenced by PsiMethodCallExpression)
+@ApiStatus.Internal
+public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement>
+  implements HintAction, IntentionActionWithModCommandFallback {
+  private final List<T> candidates;
+  private final List<T> hintCandidates;
+  final SmartPsiElementPointer<R> myReferencePointer;
+  private final long myPsiModificationCount;
 
-  @NotNull protected abstract String getBaseText();
-  @NotNull protected abstract String getMemberPresentableText(T t);
-
-  @Override
-  @NotNull
-  public String getText() {
-    String text = getBaseText();
-    if (candidates != null && candidates.size() == 1) {
-      text += " '" + getMemberPresentableText(candidates.get(0)) + "'";
+  StaticImportMemberFix(@NotNull PsiFile psiFile, @NotNull R reference) {
+    // there is a lot of PSI computations and resolve going on here,
+    // so it must be created in a background thread under the read action to ensure no freezes are reported
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Project project = psiFile.getProject();
+    myReferencePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, psiFile)
+        || !(psiFile instanceof PsiJavaFile)
+        || getElement() == null
+        || !reference.isValid()
+        || getQualifierExpression() != null
+        || !BaseIntentionAction.canModify(psiFile)
+        || resolveRef() != null) {
+      candidates = Collections.emptyList();
+      hintCandidates = Collections.emptyList();
     }
     else {
-      text += "...";
+      // search for suitable candidates here, in the background thread
+      StaticMembersProcessor.MembersToImport<T> membersToImport = getMembersToImport(100);
+      boolean noApplicableMember = membersToImport.applicable().isEmpty();
+      List<T> candidatesToImport = noApplicableMember ? membersToImport.all() : membersToImport.applicable();
+      candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(psiFile, candidate));
+      // an applicable member always has a compatible signature, so only the fallback list needs the check
+      hintCandidates = noApplicableMember ? ContainerUtil.filter(candidates, this::hasCompatibleSignature) : candidates;
     }
-    return text;
+    myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
+  }
+
+  private static boolean isValidCandidate(@NotNull PsiFile psiFile, @NotNull PsiMember candidate){
+    if (!candidate.isValid()) return false;
+    if (PsiUtil.isMemberAccessibleAt(candidate, psiFile)) return true;
+    PsiImplicitClass possibleImplicitClass = PsiTreeUtil.getParentOfType(candidate, PsiImplicitClass.class);
+    if (possibleImplicitClass != null) {
+      if (!psiFile.equals(candidate.getContainingFile())) return false;
+    }
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
+    if (virtualFile == null) return false;
+    return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
+  }
+
+  /**
+   * The fallback candidate list holds one member for each class with the correct name, also when the applicability check
+   * rejected the member. The editor hint shows a member only when it passes this check, because the user did not ask
+   * for the hint. The quick fix keeps every candidate.
+   *
+   * @return true when the signature of the member can match the reference
+   */
+  boolean hasCompatibleSignature(@NotNull T member) {
+    return true;
+  }
+
+  /**
+   * @return the members the editor hint offers
+   */
+  @TestOnly
+  public @NotNull List<T> getHintCandidates() {
+    return hintCandidates;
+  }
+
+  protected abstract @NotNull @IntentionName String getBaseText();
+
+  protected abstract @NotNull @NlsSafe String getMemberPresentableText(@NotNull T t);
+
+  protected abstract @NotNull @NlsSafe String getMemberKindPresentableText();
+
+  @Override
+  public @NotNull String getText() {
+    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.getFirst()) + "'");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file)
-           && file instanceof PsiJavaFile
-           && getElement() != null
-           && getElement().isValid()
-           && getQualifierExpression() == null
-           && resolveRef() == null
-           && file.getManager().isInProject(file)
-           && !(candidates == null ? candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS) : candidates).isEmpty()
-      ;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return !isPsiModificationStampChanged(project) && !candidates.isEmpty();
   }
 
-  @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
-
-  protected abstract boolean toAddStaticImports();
-
-  public static boolean isExcluded(PsiMember method) {
-    String name = PsiUtil.getMemberQualifiedName(method);
-    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
+  private boolean isPsiModificationStampChanged(@NotNull Project project) {
+    long currentPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
+    return currentPsiModificationCount != myPsiModificationCount;
   }
-
-  @NotNull protected abstract QuestionAction createQuestionAction(List<T> methodsToImport, @NotNull Project project, Editor editor);
-
-  @Nullable protected abstract PsiElement getElement();
-  @Nullable protected abstract PsiElement getQualifierExpression();
-  @Nullable protected abstract PsiElement resolveRef();
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    R copy = ImportFixPreviewUtil.findSameElementInPreview(psiFile, getElement());
+    if (copy == null) return IntentionPreviewInfo.EMPTY;
+    if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    T element = candidates.getFirst();
+    PsiClass containingClass = element.getContainingClass();
+    if (containingClass == null) return IntentionPreviewInfo.EMPTY;
+    R ref = myReferencePointer.getElement();
+    if (ref == null) return IntentionPreviewInfo.EMPTY;
+    performImport(element, copy);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  abstract @NotNull StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
+
+  abstract boolean toAddStaticImports();
+
+  protected abstract @Nls @NotNull String getSelectorTitle();
+
+  @NotNull
+  private QuestionAction createQuestionAction(@NotNull List<? extends T> membersToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<T>(project, editor, membersToImport, myReferencePointer, getSelectorTitle()) {
+      @Override
+      protected void doImport(@NotNull T toImport) {
+        R ref = myReferencePointer.getElement();
+        if (ref == null) return;
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(ref)) return;
+        Project project = toImport.getProject();
+        WriteCommandAction.runWriteCommandAction(project, getBaseText(), null, () -> performImport(toImport, ref));
+      }
+    };
+  }
+
+  /**
+   * @param toImport member to import
+   * @param ref reference
+   */
+  protected void performImport(@NotNull T toImport, @NotNull R ref) {
+    AddSingleMemberStaticImportAction.bindAllClassRefs(ref.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
+  }
+
+  @Nullable R getElement() {
+    return myReferencePointer.getElement();
+  }
+
+  protected abstract @Nullable PsiElement getQualifierExpression();
+
+  protected abstract @Nullable PsiElement resolveRef();
+
+  /**
+   * @return the name of the reference to import, which identifies a hint the user hid with the Escape key
+   */
+  protected abstract @Nullable String getReferenceName();
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)
+        || isPsiModificationStampChanged(project)
+        || candidates.isEmpty()) {
+      return;
+    }
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final List<T> methodsToImport = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
-      if (methodsToImport.isEmpty()) return;
-      createQuestionAction(methodsToImport, project, editor).execute();
+      createQuestionAction(candidates, project, editor).execute();
     });
   }
-
-  private ImportClassFixBase.Result doFix(Editor editor) {
-    if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-    final List<T> candidates = getMembersToImport(true, StaticMembersProcessor.SearchMode.MAX_100_MEMBERS);
-    if (candidates.isEmpty()) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    final PsiElement element = getElement();
-    if (element == null) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    if (toAddStaticImports() &&
-        candidates.size() == 1 &&
-        PsiTreeUtil.isAncestor(element.getContainingFile(), candidates.get(0), true)) {
-      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
-    }
-
-    final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    /* PsiFile psiFile = element.getContainingFile();
-   if (candidates.size() == 1 &&
-        ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-        (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-        !LaterInvocator.isInModalContext()) {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
-      return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
-    }
-*/
-    String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-      final TextRange textRange = element.getTextRange();
-      HintManager.getInstance().showQuestionHint(editor, hintText,
-                                                 textRange.getStartOffset(),
-                                                 textRange.getEndOffset(), action);
-    }
-    return ImportClassFixBase.Result.POPUP_SHOWN;
-  }
-
-  
 
   @Override
   public boolean startInWriteAction() {
@@ -151,12 +220,98 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
 
   @Override
   public boolean showHint(@NotNull Editor editor) {
-    final PsiElement callExpression = getElement();
-    if (callExpression == null || 
-        getQualifierExpression() != null) {
+    PsiElement callExpression = getElement();
+    if (callExpression == null || getQualifierExpression() != null) {
       return false;
     }
-    ImportClassFixBase.Result result = doFix(editor);
-    return result == ImportClassFixBase.Result.POPUP_SHOWN || result == ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
+    if (!CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
+      return false;
+    }
+    if (hintCandidates.isEmpty()) {
+      return false;
+    }
+    String referenceName = getReferenceName();
+    if (ImportHintDismissalTracker.isDismissed(editor, callExpression, referenceName)) {
+      return false;
+    }
+
+    T firstCandidate = hintCandidates.getFirst();
+    PsiFile containingFile = callExpression.getContainingFile();
+    if (containingFile == null || isPsiModificationStampChanged(containingFile.getProject())) {
+      return false;
+    }
+
+    if ((!toAddStaticImports() ||
+         hintCandidates.size() != 1 ||
+         !PsiTreeUtil.isAncestor(containingFile, firstCandidate, true))
+        && !ApplicationManager.getApplication().isHeadlessEnvironment()
+        && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
+      TextRange textRange = callExpression.getTextRange();
+      QuestionAction action = createQuestionAction(hintCandidates, containingFile.getProject(), editor);
+      String hintText =
+        ShowAutoImportPass.getMessage(hintCandidates.size() > 1, getMemberKindPresentableText(), getMemberPresentableText(firstCandidate));
+      ImportHintDismissalTracker.showHint(editor, hintText,
+                                          textRange.getStartOffset(),
+                                          textRange.getEndOffset(), action, callExpression, referenceName);
+      return true;
+    }
+
+    return false;
+  }
+
+  @Override
+  public @NotNull ModCommandAction getFallbackModCommandAction() {
+    return new StaticImportMemberModCommandAction();
+  }
+
+  private class StaticImportMemberModCommandAction implements ModCommandAction {
+    @Override
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (isPsiModificationStampChanged(context.project()) || candidates.isEmpty()) return null;
+      return Presentation.of(getText());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      R ref = myReferencePointer.getElement();
+      if (ref == null) {
+        return ModCommand.nop();
+      }
+      return ModCommand.chooseAction(
+        getSelectorTitle(),
+        ContainerUtil.map(candidates, c -> new StaticImportMemberSingleAction(ref, c)));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return StaticImportMemberFix.this.getFamilyName();
+    }
+  }
+
+  private class StaticImportMemberSingleAction extends PsiUpdateModCommandAction<R> {
+    private final @NotNull T myMember;
+
+    private StaticImportMemberSingleAction(@NotNull R ref, @NotNull T member) {
+      super(ref);
+      myMember = member;
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull R element) {
+      if (!myMember.isValid()) return null;
+      PsiClass aClass = Objects.requireNonNull(myMember.getContainingClass());
+      String presentation = ClassPresentationUtil.getNameForClass(aClass, false) + "." + myMember.getName();
+      return Presentation.of(presentation);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull R element, @NotNull ModPsiUpdater updater) {
+      performImport(myMember, element);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return StaticImportMemberFix.this.getFamilyName();
+    }
   }
 }

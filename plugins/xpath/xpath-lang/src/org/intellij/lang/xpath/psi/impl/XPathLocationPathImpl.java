@@ -17,7 +17,12 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.context.XPathVersion;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +31,8 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
         super(node);
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
       final XPathStep step = getFirstStep();
       if (step != null) {
         final XPathExpression expr = step.getStep();
@@ -39,16 +44,18 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
                 XPathType.NODESET : XPath2Type.SEQUENCE;
     }
 
-    @Nullable
-    public XPathStep getFirstStep() {
+    @Override
+    public @Nullable XPathStep getFirstStep() {
       return findChildByClass(XPathStep.class);
     }
 
+    @Override
     public boolean isAbsolute() {
         final XPathStep pathExpression = getFirstStep();
         return pathExpression != null && pathExpression.isAbsolute();
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathLocationPath(this);
   }

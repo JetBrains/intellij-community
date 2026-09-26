@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -20,7 +6,25 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -28,36 +32,22 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class LightMethod extends LightElement implements PsiMethod {
-
   protected final @NotNull PsiMethod myMethod;
   protected final @NotNull PsiClass myContainingClass;
   protected final @NotNull PsiSubstitutor mySubstitutor;
 
-  public LightMethod(@NotNull PsiClass containingClass, @NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    this(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
-  }
-
   public LightMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass containingClass) {
-    this(manager, method, containingClass, PsiSubstitutor.EMPTY);
-  }
-
-  public LightMethod(@NotNull PsiManager manager,
-                     @NotNull PsiMethod method,
-                     @NotNull PsiClass containingClass,
-                     @NotNull PsiSubstitutor substitutor) {
-    this(manager, method, containingClass, JavaLanguage.INSTANCE, substitutor);
+    this(manager, method, containingClass, JavaLanguage.INSTANCE, PsiSubstitutor.EMPTY);
   }
 
   public LightMethod(@NotNull PsiManager manager,
@@ -89,8 +79,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return myMethod.getTypeParameters();
   }
 
@@ -115,14 +104,12 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myMethod.getName();
   }
 
   @Override
-  @NotNull
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return myMethod.getHierarchicalMethodSignature();
   }
 
@@ -137,8 +124,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return myMethod.getModifierList();
   }
 
@@ -153,16 +139,14 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public PsiParameterList getParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
     return mySubstitutor == PsiSubstitutor.EMPTY
            ? myMethod.getParameterList()
            : new LightParameterListWrapper(myMethod.getParameterList(), mySubstitutor);
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getThrowsList() {
+  public @NotNull PsiReferenceList getThrowsList() {
     return myMethod.getThrowsList();
   }
 
@@ -182,8 +166,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return myMethod.getSignature(substitutor);
   }
 
@@ -193,38 +176,32 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods() {
+  public PsiMethod @NotNull [] findSuperMethods() {
     return myMethod.findSuperMethods();
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+  public PsiMethod @NotNull [] findSuperMethods(boolean checkAccess) {
     return myMethod.findSuperMethods(checkAccess);
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findSuperMethods(PsiClass parentClass) {
+  public PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass) {
     return myMethod.findSuperMethods(parentClass);
   }
 
   @Override
-  @NotNull
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
   }
 
   @Override
-  @NotNull
-  public PsiMethod[] findDeepestSuperMethods() {
+  public PsiMethod @NotNull [] findDeepestSuperMethods() {
     return myMethod.findDeepestSuperMethods();
   }
 
@@ -235,7 +212,12 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    myMethod.accept(visitor);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -248,9 +230,8 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myContainingClass.isValid();
   }
 
-  @NotNull
   @Override
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     return myContainingClass;
   }
 
@@ -270,9 +251,11 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
-    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
+  public Icon getElementIcon(int flags) {
+    IconManager iconManager = IconManager.getInstance();
+    Icon methodIcon =
+      iconManager.getPlatformIcon(hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method);
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
@@ -282,8 +265,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 

@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.MouseEvent;
 
 /**
@@ -29,7 +22,7 @@ public class CheckBoxWithColorChooser extends JPanel {
   private Color myColor;
   private final JCheckBox myCheckbox;
 
-  public CheckBoxWithColorChooser(String text, boolean selected, Color color) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text, boolean selected, Color color) {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     myColor = color;
     myCheckbox = new JCheckBox(text, selected);
@@ -37,11 +30,11 @@ public class CheckBoxWithColorChooser extends JPanel {
     add(new MyColorButton());
   }
 
-  public CheckBoxWithColorChooser(String text, boolean selected) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text, boolean selected) {
     this(text, selected, Color.WHITE);
   }
 
-  public CheckBoxWithColorChooser(String text) {
+  public CheckBoxWithColorChooser(@NlsContexts.Checkbox String text) {
     this(text, false);
   }
 
@@ -79,7 +72,7 @@ public class CheckBoxWithColorChooser extends JPanel {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myCheckbox.isSelected()) {
-            final Color color = ColorChooser.chooseColor(myCheckbox, "Chose color", CheckBoxWithColorChooser.this.myColor);
+            final Color color = ColorChooserService.getInstance().showDialog(myCheckbox, UIBundle.message("dialog.title.choose.color"), CheckBoxWithColorChooser.this.myColor);
             if (color != null) {
               myColor = color;
             }
@@ -97,14 +90,17 @@ public class CheckBoxWithColorChooser extends JPanel {
       g.setColor(color);
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getMaximumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return new Dimension(12, 12);
     }

@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
-public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestCase {
+public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -62,7 +59,6 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
   protected boolean replaceAllOccurences = false;
 
   private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException {
-    String result = "";
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
@@ -91,8 +87,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     String varName = "preved";
     GroovyVariableValidator validator =
       new GroovyVariableValidator(new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, null, occurences, tempContainer));
-    result = validator.isOKTest(varName, replaceAllOccurences);
-    return result;
+    return validator.isOKTest(varName, replaceAllOccurences);
   }
 
 

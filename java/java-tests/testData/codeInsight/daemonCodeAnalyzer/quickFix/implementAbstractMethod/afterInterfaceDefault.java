@@ -6,6 +6,6 @@ interface A {
 interface B extends A {
     @Override
     default void m() {
-        
+        A.super.m();
     }
 }

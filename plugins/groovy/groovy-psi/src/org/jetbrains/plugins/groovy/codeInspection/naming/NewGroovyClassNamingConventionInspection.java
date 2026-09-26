@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,58 +12,64 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+public final class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
+  private static final @NonNls String GROOVY = "Groovy";
 
-public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public NewGroovyClassNamingConventionInspection() {
-    super(wrapClassExtensions(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), GROOVY + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    registerConventionsListener(NewClassNamingConventionInspection.EP_NAME);
   }
 
-  private static List<NamingConvention<PsiClass>> wrapClassExtensions() {
-    return Arrays.stream(NewClassNamingConventionInspection.EP_NAME.getExtensions())
-      .map(ex -> new NamingConvention<PsiClass>() {
-        @Override
-        public boolean isApplicable(PsiClass member) {
-          return ex.isApplicable(member);
-        }
+  private static NamingConvention<PsiClass> wrapClassExtension(NamingConvention<PsiClass> ex) {
+    return new NamingConvention<>() {
+      @Override
+      public boolean isApplicable(PsiClass member) {
+        return ex.isApplicable(member);
+      }
 
-        @Override
-        public String getElementDescription() {
-          return ex.getElementDescription();
-        }
+      @Override
+      public String getElementDescription() {
+        return ex.getElementDescription();
+      }
 
-        @Override
-        public String getShortName() {
-          String shortName = ex.getShortName();
-          if (shortName.startsWith("JUnit")) return shortName;
-          return "Groovy" + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
-        }
+      @Override
+      public String getShortName() {
+        String shortName = ex.getShortName();
+        if (shortName.startsWith("JUnit")) return shortName;
+        return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
+      }
 
-        @Override
-        public NamingConventionBean createDefaultBean() {
-          return ex.createDefaultBean();
-        }
-      })
-      .collect(Collectors.toList());
+      @Override
+      public NamingConventionBean createDefaultBean() {
+        return ex.createDefaultBean();
+      }
+    };
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected void registerConvention(NamingConvention<PsiClass> convention) {
+    super.registerConvention(wrapClassExtension(convention));
+  }
+
+  @Override
+  protected void unregisterConvention(@NotNull NamingConvention<PsiClass> extension) {
+    super.unregisterConvention(wrapClassExtension(extension));
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!(holder.getFile() instanceof PsiClassOwner)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof GrTypeDefinition) {
-          PsiClass aClass = (PsiClass)element;
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof GrTypeDefinition aClass) {
           final String name = aClass.getName();
           if (name == null) return;
           checkName(aClass, name, holder);

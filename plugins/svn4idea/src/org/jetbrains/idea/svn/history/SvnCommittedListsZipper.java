@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,20 +18,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
 
   private static final Logger LOG = Logger.getInstance(SvnCommittedListsZipper.class);
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
 
   public SvnCommittedListsZipper(@NotNull SvnVcs vcs) {
     myVcs = vcs;
   }
 
-  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+  @Override
+  public @NotNull Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
 
@@ -45,7 +43,7 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
       }
       if (root == null) {
         // should not occur
-        LOG.info("repository root not found for location:"+ location.toPresentableString());
+        LOG.info("repository root not found for location:" + location.toPresentableString());
         singles.add(location);
       } else {
         map.putValue(root, svnLocation);
@@ -65,11 +63,13 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     return Pair.create(groups, singles);
   }
 
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+  @Override
+  public @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
     return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
   }
 
-  public long getNumber(final CommittedChangeList list) {
+  @Override
+  public long getNumber(@NotNull CommittedChangeList list) {
     return list.getNumber();
   }
 }

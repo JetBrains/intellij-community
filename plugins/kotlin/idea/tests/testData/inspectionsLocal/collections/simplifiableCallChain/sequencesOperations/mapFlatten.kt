@@ -1,0 +1,6 @@
+// WITH_STDLIB
+package test
+
+fun testMe() {
+    sequenceOf(1, 2, 3).<caret>map { sequenceOf(it - 1, it + 1) }.flatten()
+}

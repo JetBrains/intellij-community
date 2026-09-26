@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.net.IOExceptionDialog;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -39,9 +40,9 @@ public class DownloadResourceFix implements LocalQuickFix {
     myLocation = location;
   }
 
-  @NotNull
-  public String getFamilyName() {
-    return "Download External Resource";
+  @Override
+  public @NotNull String getFamilyName() {
+    return XPathBundle.message("intention.family.name.download.external.resource");
   }
 
   @Override
@@ -50,7 +51,7 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     boolean tryAgain = true;
 
     final DownloadManager.DownloadException[] ex = new DownloadManager.DownloadException[1];
@@ -68,9 +69,11 @@ public class DownloadResourceFix implements LocalQuickFix {
 
     while (tryAgain) {
       tryAgain = false;
-      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Downloading Resource", true, project)) {
+      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                            XPathBundle.message("progress.title.downloading.resource"), true, project)) {
         if (ex[0] != null) {
-          tryAgain = IOExceptionDialog.showErrorDialog("Error during Download", "Error downloading " + ex[0].getLocation());
+          tryAgain = IOExceptionDialog.showErrorDialog(XPathBundle.message("dialog.title.error.during.download"),
+                                                       XPathBundle.message("text.error.downloading", ex[0].getLocation()));
           ex[0] = null;
         }
         else {
@@ -81,11 +84,11 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   private static class MyDownloadManager extends DownloadManager {
-    public MyDownloadManager(Project project, ProgressIndicator progress) {
+    MyDownloadManager(Project project, ProgressIndicator progress) {
       super(project, progress);
     }
 
-    private static void processReferences(XmlTag[] subTags, Set<String> list) {
+    private static void processReferences(XmlTag[] subTags, Set<? super String> list) {
       for (XmlTag xmlTag : subTags) {
         final String href = xmlTag.getAttributeValue("href");
         // TODO: Handle relative dependencies!
@@ -95,10 +98,12 @@ public class DownloadResourceFix implements LocalQuickFix {
       }
     }
 
+    @Override
     protected boolean isAccepted(PsiFile psiFile) {
       return XsltSupport.isXsltFile(psiFile);
     }
 
+    @Override
     protected Set<String> getResourceDependencies(PsiFile psiFile) {
       final XmlDocument document = ((XmlFile)psiFile).getDocument();
       if (document != null) {

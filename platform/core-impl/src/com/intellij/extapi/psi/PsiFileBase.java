@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -28,12 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * @author max
- */
 public abstract class PsiFileBase extends PsiFileImpl {
-  @NotNull private final Language myLanguage;
-  @NotNull private final ParserDefinition myParserDefinition;
+  private final @NotNull Language myLanguage;
+  private final @NotNull ParserDefinition myParserDefinition;
 
   protected PsiFileBase(@NotNull FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider);
@@ -48,20 +31,26 @@ public abstract class PsiFileBase extends PsiFileImpl {
     init(nodeType, nodeType);
   }
 
-  private static Language findLanguage(Language baseLanguage, FileViewProvider viewProvider) {
+  private static Language findLanguage(@NotNull Language baseLanguage, @NotNull FileViewProvider viewProvider) {
     final Set<Language> languages = viewProvider.getLanguages();
+    Language candidate = null;
     for (final Language actualLanguage : languages) {
-      if (actualLanguage.isKindOf(baseLanguage)) {
-        return actualLanguage;
+      if (actualLanguage.equals(baseLanguage)) {
+        return baseLanguage;
       }
+      if (candidate == null && actualLanguage.isKindOf(baseLanguage)) {
+        candidate = actualLanguage;
+      }
+    }
+    if (candidate != null) {
+      return candidate;
     }
     throw new AssertionError(
         "Language " + baseLanguage + " doesn't participate in view provider " + viewProvider + ": " + new ArrayList<>(languages));
   }
 
   @Override
-  @NotNull
-  public final Language getLanguage() {
+  public final @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -70,8 +59,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     visitor.visitFile(this);
   }
 
-  @NotNull
-  public ParserDefinition getParserDefinition() {
+  public @NotNull ParserDefinition getParserDefinition() {
     return myParserDefinition;
   }
 }

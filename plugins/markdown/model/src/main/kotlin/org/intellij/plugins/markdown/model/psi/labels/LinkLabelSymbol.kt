@@ -1,0 +1,77 @@
+package org.intellij.plugins.markdown.model.psi.labels
+
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.model.Pointer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
+import com.intellij.refactoring.rename.api.RenameTarget
+import org.intellij.plugins.markdown.MarkdownIcons
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
+import org.intellij.plugins.markdown.model.psi.MarkdownSymbolWithUsages
+import org.intellij.plugins.markdown.model.psi.withLocationIn
+import org.intellij.plugins.markdown.util.isFootnoteLabelText
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+data class LinkLabelSymbol(
+  override val file: PsiFile,
+  override val range: TextRange,
+  val text: @NlsSafe String
+): MarkdownSymbolWithUsages, NavigationTarget, SearchTarget, RenameTarget {
+  override fun createPointer(): Pointer<out LinkLabelSymbol> {
+    return createPointer(file, range, text)
+  }
+
+  override fun computePresentation(): TargetPresentation {
+    return presentation()
+  }
+
+  override fun navigationRequest(): NavigationRequest? {
+    return NavigationRequest.sourceNavigationRequest(file, range)
+  }
+
+  override val targetName: String
+    get() = text
+
+  override val maximalSearchScope: SearchScope
+    get() = GlobalSearchScope.fileScope(file)
+
+  override val usageHandler: UsageHandler
+    get() = UsageHandler.createEmptyUsageHandler(text)
+
+  override val searchText: String
+    get() = text.trimStart().split(SEARCH_WORD_SEPARATOR, limit = 2).firstOrNull().orEmpty()
+
+  override fun presentation(): TargetPresentation {
+    val builder = TargetPresentation.builder(text).icon(MarkdownIcons.EditorActions.Link)
+    return builder.withLocationIn(file).presentation()
+  }
+
+  companion object {
+    private val SEARCH_WORD_SEPARATOR = Regex("\\s+")
+
+    fun createPointer(label: MarkdownLinkLabel): Pointer<LinkLabelSymbol> {
+      val absoluteRange = label.labelTextRange.shiftRight(label.startOffset)
+      return createPointer(label.containingFile, absoluteRange, label.labelText)
+    }
+
+    fun createPointer(file: PsiFile, range: TextRange, text: String): Pointer<LinkLabelSymbol> {
+      return Pointer.fileRangePointer(file, range) { restoredFile, restoredRange ->
+        LinkLabelSymbol(restoredFile, restoredRange, text)
+      }
+    }
+
+    val MarkdownLinkLabel.isDeclaration: Boolean
+      get() = parentOfType<MarkdownLinkDefinition>() != null && !isFootnoteLabelText(text)
+  }
+}

@@ -17,14 +17,16 @@ package com.intellij.framework.library;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface FrameworkLibraryVersionFilter {
   FrameworkLibraryVersionFilter ALL = new FrameworkLibraryVersionFilter() {
     @Override
     public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "FrameworkLibraryVersion(all)";
     }
   };
 

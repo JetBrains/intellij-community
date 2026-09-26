@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.formatting.ASTBlock;
@@ -20,21 +6,22 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FormatterBasedLineIndentInfoBuilder {
+@ApiStatus.Internal
+public final class FormatterBasedLineIndentInfoBuilder {
   private static final int MAX_NEW_LINE_BLOCKS_TO_PROCESS = 500;
 
   private final ProgressIndicator myProgressIndicator;
@@ -52,7 +39,7 @@ public class FormatterBasedLineIndentInfoBuilder {
     myProgressIndicator = indicator;
   }
 
-  public List<LineIndentInfo> build() {
+  public @Unmodifiable List<LineIndentInfo> build() {
     List<Block> newLineBlocks = getBlocksStartingNewLine();
     
     return ContainerUtil.map(newLineBlocks, newLineBlock -> {
@@ -88,7 +75,7 @@ public class FormatterBasedLineIndentInfoBuilder {
   }
 
   private static boolean hasOnlyNormalOrNoneIndents(List<Indent.Type> indents) {
-    Indent.Type outerMostIndent = indents.get(0);
+    Indent.Type outerMostIndent = indents.getFirst();
     if (outerMostIndent != Indent.Type.NONE && outerMostIndent != Indent.Type.NORMAL) {
       return false;
     }
@@ -116,14 +103,13 @@ public class FormatterBasedLineIndentInfoBuilder {
         ((AbstractBlock)block).setBuildIndentsOnly(true);
       }
       List<Block> subBlocks = block.getSubBlocks();
-      block = subBlocks.isEmpty() ? null : subBlocks.get(0);
+      block = subBlocks.isEmpty() ? null : subBlocks.getFirst();
     }
     
     return indentsOnStartOffset;
   }
 
-  @NotNull
-  private List<Block> getBlocksStartingNewLine() {
+  private @NotNull List<Block> getBlocksStartingNewLine() {
     NewLineBlocksIterator newLineBlocksIterator = new NewLineBlocksIterator(myRootBlock, myDocument, myProgressIndicator);
 
     List<Block> newLineBlocks = new ArrayList<>();

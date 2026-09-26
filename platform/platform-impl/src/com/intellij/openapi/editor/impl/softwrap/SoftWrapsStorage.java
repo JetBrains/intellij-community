@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.TextChange;
-import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +17,11 @@ import java.util.List;
  * Holds registered soft wraps and provides monitoring and management facilities for them.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
- * @since Jun 29, 2010 3:04:20 PM
  */
-public class SoftWrapsStorage implements Dumpable {
-
-  private final List<SoftWrapImpl>        myWraps     = new ArrayList<>();
-  private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
-  private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+@ApiStatus.Internal
+public final class SoftWrapsStorage implements Dumpable {
+  private final List<SoftWrapEx> myWraps = new ArrayList<>();
+  private final List<SoftWrapEx> myWrapsView = Collections.unmodifiableList(myWraps);
 
   /**
    * @return    {@code true} if there is at least one soft wrap registered at the current storage; {@code false} otherwise
@@ -48,8 +30,7 @@ public class SoftWrapsStorage implements Dumpable {
     return myWraps.isEmpty();
   }
 
-  @Nullable
-  public SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrapEx getSoftWrap(int offset) {
     int i = getSoftWrapIndex(offset);
     return i >= 0 ? myWraps.get(i) : null;
   }
@@ -57,8 +38,7 @@ public class SoftWrapsStorage implements Dumpable {
   /**
    * @return    view for registered soft wraps sorted by offset in ascending order if any; empty collection otherwise
    */
-  @NotNull
-  public List<SoftWrapImpl> getSoftWraps() {
+  public @NotNull List<SoftWrapEx> getSoftWraps() {
     return myWrapsView;
   }
 
@@ -72,26 +52,7 @@ public class SoftWrapsStorage implements Dumpable {
    *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
    */
   public int getSoftWrapIndex(int offset) {
-    int start = 0;
-    int end = myWraps.size() - 1;
-
-    // We use custom inline implementation of binary search here because profiling shows that standard Collections.binarySearch()
-    // is a bottleneck. The most probable reason is a big number of interface calls.
-    while (start <= end) {
-      int i = (start + end) >>> 1;
-      SoftWrap softWrap = myWraps.get(i);
-      int softWrapOffset = softWrap.getStart();
-      if (softWrapOffset > offset) {
-        end = i - 1;
-      }
-      else if (softWrapOffset < offset) {
-        start = i + 1;
-      }
-      else {
-        return i;
-      }
-    }
-    return -(start + 1);
+    return ObjectUtils.binarySearch(0, myWraps.size(), i -> Integer.compare(myWraps.get(i).getStart(), offset));
   }
 
   /**
@@ -103,6 +64,10 @@ public class SoftWrapsStorage implements Dumpable {
    * @return              number of soft wraps which {@link TextChange#getStart() start offsets} belong to the target range
    */
   public int getNumberOfSoftWrapsInRange(int startOffset, int endOffset) {
+    return getNumberOfSoftWrapsInRange(startOffset, endOffset, Integer.MAX_VALUE);
+  }
+
+  private int getNumberOfSoftWrapsInRange(int startOffset, int endOffset, int stopCountingAfter) {
     int startIndex = getSoftWrapIndex(startOffset);
     if (startIndex < 0) {
       startIndex = -startIndex - 1;
@@ -113,7 +78,7 @@ public class SoftWrapsStorage implements Dumpable {
     }
     int result = 0;
     int endIndex = startIndex;
-    for (; endIndex < myWraps.size(); endIndex++) {
+    for (; endIndex < myWraps.size() && result < stopCountingAfter; endIndex++) {
       SoftWrap softWrap = myWraps.get(endIndex);
       if (softWrap.getStart() > endOffset) {
         break;
@@ -122,14 +87,20 @@ public class SoftWrapsStorage implements Dumpable {
     }
     return result;
   }
+
+  /**
+   * Same as {@code getNumberOfSoftWrapsInRange(startOffset, endOffset) > 0}.
+   */
+  public boolean hasSoftWrapsInRange(int startOffset, int endOffset) {
+    return getNumberOfSoftWrapsInRange(startOffset, endOffset, 1) > 0;
+  }
   
   /**
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
-   * @return                  previous soft wrap object stored for the same offset if any; {@code null} otherwise
    */
-  public void storeOrReplace(SoftWrapImpl softWrap) {
+  public void storeOrReplace(SoftWrapEx softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       myWraps.set(i, softWrap);
@@ -140,7 +111,7 @@ public class SoftWrapsStorage implements Dumpable {
     myWraps.add(i, softWrap);
   }
 
-  public void remove(SoftWrapImpl softWrap) {
+  public void remove(SoftWrapEx softWrap) {
     if (myWraps.isEmpty()) return;
     int i = myWraps.size() - 1; // expected use case is removing of last soft wrap, so we have a fast path here for that case
     if (myWraps.get(i).getStart() != softWrap.getStart()) {
@@ -151,12 +122,25 @@ public class SoftWrapsStorage implements Dumpable {
     }
   }
 
+  public void removeCustomWrapsInRange(int startOffset, int endOffset) {
+    var affected = removeStartingFrom(startOffset);
+    int i = 0;
+    for (; i < affected.size(); i++) {
+      var wrap = affected.get(i);
+      if (wrap.getStart() >= endOffset) break;
+      if (!(wrap instanceof CustomWrapToSoftWrapAdapter)) {
+        addLast(wrap);
+      }
+    }
+    addAll(affected.subList(i, affected.size()));
+  }
+
   /**
    * Removes soft wraps with offsets equal or larger than a given offset from storage.
    * 
    * @return soft wraps that were removed, ordered by offset
    */
-  public List<SoftWrapImpl> removeStartingFrom(int offset) {
+  public List<SoftWrapEx> removeStartingFrom(int offset) {
     int startIndex = getSoftWrapIndex(offset);
     if (startIndex < 0) {
       startIndex = -startIndex - 1;
@@ -166,8 +150,8 @@ public class SoftWrapsStorage implements Dumpable {
       return Collections.emptyList();
     }
 
-    List<SoftWrapImpl> tail = myWraps.subList(startIndex, myWraps.size());
-    List<SoftWrapImpl> result = new ArrayList<>(tail);
+    List<SoftWrapEx> tail = myWraps.subList(startIndex, myWraps.size());
+    List<SoftWrapEx> result = new ArrayList<>(tail);
     tail.clear();
     return result;
   }
@@ -176,7 +160,7 @@ public class SoftWrapsStorage implements Dumpable {
    * Adds soft wraps to storage. They are supposed to be sorted by their offsets, and have offsets larger than offsets for soft wraps 
    * existing in storage at the moment.
    */
-  public void addAll(List<SoftWrapImpl> softWraps) {
+  public void addAll(List<? extends SoftWrapEx> softWraps) {
     myWraps.addAll(softWraps);
   }
 
@@ -185,28 +169,21 @@ public class SoftWrapsStorage implements Dumpable {
    */
   public void removeAll() {
     myWraps.clear();
-    notifyListenersAboutChange();
   }
 
   /**
-   * Registers given listener within the current model
-   *
-   * @param listener    listener to register
-   * @return            {@code true} if given listener was not registered before; {@code false} otherwise
-   */
-  public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
-    return myListeners.add(listener);
+  * Adds soft wrap to the end of the storage. Its offset must be the largest among existing ones.
+  */
+  public void addLast(SoftWrapEx softWrap) {
+    myWraps.addLast(softWrap);
   }
 
-  public void notifyListenersAboutChange() {
-    for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapsChanged();
-    }
+  public @Nullable SoftWrapEx getLast() {
+    return myWraps.isEmpty() ? null : myWraps.getLast();
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return myWraps.toString();
   }
 }

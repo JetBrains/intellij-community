@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
@@ -30,9 +31,9 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.xml.util.documentation.HtmlDescriptorsTable.LOG;
-
 public class XmlProcessingInstructionManipulator extends AbstractElementManipulator<XmlProcessingInstruction> {
+
+  private static final Logger LOG = Logger.getInstance(XmlProcessingInstructionManipulator.class);
 
   @Override
   public XmlProcessingInstruction handleContentChange(@NotNull XmlProcessingInstruction element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

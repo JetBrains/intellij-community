@@ -1,0 +1,8 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_CALL
+class T(s: String?) {
+    var i: Int = s<caret>.length
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix

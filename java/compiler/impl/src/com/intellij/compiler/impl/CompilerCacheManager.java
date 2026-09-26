@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
-import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.Compiler;
-import com.intellij.openapi.compiler.generic.GenericCompiler;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.FileProcessingCompiler;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.compiler.Validator;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,51 +28,30 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class CompilerCacheManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
+@Service(Service.Level.PROJECT)
+public final class CompilerCacheManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance(CompilerCacheManager.class);
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<>();
-  private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<>();
   private final List<Disposable> myCacheDisposables = new ArrayList<>();
   private final File myCachesRoot;
-  private final Project myProject;
 
-  public CompilerCacheManager(Project project) {
-    myProject = project;
+  public CompilerCacheManager(@NotNull Project project) {
     myCachesRoot = CompilerPaths.getCacheStoreDirectory(project);
   }
 
   public static CompilerCacheManager getInstance(Project project) {
-    return project.getComponent(CompilerCacheManager.class);
+    return project.getService(CompilerCacheManager.class);
   }
 
   @Override
   public void dispose() {
     flushCaches();
   }
-  
+
   private File getCompilerRootDir(final Compiler compiler) {
     final File dir = new File(myCachesRoot, getCompilerIdString(compiler));
     dir.mkdirs();
     return dir;
-  }
-
-  synchronized <Key, SourceState, OutputState> GenericCompilerCache<Key, SourceState, OutputState>
-                                 getGenericCompilerCache(final GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
-    GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
-    if (cache == null) {
-      final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<>(compiler, GenericCompilerRunner
-        .getGenericCompilerCacheDir(myProject, compiler));
-      myGenericCachesMap.put(compiler, genericCache);
-      myCacheDisposables.add(() -> {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Closing cache for feneric compiler " + compiler.getId());
-        }
-        genericCache.close();
-      });
-      cache = genericCache;
-    }
-    //noinspection unchecked
-    return (GenericCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
   synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(final FileProcessingCompiler compiler) throws IOException {
@@ -104,10 +75,10 @@ public class CompilerCacheManager implements Disposable {
   }
 
   public static String getCompilerIdString(Compiler compiler) {
-    @NonNls String description = compiler.getDescription();
-    return description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_").toLowerCase();
+    @NonNls String description = compiler instanceof Validator ? ((Validator)compiler).getId() : compiler.getDescription();
+    return StringUtil.toLowerCase(description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_"));
   }
-  
+
   synchronized void flushCaches() {
     for (Disposable disposable : myCacheDisposables) {
       try {
@@ -118,7 +89,6 @@ public class CompilerCacheManager implements Disposable {
       }
     }
     myCacheDisposables.clear();
-    myGenericCachesMap.clear();
     myCompilerToCacheMap.clear();
   }
 
@@ -129,7 +99,7 @@ public class CompilerCacheManager implements Disposable {
       for (final File child : children) {
         final boolean deleteOk = FileUtil.delete(child);
         if (!deleteOk) {
-          context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.failed.to.delete", child.getPath()), null, -1, -1);
+          context.addMessage(CompilerMessageCategory.ERROR, JavaCompilerBundle.message("compiler.error.failed.to.delete", child.getPath()), null, -1, -1);
         }
       }
     }

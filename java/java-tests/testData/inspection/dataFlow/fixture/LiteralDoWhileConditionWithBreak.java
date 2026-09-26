@@ -4,6 +4,6 @@ class Test {
     do {
         if (b == 1) break;
         System.out.println();
-    } while (<warning descr="Condition is always false">fa<caret>lse</warning>);
+    } while (false);
   }
 }

@@ -1,4 +1,4 @@
-// "Import static constant 'foo.B.TYPE_NODE'" "true"
+// "Import static constant 'foo.B.TYPE_NODE'" "true-preview"
 package foo;
 
 import static foo.B.TYPE_NODE;

@@ -1,0 +1,16 @@
+// "Use 'f' as receiver" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Foo {
+    val baz = 1
+}
+
+fun Foo.test() {
+    context(f: Foo)
+    fun local() {
+        val ref = ::ba<caret>z
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

@@ -32,27 +32,29 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReplaceWithXslAttribute implements IntentionAction {
-    @NotNull
-    public String getText() {
-        return "Replace with 'xsl:attribute'";
+    @Override
+    public @NotNull String getText() {
+        return getFamilyName();
     }
 
-    @NotNull
-    public String getFamilyName() {
-        return "Replace with xsl:attribute";
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.replace.with.xsl.attribute");
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!XsltSupport.isXsltFile(psiFile)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
         if (attr == null || attr.getValueElement() == null) {
             return false;
@@ -60,7 +62,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         if (XsltSupport.isXsltTag(attr.getParent())) {
             return false;
         }
-        
+
         final ASTNode node = attr.getNode();
         if (node == null) return false;
         final ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);
@@ -72,9 +74,10 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         }
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlAttribute attr = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
         assert attr != null;
 
@@ -92,7 +95,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
             if (c == '{' && j < files.length) {
                 if (i < s.length() - 1 && s.charAt(i) != '{') {
                     final PsiFile f = files[j++];
-                    if (builder.length() > 0) {
+                    if (!builder.isEmpty()) {
                         chunks.add(Pair.create(builder.toString(), Boolean.FALSE));
                         builder.setLength(0);
                     }
@@ -107,7 +110,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
                 builder.append(c);
             }
         }
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
             chunks.add(Pair.create(builder.toString(), Boolean.FALSE));
         }
 
@@ -116,7 +119,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         attrTag.setAttribute("name", attr.getName()); // local name?
 
         final String value = attr.getNamespace();
-        if (value.length() > 0) {
+        if (!value.isEmpty()) {
             attrTag.setAttribute("namespace", value);
         }
         for (Pair<String, Boolean> chunk : chunks) {
@@ -143,6 +146,7 @@ public class ReplaceWithXslAttribute implements IntentionAction {
         attr.delete();
     }
 
+    @Override
     public boolean startInWriteAction() {
         return true;
     }

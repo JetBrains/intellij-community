@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class VSpacer extends DesignSpacer{
   public VSpacer(){
     setSize(getHandleWidth(), 50);
@@ -36,6 +20,7 @@ public final class VSpacer extends DesignSpacer{
     return HANDLE_ATOM_WIDTH;
   }
 
+  @Override
   protected void paintComponent(final Graphics g){
     final int handleHeight=getHandleHeight();
     final int handleWidth=getHandleWidth();
@@ -44,12 +29,12 @@ public final class VSpacer extends DesignSpacer{
     final int x=(getWidth()-handleWidth)/2;
     drawHandle(g,x,0);
     g.setColor(ourColor1);
-    UIUtil.drawLine(g, x + handleWidth / 2, handleHeight, x + handleWidth / 2, handleHeight + 1);
+    LinePainter2D.paint((Graphics2D)g, x + handleWidth / 2, handleHeight, x + handleWidth / 2, handleHeight + 1);
 
     // Paint bottom handle
     final int y=getHeight()-handleHeight-1;
     drawHandle(g,x,y);
-    UIUtil.drawLine(g, x + handleWidth / 2, y - 2, x + handleWidth / 2, y);
+    LinePainter2D.paint((Graphics2D)g, x + handleWidth / 2, y - 2, x + handleWidth / 2, y);
     g.setColor(ourColor1);
 
     // Draw spring
@@ -64,14 +49,14 @@ public final class VSpacer extends DesignSpacer{
     g.setColor(ourColor1);
 
     g.drawRect(x,y,HANDLE_ATOM_HEIGHT-1,HANDLE_ATOM_WIDTH-1);
-    UIUtil.drawLine(g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
-                    y + HANDLE_ATOM_WIDTH / 2);
+    LinePainter2D.paint((Graphics2D)g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
+                        y + HANDLE_ATOM_WIDTH / 2);
 
     x+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
     g.drawRect(x,y,HANDLE_ATOM_HEIGHT-1,HANDLE_ATOM_WIDTH-1);
-    UIUtil.drawLine(g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
-                    y + HANDLE_ATOM_WIDTH / 2);
+    LinePainter2D.paint((Graphics2D)g, x + HANDLE_ATOM_HEIGHT, y + HANDLE_ATOM_WIDTH / 2, x + HANDLE_ATOM_HEIGHT + HANDLE_ATOM_SPACE - 1,
+                        y + HANDLE_ATOM_WIDTH / 2);
 
     x+=HANDLE_ATOM_HEIGHT+HANDLE_ATOM_SPACE;
 
@@ -86,14 +71,15 @@ public final class VSpacer extends DesignSpacer{
 
   private static void drawSpringPeriod(final Graphics g,final int x,final int y){
     g.setColor(ourColor2);
-    UIUtil.drawLine(g, x + 1, y, x + 2, y);
-    UIUtil.drawLine(g, x, y + 1, x, y + 1);
-    UIUtil.drawLine(g, x - 1, y + 2, x - 2, y + 2);
+    LinePainter2D.paint((Graphics2D)g, x + 1, y, x + 2, y);
+    LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + 1);
+    LinePainter2D.paint((Graphics2D)g, x - 1, y + 2, x - 2, y + 2);
 
     g.setColor(ourColor3);
-    UIUtil.drawLine(g, x, y + 3, x, y + 3);
+    LinePainter2D.paint((Graphics2D)g, x, y + 3, x, y + 3);
   }
 
+  @Override
   public Dimension getMinimumSize(){
     return new Dimension(getHandleWidth(),getHandleHeight()*2+SPRING_PRERIOD);
   }

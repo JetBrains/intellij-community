@@ -1,0 +1,50 @@
+try (def x = a instanceof b
+ c ? null : null) {}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Try resource list
+      PsiElement(()('(')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('x')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Instanceof expression
+            Reference expression
+              PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(instanceof)('instanceof')
+            PsiWhiteSpace(' ')
+            Type element
+              Reference element
+                PsiElement(identifier)('b')
+      PsiElement(new line)('\n ')
+      PsiErrorElement:')', ';' or new line expected, got 'c'
+        <empty list>
+  Conditional expression
+    Reference expression
+      PsiElement(identifier)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(?)('?')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(null)('null')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(null)('null')
+  PsiErrorElement:')' unexpected
+    PsiElement())(')')
+  PsiWhiteSpace(' ')
+  Block statement
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

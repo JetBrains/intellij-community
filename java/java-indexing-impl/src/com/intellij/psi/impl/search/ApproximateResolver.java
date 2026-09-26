@@ -1,33 +1,40 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author peter
- */
-public class ApproximateResolver {
+public final class ApproximateResolver {
   /**
    * Tries to calculate the type of a given expression using lightweight resolve: no type inference for method calls, no exact candidate selection, works only with raw types.
    * If it returns a non-empty set, the "real" type class is guaranteed to be present in that set. This method can be used to quickly
@@ -37,20 +44,47 @@ public class ApproximateResolver {
    * @param maxDepth a guard against too long chained calls, determines how deeply this resolve will go into a chained call
    * @return a set of possible classes corresponding to types that this expression might have, or null if it can't be determined
    */
-  @Nullable
-  static Set<PsiClass> getPossibleTypes(@NotNull PsiExpression expression, int maxDepth) {
+  static @Nullable Set<PsiClass> getPossibleTypes(@NotNull PsiExpression expression, int maxDepth) {
     if (maxDepth == 0) return null;
 
     expression = PsiUtil.skipParenthesizedExprDown(expression);
 
-    return expression instanceof PsiTypeCastExpression ? extractClass(expression.getType()) :
+    return expression instanceof PsiTypeCastExpression || expression instanceof PsiThisExpression ? extractClass(expression.getType()) :
            expression instanceof PsiMethodCallExpression ? getCallType(expression, maxDepth) :
            expression instanceof PsiReferenceExpression ? getNonCallType((PsiReferenceExpression)expression, maxDepth) :
+           expression instanceof PsiNewExpression ? getNewType((PsiNewExpression)expression) :
+           expression instanceof PsiConditionalExpression ? getConditionalType((PsiConditionalExpression)expression, maxDepth) :
            null;
   }
 
-  @Nullable
-  private static Set<PsiClass> getCallType(@NotNull PsiExpression expression, int maxDepth) {
+  private static @Nullable Set<PsiClass> getConditionalType(PsiConditionalExpression expression, int maxDepth) {
+    PsiExpression thenBranch = expression.getThenExpression();
+    PsiExpression elseBranch = expression.getElseExpression();
+    if (thenBranch != null && elseBranch != null) {
+      PsiClass thenType = ContainerUtil.getOnlyItem(getPossibleTypes(thenBranch, maxDepth / 2));
+      PsiClass elseType = ContainerUtil.getOnlyItem(getPossibleTypes(elseBranch, maxDepth / 2));
+      if (thenType != null && thenType.equals(elseType)) {
+        return Collections.singleton(thenType);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable Set<PsiClass> getNewType(PsiNewExpression expression) {
+    if (expression.isArrayCreation()) return null;
+    PsiAnonymousClass aClass = expression.getAnonymousClass();
+    if (aClass != null) return Collections.singleton(aClass);
+    PsiJavaCodeReferenceElement reference = expression.getClassReference();
+    if (reference != null) {
+      PsiClass psiClass = ObjectUtils.tryCast(reference.resolve(), PsiClass.class);
+      if (psiClass != null) {
+        return Collections.singleton(psiClass);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable Set<PsiClass> getCallType(@NotNull PsiExpression expression, int maxDepth) {
     PsiReferenceExpression ref = ((PsiMethodCallExpression)expression).getMethodExpression();
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return extractClass(expression.getType());
@@ -59,11 +93,10 @@ public class ApproximateResolver {
     String refName = ref.getReferenceName();
     int argCount = ((PsiMethodCallExpression)expression).getArgumentList().getExpressionCount();
     List<PsiMethod> methods = refName == null || qualifierType == null ? null : getPossibleMethods(qualifierType, refName, argCount);
-    return methods == null ? null : getDefiniteSymbolTypes(methods);
+    return methods == null ? null : getDefiniteSymbolTypes(methods, qualifierType);
   }
 
-  @Nullable
-  private static Set<PsiClass> getNonCallType(@NotNull PsiReferenceExpression expression, int maxDepth) {
+  private static @Nullable Set<PsiClass> getNonCallType(@NotNull PsiReferenceExpression expression, int maxDepth) {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier == null) {
       PsiElement target = expression.resolve();
@@ -73,25 +106,20 @@ public class ApproximateResolver {
     Set<PsiClass> qualifierType = getPossibleTypes(qualifier, maxDepth - 1);
     String refName = expression.getReferenceName();
     List<? extends PsiMember> members = refName == null || qualifierType == null ? null : getPossibleNonMethods(qualifierType, refName);
-    return members == null ? null : getDefiniteSymbolTypes(members);
+    return members == null ? null : getDefiniteSymbolTypes(members, qualifierType);
   }
 
-  @Nullable
-  private static Set<PsiClass> extractClass(PsiType type) {
+  private static @Nullable Set<PsiClass> extractClass(PsiType type) {
     PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return psiClass == null || psiClass instanceof PsiTypeParameter ? null : Collections.singleton(psiClass);
   }
 
-  @NotNull
-  public static List<PsiMethod> getPossibleMethods(@NotNull Set<PsiClass> symbols, @NotNull String name, int callArgCount) {
-    return JBIterable.from(symbols).
-      flatMap(sym -> Arrays.asList(sym.findMethodsByName(name, true))).
-      filter(m -> canHaveArgCount(m, callArgCount)).
-      toList();
+  public static @NotNull @Unmodifiable List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> classes, @NotNull String name, int callArgCount) {
+    return ContainerUtil.flatMap(classes,
+      aClass -> ContainerUtil.filter(aClass.findMethodsByName(name, true), m->canHaveArgCount(m, callArgCount)));
   }
 
-  @NotNull
-  public static List<PsiMember> getPossibleNonMethods(@NotNull Set<PsiClass> symbols, @NotNull String name) {
+  public static @NotNull List<PsiMember> getPossibleNonMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name) {
     List<PsiMember> result = new ArrayList<>();
     for (PsiClass sym : symbols) {
       ContainerUtil.addIfNotNull(result, sym.findFieldByName(name, true));
@@ -100,8 +128,7 @@ public class ApproximateResolver {
     return result;
   }
 
-  @Nullable
-  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates) {
+  public static @Nullable Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<? extends PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {
@@ -119,8 +146,28 @@ public class ApproximateResolver {
         }
 
         PsiClass typeClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (typeClass == null || typeClass instanceof PsiTypeParameter) {
-          return null;
+        if (typeClass == null) return null;
+        if (typeClass instanceof PsiTypeParameter) {
+          PsiClass containingClass = candidate.getContainingClass();
+          if (containingClass == null) return null;
+          typeClass = null;
+          // Sometimes we have Child extends Parent<Bar> and Parent<T> { T foo(); }
+          // In this case it's still desired to resolve that child.foo() returns Bar
+          for (PsiClass qualifierClass : qualifierType) {
+            PsiSubstitutor substitutor =
+              TypeConversionUtil.getMaybeSuperClassSubstitutor(containingClass, qualifierClass, PsiSubstitutor.EMPTY);
+            if (substitutor != null) {
+              PsiClass substitutedTypeClass = PsiUtil.resolveClassInClassTypeOnly(substitutor.substitute(type));
+              if (substitutedTypeClass instanceof PsiTypeParameter || substitutedTypeClass == null ||
+                  (typeClass != null && substitutedTypeClass != typeClass)) {
+                return null;
+              }
+              typeClass = substitutedTypeClass;
+            }
+          }
+          if (typeClass == null) {
+            return null;
+          }
         }
         possibleTypes.add(typeClass);
       }

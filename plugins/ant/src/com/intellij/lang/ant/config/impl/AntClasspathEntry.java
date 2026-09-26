@@ -26,12 +26,12 @@ import com.intellij.util.config.Externalizer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.util.List;
 
 public interface AntClasspathEntry {
-  Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<AntClasspathEntry>() {
+  Externalizer<AntClasspathEntry> EXTERNALIZER = new Externalizer<>() {
     @Override
     public AntClasspathEntry readValue(Element dataElement) {
       String pathUrl = dataElement.getAttributeValue(SinglePathEntry.PATH);
@@ -53,18 +53,18 @@ public interface AntClasspathEntry {
 
   void writeExternal(Element dataElement);
 
-  void addFilesTo(List<File> files);
+  void addFilesTo(List<? super File> files);
 
   CellAppearanceEx getAppearance();
 
   abstract class AddEntriesFactory implements NullableFactory<List<AntClasspathEntry>> {
     private final JComponent myParentComponent;
     private final FileChooserDescriptor myDescriptor;
-    private final Function<VirtualFile, AntClasspathEntry> myMapper;
+    private final Function<? super VirtualFile, ? extends AntClasspathEntry> myMapper;
 
     public AddEntriesFactory(final JComponent parentComponent,
                              final FileChooserDescriptor descriptor,
-                             final Function<VirtualFile, AntClasspathEntry> mapper) {
+                             final Function<? super VirtualFile, ? extends AntClasspathEntry> mapper) {
       myParentComponent = parentComponent;
       myDescriptor = descriptor;
       myMapper = mapper;

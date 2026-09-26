@@ -1,0 +1,13 @@
+// "Change type of 'list' to 'List<Any>'" "false"
+// WITH_STDLIB
+// K2_AFTER_ERROR: INITIALIZER_TYPE_MISMATCH
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+
+
+
+fun mixed() {
+    val list: List<Any> = lis<caret>tOf(1, "string", null, 3.14)
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

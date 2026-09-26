@@ -1,0 +1,54 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.compose.compiler.plugin` start
+jvm_library(
+    name = "libraries-kotlinc-compose-compiler-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.compose.compiler.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-compose-compiler-plugin-kotlinc-compose-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-compose-compiler-plugin-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir",
+    ],
+)
+
+jvm_library(
+    name = "libraries-kotlinc-compose-compiler-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.compose.compiler.plugin",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-compose-compiler-plugin-kotlinc-compose-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.compose.compiler.plugin` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.compose.compiler.plugin` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.compose.compiler.plugin.iml",
+        "resources/intellij.libraries.kotlinc.compose.compiler.plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.compose.compiler.plugin` end

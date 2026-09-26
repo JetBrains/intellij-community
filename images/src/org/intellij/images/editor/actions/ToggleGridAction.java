@@ -15,12 +15,15 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Toggle grid lines over image.
@@ -29,21 +32,29 @@ import org.intellij.images.ui.ImageComponentDecorator;
  * @see ImageEditor#setGridVisible
  */
 public final class ToggleGridAction extends ToggleAction implements DumbAware {
-  public boolean isSelected(AnActionEvent e) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     return decorator != null && decorator.isGridVisible();
   }
 
-  public void setSelected(AnActionEvent e, boolean state) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (decorator != null) {
       decorator.setGridVisible(state);
     }
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);
-    e.getPresentation().setText(isSelected(e) ? "Hide Grid" : "Show Grid");
+    e.getPresentation().setText(isSelected(e) ? IdeBundle.message("action.text.hide.grid") : IdeBundle.message("action.text.show.grid"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

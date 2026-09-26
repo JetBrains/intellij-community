@@ -1,41 +1,69 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.breadcrumbs;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
-import org.intellij.lang.annotations.JdkConstants.FontStyle;
+import com.intellij.util.ui.JdkConstants.FontStyle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.IllegalComponentStateException;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
-import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
 import static java.util.stream.Collectors.toList;
-import static javax.swing.SwingConstants.*;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.RIGHT;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
-/**
- * @author Sergey.Malenkov
- */
 public class Breadcrumbs extends JBPanelWithEmptyText {
   private static final int LEFT_RIGHT = 5;
   private static final int TOP_BOTTOM = 3;
@@ -45,8 +73,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-  private Crumb hovered;
-  private Crumb selected;
+  protected Crumb hovered;
+  protected Crumb selected;
 
   public Breadcrumbs() {
     MouseHandler handler = new MouseHandler();
@@ -56,11 +84,11 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     setOpaque(true);
   }
 
-  public void onHover(BiConsumer<Crumb, InputEvent> consumer) {
+  public void onHover(BiConsumer<? super Crumb, ? super InputEvent> consumer) {
     hover = hover.andThen(consumer);
   }
 
-  public void onSelect(BiConsumer<Crumb, InputEvent> consumer) {
+  public void onSelect(BiConsumer<? super Crumb, ? super InputEvent> consumer) {
     select = select.andThen(consumer);
   }
 
@@ -93,21 +121,19 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return views.stream().map(view -> view.crumb).filter(crumb -> crumb != null).collect(toList());
   }
 
-  public void setCrumbs(Iterable<? extends Crumb> crumbs) {
+  public void setCrumbs(@NotNull Iterable<? extends Crumb> crumbs) {
     CrumbView view = null;
     int index = 0;
-    if (crumbs != null) {
-      for (Crumb crumb : crumbs) {
-        if (crumb != null) {
-          if (index < views.size()) {
-            view = views.get(index++);
-            view.initialize(crumb);
-          }
-          else {
-            view = new CrumbView(view, crumb);
-            views.add(view);
-            index++;
-          }
+    for (Crumb crumb : crumbs) {
+      if (crumb != null) {
+        if (index < views.size()) {
+          view = views.get(index++);
+          view.initialize(crumb);
+        }
+        else {
+          view = new CrumbView(view, crumb);
+          views.add(view);
+          index++;
         }
       }
     }
@@ -120,13 +146,19 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     repaint();
   }
 
-  public int getBaseline() {
-    return views.isEmpty() ? 0 : views.get(0).getBaseline();
+  @Override
+  public int getBaseline(int width, int height) {
+    return views.isEmpty() ? -1 : views.get(0).getBaseline();
   }
 
   @Override
-  public String getToolTipText(MouseEvent event) {
+  public @NlsContexts.Tooltip String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
+  }
+
+  protected @Nullable Rectangle getCrumbBounds(@NotNull Crumb crumb) {
+    Optional<CrumbView> viewOpt = views.stream().filter(v -> v.crumb == crumb).findFirst();
+    return viewOpt.map(view -> view.bounds).orElse(null);
   }
 
   @Override
@@ -137,8 +169,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
+    if (g instanceof Graphics2D g2d) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, getKeyForCurrentScope(!Registry.is("editor.breadcrumbs.system.font")));
       for (CrumbView view : views) {
@@ -187,6 +218,12 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return font;
   }
 
+  @Override
+  public Font getFont() {
+    Font font = super.getFont();
+    return font != null ? RelativeFont.NORMAL.fromResource("Breadcrumbs.fontSizeOffset", 0).derive(font) : null;
+  }
+
   @FontStyle
   protected int getFontStyle(Crumb crumb) {
     TextAttributes attributes = getAttributes(crumb);
@@ -227,22 +264,9 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private CrumbView getCrumbView(Predicate<CrumbView> predicate) {
+  private CrumbView getCrumbView(Predicate<? super CrumbView> predicate) {
     for (CrumbView view : views) if (view.crumb != null && predicate.test(view)) return view;
     return null;
-  }
-
-  private void layout(boolean update) {
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    int scale = getScale();
-    for (CrumbView view : views) {
-      if (view.crumb != null) {
-        if (update || view.font == null) view.update();
-        view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
-        bounds.x += view.preferred.width;
-      }
-    }
   }
 
   private void updatePreferredSize(Dimension size, int scale) {
@@ -274,15 +298,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   }
 
   private static float getFontSize(Font font) {
-    return font == null ? DEF_SYSTEM_FONT_SIZE : font.getSize2D();
+    return font == null ? JBUIScale.DEF_SYSTEM_FONT_SIZE : font.getSize2D();
   }
 
   private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
     @Override
     public Dimension preferredLayoutSize(Container container) {
       Dimension size = new Dimension();
-      if (container instanceof Breadcrumbs) {
-        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
+      if (container instanceof Breadcrumbs breadcrumbs) {
         breadcrumbs.updatePreferredSize(size, breadcrumbs.getScale());
       }
       JBInsets.addTo(size, container.getInsets());
@@ -291,9 +314,17 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     @Override
     public void layoutContainer(Container container) {
-      if (container instanceof Breadcrumbs) {
-        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
-        breadcrumbs.layout(false);
+      if (container instanceof Breadcrumbs breadcrumbs) {
+        Rectangle bounds = new Rectangle(breadcrumbs.getWidth(), breadcrumbs.getHeight());
+        JBInsets.removeFrom(bounds, breadcrumbs.getInsets());
+        int scale = breadcrumbs.getScale();
+        for (CrumbView view : breadcrumbs.views) {
+          if (view.crumb != null) {
+            view.update();
+            view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
+            bounds.x += view.preferred.width;
+          }
+        }
       }
     }
   };
@@ -311,36 +342,37 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
           case MouseEvent.MOUSE_EXITED:
             if (!isHovered(crumb)) consumer = hover;
             break;
-          case MouseEvent.MOUSE_CLICKED:
-            if (!isLeftMouseButton(event)) break;
-            crumb = getCrumbAt(event.getX(), event.getY());
-            if (crumb != null) consumer = select;
-            break;
           case MouseEvent.MOUSE_PRESSED:
           case MouseEvent.MOUSE_RELEASED:
-            if (!event.isPopupTrigger()) break;
-            crumb = getCrumbAt(event.getX(), event.getY());
-            if (crumb == null) break; // crumb is not found
-            Collection<? extends Action> actions = crumb.getContextActions();
-            if (actions.isEmpty()) break; // nothing to show
-            JPopupMenu popup = new JPopupMenu();
-            for (Action action : actions) {
-              if (action != null) {
-                popup.add(action);
+            if (event.isPopupTrigger()) {
+              crumb = getCrumbAt(event.getX(), event.getY());
+              if (crumb == null) break; // crumb is not found
+              Collection<? extends Action> actions = crumb.getContextActions();
+              if (actions.isEmpty()) break; // nothing to show
+              DefaultActionGroup group = new DefaultActionGroup();
+              for (Action action : actions) {
+                if (action != null) {
+                  group.add(ActionUtil.createActionFromSwingAction(action));
+                }
+                else {
+                  group.addSeparator();
+                }
               }
-              else {
-                popup.addSeparator();
-              }
+              JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu("crumbs", group).getComponent();
+              Component invoker = event.getComponent();
+              popup.show(invoker, event.getX(), invoker.getHeight());
+              event.consume();
             }
-            Component invoker = event.getComponent();
-            popup.show(invoker, event.getX(), invoker.getHeight());
-            event.consume();
+            else if (isLeftMouseButton(event)) {
+              crumb = getCrumbAt(event.getX(), event.getY());
+              if (crumb != null) consumer = select;
+            }
             break;
         }
         if (consumer != null) {
           consumer.accept(crumb, event);
           event.consume();
-          layout(true);
+          revalidate();
           repaint();
         }
       }
@@ -354,7 +386,9 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     private final CrumbView parent;
     private Crumb crumb;
     private Icon icon;
-    private String text;
+    private int crumbIconWidth;
+    private int crumbIconHeight;
+    private @Nls String text;
     private Path2D path;
     private Font font;
     private Color foreground;
@@ -369,6 +403,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     void initialize(Crumb crumb) {
       this.crumb = crumb;
+      crumbIconWidth = 0;
+      crumbIconHeight = 0;
       icon = null;
       text = null;
       path = null;
@@ -380,6 +416,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void update() {
       icon = crumb.getIcon();
+      if (icon != null) {
+        crumbIconWidth = icon.getIconWidth();
+        crumbIconHeight = icon.getIconHeight();
+      }
+      else {
+        crumbIconWidth = 0;
+        crumbIconHeight = 0;
+      }
       text = crumb.getText();
       font = getFont(crumb);
       foreground = getForeground(crumb);
@@ -414,7 +458,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private String layout(FontMetrics fm, Rectangle iconR, Rectangle textR, Rectangle viewR) {
-      int gap = icon == null ? 0 : icon.getIconWidth() / 4;
+      int gap = icon == null ? 0 : Math.min(icon.getIconHeight(), icon.getIconWidth()) / 4; // an icon can have two or more images: [][]
       return layoutCompoundLabel(fm, text, icon, CENTER, LEFT, CENTER, RIGHT, viewR, iconR, textR, gap);
     }
 
@@ -434,6 +478,10 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private int getBaseline() {
+      if (crumb == null) {
+        return -1;
+      }
+
       if (font == null) {
         update();
       }
@@ -449,10 +497,18 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
       }
 
-      return 0;
+      return -1;
     }
 
     private void paint(Graphics2D g) {
+      final Icon crumbIcon = crumb.getIcon();
+      if (crumbIcon != null
+          && (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight)) {
+        // process size change for IconDeferrer (lazy calculated on pool thread)
+        Breadcrumbs.this.revalidate();
+        Breadcrumbs.this.repaint();
+        return;
+      }
       int scale = getScale();
       if (path != null) {
         if (background != null) {
@@ -461,7 +517,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
-          float stroke = JBUI.getFontScale(getFontSize(getFont()));
+          float stroke = JBUIScale.getFontScale(getFontSize(getFont()));
           // calculate a visible width of separator (30% of a whole path)
           int delta = (int)(scale * (.3 * getRightGap() + getLeftGap()));
           g2.clipRect(bounds.x - delta, bounds.y, Short.MAX_VALUE, bounds.height);
@@ -552,6 +608,98 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         path.closePath();
       }
       return path;
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleBreadcrumbs();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleBreadcrumbs extends JPanel.AccessibleJPanel {
+    @Override
+    public int getAccessibleChildrenCount() {
+      return views.size();
+    }
+
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      if (i < views.size()) {
+        return new AccessibleCrumb(i, views.get(i).text);
+      }
+      return null;
+    }
+
+    @Override
+    public Accessible getAccessibleAt(Point p) {
+      Crumb crumb = getCrumbAt(p.x, p.y);
+      if (crumb != null) {
+        int index = -1;
+        for (int i = 0; i < views.size(); i++) {
+          CrumbView view = views.get(i);
+          if (view.crumb == crumb) {
+            index = i;
+            break;
+          }
+        }
+        if (index != -1) {
+          return new AccessibleCrumb(index, crumb.getText());
+        }
+      }
+      return null;
+    }
+
+    protected class AccessibleCrumb extends AccessibleContext implements Accessible {
+      protected int myIndex;
+      protected String myText;
+
+      public AccessibleCrumb(int index, String text) {
+        myIndex = index;
+        myText = text;
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return this;
+      }
+
+      @Override
+      public @NlsSafe String getAccessibleName() {
+        return myText;
+      }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.PUSH_BUTTON;
+      }
+
+      @Override
+      public AccessibleStateSet getAccessibleStateSet() {
+        return AccessibleBreadcrumbs.this.getAccessibleStateSet();
+      }
+
+      @Override
+      public int getAccessibleIndexInParent() {
+        return myIndex;
+      }
+
+      @Override
+      public int getAccessibleChildrenCount() {
+        return 0;
+      }
+
+      @Override
+      public Accessible getAccessibleChild(int i) {
+        return null;
+      }
+
+      @Override
+      public Locale getLocale() throws IllegalComponentStateException {
+        return AccessibleBreadcrumbs.this.getLocale();
+      }
     }
   }
 }

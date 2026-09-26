@@ -1,23 +1,20 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.*;
-import com.intellij.psi.*;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -34,8 +31,12 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class FxmlReferencesContributor extends PsiReferenceContributor {
-  public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+public final class FxmlReferencesContributor extends PsiReferenceContributor {
+  public static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+    {
+      setOption(ALLOW_DOLLAR_NAMES, false);
+    }
+  };
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -114,7 +115,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new ImportReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
-                                        new JavaFxColorReferenceProvider()); 
+                                        new JavaFxColorReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
                                           .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)
@@ -127,21 +128,19 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxStaticPropertyReferenceProvider());
   }
 
-  private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
-    @NotNull
+  private static final class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
-      String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue() 
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element) {
+      String name = element instanceof XmlAttributeValue ? ((XmlAttributeValue)element).getValue()
                                                          : ((XmlTag)element).getName();
       return getReferencesByString(name, element, 1);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByString(String str,
-                                                @NotNull final PsiElement position,
-                                                int offsetInPosition) {
-      if (str.length() == 0) return PsiReference.EMPTY_ARRAY;
+    public PsiReference @NotNull [] getReferencesByString(@NotNull String str,
+                                                          final @NotNull PsiElement position,
+                                                          int offsetInPosition) {
+      if (str.isEmpty()) return PsiReference.EMPTY_ARRAY;
       final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
       final int offset = position instanceof XmlTag ? 1 : 0;
       if (references.length <= offset) return PsiReference.EMPTY_ARRAY;
@@ -152,30 +151,27 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       return results;
     }
 
-    private static class JavaClassReferenceWrapper implements PsiReference {
+    private static final class JavaClassReferenceWrapper implements PsiReference {
       private final PsiReference myReference;
       private final PsiElement myPosition;
 
-      public JavaClassReferenceWrapper(PsiReference reference, PsiElement position) {
+      JavaClassReferenceWrapper(PsiReference reference, PsiElement position) {
         myReference = reference;
         myPosition = position;
       }
 
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return myReference.getElement();
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         return myReference.getRangeInElement();
       }
 
-      @Nullable
       @Override
-      public PsiElement resolve() {
+      public @Nullable PsiElement resolve() {
         final PsiElement resolve = myReference.resolve();
         if (resolve != null) {
           return resolve;
@@ -203,12 +199,13 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return null;
       }
 
-      @NotNull
-      public String getCanonicalText() {
+      @Override
+      public @NotNull String getCanonicalText() {
         return myReference.getCanonicalText();
       }
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      @Override
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         String oldText = getOldName();
         final TextRange range = getRangeInElement();
         final String newText =
@@ -216,6 +213,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return setNewName(newText);
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element)
         throws IncorrectOperationException {
         String oldText = getOldName();
@@ -242,15 +240,17 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return myPosition instanceof XmlTag ? ((XmlTag)myPosition).getName() : ((XmlAttributeValue)myPosition).getValue();
       }
 
-      public boolean isReferenceTo(PsiElement element) {
+      @Override
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 
-      @NotNull
-      public Object[] getVariants() {
+      @Override
+      public Object @NotNull [] getVariants() {
         return myReference.getVariants();
       }
 
+      @Override
       public boolean isSoft() {
         return true;
       }

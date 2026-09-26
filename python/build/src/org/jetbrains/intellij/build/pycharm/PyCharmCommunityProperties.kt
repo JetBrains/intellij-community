@@ -1,0 +1,143 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.pycharm
+
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.plus
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.FileAssociation
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.knownMissingModuleDependencies
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.windowsCustomizer
+import java.nio.file.Files
+import java.nio.file.Path
+
+class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
+  override val customProductCode: String
+    get() = "PC"
+
+  init {
+    platformPrefix = "PyCharmCore"
+    applicationInfoModule = "intellij.pycharm.community"
+    brandingResourcePaths = listOf(communityHome.resolve("python/resources"))
+    customJvmMemoryOptions = persistentMapOf("-Xms" to "256m", "-Xmx" to "1500m")
+    scrambleMainJar = false
+    buildSourcesArchive = true
+
+    imagesDirectoryPath = communityHome.resolve("python/build/images")
+
+    productLayout.productImplementationModules = listOf(
+      "intellij.platform.starter",
+      "intellij.pycharm.community",
+    )
+    productLayout.bundledPluginModules +=
+      sequenceOf(
+        "intellij.python.community.plugin", // Python language
+        "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
+        "intellij.pycharm.community.customization.shared",
+        "intellij.vcs.github",
+        "intellij.vcs.gitlab") +
+      Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
+
+    productLayout.skipUnresolvedContentModules = true
+
+    baseDownloadUrl = "https://download.jetbrains.com/python/"
+
+    mavenArtifacts.forIdeModules = true
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
+    qodanaProductProperties = QodanaProductProperties("QDPYC", "Qodana Community for Python")
+  }
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+    // Module capability aliases
+    alias("com.intellij.modules.pycharm.community")
+    alias("com.intellij.modules.python-core-capable")
+    alias("com.intellij.platform.ide.provisioner")
+
+    // Content modules
+    module("intellij.platform.ide.newUiOnboarding")
+    module("intellij.ide.startup.importSettings")
+    // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
+    privateModule("intellij.libraries.sqlite")
+
+    // Module sets
+    moduleSet(CommunityModuleSets.ideCommon())
+    moduleSet(CommunityModuleSets.platformResourceDefaults())
+    moduleSet(CommunityModuleSets.rdCommon())
+
+    // PyCharm Core fragment (includes platformLangBaseFragment, module aliases, and pycharm-core.xml)
+    include(CommunityProductFragments.pycharmCoreFragment())
+
+    embeddedModule("intellij.pycharm.community.ide.customization")
+
+    allowMissingDependencies(knownMissingModuleDependencies)
+    allowMissingDependencies("intellij.platform.commercial.dependencies")
+    allowMissingDependencies("intellij.libraries.kotlin.logging")
+    bundledPlugins(productLayout.bundledPluginModules)
+  }
+
+  override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+    super.copyAdditionalFiles(targetDir, context)
+
+    val licenseTargetDir = targetDir.resolve("license")
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), licenseTargetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), licenseTargetDir)
+  }
+
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "PyCharmCE${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
+
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharmPC-$buildNumber"
+
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = windowsCustomizer(communityHome) {
+    fileAssociations = SUPPORTED_FILE_EXTENSIONS
+
+    fullName { "PyCharm Open Source" }
+    installDirNameHandler { "PyCharm OSS" }
+
+    copyAdditionalFiles { targetDir, _, context ->
+      PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
+    }
+
+    uninstallFeedbackUrl { appInfo ->
+      "https://www.jetbrains.com/pycharm/uninstall/?version=${appInfo.productCode}-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    }
+  }
+
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = object : MacDistributionCustomizer() {
+    init {
+      bundleIdentifier = "com.jetbrains.pycharm.ce"
+      fileAssociations = SUPPORTED_FILE_EXTENSIONS.map {
+        FileAssociation(it)
+      }
+    }
+
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "PyCharm OSS.app"
+
+    override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+      super.copyAdditionalFiles(context, targetDir, arch)
+      PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
+    }
+
+    override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = mapOf(
+      "ide.mac.useNativeClipboard" to "false"
+    )
+  }
+
+  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = object : LinuxDistributionCustomizer() {
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharm-oss"
+  }
+
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "pycharm-ce"
+}

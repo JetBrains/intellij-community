@@ -23,13 +23,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl {
   private volatile boolean myFinished;
 
-  public GlobalInspectionContextForTests(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
+  public GlobalInspectionContextForTests(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project, contentManager);
   }
 
@@ -40,7 +37,7 @@ public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl
   }
 
   @Override
-  protected boolean includeDoNotShow(final InspectionProfile profile) {
+  protected boolean includeDoNotShow(final @NotNull InspectionProfile profile) {
     return true;
   }
 

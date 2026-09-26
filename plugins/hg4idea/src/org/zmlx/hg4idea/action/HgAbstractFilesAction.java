@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -34,6 +36,11 @@ import java.util.List;
 
 abstract class HgAbstractFilesAction extends DumbAwareAction {
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
   protected abstract boolean isEnabled(Project project, HgVcs vcs, VirtualFile file);
@@ -41,7 +48,8 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
   protected abstract void batchPerform(Project project, final HgVcs activeVcs,
     List<VirtualFile> files, DataContext context);
 
-  public final void actionPerformed(AnActionEvent event) {
+  @Override
+  public final void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -59,6 +67,7 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
 
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
+      @Override
       public void run(List<VcsException> exceptions) {
         try {
           execute(project, vcs, files, dataContext);
@@ -68,12 +77,11 @@ abstract class HgAbstractFilesAction extends DumbAwareAction {
       }
     }, null);
 
-    helper.showErrors(exceptions, vcs.getName());
+    helper.showErrors(exceptions, vcs.getDisplayName());
   }
 
-  public final void update(AnActionEvent e) {
-    super.update(e);
-
+  @Override
+  public final void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 

@@ -1,0 +1,7 @@
+<class 'datasets.arrow_dataset.Dataset'>
+__pydev_val__
+4
+__pydev_val__
+'<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border="1" class="dataframe">\n  <thead>\n    <tr style="text-align: right;">\n      <th></th>\n      <th>A</th>\n      <th>B</th>\n      <th>C</th>\n      <th>D</th>\n      <th>E</th>\n      <th>dates</th>\n      <th>lists</th>\n      <th>dicts</th>\n      <th>tuples</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>1.00</td>\n      <td>foo</td>\n      <td>None</td>\n      <td>1</td>\n      <td>True</td>\n      <td>2023-01-01</td>\n      <td>[1, 2]</td>\n      <td>{\'key\': \'value\'}</td>\n      <td>[first, second]</td>\n    </tr>\n  </tbody>\n</table>\n</div>'
+__pydev_val__
+int64__pydev_table_column_type_val__float64__pydev_table_column_type_val__object__pydev_table_column_type_val__object__pydev_table_column_type_val__int64__pydev_table_column_type_val__bool__pydev_table_column_type_val__datetime64[us]__pydev_table_column_type_val__object__pydev_table_column_type_val__object__pydev_table_column_type_val__object

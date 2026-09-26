@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.framework.detection.impl.exclude.old;
 
@@ -17,9 +15,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author nik
-*/
 @Tag("facet-type")
 public class DisabledAutodetectionByTypeElement {
   public static final Comparator<DisabledAutodetectionByTypeElement> COMPARATOR =
@@ -97,8 +92,7 @@ public class DisabledAutodetectionByTypeElement {
     myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, fileUrl, recursively));
   }
 
-  @Nullable
-  public DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
+  public @Nullable DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
     for (DisabledAutodetectionInModuleElement element : myModuleElements) {
       if (moduleName.equals(element.getModuleName())) {
         return element;
@@ -107,6 +101,7 @@ public class DisabledAutodetectionByTypeElement {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -116,6 +111,7 @@ public class DisabledAutodetectionByTypeElement {
 
   }
 
+  @Override
   public int hashCode() {
     return myFacetTypeId.hashCode()+ 31 * myModuleElements.hashCode();
   }
@@ -149,6 +145,6 @@ public class DisabledAutodetectionByTypeElement {
         break;
       }
     }
-    return myModuleElements.size() > 0;
+    return !myModuleElements.isEmpty();
   }
 }

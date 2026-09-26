@@ -1,0 +1,6 @@
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression
+
+fun test(flag: Boolean): Unit = run {
+    val value = 42
+}

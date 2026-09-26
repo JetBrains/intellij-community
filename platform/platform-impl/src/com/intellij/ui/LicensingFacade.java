@@ -1,49 +1,154 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.EventListener;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author yole
- */
-public abstract class LicensingFacade {
-  public static LicensingFacade ourInstance;
+public final class LicensingFacade {
+  public String platformProductCode;
+  public String licensedTo;
+  public @NlsSafe String licenseeEmail;
+  public List<String> restrictions;
+  public boolean isEvaluation;
+  public Date expirationDate;
+  public Date perpetualFallbackDate;
+  public @Nullable Integer gracePeriodDays;
+  public Map<String, Date> expirationDates;
+  public Map<String, String> confirmationStamps;
+  public Map<String, ProductLicenseData> productLicenses;
+  public String metadata;
+  public String fusMetadata;
+  public boolean ai_enabled;
+  /// @deprecated temporary field; use [#metadata] instead
+  @Deprecated(forRemoval = true)
+  public String subType;
+  public String userBucket;
 
-  @Nullable
-  public static LicensingFacade getInstance() {
-    return ourInstance;
+  public LicensingFacade() { }
+
+  /// @param productCode the product code to look up the expiration date for
+  /// @return the expiration date for the specified product as it is hard-coded in the license.
+  /// Normally, there is the last day when the license is still valid.
+  /// `null` value is returned if the expiration date is not applicable for the product or the license has not been obtained.
+  public @Nullable Date getExpirationDate(String productCode) {
+    var result = expirationDates;
+    return result != null ? result.get(productCode) : null;
   }
 
-  public abstract String getLicensedToMessage();
+  public @Nullable String getLicensedToMessage() {
+    return licensedTo;
+  }
 
-  public abstract List<String> getLicenseRestrictionsMessages();
+  public @NlsSafe @Nullable String getLicenseeEmail() {
+    return licenseeEmail;
+  }
 
-  public abstract boolean isEvaluationLicense();
+  public @NotNull List<String> getLicenseRestrictionsMessages() {
+    var result = restrictions;
+    return result != null ? result : Collections.emptyList();
+  }
 
-  @Nullable
-  public abstract Boolean isApplicableForProduct(@NotNull Date productBuildDate);
+  public boolean isEvaluationLicense() {
+    return isEvaluation;
+  }
 
-  @Nullable
-  public abstract Boolean isPerpetualForProduct(@NotNull Date productBuildDate);
+  public boolean isApplicableForProduct(@NotNull Date releaseDate) {
+    var expDate = expirationDate;
+    return isPerpetualForProduct(releaseDate) || (expDate == null || releaseDate.before(expDate));
+  }
 
-  @Nullable
-  public abstract Date getLicenseExpirationDate();
+  public boolean isPerpetualForProduct(@NotNull Date releaseDate) {
+    var result = perpetualFallbackDate;
+    return result != null && releaseDate.before(result);
+  }
+
+  /// @return the first day when the IDE license becomes invalid
+  public @Nullable Date getLicenseExpirationDate() {
+    return expirationDate;
+  }
+
+  /// Returns a "confirmation stamp" string describing the license obtained by the licensing subsystem for the product
+  /// with the given productCode, or `null` if no license is currently obtained for the product.
+  ///
+  /// A confirmation stamp is structured according to the following rules:
+  ///
+  /// ```
+  ///   confirmationStamp := key:'license-key' | stamp:'license-server-stamp' | eval:'eval-key'
+  ///
+  ///   licenseKey := 'licenseId'-'licenseJsonBase64'-'signatureBase64'-'certificateBase64'<br>
+  ///     the signed part is licenseJson
+  ///
+  ///   license-server-stamp := 'timestampLong':'machineId':'signatureType':'signatureBase64':'certificateBase64'[:'intermediate-certificateBase64']<br>
+  ///     the signed part is 'timestampLong':'machineId' <br>
+  ///     machineId should be the same as {@link JetBrainsPermanentInstallationID#get()} returns
+  ///
+  ///   eval-key := 'expiration-date-long'
+  /// ```
+  ///
+  /// @see <a href="https://plugins.jetbrains.com/docs/marketplace/add-marketplace-license-verification-calls-to-the-plugin-code.html">
+  ///   JetBrains Marketplace online documentation</a> for more information
+  public @Nullable String getConfirmationStamp(String productCode) {
+    var result = confirmationStamps;
+    return result != null ? result.get(productCode) : null;
+  }
+
+  private static volatile LicensingFacade INSTANCE;
+
+  public static @Nullable LicensingFacade getInstance() {
+    return INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  public static void setInstance(@Nullable LicensingFacade instance) {
+    INSTANCE = instance;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LicenseStateListener.TOPIC).licenseStateChanged(instance);
+  }
+
+  private static @NotNull Gson createGson() {
+    return new GsonBuilder().setDateFormat("yyyyMMdd").create();
+  }
+
+  public String toJson() {
+    return createGson().toJson(this);
+  }
+
+  public static @Nullable LicensingFacade fromJson(String json) {
+    try {
+      return createGson().fromJson(json, LicensingFacade.class);
+    }
+    catch (Throwable e) {
+      return null;
+    }
+  }
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnusedSignalled;
+
+  public static void signalUnused(boolean value) {
+    isUnusedSignalled = value;
+  }
+
+  public static final class ProductLicenseData {
+    public String productCode;
+    public @Nullable String confirmationStamp;
+    public @Nullable Date expirationDate;
+    public boolean isPersonal;
+  }
+
+  public interface LicenseStateListener extends EventListener {
+    @NotNull Topic<LicenseStateListener> TOPIC = new Topic<>(LicenseStateListener.class);
+    void licenseStateChanged(@Nullable LicensingFacade newState);
+  }
 }

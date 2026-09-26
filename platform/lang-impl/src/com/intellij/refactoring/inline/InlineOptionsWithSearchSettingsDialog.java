@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOptionsDialog {
   protected JCheckBox myCbSearchInComments;
   protected JCheckBox myCbSearchTextOccurences;
@@ -38,7 +28,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
 
   protected abstract boolean isSearchInCommentsAndStrings();
   protected abstract void saveSearchInCommentsAndStrings(boolean searchInComments);
-  
+
   protected abstract boolean isSearchForTextOccurrences();
   protected abstract void saveSearchInTextOccurrences(boolean searchInTextOccurrences);
 
@@ -66,31 +56,33 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
+    gbc.anchor = GridBagConstraints.NORTH;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
     gbc.gridwidth = 2;
-    gbc.insets.bottom = JBUI.scale(10);
+    gbc.insets.bottom = JBUIScale.scale(UIUtil.LARGE_VGAP);
     panel.add(super.createCenterPanel(), gbc);
 
     myCbSearchInComments = new JCheckBox(RefactoringBundle.message("search.in.comments.and.strings"), isSearchInCommentsAndStrings());
     myCbSearchTextOccurences = new JCheckBox(RefactoringBundle.message("search.for.text.occurrences"), isSearchForTextOccurrences());
     gbc.insets.bottom = 0;
     gbc.weightx = 0;
+    gbc.weighty = 1;
     gbc.gridwidth = 1;
     gbc.gridy = 1;
     gbc.gridx = 0;
     panel.add(myCbSearchInComments, gbc);
+    gbc.insets.left = JBUIScale.scale(UIUtil.DEFAULT_HGAP);
     gbc.gridx = 1;
     panel.add(myCbSearchTextOccurences, gbc);
     final ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        setEnabledSearchSettngs(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+        setEnabledSearchSettngs(!isInlineThisOnly());
       }
     };
     myRbInlineThisOnly.addActionListener(actionListener);
@@ -98,7 +90,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     if (myKeepTheDeclaration != null) {
       myKeepTheDeclaration.addActionListener(actionListener);
     }
-    setEnabledSearchSettngs(myRbInlineAll.isSelected());
+    setEnabledSearchSettngs(!isInlineThisOnly());
     return panel;
   }
 }

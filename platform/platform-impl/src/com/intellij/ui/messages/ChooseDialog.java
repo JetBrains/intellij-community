@@ -1,22 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
-
-import static com.intellij.openapi.ui.Messages.CANCEL_BUTTON;
-import static com.intellij.openapi.ui.Messages.OK_BUTTON;
 
 /**
  * It looks awful!
@@ -27,12 +34,12 @@ public class ChooseDialog extends MessageDialog {
   private InputValidator myValidator;
 
   public ChooseDialog(Project project,
-                      String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
-                      @NotNull String[] values,
-                      String initialValue,
-                      @NotNull String[] options,
+                      String @NotNull [] values,
+                      @NlsSafe String initialValue,
+                      String @NotNull [] options,
                       int defaultOption) {
     super(project, message, title, options, defaultOption, icon, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
@@ -41,29 +48,28 @@ public class ChooseDialog extends MessageDialog {
 
   public ChooseDialog(@Nullable Project project,
                       @Nullable Component parent,
-                      String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
                       String[] values,
-                      String initialValue) {
-    super(project, parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, -1, icon, null, true);
+                      @NlsSafe String initialValue) {
+    super(project, parent, message, title, new String[]{Messages.getOkButton(), Messages.getCancelButton()}, 0, -1, icon, null, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
-  public ChooseDialog(String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+  public ChooseDialog(@NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
                       String[] values,
-                      String initialValue) {
-    super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
+                      @NlsSafe String initialValue) {
+    super(message, title, new String[]{Messages.getOkButton(), Messages.getCancelButton()}, 0, icon);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final Action[] actions = new Action[myOptions.length];
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];
@@ -82,7 +88,7 @@ public class ChooseDialog extends MessageDialog {
         final JTextField textField = (JTextField)myComboBox.getEditor().getEditorComponent();
         textField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          public void textChanged(DocumentEvent event) {
+          public void textChanged(@NotNull DocumentEvent event) {
             actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(textField.getText().trim()));
           }
         });
@@ -128,8 +134,7 @@ public class ChooseDialog extends MessageDialog {
     return myComboBox;
   }
 
-  @Nullable
-  public String getInputString() {
+  public @Nullable String getInputString() {
     if (getExitCode() == 0) {
       return myComboBox.getSelectedItem().toString();
     }

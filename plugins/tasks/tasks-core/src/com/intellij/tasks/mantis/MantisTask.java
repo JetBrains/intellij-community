@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.Comment;
@@ -6,20 +7,19 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.mantis.model.IssueData;
 import com.intellij.tasks.mantis.model.IssueHeaderData;
-import com.intellij.tasks.mantis.model.IssueNoteData;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.TasksCoreIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 
 public class MantisTask extends Task {
   private final String myId;
-  private final String mySummary;
-  private final String myDescription;
+  private final @Nls String mySummary;
+  private final @Nls String myDescription;
   private final Date myUpdated;
   private final Date myCreated;
   private final boolean myClosed;
@@ -41,21 +41,19 @@ public class MantisTask extends Task {
       myComments = Comment.EMPTY_ARRAY;
     }
     else {
-      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, (Function<IssueNoteData, Comment>)data1 -> new Comment() {
+      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, data1 -> new Comment() {
         @Override
         public String getText() {
           return data1.getText();
         }
 
-        @Nullable
         @Override
-        public String getAuthor() {
+        public @Nullable String getAuthor() {
           return data1.getReporter().getName();
         }
 
-        @Nullable
         @Override
-        public Date getDate() {
+        public @NotNull Date getDate() {
           return data1.getDate_submitted().getTime();
         }
       });
@@ -74,51 +72,43 @@ public class MantisTask extends Task {
     myComments = Comment.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return mySummary;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myDescription;
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return myComments;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Mantis;
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return TaskType.OTHER;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myUpdated;
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return myCreated;
   }
 
@@ -142,15 +132,13 @@ public class MantisTask extends Task {
     return myRepository;
   }
 
-  @Nullable
   @Override
-  public String getProject() {
+  public @Nullable String getProject() {
     return myProjectName;
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return getId();
   }
 }

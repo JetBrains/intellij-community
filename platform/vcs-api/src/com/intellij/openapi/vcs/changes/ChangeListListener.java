@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.EventListener;
@@ -24,26 +13,75 @@ import java.util.EventListener;
 /**
  * @author max
  *
- * @see com.intellij.openapi.vcs.changes.ChangeListManager#addChangeListListener(ChangeListListener)
- * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)
+ * @see ChangeListManager#addChangeListListener(ChangeListListener)
+ * @see ChangeListManager#removeChangeListListener(ChangeListListener)
  */
 public interface ChangeListListener extends EventListener {
+  Topic<ChangeListListener> TOPIC = Topic.create("VCS changelists changed", ChangeListListener.class);
+
   default void changeListAdded(ChangeList list) {}
   default void changeListRemoved(ChangeList list) {}
   default void changeListChanged(ChangeList list) {}
-  default void changeListRenamed(ChangeList list, String oldName) {}
-  default void changeListCommentChanged(ChangeList list, String oldComment) {}
+  default void changeListDataChanged(@NotNull ChangeList list) {}
+  default void changeListRenamed(ChangeList list, @NlsSafe String oldName) {}
+  default void changeListCommentChanged(ChangeList list, @NlsSafe String oldComment) {}
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {}
-  @ApiStatus.Experimental
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
     defaultListChanged(oldDefaultList, newDefaultList);
   }
 
-  default void changesAdded(Collection<Change> changes, ChangeList toList) {}
-  default void changesRemoved(Collection<Change> changes, ChangeList fromList) {}
-  default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
+  default void changesAdded(Collection<? extends Change> changes, ChangeList toList) {}
+  default void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {}
+  default void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {}
   default void allChangeListsMappingsChanged() {}
 
+
+  default void changedFileStatusChanged() {}
+
+  /**
+   * Notifies that VCS finished updating added/deleted/modified files.
+   *
+   * @param upToDate true if no pending refreshes are scheduled
+   */
+  default void changedFileStatusChanged(boolean upToDate) {
+    changedFileStatusChanged();
+  }
+
   default void unchangedFileStatusChanged() {}
+
+  /**
+   * Notifies that VCS finished updating misc vcs-managed file statuses. Ex: ignored, unversioned, switched, etc.
+   *
+   * @param upToDate true if no pending refreshes are scheduled
+   */
+  default void unchangedFileStatusChanged(boolean upToDate) {
+    unchangedFileStatusChanged();
+  }
+
+  /**
+   * Fired when CLM enters the update mode
+   * <p>
+   * NB: fired synchronously during the update, so the implementation must be fast to not impede the process
+   */
+  @ApiStatus.Internal
+  default void changeListUpdateRunning() {}
+
+  /**
+   * Combined event for {@link #changedFileStatusChanged()} and {@link #unchangedFileStatusChanged()}.
+   */
   default void changeListUpdateDone() {}
+
+
+  /**
+   * @see ChangeListManager#areChangeListsEnabled
+   */
+  default void changeListAvailabilityChanged() {}
+
+  /**
+   * Technical event, meaning that the state was completely invalidated (e.g. by plugin unloading)
+   * <p>
+   * NB: fired synchronously during reset, so the implementation must be fast to not impede the process
+   */
+  @ApiStatus.Internal
+  default void changeListsInvalidated() {}
 }

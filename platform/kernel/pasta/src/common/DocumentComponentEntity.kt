@@ -1,0 +1,32 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.pasta.common
+
+import andel.editor.DocumentComponent
+import andel.editor.DocumentComponentKey
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Mixin
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.get
+
+
+internal interface DocumentComponentFactory<T : DocumentComponent> {
+  val key: DocumentComponentKey<T>
+  fun ChangeScope.asComponent(): T
+}
+
+interface DocumentComponentEntity<T : DocumentComponent> : Entity {
+  val document: DocumentEntity
+    get() = this[DocumentAttr]
+
+  companion object : Mixin<DocumentComponentEntity<*>>(DocumentComponentEntity::class) {
+    val DocumentAttr: Required<DocumentEntity> = requiredRef<DocumentEntity>("document", RefFlags.CASCADE_DELETE_BY)
+  }
+
+  fun asComponent(changeScope: ChangeScope): T
+
+  fun getKey(): DocumentComponentKey<T> = Key(eid)
+
+  private data class Key<T : DocumentComponent>(val eid: EID) : DocumentComponentKey<T>
+}

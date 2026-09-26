@@ -1,102 +1,162 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
-import com.intellij.notification.NotificationDisplayType;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeSet;
 
 @State(
   name = "AcceptedLanguageLevels",
-  storages = @Storage("acceptedLanguageLevels.xml")
+  storages = @Storage("acceptedLanguageLevels.xml"),
+  category = SettingsCategory.CODE
 )
-public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings>, StartupActivity {
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
+public final class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings> {
+  private static NotificationGroup getAcceptedLanguageNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
+  }
+
+  private static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+  }
+
+  private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
-  public List<String> acceptedNames = ContainerUtil.newArrayList();
+  public List<String> acceptedNames = new ArrayList<>();
 
-  @Override
-  public void runActivity(@NotNull Project project) {
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-      if (!project.isDisposed()) {
-        MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
-        LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
-        if (projectExtension != null) {
-          LanguageLevel level = projectExtension.getLanguageLevel();
-          if (!isLanguageLevelAccepted(level)) {
-            unacceptedLevels.putValue(level, null);
-          }
-        }
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          LanguageLevelModuleExtensionImpl moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
-          if (moduleExtension != null) {
-            LanguageLevel level = moduleExtension.getLanguageLevel();
-            if (level != null && !isLanguageLevelAccepted(level)) {
-              unacceptedLevels.putValue(level, module);
+  static void applyUnacceptedLevels(@NotNull Project project,
+                                    MultiMap<LanguageLevel, Module> unacceptedLevels,
+                                    TreeSet<LanguageLevel> previewLevels) {
+    if (!unacceptedLevels.isEmpty()) {
+      decreaseLanguageLevel(project);
+
+      for (LanguageLevel level : unacceptedLevels.keySet()) {
+        showNotificationToAccept(project, unacceptedLevels, level);
+      }
+    }
+    if (!previewLevels.isEmpty()) {
+      LanguageLevel languageLevel = previewLevels.first();
+      if (languageLevel == LanguageLevel.JDK_X) {
+        return;
+      }
+
+      int previewFeature = languageLevel.feature();
+      if (languageLevel.isUnsupported()) {
+        getNotificationGroup().createNotification(
+            JavaBundle.message("java.preview.features.unsupported.title"),
+            JavaBundle.message("java.preview.features.unsupported", previewFeature),
+            NotificationType.ERROR)
+          .notify(project);
+      }
+      else if (!PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+        getNotificationGroup().createNotification(
+            JavaBundle.message("java.preview.features.notification.title"),
+            JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
+            NotificationType.WARNING)
+          .addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+              PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES, true);
+              notification.expire();
             }
-          }
-        }
-        if (!unacceptedLevels.isEmpty()) {
-          decreaseLanguageLevel(project);
+          })
+          .notify(project);
+      }
+    }
+  }
 
-          for (LanguageLevel level : unacceptedLevels.keySet()) {
-            NOTIFICATION_GROUP.createNotification(
-              EXPERIMENTAL_FEATURE_ALERT,
-              getLegalNotice(level) + "<br/><a href='accept'>Accept</a>",
-              NotificationType.WARNING,
-              (notification, event) -> {
-                if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                  switch (event.getDescription()) {
-                    case "accept":
-                      acceptAndRestore(project, unacceptedLevels.get(level), level);
-                      break;
-                  }
-                  notification.expire();
-                }
-              }).notify(project);
-          }
+  static @NotNull MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
+    MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
+    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
+    if (projectExtension != null) {
+      LanguageLevel level = projectExtension.getLanguageLevel();
+      if (!isLanguageLevelAccepted(level)) {
+        unacceptedLevels.putValue(level, null);
+      }
+      if (level.isPreview()) {
+        previewLevels.add(level);
+      }
+    }
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      LanguageLevel level = LanguageLevelUtil.getCustomLanguageLevel(module);
+      if (level != null) {
+        if (!isLanguageLevelAccepted(level)) {
+          unacceptedLevels.putValue(level, module);
+        }
+        if (level.isPreview()) {
+          previewLevels.add(level);
         }
       }
-    });
+    }
+    return unacceptedLevels;
+  }
+
+  public static void showNotificationToAccept(@NotNull Project project,  LanguageLevel level) {
+    showNotificationToAccept(project, getUnacceptedLevels(project, new TreeSet<>()), level);
+  }
+
+  private static void showNotificationToAccept(@NotNull Project project, MultiMap<LanguageLevel, Module> unacceptedLevels, LanguageLevel level) {
+    getAcceptedLanguageNotificationGroup().createNotification(
+        JavaBundle.message("java.preview.features.alert.title"),
+        JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" +
+                                                                                             JavaBundle.message(
+                                                                                               "java.preview.features.accept.notification.link") +
+                                                                                             "</a>"),
+        NotificationType.WARNING)
+      .setListener((notification, event) -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          if (event.getDescription().equals("accept")) {
+            acceptAndRestore(project, unacceptedLevels.get(level), level);
+          }
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 
   public static boolean isLanguageLevelAccepted(LanguageLevel languageLevel) {
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
     // language levels up to HIGHEST are officially supported
-    return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
+    var nonPreviewLevel = languageLevel.getNonPreviewLevel();
+    return JavaRelease.getHighest().compareTo(nonPreviewLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
-  private static void acceptAndRestore(Project project, Collection<Module> modules, LanguageLevel languageLevel) {
+  private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
     if (!getSettings().acceptedNames.contains(languageLevel.name())) {
       getSettings().acceptedNames.add(languageLevel.name());
     }
@@ -106,21 +166,25 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
       WriteAction.run(() -> {
         for (Module module : modules) {
           if (module != null) {
-            service.changeLanguageLevel(module, languageLevel);
+            service.changeLanguageLevel(module, languageLevel, false);
           }
           else {
             LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
             projectExtension.setLanguageLevel(languageLevel);
-            projectExtension.setDefault(false);
           }
         }
       });
     }
   }
 
-  public static LanguageLevel getHighestAcceptedLevel() {
-    LanguageLevel highest = LanguageLevel.HIGHEST;
-    for (LanguageLevel level : LanguageLevel.values()) {
+
+  /**
+   * @return the highest stable language level for Java, or a preview language level if the user has accepted the legal notice or is using
+   * an EAP version.
+   */
+  public static @NotNull LanguageLevel getHighestAcceptedLevel() {
+    LanguageLevel highest = JavaRelease.getHighest();
+    for (LanguageLevel level : LanguageLevel.getEntries()) {
       if (isLanguageLevelAccepted(level)) {
         highest = level;
       }
@@ -132,12 +196,11 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static AcceptedLanguageLevelsSettings getSettings() {
-    return ServiceManager.getService(AcceptedLanguageLevelsSettings.class);
+    return ApplicationManager.getApplication().getService(AcceptedLanguageLevelsSettings.class);
   }
 
-  @Nullable
   @Override
-  public AcceptedLanguageLevelsSettings getState() {
+  public @NotNull AcceptedLanguageLevelsSettings getState() {
     return this;
   }
 
@@ -156,7 +219,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static boolean showDialog(Component parent, LanguageLevel level) {
-    int result = LegalNoticeDialog.build(EXPERIMENTAL_FEATURE_ALERT, getLegalNotice(level)).withParent(parent).show();
+    int result = LegalNoticeDialog.build(JavaBundle.message("java.preview.features.alert.title"),
+                                         JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), ""))
+      .withParent(parent).show();
     if (result == DialogWrapper.OK_EXIT_CODE) {
       acceptAndRestore(null, null, level);
       return true;
@@ -166,33 +231,41 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     }
   }
 
-  private static void decreaseLanguageLevel(Project project) {
-    WriteAction.run(() -> {
-      LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
+  private static void decreaseLanguageLevel(@NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+        LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
         if (languageLevel != null && !isLanguageLevelAccepted(languageLevel)) {
-          LanguageLevel newLanguageLevel = highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
-          service.changeLanguageLevel(module, newLanguageLevel);
+          LanguageLevel newLanguageLevel = adjustLanguageLevel(languageLevel);
+          service.changeLanguageLevel(module, newLanguageLevel, false);
         }
       }
 
       LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
       if (!isLanguageLevelAccepted(projectExtension.getLanguageLevel())) {
-        projectExtension.setLanguageLevel(highestAcceptedLevel);
-        projectExtension.setDefault(false);
+        projectExtension.setLanguageLevel(getHighestAcceptedLevel());
       }
     });
   }
 
-  private static final String EXPERIMENTAL_FEATURE_ALERT = "Experimental Feature Alert";
+  /**
+   * @param languageLevel language level to adjust
+   * @return the best accepted language level based on the supplied one
+   */
+  private static @NotNull LanguageLevel adjustLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    if (isLanguageLevelAccepted(languageLevel)) return languageLevel;
+    LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
+    return highestAcceptedLevel.isAtLeast(languageLevel) ? JavaRelease.getHighest() : highestAcceptedLevel;
+  }
 
-  private static String getLegalNotice(LanguageLevel level) {
-    return
-      "You must accept the terms of legal notice of the beta Java specification to enable support for " +
-      "\"" + StringUtil.substringAfter(level.getPresentableText(), " - ") + "\".<br/><br/>" +
-      "<b>The implementation of an early-draft specification developed under the Java Community Process (JCP) " +
-      "is made available for testing and evaluation purposes only and is not compatible with any specification of the JCP.</b>";
+  @TestOnly
+  public static void allowLevel(@NotNull Disposable parentDisposable, @NotNull LanguageLevel level) {
+    List<String> acceptedNames = getSettings().acceptedNames;
+    String name = level.name();
+    if (!acceptedNames.contains(name)) {
+      acceptedNames.add(name);
+      Disposer.register(parentDisposable, () -> getSettings().acceptedNames.remove(name));
+    }
   }
 }

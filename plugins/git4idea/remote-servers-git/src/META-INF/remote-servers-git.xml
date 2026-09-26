@@ -1,8 +1,0 @@
-<idea-plugin url="https://www.jetbrains.com/idea">
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.remoteServer.util.deploymentDetector"
-                    interface="com.intellij.remoteServer.util.CloudGitDeploymentDetector"/>
-  </extensionPoints>
-
-</idea-plugin>

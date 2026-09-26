@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "xxh3",
+    srcs = ["xxh3.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/xxh3",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_zeebo_xxh3//:xxh3"],
+)
+
+# The vectors are the whole reason this package is a package: they are what makes "our index hashes match the
+# platform's" a test rather than a hope.
+go_test(
+    name = "xxh3_test",
+    srcs = [
+        "vectors_test.go",
+        "xxh3_test.go",
+    ],
+    embed = [":xxh3"],
+    pure = "on",
+)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
@@ -34,21 +20,28 @@ public interface PsiImportList extends PsiElement {
    *
    * @return the array of non-static import statements.
    */
-  @NotNull PsiImportStatement[] getImportStatements();
+  PsiImportStatement @NotNull [] getImportStatements();
 
   /**
    * Returns the static import statements contained in the list.
    *
    * @return the array of static import statements.
    */
-  @NotNull PsiImportStaticStatement[] getImportStaticStatements();
+  PsiImportStaticStatement @NotNull [] getImportStaticStatements();
+
+  /**
+   * Returns the import module statements contained in the list.
+   *
+   * @return the array of import module statements.
+   */
+  PsiImportModuleStatement @NotNull [] getImportModuleStatements();
 
   /**
    * Returns all import statements contained in the list.
    *
    * @return the array of import statements.
    */
-  @NotNull PsiImportStatementBase[] getAllImportStatements();
+  PsiImportStatementBase @NotNull [] getAllImportStatements();
 
   /**
    * Searches the list for a single-class import statement importing the specified class.
@@ -67,6 +60,15 @@ public interface PsiImportList extends PsiElement {
    */
   @Nullable
   PsiImportStatement findOnDemandImportStatement(@NonNls String packageName);
+
+  /**
+   * Searches the list for a module import statement importing the specified class.
+   *
+   * @param moduleName the name of the imported module.
+   * @return the import module statement, or null if one was not found.
+   */
+  @Nullable
+  PsiImportModuleStatement findImportModuleStatement(@NonNls String moduleName);
 
   /**
    * Searches the list for a single import or import static statement importing the specified

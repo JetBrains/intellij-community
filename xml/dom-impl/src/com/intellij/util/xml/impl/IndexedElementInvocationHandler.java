@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,11 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl, ElementStub>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
+public class IndexedElementInvocationHandler extends DomInvocationHandler {
+  private static final Logger LOG = Logger.getInstance(IndexedElementInvocationHandler.class);
   private final int myIndex;
 
   public IndexedElementInvocationHandler(final EvaluatedXmlName tagName,
@@ -48,23 +31,23 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     myIndex = index;
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
+  @Override
   public boolean equals(final Object obj) {
     return super.equals(obj) && myIndex == ((IndexedElementInvocationHandler)obj).myIndex;
   }
 
+  @Override
   public int hashCode() {
     return super.hashCode() * 239 + myIndex;
   }
 
-  @Nullable
   @Override
-  protected String getValue() {
-    return myStub == null ? super.getValue() : myStub.getValue();
+  protected @Nullable String getValue() {
+    return myStub == null ? super.getValue() : ((ElementStub)myStub).getValue();
   }
 
   @Override
-  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
+  protected XmlElement recomputeXmlElement(final @NotNull DomInvocationHandler parentHandler) {
     final XmlTag tag = parentHandler.getXmlTag();
     if (tag == null) return null;
 
@@ -97,6 +80,11 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
       }
     });
     return newTag[0];
+  }
+
+  @Override
+  public FixedChildDescriptionImpl getChildDescription() {
+    return (FixedChildDescriptionImpl)super.getChildDescription();
   }
 
   @Override

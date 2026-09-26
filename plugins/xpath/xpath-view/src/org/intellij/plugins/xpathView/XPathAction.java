@@ -15,19 +15,29 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class XPathAction extends AnAction {
+
   @Override
-  public void update(AnActionEvent event) {
-    super.update(event);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
 
     // keep track of enabled status
@@ -46,12 +56,11 @@ public abstract class XPathAction extends AnAction {
   }
 
   protected void updateMainMenu(AnActionEvent event) {
-    final boolean b = XPathAppComponent.getInstance().getConfig().SHOW_IN_MAIN_MENU;
-    event.getPresentation().setVisible(b && isEnabled(event, false));
+    event.getPresentation().setVisible(isEnabled(event, false));
   }
 
   protected void updateToolbar(AnActionEvent event) {
-    event.getPresentation().setVisible(XPathAppComponent.getInstance().getConfig().SHOW_IN_TOOLBAR);
+    event.getPresentation().setVisible(true);
   }
 
   protected boolean isEnabled(AnActionEvent event, boolean checkAvailable) {
@@ -61,11 +70,7 @@ public abstract class XPathAction extends AnAction {
       return false;
     }
 
-    Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
-    if (editor == null) {
-      FileEditorManager fem = FileEditorManager.getInstance(project);
-      editor = fem.getSelectedTextEditor();
-    }
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       return false;
     }

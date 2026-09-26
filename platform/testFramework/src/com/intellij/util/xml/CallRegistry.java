@@ -20,9 +20,6 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CallRegistry<T> {
   private int mySize;
   private final List<String> myExpected = new ArrayList<>();
@@ -48,6 +45,7 @@ public class CallRegistry<T> {
     clear();
   }
 
+  @Override
   public String toString() {
     return myActual.toString();
   }

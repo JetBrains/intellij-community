@@ -1,58 +1,99 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.util.Collections;
 
-class ColorObjectRenderer extends CompoundReferenceRenderer {
-  public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
-    super(rendererSettings, "Color", null, null);
-    setClassName("java.awt.Color");
-    setEnabled(true);
+final class ColorObjectRenderer extends CompoundRendererProvider {
+  private static final Logger LOG = Logger.getInstance(ColorObjectRenderer.class);
+
+  @Override
+  protected String getName() {
+    return "Color";
   }
 
-  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    final Value value = descriptor.getValue();
-    if (value instanceof ObjectReference) {
-      try {
-        final ObjectReference objRef = (ObjectReference)value;
-        final ReferenceType refType = objRef.referenceType();
-        final Field valueField = refType.fieldByName("value");
-        if (valueField != null) {
-          final Value rgbValue = objRef.getValue(valueField);
-          if (rgbValue instanceof IntegerValue) {
-            @SuppressWarnings("UseJBColor")
-            final Color color = new Color(((IntegerValue)rgbValue).value(), true);
-            return JBUI.scale(new ColorIcon(16, 12, color, true));
+  @Override
+  protected String getClassName() {
+    return "java.awt.Color";
+  }
+
+  @Override
+  protected ValueIconRenderer getIconRenderer() {
+    return (descriptor, evaluationContext, listener) -> {
+      Value value = descriptor.getValue();
+      if (value instanceof ObjectReference objRef) {
+        try {
+          ReferenceType refType = objRef.referenceType();
+          if (refType instanceof ClassType) {
+            Value rgbValue = null;
+            Method getRGBMethod = DebuggerUtils.findMethod(refType, "getRGB", "()I");
+            if (getRGBMethod != null) {
+              ReferenceType rgbMethodDeclaringType = getRGBMethod.declaringType();
+              if (rgbMethodDeclaringType.name().equals("java.awt.Color")) { // getRGB is not overridden
+                Field valueField = DebuggerUtils.findField(rgbMethodDeclaringType, "value");
+                if (valueField != null) {
+                  rgbValue = objRef.getValue(valueField);
+                }
+              }
+              if (rgbValue instanceof IntegerValue integerValue) {
+                return createIcon(integerValue);
+              }
+              else {
+                EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
+                DebugProcessImpl debugProcess = evalContext.getDebugProcess();
+                evalContext.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+                  @Override
+                  public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+                    try {
+                      Value rgbValue = debugProcess.invokeMethod(evaluationContext, objRef, getRGBMethod, Collections.emptyList());
+                      if (rgbValue instanceof IntegerValue integerValue) {
+                        descriptor.setValueIcon(createIcon(integerValue));
+                        listener.labelChanged();
+                      }
+                    }
+                    catch (EvaluateException e) {
+                      LOG.info(e);
+                    }
+                  }
+                });
+              }
+            }
           }
         }
+        catch (Exception e) {
+          throw new EvaluateException(e.getMessage(), e);
+        }
       }
-      catch (Exception e) {
-        throw new EvaluateException(e.getMessage(), e);
-      }
-    }
-    return null;
+      return null;
+    };
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
+  }
+
+  private static Icon createIcon(IntegerValue rgbValue) {
+    //noinspection UseJBColor
+    return JBUIScale.scaleIcon(new ColorIcon(16, 12, new Color(rgbValue.value(), true), true));
   }
 }

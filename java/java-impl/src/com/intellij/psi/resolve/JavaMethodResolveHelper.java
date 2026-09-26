@@ -1,22 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.resolve;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -29,54 +21,52 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaMethodResolveHelper {
-  private final Set<MethodSignature> myDuplicates = new THashSet<>();
+  private final Set<MethodSignature> myDuplicates = new HashSet<>();
 
   private final MethodCandidatesProcessor myProcessor;
-  @Nullable private final PsiType[] myArgumentTypes;
+  private final PsiType @Nullable [] myArgumentTypes;
 
-  public JavaMethodResolveHelper(@NotNull final PsiElement argumentList, PsiFile containingFile, @Nullable final PsiType[] argumentTypes) {
+  public JavaMethodResolveHelper(final @NotNull PsiElement argumentList, PsiFile containingFile, final PsiType @Nullable [] argumentTypes) {
     myArgumentTypes = argumentTypes;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
     final PsiConflictResolver resolver = argumentTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, argumentTypes,
-                                                                                                                                      languageLevel);
+                                                                                                                                      languageLevel, containingFile);
     myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
-      protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,
-                                                        final boolean staticProblem,
-                                                        final boolean accessible, final boolean varargs) {
+      protected @NotNull MethodCandidateInfo createCandidateInfo(final @NotNull PsiMethod method, final @NotNull PsiSubstitutor substitutor,
+                                                                 final boolean staticProblem,
+                                                                 final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
           .createCandidateInfo(method, substitutor, staticProblem, myCurrentFileContext, !accessible, argumentList, argumentTypes,
                                languageLevel, varargs);
       }
 
       @Override
-      protected boolean isAccepted(@NotNull final PsiMethod candidate) {
+      protected boolean isAccepted(final @NotNull PsiMethod candidate) {
         return !candidate.isConstructor();
       }
     };
   }
 
-  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
-                                                    PsiSubstitutor substitutor,
-                                                    boolean staticProblem,
-                                                    PsiElement currentFileContext,
-                                                    boolean accessProblem,
-                                                    PsiElement argumentList,
-                                                    PsiType[] argumentTypes,
-                                                    @NotNull LanguageLevel languageLevel, boolean vararg) {
+  protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
+                                                             PsiSubstitutor substitutor,
+                                                             boolean staticProblem,
+                                                             PsiElement currentFileContext,
+                                                             boolean accessProblem,
+                                                             PsiElement argumentList,
+                                                             PsiType[] argumentTypes,
+                                                             @NotNull LanguageLevel languageLevel, boolean vararg) {
     return new MethodCandidateInfo(method, substitutor, accessProblem, staticProblem, argumentList, currentFileContext, argumentTypes,
                                    PsiType.EMPTY_ARRAY, languageLevel) {
       @Override
@@ -92,8 +82,7 @@ public class JavaMethodResolveHelper {
     }
   }
 
-  @NotNull
-  public ErrorType getResolveError() {
+  public @NotNull ErrorType getResolveError() {
     final List<CandidateInfo> candidates = getCandidates();
     if (candidates.size() != 1) return ErrorType.RESOLVE;
 
@@ -111,7 +100,6 @@ public class JavaMethodResolveHelper {
 
     if (!info.isApplicable()) {
       boolean hasNulls = false;
-      //noinspection ConstantConditions
       final PsiParameter[] parameters = info.getElement().getParameterList().getParameters();
       if (myArgumentTypes.length == parameters.length) {
         for (int i = 0; i < myArgumentTypes.length; i++) {
@@ -137,7 +125,7 @@ public class JavaMethodResolveHelper {
     NONE, STATIC, RESOLVE
   }
 
-  public Collection<JavaMethodCandidateInfo> getMethods() {
+  public @Unmodifiable Collection<JavaMethodCandidateInfo> getMethods() {
     return ContainerUtil.mapNotNull(getCandidates(),
                                     (Function<JavaResolveResult, JavaMethodCandidateInfo>)javaResolveResult -> new JavaMethodCandidateInfo((PsiMethod)javaResolveResult.getElement(), javaResolveResult.getSubstitutor()));
   }

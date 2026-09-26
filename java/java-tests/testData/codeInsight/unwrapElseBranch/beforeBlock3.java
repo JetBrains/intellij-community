@@ -1,4 +1,4 @@
-// "Unwrap 'else' branch" "true"
+// "Unwrap 'else' branch" "false"
 
 class T {
     void f(boolean b) {
@@ -6,6 +6,6 @@ class T {
             throw new RuntimeException("When true");
         <caret>else {
             System.out.println("Otherwise");
-        }
+        }//c1
     }
 }

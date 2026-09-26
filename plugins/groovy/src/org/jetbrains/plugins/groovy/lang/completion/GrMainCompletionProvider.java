@@ -1,14 +1,45 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.intellij.codeInsight.completion.JavaCompletionSession;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaGlobalMemberLookupElement;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -17,10 +48,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionConsumer;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer;
+import org.jetbrains.plugins.groovy.lang.completion.impl.FastGroovyCompletionConsumer;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -38,15 +71,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileBaseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.typing.TypeUtils;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
@@ -55,21 +96,20 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   public static final ElementPattern<PsiElement> IN_CATCH_TYPE = PlatformPatterns
     .psiElement().afterLeaf(PlatformPatterns.psiElement().withText("(").withParent(GrCatchClause.class));
 
-  private static void addUnfinishedMethodTypeParameters(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+  private static void addUnfinishedMethodTypeParameters(@NotNull PsiElement position, @NotNull GroovyCompletionConsumer result) {
     final GrTypeParameterList candidate = findTypeParameterListCandidate(position);
 
     if (candidate != null) {
       for (GrTypeParameter p : candidate.getTypeParameters()) {
-        result.addElement(new JavaPsiClassReferenceElement(p));
+        result.consume(new JavaPsiClassReferenceElement(p));
       }
     }
   }
 
-  private static void suggestVariableNames(PsiElement context, CompletionResultSet result) {
+  private static void suggestVariableNames(PsiElement context, GroovyCompletionConsumer result) {
     final PsiElement parent = context.getParent();
     if (GroovyCompletionUtil.isWildcardCompletion(context)) return;
-    if (parent instanceof GrVariable) {
-      final GrVariable variable = (GrVariable) parent;
+    if (parent instanceof GrVariable variable) {
       if (context.equals(variable.getNameIdentifierGroovy())) {
         final PsiType type = variable.getTypeGroovy();
         if (type != null) {
@@ -82,12 +122,12 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
             String name = names[0];
             String newName = InlineMethodConflictSolver.suggestNewName(name, null, parent);
             if (!name.equals(newName)) {
-              result.addElement(LookupElementBuilder.create(newName));
+              result.consume(LookupElementBuilder.create(newName));
               return;
             }
           }
           for (String name : names) {
-            result.addElement(LookupElementBuilder.create(name));
+            result.consume(LookupElementBuilder.create(name));
           }
         }
 
@@ -95,21 +135,20 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         if (initializer != null) {
           for (String name : GroovyNameSuggestionUtil.suggestVariableNames(initializer, new DefaultGroovyVariableNameValidator(variable),
                                                                            variable.hasModifierProperty(PsiModifier.STATIC))) {
-            result.addElement(LookupElementBuilder.create(name));
+            result.consume(LookupElementBuilder.create(name));
           }
         }
       }
     }
   }
 
-  @Nullable
-  private static GrReferenceElement findGroovyReference(@NotNull PsiElement position) {
+  private static @Nullable GrReferenceElement<?> findGroovyReference(@NotNull PsiElement position) {
     final PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
-      return (GrReferenceElement)parent;
+      return (GrReferenceElement<?>)parent;
     }
     if (couldContainReference(position)) {
-      return GroovyPsiElementFactory.getInstance(position.getProject()).createReferenceElementFromText("Foo", position);
+      return GroovyPsiElementFactory.getInstance(position.getProject()).createCodeReference("Foo", position);
     }
     return null;
   }
@@ -121,8 +160,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
            GroovyCompletionUtil.isTupleVarNameWithoutTypeDeclared(position);
   }
 
-  @Nullable
-  private static GrTypeParameterList findTypeParameterListCandidate(@NotNull PsiElement position) {
+  private static @Nullable GrTypeParameterList findTypeParameterListCandidate(@NotNull PsiElement position) {
     final PsiElement parent = position.getParent();
     if (parent instanceof GrVariable) {
       final PsiElement pparent = parent.getParent();
@@ -139,17 +177,17 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   public static boolean isClassNamePossible(PsiElement position) {
     PsiElement parent = position.getParent();
     if (parent instanceof GrReferenceElement) {
-      return ((GrReferenceElement)parent).getQualifier() == null;
+      return ((GrReferenceElement<?>)parent).getQualifier() == null;
     }
     return couldContainReference(position);
   }
 
-  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final JavaCompletionSession session) {
-    addAllClasses(parameters, result::addElement, session, result.getPrefixMatcher());
+  private static void addAllClasses(CompletionParameters parameters, final GroovyCompletionConsumer result, final JavaCompletionSession session) {
+    addAllClasses(parameters, result::consume, session, result.getCompletionResultSet().getPrefixMatcher());
   }
 
   public static void addAllClasses(CompletionParameters parameters,
-                                   final Consumer<LookupElement> consumer,
+                                   final Consumer<? super LookupElement> consumer,
                                    final JavaCompletionSession inheritors, final PrefixMatcher matcher) {
     final PsiElement position = parameters.getPosition();
     final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
@@ -162,14 +200,16 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     });
   }
 
-  @NotNull
-  static Runnable completeReference(final CompletionParameters parameters,
-                                    final GrReferenceElement reference,
-                                    final JavaCompletionSession inheritorsHolder,
-                                    final PrefixMatcher matcher,
-                                    final Consumer<LookupElement> _consumer) {
-    final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      final Set<LookupElement> added = ContainerUtil.newHashSet();
+  static @NotNull Runnable completeReference(final CompletionParameters parameters,
+                                             final GrReferenceElement<?> reference,
+                                             final JavaCompletionSession inheritorsHolder,
+                                             final PrefixMatcher matcher,
+                                             final @Nullable CompletionResultSet resultSet,
+                                             final Consumer<? super LookupElement> _consumer) {
+    final HashSet<LookupElement> addedElements = new HashSet<>();
+    final Consumer<LookupElement> consumer = new Consumer<>() {
+      final Set<LookupElement> added = addedElements;
+
       @Override
       public void consume(LookupElement element) {
         if (added.add(element)) {
@@ -178,7 +218,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
     };
 
-    final Map<PsiModifierListOwner, LookupElement> staticMembers = ContainerUtil.newHashMap();
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = new HashMap<>();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = GroovyCompletionUtil.getQualifierType(qualifier);
 
@@ -187,19 +227,19 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null && !canResolveToPackage(qualifier)) {
-        if (parameters.getInvocationCount() == 1) {
-          showInfo();
+        if (resultSet != null && parameters.getInvocationCount() == 1) {
+          resultSet.addLookupAdvertisement(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
         }
         return EmptyRunnable.INSTANCE;
       }
     }
 
-    final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
+    final List<LookupElement> zeroPriority = new ArrayList<>();
 
     PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);
 
-    GroovyCompletionUtil.processVariants(reference, matcher, parameters, lookupElement -> {
+    Consumer<LookupElement> elementConsumer = lookupElement -> {
       Object object = lookupElement.getObject();
       if (object instanceof GroovyResolveResult) {
         object = ((GroovyResolveResult)object).getElement();
@@ -219,8 +259,10 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
       if (!(object instanceof PsiClass)) {
         int priority = assignPriority(lookupElement, qualifierType);
-        lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType,
-                                                             PrioritizedLookupElement.withPriority(lookupElement, priority), object, reference);
+        lookupElement = PrioritizedLookupElement.withPriority(lookupElement, priority);
+        if (object != null) {
+          lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType, parameters.getOriginalFile().getVirtualFile(), lookupElement, object, reference);
+        }
       }
 
       if ((object instanceof PsiMethod || object instanceof PsiField) &&
@@ -230,22 +272,71 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         }
       }
 
-      PrioritizedLookupElement prio = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
-      if (prio == null || prio.getPriority() == 0) {
+      PrioritizedLookupElement<?> prioritized = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+      if (prioritized == null || prioritized.getPriority() == 0) {
         zeroPriority.add(lookupElement);
-      } else {
+      }
+      else {
         consumer.consume(lookupElement);
       }
-    });
+    };
+
+    GroovyCompletionUtil.processVariants(reference, matcher, parameters, elementConsumer);
 
     for (LookupElement element : zeroPriority) {
       consumer.consume(element);
     }
+    zeroPriority.clear();
+
+    if (qualifierType != null) {
+      processImplicitSpread(qualifierType, consumer, matcher, addedElements);
+    }
 
     if (qualifier == null) {
-      return addStaticMembers(parameters, matcher, staticMembers, consumer);
+      return () -> {
+        PsiFile file = reference.getContainingFile();
+        if (!(file instanceof GroovyFileBaseImpl) || !(reference instanceof GrReferenceExpressionImpl)) {
+          return;
+        }
+        CompleteReferenceExpression.processSpecificPlace(matcher, (GrReferenceExpressionImpl)reference, parameters, (processor) -> ((GroovyFileBaseImpl)file).processComplexImports(processor, ResolveUtilKt.initialState(true), reference), elementConsumer);
+        for (LookupElement element : zeroPriority) {
+          consumer.consume(element);
+        }
+        addStaticMembers(parameters, matcher, staticMembers, consumer).run();
+      };
     }
     return EmptyRunnable.INSTANCE;
+  }
+
+  private static void processImplicitSpread(@NotNull PsiType type,
+                                            @NotNull Consumer<LookupElement> consumer,
+                                            @NotNull PrefixMatcher matcher,
+                                            @NotNull HashSet<@NotNull LookupElement> addedElements) {
+    var componentPair = PsiUtil.getComponentForSpreadWithDot(type);
+    if (componentPair == null) {
+      return;
+    }
+    PsiType deepComponentType = componentPair.first;
+    int depth = componentPair.second;
+    if (!(deepComponentType instanceof PsiClassType)) {
+      return;
+    }
+    var resolveResult = ((PsiClassType)deepComponentType).resolveGenerics();
+    PsiClass resolvedClass = resolveResult.getElement();
+    if (resolvedClass == null) {
+      return;
+    }
+    Set<String> existingIdentifiers = addedElements.stream().map(element -> element.getLookupString()).collect(Collectors.toSet());
+    for (var method : resolvedClass.getAllMethods()) {
+      if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+        var lookupElement = CompleteReferenceExpression.createPropertyLookupElement(method, resolveResult.getSubstitutor(), matcher);
+        if (lookupElement != null && !existingIdentifiers.contains(lookupElement.getLookupString())) {
+          PsiType methodReturnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
+          String returnTypeRepresentation = methodReturnType == null ? "?" : TypeUtils.box(methodReturnType, method).getPresentableText();
+          consumer.consume(lookupElement.withTypeText(StringUtil.repeat("ArrayList<", depth) + returnTypeRepresentation + StringUtil.repeat(">", depth)));
+        }
+      }
+    }
   }
 
   private static boolean isLightElementDeclaredDuringCompletion(Object object) {
@@ -259,9 +350,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
   private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
-                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<LookupElement> consumer) {
+                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<? super LookupElement> consumer) {
     final StaticMemberProcessor processor = completeStaticMembers(parameters);
-    processor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
+    processor.processMembersOfRegisteredClasses(matcher::prefixMatches, (member, psiClass) -> {
       if (member instanceof GrAccessorMethod) {
         member = ((GrAccessorMethod)member).getProperty();
       }
@@ -293,11 +384,6 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       });
     }
     return EmptyRunnable.INSTANCE;
-  }
-
-  private static void showInfo() {
-    CompletionService.getCompletionService()
-      .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
   }
 
   private static boolean checkForIterator(PsiMethod method) {
@@ -348,15 +434,14 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     final PsiElement position = parameters.getPosition();
     final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
-      @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
+      protected @NotNull LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return createGlobalMemberElement(member, containingClass, shouldImport);
       }
 
       @Override
-      protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+      protected LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
@@ -364,7 +449,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       }
 
       @Override
-      protected boolean isAccessible(PsiMember member) {
+      protected boolean isAccessible(@NotNull PsiMember member) {
         boolean result = super.isAccessible(member);
 
         if (!result && member instanceof GrField) {
@@ -406,58 +491,86 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
-    GroovyCompletionData.addGroovyDocKeywords(parameters, result);
+  protected final void addCompletions(@NotNull CompletionParameters parameters,
+                                      @NotNull ProcessingContext context,
+                                      final @NotNull CompletionResultSet result) {
+
+    try (GroovyCompletionConsumer consumer = getCompletionConsumer(result, parameters)) {
+      doAddCompletions(parameters, consumer);
+    } catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void doAddCompletions(CompletionParameters parameters, GroovyCompletionConsumer consumer) {
+
+    GroovyCompletionData.addGroovyDocKeywords(parameters, consumer);
 
     PsiElement position = parameters.getPosition();
     if (PlatformPatterns.psiElement().inside(false, PlatformPatterns.psiElement(PsiComment.class)).accepts(position)) {
       return;
     }
 
-    GroovyCompletionData.addGroovyKeywords(parameters, result);
+    GroovyCompletionData.addGroovyKeywords(parameters, consumer);
 
-    addUnfinishedMethodTypeParameters(position, result);
+    addUnfinishedMethodTypeParameters(position, consumer);
 
-    suggestVariableNames(position, result);
+    suggestVariableNames(position, consumer);
 
-    GrReferenceElement reference = findGroovyReference(position);
+    GrReferenceElement<?> reference = findGroovyReference(position);
     if (reference == null) {
       if (parameters.getInvocationCount() >= 2) {
-        result.stopHere();
-        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new JavaCompletionSession(result));
+        consumer.interrupt();
+        addAllClasses(parameters, consumer.transform(crs -> crs.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters))), new JavaCompletionSession(consumer.getCompletionResultSet()));
       }
       return;
     }
 
     if (reference.getParent() instanceof GrImportStatement && reference.getQualifier() != null) {
-      result.addElement(LookupElementBuilder.create("*"));
+      consumer.consume(LookupElementBuilder.create("*"));
     }
 
-    JavaCompletionSession inheritors = new JavaCompletionSession(result);
+    JavaCompletionSession inheritors = new JavaCompletionSession(consumer.getCompletionResultSet());
     if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors::addClassItem);
+      GroovySmartCompletionContributor.generateInheritorVariants(parameters, consumer.getCompletionResultSet().getPrefixMatcher(), inheritors::addClassItem);
     }
 
-    Runnable addSlowVariants =
-      completeReference(parameters, reference, inheritors, result.getPrefixMatcher(), lookupElement -> result.addElement(lookupElement));
+    Runnable addSlowVariants = completeReference(
+      parameters, reference, inheritors, consumer.getCompletionResultSet().getPrefixMatcher(), consumer.getCompletionResultSet(),
+      lookupElement -> consumer.consume(lookupElement)
+    );
 
     if (reference.getQualifier() == null) {
       if (!GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
-        GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
+        GroovySmartCompletionContributor.addExpectedClassMembers(parameters, consumer);
       }
 
-      if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result)) {
-        result.stopHere();
+      if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(consumer.getCompletionResultSet())) {
+        //consumer.interrupt();
         if (parameters.getInvocationCount() >= 2) {
-          addAllClasses(parameters, result, inheritors);
+          addAllClasses(parameters, consumer, inheritors);
         } else {
-          JavaCompletionContributor.advertiseSecondCompletion(position.getProject(), result);
+          JavaCompletionContributor.advertiseSecondCompletion(position.getProject(), consumer.getCompletionResultSet());
         }
       }
     }
+    consumer.fastElementsProcessed(parameters);
+    if (GroovyCompletionUtil.isSlowCompletionEnabled()) {
+      addSlowVariants.run();
+    }
+  }
 
-    addSlowVariants.run();
+  private static GroovyCompletionConsumer getCompletionConsumer(CompletionResultSet resultSet, CompletionParameters completionParameters) {
+    PsiElement position = completionParameters.getPosition();
+    for (GroovyCompletionCustomizer customizer : GroovyCompletionContributor.EP_NAME.getExtensionList()) {
+      GroovyCompletionConsumer consumer = customizer.generateCompletionConsumer(position, resultSet);
+      if (consumer != null) {
+        return consumer;
+      }
+    }
+    return new FastGroovyCompletionConsumer(resultSet);
   }
 }

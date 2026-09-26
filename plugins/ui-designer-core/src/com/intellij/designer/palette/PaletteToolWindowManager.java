@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.DesignerCustomizations;
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -43,8 +29,8 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public PaletteToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    super(project, fileEditorManager);
+  public PaletteToolWindowManager(Project project) {
+    super(project);
   }
 
   public static PalettePanel getInstance(DesignerEditorPanel designer) {
@@ -82,7 +68,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     content.setPreferredFocusableComponent(myToolWindowPanel);
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
-    myToolWindow.setAvailable(false, null);
+    myToolWindow.setAvailable(false);
   }
 
   @Override
@@ -96,17 +82,16 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     myToolWindowPanel.loadPalette((DesignerEditorPanel)designer);
 
     if (designer == null) {
-      myToolWindow.setAvailable(false, null);
+      myToolWindow.setAvailable(false);
     }
     else {
-      myToolWindow.setAvailable(true, null);
+      myToolWindow.setAvailable(true);
       myToolWindow.show(null);
     }
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "PaletteToolWindowManager";
   }
 
@@ -123,7 +108,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
     return createContent(designer,
                          palettePanel,
-                         "Palette",
+                         DesignerBundle.message("palette.toolwindow.title"),
                          AllIcons.Toolwindows.ToolWindowPalette,
                          palettePanel,
                          palettePanel,

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CompleteCodeReferenceElement")
 
 package org.jetbrains.plugins.groovy.lang.completion
@@ -10,7 +10,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.PACKAGE
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -95,7 +101,7 @@ private class CompleteReferenceProcessor(
 ) : PsiScopeProcessor {
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    element as? PsiNamedElement ?: return true
+    if (element !is PsiNamedElement) return true
 
     val name = element.name ?: return true
     val importedName = state.get(importedNameKey)
@@ -123,8 +129,7 @@ private class CompleteReferenceProcessor(
 
 private fun GrCodeReferenceElement.findTypeParameterListCandidate(): GrTypeParameterList? {
   val typeElement = getRootTypeElement() ?: return null
-  val parent = typeElement.parent
-  return when (parent) {
+  return when (typeElement.parent) {
     is GrTypeDefinitionBody -> skipWhitespacesAndComments(typeElement.prevSibling, false) as? GrTypeParameterList
     is GrVariableDeclaration -> {
       val errorElement = skipWhitespacesAndComments(typeElement.prevSibling, false) as? PsiErrorElement

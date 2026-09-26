@@ -1,51 +1,118 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 /**
  * return -1 instead of 0 if no such mapping exists
+ * @deprecated Use {@link Object2IntOpenHashMap}
  */
-public class ObjectIntHashMap<K> extends TObjectIntHashMap<K> {
-  public ObjectIntHashMap(int initialCapacity) {
-    super(initialCapacity);
-  }
-
-  public ObjectIntHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    super(strategy);
-  }
-
-  public ObjectIntHashMap(int initialCapacity, @NotNull TObjectHashingStrategy<K> strategy) {
-    super(initialCapacity, strategy);
-  }
-
+@ApiStatus.Internal
+@Deprecated
+public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
+  private final Object2IntMap<K> myMap;
   public ObjectIntHashMap() {
-    super();
+    this(10);
+  }
+
+  public ObjectIntHashMap(int initialCapacity) {
+    myMap = new Object2IntOpenHashMap<>(initialCapacity);
+    myMap.defaultReturnValue(-1);
   }
 
   @Override
-  public final int get(K key) {
-    return get(key, -1);
+  public int get(@NotNull K key) {
+    return myMap.getInt(key);
   }
 
-  public final int get(K key, int defaultValue) {
-    int index = index(key);
-    return index < 0 ? defaultValue : _values[index];
+  @Override
+  public int getOrDefault(@NotNull K key, int defaultValue) {
+    return myMap.getOrDefault(key, defaultValue);
+  }
+
+  @Override
+  public int put(@NotNull K key, int value) {
+    return myMap.put(key, value);
+  }
+
+  @Override
+  public int remove(@NotNull K key) {
+    return myMap.removeInt(key);
+  }
+
+  @Override
+  public boolean containsKey(@NotNull K key) {
+    return myMap.containsKey(key);
+  }
+
+  @Override
+  public void clear() {
+    myMap.clear();
+  }
+
+  @Override
+  public @NotNull Set<K> keySet() {
+    return myMap.keySet();
+  }
+
+  @Override
+  public int size() {
+    return myMap.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
+  @Override
+  public int @NotNull [] values() {
+    return myMap.values().toIntArray();
+  }
+
+  @Override
+  public boolean containsValue(int value) {
+    return myMap.containsValue(value);
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Iterable<Entry<K>> entries() {
+    return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
+  }
+
+  /**
+   * @deprecated use {@link #getOrDefault(Object, int)}
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public int get(@NotNull K key, int defaultValue) {
+    return getOrDefault(key, defaultValue);
+  }
+
+  private final class IntEntry implements Entry<K> {
+    private final Object2IntMap.Entry<? extends K> myEntry;
+
+    IntEntry(@NotNull Object2IntMap.Entry<? extends K> entry) { myEntry = entry; }
+
+    @Override
+    public @NotNull K getKey() {
+      return myEntry.getKey();
+    }
+
+    @Override
+    public int getValue() {
+      return myEntry.getIntValue();
+    }
+
+    @Override
+    public String toString() {
+      return myEntry.toString();
+    }
   }
 }

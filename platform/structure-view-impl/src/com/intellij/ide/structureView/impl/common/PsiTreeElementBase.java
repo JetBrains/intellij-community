@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.common;
 
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.navigation.ItemPresentation;
@@ -28,36 +13,36 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class PsiTreeElementBase <T extends PsiElement> implements StructureViewTreeElement, ItemPresentation, NodeDescriptorProvidingKey {
-
   private final Object myValue;
 
   protected PsiTreeElementBase(T psiElement) {
     myValue = psiElement == null ? null : TreeAnchorizer.getService().createAnchor(psiElement);
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
   @Override
-  @NotNull
-  public Object getKey() {
+  public @NotNull Object getKey() {
     return String.valueOf(getElement());
   }
 
-  @Nullable
-  public final T getElement() {
+  public final @Nullable T getElement() {
     //noinspection unchecked
     return myValue == null ? null : (T)TreeAnchorizer.getService().retrieveElement(myValue);
   }
@@ -80,36 +65,39 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return getElement();
   }
 
-  @Override
-  public String getLocationString() {
-    return null;
-  }
-
   public boolean isSearchInLocationString() {
     return false;
   }
 
+  @Override
   public String toString() {
     final T element = getElement();
     return element != null ? element.toString() : "";
   }
 
-  @NotNull
   @Override
-  public final StructureViewTreeElement[] getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
+  public final StructureViewTreeElement @NotNull [] getChildren() {
+    List<StructureViewTreeElement> list = doGetChildren(true);
+    return list.isEmpty() ? EMPTY_ARRAY : list.toArray(EMPTY_ARRAY);
   }
 
-  @NotNull
-  private StructureViewTreeElement[] doGetChildren() {
-    final T element = getElement();
-    if (element == null) return EMPTY_ARRAY;
-    return mergeWithExtensions(element, getChildrenBase());
+  public final @NotNull List<StructureViewTreeElement> getChildrenWithoutCustomRegions() {
+    return doGetChildren(false);
+  }
+
+  private @NotNull List<StructureViewTreeElement> doGetChildren(boolean withCustomRegions) {
+    T element = getElement();
+    if (element == null) return Collections.emptyList();
+    Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
+    if (!isAllowExtensions()) {
+      return (baseChildren instanceof List<StructureViewTreeElement> list) ? list : new ArrayList<>(baseChildren);
+    }
+    return mergeWithExtensions(element, baseChildren, withCustomRegions);
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    final T element = getElement();
+    T element = getElement();
     if (element != null) {
       ((Navigatable)element).navigate(requestFocus);
     }
@@ -126,8 +114,14 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return canNavigate();
   }
 
-  @NotNull public abstract Collection<StructureViewTreeElement> getChildrenBase();
+  public abstract @Unmodifiable @NotNull Collection<StructureViewTreeElement> getChildrenBase();
 
+  @ApiStatus.Internal
+  public boolean isAllowExtensions() {
+    return true;
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -138,6 +132,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return value == null ? that.getValue() == null : value.equals(that.getValue());
   }
 
+  @Override
   public int hashCode() {
     T value = getValue();
     return value == null ? 0 : value.hashCode();
@@ -148,10 +143,11 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   /** @return element base children merged with children provided by extensions */
-  @NotNull
-  public static StructureViewTreeElement[] mergeWithExtensions(@NotNull PsiElement element,
-                                                               @NotNull Collection<StructureViewTreeElement> baseChildren) {
-    List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
+  @ApiStatus.Internal
+  public static @NotNull List<StructureViewTreeElement> mergeWithExtensions(@NotNull PsiElement element,
+                                                                            @NotNull Collection<StructureViewTreeElement> baseChildren,
+                                                                            boolean withCustomRegions) {
+    List<StructureViewTreeElement> result = new ArrayList<>(withCustomRegions ? CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren) : baseChildren);
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();
     for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
@@ -159,7 +155,8 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
       if (children != null) {
         ContainerUtil.addAll(result, children);
       }
+      extension.filterChildren(result, children == null || children.length == 0 ? Collections.emptyList() : Arrays.asList(children));
     }
-    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
+    return result;
   }
 }

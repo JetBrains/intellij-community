@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -21,9 +7,10 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
@@ -37,27 +24,29 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
-public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
+public final class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
-  @NotNull
-  public String getText() {
-    return "Generate missed test methods";
+  @Override
+  public @NotNull String getText() {
+    return JavaBundle.message("intention.text.generate.missing.test.methods");
   }
 
-  @NotNull
-  public String getFamilyName() {
+  @Override
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (Extensions.getExtensions(TestFramework.EXTENSION_NAME).length == 0) return false;
+    if (!TestFramework.EXTENSION_NAME.hasAnyExtensions()) return false;
 
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return false;
 
-    if (!((PsiMethod)parent).hasModifierProperty(PsiModifier.PUBLIC) || 
+    if (!((PsiMethod)parent).hasModifierProperty(PsiModifier.PUBLIC) ||
         ((PsiMethod)parent).hasModifierProperty(PsiModifier.ABSTRACT)) {
       return false;
     }
@@ -72,23 +61,23 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
     if (srcClass == null) return;
 
-    final Collection<PsiElement> testClasses = TestFinderHelper.findTestsForClass(srcClass);
-    
+    final Collection<PsiElement> testClasses = ContainerUtil.filter(TestFinderHelper.findTestsForClass(srcClass), e -> e.getLanguage() == JavaLanguage.INSTANCE);
+
     if (testClasses.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No tests found.");
+      HintManager.getInstance().showErrorHint(editor, JavaBundle.message("generate.missed.tests.action.error.no.tests.found"));
       return;
     }
-    
+
     if (testClasses.size() == 1) {
       generateMissedTests((PsiClass)ContainerUtil.getFirstItem(testClasses), srcClass, editor);
       return;
     }
 
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(testClasses))
+      .createPopupChooserBuilder(new ArrayList<>(testClasses))
       .setRenderer(new PsiClassListCellRenderer())
       .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
-      .setTitle("Choose Test")
+      .setTitle(JavaBundle.message("popup.title.choose.test"))
       .createPopup()
       .showInBestPositionFor(editor);
   }
@@ -106,11 +95,13 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
         }
       }
       else {
-        HintManager.getInstance().showErrorHint(srcEditor, "Failed to detect test framework for " + testClass.getQualifiedName());
+        String message = JavaBundle.message("generate.missed.tests.action.failed.to.detect.framework", testClass.getQualifiedName());
+        HintManager.getInstance().showErrorHint(srcEditor, message);
       }
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

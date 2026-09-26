@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.json.JsonBundle;
@@ -7,15 +8,16 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
+public final class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public static int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
-  public static int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
-  public static int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
+  public static final int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
+  public static final int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
+  public static final int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
 
   public boolean SPACE_AFTER_COLON = true;
   public boolean SPACE_BEFORE_COLON = false;
@@ -23,7 +25,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
   // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
   /**
-   * Contains value of {@link com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment#getId()}
+   * Contains value of {@link JsonCodeStyleSettings.PropertyAlignment#getId()}
    *
    * @see #DO_NOT_ALIGN_PROPERTY
    * @see #ALIGN_PROPERTY_ON_VALUE
@@ -34,9 +36,10 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   @MagicConstant(flags = {
     CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED, 
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
   })
+  @CommonCodeStyleSettings.WrapConstant
   public int OBJECT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
   
   // This was default policy for array elements wrapping in JavaScript's JSON.
@@ -47,6 +50,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
     CommonCodeStyleSettings.WRAP_AS_NEEDED, 
     CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
   })
+  @CommonCodeStyleSettings.WrapConstant
   public int ARRAY_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   public JsonCodeStyleSettings(CodeStyleSettings container) {
@@ -54,21 +58,19 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   public enum PropertyAlignment {
-    DO_NOT_ALIGN(JsonBundle.message("formatter.align.properties.none"), 0),
-    ALIGN_ON_VALUE(JsonBundle.message("formatter.align.properties.on.value"), 1),
-    ALIGN_ON_COLON(JsonBundle.message("formatter.align.properties.on.colon"), 2);
-
-    private final String myDescription;
+    DO_NOT_ALIGN(0, "formatter.align.properties.none"),
+    ALIGN_ON_VALUE(1, "formatter.align.properties.on.value"),
+    ALIGN_ON_COLON(2, "formatter.align.properties.on.colon");
+    private final @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String myKey;
     private final int myId;
 
-    PropertyAlignment(@NotNull String description, int id) {
-      myDescription = description;
+    PropertyAlignment(int id, @NotNull @PropertyKey(resourceBundle = JsonBundle.BUNDLE) String key) {
+      myKey = key;
       myId = id;
     }
 
-    @NotNull
-    public String getDescription() {
-      return myDescription;
+    public @NotNull String getDescription() {
+      return JsonBundle.message(myKey);
     }
 
     public int getId() {

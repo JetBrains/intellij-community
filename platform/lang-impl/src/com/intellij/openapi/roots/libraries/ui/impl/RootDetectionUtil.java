@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.ide.util.ChooseElementsDialog;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryRootType;
 import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
@@ -29,6 +17,9 @@ import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,36 +27,35 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public class RootDetectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil");
+public final class RootDetectionUtil {
+  private static final Logger LOG = Logger.getInstance(RootDetectionUtil.class);
 
   private RootDetectionUtil() {
   }
 
-  @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates,
-                                            @Nullable Component parentComponent,
-                                            @Nullable Project project,
-                                            @NotNull final LibraryRootsComponentDescriptor rootsComponentDescriptor) {
+  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates,
+                                                     @Nullable Component parentComponent,
+                                                     @Nullable Project project,
+                                                     final @NotNull LibraryRootsComponentDescriptor rootsComponentDescriptor) {
     return detectRoots(rootCandidates, parentComponent, project, rootsComponentDescriptor.getRootsDetector(),
                        rootsComponentDescriptor.getRootTypes());
   }
 
-  @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates, @Nullable Component parentComponent,
-                                            @Nullable Project project, @NotNull final LibraryRootsDetector detector,
-                                            @NotNull OrderRootType[] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
+  public static @NotNull List<OrderRoot> detectRoots(final @NotNull Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
+                                                     @Nullable Project project, final @NotNull LibraryRootsDetector detector,
+                                                     OrderRootType @NotNull [] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<>();
-    new Task.Modal(project, "Scanning for Roots", true) {
+    new Task.Modal(project, ProjectBundle.message("progress.title.scanning.for.roots"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -121,10 +111,10 @@ public class RootDetectionUtil {
       LOG.assertTrue(!types.isEmpty(), "No allowed root types found for " + detector);
       List<String> names = new ArrayList<>(types.keySet());
       if (names.size() == 1) {
-        String title = "Attach Roots";
+        String title = LangBundle.message("dialog.title.attach.roots");
         String typeName = names.get(0);
-        String message = ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain. " +
-                         "Do you want to attach them as '" + typeName + "'?";
+        String message =
+          LangBundle.message("dialog.message.cannot.determine", ApplicationNamesInfo.getInstance().getProductName(), typeName);
         int answer = parentComponent != null
                      ? Messages.showYesNoDialog(parentComponent, message, title, null)
                      : Messages.showYesNoDialog(project, message, title, null);
@@ -136,9 +126,9 @@ public class RootDetectionUtil {
         }
       }
       else {
-        String title = "Choose Categories of Selected Files";
-        String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
-                                                      "Choose the appropriate categories from the list.");
+        String title = LangBundle.message("dialog.title.choose.categories.selected.files");
+        String description = XmlStringUtil.wrapInHtml(
+          LangBundle.message("root.detector.cannot.determine.file.kind", ApplicationNamesInfo.getInstance().getProductName()));
         ChooseElementsDialog<String> dialog;
         if (parentComponent != null) {
           dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
@@ -158,7 +148,7 @@ public class RootDetectionUtil {
     return result;
   }
 
-  private static boolean allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(Collection<DetectedLibraryRoot> roots, VirtualFile candidate) {
+  private static boolean allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(Collection<? extends DetectedLibraryRoot> roots, VirtualFile candidate) {
     for (DetectedLibraryRoot root : roots) {
       if (root.getTypes().size() > 1 || !root.getFile().equals(candidate) && !root.getFile().equals(candidate.getParent())) {
         return false;
@@ -167,23 +157,25 @@ public class RootDetectionUtil {
     return true;
   }
 
-  private static class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
-    public ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
+  private static final class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
+    ChooseRootTypeElementsDialog(Project project, List<String> names, @DialogTitle String title, @NlsContexts.Label String description) {
       super(project, names, title, description, true);
     }
 
-    private ChooseRootTypeElementsDialog(Component parent, List<String> names, String title, String description) {
+    private ChooseRootTypeElementsDialog(Component parent,
+                                         List<String> names,
+                                         @DialogTitle String title,
+                                         @NlsContexts.Label String description) {
       super(parent, names, title, description, true);
     }
 
     @Override
-    protected String getItemText(String item) {
+    protected String getItemText(@NlsSafe String item) {
       return item;
     }
 
-    @Nullable
     @Override
-    protected Icon getItemIcon(String item) {
+    protected @Nullable Icon getItemIcon(String item) {
       return null;
     }
   }

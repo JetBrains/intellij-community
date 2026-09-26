@@ -22,7 +22,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
-import java.util.*
 
 
 class VcsLogJoinerTest {
@@ -36,11 +35,12 @@ class VcsLogJoinerTest {
   }
 
   class TestRunner {
-    private var fullLog: List<String>? = null
-    private var recentCommits: List<String>? = null
-    private var oldRefs: List<String>? = null
-    private var newRefs: List<String>? = null
-    private var expected: String? = null
+    private lateinit var fullLog: List<String>
+    private lateinit var recentCommits: List<String>
+    private lateinit var oldRefs: List<String>
+    private lateinit var newRefs: List<String>
+    private lateinit var expected: String
+    private var expectedWithParents: String? = null
 
     private fun build(f: StringArrayBuilder.() -> Unit): List<String> {
       val stringArrayBuilder = StringArrayBuilder()
@@ -48,37 +48,60 @@ class VcsLogJoinerTest {
       return stringArrayBuilder.result
     }
 
-    fun fullLog(f: StringArrayBuilder.() -> Unit) {fullLog = build(f)}
+    fun fullLog(f: StringArrayBuilder.() -> Unit) {
+      fullLog = build(f)
+    }
 
-    fun recentCommits(f: StringArrayBuilder.() -> Unit) {recentCommits = build(f)}
+    fun recentCommits(f: StringArrayBuilder.() -> Unit) {
+      recentCommits = build(f)
+    }
 
-    fun oldRefs(f: StringArrayBuilder.() -> Unit) {oldRefs = build(f)}
+    fun oldRefs(f: StringArrayBuilder.() -> Unit) {
+      oldRefs = build(f)
+    }
 
-    fun newRefs(f: StringArrayBuilder.() -> Unit) {newRefs = build(f)}
+    fun newRefs(f: StringArrayBuilder.() -> Unit) {
+      newRefs = build(f)
+    }
 
-    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).joinToString(separator = "\n")}
+    fun expected(f: StringArrayBuilder.() -> Unit) {
+      expected = build(f).joinToString(separator = "\n")
+    }
+
+    fun expectedWithParents(f: StringArrayBuilder.() -> Unit) {
+      expectedWithParents = build(f).joinToString(separator = "\n")
+    }
 
     fun run() {
-      val vcsFullLog = TimedCommitParser.log(fullLog!!)
-      val vcsRecentCommits = TimedCommitParser.log(recentCommits!!)
-      val vcsOldRefs = oldRefs!!.map { HashImpl.build(it) }
-      val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
+      val vcsFullLog = TimedCommitParser.log(fullLog)
+      val vcsRecentCommits = TimedCommitParser.log(recentCommits)
+      val vcsOldRefs = oldRefs.map { HashImpl.build(it) }
+      val vcsNewRefs = newRefs.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.id.asString() }.joinToString(separator = "\n")
+      val actual = result.joinToString(separator = "\n") { it.id.asString() }
       assertEquals(expected, actual)
+
+      expectedWithParents?.let { expectedParents ->
+        val actualWithParents = result.joinToString(separator = "\n") { commit ->
+          val parents = commit.parents.joinToString(" ")
+          if (parents.isEmpty()) "${commit.id}" else "${commit.id}|-${parents}"
+        }
+        assertEquals(expectedParents, actualWithParents)
+      }
     }
   }
 
-  fun runTest(f: TestRunner.() -> Unit) {
+  private fun runTest(f: TestRunner.() -> Unit) {
     val testRunner = TestRunner()
     testRunner.f()
     testRunner.run()
   }
 
-  val BIG_TIME = 100000000
+  private val BIG_TIME = 100000000
 
-  @Test fun simple() {
+  @Test
+  fun simple() {
     runTest {
       fullLog {
         +"4|-a2|-a1"
@@ -109,7 +132,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNode() {
+  @Test
+  fun oneNode() {
     runTest {
       fullLog {
         +"3|-a1|-"
@@ -129,7 +153,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNodeReset() {
+  @Test
+  fun oneNodeReset() {
     runTest {
       fullLog {
         +"3|-a1|-a2"
@@ -151,7 +176,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNodeReset2() {
+  @Test
+  fun oneNodeReset2() {
     runTest {
       fullLog {
         +"3|-a1|-a2"
@@ -172,7 +198,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun simpleRemoveCommits() {
+  @Test
+  fun simpleRemoveCommits() {
     runTest {
       fullLog {
         +"4|-a2|-a1"
@@ -201,7 +228,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits() {
+  @Test
+  fun removeCommits() {
     runTest {
       fullLog {
         +"5|-a5|-a4"
@@ -227,7 +255,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits2() {
+  @Test
+  fun removeCommits2() {
     runTest {
       fullLog {
         +"2|-a2|-a1"
@@ -254,7 +283,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits3() {
+  @Test
+  fun removeCommits3() {
     runTest {
       fullLog {
         +"3|-a3|-a2"
@@ -277,7 +307,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeOldBranch() {
+  @Test
+  fun removeOldBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -295,7 +326,7 @@ class VcsLogJoinerTest {
         +"b2"
       }
       newRefs {
-        "e1"
+        +"e1"
       }
       expected {
         +"e1"
@@ -306,7 +337,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun addToOldBranch() {
+  @Test
+  fun addToOldBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -341,7 +373,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeLongBranch() {
+  @Test
+  fun removeLongBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -372,7 +405,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun notEnoughDataExceptionTest() {
+  @Test
+  fun notEnoughDataExceptionTest() {
     try {
       runTest {
         fullLog {
@@ -388,13 +422,15 @@ class VcsLogJoinerTest {
           +"a3"
         }
       }
-    } catch (e: VcsLogRefreshNotEnoughDataException) {
+    }
+    catch (e: VcsLogRefreshNotEnoughDataException) {
       return
     }
     fail()
   }
 
-  @Test fun illegalStateExceptionTest() {
+  @Test
+  fun illegalStateExceptionTest() {
     try {
       runTest {
         fullLog {
@@ -411,13 +447,15 @@ class VcsLogJoinerTest {
           +"a1"
         }
       }
-    } catch (e: IllegalStateException) {
+    }
+    catch (e: IllegalStateException) {
       return
     }
     fail()
   }
 
-  @Test fun illegalStateExceptionTest2() {
+  @Test
+  fun illegalStateExceptionTest2() {
     try {
       runTest {
         fullLog {
@@ -434,13 +472,15 @@ class VcsLogJoinerTest {
           +"a3"
         }
       }
-    } catch (e: IllegalStateException) {
+    }
+    catch (e: IllegalStateException) {
       return
     }
     fail()
   }
 
-  @Test fun removeParallelBranch() {
+  @Test
+  fun removeParallelBranch() {
     runTest {
       fullLog {
         +"4|-a4|-a1"
@@ -465,7 +505,424 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeAll() {
+  @Test
+  fun removeCommitWithChangedParents() {
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-d|-a"
+        +"2|-b|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"4|-c|-b"
+        +"2|-b|-a"
+        +"1|-a|-"
+      }
+      oldRefs {
+        +"c"
+        +"d"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun removeCommitWithChangedParentsNoRef() {
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-d|-a"
+        +"2|-b|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"c"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun keepSharedParentDespiteOneBranchDroppingIt() {
+    runTest {
+      fullLog {
+        +"5|-c|-b d"
+        +"4|-f|-d"
+        +"3|-d|-a"
+        +"2|-b|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"5|-c|-b"
+        +"4|-f|-d"
+      }
+      oldRefs {
+        +"c"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"f"
+        +"d"
+        +"b"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation() {
+    // Scenario from IJPL-248963: commit C's parents changed from [B, D] to [B].
+    // D had a ref of its own which is now gone. D should be removed (red).
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"c"
+        +"d"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation_parentsUpdated() {
+    // Verify that the returned commit C has updated parents from firstBlock,
+    // not stale parents from savedLog.
+    runTest {
+      fullLog {
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"c"
+        +"d"
+      }
+      newRefs {
+        +"c"
+      }
+      expected {
+        +"c"
+        +"b"
+        +"a"
+      }
+      expectedWithParents {
+        // C should have parent [b] only, not [b, d]
+        +"c|-b"
+        +"b|-a"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun staleParentPropagation_multipleChangedParents() {
+    // Multiple commits have changed parents. Verify both are updated.
+    runTest {
+      fullLog {
+        +"5|-e|-c d"
+        +"4|-c|-b d"
+        +"3|-b|-a"
+        +"2|-d|-a"
+        +"1|-a|-"
+      }
+      recentCommits {
+        // E now only has parent C, C now only has parent B (D removed from both)
+        +"5|-e|-c"
+        +"4|-c|-b"
+      }
+      oldRefs {
+        +"e"
+        +"d"
+      }
+      newRefs {
+        +"e"
+      }
+      expected {
+        +"e"
+        +"c"
+        +"b"
+        +"a"
+      }
+      expectedWithParents {
+        +"e|-c"
+        +"c|-b"
+        +"b|-a"
+        +"a"
+      }
+    }
+  }
+
+  @Test
+  fun parentReplacedSameCommitHash() {
+    // A→B→C becomes A→B'→C: commit A keeps the same hash but its parent
+    // changed from B to B'. B is gone, B' is new.
+    // A should connect to B' in the result, old B should be removed.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b2"
+        +"2|-b2|-c"
+      }
+      oldRefs {
+        +"a"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b2"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b2"
+        +"b2|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun sameDataRefresh() {
+    // Refreshing with the exact same data should not change the log.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"a"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun sameDataRefreshWithIslands() {
+    // Same-data refresh with disconnected islands should not change the log.
+    runTest {
+      fullLog {
+        +"3|-a|-b"
+        +"2|-b|-"
+        +"2|-e|-f"
+        +"1|-f|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-"
+        +"2|-e|-f"
+        +"1|-f|-"
+      }
+      oldRefs {
+        +"a"
+        +"e"
+      }
+      newRefs {
+        +"a"
+        +"e"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"e"
+        +"f"
+      }
+    }
+  }
+
+  @Test
+  fun newCommitOnExistingChain() {
+    // A new commit is added on top of an existing chain.
+    runTest {
+      fullLog {
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"3|-a|-b"
+        +"2|-b|-c"
+      }
+      oldRefs {
+        +"b"
+      }
+      newRefs {
+        +"a"
+      }
+      expected {
+        +"a"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"a|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun droppedParentRemovedWhenNoRefChange() {
+    // E's parent changes from A to B (no ref change — E is still the only ref).
+    // A becomes unreachable and should be removed from the log.
+    runTest {
+      fullLog {
+        +"4|-e|-a"
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"4|-e|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"e"
+      }
+      newRefs {
+        +"e"
+      }
+      expected {
+        +"e"
+        +"b"
+        +"c"
+      }
+      expectedWithParents {
+        +"e|-b"
+        +"b|-c"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun droppedParentSurvivesIfReachableElsewhere() {
+    // E's parent changes from A to C, but A is still reachable through another ref F.
+    // A should NOT be removed.
+    runTest {
+      fullLog {
+        +"4|-e|-a"
+        +"3|-a|-c"
+        +"3|-f|-a"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"4|-e|-c"
+        +"3|-f|-a"
+        +"3|-a|-c"
+        +"1|-c|-"
+      }
+      oldRefs {
+        +"e"
+        +"f"
+      }
+      newRefs {
+        +"e"
+        +"f"
+      }
+      expected {
+        +"e"
+        +"a"
+        +"f"
+        +"c"
+      }
+    }
+  }
+
+  @Test
+  fun commitBecomesOrphanDropsUnreachableParent() {
+    // E's parent changes from A to nothing (E is re-fetched as an orphan/root commit).
+    // A, B, C become unreachable and should all be removed.
+    runTest {
+      fullLog {
+        +"4|-e|-a"
+        +"3|-a|-b"
+        +"2|-b|-c"
+        +"1|-c|-"
+      }
+      recentCommits {
+        +"4|-e|-"
+      }
+      oldRefs {
+        +"e"
+      }
+      newRefs {
+        +"e"
+      }
+      expected {
+        +"e"
+      }
+      expectedWithParents {
+        +"e"
+      }
+    }
+  }
+
+  @Test
+  fun removeAll() {
     runTest {
       fullLog {
         +"4|-a4|-a1"

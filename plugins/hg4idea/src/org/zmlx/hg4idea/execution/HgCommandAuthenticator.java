@@ -21,12 +21,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.vcsUtil.AuthDialog;
+import com.intellij.util.net.AuthenticationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.
@@ -37,7 +37,7 @@ class HgCommandAuthenticator {
   //todo replace silent mode and/or force authorization
   private final boolean mySilentMode;
 
-  public HgCommandAuthenticator(boolean forceAuthorization, boolean silent) {
+  HgCommandAuthenticator(boolean forceAuthorization, boolean silent) {
     myForceAuthorization = forceAuthorization;
     mySilentMode = silent;
   }
@@ -66,13 +66,13 @@ class HgCommandAuthenticator {
   private static class GetPasswordRunnable implements Runnable {
     private Credentials myCredentials;
     private final Project myProject;
-    @NotNull private final String myProposedLogin;
+    private final @NotNull String myProposedLogin;
     private boolean ok = false;
-    @NotNull private final String myURL;
+    private final @NotNull String myURL;
     private final boolean myForceAuthorization;
     private final boolean mySilent;
 
-    public GetPasswordRunnable(Project project,
+    GetPasswordRunnable(Project project,
                                @NotNull String proposedLogin,
                                @NotNull String uri,
                                @NotNull String path,
@@ -86,14 +86,13 @@ class HgCommandAuthenticator {
 
     @Override
     public void run() {
-
       // find if we've already been here
       final HgVcs vcs = HgVcs.getInstance(myProject);
       if (vcs == null) {
         return;
       }
 
-      @NotNull final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
+      final @NotNull HgGlobalSettings hgGlobalSettings = HgGlobalSettings.getInstance();
       @Nullable String rememberedLoginsForUrl = null;
       String url = VirtualFileManager.extractPath(myURL);
       if (!StringUtil.isEmptyOrSpaces(myURL)) {
@@ -124,12 +123,13 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final AuthDialog dialog = new AuthDialog(myProject, HgVcsMessages.message("hg4idea.dialog.login.password.required"),
-                                               HgVcsMessages.message("hg4idea.dialog.login.description", myURL),
-                                               login, password, true);
+      var rememberByDefault = PasswordSafe.getInstance().isMemoryOnly() ? null : true;
+      var dialog = new AuthenticationDialog(
+        myProject, HgBundle.message("hg4idea.dialog.login.password.required"), HgBundle.message("hg4idea.dialog.login.description", myURL), login, password, rememberByDefault
+      );
       if (dialog.showAndGet()) {
         ok = true;
-        Credentials credentials = new Credentials(dialog.getUsername(), dialog.getPassword());
+        var credentials = new Credentials(dialog.getLogin(), dialog.getPassword());
         myCredentials = credentials;
         PasswordSafe.getInstance().set(createCredentialAttributes(url), credentials, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());
@@ -148,14 +148,12 @@ class HgCommandAuthenticator {
       return ok;
     }
 
-    @NotNull
-    public String getURL() {
+    public @NotNull String getURL() {
       return myURL;
     }
   }
 
-  @NotNull
-  private static CredentialAttributes createCredentialAttributes(@NotNull String url) {
+  private static @NotNull CredentialAttributes createCredentialAttributes(@NotNull String url) {
     return new CredentialAttributes(CredentialAttributesKt.generateServiceName("HG", url), null);
   }
 }

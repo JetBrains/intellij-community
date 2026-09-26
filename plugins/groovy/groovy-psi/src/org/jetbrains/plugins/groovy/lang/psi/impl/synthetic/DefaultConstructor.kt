@@ -1,7 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic
 
-import com.intellij.psi.*
+import com.intellij.psi.HierarchicalMethodSignature
+import com.intellij.psi.JVMElementFactories
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
 import com.intellij.psi.impl.PsiSuperMethodImplUtil.getHierarchicalMethodSignature
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightModifierList
@@ -10,7 +25,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.intellij.util.IncorrectOperationException
-import kotlin.LazyThreadSafetyMode.PUBLICATION
+import com.intellij.util.lazyPub
 
 class DefaultConstructor(
   private val myConstructedClass: PsiClass
@@ -24,11 +39,11 @@ class DefaultConstructor(
 
   override fun hasModifierProperty(name: String): Boolean = false
 
-  private val myModifierList by lazy(PUBLICATION) { LightModifierList(manager, language) }
+  private val myModifierList by lazyPub { LightModifierList(manager, language) }
 
   override fun getModifierList(): PsiModifierList = myModifierList
 
-  private val myParameterList by lazy(PUBLICATION) {
+  private val myParameterList by lazyPub {
     LightParameterListBuilder(manager, language).apply {
       if (myConstructedClass.hasModifierProperty(PsiModifier.STATIC)) return@apply
       val enclosingClass = myConstructedClass.containingClass ?: return@apply
@@ -43,7 +58,7 @@ class DefaultConstructor(
 
   override fun getParameterList(): PsiParameterList = myParameterList
 
-  override fun getContainingClass(): PsiClass? = myConstructedClass
+  override fun getContainingClass(): PsiClass = myConstructedClass
 
   override fun getReturnType(): PsiType? = null
 
@@ -53,7 +68,7 @@ class DefaultConstructor(
 
   override fun getTypeParameters(): Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
 
-  private val myThrowsList by lazy(PUBLICATION) { LightReferenceList(manager) }
+  private val myThrowsList by lazyPub { LightReferenceList(manager) }
 
   override fun getThrowsList(): PsiReferenceList = myThrowsList
 
@@ -65,7 +80,9 @@ class DefaultConstructor(
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getSignature(substitutor: PsiSubstitutor): MethodSignatureBackedByPsiMethod = MethodSignatureBackedByPsiMethod.create(this, substitutor)
+  override fun getSignature(substitutor: PsiSubstitutor): MethodSignatureBackedByPsiMethod {
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor)
+  }
 
   override fun getHierarchicalMethodSignature(): HierarchicalMethodSignature = getHierarchicalMethodSignature(this)
 
@@ -81,7 +98,7 @@ class DefaultConstructor(
 
   override fun findSuperMethods(parentClass: PsiClass?): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
-  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> = emptyList<MethodSignatureBackedByPsiMethod>()
+  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> = emptyList()
 
   override fun findDeepestSuperMethods(): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
@@ -91,4 +108,17 @@ class DefaultConstructor(
   override fun findDeepestSuperMethod(): PsiMethod? = null
 
   override fun setName(name: String): PsiElement = throw IncorrectOperationException("setName() isn't supported")
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DefaultConstructor
+
+    return myConstructedClass == other.myConstructedClass
+  }
+
+  override fun hashCode(): Int {
+    return myConstructedClass.hashCode()
+  }
 }

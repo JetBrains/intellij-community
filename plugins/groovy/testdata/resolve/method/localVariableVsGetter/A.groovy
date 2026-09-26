@@ -6,6 +6,6 @@ class W {
   def a() {
     def foo = 5;
 
-    print f<ref>oo;
+    print f<caret>oo;
   }
 }

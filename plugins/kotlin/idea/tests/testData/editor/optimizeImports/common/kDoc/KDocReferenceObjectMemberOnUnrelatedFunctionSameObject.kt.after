@@ -1,0 +1,13 @@
+
+package pack
+
+object MyObject {
+    fun objectFunction() {}
+
+    /**
+     * [objectFunction]
+     */
+    fun foo() {
+
+    }
+}

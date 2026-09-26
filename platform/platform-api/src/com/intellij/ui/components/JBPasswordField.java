@@ -1,36 +1,22 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.accessibility.AccessibleContext;
+import javax.swing.JPasswordField;
+import java.awt.Graphics;
 
-/**
- * @author nik
- */
 public class JBPasswordField extends JPasswordField implements ComponentWithEmptyText {
   private final TextComponentEmptyText myEmptyText;
 
   public JBPasswordField() {
-    myEmptyText = new TextComponentEmptyText(this);
+    myEmptyText = new TextComponentEmptyText(this, false);
   }
 
   @Override
@@ -39,18 +25,41 @@ public class JBPasswordField extends JPasswordField implements ComponentWithEmpt
     myEmptyText.paintStatusText(g);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   public void setPasswordIsStored(boolean stored) {
     if (stored) {
-      myEmptyText.setText("<hidden>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myEmptyText.setText(IdeBundle.message("text.password.hidden"), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
       myEmptyText.clear();
+    }
+  }
+
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBPasswordField();
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleJBPasswordField extends AccessibleJPasswordField {
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null && getDocument().getLength() == 0) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = myEmptyText.toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
     }
   }
 }

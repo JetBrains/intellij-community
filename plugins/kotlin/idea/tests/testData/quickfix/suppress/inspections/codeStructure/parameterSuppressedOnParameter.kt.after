@@ -1,0 +1,7 @@
+// "Suppress 'DelegationToVarProperty' for parameter text" "true"
+
+class ParameterSuppressedOnParameter(@Suppress("DelegationToVarProperty") var text: CharSequence): CharSequence by text
+
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.DelegationToVarPropertyInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.DelegationToVarPropertyInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

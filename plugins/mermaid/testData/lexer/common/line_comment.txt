@@ -1,0 +1,1 @@
+LINE_COMMENT ('%% This is comment')

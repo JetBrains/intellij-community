@@ -1,0 +1,12 @@
+// "Create parameter 's'" "true"
+// K2_ERROR: NAMED_PARAMETER_NOT_FOUND
+
+fun foo(n: Int) {
+
+}
+
+fun bar() {
+    foo(n = 1, <caret>s = "2")
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: s: kotlin.String

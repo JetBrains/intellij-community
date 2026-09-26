@@ -1,0 +1,2 @@
+top:
+  - one two -three <caret> four

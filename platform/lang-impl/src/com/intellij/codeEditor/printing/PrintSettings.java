@@ -1,18 +1,52 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "PrintSettings", storages = @Storage("print.xml"))
-public class PrintSettings implements PersistentStateComponent<PrintSettings> {
-  @NonNls public String PAPER_SIZE = "A4";
+@ApiStatus.Internal
+@State(name = "PrintSettings", storages = @Storage("print.xml"), category = SettingsCategory.UI)
+public final class PrintSettings implements PersistentStateComponent<PrintSettings> {
+  public enum Placement {
+    Header() {
+      @Override public String toString() {
+        return EditorBundle.message("print.header.placement.header");
+      }
+    },
+    Footer() {
+      @Override public String toString() {
+        return EditorBundle.message("print.header.placement.footer");
+      }
+    }
+  }
+
+  public enum Alignment {
+    Left() {
+      @Override public String toString() {
+        return EditorBundle.message("print.header.alignment.left");
+      }
+    },
+    Center() {
+      @Override public String toString() {
+        return EditorBundle.message("print.header.alignment.center");
+      }
+    },
+    Right() {
+      @Override public String toString() {
+        return EditorBundle.message("print.header.alignment.right");
+      }
+    }
+  }
+
+  public String PAPER_SIZE = "A4";
 
   public boolean COLOR_PRINTING = false;
   public boolean SYNTAX_PRINTING = true;
@@ -20,7 +54,7 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings> {
 
   public boolean PORTRAIT_LAYOUT = true;
 
-  @NonNls public String FONT_NAME = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+  public String FONT_NAME = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
   public int FONT_SIZE = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
 
   public boolean PRINT_LINE_NUMBERS = true;
@@ -36,14 +70,14 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings> {
 
   public boolean EVEN_NUMBER_OF_PAGES = false;
 
-  public String FOOTER_HEADER_TEXT1 = CodeEditorBundle.message("print.header.default.line.1");
-  public String FOOTER_HEADER_PLACEMENT1 = HEADER;
-  public String FOOTER_HEADER_ALIGNMENT1 = LEFT;
-  public String FOOTER_HEADER_TEXT2 = CodeEditorBundle.message("print.header.default.line.2");
-  public String FOOTER_HEADER_PLACEMENT2 = FOOTER;
-  public String FOOTER_HEADER_ALIGNMENT2 = CENTER;
+  public String FOOTER_HEADER_TEXT1 = EditorBundle.message("print.header.default.line.1");
+  public Placement FOOTER_HEADER_PLACEMENT1 = Placement.Header;
+  public Alignment FOOTER_HEADER_ALIGNMENT1 = Alignment.Left;
+  public String FOOTER_HEADER_TEXT2 = EditorBundle.message("print.header.default.line.2");
+  public Placement FOOTER_HEADER_PLACEMENT2 = Placement.Footer;
+  public Alignment FOOTER_HEADER_ALIGNMENT2 = Alignment.Center;
   public int FOOTER_HEADER_FONT_SIZE = 8;
-  @NonNls public String FOOTER_HEADER_FONT_NAME = "Arial";
+  public String FOOTER_HEADER_FONT_NAME = "Arial";
 
   public static final int PRINT_FILE = 1;
   public static final int PRINT_SELECTED_TEXT = 2;
@@ -51,15 +85,8 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings> {
   private int myPrintScope;
   private boolean myIncludeSubdirectories;
 
-  @NonNls public static final String HEADER = "Header";
-  @NonNls public static final String FOOTER = "Footer";
-
-  @NonNls public static final String LEFT = "Left";
-  @NonNls public static final String CENTER = "Center";
-  @NonNls public static final String RIGHT = "Right";
-
   public static PrintSettings getInstance() {
-    return ServiceManager.getService(PrintSettings.class);
+    return ApplicationManager.getApplication().getService(PrintSettings.class);
   }
 
   public int getPrintScope() {
@@ -84,7 +111,7 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings> {
   }
 
   @Override
-  public void loadState(@NotNull final PrintSettings state) {
+  public void loadState(final @NotNull PrintSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

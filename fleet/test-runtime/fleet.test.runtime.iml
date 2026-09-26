@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" exported="" />
+    <orderEntry type="module-library" exported="">
+      <library name="JUnit5Jupiter" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.junit.jupiter:junit-jupiter-engine:5.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.14.4/junit-jupiter-engine-5.14.4.jar">
+              <sha256sum>e1e35cf651ae1635638d431ea4412d5c65938be54150444f07ba659586042b11</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.14.4/junit-jupiter-engine-5.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.14.4/junit-jupiter-engine-5.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" exported="" />
+    <orderEntry type="library" exported="" name="kotlin-test-junit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" exported="" />
+  </component>
+</module>

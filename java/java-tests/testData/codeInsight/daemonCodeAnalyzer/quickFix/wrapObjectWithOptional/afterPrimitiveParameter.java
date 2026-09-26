@@ -1,11 +1,11 @@
-// "Wrap 2nd parameter using 'java.util.Optional'" "true"
+// "Wrap 2nd argument using 'java.util.Optional'" "true-preview"
 import java.util.Optional;
 
 public class Test {
 
   void m() {
     long ll = 10;
-    f(10, Optional.ofNullable(ll), 10);
+    f(10, Optional.of(ll), 10);
   }
 
 

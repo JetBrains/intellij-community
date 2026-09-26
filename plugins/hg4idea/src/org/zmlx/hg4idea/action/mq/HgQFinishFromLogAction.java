@@ -15,15 +15,35 @@
  */
 package org.zmlx.hg4idea.action.mq;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.mq.HgQFinishCommand;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgErrorUtil;
+
+import static java.util.Collections.singletonList;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QFINISH_ERROR;
 
 public class HgQFinishFromLogAction extends HgMqAppliedPatchAction {
   @Override
   protected void actionPerformed(@NotNull HgRepository repository, @NotNull Hash commit) {
-    String revisionHash = commit.asString();
-    new HgQFinishCommand(repository).execute(revisionHash);
+    String revision = commit.asString();
+    Project project = repository.getProject();
+    BackgroundTaskUtil.executeOnPooledThread(repository, () -> {
+      HgCommandExecutor executor = new HgCommandExecutor(project);
+      HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qfinish", singletonList("qbase:" + revision));
+      if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+        new HgCommandResultNotifier(project).notifyError(QFINISH_ERROR,
+                                                         result,
+                                                         HgBundle.message("action.hg4idea.QFinish.error"),
+                                                         HgBundle.message("action.hg4idea.QFinish.error.msg"));
+      }
+      repository.update();
+    });
   }
 }

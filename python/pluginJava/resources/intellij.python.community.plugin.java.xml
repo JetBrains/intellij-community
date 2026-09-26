@@ -1,0 +1,46 @@
+<idea-plugin visibility="internal">
+  <!--For IU or IC-->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <!-- Supports Java -->
+    <module name="intellij.java.backend"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community.core.impl"/>
+    <module name="intellij.python.community.plugin.impl"/>
+    <module name="intellij.python.sdk.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>
+    <moduleType id="PYTHON_MODULE" implementationClass="com.intellij.python.community.plugin.java.facet.PythonModuleType"/>
+    <facetType implementation="com.intellij.python.community.plugin.java.facet.JavaPythonFacetType"/>
+    <frameworkSupport implementation="com.intellij.python.community.plugin.java.facet.PythonFrameworkSupportProvider"/>
+    <projectStructureDetector implementation="com.intellij.python.community.plugin.java.facet.PyProjectStructureDetector"/>
+    <moduleConfigurationEditorProvider implementation="com.intellij.python.community.plugin.java.facet.PythonModuleConfigurationEditorProvider"/>
+    <completion.contributor language="Python" implementationClass="com.intellij.python.community.plugin.java.psi.impl.PyConstructorArgumentCompletionContributor"/>
+    <sdkEditorAdditionalOptionsProvider implementation="com.intellij.python.community.plugin.java.PythonSdkEditorAdditionalOptionsProvider"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <importResolver implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportResolver"/>
+    <typeProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaTypeProvider"/>
+    <pySuperMethodsSearch implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
+    <importCandidateProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportCandidateProvider"/>
+  </extensions>
+</idea-plugin>

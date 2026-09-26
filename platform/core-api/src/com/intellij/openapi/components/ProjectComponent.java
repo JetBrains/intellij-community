@@ -1,32 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 /**
- * Project-level component's implementation class should implement the {@code ProjectComponent} interface.
- * It should have constructor with a single parameter of {@link com.intellij.openapi.project.Project}
- * type or with no parameters.
+ * @see com.intellij.openapi.project.ProjectManager#TOPIC
+ * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
  * <p>
- * <strong>Note that if you register a class as a project component it will be loaded, its instance will be created and
+ * If you register a class as a project component it will be loaded, its instance will be created and
  * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user doesn't use any feature of your
- * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
- * actions explicitly.</strong>
- *
- * @see AbstractProjectComponent
+ * plugin. Also, plugins which declare project components don't support dynamic loading.
  */
+@Deprecated
 public interface ProjectComponent extends BaseComponent {
   /**
    * Invoked when the project corresponding to this component instance is opened.<p>

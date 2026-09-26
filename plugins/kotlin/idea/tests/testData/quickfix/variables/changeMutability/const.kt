@@ -1,0 +1,10 @@
+// "Change to 'var'" "true"
+// K2_ERROR: VAL_REASSIGNMENT
+object A {
+    const val A = 1
+
+    fun foo() {
+        <caret>A = 10
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix

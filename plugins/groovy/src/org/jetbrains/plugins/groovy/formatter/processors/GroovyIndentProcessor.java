@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -25,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
-import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -33,23 +17,58 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionLambdaBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitchExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -63,13 +82,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 
-import static com.intellij.formatting.Indent.*;
+import static com.intellij.formatting.Indent.getAbsoluteLabelIndent;
+import static com.intellij.formatting.Indent.getAbsoluteNoneIndent;
+import static com.intellij.formatting.Indent.getContinuationIndent;
+import static com.intellij.formatting.Indent.getContinuationWithoutFirstIndent;
+import static com.intellij.formatting.Indent.getLabelIndent;
+import static com.intellij.formatting.Indent.getNoneIndent;
+import static com.intellij.formatting.Indent.getNormalIndent;
+import static com.intellij.formatting.Indent.getSpaceIndent;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CASE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFAULT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
-/**
- * @author ilyas
- */
 public class GroovyIndentProcessor extends GroovyElementVisitor {
   public static final int GDOC_COMMENT_INDENT = 1;
   private static final TokenSet GSTRING_TOKENS_INNER = TokenSet.create(GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END,
@@ -88,22 +121,15 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
    * @param child       child node
    * @return indent
    */
-  @NotNull
-  public Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
+  public @NotNull Indent getChildIndent(final @NotNull GroovyBlock parentBlock, final @NotNull ASTNode child) {
     myChildType = child.getElementType();
     if (parentBlock instanceof ClosureBodyBlock) {
-      if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+      if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
         return getNoneIndent();
       }
       else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
         return getNormalIndent();
       }
-    }
-    if (parentBlock instanceof GrLabelBlock) {
-      ASTNode first = parentBlock.getNode().getFirstChildNode();
-      return child == first
-             ? getNoneIndent()
-             : getLabelIndent();
     }
 
     if (GSTRING_TOKENS_INNER.contains(myChildType)) {
@@ -136,6 +162,29 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    if (myChildType == BLOCK_LAMBDA_BODY) {
+      myResult = getBlockIndent(getGroovySettings().LAMBDA_BRACE_STYLE);
+      return;
+    }
+    myResult = getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    if (myChildType == GroovyTokenTypes.mLCURLY || myChildType == GroovyTokenTypes.mRCURLY) {
+      myResult = getNoneIndent();
+      return;
+    }
+    myResult = getIndentInBlock(getGroovySettings().LAMBDA_BRACE_STYLE);
+  }
+
+  @Override
+  public void visitExpressionLambdaBody(@NotNull GrExpressionLambdaBody body) {
+    myResult = getNoneIndent();
+  }
+
+  @Override
   public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     if (myChildType != GroovyTokenTypes.mLBRACK && myChildType != GroovyTokenTypes.mRBRACK) {
       myResult = getContinuationWithoutFirstIndent();
@@ -144,16 +193,32 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitCaseSection(@NotNull GrCaseSection caseSection) {
-    if (myChildType != GroovyElementTypes.CASE_LABEL) {
+    if (myChildType != KW_CASE && myChildType != KW_DEFAULT) {
       myResult = getNormalIndent();
     }
   }
 
   @Override
-  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+  public void visitExpressionList(@NotNull GrExpressionList expressionList) {
+    if (myChildType != T_COMMA) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+  }
+
+  public void visitSwitchElement() {
     if (myChildType == GroovyElementTypes.CASE_SECTION) {
       myResult = getSwitchCaseIndent(getGroovySettings());
     }
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
+    visitSwitchElement();
+  }
+
+  @Override
+  public void visitSwitchExpression(@NotNull GrSwitchExpression switchExpression) {
+    visitSwitchElement();
   }
 
   @Override
@@ -176,7 +241,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
-    if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENTS) {
+    if (myChildType == GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST) {
       myResult = getContinuationIndent();
     }
     else {
@@ -186,14 +251,20 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
-    if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != GroovyTokenTypes.mRPAREN) {
+    if (myChildType != T_LPAREN &&
+        myChildType != T_RPAREN &&
+        myChildType != T_LBRACK &&
+        myChildType != T_RBRACK) {
       myResult = getContinuationWithoutFirstIndent();
     }
   }
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
-    if (TokenSets.BLOCK_SET.contains(myChildType)) {
+    if (myChild == ifStatement.getCondition()) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+    else if (TokenSets.BLOCK_SET.contains(myChildType)) {
       if (myChild == ifStatement.getCondition()) {
         myResult = getContinuationWithoutFirstIndent();
       }
@@ -296,22 +367,22 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(@NotNull GrMethod method) {
-    if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+    if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.THROW_CLAUSE) {
+    else if (myChildType == GroovyStubElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
-    } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    } else if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);
     }
   }
 
   @Override
   public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
-    if (myChildType == GroovyElementTypes.EXTENDS_CLAUSE || myChildType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
+    if (myChildType == GroovyStubElementTypes.EXTENDS_CLAUSE || myChildType == GroovyStubElementTypes.IMPLEMENTS_CLAUSE) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.ENUM_BODY || myChildType == GroovyElementTypes.CLASS_BODY) {
+    else if (myChildType == GroovyEmptyStubElementTypes.ENUM_BODY || myChildType == GroovyEmptyStubElementTypes.CLASS_BODY) {
       myResult = getBlockIndent(getGroovySettings().CLASS_BRACE_STYLE);
     }
   }
@@ -333,7 +404,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     final IElementType type = block.getNode().getElementType();
-    if (type != GroovyElementTypes.OPEN_BLOCK && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
+    if (!(type instanceof GrBlockElementType) && type != GroovyElementTypes.CONSTRUCTOR_BODY) return;
 
     int braceStyle;
     PsiElement parent = block.getParent();
@@ -400,7 +471,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParameterList(@NotNull GrParameterList parameterList) {
-    myResult = getContinuationWithoutFirstIndent();
+    if (myChildType == T_LPAREN || myChildType == T_RPAREN) {
+      myResult = getNoneIndent();
+    }
+    else {
+      myResult = getContinuationWithoutFirstIndent();
+    }
   }
 
   @Override
@@ -465,8 +541,15 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
+    }
+  }
+
+  @Override
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    if (myChildType != T_LPAREN && myChildType != T_RPAREN) {
+      myResult = getContinuationWithoutFirstIndent();
     }
   }
 
@@ -477,7 +560,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitFinallyClause(@NotNull GrFinallyClause catchClause) {
-    if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
+    if (myChildType instanceof GrBlockElementType) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
     }
   }
@@ -487,13 +570,18 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     myResult = getContinuationWithoutFirstIndent();
   }
 
-  @NotNull
-  public static Indent getIndentInBlock(int braceStyle) {
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    if (myChildType != T_LBRACE && myChildType != T_RBRACE) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+  }
+
+  public static @NotNull Indent getIndentInBlock(int braceStyle) {
       return braceStyle == NEXT_LINE_SHIFTED ? getNoneIndent() : getNormalIndent();
   }
 
-  @NotNull
-  public static Indent getBlockIndent(int braceStyle) {
+  public static @NotNull Indent getBlockIndent(int braceStyle) {
     return braceStyle == NEXT_LINE_SHIFTED || braceStyle == NEXT_LINE_SHIFTED2 ? getNormalIndent() : getNoneIndent();
   }
 
@@ -503,13 +591,17 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   }
 
   public static boolean isFinishedCase(GrCaseSection psiParent, int newIndex) {
-    final PsiElement[] children = psiParent.getChildren();
+    GrStatement[] statements = psiParent.getStatements();
     newIndex--;
-    for (int i = 0; i < children.length && i < newIndex; i++) {
-      PsiElement child = children[i];
+    if (psiParent.getArrow() != null && statements.length == 1) {
+      return true;
+    }
+    for (int i = 0; i < statements.length && i < newIndex; i++) {
+      PsiElement child = statements[i];
       if (child instanceof GrBreakStatement ||
           child instanceof GrContinueStatement ||
           child instanceof GrReturnStatement ||
+          child instanceof GrYieldStatement ||
           child instanceof GrThrowStatement) {
         return true;
       }

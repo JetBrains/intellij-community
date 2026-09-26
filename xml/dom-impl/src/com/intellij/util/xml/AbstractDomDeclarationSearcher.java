@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.pom.PomDeclarationSearcher;
@@ -21,7 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +23,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearcher {
 
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement psiElement, int offsetInElement, Consumer<PomTarget> consumer) {
-    if (!(psiElement instanceof XmlToken)) return;
-
-    final IElementType tokenType = ((XmlToken)psiElement).getTokenType();
-
-    final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
+  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
+    if (!(token instanceof XmlToken)) return;
+    final PsiElement element = token.getParent();
+    if (element == null) return;
+    final IElementType tokenType = ((XmlToken)token).getTokenType();
+    final PsiElement parentElement = element.getParent();
+    final DomManager domManager = DomManager.getDomManager(token.getProject());
     final DomElement nameElement;
-    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && psiElement.getParent() instanceof XmlText && psiElement.getParent().getParent() instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)psiElement.getParent().getParent();
+    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && element instanceof XmlText && parentElement instanceof XmlTag tag) {
       for (XmlText text : tag.getValue().getTextElements()) {
         if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;
@@ -48,13 +39,16 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
       }
 
       nameElement = domManager.getDomElement(tag);
-    } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && psiElement.getParent() instanceof XmlAttributeValue && psiElement.getParent().getParent() instanceof XmlAttribute) {
-      final PsiElement attributeValue = psiElement.getParent();
-      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
+    }
+    else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
+             element instanceof XmlAttributeValue &&
+             parentElement instanceof XmlAttribute) {
+      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
         return;
       }
-      nameElement = domManager.getDomElement((XmlAttribute)attributeValue.getParent());
-    } else {
+      nameElement = domManager.getDomElement((XmlAttribute)parentElement);
+    }
+    else {
       return;
     }
 
@@ -73,6 +67,5 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
     }
   }
 
-  @Nullable
-  protected abstract DomTarget createDomTarget(DomElement parent, DomElement nameElement);
+  protected abstract @Nullable DomTarget createDomTarget(DomElement parent, DomElement nameElement);
 }

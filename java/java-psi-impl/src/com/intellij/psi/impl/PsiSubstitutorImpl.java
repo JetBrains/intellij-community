@@ -1,108 +1,120 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.EmptySubstitutor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeMapper;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.light.LightTypeParameter;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.UnmodifiableTHashMap;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author ik, dsl
- */
-public class PsiSubstitutorImpl implements PsiSubstitutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
+public final class PsiSubstitutorImpl implements PsiSubstitutor {
+  private static final Logger LOG = Logger.getInstance(PsiSubstitutorImpl.class);
 
-  private static final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+  static final HashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new HashingStrategy<PsiTypeParameter>() {
     @Override
-    public int computeHashCode(PsiTypeParameter parameter) {
+    public int hashCode(PsiTypeParameter parameter) {
       return Comparing.hashcode(parameter.getName());
     }
 
     @Override
     public boolean equals(PsiTypeParameter element1, PsiTypeParameter element2) {
-      return element1.getManager().areElementsEquivalent(element1, element2);
+      if (element1 == element2) return true;
+      if (element1 == null || element2 == null || element1 instanceof InferenceVariable || element2 instanceof InferenceVariable) return false;
+      if (!Objects.equals(element1.getName(), element2.getName())) return false;
+      if (element1.getIndex() != element2.getIndex()) return false;
+      if (TypeConversionUtil.areSameFreshVariables(element1, element2)) return true;
+      return element1.getManager().areElementsEquivalent(element1.getOwner(), element2.getOwner());
     }
   };
+  private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
 
-  private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
-  private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
+  private final @NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
 
-  private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, map);
+  PsiSubstitutorImpl(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+    mySubstitutionMap = UnmodifiableHashMap.fromMap(PSI_EQUIVALENCE, map);
   }
 
-  private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map, @NotNull PsiTypeParameter additionalKey, @Nullable PsiType additionalValue) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, map, additionalKey, additionalValue);
+  private PsiSubstitutorImpl(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> map,
+                             @NotNull PsiTypeParameter additionalKey,
+                             @Nullable PsiType additionalValue) {
+    mySubstitutionMap = map.with(additionalKey, additionalValue);
   }
 
   PsiSubstitutorImpl(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
-    mySubstitutionMap = new UnmodifiableTHashMap<>(PSI_EQUIVALENCE, typeParameter, mapping);
+    mySubstitutionMap = EMPTY_MAP.with(typeParameter, mapping);
   }
 
   PsiSubstitutorImpl(@NotNull PsiClass parentClass, PsiType[] mappings) {
-    this(putAllInternal(Collections.emptyMap(), parentClass, mappings));
+    this(putAllInternal(EMPTY_MAP, parentClass, mappings));
   }
 
   @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
-    return containsInMap(typeParameter)
-                     ? getFromMap(typeParameter)
-                     : JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+    PsiType type = getFromMap(typeParameter);
+    return PsiTypes.voidType().equals(type) ? JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter) : type;
   }
 
-  private boolean containsInMap(@NotNull PsiTypeParameter typeParameter) {
-    if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
-      typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
-    }
-    return mySubstitutionMap.containsKey(typeParameter);
+  @Override
+  public boolean hasRawSubstitution() {
+    return mySubstitutionMap.containsValue(null);
   }
 
+  /**
+   * @return type mapped to type parameter; null if the type parameter is mapped to null; or PsiType.VOID if no mapping exists
+   */
   private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
     if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
-    return mySubstitutionMap.get(typeParameter);
+    return mySubstitutionMap.getOrDefault(typeParameter, PsiTypes.voidType());
   }
 
   @Override
-  public PsiType substitute(PsiType type) {
-    if (type == null) {
-      //noinspection ConstantConditions
-      return null;
-    }
+  public PsiType substitute(@Nullable PsiType type) {
+    return doSubstitute(type, false);
+  }
+
+  @Override
+  public PsiType substituteIgnoringNullability(@Nullable PsiType type) {
+    return doSubstitute(type, true);
+  }
+
+  private @Nullable PsiType doSubstitute(@Nullable PsiType type, boolean ignoreNullity) {
+    if (type == null) return null;
     PsiUtil.ensureValidType(type);
-    PsiType substituted = type.accept(mySimpleSubstitutionVisitor);
+    PsiType substituted = type.accept(new SubstitutionVisitor(ignoreNullity));
     return correctExternalSubstitution(substituted, type);
   }
 
@@ -130,51 +142,68 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof PsiSubstitutorImpl)) return false;
-
-    final PsiSubstitutorImpl that = (PsiSubstitutorImpl)o;
-
-    if (mySubstitutionMap != null ? !mySubstitutionMap.equals(that.mySubstitutionMap) : that.mySubstitutionMap != null) return false;
-
-    return true;
+    return o instanceof PsiSubstitutorImpl && mySubstitutionMap.equals(((PsiSubstitutorImpl)o).mySubstitutionMap);
   }
 
   @Override
   public int hashCode() {
-    return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
+    return mySubstitutionMap.hashCode();
   }
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
+  /**
+   * A captured wildcard reports the nullability of the wildcard alone, which is not enough to instantiate a
+   * type-variable usage: the same {@code ? extends @Nullable Lib} is nullable when captured for
+   * {@code T extends @Nullable Object} but unspecified when captured for
+   * {@code T extends @NullnessUnspecified Object}. Both instantiate the same {@code @NullnessUnspecified T}, and only
+   * the second one may stay unspecified (everything in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * interface Lib {}
+   * interface NullableBounded<T extends @Nullable Object> { T get(); }
+   * interface UnspecBounded<T extends @NullnessUnspecified Object> { T get(); }
+   *
+   * abstract <T extends @Nullable Object> @NullnessUnspecified T unspec(T input);
+   *
+   * Object nullableBound(NullableBounded<? extends @Nullable Lib> x) {
+   *   return unspec(x.get()); // T is a nullable capture, so the return type is nullable: a nullness mismatch
+   * }
+   *
+   * Object unspecBound(UnspecBounded<? extends @Nullable Lib> x) {
+   *   return unspec(x.get()); // T is an unspecified capture, so the return type is unspecified: no mismatch
+   * }
+   * }</pre>
+   * Without capture conversion both would look nullable, which is why the plain {@link PsiType#getNullability()} is
+   * not enough here. See the CaptureConvertedUnspecToObject/CaptureConvertedUnspecToOther JSpecify samples.
+   */
+  static @NotNull TypeNullability instantiationNullability(@NotNull PsiType substituted) {
+    return substituted instanceof PsiCapturedWildcardType
+           ? ((PsiCapturedWildcardType)substituted).getCaptureConvertedNullability()
+           : substituted.getNullability();
+  }
+
   private PsiType rawTypeForTypeParameter(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
       // First bound
-      return ourGuard.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
+      return RecursionManager.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  @NotNull
-  private static TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
-    if(type1.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type1 instanceof PsiClassReferenceType)) {
-      return type2.getAnnotationProvider();
-    }
-    if(type2.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type2 instanceof PsiClassReferenceType)) {
-      return type1.getAnnotationProvider();
-    }
-    return () -> ArrayUtil.mergeArrays(type1.getAnnotations(), type2.getAnnotations());
-  }
-
   private class SubstitutionVisitor extends PsiTypeMapper {
+    private final boolean ignoreNullity;
+
+    private SubstitutionVisitor(boolean ignoreNullity) {
+      this.ignoreNullity = ignoreNullity; 
+    }
 
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return null;
     }
 
     @Override
-    public PsiType visitWildcardType(PsiWildcardType wildcardType) {
+    public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound == null) {
         return wildcardType;
@@ -187,22 +216,24 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         assert newBound.isValid() : newBound.getClass() + "; " + bound.isValid();
         if (newBound instanceof PsiWildcardType) {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
-          return !((PsiWildcardType)newBound).isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager())
-                                                          : rebound(wildcardType, newBoundBound);
+          // '? extends T' with 'T <- ?' is the substituted '?', so it keeps the place that one was written at
+          return !((PsiWildcardType)newBound).isBounded() || newBoundBound == null
+                 ? ((PsiWildcardType)newBound).unbounded()
+                 : rebound(wildcardType, newBoundBound);
         }
 
-        return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
+        return newBound == PsiTypes.nullType() ? newBound : rebound(wildcardType, newBound);
       }
     }
 
-    @NotNull
-    private PsiWildcardType rebound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
+    private @NotNull PsiWildcardType rebound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
       LOG.assertTrue(type.getBound() != null);
       LOG.assertTrue(newBound.isValid());
 
       if (type.isExtends()) {
         if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return PsiWildcardType.createUnbounded(type.getManager());
+          return type.unbounded()
+            .withNullability(newBound.getNullability());
         }
         return PsiWildcardType.createExtends(type.getManager(), newBound);
       }
@@ -210,7 +241,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     @Override
-    public PsiType visitClassType(final PsiClassType classType) {
+    public PsiType visitClassType(final @NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
@@ -218,51 +249,40 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       PsiUtilCore.ensureValid(aClass);
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
-        if (containsInMap(typeParameter)) {
-          final PsiType result = substituteTypeParameter(typeParameter);
-          if (result != null) {
-            PsiUtil.ensureValidType(result);
-            if (result instanceof PsiClassType || result instanceof PsiArrayType || result instanceof PsiWildcardType) {
-              return result.annotate(getMergedProvider(classType, result));
-            }
-          }
+        PsiType result = getFromMap(typeParameter);
+        if (PsiTypes.voidType().equals(result)) {
+          return classType;
+        }
+        if (result == null || ignoreNullity) {
           return result;
         }
-        return classType;
+        TypeNullability origNullability = classType.getNullability();
+
+        return result.withNullability(origNullability.instantiatedWith(instantiationNullability(result)));
       }
-      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<>(2);
-      if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
-        return null;
-      }
-      PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
-      PsiUtil.ensureValidType(result);
-      return result.annotate(classType.getAnnotationProvider());
+      PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
+      return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),
+                                       classType.getAnnotationProvider(), classType.getPsiContext())
+        .withNullability(classType.getNullability());
     }
 
-    private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {
-      return getFromMap(typeParameter);
-    }
-
-    private PsiType substituteInternal(@NotNull PsiType type) {
-      return type.accept(this);
-    }
-
-    private boolean processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor, @NotNull Map<PsiTypeParameter, PsiType> substMap) {
-      final PsiTypeParameter[] params = resolve.getTypeParameters();
-      for (final PsiTypeParameter param : params) {
-        final PsiType original = originalSubstitutor.substitute(param);
-        if (original == null) {
-          substMap.put(param, null);
+    private @NotNull PsiSubstitutor processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor) {
+      UnmodifiableHashMap<PsiTypeParameter, PsiType> substMap = EMPTY_MAP;
+      while (true) {
+        final PsiTypeParameter[] params = resolve.getTypeParameters();
+        for (final PsiTypeParameter param : params) {
+          PsiType original = originalSubstitutor.substitute(param);
+          if (original != null && original.getNullability().equals(TypeNullability.UNKNOWN)) {
+            original = original.withNullability(TypeNullability.ofTypeParameter(param));
+          }
+          PsiType mapping = original == null ? null : original.accept(this);
+          substMap = substMap.with(param, mapping);
         }
-        else {
-          substMap.put(param, substituteInternal(original));
-        }
+        final PsiClass containingClass = resolve.hasModifierProperty(PsiModifier.STATIC) ? null : resolve.getContainingClass();
+        if (containingClass == null) break;
+        resolve = containingClass;
       }
-      if (resolve.hasModifierProperty(PsiModifier.STATIC)) return true;
-
-      final PsiClass containingClass = resolve.getContainingClass();
-      return containingClass == null ||
-             processClass(containingClass, originalSubstitutor, substMap);
+      return PsiSubstitutor.createSubstitutor(substMap);
     }
   }
 
@@ -272,17 +292,17 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
     return original.accept(new PsiTypeVisitor<PsiType>() {
       @Override
-      public PsiType visitArrayType(PsiArrayType arrayType) {
+      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
         return new PsiArrayType(arrayType.getComponentType().accept(this));
       }
 
       @Override
-      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+      public PsiType visitEllipsisType(@NotNull PsiEllipsisType ellipsisType) {
         return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
       }
 
       @Override
-      public PsiType visitClassType(PsiClassType classType) {
+      public PsiType visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return classType;
@@ -290,12 +310,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (aClass instanceof PsiTypeParameter) {
           return rawTypeForTypeParameter((PsiTypeParameter)aClass);
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
-      }
-
-      @Override
-      public PsiType visitType(PsiType type) {
-        return null;
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
       }
     });
   }
@@ -305,54 +320,56 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+  public @NotNull PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     if (mapping != null && !mapping.isValid()) {
       LOG.error("Invalid type in substitutor: " + mapping + "; " + mapping.getClass());
     }
     return new PsiSubstitutorImpl(mySubstitutionMap, typeParameter, mapping);
   }
 
-  private static Map<PsiTypeParameter, PsiType> putAllInternal(Map<PsiTypeParameter, PsiType> originalMap, @NotNull PsiClass parentClass,
-                                                               PsiType[] mappings) {
+  private static @NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
+                                                                                        @NotNull PsiClass parentClass,
+                                                                                        PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
     if (params.length == 0) return originalMap;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(originalMap);
+    UnmodifiableHashMap<PsiTypeParameter, PsiType> newMap = originalMap;
 
     for (int i = 0; i < params.length; i++) {
       PsiTypeParameter param = params[i];
       assert param != null;
       if (mappings != null && mappings.length > i) {
         PsiType mapping = mappings[i];
-        newMap.put(param, mapping);
+        newMap = newMap.with(param, mapping);
         if (mapping != null && !mapping.isValid()) {
           LOG.error("Invalid type in substitutor: " + mapping);
         }
       }
       else {
-        newMap.put(param, null);
+        newMap = newMap.with(param, null);
       }
     }
     return newMap;
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     return new PsiSubstitutorImpl(putAllInternal(mySubstitutionMap, parentClass, mappings));
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
-    if (another instanceof EmptySubstitutorImpl) {
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
+    if (another instanceof EmptySubstitutor) {
       return this;
     }
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
-    Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(mySubstitutionMap, PSI_EQUIVALENCE);
-    newMap.putAll(anotherImpl.mySubstitutionMap);
-    return createSubstitutor(newMap);
+    return putAll(anotherImpl.mySubstitutionMap);
+  }
+
+  @Override
+  public @NotNull PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+    if (map.isEmpty()) return this;
+    return new PsiSubstitutorImpl(mySubstitutionMap.withAll(map));
   }
 
   @Override
@@ -386,15 +403,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return buffer.toString();
   }
 
-  @NotNull
-  public static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
-    if (map == null || map.isEmpty()) return EMPTY;
-    return new PsiSubstitutorImpl(map);
-  }
-
   @Override
   public boolean isValid() {
-    for (PsiType type : mySubstitutionMap.values()) {
+    for (Map.Entry<PsiTypeParameter, PsiType> entry : mySubstitutionMap.entrySet()) {
+      if (!entry.getKey().isValid()) return false;
+
+      PsiType type = entry.getValue();
       if (type != null && !type.isValid()) return false;
     }
     return true;
@@ -402,16 +416,15 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @Override
   public void ensureValid() {
-    for (PsiType type : mySubstitutionMap.values()) {
+    mySubstitutionMap.values().forEach(type -> {
       if (type != null) {
         PsiUtil.ensureValidType(type);
       }
-    }
+    });
   }
 
   @Override
-  @NotNull
-  public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
+  public @NotNull Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return mySubstitutionMap;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.inspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -21,7 +7,12 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.QuickFix;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -31,20 +22,25 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JViewport;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -53,8 +49,6 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractQuickFixManager {
   protected DesignerEditorPanel myDesigner;
@@ -102,7 +96,7 @@ public abstract class AbstractQuickFixManager {
 
     AnAction showHintAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myDesigner != null) {
           showHint();
           showPopup();
@@ -110,7 +104,12 @@ public abstract class AbstractQuickFixManager {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
     };
@@ -234,8 +233,7 @@ public abstract class AbstractQuickFixManager {
   /**
    * @return error info for the current {@link #myComponent} state.
    */
-  @NotNull
-  protected abstract List<ErrorInfo> getErrorInfos();
+  protected abstract @NotNull List<ErrorInfo> getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
@@ -243,8 +241,7 @@ public abstract class AbstractQuickFixManager {
    *         returned non empty list of error infos. {@code null} means that
    *         error bounds are not defined.
    */
-  @Nullable
-  protected abstract Rectangle getErrorBounds();
+  protected abstract @Nullable Rectangle getErrorBounds();
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -253,7 +250,7 @@ public abstract class AbstractQuickFixManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private class FirstStep extends BaseListPopupStep<ErrorInfo> {
-    public FirstStep(List<ErrorInfo> errorInfos) {
+    FirstStep(List<ErrorInfo> errorInfos) {
       super(null, errorInfos);
     }
 
@@ -262,14 +259,13 @@ public abstract class AbstractQuickFixManager {
       return AllIcons.Actions.RealIntentionBulb;
     }
 
-    @NotNull
     @Override
-    public String getTextFor(ErrorInfo value) {
+    public @NotNull String getTextFor(ErrorInfo value) {
       return value.getName();
     }
 
     @Override
-    public PopupStep onChosen(ErrorInfo value, boolean finalChoice) {
+    public PopupStep<?> onChosen(ErrorInfo value, boolean finalChoice) {
       List<QuickFix> quickFixes = value.getQuickFixes();
       if (finalChoice) {
         return doFinalStep(getQuickFixRunnable(quickFixes.get(0)));
@@ -289,7 +285,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
-    public SecondStep(List<QuickFix> fixList) {
+    SecondStep(List<? extends QuickFix> fixList) {
       super(null, fixList);
     }
 
@@ -298,20 +294,20 @@ public abstract class AbstractQuickFixManager {
       return value.getIcon();
     }
 
-    @NotNull
     @Override
-    public String getTextFor(QuickFix value) {
+    public @NotNull String getTextFor(QuickFix value) {
       return value.getName();
     }
 
     @Override
-    public PopupStep onChosen(QuickFix value, boolean finalChoice) {
+    public PopupStep<?> onChosen(QuickFix value, boolean finalChoice) {
       return doFinalStep(getQuickFixRunnable(value));
     }
   }
 
   private Runnable getQuickFixRunnable(final QuickFix value) {
-    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value), "Run '" + value.getName() + "' QuickFix");
+    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value),
+                                                                 DesignerBundle.message("run.0.quickfix", value.getName()));
   }
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);
@@ -321,7 +317,7 @@ public abstract class AbstractQuickFixManager {
 
   private static final Icon INACTIVE_ARROW_ICON = EmptyIcon.create(AllIcons.General.ArrowDown);
 
-  private class InspectionHint extends JLabel {
+  private final class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;
     private final RowIcon myActiveIcon;
 
@@ -329,11 +325,11 @@ public abstract class AbstractQuickFixManager {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);
 
-      myActiveIcon = new RowIcon(2);
+      myActiveIcon = IconManager.getInstance().createRowIcon(2);
       myActiveIcon.setIcon(icon, 0);
       myActiveIcon.setIcon(AllIcons.General.ArrowDown, 1);
 
-      myInactiveIcon = new RowIcon(2);
+      myInactiveIcon = IconManager.getInstance().createRowIcon(2);
       myInactiveIcon.setIcon(icon, 0);
       myInactiveIcon.setIcon(INACTIVE_ARROW_ICON, 1);
 
@@ -341,7 +337,7 @@ public abstract class AbstractQuickFixManager {
 
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-      if (acceleratorsText.length() > 0) {
+      if (!acceleratorsText.isEmpty()) {
         setToolTipText(DesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
       }
 

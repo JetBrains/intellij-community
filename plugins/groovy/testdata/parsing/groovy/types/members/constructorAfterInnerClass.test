@@ -14,6 +14,8 @@ Groovy script
       <empty list>
     Implements clause
       <empty list>
+    Permits clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -28,6 +30,8 @@ Groovy script
           <empty list>
         Implements clause
           <empty list>
+        Permits clause
+          <empty list>
         PsiWhiteSpace(' ')
         Type definition body
           PsiElement({)('{')
@@ -37,10 +41,9 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('A')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

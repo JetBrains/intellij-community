@@ -35,7 +35,7 @@ import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
 
 public final class HgConflictResolver {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final UpdatedFiles updatedFiles;
 
   public HgConflictResolver(@NotNull Project project) {

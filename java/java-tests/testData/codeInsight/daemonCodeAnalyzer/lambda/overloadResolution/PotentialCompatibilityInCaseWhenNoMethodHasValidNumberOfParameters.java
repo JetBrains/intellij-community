@@ -7,8 +7,8 @@ class Test {
     varargs(1);
     varargs(1, "");
     varargs(1, "", "");
-    usage<error descr="'usage(java.lang.String)' in 'Test' cannot be applied to '()'">()</error>; 
+    usage<error descr="Expected 1 argument but found 0">()</error>; 
     usage("");
-    usage<error descr="'usage(java.lang.String)' in 'Test' cannot be applied to '(java.lang.String, java.lang.String)'">("", "")</error>;
+    usage<error descr="Expected 1 argument but found 2">("", "")</error>;
   }
 }

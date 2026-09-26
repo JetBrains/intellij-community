@@ -42,6 +42,7 @@ public abstract class RncElementImpl extends ASTWrapperPsiElement implements Rnc
     super(node);
   }
 
+  @Override
   public String toString() {
     return getNode().getElementType().toString();
   }
@@ -129,7 +130,7 @@ public abstract class RncElementImpl extends ASTWrapperPsiElement implements Rnc
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
       if (element instanceof CommonElement) {
-        ((CommonElement)element).accept(visitor);
+        ((CommonElement<?>)element).accept(visitor);
       }
     }
   }

@@ -1,8 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +20,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 /**
  * @author Maxim.Medvedev
  */
-public class InheritConstructorContributor implements AstTransformationSupport {
+public final class InheritConstructorContributor implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
@@ -26,10 +31,13 @@ public class InheritConstructorContributor implements AstTransformationSupport {
 
     if (!hasInheritConstructorsAnnotation(psiClass)) return;
 
-    final PsiClass superClass = context.getSuperClass();
+    final PsiClass hierarchyView = context.getHierarchyView();
+    final PsiClass superClass = hierarchyView.getSuperClass();
     if (superClass == null) return;
 
-    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
+    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(
+      superClass, hierarchyView, PsiSubstitutor.EMPTY
+    );
     for (PsiMethod constructor : superClass.getConstructors()) {
       if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) continue;
 
@@ -40,9 +48,9 @@ public class InheritConstructorContributor implements AstTransformationSupport {
       inheritedConstructor.setOriginInfo("created by @InheritConstructors");
 
       for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-        String name = StringUtil.notNullize(parameter.getName());
+        String name = parameter.getName();
         PsiType type = superClassSubstitutor.substitute(parameter.getType());
-        inheritedConstructor.addParameter(name, type, false);
+        inheritedConstructor.addParameter(name, type);
       }
       context.addMethod(inheritedConstructor);
     }

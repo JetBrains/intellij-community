@@ -1,0 +1,9 @@
+fun foo(p: (Int) -> Unit){}
+
+fun bar() {
+    foo({ i -> <caret> })
+}
+
+// ELEMENT: "{ i -> ... }"
+
+// IGNORE_K2

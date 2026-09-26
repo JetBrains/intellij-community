@@ -1,0 +1,30 @@
+<idea-plugin visibility="internal" package="com.intellij.execution.process.elevation">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.execution.process.mediator.client"/>
+    <module name="intellij.execution.process.mediator.common"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
+                        serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
+
+    <applicationConfigurable parentId="preferences.general"
+                             instance="com.intellij.execution.process.elevation.settings.ElevationSettingsConfigurable"
+                             bundle="messages.ElevationBundle"
+                             key="elevation.settings.configurable"
+                             id="application.elevation"/>
+    <applicationSettings service="com.intellij.execution.process.elevation.settings.ElevationSettings"/>
+  </extensions>
+</idea-plugin>

@@ -1,51 +1,57 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.*;
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.LanguageAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.TextAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.CustomArrangementOrderToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.*;
-import java.util.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Section.END_SECTION;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Section.START_SECTION;
@@ -55,17 +61,18 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
  * <p/>
  * I.e. the general idea is to have a language-specific rules hidden by generic arrangement API and common arrangement
  * engine which works on top of that API and performs the arrangement.
- *
- * @author Denis Zhdanov
- * @since 7/20/12 1:56 PM
  */
-public class ArrangementEngine {
+@Service
+public final class ArrangementEngine {
   private boolean myCodeChanged;
 
-  @Nullable
-  public String getUserNotificationInfo() {
+  public static ArrangementEngine getInstance() {
+    return ApplicationManager.getApplication().getService(ArrangementEngine.class);
+  }
+
+  public @Nullable @NlsContexts.HintText String getUserNotificationInfo() {
     if (myCodeChanged) {
-      return "rearranged code";
+      return CodeInsightBundle.message("hint.text.rearranged.code");
     }
     return null;
   }
@@ -74,11 +81,10 @@ public class ArrangementEngine {
    * Arranges given PSI root contents that belong to the given ranges.
    * <b>Note:</b> After arrangement editor foldings we'll be preserved.
    *
-   * @param editor
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
+  public void arrange(final @NotNull Editor editor, @NotNull PsiFile file, Collection<? extends TextRange> ranges) {
     arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
@@ -89,21 +95,21 @@ public class ArrangementEngine {
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) {
     arrange(file, ranges, null);
   }
-  
+
   /**
    * Arranges given PSI root contents that belong to the given ranges.
    *
    * @param file    target PSI root
    * @param ranges  target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, final @Nullable ArrangementCallback callback) {
     myCodeChanged = false;
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null) {
+    if (document == null || !document.isWritable()) {
       return;
     }
 
@@ -113,35 +119,27 @@ public class ArrangementEngine {
     }
 
     final CodeStyleSettings settings = CodeStyle.getSettings(file);
-    ArrangementSettings arrangementSettings = settings.getCommonSettings(file.getLanguage()).getArrangementSettings();
-    if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
-      arrangementSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
+    if (settings.getExcludedFiles().contains(file)) {
+      return;
     }
-    
+
+    ArrangementSettings arrangementSettings = ArrangementUtil.getArrangementSettings(settings, file.getLanguage());
+
     if (arrangementSettings == null) {
       return;
     }
 
-    final Context<? extends ArrangementEntry> context;
-    DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(true);
-    try {
-      context = Context.from(rearranger, document, file, ranges, arrangementSettings, settings);
-    }
-    finally {
-      DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(false);
-    }
+    Context<? extends ArrangementEntry> context =
+    DumbService.getInstance(file.getProject()).computeWithAlternativeResolveEnabled(() -> Context.from(rearranger, document, file, ranges, arrangementSettings, settings));
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      FormatChangedTextUtil.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
-        doArrange(context);
-        if (callback != null) {
-          callback.afterArrangement(context.moveInfos);
-        }
-      });
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> VcsFacade.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
+      doArrange(context);
+      if (callback != null) {
+        callback.afterArrangement(context.moveInfos);
+      }
+    }));
   }
 
-  @SuppressWarnings("unchecked")
   private <E extends ArrangementEntry> void doArrange(Context<E> context) {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
     // with entries text ranges then. We use a list and a stack for achieving that than.
@@ -175,7 +173,7 @@ public class ArrangementEngine {
     //      arrange 'Entry11 Entry12'
     //    --------------------------
     //    Stage 5:
-    //      list: Entry1 Entry2 
+    //      list: Entry1 Entry2
     //      stack: [0, 1, 2]
     //    --------------------------
     //    Stage 6:
@@ -200,7 +198,6 @@ public class ArrangementEngine {
     //      stack: [0, 2, 2]
     //    --------------------------
     //      arrange 'Entry1 Entry2'
-
     Stack<StackEntry> stack = new Stack<>();
     List<ArrangementEntryWrapper<E>> entries = new ArrayList<>(context.wrappers);
     stack.push(new StackEntry(0, context.wrappers.size()));
@@ -233,51 +230,38 @@ public class ArrangementEngine {
    * @param entryToSection     mapping from arrangement entry to the parent section
    * @return                   arranged list of the given rules
    */
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  @NotNull
-  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<ArrangementSectionRule> sectionRules,
-                                                             @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
-                                                             @Nullable Map<E, ArrangementSectionRule> entryToSection)
-  {
-    List<E> arranged = ContainerUtilRt.newArrayList();
-    Set<E> unprocessed = ContainerUtilRt.newLinkedHashSet();
-    List<Pair<Set<ArrangementEntry>, E>> dependent = ContainerUtilRt.newArrayList();
+  public static @NotNull <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
+                                                                      @NotNull List<ArrangementSectionRule> sectionRules,
+                                                                      @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
+                                                                      @Nullable Map<E, ArrangementSectionRule> entryToSection) {
+    MultiMap<E, ArrangementEntry> dependent = MultiMap.createLinkedSet();
     for (E entry : entries) {
       List<? extends ArrangementEntry> dependencies = entry.getDependencies();
-      if (dependencies == null) {
-        unprocessed.add(entry);
-      }
-      else {
-        if (dependencies.size() == 1 && dependencies.get(0) == entry.getParent()) {
-          // Handle a situation when the entry is configured to be at the first parent's children.
-          arranged.add(entry);
-        }
-        else {
-          Set<ArrangementEntry> first = new HashSet<>(dependencies);
-          dependent.add(Pair.create(first, entry));
-        }
+      if (dependencies != null) {
+        dependent.putValues(entry, dependencies);
       }
     }
-
-    Set<E> matched = new HashSet<>();
 
     MultiMap<ArrangementMatchRule, E> elementsByRule = new MultiMap<>();
-    for (ArrangementMatchRule rule : rulesByPriority) {
-      matched.clear();
-      for (E entry : unprocessed) {
-        if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
-          elementsByRule.putValue(rule, entry);
-          matched.add(entry);
+    if (!rulesByPriority.isEmpty()) {
+      Set<E> matched = new HashSet<>();
+      for (ArrangementMatchRule rule : rulesByPriority) {
+        matched.clear();
+        for (E entry : entries) {
+          if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
+            elementsByRule.putValue(rule, entry);
+            matched.add(entry);
+          }
         }
+        entries.removeAll(matched);
+        if (entries.isEmpty()) break;
       }
-      unprocessed.removeAll(matched);
     }
 
+    List<E> arranged = new ArrayList<>();
     for (ArrangementSectionRule sectionRule : sectionRules) {
       for (ArrangementMatchRule rule : sectionRule.getMatchRules()) {
         final Collection<E> arrangedEntries = arrangeByRule(arranged, elementsByRule, rule);
-
         if (entryToSection != null && arrangedEntries != null) {
           for (E entry : arrangedEntries) {
             entryToSection.put(entry, sectionRule);
@@ -285,18 +269,56 @@ public class ArrangementEngine {
         }
       }
     }
-    arranged.addAll(unprocessed);
+    arranged.addAll(entries);
+    removeForwardDependencies(arranged, dependent);
+    insertDependentsAfterDependencies(entryToSection, arranged, dependent);
 
+    return arranged;
+  }
+
+  private static <E extends ArrangementEntry> void removeForwardDependencies(List<E> arranged, MultiMap<E, ArrangementEntry> dependent) {
+    for (int i = 0; i < arranged.size(); i++) {
+      E entry = arranged.get(i);
+      Collection<? extends ArrangementEntry> dependencies = entry.getDependencies();
+      if (dependencies != null) {
+        if (entry.canBeGrouped()) {
+          arranged.remove(i); // reinsert later directly after dependencies
+          //noinspection AssignmentToForLoopParameter
+          i--;
+        }
+        else {
+          for (int j = 0; j < i; j++) {
+            // have we seen the dependencies in the arranged entries?
+            dependencies.remove(arranged.get(j));
+          }
+          if (!dependencies.isEmpty()) {
+            // dependencies not all seen yet, remove and reinsert later
+            arranged.remove(i);
+            //noinspection AssignmentToForLoopParameter
+            i--;
+          }
+          else {
+            // all dependencies seen
+            dependent.remove(entry);
+          }
+        }
+      }
+    }
+  }
+
+  private static <E extends ArrangementEntry> void insertDependentsAfterDependencies(@Nullable Map<E, ArrangementSectionRule> entryToSection,
+                                                                                     List<E> arranged,
+                                                                                     MultiMap<E, ArrangementEntry> dependent) {
     for (int i = 0; i < arranged.size() && !dependent.isEmpty(); i++) {
       E e = arranged.get(i);
-      List<E> shouldBeAddedAfterCurrentElement = ContainerUtil.newArrayList();
+      List<E> shouldBeAddedAfterCurrentElement = new ArrayList<>();
 
-      for (Iterator<Pair<Set<ArrangementEntry>, E>> iterator = dependent.iterator(); iterator.hasNext(); ) {
-        Pair<Set<ArrangementEntry>, E> pair = iterator.next();
-        pair.first.remove(e);
-        if (pair.first.isEmpty()) {
+      for (Iterator<Map.Entry<E, Collection<ArrangementEntry>>> iterator = dependent.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<E, Collection<ArrangementEntry>> entry = iterator.next();
+        Collection<ArrangementEntry> deps = entry.getValue();
+        if (deps.remove(e) && deps.isEmpty()) {
           iterator.remove();
-          shouldBeAddedAfterCurrentElement.add(pair.second);
+          shouldBeAddedAfterCurrentElement.add(entry.getKey());
         }
       }
 
@@ -309,14 +331,11 @@ public class ArrangementEngine {
       }
       arranged.addAll(i + 1, shouldBeAddedAfterCurrentElement);
     }
-
-    return arranged;
   }
 
-  @Nullable
-  private static <E extends ArrangementEntry> Collection<E> arrangeByRule(@NotNull List<E> arranged,
-                                                                          @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
-                                                                          @NotNull ArrangementMatchRule rule) {
+  private static @Nullable <E extends ArrangementEntry> Collection<E> arrangeByRule(@NotNull List<? super E> arranged,
+                                                                                    @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
+                                                                                    @NotNull ArrangementMatchRule rule) {
     if (elementsByRule.containsKey(rule)) {
       List<E> arrangedEntries = (List<E>)elementsByRule.remove(rule);
       assert arrangedEntries != null;
@@ -339,7 +358,7 @@ public class ArrangementEngine {
     if (entries.size() < 2) {
       return;
     }
-    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<>();
+    final Object2IntMap<E> weights = new Object2IntOpenHashMap<>();
     int i = 0;
     for (E e : entries) {
       weights.put(e, ++i);
@@ -351,7 +370,7 @@ public class ArrangementEngine {
         return name1.compareTo(name2);
       }
       else if (name1 == null && name2 == null) {
-        return weights.get(e1) - weights.get(e2);
+        return weights.getInt(e1) - weights.getInt(e2);
       }
       else if (name2 == null) {
         return -1;
@@ -363,25 +382,22 @@ public class ArrangementEngine {
   }
 
   @SuppressWarnings("unchecked")
-  private <E extends ArrangementEntry> void doArrange(@NotNull List<ArrangementEntryWrapper<E>> wrappers,
+  private <E extends ArrangementEntry> void doArrange(@NotNull List<? extends ArrangementEntryWrapper<E>> wrappers,
                                                       @NotNull Context<E> context) {
     if (wrappers.isEmpty()) {
       return;
     }
 
-    Map<E, ArrangementSectionRule> entryToSection = ContainerUtilRt.newHashMap();
-    Map<E, ArrangementEntryWrapper<E>> map = ContainerUtilRt.newHashMap();
-    List<E> arranged = ContainerUtilRt.newArrayList();
-    List<E> toArrange = ContainerUtilRt.newArrayList(); 
+    Map<E, ArrangementSectionRule> entryToSection = new HashMap<>();
+    Map<E, ArrangementEntryWrapper<E>> map = new HashMap<>();
+    List<E> arranged = new ArrayList<>();
+    List<E> toArrange = new ArrayList<>();
     for (ArrangementEntryWrapper<E> wrapper : wrappers) {
       E entry = wrapper.getEntry();
       map.put(wrapper.getEntry(), wrapper);
       if (!entry.canBeMatched()) {
         // Split entries to arrange by 'can not be matched' rules.
         // See IDEA-104046 for a problem use-case example.
-        if (toArrange.isEmpty()) {
-          arranged.addAll(arrange(toArrange, context.sectionRules, context.rulesByPriority, entryToSection));
-        }
         arranged.add(entry);
         toArrange.clear();
       }
@@ -390,7 +406,13 @@ public class ArrangementEngine {
       }
     }
     if (!toArrange.isEmpty()) {
-      arranged.addAll(arrange(toArrange, context.sectionRules, context.rulesByPriority, entryToSection));
+      E contextEntry = toArrange.get(0);
+      Language language = contextEntry instanceof LanguageAwareArrangementEntry ?
+                          ((LanguageAwareArrangementEntry)contextEntry).getLanguage() : null;
+      ArrangementSettings settings = context.getArrangementSettings(language);
+      List<? extends ArrangementMatchRule> rulesByPriority = settings.getRulesSortedByPriority();
+      List<ArrangementSectionRule> sectionRules = ArrangementUtil.getExtendedSectionRules(settings);
+      arranged.addAll(arrange(toArrange, sectionRules, rulesByPriority, entryToSection));
     }
 
     final NewSectionInfo<E> newSectionsInfo = NewSectionInfo.create(arranged, entryToSection);
@@ -422,11 +444,11 @@ public class ArrangementEngine {
     }
   }
 
-  private static class NewSectionInfo<E extends ArrangementEntry> {
-    private final Map<E, String> mySectionStarts = ContainerUtil.newHashMap();
-    private final Map<E, String> mySectionEnds = ContainerUtil.newHashMap();
+  private static final class NewSectionInfo<E extends ArrangementEntry> {
+    private final Map<E, String> mySectionStarts = new HashMap<>();
+    private final Map<E, String> mySectionEnds = new HashMap<>();
 
-    private static <E extends ArrangementEntry> NewSectionInfo create(@NotNull List<E> arranged,
+    private static <E extends ArrangementEntry> NewSectionInfo create(@NotNull List<? extends E> arranged,
                                                                       @NotNull Map<E, ArrangementSectionRule> entryToSection) {
       final NewSectionInfo<E> info = new NewSectionInfo<>();
 
@@ -457,7 +479,7 @@ public class ArrangementEngine {
 
     public static boolean isSectionEntry(@NotNull ArrangementEntry entry, @NotNull String sectionText) {
       if (entry instanceof TypeAwareArrangementEntry && entry instanceof TextAwareArrangementEntry) {
-        final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+        final Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
         if (types.size() == 1) {
           final ArrangementSettingsToken type = types.iterator().next();
           if (type.equals(START_SECTION) || type.equals(END_SECTION)) {
@@ -488,41 +510,36 @@ public class ArrangementEngine {
       mySectionEnds.put(entry, comment);
     }
 
-    @Nullable
-    public String getStartComment(E entry) {
+    public @Nullable String getStartComment(E entry) {
       return mySectionStarts.get(entry);
     }
 
-    @Nullable
-    public String getEndComment(E entry) {
+    public @Nullable String getEndComment(E entry) {
       return mySectionEnds.get(entry);
     }
   }
 
-  private static class Context<E extends ArrangementEntry> {
+  private static final class Context<E extends ArrangementEntry> {
 
-    @NotNull public final List<ArrangementMoveInfo> moveInfos = ContainerUtilRt.newArrayList();
+    public final @NotNull List<ArrangementMoveInfo> moveInfos = new ArrayList<>();
 
-    @NotNull public final Rearranger<E>                          rearranger;
-    @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
-    @NotNull public final Document                               document;
-    @NotNull public final List<? extends ArrangementMatchRule>   rulesByPriority;
-    @NotNull public final CodeStyleSettings                      settings;
-    @NotNull public final Changer                                changer;
-    @NotNull public final List<ArrangementSectionRule>           sectionRules;
+    private final @NotNull Rearranger<E>                         rearranger;
+    public final @NotNull Collection<ArrangementEntryWrapper<E>> wrappers;
+    public final @NotNull Document                               document;
+    private final @NotNull ArrangementSettings                   arrangementSettings;
+    public final @NotNull CodeStyleSettings                      settings;
+    public final @NotNull Changer                                changer;
 
     private Context(@NotNull Rearranger<E> rearranger,
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
                     @NotNull Document document,
-                    @NotNull List<ArrangementSectionRule> sectionRules,
-                    @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
+                    @NotNull ArrangementSettings arrangementSettings,
                     @NotNull CodeStyleSettings settings, @NotNull Changer changer)
     {
       this.rearranger = rearranger;
       this.wrappers = wrappers;
       this.document = document;
-      this.sectionRules = sectionRules;
-      this.rulesByPriority = rulesByPriority;
+      this.arrangementSettings = arrangementSettings;
       this.settings = settings;
       this.changer = changer;
     }
@@ -530,11 +547,32 @@ public class ArrangementEngine {
     public void addMoveInfo(int oldStart, int oldEnd, int newStart) {
       moveInfos.add(new ArrangementMoveInfo(oldStart, oldEnd, newStart));
     }
-    
+
+    public @NotNull ArrangementSettings getArrangementSettings(@Nullable Language languageOverride) {
+      if (languageOverride != null) {
+        ArrangementSettings languageSettings = ArrangementUtil.getArrangementSettings(this.settings, languageOverride);
+        if (languageSettings != null) {
+          return languageSettings;
+        }
+      }
+      return arrangementSettings;
+    }
+
+    public @NotNull Rearranger<E> getRearranger(@Nullable Language language) {
+      if (language != null) {
+        Rearranger<?> forLanguage = Rearranger.EXTENSION.forLanguage(language);
+        if (forLanguage != null) {
+          //noinspection unchecked
+          return (Rearranger<E>)forLanguage;
+        }
+      }
+      return rearranger;
+    }
+
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
-                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull Collection<? extends TextRange> ranges,
                                                                @NotNull ArrangementSettings arrangementSettings,
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {
@@ -557,13 +595,11 @@ public class ArrangementEngine {
       else {
         changer = new DefaultChanger();
       }
-      final List<? extends ArrangementMatchRule> rulesByPriority = arrangementSettings.getRulesSortedByPriority();
-      final List<ArrangementSectionRule> sectionRules = ArrangementUtil.getExtendedSectionRules(arrangementSettings);
-      return new Context<>(rearranger, wrappers, document, sectionRules, rulesByPriority, codeStyleSettings, changer);
+      return new Context<>(rearranger, wrappers, document, arrangementSettings, codeStyleSettings, changer);
     }
   }
 
-  private static class StackEntry {
+  private static final class StackEntry {
 
     public int start;
     public int current;
@@ -577,7 +613,7 @@ public class ArrangementEngine {
   }
 
   private abstract static class Changer<E extends ArrangementEntry> {
-    public abstract void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context);
+    public abstract void prepare(@NotNull List<? extends ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context);
 
     /**
      * Replaces given 'old entry' by the given 'new entry'.
@@ -619,27 +655,31 @@ public class ArrangementEngine {
         return 0;
       }
       final E next = nextWrapper == null ? null : nextWrapper.getEntry();
+      final E parentEntry = parentWrapper == null ? null : parentWrapper.getEntry();
+      final Language language = parentEntry instanceof LanguageAwareArrangementEntry ?
+                                ((LanguageAwareArrangementEntry)parentEntry).getLanguage() : null;
+      final Rearranger<E> rearranger = context.getRearranger(language);
       if (next != null && isTypeOf(target, START_SECTION)) {
-        return context.rearranger.getBlankLines(context.settings, parentWrapper == null ? null : parentWrapper.getEntry(), previous, next);
+        return rearranger.getBlankLines(context.settings, parentEntry, previous, next);
       }
-      return context.rearranger.getBlankLines(context.settings, parentWrapper == null ? null : parentWrapper.getEntry(), previous, target);
+      return rearranger.getBlankLines(context.settings, parentEntry, previous, target);
     }
 
     private boolean isTypeOf(@Nullable E element, @NotNull ArrangementSettingsToken token) {
       if (element instanceof TypeAwareArrangementEntry) {
-        Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
+        Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
         return types.size() == 1 && token.equals(types.iterator().next());
       }
       return false;
     }
   }
 
-  private static class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
-    @NotNull private String myParentText;
+  private static final class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
+    private @NotNull String myParentText;
     private          int    myParentShift;
 
     @Override
-    public void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context) {
+    public void prepare(@NotNull List<? extends ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context) {
       ArrangementEntryWrapper<E> parent = toArrange.get(0).getParent();
       if (parent == null) {
         myParentText = context.document.getText();
@@ -661,7 +701,7 @@ public class ArrangementEngine {
     {
       // Calculate blank lines before the arrangement.
       int blankLinesBefore = 0;
-      TIntArrayList lineFeedOffsets = new TIntArrayList();
+      IntList lineFeedOffsets = new IntArrayList();
       int oldStartLine = context.document.getLineNumber(oldWrapper.getStartOffset());
       if (oldStartLine > 0) {
         int lastLineFeed = context.document.getLineStartOffset(oldStartLine) - 1;
@@ -702,7 +742,7 @@ public class ArrangementEngine {
       }
       else {
         // Cut exceeding blank lines.
-        int replacementStartOffset = lineFeedOffsets.get(-lineFeedsDiff) + 1;
+        int replacementStartOffset = lineFeedOffsets.getInt(-lineFeedsDiff) + 1;
         context.document.replaceString(replacementStartOffset, oldWrapper.getEndOffset(), newEntryText);
       }
 
@@ -768,17 +808,17 @@ public class ArrangementEngine {
     }
   }
 
-  private static class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
+  private static final class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
 
-    @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
-    @NotNull private final DocumentEx myDocument;
+    private final @NotNull List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
+    private final @NotNull DocumentEx myDocument;
 
     RangeMarkerAwareChanger(@NotNull DocumentEx document) {
       myDocument = document;
     }
 
     @Override
-    public void prepare(@NotNull List<ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context) {
+    public void prepare(@NotNull List<? extends ArrangementEntryWrapper<E>> toArrange, @NotNull Context<E> context) {
       myWrappers.clear();
       myWrappers.addAll(toArrange);
       for (ArrangementEntryWrapper<E> wrapper : toArrange) {
@@ -786,7 +826,6 @@ public class ArrangementEngine {
       }
     }
 
-    @SuppressWarnings("AssignmentToForLoopParameter")
     @Override
     public void replace(@NotNull ArrangementEntryWrapper<E> newWrapper,
                         @NotNull ArrangementEntryWrapper<E> oldWrapper,
@@ -845,7 +884,7 @@ public class ArrangementEngine {
       updateAllWrapperRanges(parentWrapper, lineFeedsDiff);
     }
 
-    protected void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
+    private void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
       // Update wrapper ranges.
       if (lineFeedsDiff == 0 || parentWrapper == null) {
         return;

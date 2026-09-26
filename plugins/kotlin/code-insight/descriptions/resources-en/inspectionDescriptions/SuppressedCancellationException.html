@@ -1,0 +1,54 @@
+<html>
+<body>
+Reports <code>catch</code> clauses and <code>runCatching</code> calls that could suppress a <code>CancellationException</code>.
+<p>
+    Cancellation in coroutines is cooperative. A cancellation is propagated by a CancellationException.
+    Catching it without re-throwing it, keeps the coroutine running after it was canceled.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+    suspend fun load(): Data? = try {
+        fetch()
+    } catch (e: Exception) {
+        null
+    }
+</code></pre>
+<p>Call <code>ensureActive()</code> to re-throw the cancellation before handling the failure:</p>
+<pre><code>
+    suspend fun load(): Data? = try {
+        fetch()
+    } catch (e: Exception) {
+        if (e is CancellationException) currentCoroutineContext().ensureActive()
+        null
+    }
+</code></pre>
+<p>Alternatively, catch <code>CancellationException</code> separately and re-throw it:</p>
+<pre><code>
+    suspend fun load(): Data? = try {
+        fetch()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
+    }
+</code></pre>
+<p>The same applies to <code>runCatching</code>, which also catches <code>CancellationException</code>:</p>
+<pre><code>
+    suspend fun load(): Data? = runCatching { fetch() }.getOrNull()
+</code></pre>
+<p>Add an <code>onFailure</code> link to the chain to re-throw the cancellation:</p>
+<pre><code>
+    suspend fun load(): Data? = runCatching { fetch() }
+        .onFailure { if (it is CancellationException) currentCoroutineContext().ensureActive() }
+        .getOrNull()
+</code></pre>
+<p>Calling <code>ensureActive()</code> after the call works as well:</p>
+<pre><code>
+    suspend fun load(): Data? {
+        val result = runCatching { fetch() }.getOrNull()
+        currentCoroutineContext().ensureActive()
+        return result
+    }
+</code></pre>
+</body>
+</html>

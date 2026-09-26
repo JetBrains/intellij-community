@@ -1,0 +1,132 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.ktor.client.core",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@kmp_deps//:io_ktor_ktor_client_core",
+        "@kmp_deps//:io_ktor_ktor_events",
+        "@kmp_deps//:io_ktor_ktor_http",
+        "@kmp_deps//:io_ktor_ktor_http_cio",
+        "@kmp_deps//:io_ktor_ktor_io",
+        "@kmp_deps//:io_ktor_ktor_serialization",
+        "@kmp_deps//:io_ktor_ktor_sse",
+        "@kmp_deps//:io_ktor_ktor_utils",
+        "@kmp_deps//:io_ktor_ktor_websocket_serialization",
+        "@kmp_deps//:io_ktor_ktor_websockets",
+    ],
+    deps = [
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+    ],
+)
+
+### auto-generated section `build fleet.ktor.client.core` start
+create_kotlinc_options(
+    name = "custom_core",
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "core",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "fleet.ktor.client.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:fleet-io-ktor-client-core",
+        "@lib//:fleet-io-ktor-events",
+        "@lib//:fleet-io-ktor-http",
+        "@lib//:fleet-io-ktor-io",
+        "@lib//:fleet-io-ktor-network",
+        "@lib//:fleet-io-ktor-serialization",
+        "@lib//:fleet-io-ktor-sse",
+        "@lib//:fleet-io-ktor-utils",
+        "@lib//:fleet-io-ktor-websocket-serialization",
+        "@lib//:fleet-io-ktor-websockets",
+        "@lib//:fleet-io-ktor-http-cio",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:fleet-io-ktor-client-core",
+        "@lib//:fleet-io-ktor-events",
+        "@lib//:fleet-io-ktor-http",
+        "@lib//:fleet-io-ktor-io",
+        "@lib//:fleet-io-ktor-network",
+        "@lib//:fleet-io-ktor-serialization",
+        "@lib//:fleet-io-ktor-sse",
+        "@lib//:fleet-io-ktor-utils",
+        "@lib//:fleet-io-ktor-websocket-serialization",
+        "@lib//:fleet-io-ktor-websockets",
+        "@lib//:fleet-io-ktor-http-cio",
+        "//libraries/jetbrains/annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/slf4j",
+        "//libraries/io",
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:slf4j-api",
+    ],
+)
+
+jvm_library(
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_core",
+    module_name = "fleet.ktor.client.core",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:fleet-io-ktor-client-core",
+        "@lib//:fleet-io-ktor-events",
+        "@lib//:fleet-io-ktor-http",
+        "@lib//:fleet-io-ktor-io",
+        "@lib//:fleet-io-ktor-network",
+        "@lib//:fleet-io-ktor-serialization",
+        "@lib//:fleet-io-ktor-sse",
+        "@lib//:fleet-io-ktor-utils",
+        "@lib//:fleet-io-ktor-websocket-serialization",
+        "@lib//:fleet-io-ktor-websockets",
+        "@lib//:fleet-io-ktor-http-cio",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
+        "//libraries/io:io_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
+)
+### auto-generated section `build fleet.ktor.client.core` end
+
+### auto-generated section `iml fleet.ktor.client.core` start
+exports_files(
+    [
+        "fleet.ktor.client.core.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.ktor.client.core` end

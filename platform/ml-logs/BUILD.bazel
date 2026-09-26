@@ -1,0 +1,64 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.ml.logs` start
+jvm_library(
+    name = "ml-logs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml.logs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//libraries/mlapi/core"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/statistics",
+        "//libraries/jetbrains/annotations",
+        "//libraries/mlapi/core",
+    ],
+)
+
+jvm_library(
+    name = "ml-logs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ml.logs",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//libraries/mlapi/core",
+        "//libraries/mlapi/core:core_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":ml-logs",
+        "//platform/util:util_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/mlapi/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ml.logs` end
+
+### auto-generated section `iml intellij.platform.ml.logs` start
+exports_files(
+    [
+        "intellij.platform.ml.logs.iml",
+        "resources/intellij.platform.ml.logs.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ml.logs` end

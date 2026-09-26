@@ -1,0 +1,1189 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl.marker
+
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.Processor
+import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.Java11Shim
+import org.jetbrains.annotations.TestOnly
+import java.util.ArrayDeque
+import java.util.NoSuchElementException
+import java.util.function.LongConsumer
+
+/**
+ * Immutable persistent marker root backed by an AVL tree keyed by `(startOffset, markerId)`.
+ *
+ * Marker IDs are stable logical node identities. [states] is a persistent radix map, so different roots can store
+ * different node contents for the same marker ID. Each valid node stores its own parent ID, which allows a marker to be
+ * resolved by ID even when an ancestor subtree carries an unpushed lazy offset delta.
+ *
+ * Equal start offsets are supported. If an edit collapses differently ordered starts to one offset and therefore
+ * violates marker-ID tie ordering, the affected middle part is sorted before it is rebuilt as a balanced AVL tree.
+ */
+open class PMarkerRootImpl private constructor(
+  private val rootId: Long,
+  private val states: PersistentLongMap<StoredNode>,
+  /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
+  private val persistentMarkerCount: Int,
+) : PMarkerRoot {
+  private val cachedDelta: ConcurrentLongObjectMap<Int> = Java11Shim.createConcurrentLongObjectMap()
+
+  override fun emptyRoot(): PMarkerRootImpl = empty()
+
+  override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
+    return when (val state = states.getUnchecked(markerId)) {
+      null -> PMarkerResolution.Absent(absentRange.startOffset, absentRange.endOffset)
+      is AbsentNode -> PMarkerResolution.Absent(state.startOffset, state.endOffset)
+      is InvalidNode -> PMarkerResolution.Invalid(
+        state.reason,
+        state.startOffset,
+        state.endOffset,
+      )
+      is ValidNode -> {
+        val ancestorDelta = ancestorDelta(state, markerId)
+        PMarkerResolution.Valid(state.entry.nodeStart + ancestorDelta, state.entry.nodeEnd + ancestorDelta)
+      }
+    }
+  }
+
+  override fun insert(
+    markerId: Long,
+    startOffset: Int,
+    endOffset: Int,
+    spec: MarkerSpec,
+    flavorFlags: Byte,
+    markerReference: SnapshotMarkerReference?,
+    measure: Int,
+  ): PMarkerRoot {
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
+    val existingState = states.getUnchecked(markerId)
+    require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
+
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    editor.putValid(
+      markerId,
+      ValidNode(
+        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
+        parentId = NULL_NODE,
+        leftId = NULL_NODE,
+        rightId = NULL_NODE,
+        height = 1,
+        maximumEndOffset = endOffset,
+        lazyOffsetDelta = 0,
+        subtreeFlavorFlags = flavorFlags,
+        subtreeAggregate = measure,
+      )
+    )
+
+    val newRoot = insertAvl(editor, rootId, markerId)
+    editor.setParent(newRoot, NULL_NODE)
+    return PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
+  }
+
+  override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
+    if (state.entry.flavorFlags == flavorFlags) return this
+
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    editor.putValid(markerId, state.copy(entry = state.entry.copy(flavorFlags = flavorFlags)))
+    var currentId = markerId
+    while (currentId != NULL_NODE) {
+      val node = editor.valid(currentId)
+      val updatedFlavorFlags = subtreeFlavorFlags(editor, node.entry, node.leftId, node.rightId)
+      if (updatedFlavorFlags != node.subtreeFlavorFlags) {
+        editor.putValid(currentId, node.copy(subtreeFlavorFlags = updatedFlavorFlags))
+      }
+      currentId = node.parentId
+    }
+    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
+  }
+
+  override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
+    return PMarkerRootImpl(
+      rootId,
+      states.put(markerId, state.copy(entry = state.entry.copy(spec = spec))),
+      incrementPersistentMarkerCount(
+        decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
+        spec.policy,
+      ),
+    )
+  }
+
+  override fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot {
+    val state = states.getUnchecked(markerId) as? ValidNode ?: return this
+    if (state.entry.measure == measure) return this
+
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    editor.putValid(markerId, state.copy(entry = state.entry.copy(measure = measure)))
+    var currentId = markerId
+    while (currentId != NULL_NODE) {
+      val node = editor.valid(currentId)
+      val updatedAggregate = subtreeAggregate(editor, node.entry, node.leftId, node.rightId)
+      if (updatedAggregate != node.subtreeAggregate) {
+        editor.putValid(currentId, node.copy(subtreeAggregate = updatedAggregate))
+      }
+      currentId = node.parentId
+    }
+    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
+  }
+
+  override fun remove(markerId: Long): PMarkerRoot {
+    return when (val state = states.getUnchecked(markerId)) {
+      null -> this
+      is AbsentNode -> this
+      is InvalidNode -> PMarkerRootImpl(
+        rootId,
+        states.put(markerId, AbsentNode(state.startOffset, state.endOffset)),
+        persistentMarkerCount,
+      )
+      is ValidNode -> {
+        val offsetDelta = ancestorDelta(state, markerId)
+        val startOffset = state.entry.nodeStart + offsetDelta
+        val endOffset = state.entry.nodeEnd + offsetDelta
+        val key = PositionKey(startOffset, markerId)
+        val editor = MapBatchEditor(states, persistentMarkerCount)
+        val newRoot = removeByKey(editor, rootId, key)
+        editor.putAbsent(markerId, startOffset, endOffset)
+        editor.setParent(newRoot, NULL_NODE)
+        PMarkerRootImpl(
+          newRoot,
+          editor.build(),
+          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
+        )
+      }
+    }
+  }
+
+  override fun purge(markerId: Long): PMarkerRoot {
+    return when (val state = states.getUnchecked(markerId)) {
+      null -> this
+      is AbsentNode, is InvalidNode -> PMarkerRootImpl(rootId, states.remove(markerId), persistentMarkerCount)
+      is ValidNode -> {
+        val startOffset = state.entry.nodeStart + ancestorDelta(state, markerId)
+        val editor = MapBatchEditor(states, persistentMarkerCount)
+        val newRoot = removeByKey(editor, rootId, PositionKey(startOffset, markerId))
+        editor.remove(markerId)
+        editor.setParent(newRoot, NULL_NODE)
+        PMarkerRootImpl(
+          newRoot,
+          editor.build(),
+          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
+        )
+      }
+    }
+  }
+
+  @TestOnly
+  fun containsMarkerId(markerId: Long): Boolean = states.getUnchecked(markerId) != null
+
+  override fun applyPatch(
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+    invalidatedMarkerConsumer: LongConsumer,
+    affectedMarkerConsumer: LongConsumer,
+  ): PMarkerRoot {
+    validatePatch(patch, beforeText, afterText)
+    val editStart = patch.startOffset()
+    val editEnd = patch.endOffset()
+    val oldLength = editEnd - editStart
+    val newLength = patch.newFragment().length
+    if (oldLength == 0 && newLength == 0 || rootId == NULL_NODE) return this
+    if (persistentMarkerCount > 0 && PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)) {
+      return applyPatchWithFullTraversal(patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+    }
+
+    val delta = newLength - oldLength
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+
+    val (before, fromEditStart) = splitByStart(editor, rootId, editStart, equalGoesLeft = false)
+    val (middle, after) = splitByStart(editor, fromEditStart, editEnd, equalGoesLeft = true)
+
+    val updatedBefore = updateMarkersStartingBeforeEdit(
+      editor, before, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
+    )
+    val middleEntries = ArrayList<MarkerEntry>()
+    collectEntries(editor, middle, 0, middleEntries)
+
+    val transformedMiddle = ArrayList<MarkerEntry>(middleEntries.size)
+    for (entry in middleEntries) {
+      val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+      if (update.errorReason == null) {
+        transformedMiddle.add(update.entry)
+      }
+      else {
+        editor.putInvalid(update.entry, update.errorReason)
+      }
+    }
+
+    if (!isSortedByPosition(transformedMiddle)) transformedMiddle.sortWith(ENTRY_COMPARATOR)
+
+    val rebuiltMiddle = buildBalanced(editor, transformedMiddle)
+    val shiftedAfter = shift(editor, after, delta)
+
+    var newRoot = joinDisjoint(editor, updatedBefore, rebuiltMiddle)
+    newRoot = joinDisjoint(editor, newRoot, shiftedAfter)
+    if (oldLength == 0 && patch.moveOffset() != editStart) {
+      // The regular insertion update has already shifted the source range. Retarget its contained markers to the
+      // inserted copy before the deletion half of moveText is applied.
+      val moveStart = patch.moveOffset()
+      val moveEnd = moveStart + newLength
+      newRoot = retargetContainedMarkers(
+        editor, newRoot, moveStart, moveEnd, editStart - moveStart, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
+      )
+    }
+    editor.setParent(newRoot, NULL_NODE)
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+  }
+
+  private fun applyPatchWithFullTraversal(
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+    invalidatedMarkerConsumer: LongConsumer,
+    affectedMarkerConsumer: LongConsumer,
+  ): PMarkerRoot {
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    val entries = ArrayList<MarkerEntry>()
+    collectEntries(editor, rootId, 0, entries)
+
+    val transformedEntries = ArrayList<MarkerEntry>(entries.size)
+    for (entry in entries) {
+      val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+      if (update.errorReason == null) {
+        transformedEntries.add(update.entry)
+      }
+      else {
+        editor.putInvalid(update.entry, update.errorReason)
+      }
+    }
+    if (!isSortedByPosition(transformedEntries)) transformedEntries.sortWith(ENTRY_COMPARATOR)
+
+    var newRoot = buildBalanced(editor, transformedEntries)
+    val oldLength = patch.endOffset() - patch.startOffset()
+    if (oldLength == 0 && patch.moveOffset() != patch.startOffset()) {
+      val moveStart = patch.moveOffset()
+      val moveEnd = moveStart + patch.newFragment().length
+      newRoot = retargetContainedMarkers(
+        editor, newRoot, moveStart, moveEnd, patch.startOffset() - moveStart, afterText,
+        invalidatedMarkerConsumer, affectedMarkerConsumer
+      )
+    }
+    editor.setParent(newRoot, NULL_NODE)
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+  }
+
+  /**
+   * Keeps this branch's marker states and adds valid markers that exist only in [other].
+   *
+   * Invalid or removed markers that exist only in [other] remain absent, which preserves their invalidity while this
+   * branch stays authoritative for every marker ID it has already observed.
+   */
+  override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRootImpl {
+    other as PMarkerRootImpl
+    if (other.rootId == NULL_NODE) return this
+
+    val otherEntries = ArrayList<MarkerEntry>()
+    collectEntries(MapBatchEditor(other.states, other.persistentMarkerCount), other.rootId, 0, otherEntries)
+    val missingEntries = otherEntries.filter { states.getUnchecked(it.markerId) == null }
+    if (missingEntries.isEmpty()) return this
+
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    var mergedRootId = rootId
+    for (entry in missingEntries) {
+      editor.putValid(
+        entry.markerId,
+        ValidNode(
+          entry = entry,
+          parentId = NULL_NODE,
+          leftId = NULL_NODE,
+          rightId = NULL_NODE,
+          height = 1,
+          maximumEndOffset = entry.nodeEnd,
+          lazyOffsetDelta = 0,
+          subtreeFlavorFlags = entry.flavorFlags,
+          subtreeAggregate = entry.measure,
+        )
+      )
+      editor.addPolicy(entry.spec.policy)
+      mergedRootId = insertAvl(editor, mergedRootId, entry.markerId)
+    }
+    editor.setParent(mergedRootId, NULL_NODE)
+    return PMarkerRootImpl(mergedRootId, editor.build(), editor.persistentMarkerCount())
+  }
+
+  /**
+   * Reports IDs of valid markers that non-strictly intersect `[startOffset, endOffset]`.
+   *
+   * This implementation uses a start-ordered tree augmented with subtree maximum ends. It is output-sensitive in
+   * typical cases, but unlike a priority-search tree it does not guarantee worst-case `O(log n + k)` reporting.
+   */
+  override fun processRangeMarkersOverlappingWith(
+    startOffset: Int,
+    endOffset: Int,
+    tastePreference: Int,
+    processor: Processor<in MarkerEntry>,
+  ): Boolean {
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
+    return processRangeMarkersOverlappingWith(
+      rootId,
+      ancestorDelta = 0,
+      queryStart = startOffset,
+      queryEnd = endOffset,
+      requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS,
+      processor = processor,
+    )
+  }
+
+  override fun getPrefixAggregate(offset: Int): Int {
+    if (rootId == NULL_NODE) return 0
+    val root = states.getUnchecked(rootId) as ValidNode
+    if (offset >= root.maximumEndOffset) return root.subtreeAggregate
+
+    var prefixAggregate = 0
+    var nodeId = rootId
+    var ancestorDelta = 0
+    while (nodeId != NULL_NODE) {
+      val node = states.getUnchecked(nodeId) as ValidNode
+      val startOffset = node.entry.nodeStart + ancestorDelta
+      val childDelta = ancestorDelta + node.lazyOffsetDelta
+      if (startOffset <= offset) {
+        prefixAggregate += subtreeAggregate(node.leftId) + node.entry.measure
+        nodeId = node.rightId
+      }
+      else {
+        nodeId = node.leftId
+      }
+      ancestorDelta = childDelta
+    }
+    return prefixAggregate
+  }
+
+  override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
+    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
+    val requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS
+
+    return object : Iterator<MarkerEntry> {
+      private val stack = ArrayDeque<TraversalFrame>()
+      private var nextEntry: MarkerEntry? = null
+
+      init {
+        pushLeft(rootId, initialAncestorDelta = 0)
+      }
+
+      override fun hasNext(): Boolean {
+        if (nextEntry == null) nextEntry = findNext()
+        return nextEntry != null
+      }
+
+      override fun next(): MarkerEntry {
+        if (!hasNext()) throw NoSuchElementException()
+        val result = nextEntry!!
+        nextEntry = null
+        return result
+      }
+
+      private fun findNext(): MarkerEntry? {
+        while (stack.isNotEmpty()) {
+          val (node, ancestorDelta) = stack.removeLast()
+          val childDelta = ancestorDelta + node.lazyOffsetDelta
+          pushLeft(node.rightId, childDelta)
+
+          val start = node.entry.nodeStart + ancestorDelta
+          val end = node.entry.nodeEnd + ancestorDelta
+          if (end >= startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
+            return if (ancestorDelta == 0) node.entry else node.entry.copy(nodeStart = start, nodeEnd = end)
+          }
+        }
+        return null
+      }
+
+      private fun pushLeft(initialNodeId: Long, initialAncestorDelta: Int) {
+        var nodeId = initialNodeId
+        var ancestorDelta = initialAncestorDelta
+        while (nodeId != NULL_NODE) {
+          val node = states.getUnchecked(nodeId) as ValidNode
+          if (!containsAllFlavorFlags(node.subtreeFlavorFlags, requiredFlavorFlags) ||
+              node.maximumEndOffset + ancestorDelta < startOffset) {
+            return
+          }
+
+          val childDelta = ancestorDelta + node.lazyOffsetDelta
+          if (node.entry.nodeStart + ancestorDelta <= endOffset) {
+            stack.addLast(TraversalFrame(node, ancestorDelta))
+          }
+          nodeId = node.leftId
+          ancestorDelta = childDelta
+        }
+      }
+    }
+  }
+
+  private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
+    return cachedDelta.computeIfAbsent(markerId) {
+      var result = 0
+      var parentId = state.parentId
+
+      while (parentId != NULL_NODE) {
+        val parent = states.getUnchecked(parentId) as? ValidNode
+                     ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
+        result += parent.lazyOffsetDelta
+        parentId = parent.parentId
+      }
+      result
+    }
+  }
+
+  private fun subtreeAggregate(markerId: Long): Int =
+    if (markerId == NULL_NODE) 0 else (states.getUnchecked(markerId) as ValidNode).subtreeAggregate
+
+  private fun processRangeMarkersOverlappingWith(
+    nodeId: Long,
+    ancestorDelta: Int,
+    queryStart: Int,
+    queryEnd: Int,
+    requiredFlavorFlags: Int,
+    processor: Processor<in MarkerEntry>,
+  ): Boolean {
+    if (nodeId == NULL_NODE) {
+      return true
+    }
+    val node = states.getUnchecked(nodeId) as ValidNode
+    if (!containsAllFlavorFlags(node.subtreeFlavorFlags, requiredFlavorFlags)) {
+      return true
+    }
+    if (node.maximumEndOffset + ancestorDelta < queryStart) {
+      return true
+    }
+
+    val childDelta = ancestorDelta + node.lazyOffsetDelta
+    if (!processRangeMarkersOverlappingWith(
+        node.leftId,
+        childDelta,
+        queryStart,
+        queryEnd,
+        requiredFlavorFlags,
+        processor,
+      )) {
+      return false
+    }
+
+    val start = node.entry.nodeStart + ancestorDelta
+    val end = node.entry.nodeEnd + ancestorDelta
+    if (start <= queryEnd && end >= queryStart && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
+      if (!processor.process(node.entry)) {
+        return false
+      }
+    }
+    if (start <= queryEnd) {
+      if (!processRangeMarkersOverlappingWith(
+          node.rightId,
+          childDelta,
+          queryStart,
+          queryEnd,
+          requiredFlavorFlags,
+          processor,
+        )) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private sealed interface StoredNode
+
+  private data class TraversalFrame(val node: ValidNode, val ancestorDelta: Int)
+
+  /**
+   * Stores one valid [entry] and the AVL links [parentId], [leftId], and [rightId].
+   *
+   * It caches [height], [maximumEndOffset], [subtreeFlavorFlags], and [subtreeAggregate].
+   * The offsets in [entry] and [maximumEndOffset] do not include pending shifts from ancestors.
+   * Readers add those shifts during traversal.
+   * [lazyOffsetDelta] is already included in both values and applies to the child subtrees.
+   */
+  private data class ValidNode(
+    /** Stores the marker state at this node. */
+    val entry: MarkerEntry,
+
+    /** Identifies the parent node, or [NULL_NODE] for the tree root. */
+    val parentId: Long,
+
+    /** Identifies the left child, or [NULL_NODE] when no left child exists. */
+    val leftId: Long,
+
+    /** Identifies the right child, or [NULL_NODE] when no right child exists. */
+    val rightId: Long,
+
+    /** Stores the AVL subtree height, including this node. */
+    val height: Int,
+
+    /** Stores the maximum end offset in this subtree, excluding deltas from ancestors. */
+    val maximumEndOffset: Int,
+
+    /** Stores the offset delta that readers must add to both child subtrees. */
+    val lazyOffsetDelta: Int,
+
+    /** Stores the bitwise OR of all flavor flags in this subtree. */
+    val subtreeFlavorFlags: Byte,
+
+    /** Stores the sum of all [MarkerEntry.measure]s in this subtree. */
+    val subtreeAggregate: Int,
+  ) : StoredNode
+
+  private data class InvalidNode(
+    val reason: String,
+    val startOffset: Int,
+    val endOffset: Int,
+  ) : StoredNode
+
+  private data class AbsentNode(
+    val startOffset: Int,
+    val endOffset: Int,
+  ) : StoredNode
+
+  private data class PositionKey(val startOffset: Int, val markerId: Long) : Comparable<PositionKey> {
+    constructor(entry: MarkerEntry) : this(entry.nodeStart, entry.markerId)
+
+    override fun compareTo(other: PositionKey): Int {
+      val byOffset = startOffset.compareTo(other.startOffset)
+      return if (byOffset != 0) byOffset else markerId.compareTo(other.markerId)
+    }
+  }
+
+  private data class ExtractMinimumResult(val rootId: Long, val minimumId: Long)
+
+  private class MapBatchEditor(
+    states: PersistentLongMap<StoredNode>,
+    initialPersistentMarkerCount: Int,
+  ) {
+    private val builder: PersistentLongMapBuilder<StoredNode> = states.builder()
+    private var persistentMarkerCount: Int = initialPersistentMarkerCount
+
+    fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
+                                           ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+
+    fun putValid(markerId: Long, node: ValidNode) {
+      builder.put(markerId, node)
+    }
+
+    fun putInvalid(entry: MarkerEntry, reason: String) {
+      persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, entry.spec.policy)
+      builder.put(
+        entry.markerId,
+        InvalidNode(reason, entry.nodeStart, entry.nodeEnd)
+      )
+    }
+
+    fun putAbsent(
+      markerId: Long,
+      startOffset: Int,
+      endOffset: Int,
+    ) {
+      builder.put(markerId, AbsentNode(startOffset, endOffset))
+    }
+
+    fun remove(markerId: Long) {
+      builder.remove(markerId)
+    }
+
+    fun replacePolicy(oldPolicy: MarkerPolicy, newPolicy: MarkerPolicy) {
+      if (oldPolicy === newPolicy) return
+      persistentMarkerCount = incrementPersistentMarkerCount(
+        decrementPersistentMarkerCount(persistentMarkerCount, oldPolicy),
+        newPolicy,
+      )
+    }
+
+    fun addPolicy(policy: MarkerPolicy) {
+      persistentMarkerCount = incrementPersistentMarkerCount(persistentMarkerCount, policy)
+    }
+
+    fun setParent(markerId: Long, parentId: Long) {
+      if (markerId == NULL_NODE) return
+      val node = valid(markerId)
+      if (node.parentId != parentId) putValid(markerId, node.copy(parentId = parentId))
+    }
+
+    fun build(): PersistentLongMap<StoredNode> = builder.build()
+
+    fun persistentMarkerCount(): Int = persistentMarkerCount
+  }
+
+  companion object {
+    private const val ALL_FLAVOR_FLAGS: Int = 0xFF
+
+    private val ENTRY_COMPARATOR: Comparator<MarkerEntry> = Comparator { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
+    private const val NULL_NODE: Long = 0
+    private object EMPTY : PMarkerRootImpl(
+      NULL_NODE,
+      PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64),
+      0,
+    ) {
+      override fun toString(): String = "EMPTY"
+    }
+
+    fun empty(): PMarkerRootImpl = EMPTY
+
+    private fun validatePatch(patch: DocumentTextPatch, beforeText: DocumentText, afterText: DocumentText) {
+      val startOffset = patch.startOffset()
+      val endOffset = patch.endOffset()
+      val newLength = patch.newFragment().length
+      require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
+      require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
+      require(endOffset <= beforeText.length()) { "DocumentTextPatch range exceeds source text length: $endOffset > ${beforeText.length()}" }
+      require(afterText.length().toLong() == beforeText.length().toLong() - (endOffset - startOffset) + newLength) {
+        "DocumentTextPatch is inconsistent with the target text length"
+      }
+      require(startOffset <= Int.MAX_VALUE - newLength) { "DocumentTextPatch new range overflows Int: startOffset=$startOffset, newLength=$newLength" }
+      require(patch.moveOffset() >= 0) { "DocumentTextPatch moveOffset must be non-negative but got: $patch" }
+      require(patch.moveOffset() <= Int.MAX_VALUE - newLength) { "DocumentTextPatch move range overflows Int: $patch" }
+    }
+
+    private fun incrementPersistentMarkerCount(
+      count: Int,
+      policy: MarkerPolicy,
+    ): Int {
+      return if (policy.isPersistent) count + 1 else count
+    }
+
+    private fun decrementPersistentMarkerCount(
+      count: Int,
+      policy: MarkerPolicy,
+    ): Int {
+      return if (policy.isPersistent) count - 1 else count
+    }
+
+    private fun key(markerId: Long, node: ValidNode): PositionKey = PositionKey(node.entry.nodeStart, markerId)
+
+    private fun height(editor: MapBatchEditor, markerId: Long): Int = if (markerId != NULL_NODE) editor.valid(markerId).height else 0
+
+    private fun containsAllFlavorFlags(flavorFlags: Byte, requiredFlavorFlags: Int): Boolean =
+      (flavorFlags.toInt() and requiredFlavorFlags) == requiredFlavorFlags
+
+    private fun subtreeFlavorFlags(editor: MapBatchEditor, markerId: Long): Int =
+      if (markerId == NULL_NODE) 0 else editor.valid(markerId).subtreeFlavorFlags.toInt()
+
+    private fun subtreeFlavorFlags(editor: MapBatchEditor, entry: MarkerEntry, leftId: Long, rightId: Long): Byte =
+      (entry.flavorFlags.toInt() or subtreeFlavorFlags(editor, leftId) or subtreeFlavorFlags(editor, rightId)).toByte()
+
+    private fun subtreeAggregate(editor: MapBatchEditor, markerId: Long): Int =
+      if (markerId == NULL_NODE) 0 else editor.valid(markerId).subtreeAggregate
+
+    private fun subtreeAggregate(editor: MapBatchEditor, entry: MarkerEntry, leftId: Long, rightId: Long): Int =
+      entry.measure + subtreeAggregate(editor, leftId) + subtreeAggregate(editor, rightId)
+
+    private fun balanceFactor(editor: MapBatchEditor, node: ValidNode): Int {
+      return height(editor, node.leftId) - height(editor, node.rightId)
+    }
+
+    private fun shift(editor: MapBatchEditor, nodeId: Long, delta: Int): Long {
+      if (nodeId == NULL_NODE || delta == 0) return nodeId
+      val node = editor.valid(nodeId)
+      editor.putValid(
+        nodeId,
+        node.copy(
+          entry = node.entry.copy(
+            nodeStart = node.entry.nodeStart + delta,
+            nodeEnd = node.entry.nodeEnd + delta,
+          ),
+          maximumEndOffset = node.maximumEndOffset + delta,
+          lazyOffsetDelta = node.lazyOffsetDelta + delta
+        )
+      )
+      return nodeId
+    }
+
+    private fun push(editor: MapBatchEditor, nodeId: Long): ValidNode {
+      val node = editor.valid(nodeId)
+      val delta = node.lazyOffsetDelta
+      if (delta == 0) return node
+
+      shift(editor, node.leftId, delta)
+      shift(editor, node.rightId, delta)
+      val updated = node.copy(lazyOffsetDelta = 0)
+      editor.putValid(nodeId, updated)
+      return updated
+    }
+
+    private fun rewrite(
+      editor: MapBatchEditor,
+      markerId: Long,
+      node: ValidNode,
+      parentId: Long,
+      leftId: Long,
+      rightId: Long,
+      entry: MarkerEntry = node.entry,
+    ): ValidNode {
+      check(node.lazyOffsetDelta == 0) { "Node $markerId must be pushed before it is rewritten" }
+      val updated = node.copy(
+        entry = entry,
+        parentId = parentId,
+        leftId = leftId,
+        rightId = rightId,
+        height = maxOf(height(editor, leftId), height(editor, rightId)) + 1,
+        maximumEndOffset = maxOf(
+          entry.nodeEnd,
+          if (leftId != NULL_NODE) editor.valid(leftId).maximumEndOffset else Int.MIN_VALUE,
+          if (rightId != NULL_NODE) editor.valid(rightId).maximumEndOffset else Int.MIN_VALUE
+        ),
+        lazyOffsetDelta = 0,
+        subtreeFlavorFlags = subtreeFlavorFlags(editor, entry, leftId, rightId),
+        subtreeAggregate = subtreeAggregate(editor, entry, leftId, rightId),
+      )
+      if (updated != node) editor.putValid(markerId, updated)
+      editor.setParent(leftId, markerId)
+      editor.setParent(rightId, markerId)
+      return updated
+    }
+
+    private fun detachAsLeaf(editor: MapBatchEditor, markerId: Long): ValidNode {
+      val node = push(editor, markerId)
+      editor.setParent(node.leftId, NULL_NODE)
+      editor.setParent(node.rightId, NULL_NODE)
+      return rewrite(editor, markerId, node, NULL_NODE, NULL_NODE, NULL_NODE)
+    }
+
+    private fun rotateLeft(editor: MapBatchEditor, rootId: Long): Long {
+      val root = push(editor, rootId)
+      val rightId = checkNotNull(root.rightId) { "Cannot rotate node $rootId left without a right child" }
+      val right = push(editor, rightId)
+      val parentId = root.parentId
+      val middleId = right.leftId
+
+      rewrite(editor, rootId, root, rightId, root.leftId, middleId)
+      rewrite(editor, rightId, right, parentId, rootId, right.rightId)
+      return rightId
+    }
+
+    private fun rotateRight(editor: MapBatchEditor, rootId: Long): Long {
+      val root = push(editor, rootId)
+      val leftId = checkNotNull(root.leftId) { "Cannot rotate node $rootId right without a left child" }
+      val left = push(editor, leftId)
+      val parentId = root.parentId
+      val middleId = left.rightId
+
+      rewrite(editor, rootId, root, leftId, middleId, root.rightId)
+      rewrite(editor, leftId, left, parentId, left.leftId, rootId)
+      return leftId
+    }
+
+    private fun rebalance(editor: MapBatchEditor, rootId: Long): Long {
+      var root = push(editor, rootId)
+      val factor = balanceFactor(editor, root)
+
+      if (factor > 1) {
+        val leftId = checkNotNull(root.leftId)
+        val left = push(editor, leftId)
+        if (balanceFactor(editor, left) < 0) {
+          val newLeft = rotateLeft(editor, leftId)
+          root = push(editor, rootId)
+          rewrite(editor, rootId, root, root.parentId, newLeft, root.rightId)
+        }
+        return rotateRight(editor, rootId)
+      }
+
+      if (factor < -1) {
+        val rightId = checkNotNull(root.rightId)
+        val right = push(editor, rightId)
+        if (balanceFactor(editor, right) > 0) {
+          val newRight = rotateRight(editor, rightId)
+          root = push(editor, rootId)
+          rewrite(editor, rootId, root, root.parentId, root.leftId, newRight)
+        }
+        return rotateLeft(editor, rootId)
+      }
+
+      return rootId
+    }
+
+    private fun insertAvl(editor: MapBatchEditor, rootId: Long, markerId: Long): Long {
+      if (rootId == NULL_NODE) return markerId
+
+      val root = push(editor, rootId)
+      val inserted = editor.valid(markerId)
+      if (key(markerId, inserted) < key(rootId, root)) {
+        val newLeft = insertAvl(editor, root.leftId, markerId)
+        rewrite(editor, rootId, root, root.parentId, newLeft, root.rightId)
+      }
+      else {
+        val newRight = insertAvl(editor, root.rightId, markerId)
+        rewrite(editor, rootId, root, root.parentId, root.leftId, newRight)
+      }
+      return rebalance(editor, rootId)
+    }
+
+    private fun removeByKey(editor: MapBatchEditor, rootId: Long, target: PositionKey): Long {
+      if (rootId == NULL_NODE) return NULL_NODE
+      val root = push(editor, rootId)
+      val comparison = target.compareTo(key(rootId, root))
+
+      if (comparison < 0) {
+        val newLeft = removeByKey(editor, root.leftId, target)
+        rewrite(editor, rootId, root, root.parentId, newLeft, root.rightId)
+        return rebalance(editor, rootId)
+      }
+
+      if (comparison > 0) {
+        val newRight = removeByKey(editor, root.rightId, target)
+        rewrite(editor, rootId, root, root.parentId, root.leftId, newRight)
+        return rebalance(editor, rootId)
+      }
+
+      val parentId = root.parentId
+      if (root.leftId == NULL_NODE) {
+        editor.setParent(root.rightId, parentId)
+        return root.rightId
+      }
+      if (root.rightId == NULL_NODE) {
+        editor.setParent(root.leftId, parentId)
+        return root.leftId
+      }
+
+      val extracted = extractMinimum(editor, root.rightId)
+      val successor = push(editor, extracted.minimumId)
+      rewrite(editor, extracted.minimumId, successor, parentId, root.leftId, extracted.rootId)
+      return rebalance(editor, extracted.minimumId)
+    }
+
+    private fun extractMinimum(editor: MapBatchEditor, rootId: Long): ExtractMinimumResult {
+      val root = push(editor, rootId)
+      if (root.leftId == NULL_NODE) {
+        val remainingRoot = root.rightId
+        editor.setParent(remainingRoot, root.parentId)
+        rewrite(editor, rootId, root, NULL_NODE, NULL_NODE, NULL_NODE)
+        return ExtractMinimumResult(remainingRoot, rootId)
+      }
+
+      val extracted = extractMinimum(editor, root.leftId)
+      rewrite(editor, rootId, root, root.parentId, extracted.rootId, root.rightId)
+      return ExtractMinimumResult(rebalance(editor, rootId), extracted.minimumId)
+    }
+
+    private fun checkNotNull(id: Long): Long {
+      check(id != NULL_NODE)
+      return id
+    }
+
+    private fun joinPrepared(editor: MapBatchEditor, leftId: Long, pivotId: Long, rightId: Long): Long {
+      val leftHeight = height(editor, leftId)
+      val rightHeight = height(editor, rightId)
+
+      if (leftHeight <= rightHeight + 1 && rightHeight <= leftHeight + 1) {
+        val pivot = push(editor, pivotId)
+        rewrite(editor, pivotId, pivot, NULL_NODE, leftId, rightId)
+        return pivotId
+      }
+
+      if (leftHeight > rightHeight + 1) {
+        val leftRootId = checkNotNull(leftId)
+        val leftRoot = push(editor, leftRootId)
+        val detachedRight = leftRoot.rightId
+        editor.setParent(detachedRight, NULL_NODE)
+        val joinedRight = joinPrepared(editor, detachedRight, pivotId, rightId)
+        rewrite(editor, leftRootId, leftRoot, NULL_NODE, leftRoot.leftId, joinedRight)
+        val result = rebalance(editor, leftRootId)
+        editor.setParent(result, NULL_NODE)
+        return result
+      }
+
+      val rightRootId = checkNotNull(rightId)
+      val rightRoot = push(editor, rightRootId)
+      val detachedLeft = rightRoot.leftId
+      editor.setParent(detachedLeft, NULL_NODE)
+      val joinedLeft = joinPrepared(editor, leftId, pivotId, detachedLeft)
+      rewrite(editor, rightRootId, rightRoot, NULL_NODE, joinedLeft, rightRoot.rightId)
+      val result = rebalance(editor, rightRootId)
+      editor.setParent(result, NULL_NODE)
+      return result
+    }
+
+    private fun joinDisjoint(editor: MapBatchEditor, leftId: Long, rightId: Long): Long {
+      if (leftId == NULL_NODE) {
+        editor.setParent(rightId, NULL_NODE)
+        return rightId
+      }
+      if (rightId == NULL_NODE) {
+        editor.setParent(leftId, NULL_NODE)
+        return leftId
+      }
+
+      editor.setParent(leftId, NULL_NODE)
+      editor.setParent(rightId, NULL_NODE)
+      val extracted = extractMinimum(editor, rightId)
+      val result = joinPrepared(editor, leftId, extracted.minimumId, extracted.rootId)
+      editor.setParent(result, NULL_NODE)
+      return result
+    }
+
+    private fun splitByStart(
+      editor: MapBatchEditor,
+      rootId: Long,
+      boundaryOffset: Int,
+      equalGoesLeft: Boolean,
+    ): Pair<Long, Long> {
+      if (rootId == NULL_NODE) return NULL_NODE to NULL_NODE
+
+      val root = push(editor, rootId)
+      val leftId = root.leftId
+      val rightId = root.rightId
+      val goesLeft = root.entry.nodeStart < boundaryOffset || equalGoesLeft && root.entry.nodeStart == boundaryOffset
+      detachAsLeaf(editor, rootId)
+
+      return if (goesLeft) {
+        val (middle, greater) = splitByStart(editor, rightId, boundaryOffset, equalGoesLeft)
+        val lessOrEqual = joinPrepared(editor, leftId, rootId, middle)
+        editor.setParent(lessOrEqual, NULL_NODE)
+        editor.setParent(greater, NULL_NODE)
+        lessOrEqual to greater
+      }
+      else {
+        val (less, middle) = splitByStart(editor, leftId, boundaryOffset, equalGoesLeft)
+        val greaterOrEqual = joinPrepared(editor, middle, rootId, rightId)
+        editor.setParent(less, NULL_NODE)
+        editor.setParent(greaterOrEqual, NULL_NODE)
+        less to greaterOrEqual
+      }
+    }
+
+    private fun updateMarkersStartingBeforeEdit(
+      editor: MapBatchEditor,
+      rootId: Long,
+      patch: DocumentTextPatch,
+      beforeText: DocumentText,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
+      affectedMarkerConsumer: LongConsumer,
+    ): Long {
+      if (rootId == NULL_NODE) return NULL_NODE
+      val initial = editor.valid(rootId)
+      if (initial.maximumEndOffset < patch.startOffset()) return rootId
+
+      val root = push(editor, rootId)
+      val leftId = root.leftId
+      val rightId = root.rightId
+      val entry = root.entry
+      detachAsLeaf(editor, rootId)
+
+      val newLeft = updateMarkersStartingBeforeEdit(
+        editor, leftId, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
+      )
+      val newRight = updateMarkersStartingBeforeEdit(
+        editor, rightId, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
+      )
+
+      val update = transform(
+        editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
+      )
+      return if (update.errorReason == null) {
+        check(update.entry.nodeStart == entry.nodeStart) {
+          "An edit changed the start of a marker that starts before the edit"
+        }
+        val leaf = editor.valid(rootId)
+        rewrite(editor, rootId, leaf, NULL_NODE, NULL_NODE, NULL_NODE, update.entry)
+        val result = joinPrepared(editor, newLeft, rootId, newRight)
+        editor.setParent(result, NULL_NODE)
+        result
+      }
+      else {
+        editor.putInvalid(update.entry, update.errorReason)
+        val result = joinDisjoint(editor, newLeft, newRight)
+        editor.setParent(result, NULL_NODE)
+        result
+      }
+    }
+
+    private fun collectEntries(
+      editor: MapBatchEditor,
+      rootId: Long,
+      ancestorDelta: Int,
+      destination: MutableList<MarkerEntry>,
+    ) {
+      if (rootId == NULL_NODE) return
+      val node = editor.valid(rootId)
+      val childDelta = ancestorDelta + node.lazyOffsetDelta
+      collectEntries(editor, node.leftId, childDelta, destination)
+      destination.add(node.entry.copy(nodeStart = node.entry.nodeStart + ancestorDelta, nodeEnd = node.entry.nodeEnd + ancestorDelta))
+      collectEntries(editor, node.rightId, childDelta, destination)
+    }
+
+    private fun retargetContainedMarkers(
+      editor: MapBatchEditor,
+      rootId: Long,
+      moveStart: Int,
+      moveEnd: Int,
+      offsetDelta: Int,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
+      affectedMarkerConsumer: LongConsumer,
+    ): Long {
+      val affected = ArrayList<MarkerEntry>()
+      collectContainedEntries(editor, rootId, 0, moveStart, moveEnd, affected)
+
+      var result = rootId
+      for (entry in affected) {
+        result = removeByKey(editor, result, PositionKey(entry))
+        val retargeted = entry.copy(
+          nodeStart = entry.nodeStart + offsetDelta,
+          nodeEnd = entry.nodeEnd + offsetDelta,
+        )
+        val update = afterRetarget(editor, retargeted, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+        if (update.errorReason == null) {
+          val updatedEntry = update.entry
+          editor.putValid(
+            entry.markerId,
+            ValidNode(
+              entry = updatedEntry,
+              parentId = NULL_NODE,
+              leftId = NULL_NODE,
+              rightId = NULL_NODE,
+              height = 1,
+              maximumEndOffset = updatedEntry.nodeEnd,
+              lazyOffsetDelta = 0,
+              subtreeFlavorFlags = updatedEntry.flavorFlags,
+              subtreeAggregate = updatedEntry.measure,
+            )
+          )
+          result = insertAvl(editor, result, entry.markerId)
+        }
+        else {
+          editor.putInvalid(update.entry, update.errorReason)
+        }
+        editor.setParent(result, NULL_NODE)
+      }
+      return result
+    }
+
+    private fun afterRetarget(
+      editor: MapBatchEditor,
+      entry: MarkerEntry,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
+      affectedMarkerConsumer: LongConsumer,
+    ): MarkerTransformResult {
+      return processTransformResult(
+        editor,
+        entry,
+        entry.spec.policy.afterRetarget(entry, afterText),
+        invalidatedMarkerConsumer,
+        affectedMarkerConsumer,
+      )
+    }
+
+    private fun processTransformResult(
+      editor: MapBatchEditor,
+      entry: MarkerEntry,
+      result: MarkerTransformResult,
+      invalidatedMarkerConsumer: LongConsumer,
+      affectedMarkerConsumer: LongConsumer,
+    ): MarkerTransformResult {
+      check(result.entry.markerId == entry.markerId) {
+        "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
+      }
+      if (result.errorReason == null) {
+        editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
+        affectedMarkerConsumer.accept(entry.markerId)
+      }
+      else {
+        invalidatedMarkerConsumer.accept(entry.markerId)
+      }
+      return result
+    }
+
+    private fun collectContainedEntries(
+      editor: MapBatchEditor,
+      rootId: Long,
+      ancestorDelta: Int,
+      startOffset: Int,
+      endOffset: Int,
+      destination: MutableList<MarkerEntry>,
+    ) {
+      if (rootId == NULL_NODE) return
+      val node = editor.valid(rootId)
+      val nodeStart = node.entry.nodeStart + ancestorDelta
+      val childDelta = ancestorDelta + node.lazyOffsetDelta
+
+      if (nodeStart >= startOffset) {
+        collectContainedEntries(editor, node.leftId, childDelta, startOffset, endOffset, destination)
+      }
+      val nodeEnd = node.entry.nodeEnd + ancestorDelta
+      if (nodeStart >= startOffset && nodeEnd <= endOffset) {
+        destination.add(node.entry.copy(nodeStart = nodeStart, nodeEnd = nodeEnd))
+      }
+      if (nodeStart <= endOffset) {
+        collectContainedEntries(editor, node.rightId, childDelta, startOffset, endOffset, destination)
+      }
+    }
+
+    private fun isSortedByPosition(entries: List<MarkerEntry>): Boolean {
+      for (index in 1 until entries.size) {
+        if (PositionKey(entries[index - 1]) > PositionKey(entries[index])) return false
+      }
+      return true
+    }
+
+    private fun buildBalanced(editor: MapBatchEditor, sortedEntries: List<MarkerEntry>): Long {
+      return buildBalanced(editor, sortedEntries, 0, sortedEntries.size, NULL_NODE)
+    }
+
+    private fun buildBalanced(
+      editor: MapBatchEditor,
+      sortedEntries: List<MarkerEntry>,
+      fromIndex: Int,
+      toIndex: Int,
+      parentId: Long,
+    ): Long {
+      if (fromIndex >= toIndex) return NULL_NODE
+      val middleIndex = (fromIndex + toIndex) ushr 1
+      val entry = sortedEntries[middleIndex]
+      val leftId = buildBalanced(editor, sortedEntries, fromIndex, middleIndex, entry.markerId)
+      val rightId = buildBalanced(editor, sortedEntries, middleIndex + 1, toIndex, entry.markerId)
+      val height = maxOf(height(editor, leftId), height(editor, rightId)) + 1
+      val maximumEndOffset = maxOf(
+        entry.nodeEnd,
+        if (leftId != NULL_NODE) editor.valid(leftId).maximumEndOffset else Int.MIN_VALUE,
+        if (rightId != NULL_NODE) editor.valid(rightId).maximumEndOffset else Int.MIN_VALUE
+      )
+      editor.putValid(
+        entry.markerId,
+        ValidNode(
+          entry = entry,
+          parentId = parentId,
+          leftId = leftId,
+          rightId = rightId,
+          height = height,
+          maximumEndOffset = maximumEndOffset,
+          lazyOffsetDelta = 0,
+          subtreeFlavorFlags = subtreeFlavorFlags(editor, entry, leftId, rightId),
+          subtreeAggregate = subtreeAggregate(editor, entry, leftId, rightId),
+        )
+      )
+      return entry.markerId
+    }
+
+    private fun transform(
+      editor: MapBatchEditor,
+      entry: MarkerEntry,
+      patch: DocumentTextPatch,
+      beforeText: DocumentText,
+      afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
+      affectedMarkerConsumer: LongConsumer,
+    ): MarkerTransformResult {
+      return processTransformResult(
+        editor,
+        entry,
+        entry.spec.policy.transform(entry, patch, beforeText, afterText),
+        invalidatedMarkerConsumer,
+        affectedMarkerConsumer,
+      )
+    }
+  }
+}

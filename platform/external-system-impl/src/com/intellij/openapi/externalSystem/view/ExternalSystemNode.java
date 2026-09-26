@@ -1,28 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyNode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -30,38 +20,46 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.InputEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
-public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
+public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode<?>> {
 
-  public static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
-  public static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
-  public static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
-  public static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_TASKS_DATA_NODE_ORDER = 10;
+  static final int BUILTIN_DEPENDENCIES_DATA_NODE_ORDER = BUILTIN_TASKS_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
+  static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
-  @NotNull public static final Comparator<ExternalSystemNode> ORDER_AWARE_COMPARATOR = new Comparator<ExternalSystemNode>() {
-
+  private static final @NotNull Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
     @Override
-    public int compare(@NotNull ExternalSystemNode o1, @NotNull ExternalSystemNode o2) {
+    public int compare(@NotNull ExternalSystemNode<?> o1, @NotNull ExternalSystemNode<?> o2) {
       int order1 = getOrder(o1);
       int order2 = getOrder(o2);
       if (order1 == order2) return o1.compareTo(o2);
       return order1 < order2 ? -1 : 1;
     }
 
-    private int getOrder(@NotNull Comparable o) {
+    private int getOrder(@NotNull ExternalSystemNode<?> o) {
       Order annotation = o.getClass().getAnnotation(Order.class);
       if (annotation != null) {
         return annotation.value();
@@ -71,25 +69,27 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   };
 
 
-  protected static final ExternalSystemNode[] NO_CHILDREN = new ExternalSystemNode[0];
+  protected static final ExternalSystemNode<?>[] NO_CHILDREN = new ExternalSystemNode[0];
+
+  private static final List<ExternalSystemNode<?>> NO_CHILDREN_LIST = Collections.emptyList();
+  private static final List<String> NO_ERRORS_LIST = Collections.emptyList();
 
   private final ExternalProjectsView myExternalProjectsView;
-  private final List<ExternalSystemNode<?>> myChildrenList = ContainerUtil.newArrayList();
-  protected DataNode<T> myDataNode;
-  @Nullable
-  private ExternalSystemNode myParent;
-  private ExternalSystemNode[] myChildren;
-  private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
-  private final List<String> myErrors = ContainerUtil.newArrayList();
+  private List<ExternalSystemNode<?>> myChildrenList = NO_CHILDREN_LIST;
+  DataNode<T> myDataNode;
+  private @Nullable ExternalSystemNode<?> myParent;
+  private ExternalSystemNode<?>[] myChildren;
+  private @NotNull ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
+  private List<String> myErrors = NO_ERRORS_LIST;
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
 
   public ExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
-                            @Nullable ExternalSystemNode parent) {
+                            @Nullable ExternalSystemNode<?> parent) {
     this(externalProjectsView, parent, null);
   }
 
   public ExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
-                            @Nullable ExternalSystemNode parent,
+                            @Nullable ExternalSystemNode<?> parent,
                             @Nullable DataNode<T> dataNode) {
     super(externalProjectsView.getProject(), null);
     myExternalProjectsView = externalProjectsView;
@@ -97,18 +97,22 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
+  @Override
   public boolean isAutoExpandNode() {
     SimpleNode parent = getParent();
     return parent != null && parent.getChildCount() == 1;
   }
 
-  public void setParent(@Nullable ExternalSystemNode parent) {
+  public void setParent(@Nullable ExternalSystemNode<?> parent) {
     myParent = parent;
   }
 
-  @Nullable
-  public T getData() {
+  public @Nullable T getData() {
     return myDataNode != null ? myDataNode.getData() : null;
+  }
+
+  public @Nullable DependencyNode getDependencyNode() {
+    return null;
   }
 
   @Override
@@ -117,8 +121,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  public String getName() {
-    String displayName = ((ExternalProjectsViewImpl)getExternalProjectsView()).getDisplayName(myDataNode);
+  public @NlsSafe String getName() {
+    String displayName = getExternalProjectsView().getDisplayName(myDataNode);
     return displayName == null ? super.getName() : displayName;
   }
 
@@ -134,6 +138,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myExternalProjectsView.getStructure();
   }
 
+  @ApiStatus.Internal
   protected ExternalSystemShortcutsManager getShortcutsManager() {
     return myExternalProjectsView.getShortcutsManager();
   }
@@ -142,29 +147,29 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myExternalProjectsView.getTaskActivator();
   }
 
-  @Nullable
-  public <DataType extends ExternalSystemNode> DataType findParent(Class<DataType> parentClass) {
-    ExternalSystemNode node = this;
-    while (true) {
-      node = node.myParent;
-      if (node == null || parentClass.isInstance(node)) {
+  public @Nullable <DataType> DataType findNode(Class<DataType> aClass, @NotNull Function<? super ExternalSystemNode<?>, Object> map) {
+    ExternalSystemNode<?> node = this;
+    while (node != null) {
+      var data = map.apply(node);
+      if (aClass.isInstance(data)) {
         //noinspection unchecked
-        return (DataType)node;
+        return (DataType)data;
       }
+      node = node.myParent;
     }
+    return null;
   }
 
-  @Nullable
-  public <DataType> DataType findParentData(Class<DataType> parentDataClass) {
-    ExternalSystemNode node = this;
-    while (true) {
-      node = node.myParent;
-      if (node == null) return null;
-      if (node.getData() != null && parentDataClass.isInstance(node.getData())) {
-        //noinspection unchecked
-        return (DataType)node.getData();
-      }
-    }
+  public @Nullable <DataType extends ExternalSystemNode<?>> DataType findNode(Class<DataType> aClass) {
+    return findNode(aClass, it -> it);
+  }
+
+  public @Nullable <DataType extends DependencyNode> DataType findDependencyNode(Class<DataType> aClass) {
+    return findNode(aClass, it -> it.getDependencyNode());
+  }
+
+  public @Nullable <DataType extends ExternalSystemNode<?>> DataType findParent(Class<DataType> aClass) {
+    return ObjectUtils.doIfNotNull(myParent, p -> p.findNode(aClass));
   }
 
   public boolean isVisible() {
@@ -176,7 +181,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
       return myDataNode.isIgnored();
     }
     final SimpleNode parent = getParent();
-    return parent instanceof ExternalSystemNode && ((ExternalSystemNode)parent).isIgnored();
+    return parent instanceof ExternalSystemNode && ((ExternalSystemNode<?>)parent).isIgnored();
   }
 
   public void setIgnored(final boolean ignored) {
@@ -185,64 +190,64 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  public ExternalProjectsStructure.DisplayKind getDisplayKind() {
-    Class[] visibles = getStructure().getVisibleNodesClasses();
+  private ExternalProjectsStructure.DisplayKind getDisplayKind() {
+    Class<?>[] visibles = getStructure().getVisibleNodesClasses();
     if (visibles == null) return ExternalProjectsStructure.DisplayKind.NORMAL;
-    for (Class each : visibles) {
+    for (Class<?> each : visibles) {
       if (each.isInstance(this)) return ExternalProjectsStructure.DisplayKind.ALWAYS;
     }
     return ExternalProjectsStructure.DisplayKind.NEVER;
   }
 
-  @NotNull
-  public final ExternalSystemNode[] getChildren() {
+  @Override
+  public final ExternalSystemNode<?> @NotNull [] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
-      onChildrenBuilt();
     }
     return myChildren;
   }
 
-  protected void onChildrenBuilt() {
-  }
-
-  @NotNull
-  private ExternalSystemNode[] buildChildren() {
-    List<? extends ExternalSystemNode> newChildrenCandidates = doBuildChildren();
+  private ExternalSystemNode<?> @NotNull [] buildChildren() {
+    List<? extends ExternalSystemNode<?>> newChildrenCandidates = new ArrayList<ExternalSystemNode<?>>(doBuildChildren());
     if (newChildrenCandidates.isEmpty()) return NO_CHILDREN;
 
     addAll(newChildrenCandidates, true);
     sort(myChildrenList);
-    List<ExternalSystemNode> visibleNodes = new ArrayList<>();
-    for (ExternalSystemNode each : myChildrenList) {
+    List<ExternalSystemNode<?>> visibleNodes = new ArrayList<>();
+    for (ExternalSystemNode<?> each : myChildrenList) {
       if (each.isVisible()) visibleNodes.add(each);
     }
     return visibleNodes.toArray(new ExternalSystemNode[0]);
   }
 
-  public void cleanUpCache() {
+  void cleanUpCache() {
     myChildren = null;
-    myChildrenList.clear();
+    myChildrenList = NO_CHILDREN_LIST;
     myTotalErrorLevel = null;
   }
 
-  @Nullable
-  protected ExternalSystemNode[] getCached() {
+  ExternalSystemNode<?> @Nullable [] getCached() {
     return myChildren;
   }
 
-  protected void sort(List<? extends ExternalSystemNode> list) {
-    Collections.sort(list, ORDER_AWARE_COMPARATOR);
+  protected void sort(List<ExternalSystemNode<?>> list) {
+    if (!list.isEmpty()) {
+      list.sort(ORDER_AWARE_COMPARATOR);
+    }
   }
 
-  public boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes) {
+  public boolean addAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes) {
     return addAll(externalSystemNodes, false);
   }
 
-  private boolean addAll(Collection<? extends ExternalSystemNode> externalSystemNodes, boolean silently) {
+  private boolean addAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes, boolean silently) {
     if (externalSystemNodes.isEmpty()) return false;
 
-    for (ExternalSystemNode externalSystemNode : externalSystemNodes) {
+    if (myChildrenList == NO_CHILDREN_LIST) {
+      myChildrenList = new CopyOnWriteArrayList<>();
+    }
+
+    for (ExternalSystemNode<?> externalSystemNode : externalSystemNodes) {
       externalSystemNode.setParent(this);
       myChildrenList.add(externalSystemNode);
     }
@@ -253,20 +258,20 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return true;
   }
 
-  public boolean add(ExternalSystemNode externalSystemNode) {
-    return addAll(ContainerUtil.list(externalSystemNode));
+  public boolean add(ExternalSystemNode<?> externalSystemNode) {
+    return addAll(Collections.singletonList(externalSystemNode));
   }
 
-  public boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes) {
+  public boolean removeAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes) {
     return removeAll(externalSystemNodes, false);
   }
 
-  private boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes, boolean silently) {
+  private boolean removeAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes, boolean silently) {
     if (externalSystemNodes.isEmpty()) return false;
 
-    for (ExternalSystemNode externalSystemNode : externalSystemNodes) {
+    for (ExternalSystemNode<?> externalSystemNode : externalSystemNodes) {
       externalSystemNode.setParent(null);
-      myChildrenList.remove(externalSystemNode);
+      if (myChildrenList != NO_CHILDREN_LIST) myChildrenList.remove(externalSystemNode);
     }
     if (!silently) {
       childrenChanged();
@@ -275,15 +280,15 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return true;
   }
 
-  public void remove(ExternalSystemNode externalSystemNode) {
-    removeAll(ContainerUtil.list(externalSystemNode));
+  public void remove(ExternalSystemNode<?> externalSystemNode) {
+    removeAll(Collections.singletonList(externalSystemNode));
   }
 
   protected void childrenChanged() {
-    ExternalSystemNode each = this;
+    ExternalSystemNode<?> each = this;
     while (each != null) {
       each.myTotalErrorLevel = null;
-      each = (ExternalSystemNode)each.getParent();
+      each = (ExternalSystemNode<?>)each.getParent();
     }
 
     sort(myChildrenList);
@@ -296,8 +301,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return getChildren().length > 0;
   }
 
-  @NotNull
-  protected List<? extends ExternalSystemNode> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     if (myDataNode != null && !myDataNode.getChildren().isEmpty()) {
       final ExternalProjectsView externalProjectsView = getExternalProjectsView();
       return externalProjectsView.createNodes(externalProjectsView, this, myDataNode);
@@ -307,62 +311,73 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     }
   }
 
-  protected void setDataNode(DataNode<T> dataNode) {
+  private void setDataNode(DataNode<T> dataNode) {
     myDataNode = dataNode;
   }
 
-  public ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
-    if (myTotalErrorLevel == null) {
-      myTotalErrorLevel = calcTotalErrorLevel();
+  private @NotNull ExternalProjectsStructure.ErrorLevel getTotalErrorLevel() {
+    ExternalProjectsStructure.ErrorLevel level = myTotalErrorLevel;
+    if (level == null) {
+      myTotalErrorLevel = level = calcTotalErrorLevel();
     }
-    return myTotalErrorLevel;
+    return level;
   }
 
-  private ExternalProjectsStructure.ErrorLevel calcTotalErrorLevel() {
+  private @NotNull ExternalProjectsStructure.ErrorLevel calcTotalErrorLevel() {
     ExternalProjectsStructure.ErrorLevel childrenErrorLevel = getChildrenErrorLevel();
     return childrenErrorLevel.compareTo(myErrorLevel) > 0 ? childrenErrorLevel : myErrorLevel;
   }
 
   public ExternalProjectsStructure.ErrorLevel getChildrenErrorLevel() {
-    ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
-    for (SimpleNode each : getChildren()) {
-      ExternalProjectsStructure.ErrorLevel eachLevel = ((ExternalSystemNode)each).getTotalErrorLevel();
-      if (eachLevel.compareTo(result) > 0) result = eachLevel;
+    if (myChildren == null && myDataNode != null) {
+      return getExternalProjectsView().getErrorLevelRecursively(myDataNode);
+    } else {
+      ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
+      for (ExternalSystemNode<?> each : getChildren()) {
+        ExternalProjectsStructure.ErrorLevel eachLevel = each.getTotalErrorLevel();
+        if (eachLevel.compareTo(result) > 0) result = eachLevel;
+        if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
+      }
+      return result;
     }
-    return result;
   }
 
-  public void setErrorLevel(ExternalProjectsStructure.ErrorLevel level, String... errors) {
+  public void setErrorLevel(@NotNull ExternalProjectsStructure.ErrorLevel level, String... errors) {
     if (myErrorLevel == level) return;
     myErrorLevel = level;
-    myErrors.clear();
-    Collections.addAll(myErrors, errors);
+
+    if (errors.length == 0) {
+      myErrors = NO_ERRORS_LIST;
+    }
+    else {
+      myErrors = Arrays.asList(errors);
+    }
     myExternalProjectsView.updateUpTo(this);
   }
 
   @Override
-  protected void doUpdate() {
-    setNameAndTooltip(getName(), null);
+  protected void doUpdate(@NotNull PresentationData presentation) {
+    setNameAndTooltip(presentation, getName(), null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip) {
-    setNameAndTooltip(name, tooltip, (String)null);
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip) {
+    setNameAndTooltip(presentation, name, tooltip, (String)null);
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, @Nullable String hint) {
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip, @Nullable @NlsSafe String hint) {
     final boolean ignored = isIgnored();
     final SimpleTextAttributes textAttributes = ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : getPlainAttributes();
-    setNameAndTooltip(name, tooltip, textAttributes);
+    setNameAndTooltip(presentation, name, tooltip, textAttributes);
     if (!StringUtil.isEmptyOrSpaces(hint)) {
-      addColoredFragment(" (" + hint + ")", ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentation.addText(" (" + hint + ")", ignored ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
-    clearColoredText();
-    addColoredFragment(name, prepareAttributes(attributes));
+  protected void setNameAndTooltip(@NotNull PresentationData presentation, @NlsSafe String name, @Nullable @Tooltip String tooltip, SimpleTextAttributes attributes) {
+    presentation.clearText();
+    presentation.addText(name, prepareAttributes(attributes));
     final String s = (tooltip != null ? tooltip + "\n\r" : "") + StringUtil.join(myErrors, "\n\r");
-    getTemplatePresentation().setTooltip(s);
+    presentation.setTooltip(s);
   }
 
   private SimpleTextAttributes prepareAttributes(SimpleTextAttributes from) {
@@ -373,29 +388,23 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
   }
 
-  @Nullable
-  @NonNls
-  protected String getActionId() {
+  protected @Language("devkit-action-id") @Nullable @NonNls String getActionId() {
     return null;
   }
 
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return null;
   }
 
-  protected String message(@NotNull String key, @NotNull Object... params) {
+  protected String message(@PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return ExternalSystemBundle.message(key, params);
   }
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return null;
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return null;
   }
 
@@ -406,7 +415,11 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  public int compareTo(@NotNull ExternalSystemNode node) {
+  public int compareTo(@NotNull ExternalSystemNode<?> node) {
     return StringUtil.compare(this.getName(), node.getName(), true);
+  }
+
+  public void mergeWith(@NotNull ExternalSystemNode<T> newNode) {
+    setDataNode(newNode.myDataNode);
   }
 }

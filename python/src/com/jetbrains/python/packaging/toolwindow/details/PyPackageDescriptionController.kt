@@ -1,0 +1,402 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.packaging.toolwindow.details
+
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.newui.OneLineProgressIndicator
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.and
+import com.intellij.openapi.observable.util.isNotNull
+import com.intellij.openapi.observable.util.not
+import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
+import com.intellij.ui.components.JBComboBoxLabel
+import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.toInstallRequest
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
+import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
+import com.jetbrains.python.ui.PyHtmlPanel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import java.awt.Font
+import java.awt.event.ActionEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+
+internal class PyPackageDescriptionController(
+  val project: Project,
+  /**
+   * Called when the user clicks the package name in the doc header. The doc panel doesn't own
+   * the tree, so we delegate back to the tool window so it can scroll the tree to that package
+   * and select it. Useful when the tree's focus has shifted away from the currently-displayed
+   * package and the user wants to jump back to it.
+   */
+  private val onSelectInTree: ((String) -> Unit)? = null,
+  /**
+   * Fired on the EDT after install / change-version / uninstall finishes (success or failure).
+   * The owning [PyPackageInfoPanel] uses this to reset its preview to the placeholder, because
+   * the `DisplayablePackage` we were rendering is now stale (e.g. an uninstalled row no longer
+   * exists, an install changes the version, etc.) and we don't want to keep showing dangling
+   * "Install"/"Uninstall" controls bound to the old reference.
+   */
+  private val onActionCompleted: (() -> Unit)? = null,
+) : Disposable {
+  private val latestText: String
+    get() = message("python.toolwindow.packages.latest.version.label")
+
+  val service: PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
+  private val isManagement = AtomicBooleanProperty(false)
+
+  internal val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
+  private val selectedPackageDetails = AtomicProperty<PythonPackageDetails?>(null)
+
+  private val packageNameProperty = selectedPackage.transform { it?.name ?: "" }
+  private val packageVersionProperty: ObservableMutableProperty<@NlsSafe String> = AtomicProperty(latestText)
+  private val packageDocumentationProperty = selectedPackageDetails.transform { it?.documentationUrl }
+
+  private var suppressClearOnFocusLoss: Boolean = false
+  private var currentPackageKey: String? = null
+
+  private val installActionButton = JBOptionButton(null, emptyArray())
+
+  private val installAction = wrapAction(
+    message("action.PyInstallPackage.text"),
+    message("progress.text.installing"),
+    installKey = { selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) } },
+  ) {
+    val details = selectedPackageDetails.get() ?: return@wrapAction
+    val version = versionSelector.text.takeIf { it != latestText }
+    val specification = details.toPackageSpecification(version) ?: return@wrapAction
+    val ctx = installContextFor(selectedPackage.get())
+    project.service<PyPackagingToolWindowService>().installPackage(
+      specification.toInstallRequest(),
+      workspaceMember = ctx.workspaceMember,
+      dependencyGroup = ctx.dependencyGroup,
+    )
+  }
+
+  private val versionSelector = JBComboBoxLabel()
+  private var versionSelectorMouseListener: MouseAdapter? = null
+
+  private val progressEnabledProperty = AtomicBooleanProperty(false)
+
+  /**
+   * Mirrors the shared active-installations set ([PyPackagingToolWindowService]) for the currently
+   * selected package, so an install started elsewhere (tree link, install dialog) also disables the
+   * install button and version selector here (PY-91529). Recomputed from an install-state listener
+   * and whenever the selection changes.
+   */
+  private val sharedInstallingProperty = AtomicBooleanProperty(false)
+
+  private val progressIndicatorComponent = JPanel()
+
+  private val htmlPanel: PyHtmlPanel = PyEmbeddedBrowserProvider.createHtmlPanel(project).also { panel ->
+    Disposer.register(this, panel)
+
+    selectedPackageDetails.afterChange { packageDetails ->
+      packageDetails ?: return@afterChange
+      PyPackageCoroutine.launch(project, Dispatchers.Default) {
+        val render = PyPackageDetailsHtmlRender(project, service.currentSdk)
+        val html = render.getHtml(packageDetails)
+            panel.setHtml(html)
+      }
+    }
+  }
+
+  private val leftPanel: DialogPanel = panel {
+    row {
+      val packageNameLabel = label("").bindText(packageNameProperty).component
+      packageNameLabel.verticalAlignment = SwingConstants.CENTER
+      packageNameLabel.font = packageNameLabel.font.deriveFont(Font.BOLD)
+      if (onSelectInTree != null) {
+        // Make the bold name double as a "scroll-to" affordance: click it to re-select the
+        // package in the tree on the left. Helpful when the tree's focus has drifted (e.g. user
+        // scrolled away or clicked outside the tree) but the info pane still shows this package.
+        packageNameLabel.cursor = java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR)
+        packageNameLabel.addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            val name = selectedPackage.get()?.name ?: return
+            onSelectInTree.invoke(name)
+          }
+        })
+      }
+
+      val docLink = link(message("python.toolwindow.packages.documentation.link")) {
+        val docLink = packageDocumentationProperty.get() ?: return@link
+        BrowserUtil.browse(docLink)
+      }.visibleIf(packageDocumentationProperty.isNotNull())
+      docLink.component.verticalAlignment = SwingConstants.CENTER
+    }.topGap(TopGap.SMALL).bottomGap(BottomGap.NONE).resizableRow()
+  }
+
+  private val rightPanel: DialogPanel = panel {
+    row {
+      cell(progressIndicatorComponent).gap(RightGap.SMALL).visibleIf(progressEnabledProperty)
+      versionSelector.apply {
+        versionSelector.text = packageVersionProperty.get()
+        versionSelectorMouseListener = object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent?) {
+            if (!isManagement.get())
+              return
+            val availableVersions = selectedPackageDetails.get()?.availableVersions ?: emptyList()
+            val latestVersion = availableVersions.firstOrNull() ?: return
+            val versions = listOf(latestText) + availableVersions
+            suppressClearOnFocusLoss = true
+            val popup = JBPopupFactory.getInstance().createListPopup(
+              object : BaseListPopupStep<String>(null, versions) {
+                override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
+                  packageVersionProperty.set(selectedValue)
+                  val effectiveVersion = if (selectedValue == latestText) latestVersion else selectedValue
+                  if (isManagement.get())
+                    suggestInstallPackage(effectiveVersion)
+                  return FINAL_CHOICE
+                }
+              }, 8)
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                suppressClearOnFocusLoss = false
+              }
+            })
+            popup.showUnderneathOf(this@apply)
+          }
+        }
+        addMouseListener(versionSelectorMouseListener)
+      }
+
+      packageVersionProperty.afterChange {
+        versionSelector.text = it
+      }
+      val comboBox = cell(versionSelector)
+      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not()).and(sharedInstallingProperty.not())).gap(RightGap.SMALL)
+      // Editable installs (``pip install -e .``) are managed from outside the package list — the
+      // user edits the source directory directly, and there is no upstream version to switch to.
+      // Surfacing the dropdown for them would imply a fake "latest" version is selectable.
+      comboBox.visibleIf(progressEnabledProperty.not().and(
+        selectedPackage.transform { pkg ->
+          when (pkg) {
+            is InstallablePackage -> true
+            is InstalledPackage -> pkg.instance.editableLocation == null
+            is RequirementPackage,
+            is WorkspaceMember,
+            is DependencyGroupNode,
+            is UndeclaredPackagesGroup,
+            is ModuleDependencyDisplayablePackage,
+            is LoadingNode,
+            null -> false
+          }
+        }
+      ))
+
+      installActionButton.action = installAction
+      installActionButton.options = emptyArray()
+      cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
+        .enabledIf(sharedInstallingProperty.not())
+        .gap(RightGap.SMALL)
+
+      button(message("action.PyDeletePackage.text")) {
+        wrapInvokeOp(progressText = message("python.toolwindow.packages.deleting.text")) {
+          val pyPackage = selectedPackage.get() as? InstalledPackage ?: return@wrapInvokeOp
+          project.service<PyPackagingToolWindowService>().deletePackage(pyPackage)
+        }
+      }.visibleIf(selectedPackage.transform { it is InstalledPackage }.and(isManagement).and(progressEnabledProperty.not()))
+        .gap(RightGap.SMALL)
+    }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE)
+  }
+
+  private val component = PyPackagesUiComponents.borderPanel {
+    add(PyPackagesUiComponents.borderPanel {
+      border = SideBorder(JBColor.border(), SideBorder.BOTTOM)
+      leftPanel.border = BorderFactory.createEmptyBorder(0, 10, 0, 0)
+      rightPanel.border = BorderFactory.createEmptyBorder(0, 0, 0, 10)
+
+      add(leftPanel, BorderLayout.WEST)
+      add(rightPanel, BorderLayout.EAST)
+    }, BorderLayout.NORTH)
+    add(htmlPanel.component, BorderLayout.CENTER)
+  }
+
+  val wrappedComponent: JComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
+
+  /**
+   * Doc-only view: just the package description HTML, without the header row that hosts the
+   * name label, version dropdown, and install/delete buttons. Used by the in-tool-window
+   * documentation pane (horizontal anchor) which renders the doc full-height instead of behind a
+   * narrow toolbar (PY-89838 follow-up).
+   */
+  val docComponent: JComponent = htmlPanel.component
+
+  fun setPackage(pyPackage: DisplayablePackage) {
+    val newKey = pyPackage.name
+    selectedPackage.set(pyPackage)
+    if (currentPackageKey != newKey) {
+      packageVersionProperty.set(calculateVersionText())
+      currentPackageKey = newKey
+    }
+    isManagement.set(service.currentSdk?.isReadOnly == false && PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false))
+  }
+
+  fun setPackageDetails(packageDetails: PythonPackageDetails) {
+    selectedPackageDetails.set(packageDetails)
+    if (packageVersionProperty.get().isEmpty()) {
+      packageVersionProperty.set(calculateVersionText())
+    }
+  }
+
+  private fun updatePackageVersion(newVersion: String) {
+    val details = selectedPackageDetails.get() ?: return
+    val newVersionSpec = details.toPackageSpecification(newVersion) ?: return
+    val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
+    val ctx = installContextFor(selectedPackage.get())
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      pyPackagingToolWindowService.installPackage(
+        newVersionSpec.toInstallRequest(),
+        workspaceMember = ctx.workspaceMember,
+        dependencyGroup = ctx.dependencyGroup,
+      )
+    }
+  }
+
+  /**
+   * Collects the install-time scope ([PyWorkspaceMember] + [PyDependencyGroup]) from the current
+   * tree selection via an exhaustive [when] over the [DisplayablePackage] sealed hierarchy.
+   */
+  private data class InstallContext(val workspaceMember: PyWorkspaceMember?, val dependencyGroup: PyDependencyGroup?) {
+    companion object {
+      val NONE: InstallContext = InstallContext(null, null)
+    }
+  }
+
+  private fun installContextFor(pkg: DisplayablePackage?): InstallContext = when (pkg) {
+    is InstalledPackage -> InstallContext(pkg.workspaceMember, pkg.dependencyGroup)
+    is InstallablePackage,
+    is RequirementPackage,
+    is WorkspaceMember,
+    is DependencyGroupNode,
+    is UndeclaredPackagesGroup,
+    is ModuleDependencyDisplayablePackage,
+    is LoadingNode,
+    null -> InstallContext.NONE
+  }
+
+  private fun suggestInstallPackage(selectedValue: String) {
+    if (selectedPackage.get() !is InstalledPackage)
+      return
+
+    wrapInvokeOp(
+      message("progress.text.installing"),
+      installKey = selectedPackage.get()?.name?.let { PyPackagingToolWindowService.packageKey(it) },
+    ) {
+      updatePackageVersion(selectedValue)
+    }
+  }
+
+  private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText
+
+  private fun wrapAction(@Nls text: String, @Nls progressText: String, installKey: (() -> String?)? = null, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
+    override fun actionPerformed(e: ActionEvent) {
+      wrapInvokeOp(progressText, installKey?.invoke(), actionPerformed)
+    }
+  }
+
+  /**
+   * [installKey] — when non-null, records the operation in the shared active-installations map for
+   * its whole duration (PY-91529) so the tree link and the install dialog also reflect it. Left
+   * null for non-install ops (e.g. uninstall).
+   */
+  private fun wrapInvokeOp(@Nls progressText: String, installKey: String? = null, actionPerformed: suspend () -> Unit) {
+    progressEnabledProperty.set(true)
+    // Capture the SDK now so mark/unmark target the same interpreter even if the selection changes.
+    val installSdk = service.currentSdk
+    if (installKey != null && installSdk != null) service.markInstalling(installSdk, installKey)
+    val progressIndicator = OneLineProgressIndicator(true, true)
+    progressIndicator.text = progressText
+    progressIndicatorComponent.removeAll()
+    progressIndicatorComponent.add(progressIndicator.component, BorderLayout.CENTER)
+
+    val job = PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      try {
+        progressIndicator.start()
+        actionPerformed()
+      }
+      finally {
+        withContext(Dispatchers.EDT) {
+          progressEnabledProperty.set(false)
+          if (installKey != null && installSdk != null) service.unmarkInstalling(installSdk, installKey)
+          selectedPackage.set(null)
+          onActionCompleted?.invoke()
+        }
+        progressIndicator.stop()
+      }
+    }
+
+    progressIndicator.setCancelRunnable {
+      job.cancel()
+    }
+  }
+
+  init {
+    // Keep [sharedInstallingProperty] in sync with the shared active-installations map: an install
+    // started from the tree or dialog, or a selection change, must re-evaluate the button state.
+    service.addInstallStateListener(this) { recomputeSharedInstalling() }
+    selectedPackage.afterChange { recomputeSharedInstalling() }
+  }
+
+  private fun recomputeSharedInstalling() {
+    val name = selectedPackage.get()?.name
+    val sdk = service.currentSdk
+    sharedInstallingProperty.set(name != null && sdk != null && service.isPackageInstalling(sdk, name))
+  }
+
+  override fun dispose() {
+    versionSelectorMouseListener?.let {
+      versionSelector.removeMouseListener(it)
+      versionSelectorMouseListener = null
+    }
+  }
+}

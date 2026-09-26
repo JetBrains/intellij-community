@@ -1,0 +1,8 @@
+NavigationItem:
+    name: SimpleObject
+ItemPresentation:
+    presentableText: SimpleObject
+    locationString: null
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/objectKotlin.svg, Public])
+TargetElement: object SimpleObject {
+QualifiedName: SimpleObject

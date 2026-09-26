@@ -20,22 +20,36 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.EmptyResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncElement;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncRef;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -49,13 +63,12 @@ import java.util.Set;
 class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function<Define, ResolveResult>,
                                                                         LocalQuickFixProvider, EmptyResolveMessageProvider {
 
-  public PatternReference(RncRef ref) {
+  PatternReference(RncRef ref) {
     super(ref);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final ASTNode node = findNameNode();
     if (node == null) return TextRange.from(0, 0);
     final int offset = myElement.getTextOffset();
@@ -69,22 +82,20 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
 
     final Set<Define> set = DefinitionResolver.resolve(scope, getCanonicalText());
-    if (set == null || set.size() == 0) return ResolveResult.EMPTY_ARRAY;
+    if (set == null || set.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     return ContainerUtil.map2Array(set, ResolveResult.class, this);
   }
@@ -92,33 +103,21 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @Override
   public ResolveResult fun(Define rncDefine) {
     final PsiElement element = rncDefine.getPsiElement();
-    return element != null ? new PsiElementResolveResult(element) : new ResolveResult() {
-      @Override
-      @Nullable
-      public PsiElement getElement() {
-        return null;
-      }
-      @Override
-      public boolean isValidResult() {
-        return false;
-      }
-    };
+    return element != null ? new PsiElementResolveResult(element) : EmptyResolveResult.INSTANCE;
   }
 
-  @Nullable
-  protected RncGrammar getScope() {
+  protected @Nullable RncGrammar getScope() {
     return PsiTreeUtil.getParentOfType(myElement, RncGrammar.class, true, PsiFile.class);
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final ASTNode node = findNameNode();
     return node != null ? EscapeUtil.unescapeText(node) : "";
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode newNode = RenameUtil.createIdentifierNode(getElement().getManager(), newElementName);
 
     final ASTNode nameNode = findNameNode();
@@ -132,17 +131,17 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final RncGrammar scope = getScope();
     if (scope == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
 
     final Map<String, Set<Define>> map = DefinitionResolver.getAllVariants(scope);
-    if (map == null || map.size() == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (map == null || map.isEmpty()) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-    return ContainerUtil.mapNotNull(map.values(), (Function<Set<Define>, Object>)defines -> defines.size() == 0 ? null : defines.iterator().next().getPsiElement()).toArray();
+    return ContainerUtil.mapNotNull(map.values(), (Function<Set<Define>, Object>)defines -> defines.isEmpty()
+                                                                                            ? null : defines.iterator().next().getPsiElement()).toArray();
   }
 
   @Override
@@ -151,14 +150,13 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
-    return "Unresolved pattern reference ''{0}''";
+  public @NotNull String getUnresolvedMessagePattern() {
+    //noinspection UnresolvedPropertyKey
+    return RelaxngBundle.message("relaxng.annotator.unresolved-pattern-reference");
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getScope() != null) {
       return new LocalQuickFix[] { new CreatePatternFix(this) };
     }
@@ -166,27 +164,27 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   static class CreatePatternFix implements LocalQuickFix {
-    private final PatternReference myReference;
 
-    public CreatePatternFix(PatternReference reference) {
-      myReference = reference;
-    }
+    private final @IntentionName String myName;
 
-    @NotNull
-    @Override
-    public String getName() {
-      return "Create Pattern '" + myReference.getCanonicalText() + "'";
+    CreatePatternFix(PatternReference reference) {
+      myName = RelaxngBundle.message("relaxng.quickfix.create-pattern.name", reference.getCanonicalText());
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return "Create Pattern";
+    public @NotNull String getName() {
+      return myName;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return RelaxngBundle.message("relaxng.quickfix.create-pattern.family");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(myReference.getElement().getProject()).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
+      PatternReference myReference = (PatternReference)descriptor.getPsiElement().getReference();
+      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
 
       final RncGrammar grammar = rncfile.getGrammar();
       assert grammar != null;

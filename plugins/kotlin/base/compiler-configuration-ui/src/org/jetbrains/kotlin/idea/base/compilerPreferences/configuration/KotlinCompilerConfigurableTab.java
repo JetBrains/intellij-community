@@ -1,0 +1,845 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
+
+import com.intellij.compiler.server.BuildManager;
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.MutableCollectionComboBoxModel;
+import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
+import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UIUtil;
+import kotlin.KotlinVersion;
+import kotlin.collections.ArraysKt;
+import kotlin.collections.CollectionsKt;
+import kotlin.enums.EnumEntries;
+import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
+import org.jetbrains.kotlin.cli.common.arguments.FreezableKt;
+import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
+import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants;
+import org.jetbrains.kotlin.config.ApiVersion;
+import org.jetbrains.kotlin.config.CompilerSettings;
+import org.jetbrains.kotlin.config.IKotlinFacetSettings;
+import org.jetbrains.kotlin.config.JpsPluginSettings;
+import org.jetbrains.kotlin.config.JvmTarget;
+import org.jetbrains.kotlin.config.KotlinFacetSettingsKt;
+import org.jetbrains.kotlin.config.LanguageOrApiVersion;
+import org.jetbrains.kotlin.config.LanguageVersion;
+import org.jetbrains.kotlin.config.VersionView;
+import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
+import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants;
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils;
+import org.jetbrains.kotlin.idea.base.util.ProjectStructureUtils;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder;
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettingsKt;
+import org.jetbrains.kotlin.idea.facet.KotlinFacet;
+import org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt;
+import org.jetbrains.kotlin.platform.IdePlatformKind;
+import org.jetbrains.kotlin.platform.PlatformUtilKt;
+import org.jetbrains.kotlin.platform.TargetPlatform;
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformUtil;
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind;
+import org.jetbrains.kotlin.platform.jvm.JdkPlatform;
+
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.event.PopupMenuEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.openapi.options.Configurable.isCheckboxModified;
+import static com.intellij.openapi.options.Configurable.isFieldModified;
+import static org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRendererKt.createDescriptionAwareRenderer;
+
+public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
+  private static final Logger LOG = Logger.getInstance(KotlinCompilerConfigurableTab.class);
+
+  private final KotlinCompilerConfigurableUi ui = new KotlinCompilerConfigurableUi(() -> {
+      updateOutputDirEnabled();
+  });
+  private final @Nullable KotlinCompilerWorkspaceSettings compilerWorkspaceSettings;
+  private final Project project;
+  private final boolean isProjectSettings;
+  private CommonCompilerArguments commonCompilerArguments;
+  private K2JSCompilerArguments k2jsCompilerArguments;
+  private K2JVMCompilerArguments k2jvmCompilerArguments;
+  private CompilerSettings compilerSettings;
+  private final @Nullable JpsPluginSettings jpsPluginSettings;
+  private JpsVersionItem defaultJpsVersionItem;
+  private boolean isEnabled = true;
+
+  private @Nullable Disposable validatorsDisposable = null;
+
+  public KotlinCompilerConfigurableTab(
+    Project project,
+    @NotNull CommonCompilerArguments commonCompilerArguments,
+    @NotNull K2JSCompilerArguments k2jsCompilerArguments,
+    @NotNull K2JVMCompilerArguments k2jvmCompilerArguments,
+    @NotNull CompilerSettings compilerSettings,
+    @Nullable KotlinCompilerWorkspaceSettings compilerWorkspaceSettings,
+    boolean isProjectSettings,
+    boolean isMultiEditor
+  ) {
+    this.project = project;
+    this.commonCompilerArguments = commonCompilerArguments;
+    this.k2jsCompilerArguments = k2jsCompilerArguments;
+    this.compilerSettings = compilerSettings;
+    this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.getInstance(project) : null)
+      .map(KotlinJpsPluginSettings::getSettings)
+      .map(FreezableKt::unfrozen)
+      .orElse(null);
+    this.compilerWorkspaceSettings = compilerWorkspaceSettings;
+    this.k2jvmCompilerArguments = k2jvmCompilerArguments;
+    this.isProjectSettings = isProjectSettings;
+
+    if (isJpsCompilerVisible()) {
+      ui.kotlinJpsPluginVersionComboBox.addActionListener(
+        e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
+    }
+
+    fillVersions();
+
+    if (KotlinPlatformUtils.isCidr()) {
+      ui.keepAliveCheckBox.setVisible(false);
+      ui.k2jvmGroup.visible(false);
+      ui.k2jsGroup.visible(false);
+    }
+    else {
+      initializeNonCidrSettings(isMultiEditor);
+    }
+
+    ui.reportWarningsCheckBox.setThirdStateEnabled(isMultiEditor);
+
+    if (isProjectSettings) {
+      List<String> modulesOverridingProjectSettings = ArraysKt.mapNotNull(
+        ModuleManager.getInstance(project).getModules(),
+        module -> {
+          KotlinFacet facet = KotlinFacet.Companion.get(module);
+          if (facet == null) return null;
+          IKotlinFacetSettings facetSettings = facet.getConfiguration().getSettings();
+          if (facetSettings.getUseProjectSettings()) return null;
+          return module.getName();
+        }
+      );
+      CollectionsKt.sort(modulesOverridingProjectSettings);
+      ui.updateWarning(modulesOverridingProjectSettings);
+    }
+  }
+
+  @SuppressWarnings("unused") // Empty constructor fixes 'Extension should not have constructor with parameters (except Project)'
+  public KotlinCompilerConfigurableTab(Project project) {
+    this(project,
+         FreezableKt.unfrozen(KotlinCommonCompilerArgumentsHolder.getInstance(project).getSettings()),
+         FreezableKt.unfrozen(Kotlin2JsCompilerArgumentsHolder.getInstance(project).getSettings()),
+         FreezableKt.unfrozen(Kotlin2JvmCompilerArgumentsHolder.getInstance(project).getSettings()),
+         FreezableKt.unfrozen(KotlinCompilerSettings.getInstance(project).getSettings()),
+         KotlinCompilerWorkspaceSettings.getInstance(project),
+         true,
+         false);
+  }
+
+  private void initializeNonCidrSettings(boolean isMultiEditor) {
+    setupFileChooser(ui.outputDirectory,
+                     KotlinBaseCompilerConfigurationUiBundle.message("configuration.title.choose.output.directory"),
+                     false, project);
+
+    fillJvmVersionList();
+
+    ui.generateSourceMapsCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.copyRuntimeFilesCheckBox.setThirdStateEnabled(isMultiEditor);
+    ui.keepAliveCheckBox.setThirdStateEnabled(isMultiEditor);
+
+    if (compilerWorkspaceSettings == null) {
+      ui.keepAliveCheckBox.setVisible(false);
+      ui.k2jvmGroup.visible(false);
+      ui.enableIncrementalCompilationForJsCheckBox.setVisible(false);
+    }
+
+    updateOutputDirEnabled();
+  }
+
+  private static @NotNull @NonNls String getModuleKindOrDefault(@Nullable @NonNls String moduleKindId) {
+    if (moduleKindId == null) {
+      moduleKindId = K2JsArgumentConstants.MODULE_PLAIN;
+    }
+    return moduleKindId;
+  }
+
+  private static @NotNull @NonNls String getSourceMapSourceEmbeddingOrDefault(@Nullable @NonNls String sourceMapSourceEmbeddingId) {
+    if (sourceMapSourceEmbeddingId == null) {
+      sourceMapSourceEmbeddingId = K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING;
+    }
+    return sourceMapSourceEmbeddingId;
+  }
+
+  private static @NlsSafe String getJvmVersionOrDefault(@Nullable String jvmVersion) {
+    return jvmVersion != null ? jvmVersion : JvmTarget.DEFAULT.getDescription();
+  }
+
+  private static void setupFileChooser(
+    @NotNull TextFieldWithBrowseButton fileChooser,
+    @NotNull @NlsContexts.DialogTitle String title,
+    boolean forFiles,
+    @Nullable Project project
+  ) {
+    var descriptor = new FileChooserDescriptor(forFiles, !forFiles, false, false, false, false).withTitle(title);
+    fileChooser.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  }
+
+  private static boolean isBrowseFieldModified(@NotNull TextFieldWithBrowseButton chooser, @NotNull String currentValue) {
+    return !StringUtil.equals(chooser.getText(), currentValue);
+  }
+
+  private void updateOutputDirEnabled() {
+    if (isEnabled) {
+        ui.outputDirectoryRow.enabled(ui.copyRuntimeFilesCheckBox.isSelected());
+    }
+  }
+
+  private static boolean isLessOrEqual(LanguageOrApiVersion version, LanguageOrApiVersion upperBound) {
+    return VersionComparatorUtil.compare(version.getVersionString(), upperBound.getVersionString()) <= 0;
+  }
+
+  public void onLanguageLevelChanged(@Nullable VersionView languageLevel) {
+    if (languageLevel == null) return;
+    restrictAPIVersions(languageLevel);
+  }
+
+  private void restrictAPIVersions(VersionView upperBoundView) {
+    VersionView selectedAPIView = getSelectedAPIVersionView();
+    LanguageOrApiVersion selectedAPIVersion = selectedAPIView.getVersion();
+    LanguageOrApiVersion upperBound = upperBoundView.getVersion();
+    EnumEntries<LanguageVersion> languageVersions = LanguageVersion.getEntries();
+    List<VersionView> permittedAPIVersions = new ArrayList<>(languageVersions.size());
+
+    final VersionView latestStable = getLatestStableVersion();
+
+    int index = 0;
+    int latestStableIndex = languageVersions.size();
+    for (LanguageVersion version : languageVersions) {
+      if (index > latestStableIndex) {
+        break;
+      }
+      ApiVersion apiVersion = ApiVersion.createByLanguageVersion(version);
+      if (!isLessOrEqual(apiVersion, upperBound) && (index < latestStableIndex)) {
+        latestStableIndex = index;
+      }
+      if (!apiVersion.isUnsupported()) {
+        permittedAPIVersions.add(new VersionView.Specific(version));
+      }
+      index++;
+    }
+
+    if (isLessOrEqual(latestStable.getVersion(), upperBound) && !permittedAPIVersions.contains(latestStable)) {
+      permittedAPIVersions.add(latestStable);
+    }
+
+    ui.apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+    ui.languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+
+    VersionView selectedItem =
+      VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
+      ? selectedAPIView
+      : upperBoundView;
+    ui.apiVersionComboBox.setSelectedItem(selectedItem);
+    if (isJpsCompilerVisible()) {
+        ui.languageVersionComboBox.setSelectedItem(selectedItem);
+    }
+  }
+
+  private void fillJvmVersionList() {
+    Set<@NlsSafe String> addedDescriptions = new HashSet<>();
+    for (TargetPlatform jvm : JvmIdePlatformKind.INSTANCE.getPlatforms()) {
+      JvmTarget jvmTarget = PlatformUtilKt.subplatformsOfType(jvm, JdkPlatform.class).get(0).getTargetVersion();
+      @NlsSafe String description = jvmTarget.getDescription();
+      if (jvmTarget == JvmTarget.JVM_1_6) {
+        description += " " + KotlinBaseCompilerConfigurationUiBundle.message("deprecated.jvm.version");
+      }
+
+      if (addedDescriptions.add(description)) {
+        ui.jvmVersionComboBox.addItem(description);
+      }
+    }
+  }
+
+  private void fetchAvailableJpsCompilersAsync(@NotNull ModalityState modality,
+                                               Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
+    Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onEdt =
+      result -> ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(result), modality);
+    JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
+        KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID, KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
+      .onProcessed(distVersions -> {
+        if (distVersions == null) {
+          onEdt.accept(null);
+          return;
+        }
+        JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
+            KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
+            KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
+          .onProcessed(jpsClassPathVersions -> {
+            if (jpsClassPathVersions == null) {
+              onEdt.accept(null);
+              return;
+            }
+
+            KotlinVersion min = KotlinJpsPluginSettings.getJpsMinimumSupportedVersion();
+            KotlinVersion max = KotlinJpsPluginSettings.getJpsMaximumSupportedVersion();
+            HashSet<IdeKotlinVersion> ideKotlinVersions = new HashSet<>();
+            for (String version : distVersions) {
+              if (!jpsClassPathVersions.contains(version)) continue;
+
+              IdeKotlinVersion parsedVersion = IdeKotlinVersion.opt(version);
+              if (parsedVersion != null) {
+                KotlinVersion parsedKotlinVersion = parsedVersion.getKotlinVersion();
+                if (parsedKotlinVersion.compareTo(min) >= 0 && parsedKotlinVersion.compareTo(max) <= 0) {
+                  ideKotlinVersions.add(parsedVersion);
+                }
+              }
+            }
+
+            onEdt.accept(ideKotlinVersions);
+          });
+      });
+  }
+
+  private boolean isJpsCompilerVisible() {
+    return isProjectSettings && jpsPluginSettings != null;
+  }
+
+  private void fillVersions() {
+    if (isJpsCompilerVisible()) {
+      defaultJpsVersionItem = JpsVersionItem.createFromRawVersion(
+        KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)
+      );
+
+      ui.kotlinJpsPluginVersionComboBox.addItem(defaultJpsVersionItem);
+
+      IdeKotlinVersion bundledVersion = KotlinJpsPluginSettings.getBundledVersion();
+      IdeKotlinVersion defaultVersion = defaultJpsVersionItem.getVersion();
+      Integer compare = defaultVersion != null ? defaultVersion.compareTo(bundledVersion) : null;
+      if (compare == null || compare > 0) {
+        ui.jpsPluginComboBoxModel.add(new JpsVersionItem(bundledVersion));
+      }
+      else if (compare < 0) {
+        ui.jpsPluginComboBoxModel.add(0, new JpsVersionItem(bundledVersion));
+      }
+
+      JpsVersionItem loadingItem =
+        JpsVersionItem.createLabel(KotlinBaseCompilerConfigurationUiBundle.message("loading.available.versions.from.maven"));
+      ui.kotlinJpsPluginVersionComboBox.addItem(loadingItem);
+      PopupMenuListenerAdapter popupListener = new PopupMenuListenerAdapter() {
+        @Override
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+          ui.kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
+          ModalityState modality = ModalityState.stateForComponent(ui.kotlinJpsPluginVersionComboBox);
+          fetchAvailableJpsCompilersAsync(
+            modality,
+            availableVersions -> {
+              ui.kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
+              if (availableVersions == null) {
+                ui.kotlinJpsPluginVersionComboBox.addItem(
+                  JpsVersionItem.createLabel(
+                    KotlinBaseCompilerConfigurationUiBundle.message("failed.fetching.all.available.versions.from.maven")
+                  )
+                );
+              }
+              else {
+                SortedSet<IdeKotlinVersion> newItems = new TreeSet<>(availableVersions);
+                for (JpsVersionItem item : ui.jpsPluginComboBoxModel.getItems()) {
+                  IdeKotlinVersion ideKotlinVersion = item.getVersion();
+                  if (ideKotlinVersion != null) {
+                    newItems.add(ideKotlinVersion);
+                  }
+                }
+
+                Object selectedItem = ui.jpsPluginComboBoxModel.getSelectedItem();
+                ui.jpsPluginComboBoxModel.update(
+                  ContainerUtil.reverse(ContainerUtil.map(newItems, it -> new JpsVersionItem(it))));
+                ui.kotlinJpsPluginVersionComboBox.setSelectedItem(selectedItem);
+              }
+
+              if (ui.kotlinJpsPluginVersionComboBox.isPopupVisible()) {
+                ui.kotlinJpsPluginVersionComboBox.hidePopup();
+                ui.kotlinJpsPluginVersionComboBox.showPopup();
+              }
+            });
+        }
+      };
+
+      ui.kotlinJpsPluginVersionComboBox.addPopupMenuListener(popupListener);
+    }
+    else {
+      ui.kotlinJpsPluginVersionRow.visible(false);
+    }
+
+    VersionView latestStable = getLatestStableVersion();
+    int index = 0;
+    EnumEntries<LanguageVersion> languageVersions = LanguageVersion.getEntries();
+    int latestStableIndex = languageVersions.size();
+    for (LanguageVersion languageVersion : languageVersions) {
+      if (index > latestStableIndex) break;
+      if (!isLessOrEqual(languageVersion, latestStable.getVersion()) && (index < latestStableIndex)) {
+        latestStableIndex = index;
+      }
+
+      if (!languageVersion.isStable()) {
+        continue;
+      }
+
+      ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
+
+      if (!apiVersion.isUnsupported()) {
+        ui.apiVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+      }
+      if (!languageVersion.isUnsupported()) {
+        ui.languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
+      }
+      index++;
+    }
+
+    ui.languageVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+    ui.kotlinJpsPluginVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+    ui.apiVersionComboBox.setRenderer(createDescriptionAwareRenderer());
+  }
+
+  private static VersionView latestStableVersion = null;
+
+  private static VersionView getLatestStableVersion() {
+    VersionView latestStable = latestStableVersion;
+    if (latestStable != null) {
+      return latestStable;
+    }
+
+    LanguageVersion bundledLanguageVersion = KotlinJpsPluginSettings.getBundledVersion().getLanguageVersion();
+    latestStable = VersionView.LatestStable.INSTANCE;
+
+    // workaround to avoid cases when Kotlin plugin bundles the latest compiler with effectively NOT STABLE version.
+    // Actually, the latest stable version is bundled in jps
+    for (LanguageVersion languageVersion : LanguageVersion.getEntries()) {
+      if (languageVersion.compareTo(bundledLanguageVersion) <= 0) {
+        latestStable = VersionView.Companion.deserialize(languageVersion.getVersionString(), false);
+      }
+      else {
+        break;
+      }
+    }
+
+    latestStableVersion = latestStable;
+    return latestStable;
+  }
+
+  public void setTargetPlatform(@Nullable IdePlatformKind targetPlatform) {
+    ui.k2jsGroup.visible(JsIdePlatformUtil.isJavaScript(targetPlatform));
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return "project.kotlinCompiler";
+  }
+
+  @Override
+  public @Nullable JComponent createComponent() {
+    if (validatorsDisposable != null) {
+      LOG.error(new IllegalStateException("validatorsDisposable is not null. Disposing and rewriting it."));
+      Disposer.dispose(validatorsDisposable);
+    }
+    validatorsDisposable = Disposer.newDisposable();
+    createVersionValidator(ui.languageVersionComboBox, "configuration.warning.text.language.version.unsupported", validatorsDisposable);
+    createVersionValidator(ui.apiVersionComboBox, "configuration.warning.text.api.version.unsupported", validatorsDisposable);
+
+    return ui.panel;
+  }
+
+  @Override
+  public boolean isModified() {
+    return isCheckboxModified(ui.reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
+           !getSelectedLanguageVersionView().equals(getCurrentLanguageVersion()) ||
+           !getSelectedAPIVersionView().equals(getCurrentApiVersion()) ||
+           jpsPluginSettings != null &&
+           !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
+           !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
+           isCheckboxModified(ui.copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
+           isBrowseFieldModified(ui.outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
+
+           (compilerWorkspaceSettings != null &&
+            (isCheckboxModified(ui.enableIncrementalCompilationForJvmCheckBox, compilerWorkspaceSettings.getPreciseIncrementalEnabled()) ||
+             isCheckboxModified(ui.enableIncrementalCompilationForJsCheckBox,
+                                compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled()) ||
+             isCheckboxModified(ui.keepAliveCheckBox, compilerWorkspaceSettings.getEnableDaemon()))) ||
+
+           isCheckboxModified(ui.generateSourceMapsCheckBox, k2jsCompilerArguments.getSourceMap()) ||
+           !getSelectedModuleKind().equals(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind())) ||
+           isFieldModified(ui.sourceMapPrefix, StringUtil.notNullize(k2jsCompilerArguments.getSourceMapPrefix())) ||
+           !getSelectedSourceMapSourceEmbedding().equals(
+             getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources())) ||
+           !getSelectedJvmVersion().equals(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
+  }
+
+  private @NotNull @NonNls String getSelectedModuleKind() {
+    return getModuleKindOrDefault((String)ui.moduleKindComboBox.getSelectedItem());
+  }
+
+  private @NotNull @NonNls String getSelectedSourceMapSourceEmbedding() {
+    return getSourceMapSourceEmbeddingOrDefault((String)ui.sourceMapEmbedSources.getSelectedItem());
+  }
+
+  public @NotNull String getSelectedJvmVersion() {
+    return getJvmVersionOrDefault((String)ui.jvmVersionComboBox.getSelectedItem());
+  }
+
+  public @NotNull VersionView getSelectedLanguageVersionView() {
+    Object item = ui.languageVersionComboBox.getSelectedItem();
+    return item != null ? (VersionView)item : getLatestStableVersion();
+  }
+
+  private @NotNull VersionView getSelectedAPIVersionView() {
+    Object item = ui.apiVersionComboBox.getSelectedItem();
+    return item != null ? (VersionView)item : getLatestStableVersion();
+  }
+
+  public VersionView getSelectedKotlinJpsPluginVersionView() {
+    JpsVersionItem selectedItem = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
+    IdeKotlinVersion version = selectedItem != null ? selectedItem.getVersion() : null;
+    LanguageVersion languageVersion = version != null ? LanguageVersion.fromFullVersionString(version.toString()) : null;
+    VersionView versionView;
+    if (languageVersion != null) {
+      versionView = new VersionView.Specific(languageVersion);
+    }
+    else {
+      String compilerVersionFromSettings = KotlinJpsPluginSettings.getInstance(project).getSettings().getVersion();
+      versionView = VersionView.Companion.deserialize(compilerVersionFromSettings, /*isAutoAdvance =*/ false);
+    }
+    return versionView;
+  }
+
+  private @NotNull String getSelectedKotlinJpsPluginVersion() {
+    JpsVersionItem item = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
+    return normalizeKotlinJpsPluginVersion(item != null ? item.getRawVersion() : null);
+  }
+
+  private static @NlsSafe @NotNull String normalizeKotlinJpsPluginVersion(@Nullable String version) {
+    if (version != null && !version.isEmpty()) {
+      return version;
+    }
+
+    return KotlinJpsPluginSettings.getRawBundledVersion();
+  }
+
+  public void applyTo(
+    CommonCompilerArguments commonCompilerArguments,
+    K2JVMCompilerArguments k2jvmCompilerArguments,
+    K2JSCompilerArguments k2jsCompilerArguments,
+    CompilerSettings compilerSettings
+  ) throws ConfigurationException {
+    if (isProjectSettings) {
+      boolean shouldInvalidateCaches =
+        !getSelectedLanguageVersionView().equals(getCurrentLanguageVersion()) ||
+        !getSelectedAPIVersionView().equals(getCurrentApiVersion()) ||
+        jpsPluginSettings != null &&
+        !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
+        !ui.additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
+
+      if (!project.isDefault() && shouldInvalidateCaches) {
+        ApplicationUtilsKt.runWriteAction(
+          new Function0<>() {
+            @Override
+            public Object invoke() {
+              ProjectStructureUtils.invalidateProjectRoots(project, RootsChangeRescanningInfo.NO_RESCAN_NEEDED);
+              return null;
+            }
+          }
+        );
+      }
+    }
+
+    commonCompilerArguments.setSuppressWarnings(!ui.reportWarningsCheckBox.isSelected());
+    KotlinFacetSettingsKt.setLanguageVersionView(commonCompilerArguments, getSelectedLanguageVersionView());
+    KotlinFacetSettingsKt.setApiVersionView(commonCompilerArguments, getSelectedAPIVersionView());
+
+    compilerSettings.setAdditionalArguments(ui.additionalArgsOptionsField.getText());
+    compilerSettings.setCopyJsLibraryFiles(ui.copyRuntimeFilesCheckBox.isSelected());
+    compilerSettings.setOutputDirectoryForJsLibraryFiles(ui.outputDirectory.getText());
+
+    if (compilerWorkspaceSettings != null) {
+      compilerWorkspaceSettings.setPreciseIncrementalEnabled(ui.enableIncrementalCompilationForJvmCheckBox.isSelected());
+      compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(ui.enableIncrementalCompilationForJsCheckBox.isSelected());
+      compilerWorkspaceSettings.setDaemonVmOptions(extractDaemonVmOptions());
+
+      boolean oldEnableDaemon = compilerWorkspaceSettings.getEnableDaemon();
+      compilerWorkspaceSettings.setEnableDaemon(ui.keepAliveCheckBox.isSelected());
+      if (ui.keepAliveCheckBox.isSelected() != oldEnableDaemon) {
+        PluginStartupApplicationService.getInstance().resetAliveFlag();
+      }
+    }
+
+    k2jsCompilerArguments.setSourceMap(ui.generateSourceMapsCheckBox.isSelected());
+    k2jsCompilerArguments.setModuleKind(getSelectedModuleKind());
+
+    k2jsCompilerArguments.setSourceMapPrefix(ui.sourceMapPrefix.getText());
+    k2jsCompilerArguments
+      .setSourceMapEmbedSources(ui.generateSourceMapsCheckBox.isSelected() ? getSelectedSourceMapSourceEmbedding() : null);
+
+    k2jvmCompilerArguments.setJvmTarget(getSelectedJvmVersion());
+
+    if (isProjectSettings) {
+      if (jpsPluginSettings != null) {
+        String jpsPluginVersion = getSelectedKotlinJpsPluginVersion();
+        if (!jpsPluginSettings.getVersion().isEmpty() ||
+            !jpsPluginVersion.equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings))) {
+          defaultJpsVersionItem = (JpsVersionItem)ui.kotlinJpsPluginVersionComboBox.getSelectedItem();
+          jpsPluginSettings.setVersion(jpsPluginVersion);
+          KotlinJpsPluginSettings.getInstance(project).setSettings(jpsPluginSettings);
+        }
+      }
+
+      KotlinCommonCompilerArgumentsHolder.getInstance(project).setSettings(commonCompilerArguments);
+      Kotlin2JvmCompilerArgumentsHolder.getInstance(project).setSettings(k2jvmCompilerArguments);
+      Kotlin2JsCompilerArgumentsHolder.getInstance(project).setSettings(k2jsCompilerArguments);
+      KotlinCompilerSettings.getInstance(project).setSettings(compilerSettings);
+    }
+
+    if (!project.isDefault()) {
+      BuildManager.getInstance().clearState(project);
+    }
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    applyTo(commonCompilerArguments, k2jvmCompilerArguments, k2jsCompilerArguments, compilerSettings);
+  }
+
+  @Override
+  public void reset() {
+    ui.reportWarningsCheckBox.setSelected(!commonCompilerArguments.getSuppressWarnings());
+    if (jpsPluginSettings != null) {
+      setSelectedItem(ui.kotlinJpsPluginVersionComboBox, defaultJpsVersionItem);
+    }
+    // This call adds the correct values to the language/apiVersion dropdown based on the compiler version.
+    // It also selects some values of the dropdown, but we want to choose the values reflecting the current settings afterward.
+    onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()); // getSelectedLanguageVersionView() replaces null
+
+    setSelectedItem(ui.languageVersionComboBox, getCurrentLanguageVersion());
+    setSelectedItem(ui.apiVersionComboBox, getCurrentApiVersion());
+
+    ui.additionalArgsOptionsField.setText(compilerSettings.getAdditionalArguments());
+    ui.copyRuntimeFilesCheckBox.setSelected(compilerSettings.getCopyJsLibraryFiles());
+    ui.outputDirectory.setText(compilerSettings.getOutputDirectoryForJsLibraryFiles());
+
+    if (compilerWorkspaceSettings != null) {
+      ui.enableIncrementalCompilationForJvmCheckBox.setSelected(compilerWorkspaceSettings.getPreciseIncrementalEnabled());
+      ui.enableIncrementalCompilationForJsCheckBox.setSelected(compilerWorkspaceSettings.getIncrementalCompilationForJsEnabled());
+      ui.keepAliveCheckBox.setSelected(compilerWorkspaceSettings.getEnableDaemon());
+    }
+
+    ui.generateSourceMapsCheckBox.setSelected(k2jsCompilerArguments.getSourceMap());
+
+    ui.moduleKindComboBox.setSelectedItem(getModuleKindOrDefault(k2jsCompilerArguments.getModuleKind()));
+    ui.sourceMapPrefix.setText(k2jsCompilerArguments.getSourceMapPrefix());
+    ui.sourceMapPrefix.setEnabled(k2jsCompilerArguments.getSourceMap());
+    ui.sourceMapEmbedSources.setSelectedItem(getSourceMapSourceEmbeddingOrDefault(k2jsCompilerArguments.getSourceMapEmbedSources()));
+
+    ui.jvmVersionComboBox.setSelectedItem(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
+  }
+
+  private VersionView getCurrentLanguageVersion() {
+      return commonCompilerArguments.getAutoAdvanceLanguageVersion()
+             ? getLatestStableVersion()
+             : KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments);
+  }
+
+  private VersionView getCurrentApiVersion() {
+      return commonCompilerArguments.getAutoAdvanceApiVersion()
+             ? getLatestStableVersion()
+             : KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments);
+  }
+
+  private static <T> void setSelectedItem(JComboBox<T> comboBox, T versionView) {
+    // Imported projects might have outdated language/api versions - we display them as well (see createVersionValidator() for details)
+    int index = ((MutableCollectionComboBoxModel<T>)comboBox.getModel()).getElementIndex(versionView);
+    if (index == -1) {
+      comboBox.addItem(versionView);
+    }
+
+    comboBox.setSelectedItem(versionView);
+  }
+
+  @Override
+  public void disposeUIResources() {
+    if (validatorsDisposable == null) {
+      LOG.error(new IllegalStateException("validatorsDisposable is null"));
+      return;
+    }
+
+    Disposer.dispose(validatorsDisposable);
+    validatorsDisposable = null;
+  }
+
+  @Nls
+  @Override
+  public String getDisplayName() {
+    return KotlinBaseCompilerConfigurationUiBundle.message("configuration.name.kotlin.compiler");
+  }
+
+  @Override
+  public @Nullable String getHelpTopic() {
+    return "reference.compiler.kotlin";
+  }
+
+  public JPanel getContentPane() {
+    return ui.panel;
+  }
+
+  public ThreeStateCheckBox getReportWarningsCheckBox() {
+    return ui.reportWarningsCheckBox;
+  }
+
+  public RawCommandLineEditor getAdditionalArgsOptionsField() {
+    return ui.additionalArgsOptionsField;
+  }
+
+  public ThreeStateCheckBox getGenerateSourceMapsCheckBox() {
+    return ui.generateSourceMapsCheckBox;
+  }
+
+  public TextFieldWithBrowseButton getOutputDirectory() {
+    return ui.outputDirectory;
+  }
+
+  public ThreeStateCheckBox getCopyRuntimeFilesCheckBox() {
+    return ui.copyRuntimeFilesCheckBox;
+  }
+
+  public ThreeStateCheckBox getKeepAliveCheckBox() {
+    return ui.keepAliveCheckBox;
+  }
+
+  public JComboBox<String> getModuleKindComboBox() {
+    return ui.moduleKindComboBox;
+  }
+
+  public JComboBox<VersionView> getLanguageVersionComboBox() {
+    return ui.languageVersionComboBox;
+  }
+
+  public JComboBox<VersionView> getApiVersionComboBox() {
+    return ui.apiVersionComboBox;
+  }
+
+  public void setEnabled(boolean value) {
+    isEnabled = value;
+    UIUtil.setEnabled(getContentPane(), value, true);
+  }
+
+  public CommonCompilerArguments getCommonCompilerArguments() {
+    return commonCompilerArguments;
+  }
+
+  public void setCommonCompilerArguments(CommonCompilerArguments commonCompilerArguments) {
+    this.commonCompilerArguments = commonCompilerArguments;
+  }
+
+  public K2JSCompilerArguments getK2jsCompilerArguments() {
+    return k2jsCompilerArguments;
+  }
+
+  public void setK2jsCompilerArguments(K2JSCompilerArguments k2jsCompilerArguments) {
+    this.k2jsCompilerArguments = k2jsCompilerArguments;
+  }
+
+  public K2JVMCompilerArguments getK2jvmCompilerArguments() {
+    return k2jvmCompilerArguments;
+  }
+
+  public void setK2jvmCompilerArguments(K2JVMCompilerArguments k2jvmCompilerArguments) {
+    this.k2jvmCompilerArguments = k2jvmCompilerArguments;
+  }
+
+  public CompilerSettings getCompilerSettings() {
+    return compilerSettings;
+  }
+
+  public void setCompilerSettings(CompilerSettings compilerSettings) {
+    this.compilerSettings = compilerSettings;
+  }
+
+  private static void createVersionValidator(JComboBox<VersionView> component, String messageKey, Disposable parentDisposable) {
+    new ComponentValidator(parentDisposable)
+      .withValidator(() -> {
+        VersionView selectedItem = (VersionView)component.getSelectedItem();
+        if (selectedItem == null) return null;
+
+        LanguageOrApiVersion version = selectedItem.getVersion();
+        if (version.isUnsupported()) {
+          return new ValidationInfo(KotlinBaseCompilerConfigurationUiBundle.message(messageKey, version.getVersionString()), component);
+        }
+
+        return null;
+      }).installOn(component);
+    component.addActionListener(e -> ComponentValidator.getInstance(component).ifPresent(ComponentValidator::revalidate));
+  }
+
+  // Expected format is
+  // -XdaemonVmOptions=-Xmx6000m for one argument
+  // and
+  // -XdaemonVmOptions=\"-Xmx6000m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
+  // for multiple
+  private @NotNull String extractDaemonVmOptions() {
+    String additionalOptions = getAdditionalArgsOptionsField().getText();
+    if (additionalOptions.contains("-XdaemonVmOptions")) {
+      Pattern pattern = Pattern.compile("-XdaemonVmOptions=(?:\"([^\"]*)\"|([^\\s]*))");
+      Matcher matcher = pattern.matcher(additionalOptions);
+
+      if (matcher.find()) {
+        String daemonArguments = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+        if (daemonArguments != null) {
+          return daemonArguments;
+        }
+      }
+    }
+    return "";
+  }
+}

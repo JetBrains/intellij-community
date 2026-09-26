@@ -1,0 +1,17 @@
+LineBreakpoint created at smartStepIntoLambdaWithDefaultArgsFun.kt:9 lambdaOrdinal = -1
+LineBreakpoint created at smartStepIntoLambdaWithDefaultArgsFun.kt:16 lambdaOrdinal = -1
+LineBreakpoint created at smartStepIntoLambdaWithDefaultArgsFun.kt:30 lambdaOrdinal = -1
+LineBreakpoint created at smartStepIntoLambdaWithDefaultArgsFun.kt:40 lambdaOrdinal = -1
+Run Java
+Connected to the target VM
+smartStepIntoLambdaWithDefaultArgsFun.kt:9
+smartStepIntoLambdaWithDefaultArgsFun.kt:10
+smartStepIntoLambdaWithDefaultArgsFun.kt:16
+smartStepIntoLambdaWithDefaultArgsFun.kt:17
+smartStepIntoLambdaWithDefaultArgsFun.kt:30
+smartStepIntoLambdaWithDefaultArgsFun.kt:31
+smartStepIntoLambdaWithDefaultArgsFun.kt:40
+smartStepIntoLambdaWithDefaultArgsFun.kt:41
+Disconnected from the target VM
+
+Process finished with exit code 0

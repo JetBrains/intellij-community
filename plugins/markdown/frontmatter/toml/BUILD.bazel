@@ -1,0 +1,75 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.markdown.frontmatter.toml` start
+content_module_jar(module = ":toml")
+### auto-generated section `dev intellij.markdown.frontmatter.toml` end
+
+### auto-generated section `build intellij.markdown.frontmatter.toml` start
+jvm_provided_library(
+    name = "plugins_toml_core_provided",
+    lib = "//plugins/toml/core",
+)
+
+jvm_library(
+    name = "toml",
+    srcs = glob(
+        [
+            "src/main/kotlin/**/*.kt",
+            "src/main/kotlin/**/*.java",
+            "src/main/kotlin/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.frontmatter.toml",
+    resource_strip_prefix = "src/main/resources",
+    resources = glob(
+        ["src/main/resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//plugins/IntelliLang:langInjection",
+        "//platform/lang-impl",
+        "//plugins/markdown/core:markdown",
+        "//platform/backend",
+        "@lib//:kotlin-stdlib",
+        ":plugins_toml_core_provided",
+    ],
+)
+
+jvm_library(
+    name = "toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.frontmatter.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":toml",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//plugins/IntelliLang:langInjection_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/markdown/core:markdown_test_lib",
+        "//plugins/toml/core",
+        "//plugins/toml/core:core_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.markdown.frontmatter.toml` end
+
+### auto-generated section `iml intellij.markdown.frontmatter.toml` start
+exports_files(
+    [
+        "intellij.markdown.frontmatter.toml.iml",
+        "src/main/resources/intellij.markdown.frontmatter.toml.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.markdown.frontmatter.toml` end

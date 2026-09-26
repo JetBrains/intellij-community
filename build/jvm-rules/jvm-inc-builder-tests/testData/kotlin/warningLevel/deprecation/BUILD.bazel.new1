@@ -1,0 +1,17 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_kotlinc_options")
+
+# Step 2: keep -Werror, but downgrade only DEPRECATION back to a warning via -Xwarning-level.
+kt_kotlinc_options(
+  name = "opts",
+  warn = "error",
+  x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.kt"], allow_empty = True),
+    kotlinc_opts = ":opts",
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

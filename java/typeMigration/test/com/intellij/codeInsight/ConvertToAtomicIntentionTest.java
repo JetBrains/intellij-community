@@ -1,18 +1,17 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @see ConvertFieldToAtomicIntention
  * @author anna
  */
 public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return true;
-  }
 
   @Override
   protected String getBasePath() {
@@ -35,9 +34,5 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTest
   public void tearDown() throws Exception {
     TypeMigrationProcessor.ourSkipFailedConversionInTestMode = false;
     super.tearDown();
-  }
-
-  public void test() {
-    doAllTests();
   }
 }

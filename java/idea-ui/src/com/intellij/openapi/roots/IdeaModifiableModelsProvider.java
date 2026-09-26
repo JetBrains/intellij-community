@@ -1,8 +1,8 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
@@ -22,10 +23,9 @@ import java.lang.reflect.Proxy;
 /**
  * @author Dennis.Ushakov
  */
-public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
+public final class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
-  @Nullable
-  public ModifiableRootModel getModuleModifiableModel(final Module module) {
+  public @Nullable ModifiableRootModel getModuleModifiableModel(final @NotNull Module module) {
     final Project project = module.getProject();
     final ModulesConfigurator configurator = getModulesConfigurator(project);
     if (configurator != null) {
@@ -39,14 +39,13 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  @Nullable
-  private static ModulesConfigurator getModulesConfigurator(Project project) {
+  private static @Nullable ModulesConfigurator getModulesConfigurator(@NotNull Project project) {
     StructureConfigurableContext context = getProjectStructureContext(project);
     return context != null ? context.getModulesConfigurator() : null;
   }
 
   @Override
-  public void commitModuleModifiableModel(final ModifiableRootModel model) {
+  public void commitModuleModifiableModel(final @NotNull ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.commit();
     }
@@ -54,7 +53,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void disposeModuleModifiableModel(final ModifiableRootModel model) {
+  public void disposeModuleModifiableModel(final @NotNull ModifiableRootModel model) {
     if (!(model instanceof Proxy)) {
       model.dispose();
     }
@@ -62,7 +61,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public ModifiableFacetModel getFacetModifiableModel(Module module) {
+  public @NotNull ModifiableFacetModel getFacetModifiableModel(@NotNull Module module) {
     final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
     if (configurator != null) {
       return configurator.getFacetsConfigurator().getOrCreateModifiableModel(module);
@@ -71,7 +70,7 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void commitFacetModifiableModel(Module module, ModifiableFacetModel model) {
+  public void commitFacetModifiableModel(@NotNull Module module, @NotNull ModifiableFacetModel model) {
     final ModulesConfigurator configurator = getModulesConfigurator(module.getProject());
     if (configurator == null || !(configurator.getFacetsConfigurator().getFacetModel(module) instanceof ModifiableFacetModel)) {
       model.commit();
@@ -79,15 +78,13 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
+  public @NotNull LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       if (!project.isInitialized()) {
         continue;
       }
-      StructureConfigurableContext context = getProjectStructureContext(project);
-      LibraryTableModifiableModelProvider provider = context != null ? context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL) : null;
-      final LibraryTable.ModifiableModel modifiableModel = provider != null ? provider.getModifiableModel() : null;
+      final LibraryTable.ModifiableModel modifiableModel = getGlobalModifiableModel(project);
       if (modifiableModel != null) {
         return modifiableModel;
       }
@@ -96,7 +93,18 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
+  public @NotNull LibraryTable.ModifiableModel getGlobalLibraryTableModifiableModel(@NotNull Project project) {
+    if (project.isInitialized()) {
+      final LibraryTable.ModifiableModel modifiableModel = getGlobalModifiableModel(project);
+      if (modifiableModel != null) {
+        return modifiableModel;
+      }
+    }
+    return LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project).getModifiableModel();
+  }
+
+  @Override
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(@NotNull Project project) {
     StructureConfigurableContext context = getProjectStructureContext(project);
     if (context != null) {
       LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
@@ -106,18 +114,25 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   }
 
   @Override
-  public void disposeLibraryTableModifiableModel(LibraryTable.ModifiableModel model) {
+  public void disposeLibraryTableModifiableModel(@NotNull LibraryTable.ModifiableModel model) {
     //IDEA should dispose this model instead of us, because it is was given from StructureConfigurableContext
     if (!(model instanceof LibrariesModifiableModel)) {
       Disposer.dispose(model);
     }
   }
 
-  @Nullable
-  private static StructureConfigurableContext getProjectStructureContext(Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return null;
+  private static @Nullable LibraryTable.ModifiableModel getGlobalModifiableModel(@NotNull Project project) {
+    var context = getProjectStructureContext(project);
+    var provider = context != null ? context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL) : null;
+    return provider != null ? provider.getModifiableModel() : null;
+  }
 
-    final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(project);
-    return structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
+  private static @Nullable StructureConfigurableContext getProjectStructureContext(@NotNull Project project) {
+    // Do not force-create the Project Structure UI service here: this method can be called on a background thread
+    // (e.g. from a write action), and instantiating the configurable off-EDT builds its Swing UI in field
+    // initializers, which contends the global AWT tree lock and freezes the IDE (IJPL-248581). We only need the
+    // context of an already opened dialog, so reuse the existing instance if any.
+    final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstanceIfCreated(project);
+    return structureConfigurable != null && structureConfigurable.isUiInitialized() ? structureConfigurable.getContext() : null;
   }
 }

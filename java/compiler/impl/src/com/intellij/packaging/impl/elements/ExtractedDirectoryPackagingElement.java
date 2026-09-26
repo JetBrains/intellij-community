@@ -1,34 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.compiler.ant.BuildProperties;
-import com.intellij.compiler.ant.Generator;
-import com.intellij.compiler.ant.taskdefs.Include;
-import com.intellij.compiler.ant.taskdefs.Mkdir;
-import com.intellij.compiler.ant.taskdefs.PatternSet;
-import com.intellij.compiler.ant.taskdefs.Unzip;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityModifications;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.AntCopyInstructionCreator;
-import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.util.PathUtil;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 
-/**
- * @author nik
- */
 public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPackagingElement<ExtractedDirectoryPackagingElement> {
   private String myPathInJar;
 
@@ -47,15 +44,14 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     }
   }
 
-  @NotNull
   @Override
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new ExtractedDirectoryPresentation(this); 
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+    return new ExtractedDirectoryPresentation(this);
   }
 
   @Override
   public String toString() {
-    return "extracted:" + myFilePath + "!" + myPathInJar;
+    return "extracted:" + getMyFilePath() + "!" + getMyPathInJar();
   }
 
   @Override
@@ -64,41 +60,14 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     if (jarFile == null) return null;
 
     final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarFile);
-    if ("/".equals(myPathInJar)) return jarRoot;
-    return jarRoot != null ? jarRoot.findFileByRelativePath(myPathInJar) : null;
+    if ("/".equals(getMyPathInJar())) return jarRoot;
+    return jarRoot != null ? jarRoot.findFileByRelativePath(getMyPathInJar()) : null;
   }
-
-  @NotNull
-  @Override
-  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
-                                                          @NotNull AntCopyInstructionCreator creator,
-                                                          @NotNull ArtifactAntGenerationContext generationContext,
-                                                          @NotNull ArtifactType artifactType) {
-    final String jarPath = generationContext.getSubstitutedPath(myFilePath);
-    final String pathInJar = StringUtil.trimStart(myPathInJar, "/");
-    if (pathInJar.length() == 0) {
-      return Collections.singletonList(creator.createExtractedDirectoryInstruction(jarPath));
-    }
-
-    final String archiveName = PathUtil.getFileName(myFilePath);
-    final String tempDirProperty = generationContext.createNewTempFileProperty("temp.unpacked.path." + archiveName, archiveName);
-    final String tempDirPath = BuildProperties.propertyRef(tempDirProperty);
-    generationContext.runBeforeCurrentArtifact(new Mkdir(tempDirPath));
-
-    final Unzip unzip = new Unzip(jarPath, tempDirPath);
-    final PatternSet patterns = new PatternSet(null);
-    patterns.add(new Include(pathInJar + "**"));
-    unzip.add(patterns);
-    generationContext.runBeforeCurrentArtifact(unzip);
-
-    return Collections.singletonList(creator.createDirectoryContentCopyInstruction(tempDirPath + "/" + pathInJar));
-  }
-
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
     return element instanceof ExtractedDirectoryPackagingElement && super.isEqualTo(element)
-           && Comparing.equal(myPathInJar, ((ExtractedDirectoryPackagingElement)element).getPathInJar());
+           && Objects.equals(getMyPathInJar(), ((ExtractedDirectoryPackagingElement)element).getPathInJar());
   }
 
   @Override
@@ -114,10 +83,51 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
 
   @Attribute("path-in-jar")
   public String getPathInJar() {
-    return myPathInJar;
+    return getMyPathInJar();
   }
 
   public void setPathInJar(String pathInJar) {
-    myPathInJar = pathInJar;
+    String myPathInJarBefore = getMyPathInJar();
+    this.update(
+      () -> myPathInJar = pathInJar,
+      (builder, entity) -> {
+        if (myPathInJarBefore.equals(pathInJar)) return;
+
+        builder.modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
+          ent.setPathInArchive(pathInJar);
+          return Unit.INSTANCE;
+        });
+    });
+  }
+
+  @Override
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
+
+    VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
+    Objects.requireNonNull(this.myFilePath, "filePath is not specified");
+    Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
+    VirtualFileUrl fileUrl = fileUrlManager.storeAndGet(VfsUtilCore.pathToUrl(this.myFilePath));
+    ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(
+      ExtractedDirectoryPackagingElementEntityModifications.createExtractedDirectoryPackagingElementEntity(fileUrl, this.myPathInJar,
+                                                                                                           source));
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
+    return getBuilder(diff, addedEntity);
+  }
+
+  private @Nullable String getMyPathInJar() {
+    if (myStorage == null) {
+      return myPathInJar;
+    } else {
+      ExtractedDirectoryPackagingElementEntity entity = (ExtractedDirectoryPackagingElementEntity)getThisEntity();
+      String path = entity.getPathInArchive();
+      if (!Objects.equals(myPathInJar, path)) {
+        myPathInJar = path;
+      }
+      return path;
+    }
   }
 }

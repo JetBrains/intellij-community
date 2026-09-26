@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -14,11 +14,11 @@ import org.jdom.Element;
 import java.util.Objects;
 
 @Tag("instance-filter")
-public class InstanceFilter implements JDOMExternalizable{
+public class InstanceFilter implements JDOMExternalizable {
   public static final InstanceFilter[] EMPTY_ARRAY = new InstanceFilter[0];
 
   @Attribute("id")
-  public long    ID      = 0;
+  public long ID = 0;
   @Attribute("enabled")
   public boolean ENABLED = true;
 
@@ -60,16 +60,18 @@ public class InstanceFilter implements JDOMExternalizable{
     return new InstanceFilter(Long.parseLong(filter.getPattern()), filter.isEnabled());
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public static ClassFilter[] createClassFilters(InstanceFilter[] filters) {
-    ClassFilter [] cFilters = new ClassFilter[filters.length];
+    ClassFilter[] cFilters = new ClassFilter[filters.length];
     for (int i = 0; i < cFilters.length; i++) {
       InstanceFilter instanceFilter = filters[i];
 

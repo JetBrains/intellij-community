@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,9 +15,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import java.util.List;
 import java.util.regex.Matcher;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalProcessHandler extends SvnProcessHandler {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -38,7 +23,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
-  public TerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
+  public TerminalProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine, forceUtf8, forceBinary);
     setHasPty(true);
     setShouldDestroyProcessRecursively(false);
@@ -55,7 +40,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   @Override
   public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
-    if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+    if (ProcessOutputType.isSystem(outputType)) {
       super.notifyTextAvailable(text, outputType);
     }
     else {
@@ -81,7 +66,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   protected boolean handlePrompt(String text, Key outputType) {
     // if process has separate output and error streams => try to handle prompts only from error stream output
-    boolean shouldHandleWithListeners = !processHasSeparateErrorStream() || ProcessOutputTypes.STDERR.equals(outputType);
+    boolean shouldHandleWithListeners = !processHasSeparateErrorStream() || ProcessOutputType.isStderr(outputType);
 
     return shouldHandleWithListeners && handlePromptWithListeners(text, outputType);
   }
@@ -96,13 +81,11 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     return result;
   }
 
-  @NotNull
-  protected String filterCombinedText(@NotNull String currentLine) {
+  protected @NotNull String filterCombinedText(@NotNull String currentLine) {
     return currentLine;
   }
 
-  @NotNull
-  protected String filterText(@NotNull String text) {
+  protected @NotNull String filterText(@NotNull String text) {
     return text;
   }
 
@@ -118,11 +101,10 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     }
   }
 
-  @NotNull
-  protected Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+  protected @NotNull Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
     Key result = outputType;
 
-    if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
+    if (!ProcessOutputType.isSystem(outputType)) {
       Matcher errorMatcher = SvnUtil.ERROR_PATTERN.matcher(line);
       Matcher warningMatcher = SvnUtil.WARNING_PATTERN.matcher(line);
 
@@ -132,12 +114,11 @@ public class TerminalProcessHandler extends SvnProcessHandler {
     return result;
   }
 
-  @NotNull
-  private StringBuilder getLastLineFor(Key outputType) {
-    if (ProcessOutputTypes.STDERR.equals(outputType)) {
+  private @NotNull StringBuilder getLastLineFor(Key outputType) {
+    if (ProcessOutputType.isStderr(outputType)) {
       return errorLine;
     }
-    else if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+    else if (ProcessOutputType.isStdout(outputType)) {
       return outputLine;
     }
     else {

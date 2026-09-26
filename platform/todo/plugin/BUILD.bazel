@@ -1,0 +1,83 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.todo.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.todo",
+        "intellij.platform.todo.backend",
+        "intellij.platform.vcs.impl.lang.todo",
+        "intellij.platform.vcs.impl.lang.todo.frontend",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.platform.todo",
+        "intellij.platform.todo.backend",
+        "intellij.platform.vcs.impl.lang.todo",
+        "intellij.platform.vcs.impl.lang.todo.frontend",
+    ],
+    jars = {
+        "lib/platform-todo-plugin.jar": ["intellij.platform.todo.plugin"],
+    },
+    main_module = "intellij.platform.todo.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.platform.todo.backend",
+            "intellij.platform.vcs.impl.lang.todo",
+        ],
+    },
+)
+### auto-generated section `dev intellij.platform.todo.plugin` end
+
+### auto-generated section `build intellij.platform.todo.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.todo.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.todo.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/todo",
+        "//platform/todo/backend",
+        "//platform/vcs-impl/lang/todo",
+        "//platform/vcs-impl/lang/todo/frontend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.platform.todo.plugin` end
+
+### auto-generated section `iml intellij.platform.todo.plugin` start
+exports_files(
+    [
+        "intellij.platform.todo.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.todo.plugin` end

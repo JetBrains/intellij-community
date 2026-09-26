@@ -1,0 +1,247 @@
+package com.intellij.ide.starter.utils
+
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
+import com.intellij.tools.ide.util.common.logError
+import com.intellij.util.io.DigestUtil
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+private const val MAX_FILE_NAME_LENGTH_IN_BYTES = 255
+private const val TEAMCITY_ARTIFACT_SUFFIX = "-2147483647.zip"
+
+/**
+ * Shared path-length rules and name-shortening utilities for paths created by IDE Starter.
+ *
+ * Limits are exclusive. Child file names are shortened against their actual absolute directory so that the complete path stays below
+ * [PATH_LENGTH_LIMIT].
+ *
+ * Shortening follows the same platform policy as reporting. Linux and macOS CI agents keep supported names unchanged.
+ */
+@ApiStatus.Internal
+object ReportingPathUtils {
+  const val PATH_LENGTH_LIMIT: Int = 260
+
+  /**
+   * The length of the hash [shortenWithHashIfNeeded] appends to a name it had to cut down. Deliberately short: a path on Windows has 260
+   * characters for everything, and two names cut down to the same prefix that also collide over 16 bits are rare enough to live with.
+   */
+  const val NAME_HASH_LENGTH: Int = 4
+
+  /** The longest one reporting directory name gets, a hash of what was cut away included. */
+  const val MAX_DIR_NAME_LENGTH_IN_BYTES: Int = 45
+
+  /**
+   * The longest the one directory of a launch gets. Far shorter than [MAX_DIR_NAME_LENGTH_IN_BYTES]: a launch name largely repeats what the
+   * method above it is called, so little of it is worth a path's length. Nothing compares the two names — the bound is simply tighter.
+   */
+  const val MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES: Int = 25
+
+  /** The longest a published artifact name gets: what a file name has left once TeamCity has appended a suffix of its own. */
+  const val MAX_ARTIFACT_NAME_LENGTH_IN_BYTES: Int = MAX_FILE_NAME_LENGTH_IN_BYTES - TEAMCITY_ARTIFACT_SUFFIX.length
+
+  /** The longest name a JVM crash log gets: the JVM expands `%p` to a process id, 32 bits wide at most on every OS Starter runs on. */
+  val WIDEST_CRASH_LOG_NAME: String = "java_error_in_idea_${UInt.MAX_VALUE}.log"
+
+  /**
+   * Whether a path over [PATH_LENGTH_LIMIT] is reported here, rather than left to the one OS its length bothers.
+   *
+   * The limit is Windows' own
+   * ([maximum path length](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation)), so it is checked where
+   * Windows is there to hit it. Linux and macOS take paths several times longer and the agents make use of that: a Bazel test runs out of a
+   * runfiles tree under an output base that is only kept short on Windows, and on those two it is over 200 characters deep before Starter
+   * has added anything of its own. Enforcing the limit there would fail a run over a path that works perfectly well where it was built.
+   *
+   * Checked outside CI on every OS all the same, because a name too long for Windows is written on whatever machine its author has, and
+   * that is the last place it is cheap to fix. The alternative is hearing about it from a Windows build.
+   */
+  private val isPathLengthLimitEnforced: Boolean
+    get() = shouldEnforcePathLength(SystemInfoRt.isWindows, CIServer.instance.isBuildRunningOnCI)
+
+  /** Returns true when Starter must enforce the Windows path limit. Local runs enforce the limit on every OS. */
+  internal fun shouldEnforcePathLength(isWindows: Boolean, isBuildRunningOnCI: Boolean): Boolean =
+    isWindows || !isBuildRunningOnCI
+
+  /**
+   * Reports a path that does not fit within [PATH_LENGTH_LIMIT] as a test infrastructure failure, where the limit is enforced at all — see
+   * [isPathLengthLimitEnforced].
+   *
+   * [path] is returned as it is, and whatever was about to be done with it is done anyway: the only fix is a shorter name somewhere above,
+   * so naming which path to shorten is all this can usefully do, and refusing the path on top of that would take a run's reports away over
+   * a length that the OS it runs on is perfectly happy with.
+   */
+  fun checkPathLength(path: Path): Path {
+    if (!isPathLengthLimitEnforced) return path
+
+    val absolutePath = path.toAbsolutePath().normalize()
+    val length = absolutePath.toString().length
+    if (length < PATH_LENGTH_LIMIT) return path
+
+    val message = "Path '$absolutePath' is $length characters long, which exceeds the $PATH_LENGTH_LIMIT-character limit."
+    // the CI server of a local run has nowhere to report to, and its own message says nothing about the path
+    logError(message)
+    CIServer.instance.reportTestFailure(
+      testName = "Path exceeds $PATH_LENGTH_LIMIT characters: $absolutePath",
+      message = message,
+      details = "Long paths fail on Windows (https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation)",
+      kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
+    )
+    return path
+  }
+
+  /**
+   * Reports [directory] unless it can still hold the crash log of any process. A directory has to be checked against the widest name it will
+   * ever hold rather than against itself, because the JVM only expands `%p` once it has already crashed: a directory that fits
+   * `-XX:ErrorFile` but not the file it names loses exactly the diagnostics the crash was supposed to leave behind.
+   */
+  fun checkCrashLogDirectoryLength(directory: Path): Path {
+    checkPathLength(directory.resolve(WIDEST_CRASH_LOG_NAME))
+    return directory
+  }
+
+  /**
+   * The file name a published artifact takes: `<type>-<time>`, timed so that several artifacts of one type can land in one directory, and
+   * short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their own to tell the
+   * tests apart.
+   *
+   * The time comes without a date, which the artifacts of one run have no use for and a path on Windows has no room for: two artifacts of one
+   * type would have to land in one directory a whole day apart, to the second, to take the same name.
+   */
+  fun formatArtifactName(artifactType: String, testName: String = ""): String {
+    val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+    val name = listOf(artifactType, testName.replace("/", "-").replace(" ", ""), time)
+      .filter(String::isNotEmpty)
+      .joinToString("-")
+    return shortenWithHashIfNeeded(name, MAX_ARTIFACT_NAME_LENGTH_IN_BYTES)
+  }
+
+  /**
+   * Shortens [fileStem] against its actual [directory], so that the complete path stays below [PATH_LENGTH_LIMIT] where that limit is
+   * enforced — see [isPathLengthLimitEnforced]. On a Linux or macOS CI agent the stem comes back unchanged, a path there being no problem
+   * at the length Windows refuses.
+   *
+   * [extension] includes its dot and remains unchanged. [preservedPrefix] remains unchanged and omits its trailing separator.
+   *
+   * The function returns [fileStem] when the prefix and hash cannot fit. [checkPathLength] can then report the complete path.
+   */
+  fun shortenFileStemIn(
+    directory: Path,
+    fileStem: String,
+    extension: String = "",
+    preservedPrefix: String = "",
+    /** Only a test passes this. The platform decides by default — see [isPathLengthLimitEnforced]. */
+    enforcePathLengthLimit: Boolean = isPathLengthLimitEnforced,
+  ): String {
+    require(fileStem.startsWith(preservedPrefix)) { "The file stem must start with the preserved prefix" }
+    require(preservedPrefix.isEmpty() || preservedPrefix.last() !in "-/\\") {
+      "The preserved prefix must omit its trailing separator"
+    }
+    if (!enforcePathLengthLimit) return fileStem
+
+    // The budget bounds a path, counted in characters, which is the unit of the Windows limit. A file name is bounded in bytes instead, by
+    // MAX_FILE_NAME_LENGTH_IN_BYTES: a different limit in a different unit.
+    // Reserve one character for the separator. Reserve one more because the limit is exclusive.
+    val pathBudget = PATH_LENGTH_LIMIT - 2 - directory.toAbsolutePath().normalize().toString().length - extension.length
+    if (fileStem.length <= pathBudget) return fileStem
+
+    val hashSuffix = "-${nameHash(fileStem)}"
+    val retainedSuffixLength = pathBudget - preservedPrefix.length - hashSuffix.length
+    if (retainedSuffixLength < 0) return fileStem
+
+    val retainedSuffix = fileStem.removePrefix(preservedPrefix)
+      .take(retainedSuffixLength)
+      .trimEnd('-', '/')
+    return "$preservedPrefix$retainedSuffix$hashSuffix"
+  }
+
+  /**
+   * Creates an artifact name for [directory], so that the complete path stays below [PATH_LENGTH_LIMIT] where that limit is enforced —
+   * see [shortenFileStemIn]. One test therefore publishes a longer name on a Linux CI agent than on a Windows one.
+   *
+   * [formatArtifactName] only enforces the file-name limit. It cannot measure the parent directory.
+   *
+   * [extension] includes its dot and remains unchanged. [checkPathLength] reports a directory that cannot hold the name and hash.
+   */
+  fun formatArtifactNameIn(directory: Path, artifactType: String, testName: String = "", extension: String = ""): String {
+    val name = formatArtifactName(artifactType, testName)
+    return shortenFileStemIn(directory, name, extension)
+  }
+
+  /**
+   * One reporting directory name, bounded so that a path built out of such names stays within [PATH_LENGTH_LIMIT]. [prefix] is kept whole
+   * and [name] gets whatever the limit leaves.
+   */
+  fun dirName(name: String, prefix: String = ""): String =
+    prefix + shortenWithHashIfNeeded(name, MAX_DIR_NAME_LENGTH_IN_BYTES - prefix.length)
+
+  /** Flattens a test name into one bounded directory segment. */
+  fun testDirectoryName(testName: String): String = dirName(testName.replace('/', '-'))
+
+  /**
+   * The one directory a launch reports in: the last level [launchName] names, cut to [MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES]. A name that
+   * lost anything — a level above the last, or bytes over the bound — carries a hash of the whole of it instead, which is what tells one
+   * launch of a method from another once the rest is gone. `null` when [launchName] names no level at all, being nothing but separators.
+   */
+  fun launchDirNameOf(launchName: String): String? {
+    // the last level that names something: a name trailing off into separators has already been spelled out one level up
+    val lastLevel = launchName.split('/').lastOrNull(String::isNotEmpty)?.escapeDotSegment() ?: return null
+    return shortenWithHashIfNeeded(lastLevel, MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES, hashedName = launchName)
+  }
+
+  /**
+   * Returns [name] unchanged when it is the whole of what it stands for and fits; otherwise shortens it and appends a stable hash.
+   *
+   * [hashedName] is what that hash is taken of and defaults to [name]. Pass the longer name [name] is only a part of, and the result
+   * carries the hash whether or not [name] itself fits: what was left out above is exactly what the hash is there to tell apart.
+   */
+  fun shortenWithHashIfNeeded(name: String, maxLengthInBytes: Int, hashedName: String = name): String {
+    require(maxLengthInBytes > NAME_HASH_LENGTH) {
+      "Maximum length must leave room for the hash suffix"
+    }
+
+    if (hashedName == name && name.fitsIn(maxLengthInBytes)) return name
+
+    return "${prefixWithinBytes(name, maxLengthInBytes - NAME_HASH_LENGTH - 1)}-${nameHash(hashedName)}"
+  }
+
+  /**
+   * The part of [name] that a directory name bounded by [maxLengthInBytes] spells with letters rather than with a hash: the whole of it
+   * when it fits, and the front of it when it does not. A directory below can leave out only what this part names already.
+   */
+  fun unhashedPartOf(name: String, maxLengthInBytes: Int = MAX_DIR_NAME_LENGTH_IN_BYTES): String =
+    if (name.fitsIn(maxLengthInBytes)) name
+    else prefixWithinBytes(name, maxLengthInBytes - NAME_HASH_LENGTH - 1)
+
+  /**
+   * The longest prefix of [name] that fits [maxLengthInBytes] and does not end in a separator. The bound counts bytes, and the cut falls
+   * between two code points, so it never splits a character in half.
+   *
+   * [shortenWithHashIfNeeded] joins the hash to this prefix with a hyphen. A prefix ending in a hyphen makes `a-dir--f3a9`, while a
+   * published path collapses a hyphen run and spells the same directory `a-dir-f3a9`. A prefix ending in a `/` makes `completion/-f3a9`,
+   * where the hash alone names the directory below.
+   */
+  private fun prefixWithinBytes(name: String, maxLengthInBytes: Int): String {
+    var end = 0
+    var usedBytes = 0
+    while (end < name.length) {
+      val charCount = Character.charCount(name.codePointAt(end))
+      val charBytes = name.substring(end, end + charCount).toByteArray(Charsets.UTF_8).size
+      if (usedBytes + charBytes > maxLengthInBytes) break
+      usedBytes += charBytes
+      end += charCount
+    }
+    return name.take(end).trimEnd('-', '/')
+  }
+
+  private fun String.fitsIn(maxLengthInBytes: Int): Boolean = toByteArray(Charsets.UTF_8).size <= maxLengthInBytes
+
+  /**
+   * A short stable hash of [name], for a directory name that keeps only a part of what it is named after: whatever was left out, the hash
+   * still tells this name from every other one that was cut down the same way.
+   */
+  fun nameHash(name: String): String =
+    DigestUtil.sha256Hex(name.toByteArray(Charsets.UTF_8)).take(NAME_HASH_LENGTH)
+}

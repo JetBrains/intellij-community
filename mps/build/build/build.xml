@@ -1,0 +1,218 @@
+<project name="MPS platform build script" default="build">
+
+  <property name="platform.root" location="${basedir}/../../.."/>
+  <property name="target.root" value="${platform.root}/out/mps"/>
+  <property name="target.dist" value="${target.root}/dist.all"/>
+  <property name="target.win.x64" value="${target.root}/dist.win.x64"/>
+  <property name="target.win.aarch64" value="${target.root}/dist.win.aarch64"/>
+  <property name="target.artifacts" value="${target.root}/artifacts"/>
+
+  <condition property="is.windows">
+    <os family="windows"/>
+  </condition>
+
+  <macrodef name="apply.patch">
+    <attribute name="file"/>
+    <sequential>
+      <echo message="Applying @{file}"/>
+      <exec executable="git" dir="${platform.root}" failonerror="true">
+        <env key="GIT_DIR" file="/dev/null"/>
+        <arg value="apply"/>
+        <!-- Remove this argument to apply patches directly in the master repository (mostly for testing purposes) -->
+        <arg value="-p2"/>
+        <arg value="&#45;-ignore-space-change"/>
+        <arg value="--verbose"/>
+        <arg value="--no-index"/>
+        <arg value="@{file}"/>
+      </exec>
+    </sequential>
+  </macrodef>
+  
+  <macrodef name="native-tar">
+    <attribute name="destfile"/>
+    <attribute name="basedir" default="${basedir}"/>
+    <attribute name="executable" default="tar"/>
+
+    <!-- Accepts nested <arg> elements -->
+    <element name="entries" implicit="true"/>
+
+    <sequential>
+      <exec executable="@{executable}" failonerror="true">
+        <!-- -czf creates a gzip-compressed tar; use -cf for plain TAR -->
+        <arg value="-czf"/>
+        <arg file="@{destfile}"/>
+
+        <!-- Relative entries are resolved from this directory -->
+        <arg value="-C"/>
+        <arg file="@{basedir}"/>
+
+        <entries/>
+      </exec>
+    </sequential>
+  </macrodef>
+
+
+  <!-- Build the IJ platform for MPS without custom patches (re-runnable) -->
+  <target name="build" depends="ij-platform,repackage,package-mps-platform-provided"/>
+
+  <!-- Code changes required for MPS not yet integrated into the codebase -->
+  <target name="patch" description="Apply MPS patches to IDEA Community sources">
+    <apply.patch file="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+    <apply.patch file="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
+    <apply.patch file="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
+    <apply.patch file="${basedir}/patches/IJPL-156181.patch"/>
+    <apply.patch file="${basedir}/patches/jps.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-36060.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-38229.patch"/>
+    <apply.patch file="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
+    <apply.patch file="${basedir}/patches/WindowsDistribution.patch"/>
+    <!-- After patching the platform build looks for .mps project folder instead of .idea -->
+    <symlink link="${platform.root}/.mps" resource="${platform.root}/.idea"/>
+  </target>
+
+  <!-- Bazel build of modules and plugins required by MPS -->
+  <target name="ij-platform" description="Compile and package the raw IJ platform">
+    <exec failonerror="true" executable="${platform.root}/bazel.cmd" dir="${platform.root}">
+      <arg value="run"/>
+      <arg value="//mps/build:mps_builder"/>
+      <arg value="--verbose_failures"/>
+      <arg value="--worker_verbose"/>
+      <arg value="--"/>
+      <arg value="--jvm_flag=-Dbuild.number=${build.number}"/>
+      <arg value="${platform.root}"/>
+    </exec>
+  </target>
+
+  <!-- Post-compile customizations required for final platform artifacts used by MPS -->
+  <target name="repackage" depends="repackage-app-jar,extract-plugin-xml,extract-win-exe"/>
+
+  <!-- Remove IdeaApplicationInfo.xml and IdeaPlugin.xml. These will be provided during MPS build later -->
+  <target name="repackage-app-jar" description="Remove IDEA specific descriptors">
+    <jar destfile="${target.dist}/lib/stripped.jar" zip64Mode="as-needed">
+      <zipfileset src="${target.dist}/lib/intellij.idea.community.customization.jar" excludes="
+        idea/IdeaApplicationInfo.xml,
+        META-INF/IdeaPlugin.xml,
+        META-INF/tips-intellij-idea-community.xml,
+        tips/**,
+        localization/**,
+        lafs/**,
+        idea_community_logo*.png,
+        idea-ce*.svg"
+      />
+    </jar>
+    <move file="${target.dist}/lib/stripped.jar" tofile="${target.dist}/lib/intellij.idea.community.customization.jar"/>
+  </target>
+
+  <!-- Build contains exe files with proper MPS icons -->
+  <target name="extract-win-exe" description="Extract customized Windows executables">
+    <copy file="${target.win.x64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-64.exe" overwrite="true"/>
+    <copy file="${target.win.aarch64}/bin/mps64.exe" tofile="${target.dist}/build/resources/mps-win-aarch64.exe" overwrite="true"/>
+  </target>
+
+  <!-- plugin.xml built by JPS contains all needed embedded module descriptors. Extract them for MPS build to later include them in MPSPlugin.xml -->
+  <!-- Skip this step during Windows local builds -->
+  <target name="extract-plugin-xml" description="Extract embedded module descriptors for future use in MPS builds" unless="is.windows">
+    <unzip src="${target.dist}/lib/mps-resources.zip" dest="${target.dist}/lib/" overwrite="true">
+      <patternset>
+        <include name="META-INF/plugin.xml"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+    <!-- Extract all <content> ... </content> snippets-->
+    <exec failonerror="true" executable="bash" dir="${target.dist}/lib/">
+      <arg value="-c"/>
+      <arg value="awk '/&lt;content[^&gt;]*&gt;/ { in_block=1 } in_block { block = block $0 ORS } /&lt;\/content&gt;/ { in_block=0; print block &gt;&gt; &quot;module-descriptors.xml&quot;; block=&quot;&quot; }' plugin.xml"/>
+    </exec>
+    <delete file="${target.dist}/lib/mps-resources.zip"/>
+    <delete file="${target.dist}/lib/plugin.xml"/>
+  </target>
+
+  <target name="package-mps-platform-provided">
+
+    <exec executable="tar"
+          failonerror="false"
+          failifexecutionfails="false"
+          outputproperty="tar.version"
+          errorproperty="tar.version.error"
+          resultproperty="tar.version.exit">
+      <arg value="--version"/>
+    </exec>
+
+    <condition property="tar.is.gnu">
+      <and>
+        <equals arg1="${tar.version.exit}" arg2="0"/>
+        <or>
+          <contains string="${tar.version}" substring="GNU tar"/>
+          <contains string="${tar.version.error}" substring="GNU tar"/>
+        </or>
+      </and>
+    </condition>
+
+    <fail unless="tar.is.gnu">
+      GNU tar is required; found: ${tar.version}
+    </fail>
+
+      <!-- Copied from `IdeaPlatform.buildTypes.PlatformCI#artifactRules` and adapted to ant -->
+    <native-tar destfile="${target.root}/artifacts/mps-platform-provided.tar.gz" basedir="${target.root}">
+      <arg value="--transform=s,^artifacts/,lib/src/,"/>
+      <arg value="--transform=s,^dist.all/build.txt,lib/build.txt,"/>
+      <arg value="--transform=s,^dist.all/,,"/>
+      <arg value="--transform=s,^temp/,lib/,"/>
+      <arg value="--transform=s,^dist\.\([^/]*\)/,__overlay__/\1/,"/>
+      <arg value="--exclude=plugin-classpath.txt"/>
+      
+      <!--Begin files and directories-->
+      <arg value="--"/>
+
+      <arg value="artifacts/platform-sources.zip"/>
+
+      <arg value="dist.all/lib"/>
+      <arg value="dist.all/license"/>
+      <arg value="dist.all/plugins"/>
+      <!--<arg value="dist.all/build.txt"/>-->
+      <arg value="dist.all/bin"/>
+      <arg value="dist.all/build/resources"/>
+      <arg value="dist.all/build/dependencies"/>
+      <arg value="dist.all/build/tools"/>
+
+      <arg value="temp/jna"/>
+      <arg value="temp/skiko-awt-runtime-all"/>
+      <arg value="temp/native"/>
+      <arg value="temp/pty4j"/>
+
+      <arg value="dist.mac.aarch64/plugins"/>
+      <arg value="dist.mac.x64/plugins"/>
+      <arg value="dist.win.aarch64/plugins"/>
+      <arg value="dist.win.x64/plugins"/>
+      <arg value="dist.unix.aarch64/plugins"/>
+      <arg value="dist.unix.x64/plugins"/>
+
+      <!--<tarfileset file="${target.root}/artifacts/platform-sources.zip" prefix="lib/src"/>-->
+
+      <!--<tarfileset dir="${target.root}/dist.all/lib" prefix="lib"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/license" prefix="license"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/plugins" prefix="plugins"/>-->
+
+      <!--<tarfileset dir="${target.root}/dist.mac.x64/plugins/laf-macos" prefix="plugins/laf-macos"/>-->
+      <!--<tarfileset dir="${target.root}/dist.win.x64/plugins/laf-win10" prefix="plugins/laf-win10"/>-->
+
+      <!--<tarfileset file="${target.root}/dist.all/build.txt" fullpath="lib/build.txt"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/bin" prefix="bin"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/resources" prefix="build/resources"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/dependencies" prefix="build/dependencies"/>-->
+      <!--<tarfileset dir="${target.root}/dist.all/build/tools" prefix="build/tools"/>-->
+
+      <!--<tarfileset dir="${target.root}/temp/jna" prefix="lib/jna"/>-->
+      <!--<tarfileset dir="${target.root}/temp/skiko-awt-runtime-all" prefix="lib/skiko-awt-runtime-all"/>-->
+      <!--<tarfileset dir="${target.root}/temp/native" prefix="lib/native"/>-->
+      <!--<tarfileset dir="${target.root}/temp/pty4j" prefix="lib/pty4j"/>-->
+
+      <!--<tarfileset dir="${target.root}/dist.mac.aarch64/plugins" prefix="__overlay__/mac.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.mac.x64/plugins" prefix="__overlay__/mac.x64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.win.aarch64/plugins" prefix="__overlay__/win.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.win.x64/plugins" prefix="__overlay__/win.x64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.unix.aarch64/plugins" prefix="__overlay__/unix.aarch64/plugins"/>-->
+      <!--<tarfileset dir="${target.root}/dist.unix.x64/plugins" prefix="__overlay__/unix.x64/plugins"/>-->
+    </native-tar>
+  </target>
+</project>

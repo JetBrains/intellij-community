@@ -1,5 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +26,19 @@ public interface VcsLogUserFilter extends VcsLogDetailsFilter {
   @NotNull
   Collection<VcsUser> getUsers(@NotNull VirtualFile root);
 
+  /**
+   * Filter values in text format, such that the filter could be later restored from it.
+   */
   @NotNull
+  Collection<@NlsSafe String> getValuesAsText();
+
   @Override
-  default VcsLogFilterCollection.FilterKey<VcsLogUserFilter> getKey() {
+  default @NotNull String getDisplayText() {
+    return StringUtil.join(getValuesAsText(), ", ");
+  }
+
+  @Override
+  default @NotNull VcsLogFilterCollection.FilterKey<VcsLogUserFilter> getKey() {
     return USER_FILTER;
   }
 }

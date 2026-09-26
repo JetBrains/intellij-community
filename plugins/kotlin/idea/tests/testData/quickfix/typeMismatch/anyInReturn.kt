@@ -1,0 +1,8 @@
+// "Specify 'Any' return type for enclosing function 'foo'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun foo() {
+    class A
+
+    return <caret>A()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

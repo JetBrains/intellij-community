@@ -1,0 +1,5 @@
+>
+  Template(ul)
+  *
+    Template(li{class=item})
+    3

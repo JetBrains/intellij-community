@@ -15,6 +15,10 @@
  */
 package com.jetbrains.python.hierarchy;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
+
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.psi.PsiElement;
@@ -27,6 +31,9 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * @author novokrest
  */
+@Subsystems.CodeInsight
+@Components.CallHierarchy
+@Layers.Functional
 public class PyCallHierarchyTest extends PyTestCase {
   private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
   private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
@@ -60,10 +67,10 @@ public class PyCallHierarchyTest extends PyTestCase {
   private void checkHierarchyTreeStructure(PyFunction function) {
     final PyCallerFunctionTreeStructure callerStructure = new PyCallerFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, 0));
+    assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, null,0));
     final PyCalleeFunctionTreeStructure calleeStructure = new PyCalleeFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, 0));
+    assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, null,0));
   }
 
   private void doTestCallHierarchy(String ... fileNames) {
@@ -117,5 +124,20 @@ public class PyCallHierarchyTest extends PyTestCase {
 
   public void testParentheses() {
     doTestCallHierarchy("main.py", "file_1.py");
+  }
+
+  // PY-29841
+  public void testSuper() {
+    doTestCallHierarchy("main.py");
+  }
+
+  // PY-52034
+  public void testQualifierDefinedInside() {
+    doTestCallHierarchy("main.py");
+  }
+
+  // PY-21354
+  public void testMultipleCallsInOneMethod() {
+    doTestCallHierarchy("main.py");
   }
 }

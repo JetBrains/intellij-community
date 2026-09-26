@@ -1,0 +1,105 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
+package com.intellij.serviceContainer
+
+import com.intellij.configurationStore.SettingsSavingComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus.Internal
+
+@Internal
+fun ComponentManager.getComponentManagerEx(): ComponentManagerEx {
+  return (this as ComponentManagerEx).getMutableComponentContainer() as ComponentManagerEx
+}
+
+internal fun checkCanceledIfNotInClassInit() {
+  try {
+    ProgressManager.checkCanceled()
+  }
+  catch (e: ProcessCanceledException) {
+    // otherwise ExceptionInInitializerError happens and the class is screwed forever
+    if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
+      throw e
+    }
+  }
+}
+
+internal fun isUnderIndicatorOrJob(): Boolean {
+  @Suppress("UsagesOfObsoleteApi")
+  return ProgressManager.getInstanceOrNull()?.getProgressIndicator() != null || Cancellation.currentJob() != null
+}
+
+@Internal
+fun throwAlreadyDisposedError(serviceDescription: String, componentManager: ComponentManagerImpl) {
+  throw AlreadyDisposedException("Cannot create $serviceDescription because container is already disposed (container=${componentManager})")
+}
+
+/**
+ * Puts a freshly created [disposable] under [ComponentManagerImpl.serviceParentDisposable], which is the only path
+ * by which service and component instances are disposed. [disposable] may be the instance itself or a lifecycle wrapper
+ * for [instanceClass].
+ *
+ * If the container has already disposed its services, the registration is rejected and nobody would ever dispose
+ * [disposable] — so dispose it here instead of leaking it together with everything it has registered in the Disposer
+ * tree, and report the container state to the caller.
+ */
+internal fun registerDisposableWithServiceParent(
+  componentManager: ComponentManagerImpl,
+  disposable: Disposable,
+  instanceClass: Class<*>,
+) {
+  if (Disposer.tryRegister(componentManager.serviceParentDisposable, disposable)) {
+    return
+  }
+
+  // `Disposer.dispose` is idempotent and handles instances which never made it into the tree
+  Disposer.dispose(disposable)
+  throwAlreadyDisposedError(instanceClass.name, componentManager)
+}
+
+internal fun doNotUseConstructorInjectionsMessage(where: String): String {
+  return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where). " +
+         "See https://plugins.jetbrains.com/docs/intellij/plugin-services.html for details."
+}
+
+internal suspend fun initializeComponentOrLightService(component: Any, pluginId: PluginId, componentManager: ComponentManagerImpl) {
+  if (component is Disposable) {
+    registerDisposableWithServiceParent(componentManager, component, component.javaClass)
+  }
+
+  @Suppress("DEPRECATION")
+  if (component is PersistentStateComponent<*> || component is SettingsSavingComponent || component is com.intellij.openapi.util.JDOMExternalizable) {
+    val componentStore = componentManager.componentStore
+    check(componentStore.isStoreInitialized || componentManager.getApplication()!!.isUnitTestMode) {
+      "You cannot get $component before component store is initialized"
+    }
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = pluginId)
+  }
+}
+
+/**
+ * @see com.intellij.serviceContainer.ServiceProxyGenerator
+ */
+@get:Internal
+val useProxiesForOpenServices: Boolean by lazy {
+  SystemProperties.getBooleanProperty("intellij.platform.use.proxies.for.open.services", false)
+}
+
+/**
+ * @see com.intellij.serviceContainer.ServiceProxyGenerator
+ */
+@get:Internal
+val proxiedServicesList: Set<String> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+  val classLoader = ComponentManagerImpl::class.java.classLoader
+  classLoader.getResourceAsStream("proxied-services.list")?.bufferedReader()?.useLines { it.toSet() } ?: emptySet()
+}

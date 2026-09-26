@@ -1,78 +1,52 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdePopupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
+import java.util.function.Function;
 
-/**
- * @author Denis Fokin
- */
-public class OwnerOptional {
-
-  private static Window findOwnerByComponent(Component component) {
-    if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (component == null) {
-      component = Window.getWindows()[0];
+@ApiStatus.Internal
+public final class OwnerOptional {
+  public static @Nullable Window findOwner(@Nullable Component parent) {
+    if (parent == null || (!(parent instanceof Window) && !parent.isValid())) {
+      parent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (parent == null) {
+        Window[] windows = Window.getWindows();
+        // when running tests, the window list may be empty
+        if (windows.length > 0) {
+          parent = windows[0];
+        }
+        else {
+          return null;
+        }
+      }
     }
-    return (component instanceof Window) ? (Window) component : SwingUtilities.getWindowAncestor(component);
-  }
 
-  private Window myPermanentOwner;
+    var owner = parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent);
 
-  private OwnerOptional(Window permanentOwner) {
-    this.myPermanentOwner = permanentOwner;
-  }
-
-  public static OwnerOptional fromComponent (Component parentComponent) {
-
-    Window owner = findOwnerByComponent(parentComponent);
-
-    IdePopupManager manager = IdeEventQueue.getInstance().getPopupManager();
-
-    if (manager.isPopupWindow(owner)) {
-
+    if (IdeEventQueue.getInstance().getPopupManager().isPopupWindow(owner)) {
       if (!owner.isFocused() || !SystemInfo.isJetBrainsJvm) {
-        owner = owner.getOwner();
-
-        while (owner != null
-               && !(owner instanceof Dialog)
-               && !(owner instanceof Frame)) {
+        do {
           owner = owner.getOwner();
         }
+        while (UIUtil.isSimpleWindow(owner));
       }
     }
 
-    if (owner instanceof Dialog) {
-      Dialog ownerDialog = (Dialog)owner;
-      if (ownerDialog.isModal()) {
-        owner = ownerDialog;
-      }
-      else {
-        while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
-          owner = owner.getOwner();
-        }
+    if (owner instanceof Dialog ownerDialog && !ownerDialog.isModal() && !UIUtil.isPossibleOwner(ownerDialog)) {
+      while (owner instanceof Dialog ownerDialog2 && !ownerDialog2.isModal()) {
+        owner = owner.getOwner();
       }
     }
 
@@ -80,42 +54,24 @@ public class OwnerOptional {
       owner = owner.getOwner();
     }
 
-    return new OwnerOptional(owner);
-  }
-
-  public OwnerOptional ifDialog(Consumer<Dialog> consumer) {
-    if (myPermanentOwner instanceof Dialog) {
-      consumer.consume((Dialog)myPermanentOwner);
+    // `Window` cannot be a parent of `JDialog`
+    if (UIUtil.isSimpleWindow(owner)) {
+      owner = null;
     }
-    return this;
+    return owner;
   }
 
-  public OwnerOptional ifNull(Consumer<Frame> consumer) {
-    if (myPermanentOwner == null) {
-      consumer.consume(null);
+  public static <T> T create(@Nullable Component parent, Function<Dialog, T> forDialog, Function<@Nullable Frame, T> forFrame) {
+    var owner = findOwner(parent);
+
+    if (owner instanceof Dialog dialog) {
+      return forDialog.apply(dialog);
     }
-    return this;
-  }
 
-  public OwnerOptional ifWindow(Consumer<Window> consumer) {
-    if (myPermanentOwner != null) {
-      consumer.consume(myPermanentOwner);
+    if (owner instanceof IdeFrame.Child childFrame) {
+      owner = WindowManager.getInstance().getFrame(childFrame.getProject());
     }
-    return this;
-  }
 
-  public OwnerOptional ifFrame(Consumer<Frame> consumer) {
-    if (myPermanentOwner instanceof Frame) {
-      if (myPermanentOwner instanceof IdeFrame.Child) {
-        IdeFrame.Child ideFrameChild = (IdeFrame.Child)myPermanentOwner;
-        myPermanentOwner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
-      }
-      consumer.consume((Frame)this.myPermanentOwner);
-    }
-    return this;
-  }
-
-  public Window get() {
-    return myPermanentOwner;
+    return forFrame.apply((Frame)owner);
   }
 }

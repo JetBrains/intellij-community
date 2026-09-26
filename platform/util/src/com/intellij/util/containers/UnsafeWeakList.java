@@ -1,30 +1,27 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Implementation of the {@link Collection} interface which:
@@ -39,36 +36,45 @@ import java.util.*;
  * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
  * Instead, please use {@link #add(T)} and {@link #iterator()}.
  */
+@Debug.Renderer(text = "\"size = \" + myList.size()", childrenArray = "toStrongList().toArray()", hasChildren = "!isEmpty()")
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
-  protected final List<MyReference<T>> myList;
-  private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
+  final List<MyReference<T>> myList;
+  private final ReferenceQueue<T> myQueue = new ReferenceQueue<>();
   private int myAlive;
   private int modCount;
 
-  private static class MyReference<T> extends WeakReference<T> {
+  private static final class MyReference<T> extends WeakReference<T> {
     private final int index;
 
     private MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
       super(referent, queue);
       this.index = index;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || obj != null && Objects.equals(get(), ((Reference<?>)obj).get());
+    }
   }
 
   public UnsafeWeakList() {
-    myList = new ArrayList<MyReference<T>>();
+    myList = new ArrayList<>();
   }
 
   public UnsafeWeakList(int capacity) {
-    myList = new ArrayList<MyReference<T>>(capacity);
+    myList = new ArrayList<>(capacity);
   }
 
-  boolean processQueue() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public boolean processQueue() {
     boolean processed = false;
     MyReference<T> reference;
+    //noinspection unchecked
     while ((reference = (MyReference<T>)myQueue.poll()) != null) {
       int index = reference.index;
-
-      if (index < myList.size() && reference == myList.get(index)) { // list may have changed while the reference was dangling in queue
+      // list may have changed while the reference was dangling in queue
+      if (index < myList.size() && reference == myList.get(index)) {
         nullizeAt(index);
       }
       processed = true;
@@ -82,7 +88,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   private void nullizeAt(int index) {
     myList.set(index, null);
     myAlive--;
-    // do not incr modCount here because every iterator().remove() usages will throw
+    // do not increment modCount here because every iterator().remove() usages will throw
   }
 
   private void reduceCapacity() {
@@ -96,7 +102,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
         continue;
       }
       if (toSaveAlive != i) {
-        myList.set(toSaveAlive, new MyReference<T>(toSaveAlive, t, myQueue));
+        myList.set(toSaveAlive, new MyReference<>(toSaveAlive, t, myQueue));
       }
       toSaveAlive++;
     }
@@ -108,7 +114,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   private void append(@NotNull T element) {
-    myList.add(new MyReference<T>(myList.size(), element, myQueue));
+    myList.add(new MyReference<>(myList.size(), element, myQueue));
     myAlive++;
     modCount++;
   }
@@ -128,6 +134,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @Override
+  public boolean contains(Object o) {
+    return !isEmpty() && super.contains(o);
+  }
+
+  @Override
   public void clear() {
     processQueue();
     myList.clear();
@@ -136,16 +147,17 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   @TestOnly
-  int listSize() {
+  @ApiStatus.Internal
+  public int listSize() {
     return myList.size();
   }
 
-  @NotNull
   @Override
-  public Iterator<T> iterator() {
+  public @NotNull Iterator<@NotNull T> iterator() {
     return new MyIterator();
   }
-  private class MyIterator implements Iterator<T> {
+
+  private final class MyIterator implements Iterator<T> {
     private final int startModCount;
     private int curIndex;
     private T curElement;
@@ -165,8 +177,9 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
       curElement = nextElement;
       nextElement = null;
       nextIndex = -1;
-      for (int i= curIndex +1; i<myList.size();i++) {
-        T t = SoftReference.dereference(myList.get(i));
+      for (int i = curIndex + 1; i < myList.size(); i++) {
+        Reference<T> ref = myList.get(i);
+        T t = ref == null ? null : ref.get();
         if (t != null) {
           nextElement = t;
           nextIndex = i;
@@ -203,7 +216,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   public boolean remove(@NotNull Object o) {
     processQueue();
     for (int i = 0; i < myList.size(); i++) {
-      T t = SoftReference.dereference(myList.get(i));
+      Reference<T> ref = myList.get(i);
+      T t = ref == null ? null : ref.get();
       if (t != null && t.equals(o)) {
         nullizeAt(i);
         modCount++;
@@ -225,24 +239,24 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return super.removeAll(c);
   }
 
-  private static final Function<MyReference<Object>, Object> DEREF = new Function<MyReference<Object>, Object>() {
-    @Override
-    public Object fun(MyReference<Object> reference) {
-      return SoftReference.dereference(reference);
+  public @NotNull @Unmodifiable List<@NotNull T> toStrongList() {
+    if (myList.isEmpty()) {
+      return Collections.emptyList();
     }
-  };
-  private static <X> Function<MyReference<X>, X> deref() {
-    //noinspection unchecked
-    return (Function)DEREF;
-  }
-  @NotNull
-  public List<T> toStrongList() {
-    return ContainerUtil.mapNotNull(myList, UnsafeWeakList.<T>deref());
+
+    FreezableArrayList<T> result = new FreezableArrayList<>(myList.size());
+    for (MyReference<T> t : myList) {
+      T o = t == null ? null : t.get();
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.emptyOrFrozen();
   }
 
   /**
-   * Since weak references can be collected at any time,
-   * this method considered dangerous, misleading, error-inducing and are is not supported.
+   * @deprecated Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and is not supported.
    * Instead, please use {@link #add(T)} and {@link #iterator()}.
    */
   @Override
@@ -253,31 +267,40 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   private static void throwNotAllowedException() {
-    throw new IncorrectOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
+    throw new UnsupportedOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
   }
 
   @Override
   public boolean isEmpty() {
-    if (myList.isEmpty()) return true;
-    Condition<MyReference<T>> notNull = notNull();
-    return ContainerUtil.find(myList, notNull) == null;
-  }
-
-  private static <T> Condition<MyReference<T>> notNull() {
-    //noinspection unchecked
-    return (Condition)NOT_NULL;
-  }
-  private static final Condition<MyReference<Object>> NOT_NULL = new Condition<MyReference<Object>>() {
-    @Override
-    public boolean value(MyReference<Object> reference) {
-      return SoftReference.dereference(reference) != null;
+    if (myList.isEmpty()) {
+      return true;
     }
-  };
 
-  // (*@#ing plugins
-  @Deprecated
-  public T get(int index) {
-    throwNotAllowedException();
-    return null;
+    for (MyReference<T> value : myList) {
+      if (value != null && value.get() != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * @return true if all elements (allowed by {@code allowEntity} predicate) from the {@code other} list are contained in this list
+   */
+  public boolean containsAll(@NotNull UnsafeWeakList<T> other, @NotNull Predicate<? super T> allowEntity) {
+    List<MyReference<T>> myList = this.myList;
+    List<MyReference<T>> otherList = other.myList;
+    if (otherList.isEmpty()) {
+      return true;
+    }
+    for (MyReference<T> otherReference : otherList) {
+      T t = SoftReference.dereference(otherReference);
+      if (t != null
+          && allowEntity.test(t)
+          && !myList.contains(otherReference)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

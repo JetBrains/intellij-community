@@ -1,0 +1,465 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.configuration;
+
+import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltipKt;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.ui.components.DropDownLink;
+import com.intellij.util.ui.JBUI;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.PyPackageManagers;
+import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
+import com.jetbrains.python.sdk.AddInterpreterActions;
+import com.jetbrains.python.sdk.DialogAction;
+import com.jetbrains.python.sdk.ModuleOrProject;
+import com.jetbrains.python.sdk.PyCustomSdkUiProvider;
+import com.jetbrains.python.sdk.PyRenderedSdkType;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.jetbrains.python.sdk.PyInterpreterSelection;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.python.sdk.common.PyInterpreterItem;
+import com.intellij.python.sdk.common.PyInterpreterRef;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.ProjectExtKt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import static com.jetbrains.python.configuration.SdkConfigurationProgressObserverKt.observeSdkConfigurationInProgress;
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
+import static com.jetbrains.python.sdk.PySdkRenderingKt.groupInterpreterItemsByTypesUnderProgress;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
+
+@ApiStatus.Internal
+public class PyActiveSdkConfigurable implements UnnamedConfigurable {
+
+  private final @NotNull Project myProject;
+
+  private final @Nullable Module myModule;
+
+  private final @NotNull JPanel myMainPanel;
+
+  private final @NotNull ComboBox<Object> mySdkCombo;
+
+  private final @NotNull DropDownLink<?> myAddInterpreterLink;
+
+  private final @NotNull PyInstalledPackagesPanel myPackagesPanel;
+  private final @Nullable PyPanelWithPromo myPanelWithPromo;
+
+  private final @Nullable Disposable myDisposable;
+
+  protected PyActiveSdkConfigurable(@NotNull Project project) {
+    this(project, null);
+  }
+
+  protected PyActiveSdkConfigurable(@NotNull Module module) {
+    this(module.getProject(), module);
+  }
+
+  private PyActiveSdkConfigurable(@NotNull Project project, @Nullable Module module) {
+    myProject = project;
+    myModule = module;
+
+    mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
+
+    final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
+    myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
+    myPackagesPanel.setShowGrid(false);
+    boolean freeTier = PythonSdkUtil.isFreeTier();
+    myPanelWithPromo = freeTier ? new PyPanelWithPromo(myPackagesPanel) : null;
+
+    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
+    myDisposable = customUiProvider == null ? null : Disposer.newDisposable();
+    final Pair<PyCustomSdkUiProvider, Disposable> customizer =
+      customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
+
+    myAddInterpreterLink = getAddInterpreterDropDownLink(project, module);
+    myMainPanel =
+      buildPanel(project, mySdkCombo, myAddInterpreterLink, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel,
+                 packagesNotificationPanel,
+                 customizer);
+
+    // Reflect the SDK configuration mutex reactively: disable the controls only while the lock is
+    // held and refresh the combo once it is released, since a background configuration may have
+    // created or changed the interpreter in the meantime.
+    observeSdkConfigurationInProgress(myProject, myMainPanel, this::onSdkConfigurationInProgressChanged,
+                                      this::onSdkConfigurationFinished);
+  }
+
+  private @NotNull DropDownLink<?> getAddInterpreterDropDownLink(@NotNull Project project, @Nullable Module module) {
+    final DropDownLink<?> additionalAction = new DropDownLink<>(
+      PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
+      link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect)
+    );
+    // Keep the link visible when it gets disabled while an SDK configuration is in progress.
+    additionalAction.setAutoHideOnDisable(false);
+    return additionalAction;
+  }
+
+  /**
+   * Disables the SDK controls while an SDK configuration holds the mutex and re-enables them once it
+   * is released, explaining via a tooltip why interaction is blocked.
+   */
+  private void onSdkConfigurationInProgressChanged(boolean inProgress) {
+    mySdkCombo.setEnabled(!inProgress);
+    myAddInterpreterLink.setEnabled(!inProgress);
+    final HtmlChunk tooltip =
+      inProgress ? HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")) : null;
+    HelpTooltipKt.setToolTipText(mySdkCombo, tooltip);
+    HelpTooltipKt.setToolTipText(myAddInterpreterLink, tooltip);
+  }
+
+  /**
+   * Called once the SDK configuration mutex is released. The background configuration may have
+   * created or changed the interpreter, so reload the combo to show the up-to-date selection.
+   */
+  private void onSdkConfigurationFinished() {
+    // reset() refreshes the SDK model from the live table and reselects the now-configured interpreter.
+    reset();
+  }
+
+  private void onShowAllSelected() {
+    Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
+    onShowAllInterpretersDialogClosed(selectedSdk);
+  }
+
+  private void onSdkSelected() {
+    final Sdk sdk = getOriginalSelectedSdk();
+
+    if (sdk != null) {
+      // Non-null means we are in free tier mode, so must switch between packages and promo panel
+      if (myPanelWithPromo != null) {
+        boolean remote = isRemote(sdk);
+        myPanelWithPromo.setPromoMode(remote);
+        if (remote) {
+          return;
+        }
+      }
+    }
+
+    refreshPackages(sdk);
+  }
+
+  private void refreshPackages(@Nullable Sdk sdk) {
+    final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
+    myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
+    myPackagesPanel.updateNotifications(sdk);
+  }
+
+  /**
+   * @param selectedSdk the selected Python SDK before closing "Python Interpreters" dialog if the user clicked "OK" and {@code null} if the
+   *                    user clicked "Cancel" button
+   */
+  private void onShowAllInterpretersDialogClosed(@Nullable Sdk selectedSdk) {
+    if (selectedSdk != null) {
+      updateSdkListAndSelect(selectedSdk);
+    }
+    else {
+      // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
+      final Sdk currentSelectedSdk = getEditableSelectedSdk();
+
+      // `getEditableSelectedSdk` resolves the selected item against the live SDK table, so a non-null answer already
+      // means the previously selected interpreter is still there.
+      if (currentSelectedSdk != null) {
+        // nothing has been selected but previously selected sdk still exists, stay with it
+        updateSdkListAndSelect(currentSelectedSdk);
+      }
+      else {
+        // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
+        updateSdkListAndSelect(null);
+      }
+    }
+  }
+
+  @Override
+  public final JComponent createComponent() {
+    return myMainPanel;
+  }
+
+  @Override
+  public final boolean isModified() {
+    return !Comparing.equal(getSdk(), getOriginalSelectedSdk());
+  }
+
+  @Nullable
+  private Sdk getOriginalSelectedSdk() {
+    // The combo holds the real SDKs from the live table, so the selected item is already the original.
+    return getEditableSelectedSdk();
+  }
+
+  @Nullable
+  private Sdk getEditableSelectedSdk() {
+    // The combo holds items, not SDKs. An item can outlive the interpreter it names, so this may be null.
+    return mySdkCombo.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+  }
+
+  @Nullable
+  protected Sdk getSdk() {
+    Sdk sdk;
+    if (myModule == null) {
+      sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
+    else {
+      sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(myModule);
+    }
+
+    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
+      return sdk;
+    }
+
+    return null;
+  }
+
+  protected void setSdk(@Nullable Sdk item) {
+    // This function literally associates SDK with module and must be moved to the service
+    final var currentSdk = getSdk();
+
+    PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);
+    PySdkExtKt.setPythonSdk(myProject, item);
+    PyTransferredSdkRootsKt.transferRootsToModulesWithInheritedSdk(myProject, item);
+
+    if (myModule != null) {
+      PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
+      setPythonSdk(myModule, item);
+      PyTransferredSdkRootsKt.transferRoots(myModule, item);
+    }
+  }
+
+  @Override
+  public final void apply() {
+    final Sdk selectedSdk = getOriginalSelectedSdk();
+    if (selectedSdk != null) {
+      ((PythonSdkType)selectedSdk.getSdkType()).setupSdkPaths(selectedSdk);
+    }
+    setSdk(selectedSdk);
+  }
+
+  @Override
+  public final void reset() {
+    // The combo reads the live SDK table, so a just-created interpreter is present without any extra refresh.
+    updateSdkListAndSelect(getSdk());
+  }
+
+  @NotNull
+  private List<Sdk> getAvailableSdks() {
+    return ProjectExtKt.getAssignablePythonSdks(myProject, myModule);
+  }
+
+  private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
+    final List<Sdk> allPythonSdks = getAvailableSdks();
+
+    final Map<PyRenderedSdkType, List<PyInterpreterItem>> moduleSdksByTypes =
+      groupInterpreterItemsByTypesUnderProgress(allPythonSdks, myModule, mySdkCombo);
+
+    final List<Object> items = new ArrayList<>();
+    items.add(null);
+
+    final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
+    for (int i = 0; i < renderedSdkTypes.length; i++) {
+      final PyRenderedSdkType currentSdkType = renderedSdkTypes[i];
+
+      if (moduleSdksByTypes.containsKey(currentSdkType)) {
+        if (i != 0) items.add(PySdkListCellRenderer.SEPARATOR);
+        items.addAll(moduleSdksByTypes.get(currentSdkType));
+      }
+    }
+
+    items.add(PySdkListCellRenderer.SEPARATOR);
+    items.add(getShowAll());
+
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    final PyInterpreterItem selection = findItemFor(moduleSdksByTypes, selectedSdk);
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
+    // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
+    // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
+    mySdkCombo.setSelectedItem(selection);
+    onSdkSelected();
+  }
+
+  /**
+   * The item that names {@code sdk}, or null when the list has none.
+   * <p>
+   * Matched by interpreter name, because the "Python Interpreters" dialog may hand over an editable copy rather than
+   * the SDK the live table holds.
+   */
+  @Nullable
+  private static PyInterpreterItem findItemFor(@NotNull Map<PyRenderedSdkType, List<PyInterpreterItem>> itemsByType,
+                                               @Nullable Sdk sdk) {
+    if (sdk == null) return null;
+    PyInterpreterRef ref = PythonInterpreterExtKt.asInterpreterRef(sdk);
+    for (List<PyInterpreterItem> items : itemsByType.values()) {
+      PyInterpreterItem item = ContainerUtil.find(items, candidate -> ref.equals(candidate.getRef()));
+      if (item != null) return item;
+    }
+    return null;
+  }
+
+  @Override
+  public final void disposeUIResources() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ListPopup createAddInterpreterPopup(@NotNull Project project,
+                                                             @Nullable Module module,
+                                                             @NotNull Component dataContextComponent,
+                                                             @NotNull Consumer<Sdk> onSdkCreated) {
+    DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
+    var moduleOrProject = (module != null) ? new ModuleOrProject.ModuleAndProject(module) : new ModuleOrProject.ProjectOnly(project);
+    List<DialogAction> actions = AddInterpreterActions.collectAddInterpreterActions(moduleOrProject, onSdkCreated);
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      null,
+      new DefaultActionGroup(actions),
+      dataContext,
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      false,
+      null,
+      -1,
+      action -> false,
+      null
+    );
+  }
+
+  /**
+   * A {@link PyInterpreterSelection} over {@code combo}, so a {@link PyCustomSdkUiProvider} never sees the raw items.
+   * <p>
+   * The combo holds interpreters, separators, the "Show All" row and {@code null}; unwrapping that is this panel's job.
+   */
+  private static @NotNull PyInterpreterSelection selectionOf(@NotNull ComboBox<Object> combo) {
+    return new PyInterpreterSelection() {
+      @Override
+      public @Nullable Sdk getSelectedSdk() {
+        return combo.getSelectedItem() instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+      }
+
+      @Override
+      public void onChange(@NotNull Runnable listener) {
+        combo.addActionListener(e -> listener.run());
+      }
+    };
+  }
+
+  private static @NotNull ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
+                                                            @NotNull Runnable onSdkSelected) {
+    final ComboBox<Object> result = new ComboBox<>() {
+      @Override
+      public void setSelectedItem(Object item) {
+        if (getShowAll().equals(item)) {
+          ApplicationManager.getApplication().invokeLater(onShowAllSelected);
+        }
+        else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
+          super.setSelectedItem(item);
+        }
+      }
+    };
+
+    result.addItemListener(
+      e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) onSdkSelected.run();
+      }
+    );
+
+    ComboboxSpeedSearch.installOn(result);
+    result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
+    return result;
+  }
+
+  /**
+   * @param additionalAction either the gear button for the old UI or the link "Add Interpreter" for the new UI
+   */
+  private static @NotNull JPanel buildPanel(@NotNull Project project,
+                                            @NotNull ComboBox<Object> sdkComboBox,
+                                            @NotNull JComponent additionalAction,
+                                            @NotNull JPanel promotionPanel,
+                                            @NotNull PackagesNotificationPanel packagesNotificationPanel,
+                                            @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
+
+    final JPanel result = new JPanel(new GridBagLayout());
+
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.insets = JBUI.insets(2);
+
+    c.gridx = 0;
+    c.gridy = 0;
+    JLabel label = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
+    label.setLabelFor(sdkComboBox);
+    result.add(label, c);
+
+    c.gridx = 1;
+    c.gridy = 0;
+    c.weightx = 0.1;
+    result.add(sdkComboBox, c);
+
+    c.insets = JBUI.insets(2, 0, 2, 2);
+    c.gridx = 2;
+    c.gridy = 0;
+    c.weightx = 0.0;
+    result.add(additionalAction, c);
+
+    if (customizer != null) {
+      customizer.first.customizeActiveSdkPanel(project, selectionOf(sdkComboBox), result, c, customizer.second);
+    }
+
+    c.gridx = 0;
+    c.gridy++;
+    c.weighty = 1.;
+    c.gridwidth = 3;
+    c.gridheight = GridBagConstraints.RELATIVE;
+    c.fill = GridBagConstraints.BOTH;
+    result.add(promotionPanel, c);
+
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.gridx = 0;
+    c.gridy++;
+    c.gridwidth = 3;
+    c.weighty = 0.;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.anchor = GridBagConstraints.SOUTH;
+
+    result.add(packagesNotificationPanel.getComponent(), c);
+
+    return result;
+  }
+
+  private static String getShowAll() {
+    return PyBundle.message("active.sdk.dialog.show.all.item");
+  }
+}

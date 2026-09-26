@@ -1,0 +1,1 @@
+Text: (x: Int, y: Boolean), Disabled: false, Strikeout: false, Green: true

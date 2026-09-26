@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;
@@ -22,24 +7,24 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -49,44 +34,61 @@ import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
-public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
-  @NonNls private static final String RECENT_KEYS = "MoveFile.RECENT_KEYS";
-  @NonNls private static final String MOVE_FILES_OPEN_IN_EDITOR = "MoveFile.OpenInEditor";
-  
-
-  public interface Callback {
-    void run(MoveFilesOrDirectoriesDialog dialog);
-  }
+@ApiStatus.Internal
+public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
+  private static final String MOVE_FILE = "MoveFile";
+  private static final String RECENT_KEYS = "MoveFile.RECENT_KEYS";
+  private static final String MOVE_FILES_OPEN_IN_EDITOR = "MoveFile.OpenInEditor";
 
   private JLabel myNameLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
-  private String myHelpID;
-  private final Project myProject;
-  private final Callback myCallback;
-  private PsiDirectory myTargetDirectory;
   private JCheckBox myCbSearchForReferences;
-  private JCheckBox myOpenInEditorCb;
+  private boolean isDumb;
 
-  public MoveFilesOrDirectoriesDialog(Project project, Callback callback) {
-    super(project, true);
-    myProject = project;
-    myCallback = callback;
+  public MoveFilesOrDirectoriesDialog(@NotNull Project project, PsiElement @NotNull [] psiElements, PsiDirectory initialTargetDirectory) {
+    super(project, true, true);
     setTitle(RefactoringBundle.message("move.title"));
     init();
-  }
 
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+    if (psiElements.length == 1) {
+      PsiFileSystemItem element = (PsiFileSystemItem)psiElements[0];
+      String path = CopyFilesOrDirectoriesDialog.shortenPath(element.getVirtualFile());
+      String text = RefactoringBundle.message(element instanceof PsiFile ? "move.file.0" : "move.directory.0", path);
+      myNameLabel.setText(text);
+    }
+    else {
+      boolean isFile = true;
+      boolean isDirectory = true;
+      for (PsiElement psiElement : psiElements) {
+        isFile &= psiElement instanceof PsiFile;
+        isDirectory &= psiElement instanceof PsiDirectory;
+      }
+      myNameLabel.setText(isFile ? RefactoringBundle.message("move.specified.files") :
+                          isDirectory ? RefactoringBundle.message("move.specified.directories")
+                                      : RefactoringBundle.message("move.specified.elements"));
+    }
+
+    String initialTargetPath = initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl();
+    myTargetDirectoryField.getChildComponent().setText(initialTargetPath);
+    int lastDirectoryIdx = initialTargetPath.lastIndexOf(File.separator);
+    int textLength = initialTargetPath.length();
+    if (lastDirectoryIdx > 0 && lastDirectoryIdx + 1 < textLength) {
+      myTargetDirectoryField.getChildComponent().getTextEditor().select(lastDirectoryIdx + 1, textLength);
+    }
+
+    validateButtons();
   }
 
   @Override
@@ -108,18 +110,16 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     if (recentEntries != null) {
       myTargetDirectoryField.getChildComponent().setHistory(recentEntries);
     }
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                   RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
-                                                   myProject,
-                                                   descriptor,
-                                                   TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(RefactoringBundle.message("select.target.directory"))
+      .withDescription(RefactoringBundle.message("the.file.will.be.moved.to.this.directory"));
+    myTargetDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     final JTextField textField = myTargetDirectoryField.getChildComponent().getTextEditor();
     FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, getDisposable());
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
-        validateOKButton();
+      protected void textChanged(@NotNull DocumentEvent e) {
+        validateButtons();
       }
     });
     myTargetDirectoryField.setTextFieldPreferredWidth(CopyFilesOrDirectoriesDialog.MAX_PATH_LENGTH);
@@ -127,110 +127,93 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
     String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
 
-    myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
-    myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+    isDumb = DumbService.isDumb(myProject);
 
-    myOpenInEditorCb = new NonFocusableCheckBox("Open moved files in editor");
-    myOpenInEditorCb.setSelected(isOpenInEditor());
-    
+    myCbSearchForReferences = createCbSearchForReferences(isDumb);
+    myCbSearchForReferences.setSelected(!isDumb && RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
+    myCbSearchForReferences.setEnabled(!isDumb);
+
     return FormBuilder.createFormBuilder().addComponent(myNameLabel)
       .addLabeledComponent(RefactoringBundle.message("move.files.to.directory.label"), myTargetDirectoryField, UIUtil.LARGE_VGAP)
       .addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText))
       .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP)
-      .addComponentToRightColumn(myOpenInEditorCb, UIUtil.LARGE_VGAP)
       .getPanel();
   }
 
-  public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, @NonNls String helpID) {
-    if (psiElements.length == 1) {
-      String text;
-      if (psiElements[0] instanceof PsiFile) {
-        text = RefactoringBundle.message("move.file.0",
-                                         CopyFilesOrDirectoriesDialog.shortenPath(((PsiFile)psiElements[0]).getVirtualFile()));
-      }
-      else {
-        text = RefactoringBundle.message("move.directory.0",
-                                         CopyFilesOrDirectoriesDialog.shortenPath(((PsiDirectory)psiElements[0]).getVirtualFile()));
-      }
-      myNameLabel.setText(text);
-    }
-    else {
-      boolean isFile = true;
-      boolean isDirectory = true;
-      for (PsiElement psiElement : psiElements) {
-        isFile &= psiElement instanceof PsiFile;
-        isDirectory &= psiElement instanceof PsiDirectory;
-      }
-      myNameLabel.setText(isFile ?
-                          RefactoringBundle.message("move.specified.files") :
-                          isDirectory ?
-                          RefactoringBundle.message("move.specified.directories") :
-                          RefactoringBundle.message("move.specified.elements"));
+  private JCheckBox createCbSearchForReferences(boolean isDumb) {
+    String cbSearchForReferencesLabel;
+
+    if (IdeProductMode.isLight()) {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references.light.mode");
+    } else if (isDumb) {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references.dumb.mode");
+    } else {
+      cbSearchForReferencesLabel = RefactoringBundle.message("search.for.references");
     }
 
-    final String initialTargetPath = initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl();
-    myTargetDirectoryField.getChildComponent().setText(initialTargetPath);
-    final int lastDirectoryIdx = initialTargetPath.lastIndexOf(File.separator);
-    final int textLength = initialTargetPath.length();
-    if (lastDirectoryIdx > 0 && lastDirectoryIdx + 1 < textLength) {
-      myTargetDirectoryField.getChildComponent().getTextEditor().select(lastDirectoryIdx + 1, textLength);
-    }
-
-    validateOKButton();
-    myHelpID = helpID;
+    return new NonFocusableCheckBox(cbSearchForReferencesLabel);
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpID);
-  }
-
-  public static boolean isOpenInEditor() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return false;
-    }
-    return PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, false);
-  } 
-
-  private void validateOKButton() {
-    setOKActionEnabled(myTargetDirectoryField.getChildComponent().getText().length() > 0);
+  protected @NotNull String getRefactoringId() {
+    return MOVE_FILE;
   }
 
   @Override
-  protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, myOpenInEditorCb.isSelected(), false);
-    //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
+  protected String getHelpId() {
+    return "refactoring.moveFile";
+  }
+
+  public static boolean isOpenInEditorProperty() {
+    return !ApplicationManager.getApplication().isUnitTestMode() &&
+           PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, false);
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return false;
+  }
+
+  @Override
+  protected boolean hasPreviewButton() {
+    return false;
+  }
+
+  @Override
+  protected boolean areButtonsValid() {
+    return !myTargetDirectoryField.getChildComponent().getText().isEmpty();
+  }
+
+  @Override
+  protected void doAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
-    RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
-
-    if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
-      return;
+    if (!isDumb) {
+      RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      final Runnable action = () -> {
-        String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
+      String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
+      PsiDirectory directory = DirectoryUtil.findLongestExistingDirectory(PsiManager.getInstance(myProject), directoryName);
+      PsiDirectory targetDirectory =
+        directory == null || !CommonRefactoringUtil.checkReadOnlyStatus(myProject, Collections.singletonList(directory), false)
+        ? null
+        : ApplicationManager.getApplication().runWriteAction((Computable<PsiDirectory>)() -> {
         try {
-          myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
+          return DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
         }
-        catch (IncorrectOperationException e) {
-          // ignore
+        catch (IncorrectOperationException ignored) {
+          return null;
         }
-      };
+      });
 
-      ApplicationManager.getApplication().runWriteAction(action);
-      if (myTargetDirectory == null) {
-        CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                               RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-        return;
+      if (targetDirectory == null) {
+        CommonRefactoringUtil.showErrorMessage(getTitle(), RefactoringBundle.message("cannot.create.directory"), getHelpId(), myProject);
       }
-      myCallback.run(this);
+      else {
+        performMove(targetDirectory);
+      }
     }, RefactoringBundle.message("move.title"), null);
   }
 
-  public PsiDirectory getTargetDirectory() {
-    return myTargetDirectory;
-  }
-
+  protected abstract void performMove(@NotNull PsiDirectory targetDirectory);
 }

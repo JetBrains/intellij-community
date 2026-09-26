@@ -30,7 +30,7 @@ public class RenameGrAccessorProcessor extends RenameJavaMethodProcessor {
   @Override
   public void renameElement(@NotNull PsiElement psiElement,
                             @NotNull String newName,
-                            @NotNull UsageInfo[] usages,
+                            UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
 
   }

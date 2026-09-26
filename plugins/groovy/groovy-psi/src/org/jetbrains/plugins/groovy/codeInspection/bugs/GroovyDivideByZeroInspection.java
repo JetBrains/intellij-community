@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -27,30 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyDivideByZeroInspection extends BaseInspection {
+public final class GroovyDivideByZeroInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Divide by zero";
-  }
-
-  @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Division by zero #loc";
+  protected @Nullable String buildErrorString(Object... args) {
+    return GroovyBundle.message("inspection.message.divide.by.zero");
 
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -97,8 +83,7 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
   }
 
   private static boolean isZero(GrExpression expression) {
-    @NonNls
-    final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "0".equals(text) ||
         "0x0".equals(text) ||
         "0X0".equals(text) ||

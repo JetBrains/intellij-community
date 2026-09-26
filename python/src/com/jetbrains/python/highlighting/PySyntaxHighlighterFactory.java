@@ -1,53 +1,25 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.highlighting;
 
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.FactoryMap;
-import com.jetbrains.python.console.parsing.PyConsoleHighlightingLexer;
-import com.jetbrains.python.lexer.PythonHighlightingLexer;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 
-/**
- * @author yole
- */
-public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.create(key -> new PyHighlighter(key));
-
-  private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.create(key -> new PyHighlighter(key) {
-    @Override
-    protected PythonHighlightingLexer createHighlightingLexer(LanguageLevel languageLevel) {
-      return new PyConsoleHighlightingLexer(languageLevel);
+public final class PySyntaxHighlighterFactory extends PySyntaxHighlighterFactoryBase {
+  @Override
+  protected boolean useConsoleLexer(final @Nullable Project project, final @Nullable VirtualFile virtualFile) {
+    if (virtualFile == null || project == null || virtualFile instanceof VirtualFileWindow) {
+      return false;
     }
-  });
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
-    final LanguageLevel level = project != null && virtualFile != null ?
-                                PyUtil.getLanguageLevelForVirtualFile(project, virtualFile) :
-                                LanguageLevel.getDefault();
-    return myMap.get(level);
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      return psiFile != null && PydevConsoleRunnerUtil.isInPydevConsole(psiFile);
+    });
   }
 }

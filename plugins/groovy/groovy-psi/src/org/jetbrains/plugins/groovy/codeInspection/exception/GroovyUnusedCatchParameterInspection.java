@@ -18,35 +18,26 @@ package org.jetbrains.plugins.groovy.codeInspection.exception;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-public class GroovyUnusedCatchParameterInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
+public final class GroovyUnusedCatchParameterInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unused catch parameter";
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+
+    private static final @NlsSafe String IGNORED = "ignored";
 
     @Override
     public void visitCatchClause(@NotNull GrCatchClause catchClause) {
@@ -64,7 +55,8 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
       block.accept(visitor);
       if (!visitor.isUsed()) {
         final PsiElement nameIdentifier = parameter.getNameIdentifierGroovy();
-        registerError(nameIdentifier, "Unused catch parameter '#ref' #loc", new LocalQuickFix[]{QuickFixFactory.getInstance().createRenameElementFix(parameter, "ignored")},
+        registerError(nameIdentifier, GroovyBundle.message("inspection.message.unused.catch.parameter.ref"),
+                      new LocalQuickFix[]{QuickFixFactory.getInstance().createRenameElementFix(parameter, IGNORED)},
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }

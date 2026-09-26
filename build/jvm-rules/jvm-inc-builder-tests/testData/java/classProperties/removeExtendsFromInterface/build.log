@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  I2.class
+End of files
+Compiling files:
+  java/classProperties/removeExtendsFromInterface/a/I2.java
+End of files
+Cleaning output files:
+  Client.class
+  Impl.class
+End of files
+Compiling files:
+  java/classProperties/removeExtendsFromInterface/a/Client.java
+  java/classProperties/removeExtendsFromInterface/a/Impl.java
+End of files
+------------------------------------------
+Exit code: ERROR

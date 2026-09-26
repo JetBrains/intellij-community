@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.squareup.okio.jvm` start
+content_module_jar(
+    libraries = ["@lib//:libraries-squareup-okio-jvm-squareup-okio-jvm"],
+    module = ":squareup-okio-jvm",
+)
+### auto-generated section `dev intellij.libraries.squareup.okio.jvm` end
+
+### auto-generated section `build intellij.libraries.squareup.okio.jvm` start
+jvm_library(
+    name = "squareup-okio-jvm",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.squareup.okio.jvm",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-squareup-okio-jvm-squareup-okio-jvm"],
+    runtime_deps = ["@lib//:libraries-squareup-okio-jvm-squareup-okio-jvm"],
+)
+
+jvm_library(
+    name = "squareup-okio-jvm_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.squareup.okio.jvm",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-squareup-okio-jvm-squareup-okio-jvm"],
+    runtime_deps = [":squareup-okio-jvm"],
+)
+### auto-generated section `build intellij.libraries.squareup.okio.jvm` end
+
+### auto-generated section `iml intellij.libraries.squareup.okio.jvm` start
+exports_files(
+    [
+        "intellij.libraries.squareup.okio.jvm.iml",
+        "resources/intellij.libraries.squareup.okio.jvm.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.squareup.okio.jvm` end

@@ -1,0 +1,28 @@
+// FILE: gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "subprojectsDir/subproject1/build.gradle.kts libs.some.test.library"
+[libraries]
+some_te<caret>st-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: subprojectsDir/subproject1/build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.some.test.library)
+}
+
+// FILE: settings.gradle.kts
+// Pay an attention on the way `subproject1` is included into the Gradle build, instead of ordinary `include(":subproject1")`.
+// This use-case became supported when IDEA started determine version catalogs locations by data received from Gradle at sync.
+fun includeSubprojectsDynamically(path: String) {
+    val dirsWithBuildScripts = file(path).listFiles()
+        ?.filter { File(it, "build.gradle.kts").exists() }
+    dirsWithBuildScripts?.forEach { subproject ->
+        val relativePath = subproject.relativeTo(rootDir).path
+        include(":${relativePath.replace('/', ':')}")
+    }
+}
+includeSubprojectsDynamically("subprojectsDir")

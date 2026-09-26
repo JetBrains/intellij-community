@@ -1,0 +1,14 @@
+{
+  "modules" : [
+    { "name": "A", "dependencies": ["B"] },
+    { "name": "B", "dependencies": ["C", "O"] },
+    { "name": "C", "dependencies": ["A"] },
+    { "name": "O", "dependencies": [] }
+  ],
+  "targets": [
+    { "module": "A" },
+    { "module": "B" },
+    { "module": "C" },
+    { "module": "O" }
+  ]
+}

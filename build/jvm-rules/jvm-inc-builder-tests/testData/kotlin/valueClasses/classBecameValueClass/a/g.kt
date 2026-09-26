@@ -1,0 +1,1 @@
+fun g(w: Wrapper): Wrapper = w

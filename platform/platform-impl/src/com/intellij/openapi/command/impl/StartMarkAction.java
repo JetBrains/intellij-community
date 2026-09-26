@@ -1,47 +1,45 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class StartMarkAction extends BasicUndoableAction {
-  private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<>();
-  private String myCommandName;
+public final class StartMarkAction extends BasicUndoableAction {
+  public static final Key<StartMarkAction> START_MARK_ACTION_KEY = Key.create("current.inplace.refactorings.mark");
+  private @NlsContexts.Command String myCommandName;
   private boolean myGlobal;
   private Document myDocument;
 
-  private StartMarkAction(Editor editor, String commandName) {
-    super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
+  StartMarkAction(@NotNull DocumentReference docRef, @NlsContexts.Command String commandName, boolean isGlobal) {
+    super(docRef);
     myCommandName = commandName;
-    myDocument = editor.getDocument();
+    myDocument = docRef.getDocument();
+    myGlobal = isGlobal;
   }
 
+  private StartMarkAction(@NotNull Editor editor, @NlsContexts.Command String commandName) {
+    this(DocumentReferenceManager.getInstance().create(editor.getDocument()), commandName, false);
+  }
+
+  @Override
   public void undo() {
   }
 
+  @Override
   public void redo() {
   }
 
@@ -49,15 +47,16 @@ public class StartMarkAction extends BasicUndoableAction {
     myGlobal = global;
   }
 
+  @Override
   public boolean isGlobal() {
     return myGlobal;
   }
 
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     return myCommandName;
   }
 
-  public void setCommandName(String commandName) {
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }
 
@@ -66,17 +65,21 @@ public class StartMarkAction extends BasicUndoableAction {
   }
 
   @TestOnly
-  public static void checkCleared() {
+  public static void checkCleared(@Nullable Editor editor) {
+    if (editor == null) {
+      return;
+    }
     try {
-      assert ourCurrentMarks.isEmpty() : ourCurrentMarks.values();
+      StartMarkAction markAction = editor.getUserData(START_MARK_ACTION_KEY);
+      assert markAction == null : markAction.myDocument;
     }
     finally {
-      ourCurrentMarks.clear();
+      editor.putUserData(START_MARK_ACTION_KEY, null);
     }
   }
 
-  public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
-    final StartMarkAction existingMark = ourCurrentMarks.get(project);
+  public static StartMarkAction start(Editor editor, Project project, @NlsContexts.Command String commandName) throws AlreadyStartedException {
+    final StartMarkAction existingMark = editor.getUserData(START_MARK_ACTION_KEY);
     if (existingMark != null) {
       throw new AlreadyStartedException(existingMark.myCommandName,
                                         existingMark.myDocument,
@@ -84,29 +87,47 @@ public class StartMarkAction extends BasicUndoableAction {
     }
     final StartMarkAction markAction = new StartMarkAction(editor, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
-    ourCurrentMarks.put(project, markAction);
+    editor.putUserData(START_MARK_ACTION_KEY, markAction);
     return markAction;
   }
 
-  public static StartMarkAction canStart(Project project) {
-    return ourCurrentMarks.get(project);
+  public static StartMarkAction canStart(Editor editor) {
+    return editor.getUserData(START_MARK_ACTION_KEY);
   }
+  
+  /**
+   * @deprecated use {@link StartMarkAction#canStart(Editor)} instead to allow inplace refactorings in different editors in parallel
+   */
+  @Deprecated
+  public static StartMarkAction canStart(@NotNull Project project) {
+    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+      if (fileEditor instanceof TextEditor te) {
+        StartMarkAction startMarkAction = te.getEditor().getUserData(START_MARK_ACTION_KEY);
+        if (startMarkAction != null) {
+          return startMarkAction;
+        }
+      }
+    }
 
-  static void markFinished(Project project) {
-    final StartMarkAction existingMark = ourCurrentMarks.remove(project);
+    return null;
+  }
+  
+  static void markFinished(Editor editor) {
+    StartMarkAction existingMark = editor.getUserData(START_MARK_ACTION_KEY);
     if (existingMark != null) {
+      editor.putUserData(START_MARK_ACTION_KEY, null);
       existingMark.myDocument = null;
     }
   }
 
-  public static class AlreadyStartedException extends Exception {
+  public static final class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
     private final Document myDocument;
 
     public AlreadyStartedException(String commandName,
                                    Document document,
                                    DocumentReference[] documentRefs) {
-      super("Unable to start inplace refactoring:\n"+ commandName + " is not finished yet.");
+      super("Unable to start inplace refactoring:\n" + IdeBundle.message("dialog.message.command.not.finished.yet", commandName));
       myAffectedDocuments = documentRefs;
       myDocument = document;
     }

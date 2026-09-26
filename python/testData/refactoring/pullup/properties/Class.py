@@ -1,3 +1,5 @@
+import logging
+
 from SuperClass import SuperClass
 
 
@@ -14,7 +16,7 @@ class AnyClass(SuperClass):
 
     @new_property.setter
     def new_property(self, value):
-        pass
+        logging.debug("Setting %s", value)
 
     @new_property.deleter
     def new_property(self):

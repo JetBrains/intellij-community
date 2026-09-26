@@ -1,28 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -30,19 +33,19 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AntRunConfiguration extends LocatableConfigurationBase implements RunProfileWithCompileBeforeLaunchOption{
+public final class AntRunConfiguration extends LocatableConfigurationBase implements RunProfileWithCompileBeforeLaunchOption{
   private AntSettings mySettings = new AntSettings();
 
-  public AntRunConfiguration(Project project, ConfigurationFactory factory, String name) {
-    super(project, factory, name);
+  public AntRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
+    super(project, factory);
   }
 
   @Override
@@ -52,31 +55,29 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     return configuration;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AntConfigurationSettingsEditor();
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (!AntConfiguration.getInstance(getProject()).isInitialized()) {
-      throw new RuntimeConfigurationException("Ant Configuration still haven't been initialized");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.ant.configuration.not.initialized"));
     }
     if (getTarget() == null)
-      throw new RuntimeConfigurationException("Target is not specified", "Missing parameters");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.target.not.specified"),
+                                              AntBundle.message("dialog.title.ant.configuration.missing.parameters"));
   }
 
   @Override
   public String suggestedName() {
     AntBuildTarget target = getTarget();
-    return target != null ? target.getDisplayName() : "";
+    return target == null ? null : target.getDisplayName();
   }
 
-
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public @NotNull RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new AntRunProfileState(env);
   }
 
@@ -92,16 +93,15 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     mySettings.writeExternal(element);
   }
 
-  @Nullable
-  public AntBuildTarget getTarget() {
+  public @Nullable AntBuildTarget getTarget() {
     return GlobalAntConfiguration.getInstance().findTarget(getProject(), mySettings.myFileUrl, mySettings.myTargetName);
   }
 
-  @NotNull
-  public List<BuildFileProperty> getProperties() {
+  public @NotNull List<BuildFileProperty> getProperties() {
     return Collections.unmodifiableList(mySettings.myProperties);
   }
-  
+
+  @SuppressWarnings("UnusedReturnValue")
   public boolean acceptSettings(AntBuildTarget target) {
     VirtualFile virtualFile = target.getModel().getBuildFile().getVirtualFile();
     if (virtualFile == null) {
@@ -174,28 +174,25 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
   private class AntConfigurationSettingsEditor extends SettingsEditor<RunConfiguration> {
     private String myFileUrl = null;
     private String myTargetName = null;
-    
-    private final JTextField myTextField = new JTextField();
+
+    private ExtendableTextField myTextField;
     private final PropertiesTable myPropTable = new PropertiesTable();
-    
-    private final ActionListener myActionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AntBuildTarget buildTarget = getTarget();
-        final TargetChooserDialog dlg = new TargetChooserDialog(getProject(), buildTarget);
-        if (dlg.showAndGet()) {
-          myFileUrl = null;
-          myTargetName = null;
-          buildTarget = dlg.getSelectedTarget();
-          if (buildTarget != null) {
-            final VirtualFile vFile = buildTarget.getModel().getBuildFile().getVirtualFile();
-            if (vFile != null) {
-              myFileUrl = vFile.getUrl();
-              myTargetName = buildTarget.getName();
-            }
+
+    private final Runnable myAction = () -> {
+      AntBuildTarget buildTarget = getTarget();
+      final TargetChooserDialog dlg = new TargetChooserDialog(getProject(), buildTarget);
+      if (dlg.showAndGet()) {
+        myFileUrl = null;
+        myTargetName = null;
+        buildTarget = dlg.getSelectedTarget();
+        if (buildTarget != null) {
+          final VirtualFile vFile = buildTarget.getModel().getBuildFile().getVirtualFile();
+          if (vFile != null) {
+            myFileUrl = vFile.getUrl();
+            myTargetName = buildTarget.getName();
           }
-          updateUI();
         }
+        updateUI();
       }
     };
 
@@ -218,34 +215,34 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     }
 
     @Override
-    protected void applyEditorTo(@NotNull RunConfiguration s) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull RunConfiguration s) {
       final AntRunConfiguration config = (AntRunConfiguration)s;
       config.mySettings.myFileUrl = myFileUrl;
       config.mySettings.myTargetName = myTargetName;
       copyProperties(ContainerUtil.filter(myPropTable.getElements(), property -> !myPropTable.isEmpty(property)), config.mySettings.myProperties);
     }
 
-    @NotNull
     @Override
-    protected JComponent createEditor() {
-      myTextField.setEditable(false);
+    protected @NotNull JComponent createEditor() {
+      myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
+
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(LabeledComponent.create(new TextFieldWithBrowseButton(myTextField, myActionListener), "Target name", BorderLayout.WEST), BorderLayout.NORTH);
-      
-      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), "Ant Properties");
+      panel.add(LabeledComponent.create(myTextField, AntBundle.message("label.ant.run.configuration.target.name"), BorderLayout.WEST), BorderLayout.NORTH);
+
+      String propertiesTableName = AntBundle.message("label.table.name.ant.properties");
+      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), propertiesTableName);
       tableComponent.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       panel.add(tableComponent, BorderLayout.CENTER);
       return panel;
     }
   }
-  
+
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
-    protected ListTableModel createListModel() {
-      final ColumnInfo nameColumn = new TableColumn("Name") {
-        @Nullable
+    protected ListTableModel<BuildFileProperty> createListModel() {
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyName();
         }
 
@@ -254,10 +251,9 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
           property.setPropertyName(value);
         }
       };
-      final ColumnInfo valueColumn = new TableColumn("Value") {
-        @Nullable
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyValue();
         }
 
@@ -266,7 +262,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
           property.setPropertyValue(value);
         }
       };
-      return new ListTableModel(nameColumn, valueColumn);
+      return new ListTableModel<>(nameColumn, valueColumn);
     }
 
     @Override
@@ -295,7 +291,7 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
     }
 
     private abstract static class TableColumn extends ElementsColumnInfoBase<BuildFileProperty> {
-      public TableColumn(final String name) {
+      TableColumn(final @NlsContexts.ColumnName String name) {
         super(name);
       }
 
@@ -304,15 +300,14 @@ public class AntRunConfiguration extends LocatableConfigurationBase implements R
         return true;
       }
 
-      @Nullable
       @Override
-      protected String getDescription(BuildFileProperty element) {
+      protected @Nullable String getDescription(BuildFileProperty element) {
         return null;
       }
     }
   }
-  
-  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<BuildFileProperty> to) {
+
+  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

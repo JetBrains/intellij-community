@@ -1,4 +1,6 @@
 import java.lang.invoke.*;
+import java.util.Arrays;
+import java.util.List;
 
 class Main {
   void foo() throws Exception {
@@ -24,6 +26,14 @@ class Main {
     l.findConstructor(NoDefault.class, <warning descr="Cannot resolve constructor 'NoDefault()'">MethodType.methodType(void.class)</warning>);
     l.findConstructor(Class.forName("NoDefault"), <warning descr="Cannot resolve constructor 'NoDefault()'">MethodType.methodType(void.class)</warning>);
 
+  }
+
+  void differentMethodTypeOverloads() throws Exception {
+    MethodHandles.Lookup l = MethodHandles.lookup();
+
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class)</warning>);
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, List.of())</warning>);
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class, Arrays.asList())</warning>);
   }
 }
 

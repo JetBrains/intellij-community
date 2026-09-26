@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -24,39 +14,36 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> {
-  protected final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
+  protected static final Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 
   /**
    * This method is used to set property value to "delegee" JComponent
    */
-  @NotNull protected final Method myReadMethod;
+  protected final @NotNull Method myReadMethod;
   /**
    * This method is used to get property value from "delegee" JComponent
    */
-  @NotNull private final Method myWriteMethod;
+  private final @NotNull Method myWriteMethod;
 
   private final boolean myStoreAsClient;
 
-  @NonNls private static final String INTRO_PREFIX = "Intro:";
+  private static final @NonNls String INTRO_PREFIX = "Intro:";
 
   public IntrospectedProperty(final String name,
-                              @NotNull final Method readMethod,
-                              @NotNull final Method writeMethod,
+                              final @NotNull Method readMethod,
+                              final @NotNull Method writeMethod,
                               final boolean storeAsClient) {
     super(null, name);
     myReadMethod = readMethod;
@@ -67,6 +54,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   /**
    * <b>Do not overide this method without serious reason!</b>
    */
+  @Override
   public V getValue(final RadComponent component){
     //noinspection unchecked
     return (V)invokeGetter(component);
@@ -88,8 +76,23 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   /**
    * <b>Do not overide this method without serious reason!</b>
    */
-  protected void setValueImpl(final RadComponent component,final V value) throws Exception{
+  @Override
+  protected void setValueImpl(final RadComponent component, final V value) throws Exception{
     invokeSetter(component, value);
+  }
+
+  /**
+   * Converts a value as it was read from the form file by
+   * {@link com.intellij.uiDesigner.lw.LwIntrospectedProperty#read} into a value that can be passed to
+   * {@link #setValue}. The two are the same for almost every property; a property whose value has to be bound to
+   * a class of the design time class loader converts it here, where that class is known.
+   *
+   * @return {@code null} if the value cannot be represented, in which case it is not applied
+   * @see com.intellij.uiDesigner.propertyInspector.properties.IntroEnumProperty
+   */
+  public V fromLwValue(final Object lwValue) {
+    //noinspection unchecked
+    return (V)lwValue;
   }
 
   protected void invokeSetter(final RadComponent component, final Object value) throws IllegalAccessException, InvocationTargetException {
@@ -125,27 +128,13 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     markTopmostModified(component, false);
   }
 
-  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      //noinspection unchecked
-      V value = (V) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      V defaultValue = getDefaultValue(radComponent.getDelegee());
-      if (!Comparing.equal(value, defaultValue)) {
-        setValue(radComponent, value);
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
-  }
-
   protected V getDefaultValue(final JComponent delegee) throws Exception {
     if (myStoreAsClient) {
       return null;
     }
     final Constructor constructor = delegee.getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
     constructor.setAccessible(true);
-    JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     //noinspection unchecked
     return (V) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
   }
@@ -153,7 +142,6 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   @Override
   public boolean appliesTo(final RadComponent component) {
     @NonNls String name = getName();
-    //noinspection SimplifiableIfStatement
     if (name.equals(SwingProperties.PREFERRED_SIZE) ||
         name.equals(SwingProperties.MINIMUM_SIZE) ||
         name.equals(SwingProperties.MAXIMUM_SIZE)) {
@@ -167,11 +155,13 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     final GlobalSearchScope scope = component.getModule().getModuleWithDependenciesAndLibrariesScope(true);
     PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
     if (componentClass == null) return true;
-    final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
-    for(PsiMethod method: psiMethods) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          method.getParameterList().isEmpty()) {
-        return true;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-641435")) {
+      final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
+      for (PsiMethod method : psiMethods) {
+        if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+            method.getParameterList().isEmpty()) {
+          return true;
+        }
       }
     }
     return false;

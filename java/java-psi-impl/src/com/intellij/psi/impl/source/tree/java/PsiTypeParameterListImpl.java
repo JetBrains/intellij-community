@@ -17,7 +17,12 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
@@ -25,11 +30,8 @@ import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParameterListStub> implements PsiTypeParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiTypeParameterListImpl.class);
 
   public PsiTypeParameterListImpl(final PsiTypeParameterListStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER_LIST);
@@ -39,14 +41,13 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameter[] getTypeParameters() {
+  public PsiTypeParameter @NotNull [] getTypeParameters() {
     return getStubOrPsiChildren(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.ARRAY_FACTORY);
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     LOG.assertTrue(typeParameter.getParent() == this);
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
   }
@@ -70,6 +71,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     }
   }
 
+  @Override
   public String toString() {
     return "PsiTypeParameterList";
   }

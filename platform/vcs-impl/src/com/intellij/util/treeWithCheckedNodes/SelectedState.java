@@ -1,39 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
-* @author irengrig
- *
  * We can have only limited number of nodes selected in a tree;
  * and children of selected nodes (any level) cannot change their state
  * used together with {@link SelectionManager}
 */
-public class SelectedState<T> {
+public final class SelectedState<T> {
   private final Set<T> mySelected;
   private final SLRUMap<T, TreeNodeState> myCache;
   private final int mySelectedSize;
@@ -45,8 +29,7 @@ public class SelectedState<T> {
     myCache = new SLRUMap<>(queueSize, queueSize);
   }
 
-  @Nullable
-  public TreeNodeState get(final T node) {
+  public @Nullable TreeNodeState get(final T node) {
     if (mySelected.contains(node)) return TreeNodeState.SELECTED;
     return myCache.get(node);
   }
@@ -56,7 +39,7 @@ public class SelectedState<T> {
     mySelected.remove(node);
   }
 
-  public void clearAllCachedMatching(final Processor<T> processor) {
+  public void clearAllCachedMatching(final Processor<? super T> processor) {
     final Set<Map.Entry<T, TreeNodeState>> entries = myCache.entrySet();
     for (Map.Entry<T, TreeNodeState> entry: entries){
       if(processor.process(entry.getKey())) {
@@ -70,8 +53,7 @@ public class SelectedState<T> {
     myCache.remove(node);
   }
 
-  @NotNull
-  public TreeNodeState putAndPass(final T node, @NotNull final TreeNodeState state) {
+  public @NotNull TreeNodeState putAndPass(final T node, final @NotNull TreeNodeState state) {
     if (TreeNodeState.SELECTED.equals(state)) {
       mySelected.add(node);
       myCache.remove(node);
@@ -87,10 +69,10 @@ public class SelectedState<T> {
   }
 
   public Set<T> getSelected() {
-    return Collections.unmodifiableSet(mySelected);
+    return Collections.unmodifiableSet(new HashSet<>(mySelected));
   }
 
-  public void setSelection(Collection<T> files) {
+  public void setSelection(Collection<? extends T> files) {
     mySelected.clear();
     mySelected.addAll(files);
   }

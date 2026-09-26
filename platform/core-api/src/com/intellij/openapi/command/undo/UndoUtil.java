@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class UndoUtil {
+public final class UndoUtil {
+
+  static Key<Boolean> FORCE_RECORD_UNDO = Key.create("FORCE_RECORD_UNDO");
+  static Key<Boolean> DONT_RECORD_UNDO = Key.create("DONT_RECORD_UNDO");
+
   private UndoUtil() {
   }
 
@@ -36,25 +23,59 @@ public class UndoUtil {
    *
    * @param file to make editors of to respond to undo action.
    */
-  public static void markPsiFileForUndo(@NotNull final PsiFile file) {
+  public static void markPsiFileForUndo(final @NotNull PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     CommandProcessor.getInstance().addAffectedDocuments(project, document);
   }
 
-  /**
-   * @deprecated please use {@link CommandProcessor#addAffectedFiles} instead
-   */
-  public static void markVirtualFileForUndo(@NotNull Project project, @NotNull VirtualFile file) {
-    CommandProcessor.getInstance().addAffectedFiles(project, file);
+  public static void disableUndoFor(@NotNull Document document) {
+    document.putUserData(DONT_RECORD_UNDO, Boolean.TRUE);
   }
 
-  public static void disableUndoFor(@NotNull Document document) {
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+  public static void disableUndoIn(@NotNull Document document, @NotNull Runnable runnable) {
+    Boolean oldVal = document.getUserData(DONT_RECORD_UNDO);
+    document.putUserData(DONT_RECORD_UNDO, Boolean.TRUE);
+    try {
+      runnable.run();
+    }
+    finally {
+      document.putUserData(DONT_RECORD_UNDO, oldVal);
+    }
+  }
+
+  public static void disableUndoFor(@NotNull VirtualFile file) {
+    file.putUserData(DONT_RECORD_UNDO, Boolean.TRUE);
+  }
+
+  public static void enableUndoFor(@NotNull Document document) {
+    document.putUserData(DONT_RECORD_UNDO, null);
   }
 
   public static boolean isUndoDisabledFor(@NotNull Document document) {
-    return Boolean.TRUE.equals(document.getUserData(UndoConstants.DONT_RECORD_UNDO));
+    return Boolean.TRUE.equals(document.getUserData(DONT_RECORD_UNDO));
+  }
+
+  public static boolean isUndoDisabledFor(@NotNull VirtualFile file) {
+    return Boolean.TRUE.equals(file.getUserData(DONT_RECORD_UNDO));
+  }
+
+  public static void forceUndoIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
+    file.putUserData(FORCE_RECORD_UNDO, Boolean.TRUE);
+    try {
+      runnable.run();
+    }
+    finally {
+      file.putUserData(FORCE_RECORD_UNDO, null);
+    }
+  }
+
+  public static void setForceUndoFlag(@NotNull VirtualFile file, boolean flag) {
+    file.putUserData(FORCE_RECORD_UNDO, flag ? Boolean.TRUE : null);
+  }
+
+  public static boolean isForceUndoFlagSet(@NotNull VirtualFile file) {
+    return file.getUserData(FORCE_RECORD_UNDO) == Boolean.TRUE;
   }
 }

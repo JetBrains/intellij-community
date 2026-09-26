@@ -1,12 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +25,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
+public final class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     final NestedControllerCandidate nestedControllerCandidate = findNestedControllerCandidate(element);
@@ -42,7 +48,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
         final Ref<Boolean> found = new Ref<>(false);
         fxml.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             super.visitXmlTag(tag);
             if (found.get()) return;
             if (FxmlConstants.FX_INCLUDE.equals(tag.getName())) {
@@ -61,10 +67,8 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  @Nullable
-  private static NestedControllerCandidate findNestedControllerCandidate(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
+  private static @Nullable NestedControllerCandidate findNestedControllerCandidate(@NotNull PsiElement element) {
+    if (element instanceof PsiField field) {
       final String fxId = field.getName();
       if (!StringUtil.isEmpty(fxId)) {
         final PsiClass containingClass = field.getContainingClass();
@@ -82,8 +86,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
     return null;
   }
 
-  @NotNull
-  private static Collection<PsiFile> findFxmlWithController(@Nullable NestedControllerCandidate nestedControllerCandidate) {
+  private static @NotNull Collection<PsiFile> findFxmlWithController(@Nullable NestedControllerCandidate nestedControllerCandidate) {
     if (nestedControllerCandidate != null) {
       final String qualifiedName = nestedControllerCandidate.controllerClass.getQualifiedName();
       if (qualifiedName != null) {
@@ -94,7 +97,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
     return Collections.emptyList();
   }
 
-  private static class NestedControllerCandidate {
+  private static final class NestedControllerCandidate {
     private final String fxId;
     private final PsiField nestedControllerField;
     private final PsiClass controllerClass;

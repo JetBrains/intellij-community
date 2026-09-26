@@ -1,7 +1,7 @@
-if True:
-    pass
-else:
-    pass
+if True:<fold text='...'>
+    pass</fold>
+else:<fold text='...'>
+    pass</fold>
 
 if True:<fold text='...'>
     pass
@@ -15,8 +15,8 @@ else:<fold text='...'>
 
 
 x  = []
-for i in x:
-    pass
+for i in x:<fold text='...'>
+    pass</fold>
 
 for i in x:<fold text='...'>
     pass
@@ -39,8 +39,8 @@ except ValueError:<fold text='...'>
     print('')
     print('')
     print('')</fold>
-except Exception:
-    print('')
+except Exception:<fold text='...'>
+    print('')</fold>
 else:<fold text='...'>
     print('')
     print('')

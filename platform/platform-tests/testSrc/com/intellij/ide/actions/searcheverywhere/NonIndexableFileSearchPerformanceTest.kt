@@ -1,0 +1,256 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions.searcheverywhere
+
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmark
+import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmarkWithVariableInputSize
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.registerProjectRootBlocking
+import com.intellij.workspaceModel.ide.unregisterProjectRoot
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.condition.DisabledOnOs
+import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.extension.RegisterExtension
+import kotlin.io.path.Path
+import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
+
+/**
+ * Performance test for [NonIndexableFilesSEContributor].
+ */
+@StressTestApplication
+@RegistryKey(key = "se.enable.non.indexable.files.contributor", value = "true")
+@PerformanceUnitTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+internal class NonIndexableFileSearchPerformanceTest {
+  @RegisterExtension
+  private val projectModel: ProjectModelExtension = ProjectModelExtension()
+
+  private val project get() = projectModel.project
+  private val workspaceFileIndex get() = WorkspaceFileIndex.getInstance(project)
+
+
+  companion object {
+    private val LOG = logger<NonIndexableFileSearchPerformanceTest>()
+
+    private val communityPath = TemporaryDirectory.generateTemporaryPath("community").also { path ->
+      NioFiles.createDirectories(path)
+    }
+    private val communityVirtualFile = VfsUtil.findFile(communityPath, true)!!.also {
+      NioFiles.copyRecursively(Path(PathManager.getCommunityHomePath()), communityPath)
+    }
+
+    private val nonIndexableFilesCount: Int = run {
+      var nonIndexableFiles = 0
+      VfsUtil.processFilesRecursively(NewVirtualFile.asCacheAvoiding(communityVirtualFile)) {
+        nonIndexableFiles++
+        true
+      }
+      LOG.info("nonIndexableFiles: $nonIndexableFiles")
+      nonIndexableFiles
+    }
+
+    private fun cachedFilesCount(file: VirtualFile = communityVirtualFile): Int {
+      return 1 + (file as NewVirtualFile).iterInDbChildren().sumOf { cachedFilesCount(it) }
+    }
+
+    private fun assertColdVfs() {
+      val cachedFiles = cachedFilesCount()
+      assertThat(cachedFiles.toLong() * 100)
+        .`as`("cached files: %d of %d", cachedFiles, nonIndexableFilesCount)
+        .isLessThan(nonIndexableFilesCount.toLong())
+    }
+
+    private fun assertWarmVfs() {
+      val cachedFiles = cachedFilesCount()
+      assertThat(cachedFiles)
+        .`as`("cached files: %d of %d", cachedFiles, nonIndexableFilesCount)
+        .isGreaterThanOrEqualTo(nonIndexableFilesCount)
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun deleteCopiedCommunity() {
+      NioFiles.deleteRecursively(communityPath)
+    }
+  }
+
+  @BeforeEach
+  fun createNonIndexableFileset(): Unit = runBlocking {
+    Assumptions.assumeTrue(project.isOpen)
+
+    runInEdtAndWait { registerProjectRootBlocking(project, communityPath) }
+
+    Assumptions.assumeTrue(readAction { workspaceFileIndex.isInContent(communityVirtualFile) }) {
+      "project root must be in content"
+    }
+    Assumptions.assumeFalse(readAction { workspaceFileIndex.isIndexable(communityVirtualFile) }) {
+      "project root must be non-indexable"
+    }
+  }
+
+  @Test
+  @Order(1)
+  fun `iterate over all files`() {
+    assertColdVfs()
+
+    val searchPattern = "ProjectRootEntity"
+    val contributor = createContributor()
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
+      contributor.search(searchPattern, createIndicator())
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+  @Test
+  @Order(100) // run this test after every other, so they won't have files loaded into vfs
+  fun `iterate over all files (cached files)`() {
+    communityVirtualFile.refresh(false, true)
+    VfsUtil.processFilesRecursively(communityVirtualFile) { true }
+    assertWarmVfs()
+
+    val searchPattern = "ProjectRootEntity"
+    val contributor = createContributor()
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
+      contributor.search(searchPattern, createIndicator())
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+  @DisabledOnOs(OS.WINDOWS)
+  @Test
+  @Order(1)
+  fun `do not search in libraries with scope 'Project Files'`(@TestDisposable disposable: Disposable): Unit = runBlocking {
+    assertColdVfs()
+
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableExternalKindFileSetTestContributor(), disposable)
+    val virtualFileManager = project.workspaceModel.getVirtualFileUrlManager()
+    val externalRoot = TemporaryDirectory
+      .generateTemporaryPath("library")
+      .createSymbolicLinkPointingTo(communityPath)
+      .toVirtualFileUrl(virtualFileManager)
+
+    unregisterProjectRoot(project, virtualFileManager.storeAndGet(communityVirtualFile.url))
+    project.workspaceModel.update("create EXTERNAL_NON_INEXABLE root") { storage ->
+      storage.addEntity(NonIndexableTestEntity(externalRoot, NonPersistentEntitySource))
+    }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project, 10.seconds.toJavaDuration())
+
+    val searchPattern = "ProjectRootEntity"
+    val searchScope = readAction { GlobalSearchScope.projectScope(project) }
+    val contributor = createContributor(searchScope)
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\", only libraries, 'Project' scope", nonIndexableFilesCount) {
+      val items = contributor.search(searchPattern, createIndicator())
+      assertThat(items).isEmpty()
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+
+  @Test
+  @Order(1)
+  fun `search for one file deep inside`() {
+    assertColdVfs()
+
+    val searchPattern = "ProjectRootEntity"
+    val contributor = createContributor()
+    newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(searchPattern, createIndicator(), elementsLimit)
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+  @Test
+  @Order(1)
+  fun `search for one last root child`() {
+    assertColdVfs()
+
+    val filename = communityVirtualFile.getChildren(true)!!.last().name
+    val contributor = createContributor()
+    newBenchmarkWithVariableInputSize("search \"$filename\"", nonIndexableFilesCount) {
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(filename, createIndicator(), elementsLimit)
+      nonIndexableFilesCount
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+  @Test
+  @Order(1)
+  fun `search for the first root child`() {
+    assertColdVfs()
+
+    val filename = communityVirtualFile.getChildren(true)!!.first().name
+    val contributor = createContributor()
+    newBenchmark("search \"$filename\"") {
+      // elementsLimit = 0, so when the first matching file is found, the search stops.
+      // Because it actually searches for `elementsLimit + 1` files
+      val elementsLimit = 0
+      contributor.search(filename, createIndicator(), elementsLimit)
+    }.attempts(1).warmupIterations(0).start()
+  }
+
+
+  private fun createIndicator() = MockProgressIndicator().also { it.start() }
+
+  private fun createContributor(scope: SearchScope = GlobalSearchScope.projectScope(project)): NonIndexableFilesSEContributor {
+    val event = TestActionEvent.createTestEvent(SimpleDataContext.getProjectContext(project))
+    return NonIndexableFilesSEContributor(event).also { contributor ->
+      contributor.setScope(ScopeDescriptor(scope))
+      Disposer.register(projectModel.disposableRule.disposable, contributor)
+    }
+  }
+}
+
+private class NonIndexableExternalKindFileSetTestContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
+  override val entityClass: Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java
+
+  override fun registerFileSets(entity: NonIndexableTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    registrar.registerFileSet(entity.root, WorkspaceFileKind.EXTERNAL_NON_INDEXABLE, entity, null)
+  }
+}

@@ -1,19 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
+
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -23,15 +13,18 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyStringLiteralTest extends PyTestCase {
   public void testEscaperDecode() {
     final PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");
@@ -91,10 +84,12 @@ public class PyStringLiteralTest extends PyTestCase {
   }
 
   public void testIterateEscapedBackslash() {
-    assertSameElements(getCharacterRanges("'''\n" +
-                                          "foo.\\\\\n" +
-                                          "bar\n" +
-                                          "'''\n"),
+    assertSameElements(getCharacterRanges("""
+                                            '''
+                                            foo.\\\\
+                                            bar
+                                            '''
+                                            """),
                        Arrays.asList("\nfoo.", "\\", "\nbar\n"));
   }
 
@@ -122,7 +117,7 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(6, escaper.getOffsetInHost(0, range));
     assertEquals(7, escaper.getOffsetInHost(1, range));
     // Each \\U0001F600 is represented as a surrogate pair, hence 2 characters-wide step in decoded text
-    assertEquals(17, escaper.getOffsetInHost(3, range)); 
+    assertEquals(17, escaper.getOffsetInHost(3, range));
     assertEquals(27, escaper.getOffsetInHost(5, range));
     assertEquals(28, escaper.getOffsetInHost(6, range));
     assertEquals(-1, escaper.getOffsetInHost(7, range));
@@ -138,29 +133,48 @@ public class PyStringLiteralTest extends PyTestCase {
   }
 
   public void testEscapedUnicodeInLiterals() {
-    assertEquals("\\u0041", createLiteralFromText("'\\u0041'").getStringValue());
-    assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
-    assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      assertEquals("\\u0041", createLiteralFromText("'\\u0041'").getStringValue());
+      assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
+      assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+    });
   }
 
   public void testNonUnicodeCodePointValue() {
     assertEquals("\\U12345678", createLiteralFromText("u'\\U12345678'").getStringValue());
   }
 
-  private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
+  public void testFStringEscapes() {
+    assertEquals("{", createLiteralFromText("f'{{'").getStringValue());
+    assertEquals("}", createLiteralFromText("f'}}'").getStringValue());
+    assertEquals("{{foo}}", createLiteralFromText("f'{{{foo}}}'").getStringValue());
+    assertEquals("\n{foo}\r\"", createLiteralFromText("f'\\n{foo}\\r\"'").getStringValue());
+  }
+
+  public void testFStringDecodedRanges() {
+    assertContainsOrdered(getCharacterRanges("f'foo\"bar'"), "foo\"bar");
+    assertContainsOrdered(getCharacterRanges("f'foo\\'bar'"), "foo", "'", "bar");
+    assertContainsOrdered(getCharacterRanges("f'foo\\{bar}'"), "foo\\", "{bar}");
+    assertContainsOrdered(getCharacterRanges("f'''foo\nbar'''"), "foo\nbar");
+  }
+
+  @NotNull
+  private static String decodeRange(@NotNull PyStringLiteralExpression expr, @NotNull TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
     return builder.toString();
   }
 
-  private PyStringLiteralExpression createLiteralFromText(final String text) {
-    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", "a = " + text);
-    final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(5), PyStringLiteralExpression.class);
+  @NotNull
+  private PyStringLiteralExpression createLiteralFromText(@NotNull String text) {
+    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", PythonFileType.INSTANCE, "a = (" + text + ")");
+    final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(6), PyStringLiteralExpression.class);
     assert expr != null;
     return expr;
   }
 
-  private List<String> getCharacterRanges(String text) {
+  @NotNull
+  private List<String> getCharacterRanges(@NotNull String text) {
     final PyStringLiteralExpression expr = createLiteralFromText(text);
     assertNotNull(expr);
     final List<String> characters = new ArrayList<>();
@@ -168,5 +182,18 @@ public class PyStringLiteralTest extends PyTestCase {
       characters.add(fragment.getSecond());
     }
     return characters;
+  }
+
+  public void testRichStringNodes() {
+    final PyStringLiteralExpression string = createLiteralFromText("'foo' 'bar' 'baz'");
+    assertSize(3, string.getStringElements());
+  }
+
+  public void testInterpolationDetection() {
+    assertFalse(createLiteralFromText("'''foo'''").isInterpolated());
+    assertFalse(createLiteralFromText("f'foo'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{}'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{42}' 'bar'").isInterpolated());
+    assertTrue(createLiteralFromText("f'foo{42}'").isInterpolated());
   }
 }

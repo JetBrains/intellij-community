@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -41,15 +27,12 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
-public class GantScriptType extends GroovyRunnableScriptType {
-  @NonNls public static final String DEFAULT_EXTENSION = "gant";
+public final class GantScriptType extends GroovyRunnableScriptType {
+  public static final @NonNls String DEFAULT_EXTENSION = "gant";
 
   public static final GroovyScriptType INSTANCE = new GantScriptType();
 
@@ -58,8 +41,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
   }
 
   @Override
-  @NotNull
-  public Icon getScriptIcon() {
+  public @NotNull Icon getScriptIcon() {
     return JetgroovyIcons.Groovy.Gant_16x16;
   }
 
@@ -78,8 +60,7 @@ public class GantScriptType extends GroovyRunnableScriptType {
     return params != null && (params.startsWith(targetName + " ") || params.equals(targetName));
   }
 
-  @Nullable
-  private static String getTargetName(Location location) {
+  private static @Nullable String getTargetName(Location location) {
     PsiElement parent = location.getPsiElement();
     while (!(parent.getParent() instanceof PsiFile) && parent.getParent() != null) {
       parent = parent.getParent();

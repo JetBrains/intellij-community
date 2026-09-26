@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.util.Pair;
@@ -28,9 +14,8 @@ import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings;
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,14 +26,14 @@ import java.util.List;
 /**
  * User : catherine
  */
-public class PyTestFinder implements TestFinder {
+public final class PyTestFinder implements TestFinder {
+  @Override
   public PyDocStringOwner findSourceElement(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PyClass.class, PyFunction.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PyDocStringOwner source = findSourceElement(element);
     if (source == null) return Collections.emptySet();
 
@@ -60,10 +45,11 @@ public class PyTestFinder implements TestFinder {
       Collection<String> names = PyClassNameIndex.allKeys(element.getProject());
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
-          for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestClass(eachClass, ThreeState.UNSURE, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
+          for (PyClass eachClass : PyClassNameIndex
+            .find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
+            if (PythonUnitTestDetectorsBasedOnSettings.isTestClass(eachClass, ThreeState.UNSURE, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
               classesWithProximities.add(
-                  new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
+                new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
           }
         }
@@ -73,8 +59,9 @@ public class PyTestFinder implements TestFinder {
       Collection<String> names = PyFunctionNameIndex.allKeys(element.getProject());
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
-          for (PyFunction eachFunction : PyFunctionNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestFunction(
+          for (PyFunction eachFunction : PyFunctionNameIndex
+            .find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
+            if (PythonUnitTestDetectorsBasedOnSettings.isTestFunction(
               eachFunction, ThreeState.UNSURE, null) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
               classesWithProximities.add(
                 new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
@@ -86,41 +73,40 @@ public class PyTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithProximities, true);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     final PyFunction sourceFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     final PyClass source = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (sourceFunction == null && source == null) return Collections.emptySet();
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
+    List<Pair<? extends PsiNamedElement, Integer>> testsWithWeights = new ArrayList<>();
     final List<Pair<String, Integer>> possibleNames = new ArrayList<>();
-    if (source != null)
+    if (source != null) {
       possibleNames.addAll(TestFinderHelper.collectPossibleClassNamesWithWeights(source.getName()));
-    if (sourceFunction != null)
+    }
+    if (sourceFunction != null) {
       possibleNames.addAll(TestFinderHelper.collectPossibleClassNamesWithWeights(sourceFunction.getName()));
+    }
 
-    for (Pair<String, Integer> eachNameWithWeight : possibleNames) {
+    for (final Pair<String, Integer> eachNameWithWeight : possibleNames) {
       for (PyClass eachClass : PyClassNameIndex.find(eachNameWithWeight.first, element.getProject(),
                                                      GlobalSearchScope.projectScope(element.getProject()))) {
-        if (!PyTestUtil.isPyTestClass(eachClass, null))
-          classesWithWeights.add(new Pair<PsiNamedElement, Integer>(eachClass, eachNameWithWeight.second));
+        if (!PythonUnitTestDetectorsBasedOnSettings.isTestClass(eachClass, ThreeState.NO, null)) {
+          testsWithWeights.add(new Pair<PsiNamedElement, Integer>(eachClass, eachNameWithWeight.second));
+        }
       }
       for (PyFunction function : PyFunctionNameIndex.find(eachNameWithWeight.first, element.getProject(),
-                                                           GlobalSearchScope.projectScope(element.getProject()))) {
-        if (!PyTestUtil.isPyTestFunction(function))
-          classesWithWeights.add(new Pair<PsiNamedElement, Integer>(function, eachNameWithWeight.second));
+                                                          GlobalSearchScope.projectScope(element.getProject()))) {
+        if (!PythonUnitTestDetectorsBasedOnSettings.isTestFunction(function, ThreeState.UNSURE, null)) {
+          testsWithWeights.add(new Pair<PsiNamedElement, Integer>(function, eachNameWithWeight.second));
+        }
       }
-
     }
-    return TestFinderHelper.getSortedElements(classesWithWeights, false);
+    return TestFinderHelper.getSortedElements(testsWithWeights, false);
   }
 
   @Override
   public boolean isTest(@NotNull PsiElement element) {
-    PyClass cl = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (cl != null)
-      return PyTestUtil.isPyTestClass(cl, null);
-    return false;
+    return PythonUnitTestDetectorsBasedOnSettings.isTestElement(element, null);
   }
 }

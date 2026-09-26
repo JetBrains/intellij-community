@@ -1,0 +1,10 @@
+// "Create abstract property 'foo'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+interface AbstractFromAssignment {
+    fun defaultFun() {
+        fo<caret>o = "gg"
+    }
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

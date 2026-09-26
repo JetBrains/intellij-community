@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -39,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -48,6 +34,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
  * @author Max Medvedev
  */
 public class GrVariableInliner implements InlineHandler.Inliner {
+  private static final Logger LOG = Logger.getInstance(GrVariableInliner.class);
+
   private final GrExpression myTempExpr;
 
   public GrVariableInliner(GrVariable variable, InlineHandler.Settings settings) {
@@ -57,7 +45,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     }
     else {
       initializer = variable.getInitializerGroovy();
-      PsiUtil.LOG.assertTrue(initializer != null);
+      LOG.assertTrue(initializer != null);
     }
 
     myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);
@@ -65,14 +53,12 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   @Override
-  @Nullable
-  public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+  public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     GrExpression expr = (GrExpression)reference.getElement();
-    if (expr.getParent() instanceof GrAssignmentExpression) {
-      GrAssignmentExpression parent = (GrAssignmentExpression)expr.getParent();
+    if (expr.getParent() instanceof GrAssignmentExpression parent) {
       if (expr.equals(parent.getLValue())) {
-        conflicts.putValue(expr, GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
+        conflicts.putValue(expr, GroovyRefactoringBundle.message("local.variable.is.lvalue"));
       }
     }
 
@@ -91,7 +77,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   @Override
-  public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
+  public void inlineUsage(final @NotNull UsageInfo usage, final @NotNull PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }
 

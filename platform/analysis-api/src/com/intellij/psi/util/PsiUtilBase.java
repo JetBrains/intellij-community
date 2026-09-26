@@ -1,0 +1,262 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.psi.util;
+
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.editor.elf.Elf;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiFileWithOneLanguage;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
+
+public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
+  private static final Logger LOG = Logger.getInstance(PsiUtilBase.class);
+  public static final Comparator<Language> LANGUAGE_COMPARATOR = Comparator.comparing(Language::getID);
+
+  public static boolean isUnderPsiRoot(@NotNull PsiFile root, @NotNull PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == root) return true;
+    for (PsiFile psiRoot : root.getViewProvider().getAllFiles()) {
+      if (containingFile == psiRoot) return true;
+    }
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
+    return host != null && isUnderPsiRoot(root, host);
+  }
+
+  public static @Nullable Language getLanguageInEditor(final @NotNull Editor editor, final @NotNull Project project) {
+    return getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), project);
+  }
+
+  public static @Nullable Language getLanguageInEditor(@NotNull Caret caret, final @NotNull Project project) {
+    Editor editor = caret.getEditor();
+    assertEditorAndProjectConsistent(project, editor);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
+
+    if (file == null) {
+      return null;
+    }
+
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+
+    @NotNull TextRange selection = caret.getSelectionRange();
+    int mostProbablyCorrectLanguageOffset = selection.getStartOffset();
+    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
+    Language lang = findLanguageFromElement(elt);
+
+    if (caret.hasSelection()) {
+      lang = evaluateLanguageInRange(selection, file);
+    }
+
+    return narrowLanguage(lang, file.getLanguage());
+  }
+
+  /**
+   * @param navigator navigator to use
+   * @return language near the caret position of the specified navigator
+   */
+  public static @NotNull Language getLanguageInModNavigator(@NotNull ModNavigator navigator) {
+    PsiFile file = navigator.getPsiFile();
+
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+
+    PsiElement elt = getElementAtOffset(file, navigator.getCaretOffset());
+    Language lang = findLanguageFromElement(elt);
+
+    return narrowLanguage(lang, file.getLanguage());
+  }
+
+  public static @Nullable PsiElement getElementAtCaret(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
+    return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
+  }
+
+  public static @Nullable PsiFile getPsiFileInEditor(final @NotNull Editor editor, final @NotNull Project project) {
+    return getPsiFileInEditor(editor.getCaretModel().getCurrentCaret(), project);
+  }
+
+  public static @Nullable PsiFile getPsiFileInEditor(@NotNull Caret caret, final @NotNull Project project) {
+    Editor editor = caret.getEditor();
+    assertEditorAndProjectConsistent(project, editor);
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
+    if (psiFile == null) return null;
+
+    // PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+    // from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+    boolean isEnsureValidSupported = !Elf.getElf().isUnsupportedOperationGuardActive();
+    if (isEnsureValidSupported) {
+      ensureValid(psiFile);
+    }
+
+    if (psiFile instanceof PsiFileWithOneLanguage) {
+      return psiFile;
+    }
+
+    final Language language = getLanguageInEditor(caret, project);
+
+    if (language == psiFile.getLanguage()) return psiFile;
+
+    int caretOffset = caret.getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
+    return getPsiFileAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
+  }
+
+  /**
+   * @param navigator navigator to use
+   * @return the most relevant PsiFile to the caret position 
+   * (may differ from {@link ModNavigator#getPsiFile()} if there are several languages in the file).
+   */
+  public static @NotNull PsiFile getPsiFileInModNavigator(@NotNull ModNavigator navigator) {
+    PsiFile psiFile = navigator.getPsiFile();
+
+    ensureValid(psiFile);
+
+    if (psiFile instanceof PsiFileWithOneLanguage) {
+      return psiFile;
+    }
+
+    final Language language = getLanguageInModNavigator(navigator);
+
+    if (language == psiFile.getLanguage()) return psiFile;
+    return getPsiFileAtOffset(psiFile, navigator.getCaretOffset());
+  }
+
+  /**
+   * assert that {@code editor} belongs to the {@code project}
+   */
+  public static void assertEditorAndProjectConsistent(@NotNull Project project, @NotNull Editor editor) {
+    Project editorProject = editor.getProject();
+    if (editorProject != null && editorProject != project) {
+      throw new IllegalArgumentException("Inconsistent editor/project combination: the editor belongs to " + editorProject + "; but passed project=" + project);
+    }
+  }
+
+  public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
+    if (Elf.getElf().isUnsupportedOperationGuardActive()) {
+      // 1) PsiUtilCore.ensureValid: throws because PsiFileImpl.isValid returns false
+      //    from InternalPsiVersioning.isInsideVersioningButNotLocks() section
+      // 2) element.getContainingFile: throws from LeafPsiElement.invalid
+      return file;
+    }
+
+    PsiElement elt = getElementAtOffset(file, offset);
+    ensureValid(elt);
+    return elt.getContainingFile();
+  }
+
+  public static @Nullable Language reallyEvaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
+    if (file instanceof PsiBinaryFile || file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+    Language lang = null;
+    int curOffset = start;
+    do {
+      PsiElement elt = getElementAtOffset(file, curOffset);
+
+      if (!(elt instanceof PsiWhiteSpace)) {
+        final Language language = findLanguageFromElement(elt);
+        if (lang == null) {
+          lang = language;
+        }
+        else if (lang != language) {
+          return null;
+        }
+      }
+      TextRange range = elt.getTextRange();
+      if (range == null) {
+        LOG.error("Null range for element " + elt + " of " + elt.getClass() + " in file " + file + " at offset " + curOffset);
+        return file.getLanguage();
+      }
+      int endOffset = range.getEndOffset();
+      curOffset = endOffset <= curOffset ? curOffset + 1 : endOffset;
+    }
+    while (curOffset < end);
+    return narrowLanguage(lang, file.getLanguage());
+  }
+
+  private static @NotNull Language evaluateLanguageInRange(TextRange selectionRange, @NotNull PsiFile file) {
+    PsiElement elt = getElementAtOffset(file, selectionRange.getStartOffset());
+
+    while (true) {
+      if (elt instanceof PsiFile) {
+        return elt.getLanguage();
+      }
+      PsiElement parent = elt.getParent();
+      TextRange range = elt.getTextRange();
+      if (range == null) {
+        LOG.error("Range is null for " + elt + "; " + elt.getClass());
+        return file.getLanguage();
+      }
+      if (range.contains(selectionRange) || parent == null) {
+        return elt.getLanguage();
+      }
+      elt = parent;
+    }
+  }
+
+  public static @NotNull ASTNode getRoot(@NotNull ASTNode node) {
+    ASTNode child = node;
+    do {
+      final ASTNode parent = child.getTreeParent();
+      if (parent == null) return child;
+      child = parent;
+    }
+    while (true);
+  }
+
+  /**
+   * @deprecated Use {@link PsiEditorUtil#findEditor(PsiElement)}
+   */
+  @Deprecated
+  @Override
+  public @Nullable Editor findEditorByPsiElement(@NotNull PsiElement element) {
+    return findEditor(element);
+  }
+
+  /**
+   * @deprecated Use {@link PsiEditorUtil#findEditor(PsiElement)}
+   */
+  @Deprecated
+  public static @Nullable Editor findEditor(@NotNull PsiElement element) {
+    return PsiEditorUtil.findEditor(element);
+  }
+
+  public static boolean isSymLink(final @NotNull PsiFileSystemItem element) {
+    final VirtualFile virtualFile = element.getVirtualFile();
+    return virtualFile != null && virtualFile.is(VFileProperty.SYMLINK);
+  }
+
+  public static @Nullable VirtualFile asVirtualFile(@Nullable PsiElement element) {
+    if (element instanceof PsiFileSystemItem psiFileSystemItem) {
+      return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
+    }
+    return null;
+  }
+}

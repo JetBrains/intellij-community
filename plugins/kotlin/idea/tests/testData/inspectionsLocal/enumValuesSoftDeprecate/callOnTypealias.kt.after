@@ -1,0 +1,10 @@
+// API_VERSION: 1.9
+// WITH_STDLIB
+typealias EnumClassAlias = EnumClass
+
+enum class EnumClass
+
+fun foo() {
+    // Preserving original alias after quick fix is not supported
+    EnumClass.entries
+}

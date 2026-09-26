@@ -1,0 +1,56 @@
+Obsolescence markers make it possible to mark changesets that have been
+deleted or superseded in a new version of the changeset.
+
+Unlike the previous way of handling such changes, by stripping the old
+changesets from the repository, obsolescence markers can be propagated
+between repositories. This allows for a safe and simple way of exchanging
+mutable history and altering it after the fact. Changeset phases are
+respected, such that only draft and secret changesets can be altered (see
+:hg:`help phases` for details).
+
+Obsolescence is tracked using "obsolescence markers", a piece of metadata
+tracking which changesets have been made obsolete, potential successors for
+a given changeset, the moment the changeset was marked as obsolete, and the
+user who performed the rewriting operation. The markers are stored
+separately from standard changeset data can be exchanged without any of the
+precursor changesets, preventing unnecessary exchange of obsolescence data.
+
+The complete set of obsolescence markers describes a history of changeset
+modifications that is orthogonal to the repository history of file
+modifications. This changeset history allows for detection and automatic
+resolution of edge cases arising from multiple users rewriting the same part
+of history concurrently.
+
+Current feature status
+======================
+
+This feature is still in development.
+
+Instability
+===========
+
+Rewriting changesets might introduce instability.
+
+There are two main kinds of instability: orphaning and diverging.
+
+Orphans are changesets left behind when their ancestors are rewritten.
+Divergence has two variants:
+
+* Content-divergence occurs when independent rewrites of the same changesets
+  lead to different results.
+
+* Phase-divergence occurs when the old (obsolete) version of a changeset
+  becomes public.
+
+It is possible to prevent local creation of orphans by using the following config::
+
+    [experimental]
+    evolution.createmarkers = true
+    evolution.exchange = true
+
+You can also enable that option explicitly::
+
+    [experimental]
+    evolution.createmarkers = true
+    evolution.exchange = true
+    evolution.allowunstable = true

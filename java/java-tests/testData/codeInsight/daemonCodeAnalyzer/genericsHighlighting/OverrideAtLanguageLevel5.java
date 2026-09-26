@@ -2,11 +2,11 @@ interface I {
 	void f();
 }
 interface II extends I {
-    <error descr="@Override is not allowed when implementing interface method">@Override</error>
+    <error descr="@Override in interfaces are not supported at language level '5'">@Override</error>
     void f();
 }
 class C implements I {
-    <error descr="@Override is not allowed when implementing interface method">@Override</error>
+    <error descr="@Override in interfaces are not supported at language level '5'">@Override</error>
     public void f() {
     }
 

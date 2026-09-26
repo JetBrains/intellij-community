@@ -1,0 +1,12 @@
+class X {
+
+  static class Nested {
+    void print(X x) {
+      System.out.println(x);
+    }
+  }
+
+  public static void main(String[] args) {
+    new Nested().print(new X());
+  }
+}

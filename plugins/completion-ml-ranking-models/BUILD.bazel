@@ -1,0 +1,239 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "completionMlRankingModels-tests_test",
+    timeout = "moderate",
+    sandbox = "True",
+    tags = ["community-aggregator"],
+    runtime_deps = [":completionMlRankingModels-tests_test_lib"],
+)
+### skip generation section `test intellij.completionMlRankingModels.tests`
+
+### auto-generated section `dev intellij.completionMlRankingModels` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.completionMlRankingModels.libraries",
+        "intellij.libraries.completion.ranking.cpp",
+        "intellij.libraries.completion.ranking.go",
+        "intellij.libraries.completion.ranking.java",
+        "intellij.libraries.completion.ranking.js",
+        "intellij.libraries.completion.ranking.kotlin",
+        "intellij.libraries.completion.ranking.php",
+        "intellij.libraries.completion.ranking.ruby",
+        "intellij.libraries.completion.ranking.rust",
+        "intellij.libraries.completion.ranking.sh",
+        "intellij.libraries.completion.ranking.swift",
+        "intellij.libraries.completion.ranking.typescript",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.completionMlRankingModels.libraries",
+        "intellij.libraries.completion.ranking.cpp",
+        "intellij.libraries.completion.ranking.go",
+        "intellij.libraries.completion.ranking.java",
+        "intellij.libraries.completion.ranking.js",
+        "intellij.libraries.completion.ranking.kotlin",
+        "intellij.libraries.completion.ranking.php",
+        "intellij.libraries.completion.ranking.ruby",
+        "intellij.libraries.completion.ranking.rust",
+        "intellij.libraries.completion.ranking.sh",
+        "intellij.libraries.completion.ranking.swift",
+        "intellij.libraries.completion.ranking.typescript",
+    ],
+    jars = {
+        "lib/intellij.completionMlRankingModels.libraries.jar": [
+            "intellij.completionMlRankingModels.libraries",
+            "@lib//:completion_ml_ranking_models-libraries-completion-ranking-css-exp",
+            "@lib//:completion_ml_ranking_models-libraries-completion-ranking-dart-exp",
+            "@lib//:completion_ml_ranking_models-libraries-completion-ranking-html-exp",
+            "@lib//:completion_ml_ranking_models-libraries-completion-ranking-python-exp",
+            "@lib//:completion_ml_ranking_models-libraries-completion-ranking-scala-exp",
+        ],
+        "lib/intellij.libraries.completion.ranking.cpp.jar": [
+            "intellij.libraries.completion.ranking.cpp",
+            "@lib//:libraries-completion-ranking-cpp-completion-ranking-cpp",
+        ],
+        "lib/intellij.libraries.completion.ranking.go.jar": [
+            "intellij.libraries.completion.ranking.go",
+            "@lib//:libraries-completion-ranking-go-completion-ranking-go",
+        ],
+        "lib/intellij.libraries.completion.ranking.java.jar": [
+            "intellij.libraries.completion.ranking.java",
+            "@lib//:libraries-completion-ranking-java-completion-ranking-java",
+        ],
+        "lib/intellij.libraries.completion.ranking.js.jar": [
+            "intellij.libraries.completion.ranking.js",
+            "@lib//:libraries-completion-ranking-js-completion-ranking-js",
+        ],
+        "lib/intellij.libraries.completion.ranking.kotlin.jar": [
+            "intellij.libraries.completion.ranking.kotlin",
+            "@lib//:libraries-completion-ranking-kotlin-completion-ranking-kotlin",
+        ],
+        "lib/intellij.libraries.completion.ranking.php.jar": [
+            "intellij.libraries.completion.ranking.php",
+            "@lib//:libraries-completion-ranking-php-completion-ranking-php",
+        ],
+        "lib/intellij.libraries.completion.ranking.ruby.jar": [
+            "intellij.libraries.completion.ranking.ruby",
+            "@lib//:libraries-completion-ranking-ruby-completion-ranking-ruby",
+        ],
+        "lib/intellij.libraries.completion.ranking.rust.jar": [
+            "intellij.libraries.completion.ranking.rust",
+            "@lib//:libraries-completion-ranking-rust-completion-ranking-rust",
+        ],
+        "lib/intellij.libraries.completion.ranking.sh.jar": [
+            "intellij.libraries.completion.ranking.sh",
+            "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
+        ],
+        "lib/intellij.libraries.completion.ranking.swift.jar": [
+            "intellij.libraries.completion.ranking.swift",
+            "@lib//:libraries-completion-ranking-swift-completion-ranking-swift",
+        ],
+        "lib/intellij.libraries.completion.ranking.typescript.jar": [
+            "intellij.libraries.completion.ranking.typescript",
+            "@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript",
+        ],
+        "lib/completionMlRankingModels.jar": ["intellij.completionMlRankingModels"],
+    },
+    main_module = "intellij.completionMlRankingModels",
+)
+### auto-generated section `dev intellij.completionMlRankingModels` end
+
+### auto-generated section `build intellij.completionMlRankingModels` start
+jvm_library(
+    name = "completion-ml-ranking-models",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.completionMlRankingModels",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/completion-ml-ranking",
+        "//platform/core-api:core",
+        "//platform/platform-impl/internal",
+        "//libraries/completion-ranking-java",
+        "//libraries/completion-ranking-kotlin",
+        "//plugins/completion-ml-ranking-models/libraries",
+        "//libraries/completion-ranking-rust",
+        "//platform/platform-impl:ide-impl",
+        "//libraries/completion-ranking-php",
+        "//libraries/completion-ranking-ruby",
+        "//libraries/completion-ranking-go",
+        "//libraries/completion-ranking-js",
+        "//libraries/completion-ranking-typescript",
+        "//libraries/completion-ranking-swift",
+        "//libraries/completion-ranking-cpp",
+        "//libraries/completion-ranking-sh",
+    ],
+)
+
+jvm_library(
+    name = "completion-ml-ranking-models_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.completionMlRankingModels",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":completion-ml-ranking-models",
+        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
+        "//libraries/completion-ranking-java:completion-ranking-java_test_lib",
+        "//libraries/completion-ranking-kotlin:completion-ranking-kotlin_test_lib",
+        "//plugins/completion-ml-ranking-models/libraries:libraries_test_lib",
+        "//libraries/completion-ranking-rust:completion-ranking-rust_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/completion-ranking-php:completion-ranking-php_test_lib",
+        "//libraries/completion-ranking-ruby:completion-ranking-ruby_test_lib",
+        "//libraries/completion-ranking-go:completion-ranking-go_test_lib",
+        "//libraries/completion-ranking-js:completion-ranking-js_test_lib",
+        "//libraries/completion-ranking-typescript:completion-ranking-typescript_test_lib",
+        "//libraries/completion-ranking-swift:completion-ranking-swift_test_lib",
+        "//libraries/completion-ranking-cpp:completion-ranking-cpp_test_lib",
+        "//libraries/completion-ranking-sh:completion-ranking-sh_test_lib",
+    ],
+)
+### auto-generated section `build intellij.completionMlRankingModels` end
+
+### auto-generated section `iml intellij.completionMlRankingModels` start
+exports_files(
+    [
+        "intellij.completionMlRankingModels.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.completionMlRankingModels` end
+
+### auto-generated section `build intellij.completionMlRankingModels.tests` start
+jvm_library(
+    name = "completionMlRankingModels-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.completionMlRankingModels.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "completionMlRankingModels-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.completionMlRankingModels.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":completionMlRankingModels-tests",
+        "//platform/platform-impl/internal:internal_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//plugins/completion-ml-ranking-models",
+        "//plugins/completion-ml-ranking-models:completion-ml-ranking-models_test_lib",
+        "//plugins/completion-ml-ranking",
+        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+        "//platform/platform-impl/internal",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.completionMlRankingModels.tests` end
+
+### auto-generated section `iml intellij.completionMlRankingModels.tests` start
+exports_files(
+    [
+        "intellij.completionMlRankingModels.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.completionMlRankingModels.tests` end

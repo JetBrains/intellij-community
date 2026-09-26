@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -17,6 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
@@ -36,6 +37,9 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     if (child instanceof PsiErrorElement) {
       return;
     }
+    if (child != null && child.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+      return;
+    }
     final XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement(tag);
     if (tagNameElement == null) {
       return;
@@ -45,7 +49,7 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
       return;
     }
 
-    holder.registerProblem(tagNameElement, XmlErrorMessages.message("element.missing.end.tag"),
+    holder.registerProblem(tagNameElement, XmlAnalysisBundle.message("html.inspections.element.missing.end.tag"),
                            new MissingClosingTagFix(tagName));
   }
 
@@ -53,22 +57,18 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
 
     private final String myName;
 
-    public MissingClosingTagFix(String name) {
+    MissingClosingTagFix(String name) {
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
-      return XmlErrorMessages.message("add.named.closing.tag", myName);
+    public @Nls @NotNull String getName() {
+      return XmlAnalysisBundle.message("html.quickfix.add.named.closing.tag", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return XmlErrorMessages.message("add.closing.tag");
+    public @Nls @NotNull String getFamilyName() {
+      return XmlAnalysisBundle.message("html.quickfix.add.closing.tag");
     }
 
     @Override

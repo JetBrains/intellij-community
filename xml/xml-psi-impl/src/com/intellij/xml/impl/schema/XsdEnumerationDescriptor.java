@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.util.Ref;
@@ -22,7 +8,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
@@ -74,10 +60,10 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     if (defaultValue != null) {
       list.add(defaultValue);
     }
-    return ArrayUtil.toStringArray(list);
+    return ArrayUtilRt.toStringArray(list);
   }
 
-  private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor, boolean forCompletion) {
+  private boolean processEnumeration(XmlElement context, PairProcessor<? super PsiElement, ? super String> processor, boolean forCompletion) {
     if (getDeclaration() == null) return false;
 
     XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
@@ -90,7 +76,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
     final String namespacePrefix = getDeclaration().getNamespacePrefix();
     XmlTag type = getDeclaration().findFirstSubTag(
-      ((namespacePrefix.length() > 0) ? namespacePrefix + ":" : "") + "simpleType"
+      ((!namespacePrefix.isEmpty()) ? namespacePrefix + ":" : "") + "simpleType"
     );
 
     if (type != null) {
@@ -102,7 +88,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   private boolean processEnumerationImpl(final XmlTag declaration,
                                          @Nullable ComplexTypeDescriptor type,
-                                         final PairProcessor<PsiElement, String> pairProcessor,
+                                         final PairProcessor<? super PsiElement, ? super String> pairProcessor,
                                          boolean forCompletion) {
     XmlAttribute name = declaration.getAttribute("name");
     if (name != null && "boolean".equals(name.getValue()) && type != null) {
@@ -144,7 +130,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
   @Override
   public boolean isEnumerated(@Nullable XmlElement context) {
-    return processEnumeration(context, PairProcessor.TRUE, false);
+    return processEnumeration(context, PairProcessor.alwaysTrue(), false);
   }
 
   @Override
@@ -163,5 +149,23 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   @Override
   protected PsiElement getDefaultValueDeclaration() {
     return getDeclaration();
+  }
+
+  @Override
+  public boolean isList() {
+    XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), null);
+    if (elementDescriptor == null) return false;
+    TypeDescriptor type = elementDescriptor.getType(null);
+    if (!(type instanceof ComplexTypeDescriptor)) return false;
+    final Ref<Boolean> result = new Ref<>(false);
+    new XmlSchemaTagsProcessor(((ComplexTypeDescriptor)type).getNsDescriptor()) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref) {
+        if ("list".equals(tagName) || "union".equals(tagName)) {
+          result.set(true);
+        }
+      }
+    }.startProcessing(type.getDeclaration());
+    return result.get();
   }
 }

@@ -17,29 +17,49 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
 
 open class UIdentifier(
-  override val psi: PsiElement?,
+  override val sourcePsi: PsiElement?,
   override val uastParent: UElement?
-) : JvmDeclarationUElement {
+) : UElement {
   /**
    * Returns the identifier name.
    */
   open val name: String
-    get() = psi?.text ?: "<error>"
+    get() = sourcePsi?.text ?: "<error>"
 
   override fun asLogString(): String = log("Identifier ($name)")
 
-  override val sourcePsi: PsiElement?
-    get() = psi
+  @Suppress("OverridingDeprecatedMember")
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
+  override val psi: PsiElement?
+    get() = sourcePsi
 
   override val javaPsi: PsiElement?
     get() = null
 }
 
-open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {
+open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UIdentifier(psi, givenParent) {
+  private var uastParentValue: Any? = givenParent ?: UNINITIALIZED_UAST_PART
 
-  override val uastParent: UElement? by lazy { givenParent ?: sourcePsi?.parent?.toUElement() }
+  override val uastParent: UElement?
+    get() {
+      val currentValue = uastParentValue
+      if (currentValue != UNINITIALIZED_UAST_PART) {
+        return currentValue as UElement?
+      }
 
+      val newValue = computeParent()
+      this.uastParentValue = newValue
+
+      return newValue
+    }
+
+  protected open fun computeParent(): UElement? {
+    return sourcePsi?.parent?.toUElement()
+  }
 }

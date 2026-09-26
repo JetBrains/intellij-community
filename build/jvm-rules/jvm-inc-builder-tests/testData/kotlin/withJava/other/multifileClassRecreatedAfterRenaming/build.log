@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileClassRecreatedAfterRenaming-a.kotlin_module
+  test/Test.class
+  test/Test__AKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileClassRecreatedAfterRenaming/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_multifileClassRecreatedAfterRenaming-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/multifileClassRecreatedAfterRenaming/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,22 @@
+[project]
+name = "portal-api"
+requires-python = ">=3.14.2"
+
+version = "0.1.0"
+dependencies = [
+  "utils",
+  "httpx",
+  "pytest",
+]
+
+[tool.uv.sources]
+utils = { workspace = true }
+
+[build-system]
+requires = [
+  "hatchling",
+]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+addopts = "--tb=short"

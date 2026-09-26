@@ -1,0 +1,4 @@
+object Owner {
+}
+
+fun Owner.f() {}

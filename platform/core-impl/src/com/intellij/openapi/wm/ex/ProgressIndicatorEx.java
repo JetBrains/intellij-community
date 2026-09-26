@@ -15,11 +15,18 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.util.ProgressIndicatorStacked;
 import org.jetbrains.annotations.NotNull;
 
-public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * </p>
+ */
+public interface ProgressIndicatorEx extends ProgressIndicator {
+  ProgressIndicatorEx[] EMPTY_ARRAY = new ProgressIndicatorEx[0];
   void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
 
   void finish(@NotNull TaskInfo task);
@@ -29,4 +36,6 @@ public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
   boolean wasStarted();
 
   void processFinish();
+
+  void initStateFrom(@NotNull ProgressIndicator indicator);
 }

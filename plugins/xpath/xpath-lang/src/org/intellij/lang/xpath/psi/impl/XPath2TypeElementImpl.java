@@ -22,7 +22,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPath2TypeElement;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
@@ -70,8 +74,8 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
     return null;
   }
 
-  @NotNull
-  public PsiReference[] getReferences() {
+  @Override
+  public PsiReference @NotNull [] getReferences() {
     final PrefixedName prefixedName = getQName();
     if (prefixedName != null && prefixedName.getPrefix() != null) {
       final PsiReference[] references =
@@ -83,6 +87,7 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
     return super.getReferences();
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2TypeElement(this);
   }

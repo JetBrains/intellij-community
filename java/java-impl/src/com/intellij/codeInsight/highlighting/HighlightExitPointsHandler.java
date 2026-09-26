@@ -1,29 +1,36 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,7 +38,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -40,17 +47,17 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
   }
 
   @Override
-  public List<PsiElement> getTargets() {
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
   @Override
-  protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiElement> targets, final @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
   @Override
-  public void computeUsages(final List<PsiElement> targets) {
+  public void computeUsages(final @NotNull List<? extends PsiElement> targets) {
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return;
 
@@ -75,8 +82,7 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     }
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiStatement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiStatement exitStatement) {
     if (exitStatement instanceof PsiReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PsiMethod.class);
     }
@@ -94,8 +100,7 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
 
       PsiElement target = exitStatement;
       while (!(target instanceof PsiMethod || target == null || target instanceof PsiClass || target instanceof PsiFile)) {
-        if (target instanceof PsiTryStatement) {
-          final PsiTryStatement tryStatement = (PsiTryStatement)target;
+        if (target instanceof PsiTryStatement tryStatement) {
           final PsiParameter[] params = tryStatement.getCatchBlockParameters();
           for (PsiParameter param : params) {
             if (param.getType().isAssignableFrom(exceptionType)) {
@@ -141,9 +146,8 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
                                                                       HighlightUsagesHandler.getShortcutText());
   }
 
-  @Nullable
   @Override
-  public String getFeatureId() {
+  public @NotNull String getFeatureId() {
     return ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN;
   }
 }

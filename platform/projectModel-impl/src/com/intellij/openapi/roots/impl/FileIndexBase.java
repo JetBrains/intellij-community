@@ -1,48 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.containers.TreeNodeProcessingResult;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public abstract class FileIndexBase implements FileIndex {
-  protected final FileTypeRegistry myFileTypeRegistry;
-  protected final DirectoryIndex myDirectoryIndex;
-  private final VirtualFileFilter myContentFilter = file -> {
-    assert file != null;
-    return ReadAction.compute(() ->
-      !isScopeDisposed() && isInContent(file));
-  };
+import java.util.Collection;
 
-  public FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
-    myDirectoryIndex = directoryIndex;
-    myFileTypeRegistry = fileTypeManager;
+@ApiStatus.Internal
+public abstract class FileIndexBase implements FileIndex {
+  final DirectoryIndex myDirectoryIndex;
+  final WorkspaceFileIndexEx myWorkspaceFileIndex;
+
+  FileIndexBase(@NotNull Project project) {
+    myDirectoryIndex = DirectoryIndex.getInstance(project);
+    myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
   }
 
   protected abstract boolean isScopeDisposed();
@@ -56,8 +39,35 @@ public abstract class FileIndexBase implements FileIndex {
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
                                               @NotNull ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
-    VirtualFileFilter filter = customFilter != null ? file -> myContentFilter.accept(file) && customFilter.accept(file) : myContentFilter;
-    return iterateContentUnderDirectoryWithFilter(dir, processor, filter);
+    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    return myWorkspaceFileIndex.processContentUnderDirectory(dir, processorEx, customFilter, fileSet -> !isScopeDisposed() && isInContent(fileSet));
+  }
+
+  private static @NotNull ContentIteratorEx toContentIteratorEx(@NotNull ContentIterator processor) {
+    if (processor instanceof ContentIteratorEx) {
+      return (ContentIteratorEx)processor;
+    }
+    return fileOrDir -> processor.processFile(fileOrDir) ? TreeNodeProcessingResult.CONTINUE : TreeNodeProcessingResult.STOP;
+  }
+
+  @ApiStatus.Internal
+  protected boolean iterateProvidedRootsOfContent(@NotNull ContentIterator processor,
+                                                  @Nullable VirtualFileFilter filter,
+                                                  @NotNull Collection<VirtualFile> topLevelRecursiveRoots,
+                                                  @NotNull Collection<VirtualFile> nonRecursiveRoots) {
+    VirtualFileFilter deduplicatingFilter = new DeduplicatingVirtualFileFilter(filter);
+    ContentIteratorEx processorEx = toContentIteratorEx(processor);
+    for (VirtualFile root : topLevelRecursiveRoots) {
+      if (!iterateContentUnderDirectory(root, processorEx, deduplicatingFilter)) {
+        return false;
+      }
+    }
+    for (VirtualFile root : nonRecursiveRoots) {
+      if (deduplicatingFilter.accept(root) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -65,30 +75,7 @@ public abstract class FileIndexBase implements FileIndex {
     return iterateContentUnderDirectory(dir, processor, null);
   }
 
-  private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,
-                                                                @NotNull ContentIterator iterator,
-                                                                @NotNull VirtualFileFilter filter) {
-    return VfsUtilCore.iterateChildrenRecursively(dir, filter, iterator);
-  }
-
-  @NotNull
-  public DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileWindow) {
-      file = ((VirtualFileWindow)file).getDelegate();
-    }
-    return myDirectoryIndex.getInfoForFile(file);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return !file.isDirectory() &&
-           !myFileTypeRegistry.isFileIgnored(file) &&
-           isInSourceContent(file);
-  }
-
-  @NotNull
-  protected static VirtualFile[][] getModuleContentAndSourceRoots(Module module) {
-    return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
-      ModuleRootManager.getInstance(module).getSourceRoots()};
+  protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    return fileSet.getKind().isContent();
   }
 }

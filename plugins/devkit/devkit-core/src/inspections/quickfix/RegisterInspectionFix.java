@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionEP;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomFileElement;
@@ -49,26 +34,24 @@ class RegisterInspectionFix implements IntentionAction {
     myEp = ep;
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return "Register inspection";
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
+  public @NotNull String getText() {
+    return DevKitBundle.message("register.inspection.fix.name", myPsiClass.getName());
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public @NotNull String getFamilyName() {
+    return DevKitBundle.message("register.inspection.fix.family.name");
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !DumbService.isDumb(project);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, element -> doFix(element, project, file));
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    PluginDescriptorChooser.show(project, editor, psiFile, element -> doFix(element, project, psiFile));
   }
 
   private void doFix(final DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
@@ -77,6 +60,7 @@ class RegisterInspectionFix implements IntentionAction {
       Extension e = extensions.addExtension(myEp.getName());
       XmlTag tag = e.getXmlTag();
       tag.setAttribute("implementationClass", myPsiClass.getQualifiedName());
+      tag.setAttribute("language", "");
       return e;
     });
     PsiNavigateUtil.navigate(extension.getXmlTag());
@@ -85,5 +69,10 @@ class RegisterInspectionFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

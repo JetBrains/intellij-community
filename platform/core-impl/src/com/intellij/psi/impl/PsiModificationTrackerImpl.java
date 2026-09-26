@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbModeListenerBackgroundable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,37 +27,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED;
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
 
-/**
- * @author mike
- */
-public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
-  private static final RegistryValue ourEnableCodeBlockTracker = Registry.get("psi.modification.tracker.code-block");
-  private static final RegistryValue ourEnableJavaStructureTracker = Registry.get("psi.modification.tracker.java-structure");
-  private static final RegistryValue ourEnableLanguageTracker = Registry.get("psi.modification.tracker.per-language");
-
-  private final boolean myTestMode = ApplicationManager.getApplication().isUnitTestMode();
-
+public final class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();
-  private final SimpleModificationTracker myOutOfCodeBlockModificationTracker = wrapped(ourEnableCodeBlockTracker, myModificationCount, myTestMode);
-  private final SimpleModificationTracker myJavaStructureModificationTracker = wrapped(ourEnableJavaStructureTracker, myModificationCount, myTestMode);
 
-  private final Map<Language, ModificationTracker> myLanguageTrackers =
-    ConcurrentFactoryMap.createMap(language -> new SimpleModificationTracker());
-
+  private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
+  private final Map<Language, SimpleModificationTracker> myLanguageTrackers =
+    ConcurrentFactoryMap.createWeakMap(language -> new SimpleModificationTracker());
   private final Listener myPublisher;
 
-  public PsiModificationTrackerImpl(Project project) {
+  public PsiModificationTrackerImpl(@NotNull Project project) {
     MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
-    bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      private void doIncCounter() {
-        ApplicationManager.getApplication().runWriteAction(() -> incCounter());
-      }
-
+    bus.connect().subscribe(DumbModeListenerBackgroundable.TOPIC, new DumbModeListenerBackgroundable() {
       @Override
       public void enteredDumbMode() {
         doIncCounter();
@@ -80,23 +57,41 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     });
   }
 
-  public void incCounter() {
-    incCountersInner(7);
+  private void doIncCounter() {
+    ApplicationManager.getApplication().runWriteAction(() -> incCountersInner());
   }
 
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public void incCounter() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    incCountersInner();
+  }
+
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public void incOutOfCodeBlockModificationCounter() {
-    incCountersInner(3);
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    incCountersInner();
   }
 
   private void fireEvent() {
-    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteSafeEnvironment();
     myPublisher.modificationCountChanged();
   }
 
-  private void incCountersInner(int bits) {
-    if ((bits & 0x1) != 0) myModificationCount.incModificationCount();
-    if ((bits & 0x2) != 0) myOutOfCodeBlockModificationTracker.incModificationCount();
-    if ((bits & 0x4) != 0) myJavaStructureModificationTracker.incModificationCount();
+  private void incCountersInner() {
+    myModificationCount.incModificationCount();
     fireEvent();
   }
 
@@ -106,42 +101,50 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       return;
     }
 
-    incLanguageTrackers(event);
-
-    PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
-    boolean outOfCodeBlock =
-      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.getPropertyName() == PsiTreeChangeEvent.PROP_ROOTS :
-      code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
-      event.getParent() instanceof PsiDirectory;
-
-    incCountersInner(outOfCodeBlock ? 7 : 1);
+    incLanguageCounters(event);
+    incCountersInner();
   }
 
+  // used by Kotlin
+  @SuppressWarnings("WeakerAccess")
   public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
-    return !PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName());
+    PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
+    return !(code == BEFORE_PROPERTY_CHANGE ||
+             code == PROPERTY_CHANGED && Strings.areSameInstance(event.getPropertyName(), PsiTreeChangeEvent.PROP_WRITABLE));
   }
 
-  protected void incLanguageTrackers(@NotNull PsiTreeChangeEventImpl event) {
-    if (!ourEnableLanguageTracker.asBoolean()) return;
-    incLanguageModificationCount(Language.ANY);
-    for (PsiElement o : new PsiElement[]{
+  private void incLanguageCounters(@NotNull PsiTreeChangeEventImpl event) {
+    PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
+    String propertyName = event.getPropertyName();
+
+    if (code == PROPERTY_CHANGED &&
+        (Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_UNLOADED_PSI) ||
+         Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_ROOTS) ||
+         Strings.areSameInstance(propertyName, PsiTreeChangeEvent.PROP_FILE_TYPES)) ||
+        code == CHILD_REMOVED && event.getChild() instanceof PsiDirectory) {
+      myAllLanguagesTracker.incModificationCount();
+      return;
+    }
+    PsiElement[] elements = {
       event.getFile(), event.getParent(), event.getOldParent(), event.getNewParent(),
-      event.getElement(), event.getChild(), event.getOldChild(), event.getNewChild()
-    }) {
-      PsiFile file = o instanceof PsiFile ? (PsiFile)o : null;
-      if (file == null) {
-        try {
-          IElementType type = PsiUtilCore.getElementType(o);
-          Language language = type != null ? type.getLanguage() : o != null ? o.getLanguage() : null;
+      event.getElement(), event.getChild(), event.getOldChild(), event.getNewChild()};
+    incLanguageModificationCount(Language.ANY);
+    for (PsiElement o : elements) {
+      if (o == null) continue;
+      if (o instanceof PsiDirectory) continue;
+      if (o instanceof PsiFile) {
+        for (Language language : ((PsiFile)o).getViewProvider().getLanguages()) {
           incLanguageModificationCount(language);
-        }
-        catch (PsiInvalidElementAccessException e) {
-          PsiDocumentManagerBase.LOG.warn(e);
         }
       }
       else {
-        for (Language language : file.getViewProvider().getLanguages()) {
+        try {
+          IElementType type = PsiUtilCore.getElementType(o);
+          Language language = type != null ? type.getLanguage() : o.getLanguage();
           incLanguageModificationCount(language);
+        }
+        catch (PsiInvalidElementAccessException e) {
+          Logger.getInstance(getClass()).warn(e);
         }
       }
     }
@@ -152,84 +155,29 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return myModificationCount.getModificationCount();
   }
 
-  @Override
-  public long getOutOfCodeBlockModificationCount() {
-    return myOutOfCodeBlockModificationTracker.getModificationCount();
-  }
-
-  @Override
-  public long getJavaStructureModificationCount() {
-    return myJavaStructureModificationTracker.getModificationCount();
-  }
-
-  @NotNull
-  @Override
-  public ModificationTracker getOutOfCodeBlockModificationTracker() {
-    return myOutOfCodeBlockModificationTracker;
-  }
-
-  @NotNull
-  @Override
-  public ModificationTracker getJavaStructureModificationTracker() {
-    return myJavaStructureModificationTracker;
-  }
-
-
-  @ApiStatus.Experimental
-  public boolean isEnableCodeBlockTracker() {
-    if (myTestMode) return true;
-    return ourEnableCodeBlockTracker.asBoolean();
-  }
-
-  @ApiStatus.Experimental
-  public boolean isEnableLanguageTracker() {
-    return ourEnableLanguageTracker.asBoolean();
-  }
-
+  // used by Kotlin
   @ApiStatus.Experimental
   public void incLanguageModificationCount(@Nullable Language language) {
     if (language == null) return;
-    ((SimpleModificationTracker)myLanguageTrackers.get(language)).incModificationCount();
+    myLanguageTrackers.get(language).incModificationCount();
   }
 
-  @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker forLanguage(@NotNull Language language) {
-    if (!ourEnableLanguageTracker.asBoolean()) return this;
-    return myLanguageTrackers.get(language);
+  @Override
+  public @NotNull ModificationTracker forLanguage(@NotNull Language language) {
+    SimpleModificationTracker languageTracker = myLanguageTrackers.get(language);
+    return () -> languageTracker.getModificationCount() +
+                 myAllLanguagesTracker.getModificationCount();
   }
 
-  @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
-    if (!ourEnableLanguageTracker.asBoolean()) return this;
+  @Override
+  public @NotNull ModificationTracker forLanguages(@NotNull Predicate<? super Language> condition) {
     return () -> {
-      long result = 0;
+      long result = myAllLanguagesTracker.getModificationCount();
       for (Language l : myLanguageTrackers.keySet()) {
-        if (condition.value(l)) continue;
+        if (!condition.test(l)) continue;
         result += myLanguageTrackers.get(l).getModificationCount();
       }
       return result;
-    };
-  }
-
-  @NotNull
-  private static SimpleModificationTracker wrapped(RegistryValue value, SimpleModificationTracker fallback, boolean testMode) {
-    if (testMode) {
-      return new SimpleModificationTracker();
-    }
-    return new SimpleModificationTracker() {
-      @Override
-      public long getModificationCount() {
-        return value.asBoolean() ? super.getModificationCount() :
-               fallback.getModificationCount();
-      }
-
-      @Override
-      public void incModificationCount() {
-        if (value.asBoolean()) super.incModificationCount();
-        //else fallback.incModificationCount();
-      }
     };
   }
 }

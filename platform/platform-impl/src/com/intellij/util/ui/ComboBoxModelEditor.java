@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.MutableCollectionComboBoxModel;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
+@ApiStatus.Internal
 public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
   private final ComboBox<T> comboBox;
 
@@ -34,28 +21,26 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
 
     comboBox = new ComboBox<>(model);
     comboBox.setEditor(new NameEditor());
-    comboBox.setRenderer(new MyListCellRenderer());
+    comboBox.setRenderer(BuilderKt.textListCellRenderer("", value -> itemEditor.getName(value)));
   }
 
-  @NotNull
   @Override
-  public MutableCollectionComboBoxModel<T> getModel() {
+  public @NotNull MutableCollectionComboBoxModel<T> getModel() {
     return model;
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return comboBox;
   }
 
-  private class NameEditor extends FixedComboBoxEditor {
+  private final class NameEditor extends FixedComboBoxEditor {
     private T item = null;
     private boolean mutated;
 
-    public NameEditor() {
+    NameEditor() {
       getField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (item != null && itemEditor.isEditable(item)) {
             String newName = getField().getText();
             if (newName.equals(itemEditor.getName(item))) {
@@ -85,15 +70,6 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
     @Override
     public Object getItem() {
       return item;
-    }
-  }
-
-  private class MyListCellRenderer extends ListCellRendererWrapper<T> {
-    @Override
-    public void customize(JList list, T item, int index, boolean selected, boolean hasFocus) {
-      if (item != null) {
-        setText(itemEditor.getName(item));
-      }
     }
   }
 }

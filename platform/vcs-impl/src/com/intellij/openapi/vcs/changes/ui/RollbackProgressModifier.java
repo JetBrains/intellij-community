@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,6 +8,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -29,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class RollbackProgressModifier implements RollbackProgressListener {
   private final Set<String> myTakenPaths;
   private final double myTotal;
@@ -62,27 +50,32 @@ public class RollbackProgressModifier implements RollbackProgressListener {
     }
   }
 
+  @Override
   public void determinate() {
     if (myIndicator != null) {
       myIndicator.setIndeterminate(false);
     }
   }
 
+  @Override
   public void indeterminate() {
     if (myIndicator != null) {
       myIndicator.setIndeterminate(true);
     }
   }
 
-  public void accept(@NotNull final Change change) {
+  @Override
+  public void accept(final @NotNull Change change) {
     acceptImpl(ChangesUtil.getFilePath(change).getPath());
   }
 
-  public void accept(@NotNull final FilePath filePath) {
+  @Override
+  public void accept(final @NotNull FilePath filePath) {
     acceptImpl(filePath.getPath());
   }
 
-  public void accept(final List<FilePath> paths) {
+  @Override
+  public void accept(final List<? extends FilePath> paths) {
     if (myIndicator != null) {
       if (paths != null && (! paths.isEmpty())) {
         for (FilePath path : paths) {
@@ -94,14 +87,17 @@ public class RollbackProgressModifier implements RollbackProgressListener {
     }
   }
 
+  @Override
   public void accept(final File file) {
     acceptImpl(file.getAbsolutePath());
   }
 
+  @Override
   public void accept(final VirtualFile file) {
     acceptImpl(new File(file.getPath()).getAbsolutePath());
   }
 
+  @Override
   public void checkCanceled() {
     if (myIndicator != null) {
       myIndicator.checkCanceled();

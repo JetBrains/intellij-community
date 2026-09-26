@@ -1,35 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UpDownHandler {
+@ApiStatus.Internal
+public final class UpDownHandler {
   private static final CustomShortcutSet UP_KEY = CustomShortcutSet.fromString("UP");
   private static final CustomShortcutSet DOWN_KEY = CustomShortcutSet.fromString("DOWN");
 
@@ -39,7 +32,7 @@ public class UpDownHandler {
   public static void register(JComponent input, final JComponent affectedComponent) {
     register(input, affectedComponent, true);
   }
-  
+
   public static void register(final JComponent input, final JComponent affectedComponent, boolean registerOnBothComponents) {
     final SelectionMover mover = new SelectionMover(affectedComponent);
     final AnAction up = new UpDownAction(mover, input, true);
@@ -53,7 +46,7 @@ public class UpDownHandler {
     }
   }
 
-  private static class SelectionMover {
+  private static final class SelectionMover {
     private JComboBox myCombo;
     private JList myList;
 
@@ -97,26 +90,26 @@ public class UpDownHandler {
       }
     }
   }
-  
-  static class UpDownAction extends AnAction {
+
+  static final class UpDownAction extends AnAction {
     private final int myDirection;
     private final SelectionMover myMover;
     private final JComponent myInput;
 
     UpDownAction(SelectionMover mover, JComponent input, boolean isUp) {
-      super(isUp ? "Up" : "Down");
+      super(isUp ? LangBundle.message("action.UpDownAction.up.text") : LangBundle.message("action.UpDownAction.down.text"));
       myMover = mover;
       myInput = input;
       myDirection = isUp ? -1 : 1;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myMover.move(myDirection);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final LookupEx lookup;
       if (myInput instanceof EditorTextField) {
         lookup = LookupManager.getActiveLookup(((EditorTextField)myInput).getEditor());
@@ -130,6 +123,11 @@ public class UpDownHandler {
       boolean popupMenuVisible = comboBox != null && comboBox.isPopupVisible();
 
       e.getPresentation().setEnabled(lookup == null && !popupMenuVisible);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

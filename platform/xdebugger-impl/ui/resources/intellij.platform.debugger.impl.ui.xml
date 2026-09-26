@@ -1,0 +1,131 @@
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="fleet.util.core"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.foldings"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <applicationListeners>
+    <listener topic="com.intellij.openapi.project.ProjectManagerListener"
+              class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
+              os="windows"
+              activeInHeadlessMode="false"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint name="xdebugger.debuggerTabCustomizer"
+                    interface="com.intellij.xdebugger.impl.ui.SessionTabComponentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.nodeLinkActionProvider" interface="com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.inlineValuePopupProvider"
+                    interface="com.intellij.xdebugger.impl.inline.InlineValuePopupProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.customEvaluateHandler"
+                    interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.customMuteBreakpointHandler"
+                    interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
+    <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
+                    interface="com.intellij.platform.debugger.impl.ui.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
+
+    <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
+                             id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
+
+    <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
+
+    <actionPromoter implementation="com.intellij.xdebugger.impl.actions.XDebuggerSuspendedSessionActionPromoter"/>
+
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule"/>
+    <xdebugger.breakpointGroupingRule implementation="com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule"/>
+    <readerModeMatcher implementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialog$BreakpointPreviewReaderModeMatcher"/>
+
+    <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
+
+    <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerStatisticsCollector"/>
+
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.UpHandler"
+                         id="smart-step-into-up"/>
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.DownHandler"
+                         id="smart-step-into-down"/>
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
+                         id="smart-step-into-left"/>
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
+                         id="smart-step-into-previous"/>
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
+                         id="smart-step-into-right"/>
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
+                         id="smart-step-into-next"/>
+    <editorActionHandler action="EditorEnter"
+                         implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebugSmartStepIntoEnterHandler"
+                         order="first, before terminalEnter" id="smart-step-into-enter"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.EscHandler"
+                         order="before hide-search" id="smart-step-into-escape"/>
+
+    <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
+
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.HtmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.XmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
+
+    <xdebugger.inlineValuePopupProvider implementation="com.intellij.xdebugger.impl.InlineTextValuePopupProvider"/>
+
+    <projectService serviceImplementation="com.intellij.platform.debugger.impl.ui.evaluate.quick.common.ValueLookupManager"/>
+
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedStacksSerializer"/>
+    <projectSettings service="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
+  </extensions>
+
+  <xi:include href="intellij.platform.debugger.impl.ui.actions.xml"/>
+</idea-plugin>

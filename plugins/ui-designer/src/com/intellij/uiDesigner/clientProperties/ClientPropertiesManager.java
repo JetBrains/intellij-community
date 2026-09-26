@@ -1,58 +1,57 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.uiDesigner.LoaderFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static com.intellij.util.JdomKt.loadElement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @State(name = "ClientPropertiesManager", defaultStateAsResource = true)
 public class ClientPropertiesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
-  @NonNls private static final String ELEMENT_PROPERTIES = "properties";
-  @NonNls private static final String ELEMENT_PROPERTY = "property";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
+  private static final @NonNls String ELEMENT_PROPERTIES = "properties";
+  private static final @NonNls String ELEMENT_PROPERTY = "property";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String COMPONENT_NAME = "ClientPropertiesManager";
 
   public static ClientPropertiesManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ClientPropertiesManager.class);
+    return project.getService(ClientPropertiesManager.class);
   }
 
-  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = new AtomicNotNullLazyValue<ClientPropertiesManager>() {
-    @NotNull
-    @Override
-    protected ClientPropertiesManager compute() {
-      ClientPropertiesManager result = new ClientPropertiesManager();
-      try {
-        result.loadState(loadElement(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return result;
+  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = NotNullLazyValue.atomicLazy(() -> {
+    ClientPropertiesManager result = new ClientPropertiesManager();
+    try {
+      result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
     }
-  };
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return result;
+  });
 
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<>();
 
   public ClientPropertiesManager() {
   }
 
-  private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
+  @NonInjectable
+  private ClientPropertiesManager(@NotNull Map<String, List<ClientProperty>> propertyMap) {
     this();
     myPropertyMap.putAll(propertyMap);
   }
@@ -91,6 +90,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
       return myName.compareTo(prop.getName());
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -103,6 +103,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = myName.hashCode();
@@ -126,9 +127,8 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     Element element = new Element("state");
     if (equals(ourDefaultManager.getValue())) {
       return element;
@@ -170,8 +170,8 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public List<Class> getConfiguredClasses(@NotNull Project project) {
-    List<Class> result = new ArrayList<>();
+  public List<Class<?>> getConfiguredClasses(@NotNull Project project) {
+    List<Class<?>> result = new ArrayList<>();
     for(String className: myPropertyMap.keySet()) {
       try {
         result.add(Class.forName(className, true, LoaderFactory.getInstance(project).getProjectClassLoader()));
@@ -189,11 +189,11 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public void removeClientPropertyClass(final Class selectedClass) {
+  public void removeClientPropertyClass(final Class<?> selectedClass) {
     myPropertyMap.remove(selectedClass.getName());
   }
 
-  public List<ClientProperty> getConfiguredProperties(Class componentClass) {
+  public List<ClientProperty> getConfiguredProperties(Class<?> componentClass) {
     List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
     if (list == null) {
       return Collections.emptyList();
@@ -201,8 +201,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     return new ArrayList<>(list);
   }
 
-  @NotNull
-  public List<ClientProperty> getClientProperties(Class componentClass) {
+  public @NotNull List<ClientProperty> getClientProperties(Class componentClass) {
     List<ClientProperty> result = new ArrayList<>();
     while(!componentClass.getName().equals(Object.class.getName())) {
       List<ClientProperty> props = myPropertyMap.get(componentClass.getName());
@@ -217,10 +216,9 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ClientPropertiesManager)) {
+    if (!(obj instanceof ClientPropertiesManager rhs)) {
       return false;
     }
-    ClientPropertiesManager rhs = (ClientPropertiesManager) obj;
     if (rhs.myPropertyMap.size() != myPropertyMap.size()) {
       return false;
     }

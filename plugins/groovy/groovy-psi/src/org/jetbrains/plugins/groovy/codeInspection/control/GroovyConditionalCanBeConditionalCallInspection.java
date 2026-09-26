@@ -15,15 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -35,52 +36,53 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Conditional expression can be conditional call";
-  }
+public final class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression can be call #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.can.be.call");
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new CollapseConditionalFix();
   }
 
-  private static class CollapseConditionalFix extends GroovyFix {
+  private static class CollapseConditionalFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return "Replace with conditional call";
+    public @NotNull String getFamilyName() {
+      return GroovyBundle.message("intention.family.name.replace.with.conditional.call");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrConditionalExpression expression = (GrConditionalExpression) element;
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
-      final GrMethodCallExpression call;
+      if (binaryCondition == null) {
+        return;
+      }
+      final GrExpression branch;
       if (GrInspectionUtil.isInequality(binaryCondition)) {
-        call = (GrMethodCallExpression) expression.getThenBranch();
+        branch = expression.getThenBranch();
       } else {
-        call = (GrMethodCallExpression) expression.getElseBranch();
+        branch = expression.getElseBranch();
+      }
+      if (!(branch instanceof GrMethodCallExpression call)) {
+        return;
       }
       final GrReferenceExpression methodExpression = (GrReferenceExpression) call.getInvokedExpression();
       final GrExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
       final String methodName = methodExpression.getReferenceName();
       final GrArgumentList argumentList = call.getArgumentList();
-      replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
+      GrInspectionUtil.replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
     }
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -99,12 +101,14 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
         return;
       }
       condition = (GrExpression)PsiUtil.skipParentheses(condition, false);
-      if (!(condition instanceof GrBinaryExpression)) {
+      if (!(condition instanceof GrBinaryExpression binaryCondition)) {
         return;
       }
-      final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
+      if (rhs == null) {
+        return;
+      }
       if (GrInspectionUtil.isInequality(binaryCondition) && GrInspectionUtil.isNull(elseBranch)) {
         if (GrInspectionUtil.isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
             GrInspectionUtil.isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
@@ -121,15 +125,13 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
 
     private static boolean isCallTargeting(GrExpression call, GrExpression expression) {
-      if (!(call instanceof GrMethodCallExpression)) {
+      if (!(call instanceof GrMethodCallExpression callExpression)) {
         return false;
       }
-      final GrMethodCallExpression callExpression = (GrMethodCallExpression) call;
       final GrExpression methodExpression = callExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
         return false;
       }
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       if (!GroovyTokenTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
         return false;
       }

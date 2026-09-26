@@ -22,8 +22,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgActivity;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgPromptCommandExecutor;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
@@ -34,25 +37,27 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_EXCEPTION;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_WARNING;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_WITH_ANCESTOR_SKIPPED;
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgMergeCommand {
 
-  @NotNull private final Project project;
-  @NotNull private final HgRepository repo;
-  @Nullable private String revision;
+  private final @NotNull Project project;
+  private final @NotNull HgRepository repo;
+  private @Nullable String revision;
 
   public HgMergeCommand(@NotNull Project project, @NotNull HgRepository repo) {
     this.project = project;
     this.repo = repo;
   }
 
-  private void setRevision(@NotNull String revision) {
+  private void setRevision(@NotNull @NonNls String revision) {
     this.revision = revision;
   }
 
-  @Nullable
-  private HgCommandResult executeInCurrentThread() {
+  private @Nullable HgCommandResult executeInCurrentThread() {
     HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
     List<String> arguments = new LinkedList<>();
@@ -60,43 +65,44 @@ public class HgMergeCommand {
       arguments.add("--rev");
       arguments.add(revision);
     }
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Merge")) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.merge"), HgActivity.Merge)) {
       HgCommandResult result = commandExecutor.executeInCurrentThread(repo.getRoot(), "merge", arguments);
       repo.update();
       return result;
     }
   }
 
-  @Nullable
-  public HgCommandResult mergeSynchronously() throws VcsException {
+  public @Nullable HgCommandResult mergeSynchronously() throws VcsException {
     HgCommandResult commandResult = ensureSuccess(executeInCurrentThread());
     HgUtil.markDirectoryDirty(project, repo.getRoot());
     return commandResult;
   }
 
-  public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final String branchName,
-                               @NotNull final UpdatedFiles updatedFiles) {
+  public static void mergeWith(final @NotNull HgRepository repository,
+                               final @NotNull @NonNls String branchName,
+                               final @NotNull UpdatedFiles updatedFiles) {
     mergeWith(repository, branchName, updatedFiles, null);
   }
 
-  public static void mergeWith(@NotNull final HgRepository repository,
-                               @NotNull final String branchName,
-                               @NotNull final UpdatedFiles updatedFiles, @Nullable final Runnable onSuccessHandler) {
+  public static void mergeWith(final @NotNull HgRepository repository,
+                               final @NotNull @NonNls String branchName,
+                               final @NotNull UpdatedFiles updatedFiles, final @Nullable Runnable onSuccessHandler) {
     final Project project = repository.getProject();
     final VirtualFile repositoryRoot = repository.getRoot();
     final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repository);
     hgMergeCommand.setRevision(branchName);//there is no difference between branch or revision or bookmark as parameter to merge,
     // we need just a string
-    new Task.Backgroundable(project, "Merging Changes...") {
+    new Task.Backgroundable(project, HgBundle.message("action.hg4idea.merge.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           HgCommandResult result = hgMergeCommand.mergeSynchronously();
           if (HgErrorUtil.isAncestorMergeError(result)) {
             //skip and notify
-            VcsNotifier.getInstance(project).notifyMinorWarning("Merging is skipped for " + repositoryRoot.getPresentableName(),
-                                                                "Merging with a working directory ancestor has no effect");
+            VcsNotifier.getInstance(project)
+              .notifyMinorWarning(MERGE_WITH_ANCESTOR_SKIPPED,
+                                  HgBundle.message("action.hg4idea.merge.skipped.title", repositoryRoot.getPresentableName()),
+                                  HgBundle.message("action.hg4idea.merge.skipped"));
             return;
           }
           new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
@@ -106,10 +112,14 @@ public class HgMergeCommand {
         }
         catch (VcsException exception) {
           if (exception.isWarning()) {
-            VcsNotifier.getInstance(project).notifyWarning("Warning during merge", exception.getMessage());
+            VcsNotifier.getInstance(project).notifyWarning(MERGE_WARNING,
+                                                           HgBundle.message("action.hg4idea.merge.warning"),
+                                                           exception.getMessage());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("Exception during merge", exception.getMessage());
+            VcsNotifier.getInstance(project).notifyError(MERGE_EXCEPTION,
+                                                         HgBundle.message("action.hg4idea.merge.exception"),
+                                                         exception.getMessage());
           }
         }
       }

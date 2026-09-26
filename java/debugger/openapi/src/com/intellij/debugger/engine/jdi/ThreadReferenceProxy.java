@@ -18,9 +18,10 @@ package com.intellij.debugger.engine.jdi;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.sun.jdi.ThreadReference;
 
-public interface ThreadReferenceProxy extends ObjectReferenceProxy{
+public interface ThreadReferenceProxy extends ObjectReferenceProxy {
   VirtualMachineProxy getVirtualMachine();
-  ThreadReference     getThreadReference();
+
+  ThreadReference getThreadReference();
 
   StackFrameProxy frame(int i) throws EvaluateException;
 

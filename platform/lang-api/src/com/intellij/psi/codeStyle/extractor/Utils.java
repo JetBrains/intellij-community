@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,13 +14,14 @@ import com.intellij.psi.codeStyle.extractor.values.Generation;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class Utils {
+public final class Utils {
   public static final int CRITICAL_SYMBOL_WEIGHT = 100;
 
   public static void logError(String message) {
@@ -106,16 +94,12 @@ public class Utils {
     return diff;
   }
 
-  @Nullable
-  public static CustomCodeStyleSettings getLanguageSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+  public static @Nullable CustomCodeStyleSettings getLanguageSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensions()) {
       if (language.equals(provider.getLanguage())) {
         CustomCodeStyleSettings modelSettings = provider.createCustomSettings(settings);
         if (modelSettings == null) continue;
-        CustomCodeStyleSettings customSettings = settings.getCustomSettings(modelSettings.getClass());
-        if (customSettings != null) {
-          return customSettings;
-        }
+        return settings.getCustomSettings(modelSettings.getClass());
       }
     }
     logError("Failed to load CustomCodeStyleSettings for " + language);
@@ -133,7 +117,7 @@ public class Utils {
     for (Value value : values) {
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.setText2("Value:" + value.name);
+        indicator.setText2(LangBundle.message("progress.details.value", value.name));
         indicator.setFraction(0.5 + 0.5 * i / length);
       }
 
@@ -171,7 +155,7 @@ public class Utils {
       }
       final int age = generation.getAge();
       if (indicator != null) {
-        indicator.setText2("Age:" + age + " Defects:" + generation.getParentKind());
+        indicator.setText2(LangBundle.message("progress.details.age.defects", age, generation.getParentKind()));
         indicator.setFraction(0.5 * age / Generation.GEN_COUNT);
       }
       generation = Generation.createNextGeneration(differ, generation);
@@ -195,8 +179,6 @@ public class Utils {
 
   public static int getRandomLess(int count) {
     final int ret = (int)(getRandom() * count / RAND_MAX);
-    if (ret >= count) return count - 1;
-    if (ret < 0) return 0;
-    return ret;
+    return MathUtil.clamp(ret, 0, count - 1);
   }
 }

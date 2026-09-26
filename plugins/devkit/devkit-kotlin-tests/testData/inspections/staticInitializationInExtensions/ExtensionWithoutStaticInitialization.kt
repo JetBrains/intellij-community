@@ -1,0 +1,3 @@
+class ExtensionWithoutStaticInitialization : MyExtension {
+  init { }
+}

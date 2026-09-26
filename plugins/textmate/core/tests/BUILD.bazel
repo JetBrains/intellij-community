@@ -1,0 +1,73 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.textmate.core.tests`
+
+### auto-generated section `build intellij.textmate.core.tests` start
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.textmate.core.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "srcMultiplatform/**/*.kt",
+            "srcMultiplatform/**/*.java",
+            "srcMultiplatform/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.textmate.core.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//plugins/textmate/core",
+        "//plugins/textmate/core:core_test_lib",
+        "//platform/util/xmlDom",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "@lib//:kotlin-test-junit5",
+    ],
+)
+### auto-generated section `build intellij.textmate.core.tests` end
+
+### auto-generated section `iml intellij.textmate.core.tests` start
+exports_files(
+    [
+        "intellij.textmate.core.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.textmate.core.tests` end

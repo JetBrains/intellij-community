@@ -1,0 +1,1 @@
+Actual declaration 'property test' would be moved to a common module.

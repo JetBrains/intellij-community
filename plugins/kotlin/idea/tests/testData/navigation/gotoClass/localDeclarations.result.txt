@@ -1,0 +1,44 @@
+NavigationItem:
+    name: LocalClass
+ItemPresentation:
+    presentableText: LocalClass
+    locationString: (in foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: class LocalClass {}
+QualifiedName: LocalClass
+
+NavigationItem:
+    name: LocalDeclarationsKt
+ItemPresentation:
+    presentableText: LocalDeclarationsKt
+    locationString: null
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: fun foo() {
+QualifiedName: LocalDeclarationsKt
+
+NavigationItem:
+    name: LocalInterface
+ItemPresentation:
+    presentableText: LocalInterface
+    locationString: (in foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface LocalInterface {}
+QualifiedName: LocalInterface
+
+NavigationItem:
+    name: LocalInterfaceWithImpl
+ItemPresentation:
+    presentableText: LocalInterfaceWithImpl
+    locationString: (in foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface LocalInterfaceWithImpl {
+QualifiedName: LocalInterfaceWithImpl
+
+NavigationItem:
+    name: LocalObject
+ItemPresentation:
+    presentableText: LocalObject
+    locationString: (in foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/objectKotlin.svg, Public])
+TargetElement: object LocalObject() {}
+QualifiedName: LocalObject

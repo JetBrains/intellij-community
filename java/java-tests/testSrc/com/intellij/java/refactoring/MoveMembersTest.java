@@ -1,43 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
-public class MoveMembersTest extends MultiFileTestCase {
+public class MoveMembersTest extends LightMultiFileTestCase {
+  private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      addJetBrainsAnnotationsWithTypeUse(model);
+      MavenDependencyUtil.addFromMaven(model, "org.jspecify:jspecify:1.0.0");
+    }
+  };
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return PROJECT_DESCRIPTOR;
+  }
+
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveMembers/";
   }
 
   public void testJavadocRefs() {
@@ -87,6 +91,10 @@ public class MoveMembersTest extends MultiFileTestCase {
   public void testIDEADEV12448() {
     doTest("B", "A", false, 0);
   }
+  
+  public void testClearFinalStatic() {
+    doTest("B", "A", 0, 1);
+  }
 
   public void testFieldForwardRef() {
     doTest("A", "Constants", 0);
@@ -102,6 +110,10 @@ public class MoveMembersTest extends MultiFileTestCase {
 
   public void testProtectedConstructor() {
     doTest("pack1.A", "pack1.C", 0);
+  }
+
+  public void testPackagePrivateStaticMember() {
+    doTest("pack1.A", "pack2.C", true, PsiModifier.PACKAGE_LOCAL, 0);
   }
 
   public void testUntouchedVisibility() {
@@ -142,13 +154,26 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("bar.B", "bar.A", 0);
   }
 
+  public void testStaticClassInitializer() {
+    doTest("B", "A", 0);
+  }
+
+  public void testStaticClassInitializerToInterface() {
+    try {
+      doTest("B", "A", 0);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Static class initializers are not allowed in interfaces.", e.getMessage());
+    }
+  }
+
   public void testWritableField() {
     try {
       doTest("B", "A", 0);
       fail("conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Field <b><code>B.ONE</code></b> has write access but is moved to an interface", e.getMessage());
+      assertEquals("Field <b><code>B.ONE</code></b> is written to, but an interface is only allowed to contain constants.", e.getMessage());
     }
   }
   
@@ -158,7 +183,27 @@ public class MoveMembersTest extends MultiFileTestCase {
       fail("conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("final variable initializer won't be available after move.", e.getMessage());
+      assertEquals("The initializer of final field <b><code>B.ONE</code></b> will be left behind.", e.getMessage());
+    }
+  }
+
+  public void testEnumConstantToInterface() {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Enum constant <b><code>B.A</code></b> won't be compilable when moved to class <b><code>A</code></b>.", e.getMessage());
+    }
+  }
+
+  public void testNonConstantToInterface() {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Non-constant field <b><code>B.i</code></b> will not be compilable when moved to an interface.", e.getMessage());
     }
   }
 
@@ -178,19 +223,21 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   public void testStaticToInterface() {
-    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel level = levelProjectExtension.getLanguageLevel();
+    final LanguageLevel level = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     try {
-      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
       doTest("A", "B", 0);
     }
     finally {
-      levelProjectExtension.setLanguageLevel(level);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
     }
   }
   
   public void testEscalateVisibility1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
+  public void testEscalateVisibilityWhenMoveStaticMemberToStaticClass() {
+    doTest("pack.A", "pack.A.B", true, VisibilityUtil.ESCALATE_VISIBILITY, 1, 2);
   }
 
   public void testStringConstantInSwitchLabelExpression() {
@@ -222,21 +269,53 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   public void testFromNestedToOuterMethodRef() {
-    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
     try {
-      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
       doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/moveMembers/";
+  public void testNullabilityMethodFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodFromNullMarkedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodWithConflictFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityMethodWithConflictFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromNullMarkedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityClassFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityFieldFromNullMarkedToUnspecified() {
+    doTest("A", "B", 0);
+  }
+
+  public void testNullabilityFieldFromUnspecifiedToNullMarked() {
+    doTest("A", "B", 0);
   }
 
   private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
@@ -255,15 +334,12 @@ public class MoveMembersTest extends MultiFileTestCase {
                       final boolean lowercaseFirstLetter,
                       final String defaultVisibility,
                       final int... memberIndices) {
-    doTest((rootDir, rootAfter) -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
+    doTest(() -> this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility), lowercaseFirstLetter);
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) {
-    PsiClass sourceClass = myJavaFacade.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
-    assertNotNull("Class " + sourceClassName + " not found", sourceClass);
-    PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getProjectScope(myProject));
-    assertNotNull("Class " + targetClassName + " not found", targetClass);
-
+    PsiClass sourceClass = myFixture.findClass(sourceClassName);
+    PsiClass targetClass = myFixture.findClass(targetClassName);
     PsiElement[] children = sourceClass.getChildren();
     ArrayList<PsiMember> members = new ArrayList<>();
     for (PsiElement child : children) {
@@ -281,7 +357,7 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(visibility);
-    new MoveMembersProcessor(myProject, null, options).run();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    new MoveMembersProcessor(getProject(), null, options).run();
   }
+
 }

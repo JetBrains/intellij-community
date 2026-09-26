@@ -1,0 +1,3 @@
+<spot><xsl:if test="true()">
+  something
+</xsl:if></spot>

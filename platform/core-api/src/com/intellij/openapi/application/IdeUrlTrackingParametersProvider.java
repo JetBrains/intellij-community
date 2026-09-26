@@ -1,9 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,15 +10,24 @@ import org.jetbrains.annotations.NotNull;
  * This service isn't supposed to be overridden in regular plugins.
  */
 public class IdeUrlTrackingParametersProvider {
+  private static final IdeUrlTrackingParametersProvider IDENTITY = new IdeUrlTrackingParametersProvider();
+
   public static IdeUrlTrackingParametersProvider getInstance() {
-    return ServiceManager.getService(IdeUrlTrackingParametersProvider.class);
+    IdeUrlTrackingParametersProvider service = ApplicationManager.getApplication().getService(IdeUrlTrackingParametersProvider.class);
+    return service != null ? service : IDENTITY;
   }
 
   /**
    * @return {@code originalUrl} with appended parameters
    */
-  @NotNull
-  public String augmentUrl(@NotNull String originalUrl) {
+  public @NotNull String augmentUrl(@NotNull String originalUrl) {
+    return originalUrl;
+  }
+
+  /**
+   * @return {@code originalUrl} with appended parameters
+   */
+  public @NotNull String augmentUrl(@NotNull String originalUrl, String campaignId) {
     return originalUrl;
   }
 }

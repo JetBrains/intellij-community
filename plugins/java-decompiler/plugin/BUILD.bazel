@@ -1,0 +1,216 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.java.decompiler` start
+dev_dist_plugin(
+    content_modules = ["intellij.java.decompiler.engine"],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/java-decompiler.jar": [
+            "intellij.java.decompiler",
+            "intellij.java.decompiler.engine",
+        ],
+    },
+    main_module = "intellij.java.decompiler",
+)
+### auto-generated section `dev intellij.java.decompiler` end
+
+### auto-generated section `build intellij.java.decompiler` start
+jvm_library(
+    name = "java-decompiler",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//plugins/java-decompiler/engine"],
+    deps = [
+        # do not sort,
+        "//plugins/java-decompiler/engine",
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-api:lang",
+        "//platform/projectModel-api:projectModel",
+        "//java/java-psi-api:psi",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//java/java-psi-impl:psi-impl",
+        "//platform/util",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/util:util-ui",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//platform/lang-impl",
+        "//platform/statistics",
+    ],
+)
+
+jvm_library(
+    name = "java-decompiler_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//plugins/java-decompiler/engine",
+        "//plugins/java-decompiler/engine:engine_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":java-decompiler",
+        "//plugins/java-decompiler/engine:engine_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.decompiler` end
+
+### auto-generated section `iml intellij.java.decompiler` start
+exports_files(
+    [
+        "intellij.java.decompiler.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.decompiler` end
+
+### auto-generated section `build intellij.java.decompiler.tests` start
+jvm_library(
+    name = "java-decompiler-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.decompiler.tests",
+    visibility = ["//visibility:public"],
+    exports = ["//plugins/java-decompiler/engine"],
+)
+
+jvm_library(
+    name = "java-decompiler-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/java-decompiler/plugin:java-decompiler",
+        "//plugins/java-decompiler/plugin:java-decompiler_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//plugins/java-decompiler/engine",
+        "//plugins/java-decompiler/engine:engine_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":java-decompiler-tests",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//plugins/java-decompiler/engine",
+        "//plugins/java-decompiler/engine:engine_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.decompiler.tests` end
+
+### auto-generated section `iml intellij.java.decompiler.tests` start
+exports_files(
+    [
+        "intellij.java.decompiler.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.decompiler.tests` end
+
+### auto-generated section `test intellij.java.decompiler.tests` start
+jps_test(
+    name = "java-decompiler-tests_test",
+    runtime_deps = [":java-decompiler-tests_test_lib"],
+)
+### auto-generated section `test intellij.java.decompiler.tests` end

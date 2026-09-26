@@ -17,15 +17,17 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 public abstract class Revision {
-  @Nullable
-  public String getLabel() {
+  public @NlsContexts.Label @Nullable String getLabel() {
     return null;
   }
 
@@ -35,13 +37,11 @@ public abstract class Revision {
 
   public abstract long getTimestamp();
 
-  @Nullable
-  public Long getChangeSetId() {
+  public @Nullable Long getChangeSetId() {
     return null;
   }
 
-  @Nullable
-  public String getChangeSetName() {
+  public @NlsContexts.Label @Nullable String getChangeSetName() {
     return null;
   }
 
@@ -50,12 +50,14 @@ public abstract class Revision {
   }
 
   public Pair<List<String>, Integer> getAffectedFileNames() {
-    return Pair.create(Collections.<String>emptyList(), 0);
+    return Pair.create(Collections.emptyList(), 0);
   }
 
-  public abstract Entry findEntry();
+  public abstract @Nullable Entry findEntry();
 
-  public List<Difference> getDifferencesWith(Revision right) {
-    return Entry.getDifferencesBetween(findEntry(), right.findEntry());
+  public static @NotNull List<Difference> getDifferencesBetween(@NotNull Revision left, @NotNull Revision right) {
+    return Entry.getDifferencesBetween(left.findEntry(), right.findEntry(), right instanceof CurrentRevision);
   }
+
+  public abstract RootEntry getRoot();
 }

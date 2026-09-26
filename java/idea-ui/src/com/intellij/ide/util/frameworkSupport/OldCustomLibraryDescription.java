@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
-import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
 import com.intellij.framework.library.impl.DownloadableLibraryFileDescriptionImpl;
@@ -38,18 +24,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private final DownloadableLibraryDescription myDownloadableDescription;
-  private final List<FrameworkVersion> myVersions;
+  private final List<? extends FrameworkVersion> myVersions;
 
-  public OldCustomLibraryDescription(@NotNull LibraryInfo[] libraryInfos, @NotNull String defaultLibraryName) {
+  public OldCustomLibraryDescription(LibraryInfo @NotNull [] libraryInfos, @NotNull String defaultLibraryName) {
     this(Collections.singletonList(new FrameworkVersion(defaultLibraryName, defaultLibraryName, libraryInfos, true)), defaultLibraryName);
   }
 
-  private OldCustomLibraryDescription(final List<FrameworkVersion> versions, String defaultLibraryName) {
+  private OldCustomLibraryDescription(final List<? extends FrameworkVersion> versions, String defaultLibraryName) {
     super(defaultLibraryName);
     myVersions = versions;
     final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<>();
@@ -83,14 +66,12 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
     return false;
   }
 
-  @NotNull
   @Override
-  public Set<? extends LibraryKind> getSuitableLibraryKinds() {
+  public @NotNull Set<? extends LibraryKind> getSuitableLibraryKinds() {
     return Collections.emptySet();
   }
 
-  @Nullable
-  public static CustomLibraryDescription createByVersions(List<? extends FrameworkVersion> versions) {
+  public static @Nullable CustomLibraryDescription createByVersions(List<? extends FrameworkVersion> versions) {
     String defaultLibraryName = null;
     List<FrameworkVersion> withLibraries = new ArrayList<>();
     for (FrameworkVersion version : versions) {

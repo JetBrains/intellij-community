@@ -1,0 +1,526 @@
+package pkg;
+
+import groovy.lang.Closure;
+import groovy.lang.GroovyObject;
+import groovy.lang.MetaClass;
+import groovy.transform.Generated;
+import groovy.transform.Internal;
+import java.beans.Transient;
+import java.util.concurrent.Callable;
+import org.codehaus.groovy.runtime.GeneratedClosure;
+import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
+import org.codehaus.groovy.runtime.callsite.CallSite;
+
+public class GroovyClass implements GroovyObject {
+   private final Nested n;
+   private final Inner i;
+   private final Runnable r;
+   private final Callable<String> c;
+
+   @Generated
+   public GroovyClass() {
+      CallSite[] var1 = $getCallSiteArray();
+      super();
+      Object var2 = var1[0].callConstructor(Nested.class);// 9
+      this.n = (Nested)ScriptBytecodeAdapter.castToType(var2, Nested.class);
+      Object var3 = var1[1].callConstructor(Inner.class, this);// 10
+      this.i = (Inner)ScriptBytecodeAdapter.castToType(var3, Inner.class);
+      _closure1 var4 = new _closure1(this, this);
+      this.r = var4;
+      _closure2 var5 = new _closure2(this, this);
+      this.c = var5;
+      MetaClass var6 = this.$getStaticMetaClass();
+      this.metaClass = var6;
+   }
+
+   @Generated
+   @Internal
+   @Transient
+   public MetaClass getMetaClass() {
+      MetaClass var10000 = this.metaClass;
+      if (var10000 != null) {
+         return var10000;
+      } else {
+         this.metaClass = this.$getStaticMetaClass();
+         return this.metaClass;
+      }
+   }
+
+   @Generated
+   @Internal
+   public void setMetaClass(MetaClass var1) {
+      this.metaClass = var1;
+   }
+
+   @Generated
+   public final Nested getN() {
+      return this.n;
+   }
+
+   @Generated
+   public final Inner getI() {
+      return this.i;
+   }
+
+   @Generated
+   public final Runnable getR() {
+      return this.r;
+   }
+
+   @Generated
+   public final Callable<String> getC() {
+      return this.c;
+   }
+
+   public final class _closure1 extends Closure implements GeneratedClosure {
+      public _closure1(Object _outerInstance, Object _thisObject) {
+         CallSite[] var3 = $getCallSiteArray();
+         super(_outerInstance, _thisObject);
+      }
+
+      public Object doCall(Object it) {
+         CallSite[] var2 = $getCallSiteArray();
+         return var2[0].callCurrent(this, "I'm runnable");// 11
+      }
+
+      @Generated
+      public Object doCall() {
+         CallSite[] var1 = $getCallSiteArray();
+         return this.doCall((Object)null);
+      }
+   }
+
+   public final class _closure2 extends Closure implements GeneratedClosure {
+      public _closure2(Object _outerInstance, Object _thisObject) {
+         CallSite[] var3 = $getCallSiteArray();
+         super(_outerInstance, _thisObject);
+      }
+
+      public Object doCall(Object it) {
+         CallSite[] var2 = $getCallSiteArray();
+         return "I'm callable";// 12
+      }
+
+      @Generated
+      public Object doCall() {
+         CallSite[] var1 = $getCallSiteArray();
+         return this.doCall((Object)null);
+      }
+   }
+
+   public class Inner implements GroovyObject {
+      @Generated
+      public Inner() {
+         CallSite[] var2 = $getCallSiteArray();
+         super();
+         MetaClass var4 = this.$getStaticMetaClass();
+         this.metaClass = var4;
+      }
+
+      @Generated
+      @Internal
+      @Transient
+      public MetaClass getMetaClass() {
+         MetaClass var10000 = this.metaClass;
+         if (var10000 != null) {
+            return var10000;
+         } else {
+            this.metaClass = this.$getStaticMetaClass();
+            return this.metaClass;
+         }
+      }
+
+      @Generated
+      @Internal
+      public void setMetaClass(MetaClass var1) {
+         this.metaClass = var1;
+      }
+   }
+
+   public static class Nested implements GroovyObject {
+      @Generated
+      public Nested() {
+         CallSite[] var1 = $getCallSiteArray();
+         super();
+         MetaClass var2 = this.$getStaticMetaClass();
+         this.metaClass = var2;
+      }
+
+      @Generated
+      @Internal
+      @Transient
+      public MetaClass getMetaClass() {
+         MetaClass var10000 = this.metaClass;
+         if (var10000 != null) {
+            return var10000;
+         } else {
+            this.metaClass = this.$getStaticMetaClass();
+            return this.metaClass;
+         }
+      }
+
+      @Generated
+      @Internal
+      public void setMetaClass(MetaClass var1) {
+         this.metaClass = var1;
+      }
+   }
+}
+
+class 'pkg/GroovyClass' {
+   method '<init> ()V' {
+      1      21
+      2      21
+      3      21
+      4      21
+      6      22
+      7      22
+      8      22
+      9      23
+      a      23
+      b      23
+      c      23
+      d      23
+      e      23
+      f      23
+      10      23
+      11      23
+      12      23
+      13      23
+      14      23
+      15      24
+      16      24
+      17      24
+      18      24
+      19      24
+      1a      24
+      1b      24
+      1c      24
+      1d      24
+      1e      24
+      20      24
+      21      24
+      22      24
+      25      25
+      26      25
+      27      25
+      28      25
+      29      25
+      2a      25
+      2b      25
+      2c      25
+      2d      25
+      2e      25
+      2f      25
+      30      25
+      31      25
+      32      26
+      33      26
+      34      26
+      35      26
+      36      26
+      37      26
+      38      26
+      39      26
+      3a      26
+      3b      26
+      3d      26
+      3e      26
+      3f      26
+      46      27
+      47      27
+      4b      27
+      4c      27
+      4d      28
+      4e      28
+      4f      28
+      51      28
+      52      28
+      53      28
+      5b      29
+      5c      29
+      60      29
+      61      29
+      62      30
+      63      30
+      64      30
+      66      30
+      67      30
+      68      30
+      6c      31
+      6d      31
+      6e      31
+      6f      31
+      70      31
+      71      31
+      72      32
+      73      32
+      74      32
+      76      32
+      77      32
+      78      32
+      7c      33
+   }
+
+   method 'getMetaClass ()Lgroovy/lang/MetaClass;' {
+      0      39
+      1      39
+      2      39
+      3      39
+      5      40
+      8      41
+      a      43
+      c      43
+      d      43
+      e      43
+      f      43
+      10      43
+      11      43
+      12      44
+      13      44
+      14      44
+      15      44
+      16      44
+   }
+
+   method 'setMetaClass (Lgroovy/lang/MetaClass;)V' {
+      0      51
+      1      51
+      2      51
+      3      51
+      4      51
+      5      52
+   }
+
+   method 'getN ()Lpkg/GroovyClass$Nested;' {
+      0      56
+      1      56
+      2      56
+      3      56
+      4      56
+   }
+
+   method 'getI ()Lpkg/GroovyClass$Inner;' {
+      0      61
+      1      61
+      2      61
+      3      61
+      4      61
+   }
+
+   method 'getR ()Ljava/lang/Runnable;' {
+      0      66
+      1      66
+      2      66
+      3      66
+      4      66
+   }
+
+   method 'getC ()Ljava/util/concurrent/Callable;' {
+      0      71
+      1      71
+      2      71
+      3      71
+      4      71
+   }
+}
+
+class 'pkg/GroovyClass$_closure1' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      1      76
+      2      76
+      3      76
+      4      76
+      6      77
+      7      77
+      8      77
+      9      77
+      a      77
+      b      78
+   }
+
+   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
+      1      81
+      2      81
+      3      81
+      4      81
+      5      82
+      6      82
+      7      82
+      8      82
+      9      82
+      a      82
+      b      82
+      c      82
+      d      82
+      e      82
+      f      82
+      10      82
+      11      82
+   }
+
+   method 'doCall ()Ljava/lang/Object;' {
+      1      87
+      2      87
+      3      87
+      4      87
+      5      88
+      6      88
+      7      88
+      8      88
+      9      88
+      a      88
+   }
+}
+
+class 'pkg/GroovyClass$_closure2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      1      94
+      2      94
+      3      94
+      4      94
+      6      95
+      7      95
+      8      95
+      9      95
+      a      95
+      b      96
+   }
+
+   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
+      1      99
+      2      99
+      3      99
+      4      99
+      5      100
+      6      100
+      7      100
+   }
+
+   method 'doCall ()Ljava/lang/Object;' {
+      1      105
+      2      105
+      3      105
+      4      105
+      5      106
+      6      106
+      7      106
+      8      106
+      9      106
+      a      106
+   }
+}
+
+class 'pkg/GroovyClass$Inner' {
+   method '<init> (Lpkg/GroovyClass;)V' {
+      1      113
+      2      113
+      3      113
+      4      113
+      10      114
+      11      114
+      12      114
+      13      115
+      14      115
+      15      115
+      16      115
+      17      115
+      18      115
+      19      116
+      1a      116
+      1b      116
+      1d      116
+      1e      116
+      1f      116
+      23      117
+   }
+
+   method 'getMetaClass ()Lgroovy/lang/MetaClass;' {
+      0      123
+      1      123
+      2      123
+      3      123
+      5      124
+      8      125
+      a      127
+      c      127
+      d      127
+      e      127
+      f      127
+      10      127
+      11      127
+      12      128
+      13      128
+      14      128
+      15      128
+      16      128
+   }
+
+   method 'setMetaClass (Lgroovy/lang/MetaClass;)V' {
+      0      135
+      1      135
+      2      135
+      3      135
+      4      135
+      5      136
+   }
+}
+
+class 'pkg/GroovyClass$Nested' {
+   method '<init> ()V' {
+      1      142
+      2      142
+      3      142
+      4      142
+      6      143
+      7      143
+      8      143
+      9      144
+      a      144
+      b      144
+      c      144
+      d      144
+      e      145
+      f      145
+      11      145
+      12      145
+      13      145
+      16      146
+   }
+
+   method 'getMetaClass ()Lgroovy/lang/MetaClass;' {
+      0      152
+      1      152
+      2      152
+      3      152
+      5      153
+      8      154
+      a      156
+      c      156
+      d      156
+      e      156
+      f      156
+      10      156
+      11      156
+      12      157
+      13      157
+      14      157
+      15      157
+      16      157
+   }
+
+   method 'setMetaClass (Lgroovy/lang/MetaClass;)V' {
+      0      164
+      1      164
+      2      164
+      3      164
+      4      164
+      5      165
+   }
+}
+
+Lines mapping:
+9 <-> 24
+10 <-> 26
+11 <-> 83
+12 <-> 101

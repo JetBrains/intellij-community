@@ -24,9 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgVersionTest extends HgPlatformTest {
 
   //todo: should be changed to Junit Parameterized tests
@@ -99,7 +96,7 @@ public class HgVersionTest extends HgPlatformTest {
     private final int middle;
     private final int minor;
 
-    public TestHgVersion(String output, int major, int middle, int minor) {
+    TestHgVersion(String output, int major, int middle, int minor) {
       this.output = output;
       this.major = major;
       this.middle = middle;

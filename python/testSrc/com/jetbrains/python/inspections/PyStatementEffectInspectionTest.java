@@ -15,20 +15,21 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
+@Subsystems.Inspections
+@Layers.Functional
 public class PyStatementEffectInspectionTest extends PyInspectionTestCase {
   public void testBasic() {
     doTest();
   }
 
   public void testAwait() {
-    doTest(LanguageLevel.PYTHON35);
+    doTest();
   }
 
   public void testComparison() {
@@ -37,11 +38,7 @@ public class PyStatementEffectInspectionTest extends PyInspectionTestCase {
 
   // PY-23057
   public void testFunctionWithEllipsis() {
-    doTest(LanguageLevel.PYTHON35);
-  }
-
-  private void doTest(@NotNull LanguageLevel level) {
-    runWithLanguageLevel(level, this::doTest);
+    doTest();
   }
 
   @NotNull

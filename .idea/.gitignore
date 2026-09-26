@@ -1,0 +1,6 @@
+# detekt can be configured by ./platform/jewel/detekt-rules/install-rules-to-idea.sh
+/artifacts
+/detekt.xml
+
+# contains user preferences, shouldn't be pushed (see IJPL-254864)
+/markdown.xml

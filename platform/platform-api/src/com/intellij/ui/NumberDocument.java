@@ -18,9 +18,10 @@ package com.intellij.ui;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-import java.awt.*;
+import java.awt.Toolkit;
 
 public class NumberDocument extends PlainDocument {
+  @Override
   public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
     char[] source = str.toCharArray();
     char[] result = new char[source.length];

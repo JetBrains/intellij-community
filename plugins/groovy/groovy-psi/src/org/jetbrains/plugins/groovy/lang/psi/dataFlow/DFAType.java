@@ -1,14 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -16,47 +19,23 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toList;
+
 /**
- * @author Max Medvedev
+ * {@link DFAType} is an immutable wrapper for {@link PsiType} of a {@link org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor}
+ * used in Groovy Type DFA.
+ * <p>
+ * This class heavily relies on referential equality, so be cautious while create new instances of it. Prefer using <b>with*</b> methods,
+ * that avoid unnecessary allocations.
  */
-public class DFAType {
-  private static class Mixin {
-    private final int ID;
+public final class DFAType {
 
-    private final PsiType myType;
-    private final ConditionInstruction myCondition;
-    private final boolean myNegated;
+  public static final DFAType NULL_DFA_TYPE = new DFAType(null);
 
-    private Mixin(PsiType type, ConditionInstruction condition, boolean negated) {
-      this(-1, type, condition, negated);
-    }
-
-    private Mixin(int ID, PsiType type, ConditionInstruction condition, boolean negated) {
-      if (ID == -1) ID = hashCode();
-      this.ID = ID;
-      myType = type;
-      myCondition = condition;
-      myNegated = negated;
-    }
-
-    Mixin negate() {
-      return new Mixin(ID, myType, myCondition, !myNegated);
-    }
-
-    @Override
-    public String toString() {
-      return "Mixin{" +
-             "ID=" + ID +
-             ", myType=" + myType +
-             ", myCondition=" + myCondition +
-             ", myNegated=" + myNegated +
-             '}';
-    }
-  }
-
-  private final PsiType primary;
+  private final @Nullable PsiType primary;
 
   private final List<Mixin> mixins = new ArrayList<>();
 
@@ -64,20 +43,62 @@ public class DFAType {
     this.primary = primary;
   }
 
-  public void addMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
+  @Contract(pure = true)
+  public @NotNull DFAType withNewMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
     if (mixin == null) {
-      return;
+      return this;
     }
+    Mixin newMixin = new Mixin(mixin, instruction, instruction != null && instruction.isNegated());
+    if (mixins.contains(newMixin)) {
+      return this;
+    }
+    DFAType newDfaType = new DFAType(this.primary);
+    newDfaType.mixins.addAll(this.mixins);
+    newDfaType.mixins.add(newMixin);
+    return newDfaType;
+  }
 
-    mixins.add(new Mixin(mixin, instruction, instruction != null && instruction.isNegated()));
+  @Contract(pure = true)
+  public @NotNull DFAType withNegated(@NotNull NegatingGotoInstruction negation) {
+    if (mixins.isEmpty()) {
+      return this;
+    }
+    final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
+    if (ContainerUtil.and(mixins, mixin -> !conditionsToNegate.contains(mixin.myCondition))) {
+      return this;
+    }
+    DFAType result = copy();
+    for (ListIterator<Mixin> iterator = result.mixins.listIterator(); iterator.hasNext(); ) {
+      Mixin mixin = iterator.next();
+      if (conditionsToNegate.contains(mixin.myCondition)) {
+        iterator.set(mixin.negate());
+      }
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
+  public static @NotNull DFAType merge(DFAType t1, DFAType t2, PsiManager manager) {
+    if (t1.equals(t2)) return t1;
+    if (dominates(t1, t2)) {
+      return t1;
+    }
+    if (dominates(t2, t1)) {
+      return t2;
+    }
+    final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
+    final PsiType type1 = reduce(t1.mixins);
+    final PsiType type2 = reduce(t2.mixins);
+    if (type1 != null && type2 != null) {
+      return create(primary).withNewMixin(GenericsUtil.getLeastUpperBound(type1, type2, manager), null);
+    }
+    return create(primary);
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof DFAType)) return false;
-
-    final DFAType other = (DFAType)obj;
+    if (!(obj instanceof DFAType other)) return false;
 
     if (!eq(primary, other.primary)) return false;
 
@@ -85,7 +106,7 @@ public class DFAType {
     for (Mixin mixin1 : mixins) {
       boolean contains = false;
       for (Mixin mixin2 : other.mixins) {
-        if (mixin1.ID == mixin2.ID) {
+        if (mixin1.equals(mixin2)) {
           contains = mixin1.myNegated == mixin2.myNegated;
           break;
         }
@@ -96,28 +117,7 @@ public class DFAType {
     return true;
   }
 
-  public DFAType negate(@NotNull Instruction instruction) {
-    final DFAType type = new DFAType(primary);
-
-    for (Mixin mixin : mixins) {
-      type.mixins.add(mixin);
-    }
-
-    for (NegatingGotoInstruction negation: instruction.getNegatingGotoInstruction()) {
-      final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
-
-      for (ListIterator<Mixin> iterator = type.mixins.listIterator(); iterator.hasNext(); ) {
-        Mixin mixin = iterator.next();
-        if (conditionsToNegate.contains(mixin.myCondition)) {
-          iterator.set(mixin.negate());
-        }
-      }
-    }
-    return type;
-  }
-
-  @Nullable
-  public PsiType getResultType() {
+  public @Nullable PsiType getResultType() {
     if (mixins.isEmpty()) return primary;
 
     List<PsiType> types = new ArrayList<>();
@@ -125,44 +125,95 @@ public class DFAType {
       types.add(primary);
     }
     for (Mixin mixin : mixins) {
-      if (!mixin.myNegated) {
-        types.add(mixin.myType);
+      if (mixin.myNegated) {
+        continue;
       }
+      if (mixin.myType.equals(PsiTypes.nullType())) {
+        continue;
+      }
+      types.add(mixin.myType);
     }
     if (types.isEmpty()) return null;
     return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));
   }
 
-  public static DFAType create(@Nullable PsiType type) {
-    return new DFAType(type);
+  public static @NotNull DFAType create(@Nullable PsiType type) {
+    return type == null ? NULL_DFA_TYPE : new DFAType(type);
   }
 
   private static boolean eq(PsiType t1, PsiType t2) {
     return t1 == t2 || Comparing.equal(TypeConversionUtil.erasure(t1), TypeConversionUtil.erasure(t2));
   }
 
-  @Nullable
-  public static DFAType create(DFAType t1, DFAType t2, PsiManager manager) {
-    if (t1.equals(t2)) return t1;
+  /**
+   * Fast check that allows to determine if one dfa type contains not less information than the other.
+   */
+  public static boolean dominates(DFAType dominating, DFAType dominated) {
+    boolean primaryDominating = dominated.primary == null || dominated.primary == PsiTypes.nullType() || dominated.primary == dominating.primary;
+    if (!primaryDominating) return false;
+    return dominating.mixins.isEmpty() || dominated.mixins == dominating.mixins;
+  }
 
-    final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
+  private static PsiType reduce(List<Mixin> mixins) {
+    List<PsiType> types = mixins.stream()
+      .filter(it -> !it.myNegated)
+      .map(it -> it.myType)
+      .collect(toList());
+    return types.isEmpty() ? null : PsiIntersectionType.createIntersection(types);
+  }
+
+  @Contract("-> new")
+  private @NotNull DFAType copy() {
     final DFAType type = new DFAType(primary);
-
-    for (Mixin mixin1 : t1.mixins) {
-      for (Mixin mixin2 : t2.mixins) {
-        if (mixin1.ID == mixin2.ID && mixin1.myNegated == mixin2.myNegated) {
-          type.mixins.add(mixin1);
-        }
-      }
-    }
+    type.mixins.addAll(mixins);
     return type;
   }
 
   @Override
   public String toString() {
-    return "DFAType{" +
-           "primary=" + primary +
-           ", mixins=" + mixins +
-           '}';
+    return "{" + primary + " : " + mixins + "}";
   }
+
+  private static final class Mixin {
+
+    private final @NotNull PsiType myType;
+    private final @Nullable ConditionInstruction myCondition;
+    private final boolean myNegated;
+
+    private Mixin(@NotNull PsiType type, @Nullable ConditionInstruction condition, boolean negated) {
+      myType = type;
+      myCondition = condition;
+      myNegated = negated;
+    }
+
+    private Mixin negate() {
+      return new Mixin(myType, myCondition, !myNegated);
+    }
+
+    @Override
+    public String toString() {
+      return (myNegated ? "!" : "") + myType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Mixin mixin = (Mixin)o;
+
+      if (!myType.equals(mixin.myType)) return false;
+      if (!Objects.equals(myCondition, mixin.myCondition)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myType.hashCode();
+      result = 31 * result + (myCondition != null ? myCondition.hashCode() : 0);
+      return result;
+    }
+  }
+
 }

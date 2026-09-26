@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(i: Int) fun usesInt() {}
+
+fun test() {
+    context(42) {
+        usesInt()
+    }
+}

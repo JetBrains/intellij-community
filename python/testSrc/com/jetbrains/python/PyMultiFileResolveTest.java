@@ -1,38 +1,62 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.google.common.collect.Lists;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyCustomPackageIdentifier;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author yole
- */
+
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   private static void checkInitPyDir(PsiElement elt, String dirname) {
@@ -92,7 +116,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testCustomPackageIdentifier() {
-    PlatformTestUtil.registerExtension(PyCustomPackageIdentifier.EP_NAME, new PyCustomPackageIdentifier() {
+    PyCustomPackageIdentifier.EP_NAME.getPoint().registerExtension(new PyCustomPackageIdentifier() {
       @Override
       public boolean isPackage(PsiDirectory directory) {
         return true;
@@ -290,7 +314,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testModulePackageConflict() {  // PY-6011
-    assertResolvesTo(PyFunction.class, "foo");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   public void testRelativePackageStarImport() {   // PY-7204
@@ -348,12 +372,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PsiDirectory.class, "p1"));
+    assertResolvesTo(PsiDirectory.class, "p1");
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFunction.class, "foo"));
+    assertResolvesTo(PyFunction.class, "foo");
   }
 
   // PY-7775
@@ -392,7 +416,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFile.class, "m1.py"));
+    assertResolvesTo(PyFile.class, "m1.py");
   }
 
   public void testKeywordArgument() {
@@ -430,8 +454,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testEmptyModuleNamesake() {
     final PsiElement module = doResolve();
     assertNotNull(module);
-    final Sdk moduleSdk = PythonSdkType.findPythonSdk(myFixture.getModule());
-    assertFalse(PythonSdkType.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
+    final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertFalse(PySkeletonUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
   }
 
   // PY-18626
@@ -467,8 +491,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-28321
-  // TODO: The test should be turned on as soon as PY-16688 and PY-23087 are implemented
-  public void ignoreTestImportManySourceRootsReverseRootOrder() {
+  public void testImportManySourceRootsReverseRootOrder() {
     myFixture.copyDirectoryToProject("importManySourceRoots", "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
@@ -476,6 +499,51 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       assertInstanceOf(ref, PsiPolyVariantReference.class);
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(0, elements.size());
+    });
+  }
+
+  // PY-16688
+  public void testPkgResourcesNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-23087
+  public void testPkgutilNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-38434
+  public void testPkgutilNamespaceWithComments() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testPkgResourcesNamespaceWithDocstring() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testTryExceptNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testTryExceptMultilineNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  private void doTestResolveInNamespacePackage(String namespace) {
+    myFixture.copyDirectoryToProject(namespace, "");
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      PsiFile root1 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root1/pkg/__init__.py"));
+      PsiFile root2 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root2/pkg/__init__.py"));
+      assertNotParsed(root1);
+      assertNotParsed(root2);
     });
   }
 
@@ -488,7 +556,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
       final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
       PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-      PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+      PyImportResolver.EP_NAME.getPoint().registerExtension(foreignResolver, getTestRootDisposable());
 
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
@@ -496,8 +564,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-                                              .filter(e -> e instanceof PyFile)
-                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+        .filter(e -> e instanceof PyFile)
+        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
   }
@@ -538,7 +606,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiFile context = myFixture.configureByText("a.py", "");
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
 
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
@@ -562,25 +630,65 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
   }
 
-  // PY-28764
-  public void testOsAttributesFromPosixPathAndNTPath() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
+  // EA-121262
+  public void testIncompleteFromImport() {
+    assertUnresolved();
+  }
 
-    runWithSourceRoots(
-      Collections.singletonList(myFixture.findFileInTempDir("lib")),
-      () -> {
-        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.configureByFile("a.py"));
-        assertInstanceOf(reference, PsiPolyVariantReference.class);
+  // PY-38322
+  public void testDunderAllDynamicallyBuiltInHelperFunction() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
 
-        final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)reference);
-        assertEquals(1, elements.size());
+  // PY-38322 PY-39171
+  public void testImportAttributeFromNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        PsiFile file = myFixture.configureByFile(testDir + "/ImportAttributeFromNestedBinarySubModule.py");
+        assertResolveResult(doResolve(file), PyFunction.class, "func", "binary.py");
+      });
+    });
+  }
 
-        final PsiElement element = elements.get(0);
-        assertInstanceOf(element, PyFile.class);
+  public void testImportNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (PsiFile file : myFixture.configureByFiles(testDir + "/import_binary.py",
+                                                       testDir + "/import_and_reference_binary.py",
+                                                       testDir + "/from_import_binary.py")) {
+          assertResolveResult(doResolve(file), PyFile.class, "binary.py", null);
+        }
+      });
+    });
+  }
 
-        final VirtualFile file = ((PyFile)element).getVirtualFile();
-        assertEquals("ntpath.py", file.getName());
-      }
-    );
+  // PY-45541
+  public void testCanonicalNameOfNumpyNdarray() {
+    Project project = myFixture.getProject();
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        PyClass ndarrayClass = assertOneElement(PyClassNameIndex.findByQualifiedName("numpy.core._multiarray_umath.ndarray",
+                                                                                     project, GlobalSearchScope.allScope(project)));
+        QualifiedName canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(ndarrayClass, null);
+        assertEquals(QualifiedName.fromDottedString("numpy"), canonicalImportPath);
+      });
+    });
+  }
+
+  // PY-49156
+  public void testFromPackageImportIntoInitConflictWithAssignment() {
+    myFixture.copyDirectoryToProject("fromPackageImportIntoInitConflictWithAssignment/pack", "pack");
+    final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
+    final PsiElement result = doResolve(psiFile);
+    assertInstanceOf(result, PyFile.class);
+    assertEquals("mod.py", ((PyFile)result).getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInClassMethodInOtherFile() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
   }
 }

@@ -1,56 +1,90 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.util.concurrent.UncheckedTimeoutException;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JScrollBar;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereNavigationHandlerKt.pathToAnonymousClass;
+
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
-  private Component myOldFocusOwner = null;
-  private boolean myShowListForEmptyPattern = false;
+  private Component myOldFocusOwner;
+  private boolean myShowListForEmptyPattern;
   private final boolean myMayRequestCurrentWindow;
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
   private InputMap myInputMap;
-  private String myAdText;
-  private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
+  private @NlsContexts.PopupAdvertisement String myAdText;
+  private final UpdateQueue<Unit> myRepaintQueue = DebouncedUpdates.<Unit>forComponent(myList, "ChooseByNamePopup repaint", 50)
+    .withContext(CoroutinesKt.getUI(Dispatchers.INSTANCE))
+    .restartTimerOnAdd(true)
+    .runLatest(ignored -> repaintListImmediate())
+    .cancelOnDispose(this);
 
-  protected ChooseByNamePopup(@Nullable final Project project,
+  protected ChooseByNamePopup(final @Nullable Project project,
                               @NotNull ChooseByNameModel model,
                               @NotNull ChooseByNameItemProvider provider,
                               @Nullable ChooseByNamePopup oldPopup,
-                              @Nullable final String predefinedText,
+                              final @Nullable String predefinedText,
                               boolean mayRequestOpenInCurrentWindow,
                               int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
@@ -59,9 +93,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
     myMayRequestCurrentWindow = mayRequestOpenInCurrentWindow;
-    myAdText = myMayRequestCurrentWindow ? "Press " +
-                                           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)) +
-                                           " to open in current window" : null;
+    myAdText = myMayRequestCurrentWindow ? LangBundle.message("popup.advertisement.press.to.open.in.current.window",
+                                                              KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)))
+                                         : null;
   }
 
   public String getEnteredText() {
@@ -166,7 +200,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     String adText = getAdText();
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
-      builder.setFocusable(false)
+      builder.setFocusable(ScreenReader.isActive())
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
         .setCancelKeyEnabled(false)
@@ -179,6 +213,25 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setSize(preferredScrollPaneSize);
       myDropdownPopup.showInScreenCoordinates(layeredPane, location);
+      if (ScreenReader.isActive()) {
+        Window window = SwingUtilities.getWindowAncestor(myDropdownPopup.getContent());
+        window.setFocusableWindowState(true);
+        window.setFocusable(true);
+        window.setFocusTraversalKeysEnabled(false);
+        window.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {});
+        window.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyReleased(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_TAB) {
+              if (e.isShiftDown()) {
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+              } else {
+                IdeFocusManager.getInstance(myProject).requestFocus(myCheckBox.isVisible() ? myCheckBox : myTextField, true);
+              }
+            }
+          }
+        });
+      }
     }
     else {
       myDropdownPopup.setLocation(location);
@@ -273,12 +326,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              @Nullable final String predefinedText) {
+                                              final @Nullable String predefinedText) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              @Nullable final String predefinedText,
+                                              final @Nullable String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, mayRequestOpenInCurrentWindow,
                        initialIndex);
@@ -293,14 +346,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project,
                                               @NotNull ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              @Nullable final String predefinedText) {
+                                              final @Nullable String predefinedText) {
     return createPopup(project, model, provider, predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project,
-                                              @NotNull final ChooseByNameModel model,
+                                              final @NotNull ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              @Nullable final String predefinedText,
+                                              final @Nullable String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow,
                                               final int initialIndex) {
     final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
@@ -315,22 +368,27 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  public static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
+                                                                                "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
-  public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
-  public static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
-  public static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+  public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
+  private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  private static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+
+  //space character in the end of pattern forces full matches search
+  private static final String fullMatchSearchSuffix = " ";
 
   @Override
-  public String transformPattern(String pattern) {
+  public @NotNull String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+  public static @NotNull String getTransformedPattern(@NotNull String pattern, @Nullable ChooseByNameModel model) {
+    String rawPattern = pattern;
+
     Pattern regex = null;
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
@@ -351,6 +409,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (matcher.matches()) {
         pattern = matcher.group(1);
       }
+    }
+
+    if (rawPattern.endsWith(fullMatchSearchSuffix)) {
+      pattern += fullMatchSearchSuffix;
     }
 
     return pattern;
@@ -378,29 +440,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return -1;
   }
 
-  @Nullable
-  public String getPathToAnonymous() {
-    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
-    if (matcher.matches()) {
-      String path = matcher.group(2);
-      if (path != null) {
-        path = path.trim();
-        if (path.endsWith("$") && path.length() >= 2) {
-          path = path.substring(0, path.length() - 2);
-        }
-        if (!path.isEmpty()) return path;
-      }
-    }
-
-    return null;
+  public @Nullable String getPathToAnonymous() {
+    Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
+    return pathToAnonymousClass(matcher);
   }
 
   public int getColumnPosition() {
     return getLineOrColumn(false);
   }
 
-  @Nullable
-  public String getMemberPattern() {
+  public @Nullable String getMemberPattern() {
     final String enteredText = getTrimmedText();
     final int index = enteredText.lastIndexOf('#');
     if (index == -1) {
@@ -418,11 +467,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
-  public String getAdText() {
+  public @NlsContexts.PopupAdvertisement String getAdText() {
     return myAdText;
   }
 
-  public void setAdText(final String adText) {
+  public void setAdText(final @NlsContexts.PopupAdvertisement String adText) {
     myAdText = adText;
   }
 
@@ -436,13 +485,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public void repaintList() {
-    myRepaintQueue.cancelAllUpdates();
-    myRepaintQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        ChooseByNamePopup.this.repaintListImmediate();
-      }
-    });
+    myRepaintQueue.queue(Unit.INSTANCE);
   }
 
   public void repaintListImmediate() {
@@ -456,4 +499,27 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
     }
   }
+
+  @TestOnly
+  public @NotNull List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
+    List<Object> elements = new SmartList<>("empty");
+    Semaphore semaphore = new Semaphore(1);
+    scheduleCalcElements(text, checkboxState, ModalityState.nonModal(), SelectMostRelevant.INSTANCE, set -> {
+      elements.clear();
+      elements.addAll(set);
+      semaphore.up();
+    });
+    long start = System.currentTimeMillis();
+    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+      });
+    }
+    if (!semaphore.waitFor(10)) {
+      PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
+      throw new UncheckedTimeoutException("Too long background calculation");
+    }
+    return elements;
+  }
+
 }

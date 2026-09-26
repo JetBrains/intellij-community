@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -11,16 +12,17 @@ import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
 import java.nio.CharBuffer
-import java.util.*
+import java.util.Locale
+import kotlin.math.min
 
-private val PARAMS = 4
-private val BEGIN_REQUEST = 1
-private val RESPONDER = 1
-private val FCGI_KEEP_CONNECTION = 1
-private val STDIN = 5
-private val VERSION = 1
+private const val PARAMS = 4
+private const val BEGIN_REQUEST = 1
+private const val RESPONDER = 1
+private const val FCGI_KEEP_CONNECTION = 1
+private const val STDIN = 5
+private const val VERSION = 1
 
-private val MAX_CONTENT_LENGTH = 0xFFFF
+private const val MAX_CONTENT_LENGTH = 0xFFFF
 
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)
@@ -70,14 +72,13 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     val remote = clientChannel.remoteAddress() as InetSocketAddress
     addHeader("REMOTE_ADDR", remote.address.hostAddress)
-    addHeader("REMOTE_PORT", Integer.toString(remote.port))
+    addHeader("REMOTE_PORT", remote.port.toString())
 
     val local = clientChannel.localAddress() as InetSocketAddress
-    addHeader("SERVER_SOFTWARE", serverHeaderValue)
     addHeader("SERVER_NAME", serverHeaderValue)
 
     addHeader("SERVER_ADDR", local.address.hostAddress)
-    addHeader("SERVER_PORT", Integer.toString(local.port))
+    addHeader("SERVER_PORT", local.port.toString())
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1")
     addHeader("SERVER_PROTOCOL", request.protocolVersion().text())
@@ -101,7 +102,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     for ((key, value) in request.headers().iteratorAsString()) {
       if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
-        addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
+        addHeader("HTTP_${key.replace('-', '_').uppercase(Locale.ENGLISH)}", value)
       }
     }
   }
@@ -131,7 +132,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
         var position = content.readerIndex()
         var toWrite = content.readableBytes()
         while (toWrite > 0) {
-          val length = Math.min(MAX_CONTENT_LENGTH, toWrite)
+          val length = min(MAX_CONTENT_LENGTH, toWrite)
 
           val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
           writeHeader(headerBuffer, STDIN, length)

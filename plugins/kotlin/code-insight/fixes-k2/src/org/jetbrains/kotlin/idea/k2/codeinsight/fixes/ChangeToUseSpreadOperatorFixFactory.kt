@@ -1,0 +1,78 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
+
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.errors
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+
+internal object ChangeToUseSpreadOperatorFixFactory {
+
+    val changeToUseSpreadOperatorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
+        val element = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
+        val callExpression = element.getStrictParentOfType<KtCallExpression>() ?: return@ModCommandBased emptyList()
+        val arrayElementType = diagnostic.actualType.arrayElementType?.unwrap() ?: return@ModCommandBased emptyList()
+        val functionCall = callExpression.tryResolveCall()?.errors?.singleOrNull()?.single?.function ?: return@ModCommandBased emptyList()
+
+        if (functionCall.valueArgumentMapping[element]?.symbol?.isVararg != true &&
+            functionCall.symbol.callableId?.asSingleFqName() != FqName("kotlin.collections.mapOf")
+        ) {
+            return@ModCommandBased emptyList()
+        }
+
+        val buildType = substituteErrorAndTypeParameterTypesWithStarTypeProjections(diagnostic.expectedType) ?: return@ModCommandBased emptyList()
+        if (arrayElementType !is KaErrorType && !arrayElementType.isSubtypeOf(buildType)) return@ModCommandBased emptyList()
+
+        listOf(
+            ChangeToUseSpreadOperatorFix(element)
+        )
+    }
+}
+
+private fun KaType.unwrap(): KaType {
+    return (this as? KaCapturedType)?.projection?.type ?: this
+}
+
+/**
+ * Substitute type parameter types in the given [type] with star type projections.
+ *
+ * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
+ */
+context(session: KaSession)
+private fun substituteErrorAndTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
+    return when (type) {
+        is KaClassType -> typeCreator.classType(type.symbol) {
+            type.typeArguments.mapNotNull { it.type }.forEach {
+                if (it is KaTypeParameterType || it is KaErrorType) {
+                    typeArgument(starTypeProjection())
+                } else {
+                    substituteErrorAndTypeParameterTypesWithStarTypeProjections(it)?.let { argumentType ->
+                        invariantTypeArgument(argumentType)
+                    }
+                }
+            }
+        }
+
+        is KaFlexibleType -> substituteErrorAndTypeParameterTypesWithStarTypeProjections(type.lowerBound)
+
+        else -> null
+    }
+}

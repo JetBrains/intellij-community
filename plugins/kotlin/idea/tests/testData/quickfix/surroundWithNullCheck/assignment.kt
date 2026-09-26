@@ -1,0 +1,8 @@
+// "Surround with null check" "true"
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
+
+fun foo(s: String?) {
+    var ss: String = ""
+    ss = <caret>s
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundWithNullCheckFixFactory$SurroundWithNullCheckFix

@@ -19,15 +19,23 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Maxim.Mossienko
  */
 public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> extends PsiElementUsageGroupBase<T> {
 
+  public PsiNamedElementUsageGroupBase(@NotNull T element, Icon icon, @NotNull String name) {
+    super(element, icon, name);
+  }
+
   public PsiNamedElementUsageGroupBase(@NotNull T element, Icon icon) {
     super(element, icon);
+  }
+
+  public PsiNamedElementUsageGroupBase(@NotNull T element, @NotNull String name) {
+    super(element, name);
   }
 
   public PsiNamedElementUsageGroupBase(@NotNull T element) {

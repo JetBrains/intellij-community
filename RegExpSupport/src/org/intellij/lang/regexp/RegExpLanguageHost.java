@@ -1,42 +1,85 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpBoundary;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpNamedCharacter;
+import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public interface RegExpLanguageHost {
 
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
+  String[][] EMPTY_COMPLETION_ITEMS_ARRAY = new String[0][];
 
-  boolean characterNeedsEscaping(char c);
+  /**
+   * @deprecated Use {@link #characterNeedsEscaping(char, boolean)} instead.
+   */
+  @Deprecated
+  default boolean characterNeedsEscaping(char c) {
+    throw new UnsupportedOperationException("Override characterNeedsEscaping(char, boolean)");
+  }
+
+  /**
+   * Returns whether the given character needs to be escaped to be treated as a literal.
+   * @param c a character to be considered.
+   * @param isInClass whether the character is within a RegExpClass (ie, within "[...]").
+   */
+  default boolean characterNeedsEscaping(char c, boolean isInClass) {
+    return characterNeedsEscaping(c);
+  }
+
   boolean supportsPerl5EmbeddedComments();
-  boolean supportsPossessiveQuantifiers();
+  /**
+   * @deprecated use `supportsPossessiveQuantifiers(RegExpElement)`
+   */
+  @Deprecated
+  default boolean supportsPossessiveQuantifiers() {
+    return false;
+  }
+
+  /**
+   * Returns whether possessive quantifiers and atomic groups are supported.
+   * <p>
+   * Possessive quantifiers (e.g., {@code *+}, {@code ++}, {@code ?+}, {@code {n,m}+}) match as much as possible
+   * without backtracking.
+   * <p>
+   * Atomic groups (e.g., {@code (?>pattern)}) prevent backtracking within the group once it matches.
+   */
+  default boolean supportsPossessiveQuantifiers(RegExpElement context) {
+    return supportsPossessiveQuantifiers();
+  }
+
+  default boolean isDuplicateGroupNamesAllowed(@NotNull RegExpGroup group) {
+    return false;
+  }
+
+  /**
+   * @return true, if this dialects support conditionals, i.e. the following construct: {@code (?(1)then|else)}
+   */
   boolean supportsPythonConditionalRefs();
+
+  /**
+   * @param condition  a RegExpBackRef, RegExpNamedGroupRef or RegExpGroup instance.
+   * @return true, if this type of conditional condition is supported
+   */
+  default boolean supportConditionalCondition(RegExpAtom condition) {
+    return true;
+  }
+
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
-  @NotNull
-  default EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+  default @NotNull EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
     return EMPTY_NAMED_GROUP_TYPES;
   }
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
@@ -64,20 +107,10 @@ public interface RegExpLanguageHost {
   }
 
   default boolean supportsBoundary(RegExpBoundary boundary) {
-    switch (boundary.getType()) {
-      case UNICODE_EXTENDED_GRAPHEME:
-        return false;
-      case LINE_START:
-      case LINE_END:
-      case WORD:
-      case NON_WORD:
-      case BEGIN:
-      case END:
-      case END_NO_LINE_TERM:
-      case PREVIOUS_MATCH:
-      default:
-        return true;
-    }
+    return switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME, RESET_MATCH -> false;
+      case LINE_START, LINE_END, WORD, NON_WORD, BEGIN, END, END_NO_LINE_TERM, PREVIOUS_MATCH -> true;
+    };
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {
@@ -89,24 +122,46 @@ public interface RegExpLanguageHost {
   }
 
   boolean isValidCategory(@NotNull String category);
-  @NotNull
-  String[][] getAllKnownProperties();
+
+  default boolean isValidPropertyName(@NotNull String name) {
+    return true;
+  }
+
+  default boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value){
+    return true;
+  }
+
+  String[] @NotNull [] getAllKnownProperties();
   @Nullable
-  String getPropertyDescription(@Nullable final String name);
-  @NotNull
-  String[][] getKnownCharacterClasses();
+  String getPropertyDescription(final @Nullable String name);
+  String[] @NotNull [] getKnownCharacterClasses();
 
   /**
    * @param number  the number element to extract the value from
    * @return the value, or null when the value is out of range
    */
-  @Nullable
-  default Number getQuantifierValue(@NotNull RegExpNumber number) {
-    return Double.parseDouble(number.getText());
+  default @Nullable Number getQuantifierValue(@NotNull RegExpNumber number) {
+    return Double.parseDouble(number.getUnescapedText());
   }
 
   default Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
     return Lookbehind.FULL; // to not break existing implementations, although rarely actually supported.
+  }
+
+  default String[] @NotNull [] getAllPropertyValues(@NotNull String propertyName){
+    return EMPTY_COMPLETION_ITEMS_ARRAY; 
+  }
+
+  default boolean supportsPropertySyntax(@NotNull PsiElement context) {
+    return true;
+  }
+
+  default boolean belongsToConditionalExpression(@NotNull PsiElement element) {
+    return false;
+  }
+
+  default boolean supportsBranchResetGroup(PsiElement context) {
+    return true;
   }
 
   enum Lookbehind {

@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A reference to some JavaScript text that you can set breakpoints on. The reference may
@@ -26,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ScriptName
  * @see ScriptId
  */
+@ApiStatus.Internal
 public abstract class BreakpointTarget {
   /**
    * Dispatches call on the actual Target type.
@@ -36,7 +25,7 @@ public abstract class BreakpointTarget {
   public abstract <R> R accept(Visitor<R> visitor);
 
   public interface Visitor<R> {
-    R visitScriptName(String scriptName);
+    R visitScriptName(String scriptName, @Nullable Script script);
 
     R visitScript(Script script);
 
@@ -81,21 +70,32 @@ public abstract class BreakpointTarget {
     }
   }
 
+  @Override
   public abstract String toString();
 
   /**
    * A target that refers to a script by its name. Breakpoint will be set on every matching script currently loaded in VM.
    */
   public static final class ScriptName extends BreakpointTarget {
-    private final String name;
+    private final @NotNull String name;
+    private final @Nullable Script script;
 
     public ScriptName(@NotNull String name) {
       this.name = name;
+      this.script = null;
     }
 
-    @NotNull
-    public String getName() {
+    public ScriptName(@NotNull Script script) {
+      this.script = script;
+      this.name = script.getUrl().toExternalForm();
+    }
+
+    public @NotNull String getName() {
       return name;
+    }
+
+    public @Nullable Script getScript() {
+      return script;
     }
 
     @Override
@@ -105,7 +105,7 @@ public abstract class BreakpointTarget {
 
     @Override
     public <R> R accept(@NotNull Visitor<R> visitor) {
-      return visitor.visitScriptName(name);
+      return visitor.visitScriptName(name, script);
     }
 
     @Override

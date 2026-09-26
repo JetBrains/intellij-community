@@ -1,50 +1,78 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jar;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.*;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.InputRedirectAware;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.configurations.SearchScopeProvidingRunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
-public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters, SearchScopeProvidingRunProfile {
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters,
+                                                                                       SearchScopeProvidingRunProfile,
+                                                                                       InputRedirectAware,
+                                                                                       TargetEnvironmentAwareRunProfile,
+                                                                                       RunProfileWithCompileBeforeLaunchOption {
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
+  private InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
+
+  @Override
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
+  }
 
   public JarApplicationConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
     myConfigurationModule = new JavaRunConfigurationModule(project, true);
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public boolean isBuildBeforeLaunchAddedByDefault() {
+    return false;
+  }
+
+  @Override
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JarApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JarApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
@@ -53,12 +81,13 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   }
 
   @Override
-  public void readExternal(@NotNull Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    XmlSerializer.deserializeInto(myBean, element);
+    XmlSerializer.deserializeInto(element, myBean);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
     myConfigurationModule.readExternal(element);
+    myInputRedirectOptions.readExternal(element);
   }
 
   @Override
@@ -68,6 +97,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     clone.myConfigurationModule = new JavaRunConfigurationModule(getProject(), true);
     clone.myConfigurationModule.setModule(myConfigurationModule.getModule());
     clone.myBean = XmlSerializerUtil.createCopy(myBean);
+    clone.myInputRedirectOptions = myInputRedirectOptions.copy();
     return clone;
   }
 
@@ -80,14 +110,15 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   }
 
   @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    XmlSerializer.serializeInto(myBean, element, SERIALIZATION_FILTERS);
+    XmlSerializer.serializeObjectInto(myBean, element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
     if (myConfigurationModule.getModule() != null) {
       myConfigurationModule.writeExternal(element);
     }
+    myInputRedirectOptions.writeExternal(element);
   }
 
   @Override
@@ -96,26 +127,24 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), null);
     File jarFile = new File(getJarPath());
     if (!jarFile.exists()) {
-      throw new RuntimeConfigurationWarning("JAR file '" + jarFile.getAbsolutePath() + "' doesn't exist");
+      throw new RuntimeConfigurationWarning(JavaCompilerBundle.message("dialog.message.jar.file.doesn.t.exist", jarFile.getAbsolutePath()));
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
-  @NotNull
-  public Module[] getModules() {
+  @Override
+  public Module @NotNull [] getModules() {
     Module module = myConfigurationModule.getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getSearchScope() {
-    return SearchScopeProvider.createSearchScope(getModules());
+  public @Nullable GlobalSearchScope getSearchScope() {
+    return ExecutionSearchScopes.executionScope(Arrays.asList(getModules()));
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     return new JarApplicationCommandLineState(this, environment);
   }
 
@@ -147,9 +176,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
   }
 
-  @Nullable
   @Override
-  public String getAlternativeJrePath() {
+  public @Nullable String getAlternativeJrePath() {
     return myBean.ALTERNATIVE_JRE_PATH;
   }
 
@@ -158,15 +186,13 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.ALTERNATIVE_JRE_PATH = path;
   }
 
-  @Nullable
   @Override
-  public String getRunClass() {
+  public @Nullable String getRunClass() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getPackage() {
+  public @Nullable String getPackage() {
     return null;
   }
 
@@ -175,9 +201,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.PROGRAM_PARAMETERS = value;
   }
 
-  @Nullable
   @Override
-  public String getProgramParameters() {
+  public @Nullable String getProgramParameters() {
     return myBean.PROGRAM_PARAMETERS;
   }
 
@@ -186,9 +211,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.WORKING_DIRECTORY = value;
   }
 
-  @Nullable
   @Override
-  public String getWorkingDirectory() {
+  public @Nullable String getWorkingDirectory() {
     return myBean.WORKING_DIRECTORY;
   }
 
@@ -198,9 +222,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myEnvs.putAll(envs);
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myEnvs;
   }
 
@@ -212,6 +235,36 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @Override
   public boolean isPassParentEnvs() {
     return myBean.PASS_PARENT_ENVS;
+  }
+
+  @Override
+  public void onNewConfigurationCreated() {
+    super.onNewConfigurationCreated();
+
+    if (StringUtil.isEmpty(getWorkingDirectory())) {
+      String baseDir = FileUtil.toSystemIndependentName(StringUtil.notNullize(getProject().getBasePath()));
+      setWorkingDirectory(baseDir);
+    }
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Override
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Override
+  public @Nullable String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
   }
 
   private static class JarApplicationConfigurationBean {

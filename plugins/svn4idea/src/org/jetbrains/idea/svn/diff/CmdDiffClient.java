@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -22,11 +9,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnStatusConvertor;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -38,20 +23,28 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
-import org.jetbrains.idea.svn.status.SvnStatusHandler;
+import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.status.StatusType;
 
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
-  @NotNull
+  private static final Logger LOG = Logger.getInstance(CmdDiffClient.class);
+
   @Override
-  public List<Change> compare(@NotNull Target target1, @NotNull Target target2) throws VcsException {
+  public @NotNull List<Change> compare(@NotNull Target target1, @NotNull Target target2) throws VcsException {
     assertUrl(target1);
     if (target2.isFile()) {
       // Such combination (file and url) with "--summarize" option is supported only in svn 1.8.
@@ -60,7 +53,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
       if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
-        throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format);
+        throw new SvnBindException(
+          message("error.could.not.compare.local.file.and.remote.url.with.executable.for.svn.version", format.getDisplayName()));
       }
     }
 
@@ -79,7 +73,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     assertUrl(target1);
     assertUrl(target2);
 
-    List<String> parameters = ContainerUtil.newArrayList();
+    List<String> parameters = new ArrayList<>();
     CommandUtil.put(parameters, target1);
     CommandUtil.put(parameters, target2);
 
@@ -93,12 +87,11 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
-  @NotNull
-  private List<Change> parseOutput(@NotNull Target target1, @NotNull Target target2, @NotNull CommandExecutor executor)
+  private @NotNull List<Change> parseOutput(@NotNull Target target1, @NotNull Target target2, @NotNull CommandExecutor executor)
     throws SvnBindException {
     try {
       DiffInfo diffInfo = CommandUtil.parse(executor.getOutput(), DiffInfo.class);
-      List<Change> result = ContainerUtil.newArrayList();
+      List<Change> result = new ArrayList<>();
 
       if (diffInfo != null) {
         for (DiffPath path : diffInfo.diffPaths) {
@@ -113,11 +106,10 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     }
   }
 
-  @NotNull
-  private ContentRevision createRevision(@NotNull FilePath path,
-                                         @NotNull FilePath localPath,
-                                         @NotNull Revision revision,
-                                         @NotNull FileStatus status) {
+  private @NotNull ContentRevision createRevision(@NotNull FilePath path,
+                                                  @NotNull FilePath localPath,
+                                                  @NotNull Revision revision,
+                                                  @NotNull FileStatus status) {
     ContentRevision result;
 
     if (path.isNonLocal()) {
@@ -139,8 +131,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
            : VcsUtil.getFilePathOnNonLocal(SvnUtil.toDecodedString(target), isDirectory);
   }
 
-  @NotNull
-  private Change createChange(@NotNull Target target1, @NotNull Target target2, @NotNull DiffPath diffPath) throws SvnBindException {
+  private @NotNull Change createChange(@NotNull Target target1, @NotNull Target target2, @NotNull DiffPath diffPath) throws SvnBindException {
     // TODO: 1) Unify logic of creating Change instance with SvnChangeProviderContext
     // TODO: 2) If some directory is switched, files inside it are returned as modified in "svn diff --summarize", even if they are equal
     // TODO: to branch files by content - possibly add separate processing of all switched files
@@ -150,7 +141,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     String relativePath = SvnUtil.getRelativeUrl(target1, subTarget1);
 
     if (relativePath == null) {
-      throw new SvnBindException("Could not get relative path for " + target1 + " and " + subTarget1);
+      throw new SvnBindException(message("error.could.not.get.relative.path.for.parent.and.child", target1, subTarget1));
     }
 
     Target subTarget2 = SvnUtil.append(target2, FileUtil.toSystemIndependentName(relativePath));
@@ -158,8 +149,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     FilePath target1Path = createFilePath(subTarget1, diffPath.isDirectory());
     FilePath target2Path = createFilePath(subTarget2, diffPath.isDirectory());
 
-    FileStatus status = SvnStatusConvertor
-      .convertStatus(SvnStatusHandler.getStatus(diffPath.itemStatus), SvnStatusHandler.getStatus(diffPath.propertiesStatus));
+    FileStatus status = Status.convertStatus(getStatus(diffPath.itemStatus), getStatus(diffPath.propertiesStatus), false, false);
 
     // statuses determine changes needs to be done to "target1" to get "target2" state
     ContentRevision beforeRevision = status == FileStatus.ADDED
@@ -172,10 +162,9 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     return createChange(status, beforeRevision, afterRevision);
   }
 
-  @NotNull
-  private static Change createChange(@NotNull final FileStatus status,
-                                     @Nullable final ContentRevision beforeRevision,
-                                     @Nullable final ContentRevision afterRevision) {
+  private static @NotNull Change createChange(final @NotNull FileStatus status,
+                                              final @Nullable ContentRevision beforeRevision,
+                                              final @Nullable ContentRevision afterRevision) {
     // isRenamed() and isMoved() are always false here not to have text like "moved from ..." in changes window - by default different
     // paths in before and after revisions are treated as move, but this is not the case for "Compare with Branch"
     return new Change(beforeRevision, afterRevision, status) {
@@ -189,6 +178,16 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
         return false;
       }
     };
+  }
+
+  private static @Nullable StatusType getStatus(@NotNull String code) {
+    StatusType result = StatusType.forStatusOperation(code);
+
+    if (result == null) {
+      LOG.info("Unknown status type " + code);
+    }
+
+    return result;
   }
 
   @XmlRootElement(name = "diff")

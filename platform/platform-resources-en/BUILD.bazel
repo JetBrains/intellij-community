@@ -1,0 +1,45 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.resources.en` start
+content_module_jar(module = ":resources-en")
+### auto-generated section `dev intellij.platform.resources.en` end
+
+### auto-generated section `build intellij.platform.resources.en` start
+jvm_library(
+    name = "resources-en",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.en",
+    resource_strip_prefix = "src",
+    resources = glob(
+        ["src/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "resources-en_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.resources.en",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":resources-en"],
+)
+### auto-generated section `build intellij.platform.resources.en` end
+
+### auto-generated section `iml intellij.platform.resources.en` start
+exports_files(
+    [
+        "intellij.platform.resources.en.iml",
+        "src/intellij.platform.resources.en.xml",
+        "src/search/synonyms.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.resources.en` end

@@ -1,0 +1,3 @@
+# "Abstract" methods, see the .pyi file for more details.
+pytz.tzinfo.BaseTzInfo.localize
+pytz.tzinfo.BaseTzInfo.normalize

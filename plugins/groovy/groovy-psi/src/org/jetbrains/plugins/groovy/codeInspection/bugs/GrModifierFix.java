@@ -1,35 +1,29 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+
+import java.util.function.Function;
 
 /**
  * @author Max Medvedev
  */
-public class GrModifierFix extends GroovyFix {
+public class GrModifierFix extends ModCommandQuickFix {
   public static final Function<ProblemDescriptor, PsiModifierList> MODIFIER_LIST = descriptor -> {
     final PsiElement element = descriptor.getPsiElement();
     assert element instanceof PsiModifierList : element;
@@ -48,42 +42,47 @@ public class GrModifierFix extends GroovyFix {
     return (PsiModifierList)element;
   };
 
-  private final String myModifier;
-  private final String myText;
+  @PsiModifier.ModifierConstant private final String myModifier;
+  private final @IntentionName String myText;
   private final boolean myDoSet;
-  private final Function<ProblemDescriptor, PsiModifierList> myModifierListProvider;
+  private final Function<? super ProblemDescriptor, ? extends PsiModifierList> myModifierListProvider;
 
+  /**
+   * The function must be pure
+   */
   public GrModifierFix(@NotNull GrVariable member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     this(initText(doSet, member.getName(), modifier), modifier, doSet, modifierListProvider);
   }
 
+  /**
+   * The function must be pure
+   */
   public GrModifierFix(@NotNull PsiMember member,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean showContainingClass,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     this(initText(doSet, getMemberName(member, showContainingClass), modifier), modifier, doSet, modifierListProvider);
   }
 
-  public GrModifierFix(@NotNull String text,
+  /**
+   * The function must be pure
+   */
+  public GrModifierFix(@IntentionName @NotNull String text,
                        @GrModifier.GrModifierConstant String modifier,
                        boolean doSet,
-                       @NotNull Function<ProblemDescriptor, PsiModifierList> modifierListProvider) {
+                       @NotNull Function<? super ProblemDescriptor, ? extends PsiModifierList> modifierListProvider) {
     myText = text;
     myModifier = modifier;
     myModifierListProvider = modifierListProvider;
     myDoSet = doSet;
   }
 
-  public static String initText(boolean doSet, @NotNull String name, @NotNull String modifier) {
-    return GroovyBundle.message(
-      doSet ? "change.modifier" : "change.modifier.not",
-      name,
-      toPresentableText(modifier)
-    );
+  protected static @IntentionName String initText(boolean doSet, @NlsSafe @NotNull String name, @NlsSafe @NotNull String modifier) {
+    return GroovyBundle.message(doSet ? "change.modifier" : "change.modifier.not", name, modifier);
   }
 
   private static String getMemberName(PsiMember member, boolean showContainingClass) {
@@ -97,29 +96,19 @@ public class GrModifierFix extends GroovyFix {
     }
   }
 
-  public static String toPresentableText(String modifier) {
-    return GroovyBundle.message(modifier + ".visibility.presentation");
-  }
-
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("change.modifier.family.name");
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-    final PsiModifierList modifierList = getModifierList(descriptor);
-    modifierList.setModifierProperty(myModifier, myDoSet);
-  }
-
-  private PsiModifierList getModifierList(ProblemDescriptor descriptor) {
-    return myModifierListProvider.fun(descriptor);
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiModifierList modifierList = myModifierListProvider.apply(descriptor);
+    return ModCommand.psiUpdate(modifierList, m -> m.setModifierProperty(myModifier, myDoSet));
   }
 }

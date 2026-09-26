@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.intellij.deps.java.atk.wrapper.linux" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-deps-java-atk-wrapper:263.35">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.35/intellij-deps-java-atk-wrapper-263.35.jar">
+          <sha256sum>e93f7257422f6fc0b43a2d17ea2edffec7c129175e10f837f6e2b3ff12417c17</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.35/intellij-deps-java-atk-wrapper-263.35.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-deps-java-atk-wrapper/263.35/intellij-deps-java-atk-wrapper-263.35-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

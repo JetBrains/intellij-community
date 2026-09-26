@@ -1,0 +1,29 @@
+fragment pullRequestInfo on PullRequest {
+  ...pullRequestInfoShort
+
+  body
+
+  author {
+    ...actor
+  }
+  createdAt
+
+  reviewDecision
+
+  baseRefName
+  baseRefOid
+  baseRepository {
+    ...repository
+  }
+
+  headRef {
+    id
+  }
+  headRefName
+  headRefOid
+  headRepository {
+    ...repository
+  }
+
+  viewerCanDeleteHeadRef
+}

@@ -1,0 +1,9 @@
+interface Foo
+
+fun test(flag: Boolean): Foo {
+    return when (flag) {
+        true -> object : Foo {}
+    }
+}
+
+// ELEMENT: object

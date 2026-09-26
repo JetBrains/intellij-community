@@ -1,0 +1,10 @@
+Original text:
+---------------
+def foo():
+    pass
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>print("hello")</reparse>
+---------------

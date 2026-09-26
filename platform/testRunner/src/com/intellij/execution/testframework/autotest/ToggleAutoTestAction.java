@@ -1,36 +1,47 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.PreferredPlace;
+import com.intellij.execution.runners.RunTab;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class ToggleAutoTestAction extends ToggleAction {
 
   public ToggleAutoTestAction() {
-    super("Toggle auto-test", "Toggle automatic rerun of tests on code changes",
-          AllIcons.Actions.SwapPanels);
+    super(IdeBundle.messagePointer("action.ToggleAction.text.toggle.auto.test"),
+          IdeBundle.messagePointer("action.ToggleAction.description.toggle.auto.test"),
+          AllIcons.Actions.RerunAutomatically);
+    getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
     return project != null && descriptor != null && getAutoTestManager(project).isAutoTestEnabled(descriptor);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    RunContentDescriptor descriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (project != null && descriptor != null && environment != null) {
       getAutoTestManager(project).setAutoTestEnabled(descriptor, environment, state);
     }

@@ -1,0 +1,19 @@
+// "Implement members" "true"
+// WITH_STDLIB
+// K2_ERROR: Class 'C' is not abstract and does not implement abstract base class members:<br>fun write(p0: CharArray!, p1: Int, p2: Int): Unit<br>fun flush(): Unit<br>fun close(): Unit
+
+class C : java.io.Writer(), java.lang.Appendable {
+    override fun close() {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+
+    override fun flush() {
+        TODO("Not yet implemented")
+    }
+
+    override fun write(p0: CharArray, p1: Int, p2: Int) {
+        TODO("Not yet implemented")
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersQuickfix

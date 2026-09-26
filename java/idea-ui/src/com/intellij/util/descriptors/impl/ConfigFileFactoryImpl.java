@@ -17,32 +17,46 @@
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.descriptors.*;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.containers.DisposableWrapperList;
+import com.intellij.util.descriptors.ConfigFileContainer;
+import com.intellij.util.descriptors.ConfigFileFactory;
+import com.intellij.util.descriptors.ConfigFileInfoSet;
+import com.intellij.util.descriptors.ConfigFileMetaData;
+import com.intellij.util.descriptors.ConfigFileMetaDataProvider;
+import com.intellij.util.descriptors.ConfigFileMetaDataRegistry;
+import com.intellij.util.descriptors.ConfigFileVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
-/**
- * @author nik
- */
-public class ConfigFileFactoryImpl extends ConfigFileFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.impl.ConfigFileFactoryImpl");
+public final class ConfigFileFactoryImpl extends ConfigFileFactory implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ConfigFileFactoryImpl.class);
+  private final DisposableWrapperList<ConfigFileContainerImpl> containers = new DisposableWrapperList<>();
+
+  public ConfigFileFactoryImpl() {
+    VirtualFileManager.getInstance().addAsyncFileListener(new ConfigFileVfsListener(), this);
+  }
 
   @Override
-  public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaDatas) {
-    return new ConfigFileMetaDataRegistryImpl(metaDatas);
+  public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaData) {
+    return new ConfigFileMetaDataRegistryImpl(metaData);
   }
 
   @Override
@@ -58,29 +72,39 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   @Override
   public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
                                                        final ConfigFileInfoSet configuration) {
-    return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
+    var container = new ConfigFileContainerImpl(project, metaDataProvider, configuration);
+    containers.add(container, container); // container will remove itself from the list on container disposal
+    return container;
+  }
+
+  @Override
+  public void dispose() {
+    containers.clear();
+  }
+
+  void handleFileChanges(List<VirtualFile> filesToUpdate) {
+    for (VirtualFile file : filesToUpdate) {
+      for (ConfigFileContainerImpl container : containers) {
+        container.fileChanged(file);
+      }
+    }
   }
 
   private static String getText(final String templateName, @Nullable Project project) throws IOException {
     final FileTemplateManager templateManager = project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project);
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
-    if (template == null) {
-      return "";
-    }
     return template.getText(templateManager.getDefaultProperties());
   }
 
   @Override
-  @Nullable
-  public VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
+  public @Nullable VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
     return createFileFromTemplate(project, url, version.getTemplateName(), forceNew);
   }
 
-  @Nullable
-  private VirtualFile createFileFromTemplate(@Nullable final Project project, String url, final String templateName, final boolean forceNew) {
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+  private @Nullable VirtualFile createFileFromTemplate(final @Nullable Project project, String url, final String templateName, final boolean forceNew) {
+    final VirtualFileSystem fileSystem = StandardFileSystems.local();
     final File file = new File(VfsUtilCore.urlToPath(url));
-    VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
+    VirtualFile existingFile = fileSystem.refreshAndFindFileByPath(file.getAbsolutePath());
     if (existingFile != null) {
       existingFile.refresh(false, false);
       if (!existingFile.isValid()) {
@@ -97,7 +121,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
       if (existingFile == null || existingFile.isDirectory()) {
         final VirtualFile virtualFile;
         if (!FileUtil.createParentDirs(file) ||
-            (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
+            (virtualFile = fileSystem.refreshAndFindFileByPath(file.getParentFile().getAbsolutePath())) == null) {
           throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));
         }
         childData = virtualFile.createChildData(this, file.getName());
@@ -111,8 +135,8 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     catch (final IOException e) {
       LOG.info(e);
       ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
-                                     IdeBundle.message("message.text.creating.deployment.descriptor")));
+        () -> Messages.showErrorDialog(JavaUiBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
+                                     JavaUiBundle.message("message.text.creating.deployment.descriptor")));
     }
     return null;
   }

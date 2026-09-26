@@ -1,65 +1,54 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.configurationStore.*
-import com.intellij.testFramework.ProjectRule
+import com.intellij.configurationStore.ApplicationStoreImpl
+import com.intellij.configurationStore.TestScheme
+import com.intellij.configurationStore.serialize
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.util.io.write
 import com.intellij.util.toByteArray
+import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.ReadonlySource
 import org.jetbrains.settingsRepository.SyncType
-import org.jetbrains.settingsRepository.git.GitRepositoryManager
+import org.jetbrains.settingsRepository.getOsFolderName
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
-import org.junit.ClassRule
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.io.path.exists
 
-private const val dirName = "keymaps"
-
-class LoadTest : IcsTestCase() {
-  companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun createSchemeManager(dirPath: String) = icsManager.schemeManagerFactory.value.create(dirPath, TestSchemesProcessor(), streamProvider = provider) as SchemeManagerImpl<TestScheme, TestScheme>
+class LoadTest : LoadTestBase() {
 
   @Test fun `load scheme`() {
     val localScheme = TestScheme("local")
-    provider.write("$dirName/local.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/local.xml", serialize(localScheme)!!.toByteArray())
 
     val schemeManager = createSchemeManager(dirName)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+    val actualLocalScheme = schemeManager.findSchemeByName("local")!!
 
     schemeManager.save()
 
-    val dirPath = (icsManager.repositoryManager as GitRepositoryManager).repository.workTree.toPath().resolve(dirName)
+    val dirPath = icsManager.repositoryManager.repository.workTree.toPath().resolve(dirName)
     assertThat(dirPath).isDirectory()
 
-    schemeManager.removeScheme(localScheme)
+    schemeManager.removeScheme(actualLocalScheme)
     schemeManager.save()
 
     assertThat(dirPath).doesNotExist()
 
-    provider.write("$dirName/local1.xml", TestScheme("local1").serialize()!!.toByteArray())
-    provider.write("$dirName/local2.xml", TestScheme("local2").serialize()!!.toByteArray())
+    provider.write("$dirName/local1.xml", serialize(TestScheme("local1"))!!.toByteArray())
+    provider.write("$dirName/local2.xml", serialize(TestScheme("local2"))!!.toByteArray())
 
     assertThat(dirPath.resolve("local1.xml")).isRegularFile()
     assertThat(dirPath.resolve("local2.xml")).isRegularFile()
@@ -74,7 +63,7 @@ class LoadTest : IcsTestCase() {
 
   @Test fun `load scheme with the same names`() {
     val localScheme = TestScheme("local")
-    val data = localScheme.serialize()!!.toByteArray()
+    val data = serialize(localScheme)!!.toByteArray()
     provider.write("$dirName/local.xml", data)
     provider.write("$dirName/local2.xml", data)
 
@@ -83,30 +72,32 @@ class LoadTest : IcsTestCase() {
     assertThat(schemeManager.allSchemes).containsOnly(localScheme)
   }
 
-  @Test fun `load scheme from repo and read-only repo`() {
+  @Test
+  fun `load scheme from repo and read-only repo`() = runBlocking {
     val localScheme = TestScheme("local")
 
-    provider.write("$dirName/local.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/local.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme("remote")
-    val remoteRepository = tempDirManager.createRepository()
-    remoteRepository
-      .add("$dirName/Mac OS X from RubyMine.xml", remoteScheme.serialize()!!.toByteArray())
-      .commit("")
-
-    remoteRepository.useAsReadOnlySource {
-      val schemeManager = createSchemeManager(dirName)
-      schemeManager.loadSchemes()
-      assertThat(schemeManager.allSchemes).containsOnly(remoteScheme, localScheme)
-      assertThat(schemeManager.isMetadataEditable(localScheme)).isTrue()
-      assertThat(schemeManager.isMetadataEditable(remoteScheme)).isFalse()
-
+    tempDirManager.createRepository().use { remoteRepository ->
       remoteRepository
-        .delete("$dirName/Mac OS X from RubyMine.xml")
-        .commit("")
+        .add("$dirName/Mac OS X from RubyMine.xml", serialize(remoteScheme)!!.toByteArray())
+        .commit("add")
 
-      icsManager.sync(SyncType.MERGE)
-      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+      remoteRepository.useAsReadOnlySource {
+        val schemeManager = createSchemeManager(dirName)
+        schemeManager.loadSchemes()
+        assertThat(schemeManager.allSchemes).containsOnly(remoteScheme, localScheme)
+        assertThat(schemeManager.isMetadataEditable(localScheme)).isTrue()
+        assertThat(schemeManager.isMetadataEditable(remoteScheme)).isFalse()
+
+        remoteRepository
+          .delete("$dirName/Mac OS X from RubyMine.xml")
+          .commit("delete")
+
+        icsManager.sync(SyncType.MERGE)
+        assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+      }
     }
   }
 
@@ -114,19 +105,60 @@ class LoadTest : IcsTestCase() {
     val schemeName = "Emacs"
     val localScheme = TestScheme(schemeName, "local")
 
-    provider.write("$dirName/$schemeName.xml", localScheme.serialize()!!.toByteArray())
+    provider.write("$dirName/$schemeName.xml", serialize(localScheme)!!.toByteArray())
 
     val remoteScheme = TestScheme(schemeName, "remote")
-    val remoteRepository = tempDirManager.createRepository("remote")
-    remoteRepository
-      .add("$dirName/$schemeName.xml", remoteScheme.serialize()!!.toByteArray())
-      .commit("")
+    tempDirManager.createRepository("remote").use { remoteRepository ->
+      remoteRepository
+        .add("$dirName/$schemeName.xml", serialize(remoteScheme)!!.toByteArray())
+        .commit("")
 
-    remoteRepository.useAsReadOnlySource {
-      val schemeManager = createSchemeManager(dirName)
-      schemeManager.loadSchemes()
-      assertThat(schemeManager.allSchemes).containsOnly(localScheme)
-      assertThat(schemeManager.isMetadataEditable(localScheme)).isFalse()
+      remoteRepository.useAsReadOnlySource {
+        val schemeManager = createSchemeManager(dirName)
+        schemeManager.loadSchemes()
+        assertThat(schemeManager.allSchemes).containsOnly(localScheme)
+        assertThat(schemeManager.isMetadataEditable(localScheme)).isFalse()
+      }
+    }
+
+  }
+
+  @Test
+  fun `deprecated per-os storage shouldn't resolve to the actual storage`() {
+    val componentStore = ApplicationStoreImpl(ApplicationManager.getApplication()).apply { setPath(configDir.value) }
+    componentStore.storageManager.addStreamProvider(provider)
+
+    val _macKeymapXml = repositoryDir.resolve("${getOsFolderName()}/keymap.xml")
+    val content = """
+      <application>
+        <component name="KeymapManager">
+          <active_keymap name="macOS System Shortcuts" />
+        </component>
+      </application>
+    """
+    _macKeymapXml.write(content)
+    val keymapXml = repositoryDir.resolve("keymap.xml")
+    keymapXml.write(content)
+
+    runBlocking {
+      val component = SeveralStoragesConfigured()
+      componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+      component.flag = true
+      componentStore.save(true)
+    }
+
+    assertTrue(_macKeymapXml.exists())
+    assertFalse(keymapXml.exists())
+  }
+
+  @State(name = "KeymapManager", storages = [Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS)], allowLoadInTests = true)
+  class SeveralStoragesConfigured : PersistentStateComponent<SeveralStoragesConfigured> {
+    var flag: Boolean = false
+
+    override fun getState() = this
+
+    override fun loadState(state: SeveralStoragesConfigured) {
+      XmlSerializerUtil.copyBean(state, this)
     }
   }
 
@@ -140,7 +172,7 @@ class LoadTest : IcsTestCase() {
     }
   }
 
-  fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
+  private fun Repository.createAndRegisterReadOnlySource(): ReadonlySource {
     val source = ReadonlySource(workTree.absolutePath)
     assertThat(cloneBare(source.url!!, icsManager.readOnlySourcesManager.rootDir.resolve(source.path!!)).objectDatabase.exists()).isTrue()
     icsManager.readOnlySourcesManager.setSources(listOf(source))

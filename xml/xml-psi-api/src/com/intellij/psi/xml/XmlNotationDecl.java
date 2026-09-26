@@ -16,6 +16,5 @@
 package com.intellij.psi.xml;
 
 public interface XmlNotationDecl extends XmlElement{
-  XmlElement getNameElement();
   XmlElementContentSpec getContentSpecElement();
 }

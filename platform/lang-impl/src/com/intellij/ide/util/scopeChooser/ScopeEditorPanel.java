@@ -1,100 +1,267 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
-import com.intellij.packageDependencies.ui.*;
-import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.*;
+import com.intellij.packageDependencies.ui.BackgroundTreeModel;
+import com.intellij.packageDependencies.ui.FileTreeModelBuilder;
+import com.intellij.packageDependencies.ui.Marker;
+import com.intellij.packageDependencies.ui.PackageDependenciesNode;
+import com.intellij.packageDependencies.ui.PackageTreeExpansionMonitor;
+import com.intellij.packageDependencies.ui.PanelProgressIndicator;
+import com.intellij.packageDependencies.ui.PatternDialectProvider;
+import com.intellij.packageDependencies.ui.RootNode;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
+import com.intellij.packageDependencies.ui.TreeModel;
+import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
+import com.intellij.psi.search.scope.packageSet.CompoundPackageSet;
+import com.intellij.psi.search.scope.packageSet.IntersectionPackageSet;
+import com.intellij.psi.search.scope.packageSet.InvalidPackageSet;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.UnionPackageSet;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DarculaColors;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.concurrency.CancellablePromise;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.tree.ExpandVetoException;
-import javax.swing.tree.TreePath;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-public class ScopeEditorPanel {
-
-  private JPanel myButtonsPanel;
-  private RawCommandLineEditor myPatternField;
-  private JPanel myTreeToolbar;
+@ApiStatus.Internal
+public final class ScopeEditorPanel implements Disposable {
+  private static final @NotNull Logger LOG = Logger.getInstance(ScopeEditorPanel.class);
+  private final JPanel myButtonsPanel;
+  private final RawCommandLineEditor myPatternField;
+  private final JPanel myTreeToolbar;
   private final Tree myPackageTree;
-  private JPanel myPanel;
-  private JPanel myTreePanel;
-  private JLabel myMatchingCountLabel;
-  private JPanel myLegendPanel;
+  private @Nullable Invoker myPackageTreeInvoker;
+  private final JPanel myPanel;
+  private final JPanel myTreePanel;
+  private final JLabel myMatchingCountLabel;
+  private final JPanel myLegendPanel;
 
   private final Project myProject;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
-  private String myErrorMessage;
+  private @Nls String myStatusMessage = "";
+  private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
-  private JLabel myCaretPositionLabel;
+  private final JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
-  private JPanel myMatchingCountPanel;
-  private JPanel myPositionPanel;
-  private JLabel myRecursivelyIncluded;
-  private JLabel myPartiallyIncluded;
+  private final JPanel myMatchingCountPanel;
+  private final JPanel myPositionPanel;
+  private final JLabel myRecursivelyIncluded;
+  private final JLabel myPartiallyIncluded;
+  private final JBLabel myPatternLegend;
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
+  private Boolean myRebuildRequired = null; //updated in EDT only
 
-  public ScopeEditorPanel(@NotNull final Project project, final NamedScopesHolder holder) {
+  private final MyAction myInclude = new MyAction("button.include", this::includeSelected);
+  private final MyAction myIncludeRec = new MyAction("button.include.recursively", this::includeSelected);
+  private final MyAction myExclude = new MyAction("button.exclude", this::excludeSelected);
+  private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
+
+  private boolean myIsDisposed;
+
+  interface SettingsChangedListener {
+
+    @Topic.ProjectLevel
+    Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
+
+    void settingsChanged();
+  }
+
+  public ScopeEditorPanel(final @NotNull Project project, @NotNull NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
+    {
+      myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
+                                                strings -> StringUtil.join(strings, "||"));
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myTreePanel = new JPanel();
+      myPanel.add(myTreePanel, new GridConstraints(1, 0, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   new Dimension(-1, 150), null, null, 0, false));
+      myButtonsPanel = new JPanel();
+      myButtonsPanel.setLayout(new BorderLayout(0, 0));
+      myPanel.add(myButtonsPanel, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                      0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.add(panel2, new GridConstraints(2, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myTreeToolbar = new JPanel();
+      panel2.add(myTreeToolbar, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, 1,
+                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myMatchingCountPanel = new JPanel();
+      myMatchingCountPanel.setLayout(new BorderLayout(0, 0));
+      panel2.add(myMatchingCountPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           null, null, null, 0, false));
+      myMatchingCountLabel = new JLabel();
+      myMatchingCountLabel.setHorizontalAlignment(4);
+      myMatchingCountLabel.setHorizontalTextPosition(4);
+      myMatchingCountLabel.setText("");
+      myMatchingCountPanel.add(myMatchingCountLabel, BorderLayout.CENTER);
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/IdeBundle", "label.scope.pattern"));
+      panel1.add(label1,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPositionPanel = new JPanel();
+      myPositionPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPositionPanel.setVisible(false);
+      panel1.add(myPositionPanel, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      myCaretPositionLabel = new JLabel();
+      myCaretPositionLabel.setText("");
+      myCaretPositionLabel.setVisible(false);
+      myPositionPanel.add(myCaretPositionLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      panel1.add(myPatternField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPatternLegend = new JBLabel();
+      panel1.add(myPatternLegend, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myLegendPanel = new JPanel();
+      myLegendPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myLegendPanel, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                     0, false));
+      myRecursivelyIncluded = new JLabel();
+      this.$$$loadLabelText$$$(myRecursivelyIncluded,
+                               this.$$$getMessageFromBundle$$$("messages/IdeBundle", "scope.editor.legend.recursively.included.label"));
+      myLegendPanel.add(myRecursivelyIncluded, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                   null, null, 0, false));
+      myPartiallyIncluded = new JLabel();
+      this.$$$loadLabelText$$$(myPartiallyIncluded,
+                               this.$$$getMessageFromBundle$$$("messages/IdeBundle", "scope.editor.legend.partly.included.label"));
+      myLegendPanel.add(myPartiallyIncluded, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                 null, null, 0, false));
+    }
 
     myPackageTree = new Tree(new RootNode(project));
 
@@ -106,20 +273,21 @@ public class ScopeEditorPanel {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree);
 
     myTreeMarker = new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
-        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
-                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
+      public boolean isMarked(@NotNull VirtualFile file) {
+        return myCurrentScope != null &&
+               (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
+                                                         : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
       }
     };
 
     myPatternField.setDialogCaption("Pattern");
     myPatternField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         onTextChange();
       }
     });
@@ -143,24 +311,95 @@ public class ScopeEditorPanel {
 
       @Override
       public void focusLost(FocusEvent e) {
-        myPositionPanel.setVisible(false);
-        myPanel.revalidate();
+        if (!myPatternField.getEditorField().isExpanded()) {
+          myPositionPanel.setVisible(false);
+          myPanel.revalidate();
+        }
       }
     });
+    myPatternLegend.setForeground(new JBColor(Gray._50, Gray._130));
+    myPatternLegend.setText("");
 
     initTree(myPackageTree);
-    new UiNotifyConnector(myPanel, new Activatable() {
-      @Override
-      public void showNotify() {
-      }
-
+    Disposer.register(this, UiNotifyConnector.installOn(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
       }
+
+      @Override
+      public void showNotify() {
+        if (myRebuildRequired != null && myRebuildRequired) {
+          rebuild(false);
+        }
+      }
+    }));
+    myPartiallyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
+
+    SimpleMessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(SettingsChangedListener.TOPIC, () -> {
+      if (!myPanel.isShowing()) {
+        if (myRebuildRequired != null) { //schedule rebuild if panel was already shown
+          myRebuildRequired = true;
+        }
+      }
+      else {
+        rebuild(false);
+      }
     });
-    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
-    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
+  @Override
+  public void dispose() {
+    myIsDisposed = true;
   }
 
   private void updateCaretPositionText() {
@@ -179,7 +418,7 @@ public class ScopeEditorPanel {
     return myPanel;
   }
 
-  public JPanel getTreePanel(){
+  public JPanel getTreePanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(myTreePanel, BorderLayout.CENTER);
     panel.add(myLegendPanel, BorderLayout.SOUTH);
@@ -192,7 +431,6 @@ public class ScopeEditorPanel {
 
   private void onTextChange() {
     if (!myIsInUpdate) {
-      myUpdateAlarm.cancel(false);
       cancelCurrentProgress();
       final String text = myPatternField.getText();
       myCurrentScope = new InvalidPackageSet(text);
@@ -204,29 +442,19 @@ public class ScopeEditorPanel {
       }
       catch (Exception e) {
         myErrorMessage = e.getMessage();
-        showErrorMessage();
       }
       rebuild(false);
     }
-    else if (!invalidScopeInside(myCurrentScope)){
+    else if (!invalidScopeInside(myCurrentScope)) {
       myErrorMessage = null;
     }
-  }
-
-  private void createUIComponents() {
-    myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
-                                              strings -> StringUtil.join(strings, "||")); 
+    updateStatusMessage();
   }
 
   private static boolean invalidScopeInside(PackageSet currentScope) {
     if (currentScope instanceof InvalidPackageSet) return true;
-    if (currentScope instanceof UnionPackageSet) {
-      if (invalidScopeInside(((UnionPackageSet)currentScope).getFirstSet())) return true;
-      if (invalidScopeInside(((UnionPackageSet)currentScope).getSecondSet())) return true;
-    }
-    if (currentScope instanceof IntersectionPackageSet) {
-      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getFirstSet())) return true;
-      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getSecondSet())) return true;
+    if (currentScope instanceof CompoundPackageSet) {
+      return ContainerUtil.or(((CompoundPackageSet)currentScope).getSets(), s -> invalidScopeInside(s));
     }
     if (currentScope instanceof ComplementPackageSet) {
       return invalidScopeInside(((ComplementPackageSet)currentScope).getComplementarySet());
@@ -234,125 +462,156 @@ public class ScopeEditorPanel {
     return false;
   }
 
-  private void showErrorMessage() {
-    myMatchingCountLabel.setText(StringUtil.capitalize(myErrorMessage));
-    myMatchingCountLabel.setForeground(JBColor.red);
-    myMatchingCountLabel.setToolTipText(myErrorMessage);
+  private void updateStatusMessage() {
+    if (myErrorMessage == null) {
+      myMatchingCountLabel.setText(myStatusMessage);
+      myMatchingCountLabel.setForeground(new JLabel().getForeground());
+      myMatchingCountLabel.setToolTipText(null);
+    }
+    else {
+      myMatchingCountLabel.setText(StringUtil.capitalize(myErrorMessage));
+      myMatchingCountLabel.setForeground(JBColor.red);
+      myMatchingCountLabel.setToolTipText(myErrorMessage);
+    }
   }
 
   private JComponent createActionsPanel() {
-    final JButton include = new JButton(IdeBundle.message("button.include"));
-    final JButton includeRec = new JButton(IdeBundle.message("button.include.recursively"));
-    final JButton exclude = new JButton(IdeBundle.message("button.exclude"));
-    final JButton excludeRec = new JButton(IdeBundle.message("button.exclude.recursively"));
     myPackageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final boolean recursiveEnabled = isButtonEnabled(true);
-        includeRec.setEnabled(recursiveEnabled);
-        excludeRec.setEnabled(recursiveEnabled);
-
-        final boolean nonRecursiveEnabled = isButtonEnabled(false);
-        include.setEnabled(nonRecursiveEnabled);
-        exclude.setEnabled(nonRecursiveEnabled);
+        updateSelectedSets();
       }
     });
 
     JPanel buttonsPanel = new JPanel(new VerticalLayout(5));
-    buttonsPanel.add(include);
-    buttonsPanel.add(includeRec);
-    buttonsPanel.add(exclude);
-    buttonsPanel.add(excludeRec);
-
-    include.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        includeSelected(false);
-      }
-    });
-    includeRec.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        includeSelected(true);
-      }
-    });
-    exclude.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        excludeSelected(false);
-      }
-    });
-    excludeRec.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        excludeSelected(true);
-      }
-    });
-
+    buttonsPanel.add(new JButton(myInclude));
+    buttonsPanel.add(new JButton(myIncludeRec));
+    buttonsPanel.add(new JButton(myExclude));
+    buttonsPanel.add(new JButton(myExcludeRec));
     return buttonsPanel;
   }
 
-  boolean isButtonEnabled(boolean rec) {
-    final TreePath[] paths = myPackageTree.getSelectionPaths();
-    if (paths != null) {
-      for (TreePath path : paths) {
-        final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-        if (PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, rec) != null) {
-          return true;
-        }
+  private void updateSelectedSets() {
+    var invoker = myPackageTreeInvoker;
+    if (invoker == null) {
+      LOG.warn("ScopeEditorPanel.updateSelectedSets called before tree initialization", new Throwable());
+      return;
+    }
+    var paths = myPackageTree.getSelectionPaths();
+    if (paths == null) return;
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    if (provider == null) return;
+    final var nodes = new ArrayList<PackageDependenciesNode>(paths.length);
+    for (var path : paths) {
+      if (path.getLastPathComponent() instanceof PackageDependenciesNode node) {
+        nodes.add(node);
       }
     }
-    return false;
+    computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
+      myInclude.setSelection(result);
+      myExclude.setSelection(result);
+    });
+    computeSelection(invoker, nodes, provider, true).onSuccess(result -> {
+      myIncludeRec.setSelection(result);
+      myExcludeRec.setSelection(result);
+    });
   }
 
-  private void excludeSelected(boolean recurse) {
-    final ArrayList<PackageSet> selected = getSelectedSets(recurse);
-    if (selected == null || selected.isEmpty()) return;
+  private static @NotNull CancellablePromise<ArrayList<PackageSet>> computeSelection(
+    Invoker invoker,
+    ArrayList<PackageDependenciesNode> nodes,
+    PatternDialectProvider provider,
+    boolean recursively
+  ) {
+    return invoker.compute(() -> {
+      final ArrayList<PackageSet> result = new ArrayList<>();
+      for (PackageDependenciesNode node : nodes) {
+        final PackageSet set = provider.createPackageSet(node, recursively);
+        if (set != null) {
+          result.add(set);
+        }
+      }
+      return result;
+    });
+  }
+
+  private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = new ComplementPackageSet(set);
-      } else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : new IntersectionPackageSet(myCurrentScope, new ComplementPackageSet(set));
-      }
-      else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, false, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        }
-        else {
-          myCurrentScope = simplifiedScope != null ? new IntersectionPackageSet(simplifiedScope, new ComplementPackageSet(set)) : new ComplementPackageSet(set);
-        }
-      }
+      myCurrentScope = doExcludeSelected(set, myCurrentScope);
     }
     rebuild(true);
   }
 
-  private void includeSelected(boolean recurse) {
-    final ArrayList<PackageSet> selected = getSelectedSets(recurse);
-    if (selected == null || selected.isEmpty()) return;
-    for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = set;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = new ComplementPackageSet(set);
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText())
+                ? new ComplementPackageSet(set)
+                : IntersectionPackageSet.create(current, new ComplementPackageSet(set));
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, false, append);
+      if (!append[0]) {
+        current = simplifiedScope;
       }
-      else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : new UnionPackageSet(myCurrentScope, set);
+      else if (simplifiedScope == null) {
+        current = new ComplementPackageSet(set);
       }
       else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, true, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        } else {
-          myCurrentScope = simplifiedScope != null ? new UnionPackageSet(simplifiedScope, set) : set;
-        }
+        PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
+                            ((IntersectionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+
+        current = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
       }
+    }
+    return current;
+  }
+
+  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
+    for (PackageSet set : selected) {
+      myCurrentScope = doIncludeSelected(set, myCurrentScope);
     }
     rebuild(true);
   }
 
-  @Nullable
-  static PackageSet processComplementaryScope(@NotNull PackageSet current, PackageSet added, boolean checkComplementSet, boolean[] append) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = set;
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText()) ? set : UnionPackageSet.create(current, set);
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, true, append);
+      if (!append[0]) {
+        current = simplifiedScope;
+      }
+      else if (simplifiedScope == null) {
+        current = set;
+      }
+      else {
+        PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
+                            ((UnionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+        current = UnionPackageSet.create(ArrayUtil.append(sets, set));
+      }
+    }
+    return current;
+  }
+
+  private static @Nullable PackageSet processComplementaryScope(@NotNull PackageSet current,
+                                                                PackageSet added,
+                                                                boolean checkComplementSet,
+                                                                boolean[] append) {
     final String text = added.getText();
     if (current instanceof ComplementPackageSet &&
         Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
@@ -369,47 +628,31 @@ public class ScopeEditorPanel {
     }
 
     if (current instanceof UnionPackageSet) {
-      final PackageSet left = processComplementaryScope(((UnionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
-      final PackageSet right = processComplementaryScope(((UnionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
-      if (left == null) return right;
-      if (right == null) return left;
-      return new UnionPackageSet(left, right);
+      PackageSet[] sets = ((UnionPackageSet)current).getSets();
+      PackageSet[] processed =
+        ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      return processed.length == 0 ? null : UnionPackageSet.create(processed);
     }
 
     if (current instanceof IntersectionPackageSet) {
-      final PackageSet left = processComplementaryScope(((IntersectionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
-      final PackageSet right = processComplementaryScope(((IntersectionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
-      if (left == null) return right;
-      if (right == null) return left;
-      return new IntersectionPackageSet(left, right);
+      PackageSet[] sets = ((IntersectionPackageSet)current).getSets();
+      PackageSet[] processed =
+        ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      return processed.length == 0 ? null : IntersectionPackageSet.create(processed);
     }
 
     return current;
   }
 
-  @Nullable
-  private ArrayList<PackageSet> getSelectedSets(boolean recursively) {
-    int[] rows = myPackageTree.getSelectionRows();
-    if (rows == null) return null;
-    final ArrayList<PackageSet> result = new ArrayList<>();
-    for (int row : rows) {
-      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
-      final PackageSet set = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, recursively);
-      if (set != null) {
-        result.add(set);
-      }
-    }
-    return result;
-  }
-
-
   private JComponent createTreeToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    final Runnable update = () -> rebuild(true);
+    final Runnable update = () -> {
+      myProject.getMessageBus().syncPublisher(SettingsChangedListener.TOPIC).settingsChanged();
+    };
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       group.add(new FlattenPackagesAction(update));
     }
-    final PatternDialectProvider[] dialectProviders = Extensions.getExtensions(PatternDialectProvider.EP_NAME);
+    final List<PatternDialectProvider> dialectProviders = PatternDialectProvider.EP_NAME.getExtensionList();
     for (PatternDialectProvider provider : dialectProviders) {
       for (AnAction action : provider.createActions(myProject, update)) {
         group.add(action);
@@ -426,16 +669,16 @@ public class ScopeEditorPanel {
     }
     group.add(new FilterLegalsAction(update));
 
-    if (dialectProviders.length > 1) {
+    if (dialectProviders.size() > 1) {
       group.add(new ChooseScopeTypeAction(update));
     }
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ScopeEditor", group, true);
+    toolbar.setTargetComponent(myPackageTree);
     return toolbar.getComponent();
   }
 
-  @NotNull
-  private FlattenModulesToggleAction createFlattenModulesAction(Runnable update) {
+  private @NotNull FlattenModulesToggleAction createFlattenModulesAction(Runnable update) {
     return new FlattenModulesToggleAction(myProject, () -> DependencyUISettings.getInstance().UI_SHOW_MODULES,
                                           () -> !DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS, value -> {
       DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = !value;
@@ -443,9 +686,35 @@ public class ScopeEditorPanel {
     });
   }
 
-  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
-    myUpdateAlarm.cancel(false);
-    final Runnable request = () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  @TestOnly
+  public void waitForCompletion() {
+    int idx = 0;
+    while (!myUpdateAlarm.isDone() && idx++ < 10000) {
+      try {
+        myUpdateAlarm.get(1, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void rebuild(final boolean updateText, final @Nullable Runnable runnable, final boolean requestFocus, final int delayMillis) {
+    ThreadingAssertions.assertEventDispatchThread();
+    myRebuildRequired = false;
+    cancelCurrentProgress();
+    PanelProgressIndicator progress = createProgressIndicator(requestFocus);
+    progress.setBordersVisible(false);
+    myCurrentProgress = progress;
+
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    String hintMessage = provider != null ? provider.getHintMessage() : "";
+    myPatternLegend.setText(new HtmlBuilder().appendRaw(hintMessage).wrapWithHtmlBody().toString());
+
+    final Runnable request = () -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
         SwingUtilities.invokeLater(() -> {
@@ -459,10 +728,11 @@ public class ScopeEditorPanel {
         });
       }
 
+      if (myProject.isDisposed()) {
+        return;
+      }
       try {
-        if (!myProject.isDisposed()) {
-          updateTreeModel(requestFocus);
-        }
+        updateTreeModel(requestFocus, progress);
       }
       catch (ProcessCanceledException e) {
         return;
@@ -470,11 +740,11 @@ public class ScopeEditorPanel {
       if (runnable != null) {
         runnable.run();
       }
-    });
+    };
     myUpdateAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(request, delayMillis, TimeUnit.MILLISECONDS);
   }
 
-  private void rebuild(final boolean updateText) {
+  public void rebuild(final boolean updateText) {
     rebuild(updateText, null, true, 300);
   }
 
@@ -486,101 +756,60 @@ public class ScopeEditorPanel {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.setLineStyleAngled();
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
-    new TreeSpeedSearch(tree);
-    tree.addTreeWillExpandListener(new TreeWillExpandListener() {
-      @Override
-      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
-        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
-      }
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
-      @Override
-      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
-      }
-    });
-
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "ScopeEditorPopup");
   }
 
   private ActionGroup createTreePopupActions() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new AnAction(IdeBundle.message("button.include")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        includeSelected(false);
-      }
-    });
-    actionGroup.add(new AnAction(IdeBundle.message("button.include.recursively")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        includeSelected(true);
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(isButtonEnabled(true));
-      }
-    });
-
-    actionGroup.add(new AnAction(IdeBundle.message("button.exclude")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        excludeSelected(false);
-      }
-    });
-    actionGroup.add(new AnAction(IdeBundle.message("button.exclude.recursively")) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        excludeSelected(true);
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(isButtonEnabled(true));
-      }
-    });
-
+    addAction(actionGroup, myInclude);
+    addAction(actionGroup, myIncludeRec);
+    addAction(actionGroup, myExclude);
+    addAction(actionGroup, myExcludeRec);
     return actionGroup;
   }
 
-  private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {
-    PanelProgressIndicator progress = createProgressIndicator(requestFocus);
-    progress.setBordersVisible(false);
-    myCurrentProgress = progress;
+  private void updateTreeModel(final boolean requestFocus, PanelProgressIndicator progress) throws ProcessCanceledException {
     Runnable updateModel = () -> {
-      final ProcessCanceledException [] ex = new ProcessCanceledException[1];
-      ApplicationManager.getApplication().runReadAction(() -> {
+      final ProcessCanceledException[] ex = new ProcessCanceledException[1];
+      ReadAction.runBlocking(() -> {
         if (myProject.isDisposed()) return;
         try {
           myTreeExpansionMonitor.freeze();
-          final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
-          ((PackageDependenciesNode)model.getRoot()).sortChildren();
-          if (myErrorMessage == null) {
-            String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
-            if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
-              message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
-            }
-            myMatchingCountLabel.setText(message);
-            myMatchingCountLabel.setForeground(new JLabel().getForeground());
-          }
-          else {
-            showErrorMessage();
-          }
+          TreeModel model = Objects.requireNonNull(PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE))
+            .createTreeModel(myProject, myTreeMarker);
+          ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
 
           SwingUtilities.invokeLater(() -> { //not under progress
-            myPackageTree.setModel(model);
-            myTreeExpansionMonitor.restore();
+            if (myIsDisposed) return;
+
+            var backgroundModel = new BackgroundTreeModel(() -> model, true);
+            myPackageTreeInvoker = backgroundModel.getInvoker();
+            var asyncModel = new AsyncTreeModel(backgroundModel, this);
+            var oldModel = myPackageTree.getModel();
+            myPackageTree.setModel(asyncModel);
+
+            myStatusMessage = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
+            updateStatusMessage();
+
+            if (oldModel instanceof Disposable disposable) {
+              Disposer.dispose(disposable);
+            }
+            myTreeExpansionMonitor.restoreAsync();
+            TreeUtil.ensureSelection(myPackageTree);
           });
-        } catch (ProcessCanceledException e) {
+        }
+        catch (ProcessCanceledException e) {
           ex[0] = e;
         }
         finally {
-          myCurrentProgress = null;
-          //update label
-          setToComponent(myMatchingCountLabel, requestFocus);
+          SwingUtilities.invokeLater(() -> {
+            setToComponent(myMatchingCountLabel, requestFocus);
+          });
         }
       });
       if (ex[0] != null) {
@@ -594,9 +823,12 @@ public class ScopeEditorPanel {
     return new MyPanelProgressIndicator(requestFocus);
   }
 
-  public void cancelCurrentProgress(){
-    if (myCurrentProgress != null){
+  public void cancelCurrentProgress() {
+    ThreadingAssertions.assertEventDispatchThread();
+    myUpdateAlarm.cancel(false);
+    if (myCurrentProgress != null) {
       myCurrentProgress.cancel();
+      myCurrentProgress = null;
     }
   }
 
@@ -608,11 +840,12 @@ public class ScopeEditorPanel {
   }
 
   public String getPatternText() {
-     return myPatternField.getText();
-   }
+    return myPatternField.getText();
+  }
 
   public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
+    myRebuildRequired = false;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false, runnable, false, 0);
   }
@@ -623,7 +856,7 @@ public class ScopeEditorPanel {
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
     if (requestFocus) {
-      SwingUtilities.invokeLater(() -> myPatternField.getTextField().requestFocusInWindow());
+      myPatternField.getTextField().requestFocusInWindow();
     }
   }
 
@@ -637,23 +870,22 @@ public class ScopeEditorPanel {
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof PackageDependenciesNode) {
-        PackageDependenciesNode node = (PackageDependenciesNode)value;
+      if (value instanceof PackageDependenciesNode node) {
         setIcon(node.getIcon());
 
-        setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
+        setForeground(UIUtil.getTreeForeground(selected, hasFocus));
         if (!(selected && hasFocus) && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
@@ -666,21 +898,20 @@ public class ScopeEditorPanel {
     }
   }
 
-  private final class ChooseScopeTypeAction extends ComboBoxAction{
+  private static final class ChooseScopeTypeAction extends ComboBoxAction {
     private final Runnable myUpdate;
 
-    public ChooseScopeTypeAction(final Runnable update) {
+    ChooseScopeTypeAction(final Runnable update) {
       myUpdate = update;
     }
 
     @Override
-    @NotNull
-    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+    protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+      for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(final AnActionEvent e) {
+          public void actionPerformed(final @NotNull AnActionEvent e) {
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             myUpdate.run();
           }
@@ -690,48 +921,58 @@ public class ScopeEditorPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
       e.getPresentation().setText(provider.getDisplayName());
       e.getPresentation().setIcon(provider.getIcon());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
   private final class FilterLegalsAction extends ToggleAction {
     private final Runnable myUpdate;
 
-    public FilterLegalsAction(final Runnable update) {
+    FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
             IdeBundle.message("action.description.show.included.only"), AllIcons.General.Filter);
       myUpdate = update;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
       myUpdate.run();
     }
   }
 
-  protected class MyPanelProgressIndicator extends PanelProgressIndicator {
+  protected final class MyPanelProgressIndicator extends PanelProgressIndicator {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
       //noinspection Convert2Lambda
-      super(new Consumer<JComponent>() {
+      super(new Consumer<>() {
         @Override
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);
         }
       });
-      myRequestFocus = requestFocus; 
+      myRequestFocus = requestFocus;
     }
 
     @Override
@@ -748,6 +989,47 @@ public class ScopeEditorPanel {
     @Override
     public String getText2() {
       return null;
+    }
+  }
+
+  private static void addAction(@NotNull DefaultActionGroup group, @NotNull MyAction action) {
+    group.add(new DumbAwareAction(String.valueOf(action.getValue(Action.NAME))) {
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        event.getPresentation().setEnabled(action.isEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        action.actionPerformed(null);
+      }
+    });
+  }
+
+  private static final class MyAction extends AbstractAction {
+    private final @NotNull Consumer<? super List<PackageSet>> consumer;
+    private List<PackageSet> selection;
+
+    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key,
+                     @NotNull Consumer<? super List<PackageSet>> consumer) {
+      super(IdeBundle.message(key));
+      setEnabled(false);
+      this.consumer = consumer;
+    }
+
+    void setSelection(@Nullable List<PackageSet> selection) {
+      this.selection = selection;
+      setEnabled(selection != null && !selection.isEmpty());
+    }
+
+    @Override
+    public void actionPerformed(@Nullable ActionEvent event) {
+      if (selection != null && !selection.isEmpty()) consumer.consume(selection);
     }
   }
 }

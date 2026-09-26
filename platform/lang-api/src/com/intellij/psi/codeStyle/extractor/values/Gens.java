@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.values;
 
 import com.intellij.psi.codeStyle.extractor.Utils;
@@ -57,8 +43,7 @@ public class Gens extends ValuesExtractionResultImpl {
     return this;
   }
 
-  @NotNull
-  public Gens copy() {
+  public @NotNull Gens copy() {
     final ArrayList<Value> values = new ArrayList<>();
     for (Value value : myValues) {
       values.add(new Value(value));
@@ -83,8 +68,7 @@ public class Gens extends ValuesExtractionResultImpl {
     return new Gens(diff);
   }
 
-  @NotNull
-  public static Gens breed(@NotNull Gens p1, @NotNull Gens p2, int averageMutationCount) {
+  public static @NotNull Gens breed(@NotNull Gens p1, @NotNull Gens p2, int averageMutationCount) {
     final int size = p1.myValues.size();
     assert size == p2.myValues.size();
 

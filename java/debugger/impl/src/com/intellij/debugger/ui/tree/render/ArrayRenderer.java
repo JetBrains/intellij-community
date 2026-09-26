@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ArrayAction;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -43,13 +32,18 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -58,8 +52,11 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.StringReference;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -67,130 +64,256 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ArrayRenderer extends NodeRendererImpl{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
+public class ArrayRenderer extends NodeRendererImpl {
+  private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
-  public int END_INDEX   = Integer.MAX_VALUE;
+  public int END_INDEX = Integer.MAX_VALUE;
   public int ENTRIES_LIMIT = XCompositeNode.MAX_CHILDREN_TO_SHOW;
 
   private boolean myForced = false;
 
   public ArrayRenderer() {
-    myProperties.setEnabled(true);
+    super(DEFAULT_NAME, true);
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public @NonNls String getName() {
     return "Array";
   }
 
+  @Override
   public void setName(String text) {
     LOG.assertTrue(false);
   }
 
+  @Override
   public ArrayRenderer clone() {
     return (ArrayRenderer)super.clone();
   }
 
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return ClassRenderer.calcLabel(descriptor);
+  @Override
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    if (!Registry.is("debugger.renderers.arrays") ||
+        OnDemandRenderer.isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess())) {
+      return ClassRenderer.calcLabel(descriptor, evaluationContext);
+    }
+
+    Value value = descriptor.getValue();
+    if (value == null) {
+      return "null";
+    }
+    else if (value instanceof ArrayReference arrValue) {
+      String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
+      boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
+      if (TypeConversionUtil.isPrimitive(componentTypeName) || UnBoxingEvaluator.isTypeUnboxable(componentTypeName) || isString) {
+        CompletableFuture<String> asyncLabel = DebuggerUtilsAsync.length(arrValue)
+          .thenCompose(length -> {
+            if (length > 0) {
+              int shownLength = Math.min(length, Registry.intValue(
+                isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
+              return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
+                @SuppressWarnings("unchecked")
+                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], v -> {
+                  if (v != null) {
+                    try {
+                      v = (Value)UnBoxingEvaluator.unbox(v, evaluationContext);
+                    }
+                    catch (EvaluateException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                  return getElementAsString(v);
+                });
+                return CompletableFuture.allOf(futures).thenApply(_ -> {
+                  List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
+                  if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
+                    int compactLength = Math.min(shownLength, isString ? 5 : 10);
+                    String compact =
+                      createLabel(elements.subList(0, compactLength), length - values.size() + (shownLength - compactLength));
+                    valueDescriptor.setCompactValueLabel(compact);
+                  }
+                  return createLabel(elements, length - values.size());
+                });
+              });
+            }
+            return CompletableFuture.completedFuture("[]");
+          });
+        if (asyncLabel.isDone()) {
+          return asyncLabel.join();
+        }
+        else {
+          DescriptorLabelListener updateListener = ValueDescriptorImpl.startLabelUpdate(descriptor, listener);
+          asyncLabel
+            .thenAccept(descriptor::setValueLabel)
+            .exceptionally(throwable -> {
+              ValueDescriptorImpl.setValueLabelFailed(descriptor, throwable);
+              return null;
+            })
+            .whenComplete((_, _) -> updateListener.labelChanged());
+        }
+      }
+      return "";
+    }
+    return JavaDebuggerBundle.message("label.undefined");
+  }
+
+  private static String createLabel(List<String> elements, int remaining) {
+    StreamEx<String> strings = StreamEx.of(elements);
+    if (remaining > 0) {
+      strings = strings.append(JavaDebuggerBundle.message("message.node.array.elements.more", remaining));
+    }
+    return strings.joining(", ", "[", "]");
+  }
+
+  private static CompletableFuture<String> getElementAsString(Value value) {
+    if (value instanceof StringReference reference) {
+      return DebuggerUtilsAsync.getStringValue(reference).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
+    }
+    return CompletableFuture.completedFuture(value != null ? value.toString() : "null");
   }
 
   public void setForced(boolean forced) {
     myForced = forced;
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
-    NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     ArrayReference array = (ArrayReference)value;
-    int arrayLength = array.length();
-    if (arrayLength > 0) {
-      if (!myForced) {
-        builder.initChildrenArrayRenderer(this, arrayLength);
-      }
+    DebuggerUtilsAsync.length(array)
+      .thenAccept(arrayLength -> {
+        if (arrayLength > 0) {
+          if (!myForced) {
+            builder.initChildrenArrayRenderer(this, arrayLength);
+          }
 
-      if (ENTRIES_LIMIT <= 0) {
-        ENTRIES_LIMIT = 1;
-      }
+          if (ENTRIES_LIMIT <= 0) {
+            ENTRIES_LIMIT = 1;
+          }
 
-      int added = 0;
-      boolean hiddenNulls = false;
-      int end = Math.min(arrayLength - 1, END_INDEX);
-      int idx = START_INDEX;
-      if (arrayLength > START_INDEX) {
-        for (; idx <= end; idx++) {
-          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) {
-            hiddenNulls = true;
+          AtomicInteger added = new AtomicInteger();
+          AtomicBoolean hiddenNulls = new AtomicBoolean();
+
+          addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
+        }
+      });
+  }
+
+  private CompletableFuture<Void> addChunk(ArrayReference array,
+                                           int start,
+                                           int end,
+                                           int length,
+                                           ChildrenBuilder builder,
+                                           EvaluationContext evaluationContext,
+                                           AtomicInteger added,
+                                           AtomicBoolean hiddenNulls) {
+    int chunkLength = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, end - start + 1);
+    return DebuggerUtilsAsync.getValues(array, start, chunkLength)
+      .thenCompose(values -> {
+        int idx = start;
+        for (; idx < start + values.size(); idx++) {
+          Value val = values.get(idx - start);
+          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && val == null) {
+            hiddenNulls.set(true);
             continue;
           }
 
-          DebuggerTreeNode arrayItemNode =
-            nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
-
+          ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)builder.getDescriptorManager()
+            .getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
+          descriptor.setValue(val);
+          DebuggerTreeNode arrayItemNode = ((NodeManagerImpl)builder.getNodeManager()).createNode(descriptor, evaluationContext);
           builder.addChildren(Collections.singletonList(arrayItemNode), false);
-          added++;
-          if (added >= ENTRIES_LIMIT) {
+
+          if (added.incrementAndGet() >= ENTRIES_LIMIT) {
             break;
           }
         }
-      }
-
-      builder.addChildren(Collections.emptyList(), true);
-
-      if (added == 0) {
-        if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
-          builder.setMessage(DebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+        // process next chunk if needed
+        if (idx < end && added.get() < ENTRIES_LIMIT) {
+          return addChunk(array, idx, end, length, builder, evaluationContext, added, hiddenNulls);
         }
-        else {
-          builder.setMessage(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
-                             SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
-        }
+        finish(builder, length, added.get(), hiddenNulls.get(), end, idx);
+        return CompletableFuture.completedFuture(null);
+      });
+  }
+
+  private void finish(ChildrenBuilder builder, int arrayLength, int added, boolean hiddenNulls, int end, int idx) {
+    builder.addChildren(Collections.emptyList(), true);
+
+    if (added == 0) {
+      if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
       }
       else {
-        if (hiddenNulls) {
-          builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
-        }
-        if (!myForced && idx < end) {
-          builder.tooManyChildren(end - idx);
-        }
+        builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+                           SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+      }
+    }
+    else {
+      if (hiddenNulls) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
+      }
+      if (!myForced && idx < end) {
+        builder.tooManyChildren(end - idx);
       }
     }
   }
 
-  private static boolean elementIsNull(ArrayReference arrayReference, int index) {
-    try {
-      return ArrayElementDescriptorImpl.getArrayElement(arrayReference, index) == null;
+  private static final class ArrayValuesCache {
+    private final ArrayReference myArray;
+    private List<Value> myCachedValues = Collections.emptyList();
+    private int myCachedStartIndex;
+
+    private ArrayValuesCache(ArrayReference array) {
+      myArray = array;
     }
-    catch (EvaluateException e) {
-      return false;
+
+    Value getValue(int index) {
+      if (index < myCachedStartIndex || index >= myCachedStartIndex + myCachedValues.size()) {
+        myCachedStartIndex = index;
+        myCachedValues = myArray.getValues(index, Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, myArray.length() - index));
+      }
+      return myCachedValues.get(index - myCachedStartIndex);
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(node.getProject()).getLanguageLevel();
       return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass(languageLevel));
@@ -201,14 +324,20 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
   }
 
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
+  @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    if (!(value instanceof ArrayReference reference)) {
+      return CompletableFuture.completedFuture(false);
+    }
+    return DebuggerUtilsAsync.length(reference).thenApply(l -> l > 0);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type instanceof ArrayType;
   }
 
+  //TODO: make async
   public static class Filtered extends ArrayRenderer {
     private final XExpression myExpression;
 
@@ -226,7 +355,7 @@ public class ArrayRenderer extends NodeRendererImpl{
       NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
       NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-      builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
+      builder.setMessage(JavaDebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
                          AllIcons.General.Filter,
                          SimpleTextAttributes.REGULAR_ATTRIBUTES,
                          FILTER_HYPERLINK);
@@ -253,42 +382,45 @@ public class ArrayRenderer extends NodeRendererImpl{
         };
         cachedEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(myExpression));
 
-        int added = 0;
-        if (arrayLength - 1 >= START_INDEX) {
-          ErrorsValueGroup errorsGroup = null;
-          for (int idx = START_INDEX; idx < arrayLength; idx++) {
-            try {
-              if (DebuggerUtilsEx.evaluateBoolean(cachedEvaluator.getEvaluator(evaluationContext.getProject()),
-                                                  (EvaluationContextImpl)evaluationContext.createEvaluationContext(array.getValue(idx)))) {
+        try {
+          int added = 0;
+          if (arrayLength - 1 >= START_INDEX) {
 
-                DebuggerTreeNode arrayItemNode =
-                  nodeManager
-                    .createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
+            ErrorsValueGroup errorsGroup = null;
+            ArrayValuesCache arrayValuesCache = new ArrayValuesCache(array);
+            for (int idx = START_INDEX; idx < arrayLength; idx++) {
+              ArrayElementDescriptorImpl descriptor =
+                (ArrayElementDescriptorImpl)descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
+              Value val = arrayValuesCache.getValue(idx);
+              descriptor.setValue(val);
+              try {
+                if (DebuggerUtilsEx.evaluateBoolean(cachedEvaluator.getEvaluator(evaluationContext.getProject()),
+                                                    (EvaluationContextImpl)evaluationContext.createEvaluationContext(val))) {
 
-                builder.addChildren(Collections.singletonList(arrayItemNode), false);
-                added++;
-                //if (added > ENTRIES_LIMIT) {
-                //  break;
-                //}
+                  DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptor, evaluationContext);
+                  builder.addChildren(Collections.singletonList(arrayItemNode), false);
+                  added++;
+                  //if (added > ENTRIES_LIMIT) {
+                  //  break;
+                  //}
+                }
               }
-            }
-            catch (EvaluateException e) {
-              if (errorsGroup == null) {
-                errorsGroup = new ErrorsValueGroup();
-                builder.addChildren(XValueChildrenList.bottomGroup(errorsGroup), false);
+              catch (EvaluateException e) {
+                if (errorsGroup == null) {
+                  errorsGroup = new ErrorsValueGroup();
+                  builder.addChildren(XValueChildrenList.bottomGroup(errorsGroup), false);
+                }
+                JavaValue childValue = JavaValue.create(null, descriptor, ((EvaluationContextImpl)evaluationContext), nodeManager, false);
+                errorsGroup.addErrorValue(e.getMessage(), childValue);
               }
-              JavaValue childValue = JavaValue
-                .create(null,
-                        (ValueDescriptorImpl)descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx),
-                        ((EvaluationContextImpl)evaluationContext),
-                        nodeManager,
-                        false);
-              errorsGroup.addErrorValue(e.getMessage(), childValue);
             }
           }
-        }
 
-        builder.addChildren(Collections.emptyList(), true);
+          builder.addChildren(Collections.emptyList(), true);
+        }
+        catch (ObjectCollectedException e) {
+          builder.setErrorMessage(JavaDebuggerBundle.message("evaluation.error.array.collected"));
+        }
 
         //if (added != 0 && END_INDEX < arrayLength - 1) {
         //  builder.setRemaining(arrayLength - 1 - END_INDEX);
@@ -296,15 +428,15 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
 
-    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(" clear") {
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(
+      JavaDebuggerBundle.message("array.filter.node.clear.link")) {
       @Override
       public void onClick(MouseEvent e) {
         XDebuggerTree tree = (XDebuggerTree)e.getSource();
         TreePath path = tree.getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           TreeNode parent = ((TreeNode)path.getLastPathComponent()).getParent();
-          if (parent instanceof XValueNodeImpl) {
-            XValueNodeImpl valueNode = (XValueNodeImpl)parent;
+          if (parent instanceof XValueNodeImpl valueNode) {
             ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
                                          valueNode,
                                          DebuggerManagerEx.getInstanceEx(tree.getProject()).getContext());

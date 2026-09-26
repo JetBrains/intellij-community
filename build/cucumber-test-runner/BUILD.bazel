@@ -1,0 +1,61 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+### auto-generated section `build intellij.cucumber.testRunner` start
+jvm_provided_library(
+    name = "libraries_cucumber-core1_provided",
+    lib = "//libraries/cucumber-core1",
+)
+
+jvm_library(
+    name = "cucumber-testRunner",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.cucumber.testRunner",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//platform/testFramework",
+        "//platform/util-class-loader:util-classLoader",
+        ":libraries_cucumber-core1_provided",
+    ],
+)
+
+jvm_library(
+    name = "cucumber-testRunner_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.cucumber.testRunner",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":cucumber-testRunner",
+        "//platform/core-api:core_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//libraries/cucumber-core1",
+        "//libraries/cucumber-core1:cucumber-core1_test_lib",
+        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter_test_lib",
+        "//platform/util-class-loader:util-classLoader_test_lib",
+    ],
+)
+### auto-generated section `build intellij.cucumber.testRunner` end
+
+### auto-generated section `iml intellij.cucumber.testRunner` start
+exports_files(
+    [
+        "intellij.cucumber.testRunner.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.cucumber.testRunner` end

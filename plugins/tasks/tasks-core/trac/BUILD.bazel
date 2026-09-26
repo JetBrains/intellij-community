@@ -1,0 +1,72 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.tasks.trac` start
+content_module_jar(module = ":trac")
+### auto-generated section `dev intellij.tasks.trac` end
+
+### auto-generated section `build intellij.tasks.trac` start
+jvm_library(
+    name = "trac",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tasks.trac",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/tasks/tasks-api:tasks",
+        "//platform/platform-api:ide",
+        "//plugins/tasks/tasks-core:core",
+        "//plugins/tasks/tasks-compatibility:compatibility",
+        "//platform/core-api:core",
+        "//platform/tasks-platform-impl:tasks-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util:util-ui",
+        "//libraries/xml-rpc",
+    ],
+)
+
+jvm_library(
+    name = "trac_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tasks.trac",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":trac",
+        "//plugins/tasks/tasks-api:tasks_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//plugins/tasks/tasks-core:core_test_lib",
+        "//plugins/tasks/tasks-compatibility:compatibility_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/tasks-platform-impl:tasks-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/xml-rpc:xml-rpc_test_lib",
+    ],
+)
+### auto-generated section `build intellij.tasks.trac` end
+
+### auto-generated section `iml intellij.tasks.trac` start
+exports_files(
+    [
+        "intellij.tasks.trac.iml",
+        "resources/intellij.tasks.trac.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tasks.trac` end

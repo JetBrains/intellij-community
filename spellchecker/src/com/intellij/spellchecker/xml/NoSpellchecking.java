@@ -19,7 +19,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * @author Sergey Evdokimov
+ * Allows suppression of spellchecking for annotated {@link com.intellij.util.xml.DomElement DomElement}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NoSpellchecking {

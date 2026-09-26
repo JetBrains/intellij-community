@@ -1,105 +1,167 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.Language;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import junit.framework.TestCase;
+import kotlin.Unit;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.LockSupport;
+import java.util.Set;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static com.intellij.openapi.application.ActionsKt.invokeAndWaitIfNeeded;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * @author Maxim.Mossienko
  */
-public class EditorTestUtil {
-  public static final String CARET_TAG = "<caret>";
-  public static final String CARET_TAG_PREFIX = CARET_TAG.substring(0, CARET_TAG.length() - 1);
+public final class EditorTestUtil {
+  public static final String CARET_TAG = EditorCaretTestUtil.CARET_TAG;
+  public static final String CARET_TAG_PREFIX = EditorCaretTestUtil.CARET_TAG_PREFIX;
 
-  public static final String SELECTION_START_TAG = "<selection>";
-  public static final String SELECTION_END_TAG = "</selection>";
-  public static final String BLOCK_SELECTION_START_TAG = "<block>";
-  public static final String BLOCK_SELECTION_END_TAG = "</block>";
+  public static final String SELECTION_START_TAG = EditorCaretTestUtil.SELECTION_START_TAG;
+  public static final String SELECTION_END_TAG = EditorCaretTestUtil.SELECTION_END_TAG;
+  public static final String BLOCK_SELECTION_START_TAG = EditorCaretTestUtil.BLOCK_SELECTION_START_TAG;
+  public static final String BLOCK_SELECTION_END_TAG = EditorCaretTestUtil.BLOCK_SELECTION_END_TAG;
 
   public static final char BACKSPACE_FAKE_CHAR = '\uFFFF';
   public static final char SMART_ENTER_FAKE_CHAR = '\uFFFE';
   public static final char SMART_LINE_SPLIT_CHAR = '\uFFFD';
+  private static final Comparator<Pair<Integer, String>> MARKERS_COMPARATOR = (o1, o2) -> {
+    int first = Comparing.compare(o1.first, o2.first);
+    return first != 0 ? first : Comparing.compare(o1.second, o2.second);
+  };
 
-  public static void performTypingAction(Editor editor, char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
+  public static void performTypingAction(@NotNull Editor editor, char c) {
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
-    } else if (c == SMART_ENTER_FAKE_CHAR) {
+    }
+    else if (c == SMART_ENTER_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
-    } else if (c == SMART_LINE_SPLIT_CHAR) {
+    }
+    else if (c == SMART_LINE_SPLIT_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_SPLIT);
     }
     else if (c == '\n') {
       executeAction(editor, IdeActions.ACTION_EDITOR_ENTER);
     }
     else {
-      TypedAction action = actionManager.getTypedAction();
+      TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, DataManager.getInstance().getDataContext(editor.getContentComponent()));
     }
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId) {
     executeAction(editor, actionId, false);
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     AnAction action = actionManager.getAction(actionId);
@@ -109,24 +171,31 @@ public class EditorTestUtil {
 
   public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
-    action.beforeActionPerformedUpdate(event);
-    if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
-      return;
+    ActionUtil.updateAction(action, event);
+    if (event.getPresentation().isEnabled()) {
+      ActionUtil.performAction(action, event);
     }
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-    action.actionPerformed(event);
-    actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    else if (assertActionIsEnabled) {
+      fail("Action " + action + " is disabled");
+    }
   }
 
-  @NotNull
-  private static DataContext createEditorContext(@NotNull Editor editor) {
-    Object hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    Map<String, Object> map = ContainerUtil.newHashMap(Pair.create(CommonDataKeys.HOST_EDITOR.getName(), hostEditor),
-                                                       Pair.createNonNull(CommonDataKeys.EDITOR.getName(), editor));
+  public static boolean checkActionIsEnabled(@NotNull Editor editor, @NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
+    ActionUtil.updateAction(action, event);
+    return event.getPresentation().isEnabled();
+  }
+
+  private static @NotNull DataContext createEditorContext(@NotNull Editor editor) {
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    return SimpleDataContext.getSimpleContext(map, parent);
+    return SimpleDataContext.builder()
+      .setParent(parent)
+      .add(CommonDataKeys.HOST_EDITOR, hostEditor)
+      .add(CommonDataKeys.EDITOR, editor)
+      .add(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile())
+      .add(CommonDataKeys.PROJECT, editor.getProject())
+      .build();
   }
 
   public static void performReferenceCopy(Editor editor) {
@@ -147,11 +216,48 @@ public class EditorTestUtil {
     return tokens;
   }
 
-  public static int getCaretPosition(@NotNull final String content) {
+  public static void checkEditorHighlighter(Project project, Editor editor) {
+    if (!(editor instanceof EditorImpl)) return;
+    HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
+
+    EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
+      project, editor.getVirtualFile());
+    freshHighlighter.setEditor((EditorImpl)editor);
+    freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
+    HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
+
+    while (!editorIterator.atEnd() || !freshIterator.atEnd()) {
+      if (editorIterator.atEnd() || freshIterator.atEnd()
+          || editorIterator.getTokenType() != freshIterator.getTokenType()
+          || editorIterator.getStart() != freshIterator.getStart()
+          || editorIterator.getEnd() != freshIterator.getEnd()) {
+        throw new IllegalStateException("Editor highlighter failed to update incrementally:\nFresh:  " +
+                                        dumpHighlighter(freshHighlighter) +
+                                        "\nEditor: " +
+                                        dumpHighlighter(editor.getHighlighter()));
+      }
+      editorIterator.advance();
+      freshIterator.advance();
+    }
+  }
+
+  private static String dumpHighlighter(EditorHighlighter highlighter) {
+    HighlighterIterator iterator = highlighter.createIterator(0);
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+    while (!iterator.atEnd()) {
+      result.append(i).append(": ").append(iterator.getTokenType()).append(" [").append(iterator.getStart()).append("-")
+        .append(iterator.getEnd()).append("], ");
+      iterator.advance();
+    }
+    return result.toString();
+  }
+
+  public static int getCaretPosition(final @NotNull String content) {
     return getCaretAndSelectionPosition(content)[0];
   }
 
-  public static int[] getCaretAndSelectionPosition(@NotNull final String content) {
+  public static int[] getCaretAndSelectionPosition(final @NotNull String content) {
     int caretPosInSourceFile = content.indexOf(CARET_TAG_PREFIX);
     int caretEndInSourceFile = content.indexOf(">", caretPosInSourceFile);
     int caretLength = caretEndInSourceFile - caretPosInSourceFile;
@@ -192,19 +298,43 @@ public class EditorTestUtil {
    */
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
-    int charWidthInPixels = 10;
-    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    return configureSoftWraps(editor, charCountToWrapAt, true);
   }
 
   /**
-   * Configures given editor to wrap at given width, assuming characters are of given width
+   * Configures given editor to wrap at given character count.
    *
    * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
    */
   @TestOnly
+  public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
+    int charWidthInPixels = 10;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWrapsAndViewport(Editor editor, int charCountToWrapAt, int visibleLineCount) {
+    int charWidthInPixels = 10;
+    // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, visibleLineCount * editor.getLineHeight(),
+                              charWidthInPixels);
+  }
+
+  @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int visibleWidth, final int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidth, 1000, charWidthInPixels);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidthInPixels, visibleHeightInPixels, charWidthInPixels, true);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels, boolean useCustomSoftWrapIndent) {
     editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseCustomSoftWrapIndent(useCustomSoftWrapIndent);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
       @Override
@@ -233,25 +363,50 @@ public class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(() -> visibleWidth);
-    model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
-      @Override
-      public int charWidth(int c, int fontType) {
-        return charWidthInPixels;
-      }
-    });
-    setEditorVisibleSizeInPixels(editor, visibleWidth, 1000);
-    applianceManager.registerSoftWrapIfNecessary();
+    applianceManager.setWidthProvider(new TestWidthProvider(visibleWidthInPixels));
+    setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
+    applianceManager.recalculateIfNecessary("configureSoftWraps");
     return !model.getRegisteredSoftWraps().isEmpty();
   }
 
-  public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
-    setEditorVisibleSizeInPixels(editor, 
-                                 widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), 
+  @TestOnly
+  public static void releaseAllEditors() {
+    invokeAndWaitIfNeeded(null, () -> {
+      EditorFactory editorFactory = EditorFactory.getInstance();
+      for (Editor editor : editorFactory.getAllEditors()) {
+        if (!editor.isDisposed()) {
+          editorFactory.releaseEditor(editor);
+        }
+      }
+      return Unit.INSTANCE;
+    });
+  }
+
+  /**
+   * Closes all opened file editors and clears editor history for the given {@code project}.
+   * <p>
+   * The editor history cleanup is scheduled via {@link PsiDocumentManager#performWhenAllCommitted(Runnable)}
+   * and runs after {@link FileEditorManagerEx#closeAllFiles()} finishes producing its asynchronous
+   * selection events: {@code closeAllFiles} eventually fires {@code selectionChanged}, which
+   * {@code EditorHistoryManager.MyEditorManagerListener} handles by recording the closed file into
+   * the history (postponed via {@code performWhenAllCommitted}). Calling
+   * {@code EditorHistoryManager.removeAllFiles()} synchronously here would race with that
+   * postponed history entry update, so the cleanup is queued after the same commit barrier.
+   */
+  public static void closeAllFilesAndClearEditorHistory(@NotNull Project project) {
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    psiDocumentManager.commitAllDocuments();
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
+    psiDocumentManager.performWhenAllCommitted(() -> EditorHistoryManager.getInstance(project).removeAllFiles());
+  }
+
+  public static void setEditorVisibleSize(@NotNull Editor editor, int widthInChars, int heightInChars) {
+    setEditorVisibleSizeInPixels(editor,
+                                 widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor),
                                  heightInChars * editor.getLineHeight());
   }
 
-  public static void setEditorVisibleSizeInPixels(Editor editor, int widthInPixels, int heightInPixels) {
+  public static void setEditorVisibleSizeInPixels(@NotNull Editor editor, int widthInPixels, int heightInPixels) {
     Dimension size = new Dimension(widthInPixels, heightInPixels);
     ((EditorEx)editor).getScrollPane().getViewport().setExtentSize(size);
   }
@@ -261,9 +416,8 @@ public class EditorTestUtil {
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
-    return extractCaretAndSelectionMarkers(document, true);
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkers(document, true);
   }
 
   /**
@@ -272,127 +426,33 @@ public class EditorTestUtil {
    *
    * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
-    return WriteCommandAction.writeCommandAction(null).compute(() -> extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkers(document, processBlockSelection);
   }
 
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
-    List<CaretInfo> carets = ContainerUtil.newArrayList();
-    String fileText = document.getText();
-
-    RangeMarker blockSelectionStartMarker = null;
-    RangeMarker blockSelectionEndMarker = null;
-    if (processBlockSelection) {
-      int blockSelectionStart = fileText.indexOf(BLOCK_SELECTION_START_TAG);
-      int blockSelectionEnd = fileText.indexOf(BLOCK_SELECTION_END_TAG);
-      if ((blockSelectionStart ^ blockSelectionEnd) < 0) {
-        throw new IllegalArgumentException("Both block selection opening and closing tag must be present");
-      }
-      if (blockSelectionStart >= 0) {
-        blockSelectionStartMarker = document.createRangeMarker(blockSelectionStart, blockSelectionStart);
-        blockSelectionEndMarker = document.createRangeMarker(blockSelectionEnd, blockSelectionEnd);
-        document.deleteString(blockSelectionStartMarker.getStartOffset(), blockSelectionStartMarker.getStartOffset() + BLOCK_SELECTION_START_TAG.length());
-        document.deleteString(blockSelectionEndMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset() + BLOCK_SELECTION_END_TAG.length());
-      }
-    }
-
-    boolean multiCaret = StringUtil.getOccurrenceCount(document.getText(), CARET_TAG) > 1
-                         || StringUtil.getOccurrenceCount(document.getText(), SELECTION_START_TAG) > 1;
-    int pos = 0;
-    while (pos < document.getTextLength()) {
-      fileText = document.getText();
-      int caretIndex = fileText.indexOf(CARET_TAG, pos);
-      int selStartIndex = fileText.indexOf(SELECTION_START_TAG, pos);
-      int selEndIndex = fileText.indexOf(SELECTION_END_TAG, pos);
-
-      if ((selStartIndex ^ selEndIndex) < 0) {
-        selStartIndex = -1;
-        selEndIndex = -1;
-      }
-      if (0 <= selEndIndex && selEndIndex < selStartIndex) {
-        throw new IllegalArgumentException("Wrong order of selection opening and closing tags");
-      }
-      if (caretIndex < 0 && selStartIndex < 0 && selEndIndex < 0) {
-        break;
-      }
-      if (multiCaret && 0 <= caretIndex && caretIndex < selStartIndex) {
-        selStartIndex = -1;
-        selEndIndex = -1;
-      }
-      if (multiCaret && caretIndex > selEndIndex && selEndIndex >= 0) {
-        caretIndex = -1;
-      }
-
-      final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-      final RangeMarker selStartMarker = selStartIndex >= 0
-                                         ? document.createRangeMarker(selStartIndex, selStartIndex)
-                                         : null;
-      final RangeMarker selEndMarker = selEndIndex >= 0
-                                       ? document.createRangeMarker(selEndIndex, selEndIndex)
-                                       : null;
-
-      if (caretMarker != null) {
-        document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_TAG.length());
-      }
-      if (selStartMarker != null) {
-        document.deleteString(selStartMarker.getStartOffset(),
-                              selStartMarker.getStartOffset() + SELECTION_START_TAG.length());
-      }
-      if (selEndMarker != null) {
-        document.deleteString(selEndMarker.getStartOffset(),
-                              selEndMarker.getStartOffset() + SELECTION_END_TAG.length());
-      }
-      LogicalPosition caretPosition = null;
-      if (caretMarker != null) {
-        int line = document.getLineNumber(caretMarker.getStartOffset());
-        int column = caretMarker.getStartOffset() - document.getLineStartOffset(line);
-        caretPosition = new LogicalPosition(line, column);
-      }
-      carets.add(new CaretInfo(caretPosition,
-                                      selStartMarker == null || selEndMarker == null
-                                      ? null
-                                      : new TextRange(selStartMarker.getStartOffset(), selEndMarker.getEndOffset())));
-
-      pos = Math.max(caretMarker == null ? -1 : caretMarker.getStartOffset(), selEndMarker == null ? -1 : selEndMarker.getEndOffset());
-    }
-    if (carets.isEmpty()) {
-      carets.add(new CaretInfo(null, null));
-    }
-    TextRange blockSelection = null;
-    if (blockSelectionStartMarker != null) {
-      blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
-    }
-    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[0])), blockSelection);
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
+    return EditorCaretTestUtil.extractCaretAndSelectionMarkersImpl(document, processBlockSelection);
   }
 
   /**
    * Applies given caret/selection state to the editor. Editor text must have been set up previously.
    */
-  public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
-    CaretModel caretModel = editor.getCaretModel();
-    List<CaretState> states = new ArrayList<>(caretsState.carets.size());
-    for (CaretInfo caret : caretsState.carets) {
-      states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
-                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
-                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
-    }
-    caretModel.setCaretsAndSelections(states);
-    if (caretsState.blockSelection != null) {
-      editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),
-                                                   editor.offsetToLogicalPosition(caretsState.blockSelection.getEndOffset()));
-    }
+  public static void setCaretsAndSelection(@NotNull Editor editor, @NotNull CaretAndSelectionState caretsState) {
+    EditorCaretTestUtil.setCaretsAndSelection(editor, caretsState);
   }
 
-  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState) {
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState) {
     verifyCaretAndSelectionState(editor, caretState, null);
   }
 
-  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message) {
+    verifyCaretAndSelectionState(editor, caretState, message, null);
+  }
+
+  public static void verifyCaretAndSelectionState(Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message, String expectedFilePath) {
     boolean hasChecks = false;
-    for (int i = 0; i < caretState.carets.size(); i++) {
-      EditorTestUtil.CaretInfo expected = caretState.carets.get(i);
+    for (int i = 0; i < caretState.carets().size(); i++) {
+      CaretInfo expected = caretState.carets().get(i);
       if (expected.position != null || expected.selection != null) {
         hasChecks = true;
         break;
@@ -401,12 +461,37 @@ public class EditorTestUtil {
     if (!hasChecks) {
       return; // nothing to check, so we skip caret/selection assertions
     }
+
+    try {
+      doVerifyCaretAndSelectionState(editor, caretState, message);
+    }
+    catch (AssertionError e) {
+      try {
+        String expected = CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets());
+        String actual = CaretAndSelectionMarkup.renderActualState(editor);
+        if (expectedFilePath != null) {
+          if (!expected.equals(actual)) {
+            throw new FileComparisonFailedError(e.getMessage(), expected, actual, expectedFilePath);
+          }
+        } else {
+          assertEquals(e.getMessage(), expected, actual);
+        }
+      }
+      catch (AssertionError exception) {
+        exception.addSuppressed(e);
+        throw exception;
+      }
+      throw e;
+    }
+  }
+
+  private static void doVerifyCaretAndSelectionState(@NotNull Editor editor, @NotNull CaretAndSelectionState caretState, @Nullable String message) {
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
     List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
-    assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets.size(), allCarets.size());
-    for (int i = 0; i < caretState.carets.size(); i++) {
-      String caretDescription = caretState.carets.size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets.size() + " ";
+    assertEquals(messageSuffix + " Unexpected number of carets", caretState.carets().size(), allCarets.size());
+    for (int i = 0; i < caretState.carets().size(); i++) {
+      String caretDescription = caretState.carets().size() == 1 ? "" : "caret " + (i + 1) + "/" + caretState.carets().size() + " ";
       Caret currentCaret = allCarets.get(i);
       int actualCaretLine = editor.getDocument().getLineNumber(currentCaret.getOffset());
       int actualCaretColumn = currentCaret.getOffset() - editor.getDocument().getLineStartOffset(actualCaretLine);
@@ -415,7 +500,7 @@ public class EditorTestUtil {
       int selectionEnd = currentCaret.getSelectionEnd();
       LogicalPosition actualSelectionStart = editor.offsetToLogicalPosition(selectionStart);
       LogicalPosition actualSelectionEnd = editor.offsetToLogicalPosition(selectionEnd);
-      CaretInfo expected = caretState.carets.get(i);
+      CaretInfo expected = caretState.carets().get(i);
       if (expected.position != null) {
         assertEquals(messageSuffix + caretDescription + "unexpected caret position", expected.position, actualCaretPosition);
       }
@@ -427,9 +512,136 @@ public class EditorTestUtil {
         assertEquals(messageSuffix + caretDescription + "unexpected selection end", expectedSelectionEnd, actualSelectionEnd);
       }
       else {
-        assertFalse(messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
-                    currentCaret.hasSelection());
+        assertFalse(
+          messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
+          currentCaret.hasSelection());
       }
+    }
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with {@code expected}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, boolean allowUnhandledTokens, @NotNull String expected) {
+    UsefulTestCase.assertTextEquals(expected, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with file from {@code answerFilePath}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
+    UsefulTestCase.assertSameLinesWithFile(answerFilePath, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  private static String serializeHighlightingResults(@NotNull PsiFile testFile, boolean allowUnhandledTokens) {
+    TestCase.assertNotNull("Fixture has no file", testFile);
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
+                                                                                              testFile.getProject(),
+                                                                                              testFile.getVirtualFile());
+    TestCase.assertNotNull("Syntax highlighter not found", syntaxHighlighter);
+    final Lexer highlightingLexer = syntaxHighlighter.getHighlightingLexer();
+    TestCase.assertNotNull("Highlighting lexer not found", highlightingLexer);
+
+    final String fileText = testFile.getText();
+    highlightingLexer.start(fileText);
+    IElementType tokenType;
+    final StringBuilder sb = new StringBuilder();
+    Set<IElementType> notHighlightedTokens = new HashSet<>();
+    while ((tokenType = highlightingLexer.getTokenType()) != null) {
+      final TextAttributesKey[] highlights = syntaxHighlighter.getTokenHighlights(tokenType);
+      if (highlights.length > 0) {
+        if (!sb.isEmpty()) {
+          sb.append("\n");
+        }
+        String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());
+        token = token.replace(' ', '␣');
+        if (StringUtil.isEmptyOrSpaces(token)) {
+          token = token.replace("\n", "\\n");
+        }
+        sb.append(token).append("\n");
+        final List<String> attrNames = new SmartList<>();
+        for (final TextAttributesKey attributesKey : highlights) {
+          attrNames.add("    " + serializeTextAttributeKey(attributesKey));
+        }
+        sb.append(StringUtil.join(attrNames, "\n"));
+      }
+      else if (!StringUtil.isEmptyOrSpaces(highlightingLexer.getTokenText())) {
+        notHighlightedTokens.add(tokenType);
+      }
+      highlightingLexer.advance();
+    }
+    if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
+      TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
+    }
+    return sb.toString();
+  }
+
+  private static String serializeTextAttributeKey(@Nullable TextAttributesKey key) {
+    if (key == null) {
+      return "";
+    }
+    final String keyName = key.getExternalName();
+    final TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TestCase.assertNotSame(fallbackKey, key);
+    return fallbackKey == null ? keyName : (keyName + " => " + serializeTextAttributeKey(fallbackKey));
+  }
+
+  private static class CaretAndSelectionMarkup {
+    private final @NotNull ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+
+    static @NotNull String renderActualState(@NotNull Editor editor) {
+      CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
+      // There's no guarantee on the order the carets are enumerated,
+      // and in any case we should be prepared that something might go wrong.
+      for (Caret caret : editor.getCaretModel().getAllCarets()) {
+        boolean hasSelection = caret.hasSelection();
+        if (hasSelection) markup.addMark(caret.getSelectionStart(), SELECTION_START_TAG);
+        markup.addMark(caret.getOffset(), CARET_TAG);
+        if (hasSelection) markup.addMark(caret.getSelectionEnd(), SELECTION_END_TAG);
+      }
+      return markup.insertMarks(editor.getDocument().getCharsSequence());
+    }
+
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<? extends CaretInfo> carets) {
+      CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
+      // The expected state is properly sorted already, so it doesn't require extra sorting,
+      // but for sake of consistency we use the same approach as for the actual caret state.
+      for (CaretInfo expected : carets) {
+        LogicalPosition position = expected.position;
+        TextRange selection = expected.selection;
+
+        if (selection != null) markup.addMark(selection.getStartOffset(), SELECTION_START_TAG);
+        if (position != null) markup.addMark(editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG);
+        if (selection != null) markup.addMark(selection.getEndOffset(), SELECTION_END_TAG);
+      }
+      return markup.insertMarks(editor.getDocument().getCharsSequence());
+    }
+
+    private void addMark(int offset, @NotNull String s) {
+      Pair<Integer, String> mark = Pair.create(offset, s);
+      marks.add(mark);
+    }
+
+    private @NotNull String insertMarks(@NotNull @NlsSafe CharSequence text) {
+      StringBuilder sb = new StringBuilder(text);
+
+      marks.sort(Comparator.comparingInt(mark -> mark.first));
+      for (int i = marks.size() - 1; i >= 0; i--) {
+        Pair<Integer, String> mark = marks.get(i);
+        int offset = mark.first;
+        if (0 <= offset && offset <= sb.length()) {
+          sb.insert(offset, mark.second);
+        }
+        else {
+          sb.insert(Math.max(0, Math.min(offset, sb.length())), "!!!" + mark.second + "@[" + offset + "]");
+        }
+      }
+
+      return sb.toString();
     }
   }
 
@@ -451,22 +663,66 @@ public class EditorTestUtil {
   }
 
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
-    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
-
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
-    });
+    return addInlay(editor, offset, relatesToPrecedingText, 1);
   }
 
-  public static void waitForLoading(Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editor == null) return;
-    while (!AsyncEditorLoader.isEditorLoaded(editor)) {
-      LockSupport.parkNanos(100_000_000);
-      UIUtil.dispatchAllInvocationEvents();
-    }
+  public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, int widthInPixels) {
+    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EmptyInlayRenderer(widthInPixels));
+  }
+
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return addBlockInlay(editor, offset, relatesToPrecedingText, showAbove, false, widthInPixels, heightInPixels);
+  }
+
+
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    boolean showWhenFolded,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return editor.getInlayModel().addBlockElement(offset,
+                                                  new InlayProperties()
+                                                    .relatesToPrecedingText(relatesToPrecedingText)
+                                                    .showAbove(showAbove)
+                                                    .showWhenFolded(showWhenFolded),
+                                                  new EmptyInlayRenderer(widthInPixels, heightInPixels));
+  }
+
+  public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
+    return editor.getInlayModel().addAfterLineEndElement(offset, false, new EmptyInlayRenderer(widthInPixels));
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine) {
+    return addCustomFoldRegion(editor, startLine, endLine, 1);
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine, int heightInPixels) {
+    return addCustomFoldRegion(editor, startLine, endLine, 0, heightInPixels);
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine,
+                                                               int widthInPixels, int heightInPixels) {
+    CustomFoldRegion[] result = new CustomFoldRegion[1];
+    FoldingModel model = editor.getFoldingModel();
+    model.runBatchFoldingOperation(() -> {
+      result[0] = model.addCustomLinesFolding(startLine, endLine, new EmptyCustomFoldingRenderer(widthInPixels, heightInPixels));
+    });
+    return result[0];
+  }
+
+  /**
+   * @see AsyncEditorLoader#start(TextEditorImpl, Deferred)
+   */
+  @RequiresEdt
+  public static void waitForLoading(@SuppressWarnings("unused") Editor editor) {
+    // editors in the test mode are loaded synchronously
   }
 
   public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
@@ -474,53 +730,253 @@ public class EditorTestUtil {
     Project project = editor.getProject();
     assertNotNull(project);
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
-    undoManager.setEditorProvider(() -> fileEditor); // making undo work in test
+    undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+      @Override
+      public FileEditor getCurrentEditor(@Nullable Project project) {
+        return fileEditor;
+      }
+    });
     try {
       runnable.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 
-  public static class CaretAndSelectionState {
-    public final List<CaretInfo> carets;
-    public final TextRange blockSelection;
+  /**
+   * @see #getTextWithCaretsAndSelections(Editor, boolean, boolean)
+   */
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor) {
+    return getTextWithCaretsAndSelections(editor, true, true);
+  }
 
-    public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-      this.carets = carets;
-      this.blockSelection = blockSelection;
+  /**
+   * @return a text from the {@code editor} with optional carets and selections markers.
+   */
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
+    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
+    ContainerUtil.reverse(editor.getCaretModel().getAllCarets()).forEach(
+      caret -> ContainerUtil.reverse(getCaretMacros(caret, addCarets, addSelections)).forEach(
+        pair -> sb.insert(pair.first, pair.second)));
+    return sb.toString();
+  }
+
+  /**
+   * Return macros describing a {@code caret}
+   */
+  public static @NotNull List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
+    if (!position && !selection) {
+      return Collections.emptyList();
     }
 
-    /**
-     * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
-     */
-    public boolean hasExplicitCaret() {
-      if(carets.isEmpty()) return false;
-      if(blockSelection == null && carets.size() == 1) {
-        CaretInfo caret = carets.get(0);
-        return caret.position != null || caret.selection != null;
+    boolean addSelection = selection && caret.hasSelection();
+    List<Pair<Integer, String>> result = new ArrayList<>();
+    if (addSelection) {
+      result.add(Pair.create(caret.getSelectionStart(), SELECTION_START_TAG));
+    }
+    if (position) {
+      result.add(Pair.create(caret.getOffset(), CARET_TAG));
+    }
+    if (addSelection) {
+      result.add(Pair.create(caret.getSelectionEnd(), SELECTION_END_TAG));
+    }
+    result.sort(Pair.comparingByFirst());
+    return result;
+  }
+
+  /**
+   * Loads file from the {@code sourcePath}, runs highlighting, collects highlights optionally filtered with {@code textAttributesKeysNames},
+   * serializes them and compares result with file from {@code answersFilePath}. If answers file is missing, it's going to be created and
+   * test will fail.
+   *
+   * @param acceptableKeyNames highlights filter by {@link TextAttributesKey#myExternalName key names} or null if all highlights should be collected
+   * @apiNote If source file has carets in it, runs checking once per each caret. Results MUST be the same. E.g: brace matching highlighting with
+   * cursor positioned on open and close brace.
+   */
+  public static void checkEditorHighlighting(@NotNull CodeInsightTestFixture fixture,
+                                             @NotNull String answersFilePath,
+                                             @Nullable Set<String> acceptableKeyNames) {
+    Editor editor = fixture.getEditor();
+    CaretModel caretModel = editor.getCaretModel();
+    List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
+    caretModel.removeSecondaryCarets();
+    CharSequence documentSequence = InjectedLanguageEditorUtil.getTopLevelEditor(editor).getDocument().getCharsSequence();
+
+    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(fixture.getProject(), () -> {
+      for (Integer caretsOffset : caretsOffsets) {
+        if (caretsOffset != -1) {
+          caretModel.moveToOffset(caretsOffset);
+        }
+
+        UsefulTestCase.assertSameLinesWithFile(
+          answersFilePath,
+          renderTextWithHighlightingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          () -> "Failed at:\n " +
+                documentSequence.subSequence(0, caretsOffset) +
+                "<caret>" +
+                documentSequence.subSequence(caretsOffset, documentSequence.length()) +
+                "\n");
+      }});
+  }
+
+  private static @NotNull String renderTextWithHighlightingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
+                                                                 @NotNull CharSequence documentSequence,
+                                                                 @Nullable Set<String> acceptableKeyNames) {
+    List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()
+      .flatMap(it -> {
+        String keyText = it.type.getAttributesKey().toString();
+        if (acceptableKeyNames != null && !acceptableKeyNames.contains(keyText)) {
+          return Stream.empty();
+        }
+        return Stream.of(
+          Pair.create(it.getStartOffset(), "<" + keyText + ">"),
+          Pair.create(it.getEndOffset(), "</" + keyText + ">")
+        );
+      })
+      .sorted(MARKERS_COMPARATOR).toList();
+
+    StringBuilder sb = new StringBuilder();
+    int lastEnd = 0;
+
+    for (Pair<Integer, String> marker : sortedMarkers) {
+      Integer startOffset = marker.first;
+      if (startOffset > lastEnd) {
+        sb.append(documentSequence.subSequence(lastEnd, startOffset));
+        lastEnd = startOffset;
       }
-      return true;
+      sb.append(marker.second);
+    }
+    return sb.append(documentSequence.subSequence(lastEnd, documentSequence.length())).toString();
+  }
+
+  private static final class EmptyInlayRenderer implements EditorCustomElementRenderer {
+    private final int width;
+    private final Integer height;
+
+    private EmptyInlayRenderer(int width) {
+      this(width, null);
+    }
+
+    private EmptyInlayRenderer(int width, Integer height) {
+      this.width = width;
+      this.height = height;
+    }
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return width;}
+
+    @Override
+    public int calcHeightInPixels(@NotNull Inlay inlay) {
+      return height == null ? EditorCustomElementRenderer.super.calcHeightInPixels(inlay) : height;
     }
   }
 
-  public static class CaretInfo {
-    @Nullable
-    public final LogicalPosition position; // column number in this position is calculated in terms of characters,
-                                           // not in terms of visual position
-                                           // so Tab character always increases the column number by 1
-    @Nullable
-    public final TextRange selection;
+  private static class EmptyCustomFoldingRenderer implements CustomFoldRegionRenderer {
+    private final int myWidth;
+    private final int myHeight;
 
-    public CaretInfo(@Nullable LogicalPosition position, @Nullable TextRange selection) {
-      this.position = position;
-      this.selection = selection;
+    private EmptyCustomFoldingRenderer(int width, int height) {
+      myWidth = width;
+      myHeight = height;
     }
 
-    public int getCaretOffset(Document document) {
-      return position == null ? -1 : document.getLineStartOffset(position.line) + position.column;
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return myWidth;
     }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return myHeight;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
+  }
+
+  public static class TestWidthProvider implements SoftWrapApplianceManager.VisibleAreaWidthProvider {
+    private int myWidth;
+
+    public TestWidthProvider(int width) {
+      setVisibleAreaWidth(width);
+    }
+
+    @Override
+    public int getVisibleAreaWidth() {
+      return myWidth;
+    }
+
+    public void setVisibleAreaWidth(int width) {
+      myWidth = width;
+    }
+  }
+
+  public static <E extends Exception> void saveEncodingsIn(@NotNull Project project, Charset newIdeCharset, Charset newProjectCharset, @NotNull ThrowableRunnable<E> task) throws E {
+    EncodingManager encodingManager = EncodingManager.getInstance();
+    String oldIde = encodingManager.getDefaultCharsetName();
+    if (newIdeCharset != null) {
+      encodingManager.setDefaultCharsetName(newIdeCharset.name());
+    }
+
+    EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
+    String oldProject = encodingProjectManager.getDefaultCharsetName();
+    if (newProjectCharset != null) {
+      encodingProjectManager.setDefaultCharsetName(newProjectCharset.name());
+    }
+
+    try {
+      task.run();
+    }
+    finally {
+      if (newIdeCharset != null) {
+        encodingManager.setDefaultCharsetName(oldIde);
+      }
+      if (newProjectCharset != null) {
+        encodingProjectManager.setDefaultCharsetName(oldProject);
+      }
+    }
+  }
+  @RequiresEdt
+  public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
+    buildInitialFoldingsInBackground(editor, null);
+  }
+
+  @RequiresEdt
+  public static void buildInitialFoldingsInBackground(@NotNull Editor editor, @Nullable Duration timeout) {
+    ThreadingAssertions.assertEventDispatchThread();
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    var future = ReadAction.nonBlocking(() -> {
+      Project project = editor.getProject();
+      if (project == null || editor.isDisposed()) {
+        return null;
+      }
+      if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+        return null;
+      }
+      PsiFile psiFile = EditorContextManager.getPsiFileForEditor(editor, project);
+      if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+        return null;
+      }
+      return ((CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project)).updateFoldRegionsAsync(editor, true, true);
+    }).submit(AppExecutorUtil.getAppExecutorService());
+    final Runnable foldingState = timeout != null
+                            ? PlatformTestUtil.waitForFuture(future, timeout.toMillis())
+                            : PlatformTestUtil.waitForFuture(future);
+    if (foldingState != null) {
+      foldingState.run();
+    }
+  }
+  private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    for (Language language : viewProvider.getLanguages()) {
+      FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
+      if (foldingBuilder != null && !DumbService.isDumbAware(foldingBuilder)) return false;
+    }
+    return true;
   }
 }

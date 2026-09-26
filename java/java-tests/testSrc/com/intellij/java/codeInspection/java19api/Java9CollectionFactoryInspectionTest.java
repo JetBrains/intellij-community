@@ -29,19 +29,14 @@ public class Java9CollectionFactoryInspectionTest extends LightQuickFixParameter
     return LanguageLevel.JDK_1_9;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new Java9CollectionFactoryInspection()};
   }
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk9();
-  }
-
-  public void test() {
-    doAllTests();
+    return IdeaTestUtil.getMockJdk11();
   }
 
   @Override

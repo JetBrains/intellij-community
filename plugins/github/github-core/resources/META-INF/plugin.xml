@@ -1,0 +1,92 @@
+<idea-plugin allow-bundled-update="true">
+  <name>GitHub</name>
+  <id>org.jetbrains.plugins.github</id>
+  <vendor>JetBrains</vendor>
+  <category>Version Controls</category>
+  <description>
+    <![CDATA[
+      Provides integration with <a href="https://github.com/">GitHub</a>.
+        <ul>
+        <li>Specify your GitHub account to access all of your repositories from the IDE.</li>
+        <li>Clone repositories, create and review pull requests, create gists, and much more.</li>
+        </ul>
+        <p>To configure, open <b>Settings / Preferences</b> and go to Version Control | GitHub.</p>
+        <p>Requires the Git plugin.</p>
+      ]]>
+  </description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.vcs.github" loading="embedded"/>
+    <module name="intellij.vcs.github.git"/>
+    <module name="intellij.vcs.github.ultimatePromo"/>
+    <module name="intellij.vcs.github.tracker"/>
+    <module name="intellij.vcs.github.json"/>
+    <module name="intellij.vcs.github.ultimate.features"/>
+    <module name="intellij.vcs.github.ultimate.docker"/>
+    <module name="intellij.vcs.github.ultimate.cron"/>
+  </content>
+
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="Git4Idea"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.collaborationTools.auth"/>
+    <module name="intellij.platform.collaborationTools.auth.base"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.credentialStore.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.externalProcessAuthHelper"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.vcs.git.backend"/>
+    <module name="intellij.vcs.git.shared"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

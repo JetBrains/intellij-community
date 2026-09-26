@@ -1,45 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.test.cd
 import git4idea.test.cloneRepo
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.initRepo
 import git4idea.test.tac
-import java.io.File
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.nio.file.Files
 
-class GitBareWorkTreeTest : GitWorkTreeBaseTest() {
+@TestApplication
+internal class GitBareWorkTreeTest {
 
-  override fun initMainRepo(): String {
-    val sourceRepo = File(testRoot, "source")
-    assertTrue(sourceRepo.mkdir())
-    initRepo(project, sourceRepo.path, true)
+  private val contextFixture = gitPlatformContextFixture().gitWorkTreeFixture {
+    val sourceRepo = testNioRoot.resolve("source")
+    Files.createDirectories(testNioRoot)
+    initRepo(project, sourceRepo, true)
 
-    val mainDir = File(testRoot, "main.git")
-    val path = mainDir.path
-    cloneRepo(sourceRepo.path, path, true)
-    return path
+    val mainDir = testNioRoot.resolve("main.git")
+    cloneRepo(project, sourceRepo.toString(), mainDir.toString(), true)
+    mainDir
   }
+  private val context: GitWorkTreeContext get() = contextFixture.get()
 
   // IDEA-151598
-  fun `test current revision`() {
-    cd(myRepo)
+  @Test
+  fun `test current revision`(): Unit = with(context) {
+    cd(repo)
     val hash = tac("file.txt")
-    myRepo.update()
+    repo.update()
 
-    assertEquals("Current revision identified incorrectly", hash, myRepo.currentRevision)
+    assertThat(repo.currentRevision).describedAs("Current revision identified incorrectly").isEqualTo(hash)
   }
 }

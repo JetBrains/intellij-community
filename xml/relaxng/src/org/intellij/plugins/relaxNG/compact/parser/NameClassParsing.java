@@ -18,9 +18,17 @@ package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
-import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIER_OR_KEYWORD;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.MINUS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PIPE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_NAME;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_STAR;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.STAR;
 
 public class NameClassParsing extends AbstractParsing {
 
@@ -40,7 +48,7 @@ public class NameClassParsing extends AbstractParsing {
       do {
         advance();
         if (!parseNameClassPart()) {
-          error("NameClass expected");
+          error(RelaxngBundle.message("relaxng.parse.error.name-class-expected"));
         }
       } while (currentToken() == PIPE);
       marker.done(RncElementTypes.NAME_CLASS_CHOICE);
@@ -66,7 +74,7 @@ public class NameClassParsing extends AbstractParsing {
     } else if (LPAREN == t) {
       advance();
       if (parseNameClass()) {
-        match(RPAREN, "')' expected");
+        match(RPAREN, RelaxngBundle.message("relaxng.parse.error.rparen-expected"));
       }
     } else {
       marker.drop();
@@ -80,7 +88,7 @@ public class NameClassParsing extends AbstractParsing {
     if (MINUS == currentToken()) {
       final PsiBuilder.Marker marker = begin();
       if (!parseNameClass()) {
-        error("NameClass expected");
+        error(RelaxngBundle.message("relaxng.parse.error.name-class-expected"));
       }
       marker.done(RncElementTypes.EXCEPT_NAME_CLASS);
     }

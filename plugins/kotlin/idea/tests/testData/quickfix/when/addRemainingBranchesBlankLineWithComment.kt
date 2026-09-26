@@ -1,0 +1,16 @@
+// "Add remaining branches" "true"
+// WITH_STDLIB
+// K2_ERROR: NO_ELSE_IN_WHEN
+
+sealed class A
+class B : A()
+
+fun test(a: A) {
+    val r = <caret>when (a) {
+
+        // comment
+
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix

@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ParameterElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterElement");
+  private static final Logger LOG = Logger.getInstance(ParameterElement.class);
 
   public ParameterElement(@NotNull IElementType type) {
     super(type);

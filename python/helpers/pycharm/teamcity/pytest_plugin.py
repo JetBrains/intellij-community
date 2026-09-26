@@ -12,38 +12,33 @@ tests under TeamCity build.
 """
 
 import os
-import sys
 import re
+import sys
 import traceback
 from datetime import timedelta
 
-from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
-from teamcity import is_running_under_teamcity
+import pytest
+
 from teamcity import diff_tools
+from teamcity import is_running_under_teamcity
+from teamcity.common import convert_error_to_string, dump_test_log, dump_test_stderr, dump_test_stdout
+from teamcity.messages import TeamcityServiceMessages
+from teamcity.output import TeamCityMessagesPrinter
 
 diff_tools.patch_unittest_diff()
+_ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
+_skip_passed_output_default = None
+_report_logs_as_test_log = False
 
 
-def fetch_diff_error_from_message(err_message):
-    line_with_diff = None
-    diff_error_message = None
-    lines = err_message.split("\n")
-    if err_message.startswith("AssertionError: assert"):
-        # Everything in one line
-        line_with_diff = lines[0][len("AssertionError: assert "):]
-    elif len(err_message.split("\n")) > 1:
-        err_line = lines[1]
-        line_with_diff = err_line[len("assert "):]
-        diff_error_message = lines[0]
+def set_skip_passed_output_default(value):
+    global _skip_passed_output_default
+    _skip_passed_output_default = value
 
-    if line_with_diff and line_with_diff.count("==") == 1:
-        parts = [x.strip() for x in line_with_diff.split("==")]
-        parts = [s[1:-1] if s.startswith("'") or s.startswith('"') else s for s in parts]
-        # Pytest cuts too long lines, no need to check is_too_big
-        return diff_tools.EqualsAssertionError(parts[0], parts[1], diff_error_message)
-    else:
-        return None
+
+def set_report_logs_as_test_log(value):
+    global _report_logs_as_test_log
+    _report_logs_as_test_log = value
 
 
 def pytest_addoption(parser):
@@ -53,9 +48,20 @@ def pytest_addoption(parser):
                      dest="teamcity", default=0, help="force output of JetBrains TeamCity service messages")
     group._addoption('--no-teamcity', action="count",
                      dest="no_teamcity", default=0, help="disable output of JetBrains TeamCity service messages")
+    parser.addoption('--jb-swapdiff', action="store_true", dest="swapdiff", default=False, help="Swap actual/expected in diff")
 
-    parser.addini("skippassedoutput", help="skip output of passed tests for JetBrains TeamCity service messages",
-                  type="bool")
+    skip_passed_output = {"type": "bool"}
+    if _skip_passed_output_default is not None:
+        skip_passed_output["default"] = _skip_passed_output_default
+    parser.addini("skippassedoutput", help="skip output of passed tests for JetBrains TeamCity service messages", **skip_passed_output)
+    parser.addini("swapdiff", help="Swap actual/expected in diff", type="bool")
+
+
+def get_rootdir(config):
+    if hasattr(config, 'rootpath'):  # pytest>=6
+        return str(config.rootpath)
+    else:
+        return str(config.rootdir)
 
 
 def pytest_configure(config):
@@ -69,12 +75,18 @@ def pytest_configure(config):
     if enabled:
         output_capture_enabled = getattr(config.option, 'capture', 'fd') != 'no'
         coverage_controller = _get_coverage_controller(config)
-        skip_passed_output = config.getini('skippassedoutput')
+        skip_passed_output = bool(config.getini('skippassedoutput'))
 
+        config.option.verbose = 2  # don't truncate assert explanations
         config._teamcityReporting = EchoTeamCityMessages(
             output_capture_enabled,
+            # never write tc messages into buffered output
+            getattr(config.pluginmanager.getplugin('capturemanager'), 'global_and_fixture_disabled'),
             coverage_controller,
-            skip_passed_output
+            skip_passed_output,
+            bool(config.getini('swapdiff') or config.option.swapdiff),
+            get_rootdir(config),
+            _report_logs_as_test_log,
         )
         config.pluginmanager.register(config._teamcityReporting)
 
@@ -95,16 +107,22 @@ def _get_coverage_controller(config):
 
 
 class EchoTeamCityMessages(object):
-    def __init__(self, output_capture_enabled, coverage_controller, skip_passed_output):
+    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff, rootdir,
+                 report_logs_as_test_log):
         self.coverage_controller = coverage_controller
         self.output_capture_enabled = output_capture_enabled
         self.skip_passed_output = skip_passed_output
+        self.report_logs_as_test_log = report_logs_as_test_log
 
-        self.teamcity = TeamcityServiceMessages()
+        output_handler = TeamCityMessagesPrinter(context_manager=context_manager)
+        self.teamcity = TeamcityServiceMessages(output_handler=output_handler)
         self.test_start_reported_mark = set()
+        self.rootdir = rootdir
+        self.current_test_item = None
 
         self.max_reported_output_size = 1 * 1024 * 1024
         self.reported_output_chunk_size = 50000
+        self.swap_diff = swap_diff
 
     def get_id_from_location(self, location):
         if type(location) is not tuple or len(location) != 3 or not hasattr(location[2], "startswith"):
@@ -170,46 +188,88 @@ class EchoTeamCityMessages(object):
 
     def format_location(self, location):
         if type(location) is tuple and len(location) == 3:
-            return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
+            # Pytest internal location uses 0-based line numbers; display 1-based for humans
+            lineno = location[1]
+            if lineno is not None:
+                lineno = lineno + 1
+            return "%s:%s (%s)" % (str(location[0]), str(lineno), str(location[2]))
         return str(location)
 
-    def pytest_collection_modifyitems(self, session, config, items):
-        self.teamcity.testCount(len(items))
+    def pytest_sessionfinish(self, session, exitstatus):
+        if sys.version_info[0] == 2:
+            return
+        if exitstatus > pytest.ExitCode.TESTS_FAILED and self.current_test_item:
+            test_id = self.format_test_id(self.current_test_item.nodeid, self.current_test_item.location)
+            self.teamcity.testStopped(
+                test_id,
+                message=exitstatus.name if hasattr(exitstatus, 'name') else str(exitstatus),
+                flowId=test_id
+            )
+            self.report_test_finished(test_id)
 
+    def pytest_collection_finish(self, session):
+        self.teamcity.testCount(len(session.items))
+
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logstart(self, nodeid, location):
         # test name fetched from location passed as metainfo to PyCharm
-        # it will be used to run specific test using "-k"
-        # See IDEA-176950
-        self.ensure_test_start_reported(self.format_test_id(nodeid, location), location[2])
+        # it will be used to run specific test
+        # See IDEA-176950, PY-31836
+        path, lineno, test_name = location
+        if test_name:
+            test_name = str(test_name).split(".")[-1]
+        path = os.path.join(self.rootdir, path)
+        lineno = lineno + 1 if lineno is not None else None
+        self.ensure_test_start_reported(self.format_test_id(nodeid, location), test_name, path=path, lineno=lineno)
 
-    def ensure_test_start_reported(self, test_id, metainfo=None):
+    def pytest_runtest_protocol(self, item):
+        self.current_test_item = item
+        return None  # continue to next hook
+
+    def ensure_test_start_reported(self, test_id, metainfo=None, path=None, lineno=None):
         if test_id not in self.test_start_reported_mark:
             if self.output_capture_enabled:
                 capture_standard_output = "false"
             else:
                 capture_standard_output = "true"
-            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output, metainfo=metainfo)
+            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output,
+                                      metainfo=metainfo, path=path, lineno=str(lineno) if lineno is not None else None)
             self.test_start_reported_mark.add(test_id)
 
     def report_has_output(self, report):
         for (secname, data) in report.sections:
-            if report.when in secname and ('stdout' in secname or 'stderr' in secname):
+            if report.when in secname and ('stdout' in secname or 'stderr' in secname or ('log' in secname and self.report_logs_as_test_log)):
                 return True
         return False
+
+    def report_output_separator(self):
+        self.teamcity.output_handler.send_message(self.teamcity.encode("\n"))
 
     def report_test_output(self, report, test_id):
         for (secname, data) in report.sections:
             # https://github.com/JetBrains/teamcity-messages/issues/112
-            # CollectReport doesn't have 'when' property
-            if hasattr(report, "when") and report.when not in secname:
+            # CollectReport didn't have 'when' property, but now it has.
+            # But we still need output on 'collect' state
+            if hasattr(report, "when") and report.when not in secname and report.when != 'collect':
                 continue
             if not data:
                 continue
 
             if 'stdout' in secname:
+                self.report_output_separator()
                 dump_test_stdout(self.teamcity, test_id, test_id, data)
             elif 'stderr' in secname:
+                self.report_output_separator()
                 dump_test_stderr(self.teamcity, test_id, test_id, data)
+            elif 'log' in secname:
+                self.report_test_log(test_id, data)
+
+    def report_test_log(self, test_id, data):
+        if not self.report_logs_as_test_log:
+            return
+
+        self.report_output_separator()
+        dump_test_log(self.teamcity, test_id, test_id, data)
 
     def report_test_finished(self, test_id, duration=None):
         self.teamcity.testFinished(test_id, testDuration=duration, flowId=test_id)
@@ -237,23 +297,36 @@ class EchoTeamCityMessages(object):
                 serialized_data = err_message[err_message.index(diff_name) + len(diff_name) + 1:]
                 diff_error = diff_tools.deserialize_error(serialized_data)
 
-            # AssertionError is patched in py.test, we can try to fetch diff from it
-            # In general case message starts with "AssertionError: ", but can also starts with "assert" for top-level
-            # function. To support both cases we unify them
-            if err_message.startswith("assert"):
-                err_message = "AssertionError: " + err_message
-            if err_message.startswith("AssertionError:"):
-                diff_error = fetch_diff_error_from_message(err_message)
+            assertion_tuple = getattr(self.current_test_item, _ASSERTION_FAILURE_KEY, None)
+            if assertion_tuple:
+                op, left, right = assertion_tuple
+                if self.swap_diff:
+                    left, right = right, left
+                diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
+            else:
+                m = re.search("AssertionError: Expected <(.*)> to .*? <(.*)>, but .*", err_message)
+                if m:
+                    left, right = m.group(1), m.group(2)
+                    if self.swap_diff:
+                        left, right = right, left
+                    diff_error = diff_tools.EqualsAssertionError(expected=right, actual=left)
         except Exception:
             pass
 
+        if not diff_error:
+            from .jb_local_exc_store import get_exception
+            diff_error = get_exception()
+
         if diff_error:
-            # Cut everything after postfix: it is internal view of DiffError
+            # Keep full pytest traceback; do not truncate by underscore separators to avoid losing frames.
             strace = str(report.longrepr)
-            data_postfix = "_ _ _ _ _"
-            if data_postfix in strace:
-                strace = strace[0:strace.index(data_postfix)]
-            self.teamcity.testFailed(test_id, diff_error.msg if diff_error.msg else message, strace,
+            # If the message ends with ":", append the real exception class for clarity.
+            try:
+                if strace.endswith(":") and getattr(diff_error, "real_exception", None):
+                    strace += " " + type(diff_error.real_exception).__name__
+            except Exception:
+                pass
+            self.teamcity.testFailed(test_id, diff_error.msg or message, strace,
                                      flowId=test_id,
                                      comparison_failure=diff_error
                                      )
@@ -277,6 +350,10 @@ class EchoTeamCityMessages(object):
         self.teamcity.testIgnored(test_id, reason, flowId=test_id)
         self.report_test_finished(test_id, duration)
 
+    def pytest_assertrepr_compare(self, config, op, left, right):
+        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, left, right))
+
+    @pytest.hookimpl(trylast=True)
     def pytest_runtest_logreport(self, report):
         """
         :type report: _pytest.runner.TestReport
@@ -332,14 +409,42 @@ class EchoTeamCityMessages(object):
 
     def _report_coverage(self):
         from coverage.misc import NotPython
-        from coverage.report import Reporter
         from coverage.results import Numbers
 
-        class _CoverageReporter(Reporter):
+        class _Reporter(object):
+            def __init__(self, coverage, config):
+                try:
+                    from coverage.report import Reporter
+                except ImportError:
+                    # Support for coverage >= 5.0.1.
+                    from coverage.report import get_analysis_to_report
+
+                    class Reporter(object):
+
+                        def __init__(self, coverage, config):
+                            self.coverage = coverage
+                            self.config = config
+                            self._file_reporters = []
+
+                        def find_file_reporters(self, morfs):
+                            return [fr for fr, _ in get_analysis_to_report(self.coverage, morfs)]
+
+                self._reporter = Reporter(coverage, config)
+
+            def find_file_reporters(self, morfs):
+                self.file_reporters = self._reporter.find_file_reporters(morfs)
+
+            def __getattr__(self, name):
+                return getattr(self._reporter, name)
+
+        class _CoverageReporter(_Reporter):
             def __init__(self, coverage, config, messages):
                 super(_CoverageReporter, self).__init__(coverage, config)
 
-                self.branches = coverage.data.has_arcs()
+                if hasattr(coverage, 'data'):
+                    self.branches = coverage.data.has_arcs()
+                else:
+                    self.branches = coverage.get_data().has_arcs()
                 self.messages = messages
 
             def report(self, morfs, outfile=None):
@@ -357,7 +462,7 @@ class EchoTeamCityMessages(object):
 
                 for cu in units:
                     try:
-                        analysis = self.coverage._analyze(cu)
+                        analysis = self.coverage._analyze(cu.filename)
                         nums = analysis.numbers
                         total += nums
                     except KeyboardInterrupt:
@@ -371,7 +476,7 @@ class EchoTeamCityMessages(object):
                         if typ is NotPython and not cu.should_be_python():
                             continue
 
-                        test_id = cu.name
+                        test_id = cu.relname
                         details = convert_error_to_string(err)
 
                         self.messages.testStarted(test_id, flowId=test_id)

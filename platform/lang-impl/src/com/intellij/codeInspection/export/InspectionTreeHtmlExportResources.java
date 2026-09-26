@@ -1,44 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.export;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
+
 /**
  * @author Dmitry Batkovich
  */
-class InspectionTreeHtmlExportResources {
+final class InspectionTreeHtmlExportResources {
   private static final Logger LOG = Logger.getInstance(InspectionTreeHtmlExportResources.class);
 
-  static void copyInspectionReportResources(final String targetDirectory) {
+  static void copyInspectionReportResources(@NotNull Path targetDirectory) {
     copyInspectionReportResource("styles.css", targetDirectory);
     copyInspectionReportResource("script.js", targetDirectory);
   }
 
-  private static void copyInspectionReportResource(final String resourceName, final String targetDirectory) {
-    final File resourceTargetFile = new File(targetDirectory, resourceName);
-    if (!FileUtil.createIfDoesntExist(resourceTargetFile)) {
-      LOG.error("Can't create file: " + resourceTargetFile.getAbsolutePath());
+  private static void copyInspectionReportResource(@NotNull String resourceName, @NotNull Path targetDirectory) {
+    Path resourceTargetFile = targetDirectory.resolve(resourceName);
+    try {
+      Files.createDirectories(resourceTargetFile.getParent());
     }
-    try (InputStream input = InspectionTreeHtmlExportResources.class.getClassLoader().getResourceAsStream("/inspectionReport/" + resourceName)) {
-      try (OutputStream f = new FileOutputStream(resourceTargetFile)) {
-        FileUtil.copy(input, f);
-      }
+    catch (IOException e) {
+      LOG.error("Can't create file: " + resourceTargetFile);
+    }
+
+    try (InputStream input = InspectionTreeHtmlExportResources.class.getClassLoader().getResourceAsStream("inspectionReport/" + resourceName)) {
+      Files.copy(Objects.requireNonNull(input), resourceTargetFile, StandardCopyOption.REPLACE_EXISTING);
     }
     catch (IOException e) {
       LOG.error(e);

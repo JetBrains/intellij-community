@@ -1,0 +1,26 @@
+<html>
+<body>
+<p>Calling <code>hashCode()</code> on an array returns the identity hash code,
+    not a hash based on the array's contents. This is almost never what you want.</p>
+<p>To calculate the hash code for an array correctly, use:</p>
+<ul>
+  <li><code>contentHashCode()</code> for linear arrays</li>
+  <li><code>contentDeepHashCode()</code> for multidimensional arrays</li>
+</ul>
+<p><b>Example:</b></p>
+<pre><code>
+  fun main() {
+      val a1 = arrayOf&lt;Any&gt;()
+      val hashcode = a1.hashCode() // incorrect
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun main() {
+      val a1 = arrayOf&lt;Any&gt;()
+      val hashcode = a1.contentHashCode() // correct
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

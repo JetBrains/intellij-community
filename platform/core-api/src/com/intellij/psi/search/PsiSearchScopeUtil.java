@@ -1,33 +1,28 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.lang.LanguageMatcher;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiSearchScopeUtil {
+public final class PsiSearchScopeUtil {
 
-  @Nullable
-  public static SearchScope union(@Nullable SearchScope a, @Nullable SearchScope b) {
+  public static final Key<SearchScope> USE_SCOPE_KEY = Key.create("search.use.scope");
+
+  public static @Nullable SearchScope union(@Nullable SearchScope a, @Nullable SearchScope b) {
     return a == null ? b : b == null ? a : a.union(b);
   }
 
@@ -47,11 +42,23 @@ public class PsiSearchScopeUtil {
     if (file == null) {
       return true;
     }
-    final PsiElement context = file.getContext();
-    if (context != null) file = context.getContainingFile();
-    if (file == null) return false;
-    VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile == null || globalScope.contains(virtualFile);
+    while (file != null) {
+      FileViewProvider viewProvider = file.getOriginalFile().getViewProvider();
+      VirtualFile backed = BackedVirtualFile.getOriginFileIfBacked(viewProvider.getVirtualFile());
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(element.getProject())) {
+        if (CodeInsightContextAwareSearchScopes.contains(globalScope, backed, CodeInsightContextUtil.getCodeInsightContext(viewProvider))) {
+          return true;
+        }
+      }
+      else {
+        if (globalScope.contains(backed)) {
+          return true;
+        }
+      }
+      PsiElement context = file.getContext();
+      file = context == null ? null : context.getContainingFile();
+    }
+    return false;
   }
 
   public static boolean isInScope(@NotNull LocalSearchScope local, @NotNull PsiElement element) {
@@ -62,9 +69,8 @@ public class PsiSearchScopeUtil {
     return false;
   }
 
-  @NotNull
-  @Contract(pure=true)
-  public static SearchScope restrictScopeTo(@NotNull SearchScope originalScope, @NotNull FileType... fileTypes) {
+  @Contract(pure = true)
+  public static @NotNull SearchScope restrictScopeTo(@NotNull SearchScope originalScope, FileType @NotNull ... fileTypes) {
     if (originalScope instanceof GlobalSearchScope) {
       return GlobalSearchScope.getScopeRestrictedByFileTypes(
         (GlobalSearchScope)originalScope,
@@ -75,5 +81,18 @@ public class PsiSearchScopeUtil {
       (LocalSearchScope)originalScope,
       fileTypes
     );
+  }
+
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  public static @NotNull SearchScope restrictScopeToFileLanguage(@NotNull Project project,
+                                                                 @NotNull SearchScope originalScope,
+                                                                 @NotNull LanguageMatcher matcher) {
+    if (originalScope instanceof GlobalSearchScope) {
+      return new FileLanguageGlobalScope(project, (GlobalSearchScope)originalScope, matcher);
+    }
+    else {
+      return LocalSearchScope.getScopeRestrictedByFileLanguage((LocalSearchScope)originalScope, matcher);
+    }
   }
 }

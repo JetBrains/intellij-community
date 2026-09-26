@@ -1,31 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class PropertyEditor<V> {
   private final EventListenerList myListenerList;
 
@@ -36,12 +18,11 @@ public abstract class PropertyEditor<V> {
   /**
    * @return edited value. Note that {@code null} is the legal.
    *
-   * @exception java.lang.Exception the method throws exception
+   * @exception Exception the method throws exception
    * if user enters wrong value and it cannot be applied. Note, that
    * exception's message will be shown to the user.
    */
-  @Nullable
-  public abstract V getValue() throws Exception;
+  public abstract @Nullable V getValue() throws Exception;
 
   /**
    * @param component this component can be used to prepare editor UI
@@ -67,21 +48,21 @@ public abstract class PropertyEditor<V> {
 
   /**
    * Property editor can return preferred focused component (if any) inside the component
-   * which is returned by the {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method.
+   * which is returned by the {@link #getComponent(RadComponent,V,InplaceContext) } method.
    * This method is used as a hint to implement better focus handling.
    * {@code null} values means that editor relies on the UI editor in
    * determing preferred focused component.
    *
    * @param component cannot be null
    */
-  public JComponent getPreferredFocusedComponent(@NotNull final JComponent component){
+  public JComponent getPreferredFocusedComponent(final @NotNull JComponent component){
     return null;
   }
 
   /**
    * Editor should update UI of all its internal components to fit current
    * IDEA Look And Feel. We cannot directly update UI of the component
-   * that is returned by {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method
+   * that is returned by {@link #getComponent(RadComponent,V,InplaceContext) } method
    * because hidden components that are not in the Swing tree can exist.
    */
   public abstract void updateUI();

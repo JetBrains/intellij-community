@@ -2,7 +2,7 @@ import java.util.*;
 
 class LambdaTest {
     public void testR() {
-        <error descr="Incompatible types. Found: 'java.lang.String', required: '<method reference>'">new ArrayList<String>() :: size = ""</error>; 
+        <error descr="Reference to variable expected on left-hand side of assignment">new ArrayList<String>() :: size</error> = ""; 
 
     }
 }

@@ -1,0 +1,7 @@
+JsonFile: n_string_incomplete_escape.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\"]')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

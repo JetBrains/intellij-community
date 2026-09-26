@@ -1,11 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
@@ -33,7 +37,7 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   }
 
   public void testTest() {
-    myFixture.configureByFile("unittest.py");
+    myFixture.configureByFile("packages/unittest/unittest.py");
     doTest();
   }
 
@@ -46,14 +50,12 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   }
 
   public void testAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
-      inspection.ignoreAnnotations = true;
-      myFixture.enableInspections(inspection);
-      final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
-      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
-      assertSdkRootsNotParsed(currentFile);
-    });
+    PyProtectedMemberInspection inspection = new PyProtectedMemberInspection();
+    inspection.ignoreAnnotations = true;
+    myFixture.enableInspections(inspection);
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+    assertSdkRootsNotParsed(currentFile);
   }
 
   //PY-14234
@@ -76,12 +78,12 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
 
   // PY-26112
   public void testMemberResolvedToStub() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-27148
   public void testTypingNamedTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-26139
@@ -92,6 +94,22 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
   // PY-26139
   public void testProtectedModuleInPackageAbove() {
     doMultiFileTest("my_package/my_subpackage/module2.py");
+  }
+
+  // PY-32485
+  public void testProtectedMemberOfSameFileClass() {
+    // created file should be considered as located inside a package so Python 3 is used here
+    doTestByText("""
+                   class A:
+                       def __init__(self, arg):
+                           self._arg = arg
+
+                       def _f(self):
+                           return self._arg
+
+                   a = A(1)
+                   print(<weak_warning descr="Access to a protected member _arg of a class">a._arg</weak_warning>)
+                   print(<weak_warning descr="Access to a protected member _f of a class">a._f</weak_warning>())""");
   }
 
   @NotNull

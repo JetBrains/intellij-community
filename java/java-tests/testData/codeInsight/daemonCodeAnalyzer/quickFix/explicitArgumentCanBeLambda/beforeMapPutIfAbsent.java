@@ -1,6 +1,6 @@
-// "Use 'computeIfAbsent' method with functional argument" "true"
+// "Use 'computeIfAbsent' method with functional argument" "true-preview"
 
-import java.util.Map;
+import java.util.*;
 
 class Test {
   public void test(Map<String, List<Integer>> map, String key) {

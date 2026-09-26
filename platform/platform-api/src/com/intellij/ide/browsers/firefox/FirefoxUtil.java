@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,18 +17,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class FirefoxUtil {
+public final class FirefoxUtil {
   private static final Logger LOG = Logger.getInstance(FirefoxUtil.class);
-  @NonNls public static final String PROFILES_INI_FILE = "profiles.ini";
+  public static final @NonNls String PROFILES_INI_FILE = "profiles.ini";
 
   private FirefoxUtil() {
   }
 
-  @Nullable
-  public static File getDefaultProfileIniPath() {
+  public static @Nullable File getDefaultProfileIniPath() {
     File[] roots = getProfilesDirs();
     for (File profilesDir : roots) {
       File profilesFile = new File(profilesDir, PROFILES_INI_FILE);
@@ -53,8 +35,7 @@ public class FirefoxUtil {
     return null;
   }
 
-  @Nullable
-  public static File getFirefoxExtensionsDir(FirefoxSettings settings) {
+  public static @Nullable File getFirefoxExtensionsDir(FirefoxSettings settings) {
     File profilesFile = settings.getProfilesIniFile();
     if (profilesFile != null && profilesFile.exists()) {
       List<FirefoxProfile> profiles = computeProfiles(profilesFile);
@@ -69,8 +50,7 @@ public class FirefoxUtil {
     return null;
   }
 
-  @Nullable
-  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<FirefoxProfile> profiles) {
+  public static @Nullable FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<? extends FirefoxProfile> profiles) {
     for (FirefoxProfile profile : profiles) {
       if (profile.getName().equals(name)) {
         return profile;
@@ -79,8 +59,7 @@ public class FirefoxUtil {
     return getDefaultProfile(profiles);
   }
 
-  @Nullable
-  public static FirefoxProfile getDefaultProfile(List<FirefoxProfile> profiles) {
+  public static @Nullable FirefoxProfile getDefaultProfile(List<? extends FirefoxProfile> profiles) {
     if (profiles.isEmpty()) {
       return null;
     }
@@ -93,16 +72,12 @@ public class FirefoxUtil {
     return profiles.get(0);
   }
 
-  @NotNull
-  public static List<FirefoxProfile> computeProfiles(@Nullable File profilesFile) {
+  public static @NotNull List<FirefoxProfile> computeProfiles(@Nullable File profilesFile) {
     if (profilesFile == null || !profilesFile.isFile()) {
       return Collections.emptyList();
     }
 
-    try {
-      BufferedReader reader;
-      reader = new BufferedReader(new FileReader(profilesFile));
-      try {
+      try (BufferedReader reader = new BufferedReader(new FileReader(profilesFile))) {
         final List<FirefoxProfile> profiles = new SmartList<>();
         boolean insideProfile = false;
         String currentName = null;
@@ -147,16 +122,12 @@ public class FirefoxUtil {
             }
             else //noinspection SpellCheckingInspection
               if (name.equalsIgnoreCase("isrelative") && value.equals("1")) {
-              isRelative = true;
-            }
+                isRelative = true;
+              }
           }
         }
         return profiles;
       }
-      finally {
-        reader.close();
-      }
-    }
     catch (IOException e) {
       LOG.info(e);
       return Collections.emptyList();

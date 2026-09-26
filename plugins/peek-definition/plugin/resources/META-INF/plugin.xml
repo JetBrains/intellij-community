@@ -1,0 +1,20 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>intellij.peek.definition</id>
+  <name>Peek Definition</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <description><![CDATA[
+    Provides <b>Peek Definition</b> action to view code without switching away from the code that you're editing.
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <!--suppress AllContentModulesOptionalLoadingRule -->
+  <content namespace="jetbrains">
+    <module name="intellij.peek.definition.frontend"/>
+  </content>
+</idea-plugin>

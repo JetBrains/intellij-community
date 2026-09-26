@@ -1,0 +1,1084 @@
+{
+  parserClass="com.intellij.mermaid.lang.parser._MermaidParser"
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  psiClassPrefix="Mermaid"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.intellij.mermaid.lang.psi"
+  psiImplPackage="com.intellij.mermaid.lang.psi.impl"
+  elementTypeHolderClass="com.intellij.mermaid.lang.parser.MermaidElements"
+  elementTypeClass="com.intellij.mermaid.lang.psi.MermaidElementType"
+  tokenTypeClass="com.intellij.mermaid.lang.lexer.MermaidToken"
+  parserImports=[
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Directives.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Frontmatter.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Journey.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sequence.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Gantt.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.C4.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Timeline.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.XYChart.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Block.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Generic.*'
+    'static com.intellij.mermaid.lang.parser.ParserUtils.*'
+  ]
+  generateTokens=false
+  implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
+}
+
+file ::= [frontmatter EOL] (oldStart | newStart)
+
+private oldStart ::= EOL oldStart | directive oldStart | oldDiagram
+private newStart ::= EOL newStart | newDiagram
+
+frontmatter ::= FRONTMATTER_START EOL frontmatterContent FRONTMATTER_END
+external frontmatterContent ::= frontmatterParser
+
+private oldDiagram ::= pieHeader EOL* [pieBody]
+  | journeyHeader EOL* [journeyBody]
+  | flowchartHeader EOL* [flowchartBody]
+  | sequenceHeader EOL* [sequenceBody]
+  | classDiagramHeader EOL* classBody
+  | stateHeader EOL* [stateBody]
+  | erHeader EOL* [erBody]
+  | ganttHeader EOL* [ganttBody]
+  | requirementDiagramHeader EOL* [requirementDiagramBody]
+  | gitGraphHeader EOL* [gitGraphBody]
+  | c4Header EOL* c4Body
+  | mindmapHeader EOL* mindmapBody
+  | timelineHeader EOL* [timelineBody]
+  | quadrantHeader EOL* [quadrantBody]
+  | xyChartHeader EOL* [xyChartBody]
+  | blockDiagramHeader EOL* [blockDiagramBody]
+  | genericHeader EOL* [genericBody]
+
+private newDiagram ::= ZEN_UML
+  | sankeyHeader EOL* [sankeyBody]
+
+titleStatement ::= TITLE complexTitleValue
+complexTitleValue ::= TITLE_VALUE+
+
+
+pieHeader ::= PIE [showDataRec]
+private showDataRec ::= EOL showDataRec | SHOW_DATA
+
+pieBody ::= pieLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private pieLines ::= pieLine [pieLines]
+private pieLine ::= pieStatement [EOL] | EOL
+private pieStatement ::= pieDataStatement
+  | titleStatement
+  | directive
+  | accStatement
+
+pieDataStatement ::= string COLON VALUE
+
+
+journeyHeader ::= JOURNEY
+
+journeyBody ::= journeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
+private journeyLine ::= journeyStatement [EOL] | EOL
+private journeyStatement ::= journeyDataStatement
+  | journeySectionStatement
+  | titleStatement
+  | directive
+  | accStatement
+
+journeyDataStatement ::= complexTaskName COLON (IGNORED | sectionTaskData [COLON journeyNamedData? (COLON sectionTaskData?)*])
+
+journeySectionStatement ::= journeySectionHeader EOL* [journeySectionBlock]
+journeySectionHeader ::= SECTION complexSectionTitle
+journeySectionBlock ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private journeySectionLines ::= (journeySectionLine | IGNORED) [journeySectionLines]
+private journeySectionLine ::= journeySectionInnerStatement [EOL] | EOL
+private journeySectionInnerStatement ::= journeyDataStatement
+
+complexSectionTitle ::= SECTION_TITLE+
+complexTaskName ::= TASK_NAME+
+complexTaskData ::= TASK_DATA*
+private recTaskData ::= complexTaskData [COMMA recTaskData]
+sectionTaskData ::= recTaskData
+
+complexNamedData ::= TASK_DATA* { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
+private recNamedData ::= complexNamedData [COMMA recNamedData]
+journeyNamedData ::= recNamedData
+
+
+flowchartHeader ::= FLOWCHART [DIR]
+
+flowchartBody ::= flowchartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
+private flowchartLine ::= flowchartStatement [separator] | separator
+private flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
+  | subgraphStatement
+  | styleStatement
+  | linkStyleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | flowchartClickStatement
+//	| directive
+  | accStatement
+
+private separator ::= EOL | SEMICOLON
+vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
+flowchartLinkStatement ::= [edgeId] (START_ARROW complexLinkText ARROW | ARROW [SEP complexLinkText SEP])
+// mermaid 11.5+: `A e1@--> B` names the edge so it can be styled or animated later.
+edgeId ::= ID EDGE_ID_MARKER
+nodeStatement ::= (styledVertex | vertex)  [AMPERSAND nodeStatement]
+styledVertex ::= vertex STYLE_SEPARATOR STYLE_TARGET
+// A node carries either the classic bracket shape or `@{ ... }` metadata, not both. Standalone
+// `e1@{ animate: true }` lines land here too: an id plus metadata is the same shape, and only the id's
+// meaning differs.
+vertex ::= complexIdentifier [metadata | vertexText]
+vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
+  | OPEN_ROUND nodeText CLOSE_ROUND
+  | STADIUM_START nodeText STADIUM_END
+  | SUBROUTINE_START nodeText SUBROUTINE_END
+  | CYLINDER_START nodeText CYLINDER_END
+  | CIRCLE_START nodeText CIRCLE_END
+  | ASYMMETRIC_START nodeText CLOSE_SQUARE
+  | DIAMOND_START nodeText DIAMOND_END
+  | HEXAGON_START nodeText HEXAGON_END
+  | TRAP_START nodeText INV_TRAP_END
+  | INV_TRAP_START nodeText TRAP_END
+  | TRAP_START nodeText TRAP_END
+  | INV_TRAP_START nodeText INV_TRAP_END
+  | DOUBLE_CIRCLE_START nodeText DOUBLE_CIRCLE_END
+
+// `A@{ shape: rect, label: "Hello" }` (mermaid 11.3+). Shared with sequence participants and actors
+// (`participant Alice@{ "type": "boundary" }`, 11.13+), which is why keys may be quoted as well as bare.
+//
+// Entries are separated by a comma or by a newline, matching how mermaid reads the mapping: on one line the
+// separator is the comma, and when it is spread over several lines the newline separates them and a trailing
+// comma would be taken as part of the value ("No such shape: rounded,").
+metadata ::= METADATA_START EOL* [metadataEntries] METADATA_END
+// One separator rule covering both spellings rather than two alternatives: written as
+// `EOL* COMMA EOL* | EOL+` the two share a leading `EOL*`, and the first alternative consuming the newline
+// before failing on the missing comma stops the second from being tried at all.
+private metadataEntries ::= metadataEntry ((EOL | COMMA)+ metadataEntry)* EOL*
+// Named metadataEntryValue, not metadataValue: the generated element type would otherwise collide with
+// the METADATA_VALUE token, and both are static-imported into the generated parser.
+metadataEntry ::= (METADATA_KEY | string) COLON metadataEntryValue
+metadataEntryValue ::= METADATA_VALUE | string
+
+nodeText ::=
+    (maybeEmptyQuotedNodeText | maybeEmptyMdText) ALIAS+
+  | (quotedNodeText | mdText) ALIAS*
+  | ALIAS+
+
+private quotedNodeText ::= DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
+private maybeEmptyQuotedNodeText ::= DOUBLE_QUOTE ALIAS* DOUBLE_QUOTE
+
+complexLinkText ::=
+    (maybeEmptyQuotedLinkText | maybeEmptyMdText) LINK_TEXT+
+  | (quotedLinkText | mdText) LINK_TEXT*
+  | LINK_TEXT+
+
+private quotedLinkText ::= DOUBLE_QUOTE LINK_TEXT+ DOUBLE_QUOTE
+private maybeEmptyQuotedLinkText ::= DOUBLE_QUOTE LINK_TEXT* DOUBLE_QUOTE
+
+private mdText ::= DOUBLE_QUOTE BACK_QUOTE markdownValue BACK_QUOTE DOUBLE_QUOTE
+private maybeEmptyMdText ::= DOUBLE_QUOTE BACK_QUOTE [markdownValue] BACK_QUOTE DOUBLE_QUOTE
+markdownValue ::= MD_STRING_VALUE { mixin="com.intellij.mermaid.lang.psi.impl.MermaidLanguageInjectionHost" }
+
+subgraphStatement ::= subgraphHeader separator EOL* subgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+
+subgraphHeader ::= SUBGRAPH subgraphName
+subgraphName ::= subgraphId [OPEN_SQUARE nodeText CLOSE_SQUARE]
+private subgraphId ::=
+    (maybeEmptyString | maybeEmptyMdText) complexIdentifier
+  | (string | mdText) complexIdentifier?
+  | complexIdentifier
+
+subgraphBlock ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
+private subgraphLine ::= subgraphInnerStatement [separator] | separator
+private subgraphInnerStatement ::= flowchartStatement
+  | directionStatement
+
+styleStatement ::= STYLE styleStatementTarget styleOptions
+styleStatementTarget ::= STYLE_TARGET {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+linkStyleStatement ::= LINK_STYLE linkStyleTarget styleOptions
+private linkStyleTarget ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
+
+classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
+
+flowchartClassStatement ::= CLASS identifier (COMMA identifier)* STYLE_TARGET
+
+// STYLE_VAL+ rather than a single token: a CSS value may contain commas (`stroke-dasharray: 9,5`), and the
+// lexer emits those commas as value fragments rather than declaration separators, so a value arrives as
+// several adjacent tokens.
+styleOptions ::= styleDeclaration (COMMA styleDeclaration)*
+// The value is optional because mermaid accepts a declaration with no colon at all.
+styleDeclaration ::= STYLE_OPT [COLON STYLE_VAL+]
+
+
+sequenceHeader ::= SEQUENCE
+
+sequenceBody ::= sequenceLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
+private sequenceLine ::= sequenceStatement [separator] | separator
+private sequenceStatement ::= actorStatement
+  | signalStatement
+  | autonumberStatement
+  | activateStatement
+  | deactivateStatement
+  | noteStatement
+  | linksStatement
+  | linkStatement
+  | loopStatement
+  | rectStatement
+  | optStatement
+  | breakStatement
+  | boxStatement
+  | altStatement
+  | parStatement
+  | parOverStatement
+  | criticalStatement
+  | directive
+  | accStatement
+  | titleStatement
+
+autonumberStatement ::= AUTONUMBER (OFF | [NUM] [NUM])
+
+activateStatement ::= ACTIVATE complexIdentifier
+deactivateStatement ::= DEACTIVATE complexIdentifier
+
+idAlias ::= ALIAS+
+
+actorStatement ::= [CREATE] (PARTICIPANT | ACTOR) complexIdentifier [metadata] [AS idAlias]
+  | DESTROY complexIdentifier
+
+signalStatement ::= complexIdentifier signal complexIdentifier COLON complexMessage
+signal ::= signalType [PLUS | MINUS]
+signalType ::= SOLID_OPEN_ARROW
+  | DOTTED_OPEN_ARROW
+  | SOLID_ARROW
+  | DOTTED_ARROW
+  | SOLID_CROSS
+  | DOTTED_CROSS
+  | SOLID_POINT
+  | DOTTED_POINT
+
+loopStatement ::= loopHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+loopHeader ::= LOOP [complexControlId]
+
+rectStatement ::= rectHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+rectHeader ::= RECT [complexControlId]
+
+optStatement ::= optHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+optHeader ::= OPT [complexControlId]
+
+breakStatement ::= breakHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+breakHeader ::= BREAK [complexControlId]
+
+altStatement ::= altHeader EOL+ [sequenceBody] [EOL* elseSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+altHeader ::= ALT [complexControlId]
+
+parStatement ::= parHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+parHeader ::= PAR [complexControlId]
+
+parOverStatement ::= parOverHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+parOverHeader ::= PAR_OVER [complexControlId]
+
+criticalStatement ::= criticalHeader EOL+ [sequenceBody] [EOL* optionSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+criticalHeader ::= CRITICAL [complexControlId]
+
+boxStatement ::= boxHeader EOL+ [boxBlock] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+boxHeader ::= BOX [complexControlId]
+boxBlock ::= boxLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private boxLines ::= (boxLine | IGNORED) [boxLines]
+private boxLine ::= actorStatement [separator] | separator
+
+noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessage
+  | NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON complexMessage
+
+linksStatement ::= LINKS complexIdentifier COLON linksValues
+linksValues ::= OPEN_CURLY linkContent CLOSE_CURLY
+private linkContent ::= maybeEmptyString COLON maybeEmptyString [COMMA linkContent]
+
+linkStatement ::= LINK complexIdentifier COLON complexMessage
+
+private elseSections ::= elseSection [EOL* elseSections]
+private elseSection ::= elseHeader EOL+ [sequenceBody]
+elseHeader ::= ELSE [complexControlId]
+
+private andSections ::= andSection [EOL* andSections]
+private andSection ::= andHeader EOL+ [sequenceBody]
+andHeader ::= AND [complexControlId]
+
+private optionSections ::= optionSection [EOL* optionSections]
+private optionSection ::= optionHeader EOL+ [sequenceBody]
+optionHeader ::= OPTION [complexControlId]
+
+complexMessage ::= MESSAGE+
+complexControlId ::= CONTROL_ID+
+
+
+classDiagramHeader ::= CLASS_DIAGRAM
+
+classBody ::= classLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private classLines ::= classLine [classLines]
+private classLine ::= classDiagramStatement [EOL] | EOL
+private classDiagramStatement ::= directionStatement
+  | classStatement
+  | relationStatement
+  | namespaceStatement
+  | memberStatement
+  | annotationStatement
+  | classDiagramNoteStatement
+  | classDiagramClickStatement
+  | accStatement
+  | styleStatement
+  | classDefStatement
+
+classDiagramIdentifier ::= CLASS_ID+ | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+quotedClassIdentifier ::= STRING_VALUE {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+classStatement ::= classHeader [classBlock]
+// The trailing annotation is `class Shape <<interface>>`, the one-line alternative to a separate
+// `<<interface>> Shape` statement (which annotationStatement already covers). The lexer already enters
+// the annotation state from pre_generic_class_diagram, so only the rule was missing.
+classHeader ::= CLASS classDiagramIdentifier [generic] [classLabel] [annotation] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+classBlock ::= OPEN_CURLY EOL* classMembers? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+classLabel ::= OPEN_SQUARE maybeEmptyString CLOSE_SQUARE
+
+memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+
+relationStatement ::= leftId relation rightId [COLON complexLabel]
+leftId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+rightId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+complexLabel ::= LABEL+
+
+annotationStatement ::= annotation classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
+annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+
+private classMembers ::= memberLines
+private memberLines ::= memberLine [memberLines]
+private memberLine ::= classMemberStatement [EOL] | EOL
+private classMemberStatement ::= attribute | annotation | directive
+
+attribute ::= attrWord+
+private attrWord ::= ATTRIBUTE_WORD
+  | genericTypeId
+  | maybeEmptyString
+  | OPEN_SQUARE | CLOSE_SQUARE
+  | OPEN_ROUND | CLOSE_ROUND
+  | OPEN_ANGLE | CLOSE_ANGLE
+  | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
+  | COLON | SEMICOLON
+
+memberAttribute ::= memberAttrWord+
+private memberAttrWord ::= ATTRIBUTE_WORD
+  | genericTypeId
+  | OPEN_SQUARE | CLOSE_SQUARE
+  | OPEN_CURLY | CLOSE_CURLY
+  | OPEN_ROUND | CLOSE_ROUND
+  | OPEN_ANGLE | CLOSE_ANGLE
+  | PLUS | MINUS | POUND | TILDA | STAR | DOLLAR | COMMA | DOT
+
+generic ::= TILDA genericTypeId [generic] TILDA
+genericTypeId ::= GENERIC_TYPE+ {
+    mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+namespaceStatement ::= namespaceHeader [namespaceBlock]
+// The optional label is `namespace Auth["Authentication Service"]`.
+namespaceHeader ::= NAMESPACE namespaceIdentifier [namespaceLabel]
+namespaceLabel ::= OPEN_SQUARE string CLOSE_SQUARE
+namespaceIdentifier ::= CLASS_ID+ { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
+namespaceBlock ::= OPEN_CURLY EOL* namespaceStatements? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private namespaceStatements ::= namespaceLines
+private namespaceLines ::= namespaceLine [namespaceLines]
+// Namespaces nest as of mermaid 11.15, so a namespace body may contain further namespaces.
+private namespaceLine ::= classStatement [EOL] | namespaceStatement [EOL] | EOL
+
+relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
+cardinality ::= maybeEmptyString
+
+relationTypeLeft ::= AGGREGATION
+  | EXTENSION_START
+  | COMPOSITION
+  | DEPENDENCY_START
+  | LOLLIPOP
+
+relationTypeRight ::= AGGREGATION
+  | EXTENSION_END
+  | COMPOSITION
+  | DEPENDENCY_END
+  | LOLLIPOP
+
+lineType ::= LINE | DOTTED_LINE
+
+classDiagramNoteStatement ::= NOTE_FOR classDiagramIdentifier classDiagramNoteText | NOTE classDiagramNoteText
+classDiagramNoteText ::= string
+
+
+stateHeader ::= STATE_DIAGRAM
+
+stateBody ::= stateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private stateLines ::= stateLine [stateLines]
+private stateLine ::= stateDiagramStatement [EOL] | EOL
+private stateDiagramStatement ::= stateDeclaration
+  | compositeStateDeclaration
+  | stateRelationStatement
+  | stateId
+  | stateNote
+  | stateClassDefStatement
+  | cssClassStatement
+  | directionStatement
+  | directive
+  | accStatement
+
+stateRelationStatement ::= stateId ARROW stateId [COLON complexLabel]
+
+stateDeclaration ::= stateId COLON complexLabel
+  | STATE description AS stateId
+  | stateDeclarationHeader annotation
+
+stateDeclarationHeader ::= STATE stateId
+
+compositeStateDeclaration ::= stateDeclarationHeader stateBlock
+stateBlock ::= OPEN_CURLY EOL* innerStateBody? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private innerStateBody ::= innerStateLines
+private innerStateLines ::= innerStateLine [innerStateLines]
+private innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
+private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
+
+dividerStatement ::= DIVIDER
+
+stateId ::= identifier [STYLE_SEPARATOR identifier] | specialState [STYLE_SEPARATOR identifier]
+specialState ::= OPEN_SQUARE STAR CLOSE_SQUARE
+description ::= string
+
+stateNote ::= noteHeader EOL* noteContent { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+noteHeader ::= NOTE (RIGHT_OF | LEFT_OF) stateId
+private noteContent ::= complexNoteContent? END
+  | COLON [simpleNoteContent]
+
+simpleNoteContent ::= NOTE_CONTENT+
+complexNoteContent ::= noteLines
+private noteLines ::= noteLine [noteLines]
+private noteLine ::= simpleNoteContent [EOL] | EOL
+
+stateClassDefStatement ::= CLASS_DEF (CLASS_DEF_ID | DEFAULT) styleOptions
+
+cssClassStatement ::= CLASS CLASS_ENTITY_IDS STYLE_CLASS
+
+
+erHeader ::= ENTITY_RELATIONSHIP
+
+erBody ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private erLines ::= erLine [erLines]
+private erLine ::= erStatement [EOL] | EOL
+private erStatement ::= erSubgraphStatement
+  | erRelationStatement
+  | entityDeclaration
+  | erIdentifier [erStyleClass] [erIdentifierAlias]
+  | directive
+  | accStatement
+  | styleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | directionStatement
+
+erRelationStatement ::= erIdentifier [erStyleClass] relationship erIdentifier [erStyleClass] COLON (complexLabel | maybeEmptyString)
+
+erIdentifier ::= ID | string {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+// Free text rather than a single token: entity aliases are quoted (`PERSON["Person Entity"]`), but the
+// subgraph titles added in mermaid 11.17 are not (`subgraph id1 [title 1]`).
+erIdentifierAlias ::= OPEN_SQUARE (complexLabel | maybeEmptyString) CLOSE_SQUARE
+
+// erDiagram subgraphs, mermaid 11.17. Modelled on the flowchart ones, and nesting the same way: the block
+// is the ordinary line list, which already includes this rule and `direction`, and stops at END because no
+// statement starts with it.
+erSubgraphStatement ::= erSubgraphHeader erSubgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+erSubgraphHeader ::= SUBGRAPH erIdentifier [erIdentifierAlias]
+erSubgraphBlock ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+// `PERSON:::someclass` attaches a classDef class. Kept out of erIdentifier so the identifier's own text
+// stays just the name, which is what the named-element mixin exposes to rename and find-usages.
+erStyleClass ::= STYLE_SEPARATOR ID
+
+entityDeclaration ::= erIdentifier [erStyleClass] [erIdentifierAlias] erEntityBlock
+
+relationship ::= erCardinality (IDENTIFYING | NON_IDENTIFYING) erCardinality
+private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE | MD_PARENT
+
+erEntityBlock ::= OPEN_CURLY EOL* erAttributes? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private erAttributes ::= erAttributesLines
+private erAttributesLines ::= erAttributeLine [erAttributesLines]
+private erAttributeLine ::= erAttribute [EOL] | EOL
+erAttribute ::= (attrTypeWithGeneric | attrType) attrName [attrKeys] [maybeEmptyString]
+attrType ::= ATTRIBUTE_WORD | COMMA
+attrTypeWithGeneric ::= [attrType] ( genericTypeId | TILDA | COMMA )+
+attrName ::= ATTRIBUTE_WORD
+attrKeys ::= ATTR_KEY (COMMA ATTR_KEY)*
+
+
+ganttHeader ::= GANTT
+
+ganttBody ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private ganttLines ::= ganttLine [ganttLines]
+private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
+private ganttStatement ::= ganttDateFormatStatement
+  | titleStatement
+  | ganttExcludesStatement
+  | ganttWeekendStatement
+  | ganttIncludesStatement
+  | ganttAxisFormatStatement
+  | ganttTodayMarkerStatement
+  | ganttTickIntervalStatement
+  | ganttSectionStatement
+  | ganttDataStatement
+  | ganttInclusiveEndDatesStatement
+  | ganttTopAxisStatement
+  | ganttWeekdayStatement
+  | directive
+  | ganttClickStatement
+  | accStatement
+
+ganttDataStatement ::= complexTaskName COLON recTaskData
+
+ganttSectionStatement ::= ganttSectionHeader [EOL+ ganttSectionBlock]
+ganttSectionHeader ::= SECTION complexSectionTitle
+ganttSectionBlock ::= ganttSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private ganttSectionLines ::= (ganttSectionLine | IGNORED) [ganttSectionLines]
+private ganttSectionLine ::= ganttSectionInnerStatement [EOL] | EOL
+private ganttSectionInnerStatement ::= ganttDataStatement
+
+ganttDateFormatStatement ::= DATE_FORMAT GANTT_VALUE+
+ganttExcludesStatement ::= EXCLUDES GANTT_VALUE+
+// `weekend friday` names which day counts as the weekend (mermaid 11.16).
+ganttWeekendStatement ::= WEEKEND GANTT_VALUE+
+ganttIncludesStatement ::= INCLUDES GANTT_VALUE+
+ganttAxisFormatStatement ::= AXIS_FORMAT GANTT_VALUE+
+ganttTodayMarkerStatement ::= TODAY_MARKER GANTT_VALUE+
+ganttTickIntervalStatement ::= TICK_INTERVAL GANTT_VALUE+
+ganttInclusiveEndDatesStatement ::= INCLUSIVE_END_DATES
+ganttTopAxisStatement ::= TOP_AXIS
+ganttWeekdayStatement ::= WEEKDAY (MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY | SATURDAY | SUNDAY)
+
+requirementDiagramHeader ::= REQUIREMENT_DIAGRAM
+
+requirementDiagramBody ::= requirementLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private requirementLines ::= requirementLine [requirementLines]
+private requirementLine ::= requirementStatement [EOL] | EOL
+private requirementStatement ::= requirementDef
+  | elementDef
+  | relationshipDef
+  | directive
+  | accStatement
+  | styleStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | directionStatement
+
+requirementDef ::= requirementHeader requirementBlock
+requirementType ::= REQUIREMENT
+  | FUNCTIONAL_REQUIREMENT
+  | INTERFACE_REQUIREMENT
+  | PERFORMANCE_REQUIREMENT
+  | PHYSICAL_REQUIREMENT
+  | DESIGN_CONSTRAINT
+// The name may be quoted, which is how markdown formatting gets into it: `requirement "__test_req__"`.
+requirementHeader ::= requirementType (identifier | string) [erStyleClass]
+private requirementValue ::= complexLabel | string
+
+requirementBlock ::= OPEN_CURLY EOL+ requirementBlockLines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private requirementBlockLines ::= requirementBlockLine [requirementBlockLines]
+private requirementBlockLine ::= requirementBlockStatement [EOL] | EOL
+private requirementBlockStatement ::= requirementIdAttribute
+  | requirementTextAttribute
+  | requirementRiskAttribute
+  | requirementVerifyMethodAttribute
+
+requirementIdAttribute ::= ID_KEYWORD COLON requirementValue
+requirementTextAttribute ::= TEXT COLON requirementValue
+requirementRiskAttribute ::= RISK COLON riskLevel
+requirementVerifyMethodAttribute ::= VERIFY_METHOD COLON verifyType
+
+riskLevel ::= LOW | MEDIUM | HIGH
+verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
+
+elementDef ::= elementHeader elementBlock
+elementHeader ::= ELEMENT identifier
+
+elementBlock ::= OPEN_CURLY EOL+ elementBlockLines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private elementBlockLines ::= elementBlockLine [elementBlockLines]
+private elementBlockLine ::= elementBlockStatement [EOL] | EOL
+private elementBlockStatement ::= elementTypeAttribute
+  | elementDocRefAttribute
+
+elementTypeAttribute ::= TYPE COLON requirementValue
+elementDocRefAttribute ::= DOCREF COLON requirementValue
+
+relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
+  | identifier REQ_LINE reqRelationship ARROW_RIGHT identifier
+
+reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
+
+
+gitGraphHeader ::= GIT_GRAPH [DIR] COLON | GIT_GRAPH
+
+gitGraphBody ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private gitGraphLines ::= gitGraphLine [gitGraphLines]
+private gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
+private gitGraphStatement ::= commitStatement
+  | mergeStatement
+  | cherryPickStatement
+  | branchStatement
+  | checkoutStatement
+  | accStatement
+
+gitGraphBranchIdentifier ::= identifier | DOUBLE_QUOTE quotedBranchIdentifier DOUBLE_QUOTE
+quotedBranchIdentifier ::= STRING_VALUE {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+
+branchStatement ::= BRANCH gitGraphBranchIdentifier [branchOrder] {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
+cherryPickStatement ::= CHERRY_PICK cherryPickAttributes
+mergeStatement ::= MERGE gitGraphBranchIdentifier [commitAttributes] {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
+checkoutStatement ::= CHECKOUT gitGraphBranchIdentifier {
+  implements="com.intellij.mermaid.lang.psi.MermaidGitGraphBranchIdentifierHolder"
+}
+commitStatement ::=
+    COMMIT commitAttributesWithMsg
+  | COMMIT [commit_arg]
+
+private cherryPickAttributes ::=
+    commitIdAttribute parentCommitIdAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute parentCommitIdAttribute
+  | commitTagAttribute commitIdAttribute parentCommitIdAttribute
+  | commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute parentCommitIdAttribute
+  | commitIdAttribute
+
+private commitAttributes ::=
+    commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitTypeAttribute
+  | commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute
+  | commitTagAttribute
+  | commitTypeAttribute
+  | commitIdAttribute
+
+private commitAttributesWithMsg ::=
+    commitMsgAttribute commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitMsgAttribute commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitMsgAttribute commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitMsgAttribute commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitMsgAttribute commitTagAttribute commitIdAttribute commitTypeAttribute
+  | commitMsgAttribute commitTagAttribute commitTypeAttribute commitIdAttribute
+
+  | commitIdAttribute commitMsgAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitMsgAttribute commitTagAttribute commitTypeAttribute
+  | commitIdAttribute commitTypeAttribute commitMsgAttribute commitTagAttribute
+  | commitIdAttribute commitTypeAttribute commitTagAttribute commitMsgAttribute
+  | commitIdAttribute commitTagAttribute commitMsgAttribute commitTypeAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute commitMsgAttribute
+
+  | commitTagAttribute commitIdAttribute commitTypeAttribute commitMsgAttribute
+  | commitTagAttribute commitIdAttribute commitMsgAttribute commitTypeAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute commitMsgAttribute
+  | commitTagAttribute commitTypeAttribute commitMsgAttribute commitIdAttribute
+  | commitTagAttribute commitMsgAttribute commitIdAttribute commitTypeAttribute
+  | commitTagAttribute commitMsgAttribute commitTypeAttribute commitIdAttribute
+
+  | commitTypeAttribute commitIdAttribute commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute commitMsgAttribute
+  | commitTypeAttribute commitTagAttribute commitMsgAttribute commitIdAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute commitMsgAttribute
+  | commitTypeAttribute commitMsgAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitMsgAttribute commitTagAttribute commitIdAttribute
+
+  | commitMsgAttribute commitTypeAttribute commitTagAttribute
+  | commitMsgAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitMsgAttribute
+  | commitTagAttribute commitTypeAttribute commitMsgAttribute
+  | commitTagAttribute commitMsgAttribute commitTypeAttribute
+
+  | commitMsgAttribute commitTypeAttribute commitIdAttribute
+  | commitMsgAttribute commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitMsgAttribute commitIdAttribute
+  | commitTypeAttribute commitIdAttribute commitMsgAttribute
+  | commitIdAttribute commitTypeAttribute commitMsgAttribute
+  | commitIdAttribute commitMsgAttribute commitTypeAttribute
+
+  | commitMsgAttribute commitTagAttribute commitIdAttribute
+  | commitMsgAttribute commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitMsgAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitMsgAttribute
+  | commitIdAttribute commitTagAttribute commitMsgAttribute
+  | commitIdAttribute commitMsgAttribute commitTagAttribute
+
+  | commitIdAttribute commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute commitTagAttribute
+  | commitTypeAttribute commitTagAttribute commitIdAttribute
+  | commitTagAttribute commitTypeAttribute commitIdAttribute
+  | commitTagAttribute commitIdAttribute commitTypeAttribute
+
+  | commitTagAttribute commitMsgAttribute
+  | commitMsgAttribute commitTagAttribute
+  | commitTypeAttribute commitMsgAttribute
+  | commitMsgAttribute commitTypeAttribute
+  | commitIdAttribute commitMsgAttribute
+  | commitMsgAttribute commitIdAttribute
+
+  | commitTagAttribute commitTypeAttribute
+  | commitTypeAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute commitTypeAttribute
+  | commitTypeAttribute commitIdAttribute
+
+  | commitMsgAttribute
+  | commitTagAttribute
+  | commitTypeAttribute
+  | commitIdAttribute
+
+branchOrder ::= ORDER COLON NUM
+commitIdAttribute ::= ID_KEYWORD COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
+parentCommitIdAttribute ::= PARENT COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
+commitTypeAttribute ::= TYPE COLON commitType
+commitTagAttribute ::= TAG COLON maybeEmptyString
+commitMsgAttribute ::= MSG COLON maybeEmptyString
+commit_arg ::= string
+private commitType ::= NORMAL | REVERSE | HIGHLIGHT
+commitIdValue ::= STRING_VALUE {
+    mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+
+c4Header ::= C4_CONTEXT
+  | C4_CONTAINER
+  | C4_COMPONENT
+  | C4_DYNAMIC
+  | C4_DEPLOYMENT
+
+c4Body ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private c4Lines ::= c4Line [c4Lines]
+private c4Line ::= c4Statement [EOL] | EOL
+private c4Statement ::= c4ComponentStatement
+  | boundaryStatement
+  | titleStatement
+  | directionStatement
+  | accStatement
+
+c4ComponentStatement ::= PERSON c4Attributes
+  | PERSON_EXT c4Attributes
+  | SYSTEM c4Attributes
+  | SYSTEM_DB c4Attributes
+  | SYSTEM_QUEUE c4Attributes
+  | SYSTEM_EXT c4Attributes
+  | SYSTEM_EXT_DB c4Attributes
+  | SYSTEM_EXT_QUEUE c4Attributes
+  | CONTAINER c4Attributes
+  | CONTAINER_DB c4Attributes
+  | CONTAINER_QUEUE c4Attributes
+  | CONTAINER_EXT c4Attributes
+  | CONTAINER_EXT_DB c4Attributes
+  | CONTAINER_EXT_QUEUE c4Attributes
+  | COMPONENT c4Attributes
+  | COMPONENT_DB c4Attributes
+  | COMPONENT_QUEUE c4Attributes
+  | COMPONENT_EXT c4Attributes
+  | COMPONENT_EXT_DB c4Attributes
+  | COMPONENT_EXT_QUEUE c4Attributes
+  | REL c4Attributes
+  | BIREL c4Attributes
+  | REL_U c4Attributes
+  | REL_D c4Attributes
+  | REL_L c4Attributes
+  | REL_R c4Attributes
+  | REL_B c4Attributes
+  | REL_INDEX c4Attributes
+  | UPDATE_EL_STYLE c4Attributes
+  | UPDATE_REL_STYLE c4Attributes
+  | UPDATE_LAYOUT_CONFIG c4Attributes
+
+c4Attributes ::= OPEN_ROUND c4AttributesRec CLOSE_ROUND
+private c4AttributesRec ::= [c4Attr] [COMMA c4AttributesRec]
+c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | maybeEmptyString
+c4AttrComplexName ::= (C4_ATTRIBUTE | DOLLAR | EQUALITY)+
+
+boundaryStatement ::= boundaryHeader boundaryBlock
+boundaryBlock ::= OPEN_CURLY EOL* c4Lines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+
+boundaryHeader ::= ENTERPRISE_BOUNDARY c4Attributes
+  | SYSTEM_BOUNDARY c4Attributes
+  | BOUNDARY c4Attributes
+  | CONTAINER_BOUNDARY c4Attributes
+  | NODE c4Attributes
+  | NODE_L c4Attributes
+  | NODE_R c4Attributes
+
+
+mindmapHeader ::= MINDMAP
+
+mindmapBody ::= mindmapLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private mindmapLines ::= mindmapLine [mindmapLines]
+private mindmapLine ::= mindmapStatement [EOL] | EOL
+private mindmapStatement ::= mindmapNodeStatement
+  | iconStatement
+  | mindmapClassStatement
+  | directive
+
+mindmapNodeStatement ::= mindmapNodeId [mindmapNodeDescr]
+mindmapNodeId ::= (ID | COLON)+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+mindmapNodeDescr ::= NODE_DESCR_START nodeDescription NODE_DESCR_END
+nodeDescription ::= NODE_DESCR+ | string | mdText
+
+iconStatement ::= OPEN_ICON ICON_VALUE? CLOSE_ICON
+mindmapClassStatement ::= STYLE_SEPARATOR CLASS+
+
+
+timelineHeader ::= TIMELINE
+
+timelineBody ::= timelineLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private timelineLines ::= (timelineLine | IGNORED) [timelineLines]
+private timelineLine ::= timelineStatement [EOL] | EOL
+private timelineStatement ::= timelineDataStatement
+  | timelineSectionStatement
+  | titleStatement
+  | directive
+  | accStatement
+
+timelineDataStatement ::= complexTaskName [IGNORED] (EOL* COLON sectionTaskData)*
+
+timelineSectionStatement ::= timelineSectionHeader EOL* [timelineSectionBlock]
+timelineSectionHeader ::= SECTION complexSectionTitle
+timelineSectionBlock ::= timelineSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private timelineSectionLines ::= (timelineSectionLine | IGNORED) [timelineSectionLines]
+private timelineSectionLine ::= timelineSectionInnerStatement [EOL] | EOL
+private timelineSectionInnerStatement ::= timelineDataStatement
+
+
+quadrantHeader ::= QUADRANT_CHART
+
+quadrantBody ::= quadrantLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private quadrantLines ::= quadrantLine [quadrantLines]
+private quadrantLine ::= quadrantStatement [separator] | separator
+private quadrantStatement ::= titleStatement
+  | directive
+  | accStatement
+  | pointStatement
+  | axisDetailsStatement
+  | quadrantDetailsStatement
+
+pointStatement ::= quadrantComplexText COLON point [pointRadius]
+// `radius: 12` after the coordinates sizes the point (mermaid 11.16).
+// The value is a QUADRANT_TEXT, not NUM: numbers are only lexed as NUM inside the coordinate brackets,
+// and outside them the quadrant body has a single catch-all text token.
+pointRadius ::= RADIUS COLON QUADRANT_TEXT
+point ::= OPEN_SQUARE NUM COMMA NUM CLOSE_SQUARE
+
+axisDetailsStatement ::= (X_AXIS | Y_AXIS) (quadrantComplexText) [ARROW quadrantComplexText?]
+
+quadrantDetailsStatement ::= QUADRANT quadrantComplexText
+
+quadrantComplexText ::=
+    (maybeEmptyString | maybeEmptyMdText) QUADRANT_TEXT+
+  | (string | mdText) QUADRANT_TEXT*
+  | QUADRANT_TEXT+
+
+
+sankeyHeader ::= SANKEY
+
+sankeyBody ::= sankeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private sankeyLines ::= sankeyLine [sankeyLines]
+private sankeyLine ::= sankeyStatement [EOL] | EOL
+private sankeyStatement ::= sankeyRecordStatement
+
+sankeyRecordStatement ::= identifyingSankeyField COMMA identifyingSankeyField COMMA sankeyField
+private identifyingSankeyField ::= identifyingQuotedSankeyField | identifyingComplexSankeyText
+private sankeyField ::= quotedSankeyField | complexSankeyText
+
+
+identifyingQuotedSankeyField ::= DOUBLE_QUOTE identifyingQuotedSankeyFieldValue DOUBLE_QUOTE
+identifyingQuotedSankeyFieldValue ::= ( quotedSankeyFieldInnerValue | (complexSankeyText | COMMA)+ )+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+identifyingComplexSankeyText ::= SANKEY_TEXT+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+
+quotedSankeyField ::= DOUBLE_QUOTE quotedSankeyFieldValue DOUBLE_QUOTE
+quotedSankeyFieldValue ::= ( quotedSankeyFieldInnerValue | (complexSankeyText | COMMA)+ )+
+quotedSankeyFieldInnerValue ::= DOUBLE_QUOTE DOUBLE_QUOTE quotedSankeyFieldValue DOUBLE_QUOTE DOUBLE_QUOTE
+
+complexSankeyText ::= SANKEY_TEXT+
+
+
+xyChartHeader ::= XY_CHART [ORIENTATION_VALUE]
+
+xyChartBody ::= xyChartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private xyChartLines ::= xyChartLine [xyChartLines]
+private xyChartLine ::= xyChartStatement [separator] | separator
+private xyChartStatement ::= titleStatement
+  | directive
+  | accStatement
+  | xAxisStatement
+  | yAxisStatement
+  | lineStatement
+  | barStatement
+
+xAxisStatement ::= X_AXIS xAxisData
+private xAxisData ::= xyChartText* (bandData | arrowData)
+
+yAxisStatement ::= Y_AXIS yAxisData
+private yAxisData ::= xyChartText* arrowData
+
+lineStatement ::= LINE_KEYWORD [xyChartText] plotData
+barStatement ::= BAR_KEYWORD [xyChartText] plotData
+
+// mermaid 11.16 allows a label on individual points: `line [25 "Launch", 45, 72, 90 "Target Hit"]`.
+plotData ::= OPEN_SQUARE (plotPoint (COMMA plotPoint)*) CLOSE_SQUARE
+plotPoint ::= NUM [string]
+bandData ::= OPEN_SQUARE (xyChartText (COMMA xyChartText)*) CLOSE_SQUARE
+arrowData ::= NUM ARROW NUM
+private xyChartText ::= XY_CHART_TEXT | maybeEmptyString | maybeEmptyMdText
+
+
+blockDiagramHeader ::= BLOCK_DIAGRAM
+
+blockDiagramBody ::= blockDiagramLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private blockDiagramLines ::= blockDiagramLine [blockDiagramLines]
+private blockDiagramLine ::= blockDiagramStatement [separator] | separator
+private blockDiagramStatement ::= directive
+  | accStatement
+  | blockDiagramComplexStatement
+  | blockDiagramNodeStatement
+  | columnsStatement
+  | blockStatement
+  | spaceStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | styleStatement
+
+// Families mermaid renders but this grammar does not model in detail (packet, architecture, kanban,
+// radar, treemap, treeView, venn, wardley, ishikawa, eventmodeling, cynefin, railroad*, info). The body
+// is intentionally shapeless: the goal is only that the file stops being reported as one long error,
+// while comments, frontmatter, directives, accessibility statements and the preview keep working.
+// Replace a family's entry here with a real grammar when one is written.
+//
+// Attached to oldDiagram, so interleaved `%%{...}%%` directives are accepted: mermaid strips directives
+// in preprocessDiagram() before the diagram is ever detected or parsed, so they are valid for every
+// diagram type regardless of how new it is.
+genericHeader ::= GENERIC_DIAGRAM
+
+genericBody ::= genericLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private genericLines ::= genericLine [genericLines]
+private genericLine ::= genericStatement [separator] | separator
+private genericStatement ::= directive
+  | accStatement
+  | genericContent
+genericContent ::= (GENERIC_TEXT | string)+
+
+blockDiagramComplexStatement ::= (blockDiagramNodeStatementInner | spaceStatementInner) (blockDiagramNodeStatementInner | spaceStatementInner)+
+
+blockDiagramNodeStatement ::= blockDiagramNodeStatementInner
+blockDiagramNodeStatementInner ::= blockDiagramNode [blockSize] (blockDiagramArrow blockDiagramNode)*
+
+blockDiagramNode ::= identifier [blockDiagramNodeDescr]
+blockDiagramNodeDescr ::= NODE_DESCR_START string NODE_DESCR_END
+  | ARROW_DESCR_START string ARROW_DESCR_END OPEN_ROUND directions CLOSE_ROUND
+directions ::= [COMMA] ARROW_DIR (COMMA ARROW_DIR)*
+
+blockSize ::= COLON NUM
+
+blockDiagramArrow ::= ARROW
+  | START_ARROW string ARROW
+
+
+columnsStatement ::= COLUMNS (AUTO | NUM)
+
+blockStatement ::= blockStatementHeader EOL* blockDiagramBody END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+blockStatementHeader ::= BLOCK [COLON blockDiagramNodeStatementInner | blockSize]
+
+spaceStatement ::= spaceStatementInner
+spaceStatementInner ::= SPACE [blockSize]
+
+
+directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
+external directiveValue ::= directiveParser
+
+flowchartClickStatement ::= CLICK [CLICK_DATA] [HREF] string [string] [LINK_TARGET]
+  | CLICK [CALL] CLICK_DATA [callbackArgs] string
+  | CLICK CLICK_DATA [CALL? CLICK_DATA callbackArgs?] [string]
+
+ganttClickStatement ::= CLICK CLICK_DATA (CALL CLICK_DATA callbackArgs | HREF string)
+
+classDiagramClickStatement ::= CLICK CLICK_DATA CALL CLICK_DATA callbackArgs [string]
+  | CLICK CLICK_DATA HREF string [string] [LINK_TARGET]
+  | CALLBACK CLICK_DATA string [string]
+  | LINK CLICK_DATA string [string] [LINK_TARGET]
+
+callbackArgs ::= OPEN_ROUND [callbackArg] (COMMA callbackArg)* CLOSE_ROUND
+private callbackArg ::= CLICK_DATA | string
+
+directionStatement ::= DIRECTION DIR
+
+accStatement ::= ACC_TITLE COLON complexAccTitleValue
+  | ACC_DESCR COLON complexAccDescrValue
+  | ACC_DESCR OPEN_CURLY EOL* accDescrMultilineValueLines CLOSE_CURLY
+
+complexAccTitleValue ::= ACC_TITLE_VALUE+
+complexAccDescrValue ::= ACC_DESCR_VALUE+
+accDescrMultilineValueLines ::= complexAccDescrMultilineValue [accDescrMultilineValueLines]
+complexAccDescrMultilineValue ::= ACC_DESCR_MULTILINE_VALUE+ [EOL] | EOL
+
+string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
+private maybeEmptyString ::= DOUBLE_QUOTE DOUBLE_QUOTE | string
+
+// The not-predicate stops an identifier from absorbing a following edge id: in `A e1@--> B` the two IDs
+// are adjacent, and without it `ID+` takes both, so the identifier becomes "A e1" and resolve, rename
+// and find-usages all see a name that does not exist. EDGE_ID_MARKER only occurs in flowcharts, so this
+// is inert for every other diagram that shares this rule.
+complexIdentifier ::= (ID !EDGE_ID_MARKER)+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+identifier ::= ID {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+

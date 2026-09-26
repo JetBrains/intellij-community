@@ -35,6 +35,11 @@
     <item name='java.security.Identity boolean identityEquals(java.security.Identity) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.security.Identity int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.security.Identity java.lang.String getInfo()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -90,7 +95,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.security.Policy java.security.Policy getInstance(java.lang.String, java.security.Policy.Parameters)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -119,13 +123,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.security.Policy java.security.Provider getProvider()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.security.Policy void checkPermission(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -163,18 +165,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.security.Provider java.lang.Object implPut(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.security.Provider java.lang.Object implRemove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.security.Provider java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.security.Provider java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Provider java.lang.String getInfo()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -194,14 +184,8 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.security.Provider java.lang.String[] getTypeAndAlgorithm(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Provider java.lang.String[] getTypeAndAlgorithm(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.security.Provider java.security.Provider.Service getService(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.security.Provider java.util.Collection&lt;java.lang.Object&gt; values()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -283,9 +267,6 @@
     <item name='java.security.Provider.Service boolean supportsParameter(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.security.Provider.Service java.lang.Class&lt;?&gt; getKeyClass(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Provider.Service java.lang.String getAlgorithm()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -345,6 +326,11 @@
     <item name='java.security.Provider.ServiceKey boolean matches(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.security.Provider.ServiceKey int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.security.Provider.UString UString(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -355,6 +341,11 @@
     </item>
     <item name='java.security.Provider.UString boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.security.Provider.UString int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.security.Provider.UString java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -405,9 +396,6 @@
     <item name='java.security.Security java.lang.Object[] getImpl(java.lang.String, java.lang.String, java.lang.String, java.lang.Object) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.security.Security java.lang.String getAlgorithmProperty(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Security java.lang.String getAlgorithmProperty(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -426,20 +414,11 @@
     <item name='java.security.Security java.lang.String[] getFilterComponents(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.security.Security java.security.Provider[] getProviders(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Security java.security.Provider[] getProviders(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.security.Security java.security.Provider[] getProviders(java.util.Map&lt;java.lang.String,java.lang.String&gt;)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.security.Security java.security.Provider[] getProviders(java.util.Map&lt;java.lang.String,java.lang.String&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.security.Security java.security.Security.ProviderProperty getProviderProperty(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.security.Security java.util.Set&lt;java.lang.String&gt; getAlgorithms(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

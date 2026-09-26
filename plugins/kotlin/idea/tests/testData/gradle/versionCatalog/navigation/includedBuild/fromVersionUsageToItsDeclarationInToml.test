@@ -1,0 +1,15 @@
+// FILE: includedBuild1/build.gradle.kts
+val myVersion = libs.versions.test.l<caret>ibrary.version
+
+// FILE: includedBuild1/gradle/libs.versions.toml
+# EXPECTED
+# notice that this version catalog belongs to the included build, not the root build
+[versions]
+test_library-version = "1.0.5"
+
+// FILE: includedBuild1/settings.gradle.kts
+rootProject.name = "includedBuild1"
+
+// FILE: settings.gradle.kts
+// this is the settings file for the root build of a composite build
+includeBuild("includedBuild1")

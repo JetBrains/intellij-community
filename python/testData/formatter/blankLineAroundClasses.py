@@ -5,4 +5,4 @@ class Adjunct:
     def foo(): pass
     class B: pass
 
-print '239'
+print('239')

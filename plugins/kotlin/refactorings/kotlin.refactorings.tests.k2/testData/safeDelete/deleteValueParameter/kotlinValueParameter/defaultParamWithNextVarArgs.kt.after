@@ -1,0 +1,13 @@
+fun myFunction(first: String, vararg last: String) {
+
+}
+
+fun usage() {
+    myFunction("str", "str2", "str22")
+    myFunction("str", "str2")
+    myFunction("str")
+
+    myFunction("str")
+    myFunction("str", "str3")
+    myFunction("str", "str3", "str33")
+}

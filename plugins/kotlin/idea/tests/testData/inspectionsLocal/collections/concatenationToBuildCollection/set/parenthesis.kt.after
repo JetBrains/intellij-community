@@ -1,0 +1,10 @@
+// FIX: Convert to collection builder
+
+fun main() {
+    val list = listOf(1)
+    val a = buildSet {
+        addAll(setOf(1, 2))
+        addAll(listOf(1,2))
+        addAll(listOf(1) - 1)
+    }
+}

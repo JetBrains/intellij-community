@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/JavaUtil.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodBecameStaticStarImportCapture/a/ppp/JavaUtil.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_methodBecameStaticStarImportCapture-a.kotlin_module
+  rrr/UseKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/methodBecameStaticStarImportCapture/a/rrr/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

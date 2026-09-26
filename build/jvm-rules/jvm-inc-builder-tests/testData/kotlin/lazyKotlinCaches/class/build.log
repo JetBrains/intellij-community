@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_lazyKotlinCaches_class-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/lazyKotlinCaches/class/a/A.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,6 @@
+// "Add type 'Int' to parameter 'value'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+// K2_ERROR: VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
+
+class CollectionDefault(vararg val value = intArrayOf(1, 2)<caret>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddTypeAnnotationToValueParameterFixFactory$AddTypeAnnotationToValueParameterFix

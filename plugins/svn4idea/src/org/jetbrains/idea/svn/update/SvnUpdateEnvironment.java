@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -22,26 +21,32 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment {
 
   public SvnUpdateEnvironment(SvnVcs vcs) {
     super(vcs);
   }
 
+  @Override
   protected AbstractUpdateIntegrateCrawler createCrawler(final UpdateEventHandler eventHandler,
-                                        final boolean totalUpdate,
-                                        final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
+                                                         final boolean totalUpdate,
+                                                         final ArrayList<VcsException> exceptions, final UpdatedFiles updatedFiles) {
     return new UpdateCrawler(myVcs, eventHandler, totalUpdate, exceptions, updatedFiles);
   }
 
+  @Override
   public Configurable createConfigurable(final Collection<FilePath> collection) {
     if (collection.isEmpty()) return null;
     return new SvnUpdateConfigurable(myVcs.getProject()){
 
+      @Override
       public String getDisplayName() {
-        return SvnBundle.message("update.switch.configurable.name");
+        return message("update.switch.configurable.name");
       }
 
+      @Override
       protected AbstractSvnUpdatePanel createPanel() {
 
         return new SvnUpdatePanel(myVcs, collection);
@@ -55,10 +60,12 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       super(totalUpdate, postUpdateFiles, exceptions, handler, vcs);
     }
 
+    @Override
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
-      progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
+      progress.setText(message("progress.text.updating", root.getAbsolutePath()));
     }
 
+    @Override
     protected long doUpdate(final File root) throws SvnBindException {
       final long rev;
 
@@ -88,22 +95,22 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         updateClient.setIgnoreExternals(configuration.isIgnoreExternals());
       }
       updateClient.setEventHandler(myHandler);
-      updateClient.setUpdateLocksOnDemand(configuration.isUpdateLockOnDemand());
 
       return updateClient;
     }
 
+    @Override
     protected boolean isMerge() {
       return false;
     }
   }
 
-  @Nullable
-  private static Url getSourceUrl(final SvnVcs vcs, final File root) {
+  private static @Nullable Url getSourceUrl(final SvnVcs vcs, final File root) {
     final Info svnInfo = vcs.getInfo(root);
-    return svnInfo != null ? svnInfo.getURL() : null;
+    return svnInfo != null ? svnInfo.getUrl() : null;
   }
 
+  @Override
   public boolean validateOptions(final Collection<FilePath> roots) {
     // TODO: Check if this logic is useful and needs to be uncommented.
     // TODO: Also Check if setXxx() in UpdateRootInfo are thread safe.
@@ -153,17 +160,17 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return true;
     }
 
-    final Url copyFromTarget = targetSvnInfo.getCopyFromURL();
-    final Url copyFromSource = sourceSvnInfo.getCopyFromURL();
+    final Url copyFromTarget = targetSvnInfo.getCopyFromUrl();
+    final Url copyFromSource = sourceSvnInfo.getCopyFromUrl();
 
     if ((copyFromSource != null) || (copyFromTarget != null)) {
-      if (sourceSvnInfo.getURL().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {
+      if (sourceSvnInfo.getUrl().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {
         return true;
       }
     }
 
-    final int result = Messages.showYesNoDialog(myVcs.getProject(), SvnBundle.message("switch.target.not.copy.current"),
-                                                SvnBundle.message("switch.target.problem.title"), Messages.getWarningIcon());
+    final int result = Messages.showYesNoDialog(myVcs.getProject(), message("dialog.message.switch.target.not.copy.current"),
+                                                message("dialog.title.switch.target.problem"), Messages.getWarningIcon());
     return (Messages.YES == result);
   }
 }

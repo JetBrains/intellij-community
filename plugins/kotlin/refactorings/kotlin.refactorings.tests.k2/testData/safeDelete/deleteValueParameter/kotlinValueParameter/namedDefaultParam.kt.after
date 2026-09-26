@@ -1,0 +1,7 @@
+fun foo(a: Int, c: Int = 4) {
+
+}
+
+fun bar() {
+    foo(1, c = 3)
+}

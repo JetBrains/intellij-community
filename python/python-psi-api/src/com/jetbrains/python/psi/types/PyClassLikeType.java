@@ -1,0 +1,86 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.psi.types;
+
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.Processor;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallSiteOwner;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyWithAncestors;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Set;
+
+public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInstantiableType<PyClassLikeType> {
+
+  @Nullable
+  @NlsSafe
+  String getClassQName();
+
+  @NotNull
+  List<@Nullable PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
+
+  @Nullable
+  List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
+                                                   @Nullable PyExpression location,
+                                                   @NotNull AccessDirection direction,
+                                                   @NotNull PyResolveContext resolveContext,
+                                                   boolean inherited);
+
+  // TODO: Pull to PyType at next iteration
+
+  /**
+   * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
+   * class-like structures as well. Consider using user-friendly wrapper {@link PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext)}
+   *
+   * @param processor visitor
+   * @param inherited call on parents too
+   * @param context   context to be used to resolve types
+   * @see PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext)
+   */
+  void visitMembers(@NotNull Processor<? super PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
+
+  @NotNull
+  Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context);
+
+  boolean isValid();
+
+  /**
+   * @param name    name to check
+   * @param context type evaluation context
+   * @return true if attribute with the specified name could be created or updated.
+   * Does not take `typing.Final` into account.
+   * @see PyClass#getSlots(TypeEvalContext)
+   */
+  default boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    return true;
+  }
+
+  @Nullable
+  PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited);
+
+  @Override
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyClassLikeType(this);
+  }
+
+  @Nullable
+  default PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteOwner callSite) {
+    return getReturnType(context);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  default @Nullable PyType getCallType(@NotNull TypeEvalContext context,
+                                       @Nullable PyCallSiteOwner callSite,
+                                       @NotNull List<PyCallableArgument> arguments) {
+    return callSite != null ? getCallType(context, callSite) : getReturnType(context);
+  }
+}

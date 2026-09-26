@@ -1,0 +1,26 @@
+<idea-plugin package="ru.adelf.idea.dotenv.kotlin">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.dotenv.java"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>
+    <completion.confidence language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinCompletionConfidence"
+                           id="envStringCompletionConfidence" order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.kotlin.KotlinEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

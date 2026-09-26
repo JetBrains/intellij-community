@@ -1,0 +1,9 @@
+import java.lang.annotation.Inherited
+
+// FIR_IDENTICAL
+// FIR_COMPARISON
+class A {
+    @Inherited<caret>
+}
+
+// ELEMENT: Inherited

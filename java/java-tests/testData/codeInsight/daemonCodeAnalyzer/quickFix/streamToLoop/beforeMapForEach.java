@@ -21,4 +21,18 @@ public class Main {
     map.forEach(otherMap::putIfAbsent);
   }
 
+  class X implements Map<String, String> {
+    class Y {
+      void test() {
+        forEach((k, v) -> System.out.println(k + "-" + v));
+      }
+    }
+  }
+
+  void convert(Map<Integer, ? extends List<? extends Appendable>> map) {
+    map.forEach((integer, appendables) -> {
+      System.out.println(integer);
+      System.out.println(appendables);
+    });
+  }
 }

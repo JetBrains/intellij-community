@@ -1,0 +1,12 @@
+fun foo(a: (String, Int) -> Unit) {}
+
+// Note: A single escape cancels the naming of the currently selected parameter,
+// not the entire live template. It is still possible to navigate to the next
+// parameter by pressing TAB.
+fun test() {
+    foo<caret>
+}
+
+// ELEMENT: foo
+// TAIL_TEXT: " { a: (String, Int) -> Unit } (<root>)"
+// ESCAPES: 1

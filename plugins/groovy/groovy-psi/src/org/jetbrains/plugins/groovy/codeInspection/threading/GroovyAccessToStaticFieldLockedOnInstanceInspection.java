@@ -21,6 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -29,28 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyAccessToStaticFieldLockedOnInstanceInspection
+public final class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
+
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
+  protected @NotNull String buildErrorString(Object... infos) {
+    return GroovyBundle.message("inspection.message.access.to.static.field.locked.on.instance.data");
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Access to static field locked on instance data";
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return "Access to static field <code>#ref</code> locked on instance data #loc";
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -85,11 +74,9 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
         if (lockExpression instanceof GrReferenceExpression && PsiUtil.isThisReference(lockExpression)) {
           isLockedOnInstance = true;
         }
-        else if (lockExpression instanceof GrReferenceExpression) {
-          final GrReferenceExpression reference = (GrReferenceExpression) lockExpression;
+        else if (lockExpression instanceof GrReferenceExpression reference) {
           final PsiElement referent = reference.resolve();
-          if (referent instanceof PsiField) {
-            final PsiField referentField = (PsiField) referent;
+          if (referent instanceof PsiField referentField) {
             if (referentField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             } else {
@@ -103,10 +90,9 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
         return;
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField referredField)) {
         return;
       }
-      final PsiField referredField = (PsiField) referent;
       if (!referredField.hasModifierProperty(PsiModifier.STATIC) ||
           isConstant(referredField)) {
         return;

@@ -1,33 +1,61 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.InputMap;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.util.function.Function;
 
 /**
  * @author Anna.Kozlova
- * @since 11-Jul-2006
  */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
-  public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {
+
+  public static <T> void installSpeedSearch(JComboBox<T> comboBox, Function<? super T, String> textGetter) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(comboBox, null) {
+      @Override
+      protected String getElementText(Object element) {
+        return textGetter.apply((T)element);
+      }
+    };
+    search.setupListeners();
+  }
+
+  public static @NotNull ComboboxSpeedSearch installOn(final @NotNull JComboBox<?> comboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(comboBox, null);
+    search.setupListeners();
+    return search;
+  }
+
+  /**
+   * @deprecated Use the static method {@link ComboboxSpeedSearch#installOn(JComboBox)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link ComboboxSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
+  public ComboboxSpeedSearch(final @NotNull JComboBox comboBox) {
     super(comboBox);
     removeKeyStroke(comboBox.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
+  }
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  public ComboboxSpeedSearch(final @NotNull JComboBox comboBox, Void sig) {
+    super(comboBox, sig);
+  }
+
+  @Override
+  public void setupListeners() {
+    super.setupListeners();
+    removeKeyStroke(myComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
   }
 
   private static void removeKeyStroke(@Nullable InputMap map, KeyStroke ks) {
@@ -43,21 +71,22 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
     myComponent.repaint();
   }
 
+  @Override
   protected int getSelectedIndex() {
     return myComponent.getSelectedIndex();
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
-    ListModel model = myComponent.getModel();
-    Object[] elements = new Object[model.getSize()];
-    for (int i = 0; i < elements.length; i++) {
-      elements[i] = model.getElementAt(i);
-    }
-    return elements;
+  protected int getElementCount() {
+    return myComponent.getModel().getSize();
   }
 
+  @Override
+  protected Object getElementAt(int viewIndex) {
+    return myComponent.getModel().getElementAt(viewIndex);
+  }
+
+  @Override
   protected String getElementText(Object element) {
     return element == null ? null : element.toString();
   }

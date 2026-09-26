@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
@@ -15,31 +15,29 @@ public abstract class KeymapManager {
   public static final String KDE_KEYMAP = "Default for KDE";
   public static final String GNOME_KEYMAP = "Default for GNOME";
 
-  public abstract Keymap getActiveKeymap();
+  public abstract @NotNull Keymap getActiveKeymap();
 
-  @Nullable
-  public abstract Keymap getKeymap(@NotNull String name);
+  public abstract @Nullable Keymap getKeymap(@NotNull String name);
+
+  private static volatile KeymapManager INSTANCE;
 
   public static KeymapManager getInstance() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null) return null;
-    return application.getComponent(KeymapManager.class);
+    Application app = ApplicationManager.getApplication();
+    if (app == null || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+      return null;
+    }
+
+    KeymapManager instance = INSTANCE;
+    if (instance == null) {
+      instance = app.getService(KeymapManager.class);
+      INSTANCE = instance;
+    }
+    return instance;
   }
 
   /**
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead
    */
-  @Deprecated
-  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener);
-
-  /**
-   * @deprecated use {@link KeymapManagerListener#TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated use {@link KeymapManagerListener#TOPIC} instead
-   */
+  @Deprecated(forRemoval = true)
   public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
 }

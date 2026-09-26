@@ -1,4 +1,4 @@
-// "Add exception to method signature" "true"
+// "Add exception to method signature|->Change only this method" "true-preview"
 class C {
   interface I {
     void a();

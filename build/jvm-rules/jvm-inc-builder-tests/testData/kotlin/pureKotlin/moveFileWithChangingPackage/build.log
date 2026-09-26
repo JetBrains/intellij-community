@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  foo/AKt.class
+  foo/Foo.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_moveFileWithChangingPackage-a.kotlin_module
+  baz/UseClassKt.class
+  baz/UseFunKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/moveFileWithChangingPackage/a/bar/a.kt
+  kotlin/pureKotlin/moveFileWithChangingPackage/a/useClass.kt
+  kotlin/pureKotlin/moveFileWithChangingPackage/a/useFun.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,28 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.autodetect;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.autodetect.*;
+import com.intellij.psi.codeStyle.autodetect.FormatterBasedLineIndentInfoBuilder;
+import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetector;
+import com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl;
+import com.intellij.psi.codeStyle.autodetect.IndentUsageInfo;
+import com.intellij.psi.codeStyle.autodetect.IndentUsageStatistics;
+import com.intellij.psi.codeStyle.autodetect.IndentUsageStatisticsImpl;
+import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +25,7 @@ import org.junit.Assert;
 
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   @NotNull
@@ -72,44 +68,45 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
-  private static void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
+  private void doTestIndentSize(@Nullable CommonCodeStyleSettings.IndentOptions defaultIndentOptions, int expectedIndent) {
     if (defaultIndentOptions != null) {
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions();
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
     Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
   }
 
-  private static void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(myFile.getFileType());
+  private void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(getFile().getFileType());
     indentOptions.copyFrom(defaultIndentOptions);
   }
   
   @NotNull
   private IndentUsageInfo getMaxUsedIndentInfo() {
     configureByFile(getFileNameWithExtension());
-    Document document = getDocument(myFile);
+    Document document = getDocument(getFile());
 
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
-    
-    FormattingModel model = builder.createModel(myFile, CodeStyleSettingsManager.getSettings(getProject()));
+
+    FormattingModel model =
+      builder.createModel(FormattingContext.create(getFile(), CodeStyle.getSettings(getProject())));
     List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock(), null).build();
-    
+
     IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
     return statistics.getKMostUsedIndentInfo(0);
   }
 
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions() {
-    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(myFile);
+  public CommonCodeStyleSettings.IndentOptions detectIndentOptions(@NotNull VirtualFile file, @NotNull Document document) {
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(getProject(), file, document, new EmptyProgressIndicator());
     return detector.getIndentOptions();
   }
 }

@@ -1,44 +1,43 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Revision;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.Date;
 
-public class CommitInfo {
+public final class CommitInfo {
 
-  public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevision(-1).build();
+  public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevisionNumber(-1).build();
 
-  private final long myRevision;
+  private final long myRevisionNumber;
+  private final @NotNull Revision myRevision;
   private final Date myDate;
   private final String myAuthor;
 
   private CommitInfo(@NotNull CommitInfo.Builder builder) {
-    myRevision = builder.revision;
+    myRevisionNumber = builder.revisionNumber;
+    myRevision = Revision.of(myRevisionNumber);
     myAuthor = builder.author;
     myDate = builder.date;
   }
 
-  public long getRevision() {
+  public long getRevisionNumber() {
+    return myRevisionNumber;
+  }
+
+  public @NotNull Revision getRevision() {
     return myRevision;
   }
 
-  public String getAuthor() {
+  public @NlsSafe String getAuthor() {
     return myAuthor;
   }
 
@@ -51,8 +50,8 @@ public class CommitInfo {
   @XmlRootElement(name = "commit")
   public static class Builder {
 
-    @XmlAttribute(name = "revision")
-    private long revision;
+    @XmlAttribute(name = "revision", required = true)
+    private long revisionNumber;
 
     @XmlElement(name = "author")
     private String author;
@@ -63,14 +62,14 @@ public class CommitInfo {
     public Builder() {
     }
 
-    public Builder(long revision, Date date, String author) {
-      this.revision = revision;
+    public Builder(long revisionNumber, Date date, String author) {
+      this.revisionNumber = revisionNumber;
       this.date = date;
       this.author = author;
     }
 
-    public long getRevision() {
-      return revision;
+    public long getRevisionNumber() {
+      return revisionNumber;
     }
 
     public String getAuthor() {
@@ -81,26 +80,22 @@ public class CommitInfo {
       return date;
     }
 
-    @NotNull
-    public Builder setRevision(long revision) {
-      this.revision = revision;
+    public @NotNull Builder setRevisionNumber(long revisionNumber) {
+      this.revisionNumber = revisionNumber;
       return this;
     }
 
-    @NotNull
-    public Builder setAuthor(String author) {
+    public @NotNull Builder setAuthor(String author) {
       this.author = author;
       return this;
     }
 
-    @NotNull
-    public Builder setDate(Date date) {
+    public @NotNull Builder setDate(Date date) {
       this.date = date;
       return this;
     }
 
-    @NotNull
-    public CommitInfo build() {
+    public @NotNull CommitInfo build() {
       return new CommitInfo(this);
     }
   }

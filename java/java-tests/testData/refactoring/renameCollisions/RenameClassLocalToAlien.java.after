@@ -25,10 +25,10 @@ public class RenameCollisions {
 		java.lang.String.CASE_INSENSITIVE_ORDER.getClass();
 		java.lang.String.valueOf(0);
 
-		int var6 = renameCollisions.String.STATIC_FIELD;
-		renameCollisions.String.staticMethod();
+		int var6 = String.STATIC_FIELD;
+		String.staticMethod();
 
-		renameCollisions.String localClass = new renameCollisions.String();
+		String localClass = new String();
 		localClass.myField++;
 		localClass.method();
 	}

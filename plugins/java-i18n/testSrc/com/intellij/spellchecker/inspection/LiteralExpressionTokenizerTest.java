@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.openapi.util.TextRange;
@@ -20,16 +6,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.LiteralExpressionTokenizer;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class LiteralExpressionTokenizerTest extends LightPlatformCodeInsightFixtureTestCase {
+
+public class LiteralExpressionTokenizerTest extends BasePlatformTestCase {
   private static class TokenCollector extends TokenConsumer implements Consumer<TextRange> {
     private final List<String> myTokenTexts = new ArrayList<>();
     private String myText;
@@ -46,7 +30,7 @@ public class LiteralExpressionTokenizerTest extends LightPlatformCodeInsightFixt
 
     @Override
     public void consume(TextRange range) {
-      myTokenTexts.add(myText.substring(range.getStartOffset(), range.getEndOffset()));
+      myTokenTexts.add(range.substring(myText));
     }
   }
 

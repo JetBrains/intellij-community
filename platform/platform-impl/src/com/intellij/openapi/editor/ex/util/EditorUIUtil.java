@@ -1,34 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
-/**
- * @author Denis Fokin
- */
-public class EditorUIUtil {
+public final class EditorUIUtil {
 
   /* This method has to be used for setting up antialiasing and rendering hints in
  * editors only.
@@ -45,12 +33,45 @@ public class EditorUIUtil {
     UISettings.setupFractionalMetrics(g2d);
   }
 
-  public static void hideCursorInEditor(Editor editor) {
-    if (SystemInfo.isMac) {
-      MacUIUtil.hideCursor();
+  @ApiStatus.Internal
+  public static void setupEditorPainting(
+    @NotNull Graphics2D g,
+    boolean useEditorAntialiasing
+  ) {
+    if (useEditorAntialiasing) {
+      setupAntialiasing(g);
     }
-    else if (editor instanceof EditorImpl) {
+    else {
+      UISettings.setupAntialiasing(g);
+    }
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+  }
+
+  public static void hideCursorInEditor(Editor editor) {
+    if (editor instanceof EditorImpl) {
       ((EditorImpl)editor).hideCursor();
     }
+  }
+
+  public static Icon scaleIcon(Icon icon, @NotNull EditorImpl editor) {
+    float scale = getEditorScaleFactor(editor);
+    return scale == 1 ? icon : IconUtil.scale(icon, editor.getComponent(), scale);
+  }
+
+  public static int scaleWidth(int width, EditorImpl editor) {
+    return (int)(getEditorScaleFactor(editor) * width);
+  }
+
+  private static float getEditorScaleFactor(@NotNull EditorImpl editor) {
+    if (Registry.is("editor.scale.gutter.icons")) {
+      float scale = editor.getScale();
+      if (Math.abs(1f - scale) > 0.10f) {
+        return scale;
+      }
+    }
+    return 1f;
+  }
+
+  private EditorUIUtil() {
   }
 }

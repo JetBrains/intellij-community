@@ -17,10 +17,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +74,7 @@ public class TextFieldWithHistory extends ComboBox {
     getTextEditor().setText(aText);
   }
 
-  public String getText() {
+  public @NlsSafe String getText() {
     return getTextEditor().getText();
   }
 
@@ -172,13 +174,6 @@ public class TextFieldWithHistory extends ComboBox {
     public void setItems(List<String> aList) {
       myFullList = new ArrayList<>(aList);
       fireContentsChanged();
-    }
-  }
-
-  protected static class TextFieldWithProcessing extends JTextField {
-    @Override
-    public void processKeyEvent(KeyEvent e) {
-      super.processKeyEvent(e);
     }
   }
 }

@@ -1,0 +1,3 @@
+<spot>System.out.println("one")</spot>;
+System.out.println("two");
+System.out.println("three");

@@ -4,6 +4,6 @@ public class Ambiguous {
 
     void g(Integer i)
     {
-        <ref>f(1, i);
+        <caret>f(1, i);
     }
 }

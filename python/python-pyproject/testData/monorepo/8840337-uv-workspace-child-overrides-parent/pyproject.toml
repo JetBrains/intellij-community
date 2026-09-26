@@ -1,0 +1,12 @@
+[project]
+name = "monorepo-root"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["apps/*", "libs/*"]
+
+# Parent says: resolve `mylib` to the workspace member libs/mylib...
+[tool.uv.sources]
+mylib = { workspace = true }

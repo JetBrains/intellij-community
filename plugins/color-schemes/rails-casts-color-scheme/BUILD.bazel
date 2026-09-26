@@ -1,0 +1,63 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.color.scheme.rails_casts` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/color-scheme-rails_casts.jar": ["intellij.color.scheme.rails_casts"],
+    },
+    main_module = "intellij.color.scheme.rails_casts",
+)
+### auto-generated section `dev intellij.color.scheme.rails_casts` end
+
+### auto-generated section `build intellij.color.scheme.rails_casts` start
+jvm_library(
+    name = "color-scheme-rails_casts",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.rails_casts",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/projectModel-impl"],
+)
+
+jvm_library(
+    name = "color-scheme-rails_casts_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.rails_casts",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":color-scheme-rails_casts",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "color-scheme-rails_casts_plugin",
+    descriptor_module = ":color-scheme-rails_casts",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.color.scheme.rails_casts` end
+
+### auto-generated section `iml intellij.color.scheme.rails_casts` start
+exports_files(
+    [
+        "intellij.color.scheme.rails_casts.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/rails_casts.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.color.scheme.rails_casts` end

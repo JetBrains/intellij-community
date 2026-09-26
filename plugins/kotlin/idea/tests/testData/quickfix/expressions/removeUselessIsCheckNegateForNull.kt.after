@@ -1,0 +1,7 @@
+// "Remove redundant 'is' check" "true"
+fun foo() {
+    if (true) {
+    }
+}
+
+// IGNORE_K2

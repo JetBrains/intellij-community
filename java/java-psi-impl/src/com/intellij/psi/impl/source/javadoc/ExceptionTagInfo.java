@@ -1,18 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.psi.*;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 
 import static com.intellij.codeInsight.javadoc.JavaDocUtil.resolveClassInTagValue;
 
-/**
- * @author mike
- */
 class ExceptionTagInfo extends ClassReferenceTagInfo {
-  public ExceptionTagInfo(String name) {
+  ExceptionTagInfo(String name) {
     super(name);
   }
 
@@ -31,7 +33,7 @@ class ExceptionTagInfo extends ClassReferenceTagInfo {
 
     PsiClass throwable = JavaPsiFacade.getInstance(value.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, value.getResolveScope());
     if (throwable != null && !exceptionClass.equals(throwable) && !exceptionClass.isInheritor(throwable, true)) {
-      return JavaErrorMessages.message("javadoc.exception.tag.class.is.not.throwable", exceptionClass.getQualifiedName());
+      return JavaPsiBundle.message("javadoc.exception.tag.class.is.not.throwable", exceptionClass.getQualifiedName());
     }
 
     PsiClass runtimeException = JavaPsiFacade.getInstance(value.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, value.getResolveScope());
@@ -54,6 +56,6 @@ class ExceptionTagInfo extends ClassReferenceTagInfo {
       }
     }
 
-    return JavaErrorMessages.message("javadoc.exception.tag.exception.is.not.thrown", exceptionClass.getName(), method.getName());
+    return JavaPsiBundle.message("javadoc.exception.tag.exception.is.not.thrown", exceptionClass.getName(), method.getName());
   }
 }

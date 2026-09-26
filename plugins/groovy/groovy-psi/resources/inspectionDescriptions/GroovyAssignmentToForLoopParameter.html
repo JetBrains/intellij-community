@@ -1,10 +1,12 @@
 <html>
 <body>
-
-This inspection reports any instances of assignment a variable declared in a Groovy <b><font color="#000080">for</font></b> statement
-in the body of that statement. It also reports any attempt to increment or decrement the variable.
-While occasionally intended, this construct can be extremely confusing, and is often the result of a typo.
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports assignments to <b>for</b> loop parameters inside the <b>for</b> loop body.
+<p>While occasionally intended, this construct can be extremely confusing, and is often the result of a typo.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  for (value in [1, 2, 3]) {
+      value = 4 // warning
+  }
+</code></pre>
 </body>
 </html>

@@ -1,20 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
 import com.intellij.execution.Executor
@@ -22,8 +6,10 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.PyNames
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**
@@ -32,8 +18,8 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 class PyNoseTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
-    PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
-      PyNoseTestConfiguration::regexPattern.name, PyRunTargetVariant.PATH)))
+    PyTestSharedForm.create(configuration, PyTestCustomOption(
+      PyNoseTestConfiguration::regexPattern, PyRunTargetVariant.PATH)))
 
 class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyNoseTestConfiguration>(configuration, environment) {
@@ -42,11 +28,12 @@ class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, env
 
 
 class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
-  PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)) {
-  @ConfigField
+  PyAbstractTestConfiguration(project, factory),
+  PyTestConfigurationWithCustomSymbol {
+  @ConfigField("runcfg.nosetests.config.regexPattern")
   var regexPattern: String = ""
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
     PyNoseTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
@@ -58,12 +45,23 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
       else -> "-m $regexPattern"
     }
 
-  override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST)
-
+  override val fileSymbolSeparator get() = ":"
+  override val symbolSymbolSeparator get() = "."
 }
 
-object PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project): PyNoseTestConfiguration = PyNoseTestConfiguration(project, this)
+class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyNoseTestConfiguration>(type) {
+  companion object {
+    const val id = "Nosetests"
+    private val PACKAGE_SPEC = PackageAvailabilitySpec("nose", "nose.case.Test")
+  }
 
-  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)
+  override fun createTemplateConfiguration(project: Project) = PyNoseTestConfiguration(project, this)
+
+  override fun getId(): String = PyNoseTestFactory.id
+
+  override fun getName(): String = PyBundle.message("runcfg.nosetests.display_name")
+
+  override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
+
+  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

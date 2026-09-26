@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A keyboard or mouse shortcut which can be used for invoking an action.
  *
@@ -22,10 +24,8 @@ package com.intellij.openapi.actionSystem;
  */
 public abstract class Shortcut {
   public static final Shortcut[] EMPTY_ARRAY = new Shortcut[0];
-  Shortcut(){
-  }
 
   public abstract boolean isKeyboard();
 
-  public abstract boolean startsWith(final Shortcut sc);
+  public abstract boolean startsWith(@NotNull Shortcut sc);
 }

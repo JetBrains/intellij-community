@@ -1,40 +1,51 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author MYakovlev
  */
 public class PathEditor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
+  private static final Logger LOG = Logger.getInstance(PathEditor.class);
 
   public static final Color INVALID_COLOR = new JBColor(new Color(210, 0, 0), JBColor.RED);
 
@@ -68,7 +79,7 @@ public class PathEditor {
     return myModified;
   }
 
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     final int count = getRowCount();
     if (count == 0) {
       return VirtualFile.EMPTY_ARRAY;
@@ -80,7 +91,7 @@ public class PathEditor {
     return roots;
   }
 
-  public void resetPath(@NotNull List<VirtualFile> paths) {
+  public void resetPath(@NotNull List<? extends VirtualFile> paths) {
     keepSelectionState();
     clearList();
     setEnabled(true);
@@ -92,41 +103,24 @@ public class PathEditor {
 
   public JComponent createComponent() {
     myList = new JBList<>(getListModel());
-    //noinspection unchecked
     myList.setCellRenderer(createListCellRenderer(myList));
     TreeUIHelper.getInstance().installListSpeedSearch(myList, VirtualFile::getPresentableUrl);
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
       .disableUpDownActions()
-      .setAddActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myEnabled;
+      .setAddActionUpdater(e -> myEnabled)
+      .setRemoveActionUpdater(e -> isRemoveActionEnabled(getSelectedRoots()))
+      .setAddAction(button -> {
+        final VirtualFile[] added = doAddItems();
+        if (added.length > 0) {
+          setModified(true);
         }
+        requestDefaultFocus();
+        setSelectedRoots(added);
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return isRemoveActionEnabled(PathEditor.this.getSelectedRoots());
-        }
-      })
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final VirtualFile[] added = doAddItems();
-          if (added.length > 0) {
-            setModified(true);
-          }
-          requestDefaultFocus();
-          setSelectedRoots(added);
-        }
-      })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          int[] indices = myList.getSelectedIndices();
-          doRemoveItems(indices, myList);
-        }
+      .setRemoveAction(button -> {
+        int[] indices = myList.getSelectedIndices();
+        doRemoveItems(indices, myList);
       });
 
     addToolbarButtons(toolbarDecorator);
@@ -137,11 +131,10 @@ public class PathEditor {
     return myPanel;
   }
 
-  protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-  }
+  protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) { }
 
-  protected boolean isRemoveActionEnabled(Object[] values) {
-    return values.length > 0 && myEnabled;
+  protected boolean isRemoveActionEnabled(VirtualFile[] files) {
+    return files.length > 0 && myEnabled;
   }
 
   protected VirtualFile[] doAddItems() {
@@ -160,22 +153,21 @@ public class PathEditor {
     return VfsUtilCore.toVirtualFileArray(added);
   }
 
-  protected void doRemoveItems(int[] indices, JList list) {
-    List removedItems = ListUtil.removeIndices(list, indices);
-    itemsRemoved(removedItems);
+  protected void doRemoveItems(int[] indices, JList<VirtualFile> list) {
+    itemsRemoved(ListUtil.removeIndices(list, indices));
   }
 
   protected DefaultListModel<VirtualFile> createListModel() {
     return new DefaultListModel<>();
   }
 
-  protected ListCellRenderer createListCellRenderer(JBList list) {
+  protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList<VirtualFile> list) {
     return new PathCellRenderer();
   }
 
   protected void itemsRemoved(List<VirtualFile> removedItems) {
     myAllFiles.removeAll(removedItems);
-    if (removedItems.size() > 0) {
+    if (!removedItems.isEmpty()) {
       setModified(true);
     }
     requestDefaultFocus();
@@ -222,18 +214,17 @@ public class PathEditor {
     }
   }
 
-  public void removePaths(VirtualFile... paths) {
-    final Set<VirtualFile> pathsSet = new HashSet<>(Arrays.asList(paths));
+  public void removePaths(@NotNull VirtualFile @NotNull ... paths) {
+    final Set<VirtualFile> pathsSet = Set.of(paths);
     int size = getRowCount();
-    final TIntArrayList indicesToRemove = new TIntArrayList(paths.length);
+    IntArrayList indicesToRemove = new IntArrayList(paths.length);
     for (int idx = 0; idx < size; idx++) {
       VirtualFile path = getValueAt(idx);
-      if (pathsSet.contains(path)) {
+      if (path != null && pathsSet.contains(path)) {
         indicesToRemove.add(idx);
       }
     }
-    final List<VirtualFile> list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
-    itemsRemoved(list);
+    itemsRemoved(ListUtil.removeIndices(myList, indicesToRemove.toArray()));
   }
 
   /**
@@ -260,35 +251,26 @@ public class PathEditor {
     return myModel;
   }
 
-  protected void setSelectedRoots(Object[] roots) {
-    ArrayList<Object> rootsList = new ArrayList<>(roots.length);
-    for (Object root : roots) {
-      if (root != null) {
-        rootsList.add(root);
-      }
-    }
+  protected void setSelectedRoots(VirtualFile[] roots) {
+    Set<VirtualFile> set = ContainerUtil.newHashSet(roots);
     myList.getSelectionModel().clearSelection();
-    int rowCount = getRowCount();
-    for (int i = 0; i < rowCount; i++) {
+    for (int i = 0, rowCount = getRowCount(); i < rowCount; i++) {
       Object currObject = getValueAt(i);
       LOG.assertTrue(currObject != null);
-      if (rootsList.contains(currObject)) {
+      if (set.contains(currObject)) {
         myList.getSelectionModel().addSelectionInterval(i, i);
       }
     }
   }
 
   private void keepSelectionState() {
-    final Object[] selectedItems = getSelectedRoots();
-    if (selectedItems != null) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> setSelectedRoots(selectedItems));
-    }
+    VirtualFile[] selectedItems = getSelectedRoots();
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(() -> setSelectedRoots(selectedItems));
   }
 
-  @SuppressWarnings("deprecation")
-  protected Object[] getSelectedRoots() {
-    return myList.getSelectedValues();
+  protected VirtualFile[] getSelectedRoots() {
+    return VfsUtilCore.toVirtualFileArray(myList.getSelectedValuesList());
   }
 
   protected int getRowCount() {
@@ -305,63 +287,21 @@ public class PathEditor {
     setModified(true);
   }
 
-  private static boolean isJarFile(final VirtualFile file) {
-    return ReadAction.compute(() -> {
-      VirtualFile tempFile = file;
-      if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
-        //[myakovlev] It was bug - directories with *.jar extensions was saved as files of JarFileSystem.
-        //    so we can not just return true, we should filter such directories.
-        String path = file.getPath().substring(0, file.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
-        tempFile = LocalFileSystem.getInstance().findFileByPath(path);
-      }
-      if (tempFile != null && !tempFile.isDirectory()) {
-        return Boolean.valueOf(tempFile.getFileType().equals(FileTypes.ARCHIVE));
-      }
-      return Boolean.FALSE;
-    }).booleanValue();
-  }
-
-  private static Icon getIconForRoot(Object projectRoot) {
-    if (projectRoot instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)projectRoot;
-      if (!file.isValid()) {
-        return AllIcons.Nodes.PpInvalid;
-      }
-      else if (file.getFileSystem() instanceof HttpFileSystem) {
-        return PlatformIcons.WEB_ICON;
-      }
-      else if (isJarFile(file)) {
-        return PlatformIcons.JAR_ICON;
-      }
-      return PlatformIcons.FILE_ICON;
-    }
-
-    return AllIcons.Nodes.EmptyNode;
-  }
-
-  protected static class PathCellRenderer extends DefaultListCellRenderer {
-    protected String getItemText(Object value) {
-      return value instanceof VirtualFile ? ((VirtualFile)value).getPresentableUrl() : "UNKNOWN OBJECT";
-    }
-
-    protected Icon getItemIcon(Object value) {
-      return getIconForRoot(value);
-    }
-
+  @ApiStatus.Internal
+  protected static class PathCellRenderer extends ColoredListCellRenderer<VirtualFile> {
     @Override
-    public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, getItemText(value), index, isSelected, cellHasFocus);
+    protected void customizeCellRenderer(@NotNull JList<? extends VirtualFile> list, VirtualFile file, int index, boolean selected, boolean focused) {
+      LOG.assertTrue(file != null);
+      String text = file.getPresentableUrl();
+      append(text, file.isValid() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES);
+      setIcon(getItemIcon(file));
+    }
 
-      if (isSelected) {
-        setForeground(UIUtil.getListSelectionForeground());
-      }
-      else if (value instanceof VirtualFile && !((VirtualFile)value).isValid()) {
-        setForeground(INVALID_COLOR);
-      }
-
-      setIcon(getItemIcon(value));
-
-      return this;
+    protected Icon getItemIcon(@NotNull VirtualFile file) {
+      if (!file.isValid()) return AllIcons.Nodes.PpInvalid;
+      if (file.getFileSystem() instanceof HttpFileSystem) return PlatformIcons.WEB_ICON;
+      if (file.getFileSystem() instanceof ArchiveFileSystem) return PlatformIcons.JAR_ICON;
+      return PlatformIcons.FILE_ICON;
     }
   }
 }

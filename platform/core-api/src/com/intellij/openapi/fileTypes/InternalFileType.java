@@ -19,4 +19,13 @@ package com.intellij.openapi.fileTypes;
  * @author gregsh
  */
 public interface InternalFileType extends FileType {
+  @Override
+  default boolean isReadOnly() {
+    return true;
+  }
+
+  @Override
+  default boolean isCharsetHardcoded() {
+    return true;
+  }
 }

@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_binary")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+#
+# The upstream Treehouse CLI, built from `//build/treehouse:go.mod`. It is a separate Bazel package, because Bazel
+# takes one package per directory and the wrapper above must name this binary as a label.
+#
+# The wrapper in the parent directory starts this binary. The split keeps the wrapper on the standard library only,
+# so the upstream module and its 16 transitive dependencies stay off the wrapper's own dependency path.
+
+go_binary(
+    name = "cli",
+    srcs = ["main.go"],
+    importpath = "jetbrains.com/treehouse/cli",
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+    # The wrapper package is the only consumer. It puts this binary in `data` and injects its runfiles path.
+    visibility = ["//build/treehouse:__pkg__"],
+    deps = ["@com_github_kunchenguid_treehouse//cmd"],
+)

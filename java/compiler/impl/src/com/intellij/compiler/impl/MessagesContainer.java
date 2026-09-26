@@ -1,55 +1,63 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.codeStyle.CodeStyleDefaults;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class MessagesContainer {
+public final class MessagesContainer {
+  private static final Logger LOG = Logger.getInstance(MessagesContainer.class);
 
   private static final int JAVAC_TAB_SIZE = 8;
   private final Project myProject;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<>(CompilerMessageCategory.class);
   private final int myTabSize;
 
-  public MessagesContainer(Project project) {
+  public MessagesContainer(@NotNull Project project) {
     myProject = project;
-    myTabSize = CodeStyle.getDefaultSettings().getTabSize(StdFileTypes.JAVA);
+    myTabSize = getTabSize(project);
   }
 
-  @NotNull
-  public Collection<CompilerMessage> getMessages(@NotNull CompilerMessageCategory category) {
+  private static int getTabSize(@NotNull Project project) {
+    try {
+      return CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error("Cannot compute tab size", e);
+      return CodeStyleDefaults.DEFAULT_TAB_SIZE;
+    }
+  }
+
+  public @NotNull Collection<CompilerMessage> getMessages(@NotNull CompilerMessageCategory category) {
     final Collection<CompilerMessage> collection = myMessages.get(category);
     if (collection == null) {
       return Collections.emptyList();
@@ -57,9 +65,10 @@ public class MessagesContainer {
     return Collections.unmodifiableCollection(collection);
   }
 
-  @Nullable
-  public CompilerMessage addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
+  public @Nullable CompilerMessage addMessage(CompilerMessageCategory category,
+                                              @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                              String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable, moduleNames);
     if (addMessage(msg)) {
       msg.setColumnAdjuster((m, line, col) -> adjustColumn(m, line, col));
       return msg;
@@ -109,8 +118,7 @@ public class MessagesContainer {
     return messages.add(msg);
   }
 
-  @Nullable
-  private static VirtualFile findFileByUrl(@Nullable String url) {
+  private static @Nullable VirtualFile findFileByUrl(@Nullable String url) {
     if (url == null) {
       return null;
     }
@@ -129,5 +137,4 @@ public class MessagesContainer {
     }
     return myMessages.values().stream().filter(Objects::nonNull).mapToInt(Collection::size).sum();
   }
-
 }

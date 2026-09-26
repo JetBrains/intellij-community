@@ -1,4 +1,4 @@
-// "Extract variable 'l' to 'asLongStream' operation" "true"
+// "Extract variable 'l' to 'asLongStream' operation" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

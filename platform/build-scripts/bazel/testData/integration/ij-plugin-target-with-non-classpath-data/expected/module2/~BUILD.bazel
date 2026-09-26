@@ -1,0 +1,49 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
+
+pkg_files(
+    name = "data",
+    srcs = ["file.txt"],
+)
+
+### auto-generated section `build intellij.module2` start
+ij_plugin_module(
+    name = "module2",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.module2",
+    # manually written attribute
+    non_classpath_data = [":data"],
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "module2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.module2",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":module2"],
+)
+### auto-generated section `build intellij.module2` end
+
+### auto-generated section `iml intellij.module2` start
+exports_files(
+    [
+        "intellij.module2.iml",
+        "resources/intellij.module2.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module2` end

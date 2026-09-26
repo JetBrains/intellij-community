@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,28 +7,37 @@ import java.io.InputStream;
 
 @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
 public class UnsyncByteArrayInputStream extends InputStream {
-  protected byte[] myBuffer;
+  protected final byte[] myBuffer;
   private int myPosition;
-  private int myCount;
+  private final int myCount;
   private int myMarkedPosition;
 
   public UnsyncByteArrayInputStream(@NotNull byte[] buf) {
     this(buf, 0, buf.length);
   }
 
-  public UnsyncByteArrayInputStream(byte[] buf, int offset, int length) {
-    init(buf, offset, length);
-  }
-
-  public void init(byte[] buf, int offset, int length) {
+  public UnsyncByteArrayInputStream(@NotNull byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
-    myCount = length;
+    myCount = Math.min(offset + length, buf.length);
+    myMarkedPosition = offset;
   }
 
   @Override
   public int read() {
     return myPosition < myCount ? myBuffer[myPosition++] & 0xff : -1;
+  }
+
+  // read next two bytes and convert them to short (little endian)
+  public int readShortLittleEndian() {
+    int position = myPosition;
+    if (position >= myCount - 1) {
+      return -1;
+    }
+    byte ch1 = myBuffer[position];
+    byte ch2 = myBuffer[position+1];
+    myPosition += 2;
+    return (ch1 & 0xff) | ((ch2 << 8) & 0xff00);
   }
 
   @Override
@@ -94,5 +89,10 @@ public class UnsyncByteArrayInputStream extends InputStream {
   @Override
   public void reset() {
     myPosition = myMarkedPosition;
+  }
+
+  @Override
+  public String toString() {
+    return getClass() + " (" + available() + " bytes available out of " + myCount + ")";
   }
 }

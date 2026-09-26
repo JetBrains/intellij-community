@@ -1,0 +1,47 @@
+from io import BytesIO, IOBase
+from typing import Any
+from wsgiref.types import StartResponse, WSGIEnvironment
+
+from django.core.files import uploadedfile
+from django.core.handlers import base
+from django.http import HttpRequest
+from django.http.request import _ImmutableQueryDict
+from django.http.response import HttpResponseBase
+from django.utils.datastructures import MultiValueDict
+from django.utils.functional import cached_property
+from typing_extensions import override
+
+class LimitedStream(IOBase):
+    limit: int
+    def __init__(self, stream: BytesIO, limit: int) -> None: ...
+    @override
+    def read(self, size: int | None = -1, /) -> bytes: ...
+    @override
+    def readline(self, size: int | None = -1, /) -> bytes: ...
+
+class WSGIRequest(HttpRequest):
+    environ: WSGIEnvironment
+    def __init__(self, environ: WSGIEnvironment) -> None: ...
+    @cached_property
+    @override
+    def GET(self) -> _ImmutableQueryDict: ...  # type: ignore[override]
+    @cached_property
+    @override
+    def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
+    @property
+    @override
+    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile[Any]]: ...  # type: ignore[override]
+
+class WSGIHandler(base.BaseHandler):
+    request_class: type[WSGIRequest]
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __call__(
+        self,
+        environ: WSGIEnvironment,
+        start_response: StartResponse,
+    ) -> HttpResponseBase: ...
+
+def get_path_info(environ: WSGIEnvironment) -> str: ...
+def get_script_name(environ: WSGIEnvironment) -> str: ...
+def get_bytes_from_wsgi(environ: WSGIEnvironment, key: str, default: str) -> bytes: ...
+def get_str_from_wsgi(environ: WSGIEnvironment, key: str, default: str) -> str: ...

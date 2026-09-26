@@ -1,0 +1,7 @@
+open class BaseClass {
+}
+
+class SubClass : BaseClass() {
+    // INFO: {"checked": "true"}
+    class NestedFinalClass
+}

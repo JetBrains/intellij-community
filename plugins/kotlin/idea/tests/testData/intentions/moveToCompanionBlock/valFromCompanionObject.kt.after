@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion object {
+
+        fun bar() {
+        }
+    }
+
+    companion {
+        val v = 1
+    }
+}

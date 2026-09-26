@@ -1,0 +1,13 @@
+{
+  "filesToMove": [
+    "A/src/bar/C.kt",
+    "A/src/bar/f.kt",
+    "A/src/bar/I.kt",
+    "A/src/bar/O.kt"
+  ],
+  "type": "MOVE_FILES",
+  "targetDirectory": "B/src/foo",
+  "targetPackage": "implicit.foo",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

@@ -1,0 +1,8 @@
+// "Change parameter 'f' type of function 'foo' to '() -> String'" "true"
+fun foo(f: () -> String) {
+    foo {
+        ""<caret>
+    }
+}
+// IGNORE_K2
+// For K2, see KTIJ-33125

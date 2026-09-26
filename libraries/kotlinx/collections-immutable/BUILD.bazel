@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.kotlinx.collections.immutable` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinx-collections-immutable-kotlinx-collections-immutable"],
+    module = ":libraries-kotlinx-collections-immutable",
+)
+### auto-generated section `dev intellij.libraries.kotlinx.collections.immutable` end
+
+### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` start
+jvm_library(
+    name = "libraries-kotlinx-collections-immutable",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinx.collections.immutable",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinx-collections-immutable-kotlinx-collections-immutable"],
+    runtime_deps = ["@lib//:libraries-kotlinx-collections-immutable-kotlinx-collections-immutable"],
+)
+
+jvm_library(
+    name = "libraries-kotlinx-collections-immutable_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinx.collections.immutable",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinx-collections-immutable-kotlinx-collections-immutable"],
+    runtime_deps = [":libraries-kotlinx-collections-immutable"],
+)
+### auto-generated section `build intellij.libraries.kotlinx.collections.immutable` end
+
+### auto-generated section `iml intellij.libraries.kotlinx.collections.immutable` start
+exports_files(
+    [
+        "intellij.libraries.kotlinx.collections.immutable.iml",
+        "resources/intellij.libraries.kotlinx.collections.immutable.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinx.collections.immutable` end

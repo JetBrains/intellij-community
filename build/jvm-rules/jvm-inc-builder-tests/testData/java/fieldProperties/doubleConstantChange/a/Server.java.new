@@ -1,0 +1,3 @@
+class Server {
+  static final double var = 99.9;
+}

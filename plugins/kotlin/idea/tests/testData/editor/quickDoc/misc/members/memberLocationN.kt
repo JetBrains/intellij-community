@@ -1,0 +1,2 @@
+annotation class LocationContainerJ(val memberLocationM: KClass<AuxFaceA>, val <caret>memberLocationN: String)
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">val</span> <span style="color:#660e7a;font-weight:bold;">memberLocationN</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://kotlin.String">String</a></span></pre></div>

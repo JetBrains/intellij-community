@@ -16,19 +16,15 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
-
-  public ShowRootsColumnAction() {
-    super("Show Root Names");
-  }
-
+@ApiStatus.Internal
+public final class ShowRootsColumnAction extends BooleanPropertyToggleAction {
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return CommonUiProperties.SHOW_ROOT_NAMES;
@@ -37,7 +33,7 @@ public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui == null || !((AbstractVcsLogUi)ui).getColorManager().isMultipleRoots()) e.getPresentation().setEnabledAndVisible(false);
+    VcsLogGraphTable table = e.getData(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE);
+    if (table == null || !table.getColorManager().hasMultiplePaths()) e.getPresentation().setEnabledAndVisible(false);
   }
 }

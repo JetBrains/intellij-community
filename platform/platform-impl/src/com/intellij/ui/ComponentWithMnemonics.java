@@ -16,9 +16,19 @@
 package com.intellij.ui;
 
 /**
- * Markup interface to find components with mnemonics in JLayeredPane (balloons, etc..)
+ * Markup interface with two purposes:
+ * <ol>
+ * <li>To find components with mnemonics (root components) in JLayeredPane (balloons, etc..)</li>
+ * <li>To mark visual 'scopes' inside IDE frame and prevent a collision between mnemonics and shortcuts</li>
+ * </ol>
+ * As for the second purpose:
+ * <p>In terms of Swing 'scope' for mnemonic is whole RootPaneContainer like JFrame of JDialog but main IDE frame is too complex
+ * and cannot be considered as 'single UI'. So there should be some user-friendly 'scopes' or 'contexts'.</p>
+ * <p>For example, in focused editor global action with some alt+{char} shortcut is more preferable than the same alt+{char} mnemonic
+ * presented inside tool window (and vise versa, when focus comes to the tool window namely mnemonic is expected to be more preferable).</p>
  *
  * @author Konstantin Bulenkov
+ * @author Vassiliy.Kudryashov
  */
 public interface ComponentWithMnemonics {
 }

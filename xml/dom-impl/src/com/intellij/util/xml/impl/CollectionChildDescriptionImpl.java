@@ -1,31 +1,24 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.ModelMergerUtil;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -33,9 +26,6 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
 
@@ -49,8 +39,9 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
-  List<XmlTag> getCollectionSubTags(DomInvocationHandler<?,?> handler, @NotNull XmlTag tag) {
-    return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
+  @Unmodifiable
+  List<XmlTag> getCollectionSubTags(DomInvocationHandler handler, @NotNull XmlTag tag, boolean processIncludes) {
+    return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile(), processIncludes);
   }
 
   @Override
@@ -86,16 +77,14 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  @Nullable
-  public final JavaMethod getGetterMethod() {
+  public final @Nullable JavaMethod getGetterMethod() {
     final Collection<JavaMethod> methods = myGetterMethods;
     return methods.isEmpty() ? null : methods.iterator().next();
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
-    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(element);
+  public @Unmodifiable @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       return handler.getCollectionChildren(this);
     }
@@ -103,25 +92,23 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     if (getterMethod == null) {
       final Collection<DomElement> collection = ModelMergerUtil.getFilteredImplementations(element);
       return ContainerUtil.concat(collection, (Function<DomElement, Collection<? extends DomElement>>)domElement -> {
-        final DomInvocationHandler<?,?> handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
+        final DomInvocationHandler handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
         assert handler1 != null : domElement;
         return handler1.getCollectionChildren(this);
       });
     }
     //noinspection unchecked
-    return (List<? extends DomElement>)getterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return (List<? extends DomElement>)getterMethod.invoke(element, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   @Override
-  @NotNull
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
-    String words = strategy.splitIntoWords(getXmlElementName());
-    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
+  public @NotNull String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+    @NlsSafe String words = strategy.splitIntoWords(getXmlElementName());
+    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true); //NON-NLS
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     if (method != null) {
       final T annotation = method.getAnnotation(annotationClass);
@@ -133,7 +120,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+  public @Unmodifiable List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.findSubTags(subTags, handler.createEvaluatedXmlName(getXmlName()), file);
   }
 

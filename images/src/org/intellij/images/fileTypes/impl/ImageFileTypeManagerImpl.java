@@ -16,64 +16,22 @@
 package org.intellij.images.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.UserBinaryFileType;
-import com.intellij.openapi.fileTypes.UserFileType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
-import icons.ImagesIcons;
-import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
-import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.imageio.ImageIO;
-import java.util.Set;
 
 /**
  * Image file type manager.
- *
- * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
-
-  private static final String IMAGE_FILE_TYPE_NAME = "Image";
-  private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-  private static final UserFileType imageFileType;
-
-  static {
-    imageFileType = new ImageFileType();
-    imageFileType.setIcon(ImagesIcons.ImagesFileType);
-    imageFileType.setName(IMAGE_FILE_TYPE_NAME);
-    imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+  @Override
+  public boolean isImage(@NotNull VirtualFile file) {
+    return FileTypeRegistry.getInstance().isFileOfType(file, ImageFileType.INSTANCE) || file.getFileType() instanceof SvgFileType;
   }
 
-  public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType || file.getFileType() instanceof SvgFileType;
-  }
-
-  public FileType getImageFileType() {
-    return imageFileType;
-  }
-
-
-  public static final class ImageFileType extends UserBinaryFileType {
-  }
-
-
-  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    final Set<String> processed = new THashSet<>();
-
-    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
-    for (String format : readerFormatNames) {
-      final String ext = format.toLowerCase();
-      processed.add(ext);
-    }
-
-    processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
-
-    consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
-    consumer.consume(SvgFileType.INSTANCE, "svg");
+  @Override
+  public @NotNull FileType getImageFileType() {
+    return ImageFileType.INSTANCE;
   }
 }

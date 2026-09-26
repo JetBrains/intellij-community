@@ -1,0 +1,30 @@
+// FILE: first.before.kt
+// "Import extension function 'String.extension'" "true"
+// ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public fun Int.extension(): Unit defined in test in file first.before.kt
+
+package test
+
+fun Int.extension() {}
+
+fun test(str: String) {
+    str.<caret>extension()
+}
+
+// FILE: second.kt
+package dependency
+
+fun String.extension() {}
+
+// FILE: first.after.kt
+// "Import extension function 'String.extension'" "true"
+// ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public fun Int.extension(): Unit defined in test in file first.before.kt
+
+package test
+
+import dependency.extension
+
+fun Int.extension() {}
+
+fun test(str: String) {
+    str.<caret>extension()
+}

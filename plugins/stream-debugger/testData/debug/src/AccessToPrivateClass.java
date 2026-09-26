@@ -6,11 +6,11 @@ public class AccessToPrivateClass {
   }
 
   private void test() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     Stream.generate(() -> new MyClass()).mapToInt(x -> x.field).limit(10).count();
   }
 
-  private class MyClass {
+  private static class MyClass {
     private int field = 10;
 
     public MyClass() {

@@ -1,35 +1,29 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-
-import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.util.containers.VarHandleWrapper;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnknownNullability;
 
-public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
+import java.io.Serializable;
+import java.util.Objects;
+
+@ReviseWhenPortedToJDK("11") // rewrite to real VarHandles
+@Transient
+public class UserDataHolderBase implements UserDataHolderEx, Serializable {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
-  /**
-   * Concurrent writes to this field are via CASes only, using the {@link #updater}
-   */
-  @NotNull
-  private volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+  private volatile @NotNull KeyFMap value = KeyFMap.EMPTY_MAP;
+  private static final VarHandleWrapper VALUE_HANDLE = VarHandleWrapper.getFactory().create(UserDataHolderBase.class, "value", KeyFMap.class);
+
+  public UserDataHolderBase() {
+  }
 
   @Override
   protected Object clone() {
@@ -64,9 +58,9 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     return t;
   }
 
-  @NotNull
-  protected KeyFMap getUserMap() {
-    return myUserMap;
+  @ApiStatus.Internal
+  public @NotNull KeyFMap getUserMap() {
+    return value;
   }
 
   @Override
@@ -80,13 +74,12 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
-    return updater.compareAndSet(this, oldMap, newMap);
+  protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
+    return VALUE_HANDLE.compareAndSet(this, oldMap, newMap);
   }
 
-  public <T> T getCopyableUserData(@NotNull Key<T> key) {
+  public <T> @UnknownNullability T getCopyableUserData(@NotNull Key<T> key) {
     KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
-    //noinspection unchecked,ConstantConditions
     return map == null ? null : map.get(key);
   }
 
@@ -118,10 +111,9 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       }
     }
   }
-                                                            
+
   @Override
-  @NotNull
-  public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
+  public @NotNull <T> T putUserDataIfAbsent(final @NotNull Key<T> key, final @NotNull T value) {
     while (true) {
       KeyFMap map = getUserMap();
       T oldValue = map.get(key);
@@ -139,17 +131,25 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     clone.putUserData(COPYABLE_USER_MAP_KEY, getUserData(COPYABLE_USER_MAP_KEY));
   }
 
+  @ApiStatus.Experimental
+  public boolean isCopyableDataEqual(@NotNull UserDataHolderBase other) {
+    return Objects.equals(getUserData(COPYABLE_USER_MAP_KEY), other.getUserData(COPYABLE_USER_MAP_KEY));
+  }
+
   protected void clearUserData() {
     setUserMap(KeyFMap.EMPTY_MAP);
   }
 
   protected void setUserMap(@NotNull KeyFMap map) {
-    myUserMap = map;
+    value = map;
   }
 
   public boolean isUserDataEmpty() {
     return getUserMap().isEmpty();
   }
 
-  private static final AtomicFieldUpdater<UserDataHolderBase, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, KeyFMap.class);
+  @Override
+  public String toString() {
+    return getUserMap().toString();
+  }
 }

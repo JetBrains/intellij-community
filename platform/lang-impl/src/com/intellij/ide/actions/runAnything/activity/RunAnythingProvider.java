@@ -1,15 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
+import com.intellij.ide.actions.runAnything.RunAnythingContext;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
+import javax.swing.Icon;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Introduction
@@ -44,6 +51,11 @@ import java.util.Collection;
  */
 public interface RunAnythingProvider<V> {
   ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.executionProvider");
+  /**
+   * Use it to retrieve command executing context, e.g. project base directory, module or custom working directory
+   * that'd been chosen by the "Choose context" dropdown
+   */
+  DataKey<RunAnythingContext> EXECUTING_CONTEXT = DataKey.create("EXECUTING_CONTEXT");
 
   /**
    * Finds matching value by input {@code pattern}.
@@ -61,9 +73,10 @@ public interface RunAnythingProvider<V> {
    * Gets completions variants for input command prefix. E.g. "rvm use" provider should return list of sdk versions.
    *
    * @param dataContext use it to fetch project, module, working directory
+   * @param pattern     input string, use it to provide specific variants for the input command if needed, e.g. for command arguments completion
    */
   @NotNull
-  Collection<V> getValues(@NotNull DataContext dataContext);
+  Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern);
 
   /**
    * Execute actual matched {@link #findMatchingValue(DataContext, String)} value.
@@ -88,12 +101,12 @@ public interface RunAnythingProvider<V> {
    * @param value matching value
    */
   @NotNull
-  String getCommand(@NotNull V value);
+  @NlsSafe String getCommand(@NotNull V value);
 
   /**
    * Returns text that is painted on the popup bottom and changed according to the list selection.
    */
-  @Nullable
+  @Nullable @NlsContexts.PopupAdvertisement
   String getAdText();
 
   /**
@@ -105,6 +118,13 @@ public interface RunAnythingProvider<V> {
    */
   @NotNull
   RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value);
+
+  /**
+   * Returns help group title this provider belongs to
+   */
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getHelpGroupTitle() {
+    return null;
+  }
 
   /**
    * Returns value's presentation wrapper that is actually added into the help list.
@@ -120,7 +140,27 @@ public interface RunAnythingProvider<V> {
    * Returns completion group title. {@code null} means that current provider doesn't provide completion.
    */
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getCompletionGroupTitle();
+
+  /**
+   * Returns group matcher for filtering group elements. Remain {@code null} to use default matcher
+   * @param dataContext use it to fetch project, module, working directory
+   * @param pattern to build matcher
+   */
+  @Nullable
+  Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern);
+
+  /**
+   * Provides context types that can be chosen as execution contexts:
+   * - project, {@link RunAnythingContext.ProjectContext}
+   * - module, {@link RunAnythingContext.ModuleContext}
+   * - working directory, {@link RunAnythingContext.RecentDirectoryContext}
+   * <p>
+   * The first context will be chosen as default context.
+   */
+  @NotNull
+  List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext);
 
   /**
    * Finds provider that matches {@code pattern}
@@ -128,11 +168,7 @@ public interface RunAnythingProvider<V> {
    * @param dataContext use it to fetch project, module, working directory
    * @param pattern     input string
    */
-  @Nullable
-  static RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return Arrays.stream(EP_NAME.getExtensions())
-                 .filter(provider -> provider.findMatchingValue(dataContext, pattern) != null)
-                 .findFirst()
-                 .orElse(null);
+  static @Nullable RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
+    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.findMatchingValue(dataContext, pattern) != null);
   }
 }

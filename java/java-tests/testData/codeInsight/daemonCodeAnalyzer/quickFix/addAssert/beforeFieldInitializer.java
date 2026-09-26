@@ -1,5 +1,5 @@
-// "Assert 'myFoo != null'" "false"
+// "Assert 'myFoo != null'" "true-preview"
 class A{
-  private final String myFoo = null;
-  String myBar = my<caret>Foo.substring(0);
+  private final String myFoo = Math.random() > 0.5 ? "" : null;
+  String myBar = myFoo.su<caret>bstring(0);
 }

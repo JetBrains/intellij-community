@@ -1,0 +1,7 @@
+{
+  "subject": <warning descr="Does not match any of the allowed schemas">{
+    "discriminator": <warning descr="Value should be one of: \"second\"">"first"</warning>,
+    <warning descr="Property 'first' is not allowed">"first"</warning>: false,
+    <warning descr="Property 'second' is not allowed">"second"</warning>: false
+  }</warning>
+}

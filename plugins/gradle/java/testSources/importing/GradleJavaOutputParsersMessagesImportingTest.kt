@@ -1,0 +1,450 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.gradle.importing
+
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
+import com.intellij.platform.testFramework.assertion.consoleText
+import com.intellij.platform.testFramework.assertion.isNodeSelected
+import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Ignore
+import org.junit.Test
+
+@Suppress("GrUnresolvedAccess")
+class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
+
+  @Ignore("IDEA-387217")
+  @Test
+  fun `test build script errors on Build`() {
+    createSettingsFile("include 'api', 'impl', 'brokenProject' ")
+    createBuildFile("impl") {
+      addImplementationDependency(project(":api"))
+    }
+    createProjectSubFile("api/src/main/java/my/pack/Api.java",
+                         "package my.pack;\n" +
+                         "public interface Api {\n" +
+                         "  @Deprecated" +
+                         "  public int method();" +
+                         "}")
+    createProjectSubFile("impl/src/main/java/my/pack/App.java",
+                         "package my.pack;\n" +
+                         "import my.pack.Api;\n" +
+                         "public class App implements Api {\n" +
+                         "  public int method() { return 1; }" +
+                         "}")
+    createProjectSubFile("brokenProject/src/main/java/my/pack/App2.java",
+                         "package my.pack;\n" +
+                         "import my.pack.Api;\n" +
+                         "public class App2 {\n" +
+                         "  public int metho d() { return 1; }" +
+                         "}")
+
+    importProject {
+      subprojects {
+        withJavaPlugin()
+      }
+    }
+    assertBuildViewTree(syncView) {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
+
+    compileModulesExpectingFailure("project.impl.main")
+    assertBuildViewTree(buildView) {
+      assertNode("successful") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":api:compileJava")
+        assertNode(":api:processResources")
+        assertNode(":api:classes")
+        assertNode(":api:jar")
+        if (isGradleAtLeast("4.7")) {
+          assertNode(":impl:compileJava") {
+            assertNode("App.java") {
+              assertNode("uses or overrides a deprecated API.")
+            }
+          }
+          assertNode(":impl:processResources")
+          assertNode(":impl:classes")
+        }
+        else {
+          assertNode(":impl:compileJava")
+          assertNode(":impl:processResources")
+          assertNode(":impl:classes")
+          assertNode("App.java") {
+            assertNode("uses or overrides a deprecated API.")
+          }
+        }
+      }
+    }
+
+    fun BuildViewNodeAssertion.assertCompilationReportErrors() {
+      when {
+        isGradleAtLeast("8.14") -> {
+          assertNode("invalid method declaration; return type required")
+          assertNode("';' expected")
+        }
+        isGradleAtLeast("8.11") -> {
+          assertNode("';' expected")
+          assertNode("invalid method declaration; return type required")
+        }
+      }
+    }
+
+    compileModulesExpectingFailure("project.brokenProject.main")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        if (isGradleAtLeast("4.7")) {
+          assertNode(":brokenProject:compileJava") {
+            assertNode("App2.java") {
+              assertNode("';' expected")
+              assertNode("invalid method declaration; return type required")
+              assertCompilationReportErrors()
+            }
+          }
+        }
+        else {
+          assertNode(":brokenProject:compileJava")
+          assertNode("App2.java") {
+            assertNode("';' expected")
+            assertNode("invalid method declaration; return type required")
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `test compilation view tree`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+    }
+    assertBuildViewTree(syncView) {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
+    compileModules("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("successful") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode(":processTestResources")
+        assertNode(":testClasses")
+      }
+    }
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build without repositories for legacy Gradle`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      addTestImplementationDependency("junit:junit:4.12")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
+      }
+    }
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Could not resolve all files for configuration ':testCompileClasspath'.
+        |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
+        |  Required by:
+        |      project :
+        |
+        |Possible solution:
+        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test unresolved dependencies errors on Build without repositories`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      addTestImplementationDependency("junit:junit:4.12")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava") {
+          assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
+        }
+      }
+    }
+    val projectQualifier = when {
+      isGradleAtLeast("9.0") -> "root project 'project'"
+      isGradleAtLeast("8.10") -> "root project :"
+      else -> "project :"
+    }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Execution failed for task ':compileTestJava'$taskSourceSuffix.
+        |> Could not resolve all files for configuration ':testCompileClasspath'.
+        |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
+        |     Required by:
+        |         $projectQualifier
+        |
+        |Possible solution:
+        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build in offline mode for legacy Gradle`() {
+    GradleSettings.getInstance(myProject).isOfflineWork = true
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withRepository {
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
+      }
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could Not Resolve junit:junit:99.99")
+      }
+    }
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Could not resolve all files for configuration ':testCompileClasspath'.
+        |> Could not resolve junit:junit:99.99.
+        |  Required by:
+        |      project :
+        |   > No cached version of junit:junit:99.99 available for offline mode.
+        |> Could not resolve junit:junit:99.99.
+        |  Required by:
+        |      project :
+        |   > No cached version of junit:junit:99.99 available for offline mode.
+        |
+        |Possible solution:
+        | - Disable offline mode and rerun the build
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test unresolved dependencies errors on Build in offline mode`() {
+    GradleSettings.getInstance(myProject).isOfflineWork = true
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withRepository {
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
+      }
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava") {
+          assertNode("Could Not Resolve junit:junit:99.99")
+        }
+      }
+    }
+    val projectQualifier = when {
+      isGradleAtLeast("9.0") -> "root project 'project'"
+      isGradleAtLeast("8.10") -> "root project :"
+      else -> "project :"
+    }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Execution failed for task ':compileTestJava'$taskSourceSuffix.
+        |> Could not resolve all files for configuration ':testCompileClasspath'.
+        |   > Could not resolve junit:junit:99.99.
+        |     Required by:
+        |         $projectQualifier
+        |      > No cached version of junit:junit:99.99 available for offline mode.
+        |
+        |Possible solution:
+        | - Disable offline mode and rerun the build
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build for legacy Gradle`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withRepository {
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
+      }
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava")
+        assertNode("Could Not Resolve junit:junit:99.99")
+      }
+    }
+    val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Could not resolve all files for configuration ':testCompileClasspath'.
+        |> Could not find junit:junit:99.99.
+        |  Searched in the following locations:
+        |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
+        |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
+        |  Required by:
+        |      project :
+        |> Could not find junit:junit:99.99.
+        |  Searched in the following locations:
+        |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
+        |    $repositoryPrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
+        |  Required by:
+        |      project :
+        |
+        |Possible solution:
+        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test unresolved dependencies errors on Build`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withRepository {
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
+      }
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModulesExpectingFailure("project.test")
+    assertBuildViewTree(buildView) {
+      assertNode("failed") {
+        assertNodeWithDeprecatedGradleWarning()
+        assertNode(":compileJava")
+        assertNode(":processResources")
+        assertNode(":classes")
+        assertNode(":compileTestJava") {
+          assertNode("Could Not Resolve junit:junit:99.99")
+        }
+      }
+    }
+    val projectQualifier = when {
+      isGradleAtLeast("9.0") -> "root project 'project'"
+      isGradleAtLeast("8.10") -> "root project :"
+      else -> "project :"
+    }
+    val taskSourceSuffix = when {
+      isGradleAtLeast("9.5.0") -> " (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin')"
+      else -> ""
+    }
+    assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
+      assertTrue(it.isNodeSelected)
+      assertEquals("""
+        |Execution failed for task ':compileTestJava'$taskSourceSuffix.
+        |> Could not resolve all files for configuration ':testCompileClasspath'.
+        |   > Could not find junit:junit:99.99.
+        |     Searched in the following locations:
+        |       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
+        |       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
+        |     Required by:
+        |         $projectQualifier
+        |   > Could not find junit:junit:99.99.
+        |     Searched in the following locations:
+        |       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom
+        |       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar
+        |     Required by:
+        |         $projectQualifier
+        |
+        |Possible solution:
+        | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+        |
+        |
+      """.trimMargin(), it.consoleText)
+    }
+  }
+
+  private fun createProjectSources() {
+    createProjectSubFile("src/main/java/my/pack/App.java",
+                         "package my.pack;\n" +
+                         "public class App {\n" +
+                         "  public int method() { return 1; }\n" +
+                         "}")
+    createProjectSubFile("src/test/java/my/pack/AppTest.java",
+                         "package my.pack;\n" +
+                         "public class AppTest {\n" +
+                         "  public void testMethod() { }\n" +
+                         "}")
+  }
+
+  private fun compileModulesExpectingFailure(vararg moduleNames: String) {
+    try {
+      compileModules(*moduleNames)
+      throw AssertionError("Compilation should be failing")
+    } catch (_: AssertionError) { /* compilation failure expected */ }
+  }
+}

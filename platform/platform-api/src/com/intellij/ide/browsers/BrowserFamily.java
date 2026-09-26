@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -9,24 +10,23 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public enum BrowserFamily implements Iconable {
-  CHROME(IdeBundle.message("browsers.chrome"), "chrome", "google-chrome", "Google Chrome", AllIcons.Xml.Browsers.Chrome16) {
+  CHROME(IdeBundle.message("browsers.chrome"), "chrome", "google-chrome", "Google Chrome", AllIcons.Xml.Browsers.Chrome) {
     @Override
     public BrowserSpecificSettings createBrowserSpecificSettings() {
       return new ChromeSettings();
     }
   },
-  FIREFOX(IdeBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", AllIcons.Xml.Browsers.Firefox16) {
+  FIREFOX(IdeBundle.message("browsers.firefox"), "firefox", "firefox", "Firefox", AllIcons.Xml.Browsers.Firefox) {
     @Override
     public BrowserSpecificSettings createBrowserSpecificSettings() {
       return new FirefoxSettings();
     }
   },
-  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer16),
-  OPERA(IdeBundle.message("browsers.opera"), "opera", "opera", "Opera", AllIcons.Xml.Browsers.Opera16),
-  SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari16);
+  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer),
+  SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari);
 
   private final String myName;
   private final String myWindowsPath;
@@ -46,13 +46,11 @@ public enum BrowserFamily implements Iconable {
     myIcon = icon;
   }
 
-  @Nullable
-  public BrowserSpecificSettings createBrowserSpecificSettings() {
+  public @Nullable BrowserSpecificSettings createBrowserSpecificSettings() {
     return null;
   }
 
-  @Nullable
-  public String getExecutionPath() {
+  public @Nullable String getExecutionPath() {
     if (SystemInfo.isWindows) {
       return myWindowsPath;
     }

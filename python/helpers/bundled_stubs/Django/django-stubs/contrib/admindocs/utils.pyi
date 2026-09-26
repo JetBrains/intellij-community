@@ -1,0 +1,36 @@
+from collections.abc import Callable
+from re import Pattern
+from typing import Any
+
+from django.utils.safestring import SafeString
+
+docutils_is_available: bool
+
+def get_view_name(view_func: Callable[..., Any]) -> str: ...
+def parse_docstring(docstring: str) -> tuple[str, str, dict[str, str]]: ...
+def parse_rst(text: str, default_reference_context: Any, thing_being_parsed: Any | None = ...) -> SafeString: ...
+
+ROLES: dict[str, str]
+explicit_title_re: Pattern[str]
+
+def split_explicit_title(text: str) -> tuple[bool, str, str]: ...
+def create_reference_role(rolename: str, urlbase: str) -> None: ...
+def default_reference_role(
+    name: str,
+    rawtext: str,
+    text: str,
+    lineno: Any,
+    inliner: Any,
+    options: Any | None = ...,
+    content: Any | None = ...,
+) -> tuple[list[Any], list[Any]]: ...
+
+named_group_matcher: Pattern[str]
+unnamed_group_matcher: Pattern[str]
+non_capturing_group_matcher: Pattern[str]
+
+def replace_metacharacters(pattern: str) -> str: ...
+def replace_named_groups(pattern: str) -> str: ...
+def replace_unnamed_groups(pattern: str) -> str: ...
+def remove_non_capturing_groups(pattern: str) -> str: ...
+def strip_p_tags(value: str) -> SafeString: ...

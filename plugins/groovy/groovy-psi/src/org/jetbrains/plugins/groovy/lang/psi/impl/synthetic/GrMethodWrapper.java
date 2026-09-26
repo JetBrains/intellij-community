@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorElement {
   private static final PsiType TYPE_MARKER = new GrPsiTypeStub() {
     @Override
@@ -73,9 +63,8 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
     super.setNavigationElement(navigationElement);
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     if (!myNavigationElementInit) {
       setNavigationElement(myWrappedMethod.getNavigationElement()); // getNavigationElement() can get long time if wrapped method is a ClsMethod.
     }
@@ -110,13 +99,12 @@ public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorEl
     return new GrMethodWrapper(method, substitutor);
   }
 
-  public static GrMethodWrapper wrap(@NotNull PsiMethod method, @NotNull String newName) {
+  public static GrMethodWrapper wrap(@NotNull PsiMethod method, @NlsSafe @NotNull String newName) {
     return new GrMethodWrapper(method, PsiSubstitutor.EMPTY, newName);
   }
 
-  @NotNull
   @Override
-  public PsiMethod getPrototype() {
+  public @NotNull PsiMethod getPrototype() {
     return myWrappedMethod;
   }
 }

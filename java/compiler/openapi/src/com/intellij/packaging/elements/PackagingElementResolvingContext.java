@@ -23,9 +23,6 @@ import com.intellij.packaging.artifacts.ArtifactModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface PackagingElementResolvingContext {
   @NotNull
   Project getProject();
@@ -44,4 +41,9 @@ public interface PackagingElementResolvingContext {
 
   @NotNull
   ManifestFileProvider getManifestFileProvider();
+
+  @FunctionalInterface
+  interface LibraryFinder {
+    @Nullable Library find(@NotNull String level, @NotNull String libraryName);
+  }
 }

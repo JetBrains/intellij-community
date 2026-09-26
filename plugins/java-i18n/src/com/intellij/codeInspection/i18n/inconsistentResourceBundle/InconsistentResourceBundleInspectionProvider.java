@@ -19,9 +19,9 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -34,11 +34,11 @@ public interface InconsistentResourceBundleInspectionProvider {
   @NotNull
   String getName();
 
-  @NotNull
+  @NotNull @NlsContexts.Checkbox
   String getPresentableName();
 
   void check(BidirectionalMap<PropertiesFile, PropertiesFile> parents,
-             List<PropertiesFile> files,
+             List<? extends PropertiesFile> files,
              Map<PropertiesFile, Set<String>> keysUpToParent,
              Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps,
              InspectionManager manager,

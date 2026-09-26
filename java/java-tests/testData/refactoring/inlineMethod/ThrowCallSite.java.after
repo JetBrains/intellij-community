@@ -1,0 +1,7 @@
+class ThrowCallSite {
+    void test() {
+        /*test*/
+        throw new RuntimeException();
+    }
+
+}

@@ -1,52 +1,61 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.python.test.env.common.PredefinedPyEnvironments;
+import com.intellij.python.test.env.junit4.JUnit4FactoryHolder;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
-import com.jetbrains.LoggingRule;
-import com.jetbrains.TestEnv;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.Companion;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VANILLA_2_7;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_10;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_11;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12_DJANGO;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_13;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_14;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_8_FULL;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_9;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
- * @author traff
  * <p>
- * All inhertors must be in {@link com.jetbrains.env}.*
+ * All inheritors must be in {@link com.jetbrains.env}.*
  * <p>
  * See "community/python/setup-test-environment/build.gradle"
+ * {@link com.jetbrains.env.python.api.EnvTagsKt#loadEnvTags(Path)}
+ *
+ * @author traff
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
-  private static final String TAGS_FILE = "tags.txt";
-
   @NotNull
-  protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
-
+  protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
 
   /**
    * Rule used to capture debug logging and display it if test failed.
@@ -56,21 +65,12 @@ public abstract class PyEnvTestCase {
   @Rule
   public LoggingRule myLoggingRule = new LoggingRule();
 
-
-  /**
-   * Logger to be used with {@link #startMessagesCapture()}
-   */
-  private PyTestMessagesLogger myLogger;
-
   /**
    * Tags that should exist between all tags, available on all interpreters for test to run.
    * See {@link #PyEnvTestCase(String...)}
    */
-  @Nullable
-  private final String[] myRequiredTags;
+  private final String @Nullable [] myRequiredTags;
 
-
-  private boolean myStaging = false;
   /**
    * TODO: Move to {@link EnvTestTagsRequired} as well?
    */
@@ -78,43 +78,34 @@ public abstract class PyEnvTestCase {
   @Rule public TestName myTestName = new TestName();
 
   @Rule public final TestWatcher myWatcher = new TestWatcher() {
-    @Override
-    protected void starting(Description description) {
-      myStaging = isStaging(description);
-    }
   };
 
   static {
-    LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
+    LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
   }
+
+  /**
+   * All predefined environments used by PyEnvTestCase by default
+   */
+  public static final List<PredefinedPyEnvironments> ALL_ENVIRONMENTS = List.of(
+    VANILLA_2_7,
+    VENV_3_8_FULL,
+    VENV_3_9,
+    VENV_3_10,
+    VENV_3_11,
+    VENV_3_12,
+    VENV_3_12_DJANGO,
+    VENV_3_13,
+    VENV_3_14
+  );
+
 
   /**
    * Escape test output to prevent python test be processed as test result
    */
+  @NotNull
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\[sharp][sharp]");
-  }
-
-  protected boolean isStaging(Description description) {
-    try {
-      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
-        return true;
-      }
-      if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
-        return true;
-      }
-      else {
-        for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os().isThisOs()) {
-            return true;
-          }
-        }
-        return false;
-      }
-    }
-    catch (NoSuchMethodException e) {
-      return false;
-    }
+    return message.replace("##teamcity", "from test: \\[sharp][sharp]");
   }
 
   /**
@@ -124,9 +115,9 @@ public abstract class PyEnvTestCase {
    *                     See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
    *                     Check [IDEA-122939] and [TW-25043] as well.
    */
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected PyEnvTestCase(@NotNull final String... requiredTags) {
+  protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+    TestApplicationManager.getInstance(); // init app explicitly
   }
 
   public static String norm(String testDataPath) {
@@ -134,7 +125,7 @@ public abstract class PyEnvTestCase {
   }
 
   @Before
-  public void setUp() {
+  public void before() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
       assertThat(getAvailableTags())
         .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
@@ -149,28 +140,10 @@ public abstract class PyEnvTestCase {
   @NotNull
   private static Collection<String> getAvailableTags() {
     final Collection<String> allAvailableTags = new HashSet<>();
-    for (final String pythonRoot : getPythonRoots()) {
-      allAvailableTags.addAll(loadEnvTags(pythonRoot));
+    for (@NotNull Set<@NotNull String> tags : Companion.getENVIRONMENTS_TO_TAGS().values()) {
+      allAvailableTags.addAll(tags);
     }
     return allAvailableTags;
-  }
-
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  protected boolean runInWriteAction() {
-    return false;
   }
 
   /**
@@ -199,51 +172,23 @@ public abstract class PyEnvTestCase {
   private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
-    checkStaging();
-
-    List<String> roots = getPythonRoots();
-
-    /**
-     * <p>
-     * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
-     * TeamCity supports this (if not you should create and issue about that).
-     * Idea does not support it for JUnit 3, while JUnit 4 must be supported.
-     * </p>
-     *<p>
-     * It this error brakes your test, please <strong>do not</strong> revert. Instead, do the following:
-     * <ol>
-     *   <li>Make sure {@link com.jetbrains.env.python} tests are <strong>excluded</strong> from your configuration (unless you are
-     *   PyCharm developer)</li>
-     *   <li>Check that your environment supports {@link AssumptionViolatedException}.
-     *   JUnit 4 was created about 10 years ago, so fixing environment is much better approach than hacky "return;" here.
-     *   </li>
-     * </ol>
-     *</p>
-     */
-    Assume.assumeFalse(testName +
-                       ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
-                       roots.isEmpty());
-
-    doRunTests(testTask, testName, roots);
+    Registry.get("debugpy.dap.is.enable").setValue(false);
+    doRunTests(testTask, testName);
   }
 
-  protected final void checkStaging() {
-    if (!SETTINGS.isUnderTeamCity()) {
-      return; // Its ok to run staging tests locally
-    }
-    Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
-                      myStaging == SETTINGS.isStagingMode());
-  }
-
-  protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
+  protected void doRunTests(PyTestTask testTask, String testName) {
     Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(JUnit4FactoryHolder.INSTANCE.getOrCreate(), SETTINGS.getPythonVersion(), myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-    EnvTestTagsRequired methodAnnotation = null;
+    EnvTestTagsRequired methodAnnotation;
     try {
-      final Method method = getClass().getMethod(myTestName.getMethodName());
+      String methodName = myTestName.getMethodName();
+      if (methodName.contains("[")) {
+        methodName = methodName.substring(0, methodName.indexOf('['));
+      }
+      final Method method = getClass().getMethod(methodName);
       methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
     catch (final NoSuchMethodException e) {
@@ -256,7 +201,7 @@ public abstract class PyEnvTestCase {
 
 
     if (firstAnnotation != null) {
-      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      Assume.assumeFalse("Test skipped on this os", ContainerUtil.exists(firstAnnotation.skipOnOSes(), TestEnv::isThisOs));
       skipOnFlavors = firstAnnotation.skipOnFlavors();
     }
     else {
@@ -269,64 +214,13 @@ public abstract class PyEnvTestCase {
     taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
-  @NotNull
-  private static String[] getTags(@Nullable final EnvTestTagsRequired tagsRequiredAnnotation) {
+  private static String @NotNull [] getTags(@Nullable final EnvTestTagsRequired tagsRequiredAnnotation) {
     if (tagsRequiredAnnotation != null) {
       return tagsRequiredAnnotation.tags();
     }
     else {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
-  }
-
-  public static List<String> getPythonRoots() {
-    return SETTINGS.getPythons().stream().map(File::getAbsolutePath).collect(Collectors.toList());
-  }
-
-
-  public static List<String> loadEnvTags(String env) {
-    List<String> envTags;
-
-    try {
-      File parent = new File(env);
-      if (parent.isFile()) {
-        parent = parent.getParentFile();
-      }
-      envTags = com.intellij.openapi.util.io.FileUtil.loadLines(new File(parent, TAGS_FILE));
-    }
-    catch (IOException e) {
-      envTags = Lists.newArrayList();
-    }
-    return envTags;
-  }
-
-  /**
-   * Capture all messages and error logs and store them to be obtained with {@link #getCapturesMessages()}
-   * and stopped with {@link #stopMessageCapture()}
-   */
-  protected final void startMessagesCapture() {
-    myLogger = new PyTestMessagesLogger();
-    LoggedErrorProcessor.setNewInstance(myLogger);
-    Messages.setTestDialog(myLogger);
-  }
-
-  /**
-   * @return captures messages (first start with {@link #startMessagesCapture()}).
-   * Logged exceptions -- list of messages to be displayed (never null)
-   */
-  @NotNull
-  protected final Pair<List<Throwable>, List<String>> getCapturesMessages() {
-    assert myLogger != null : "Capturing not enabled";
-    return Pair.create(Collections.unmodifiableList(myLogger.myExceptions), Collections.unmodifiableList(myLogger.myMessages));
-  }
-
-  /**
-   * Stop message capturing started with {@link #startMessagesCapture()}
-   */
-  protected final void stopMessageCapture() {
-    LoggedErrorProcessor.restoreDefaultProcessor();
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    myLogger = null;
   }
 
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -336,45 +230,11 @@ public abstract class PyEnvTestCase {
   }
 
   /**
-   * Always call parrent when overwrite
+   * Always call parent when overriding.
    */
   @After
-  public void tearDown() {
-    // We can stop message capturing even if it was not started as cleanup process.
-    stopMessageCapture();
+  public void after() {
     Disposer.dispose(myDisposable);
-  }
-
-  /**
-   * Logger to be used with {@link #startMessagesCapture()}
-   */
-  private static final class PyTestMessagesLogger extends LoggedErrorProcessor implements TestDialog {
-
-    private final List<String> myMessages = new ArrayList<>();
-    private final List<Throwable> myExceptions = new ArrayList<>();
-
-    @Override
-    public int show(final String message) {
-      myMessages.add(message);
-      return 0;
-    }
-
-    @Override
-    public void processWarn(final String message, final Throwable t, @NotNull final org.apache.log4j.Logger logger) {
-      if (t != null) {
-        myExceptions.add(t);
-      }
-    }
-
-    @Override
-    public void processError(final String message,
-                             final Throwable t,
-                             final String[] details,
-                             @NotNull final org.apache.log4j.Logger logger) {
-      if (t != null) {
-        myExceptions.add(t);
-      }
-    }
   }
 }
 

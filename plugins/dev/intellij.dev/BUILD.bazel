@@ -1,0 +1,61 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.dev` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.statistics.devkit",
+        "intellij.platform.statistics.devkit.backend",
+        "intellij.platform.statistics.devkit.frontend",
+        "intellij.platform.ide.ui.inspector",
+        "intellij.dev.psiViewer",
+        "intellij.dev.codeInsight",
+        "intellij.dev.leakDetection",
+        "intellij.dev.pluginLoading",
+        "intellij.java.dev",
+        "intellij.groovy.dev",
+        "intellij.kotlin.dev",
+        "intellij.dev.core",
+    ],
+    main_module = "intellij.dev",
+)
+### auto-generated section `dev intellij.dev` end
+
+### auto-generated section `build intellij.dev` start
+jvm_library(
+    name = "dev",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.dev",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "dev_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.dev",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":dev"],
+)
+### auto-generated section `build intellij.dev` end
+
+### auto-generated section `iml intellij.dev` start
+exports_files(
+    [
+        "intellij.dev.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.dev` end

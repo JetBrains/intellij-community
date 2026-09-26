@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
@@ -34,6 +19,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,16 +31,14 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
-  public static final String NAME = "Insert namespace prefix";
 
   public AddSchemaPrefixIntention() {
-    setText(NAME);
+    setText(XmlBundle.message("xml.intention.insert.namespace.prefix.name"));
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return NAME;
+  public @NotNull String getFamilyName() {
+    return getText();
   }
 
   @Override
@@ -72,11 +56,13 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     if (tag != null) {
       final Set<String> ns = tag.getLocalNamespaceDeclarations().keySet();
       final String nsPrefix =
-        Messages.showInputDialog(project, "Namespace Prefix:", StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
+        Messages.showInputDialog(project, XmlBundle.message("namespace.prefix"),
+                                 XmlBundle.message("xml.intention.insert.namespace.prefix.command"),
+                                 Messages.getInformationIcon(), "",
                                  new InputValidator() {
                                    @Override
                                    public boolean checkInput(String inputString) {
-                                     return !ns.contains(inputString);
+                                     return !ns.contains(inputString) && isValidPrefix(inputString, project);
                                    }
 
                                    @Override
@@ -87,10 +73,11 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
       if (nsPrefix == null) return;
       final List<XmlTag> tags = new ArrayList<>();
       final List<XmlAttributeValue> values = new ArrayList<>();
-      WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName(NAME).run(() -> {
+      WriteCommandAction.writeCommandAction(project, tag.getContainingFile())
+        .withName(XmlBundle.message("xml.intention.insert.namespace.prefix.command")).run(() -> {
         tag.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
               tags.add(tag);
             }
@@ -98,7 +85,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           }
 
           @Override
-          public void visitXmlAttributeValue(XmlAttributeValue value) {
+          public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
             PsiReference ref = null;
             boolean skip = false;
             for (PsiReference reference : value.getReferences()) {
@@ -136,16 +123,24 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     }
   }
 
+  private static boolean isValidPrefix(String prefix, Project project) {
+    try {
+      XmlTag tag = XmlElementFactory.getInstance(project).createTagFromText("<" + prefix + ":foo/>");
+      return "foo".equals(tag.getLocalName());
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
+  }
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     return getXmlnsDeclaration(element) != null;
   }
 
-  @Nullable
-  private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
+  private static @Nullable XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag tag = (XmlTag)parent;
+    if (parent instanceof XmlTag tag) {
       if (tag.getNamespacePrefix().isEmpty()) {
         while (tag != null) {
           final XmlAttribute attr = tag.getAttribute("xmlns");
@@ -153,7 +148,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           tag = tag.getParentTag();
         }
       }
-    } else if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().equals("xmlns")) {
+    }
+    else if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().equals("xmlns")) {
       return (XmlAttribute)parent;
     }
     return null;

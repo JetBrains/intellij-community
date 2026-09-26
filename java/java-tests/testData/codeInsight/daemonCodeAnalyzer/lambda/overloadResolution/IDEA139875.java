@@ -38,7 +38,7 @@ class GenericsError {
   }
 
 
-  public static void main(final String[] args) {
+  public static void main() {
     final ListHolder<? extends B> aListHolder = new ListHolder<B>();
     final DeletingLooper<? super B> bLooper = new MyDeletingLooper();
 

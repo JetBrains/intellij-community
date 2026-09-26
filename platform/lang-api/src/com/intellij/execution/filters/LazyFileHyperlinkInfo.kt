@@ -16,13 +16,15 @@
 package com.intellij.execution.filters
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 
-class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: Int, documentColumn: Int)
-  : FileHyperlinkInfoBase(project, documentLine, documentColumn) {
+open class LazyFileHyperlinkInfo
+@JvmOverloads
+constructor(project: Project, filePath: String, documentLine: Int, documentColumn: Int, useBrowser: Boolean = true)
+  : FileHyperlinkInfoBase(project, documentLine, documentColumn, useBrowser) {
 
   override val virtualFile: VirtualFile? by lazy {
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    StandardFileSystems.local().refreshAndFindFileByPath(filePath)
   }
 }

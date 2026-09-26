@@ -23,4 +23,8 @@ interface NonNullEnum {
   String name();
 }
 
-enum NonNullEnumImpl implements NonNullEnum {}
+enum NonNullEnumImpl implements NonNullEnum { a;
+  public String toString() {
+    return null;
+  }
+}

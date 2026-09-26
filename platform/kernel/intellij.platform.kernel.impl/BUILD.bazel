@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.kernel.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.platform.kernel.impl` end
+
+### auto-generated section `build intellij.platform.kernel.impl` start
+jvm_library(
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+        "//platform/util",
+        "//platform/kernel/shared:kernel",
+        "//platform/util/coroutines",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.kernel.impl` end
+
+### auto-generated section `iml intellij.platform.kernel.impl` start
+exports_files(
+    [
+        "intellij.platform.kernel.impl.iml",
+        "resources/intellij.platform.kernel.impl.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.kernel.impl` end

@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -33,7 +20,7 @@ public class ChangeListInfo {
 
   @Attribute("name")
   public String name;
-  
+
   @Attribute("comment")
   public String comment;
 
@@ -51,12 +38,9 @@ public class ChangeListInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ChangeListInfo)) return false;
+    if (!(o instanceof ChangeListInfo that)) return false;
 
-    ChangeListInfo that = (ChangeListInfo)o;
-
-    return Comparing.equal(id, that.id);
-
+    return Objects.equals(id, that.id);
   }
 
   @Override

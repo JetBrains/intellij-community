@@ -1,0 +1,19 @@
+// "Import class 'FromBarCompanion'" "true"
+// LANGUAGE_VERSION: 1.3
+
+package foo
+
+import foo.Bar.Companion.FromBarCompanion
+
+open class Bar {
+    companion object {
+        class FromBarCompanion {
+            fun foo() = 42
+        }
+    }
+}
+
+class Foo : Bar() {
+    val a = FromBarCompanion::foo
+}
+// IGNORE_K2

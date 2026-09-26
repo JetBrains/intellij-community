@@ -1,0 +1,10 @@
+FILE
+  MermaidGanttHeaderImpl(GANTT_HEADER)
+    PsiElement(Gantt.GANTT)('gantt')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
+  MermaidGanttBodyImpl(GANTT_BODY)
+    MermaidGanttTickIntervalStatementImpl(GANTT_TICK_INTERVAL_STATEMENT)
+      PsiElement(Gantt.TICK_INTERVAL)('tickInterval')
+      PsiWhiteSpace(' ')
+      PsiElement(Gantt.GANTT_VALUE)('1day')

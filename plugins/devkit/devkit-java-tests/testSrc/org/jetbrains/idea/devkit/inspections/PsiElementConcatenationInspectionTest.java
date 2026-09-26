@@ -30,16 +30,16 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
     createAndSaveFile("com/intellij/psi/PsiType.java",
                       "package com.intellij.psi;interface PsiType {}");
     createAndSaveFile("com/intellij/psi/PsiElementFactory.java",
-                      "package com.intellij.psi;\n" +
-                      "interface PsiElementFactory {\n" +
-                      "PsiExpression createExpressionFromText(String str, PsiElement context);\n" +
-                      "}");
+                      """
+                        package com.intellij.psi;
+                        interface PsiElementFactory {
+                        PsiExpression createExpressionFromText(String str, PsiElement context);
+                        }""");
     super.beforeActionStarted(testName, contents);
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new PsiElementConcatenationInspection()};
   }
 
@@ -47,10 +47,6 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
   @Override
   protected String getTestDataPath() {
     return DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH;
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

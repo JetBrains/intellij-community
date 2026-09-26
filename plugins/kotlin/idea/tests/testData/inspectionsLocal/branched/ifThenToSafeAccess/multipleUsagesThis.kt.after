@@ -1,0 +1,6 @@
+// FIX: Replace 'if' expression with safe access expression
+// HIGHLIGHT: INFORMATION
+
+fun Any.test() {
+    (this as? Int)?.let { it + it }
+}

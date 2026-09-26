@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.build;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Base64;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
@@ -17,6 +15,8 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,40 +24,35 @@ import java.util.jar.JarFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
     String artifactName = artifact.getName();
     if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING && (artifactName.endsWith(" (exploded)"))
         && artifact.getRootElement() instanceof JpsArtifactRootElement) {
       JpsGradleArtifactExtension extension = getArtifactExtension(artifact, buildPhase);
       if (extension != null && extension.getProperties() != null) {
-        return ContainerUtil.list(new GradleManifestGenerationBuildTask(artifact, extension.getProperties()),
-                                  new GradleAdditionalFilesGenerationBuildTask(artifact, extension.getProperties()));
+        return Arrays.asList(new GradleManifestGenerationBuildTask(artifact, extension.getProperties()),
+                             new GradleAdditionalFilesGenerationBuildTask(artifact, extension.getProperties()));
       }
     }
 
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    switch (buildPhase) {
-      case PRE_PROCESSING:
-        return JpsGradleExtensionService.getArtifactExtension(artifact);
-      default:
-        return null;
+  private static @Nullable JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
+    if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING) {
+      return JpsGradleExtensionService.getArtifactExtension(artifact);
     }
+    return null;
   }
 
   private abstract static class GradleGenerationBuildTask extends BuildTask {
     protected final JpsArtifact myArtifact;
     protected final GradleArtifactExtensionProperties myProperties;
 
-    public GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
+    GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
       myArtifact = artifact;
       myProperties = properties;
     }
@@ -66,7 +61,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleManifestGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleManifestGenerationBuildTask.class);
 
-    public GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
                                              @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }
@@ -76,7 +71,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       if (myProperties.manifest != null) {
         try {
           File output = new File(myArtifact.getOutputPath(), JarFile.MANIFEST_NAME);
-          FileUtil.writeToFile(output, Base64.decode(myProperties.manifest));
+          FileUtil.writeToFile(output, Base64.getDecoder().decode(myProperties.manifest));
         }
         // do not fail the whole 'Make' if there is an invalid manifest cached
         catch (Exception e) {
@@ -89,7 +84,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleAdditionalFilesGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleAdditionalFilesGenerationBuildTask.class);
 
-    public GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
                                                     @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }
@@ -100,7 +95,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         for (Map.Entry<String, String> entry : myProperties.additionalFiles.entrySet()) {
           try {
             File output = new File(entry.getKey());
-            FileUtil.writeToFile(output, Base64.decode(entry.getValue()));
+            FileUtil.writeToFile(output, Base64.getDecoder().decode(entry.getValue()));
           }
           // do not fail the whole 'Make' if there is an invalid file cached
           catch (Exception e) {

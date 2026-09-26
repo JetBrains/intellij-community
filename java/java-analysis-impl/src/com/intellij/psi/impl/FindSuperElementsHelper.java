@@ -1,47 +1,46 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class FindSuperElementsHelper {
-  @NotNull
-  public static PsiElement[] findSuperElements(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) element;
+public final class FindSuperElementsHelper {
+  public static PsiElement @NotNull [] findSuperElements(@NotNull PsiElement element) {
+    if (element instanceof PsiClass aClass) {
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
       allSupers.removeIf(superClass -> CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()));
       return allSupers.toArray(PsiClass.EMPTY_ARRAY);
     }
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if (method.isConstructor()) {
         PsiMethod constructorInSuper = JavaPsiConstructorUtil.findConstructorInSuper(method);
         if (constructorInSuper != null) {
@@ -49,7 +48,8 @@ public class FindSuperElementsHelper {
         }
       }
       else {
-        PsiMethod[] superMethods = method.findSuperMethods(false);
+        PsiMethod[] superMethods = MethodSignatureUtil.convertMethodSignaturesToMethods(new ArrayList<>(
+          SuperMethodsSearch.search(method, null, true, false).findAll()));
         if (superMethods.length == 0) {
           PsiMethod superMethod = getSiblingInheritedViaSubClass(method);
           if (superMethod != null) {
@@ -70,13 +70,11 @@ public class FindSuperElementsHelper {
   /**
    * @return (super method, sub class) or null if can't find any siblings
    */
-  @Nullable
-  public static SiblingInfo getSiblingInfoInheritedViaSubClass(@NotNull final PsiMethod method) {
+  public static @Nullable SiblingInfo getSiblingInfoInheritedViaSubClass(final @NotNull PsiMethod method) {
     return getSiblingInheritanceInfos(Collections.singletonList(method)).get(method);
   }
 
-  @NotNull
-  public static Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(@NotNull final Collection<PsiMethod> methods) {
+  public static @NotNull Map<PsiMethod, SiblingInfo> getSiblingInheritanceInfos(final @NotNull Collection<? extends PsiMethod> methods) {
     MultiMap<PsiClass, PsiMethod> byClass = MultiMap.create();
     for (PsiMethod method : methods) {
       PsiClass containingClass = method.getContainingClass();
@@ -88,7 +86,7 @@ public class FindSuperElementsHelper {
     Map<PsiMethod, SiblingInfo> result = null;
     for (PsiClass psiClass : byClass.keySet()) {
       SiblingInheritorSearcher searcher = new SiblingInheritorSearcher(byClass.get(psiClass), psiClass);
-      ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true, true, false).forEach(searcher);
+      ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true, true, false).allowParallelProcessing().forEach(searcher);
       Map<PsiMethod, SiblingInfo> searcherResult = searcher.getResult();
       if (!searcherResult.isEmpty()) {
         if (result == null) result = new HashMap<>();
@@ -113,9 +111,9 @@ public class FindSuperElementsHelper {
            !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName());
   }
 
-  public static class SiblingInfo {
-    @NotNull public final PsiMethod superMethod;
-    @NotNull public final PsiClass subClass;
+  public static final class SiblingInfo {
+    public final @NotNull PsiMethod superMethod;
+    public final @NotNull PsiClass subClass;
 
     private SiblingInfo(@NotNull PsiMethod superMethod, @NotNull PsiClass subClass) {
       this.superMethod = superMethod;
@@ -123,11 +121,11 @@ public class FindSuperElementsHelper {
     }
   }
 
-  private static class SiblingInheritorSearcher implements Processor<PsiClass> {
+  private static final class SiblingInheritorSearcher implements Processor<PsiClass> {
     private final PsiClass myContainingClass;
     private final Set<PsiMethod> myRemainingMethods;
     private Map<PsiMethod, SiblingInfo> myResult;
-    private final Collection<PsiAnchor> myCheckedInterfaces = new THashSet<>();
+    private final Collection<PsiAnchor> myCheckedInterfaces = new HashSet<>();
 
     SiblingInheritorSearcher(@NotNull Collection<PsiMethod> methods, @NotNull PsiClass containingClass) {
       myContainingClass = containingClass;
@@ -165,13 +163,8 @@ public class FindSuperElementsHelper {
       }
     }
 
-    @Nullable
-    private SiblingInfo findSibling(@NotNull PsiClass inheritor, @NotNull PsiClass anInterface, @NotNull PsiMethod method) {
+    private @Nullable SiblingInfo findSibling(@NotNull PsiClass inheritor, @NotNull PsiClass anInterface, @NotNull PsiMethod method) {
       for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
-        PsiElement navigationElement = superMethod.getNavigationElement();
-        if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
-        superMethod = (PsiMethod)navigationElement;
-        ProgressManager.checkCanceled();
         PsiClass superInterface = superMethod.getContainingClass();
         if (superInterface == null || myContainingClass.isInheritor(superInterface, true)) {
           // if containingClass implements the superInterface then it's not a sibling inheritance but a pretty boring the usual one
@@ -179,7 +172,10 @@ public class FindSuperElementsHelper {
         }
 
         if (isOverridden(inheritor, method, superMethod, superInterface)) {
-          return new SiblingInfo(superMethod, inheritor);
+          PsiElement navigationElement = superMethod.getNavigationElement();
+          if (!(navigationElement instanceof PsiMethod)) continue; // Kotlin
+
+          return new SiblingInfo((PsiMethod)navigationElement, inheritor);
         }
       }
       return null;
@@ -187,7 +183,11 @@ public class FindSuperElementsHelper {
 
     private boolean isOverridden(@NotNull PsiClass inheritor, @NotNull PsiMethod method, @NotNull PsiMethod superMethod, @NotNull PsiClass superInterface) {
       // calculate substitutor of containingClass --> inheritor
-      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myContainingClass, inheritor, PsiSubstitutor.EMPTY);
+      PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(myContainingClass, inheritor, PsiSubstitutor.EMPTY);
+      if (substitutor == null) {
+        return false; // queer EJB hierarchy
+      }
+
       // calculate substitutor of inheritor --> superInterface
       PsiSubstitutor superInterfaceSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
 

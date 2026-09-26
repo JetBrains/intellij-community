@@ -3,20 +3,20 @@ import java.util.stream.*;
 
 public class StreamKnownSource {
   void testFlatMap(List<String> list) {
-    long count = list.stream().<String>flatMap(s -> Stream.empty()).count();
+    long count = <warning descr="Result of 'list.stream().<String>flatMap(s -> Stream.empty()).count()' is always '0'">list.stream().<String>flatMap(s -> Stream.empty()).count()</warning>;
     if(<warning descr="Condition 'count > 0' is always 'false'">count > 0</warning>) {
       System.out.println("Impossible");
     }
   }
 
   void testEmptyStream(List<String> list) {
-    long result = Stream.empty().count();
+    long result = <warning descr="Result of 'Stream.empty().count()' is always '0'">Stream.empty().count()</warning>;
 
     if (<warning descr="Condition 'result > 0' is always 'false'">result > 0</warning>) {
       System.out.println("Never");
     }
 
-    int sum = list.stream().filter(Objects::isNull).filter(<warning descr="Method reference result is always 'false'">Objects::nonNull</warning>).mapToInt(String::length).sum();
+    int sum = <warning descr="Result of 'list.stream().filter(Objects::isNull).filter(Objects::nonNull).mapToInt(String::length).sum()' is always '0'">list.stream().filter(Objects::isNull).filter(<warning descr="Method reference result is always 'false'">Objects::nonNull</warning>).mapToInt(String::length).sum()</warning>;
     if (<warning descr="Condition 'sum == 0' is always 'true'">sum == 0</warning>) {
       System.out.println("Always");
     }
@@ -38,15 +38,15 @@ public class StreamKnownSource {
       System.out.println("Probably");
     }
 
-    boolean emptyAll = Stream.empty().allMatch(Objects::nonNull);
+    boolean emptyAll = <warning descr="Result of 'Stream.empty().allMatch(Objects::nonNull)' is always 'true'">Stream.empty().allMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyAll' is always 'true'">emptyAll</warning>) {
       System.out.println("True");
     }
-    boolean emptyAny = Stream.empty().anyMatch(Objects::nonNull);
+    boolean emptyAny = <warning descr="Result of 'Stream.empty().anyMatch(Objects::nonNull)' is always 'false'">Stream.empty().anyMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyAny' is always 'false'">emptyAny</warning>) {
       System.out.println("False");
     }
-    boolean emptyNone = Stream.empty().noneMatch(Objects::nonNull);
+    boolean emptyNone = <warning descr="Result of 'Stream.empty().noneMatch(Objects::nonNull)' is always 'true'">Stream.empty().noneMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyNone' is always 'true'">emptyNone</warning>) {
       System.out.println("True");
     }
@@ -77,7 +77,7 @@ public class StreamKnownSource {
   }
 
   void testStreamOf(int[] arr) {
-    if(Stream.of().count() > 0) {
+    if(<warning descr="Condition 'Stream.of().count() > 0' is always 'false'">Stream.of().count() > 0</warning>) {
       System.out.println("Impossible");
     }
     if(<warning descr="Condition 'Stream.of(\"foo\", \"bar\").findFirst().isPresent()' is always 'true'">Stream.of("foo", "bar").findFirst().isPresent()</warning>) {
@@ -119,7 +119,7 @@ public class StreamKnownSource {
       return;
     }
 
-    boolean hasNoNulls = list.stream().allMatch(Objects::nonNull);
+    boolean hasNoNulls = <warning descr="Result of 'list.stream().allMatch(Objects::nonNull)' is always 'true'">list.stream().allMatch(Objects::nonNull)</warning>;
 
     if(<warning descr="Condition 'hasNoNulls' is always 'true'">hasNoNulls</warning>) {
       System.out.println("Always");

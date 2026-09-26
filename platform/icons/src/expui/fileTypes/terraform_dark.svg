@@ -1,0 +1,6 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M10.049 10.765V15.5L5.949 13.133V8.397L10.049 10.765ZM10.049 5.51V10.245L5.949 7.878V3.143L10.049 5.51ZM14.6 7.878L10.498 10.245V5.51L14.6 3.143V7.878ZM5.498 2.867V7.603L1.398 5.235V0.5L5.498 2.867Z"
+    fill="#A571E6" color-fill-key="icon-purple-solid"/>
+</svg>

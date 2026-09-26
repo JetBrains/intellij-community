@@ -1,0 +1,8 @@
+// "Convert expression to 'Int'" "true"
+fun test(b: Byte, i: Int) {
+    when (i) {
+        b.toInt() -> {}
+    }
+}
+// IGNORE_K2
+// Task for K2: KTIJ-33283

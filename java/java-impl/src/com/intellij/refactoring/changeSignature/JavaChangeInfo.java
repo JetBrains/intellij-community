@@ -1,23 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -31,21 +23,34 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   boolean isExceptionSetOrOrderChanged();
 
+  @Override
+  @NotNull
   PsiMethod getMethod();
 
   CanonicalTypes.Type getNewReturnType();
+   
+  default @Nullable String getOldReturnType() {
+    PsiType type = getMethod().getReturnType();
+    return type != null ? type.getCanonicalText() : null;
+  }
 
-  @NotNull
-  JavaParameterInfo[] getNewParameters();
+  /**
+   * @return true if it's desired to fix conflicts between new parameters and field names (adding {@code this.} qualifier to field accesses)
+   */
+  default boolean isFixFieldConflicts() {
+    return true;
+  }
+
+  @Override
+  JavaParameterInfo @NotNull [] getNewParameters();
 
   @PsiModifier.ModifierConstant
+  @NotNull
   String getNewVisibility();
 
-  @NotNull
-  String[] getOldParameterNames();
+  String @NotNull [] getOldParameterNames();
 
-  @NotNull
-  String[] getOldParameterTypes();
+  String @NotNull [] getOldParameterTypes();
 
   ThrownExceptionInfo[] getNewExceptions();
 
@@ -65,8 +70,9 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   PsiExpression getValue(int i, PsiCallExpression callExpression);
 
-  void updateMethod(PsiMethod psiMethod);
+  void updateMethod(@NotNull PsiMethod psiMethod);
 
+  @NotNull
   Collection<PsiMethod> getMethodsToPropagateParameters();
 
   default boolean checkUnusedParameter() {

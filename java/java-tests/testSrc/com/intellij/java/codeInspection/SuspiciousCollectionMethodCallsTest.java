@@ -18,10 +18,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixtureTestCase {
+public class SuspiciousCollectionMethodCallsTest extends LightJavaCodeInsightFixtureTestCase {
   private SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
   @Override
@@ -40,11 +40,17 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     super.tearDown();
   }
 
-  public void testConcurrentHashMap() { doTest(); }
+  public void testConcurrentHashMapCalls() { doTest(); }
   public void testRemoveAllCall() { doTest(); }
+  public void testRetainAllCall() { doTest(); }
   public void testSetList() { doTest(); }
   public void testUseDfa() { doTest(); }
   public void testWildcard() { doTest(); }
+  public void testGuava() {
+    myFixture.addClass("package com.google.common.cache;" +
+                "public interface Cache<K, V> {V getIfPresent(Object k);void invalidate(Object k);}");
+    doTest();
+  }
   public void testPolyConditionalExpressionPassedToMapGetCall() { doTest(); }
   public void testNewExpressionPassedToMapContains() { doTest(); }
   public void testIgnoreConvertible() {

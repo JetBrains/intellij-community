@@ -9,6 +9,6 @@ package = 'python_package_template'
 setup_dir = os.path.dirname(os.path.abspath(__file__))
 
 setup(name=package,
-      version="!",
+      version="0.1",
       include_package_data=True,
       )

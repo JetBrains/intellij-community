@@ -5,10 +5,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @author Denis Zhdanov
- * @since 01/20/2011
- */
 public class EnterAfterJavadocTagHandlerTest {
 
   @Test
@@ -16,6 +12,18 @@ public class EnterAfterJavadocTagHandlerTest {
     String text = " <start>";
     EnterAfterJavadocTagHandler.Context context = parse(text);
     assertEmpty(context);
+  }
+
+  @Test
+  public void unterminatedTagAtTheEnd() {
+    String text = "/**\n * <p><";
+    EnterAfterJavadocTagHandler.Context context = parse(text, text.length() - 1);
+    assertEquals(9, context.startTagEndOffset);
+    assertEquals(-1, context.endTagStartOffset);
+    String text2 = "/**\n * <p></";
+    context = parse(text2, text2.length() - 2);
+    assertEquals(9, context.startTagEndOffset);
+    assertEquals(-1, context.endTagStartOffset);
   }
   
   @Test

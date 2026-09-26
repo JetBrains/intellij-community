@@ -26,5 +26,4 @@ public class VcsLogMultiRepoJoinerTest {
 
     assertEquals(expected, joined);
   }
-
 }

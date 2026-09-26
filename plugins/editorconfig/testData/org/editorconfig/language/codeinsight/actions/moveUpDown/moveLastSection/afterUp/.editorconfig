@@ -1,0 +1,10 @@
+[foo]
+charset = utf-8
+
+<caret>[bas]
+charset=utf-32
+# this comment is not
+# part of [bar] section
+
+[bar]
+charset = utf-16

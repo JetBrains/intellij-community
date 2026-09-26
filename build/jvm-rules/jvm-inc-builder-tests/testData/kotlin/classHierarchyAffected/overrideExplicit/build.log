@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_overrideExplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideExplicit/a/A.kt
+End of files
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_overrideExplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideExplicit/a/B.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_overrideExplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideExplicit/a/A.kt
+  kotlin/classHierarchyAffected/overrideExplicit/a/B.kt
+End of files
+------------------------------------------
+Exit code: OK

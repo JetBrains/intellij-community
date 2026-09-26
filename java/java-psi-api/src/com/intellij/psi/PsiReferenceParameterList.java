@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the list of type arguments specified on a Java reference.
  *
- * @author dsl
  * @see PsiJavaCodeReferenceElement#getParameterList()
  */
 public interface PsiReferenceParameterList extends PsiElement {
@@ -29,14 +28,19 @@ public interface PsiReferenceParameterList extends PsiElement {
    *
    * @return the array of type elements.
    */
-  @NotNull
-  PsiTypeElement[] getTypeParameterElements();
+  PsiTypeElement @NotNull [] getTypeParameterElements();
 
   /**
    * Returns the array of types corresponding to type elements used as type arguments.
    *
    * @return the array of types.
    */
-  @NotNull
-  PsiType[] getTypeArguments();
+  PsiType @NotNull [] getTypeArguments();
+
+  /**
+   * @return number of type arguments
+   */
+  default int getTypeArgumentCount() {
+    return getTypeParameterElements().length;
+  }
 }

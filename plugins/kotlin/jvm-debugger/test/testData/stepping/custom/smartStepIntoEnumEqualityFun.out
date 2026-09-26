@@ -1,0 +1,13 @@
+LineBreakpoint created at smartStepIntoEnumEqualityFun.kt:6
+LineBreakpoint created at smartStepIntoEnumEqualityFun.kt:12
+Run Java
+Connected to the target VM
+smartStepIntoEnumEqualityFun.kt:6
+smartStepIntoEnumEqualityFun.kt:16
+smartStepIntoEnumEqualityFun.kt:17
+smartStepIntoEnumEqualityFun.kt:12
+smartStepIntoEnumEqualityFun.kt:16
+smartStepIntoEnumEqualityFun.kt:17
+Disconnected from the target VM
+
+Process finished with exit code 0

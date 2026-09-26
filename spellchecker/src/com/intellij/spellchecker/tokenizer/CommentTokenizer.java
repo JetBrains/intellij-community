@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class CommentTokenizer extends Tokenizer<PsiComment> {
 
   @Override
-  public void tokenize(@NotNull PsiComment element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiComment element, @NotNull TokenConsumer consumer) {
     // doccomment chameleon expands as PsiComment inside PsiComment, avoid duplication
     if (element.getParent() instanceof PsiComment) return;
     consumer.consumeToken(element, CommentSplitter.getInstance());

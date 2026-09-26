@@ -29,9 +29,8 @@ public class GrMethodCallFixer extends SmartEnterProcessorWithFixers.Fixer<Groov
     int endOffset = -1;
 
     for (PsiElement child = argList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (!(child instanceof PsiErrorElement)) continue;
+      if (!(child instanceof PsiErrorElement errorElement)) continue;
 
-      final PsiErrorElement errorElement = (PsiErrorElement)child;
       if (errorElement.getErrorDescription().contains("')'")) {
         endOffset = errorElement.getTextRange().getStartOffset();
         break;

@@ -1,53 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
   private final Map<String, FileCoverageInfo> myFileCoverageInfos = new HashMap<>();
   private final Map<String, DirCoverageInfo> myTestDirCoverageInfos = new HashMap<>();
   private final Map<String, DirCoverageInfo> myDirCoverageInfos = new HashMap<>();
+  private final Set<String> myTestDirectories = new HashSet<>();
 
   public SimpleCoverageAnnotator(Project project) {
     super(project);
@@ -60,39 +46,38 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     myFileCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myDirCoverageInfos.clear();
+    myTestDirectories.clear();
   }
 
-  @Nullable
-  protected DirCoverageInfo getDirCoverageInfo(@NotNull final PsiDirectory directory,
-                                               @NotNull final CoverageSuitesBundle currentSuite) {
-    final VirtualFile dir = directory.getVirtualFile();
+  protected @Nullable DirCoverageInfo getDirCoverageInfo(@NotNull VirtualFile dir,
+                                                         @NotNull CoverageSuitesBundle currentSuite) {
+    final String path = normalizeFilePath(dir.getPath());
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(dir, directory.getProject());
+    final boolean isInTestContent = myTestDirectories.contains(path);
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
 
-    final String path = normalizeFilePath(dir.getPath());
-
     return isInTestContent ? myTestDirCoverageInfos.get(path) : myDirCoverageInfos.get(path);
   }
 
-  @Nullable
-  public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
-                                                @NotNull final CoverageSuitesBundle currentSuite,
-                                                @NotNull final CoverageDataManager manager) {
-    DirCoverageInfo coverageInfo = getDirCoverageInfo(directory, currentSuite);
+  @Override
+  public @Nullable @Nls String getDirCoverageInformationString(@NotNull Project project,
+                                                               @NotNull VirtualFile dir,
+                                                               @NotNull CoverageSuitesBundle currentSuite,
+                                                               @NotNull CoverageDataManager manager) {
+    DirCoverageInfo coverageInfo = getDirCoverageInfo(dir, currentSuite);
     if (coverageInfo == null) {
       return null;
     }
 
     if (manager.isSubCoverageActive()) {
-      return coverageInfo.coveredLineCount > 0 ? "covered" : null;
+      return coverageInfo.coveredLineCount > 0 ? CoverageBundle.message("coverage.view.text.covered") : null;
     }
 
     final String filesCoverageInfo = getFilesCoverageInformationString(coverageInfo);
     if (filesCoverageInfo != null) {
-      final StringBuilder builder = new StringBuilder();
+      final @Nls StringBuilder builder = new StringBuilder();
       builder.append(filesCoverageInfo);
       final String linesCoverageInfo = getLinesCoverageInformationString(coverageInfo);
       if (linesCoverageInfo != null) {
@@ -103,9 +88,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return null;
   }
 
-  // SimpleCoverageAnnotator doesn't require normalized file paths any more
-  // so now coverage report should work w/o usage of this method
-  @Deprecated
+  /**
+   * @deprecated SimpleCoverageAnnotator doesn't require normalized file paths any more
+   * so now coverage report should work w/o usage of this method
+   */
+  @Deprecated(forRemoval = true)
   public static String getFilePath(final String filePath) {
     return normalizeFilePath(filePath);
   }
@@ -113,21 +100,16 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   protected static @NotNull
   String normalizeFilePath(@NotNull String filePath) {
     if (SystemInfo.isWindows) {
-      filePath = filePath.toLowerCase();
+      filePath = StringUtil.toLowerCase(filePath);
     }
     return FileUtil.toSystemIndependentName(filePath);
   }
 
-  @Nullable
-  public String getFileCoverageInformationString(@NotNull final PsiFile psiFile,
-                                                 @NotNull final CoverageSuitesBundle currentSuite,
-                                                 @NotNull final CoverageDataManager manager) {
-    VirtualFile file = psiFile.getVirtualFile().getCanonicalFile();
-    if (file == null) {
-      file = psiFile.getVirtualFile();
-    }
-
-    assert file != null;
+  @Override
+  public @Nullable @Nls String getFileCoverageInformationString(@NotNull Project project,
+                                                                @NotNull VirtualFile file,
+                                                                @NotNull CoverageSuitesBundle currentSuite,
+                                                                @NotNull CoverageDataManager manager) {
     final String path = normalizeFilePath(file.getPath());
 
     final FileCoverageInfo coverageInfo = myFileCoverageInfos.get(path);
@@ -136,17 +118,16 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (manager.isSubCoverageActive()) {
-      return coverageInfo.coveredLineCount > 0 ? "covered" : null;
+      return coverageInfo.coveredLineCount > 0 ? CoverageBundle.message("coverage.view.text.covered") : null;
     }
 
     return getLinesCoverageInformationString(coverageInfo);
   }
 
-  @Nullable
-  protected FileCoverageInfo collectBaseFileCoverage(@NotNull VirtualFile file,
-                                                     @NotNull final Annotator annotator,
-                                                     @NotNull final ProjectData projectData,
-                                                     @NotNull final Map<String, String> normalizedFiles2Files) {
+  protected @Nullable FileCoverageInfo collectBaseFileCoverage(@NotNull VirtualFile file,
+                                                               final @NotNull SimpleCoverageAnnotator.CoverageAnnotatorRunner annotator,
+                                                               final @NotNull ProjectData projectData,
+                                                               final @NotNull Map<String, String> normalizedFiles2Files) {
 
     file = file.getCanonicalFile() != null ? file.getCanonicalFile() : file;
     assert file != null;
@@ -163,7 +144,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     else {
       // file wasn't mentioned in coverage information
-      info = fillInfoForUncoveredFile(VfsUtilCore.virtualToIoFile(file));
+      info = fillInfoForUncoveredFile(file.toNioPath());
     }
 
     if (info != null) {
@@ -172,7 +153,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return info;
   }
 
-  private static @Nullable
+  protected static @Nullable
   ClassData getClassData(
     final @NotNull String filePath,
     final @NotNull ProjectData data,
@@ -184,16 +165,15 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return data.getClassData(originalFileName);
   }
 
-  @Nullable
-  protected DirCoverageInfo collectFolderCoverage(@NotNull final VirtualFile dir,
-                                                  final @NotNull CoverageDataManager dataManager,
-                                                  final Annotator annotator,
-                                                  final ProjectData projectInfo, boolean trackTestFolders,
-                                                  @NotNull final ProjectFileIndex index,
-                                                  @NotNull final CoverageEngine coverageEngine,
-                                                  Set<VirtualFile> visitedDirs,
-                                                  @NotNull final Map<String, String> normalizedFiles2Files) {
-    if (!index.isInContent(dir)) {
+  protected @Nullable DirCoverageInfo collectFolderCoverage(final @NotNull VirtualFile dir,
+                                                            final @NotNull CoverageDataManager dataManager,
+                                                            final CoverageAnnotatorRunner annotator,
+                                                            final ProjectData projectInfo, boolean trackTestFolders,
+                                                            final @NotNull ProjectFileIndex index,
+                                                            final @NotNull CoverageEngine coverageEngine,
+                                                            Set<? super VirtualFile> visitedDirs,
+                                                            final @NotNull Map<String, String> normalizedFiles2Files) {
+    if (ReadAction.computeBlocking(() -> !index.isInContent(dir) && !index.isInLibrary(dir))) {
       return null;
     }
 
@@ -201,14 +181,18 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    if (!shouldCollectCoverageInsideLibraryDirs()) {
-      if (index.isInLibrarySource(dir) || index.isInLibraryClasses(dir)) {
-        return null;
-      }
+    if (!shouldCollectCoverageInsideLibraryDirs()
+        && ReadAction.computeBlocking(() -> index.isInLibrary(dir))) {
+      return null;
     }
     visitedDirs.add(dir);
 
-    final boolean isInTestSrcContent = TestSourcesFilter.isTestSources(dir, getProject());
+    final String dirPath = normalizeFilePath(dir.getPath());
+
+    boolean isInTestSrcContent = ReadAction.computeBlocking(() -> TestSourcesFilter.isTestSources(dir, getProject()));
+    if (isInTestSrcContent) {
+      myTestDirectories.add(dirPath);
+    }
 
     // Don't count coverage for tests folders if track test folders is switched off
     if (!trackTestFolders && isInTestSrcContent) {
@@ -261,7 +245,6 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    final String dirPath = normalizeFilePath(dir.getPath());
     if (isInTestSrcContent) {
       annotator.annotateTestDirectory(dirPath, dirCoverageInfo);
     }
@@ -277,11 +260,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return true;
   }
 
-  public void annotate(@NotNull final VirtualFile contentRoot,
-                       @NotNull final CoverageSuitesBundle suite,
-                       final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
-                       final Project project,
-                       final Annotator annotator) {
+  protected void annotate(final @NotNull VirtualFile contentRoot,
+                          final @NotNull CoverageSuitesBundle suite,
+                          final @NotNull CoverageDataManager dataManager, final @NotNull ProjectData data,
+                          final Project project,
+                          final CoverageAnnotatorRunner annotator) {
     if (!contentRoot.isValid()) {
       return;
     }
@@ -290,22 +273,28 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
 
-    @SuppressWarnings("unchecked") final Set<String> files = data.getClasses().keySet();
-    final Map<String, String> normalizedFiles2Files = ContainerUtil.newHashMap();
-    for (final String file : files) {
-      normalizedFiles2Files.put(normalizeFilePath(file), file);
-    }
+    final Map<String, String> normalizedFiles2Files = getNormalizedFiles2FilesMapping(data);
     collectFolderCoverage(contentRoot, dataManager, annotator, data,
                           suite.isTrackTestFolders(),
                           index,
                           suite.getCoverageEngine(),
-                          ContainerUtil.newHashSet(),
+                          new HashSet<>(),
                           Collections.unmodifiableMap(normalizedFiles2Files));
   }
 
+  @ApiStatus.Internal
+  protected Map<String, String> getNormalizedFiles2FilesMapping(ProjectData data) {
+    final Map<String, String> normalizedFiles2Files = new HashMap<>();
+    final Set<String> files = data.getClasses().keySet();
+    for (final String file : files) {
+      normalizedFiles2Files.put(normalizeFilePath(file), file);
+    }
+    return normalizedFiles2Files;
+  }
+
   @Override
-  @Nullable
-  protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
+  protected @Nullable Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite,
+                                                  final @NotNull CoverageDataManager dataManager) {
     final ProjectData data = suite.getCoverageData();
     if (data == null) {
       return null;
@@ -314,10 +303,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return () -> {
       final Project project = getProject();
 
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-
-      // find all modules content roots
-      final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
+      final VirtualFile[] modulesContentRoots = getRoots(project, dataManager, suite);
 
       if (modulesContentRoots == null) {
         return;
@@ -325,34 +311,37 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
       // gather coverage from all content roots
       for (VirtualFile root : modulesContentRoots) {
-        annotate(root, suite, dataManager, data, project, new Annotator() {
+        annotate(root, suite, dataManager, data, project, new CoverageAnnotatorRunner() {
+          @Override
           public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
             myDirCoverageInfos.put(dirPath, info);
 
             try {
-              myDirCoverageInfos.put((new File(dirPath)).getCanonicalPath(), info);
+              myDirCoverageInfos.put(toRealPath(dirPath), info);
             }
             catch (IOException e) {
               //pass
             }
           }
 
+          @Override
           public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
             myTestDirCoverageInfos.put(dirPath, info);
 
             try {
-              myTestDirCoverageInfos.put((new File(dirPath)).getCanonicalPath(), info);
+              myTestDirCoverageInfos.put(toRealPath(dirPath), info);
             }
             catch (IOException e) {
               //pass
             }
           }
 
-          public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
+          @Override
+          public void annotateFile(final @NotNull String filePath, final @NotNull FileCoverageInfo info) {
             myFileCoverageInfos.put(filePath, info);
 
             try {
-              myFileCoverageInfos.put((new File(filePath)).getCanonicalPath(), info);
+              myFileCoverageInfos.put(toRealPath(filePath), info);
             }
             catch (IOException e) {
               //pass
@@ -405,26 +394,38 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     };
   }
 
-  @Nullable
-  protected String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
-    return calcCoveragePercentage(info) + "% lines covered";
+  private static @NotNull String toRealPath(@NotNull String filePath) throws IOException {
+    return Path.of(filePath).toRealPath().toString();
   }
 
-  protected static int calcCoveragePercentage(FileCoverageInfo info) {
+  @ApiStatus.Internal
+  protected VirtualFile[] getRoots(Project project,
+                                   @NotNull CoverageDataManager dataManager,
+                                   CoverageSuitesBundle suite) {
+    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+
+    // find all modules content roots
+    return dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
+  }
+
+  protected @Nullable @Nls String getLinesCoverageInformationString(final @NotNull FileCoverageInfo info) {
+    return CoverageBundle.message("coverage.view.text.lines.covered", calcCoveragePercentage(info));
+  }
+
+  protected static int calcCoveragePercentage(@NotNull FileCoverageInfo info) {
     return calcPercent(info.coveredLineCount, info.totalLineCount);
   }
 
-  private static int calcPercent(final int covered, final int total) {
+  @ApiStatus.Internal
+  protected static int calcPercent(final int covered, final int total) {
     return total != 0 ? (int)((double)covered / total * 100) : 100;
   }
 
-  @Nullable
-  protected String getFilesCoverageInformationString(@NotNull final DirCoverageInfo info) {
-    return calcPercent(info.coveredFilesCount, info.totalFilesCount) + "% files";
+  protected @Nullable @Nls String getFilesCoverageInformationString(final @NotNull DirCoverageInfo info) {
+    return CoverageBundle.message("coverage.view.text.files.covered", calcPercent(info.coveredFilesCount, info.totalFilesCount));
   }
 
-  @Nullable
-  private FileCoverageInfo fileInfoForCoveredFile(@NotNull final ClassData classData) {
+  protected @Nullable FileCoverageInfo fileInfoForCoveredFile(final @NotNull ClassData classData) {
     final Object[] lines = classData.getLines();
 
     // class data lines = [0, 1, ... count] but first element with index = #0 is fake and isn't
@@ -462,16 +463,25 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     info.totalLineCount++;
   }
 
-  @Nullable
-  protected FileCoverageInfo fillInfoForUncoveredFile(@NotNull File file) {
+  /**
+   * @deprecated Use {@link #fillInfoForUncoveredFile(Path)} instead.
+   */
+  @SuppressWarnings({"IO_FILE_USAGE"})
+  @Deprecated
+  protected @Nullable FileCoverageInfo fillInfoForUncoveredFile(@NotNull File file) {
     return null;
   }
 
-  private interface Annotator {
+  @SuppressWarnings("IO_FILE_USAGE")
+  protected @Nullable FileCoverageInfo fillInfoForUncoveredFile(@NotNull Path file) {
+    return fillInfoForUncoveredFile(file.toFile());
+  }
+
+  protected interface CoverageAnnotatorRunner {
     void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info);
 
     void annotateTestDirectory(final String dirPath, final DirCoverageInfo info);
 
-    void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info);
+    void annotateFile(final @NotNull String filePath, final @NotNull FileCoverageInfo info);
   }
 }

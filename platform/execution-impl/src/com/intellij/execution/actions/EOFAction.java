@@ -1,0 +1,107 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.actions;
+
+import com.google.common.base.Ascii;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+public final class EOFAction extends DumbAwareAction {
+
+  public static final @NonNls String ACTION_ID = "SendEOF";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
+    ConsoleView console = resolveConsole(e, descriptor);
+    ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
+    e.getPresentation().setEnabledAndVisible(console != null
+                                             && handler != null
+                                             && !handler.isProcessTerminated());
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    RunContentDescriptor descriptor = e.getData(ExecutionDataKeys.RUN_CONTENT_DESCRIPTOR);
+    ProcessHandler activeProcessHandler = descriptor != null ? descriptor.getProcessHandler() : null;
+    if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
+
+    ConsoleView console = resolveConsole(e, descriptor);
+    if (console instanceof TerminalExecutionConsole) {
+      sendEOFToPtyProcess(activeProcessHandler.getProcessInput());
+      return;
+    }
+
+    try (OutputStream input = activeProcessHandler.getProcessInput()) {
+      if (input != null) {
+        if (console != null) {
+          console.print("^D\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
+  }
+
+  /**
+   * Resolves the {@link ConsoleView} the action should target.
+   * <p>
+   * Prefers the console in the data context or focus owner. Falls back to event's
+   * {@link RunContentDescriptor}'s execution console when neither is available (e.g. when invoked
+   * from the Find Action popup), but only if that console's component is currently showing —
+   * so the action is disabled when the user is on a non-console tab (Threads, Variables, etc.) in
+   * the Debug tool window.
+   */
+  private static @Nullable ConsoleView resolveConsole(@NotNull AnActionEvent e, @Nullable RunContentDescriptor descriptor) {
+    ConsoleView fromData = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
+    if (fromData != null) return fromData;
+
+    ConsoleView fromFocus = UIUtil.getParentOfType(ConsoleView.class, IdeFocusManager.findInstance().getFocusOwner());
+    if (fromFocus != null) return fromFocus;
+
+    if (descriptor == null) return null;
+    if (!(descriptor.getExecutionConsole() instanceof ConsoleView console)) return null;
+    if (!console.getComponent().isShowing()) return null;
+    return console;
+  }
+
+  /**
+   * Writes the EOF (end of file) character to process's stdin (PTY).
+   * This character causes the pending tty buffer to be sent to the waiting user program without waiting for end-of-line.
+   * If it is the first character of the line, the read(2) in the user program returns 0, which signifies end-of-file.
+   *
+   * <p>Works on Unix and Windows.
+   *
+   * @see <a href="https://man7.org/linux/man-pages/man3/tcflow.3.html">termios(3)</a>
+   * @see <a href="https://www.gnu.org/software/libc/manual/html_node/Editing-Characters.html">Characters for Input Editing</a>
+   */
+  private static void sendEOFToPtyProcess(OutputStream outputStream) {
+    if (outputStream != null) {
+      try {
+        outputStream.write(Ascii.EOT);
+        outputStream.flush();
+      }
+      catch (IOException ignored) {
+      }
+    }
+  }
+}

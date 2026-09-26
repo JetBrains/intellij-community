@@ -1,37 +1,22 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataFile;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Base for cases that need marked PSI elements.
- * User: dcheryasov
  */
 public abstract class LightMarkedTestCase extends PyTestCase {
   protected PsiFile myFile;
@@ -46,7 +31,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @see #configureByFileText(String, String, String)
    * @param filePath file to load and parse
    * @return a mapping of markers to PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath) {
     return configureByFile(filePath, MARKER);
@@ -57,7 +41,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @param filePath file to read and parse
    * @param markerRegexp regexp for markers
    * @return a mapping of markers to PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp) {
     final String fullPath = getTestDataPath() + filePath;
@@ -66,7 +49,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
 
     final String text;
     try {
-      text = VfsUtil.loadText(vFile);
+      text = VfsUtilCore.loadText(vFile);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -85,7 +68,6 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    * @param fileName name to give to the PSI file
    * @param markerRegexp regexp to detect markers in the text
    * @return mapping of markers to the PSI elements
-   * @throws Exception
    */
   protected Map<String, PsiElement> configureByFileText(String fileText, final String fileName, @NonNls String markerRegexp) {
     // build a map of marks to positions, and the text with marks stripped
@@ -93,7 +75,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
     Matcher mat = pat.matcher(fileText);
     int rest_index = 0; // from here on fileText is not yet looked at
     Map<String, Integer> offsets = new HashMap<>();
-    final StringBuffer text = new StringBuffer();
+    final StringBuilder text = new StringBuilder();
     while (mat.find(rest_index)) {
       String mark = mat.group();
       CharSequence prev_part = fileText.subSequence(rest_index, mat.start());

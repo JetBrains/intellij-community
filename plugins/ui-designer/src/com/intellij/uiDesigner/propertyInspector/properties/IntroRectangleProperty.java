@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
@@ -28,10 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Rectangle;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle> {
   private final RectangleRenderer myRenderer;
   private final Property[] myChildren;
@@ -49,23 +31,25 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
     myEditor = new IntRegexEditor<>(Rectangle.class, myRenderer, new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE, 0, 0});
   }
 
-  public void write(final Rectangle value,final XmlWriter writer){
+  @Override
+  public void write(final Rectangle value, final XmlWriter writer){
     writer.addAttribute("x",value.x);
     writer.addAttribute("y",value.y);
     writer.addAttribute("width",value.width);
     writer.addAttribute("height",value.height);
   }
 
-  @NotNull
-  public Property[] getChildren(final RadComponent component){
+  @Override
+  public Property @NotNull [] getChildren(final RadComponent component){
     return myChildren;
   }
 
-  @NotNull
-  public PropertyRenderer<Rectangle> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<Rectangle> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<Rectangle> getEditor() {
     return myEditor;
   }

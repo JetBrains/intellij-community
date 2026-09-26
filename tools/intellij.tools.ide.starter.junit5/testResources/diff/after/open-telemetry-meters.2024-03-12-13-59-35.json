@@ -1,0 +1,100 @@
+[
+  {
+    "name": "NonBlockingReadAction.finalizedExecutionsCount",
+    "description": "",
+    "unit": "",
+    "type": "LONG_SUM",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1710244770504000000,
+          "epochNanos": 1710244775292000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 25
+        }
+      ],
+      "monotonic": true,
+      "aggregationTemporality": "DELTA"
+    }
+  },
+  {
+    "name": "Indexes.entries.lookupDurationAvgMs",
+    "description": "",
+    "unit": "",
+    "type": "DOUBLE_GAUGE",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1710244770504000000,
+          "epochNanos": 1710244775292000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 1.0
+        }
+      ]
+    }
+  },
+  {
+    "name": "jps.library.entities.serializer.load.entities.ms",
+    "description": "",
+    "unit": "",
+    "type": "LONG_SUM",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1710244770504000000,
+          "epochNanos": 1710244775292000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 23
+        }
+      ],
+      "monotonic": true,
+      "aggregationTemporality": "DELTA"
+    }
+  },
+  {
+    "name": "jps.module.iml.entities.serializer.load.entities.ms",
+    "description": "",
+    "unit": "",
+    "type": "LONG_SUM",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1710244770504000000,
+          "epochNanos": 1710244775292000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 4346
+        }
+      ],
+      "monotonic": true,
+      "aggregationTemporality": "DELTA"
+    }
+  },
+  {
+    "name": "workspaceModel.mutableEntityStorage.replace.by.source.ms",
+    "description": "",
+    "unit": "",
+    "type": "LONG_SUM",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1710244770504000000,
+          "epochNanos": 1710244775292000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 2375
+        }
+      ],
+      "monotonic": true,
+      "aggregationTemporality": "DELTA"
+    }
+  }
+]

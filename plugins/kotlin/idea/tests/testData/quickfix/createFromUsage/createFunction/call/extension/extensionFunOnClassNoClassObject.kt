@@ -1,0 +1,15 @@
+// "Create extension function 'A.Companion.foo'" "true"
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Create member function 'A.Companion.foo'
+// K2_ACTIONS_LIST: Create parameter 'foo'
+// K2_ACTIONS_LIST: Rename reference
+// K2_ACTIONS_LIST: Create annotation 'foo'
+// K2_ACTIONS_LIST: Create extension function 'A.Companion.foo'
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A<T>(val n: T)
+
+fun test() {
+    val a: Int = A.<caret>foo(2)
+}

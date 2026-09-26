@@ -20,9 +20,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,40 +40,22 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncDefineImpl;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class UnusedDefineInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unused Define";
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "UnusedDefine";
-  }
-
-  @Override
-  @NotNull
-  public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
   }
 
@@ -82,12 +64,12 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private final XmlElementVisitor myXmlVisitor = new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         MyElementVisitor.this.visitXmlTag(tag);
       }
     };
 
-    public MyElementVisitor(ProblemsHolder holder) {
+    MyElementVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -112,12 +94,12 @@ public class UnusedDefineInspection extends BaseInspection {
       if (processRncUsages(pattern, new LocalSearchScope(collector.toArray()))) return;
 
       final ASTNode astNode = ((RncDefineImpl)pattern).getNameNode();
-      myHolder.registerProblem(astNode.getPsi(), "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(pattern));
+      myHolder.registerProblem(astNode.getPsi(), RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         final RncDefine t = PsiTreeUtil.getParentOfType(e, RncDefine.class, false);
         if (t == null || !PsiTreeUtil.isAncestor(tag, t, true)) {
@@ -129,13 +111,13 @@ public class UnusedDefineInspection extends BaseInspection {
 
     public void visitXmlTag(XmlTag tag) {
       final PsiFile file = tag.getContainingFile();
-      if (file.getFileType() != StdFileTypes.XML) {
+      if (file.getFileType() != XmlFileType.INSTANCE) {
         return;
       }
       if (!tag.getLocalName().equals("define")) {
         return;
       }
-      if (!tag.getNamespace().equals(ApplicationLoader.RNG_NAMESPACE)) {
+      if (!tag.getNamespace().equals(RelaxNgMetaDataContributor.RNG_NAMESPACE)) {
         return;
       }
       if (tag.getAttribute("combine") != null) {
@@ -149,7 +131,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (value == null) return;
 
       final String s = value.getValue();
-      if (s == null || s.length() == 0) {
+      if (s.isEmpty()) {
         return;
       }
       final PsiElement parent = value.getParent();
@@ -181,12 +163,12 @@ public class UnusedDefineInspection extends BaseInspection {
 
       if (processUsages(tag, value, new LocalSearchScope(collector.toArray()))) return;
 
-      myHolder.registerProblem(value, "Unreferenced define", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>(tag));
+      myHolder.registerProblem(value, RelaxngBundle.message("relaxng.inspection.unused-define.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MyFix<>());
     }
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope, true);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         if (e != value) {
           final XmlTag t = PsiTreeUtil.getParentOfType(e, XmlTag.class);
@@ -199,22 +181,16 @@ public class UnusedDefineInspection extends BaseInspection {
     }
 
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
-      private final T myTag;
-
-      public MyFix(T tag) {
-        myTag = tag;
-      }
-
       @Override
-      @NotNull
-      public String getFamilyName() {
-        return "Remove define";
+      public @NotNull String getFamilyName() {
+        return RelaxngBundle.message("relaxng.quickfix.remove-define");
       }
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiElement myTag = doIfNotNull(descriptor.getPsiElement(), PsiElement::getParent);
         try {
-          if (myTag.isValid()) {
+          if (myTag instanceof RncDefine && myTag.isValid()) {
             myTag.delete();
           }
         } catch (IncorrectOperationException e) {

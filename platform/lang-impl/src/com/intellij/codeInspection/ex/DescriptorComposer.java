@@ -1,10 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -15,19 +16,20 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
-public class DescriptorComposer extends HTMLComposerImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorComposer");
+@ApiStatus.Internal
+public final class DescriptorComposer extends HTMLComposerImpl {
+  private static final Logger LOG = Logger.getInstance(DescriptorComposer.class);
   private final InspectionToolPresentation myTool;
 
   public DescriptorComposer(@NotNull InspectionToolPresentation tool) {
@@ -35,36 +37,32 @@ public class DescriptorComposer extends HTMLComposerImpl {
   }
 
   @Override
-  public void compose(StringBuffer buf, RefEntity refEntity) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refEntity) {
     genPageHeader(buf, refEntity);
     if (myTool.getDescriptions(refEntity) != null) {
-      appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
-      buf.append("<div class=\"problem-description\">");
+      appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
+      startProblemDescription(buf);
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
       LOG.assertTrue(descriptions != null);
 
       startList(buf);
       for (int i = 0; i < descriptions.length; i++) {
-        final CommonProblemDescriptor description = descriptions[i];
-
         startListItem(buf);
-        composeDescription(description, i, buf, refEntity);
+        composeDescription(descriptions[i], i, buf, refEntity);
         doneListItem(buf);
       }
-
       doneList(buf);
-      buf.append("</div>");
+      doneProblemDescription(buf);
 
-      appendResolution(buf,refEntity, quickFixTexts(refEntity, myTool));
+      appendResolution(buf, refEntity, quickFixTexts(refEntity, myTool));
     }
     else {
       appendNoProblems(buf);
     }
   }
 
-  @NotNull
-  public static String[] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
+  public static String @NotNull [] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
     QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(where);
     List<String> texts = new ArrayList<>();
     for (QuickFixAction quickFix : quickFixes) {
@@ -72,35 +70,27 @@ public class DescriptorComposer extends HTMLComposerImpl {
       if (text == null) continue;
       texts.add(escapeQuickFixText(text));
     }
-    return ArrayUtil.toStringArray(texts);
+    return ArrayUtilRt.toStringArray(texts);
   }
 
-  private static String escapeQuickFixText(String text) {
-    return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXml(text);
+  private static String escapeQuickFixText(@NotNull String text) {
+    return XmlStringUtil.isWrappedInHtml(text) ? XmlStringUtil.stripHtml(text) : StringUtil.escapeXmlEntities(text);
   }
 
-  protected void composeAdditionalDescription(@NotNull StringBuffer buf, @NotNull RefEntity refEntity) {}
+  private void composeAdditionalDescription(@NotNull StringBuilder buf, @NotNull RefEntity refEntity) {}
 
   @Override
-  public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
     int problemIdx = 0;
     if (descriptions != null) { //server-side inspections
-      problemIdx = -1;
-      for (int i = 0; i < descriptions.length; i++) {
-        CommonProblemDescriptor description = descriptions[i];
-        if (description == descriptor) {
-          problemIdx = i;
-          break;
-        }
-      }
+      problemIdx = ArrayUtil.indexOf(descriptions, descriptor);
       if (problemIdx == -1) return;
     }
 
     genPageHeader(buf, refElement);
-    appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
-    //noinspection HardCodedStringLiteral
+    appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
     buf.append("<br>");
     appendAfterHeaderIndention(buf);
 
@@ -108,55 +98,47 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
     if (refElement instanceof RefElement && !refElement.isValid()) return;
 
-    final QuickFix[] fixes = descriptor.getFixes();
+    QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
-      //noinspection HardCodedStringLiteral
       buf.append("<br><br>");
-      appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
-      //noinspection HardCodedStringLiteral
+      appendHeading(buf, AnalysisBundle.message("inspection.problem.resolution"));
       buf.append("<br>");
       appendAfterHeaderIndention(buf);
 
       int idx = 0;
       for (QuickFix fix : fixes) {
-        //noinspection HardCodedStringLiteral
-        //noinspection HardCodedStringLiteral
-        buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
-        buf.append("\">");
-        buf.append(escapeQuickFixText(fix.getName()));
-        //noinspection HardCodedStringLiteral
-        buf.append("</a>");
-        //noinspection HardCodedStringLiteral
-        buf.append("<br>");
+        buf.append("<a href=\"file://bred.txt#invokelocal:")
+          .append(idx++)
+          .append("\">")
+          .append(escapeQuickFixText(fix.getName()))
+          .append("</a><br>");
         appendAfterHeaderIndention(buf);
       }
     }
   }
 
-  protected void composeDescription(@NotNull CommonProblemDescriptor description, int i, @NotNull StringBuffer buf, @NotNull RefEntity refElement) {
+  private void composeDescription(@NotNull CommonProblemDescriptor description,
+                                  int i,
+                                  @NotNull StringBuilder buf,
+                                  @NotNull RefEntity refElement) {
     PsiElement expression = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
     StringBuilder anchor = new StringBuilder();
     VirtualFile vFile = null;
 
     if (expression != null) {
-      vFile = expression.getContainingFile().getVirtualFile();
+      vFile = (expression instanceof PsiFileSystemItem ? (PsiFileSystemItem) expression : expression.getContainingFile()).getVirtualFile();
       if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
 
-      //noinspection HardCodedStringLiteral
-      anchor.append("<a HREF=\"");
-      //noinspection HardCodedStringLiteral
+      anchor.append("<a href=\"");
       anchor.append(appendURL(vFile, "descr:" + i));
 
-      anchor.append("\">");
-      anchor.append(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
-      //noinspection HardCodedStringLiteral
-      anchor.append("</a>");
+      anchor.append("\"><code>");
+      anchor.append(StringUtil.escapeXmlEntities(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$")));
+      anchor.append("</code></a>");
     }
     else {
-      //noinspection HardCodedStringLiteral
       anchor.append("<font style=\"font-weight:bold; color:#FF0000\";>");
-      anchor.append(InspectionsBundle.message("inspection.export.results.invalidated.item"));
-      //noinspection HardCodedStringLiteral
+      anchor.append(AnalysisBundle.message("inspection.export.results.invalidated.item"));
       anchor.append("</font>");
     }
 
@@ -169,33 +151,28 @@ public class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
-    //noinspection HardCodedStringLiteral
-    final String reference = "#ref";
-    final boolean containsReference = descriptionTemplate.contains(reference);
-    String res = descriptionTemplate.replaceAll(reference, anchor.toString());
-    final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-    StringBuffer lineAnchor = new StringBuffer();
+    String res = descriptionTemplate.replace(ProblemDescriptorUtil.REF_REFERENCE, anchor.toString());
+    int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
+    StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
       Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-      lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
-      //noinspection HardCodedStringLiteral
-      lineAnchor.append("<a HREF=\"");
-      int offset = doc.getLineStartOffset(lineNumber);
-      offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-      lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
-      lineAnchor.append("\">");
-      lineAnchor.append(Integer.toString(lineNumber + 1));
-      //noinspection HardCodedStringLiteral
-      lineAnchor.append("</a>");
-      //noinspection HardCodedStringLiteral
-      final String location = "#loc";
-      if (!res.contains(location)) {
-        res += " (" + location + ")";
+      if (doc != null && lineNumber < doc.getLineCount()) {
+        lineNumber = Math.min(lineNumber, doc.getLineCount() - 1);
+        lineAnchor.append(AnalysisBundle.message("inspection.export.results.at.line")).append(" ");
+        lineAnchor.append("<a href=\"");
+        int offset = doc.getLineStartOffset(lineNumber);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
+        lineAnchor.append("\">");
+        lineAnchor.append((lineNumber + 1));
+        lineAnchor.append("</a>");
+        if (!res.contains(ProblemDescriptorUtil.LOC_REFERENCE)) {
+          res += " (" + ProblemDescriptorUtil.LOC_REFERENCE + ")";
+        }
+        res = res.replace(ProblemDescriptorUtil.LOC_REFERENCE, lineAnchor.toString());
       }
-      res = res.replaceAll(location, lineAnchor.toString());
     }
     buf.append(res.replace("#end", "").replace("#treeend",""));
-    buf.append(BR).append(BR);
     composeAdditionalDescription(buf, refElement);
   }
 

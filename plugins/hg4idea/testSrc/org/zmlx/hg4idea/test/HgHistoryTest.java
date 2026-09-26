@@ -1,19 +1,21 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.vcsUtil.VcsUtil;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * HgHistoryTest tests retrieving file history and specific revisions.
@@ -42,10 +44,10 @@ public class HgHistoryTest extends HgSingleUserTest {
       rev.loadContent();
     }
 
-    assertEquals(revisions.size(), versions);
+    assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
   }
 
   /**
@@ -76,10 +78,10 @@ public class HgHistoryTest extends HgSingleUserTest {
     final List<VcsFileRevision> revisions = session.getRevisionList();
     loadAllRevisions(revisions);
 
-    assertEquals(revisions.size(), versions);
+    assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(2).getContent(), INITIAL_FILE_CONTENT.getBytes());
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(2).loadContent());
   }
   
   @Test
@@ -98,7 +100,7 @@ public class HgHistoryTest extends HgSingleUserTest {
     //don't commit 
 
     refreshVfs();
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    ChangeListManagerImpl.getInstanceImpl(myProject).ensureUpToDate();
     
     final VcsHistorySession session = getHistorySession(BFILE);
     final List<VcsFileRevision> revisions = session.getRevisionList();
@@ -106,11 +108,10 @@ public class HgHistoryTest extends HgSingleUserTest {
       rev.loadContent();
     }
 
-    assertEquals(revisions.size(), versions);
+    assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(revisions.get(0).getContent(), UPDATED_FILE_CONTENT.getBytes());
-    assertEquals(revisions.get(1).getContent(), INITIAL_FILE_CONTENT.getBytes());
-    
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
   }
 
   private static void loadAllRevisions(Collection<VcsFileRevision> revisions) throws Exception {

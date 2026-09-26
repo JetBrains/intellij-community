@@ -1,0 +1,91 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>com.intellij.turboComplete</id>
+  <name>Turbo Complete</name>
+  <vendor>JetBrains</vendor>
+  <category>Local AI/ML Tools</category>
+
+  <description><![CDATA[
+    Experimental approach to speed up code completion.
+    <br><br>
+    The plugin implements a <a href="https://youtrack.jetbrains.com/issue/MLP-17/ML-for-IDE-Performance">new approach</a>
+    to improve code completion's performance perception. Currently, it works only for Kotlin.
+  ]]></description>
+
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.xml.analysis.impl), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
+
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.completion.ml.ranking"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.ml"/>
+    <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <resource-bundle>messages.TurboComplete</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint
+      interface="com.intellij.platform.ml.impl.turboComplete.KindCollector"
+      dynamic="true"
+      name="kindCollector"/>
+    <extensionPoint
+      interface="com.intellij.turboComplete.analysis.PipelineListener"
+      dynamic="true"
+      name="analysis.pipelineListener"/>
+    <extensionPoint
+      interface="com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider"
+      dynamic="true"
+      name="suggestionGeneratorExecutorProvider"/>
+    <extensionPoint
+      interface="com.intellij.turboComplete.features.kind.KindFeatureProvider"
+      dynamic="true"
+      name="features.kind.provider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.ml.contextFeatures language="" implementationClass="com.intellij.turboComplete.features.context.AllKindsUsageFeatures"/>
+    <completion.ml.contextFeatures language=""
+                                   implementationClass="com.intellij.turboComplete.features.context.CompletionPerformanceStatusFeatures"/>
+
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.turboComplete.features.element.ElementsKindFeatures"/>
+
+    <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindCommonFeatures"/>
+    <turboComplete.features.kind.provider implementation="com.intellij.turboComplete.features.kind.KindUsageFeatures"/>
+
+    <turboComplete.analysis.pipelineListener
+      implementation="com.intellij.turboComplete.analysis.usage.KindVarietyUsageTracker$UsagePipelineListener"/>
+    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.platform.EarlyLookupOpener"/>
+    <turboComplete.analysis.pipelineListener implementation="com.intellij.turboComplete.analysis.PipelineDebugLogger"/>
+
+    <platform.ml.impl.turboComplete.smartPipelineRunner implementation="com.intellij.turboComplete.platform.contributor.MLPipelineRunner"/>
+
+    <lookup.usageDetails implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker"/>
+    <statistics.collectorExtension
+      implementation="com.intellij.turboComplete.analysis.fus.MLPerformanceTracker$MLPerformanceUsageCollectorExtension"/>
+
+    <registryKey key="ml.completion.performance.showLookupEarly" defaultValue="true"
+                 description="Show lookup as soon as the first CompletionKind finished working"/>
+    <registryKey key="ml.completion.performance.experiment" defaultValue="true"
+                 description="Perform an A/B experiment turning on and off performance"/>
+    <registryKey key="ml.completion.performance.executeImmediately" defaultValue="false"
+                 description="Immediately execute suggestion generators"/>
+    <registryKey key="ml.completion.performance.logDebug" defaultValue="false"
+                 description="Log performance pipeline to idea.log"/>
+  </extensions>
+</idea-plugin>

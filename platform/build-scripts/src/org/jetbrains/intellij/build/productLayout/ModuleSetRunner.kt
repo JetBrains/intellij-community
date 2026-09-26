@@ -1,0 +1,339 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration")
+
+package org.jetbrains.intellij.build.productLayout
+
+import com.intellij.platform.pluginGraph.PluginGraph
+import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.BuildLifetime
+import org.jetbrains.intellij.build.BuildTracer
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.buildSpan
+import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
+import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
+import org.jetbrains.intellij.build.impl.bazelOutputRoot
+import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetSourceLabels
+import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
+import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
+import org.jetbrains.intellij.build.productLayout.json.buildPluginGraphForJson
+import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
+import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
+import org.jetbrains.intellij.build.productLayout.tooling.JsonFilter
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocation
+import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.tooling.ProductCategory
+import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
+import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
+import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.withTracer
+import org.jetbrains.intellij.build.telemetry.withoutTracer
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
+import org.jetbrains.jps.model.serialization.JpsSerializationManager
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.system.exitProcess
+
+private val jsonFilterParser = Json {
+  ignoreUnknownKeys = true
+}
+
+data class DiscoveredModuleSetSource(
+  @JvmField val moduleSets: List<ModuleSet>,
+  @JvmField val sourceFile: String,
+)
+
+fun discoverCommunityModuleSetSources(): Map<String, DiscoveredModuleSetSource> {
+  return mapOf(
+    ModuleSetSourceLabels.COMMUNITY to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(CommunityModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CommunityModuleSets.kt",
+    ),
+    ModuleSetSourceLabels.CORE to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(CoreModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/CoreModuleSets.kt",
+    ),
+    ModuleSetSourceLabels.LIBRARIES to DiscoveredModuleSetSource(
+      moduleSets = discoverModuleSets(LibraryModuleSets),
+      sourceFile = "community/platform/build-scripts/src/org/jetbrains/intellij/build/productLayout/LibraryModuleSets.kt",
+    ),
+  )
+}
+
+/**
+ * Determines product category based on module sets included in the content spec.
+ * 
+ * @param contentSpec Product's module content specification
+ * @return ProductCategory, based on which core module sets are used
+ */
+private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): ProductCategory {
+  if (contentSpec == null) return ProductCategory.BACKEND
+
+  val moduleSetNames = contentSpec.moduleSets.map { it.moduleSet.name }
+  return when {
+    "ide.ultimate" in moduleSetNames -> ProductCategory.ULTIMATE
+    "ide.common" in moduleSetNames -> ProductCategory.COMMUNITY
+    else -> ProductCategory.BACKEND
+  }
+}
+
+/**
+ * Generic main runner for module set generation and analysis.
+ * Supports multiple modes:
+ * 1. JSON mode (--json): Outputs comprehensive analysis as JSON to stdout
+ * 2. Update suppressions mode (--update-suppressions): Only updates suppressions.json, no XML changes
+ * 3. Default mode: Generates XML files for module sets and products (but NOT suppressions.json)
+ *
+ * CLI flags:
+ * - `--json[=filter]`: Output analysis as JSON instead of generating files
+ * - `--update-suppressions`: Only update suppressions.json (no XML changes)
+ * - `--validation=<ids>`: Run only specified validation rules (comma-separated).
+ *   Use `--validation=none` to skip all validation. Generation generators always run.
+ * - `--trace=<file>`: Write an OpenTelemetry trace of the run into the file, in the Jaeger JSON format.
+ *
+ * @param args Command line arguments
+ * @param communityModuleSetSources Module sets from community sources grouped by discovery label
+ * @param ultimateModuleSets Module sets from ultimate (or empty for community-only)
+ * @param testProducts Test product specifications (name to ProductModulesContentSpec pairs)
+ * @param ultimateSourceFile Source file path for ultimate module sets (or null for community-only)
+ * @param projectRoot Project root path
+ * @param generateXmlImpl Lambda to generate XML files, returns generation result with errors and diffs
+ * @param graphConfigProvider Optional provider for building ModuleSetGenerationConfig when JSON analysis needs PluginGraph
+ */
+fun runModuleSetMain(
+  args: Array<String>,
+  communityModuleSetSources: Map<String, DiscoveredModuleSetSource>,
+  ultimateModuleSets: List<ModuleSet>,
+  testProducts: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
+  ultimateSourceFile: String?,
+  projectRoot: Path,
+  generateXmlImpl: (outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> GenerationResult,
+  graphConfigProvider: ((outputProvider: ModuleOutputProvider, options: GeneratorRunOptions) -> ModuleSetGenerationConfig)? = null,
+) {
+  // The process start, so the total covers the JVM start and the module set discovery of the caller, and not only the
+  // part below. A reader compares the total against the wall clock, and a total that starts here misses seconds.
+  val startTime = ProcessHandle.current().info().startInstant().map { it.toEpochMilli() }.orElseGet { System.currentTimeMillis() }
+  val options = parseGeneratorOptions(args)
+  setProductDslLogFilter(options.logFilter)
+  // A bad filter must fail before the run starts, so that no trace file stays half-written.
+  val jsonFilter = options.jsonFilter?.let {
+    try {
+      parseJsonArgument(it)
+    }
+    catch (e: IllegalArgumentException) {
+      System.err.println(e.message)
+      exitProcess(1)
+    }
+  }
+
+  var exitCode = 0
+  val run: () -> Unit = {
+    BuildLifetime().use { lifetime ->
+      val outputProvider = buildSpan("create module output provider") {
+        createModuleOutputProvider(projectRoot = projectRoot, lifetime = lifetime)
+      }
+      if (options.jsonFilter != null) {
+        val pluginGraph = graphConfigProvider?.let { buildPluginGraphForJson(it(outputProvider, options)) }
+                          ?: error("PluginGraph is required for --json output; graphConfigProvider was not supplied")
+        jsonResponse(
+          communityModuleSetSources = communityModuleSetSources,
+          ultimateSourceFile = ultimateSourceFile,
+          ultimateModuleSets = ultimateModuleSets,
+          projectRoot = projectRoot,
+          testProducts = testProducts,
+          filter = jsonFilter,
+          outputProvider = outputProvider,
+          pluginGraph = pluginGraph,
+        )
+      }
+      else if (options.updateSuppressions) {
+        // Update suppressions mode: only update suppressions.json, no XML changes
+        val result = generateXmlImpl(outputProvider, options)
+        println("Suppressions config updated.")
+        printGenerationSummary(result.stats, result.errors, committed = true, runDurationMs = System.currentTimeMillis() - startTime)
+      }
+      else {
+        // Default mode: Generate XML files but NOT suppressions.json
+        val result = generateXmlImpl(outputProvider, options)
+        printGenerationSummary(
+          stats = result.stats,
+          errors = result.errors,
+          committed = options.commitChanges,
+          runDurationMs = System.currentTimeMillis() - startTime,
+        )
+        if (!options.commitChanges) {
+          for (diff in result.diffs) {
+            println("out of sync: ${projectRoot.relativize(diff.path)} (${diff.changeType})")
+          }
+        }
+        if (result.errors.isNotEmpty() || (!options.commitChanges && result.diffs.isNotEmpty())) {
+          exitCode = 1
+        }
+      }
+    }
+  }
+
+  val traceFile = options.traceFile
+  if (traceFile == null) {
+    withoutTracer(run)
+  }
+  else {
+    // The trace goes to the file. The console exporter prints every span to stdout, which breaks the JSON output.
+    System.setProperty(ConsoleSpanExporter.IS_ENABLED_PROPERTY, "false")
+    withTracer(serviceName = "plugin-model-tool", traceFile = traceFile) {
+      BuildTracer.install(TraceManager.currentTracer()).use {
+        // One root span, so that every span of the run has a parent.
+        buildSpan("plugin-model-tool") { run() }
+      }
+    }
+    println("Trace: $traceFile")
+  }
+
+  // The exit must come after the trace file is closed, because a process exit skips the flush of the exporter.
+  if (exitCode != 0) {
+    exitProcess(exitCode)
+  }
+}
+
+private fun jsonResponse(
+  communityModuleSetSources: Map<String, DiscoveredModuleSetSource>,
+  ultimateSourceFile: String?,
+  ultimateModuleSets: List<ModuleSet>,
+  projectRoot: Path,
+  testProducts: List<Pair<String, ProductModulesContentSpec>>,
+  filter: JsonFilter?,
+  outputProvider: ModuleOutputProvider,
+  pluginGraph: PluginGraph,
+) {
+  // Prepare all module sets with metadata
+  val communityModuleSetsWithMeta = communityModuleSetSources.values.flatMap { source ->
+    source.moduleSets.map {
+      ModuleSetMetadata(
+        moduleSet = it,
+        location = ModuleLocation.COMMUNITY,
+        sourceFile = source.sourceFile,
+        directNestedSets = it.nestedSets.map { nested -> nested.name }
+      )
+    }
+  }
+  val ultimateModuleSetsWithMeta = if (ultimateSourceFile == null) {
+    emptyList()
+  }
+  else {
+    ultimateModuleSets.map {
+      ModuleSetMetadata(
+        moduleSet = it,
+        location = ModuleLocation.ULTIMATE,
+        sourceFile = ultimateSourceFile,
+        directNestedSets = it.nestedSets.map { nested -> nested.name }
+      )
+    }
+  }
+  val allModuleSets = communityModuleSetsWithMeta + ultimateModuleSetsWithMeta
+
+  // Discover regular products and add passed test products
+  val regularProducts = discoverAllProducts(projectRoot, outputProvider).asSequence().map {
+    // For test products (properties = null), use "test-product" as source file
+    val props = it.properties // Store in local val to enable smart cast
+    val sourceFile = if (props == null) {
+      "test-product"
+    }
+    else {
+      // Use JPS-based lookup to find actual source file in module source roots
+      findProductPropertiesSourceFile(buildModules = it.config.modules, productPropertiesClass = props.javaClass, outputProvider = outputProvider, projectRoot = projectRoot)
+    }
+    ProductSpec(
+      name = it.name,
+      className = it.config.className,
+      sourceFile = sourceFile,
+      pluginXmlPath = it.pluginXmlPath,
+      contentSpec = it.spec,  // Pass full ProductModulesContentSpec for complete DSL serialization
+      buildModules = it.config.modules,
+      category = determineProductCategory(it.spec),
+    )
+  }
+  val testProductSpecs = testProducts.asSequence().map { (name, spec) ->
+    ProductSpec(
+      name = name,
+      className = "test-product",
+      sourceFile = "test-product",
+      pluginXmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml",
+      contentSpec = spec,
+      buildModules = emptyList()
+    )
+  }
+
+  streamModuleAnalysisJson(
+    allModuleSets = allModuleSets,
+    products = (regularProducts + testProductSpecs).toList(),
+    projectRoot = projectRoot,
+    filter = filter,
+    pluginGraph = pluginGraph,
+  )
+}
+
+/**
+ * Parses JSON argument from command line in the format `--json`, `--json='{"filter":"...","value":"..."}'`,
+ * `--json=-`, or `--json=@/path/to/query.json`.
+ * Returns null for full JSON output, or JsonFilter for filtered output.
+ */
+internal fun parseJsonArgument(
+  arg: String,
+  stdinReader: () -> String = { System.`in`.bufferedReader().readText() },
+  fileReader: (Path) -> String = { Files.readString(it) },
+): JsonFilter? {
+  if (arg == "--json") {
+    return null
+  }
+
+  if (!arg.startsWith("--json=")) {
+    throw IllegalArgumentException("Invalid JSON argument: $arg. Use --json, --json=<payload>, --json=-, or --json=@<file>.")
+  }
+
+  val rawValue = arg.substringAfter('=')
+  val filterJson = when {
+    rawValue == "-" -> stdinReader()
+    rawValue.startsWith("@") -> {
+      val path = rawValue.removePrefix("@")
+      if (path.isEmpty()) {
+        throw IllegalArgumentException("Invalid JSON argument: --json=@ requires a file path.")
+      }
+      try {
+        fileReader(Path.of(path))
+      }
+      catch (e: Exception) {
+        throw IllegalArgumentException("Failed to read JSON filter from $path: ${e.message}")
+      }
+    }
+    else -> rawValue
+  }
+
+  try {
+    return jsonFilterParser.decodeFromString<JsonFilter>(filterJson)
+  }
+  catch (e: Exception) {
+    throw IllegalArgumentException("Failed to parse JSON filter: $filterJson\nError: ${e.message}")
+  }
+}
+
+private fun createModuleOutputProvider(projectRoot: Path, lifetime: BuildLifetime): ModuleOutputProvider {
+  val useTestCompilationOutput = true
+  val project = buildSpan("load project") { span ->
+    val project = JpsSerializationManager.getInstance().loadProject(
+      projectRoot.toString(),
+      mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
+      false
+    )
+    span.setAttribute("moduleCount", project.modules.size.toLong())
+    project
+  }
+  val bazelOutputRoot = bazelOutputRoot ?: return JpsModuleOutputProvider(project, useTestCompilationOutput = useTestCompilationOutput)
+  return BazelModuleOutputProvider(
+    modules = project.modules,
+    projectHome = projectRoot,
+    bazelOutputRoot = bazelOutputRoot,
+    lifetime = lifetime,
+    useTestCompilationOutput = useTestCompilationOutput,
+  )
+}

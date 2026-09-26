@@ -1,0 +1,27 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-AllowBreakAndContinueInsideWhen
+
+fun test() {
+    loop@ while (true) {
+        loop2@ for (i in -10..10) {
+            when {
+                i < 0 -> {
+                    if (i < -5) {
+                        break@loop2
+                    } else {
+                        continue@loop
+                    }
+                }
+                else -> {
+                    if (i == 0) {
+                        i.hashCode()
+                        break@loop2
+                    } else if (i > 5) {
+                        i.hashCode()
+                    } else {
+                        continue@loop2
+                    }
+                }
+            }
+        }
+    }
+}

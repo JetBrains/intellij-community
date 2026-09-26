@@ -1,34 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class IdeDocumentHistoryTest extends PlatformTestCase {
+public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   private IdeDocumentHistoryImpl myHistory;
 
   private Mock.MyFileEditor  mySelectedEditor;
@@ -43,25 +33,10 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject(), EditorFactory.getInstance(), new EditorManager(), VirtualFileManager.getInstance(), CommandProcessor.getInstance(), new Mock.MyToolWindowManager()) {
-      @Override
-      protected Pair<FileEditor,FileEditorProvider> getSelectedEditor() {
-        return Pair.create ((FileEditor)mySelectedEditor, myProvider);
-      }
-
-      @Override
-      protected void executeCommand(Runnable runnable, String name, Object groupId) {
-        myHistory.onCommandStarted();
-        runnable.run();
-        myHistory.onSelectionChanged();
-        myHistory.onCommandFinished(groupId);
-      }
-    };
 
     mySelectedEditor = new Mock.MyFileEditor() {
       @Override
-      @NotNull
-      public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+      public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
         return myEditorState;
       }
 
@@ -69,13 +44,40 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
       public void setState(@NotNull FileEditorState state) {
         myEditorState = state;
       }
+
+      @Override
+      public @NotNull VirtualFile getFile() {
+        return mySelectedFile;
+      }
     };
+
+    EditorManager editorManager = new EditorManager();
+    Project project = getProject();
+    myHistory = new IdeDocumentHistoryImpl(project, ((ComponentManagerEx)project).getCoroutineScope()) {
+      @Override
+      protected FileEditorManagerEx getFileEditorManager() {
+        return editorManager;
+      }
+
+      @Override
+      protected FileEditorWithProvider getSelectedEditor() {
+        return mySelectedEditor == null ? null : new FileEditorWithProvider(mySelectedEditor, myProvider);
+      }
+
+      @Override
+      protected void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
+        myHistory.onCommandStarted(groupId);
+        runnable.run();
+        myHistory.onSelectionChanged();
+        myHistory.onCommandFinished(getProject(), groupId);
+      }
+    };
+
     mySelectedFile = new Mock.MyVirtualFile();
     myEditorState = new MyState(false, "start");
     myProvider = new Mock.MyFileEditorProvider() {
       @Override
-      @NotNull
-      public String getEditorTypeId() {
+      public @NotNull String getEditorTypeId() {
         return "EditorType";
       }
     };
@@ -83,20 +85,28 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myHistory = null;
-    mySelectedEditor = null;
-    myEditorState = null;
-    myProvider = null;
-    mySelectedFile = null;
-    myState1 = null;
-    myState2 = null;
-    myState3 = null;
-    super.tearDown();
+    try {
+      Disposer.dispose(myHistory);
+      myHistory = null;
+      mySelectedEditor = null;
+      myEditorState = null;
+      myProvider = null;
+      mySelectedFile = null;
+      myState1 = null;
+      myState2 = null;
+      myState3 = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testNoHistoryRecording() {
-    myHistory.onCommandStarted();
-    myHistory.onCommandFinished(null);
+    myHistory.onCommandStarted(null);
+    myHistory.onCommandFinished(getProject(), null);
 
     assertFalse(myHistory.isBackAvailable());
     assertFalse(myHistory.isForwardAvailable());
@@ -173,13 +183,54 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     assertTrue(myHistory.isBackAvailable());
 
     mySelectedFile.myValid = false;
-
-    myHistory.onFileDeleted();
+    myHistory.removeInvalidFilesFromStacks();
 
     assertFalse(myHistory.isBackAvailable());
     assertFalse(myHistory.isForwardAvailable());
   }
 
+  public void testRemoveOptionallyIncludedFiles() {
+    var file = new MyOptionallyIncludedFile();
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertTrue(myHistory.isBackAvailable());
+
+    file.myIsIncludedInDocumentHistory = false;
+    myHistory.removeInvalidFilesFromStacks();
+
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testOptionallyExcludedFileIsNotPushed() {
+    var file = new MyOptionallyIncludedFile();
+    file.myIsIncludedInDocumentHistory = false;
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testExcludedFileIsNotPushed() {
+    mySelectedFile = new MyAlwaysExcludedFile();
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testNavigationHistorySnapshotsDoNotSuppressCommandHistory() {
+    var outerSnapshot = myHistory.prepareHistorySnapshot();
+    var innerSnapshot = myHistory.prepareHistorySnapshot();
+
+    innerSnapshot.commitIfChanged();
+    makeNavigationChange(new MyState(false, "state2"));
+
+    assertTrue(myHistory.isBackAvailable());
+    outerSnapshot.commitIfChanged();
+  }
 
   private void pushTwoStates() {
     myState1 = new MyState(false, "state1");
@@ -192,25 +243,18 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
   }
 
   private void makeNavigationChange(MyState newState) {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onSelectionChanged();
-    myHistory.onCommandFinished(null);
+    myHistory.onCommandFinished(getProject(), null);
     myEditorState = newState;
   }
 
-  private class EditorManager extends Mock.MyFileEditorManager {
-
+  private final class EditorManager extends Mock.MyFileEditorManager {
     @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return mySelectedFile;
-    }
-
-    @Override
-    @NotNull
-    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                         boolean focusEditor,
-                                                                         boolean searchForSplitter) {
-      return Pair.create (new FileEditor[] {mySelectedEditor}, new FileEditorProvider[] {myProvider});
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file,
+                                                 @Nullable EditorWindow window,
+                                                 @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider}));
     }
 
     @Override
@@ -219,24 +263,35 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     }
   }
 
-  private static class MyState implements FileEditorState {
-
+  private static final class MyState implements FileEditorState {
     private final boolean myCanBeMerged;
     private final String myName;
 
-    public MyState(boolean canBeMerged, String name) {
+    MyState(boolean canBeMerged, String name) {
       myCanBeMerged = canBeMerged;
       myName = name;
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return myCanBeMerged;
     }
 
+    @Override
     public String toString() {
       return myName;
     }
   }
 
+  private static final class MyAlwaysExcludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.SkipFromDocumentHistory {
+  }
+
+  private static final class MyOptionallyIncludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.OptionallyIncluded {
+    boolean myIsIncludedInDocumentHistory = true;
+
+    @Override
+    public boolean isIncludedInDocumentHistory(@NotNull Project project) {
+      return myIsIncludedInDocumentHistory;
+    }
+  }
 }

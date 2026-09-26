@@ -1,0 +1,14 @@
+<html>
+<body>
+Detects collection literals.
+<p>A quick-fix replaces collection literals with corresponding collection factory functions.</p>
+<p><b>Example:</b></p>
+<pre><code>
+    val list: List&lt;String&gt; = ["a", "b", "c"]
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    val list: List&lt;String&gt; = listOf("a", "b", "c")
+</code></pre>
+</body>
+</html>

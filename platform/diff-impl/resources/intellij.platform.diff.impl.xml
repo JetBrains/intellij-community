@@ -1,0 +1,173 @@
+<idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+
+    <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
+
+    <registryKey key="diff.by.word.deprioritize.line.differences" defaultValue="false"
+                 description="When possible, let 'changed words' have influence on 'changed lines'"/>
+    <registryKey key="semantic.merge.conflict.resolution" defaultValue="true" description="Try to resolve conflicts based on the semantics of the file"/>
+    <registryKey key="semantic.merge.recompute.after.change" defaultValue="true" description="Recompute semantic merge conflicting chunks result when document has changed"/>
+
+
+    <registryKey key="diff.semantic.highlighting" defaultValue="false" description="Enables difference highlighting based on the semantics language"/>
+    <registryKey key="diff.highlighting.level.visible" defaultValue="false"
+                 description="Show the Highlighting Level option in the diff viewer settings menu"/>
+    <registryKey key="diff.frontend.debug.inlays" defaultValue="false"
+                 description="Show FrontendDiffExtension debug information in newly created diff editors"
+                 restartRequired="false"/>
+
+    <editorActionHandler action="EditorEscape"
+                         implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"
+                         id="LineStatusTrackerMarkerPopup"
+                         order="before hide-hints"/>
+
+    <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
+
+    <editorAudioCueDetector implementation="com.intellij.diff.audioCues.DiffChangeAudioCueDetector"/>
+    <audioCueProvider implementation="com.intellij.diff.audioCues.DiffAudioCueProvider"/>
+
+    <rdct.remoteSettingProvider implementation="com.intellij.diff.settings.DiffSettingsProvider"/>
+    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication" bundle="messages.IdeBundle" key="diff.help"/>
+    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication" bundle="messages.IdeBundle" key="merge.help"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffManager" open="true"
+                        serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
+                        serviceImplementation="com.intellij.diff.DiffContentFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.DiffRequestFactory"
+                        serviceImplementation="com.intellij.diff.DiffRequestFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.diff.comparison.ComparisonManager"
+                        serviceImplementation="com.intellij.diff.comparison.ComparisonManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
+    <applicationSettings service="com.intellij.diff.impl.DiffSettingsHolder"/>
+    <applicationService serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
+    <applicationService serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
+    <applicationConfigurable groupId="tools" id="diff.base"
+                             bundle="messages.DiffBundle"
+                             key="configurable.DiffSettingsConfigurable.display.name"
+                             instance="com.intellij.diff.settings.DiffSettingsConfigurable">
+      <configurable id="diff.external"
+                    bundle="messages.DiffBundle"
+                    key="configurable.ExternalDiffSettingsConfigurable.display.name"
+                    instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
+    </applicationConfigurable>
+    <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+    <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.diff.DiffNotificationIdsHolder"/>
+    <uiDataRule implementation="com.intellij.diff.actions.impl.DiffUiDataRule"/>
+    <actionPromoter implementation="com.intellij.diff.DiffActionPromoter"/>
+    <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
+                    serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
+    <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
+    <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
+                    serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
+    <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
+    <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
+    <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>
+    <!-- combined diff editor: UP, DOWN, LEFT, RIGHT -->
+    <editorActionHandler action="EditorUp" id="combinedDiffUp" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorUpHandler"/>
+    <editorActionHandler action="EditorDown" id="combinedDiffDown" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorDownHandler"/>
+    <editorActionHandler action="EditorLeft" id="combinedDiffLeft" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler"/>
+    <editorActionHandler action="EditorRight" id="combinedDiffRight" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorRightHandler"/>
+    <!-- combined diff editor: UP, DOWN, LEFT, RIGHT with selection-->
+    <editorActionHandler action="EditorUpWithSelection" id="combinedDiffUpWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorUpWithSelectionHandler"/>
+    <editorActionHandler action="EditorDownWithSelection" id="combinedDiffDownWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorDownWithSelectionHandler"/>
+    <editorActionHandler action="EditorLeftWithSelection" id="combinedDiffLeftWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler"/>
+    <editorActionHandler action="EditorRightWithSelection" id="combinedDiffRightWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorRightHandler"/>
+    <!-- combined diff editor: PageUp, Page Down -->
+    <editorActionHandler action="EditorPageUp" id="combinedDiffPageUp" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageUpHandler"/>
+    <editorActionHandler action="EditorPageDown" id="combinedDiffPageDown" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageDownHandler"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.diff.impl.DiffUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diff.statistics.MergeStatisticsCollector"/>
+    <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
+    <applicationSettings service="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
+    <applicationSettings service="com.intellij.diff.tools.external.ExternalDiffSettings"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.diff.editor.EditorTabDiffPreviewAdvancedSettingsListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+    <listener class="com.intellij.diff.editor.DiffInWindowDndListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener"/>
+    <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+  </applicationListeners>
+
+  <actions>
+    <action overrides="true"
+            id="Diff.PrevChange"
+            class="com.intellij.diff.actions.impl.DiffPreviousFileAction"
+            icon="AllIcons.Actions.Back"/>
+    <action overrides="true"
+            id="Diff.NextChange"
+            class="com.intellij.diff.actions.impl.DiffNextFileAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action overrides="true"
+            id="PreviousDiff"
+            class="com.intellij.diff.actions.impl.DiffPreviousDifferenceAction"
+            icon="AllIcons.Actions.PreviousOccurence"/>
+    <action overrides="true"
+            id="NextDiff"
+            class="com.intellij.diff.actions.impl.DiffNextDifferenceAction"
+            icon="AllIcons.Actions.NextOccurence"/>
+    <action id="Diff.OpenInEditor"
+            class="com.intellij.diff.actions.impl.OpenInEditorAction"
+            use-shortcut-of="EditSource"/>
+  </actions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.diff.merge.conflict.semantic.resolver" interface="com.intellij.diff.merge.LangSpecificMergeConflictResolver" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.diff.lang.DiffLangSpecificAdjuster" interface="com.intellij.diff.lang.DiffLangSpecificProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="com.intellij.diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
+  </extensionPoints>
+  <xi:include href="intellij.platform.diff.impl.actions.xml"/>
+</idea-plugin>

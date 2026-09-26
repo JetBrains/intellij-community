@@ -1,28 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.DataWriter
+import com.intellij.configurationStore.DataWriterFilter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.io.*
-import com.intellij.util.loadElement
-import com.intellij.util.write
+import com.intellij.util.LineSeparator
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.move
+import com.intellij.util.io.outputStream
+import com.intellij.util.io.sanitizeFileName
 import org.jdom.Element
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 private val LOG = logger<FileSystemExternalSystemStorage>()
 
 internal interface ExternalSystemStorage {
-  val isDirty: Boolean
-
   fun remove(name: String)
 
   fun read(name: String): Element?
 
-  fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter? = null)
-
-  fun forceSave()
+  fun write(name: String, dataWriter: DataWriter?, filter: DataWriterFilter? = null)
 
   fun rename(oldName: String, newName: String)
 }
@@ -37,9 +42,8 @@ internal class ModuleFileSystemExternalSystemStorage(project: Project) : FileSys
 
 internal class ProjectFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("project", project)
 
+@OptIn(ExperimentalPathApi::class)
 internal abstract class FileSystemExternalSystemStorage(dirName: String, project: Project) : ExternalSystemStorage {
-  override val isDirty = false
-
   protected val dir: Path = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve(dirName)
 
   var hasSomeData: Boolean
@@ -51,7 +55,11 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       fileAttributes == null -> false
       fileAttributes.isRegularFile -> {
         // old binary format
-        dir.parent.deleteChildrenStartingWith(dir.fileName.toString())
+        val prefix = dir.fileName.toString()
+        val children = dir.parent.directoryStreamIfExists { stream ->
+          stream.filter { it.fileName.toString().startsWith(prefix) }.toList()
+        }
+        children?.forEach { it.deleteRecursively() }
         false
       }
       else -> {
@@ -63,15 +71,12 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
 
   protected open fun nameToPath(name: String): Path = dir.resolve(name)
 
-  override fun forceSave() {
-  }
-
   override fun remove(name: String) {
     if (!hasSomeData) {
       return
     }
 
-    nameToPath(name).delete()
+    nameToPath(name).deleteRecursively()
   }
 
   override fun read(name: String): Element? {
@@ -79,19 +84,23 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       return null
     }
 
-    return nameToPath(name).inputStreamIfExists()?.use {
-      loadElement(it)
+    val path = nameToPath(name)
+    if (!path.exists()) {
+      return null
+    }
+    return path.inputStream().use {
+      JDOMUtil.load(it)
     }
   }
 
-  override fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter?) {
-    if (element == null) {
+  override fun write(name: String, dataWriter: DataWriter?, filter: DataWriterFilter?) {
+    if (dataWriter == null || (filter != null && !dataWriter.hasData(filter))) {
       remove(name)
       return
     }
 
     hasSomeData = true
-    element.write(nameToPath(name), filter = filter)
+    nameToPath(name).outputStream().use { dataWriter.writeTo(it, LineSeparator.LF, filter) }
   }
 
   override fun rename(oldName: String, newName: String) {

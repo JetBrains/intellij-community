@@ -1,0 +1,34 @@
+// FILE: test.before.kt
+// "Change 'arrayOf()' to '*arrayOf()'" "true"
+// ACTION: Add explicit type arguments
+// ACTION: Add full qualifier
+// ACTION: Introduce import alias
+// ACTION: Introduce local variable
+// ACTION: Put arguments on separate lines
+// ACTION: Add names in comment to call arguments
+// WITH_STDLIB
+
+fun main() {
+    Test.foo(<caret>arrayOf())
+}
+
+// FILE: Test.java
+public class Test {
+    public static String foo(String... strs) {
+        return null;
+    }
+}
+
+// FILE: test.after.kt
+// "Change 'arrayOf()' to '*arrayOf()'" "true"
+// ACTION: Add explicit type arguments
+// ACTION: Add full qualifier
+// ACTION: Introduce import alias
+// ACTION: Introduce local variable
+// ACTION: Put arguments on separate lines
+// ACTION: Add names in comment to call arguments
+// WITH_STDLIB
+
+fun main() {
+    Test.foo(<caret>*arrayOf())
+}

@@ -1,11 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Revision;
@@ -17,25 +15,26 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
+
 public class ForNestedRootChecker {
 
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final VcsRootIterator myRootIterator;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull VcsRootIterator myRootIterator;
 
   public ForNestedRootChecker(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myRootIterator = new VcsRootIterator(vcs.getProject(), vcs);
   }
 
-  @NotNull
-  public List<Node> getAllNestedWorkingCopies(@NotNull VirtualFile root) {
-    LinkedList<Node> result = ContainerUtil.newLinkedList();
-    LinkedList<VirtualFile> workItems = ContainerUtil.newLinkedList();
+  public @NotNull List<Node> getAllNestedWorkingCopies(@NotNull VirtualFile root) {
+    LinkedList<Node> result = new LinkedList<>();
+    LinkedList<VirtualFile> workItems = new LinkedList<>();
 
     workItems.add(root);
     while (!workItems.isEmpty()) {
       VirtualFile item = workItems.removeFirst();
-      checkCancelled();
+      checkCanceled();
 
       final Node vcsElement = new VcsFileResolver(myVcs, item, root).resolve();
       if (vcsElement != null) {
@@ -43,7 +42,7 @@ public class ForNestedRootChecker {
       }
       else {
         for (VirtualFile child : item.getChildren()) {
-          checkCancelled();
+          checkCanceled();
 
           if (child.isDirectory() && myRootIterator.acceptFolderUnderVcs(root, child)) {
             workItems.add(child);
@@ -54,20 +53,14 @@ public class ForNestedRootChecker {
     return result;
   }
 
-  private void checkCancelled() {
-    if (myVcs.getProject().isDisposed()) {
-      throw new ProcessCanceledException();
-    }
-  }
+  private static final class VcsFileResolver {
 
-  private static class VcsFileResolver {
-
-    @NotNull private final SvnVcs myVcs;
-    @NotNull private final VirtualFile myFile;
-    @NotNull private final File myIoFile;
-    @NotNull private final VirtualFile myRoot;
-    @Nullable private Info myInfo;
-    @Nullable private SvnBindException myError;
+    private final @NotNull SvnVcs myVcs;
+    private final @NotNull VirtualFile myFile;
+    private final @NotNull File myIoFile;
+    private final @NotNull VirtualFile myRoot;
+    private @Nullable Info myInfo;
+    private @Nullable SvnBindException myError;
 
     private VcsFileResolver(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull VirtualFile root) {
       myVcs = vcs;
@@ -76,8 +69,7 @@ public class ForNestedRootChecker {
       myRoot = root;
     }
 
-    @Nullable
-    public Node resolve() {
+    public @Nullable Node resolve() {
       runInfo();
 
       return processInfo();
@@ -103,8 +95,7 @@ public class ForNestedRootChecker {
       return myFile.findChild(SvnUtil.SVN_ADMIN_DIR_NAME) != null;
     }
 
-    @Nullable
-    private Node processInfo() {
+    private @Nullable Node processInfo() {
       Node result = null;
 
       if (myError != null) {
@@ -113,8 +104,8 @@ public class ForNestedRootChecker {
           result = new Node(myFile, Url.EMPTY, Url.EMPTY, myError);
         }
       }
-      else if (myInfo != null && myInfo.getRepositoryRootURL() != null && myInfo.getURL() != null) {
-        result = new Node(myFile, myInfo.getURL(), myInfo.getRepositoryRootURL());
+      else if (myInfo != null && myInfo.getRepositoryRootUrl() != null && myInfo.getUrl() != null) {
+        result = new Node(myFile, myInfo.getUrl(), myInfo.getRepositoryRootUrl());
       }
 
       return result;

@@ -1,50 +1,36 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author nik
- */
-public class GroovyFrameworkType extends FrameworkTypeEx {
+public final class GroovyFrameworkType extends FrameworkTypeEx {
   public GroovyFrameworkType() {
     super("Groovy");
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportInModuleProvider createProvider() {
+  public boolean isDumbAware() {
+    return false;
+  }
+
+  @Override
+  public @NotNull FrameworkSupportInModuleProvider createProvider() {
     return new GroovyFrameworkSupportProvider();
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
-    return "Groovy";
+  public @NotNull String getPresentableName() {
+    return GroovyBundle.message("language.groovy");
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 }

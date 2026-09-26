@@ -18,8 +18,10 @@ package com.intellij.vcs.log.graph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
+ * Visible commit graph row data
  */
 public interface RowInfo<Id> {
 
@@ -34,4 +36,7 @@ public interface RowInfo<Id> {
 
   @NotNull
   RowType getRowType();
+
+  @NotNull
+  List<Integer> getAdjacentRows(boolean parent);
 }

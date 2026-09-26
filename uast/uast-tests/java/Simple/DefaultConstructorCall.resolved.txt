@@ -1,0 +1,5 @@
+        UMethod (name = test) -> UTypeReferenceExpression (name = void) -> [] ~= []
+        UMethod (name = test) -> UBlockExpression -> [] ~= []
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> [M] LightDefaultConstructor ~= LightDefaultConstructor:Foo
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> [M] LightDefaultConstructor ~= LightDefaultConstructor:Foo
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> USimpleNameReferenceExpression (identifier = Foo) -> [M] PsiClassImpl ~= PsiClass:Foo

@@ -1,0 +1,25 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider
+      implementation="com.intellij.java.debugger.impl.backend.BackendJavaDebuggerRemoteApiProvider"
+      apiInterfaces="com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi,
+                     com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi"/>
+  </extensions>
+
+  <actions>
+    <group id="JavaCompileGroup">
+      <separator/>
+      <reference ref="ToggleMethodBreakpoint"/>
+      <reference ref="ToggleFieldBreakpoint"/>
+
+      <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
+      <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

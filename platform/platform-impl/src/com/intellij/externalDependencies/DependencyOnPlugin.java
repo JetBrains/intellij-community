@@ -1,62 +1,51 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
- *
- * @author nik
  */
-public class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
+public final class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
+  private static final @NonNls String IDE_BUILD_BASELINE_PLACEHOLDER = "<ide.build.baseline>";
   private final String myPluginId;
-  private final String myMinVersion;
-  private final String myMaxVersion;
+  private final @NlsSafe String myMinVersion;
+  private final @NlsSafe String myMaxVersion;
 
-  /**
-   * @deprecated use {@link #DependencyOnPlugin(String, String, String)} instead
-   */
-  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion, @Nullable String channel) {
-    this(pluginId, minVersion, maxVersion);
-  }
-
-  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion) {
+  public DependencyOnPlugin(@NotNull String pluginId, @NlsSafe @Nullable String minVersion, @NlsSafe @Nullable String maxVersion) {
     myPluginId = pluginId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
   }
 
-  public String getPluginId() {
+  public @NlsSafe String getPluginId() {
     return myPluginId;
   }
 
-  public String getMinVersion() {
+  public @Nullable @NlsSafe String getRawMinVersion() {
     return myMinVersion;
   }
 
-  public String getMaxVersion() {
+  public @Nullable @NlsSafe String getRawMaxVersion() {
     return myMaxVersion;
   }
 
+  public @Nullable @NlsSafe String getMinVersion() {
+    return preprocessVersionRequirement(myMinVersion);
+  }
+
+  public @Nullable @NlsSafe String getMaxVersion() {
+    return preprocessVersionRequirement(myMaxVersion);
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -66,8 +55,8 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
     DependencyOnPlugin plugin = (DependencyOnPlugin)o;
 
     return myPluginId.equals(plugin.myPluginId)
-           && Comparing.equal(myMinVersion, plugin.myMinVersion)
-           && Comparing.equal(myMaxVersion, plugin.myMaxVersion);
+           && Objects.equals(myMinVersion, plugin.myMinVersion)
+           && Objects.equals(myMaxVersion, plugin.myMaxVersion);
   }
 
   @Override
@@ -79,5 +68,10 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
   public int compareTo(DependencyOnPlugin o) {
     return ContainerUtil.compareLexicographically(Arrays.asList(myPluginId, myMinVersion, myMaxVersion),
                                                   Arrays.asList(o.myPluginId, o.myMinVersion, o.myMaxVersion));
+  }
+
+  private static String preprocessVersionRequirement(@NlsSafe String version) {
+    String baseline = String.valueOf(ApplicationInfo.getInstance().getBuild().getBaselineVersion());
+    return version != null ? version.replace(IDE_BUILD_BASELINE_PLACEHOLDER, baseline) : null;
   }
 }

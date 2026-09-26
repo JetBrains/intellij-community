@@ -7,8 +7,6 @@ import com.intellij.lang.jvm.JvmLanguage
 
 /**
  * All main properties for Groovy language
- *
- * @author ilyas
  */
 object GroovyLanguage : Language("Groovy"), JvmLanguage {
 

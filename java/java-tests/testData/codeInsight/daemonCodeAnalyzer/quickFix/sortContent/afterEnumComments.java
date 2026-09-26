@@ -1,14 +1,13 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 public enum OSType {
-    LINUX// linux
+    LINUX // linux
     ,
 
-    MAC//mac
+    MAC //mac
     ,
-    WIN//after win
-// win
-
+    WIN //after win
+    // win
 
     ;
 }

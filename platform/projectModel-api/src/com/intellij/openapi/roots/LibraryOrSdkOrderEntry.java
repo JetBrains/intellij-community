@@ -16,14 +16,29 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
+@ApiStatus.NonExtendable
 public interface LibraryOrSdkOrderEntry extends OrderEntry {
-  @NotNull
-  VirtualFile[] getRootFiles(@NotNull OrderRootType type);
-  @NotNull
-  String[] getRootUrls(@NotNull OrderRootType type);
+  /**
+   * Returns files configured as roots in the corresponding library or SDK. Note that only existing files are returned; if you need to get
+   * paths to non-existing files as well, use {@link #getRootUrls(OrderRootType)} instead.
+   */
+  VirtualFile @NotNull [] getRootFiles(@NotNull OrderRootType type);
+
+  /**
+   * Returns URLs of roots configured in the corresponding library or SDK.
+   */
+  String @NotNull [] getRootUrls(@NotNull OrderRootType type);
+
+  /**
+   * @deprecated use {@link #getRootFiles(OrderRootType)} instead; meaning of this method coming from the base {@link OrderEntry} interface 
+   * is unclear.
+   */
+  @Deprecated
+  @Override
+  default VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
+    return getRootFiles(type);
+  }
 }

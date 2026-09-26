@@ -1,32 +1,25 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -38,15 +31,17 @@ import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author max
- */
-public class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
-  @Nullable
+class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+  private final boolean myShowShortFilePath;
+
+  ClassGroupingRule(boolean showShortFilePath) {
+    myShowShortFilePath = showShortFilePath;
+  }
+
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }
@@ -56,16 +51,15 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
 
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
 
-    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof ServerPageFile) {
+    if (!(topLevelFile instanceof PsiJavaFile) || !JavaTemplatePresentationSupport.isJavaSourceAllowed(topLevelFile)) {
       return null;
     }
     PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
           .getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     do {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
-      if (containingClass == null || ((PsiClass)containingClass).getQualifiedName() != null) break;
     }
-    while (true);
+    while (containingClass != null && ((PsiClass)containingClass).getQualifiedName() == null);
 
     if (containingClass == null) {
       // check whether the element is in the import list
@@ -82,8 +76,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
       }
     }
     else {
-      // skip JspClass synthetic classes.
-      if (containingClass.getParent() instanceof PsiFile && FileTypeUtils.isInServerPageFile(containingClass)) {
+      if (JavaTemplatePresentationSupport.isClassHidden((PsiClass)containingClass)) {
         containingClass = null;
       }
     }
@@ -94,7 +87,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
 
     final VirtualFile virtualFile = topLevelFile.getVirtualFile();
     if (virtualFile != null) {
-      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile);
+      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile, myShowShortFilePath);
     }
     return null;
   }
@@ -105,41 +98,36 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
-    private final SmartPsiElementPointer myClassPointer;
-    private final String myText;
+  private static class ClassUsageGroup implements UsageGroup, UiDataProvider {
+    private final SmartPsiElementPointer<PsiClass> myClassPointer;
+    private final @NlsSafe String myText;
     private final String myQName;
     private final Icon myIcon;
 
-    public ClassUsageGroup(@NotNull PsiClass aClass) {
+    ClassUsageGroup(@NotNull PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @Override
-    public void update() {
-    }
-
-    private static String createText(PsiClass aClass) {
+    private static @NotNull @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
         text = containingClass.getName() + '.' + text;
         containingClass = containingClass.getContainingClass();
       }
-      return text;
+      return StringUtil.notNullize(text);
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
-    @NotNull
-    public String getText(UsageView view) {
+    public @NotNull String getPresentableGroupText() {
       return myText;
     }
 
@@ -149,7 +137,7 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
     }
 
     private PsiClass getPsiClass() {
-      return (PsiClass)myClassPointer.getElement();
+      return myClassPointer.getElement();
     }
 
     @Override
@@ -158,10 +146,12 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
       return psiClass != null && psiClass.isValid();
     }
 
+    @Override
     public int hashCode() {
       return myQName.hashCode();
     }
 
+    @Override
     public boolean equals(Object object) {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }
@@ -185,21 +175,18 @@ public class ClassGroupingRule extends SingleParentUsageGroupingRule implements 
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());
-      }
-      if (UsageView.USAGE_INFO_KEY == key) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return getPsiClass();
+      });
+      sink.lazy(UsageView.USAGE_INFO_KEY, () -> {
         PsiClass psiClass = getPsiClass();
-        if (psiClass != null) {
-          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(psiClass));
-        }
-      }
+        return psiClass == null ? null : new UsageInfo(psiClass);
+      });
     }
   }
 }

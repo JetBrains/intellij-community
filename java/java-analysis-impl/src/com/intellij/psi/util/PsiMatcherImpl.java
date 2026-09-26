@@ -17,7 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
 
-public class PsiMatcherImpl implements PsiMatcher {
+public final class PsiMatcherImpl implements PsiMatcher {
   private PsiElement myElement;
 
   public PsiMatcherImpl(PsiElement element) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -21,35 +7,52 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
-/**
- * @author nik
- */
-public class ModuleOrderEnumerator extends OrderEnumeratorBase {
+@ApiStatus.Internal
+public final class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
+  private @Nullable Set<? super Module> myProcessedModules;
 
-  ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, OrderRootsCache cache) {
-    super(cache);
+  @ApiStatus.Internal
+  public ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
+    super(rootModel.getModule().getProject(), cache);
     myRootModel = rootModel;
   }
 
   @Override
-  public void processRootModules(@NotNull Processor<Module> processor) {
+  public void processRootModules(@NotNull Processor<? super Module> processor) {
     processor.process(myRootModel.getModule());
   }
 
   @Override
-  protected void forEach(@NotNull PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()));
+  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    Set<? super Module> processedModules = myProcessedModules;
+    if (myRecursively && processedModules == null) {
+      processedModules = CollectionFactory.createSmallMemoryFootprintSet();
+    }
+    processEntries(myRootModel, processedModules, true, getCustomHandlers(myRootModel.getModule()), processor);
   }
 
   @Override
   public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
-    return rootModel.equals(myRootModel);
+    return rootModel.getModule() == myRootModel.getModule();
+  }
+
+  /**
+   * @param processedModules set of modules that should be skipped during enumeration because they have been processed already elsewhere.
+   * <b>After enumeration all the visited modules will be added to this set.</b>
+   * @return this instance
+   */
+  public @NotNull ModuleOrderEnumerator withProcessedModules(@Nullable Set<? super Module> processedModules) {
+    this.myProcessedModules = processedModules;
+    return this;
   }
 }
 

@@ -1,0 +1,234 @@
+/bin/sh ./mvnw -Didea.version=2026.2 -Dmaven.ext.class.path=/Users/Alexander.Bubenchiko/ultimate-2/out/dev-run/idea-baze-devk-314s1nrg0s5va/plugins/maven-plugin/lib/intellij.maven.rt/maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -Dmaven.repo.local=/Users/Alexander.Bubenchiko/.m2/repository compile -f pom.xml
+[INFO] [stdout] [IJ]-3-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-maven-plugin:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] Loaded 22517 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] [stdout] [IJ]-43-IDEA_INTERNAL_MESSAGE-[IJ]-error=idea.modules.paths.file is not defined
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-project:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-api:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:pom:3.7.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-compiler-embeddable:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-impl:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-tools:pom:3.7.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:pom:1-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:3.14.0-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:pom:33.5.0-jre-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains:annotations:pom:26.0.2-1-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:33.5.0-jre-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:37-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:43-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:43-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:27-[IJ]-error=
+[INFO] Loaded 74 auto-discovered prefixes for remote repository apache.snapshots (prefixes-apache.snapshots-c1d4c55f9308e5ac18a4069bed41dca64d85c515.txt)
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:33-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.9.1-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.10.3-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-stdlib:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-cri-impl:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-script-runtime:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-reflect:pom:1.6.10-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-compiler-runner:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-daemon-embeddable:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:pom:1.8.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-common:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-jvm:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:pom:3.4.2-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:pom:1.1-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-java:pom:1.4.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:pom:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlinx:kotlinx-coroutines-bom:pom:1.8.0-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:19-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:39-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler:pom:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-languages:pom:1.4.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:pom:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:39-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:20-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:17-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:29-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.11.4-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.10.2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:pom:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:4.0.1-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:failureaccess:pom:1.0.3-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jspecify:jspecify:pom:1.0.0-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:listenablefuture:pom:9999.0-empty-to-avoid-conflict-with-guava-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compilers:pom:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:33.4.0-android-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:26.0-android-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.oss:oss-parent:pom:9-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.j2objc:j2objc-annotations:pom:3.1-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.errorprone:error_prone_annotations:pom:2.41.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-daemon-client:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains:annotations:pom:13.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:pom:1.7.36-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.errorprone:error_prone_parent:pom:2.41.0-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.18.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:pom:9.7.1-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.qdox:qdox:pom:2.2.0-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-xml:pom:3.0.1-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-parent:pom:1.7.36-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:78-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:18-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2:ow2:pom:1.5.1-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-stdlib:pom:2.1.21-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.oss:oss-parent:pom:9-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.11.2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-maven-plugin:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:jar:3.7.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-api:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-impl:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-compiler-embeddable:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:3.14.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:jar:33.5.0-jre-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains:annotations:jar:26.0.2-1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-stdlib:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-build-tools-cri-impl:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-compiler-runner:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-script-runtime:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-reflect:jar:1.6.10-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-daemon-embeddable:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:jar:1.8.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-common:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-jvm:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:jar:3.4.2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:jar:1.1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-java:jar:1.4.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:jar:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:jar:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:jar:2.15.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:4.0.1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:failureaccess:jar:1.0.3-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jspecify:jspecify:jar:1.0.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.errorprone:error_prone_annotations:jar:2.41.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.j2objc:j2objc-annotations:jar:3.1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-daemon-client:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.18.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:jar:9.7.1-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.qdox:qdox:jar:2.2.0-[IJ]-error=
+[INFO] [stdout] [IJ]-43-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-xml:jar:3.0.1-[IJ]-error=
+[INFO] Kotlin smart defaults are enabled for mvn4-repro-386099
+[INFO] Added kotlin-stdlib dependency, version 2.3.20-Beta2
+[INFO] Kotlin smart defaults are enabled for module
+[INFO] Added kotlin-stdlib dependency, version 2.3.20-Beta2
+[INFO] [stdout] [IJ]-3-SessionStarted-[IJ]-id=org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT-[IJ]-projects=org.example:mvn4-repro-386099:1.0-SNAPSHOT&&org.example:module:1.0-SNAPSHOT&&
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] mvn4-repro-386099                                                  [pom]
+[INFO] module                                                             [jar]
+[INFO] [stdout] [IJ]-3-ProjectStarted-[IJ]-id=org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT
+[INFO]
+[INFO] -------------------< org.example:mvn4-repro-386099 >--------------------
+[INFO] Building mvn4-repro-386099 1.0-SNAPSHOT                            [1/2]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] [stdout] [IJ]-3-ProjectSucceeded-[IJ]-id=org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT
+[INFO] Copying org.example:mvn4-repro-386099:pom:1.0-SNAPSHOT to project local repository
+[INFO] Copying org.example:mvn4-repro-386099:pom:consumer:1.0-SNAPSHOT to project local repository
+[INFO] [stdout] [IJ]-3-ProjectStarted-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT
+[INFO]
+[INFO] -------------------------< org.example:module >-------------------------
+[INFO] Building module 1.0-SNAPSHOT                                       [2/2]
+[INFO]   from module/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-maven-plugin:pom:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-maven-plugin:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:36-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:36-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:26-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:4.0.0-beta-4-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:47-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:47-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:37-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.14.2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:4.0.0-beta-4-[IJ]-error=
+[WARNING] Version not locked for default bindings plugins [maven-resources-plugin], you should define versions in pluginManagement section of your pom.xml or parent
+[INFO] [stdout] [IJ]-3-DependencyResolutionRequest-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-api:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-engine:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-params:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.opentest4j:opentest4j:pom:1.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-commons:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apiguardian:apiguardian-api:pom:1.1.2-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-engine:pom:6.0.2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains.kotlin:kotlin-stdlib:jar:2.3.20-Beta2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jetbrains:annotations:jar:13.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-DependencyResolutionResult-[IJ]-error=
+[INFO] [stdout] [IJ]-3-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=kapt-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- kotlin:2.3.20-Beta2:kapt (default-kapt) @ module ---
+[INFO] No sources to compile
+[INFO] [stdout] [IJ]-3-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=kapt-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO] [stdout] [IJ]-3-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- resources:3.3.0:resources (default-resources) @ module ---
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.26-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.11.0-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:pom:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:pom:3.12.0-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:5.1-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:36-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:52-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:36-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:pom:0.0.7-[IJ]-error=
+[INFO] [stdout] [IJ]-46-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:23-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:15-[IJ]-error=
+[INFO] [stdout] [IJ]-45-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:5-[IJ]-error=
+[INFO] [stdout] [IJ]-49-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.7.1-[IJ]-error=
+[INFO] [stdout] [IJ]-48-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.7.2-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.26-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:jar:3.3.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.11.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.12.0-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.7-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.3.0-[IJ]-error=
+[INFO] Copying 0 resource
+[INFO] skip non existing resourceDirectory /Users/Alexander.Bubenchiko/IdeaProjects/mvn4-repro-386099/module/src/main/resources-filtered
+[INFO] [stdout] [IJ]-3-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO] [stdout] [IJ]-3-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- kotlin:2.3.20-Beta2:compile (default-compile) @ module ---
+[INFO] No sources to compile
+[INFO] [stdout] [IJ]-3-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO] [stdout] [IJ]-3-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- compiler:4.0.0-beta-4:compile (default-compile) @ module ---
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:4.0.0-beta-4-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:pom:9.9.1-[IJ]-error=
+[INFO] [stdout] [IJ]-47-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2:ow2:pom:1.5.1-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:4.0.0-beta-4-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:jar:9.9.1-[IJ]-error=
+[INFO] No sources to compile.
+[INFO] [stdout] [IJ]-3-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT-[IJ]-error=
+[INFO] [stdout] [IJ]-3-ProjectSucceeded-[IJ]-id=org.example:module:jar:1.0-SNAPSHOT
+[INFO] [stdout] [IJ]-3-SessionEnded-[IJ]-id=unknown
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for mvn4-repro-386099 1.0-SNAPSHOT:
+[INFO]
+[INFO] mvn4-repro-386099 .................................. SUCCESS [  0.007 s]
+[INFO] module ............................................. SUCCESS [  0.224 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.602 s
+[INFO] Finished at: 2026-04-09T14:30:31+02:00
+[INFO] ------------------------------------------------------------------------

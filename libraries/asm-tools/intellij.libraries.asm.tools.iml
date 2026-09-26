@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="asm-tools" type="repository">
+        <properties maven-id="org.ow2.asm:asm-analysis:9.10.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar">
+              <sha256sum>dede75a21306b65974ecd8f87114ff6970f09fb794157a4ca09ab25c888c2bfc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar">
+              <sha256sum>3dfb0d5b6a106cd40b5b250e39935fbf2f927f4477546a5369a3ac609cf0506b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar">
+              <sha256sum>ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.10.1/asm-9.10.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

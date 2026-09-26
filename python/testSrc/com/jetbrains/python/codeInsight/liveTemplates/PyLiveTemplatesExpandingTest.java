@@ -15,14 +15,16 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyLiveTemplatesExpandingTest extends PyTestCase {
 
   @Override
@@ -37,15 +39,73 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
   private void doMultiFileTest() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("a.py");
-
-    final Editor editor = myFixture.getEditor();
-    final Project project = myFixture.getProject();
-
-    new ListTemplatesAction().actionPerformedImpl(project, editor);
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    assertNotNull(lookup);
-    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-
+    myFixture.type("\t");
     myFixture.checkResultByFile(getTestName(false) + "/a_after.py");
+  }
+
+  public void testTrimCommentStart() {
+    myFixture.configureByText("a.py", "<caret>");
+
+    TemplateManager manager = TemplateManager.getInstance(myFixture.getProject());
+    Template template = manager.createTemplate("empty", "user", "$S$ comment $E$");
+    template.addVariable("S", "commentStart()", "", false);
+    template.addVariable("E", "commentEnd()", "", false);
+
+    manager.startTemplate(myFixture.getEditor(), template);
+
+    myFixture.checkResult("# comment ");
+  }
+
+  // PY-43889
+  public void testMainInDef() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainInImport() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainInMain() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainTopLevel() {
+    doMultiFileTest();
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-36230
+  public void testPropertyDecoratorNoDuplicate() {
+    myFixture.configureByText("a.py", "class MyClass:\n    @prop<caret>");
+    myFixture.type("\t");
+    myFixture.checkResult("class MyClass:\n    @property\n    def <caret>(self):\n        return ");
+  }
+
+  // PY-36230
+  public void testPropertyDecoratorNoAtSymbol() {
+    myFixture.configureByText("a.py", "class MyClass:\n    prop<caret>");
+    myFixture.type("\t");
+    myFixture.checkResult("class MyClass:\n    @property\n    def <caret>(self):\n        return ");
+  }
+
+  // PY-41231
+  public void testIterableVariableWithTypeAnnotation() {
+    doMultiFileTest();
   }
 }

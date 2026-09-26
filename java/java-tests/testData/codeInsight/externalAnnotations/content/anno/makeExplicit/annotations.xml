@@ -1,0 +1,8 @@
+<root>
+  <item name='makeExplicit.Hello java.lang.String test(java.util.List&lt;java.lang.String&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+</root>

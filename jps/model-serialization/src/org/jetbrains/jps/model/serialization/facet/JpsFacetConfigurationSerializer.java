@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.model.serialization.facet;
 
-import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +22,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.util.List;
-
-/**
- * @author nik
- */
 public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
   private final JpsElementChildRole<E> myRole;
   private final String myFacetTypeId;
@@ -54,20 +48,10 @@ public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
     return module.getContainer().getChild(myRole) != null;
   }
 
-  public void saveExtension(JpsModule module, @NotNull List<FacetState> states) {
-    E extension = module.getContainer().getChild(myRole);
-    if (extension != null) {
-      FacetState state = new FacetState();
-      state.setFacetType(myFacetTypeId);
-      state.setName(myFacetName);
-      Element tag = new Element(JpsFacetSerializer.CONFIGURATION_TAG);
-      saveExtension(extension, tag, module);
-      if (!JDOMUtil.isEmpty(tag)) {
-        state.setConfiguration(tag);
-      }
-      states.add(state);
-    }
+  /**
+   * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
+   */
+  @Deprecated
+  protected void saveExtension(E extension, Element facetConfigurationTag, JpsModule module) {
   }
-
-  protected abstract void saveExtension(E extension, Element facetConfigurationTag, JpsModule module);
 }

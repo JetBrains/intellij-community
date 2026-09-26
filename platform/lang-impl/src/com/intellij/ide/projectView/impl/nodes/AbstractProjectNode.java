@@ -1,51 +1,44 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.projectView.NodeSortOrder;
+import com.intellij.ide.projectView.NodeSortSettings;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scratch.ScratchProjectViewPane;
-import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.LoadedModuleDescription;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
-  protected AbstractProjectNode(Project project, Project value, ViewSettings viewSettings) {
+  protected AbstractProjectNode(Project project, @NotNull Project value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
-  protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+  protected @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modulesWithTopLevelContentRoots) {
     if (getSettings().isFlattenModules()) {
-      return ContainerUtil.mapNotNull(modules, moduleDescription -> {
+      return ContainerUtil.mapNotNull(modulesWithTopLevelContentRoots, moduleDescription -> {
         try {
           return createModuleNode(moduleDescription);
         }
@@ -56,31 +49,40 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
       });
     }
 
-    Set<String> topLevelGroups = new LinkedHashSet<>();
-    Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
-    List<String> commonGroupsPath = null;
-    for (final ModuleDescription moduleDescription : modules) {
-      final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
-      if (!path.isEmpty()) {
-        final String topLevelGroupName = path.get(0);
-        topLevelGroups.add(topLevelGroupName);
-        nonGroupedModules.remove(moduleDescription);
-        if (commonGroupsPath == null) {
-          commonGroupsPath = path;
-        }
-        else {
-          int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
-          OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
-          if (firstDifference.isPresent()) {
-            commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
+    List<AbstractTreeNode<?>> result = new ArrayList<>();
+    try {
+      if (modulesWithTopLevelContentRoots.size() > 1) {
+        Set<String> topLevelGroups = new LinkedHashSet<>();
+        Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modulesWithTopLevelContentRoots);
+        List<String> commonGroupsPath = null;
+        for (final ModuleDescription moduleDescription : modulesWithTopLevelContentRoots) {
+          final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
+          if (!path.isEmpty()) {
+            final String topLevelGroupName = path.get(0);
+            topLevelGroups.add(topLevelGroupName);
+            nonGroupedModules.remove(moduleDescription);
+            if (commonGroupsPath == null) {
+              commonGroupsPath = path;
+            }
+            else {
+              int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
+              int firstDifference = -1;
+              for (int i = 0; i < commonPartLen; i++) {
+                if (!commonGroupsPath.get(i).equals(path.get(i))) {
+                  firstDifference = i;
+                  break;
+                }
+              }
+              if (firstDifference >= 0) {
+                commonGroupsPath = commonGroupsPath.subList(0, firstDifference);
+              }
+              else if (commonPartLen < commonGroupsPath.size()) {
+                commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);
+              }
+            }
           }
         }
-      }
-    }
-    
-    List<AbstractTreeNode> result = new ArrayList<>();
-    try {
-      if (modules.size() > 1) {
+
         if (commonGroupsPath != null && !commonGroupsPath.isEmpty()) {
           result.add(createModuleGroupNode(new ModuleGroup(commonGroupsPath)));
         }
@@ -94,7 +96,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
         }
       }
       else {
-        ContainerUtil.addIfNotNull(result, createModuleNode(ContainerUtil.getFirstItem(modules)));
+        ContainerUtil.addIfNotNull(result, createModuleNode(ContainerUtil.getFirstItem(modulesWithTopLevelContentRoots)));
       }
     }
     catch (ProcessCanceledException e) {
@@ -107,30 +109,29 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return result;
   }
 
-  protected abstract AbstractTreeNode createModuleGroup(final Module module)
+  protected abstract @NotNull AbstractTreeNode<?> createModuleGroup(@NotNull Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
-  @Nullable
-  private AbstractTreeNode createModuleNode(final ModuleDescription moduleDescription)
+  private @Nullable AbstractTreeNode<?> createModuleNode(final ModuleDescription moduleDescription)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     if (moduleDescription instanceof LoadedModuleDescription) {
       return createModuleGroup(((LoadedModuleDescription)moduleDescription).getModule());
     }
-    else if (moduleDescription instanceof UnloadedModuleDescription) {
+    if (moduleDescription instanceof UnloadedModuleDescription) {
       return createUnloadedModuleNode((UnloadedModuleDescription)moduleDescription);
     }
     return null;
   }
 
-  protected AbstractTreeNode createUnloadedModuleNode(UnloadedModuleDescription moduleDescription) {
+  protected AbstractTreeNode<?> createUnloadedModuleNode(UnloadedModuleDescription moduleDescription) {
     return null;
   }
 
-  protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
+  protected abstract @NotNull AbstractTreeNode<?> createModuleGroupNode(@NotNull ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }
@@ -142,11 +143,12 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   @Override
   public boolean contains(@NotNull VirtualFile vFile) {
-    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    return index.getContentRootForFile(vFile, false) != null ||
-           index.isInLibraryClasses(vFile) ||
-           index.isInLibrarySource(vFile) ||
-           Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
+    assert myProject != null;
+    return ProjectViewPane.canBeSelectedInProjectView(myProject, vFile);
+  }
+
+  @Override
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return NodeSortOrder.PROJECT_ROOT;
   }
 }

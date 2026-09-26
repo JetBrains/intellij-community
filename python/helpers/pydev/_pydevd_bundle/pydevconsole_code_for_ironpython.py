@@ -102,23 +102,23 @@ def _maybe_compile(compiler, source, filename, symbol):
 
     try:
         code = compiler(source, filename, symbol)
-    except SyntaxError, err:
+    except SyntaxError:
         pass
 
     try:
         code1 = compiler(source + "\n", filename, symbol)
-    except SyntaxError, err1:
+    except SyntaxError as err1:
         pass
 
     try:
         code2 = compiler(source + "\n\n", filename, symbol)
-    except SyntaxError, err2:
+    except SyntaxError as err2:
         pass
 
     if code:
         return code
     if not code1 and repr(err1) == repr(err2):
-        raise SyntaxError, err1
+        raise SyntaxError(err1)
 
 def _compile(source, filename, symbol):
     return compile(source, filename, symbol, PyCF_DONT_IMPLY_DEDENT)
@@ -211,7 +211,7 @@ class CommandCompiler:
 
 
 
-__all__ = ["InteractiveInterpreter", "InteractiveConsole", "interact",
+__all__ = ["IronPythonInteractiveInterpreter", "IronPythonInteractiveConsole", "interact",
            "compile_command"]
 
 def softspace(file, newvalue):
@@ -227,7 +227,7 @@ def softspace(file, newvalue):
         pass
     return oldvalue
 
-class InteractiveInterpreter:
+class IronPythonInteractiveInterpreter:
     """Base class for InteractiveConsole.
 
     This class deals with parsing and interpreter state (the user's
@@ -373,7 +373,7 @@ class InteractiveInterpreter:
         sys.stderr.write(data)
 
 
-class InteractiveConsole(InteractiveInterpreter):
+class IronPythonInteractiveConsole(IronPythonInteractiveInterpreter):
     """Closely emulate the behavior of the interactive Python interpreter.
 
     This class builds on InteractiveInterpreter and adds prompting
@@ -391,7 +391,7 @@ class InteractiveConsole(InteractiveInterpreter):
         of the input stream; it will show up in tracebacks.
 
         """
-        InteractiveInterpreter.__init__(self, locals)
+        IronPythonInteractiveInterpreter.__init__(self, locals)
         self.filename = filename
         self.resetbuffer()
 
@@ -467,7 +467,7 @@ class InteractiveConsole(InteractiveInterpreter):
         more = self.runsource(source, self.filename)
         if not more:
             self.resetbuffer()
-        return more
+        return more, False
 
     def raw_input(self, prompt=""):
         """Write a prompt and read a line.
@@ -497,7 +497,7 @@ def interact(banner=None, readfunc=None, local=None):
     local -- passed to InteractiveInterpreter.__init__()
 
     """
-    console = InteractiveConsole(local)
+    console = IronPythonInteractiveConsole(local)
     if readfunc is not None:
         console.raw_input = readfunc
     else:

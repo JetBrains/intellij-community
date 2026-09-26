@@ -1,0 +1,3 @@
+doIt() {
+export PATH= "a"
+}

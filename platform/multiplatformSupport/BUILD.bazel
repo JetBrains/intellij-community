@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.multiplatformSupport` start
+jvm_library(
+    name = "multiplatformSupport",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    exported_compiler_plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.multiplatformSupport",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "multiplatformSupport_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.multiplatformSupport",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":multiplatformSupport",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.multiplatformSupport` end
+
+### auto-generated section `iml intellij.platform.multiplatformSupport` start
+exports_files(
+    [
+        "intellij.platform.multiplatformSupport.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.multiplatformSupport` end

@@ -1,63 +1,47 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiType;
 import com.intellij.ui.UIBundle;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author yole
- */
-public class FormClassAnnotator implements Annotator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
+
+public final class FormClassAnnotator implements Annotator {
+  private static final Logger LOG = Logger.getInstance(FormClassAnnotator.class);
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (psiElement instanceof PsiField) {
-      PsiField field = (PsiField) psiElement;
+    if (psiElement instanceof PsiField field) {
       final PsiFile boundForm = FormReferenceProvider.getFormFile(field);
       if (boundForm != null) {
         annotateFormField(field, boundForm, holder);
       }
     }
-    else if (psiElement instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) psiElement;
+    else if (psiElement instanceof PsiClass aClass) {
       final List<PsiFile> formsBoundToClass = FormClassIndex.findFormsBoundToClass(aClass.getProject(), aClass);
-      if (formsBoundToClass.size() > 0) {
-        Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
-        boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));
+      if (!formsBoundToClass.isEmpty()) {
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(aClass.getNameIdentifier()).gutterIconRenderer(new BoundIconRenderer(aClass)).create();
       }
     }
   }
 
   private static void annotateFormField(final PsiField field, final PsiFile boundForm, final AnnotationHolder holder) {
-    Annotation boundFieldAnnotation = holder.createInfoAnnotation(field, null);
-    boundFieldAnnotation.setGutterIconRenderer(new BoundIconRenderer(field));
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION).gutterIconRenderer(new BoundIconRenderer(field)).create();
 
     LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
     final PsiType guiComponentType = FormReferenceProvider.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
@@ -66,45 +50,17 @@ public class FormClassAnnotator implements Annotator {
       if (!fieldType.isAssignableFrom(guiComponentType)) {
         String message = UIDesignerBundle.message("bound.field.type.mismatch", guiComponentType.getCanonicalText(),
                                                   fieldType.getCanonicalText());
-        Annotation annotation = holder.createErrorAnnotation(field.getTypeElement(), message);
-        annotation.registerFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), null, null);
-        annotation.registerFix(new ChangeBoundFieldTypeFix(field, guiComponentType), null, null);
+        holder.newAnnotation(HighlightSeverity.ERROR, message).range(field.getTypeElement())
+        .withFix(new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()))
+        .withFix(new ChangeBoundFieldTypeFix(field, guiComponentType)).create();
       }
     }
 
     if (field.hasInitializer()) {
       final String message = UIDesignerBundle.message("field.is.overwritten.by.generated.code", field.getName());
-      Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
-      annotation.registerFix(new IntentionAction() {
-        @Override
-        @NotNull
-        public String getText() {
-          return message;
-        }
-
-        @Override
-        @NotNull
-        public String getFamilyName() {
-          return UIBundle.message("remove.field.initializer.quick.fix");
-        }
-
-        @Override
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return field.getInitializer() != null;
-        }
-
-        @Override
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          final PsiExpression initializer = field.getInitializer();
-          LOG.assertTrue(initializer != null);
-          initializer.delete();
-        }
-
-        @Override
-        public boolean startInWriteAction() {
-          return true;
-        }
-      });
+      PsiExpression initializer = Objects.requireNonNull(field.getInitializer());
+      holder.newAnnotation(HighlightSeverity.WARNING, message).range(initializer)
+        .withFix(new DeleteElementFix(initializer, UIBundle.message("remove.field.initializer.quick.fix"))).create();
     }
   }
 }

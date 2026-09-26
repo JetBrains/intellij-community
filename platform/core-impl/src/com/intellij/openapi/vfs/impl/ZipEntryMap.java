@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Map of relativePath => ArchiveHandler.EntryInfo optimised for memory:
- * - it does not store keys (may be recovered from the ArchiveHandler.EntryInfo)
+ * - it does not store keys (maybe recovered from the ArchiveHandler.EntryInfo)
  * - does not support removal
  */
-class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
+final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   private ArchiveHandler.EntryInfo[] entries;
   private int size;
 
@@ -61,7 +53,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return entry;
   }
 
-  private static int index(@NotNull String relativePath, @NotNull ArchiveHandler.EntryInfo[] entries) {
+  private static int index(@NotNull String relativePath, ArchiveHandler.EntryInfo @NotNull [] entries) {
     return (relativePath.hashCode() & 0x7fffffff) % entries.length;
   }
 
@@ -78,10 +70,9 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return old;
   }
 
-  @Nullable
-  private static ArchiveHandler.EntryInfo put(@NotNull String relativePath,
-                                              @NotNull ArchiveHandler.EntryInfo value,
-                                              @NotNull ArchiveHandler.EntryInfo[] entries) {
+  private static @Nullable ArchiveHandler.EntryInfo put(@NotNull String relativePath,
+                                                        @NotNull ArchiveHandler.EntryInfo value,
+                                                        ArchiveHandler.EntryInfo @NotNull [] entries) {
     int index = index(relativePath, entries);
     ArchiveHandler.EntryInfo entry;
     int i = index;
@@ -121,8 +112,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return endIndex==0;
   }
 
-  @NotNull
-  private ArchiveHandler.EntryInfo[] rehash() {
+  private void rehash() {
     ArchiveHandler.EntryInfo[] newEntries = new ArchiveHandler.EntryInfo[entries.length < 1000 ? entries.length  * 2 : entries.length * 3/2];
     for (ArchiveHandler.EntryInfo entry : entries) {
       if (entry != null) {
@@ -130,11 +120,9 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
       }
     }
     entries = newEntries;
-    return newEntries;
   }
 
-  @NotNull
-  private static String getRelativePath(@NotNull ArchiveHandler.EntryInfo entry) {
+  private static @NotNull String getRelativePath(@NotNull ArchiveHandler.EntryInfo entry) {
     StringBuilder result = new StringBuilder(entry.shortName.length() + 10);
     for (ArchiveHandler.EntryInfo e = entry; e != null; e = e.parent) {
       if (result.length() != 0 && e.shortName.length() != 0) {
@@ -168,32 +156,31 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   }
 
   private EntrySet entrySet;
-  @NotNull
+
   @Override
-  public EntrySet entrySet() {
+  public @NotNull Set<Entry<String, ArchiveHandler.EntryInfo>> entrySet() {
     EntrySet es;
     return (es = entrySet) == null ? (entrySet = new EntrySet()) : es;
   }
 
   private final class EntrySet extends AbstractSet<Entry<String, ArchiveHandler.EntryInfo>> {
     @Override
-    public final int size() {
+    public int size() {
       return ZipEntryMap.this.size();
     }
 
     @Override
-    public final void clear() {
+    public void clear() {
       ZipEntryMap.this.clear();
     }
 
     @Override
-    public final Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
-      return ContainerUtil.mapIterator(ContainerUtil.iterate(entries, Condition.NOT_NULL).iterator(),
-                                       entry -> new SimpleEntry<>(getRelativePath(entry), entry));
+    public Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
+      return ContainerUtil.map(ContainerUtil.filter(entries, Objects::nonNull), entry -> (Entry<String, ArchiveHandler.EntryInfo>)new SimpleEntry<>(getRelativePath(entry), entry)).iterator();
     }
 
     @Override
-    public final boolean contains(Object o) {
+    public boolean contains(Object o) {
       if (!(o instanceof Map.Entry)) {
         return false;
       }
@@ -204,14 +191,13 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     }
 
     @Override
-    public final boolean remove(Object o) {
+    public boolean remove(Object o) {
       throw new UnsupportedOperationException();
     }
   }
 
-  @NotNull
   @Override
-  public Collection<ArchiveHandler.EntryInfo> values() {
-    return ContainerUtil.filter(entries, Condition.NOT_NULL);
+  public @Unmodifiable @NotNull Collection<ArchiveHandler.EntryInfo> values() {
+    return ContainerUtil.filter(entries, Conditions.notNull());
   }
 }

@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.actions.generate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,14 +23,32 @@ import java.util.Map;
 public abstract class AbstractDomGenerateProvider<T extends DomElement> extends DefaultGenerateElementProvider<T> {
   public static final String NAMESPACE_PREFIX_VAR = "NS_PREFIX";
 
-  @Nullable private final String myMappingId;
+  private final @Nullable String myMappingId;
 
-  public AbstractDomGenerateProvider(final String description, final Class<T> aClass) {
+  /**
+   * @deprecated Provide both action description and text, as they have different capitalization rules.
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass) {
     this(description, aClass, null);
   }
 
-  public AbstractDomGenerateProvider(final String description, final Class<T> aClass, @Nullable String mappingId) {
-    super(description, aClass);
+  /**
+   * @deprecated Provide both action description and text, as they have different capitalization rules.
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public AbstractDomGenerateProvider(final @Nls String description, final Class<T> aClass, @Nullable String mappingId) {
+    this(description, description, aClass, mappingId);
+  }
+
+  public AbstractDomGenerateProvider(@ActionText String text, @ActionDescription String description, final Class<T> aClass) {
+    this(text, description, aClass, null);
+  }
+
+  public AbstractDomGenerateProvider(@ActionText String text, @ActionDescription String description, final Class<T> aClass, @Nullable String mappingId) {
+    super(text, description, aClass);
     myMappingId = mappingId;
   }
 
@@ -63,8 +70,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     return createNamespacePrefixMap(parentDomElement);
   }
 
-  @NotNull
-  public static Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
+  public static @NotNull Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
     Map<String, String> vars = new HashMap<>();
 
     addNamespacePrefix(domElement, vars);
@@ -100,17 +106,15 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     }
   }
 
-  @Nullable
-  protected DomElement getElementToNavigate(final T t) {
+  protected @Nullable DomElement getElementToNavigate(final T t) {
     return t;
   }
 
   protected static String getDescription(final Class<? extends DomElement> aClass) {
-    return StringUtil.join(Arrays.asList(NameUtil.nameToWords(aClass.getSimpleName())), " ");
+    return StringUtil.join(NameUtilCore.nameToWordList(aClass.getSimpleName()), " ");
   }
 
-  @Nullable
-  public String getMappingId() {
+  public @Nullable String getMappingId() {
     return myMappingId;
   }
 }

@@ -1,4 +1,5 @@
-// "Expand static import to Arrays.sort" "true"
+// "Replace static import with qualified access to Arrays" "true-preview"
+
 import java.util.Arrays;
 
 class Test {

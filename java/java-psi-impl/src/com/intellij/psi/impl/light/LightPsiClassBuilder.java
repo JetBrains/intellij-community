@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.*;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.intellij.psi.PsiReferenceList.Role.EXTENDS_LIST;
@@ -32,7 +23,7 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
   private final LightReferenceListBuilder myImplementsList = new LightReferenceListBuilder(getManager(), IMPLEMENTS_LIST);
   private final LightReferenceListBuilder myExtendsList = new LightReferenceListBuilder(getManager(), EXTENDS_LIST);
   private final LightTypeParameterListBuilder myTypeParametersList = new LightTypeParameterListBuilder(getManager(), getLanguage());
-  private final Collection<PsiMethod> myMethods = ContainerUtil.newArrayList();
+  private final Collection<PsiMethod> myMethods = new ArrayList<>();
   private PsiElement myScope;
   private PsiClass myContainingClass;
   private String myOriginInfo;
@@ -41,53 +32,45 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
     super(context, name);
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 
-  @NotNull
   @Override
-  public LightModifierList getModifierList() {
+  public @NotNull LightModifierList getModifierList() {
     return myModifierList;
   }
 
-  @NotNull
   @Override
-  public LightReferenceListBuilder getExtendsList() {
+  public @NotNull LightReferenceListBuilder getExtendsList() {
     return myExtendsList;
   }
 
-  @NotNull
   @Override
-  public LightReferenceListBuilder getImplementsList() {
+  public @NotNull LightReferenceListBuilder getImplementsList() {
     return myImplementsList;
   }
 
-  @NotNull
   @Override
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     // TODO
     return PsiField.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return myMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     // TODO
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassInitializer[] getInitializers() {
+  public PsiClassInitializer @NotNull [] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 
@@ -96,15 +79,13 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
     return myScope;
   }
 
-  @Nullable
   @Override
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return myContainingClass;
   }
 
-  @NotNull
   @Override
-  public LightTypeParameterListBuilder getTypeParameterList() {
+  public @NotNull LightTypeParameterListBuilder getTypeParameterList() {
     return myTypeParametersList;
   }
 

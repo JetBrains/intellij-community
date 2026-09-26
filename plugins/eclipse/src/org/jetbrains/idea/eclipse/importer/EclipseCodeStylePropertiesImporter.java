@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.options.SchemeImportException;
@@ -12,17 +10,21 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
-public class EclipseCodeStylePropertiesImporter extends EclipseFormatterOptionsHandler {
+public class EclipseCodeStylePropertiesImporter implements EclipseFormatterOptions {
 
   public void importProperties(@NotNull Properties eclipseProperties, @NotNull CodeStyleSettings settings) throws SchemeImportException {
+    Map<String, String> eclipseStringPropsMap = new HashMap<>();
     for (String key : eclipseProperties.stringPropertyNames()) {
       String value = eclipseProperties.getProperty(key);
       if (value != null) {
-        setCodeStyleOption(settings, key, value);
+        eclipseStringPropsMap.put(key, value);
       }
     }
+    EclipseCodeStyleSchemeImporter.importCodeStyleSettings(eclipseStringPropsMap, settings);
   }
 
   public void importOptimizeImportsSettings(@NotNull Properties uiPreferences, @NotNull CodeStyleSettings settings) {
@@ -30,6 +32,7 @@ public class EclipseCodeStylePropertiesImporter extends EclipseFormatterOptionsH
     importOrderOfImports(uiPreferences, javaSettings);
     importStarImportThresholds(uiPreferences, javaSettings);
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+    javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
     javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(new PackageEntryTable());
   }
 
@@ -37,6 +40,7 @@ public class EclipseCodeStylePropertiesImporter extends EclipseFormatterOptionsH
     String oderOfImportsValue = uiPreferences.getProperty(OPTION_IMPORT_ORDER);
     if (oderOfImportsValue != null) {
       PackageEntryTable importLayoutTable = new PackageEntryTable();
+      importLayoutTable.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
       importLayoutTable.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       String[] chunks = oderOfImportsValue.split(";");
       for (String importString : chunks) {

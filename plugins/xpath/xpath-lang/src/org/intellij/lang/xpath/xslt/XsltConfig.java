@@ -19,7 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 
 public abstract class XsltConfig {
   public static XsltConfig getInstance() {
-    return ApplicationManager.getApplication().getComponent(XsltConfig.class);
+    return ApplicationManager.getApplication().getService(XsltConfig.class);
   }
 
   public abstract boolean isShowLinkedFiles();

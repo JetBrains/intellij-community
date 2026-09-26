@@ -1,18 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,14 +25,13 @@ public abstract class ProjectView {
    */
   public static final DataKey<List<UnloadedModuleDescription>> UNLOADED_MODULES_CONTEXT_KEY = DataKey.create("context.unloaded.modules.list");
 
-  public static ProjectView getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectView.class);
+  public static ProjectView getInstance(@NotNull Project project) {
+    return project.getService(ProjectView.class);
   }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
-  @NotNull
-  public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
+  public abstract @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
   /**
    * Changes currently selected view and subview (if any).
@@ -46,11 +47,9 @@ public abstract class ProjectView {
    * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
    * or to {@link ActionCallback#setRejected rejected} if content didn't change.
    */
-  @NotNull
-  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
+  public abstract @NotNull ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
 
-  @Nullable
-  public abstract PsiElement getParentOfCurrentSelection();
+  public abstract @Nullable PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(@NotNull String viewId);
@@ -60,8 +59,16 @@ public abstract class ProjectView {
    */
   public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
-  public abstract void changeView();
+  @ApiStatus.Internal
+  public abstract void refresh(@NotNull ProjectViewUpdateCause cause);
 
+  /**
+   * Refreshes the current pane asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #refresh(ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   */
   public abstract void refresh();
 
   public abstract boolean isAutoscrollToSource(String paneId);
@@ -76,28 +83,45 @@ public abstract class ProjectView {
 
   public abstract boolean isHideEmptyMiddlePackages(String paneId);
 
-  public abstract void setHideEmptyPackages(boolean hideEmptyPackages, @NotNull String paneId);
+  public abstract void setHideEmptyPackages(@NotNull String paneId, boolean hideEmptyPackages);
+
+  public boolean isUseFileNestingRules(String paneId) {
+    return false;
+  }
+
+  public void setUseFileNestingRules(boolean useFileNestingRules) {
+  }
 
   public boolean isCompactDirectories(String paneId) {
     return false;
   }
 
-  public void setCompactDirectories(boolean compactDirectories, @NotNull String paneId) {
+  public void setCompactDirectories(@NotNull String paneId, boolean compactDirectories) {
+  }
+
+  public boolean isShowExcludedFiles(String paneId) {
+    return true;
+  }
+
+  public boolean isShowVisibilityIcons(String paneId) {
+    return false;
   }
 
   public abstract boolean isShowLibraryContents(String paneId);
 
-  public abstract void setShowLibraryContents(boolean showLibraryContents, @NotNull String paneId);
+  public abstract void setShowLibraryContents(@NotNull String paneId, boolean showLibraryContents);
 
   public abstract boolean isShowModules(String paneId);
 
-  public abstract void setShowModules(boolean showModules, @NotNull String paneId);
+  public abstract void setShowModules(@NotNull String paneId, boolean showModules);
 
   public abstract boolean isFlattenModules(String paneId);
 
-  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+  public abstract void setFlattenModules(@NotNull String paneId, boolean flattenModules);
 
   public abstract boolean isShowURL(String paneId);
+
+  public abstract boolean isShowScratchesAndConsoles(String paneId);
 
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
@@ -109,27 +133,33 @@ public abstract class ProjectView {
 
   public abstract boolean isAbbreviatePackageNames(String paneId);
 
-  public abstract void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId);
+  public abstract void setAbbreviatePackageNames(@NotNull String paneId, boolean abbreviatePackageNames);
 
   /**
    * e.g. {@link com.intellij.ide.projectView.impl.ProjectViewPane#ID}
-   * @see com.intellij.ide.projectView.impl.AbstractProjectViewPane#getId()
+   * @see AbstractProjectViewPane#getId()
    */
   public abstract String getCurrentViewId();
 
-  public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
+  public abstract void selectPsiElement(@NotNull PsiElement element, boolean requestFocus);
 
   public abstract boolean isManualOrder(String paneId);
-  public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);
+
+  public abstract void setManualOrder(@NotNull String paneId, boolean enabled);
 
   public abstract boolean isSortByType(String paneId);
+
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
+
+  public abstract @NotNull NodeSortKey getSortKey(String paneId);
+
+  public abstract void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
-  @NotNull
-  public abstract Collection<String> getPaneIds();
+  public abstract @NotNull @Unmodifiable Collection<String> getPaneIds();
 
-  @NotNull
-  public abstract Collection<SelectInTarget> getSelectInTargets();
+  public abstract @NotNull @Unmodifiable Collection<SelectInTarget> getSelectInTargets();
+
+  public abstract @NotNull String getDefaultViewId();
 }

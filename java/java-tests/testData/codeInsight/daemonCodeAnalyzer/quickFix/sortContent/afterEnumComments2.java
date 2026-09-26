@@ -1,9 +1,9 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 public enum Enum {
     A,
 
     B,
-    C// foo
+    C // foo
     ;
 }

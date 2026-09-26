@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.icons.AllIcons;
@@ -22,27 +8,28 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ArtifactErrorPanel {
+public final class ArtifactErrorPanel {
   private final JPanel myMainPanel;
   private final JButton myFixButton;
   private final JLabel myErrorLabel;
   private List<? extends ConfigurationErrorQuickFix> myCurrentQuickFixes;
-  private String myErrorText;
+  private @NlsContexts.Label String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
     myMainPanel = new JPanel(new BorderLayout());
@@ -50,7 +37,7 @@ public class ArtifactErrorPanel {
     myMainPanel.add(myErrorLabel, BorderLayout.CENTER);
     myFixButton = new JButton();
     myMainPanel.add(myFixButton, BorderLayout.EAST);
-    new UiNotifyConnector(myMainPanel, new Activatable.Adapter() {
+    UiNotifyConnector.installOn(myMainPanel, new Activatable() {
       @Override
       public void showNotify() {
         if (myErrorText != null) {
@@ -68,14 +55,13 @@ public class ArtifactErrorPanel {
           }
           else {
             JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationErrorQuickFix>(null, myCurrentQuickFixes) {
-              @NotNull
               @Override
-              public String getTextFor(ConfigurationErrorQuickFix value) {
+              public @NotNull String getTextFor(ConfigurationErrorQuickFix value) {
                 return value.getActionName();
               }
 
               @Override
-              public PopupStep onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
+              public PopupStep<?> onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
                 performFix(selectedValue, artifactEditor);
                 return FINAL_CHOICE;
               }
@@ -92,7 +78,7 @@ public class ArtifactErrorPanel {
     artifactEditor.queueValidation();
   }
 
-  public void showError(@NotNull String message, @NotNull ProjectStructureProblemType.Severity severity,
+  public void showError(@NotNull @NlsContexts.Label String message, @NotNull ProjectStructureProblemType.Severity severity,
                         @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
     myErrorLabel.setIcon(severity == ProjectStructureProblemType.Severity.ERROR ? AllIcons.General.Error :

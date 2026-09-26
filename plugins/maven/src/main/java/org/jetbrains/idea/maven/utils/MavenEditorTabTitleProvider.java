@@ -16,22 +16,26 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class MavenEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
+public final class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    if (projectsManager.isMavenizedProject()) {
-      MavenProject mavenProject = projectsManager.findProject(file);
-      if (mavenProject != null) {
-        return mavenProject.getMavenId().getArtifactId();
+    if (!projectsManager.isMavenizedProject()) return null;
+
+    MavenProject mavenProject = projectsManager.findProject(file);
+    if (mavenProject != null) {
+      String name = file.getName() + " (" + mavenProject.getMavenId().getArtifactId() + ")";
+      if (projectsManager.isIgnored(mavenProject)) {
+        return MavenProjectBundle.message("tab.title.ignored", name);
       }
+      return name;
     }
 
     return null;

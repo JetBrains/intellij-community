@@ -16,16 +16,20 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.plugins.xpathView.XPathBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -34,14 +38,19 @@ class ToggleAssociationAction extends ToggleAction {
     private final PsiFile myPsiFile;
     private final PsiFile myAssoc;
 
-    public ToggleAssociationAction(FileAssociationsManager fileAssociationsManager, PsiFile psiFile, PsiFile assoc) {
-        super(getPath(assoc, psiFile), "Remove Association to " + assoc.getName(), null);
+    ToggleAssociationAction(FileAssociationsManager fileAssociationsManager, PsiFile psiFile, PsiFile assoc) {
+        super(getPath(assoc, psiFile), XPathBundle.message("action.remove.association.to.description", assoc.getName()), null);
         myFileAssociationsManager = fileAssociationsManager;
         myPsiFile = psiFile;
         myAssoc = assoc;
     }
 
-    private static String getPath(PsiFile assoc, PsiFile psiFile) {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    private static @NlsSafe String getPath(PsiFile assoc, PsiFile psiFile) {
         final VirtualFile virtualFile = assoc.getVirtualFile();
         assert virtualFile != null;
 
@@ -51,13 +60,15 @@ class ToggleAssociationAction extends ToggleAction {
         return path != null ? (module != null ? "[" + module.getName() + "] - " + path : path) : virtualFile.getPresentableUrl();
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
         return true;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);
-        DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart();
+        DaemonCodeAnalyzer.getInstance(AnAction.getEventProject(e)).restart(this);
     }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -31,40 +16,39 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/1/2017
  */
 public class GradleRefreshProjectDependenciesAction extends RefreshExternalProjectAction {
-
   public GradleRefreshProjectDependenciesAction() {
-    getTemplatePresentation().setText("Refresh dependencies");
-    getTemplatePresentation().setDescription("Refresh dependencies in the Gradle cache using --refresh-dependencies argument");
+    getTemplatePresentation().setText(GradleBundle.messagePointer("gradle.action.refresh.dependencies.text"));
+    getTemplatePresentation().setDescription(GradleBundle.messagePointer("gradle.action.refresh.dependencies.description"));
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!GradleConstants.SYSTEM_ID.equals(getSystemId(e))) return false;
     return super.isEnabled(e);
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!GradleConstants.SYSTEM_ID.equals(getSystemId(e))) return false;
     return super.isVisible(e);
   }
 
   @Override
-  public void perform(@NotNull final Project project,
+  public void perform(final @NotNull Project project,
                       @NotNull ProjectSystemId projectSystemId,
                       @NotNull AbstractExternalEntityData externalEntityData,
                       @NotNull AnActionEvent e) {
 
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     final ExternalSystemNode<?> externalSystemNode = ContainerUtil.getFirstItem(selectedNodes);
     assert externalSystemNode != null;
 
@@ -84,9 +68,6 @@ public class GradleRefreshProjectDependenciesAction extends RefreshExternalProje
 
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       new ImportSpecBuilder(project, projectSystemId)
-                                        .useDefaultCallback()
-                                        .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                                        .withArguments("--refresh-dependencies")
-                                        .build());
+                                        .withArguments("--refresh-dependencies"));
   }
 }

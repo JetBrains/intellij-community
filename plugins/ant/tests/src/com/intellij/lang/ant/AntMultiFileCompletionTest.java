@@ -44,7 +44,7 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
   public void testPropertyCompletion2() {
     final String testName = "PropertyCompletion2";
     final String[] fileNames = new String [] { testName + ".xml", "PropertyCompletion.properties" };
-    myFixture.testCompletionTyping(fileNames, "\n", testName + "_after.xml");
+    myFixture.testCompletionTyping(fileNames, ".pro\n", testName + "_after.xml");
   }
 
   private void doTestFor(final String[] fileNames, final String ext) {
@@ -61,7 +61,7 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder(getTestName(false));
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
@@ -71,6 +71,9 @@ public class AntMultiFileCompletionTest extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myFixture = null;

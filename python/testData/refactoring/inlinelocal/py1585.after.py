@@ -1,6 +1,6 @@
 def foo(a, b):
     if a < b:
         params = {'a': 'b'}
-        print params
+        print(params)
     else:
-        print {'c': 'd'}
+        print({'c': 'd'})

@@ -1,0 +1,163 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.process;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.OutputStream;
+import java.nio.file.Path;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
+public final class OSProcessUtil {
+  private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
+
+  private OSProcessUtil() { }
+
+  /// @deprecated might not work in recent Windows 11 versions. Use [ProcessHandle#allProcesses()] instead.
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
+  public static ProcessInfo @NotNull [] getProcessList() {
+    return com.intellij.execution.process.impl.ProcessListUtil.getProcessList();
+  }
+
+  /// Returns an executable name for the given process if available, or an empty string.
+  ///
+  /// @since 2026.2
+  public static @NotNull String processName(@NotNull ProcessHandle handle) {
+    return NioFiles.getFileName(Path.of(handle.info().command().orElse("")));
+  }
+
+  /// Forceful termination of a process tree.
+  /// Returns `true` is the attempt was successful.
+  public static boolean killProcessTree(@NotNull Process process) {
+    if (OS.CURRENT == OS.Windows) {
+      var result = killProcessTree(process.pid());
+      if (result) {
+        process.destroyForcibly();
+      }
+      return result;
+    }
+    else {
+      ProcessHandle.of(process.pid()).ifPresent(handle -> {
+        @SuppressWarnings("UseProcessDescendantsWithCare")
+        var handles = handle.descendants().toList();
+        for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+          iterator.previous().destroyForcibly();
+        }
+      });
+      process.destroyForcibly();
+      return true;
+    }
+  }
+
+  /// Forceful termination of a process tree.
+  /// Returns `true` is the attempt was successful.
+  public static boolean killProcessTree(long pid) {
+    if (OS.CURRENT == OS.Windows) {
+      try {
+        if (!Registry.is("disable.winp", false)) {
+          try {
+            LocalProcessService.getInstance().killWinProcessRecursively(Math.toIntExact(pid));
+            return true;
+          }
+          catch (Throwable e) {
+            rethrowControlFlowException(e);
+            LOG.error("Failed to kill " + pid + " tree with WinP, falling back to the default logic", e);
+          }
+        }
+        return WinProcessManager.kill(Math.toIntExact(pid), true);
+      }
+      catch (Throwable e) {
+        rethrowControlFlowException(e);
+        LOG.info("Cannot kill process tree", e);
+        return false;
+      }
+    }
+    else {
+      ProcessHandle.of(pid).ifPresent(handle -> {
+        @SuppressWarnings("UseProcessDescendantsWithCare")
+        var handles = handle.descendants().toList();
+        for (var iterator = handles.listIterator(handles.size()); iterator.hasPrevious(); ) {
+          iterator.previous().destroyForcibly();
+        }
+        handle.destroyForcibly();
+      });
+      return true;
+    }
+  }
+
+  /// @deprecated use [Process#destroyForcibly()]
+  @Deprecated(forRemoval = true)
+  public static void killProcess(@NotNull Process process) {
+    process.destroyForcibly();
+  }
+
+  public static void killProcess(int pid) {
+    ProcessHandle.of(pid).ifPresent(ProcessHandle::destroyForcibly);
+  }
+
+  /// Terminates the specified process gracefully: on Windows, sends Ctrl-C, on Unix, sends the SIGINT signal.
+  ///
+  /// @throws UnsupportedOperationException if it cannot interrupt the process
+  /// @see KillableProcessHandler#destroyProcessGracefully()
+  public static void terminateProcessGracefully(@NotNull Process process) throws RuntimeException {
+    terminateProcessGracefully((int)process.pid(), process.getOutputStream());
+  }
+
+  /// Terminates the specified process gracefully: on Windows, sends Ctrl-C, on Unix, sends the SIGINT signal.
+  ///
+  /// Just sending a CTRL+C event on Windows might not be enough to terminate the process (PY-50064).
+  /// Use [#terminateProcessGracefully(Process)] or handle the case when the process doesn't terminate.
+  ///
+  /// @throws UnsupportedOperationException if it cannot interrupt the process
+  /// @see KillableProcessHandler#destroyProcessGracefully()
+  public static void terminateProcessGracefully(int pid) throws RuntimeException {
+    terminateProcessGracefully(pid, null);
+  }
+
+  private static void terminateProcessGracefully(int pid, @Nullable OutputStream processOutputStream) throws RuntimeException {
+    if (OS.CURRENT == OS.Windows) {
+      if (Registry.is("disable.winp")) {
+        throw new UnsupportedOperationException("Cannot terminate process, disable.winp=true");
+      }
+      else {
+        try {
+          // there is no need to check return value: `sendCtrlC` either returns `true` or throws an exception
+          LocalProcessService.getInstance().sendWinProcessCtrlC(pid, processOutputStream);
+        }
+        catch (Exception e) {
+          rethrowControlFlowException(e);
+          throw new UnsupportedOperationException("Failed to terminate process", e);
+        }
+      }
+    }
+    else {
+      UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGINT);
+    }
+  }
+
+  /// @deprecated use [Process#pid()] directly
+  @Deprecated(forRemoval = true)
+  public static int getProcessID(@NotNull Process process) {
+    return (int)process.pid();
+  }
+
+  /// @deprecated use `ProcessHandle.current().pid()`
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static int getCurrentProcessId() {
+    return (int)ProcessHandle.current().pid();
+  }
+
+  /// @deprecated use `String.valueOf(ProcessHandle.current().pid())`
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static String getApplicationPid() {
+    return String.valueOf(getCurrentProcessId());
+  }
+}

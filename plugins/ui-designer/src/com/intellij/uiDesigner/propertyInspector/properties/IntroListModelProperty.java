@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -24,26 +11,24 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.ListModelEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.lang.reflect.Method;
 
-/**
- * @author yole
- */
+
 public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   private LabelPropertyRenderer<String[]> myRenderer;
   private ListModelEditor myEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
 
   public IntroListModelProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
   }
 
+  @Override
   public void write(final String[] value, final XmlWriter writer) {
     for(String s: value) {
       writer.startElement(UIFormXmlConstants.ELEMENT_ITEM);
@@ -52,14 +37,15 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
     }
   }
 
-  @NotNull
-  public PropertyRenderer<String[]> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<String[]> getRenderer() {
     if (myRenderer == null) {
       myRenderer = new MyRenderer();
     }
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<String[]> getEditor() {
     if (myEditor == null) {
       myEditor = new ListModelEditor(getName());
@@ -70,7 +56,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   @Override public String[] getValue(final RadComponent component) {
     final String[] strings = (String[])component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
     if (strings == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
     return strings;
   }
@@ -78,7 +64,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   @Override protected void setValueImpl(final RadComponent component, final String[] value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     DefaultComboBoxModel model = new DefaultComboBoxModel();
-    for(String s: value) {
+    for(@NlsSafe String s: value) {
       model.addElement(s);
     }
     invokeSetter(component, model);
@@ -88,32 +74,6 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   public void resetValue(RadComponent component) throws Exception {
     super.resetValue(component);
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
-  }
-
-  @Override
-  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    ListModel listModel;
-    try {
-      listModel = (ListModel)myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-    }
-    catch (Exception e) {
-      return;
-    }
-    if (listModel == null || listModel.getSize() == 0) return;
-    String[] values = new String [listModel.getSize()];
-    for(int i=0; i<listModel.getSize(); i++) {
-      final Object value = listModel.getElementAt(i);
-      if (!(value instanceof String)) {
-        return;
-      }
-      values [i] = (String) value;
-    }
-    try {
-      setValue(radComponent, values);
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 
   private static class MyRenderer extends LabelPropertyRenderer<String[]> {

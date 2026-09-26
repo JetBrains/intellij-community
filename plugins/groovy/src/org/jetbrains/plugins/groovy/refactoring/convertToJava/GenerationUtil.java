@@ -1,16 +1,40 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
-import java.util.HashMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -27,7 +51,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -42,6 +71,8 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,8 +81,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil
 /**
  * @author Maxim.Medvedev
  */
-public class GenerationUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
+public final class GenerationUtil {
+  private static final Logger LOG = Logger.getInstance(GenerationUtil.class);
 
   private GenerationUtil() {
   }
@@ -118,22 +149,21 @@ public class GenerationUtil {
 
   public static void invokeMethodByName(@Nullable GrExpression caller,
                                         @NotNull String methodName,
-                                        @NotNull GrExpression[] exprs,
-                                        @NotNull GrNamedArgument[] namedArgs,
-                                        @NotNull GrClosableBlock[] closureArgs,
+                                        GrExpression @NotNull [] exprs,
+                                        GrNamedArgument @NotNull [] namedArgs,
+                                        GrClosableBlock @NotNull [] closureArgs,
                                         @NotNull ExpressionGenerator expressionGenerator,
                                         @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
-  @NotNull
-  public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
-                                                   @NotNull String methodName,
-                                                   @NotNull GrExpression[] exprs,
-                                                   @NotNull GrNamedArgument[] namedArgs,
-                                                   @NotNull GrClosableBlock[] closureArgs,
-                                                   @NotNull GroovyPsiElement psiContext) {
+  public static @NotNull GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
+                                                           @NotNull String methodName,
+                                                           GrExpression @NotNull [] exprs,
+                                                           GrNamedArgument @NotNull [] namedArgs,
+                                                           GrClosableBlock @NotNull [] closureArgs,
+                                                           @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
     final PsiType type;
@@ -154,9 +184,9 @@ public class GenerationUtil {
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
                                                  @NotNull GroovyResolveResult resolveResult,
                                                  @NotNull String methodName,
-                                                 @NotNull GrExpression[] exprs,
-                                                 @NotNull GrNamedArgument[] namedArgs,
-                                                 @NotNull GrClosableBlock[] closureArgs,
+                                                 GrExpression @NotNull [] exprs,
+                                                 GrNamedArgument @NotNull [] namedArgs,
+                                                 GrClosableBlock @NotNull [] closureArgs,
                                                  @NotNull ExpressionGenerator expressionGenerator,
                                                  @NotNull GroovyPsiElement psiContext) {
     final PsiElement resolved = resolveResult.getElement();
@@ -219,8 +249,7 @@ public class GenerationUtil {
     writeStatement(builder, statementBuilder, statement, statementContext);
   }
 
-  @Nullable
-  static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
+  static @Nullable PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
     Set<PsiClass> visitedClasses = new HashSet<>();
     PsiClass curClass = initialClass;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
@@ -258,8 +287,8 @@ public class GenerationUtil {
   }
 
   static void writeParameterList(@NotNull StringBuilder text,
-                                 @NotNull PsiParameter[] parameters,
-                                 @NotNull final ClassNameProvider classNameProvider,
+                                 PsiParameter @NotNull [] parameters,
+                                 final @NotNull ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
     Set<String> usedNames = new HashSet<>();
     text.append('(');
@@ -270,7 +299,10 @@ public class GenerationUtil {
       PsiParameter parameter = parameters[i];
       if (parameter == null) continue;
       if (parameter instanceof PsiCompiledElement) {
-        parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+        // todo fix IDEA-387059
+        PsiParameter finalParameter = parameter;
+        parameter =
+          BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> (PsiParameter)((PsiCompiledElement)finalParameter).getMirror());
       }
 
       if (i > 0) text.append(", ");  //append ','
@@ -406,14 +438,13 @@ public class GenerationUtil {
     if (initializer instanceof GrLiteral) {
       Object value = ((GrLiteral)initializer).getValue();
       if (value instanceof BigDecimal && Double.isFinite(((BigDecimal)value).doubleValue())) {
-        return !TypeConversionUtil.isAssignable(target, PsiType.DOUBLE);
+        return !TypeConversionUtil.isAssignable(target, PsiTypes.doubleType());
       }
       else if (value instanceof String && ((String)value).length() == 1) {
-        return !PsiType.CHAR.equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
+        return !PsiTypes.charType().equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
       }
     }
-    else if (initializer instanceof GrListOrMap && target instanceof PsiArrayType) {
-      GrListOrMap listOrMap = (GrListOrMap)initializer;
+    else if (initializer instanceof GrListOrMap listOrMap && target instanceof PsiArrayType) {
       return listOrMap.isMap();
     }
     return true;
@@ -480,7 +511,7 @@ public class GenerationUtil {
     return name;
   }
 
-  public static boolean isCastNeeded(@NotNull GrExpression qualifier, @NotNull final PsiMember member, ExpressionContext context) {
+  public static boolean isCastNeeded(@NotNull GrExpression qualifier, final @NotNull PsiMember member, ExpressionContext context) {
     PsiType declared = getDeclaredType(qualifier, context);
     if (declared == null) return false;
 
@@ -507,7 +538,7 @@ public class GenerationUtil {
 
     private boolean myResult = false;
 
-    public CheckProcessElement(@NotNull PsiElement member) {
+    CheckProcessElement(@NotNull PsiElement member) {
       myMember = member;
       myManager = member.getManager();
     }
@@ -518,6 +549,17 @@ public class GenerationUtil {
         myResult = true;
         return false;
       }
+
+      if (myMember instanceof PsiMethod) {
+        PsiMethod[] methods = ((PsiMethod)myMember).findSuperMethods();
+        for (PsiMethod method: methods) {
+          if (myManager.areElementsEquivalent(element, method)) {
+            myResult = true;
+            return false;
+          }
+        }
+      }
+
       return true;
     }
 
@@ -526,8 +568,7 @@ public class GenerationUtil {
     }
   }
 
-  @Nullable
-  public static PsiType getDeclaredType(@Nullable GrExpression expression, ExpressionContext context) {
+  public static @Nullable PsiType getDeclaredType(@Nullable GrExpression expression, ExpressionContext context) {
     if (expression instanceof GrReferenceExpression) {
       final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -626,8 +667,7 @@ public class GenerationUtil {
     buffer.append("super");
   }
 
-  @Nullable
-  static PsiElement getWrappingImplicitClass(@NotNull PsiElement place) {
+  static @Nullable PsiElement getWrappingImplicitClass(@NotNull PsiElement place) {
     PsiElement parent = place.getParent();
 
     while (parent != null) {

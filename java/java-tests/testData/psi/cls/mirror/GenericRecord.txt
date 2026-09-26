@@ -1,0 +1,11 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+public final record GenericRecord<T extends java.lang.CharSequence, V>(T t, V v) {
+    public GenericRecord(T t, V v) { /* compiled code */ }
+
+    public T t() { /* compiled code */ }
+
+    public V v() { /* compiled code */ }
+}

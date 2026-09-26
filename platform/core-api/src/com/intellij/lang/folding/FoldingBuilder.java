@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @see LanguageFolding#forLanguage(Language)
  */
 
-public interface FoldingBuilder {
+public interface FoldingBuilder extends PossiblyDumbAware {
   /**
    * Builds the folding regions for the specified node in the AST tree and its children.
    * Note that you can have several folding regions for one AST node, i.e. several {@link FoldingDescriptor} with similar AST node.
@@ -39,8 +26,7 @@ public interface FoldingBuilder {
    *                 numbers for folding regions.
    * @return the array of folding descriptors.
    */
-  @NotNull
-  FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document);
+  FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document);
 
   /**
    * Returns the text which is displayed in the editor for the folding region related to the
@@ -54,9 +40,33 @@ public interface FoldingBuilder {
 
   /**
    * Returns the default collapsed state for the folding region related to the specified node.
+   * <p/>
+   * The expand-all action applies a two-step behavior that - in step one - expands all regions except those
+   * that return {@code true} here. In step two, all regions are expanded.
    *
    * @param node the node for which the collapsed state is requested.
    * @return true if the region is collapsed by default, false otherwise.
    */
   boolean isCollapsedByDefault(@NotNull ASTNode node);
+
+  default boolean isCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
+    return isCollapsedByDefault(foldingDescriptor.getElement());
+  }
+
+  /**
+   * Returns the behavior of the folding region when performing the collapse-all action.
+   * <p/>
+   * The collapse-all action applies a two-step behavior that - in step one - collapses all regions except those
+   * that return {@code true} here. In step two, all regions are collapsed.
+   *
+   * @param node the node for which the expanded state is requested.
+   * @return true if the region is not collapsed when the collapse-all action is applied the first time.
+   */
+  default boolean keepExpandedOnFirstCollapseAll(@NotNull ASTNode node) {
+    return false;
+  }
+
+  default boolean keepExpandedOnFirstCollapseAll(@NotNull FoldingDescriptor foldingDescriptor) {
+    return keepExpandedOnFirstCollapseAll(foldingDescriptor.getElement());
+  }
 }

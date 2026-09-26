@@ -1,42 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
+import java.util.Objects;
 
-/**
- * @author dyoma
- */
-public class FilterInfo implements JDOMExternalizable {
-  @NonNls private static final String FILTER_NAME = "NAME";
-  @NonNls private static final String FILTER_DESCRIPTION = "DESCRIPTION";
-  @NonNls private static final String FILTER_REGEXP = "REGEXP";
+@ApiStatus.Internal
+public final class FilterInfo implements JDOMExternalizable {
+  private static final @NonNls String FILTER_NAME = "NAME";
+  private static final @NonNls String FILTER_DESCRIPTION = "DESCRIPTION";
+  private static final @NonNls String FILTER_REGEXP = "REGEXP";
 
   private String myName = ToolsBundle.message("tools.filters.name.default");
   private String myDescription;
   private String myRegExp;
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_OPTION = "option";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
 
   public FilterInfo() {
   }
@@ -71,18 +56,19 @@ public class FilterInfo implements JDOMExternalizable {
     myRegExp = regExp;
   }
 
+  @Override
   public int hashCode() {
     return Comparing.hashcode(myName) +
            Comparing.hashcode(myDescription) +
            Comparing.hashcode(myRegExp);
   }
 
+  @Override
   public boolean equals(Object object) {
-    if (!(object instanceof FilterInfo)) return false;
-    FilterInfo other = (FilterInfo)object;
-    return Comparing.equal(myName, other.myName) &&
-           Comparing.equal(myDescription, other.myDescription) &&
-           Comparing.equal(myRegExp, other.myRegExp);
+    if (!(object instanceof FilterInfo other)) return false;
+    return Objects.equals(myName, other.myName) &&
+           Objects.equals(myDescription, other.myDescription) &&
+           Objects.equals(myRegExp, other.myRegExp);
   }
 
   public FilterInfo createCopy() {
@@ -91,8 +77,7 @@ public class FilterInfo implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    for (Iterator i2 = element.getChildren(ELEMENT_OPTION).iterator(); i2.hasNext(); ) {
-      Element optionElement = (Element)i2.next();
+    for (Element optionElement : element.getChildren(ELEMENT_OPTION)) {
       String value = optionElement.getAttributeValue(ATTRIBUTE_VALUE);
       String name = optionElement.getAttributeValue(ATTRIBUTE_NAME);
 

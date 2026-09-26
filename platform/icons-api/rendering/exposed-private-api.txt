@@ -1,0 +1,1 @@
+com/intellij/platform/icons/rendering/MutableIconUpdateFlow

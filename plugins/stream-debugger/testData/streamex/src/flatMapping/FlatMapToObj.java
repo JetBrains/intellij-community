@@ -5,7 +5,7 @@ import one.util.streamex.StreamEx;
 
 public class FlatMapToObj {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long count = LongStreamEx.of(1, 2, 3).flatMapToObj(x -> StreamEx.of(x, x + 1)).count();
     System.out.println(count);
   }

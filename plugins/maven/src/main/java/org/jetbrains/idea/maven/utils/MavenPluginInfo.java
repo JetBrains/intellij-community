@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.plugins.compatibility.MavenLifecycleMetadataReader;
+import org.jetbrains.idea.maven.plugins.compatibility.MavenPluginM2ELifecycles;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -30,8 +20,9 @@ public class MavenPluginInfo {
   private final String myVersion;
   private final String myGoalPrefix;
   private final Map<String, Mojo> myMojos;
+  private final @Nullable MavenPluginM2ELifecycles myLifecycles;
 
-  public MavenPluginInfo(byte[] text) {
+  public MavenPluginInfo(@NotNull byte[] text, @Nullable byte[] lifecycle) {
     Element plugin = MavenJDOMUtil.read(text, null);
 
     myGroupId = MavenJDOMUtil.findChildValueByPath(plugin, "groupId", MavenId.UNKNOWN_VALUE);
@@ -41,6 +32,12 @@ public class MavenPluginInfo {
     myGoalPrefix = MavenJDOMUtil.findChildValueByPath(plugin, "goalPrefix", "unknown");
 
     myMojos = readMojos(plugin);
+    myLifecycles = readLifecycles(lifecycle);
+  }
+
+  private @Nullable MavenPluginM2ELifecycles readLifecycles(byte[] lifecycle) {
+    if (lifecycle == null) return null;
+    return MavenLifecycleMetadataReader.read(this.getGroupId() + ":" + this.getArtifactId() + ":" + this.getVersion(), lifecycle);
   }
 
   private Map<String, Mojo> readMojos(Element plugin) {
@@ -72,11 +69,15 @@ public class MavenPluginInfo {
     return myMojos.values();
   }
 
+  public @Nullable MavenPluginM2ELifecycles getLifecycles() {
+    return myLifecycles;
+  }
+
   public Mojo findMojo(String name) {
     return myMojos.get(name);
   }
 
-  public class Mojo {
+  public final class Mojo {
     private final String myGoal;
 
     private Mojo(String goal) {

@@ -1,0 +1,114 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.plugins.newui;
+
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
+import java.awt.Color;
+
+/**
+ * @author Alexander Lobas
+ */
+@ApiStatus.Internal
+public class InstallButton extends ColorButton implements PluginInstallButton {
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
+
+  private static final Color FillForegroundColor = JBColor.namedColor("Plugins.Button.installFillForeground", WhiteForeground);
+  private static final Color FillBackgroundColor = JBColor.namedColor("Plugins.Button.installFillBackground", GreenColor);
+
+  private static final Color ForegroundColor = JBColor.namedColor("Plugins.Button.installForeground", GreenColor);
+  private static final Color BackgroundColor =
+    JBColor.namedColor("Plugins.Button.installBackground", PluginManagerConfigurable.MAIN_BG_COLOR);
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color FocusedBackground = JBColor.namedColor("Plugins.Button.installFocusedBackground", new Color(0xE1F6DA));
+
+  private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
+
+  private final boolean myIsUpgradeRequired;
+  private final boolean myUseSecondaryStyle;
+
+  public InstallButton(boolean fill) {
+    this(fill, false, false);
+  }
+
+  public InstallButton(boolean fill, boolean isUpgradeRequired) {
+    this(fill, isUpgradeRequired, false);
+  }
+
+  InstallButton(boolean fill, boolean isUpgradeRequired, boolean useSecondaryStyle) {
+    myIsUpgradeRequired = isUpgradeRequired;
+    myUseSecondaryStyle = useSecondaryStyle;
+
+    setButtonColors(fill);
+  }
+
+  public InstallButton(@NlsContexts.Button String text, boolean fill) {
+    this(fill, false);
+    setText(text);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+
+    if (getParent() != null) {
+      setEnabled(isEnabled(), getText());
+    }
+  }
+
+  @Override
+  public void setButtonColors(boolean fill) {
+    if (myUseSecondaryStyle) {
+      clearCustomColors();
+      setTextAndSize();
+      return;
+    }
+
+    if (fill) {
+      setTextColor(FillForegroundColor);
+      setBgColor(FillBackgroundColor);
+    }
+    else {
+      setTextColor(ForegroundColor);
+      setFocusedTextColor(ForegroundColor);
+      setBgColor(BackgroundColor);
+    }
+
+    setFocusedBgColor(FocusedBackground);
+    setBorderColor(BorderColor);
+    setFocusedBorderColor(BorderColor);
+
+    setTextAndSize();
+  }
+
+  protected void setTextAndSize() {
+    setText(IdeBundle.message("action.AnActionButton.text.install"));
+    setEnabled(!myIsUpgradeRequired);
+    setWidth72(this);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled, @Nullable @Nls String statusText) {
+    super.setEnabled(enabled);
+    if (enabled) {
+      setTextAndSize();
+    }
+    else {
+      setText(statusText);
+      setWidth(this, 80);
+    }
+  }
+
+  @Override
+  public @NotNull JComponent getComponent() {
+    return this;
+  }
+}

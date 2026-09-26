@@ -1,0 +1,6 @@
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> SymbolLightClassForClassOrObject: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = AA) -> SymbolLightClassForClassOrObject: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> USimpleNameReferenceExpression (identifier = AA) -> SymbolLightConstructor of SymbolLightClassForClassOrObject: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> USimpleNameReferenceExpression (identifier = A) -> SymbolLightConstructor of SymbolLightClassForClassOrObject: A
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> USimpleNameReferenceExpression (identifier = AAA) -> SymbolLightConstructor of SymbolLightClassForClassOrObject: A

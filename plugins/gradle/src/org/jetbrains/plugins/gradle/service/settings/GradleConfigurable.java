@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalSystemConfigurable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
+import com.intellij.openapi.options.BackedByPersistentState;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,45 +15,48 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-/**
- * @author Denis Zhdanov
- * @since 4/30/13 11:42 PM
- */
-public class GradleConfigurable extends AbstractExternalSystemConfigurable<GradleProjectSettings, GradleSettingsListener, GradleSettings> {
+import java.util.Collection;
+import java.util.List;
 
-  @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
+public final class GradleConfigurable extends AbstractExternalSystemConfigurable<GradleProjectSettings, GradleSettingsListener, GradleSettings>
+  implements BackedByPersistentState {
+
+  public static final String DISPLAY_NAME = GradleConstants.SYSTEM_ID.getReadableName();
+  public static final String ID = "reference.settingsdialog.project.gradle";
+  public static final @NonNls String HELP_TOPIC = ID;
 
   public GradleConfigurable(@NotNull Project project) {
     super(project, GradleConstants.SYSTEM_ID);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  protected ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
+  public @NotNull Collection<PersistentStateComponent<?>> getBackingComponents() {
+    return List.of(GradleSettings.getInstance(getProject()));
+  }
+
+  @Override
+  protected @NotNull ExternalSystemSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
     return new GradleProjectSettingsControl(settings);
   }
 
-  @Nullable
   @Override
-  protected ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
+  protected @Nullable ExternalSystemSettingsControl<GradleSettings> createSystemSettingsControl(@NotNull GradleSettings settings) {
     return new GradleSystemSettingsControl(settings);
   }
 
-  @NotNull
   @Override
-  protected GradleProjectSettings newProjectSettings() {
+  protected @NotNull GradleProjectSettings newProjectSettings() {
     return new GradleProjectSettings();
   }
 
-  @NotNull
   @Override
-  public String getId() {
-    return getHelpTopic();
+  public @NotNull String getId() {
+    return ID;
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return HELP_TOPIC;
   }
 }

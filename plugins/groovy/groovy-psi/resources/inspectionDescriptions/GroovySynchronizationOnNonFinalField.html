@@ -1,10 +1,10 @@
 <html>
 <body>
-
-This inspection reports instances of Groovy <b><font color="#000080">synchronized</font></b> statements where the lock expression
-is a non- <b><font color="#000080">final</font></b> field. Such statements are unlikely to have useful semantics, as different
-threads may be locking on different objects even when operating on the same object.
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports <code>synchronized</code> statements where the lock expression
+is a non-<code>final</code> field.
+<p>
+  Such statements are unlikely to have useful semantics, as different
+  threads may be locking on different objects even when operating on the same object.
+</p>
 </body>
 </html>

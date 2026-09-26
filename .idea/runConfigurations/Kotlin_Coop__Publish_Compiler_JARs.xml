@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kotlin Coop: Publish Compiler JARs" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.tools.model.updater.MainKt" />
+    <module name="kotlin.util.project-model-updater" />
+    <option name="PROGRAM_PARAMETERS" value="applicationMode=COMPILER_PUBLICATION" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

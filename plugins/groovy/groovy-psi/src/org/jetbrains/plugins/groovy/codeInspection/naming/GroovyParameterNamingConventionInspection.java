@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
@@ -24,16 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-public class GroovyParameterNamingConventionInspection extends ConventionInspection {
+public final class GroovyParameterNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Method parameter naming convention";
-  }
 
   @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
@@ -46,15 +41,14 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... args) {
+  public @NotNull String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
-      return "Method parameter name '#ref' is too short";
+      return GroovyBundle.message("inspection.message.method.parameter.name.ref.too.short");
     } else if (className.length() > getMaxLength()) {
-      return "Method parameter name '#ref' is too long";
+      return GroovyBundle.message("inspection.message.method.parameter.name.ref.too.long");
     }
-    return "Method parameter name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+    return GroovyBundle.message("inspection.message.method.parameter.name.ref.doesnt.match.regex", getRegex());
   }
 
   @Override
@@ -72,9 +66,8 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
     return DEFAULT_MAX_LENGTH;
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 
@@ -82,6 +75,7 @@ public class GroovyParameterNamingConventionInspection extends ConventionInspect
     @Override
     public void visitParameter(@NotNull GrParameter grParameter) {
       super.visitParameter(grParameter);
+      if (grParameter.isUnnamed()) return;
       final String name = grParameter.getName();
       final PsiElement scope = grParameter.getDeclarationScope();
       if (scope instanceof GrCatchClause ||

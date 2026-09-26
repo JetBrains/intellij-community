@@ -1,46 +1,33 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
-import gnu.trove.Equality;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
-  private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<StdArrangementRuleAliasToken>() {
+public final class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdArrangementRuleAliasToken> {
+  private static final Namer<StdArrangementRuleAliasToken> NAMER = new Namer<>() {
     @Override
     public String getName(StdArrangementRuleAliasToken token) {
       return token.getName();
@@ -57,7 +44,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
     }
   };
   private static final Factory<StdArrangementRuleAliasToken> FACTORY = () -> new StdArrangementRuleAliasToken("");
-  private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<StdArrangementRuleAliasToken>() {
+  private static final Cloner<StdArrangementRuleAliasToken> CLONER = new Cloner<>() {
     @Override
     public StdArrangementRuleAliasToken cloneOf(StdArrangementRuleAliasToken original) {
       return copyOf(original);
@@ -68,13 +55,14 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       return new StdArrangementRuleAliasToken(original.getName(), original.getDefinitionRules());
     }
   };
-  private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Comparing.equal(o1.getId(), o2.getId());
+  private static final BiPredicate<StdArrangementRuleAliasToken, StdArrangementRuleAliasToken>
+    COMPARER = (o1, o2) -> Objects.equals(o1.getId(), o2.getId());
 
-  @NotNull private final Set<String> myUsedTokenIds;
-  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
-  @NotNull private final ArrangementColorsProvider myColorsProvider;
+  private final @NotNull Set<String> myUsedTokenIds;
+  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
+  private final @NotNull ArrangementColorsProvider myColorsProvider;
 
-  protected ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
+  ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,
                                              @NotNull List<StdArrangementRuleAliasToken> items,
                                              @NotNull Set<String> usedTokenIds) {
@@ -96,20 +84,32 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
     return !myUsedTokenIds.contains(item.getId());
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
-    return "Custom Composite Tokens";
+  public @Nls String getDisplayName() {
+    return ApplicationBundle.message("configurable.ArrangementRuleAliasesListEditor.display.name");
   }
 
-  @Nullable
   @Override
-  public String askForProfileName(String titlePattern) {
-    String title = MessageFormat.format(titlePattern, subjDisplayName());
-    return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+  protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
+    return ApplicationBundle.message("dialog.title.copy.alias");
+  }
+
+  @Override
+  protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
+    return ApplicationBundle.message("dialog.title.create.new.alias");
+  }
+
+  @Override
+  protected @NlsContexts.Label String getNewLabelText() {
+    return ApplicationBundle.message("label.new.alias.name");
+  }
+
+  @Override
+  public @Nullable String askForProfileName(@NlsContexts.DialogTitle String title) {
+    return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
-        return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;
+        return !s.isEmpty() && findByName(s) == null && Verifier.checkElementName(s) == null;
       }
 
       @Override

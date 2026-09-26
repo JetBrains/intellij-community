@@ -1,0 +1,37 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.credentialStore
+
+import com.intellij.util.Ephemeral
+import com.intellij.util.StaticEphemeral
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import org.jetbrains.concurrency.await
+import org.jetbrains.concurrency.runAsync
+
+/**
+ * Please see [Storing Sensitive Data](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
+ */
+interface CredentialStore {
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  operator fun get(attributes: CredentialAttributes): Credentials?
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  operator fun set(attributes: CredentialAttributes, credentials: Credentials?)
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  fun getPassword(attributes: CredentialAttributes): String? = get(attributes)?.getPasswordAsString()
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false /* IJPL-115548 */)
+  fun setPassword(attributes: CredentialAttributes, password: String?) {
+    set(attributes, password?.let { Credentials(attributes.userName, it) })
+  }
+
+  suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
+    ephemeral(runAsync { get(attributes) }.await() )
+
+  suspend fun <T : Any> ephemeral(value: T?): Ephemeral<T> = StaticEphemeral(value)
+}

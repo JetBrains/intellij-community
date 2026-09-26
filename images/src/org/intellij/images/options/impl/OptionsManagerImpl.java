@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
@@ -50,7 +49,7 @@ final class OptionsManagerImpl extends OptionsManager implements PersistentState
   }
 
   @Override
-  public void loadState(@NotNull final Element state) {
+  public void loadState(final @NotNull Element state) {
     options.readExternal(state);
   }
 }

@@ -1,0 +1,2 @@
+version = "26.1.*"
+upstream-repository = "https://github.com/mahmoud/boltons"

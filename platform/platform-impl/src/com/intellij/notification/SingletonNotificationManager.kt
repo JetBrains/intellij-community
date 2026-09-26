@@ -1,66 +1,60 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.wm.ToolWindowManager
-
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
-class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val defaultListener: NotificationListener?) {
+class SingletonNotificationManager(private val groupId: String, private val type: NotificationType) {
   private val notification = AtomicReference<Notification>()
 
-  private val expiredListener by lazy {
-    Runnable {
-      val currentNotification = notification.get()
-      if (currentNotification != null && currentNotification.isExpired) {
-        notification.compareAndSet(currentNotification, null)
-      }
-    }
-  }
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?): Unit =
+    notify(title, content, project) { }
 
-  fun notify(content: String, project: Project?): Boolean {
-    return notify("", content, project, defaultListener)
-  }
-
-  @JvmOverloads
-  fun notify(title: String, content: String, project: Project? = null, listener: NotificationListener? = defaultListener): Boolean {
+  fun notify(
+    @NotificationTitle title: String,
+    @NotificationContent content: String,
+    project: Project?,
+    customizer: Consumer<Notification>,
+  ) {
     val oldNotification = notification.get()
-    // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
-      if (!oldNotification.isExpired && (oldNotification.balloon != null || project != null &&
-          group.displayType == NotificationDisplayType.TOOL_WINDOW &&
-          ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId) != null)) {
-        return false
+      if (isVisible(oldNotification, project)) {
+        return
       }
-      oldNotification.whenExpired(null)
       oldNotification.expire()
     }
 
-    val newNotification = group.createNotification(title, content, type, listener)
-    newNotification.whenExpired(expiredListener)
-    notification.set(newNotification)
-    newNotification.notify(project)
-    return true
+    val newNotification = object : Notification(groupId, title, content, type) {
+      override fun expire() {
+        super.expire()
+        notification.compareAndSet(this, null)
+      }
+    }
+    customizer.accept(newNotification)
+
+    if (notification.compareAndSet(oldNotification, newNotification) || notification.compareAndSet(null, newNotification)) {
+      newNotification.notify(project)
+    }
+    else {
+      newNotification.expire()
+    }
+  }
+
+  private fun isVisible(notification: Notification, project: Project?): Boolean {
+    val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
+    val balloon = when {
+      group.displayType != NotificationDisplayType.TOOL_WINDOW -> notification.balloon
+      project != null -> ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId!!)
+      else -> null
+    }
+    return balloon != null && !balloon.isDisposed
   }
 
   fun clear() {
-    notification.getAndSet(null)?.let {
-      it.whenExpired(null)
-      it.expire()
-    }
+    notification.getAndSet(null)?.expire()
   }
 }

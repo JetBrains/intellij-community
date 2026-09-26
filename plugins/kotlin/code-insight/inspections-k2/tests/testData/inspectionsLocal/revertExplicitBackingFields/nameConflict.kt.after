@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+interface I
+class C {
+    private val _x: MutableList<I> = mutableListOf()
+    val x: List<I>
+        get() = _x
+
+    fun update(newX: I) {
+        val _x: String = ""
+        println(_x)
+        this._x.add(newX)
+    }
+}

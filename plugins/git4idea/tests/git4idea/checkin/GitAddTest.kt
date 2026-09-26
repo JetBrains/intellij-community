@@ -16,30 +16,43 @@
 package git4idea.checkin
 
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitSingleRepoTest
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import git4idea.GitVcs
+import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertStatus
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.prepareUnversionedFile
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GitAddTest : GitSingleRepoTest() {
+@TestApplication
+class GitAddTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  override fun setUp() {
-    super.setUp()
-    ADD.doNothing()
+  @BeforeEach
+  fun setUp(): Unit = with(context) {
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, ADD, DO_NOTHING_SILENTLY)
   }
 
-  fun `test add one file`() {
+  @Test
+  fun `test add one file`(): Unit = with(context) {
     val file = prepareUnversionedFile("unv.txt")
     addUnversionedFile(file)
     repo.assertStatus(file, 'A')
   }
 
-  fun `test add directory`() {
+  @Test
+  fun `test add directory`(): Unit = with(context) {
     val file = prepareUnversionedFile("dir/unv.txt")
     addUnversionedFile(projectRoot.findChild("dir")!!)
     repo.assertStatus(file, 'A')
   }
 
-  private fun addUnversionedFile(file: VirtualFile) {
+  private fun GitSingleRepoContext.addUnversionedFile(file: VirtualFile) {
     changeListManager.addUnversionedFiles(changeListManager.addChangeList("dummy", null), listOf(file))
   }
 }

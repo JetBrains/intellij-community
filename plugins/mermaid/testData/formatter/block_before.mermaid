@@ -1,0 +1,72 @@
+block-beta
+  columns   2
+  block
+    id1["one"]
+    id2
+  end
+  id3["three"]
+
+  block
+    columns 3
+    id4["four"]
+    id4.1
+  end
+
+  columns 1
+  block
+    columns 1
+    block
+      columns 3
+      id12
+      id13
+      id13.1(("XYZ"))
+    end
+    id48
+  end
+  id14
+
+  space  :3
+
+  A   space:5
+  A --o B
+  A --> C
+  A --x D
+
+  space
+  A1 -- "apa" --> E
+
+  columns 3
+  space    blockArrowId11<["down"]>(down)    space
+  blockArrowId12<["right"]>(right)    blockArrowId13<["Sync"]>(x, y)    blockArrowId14<["left"]>(left)
+
+  A3
+  B3
+  classDef blue fill: #66f, stroke: #333, stroke-width: 2px;
+  class A3 blue
+  style B3 fill: #f9F, stroke: #333, stroke-width: 4px
+
+  A3["square"]
+  B3("rounded")
+  C3(("circle"))
+  A4>"rect_left_inv_arrow"]
+  B4{"diamond"}
+  C4{{"hexagon"}}
+  A5(["stadium"])
+  A6[/"lean right"/]
+  B6[\"lean left"\]
+  C6[/"trapezoid"\]
+  D6[\"trapezoid alt"/]
+  A7("rounded")  :2
+  B7 :2
+
+  block: 2
+    A8
+  end
+  B8
+
+  a["A wide one"] b:2 c:2 d
+
+  a:3
+  block: e:3
+    f
+  end

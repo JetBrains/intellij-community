@@ -1,29 +1,21 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.ScopeInfo;
+import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -31,8 +23,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   private final Project myProject;
@@ -44,7 +38,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     myRoots = roots;
   }
 
-  public static void run(@NotNull AutoSvnUpdater updater, @NotNull String title) {
+  public static void run(@NotNull AutoSvnUpdater updater, @ActionText @NotNull String title) {
     JComponent frame = WindowManager.getInstance().getIdeFrame(updater.myProject).getComponent();
 
     updater.getTemplatePresentation().setText(title);
@@ -54,16 +48,15 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   }
 
   @Override
-  protected void actionPerformed(@NotNull VcsContext context) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final SvnConfiguration configuration17 = SvnConfiguration.getInstance(myProject);
     configuration17.setForceUpdate(false);
-    configuration17.setUpdateLockOnDemand(false);
     configuration17.setUpdateDepth(Depth.INFINITY);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     for (FilePath root : myRoots) {
       configureUpdateRootInfo(root, configuration17.getUpdateRootInfo(root.getIOFile(), vcs));
     }
-    super.actionPerformed(context);
+    super.actionPerformed(e);
   }
 
   protected void configureUpdateRootInfo(@NotNull FilePath root, @NotNull UpdateRootInfo info) {
@@ -77,7 +70,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   }
 
   private static class BlindUpdateAction implements ActionInfo {
-    private final static BlindUpdateAction ourInstance = new BlindUpdateAction();
+    private static final BlindUpdateAction ourInstance = new BlindUpdateAction();
 
     @Override
     public boolean showOptions(Project project) {
@@ -123,7 +116,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     }
   }
 
-  private static class AutoUpdateScope implements ScopeInfo {
+  private static final class AutoUpdateScope implements ScopeInfo {
     private final FilePath[] myRoots;
 
     private AutoUpdateScope(final FilePath[] roots) {
@@ -131,13 +124,13 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     }
 
     @Override
-    public FilePath[] getRoots(VcsContext context, ActionInfo actionInfo) {
-      return myRoots;
+    public List<FilePath> getRoots(@NotNull DataContext context, @NotNull ActionInfo actionInfo) {
+      return Arrays.asList(myRoots);
     }
 
     @Override
-    public String getScopeName(VcsContext dataContext, ActionInfo actionInfo) {
-      return "Subversion";
+    public String getScopeName(@NotNull DataContext dataContext, ActionInfo actionInfo) {
+      return SvnVcs.VCS_DISPLAY_NAME;
     }
 
     @Override

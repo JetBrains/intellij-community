@@ -1,0 +1,14 @@
+// "Make 'foo' public" "true"
+// PRIORITY: HIGH
+// K2_ERROR: INVISIBLE_REFERENCE
+
+open class A {
+    private val foo = 1
+}
+
+class B : A() {
+    fun bar() {
+        <caret>foo
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

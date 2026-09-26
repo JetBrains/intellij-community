@@ -1,0 +1,608 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.impl
+
+import com.intellij.platform.buildScripts.concurrency.SharedCache
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.product.serialization.RawProductModules
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.util.containers.with
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildHttpSession
+import org.jetbrains.intellij.build.BuildLifetime
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.LinuxLibcImpl
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.computeAppInfoXml
+import org.jetbrains.intellij.build.findProductModulesFile
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
+import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.impl.moduleRepository.computeDescriptorsForAdditionalFrontendPlugins
+import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
+import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.jarCache.JarCacheManager
+import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
+import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
+import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.module.JpsModule
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.inputStream
+import kotlin.io.path.pathString
+import kotlin.time.Duration
+
+/**
+ * Creates the context of a product build. [lifetime] owns its shared tasks and caches, including the module output archives.
+ */
+fun createBuildContext(
+  projectHome: Path,
+  productProperties: ProductProperties,
+  setupTracer: Boolean = true,
+  proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  options: BuildOptions = BuildOptions(),
+  lifetime: BuildLifetime,
+): BuildContext {
+  val context = createBuildContext(
+    compilationContext = createCompilationContext(
+      projectHome = projectHome,
+      buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+      options = options,
+      setupTracer = setupTracer,
+      httpSession = lifetime.http,
+    ),
+    projectHome = projectHome,
+    productProperties = productProperties,
+    proprietaryBuildTools = proprietaryBuildTools,
+    lifetime = lifetime,
+  )
+  context.cleanupJarCache()
+  return context
+}
+
+@Experimental
+@Internal
+fun createCompilationContext(
+  projectHome: Path,
+  productProperties: ProductProperties,
+  options: BuildOptions,
+  lifetime: BuildLifetime,
+  setupTracer: Boolean,
+): CompilationContext {
+  return normalizeCompilationContextForBuild(
+    context = createCompilationContext(
+      projectHome = projectHome,
+      buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
+      options = options,
+      setupTracer = setupTracer,
+      httpSession = lifetime.http,
+    ),
+    lifetime = lifetime,
+  )
+}
+
+@Internal
+fun normalizeCompilationContextForBuild(
+  context: CompilationContext,
+  lifetime: BuildLifetime?,
+  isBazelBacked: Boolean = isRunningFromBazelOut(),
+): CompilationContext {
+  val bazelAwareContext = when (context) {
+    is CompilationContextImpl -> context.toBazelIfNeeded(lifetime, isBazelBacked)
+    else -> context
+  }
+  return if (bazelAwareContext.options.unpackCompiledClassesArchives) {
+    bazelAwareContext.toArchivedIfNeeded(lifetime)
+  }
+  else {
+    bazelAwareContext.toArchivedContext(lifetime)
+  }
+}
+
+fun createBuildContext(
+  compilationContext: CompilationContext,
+  projectHome: Path,
+  productProperties: ProductProperties,
+  proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  lifetime: BuildLifetime,
+): BuildContextImpl {
+  val normalizedCompilationContext = normalizeCompilationContextForBuild(compilationContext, lifetime)
+  val jarCacheManager = normalizedCompilationContext.options.jarCacheDir?.let {
+    LocalDiskJarCacheManager(
+      cacheDir = it,
+      classesOutputDirectory = normalizedCompilationContext.classesOutputDirectory,
+      maxAccessTimeAge = normalizedCompilationContext.options.jarCacheMaxAccessAge,
+    )
+  } ?: NonCachingJarCacheManager
+  return BuildContextImpl(
+    compilationContext = normalizedCompilationContext,
+    lifetime = lifetime,
+    productProperties = productProperties,
+    windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome),
+    linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome),
+    macDistributionCustomizer = productProperties.createMacCustomizer(projectHome),
+    proprietaryBuildTools = proprietaryBuildTools,
+    applicationInfo = ApplicationInfoPropertiesImpl(
+      project = normalizedCompilationContext.project,
+      productProperties = productProperties,
+      buildOptions = normalizedCompilationContext.options
+    ),
+    jarCacheManager = jarCacheManager,
+  )
+}
+
+class BuildContextImpl internal constructor(
+  internal val compilationContext: CompilationContext,
+  override val lifetime: BuildLifetime,
+  override val productProperties: ProductProperties,
+  override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
+  override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
+  override val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val proprietaryBuildTools: ProprietaryBuildTools,
+  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(
+    project = compilationContext.project,
+    productProperties = productProperties,
+    buildOptions = compilationContext.options
+  ),
+  @JvmField internal val jarCacheManager: JarCacheManager,
+) : BuildContext, CompilationContext by compilationContext {
+  override val httpSession: BuildHttpSession
+    get() = lifetime.http
+
+  private val distFiles = ConcurrentLinkedQueue<DistFile>()
+
+  private val extraExecutablePatterns = AtomicReference<Map<OsFamily, PersistentList<String>>>(java.util.Map.of())
+
+  override val fullBuildNumber: String
+    get() = "${applicationInfo.productCode}-$buildNumber"
+
+  override val systemSelector: String
+    get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
+
+  override val buildNumber: String by lazy {
+    options.buildNumber ?: SnapshotBuildNumber.VALUE
+  }
+
+  override val pluginBuildNumber: String by lazy {
+    computePluginBuildNumber(buildNumber = buildNumber)
+  }
+
+  override fun reportDistributionBuildNumber() {
+    val suppliedBuildNumber = options.buildNumber
+    val baseBuildNumber = SnapshotBuildNumber.BASE
+    check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
+      "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
+      "defined in ${SnapshotBuildNumber.PATH}"
+    }
+    messages.setParameter("build.artifact.buildNumber", buildNumber)
+    if (buildNumber != suppliedBuildNumber) {
+      messages.reportBuildNumber(buildNumber)
+    }
+  }
+
+  override fun cleanupJarCache() {
+    jarCacheManager.cleanup()
+  }
+
+  override var bootClassPathJarNames: List<String> = listOf(PLATFORM_LOADER_JAR)
+
+  override val ideMainClassName: String
+    get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
+
+  override val useModularLoader: Boolean
+    get() = productProperties.rootModuleForModularLoader != null && options.useModularLoader
+
+  override val generateRuntimeModuleRepository: Boolean
+    get() = useModularLoader || options.generateRuntimeModuleRepository
+
+  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(outputProvider) }
+
+  override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
+
+  override val nonBundledPluginsToBePublished: Path by lazy { nonBundledPlugins.resolve("auto-uploading") }
+
+  override val bundledRuntime: BundledRuntime = BundledRuntimeImpl(this)
+
+  override val isNightlyBuild: Boolean = options.isNightlyBuild || isNightly(buildNumber)
+
+  init {
+    @Suppress("DEPRECATION")
+    if (productProperties.productCode == null) {
+      productProperties.productCode = applicationInfo.productCode
+    }
+    check(!systemSelector.contains(' ')) {
+      "System selector must not contain spaces: $systemSelector"
+    }
+    options.buildStepsToSkip += productProperties.incompatibleBuildSteps
+    if (!options.buildStepsToSkip.isEmpty()) {
+      Span.current().addEvent(
+        "build steps to be skipped",
+        Attributes.of(AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip))
+      )
+    }
+    if (!options.compatiblePluginsToIgnore.isEmpty()) {
+      productProperties.productLayout.compatiblePluginsToIgnore =
+        productProperties.productLayout.compatiblePluginsToIgnore.addingAll(options.compatiblePluginsToIgnore)
+    }
+    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix || LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
+      "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
+    }
+  }
+
+  companion object {
+    @Deprecated("Use `createBuildContext`", ReplaceWith("createBuildContext(projectHome, productProperties, proprietaryBuildTools, options)"))
+    fun createContext(
+      projectHome: Path,
+      productProperties: ProductProperties,
+      setupTracer: Boolean = true,
+      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+      options: BuildOptions = BuildOptions(),
+      lifetime: BuildLifetime,
+    ): BuildContext {
+      return createBuildContext(
+        projectHome = projectHome,
+        productProperties = productProperties,
+        setupTracer = setupTracer,
+        proprietaryBuildTools = proprietaryBuildTools,
+        options = options,
+        lifetime = lifetime,
+      )
+    }
+  }
+
+  private val builtinModules = sharedLazy(lifetime, "provided module list") {
+    if (isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP) || !shouldBuildDistributions()) {
+      null
+    }
+    else {
+      buildProvidedModuleList(this@BuildContextImpl)
+    }
+  }
+
+  override fun builtinModules(): BuiltinModulesFileData? = builtinModules.get()
+
+  override fun addDistFile(file: DistFile) {
+    Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
+
+    val existing = distFiles.firstOrNull { it.os == file.os && it.arch == file.arch && it.libcImpl == file.libcImpl && it.relativePath == file.relativePath }
+    check(existing == null) {
+      "$file duplicates $existing"
+    }
+    distFiles.add(file)
+  }
+
+  override fun getBundledPluginModules(): List<String> {
+    return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
+  }
+
+  private val bundledPluginModulesForModularLoader by lazy {
+    productProperties.rootModuleForModularLoader?.let {
+      getBundledPluginModules(productProperties, outputProvider)
+    }
+  }
+
+  override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile> {
+    return selectDistFiles(distFiles, os, arch, libcImpl)
+  }
+
+  override fun findApplicationInfoModule(): JpsModule = outputProvider.findRequiredModule(productProperties.applicationInfoModule)
+
+  override fun notifyArtifactBuilt(artifactPath: Path) {
+    compilationContext.notifyArtifactBuilt(artifactPath)
+  }
+
+  private val _frontendModuleFilter = sharedLazy(lifetime, "frontend module filter") {
+    val rootModule = productProperties.embeddedFrontendRootModule
+    if (rootModule != null && options.enableEmbeddedFrontend) {
+      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project)
+    }
+    else {
+      productProperties.frontendModuleFilter?.invoke(this@BuildContextImpl) ?: EmptyFrontendModuleFilter
+    }
+  }
+
+  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.get()
+
+  private val embeddedFrontendProductContext = sharedLazy(lifetime, "embedded frontend product context") {
+    if (options.enableEmbeddedFrontend) {
+      val factory = productProperties.embeddedFrontendProperties
+      if (factory != null) {
+        return@sharedLazy createCopyForProduct(factory(), paths.projectHome, prepareForBuild = false)
+      }
+    }
+    null
+  }
+
+  override fun getEmbeddedFrontendProductContext(): BuildContext? = embeddedFrontendProductContext.get()
+
+  // The layout fills the descriptor cache of the given platform layout, so the result is cached per layout identity.
+  private val layoutOfAdditionalFrontendOnlyPlugins = SharedCache<PlatformLayout, List<PluginBuildResult>>(lifetime.sharedTasks)
+
+  override fun getLayoutOfAdditionalFrontendOnlyPlugins(platformLayout: PlatformLayout): List<PluginBuildResult> {
+    return layoutOfAdditionalFrontendOnlyPlugins.getOrPut(platformLayout) {
+      computeDescriptorsForAdditionalFrontendPlugins(this, platformLayout)
+    }
+  }
+
+  private val _contentModuleFilter by lazy { computeContentModuleFilter() }
+
+  private fun computeContentModuleFilter(): ContentModuleFilter = createContentModuleFilter(
+    project = project,
+    productProperties = productProperties,
+    outputProvider = outputProvider,
+    bundledPluginModules = { getBundledPluginModules() },
+  )
+
+  override fun getContentModuleFilter(): ContentModuleFilter = _contentModuleFilter
+
+  override val isEmbeddedFrontendEnabled: Boolean
+    get() = productProperties.embeddedFrontendRootModule != null && options.enableEmbeddedFrontend
+
+  override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
+
+  override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
+    return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
+  }
+
+  override fun createCopyForProduct(
+    productProperties: ProductProperties,
+    projectHomeForCustomizers: Path,
+    prepareForBuild: Boolean,
+  ): BuildContext {
+    val sourceOptions = this.options
+    val options = if (options.useCompiledClassesFromProjectOutput) {
+      // compiled classes are already reused
+      sourceOptions.copy(
+        pathToCompiledClassesArchive = null,
+        pathToCompiledClassesArchivesMetadata = null,
+      )
+    }
+    else {
+      sourceOptions.copy()
+    }
+    options.targetArch = sourceOptions.targetArch
+    options.targetOs = sourceOptions.targetOs
+
+    val newAppInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = options)
+
+    val buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)(project)
+
+    @Suppress("DEPRECATION")
+    val artifactDir = if (prepareForBuild) paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode) else null
+    // the copy shares the lifetime of this context, so its caches end with the build that owns both
+    val compilationContextCopy = compilationContext.createCopy(
+      messages = messages,
+      options = options,
+      paths = computeBuildPaths(options = options, buildOut = buildOut, projectHome = paths.projectHome, artifactDir = artifactDir),
+      lifetime = null,
+    )
+    val copy = BuildContextImpl(
+      compilationContext = compilationContextCopy,
+      lifetime = lifetime,
+      productProperties = productProperties,
+      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers),
+      linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers),
+      macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers),
+      proprietaryBuildTools = proprietaryBuildTools,
+      applicationInfo = newAppInfo,
+      jarCacheManager = jarCacheManager,
+    )
+    if (prepareForBuild) {
+      copy.compilationContext.prepareForBuild()
+    }
+    return copy
+  }
+
+  override fun patchInspectScript(path: Path) {
+    //todo use placeholder in inspect.sh/inspect.bat file instead
+    Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
+  }
+
+  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
+    fun String.quoteIfNeeded(): String = if (isScript) '"' + this + '"' else this
+
+    val jvmArgs = ArrayList<String>()
+
+    val macroName = when (os) {
+      OsFamily.WINDOWS -> "%IDE_HOME%"
+      OsFamily.MACOS -> $$"$APP_PACKAGE$${if (isPortableDist) "" else "/Contents"}"
+      OsFamily.LINUX -> $$"$IDE_HOME"
+    }
+    val useMultiRoutingFs = !isQodana && isMultiRoutingFileSystemEnabledForProduct(productProperties.platformPrefix)
+
+    val bcpJarNames = productProperties.xBootClassPathJarNames + if (useMultiRoutingFs) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
+    if (bcpJarNames.isNotEmpty()) {
+      val (pathSeparator, dirSeparator) = if (os == OsFamily.WINDOWS) ";" to "\\" else ":" to "/"
+      val bootCp = bcpJarNames.joinToString(pathSeparator) { arrayOf(macroName, "lib", it).joinToString(dirSeparator) }
+      jvmArgs.add("-Xbootclasspath/a:${bootCp}".quoteIfNeeded())
+    }
+
+    if (productProperties.enableCds) {
+      val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else $$"$IDE_CACHE_DIR/"
+      jvmArgs.add("-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa")
+      jvmArgs.add("-XX:+AutoCreateSharedArchive")
+    }
+    else {
+      productProperties.classLoader?.let {
+        jvmArgs.add("-Djava.system.class.loader=${it}")
+      }
+    }
+
+    jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
+    jvmArgs.add("-Didea.paths.selector=${systemSelector}")
+
+    val bundledPluginModules = getBundledPluginModules()
+    // `intellij.jna.plugin` owns the JNA copy and places `lib/jna`
+    if (bundledPluginModules.contains(JNA_PLUGIN_MODULE)) {
+      // require bundled JNA dispatcher lib
+      jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".quoteIfNeeded())
+      jvmArgs.add("-Djna.nosys=true")
+      jvmArgs.add("-Djna.noclasspath=true")
+    }
+    // `intellij.pty4j.plugin` owns the pty4j copy and places `lib/pty4j`
+    if (bundledPluginModules.contains(PTY4J_PLUGIN_MODULE)) {
+      jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".quoteIfNeeded())
+    }
+    jvmArgs.add("-Dio.netty.allocator.type=pooled")
+
+    // `intellij.skiko.plugin` owns the Skiko copy and places `lib/skiko-awt-runtime-all`
+    if (bundledPluginModules.contains(SKIKO_PLUGIN_MODULE)) {
+      jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".quoteIfNeeded())
+    }
+
+    if (useModularLoader || generateRuntimeModuleRepository) {
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".quoteIfNeeded())
+    }
+    if (useModularLoader) {
+      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}")
+      jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
+    }
+
+    if (productProperties.platformPrefix != null) {
+      jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
+    }
+
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+    jvmArgs.addAll(productProperties.getAdditionalContextDependentIdeJvmArguments(this))
+
+    if (productProperties.useSplash) {
+      @Suppress("SpellCheckingInspection", "RedundantSuppression")
+      jvmArgs.add("-Dsplash=true")
+    }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-269280
+    jvmArgs.add("-Daether.connector.resumeDownloads=false")
+
+    jvmArgs.add("-Dcompose.swing.render.on.graphics=true")
+
+    if (bundledRuntime.version >= 25) {
+      jvmArgs.add("--enable-native-access=ALL-UNNAMED")
+    }
+
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context = this, os))
+
+    return jvmArgs
+  }
+
+  override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
+    extraExecutablePatterns.updateAndGet { prev ->
+      prev.with(os, (prev.get(os) ?: persistentListOf()).adding(pattern))
+    }
+  }
+
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
+
+  override val appInfoXml: String by lazy {
+    computeAppInfoXml(appInfo = applicationInfo, context = this)
+  }
+
+  private val devModeProductRunner = sharedLazy(lifetime, "dev mode product runner") {
+    createDevModeProductRunner(this@BuildContextImpl)
+  }
+
+  override fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
+    return spanBuilder("create product runner")
+      .setAttribute("additional.plugin.module.count", additionalPluginModules.size.toLong())
+      .use {
+        when {
+          additionalPluginModules.isEmpty() -> devModeProductRunner.get()
+          else -> createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this@BuildContextImpl)
+        }
+      }
+  }
+
+  override fun runProcess(
+    args: List<String>,
+    workingDir: Path?,
+    timeout: Duration,
+    additionalEnvVariables: Map<String, String>,
+    attachStdOutToException: Boolean,
+  ) {
+    runProcess(
+      args = args,
+      workingDir = workingDir,
+      timeout = timeout,
+      additionalEnvVariables = additionalEnvVariables,
+      attachStdOutToException = attachStdOutToException,
+      stdOutConsumer = messages::info,
+      stdErrConsumer = messages::warning,
+    )
+  }
+
+  override val pluginAutoPublishList: PluginAutoPublishList by lazy {
+    PluginAutoPublishList(this)
+  }
+
+  private val distributionState = sharedLazy(lifetime, "Creating distribution state") {
+    createDistributionState(this@BuildContextImpl)
+  }
+
+  override fun distributionState(): DistributionBuilderState {
+    return distributionState.get()
+  }
+}
+
+private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
+  return { project ->
+    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
+    projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
+  }
+}
+
+private fun isNightly(buildNumber: String): Boolean {
+  return buildNumber.count { it == '.' } <= 1
+}
+
+/** Reads product-modules.xml and its includes from module sources. */
+@Internal
+fun loadRawProductModules(rootModuleName: String, outputProvider: ModuleOutputProvider): RawProductModules {
+  val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = outputProvider)
+                           ?: error("Cannot find product-modules.xml file in $rootModuleName")
+  val resolver = object : ResourceFileResolver {
+    override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
+      return outputProvider.findFileInModuleSources(outputProvider.findRequiredModule(moduleId.name), relativePath)?.inputStream()
+    }
+
+    override fun toString(): String {
+      return "source file based resolver for '$rootModuleName' product"
+    }
+  }
+  return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
+}

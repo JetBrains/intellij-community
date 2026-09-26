@@ -1,73 +1,130 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
-public class FieldCanBeLocalTest extends InspectionTestCase {
+public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/fieldCanBeLocal";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   private void doTest() {
-    doTest("fieldCanBeLocal/" + getTestName(true), new FieldCanBeLocalInspection());
+    doTest(new FieldCanBeLocalInspection());
   }
 
-  public void testSimple () { doTest(); }
-
-  public void testTwoMethods () { doTest(); }
-  public void testTwoMethodsNotIgnoreMultipleMethods () {
-    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
-    inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
-    doTestConfigured(inspection); 
+  private void doTest(InspectionProfileEntry inspection) {
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
-  public void testConstructor () { doTest(); }
-  public void testConstructorThisRef() { doTest(); }
-  public void testStaticFinal() { doTest(); }
-  public void testStaticAccess() { doTest(); }
-  public void testInnerClassConstructor() { doTest(); }
+  public void testFieldWrittenInAnonymousClassFieldInitializer() { doTest(); }
+  public void testFieldUsedInAnotherMethodAsQualifier() { doTest(); }
+  public void testFieldUsedForWritingInLambda() { doTest(); }
+  public void testFieldUsedInConstantInitialization() { doTest(); }
   public void testLocalVar2InnerClass() { doTest(); }
+  public void testFieldReferencedFromAnotherObject() { doTest(); }
+  public void testDontSimplifyRuntimeConstants() { doTest(); }
+  public void testInnerClassConstructor() { doTest(); }
+  public void testAnonymousClassConstructor() { doTest(); }
   public void testStateField() { doTest(); }
-  public void testLocalStateVar2InnerClass() { doTest(); }
-  public void testNotConstantInitializer() {doTest();}
-  public void testInnerClassFieldInitializer() {doTest();}
-  public void testFieldUsedInConstantInitialization() {doTest();}
-  public void testFieldWithImmutableType() {doTest();}
-  public void testFieldUsedForWritingInLambda() {doTest();}
-  public void testStaticQualifiedFieldAccessForWriting() {doTest();}
-  public void testFieldReferencedFromAnotherObject() {doTest();}
-  public void testDontSimplifyRuntimeConstants() {doTest();}
-  public void testIgnoreAnnotated() {
-    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
-    doTestConfigured(inspection);
-  }
+  public void testConstructorThisRef() { doTest(); }
 
-  public void testFieldUsedInAnotherMethodAsQualifier() {
+  public void testConstructorThisRef2() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_25, myFixture.getTestRootDisposable());
     doTest();
   }
 
-  private void doTestConfigured(FieldCanBeLocalInspection inspection) {
+  public void testStaticQualifiedFieldAccessForWriting() { doTest(); }
+
+  public void testIgnoreAnnotated() {
+    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
-    doTest("fieldCanBeLocal/" + getTestName(true), inspection);
+    doTest(inspection);
+  }
+
+  public void testInnerClassFieldInitializer() { doTest(); }
+  public void testFieldWithImmutableType() { doTest(); }
+
+  public void testLambda() {
+    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
+    doTest(inspection);
+  }
+
+  public void testTwoMethodsNotIgnoreMultipleMethods () {
+    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
+    inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
+    doTest(inspection);
+  }
+
+  public void testMockito() {
+    myFixture.addClass("""
+                         package org.mockito;
+                         public @interface Mock {}
+                         """);
+    myFixture.addClass("""
+                         package org.mockito;
+                         public class Mockito {
+                           public static <T> T mock(Class<T> classToMock) {
+                             return null;
+                           }
+                         }
+                         """);
+    doTest();
+  }
+
+  public void testStaticFinal() { doTest(); }
+  public void testTwoMethods() { doTest(); }
+  public void testNotConstantInitializer() { doTest(); }
+  public void testLocalStateVar2InnerClass() { doTest(); }
+  public void testSimple() { doTest(); }
+  public void testStaticAccess() { doTest(); }
+  public void testConstructor() { doTest(); }
+  public void testReflection() { doTest(); }
+  public void testArrayAccessAssignment() { doTest(); }
+
+  /// Regression test for IDEA-386737.
+  public void testSuppressAnnotationFixHasNoFixAll() {
+    FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.configureByText("Test.java", """
+      package my.annotation1;
+
+      class Test {
+      @MyAnn
+        private int <caret>f;
+
+        void foo() {
+          f = 0;
+          int k = f;
+        }
+      }
+
+      @interface MyAnn {
+      }
+      """);
+
+    IntentionAction suppressFix = myFixture.findSingleIntention(
+      QuickFixBundle.message("fix.add.special.annotation.text", "my.annotation1.MyAnn"));
+    IntentionAction fixAll = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), suppressFix);
+    assertNull(fixAll);
   }
 }

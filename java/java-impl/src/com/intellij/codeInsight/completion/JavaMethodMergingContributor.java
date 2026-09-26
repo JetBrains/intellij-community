@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion;
 
-/**
- * @author peter
- */
-public class JavaMethodMergingContributor extends CompletionContributor {
+public final class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
+  static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
@@ -39,17 +26,23 @@ public class JavaMethodMergingContributor extends CompletionContributor {
       return null;
     }
 
-    if (ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
+    if (areParameterTemplatesEnabledOnCompletion()) {
       return null;
     }
 
     final LookupElement[] items = context.getItems();
+    if (ContainerUtil.exists(items, t -> t.as(MethodTags.TagLookupElementDecorator.class) != null)) {
+      return AutoCompletionDecision.SHOW_LOOKUP;
+    }
     if (items.length > 1) {
       String commonName = null;
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (!(o instanceof PsiMethod psiMethod)) {
+          return super.handleAutoCompletionPossibility(context);
+        }
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
@@ -59,17 +52,24 @@ public class JavaMethodMergingContributor extends CompletionContributor {
         }
 
         commonName = name;
-        allMethods.add((PsiMethod)o);
+        allMethods.add(psiMethod);
       }
 
       for (LookupElement item : items) {
         JavaCompletionUtil.putAllMethods(item, allMethods);
       }
 
-      return AutoCompletionDecision.insertItem(findBestOverload(items));
+      LookupElement best = findBestOverload(items);
+      markAsMerged(best);
+      return AutoCompletionDecision.insertItem(best);
     }
 
     return super.handleAutoCompletionPossibility(context);
+  }
+
+  private static void markAsMerged(LookupElement element) {
+    JavaMethodCallElement methodCallElement = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
+    if (methodCallElement != null) methodCallElement.putUserData(MERGED_ELEMENT, Boolean.TRUE);
   }
 
   public static String joinLookupStrings(LookupElement item) {
@@ -88,14 +88,22 @@ public class JavaMethodMergingContributor extends CompletionContributor {
   }
 
   private static int getPriority(LookupElement element) {
-    PsiMethod method = assertNotNull(getItemMethod(element));
-    return (PsiType.VOID.equals(method.getReturnType()) ? 0 : 1) +
+    PsiMethod method = Objects.requireNonNull(getItemMethod(element));
+    return (PsiTypes.voidType().equals(method.getReturnType()) ? 0 : 1) +
            (method.getParameterList().isEmpty() ? 0 : 2);
   }
 
-  @Nullable
-  private static PsiMethod getItemMethod(LookupElement item) {
+  private static @Nullable PsiMethod getItemMethod(LookupElement item) {
     Object o = item.getPsiElement();
     return o instanceof PsiMethod ? (PsiMethod)o : null;
+  }
+
+  /**
+   * Mark item to forcefully disallow merge with another item that refers to the same PsiMethod.
+   *
+   * @param item to mark
+   */
+  public static void disallowMerge(LookupElement item) {
+    item.putUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR, true);
   }
 }

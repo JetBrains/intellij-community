@@ -1,0 +1,9 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.codeowners"/>
+    <module name="intellij.codeowners.monorepo.resolver"/>
+    <module name="intellij.tools.testsBootstrap"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

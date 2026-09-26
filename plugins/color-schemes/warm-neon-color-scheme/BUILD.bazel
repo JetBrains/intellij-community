@@ -1,0 +1,63 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.color.scheme.warmNeon` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/color-scheme-warmNeon.jar": ["intellij.color.scheme.warmNeon"],
+    },
+    main_module = "intellij.color.scheme.warmNeon",
+)
+### auto-generated section `dev intellij.color.scheme.warmNeon` end
+
+### auto-generated section `build intellij.color.scheme.warmNeon` start
+jvm_library(
+    name = "color-scheme-warmNeon",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.warmNeon",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/projectModel-impl"],
+)
+
+jvm_library(
+    name = "color-scheme-warmNeon_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.warmNeon",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":color-scheme-warmNeon",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "color-scheme-warmNeon_plugin",
+    descriptor_module = ":color-scheme-warmNeon",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.color.scheme.warmNeon` end
+
+### auto-generated section `iml intellij.color.scheme.warmNeon` start
+exports_files(
+    [
+        "intellij.color.scheme.warmNeon.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/WarmNeon.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.color.scheme.warmNeon` end

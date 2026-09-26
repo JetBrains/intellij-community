@@ -20,11 +20,9 @@ import com.intellij.psi.PsiArrayInitializerMemberValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrAnnotationArrayInitializer extends GrAnnotationMemberValue, PsiArrayInitializerMemberValue {
   @Override
-  @NotNull
-  GrAnnotationMemberValue[] getInitializers();
+  GrAnnotationMemberValue @NotNull [] getInitializers();
 }

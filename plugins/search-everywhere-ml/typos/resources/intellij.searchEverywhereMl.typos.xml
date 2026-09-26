@@ -1,0 +1,59 @@
+<idea-plugin>
+
+  <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="tanvd.grazi"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.ml.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <searchEverywhereSpellingCorrector
+      implementation="com.intellij.searchEverywhereMl.typos.GrazieSpellingCorrectorFactoryImpl" />
+
+    <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlTyposBundle"/>
+
+    <registryKey key="search.everywhere.ml.typos.min.confidence"
+                 description="Minimum confidence required for spelling suggestion"
+                 defaultValue="0.5"/>
+
+    <registryKey key="search.everywhere.ml.typos.show.confidence"
+                 description="Show confidence in Search Everywhere"
+                 defaultValue="false"/>
+  </extensions>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
+    <action id="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
+  </actions>
+</idea-plugin>

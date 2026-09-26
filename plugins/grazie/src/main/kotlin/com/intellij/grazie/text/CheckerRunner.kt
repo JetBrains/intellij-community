@@ -1,0 +1,244 @@
+@file:Suppress("DEPRECATION")
+
+package com.intellij.grazie.text
+
+import ai.grazie.utils.toLinkedSet
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.grazie.ide.fus.AcceptanceRateTracker
+import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieYtReportAction
+import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.rule.SentenceTokenizer
+import com.intellij.grazie.spellcheck.TypoProblem
+import com.intellij.grazie.text.TextContent.TextDomain
+import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
+import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.isGrammar
+import com.intellij.grazie.utils.isSpelling
+import com.intellij.grazie.utils.toProofreadingContext
+import com.intellij.lang.annotation.ProblemGroup
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.util.parents
+import com.intellij.psi.util.startOffset
+import com.intellij.spellchecker.inspections.SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME
+import org.jetbrains.annotations.ApiStatus
+
+class CheckerRunner(val text: TextContent) {
+  @Suppress("unused")
+  @Deprecated("This method is deprecated and does nothing. Use run() instead.")
+  @ApiStatus.ScheduledForRemoval
+  fun run(checkers: List<TextChecker>, consumer: (List<TextProblem>) -> Unit) {
+    // No-op implementation to prevent NoSuchMethodError
+  }
+  fun run(): List<TextProblem> = run(TextChecker.allCheckers(), TextDomain.ALL)
+  fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextDomain>): List<TextProblem> = run(allCheckers, text, checkedDomains)
+
+  // a non-anonymous class to work around KT-48784
+  private class GrazieProblemDescriptor(psi: PsiElement,
+                                        @InspectionMessage descriptionTemplate: String,
+                                        rangeInElement: TextRange?,
+                                        onTheFly: Boolean,
+                                        @NlsContexts.Tooltip private val tooltip: String
+  ): ProblemDescriptorBase(
+    psi, psi, descriptionTemplate, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
+    rangeInElement, true, onTheFly, tooltip
+  ) {
+    var quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY
+
+    override fun getFixes(): Array<LocalQuickFix> = quickFixes
+  }
+
+  // used in rider
+  @ApiStatus.Experimental
+  fun findSentence(problem: TextProblem): String? = CheckerRunner.findSentence(problem)
+
+  @Suppress("unused")
+  @Deprecated("Use static version instead")
+  @ApiStatus.ScheduledForRemoval
+  fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> = CheckerRunner.toProblemDescriptors(problem, isOnTheFly)
+
+  @Suppress("unused")
+  @Deprecated("Use static version instead")
+  @ApiStatus.ScheduledForRemoval
+  fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> = CheckerRunner.toFixes(problem, descriptor)
+
+  // used in rider
+  @ApiStatus.Experimental
+  fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern =
+    CheckerRunner.defaultSuppressionPattern(problem, sentenceText)
+
+  companion object {
+    @JvmStatic
+    @Deprecated("Use TextProblem#getFileHighlightRanges instead")
+    fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
+      return problem.highlightRanges.asSequence()
+        .map { problem.text.textRangeToFile(it) }
+        .flatMap { range -> problem.text.intersection(range) }
+        .filterNot { it.isEmpty }
+        .toList()
+    }
+
+    fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
+      val parent = problem.text.commonParent
+      val tooltip = problem.tooltipTemplate
+      val description = problem.getDescriptionTemplate(isOnTheFly)
+      return problem.fileHighlightRanges.mapNotNull { range ->
+        val rangeInElement = range.shiftLeft(parent.startOffset)
+        val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
+        if (isOnTheFly) {
+          grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
+        }
+        val shortName = getShortName(problem)
+        val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
+        descriptor.problemGroup = ProblemGroup { shortName }
+        descriptor
+      }
+    }
+
+    fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
+      val file = problem.text.containingFile
+      val result = arrayListOf<LocalQuickFix>()
+      val spm = SmartPointerManager.getInstance(file.project)
+      val underline = problem.fileHighlightRanges.map { spm.createSmartPsiFileRangePointer(file, it) }
+
+      if (problem !is TypoProblem && problem.suggestions.isNotEmpty()) {
+        GrazieFUSCounter.typoFound(problem)
+        result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
+      }
+
+      problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
+
+      if (problem !is TypoProblem) {
+        val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
+        result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
+          override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+            GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
+            super.applyFix(project, psiFile, editor)
+          }
+        })
+        result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+      }
+      result.add(GrazieMassApplyAction())
+      result.add(GrazieYtReportAction(problem))
+      return result.toTypedArray()
+    }
+
+    @JvmStatic
+    fun checkTexts(allCheckers: List<TextChecker>, texts: List<TextContent>, checkedDomains: Set<TextDomain>): List<TextProblem> {
+      if (allCheckers.isEmpty() || texts.isEmpty() || texts.all { it.isBlank() }) return emptyList()
+      val checkers = if (texts.all { it.domain !in checkedDomains }) allCheckers.filter { it.isSpelling() } else allCheckers
+      val languageDetectionRequired = checkers.any { it.isGrammar() }
+      val contexts = texts.toProofreadingContext(languageDetectionRequired)
+      return TextCheckerManager.doRun(checkers, contexts).filterNot { shouldBeIgnored(it) }
+    }
+
+    private fun run(allCheckers: List<TextChecker>, text: TextContent, checkedDomains: Set<TextDomain>): List<TextProblem> {
+      if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
+      val checkers = if (text.domain in checkedDomains && seemsNatural(text)) allCheckers else allCheckers.filterNot { it.isGrammar() }
+      val languageDetectionRequired = checkers.any { it.isGrammar() }
+      val context = text.toProofreadingContext(languageDetectionRequired)
+      return TextCheckerManager.doRun(checkers, context).filterNot { shouldBeIgnored(it) }
+    }
+
+    private fun shouldBeIgnored(problem: TextProblem): Boolean =
+      isSuppressed(problem) ||
+      hasIgnoredCategory(problem) ||
+      isIgnoredByStrategies(problem) ||
+      ProblemFilter.allIgnoringFilters(problem).findAny().isPresent
+
+    private fun isSuppressed(problem: TextProblem): Boolean {
+      if (problem is TypoProblem) return false
+      val sentence = findSentence(problem)
+      if (defaultSuppressionPattern(problem, sentence).isSuppressed()) {
+        return true
+      }
+
+      val patternRange = problem.patternRange
+      val errorText = highlightSpan(problem).subSequence(problem.text)
+      return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
+    }
+
+    private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
+      if (descriptor is TypoProblem) return false
+      for (root in descriptor.text.findPsiElementAt(0).parents(withSelf = true)) {
+        for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
+          if (strategy.isMyContextRoot(root)) {
+            val errorRange = descriptor.text.textRangeToFile(highlightSpan(descriptor)).shiftLeft(root.startOffset)
+            val patternRange = descriptor.text.textRangeToFile(descriptor.patternRange ?: highlightSpan(descriptor)).shiftLeft(root.startOffset)
+            val typoRange = errorRange.startOffset until errorRange.endOffset
+            val ruleRange = patternRange.startOffset until patternRange.endOffset
+            if (!strategy.isTypoAccepted(descriptor.text.commonParent, strategy.getRootsChain(root), typoRange, ruleRange) ||
+                !strategy.isTypoAccepted(root, typoRange, ruleRange)) {
+              return true
+            }
+          }
+        }
+      }
+      return false
+    }
+
+    private fun highlightSpan(problem: TextProblem) =
+      TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
+
+    private fun hasIgnoredCategory(problem: TextProblem): Boolean {
+      if (problem is TypoProblem) return false
+      val ignored = ignoredRules(problem)
+      return ignored.rules.isNotEmpty() && problem.fitsGroup(ignored)
+    }
+
+    private fun ignoredRules(descriptor: TextProblem): RuleGroup {
+      val leaves = descriptor.highlightRanges.asSequence()
+        .flatMap { it.startOffset until it.endOffset }
+        .map { descriptor.text.findPsiElementAt(it) }
+        .toLinkedSet()
+      val ignored = LinkedHashSet<String>()
+      for (leaf in leaves) {
+        for (root in leaf.parents(withSelf = true)) {
+          for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
+            for (child in leaf.parents(withSelf = true)) {
+              val group = strategy.getIgnoredRuleGroup(root, child)
+              if (group != null) ignored.addAll(group.rules)
+              if (child == root) break
+            }
+          }
+        }
+      }
+      return RuleGroup(ignored)
+    }
+
+    private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
+      val text = problem.text
+      val patternRange = problem.patternRange
+      if (patternRange != null) {
+        return SuppressionPattern(patternRange.subSequence(text), null)
+      }
+      return SuppressionPattern(highlightSpan(problem).subSequence(text), sentenceText)
+    }
+
+    private fun findSentence(problem: TextProblem): String? =
+      SentenceTokenizer.toTokens(problem.text)
+        .find { sentence -> problem.highlightRanges.any { range -> range.intersectsStrict(sentence.range.start, sentence.range.endExclusive) } }?.text
+
+    private fun getShortName(problem: TextProblem): String =
+      if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION
+      else if (problem is TypoProblem) SPELL_CHECKING_INSPECTION_TOOL_NAME
+      else GrazieInspection.GRAMMAR_INSPECTION
+  }
+}

@@ -7,10 +7,10 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public abstract class BuildProcessHandler extends ProcessHandler {
   public abstract String getExecutionName();
 
+  @ApiStatus.Internal
   public void forceProcessDetach() {
     notifyProcessDetached();
   }

@@ -13,7 +13,7 @@ class Foo<R> {
 
     public void foo() {
         reduce(Moo::new);
-        reduce(<error descr="Bad return type in method reference: cannot convert Foo<R>.AMoo to S">AMoo::new</error>);
+        reduce<error descr="'reduce(Foo.Factory<S>)' in 'Foo' cannot be applied to '(<method reference>)'">(AMoo::new)</error>;
         reduce(AAMoo::new);
         reduce(AAAMoo::new);
     }

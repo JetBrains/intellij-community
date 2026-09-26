@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
@@ -17,7 +19,7 @@ import javax.swing.ListCellRenderer
  */
 class RightTextCellRenderer<T>(
   private val baseRenderer: ListCellRenderer<in T>,
-  private val text: (T) -> String?
+  private val text: (T) -> @Nls String?
 ) : ListCellRenderer<T> {
 
   private val label = JBLabel().apply {
@@ -46,11 +48,11 @@ class RightTextCellRenderer<T>(
 
     val text = text(value) ?: return originalComponent
 
-    val bg = if (isSelected) UIUtil.getListSelectionBackground() else originalComponent.background
+    val bg = if (isSelected) UIUtil.getListSelectionBackground(true) else originalComponent.background
 
     label.text = text
     label.background = bg
-    label.foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+    label.foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else NamedColorUtil.getInactiveTextColor()
 
     spacer.background = bg
 

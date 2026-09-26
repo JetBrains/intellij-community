@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Outer$Nested.class
+  ppp/Outer.class
+End of files
+Compiling files:
+  java/classModifiers/sealedPermitsNestedBecamePrivate/a/ppp/Outer.java
+End of files
+Cleaning output files:
+  ppp/S.class
+End of files
+Compiling files:
+  java/classModifiers/sealedPermitsNestedBecamePrivate/a/ppp/S.java
+End of files
+------------------------------------------
+Exit code: ERROR

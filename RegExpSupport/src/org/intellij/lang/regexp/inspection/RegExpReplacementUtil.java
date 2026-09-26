@@ -1,55 +1,70 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpReplacementUtil {
+public final class RegExpReplacementUtil {
 
   private RegExpReplacementUtil() {}
 
   public static void replaceInContext(@NotNull PsiElement element, @NotNull String text) {
-    final PsiFile file = element.getContainingFile();
-    text = escapeForContext(text, file);
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
-    assert document != null;
-    final TextRange replaceRange = element.getTextRange();
-    document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), text);
+    replaceInContext(element, text, null);
   }
 
-  private static String escapeForContext(String text, PsiFile file) {
+  public static void replaceInContext(@NotNull PsiElement element, @NotNull String text, TextRange range) {
+    final PsiFile file = element.getContainingFile();
+    text = escapeForContext(text, file);
+    final Document document = file.getViewProvider().getDocument();
+    assert document != null;
+    final TextRange replaceRange = element.getTextRange();
+    final int startOffset = replaceRange.getStartOffset();
+    if (range != null) {
+      document.replaceString(startOffset + range.getStartOffset(), startOffset + range.getEndOffset(), text);
+    }
+    else {
+      document.replaceString(startOffset, replaceRange.getEndOffset(), text);
+    }
+  }
+
+  public static String escapeForContext(String text, PsiFile file) {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
     if (injectedLanguageManager.isInjectedFragment(file)) {
       final PsiElement context = file.getContext();
-      ElementManipulator<PsiElement> manipulator = context == null ? null : ElementManipulators.getManipulator(context);
+      final ElementManipulator<PsiElement> manipulator = context == null ? null : ElementManipulators.getManipulator(context);
       if (manipulator != null) {
         // use element manipulator to process escape sequences correctly for all supported languages
-        PsiElement copy = context.copy(); // create a copy to avoid original element modifications
-        PsiElement newElement = manipulator.handleContentChange(copy, text);
+        final PsiElement copy = context.copy(); // create a copy to avoid original element modifications
+        final PsiElement newElement = manipulator.handleContentChange(copy, text);
         if (newElement != null) {
-          String newElementText = newElement.getText();
-          TextRange newRange = manipulator.getRangeInElement(newElement);
-          return newElementText.substring(newRange.getStartOffset(), newRange.getEndOffset());
+          return manipulator.getRangeInElement(newElement).substring(newElement.getText());
         }
       }
       if (RegExpElementImpl.isLiteralExpression(context)) {
         // otherwise, just pretend it is a Java-style string
         return StringUtil.escapeStringCharacters(text);
       }
-      else if (context instanceof XmlElement) {
-        return XmlStringUtil.escapeString(text);
-      }
     }
     return text;
+  }
+
+  public static void flipLeftRight(@Nullable PsiElement left, @Nullable PsiElement right) {
+    if (left == null || right == null) return;
+    final PsiElement copyLeft = left.copy();
+    final PsiElement copyRight = right.copy();
+    left.replace(copyRight);
+    right.replace(copyLeft);
   }
 }

@@ -17,6 +17,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Collection;
 
@@ -26,6 +28,8 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPullUpViewInitializationInfo, PyPullUpView> {
 
 
@@ -63,7 +67,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
     configureParent();
     final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
 
-    final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = new Capture<>();
+    final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = Capture.newInstance();
     EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture), EasyMock.anyObject())).andReturn(false).anyTimes();
     EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(infos).anyTimes();
     final PyClass parent = getClassByName("ParentWithConflicts");
@@ -81,8 +85,6 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
       "my_func(self)",
       "__init__(self)"
     ));
-
-
   }
 
   /**
@@ -114,14 +116,14 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py2
    */
   public void testMembersPy2() {
-    ensureCorrectMembersForHugeChild(false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> ensureCorrectMembersForHugeChild(false));
   }
 
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
    */
   public void testMembersPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureCorrectMembersForHugeChild(true));
+    ensureCorrectMembersForHugeChild(true);
   }
 
   /**

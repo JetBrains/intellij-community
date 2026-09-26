@@ -7,11 +7,11 @@ class CandidateInfo<T> {
   }
 
   static void test() {
-    new <warning descr="The call to 'CandidateInfo' always fails, according to its method contracts">CandidateInfo</warning>(null, true, false);
-    new <warning descr="The call to 'CandidateInfo' always fails, according to its method contracts">CandidateInfo</warning>(null, true, true);
+    if (Math.random() > 0.5) new <warning descr="The call to 'CandidateInfo' always fails, according to its method contracts">CandidateInfo</warning>(null, true, false);
+    if (Math.random() > 0.5) new <warning descr="The call to 'CandidateInfo' always fails, according to its method contracts">CandidateInfo</warning>(null, true, true);
 
-    new CandidateInfo(null, false, true);
-    new CandidateInfo(new Object(), true, true);
-    new CandidateInfo(new Object(), false, true);
+    if (Math.random() > 0.5) new CandidateInfo(null, false, true);
+    if (Math.random() > 0.5) new CandidateInfo(new Object(), true, true);
+    if (Math.random() > 0.5) new CandidateInfo(new Object(), false, true);
   }
 }

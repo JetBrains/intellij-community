@@ -1,41 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Factory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"))
-public class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
-  public static final Factory<Set<String>> SET_FACTORY = () -> ContainerUtil.newHashSet();
-  private Map<String, Set<String>> myProviderToDisabledTemplates = ContainerUtil.newHashMap();
+@ApiStatus.Internal
+@State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
+public final class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
+  private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();
   /**
    * @deprecated use myProviderToDisabledTemplates
    */
-  private Map<String, Set<String>> myLangToDisabledTemplates = ContainerUtil.newHashMap();
+  @Deprecated
+  private Map<String, Set<String>> myLangToDisabledTemplates = new HashMap<>();
 
   private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
+  private boolean showAsSeparateGroup = true;
   private int myShortcut = TemplateSettings.TAB_CHAR;
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template, @NotNull PostfixTemplateProvider provider) {
@@ -48,7 +51,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   }
 
   public void disableTemplate(@NotNull PostfixTemplate template, @NotNull String providerId) {
-    Set<String> state = ContainerUtil.getOrCreate(myProviderToDisabledTemplates, providerId, SET_FACTORY);
+    Set<String> state = myProviderToDisabledTemplates.computeIfAbsent(providerId, _ -> new HashSet<>());
     state.add(template.getId());
   }
 
@@ -68,25 +71,33 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
     this.templatesCompletionEnabled = templatesCompletionEnabled;
   }
 
+  public boolean isShowAsSeparateGroup() {
+    return showAsSeparateGroup && GroupedCompletionContributor.isGroupEnabled(null);
+  }
+
+  public void setShowAsSeparateGroup(boolean showAsSeparateGroup) {
+    this.showAsSeparateGroup = showAsSeparateGroup;
+  }
+
   /**
    * @deprecated use getProviderToDisabledTemplates
    */
-  @NotNull
+  @Deprecated(forRemoval = true)
   @MapAnnotation(entryTagName = "disabled-postfix-templates", keyAttributeName = "lang", surroundWithTag = false)
-  public Map<String, Set<String>> getLangDisabledTemplates() {
+  public @NotNull Map<String, Set<String>> getLangDisabledTemplates() {
     return myLangToDisabledTemplates;
   }
 
   /**
    * @deprecated use setProviderToDisabledTemplates
    */
+  @Deprecated(forRemoval = true)
   public void setLangDisabledTemplates(@NotNull Map<String, Set<String>> templatesState) {
     myLangToDisabledTemplates = templatesState;
   }
 
-  @NotNull
   @MapAnnotation(entryTagName = "disabled-templates", keyAttributeName = "provider", surroundWithTag = false)
-  public Map<String, Set<String>> getProviderToDisabledTemplates() {
+  public @NotNull Map<String, Set<String>> getProviderToDisabledTemplates() {
     return myProviderToDisabledTemplates;
   }
 
@@ -102,20 +113,22 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
     myShortcut = shortcut;
   }
 
-  @NotNull
-  public static PostfixTemplatesSettings getInstance() {
-    return ServiceManager.getService(PostfixTemplatesSettings.class);
+  public static @NotNull PostfixTemplatesSettings getInstance() {
+    return ApplicationManager.getApplication().getService(PostfixTemplatesSettings.class);
   }
 
-  @Nullable
   @Override
-  public Element getState() {
-    return XmlSerializer.serialize(this, new SkipDefaultValuesSerializationFilters());
+  public @Nullable Element getState() {
+    Element result = new Element("state");
+    XmlSerializer.serializeObjectInto(this, result);
+    return result;
   }
 
   @Override
   public void loadState(@NotNull Element settings) {
-    XmlSerializer.deserializeInto(this, settings);
+    myLangToDisabledTemplates.clear();
+
+    XmlSerializer.deserializeInto(settings, this);
 
     if (!myLangToDisabledTemplates.isEmpty()) {
       MultiMap<String, Language> importedLanguages = getLanguagesToImport();
@@ -136,11 +149,9 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
     }
   }
 
-  @NotNull
-  private static MultiMap<String, Language> getLanguagesToImport() {
+  private static @NotNull MultiMap<String, Language> getLanguagesToImport() {
     MultiMap<String, Language> importedLanguages = MultiMap.create();
-    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
-    for (LanguageExtensionPoint extension : extensions) {
+    for (LanguageExtensionPoint extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {
       Language language = Language.findLanguageByID(extension.getKey());
       if (language == null) continue;
       importedLanguages.putValue(language.getDisplayName(), language);

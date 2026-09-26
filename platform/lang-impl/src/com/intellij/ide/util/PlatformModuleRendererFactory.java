@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.TextWithIcon;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.SwingConstants;
+import java.awt.Component;
 
-/**
- * @author yole
- */
-public class PlatformModuleRendererFactory extends ModuleRendererFactory {
+public final class PlatformModuleRendererFactory extends ModuleRendererFactory {
+
   @Override
-  public DefaultListCellRenderer getModuleRenderer() {
+  public @NotNull DefaultListCellRenderer getModuleRenderer() {
     return new PlatformModuleRenderer();
   }
 
@@ -38,7 +30,14 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
     return true;
   }
 
-  public static class PlatformModuleRenderer extends DefaultListCellRenderer {
+  @Override
+  public @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
+    String text = getItemText(element);
+    return text == null ? null : new TextWithIcon(text, null);
+  }
+
+  @ApiStatus.Internal
+  public static final class PlatformModuleRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value,
@@ -46,25 +45,27 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
                                                   final boolean isSelected,
                                                   final boolean cellHasFocus) {
       final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-      String text = "";
-      if (value instanceof NavigationItem) {
-        final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-        if (presentation != null) {
-          String containerText = presentation.getLocationString();
-          if (!StringUtil.isEmpty(containerText)) {
-            text = " " + containerText;
-          }
-        }
-      }
-
-
-      setText(text);
+      setText(StringUtil.notNullize(getItemText(value)));
       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
       setHorizontalTextPosition(SwingConstants.LEFT);
-      setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-      setForeground(isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
+      setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
+      setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
       return component;
     }
+  }
+
+  private static @NlsSafe @Nullable String getItemText(Object value) {
+    if (!(value instanceof NavigationItem)) {
+      return null;
+    }
+    final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
+    if (presentation == null) {
+      return null;
+    }
+    String containerText = presentation.getLocationString();
+    if (StringUtil.isEmpty(containerText)) {
+      return null;
+    }
+    return " " + containerText;
   }
 }

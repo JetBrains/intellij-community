@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.magicLiteral;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -17,13 +17,13 @@ import org.jetbrains.annotations.NotNull;
  * <strong>Install it</strong> as "referencesSearch" !
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>  {
+final class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>  {
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiReference> consumer) {
+    ReadAction.runBlocking(() -> {
       final PsiElement refElement = queryParameters.getElementToSearch();
-      if (PyMagicLiteralTools.isMagicLiteral(refElement)) {
+      if (PyMagicLiteralTools.couldBeMagicLiteral(refElement)) {
         final String refText = ((StringLiteralExpression)refElement).getStringValue();
         if (!StringUtil.isEmpty(refText)) {
           final SearchScope searchScope = queryParameters.getEffectiveSearchScope();

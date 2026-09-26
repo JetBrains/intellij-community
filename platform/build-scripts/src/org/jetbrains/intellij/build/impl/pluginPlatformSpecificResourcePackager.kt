@@ -1,0 +1,153 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl
+
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CustomAssetShimSource
+import org.jetbrains.intellij.build.FileSource
+import org.jetbrains.intellij.build.UnpackedZipSource
+import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+
+/**
+ * @param pluginDirs List of OS-specific plugin directories, with appended `plugin.directoryName` already
+ */
+internal fun buildPlatformSpecificPluginResources(
+  plugin: PluginLayout,
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+  context: BuildContext,
+  isDevMode: Boolean,
+): List<DistributionFileEntry> {
+  for ((dist, generators) in plugin.platformResourceGenerators) {
+    val selected = if (isDevMode) generators.filter(::runsInClassicDevMode) else generators
+    handlePlatformResourceGenerator(dist, selected, pluginDirs, context)
+  }
+
+  val distEntries = ArrayList<DistributionFileEntry>()
+  for ((platform, pluginDir) in pluginDirs) {
+    distEntries.addAll(
+      handleCustomPlatformSpecificAssets(
+        layout = plugin,
+        targetPlatform = platform,
+        context = context,
+        pluginDir = pluginDir,
+        runCustomAssetShimTasks = !isDevMode,
+      )
+    )
+  }
+  return distEntries
+}
+
+private fun handlePlatformResourceGenerator(
+  dist: SupportedDistribution,
+  generators: List<ResourceGenerator>,
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+  context: BuildContext,
+) {
+  val pluginDir = pluginDirs.firstOrNull { it.first == dist }?.second ?: return
+  val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
+  for (generator in generators) {
+    spanBuilder("plugin platform-specific resources")
+      .setAttribute("path", relativePluginDir)
+      .setAttribute("os", dist.os.toString())
+      .setAttribute("arch", dist.arch.toString())
+      .use {
+        generator(pluginDir, context)
+      }
+  }
+}
+
+/**
+ * @param runCustomAssetShimTasks whether a [CustomAssetShimSource] runs its task. A bundled build runs them; classic dev
+ * mode and a published plugin do not.
+ */
+internal fun handleCustomPlatformSpecificAssets(
+  layout: PluginLayout,
+  targetPlatform: SupportedDistribution?,
+  context: BuildContext,
+  pluginDir: Path,
+  runCustomAssetShimTasks: Boolean,
+): List<DistributionFileEntry> {
+  val distEntries = ArrayList<DistributionFileEntry>()
+  for (customAsset in layout.customAssets) {
+    if (targetPlatform == null) {
+      if (customAsset.platformSpecific != null) {
+        continue
+      }
+    }
+    else {
+      val platformSpecific = customAsset.platformSpecific ?: continue
+      if (platformSpecific != targetPlatform) {
+        continue
+      }
+    }
+
+    val rootDir = customAsset.relativePath?.let { pluginDir.resolve(it) } ?: pluginDir
+    val lazySources = customAsset.getSources(context) ?: continue
+    for (lazySource in lazySources) {
+      require(lazySource.filter == null) {
+        "please specify filter for wrapped sources, not for LazySource"
+      }
+
+      for (source in lazySource.getSources()) {
+        when (source) {
+          is UnpackedZipSource -> {
+            val dir = extractFileToCacheLocation(archiveFile = source.file, communityRoot = context.paths.communityHomeDirRoot)
+            val dirPrefix = dir.toString().length + 1
+            val filter = source.filter
+            if (filter == null) {
+              copyDir(sourceDir = dir, targetDir = rootDir, overwrite = true)
+            }
+            else {
+              copyDir(
+                sourceDir = dir,
+                targetDir = rootDir,
+                fileFilter = { filter(it.invariantSeparatorsPathString.substring(dirPrefix)) },
+              )
+            }
+
+            distEntries.add(
+              CustomAssetEntry(
+                path = source.file,
+                hash = lazySource.precomputedHash,
+                relativeOutputFile = customAsset.relativePath,
+                distributionPath = rootDir,
+              )
+            )
+          }
+
+          is CustomAssetShimSource -> {
+            if (runCustomAssetShimTasks) {
+              distEntries.addAll(source.task(pluginDir, context))
+            }
+          }
+
+          is FileSource -> {
+            val targetFile = rootDir.resolve(source.relativePath)
+            copyFile(file = source.file, target = targetFile, overwrite = true)
+            distEntries.add(
+              CustomAssetEntry(
+                path = targetFile,
+                hash = lazySource.precomputedHash,
+                relativeOutputFile = resolveRelativeOutputFile(customAsset.relativePath, source.relativePath),
+              )
+            )
+          }
+
+          else -> throw UnsupportedOperationException("Not supported source for custom plugin platform-specific assets, got $source for $customAsset")
+        }
+      }
+    }
+  }
+  return distEntries
+}
+
+private fun resolveRelativeOutputFile(rootRelativePath: String?, sourceRelativePath: String): String {
+  return rootRelativePath?.let { "$it/$sourceRelativePath" } ?: sourceRelativePath
+}

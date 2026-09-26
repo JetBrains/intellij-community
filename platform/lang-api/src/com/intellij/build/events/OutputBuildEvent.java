@@ -1,30 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.BuildViewSettingsProvider;
+import com.intellij.build.eventBuilders.OutputBuildEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import com.intellij.execution.process.ProcessOutputType;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Vladislav.Soroka
+ * Produces new output in the build console.
+ * <p>
+ * The whole build output is printed as a single stream into the shared console when {@link StartBuildEvent#getBuildViewSettings()} have a
+ * valid {@link BuildViewSettingsProvider} and {@link BuildViewSettingsProvider#isSingleBuildConsoleView} is true for the execution.
+ * Therefore, the {@link #getParentId} only anchors the produced output to a build tree node,
+ * instead of splitting the output between the per-node consoles.
+ * <p>
+ * Use the {@link OutputReferenceEvent} to attach the output of this event to another build tree node,
+ * instead of producing the same output twice.
  */
-@ApiStatus.Experimental
-public interface OutputBuildEvent {
-  @NotNull
-  String getMessage();
+public interface OutputBuildEvent extends BuildEvent {
 
-  boolean isStdOut();
+  @Override
+  @Message
+  @NotNull String getMessage();
+
+  /**
+   * @return type of the output (stdout, stderr, or system)
+   */
+  @NotNull ProcessOutputType getOutputType();
+
+  /**
+   * @deprecated Use {@link #getOutputType()} instead
+   */
+  @Deprecated
+  default boolean isStdOut() {
+    return getOutputType().isStdout();
+  }
+
+  @CheckReturnValue
+  static @NotNull OutputBuildEventBuilder builder(
+    @NotNull @Message String message
+  ) {
+    return BuildEvents.getInstance().output(message);
+  }
 }

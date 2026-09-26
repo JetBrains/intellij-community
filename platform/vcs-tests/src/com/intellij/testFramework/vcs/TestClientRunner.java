@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,17 +13,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina
- * @since 2.05.2012
- */
-public class TestClientRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");
+public final class TestClientRunner {
+  private static final Logger LOG = Logger.getInstance(TestClientRunner.class);
   private final boolean myTraceClient;
   private final File myClientBinaryPath;
   private final Map<String, String> myClientEnvironment;
@@ -51,7 +34,7 @@ public class TestClientRunner {
 
   public ProcessOutput runClient(@NotNull String exeName,
                                  @Nullable String stdin,
-                                 @Nullable final File workingDir,
+                                 final @Nullable File workingDir,
                                  String... commandLine) throws IOException {
     final List<String> arguments = new ArrayList<>();
 
@@ -82,13 +65,9 @@ public class TestClientRunner {
     final Process clientProcess = builder.start();
 
     if (stdin != null) {
-      final OutputStream outputStream = clientProcess.getOutputStream();
-      try {
-        final byte[] bytes = stdin.getBytes();
+      try (OutputStream outputStream = clientProcess.getOutputStream()) {
+        final byte[] bytes = stdin.getBytes(StandardCharsets.UTF_8);
         outputStream.write(bytes);
-      }
-      finally {
-        outputStream.close();
       }
     }
 
@@ -97,17 +76,17 @@ public class TestClientRunner {
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
-      if (out.length() > 0) {
+      if (!out.isEmpty()) {
         LOG.debug("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
-      if (err.length() > 0) {
+      if (!err.isEmpty()) {
         LOG.debug("*** error:\n" + err);
       }
     }
 
     if (result.isTimeout()) {
-      String processList = LogUtil.getProcessList();
+      String processList = ProcessHandle.allProcesses().map(h -> h.pid() + ": " + h.info()).collect(Collectors.joining("\n"));
       handler.destroyProcess();
       throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + processList);
     }

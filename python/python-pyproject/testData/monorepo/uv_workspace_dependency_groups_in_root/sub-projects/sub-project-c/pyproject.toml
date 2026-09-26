@@ -1,0 +1,11 @@
+[project]
+name = "sub-project-c"
+version = "0.1.0"
+description = "Sub-project C"
+dependencies = [
+    "numpy",
+]
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = ["pandas"]

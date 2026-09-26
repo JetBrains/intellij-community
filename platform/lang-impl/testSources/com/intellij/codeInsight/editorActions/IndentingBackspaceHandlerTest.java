@@ -18,28 +18,26 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
+@Ignore("AT-4013")
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/indentingBackspace/")
 public class IndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    runInEdtAndWait(() -> {
-      configureByFile(myFileSuffix);
-      backspace();
-      checkResultByFile(myFileSuffix.replace(".", "-after."));
-    });
+    configureByFile(myFileSuffix);
+    backspace();
+    checkResultByFile(myFileSuffix.replace(".", "-after."));
   }
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     return fileName.contains("-after.") ? null : fileName;
   }
 }

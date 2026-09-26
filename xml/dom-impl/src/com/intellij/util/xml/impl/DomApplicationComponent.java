@@ -1,172 +1,244 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
-/**
- * @author peter
- */
-public class DomApplicationComponent {
-  private final Map<String, Set<DomFileDescription>> myRootTagName2FileDescription = FactoryMap.create(key -> new THashSet<>());
-  private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
+@Service(Service.Level.APP)
+public final class DomApplicationComponent {
+  private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
+  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new HashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
-  private final Map<Class, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
-      final DomFileDescription desc = findFileDescription(key);
-      return desc == null ? null : desc.createAnnotator();
-    }
-  );
+  private final Map<Class<?>, DomElementsAnnotator> classToAnnotator = new ConcurrentHashMap<>();
+  private final Map<Class<?>, DomFileDescription<?>> classToDescription = new ConcurrentHashMap<>();
 
-  private final Map<Class, StaticGenericInfo> myGenericInfos = ConcurrentFactoryMap.createMap(StaticGenericInfo::new,
-                                                                                              ContainerUtil::createConcurrentSoftValueMap);
-  private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.createMap(InvocationCache::new,
-                                                                                                ContainerUtil::createConcurrentSoftValueMap);
-  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-    ConcurrentFactoryMap.createMap(VisitorDescription::new);
-
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = CollectionFactory.createConcurrentSoftValueMap();
+  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions = new ConcurrentHashMap<>();
 
   public DomApplicationComponent() {
-    for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
+    registerDescriptions();
+
+    //noinspection deprecation
+    addChangeListener(DomFileDescription.EP_NAME, this::extensionsChanged);
+    addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
+    addChangeListener(DomImplementationClassEP.EP_NAME, this::extensionsChanged);
+  }
+
+  private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDisposed()) {
+      return;
+    }
+    ep.addChangeListener(onChange, app);
+  }
+
+  private void registerDescriptions() {
+    //noinspection deprecation
+    for (DomFileDescription<?> description : DomFileDescription.EP_NAME.getExtensionList()) {
       registerFileDescription(description);
     }
+    for (DomFileMetaData meta : DomFileMetaData.EP_NAME.getExtensionList()) {
+      registerFileDescription(meta);
+    }
+  }
+
+  private synchronized void extensionsChanged() {
+    myRootTagName2FileDescription.clear();
+
+    myAcceptingOtherRootTagNamesDescriptions.clear();
+    classToAnnotator.clear();
+    classToDescription.clear();
+
+    myCachedImplementationClasses.clearCache();
+    myTypeChooserManager.clearCache();
+
+    myInvocationCaches.clear();
+    assignabilityCache.clear();
+
+    myVisitorDescriptions.clear();
+
+    registerDescriptions();
   }
 
   public static DomApplicationComponent getInstance() {
-    return ServiceManager.getService(DomApplicationComponent.class);
+    return ApplicationManager.getApplication().getService(DomApplicationComponent.class);
   }
 
-  public int getCumulativeVersion(boolean forStubs) {
-    int result = 0;
-    for (DomFileDescription description : getAllFileDescriptions()) {
+  public synchronized int getCumulativeVersion(boolean forStubs) {
+    return allMetas().mapToInt(meta -> {
       if (forStubs) {
-        if (description.hasStubs()) {
-          result += description.getStubVersion();
-          result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        if (meta.stubVersion != null) {
+          return meta.stubVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
         }
       }
       else {
-        result += description.getVersion();
-        result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        return meta.domVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+      }
+      return 0;
+    }).sum();
+  }
+
+  private @NotNull Stream<DomFileMetaData> allMetas() {
+    return Stream.concat(myRootTagName2FileDescription.values().stream(), myAcceptingOtherRootTagNamesDescriptions.stream());
+  }
+
+  public synchronized @NotNull List<DomFileMetaData> getStubBuildingMetadata() {
+    return allMetas().filter(m -> m.hasStubs()).collect(Collectors.toList());
+  }
+
+  public synchronized @Nullable DomFileMetaData findMeta(DomFileDescription<?> description) {
+    return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
+  }
+
+  public synchronized @Unmodifiable Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
+    return ContainerUtil.map2Set(myRootTagName2FileDescription.get(rootTagName), DomFileMetaData::getDescription);
+  }
+
+  public synchronized @Unmodifiable Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
+    return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
+  }
+
+  @SuppressWarnings("deprecation")
+  public @Nullable DomFileDescription<?> findDescription(XmlFile file) {
+    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
+    Set<DomFileDescription<?>> byRootTag = getFileDescriptions(rootTagLocalName);
+    Set<DomFileDescription<?>> acceptingOtherRootTags = getAcceptingOtherRootTagNameDescriptions();
+    if (byRootTag.isEmpty() && acceptingOtherRootTags.isEmpty()) {
+      return null;
+    }
+    // The module lookup is costly and may be unavailable (e.g. while indexing), so resolve it lazily
+    // and only for descriptions that override the module-aware isMyFile.
+    NullableLazyValue<Module> module = NullableLazyValue.lazyNullable(() -> ModuleUtilCore.findModuleForFile(file));
+    Condition<DomFileDescription<?>> condition = d -> isModuleAware(d) ? d.isMyFile(file, module.getValue()) : d.isMyFile(file);
+    DomFileDescription<?> description = ContainerUtil.find(byRootTag, condition);
+    return description != null ? description : ContainerUtil.find(acceptingOtherRootTags, condition);
+  }
+
+  /**
+   * Whether the description overrides the deprecated {@link DomFileDescription#isMyFile(XmlFile, Module)} and thus needs the file's module.
+   * Resolved by reflection once per description class.
+   */
+  private static final ClassValue<Boolean> MODULE_AWARE = new ClassValue<>() {
+    @Override
+    protected Boolean computeValue(Class<?> type) {
+      try {
+        return type.getMethod("isMyFile", XmlFile.class, Module.class).getDeclaringClass() != DomFileDescription.class;
+      }
+      catch (NoSuchMethodException e) {
+        // unreachable: the method is public and inherited; stay on the safe side and pass the module
+        return true;
       }
     }
-    return result;
+  };
+
+  static boolean isModuleAware(@NotNull DomFileDescription<?> description) {
+    return MODULE_AWARE.get(description.getClass());
   }
 
-  public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
-    return myRootTagName2FileDescription.get(rootTagName);
+  synchronized void registerFileDescription(DomFileDescription<?> description) {
+    registerFileDescription(new DomFileMetaData(description));
+    initDescription(description);
   }
 
-  public final synchronized Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
-    return myAcceptingOtherRootTagNamesDescriptions;
-  }
-
-  public final synchronized void registerFileDescription(final DomFileDescription description) {
-    myRootTagName2FileDescription.get(description.getRootTagName()).add(description);
-    if (description.acceptsOtherRootTagNames()) {
-      myAcceptingOtherRootTagNamesDescriptions.add(description);
+  void registerFileDescription(@NotNull DomFileMetaData meta) {
+    if (StringUtil.isEmpty(meta.rootTagName)) {
+      myAcceptingOtherRootTagNamesDescriptions.add(meta);
     }
+    else {
+      myRootTagName2FileDescription.putValue(meta.rootTagName, meta);
+    }
+  }
 
-    //noinspection unchecked
-    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
+  void initDescription(@NotNull DomFileDescription<?> description) {
+    for (Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : description.getImplementations().entrySet()) {
       registerImplementation(entry.getKey(), entry.getValue(), null);
     }
 
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
   }
 
-  public synchronized List<DomFileDescription> getAllFileDescriptions() {
-    final List<DomFileDescription> result = newArrayList();
-    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
-      result.addAll(descriptions);
-    }
-    result.addAll(myAcceptingOtherRootTagNamesDescriptions);
-    return result;
+  synchronized void removeDescription(DomFileDescription<?> description) {
+    DomFileMetaData meta = findMeta(description);
+    myRootTagName2FileDescription.get(description.getRootTagName()).remove(meta);
+    myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
-  @Nullable
-  private synchronized DomFileDescription findFileDescription(Class rootElementClass) {
-    for (Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
-      for (DomFileDescription description : descriptions) {
-        if (description.getRootElementClass() == rootElementClass) {
-          return description;
-        }
-      }
-    }
-
-    for (DomFileDescription description : myAcceptingOtherRootTagNamesDescriptions) {
-      if (description.getRootElementClass() == rootElementClass) {
-        return description;
-      }
-    }
-    return null;
+  public synchronized @Nullable DomFileDescription<?> findFileDescription(@NotNull Class<?> rootElementClass) {
+    return classToDescription.computeIfAbsent(rootElementClass, this::_findFileDescription);
   }
 
-  public DomElementsAnnotator getAnnotator(Class rootElementClass) {
-    return myClass2Annotator.get(rootElementClass);
+  private synchronized @Nullable DomFileDescription<?> _findFileDescription(Class<?> rootElementClass) {
+    return allMetas()
+      .map(meta -> meta.getDescription())
+      .filter(description -> description.getRootElementClass() == rootElementClass)
+      .findAny()
+      .orElse(null);
   }
 
-  @Nullable
-  final Class<? extends DomElement> getImplementation(final Class concreteInterface) {
+  public DomElementsAnnotator getAnnotator(@NotNull Class<?> rootElementClass) {
+    return classToAnnotator.computeIfAbsent(rootElementClass, key -> {
+      DomFileDescription<?> desc = findFileDescription(key);
+      return desc == null ? null : desc.createAnnotator();
+    });
+  }
+
+  @Nullable Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
-    return myCachedImplementationClasses.get(concreteInterface);
+    return (Class<? extends DomElement>)myCachedImplementationClasses.get(concreteInterface);
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           @Nullable final Disposable parentDisposable) {
+  public void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
+                                     final @Nullable Disposable parentDisposable) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
   }
 
-  public TypeChooserManager getTypeChooserManager() {
+  TypeChooserManager getTypeChooserManager() {
     return myTypeChooserManager;
   }
 
-  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.get(ReflectionUtil.getRawType(type));
+  public StaticGenericInfo getStaticGenericInfo(final Type type) {
+    return getInvocationCache(ClassUtil.getRawType(type)).genericInfo;
   }
 
-  final InvocationCache getInvocationCache(final Class type) {
-    return myInvocationCaches.get(type);
+  InvocationCache getInvocationCache(Class<?> type) {
+    return myInvocationCaches.computeIfAbsent(type, InvocationCache::new);
   }
 
-  public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
-    return myVisitorDescriptions.get(aClass);
+  public VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
+    return myVisitorDescriptions.computeIfAbsent(aClass, VisitorDescription::new);
   }
-
 }

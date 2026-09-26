@@ -1,34 +1,29 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.ComponentVisitor;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.LwNestedForm;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.PropertiesProvider;
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.LayoutManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -38,12 +33,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- *         <p/>
- *         NOTE: the class must be compilable with JDK 1.3, so any methods and filds introduced in 1.4 or later must not be used
- */
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();
@@ -53,22 +42,38 @@ public final class Utils {
 
   private static SAXParser createParser() {
     try {
-      return SAXParserFactory.newInstance().newSAXParser();
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      try {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (Exception ignored) {
+      }
+      return factory.newSAXParser();
     }
     catch (Exception e) {
       return null;
     }
   }
 
+  private static @NotNull SAXBuilder createBuilder() {
+    SAXBuilder builder = new SAXBuilder();
+    builder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    builder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    builder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    return builder;
+  }
+
   /**
    * @param provider if null, no classes loaded and no properties read
    */
   public static LwRootContainer getRootContainer(final String formFileContent, final PropertiesProvider provider) throws Exception {
-    if (formFileContent.indexOf(FORM_NAMESPACE) == -1) {
+    if (!formFileContent.contains(FORM_NAMESPACE)) {
       throw new AlienFormFileException();
     }
 
-    final Document document = new SAXBuilder().build(new StringReader(formFileContent), "UTF-8");
+    final Document document = createBuilder().build(new StringReader(formFileContent), "UTF-8");
 
     return getRootContainerFromDocument(document, provider);
   }
@@ -82,7 +87,7 @@ public final class Utils {
    * @throws Exception if there is a problem with parsing DOM
    */
   public static LwRootContainer getRootContainer(final URL formFile, final PropertiesProvider provider) throws Exception {
-    final Document document = new SAXBuilder().build(formFile);
+    final Document document = createBuilder().build(formFile);
     return getRootContainerFromDocument(document, provider);
   }
 
@@ -102,19 +107,20 @@ public final class Utils {
   }
 
   public static LwRootContainer getRootContainer(final InputStream stream, final PropertiesProvider provider) throws Exception {
-    final Document document = new SAXBuilder().build(stream, "UTF-8");
+    final Document document = createBuilder().build(stream, "UTF-8");
 
     return getRootContainerFromDocument(document, provider);
   }
 
-  public synchronized static String getBoundClassName(final String formFileContent) throws Exception {
-    if (formFileContent.indexOf(FORM_NAMESPACE) == -1) {
+  public static synchronized String getBoundClassName(final String formFileContent) throws Exception {
+    if (!formFileContent.contains(FORM_NAMESPACE)) {
       throw new AlienFormFileException();
     }
 
     final String[] className = new String[]{null};
     try {
       SAX_PARSER.parse(new InputSource(new StringReader(formFileContent)), new DefaultHandler() {
+        @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
           if ("form".equals(qName)) {
             className[0] = attributes.getValue("", "bind-to-class");
@@ -131,14 +137,14 @@ public final class Utils {
   }
 
   /**
-   * Validates that specified class represents {@link javax.swing.JComponent} with
+   * Validates that specified class represents {@link JComponent} with
    * empty constructor.
    *
    * @return descriptive human readable error message or {@code null} if
    *         no errors were detected.
    */
-    public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor) {
-        if (loader == null) {
+  public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor) {
+    if (loader == null) {
       throw new IllegalArgumentException("loader cannot be null");
     }
     if (className == null) {
@@ -150,9 +156,9 @@ public final class Utils {
       return null;
     }
 
-        final Class aClass;
+    final Class<?> aClass;
     try {
-            aClass = Class.forName(className, false, loader);
+      aClass = Class.forName(className, false, loader);
     }
     catch (final ClassNotFoundException exc) {
       return "Class \"" + className + "\"not found";
@@ -168,22 +174,22 @@ public final class Utils {
     }
 
     if (validateConstructor) {
-            try {
-                final Constructor constructor = aClass.getConstructor(new Class[0]);
-                if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
-        return "Class \"" + className + "\" does not have default public constructor";
+      try {
+        final Constructor<?> constructor = aClass.getConstructor();
+        if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+          return "Class \"" + className + "\" does not have default public constructor";
+        }
+      }
+      catch (final Exception exc) {
+        return "Class \"" + className + "\" does not have default constructor";
       }
     }
-            catch (final Exception exc) {
-                return "Class \"" + className + "\" does not have default constructor";
-            }
-        }
 
     // Check that JComponent is accessible via the loader
 
-        if (!JComponent.class.isAssignableFrom(aClass)) {
-        return "Class \"" + className + "\" is not an instance of javax.swing.JComponent";
-      }
+    if (!JComponent.class.isAssignableFrom(aClass)) {
+      return "Class \"" + className + "\" is not an instance of javax.swing.JComponent";
+    }
 
     return null;
   }
@@ -195,14 +201,14 @@ public final class Utils {
 
   public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader, final String targetForm)
     throws CodeGenerationException, RecursiveFormNestingException {
-    HashSet usedFormNames = new HashSet();
+    HashSet<String> usedFormNames = new HashSet<>();
     if (targetForm != null) {
       usedFormNames.add(targetForm);
     }
     validateNestedFormLoop(usedFormNames, formName, nestedFormLoader);
   }
 
-  private static void validateNestedFormLoop(final Set usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
+  private static void validateNestedFormLoop(final Set<String> usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
     throws CodeGenerationException, RecursiveFormNestingException {
     if (usedFormNames.contains(formName)) {
       throw new RecursiveFormNestingException();
@@ -215,10 +221,11 @@ public final class Utils {
     catch (Exception e) {
       throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage(), e);
     }
-    final Set thisFormNestedForms = new HashSet();
+    final Set<String> thisFormNestedForms = new HashSet<>();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
     final RecursiveFormNestingException[] recursiveNestingExceptions = new RecursiveFormNestingException[1];
     rootContainer.accept(new ComponentVisitor() {
+      @Override
       public boolean visit(final IComponent component) {
         if (component instanceof LwNestedForm) {
           LwNestedForm nestedForm = (LwNestedForm)component;
@@ -290,8 +297,8 @@ public final class Utils {
 
   public static int getCustomCreateComponentCount(final IContainer container) {
     final int[] result = new int[1];
-    result[0] = 0;
     container.accept(new ComponentVisitor() {
+      @Override
       public boolean visit(IComponent c) {
         if (c.isCustomCreate()) {
           result[0]++;
@@ -302,7 +309,7 @@ public final class Utils {
     return result[0];
   }
 
-  public static Class suggestReplacementClass(Class componentClass) {
+  public static Class suggestReplacementClass(Class<?> componentClass) {
     while (true) {
       componentClass = componentClass.getSuperclass();
       if (componentClass.equals(JComponent.class)) {
@@ -312,7 +319,7 @@ public final class Utils {
         continue;
       }
       try {
-        componentClass.getConstructor(new Class[]{});
+        componentClass.getConstructor();
       }
       catch (NoSuchMethodException ex) {
         continue;
@@ -321,10 +328,11 @@ public final class Utils {
     }
   }
 
-  public static InstrumentationClassFinder.PseudoClass suggestReplacementClass(InstrumentationClassFinder.PseudoClass componentClass) throws ClassNotFoundException, IOException {
+  static InstrumentationClassFinder.PseudoClass suggestReplacementClass(InstrumentationClassFinder.PseudoClass componentClass) throws ClassNotFoundException, IOException {
     final InstrumentationClassFinder.PseudoClass jComponentClass = componentClass.getFinder().loadClass(JComponent.class.getName());
     while (true) {
       componentClass = componentClass.getSuperClass();
+      assert componentClass != null;
       if (componentClass.equals(jComponentClass)) {
         return componentClass.getFinder().loadClass(JPanel.class.getName());
       }

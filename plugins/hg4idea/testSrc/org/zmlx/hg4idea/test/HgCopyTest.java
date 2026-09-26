@@ -12,55 +12,79 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+
+import static com.intellij.openapi.vcs.Executor.append;
 
 public class HgCopyTest extends HgSingleUserTest {
-
   @Test
   public void testCopyUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"));
+    myChangeListManager.ensureUpToDate();
+    verifyStatus(HgTestOutputParser.added("b.txt"));
   }
 
   @Test
   public void testCopyModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
-    VcsTestUtil.editFileInCommand(myProject, file, "newer content");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"));
+    append(new File(file.getPath()), "newer content");
+    file.refresh(false, true);
+    verifyStatus(HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
+    myChangeListManager.ensureUpToDate();
+    verifyStatus(HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
   }
 
   @Test
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"), HgTestOutputParser.unknown("b.txt"));
+    myChangeListManager.ensureUpToDate();
+    verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
   }
 
   @Test
   public void testCopyCopiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     copyFileInCommand(file, "c.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
+    myChangeListManager.ensureUpToDate();
+    verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
   }
 
   @Test
   public void testCopyDirWithFiles() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
-    copyFileInCommand(parent, "org");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
+    copyDir(parent, "org");
+    myChangeListManager.ensureUpToDate();
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"));
   }
 
+
+  private void copyDir(@NotNull VirtualFile vDir, @NotNull String newName) throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vDir);
+      CopyFilesOrDirectoriesHandler.copyToDirectory(psiDirectory, newName, psiDirectory.getParentDirectory());
+    });
+  }
 }

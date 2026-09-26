@@ -1,0 +1,5 @@
+version = "2.2.*"
+upstream-repository = "https://github.com/PyMySQL/mysqlclient"
+
+[tool.stubtest]
+apt-dependencies = ["libmariadb-dev"]

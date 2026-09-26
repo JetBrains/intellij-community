@@ -1,0 +1,20 @@
+Original text:
+---------------
+class Outer:
+    class Inner:
+        def method(self):
+            if True:
+                print("deep")
+                print("nested")
+            return None
+---------------
+Subtree: Language: Python
+---------------
+<reparse>class Outer:
+    class Inner:
+        def method(self):
+            if True:
+                print("deep")
+print("at zero")
+            return None</reparse>
+---------------

@@ -1,0 +1,6 @@
+// "Remove redundant assignment" "true"
+fun test(number: Number) {
+    var isInt: Boolean
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.AssignedValueIsNeverReadInspection$RemoveRedundantAssignmentFix

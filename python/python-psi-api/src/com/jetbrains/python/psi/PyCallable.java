@@ -1,0 +1,54 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.psi;
+
+import com.jetbrains.python.ast.PyAstCallable;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+/**
+ * Something that can be called, passed parameters to, and return something back.
+ */
+public interface PyCallable extends PyAstCallable, PyTypedElement, PyQualifiedNameOwner {
+
+  /**
+   * @return a list of parameters passed to this callable, possibly empty.
+   */
+  @Override
+  @NotNull
+  PyParameterList getParameterList();
+
+  /**
+   * Same as {@link PyCallable#getParameterList()} but more flexible because
+   * parameters could be provided and have no representation in the code.
+   *
+   * @param context type evaluation context
+   * @return a list of parameters passed to this callable, possibly empty.
+   */
+  @NotNull
+  List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context);
+
+  /**
+   * Returns the return type of the callable independent of a call site.
+   */
+  default PyType getReturnType(@NotNull TypeEvalContext context) {
+    return context.getReturnType(this);
+  }
+
+  /**
+   * Returns the return type of the callable independent of a call site.
+   */
+  @Nullable
+  PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key);
+
+  /**
+   * @return a methods returns itself, non-method callables return null.
+   */
+  @Override
+  @Nullable
+  PyFunction asMethod();
+}

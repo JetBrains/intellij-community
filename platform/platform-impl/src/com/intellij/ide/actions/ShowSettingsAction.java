@@ -1,65 +1,56 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.ide.actions.ShowSettingsUtilImplKt.scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized;
 
-public class ShowSettingsAction extends AnAction implements DumbAware {
+/**
+ * @see com.intellij.openapi.options.ShowSettingsUtil to show the Settings dialog programmatically
+ */
+@ApiStatus.Internal
+public class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   public ShowSettingsAction() {
     super(CommonBundle.settingsAction(), CommonBundle.settingsActionDescription(), AllIcons.General.Settings);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!SystemInfo.isMac || !ActionPlaces.MAIN_MENU.equals(e.getPlace()));
-    if (SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      // It's called from Preferences in App menu.
-      e.getPresentation().setVisible(false);
-    }
-    if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
+    e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
+    if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       e.getPresentation().setText(CommonBundle.settingsTitle());
+      e.getPresentation().setIcon(AllIcons.General.Settings);
+    }
+    else if (SystemInfo.isMacOSVentura) {
+      e.getPresentation().setText(CommonBundle.settingsAction());
     }
   }
 
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     perform(project != null ? project : ProjectManager.getInstance().getDefaultProject());
   }
 
   public static void perform(@NotNull Project project) {
-    final long startTime = System.nanoTime();
-    SwingUtilities.invokeLater(() -> {
-      final long endTime = System.nanoTime();
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
-      }
-    });
-    ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
+    scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project);
   }
 }

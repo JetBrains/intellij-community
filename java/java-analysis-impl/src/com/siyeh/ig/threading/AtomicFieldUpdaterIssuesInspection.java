@@ -1,0 +1,158 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.siyeh.ig.threading;
+
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public final class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
+
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    return (String)infos[0];
+  }
+
+  @Override
+  public @NotNull BaseInspectionVisitor buildVisitor() {
+    return new AtomicFieldUpdaterIssuesVisitor();
+  }
+
+  private static class AtomicFieldUpdaterIssuesVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final @NonNls String name = methodExpression.getReferenceName();
+      if (!"newUpdater".equals(name)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length < 2) {
+        return;
+      }
+      final PsiExpression lastArgument = arguments[arguments.length - 1];
+      final Object value = ExpressionUtils.computeConstantExpression(lastArgument);
+      if (!(value instanceof String fieldName)) {
+        return;
+      }
+      final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+      if (!(firstArgument instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
+        return;
+      }
+      final PsiType operandType = classObjectAccessExpression.getOperand().getType();
+      if (!(operandType instanceof PsiClassType classType)) {
+        return;
+      }
+      final PsiClass target = classType.resolve();
+      if (target == null) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final String typeString = TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                                     "java.util.concurrent.atomic.AtomicLongFieldUpdater",
+                                                                     "java.util.concurrent.atomic.AtomicIntegerFieldUpdater",
+                                                                     "java.util.concurrent.atomic.AtomicReferenceFieldUpdater");
+      if (typeString == null) {
+        return;
+      }
+      final PsiField field = target.findFieldByName(fieldName, false);
+      if (field == null) {
+        registerError(lastArgument,
+                      InspectionGadgetsBundle.message("field.not.found.in.class.problem.descriptor", fieldName, target.getName()));
+        return;
+      }
+      else if (typeString.equals("java.util.concurrent.atomic.AtomicLongFieldUpdater")) {
+        if (arguments.length != 2) {
+          return;
+        }
+        if (!PsiTypes.longType().equals(field.getType())) {
+          registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "long"));
+          return;
+        }
+      }
+      else if (typeString.equals("java.util.concurrent.atomic.AtomicIntegerFieldUpdater")) {
+        if (arguments.length != 2) {
+          return;
+        }
+        if (!PsiTypes.intType().equals(field.getType())) {
+          registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "int"));
+          return;
+        }
+      }
+      else if (typeString.equals("java.util.concurrent.atomic.AtomicReferenceFieldUpdater")) {
+        if (arguments.length != 3) {
+          return;
+        }
+        final PsiExpression argument2 = arguments[1];
+        if (!(argument2 instanceof PsiClassObjectAccessExpression objectAccessExpression)) {
+          return;
+        }
+        final PsiType type = objectAccessExpression.getOperand().getType();
+        final PsiType substFieldType = classType.resolveGenerics().getSubstitutor().substitute(field.getType());
+        if (substFieldType == null) {
+          return;
+        }
+        if (!substFieldType.isAssignableFrom(type)) {
+          registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor",
+                                                                      fieldName, type.getPresentableText()));
+          return;
+        }
+      }
+      else {
+        assert false;
+      }
+      if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        registerError(lastArgument, InspectionGadgetsBundle.message("field.missing.volatile.modifier.problem.descriptor", fieldName));
+      }
+      else if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        registerError(lastArgument, InspectionGadgetsBundle.message("field.has.static.modifier.problem.descriptor", fieldName));
+      }
+      else {
+        if (!field.hasModifierProperty(PsiModifier.PUBLIC) && PsiUtil.getContainingClass(expression) != field.getContainingClass()) {
+          if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+            registerError(lastArgument, InspectionGadgetsBundle.message("private.field.not.accessible.problem.descriptor", fieldName));
+          }
+          else if (!ClassUtils.inSamePackage(expression, field)) {
+            if (field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+              registerError(lastArgument, InspectionGadgetsBundle.message("package.local.field.not.accessible", fieldName));
+            }
+            final PsiClass expressionClass = PsiUtil.getContainingClass(expression);
+            final PsiClass fieldClass = field.getContainingClass();
+            if (expressionClass != null && fieldClass != null && !expressionClass.isInheritor(fieldClass, true)) {
+              if (field.hasModifierProperty(PsiModifier.PROTECTED)) {
+                registerError(lastArgument,
+                              InspectionGadgetsBundle.message("protected.field.not.accessible.problem.descriptor", fieldName));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

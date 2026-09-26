@@ -1,0 +1,117 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.cglib"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.dom.fileMetaData"
+                    beanClass="com.intellij.util.xml.impl.DomFileMetaData"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.util.xml.DomFileDescription"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.dom.implementation"
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
+                    dynamic="true">
+      <with attribute="interfaceClass" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="implementationClass" implements="com.intellij.util.xml.DomElement"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.dom.converter"
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.dom.extender"
+                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP"
+                    dynamic="true">
+      <with attribute="domClass" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.gotoSuper language="XML" implementationClass="com.intellij.codeInsight.navigation.DomGotoSuperHandler"/>
+
+    <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
+
+    <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
+    <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder" externalIdPrefix="xml."/>
+    <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
+    <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.DomService"
+                        serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.ui.DomUIFactory"
+                        serviceImplementation="com.intellij.util.xml.ui.DomUIFactoryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.ElementPresentationManager"
+                        serviceImplementation="com.intellij.util.xml.ElementPresentationManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.ConverterManager" open="true"
+                        serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"
+                    serviceImplementation="com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.DomElementsNavigationManager"
+                    serviceImplementation="com.intellij.util.xml.impl.DomElementsNavigationManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.util.xml.DomManager"
+                    serviceImplementation="com.intellij.util.xml.impl.DomManagerImpl"/>
+    
+    <projectService serviceInterface="com.intellij.util.xml.actions.generate.DomTemplateRunner"
+                    serviceImplementation="com.intellij.util.xml.impl.DomTemplateRunnerImpl"/>
+
+    <metaDataContributor implementation="com.intellij.util.xml.impl.DomMetaDataContributor"/>
+
+    <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.util.xml.DomDocumentationProvider" id="dom"/>
+
+    <usageTypeProvider implementation="com.intellij.util.xml.DomUsageTypeProvider"/>
+
+    <psi.referenceContributor language="XML" implementation="com.intellij.util.xml.impl.DomReferenceContributor"/>
+
+    <xml.elementDescriptorProvider implementation="com.intellij.util.xml.impl.DomDescriptorProvider"/>
+
+    <completion.contributor language="XML" implementationClass="com.intellij.util.xml.impl.DomCompletionContributor" id="dom" order="first, before xml"/>
+
+    <nameSuggestionProvider implementation="com.intellij.util.xml.DomNameSuggestionProvider" id="dom" order="first, before java"/>
+
+    <pom.declarationSearcher implementation="com.intellij.util.xml.impl.DomDeclarationSearcher"/>
+    <elementDescriptionProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetDescriptionProvider" id="domDefault" order="last, before pomDefault"/>
+    <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
+    <iconProvider implementation="com.intellij.util.xml.DomFileIconProvider" id="domFileDefault" order="last"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.util.xml.DomUtil$XmlDomCacheCleaner" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+</idea-plugin>

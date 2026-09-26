@@ -1,0 +1,27 @@
+<html>
+<body>
+Reports unused expressions, which often indicate incomplete code or a missing <code>return</code> statement.
+
+<p>
+    If the unused expression is the last statement in a function and its type matches the function's return type,
+    a quick fix is available to automatically add the <code>return</code> keyword.
+</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+fun example(): Int {
+    val x = 10
+    x // Warning: Expression is unused
+}
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun example(): Int {
+    val x = 10
+    return x
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

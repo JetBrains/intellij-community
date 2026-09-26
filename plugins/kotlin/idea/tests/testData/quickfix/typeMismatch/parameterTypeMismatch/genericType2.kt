@@ -1,0 +1,10 @@
+// "Change parameter 'x' type of function 'foo' to 'Any?'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+fun <X: Any, Y> foo(x: X, y: Y) {}
+
+fun <T> bar(x: T) {
+    foo(<caret>x, "")
+}
+// IGNORE_K2
+// Task for K2: KTIJ-33274

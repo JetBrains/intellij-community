@@ -23,7 +23,7 @@ class C {
   interface II extends I {
     default void m() {
       I.super.m();
-      <error descr="Unqualified super reference is not allowed in extension method">super.<error descr="Cannot resolve method 'm()'">m</error></error>();
+      <error descr="Unqualified super reference is not allowed in extension method">super.<error descr="Cannot resolve method 'm' in 'Object'">m</error></error>();
 
       System.out.println(<error descr="'C.I' is not an enclosing class">I.super</error>.i);
       System.out.println(<error descr="Unqualified super reference is not allowed in extension method">super.<error descr="Cannot resolve symbol 'i'">i</error></error>);
@@ -50,14 +50,14 @@ class D {
 }
 
 interface IllegalMods {
-  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Not allowed in interface">{ }</error>
+  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Class initializer is not allowed in interface">{ }</error>
 
-  <error descr="Static methods in interfaces should have a body">static void m2()</error>;
-  <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers: 'default' and 'static'">default</error> void m3() { }
+  <error descr="Static methods in interfaces should have a body">static void m2();</error>
+  <error descr="Illegal combination of modifiers 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers 'default' and 'static'">default</error> void m3() { }
 
-  <error descr="Illegal combination of modifiers: 'abstract' and 'default'">abstract</error> <error descr="Illegal combination of modifiers: 'default' and 'abstract'">default</error> void m4() { }
+  <error descr="Illegal combination of modifiers 'abstract' and 'default'">abstract</error> <error descr="Illegal combination of modifiers 'default' and 'abstract'">default</error> void m4() { }
 
-  <error descr="Extension method should have a body">default void m5()</error>;
+  <error descr="Extension method should have a body">default void m5();</error>
 
   <error descr="Modifier 'default' not allowed here">default</error> int i;
   <error descr="Modifier 'default' not allowed here">default</error> interface X { }

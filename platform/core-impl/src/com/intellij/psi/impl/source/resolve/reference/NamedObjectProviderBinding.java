@@ -1,113 +1,119 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.diagnostic.PluginExceptionUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
+import com.intellij.util.SharedProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author maxim
  */
+@ApiStatus.Internal
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMap = new THashMap<>(5);
-  private final Map<String, List<ProviderInfo<ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<>(5);
+  /**
+   * arrays inside these maps must be copy-on-write to avoid data races, since they can be read concurrently,
+   * via {@link #addAcceptableReferenceProviders}
+   */
+  private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMap = new ConcurrentHashMap<>(5);
+  private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<>(5);
 
-  public void registerProvider(@NonNls @NotNull String[] names,
-                               @NotNull ElementPattern filter,
-                               boolean caseSensitive,
-                               @NotNull PsiReferenceProvider provider,
-                               final double priority) {
-    final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+  public synchronized void registerProvider(@NonNls String @NotNull [] names,
+                                            @NotNull ElementPattern<?> filter,
+                                            boolean caseSensitive,
+                                            @NotNull PsiReferenceProvider provider,
+                                            double priority) {
+    Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
-    for (final String attributeName : names) {
-      String key = caseSensitive ? attributeName : attributeName.toLowerCase();
-      List<ProviderInfo<ElementPattern>> psiReferenceProviders = map.get(key);
+    for (String attributeName : names) {
+      String key = caseSensitive ? attributeName : StringUtil.toLowerCase(attributeName);
+      ProviderInfo<ElementPattern<?>>[] psiReferenceProviders = map.get(key);
 
-      if (psiReferenceProviders == null) {
-        map.put(key, psiReferenceProviders = new SmartList<>());
-      }
+      ProviderInfo<ElementPattern<?>> newInfo = new ProviderInfo<>(provider, filter, priority);
+      ProviderInfo<ElementPattern<?>>[] newProviders = appendToArray(psiReferenceProviders, newInfo);
 
-      psiReferenceProviders.add(new ProviderInfo<>(provider, filter, priority));
+      map.put(key, newProviders);
     }
+  }
+
+  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] appendToArray(@NotNull ProviderInfo<ElementPattern<?>> @Nullable [] psiReferenceProviders,
+                                                                            @NotNull ProviderInfo<ElementPattern<?>> newInfo) {
+    @SuppressWarnings("unchecked")
+    ProviderInfo<ElementPattern<?>>[] newProviders = psiReferenceProviders == null ? new ProviderInfo[]{newInfo}
+                                                                                   : ArrayUtil.append(psiReferenceProviders, newInfo);
+    return newProviders;
   }
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
+                                              @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
     String name = getName(position);
     if (name != null) {
       addMatchingProviders(position, myNamesToProvidersMap.get(name), list, hints);
-      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(name.toLowerCase()), list, hints);
+      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name)), list, hints);
     }
   }
 
   @Override
-  public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
-    for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMap.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
-        if (trinity.provider.equals(provider)) {
-          list.remove(trinity);
-        }
-      }
+  public synchronized void unregisterProvider(@NotNull PsiReferenceProvider provider) {
+    for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMap.entrySet()) {
+      entry.setValue(removeFromArray(provider, entry.getValue()));
     }
-    for (final List<ProviderInfo<ElementPattern>> list : myNamesToProvidersMapInsensitive.values()) {
-      for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(list)) {
-        if (trinity.provider.equals(provider)) {
-          list.remove(trinity);
-        }
-      }
+    for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMapInsensitive.entrySet()) {
+      entry.setValue(removeFromArray(provider, entry.getValue()));
     }
   }
 
-  @Nullable
-  protected abstract String getName(@NotNull PsiElement position);
+  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider,
+                                                                              @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] array) {
+    int i = ContainerUtil.indexOf(array, trinity -> trinity.provider.equals(provider));
+    if (i != -1) {
+      //noinspection unchecked
+      return (ProviderInfo<ElementPattern<?>>[])ArrayUtil.remove(array, i, ProviderInfo.ARRAY_FACTORY);
+    }
+    return array;
+  }
+
+  boolean isEmpty() {
+    return myNamesToProvidersMap.isEmpty() && myNamesToProvidersMapInsensitive.isEmpty();
+  }
+
+  protected abstract @Nullable String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @Nullable final List<ProviderInfo<ElementPattern>> providerList,
-                                   @NotNull Collection<ProviderInfo<ProcessingContext>> output,
+                                   @NotNull ProviderInfo<ElementPattern<?>> @Nullable [] providerList,
+                                   @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
+    SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < providerList.size(); i++) {
-      ProviderInfo<ElementPattern> info = providerList.get(i);
-      if (hints != PsiReferenceService.Hints.NO_HINTS && !info.provider.acceptsHints(position, hints)) {
-        continue;
-      }
-
-      final ProcessingContext context = new ProcessingContext();
+    for (ProviderInfo<ElementPattern<?>> info : providerList) {
       if (hints != PsiReferenceService.Hints.NO_HINTS) {
-        context.put(PsiReferenceService.HINTS, hints);
+        Boolean hintAccepted = PluginExceptionUtil.computeOrLogPluginException(
+          info.provider.getClass(),
+          () -> info.provider.acceptsHints(position, hints)
+        );
+        if (hintAccepted == null || !hintAccepted.booleanValue()) continue;
       }
+
+      ProcessingContext context = new ProcessingContext(sharedProcessingContext);
       boolean suitable = false;
       try {
         suitable = info.processingContext.accepts(position, context);

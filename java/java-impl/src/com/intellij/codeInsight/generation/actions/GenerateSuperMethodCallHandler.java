@@ -19,14 +19,20 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,16 +41,16 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
   private static final Logger LOG = Logger.getInstance(GenerateSuperMethodCallHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiMethod method = canInsertSuper(editor, file);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiMethod method = canInsertSuper(editor, psiFile);
     LOG.assertTrue(method != null);
     PsiMethod template = (PsiMethod)method.copy();
 
-    OverrideImplementUtil.setupMethodBody(template, method, method.getContainingClass());
+    OverrideImplementUtil.setupMethodBody(template, findNonAbstractSuper(method), method.getContainingClass());
     PsiCodeBlock templateBody = template.getBody();
     LOG.assertTrue(templateBody != null, template);
     PsiStatement superCall = templateBody.getStatements()[0];
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
     LOG.assertTrue(codeBlock != null);
     PsiElement toGo;
@@ -62,6 +68,15 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     toGo = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(toGo);
     editor.getCaretModel().moveToOffset(toGo.getTextOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static PsiMethod findNonAbstractSuper(PsiMethod method) {
+    List<? extends HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : superSignatures) {
+      PsiMethod superMethod = superSignature.getMethod();
+      if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return superMethod;
+    }
+    return null;
   }
 
   public static PsiMethod canInsertSuper(Editor editor, PsiFile file) {

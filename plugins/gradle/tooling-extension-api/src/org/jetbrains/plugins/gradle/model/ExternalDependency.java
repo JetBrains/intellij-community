@@ -24,7 +24,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalDependency extends Serializable {
   /**
@@ -86,8 +85,10 @@ public interface ExternalDependency extends Serializable {
    * Useful if multiple candidates were found during dependency resolution.
    *
    * @return the reason for selecting the dependency
+   * @deprecated org.gradle.api.artifacts.result.ComponentSelectionReason#getDescription() was deprecated
    */
   @Nullable
+  @Deprecated
   String getSelectionReason();
 
   /**
@@ -103,7 +104,7 @@ public interface ExternalDependency extends Serializable {
    * @return transitive dependencies
    */
   @NotNull
-  Collection<ExternalDependency> getDependencies();
+  Collection<? extends ExternalDependency> getDependencies();
 
   /**
    * Allows to check if current dependency is transitive, i.e. is visible to the module which depends on module that has current dependency.

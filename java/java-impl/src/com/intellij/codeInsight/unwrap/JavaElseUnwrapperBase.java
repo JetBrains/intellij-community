@@ -20,12 +20,13 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
-  public JavaElseUnwrapperBase(String description) {
+  public JavaElseUnwrapperBase(@Nls String description) {
     super(description);
   }
 
@@ -34,12 +35,12 @@ public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
     return (PsiUtil.isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }
 
-  private boolean isElseKeyword(PsiElement e) {
+  private static boolean isElseKeyword(PsiElement e) {
     PsiElement p = e.getParent();
     return p instanceof PsiIfStatement && e == ((PsiIfStatement)p).getElseElement();
   }
 
-  private boolean isValidConstruct(PsiElement e) {
+  private static boolean isValidConstruct(PsiElement e) {
     return ((PsiIfStatement)e.getParent()).getElseBranch() != null;
   }
 

@@ -1,0 +1,1 @@
+fun g() = 1 < <error descr="[DECLARATION_IN_ILLEGAL_CONTEXT]">class A</error>

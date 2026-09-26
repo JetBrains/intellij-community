@@ -5,7 +5,6 @@ f(c=1, *(10, 20))
 f(*(10, 20), c=1)
 f(*(10, 20, 30), <warning descr="Unexpected argument">c=1</warning>) # fail: duplicate c
 f(1, *(10, 20, <warning descr="Unexpected argument">30</warning>)) # fail: tuple too long
-f(1, <warning descr="Expected an iterable, got int">*(10)</warning>) # fail: wrong type
 f(1, *(10,)<warning descr="Parameter 'c' unfilled">)</warning> # fail: tuple too short, c not mapped
 
 def f1(a, b, c=1):
@@ -19,7 +18,7 @@ def f2(a, b, c=1, *d):
 f2(c=3, *(1,2))
 f2(1,2,3, *(1,2))
 f2(*(1,2), c=20)
-f2(*(1,2), <error descr="Python versions < 3.5 do not allow positional arguments after *expression">20</error>) # fail: positional past *
+f2(*(1,2), <error descr="Python version 3.4 does not allow positional arguments after *expression">20</error>) # fail: positional past *
 
 def f3(a=1, b=2, c=3, *d):
   return a,b,c,d

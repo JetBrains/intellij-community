@@ -1,0 +1,67 @@
+PsiJavaFile:ReferenceLinkMarkdown17.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_COMMENT_DATA('\format')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiDocToken:DOC_COMMENT_DATA('WrapFileLinks(\i. ')
+      PsiDocToken:DOC_COMMENT_DATA('\d (')
+      PsiDocToken:DOC_COMMENT_DATA('\p')
+      PsiDocToken:DOC_RPAREN(')')
+      PsiDocToken:DOC_RPAREN(')')
+      PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_COMMENT_DATA('{')
+      PsiDocToken:DOC_COMMENT_DATA('\file')
+      PsiDocToken:DOC_COMMENT_DATA('}')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' \n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:List<String>
+            PsiIdentifier:List('List')
+            PsiReferenceParameterList
+              PsiJavaToken:LT('<')
+              PsiTypeElement:String
+                PsiJavaCodeReferenceElement:String
+                  PsiIdentifier:String('String')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:GT('>')
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_COMMENT_DATA(' real link with a generic type')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiDocToken:DOC_COMMENT_DATA('Hello, world')
+      PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_COMMENT_DATA(' fake link with a comma')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiDocToken:DOC_COMMENT_DATA('Hello world')
+      PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_COMMENT_DATA(' fake link without comma')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

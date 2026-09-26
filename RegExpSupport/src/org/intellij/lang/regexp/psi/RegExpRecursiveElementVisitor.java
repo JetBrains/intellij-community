@@ -15,10 +15,15 @@
  */
 package org.intellij.lang.regexp.psi;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpRecursiveElementVisitor extends RegExpElementVisitor implements PsiRecursiveVisitor {
-    public void visitRegExpElement(RegExpElement element) {
-        element.acceptChildren(this);
-    }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    super.visitElement(element);
+    element.acceptChildren(this);
+  }
 }

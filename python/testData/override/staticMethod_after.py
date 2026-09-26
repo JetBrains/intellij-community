@@ -6,4 +6,4 @@ class A:
 class B(A):
     @staticmethod
     def foo(cls):
-        <selection>A.foo(cls)</selection>
+        <selection>super().foo(cls)</selection>

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author spleaner
- */
 @SuppressWarnings({"ALL"})
 public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
 
@@ -72,11 +69,11 @@ public class XmlMoverTest extends LightPlatformCodeInsightTestCase {
 
   private void performAction(final String fileName, final EditorActionHandler handler, final String afterFileName) throws Exception {
     configureByFile(fileName);
-    if (handler.isEnabled(myEditor, null)) {
+    if (handler.isEnabled(getEditor(), null, null)) {
       WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
-          handler.execute(myEditor, null);
+          handler.execute(getEditor(), null, null);
         }
       });
     }

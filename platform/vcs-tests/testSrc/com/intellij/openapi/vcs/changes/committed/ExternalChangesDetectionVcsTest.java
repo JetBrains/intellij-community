@@ -1,34 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ChangelistBuilder;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,20 +32,20 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author irengrig
- */
+import static com.intellij.openapi.vcs.changes.ChangeListManagerExtensionsKt.getUnversionedFiles;
+import static org.junit.Assert.assertTrue;
+
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
-  private LocalFileSystem myLFS;
-  private ChangeListManager myChangeListManager;
+  private VirtualFileSystem myLFS;
+  private ChangeListManagerImpl myChangeListManager;
   private VcsDirtyScopeManager myVcsDirtyScopeManager;
   private TempDirTestFixture myTempDirTestFixture;
   private File myClientRoot;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
       myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
@@ -61,22 +54,22 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
       myClientRoot.mkdir();
 
-      initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
+      initProject(myClientRoot, this.getTestName());
 
       myVcs = new MockAbstractVcs(myProject);
       myVcs.setChangeProvider(new MyMockChangeProvider());
       myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
       myVcsManager.registerVcs(myVcs);
-      myVcsManager.setDirectoryMapping("", myVcs.getName());
+      myVcsManager.setDirectoryMapping(myClientRoot.getPath(), myVcs.getName());
 
-      myLFS = LocalFileSystem.getInstance();
-      myChangeListManager = ChangeListManager.getInstance(myProject);
+      myLFS = StandardFileSystems.local();
+      myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     });
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       myVcsManager.unregisterVcs(myVcs);
       myVcs = null;
@@ -94,13 +87,13 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   public void testDeletion() throws Exception {
     final File f = new File(myClientRoot, "f.txt");
     f.createNewFile();
-    final VirtualFile vf = myLFS.refreshAndFindFileByIoFile(f);
-    myChangeListManager.ensureUpToDate(false);
-    ((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles().contains(vf);
+    final VirtualFile vf = myLFS.refreshAndFindFileByPath(f.getAbsolutePath());
+    myChangeListManager.ensureUpToDate();
+    assertTrue(getUnversionedFiles(myChangeListManager).contains(vf));
     FileUtil.delete(f);
     myWorkingCopyDir.refresh(false, true);
-    myChangeListManager.ensureUpToDate(false);
-    ((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles().isEmpty();
+    myChangeListManager.ensureUpToDate();
+    assertTrue(getUnversionedFiles(myChangeListManager).isEmpty());
   }
 
   @Test
@@ -110,14 +103,14 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       f.createNewFile();
     }
     myWorkingCopyDir.refresh(false, true);
-    myChangeListManager.ensureUpToDate(false);
-    final List<VirtualFile> unversionedFiles = ((ChangeListManagerImpl)myChangeListManager).getUnversionedFiles();
+    myChangeListManager.ensureUpToDate();
+    final List<VirtualFile> unversionedFiles = getUnversionedFiles(myChangeListManager);
     final Pattern pattern = Pattern.compile("f([0-9])+\\.txt");
     int cnt = 0;
     for (VirtualFile unversionedFile : unversionedFiles) {
-      if (VfsUtil.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
-        ++ cnt;
-        Assert.assertTrue(pattern.matcher(unversionedFile.getName()).matches());
+      if (VfsUtilCore.isAncestor(myWorkingCopyDir, unversionedFile, true)) {
+        ++cnt;
+        assertTrue(pattern.matcher(unversionedFile.getName()).matches());
       }
     }
     Assert.assertEquals(100, cnt);
@@ -171,23 +164,19 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
 
   private static class MyMockChangeProvider implements ChangeProvider {
     @Override
-    public void doCleanup(List<VirtualFile> files) {
-    }
-
-    @Override
     public void getChanges(@NotNull VcsDirtyScope dirtyScope,
                            @NotNull final ChangelistBuilder builder,
                            @NotNull ProgressIndicator progress,
                            @NotNull ChangeListManagerGate addGate) {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        builder.processUnversionedFile(path.getVirtualFile());
+        builder.processUnversionedFile(path);
       }
       final Processor<VirtualFile> processor = vf -> {
-        builder.processUnversionedFile(vf);
+        builder.processUnversionedFile(VcsUtil.getFilePath(vf));
         return true;
       };
       for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
-        VfsUtil.processFilesRecursively(dir.getVirtualFile(), processor);
+        VfsUtilCore.processFilesRecursively(dir.getVirtualFile(), processor);
       }
     }
 

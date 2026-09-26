@@ -1,211 +1,142 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.execution.ExecutionException
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.util.PathUtil
-import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
-import java.io.File
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
+import kotlin.io.path.div
+import com.intellij.python.sdk.backend.pythonInterpreter
 
-/**
- * @author vlan
- */
-
-fun findBaseSdks(existingSdks: List<Sdk>): List<Sdk> {
-  val existing = existingSdks.filter { it.isSystemWide }
-  val detected = detectSystemWideSdks(existingSdks)
-  return existing + detected
-}
-
-fun detectSystemWideSdks(existingSdks: List<Sdk>): List<PyDetectedSdk> {
-  val existingPaths = existingSdks.map { it.homePath }.toSet()
-  return PythonSdkFlavor.getApplicableFlavors(false)
-    .asSequence()
-    .flatMap { it.suggestHomePaths().asSequence() }
-    .filter { it !in existingPaths }
-    .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
-                                         { it.homePath }).reversed())
-    .toList()
-}
-
-fun detectVirtualEnvs(project: Project?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, project)
-
-fun detectCondaEnvs(project: Project?, existingSdks: List<Sdk>): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths(), existingSdks, project)
-
-fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
-                            existingSdks: List<Sdk>,
-                            baseSdk: Sdk?,
-                            associatedProjectPath: String?): Sdk? {
-  val homeFile = try {
-    val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
-    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?:
-    throw ExecutionException("Directory $homePath not found")
+@Internal
+fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
+  // in case module contains root of the project we consider it as a project wide interpreter
+  if (project.basePath == module.baseDir?.path) {
+    project.pythonSdk = sdk
   }
-  catch (e: ExecutionException) {
-    val description = PyPackageManagementService.toErrorDescription(listOf(e), baseSdk) ?: return null
-    PackagesNotificationPanel.showError("Failed to Create Interpreter", description)
-    return null
-  }
-  val suggestedName = suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
-                                       PythonSdkType.getInstance(),
-                                       false, null, suggestedName) ?: return null
+
+  module.pythonSdk = sdk
+  module.excludeInnerVirtualEnv(sdk)
 }
 
-fun Sdk.associateWithProject(project: Project?, isNewProject: Boolean) {
-  getOrCreateAdditionalData().apply {
-    when {
-      isNewProject -> associateWithNewProject()
-      project != null -> associateWithProject(project)
-    }
-  }
+
+internal fun resetSystemWideSdksDetectors() {
+  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
 }
 
-fun Sdk.isAssociatedWithProject(project: Project?): Boolean {
-  val basePath = project?.basePath
-  val associatedPath = associatedProjectPath
+@Internal
+fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
+  val basePath = module?.baseDir?.path
+  val associatedPath = associatedModulePath
   if (basePath != null && associatedPath == basePath) return true
-  if (isAssociatedWithAnotherProject(project)) return false
-  return isLocatedInsideProject(project) || containsProjectName(project)
+  if (isAssociatedWithAnotherModule(module)) return false
+  return (module != null && isLocatedInsideModule(module)) || containsModuleName(module)
 }
 
-fun Sdk.isAssociatedWithAnotherProject(project: Project?): Boolean {
-  val basePath = project?.basePath ?: return false
-  val associatedPath = associatedProjectPath ?: return false
+@Internal
+fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
+  val basePath = module?.baseDir?.path ?: return false
+  val associatedPath = associatedModulePath ?: return false
   return basePath != associatedPath
 }
 
-val Sdk.associatedProjectPath: String?
-  // TODO: Support .project associations
-  get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
-
-fun Sdk.adminPermissionsNeeded(): Boolean {
-  val homePath = homePath ?: return false
-  return !Files.isWritable(Paths.get(homePath))
-}
-
-fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
-  val homeDir = homeDirectory ?: return null
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, null)
-}
-
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedProjectPath: String?): Sdk? {
-  val homeDir = homeDirectory ?: return null
-  val suggestedName = homePath?.let { suggestAssociatedSdkName(it, associatedProjectPath) }
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, suggestedName)
-}
-
-private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
-  val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
-  val venvRoot = PythonSdkType.getVirtualEnvRoot(sdkHome)?.path
-  val condaRoot = CondaEnvSdkFlavor.getCondaEnvRoot(sdkHome)?.path
-  val associatedName = when {
-    venvRoot != null && (associatedPath == null || !FileUtil.isAncestor(associatedPath, venvRoot, true)) ->
-      PathUtil.getFileName(venvRoot)
-    condaRoot != null && (associatedPath == null || !FileUtil.isAncestor(associatedPath, condaRoot, true)) ->
-      PathUtil.getFileName(condaRoot)
-    else ->
-      associatedPath?.let { PathUtil.getFileName(associatedPath) } ?: return null
-  }
-  return "$baseSdkName ($associatedName)"
-}
-
-val File.isNotEmptyDirectory: Boolean
-  get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false
-
-private val Sdk.isSystemWide: Boolean
-  get() = !PythonSdkType.isRemote(this) && !PythonSdkType.isVirtualEnv(
-    this) && !PythonSdkType.isCondaVirtualEnv(this)
-
-@Suppress("unused")
-private val Sdk.associatedPathFromDotProject: String?
+/**
+ * Please set sdk on module level: [Module.pythonSdk]
+ */
+@set:ApiStatus.Obsolete
+var Project.pythonSdk: Sdk?
   get() {
-    val binaryPath = homePath ?: return null
-    val virtualEnvRoot = PythonSdkType.getVirtualEnvRoot(binaryPath) ?: return null
-    val projectFile = File(virtualEnvRoot, ".project")
-    return try {
-      projectFile.readText().trim()
+    val sdk = ProjectRootManager.getInstance(this).projectSdk
+    return when (sdk?.sdkType) {
+      is PythonSdkType -> sdk
+      else -> null
     }
-    catch (e: IOException) {
-      null
+  }
+  set(value) {
+    val application = ApplicationManager.getApplication()
+    application.invokeAndWait {
+      application.runWriteAction {
+        ProjectRootManager.getInstance(this).projectSdk = value
+      }
     }
   }
 
-private val Sdk.associatedPathFromAdditionalData: String?
-  get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedProjectPath
+@Internal
+fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
+  val root = sdk.pythonInterpreter().pythonHomePath?.let {
+    VirtualFileManager.getInstance().findFileByNioPath(it)
+  } ?: return
 
-private fun Sdk.isLocatedInsideProject(project: Project?): Boolean {
-  val homePath = homePath ?: return false
-  val basePath = project?.basePath ?: return false
-  return FileUtil.isAncestor(basePath, homePath, true)
+  runInEdt {
+    MarkRootsManager.modifyRoots(this, arrayOf(root)) { vFile, entry ->
+      entry.addExcludeFolder(vFile)
+    }
+  }
 }
 
-private val PyDetectedSdk.guessedLanguageLevel: LanguageLevel?
-  get() {
-    val path = homePath ?: return null
-    val result = Regex(""".*python(\d\.\d)""").find(path) ?: return null
-    val versionString = result.groupValues.getOrNull(1) ?: return null
-    return LanguageLevel.fromPythonVersion(versionString)
-  }
+internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
+  val binary = sdk.homeDirectory ?: return
+  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
+}
 
-private fun Sdk.containsProjectName(project: Project?): Boolean {
+internal val Sdk.isSystemWide: Boolean
+  get() = !PythonSdkUtil.isRemote(this) && !this.isNonToolVirtualEnv && !this.isCondaVirtualEnv
+
+
+@get:Internal
+val Sdk.isReadOnly: Boolean
+  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
+
+@get:Internal
+val Sdk.readOnlyErrorMessage: String
+  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
+
+internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
+
+private fun Sdk.isLocatedInsideModule(module: Module): Boolean {
+  val moduleDir = module.baseDir
+  val sdkDir = homeDirectory
+  return moduleDir != null && sdkDir != null && VfsUtil.isAncestor(moduleDir, sdkDir, true)
+}
+
+
+private fun Sdk.containsModuleName(module: Module?): Boolean {
   val path = homePath ?: return false
-  val name = project?.name ?: return false
+  val name = module?.name ?: return false
   return path.contains(name, true)
 }
 
-private fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
-  val existingData = sdkAdditionalData as? PythonSdkAdditionalData
-  if (existingData != null) return existingData
-  val newData = PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(homePath))
-  val modificator = sdkModificator
-  modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
-  return newData
-}
 
-private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
-                                 existingSdks: List<Sdk>,
-                                 project: Project?): List<PyDetectedSdk> {
-  val existingPaths = existingSdks.map { it.homePath }.toSet()
-  return suggestedPaths
-    .asSequence()
-    .filterNot { it in existingPaths }
-    .distinct()
-    .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithProject(project) },
-                                         { it.homePath }).reversed())
-    .toList()
-}
+@JvmName("getOrCreateAdditionalData")
+fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.pySdkAdditionalData
+
+/**
+ * Where a "remote_sources" folder for certain SDK is stored
+ */
+@get:Internal
+internal val Sdk.remoteSourcesLocalPath: Path
+  get() =
+    Path.of(PathManager.getSystemPath()) /
+    Path.of(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME) /
+    Path.of(when (val data = sdkAdditionalData) {
+              is PyTargetAwareAdditionalData -> data.uuid.toString()
+              else -> error("Only legacy and remote SDK and target-based SDKs are supported")
+            }.hashCode().toString())
+

@@ -1,0 +1,7 @@
+import kotlin.enums.enumEntries
+
+enum class EnumClass
+
+fun test() {
+    val res: Array<EnumClass> = run { enumEntries<EnumClass>().toTypedArray() })
+}

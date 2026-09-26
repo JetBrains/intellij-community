@@ -1,8 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.openapi.vfs.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -12,11 +16,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MockVirtualFile extends VirtualFile {
   public static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
     MockVirtualFile dir = new MockVirtualFile(true, name);
@@ -59,9 +61,8 @@ public class MockVirtualFile extends VirtualFile {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -69,9 +70,8 @@ public class MockVirtualFile extends VirtualFile {
     myParent = parent;
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
     MockVirtualFile file = new MockVirtualFile(name);
     addChild(file);
     return file;
@@ -82,15 +82,13 @@ public class MockVirtualFile extends VirtualFile {
     myChildren.add(child);
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return ourFileSystem;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     String prefix = myParent == null ? "MOCK_ROOT:" : myParent.getPath();
     return prefix + "/" + myName;
   }
@@ -115,9 +113,8 @@ public class MockVirtualFile extends VirtualFile {
     return true;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getParent() {
+  public @Nullable VirtualFile getParent() {
     return myParent;
   }
 
@@ -126,9 +123,18 @@ public class MockVirtualFile extends VirtualFile {
     return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public final boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     return new ByteArrayOutputStream() {
       @Override
       public void close() {
@@ -147,10 +153,9 @@ public class MockVirtualFile extends VirtualFile {
     myModStamp = modStamp;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() {
-    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(CharsetToolkit.UTF8_CHARSET);
+  public byte @NotNull [] contentsToByteArray() {
+    return myText == null ? ArrayUtilRt.EMPTY_BYTE_ARRAY : myText.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
@@ -167,7 +172,7 @@ public class MockVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 

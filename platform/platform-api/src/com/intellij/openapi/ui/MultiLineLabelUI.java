@@ -1,28 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
 /**
  * Based on Zafir Anjum example.
@@ -31,6 +25,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
   private String myString;
   private String[] myLines;
 
+  @Override
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
@@ -86,8 +81,6 @@ public class MultiLineLabelUI extends BasicLabelUI {
     Rectangle textR,
     int textIconGap) {
     boolean orientationIsLeftToRight = true;
-    int hAlign = horizontalAlignment;
-    int hTextPos = horizontalTextPosition;
 
 
     if (c != null) {
@@ -99,25 +92,19 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
     // Translate LEADING/TRAILING values in horizontalAlignment
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalAlignment) {
-    case LEADING:
-      hAlign = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hAlign = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hAlign = switch (horizontalAlignment) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalAlignment;
+    };
 
     // Translate LEADING/TRAILING values in horizontalTextPosition
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalTextPosition) {
-    case LEADING:
-      hTextPos = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hTextPos = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hTextPos = switch (horizontalTextPosition) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalTextPosition;
+    };
 
     return layoutCompoundLabel(fm,
       text,
@@ -172,7 +159,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
     // Fix for textIsEmpty sent by Paulo Santos
     boolean textIsEmpty =
-      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || "".equals(text[0])));
+      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || text[0].isEmpty()));
 
     String rettext = "";
     if (textIsEmpty) {
@@ -309,12 +296,14 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return rettext;
   }
 
+  @Override
   protected void paintEnabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getForeground());
     drawString(g, s, accChar, textX, textY);
   }
 
+  @Override
   protected void paintDisabledText(JLabel l, Graphics g, String s, int textX, int textY) {
     int accChar = l.getDisplayedMnemonic();
     g.setColor(l.getBackground());
@@ -336,16 +325,16 @@ public class MultiLineLabelUI extends BasicLabelUI {
     }
   }
 
-  public static Dimension computeMultiLineDimension(FontMetrics fm, String[] strs) {
+  public static Dimension computeMultiLineDimension(FontMetrics fm, @Nls String [] strs) {
     int width = 0;
-    for (int i = 0; i < strs.length; i++) {
-      width = Math.max(width, SwingUtilities.computeStringWidth(fm, strs[i]));
+    for (@Nls String str : strs) {
+      width = Math.max(width, SwingUtilities.computeStringWidth(fm, str));
     }
     return new Dimension(width, fm.getHeight() * strs.length);
   }
 
   public String[] splitStringByLines(String str) {
-    if (str == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (str == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (str.equals(myString)) {
       return myLines;
     }
@@ -354,12 +343,12 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return myLines;
   }
 
-  public static String convertTabs(String text, final int tabLength) {
-    StringBuffer buf = new StringBuffer(text.length());
+  public static String convertTabs(@Nls String text, final int tabLength) {
+    @Nls StringBuilder buf = new StringBuilder(text.length());
     for (int idx = 0; idx < text.length(); idx++) {
       char ch = text.charAt(idx);
       if (ch == '\t') {
-        for (int i = 0; i < tabLength; i++) buf.append(' ');
+        buf.repeat(' ', tabLength);
       }
       else {
         buf.append(ch);

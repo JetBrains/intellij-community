@@ -1,39 +1,30 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -41,43 +32,46 @@ import java.util.LinkedHashSet;
 public class MyLookupExpression extends Expression {
   protected final String myName;
   protected final LookupElement[] myLookupItems;
-  private final String myAdvertisementText;
+  private final @NlsContexts.PopupAdvertisement String myAdvertisementText;
+  private volatile LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
+  private SuggestedNameInfo mySuggestedNameInfo;
 
-  public MyLookupExpression(final String name,
-                            final LinkedHashSet<String> names,
-                            PsiNamedElement elementToRename, 
-                            final PsiElement nameSuggestionContext,
-                            final boolean shouldSelectAll,
-                            final String advertisement) {
+  public MyLookupExpression(@NlsSafe String name,
+                            @Nullable LinkedHashSet<@NlsSafe String> names,
+                            @Nullable PsiNamedElement elementToRename,
+                            @Nullable PsiElement nameSuggestionContext,
+                            boolean shouldSelectAll,
+                            @NlsContexts.PopupAdvertisement String advertisement) {
     myName = name;
     myAdvertisementText = advertisement;
     myLookupItems = initLookupItems(names, elementToRename, nameSuggestionContext, shouldSelectAll);
   }
 
-  private static LookupElement[] initLookupItems(LinkedHashSet<String> names,
-                                                 PsiNamedElement elementToRename, 
-                                                 PsiElement nameSuggestionContext,
+  public @Nullable SuggestedNameInfo getSuggestedNameInfo() {
+    return mySuggestedNameInfo;
+  }
+
+  private LookupElement[] initLookupItems(@Nullable LinkedHashSet<String> names,
+                                                 @Nullable PsiNamedElement elementToRename,
+                                                 @Nullable PsiElement nameSuggestionContext,
                                                  final boolean shouldSelectAll) {
     if (names == null) {
+      if (elementToRename == null) return LookupElement.EMPTY_ARRAY;
       names = new LinkedHashSet<>();
-      for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-        final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(elementToRename, nameSuggestionContext, names);
-        if (suggestedNameInfo != null &&
-            provider instanceof PreferrableNameSuggestionProvider &&
-            !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
-          break;
-        }
-      }
+      final LinkedHashSet<String> finalNames = names;
+      mySuggestedNameInfo =
+        ActionUtil.underModalProgress(elementToRename.getProject(), RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                      () -> NameSuggestionProvider.suggestNames(elementToRename, nameSuggestionContext, finalNames));
     }
     final LookupElement[] lookupElements = new LookupElement[names.size()];
     final Iterator<String> iterator = names.iterator();
     for (int i = 0; i < lookupElements.length; i++) {
       final String suggestion = iterator.next();
-      lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler(new InsertHandler<LookupElement>() {
+      lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler(new InsertHandler<>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           if (shouldSelectAll) return;
-          final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(context.getEditor());
+          final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(context.getEditor());
           final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
           if (templateState != null) {
             final TextRange range = templateState.getCurrentVariableRange();
@@ -97,14 +91,8 @@ public class MyLookupExpression extends Expression {
   }
 
   @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return calculateResult(context);
-  }
-
-  @Override
   public Result calculateResult(ExpressionContext context) {
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(context.getEditor());
-    final TextResult insertedValue = templateState != null ? templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME) : null;
+    final TextResult insertedValue = context.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
     if (insertedValue != null) {
       if (!insertedValue.getText().isEmpty()) return insertedValue;
     }
@@ -112,7 +100,21 @@ public class MyLookupExpression extends Expression {
   }
 
   @Override
+  public boolean requiresCommittedPSI() {
+    return false;
+  }
+
+  @Override
   public String getAdvertisingText() {
     return myAdvertisementText;
+  }
+
+  @Override
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
+    return myLookupFocusDegree;
+  }
+
+  public void setLookupFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
+    myLookupFocusDegree = lookupFocusDegree;
   }
 }

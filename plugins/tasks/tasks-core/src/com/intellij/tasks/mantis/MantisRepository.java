@@ -1,35 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.mantis.model.*;
+import com.intellij.tasks.mantis.model.FilterData;
+import com.intellij.tasks.mantis.model.IssueData;
+import com.intellij.tasks.mantis.model.IssueHeaderData;
+import com.intellij.tasks.mantis.model.MantisConnectLocator;
+import com.intellij.tasks.mantis.model.MantisConnectPortType;
+import com.intellij.tasks.mantis.model.ProjectData;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.net.ProxyUtils;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.AxisFault;
@@ -38,10 +27,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.net.URL;
+import java.net.URI;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -88,15 +78,13 @@ public class MantisRepository extends BaseRepositoryImpl {
     myAllProjectsAvailable = other.myAllProjectsAvailable;
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new MantisRepository(this);
   }
 
-  @Nullable
   @Override
-  public String extractId(@NotNull String taskName) {
+  public @Nullable String extractId(@NotNull String taskName) {
     Matcher matcher = ID_PATTERN.matcher(taskName);
     return matcher.find() ? matcher.group() : null;
   }
@@ -149,9 +137,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     });
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     IssueData data = fetchIssueById(createSoap(), id);
     // sanity check
     if (data == null || data.getId() == null || data.getSummary() == null) {
@@ -160,9 +147,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     return new MantisTask(data, this);
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
@@ -181,8 +167,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
-  public List<MantisProject> getProjects() throws Exception {
+  public @NotNull List<MantisProject> getProjects() throws Exception {
     ensureProjectsRefreshed();
     return myProjects == null ? Collections.emptyList() : myProjects;
   }
@@ -215,7 +200,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    Collections.sort(commonFilters, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+    commonFilters.sort(Comparator.comparing(MantisFilter::getName));
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
@@ -248,39 +233,23 @@ public class MantisRepository extends BaseRepositoryImpl {
     throw e;
   }
 
-  @NotNull
-  private MantisConnectPortType createSoap() throws Exception {
+  private @NotNull MantisConnectPortType createSoap() throws Exception {
     if (isUseProxy()) {
-      for (Pair<String, String> pair : HttpConfigurable.getInstance().getJvmProperties(false, null)) {
-        String key = pair.first, value = pair.second;
-        // Axis uses another names for username and password properties
-        // see http://axis.apache.org/axis/java/client-side-axis.html for complete list
-        if (key.equals(JavaProxyProperty.HTTP_USERNAME)) {
-          AxisProperties.setProperty("http.proxyUser", value);
-        }
-        else if (key.equals(JavaProxyProperty.HTTP_PASSWORD)) {
-          AxisProperties.setProperty("http.proxyPassword", value);
-        }
-        else {
-          AxisProperties.setProperty(key, value);
-        }
-      }
+      ProxyUtils.getCurrentSettingsAsJvmProperties().forEach(AxisProperties::setProperty);
     }
-    return new MantisConnectLocator().getMantisConnectPort(new URL(getUrl() + SOAP_API_LOCATION));
+    return new MantisConnectLocator().getMantisConnectPort(new URI(getUrl() + SOAP_API_LOCATION).toURL());
   }
 
-  @Nullable
-  private IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
+  private @Nullable IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
     try {
-      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.valueOf(id)));
+      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.parseInt(id)));
     }
     catch (RemoteException e) {
       throw handleException(e);
     }
   }
 
-  @NotNull
-  private ProjectData[] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
+  private ProjectData @NotNull [] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
     try {
       return soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     }
@@ -289,8 +258,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private FilterData[] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
+  private FilterData @NotNull [] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
     try {
       return soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
     }
@@ -299,9 +267,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private IssueHeaderData[] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
-                                               @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
+  private IssueHeaderData @NotNull [] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
+                                                         @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
     try {
       if (filter.isUnspecified()) {
         return soap.mc_project_get_issue_headers(getUsername(), getPassword(),
@@ -339,8 +306,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @Nullable
-  public MantisProject getCurrentProject() {
+  public @Nullable MantisProject getCurrentProject() {
     return myCurrentProject;
   }
 
@@ -348,8 +314,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     myCurrentProject = currentProject;
   }
 
-  @Nullable
-  public MantisFilter getCurrentFilter() {
+  public @Nullable MantisFilter getCurrentFilter() {
     return myCurrentFilter;
   }
 
@@ -359,7 +324,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(myUsername) && StringUtil.isNotEmpty(myPassword);
+    return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
   }
 
   @Override

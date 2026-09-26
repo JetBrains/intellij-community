@@ -1,0 +1,11 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_IMPLICIT_INVOKE_CALL
+
+fun foo() {}
+
+fun bar() {
+    val fff: (() -> Unit)? = ::foo
+    <caret>fff()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

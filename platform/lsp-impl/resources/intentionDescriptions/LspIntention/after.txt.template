@@ -1,0 +1,4 @@
+// LSP servers may suggest various code actions
+// A random example that adds type annotation:
+
+<spot>int</spot> foo = 0

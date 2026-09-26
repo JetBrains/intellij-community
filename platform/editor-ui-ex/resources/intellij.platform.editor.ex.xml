@@ -1,0 +1,43 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper" open="true"
+                    serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
+                        serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
+                        serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
+    <indexPatternSearch implementation="com.intellij.psi.impl.search.IndexPatternSearcher"/>
+    <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
+                        serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
+    <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
+    <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationService
+      serviceInterface="com.intellij.ide.todo.TodoDefaultPatternProvider"
+      serviceImplementation="com.intellij.ide.todo.DefaultTodoDefaultPatternProvider"
+      open="true"/>
+  </extensions>
+</idea-plugin>

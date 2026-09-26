@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(a: String)
+fun bar(p: Int) {}
+
+context(i: Int)
+val prop: Int
+    get() = 42
+
+context(a: String, b: Int)
+fun m() {
+    val i = prop
+
+    object: Function0<Int> {
+        override fun invoke(): Int {
+            <selection>bar(i)</selection>
+            return 1
+        }
+    }
+}

@@ -1,19 +1,5 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
-
-/*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.GroovyBugError;
@@ -22,8 +8,16 @@ import org.codehaus.groovy.ast.AnnotatedNode;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.ModuleNode;
 import org.codehaus.groovy.classgen.GeneratorContext;
-import org.codehaus.groovy.control.*;
-import org.codehaus.groovy.control.messages.*;
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.ErrorCollector;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.SourceUnit;
+import org.codehaus.groovy.control.messages.ExceptionMessage;
+import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SimpleMessage;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +28,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 public class GroovyCompilerWrapper {
@@ -45,10 +44,10 @@ public class GroovyCompilerWrapper {
     "A groovyc error occurred while trying to load one of the classes in project dependencies. " +
     "Please ensure its version is compatible with other jars (including Groovy ones) in the dependencies. " +
     "See the message and the stack trace below for reference\n\n";
-  private final List<CompilerMessage> collector;
+  private final List<? super GroovyCompilerMessage> collector;
   private boolean forStubs;
 
-  public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
+  public GroovyCompilerWrapper(List<? super GroovyCompilerMessage> collector, boolean forStubs) {
     this.collector = collector;
     this.forStubs = forStubs;
   }
@@ -65,10 +64,7 @@ public class GroovyCompilerWrapper {
     catch (CompilationFailedException e) {
       processCompilationException(e);
     }
-    catch (IOException e) {
-      processException(e, "");
-    }
-    catch (GroovyBugError e) {
+    catch (IOException | GroovyBugError e) {
       processException(e, "");
     }
     catch (NoClassDefFoundError e) {
@@ -105,14 +101,14 @@ public class GroovyCompilerWrapper {
       return getStubOutputItems(compilationUnit, targetDirectory);
     }
 
-    final SortedSet<String> allClasses = new TreeSet<String>();
+    final SortedSet<String> allClasses = new TreeSet<>();
     //noinspection unchecked
     List<GroovyClass> listOfClasses = compilationUnit.getClasses();
     for (GroovyClass listOfClass : listOfClasses) {
       allClasses.add(listOfClass.getName());
     }
 
-    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    List<OutputItem> compiledFiles = new ArrayList<>();
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
@@ -143,8 +139,9 @@ public class GroovyCompilerWrapper {
 
   @NotNull
   static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
-    final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    final List<OutputItem> compiledFiles = new ArrayList<>();
     compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
+      @Override
       public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
         final String topLevel = classNode.getName();
         String fileName = source.getName();
@@ -156,9 +153,15 @@ public class GroovyCompilerWrapper {
           }
         }
         OutputItem item = new OutputItem(stubDirectory, topLevel.replace('.', '/') + ".java", fileName);
-        if (new File(item.getOutputPath()).exists()) {
+        if (new File(item.outputPath).exists()) {
           compiledFiles.add(item);
         }
+      }
+
+      @Override
+      @SuppressWarnings("RedundantMethodOverride")
+      public void doPhaseOperation(CompilationUnit unit) throws CompilationFailedException {
+        super.doPhaseOperation(unit);
       }
     });
     return compiledFiles;
@@ -167,7 +170,10 @@ public class GroovyCompilerWrapper {
   private void addWarnings(ErrorCollector errorCollector) {
     for (int i = 0; i < errorCollector.getWarningCount(); i++) {
       WarningMessage warning = errorCollector.getWarning(i);
-      collector.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, warning.getMessage(), null, -1, -1));
+      collector.add(new GroovyCompilerMessage(
+        GroovyCompilerMessageCategories.WARNING, warning.getMessage(),
+        null, -1, -1
+      ));
     }
   }
 
@@ -183,7 +189,7 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  /** @noinspection ThrowableResultOfMethodCallIgnored*/
+  /** */
   private void processException(Message message) {
     if (message instanceof SyntaxErrorMessage) {
       SyntaxErrorMessage syntaxErrorMessage = (SyntaxErrorMessage) message;
@@ -205,8 +211,10 @@ public class GroovyCompilerWrapper {
     }
 
     if (forStubs) {
-      collector.add(new CompilerMessage(GroovyCompilerMessageCategories.INFORMATION,
-                                        GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED, null, -1, -1));
+      collector.add(new GroovyCompilerMessage(
+        GroovyCompilerMessageCategories.INFORMATION, GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED,
+        null, -1, -1
+      ));
     }
 
     final StringWriter writer = new StringWriter();
@@ -214,13 +222,12 @@ public class GroovyCompilerWrapper {
     if (!prefix.endsWith("\n")) {
       writer.append("\n\n");
     }
-    //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
-    collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
+    collector.add(new GroovyCompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
   }
 
   private void addMessageWithoutLocation(String message, boolean error) {
-    collector.add(new CompilerMessage(error ? GroovyCompilerMessageCategories.ERROR : GroovyCompilerMessageCategories.WARNING, message, null, -1, -1));
+    collector.add(new GroovyCompilerMessage(error ? GroovyCompilerMessageCategories.ERROR : GroovyCompilerMessageCategories.WARNING, message, null, -1, -1));
   }
 
   private static final String LINE_AT = " @ line ";
@@ -228,8 +235,10 @@ public class GroovyCompilerWrapper {
   private void addErrorMessage(SyntaxException exception) {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
-    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, justMessage, exception.getSourceLocator(),
-                                      exception.getLine(), exception.getStartColumn()));
+    collector.add(new GroovyCompilerMessage(
+      GroovyCompilerMessageCategories.ERROR, justMessage,
+      exception.getSourceLocator(), exception.getLine(), exception.getStartColumn()
+    ));
   }
 
   private void addErrorMessage(GroovyRuntimeException exception) {
@@ -243,7 +252,10 @@ public class GroovyCompilerWrapper {
     int lineNumber = astNode == null ? -1 : astNode.getLineNumber();
     int columnNumber = astNode == null ? -1 : astNode.getColumnNumber();
 
-    collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, getExceptionMessage(exception), moduleName, lineNumber, columnNumber));
+    collector.add(new GroovyCompilerMessage(
+      GroovyCompilerMessageCategories.ERROR, getExceptionMessage(exception),
+      moduleName, lineNumber, columnNumber
+    ));
   }
 
   @NotNull
@@ -262,7 +274,6 @@ public class GroovyCompilerWrapper {
   @NotNull
   private static String getStackTrace(GroovyRuntimeException exception) {
     String message;StringWriter stringWriter = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
     PrintWriter writer = new PrintWriter(stringWriter);
     exception.printStackTrace(writer);
     message = stringWriter.getBuffer().toString();
@@ -287,23 +298,5 @@ public class GroovyCompilerWrapper {
 
   private void addErrorMessage(SimpleMessage message) {
     addMessageWithoutLocation(message.getMessage(), true);
-  }
-
-  public static class OutputItem {
-    private final String myOutputPath;
-    private final String mySourceFileName;
-
-    public OutputItem(File targetDirectory, String outputPath, String sourceFileName) {
-      myOutputPath = targetDirectory.getAbsolutePath().replace(File.separatorChar, '/') + "/" + outputPath;
-      mySourceFileName = sourceFileName;
-    }
-
-    public String getOutputPath() {
-      return myOutputPath;
-    }
-
-    public String getSourceFile() {
-      return mySourceFileName;
-    }
   }
 }

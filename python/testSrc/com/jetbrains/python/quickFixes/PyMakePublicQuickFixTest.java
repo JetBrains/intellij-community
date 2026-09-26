@@ -17,14 +17,18 @@ package com.jetbrains.python.quickFixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyProtectedMemberInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMakePublicQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyMakePublicQuickFixTest extends PyQuickFixTestCase {
   public void testPositive() {
-    doQuickFixTest(PyProtectedMemberInspection.class, PyBundle.message("QFIX.make.public"));
+    doQuickFixTest(PyProtectedMemberInspection.class, PyPsiBundle.message("QFIX.make.public"));
   }
 
   public void testNegative() {
@@ -32,7 +36,7 @@ public class PyMakePublicQuickFixTest extends PyQuickFixTestCase {
     myFixture.enableInspections(PyProtectedMemberInspection.class);
     myFixture.configureByFile(testFileName + ".py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.make.public"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyPsiBundle.message("QFIX.make.public"));
     assertNull(intentionAction);
   }
 }

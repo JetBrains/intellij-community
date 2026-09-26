@@ -1,31 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -43,14 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.awt.Color;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
-class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+final class MapArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   // @formatter:off
 
@@ -58,9 +47,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
   // [<some values, initializers or named arguments>, <caret>]
   // foo <caret>
   // foo (<caret>)
+  // foo (aa<caret> bb)
   public static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(
-    StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
+    StandardPatterns.or(PlatformPatterns.psiElement(GrArgumentList.class), PlatformPatterns.psiElement().withParent(GrArgumentList.class), PlatformPatterns.psiElement(GrListOrMap.class)))
   );
 
   // [<caret> : ]
@@ -81,7 +71,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiElement mapOrArgumentList = findMapOrArgumentList(parameters);
     if (mapOrArgumentList == null) {
@@ -92,7 +82,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       result.stopHere();
     }
 
-    final Map<String, NamedArgumentDescriptor> map = ContainerUtil.newHashMap(calculateNamedArguments(mapOrArgumentList));
+    final Map<String, NamedArgumentDescriptor> map = new HashMap<>(calculateNamedArguments(mapOrArgumentList));
 
     for (GrNamedArgument argument : getSiblingNamedArguments(mapOrArgumentList)) {
       map.remove(argument.getLabelName());
@@ -104,10 +94,16 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         .withTailText(":");
 
       if (entry.getValue().getPriority() == NamedArgumentDescriptor.Priority.UNLIKELY) {
-        lookup = lookup.withItemTextForeground(GroovySyntaxHighlighter.MAP_KEY.getDefaultAttributes().getForegroundColor());
+        TextAttributes defaultAttributes = GroovySyntaxHighlighter.MAP_KEY.getDefaultAttributes();
+        if (defaultAttributes != null) {
+          Color fg = defaultAttributes.getForegroundColor();
+          if (fg != null) {
+            lookup = lookup.withItemTextForeground(fg);
+          }
+        }
       }
       else {
-        lookup = lookup.withIcon(JetgroovyIcons.Groovy.DynamicProperty);
+        lookup = lookup.withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Property));
       }
 
       LookupElement customized = entry.getValue().customizeLookupElement(lookup);
@@ -120,8 +116,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return mapOrArgumentList instanceof GrListOrMap && ((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0;
   }
 
-  @Nullable
-  private static PsiElement findMapOrArgumentList(CompletionParameters parameters) {
+  private static @Nullable PsiElement findMapOrArgumentList(CompletionParameters parameters) {
     PsiElement parent = parameters.getPosition().getParent();
     if (parent instanceof GrReferenceExpression) {
       if (((GrReferenceExpression)parent).getQualifier() != null) return null;
@@ -133,12 +128,11 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return parent.getParent().getParent();
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
     final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrArgumentLabel) {
           final String name = ((GrArgumentLabel)element).getName();
           if (GroovyNamesUtil.isIdentifier(name)) {
@@ -166,8 +160,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
 
     if ((map == null || map.isEmpty()) && mapOrArgumentList instanceof GrListOrMap) {
@@ -181,8 +174,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return map;
   }
 
-  @Nullable
-  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
+  private static @Nullable Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {
       if (mapOrArgumentList instanceof GrListOrMap) {

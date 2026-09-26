@@ -1,0 +1,35 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_sealed_addedEntry-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/addedEntry/a/anotherSealedSubclass.kt
+End of files
+Cleaning output files:
+  BigBar.class
+  ExhaustiveWhenKt.class
+  IBar.class
+  META-INF/kotlin_sealed_addedEntry-a.kotlin_module
+  ShinyNewBar.class
+  SmallBar.class
+End of files
+Compiling files:
+  kotlin/sealed/addedEntry/a/anotherSealedSubclass.kt
+  kotlin/sealed/addedEntry/a/exhaustiveWhen.kt
+  kotlin/sealed/addedEntry/a/sealedInterface.kt
+  kotlin/sealed/addedEntry/a/sealedSubclasses.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_sealed_addedEntry-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/addedEntry/a/anotherSealedSubclass.kt
+  kotlin/sealed/addedEntry/a/exhaustiveWhen.kt
+  kotlin/sealed/addedEntry/a/sealedInterface.kt
+  kotlin/sealed/addedEntry/a/sealedSubclasses.kt
+End of files
+------------------------------------------
+Exit code: OK

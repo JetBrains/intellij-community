@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import java.util.LinkedList;
+import java.util.List;
+import static java.util.Collections.emptyList;
 
 public class External {
     public static boolean foo() {
@@ -23,5 +25,9 @@ public class External {
     public static boolean bar() {
         List<Integer> list = new LinkedList<Integer>();
         return list == list;
+    }
+
+    public static boolean baz() {
+        return emptyList() == emptyList();
     }
 }

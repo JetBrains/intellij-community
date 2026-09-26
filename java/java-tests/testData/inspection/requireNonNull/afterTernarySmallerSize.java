@@ -1,4 +1,4 @@
-// "Replace condition with Objects.requireNonNullElseGet" "INFORMATION"
+// "Replace conditional expression with 'Objects.requireNonNullElseGet()' call" "INFORMATION"
 
 import java.util.*;
 

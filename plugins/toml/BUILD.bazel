@@ -1,0 +1,54 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.toml` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.toml.core",
+        "intellij.toml.backend",
+        "intellij.toml.frontend",
+        "intellij.toml.json",
+        "intellij.toml.grazie",
+    ],
+    main_module = "intellij.toml",
+)
+### auto-generated section `dev intellij.toml` end
+
+### auto-generated section `build intellij.toml` start
+jvm_library(
+    name = "toml",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":toml"],
+)
+### auto-generated section `build intellij.toml` end
+
+### auto-generated section `iml intellij.toml` start
+exports_files(
+    [
+        "intellij.toml.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.toml` end

@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsolePropertie
 /**
  * @author Vladislav.Soroka
  */
-public class GradleJavaIdeManager extends GradleIdeManager {
+public final class GradleJavaIdeManager extends GradleIdeManager {
 
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(Project project, Executor executor, RunConfiguration runConfiguration) {

@@ -1,0 +1,4 @@
+[^note]: First
+	  code
+
+[^note]

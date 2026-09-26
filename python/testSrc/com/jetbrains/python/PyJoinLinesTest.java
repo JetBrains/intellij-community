@@ -15,16 +15,19 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Tests the "Join lines" handler.
- *
- * @author dcheryasov
  */
+@Subsystems.Editing
+@Layers.Functional
 public class PyJoinLinesTest extends PyTestCase {
   private void doTest() {
     myFixture.configureByFile("joinLines/" + getTestName(false) + ".py");
@@ -33,9 +36,8 @@ public class PyJoinLinesTest extends PyTestCase {
   }
 
   private void doTestWithCodeStyleSettings() {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     settings.setRightMargin(PythonLanguage.getInstance(), 79);
-    CodeStyleSettingsManager.getInstance().setTemporarySettings(settings);
 
     doTest();
   }
@@ -177,6 +179,18 @@ public class PyJoinLinesTest extends PyTestCase {
 
   // PY-15564
   public void testBackslashBetweenTargetsInFromImport() {
+    doTest();
+  }
+
+  public void testFStrings() {
+    doTest();
+  }
+  
+  public void testFStringAndPlainLiteral() {
+    doTest();
+  }
+
+  public void testSlashAtFirstLine() {
     doTest();
   }
 }

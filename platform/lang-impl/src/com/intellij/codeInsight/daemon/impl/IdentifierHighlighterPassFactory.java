@@ -1,68 +1,78 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.highlighting.BackgroundHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author yole
- */
-public class IdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  private static final int[] AFTER_PASSES = {Pass.UPDATE_ALL};
+public final class IdentifierHighlighterPassFactory {
+  private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
-  private static boolean ourTestingIdentifierHighlighting;
-  
-  public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
-    super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, AFTER_PASSES, false, -1);
+  @ApiStatus.Internal
+  public static boolean shouldHighlightIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    return CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
+           (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
+           checkDumbMode(psiFile) &&
+           isEnabled() &&
+           (psiFile.isPhysical() || psiFile.getOriginalFile().isPhysical());
   }
 
-  @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    if (!editor.isOneLineMode() &&
-        CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        !DumbService.isDumb(myProject) &&
-        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting) &&
-        (file.isPhysical() || file.getOriginalFile().isPhysical())) {
-      return new IdentifierHighlighterPass(file.getProject(), file, editor);
-    }
+  private static boolean checkDumbMode(@NotNull PsiFile psiFile) {
+    return !DumbService.isDumb(psiFile.getProject()) || Registry.is("identifier.highlighter.pass.in.dumb.mode");
+  }
 
-    return null;
+  public static boolean isEnabled() {
+    return !ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourTestingIdentifierHighlighting);
   }
 
   @TestOnly
-  public static void doWithHighlightingEnabled(@NotNull Runnable r) {
-    ourTestingIdentifierHighlighting = true;
-    try {
-      r.run();
+  @RequiresEdt
+  public static void doWithIdentifierHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ThreadingAssertions.assertEventDispatchThread();
+    BackgroundHighlighter.Companion.runWithEnabledListenersInTest(project, ()-> {
+      try {
+        TestModeFlags.runWithFlag(ourTestingIdentifierHighlighting, true, r);
+      }
+      finally {
+        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+          if (fileEditor instanceof TextEditor te) {
+            waitForIdentifierHighlighting(te.getEditor());
+          }
+        }
+      }
+    });
+  }
+
+  @TestOnly
+  @RequiresEdt
+  public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    Project project = editor.getProject();
+    UIUtil.dispatchAllInvocationEvents();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     }
-    finally {
-      ourTestingIdentifierHighlighting = false;
-    }
+    UIUtil.dispatchAllInvocationEvents();
+    // wait for async "highlight identifier" computation to apply in com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted
+    BackgroundHighlighter.Companion.waitForIdentifierHighlighting(editor);
   }
 }

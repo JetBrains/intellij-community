@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -25,25 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovySynchronizationOnThisInspection extends BaseInspection {
+public final class GroovySynchronizationOnThisInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Synchronization on 'this'";
+  protected @Nullable String buildErrorString(Object... args) {
+    return GroovyBundle.message("inspection.message.synchronization.on.ref");
+
   }
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Synchronization on '#ref' #loc";
-
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

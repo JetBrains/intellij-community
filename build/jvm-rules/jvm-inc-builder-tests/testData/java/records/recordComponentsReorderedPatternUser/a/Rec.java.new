@@ -1,0 +1,2 @@
+public record Rec(String b, int a) {
+}

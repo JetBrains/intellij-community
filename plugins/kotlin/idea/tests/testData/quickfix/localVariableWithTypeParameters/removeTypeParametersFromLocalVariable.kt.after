@@ -1,0 +1,8 @@
+// "Remove type parameters" "true"
+// K2_ERROR: LOCAL_VARIABLE_WITH_TYPE_PARAMETERS
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test() {
+    val x = 0
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix

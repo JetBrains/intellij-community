@@ -1,0 +1,7 @@
+// K2_AFTER_ERROR: UNRESOLVED_LABEL
+// K2_ERROR: NOT_A_FUNCTION_LABEL
+
+fun testValLabelInReturn() {
+    <caret>L@ val fn = { return@L }
+    fn()
+}

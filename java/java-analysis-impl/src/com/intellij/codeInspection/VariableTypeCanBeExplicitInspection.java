@@ -1,51 +1,68 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+public final class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel10OrHigher(holder.getFile())) { //var won't be parsed as inferred type otherwise
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LVTI);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitVariable(PsiVariable variable) {
-        PsiTypeElement typeElement = variable.getTypeElement();
-        if (typeElement != null && typeElement.isInferredType()) {
-          PsiType type = variable.getType();
-          if (PsiTypesUtil.isDenotableType(type, variable)) {
-            holder.registerProblem(typeElement,
-                                   "'var' can be replaced with explicit type",
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new ReplaceVarWithExplicitTypeFix());
-          }
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+        List<PsiTypeElement> typeElements = new ArrayList<>();
+        for (PsiParameter parameter: expression.getParameterList().getParameters()) {
+          PsiTypeElement typeElement = getTypeElementToExpand(parameter);
+          if (typeElement == null) return;
+          typeElements.add(typeElement);
         }
+
+        for (PsiTypeElement typeElement: typeElements) {
+          registerTypeElementProblem(typeElement);
+        }
+      }
+
+      @Override
+      public void visitVariable(@NotNull PsiVariable variable) {
+        if (variable instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression) {
+          return;
+        }
+        PsiTypeElement typeElement = getTypeElementToExpand(variable);
+        if (typeElement != null) {
+          registerTypeElementProblem(typeElement);
+        }
+      }
+
+      private void registerTypeElementProblem(@NotNull PsiTypeElement typeElement) {
+        holder.problem(typeElement, JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"))
+          .fix(new ReplaceVarWithExplicitTypeFix(typeElement))
+          .register();
       }
     };
   }
 
-  private static class ReplaceVarWithExplicitTypeFix implements LocalQuickFix {
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace 'var' with explicit type";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiTypeElement) {
-        PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)element);
-      }
-    }
+  public static PsiTypeElement getTypeElementToExpand(PsiVariable variable) {
+    PsiTypeElement typeElement = variable.getTypeElement();
+    return typeElement != null && typeElement.isInferredType() && PsiTypesUtil.isDenotableType(variable.getType(), variable)
+           ? typeElement
+           : null;
   }
 }

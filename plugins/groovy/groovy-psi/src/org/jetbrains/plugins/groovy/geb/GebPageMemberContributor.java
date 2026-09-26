@@ -1,22 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
-import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.sorryCannotKnowElementKind;
+
 public class GebPageMemberContributor extends NonCodeMembersContributor {
 
   @Override
@@ -26,19 +31,19 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
+                                     @Nullable PsiClass aClass,
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return;
+    if (!ResolveUtilKt.shouldProcessMethods(processor) && !ResolveUtilKt.shouldProcessProperties(processor)) return;
+    if (aClass == null) return;
 
     PsiElement grCall = place.getParent();
     if (grCall instanceof GrMethodCall) {
       PsiElement grClosure = grCall.getParent();
       if (grClosure instanceof GrClosableBlock) {
         PsiElement contentField = grClosure.getParent();
-        if (contentField instanceof GrField) {
-          GrField f = (GrField)contentField;
+        if (contentField instanceof GrField f) {
           if ("content".equals(f.getName()) && f.hasModifierProperty(PsiModifier.STATIC) && f.getContainingClass() == aClass) {
             Map<String, PsiMember> elements = GebUtil.getContentElements(aClass);
             for (PsiMember element : elements.values()) {
@@ -51,7 +56,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    processPageElements(processor, aClass, state);
+    processPageElements(processor, aClass, state.put(sorryCannotKnowElementKind, true));
   }
 
   public static boolean processPageElements(PsiScopeProcessor processor,

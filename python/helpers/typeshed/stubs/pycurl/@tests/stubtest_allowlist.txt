@@ -1,0 +1,3 @@
+# The runtime computes __all__ dynamically (dir(_pycurl) + AsyncCurlMulti), so
+# its exact contents depend on the libcurl feature set pycurl was built against.
+pycurl.__all__

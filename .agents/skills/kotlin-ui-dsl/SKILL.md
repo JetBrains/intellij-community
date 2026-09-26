@@ -1,0 +1,200 @@
+---
+name: kotlin-ui-dsl
+description: Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels.
+---
+
+# Kotlin UI DSL
+
+Use Kotlin UI DSL (`com.intellij.ui.dsl.builder`, "version 2") for new IntelliJ forms: dialogs, settings pages, and form-like tool-window content. `panel { }` returns a `DialogPanel` with layout, data binding, and validation wired together.
+
+Version 1 (the `com.intellij.ui.layout` builder: `LayoutBuilder`, `CellBuilder`, `PropertyBinding`, `noteRow`, `titledRow`, ...) was **removed in July 2026** — never write against it and do not copy old snippets that import it. `ComponentPredicate` and `ValidationInfoBuilder` still live in the `com.intellij.ui.layout` package, but they are current v2 support code, not leftovers.
+
+For component architecture (state flow, EDT, lifecycle) apply the [Swing component architecture skill](../kotlin-ui-swing-component-architecture/SKILL.md); for accessibility review apply the [UI accessibility skill](../ui-accessibility/SKILL.md).
+
+## Sources and live examples
+
+- API: `community/platform/platform-api/src/com/intellij/ui/dsl/builder/` — `Panel.kt`, `Row.kt`, `Cell.kt`, plus per-component extensions (`textField.kt`, `button.kt`, `comboBox.kt`, `spinner.kt`, ...). Implementations: `community/platform/platform-impl/src/com/intellij/ui/dsl/builder/impl/`.
+- **UI DSL Showcase** — documentation-grade demos: `community/plugins/devkit/intellij.devkit.uiDsl/src/showcase/Demo*.kt` (Basics, RowLayout, ComponentLabels, Comments, Components, Gaps, Groups, Availability, Validation, Binding, Examples). Run via `Tools | Internal Actions | UI | Kotlin UI DSL | UI DSL Showcase`.
+- **UI Sandbox** — ~80 stress-test panels including edge cases: `community/plugins/devkit/intellij.devkit.uiDsl/src/sandbox/`. Run via `Tools | Internal Actions | UI | UI Sandbox`.
+- Online reference: <https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html>
+
+Before inventing a pattern, check whether a `Demo*.kt` or sandbox panel already demonstrates it.
+
+## Core model
+
+A panel is a grid built row by row:
+
+- Rows go top to bottom; cells in a row go left to right, one per factory call.
+- The last cell of a row occupies the remaining width; trailing empty cells merge into it.
+- A cell holds one component or a sub-panel with its own grid.
+
+```kotlin
+val panel: DialogPanel = panel {
+  row(MyBundle.message("label.host")) {          // "Host:" — sets labelFor + mnemonics + accessible context
+    textField()
+      .align(AlignX.FILL)
+      .bindText(model::host)
+  }
+  row(MyBundle.message("label.port")) {
+    intTextField(range = 0..65535)
+      .bindIntText(model::port)
+  }
+  row {
+    checkBox(MyBundle.message("checkbox.use.auth"))
+      .bindSelected(model::useAuth)
+  }
+}
+```
+
+## Rows, labels, and row layout
+
+- `row("Label:") { ... }` — labeled row. Always attach labels of modifiable components via `row(label)` or `Cell.label(...)`, never a bare `label(...)` cell next to them: these two methods set correct spacing, mnemonics, `labelFor`, and accessible context. Label text ends with a colon; use `row("")` for a row that must align with labeled siblings.
+- `Cell.label(text, LabelPosition.TOP)` puts the label above the component.
+- `Row.layout(RowLayout)` controls grid participation:
+  - `INDEPENDENT` — row has its own grid (default for rows without a label).
+  - `LABEL_ALIGNED` — label sits in the parent grid, the rest is independent (default for `row("Label:")`). Note: without a label the *first cell* (often a checkbox) is treated as the label.
+  - `PARENT_GRID` — every cell participates in the parent grid (use for column-aligned forms).
+  - One long label stretching all others? Give that row `.layout(RowLayout.INDEPENDENT)`.
+- `Row.resizableRow()` — the row takes the free vertical space (several resizable rows share it). Combine with `align(Align.FILL)` on the cell (text areas, trees, tables).
+- `Row.rowComment("...")` — gray comment under the whole row; follows the row's visible/enabled state.
+- `Row.topGap(TopGap.SMALL|MEDIUM)` / `bottomGap(...)` — vertical gaps; attach them to the *related* row so hiding it doesn't leave a stray gap. Default vertical gap is none; `group` adds its own.
+
+## Components (Row factories)
+
+Always prefer a factory over `cell(JBTextField())` — factories apply platform defaults (widths, gaps, group membership):
+
+- Toggles: `checkBox(text)`, `threeStateCheckBox(text)`, `radioButton(text, value = null)`
+- Buttons: `button(text) { }`, `button(text, anAction)`, `actionButton(anAction)` / `actionsButton(...)` (extensions from platform-impl `extensions.kt`), `segmentedButton(items) { text = ... }`
+- Text input: `textField()`, `passwordField()`, `expandableTextField()`, `extendableTextField()`, `intTextField(range = null, keyboardStep = null)`, `textArea()`, `textFieldWithBrowseButton(fileChooserDescriptor, project)`
+- Choice: `comboBox(items or model, renderer = null)`, `spinner(IntRange, step)`, `spinner(ClosedRange<Double>, step)`, `slider(min, max, minorTick, majorTick)`
+- Static: `label(text)`, `text(text)` (wrapping HTML text, supports links), `comment(text)`, `icon(icon)`, `contextHelp(description, title = null)` (the `(?)` icon), `link(text) { }`, `browserLink(text, url)`, `dropDownLink(item, items)`
+- Raw cells: `cell(component)` (custom component), `scrollCell(component)` (wraps in `JBScrollPane`), `cell()` (reserve an empty grid cell), `placeholder()` (content assigned later), `panel { }` (sub-panel cell)
+
+Tune components via `.applyToComponent { ... }`. Text-field width: `.columns(COLUMNS_TINY|COLUMNS_SHORT|COLUMNS_MEDIUM|COLUMNS_LARGE)` (6/18/25/36).
+
+## Structure: groups and multi-column
+
+```kotlin
+panel {
+  group(MyBundle.message("group.server")) { ... }          // titled block, own grid, vertical gaps around
+  groupRowsRange(title) { ... }                            // titled block sharing the parent grid
+  collapsibleGroup(title) { ... }                          // collapsible; title is focusable, supports mnemonics
+  rowsRange { ... }                                        // invisible range for batch visibleIf/enabledIf, parent grid
+  indent { ... }                                           // standard left indent
+  separator()                                              // plain line; for a titled line use group/groupRowsRange
+  panel { ... }                                            // sub-panel: full width, own grid
+  twoColumnsRow({ checkBox(...) }, { checkBox(...) })      // and threeColumnsRow(...)
+}
+```
+
+- `buttonsGroup(title = null) { ... }` is **required** around `radioButton`s (never use raw `javax.swing.ButtonGroup`) and around checkboxes grouped under a title. Bind a value per radio button:
+
+  ```kotlin
+  buttonsGroup(MyBundle.message("group.color")) {
+    for (value in Color.entries) {
+      row { radioButton(value.displayName, value) }
+    }
+  }.bind(model::color)   // radioButton value arguments must match the property type
+  ```
+
+- Multi-column blocks: put several `panel { }` cells in one `row`, aligning each with `.align(AlignY.TOP)`; `Row.panel { }` builds the nested grid inline.
+
+## Sizing, alignment, gaps
+
+- `Cell.align(AlignX.LEFT|CENTER|RIGHT|FILL)`, `AlignY.TOP|CENTER|BOTTOM|FILL`, combined: `align(AlignX.RIGHT + AlignY.TOP)`, `Align.FILL`, `Align.CENTER`. Default is `AlignX.LEFT + AlignY.CENTER`.
+- `Cell.resizableColumn()` — this column takes the extra horizontal space; several share it. Setting it once per column is enough (other rows inherit). `AlignX.FILL` stretches the component inside the column; `resizableColumn()` grows the column itself — full-width fields usually need both.
+- `Cell.widthGroup("name")` — equal widths within the group (e.g. buttons); do not combine with `AlignX.FILL`.
+- Horizontal gaps: default gap between cells needs no code. `.gap(RightGap.SMALL)` binds tightly related neighbors: checkbox-as-label before a field, field before its unit label (`textField().gap(RightGap.SMALL); label("pixels")`). `RightGap.COLUMNS` separates independent columns.
+- Never wrap DSL content in hand-made `JPanel`s or `Border`s to fix spacing. Use `Cell.customize(UnscaledGaps(...))` / `Row.customize(UnscaledGapsY(...))` for exceptional cases, and `customizeSpacingConfiguration(...)` to change spacing wholesale.
+
+## Data binding
+
+Bindings connect a component to a property; the property is written only on `DialogPanel.apply()`, while `reset()` and `isModified()` come for free:
+
+| Component | Binding |
+|---|---|
+| `checkBox`, any `AbstractButton` | `bindSelected(model::flag)` |
+| `textField` & other text components | `bindText(model::text)` / `bindText(getter, setter)` |
+| `intTextField` | `bindIntText(model::count)` |
+| `comboBox` | `bindItem(model::item.toNullableProperty())` |
+| `spinner` | `bindIntValue(model::value)` / `bindValue(model::double)` |
+| `slider` | `bindValue(model::value)` |
+| `textFieldWithBrowseButton` | `bindText(model::path)` |
+| `buttonsGroup` | `.bind(model::choice)` — radio buttons carry values |
+| `segmentedButton` | `.bind(property)` |
+| custom `cell(c)` | `.bind(componentGet, componentSet, prop)` |
+
+- Property forms: `KMutableProperty0` (`model::field`), getter/setter lambdas, `MutableProperty(getter, setter)`; converters `toMutableProperty()`, `toNullableProperty()`, `toNonNullableProperty(default)`. Binding an `ObservableMutableProperty` additionally updates immediately and auto-registers a validation requestor.
+- There is no `bindItems`: pass combo items at construction (`comboBox(items, renderer)`).
+- Extra apply/reset/modified logic: `Panel.onApply/onReset/onIsModified { }` and `Cell.onApply/onReset/onIsModified { }`.
+- Hosts call the lifecycle for you: `DialogWrapper` applies the panel on OK; `BoundConfigurable` delegates `apply/reset/isModified`. Call `panel.apply()/reset()/isModified()` manually only in custom hosts.
+
+## Validation
+
+Two rule styles on `Cell`:
+
+```kotlin
+// Stable API: ValidationInfoBuilder receiver — error(...) / warning(...)
+textField()
+  .validationOnInput { if (it.text.toIntOrNull() == null) error(MyBundle.message("error.not.a.number")) else null }
+  .validationOnApply { if (it.text.isBlank()) error(MyBundle.message("error.specify.value")) else null }
+
+// Newer API (experimental, used across the platform; will eventually be renamed `validation`)
+textField().cellValidation {
+  addInputRule(MyBundle.message("error.contains.digits"), level = Level.WARNING) { it.text.any(Char::isDigit) }
+  addApplyRule(MyBundle.message("error.must.not.be.empty")) { it.text.isNullOrEmpty() }   // condition true = problem
+  enabledIf(someCheckBox.selected)
+}
+```
+
+- `validationOnInput` runs on every change — keep it lightweight and only reject impossible input (bad characters, out-of-range). `validationOnApply` (and `addApplyRule`) runs on OK — put emptiness and expensive checks there. **Never flag empty required fields on input or focus loss.**
+- `warning(...)` / `Level.WARNING` doesn't block OK; `error(...)` disables OK by default (`.withOKEnabled()` to keep it enabled in complex forms).
+- Wiring:
+  - `DialogWrapper`: return the `DialogPanel` from `createCenterPanel()` — validators register automatically on the dialog's disposable, `doValidateAll()` includes `panel.validateAll()`, OK applies the panel.
+  - `BoundConfigurable` / `DslConfigurableBase`: automatic as well.
+  - Standalone hosts: call `panel.registerValidators(parentDisposable)` yourself; run `panel.validateAll()` before applying.
+- Custom components validate too: `cell(custom).validationRequestor { ... }` (or the prebuilt `WHEN_TEXT_CHANGED` etc. from `com.intellij.openapi.ui.validation`) tells the panel when to re-validate.
+- Cross-field validation has no dedicated DSL API: install `ComponentValidator(disposable).withValidator { ... }.installOn(field)` per field and `revalidate()` all of them from each field's `onChanged` (see `sandbox/dsl/validation/CrossValidationPanel.kt`).
+
+## Dynamic UI
+
+- `visibleIf(predicate)` / `enabledIf(predicate)` exist on `Cell`, `Row`, `Panel`, `RowsRange` and accept a `ComponentPredicate` or `ObservableProperty<Boolean>`. Built-ins: `cellOrButton.selected`, `comboBox.selectedValueIs(v)` / `selectedValueMatches { }`, `textComponent.enteredTextSatisfies { }`; combine with `and` / `or` / `not`.
+
+  ```kotlin
+  lateinit var enableAll: Cell<JBCheckBox>
+  row { enableAll = checkBox(MyBundle.message("checkbox.enable")) }
+  indent {
+    row { checkBox(MyBundle.message("checkbox.option1")) }
+  }.enabledIf(enableAll.selected)
+  ```
+
+- `placeholder()` reserves a cell whose `component` you assign or clear later; a nested `panel { }` put there keeps its own bindings and validation.
+- Change listeners: `Cell.onChanged { component -> }` / `onChangedContext { component, context -> }` (supported for buttons, text components, combo boxes, sliders; **`JSpinner` is not supported** and throws `UiDslException`). Experimental typed helpers take a disposable: `whenTextChangedFromUi`, `whenStateChangedFromUi`, `whenItemSelectedFromUi`.
+
+## List and combo renderers
+
+Never hand-write `ListCellRenderer`s for combo boxes and `JBList` — use the DSL from `com.intellij.ui.dsl.listCellRenderer`, which handles selection shapes (old/new UI), disabled colors, scaling, accessibility, and speed search:
+
+```kotlin
+comboBox(items, textListCellRenderer { it?.displayName })          // simple text
+
+comboBox(items, listCellRenderer {                                  // rich rows
+  icon(value.icon)
+  text(value.name)
+  text(value.detail) { foreground = greyForeground }
+  separator { text = "Group" }                                      // section separator
+})
+```
+
+## Settings pages
+
+- Extend `BoundConfigurable(displayName)` or `BoundSearchableConfigurable(displayName, helpTopic)` and build the UI in `createPanel(): DialogPanel`; use the inherited `disposable` for UI that needs one. Apply/reset/isModified/validation are handled by the base class.
+- For a fragment embedded in a composite configurable, implement `UiDslUnnamedConfigurable.Simple` and override `Panel.createContent()`; root your content in `group { }` or `panel { }` so it doesn't interfere with the parent grid.
+
+## Hard rules
+
+- Every user-visible string comes from a message bundle (`MyBundle.message("key")`); `@NlsContexts` annotations on the factory parameters enforce this. Sentence capitalization, no ending period on checkbox/radio labels, labels end with `:`.
+- No `javax.swing.ButtonGroup`; use `buttonsGroup { }`.
+- No manual `JPanel`/`GridBagLayout` wrappers inside DSL forms; nest `panel { }` / use `rowsRange` / `customize(UnscaledGaps)` instead.
+- Custom components with their own borders confuse layout — set `putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)` (see also `DslComponentProperty.INTERACTIVE_COMPONENT` for composite components so `labelFor`, validation, and `onChanged` target the right child).
+- `DialogPanel` construction is EDT work like any Swing; do not run services or I/O inside the `panel { }` block.

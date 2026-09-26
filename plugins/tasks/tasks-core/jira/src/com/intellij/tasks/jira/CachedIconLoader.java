@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008 Atlassian
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,29 +16,17 @@
 
 package com.intellij.tasks.jira;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class CachedIconLoader {
-	private static final Map<String, Icon> icons = new HashMap<>();
+	private static final Map<String, Icon> icons = new ConcurrentHashMap<>();
 
 	private CachedIconLoader() {
-	}
-
-	public static Icon getIcon(URL url) {
-		if (url != null) {
-			String key = url.toString();
-			if (!icons.containsKey(key)) {
-				Icon i = new ImageIcon(url);
-				icons.put(key, i);
-			}
-			return icons.get(key);
-		} else {
-			return null;
-		}
 	}
 
 	public static Icon getIcon(String urlString) {

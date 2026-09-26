@@ -1,22 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.memory.component.MemoryViewManagerState;
@@ -24,23 +35,23 @@ import com.intellij.xdebugger.memory.event.MemoryViewManagerListener;
 import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.utils.KeyboardUtils;
 import com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implements Disposable {
+public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implements UiDataProvider, Disposable {
   protected static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   protected static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   protected static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
-  private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
-  private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
+  private static final int INITIAL_TIME = 0;
 
   protected final Project myProject;
   protected final SingleAlarmWithMutableDelay mySingleAlarm;
@@ -50,7 +61,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
   private final MyDebuggerSessionListener myDebugSessionListener;
 
   // tick on each session paused event
-  private final AtomicInteger myTime = new AtomicInteger(0);
+  private final AtomicInteger myTime = new AtomicInteger(INITIAL_TIME);
 
   private final AtomicInteger myLastUpdatingTime = new AtomicInteger(myTime.intValue());
 
@@ -72,22 +83,22 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final MemoryViewManagerState memoryViewManagerState = MemoryViewManager.getInstance().getState();
 
     myTable = createClassesTable(memoryViewManagerState);
-    myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_RUNNING);
+    myTable.getEmptyText().setText(XDebuggerBundle.message("memory.view.empty.running"));
     Disposer.register(this, myTable);
 
 
     myTable.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
-        final int keyCode = e.getKeyCode();
-        if (KeyboardUtils.isEnterKey(keyCode)) {
+      public void keyTyped(KeyEvent e) {
+        char keyChar = e.getKeyChar();
+        if (KeyboardUtils.isEnterKey(keyChar)) {
           handleClassSelection(myTable.getSelectedClass());
         }
-        else if (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isBackSpace(keyCode)) {
+        else if (KeyboardUtils.isPartOfJavaClassName(keyChar) || KeyboardUtils.isBackSpace(keyChar)) {
           final String text = myFilterTextField.getText();
-          final String newText = KeyboardUtils.isBackSpace(keyCode)
-            ? text.substring(0, text.length() - 1)
-            : text + e.getKeyChar();
+          final String newText = KeyboardUtils.isBackSpace(keyChar)
+                                 ? text.substring(0, text.length() - 1)
+                                 : text + keyChar;
           myFilterTextField.setText(newText);
           IdeFocusManager.getInstance(myProject).requestFocus(myFilterTextField, false);
         }
@@ -107,7 +118,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
       private void dispatch(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isEnterKey(keyCode))) {
+        if (myTable.isInClickableMode() && (KeyboardUtils.isPartOfJavaClassName(e.getKeyChar()) || KeyboardUtils.isEnterKey(keyCode))) {
           myTable.exitClickableMode();
           updateClassesAndCounts(true);
         }
@@ -119,7 +130,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myFilterTextField.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myTable.setFilterPattern(myFilterTextField.getText());
       }
     });
@@ -137,6 +148,12 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myDebugSessionListener = new MyDebuggerSessionListener();
     debugSession.addSessionListener(myDebugSessionListener, this);
+    // In split architecture, the session tab init is asynchronous.
+    // This constructor might be called when the session is already running.
+    // Therefore, the first session pause event might be missed.
+    if (debugSession.isPaused()) {
+      myTime.incrementAndGet();
+    }
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(suspendContext -> {
       ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
@@ -145,18 +162,13 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     mySingleAlarm.setDelay((int)TimeUnit.MILLISECONDS.toMillis(500));
 
-    myTable.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        ActionPopupMenu menu = createContextMenu();
-        menu.getComponent().show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(myTable, "MemoryView.ClassesPopupActionGroup", "MemoryView.ClassesPopupActionGroup");
 
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
-    final Presentation actionsPresentation = new Presentation("Memory View Settings");
+    final Presentation actionsPresentation = new Presentation(XDebuggerBundle.messagePointer("action.memory.view.settings.text"));
+    actionsPresentation.setPopupGroup(true);
     actionsPresentation.setIcon(AllIcons.General.GearPlain);
 
     final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
@@ -167,16 +179,18 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     addToCenter(scroll);
   }
 
-  @NotNull
-  protected ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
+  public JComponent getDefaultFocusedComponent() {
+    return myFilterTextField;
+  }
+
+  protected @NotNull ClassesTable createClassesTable(MemoryViewManagerState memoryViewManagerState) {
     return new ClassesTable(myProject,this, memoryViewManagerState.isShowWithDiffOnly,
       memoryViewManagerState.isShowWithInstancesOnly, memoryViewManagerState.isShowTrackedOnly);
   }
 
   protected abstract void scheduleUpdateClassesCommand(XSuspendContext context);
 
-  @Nullable
-  protected TrackerForNewInstancesBase getStrategy(@NotNull TypeInfo ref) {
+  protected @Nullable TrackerForNewInstancesBase getStrategy(@NotNull TypeInfo ref) {
     return null;
   }
 
@@ -186,9 +200,9 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
       if (!ref.canGetInstanceInfo()) {
-        XDebuggerManagerImpl.NOTIFICATION_GROUP
-          .createNotification("Unable to get instances of class " + ref.name(),
-            NotificationType.INFORMATION).notify(debugSession.getProject());
+        XDebuggerManagerImpl.getNotificationGroup()
+          .createNotification(XDebuggerBundle.message("memory.unable.to.get.instances.of.class", ref.name()),
+                              NotificationType.INFORMATION).notify(debugSession.getProject());
         return;
       }
 
@@ -202,7 +216,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
   protected void updateClassesAndCounts(boolean immediate) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
-      if (debugSession != null) {
+      if (shouldBeUpdated(debugSession)) {
         XSuspendContext suspendContext = debugSession.getSuspendContext();
         if (suspendContext != null) {
           if (immediate) {
@@ -216,17 +230,20 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     }, myProject.getDisposed());
   }
 
-  private static ActionPopupMenu createContextMenu() {
-    final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("MemoryView.ClassesPopupActionGroup");
-    return ActionManager.getInstance().createActionPopupMenu("MemoryView.ClassesPopupActionGroup", group);
+  @Contract("null -> false")
+  private boolean shouldBeUpdated(@Nullable XDebugSession session) {
+    if (session instanceof XDebugSessionImpl debugSession && debugSession.isReadOnly()) {
+      // update memory view only once (initially) if session is in read-only mode
+      return myLastUpdatingTime.get() == INITIAL_TIME;
+    }
+
+    return session != null;
   }
-
-
 
   protected void doActivate() {
     myDebugSessionListener.setActive(true);
 
-    if (isNeedUpdateView()) {
+    if (isContentObsolete()) {
       if (MemoryViewManager.getInstance().isAutoUpdateModeEnabled()) {
         updateClassesAndCounts(true);
       }
@@ -246,8 +263,8 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     mySingleAlarm.cancelAllRequests();
   }
 
-  private boolean isNeedUpdateView() {
-    return myLastUpdatingTime.get() != myTime.get();
+  private boolean isContentObsolete() {
+    return myLastUpdatingTime.get() != myTime.get() && shouldBeUpdated(XDebuggerManager.getInstance(myProject).getCurrentSession());
   }
 
   protected void viewUpdated() {
@@ -258,10 +275,9 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     return myTable;
   }
 
-  public Object getData(String dataId) {
-    return null;
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
   }
-
 
   private static class FilterTextField extends SearchTextField {
     FilterTextField() {
@@ -271,15 +287,9 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     @Override
     protected void showPopup() {
     }
-
-    @Override
-    protected boolean hasIconsOutsideOfTextField() {
-      return false;
-    }
   }
 
-  @Nullable
-  protected XDebugSessionListener getAdditionalSessionListener() {
+  protected @Nullable XDebugSessionListener getAdditionalSessionListener() {
     return null;
   }
 
@@ -296,7 +306,8 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
         XDebugSessionListener additionalSessionListener = getAdditionalSessionListener();
         if (additionalSessionListener != null)
           additionalSessionListener.sessionResumed();
-        ApplicationManager.getApplication().invokeLater(() -> myTable.hideContent(EMPTY_TABLE_CONTENT_WHEN_RUNNING));
+        ApplicationManager.getApplication().invokeLater(
+          () -> myTable.hideContent(XDebuggerBundle.message("memory.view.empty.running")));
 
         mySingleAlarm.cancelAllRequests();
       }
@@ -308,7 +319,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
       if (additionalSessionListener != null)
         additionalSessionListener.sessionStopped();
       mySingleAlarm.cancelAllRequests();
-      ApplicationManager.getApplication().invokeLater(() -> myTable.clean(EMPTY_TABLE_CONTENT_WHEN_STOPPED));
+      ApplicationManager.getApplication().invokeLater(() -> myTable.clean(XDebuggerBundle.message("memory.view.empty.stopped")));
     }
 
     @Override
@@ -317,7 +328,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
       XDebugSessionListener additionalSessionListener = getAdditionalSessionListener();
       if (additionalSessionListener != null)
         additionalSessionListener.sessionPaused();
-      if (myIsActive) {
+      if (myIsActive && isContentObsolete()) {
         if (MemoryViewManager.getInstance().isAutoUpdateModeEnabled()) {
           updateClassesAndCounts(false);
         }

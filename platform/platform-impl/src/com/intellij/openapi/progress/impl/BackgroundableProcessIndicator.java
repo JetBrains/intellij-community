@@ -1,87 +1,124 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.EdtInvocationManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+ * </p>
+ */
 public class BackgroundableProcessIndicator extends ProgressWindow {
-  protected StatusBarEx myStatusBar;
+  private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
 
-  private PerformInBackgroundOption myOption;
+  private StatusBarEx myStatusBar;
+
   private TaskInfo myInfo;
 
+  private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
-  private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
 
+  @Obsolete
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
-    this(task.getProject(), task, task);
-
-    myDumbModeAction = task.getDumbModeAction();
-    if (myDumbModeAction == DumbModeAction.CANCEL) {
-      task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
-        @Override
-        public void enteredDumbMode() {
-          cancel();
-        }
-      });
-    }
+    this(task.getProject(), task);
   }
 
-  public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
-    super(info.isCancellable(), true, project, info.getCancelText());
+  /**
+   * @deprecated use {@link #BackgroundableProcessIndicator(Project, TaskInfo)}
+   */
+  @Deprecated(forRemoval = true)
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        @NotNull TaskInfo info,
+                                        @NotNull PerformInBackgroundOption option) {
+    this(project, info);
+  }
+
+  @Obsolete
+  public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info) {
+    this(project, info, (StatusBarEx)null);
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        @NotNull TaskInfo info,
+                                        @Nullable StatusBarEx statusBarOverride) {
+    super(info.isCancellable(), true, project, null, info.getCancelText());
     setOwnerTask(info);
-    myOption = option;
     myInfo = info;
-    setTitle(info.getTitle());
-    final Project nonDefaultProject = project == null || project.isDisposed() ? null : project.isDefault() ? null : project;
-    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(nonDefaultProject);
-    myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
-    myBackgrounded = shouldStartInBackground();
-    if (myBackgrounded) {
-      doBackground();
+    myStatusBar = statusBarOverride;
+    myBackgrounded = true;
+    EdtInvocationManager.invokeLaterIfNeeded(this::initializeStatusBar);
+  }
+
+  @RequiresEdt
+  @Override
+  protected void initializeOnEdtIfNeeded() {
+    super.initializeOnEdtIfNeeded();
+    initializeStatusBar();
+  }
+
+  @RequiresEdt
+  private void initializeStatusBar() {
+    if (myDisposed || myDidInitializeOnEdt) return;
+    myDidInitializeOnEdt = true;
+
+    setTitle(myInfo.getTitle());
+
+    if (myStatusBar == null) {
+      Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
+      IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
+      myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+      if (myStatusBar == null && LOG.isDebugEnabled()) {
+        LOG.debug("No status bar for [" + this + "], progress will be displayed in a popup\nproject:" + myProject + "\nframe:" + frame,
+                  new Throwable());
+      }
     }
+    doBackground(myStatusBar);
   }
 
-  private boolean shouldStartInBackground() {
-    return myOption.shouldStartInBackground() && myStatusBar != null;
-  }
-
-  public BackgroundableProcessIndicator(Project project,
-                                        @Nls final String progressTitle,
+  /**
+   * @deprecated use {@link #BackgroundableProcessIndicator(Project, String, String, String, boolean)}
+   */
+  @Deprecated
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nls final String cancelButtonText,
-                                        @Nls final String backgroundStopTooltip, final boolean cancellable) {
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
+                                        final boolean cancellable) {
+    this(project, progressTitle, cancelButtonText, backgroundStopTooltip, cancellable);
+  }
+
+  public BackgroundableProcessIndicator(@Nullable Project project,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
+                                        final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
-      @NotNull
-      public String getTitle() {
+      public @NotNull String getTitle() {
         return progressTitle;
       }
 
@@ -99,40 +136,40 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       public boolean isCancellable() {
         return cancellable;
       }
-    }, option);
-  }
-
-  /**
-   * to remove in IDEA 16
-   */
-  @Deprecated
-  public DumbModeAction getDumbModeAction() {
-    return myDumbModeAction;
+    });
   }
 
   @Override
   protected void showDialog() {
     if (myDisposed) return;
+    initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (shouldStartInBackground()) {
+    if (myStatusBar != null) {
       return;
     }
 
     super.showDialog();
   }
-
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void showDialogTestAccessor() {
+    showDialog();
+  }
+  
   @Override
   public void background() {
     if (myDisposed) return;
+    assert myDidInitializeOnEdt : "Call to background action before showing dialog";
 
-    myOption.processSentToBackground();
-    doBackground();
+    doBackground(myStatusBar);
     super.background();
   }
 
-  private void doBackground() {
-    if (myStatusBar != null) { //not welcome screen
-      myStatusBar.addProgress(this, myInfo);
+  @RequiresEdt
+  private void doBackground(@Nullable StatusBarEx statusBar) {
+    if (statusBar != null) { //not welcome screen
+      statusBar.addProgress(this, myInfo);
     }
   }
 
@@ -142,7 +179,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myDisposed = true;
     myInfo = null;
     myStatusBar = null;
-    myOption = null;
   }
 
   @Override

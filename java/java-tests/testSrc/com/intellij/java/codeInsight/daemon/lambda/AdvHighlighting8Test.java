@@ -15,45 +15,96 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
- * For "lightweight" tests use LightAdvHighlightingTest.
- */
-public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
+import java.util.List;
+
+public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
   }
 
+  @NotNull
   @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk18();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
-  public void testProtectedVariable() throws Exception {
-    doTest(BASE_PATH + "/protectedVariable/p2/B.java", BASE_PATH + "/protectedVariable", false, false);
+  public void testProtectedVariable() {
+    myFixture.addClass("""
+                         package p1;
+                         public class A {
+                           protected String myFoo = "A";
+                         }""");
+    doTest();
   }
 
-  public void testIDEA67842() throws Exception {
-    doTest(BASE_PATH + "/IDEA67842/pck/IDEA67842.java", BASE_PATH + "/IDEA67842", false, false);
+  public void testIDEA67842() {
+    doTest();
   }
 
-  public void testUnrelatedConcreteInConstructors() throws Exception {
-    doTest(BASE_PATH + "/unrelatedConcreteInConstructors/B.java", BASE_PATH + "/unrelatedConcreteInConstructors", false, false);
+  public void testUnrelatedConcreteInConstructors() {
+    myFixture.addClass("""
+                         package p;
+                         import java.util.List;
+
+                         public class A {
+                           public A(List l) {
+                           }
+                         }""");
+    myFixture.addClass("""
+                         import java.util.List;
+                         public class A<T> extends p.A {
+                           public A(List<T> l) {
+                             super(l);
+                           }
+                         }""");
+    doTest();
   }
 
-  public void testPackageLocalMethodVisibleInHierarchy() throws Exception {
-    doTest(BASE_PATH + "/packageLocalMethod/foo/bar/C.java",
-           BASE_PATH + "/packageLocalMethod", false, false);
+  public void testPackageLocalMethod() {
+    myFixture.addClass("""
+                         package foo;
+                         public abstract class A {
+                           abstract void foo();
+                         }""");
+    myFixture.addClass("""
+                         package foo.bar;
+                         import foo.A;
+                         abstract class B extends A {}""");
+    doTest();
+  }
+
+  public void testPackagePrivateAndSuperMethodReference() {
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                             protected void foo(int a) {
+                                 System.out.println(a);
+                             }
+                         }""");
+    doTest();
+  }
+  
+  public void testTooltipProperlyEscaped() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.ERROR);
+    assertEquals(1, infos.size());
+    assertEquals(
+      "<html>'unmodifiableSet(java.util.Set&lt;? extends java.lang.String&gt;)' in 'java.util.Collections' cannot be applied to '(java.util.TreeSet&lt;java.lang.String&gt;)'</html>",
+      infos.get(0).getToolTip());
+  }
+
+  private void doTest() {
+    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 }

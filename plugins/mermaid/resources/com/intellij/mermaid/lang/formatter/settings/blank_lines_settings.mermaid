@@ -1,0 +1,37 @@
+stateDiagram-v2
+    [*] --> First
+
+
+    state First {
+        [*] --> Second
+
+        state Second {
+            [*] --> second
+            second --> Third
+
+            state Third {
+                [*] --> third
+
+
+                third --> [*]
+            }
+
+
+
+            state Fourth {
+                [*] --> third
+                third --> [*]
+            }
+        }
+    }
+
+
+    State1: The state with a note
+    note right of State1
+        Important information! You can write
+        notes.
+    end note
+    State1 --> State2
+    Third --> Fourth
+    A --> B
+    note left of State2 : This is the note to the left.

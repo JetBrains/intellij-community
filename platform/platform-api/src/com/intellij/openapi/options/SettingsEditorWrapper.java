@@ -1,63 +1,43 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.function.Function;
 
-public class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SettingsEditorWrapper");
-
-  private final Convertor<Src, Dst> mySrcToDstConvertor;
+public final class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
+  private final Function<? super Src, ? extends Dst> mySrcToDstConvertor;
   private final SettingsEditor<Dst> myWrapped;
 
   private final SettingsEditorListener<Dst> myListener;
 
-  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Convertor<Src, Dst> convertor) {
+  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Function<? super Src, ? extends Dst> convertor) {
     mySrcToDstConvertor = convertor;
     myWrapped = wrapped;
-    myListener = new SettingsEditorListener<Dst>() {
-      public void stateChanged(SettingsEditor<Dst> settingsEditor) {
-        fireEditorStateChanged();
-      }
-    };
+    myListener = settingsEditor -> fireEditorStateChanged();
     myWrapped.addSettingsEditorListener(myListener);
   }
 
+  @Override
   public void resetEditorFrom(@NotNull Src src) {
-    myWrapped.resetFrom(mySrcToDstConvertor.convert(src));
+    myWrapped.resetFrom(mySrcToDstConvertor.apply(src));
   }
 
+  @Override
   public void applyEditorTo(@NotNull Src src) throws ConfigurationException {
-    myWrapped.applyTo(mySrcToDstConvertor.convert(src));
+    myWrapped.applyTo(mySrcToDstConvertor.apply(src));
   }
 
-  @NotNull
-  public JComponent createEditor() {
-    return myWrapped.createEditor();
+  @Override
+  public @NotNull JComponent createEditor() {
+    return createEditorComponent(myWrapped);
   }
 
+  @Override
   public void disposeEditor() {
     myWrapped.removeSettingsEditorListener(myListener);
     Disposer.dispose(myWrapped);
   }
-
 }

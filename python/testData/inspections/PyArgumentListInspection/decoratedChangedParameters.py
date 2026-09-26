@@ -7,4 +7,4 @@ def test(x):
     return x
 
 
-test()
+test(<warning descr="Parameter 'x' unfilled">)</warning>

@@ -1,0 +1,52 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.java.jshell` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.java.jshell.console",
+        "intellij.java.jshell.execution",
+        "intellij.java.jshell.protocol",
+    ],
+    main_module = "intellij.java.jshell",
+)
+### auto-generated section `dev intellij.java.jshell` end
+
+### auto-generated section `build intellij.java.jshell` start
+jvm_library(
+    name = "jshell",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "jshell_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":jshell"],
+)
+### auto-generated section `build intellij.java.jshell` end
+
+### auto-generated section `iml intellij.java.jshell` start
+exports_files(
+    [
+        "intellij.java.jshell.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jshell` end

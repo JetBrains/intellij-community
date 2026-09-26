@@ -1,0 +1,61 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.buildScripts.pluginPreparation` start
+jvm_library(
+    name = "plugin-preparation",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.pluginPreparation",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/commons/compress",
+        "//libraries/hash4j",
+        "//platform/util",
+        "//platform/util/jdom",
+        "@community//build:zip",
+    ],
+)
+
+jvm_library(
+    name = "plugin-preparation_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.pluginPreparation",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin-preparation",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/commons/compress:compress_test_lib",
+        "//libraries/hash4j:hash4j_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "@community//build:zip_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.buildScripts.pluginPreparation` end
+
+### auto-generated section `iml intellij.platform.buildScripts.pluginPreparation` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.pluginPreparation.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.pluginPreparation` end

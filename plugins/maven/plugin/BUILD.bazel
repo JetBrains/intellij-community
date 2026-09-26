@@ -1,0 +1,75 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.maven.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.maven.model",
+        "intellij.maven",
+        "intellij.maven.proofreading",
+        "intellij.maven.performanceTesting",
+        "intellij.maven.groovy",
+        "intellij.maven.completion",
+        "intellij.maven.delegation.junit",
+        "intellij.maven.delegation.testng",
+        "intellij.maven.jps",
+        "intellij.maven.jps.ide",
+        "intellij.idea.community.build.dependencies",
+        "intellij.maven.artifactResolver.common",
+        "intellij.maven.artifactResolver.m31",
+        "intellij.maven.server",
+        "intellij.maven.server.eventListener",
+        "intellij.maven.server.indexer",
+        "intellij.maven.server.m3.common",
+        "intellij.maven.server.m3.impl",
+        "intellij.maven.server.m36.impl",
+        "intellij.maven.server.m40",
+        "intellij.maven.server.telemetry",
+    ],
+    main_module = "intellij.maven.plugin",
+)
+
+exports_files(
+    ["intellij.maven.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev intellij.maven.plugin` end
+
+### auto-generated section `build intellij.maven.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.maven.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.maven.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.maven.plugin` end
+
+### auto-generated section `iml intellij.maven.plugin` start
+exports_files(
+    [
+        "intellij.maven.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.maven.plugin` end

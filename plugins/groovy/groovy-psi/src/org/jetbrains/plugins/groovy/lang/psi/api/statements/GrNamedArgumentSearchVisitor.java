@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
@@ -21,8 +7,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -30,7 +16,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
 
@@ -55,8 +45,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
     if (expr.length == 1 && expr[0] instanceof GrLiteral) {
       Object value = ((GrLiteral)expr[0]).getValue();
-      if (value instanceof String) {
-        String s = (String)value;
+      if (value instanceof String s) {
         if (StringUtil.isJavaIdentifier(s)) {
           add((String)value);
         }
@@ -73,8 +62,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     if (myFirstArgumentName.equals(referenceExpression.getReferenceName()) && !referenceExpression.isQualified()) {
       PsiElement parent = referenceExpression.getParent();
 
-      if (parent instanceof GrReferenceExpression) {
-        GrReferenceExpression parentRef = (GrReferenceExpression)parent;
+      if (parent instanceof GrReferenceExpression parentRef) {
 
         PsiElement parentParent = parentRef.getParent();
 
@@ -87,8 +75,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
           add(parentRef.getReferenceName());
         }
       }
-      else if (parent instanceof GrIndexProperty) {
-        GrIndexProperty indexProperty = (GrIndexProperty)parent;
+      else if (parent instanceof GrIndexProperty indexProperty) {
         extractArguments(indexProperty.getArgumentList());
       }
     }
@@ -99,18 +86,17 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   public static Map<String, NamedArgumentDescriptor> find(GrVariable variable) {
     final GrExpression initializerGroovy = variable.getInitializerGroovy();
 
-    if (!(initializerGroovy instanceof GrClosableBlock)) {
+    if (!(initializerGroovy instanceof GrFunctionalExpression expression)) {
       return Collections.emptyMap();
     }
 
-    final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
-    final GrParameter[] parameters = closure.getAllParameters();
+    final GrParameter[] parameters = expression.getAllParameters();
     if (parameters.length == 0) return Collections.emptyMap();
 
     GrParameter parameter = parameters[0];
 
     GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(parameter.getName());
-    closure.accept(visitor);
+    expression.accept(visitor);
     return visitor.getResult();
   }
 }

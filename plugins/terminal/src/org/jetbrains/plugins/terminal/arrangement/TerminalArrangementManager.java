@@ -1,0 +1,106 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.arrangement;
+
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+
+import java.util.List;
+
+@Service(Service.Level.PROJECT)
+@State(name = "TerminalArrangementManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+public final class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
+
+  private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
+  private final Project myProject;
+  private ToolWindow myTerminalToolWindow;
+  private TerminalArrangementState myState;
+
+  public TerminalArrangementManager(@NotNull Project project) {
+    myProject = project;
+    myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();
+  }
+
+  public void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
+    myTerminalToolWindow = terminalToolWindow;
+    myWorkingDirectoryManager.init(terminalToolWindow);
+  }
+
+  @Override
+  public @Nullable TerminalArrangementState getState() {
+    if (!isAvailable() || myTerminalToolWindow == null) {
+      // do not save state, reuse previously stored state
+      return null;
+    }
+    TerminalArrangementState state = calcArrangementState(myTerminalToolWindow);
+    TerminalCommandHistoryManager.getInstance().retainCommandHistoryFiles(getCommandHistoryFileNames(state), myProject);
+    return state;
+  }
+
+  @Override
+  public void loadState(@NotNull TerminalArrangementState state) {
+    if (isAvailable()) {
+      myState = state;
+    }
+  }
+
+  private static @NotNull List<String> getCommandHistoryFileNames(@NotNull TerminalArrangementState state) {
+    return ContainerUtil.mapNotNull(state.myTabStates, tabState -> tabState.myCommandHistoryFileName);
+  }
+
+  public @Nullable TerminalArrangementState getArrangementState() {
+    return myState;
+  }
+
+  private @NotNull TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
+    TerminalArrangementState arrangementState = new TerminalArrangementState();
+    ContentManager contentManager = terminalToolWindow.getContentManager();
+    for (Content content : contentManager.getContents()) {
+      AbstractTerminalRunner<?> runner = TerminalToolWindowManager.getRunnerByContent(content);
+      if (runner == null || !runner.isTerminalSessionPersistent()) {
+        continue;
+      }
+      TerminalWidget terminalWidget = TerminalToolWindowManager.findWidgetByContent(content);
+      if (terminalWidget == null) continue;
+      TerminalTabState tabState = new TerminalTabState();
+      tabState.myTabName = content.getTabName();
+      tabState.myShellCommand = terminalWidget.getShellCommand();
+      tabState.myIsUserDefinedTabTitle = tabState.myTabName.equals(terminalWidget.getTerminalTitle().getUserDefinedTitle());
+      tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
+      JBTerminalWidget jbTerminalWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+      ShellTerminalWidget shellTerminalWidget = ObjectUtils.tryCast(jbTerminalWidget, ShellTerminalWidget.class);
+      tabState.myCommandHistoryFileName = TerminalCommandHistoryManager.getFilename(
+        shellTerminalWidget != null ? shellTerminalWidget.getCommandHistoryFilePath() : null
+      );
+      arrangementState.myTabStates.add(tabState);
+    }
+    Content selectedContent = contentManager.getSelectedContent();
+    arrangementState.mySelectedTabIndex = selectedContent == null ? -1 : contentManager.getIndexOfContent(selectedContent);
+    return arrangementState;
+  }
+
+  public static @NotNull TerminalArrangementManager getInstance(@NotNull Project project) {
+    return project.getService(TerminalArrangementManager.class);
+  }
+
+  static boolean isAvailable() {
+    return Registry.is("terminal.persistent.tabs");
+  }
+}

@@ -15,16 +15,15 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring.introduceParameter;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.usageView.UsageInfo;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.Nullable;
 
-class XPathUsageInfo extends UsageInfo {
+final class XPathUsageInfo extends UsageInfo {
     private final XPathExpression myExpression;
 
     @SuppressWarnings({ "ConstantConditions" })
@@ -33,8 +32,7 @@ class XPathUsageInfo extends UsageInfo {
         myExpression = expression;
     }
 
-    @Nullable
-    public XmlAttribute getAttribute() {
+    public @Nullable XmlAttribute getAttribute() {
         return PsiTreeUtil.getContextOfType(myExpression, XmlAttribute.class, true);
     }
 

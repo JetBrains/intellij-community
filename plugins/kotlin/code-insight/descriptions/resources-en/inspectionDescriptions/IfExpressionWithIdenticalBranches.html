@@ -1,0 +1,17 @@
+<html>
+<body>
+<p>Reports an <code>if</code> expression when its <code>then</code> and <code>else</code> branches execute the same code.</p>
+<p>The quick-fix removes the <code>if</code> and keeps one copy of the branch.
+  If evaluating the condition may have side effects, the quick-fix is marked as potentially changing semantics.</p>
+<!-- tooltip end -->
+<p><b>Example:</b></p>
+<pre><code>
+  fun answer(useDefault: Boolean): Int =
+      if (useDefault) 42 else 42
+</code></pre>
+<p>After you apply the quick-fix:</p>
+<pre><code>
+  fun answer(useDefault: Boolean): Int = 42
+</code></pre>
+</body>
+</html>

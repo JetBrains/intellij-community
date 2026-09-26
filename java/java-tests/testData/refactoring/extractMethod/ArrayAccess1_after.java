@@ -7,8 +7,8 @@ class Test {
      }
   }
 
-    private void newMethod(String s, String s1) {
+    private void newMethod(String s, String x) {
         System.out.println(s);
-        System.out.println(s1);
+        System.out.println(x);
     }
 }

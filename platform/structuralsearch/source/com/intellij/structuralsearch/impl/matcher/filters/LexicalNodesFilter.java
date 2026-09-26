@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -25,13 +11,13 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
  */
 public final class LexicalNodesFilter implements NodeFilter {
 
-  LexicalNodesFilter() {}
+  private LexicalNodesFilter() {}
 
   public static NodeFilter getInstance() {
     return NodeFilterHolder.INSTANCE;
   }
 
-  private static class NodeFilterHolder {
+  private static final class NodeFilterHolder {
     static final NodeFilter INSTANCE = new LexicalNodesFilter();
   }
 
@@ -39,6 +25,6 @@ public final class LexicalNodesFilter implements NodeFilter {
   public boolean accepts(PsiElement element) {
     if (element == null) return false;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    return profile != null && profile.getLexicalNodesFilter().accepts(element);
+    return profile != null && !profile.isMatchNode(element);
   }
 }

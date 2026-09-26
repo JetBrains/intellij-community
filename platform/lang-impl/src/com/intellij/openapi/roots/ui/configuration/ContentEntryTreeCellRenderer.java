@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -22,10 +8,12 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -34,28 +22,35 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
+import java.util.Set;
 
+@ApiStatus.Internal
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
-  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
+  private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;
+  private final @NotNull Set<String> myExcludedUrls;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<ModuleSourceRootEditHandler<?>> editHandlers) {
+  public ContentEntryTreeCellRenderer(final @NotNull ContentEntryTreeEditor treeEditor,
+                                      @NotNull ContentEntry contentEntry,
+                                      List<? extends ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
     myEditHandlers = editHandlers;
+    myExcludedUrls = ContentEntryEditor.getEntryExcludedUrls(myTreeEditor.getProject(), contentEntry);
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     final ContentEntryEditor editor = myTreeEditor.getContentEntryEditor();
     if (editor != null) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        final Object element = ((NodeDescriptor)userObject).getElement();
+        final Object element = ((NodeDescriptor<?>)userObject).getElement();
         if (element instanceof FileElement) {
           final VirtualFile file = ((FileElement)element).getFile();
           if (file != null && file.isDirectory()) {
@@ -73,7 +68,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
   }
 
-  private static String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
+  private static @NlsSafe String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
       if (file.equals(sourceFolder.getFile())) {
         JpsModuleSourceRoot element = sourceFolder.getJpsElement();
@@ -87,7 +82,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   }
 
   protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
-    if (ContentEntryEditor.isExcludedOrUnderExcludedDirectory(myTreeEditor.getProject(), entry, file)) {
+    if (ContentEntryEditor.isExcludedOrUnderExcludedDirectory(entry, myExcludedUrls, file)) {
       return AllIcons.Modules.ExcludeRoot;
     }
 
@@ -116,8 +111,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     return icon;
   }
 
-  @Nullable
-  private Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
+  private @Nullable Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
     for (ModuleSourceRootEditHandler<?> handler : myEditHandlers) {
       if (handler.getRootType().equals(type)) {
         return handler.getFolderUnderRootIcon();

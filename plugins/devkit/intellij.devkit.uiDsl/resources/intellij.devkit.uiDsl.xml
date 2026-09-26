@@ -1,0 +1,41 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.DevkitUiDslBundle</resource-bundle>
+
+  <actions>
+    <action id="UiDslShowcaseAction" class="com.intellij.devkit.uiDsl.showcase.UiDslShowcaseAction"/>
+    <group id="UiDslShowcaseInternalGroup" internal="true">
+      <reference ref="UiDslShowcaseAction"/>
+      <add-to-group group-id="Internal.UI.KotlinUiDsl"/>
+    </group>
+    <action id="UISandboxAction" internal="true" class="com.intellij.devkit.uiDsl.sandbox.UISandboxAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="com.intellij.devkit.uiDsl.usageNotification.KotlinUiDslUsageNotificationProvider"/>
+  </extensions>
+
+</idea-plugin>

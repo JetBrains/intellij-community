@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="7bfab"/>
-              <text value="&amp;Title:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.title"/>
             </properties>
           </component>
           <component id="7bfab" class="javax.swing.JTextField" binding="myTitleTF">
@@ -39,7 +39,7 @@
             </constraints>
             <properties>
               <labelFor value="ad1f3"/>
-              <text value="&amp;Vendor:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.vendor"/>
             </properties>
           </component>
           <component id="ad1f3" class="javax.swing.JTextField" binding="myVendorTF">
@@ -71,7 +71,7 @@
             </constraints>
             <properties>
               <labelFor value="a51e8"/>
-              <text value="&amp;Description:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.description"/>
             </properties>
           </component>
           <component id="a1cdd" class="javax.swing.JLabel">
@@ -80,7 +80,7 @@
             </constraints>
             <properties>
               <labelFor value="e5f9c"/>
-              <text value="A&amp;pplication class:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.application.class"/>
             </properties>
           </component>
           <component id="e5f9c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myAppClass">
@@ -95,7 +95,7 @@
             </constraints>
             <properties>
               <labelFor value="fde94"/>
-              <text value="&amp;Width:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.width"/>
             </properties>
           </component>
           <component id="fde94" class="javax.swing.JTextField" binding="myWidthTF">
@@ -112,7 +112,7 @@
             </constraints>
             <properties>
               <labelFor value="2a255"/>
-              <text value="&amp;Height:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.height"/>
             </properties>
           </component>
           <component id="2a255" class="javax.swing.JTextField" binding="myHeightTF">
@@ -129,7 +129,7 @@
             </constraints>
             <properties>
               <labelFor value="26da8"/>
-              <text value="HT&amp;ML Template:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.html.template"/>
             </properties>
           </component>
           <component id="26da8" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myHtmlTemplate">
@@ -144,7 +144,7 @@
             </constraints>
             <properties>
               <labelFor value="a217c"/>
-              <text value="HTML Placeh&amp;older Id:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.html.placeholder.id"/>
             </properties>
           </component>
           <component id="a217c" class="javax.swing.JTextField" binding="myHtmlPlaceholderIdTF">
@@ -161,7 +161,7 @@
             </constraints>
             <properties>
               <labelFor value="b2b7a"/>
-              <text value="HTM&amp;L Parameters:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.html.parameters"/>
             </properties>
           </component>
           <component id="b2b7a" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myHtmlParams">
@@ -176,7 +176,7 @@
             </constraints>
             <properties>
               <labelFor value="be63e"/>
-              <text value="Application Pa&amp;rameters:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.application.parameters"/>
             </properties>
           </component>
           <component id="be63e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myParams">
@@ -190,7 +190,7 @@
               <grid row="11" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Update in &amp;background"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.update.in.background.option"/>
             </properties>
           </component>
           <component id="b03bd" class="javax.swing.JCheckBox" binding="myEnableSigningCB">
@@ -198,7 +198,7 @@
               <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Enable &amp;signing"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.signing.option"/>
             </properties>
           </component>
           <grid id="506ce" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -214,7 +214,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Edit &amp;Certificates"/>
+                  <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.edit.certificates.button"/>
                 </properties>
               </component>
               <hspacer id="d47d8">
@@ -229,7 +229,7 @@
               <grid row="13" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Convert css to bin"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.convert.css.to.bin.option"/>
             </properties>
           </component>
           <component id="9164e" class="javax.swing.JLabel">
@@ -238,7 +238,7 @@
             </constraints>
             <properties>
               <labelFor value="2acc4"/>
-              <text value="Nat&amp;ive bundle:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.native.bundle"/>
             </properties>
           </component>
           <component id="2acc4" class="javax.swing.JComboBox" binding="myNativeBundleCB">
@@ -252,7 +252,7 @@
               <grid row="15" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Custom manifest attributes"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.custom.manifest.attributes"/>
             </properties>
           </component>
           <grid id="cd6c2" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -268,7 +268,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Edit  &amp;Attributes"/>
+                  <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.edit.attributes.button"/>
                 </properties>
               </component>
               <hspacer id="20f71">
@@ -291,7 +291,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Edit Ico&amp;ns"/>
+                  <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.edit.icons.button"/>
                 </properties>
               </component>
               <hspacer id="3a5bd">
@@ -306,7 +306,7 @@
               <grid row="16" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Application icon"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.application.icon"/>
             </properties>
           </component>
           <component id="c9cb5" class="javax.swing.JLabel">
@@ -315,7 +315,7 @@
             </constraints>
             <properties>
               <labelFor value="78c4b"/>
-              <text value="V&amp;ersion:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.version"/>
             </properties>
           </component>
           <component id="78c4b" class="javax.swing.JTextField" binding="myVersionTF">
@@ -333,7 +333,7 @@
               <grid row="17" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Build output level:"/>
+              <text resource-bundle="messages/JavaFXBundle" key="javafx.artifact.properties.editor.build.output.level"/>
             </properties>
           </component>
           <component id="2acc4" class="javax.swing.JComboBox" binding="myMsgOutputLevel">

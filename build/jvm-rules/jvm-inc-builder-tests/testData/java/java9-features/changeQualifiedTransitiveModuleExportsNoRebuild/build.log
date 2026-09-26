@@ -1,0 +1,9 @@
+================ Step #1 =================
+Cleaning output files:
+  module-info.class
+End of files
+Compiling files:
+  java/java9-features/changeQualifiedTransitiveModuleExportsNoRebuild/a/module-info.java
+End of files
+------------------------------------------
+Exit code: OK

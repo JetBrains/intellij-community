@@ -1,0 +1,77 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.highlighting.analyzers
+
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.dataflow.KaImplicitReceiverSmartCastKind
+import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
+import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.types.Variance
+
+internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+    override fun visitExpression(expression: KtExpression) {
+        highlightExpression(expression)
+    }
+
+    private fun highlightExpression(expression: KtExpression): Unit = context(session) {
+        expression.implicitReceiverSmartCasts.forEach {
+            val receiverName = when (it.kind) {
+                KaImplicitReceiverSmartCastKind.EXTENSION -> K2HighlightingBundle.message("extension.implicit.receiver")
+                KaImplicitReceiverSmartCastKind.DISPATCH -> K2HighlightingBundle.message("implicit.receiver")
+            }
+
+            highlightName(
+                expression,
+                KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
+                K2HighlightingBundle.message(
+                    "0.smart.cast.to.1",
+                    receiverName,
+                    it.type.render(position = Variance.INVARIANT)
+                )
+            )
+        }
+
+        expression.smartCastInfo?.takeIf { it.isStable }?.let { info ->
+            expression.expectedType?.let { expectedType ->
+                if (info.originalType.isSubtypeOf(expectedType)) {
+                    // Skip redundant smart casts (the code compiles without a smart cast)
+                    return
+                }
+            }
+
+            highlightName(
+                getSmartCastTarget(expression),
+                KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
+                K2HighlightingBundle.message(
+                    "smart.cast.to.0",
+                    info.smartCastType.render(position = Variance.INVARIANT)
+                )
+            )
+        }
+    }
+}
+
+private fun getSmartCastTarget(expression: KtExpression): PsiElement {
+    var target: PsiElement = expression
+    if (target is KtParenthesizedExpression) {
+        target = KtPsiUtil.deparenthesize(target) ?: expression
+    }
+    return when (target) {
+        is KtIfExpression -> target.ifKeyword
+        is KtWhenExpression -> target.whenKeyword
+        is KtBinaryExpression -> target.operationReference
+        else -> target
+    }
+}

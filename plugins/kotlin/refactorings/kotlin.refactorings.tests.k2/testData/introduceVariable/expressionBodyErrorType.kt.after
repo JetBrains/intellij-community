@@ -1,0 +1,7 @@
+
+fun foo(lambda: () -> Int): AAA = aaa
+
+fun test(): AAA {
+    val i = 24
+    return foo { i }
+}

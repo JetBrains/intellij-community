@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
@@ -24,23 +9,26 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AntRunProfileState implements RunProfileState {
+import javax.swing.JComponent;
+
+final class AntRunProfileState implements RunProfileState {
+  static final Key<AntBuildMessageView> MESSAGE_VIEW = Key.create("ANT_MESSAGE_VIEW");
   private final ExecutionEnvironment myEnvironment;
 
-  public AntRunProfileState(ExecutionEnvironment environment) {
+  AntRunProfileState(ExecutionEnvironment environment) {
     myEnvironment = environment;
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
     final RunProfile profile = myEnvironment.getRunProfile();
-    if (profile instanceof AntRunConfiguration) {
-      final AntRunConfiguration runConfig = (AntRunConfiguration)profile;
+    if (profile instanceof AntRunConfiguration runConfig) {
       if (runConfig.getTarget() == null) {
         return null;
       }
@@ -48,7 +36,23 @@ public class AntRunProfileState implements RunProfileState {
       if (processHandler == null) {
         return null;
       }
-      return new DefaultExecutionResult(null, processHandler);
+
+      return new DefaultExecutionResult(new ExecutionConsole() {
+        @Override
+        public @NotNull JComponent getComponent() {
+          return processHandler.getUserData(MESSAGE_VIEW);
+        }
+
+        @Override
+        public JComponent getPreferredFocusableComponent() {
+          return processHandler.getUserData(MESSAGE_VIEW);
+        }
+
+        @Override
+        public void dispose() {
+          processHandler.putUserData(MESSAGE_VIEW, null);
+        }
+      }, processHandler);
     }
     return null;
   }

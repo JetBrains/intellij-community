@@ -1,0 +1,5 @@
+
+// FIX: Remove unreachable code
+fun example() {
+    while (true) { }
+}

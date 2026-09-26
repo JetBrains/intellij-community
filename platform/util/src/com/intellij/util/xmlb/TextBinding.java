@@ -1,47 +1,64 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
+import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class TextBinding extends Binding {
+import static com.intellij.util.xmlb.JsonHelperKt.valueToJson;
+
+final class TextBinding implements NestedBinding {
   private final Class<?> valueClass;
+  private final MutableAccessor accessor;
 
-  public TextBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
-
-    valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
-  }
-
-  @Nullable
-  @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
-    return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
+  TextBinding(@NotNull MutableAccessor accessor) {
+    this.accessor = accessor;
+    valueClass = ClassUtil.typeToClass(accessor.getGenericType());
   }
 
   @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return valueToJson(element.getText(), valueClass);
+  }
+
+  @Override
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    return JsonHelperKt.toJson(bean, accessor, null);
+  }
+
+  @Override
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    JsonHelperKt.setFromJson(bean, element, accessor, valueClass, null);
+  }
+
+  @Override
+  public @NotNull MutableAccessor getAccessor() {
+    return accessor;
+  }
+
+  @Override
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
+    if (value != null) {
+      parent.addContent(new Text(true, XmlSerializerImpl.convertToString(value)));
+    }
+  }
+
+  @Override
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
+    return false;
+  }
+
+  @Override
+  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return context;
   }
 
-  void set(@NotNull Object context, @NotNull String value) {
-    XmlSerializerImpl.doSet(context, value, myAccessor, valueClass);
+  void setValue(@NotNull Object context, @Nullable String value) {
+    XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }

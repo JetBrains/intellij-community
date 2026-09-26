@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiType
@@ -48,8 +34,16 @@ interface UTryExpression : UExpression {
   val hasResources: Boolean
 
   /**
-   * Returns the list of resource variables declared in this expression, or an empty list if this expression is not a `try-with-resources` expression.
+   * Returns the list of resource variables or expressions declared in this expression, or an empty list if this expression is not a
+   * `try-with-resources` expression.
    */
+  val resources: List<UAnnotated> get() = emptyList()
+
+  /**
+   * Returns the list of resource variables declared in this expression, or an empty list if this expression is not a `try-with-resources`
+   * expression.
+   */
+  @Deprecated("This API doesn't support resource expression", ReplaceWith("resources"))
   val resourceVariables: List<UVariable>
 
   /**
@@ -79,8 +73,8 @@ interface UTryExpression : UExpression {
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitTryExpression(this)) return
-    annotations.acceptList(visitor)
-    resourceVariables.acceptList(visitor)
+    uAnnotations.acceptList(visitor)
+    resources.acceptList(visitor)
     tryClause.accept(visitor)
     catchClauses.acceptList(visitor)
     finallyClause?.accept(visitor)
@@ -92,13 +86,13 @@ interface UTryExpression : UExpression {
 
   override fun asRenderString(): String = buildString {
     append("try ")
-    if (hasResources) {
+    if (resources.isNotEmpty()) {
       append("(")
-      append(resourceVariables.joinToString("\n") { it.asRenderString() })
+      append(resources.joinToString("\n") { it.asRenderString() })
       append(")")
     }
-    appendln(tryClause.asRenderString().trim('\n', '\r'))
-    catchClauses.forEach { appendln(it.asRenderString().trim('\n', '\r')) }
+    appendLine(tryClause.asRenderString().trim('\n', '\r'))
+    catchClauses.forEach { appendLine(it.asRenderString().trim('\n', '\r')) }
     finallyClause?.let { append("finally ").append(it.asRenderString().trim('\n', '\r')) }
   }
 
@@ -132,6 +126,7 @@ interface UCatchClause : UElement {
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitCatchClause(this)) return
+    parameters.acceptList(visitor)
     body.accept(visitor)
     visitor.afterVisitCatchClause(this)
   }
@@ -139,7 +134,7 @@ interface UCatchClause : UElement {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitCatchClause(this, data)
 
-  override fun asLogString(): String = log(parameters.joinToString { it.name ?: "<error>" })
+  override fun asLogString(): String = log(parameters.joinToString { it.name })
 
-  override fun asRenderString(): String = "catch (e) " + body.asRenderString()
+  override fun asRenderString(): String = "catch (${parameters.joinToString { it.asRenderString() }}) ${body.asRenderString()}"
 }

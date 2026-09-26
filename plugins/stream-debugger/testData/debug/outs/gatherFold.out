@@ -1,0 +1,30 @@
+LineBreakpoint created at GatherFold.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! GatherFold
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+GatherFold.java:7
+Stream.of(1, 2, 3, 4, 5)
+.gather(Gatherers.fold(() -> "", (string, number) -> string + number))
+.toArray()
+gather
+    before: 1,2,3,4,5
+    after: 6
+toArray
+    before: 6
+    after: 7
+mappings for gather
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    4 -> nothing
+    5 -> nothing
+  reverse:
+    nothing <- 6
+mappings for toArray
+  direct:
+    6 -> 7
+  reverse:
+    6 <- 7
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

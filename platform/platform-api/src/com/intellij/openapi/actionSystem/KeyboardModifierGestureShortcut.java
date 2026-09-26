@@ -1,41 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.keymap.KeymapUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
+import java.util.Objects;
 
 public class KeyboardModifierGestureShortcut extends Shortcut {
-
   private final KeyStroke myStroke;
   private final KeyboardGestureAction.ModifierType myType;
 
-  public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
-    switch (type) {
-      case dblClick:
-        return new DblClick(stroke);
-      case hold:
-        return new Hold(stroke);
-    }
-
-    throw new IllegalArgumentException(type.toString());
+  public static @NotNull Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
+    return switch (type) {
+      case dblClick -> new DblClick(stroke);
+      case hold -> new Hold(stroke);
+    };
   }
 
-  protected KeyboardModifierGestureShortcut(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
+  protected KeyboardModifierGestureShortcut(KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
     myStroke = stroke;
     myType = type;
   }
@@ -54,13 +37,15 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
   }
 
   @Override
-  public boolean startsWith(final Shortcut sc) {
-    if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
+  public boolean startsWith(@NotNull Shortcut shortcut) {
+    if (!(shortcut instanceof KeyboardModifierGestureShortcut other)) return false;
 
-    final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
     if (myType.equals(other.myType)) {
-      if (myStroke.getModifiers() != other.myStroke.getModifiers()) return false;
-      return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
+      if (myStroke.getModifiers() != other.myStroke.getModifiers()) {
+        return false;
+      }
+      // keyCode == -1 is a wildcard used for prefix checks; concrete gestures must match the doubled modifier key.
+      return other.myStroke.getKeyCode() == -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();
     }
 
     return false;
@@ -73,7 +58,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
     final KeyboardModifierGestureShortcut that = (KeyboardModifierGestureShortcut)o;
 
-    if (myStroke != null ? !myStroke.equals(that.myStroke) : that.myStroke != null) return false;
+    if (!Objects.equals(myStroke, that.myStroke)) return false;
     if (myType != that.myType) return false;
 
     return true;
@@ -93,7 +78,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     }
   }
 
-  public static class Hold extends KeyboardModifierGestureShortcut {
+  public static final class Hold extends KeyboardModifierGestureShortcut {
     public Hold(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.hold);
     }

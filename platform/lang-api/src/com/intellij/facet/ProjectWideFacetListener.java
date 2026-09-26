@@ -16,22 +16,28 @@
 
 package com.intellij.facet;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
- * @author nik
+ * Implement this interface and register the implementation in {@link ProjectWideFacetListenersRegistry} to be notified about changes in facets
+ * in all modules.
+ * <p>
+ * Consider using {@link ProjectFacetListener} instead, it doesn't require calling code during project initialization.
+ * </p>
  */
 public interface ProjectWideFacetListener<F extends Facet> extends EventListener {
 
   void firstFacetAdded();
 
-  void facetAdded(F facet);
+  void facetAdded(@NotNull F facet);
 
-  void beforeFacetRemoved(F facet);
+  void beforeFacetRemoved(@NotNull F facet);
 
-  void facetRemoved(F facet);
+  void facetRemoved(@NotNull F facet);
 
   void allFacetsRemoved();
 
-  void facetConfigurationChanged(F facet);
+  void facetConfigurationChanged(@NotNull F facet);
 }

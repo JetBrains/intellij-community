@@ -1,82 +1,101 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.UIBundle;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 
-/**
- * Panel for authentication - contains text fields for login and password, and a checkbox to remember
- * password in the Password Safe.
- * 
- * @author stathik
- * @author Kirill Likhodedov
- */
-public class AuthenticationPanel extends JPanel {
-  private JPanel myMainPanel;
-  private JLabel myDescriptionLabel;
-  private JTextField myLoginTextField;
-  private JPasswordField myPasswordTextField;
-  private JCheckBox rememberPasswordCheckBox;
+import static java.util.Objects.requireNonNullElse;
 
-  /**
-   * @param description       Description text above the text fields.
-   * @param login             Initial login value.
-   * @param password          Initial password value.
-   * @param rememberPassword  Default value for the 'remember password' checkbox.
-   * If true, the checkbox will be selected; if false, the checkbox won't be selected; if null, there will be no checkbox for remembering
-   * password.
-   */
-  public AuthenticationPanel(@Nullable String description, @Nullable String login, @Nullable String password, @Nullable Boolean rememberPassword) {
-    add(myMainPanel);
-    myDescriptionLabel.setText(description);
+@ApiStatus.Internal
+public final class AuthenticationPanel extends JPanel {
+  private final JTextField myLoginTextField;
+  private final JPasswordField myPasswordTextField;
+  private final JCheckBox rememberPasswordCheckBox;
+
+  public AuthenticationPanel(
+    @Nullable @NlsContexts.Label String description,
+    @Nullable String login,
+    @Nullable String password,
+    @Nullable Boolean rememberPassword
+  ) {
+    setLayout(new GridLayoutManager(4, 2, JBUI.insets(2), -1, -1));
+
+    var descriptionLabel = new JLabel();
+    descriptionLabel.setText(description);
+    add(descriptionLabel, new GridConstraints(
+      0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false
+    ));
+
+    var loginLabel = new JLabel(UIBundle.message("auth.login.label"));
+    add(loginLabel, new GridConstraints(
+      1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
+      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false
+    ));
+
+    myLoginTextField = new JTextField();
     myLoginTextField.setText(login);
+    add(myLoginTextField, new GridConstraints(
+      1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+      GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false
+    ));
+    loginLabel.setLabelFor(myLoginTextField);
+
+    var passwordLabel = new JLabel(UIBundle.message("auth.password.label"));
+    add(passwordLabel, new GridConstraints(
+      2, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE,
+      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false
+    ));
+
+    myPasswordTextField = new JPasswordField();
     myPasswordTextField.setText(password);
+    add(myPasswordTextField, new GridConstraints(
+      2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+      GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false
+    ));
+    passwordLabel.setLabelFor(myPasswordTextField);
+
+    rememberPasswordCheckBox = new JCheckBox(UIBundle.message("auth.remember.cb"));
+    add(rememberPasswordCheckBox, new GridConstraints(
+      3, 1, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE,
+      GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false
+    ));
     if (rememberPassword == null) {
       rememberPasswordCheckBox.setVisible(false);
-    } else {
+    }
+    else {
       rememberPasswordCheckBox.setSelected(rememberPassword);
     }
   }
 
-  @NotNull
-  public String getLogin() {
-    return StringUtil.notNullize(myLoginTextField.getText());
+  public @NotNull String getLogin() {
+    return requireNonNullElse(myLoginTextField.getText(), "");
   }
 
-  @NotNull
-  public char[] getPassword() {
-    return ObjectUtils.notNull(myPasswordTextField.getPassword(), ArrayUtil.EMPTY_CHAR_ARRAY);
+  public char @NotNull [] getPassword() {
+    return requireNonNullElse(myPasswordTextField.getPassword(), ArrayUtil.EMPTY_CHAR_ARRAY);
   }
 
-  public boolean isRememberPassword () {
+  public boolean isRememberPassword() {
     return rememberPasswordCheckBox.isSelected();
   }
 
-  /**
-   * @return the component which should be focused when the dialog appears on the screen. May be used in dialogs.
-   * @see com.intellij.openapi.ui.DialogWrapper#getPreferredFocusedComponent()
-   */
   public JComponent getPreferredFocusedComponent() {
     return getLogin().isEmpty() ? myLoginTextField : myPasswordTextField;
   }
-
 }

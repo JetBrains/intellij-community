@@ -1,23 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -26,26 +32,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author dsl
- */
-public class CanonicalTypes {
+public final class CanonicalTypes {
   private CanonicalTypes() { }
 
   public abstract static class Type {
-    @NotNull
-    public abstract PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
+    public abstract @NotNull PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
 
-    @NotNull
-    public PsiType getType(@NotNull PsiElement context) {
+    public @NotNull PsiType getType(@NotNull PsiElement context) {
       return getType(context, context.getManager());
     }
 
-    @NonNls
-    public abstract String getTypeText();
+    public abstract @NonNls String getTypeText();
 
     public void addImportsTo(@NotNull JavaCodeFragment fragment) { }
 
@@ -57,13 +59,21 @@ public class CanonicalTypes {
   private abstract static class AnnotatedType extends Type {
     protected final TypeAnnotationProvider myProvider;
 
-    public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+    AnnotatedType(@NotNull TypeAnnotationProvider provider) {
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
 
-  private static class Primitive extends AnnotatedType {
+  private static final class Primitive extends AnnotatedType {
     private final PsiPrimitiveType myType;
 
     private Primitive(@NotNull PsiPrimitiveType type) {
@@ -71,35 +81,35 @@ public class CanonicalTypes {
       myType = type;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) {
       return myType.annotate(myProvider);
     }
 
     @Override
     public String getTypeText() {
-      return myType.getPresentableText();
+      return myType.getPresentableText(true);
     }
   }
 
   private static class Array extends AnnotatedType {
     final Type myComponentType;
+    private final String myPresentableText;
 
     private Array(@NotNull PsiType original, @NotNull Type componentType) {
       super(original.getAnnotationProvider());
+      myPresentableText = original.getPresentableText(true);
       myComponentType = componentType;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       return myComponentType.getType(context, manager).createArrayType().annotate(myProvider);
     }
 
     @Override
     public String getTypeText() {
-      return myComponentType.getTypeText() + "[]";
+      return myPresentableText;
     }
 
     @Override
@@ -113,24 +123,18 @@ public class CanonicalTypes {
     }
   }
 
-  private static class Ellipsis extends Array {
+  private static final class Ellipsis extends Array {
     private Ellipsis(@NotNull PsiType original, @NotNull Type componentType) {
       super(original, componentType);
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       return new PsiEllipsisType(myComponentType.getType(context, manager)).annotate(myProvider);
-    }
-
-    @Override
-    public String getTypeText() {
-      return myComponentType.getTypeText() + "...";
     }
   }
 
-  private static class WildcardType extends AnnotatedType {
+  private static final class WildcardType extends AnnotatedType {
     private final boolean myIsExtending;
     private final Type myBound;
 
@@ -140,18 +144,26 @@ public class CanonicalTypes {
       myBound = bound;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       PsiWildcardType type;
       if (myBound == null) {
         type = PsiWildcardType.createUnbounded(manager);
       }
-      else if (myIsExtending) {
-        type = PsiWildcardType.createExtends(manager, myBound.getType(context, manager));
-      }
       else {
-        type = PsiWildcardType.createSuper(manager, myBound.getType(context, manager));
+        PsiType boundType = myBound.getType(context, manager);
+        if (boundType.equals(PsiTypes.nullType())) {
+          throw new IncorrectOperationException("Bound type is null " + getTypeText());
+        }
+        if (boundType instanceof PsiWildcardType) {
+          throw new IncorrectOperationException("Bound type is a wildcard " + getTypeText() + "; " + boundType.getCanonicalText());
+        }
+        if (myIsExtending) {
+          type = PsiWildcardType.createExtends(manager, boundType);
+        }
+        else {
+          type = PsiWildcardType.createSuper(manager, boundType);
+        }
       }
       return type.annotate(myProvider);
     }
@@ -174,19 +186,18 @@ public class CanonicalTypes {
     }
   }
 
-  private static class UnresolvedType extends Type {
+  private static final class UnresolvedType extends Type {
     private final String myPresentableText;
     private final String myCanonicalText;
 
     private UnresolvedType(@NotNull PsiType original) {
-      myPresentableText = original.getPresentableText();
+      myPresentableText = original.getPresentableText(true);
       myCanonicalText = original.getCanonicalText(true);
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeFromText(myCanonicalText, context);
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(myCanonicalText, context);
     }
 
     @Override
@@ -200,21 +211,20 @@ public class CanonicalTypes {
     }
   }
 
-  private static class ClassType extends AnnotatedType {
+  private static final class ClassType extends AnnotatedType {
     private final String myPresentableText;
     private final String myClassQName;
     private final Map<String, Type> mySubstitutor;
 
     private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
-      super(original.getAnnotationProvider());
-      myPresentableText = original.getPresentableText();
+      super(TypeAnnotationProvider.Static.create(original.getAnnotations()));
+      myPresentableText = original.getPresentableText(true);
       myClassQName = classQName;
       mySubstitutor = substitutor;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       PsiElementFactory factory = facade.getElementFactory();
 
@@ -223,7 +233,7 @@ public class CanonicalTypes {
         return factory.createTypeFromText(myClassQName, context);
       }
 
-      Map<PsiTypeParameter, PsiType> substitutionMap = ContainerUtil.newHashMap();
+      Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         Type substitute = mySubstitutor.get(typeParameter.getName());
         substitutionMap.put(typeParameter, substitute != null ? substitute.getType(context, manager) : null);
@@ -244,21 +254,23 @@ public class CanonicalTypes {
           type.addImportsTo(fragment);
         }
       }
+      for (PsiAnnotation annotation : myProvider.getAnnotations()) {
+        fragment.addImportsFromString(annotation.getQualifiedName());
+      }
     }
   }
 
-  private static class LogicalOperationType extends Type {
-    private final List<Type> myTypes;
+  private static final class LogicalOperationType extends Type {
+    private final List<? extends Type> myTypes;
     private final boolean myDisjunction;
 
-    private LogicalOperationType(List<Type> types, boolean disjunction) {
+    private LogicalOperationType(List<? extends Type> types, boolean disjunction) {
       myTypes = types;
       myDisjunction = disjunction;
     }
 
-    @NotNull
     @Override
-    public PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+    public @NotNull PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
       List<PsiType> types = ContainerUtil.map(myTypes, type -> type.getType(context, manager));
       return myDisjunction ? new PsiDisjunctionType(types, manager) : PsiIntersectionType.createIntersection(types);
     }
@@ -281,22 +293,21 @@ public class CanonicalTypes {
     private static final Logger LOG = Logger.getInstance(Creator.class);
 
     @Override
-    public Type visitPrimitiveType(PsiPrimitiveType type) {
+    public Type visitPrimitiveType(@NotNull PsiPrimitiveType type) {
       return new Primitive(type);
     }
 
     @Override
-    public Type visitEllipsisType(PsiEllipsisType type) {
+    public Type visitEllipsisType(@NotNull PsiEllipsisType type) {
       return new Ellipsis(type, substituteComponents(type));
     }
 
     @Override
-    public Type visitArrayType(PsiArrayType type) {
+    public Type visitArrayType(@NotNull PsiArrayType type) {
       return new Array(type, substituteComponents(type));
     }
 
-    @NotNull
-    private Type substituteComponents(PsiArrayType type) {
+    private @NotNull Type substituteComponents(PsiArrayType type) {
       final PsiType componentType = type.getComponentType();
       final Type substituted = componentType.accept(this);
       LOG.assertTrue(substituted != null, componentType);
@@ -304,13 +315,13 @@ public class CanonicalTypes {
     }
 
     @Override
-    public Type visitWildcardType(PsiWildcardType type) {
+    public Type visitWildcardType(@NotNull PsiWildcardType type) {
       PsiType bound = type.getBound();
       return new WildcardType(type, type.isExtends(), bound == null ? null : bound.accept(this));
     }
 
     @Override
-    public Type visitClassType(PsiClassType type) {
+    public Type visitClassType(@NotNull PsiClassType type) {
       PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
       PsiClass aClass = resolveResult.getElement();
       if (aClass instanceof PsiAnonymousClass) {
@@ -320,26 +331,25 @@ public class CanonicalTypes {
         return new UnresolvedType(type);
       }
       else {
-        Map<String, Type> substitutionMap = ContainerUtil.newHashMap();
+        Map<String, Type> substitutionMap = new HashMap<>();
         PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
           PsiType substitute = substitutor.substitute(typeParameter);
           substitutionMap.put(typeParameter.getName(), substitute != null ? substitute.accept(this) : null);
         }
-        String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), ObjectUtils.assertNotNull(aClass.getName()));
+        String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), Objects.requireNonNull(aClass.getName()));
         return new ClassType(type, qualifiedName, substitutionMap);
       }
     }
 
     @Override
-    public Type visitDisjunctionType(PsiDisjunctionType type) {
+    public Type visitDisjunctionType(@NotNull PsiDisjunctionType type) {
       List<Type> types = ContainerUtil.map(type.getDisjunctions(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, true);
     }
 
-    @Nullable
     @Override
-    public Type visitIntersectionType(PsiIntersectionType type) {
+    public @Nullable Type visitIntersectionType(@NotNull PsiIntersectionType type) {
       List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, false);
     }

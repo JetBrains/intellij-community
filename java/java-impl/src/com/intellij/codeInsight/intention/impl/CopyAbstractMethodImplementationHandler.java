@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -33,19 +20,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CopyAbstractMethodImplementationHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationHandler");
+  private static final Logger LOG = Logger.getInstance(CopyAbstractMethodImplementationHandler.class);
 
   private final Project myProject;
   private final Editor myEditor;
@@ -62,17 +59,19 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   public void invoke() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations"), false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.runBlocking(() -> searchExistingImplementations()), CodeInsightBundle.message("searching.for.implementations")
+      , false, myProject);
     if (mySourceMethods.isEmpty()) {
-      Messages.showErrorDialog(myProject, CodeInsightBundle.message("copy.abstract.method.no.existing.implementations.found"),
-                               CodeInsightBundle.message("copy.abstract.method.title"));
+      Messages.showErrorDialog(myProject, JavaBundle.message("copy.abstract.method.no.existing.implementations.found"),
+                               JavaBundle.message("copy.abstract.method.title"));
       return;
     }
     if (mySourceMethods.size() == 1) {
       copyImplementation(mySourceMethods.get(0));
     }
     else {
-      Collections.sort(mySourceMethods, (o1, o2) -> {
+      mySourceMethods.sort((o1, o2) -> {
         PsiClass c1 = o1.getContainingClass();
         PsiClass c2 = o2.getContainingClass();
         return Comparing.compare(c1.getName(), c2.getName());
@@ -81,7 +80,7 @@ public class CopyAbstractMethodImplementationHandler {
         .createPopupChooserBuilder(mySourceMethods)
         .setRenderer(new MethodCellRenderer(true))
         .setItemChosenCallback((element) -> copyImplementation(element))
-        .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
+        .setTitle(JavaBundle.message("copy.abstract.method.popup.title"))
         .createPopup()
         .showInBestPositionFor(myEditor);
     }
@@ -90,7 +89,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass).asIterable()) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -109,8 +108,7 @@ public class CopyAbstractMethodImplementationHandler {
     }
     if (mySourceClass.isEnum()) {
       for (PsiField field : mySourceClass.getFields()) {
-        if (field instanceof PsiEnumConstant){
-          final PsiEnumConstant enumConstant = (PsiEnumConstant)field;
+        if (field instanceof PsiEnumConstant enumConstant){
           final PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
           if (initializingClass == null) {
             myTargetEnumConstants.add(enumConstant);
@@ -130,9 +128,8 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
     final List<PsiMethod> generatedMethods = new ArrayList<>();
-    WriteCommandAction.writeCommandAction(myProject, getTargetFiles()).run(() -> {
+    WriteCommandAction.writeCommandAction(myProject, myTargetClasses.isEmpty() ? myTargetEnumConstants : myTargetClasses).run(() -> {
       for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
         PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();
         myTargetClasses.add(initializingClass);
@@ -148,7 +145,15 @@ public class CopyAbstractMethodImplementationHandler {
         ChangeContextUtil.encodeContextInfo(sourceBody, true);
         final PsiElement newBody = body.replace(sourceBody.copy());
         ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
-
+        final PsiDocComment docComment = overriddenMethod.getDocComment();
+        if (docComment != null) {
+          try {
+            docComment.delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
         PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
         try {
@@ -176,13 +181,4 @@ public class CopyAbstractMethodImplementationHandler {
       }
     }
   }
-
-  private PsiFile[] getTargetFiles() {
-    Collection<PsiFile> fileList = new HashSet<>();
-    for(PsiClass psiClass: myTargetClasses) {
-      fileList.add(psiClass.getContainingFile());
-    }
-    return PsiUtilCore.toPsiFileArray(fileList);
-  }
-
 }

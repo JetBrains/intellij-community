@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -7,18 +7,26 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
+@ApiStatus.Internal
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegionMarker {
+  private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+  private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
+
   private boolean myIsExpanded;
-  private final EditorImpl myEditor;
-  private final String myPlaceholderText;
+  final EditorImpl myEditor;
+  private String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
+  int mySizeBeforeUpdate; // temporary field used during update on document change
 
   FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
@@ -26,7 +34,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super(editor.getDocument(), startOffset, endOffset,false);
+    super(editor.getElfDocument(), startOffset, endOffset, false, true);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
@@ -40,15 +48,19 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
   }
 
   @Override
+  @RequiresEdt
   public void setExpanded(boolean expanded) {
     setExpanded(expanded, true);
   }
 
-  void setExpanded(boolean expanded, boolean notify) {
+  @RequiresEdt
+  @Override
+  public void setExpanded(boolean expanded, boolean notify) {
     FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
       doSetExpanded(expanded, foldingModel, this, notify);
-    } else {
+    }
+    else {
       for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
         doSetExpanded(expanded, foldingModel, region, notify || region != this);
         // There is a possible case that we can't change expanded status of particular fold region (e.g. we can't collapse
@@ -66,11 +78,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     }
   }
 
-  @Override
-  public FoldRegionImpl get() {
-    return this;
-  }
-
+  @RequiresEdt
   private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
     if (expanded) {
       foldingModel.expandFoldRegion(region, notify);
@@ -85,13 +93,13 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     return super.isValid() && intervalStart() < intervalEnd();
   }
 
-  void setExpandedInternal(boolean toExpand) {
+  @Override
+  public void setExpandedInternal(boolean toExpand) {
     myIsExpanded = toExpand;
   }
 
   @Override
-  @NotNull
-  public String getPlaceholderText() {
+  public @NotNull String getPlaceholderText() {
     return myPlaceholderText;
   }
 
@@ -101,8 +109,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
   }
 
   @Override
-  @Nullable
-  public FoldingGroup getGroup() {
+  public @Nullable FoldingGroup getGroup() {
     return myGroup;
   }
 
@@ -111,11 +118,18 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     return myShouldNeverExpand;
   }
   
-  boolean hasDocumentRegionChanged() {
+  @Override
+  public boolean hasDocumentRegionChanged() {
     return myDocumentRegionWasChanged;
   }
+
+  @Override
+  public void markDocumentRegionChanged() {
+    myDocumentRegionWasChanged = true;
+  }
   
-  void resetDocumentRegionChanged() {
+  @Override
+  public void resetDocumentRegionChanged() {
     myDocumentRegionWasChanged = false;
   }
 
@@ -126,33 +140,74 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
       int oldEnd = intervalEnd();
       int changeStart = e.getOffset();
       int changeEnd = e.getOffset() + e.getOldLength();
-      if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
+      if (changeStart < oldEnd && changeEnd > oldStart) {
+        myDocumentRegionWasChanged = true;
+      }
     }
     super.changedUpdateImpl(e);
     if (isValid()) {
-      alignToSurrogateBoundaries();
+      alignToValidBoundaries();
     }
-    else {
-      myEditor.getFoldingModel().removeRegionFromGroup(this);
-    }
-    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override
-  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
-    alignToSurrogateBoundaries();
+  protected void onReTarget(@NotNull DocumentEvent e) {
+    alignToValidBoundaries();
   }
 
-  private void alignToSurrogateBoundaries() {
+  void alignToValidBoundaries() {
     Document document = getDocument();
-    int start = intervalStart();
-    int end = intervalEnd();
-    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
-      setIntervalStart(start - 1);
+    long alignedRange = TextRangeScalarUtil.shift(toScalarRange(),
+    DocumentUtil.isInsideCharacterPair(document, getStartOffset()) ? -1 : 0,
+    DocumentUtil.isInsideCharacterPair(document, getEndOffset()) ? -1 : 0);
+    if (alignedRange != toScalarRange()) {
+      myEditor.getFoldingModel().setComplexDocumentChange(true);
     }
-    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
-      setIntervalEnd(end - 1);
+    setRange(alignedRange);
+  }
+
+  @Override
+  public void setGreedyToLeft(boolean greedy) {
+    // not supported
+  }
+
+  @Override
+  public void setGreedyToRight(boolean greedy) {
+    // not supported
+  }
+
+  @Override
+  public void setStickingToRight(boolean value) {
+    // not supported
+  }
+
+  @Override
+  public void setInnerHighlightersMuted(boolean value) {
+    putUserData(MUTE_INNER_HIGHLIGHTERS, value ? Boolean.TRUE : null);
+  }
+
+  @Override
+  public boolean areInnerHighlightersMuted() {
+    return Boolean.TRUE.equals(getUserData(MUTE_INNER_HIGHLIGHTERS));
+  }
+
+  @Override
+  public void setGutterMarkEnabledForSingleLine(boolean value) {
+    if (value != isGutterMarkEnabledForSingleLine()) {
+      putUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE, value ? Boolean.TRUE : null);
+      myEditor.getGutterComponentEx().repaint();
     }
+  }
+
+  @Override
+  public boolean isGutterMarkEnabledForSingleLine() {
+    return Boolean.TRUE.equals(getUserData(SHOW_GUTTER_MARK_FOR_SINGLE_LINE));
+  }
+
+  @Override
+  public void setPlaceholderText(@NotNull String text) {
+    myPlaceholderText = text;
+    myEditor.getFoldingModel().onPlaceholderTextChanged(this);
   }
 
   @Override

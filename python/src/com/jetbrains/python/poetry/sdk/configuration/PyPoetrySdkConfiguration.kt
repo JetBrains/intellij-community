@@ -1,0 +1,172 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.poetry.sdk.configuration
+
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.pytools.backend.PyExecutableCache
+import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.psi.resolvePythonVersionSpecifiers
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyVersionSpecifiers
+import com.jetbrains.python.poetry.findPoetryLock
+import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
+import com.jetbrains.python.projectCreation.getSystemPython
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.configuration.CheckToml
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.findEnvOrNull
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.sdk.createSdk
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.poetry.runPoetry
+import com.jetbrains.python.sdk.poetry.setupPoetry
+import com.jetbrains.python.sdk.poetry.suggestedSdkName
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.module.eelDescriptor
+import com.jetbrains.python.module.getEel
+import com.jetbrains.python.sdk.poetry.POETRY_TOML
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
+import kotlin.io.path.pathString
+
+internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
+
+  companion object {
+    private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
+  }
+
+  override val toolId: ToolId = POETRY_TOOL_ID
+
+  override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, POETRY_TOML)
+
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, true) },
+    ) { { createPoetry(module) } }
+
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, false) },
+    ) { { createPoetry(module) } }
+
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
+
+  private suspend fun checkManageableEnv(
+    module: Module, checkToml: CheckToml,
+  ): EnvCheckerResult = reportRawProgress {
+    it.text(PyBundle.message("python.sdk.validating.environment"))
+    val poetryLockExists = findPoetryLock(module) != null
+
+    val isPoetryProject = if (checkToml) {
+      withContext(Dispatchers.IO) {
+        PyProjectToml.findPyProjectTomlFile(module)
+          ?.let { toml -> getPyProjectTomlForPoetry(toml.virtualFile) } != null || poetryLockExists
+      }
+    }
+    else true
+
+    val canManage = isPoetryProject && PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel())) != null
+    val intentionName = PyBundle.message("sdk.set.up.poetry.environment")
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
+
+    if (canManage) {
+      val basePath = module.baseDir?.path?.toNioPathOrNull()
+      runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
+      val envPath = runPoetry(basePath, "env", "info", "-p")
+        .mapSuccess { it.toNioPathOrNull() }
+        .getOr { return@reportRawProgress envNotFound }
+      envPath?.resolvePythonBinary()?.findEnvOrNull(intentionName) ?: envNotFound
+    }
+    /**
+     * We're confident that it's a poetry project in two cases:
+     * - File poetry.lock exists
+     * - We checked pyproject.toml and there's a specific mention of poetry tool
+     */
+    else if (poetryLockExists || (isPoetryProject && checkToml)) {
+      // poetry was just installed; drop the detection cache so the next lookup finds it (don't persist).
+      val pathPersister: (Path) -> Unit = { _ ->
+        PyExecutableCache.getInstance().invalidate(module.eelDescriptor, PoetryPyTool.getInstance())
+      }
+      val tool = PoetryPyTool.getInstance()
+      EnvCheckerResult.SuggestToolInstallation(
+        toolToInstall = tool.packageName.name,
+        pathPersister = pathPersister,
+        intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title", "Poetry")
+      )
+    }
+    else EnvCheckerResult.CannotConfigure
+  }
+
+  private suspend fun createPoetry(module: Module): PyResult<Sdk> =
+    withBackgroundProgress(module.project, PyBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
+      LOGGER.debug("Creating poetry environment")
+
+      val basePath = module.baseDir?.path?.let { Path.of(it) }
+      if (basePath == null) {
+        return@withBackgroundProgress PyResult.localizedError(
+          PyBundle.message(
+            "python.sdk.provided.path.is.invalid",
+            module.baseDir?.path
+          )
+        )
+      }
+      val tomlFile = PyProjectToml.findPyProjectTomlFile(module)
+      val versionSpecifiers = tomlFile?.let { pyProjectTomlFile ->
+        readAction { pyProjectTomlFile.virtualFile.findPsiFile(module.project)?.resolvePythonVersionSpecifiers() }
+      } ?: PyVersionSpecifiers.ANY_SUPPORTED
+
+      val baseSystemPython = getSystemPython(
+        confirmInstallation = { true },
+        pythonService = SystemPythonService(),
+        versionSpecifiers = versionSpecifiers,
+        eelDescriptor = module.eelDescriptor,
+      ).getOr { return@withBackgroundProgress it }
+
+      val poetry = setupPoetry(
+        projectPath = basePath,
+        basePythonBinaryPath = baseSystemPython.pythonBinary,
+        installPackages = true,
+        init = tomlFile == null,
+        errorSink = ErrorSink().withProject(module.project)
+      ).getOr { return@withBackgroundProgress it }
+
+      val path = poetry.resolvePythonBinary()
+                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", poetry))
+
+      val file = StandardFileSystems.local().refreshAndFindFileByPath(path.pathString)
+                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
+
+      LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
+      val sdk = createSdk(
+        PathHolder.Eel(file.toNioPath()),
+        PyPoetrySdkAdditionalData(basePath),
+        suggestedSdkName(basePath)
+      ).getOr { return@withBackgroundProgress it }
+
+      PyResult.success(sdk)
+    }
+}

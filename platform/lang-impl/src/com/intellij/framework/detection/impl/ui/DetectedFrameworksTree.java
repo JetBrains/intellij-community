@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.FrameworkType;
@@ -27,15 +13,17 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
 public class DetectedFrameworksTree extends CheckboxTree {
   private List<? extends DetectedFrameworkDescription> myDetectedFrameworks;
   private final FrameworkDetectionContext myContext;
@@ -80,10 +68,9 @@ public class DetectedFrameworksTree extends CheckboxTree {
     }
   }
 
-  public void processUncheckedNodes(@NotNull final Consumer<DetectedFrameworkTreeNodeBase> consumer) {
+  public void processUncheckedNodes(final @NotNull Consumer<? super DetectedFrameworkTreeNodeBase> consumer) {
     TreeUtil.traverse(getRoot(), node -> {
-      if (node instanceof DetectedFrameworkTreeNodeBase) {
-        final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
+      if (node instanceof DetectedFrameworkTreeNodeBase frameworkNode) {
         if (!frameworkNode.isChecked()) {
           consumer.consume(frameworkNode);
         }
@@ -124,8 +111,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     return node;
   }
 
-  @NotNull
-  private static FrameworkDirectoryNode createDirectoryNodes(@NotNull VirtualFile dir, @NotNull Map<VirtualFile, FrameworkDirectoryNode> nodes) {
+  private static @NotNull FrameworkDirectoryNode createDirectoryNodes(@NotNull VirtualFile dir, @NotNull Map<VirtualFile, FrameworkDirectoryNode> nodes) {
     final FrameworkDirectoryNode node = nodes.get(dir);
     if (node != null) {
       return node;
@@ -141,13 +127,13 @@ public class DetectedFrameworksTree extends CheckboxTree {
   }
 
   private void createNodesGroupedByType(CheckedTreeNode root, final List<? extends DetectedFrameworkDescription> frameworks) {
-    Map<FrameworkType, FrameworkTypeNode> groupNodes = new HashMap<>();
+    Map<String, FrameworkTypeNode> groupNodes = new HashMap<>();
     for (DetectedFrameworkDescription framework : frameworks) {
       final FrameworkType type = framework.getDetector().getFrameworkType();
-      FrameworkTypeNode group = groupNodes.get(type);
+      FrameworkTypeNode group = groupNodes.get(type.getId());
       if (group == null) {
         group = new FrameworkTypeNode(type);
-        groupNodes.put(type, group);
+        groupNodes.put(type.getId(), group);
         root.add(group);
       }
       group.add(new DetectedFrameworkNode(framework, myContext));
@@ -180,7 +166,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     myDetectedFrameworks = frameworks;
   }
 
-  private static class DetectedFrameworksTreeRenderer extends CheckboxTreeCellRenderer {
+  private static final class DetectedFrameworksTreeRenderer extends CheckboxTreeCellRenderer {
     private DetectedFrameworksTreeRenderer() {
       super(true, false);
     }

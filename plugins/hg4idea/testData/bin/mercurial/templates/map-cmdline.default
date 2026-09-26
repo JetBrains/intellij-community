@@ -1,0 +1,91 @@
+# Base templates. Due to name clashes with existing keywords, we have
+# to replace some keywords with 'lkeyword', for 'labelled keyword'
+
+[templates]
+changeset = '{cset}{branches}{bookmarks}{tags}{parents}{luser}{ldate}{ltroubles}{lobsfate}{summary}\n'
+changeset_quiet = '{lnode}'
+changeset_verbose = '{cset}{branches}{bookmarks}{tags}{parents}{luser}{ldate}{ltroubles}{lobsfate}{lfiles}{lfile_copies_switch}{description}\n'
+changeset_debug = '{fullcset}{branches}{bookmarks}{tags}{lphase}{parents}{manifest}{luser}{ldate}{ltroubles}{lobsfate}{lfile_mods}{lfile_adds}{lfile_dels}{lfile_copies_switch}{extras}{description}\n'
+
+# File templates
+lfiles = '{if(files,
+               label("ui.note log.files",
+                     "files:       {files}\n"))}'
+
+lfile_mods = '{if(file_mods,
+                  label("ui.debug log.files",
+                        "files:       {file_mods}\n"))}'
+
+lfile_adds = '{if(file_adds,
+                  label("ui.debug log.files",
+                        "files+:      {file_adds}\n"))}'
+
+lfile_dels = '{if(file_dels,
+                  label("ui.debug log.files",
+                        "files-:      {file_dels}\n"))}'
+
+lfile_copies_switch = '{if(file_copies_switch,
+                           label("ui.note log.copies",
+                                 "copies:     {file_copies_switch
+                                               % ' {name} ({source})'}\n"))}'
+
+# General templates
+cset = '{labelcset("changeset:   {rev}:{node|short}")}\n'
+fullcset = '{labelcset("changeset:   {rev}:{node}")}\n'
+
+lphase = '{label("log.phase",
+                 "phase:       {phase}")}\n'
+
+parent = '{label("log.parent changeset.{phase}",
+                  "parent:      {rev}:{node|formatnode}")}\n'
+
+lnode = '{label("log.node",
+                "{rev}:{node|short}")}\n'
+
+manifest = '{label("ui.debug log.manifest",
+                   "manifest:    {rev}:{node}")}\n'
+
+branch = '{label("log.branch",
+                 "branch:      {branch}")}\n'
+
+tag = '{label("log.tag",
+              "tag:         {tag}")}\n'
+
+bookmark = '{label("log.bookmark",
+                   "bookmark:    {bookmark}")}\n'
+
+luser = '{label("log.user",
+                "user:        {author}")}\n'
+
+summary = '{if(desc|strip, "{label('log.summary',
+                                   'summary:     {desc|firstline}')}\n")}'
+
+ldate = '{label("log.date",
+                "date:        {date|date}")}\n'
+
+ltroubles = '{if(instabilities, "{label('log.instability',
+                                   'instability: {join(instabilities, ", ")}')}\n")}'
+
+extra = '{label("ui.debug log.extra",
+                "extra:       {key}={value|stringescape}")}\n'
+
+description = '{if(desc|strip, "{label('ui.note log.description',
+                                       'description:')}
+                                {label('ui.note log.description',
+                                       '{desc|strip}')}\n\n")}'
+
+status = '{status} {path|relpath}\n{if(source, "  {source|relpath}\n")}'
+
+# Obsfate templates, it would be removed once we introduce the obsfate
+# template fragment
+lobsfate = '{if(obsfate, "{label('log.obsfate', '{obsfate % "obsolete:    {fate}\n"}')}")}'
+
+[templatealias]
+labelcset(expr) = label(separate(" ",
+                                 "log.changeset",
+                                 "changeset.{phase}",
+                                 if(obsolete, "changeset.obsolete"),
+                                 if(instabilities, "changeset.unstable"),
+                                 join(instabilities
+                                      % "instability.{instability}", " ")),
+                        expr)

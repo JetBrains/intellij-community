@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito" />
+    <orderEntry type="module-library" exported="">
+      <library name="mockito-kotlin" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.mockito.kotlin:mockito-kotlin:6.3.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.3.0/mockito-kotlin-6.3.0.jar">
+              <sha256sum>eb5784442906440151a2c675eb1bf0869047282bbe1c16580193e8a62baaf08e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.3.0/mockito-kotlin-6.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/6.3.0/mockito-kotlin-6.3.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

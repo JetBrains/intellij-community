@@ -1,35 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJvmModifiersOwner
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 /**
  * A [PsiElement] declaration wrapper.
  */
-interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
+interface UDeclaration : UElement, PsiJvmModifiersOwner, UAnnotated {
   /**
    * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
    */
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiModifierListOwner
 
-  override fun getOriginalElement(): PsiElement? = psi.originalElement
+  override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   /**
    * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
@@ -58,21 +49,34 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
     get() = UastVisibility[this]
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
+
+  override fun hasAnnotation(fqName: String): Boolean {
+    return findAnnotation(fqName) != null
+  }
 }
 
-/**
- * @since 2018.2
- */
 interface UDeclarationEx : UDeclaration {
   override val javaPsi: PsiModifierListOwner
 }
 
-fun UElement.getContainingDeclaration(): UDeclaration? = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
+
+fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
+  val element = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
+  return if (element != null && cls.isInstance(element)) {
+    @Suppress("UNCHECKED_CAST")
+    element as T
+  } else {
+    null
+  }
+}
+
+fun UDeclaration?.getAnchorPsi():PsiElement? {
+  return this?.uastAnchor?.sourcePsi
+}
 
 /**
- * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
- *
- * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
+ * A base interface for every [UElement] which have a name identifier. As analogy to [com.intellij.psi.PsiNameIdentifierOwner]
  */
 interface UAnchorOwner : UElement {
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -23,52 +9,76 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Settings {
   public static final DataKey<Settings> KEY = DataKey.create("settings.editor");
 
-  private final ConfigurableGroup[] myGroups;
-  private final IdentityHashMap<UnnamedConfigurable, ConfigurableWrapper>
-    myMap = new IdentityHashMap<>();
+  private final List<? extends ConfigurableGroup> myGroups;
+  private final Map<UnnamedConfigurable, ConfigurableWrapper> myMap = new IdentityHashMap<>();
 
-  protected Settings(@NotNull ConfigurableGroup... groups) {
+  protected Settings(@NotNull List<? extends ConfigurableGroup> groups) {
     myGroups = groups;
   }
 
-  @Nullable
-  public final <T extends Configurable> T find(@NotNull Class<T> type) {
-    return unwrap(new ConfigurableVisitor.ByType(type).find(myGroups), type);
+  public final @Nullable <T extends Configurable> T find(@NotNull Class<T> type) {
+    return unwrap(ConfigurableVisitor.findByType(type, myGroups), type);
   }
 
-  @Nullable
-  public final Configurable find(@NotNull String id) {
-    return unwrap(new ConfigurableVisitor.ByID(id).find(myGroups), Configurable.class);
+  public final @Nullable Configurable find(@NotNull String id) {
+    return unwrap(ConfigurableVisitor.findById(id, myGroups), Configurable.class);
   }
 
-  @NotNull
-  public final ActionCallback select(Configurable configurable) {
-    return configurable != null
-           ? selectImpl(choose(configurable, myMap.get(configurable)))
-           : ActionCallback.REJECTED;
+  public final @NotNull ActionCallback select(Configurable configurable) {
+    return configurable == null ? ActionCallback.REJECTED : Promises.toActionCallback(selectImpl(choose(configurable, myMap.get(configurable))));
   }
 
-  @NotNull
-  public final ActionCallback select(Configurable configurable, String option) {
+  public final @NotNull ActionCallback select(Configurable configurable, String option) {
     ActionCallback callback = select(configurable);
     if (option != null && configurable instanceof SearchableConfigurable) {
-      SearchableConfigurable searchable = (SearchableConfigurable)configurable;
-      Runnable search = searchable.enableSearch(option);
-      if (search != null) callback.doWhenDone(search);
+      Runnable runnable = ((SearchableConfigurable)configurable).enableSearch(option);
+      callback.doWhenDone(() -> {
+        if (runnable != null) {
+          runnable.run();
+        }
+        else {
+          setSearchText(option);
+        }
+      });
     }
     return callback;
   }
 
-  protected abstract ActionCallback selectImpl(Configurable configurable);
+  protected abstract @NotNull Promise<? super Object> selectImpl(Configurable configurable);
+
+  public final @Nullable Configurable getConfigurableWithInitializedUiComponent(@NotNull String configurableId,
+                                                                                boolean initializeUiComponentIfNotYet) {
+    Configurable c = find(configurableId);
+    if (c == null) return null;
+
+    Configurable configurable = choose(c, myMap.get(c));
+    return getConfigurableWithInitializedUiComponentImpl(configurable, initializeUiComponentIfNotYet);
+  }
+
+  protected abstract Configurable getConfigurableWithInitializedUiComponentImpl(@NotNull Configurable configurable,
+                                                                                boolean initializeUiComponentIfNotYet);
+
+  public final void checkModified(@NotNull String configurableId) {
+    Configurable c = find(configurableId);
+    if (c == null) return;
+
+    Configurable configurable = choose(c, myMap.get(c));
+    checkModifiedImpl(configurable);
+  }
+
+  protected abstract void checkModifiedImpl(@NotNull Configurable configurable);
+
+  protected abstract void setSearchText(String option);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {
     T result = ConfigurableWrapper.cast(type, configurable);
@@ -86,4 +96,8 @@ public abstract class Settings {
    * Used to handle programmatic settings changes when no UI events are sent.
    */
   public void revalidate() {}
+
+  public void reload() {
+    myMap.clear();
+  }
 }

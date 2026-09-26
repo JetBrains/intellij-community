@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,7 +94,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
 
 
   protected void moveViaProcessor(@NotNull Project project, @NotNull final BaseRefactoringProcessor processor) {
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> processor.run()), null, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(processor), null, null);
   }
 
   /**
@@ -119,7 +105,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @param fileNamesNoExtensions file (module) names to add with out of extensions
    * @see #checkMultiFile(String...)
    */
-  protected void configureMultiFile(@NotNull final String... fileNamesNoExtensions) {
+  protected void configureMultiFile(final String @NotNull ... fileNamesNoExtensions) {
     final String baseName = getMultiFileBaseName() + "/";
 
     for (final String fileNameNoExtension : fileNamesNoExtensions) {
@@ -134,7 +120,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
    * @param fileNamesNoExtensions file names to check with out of extension
    * @see #configureMultiFile(String...)
    */
-  protected void checkMultiFile(@NotNull final String... fileNamesNoExtensions) {
+  protected void checkMultiFile(final String @NotNull ... fileNamesNoExtensions) {
     for (final String fileNameNoExtension : fileNamesNoExtensions) {
       final String fileNameAfter = String.format("%s.after.py", fileNameNoExtension);
       final String fileNameBefore = String.format("%s.py", fileNameNoExtension);

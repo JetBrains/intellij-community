@@ -1,6 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
@@ -9,7 +11,7 @@ import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.EnumSet;
 
 /**
@@ -17,30 +19,28 @@ import java.util.EnumSet;
  */
 public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepository> {
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return "YouTrack";
   }
 
-  @NotNull
-  public Icon getIcon() {
+  @Override
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Youtrack;
   }
 
-  @Nullable
   @Override
-  public String getAdvertiser() {
-    return "<html>Not YouTrack customer yet? Get <a href='https://www.jetbrains.com/youtrack/download/get_youtrack.html?idea_integration'>YouTrack</a></html>";
+  public @Nullable String getAdvertiser() {
+    return TaskBundle.message("more.features.available.in.youtrack.plugin");
   }
 
-  @NotNull
-  public YouTrackRepository createRepository() {
+  @Override
+  public @NotNull YouTrackRepository createRepository() {
     return new YouTrackRepository(this);
   }
 
-  @NotNull
   @Override
-  public Class<YouTrackRepository> getRepositoryClass() {
+  public @NotNull Class<YouTrackRepository> getRepositoryClass() {
     return YouTrackRepository.class;
   }
 
@@ -49,9 +49,13 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
     return EnumSet.of(TaskState.IN_PROGRESS, TaskState.RESOLVED);
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<YouTrackRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<? super YouTrackRepository> changeListener) {
     return new YouTrackRepositoryEditor(project, repository, changeListener);
+  }
+
+  @Override
+  public int getSortOrder() {
+    return 1;
   }
 }

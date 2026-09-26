@@ -1,35 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
+@ApiStatus.Internal
+public final class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
   @Override
-  public ItemPresentation getPresentation(@NotNull final PsiDirectory directory) {
+  public ItemPresentation getPresentation(final @NotNull PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();
     final Project project = directory.getProject();
     final String locationString = vFile.getPath();
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
-      final Icon projectIcon = PlatformUtils.isJetBrainsProduct()
-                               ? AllIcons.Nodes.IdeaProject
-                               : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      final Icon projectIcon = ProductIcons.getInstance().getProjectNodeIcon();
       return new PresentationData(project.getName(), locationString, projectIcon, null);
     }
 

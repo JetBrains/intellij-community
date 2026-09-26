@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -30,36 +17,42 @@ import com.intellij.uiDesigner.propertyInspector.editors.ColorEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
-import com.intellij.uiDesigner.propertyInspector.renderers.*;
+import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
-  @NonNls public static final String NAME = "border";
+  public static final @NonNls String NAME = "border";
 
   private final Project myProject;
   private final Property[] myChildren;
 
-  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = new NotNullLazyValue<PropertyRenderer<BorderType>>() {
-    @NotNull
-    @Override
-    protected PropertyRenderer<BorderType> compute() {
-      return new LabelPropertyRenderer<BorderType>() {
-        protected void customize(@NotNull final BorderType value) {
-          setText(value.getName());
-        }
-      };
-    }
-  };
+  // Converting this anonymous class to lambda causes javac 11 failure (should compile fine in later javac)
+  // suppression can be removed when we migrate to newer Java
+  @SuppressWarnings("Convert2Lambda")
+  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
+    new Supplier<>() {
+      @Override
+      public PropertyRenderer<BorderType> get() {
+        return new LabelPropertyRenderer<>() {
+          @Override
+          protected void customize(final @NotNull BorderType value) {
+            @NlsSafe String name = value.getName();
+            setText(name);
+          }
+        };
+      }
+    });
 
   public BorderProperty(final Project project) {
     super(null, NAME);
@@ -68,15 +61,17 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       new MyTitleIntEnumProperty(this, "title position", false), new MyTitleFontProperty(this), new MyBorderColorProperty(this, true)};
   }
 
+  @Override
   public BorderType getValue(final RadContainer component) {
     return component.getBorderType();
   }
 
+  @Override
   protected void setValueImpl(final RadContainer component, final BorderType value) throws Exception {
   }
 
-  @NotNull
-  public Property[] getChildren(final RadComponent component) {
+  @Override
+  public Property @NotNull [] getChildren(final RadComponent component) {
     if (!(component instanceof RadContainer)) return Property.EMPTY_ARRAY;
     BorderType borderType = ((RadContainer)component).getBorderType();
     if (borderType.equals(BorderType.EMPTY)) {
@@ -92,11 +87,12 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     return myChildren;
   }
 
-  @NotNull
-  public PropertyRenderer<BorderType> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<BorderType> getRenderer() {
     return myRenderer.getValue();
   }
 
+  @Override
   public PropertyEditor<BorderType> getEditor() {
     return null;
   }
@@ -118,23 +114,26 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private final class MyTypeProperty extends Property<RadContainer, BorderType> {
     BorderTypeEditor myEditor;
 
-    public MyTypeProperty() {
+    MyTypeProperty() {
       super(BorderProperty.this, "type");
     }
 
+    @Override
     public BorderType getValue(final RadContainer component) {
       return component.getBorderType();
     }
 
+    @Override
     protected void setValueImpl(final RadContainer component, final BorderType value) throws Exception {
       component.setBorderType(value);
     }
 
-    @NotNull
-    public PropertyRenderer<BorderType> getRenderer() {
+    @Override
+    public @NotNull PropertyRenderer<BorderType> getRenderer() {
       return myRenderer.getValue();
     }
 
+    @Override
     public PropertyEditor<BorderType> getEditor() {
       if (myEditor == null) {
         myEditor = new BorderTypeEditor();
@@ -165,10 +164,11 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private StringRenderer myRenderer;
     private StringEditor myEditor;
 
-    public MyTitleProperty() {
+    MyTitleProperty() {
       super(BorderProperty.this, "title");
     }
 
+    @Override
     public StringDescriptor getValue(final RadContainer component) {
       final StringDescriptor descriptor = component.getBorderTitle();
       final String resolvedValue = StringDescriptorManager.getInstance(component.getModule()).resolve(component, descriptor);
@@ -178,22 +178,24 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       return descriptor;
     }
 
+    @Override
     protected void setValueImpl(final RadContainer component, final StringDescriptor value) throws Exception {
       StringDescriptor title = value;
-      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).length() == 0) {
+      if (title != null && StringDescriptorManager.getInstance(component.getModule()).resolve(component, title).isEmpty()) {
         title = null;
       }
       component.setBorderTitle(title);
     }
 
-    @NotNull
-    public PropertyRenderer<StringDescriptor> getRenderer() {
+    @Override
+    public @NotNull PropertyRenderer<StringDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new StringRenderer();
       }
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<StringDescriptor> getEditor() {
       if (myEditor == null) {
         myEditor = new StringEditor(myProject);
@@ -234,15 +236,17 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private IntEnumEditor myEditor;
     private final boolean myJustification;
 
-    public MyTitleIntEnumProperty(final Property parent, @NonNls final String name, final boolean isJustification) {
+    MyTitleIntEnumProperty(final Property parent, final @NonNls String name, final boolean isJustification) {
       super(parent, name);
       myJustification = isJustification;
     }
 
+    @Override
     public Integer getValue(final RadContainer component) {
       return myJustification ? component.getBorderTitleJustification() : component.getBorderTitlePosition();
     }
 
+    @Override
     protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
       if (myJustification) {
         component.setBorderTitleJustification(value.intValue());
@@ -252,14 +256,15 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       }
     }
 
-    @NotNull
-    public PropertyRenderer<Integer> getRenderer() {
+    @Override
+    public @NotNull PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new IntEnumRenderer(myJustification ? ourJustificationPairs : ourPositionPairs);
       }
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<Integer> getEditor() {
       if (myEditor == null) {
         myEditor = new IntEnumEditor(myJustification ? ourJustificationPairs : ourPositionPairs);
@@ -282,26 +287,29 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private FontRenderer myRenderer;
     private FontEditor myEditor;
 
-    public MyTitleFontProperty(final Property parent) {
+    MyTitleFontProperty(final Property parent) {
       super(parent, "title font");
     }
 
+    @Override
     public FontDescriptor getValue(final RadContainer component) {
       return component.getBorderTitleFont();
     }
 
+    @Override
     protected void setValueImpl(final RadContainer component, final FontDescriptor value) throws Exception {
       component.setBorderTitleFont(value);
     }
 
-    @NotNull
-    public PropertyRenderer<FontDescriptor> getRenderer() {
+    @Override
+    public @NotNull PropertyRenderer<FontDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new FontRenderer();
       }
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<FontDescriptor> getEditor() {
       if (myEditor == null) {
         myEditor = new FontEditor(UIDesignerBundle.message("border.title.editor.title"));
@@ -325,15 +333,17 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private ColorEditor myEditor;
     private final boolean myTitleColor;
 
-    public MyBorderColorProperty(final Property parent, final boolean titleColor) {
+    MyBorderColorProperty(final Property parent, final boolean titleColor) {
       super(parent, titleColor ? "title color" : "color");
       myTitleColor = titleColor;
     }
 
+    @Override
     public ColorDescriptor getValue(final RadContainer component) {
       return myTitleColor ? component.getBorderTitleColor() : component.getBorderColor();
     }
 
+    @Override
     protected void setValueImpl(final RadContainer component, final ColorDescriptor value) throws Exception {
       if (myTitleColor) {
         component.setBorderTitleColor(value);
@@ -343,14 +353,15 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
       }
     }
 
-    @NotNull
-    public PropertyRenderer<ColorDescriptor> getRenderer() {
+    @Override
+    public @NotNull PropertyRenderer<ColorDescriptor> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new ColorRenderer();
       }
       return myRenderer;
     }
 
+    @Override
     public PropertyEditor<ColorDescriptor> getEditor() {
       if (myEditor == null) {
         myEditor = new ColorEditor(
@@ -371,14 +382,16 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   private static class MySizeProperty extends AbstractInsetsProperty<RadContainer> {
-    public MySizeProperty(final Property parent) {
+    MySizeProperty(final Property parent) {
       super(parent, "size");
     }
 
+    @Override
     public Insets getValue(final RadContainer container) {
       return container.getBorderSize();
     }
 
+    @Override
     protected void setValueImpl(final RadContainer container, final Insets insets) throws Exception {
       container.setBorderSize(insets);
     }

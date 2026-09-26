@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.codeInspection.reference.PsiMemberReference;
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -34,7 +20,24 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -51,10 +54,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
@@ -65,19 +66,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author peter
- */
-public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference");
+public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider, PsiMemberReference {
+  private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;
   private TextRange myRange;
-  private final String myText;
+  private final @NotNull String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
 
-  public JavaClassReference(final JavaClassReferenceSet referenceSet, TextRange range, int index, String text, final boolean staticImport) {
+  public JavaClassReference(@NotNull JavaClassReferenceSet referenceSet, @NotNull TextRange range, int index, @NotNull String text, boolean staticImport) {
     super(referenceSet.getProvider());
     myInStaticImport = staticImport;
     LOG.assertTrue(range.getEndOffset() <= referenceSet.getElement().getTextLength());
@@ -88,17 +87,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  @Nullable
-  public PsiElement getContext() {
-    final PsiReference contextRef = getContextReference();
+  public @Nullable PsiElement getContext() {
+    PsiReference contextRef = getContextReference();
     assert contextRef != this : getCanonicalText();
     return contextRef != null ? contextRef.resolve() : null;
   }
 
   @Override
-  public void processVariants(@NotNull final PsiScopeProcessor processor) {
+  public void processVariants(@NotNull PsiScopeProcessor processor) {
     if (processor instanceof JavaCompletionProcessor) {
-      final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
+      Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
       if (options != null &&
           (JavaClassReferenceProvider.SUPER_CLASSES.getValue(options) != null ||
            JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options) ||
@@ -139,11 +137,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private boolean isDefinitelyStatic() {
-    final String s = getElement().getText();
+    String s = getElement().getText();
     return isStaticClassReference(s, true);
   }
 
-  private boolean isStaticClassReference(final String s, boolean strict) {
+  private boolean isStaticClassReference(String s, boolean strict) {
     if (myIndex == 0) {
       return false;
     }
@@ -152,8 +150,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  @Nullable
-  public PsiReference getContextReference() {
+  public @Nullable PsiReference getContextReference() {
     return myIndex > 0 ? myJavaClassReferenceSet.getReference(myIndex - 1) : null;
   }
 
@@ -161,26 +158,18 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return myJavaClassReferenceSet.canReferencePackage(myIndex);
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myJavaClassReferenceSet.getElement();
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
-    return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
-  }
-
-  @NotNull
-  @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRange;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myText;
   }
 
@@ -190,10 +179,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
-    myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+    ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    TextRange rangeInElement = getRangeInElement();
+    PsiElement element = manipulator.handleContentChange(getElement(), rangeInElement, newElementName);
+    myRange = new TextRange(rangeInElement.getStartOffset(), rangeInElement.getStartOffset() + newElementName.length());
     return element;
   }
 
@@ -201,12 +191,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return getElement();
 
-    final String newName;
+    String newName;
     if (element instanceof PsiClass) {
       newName = getQualifiedClassNameToInsert((PsiClass)element);
     }
-    else if (element instanceof PsiPackage) {
-      PsiPackage psiPackage = (PsiPackage)element;
+    else if (element instanceof PsiPackage psiPackage) {
       newName = psiPackage.getQualifiedName();
     }
     else {
@@ -221,14 +210,14 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       end = CharArrayUtil.shiftBackward(text, lt - 1, "\n\t ") + 1;
     }
     TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), end);
-    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
+    ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
     myJavaClassReferenceSet.reparse(finalElement, TextRange.from(range.getStartOffset(), newName.length()));
     return finalElement;
   }
 
   private String getQualifiedClassNameToInsert(PsiClass psiClass) {
-    final boolean jvmFormat = Boolean.TRUE.equals(JavaClassReferenceProvider.JVM_FORMAT.getValue(getOptions()));
+    boolean jvmFormat = Boolean.TRUE.equals(JavaClassReferenceProvider.JVM_FORMAT.getValue(getOptions()));
     return jvmFormat ? ClassUtil.getJVMClassName(psiClass) : psiClass.getQualifiedName();
   }
 
@@ -238,9 +227,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
-    List<Object> result = ContainerUtil.newArrayList();
+  public Object @NotNull [] getVariants() {
+    List<Object> result = new ArrayList<>();
     for (PsiElement context : getCompletionContexts()) {
       if (context instanceof PsiPackage) {
         result.addAll(processPackage((PsiPackage)context));
@@ -259,7 +247,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private List<? extends PsiElement> getCompletionContexts() {
-    List<PsiElement> result = ContainerUtil.newArrayList();
+    List<PsiElement> result = new ArrayList<>();
 
     ContainerUtil.addIfNotNull(result, getCompletionContext());
 
@@ -271,45 +259,38 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return result;
   }
 
-  @Nullable
-  public PsiElement getCompletionContext() {
-    PsiElement context = getContext();
-    return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
+  public @Nullable PsiElement getCompletionContext() {
+    PsiReference contextRef = getContextReference();
+    if (contextRef == null) {
+      return JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
+    }
+    return contextRef.resolve();
   }
 
-  /** @deprecated use {@code getSuperClasses()} instead */
-  @Nullable
-  public String[] getExtendClassNames() {
-    List<String> result = getSuperClasses();
-    return result.isEmpty() ? null : ArrayUtil.toStringArray(result);
-  }
-
-  @NotNull
-  public List<String> getSuperClasses() {
+  public @NotNull List<String> getSuperClasses() {
     List<String> values = JavaClassReferenceProvider.SUPER_CLASSES.getValue(getOptions());
     return values == null ? Collections.emptyList() : values;
   }
 
-  @NotNull
-  private List<LookupElement> processPackage(@NotNull PsiPackage aPackage) {
-    final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
-    final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
-    final GlobalSearchScope scope = getScope(getJavaContextFile());
-    for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {
-      final String shortName = subPackage.getQualifiedName().substring(startOffset);
+  private @NotNull List<LookupElement> processPackage(@NotNull PsiPackage aPackage) {
+    ArrayList<LookupElement> list = new ArrayList<>();
+    int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
+    GlobalSearchScope scope = getScope(getJavaContextFile());
+    for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
+      String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (PsiNameHelper.getInstance(subPackage.getProject()).isIdentifier(shortName)) {
         list.add(LookupElementBuilder.create(subPackage).withIcon(subPackage.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
       }
     }
 
-    final List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), psiClass -> StringUtil.isNotEmpty(psiClass.getName()));
-    final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
+    List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), psiClass -> StringUtil.isNotEmpty(psiClass.getName()));
+    Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
-      final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
-      final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(options);
-      final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options);
-      final boolean notEnum = JavaClassReferenceProvider.NOT_ENUM.getBooleanValue(options);
-      final ClassKind classKind = getClassKind();
+      boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
+      boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(options);
+      boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options);
+      boolean notEnum = JavaClassReferenceProvider.NOT_ENUM.getBooleanValue(options);
+      ClassKind classKind = getClassKind();
 
       for (PsiClass clazz : classes) {
         if (isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
@@ -325,17 +306,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return list;
   }
 
-  @Nullable
-  public ClassKind getClassKind() {
+  public @Nullable ClassKind getClassKind() {
     return JavaClassReferenceProvider.CLASS_KIND.getValue(getOptions());
   }
 
-  private static boolean isClassAccepted(final PsiClass clazz,
-                                         @Nullable final ClassKind classKind,
-                                         final boolean instantiatable,
-                                         final boolean concrete,
-                                         final boolean notInterface,
-                                         final boolean notEnum) {
+  private static boolean isClassAccepted(PsiClass clazz,
+                                         @Nullable ClassKind classKind,
+                                         boolean instantiatable,
+                                         boolean concrete,
+                                         boolean notInterface,
+                                         boolean notEnum) {
     if (classKind == ClassKind.ANNOTATION)  return clazz.isAnnotationType();
     if (classKind == ClassKind.ENUM) return clazz.isEnum();
 
@@ -366,44 +346,45 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     PsiFile file = getJavaContextFile();
-    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
+    ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
     return (JavaResolveResult) resolveCache.resolveWithCaching(this, MyResolver.INSTANCE, false, false,file)[0];
   }
 
-  private PsiFile getJavaContextFile() {
+  private @NotNull PsiFile getJavaContextFile() {
     return myJavaClassReferenceSet.getProvider().getContextFile(getElement());
   }
 
-  @NotNull
-  private JavaResolveResult doAdvancedResolve(@NotNull PsiFile containingFile) {
-    final PsiElement psiElement = getElement();
+  private @NotNull JavaResolveResult doAdvancedResolve(@NotNull PsiFile containingFile) {
+    PsiElement psiElement = getElement();
 
     if (!psiElement.isValid()) return JavaResolveResult.EMPTY;
 
-    final String elementText = psiElement.getText();
+    String elementText = psiElement.getText();
 
-    final PsiElement context = getContext();
+    PsiElement context = getContext();
     if (context instanceof PsiClass) {
       if (isStaticClassReference(elementText, false)) {
-        final PsiClass psiClass = ((PsiClass)context).findInnerClassByName(getCanonicalText(), false);
+        PsiClass psiClass = ((PsiClass)context).findInnerClassByName(getCanonicalText(), false);
         if (psiClass != null) {
           return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, psiElement);
         }
         PsiElement member = doResolveMember((PsiClass)context, myText);
         return member == null ? JavaResolveResult.EMPTY : new CandidateInfo(member, PsiSubstitutor.EMPTY, false, false, psiElement);
       }
-      else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
+      if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
         return JavaResolveResult.EMPTY;
       }
     }
 
-    final int endOffset = getRangeInElement().getEndOffset();
-    LOG.assertTrue(endOffset <= elementText.length(), elementText);
-    final int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
-    final String qName = elementText.substring(startOffset, endOffset);
+    TextRange rangeInElement = getRangeInElement();
+    int endOffset = rangeInElement.getEndOffset();
+    if (endOffset > elementText.length()) {
+      LOG.error(elementText+": rangeInElement="+rangeInElement+"; "+getClass());
+    }
+    int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
+    String qName = elementText.substring(startOffset, endOffset);
     if (!qName.contains(".")) {
       JavaResolveResult viaImports = JBIterable.from(JavaClassReferenceProvider.IMPORTS.getValue(getOptions()))
         .map(o -> o == null ? JavaResolveResult.EMPTY : advancedResolveInner(psiElement, o + "." + qName, containingFile))
@@ -416,10 +397,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private JavaResolveResult advancedResolveInner(@NotNull PsiElement psiElement, @NotNull String qName, @NotNull PsiFile containingFile) {
-    final PsiManager manager = containingFile.getManager();
-    final GlobalSearchScope scope = getScope(containingFile);
+    PsiManager manager = containingFile.getManager();
+    GlobalSearchScope scope = getScope(containingFile);
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
-      final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, scope);
+      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, scope);
       if (aClass != null) {
         return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, psiElement);
       }
@@ -438,12 +419,10 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     if (resolveResult == null) {
       if (containingFile instanceof PsiJavaFile) {
-        if (containingFile instanceof ServerPageFile) {
-          containingFile = containingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
-          if (containingFile == null) return JavaResolveResult.EMPTY;
-        }
+        containingFile = JavaTemplateCodeInsightSupport.getReferenceResolutionFile(containingFile);
+        if (containingFile == null) return JavaResolveResult.EMPTY;
 
-        final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement, containingFile);
+        ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement, containingFile);
         PsiClass contextClass = myJavaClassReferenceSet.getProvider().getContextClass(psiElement);
         if (contextClass != null) {
           PsiScopesUtil.treeWalkUp(processor, contextClass, null);
@@ -453,13 +432,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
 
         if (processor.getResult().length == 1) {
-          final JavaResolveResult javaResolveResult = processor.getResult()[0];
+          JavaResolveResult javaResolveResult = processor.getResult()[0];
 
           if (javaResolveResult != JavaResolveResult.EMPTY && getOptions() != null) {
-            final Boolean value = JavaClassReferenceProvider.RESOLVE_QUALIFIED_CLASS_NAME.getValue(getOptions());
-            final PsiClass psiClass = (PsiClass)javaResolveResult.getElement();
+            Boolean value = JavaClassReferenceProvider.RESOLVE_QUALIFIED_CLASS_NAME.getValue(getOptions());
+            PsiClass psiClass = (PsiClass)javaResolveResult.getElement();
             if (value != null && value.booleanValue() && psiClass != null) {
-              final String qualifiedName = psiClass.getQualifiedName();
+              String qualifiedName = psiClass.getQualifiedName();
 
               if (!qName.equals(qualifiedName)) {
                 return JavaResolveResult.EMPTY;
@@ -471,7 +450,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
       }
     }
-    if (resolveResult instanceof PsiPackageImpl && !((PsiPackageImpl)resolveResult).mayHaveContentInScope(getElement().getResolveScope())) {
+    if (resolveResult instanceof PsiPackageImpl && !((PsiPackageImpl)resolveResult).mayHaveContentInScope(scope)) {
       return JavaResolveResult.EMPTY;
     }
     return resolveResult != null
@@ -479,7 +458,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
            : JavaResolveResult.EMPTY;
   }
 
-  private GlobalSearchScope getScope(@NotNull PsiFile containingFile) {
+  private @NotNull GlobalSearchScope getScope(@NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(project);
     if (scope == null) {
@@ -489,30 +468,26 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return scope;
   }
 
-  @Nullable
-  private Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
+  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
     return myJavaClassReferenceSet.getOptions();
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
     if (javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
     return new JavaResolveResult[]{javaResolveResult};
   }
 
-  @Nullable
-  private List<? extends LocalQuickFix> registerFixes() {
-    final List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(new QuickFixActionRegistrarImpl(null), this);
+  private @NotNull List<? extends @NotNull LocalQuickFix> registerFixes() {
+    List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(this, new ArrayList<>());
 
-    final String[] extendClasses = getExtendClassNames();
-    final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
+    String extendClass = ContainerUtil.getFirstItem(getSuperClasses());
 
-    final JavaClassReference[] references = getJavaClassReferenceSet().getAllReferences();
+    JavaClassReference[] references = getJavaClassReferenceSet().getAllReferences();
     PsiPackage contextPackage = null;
     for (int i = myIndex; i >= 0; i--) {
-      final PsiElement context = references[i].getContext();
+      PsiElement context = references[i].getContext();
       if (context != null) {
         if (context instanceof PsiPackage) {
           contextPackage = (PsiPackage)context;
@@ -524,42 +499,34 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     boolean createJavaClass = !canReferencePackage();
     ClassKind kind = createJavaClass ? getClassKind() : null;
     if (createJavaClass && kind == null) kind = ClassKind.CLASS;
-    final String templateName = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
-    final TextRange range = new TextRange(references[0].getRangeInElement().getStartOffset(),
+    String templateName = JavaClassReferenceProvider.CLASS_TEMPLATE.getValue(getOptions());
+    TextRange range = new TextRange(references[0].getRangeInElement().getStartOffset(),
                                           getRangeInElement().getEndOffset());
-    final String qualifiedName = range.substring(getElement().getText());
-    final CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(getJavaContextFile()), getElement(), contextPackage,
+    String qualifiedName = range.substring(getElement().getText());
+    CreateClassOrPackageFix action = CreateClassOrPackageFix.createFix(qualifiedName, getScope(getJavaContextFile()), getElement(), contextPackage,
                                                                              kind, extendClass, templateName);
     if (action != null) {
-      if (list == null) {
-        return Collections.singletonList(action);
-      }
-      else {
-        final ArrayList<LocalQuickFix> fixes = new ArrayList<>(list.size() + 1);
-        fixes.addAll(list);
-        fixes.add(action);
-        return fixes;
-      }
+      list = ContainerUtil.append(list, action);
     }
     return list;
   }
 
-  public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<LookupElement> result) {
+  public void processSubclassVariants(@NotNull PsiPackage context, String @NotNull [] extendClasses, Consumer<? super LookupElement> result) {
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope != null) {
       packageScope = packageScope.intersectWith(scope);
     }
-    final GlobalSearchScope allScope = ProjectScope.getAllScope(context.getProject());
-    final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
-    final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(getOptions());
-    final boolean notEnum = JavaClassReferenceProvider.NOT_ENUM.getBooleanValue(getOptions());
-    final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(getOptions());
+    GlobalSearchScope allScope = ProjectScope.getAllScope(context.getProject());
+    boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
+    boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(getOptions());
+    boolean notEnum = JavaClassReferenceProvider.NOT_ENUM.getBooleanValue(getOptions());
+    boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(getOptions());
 
-    final ClassKind classKind = getClassKind();
+    ClassKind classKind = getClassKind();
 
     for (String extendClassName : extendClasses) {
-      final PsiClass extendClass = JavaPsiFacade.getInstance(context.getProject()).findClass(extendClassName, allScope);
+      PsiClass extendClass = JavaPsiFacade.getInstance(context.getProject()).findClass(extendClassName, allScope);
       if (extendClass != null) {
         // add itself
         if (packageScope.contains(extendClass.getContainingFile().getVirtualFile())) {
@@ -567,7 +534,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
             result.consume(createSubclassLookupValue(extendClass));
           }
         }
-        for (final PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true)) {
+        for (PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true).asIterable()) {
           String qname = clazz.getQualifiedName();
           if (qname != null && isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
             result.consume(createSubclassLookupValue(clazz));
@@ -577,20 +544,18 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
   }
 
-  @NotNull
-  private LookupElementBuilder createSubclassLookupValue(@NotNull PsiClass clazz) {
+  private @NotNull LookupElementBuilder createSubclassLookupValue(@NotNull PsiClass clazz) {
     return JavaLookupElementBuilder.forClass(clazz, getQualifiedClassNameToInsert(clazz), true)
-      .withPresentableText(ObjectUtils.assertNotNull(clazz.getName()));
+      .withPresentableText(Objects.requireNonNull(clazz.getName()));
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
-    final List<? extends LocalQuickFix> list = registerFixes();
-    return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(LocalQuickFix.EMPTY_ARRAY);
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    List<? extends @NotNull LocalQuickFix> list = registerFixes();
+    return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public static PsiElement resolveMember(String fqn, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static @Nullable PsiElement resolveMember(@NotNull String fqn, @NotNull PsiManager manager, GlobalSearchScope resolveScope) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass != null) return aClass;
     int i = fqn.lastIndexOf('.');
@@ -602,8 +567,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return doResolveMember(aClass, memberName);
   }
 
-  @Nullable
-  private static PsiElement doResolveMember(PsiClass aClass, String memberName) {
+  private static @Nullable PsiElement doResolveMember(@NotNull PsiClass aClass, @NotNull String memberName) {
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;
 
@@ -611,24 +575,26 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return methods.length == 0 ? null : methods[0];
   }
 
-  public JavaClassReferenceSet getJavaClassReferenceSet() {
+  public @NotNull JavaClassReferenceSet getJavaClassReferenceSet() {
     return myJavaClassReferenceSet;
   }
 
-  @NotNull
   @Override
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     return myJavaClassReferenceSet.getUnresolvedMessagePattern(myIndex);
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantContextResolver<JavaClassReference> {
+  private static final class MyResolver implements ResolveCache.PolyVariantContextResolver<JavaClassReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull JavaClassReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull JavaClassReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       return new JavaResolveResult[]{ref.doAdvancedResolve(containingFile)};
     }
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName() + "(" + getRangeInElement() + ", provider=" + myJavaClassReferenceSet.getProvider() + "}";
+  }
 }

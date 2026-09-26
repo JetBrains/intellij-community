@@ -1,0 +1,11 @@
+package ppp;
+
+public final class B extends A {
+  public B(Inner inner) {
+    super(inner);
+  }
+
+  public C createC() {
+    return new C(getInner());
+  }
+}

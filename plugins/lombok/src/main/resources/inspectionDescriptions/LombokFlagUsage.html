@@ -1,0 +1,194 @@
+<html>
+<body>
+<h1>IntelliJ Lombok flagUsage Inspection</h1>
+
+<p>
+  This inspection supports every <code>flagUsage</code> configuration specified in the <code>lombok.config</code> file. It issue warnings or errors inside IntelliJ when a Lombok feature is used that is configured to be flagged. This proactive feedback helps maintain code standards and ensures that only approved Lombok features are utilized.
+</p>
+
+<h2>Supported flagUsage Configurations</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Configuration Key</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>lombok.anyConstructor.flagUsage</td>
+    <td>Emit a warning or error if any of the XxxArgsConstructor annotations are used.</td>
+  </tr>
+  <tr>
+    <td>lombok.allArgsConstructor.flagUsage</td>
+    <td>Emit a warning or error if <code>@AllArgsConstructor</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.noArgsConstructor.flagUsage</td>
+    <td>Emit a warning or error if <code>@NoArgsConstructor</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.requiredArgsConstructor.flagUsage</td>
+    <td>Emit a warning or error if <code>@RequiredArgsConstructor</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.data.flagUsage</td>
+    <td>Emit a warning or error if <code>@Data</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.value.flagUsage</td>
+    <td>Emit a warning or error if <code>@Value</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.getter.flagUsage</td>
+    <td>Emit a warning or error if <code>@Getter</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.getter.lazy.flagUsage</td>
+    <td>Emit a warning or error if <code>@Getter(lazy=true)</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.setter.flagUsage</td>
+    <td>Emit a warning or error if <code>@Setter</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.equalsAndHashCode.flagUsage</td>
+    <td>Emit a warning or error if <code>@EqualsAndHashCode</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.toString.flagUsage</td>
+    <td>Emit a warning or error if <code>@ToString</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.builder.flagUsage</td>
+    <td>Emit a warning or error if <code>@Builder</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.cleanup.flagUsage</td>
+    <td>Emit a warning or error if <code>@Cleanup</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.delegate.flagUsage</td>
+    <td>Emit a warning or error if <code>@Delegate</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.nonNull.flagUsage</td>
+    <td>Emit a warning or error if <code>@NonNull</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.sneakyThrows.flagUsage</td>
+    <td>Emit a warning or error if <code>@SneakyThrows</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.synchronized.flagUsage</td>
+    <td>Emit a warning or error if <code>@Synchronized</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.val.flagUsage</td>
+    <td>Emit a warning or error if the language keyword <code>val</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.var.flagUsage</td>
+    <td>Emit a warning or error if the language keyword <code>var</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.with.flagUsage</td>
+    <td>Emit a warning or error if <code>@With</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.flagUsage</td>
+    <td>Emit a warning or error if any log annotation is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.apacheCommons.flagUsage</td>
+    <td>Emit a warning or error if <code>@CommonsLog</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.javaUtilLogging.flagUsage</td>
+    <td>Emit a warning or error if <code>@Log</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.log4j.flagUsage</td>
+    <td>Emit a warning or error if <code>@Log4j</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.log4j2.flagUsage</td>
+    <td>Emit a warning or error if <code>@Log4j2</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.slf4j.flagUsage</td>
+    <td>Emit a warning or error if <code>@Slf4j</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.xslf4j.flagUsage</td>
+    <td>Emit a warning or error if <code>@XSlf4j</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.jbosslog.flagUsage</td>
+    <td>Emit a warning or error if <code>@JBossLog</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.flogger.flagUsage</td>
+    <td>Emit a warning or error if <code>@Flogger</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.log.custom.flagUsage</td>
+    <td>Emit a warning or error if <code>@CustomLog</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.experimental.flagUsage</td>
+    <td>Emit a warning or error if an experimental feature is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.accessors.flagUsage</td>
+    <td>Emit a warning or error if <code>@Accessors</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.extensionMethod.flagUsage</td>
+    <td>Emit a warning or error if <code>@ExtensionMethod</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.fieldDefaults.flagUsage</td>
+    <td>Emit a warning or error if <code>@FieldDefaults</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.helper.flagUsage</td>
+    <td>Emit a warning or error if <code>@Helper</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.locked.flagUsage</td>
+    <td>Emit a warning or error if <code>@Locked</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.onX.flagUsage</td>
+    <td>Emit a warning or error if the <code>onX</code> flag is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.utilityClass.flagUsage</td>
+    <td>Emit a warning or error if <code>@UtilityClass</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.fieldNameConstants.flagUsage</td>
+    <td>Emit a warning or error if <code>@FieldNameConstants</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.superBuilder.flagUsage</td>
+    <td>Emit a warning or error if <code>@SuperBuilder</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.withBy.flagUsage</td>
+    <td>Emit a warning or error if <code>@WithBy</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.jacksonized.flagUsage</td>
+    <td>Emit a warning or error if <code>@Jacksonized</code> is used.</td>
+  </tr>
+  <tr>
+    <td>lombok.standardException.flagUsage</td>
+    <td>Emit a warning or error if <code>@StandardException</code> is used.</td>
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

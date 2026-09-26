@@ -19,3 +19,19 @@ class TestStaticBlockFinalInitializer {
   }
 
 }
+class Initialize {
+  final int a;
+  final int b;
+  final int c;
+
+  {
+    c = 3;
+    System.out.println(c.<error descr="Identifier expected">)</error>;
+  }
+
+  Initialize () {
+    a = 1;
+    b = 2;
+  }
+}
+

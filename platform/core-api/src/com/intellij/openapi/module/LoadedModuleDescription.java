@@ -18,9 +18,6 @@ package com.intellij.openapi.module;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 @ApiStatus.Experimental
 public interface LoadedModuleDescription extends ModuleDescription {
   @NotNull

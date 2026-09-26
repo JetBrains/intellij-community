@@ -1,0 +1,2 @@
+com/google/gson/Gson
+kotlin/jvm/internal/DefaultConstructorMarker

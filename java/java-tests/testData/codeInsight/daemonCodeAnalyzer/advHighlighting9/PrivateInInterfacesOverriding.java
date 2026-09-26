@@ -5,7 +5,7 @@ interface A1 extends A {
   <error descr="Static method 'm()' in 'A1' cannot override instance method 'm()' in 'A'">private static void m()</error> {}
 }
 interface A2 extends A {
-  <error descr="'m()' in 'A2' clashes with 'm()' in 'A'; attempting to assign weaker access privileges ('private'); was 'public'">private</error> void m() {}
+  <error descr="'m()' in 'A2' clashes with 'm()' in 'A'; cannot reduce visibility from 'public' to 'private'">private</error> void m() {}
 }
 
 interface B {

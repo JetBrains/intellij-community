@@ -1,31 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Factory;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 @RunWith(Parameterized.class)
 public class MapInvariantsTestSuite {
-  private final Factory<Map<Object, Object>> factory;
+  private final Factory<? extends Map<Object, Object>> factory;
 
-  public MapInvariantsTestSuite(@SuppressWarnings("unused") String name, Factory<Map<Object, Object>> fac) {
+  public MapInvariantsTestSuite(@SuppressWarnings("unused") String name, Factory<? extends Map<Object, Object>> fac) {
     factory = fac;
   }
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> parameters() {
     return Arrays.asList(
-      name("Our HashMap", com.intellij.util.containers.hash.HashMap::new),
-      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createMap(ContainerUtil.canonicalStrategy())),
-      name("Our LinkedHashMap", LinkedHashMap::new),
+      name("Our HashMap", HashMap::new),
+      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createConcurrentMap()),
       name("ConcurrentFactoryMap (on ConcurrentHashMap)", () -> ConcurrentFactoryMap.createMap(k -> "val_" + k))
     );
   }

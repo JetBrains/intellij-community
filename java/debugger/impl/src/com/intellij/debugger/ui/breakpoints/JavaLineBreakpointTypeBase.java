@@ -1,19 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PairFunction;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -28,11 +37,12 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
-import javax.swing.*;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
- * Base class for java line-connected exceptions (line, method, field)
+ * Base class for java line-connected breakpoints (line, method, field)
+ *
  * @author egor
  */
 public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>
@@ -46,15 +56,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     return true;
   }
 
-  @NotNull
   @Override
-  public final XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
+  public final @NotNull XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointFiltersPanel<>(project);
   }
 
-  @NotNull
   @Override
-  public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
+  public final @NotNull XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
   }
 
@@ -62,72 +70,84 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   public String getDisplayText(XLineBreakpoint<P> breakpoint) {
     BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
-      return javaBreakpoint.getDescription();
+      return javaBreakpoint.getDisplayName();
     }
     else {
       return super.getDisplayText(breakpoint);
     }
   }
 
-  @Nullable
   @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_breakpoint;
+  public List<@Nls String> getPropertyXMLDescriptions(XLineBreakpoint<P> breakpoint) {
+    BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.getJavaBreakpoint(breakpoint);
+    if (javaBreakpoint != null) {
+      return javaBreakpoint.getPropertyXMLDescriptions();
+    }
+    else {
+      return super.getPropertyXMLDescriptions(breakpoint);
+    }
   }
 
-  protected static boolean canPutAtElement(@NotNull final VirtualFile file,
+  protected static boolean canPutAtElement(final @NotNull VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
-                                           @NotNull PairFunction<PsiElement, Document, Boolean> processor) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    // JSPX supports jvm debugging, but not in XHTML files
-    if (psiFile == null || psiFile.getViewProvider().getFileType() == StdFileTypes.XHTML) {
-      return false;
-    }
+                                           @NotNull BiFunction<? super PsiElement, ? super Document, Boolean> processor) {
+    try {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      // JSPX supports jvm debugging, but not in XHTML files
+      if (psiFile == null || psiFile.getViewProvider().getFileType() == StdFileTypes.XHTML) {
+        return false;
+      }
 
-    if (!StdFileTypes.CLASS.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
-      return false;
-    }
+      if (!JavaClassFileType.INSTANCE.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
+        return false;
+      }
 
-    // workaround for KT-23886, remove after it is fixed
-    if ("kt".equals(psiFile.getFileType().getDefaultExtension())) {
-      return false;
-    }
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        Ref<Boolean> res = Ref.create(false);
+        XDebuggerUtil.getInstance().iterateLine(project, document, line, element -> {
+          // avoid comments
+          if (element instanceof PsiWhiteSpace) return true;
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      Ref<Boolean> res = Ref.create(false);
-      XDebuggerUtil.getInstance().iterateLine(project, document, line, element -> {
-        // avoid comments
-        if ((element instanceof PsiWhiteSpace)
-            || (PsiTreeUtil.getParentOfType(element, PsiComment.class, PsiImportStatementBase.class, PsiPackageStatement.class) != null)) {
-          return true;
-        }
-        PsiElement parent = element;
-        while (element != null) {
-          // skip modifiers
-          if (element instanceof PsiModifierList) {
+          PsiElement nonExecutableParent = PsiTreeUtil.getNonStrictParentOfType(element, PsiComment.class, PsiImportStatementBase.class,
+                                                                                PsiPackageStatement.class);
+          if (nonExecutableParent != null) return true;
+
+          PsiElement parent = element;
+          while (element != null) {
+            // skip modifiers
+            if (element instanceof PsiModifierList) {
+              element = element.getParent();
+              continue;
+            }
+            if (element instanceof PsiImplicitClass) {
+              // don't go up, nothing interesting there, stop at main method
+              break;
+            }
+
+            final int offset = element.getTextOffset();
+            if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) != line) {
+              break;
+            }
+            parent = element;
             element = element.getParent();
-            continue;
           }
 
-          final int offset = element.getTextOffset();
-          if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) != line) {
-            break;
+          if (processor.apply(parent, document)) {
+            res.set(true);
+            return false;
           }
-          parent = element;
-          element = element.getParent();
-        }
-
-        if (processor.fun(parent, document)) {
-          res.set(true);
-          return false;
-        }
-        return true;
-      });
-      return res.get();
+          return true;
+        });
+        return res.get();
+      }
+      return false;
     }
-    return false;
+    catch (PsiInvalidElementAccessException e) {
+      Logger.getInstance(JavaLineBreakpointTypeBase.class).warn("Cannot check line breakpoint applicability, as element is invalid", e);
+      return false;
+    }
   }
 
   @Override

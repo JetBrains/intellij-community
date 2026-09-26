@@ -1,0 +1,8 @@
+// "Suppress 'RedundantModalityModifier' for object ObjectSuppressedOnObject" "true"
+
+@Suppress("RedundantModalityModifier")
+final object ObjectSuppressedOnObject
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.RedundantModalityModifierInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantModalityModifierInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

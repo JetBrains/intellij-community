@@ -16,23 +16,31 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.EditorTextField;
 
-/**
- * @author dsl
- */
 public class JavaCodeFragmentTableCellEditor extends CodeFragmentTableCellEditorBase {
 
   public JavaCodeFragmentTableCellEditor(final Project project) {
-    super(project, StdFileTypes.JAVA);
+    super(project, JavaFileType.INSTANCE);
   }
 
+  @Override
+  protected EditorTextField createEditorField(Document document) {
+    final var editor = super.createEditorField(document);
+    editor.setFont(EditorUtil.getEditorFont());
+    return editor;
+  }
+
+  @Override
   public boolean stopCellEditing() {
     final Editor editor = myEditorTextField.getEditor();
     if (editor != null) {
-      JavaReferenceImporter.autoImportReferenceAtCursor(editor, myCodeFragment, true);
+      new JavaReferenceImporter().autoImportReferenceAtCursor(editor, myCodeFragment);
     }
     return super.stopCellEditing();
   }

@@ -1,0 +1,9 @@
+// "Wrap element with 'listOf()' call" "true"
+// WITH_STDLIB
+// K2_ERROR: INCOMPATIBLE_TYPES
+fun test(ints: List<Int>, i: Int) {
+    when (ints) {
+        <caret>i -> {}
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

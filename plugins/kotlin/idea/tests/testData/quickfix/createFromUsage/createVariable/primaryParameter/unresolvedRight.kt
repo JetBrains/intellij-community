@@ -1,0 +1,13 @@
+// "Create property 'foo' as constructor parameter" "true"
+// ERROR: Unresolved reference: unresolved
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A {
+    fun expressionBody() {
+        f<caret>oo = unresolved
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

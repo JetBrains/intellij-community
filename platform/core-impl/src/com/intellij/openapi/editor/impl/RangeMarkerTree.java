@@ -1,31 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.DocumentEventDispatcher;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.ElfCandidate;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
-class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
-  RangeMarkerTree(@NotNull Document document) {
+@ApiStatus.Internal
+@ElfCandidate
+public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
+  public RangeMarkerTree(@NotNull Document document) {
+    //noinspection deprecation: no need to unregister because RMT life cycle is the same as document's
     document.addDocumentListener(this);
   }
-  RangeMarkerTree() {
+
+  RangeMarkerTree(@NotNull DocumentEventDispatcher dispatcher) {
+    dispatcher.addDocumentListener(this);
   }
 
-  @Override
-  public void moveTextHappened(int start, int end, int newBase) {
-    reTarget(start, end, newBase);
+  protected RangeMarkerTree() {
   }
 
   @Override
@@ -34,63 +47,43 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
-    updateMarkersOnChange(event);
-  }
-
-  @Override
   protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
-    RMNode o1 = (RMNode)i1;
-    RMNode o2 = (RMNode)i2;
-    boolean greedyL1 = o1.isGreedyToLeft();
-    boolean greedyL2 = o2.isGreedyToLeft();
-    if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
-
-    int o1Length = o1.intervalEnd() - o1.intervalStart();
-    int o2Length = o2.intervalEnd() - o2.intervalStart();
-    int d = o1Length - o2Length;
-    if (d != 0) return d;
-
-    boolean greedyR1 = o1.isGreedyToRight();
-    boolean greedyR2 = o2.isGreedyToRight();
-    if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
-
-    boolean stickyR1 = o1.isStickingToRight();
-    boolean stickyR2 = o2.isStickingToRight();
-    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1; 
-                                     
-    return 0;
+    RMNode<?> o1 = (RMNode<?>)i1;
+    RMNode<?> o2 = (RMNode<?>)i2;
+    return o1.compareTo(o2);
   }
 
-  void dispose(@NotNull Document document) {
+  @ApiStatus.Internal
+  protected void dispose(@NotNull Document document) {
     document.removeDocumentListener(this);
+  }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeInTests(@NotNull Document document) {
+    dispose(document);
   }
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
-  @NotNull
   @Override
-  public RMNode<T> addInterval(@NotNull T interval, int start, int end, 
-                               boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RMNode<T> addInterval(@NotNull T interval, int start, int end,
+                                        boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
 
-    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT && !ApplicationInfoImpl.isInStressTest() && ApplicationManager.getApplication().isUnitTestMode()) {
-      l.readLock().lock();
-      try {
+    if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT && !ApplicationManagerEx.isInStressTest() && ApplicationManager.getApplication().isUnitTestMode()) {
+      runUnderWriteLock(() -> {
         String msg = errMsg(node);
         if (msg != null) {
           LOG.warn(msg);
         }
-      }
-      finally {
-        l.readLock().unlock();
-      }
+      });
     }
     return node;
   }
-  private String errMsg(@NotNull RMNode<T> node) {
+  private @NonNls String errMsg(@NotNull RMNode<T> node) {
     System.gc();
-    final AtomicInteger alive = new AtomicInteger();
+    AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(t -> {
       alive.incrementAndGet();
       return true;
@@ -102,10 +95,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     return null;
   }
 
-  @NotNull
   @Override
-  protected RMNode<T> createNewNode(@NotNull T key, int start, int end, 
-                                    boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RMNode<T> createNewNode(@NotNull T key, int start, int end,
+                                             boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
   }
 
@@ -117,22 +109,24 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Override
   protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
+    assertUnderWriteLock();
     //noinspection unchecked
-    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
+    ((RangeMarkerImpl)key).myNode = (RMNode<RangeMarkerEx>)intervalNode;
   }
 
-  static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
+  @ApiStatus.Internal
+  protected static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> implements Comparable<RMNode<?>> {
     private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
     private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
-    private static final byte STICK_TO_RIGHT_FLAG = EXPAND_TO_RIGHT_FLAG<<1;
+    protected static final byte STICK_TO_RIGHT_FLAG = EXPAND_TO_RIGHT_FLAG << 1;
 
-    RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
-           @NotNull T key,
-           int start,
-           int end,
-           boolean greedyToLeft,
-           boolean greedyToRight,
-           boolean stickingToRight) {
+    protected RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
+                     @NotNull T key,
+                     int start,
+                     int end,
+                     boolean greedyToLeft,
+                     boolean greedyToRight,
+                     boolean stickingToRight) {
       super(rangeMarkerTree, key, start, end);
       setFlag(EXPAND_TO_LEFT_FLAG, greedyToLeft);
       setFlag(EXPAND_TO_RIGHT_FLAG, greedyToRight);
@@ -151,199 +145,252 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       return isFlagSet(STICK_TO_RIGHT_FLAG);
     }
 
-    void onRemoved() {}
+    protected void onRemoved() {}
+
+    @Override
+    public int compareTo(@NotNull RangeMarkerTree.RMNode<?> o2) {
+      RMNode<?> o1 = this;
+      boolean greedyL1 = o1.isGreedyToLeft();
+      boolean greedyL2 = o2.isGreedyToLeft();
+      if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
+
+      int o1Length = o1.intervalEnd() - o1.intervalStart();
+      int o2Length = o2.intervalEnd() - o2.intervalStart();
+      int d = o1Length - o2Length;
+      if (d != 0) return d;
+
+      boolean greedyR1 = o1.isGreedyToRight();
+      boolean greedyR2 = o2.isGreedyToRight();
+      if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
+
+      boolean stickyR1 = o1.isStickingToRight();
+      boolean stickyR2 = o2.isStickingToRight();
+      if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1;
+
+      return 0;
+    }
 
     @Override
     public String toString() {
-      return (isGreedyToLeft() ? "[" : "(") + intervalStart() + "," + intervalEnd() + (isGreedyToRight() ? "]" : ")");
+      return (isGreedyToLeft() ? "[" : "(")
+             + intervalStart() + "," + intervalEnd()
+             + (isValid() ? "" : "-invalid")
+             + (isGreedyToRight() ? "]" : ")")
+        ;
+    }
+
+    // return a list of invalidated range markers
+    @NotNull List<T> invalidate() {
+      setValid(false);
+      IntervalTreeImpl<T> tree = getTree();
+      tree.assertUnderWriteLock();
+      List<T> invalidated = new ArrayList<>(intervals.size());
+      processAliveKeys(markerEx -> {
+        tree.beforeRemove(markerEx, this);
+        tree.setNode(markerEx, null);
+        invalidated.add(markerEx);
+        return true;
+      });
+      return invalidated;
+    }
+
+    private void invalidateUnderLock() {
+      List<T> toInvalidate = Collections.emptyList();
+      try {
+        toInvalidate = getTree().runUnderWriteLock(() -> invalidate());
+      }
+      finally {
+        getTree().fireAfterRemoved(toInvalidate);
+      }
     }
   }
 
-  private void updateMarkersOnChange(@NotNull DocumentEvent e) {
+  @Override
+  public void documentChanged(@NotNull DocumentEvent e) {
+    List<T> toInvalidate = Collections.emptyList();
     try {
-      l.writeLock().lock();
-      if (size() == 0) return;
-      checkMax(true);
-
-      incModCount();
-
-      List<IntervalNode<T>> affected = new SmartList<>();
-      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
-      checkMax(false);
-
-      if (!affected.isEmpty()) {
-        // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
-        for (int i = affected.size() - 1; i >= 0; i--) {
-          IntervalNode<T> node = affected.get(i);
-          // assumption: interval.getEndOffset() will never be accessed during remove()
-          int startOffset = node.intervalStart();
-          int endOffset = node.intervalEnd();
-          removeNode(node);
-          checkMax(false);
-          node.clearDelta();   // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
-          node.setParent(null);
-          node.setLeft(null);
-          node.setRight(null);
-          node.setValid(true);
-          assert node.intervalStart() == startOffset;
-          assert node.intervalEnd() == endOffset;
+      toInvalidate = runUnderWriteLock(() -> {
+        List<T> ret;
+        if (size() == 0) {
+          ret = Collections.emptyList();
         }
-        checkMax(true);
-        for (IntervalNode<T> node : affected) {
-          List<Getter<T>> keys = node.intervals;
-          if (keys.isEmpty()) continue; // collected away
-
-          RangeMarkerImpl marker = null;
-          for (int i = keys.size() - 1; i >= 0; i--) {
-            Getter<T> key = keys.get(i);
-            marker = (RangeMarkerImpl)key.get();
-            if (marker != null) {
-              if (!marker.isValid()) {
-                // marker can become invalid on its own, e.g. FoldRegion
-                node.removeIntervalInternal(i);
-                marker = null;
-                continue;
-              }
-              break;
-            }
+        else {
+          ret = updateMarkersOnChange(e);
+          if (DocumentEventUtil.isMoveInsertion(e)) {
+            ret = ContainerUtil.concat(ret, reTargetMarkersOnChange(e));
           }
-          if (marker == null) continue; // node remains removed from the tree
-          marker.documentChanged(e);
-          if (marker.isValid()) {
-            findOrInsertWithIntervals(node);
-            assert marker.isValid();
-          }
-          else {
-            node.setValid(false);
-            ((RMNode)node).onRemoved();
-          }
+          IntervalNode<T> root = getRoot();
+          assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength() : "Root: "+root+"; root.maxEnd="+root.maxEnd+"; root.delta="+root.delta+"; e.getDocument().getTextLength()="+e.getDocument().getTextLength()+"; event: "+e;
         }
-      }
-      checkMax(true);
-
-      IntervalNode<T> root = getRoot();
-      assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
+        return ret;
+      });
     }
     finally {
-      l.writeLock().unlock();
+      fireAfterRemoved(toInvalidate);
     }
   }
 
-  private void findOrInsertWithIntervals(IntervalNode<T> node) {
+  // return invalidated markers
+  private @NotNull List<T> updateMarkersOnChange(@NotNull DocumentEvent e) {
+    checkMax(true);
+
+    incModCount();
+
+    List<IntervalNode<T>> affected = new SmartList<>();
+    int start = e.getOffset();
+    int oldLength = e.getOldLength();
+    int newLength = e.getNewLength();
+    collectAffectedMarkersAndShiftSubtrees(getRoot(), start, start + oldLength, newLength - oldLength, affected);
+    checkMax(false);
+
+    return updateAffectedNodes(e, 0, affected);
+  }
+
+  // return invalidated markers
+  private @NotNull List<T> updateAffectedNodes(@NotNull DocumentEvent e,
+                                               int reTargetShift,
+                                               @NotNull List<? extends IntervalNode<T>> affected) {
+    if (affected.isEmpty()) {
+      return Collections.emptyList();
+    }
+    int affectedSize = affected.size();
+    List<T> invalidated = new ArrayList<>(affectedSize);
+    // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
+    for (int i = affectedSize - 1; i >= 0; i--) {
+      IntervalNode<T> node = affected.get(i);
+      // assumption: interval.getEndOffset() will never be accessed during remove()
+      int startOffset = node.intervalStart();
+      int endOffset = node.intervalEnd();
+      removeNode(node);
+      checkMax(false);
+      node.setParent(null);
+      node.setLeft(null);
+      node.setRight(null);
+      node.setValid(true);
+      if (reTargetShift == 0) {
+        // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
+        node.clearDelta();
+        assert node.intervalStart() == startOffset;
+        assert node.intervalEnd() == endOffset;
+      }
+      else {
+        node.changeDelta(reTargetShift);
+        pushDelta(node);
+      }
+    }
+    checkMax(true);
+    for (int i = 0; i < affectedSize; i++) {
+      IntervalNode<T> node = affected.get(i);
+      RangeMarkerImpl marker = getAnyNodeMarker(node, invalidated);
+      if (marker == null) continue; // node remains removed from the tree
+
+      if (reTargetShift == 0) {
+        marker.onDocumentChanged(e);
+      }
+      else {
+        marker.onReTarget(e);
+      }
+
+      if (marker.isValid()) {
+        findOrInsertWithIntervals(node);
+      }
+      else {
+        node.setValid(false);
+        ((RMNode<?>)node).onRemoved();
+      }
+      if (!node.isValid()) {
+        node.processAliveKeys(t->invalidated.add(t));
+        node.intervals.clear();
+      }
+    }
+    checkMax(true);
+    assert root==null || ((IntervalNode<T>)root).isValid();
+    return invalidated;
+  }
+
+  private static @Nullable <T extends RangeMarkerEx> RangeMarkerImpl getAnyNodeMarker(@NotNull IntervalNode<T> node, @NotNull List<? super T> invalidated) {
+    List<Supplier<? extends T>> keys = node.intervals;
+    for (int i = keys.size() - 1; i >= 0; i--) {
+      Supplier<? extends T> key = keys.get(i);
+      T t = key.get();
+      RangeMarkerImpl marker = (RangeMarkerImpl)t;
+      if (marker != null) {
+        if (marker.isValid()) return marker;
+        // marker can become invalid on its own, e.g., FoldRegion
+        node.removeIntervalInternal(i, t);
+        invalidated.add(t);
+      }
+    }
+    return null;
+  }
+
+  private void findOrInsertWithIntervals(@NotNull IntervalNode<T> node) {
     IntervalNode<T> insertedNode = findOrInsert(node);
-    // can change if two range become the one
+    // can change if two ranges become the one
     if (insertedNode != node) {
       // merge happened
-      for (Getter<T> key : node.intervals) {
-        T interval = key.get();
-        if (interval != null) {
-          insertedNode.addInterval(interval);
-        }
-      }
+      insertedNode.addIntervalsFrom(node);
     }
   }
 
   // returns true if all deltas involved are still 0
-  private boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                         @NotNull DocumentEvent e,
-                                                         @NotNull List<? super IntervalNode<T>> affected) {
-    if (root == null) return true;
-    boolean norm = pushDelta(root);
+  @ApiStatus.Internal
+  protected void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+                                                        int start, int end, int lengthDelta,
+                                                        @NotNull List<? super IntervalNode<T>> affected) {
+    if (root == null) return;
+    pushDelta(root);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
 
-    int offset = e.getOffset();
-    int affectedEndOffset = offset + e.getOldLength();
     boolean hasAliveKeys = root.hasAliveKey(false);
     if (!hasAliveKeys) {
       // marker was garbage collected
       affected.add(root);
     }
-    if (offset > maxEnd) {
+    if (start > maxEnd) {
       // no need to bother
     }
-    else if (affectedEndOffset < root.intervalStart()) {
+    else if (end < root.intervalStart()) {
       // shift entire subtree
-      int lengthDelta = e.getNewLength() - e.getOldLength();
-      int newD = root.changeDelta(lengthDelta);
-      norm &= newD == 0;
+      root.changeDelta(lengthDelta);
       IntervalNode<T> left = root.getLeft();
       if (left != null) {
-        int newL = left.changeDelta(-lengthDelta);
-        norm &= newL == 0;
+        left.changeDelta(-lengthDelta);
       }
-      norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, affected);
+      pushDelta(root);
+      collectAffectedMarkersAndShiftSubtrees(left, start, end, lengthDelta, affected);
       correctMax(root, 0);
     }
     else {
-      if (offset <= root.intervalEnd()) {
-        // unlucky enough so that change affects the interval
-        if (hasAliveKeys) affected.add(root); // otherwise we've already added it
+      if (start <= root.intervalEnd()) {
+        // unlucky enough so that the change does affect the interval
+        if (hasAliveKeys) {
+          affected.add(root); // otherwise, we've already added it
+        }
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, affected);
-      correctMax(root,0);
+      collectAffectedMarkersAndShiftSubtrees(root.getLeft(), start, end, lengthDelta, affected);
+      collectAffectedMarkersAndShiftSubtrees(root.getRight(), start, end, lengthDelta, affected);
+      correctMax(root, 0);
     }
-    return norm;
   }
 
-  // all intervals contained in (start, end) will be shifted by (newBase-start)
-  // that's what happens when you "move" text in document, e.g. ctrl-shift-up/down the selection.
-  private void reTarget(int start, int end, int newBase) {
-    l.writeLock().lock();
-    try {
-      checkMax(true);
+  // All intervals contained in (e.getMoveOffset(), e.getMoveOffset() + e.getNewLength())
+  // will be shifted by (e.getOffset() - e.getMoveOffset()).
+  // That's what happens when you "move" text in the document, e.g. ctrl-shift-up/down the selection.
+  private @NotNull List<T> reTargetMarkersOnChange(@NotNull DocumentEvent e) {
+    checkMax(true);
 
-      List<IntervalNode<T>> affected = new ArrayList<>();
-      collectNodesToRetarget(getRoot(), start, end, affected);
-      if (affected.isEmpty()) return;
-      // remove all first because findOrInsert can remove gced nodes which could interfere with not-yet-removed nodes
-      for (IntervalNode<T> node : affected) {
-        removeNode(node);
-      }
-      int shift = newBase - start;
-      for (IntervalNode<T> node : affected) {
-        node.setLeft(null);
-        node.setRight(null);
-        node.setParent(null);
-        node.changeDelta(shift);
-        node.setValid(true);
-        pushDelta(node);
+    List<IntervalNode<T>> affected = new SmartList<>();
 
-        List<Getter<T>> keys = node.intervals;
-        if (keys.isEmpty()) continue; // collected away
+    int moveStart = e.getMoveOffset();
+    int moveEnd = moveStart + e.getNewLength();
+    collectNodesToRetarget(getRoot(), moveStart, moveEnd, affected);
 
-        RangeMarkerImpl marker = null;
-        for (int i = keys.size() - 1; i >= 0; i--) {
-          Getter<T> key = keys.get(i);
-          marker = (RangeMarkerImpl)key.get();
-          if (marker != null) {
-            if (marker.isValid()) break;
-            node.removeIntervalInternal(i);
-            marker = null;
-          }
-        }
-        if (marker == null) continue;
-
-        marker.onReTarget(start, end, newBase);
-
-        if (marker.isValid()) {
-          findOrInsertWithIntervals(node);
-        }
-        else {
-          node.setValid(false);
-          ((RMNode)node).onRemoved();
-        }
-      }
-    }
-    finally {
-      checkMax(true);
-      l.writeLock().unlock();
-    }
+    return updateAffectedNodes(e, e.getOffset() - e.getMoveOffset(), affected);
   }
 
   private void collectNodesToRetarget(@Nullable IntervalNode<T> root,
@@ -367,5 +414,29 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       return;
     }
     collectNodesToRetarget(root.getRight(), start, end, affected);
+  }
+
+  @Override
+  void beforeRemove(@NotNull T markerEx, @NotNull IntervalNode<T> node) {
+    super.beforeRemove(markerEx, node);
+    ((RangeMarkerImpl)markerEx).storeOffsetsBeforeDying(node);
+  }
+
+  void copyRangeMarkersTo(@NotNull DocumentEx document, int tabSize) {
+    List<RangeMarkerEx> oldMarkers = new ArrayList<>(size());
+    processAll(r -> oldMarkers.add(r));
+    for (RangeMarkerEx r : oldMarkers) {
+      TextRange newRange = ((RangeMarkerImpl)r).reCalcTextRangeAfterReload(document, tabSize);
+      RMNode<RangeMarkerEx> node = ((RangeMarkerImpl)r).myNode;
+      if (node == null) continue;
+      int startOffset = newRange.getStartOffset();
+      int endOffset = newRange.getEndOffset();
+      if (r.isValid() && TextRange.isProperRange(startOffset, endOffset) && endOffset <= document.getTextLength()) {
+        document.registerRangeMarker(r, startOffset, endOffset, r.isGreedyToLeft(), r.isGreedyToRight(), 0);
+      }
+      else {
+        node.invalidateUnderLock();
+      }
+    }
   }
 }

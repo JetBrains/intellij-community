@@ -22,23 +22,25 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlToken;
 
 class PsiChildAxisIterator extends NodeIterator {
-    public PsiChildAxisIterator(Object contextNode) {
+    PsiChildAxisIterator(Object contextNode) {
         super((PsiElement)contextNode);
     }
 
+    @Override
     protected PsiElement getFirstNode(PsiElement contextNode) {
         PsiElement n = contextNode.getFirstChild();
         n = skipToXmlElement(n);
         return n;
     }
 
+    @Override
     protected PsiElement getNextNode(PsiElement contextNode) {
         PsiElement n = contextNode.getNextSibling();
         n = skipToXmlElement(n);
         return n;
     }
 
-    private PsiElement skipToXmlElement(PsiElement n) {
+    private static PsiElement skipToXmlElement(PsiElement n) {
         // attributes cannot appear in the child axis
         // optimize: skip XmlTokens
         while (n != null && (!isXmlElement(n) || isXmlToken(n) || isAttribute(n))) {
@@ -47,15 +49,15 @@ class PsiChildAxisIterator extends NodeIterator {
         return n;
     }
 
-    private boolean isAttribute(PsiElement n) {
+    private static boolean isAttribute(PsiElement n) {
         return (n instanceof XmlAttribute);
     }
 
-    private boolean isXmlElement(PsiElement n) {
+    private static boolean isXmlElement(PsiElement n) {
         return (n instanceof XmlElement || n instanceof PsiWhiteSpace);
     }
 
-    private boolean isXmlToken(PsiElement n) {
+    private static boolean isXmlToken(PsiElement n) {
         return n instanceof XmlToken;
     }
 }

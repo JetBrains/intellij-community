@@ -15,12 +15,12 @@
  */
 package com.intellij.uiDesigner.core;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.LayoutManager2;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class AbstractLayout implements LayoutManager2 {
   /**
    * Default value of HGAP property
@@ -93,7 +93,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * @param hGap new horizontal gap. If <code>hGap</code> is <code>-1</code>
    * then own gap is not defined and it should be inherited from parent container.
    *
-   * @exception java.lang.IllegalArgumentException if <code>hGap</code> is less
+   * @exception IllegalArgumentException if <code>hGap</code> is less
    * then <code>-1</code>
    */
   public final void setHGap(final int hGap){
@@ -138,7 +138,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * @param vGap new vertical gap. If <code>vGap</code> is <code>-1</code>
    * then own gap is not defined and it should be inherited from parent container.
    *
-   * @exception java.lang.IllegalArgumentException if <code>vGap</code> is less
+   * @exception IllegalArgumentException if <code>vGap</code> is less
    * then <code>-1</code>
    */
   public final void setVGap(final int vGap){
@@ -167,6 +167,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
     return myConstraints[index];
   }
 
+  @Override
   public void addLayoutComponent(final Component comp, final Object constraints){
     if (!(constraints instanceof GridConstraints)) {
       throw new IllegalArgumentException("constraints: " + constraints);
@@ -183,10 +184,12 @@ public abstract class AbstractLayout implements LayoutManager2 {
     myConstraints = newConstraints;
   }
 
+  @Override
   public final void addLayoutComponent(final String name, final Component comp){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final void removeLayoutComponent(final Component comp){
     final int i = getComponentIndex(comp);
     if (i == -1) {
@@ -233,17 +236,24 @@ public abstract class AbstractLayout implements LayoutManager2 {
     return -1;
   }
 
+  @Override
   public final float getLayoutAlignmentX(final Container container){
     return 0.5f;
   }
 
+  @Override
   public final float getLayoutAlignmentY(final Container container){
     return 0.5f;
   }
 
+  @Override
   public abstract Dimension maximumLayoutSize(Container target);
+  @Override
   public abstract void invalidateLayout(Container target);
+  @Override
   public abstract Dimension preferredLayoutSize(Container parent);
+  @Override
   public abstract Dimension minimumLayoutSize(Container parent);
+  @Override
   public abstract void layoutContainer(Container parent);
 }

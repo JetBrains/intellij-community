@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class RemovePackagingElementAction extends LayoutTreeActionBase {
 
-  public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {
-    super(ProjectBundle.message("action.name.remove.packaging.element"), ProjectBundle.message("action.description.remove.packaging.elements"), PlatformIcons.DELETE_ICON,
+  public RemovePackagingElementAction(@NotNull ArtifactEditorEx artifactEditor) {
+    super(JavaUiBundle.message("action.name.remove.packaging.element"),
+          JavaUiBundle.message("action.description.remove.packaging.elements"),
+          PlatformIcons.DELETE_ICON,
           artifactEditor);
   }
 
@@ -47,7 +47,7 @@ public class RemovePackagingElementAction extends LayoutTreeActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArtifactEditor.removeSelectedElements();
   }
 }

@@ -16,8 +16,9 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import org.intellij.plugins.testUtil.CopyFile;
 
 import java.util.ArrayList;
@@ -34,19 +35,19 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
     super.init();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManagerExImpl
-        .addTestResource("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), getTestRootDisposable());
-      ExternalResourceManagerExImpl.addTestResource("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
+      ExternalResourceManagerExBase
+        .registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), getTestRootDisposable());
+      ExternalResourceManagerExBase.registerResourceTemporarily("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
                                                     getTestRootDisposable());
       //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
-      ExternalResourceManagerExImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
+      ExternalResourceManagerExBase.registerResourceTemporarily("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
                                                     getTestRootDisposable());
-      ExternalResourceManagerExImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
+      ExternalResourceManagerExBase.registerResourceTemporarily("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
                                                     getTestRootDisposable());
-      ExternalResourceManagerExImpl.addTestResource("urn:intelliForm:AttachmentFilter",
+      ExternalResourceManagerExBase.registerResourceTemporarily("urn:intelliForm:AttachmentFilter",
                                                     toAbsolutePath("highlighting/attachment-filter.rng"), getTestRootDisposable());
-      ExternalResourceManagerExImpl
-        .addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), getTestRootDisposable());
+      ExternalResourceManagerExBase
+        .registerResourceTemporarily("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), getTestRootDisposable());
 
       List<String> list = new ArrayList<>();
       list.add("urn:intelliForm:Spaces");
@@ -62,6 +63,10 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
       list.add("http://www.renderx.com/XSL/Extensions");
       list.add("http://relaxng.org/ns/compatibility/annotations/1.0");
       ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(list, getTestRootDisposable());
+
+      ModuleRootModificationUtil.updateModel(getFixture().getModule(), model -> {
+        model.addContentEntry(myTestFixture.getTempDirFixture().getFile(""));
+      });
     });
   }
 

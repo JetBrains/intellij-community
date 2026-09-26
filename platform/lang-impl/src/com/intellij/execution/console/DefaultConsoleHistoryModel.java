@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,17 +19,12 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
-public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
-  /**
-   * @noinspection FieldCanBeLocal
-   */
+@ApiStatus.Internal
+public final class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
 
-  /**
-   * @noinspection MismatchedQueryAndUpdateOfCollection
-   */
-  private final static Map<String, DefaultConsoleHistoryModel> ourModels =
-    ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),
-                                   ContainerUtil::createConcurrentWeakValueMap);
+  private static final Map<String, DefaultConsoleHistoryModel> ourModels =
+    ConcurrentFactoryMap.create(key -> new DefaultConsoleHistoryModel(null),
+                                () -> CollectionFactory.createConcurrentWeakValueMap());
 
   public static DefaultConsoleHistoryModel createModel(String persistenceId) {
     return ourModels.get(persistenceId).copy();
@@ -65,7 +49,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
   public void resetEntries(@NotNull List<String> entries) {
     synchronized (myLock) {
       myEntries.clear();
-      myEntries.addAll(entries.subList(0, Math.min(entries.size(), getMaxHistorySize())));
+      myEntries.addAll(ContainerUtil.getFirstItems(entries, getMaxHistorySize()));
       incModificationCount();
     }
   }
@@ -92,7 +76,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
     super.incModificationCount();
   }
 
-  protected void resetIndex() {
+  private void resetIndex() {
     synchronized (myLock) {
       myIndex = myEntries.size();
     }
@@ -111,11 +95,10 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getEntries() {
+  public @NotNull List<String> getEntries() {
     synchronized (myLock) {
-      return ContainerUtil.newArrayList(myEntries);
+      return new ArrayList<>(myEntries);
     }
   }
 
@@ -134,8 +117,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
   }
 
   @Override
-  @Nullable
-  public Entry getHistoryNext() {
+  public @Nullable Entry getHistoryNext() {
     synchronized (myLock) {
       if (myIndex >= 0) --myIndex;
       return new Entry(getCurrentEntry(), -1);
@@ -143,8 +125,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
   }
 
   @Override
-  @Nullable
-  public Entry getHistoryPrev() {
+  public @Nullable Entry getHistoryPrev() {
     synchronized (myLock) {
       if (myIndex <= myEntries.size() - 1) ++myIndex;
       return new Entry(getCurrentEntry(), -1);
@@ -165,6 +146,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
     }
   }
 
+  @Override
   public int getCurrentIndex() {
     synchronized (myLock) {
       return myIndex;

@@ -1,34 +1,46 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * A listener for VFS events, invoked inside write-action <b>on EDT</b>.
+ * <p>
+ * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
+ * Consider using {@link BulkFileListenerBackgroundable} to avoid changes in semantics depending on the version of the Platform.
+ * </b>
+ * <p>
+ * Please use {@link com.intellij.openapi.vfs.AsyncFileListener} instead, unless you are absolutely sure you need to receive events synchronously.
+ * <p>
+ * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
+ * or define the listener in {@code plugin.xml} as an application listener (the preferred way):
+ * <pre>
+ * &lt;applicationListeners>
+ *   &lt;listener class="com.plugin.MyBulkFileListener"
+ *             topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+ * &lt;/applicationListeners>
+ * </pre>
+ * </p>
+ *
+ * <p>Please note that the VFS events are project-agnostic so all listeners will be notified about events from all open projects.
+ * For filtering the events use {@link com.intellij.openapi.roots.ProjectRootManager#getFileIndex} with
+ * {@link com.intellij.openapi.roots.FileIndex#isInContent}.</p>
+ *
+ * <p>Also note that if a directory with other files/directories inside is created, this listener will receive {@link VFileCreateEvent} only for the topmost directory.
+ * To iterate over all the created files use {@link com.intellij.openapi.roots.FileIndex#iterateContentUnderDirectory} and provide the file from the {@link VFileCreateEvent}.
+ * Otherwise, excluded files might be added to the VFS which may lead to performance problems.</p>
+ */
 public interface BulkFileListener {
-  /**
-   * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
-   */
-  class Adapter implements BulkFileListener {
+  @RequiresWriteLock
+  // depending on its registration, can be executed either only on EDT or on any thread
+  default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }
 
-  }
-
-  default void before(@NotNull List<? extends VFileEvent> events) { }
-
-  default void after(@NotNull List<? extends VFileEvent> events) { }
+  @RequiresWriteLock
+  // depending on its registration, can be executed either only on EDT or on any thread
+  default void after(@NotNull List<? extends @NotNull VFileEvent> events) { }
 }

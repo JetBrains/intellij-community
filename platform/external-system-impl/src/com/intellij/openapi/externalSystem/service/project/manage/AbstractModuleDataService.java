@@ -1,88 +1,116 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.OrderAware;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.platform.eel.fs.EelFileUtils;
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.JBUI;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
-
   public static final Key<ModuleData> MODULE_DATA_KEY = Key.create("MODULE_DATA_KEY");
   public static final Key<Module> MODULE_KEY = Key.create("LINKED_MODULE");
   public static final Key<Map<OrderEntry, OrderAware>> ORDERED_DATA_MAP_KEY = Key.create("ORDER_ENTRY_DATA_MAP");
   private static final Key<Set<Path>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
 
-  private static final NotificationGroup ORPHAN_MODULE_NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup("Build sync orphan modules", ToolWindowId.BUILD);
-
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
+  private static final @NotNull String UNDEFINED_MODULE_TYPE = "UNDEFINED_MODULE_TYPE";
+
+  /**
+   * @see ExternalSystemModuleOptionsEntity#getExternalSystemModuleType
+   */
+  public @Nullable String getExternalModuleType() {
+    return UNDEFINED_MODULE_TYPE;
+  }
+
   @Override
-  public void importData(@NotNull final Collection<DataNode<E>> toImport,
+  public void importData(final @NotNull Collection<? extends DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
-                         @NotNull final Project project,
+                         final @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty()) {
       return;
@@ -96,21 +124,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
-        ProjectCoordinate publication = node.getData().getPublication();
-        if (publication != null) {
-          modelsProvider.registerModulePublication(module, publication);
-        }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
-
-        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
-          // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
-          setLanguageLevel(modifiableRootModel, node.getData());
-        }
-        setSdk(modifiableRootModel, node.getData());
       }
     }
 
@@ -125,17 +143,20 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
-  private void createModules(@NotNull Collection<DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
-    for (final DataNode<E> module : toCreate) {
-      ModuleData data = module.getData();
-      final Module created = modelsProvider.newModule(data);
+  protected @NotNull Module createModule(@NotNull DataNode<E> module, @NotNull IdeModifiableModelsProvider modelsProvider) {
+    ModuleData data = module.getData();
+    return modelsProvider.newModule(data);
+  }
+
+  private void createModules(@NotNull Collection<? extends DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
+    for (DataNode<E> module : toCreate) {
+      Module created = createModule(module, modelsProvider);
       module.putUserData(MODULE_KEY, created);
 
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
-      modifiableRootModel.inheritSdk();
 
-      RootPolicy<Object> visitor = new RootPolicy<Object>() {
+      RootPolicy<Object> visitor = new RootPolicy<>() {
         @Override
         public Object visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, Object value) {
           modifiableRootModel.removeOrderEntry(libraryOrderEntry);
@@ -155,10 +176,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
-  @NotNull
-  private Collection<DataNode<E>> filterExistingModules(@NotNull Collection<DataNode<E>> modules,
-                                                        @NotNull IdeModifiableModelsProvider modelsProvider) {
-    Collection<DataNode<E>> result = ContainerUtilRt.newArrayList();
+  private @NotNull Collection<DataNode<E>> filterExistingModules(@NotNull Collection<? extends DataNode<E>> modules,
+                                                                 @NotNull IdeModifiableModelsProvider modelsProvider) {
+    Collection<DataNode<E>> result = new ArrayList<>();
     for (DataNode<E> node : modules) {
       ModuleData moduleData = node.getData();
       Module module = modelsProvider.findIdeModule(moduleData);
@@ -191,12 +211,93 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   @Override
-  public void removeData(@NotNull final Computable<Collection<Module>> toRemoveComputable,
-                         @NotNull final Collection<DataNode<E>> toIgnore,
-                         @NotNull final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    final Collection<Module> toRemove = toRemoveComputable.compute();
+  public @NotNull Computable<Collection<Module>> computeOrphanData(@NotNull Collection<? extends DataNode<E>> toImport,
+                                                                   @NotNull ProjectData projectData,
+                                                                   @NotNull Project project,
+                                                                   @NotNull IdeModifiableModelsProvider modelsProvider) {
+    return () -> {
+      var externalSystemId = projectData.getOwner();
+      var externalRootProjectPath = projectData.getLinkedExternalProjectPath();
+      var externalModuleType = getExternalModuleType();
+
+      var result = new SmartList<Module>();
+      if (!Objects.equals(externalModuleType, UNDEFINED_MODULE_TYPE)) {
+        result.addAll(computeRemovedModules(modelsProvider, externalSystemId, externalRootProjectPath, externalModuleType));
+      }
+      result.addAll(computeModulesWithUsedContentRoots(modelsProvider, externalSystemId, toImport));
+      return result;
+    };
+  }
+
+  /**
+   * Computes IDE modules that was associated with defined external system,
+   * but doesn't have corresponding module data in new data graph.
+   * I.e. removed from the external project structure.
+   *
+   * @param externalSystemId defines target external system.
+   * @param externalRootProjectPath path of a root external project.
+   */
+  private static @NotNull List<Module> computeRemovedModules(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull String externalRootProjectPath,
+    @Nullable String externalModuleType
+  ) {
+    var result = new SmartList<Module>();
+
+    for (var module : modelsProvider.getModules()) {
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(externalSystemId, module)) continue;
+      if (!Objects.equals(ExternalSystemApiUtil.getExternalModuleType(module), externalModuleType)) continue;
+      if (!Objects.equals(ExternalSystemApiUtil.getExternalRootProjectPath(module), externalRootProjectPath)) continue;
+
+      if (module.getUserData(MODULE_DATA_KEY) == null) {
+        result.add(module);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Computes IDE modules that use the defined external system's content locations.
+   * <p>
+   * This is important during miration from one external system to another.
+   * For example, JPS build tool doesn't have unlink operation.
+   * Therefore we need to replace their modules forcibly to apply new project model.
+   *
+   * @param externalSystemId        defines target external system.
+   */
+  private @NotNull List<Module> computeModulesWithUsedContentRoots(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Collection<? extends DataNode<E>> moduleNodes
+  ) {
+    var usedContentRoots = new HashSet<>();
+    for (var moduleNode : moduleNodes) {
+      usedContentRoots.add(moduleNode.getData().getLinkedExternalProjectPath());
+    }
+    var result = new SmartList<Module>();
+    for (var module : modelsProvider.getModules()) {
+      if (ExternalSystemApiUtil.isExternalSystemAwareModule(externalSystemId, module)) {
+        continue;
+      }
+      for (var contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+        if (usedContentRoots.contains(contentRoot.getPath())) {
+          result.add(module);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public void removeData(Computable<? extends Collection<? extends Module>> toRemoveComputable,
+                         final @NotNull Collection<? extends DataNode<E>> toIgnore,
+                         final @NotNull ProjectData projectData,
+                         final @NotNull Project project,
+                         final @NotNull IdeModifiableModelsProvider modelsProvider) {
+    final Collection<? extends Module> toRemove = toRemoveComputable.compute();
     final List<Module> modules = new SmartList<>(toRemove);
     for (DataNode<E> moduleDataNode : toIgnore) {
       final Module module = modelsProvider.findIdeModule(moduleDataNode.getData());
@@ -209,10 +310,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
     ContainerUtil.removeDuplicates(modules);
 
-    for (Module module : modules) {
-      if (module.isDisposed()) continue;
-      unlinkModuleFromExternalSystem(module);
-    }
+    ProjectSystemId projectSystemId = projectData.getOwner();
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove external system options from workspace model", _ -> {
+      for (Module module : modules) {
+        if (module.isDisposed()) continue;
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove options for " + module.getName(), _ -> {
+          unlinkModuleFromExternalSystem(module);
+        });
+      }
+    });
 
     ExternalSystemApiUtil.executeOnEdt(true, () -> {
       AtomicInteger counter = project.getUserData(ORPHAN_MODULE_HANDLERS_COUNTER);
@@ -224,7 +330,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       Set<Path> orphanModules = project.getUserData(ORPHAN_MODULE_FILES);
       if (orphanModules == null) {
-        orphanModules = ContainerUtil.newLinkedHashSet();
+        orphanModules = new LinkedHashSet<>();
         project.putUserData(ORPHAN_MODULE_FILES, orphanModules);
       }
 
@@ -247,7 +353,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
-              ServiceKt.getStateStore(module).save(new SmartList<>(), false);
+              StoreUtil.saveSettings(module);
               VirtualFile moduleFile = module.getModuleFile();
               if (moduleFile != null) {
                 Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));
@@ -262,7 +368,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             }
           }
           modelsProvider.getModifiableModuleModel().disposeModule(module);
-          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {
@@ -289,11 +394,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       project.putUserData(ORPHAN_MODULE_FILES, null);
       project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
       StringBuilder modulesToRestoreText = new StringBuilder();
-      List<Pair<String, Path>> modulesToRestore = ContainerUtil.newArrayList();
+      List<Pair<String, Path>> modulesToRestore = new ArrayList<>();
       for (Path modulePath : orphanModules) {
         try {
           String path = FileUtil.loadFile(modulePath.resolveSibling(modulePath.getFileName() + ".path").toFile());
-          modulesToRestoreText.append(FileUtil.getNameWithoutExtension(new File(path))).append("\n");
+          modulesToRestoreText.append(FileUtilRt.getNameWithoutExtension(new File(path).getName())).append("\n");
           modulesToRestore.add(Pair.create(path, modulePath));
         }
         catch (IOException e) {
@@ -304,19 +409,24 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
       String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
                                                     StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 50, 0));
-      Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
+      Notification cleanUpNotification = NotificationGroupManager.getInstance().getNotificationGroup("Build sync orphan modules")
+        .createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-          if (showRemovedOrphanModules(modulesToRestore, project, buildSystem)) {
+          if (showRemovedOrphanModules(modulesToRestore, project)) {
             notification.expire();
           }
         })
         .whenExpired(() -> {
-          List<File> filesToRemove = orphanModules.stream().map(Path::toFile).collect(Collectors.toList());
-          filesToRemove.addAll(orphanModules.stream()
-                                 .map(path -> path.resolveSibling(path.getFileName() + ".path").toFile())
-                                 .collect(Collectors.toList()));
-          FileUtil.asyncDelete(filesToRemove);
+          try {
+            for (var path : orphanModules) {
+              EelFileUtils.deleteRecursively(path);
+              EelFileUtils.deleteRecursively(path.resolveSibling(path.getFileName() + ".path"));
+            }
+          }
+          catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
         });
 
       Disposer.register(project, cleanUpNotification::expire);
@@ -324,14 +434,14 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
+  @Override
   public void onFailureImport(Project project) {
     project.putUserData(ORPHAN_MODULE_FILES, null);
     project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
   }
 
-  private static boolean showRemovedOrphanModules(@NotNull final List<Pair<String, Path>> orphanModules,
-                                                  @NotNull final Project project,
-                                                  @NotNull final String buildSystem) {
+  private static boolean showRemovedOrphanModules(final @NotNull List<? extends Pair<String, Path>> orphanModules,
+                                                  final @NotNull Project project) {
     final CheckBoxList<Pair<String, Path>> orphanModulesList = new CheckBoxList<>();
     DialogWrapper dialog = new DialogWrapper(project) {
       {
@@ -342,7 +452,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       @Override
       protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> FileUtil.getNameWithoutExtension(new File(module.getFirst())));
+        orphanModulesList.setItems(orphanModules, module -> FileUtilRt.getNameWithoutExtension(new File(module.getFirst()).getName())); //NON-NLS
         orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
         JScrollPane myModulesScrollPane =
@@ -356,9 +466,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         return content;
       }
 
-      @NotNull
       @Override
-      protected JComponent createNorthPanel() {
+      protected @NotNull JComponent createNorthPanel() {
         GridBagConstraints gbConstraints = new GridBagConstraints();
         JPanel panel = new JPanel(new GridBagLayout());
         gbConstraints.insets = JBUI.insets(4, 0, 10, 8);
@@ -375,10 +484,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           Path savedPath = pair.second;
           if (orphanModulesList.isItemSelected(i) && savedPath.toFile().isFile()) {
             try {
-              FileUtil.copy(savedPath.toFile(), new File(originalPath));
-              ModuleManager.getInstance(project).loadModule(originalPath);
+              File file = new File(originalPath);
+              FileUtil.copy(savedPath.toFile(), file);
+              ModuleManager.getInstance(project).loadModule(file.toPath());
             }
-            catch (IOException | JDOMException | ModuleWithNameAlreadyExists e) {
+            catch (IOException | ModuleWithNameAlreadyExists e) {
               LOG.warn(e);
             }
           }
@@ -393,15 +503,22 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
-  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
-    ModuleData moduleData = moduleDataNode.getData();
+  protected void setModuleOptions(@NotNull Module module, @NotNull DataNode<E> moduleNode) {
+    ModuleData moduleData = moduleNode.getData();
+
     module.putUserData(MODULE_DATA_KEY, moduleData);
-    ExternalSystemModulePropertyManager.getInstance(module)
-      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
+
+    ExternalSystemModulePropertyManager externalModuleOptions = ExternalSystemModulePropertyManager.getInstance(module);
+    externalModuleOptions.setExternalOptions(moduleData.getOwner(), moduleData, moduleNode.getData(ProjectKeys.PROJECT));
+
+    String moduleType = getExternalModuleType();
+    if (!Objects.equals(moduleType, UNDEFINED_MODULE_TYPE)) {
+      externalModuleOptions.setExternalModuleType(moduleType);
+    }
   }
 
   @Override
-  public void postProcess(@NotNull Collection<DataNode<E>> toImport,
+  public void postProcess(@NotNull Collection<? extends DataNode<E>> toImport,
                           @Nullable ProjectData projectData,
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -412,7 +529,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       if (orderAwareMap != null) {
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
-      setBytecodeTargetLevel(project, module, moduleDataNode.getData());
       moduleDataNode.putUserData(MODULE_KEY, null);
       moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
     }
@@ -431,84 +547,37 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       11, (o1, o2) -> {
       int order1 = o1.second.getOrder();
       int order2 = o2.second.getOrder();
-      return order1 != order2 ? order1 < order2 ? -1 : 1 : 0;
+      if (order1 != order2) {
+        return order1 < order2 ? -1 : 1;
+      }
+      return o1.second.toString().compareTo(o2.second.toString());
     });
-
-    int shift = 0;
+    final List<OrderEntry> noOrderAwareItems = new ArrayList<>();
     for (int i = 0; i < length; i++) {
       OrderEntry orderEntry = orderEntries[i];
       final OrderAware orderAware = orderEntryDataMap.get(orderEntry);
       if (orderAware == null) {
-        newOrder[i] = orderEntry;
-        shift++;
+        noOrderAwareItems.add(orderEntry);
       }
       else {
         priorityQueue.add(Pair.create(orderEntry, orderAware));
       }
     }
 
+    for (int i = 0; i < noOrderAwareItems.size(); i++) {
+      newOrder[i] = noOrderAwareItems.get(i);
+    }
+    int index = noOrderAwareItems.size();
     Pair<OrderEntry, OrderAware> pair;
     while ((pair = priorityQueue.poll()) != null) {
-      final OrderEntry orderEntry = pair.first;
-      final OrderAware orderAware = pair.second;
-      final int order = orderAware.getOrder() != -1 ? orderAware.getOrder() : length - 1;
-      final int newPlace = findNewPlace(newOrder, order - shift);
-      assert newPlace != -1;
-      newOrder[newPlace] = orderEntry;
+      newOrder[index] = pair.first;
+      index++;
     }
 
-    if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, Comparator.naturalOrder());
-      LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
+    if (LOG.isTraceEnabled()) {
+      boolean changed = !Arrays.equals(orderEntries, newOrder);
+      LOG.trace(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
-  }
-
-  private static int findNewPlace(OrderEntry[] newOrder, int newIndex) {
-    int idx = newIndex;
-    while (idx < 0 || (idx < newOrder.length && newOrder[idx] != null)) {
-      idx++;
-    }
-    if (idx >= newOrder.length) {
-      idx = newIndex - 1;
-      while (idx >= 0 && (idx >= newOrder.length || newOrder[idx] != null)) {
-        idx--;
-      }
-    }
-    return idx;
-  }
-
-  private void setLanguageLevel(@NotNull ModifiableRootModel modifiableRootModel, E data) {
-    LanguageLevel level = LanguageLevel.parse(data.getSourceCompatibility());
-    if (level != null) {
-      try {
-        modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
-      }
-      catch (IllegalArgumentException e) {
-        LOG.debug(e);
-      }
-    }
-  }
-
-  private void setSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
-    String skdName = data.getSdkName();
-    if (skdName != null) {
-      ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-      Sdk sdk = projectJdkTable.findJdk(skdName);
-      if (sdk != null) {
-        modifiableRootModel.setSdk(sdk);
-      }
-      else {
-        modifiableRootModel.setInvalidSdk(skdName, JavaSdk.getInstance().getName());
-      }
-    }
-  }
-
-  private void setBytecodeTargetLevel(@NotNull Project project, @NotNull Module module, @NotNull E data) {
-    String targetLevel = data.getTargetCompatibility();
-    if (targetLevel != null) {
-      CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
-      configuration.setBytecodeTargetLevel(module, targetLevel);
-    }
   }
 }

@@ -18,15 +18,16 @@ package org.intellij.lang.xpath;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class XPath2LexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return XPathLexer.create(true);
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return TestBase.getTestDataPath("xpath2/parsing/lexer").substring(PathManager.getHomePath().length());
   }
 

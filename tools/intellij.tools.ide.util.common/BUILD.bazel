@@ -1,0 +1,60 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.tools.ide.util.common` start
+create_kotlinc_options(
+    name = "custom_ide-util-common",
+    opt_in = ["kotlin.time.ExperimentalTime"],
+)
+
+jvm_library(
+    name = "ide-util-common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-util-common",
+    module_name = "intellij.tools.ide.util.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+jvm_library(
+    name = "ide-util-common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-util-common",
+    module_name = "intellij.tools.ide.util.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-util-common",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.tools.ide.util.common` end
+
+### auto-generated section `iml intellij.tools.ide.util.common` start
+exports_files(
+    [
+        "intellij.tools.ide.util.common.iml",
+        "resources/intellij.tools.ide.util.common.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tools.ide.util.common` end

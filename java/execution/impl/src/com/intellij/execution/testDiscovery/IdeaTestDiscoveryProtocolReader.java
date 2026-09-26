@@ -1,20 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolReader;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+final class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
 
-  @NotNull
-  private final TIntObjectHashMap<String> myTestExecutionNameEnumerator = new TIntObjectHashMap<>();
-  @NotNull
-  private final TestDiscoveryIndex myIndex;
+  private final @NotNull Int2ObjectMap<String> myTestExecutionNameEnumerator = new Int2ObjectOpenHashMap<>();
+  private final @NotNull TestDiscoveryIndex myIndex;
   private final String myModuleName;
   private final byte myFrameworkId;
 
@@ -87,6 +92,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
       private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
+      private final List<String> myUsedFiles = new SmartList<>();
       private int myCurrentClassId;
 
       @Override
@@ -103,7 +109,6 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
           return;
         }
         myUsedMethods.putValue(className, methodName);
-
       }
 
       @Override
@@ -113,7 +118,12 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
 
       @Override
       public void testDataProcessed() {
-        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
+        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myUsedFiles, myModuleName, myFrameworkId);
+      }
+
+      @Override
+      public void processAffectedFile(int[] ints) {
+        myUsedFiles.add(Arrays.stream(ints).mapToObj(id1 -> myTestExecutionNameEnumerator.get(id1)).collect(Collectors.joining(File.separator)));
       }
     };
   }

@@ -1,0 +1,10 @@
+// "Specify 'String' type for enclosing property 'a'" "true"
+// K2_ERROR: IMPLICIT_NOTHING_PROPERTY_TYPE
+// K2_ERROR: RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY_AND_IMPLICIT_TYPE
+// K2_ERROR: RETURN_TYPE_MISMATCH
+
+val a
+    get() = r<caret>eturn ""
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

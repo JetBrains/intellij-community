@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -23,6 +9,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -38,6 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -48,12 +37,11 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_PACKAGE_I
  */
 public class CreatePackageInfoAction extends CreateFromTemplateActionBase implements DumbAware {
   public CreatePackageInfoAction() {
-    super(IdeBundle.message("action.create.new.package-info.title"), IdeBundle.message("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
+    super(JavaBundle.messagePointer("action.create.new.package-info.title"), JavaBundle.messagePointer("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
-  @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+  protected @Nullable PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     final PsiDirectory[] directories = view.getDirectories();
     for (PsiDirectory directory : directories) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
@@ -62,16 +50,16 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
       }
       if (directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null) {
         Messages.showErrorDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                 IdeBundle.message("error.package.already.contains.package-info", aPackage.getQualifiedName()),
+                                 JavaBundle.message("error.package.already.contains.package-info", aPackage.getQualifiedName()),
                                  IdeBundle.message("title.cannot.create.file"));
         return null;
       }
       else if (directory.findFile("package.html") != null) {
         if (Messages.showOkCancelDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                    IdeBundle.message("error.package.already.contains.package.html", aPackage.getQualifiedName()),
-                                    IdeBundle.message("error.package.html.found.title"),
-                                    IdeBundle.message("button.create"), CommonBundle.message("button.cancel"),
-                                    Messages.getQuestionIcon()) != Messages.OK) {
+                                        JavaBundle.message("error.package.already.contains.package.html", aPackage.getQualifiedName()),
+                                        JavaBundle.message("error.package.html.found.title"),
+                                        IdeBundle.message("button.create"), CommonBundle.getCancelButtonText(),
+                                        Messages.getQuestionIcon()) != Messages.OK) {
           return null;
         }
       }
@@ -81,7 +69,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isAvailable(e.getDataContext()));
   }
 
@@ -93,6 +81,9 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     }
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
+      return false;
+    }
+    if (CreateClassAction.isJavaFileActionSuppressed(dataContext)) {
       return false;
     }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -114,9 +105,13 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     return false;
   }
 
-  @Nullable
   @Override
-  public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public @Nullable AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return new AttributesDefaults(INTERNAL_PACKAGE_INFO_TEMPLATE_NAME).withFixedName(true);
   }
 

@@ -1,0 +1,17 @@
+// PROBLEM: none
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+import kotlin.reflect.KProperty
+
+@RequiresOptIn
+annotation class DelegateOptIn
+
+class Delegate {
+    operator fun getValue(instance: Any?, property: KProperty<*>): String = ""
+
+    @DelegateOptIn
+    operator fun setValue(instance: Any?, property: KProperty<*>, value: String) {}
+}
+
+@OptIn(DelegateOptIn::class)<caret>
+var foo by Delegate()

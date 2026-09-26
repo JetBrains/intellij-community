@@ -1,35 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author max
- */
 public interface UsageView extends Disposable {
   /**
    * Returns {@link UsageTarget} to look usages for
+   * @see com.intellij.ide.impl.dataRules.UsageTargetsRule
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
 
+  AtomicInteger COUNTER = new AtomicInteger();
   /**
    * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
 
   DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
+  DataKey<UsageViewSettings> USAGE_VIEW_SETTINGS_KEY = DataKey.create("UsageViewSettings");
 
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
   DataKey<SearchScope> USAGE_SCOPE = DataKey.create("UsageScope");
@@ -37,54 +41,102 @@ public interface UsageView extends Disposable {
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
   void appendUsage(@NotNull Usage usage);
+  @RequiresEdt
   void removeUsage(@NotNull Usage usage);
-  void includeUsages(@NotNull Usage[] usages);
-  void excludeUsages(@NotNull Usage[] usages);
-  void selectUsages(@NotNull Usage[] usages);
+  @RequiresEdt
+  void includeUsages(Usage @NotNull [] usages);
+  @RequiresEdt
+  void excludeUsages(Usage @NotNull [] usages);
+  @RequiresEdt
+  void selectUsages(Usage @NotNull [] usages);
 
+  @RequiresEdt
   void close();
   boolean isSearchInProgress();
 
-  /**
-   * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
-   */
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
-  void addButtonToLowerPane(@NotNull Action action);
-  void setReRunActivity(@NotNull Runnable runnable);
+  @RequiresEdt
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
+  @RequiresEdt
+  default void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, boolean dumbAware){
+    addButtonToLowerPane(runnable, text);
+  }
 
+  @RequiresEdt
+  void addButtonToLowerPane(@NotNull Action action);
+  @RequiresEdt
+  default void addButtonToLowerPane(@NotNull Action action, boolean dumbAware) {
+    addButtonToLowerPane(action);
+  }
+
+  /**
+   * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.
+   */
+  default void setRerunAction(@NotNull Action rerunAction) {}
+
+  @RequiresEdt
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
+  /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
+   */
+  @RequiresEdt
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @Nullable @NlsContexts.Command String commandName,
+                                 @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                 @NotNull @NlsContexts.Button String shortDescription);
 
   /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  @RequiresEdt
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @Nullable String commandName,
+                                 @NotNull String cannotMakeString,
+                                 @NotNull String shortDescription,
+                                 boolean checkReadOnlyStatus);
+
+  /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
+   * @param checkReadOnlyStatus if false, check is performed inside processRunnable
+   * @param dumbAware if true, the action can be performed in dumb mode (without indexes)
+   */
+  @RequiresEdt
+  default void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                         @Nullable String commandName,
+                                         @NotNull String cannotMakeString,
+                                         @NotNull String shortDescription,
+                                         boolean checkReadOnlyStatus,
+                                         boolean dumbAware) {
+    addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, checkReadOnlyStatus);
+  }
 
   @NotNull
   UsageViewPresentation getPresentation();
 
   @NotNull
+  @Unmodifiable
   Set<Usage> getExcludedUsages();
 
+  @RequiresEdt
   @NotNull
+  @Unmodifiable
   Set<Usage> getSelectedUsages();
 
   @NotNull
-  Set<Usage> getUsages();
+  @Unmodifiable Set<Usage> getUsages();
 
   @NotNull
-  List<Usage> getSortedUsages();
+  @Unmodifiable List<Usage> getSortedUsages();
 
+  @RequiresEdt
   @NotNull
   JComponent getComponent();
 
-  @NotNull
-  default JComponent getPreferredFocusableComponent() {
+  @RequiresEdt
+  default @NotNull JComponent getPreferredFocusableComponent() {
     return getComponent();
   }
-
 
   int getUsagesCount();
 
@@ -93,5 +145,28 @@ public interface UsageView extends Disposable {
    * Reloads the whole tree model once instead of firing individual remove event for each node.
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
-  void removeUsagesBulk(@NotNull Collection<Usage> usages);
+  @RequiresEdt
+  void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
+
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
+
+  @ApiStatus.Internal
+  default int getId() {
+    return -1;
+  }
+
+  @FunctionalInterface
+  interface ExcludeListener {
+    /**
+     *
+     * @param usages unmodifiable set or nodes that were excluded or included
+     * @param excluded if {@code true} usages were excluded otherwise they were included
+     */
+    @RequiresEdt
+    void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
+  }
+
+  @RequiresEdt
+  @Override
+  void dispose();
 }

@@ -1,4 +1,4 @@
-// "Move 'return' closer to computation of the value of 's'" "true"
+// "Move 'return' closer to computation of the value of 's'" "true-preview"
 class T {
     String f(String a) {
         String s = a;
@@ -11,6 +11,6 @@ class T {
         else if (s.startsWith("#")) {
             s = "#"; /* inline */
         }
-        ret<caret>urn s; // return comment
+        ret<caret>urn (s); // return comment
     }
 }

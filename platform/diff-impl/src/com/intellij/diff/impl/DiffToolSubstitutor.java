@@ -11,7 +11,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
+/**
+ * This API allows to use one DiffTool instead of another depending on the context.
+ * It can be used instead of {@link com.intellij.diff.SuppressiveDiffTool} to keep existing tool order intact.
+ * <p>
+ * Ex: it is possible to override {@link com.intellij.diff.tools.simple.SimpleDiffTool} for some requests,
+ * without disturbing {@link com.intellij.diff.tools.simple.SimpleDiffTool} vs {@link com.intellij.diff.tools.fragmented.UnifiedDiffTool} priority.
+ */
+@ApiStatus.Internal
 public interface DiffToolSubstitutor {
   ExtensionPointName<DiffToolSubstitutor> EP_NAME =
     ExtensionPointName.create("com.intellij.diff.impl.DiffToolSubstitutor");

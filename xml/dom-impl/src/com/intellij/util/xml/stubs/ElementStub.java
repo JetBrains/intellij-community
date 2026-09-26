@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,21 +14,19 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class ElementStub extends DomStub {
-
-  private final List<DomStub> myChildren = new SmartList<>();
+  private final List<Stub> myChildren = new SmartList<>();
   private final int myIndex;
   private final boolean myCustom;
 
-  @Nullable
-  private final StringRef myElementClass;
+  private final @Nullable String myElementClass;
   private final String myValue;
 
   public ElementStub(@Nullable ElementStub parent,
-                     @NotNull StringRef name,
-                     @Nullable StringRef namespace,
+                     @NotNull String name,
+                     @Nullable String namespace,
                      int index,
                      boolean custom,
-                     @Nullable StringRef elementClass,
+                     @Nullable String elementClass,
                      @NotNull String value) {
     super(parent, name, namespace);
     myIndex = index;
@@ -51,19 +35,18 @@ public class ElementStub extends DomStub {
     myValue = value;
   }
 
-  void addChild(DomStub child) {
+  void addChild(Stub child) {
     myChildren.add(child);
   }
 
-  @NotNull
   @Override
-  public List<DomStub> getChildrenStubs() {
+  public @NotNull List<? extends Stub> getChildrenStubs() {
     return myChildren;
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
-    return ElementStubSerializer.INSTANCE;
+  public ObjectStubSerializer<?, Stub> getStubType() {
+    return DomElementTypeHolder.ElementStubSerializer;
   }
 
   @Override
@@ -85,11 +68,10 @@ public class ElementStub extends DomStub {
 
   @Nullable
   String getElementClass() {
-    return myElementClass == null ? null : myElementClass.getString();
+    return myElementClass;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull String getValue() {
     return myValue;
   }
 }

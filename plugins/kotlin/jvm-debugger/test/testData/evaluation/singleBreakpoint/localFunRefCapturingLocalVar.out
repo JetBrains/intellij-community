@@ -1,0 +1,9 @@
+LineBreakpoint created at localFunRefCapturingLocalVar.kt:9
+Run Java
+Connected to the target VM
+localFunRefCapturingLocalVar.kt:9
+Compile bytecode for ::localFun.name
+Compile bytecode for ::localFun.invoke(2)
+Disconnected from the target VM
+
+Process finished with exit code 0

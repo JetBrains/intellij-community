@@ -1,39 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.formatting.FormatterTestUtils.Action;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -43,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.intellij.formatting.FormatterTestUtils.ACTIONS;
@@ -50,19 +40,15 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
 
 /**
  * Base class for java formatter tests that holds utility methods.
- *
- * @author Denis Zhdanov
- * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
-  private JavaCodeStyleBean myCodeStyleBean;
 
   @NotNull
   public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) {
     StringBuilder result = new StringBuilder(initial.length());
     List<byte[]> lines;
     try {
-      LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes(CharsetToolkit.UTF8_CHARSET)));
+      LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes(StandardCharsets.UTF_8)));
       lines = reader.readLines();
     }
     catch (IOException e) {
@@ -71,34 +57,22 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
     boolean first = true;
     for (byte[] line : lines) {
-      try {
-        if (!first) result.append('\n');
-        if (line.length > 0 || shiftEmptyLines) {
-          StringUtil.repeatSymbol(result, ' ', i);
-        }
-        result.append(new String(line, CharsetToolkit.UTF8_CHARSET));
+      if (!first) result.append('\n');
+      if (line.length > 0 || shiftEmptyLines) {
+        StringUtil.repeatSymbol(result, ' ', i);
       }
-      finally {
-        first = false;
-      }
+      result.append(new String(line, StandardCharsets.UTF_8));
+      first = false;
     }
 
     return result.toString();
   }
 
-  @NotNull
-  public JavaCodeStyleBean getCodeStyleBean() {
-    if (myCodeStyleBean == null) {
-      myCodeStyleBean = new JavaCodeStyleBean();
-      myCodeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()));
-    }
-    return myCodeStyleBean;
-  }
 
-  public static JavaCodeStyleSettings getJavaSettings() {
+  public JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
-  
+
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
   public TextRange myTextRange;
@@ -107,16 +81,16 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
   }
 
-  public static CommonCodeStyleSettings getSettings() {
+  public CommonCodeStyleSettings getSettings() {
     CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    return getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+  public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    return getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE);
   }
 
   public void doTest() {
@@ -145,6 +119,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public void doTextTest(@NotNull Action action, @NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
     final PsiFile file = createFile("A.java", text);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
     if (document == null) {
@@ -157,7 +132,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     assertEquals(textAfter, file.getText());
   }
 
-  public void formatEveryoneAndCheckIfResultEqual(@NotNull final String...before) {
+  public void formatEveryoneAndCheckIfResultEqual(final String @NotNull ... before) {
     assert before.length > 1;
     final PsiFile file = createFile("A.java", "");
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
@@ -195,9 +170,9 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
         ACTIONS.get(action).run(file, rangeToUse.getStartOffset(), rangeToUse.getEndOffset());
       }
       catch (IncorrectOperationException e) {
-        assertTrue(e.getLocalizedMessage(), false);
+        fail(e.getLocalizedMessage());
       }
-    }), action == REFORMAT ? ReformatCodeProcessor.COMMAND_NAME : "", "");
+    }), action == REFORMAT ? ReformatCodeProcessor.getCommandName() : "", "");
 
     return document.getText();
   }

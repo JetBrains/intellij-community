@@ -1,4 +1,4 @@
-// "Fix all 'Constant conditions & exceptions' problems in file" "true"
+// "Fix all 'Constant values' problems in file" "true"
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -15,7 +15,7 @@ public class MethodReferenceConstantValue {
     Boolean aBoolean = opt.map(th<caret>is::strangeMethod)
       .map(Objects::nonNull)
       .map(Objects::isNull)
-      .orElse(false);
+      .orElse(new Random().nextBoolean());
     if (opt.isPresent()) {
       Stream.generate(opt::isPresent)
         .limit(10)

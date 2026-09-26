@@ -1,0 +1,88 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_radixTrie",
+    module_name = "fleet.radixTrie",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    test_deps = ["@community//fleet/test-runtime:wasmjs_module_lib"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/util/serialization:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+    ],
+)
+
+### auto-generated section `dev fleet.radixTrie` start
+content_module_jar(module = ":radixTrie")
+### auto-generated section `dev fleet.radixTrie` end
+
+### auto-generated section `build fleet.radixTrie` start
+create_kotlinc_options(
+    name = "custom_radixTrie",
+    opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
+)
+
+jvm_library(
+    name = "radixTrie",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_radixTrie",
+    module_name = "fleet.radixTrie",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//fleet/util/serialization",
+    ],
+)
+
+jvm_library(
+    name = "radixTrie_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_radixTrie",
+    module_name = "fleet.radixTrie",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":radixTrie",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//fleet/util/serialization:serialization_test_lib",
+        "//fleet/test-runtime",
+        "//fleet/test-runtime:test-runtime_test_lib",
+    ],
+)
+### auto-generated section `build fleet.radixTrie` end
+
+### auto-generated section `iml fleet.radixTrie` start
+exports_files(
+    [
+        "fleet.radixTrie.iml",
+        "resources/fleet.radixTrie.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.radixTrie` end

@@ -1,0 +1,11 @@
+JsonFile: n_object_trailing_comment_slash_open.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+    PsiElement(})('}')
+  PsiComment(LINE_COMMENT)('//')

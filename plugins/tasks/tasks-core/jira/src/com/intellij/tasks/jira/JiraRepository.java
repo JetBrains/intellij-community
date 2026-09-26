@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -21,8 +7,8 @@ import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -30,37 +16,42 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
-import com.intellij.tasks.jira.soap.JiraLegacyApi;
-import com.intellij.util.ArrayUtil;
+import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
+import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.Cookie;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 @Tag("JIRA")
-public class JiraRepository extends BaseRepositoryImpl {
+public final class JiraRepository extends BaseRepositoryImpl {
 
   public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
-  private final static Logger LOG = Logger.getInstance(JiraRepository.class);
+  private static final Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
-  private static final boolean LEGACY_API_ONLY = Boolean.getBoolean("tasks.jira.legacy.api.only");
   private static final boolean BASIC_AUTH_ONLY = Boolean.getBoolean("tasks.jira.basic.auth.only");
   private static final boolean REDISCOVER_API = Boolean.getBoolean("tasks.jira.rediscover.api");
 
@@ -75,6 +66,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private JiraRemoteApi myApiVersion;
   private String myJiraVersion;
   private boolean myInCloud = false;
+  private boolean myUseBearerTokenAuthentication;
 
   /**
    * Serialization constructor
@@ -95,6 +87,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     mySearchQuery = other.mySearchQuery;
     myJiraVersion = other.myJiraVersion;
     myInCloud = other.myInCloud;
+    myUseBearerTokenAuthentication = other.myUseBearerTokenAuthentication;
     if (other.myApiVersion != null) {
       myApiVersion = other.myApiVersion.getType().createApi(this);
     }
@@ -103,35 +96,33 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof JiraRepository)) return false;
+    if (!(o instanceof JiraRepository repository)) return false;
 
-    JiraRepository repository = (JiraRepository)o;
-
-    if (!Comparing.equal(mySearchQuery, repository.getSearchQuery())) return false;
-    if (!Comparing.equal(myJiraVersion, repository.getJiraVersion())) return false;
+    if (!Objects.equals(mySearchQuery, repository.getSearchQuery())) return false;
+    if (!Objects.equals(myJiraVersion, repository.getJiraVersion())) return false;
     if (!Comparing.equal(myInCloud, repository.isInCloud())) return false;
+    if (!Comparing.equal(myUseBearerTokenAuthentication, repository.isUseBearerTokenAuthentication())) return false;
     return true;
   }
 
 
-  @NotNull
-  public JiraRepository clone() {
+  @Override
+  public @NotNull JiraRepository clone() {
     return new JiraRepository(this);
   }
 
+  @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
     String resultQuery = StringUtil.notNullize(query);
-    if (isJqlSupported()) {
-      if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
-        resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
-      }
-      else if (StringUtil.isNotEmpty(query)) {
-        resultQuery = String.format("summary ~ '%s'", query);
-      }
-      else {
-        resultQuery = mySearchQuery;
-      }
+    if (StringUtil.isNotEmpty(mySearchQuery) && StringUtil.isNotEmpty(query)) {
+      resultQuery = String.format("summary ~ '%s' and ", query) + mySearchQuery;
+    }
+    else if (StringUtil.isNotEmpty(query)) {
+      resultQuery = String.format("summary ~ '%s'", query);
+    }
+    else {
+      resultQuery = mySearchQuery;
     }
     List<Task> tasksFound = myApiVersion.findTasks(resultQuery, max);
     // JQL matching doesn't allow to do something like "summary ~ query or key = query"
@@ -144,12 +135,11 @@ public class JiraRepository extends BaseRepositoryImpl {
         tasksFound = ContainerUtil.append(tasksFound, task);
       }
     }
-    return ArrayUtil.toObjectArray(tasksFound, Task.class);
+    return tasksFound.toArray(Task.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     ensureApiVersionDiscovered();
     return myApiVersion.findTask(id);
   }
@@ -159,9 +149,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     myApiVersion.updateTimeSpend(task, timeSpent, comment);
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     clearCookies();
     // TODO cancellable connection for XML_RPC?
     return new CancellableConnection() {
@@ -178,31 +167,9 @@ public class JiraRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
-  public JiraRemoteApi discoverApiVersion() throws Exception {
-    if (LEGACY_API_ONLY) {
-      LOG.info("Intentionally using only legacy JIRA API");
-      return createLegacyApi();
-    }
-
-    String responseBody;
+  public @NotNull JiraRemoteApi discoverApiVersion() throws Exception {
     GetMethod method = new GetMethod(getRestUrl("serverInfo"));
-    try {
-      responseBody = executeMethod(method);
-    }
-    catch (Exception e) {
-      // probably JIRA version prior 4.2
-      // It's not safe to call HttpMethod.getStatusCode() directly, because it will throw NPE
-      // if response was not received (connection lost etc.) and hasBeenUsed()/isRequestSent() are
-      // not the way to check it safely.
-      StatusLine status = method.getStatusLine();
-      if (status != null && status.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-        return createLegacyApi();
-      }
-      else {
-        throw e;
-      }
-    }
+    String responseBody = executeMethod(method);
     JsonObject serverInfo = GSON.fromJson(responseBody, JsonObject.class);
     // when JIRA 4.x support will be dropped 'versionNumber' array in response
     // may be used instead version string parsing
@@ -212,25 +179,38 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (isInCloud()) {
       LOG.info("Connecting to JIRA Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
     }
-    JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
-    if (restApi == null) {
-      throw new Exception(TaskBundle.message("jira.failure.no.REST"));
+    String providedRestApiVersion = Registry.stringValue("tasks.jira.use.rest.api.version");
+    if ("3".equals(providedRestApiVersion)) {
+      return new JiraRestApiCloud3(this);
     }
-    return restApi;
+    else if ("2".equals(providedRestApiVersion)) {
+      return new JiraRestApi2(this);
+    }
+    else {
+      JiraRestApi restApi = JiraRestApi.fromJiraVersion(myJiraVersion, this);
+      if (restApi == null) {
+        throw new Exception(TaskBundle.message("jira.failure.no.REST"));
+      }
+      return restApi;
+    }
   }
 
   private static boolean isHostedInCloud(@NotNull JsonObject serverInfo) {
     final JsonElement deploymentType = serverInfo.get("deploymentType");
     if (deploymentType != null) {
-      return deploymentType.getAsString().equals("Cloud");  
+      return deploymentType.getAsString().equals("Cloud");
     }
-    // Legacy heuristics 
-    final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
+    // Legacy heuristics
+    final boolean atlassianSubDomain = isAtlassianNetSubDomain(serverInfo.get("baseUrl").getAsString());
     if (atlassianSubDomain) {
       return true;
     }
     // JIRA OnDemand versions contained "OD" abbreviation
     return serverInfo.get("version").getAsString().contains("OD") ;
+  }
+
+  private static boolean isAtlassianNetSubDomain(@NotNull String url) {
+    return hostEndsWith(url, ".atlassian.net");
   }
 
   private static boolean hostEndsWith(@NotNull String url, @NotNull String suffix) {
@@ -243,31 +223,13 @@ public class JiraRepository extends BaseRepositoryImpl {
     return false;
   }
 
-  private JiraLegacyApi createLegacyApi() {
-    try {
-      XmlRpcClient client = new XmlRpcClient(getUrl());
-      Vector<String> parameters = new Vector<>(Collections.singletonList(""));
-      XmlRpcRequest request = new XmlRpcRequest("jira1.getServerInfo", parameters);
-      @SuppressWarnings("unchecked") Hashtable<String, Object> response =
-        (Hashtable<String, Object>)client.execute(request, new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient()));
-      if (response != null) {
-        myJiraVersion = (String)response.get("version");
-      }
-    }
-    catch (Exception e) {
-      LOG.error("Cannot find out JIRA version via XML-RPC", e);
-    }
-    return new JiraLegacyApi(this);
-  }
-
   private void ensureApiVersionDiscovered() throws Exception {
-    if (myApiVersion == null || LEGACY_API_ONLY || REDISCOVER_API) {
+    if (myApiVersion == null || REDISCOVER_API) {
       myApiVersion = discoverApiVersion();
     }
   }
 
-  @NotNull
-  public String executeMethod(@NotNull HttpMethod method) throws Exception {
+  public @NotNull String executeMethod(@NotNull HttpMethod method) throws Exception {
     LOG.debug("URI: " + method.getURI());
 
     HttpClient client = getHttpClient();
@@ -275,12 +237,21 @@ public class JiraRepository extends BaseRepositoryImpl {
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
     // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
     // TODO Make JiraVersion more suitable for such checks
-    if (BASIC_AUTH_ONLY || !isInCloud()) {
+    if (BASIC_AUTH_ONLY) {
       // to override persisted settings
       setUseHttpAuthentication(true);
     }
+    else if (!isInCloud()) {
+      if (isUseBearerTokenAuthentication()) {
+        setUseHttpAuthentication(false);
+        method.addRequestHeader(new Header(HttpAuthenticator.WWW_AUTH_RESP, "Bearer " + getPassword()));
+      }
+      else {
+        setUseHttpAuthentication(true);
+      }
+    }
     else {
-      boolean enableBasicAuthentication = !(isRestApiSupported() && containsCookie(client, AUTH_COOKIE_NAME));
+      boolean enableBasicAuthentication = !containsCookie(client, AUTH_COOKIE_NAME);
       if (enableBasicAuthentication != isUseHttpAuthentication()) {
         LOG.info("Basic authentication for subsequent requests was " + (enableBasicAuthentication ? "enabled" : "disabled"));
       }
@@ -290,8 +261,13 @@ public class JiraRepository extends BaseRepositoryImpl {
     int statusCode = client.executeMethod(method);
     LOG.debug("Status code: " + statusCode);
     // may be null if 204 No Content received
-    final InputStream stream = method.getResponseBodyAsStream();
-    String entityContent = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8);
+    InputStream stream = method.getResponseBodyAsStream();
+    String entityContent = "";
+    if (stream != null) {
+      try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+        entityContent = StreamUtil.readText(reader);
+      }
+    }
     //TaskUtil.prettyFormatJsonToLog(LOG, entityContent);
     // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
     // see: JiraRestApi#setTaskStatus
@@ -306,8 +282,15 @@ public class JiraRepository extends BaseRepositoryImpl {
         JsonObject object = GSON.fromJson(entityContent, JsonObject.class);
         if (object.has("errorMessages")) {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
-          // something meaningful to user, e.g. invalid field name in JQL query
+          // If anonymous access is enabled on server, it might reply only with a cryptic 400 error about inaccessible issue fields,
+          // e.g. "Field 'assignee' does not exist or this field cannot be viewed by anonymous users."
+          // Unfortunately, there is no better way to indicate such errors other than by matching by the error message itself.
           LOG.warn(reason);
+          if (statusCode ==  HttpStatus.SC_BAD_REQUEST && reason.contains("cannot be viewed by anonymous users")) {
+            // Oddly enough, in case of JIRA Cloud issues are access anonymously only if API Token is correct, but email is wrong.
+            throw new Exception(isInCloud() ? TaskBundle.message("jira.failure.email.address") : TaskBundle.message("failure.login"));
+          }
+          // something meaningful to user, e.g. invalid field name in JQL query
           throw new Exception(TaskBundle.message("failure.server.message", reason));
         }
       }
@@ -330,15 +313,22 @@ public class JiraRepository extends BaseRepositoryImpl {
     return myInCloud;
   }
 
-  public void setInCloud(boolean inCloud) {
-    myInCloud = inCloud;
+  public boolean isUseBearerTokenAuthentication() {
+    return myUseBearerTokenAuthentication;
+  }
+
+  public void setUseBearerTokenAuthentication(boolean useBearerTokenAuthentication) {
+    if (useBearerTokenAuthentication != isUseBearerTokenAuthentication()) {
+      myUseBearerTokenAuthentication = useBearerTokenAuthentication;
+      reconfigureClient();
+    }
   }
 
   @NotNull
   String getPresentableVersion() {
     return StringUtil.notNullize(myJiraVersion, "unknown") + (myInCloud ? " (Cloud)" : "");
   }
-  
+
   private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {
     for (Cookie cookie : client.getState().getCookies()) {
       if (cookie.getName().equals(cookieName) && !cookie.isExpired()) {
@@ -361,26 +351,16 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpClient(HttpClient client) {
     super.configureHttpClient(client);
+    if (isUseBearerTokenAuthentication()) {
+      client.getParams().setAuthenticationPreemptive(true);
+      client.getState().clearCredentials();
+    }
     client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
   }
 
   @Override
   protected int getFeatures() {
-    int features = super.getFeatures();
-    if (isRestApiSupported()) {
-      return features | TIME_MANAGEMENT | STATE_UPDATING;
-    }
-    else {
-      return features & ~NATIVE_SEARCH & ~STATE_UPDATING & ~TIME_MANAGEMENT;
-    }
-  }
-
-  private boolean isRestApiSupported() {
-    return myApiVersion != null && myApiVersion.getType() != JiraRemoteApi.ApiType.LEGACY;
-  }
-
-  public boolean isJqlSupported() {
-    return isRestApiSupported();
+    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
   }
 
   public String getSearchQuery() {
@@ -392,9 +372,8 @@ public class JiraRepository extends BaseRepositoryImpl {
     myApiVersion.setTaskState(task, state);
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return myApiVersion.getAvailableTaskStates(task);
   }
 
@@ -410,28 +389,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     // reset remote API version, only if server URL was changed
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
-      myInCloud = false;
+      myInCloud = isAtlassianNetSubDomain(getUrl());
     }
   }
 
-  /**
-   * Used to preserve discovered API version for the next initialization.
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public JiraRemoteApi.ApiType getApiType() {
-    return myApiVersion == null ? null : myApiVersion.getType();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setApiType(@Nullable JiraRemoteApi.ApiType type) {
-    if (type != null) {
-      myApiVersion = type.createApi(this);
-    }
-  }
-
-  @Nullable
-  public String getJiraVersion() {
+  public @Nullable String getJiraVersion() {
     return myJiraVersion;
   }
 

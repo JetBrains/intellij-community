@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jsvg` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jsvg-jsvg"],
+    module = ":jsvg",
+)
+### auto-generated section `dev intellij.libraries.jsvg` end
+
+### auto-generated section `build intellij.libraries.jsvg` start
+jvm_library(
+    name = "jsvg",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsvg",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsvg-jsvg"],
+    runtime_deps = ["@lib//:libraries-jsvg-jsvg"],
+)
+
+jvm_library(
+    name = "jsvg_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jsvg",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jsvg-jsvg"],
+    runtime_deps = [":jsvg"],
+)
+### auto-generated section `build intellij.libraries.jsvg` end
+
+### auto-generated section `iml intellij.libraries.jsvg` start
+exports_files(
+    [
+        "intellij.libraries.jsvg.iml",
+        "resources/intellij.libraries.jsvg.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jsvg` end

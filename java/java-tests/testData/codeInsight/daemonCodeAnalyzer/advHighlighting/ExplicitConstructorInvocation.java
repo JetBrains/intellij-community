@@ -19,15 +19,35 @@ class A1 {
 
     class C extends S {
         C(A1 c) {
-            <error descr="'A1.S' is not an inner class">c</error>.super();
+            <error descr="Qualifier is not allowed because superclass 'A1.S' is not a non-static inner class">c</error>.super();
         }
     }
 }
 
 class C2 {
     C2(String c){
-        <error descr="'java.lang.Object' is not an inner class">c</error>.super();
+        <error descr="Qualifier is not allowed because superclass 'java.lang.Object' is not a non-static inner class">c</error>.super();
     }
+}
+class Scratch {
+  void method() {
+    class A {}
+
+    class B extends A {
+      B() {
+        new Scratch().super();
+      }
+    }
+  }
+  static void method2() {
+    class A {}
+
+    class B extends A {
+      B() {
+        <error descr="Qualifier is not allowed because superclass 'A' is not a non-static inner class">new Scratch()</error>.super();
+      }
+    }
+  }
 }
 
 class A3 {

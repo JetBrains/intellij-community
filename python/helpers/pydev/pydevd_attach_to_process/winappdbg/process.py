@@ -564,7 +564,7 @@ class Process (_ThreadContainer, _ModuleContainer):
         return disasm
 
     # FIXME
-    # This algorithm really sucks, I've got to write a better one :P
+    # This algorithm really bad, I've got to write a better one :P
     def disassemble_around(self, lpAddress, dwSize = 64):
         """
         Disassemble around the given address.

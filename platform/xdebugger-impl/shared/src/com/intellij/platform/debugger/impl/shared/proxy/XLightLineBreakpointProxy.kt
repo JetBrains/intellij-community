@@ -1,0 +1,40 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.debugger.impl.shared.proxy
+
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+interface XLightLineBreakpointProxy {
+  val type: XLineBreakpointTypeProxy
+
+  val project: Project
+
+  fun isDisposed(): Boolean
+
+  fun getFile(): VirtualFile?
+  fun getLine(): Int
+  fun getPlacement(): XLineBreakpointVerticalPlacement
+  fun getHighlightRange(): XLineBreakpointHighlighterRange
+  suspend fun getHighlightRangeSuspend(): XLineBreakpointHighlighterRange = getHighlightRange()
+
+  fun isEnabled(): Boolean
+  fun updateIcon()
+  fun getGutterIconRenderer(): GutterIconRenderer?
+
+}
+
+@ApiStatus.Internal
+sealed interface XLineBreakpointHighlighterRange {
+  object Unavailable : XLineBreakpointHighlighterRange {
+    override fun toString(): String = "[unavailable]"
+  }
+
+  data class Available(val range: TextRange?) : XLineBreakpointHighlighterRange {
+    override fun toString(): String = range?.toString() ?: "[full line]"
+  }
+}

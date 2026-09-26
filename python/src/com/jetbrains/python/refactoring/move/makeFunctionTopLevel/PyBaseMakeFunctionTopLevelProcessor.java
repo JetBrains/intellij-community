@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
@@ -24,32 +10,50 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.inSameFile;
+import static com.jetbrains.python.psi.PyUtil.multiResolveTopPriority;
+import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 
 /**
  * @author Mikhail Golubev
@@ -67,18 +71,16 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     myFunction = targetFunction;
     myDestinationPath = destinationPath;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
-    myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    myResolveContext = PyResolveContext.defaultContext(typeEvalContext);
     myGenerator = PyElementGenerator.getInstance(myProject);
     mySourceFile = myFunction.getContainingFile();
   }
 
-  @NotNull
   @Override
-  protected final UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected final @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
-      @NotNull
       @Override
-      public PsiElement[] getElements() {
+      public PsiElement @NotNull [] getElements() {
         return new PsiElement[] {myFunction};
       }
 
@@ -89,28 +91,27 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     };
   }
 
-  @NotNull
   @Override
-  protected final UsageInfo[] findUsages() {
-    return ArrayUtil.toObjectArray(PyRefactoringUtil.findUsages(myFunction, false), UsageInfo.class);
+  protected final UsageInfo @NotNull [] findUsages() {
+    return PyPsiIndexUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  protected final String getCommandName() {
+  protected final @NotNull String getCommandName() {
     return getRefactoringName();
   }
 
   @Override
-  protected final void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected final void performRefactoring(UsageInfo @NotNull [] usages) {
     final List<String> newParameters = collectNewParameterNames();
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyUtil.getOrCreateFile(myDestinationPath, myProject);
+    boolean isNamespace = isInNamespacePackage(myFunction);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
-        PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));
+        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
     }
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
@@ -127,7 +128,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     updateImports(newFunction, usages);
   }
 
-  private boolean importsRequired(@NotNull UsageInfo[] usages, final PyFile targetFile) {
+  private boolean importsRequired(UsageInfo @NotNull [] usages, final PyFile targetFile) {
     return ContainerUtil.exists(usages, info -> {
       final PsiElement element = info.getElement();
       if (element == null) {
@@ -142,40 +143,36 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
 
-  private void updateImports(@NotNull PyFunction newFunction, @NotNull UsageInfo[] usages) {
+  private void updateImports(@NotNull PyFunction newFunction, UsageInfo @NotNull [] usages) {
     final Set<PsiFile> usageFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       usageFiles.add(usage.getFile());
     }
     for (PsiFile file : usageFiles) {
       if (file != newFunction.getContainingFile()) {
-        PyClassRefactoringUtil.insertImport(file, newFunction, null, true);
+        PyPsiRefactoringUtil.insertImport(file, newFunction, null, true);
       }
     }
     // References inside the body of function 
     if (newFunction.getContainingFile() != mySourceFile) {
       for (PsiElement read : myExternalReads) {
         if (read instanceof PsiNamedElement && read.isValid()) {
-          PyClassRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
+          PyPsiRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
         }
       }
       PyClassRefactoringUtil.optimizeImports(mySourceFile);
     }
   }
 
-  @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @NotNull @Nls String getRefactoringName();
 
-  @NotNull
-  protected abstract List<String> collectNewParameterNames();
+  protected abstract @NotNull List<String> collectNewParameterNames();
 
-  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages);
+  protected abstract void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages);
   
-  @NotNull
-  protected abstract PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
+  protected abstract @NotNull PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
 
-  @NotNull
-  protected final PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
+  protected final @NotNull PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
     if (!newParameters.isEmpty()) {
       final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
       final StringBuilder paramListText = new StringBuilder(paramList.getText());
@@ -186,8 +183,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return paramList;
   }
 
-  @NotNull
-  protected PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
+  protected @NotNull PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
     if (!newArguments.isEmpty()) {
       final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
       final StringBuilder argListText = new StringBuilder(argList.getText());
@@ -198,8 +194,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return argList;
   }
 
-  @NotNull
-  protected PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
+  protected @NotNull PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
     if (mySourceFile == newFile) {
       // In the same file try inserting generated function at the top level but preferably right after the original scope owner
       final PsiElement surroundingStatement = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
@@ -211,23 +206,19 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return (PyFunction)newFile.addBefore(newFunction, anchor);
   }
 
-  @NotNull
-  protected AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
+  protected @NotNull AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
     final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         final PsiElement element = readWriteInstruction.getElement();
         if (element == null) {
           continue;
         }
         if (readWriteInstruction.getAccess().isReadAccess()) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
+            resolved = ObjectUtils.chooseNotNull(turnConstructorIntoClass(as(resolved, PyFunction.class)), resolved);
             if (resolved != null) {
-              if (isInitOrNewMethod(resolved)) {
-                resolved = ((PyFunction)resolved).getContainingClass();
-              }
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
               }
@@ -246,7 +237,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
           }
         }
         if (readWriteInstruction.getAccess().isWriteAccess() && element instanceof PyTargetExpression) {
-          for (PsiElement resolved : PyUtil.multiResolveTopPriority(element, myResolveContext)) {
+          for (PsiElement resolved : multiResolveTopPriority(element, myResolveContext)) {
             if (resolved != null) {
               if (element.getParent() instanceof PyNonlocalStatement && isFromEnclosingScope(resolved)) {
                 result.nonlocalWritesToEnclosingScope.add((PyTargetExpression)element);
@@ -263,15 +254,24 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return result;
   }
 
-  private static boolean isInitOrNewMethod(@NotNull PsiElement elem) {
-    final PyFunction func = as(elem, PyFunction.class);
-    return func != null && (PyNames.INIT.equals(func.getName()) || PyNames.NEW.equals(func.getName()));
-  }
-
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
-    return PyUtil.inSameFile(element, myFunction) &&
+    return inSameFile(element, myFunction) &&
            !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
+  }
+
+  @Override
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(List.of(myFunction));
+    return data;
   }
 
   protected static class AnalysisResult {

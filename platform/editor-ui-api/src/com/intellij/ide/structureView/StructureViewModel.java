@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Defines the model for the data displayed in the standard structure view or file structure
  * popup component. The model of the standard structure view is represented as a tree of elements.
+ * Use {@link ElementInfoProvider} and {@link ExpandInfoProvider} to control tree expansion behavior.
  *
- * @see TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel(Editor)
  * @see TextEditorBasedStructureViewModel
  */
 public interface StructureViewModel extends TreeModel, Disposable {
@@ -34,7 +26,8 @@ public interface StructureViewModel extends TreeModel, Disposable {
    * @return the selected element, or null if the current editor position does not
    * correspond to any element that can be shown in the structure view.
    */
-  @Nullable Object getCurrentEditorElement();
+  @Nullable
+  Object getCurrentEditorElement();
 
   /**
    * Adds a listener which gets notified when the selection in the editor linked to the
@@ -80,17 +73,50 @@ public interface StructureViewModel extends TreeModel, Disposable {
   /**
    * Disposes of the model.
    */
+  @Override
   void dispose();
 
   boolean shouldEnterElement(Object element);
 
+  /**
+   * @return status of element, whether it's changed or not. May affect the presentation
+   */
+  default @NotNull FileStatus getElementStatus(Object element) {
+    return FileStatus.NOT_CHANGED;
+  }
+
   interface ElementInfoProvider extends StructureViewModel {
     boolean isAlwaysShowsPlus(StructureViewTreeElement element);
+
     boolean isAlwaysLeaf(StructureViewTreeElement element);
   }
 
   interface ExpandInfoProvider {
     boolean isAutoExpand(@NotNull StructureViewTreeElement element);
+
     boolean isSmartExpand();
+
+    /**
+     * @return number of levels that would be always expanded in structure view.
+     * Returns 2 by default: root node and its immediate children.
+     * @apiNote Be careful with using this method because this approach is planned to be rewritten.
+     */
+    @ApiStatus.Experimental
+    default int getMinimumAutoExpandDepth() {
+      return 2;
+    }
   }
+
+  @ApiStatus.Experimental
+  @FunctionalInterface
+  interface ClickHandler {
+
+    /**
+     * @return - true if the event was handled
+     */
+    @NotNull
+    CompletableFuture<Boolean> handleClick(@NotNull StructureViewClickEvent event);
+
+  }
+
 }

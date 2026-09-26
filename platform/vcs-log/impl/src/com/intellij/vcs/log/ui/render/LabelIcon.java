@@ -1,29 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -33,11 +24,11 @@ import java.util.List;
 public class LabelIcon implements Icon {
   public static final float SIZE = 6.25f;
   private final int mySize;
-  @NotNull private final List<Color> myColors;
-  @NotNull private final Color myBgColor;
-  @NotNull private BufferedImage myImage;
+  private final @NotNull List<? extends Color> myColors;
+  private final @NotNull Color myBgColor;
+  private @NotNull BufferedImage myImage;
 
-  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull List<Color> colors) {
+  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull List<? extends Color> colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;
@@ -46,23 +37,32 @@ public class LabelIcon implements Icon {
 
   private BufferedImage createImage(Component c, Graphics2D g) {
     BufferedImage image = c != null ?
-                          UIUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                          UIUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+                          ImageUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+                                    : ImageUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     paintIcon(image.createGraphics());
     return image;
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (ImageUtil.getImageScale(myImage) != JBUI.sysScale((Graphics2D)g)) {
+    if (ImageUtil.getImageScale(myImage) != JBUIScale.sysScale((Graphics2D)g)) {
       myImage = createImage(null, (Graphics2D)g);
     }
-    UIUtil.drawImage(g, myImage, x, y, null);
+    StartupUiUtil.drawImage(g, myImage, x, y, null);
   }
 
   private void paintIcon(@NotNull Graphics2D g2) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
+    if (ExperimentalUI.isNewUI()) {
+      paintTagsForNewUi(g2);
+    }
+    else {
+      paintTagsForClassicUi(g2);
+    }
+    config.restore();
+  }
 
+  private void paintTagsForClassicUi(@NotNull Graphics2D g2) {
     float scale = mySize / SIZE;
 
     for (int i = myColors.size() - 1; i >= 0; i--) {
@@ -73,8 +73,20 @@ public class LabelIcon implements Icon {
       g2.setColor(myColors.get(i));
       paintTag(g2, scale, scale * 2 * i, 0);
     }
+  }
 
-    config.restore();
+  private void paintTagsForNewUi(@NotNull Graphics2D g2) {
+    float scale = mySize / SIZE;
+    int tagCount = myColors.size();
+    for (int i = 0; i < tagCount; i++) {
+      Color color = myColors.get(tagCount - 1 - i);
+      TagPainter.paintTag(g2, scale * 2 * i, i == tagCount - 1, myBgColor, color, mySize);
+
+      if (i != tagCount - 1) {
+        float x0 = scale * 2 * i + 2 * scale - JBUIScale.scale((float)Math.sqrt(2.0));
+        TagPainter.paintTag(g2, x0, false, myBgColor, myBgColor, mySize);
+      }
+    }
   }
 
   public void paintTag(Graphics2D g2, float scale, float x, float y) {

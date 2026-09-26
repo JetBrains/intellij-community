@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -27,10 +13,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
@@ -40,25 +26,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnFormatWorker extends Task.Backgroundable {
 
   private final List<Throwable> myExceptions;
-  private final Project myProject;
-  @NotNull private final WorkingCopyFormat myNewFormat;
-  private final List<WCInfo> myWcInfos;
+  private final @NotNull WorkingCopyFormat myNewFormat;
+  private final List<? extends WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
   private final SvnVcs myVcs;
 
-  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
-    super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
-    myProject = project;
+  public SvnFormatWorker(final Project project, final @NotNull WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
+    super(project, message("progress.title.convert.working.copy.format"), false, DEAF);
     myNewFormat = newFormat;
     myExceptions = new ArrayList<>();
     myWcInfos = wcInfos;
     myVcs = SvnVcs.getInstance(myProject);
   }
 
-  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final WCInfo wcInfo) {
+  public SvnFormatWorker(final Project project, final @NotNull WorkingCopyFormat newFormat, final WCInfo wcInfo) {
     this(project, newFormat, Collections.singletonList(wcInfo));
   }
 
@@ -83,16 +69,17 @@ public class SvnFormatWorker extends Task.Backgroundable {
         messages.add(exception.getMessage());
       }
       AbstractVcsHelper.getInstance(myProject)
-          .showErrors(Collections.singletonList(new VcsException(messages)), SvnBundle.message("action.change.wcopy.format.task.title"));
+        .showErrors(Collections.singletonList(new VcsException(messages)), message("dialog.title.convert.working.copy.format"));
     }
   }
 
-  public void run(@NotNull final ProgressIndicator indicator) {
-    ProjectLevelVcsManager.getInstanceChecked(myProject).startBackgroundVcsOperation();
+  @Override
+  public void run(final @NotNull ProgressIndicator indicator) {
+    ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
     indicator.setIndeterminate(true);
     final boolean supportsChangelists = myNewFormat.supportsChangelists();
     if (supportsChangelists) {
-      myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeListsCopy();
+      myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     }
 
     try {
@@ -102,10 +89,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
           path = SvnUtil.getWorkingCopyRoot(path);
         }
         try {
-          String cleanupMessage = SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath());
-          String upgradeMessage =
-            SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(), wcInfo.getFormat(), myNewFormat);
-          ProgressTracker handler = createUpgradeHandler(indicator, cleanupMessage, upgradeMessage);
+          ProgressTracker handler = createUpgradeHandler(indicator, path, wcInfo.getFormat());
 
           myVcs.getFactory(path).createUpgradeClient().upgrade(path, myNewFormat, handler);
         } catch (Throwable e) {
@@ -118,30 +102,33 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
       // to map to native
       if (supportsChangelists) {
-        SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
+        ExclusiveBackgroundVcsAction.run(
+          myProject,
+          () -> SvnVcs.getInstance(myProject).synchronizeToNativeChangeLists(myBeforeChangeLists)
+        );
       }
 
       BackgroundTaskUtil.syncPublisher(SvnVcs.WC_CONVERTED).run();
     }
   }
 
-  private static ProgressTracker createUpgradeHandler(@NotNull final ProgressIndicator indicator,
-                                                       @NotNull final String cleanupMessage,
-                                                       @NotNull final String upgradeMessage) {
+  private @NotNull ProgressTracker createUpgradeHandler(@NotNull ProgressIndicator indicator,
+                                                        @NotNull File path,
+                                                        @NotNull WorkingCopyFormat format) {
     return new ProgressTracker() {
       @Override
       public void consume(ProgressEvent event) {
         if (event.getFile() != null) {
           if (EventAction.UPGRADED_PATH.equals(event.getAction())) {
-            indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
+            indicator.setText2(message("progress.details.upgraded.path", VcsUtil.getPathForProgressPresentation(event.getFile())));
           }
           // fake event indicating cleanup start
           if (EventAction.UPDATE_STARTED.equals(event.getAction())) {
-            indicator.setText(cleanupMessage);
+            indicator.setText(message("progress.text.performing.path.cleanup", path.getAbsolutePath()));
           }
           // fake event indicating upgrade start
           if (EventAction.UPDATE_COMPLETED.equals(event.getAction())) {
-            indicator.setText(upgradeMessage);
+            indicator.setText(message("progress.text.converting.working.copy.format", path.getAbsolutePath(), format, myNewFormat));
           }
         }
       }

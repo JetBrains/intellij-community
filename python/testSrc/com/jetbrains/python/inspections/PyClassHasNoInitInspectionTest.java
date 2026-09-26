@@ -15,14 +15,19 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   public void testClass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testTrueNegative() {
@@ -30,7 +35,7 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
   }
 
   public void testParentClass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testInitInParentClass() {
@@ -55,7 +60,12 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   // PY-24436
   public void testAInheritsBAndBInheritsImportedAWithDunderInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
+    doMultiFileTest();
+  }
+
+  // PY-36008
+  public void testTypedDict() {
+    doTest();
   }
 
   @NotNull

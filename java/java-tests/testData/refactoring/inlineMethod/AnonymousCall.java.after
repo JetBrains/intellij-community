@@ -1,0 +1,5 @@
+class Foo {
+  void test() {
+      System.out.println("hello");
+  }
+}

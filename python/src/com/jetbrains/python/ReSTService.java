@@ -1,48 +1,79 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@State(name = "ReSTService")
-public class ReSTService implements PersistentStateComponent<ReSTService> {
-  public String DOC_DIR = "";
-  public boolean TXT_IS_RST = false;
+public abstract class ReSTService extends PyDefaultProjectAwareService<
+  ReSTService.ServiceState, ReSTService, ReSTService.AppService, ReSTService.ModuleService> {
 
-  public ReSTService() {
+  static final String MODULE_STATE_COMPONENT = "ReSTService";
+
+  private static final PyDefaultProjectAwareServiceClasses<ServiceState, ReSTService, AppService, ModuleService, ReSTServiceFactory> SERVICE_CLASSES =
+    new PyDefaultProjectAwareServiceClasses<>(AppService.class, ReSTServiceFactory.class);
+
+
+  protected ReSTService() {
+    super(new ServiceState());
   }
 
-  @Override
-  public ReSTService getState() {
-    return this;
+  protected ReSTService(Module module) {
+    super(new ServiceState(), MODULE_STATE_COMPONENT, ReSTService.ServiceState.class, module);
   }
 
-  @Override
-  public void loadState(@NotNull ReSTService state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public final void setWorkdir(String workDir) {
+    var state = getState();
+    state.DOC_DIR = workDir;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
-  public void setWorkdir(String workDir) {
-    DOC_DIR = workDir;
+  public static ReSTService getInstance(@Nullable Module module) {
+    return SERVICE_CLASSES.getService(module);
   }
 
-  public static ReSTService getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, ReSTService.class);
+
+  public static @NotNull PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+    return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES);
   }
 
-  public String getWorkdir() {
-    return DOC_DIR;
+  public final String getWorkdir() {
+    return getState().DOC_DIR;
   }
 
-  public boolean txtIsRst() {
-    return TXT_IS_RST;
+  public final boolean txtIsRst() {
+    return getState().TXT_IS_RST;
   }
 
-  public void setTxtIsRst(boolean isRst) {
-    TXT_IS_RST = isRst;
+  public final void setTxtIsRst(boolean isRst) {
+    var state = getState();
+    state.TXT_IS_RST = isRst;
+    if (myModule != null) {
+      loadState(state);
+    }
+  }
+
+  public static final class ServiceState {
+    public String DOC_DIR = "";
+    public boolean TXT_IS_RST = false;
+  }
+
+  @State(name = "AppReSTService", storages = @Storage(value = "ReSTService.xml", roamingType = RoamingType.DISABLED))
+  public static final class AppService extends ReSTService {
+  }
+
+  public static final class ModuleService extends ReSTService {
+    ModuleService(Module module) {
+      super(module);
+    }
   }
 }

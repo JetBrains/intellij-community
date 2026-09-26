@@ -1,48 +1,54 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
+import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class CompareRevisionsAction implements AnActionExtensionProvider {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VcsHistoryProvider provider = e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (revisions == null) return;
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
+    VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
+    if (provider == null) return;
 
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     DiffFromHistoryHandler diffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
     if (revisions.length == 2) {
-      diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, revisions[1], revisions[0]);
+      diffHandler.showDiffForTwo(project, filePath, revisions[1], revisions[0]);
     }
     else if (revisions.length == 1) {
-      VcsFileRevision previousRevision = e.getRequiredData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF);
-      if (revisions[0] != null) {
-        diffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), filePath, previousRevision, revisions[0]);
+      VcsFileRevision previousRevision = e.getData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF);
+      if (previousRevision != null && revisions[0] != null) {
+        diffHandler.showDiffForOne(e, project, filePath, previousRevision, revisions[0]);
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -50,9 +56,10 @@ public class CompareRevisionsAction implements AnActionExtensionProvider {
     return e.getData(VcsDataKeys.HISTORY_SESSION) != null;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText(VcsBundle.message("action.name.compare"));
-    e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
+    e.getPresentation().setText(VcsBundle.messagePointer("action.name.compare"));
+    e.getPresentation().setDescription(VcsBundle.messagePointer("action.description.compare"));
 
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);

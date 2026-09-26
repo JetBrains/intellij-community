@@ -1,0 +1,122 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.settings
+
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.project.Project
+import com.intellij.util.messages.Topic
+import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
+
+const val MARKDOWN_SETTINGS_FILE_NAME: String = "markdown.xml"
+
+@Service(Service.Level.PROJECT)
+@State(name = "MarkdownSettings", storages = [(Storage(MARKDOWN_SETTINGS_FILE_NAME))])
+class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
+  var areInjectionsEnabled: Boolean
+    get() = state.areInjectionsEnabled
+    set(value) { state.areInjectionsEnabled = value }
+
+  var showProblemsInCodeBlocks: Boolean
+    get() = state.showProblemsInCodeBlocks
+    set(value) { state.showProblemsInCodeBlocks = value }
+
+  var isStripTrailingSpacesOnSave: Boolean
+    get() = state.isStripTrailingSpacesOnSave
+    set(value) { state.isStripTrailingSpacesOnSave = value }
+
+  var splitLayout: TextEditorWithPreview.Layout
+    get() = state.splitLayout
+    set(value) { state.splitLayout = value }
+
+  var previewPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
+    get() = state.previewPanelProviderInfo
+    set(value) { state.previewPanelProviderInfo = value }
+
+  var isVerticalSplit: Boolean
+    get() = state.isVerticalSplit
+    set(value) { state.isVerticalSplit = value }
+
+  var isAutoScrollEnabled: Boolean
+    get() = state.isAutoScrollEnabled
+    set(value) { state.isAutoScrollEnabled = value }
+
+  var useCustomStylesheetPath: Boolean
+    get() = state.useCustomStylesheetPath
+    set(value) { state.useCustomStylesheetPath = value }
+
+  var customStylesheetPath: String?
+    get() = state.customStylesheetPath
+    set(value) { state.customStylesheetPath = value }
+
+  var useCustomStylesheetText: Boolean
+    get() = state.useCustomStylesheetText
+    set(value) { state.useCustomStylesheetText = value }
+
+  var customStylesheetText: String?
+    get() = state.customStylesheetText
+    set(value) { state.customStylesheetText = value }
+
+  var isFileGroupingEnabled: Boolean
+    get() = state.isFileGroupingEnabled
+    set(value) { state.isFileGroupingEnabled = value }
+
+  var useFileDirectoryForCommands: Boolean?
+    get() = state.useFileDirectoryForCommands
+    set(value) { state.useFileDirectoryForCommands = value }
+
+  override fun noStateLoaded() {
+    super.noStateLoaded()
+    loadState(MarkdownSettingsState())
+  }
+
+  @Synchronized
+  fun update(block: (MarkdownSettings) -> Unit) {
+    val publisher = project.messageBus.syncPublisher(ChangeListener.TOPIC)
+    publisher.beforeSettingsChanged(this)
+    block(this)
+    publisher.settingsChanged(this)
+  }
+
+  interface ChangeListener {
+    fun beforeSettingsChanged(settings: MarkdownSettings) {
+    }
+
+    fun settingsChanged(settings: MarkdownSettings) {
+    }
+
+    companion object {
+      @Topic.ProjectLevel
+      @JvmField
+      val TOPIC: Topic<ChangeListener> = Topic("MarkdownSettingsChanged", ChangeListener::class.java, Topic.BroadcastDirection.NONE)
+    }
+  }
+
+  companion object {
+    internal val defaultFontSize
+      get() = (checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt()
+
+    internal val defaultFontFamily
+      get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY
+
+    @JvmStatic
+    val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
+      get() {
+        return MarkdownHtmlPanelProvider.getProviders()
+          .firstOrNull { it.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
+          ?.providerInfo
+               ?: MarkdownHtmlPanelProvider.getProviders().firstOrNull()?.providerInfo
+               ?: MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
+      }
+
+    @JvmStatic
+    fun getInstance(project: Project): MarkdownSettings = project.service()
+
+    suspend fun getInstanceAsync(project: Project): MarkdownSettings = project.serviceAsync()
+  }
+}

@@ -1,56 +1,39 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.Utils;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ListModel;
+import java.awt.Component;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CompiledClassPropertiesProvider implements PropertiesProvider {
   private final ClassLoader myLoader;
-  private final HashMap myCache;
+  private final HashMap<String, HashMap<String, LwIntrospectedProperty>> myCache;
 
   public CompiledClassPropertiesProvider(final ClassLoader loader) {
     if (loader == null) {
       throw new IllegalArgumentException("loader cannot be null");
     }
     myLoader = loader;
-    myCache = new HashMap();
+    myCache = new HashMap<>();
   }
 
-  public HashMap getLwProperties(final String className) {
+  @Override
+  public HashMap<String, LwIntrospectedProperty> getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
-      return (HashMap)myCache.get(className);
+      return myCache.get(className);
     }
 
     if (Utils.validateJComponentClass(myLoader, className, false) != null) {
       return null;
     }
 
-    final Class aClass;
+    final Class<?> aClass;
     try {
       aClass = Class.forName(className, false, myLoader);
     }
@@ -63,17 +46,15 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       beanInfo = Introspector.getBeanInfo(aClass);
     }
     catch (Throwable e) {
-      return null;
+      throw new RuntimeException("Error loading BeanInfo for component " + className + ": " + e.getMessage(), e);
     }
 
-    final HashMap result = new HashMap();
+    final HashMap<String, LwIntrospectedProperty> result = new HashMap<>();
     final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
-    for (int i = 0; i < descriptors.length; i++) {
-      final PropertyDescriptor descriptor = descriptors[i];
-
+    for (final PropertyDescriptor descriptor : descriptors) {
       final Method readMethod = descriptor.getReadMethod();
       final Method writeMethod = descriptor.getWriteMethod();
-      final Class propertyType = descriptor.getPropertyType();
+      final Class<?> propertyType = descriptor.getPropertyType();
       if (writeMethod == null || readMethod == null || propertyType == null) {
         continue;
       }
@@ -93,7 +74,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     return result;
   }
 
-  public static LwIntrospectedProperty propertyFromClass(final Class propertyType, final String name) {
+  static LwIntrospectedProperty propertyFromClass(final Class<?> propertyType, final String name) {
     LwIntrospectedProperty property = propertyFromClassName(propertyType.getName(), name);
     if (property == null) {
       if (Component.class.isAssignableFrom(propertyType)) {
@@ -103,7 +84,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
         property = new LwIntroListModelProperty(name, propertyType.getName());
       }
       else if (propertyType.getSuperclass() != null && "java.lang.Enum".equals(propertyType.getSuperclass().getName())) {
-        property = new LwIntroEnumProperty(name, propertyType);
+        property = new LwIntroEnumProperty(name, propertyType.getName());
       }
     }
     return property;

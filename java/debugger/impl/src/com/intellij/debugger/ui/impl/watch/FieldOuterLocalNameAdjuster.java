@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay.Tropin
  */
-public class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuster {
+public final class FieldOuterLocalNameAdjuster extends NodeDescriptorNameAdjuster {
 
   @Override
   public boolean isApplicable(@NotNull NodeDescriptor descriptor) {
-    if (descriptor instanceof FieldDescriptorImpl && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      return ((FieldDescriptorImpl)descriptor).isOuterLocalVariableValue();
+    if (descriptor instanceof FieldDescriptorImpl fieldDescriptor && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
+      return fieldDescriptor.isOuterLocalVariableValue();
     }
     return false;
   }

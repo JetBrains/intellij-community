@@ -1,0 +1,495 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.psi.types
+
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyTypeUtil.toStream
+import org.jetbrains.annotations.ApiStatus
+import java.util.Objects
+import java.util.concurrent.atomic.AtomicReference
+
+class PyTypedDictType private constructor(
+  override val name: String,
+  private val lazyFields: LazilyEvaluated<Map<String, FieldTypeAndTotality>>,
+  private val dictClass: PyClass,
+  isDefinition: Boolean,
+  private val declaration: PyQualifiedNameOwner,
+  val isClosed: Boolean,
+  private val lazyExtraItems: LazilyEvaluated<FieldTypeAndTotality>,
+  /**
+   * Read from the declaration rather than from the item types, which a recursive TypedDict cannot evaluate. An empty list means
+   * "not generic"; `null` means unstated, which only a TypedDict synthesized from something else is.
+   */
+  val declaredTypeParameters: List<PyType?>?,
+  substitutedTypeArguments: List<PyType?>,
+) : PyClassTypeImpl(dictClass, isDefinition, substitutedTypeArguments) {
+
+  fun fields(context: TypeEvalContext): Map<String, FieldTypeAndTotality> = lazyFields.get(context)
+
+  /** An item without a value expression, `extra_items` being a keyword argument rather than an assignment. */
+  fun extraItems(context: TypeEvalContext): FieldTypeAndTotality = lazyExtraItems.get(context)
+  fun extraItemsType(context: TypeEvalContext): PyType? = extraItems(context).type
+  fun extraItemsQualifiers(context: TypeEvalContext): TypedDictFieldQualifiers = extraItems(context).qualifiers
+
+  /**
+   * The items and the extra items are evaluated on first access, not on creation: both can refer back to the TypedDict
+   * being created, as `parent: "Node"` and `extra_items="Node"` do.
+   */
+  constructor(
+    name: String,
+    fieldsProvider: (TypeEvalContext) -> Map<String, FieldTypeAndTotality>,
+    dictClass: PyClass,
+    isDefinition: Boolean,
+    declaration: PyQualifiedNameOwner,
+    isClosed: Boolean = false,
+    extraItemsProvider: (TypeEvalContext) -> FieldTypeAndTotality = { FieldTypeAndTotality(null, PyAnyType.unknown) },
+    declaredTypeParameters: List<PyType?>? = null,
+    substitutedTypeArguments: List<PyType?> = emptyList(),
+  ) : this(name,
+           LazilyEvaluated(fieldsProvider),
+           dictClass, isDefinition, declaration, isClosed,
+           LazilyEvaluated(extraItemsProvider),
+           declaredTypeParameters,
+           substitutedTypeArguments)
+
+  /** The arguments as they appear in this TypedDict's notation, `null` when the parameters are unstated. */
+  val typeArgumentsOrDeclaredParameters: List<PyType?>?
+    get() = typeArguments.ifEmpty { declaredTypeParameters }
+
+  fun getElementType(key: String, context: TypeEvalContext): PyType? {
+    val field = fields(context)[key] ?: return PyAnyType.unknown
+    return field.type
+  }
+
+  override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteOwner): PyType? {
+    return if (isDefinition) toInstance() else PyAnyType.unknown
+  }
+
+  override fun toInstance(): PyTypedDictType {
+    return if (isDefinition)
+      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItems,
+                      declaredTypeParameters, typeArguments)
+    else
+      this
+  }
+
+  override fun toClass(): PyTypedDictType {
+    return if (isDefinition)
+      this
+    else
+      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItems,
+                      declaredTypeParameters, typeArguments)
+  }
+
+  override val isBuiltin: Boolean = false
+
+  override fun isCallable(): Boolean = isDefinition
+
+  override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
+    return if (isCallable) {
+      val extraItemsType = extraItemsType(context)
+      if (fields(context).isEmpty() && extraItemsType.isUnknown) {
+        emptyList()
+      }
+      else {
+        val singleStarParameter = PyCallableParameterImpl.keywordOnlySeparatorNonPsi()
+
+        val fieldParameters = fields(context).map { (key, value) ->
+          if (value.qualifiers.isRequired == true)
+            PyCallableParameterImpl.nonPsi(key, value.type)
+          else
+            PyCallableParameterImpl.nonPsi(key, value.type, PyNames.ELLIPSIS)
+        }
+
+        val extraItemsParam = if (!extraItemsType.isUnknown && !isClosed) {
+          listOf(PyCallableParameterImpl.keywordContainerNonPsi("kwargs", extraItemsType))
+        } else {
+          emptyList()
+        }
+
+        listOf(singleStarParameter) + fieldParameters + extraItemsParam
+      }
+    }
+    else null
+  }
+
+  override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
+    return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
+  }
+
+  override fun toString(): String = "PyTypedDictType: $name"
+
+  override fun equals(other: Any?): Boolean {
+    if (other === this) return true
+    if (other == null || javaClass != other.javaClass) return false
+
+    other as PyTypedDictType
+    // Every TypedDict is built on `dict`, so only the declaration tells two of them apart.
+    return declaration == other.declaration && super.equals(other)
+  }
+
+  override fun hashCode(): Int = cachedHashCode
+
+  private val cachedHashCode: Int by lazy(LazyThreadSafetyMode.PUBLICATION) { computeHashCode() }
+
+  private fun computeHashCode(): Int = Objects.hash(super.hashCode(), declaration)
+
+  override val declarationElement: PyQualifiedNameOwner = declaration
+
+  /**
+   * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
+   */
+  data class TypedDictFieldQualifiers(
+    val isRequired: Boolean? = true,
+    val isReadOnly: Boolean = false,
+    val hasExplicitRequiredQualifier: Boolean = false
+  )
+
+  data class FieldTypeAndTotality(
+    val value: PyExpression?,
+    val type: PyType?,
+    val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+  ) {
+    init {
+      PyAnyType.validate(type)
+    }
+    val isRequired: Boolean get() = qualifiers.isRequired ?: true
+    val isReadOnly: Boolean get() = qualifiers.isReadOnly
+  }
+
+  /**
+   * A single failed TypedDict key, reported by [match] while a breakdown is being collected. Carries the raw
+   * value types ([expectedValue]/[actualValue]) so the caller ([PyTypeChecker]) can codify them against its
+   * anchor into a [PyMismatchStep.TypedDictKey]; [actualValue] is null for a [TypedDictKeyProblem.MISSING] key.
+   */
+  data class TypedDictKeyMismatch(
+    val key: String,
+    val problem: TypedDictKeyProblem,
+    val expectedValue: PyType?,
+    val actualValue: PyType?,
+  )
+
+  companion object {
+
+    const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
+    const val TYPED_DICT_EXTRA_ITEMS_PARAMETER: String = "extra_items"
+    const val TYPED_DICT_CLOSED_PARAMETER : String  = "closed"
+
+    /**
+     * [expression] matches [expectedType] if:
+     * * all required keys from [expectedType] are present in [expression]
+     * * all keys from [expression] are present in [expectedType]
+     * * each key has the same value type in [expectedType] and [expression]
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun checkExpression(
+      expectedType: PyTypedDictType,
+      expression: PyExpression,
+      context: TypeEvalContext,
+      result: TypeCheckingResult,
+    ) {
+      assert(isDictExpression(expression, context))
+      val actualFields = getTypedDictFieldsFromExpression(expression, context)
+      if (actualFields == null) {
+        result.valueTypeErrors.add(ValueTypeError(expression, expectedType, context.getType(expression)))
+        return
+      }
+
+      val extraItemsType = expectedType.extraItemsType(context)
+      val isClosed = expectedType.isClosed
+
+      actualFields.forEach { key, (actualFieldValue, actualFieldType) ->
+        if (key in expectedType.fields(context)) {
+          val expectedFieldType = expectedType.fields(context)[key]?.type
+          if (expectedFieldType is PyTypedDictType && actualFieldValue != null && isDictExpression(actualFieldValue, context)) {
+            checkExpression(expectedFieldType, actualFieldValue, context, result)
+          }
+          else {
+            val promotedType = if (actualFieldValue != null) {
+              PyLiteralType.promoteToLiteral(actualFieldValue, expectedFieldType, context, null).takeUnless { it.isUnknown } ?: context.getType(actualFieldValue)
+            }
+            else {
+              actualFieldType
+            }
+            // `promotedType` may preserve element literals inside an invariant container (e.g. `list[Literal['b']]`
+            // for `["b"]`), which spuriously fails the invariant match against the field's own widened type
+            // (`list[str]`). If the value's natural (un-promoted) type already matches, the fresh literal is
+            // assignable and there is no real mismatch. Mirrors the assignment-statement handling in
+            // PyTypeCheckerInspection.
+            // temporary special casing to avoid Literal problems PY-90366
+            if (!match(expectedFieldType, promotedType, actualFieldValue, context, result) &&
+                (actualFieldType == promotedType || !match(expectedFieldType, actualFieldType, actualFieldValue, context, result))) {
+              result.valueTypeErrors.add(ValueTypeError(actualFieldValue, expectedFieldType, actualFieldType))
+            }
+          }
+        }
+        else if (!extraItemsType.isUnknown && !isClosed) {
+          if (!match(extraItemsType, actualFieldType, actualFieldValue, context, result)) {
+            result.valueTypeErrors.add(ValueTypeError(actualFieldValue, extraItemsType, actualFieldType))
+          }
+        }
+        else {
+          val extraKeyToHighlight = PsiTreeUtil.getParentOfType(actualFieldValue, PyKeyValueExpression::class.java)
+                                    ?: PsiTreeUtil.getParentOfType(actualFieldValue, PyKeywordArgument::class.java)
+                                    ?: actualFieldValue
+          result.extraKeys.add(ExtraKeyError(extraKeyToHighlight, expectedType.name, key))
+        }
+      }
+
+      val missingKeys = expectedType.fields(context).entries
+        .filter { (key, value) -> value.qualifiers.isRequired == true && key !in actualFields }
+        .map { it.key }
+      if (missingKeys.isNotEmpty()) {
+        result.missingKeys.add(MissingKeysError(expression, expectedType.name, missingKeys))
+      }
+    }
+
+    private fun match(
+      expectedType: PyType?,
+      actualType: PyType?,
+      actualExpression: PyExpression?,
+      context: TypeEvalContext,
+      result: TypeCheckingResult,
+    ): Boolean {
+      if (actualExpression != null && isDictExpression(actualExpression, context)) {
+        val types = expectedType.toStream().toList()
+        for (subType in types) {
+          if (subType is PyTypedDictType) {
+            val res = if (types.size <= 1) result else TypeCheckingResult()
+            checkExpression(subType, actualExpression, context, res)
+            if (!res.hasErrors) {
+              return true
+            }
+          }
+          else {
+            if (strictUnionMatch(subType, actualType, context)) {
+              return true
+            }
+          }
+        }
+        return false
+      }
+      return strictUnionMatch(expectedType, actualType, context)
+    }
+
+    private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
+        return actual.toStream().allMatch { type -> PyTypeChecker.match(expected, type, context) }
+      }
+      return PyTypeChecker.match(expected, actual, context)
+    }
+
+    /**
+     * Rules for type-checking TypedDicts are described in PEP-589
+     * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    @JvmOverloads
+    fun match(
+      expected: PyType,
+      actual: PyTypedDictType,
+      context: TypeEvalContext,
+      mismatch: ((TypedDictKeyMismatch) -> Unit)? = null,
+    ): Boolean? {
+      if (expected is PyClassType && expected !is PyTypedDictType && expected.isParameterized) {
+        matchTypedDictWithCollection(expected, actual, context)?.let { return it }
+      }
+
+      if (expected is PyClassLikeType && expected.isProtocol(context)) {
+        return null
+      }
+
+      if (expected !is PyTypedDictType) {
+        return false
+      }
+
+      for ((expectedKey, expectedField) in expected.fields(context)) {
+        if (expectedField.isReadOnly && !expectedField.isRequired && expectedField.type?.name == PyNames.OBJECT) {
+          continue
+        }
+        val actualField = actual.fields(context)[expectedKey]
+        if (actualField == null) {
+          if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.MISSING, expectedField.type, null))
+          return false
+        }
+        if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
+          if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.VALUE_TYPE, expectedField.type, actualField.type))
+          return false
+        }
+        if (!expectedField.isReadOnly) {
+          if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
+            // A mutable key is invariant: the value types must match both ways and the source key must stay writable.
+            val problem = if (actualField.isReadOnly) TypedDictKeyProblem.READONLY else TypedDictKeyProblem.VALUE_TYPE
+            if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, problem, expectedField.type, actualField.type))
+            return false
+          }
+        }
+        if (expectedField.isRequired) {
+          if (!actualField.isRequired) {
+            if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.REQUIRED, expectedField.type, actualField.type))
+            return false
+          }
+        }
+        else {
+          if (!expectedField.isReadOnly) {
+            if (actualField.isRequired) {
+              if (mismatch != null) mismatch(TypedDictKeyMismatch(expectedKey, TypedDictKeyProblem.REQUIRED, expectedField.type, actualField.type))
+              return false
+            }
+          }
+        }
+      }
+      return true
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isDictExpression(expression: PyExpression, context: TypeEvalContext): Boolean {
+      if (expression is PyDictLiteralExpression) return true
+      if (expression is PyCallExpression) {
+        val callee = expression.callee
+        if (callee != null) {
+          return PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.FQN.DICT }
+        }
+      }
+      return false
+    }
+
+    private fun getTypedDictFieldsFromExpression(
+      expression: PyExpression,
+      context: TypeEvalContext,
+    ): Map<String, Pair<PyExpression?, PyType?>>? {
+      assert(isDictExpression(expression, context))
+      return if (expression is PyDictLiteralExpression) {
+        PyCollectionTypeUtil.getTypedDictFieldsFromDictLiteral(expression, context)
+      }
+      else {
+        getTypedDictFieldsFromDictConstructorCall(expression as PyCallExpression, context)
+      }
+    }
+
+    private fun getTypedDictFieldsFromDictConstructorCall(
+      callExpression: PyCallExpression,
+      context: TypeEvalContext,
+    ): Map<String, Pair<PyExpression?, PyType?>>? {
+      val callee = callExpression.callee ?: return null
+      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.FQN.DICT }) {
+        val arguments = callExpression.arguments
+        if (arguments.size > 1) {
+          val fields = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
+          for (argument in arguments) {
+            if (argument !is PyKeywordArgument) return null
+            val keyword = argument.keyword ?: return null
+            val valueExpression = argument.valueExpression
+            fields[keyword] = valueExpression to valueExpression?.let(context::getType)
+          }
+          return fields
+        }
+      }
+      return null
+    }
+
+    private fun matchTypedDictWithCollection(expected: PyClassType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
+      val expectedClassQName = expected.classQName
+      val isMapping = expectedClassQName == PyTypingTypeProvider.MAPPING
+      if (!isMapping && expectedClassQName != PyNames.FQN.DICT) return null
+
+      val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
+      val elementTypes = expected.typeArguments
+
+      if (elementTypes.size != 2 || builtinCache.strType != elementTypes[0]) {
+        return false
+      }
+
+      val expectedValueType = elementTypes[1]
+      val extraItemsType = actual.extraItemsType(context)
+      // Extra items are present only when they are explicitly typed and the TypedDict is not closed
+      // (closed=True is equivalent to extra_items=Never).
+      val hasExtraItems = extraItemsType != null && extraItemsType != PyNeverType.NEVER && !actual.isClosed
+
+      if (isMapping) {
+        // A TypedDict is assignable to Mapping[str, VT] when every value type of its items is assignable to VT.
+        // An open (non-closed) TypedDict is considered to have read-only extra items of type 'object'.
+        val valueTypes: MutableList<PyType?> = actual.fields(context).values.mapNotNullTo(mutableListOf()) { it.type }
+        when {
+          actual.isClosed || extraItemsType == PyNeverType.NEVER -> {}
+          !extraItemsType.isUnknown -> valueTypes.add(extraItemsType)
+          else -> builtinCache.objectType?.let { valueTypes.add(it) }
+        }
+        return PyTypeChecker.match(expectedValueType, PyUnionType.unionOrUnknown(valueTypes), context)
+      }
+      else {
+        // A TypedDict is generally not assignable to `dict[str, X]` because `dict` is mutable and
+        // invariant, so its known keys could be deleted or have their value types broken. However,
+        // `dict[str, Any]` uses `Any` as the value type, which opts out of value-type checking
+        // (the common "JSON-like" usage), so accept any TypedDict here. See PY-85704.
+        if (expectedValueType.isAnyOrUnknown) {
+          return actual.fields(context).values.none { it.isReadOnly }
+        }
+        // A TypedDict is assignable to dict[str, VT] only when it has mutable extra items equivalent to VT
+        // and every declared item is mutable, non-required, and has a value type equivalent to VT.
+        return hasExtraItems &&
+               !actual.extraItemsQualifiers(context).isReadOnly &&
+               areEquivalent(extraItemsType, expectedValueType, context) &&
+               actual.fields(context).values.all { field ->
+                 !field.isReadOnly &&
+                 field.qualifiers.isRequired != true &&
+                 areEquivalent(field.type, expectedValueType, context)
+               }
+      }
+    }
+
+    private fun areEquivalent(left: PyType?, right: PyType?, context: TypeEvalContext): Boolean {
+      return PyTypeChecker.match(right, left, context) && PyTypeChecker.match(left, right, context)
+    }
+  }
+
+  data class MissingKeysError(val actualExpression: PyExpression?, val expectedTypedDictName: String, val missingKeys: List<String>)
+
+  data class ExtraKeyError(val actualExpression: PyExpression?, val expectedTypedDictName: String, val key: String)
+
+  data class ValueTypeError(val actualExpression: PyExpression?, val expectedType: PyType?, val actualType: PyType?)
+
+  class TypeCheckingResult {
+    val valueTypeErrors: MutableList<ValueTypeError> = mutableListOf()
+    val missingKeys: MutableList<MissingKeysError> = mutableListOf()
+    val extraKeys: MutableList<ExtraKeyError> = mutableListOf()
+
+    val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
+  }
+
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyTypedDictType(this)
+    }
+    return visitor.visitPyClassType(this)
+  }
+
+}
+
+private class LazilyEvaluated<T : Any>(provider: (TypeEvalContext) -> T) {
+  @Volatile private var provider: ((TypeEvalContext) -> T)? = provider
+  private val value = AtomicReference<T?>()
+
+  fun get(context: TypeEvalContext): T {
+    value.get()?.let { return it }
+    val pending = provider ?: return requireNotNull(value.get())
+    val computed = pending(context)
+    if (!value.compareAndSet(null, computed)) return requireNotNull(value.get())
+    provider = null
+    return computed
+  }
+}

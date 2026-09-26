@@ -1,49 +1,45 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.IntStubIndexExtension;
+import com.intellij.psi.stubs.CharSequenceHashStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
-/**
- * @author max
- */
-public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
+public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
 
   public static JavaFullClassNameIndex getInstance() {
     return ourInstance;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<Integer, PsiClass> getKey() {
+  public @NotNull StubIndexKey<CharSequence, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getClasses(CharSequence, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
-  public Collection<PsiClass> get(@NotNull final Integer integer, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), integer, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  public @Unmodifiable Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getClasses(name, project, scope);
+  }
+
+  public @Unmodifiable Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  }
+
+  @Override
+  public boolean doesKeyMatchPsi(@NotNull CharSequence key, @NotNull PsiClass aClass) {
+    return key.equals(aClass.getQualifiedName());
   }
 }

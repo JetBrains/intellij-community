@@ -1,0 +1,125 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("NonAsciiCharacters")
+
+package com.intellij.grazie.ide.language
+
+import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.util.Disposer
+import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
+
+
+class MarkdownSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf(
+    "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
+    "LanguageTool.EN.EN_QUOTES",
+    "LanguageTool.EN.DASH_RULE"
+  )
+
+  fun `test grammar check in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+    runHighlightTestForFile("ide/language/markdown/Example.md")
+  }
+
+  fun `test grazie spellchecker in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    runHighlightTestForFile("ide/language/markdown/Spellcheck.md")
+  }
+
+  fun `test no false positives in test links`() {
+    runHighlightTestForFile("ide/language/markdown/TestLink.md")
+  }
+
+  fun `test replacement with markup inside`() {
+    myFixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
+    myFixture.checkHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention("gather"))
+    myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
+  }
+
+  fun `test no highlighting in a very large file to avoid slow analysis`() {
+    val text = "This is an very nice mistake in English text.\n\n".repeat(10_000)
+    myFixture.configureByText("a.md", text)
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no style warning highlighting for picky passive voice rules`() {
+    myFixture.configureByText("a.md", """
+      Many objects are disposed automatically by the platform if they implement the Disposable interface. 
+      The most important type of such objects is services. Application-level services are automatically disposed 
+      by the platform when the IDE is closed or the plugin providing the service is unloaded.
+      Project-level services are disposed on project close or plugin upload events.
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  fun `test html entity excluded before grazie checks`() {
+    myFixture.configureByText("a.md", "You&#39;re here.")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no LT article warning before number starting with a vowel`() {
+    myFixture.configureByText("a.md", "Extract an 8x8 pixel square from an 11x11 square from an 18432x18432 square from an 11000.")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no em dash warning for list bullet in injected markdown`() {
+    myFixture.configureByText("a.md", """
+      Something
+      ```markdown
+      ## Goals
+      - Primary outcomes the feature must deliver.
+      ```
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no typos in asian-english mixed texts with text-level spellchecker`() {
+    // It may look like a synthetic example that has nothing to do with the real world,
+    // but this is exactly what [androidDictionary] looks like
+    val mixedText = """
+      文件不存在时应返回错误
+      相对路径不存在
+      期望返回错误但未返回
+      不应返回错误
+      Hello不应返回错误
+      不应返回错误hello
+      不应HELLO返回错误
+      "文件'Love'文件", "Love'文件", "文件'Love" ,"文件\"Love\"文件", "文件`Love`文件", "文件Love", "Love文件",
+      
+      // Some Japanese too
+      次のprojectのdeadlineは来週の金曜日なので、急いでfinishしなければなりません。
+    """.trimIndent()
+    myFixture.configureByText("a.md", mixedText)
+    myFixture.checkHighlighting()
+
+    val name = "androidDictionary"
+    val words = setOf("foldable", "rollable", "wearable")
+    getInstance(project).spellChecker!!.addDictionary(object : Dictionary {
+      override fun getName(): String = name
+      override fun lookup(word: String): LookupStatus = if (word in words) Present else Absent
+      override fun getWords(): Set<String> = words
+    })
+    Disposer.register(testRootDisposable) { getInstance(project).spellChecker!!.removeDictionary(name) }
+    myFixture.configureByText("a.md", mixedText)
+    myFixture.checkHighlighting()
+
+    enableProofreadingFor(setOf(Lang.CHINESE, Lang.JAPANESE))
+    myFixture.configureByText("a.md", mixedText + """
+
+      <!-- 将文本粘贴在此，或者检测以下文本 我和她去看了<GRAMMAR_ERROR descr="wa5">二部</GRAMMAR_ERROR>电影。-->
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  fun `test grammar check in html comment`() {
+    myFixture.configureByText("a.md", """
+      <!-- It is <GRAMMAR_ERROR <TYPO descr="Typo: In word 'descr'">descr</TYPO>=\"EN_A_VS_AN\">an</GRAMMAR_ERROR> friend there -->
+    """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+}

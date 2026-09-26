@@ -1,0 +1,12 @@
+// "Change type of 'myFunction' to '(Int) -> KFunction0<Boolean>'" "true"
+// WITH_STDLIB
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+
+fun foo() {
+    var myFunction: (Int, Int) -> Int = <caret>::verifyData
+}
+
+fun Int.internalVerifyData() = this > 0
+
+fun verifyData(a: Int) = a::internalVerifyData
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

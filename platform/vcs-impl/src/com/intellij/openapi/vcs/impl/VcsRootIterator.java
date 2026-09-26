@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VirtualFileFilter;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -30,7 +19,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class VcsRootIterator {
   // folder path to files to be excluded
@@ -43,7 +36,7 @@ public class VcsRootIterator {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<>();
-    myExcludedFileIndex = ServiceManager.getService(project, FileIndexFacade.class);
+    myExcludedFileIndex = FileIndexFacade.getInstance(project);
 
     final VcsRoot[] allRoots = myVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
@@ -60,14 +53,14 @@ public class VcsRootIterator {
     if ((rootFilter != null) && (!rootFilter.accept(file))) {
       return false;
     }
-    return !isIgnoredByVcs(myVcsManager, myProject, file);
+    return !isIgnoredByVcs(myVcsManager, vcsRoot, file);
   }
 
-  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, final Project project, final VirtualFile file) {
-    return ReadAction.compute(() -> project.isDisposed() || vcsManager.isIgnored(file));
+  private static boolean isIgnoredByVcs(final ProjectLevelVcsManager vcsManager, @NotNull VirtualFile vcsRoot, @NotNull VirtualFile file) {
+    return vcsManager.isIgnoredUnderRoot(vcsRoot, file);
   }
 
-  private static class MyRootFilter {
+  private static final class MyRootFilter {
     private final VirtualFile myRoot;
     private final String myVcsName;
 
@@ -78,7 +71,7 @@ public class VcsRootIterator {
       myRoot = root;
       myVcsName = vcsName;
 
-      myExcludedByOthers = new LinkedList<>();
+      myExcludedByOthers = new ArrayList<>();
     }
 
     private void init(final VcsRoot[] allRoots) {
@@ -86,17 +79,14 @@ public class VcsRootIterator {
 
       for (VcsRoot root : allRoots) {
         final AbstractVcs vcs = root.getVcs();
-        if (vcs == null || Comparing.equal(vcs.getName(), myVcsName)) continue;
-        final VirtualFile path = root.getPath();
-        if (path != null) {
-          final String url = path.getUrl();
-          if (url.startsWith(ourPath)) {
-            myExcludedByOthers.add(url);
-          }
+        if (vcs == null || Objects.equals(vcs.getName(), myVcsName)) continue;
+        final String url = root.getPath().getUrl();
+        if (url.startsWith(ourPath)) {
+          myExcludedByOthers.add(url);
         }
       }
 
-      Collections.sort(myExcludedByOthers, StringLenComparator.getDescendingInstance());
+      myExcludedByOthers.sort(StringLenComparator.getDescendingInstance());
     }
 
     public boolean accept(final VirtualFile vf) {
@@ -112,38 +102,38 @@ public class VcsRootIterator {
 
   public static void iterateVfUnderVcsRoot(final Project project,
                                            final VirtualFile root,
-                                           final Processor<VirtualFile> processor) {
+                                           final Processor<? super VirtualFile> processor) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, null, processor, null);
     rootIterator.iterate();
   }
 
   public static void iterateVcsRoot(final Project project,
                                     final VirtualFile root,
-                                    final Processor<FilePath> processor) {
+                                    final Processor<? super FilePath> processor) {
     iterateVcsRoot(project, root, processor, null);
   }
 
   public static void iterateVcsRoot(final Project project,
                                     final VirtualFile root,
-                                    final Processor<FilePath> processor,
+                                    final Processor<? super FilePath> processor,
                                     @Nullable VirtualFileFilter directoryFilter) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, null, directoryFilter);
     rootIterator.iterate();
   }
 
-  private static class MyRootIterator {
+  private static final class MyRootIterator {
     private final Project myProject;
-    private final Processor<FilePath> myPathProcessor;
-    private final Processor<VirtualFile> myFileProcessor;
-    @Nullable private final VirtualFileFilter myDirectoryFilter;
+    private final Processor<? super FilePath> myPathProcessor;
+    private final Processor<? super VirtualFile> myFileProcessor;
+    private final @Nullable VirtualFileFilter myDirectoryFilter;
     private final VirtualFile myRoot;
     private final MyRootFilter myRootPresentFilter;
     private final ProjectLevelVcsManager myVcsManager;
 
     private MyRootIterator(final Project project,
                            final VirtualFile root,
-                           @Nullable final Processor<FilePath> pathProcessor,
-                           @Nullable final Processor<VirtualFile> fileProcessor,
+                           final @Nullable Processor<? super FilePath> pathProcessor,
+                           final @Nullable Processor<? super VirtualFile> fileProcessor,
                            @Nullable VirtualFileFilter directoryFilter) {
       myProject = project;
       myPathProcessor = pathProcessor;
@@ -160,7 +150,7 @@ public class VcsRootIterator {
     }
 
     public void iterate() {
-      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
         @Override
         public void afterChildrenVisited(@NotNull VirtualFile file) {
           if (myDirectoryFilter != null) {
@@ -168,10 +158,9 @@ public class VcsRootIterator {
           }
         }
 
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
-          if (isIgnoredByVcs(myVcsManager, myProject, file)) return SKIP_CHILDREN;
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
+          if (isIgnoredByVcs(myVcsManager, myRoot, file)) return SKIP_CHILDREN;
           if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
           if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);
           if (myDirectoryFilter != null && file.isDirectory() && !myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;
@@ -189,5 +178,60 @@ public class VcsRootIterator {
       }
       return false;
     }
+  }
+
+  /**
+   * Invoke the {@code iterator} for all files in the dirty scope.
+   * For recursively dirty directories all children are processed.
+   */
+  public static void iterate(@NotNull VcsDirtyScope scope, @NotNull Processor<? super FilePath> iterator) {
+    Project project = scope.getProject();
+    if (project.isDisposed()) return;
+
+    for (FilePath dir : scope.getRecursivelyDirtyDirectories()) {
+      final VirtualFile vFile = dir.getVirtualFile();
+      if (vFile != null && vFile.isValid()) {
+        iterateVcsRoot(project, vFile, iterator);
+      }
+    }
+
+    for (FilePath file : scope.getDirtyFilesNoExpand()) {
+      iterator.process(file);
+      final VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+        for (VirtualFile child : vFile.getChildren()) {
+          iterator.process(VcsUtil.getFilePath(child));
+        }
+      }
+    }
+  }
+
+  public static void iterateExistingInsideScope(@NotNull VcsDirtyScope scope, @NotNull Processor<? super VirtualFile> iterator) {
+    Project project = scope.getProject();
+    if (project.isDisposed()) return;
+
+    for (FilePath dir : scope.getRecursivelyDirtyDirectories()) {
+      final VirtualFile vFile = obtainVirtualFile(dir);
+      if (vFile != null && vFile.isValid()) {
+        iterateVfUnderVcsRoot(project, vFile, iterator);
+      }
+    }
+
+    for (FilePath file : scope.getDirtyFilesNoExpand()) {
+      VirtualFile vFile = obtainVirtualFile(file);
+      if (vFile != null && vFile.isValid()) {
+        iterator.process(vFile);
+        if (vFile.isDirectory()) {
+          for (VirtualFile child : vFile.getChildren()) {
+            iterator.process(child);
+          }
+        }
+      }
+    }
+  }
+
+  private static @Nullable VirtualFile obtainVirtualFile(FilePath file) {
+    VirtualFile vFile = file.getVirtualFile();
+    return vFile == null ? VfsUtil.findFileByIoFile(file.getIOFile(), false) : vFile;
   }
 }

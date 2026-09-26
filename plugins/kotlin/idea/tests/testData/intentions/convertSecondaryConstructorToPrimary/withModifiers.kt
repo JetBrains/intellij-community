@@ -1,0 +1,8 @@
+// "Convert to primary constructor" "true"
+annotation class Ann
+
+internal class WithModifiers {
+    @Ann
+    private constructor<caret>()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

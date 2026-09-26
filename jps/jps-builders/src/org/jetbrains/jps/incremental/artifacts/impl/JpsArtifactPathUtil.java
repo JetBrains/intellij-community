@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,19 +7,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
-public class JpsArtifactPathUtil {
-  //todo[nik] copied from DeploymentUtil
+public final class JpsArtifactPathUtil {
+  //todo reuse code from DeploymentUtil instead
   public static String trimForwardSlashes(@NotNull String path) {
-    while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
+    while (!path.isEmpty() && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
       path = path.substring(1);
     }
     return path;
   }
 
-  //todo[nik] copied from DeploymentUtil
+  //todo reuse code from DeploymentUtil instead
   public static String appendToPath(@NotNull String basePath, @NotNull String relativePath) {
     final boolean endsWithSlash = StringUtilRt.endsWithChar(basePath, '/') || StringUtilRt.endsWithChar(basePath, '\\');
     final boolean startsWithSlash = StringUtil.startsWithChar(relativePath, '/') || StringUtil.startsWithChar(relativePath, '\\');
@@ -41,7 +24,7 @@ public class JpsArtifactPathUtil {
     if (endsWithSlash && startsWithSlash) {
       tail = trimForwardSlashes(relativePath);
     }
-    else if (!endsWithSlash && !startsWithSlash && basePath.length() > 0 && relativePath.length() > 0) {
+    else if (!endsWithSlash && !startsWithSlash && !basePath.isEmpty() && !relativePath.isEmpty()) {
       tail = "/" + relativePath;
     }
     else {

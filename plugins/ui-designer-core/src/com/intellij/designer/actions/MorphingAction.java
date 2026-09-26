@@ -15,15 +15,17 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.PaletteItem;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +36,10 @@ import java.util.List;
 public class MorphingAction extends AnAction {
   private final DesignerEditorPanel myDesigner;
   private final EditableArea myArea;
-  private final List<RadComponent> myComponents;
+  private final List<? extends RadComponent> myComponents;
   private final MetaModel myTarget;
 
-  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<RadComponent> components, MetaModel target) {
+  public MorphingAction(DesignerEditorPanel designer, EditableArea area, List<? extends RadComponent> components, MetaModel target) {
     super(target.getTag(), null, target.getIcon());
     myDesigner = designer;
     myArea = area;
@@ -46,13 +48,18 @@ public class MorphingAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     PaletteItem paletteItem = myTarget.getPaletteItem();
     e.getPresentation().setEnabled(paletteItem == null || paletteItem.isEnabled());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myDesigner.getToolProvider().execute(() -> {
       List<RadComponent> newComponents = new ArrayList<>();
 
@@ -64,7 +71,7 @@ public class MorphingAction extends AnAction {
       }
 
       myArea.setSelection(newComponents);
-    }, "Run Morphing action", true);
+    }, DesignerBundle.message("run.morphing.action"), true);
   }
 
   public static void fill(DesignerEditorPanel designer, DefaultActionGroup group, EditableArea area) {
@@ -91,7 +98,7 @@ public class MorphingAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup morphingGroup = new DefaultActionGroup("Morphing", true);
+    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.morphing.text"));
     for (MetaModel morphingModel : models) {
       morphingGroup.add(new MorphingAction(designer, area, selection, morphingModel));
     }

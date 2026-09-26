@@ -1,0 +1,37 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.classic
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.terminal.ui.TerminalWidget
+import com.intellij.ui.content.Content
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalTabCloseListener
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+
+@ApiStatus.Internal
+class ClassicTerminalTabCloseListener private constructor(
+  content: Content,
+  project: Project,
+  parentDisposable: Disposable,
+) : TerminalTabCloseListener(content, project, parentDisposable) {
+  override fun shouldConfirmClosing(content: Content): CloseCheckResult {
+    val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return CloseCheckResult.CAN_CLOSE_SILENTLY
+    return runCloseCheckBlocking {
+      shouldConfirmClosing(widget)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun install(content: Content, project: Project, parentDisposable: Disposable) {
+      ClassicTerminalTabCloseListener(content, project, parentDisposable)
+    }
+
+    suspend fun shouldConfirmClosing(widget: TerminalWidget): Boolean = withContext(Dispatchers.IO) {
+      widget.isCommandRunning()
+    }
+  }
+}

@@ -1,26 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightParameter;
@@ -33,6 +32,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -42,17 +42,24 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWith
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
-public class DelegateTransformationSupport implements AstTransformationSupport {
+public final class DelegateTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    Map<PsiType, PsiAnnotation> declaredTypes = ContainerUtil.newLinkedHashMap();
+    Map<PsiType, PsiAnnotation> declaredTypes = new LinkedHashMap<>();
+    GrTypeDefinition codeClass = context.getCodeClass();
     for (GrField field : context.getFields()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
       if (annotation == null) continue;
       declaredTypes.putIfAbsent(field.getDeclaredType(), annotation);
-
     }
     for (PsiMethod method : context.getMethods()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(method, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
@@ -73,12 +80,12 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
         processor,
         ResolveState.initial().put(PsiSubstitutor.KEY, delegateResult.getSubstitutor()),
         null,
-        context.getCodeClass()
+        codeClass
       );
 
       if (!processor.myInterfaces) return;
 
-      Set<PsiClass> visited = ContainerUtil.newHashSet();
+      Set<PsiClass> visited = new HashSet<>();
       Queue<Pair<PsiClass, PsiSubstitutor>> queue = ContainerUtil.newLinkedList(Pair.create(delegate, delegateResult.getSubstitutor()));
 
       while (!queue.isEmpty()) {
@@ -101,7 +108,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     });
   }
 
-  private static class DelegateProcessor extends GrScopeProcessorWithHints {
+  private static final class DelegateProcessor extends GrScopeProcessorWithHints {
 
     private final TransformationContext myContext;
     private final boolean myInterfaces;
@@ -122,9 +129,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (!(element instanceof PsiMethod)) return true;
+      if (!(element instanceof PsiMethod method)) return true;
 
-      PsiMethod method = (PsiMethod)element;
       if (!myIgnoreCondition.value(method)) return true;
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
@@ -134,8 +140,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
       return true;
     }
 
-    @NotNull
-    protected PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    private @NotNull PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
       final LightMethodBuilder builder = new LightMethodBuilder(myContext.getManager(), GroovyLanguage.INSTANCE, method.getName());
       builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
       builder.setContainingClass(myContext.getCodeClass());
@@ -185,8 +190,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
       return new DelegatedMethod(builder, method);
     }
 
-    @NotNull
-    private Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
+    private @NotNull Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
       Condition<PsiMethod> result = method -> {
         if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 
@@ -244,8 +248,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     }
   }
 
-  private static final Set<String> OBJECT_METHODS = ContainerUtil.newHashSet(
-    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize"
+  private static final Set<@NlsSafe String> OBJECT_METHODS = ContainerUtil.newHashSet(
+    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize" // NON-NLS
   );
   private static final Set<String> GROOVY_OBJECT_METHODS = ContainerUtil.newHashSet(
     "invokeMethod", "getProperty", "setProperty", "getMetaClass", "setMetaClass"

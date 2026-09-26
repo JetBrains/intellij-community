@@ -1,37 +1,42 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readBytes
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
+import kotlin.io.path.readBytes
 
 // empty means "no files, no HEAD, no commits"
-internal class OverwriteRemote : GitTestCase() {
-  @Test fun `not empty local and not empty remote`() {
+internal class OverwriteRemote : SettingsRepositoryGitTestBase() {
+  @Test
+  fun `not empty local and not empty remote`() {
     addLocalToFs()
     doTest(true)
   }
 
-  @Test fun `not empty local and empty remote`() {
+  @Test
+  fun `not empty local and empty remote`() {
     addLocalToFs()
     doTest(false)
   }
 
   private fun addLocalToFs() {
-    fs
-      .file("local.xml", """<file path="local.xml" />""")
+    fs.file("local.xml", """<file path="local.xml" />""")
   }
 
-  @Test fun `empty local`() {
+  @Test
+  fun `empty local`() {
     doTest(false)
   }
 
-  @Test fun `empty local and empty remote`() {
+  @Test
+  fun `empty local and empty remote`() {
     doTest(true)
   }
 
-  private fun doTest(initialRemoteCommit: Boolean) {
+  private fun doTest(initialRemoteCommit: Boolean) = runBlocking<Unit> {
     createRemoteRepository(initialCommit = initialRemoteCommit)
     configureLocalRepository()
 
@@ -48,7 +53,8 @@ internal class OverwriteRemote : GitTestCase() {
     fs.compare()
   }
 
-  @Test fun `second merge is null`() {
+  @Test
+  fun `second merge is null`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.MERGE)

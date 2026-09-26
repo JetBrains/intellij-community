@@ -1,13 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
+import com.intellij.java.JavaPluginDisposable;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -17,37 +22,74 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import gnu.trove.THashMap;
+import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.util.LazyInitializer.LazyValue;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UAnnotated;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UClassInitializer;
+import org.jetbrains.uast.UComment;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UFile;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UNamedExpression;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UVariable;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
+import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-
-/**
- * @author anna
- */
-public class RefJavaManagerImpl extends RefJavaManager {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
-    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+public final class RefJavaManagerImpl extends RefJavaManager {
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
+                  Conditions.and(Conditions.and(Conditions.notInstanceOf(PsiTypeParameter.class), Conditions.instanceOf(PsiNamedElement.class)), psi -> {
+                    UDeclaration decl = UastContextKt.toUElement(psi, UDeclaration.class);
+                    return decl != null && (decl instanceof UField || !(decl instanceof UVariable)) && (!(decl instanceof UClassInitializer));
+                  }));
 
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
-  private final PsiClass myApplet;
-  private final PsiClass myServlet;
+  private final LazyValue<PsiClass> myApplet;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -57,14 +99,13 @@ public class RefJavaManagerImpl extends RefJavaManager {
   public RefJavaManagerImpl(@NotNull RefManagerImpl manager) {
     myRefManager = manager;
     final Project project = manager.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet =
+      new LazyValue<>(() -> JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project)));
   }
 
   @Override
@@ -80,7 +121,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     RefPackage refPackage;
     synchronized (this) {
       if (myPackages == null) {
-        myPackages = new THashMap<>();
+        myPackages = new HashMap<>();
       }
 
       refPackage = myPackages.get(packageName);
@@ -115,53 +156,50 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return refPackage;
   }
 
-  private boolean isEntryPoint(final RefElement element) {
+  private boolean isEntryPoint(RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
-    return tool != null && tool.isEntryPoint(element) && isTestSource(tool, element);
+    return tool != null && tool.isEntryPoint(element) && !skipEntryPoint(tool, element);
   }
 
-  private static boolean isTestSource(UnusedDeclarationInspectionBase tool, RefElement refElement) {
-    if (tool.isTestEntryPoints()) return true;
-    final PsiElement element = refElement.getElement();
-    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    return file != null && !ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
+  private static boolean skipEntryPoint(UnusedDeclarationInspectionBase tool, RefElement refElement) {
+    if (tool.isTestEntryPoints()) return false;
+    final PsiElement element = refElement.getPsiElement();
+    final VirtualFile file = element.getContainingFile().getVirtualFile();
+    return file != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(file);
   }
 
-  @Nullable
-  private UnusedDeclarationInspectionBase getDeadCodeTool(RefElement element) {
+  private @Nullable UnusedDeclarationInspectionBase getDeadCodeTool(RefElement element) {
     PsiFile file = ((RefElementImpl)element).getContainingFile();
     if (file == null) return null;
 
-    return getDeadCodeTool(file.getContainingFile());
+    return getDeadCodeTool(file);
   }
 
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
     GlobalInspectionContextBase contextBase = (GlobalInspectionContextBase)myRefManager.getContext();
     Tools tools = contextBase.getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
-    InspectionToolWrapper toolWrapper;
+    InspectionToolWrapper<?,?> toolWrapper;
     if (tools != null) {
       toolWrapper = tools.getEnabledTool(file);
     }
     else  {
       String singleTool = contextBase.getCurrentProfile().getSingleTool();
       if (singleTool != null && !UnusedDeclarationInspectionBase.SHORT_NAME.equals(singleTool)) {
-        InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myRefManager.getProject()).getCurrentProfile();
-        tools = currentProfile.getTools(UnusedDeclarationInspectionBase.SHORT_NAME, myRefManager.getProject());
-        toolWrapper = tools.getEnabledTool(file);
+        return UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(file);
       }
       else {
         return null;
       }
     }
     InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
-    return tool instanceof UnusedDeclarationInspectionBase ? (UnusedDeclarationInspectionBase)tool : null;
+    return tool instanceof UnusedDeclarationInspectionBase t ? t : null;
   }
 
   @Override
   public RefPackage getDefaultPackage() {
     RefPackage defaultPackage = myCachedDefaultPackage;
     if (defaultPackage == null) {
-      myCachedDefaultPackage = defaultPackage = getPackage(InspectionsBundle.message("inspection.reference.default.package"));
+      myCachedDefaultPackage = defaultPackage = getPackage(JavaAnalysisBundle.message("inspection.reference.default.package"));
     }
     return defaultPackage;
   }
@@ -183,27 +221,35 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public PsiClass getApplet() {
-    return myApplet;
+    return myApplet.get();
   }
 
   @Override
-  public PsiClass getServlet() {
-    return myServlet;
+  public String getAppletQName() {
+    return myApplet.get().getQualifiedName();
   }
 
   @Override
-  public RefParameter getParameterReference(final PsiParameter param, final int index) {
+  public String getServletQName() {
+    return "javax.servlet.Servlet";
+  }
+
+  @Override
+  public RefParameter getParameterReference(UParameter param, int index, RefElement refElement) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
-    
-    return myRefManager.getFromRefTableOrCache(param, () -> {
-      RefParameterImpl ref = new RefParameterImpl(param, index, myRefManager);
-      ref.initialize();
-      return ref;
+
+    PsiElement sourcePsi = param.getSourcePsi();
+    LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
+    RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
+      RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
+      ref.initializeIfNeeded();
+      return (RefElement)ref;
     });
+    return result instanceof RefParameter p ? p : null;
   }
 
   @Override
-  public void iterate(@NotNull final RefVisitor visitor) {
+  public void iterate(@NotNull RefVisitor visitor) {
     Map<String, RefPackage> packages;
     synchronized (this) {
       packages = myPackages;
@@ -214,11 +260,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
       }
     }
     for (RefElement refElement : myRefManager.getSortedElements()) {
-      if (refElement instanceof RefClass) {
-        RefClass refClass = (RefClass)refElement;
+      if (refElement instanceof RefClass refClass) {
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
         if (refDefaultConstructor instanceof RefImplicitConstructor) {
-          refClass.getDefaultConstructor().accept(visitor);
+          refDefaultConstructor.accept(visitor);
         }
       }
     }
@@ -238,46 +283,42 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void removeReference(@NotNull final RefElement refElement) { }
+  public void removeReference(@NotNull RefElement refElement) { }
 
   @Override
-  @Nullable
-  public RefElement createRefElement(@NotNull final PsiElement elem) {
-    if (elem instanceof PsiClass) {
-      return new RefClassImpl((PsiClass)elem, myRefManager);
+  public @Nullable RefElement createRefElement(@NotNull PsiElement psi) {
+    if (!getLanguages().contains(psi.getLanguage())) {
+      return null;
     }
-    if (elem instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)elem;
-      final RefElement ref = myRefManager.getReference(method.getContainingClass(), true);
-      if (ref instanceof RefClass) {
-        return new RefMethodImpl((RefClass)ref, method, myRefManager);
-      }
+    if (psi instanceof PsiFile f) {
+      return new RefJavaFileImpl(f, myRefManager);
     }
-    else if (elem instanceof PsiField) {
-      final PsiField field = (PsiField)elem;
-      final RefElement ref = myRefManager.getReference(field.getContainingClass(), true);
-      if (ref instanceof RefClass) {
-        return new RefFieldImpl((RefClass)ref, field, myRefManager);
-      }
+    else if (psi instanceof PsiJavaModule m) {
+      return new RefJavaModuleImpl(m, myRefManager);
     }
-    else if (elem instanceof PsiJavaFile) {
-      return new RefJavaFileImpl((PsiJavaFile)elem, myRefManager);
+    UElement uElement = psi instanceof UElement e ? e : UastContextKt.toUElement(psi);
+    if (uElement instanceof UClass c) {
+      return new RefClassImpl(c, psi, myRefManager);
     }
-    else if (elem instanceof PsiJavaModule) {
-      return new RefJavaModuleImpl((PsiJavaModule)elem, myRefManager);
+    if (uElement instanceof UMethod m) {
+      return new RefMethodImpl(m, psi, myRefManager);
+    }
+    else if (uElement instanceof UField f) {
+      return new RefFieldImpl(f, psi, myRefManager);
+    }
+    else if (uElement instanceof ULambdaExpression || uElement instanceof UCallableReferenceExpression) {
+      return new RefFunctionalExpressionImpl((UExpression)uElement, psi, myRefManager);
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
+  public @Nullable PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
     return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
   }
 
   @Override
-  @Nullable
-  public RefEntity getReference(final String type, final String fqName) {
+  public @Nullable RefEntity getReference(String type, String fqName) {
     if (IMPLICIT_CONSTRUCTOR.equals(type)) {
       return getImplicitConstructor(fqName);
     }
@@ -303,8 +344,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  @Nullable
-  public String getType(@NotNull final RefEntity ref) {
+  public @Nullable String getType(@NotNull RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -326,52 +366,68 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (ref instanceof RefJavaModule) {
       return JAVA_MODULE;
     }
+    if (ref instanceof RefFunctionalExpression) {
+      return FUNCTIONAL_EXPRESSION;
+    }
     return null;
   }
 
-  @NotNull
   @Override
-  public RefEntity getRefinedElement(@NotNull final RefEntity ref) {
-    if (ref instanceof RefImplicitConstructor) {
-      return ((RefImplicitConstructor)ref).getOwnerClass();
+  public @NotNull RefEntity getRefinedElement(@NotNull RefEntity ref) {
+    if (ref instanceof RefImplicitConstructor c) {
+      return c.getOwnerClass();
     }
     return ref;
   }
 
   @Override
-  public void visitElement(@NotNull final PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
-      myProjectIterator = projectIterator = new MyJavaElementVisitor();
+      myProjectIterator = projectIterator = new UastVisitorAdapter(new MyJavaElementVisitor(), true) {
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
+          if (element instanceof PsiJavaModule) {
+            visitJavaModule((PsiJavaModule)element);
+          }
+        }
+
+        private void visitJavaModule(PsiJavaModule module) {
+          RefElement refElement = myRefManager.getReference(module);
+          if (refElement != null) {
+            myRefManager.buildReferences(refElement);
+          }
+        }
+      };
     }
     element.accept(projectIterator);
   }
 
   @Override
-  @Nullable
-  public String getGroupName(@NotNull final RefEntity entity) {
+  public @Nullable String getGroupName(@NotNull RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(@NotNull final PsiElement psiElement) {
+  public boolean belongsToScope(@NotNull PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
   @Override
-  public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
+  public void export(@NotNull RefEntity refEntity, @NotNull Element element) {
     String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
     if (packageName != null) {
       final Element packageElement = new Element("package");
-      packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
+      packageElement.addContent(packageName.isEmpty() ? JavaAnalysisBundle.message("inspection.reference.default.package") : packageName);
       element.addContent(packageElement);
     }
   }
 
   @Override
   public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
-    if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
+    if (myRefManager.isOfflineView()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
@@ -382,14 +438,18 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return file instanceof PsiClassOwner;
   }
 
-  @NotNull
   @Override
-  public Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+  public @NotNull Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
     return Arrays
       .stream(((PsiClassOwner)psiFile).getClasses())
       .flatMap(c -> Arrays.stream(c.getSuperTypes()))
       .map(PsiClassType::resolve)
       .filter(Objects::nonNull);
+  }
+
+  @Override
+  public void markExternalReferencesProcessed(@NotNull RefElement file) {
+    getEntryPointsManager().addEntryPoint(file, false);
   }
 
   @Override
@@ -402,90 +462,150 @@ public class RefJavaManagerImpl extends RefJavaManager {
         public void configureAnnotations() {
         }
       };
-      Disposer.register(project, entryPointsManager);
+      Disposer.register(JavaPluginDisposable.getInstance(project), entryPointsManager);
 
       ((EntryPointsManagerBase)entryPointsManager).addAllPersistentEntries(EntryPointsManagerBase.getInstance(project));
     }
     return entryPointsManager;
   }
 
-  private class MyJavaElementVisitor extends JavaElementVisitor {
+  private final class MyJavaElementVisitor extends AbstractUastNonRecursiveVisitor {
     private final RefJavaUtil myRefUtil = RefJavaUtil.getInstance();
     private final ExternalAnnotationsManager myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myRefManager.getProject());
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitElement(expression);
+    public boolean visitFile(@NotNull UFile node) {
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement instanceof RefJavaFileImpl) {
+        myRefManager.buildReferences(refElement);
+      }
+      return true;
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public boolean visitDeclaration(@NotNull UDeclaration node) {
+      processComments(node);
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
+      }
+
+      if (node.getJavaPsi() instanceof PsiModifierListOwner modifierListOwner) {
+        PsiAnnotation externalAnnotation =
+          myExternalAnnotationsManager.findExternalAnnotation(modifierListOwner, BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        UAnnotation uAnnotation = UastContextKt.toUElement(externalAnnotation, UAnnotation.class);
+        if (uAnnotation != null) {
+          retrieveSuppressions(uAnnotation, node);
+        }
+      }
+      return true;
     }
 
+    @Override
+    public boolean visitExpression(@NotNull UExpression node) {
+      // for lambda expressions and method references
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
+      }
+      return true;
+    }
 
     @Override
-    public void visitReferenceParameterList(final PsiReferenceParameterList list) {
-      super.visitReferenceParameterList(list);
-      final PsiMember member = PsiTreeUtil.getParentOfType(list, PsiMember.class);
+    public boolean visitField(@NotNull UField node) {
+      visitDeclaration(node);
+      return false;
+    }
 
-      if (member instanceof PsiTypeParameter) {
-        final PsiMember owner = ((PsiTypeParameter)member).getOwner();
-        if (owner != null) {
-          for (PsiClassType type : ((PsiTypeParameter)member).getExtendsListTypes()) {
-            myRefUtil.addTypeReference(owner, type, myRefManager);
+    @Override
+    public boolean visitVariable(@NotNull UVariable variable) {
+      myRefUtil.addTypeReference((UElement)variable, variable.getType(), myRefManager);
+      if (variable instanceof UParameter) {
+        final RefElement refElement = myRefManager.getReference(variable.getSourcePsi());
+        if (refElement instanceof RefParameterImpl) {
+          myRefManager.buildReferences(refElement);
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public boolean visitAnnotation(@NotNull UAnnotation annotation) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (Comparing.strEqual(qualifiedName, BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME) ||
+          Comparing.strEqual(qualifiedName, "kotlin.Suppress")) {
+        UAnnotated annotated = UastUtils.getParentOfType(annotation, UAnnotated.class);
+        if (annotated == null) {
+          UElement parent = annotation.getUastParent();
+          if (parent == null) {
+            PsiElement sourcePsi = annotation.getSourcePsi();
+            if (sourcePsi != null) {
+              annotated = UastContextKt.toUElement(sourcePsi.getContainingFile(), UFile.class);
+            }
+          }
+        }
+        retrieveSuppressions(annotation, annotated);
+      }
+      return false;
+    }
+
+    private void retrieveSuppressions(UAnnotation annotation, UAnnotated annotated) {
+      if (annotated != null) {
+        PsiElement annotatedSrc = annotated.getSourcePsi();
+        final WritableRefElement element = (WritableRefElement)myRefManager.getReference(annotatedSrc);
+        if (element != null) {
+          StringBuilder buf = new StringBuilder();
+          final List<UNamedExpression> nameValuePairs = annotation.getAttributeValues();
+          for (UNamedExpression nameValuePair : nameValuePairs) {
+            UExpression value = nameValuePair.getExpression();
+            if (value instanceof UInjectionHost host) {
+              String val = host.evaluateToString();
+              if (val != null) {
+                buf.append(",").append(val.replaceAll("[{}\"]", ""));
+              }
+            }
+            else if (value instanceof UCallExpression call && call.getKind() == UastCallKind.NESTED_ARRAY_INITIALIZER) {
+              for (UExpression argument : call.getValueArguments()) {
+                if (argument instanceof UInjectionHost host) {
+                  String val = host.evaluateToString();
+                  if (val != null) {
+                    buf.append(",").append(val);
+                  }
+                }
+              }
+            }
+          }
+
+          if (!buf.isEmpty()) {
+            String suppressId = buf.substring(1);
+            element.addSuppression(suppressId);
+
+            if (annotatedSrc instanceof PsiField field) {
+              addSuppressionsForSiblings(field, suppressId);
+            }
           }
         }
       }
-
-      final PsiType[] typeArguments = list.getTypeArguments();
-      for (PsiType type : typeArguments) {
-        myRefUtil.addTypeReference(member, type, myRefManager);
-      }
     }
 
-    @Override
-    public void visitClass(PsiClass aClass) {
-      if (!(aClass instanceof PsiTypeParameter)) {
-        super.visitClass(aClass);
-        RefElement refClass = myRefManager.getReference(aClass);
-        if (refClass != null) {
-          ((RefClassImpl)refClass).buildReferences();
-        }
-      }
-    }
-
-    @Override
-    public void visitMethod(final PsiMethod method) {
-      super.visitMethod(method);
-      final RefElement refElement = myRefManager.getReference(method);
-      if (refElement instanceof RefMethodImpl) {
-        ((RefMethodImpl)refElement).buildReferences();
-      }
-    }
-
-    @Override
-    public void visitField(final PsiField field) {
-      super.visitField(field);
-      final RefElement refElement = myRefManager.getReference(field);
-      if (refElement instanceof RefFieldImpl) {
-        ((RefFieldImpl)refElement).buildReferences();
-      }
-    }
-
-    @Override
-    public void visitDocComment(PsiDocComment comment) {
-      super.visitDocComment(comment);
-      final PsiDocTag[] tags = comment.getTags();
-      for (PsiDocTag tag : tags) {
-        if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-          final PsiElement[] dataElements = tag.getDataElements();
-          if (dataElements.length > 0) {
-            final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(comment, PsiModifierListOwner.class);
-            if (listOwner != null) {
-              final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
-              if (element != null) {
-                String suppression = StringUtil.join(dataElements, PsiElement::getText, ",");
-                element.addSuppression(suppression);
+    //TODO support suppressions by comment tag in kotlin
+    private void processComments(@NotNull UElement node) {
+      for (UComment comment : node.getComments()) {
+        PsiElement psi = comment.getSourcePsi();
+        if (psi instanceof PsiDocComment docComment) {
+          final PsiDocTag[] tags = docComment.getTags();
+          for (PsiDocTag tag : tags) {
+            if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+              final PsiElement[] dataElements = tag.getDataElements();
+              if (dataElements.length > 0) {
+                final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psi, PsiModifierListOwner.class);
+                if (listOwner != null) {
+                  final WritableRefElement element = (WritableRefElement)myRefManager.getReference(listOwner);
+                  if (element != null) {
+                    String suppression = StringUtil.join(dataElements, PsiElement::getText, ",");
+                    element.addSuppression(suppression);
+                  }
+                }
               }
             }
           }
@@ -493,95 +613,23 @@ public class RefJavaManagerImpl extends RefJavaManager {
       }
     }
 
-    @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
-      super.visitAnnotation(annotation);
-      if (Comparing.strEqual(annotation.getQualifiedName(), BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME)) {
-        retrieveSuppressions(annotation, PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class));
-      }
-    }
-
-    private void retrieveSuppressions(PsiAnnotation annotation, PsiModifierListOwner listOwner) {
-      if (listOwner != null) {
-        final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
-        if (element != null) {
-          StringBuilder buf = new StringBuilder();
-          final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
-          for (PsiNameValuePair nameValuePair : nameValuePairs) {
-            buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));
-          }
-          if (buf.length() > 0) {
-            element.addSuppression(buf.substring(1));
+    private void addSuppressionsForSiblings(PsiField listOwner, String suppressId) {
+      PsiField field = listOwner;
+      while (true) {
+        PsiElement psiElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(field);
+        if (psiElement == null || !JavaTokenType.COMMA.equals(psiElement.getNode().getElementType())) {
+          break;
+        }
+        psiElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(psiElement);
+        if (psiElement instanceof PsiField f) {
+          field = f;
+          RefElement refElement = myRefManager.getReference(field);
+          if (refElement != null) {
+            ((WritableRefElement)refElement).addSuppression(suppressId);
           }
         }
-      }
-    }
-
-    @Override
-    public void visitVariable(PsiVariable variable) {
-      super.visitVariable(variable);
-      myRefUtil.addTypeReference(variable, variable.getType(), myRefManager);
-      if (variable instanceof PsiParameter) {
-        final RefElement reference = myRefManager.getReference(variable);
-        if (reference instanceof RefParameterImpl) {
-          ((RefParameterImpl)reference).buildReferences();
-        }
-      }
-    }
-
-    @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
-      super.visitInstanceOfExpression(expression);
-      final PsiTypeElement typeElement = expression.getCheckType();
-      if (typeElement != null) {
-        myRefUtil.addTypeReference(expression, typeElement.getType(), myRefManager);
-      }
-    }
-
-    @Override
-    public void visitThisExpression(PsiThisExpression expression) {
-      super.visitThisExpression(expression);
-      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
-      if (qualifier != null) {
-        myRefUtil.addTypeReference(expression, expression.getType(), myRefManager);
-        RefClass ownerClass = myRefUtil.getOwnerClass(myRefManager, expression);
-        if (ownerClass != null) {
-          RefClassImpl refClass = (RefClassImpl)myRefManager.getReference(qualifier.resolve());
-          if (refClass != null) {
-            refClass.addInstanceReference(ownerClass);
-          }
-        }
-      }
-    }
-
-    @Override
-    public void visitModule(PsiJavaModule javaModule) {
-      super.visitModule(javaModule);
-      RefElement refElement = myRefManager.getReference(javaModule);
-      if (refElement != null) {
-        ((RefJavaModuleImpl)refElement).buildReferences();
-      }
-    }
-
-    @Override
-    public void visitJavaFile(PsiJavaFile file) {
-      super.visitJavaFile(file);
-      RefElement refElement = myRefManager.getReference(file);
-      if (refElement != null) {
-        ((RefJavaFileImpl)refElement).buildReferences();
-      }
-    }
-
-    @Override
-    public void visitModifierList(PsiModifierList list) {
-      super.visitModifierList(list);
-      PsiElement parent = list.getParent();
-      if (parent instanceof PsiModifierListOwner) {
-        PsiModifierListOwner listOwner = (PsiModifierListOwner)parent;
-        PsiAnnotation externalAnnotation = myExternalAnnotationsManager.findExternalAnnotation(listOwner, 
-                                                                                               BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-        if (externalAnnotation != null) {
-          retrieveSuppressions(externalAnnotation, listOwner);
+        else {
+          break;
         }
       }
     }

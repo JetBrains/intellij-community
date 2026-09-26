@@ -1,4 +1,4 @@
-// "Replace with 'Set.of' call" "true"
+// "Replace with 'Set.of()' call" "true"
 import java.util.*;
 
 public class Test {

@@ -1,0 +1,83 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build fleet.build.bundles` start
+create_kotlinc_options(
+    name = "custom_bundles",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "bundles",
+    srcs = glob(
+        [
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bundles",
+    module_name = "fleet.build.bundles",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/build/codecache",
+        "//fleet/build/platform",
+        "//fleet/build/sign",
+        "//fleet/codecache",
+        "//fleet/build/fs",
+        "//fleet/bundles",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:slf4j-api",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
+)
+
+jvm_library(
+    name = "bundles_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bundles",
+    module_name = "fleet.build.bundles",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bundles",
+        "//fleet/build/codecache:codecache_test_lib",
+        "//fleet/build/platform:platform_test_lib",
+        "//fleet/build/sign:sign_test_lib",
+        "//fleet/codecache:codecache_test_lib",
+        "//fleet/build/fs:fs_test_lib",
+        "//fleet/bundles:bundles_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
+)
+### auto-generated section `build fleet.build.bundles` end
+
+### auto-generated section `iml fleet.build.bundles` start
+exports_files(
+    [
+        "fleet.build.bundles.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.build.bundles` end

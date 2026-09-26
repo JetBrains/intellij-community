@@ -5,7 +5,7 @@ FunctionTypeComment:a.functionTypeComment
       PyReferenceExpression: int
         PsiElement(Py:IDENTIFIER)('int')
       PsiElement(Py:COMMA)(',')
-      PsiErrorElement:expression expected
+      PsiErrorElement:Expression expected
         <empty list>
       PsiElement(Py:RPAR)(')')
     PsiWhiteSpace(' ')

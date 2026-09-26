@@ -1,0 +1,8 @@
+{
+  "mainFile": "sample/Source.kt",
+  "enabledInK2": true,
+  "targetClassFqName": "sample.Target",
+  "candidateKind": "VALUE_PARAMETER",
+  "candidateDisplayName": "t",
+  "comment": "declaration clash in the target class"
+}

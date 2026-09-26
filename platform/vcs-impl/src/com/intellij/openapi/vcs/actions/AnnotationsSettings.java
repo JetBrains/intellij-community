@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.codeHighlighting.ColorGenerator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.codeHighlighting.ColorGenerator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +21,7 @@ public class AnnotationsSettings {
 
   static final List<ColorKey> ANCHOR_COLOR_KEYS = createColorKeys(ANCHORS_COUNT);
 
-  @NotNull
-  private static List<ColorKey> createColorKeys(int count) {
+  private static @NotNull List<ColorKey> createColorKeys(int count) {
     List<ColorKey> keys = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       keys.add(ColorKey.createColorKey("VCS_ANNOTATIONS_COLOR_" + (i + 1)));
@@ -45,11 +30,10 @@ public class AnnotationsSettings {
   }
 
   public static AnnotationsSettings getInstance() {
-    return ServiceManager.getService(AnnotationsSettings.class);
+    return ApplicationManager.getApplication().getService(AnnotationsSettings.class);
   }
 
-  @NotNull
-  public List<Color> getAuthorsColors(@Nullable EditorColorsScheme scheme) {
+  public @NotNull List<Color> getAuthorsColors(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     List<Color> colors = getOrderedColors(scheme);
 
@@ -64,8 +48,7 @@ public class AnnotationsSettings {
     return authorColors;
   }
 
-  @NotNull
-  public List<Color> getOrderedColors(@Nullable EditorColorsScheme scheme) {
+  public @NotNull List<Color> getOrderedColors(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     List<Color> anchorColors = new ArrayList<>();

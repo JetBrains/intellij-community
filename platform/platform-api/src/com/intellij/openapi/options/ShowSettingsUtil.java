@@ -1,74 +1,87 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-public abstract class ShowSettingsUtil {
+/**
+ * Opens Settings dialog or specific {@link Configurable}.
+ */
+public abstract class ShowSettingsUtil implements ShowSettingsUtilEx {
   public static ShowSettingsUtil getInstance() {
-    return ServiceManager.getService(ShowSettingsUtil.class);
+    return ApplicationManager.getApplication().getService(ShowSettingsUtil.class);
   }
 
-  public abstract void showSettingsDialog(Project project, ConfigurableGroup... group);
+  public abstract void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups);
 
-  public abstract void showSettingsDialog(@Nullable Project project, Class toSelect);
+  public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> toSelect);
 
-  public abstract void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect);
+  public abstract void showSettingsDialog(@Nullable Project project, @NlsContexts.ConfigurableName @NotNull String nameToSelect);
 
-  public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
+  public abstract void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect);
 
-  public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
-                                                                   @NotNull Class<T> configurableClass,
-                                                                   @Nullable Consumer<T> additionalConfiguration);
-  
-  public abstract boolean editConfigurable(Project project, Configurable configurable);
+  public abstract <T extends Configurable> void showSettingsDialog(
+    @Nullable Project project,
+    @NotNull Class<T> configurableClass,
+    @Nullable Consumer<? super T> additionalConfiguration
+  );
 
-  public abstract boolean editConfigurable(@Nullable Project project, Configurable configurable, @Nullable Runnable advancedInitialization);
+  public abstract void showSettingsDialog(
+    @Nullable Project project,
+    @NotNull Predicate<? super Configurable> predicate,
+    @Nullable Consumer<? super Configurable> additionalConfiguration
+  );
+
+  /**
+   * Show a dialog with a defined configurable.
+   * <p>
+   * editConfigurable method is a good choice to create and show a quick on-call created configurable.
+   * If you'd like to show a configurable that is a part of the settings dialog, prefer using showSettingsDialog method
+   */
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable);
+
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization);
+
+  public abstract <T extends Configurable> boolean editConfigurable(@Nullable Project project, @NotNull T configurable, @NotNull Consumer<? super T> advancedInitialization);
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NlsContexts.ConfigurableName @NotNull String displayName);
 
-  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NlsContexts.ConfigurableName @NotNull String displayName, @Nullable Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Project project, @NonNls String dimensionServiceKey, Configurable configurable, boolean showApplyButton);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
+
+  public abstract boolean editConfigurable(
+    @Nullable Project project,
+    @NotNull String dimensionServiceKey,
+    @NotNull Configurable configurable,
+    boolean showApplyButton
+  );
+
+  public abstract boolean editConfigurable(Component parent, @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
   /**
-   * @deprecated create a new instance of configurable instead
-   * to remove in IDEA 15
+   * Closes both types of settings - modal and non-modal
+   * @param project - current project
    */
-  public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
+  public abstract void closeSettings(@NotNull Project project, @NotNull Component component);
 
   /**
-   * @deprecated create a new instance of configurable instead
-   * to remove in IDEA 15
+   * OS-specific name.
    */
-  public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
-
-  public static String getSettingsMenuName() {
-    return SystemInfo.isMac ? "Preferences" : "Settings";
+  public static @Nls String getSettingsMenuName() {
+    return CommonBundle.settingsTitle();
   }
 }

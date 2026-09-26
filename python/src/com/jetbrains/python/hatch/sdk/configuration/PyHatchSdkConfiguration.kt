@@ -1,0 +1,144 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.hatch.sdk.configuration
+
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.resolvePythonBinary
+import com.jetbrains.python.PythonInfo
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.hatch.HATCH_TOML
+import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
+import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.hatch.HatchVirtualEnvironment
+import com.intellij.python.pytools.resolveExecutable
+import com.jetbrains.python.Result
+import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.hatch.cli.HatchEnvironment
+import com.intellij.python.hatch.getHatchService
+import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.hatch.sdk.createSdk
+import com.jetbrains.python.module.getEel
+import com.jetbrains.python.onSuccess
+import com.jetbrains.python.orLogException
+import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.configuration.CheckToml
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.EnvExists
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
+
+internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
+  companion object {
+    private val LOGGER = Logger.getInstance(PyHatchSdkConfiguration::class.java)
+  }
+
+  override val toolId: ToolId = HATCH_TOOL_ID
+
+  override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, HATCH_TOML)
+
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, true) },
+    ) { envExists -> { createSdk(module, envExists) } }
+
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, false) },
+    ) { envExists -> { createSdk(module, envExists) } }
+
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
+
+  private suspend fun checkManageableEnv(
+    module: Module, checkToml: CheckToml,
+  ): EnvCheckerResult = reportRawProgress {
+    it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
+    val eel = module.getEel()
+    val hatchService = module.getHatchService(eel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
+    val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
+    val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
+
+    if (canManage) {
+      val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().orLogException(LOGGER)?.pythonVirtualEnvironment
+      when (defaultEnv) {
+        // Asked of the one environment this is about. Listing them no longer runs every interpreter to learn a version
+        // nobody had asked for, so the version for this one is read here — from what it records, and only otherwise by
+        // running it.
+        is PythonVirtualEnvironment.Existing -> {
+          val info = defaultEnv.pythonInfo ?: defaultEnv.pythonHomePath.path.pythonInfoOrNull()
+          if (info == null) envNotFound else EnvCheckerResult.EnvFound(info, intentionName)
+        }
+        is PythonVirtualEnvironment.NotExisting, null -> envNotFound
+      }
+    }
+    else EnvCheckerResult.CannotConfigure
+  }
+
+  /**
+   * Creates SDK for Hatch, it will also create a new Hatch environment and use an existing one.
+   *
+   * @param module module used to create SDK
+   * @param envExists shows whether the environment already exists or a new one should be created
+   */
+  private fun createSdk(module: Module, envExists: EnvExists): PyResult<Sdk> = runWithModalBlockingOrInBackground(
+    project = module.project,
+    msg = PyBundle.message("sdk.set.up.hatch.environment")
+  ) {
+    val fileSystem = module.getEel().toFileSystem()
+    val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
+                              ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
+    val hatchService = module.getHatchService(fileSystem, hatchExecutablePath.path).getOr { return@runWithModalBlockingOrInBackground it }
+
+    val environment = if (envExists) {
+      val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
+        .mapSuccess { it?.pythonVirtualEnvironment }
+        .getOr { return@runWithModalBlockingOrInBackground it }
+      when (defaultEnv) {
+        is PythonVirtualEnvironment.Existing -> defaultEnv
+        is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
+          PyBundle.message("sdk.could.not.find.valid.hatch.environment")
+        )
+      }
+    }
+    else {
+      hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
+    }
+
+    val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
+    val sdk = hatchVenv.createSdk(
+      workingDirectoryPath = hatchService.getWorkingDirectoryPath(),
+      fileSystem = fileSystem,
+    ).onSuccess { sdk ->
+      sdk.setAssociationToModule(module)
+    }
+    sdk
+  }
+
+}
+
+/**
+ * What the environment at this home path is, without starting it where it says so itself.
+ *
+ * A hatch environment is a virtualenv, so its `pyvenv.cfg` states the version, which environment detection reads. The
+ * interpreter is only run for one that records nothing.
+ */
+private suspend fun java.nio.file.Path.pythonInfoOrNull(): PythonInfo? {
+  val binary = resolvePythonBinary() ?: return null
+  val environment = withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull } ?: return null
+  return environment.getPythonInfo().successOrNull
+}

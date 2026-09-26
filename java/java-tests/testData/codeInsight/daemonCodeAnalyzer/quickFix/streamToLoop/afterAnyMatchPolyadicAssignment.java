@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
   public boolean testCond(List<String> list) {
       boolean x = false;
-      for (String s: list) {
+      for (String s : list) {
           if (s.isEmpty()) {
               x = list.stream().anyMatch(Objects::isNull);
               break;

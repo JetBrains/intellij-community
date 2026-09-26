@@ -1,0 +1,35 @@
+NavigationItem:
+    name: ClassObjectClass
+ItemPresentation:
+    presentableText: ClassObjectClass
+    locationString: (in test.InClassObject.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: class ClassObjectClass {}
+QualifiedName: test.InClassObject.Companion.ClassObjectClass
+
+NavigationItem:
+    name: ClassObjectInterface
+ItemPresentation:
+    presentableText: ClassObjectInterface
+    locationString: (in test.InClassObject.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface ClassObjectInterface {}
+QualifiedName: test.InClassObject.Companion.ClassObjectInterface
+
+NavigationItem:
+    name: ClassObjectInterfaceWithImpl
+ItemPresentation:
+    presentableText: ClassObjectInterfaceWithImpl
+    locationString: (in test.InClassObject.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface ClassObjectInterfaceWithImpl {
+QualifiedName: test.InClassObject.Companion.ClassObjectInterfaceWithImpl
+
+NavigationItem:
+    name: ClassObjectObject
+ItemPresentation:
+    presentableText: ClassObjectObject
+    locationString: (in test.InClassObject.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/objectKotlin.svg, Public])
+TargetElement: object ClassObjectObject() {}
+QualifiedName: test.InClassObject.Companion.ClassObjectObject

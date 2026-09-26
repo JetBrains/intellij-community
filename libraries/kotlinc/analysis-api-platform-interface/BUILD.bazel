@@ -1,0 +1,55 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.analysis.api.platform.interface` start
+jvm_library(
+    name = "libraries-kotlinc-analysis-api-platform-interface",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.analysis.api.platform.interface",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface",
+        "//platform/backend",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+    ],
+)
+
+jvm_library(
+    name = "libraries-kotlinc-analysis-api-platform-interface_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinc.analysis.api.platform.interface",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-analysis-api-platform-interface",
+        "//platform/backend:backend_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.analysis.api.platform.interface` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.analysis.api.platform.interface` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.analysis.api.platform.interface.iml",
+        "resources/intellij.libraries.kotlinc.analysis.api.platform.interface.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.analysis.api.platform.interface` end

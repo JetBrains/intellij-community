@@ -1,0 +1,3 @@
+class Test(`foo bar`: Int) {
+    val `foo bar` = `foo bar`
+}

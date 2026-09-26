@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports <code>map { it.key }.toSet()</code> call chains on map receivers that could be replaced with <code>keys</code>.
+<p>
+    <b>Note:</b> While this transformation is beneficial for readability and performance, as it avoids unnecessary intermediate collections,
+    it may change call semantics because <code>keys</code> returns a read-only view of the map's <code>keys</code>,
+    whereas the original call chain creates a copy of the <code>keys</code>.</p>
+<p>The quick-fix replaces the call chain with the map's <code>keys</code> property.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(steps: Map&lt;String, Int&gt;) {
+      steps.map { it.key }.toSet()
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(steps: Map&lt;String, Int&gt;) {
+      steps.keys
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

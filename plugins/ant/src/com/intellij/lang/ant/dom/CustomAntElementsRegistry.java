@@ -1,33 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.lang.ant.config.impl.AntResourcesClassLoader;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -37,63 +28,80 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
-import gnu.trove.THashMap;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Storage for user-defined tasks and data types
  * parsed from ant files
  * @author Eugene Zhuravlev
  */
-public class CustomAntElementsRegistry {
-
-  public static ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = new ThreadLocal<Boolean>() {
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
+public final class CustomAntElementsRegistry {
+  public static final ThreadLocal<Boolean> ourIsBuildingClasspathForCustomTagLoading = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  private static final Logger LOG = Logger.getInstance(CustomAntElementsRegistry.class);
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
-  private final Map<XmlName, ClassProvider> myCustomElements = new THashMap<>();
-  private final Map<AntDomNamedElement, String> myTypeDefErrors = new THashMap<>();
-  private final Map<XmlName, AntDomNamedElement> myDeclarations = new THashMap<>();
-  private final Map<String, ClassLoader> myNamedLoaders = new THashMap<>();
+  private final Map<XmlName, ClassProvider> myCustomElements = new HashMap<>();
+  private final Map<AntDomNamedElement, String> myTypeDefErrors = new HashMap<>();
+  private final Map<XmlName, AntDomNamedElement> myDeclarations = new HashMap<>();
+  private final Map<String, ClassLoader> myNamedLoaders = new HashMap<>();
+  private final boolean myIsComplete;
 
-  private CustomAntElementsRegistry(final AntDomProject antProject) {
-    antProject.accept(new CustomTagDefinitionFinder(antProject));
+  private CustomAntElementsRegistry(AntDomProject antProject) {
+    boolean isComplete = false;
+    try {
+      antProject.accept(new CustomTagDefinitionFinder(antProject));
+      isComplete = true;
+    }
+    catch (ProcessCanceledException ignored) {
+    }
+    finally {
+      myIsComplete = isComplete;
+    }
+  }
+
+  public boolean isComplete() {
+    return myIsComplete;
   }
 
   public static CustomAntElementsRegistry getInstance(AntDomProject antProject) {
-    CustomAntElementsRegistry registry = antProject.getContextAntProject().getUserData(REGISTRY_KEY);
+    final AntDomProject contextProject = antProject.getContextAntProject();
+    CustomAntElementsRegistry registry = contextProject != null? contextProject.getUserData(REGISTRY_KEY) : null;
     if (registry == null) {
       registry = new CustomAntElementsRegistry(antProject);
-      antProject.putUserData(REGISTRY_KEY, registry);
+      if (registry.isComplete()) {
+        antProject.putUserData(REGISTRY_KEY, registry);
+      }
     }
     return registry;
   }
 
-  @NotNull
-  public Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
+  public @NotNull Set<XmlName> getCompletionVariants(AntDomElement parentElement) {
     if (parentElement instanceof AntDomCustomElement) {
       // this case is already handled in AntDomExtender when defining children
-      return Collections.emptySet(); 
+      return Collections.emptySet();
     }
     final Set<XmlName> result = new HashSet<>();
-    
+
     final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-    final AntDomMacroDef restrictToMacroDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
-    final AntDomScriptDef restrictToScriptDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+    final AntDomMacroDef restrictToMacroDef = Pair.getFirst(contextMacroOrScriptDef);
+    final AntDomScriptDef restrictToScriptDef = Pair.getSecond(contextMacroOrScriptDef);
     final boolean parentIsDataType = parentElement.isDataType();
 
     for (final XmlName xmlName : myCustomElements.keySet()) {
@@ -119,22 +127,20 @@ public class CustomAntElementsRegistry {
         if (declaringElement instanceof AntDomMacroDef || declaringElement instanceof AntDomScriptDef || declaringElement instanceof AntDomTaskdef) {
           continue;
         }
-        if (declaringElement instanceof AntDomTypeDef) {
-          final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
-          final Class clazz = lookupClass(xmlName);
+        if (declaringElement instanceof AntDomTypeDef typedef) {
+          Class<?> clazz = lookupClass(xmlName);
           if (clazz != null && typedef.isTask(clazz)) {
-            continue;                                                           
+            continue;
           }
         }
       }
-      
+
       result.add(xmlName);
     }
     return result;
   }
 
-  @Nullable
-  private Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
+  private @Nullable Pair<AntDomMacroDef, AntDomScriptDef> getContextMacroOrScriptDef(AntDomElement element) {
     final AntDomMacroDef macrodef = element.getParentOfType(AntDomMacroDef.class, false);
     if (macrodef != null) {
       return new Pair<>(macrodef, null);
@@ -151,43 +157,40 @@ public class CustomAntElementsRegistry {
     return null;
   }
 
-  @Nullable
-  public AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
+  public @Nullable AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
     final AntDomElement declaration = myDeclarations.get(customElementName);
     if (declaration == null) {
       return null;
     }
-    
+
     if (declaration instanceof AntDomMacrodefElement) {
       final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-      final AntDomMacroDef macrodefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
+      final AntDomMacroDef macrodefUsed = Pair.getFirst(contextMacroOrScriptDef);
       if (macrodefUsed == null || !macrodefUsed.equals(declaration.getParentOfType(AntDomMacroDef.class, true))) {
         return null;
       }
     }
     else if (declaration instanceof AntDomScriptdefElement) {
       final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-      final AntDomScriptDef scriptDefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+      final AntDomScriptDef scriptDefUsed = Pair.getSecond(contextMacroOrScriptDef);
       if (scriptDefUsed == null || !scriptDefUsed.equals(declaration.getParentOfType(AntDomScriptDef.class, true))) {
         return null;
       }
     }
-    
+
     return declaration;
   }
 
   public AntDomNamedElement getDeclaringElement(XmlName customElementName) {
     return myDeclarations.get(customElementName);
   }
-  
-  @Nullable
-  public Class lookupClass(XmlName xmlName) {
-    final ClassProvider provider = myCustomElements.get(xmlName);
+
+  public @Nullable Class<?> lookupClass(XmlName xmlName) {
+    ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.lookupClass();
   }
 
-  @Nullable
-  public String lookupError(XmlName xmlName) {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String lookupError(XmlName xmlName) {
     final ClassProvider provider = myCustomElements.get(xmlName);
     return provider == null ? null : provider.getError();
   }
@@ -200,7 +203,7 @@ public class CustomAntElementsRegistry {
     return StreamEx.ofKeys(myDeclarations, typedef::equals).anyMatch(name -> lookupError(name) != null);
   }
 
-  public List<String> getTypeLoadingErrors(AntDomTypeDef typedef) {
+  public List<@NlsSafe String> getTypeLoadingErrors(AntDomTypeDef typedef) {
     final String generalError = myTypeDefErrors.get(typedef);
     if (generalError != null) {
       return Collections.singletonList(generalError);
@@ -219,7 +222,7 @@ public class CustomAntElementsRegistry {
     }
     return errors == null ? Collections.emptyList() : errors;
   }
-  
+
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {
     final String loaderRef = typedef.getLoaderRef().getStringValue();
     if (loaderRef != null) {
@@ -229,8 +232,7 @@ public class CustomAntElementsRegistry {
     }
   }
 
-  @NotNull
-  private ClassLoader getClassLoader(AntDomCustomClasspathComponent customComponent, AntDomProject antProject) {
+  private @NotNull ClassLoader getClassLoader(AntDomCustomClasspathComponent customComponent, AntDomProject antProject) {
     final String loaderRef = customComponent.getLoaderRef().getStringValue();
     if (loaderRef != null) {
       final ClassLoader loader = myNamedLoaders.get(loaderRef);
@@ -241,8 +243,7 @@ public class CustomAntElementsRegistry {
     return createClassLoader(collectUrls(customComponent), antProject);
   }
 
-  @Nullable
-  public static PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
+  public static @Nullable PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
     final VirtualFile vFile = originalFile.getVirtualFile();
     if (vFile == null) {
       return null;
@@ -258,14 +259,11 @@ public class CustomAntElementsRegistry {
 
   public static PsiFile loadContentAsFile(Project project, InputStream stream, LanguageFileType fileType) throws IOException {
     final StringBuilder builder = new StringBuilder();
-    try {
+    try (stream) {
       int nextByte;
       while ((nextByte = stream.read()) >= 0) {
         builder.append((char)nextByte);
       }
-    }
-    finally {
-      stream.close();
     }
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     return factory.createFileFromText("_ant_dummy__." + fileType.getDefaultExtension(), fileType, builder, LocalTimeCounter.currentTime(), false, false);
@@ -275,13 +273,10 @@ public class CustomAntElementsRegistry {
     final XmlName xmlName = new XmlName(customTagName, nsUri == null? "" : nsUri);
     myCustomElements.put(xmlName, classProvider);
     myDeclarations.put(xmlName, declaringTag);
+    ProgressManager.checkCanceled();
   }
 
-  private static PsiFile createDummyFile(@NonNls final String name, final LanguageFileType type, final CharSequence str, Project project) {
-    return PsiFileFactory.getInstance(project).createFileFromText(name, type, str, LocalTimeCounter.currentTime(), false, false);
-  }
-
-  private static boolean isXmlFormat(AntDomTypeDef typedef, @NotNull final String resourceOrFileName) {
+  private static boolean isXmlFormat(AntDomTypeDef typedef, final @NotNull String resourceOrFileName) {
     final String format = typedef.getFormat().getStringValue();
     if (format != null) {
       return "xml".equalsIgnoreCase(format);
@@ -289,16 +284,15 @@ public class CustomAntElementsRegistry {
     return StringUtil.endsWithIgnoreCase(resourceOrFileName, ".xml");
   }
 
-  @NotNull
-  public static ClassLoader createClassLoader(final List<URL> urls, final AntDomProject antProject) {
-    final ClassLoader parentLoader = antProject.getClassLoader();
-    if (urls.size() == 0) {
+  public static @NotNull ClassLoader createClassLoader(List<Path> files, AntDomProject antProject) {
+    ClassLoader parentLoader = antProject.getClassLoader();
+    if (files.isEmpty()) {
       return parentLoader;
     }
-    return new AntResourcesClassLoader(urls, parentLoader, false, false);
+    return new AntResourcesClassLoader(files, parentLoader, false, false);
   }
 
-  public static List<URL> collectUrls(AntDomClasspathElement typedef) {
+  public static List<Path> collectUrls(AntDomClasspathElement typedef) {
     boolean cleanupNeeded = false;
     if (!ourIsBuildingClasspathForCustomTagLoading.get()) {
       ourIsBuildingClasspathForCustomTagLoading.set(Boolean.TRUE);
@@ -306,49 +300,27 @@ public class CustomAntElementsRegistry {
     }
 
     try {
-      final List<URL> urls = new ArrayList<>();
+      List<Path> paths = new ArrayList<>();
       // check classpath attribute
-      final List<File> cpFiles = typedef.getClasspath().getValue();
+      List<File> cpFiles = typedef.getClasspath().getValue();
       if (cpFiles != null) {
-        for (File file : cpFiles) {
-          try {
-            urls.add(toLocalURL(file));
-          }
-          catch (MalformedURLException ignored) {
-            LOG.info(ignored);
-          }
-        }
+        addClasspathEntries(paths, cpFiles);
       }
 
       final HashSet<AntFilesProvider> processed = new HashSet<>();
       final AntDomElement referencedPath = typedef.getClasspathRef().getValue();
       if (referencedPath instanceof AntFilesProvider) {
-        for (File cpFile : ((AntFilesProvider)referencedPath).getFiles(processed)) {
-          try {
-            urls.add(toLocalURL(cpFile));
-          }
-          catch (MalformedURLException ignored) {
-            LOG.info(ignored);
-          }
-        }
+        addClasspathEntries(paths, ((AntFilesProvider)referencedPath).getFiles(processed));
       }
       // check nested elements
-      
-      for (final Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
+      for (Iterator<AntDomElement> it = typedef.getAntChildrenIterator(); it.hasNext();) {
         AntDomElement child = it.next();
         if (child instanceof AntFilesProvider) {
-          for (File cpFile : ((AntFilesProvider)child).getFiles(processed)) {
-            try {
-              urls.add(toLocalURL(cpFile));
-            }
-            catch (MalformedURLException ignored) {
-              LOG.info(ignored);
-            }
-          }
+          addClasspathEntries(paths, ((AntFilesProvider)child).getFiles(processed));
         }
       }
 
-      return urls;
+      return paths;
     }
     finally {
       if (cleanupNeeded) {
@@ -357,20 +329,44 @@ public class CustomAntElementsRegistry {
     }
   }
 
-  private static URL toLocalURL(final File file) throws MalformedURLException {
-    return file.toURI().toURL();
+  private static void addClasspathEntries(List<Path> paths, List<File> cpFiles) {
+    for (File file : cpFiles) {
+      if (!isValidClassPathEntry(file)) {
+        continue;
+      }
+      Path path;
+      try {
+        path = file.toPath();
+      }
+      catch (InvalidPathException e) {
+        LOG.info(e);
+        continue;
+      }
+
+      paths.add(path);
+    }
   }
 
-  private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
+  private static boolean isValidClassPathEntry(File file) {
+    if (file.isFile()) {
+      final String name = file.getName();
+      return StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip");
+    }
+    return true;
+  }
+
+  private final class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
     private final Set<AntDomElement> myElementsOnThePath = new HashSet<>();
     private final Set<String> processedAntlibs = new HashSet<>();
     private final AntDomProject myAntProject;
 
-    public CustomTagDefinitionFinder(AntDomProject antProject) {
+    CustomTagDefinitionFinder(AntDomProject antProject) {
       myAntProject = antProject;
     }
 
+    @Override
     public void visitAntDomElement(AntDomElement element) {
+      ProgressManager.checkCanceled();
       if (element instanceof AntDomCustomElement || myElementsOnThePath.contains(element)) {
         return; // avoid stack overflow
       }
@@ -390,10 +386,8 @@ public class CustomAntElementsRegistry {
                   final InputStream stream = loader.getResourceAsStream(antLibResource);
                   if (stream != null) {
                     try {
-                      final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
-                      if (xmlFile != null) {
-                        loadDefinitionsFromAntlib(xmlFile, uri, loader, null, myAntProject);
-                      }
+                      final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, XmlFileType.INSTANCE);
+                      loadDefinitionsFromAntlib(xmlFile, uri, loader, null, myAntProject);
                     }
                     catch (IOException e) {
                       LOG.info(e);
@@ -411,7 +405,9 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitMacroDef(AntDomMacroDef macrodef) {
+      ProgressManager.checkCanceled();
       final String customTagName = macrodef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = macrodef.getUri().getStringValue();
@@ -425,7 +421,9 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitScriptDef(AntDomScriptDef scriptdef) {
+      ProgressManager.checkCanceled();
       final String customTagName = scriptdef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = scriptdef.getUri().getStringValue();
@@ -442,7 +440,7 @@ public class CustomAntElementsRegistry {
               addCustomDefinition(element, customTagName, nsUri, ClassProvider.create(classname, classLoader));
             }
             else {
-              Class clazz = null;
+              Class<?> clazz = null;
               final String typeName = element.getElementType().getStringValue();
               if (typeName != null) {
                 clazz = lookupClass(new XmlName(typeName));
@@ -450,12 +448,12 @@ public class CustomAntElementsRegistry {
                   if (reflectedProject == null) { // lazy init
                     reflectedProject = ReflectedProject.getProject(myAntProject.getClassLoader());
                   }
-                  final Hashtable<String, Class> coreTasks = reflectedProject.getTaskDefinitions();
+                  Map<String, Class<?>> coreTasks = reflectedProject.getTaskDefinitions();
                   if (coreTasks != null) {
                     clazz = coreTasks.get(typeName);
                   }
                   if (clazz == null) {
-                    final Hashtable<String, Class> coreTypes = reflectedProject.getDataTypeDefinitions();
+                    Map<String, Class<?>> coreTypes = reflectedProject.getDataTypeDefinitions();
                     if (coreTypes != null) {
                       clazz = coreTypes.get(typeName);
                     }
@@ -469,7 +467,9 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitPresetDef(AntDomPresetDef presetdef) {
+      ProgressManager.checkCanceled();
       final String customTagName = presetdef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = presetdef.getUri().getStringValue();
@@ -477,17 +477,23 @@ public class CustomAntElementsRegistry {
       }
     }
 
+    @Override
     public void visitTypeDef(AntDomTypeDef typedef) {
+      ProgressManager.checkCanceled();
       // if loaderRef attribute is specified, make sure the loader is built and stored
       rememberNamedClassLoader(typedef, myAntProject);
       defineCustomElements(typedef, myAntProject);
     }
 
+    @Override
     public void visitInclude(AntDomInclude includeTag) {
+      ProgressManager.checkCanceled();
       processInclude(includeTag);
     }
 
+    @Override
     public void visitImport(AntDomImport importTag) {
+      ProgressManager.checkCanceled();
       processInclude(importTag);
     }
 
@@ -532,10 +538,10 @@ public class CustomAntElementsRegistry {
         if (stream != null) {
           try {
             if (isXmlFormat(typedef, resource)) {
-              xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
+              xmlFile = (XmlFile)loadContentAsFile(project, stream, XmlFileType.INSTANCE);
             }
             else {
-              propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
+              propFile = (PropertiesFile)loadContentAsFile(project, stream, PropertiesFileType.INSTANCE);
             }
           }
           catch (IOException e) {
@@ -550,10 +556,10 @@ public class CustomAntElementsRegistry {
         final PsiFileSystemItem file = typedef.getFile().getValue();
         if (file instanceof PsiFile) {
           if (isXmlFormat(typedef, file.getName())) {
-            xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, StdFileTypes.XML);
+            xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, XmlFileType.INSTANCE);
           }
           else { // assume properties format
-            propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, StdFileTypes.PROPERTIES);
+            propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, PropertiesFileType.INSTANCE);
           }
         }
       }
@@ -596,6 +602,5 @@ public class CustomAntElementsRegistry {
         }
       }
     }
-
   }
 }

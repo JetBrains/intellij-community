@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,10 +14,8 @@ import java.util.List;
 
 /**
  * Represents a Java annotation.
- *
- * @author ven
  */
-public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, JvmAnnotation {
+public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */
@@ -32,7 +30,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
    */
   enum TargetType {
     // see java.lang.annotation.ElementType
-    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE,
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE, RECORD_COMPONENT,
     // auxiliary value, used when it's impossible to determine annotation's targets
     UNKNOWN;
 
@@ -52,8 +50,8 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
    *
    * @return the class name, or null if the annotation is unresolved.
    */
-  @Nullable
-  @NonNls
+  @Override
+  @Nullable @NlsSafe
   String getQualifiedName();
 
   /**
@@ -95,35 +93,33 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
   <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, @Nullable T value);
 
   /**
-   * Returns an owner of the annotation - usually a parent, but for type annotations the owner might be a type element.
+   * Returns an owner of the annotation - usually a parent, but for type annotations the owner might be a PsiType or PsiTypeElement.
    *
    * @return annotation owner
    */
   @Nullable
   PsiAnnotationOwner getOwner();
 
-  @Nullable
-  @Override
-  default PsiElement getSourceElement() {
-    return this;
+  /**
+   * @return the target of {@link #getNameReferenceElement()}, if it's an {@code @interface}, otherwise null
+   */
+  default @Nullable PsiClass resolveAnnotationType() {
+    PsiJavaCodeReferenceElement element = getNameReferenceElement();
+    PsiElement declaration = element == null ? null : element.resolve();
+    if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
+    return (PsiClass)declaration;
   }
 
   @Override
-  default void navigate(boolean requestFocus) {}
-
-  @Override
-  default boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  default boolean canNavigateToSource() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  default List<JvmAnnotationAttribute> getAttributes() {
+  default @NotNull List<JvmAnnotationAttribute> getAttributes() {
     return Arrays.asList(getParameterList().getAttributes());
+  }
+
+  /**
+   * @return whether the annotation has the given qualified name. Specific languages may provide efficient implementation
+   * that doesn't always create/resolve annotation reference.
+   */
+  default boolean hasQualifiedName(@NotNull String qualifiedName) {
+    return qualifiedName.equals(getQualifiedName());
   }
 }

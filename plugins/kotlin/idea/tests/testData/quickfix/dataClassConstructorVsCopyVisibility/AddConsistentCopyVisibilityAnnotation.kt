@@ -1,0 +1,5 @@
+
+// "Add '@ConsistentCopyVisibility' annotation" "true"
+data class Foo private<caret> constructor(val x: Int)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix

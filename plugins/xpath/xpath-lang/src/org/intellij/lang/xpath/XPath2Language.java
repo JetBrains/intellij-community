@@ -34,8 +34,8 @@ public final class XPath2Language extends Language {
   }
 
   public static class XPathSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-    @NotNull
-    protected SyntaxHighlighter createHighlighter() {
+    @Override
+    protected @NotNull SyntaxHighlighter createHighlighter() {
       return new XPathHighlighter(true);
     }
   }

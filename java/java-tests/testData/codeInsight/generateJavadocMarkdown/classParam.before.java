@@ -1,0 +1,2 @@
+/// <caret>
+interface MarkdownFirstClassParam<T> {}

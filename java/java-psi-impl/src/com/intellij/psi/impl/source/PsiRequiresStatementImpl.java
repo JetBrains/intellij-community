@@ -1,30 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
+
 import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
+  private SoftReference<PsiJavaModuleReference> myReference;
+
   public PsiRequiresStatementImpl(@NotNull PsiRequiresStatementStub stub) {
     super(stub, JavaStubElementTypes.REQUIRES_STATEMENT);
   }
@@ -51,8 +48,28 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
   }
 
   @Override
+  public PsiJavaModuleReference getModuleReference() {
+    PsiRequiresStatementStub stub = getStub();
+    if (stub != null) {
+      String refText = nullize(stub.getModuleName());
+      if (refText == null) return null;
+      PsiJavaModuleReference ref = dereference(myReference);
+      if (ref == null) {
+        ref = JavaPsiFacade.getInstance(getProject()).getParserFacade().createModuleReferenceFromText(refText, this).getReference();
+        myReference = new SoftReference<>(ref);
+      }
+      return ref;
+    }
+    else {
+      myReference = null;
+      PsiJavaModuleReferenceElement refElement = getReferenceElement();
+      return refElement != null ? refElement.getReference() : null;
+    }
+  }
+
+  @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

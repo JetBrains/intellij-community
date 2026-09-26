@@ -22,12 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
+public class GenerateSuperMethodCallTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -37,6 +37,7 @@ public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
   public void testImplement() { doTest(); }
   public void testOverride() { doTest(); }
   public void testOverrideInNestedBlock() { doTest(); }
+  public void testDefaultMethod() { doTest(); }
 
 
   private void doTest() {
@@ -48,8 +49,8 @@ public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
     boolean mustBeAvailable = new File(getTestDataPath() + after).exists();
     boolean isValid = new GenerateSuperMethodCallAction() {
       @Override
-      protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
-        return super.isValidForFile(project, editor, file);
+      protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile psiFile) {
+        return super.isValidForFile(project, editor, psiFile);
       }
     }.isValidForFile(getProject(), getEditor(), getFile());
     assertEquals(mustBeAvailable, isValid);

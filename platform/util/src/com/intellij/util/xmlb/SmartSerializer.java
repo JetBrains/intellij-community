@@ -1,46 +1,33 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
-import gnu.trove.TObjectFloatHashMap;
+import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class SmartSerializer {
-  private LinkedHashSet<String> mySerializedAccessorNameTracker;
-  private TObjectFloatHashMap<String> myOrderedBindings;
+  private Set<String> serializedAccessorNameTracker;
+  private Object2FloatMap<String> orderedBindings;
   private final SerializationFilter mySerializationFilter;
 
-  public SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
-    mySerializedAccessorNameTracker = trackSerializedNames ? new LinkedHashSet<String>() : null;
+  private SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
+    serializedAccessorNameTracker = trackSerializedNames ? CollectionFactory.createSmallMemoryFootprintLinkedSet() : null;
 
     mySerializationFilter = useSkipEmptySerializationFilter ?
                             new SkipEmptySerializationFilter() {
                               @Override
                               protected ThreeState accepts(@NotNull String name, @NotNull Object beanValue) {
-                                return mySerializedAccessorNameTracker != null && mySerializedAccessorNameTracker.contains(name) ? ThreeState.YES : ThreeState.UNSURE;
+                                return serializedAccessorNameTracker != null && serializedAccessorNameTracker.contains(name) ? ThreeState.YES : ThreeState.UNSURE;
                               }
                             } :
                             new SkipDefaultValuesSerializationFilters() {
                               @Override
                               public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-                                if (mySerializedAccessorNameTracker != null && mySerializedAccessorNameTracker.contains(accessor.getName())) {
+                                if (serializedAccessorNameTracker != null && serializedAccessorNameTracker.contains(accessor.getName())) {
                                   return true;
                                 }
                                 return super.accepts(accessor, bean);
@@ -52,22 +39,22 @@ public final class SmartSerializer {
     this(true, false);
   }
 
-  @NotNull
-  public static SmartSerializer skipEmptySerializer() {
+  public static @NotNull SmartSerializer skipEmptySerializer() {
     return new SmartSerializer(true, true);
   }
 
   public void readExternal(@NotNull Object bean, @NotNull Element element) {
-    if (mySerializedAccessorNameTracker != null) {
-      mySerializedAccessorNameTracker.clear();
-      myOrderedBindings = null;
+    if (serializedAccessorNameTracker != null) {
+      serializedAccessorNameTracker.clear();
+      orderedBindings = null;
     }
 
     BeanBinding beanBinding = getBinding(bean);
-    beanBinding.deserializeInto(bean, element, mySerializedAccessorNameTracker);
+    assert beanBinding.bindings != null;
+    BeanBindingKt.deserializeJdomIntoBean(bean, element, beanBinding.bindings, serializedAccessorNameTracker);
 
-    if (mySerializedAccessorNameTracker != null) {
-      myOrderedBindings = beanBinding.computeBindingWeights(mySerializedAccessorNameTracker);
+    if (serializedAccessorNameTracker != null) {
+      orderedBindings = beanBinding.computeBindingWeights$intellij_platform_util(serializedAccessorNameTracker);
     }
   }
 
@@ -77,27 +64,26 @@ public final class SmartSerializer {
 
   public void writeExternal(@NotNull Object bean, @NotNull Element element, boolean preserveCompatibility) {
     BeanBinding binding = getBinding(bean);
-    if (preserveCompatibility && myOrderedBindings != null) {
-      binding.sortBindings(myOrderedBindings);
+    if (preserveCompatibility && orderedBindings != null) {
+      binding.sortBindings(orderedBindings);
     }
 
-    if (preserveCompatibility || mySerializedAccessorNameTracker == null) {
-      binding.serializeInto(bean, element, mySerializationFilter);
+    if (preserveCompatibility || serializedAccessorNameTracker == null) {
+      binding.serializeProperties(bean, element, mySerializationFilter);
     }
     else {
-      LinkedHashSet<String> oldTracker = mySerializedAccessorNameTracker;
+      Set<String> oldTracker = serializedAccessorNameTracker;
       try {
-        mySerializedAccessorNameTracker = null;
-        binding.serializeInto(bean, element, mySerializationFilter);
+        serializedAccessorNameTracker = null;
+        binding.serializeProperties(bean, element, mySerializationFilter);
       }
       finally {
-        mySerializedAccessorNameTracker = oldTracker;
+        serializedAccessorNameTracker = oldTracker;
       }
     }
   }
 
-  @NotNull
-  private static BeanBinding getBinding(@NotNull Object bean) {
-    return (BeanBinding)XmlSerializerImpl.serializer.getClassBinding(bean.getClass());
+  private static @NotNull BeanBinding getBinding(@NotNull Object bean) {
+    return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(bean.getClass());
   }
 }

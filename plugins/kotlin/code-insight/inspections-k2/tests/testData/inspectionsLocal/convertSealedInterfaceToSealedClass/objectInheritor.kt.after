@@ -1,0 +1,5 @@
+// FIX: Convert to sealed class
+sealed class Result
+object Loading : Result()
+data object Empty : Result()
+class Success : Result()

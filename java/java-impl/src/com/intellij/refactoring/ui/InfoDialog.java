@@ -1,52 +1,45 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
   private JTextArea myTextArea;
-  private final String myText;
+  private final @Nls String myText;
   private boolean isToShowInFuture;
 
-  public InfoDialog(String text, Project project) {
+  public InfoDialog(@Nls String text, Project project) {
     super(project, false);
     myText = text;
-    setButtonsAlignment(SwingUtilities.CENTER);
-    setTitle(RefactoringBundle.message("information.title"));
+    setTitle(JavaRefactoringBundle.message("information.title"));
     init();
-    setOKButtonText(RefactoringBundle.message("ok.button"));
+    setOKButtonText(JavaRefactoringBundle.message("ok.button"));
   }
 
-  @NotNull
-  protected Action[] createActions(){
+  @Override
+  protected Action @NotNull [] createActions(){
     return new Action[]{getOKAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEtchedBorder());
@@ -55,7 +48,7 @@ public class InfoDialog extends DialogWrapper{
     JPanel cbPanel = new JPanel(new BorderLayout());
     cbPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
     myShowInFutureCheckBox = new JCheckBox();
-    myShowInFutureCheckBox.setText(RefactoringBundle.message("do.not.show.this.message.in.the.future"));
+    myShowInFutureCheckBox.setText(JavaRefactoringBundle.message("do.not.show.this.message.in.the.future"));
     panel.add(cbPanel, BorderLayout.SOUTH);
     cbPanel.add(myShowInFutureCheckBox, BorderLayout.WEST);
 
@@ -74,6 +67,7 @@ public class InfoDialog extends DialogWrapper{
     isToShowInFuture = true;
     myShowInFutureCheckBox.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           isToShowInFuture = !myShowInFutureCheckBox.isSelected();
         }

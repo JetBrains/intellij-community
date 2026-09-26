@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+public final class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
 
   @Override
   public boolean isValidFor(Editor editor, PsiFile file) {
@@ -35,10 +32,10 @@ public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandle
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, file);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, psiFile);
     if (aClass != null) {
-      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass, TypeEvalContext.userInitiated(project, file));
+      PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass, TypeEvalContext.userInitiated(project, psiFile));
     }
   }
 

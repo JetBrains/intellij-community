@@ -1,0 +1,57 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.communityOnly` start
+content_module_jar(module = ":community-communityOnly")
+### auto-generated section `dev intellij.python.community.communityOnly` end
+
+### auto-generated section `build intellij.python.community.communityOnly` start
+jvm_library(
+    name = "community-communityOnly",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.communityOnly",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python:python-community-impl",
+    ],
+)
+
+jvm_library(
+    name = "community-communityOnly_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.communityOnly",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":community-communityOnly",
+        "//python:python-community-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.communityOnly` end
+
+### auto-generated section `iml intellij.python.community.communityOnly` start
+exports_files(
+    [
+        "intellij.python.community.communityOnly.iml",
+        "resources/intellij.python.community.communityOnly.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.communityOnly` end

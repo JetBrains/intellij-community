@@ -1,0 +1,11 @@
+// "Add constructor parameters from Base(String)" "true"
+// K2_ERROR: INVISIBLE_REFERENCE
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
+open class Base private constructor(p1: Int, val p2: Int) {
+    private constructor() : this(0, 1)
+    protected constructor(s: String) : this(s.length, 1)
+}
+
+class C : Base<caret>
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParametersFix

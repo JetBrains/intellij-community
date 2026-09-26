@@ -30,6 +30,6 @@ class Foo<T> {
 
   public static void main(String[] args) {
     Foo<?> foo = getFoo();
-    double value = <error descr="Inconvertible types; cannot cast 'capture<?>' to 'double'">(double) foo.getValue()</error>;
+    double value = (double) foo.getValue();
   }
 }

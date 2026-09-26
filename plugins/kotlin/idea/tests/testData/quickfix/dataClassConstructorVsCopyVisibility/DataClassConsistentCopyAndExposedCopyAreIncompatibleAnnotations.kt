@@ -1,0 +1,8 @@
+// K2_ERROR: DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS
+// K2_ERROR: DATA_CLASS_CONSISTENT_COPY_AND_EXPOSED_COPY_ARE_INCOMPATIBLE_ANNOTATIONS
+
+// "Remove annotation" "true"
+@ConsistentCopyVisibility<caret>
+@ExposedCopyVisibility
+data class Foo private constructor(val x: Int)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

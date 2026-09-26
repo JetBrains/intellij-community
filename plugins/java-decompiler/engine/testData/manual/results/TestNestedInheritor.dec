@@ -1,0 +1,45 @@
+package pkg;
+
+public class TestNestedInheritor {
+   public static void main(String[] args) {
+   }// 23
+
+   public static class Parent {
+      public class NestedParent {
+      }
+   }
+
+   public static class Child extends Parent {
+      public class NestedChild extends Child {
+         Integer myInteger;
+
+         public NestedChild(Integer i) {
+            this.myInteger = i;// 16
+         }// 17
+      }
+   }
+}
+
+class 'pkg/TestNestedInheritor' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+}
+
+class 'pkg/TestNestedInheritor$Child$NestedChild' {
+   method '<init> (Lpkg/TestNestedInheritor$Child;Ljava/lang/Integer;)V' {
+      4      16
+      5      16
+      6      16
+      7      16
+      8      16
+      9      17
+   }
+}
+
+Lines mapping:
+16 <-> 17
+17 <-> 18
+23 <-> 5
+Not mapped:
+15

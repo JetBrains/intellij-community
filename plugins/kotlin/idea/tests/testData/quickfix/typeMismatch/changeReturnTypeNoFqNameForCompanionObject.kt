@@ -1,0 +1,14 @@
+// "Change return type of enclosing function 'Companion.foo' to 'Int'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+package foo.bar
+
+class A {
+    companion object {
+        fun foo(): String {
+            return <caret>1
+        }
+    }
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

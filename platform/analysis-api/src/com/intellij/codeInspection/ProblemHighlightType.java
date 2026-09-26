@@ -1,51 +1,81 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.psi.PsiElement;
+
+/**
+ * Defines type used to determine highlighting of {@link ProblemDescriptor}.
+ * Please use {@link #GENERIC_ERROR_OR_WARNING}, otherwise user's settings would be ignored.
+ * <p/>
+ * If you need specific text attributes in the editor, please specify it in the {@code plugin.xml} using {@link InspectionEP#editorAttributes}
+ *
+ * @see com.intellij.codeInspection.ProblemDescriptorUtil#getHighlightInfoType
+ */
 public enum ProblemHighlightType {
 
-  /** Underlying highlighting with color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel} */
+  /**
+   * Use underlying highlighting with a style specified in the inspection settings.
+   *
+   * @see com.intellij.codeHighlighting.HighlightDisplayLevel
+   * @see InspectionEP#getDefaultLevel
+   * @see InspectionEP#editorAttributes
+   * @see com.intellij.codeInsight.daemon.impl.LocalInspectionsPass#highlightInfoFromDescriptor
+   */
   GENERIC_ERROR_OR_WARNING,
 
-  /** Changes font color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel} */
+  /**
+   * Changes font color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel}.
+   */
   LIKE_UNKNOWN_SYMBOL,
 
   LIKE_DEPRECATED,
 
   LIKE_UNUSED_SYMBOL,
 
-  /** The same as {@link #LIKE_UNKNOWN_SYMBOL} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
+  /**
+   * The same as {@link #LIKE_UNKNOWN_SYMBOL} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level.
+   */
   ERROR,
 
-  /** The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
+  /**
+   * Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WARNING} severity level.
+   */
+  WARNING,
+
+  /**
+   * The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level.
+   */
   GENERIC_ERROR,
 
-  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level
-   * use #WEAK_WARNING instead*/
-  @Deprecated
+  /**
+   * Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level.
+   *
+   * @deprecated use {@link #WEAK_WARNING} instead
+   */
+  @Deprecated(forRemoval = true)
   INFO,
 
-  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WEAK_WARNING} severity level */
+  /**
+   * Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WEAK_WARNING} severity level.
+   */
   WEAK_WARNING,
 
-  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#DO_NOT_SHOW} severity level
-   *  Please ensure that if used from inspection explicitly, corresponding problem is added in the onTheFly mode only
+  /**
+   * Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#DO_NOT_SHOW} severity level.
+   * Please ensure that if used from inspection explicitly, corresponding problem is added in {@code onTheFly} mode only.
    */
   INFORMATION,
 
-  /** JEP 277 enhanced deprecation */
-  LIKE_MARKED_FOR_REMOVAL
+  /**
+   * JEP 277 enhanced deprecation.
+   */
+  LIKE_MARKED_FOR_REMOVAL,
+
+  /**
+   * Marks places which were not checked during local analysis e.g., because of performance considerations. 
+   * These places won't be anyhow highlighted in the editor though Redundant suppression inspection would skip reporting.
+   * 
+   * @see ProblemsHolder#registerPossibleProblem(PsiElement) for more details.
+   */
+  POSSIBLE_PROBLEM
 }

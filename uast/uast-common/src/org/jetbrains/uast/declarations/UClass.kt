@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
+import org.jetbrains.uast.internal.convertOrReport
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
@@ -26,6 +14,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class wrapper to be used in [UastVisitor].
  */
 interface UClass : UDeclaration, PsiClass {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiClass
 
   override val javaPsi: PsiClass
@@ -39,9 +30,11 @@ interface UClass : UDeclaration, PsiClass {
   /**
    * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
    */
+  @Deprecated("will return null if existing superclass is not convertable to Uast, use `javaPsi.superClass` instead",
+              ReplaceWith("javaPsi.superClass"))
   override fun getSuperClass(): UClass? {
-    val superClass = psi.superClass ?: return null
-    return getUastContext().convertWithParent(superClass)
+    val superClass = javaPsi.superClass ?: return null
+    return UastFacade.convertWithParent(superClass)
   }
 
   val uastSuperTypes: List<UTypeReferenceExpression>
@@ -52,43 +45,43 @@ interface UClass : UDeclaration, PsiClass {
   val uastDeclarations: List<UDeclaration>
 
   override fun getFields(): Array<UField> =
-    psi.fields.map { getLanguagePlugin().convert<UField>(it, this) }.toTypedArray()
+    javaPsi.fields.mapNotNull { convertOrReport<UField>(it, this) }.toTypedArray()
 
   override fun getInitializers(): Array<UClassInitializer> =
-    psi.initializers.map { getLanguagePlugin().convert<UClassInitializer>(it, this) }.toTypedArray()
+    javaPsi.initializers.mapNotNull { convertOrReport<UClassInitializer>(it, this) }.toTypedArray()
 
   override fun getMethods(): Array<UMethod> =
-    psi.methods.map { getLanguagePlugin().convert<UMethod>(it, this) }.toTypedArray()
+    javaPsi.methods.mapNotNull { convertOrReport<UMethod>(it, this) }.toTypedArray()
 
   override fun getInnerClasses(): Array<UClass> =
-    psi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
+    javaPsi.innerClasses.mapNotNull { convertOrReport<UClass>(it, this) }.toTypedArray()
 
   override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitClass(this)) return
-    annotations.acceptList(visitor)
+    uAnnotations.acceptList(visitor)
     uastDeclarations.acceptList(visitor)
     visitor.afterVisitClass(this)
   }
 
   override fun asRenderString(): String = buildString {
-    append(psi.renderModifiers())
+    append(javaPsi.renderModifiers())
     val kind = when {
-      psi.isAnnotationType -> "annotation"
-      psi.isInterface -> "interface"
-      psi.isEnum -> "enum"
+      javaPsi.isAnnotationType -> "annotation"
+      javaPsi.isInterface -> "interface"
+      javaPsi.isEnum -> "enum"
       else -> "class"
     }
-    append(kind).append(' ').append(psi.name)
+    append(kind).append(' ').append(javaPsi.name)
     val superTypes = uastSuperTypes
     if (superTypes.isNotEmpty()) {
       append(" : ")
       append(superTypes.joinToString { it.asRenderString() })
     }
-    appendln(" {")
-    uastDeclarations.forEachIndexed { index, declaration ->
-      appendln(declaration.asRenderString().withMargin)
+    appendLine(" {")
+    uastDeclarations.forEachIndexed { _, declaration ->
+      appendLine(declaration.asRenderString().withMargin)
     }
     append("}")
   }
@@ -98,8 +91,9 @@ interface UClass : UDeclaration, PsiClass {
 }
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnonymousClass
 }
 
-@Deprecated("no more needed, use UClass", ReplaceWith("UClass"))
-interface UClassTypeSpecific : UClass

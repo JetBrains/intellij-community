@@ -1,0 +1,7 @@
+fun test() {
+    fun foo(string: String, n: Int): Boolean {
+        return string.length - n/2 > 1
+    }
+
+    foo("1", 2)
+}

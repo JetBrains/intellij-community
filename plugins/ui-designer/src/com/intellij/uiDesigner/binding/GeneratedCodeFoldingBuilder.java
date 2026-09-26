@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.ASTNode;
@@ -20,7 +6,15 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -29,21 +23,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+
+public final class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
+  @Override
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
-    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
+    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     return UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text");
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return true;
   }
@@ -53,11 +47,10 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     if (body.getStatementCount() != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
-        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
+        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression call)) {
       return false;
     }
 
-    PsiMethodCallExpression call = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression();
     return AsmCodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 
@@ -66,18 +59,28 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     private final List<FoldingDescriptor> myFoldingData = new ArrayList<>();
 
     @Override
-      public void visitMethod(PsiMethod method) {
-      if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName()) ||
-          AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(method.getName())) {
+      public void visitMethod(@NotNull PsiMethod method) {
+      String methodName = method.getName();
+      if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(methodName) ||
+          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(methodName) ||
+          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE.equals(methodName)) {
+
         addFoldingData(method);
       }
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitField(@NotNull PsiField field) {
+      if (AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD.equals(field.getName())) {
+        addFoldingData(field);
+      }
+    }
+
+    @Override
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       if (isGeneratedUIInitializer(initializer)) {
         addFoldingData(initializer);
       }

@@ -1,72 +1,82 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
 import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.List;
+import java.util.function.IntConsumer;
 
-import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.VK_DOWN;
+import static java.awt.event.KeyEvent.VK_ENTER;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_TAB;
+import static java.awt.event.KeyEvent.VK_UP;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class JBListTable {
-  protected final JTable myInternalTable;
+  protected final JBTable myInternalTable;
   private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
   protected MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
+  public JBListTable(@NotNull JBTable t, @NotNull Disposable parent) {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
-    myMainTable.setStriped(true);
+    myMainTable.setShowGrid(false);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
+  }
+
+  public void setVisibleRowCount(int rowCount) {
+    myInternalTable.setVisibleRowCount(rowCount);
   }
 
   public void stopEditing() {
@@ -76,7 +86,7 @@ public abstract class JBListTable {
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
-      textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+      textField.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.FALSE);
       textField.putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
     }
   }
@@ -101,7 +111,7 @@ public abstract class JBListTable {
   protected boolean isRowEditable(int row) {
     return true;
   }
-  
+
   protected boolean isRowEmpty(int row) {
     return false;
   }
@@ -119,14 +129,14 @@ public abstract class JBListTable {
       }
     };
 
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), JBUI.scaleFontSize(12));
+    Font font = EditorFontType.getGlobalPlainFont();
+    font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
 
     if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
+      panel.setBackground(UIUtil.getTableSelectionBackground(true));
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground(true));
     } else {
       panel.setBackground(UIUtil.getTableBackground());
       if (selected) {
@@ -137,10 +147,10 @@ public abstract class JBListTable {
     return panel;
   }
 
-  private class MyCellEditor extends AbstractTableCellEditor {
+  private final class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
-    public MyCellEditor(JBTableRowEditor editor) {
+    MyCellEditor(JBTableRowEditor editor) {
       myEditor = editor;
     }
 
@@ -158,12 +168,14 @@ public abstract class JBListTable {
         @Override
         public void addNotify() {
           super.addNotify();
+          validate();
           int height = getPreferredSize().height;
           if (height > table.getRowHeight(row)) {
             myRowResizeAnimator.resize(row, height);
           }
         }
 
+        @Override
         public void removeNotify() {
           if (myCellEditor != null) myCellEditor.saveFocusIndex();
           super.removeNotify();
@@ -219,15 +231,16 @@ public abstract class JBListTable {
     }
   }
 
-  private static class RowResizeAnimator implements ActionListener, Disposable {
+  private static final class RowResizeAnimator implements ActionListener, Disposable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
-    private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
+    private final Int2ObjectMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
+    private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
+    private boolean myDisposed;
 
-    public RowResizeAnimator(JTable table) {
+    RowResizeAnimator(JTable table) {
       myTable = table;
     }
 
@@ -241,15 +254,20 @@ public abstract class JBListTable {
       doAnimationStep(e.getWhen());
     }
 
+    void revive() {
+      myDisposed = false;
+    }
+
     @Override
     public void dispose() {
+      myDisposed = true;
       stopAnimation();
       // enforce all animations are completed
       doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning()) {
+      if (!myAnimationTimer.isRunning() && !myDisposed) {
         myAnimationTimer.start();
       }
     }
@@ -258,32 +276,27 @@ public abstract class JBListTable {
       myAnimationTimer.stop();
     }
 
-    private void doAnimationStep(final long updateTime) {
-      final TIntArrayList completeRows = new TIntArrayList(myRowAnimationStates.size());
-      myRowAnimationStates.forEachEntry(new TIntObjectProcedure<RowAnimationState>() {
-        @Override
-        public boolean execute(int row, RowAnimationState animationState) {
-          if (animationState.doAnimationStep(updateTime)) {
-            completeRows.add(row);
-          }
-          return true;
+    private void doAnimationStep(long updateTime) {
+      IntList completeRows = new IntArrayList(myRowAnimationStates.size());
+      for (Int2ObjectMap.Entry<RowAnimationState> entry : myRowAnimationStates.int2ObjectEntrySet()) {
+        if (entry.getValue().doAnimationStep(updateTime)) {
+          completeRows.add(entry.getIntKey());
         }
-      });
-      completeRows.forEach(row -> {
+      }
+      completeRows.forEach((IntConsumer)row -> {
         myRowAnimationStates.remove(row);
-        return true;
       });
       if (myRowAnimationStates.isEmpty()) {
         stopAnimation();
       }
     }
 
-    private class RowAnimationState {
+    private final class RowAnimationState {
       private final int myRow;
       private final int myTargetHeight;
       private long myLastUpdateTime;
 
-      public RowAnimationState(int row, int targetHeight) {
+      RowAnimationState(int row, int targetHeight) {
         myRow = row;
         myTargetHeight = targetHeight;
         myLastUpdateTime = System.currentTimeMillis();
@@ -310,15 +323,21 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTable extends JBTable {
+  private final class MyTable extends JBTable {
 
-    public MyTable() {
+    MyTable() {
       super(new MyTableModel(myInternalTable.getModel()));
     }
 
     @Override
     public MyTableModel getModel() {
       return (MyTableModel)super.getModel();
+    }
+
+    @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+      super.changeSelection(rowIndex, columnIndex, toggle, extend);
+      scrollRectToVisible(getCellRect(rowIndex, columnIndex, false));
     }
 
     @Override
@@ -469,7 +488,7 @@ public abstract class JBListTable {
         return myCellEditor;
       }
       myCellEditor = null;
-      return myCellEditor;
+      return null;
     }
 
     @Override
@@ -480,13 +499,19 @@ public abstract class JBListTable {
     }
 
     @Override
+    public void addNotify() {
+      super.addNotify();
+      myRowResizeAnimator.revive();
+    }
+
+    @Override
     public void removeNotify() {
       super.removeNotify();
       Disposer.dispose(myRowResizeAnimator);
     }
   }
 
-  private class MyTableModel extends JBListTableModel {
+  private final class MyTableModel extends JBListTableModel {
 
     MyTableModel(TableModel model) {
       super(model);

@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.hint;
 
-/**
- * @author cdr
- */
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface PriorityQuestionAction extends QuestionAction {
   int getPriority(); // hint with higher priority overlaps hint with lower priority
+
+  int INTENTION_BULB_PRIORITY = -10;
 }

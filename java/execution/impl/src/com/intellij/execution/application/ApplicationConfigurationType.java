@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,28 +16,41 @@ import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
+// cannot be final because of backward compatibility (~8 external usages)
+/**
+ * DO NOT extend this class directly.
+ */
 public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public ApplicationConfigurationType() {
-    myFactory = new ConfigurationFactoryEx(this) {
-      @NotNull
+    myFactory = new ConfigurationFactory(this) {
       @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      public Class<? extends BaseState> getOptionsClass() {
+        return JvmMainMethodRunConfigurationOptions.class;
+      }
+
+      @Override
+      public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
 
       @Override
-      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
+      public @NotNull String getId() {
+        return ApplicationConfigurationType.this.getId();
+      }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return true;
       }
     };
   }
 
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return ExecutionBundle.message("application.configuration.name");
   }
 
@@ -68,23 +70,26 @@ public class ApplicationConfigurationType implements ConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "concepts.run.configuration";
+  }
+
+  @Override
   public boolean isDumbAware() {
     return true;
   }
 
-  @Nullable
-  public static PsiClass getMainClass(PsiElement element) {
+  public static @Nullable PsiClass getMainClass(PsiElement element) {
     while (element != null) {
-      if (element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element;
-        if (PsiMethodUtil.findMainInClass(aClass) != null) {
+      if (element instanceof PsiClass aClass) {
+        if (PsiMethodUtil.hasMainInClass(aClass)) {
           return aClass;
         }
       }
-      else if (element instanceof PsiJavaFile) {
-        final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+      else if (element instanceof PsiJavaFile javaFile) {
+        final PsiClass[] classes = javaFile.getClasses();
         for (PsiClass aClass : classes) {
-          if (PsiMethodUtil.findMainInClass(aClass) != null) {
+          if (PsiMethodUtil.hasMainInClass(aClass)) {
             return aClass;
           }
         }
@@ -96,13 +101,17 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "Application";
   }
 
-  @NotNull
-  public static ApplicationConfigurationType getInstance() {
+  @Override
+  public @NotNull String getTag() {
+    String id = getId();
+    return id.equals("Application") ? "java" : id;
+  }
+
+  public static @NotNull ApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(ApplicationConfigurationType.class);
   }
 }

@@ -1,0 +1,106 @@
+MODULES
+project
+
+project.buildSrc
+
+project.buildSrc.main
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    targetPlatform = JVM (17)
+
+project.buildSrc.test
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    additionalVisibleModuleNames = :buildSrc:main
+    targetPlatform = JVM (17)
+
+project.sub-kotlin
+
+project.sub-kotlin.commonMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)/Native (general)
+
+project.sub-kotlin.commonTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    additionalVisibleModuleNames = :sub-kotlin:commonMain
+    targetPlatform = JVM (17)/Native (general)
+
+project.sub-kotlin.jvmAndLinuxMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain
+    targetPlatform = JVM (17)/Native (general)
+
+project.sub-kotlin.jvmAndLinuxTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jvmAndLinuxMain
+    targetPlatform = JVM (17)/Native (general)
+
+project.sub-kotlin.jvmMain
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jvmAndLinuxMain
+    targetPlatform = JVM (17)
+
+project.sub-kotlin.jvmTest
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest, :sub-kotlin:jvmAndLinuxTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jvmAndLinuxMain, :sub-kotlin:jvmMain
+    targetPlatform = JVM (17)
+
+project.sub-kotlin.linuxX64Main
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jvmAndLinuxMain
+    targetPlatform = Native (linux_x64)
+
+project.sub-kotlin.linuxX64Test
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest, :sub-kotlin:jvmAndLinuxTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:jvmAndLinuxMain, :sub-kotlin:linuxX64Main
+    targetPlatform = Native (linux_x64)
+
+project.sub-kotlin.macosX64Main
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonMain
+    targetPlatform = Native (macos_x64)
+
+project.sub-kotlin.macosX64Test
+    externalProjectId = :sub-kotlin
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :sub-kotlin:commonTest
+    additionalVisibleModuleNames = :sub-kotlin:commonMain, :sub-kotlin:macosX64Main
+    targetPlatform = Native (macos_x64)
+
+
+Test configuration:
+- excluding following facet fields: compilerSettings

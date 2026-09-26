@@ -1,0 +1,21 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.openmap"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc.lite"/>
+    <module name="intellij.platform.util.coroutines"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <!-- `hasAttributes` exposes the `topicId` attribute to the listener index, so a listener is constructed on the first event of its topic -->
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
+                    interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" hasAttributes="true" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.projectRemoteTopicListener"
+                    interface="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener" hasAttributes="true" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

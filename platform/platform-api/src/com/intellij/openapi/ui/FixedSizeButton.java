@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 
 /**
  * This class represents non-resizable, non-focusable button with the
@@ -37,19 +27,13 @@ public class FixedSizeButton extends JButton {
 
   private FixedSizeButton(int size, JComponent component) {
     Icon icon = AllIcons.General.Ellipsis;
-    if (icon != null) {
-      // loading may fail at design time
-      setIcon(icon);
-    }
-    else {
-      setText(".");
-    }
+    setIcon(icon);
     mySize = size;
     myComponent = component;
-    setMargin(JBUI.emptyInsets());
+    setMargin(JBInsets.emptyInsets());
     setDefaultCapable(false);
     setFocusable(false);
-    if (((UIUtil.isUnderAquaLookAndFeel()) && size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
@@ -77,14 +61,17 @@ public class FixedSizeButton extends JButton {
     this(-1, component);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return getPreferredSize();
   }
 
+  @Override
   public Dimension getPreferredSize() {
     if (mySize != -1) {
       return new Dimension(mySize, mySize);

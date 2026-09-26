@@ -1,34 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutProvider, DumbAware {
   private final DefaultActionGroup myGroup;
   private final DirDiffSettings mySettings;
@@ -43,38 +41,39 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
         actions.add(new ChangeCompareModeAction(model, mode));
       }
     }
-    else {
-      getTemplatePresentation().setVisible(false);
-      getTemplatePresentation().setEnabled(false);
-    }
     myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[0]));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myButton.doClick();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
     e.getPresentation().setText(mySettings.compareMode.getPresentableName());
+    e.getPresentation().setEnabledAndVisible(mySettings.showCompareModes);
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    final JLabel label = new JLabel("Compare by:");
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    final JLabel label = new JLabel(DiffBundle.message("compare.by"));
     label.setDisplayedMnemonicIndex(0);
-    myButton = (JButton)super.createCustomComponent(presentation).getComponent(0);
+    myButton = (JButton)super.createCustomComponent(presentation, place).getComponent(0);
     return JBUI.Panels.simplePanel(myButton)
       .addToLeft(label)
       .withBorder(JBUI.Borders.empty(2, 6, 2, 0));
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return myGroup;
   }
 

@@ -1,40 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.util.Map;
 
 /**
- * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
-  @NotNull protected final LineAnnotationAspect myAspect;
+  protected final @NotNull LineAnnotationAspect myAspect;
   private final boolean myIsGutterAction;
 
   public AspectAnnotationFieldGutter(@NotNull FileAnnotation annotation,
@@ -54,16 +44,17 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @Override
   public String getLineText(int line, Editor editor) {
     final String value = isAvailable() ? myAspect.getValue(line) : "";
-    if (myAspect.getId() == LineAnnotationAspect.AUTHOR) {
+    if (LineAnnotationAspect.AUTHOR.equals(myAspect.getId())) {
       return ShortNameType.shorten(value, ShowShortenNames.getType());
     }
     return value;
   }
 
-  @Nullable
   @Override
-  public String getToolTip(final int line, final Editor editor) {
-    return isAvailable() ? XmlStringUtil.escapeString(myAnnotation.getToolTip(line)) : null;
+  public @Nullable String getToolTip(final int line, final Editor editor) {
+    String text = myAspect.getTooltipText(line);
+    if (text != null) return text;
+    return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
   }
 
   @Override
@@ -82,13 +73,38 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   }
 
   @Override
+  public EditorFontType getStyle(int line, Editor editor) {
+    EditorFontType style = myAspect.getStyle(line);
+    if (style != null) return style;
+    return super.getStyle(line, editor);
+  }
+
+  @Override
+  public @Nullable ColorKey getColor(int line, Editor editor) {
+    ColorKey color = myAspect.getColor(line);
+    if (color != null) return color;
+    return super.getColor(line, editor);
+  }
+
+  @Override
+  public @Nullable Color getBgColor(int line, Editor editor) {
+    Color color = myAspect.getBgColor(line);
+    if (color != null) return color;
+    return super.getBgColor(line, editor);
+  }
+
+  @Override
   public boolean isShowByDefault() {
     return myAspect.isShowByDefault();
   }
 
-  @Nullable
   @Override
-  public String getID() {
+  public @Nullable String getID() {
     return myAspect.getId();
+  }
+
+  @Override
+  public @NlsContexts.ListItem @Nullable String getDisplayName() {
+    return myAspect.getDisplayName();
   }
 }

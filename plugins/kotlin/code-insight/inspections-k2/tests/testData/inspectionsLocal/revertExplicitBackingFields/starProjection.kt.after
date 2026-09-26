@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+class A<T>
+
+fun test(): A<*> = A<String>()
+
+private val _x = test()
+val x: A<*>
+    get() = _x

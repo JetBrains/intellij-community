@@ -1,0 +1,16 @@
+// "Add 'operator' modifier" "true"
+// ERROR: 'operator' modifier is required on 'component2' in 'A'
+// K2_AFTER_ERROR: OPERATOR_MODIFIER_REQUIRED
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
+
+class A {
+    fun component1(): Int = 0
+    fun component2(): Int = 1
+}
+
+fun foo() {
+    val (<caret>zero, one) = A()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ModifierRequiredFixFactoriesKt$createFixIfAvailable$1

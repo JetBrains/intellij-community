@@ -1,34 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Base class and extension point for custom folding providers.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class CustomFoldingProvider {
   public static final ExtensionPointName<CustomFoldingProvider> EP_NAME = ExtensionPointName.create("com.intellij.customFoldingProvider");
+  private static final Logger LOG = Logger.getInstance(CustomFoldingProvider.class);
 
-  public static CustomFoldingProvider[] getAllProviders() {
-    return Extensions.getExtensions(EP_NAME);
+  public static @NotNull List<CustomFoldingProvider> getAllProviders() {
+    return EP_NAME.getExtensionList();
   }
 
   public abstract boolean isCustomRegionStart(String elementText);
@@ -38,11 +29,55 @@ public abstract class CustomFoldingProvider {
   /**
    * @return A description string shown in "Surround With" action.
    */
-  public abstract String getDescription();
-  
-  public abstract String getStartString();
-  public abstract String getEndString();
-  
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription();
+
+  /**
+   * If the method returns `false`, the inheritance class need:
+   *  1. override the method `isSupportedBy` and limit folding by a language-specific instantiation of `CustomFoldingBuilder`
+   *  2. the language-specific instantiation of `CustomFoldingBuilder` need to filter out language-specific
+   *     AST nodes in the overridden `CustomFoldingBuilder#isCustomFoldingCandidate(ASTNode)`
+   *
+   * @return true, if you like to wrap `getStartString/getEndString` return values
+   *         in language specific comment on folding generation
+   */
+  public boolean wrapStartEndMarkerTextInLanguageSpecificComment() {
+    return true;
+  }
+
+  /**
+   * @return true, if custom folding provider is supported
+   */
+  public boolean isSupportedBy(FoldingBuilder foldingBuilder) {
+    if (!wrapStartEndMarkerTextInLanguageSpecificComment()) {
+      // this method need to be overridden, if `wrapStartEndMarkerTextInLanguageSpecificComment` returns `false`.
+      // The overridden methods returns `true` only for a language-specific child of `CustomFoldingBuilder` class with
+      // overridden `CustomFoldingBuilder#isCustomFoldingCandidate(ASTNode)`.
+      LOG.error("non-comment based custom folding node need to be filtered in overridden `CustomFoldingBuilder#isCustomFoldingCandidate(ASTNode)`");
+    }
+    return foldingBuilder instanceof CustomFoldingBuilder;
+  }
+
+  public boolean isSupported(@NotNull Language language) {
+    return true;
+  }
+
+  /**
+   * Called from new folding generation procedure.
+   * Please, use tailing `?` as description placeholder if any.
+   *
+   * @return starting marker text without comment suffix/prefix if `wrapStartEndMarkerTextInLanguageSpecificComment` returns true.
+   *         Else, full starting element text for non-comment bound element.
+   */
+  public abstract @NonNls String getStartString();
+
+  /**
+   * Called from new folding generation procedure.
+   *
+   * @return ending marker text without comment suffix/prefix if `wrapStartEndMarkerTextInLanguageSpecificComment` returns true.
+   *         Else, full ending element text for non-comment bound element.
+   */
+  public abstract @NonNls String getEndString();
+
   public boolean isCollapsedByDefault(String text) {
     return CodeFoldingSettings.getInstance().COLLAPSE_CUSTOM_FOLDING_REGIONS;
   }

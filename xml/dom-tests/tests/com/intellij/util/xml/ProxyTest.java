@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xml.ui.DomUIFactory;
 import junit.framework.TestCase;
 import net.sf.cglib.proxy.AdvancedProxy;
@@ -26,14 +13,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class ProxyTest extends TestCase {
 
   public void testExtendClass() throws Throwable {
     final List<String> invocations = new ArrayList<>();
-    Implementation implementation = AdvancedProxy.createProxy(Implementation.class, new Class[]{Interface3.class}, new InvocationHandler(){
+    Implementation implementation = AdvancedProxy.createProxy(Implementation.class, new Class[]{Interface3.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         invocations.add(method.getName());
@@ -43,6 +27,7 @@ public class ProxyTest extends TestCase {
         return Implementation.class.getMethod("getField").invoke(proxy);
       }
     }, "239");
+    //noinspection ResultOfMethodCallIgnored
     implementation.hashCode();
     implementation.method();
     assertEquals("239", implementation.getFoo());
@@ -98,6 +83,7 @@ public class ProxyTest extends TestCase {
       getFoo();
     }
 
+    @Override
     public String toString() {
       return myField;
     }
@@ -111,11 +97,12 @@ public class ProxyTest extends TestCase {
     public abstract String foo();
   }
 
+  @SuppressWarnings("CastToIncompatibleInterface")
   public void testAddInterfaces() {
     final BaseImpl proxy = AdvancedProxy.createProxy(BaseImpl.class, BaseIEx.class);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((BaseI)proxy).sayA(), "a");
-    assertEquals(((BaseIEx)proxy).sayA(), "a");
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((BaseI)proxy).sayA());
+    assertEquals("a", ((BaseIEx)proxy).sayA());
   }
 
   public interface BaseI {
@@ -138,24 +125,27 @@ public class ProxyTest extends TestCase {
     @Override
     public abstract String sayA();
 
-    public abstract static class AbstractBaseImpl extends AbstractBase {}
+    public abstract static class AbstractBaseImpl extends AbstractBase {
+    }
   }
 
   public void testCovariantFromInterface() {
     final AbstractBase.AbstractBaseImpl proxy = AdvancedProxy.createProxy(AbstractBase.AbstractBaseImpl.class, ArrayUtil.EMPTY_CLASS_ARRAY,
                                                                           new InvocationHandler() {
                                                                             @Override
-                                                                            public Object invoke(Object proxy, Method method, Object[] args) {
+                                                                            public Object invoke(Object proxy,
+                                                                                                 Method method,
+                                                                                                 Object[] args) {
                                                                               return "a";
                                                                             }
-                                                                          }, false, new Object[0]);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((AbstractBase)proxy).sayA(), "a");
-    assertEquals(((BaseI)proxy).sayA(), "a");
+                                                                          }, false, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((BaseI)proxy).sayA());
   }
 
   public static class CovariantFromBaseClassTest {
-    public static interface Intf {
+    public interface Intf {
       String sayA();
     }
 
@@ -178,10 +168,11 @@ public class ProxyTest extends TestCase {
         public Object invoke(Object proxy, Method method, Object[] args) {
           return "a";
         }
-      }, false, new Object[0]);
-    assertEquals(proxy.sayA(), "a");
-    assertEquals(((CovariantFromBaseClassTest.Base)proxy).sayA(), "a");
-    assertEquals(((CovariantFromBaseClassTest.Intf)proxy).sayA(), "a");
+      }, false, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+    assertEquals("a", proxy.sayA());
+    assertEquals("a", ((CovariantFromBaseClassTest.Base)proxy).sayA());
+    //noinspection RedundantCast
+    assertEquals("a", ((CovariantFromBaseClassTest.Intf)proxy).sayA());
   }
 
   public void testGenericMethodInvocationJava8() throws Throwable {
@@ -205,6 +196,4 @@ public class ProxyTest extends TestCase {
     @Override
     Object foo(String t);
   }
-
-
 }

@@ -1,38 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-public class OverlappingSourceRootsTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.OverlappingSourceRootsTest");
+public class OverlappingSourceRootsTest extends JavaPsiTestCase {
+  private static final Logger LOG = Logger.getInstance(OverlappingSourceRootsTest.class);
 
   private VirtualFile myProjectRoot;
   private VirtualFile mySourceRoot1;
@@ -54,7 +40,7 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
         try {
           File dir = createTempDirectory();
 
-          myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+          myProjectRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
 
           mySourceRoot1 = createChildDirectory(myProjectRoot, "root1");
           mySourceRoot2 = createChildDirectory(myProjectRoot, "root2");
@@ -109,7 +95,7 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
   }
 
   private PsiDirectory findSourceRootDirectory(PsiElement element) {
-    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(virtualFile);
     return myPsiManager.findDirectory(sourceRoot);
   }

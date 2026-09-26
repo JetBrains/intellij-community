@@ -1,0 +1,16 @@
+// "Implement members" "true"
+// DISABLE_ERRORS
+
+interface Interf {
+    fun m()
+}
+
+actual class C : I, Interf {
+    actual override fun f() {
+        TODO("Not yet implemented")
+    }
+
+    override fun m() {
+        TODO("Not yet implemented")
+    }
+}

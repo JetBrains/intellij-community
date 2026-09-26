@@ -1,16 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi;
 
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertiesResourceBundleUtil {
-  private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'=', ':'});
-  private static final char        ESCAPE_SYMBOL     = '\\';
-
+public final class PropertiesResourceBundleUtil {
+  private static final char ESCAPE_SYMBOL = '\\';
 
   /**
    * Allows to map given 'raw' property value text to the 'user-friendly' text to show at the resource bundle editor.
@@ -20,9 +17,7 @@ public class PropertiesResourceBundleUtil {
    * @param text  'raw' property value text
    * @return      'user-friendly' text to show at the resource bundle editor
    */
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  @NotNull
-  public static String fromPropertyValueToValueEditor(@NotNull String text) {
+  public static @NotNull String fromPropertyValueToValueEditor(@NotNull String text) {
     StringBuilder buffer = new StringBuilder();
     boolean escaped = false;
     for (int i = 0; i < text.length(); i++) {
@@ -41,36 +36,43 @@ public class PropertiesResourceBundleUtil {
   }
 
   /**
-   * Perform reverse operation to {@link #fromPropertyValueToValueEditor(String)}.
-   *
-   * @param text  'user-friendly' text shown to the user at the resource bundle editor
-   * @param delimiter
-   * @return      'raw' value to store at the *.properties file
+   * Converts property value from given {@code valueFormat} to 'raw' format (how it should be stored in *.properties file)
    */
-  @NotNull
-  public static String fromValueEditorToPropertyValue(@NotNull String text, char delimiter) {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
+  public static @NotNull String convertValueToFileFormat(@NotNull String value, char delimiter, @NotNull PropertyKeyValueFormat valueFormat) {
+    if (valueFormat == PropertyKeyValueFormat.FILE) return value;
 
-      if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
-          || c == '\n' || c == '\r' // Multi-line value
-          || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   // Special symbol
-      {
+    StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+
+      if (c == '\n' || c == '\r') {
         buffer.append(ESCAPE_SYMBOL);
-      }
-      else if (c == ESCAPE_SYMBOL) {           // Escaped 'escape' symbol)
-        if (text.length() > i + 1) {
-          final char nextChar = text.charAt(i + 1);
-          if (nextChar != 'n' && nextChar != 'r' && nextChar != 'u' && nextChar != 'U') {
-            buffer.append(ESCAPE_SYMBOL);
-          }
-        } else {
-          buffer.append(ESCAPE_SYMBOL);
+        if (valueFormat == PropertyKeyValueFormat.MEMORY) {
+          buffer.append(c == '\n' ? 'n' : 'r');
+        }
+        else {
+          buffer.append(c);
         }
       }
-      buffer.append(c);
+      else if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
+               || (delimiter == ' ' && (c == '=' || c == ':' /* special symbol */)))  {
+        buffer.append(ESCAPE_SYMBOL);
+        buffer.append(c);
+      }
+      else if (c == ESCAPE_SYMBOL) {
+        if (i + 1 >= value.length() || !isEscapedChar(value.charAt(i + 1)) || valueFormat == PropertyKeyValueFormat.MEMORY) {
+          buffer.append(ESCAPE_SYMBOL);
+        }
+        buffer.append(c);
+      }
+      else {
+        buffer.append(c);
+      }
     }
     return buffer.toString();
+  }
+
+  private static boolean isEscapedChar(char nextChar) {
+    return nextChar == 'n' || nextChar == 'r' || nextChar == 'u' || nextChar == 'U';
   }
 }

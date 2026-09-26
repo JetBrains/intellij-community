@@ -1,0 +1,4 @@
+top:
+  - one two -three - item1
+  - item2
+  - item3<caret> four

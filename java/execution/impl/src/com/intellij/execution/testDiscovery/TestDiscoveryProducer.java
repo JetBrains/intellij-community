@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,46 +7,53 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
-@ApiStatus.Experimental
 public interface TestDiscoveryProducer {
-  Logger LOG = Logger.getInstance(LocalTestDiscoveryProducer.class);
+  ExtensionPointName<TestDiscoveryProducer> EP = new ExtensionPointName<>("com.intellij.testDiscoveryProducer");
+
+  Logger LOG = Logger.getInstance(TestDiscoveryProducer.class);
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                              @NotNull String classFQName,
-                                              @NotNull String methodName,
+                                              @NotNull List<? extends Couple<String>> classesAndMethods,
                                               byte frameworkId);
+
+  @NotNull
+  MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project,
+                                                      @NotNull List<String> paths,
+                                                      byte frameworkId);
 
   boolean isRemote();
 
-  ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
-
   static void consumeDiscoveredTests(@NotNull Project project,
-                                     @NotNull String classFQName,
-                                     @NotNull String methodName,
+                                     @NotNull List<Couple<String>> classesAndMethods,
                                      byte frameworkId,
+                                     @NotNull List<String> filePaths,
                                      @NotNull TestProcessor processor) {
-    MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
-      @NotNull
+    MultiMap<String, String> visitedTests = new MultiMap<>() {
       @Override
-      protected Collection<String> createCollection() {
-        return new THashSet<>();
+      protected @NotNull Collection<String> createCollection() {
+        return new HashSet<>();
       }
     };
-    for (TestDiscoveryProducer producer : EP.getExtensions()) {
-      for (Map.Entry<String, Collection<String>> entry : producer.getDiscoveredTests(project, classFQName, methodName, frameworkId).entrySet()) {
+    for (TestDiscoveryProducer producer : EP.getExtensionList()) {
+      for (Map.Entry<String, Collection<String>> entry : ContainerUtil.concat(
+        producer.getDiscoveredTests(project, classesAndMethods, frameworkId).entrySet(),
+        producer.getDiscoveredTestsForFiles(project, filePaths, frameworkId).entrySet())) {
         String className = entry.getKey();
         for (String methodRawName : entry.getValue()) {
-          if (!visitedTests.get(classFQName).contains(methodRawName)) {
+          if (!visitedTests.get(className).contains(methodRawName)) {
             visitedTests.putValue(className, methodRawName);
             Couple<String> couple = extractParameter(methodRawName);
             if (!processor.process(className, couple.first, couple.second)) return;
@@ -57,12 +64,38 @@ public interface TestDiscoveryProducer {
   }
 
   @NotNull
-  static Couple<String> extractParameter(@NotNull String rawName) {
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId);
+
+  @NotNull
+  List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassNames, byte frameworkId);
+
+  @NotNull
+  List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException;
+
+  // testFqn - (className, methodName)
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
+    for (TestDiscoveryProducer extension : EP.getExtensionList()) {
+      for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
+        pathsConsumer.consume(path);
+      }
+    }
+  }
+
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
+    for (TestDiscoveryProducer extension : EP.getExtensionList()) {
+      for (String path : extension.getAffectedFilePathsByClassName(project, testClassName, frameworkId)) {
+        pathsConsumer.consume(path);
+      }
+    }
+  }
+
+  static @NotNull Couple<String> extractParameter(@NotNull String rawName) {
     int idx = rawName.indexOf('[');
     return idx == -1 ?
            Couple.of(rawName, null) :
            Couple.of(rawName.substring(0, idx), rawName.substring(idx));
   }
+
 
   @FunctionalInterface
   interface TestProcessor {
@@ -71,6 +104,6 @@ public interface TestDiscoveryProducer {
 
   @FunctionalInterface
   interface PsiTestProcessor {
-    boolean process(@NotNull PsiClass clazz, @NotNull PsiMethod method, @Nullable String parameter);
+    boolean process(@NotNull PsiClass clazz, @Nullable PsiMethod method, @Nullable String parameter);
   }
 }

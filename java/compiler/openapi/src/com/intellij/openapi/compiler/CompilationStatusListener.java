@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.task.ProjectTaskListener;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * A listener for compiler events.
+ * Consider to use {@link ProjectTaskListener} to be able to support delegated build.
  *
- * @see CompilerTopics.COMPILATION_STATUS
+ * @see CompilerTopics#COMPILATION_STATUS
+ * @see ProjectTaskListener#TOPIC
  */
 public interface CompilationStatusListener extends EventListener {
   /**
@@ -31,12 +36,12 @@ public interface CompilationStatusListener extends EventListener {
    * @param warnings warning count
    * @param compileContext context for the finished compilation
    */
-  default void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext){
+  default void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext){
   }
 
-  default void automakeCompilationFinished(int errors, int warnings, final CompileContext compileContext) {
+  default void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
   }
 
-  default void fileGenerated(String outputRoot, String relativePath) {
+  default void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
   }
 }

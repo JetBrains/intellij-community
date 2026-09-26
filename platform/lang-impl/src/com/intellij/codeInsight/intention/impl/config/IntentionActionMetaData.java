@@ -1,122 +1,101 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-
 public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
-  @NotNull private final IntentionAction myAction;
-  @NotNull public final String[] myCategory;
-  private URL myDirURL;
-  @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
+  private final @NotNull IntentionAction myAction;
+  public final String @NotNull [] myCategory;
+  private String myDirName;
+  private static final @NonNls String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
   public IntentionActionMetaData(@NotNull IntentionAction action,
                                  @Nullable ClassLoader loader,
-                                 @NotNull String[] category,
-                                 @NotNull String descriptionDirectoryName) {
-    super(loader, descriptionDirectoryName);
+                                 String @NotNull [] category,
+                                 @NotNull String descriptionDirectoryName,
+                                 boolean skipBeforeAfter) {
+    super(loader, descriptionDirectoryName, skipBeforeAfter);
 
     myAction = action;
     myCategory = category;
   }
 
-  public IntentionActionMetaData(@NotNull final IntentionAction action,
-                                 @NotNull final String[] category,
-                                 @NotNull TextDescriptor description,
-                                 @NotNull TextDescriptor[] exampleUsagesBefore,
-                                 @NotNull TextDescriptor[] exampleUsagesAfter) {
-    super(description, exampleUsagesBefore, exampleUsagesAfter);
-
-    myAction = action;
-    myCategory = category;
-  }
-
+  @Override
   public String toString() {
     return getFamily();
   }
 
-  @Nullable
-  private static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {
-    final URL pageURL = aClassLoader.getResource(INTENTION_DESCRIPTION_FOLDER + "/" + intentionFolderName + "/" + DESCRIPTION_FILE_NAME);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Path:" + "intentionDescriptions/" + intentionFolderName);
-      LOG.debug("URL:" + pageURL);
-    }
-    if (pageURL != null) {
-      try {
-        final String url = pageURL.toExternalForm();
-        return UrlClassLoader.internProtocol(new URL(url.substring(0, url.lastIndexOf('/'))));
-      }
-      catch (MalformedURLException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
+  public @Nullable PluginId getPluginId() {
+    return myLoader instanceof PluginAwareClassLoader loader ? loader.getPluginId() : null;
   }
 
-  @Nullable
-  public PluginId getPluginId() {
-    if (myLoader instanceof PluginClassLoader) {
-      return ((PluginClassLoader)myLoader).getPluginId();
-    }
-    return null;
-  }
-
-  @NotNull
-  public String getFamily() {
+  public @NotNull @IntentionFamilyName String getFamily() {
     return myAction.getFamilyName();
   }
 
-  @NotNull
-  public IntentionAction getAction() {
+  public @NotNull IntentionAction getAction() {
     return myAction;
   }
 
   @Override
-  @NotNull
-  protected URL getDirURL() {
-    if (myDirURL == null) {
-      myDirURL = getIntentionDescriptionDirURL(myLoader, myDescriptionDirectoryName);
-    }
-    if (myDirURL == null) { //plugin compatibility
-      myDirURL = getIntentionDescriptionDirURL(myLoader, getFamily());
-    }
-    if (myDirURL == null) {
-      PluginId pluginId = getPluginId();
-      String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; " + myDescriptionDirectoryName;
-      if (pluginId != null) {
-        throw new PluginException(errorMessage, pluginId);
-      } else {
-        throw new RuntimeException(errorMessage);
+  protected String getResourceLocation(String resourceName) {
+    if (myDirName == null) {
+      String dirName = myDescriptionDirectoryName;
+      if (myLoader != null && myLoader.getResource(getResourceLocationStatic(dirName, resourceName)) == null) {
+        dirName = getFamily();
+
+        if (myLoader.getResource(getResourceLocationStatic(dirName, resourceName)) == null) {
+          PluginId pluginId = getPluginId();
+          String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; "
+                                + myDescriptionDirectoryName + "; while looking for " + resourceName;
+          if (pluginId != null) {
+            throw new PluginException(errorMessage, pluginId);
+          }
+          else {
+            throw new RuntimeException(errorMessage);
+          }
+        }
       }
+      myDirName = dirName;
     }
-    return myDirURL;
+
+    return getResourceLocationStatic(myDirName, resourceName);
+  }
+
+  private static @NotNull String getResourceLocationStatic(String dirName, String resourceName) {
+    return INTENTION_DESCRIPTION_FOLDER + "/" + dirName + "/" + resourceName;
+  }
+
+  public String getDescriptionDirectoryName() {
+    return myDescriptionDirectoryName;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public TextDescriptor @NotNull [] getExampleUsagesBefore() {
+    if (myExampleUsagesBefore == null) {
+      String language = myAction instanceof IntentionActionWrapper wrapper ? wrapper.getLanguage() : null;
+      myExampleUsagesBefore = retrieveURLs(BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, Language.findLanguageByID(language));
+    }
+    return myExampleUsagesBefore;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public TextDescriptor @NotNull [] getExampleUsagesAfter() {
+    if (myExampleUsagesAfter == null) {
+      String language = myAction instanceof IntentionActionWrapper wrapper ? wrapper.getLanguage() : null;
+      myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX, Language.findLanguageByID(language));
+    }
+    return myExampleUsagesAfter;
   }
 }

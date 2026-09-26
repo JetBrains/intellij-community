@@ -1,24 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScrollable {
+  private static final Logger LOG = getInstance(BaseSyncScrollable.class);
+
   /*
    * should call handler on pairs of lines, that represent boundaries of blocks, that are 'similar'
    * pairs should not form "crossings": x1 <= x2 <=> y1 <= y2
@@ -31,7 +23,16 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
 
   @Override
   public int transfer(@NotNull Side baseSide, int line) {
-    if (line < 0) return -1;
+    Range range = getRange(baseSide, line);
+    return transferLine(line, range);
+  }
+
+  @Override
+  public @NotNull Range getRange(@NotNull Side baseSide, int line) {
+    if (line < 0) {
+      LOG.error("Invalid line number: " + line);
+      return idRange(line);
+    }
 
     ScrollHelper helper = new ScrollHelper(baseSide, line);
     processHelper(helper);
@@ -40,16 +41,11 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     int master2 = helper.getMaster2();
     int slave1 = helper.getSlave1();
     int slave2 = helper.getSlave2();
-
-    if (master1 == line) return slave1;
-    if (master2 == line) return slave2;
-    if (master2 < line) return (line - master2) + slave2;
-
-    return Math.min(slave1 + (line - master1), slave2);
+    return new Range(master1, master2, slave1, slave2);
   }
 
   protected static class ScrollHelper {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
     private final int myLine;
 
     public ScrollHelper(@NotNull Side side, int line) {
@@ -90,5 +86,17 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     public int getSlave2() {
       return mySide.select(myRight2, myLeft2);
     }
+  }
+
+  public static int transferLine(int line, @NotNull Range range) {
+    if (range.start1 == line) return range.start2;
+    if (range.end1 == line) return range.end2;
+    if (range.end1 < line) return (line - range.end1) + range.end2;
+
+    return Math.min(range.start2 + (line - range.start1), range.end2);
+  }
+
+  public static @NotNull Range idRange(int line) {
+    return new Range(line, line + 1, line, line + 1);
   }
 }

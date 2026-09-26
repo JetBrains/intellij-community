@@ -15,17 +15,17 @@
  */
 package com.intellij.xml.actions;
 
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.io.File;
 
 /**
  * @author Dmitry Avdeev
  */
-public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase {
+public class GenerateXmlTagTest extends BasePlatformTestCase {
 
   public void testGenerate() {
     myFixture.configureByFile("web-app_2_5.xsd");
@@ -82,7 +82,7 @@ public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/j2ee/dtds/web-app_2_3.dtd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/j2ee/dtds/web-app_2_3.dtd",
                                                               getTestDataPath() + "/web-app_2_3.dtd", myFixture.getTestRootDisposable());
   }
 

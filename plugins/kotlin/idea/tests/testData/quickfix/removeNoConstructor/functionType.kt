@@ -1,0 +1,5 @@
+// "Remove constructor call" "true"
+// K2_ERROR: NO_CONSTRUCTOR
+
+abstract class A : () -> Int()<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNoConstructorFix

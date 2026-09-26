@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -46,30 +47,27 @@ public class SubtypingConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     SubtypingConstraint that = (SubtypingConstraint)o;
-
-    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
-    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myS != null ? myS.hashCode() : 0;
-    result = 31 * result + (myT != null ? myT.hashCode() : 0);
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     final boolean reduceResult = doReduce(constraints);
     if (!reduceResult) {
-      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " can be converted to " + session.getPresentableText(myT));
+      session.registerIncompatibleErrorMessage(session.getInferenceVariables(),
+                                               JavaPsiBundle.message("type.can.be.converted", session.getPresentableText(myS), session.getPresentableText(myT)));
     }
     return reduceResult;
   }
 
-  private boolean doReduce(List<ConstraintFormula> constraints) {
+  private boolean doReduce(List<? super ConstraintFormula> constraints) {
     if (myT instanceof PsiWildcardType) {
       PsiType tBound = ((PsiWildcardType)myT).getBound();
       if (tBound == null) {

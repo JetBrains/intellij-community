@@ -1,42 +1,37 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.Outcome;
-import com.intellij.util.Producer;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
-/**
- * @author Sergey Simonchik
- */
-public class GithubDownloadUtil {
+public final class GithubDownloadUtil {
   private static final String PROJECT_GENERATORS = "projectGenerators";
 
   private GithubDownloadUtil() {}
 
-  @NotNull
-  private static String formatGithubRepositoryName(@NotNull String userName, @NotNull String repositoryName) {
+  private static @NotNull String formatGithubRepositoryName(@NotNull String userName, @NotNull String repositoryName) {
     return "github-" + userName + "-" + repositoryName;
   }
 
-  @NotNull
-  private static String formatGithubUserName(@NotNull String userName) {
+  private static @NotNull String formatGithubUserName(@NotNull String userName) {
     return "github-" + userName;
   }
 
-  @NotNull
-  public static File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
+  public static @NotNull File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
     File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubRepositoryName(userName, repositoryName);
     File dir = new File(generatorsDir, dirName);
@@ -47,8 +42,7 @@ public class GithubDownloadUtil {
     }
   }
 
-  @NotNull
-  public static File getUserCacheDir(@NotNull String userName) {
+  public static @NotNull File getUserCacheDir(@NotNull String userName) {
     File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubUserName(userName);
     File dir = new File(generatorsDir, dirName);
@@ -64,20 +58,19 @@ public class GithubDownloadUtil {
     return new File(dir, cacheFileName);
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void downloadContentToFileWithProgressSynchronously(
     @Nullable Project project,
-    @NotNull final String url,
-    @NotNull String progressTitle,
-    @NotNull final File outputFile,
-    @NotNull final String userName,
-    @NotNull final String repositoryName,
+    final @NotNull String url,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    final @NotNull File outputFile,
+    final @NotNull String userName,
+    final @NotNull String repositoryName,
     final boolean retryOnError) throws GeneratorException
   {
     Outcome<File> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project,
       progressTitle,
-      "Downloading zip archive" + DownloadUtil.CONTENT_LENGTH_TEMPLATE + " ...",
+      LangBundle.message("progress.text.downloading.zip.archive", DownloadUtil.CONTENT_LENGTH_TEMPLATE),
       () -> {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         downloadAtomically(progress, url, outputFile, userName, repositoryName);
@@ -86,7 +79,8 @@ public class GithubDownloadUtil {
         if (!retryOnError) {
           return false;
         }
-        return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
+        return IOExceptionDialog.showErrorDialog(LangBundle.message("dialog.title.download.error"),
+                                                 LangBundle.message("text.can.not.download", url));
       }
     );
     File out = outcome.get();
@@ -95,9 +89,9 @@ public class GithubDownloadUtil {
     }
     Exception e = outcome.getException();
     if (e != null) {
-      throw new GeneratorException("Can not fetch content from " + url, e);
+      throw new GeneratorException(LangBundle.message("dialog.message.can.fetch.content.from", url), e);
     }
-    throw new GeneratorException("Download was cancelled");
+    throw new GeneratorException(LangBundle.message("dialog.message.download.was.cancelled"));
   }
 
   /**

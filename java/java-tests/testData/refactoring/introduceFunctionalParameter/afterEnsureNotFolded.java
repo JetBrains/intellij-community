@@ -4,7 +4,7 @@ class Test {
 
   {
       final int[] equals = new int[0];
-      performTest(new Function<String[],String[]>() {
+      performTest(new Function<String[], String[]>() {
           public String[] apply(String[] fields) {
               System.out.println();
               return getIndexed(fields, equals);

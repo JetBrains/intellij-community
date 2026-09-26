@@ -1,74 +1,96 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.EDT
+import org.jetbrains.annotations.ApiStatus.Internal
 
-abstract class FileHyperlinkInfoBase(private val myProject: Project,
-                                     private val myDocumentLine: Int,
-                                     private val myDocumentColumn: Int) : FileHyperlinkInfo {
-
+abstract class FileHyperlinkInfoBase
+@JvmOverloads
+constructor(
+  private val project: Project,
+  private val documentLine: Int,
+  private val documentColumn: Int,
+  private val useBrowser: Boolean = true,
+) : FileHyperlinkInfo {
   protected abstract val virtualFile: VirtualFile?
 
   override fun getDescriptor(): OpenFileDescriptor? {
     val file = virtualFile
-    if (file == null || !file.isValid) return null
+    if (file == null || !file.isValid) {
+      return null
+    }
 
-    val document = FileDocumentManager.getInstance().getDocument(file) // need to load decompiler text
+    val document =
+      if (Registry.`is`("hyperlink.ide.decompiler.open.file") &&
+          EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        underModalProgress<Document?>(project, IdeBundle.message("progress.title.preparing.navigation"),
+                                      Computable {
+                                        ReadAction.computeCancellable<Document?, RuntimeException?>(ThrowableComputable {
+                                          ProjectLocator.withPreferredProject(file, project).use {
+                                            // need to load decompiler text
+                                            FileDocumentManager.getInstance().getDocument(file)
+                                          }
+                                        })
+                                      })
+      }
+      else {
+        ProjectLocator.withPreferredProject(file, project).use {
+          // need to load decompiler text
+          FileDocumentManager.getInstance().getDocument(file)
+        }
+      }
     val line = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)?.let { mapping ->
-      val mappingLine = mapping.bytecodeToSource(myDocumentLine + 1) - 1
+      val mappingLine = mapping.bytecodeToSource(documentLine + 1) - 1
       if (mappingLine < 0) null else mappingLine
-    } ?: myDocumentLine
+    } ?: documentLine
 
-    val offset = calculateOffset(document, line, myDocumentColumn)
+    val offset = document?.let { calculateOffset(document = it, documentLine = line, documentColumn = documentColumn) }
     if (offset == null) {
       // although document position != logical position, it seems better than returning 'null'
-      return OpenFileDescriptor(myProject, file, line, myDocumentColumn)
+      return OpenFileDescriptor(project, file, line, documentColumn)
     }
     else {
-      return OpenFileDescriptor(myProject, file, offset)
+      return OpenFileDescriptor(project, file, offset)
     }
   }
 
-  override fun navigate(project: Project?) {
-    project ?: return
-    descriptor?.let {
-      FileEditorManager.getInstance(project).navigateToTextEditor(it, true)
-    }
+  override fun navigate(project: Project) {
+    navigateFileHyperlinkLegacy(project = project, descriptor = this.descriptor ?: return, useBrowser = useBrowser)
   }
+
+  @get:Internal
+  val isUseBrowserForNavigation: Boolean
+    get() = useBrowser
 
   /**
-   * Calculates an offset, that matches given line and column of the document.
+   * Calculates an offset that matches the given line and column of the document.
    *
    * @param document [Document] instance
    * @param documentLine zero-based line of the document
    * @param documentColumn zero-based column of the document
    * @return calculated offset or `null` if it's impossible to calculate
    */
-  protected open fun calculateOffset(document: Document?, documentLine: Int, documentColumn: Int): Int? {
-    document ?: return null
-    if (documentLine < 0 || document.lineCount <= documentLine) return null
+  protected open fun calculateOffset(document: Document, documentLine: Int, documentColumn: Int): Int? {
+    if (documentLine < 0 || document.lineCount <= documentLine) {
+      return null
+    }
+
     val lineStartOffset = document.getLineStartOffset(documentLine)
     val lineEndOffset = document.getLineEndOffset(documentLine)
-    val fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset)
+    val fixedColumn = documentColumn.coerceAtLeast(0).coerceAtMost(lineEndOffset - lineStartOffset)
     return lineStartOffset + fixedColumn
   }
 }

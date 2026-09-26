@@ -1,0 +1,121 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.maven.configuration
+
+import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
+import org.jetbrains.kotlin.idea.configuration.hasKotlinJvmRuntimeInScope
+import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
+import org.jetbrains.kotlin.idea.maven.PomFile
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
+
+class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, NAME, PRESENTABLE_TEXT) {
+
+    override fun isKotlinModule(module: Module): Boolean =
+        hasKotlinJvmRuntimeInScope(module)
+
+    override fun isRelevantGoal(goalName: String): Boolean =
+        goalName == PomFile.KotlinGoals.Compile
+
+    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String {
+        return KOTLIN_JAVA_STDLIB_NAME
+    }
+
+    private fun hasJavaFiles(module: Module): Boolean {
+        return FileTypeIndex.containsFileOfType(JavaFileType.INSTANCE, GlobalSearchScope.moduleScope(module))
+    }
+
+    override fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module, kotlinVersion: String?) {
+        createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.Compile, PomFile.KotlinGoals.Compile, module, false, kotlinVersion)
+        createExecution(
+            pomFile,
+            kotlinPlugin,
+            PomFile.DefaultPhases.TestCompile,
+            PomFile.KotlinGoals.TestCompile,
+            module,
+            true,
+            kotlinVersion
+        )
+
+        if (hasJavaFiles(module) || pomFile.hasJavacPlugin()) {
+            pomFile.addJavacExecutions(module, kotlinPlugin)
+        }
+    }
+
+    override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion?) {
+        if (version == null) return
+        val mavenCompilerTarget = pom.findProperty("maven.compiler.target")?.value?.text
+        val jvmTargetVersion = if (mavenCompilerTarget != null && mavenCompilerTarget in JvmTarget.entries.map { it.description }) {
+            $$"${maven.compiler.target}"
+        } else {
+            val sdk = ModuleRootManager.getInstance(module).sdk
+            getDefaultJvmTarget(sdk, version)?.description
+        }
+
+        if (jvmTargetVersion != null) {
+            pom.addPluginConfiguration(plugin, "jvmTarget", jvmTargetVersion)
+            if (plugin.extensions.value == true && !pom.hasConfiguredJavaCompilerLevel(module)) {
+                pom.addProperty("maven.compiler.release", jvmTargetVersion.toMavenRelease())
+            }
+        }
+    }
+
+    private fun String.toMavenRelease(): String = removePrefix("1.")
+
+    private fun PomFile.hasConfiguredJavaCompilerLevel(module: Module): Boolean {
+        val propertyNames = listOf("maven.compiler.release", "maven.compiler.source", "maven.compiler.target")
+        if (propertyNames.any { findProperty(it) != null }) {
+            return true
+        }
+
+        val configurationNames = listOf("release", "source", "target")
+        val localPlugin = findPlugin(javacMavenId)
+        val localConfigurations = listOfNotNull(localPlugin?.configuration?.xmlTag) +
+                localPlugin?.executions?.executions.orEmpty().mapNotNull { it.configuration.xmlTag }
+        if (localConfigurations.any { configuration -> configurationNames.any { configuration.findFirstSubTag(it) != null } }) {
+            return true
+        }
+
+        val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return false
+        if (propertyNames.any { mavenProject.properties.getProperty(it) != null }) {
+            return true
+        }
+
+        val effectivePlugin = mavenProject.findPlugin(javacMavenId.groupId, javacMavenId.artifactId) ?: return false
+        val effectiveConfigurations = listOfNotNull(effectivePlugin.configurationElement) +
+                effectivePlugin.executions.mapNotNull { it.configurationElement }
+        return effectiveConfigurations.any { configuration -> configurationNames.any { configuration.getChild(it) != null } }
+    }
+
+    override fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean {
+        if (!super.configureModule(module, file, version, collector)) {
+            return false
+        }
+
+        addStdlibToJavaModuleInfo(module, collector)
+        return true
+    }
+
+    override val targetPlatform: TargetPlatform
+        get() = JvmPlatforms.unspecifiedJvmPlatform
+
+    companion object {
+        private const val NAME = "maven"
+        const val TEST_LIB_ID: String = "kotlin-test"
+        const val JUNIT_TEST_LIB_ID: String = "kotlin-test-junit"
+        private val PRESENTABLE_TEXT get() = KotlinMavenBundle.message("configure.java.with.maven")
+    }
+}

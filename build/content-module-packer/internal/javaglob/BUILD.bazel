@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "javaglob",
+    srcs = ["glob.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/javaglob",
+    visibility = ["//visibility:public"],
+)
+
+# The record in testdata is what the JDK path matcher answered; RecordPathMatcher.java there regenerates it.
+go_test(
+    name = "javaglob_test",
+    srcs = ["glob_test.go"],
+    data = glob(["testdata/*"]),
+    embed = [":javaglob"],
+    pure = "on",
+)

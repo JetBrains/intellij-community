@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +8,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -31,7 +18,7 @@ import java.util.List;
 public abstract class TaskManager {
 
   public static TaskManager getManager(@NotNull Project project) {
-    return project.getComponent(TaskManager.class);
+    return project.getService(TaskManager.class);
   }
 
   public enum VcsOperation {
@@ -48,9 +35,9 @@ public abstract class TaskManager {
    * @return up-to-date issues retrieved from repositories
    * @see #getCachedIssues()
    */
-  public abstract List<Task> getIssues(@Nullable String query);
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query);
 
-  public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
   /**
    * Most arguments have the same meaning as the ones in {@link TaskRepository#getIssues(String, int, int, boolean, ProgressIndicator)}.
@@ -65,7 +52,7 @@ public abstract class TaskManager {
    * @param forceRequest whether to download issues anew or use already cached ones.
    * @return tasks collected from all active repositories
    */
-  public abstract List<Task> getIssues(@Nullable String query,
+  public abstract @Unmodifiable List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
                               boolean withClosed,
@@ -77,13 +64,13 @@ public abstract class TaskManager {
    *
    * @return cached issues.
    */
-  public abstract List<Task> getCachedIssues();
+  public abstract @Unmodifiable List<Task> getCachedIssues();
 
-  public abstract List<Task> getCachedIssues(final boolean withClosed);
+  public abstract @Unmodifiable List<Task> getCachedIssues(final boolean withClosed);
 
-  public abstract List<LocalTask> getLocalTasks();
+  public abstract @Unmodifiable List<LocalTask> getLocalTasks();
 
-  public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
+  public abstract @Unmodifiable List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);
 
@@ -91,11 +78,9 @@ public abstract class TaskManager {
 
   public abstract LocalTask activateTask(@NotNull Task task, boolean clearContext);
 
-  @NotNull
-  public abstract LocalTask getActiveTask();
+  public abstract @NotNull LocalTask getActiveTask();
 
-  @Nullable
-  public abstract LocalTask findTask(String id);
+  public abstract @Nullable LocalTask findTask(String id);
 
   /**
    * Update issue cache asynchronously
@@ -110,20 +95,14 @@ public abstract class TaskManager {
 
   public abstract boolean isLocallyClosed(LocalTask localTask);
 
-  @Nullable
-  public abstract LocalTask getAssociatedTask(LocalChangeList list);
+  public abstract @Nullable LocalTask getAssociatedTask(LocalChangeList list);
 
   public abstract void trackContext(LocalChangeList changeList);
 
-  public abstract void removeTask(LocalTask task);
-
-  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
-  public abstract void addTaskListener(TaskListener listener);
+  public abstract void removeTask(@NotNull LocalTask task);
 
   public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);
 
-  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
-  public abstract void removeTaskListener(TaskListener listener);
   // repositories management
 
   public abstract TaskRepository[] getAllRepositories();

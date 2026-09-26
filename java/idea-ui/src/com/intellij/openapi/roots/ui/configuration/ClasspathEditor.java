@@ -15,48 +15,45 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  public static final String NAME = ProjectBundle.message("modules.classpath.title");
 
   private ClasspathPanelImpl myPanel;
-  private ClasspathFormatPanel myClasspathFormatPanel;
+  private ClasspathFormatUI myClasspathFormatUI;
+  private boolean myDisposed;
 
   public ClasspathEditor(final ModuleConfigurationState state) {
     super(state);
 
     final Disposable disposable = Disposer.newDisposable();
-    state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
+    state.getProject().getMessageBus().connect(disposable).subscribe(TOPIC, this);
     registerDisposable(disposable);
   }
 
   @Override
   public boolean isModified() {
-    return super.isModified() || (myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
+    return super.isModified() || (myClasspathFormatUI != null && myClasspathFormatUI.isModified());
   }
 
   @Override
@@ -66,7 +63,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getName();
   }
 
   @Override
@@ -76,16 +73,16 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myClasspathFormatPanel != null) {
-      myClasspathFormatPanel.apply();
+    if (myClasspathFormatUI != null) {
+      myClasspathFormatUI.apply();
     }
   }
 
   @Override
   public void canApply() throws ConfigurationException {
     super.canApply();
-    if (myClasspathFormatPanel != null) {
-      myClasspathFormatPanel.canApply();
+    if (myClasspathFormatUI != null) {
+      myClasspathFormatUI.canApply();
     }
   }
 
@@ -93,14 +90,14 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanelImpl(getState());
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    panel.setBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP));
     panel.add(myPanel, BorderLayout.CENTER);
 
     final ModuleJdkConfigurable jdkConfigurable =
-      new ModuleJdkConfigurable(this, ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel()) {
+      new ModuleJdkConfigurable(this, ((ModulesConfigurator)getState().getModulesProvider()).getProjectStructureConfigurable()) {
         @Override
         protected ModifiableRootModel getRootModel() {
-          return getState().getRootModel();
+          return getModifiableModel();
         }
       };
     panel.add(jdkConfigurable.createComponent(), BorderLayout.NORTH);
@@ -109,14 +106,18 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
     ClasspathStorageProvider[] providers = ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length > 0) {
-      myClasspathFormatPanel = new ClasspathFormatPanel(providers, getModel());
-      panel.add(myClasspathFormatPanel, BorderLayout.SOUTH);
+      myClasspathFormatUI = new ClasspathFormatUI(providers, getState());
+      panel.add(myClasspathFormatUI.getPanel(), BorderLayout.SOUTH);
     }
 
     return panel;
   }
 
-  public void selectOrderEntry(@NotNull final OrderEntry entry) {
+  private ModifiableRootModel getModifiableModel() {
+    return getState().getModifiableRootModel();
+  }
+
+  public void selectOrderEntry(final @NotNull OrderEntry entry) {
     myPanel.selectOrderEntry(entry);
   }
 
@@ -128,13 +129,23 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     if (myPanel != null) {
-      myPanel.rootsChanged();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myDisposed) {
+          myPanel.rootsChanged();
+        }
+      });
     }
   }
 
-  public void setSdk(final Sdk newJDK) {
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myDisposed = true;
+  }
+
+  public void setSdk(final @Nullable Sdk newJDK) {
     final ModifiableRootModel model = getModel();
     if (newJDK != null) {
       model.setSdk(newJDK);
@@ -148,56 +159,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  private static class ClasspathFormatPanel extends JPanel {
-    private final ModifiableRootModel rootModel;
-    private final JComboBox<String> comboBoxClasspathFormat;
-
-    private ClasspathFormatPanel(ClasspathStorageProvider[] providers, ModifiableRootModel model) {
-      super(new GridBagLayout());
-      rootModel = model;
-
-      add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
-          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
-
-      Map<String, String> formatIdToDescription = new LinkedHashMap<>();
-      formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, ProjectBundle.message("project.roots.classpath.format.default.descr"));
-      for (ClasspathStorageProvider provider : providers) {
-        formatIdToDescription.put(provider.getID(), provider.getDescription());
-      }
-      comboBoxClasspathFormat = new ComboBox<>(ArrayUtil.toStringArray(formatIdToDescription.keySet()));
-      comboBoxClasspathFormat.setRenderer(new ListCellRendererWrapper<String>() {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          setText(formatIdToDescription.get(value));
-        }
-      });
-      comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
-      add(comboBoxClasspathFormat,
-          new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));
-    }
-
-    private String getSelectedClasspathFormat() {
-      return (String)comboBoxClasspathFormat.getSelectedItem();
-    }
-
-    private String getModuleClasspathFormat() {
-      return ClassPathStorageUtil.getStorageType(rootModel.getModule());
-    }
-
-    private boolean isModified() {
-      return !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
-    }
-
-    public void canApply() throws ConfigurationException {
-      ClasspathStorageProvider provider = ClasspathStorage.getProvider(getSelectedClasspathFormat());
-      if (provider != null) {
-        provider.assertCompatible(rootModel);
-      }
-    }
-
-    private void apply() throws ConfigurationException {
-      canApply();
-      ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
-    }
+  public static @NlsContexts.ConfigurableName String getName() {
+    return JavaCompilerBundle.message("modules.classpath.title");
   }
 }

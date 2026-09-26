@@ -1,137 +1,195 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.DisposableWrapperList;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.function.Supplier;
 
-/**
- * @author max
- */
-public class EventDispatcher<T extends EventListener> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.EventDispatcher");
+public final class EventDispatcher<T extends EventListener> {
+  private static final Logger LOG = Logger.getInstance(EventDispatcher.class);
 
-  private final T myMulticaster;
+  private T myMulticaster;
 
-  private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<T> myListeners = new DisposableWrapperList<>();
+  private final @NotNull Class<T> myListenerClass;
+  private final @Nullable Map<String, Object> myMethodReturnValues;
 
-  public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
-    return new EventDispatcher<T>(listenerClass);
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
+    return new EventDispatcher<>(listenerClass, null);
   }
 
-  private EventDispatcher(@NotNull Class<T> listenerClass) {
-    myMulticaster = createMulticaster(listenerClass, new Getter<Iterable<T>>() {
-      @Override
-      public Iterable<T> get() {
-        return myListeners;
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass,
+                                                                             @NotNull Map<String, Object> methodReturnValues) {
+    assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
+    return new EventDispatcher<>(listenerClass, methodReturnValues);
+  }
+
+  private static void assertNonVoidMethodReturnValuesAreDeclared(@NotNull Map<String, Object> methodReturnValues,
+                                                                 @NotNull Class<?> listenerClass) {
+    List<Method> declared = new ArrayList<>(ReflectionUtil.getClassPublicMethods(listenerClass));
+    for (final Map.Entry<String, Object> entry : methodReturnValues.entrySet()) {
+      final String methodName = entry.getKey();
+      Method found = ContainerUtil.find(declared, m -> methodName.equals(m.getName()));
+      assert found != null : "Method " + methodName + " must be declared in " + listenerClass;
+      assert !found.getReturnType().equals(void.class) :
+        "Method " + methodName + " must be non-void if you want to specify what its proxy should return";
+      Object returnValue = entry.getValue();
+      assert ReflectionUtil.boxType(found.getReturnType()).isAssignableFrom(returnValue.getClass()) :
+        "You specified that method " +
+        methodName + " proxy will return " + returnValue +
+        " but its return type is " + found.getReturnType() + " which is incompatible with " + returnValue.getClass();
+      declared.remove(found);
+    }
+    for (Method method : declared) {
+      assert method.getReturnType().equals(void.class) :
+        "Method " + method + " returns " + method.getReturnType() + " and yet you didn't specify what its proxy should return";
+    }
+  }
+
+  private EventDispatcher(@NotNull Class<T> listenerClass, @Nullable Map<String, Object> methodReturnValues) {
+    myListenerClass = listenerClass;
+    myMethodReturnValues = methodReturnValues;
+  }
+
+  public static <T> T createMulticaster(@NotNull Class<T> listenerClass,
+                                        @NotNull Supplier<? extends Iterable<T>> listeners) {
+    return doCreateMulticaster(listenerClass, null, listeners);
+  }
+
+  private static @NotNull <T> T doCreateMulticaster(@NotNull Class<T> listenerClass,
+                                            @Nullable Map<String, Object> methodReturnValues,
+                                            @NotNull Supplier<? extends Iterable<T>> listeners) {
+    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface: " + listenerClass.getName());
+    return ReflectionUtil.proxy(listenerClass, (proxy, method, args) -> {
+      String methodName = method.getName();
+      if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
+        return handleObjectMethod(proxy, args, methodName);
+      }
+      else if (methodReturnValues != null && methodReturnValues.containsKey(methodName)) {
+        return methodReturnValues.get(methodName);
+      }
+      else {
+        dispatchVoidMethod(listeners.get(), method, args);
+        return null;
       }
     });
   }
 
-  @NotNull
-  static <T> T createMulticaster(@NotNull Class<T> listenerClass, final Getter<Iterable<T>> listeners) {
-    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
-    InvocationHandler handler = new InvocationHandler() {
-      @Override
-      @NonNls
-      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-        if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
-          @NonNls String methodName = method.getName();
-          if (methodName.equals("toString")) {
-            return "Multicaster";
-          }
-          else if (methodName.equals("hashCode")) {
-            return Integer.valueOf(System.identityHashCode(proxy));
-          }
-          else if (methodName.equals("equals")) {
-            return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
-          }
-          else {
-            LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
-            return null;
-          }
-        }
-        else {
-          dispatch(listeners.get(), method, args);
-          return null;
-        }
-      }
-    };
-
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
+  public static @Nullable Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
+    switch (methodName) {
+      case "toString":
+        return "Multicaster";
+      case "hashCode":
+        return System.identityHashCode(proxy);
+      case "equals":
+        return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
+      default:
+        LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
+        return null;
+    }
   }
 
-  @NotNull
-  public T getMulticaster() {
-    return myMulticaster;
+  public @NotNull T getMulticaster() {
+    T multicaster = myMulticaster;
+    if (multicaster == null) {
+      // benign race
+      myMulticaster = multicaster = doCreateMulticaster(myListenerClass, myMethodReturnValues, () -> myListeners);
+    }
+    return multicaster;
   }
 
-  private static <T> void dispatch(Iterable<T> listeners, @NotNull Method method, Object[] args) {
+  private static <T> void dispatchVoidMethod(@NotNull Iterable<? extends T> listeners, @NotNull Method method, Object[] args) {
+    List<Throwable> exceptions = null;
     method.setAccessible(true);
 
     for (T listener : listeners) {
       try {
         method.invoke(listener, args);
       }
-      catch (AbstractMethodError ignored) {
-        // Do nothing. This listener just does not implement something newly added yet.
-        // AbstractMethodError is normally wrapped in InvocationTargetException,
-        // but some Java versions didn't do it in some cases (see http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6531596)
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        final Throwable cause = e.getCause();
-        ExceptionUtil.rethrowUnchecked(cause);
-        if (!(cause instanceof AbstractMethodError)) { // AbstractMethodError means this listener doesn't implement some new method in interface
-          LOG.error(cause);
-        }
+      catch (Throwable e) {
+        exceptions = handleException(e, exceptions);
       }
     }
+
+    if (exceptions != null) {
+      throwExceptions(exceptions);
+    }
+  }
+
+  public static @Nullable List<Throwable> handleException(@NotNull Throwable e, @Nullable List<Throwable> exceptions) {
+    Throwable exception = e;
+    if (e instanceof InvocationTargetException) {
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        // Do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
+        if (cause instanceof AbstractMethodError) {
+          return exceptions;
+        }
+
+        exception = cause;
+      }
+    }
+
+    if (exceptions == null) {
+      exceptions = new ArrayList<>();
+    }
+    exceptions.add(exception);
+    return exceptions;
+  }
+
+  private static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
+    if (isEventDispatcherErrorPropagationEnabled()) {
+      if (exceptions.size() == 1) {
+        ExceptionUtil.rethrow(exceptions.get(0));
+      }
+      else {
+        for (Throwable exception : exceptions) {
+          if (exception instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)exception;
+          }
+        }
+        throw new CompoundRuntimeException(exceptions);
+      }
+    }
+    else {
+      for (Throwable exception : exceptions) {
+        if (exception instanceof CancellationException) continue;
+        LOG.error(exception);
+      }
+    }
+  }
+
+  /**
+   * - `false` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being logged
+   * - `true` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being rethrown at {@link com.intellij.util.EventDispatcher#getMulticaster} usages (the old behavior)
+   */
+  private static boolean isEventDispatcherErrorPropagationEnabled() {
+    return Boolean.parseBoolean(System.getProperty("ijpl.event.dispatcher.rethrows.errors.from.listeners", "false"));
   }
 
   public void addListener(@NotNull T listener) {
     myListeners.add(listener);
   }
 
-  /**
-   * CAUTION: do not use in pair with {@link #removeListener(EventListener)}: a memory leak can occur.
-   * In case a listener is removed, it's disposable stays in disposable hierarchy, preventing the listener from being gc'ed.
-   */
-  public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
-    addListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeListener(listener);
-      }
-    });
+  public void addListener(@NotNull T listener, @NotNull Disposable parentDisposable) {
+    myListeners.add(listener, parentDisposable);
   }
 
   public void removeListener(@NotNull T listener) {
@@ -142,8 +200,14 @@ public class EventDispatcher<T extends EventListener> {
     return !myListeners.isEmpty();
   }
 
-  @NotNull
-  public List<T> getListeners() {
+  public @NotNull List<T> getListeners() {
     return myListeners;
+  }
+
+  @TestOnly
+  public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
+    T multicaster = myMulticaster;
+    myMulticaster = doCreateMulticaster(myListenerClass, myMethodReturnValues, () -> Collections.emptyList());
+    Disposer.register(disposable, () -> myMulticaster = multicaster);
   }
 }

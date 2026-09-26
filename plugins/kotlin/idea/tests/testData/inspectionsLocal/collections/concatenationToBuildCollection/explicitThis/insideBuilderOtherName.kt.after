@@ -1,0 +1,12 @@
+// FIX: Convert to collection builder
+
+val x = buildSet<Boolean> {
+    add(true)
+    addAll(
+        buildList {
+            addAll(listOf(this@buildSet).flatten())
+            this@buildSet.mapTo(this) { !it }
+            addAll(this@buildSet.mapTo(this@buildSet) { !it })
+        }
+    )
+}

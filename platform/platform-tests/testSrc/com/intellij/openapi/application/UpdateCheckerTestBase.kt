@@ -1,0 +1,348 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application
+
+import com.intellij.ide.plugins.IdeaPluginDependency
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.TestIdeaPluginDescriptor
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
+import com.intellij.ide.plugins.updateBrokenPlugins
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProvider
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.http.url
+import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.io.deleteChildrenRecursively
+import com.intellij.util.application
+import com.sun.net.httpserver.HttpServer
+import org.apache.http.client.utils.URLEncodedUtils
+import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import tools.jackson.databind.ObjectMapper
+import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
+
+internal abstract class UpdateCheckerTestBase {
+  companion object {
+    const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
+  }
+
+  protected val testDisposable = disposableFixture()
+  protected val objectMapper = ObjectMapper()
+
+  protected lateinit var server: HttpServer
+
+  protected var receivedUpdatesRequestUri: URI? = null
+
+  @BeforeEach
+  fun setup() {
+    server = createTestServer().httpServer
+
+    application.replaceService(InstalledPluginsState::class.java, InstalledPluginsState(), testDisposable.get())
+    application.replaceService(UpdateCheckerPluginsFacade::class.java, TestUpdateCheckerPluginsFacade(), testDisposable.get())
+    application.replaceService(PluginUpdateSourcePluginsProvider::class.java, TestPluginUpdateSourcePluginsProvider(),
+                               testDisposable.get())
+    application.replaceService(MarketplaceCustomizationService::class.java, TestMarketplaceCustomizationService(server.url),
+                               testDisposable.get())
+
+    server.createContext("/plugins/files/brokenPlugins.json") { handler ->
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
+        it.write("[]")
+      }
+    }
+  }
+
+  @AfterEach
+  @Suppress("DEPRECATION")
+  fun tearDown() {
+    updateBrokenPlugins(emptyMap())
+
+    val pluginTempPath = Path.of(PathManager.getPluginTempPath())
+    if (Files.exists(pluginTempPath)) {
+      pluginTempPath.deleteChildrenRecursively { true }
+    }
+  }
+
+  protected data class Server(val httpServer: HttpServer, val suffix: String) {
+    val url: String
+      get() = "${httpServer.url}/$suffix"
+  }
+
+  protected fun createTestServer(suffix: String = "custom-repository"): Server {
+    val server = HttpServer.create()!!
+    server.bind(InetSocketAddress(0), 1)
+    server.start()
+    testDisposable.get().whenDisposed { server.stop(0) }
+    return Server(server, suffix)
+  }
+
+  protected fun setServerPlugins(
+    plugins: List<RepositoryPluginMock>,
+    updates: List<RepositoryPluginMock>,
+  ) {
+    server.createContext("/plugins/files/pluginsXMLIds.json") { handler ->
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use { out ->
+        out.write(objectMapper.writeValueAsString(plugins.map { it.pluginId }))
+      }
+    }
+
+    for ((pluginId, externalPluginId, externalUpdateId, version, customModelResponse) in plugins) {
+      server.createContext("/plugins/files/$externalPluginId/$externalUpdateId/meta.json") { handler ->
+        handler.sendResponseHeaders(200, 0)
+        handler.responseBody.writer().use {
+          if (customModelResponse != null) {
+            it.write(customModelResponse)
+          }
+          else {
+            it.write(getMetaJson(pluginId, externalPluginId, version, "1.0", "999.9999"))
+          }
+        }
+      }
+    }
+
+    server.createContext("/plugins/api/search/updates/compatible") { handler ->
+      receivedUpdatesRequestUri = handler.requestURI
+
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
+        it.write(getUpdatesResponseJson(updates))
+      }
+    }
+  }
+
+  protected fun setCustomRepositoryPlugins(customServer: Server, plugins: List<CustomRepositoryPlugin>) {
+    customServer.httpServer.createContext("/${customServer.suffix}") { handler ->
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use { out ->
+        out.write("""
+          <plugins>
+            ${plugins.joinToString("\n") { it.toPluginXml(customServer.httpServer) }}
+          </plugins>
+          """.trimIndent())
+      }
+    }
+
+    for (plugin in plugins) {
+      customServer.httpServer.createContext(plugin.downloadPath) { handler ->
+        handler.sendResponseHeaders(200, 0)
+        handler.responseBody.use { output ->
+          JarOutputStream(output).use { jarOutput ->
+            jarOutput.putNextEntry(ZipEntry("META-INF/plugin.xml"))
+            jarOutput.write(plugin.toJarPluginXml().toByteArray())
+          }
+        }
+      }
+    }
+  }
+
+  protected fun getUpdatesResponseJson(updates: List<RepositoryPluginMock>): String {
+    return objectMapper.writeValueAsString(
+      updates.map {
+        linkedMapOf(
+          "id" to it.externalUpdateId,
+          "pluginId" to it.externalPluginId,
+          "pluginXmlId" to it.pluginId,
+          "version" to it.version,
+        )
+      }
+    )
+  }
+
+  protected fun getMetaJson(pluginId: String, externalPluginId: String, version: String, sinceBuild: String, untilBuild: String): String {
+    return """
+              {
+                "id": "${externalPluginId}",
+                "xmlId": "${pluginId}",
+                "name": "${pluginId} Plugin",
+                "description": "${pluginId} Helps You!",
+                "organization": "${pluginId} Company",
+                "tags": ["Productivity"],
+                "version": "${version}",
+                "notes": "Fixed bugs",
+                "dependencies": ["com.intellij.modules.lang"],
+                "since": "${sinceBuild}",
+                "until": "${untilBuild}",
+                "size": 86085,
+                "vendor": "YourCompany",
+                "sourceCodeUrl": "https://example.com/plugin/${pluginId}"
+              }
+          """.trimIndent()
+  }
+
+  protected fun getPluginIdsFromQuery(uri: URI?): List<String?> {
+    // Java URI does not support repeatable names for pluginXmlId
+    val parsedQuery = URLEncodedUtils.parse(uri, StandardCharsets.UTF_8)
+    val pluginIds = parsedQuery
+      .filter { it.name.equals("pluginXmlId", true) }
+      .map { it.value }
+    return pluginIds
+  }
+
+  protected val installedPluginsFacade: TestUpdateCheckerPluginsFacade
+    get() = application.getService(UpdateCheckerPluginsFacade::class.java) as TestUpdateCheckerPluginsFacade
+
+  protected fun setInstalledPluginMocks(vararg plugins: InstalledPluginMock) {
+    val installedPlugins = plugins.asList()
+    installedPluginsFacade.setPlugins(installedPlugins)
+    pluginUpdateSourcePluginsProvider.setPlugins(installedPlugins.map { it.createTestPluginDescriptor() })
+  }
+
+  private val pluginUpdateSourcePluginsProvider: TestPluginUpdateSourcePluginsProvider
+    get() = application.getService(PluginUpdateSourcePluginsProvider::class.java) as TestPluginUpdateSourcePluginsProvider
+}
+
+internal class TestMarketplaceCustomizationService(private val mockHost: String, private val byJetBrains: Boolean = true) :
+  MarketplaceCustomizationService {
+  override fun usesJetBrainsPluginRepository(): Boolean = byJetBrains
+  override fun getPluginManagerUrl(): String = "$mockHost/plugins"
+  override fun getPluginDownloadUrl(): String = "$mockHost/download"
+  override fun getPluginsListUrl(): String = "$mockHost/list"
+  override fun getPluginHomepageUrl(pluginId: PluginId): String = "$mockHost/plugin/$pluginId"
+}
+
+internal data class RepositoryPluginMock(
+  val pluginId: String,
+  val externalPluginId: String,
+  val externalUpdateId: String,
+  val version: String,
+  @param:Language("JSON") val customModelResponse: String? = null,
+)
+
+internal data class InstalledPluginMock(
+  val id: String,
+  val name: String,
+  val company: String,
+  val version: String?,
+  val sinceBuild: String?,
+  val untilBuild: String?,
+  val enabled: Boolean,
+  val vendor: String? = null,
+  val isBundled: Boolean = false,
+  val allowBundledUpdate: Boolean = false,
+) {
+  fun createTestPluginDescriptor(): TestIdeaPluginDescriptor {
+    return object : TestIdeaPluginDescriptor() {
+      override fun getPluginId(): PluginId = PluginId.getId(id)
+      override fun getName(): @NlsSafe String = pluginId.idString
+      override fun getSinceBuild(): @NlsSafe String? = this@InstalledPluginMock.sinceBuild
+      override fun getUntilBuild(): @NlsSafe String? = this@InstalledPluginMock.untilBuild
+      override fun getVersion(): @NlsSafe String? = this@InstalledPluginMock.version
+      override fun getVendor(): @NlsSafe String? = this@InstalledPluginMock.vendor
+      override fun getDependencies(): List<IdeaPluginDependency> = listOf()
+
+      @Suppress("OVERRIDE_DEPRECATION")
+      override fun isEnabled(): Boolean = enabled
+      override fun isBundled(): Boolean = this@InstalledPluginMock.isBundled
+      override fun allowBundledUpdate(): Boolean = this@InstalledPluginMock.allowBundledUpdate
+    }
+  }
+}
+
+internal data class CustomRepositoryPlugin(val pluginId: String, val version: String) {
+  val downloadPath: String = "/downloads/$pluginId-$version.jar"
+
+  fun toPluginXml(customServer: HttpServer): String {
+    return """
+            <plugin id="$pluginId">
+              <name>$pluginId</name>
+              <description>$pluginId plugin</description>
+              <version>$version</version>
+              <vendor>JetBrains</vendor>
+              <idea-version since-build="1.0" until-build="999.*"/>
+              <change-notes>Update</change-notes>
+              <download-url>${customServer.url}$downloadPath</download-url>
+            </plugin>
+      """.trimIndent()
+  }
+
+  fun toJarPluginXml(): String {
+    return """
+        <idea-plugin>
+          <id>$pluginId</id>
+          <name>$pluginId</name>
+          <description>$pluginId plugin</description>
+          <vendor>JetBrains</vendor>
+          <version>$version</version>
+          <idea-version since-build="1.0" until-build="999.9999"/>
+        </idea-plugin>
+      """.trimIndent()
+  }
+}
+
+internal class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
+  private val plugins = mutableListOf<InstalledPluginMock>()
+  private val descriptors = mutableMapOf<PluginId, TestIdeaPluginDescriptor>()
+
+  private val hosts = mutableListOf<String>()
+
+  fun setPlugins(plugins: List<InstalledPluginMock>) {
+    this.plugins.clear()
+    this.plugins.addAll(plugins)
+
+    this.descriptors.clear()
+    this.descriptors.putAll(
+      plugins.map { it.createTestPluginDescriptor() }.associateBy { it.pluginId }
+    )
+  }
+
+  fun setHosts(repositories: List<String>) {
+    this.hosts.clear()
+    this.hosts.addAll(repositories)
+  }
+
+  override fun getPlugin(id: PluginId): IdeaPluginDescriptor? {
+    return descriptors[id]
+  }
+
+  override fun getInstalledPlugins(): Collection<IdeaPluginDescriptor> {
+    return descriptors.values
+  }
+
+  override fun getOnceInstalledIfExists(): Path? = null
+
+  override fun isDisabled(id: PluginId): Boolean {
+    return plugins.find { it.id == id.idString }?.enabled == false
+  }
+
+  override fun isCompatible(
+    descriptor: IdeaPluginDescriptor,
+    buildNumber: BuildNumber?,
+  ): Boolean {
+    return PluginManagerCore.isCompatible(descriptor, buildNumber)
+  }
+
+  // See RepositoryHelper.getPluginHosts
+  override fun getPluginHosts(): List<String?> {
+    val data = mutableListOf<String?>()
+    data.addAll(hosts)
+    data.add(null)
+    return data
+  }
+}
+
+internal class TestPluginUpdateSourcePluginsProvider : PluginUpdateSourcePluginsProvider {
+  private val plugins = mutableListOf<PluginDescriptor>()
+
+  fun setPlugins(plugins: Collection<PluginDescriptor>) {
+    this.plugins.clear()
+    this.plugins.addAll(plugins)
+  }
+
+  override fun getAllPlugins(): Collection<PluginDescriptor> {
+    return plugins
+  }
+}

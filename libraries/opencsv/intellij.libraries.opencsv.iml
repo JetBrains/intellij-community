@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="opencsv" type="repository">
+        <properties maven-id="com.opencsv:opencsv:5.12.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0.jar">
+              <sha256sum>f1c55d80a92c8ecfe3f15fb71785d5b156f3674cb5b9ad55dcfd378ffeed2960</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.jar">
+              <sha256sum>9e44ba68ec9a3f21286fa2a8bbb003b735c0f69101bb43144b79f4f8aaa74709</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apache.commons:commons-text" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="commons-collections:commons-collections" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="org.apache.commons:commons-collections4" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/opencsv/opencsv/5.12.0/opencsv-5.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1.11.0/commons-beanutils-1.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -1,0 +1,50 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.ui.visualization
+
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Key
+import java.awt.Color
+
+/**
+ * Constants and functions that affects only visual representation, like colors, sizes of elements, etc.
+ */
+interface NotebookEditorAppearance : NotebookEditorAppearanceSizes, NotebookEditorAppearanceFlags {
+  fun editorBackgroundColor(): Color
+  fun codeCellBackgroundColor(): Color
+  fun codeCellFoldedTextAttribute(): TextAttributes?
+  fun codeCellSelectionBackgroundColor(): Color?
+  fun cellStripeSelectedColor(): Color
+  fun cellStripeHoveredColor(): Color
+  fun cellFrameSelectedColor(): Color
+  fun cellFrameHoveredColor(): Color
+  fun caretRowColor(): Color?
+  fun cellOutputForeground(): Color?
+  fun markdownPreviewForeground(): Color
+  fun executionTimeForeground(): Color
+
+  companion object {
+    val NOTEBOOK_APPEARANCE_KEY: Key<NotebookEditorAppearance?> = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
+
+    val EDITOR_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.EDITOR_BACKGROUND")
+
+    val CODE_CELL_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND")
+    val CODE_CELL_FOLDED_TEXT_ATTRIBUTES: TextAttributesKey = TextAttributesKey.createTextAttributesKey("JUPYTER_FOLDED_TEXT_ATTRIBUTES")
+    val CODE_CELL_SELECTION_BACKGROUND: ColorKey = ColorKey.createColorKey("JUPYTER.SELECTION_BACKGROUND")
+    val CARET_ROW_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR")
+
+    val CELL_STRIPE_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_SELECTED_COLOR")
+    val CELL_STRIPE_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_HOVERED_COLOR")
+
+    val CELL_FRAME_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_SELECTED_COLOR")
+    val CELL_FRAME_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_HOVERED_COLOR")
+
+    val CELL_OUTPUT_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_OUTPUT_COLOR")
+    val EXECUTION_TIME_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.EXECUTION_TIME_COLOR")
+    val MARKDOWN_PREVIEW_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.MARKDOWN_PREVIEW_COLOR")
+
+    internal val CELL_STRIPE_HOVERED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
+    internal val CELL_STRIPE_SELECTED_COLOR_OLD: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR")
+  }
+}

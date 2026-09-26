@@ -16,11 +16,19 @@
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
+public class ConstantValuesTest extends LightJavaCodeInsightFixtureTestCase {
   private PsiClass myClass;
 
   @Override
@@ -45,7 +53,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     assertEquals(Integer.valueOf(1), initializer.getValue());
     assertEquals("1", initializer.getText());
 
@@ -57,7 +65,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     PsiLiteralExpression operand = (PsiLiteralExpression)initializer.getOperand();
     assertNotNull(operand);
     assertEquals(Integer.valueOf(1), operand.getValue());
@@ -71,7 +79,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     int value = -1 << 31;
     assertEquals(Integer.toString(value), initializer.getText());
 
@@ -84,7 +92,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
     assertEquals("2", initializer.getText());
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     assertEquals(Integer.valueOf(2), initializer.getValue());
 
     assertEquals(Long.valueOf(2), field.computeConstantValue());
@@ -95,7 +103,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.LONG, initializer.getType());
+    assertEquals(PsiTypes.longType(), initializer.getType());
     assertEquals(Long.valueOf(1000000000000L), initializer.getValue());
     assertEquals("1000000000000L", initializer.getText());
 
@@ -107,7 +115,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiPrefixExpression initializer = (PsiPrefixExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.LONG, initializer.getType());
+    assertEquals(PsiTypes.longType(), initializer.getType());
     long value = -1L << 63;
     assertEquals(value + "L", initializer.getText());
 
@@ -119,7 +127,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     assertEquals(Integer.valueOf(3), initializer.getValue());
     assertEquals("3", initializer.getText());
 
@@ -131,7 +139,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
     assertEquals(Integer.valueOf(4), initializer.getValue());
     assertEquals("4", initializer.getText());
 
@@ -143,7 +151,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.CHAR, initializer.getType());
+    assertEquals(PsiTypes.charType(), initializer.getType());
     assertEquals(new Character('5'), initializer.getValue());
     assertEquals("'5'", initializer.getText());
 
@@ -155,7 +163,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.BOOLEAN, initializer.getType());
+    assertEquals(PsiTypes.booleanType(), initializer.getType());
     assertEquals(Boolean.TRUE, initializer.getValue());
     assertEquals("true", initializer.getText());
 
@@ -167,7 +175,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.FLOAT, initializer.getType());
+    assertEquals(PsiTypes.floatType(), initializer.getType());
     assertEquals(new Float(1.234f), initializer.getValue());
     assertEquals("1.234f", initializer.getText());
 
@@ -179,7 +187,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field);
     PsiLiteralExpression initializer = (PsiLiteralExpression)field.getInitializer();
     assertNotNull(initializer);
-    assertEquals(PsiType.DOUBLE, initializer.getType());
+    assertEquals(PsiTypes.doubleType(), initializer.getType());
     assertEquals(new Double(3.456), initializer.getValue());
     assertEquals("3.456", initializer.getText());
 
@@ -205,7 +213,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field1);
     PsiReferenceExpression initializer1 = (PsiReferenceExpression)field1.getInitializer();
     assertNotNull(initializer1);
-    assertEquals(PsiType.DOUBLE, initializer1.getType());
+    assertEquals(PsiTypes.doubleType(), initializer1.getType());
     assertEquals("Double.POSITIVE_INFINITY", initializer1.getText());
     assertEquals(new Double(Double.POSITIVE_INFINITY), field1.computeConstantValue());
 
@@ -213,7 +221,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field2);
     PsiReferenceExpression initializer2 = (PsiReferenceExpression)field2.getInitializer();
     assertNotNull(initializer2);
-    assertEquals(PsiType.DOUBLE, initializer2.getType());
+    assertEquals(PsiTypes.doubleType(), initializer2.getType());
     assertEquals("Double.NEGATIVE_INFINITY", initializer2.getText());
     assertEquals(new Double(Double.NEGATIVE_INFINITY), field2.computeConstantValue());
 
@@ -221,7 +229,7 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(field3);
     PsiReferenceExpression initializer3 = (PsiReferenceExpression)field3.getInitializer();
     assertNotNull(initializer3);
-    assertEquals(PsiType.DOUBLE, initializer3.getType());
+    assertEquals(PsiTypes.doubleType(), initializer3.getType());
     assertEquals("Double.NaN", initializer3.getText());
     assertEquals(new Double(Double.NaN), field3.computeConstantValue());
   }
@@ -235,5 +243,115 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     PsiField field = file.getClasses()[0].findFieldByName("s", false);
     assertNotNull(field);
     assertEquals("", JavaConstantExpressionEvaluator.computeConstantExpression(field.getInitializer(), false));
+  }
+
+  public void testStringConstExpression1() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST1", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("\"a\" + \"b\"", initializer.getText());
+
+    assertEquals("ab", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression2() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST2", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("\"a\" + 123", initializer.getText());
+
+    assertEquals("a123", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression3() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST3", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("123 + \"b\"", initializer.getText());
+
+    assertEquals("123b", field.computeConstantValue());
+  }
+
+  public void testStringConstExpression4() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CONST4", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("INT_CONST1 + \"aaa\"", initializer.getText());
+
+    assertEquals("1aaa", field.computeConstantValue());
+  }
+
+  public void testStringExpressionClass() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CLASS", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Integer.class + \"xxx\"", initializer.getText());
+
+    assertEquals("class java.lang.Integerxxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionClassArray() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_CLASS_ARRAY", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Integer[].class + \"xxx\"", initializer.getText());
+
+    assertEquals("class [Ljava.lang.Integer;xxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionInterface() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_INTERFACE", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("Runnable.class + \"xxx\"", initializer.getText());
+
+    assertEquals("interface java.lang.Runnablexxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionPrimitive() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_PRIMITIVE", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("int.class + \"xxx\"", initializer.getText());
+
+    assertEquals("intxxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionPrimitiveArray() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_PRIMITIVE_ARRAY", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("int[].class + \"xxx\"", initializer.getText());
+
+    assertEquals("class [Ixxx", field.computeConstantValue());
+  }
+
+  public void testStringExpressionMethod() {
+    PsiField field = myClass.findFieldByName("STRING_EXPRESSION_METHOD", false);
+    assertNotNull(field);
+    PsiBinaryExpression initializer = (PsiBinaryExpression)field.getInitializer();
+    assertNotNull(initializer);
+    assertTrue(initializer.getType().equalsToText("java.lang.String"));
+    assertEquals("val() + \"xxx\"", initializer.getText());
+
+    assertNull(field.computeConstantValue());
   }
 }

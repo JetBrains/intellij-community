@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -20,37 +6,39 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.util.JdomKt;
-import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class InspectionProfileConvertor {
   private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
-  @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
-  @NonNls public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
+  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
+  public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
+  private static final Logger LOG = Logger.getInstance(InspectionProfileConvertor.class);
 
-  @NonNls private static final String NAME_ATT = "name";
-  @NonNls private static final String VERSION_ATT = "version";
-  @NonNls private static final String OPTION_TAG = "option";
-  @NonNls private static final String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
-  @NonNls protected static final String VALUE_ATT = "value";
-  @NonNls private static final String DEFAULT_XML = "Default.xml";
-  @NonNls private static final String XML_EXTENSION = ".xml";
-  @NonNls public static final String LEVEL_ATT = "level";
+  private static final @NonNls String NAME_ATT = "name";
+  private static final @NonNls String VERSION_ATT = "version";
+  private static final @NonNls String OPTION_TAG = "option";
+  private static final @NonNls String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
+  protected static final @NonNls String VALUE_ATT = "value";
+  private static final @NonNls String DEFAULT_XML = "Default.xml";
+  private static final @NonNls String XML_EXTENSION = ".xml";
+  public static final @NonNls String LEVEL_ATT = "level";
   private final InspectionProfileManager myManager;
 
   public InspectionProfileConvertor(@NotNull InspectionProfileManager manager) {
@@ -92,7 +80,7 @@ public class InspectionProfileConvertor {
 
   private static void renameOldDefaultsProfile() {
     Path directoryPath = Paths.get(PathManager.getConfigPath(), InspectionProfileManager.INSPECTION_DIR);
-    if (!PathKt.exists(directoryPath)) {
+    if (!Files.exists(directoryPath)) {
       return;
     }
 
@@ -101,9 +89,9 @@ public class InspectionProfileConvertor {
       return;
     }
     try {
-      Element root = JdomKt.loadElement(files[0].toPath());
+      Element root = JDOMUtil.load(files[0].toPath());
       if (root.getAttributeValue(VERSION_ATT) == null){
-        JdomKt.write(root, directoryPath.resolve(OLD_DEFAUL_PROFILE + XML_EXTENSION));
+        JDOMUtil.write(root, directoryPath.resolve(OLD_DEFAUL_PROFILE + XML_EXTENSION));
         FileUtil.delete(files[0]);
       }
     }

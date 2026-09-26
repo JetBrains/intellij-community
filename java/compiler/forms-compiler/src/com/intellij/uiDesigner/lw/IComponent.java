@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public interface IComponent {
   Object getClientProperty(Object key);
 

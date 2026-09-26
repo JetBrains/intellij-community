@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a receiver parameter of a Java method (Java 8).
- *
- * @since 12.1
  */
 public interface PsiReceiverParameter extends PsiVariable {
   @NotNull

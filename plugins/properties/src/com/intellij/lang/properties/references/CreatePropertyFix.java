@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,12 +28,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
+  private static final Logger LOG = Logger.getInstance(CreatePropertyFix.class);
   private final PsiAnchor myElement;
   private final String myKey;
   private final List<PropertiesFile> myPropertiesFiles;
-
-  public static final String NAME = PropertiesBundle.message("create.property.quickfix.text");
 
   public CreatePropertyFix() {
     this(null, null, null);
@@ -58,14 +44,12 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return NAME;
+  public @NotNull String getName() {
+    return getFixName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -78,26 +62,31 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return NAME;
+  public @NotNull String getText() {
+    return getFixName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile psiFile) {
     return myElement != null && myElement.retrieve() != null;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    invokeAction(project, file, myElement.retrieve(), myKey, myPropertiesFiles);
+  public void invoke(final @NotNull Project project, @Nullable Editor editor, @NotNull PsiFile psiFile) {
+    invokeAction(project, psiFile, myElement.retrieve(), myKey, myPropertiesFiles);
   }
 
-  private void invokeAction(@NotNull final Project project,
-                                      @NotNull PsiFile file,
-                                      @NotNull PsiElement psiElement,
-                                      @Nullable final String suggestedKey,
-                                      @Nullable final List<PropertiesFile> propertiesFiles) {
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    String fileName = myPropertiesFiles != null && !myPropertiesFiles.isEmpty() ? myPropertiesFiles.get(0).getName() : "";
+    return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, fileName, myKey + "=", myKey + "=...");
+  }
+
+  private void invokeAction(final @NotNull Project project,
+                            @NotNull PsiFile file,
+                            @NotNull PsiElement psiElement,
+                            final @Nullable String suggestedKey,
+                            final @Nullable List<PropertiesFile> propertiesFiles) {
     final I18nizeQuickFixModel model;
     final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
 
@@ -127,14 +116,14 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
       model = new I18nizeQuickFixDialog(
         project,
         file,
-        NAME, dialogCustomization
+        getFixName(), dialogCustomization
       );
     }
     doAction(project, psiElement, model);
   }
 
   protected static I18nizeQuickFixDialog.DialogCustomization createDefaultCustomization(String suggestedKey, List<PropertiesFile> propertiesFiles) {
-    return new I18nizeQuickFixDialog.DialogCustomization(NAME, false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
+    return new I18nizeQuickFixDialog.DialogCustomization(getFixName(), false, true, propertiesFiles, suggestedKey == null ? "" : suggestedKey);
   }
 
   protected Couple<String> doAction(Project project, PsiElement psiElement, I18nizeQuickFixModel model) {
@@ -150,11 +139,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     return Couple.of(key, value);
   }
 
-  public static void createProperty(@NotNull final Project project,
-                                    @NotNull final PsiElement psiElement,
-                                    @NotNull final Collection<PropertiesFile> selectedPropertiesFiles,
-                                    @NotNull final String key,
-                                    @NotNull final String value) {
+  public static void createProperty(final @NotNull Project project,
+                                    final @NotNull PsiElement psiElement,
+                                    final @NotNull Collection<? extends PropertiesFile> selectedPropertiesFiles,
+                                    final @NotNull String key,
+                                    final @NotNull String value) {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {
       if (!FileModificationService.getInstance().prepareFileForWrite(selectedFile.getContainingFile())) return;
     }
@@ -167,11 +156,15 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }, CodeInsightBundle.message("quickfix.i18n.command.name"), project));
+    }, PropertiesBundle.message("quickfix.i18n.command.name"), project));
   }
 
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static @IntentionName String getFixName() {
+    return PropertiesBundle.message("create.property.quickfix.text");
   }
 }

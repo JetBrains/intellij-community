@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeInsight.editor.quotes;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -23,18 +9,13 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author oleg
- */
-public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  private boolean myPrevValue;
-
+public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
  /**
-   * Perfoms an action as write action
+   * Performs an action as write action
    *
    * @param project Project
    * @param action  Runnable to be executed
@@ -44,16 +25,12 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPrevValue = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
-    CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = myPrevValue;
-    super.tearDown();
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   public void testWOSelection() {
@@ -73,7 +50,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
   }
 
   public void testChangeQuotes() {
-    doTest("\'", "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
+    doTest("'", "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
   }
 
   public void testChangeBrackets() {
@@ -103,12 +80,45 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
   public void testMultipleCarets() {
     doTest("\"",
            "aa<caret>a <selection><caret>bbb</selection> c<selection>c<caret>c</selection>",
-           "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection><caret>cc</selection>\"");
+           "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection>cc<caret></selection>\"");
   }
 
+  private void doUpdateQuoteTest(@NotNull String before, @NotNull String expected) {
+    String typeChar = before.charAt(0) == '"' ? "'" : "\"";
+    StringBuilder selectFirst = new StringBuilder(before).insert(1, "</selection>").insert(0, "<selection><caret>");
+    StringBuilder expectedFirst = new StringBuilder(expected).insert(1, "<caret>");
+    doTest(typeChar, selectFirst.toString(), expectedFirst.toString());
+
+    StringBuilder selectLast = new StringBuilder(before).insert(before.length() - 1, "<selection><caret>").append("</selection>");
+    doTest(typeChar, selectLast.toString(), expected + "<caret>");
+  }
+
+  public void testUpdatePairQuote() {
+    doUpdateQuoteTest("''", "\"\"");
+    doUpdateQuoteTest("'aa'", "\"aa\"");
+  }
+
+  public void testUpdatePairQuoteFixEscaping() {
+    doUpdateQuoteTest("'aa\\'bb'", "\"aa'bb\"");
+    doUpdateQuoteTest("'AA\\'\\'BB\\\\\\'CC\\nDD\"\"EE\\\"FF'", "\"AA''BB\\\\'CC\\nDD\\\"\\\"EE\\\"FF\"");
+    doUpdateQuoteTest("\"AA\\\"BB'CC\\'DD\"", "'AA\"BB\\'CC\\'DD'");
+  }
+
+  public void testMathExpression() {
+    doTest("<",
+           "a <selection><caret>></selection>= b",
+           "a <<caret>= b");
+  }
+
+  public void testMathExpression2() {
+    doTest("<",
+           "a <selection><caret>>=</selection> b",
+           "a <<caret> b");
+  }
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    final TypedAction typedAction = TypedAction.getInstance();
 
     performAction(myFixture.getProject(), () -> {
       for (int i = 0, max = cs.length(); i < max; i++) {
@@ -123,7 +133,8 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "\"aaa\"\nbbb\n\n");
     myFixture.getEditor().getCaretModel().moveToOffset(0);
     myFixture.getEditor().getSelectionModel().setSelection(0, 5);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    final TypedAction typedAction = TypedAction.getInstance();
     performAction(myFixture.getProject(),
                   () -> typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext()));
     myFixture.getEditor().getSelectionModel().removeSelection();

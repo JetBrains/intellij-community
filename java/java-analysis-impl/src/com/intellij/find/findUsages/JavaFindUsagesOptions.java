@@ -1,32 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.text.ListFormat;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author peter
- */
-public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
+public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
   public boolean isSkipImportStatements;
 
   public JavaFindUsagesOptions(@NotNull Project project) {
@@ -42,10 +30,34 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public final void setDefaults(@NotNull Project project) {
+    setDefaults(PropertiesComponent.getInstance(project), findPrefix());
+  }
+
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    isSearchForTextOccurrences = properties.getBoolean(prefix + "isSearchForTextOccurrences", true);
+    isUsages = properties.getBoolean(prefix + "isUsages", true);
+  }
+
+  @Override
+  public final void storeDefaults(@NotNull Project project) {
+    storeDefaults(PropertiesComponent.getInstance(project), findPrefix());
+  }
+
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    properties.setValue(prefix + "isUsages", isUsages, true);
+    properties.setValue(prefix + "isSearchForTextOccurrences", isSearchForTextOccurrences, true);
+  }
+
+  private @NotNull String findPrefix() {
+    return getClass().getSimpleName() + ".";
+  }
+
+  @Override
+  public boolean equals(Object o) {
     if (this == o) return true;
-    if (!super.equals(this)) return false;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    if (getClass() != o.getClass()) return false;
 
     return isSkipImportStatements == ((JavaFindUsagesOptions)o).isSkipImportStatements;
   }
@@ -57,23 +69,23 @@ public abstract class JavaFindUsagesOptions extends FindUsagesOptions {
     return result;
   }
 
-  protected void addUsageTypes(@NotNull LinkedHashSet<String> to) {
+  protected void addUsageTypes(@NotNull List<? super String> to) {
     if (isUsages) {
-      to.add(FindBundle.message("find.usages.panel.title.usages"));
+      to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
   }
 
-  @NotNull
   @Override
-  public final String generateUsagesString() {
-    String separator = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
-    LinkedHashSet<String> strings = new LinkedHashSet<>();
+  public final @NotNull String generateUsagesString() {
+    List<String> strings = new ArrayList<>();
     addUsageTypes(strings);
     if (strings.isEmpty()) {
-      strings.add(FindBundle.message("find.usages.panel.title.usages"));
+      return AnalysisBundle.message("find.usages.panel.title.usages");
     }
-    return StringUtil.join(strings, separator);
+    return formatOrList(strings);
   }
-
-
+  private static @NotNull @Nls String formatOrList(List<String> list) {
+    @NlsSafe String formatted = ListFormat.getInstance(DynamicBundle.getLocale(), ListFormat.Type.OR, ListFormat.Style.FULL).format(list);
+    return formatted;
+  }
 }

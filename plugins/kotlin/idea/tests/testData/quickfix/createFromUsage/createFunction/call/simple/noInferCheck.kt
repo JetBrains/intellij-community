@@ -1,0 +1,10 @@
+// "Create function 'process'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test(objects: List<Any>) {
+    val strings = objects.filterIsInstance<String>()
+    for (string in strings) {
+        <caret>process(string) // must not create function with parameter annotated @NoInfer
+    }
+}

@@ -1,52 +1,109 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtilRt
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.openapi.vfs.StandardFileSystems
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 import java.io.File
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
-
-private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
+import java.nio.file.AccessDeniedException
+import java.util.concurrent.CancellationException
 
 val File.systemIndependentPath: String
   get() = path.replace(File.separatorChar, '/')
 
-val File.parentSystemIndependentPath: String
-  get() = parent.replace(File.separatorChar, '/')
+fun endsWithName(path: String, name: String): Boolean {
+  return path.endsWith(name) && (path.length == name.length || path.getOrNull(path.length - name.length - 1) == '/')
+}
 
-// PathUtilRt.getParentPath returns empty string if no parent path, but in Kotlin "null" is better because elvis operator could be used
-fun getParentPath(path: String): String? = StringUtil.nullize(PathUtilRt.getParentPath(path))
-
-fun endsWithSlash(path: String): Boolean = path.getOrNull(path.length - 1) == '/'
-
-fun endsWithName(path: String, name: String): Boolean = path.endsWith(name) && (path.length == name.length || path.getOrNull(path.length - name.length - 1) == '/')
-
-fun Path.setOwnerPermissions() {
-  Files.getFileAttributeView(this, PosixFileAttributeView::class.java)?.let {
+/**
+ * Attempts to write a collection of files, handling [AccessDeniedException] by attempting to make files writable and write to file one more time.
+ *
+ * @param project the project context within which the files are handled; if null, no attempts to make files writable will be made
+ * @param files a collection of file descriptors representing the files to be written
+ * @param writeFile the actual file write operation
+ * @param errorCollector a function that collects errors occurring during the write process
+ * @see [com.intellij.openapi.vfs.ReadonlyStatusHandler.ensureFilesWritable]
+ */
+@ApiStatus.Internal
+@CalledInAny
+suspend fun <FileDescriptor> writeWithEnsureWritable(
+  project: Project?,
+  files: Collection<FileDescriptor>,
+  writeFile: suspend (FileDescriptor) -> Unit,
+  errorCollector: (FileDescriptor, Throwable) -> Unit,
+) {
+  val notWritableFiles = mutableMapOf<FileDescriptor, AccessDeniedException>()
+  for (file in files) {
     try {
-      it.setPermissions(setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
+      writeFile(file)
     }
-    catch (e: IOException) {
-      LOG.warn(e)
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: AccessDeniedException) {
+      if (project == null) {
+        errorCollector(file, e)
+      }
+      else {
+        notWritableFiles[file] = e
+      }
+    }
+    catch (e: Throwable) {
+      errorCollector(file, e)
+    }
+  }
+
+  if (project == null || notWritableFiles.isEmpty()) return
+
+  val localFileSystem = StandardFileSystems.local()
+  val accessDeniedFiles = notWritableFiles.mapNotNull { (file, accessDeniedException) ->
+    val filePath = accessDeniedException.file ?: return@mapNotNull null
+    val virtualFile = localFileSystem.findFileByPath(filePath)
+    when {
+      virtualFile != null -> file to virtualFile
+      else -> null
+    }
+  }.toMap()
+
+  val status = withContext(Dispatchers.EDT) {
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(accessDeniedFiles.values)
+  }
+
+  val readOnlyFiles = status.readonlyFiles.toSet()
+
+  val (stillReadOnly, writableFiles) = accessDeniedFiles.asSequence().partition { (_, file) -> file in readOnlyFiles }
+
+  for ((file, _) in writableFiles) {
+    try {
+      writeFile(file)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: AccessDeniedException) {
+      notWritableFiles[file] = e
+    }
+    catch (e: Throwable) {
+      errorCollector(file, e)
+    }
+  }
+
+  for ((file, _) in stillReadOnly) {
+    var accessDeniedException = notWritableFiles[file]
+    if (accessDeniedException != null) {
+      errorCollector(file, accessDeniedException)
     }
   }
 }

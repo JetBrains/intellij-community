@@ -1,0 +1,10 @@
+// "Remove '.java'" "true"
+// PRIORITY: HIGH
+// WITH_STDLIB
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+fun foo() {
+    val clazz: kotlin.reflect.KClass<Foo> = Foo::class.java<caret>
+}
+
+class Foo
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertClassToKClassFix

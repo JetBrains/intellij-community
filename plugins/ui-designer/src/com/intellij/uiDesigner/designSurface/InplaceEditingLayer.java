@@ -1,49 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditorListener;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class InplaceEditingLayer extends JComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.InplaceEditingLayer");
+  private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 
   private final GuiEditor myEditor;
   /**
@@ -80,7 +68,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private boolean myInsideChange;
 
-  public InplaceEditingLayer(@NotNull final GuiEditor editor) {
+  public InplaceEditingLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
     myFocusWatcher = new MyFocusWatcher();
@@ -91,6 +79,7 @@ public final class InplaceEditingLayer extends JComponent{
    * This is optimization. We do not need to invalidate Swing hierarchy
    * upper than InplaceEditingLayer.
    */
+  @Override
   public boolean isValidateRoot() {
     return true;
   }
@@ -100,12 +89,15 @@ public final class InplaceEditingLayer extends JComponent{
    * and finish editing by any MOUSE_PRESSED or MOUSE_RELEASED event.
    * We are acting like yet another glass pane over the standard glass layer.
    */
+  @Override
   protected void processMouseEvent(final MouseEvent e) {
     if(
       myInplaceComponent != null &&
       (MouseEvent.MOUSE_PRESSED == e.getID() || MouseEvent.MOUSE_RELEASED == e.getID())
     ){
-      finishInplaceEditing();
+      WriteIntentReadAction.run(() -> {
+        finishInplaceEditing();
+      });
     }
     // [vova] this is very important! Without this code Swing doen't close popup menu on our
     // layered pane. Swing adds MouseListeners to all component to close popup. If we do not
@@ -142,9 +134,9 @@ public final class InplaceEditingLayer extends JComponent{
     }
   }
 
-  public void startInplaceEditing(@NotNull final RadComponent inplaceComponent,
-                                  @Nullable final Property property,
-                                  @Nullable final Rectangle bounds,
+  public void startInplaceEditing(final @NotNull RadComponent inplaceComponent,
+                                  final @Nullable Property property,
+                                  final @Nullable Rectangle bounds,
                                   final InplaceContext context) {
     myInplaceProperty = property;
     if(myInplaceProperty == null){
@@ -191,7 +183,7 @@ public final class InplaceEditingLayer extends JComponent{
     myInplaceEditorComponent.setBounds(
       myPreferredBounds.x,
       myPreferredBounds.y + (myPreferredBounds.height - prefSize.height)/2,
-      Math.min(Math.max(prefSize.width, myPreferredBounds.width), getWidth() - myPreferredBounds.x),
+      MathUtil.clamp(prefSize.width, myPreferredBounds.width, getWidth() - myPreferredBounds.x),
       prefSize.height
     );
 
@@ -220,7 +212,7 @@ public final class InplaceEditingLayer extends JComponent{
     }
 
     // 5. Block any mouse event to finish editing by any of them
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 
     repaint();
   }
@@ -273,7 +265,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 3. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }
@@ -304,7 +296,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 2. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }
@@ -313,24 +305,15 @@ public final class InplaceEditingLayer extends JComponent{
   }
 
   private void removeInplaceEditorComponent() {
-    // [vova] before removing component from Swing tree we have to
-    // request component into glass layer. Otherwise focus from component being removed
-    // can go to some RadComponent.
-
-    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myEditor.getGlassLayer());
-    try {
-      remove(myInplaceEditorComponent);
-    }
-    finally {
-      LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-    }
+    remove(myInplaceEditorComponent);
   }
 
   /**
    * Finish inplace editing when selection changes
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
-    public void selectedComponentChanged(final GuiEditor source) {
+    @Override
+    public void selectedComponentChanged(final @NotNull GuiEditor source) {
       finishInplaceEditing();
     }
   }
@@ -339,6 +322,7 @@ public final class InplaceEditingLayer extends JComponent{
    * Finish inplace editing when inplace editor component loses focus
    */
   private final class MyFocusWatcher extends FocusWatcher{
+    @Override
     protected void focusLostImpl(final FocusEvent e) {
       final Component opposite = e.getOppositeComponent();
       if(
@@ -349,23 +333,26 @@ public final class InplaceEditingLayer extends JComponent{
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.nonModal());
     }
   }
 
   /**
    * Finishes editing by "Enter" and cancels editing by "Esc"
    */
-  private final class MyPropertyEditorListener extends PropertyEditorAdapter{
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
+  private final class MyPropertyEditorListener implements PropertyEditorListener {
+    @Override
+    public void valueCommitted(final @NotNull PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
       finishInplaceEditing();
     }
 
-    public void editingCanceled(final PropertyEditor source) {
+    @Override
+    public void editingCanceled(final @NotNull PropertyEditor source) {
       cancelInplaceEditing();
     }
 
-    public void preferredSizeChanged(final PropertyEditor source) {
+    @Override
+    public void preferredSizeChanged(final @NotNull PropertyEditor source) {
       adjustEditorComponentSize();
     }
   }

@@ -1,41 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/19/2015
  */
-public class DefaultExternalDependencyId implements ExternalDependencyId, Serializable {
-
+public final class DefaultExternalDependencyId implements ExternalDependencyId, Serializable {
   private static final long serialVersionUID = 1L;
 
   private String group;
   private String name;
   private String version;
-  @NotNull
-  private String packaging = "jar";
-  @Nullable
-  private String classifier;
+  private @NotNull String packaging = "jar";
+  private @Nullable String classifier;
 
   public DefaultExternalDependencyId() {
   }
@@ -79,9 +61,8 @@ public class DefaultExternalDependencyId implements ExternalDependencyId, Serial
     this.version = version;
   }
 
-  @NotNull
   @Override
-  public String getPackaging() {
+  public @NotNull String getPackaging() {
     return packaging;
   }
 
@@ -89,9 +70,8 @@ public class DefaultExternalDependencyId implements ExternalDependencyId, Serial
     this.packaging = packaging;
   }
 
-  @Nullable
   @Override
-  public String getClassifier() {
+  public @Nullable String getClassifier() {
     return classifier;
   }
 
@@ -100,8 +80,7 @@ public class DefaultExternalDependencyId implements ExternalDependencyId, Serial
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     final StringBuilder buf = new StringBuilder();
     if (group != null) {
       buf.append(group).append(':');
@@ -123,19 +102,18 @@ public class DefaultExternalDependencyId implements ExternalDependencyId, Serial
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof DefaultExternalDependencyId)) return false;
-    DefaultExternalDependencyId that = (DefaultExternalDependencyId)o;
-    return Objects.equal(group, that.group) &&
-           Objects.equal(name, that.name) &&
-           Objects.equal(packaging, that.packaging) &&
-           Objects.equal(classifier, that.classifier) &&
-           Objects.equal(version, that.version);
+    if (o == null || getClass() != o.getClass()) return false;
+    DefaultExternalDependencyId id = (DefaultExternalDependencyId)o;
+    return Objects.equals(group, id.group) &&
+           Objects.equals(name, id.name) &&
+           Objects.equals(packaging, id.packaging) &&
+           Objects.equals(classifier, id.classifier) &&
+           Objects.equals(version, id.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(group, name, packaging, classifier, version);
+    return Objects.hash(group, name, packaging, classifier, version);
   }
 
   @Override

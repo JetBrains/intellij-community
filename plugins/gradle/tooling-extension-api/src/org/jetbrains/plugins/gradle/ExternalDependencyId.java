@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/19/2015
  */
 public interface ExternalDependencyId {
   String getGroup();

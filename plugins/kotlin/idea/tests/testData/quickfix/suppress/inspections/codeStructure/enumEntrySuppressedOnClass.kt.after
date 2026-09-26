@@ -1,0 +1,10 @@
+// "Suppress 'RemoveRedundantBackticks' for class EnumEntrySuppressedOnClass" "true"
+
+@Suppress("RemoveRedundantBackticks")
+enum class EnumEntrySuppressedOnClass {
+    `VALUE_A`, VALUE_B
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveRedundantBackticksInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveRedundantBackticksInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

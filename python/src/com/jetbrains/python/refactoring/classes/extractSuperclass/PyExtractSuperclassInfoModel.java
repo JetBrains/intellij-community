@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,22 +12,33 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 class PyExtractSuperclassInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
-  PyExtractSuperclassInfoModel(@NotNull final PyClass clazz) {
+  PyExtractSuperclassInfoModel(final @NotNull PyClass clazz) {
     super(clazz, null, false);
   }
 
   @Override
   public boolean isAbstractEnabled(final PyMemberInfo<PyElement> member) {
+    if (propertyDependsOnThisMethod(member)) {
+      return false;
+    }
     return member.isCouldBeAbstract() && isMemberEnabled(member);
   }
 
+  /**
+   * If property depends on method, this method can't be made abstract
+   */
+  private boolean propertyDependsOnThisMethod(@NotNull PyMemberInfo<PyElement> member) {
+    var dependencies = myMemberDependencyGraph.getDependenciesOf(member.getMember());
+    return (dependencies != null && dependencies.stream().anyMatch(o -> o instanceof PyTargetExpression));
+  }
+
   @Override
-  public int checkForProblems(@NotNull final PyMemberInfo<PyElement> member) {
+  public int checkForProblems(final @NotNull PyMemberInfo<PyElement> member) {
     return member.isChecked() ? OK : super.checkForProblems(member);
   }
 
   @Override
-  protected int doCheck(@NotNull final PyMemberInfo<PyElement> memberInfo, final int problem) {
+  protected int doCheck(final @NotNull PyMemberInfo<PyElement> memberInfo, final int problem) {
     return problem;
   }
 }

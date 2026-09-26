@@ -1,20 +1,24 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.diagnostic.rethrowControlFlowException
+import java.util.concurrent.CancellationException
 
-internal fun ExternalizableScheme.renameScheme(newName: String) {
-  if (newName != name) {
-    name = newName
-    LOG.assertTrue(newName == name)
-  }
-}
-
-internal inline fun catchAndLog(fileName: String, runnable: (fileName: String) -> Unit) {
+internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
   try {
-    runnable(fileName)
+    return runnable()
+  }
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
-    LOG.error("Cannot read scheme $fileName", e)
+    rethrowControlFlowException(e)
+    LOG.error("Cannot read scheme ${file()}", e)
   }
+  return null
+}
+
+internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
+  return RuntimeException("Name is missed:\n${bytes.decodeToString()}")
 }

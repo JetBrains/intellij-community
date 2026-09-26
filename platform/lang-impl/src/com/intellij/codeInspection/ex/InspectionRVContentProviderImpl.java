@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -8,11 +6,12 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeModel;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -20,31 +19,28 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
-  public InspectionRVContentProviderImpl(final Project project) {
-    super(project);
-  }
-
+@ApiStatus.Internal
+public final class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
   @Override
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
-                                       @NotNull final InspectionToolWrapper toolWrapper) {
+                                       @NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     presentation.updateContent();
 
     AnalysisScope scope = context.getCurrentScope();
     if (scope == null) return false;
-    final SearchScope searchScope = scope.toSearchScope();
+    SearchScope searchScope = scope.toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
-      final Map<String, Set<RefEntity>> contents = presentation.getContent();
-      final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
+      Map<String, Set<RefEntity>> contents = presentation.getContent();
+      SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       for (Set<RefEntity> entities : contents.values()) {
         for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext();) {
           RefEntity entity = iterator.next();
@@ -53,9 +49,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
             if (pointer != null) {
               VirtualFile vFile = pointer.getVirtualFile();
               if (vFile != null && searchScope.contains(vFile)) {
-                final PsiElement element = ((RefElement)entity).getElement();
+                PsiElement element = ((RefElement)entity).getPsiElement();
                 if (element != null) {
-                  final TextRange range = element.getTextRange();
+                  TextRange range = element.getTextRange();
                   if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
                     continue;
                   }
@@ -69,64 +65,53 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
     }
 
-    return presentation.hasReportedProblems();
+    return presentation.hasReportedProblems().toBoolean();
   }
 
-  @NotNull
   @Override
-  public QuickFixAction[] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper,
+                                                        @NotNull InspectionTree tree,
+                                                        CommonProblemDescriptor @NotNull [] descriptors,
+                                                        RefEntity @NotNull [] refElements) {
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    QuickFixAction[] fixes = getCommonFixes(presentation, tree.getSelectedDescriptors());
-    return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(tree.getSelectedElements()), QuickFixAction[]::new);
+    QuickFixAction[] fixes = getCommonFixes(presentation, descriptors);
+    return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(refElements), QuickFixAction[]::new);
   }
 
   @Override
-  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                                  @NotNull final InspectionNode toolNode,
-                                                  @NotNull final InspectionTreeNode parentNode,
-                                                  final boolean showStructure,
-                                                  boolean groupBySeverity,
-                                                  @NotNull final Map<String, Set<RefEntity>> contents,
-                                                  @NotNull final Function<RefEntity, CommonProblemDescriptor[]> problems) {
-    final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-    InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
+  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                    @NotNull InspectionToolWrapper wrapper,
+                                    @NotNull InspectionTreeNode toolNode,
+                                    boolean showStructure,
+                                    boolean groupBySeverity,
+                                    @NotNull Map<String, Set<RefEntity>> contents,
+                                    @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
+
+    InspectionResultsView view = context.getView();
 
     buildTree(context,
               contents,
-              false,
-              toolWrapper,
+              wrapper,
               refElement -> new RefEntityContainer<>(refElement, problems.apply(refElement)),
               showStructure,
-              node -> merge(node, mergedToolNode, true));
-    return mergedToolNode;
+              toolNode,
+              view.getTree().getInspectionTreeModel());
   }
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
-                                  @NotNull final InspectionToolWrapper toolWrapper,
-                                  @NotNull final RefEntityContainer container,
-                                  @NotNull final InspectionTreeNode pNode,
-                                  final boolean canPackageRepeat) {
-    final RefEntity refElement = container.getRefEntity();
+                                  @NotNull InspectionToolWrapper toolWrapper,
+                                  @NotNull RefEntityContainer container,
+                                  @NotNull InspectionTreeNode parent) {
+    RefEntity refElement = container.getRefEntity();
+    InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
-    if (problems != null && problems.length != 0) {
-        final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
+    CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
+    if (problems != null) {
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
-          elemNode.insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(refElement, problem, presentation)), false);
-          elemNode.setProblem(elemNode.getChildCount() == 1 ? problems[0] : null);
+          model.createProblemDescriptorNode(refElement, problem, presentation, parent);
         }
-    }
-    else {
-      if (canPackageRepeat && pNode instanceof InspectionPackageNode) {
-        final Set<RefEntity> currentElements = presentation.getContent().get(((InspectionPackageNode) pNode).getPackageName());
-        if (currentElements != null) {
-          final Set<RefEntity> currentEntities = new HashSet<>(currentElements);
-          if (RefUtil.contains(refElement, currentEntities)) return;
-        }
-      }
-      addNodeToParent(container, presentation, pNode);
     }
   }
 }

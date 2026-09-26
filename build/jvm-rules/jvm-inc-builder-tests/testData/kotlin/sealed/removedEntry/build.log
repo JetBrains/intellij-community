@@ -1,0 +1,29 @@
+================ Step #1 =================
+Cleaning output files:
+  BigBar.class
+  IBar.class
+  META-INF/kotlin_sealed_removedEntry-a.kotlin_module
+  SmallBar.class
+End of files
+Compiling files:
+  kotlin/sealed/removedEntry/a/sealedInterface.kt
+  kotlin/sealed/removedEntry/a/sealedSubclasses.kt
+End of files
+Cleaning output files:
+  ExhaustiveWhenKt.class
+  META-INF/kotlin_sealed_removedEntry-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/removedEntry/a/exhaustiveWhen.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_sealed_removedEntry-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/removedEntry/a/exhaustiveWhen.kt
+End of files
+------------------------------------------
+Exit code: OK

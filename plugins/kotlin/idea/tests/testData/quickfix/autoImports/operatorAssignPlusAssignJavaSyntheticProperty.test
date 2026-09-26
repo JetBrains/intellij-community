@@ -1,0 +1,41 @@
+// FILE: first.before.kt
+// "Import operator 'Box.plusAssign'" "true"
+
+
+package testing
+
+import some.BoxHolder
+
+fun test(holder: BoxHolder, value: String) {
+    holder.box <caret>+= value
+}
+
+// FILE: declarations.kt
+package some
+
+class Box<T>
+
+// FILE: some/BoxHolder.java
+package some;
+
+public abstract class BoxHolder {
+    public abstract Box<String> getBox();
+}
+
+// FILE: operators.kt
+package some
+
+operator fun <T> Box<T>.plusAssign(value: T) {}
+
+// FILE: first.after.kt
+// "Import operator 'Box.plusAssign'" "true"
+
+
+package testing
+
+import some.BoxHolder
+import some.plusAssign
+
+fun test(holder: BoxHolder, value: String) {
+    holder.box <caret>+= value
+}

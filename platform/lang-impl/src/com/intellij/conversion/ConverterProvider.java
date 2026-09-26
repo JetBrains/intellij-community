@@ -1,63 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion;
 
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * Implement this class and register the implementation as {@code project.converterProvider} extension in plugin.xml if you need to migrate
+ * some project configuration files to a new format. Converters are executed before the project is loaded and operate on xml configuration
+ * files directly via JDom API.
+ * <p>If there is an applicable converter, a special dialog will be shown when the project is opened asking for confirmation and allowing
+ * user to back up the configuration files. After the conversion is performed, older versions of the IDE won't be able to load the project
+ * properly. So this extension point should be used only for major changes in the configuration format. If you want to just replace some
+ * property in your service with a new one, it's better to do this in {@link com.intellij.openapi.components.PersistentStateComponent}'s
+ * methods or by {@link Storage#deprecated() deprecating} its storage. Also it's very important to return {@code true} from {@link ConversionProcessor#isConversionNeeded}
+ * method only if corresponding configuration was really used in the project to ensure that users of projects which aren't affected won't
+ * be disturbed.</p>
+ *
+ * @see ProjectConverter
  */
 public abstract class ConverterProvider {
-  public static final ExtensionPointName<ConverterProvider> EP_NAME = ExtensionPointName.create("com.intellij.project.converterProvider");
-  private final String myId;
+  public static final ExtensionPointName<ConverterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.project.converterProvider");
 
-  protected ConverterProvider(@NotNull @NonNls String id) {
-    myId = id;
+  protected ConverterProvider() {
   }
 
-  public String[] getPrecedingConverterIds() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
+  public abstract @NlsContexts.DialogMessage @NotNull String getConversionDescription();
 
-  public final String getId() {
-    return myId;
-  }
-
-  @NotNull
-  public abstract String getConversionDescription();
-
-  @NotNull
-  public abstract ProjectConverter createConverter(@NotNull ConversionContext context);
-
-  @Nullable
-  public String getConversionDialogText(ConversionContext context) {
-    return null;
-  }
-
-  /**
-   * @return {@code false} if the converter cannot determine that the conversion was already performed using project files only.
-   * In such case the information about performed conversion will be stored in .ipr file so the converter will not be asked to perform
-   * the conversion again.
-   */
-  public boolean canDetermineIfConversionAlreadyPerformedByProjectFiles() {
-    return true;
-  }
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull ProjectConverter createConverter(@NotNull ConversionContext context);
 }

@@ -1,28 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.SystemProperties;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.DrawUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.LookAndFeel;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPACT_HEIGHT;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   private FocusListener focusListener;
 
@@ -36,11 +45,13 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installListeners();
     JTextComponent passwordField = getComponent();
     focusListener = new FocusListener() {
-      @Override public void focusGained(FocusEvent e) {
+      @Override
+      public void focusGained(FocusEvent e) {
         passwordField.repaint();
       }
 
-      @Override public void focusLost(FocusEvent e) {
+      @Override
+      public void focusLost(FocusEvent e) {
         passwordField.repaint();
       }
     };
@@ -58,23 +69,29 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    return updatePreferredSize(super.getPreferredSize(c));
-  }
-
-  protected Dimension updatePreferredSize(Dimension size) {
-    Insets i = getComponent().getInsets();
-    size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
-    JBInsets.addTo(size, getComponent().getMargin());
+    Dimension size = super.getPreferredSize(c);
+    if (size != null) updatePreferredSize(c, size);
     return size;
   }
 
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    JBInsets.addTo(size, ((JTextComponent)c).getMargin());
+    size.height = Math.max(size.height, getMinimumHeight(size.height));
+    size.width = Math.max(size.width, JBUI.CurrentTheme.TextField.minimumSize().width);
+    return size;
+  }
+
+  protected int getMinimumHeight(int originHeight) {
+    JComponent component = getComponent();
+    Insets insets = component.getInsets();
+    return (isCompact(component) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.TextField.minimumSize().height) + insets.top + insets.bottom;
   }
 
   @Override
   public Dimension getMinimumSize(JComponent c) {
-    return getPreferredSize(c);
+    Dimension size = super.getMinimumSize(c);
+    if (size != null) updatePreferredSize(c, size);
+    return size;
   }
 
   @Override
@@ -92,19 +109,18 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
       JBInsets.removeFrom(r, JBUI.insets(1));
 
       try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        DrawUtil.setupRenderingHints(g2);
         g2.translate(r.x, r.y);
 
-        float bw = DarculaUIUtil.BW.getFloat();
+        float bw = BW.getFloat();
 
         if (component.isEnabled() && component.isEditable()) {
           g2.setColor(component.getBackground());
         }
 
         g2.fill(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2));
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
@@ -122,7 +138,14 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBUI.insets(0, 5));
+    getComponent().setMargin(getDefaultMargins(c));
+  }
+
+  private static @NotNull Insets getDefaultMargins(JComponent c) {
+    boolean newBorder = c.getBorder() instanceof DarculaTextBorderNew;
+
+    // See constants in DarculaTextFieldUI.getDefaultMargins
+    return newBorder ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 5);
   }
 
   @Override
@@ -135,7 +158,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installDefaults();
 
     JTextComponent component = getComponent();
-    if (SystemInfoRt.isMac && SystemProperties.getBooleanProperty("idea.ui.set.password.echo.char", false)) {
+    if (SystemInfo.isMac) {
       LookAndFeel.installProperty(component, "echoChar", '•');
     }
   }

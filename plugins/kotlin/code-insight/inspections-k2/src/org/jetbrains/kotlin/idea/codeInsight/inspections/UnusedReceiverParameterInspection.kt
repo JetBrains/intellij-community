@@ -1,0 +1,127 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections
+
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.getThisLabelName
+import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.getThisWithLabel
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.collectUsedTypeParameters
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ReceiverParameterChangeSignatureUtils.isReceiverUsedInside
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.RemoveReceiverParameterFix
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+
+internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = object : KtVisitorVoid() {
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            checkElement(function, holder)
+        }
+
+        override fun visitProperty(property: KtProperty) {
+            checkElement(property, holder)
+        }
+    }
+
+    private fun registerProblem(
+        holder: ProblemsHolder,
+        callableDeclaration: KtCallableDeclaration,
+        receiverTypeReference: KtTypeReference,
+        textForReceiver: String?
+    ) {
+        holder.registerProblem(
+            receiverTypeReference,
+            KotlinBundle.message("inspection.unused.receiver.parameter"),
+            IntentionWrapper.wrapToQuickFix(RemoveReceiverParameterFix(callableDeclaration, textForReceiver), holder.file)
+        )
+    }
+
+    private fun checkElement(callableDeclaration: KtCallableDeclaration, holder: ProblemsHolder) {
+        val receiverTypeReference = callableDeclaration.receiverTypeReference
+        if (receiverTypeReference == null || receiverTypeReference.textRange.isEmpty) return
+
+        if (callableDeclaration is KtProperty && callableDeclaration.accessors.isEmpty()) return
+        if (callableDeclaration is KtNamedFunction) {
+            if (!callableDeclaration.hasBody()) return
+            if (callableDeclaration.name == null) {
+                val parentQualified = callableDeclaration.getStrictParentOfType<KtQualifiedExpression>()
+                if (KtPsiUtil.deparenthesize(parentQualified?.callExpression?.calleeExpression) == callableDeclaration) return
+            }
+        }
+
+        if (callableDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
+            callableDeclaration.hasModifier(KtTokens.OPERATOR_KEYWORD) ||
+            callableDeclaration.hasModifier(KtTokens.INFIX_KEYWORD) ||
+            callableDeclaration.hasActualModifier() ||
+            callableDeclaration.isOverridable() ||
+            (callableDeclaration is KtProperty && callableDeclaration.delegate != null)
+        ) return
+
+        analyze(callableDeclaration) {
+            if (callableDeclaration.expectedType != null) return
+
+            val usedTypeParametersInReceiver = collectUsedTypeParameters(receiverTypeReference)
+            val usedInReturnType = callableDeclaration.typeReference
+                ?.let { collectUsedTypeParameters(it) }
+                .orEmpty()
+            if (usedTypeParametersInReceiver.any { it in usedInReturnType }) return
+
+            if (callableDeclaration
+                .diagnostics()
+                .directOnly(true)
+                .withCheckers(KaDiagnosticCheckerKind.COMMON)
+                .any { it is KaFirDiagnostic.CompanionBlockMemberExtension }
+            ) return
+
+            val receiverType = receiverTypeReference.typeIfSafeToResolve
+            val receiverTypeSymbol = receiverType?.symbol
+            if (receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind == KaClassKind.COMPANION_OBJECT) return
+
+            val callableSymbol = callableDeclaration.symbol
+
+            val containingDeclarationSymbol = callableSymbol.containingDeclaration
+            if (containingDeclarationSymbol != null && containingDeclarationSymbol == receiverTypeSymbol) {
+                val thisLabelName = containingDeclarationSymbol.getThisLabelName()
+                val thisLabelNamesInCallable =
+                    callableDeclaration.collectDescendantsOfType<KtThisExpression>().mapNotNull { it.getLabelName() }
+                if (thisLabelNamesInCallable.isNotEmpty()) {
+                    if (thisLabelNamesInCallable.none { it == thisLabelName }) {
+                        registerProblem(holder, callableDeclaration, receiverTypeReference, callableSymbol.getThisWithLabel())
+                    }
+                    return
+                }
+            }
+
+            val usedReifiedTypeParametersInReceiver = usedTypeParametersInReceiver.filterTo(mutableSetOf()) { it.isReified }
+            val receiverUsedInside = isReceiverUsedInside(callableDeclaration, usedReifiedTypeParametersInReceiver)
+            if (!receiverUsedInside) {
+                registerProblem(holder, callableDeclaration, receiverTypeReference, textForReceiver = null)
+            }
+        }
+    }
+}

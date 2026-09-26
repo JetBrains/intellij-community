@@ -1,0 +1,11 @@
+LineBreakpoint created at smartStepIntoSuspendFunInterface.kt:14
+LineBreakpoint created at smartStepIntoSuspendFunInterface.kt:23
+Run Java
+Connected to the target VM
+smartStepIntoSuspendFunInterface.kt:14
+smartStepIntoSuspendFunInterface.kt:15
+smartStepIntoSuspendFunInterface.kt:23
+smartStepIntoSuspendFunInterface.kt:24
+Disconnected from the target VM
+
+Process finished with exit code 0

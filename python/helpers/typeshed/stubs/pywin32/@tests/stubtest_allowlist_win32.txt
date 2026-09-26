@@ -1,0 +1,51 @@
+# Not available at runtime. Contains type definitions that are otherwise not exposed
+_win32typing
+
+# False-positive, stubtest shouldn't want to expose TYPE_CHECKING
+(win32\.lib\.)?pywintypes\.TYPE_CHECKING
+
+# PyWin tool / debugger
+pythonwin.start_pythonwin
+pythonwin.pywin.*
+win32com.client.combrowse
+win32com.client.tlbrowse
+
+# Utilities to generate python bindings
+win32com.client.CLSIDToClass
+win32com.client.connect
+win32com.client.genpy
+win32com.client.makepy
+win32com.client.selecttlb
+win32com.client.util
+win32com.makegw.*
+(win32.lib.)?pywintypes.__import_pywin32_system_module__
+
+# COM object servers scripts
+win32com.servers.*
+# Active X Scripts
+win32com(ext)?.axscript.client.pyscript_rexec
+win32com(ext)?.axscript.client.pyscript
+win32com(ext)?.axscript.client.scriptdispatch
+
+# Demos, tests and debugging
+win32com.demos.*
+win32com.servers.test_pycomtest
+win32com.test.*
+win32com(ext)?.axdebug.dump
+win32com(ext)?.axscript.client.pydumper
+win32com(ext)?.directsound.test.*
+
+# Deprecated and makes a buffer of random junk. Use something like `b"\x00" * bufferSize` instead
+# It's safer to not even expose this method as deprecated.
+(win32.)?win32gui.PyMakeBuffer
+
+# failed to import, ImportError: DLL load failed while importing axdebug: The specified module could not be found.
+win32com(ext)?.axdebug.adb
+win32com(ext)?.axdebug.axdebug
+win32com(ext)?.axdebug.codecontainer
+win32com(ext)?.axdebug.contexts
+win32com(ext)?.axdebug.debugger
+win32com(ext)?.axdebug.documents
+win32com(ext)?.axdebug.expressions
+win32com(ext)?.axdebug.gateways
+win32com(ext)?.axdebug.stackframe

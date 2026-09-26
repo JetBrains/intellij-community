@@ -1,0 +1,53 @@
+LineBreakpoint created at DeeplyNestedStreams.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DeeplyNestedStreams
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at DeeplyNestedStreams.java:8
+=== before stream (bytecode offset 41) ===
+  [0] traceable Stream.of(1,2) -> count
+  [1] traceable Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] traceable Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before count (bytecode offset 65) ===
+  [0] traceable Stream.of(1,2) -> count
+  [1] traceable Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] traceable Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before count#1 (bytecode offset 91) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] traceable Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] traceable Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before limit (bytecode offset 97) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] traceable Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before map (bytecode offset 107) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] filtered  Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before filter (bytecode offset 117) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] filtered  Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before toList (bytecode offset 143) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] traceable Stream.of(1,2) -> toList
+  [3] filtered  Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before limit#1 (bytecode offset 154) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] filtered  Stream.of(1,2) -> toList
+  [3] filtered  Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+=== before toList#1 (bytecode offset 159) ===
+  [0] filtered  Stream.of(1,2) -> count
+  [1] filtered  Stream.of(3,4) -> count
+  [2] filtered  Stream.of(1,2) -> toList
+  [3] filtered  Arrays.stream(arr) -> limit -> map -> filter -> limit -> toList
+Resuming DeeplyNestedStreams.java:8
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

@@ -15,9 +15,12 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 public interface IntToIntMap {
   int shortSize();
 
@@ -26,7 +29,6 @@ public interface IntToIntMap {
   int getLongIndex(int shortIndex); // must be very fast
 
   /**
-   * @param longIndex
    * @return max shortIndex, witch getLongIndex(shortIndex) <= longIndex or 0
    */
   int getShortIndex(int longIndex);

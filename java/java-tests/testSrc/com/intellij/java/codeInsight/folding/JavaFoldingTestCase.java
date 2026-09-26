@@ -15,14 +15,15 @@
  */
 package com.intellij.java.codeInsight.folding;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class JavaFoldingTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class JavaFoldingTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected JavaCodeFoldingSettings myFoldingSettings;
   private JavaCodeFoldingSettings myFoldingSettingsBackup;
 
@@ -39,19 +40,26 @@ public abstract class JavaFoldingTestCase extends LightCodeInsightFixtureTestCas
     try {
       ((JavaCodeFoldingSettingsImpl)myFoldingSettings).loadState(((JavaCodeFoldingSettingsImpl)myFoldingSettingsBackup));
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
-  protected void configure(String text) {
-    myFixture.configureByText("a.java", text);
+  protected void configure(@NotNull String text) {
+    configure("a.java", text);
+  }
+
+  protected void configure(@NotNull String fileName, @NotNull String text) {
+    myFixture.configureByText(fileName, text);
     performInitialFolding(myFixture.getEditor());
     myFixture.doHighlighting();
   }
 
   public static void performInitialFolding(Editor editor) {
-    CodeFoldingManager.getInstance(editor.getProject()).buildInitialFoldings(editor);
+    EditorTestUtil.buildInitialFoldingsInBackground(editor);
     ((FoldingModelEx)editor.getFoldingModel()).rebuild();
   }
 }

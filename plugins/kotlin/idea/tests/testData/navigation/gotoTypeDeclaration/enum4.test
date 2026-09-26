@@ -1,0 +1,21 @@
+// FILE: before.kt
+class Outer {
+  enum class Foo {
+    BAR
+  }
+}
+
+fun usage() {
+  Outer.Foo.BAR<caret>
+}
+
+// FILE: after.kt
+class Outer {
+  enum class <caret>Foo {
+    BAR
+  }
+}
+
+fun usage() {
+  Outer.Foo.BAR
+}

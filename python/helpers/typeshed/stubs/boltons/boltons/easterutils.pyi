@@ -1,0 +1,3 @@
+from typing_extensions import Never
+
+def gobs_program() -> Never: ...

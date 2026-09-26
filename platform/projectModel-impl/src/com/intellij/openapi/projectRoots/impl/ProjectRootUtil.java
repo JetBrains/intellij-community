@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.projectRoots.impl;
 
@@ -22,30 +8,24 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author mike
- */
-public class ProjectRootUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootUtil");
+public final class ProjectRootUtil {
+  private static final Logger LOG = Logger.getInstance(ProjectRootUtil.class);
 
   private ProjectRootUtil() {
   }
 
-  @NotNull
-  private static PsiDirectory[] convertRoots(final Project project, VirtualFile[] roots) {
-    return convertRoots(((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager(), roots);
+  private static PsiDirectory @NotNull [] convertRoots(@NotNull Project project, VirtualFile @NotNull [] roots) {
+    return convertRoots(PsiManagerEx.getInstanceEx(project).getFileManager(), roots);
   }
 
-  @NotNull
-  private static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
+  private static PsiDirectory @NotNull [] convertRoots(@NotNull FileManager fileManager, VirtualFile @NotNull [] roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
 
     for (VirtualFile root : roots) {
@@ -61,14 +41,12 @@ public class ProjectRootUtil {
     return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiDirectory[] getSourceRootDirectories(final Project project) {
+  public static PsiDirectory @NotNull [] getSourceRootDirectories(@NotNull Project project) {
     VirtualFile[] files = OrderEnumerator.orderEntries(project).sources().usingCache().getRoots();
     return convertRoots(project, files);
   }
 
-  @NotNull
-  public static PsiDirectory[] getAllContentRoots(final Project project) {
+  public static PsiDirectory @NotNull [] getAllContentRoots(@NotNull Project project) {
     VirtualFile[] files = ProjectRootManager.getInstance(project).getContentRootsFromAllModules();
     return convertRoots(project, files);
   }

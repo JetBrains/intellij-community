@@ -1,0 +1,30 @@
+<html>
+<body>
+Reports unused import statements in Python code.
+
+<p>
+  This inspection detects import statements that are not used in the code and can be safely removed.
+  Removing unused imports helps to keep the code clean and reduces the risk of name conflicts.
+</p>
+
+<!-- tooltip end -->
+<p><b>Example:</b></p>
+
+<pre><code>
+import os           # Unused import
+import sys         # Used import
+from math import pi # Unused import
+
+print(sys.version)
+</code></pre>
+
+<p>
+  The inspection provides a quick fix to optimize imports, which removes all unused import statements.
+</p>
+
+<p>
+  Note that some imports might be used indirectly (e.g., for side effects) and should not be removed.
+  You can suppress this inspection for specific imports if they are needed for side effects.
+</p>
+</body>
+</html>

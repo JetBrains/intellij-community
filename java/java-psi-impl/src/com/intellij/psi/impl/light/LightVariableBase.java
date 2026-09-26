@@ -1,37 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author ven
- */
 public abstract class LightVariableBase extends LightElement implements PsiVariable, OriginInfoAwareElement {
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
@@ -53,12 +51,20 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     myModifierList = createModifierList();
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   protected PsiModifierList createModifierList() {
     return new LightModifierList(getManager());
   }
 
-  @NotNull
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     return myScope;
   }
 
@@ -73,8 +79,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return StringUtil.notNullize(getNameIdentifier().getText());
   }
 
@@ -85,23 +90,21 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
-    if (myType == null) {
-      myType = computeType();
+  public @NotNull PsiType getType() {
+    PsiType type = myType;
+    if (type == null) {
+      myType = type = computeType();
     }
-    return myType;
+    return type;
   }
 
-  @NotNull
-  protected PsiType computeType() {
-    return PsiType.VOID;
+  protected @NotNull PsiType computeType() {
+    return PsiTypes.voidType();
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getTypeElement() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeElement(myType);
+  public @NotNull PsiTypeElement getTypeElement() {
+    return JavaPsiFacade.getElementFactory(getProject()).createTypeElement(myType);
   }
 
   @Override
@@ -149,17 +152,18 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.VARIABLE_ICON, this, false);
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Variable),
+                                                     ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 
-  public void setOriginInfo(String originInfo) {
+  public void setOriginInfo(@NonNls String originInfo) {
     myOriginInfo = originInfo;
   }
 }

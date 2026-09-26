@@ -13,8 +13,12 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -26,9 +30,9 @@ import org.jetbrains.annotations.Nullable;
   name = "hg4idea.settings",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
+public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private State myState = new State();
 
@@ -40,34 +44,31 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
     public String PATH_TO_EXECUTABLE = null;
     public boolean OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = false;
-    public boolean myCheckIncoming = true;
-    public boolean myCheckOutgoing = true;
-    public Boolean CHECK_INCOMING_OUTGOING = null;
+    public boolean CHECK_INCOMING_OUTGOING = false;
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
-    
+    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
+
     @Property(surroundWithTag = false, flat = true)
-    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
+    public DvcsBranchSettings BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
-    if (state.CHECK_INCOMING_OUTGOING == null) {
-      state.CHECK_INCOMING_OUTGOING = state.myCheckIncoming || state.myCheckOutgoing;
-    }
   }
 
   public static HgProjectSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, HgProjectSettings.class);
+    return project.getService(HgProjectSettings.class);
   }
 
-  @Nullable
-  public String getHgExecutable() {
+  public @Nullable String getHgExecutable() {
     return myState.PATH_TO_EXECUTABLE;
   }
 
@@ -83,8 +84,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = overridden;
   }
 
-  @Nullable
-  public String getRecentRootPath() {
+  public @Nullable String getRecentRootPath() {
     return myState.RECENT_HG_ROOT_PATH;
   }
 
@@ -93,23 +93,34 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public boolean isCheckIncomingOutgoing() {
-    if (myState.CHECK_INCOMING_OUTGOING == null) {
-      return myState.myCheckIncoming || myState.myCheckOutgoing;
-    }
-    return myState.CHECK_INCOMING_OUTGOING.booleanValue();
+    return myState.CHECK_INCOMING_OUTGOING;
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+    if (myState.CHECK_INCOMING_OUTGOING != checkIncomingOutgoing) {
+      myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).updateVisibility();
+    }
   }
 
-  @NotNull
-  public Value getSyncSetting() {
+  @Override
+  public @NotNull Value getSyncSetting() {
     return myState.ROOT_SYNC;
   }
 
+  @Override
   public void setSyncSetting(@NotNull Value syncSetting) {
     myState.ROOT_SYNC = syncSetting;
+  }
+
+  @Override
+  public boolean shouldSwapSidesInCompareBranches() {
+    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+  }
+
+  @Override
+  public void setSwapSidesInCompareBranches(boolean value) {
+    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }
 
   public boolean isWhitespacesIgnoredInAnnotations() {
@@ -123,8 +134,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     }
   }
 
-  @NotNull
-  public DvcsBranchSettings getFavoriteBranchSettings() {
-    return myState.FAVORITE_BRANCH_SETTINGS;
+  public @NotNull DvcsBranchSettings getBranchSettings() {
+    return myState.BRANCH_SETTINGS;
   }
 }

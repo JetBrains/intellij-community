@@ -1,87 +1,106 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorColorsManager {
-  public static final Topic<EditorColorsListener> TOPIC = Topic.create("EditorColorsListener", EditorColorsListener.class);
 
-  @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
+  @Topic.AppLevel
+  public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @NonNls public static final String COLOR_SCHEME_FILE_EXTENSION = ".icls";
+  /**
+   * @deprecated use {@link #getDefaultSchemeName()} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";
+
+  public static @NonNls @NotNull String getDefaultSchemeName() {
+    return DEFAULT_SCHEME_NAME;
+  }
+
+  public static @NonNls @NotNull String getColorSchemeFileExtension() {
+    return ".icls";
+  }
 
   public static EditorColorsManager getInstance() {
-    return ServiceManager.getService(EditorColorsManager.class);
+    return ApplicationManager.getApplication().getService(EditorColorsManager.class);
   }
 
-  public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
+  @ApiStatus.Internal
+  protected EditorColorsManager() {
+  }
 
-  @Deprecated
-  public abstract void removeAllSchemes();
+  public abstract void addColorScheme(@NotNull EditorColorsScheme scheme);
 
-  @NotNull
-  public abstract EditorColorsScheme[] getAllSchemes();
+  public abstract EditorColorsScheme @NotNull [] getAllSchemes();
 
-  public abstract void setGlobalScheme(EditorColorsScheme scheme);
+  public abstract void setGlobalScheme(@Nullable EditorColorsScheme scheme);
 
-  @NotNull
-  public abstract EditorColorsScheme getGlobalScheme();
+  @ApiStatus.Internal
+  @RequiresEdt
+  public abstract void setCurrentSchemeOnLafChange(@NotNull EditorColorsScheme scheme);
 
-  public abstract EditorColorsScheme getScheme(@NotNull String schemeName);
+  public abstract @NotNull EditorColorsScheme getGlobalScheme();
+
+  public abstract @Nullable EditorColorsScheme getActiveVisibleScheme();
+
+  public abstract @Nullable EditorColorsScheme getScheme(@NotNull String schemeName);
+
+  /**
+   * Returns the default scheme, falling back to the global scheme.
+   * <p>
+   *   This is a compatibility hack used to somehow deal with the fact that
+   *   {@code getScheme(getDefaultSchemeName())} is nullable,
+   *   and some legacy code expects that it's not, throwing NPEs sometimes.
+   *   And it's better to fall back to the global scheme than to throw an NPE.
+   * </p>
+   * @return the default scheme or the global scheme
+   */
+  @ApiStatus.Internal
+  public @NotNull EditorColorsScheme getDefaultScheme() {
+    var result = getScheme(getDefaultSchemeName());
+    if (result == null) {
+      result = getGlobalScheme();
+    }
+    return result;
+  }
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
-
-  /**
-   * @deprecated use {@link #TOPIC} instead
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
-  }
-
-  /**
-   * @deprecated use {@link #TOPIC} instead
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public final void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(TOPIC, listener);
-  }
 
   public abstract boolean isUseOnlyMonospacedFonts();
 
   public abstract void setUseOnlyMonospacedFonts(boolean b);
 
-  @NotNull
-  public EditorColorsScheme getSchemeForCurrentUITheme() {
+  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
     return getGlobalScheme();
   }
 
   public boolean isDarkEditor() {
-    Color bg = getGlobalScheme().getDefaultBackground();
-    return ColorUtil.isDark(bg);
+    return ColorUtil.isDark(getGlobalScheme().getDefaultBackground());
   }
+
+  /**
+   * Resolves a temporary link to a bundled scheme using bundled scheme's name.
+   * @param scheme The scheme with unresolved parent. The call will be ignored for other schemes.
+   * @throws com.intellij.openapi.util.InvalidDataException If a referenced scheme doesn't exist or is not read-only.
+   */
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+  }
+
+  /**
+   * Unlike {@code SchemeManager.reload()} guarantees that the currently selected color scheme remains the same unless it has been
+   * removed as a result of reload.
+   */
+  public void reloadKeepingActiveScheme() {
+  }
+
+  @ApiStatus.Experimental
+  public abstract long getSchemeModificationCounter();
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -61,20 +47,19 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     else {
       String message =
         RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("error.wrong.caret.position.method.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_SIGNATURE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE);
     }
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, editor, elements[0]);
   }
 
-  @Nullable
   @Override
-  public String getTargetNotFoundMessage() {
+  public @Nullable String getTargetNotFoundMessage() {
     return null;
   }
 
@@ -82,7 +67,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
 
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
@@ -98,8 +83,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiElement targetMember = findTargetMember(element);
     if (targetMember != null) return targetMember;
@@ -112,8 +96,9 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement findTargetMember(PsiElement element) {
+  public @Nullable PsiElement findTargetMember(@Nullable PsiElement element) {
+    if (element == null) return null;
+
     final GrParameterList parameterList = PsiTreeUtil.getParentOfType(element, GrParameterList.class);
     if (parameterList != null) {
       final PsiElement parent = parameterList.getParent();

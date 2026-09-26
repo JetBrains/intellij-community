@@ -1,0 +1,9 @@
+fun f() {}
+
+fun getF() = ::f
+
+class C
+
+fun main() {
+    getF()()
+}

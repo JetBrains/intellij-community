@@ -23,9 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-/**
- * @author ilyas
- */
 public class GrLightIdentifier extends LightElement {
 
   private final String myText;
@@ -49,6 +46,7 @@ public class GrLightIdentifier extends LightElement {
     return new GrLightIdentifier(getManager(), myText);
   }
 
+  @Override
   public String toString() {
     return "PsiIdentifier:" + getText();
   }

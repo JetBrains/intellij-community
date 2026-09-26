@@ -1,20 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class JvmAnalysisBundle extends AbstractBundle {
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+import java.util.function.Supplier;
+
+public final class JvmAnalysisBundle {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "com.intellij.jvm.analysis.JvmAnalysisBundle";
-  private static final JvmAnalysisBundle ourInstance = new JvmAnalysisBundle();
-
-  private JvmAnalysisBundle() {
-    super(BUNDLE);
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
   }
+
+  public static final @NonNls String BUNDLE = "messages.JvmAnalysisBundle";
+  private static final DynamicBundle ourInstance = new DynamicBundle(JvmAnalysisBundle.class, BUNDLE);
 }

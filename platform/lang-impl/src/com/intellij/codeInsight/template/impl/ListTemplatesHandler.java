@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -6,13 +6,20 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,26 +35,37 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-public class ListTemplatesHandler implements CodeInsightActionHandler {
+@ApiStatus.Internal
+public final class ListTemplatesHandler implements CodeInsightActionHandler {
 
   private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile psiFile) {
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     int offset = editor.getCaretModel().getOffset();
-    List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, false);
+    List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
+      TemplateActionContext.expanding(psiFile, editor));
 
-    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
-    MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, file, offset);
+    Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, document, offset, false, true);
+    MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, psiFile, offset);
 
     if (matchingTemplates.isEmpty()) {
       for (TemplateImpl template : applicableTemplates) {
@@ -62,18 +80,20 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       return;
     }
 
-    showTemplatesLookup(project, editor, file, matchingTemplates, customTemplatesLookupElements);
+    showTemplatesLookup(project, editor, psiFile, matchingTemplates, customTemplatesLookupElements);
   }
 
-  public static Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<TemplateImpl> templates, @NotNull Editor editor,
-                                                                  int offset, boolean fullMatch, boolean searchInDescription) {
-    if (offset > editor.getDocument().getTextLength()) {
+  public static @NotNull Map<TemplateImpl, String> filterTemplatesByPrefix(@NotNull Collection<? extends TemplateImpl> templates,
+                                                                           @NotNull Document document, int offset,
+                                                                           boolean fullMatch,
+                                                                           boolean searchInDescription) {
+    if (offset > document.getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                AttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(document));
     }
-    CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
+    CharSequence documentText = document.getCharsSequence().subSequence(0, offset);
 
-    String prefixWithoutDots = computeDescriptionMatchingPrefix(editor.getDocument(), offset);
+    String prefixWithoutDots = computeDescriptionMatchingPrefix(document, offset);
     Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
 
     Map<TemplateImpl, String> matchingTemplates = new TreeMap<>(TemplateListPanel.TEMPLATE_COMPARATOR);
@@ -90,6 +110,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       else {
+        if (!ClientId.isCurrentlyUnderLocalId() && prefixWithoutDots.isEmpty()) {
+          matchingTemplates.put(template, prefixWithoutDots);
+          continue;
+        }
+
         for (int i = templateKey.length(); i > 0; i--) {
           ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);
@@ -142,9 +167,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                                                 int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
     CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file);
-    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+    TemplateActionContext templateActionContext = TemplateActionContext.expanding(file, editor);
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext)) {
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
-        String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
+        String customTemplatePrefix =
+          ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
         if (customTemplatePrefix != null) {
           result.putValues(customTemplatePrefix, ((CustomLiveTemplateBase)customLiveTemplate).getLookupElements(file, editor, offset));
         }
@@ -156,7 +183,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   private static LiveTemplateLookupElement createTemplateElement(final TemplateImpl template) {
     return new LiveTemplateLookupElementImpl(template, false) {
       @Override
-      public Set<String> getAllLookupStrings() {
+      public @Unmodifiable @NotNull Set<String> getAllLookupStrings() {
         String description = template.getDescription();
         if (description == null) {
           return super.getAllLookupStrings();
@@ -171,7 +198,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     if (argument == null) {
       return key;
     }
-    if (key.length() > 0 && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
+    if (!key.isEmpty() && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
       return key + ' ' + argument;
     }
     return key + argument;
@@ -213,22 +240,22 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private static class MyLookupAdapter extends LookupAdapter {
+  private static final class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
-    private final PsiFile myFile;
+    private final PsiFile myPsiFile;
 
-    public MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
+    MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
       myTemplate2Argument = template2Argument;
-      myFile = null;
+      myPsiFile = null;
     }
 
-    public MyLookupAdapter(@Nullable PsiFile file) {
+    MyLookupAdapter(@Nullable PsiFile psiFile) {
       myTemplate2Argument = null;
-      myFile = file;
+      myPsiFile = psiFile;
     }
 
     @Override
-    public void itemSelected(final LookupEvent event) {
+    public void itemSelected(final @NotNull LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       final LookupElement item = event.getItem();
       final Lookup lookup = event.getLookup();
@@ -237,23 +264,34 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         final TemplateImpl template = ((LiveTemplateLookupElementImpl)item).getTemplate();
         final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
         WriteCommandAction.writeCommandAction(project).run(() -> {
-          ((TemplateManagerImpl)TemplateManager.getInstance(project)).startTemplateWithPrefix(lookup.getEditor(), template, null, argument);
+          Editor editor = lookup.getEditor();
+          if (!editor.isDisposed()) {
+            editor.getCaretModel().runForEachCaret(caret -> {
+              ((TemplateManagerImpl)TemplateManager.getInstance(project))
+                .startTemplateWithPrefix(caret.getEditor(), template, null, argument);
+            });
+          }
         });
       }
       else if (item instanceof CustomLiveTemplateLookupElement) {
-        if (myFile != null) {
+        if (myPsiFile != null) {
           WriteCommandAction.writeCommandAction(project).run(() -> {
-            ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myFile);
+            Editor editor = lookup.getEditor();
+            if (!editor.isDisposed()) {
+              editor.getCaretModel().runForEachCaret(caret -> {
+                ((CustomLiveTemplateLookupElement)item).expandTemplate(lookup.getEditor(), myPsiFile);
+              });
+            }
           });
         }
       }
     }
   }
 
-  private static class TemplatesArranger extends LookupArranger {
+  private static final class TemplatesArranger extends LookupArranger {
 
     @Override
-    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
+    public @NotNull Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<>();
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
@@ -264,11 +302,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
       result.addAll(items);
       ArrayList<LookupElement> list = new ArrayList<>(result);
       int selected = lookup.isSelectionTouched() ? list.indexOf(lookup.getCurrentItem()) : 0;
-      return new Pair<>(list, selected >= 0 ? selected : 0);
+      return new Pair<>(list, Math.max(selected, 0));
     }
 
     @Override
-    public LookupArranger createEmptyCopy() {
+    public @NotNull LookupArranger createEmptyCopy() {
       return new TemplatesArranger();
     }
   }

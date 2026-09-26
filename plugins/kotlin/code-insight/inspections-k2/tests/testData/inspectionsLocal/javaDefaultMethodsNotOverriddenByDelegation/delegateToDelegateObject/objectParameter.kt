@@ -1,0 +1,10 @@
+// FIX: Override Java default methods by delegation to the delegate object
+// K2_AFTER_ERROR: VAL_OR_VAR_ON_FUN_PARAMETER
+// K2_ERROR: VAL_OR_VAR_ON_FUN_PARAMETER
+class IImpl: Interface {
+    override fun getInt(): Int = 42
+}
+
+fun test(val iImpl: IImpl) {
+    object : Interface by iImpl<caret> {}
+}

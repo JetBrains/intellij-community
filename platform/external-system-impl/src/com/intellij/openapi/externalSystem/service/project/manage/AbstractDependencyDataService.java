@@ -1,23 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.model.project.OrderAware;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -25,27 +17,29 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ExportableOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- * @since 4/14/13 11:21 PM
- */
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
   extends AbstractProjectDataService<E, I> {
@@ -54,7 +48,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
 
 
   @Override
-  public void importData(@NotNull Collection<DataNode<E>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -84,20 +78,19 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
-  protected abstract Map<OrderEntry, OrderAware> importData(@NotNull Collection<DataNode<E>> nodesToImport,
+  protected abstract Map<OrderEntry, OrderAware> importData(@NotNull Collection<? extends DataNode<E>> nodesToImport,
                                                             @NotNull Module module,
                                                             @NotNull IdeModifiableModelsProvider modelsProvider);
 
-  @NotNull
   @Override
-  public Computable<Collection<I>> computeOrphanData(@NotNull final Collection<DataNode<E>> toImport,
-                                                     @NotNull final ProjectData projectData,
-                                                     @NotNull final Project project,
-                                                     @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  public @NotNull Computable<Collection<I>> computeOrphanData(final @NotNull Collection<? extends DataNode<E>> toImport,
+                                                              final @NotNull ProjectData projectData,
+                                                              final @NotNull Project project,
+                                                              final @NotNull IdeModifiableModelsProvider modelsProvider) {
     return () -> {
       MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
       for (DataNode<E> node : toImport) {
-        final AbstractDependencyData data = node.getData();
+        final E data = node.getData();
         Module ownerModule = modelsProvider.findIdeModule(data.getOwnerModule());
         if (ownerModule == null && modelsProvider.getUnloadedModuleDescription(data.getOwnerModule()) != null) {
           continue;
@@ -118,17 +111,17 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       }
 
       final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();
-      List<I> orphanEntries = ContainerUtil.newSmartList();
+      List<I> orphanEntries = new SmartList<>();
       for (Module module : modelsProvider.getModules(projectData)) {
         for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
           // do not remove recently created library w/o name
           if (entry instanceof LibraryOrderEntry &&
               ((LibraryOrderEntry)entry).getLibraryName() == null &&
-              entry.getUrls(OrderRootType.CLASSES).length == 0) {
+              ((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES).length == 0) {
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {
-            final String moduleName = modifiableModuleModel.getActualName(entry.getOwnerModule()); ;
+            final String moduleName = modifiableModuleModel.getActualName(entry.getOwnerModule());
             //noinspection unchecked
             if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
               //noinspection unchecked
@@ -142,16 +135,15 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     };
   }
 
-  @NotNull
-  protected abstract Class<I> getOrderEntryType();
+  protected abstract @NotNull Class<I> getOrderEntryType();
 
   protected String getOrderEntryName(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull I orderEntry) {
     return orderEntry.getPresentableName();
   }
 
   @Override
-  public void removeData(@NotNull Computable<Collection<I>> toRemoveComputable,
-                         @NotNull Collection<DataNode<E>> toIgnore,
+  public void removeData(Computable<? extends Collection<? extends I>> toRemoveComputable,
+                         @NotNull Collection<? extends DataNode<E>> toIgnore,
                          @NotNull ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -161,13 +153,12 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
-  @NotNull
-  private static Map<Module, Collection<ExportableOrderEntry>> groupByModule(@NotNull Collection<? extends ExportableOrderEntry> data) {
-    Map<Module, Collection<ExportableOrderEntry>> result = ContainerUtilRt.newHashMap();
+  private static @NotNull Map<Module, Collection<ExportableOrderEntry>> groupByModule(@NotNull Collection<? extends ExportableOrderEntry> data) {
+    Map<Module, Collection<ExportableOrderEntry>> result = new HashMap<>();
     for (ExportableOrderEntry entry : data) {
       Collection<ExportableOrderEntry> entries = result.get(entry.getOwnerModule());
       if (entries == null) {
-        result.put(entry.getOwnerModule(), entries = ContainerUtilRt.newArrayList());
+        result.put(entry.getOwnerModule(), entries = new ArrayList<>());
       }
       entries.add(entry);
     }
@@ -186,7 +177,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
-  private static String getInternalName(final AbstractDependencyData data) {
+  private static String getInternalName(final AbstractDependencyData<?> data) {
     if (data instanceof LibraryDependencyData) {
       final String name = data.getInternalName();
       if (StringUtil.isNotEmpty(name)) {
@@ -199,7 +190,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           return PathUtil.toPresentableUrl(url);
         }
         else {
-          return ProjectBundle.message("library.empty.library.item");
+          return ProjectModelBundle.message("empty.library.title");
         }
       }
     }

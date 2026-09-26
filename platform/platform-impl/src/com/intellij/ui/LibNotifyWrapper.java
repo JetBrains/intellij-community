@@ -1,49 +1,82 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.util.messages.MessageBusConnection;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Fokin
- */
-class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
+import java.lang.invoke.MethodHandle;
+
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
+final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private static LibNotifyWrapper ourInstance;
 
-  public static synchronized LibNotifyWrapper getInstance() {
+  static synchronized @Nullable LibNotifyWrapper getInstance() {
     if (ourInstance == null) {
       ourInstance = new LibNotifyWrapper();
     }
     return ourInstance;
   }
 
-  @SuppressWarnings({"SpellCheckingInspection", "UnusedReturnValue"})
-  private interface LibNotify extends Library {
-    int notify_init(String appName);
-    void notify_uninit();
-    Pointer notify_notification_new(String summary, String body, String icon);
-    int notify_notification_show(Pointer notification, Pointer error);
+  static final class LibNotify {
+    private final MethodHandle init;
+    private final MethodHandle uninit;
+    private final MethodHandle create;
+    private final MethodHandle show;
+    private final MethodHandle unref;
+
+    LibNotify(SymbolLookup symbols) {
+      var linker = Linker.nativeLinker();
+      init = linker.downcallHandle(symbols.findOrThrow("notify_init"), FunctionDescriptor.of(JAVA_INT, ADDRESS));
+      uninit = linker.downcallHandle(symbols.findOrThrow("notify_uninit"), FunctionDescriptor.ofVoid());
+      create = linker.downcallHandle(symbols.findOrThrow("notify_notification_new"),
+                                    FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS));
+      show = linker.downcallHandle(symbols.findOrThrow("notify_notification_show"), FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
+      unref = linker.downcallHandle(symbols.findOrThrow("g_object_unref"), FunctionDescriptor.ofVoid(ADDRESS));
+    }
+
+    void init(String appName) {
+      try (var arena = Arena.ofConfined()) {
+        if ((int)init.invokeExact(arena.allocateFrom(appName)) == 0) throw new IllegalStateException("notify_init failed");
+      }
+      catch (Throwable error) {
+        throw new IllegalStateException(error);
+      }
+    }
+
+    void uninit() {
+      try {
+        uninit.invokeExact();
+      }
+      catch (Throwable error) {
+        throw new IllegalStateException(error);
+      }
+    }
+
+    boolean notify(String title, String body, String icon) {
+      try (var arena = Arena.ofConfined()) {
+        var notification = (MemorySegment)create.invokeExact(arena.allocateFrom(title), arena.allocateFrom(body), arena.allocateFrom(icon));
+        if (notification.address() == 0) return false;
+        try {
+          return (int)show.invokeExact(notification, MemorySegment.NULL) != 0;
+        }
+        finally {
+          unref.invokeExact(notification);
+        }
+      }
+      catch (Throwable error) {
+        throw new IllegalStateException(error);
+      }
+    }
   }
 
   private final LibNotify myLibNotify;
@@ -52,23 +85,21 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private boolean myDisposed = false;
 
   private LibNotifyWrapper() {
-    myLibNotify = Native.loadLibrary("libnotify.so.4", LibNotify.class);
+    myLibNotify = new LibNotify(SymbolLookup.libraryLookup("libnotify.so.4", Arena.global()));
 
-    String appName = ApplicationNamesInfo.getInstance().getProductName();
-    if (myLibNotify.notify_init(appName) == 0) {
-      throw new IllegalStateException("notify_init failed");
-    }
+    var appName = ApplicationNamesInfo.getInstance().getProductName();
+    myLibNotify.init(appName);
 
-    String icon = AppUIUtil.findIcon(PathManager.getBinPath());
+    var icon = AppUIUtil.findAppIcon();
     myIcon = icon != null ? icon : "dialog-information";
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    var connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         synchronized (myLock) {
           myDisposed = true;
-          myLibNotify.notify_uninit();
+          myLibNotify.uninit();
         }
       }
     });
@@ -76,11 +107,12 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
 
   @Override
   public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
-    synchronized (myLock) {
-      if (!myDisposed) {
-        Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
-        myLibNotify.notify_notification_show(notification, null);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      synchronized (myLock) {
+        if (!myDisposed) {
+          myLibNotify.notify(title, description, myIcon);
+        }
       }
-    }
+    });
   }
 }

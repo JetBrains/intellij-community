@@ -1,23 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class TBItemGroup extends TBItem {
+import java.util.List;
+
+final class TBItemGroup extends TBItem {
   private final ItemsContainer myGroupItems;
 
-  TBItemGroup(@NotNull String uid, @Nullable ItemListener listener) {
-    super(uid, listener);
-    myGroupItems = new ItemsContainer(uid + "_group", listener);
+  TBItemGroup(@NotNull String name, @Nullable ItemListener listener, @NotNull List<AnAction> actions) {
+    super("group", listener);
+    myGroupItems = new ItemsContainer(name + "_group");
+    for (AnAction action: actions) {
+      myGroupItems.addItem(new TBItemAnActionButton(listener, action, null)); // TODO: pass stats from parent touchbar
+    }
   }
 
-  ItemsContainer getContainer() { return myGroupItems; }
+  int size() { return myGroupItems.size(); }
 
-  @Override
-  protected void _updateNativePeer() {
-    myGroupItems.forEachDeep(item->item._updateNativePeer());
+  TBItemAnActionButton getItem(int c) {
+    return (TBItemAnActionButton)myGroupItems.get(c);
   }
 
   @Override
@@ -25,11 +30,12 @@ class TBItemGroup extends TBItem {
     if (myGroupItems.isEmpty())
       return ID.NIL;
 
-    final ID[] ids = myGroupItems.getVisibleNativePeers();
-    return NST.createGroupItem(myUid, ids, ids.length);
+    final ID[] ids = myGroupItems.getNativePeers();
+    return NST.createGroupItem(getUid(), ids);
   }
 
   @Override
+  synchronized
   void releaseNativePeer() {
     myGroupItems.releaseAll();
     super.releaseNativePeer();

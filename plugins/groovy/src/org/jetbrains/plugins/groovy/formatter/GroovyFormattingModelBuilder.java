@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter;
 
@@ -22,34 +22,29 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 
-/**
- * @author ilyas
- */
-public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
+public final class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @Override
-  @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    ASTNode node = element.getNode();
-    assert node != null;
-    PsiFile containingFile = element.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
-    assert containingFile != null : element.getContainingFile();
+  public @NotNull FormattingModel createModel(com.intellij.formatting.@NotNull FormattingContext formattingContext) {
+    PsiFile containingFile = formattingContext.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+    assert containingFile != null;
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
     GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
 
     final AlignmentProvider alignments = new AlignmentProvider();
     if (customSettings.USE_FLYING_GEESE_BRACES) {
-      element.accept(new PsiRecursiveElementVisitor() {
+      formattingContext.getPsiElement().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (GeeseUtil.isClosureRBrace(element)) {
             GeeseUtil.calculateRBraceAlignment(element, alignments);
           }
@@ -59,7 +54,14 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
         }
       });
     }
-    final GroovyBlock block = new GroovyBlock(astNode, Indent.getAbsoluteNoneIndent(), null, new FormattingContext(groovySettings, alignments, customSettings, false));
+
+    final GroovyBlock block = new GroovyBlock(
+      astNode,
+      Indent.getAbsoluteNoneIndent(),
+      null,
+      new FormattingContext(groovySettings, alignments, customSettings, false, false, GroovyBlockProducer.DEFAULT)
+    );
+
     if (Registry.is("groovy.document.based.formatting")) {
       return new DocumentBasedFormattingModel(block, settings, containingFile);
     }

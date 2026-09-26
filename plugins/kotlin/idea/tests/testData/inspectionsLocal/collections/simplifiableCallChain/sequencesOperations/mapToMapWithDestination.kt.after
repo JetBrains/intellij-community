@@ -1,0 +1,9 @@
+// FIX: Merge call chain to 'associateTo'
+// WITH_STDLIB
+fun getKey(i: Int): Long = 1L
+fun getValue(i: Int): String = ""
+
+fun test(sequence: Sequence<Int>) {
+    val target = mutableMapOf<Long, String>()
+    sequence.associateTo(target) { getKey(it) to getValue(it) }
+}

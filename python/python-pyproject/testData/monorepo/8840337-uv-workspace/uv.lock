@@ -1,0 +1,30 @@
+version = 1
+requires-python = ">=3.13"
+
+[manifest]
+members = [
+    "8840337-uv-workspace",
+    "myorg-core",
+    "myorg-frontend",
+]
+
+[[package]]
+name = "8840337-uv-workspace"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "myorg-core"
+version = "0.1.0"
+source = { editable = "libs/core" }
+
+[[package]]
+name = "myorg-frontend"
+version = "0.1.0"
+source = { editable = "apps/frontend" }
+dependencies = [
+    { name = "myorg-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "myorg-core", editable = "libs/core" }]

@@ -1,0 +1,20 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_sealed_unrelatedDiff-a.kotlin_module
+  unrelated/UnrelatedKt.class
+End of files
+Compiling files:
+  kotlin/sealed/unrelatedDiff/a/unrelated.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  ExhaustiveWhenKt.class
+  META-INF/kotlin_sealed_unrelatedDiff-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/unrelatedDiff/a/exhaustiveWhen.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,13 @@
+// FILE: before.kt
+fun <T> List<T>.firstMatching(predicate: (T) -> Boolean): T? = null
+
+fun <U> usage(list: List<U>) {
+    list.firstMatching { i<caret>t.toString() == "" }
+}
+
+// FILE: after.kt
+fun <T> List<T>.firstMatching(predicate: (T) -> Boolean): T? = null
+
+fun <<caret>U> usage(list: List<U>) {
+    list.firstMatching { it.toString() == "" }
+}

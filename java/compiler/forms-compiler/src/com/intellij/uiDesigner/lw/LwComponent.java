@@ -19,23 +19,18 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class LwComponent implements IComponent{
   /**
    *  Component's ID. Cannot be null.
    */
   private String myId;
   /**
-   * may be null
+   * could be null
    */
   private String myBinding;
   /**
@@ -59,13 +54,13 @@ public abstract class LwComponent implements IComponent{
    */
   private final Rectangle myBounds;
 
-  private final HashMap myIntrospectedProperty2Value;
+  private final HashMap<LwIntrospectedProperty, Object> myIntrospectedProperty2Value;
   /**
-   * if class is unknown (cannot be loaded), properties tag is stored as is
+   * if class is unknown (cannot be loaded), property tag is stored as is
    */
   private Element myErrorComponentProperties;
-  protected final HashMap myClientProperties;
-  protected final HashMap myDelegeeClientProperties;
+  protected final HashMap<Object, Object> myClientProperties;
+  protected final HashMap<String, Object> myDelegeeClientProperties;
   private boolean myCustomCreate = false;
   private boolean myDefaultBinding = false;
 
@@ -75,12 +70,13 @@ public abstract class LwComponent implements IComponent{
     }
     myBounds = new Rectangle();
     myConstraints = new GridConstraints();
-    myIntrospectedProperty2Value = new LinkedHashMap();
+    myIntrospectedProperty2Value = new LinkedHashMap<>();
     myClassName = className;
-    myClientProperties = new LinkedHashMap();
-    myDelegeeClientProperties = new LinkedHashMap();
+    myClientProperties = new LinkedHashMap<>();
+    myDelegeeClientProperties = new LinkedHashMap<>();
   }
 
+  @Override
   public final String getId() {
     return myId;
   }
@@ -92,6 +88,7 @@ public abstract class LwComponent implements IComponent{
     myId = id;
   }
 
+  @Override
   public final String getBinding(){
     return myBinding;
   }
@@ -100,6 +97,7 @@ public abstract class LwComponent implements IComponent{
     myBinding = binding;
   }
 
+  @Override
   public final Object getCustomLayoutConstraints(){
     return myCustomLayoutConstraints;
   }
@@ -111,17 +109,18 @@ public abstract class LwComponent implements IComponent{
   /**
    * @return never null
    */
+  @Override
   public final String getComponentClassName(){
     return myClassName;
   }
 
+  @Override
   public IProperty[] getModifiedProperties() {
     return getAssignedIntrospectedProperties();
   }
 
   /**
-   * @return component's constraints in XY layout. This method rever
-   * returns {@code null}.
+   * @return component's constraints in XY layout.
    */
   public final Rectangle getBounds(){
     return (Rectangle)myBounds.clone();
@@ -131,10 +130,12 @@ public abstract class LwComponent implements IComponent{
    * @return component's constraints in GridLayoutManager. This method never
    * returns {@code null}.
    */
+  @Override
   public final GridConstraints getConstraints(){
     return myConstraints;
   }
 
+  @Override
   public boolean isCustomCreate() {
     return myCustomCreate;
   }
@@ -143,10 +144,12 @@ public abstract class LwComponent implements IComponent{
     return myDefaultBinding;
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     return visitor.visit(this);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return false;
   }
@@ -155,6 +158,7 @@ public abstract class LwComponent implements IComponent{
     return myParent;
   }
 
+  @Override
   public IContainer getParentContainer() {
     return myParent;
   }
@@ -184,12 +188,7 @@ public abstract class LwComponent implements IComponent{
   }
 
   public final LwIntrospectedProperty[] getAssignedIntrospectedProperties() {
-    final LwIntrospectedProperty[] properties = new LwIntrospectedProperty[myIntrospectedProperty2Value.size()];
-    final Iterator iterator = myIntrospectedProperty2Value.keySet().iterator();
-    for (int i=0; iterator.hasNext(); i++) {
-      properties[i] = (LwIntrospectedProperty)iterator.next();
-    }
-    return properties;
+    return myIntrospectedProperty2Value.keySet().toArray(new LwIntrospectedProperty[0]);
   }
 
   /**
@@ -205,11 +204,11 @@ public abstract class LwComponent implements IComponent{
 
   /**
    * 'properties' is not required subtag
-   * @param provider can be null if no properties should be read 
+   * @param provider can be null if no properties should be read
    */
   protected final void readProperties(final Element element, final PropertiesProvider provider) {
     if (provider == null) {
-      // do not read properties 
+      // do not read properties
       return;
     }
 
@@ -218,7 +217,7 @@ public abstract class LwComponent implements IComponent{
       propertiesElement = new Element(UIFormXmlConstants.ELEMENT_PROPERTIES, element.getNamespace());
     }
 
-    final HashMap name2property = provider.getLwProperties(getComponentClassName());
+    final HashMap<String, LwIntrospectedProperty> name2property = provider.getLwProperties(getComponentClassName());
     if (name2property == null) {
       myErrorComponentProperties = propertiesElement.clone();
       return;
@@ -227,7 +226,7 @@ public abstract class LwComponent implements IComponent{
     final List<Element> propertyElements = propertiesElement.getChildren();
     for (Element t : propertyElements) {
       final String name = t.getName();
-      final LwIntrospectedProperty property = (LwIntrospectedProperty)name2property.get(name);
+      final LwIntrospectedProperty property = name2property.get(name);
       if (property == null){
         continue;
       }
@@ -262,7 +261,7 @@ public abstract class LwComponent implements IComponent{
         lwProp = new LwIntroPrimitiveTypeProperty(propName, Double.class);
       }
       else {
-        Class propClass;
+        Class<?> propClass;
         try {
           propClass = Class.forName(className);
         }
@@ -304,6 +303,7 @@ public abstract class LwComponent implements IComponent{
   /**
    * @see javax.swing.JComponent#getClientProperty(Object)
    */
+  @Override
   public final Object getClientProperty(final Object key){
     if (key == null) {
       throw new IllegalArgumentException("key cannot be null");
@@ -314,6 +314,7 @@ public abstract class LwComponent implements IComponent{
   /**
    * @see javax.swing.JComponent#putClientProperty(Object, Object)
    */
+  @Override
   public final void putClientProperty(final Object key, final Object value){
     if (key == null) {
       throw new IllegalArgumentException("key cannot be null");
@@ -321,7 +322,7 @@ public abstract class LwComponent implements IComponent{
     myClientProperties.put(key, value);
   }
 
-  public HashMap getDelegeeClientProperties() {
+  public HashMap<String, Object> getDelegeeClientProperties() {
     return myDelegeeClientProperties;
   }
 }

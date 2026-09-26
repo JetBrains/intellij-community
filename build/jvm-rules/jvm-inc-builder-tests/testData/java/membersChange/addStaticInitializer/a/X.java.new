@@ -1,0 +1,6 @@
+public class X {
+  public static int V;
+  static {
+    V = 5;
+  }
+}

@@ -1,0 +1,70 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions.searcheverywhere
+
+import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
+import com.intellij.lang.LanguageStructureViewBuilder
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiNamedElement
+import com.intellij.usageView.UsageInfo
+import com.intellij.usages.impl.UsagePreviewPanel
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+interface SearchEverywherePreviewPrimaryUsageFinder {
+  
+  companion object {
+    @JvmField val EP_NAME: ExtensionPointName<SearchEverywherePreviewPrimaryUsageFinder> = ExtensionPointName("com.intellij.searchEverywherePreviewPrimaryUsageFinder")
+  }
+  
+  fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
+  fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement?
+  @ApiStatus.Internal
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>?
+}
+
+@ApiStatus.Internal
+class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder {
+  override fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>? {
+    val structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
+    if (structureViewBuilder !is TreeBasedStructureViewBuilder) return null;
+
+    val structureViewModel = structureViewBuilder.createStructureViewModel(null);
+    val structuredViewModelDisposable = Disposable { Disposer.dispose(structureViewModel); }
+
+    val firstChild = structureViewModel.root.children.firstOrNull()
+    if (firstChild !is StructureViewTreeElement) return Pair(UsageInfo(psiFile), structuredViewModelDisposable)
+
+    val firstChildElement = firstChild.value
+    if (firstChildElement !is PsiElement) return Pair(UsageInfo(psiFile), structuredViewModelDisposable)
+
+    return Pair(UsageInfo(firstChildElement), structuredViewModelDisposable)
+  }
+
+  override fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement {
+    return psiElement
+  }
+
+  override fun readRangeFromUsageInfo(info: UsageInfo): Pair<Int, Int>? {
+    val element = info.element
+    if (element != null && element.isValid && element is PsiNamedElement && element !is PsiFileSystemItem) {
+      val nameRange = UsagePreviewPanel.getNameElementTextRange(element)
+      return nameRange.startOffset to nameRange.endOffset
+    }
+    val range = info.smartPointer.psiRange ?: try {
+      info.navigationRange
+    }
+    catch (_: Exception) {
+      null
+    }
+    return range?.let { it.startOffset to it.endOffset }
+  }
+}

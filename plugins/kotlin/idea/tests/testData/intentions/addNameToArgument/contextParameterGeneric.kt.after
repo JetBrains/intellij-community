@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+// PRIORITY: LOW
+// INTENTION_TEXT: "Add 'x =' to argument"
+// AFTER-WARNING: Parameter 'x' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+
+
+context(x: List<String>)
+fun foo(a: String): String = a
+
+fun main() {
+    // List<String> matches List<String> context param
+    foo(x = listOf("a", "b"), a = "World")
+}

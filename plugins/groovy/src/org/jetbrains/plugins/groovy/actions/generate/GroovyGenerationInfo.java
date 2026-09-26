@@ -43,9 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
-/**
- * @author peter
- */
 public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo<T> {
   private static final Logger LOG = Logger.getInstance(GroovyGenerationInfo.class);
 
@@ -138,7 +135,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
   @Override
   public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
     final T firstMember = getPsiMember();
-    LOG.assertTrue(firstMember.isValid());
+    LOG.assertTrue(firstMember != null);
 
     if (toEditMethodBody) {
       GrMethod method = (GrMethod)firstMember;
@@ -168,8 +165,7 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     int offset;
-    if (firstMember instanceof GrMethod) {
-      GrMethod method = (GrMethod)firstMember;
+    if (firstMember instanceof GrMethod method) {
       GrCodeBlock body = method.getBlock();
       if (body == null) {
         offset = method.getTextRange().getStartOffset();

@@ -1,64 +1,50 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "myMap.entrySet().toArray()")
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784473565881807109L;
 
-  protected final Map<K, Object> myMap;
+  protected final Map<K, Object> myMap; // K -> V|ValueList<V>
 
   public MostlySingularMultiMap() {
-    myMap = createMap();
+    myMap = CollectionFactory.createSmallMemoryFootprintMap();
   }
 
-  @NotNull
-  protected Map<K, Object> createMap() {
-    return new THashMap<K, Object>();
+  public MostlySingularMultiMap(@NotNull Map<K, Object> map) {
+    myMap = map;
   }
 
   public void add(@NotNull K key, @NotNull V value) {
-    Object current = myMap.get(key);
-    if (current == null) {
-      myMap.put(key, value);
-    }
-    else if (current instanceof MostlySingularMultiMap.ValueList) {
-      //noinspection unchecked
-      ValueList<Object> curList = (ValueList<Object>) current;
-      curList.add(value);
-    }
-    else {
-      ValueList<Object> newList = new ValueList<Object>();
-      newList.add(current);
-      newList.add(value);
-      myMap.put(key, newList);
-    }
+    myMap.merge(key, value, (currentValue, newValue) -> {
+      if (currentValue instanceof ValueList) {
+        //noinspection unchecked
+        ((List<V>)currentValue).add((V)newValue);
+        return currentValue;
+      }
+      else {//currentValue is single value:
+        List<V> newList = new ValueList<>();
+        //noinspection unchecked
+        newList.add((V)currentValue);
+        //noinspection unchecked
+        newList.add((V)newValue);
+        return newList;
+      }
+    });
   }
 
   public boolean remove(@NotNull K key, @NotNull V value) {
@@ -66,16 +52,14 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     if (current == null) {
       return false;
     }
-    if (current instanceof MostlySingularMultiMap.ValueList) {
-      ValueList curList = (ValueList) current;
-      return curList.remove(value);
+    else if (current instanceof ValueList) {
+      //noinspection unchecked
+      return ((List<V>)current).remove(value);
     }
-
-    if (value.equals(current)) {
+    else if (value.equals(current)) {
       myMap.remove(key);
       return true;
     }
-
     return false;
   }
 
@@ -83,92 +67,97 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return myMap.remove(key) != null;
   }
 
-  @NotNull
-  public Set<K> keySet() {
+  public final @NotNull Set<K> keySet() {
     return myMap.keySet();
   }
 
-  public boolean isEmpty() {
+  public final boolean isEmpty() {
     return myMap.isEmpty();
   }
 
-  public boolean processForKey(@NotNull K key, @NotNull Processor<? super V> p) {
+  public final boolean processForKey(@NotNull K key, @NotNull Processor<? super V> p) {
     return processValue(p, myMap.get(key));
   }
 
-  @SuppressWarnings("unchecked")
   private boolean processValue(@NotNull Processor<? super V> p, Object v) {
-    if (v instanceof MostlySingularMultiMap.ValueList) {
-      for (Object o : (ValueList)v) {
-        if (!p.process((V)o)) return false;
+    if (v instanceof ValueList) {
+      //noinspection unchecked
+      for (V o : (ValueList<V>)v) {
+        if (!p.process(o)) {
+          return false;
+        }
       }
+      return true;
     }
-    else if (v != null) {
-      return p.process((V)v);
+    else {
+      //noinspection unchecked
+      return v == null || p.process((V)v);
     }
-
-    return true;
   }
 
   public boolean processAllValues(@NotNull Processor<? super V> p) {
     for (Object v : myMap.values()) {
-      if (!processValue(p, v)) return false;
+      if (!processValue(p, v)) {
+        return false;
+      }
     }
-
     return true;
   }
 
-  public int size() {
+  public final int size() {
     return myMap.size();
   }
 
-  public boolean containsKey(@NotNull K key) {
+  public final boolean containsKey(@NotNull K key) {
     return myMap.containsKey(key);
   }
 
-  public int valuesForKey(@NotNull K key) {
+  public final int valuesForKey(@NotNull K key) {
     Object current = myMap.get(key);
-    if (current == null) return 0;
-    if (current instanceof MostlySingularMultiMap.ValueList) return ((ValueList)current).size();
+    if (current == null) {
+      return 0;
+    }
+    else if (current instanceof ValueList) {
+      //noinspection unchecked
+      return ((ValueList<V>)current).size();
+    }
     return 1;
   }
 
-  @NotNull
-  public Iterable<V> get(@NotNull K name) {
-    final Object value = myMap.get(name);
-    return rawValueToCollection(value);
+  public final @NotNull Iterable<V> get(@NotNull K name) {
+    return rawValueToCollection(myMap.get(name));
   }
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  protected List<V> rawValueToCollection(Object value) {
-    if (value == null) return Collections.emptyList();
-
-    if (value instanceof MostlySingularMultiMap.ValueList) {
+  protected final @NotNull List<V> rawValueToCollection(Object value) {
+    if (value == null) {
+      return Collections.emptyList();
+    }
+    else if (value instanceof ValueList) {
+      //noinspection unchecked
       return (ValueList<V>)value;
     }
-
-    return Collections.singletonList((V)value);
+    else {
+      //noinspection unchecked
+      return Collections.singletonList((V)value);
+    }
   }
 
   public void compact() {
-    ((THashMap)myMap).compact();
+    CollectionFactory.trimMap(myMap);
     for (Object eachValue : myMap.values()) {
-      if (eachValue instanceof MostlySingularMultiMap.ValueList) {
-        ((ValueList)eachValue).trimToSize();
+      if (eachValue instanceof ValueList) {
+        //noinspection unchecked
+        ((ValueList<V>)eachValue).trimToSize();
       }
     }
   }
 
   @Override
-  public String toString() {
-    return "{" + StringUtil.join(myMap.entrySet(), new Function<Map.Entry<K, Object>, String>() {
-      @Override
-      public String fun(Map.Entry<K, Object> entry) {
-        Object value = entry.getValue();
-        String s = (value instanceof MostlySingularMultiMap.ValueList ? ((ValueList)value) : Collections.singletonList(value)).toString();
-        return entry.getKey() + ": " + s;
-      }
+  public final String toString() {
+    return "{" + StringUtil.join(myMap.entrySet(), entry -> {
+      Object value = entry.getValue();
+      String s = (value instanceof ValueList ? value : Collections.singletonList(value)).toString();
+      return entry.getKey() + ": " + s;
     }, "; ") + "}";
   }
 
@@ -176,54 +165,54 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     myMap.clear();
   }
 
-  @NotNull
-  public static <K,V> MostlySingularMultiMap<K,V> emptyMap() {
+  public static @NotNull <K, V> MostlySingularMultiMap<K, V> emptyMap() {
     //noinspection unchecked
-    return EMPTY;
+    return (MostlySingularMultiMap<K, V>)EmptyMap.EMPTY;
   }
 
-  @NotNull
-  public static <K, V> MostlySingularMultiMap<K, V> newMap() {
-    return new MostlySingularMultiMap<K, V>();
-  }
-  private static final MostlySingularMultiMap EMPTY = new EmptyMap();
+  public void addAll(@NotNull MostlySingularMultiMap<K, V> other) {
+    if (other.isEmpty()) {
+      return;
+    }
 
-  @SuppressWarnings("unchecked")
-  public void addAll(MostlySingularMultiMap<K, V> other) {
-    if (other instanceof EmptyMap) return;
-
-    for (Map.Entry<K, Object> entry : other.myMap.entrySet()) {
+    for (Map.Entry<? extends K, Object> entry : other.myMap.entrySet()) {
       K key = entry.getKey();
       Object otherValue = entry.getValue();
       Object myValue = myMap.get(key);
 
       if (myValue == null) {
-        if (otherValue instanceof MostlySingularMultiMap.ValueList) {
-          myMap.put(key, new ValueList((ValueList)otherValue));
+        if (otherValue instanceof ValueList) {
+          //noinspection unchecked
+          myMap.put(key, new ValueList<>((ValueList<? extends V>)otherValue));
         }
         else {
           myMap.put(key, otherValue);
         }
       }
-      else if (myValue instanceof MostlySingularMultiMap.ValueList) {
-        ValueList myListValue = (ValueList)myValue;
-        if (otherValue instanceof MostlySingularMultiMap.ValueList) {
-          myListValue.addAll((ValueList)otherValue);
+      else if (myValue instanceof ValueList) {
+        //noinspection unchecked
+        List<V> myListValue = (ValueList<V>)myValue;
+        if (otherValue instanceof ValueList) {
+          //noinspection unchecked
+          myListValue.addAll((ValueList<? extends V>)otherValue);
         }
         else {
-          myListValue.add(otherValue);
+          //noinspection unchecked
+          myListValue.add((V)otherValue);
         }
       }
       else {
-        if (otherValue instanceof MostlySingularMultiMap.ValueList) {
-          ValueList otherListValue = (ValueList)otherValue;
-          ValueList newList = new ValueList(otherListValue.size() + 1);
-          newList.add(myValue);
+        if (otherValue instanceof ValueList) {
+          //noinspection unchecked
+          List<V> otherListValue = (ValueList<V>)otherValue;
+          List<V> newList = new ValueList<>(otherListValue.size() + 1);
+          //noinspection unchecked
+          newList.add((V)myValue);
           newList.addAll(otherListValue);
           myMap.put(key, newList);
         }
         else {
-          ValueList newList = new ValueList();
+          List<Object> newList = new ValueList<>();
           newList.add(myValue);
           newList.add(otherValue);
           myMap.put(key, newList);
@@ -233,7 +222,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   // marker class to distinguish multi-values from single values in case client want to store collections as values.
-  protected static class ValueList<V> extends ArrayList<V> {
+  protected static final class ValueList<V> extends ArrayList<V> {
     public ValueList() {
     }
 
@@ -245,8 +234,23 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
       super(c);
     }
   }
-  
-  private static class EmptyMap extends MostlySingularMultiMap {
+
+  public static @NotNull Class<? extends List<?>> getValueListClass() {
+    //noinspection unchecked,rawtypes
+    return (Class)MostlySingularMultiMap.ValueList.class;
+  }
+
+  public static @NotNull List<?> createValueList() {
+    return new MostlySingularMultiMap.ValueList<>();
+  }
+
+  private static final class EmptyMap extends MostlySingularMultiMap<Object, Object> {
+    static final MostlySingularMultiMap<?, ?> EMPTY = new EmptyMap();
+
+    private EmptyMap() {
+      super(Collections.emptyMap());
+    }
+
     @Override
     public void add(@NotNull Object key, @NotNull Object value) {
       throw new IncorrectOperationException();
@@ -258,50 +262,8 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
 
     @Override
-    public boolean removeAllValues(@NotNull Object key) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public void clear() {
       throw new IncorrectOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Set keySet() {
-      return Collections.emptySet();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public boolean processForKey(@NotNull Object key, @NotNull Processor p) {
-      return true;
-    }
-
-    @Override
-    public boolean processAllValues(@NotNull Processor p) {
-      return true;
-    }
-
-    @Override
-    public int size() {
-      return 0;
-    }
-
-    @Override
-    public int valuesForKey(@NotNull Object key) {
-      return 0;
-    }
-
-    @NotNull
-    @Override
-    public Iterable get(@NotNull Object name) {
-      return ContainerUtil.emptyList();
     }
   }
 }

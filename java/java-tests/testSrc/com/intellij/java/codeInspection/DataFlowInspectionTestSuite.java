@@ -1,71 +1,84 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.java.codeInsight.completion.NormalCompletionDfaTest;
-import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
-import com.intellij.java.codeInsight.daemon.quickFix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddAssertStatementFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnnotateNullabilityFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteRedundantUpdateFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSwitchLabelFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.RedundantInstanceofFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceComputeWithComputeIfPresentFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceFromOfNullableFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceMinMaxWithArgumentFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceTypeInCastFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithNullCheckFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithObjectsEqualsTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithOfNullableFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTernaryOperatorTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTrivialLambdaFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.StreamFilterNotNullFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithIfFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapIfStatementFixTest;
+import com.intellij.java.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionTest;
 import com.intellij.java.slicer.SliceBackwardTest;
 import com.intellij.java.slicer.SliceTreeTest;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspectionTest;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
+@Suite
+@SelectClasses({
+  DataFlowInspectionTest.class,
+  DataFlowInspection8Test.class,
+  DataFlowInspection9Test.class,
+  DataFlowInspection11Test.class,
+  DataFlowInspection16Test.class,
+  DataFlowInspection21Test.class,
+  DataFlowInspection26Test.class,
+  DataFlowInspectionHeavyTest.class,
+  DataFlowInspectionAncientTest.class,
+  DataFlowInspectionCancellingTest.class,
+  DataFlowInspectionPrimitivesInPatternsTest.class,
+  ContractCheckTest.class,
+  HardcodedContractsTest.class,
+  DataFlowRangeAnalysisTest.class,
+  OptionalGetWithoutIsPresentInspectionTest.class,
+  RedundantOperationOnEmptyContainerInspectionTest.class,
+
+  ContractInferenceFromSourceTest.class,
+  NullityInferenceFromSourceTestCase.DfaInferenceTest.class,
+  NullityInferenceFromSourceTestCase.LightInferenceTest.class,
+  PurityInferenceFromSourceTest.class,
+  ParameterNullityInferenceFromSourceTest.class,
+
+  SliceTreeTest.class,
+  SliceBackwardTest.class,
+
+  NullableStuffInspectionTest.class,
+  NullableStuffInspectionAncientTest.class,
+  NotNullParameterReceivesNullInspectionTest.class,
+
+  CheckerNullityTest.class,
+
+  AddAssertStatementFixTest.class,
+  SurroundWithIfFixTest.class,
+  ReplaceWithTernaryOperatorTest.class,
+  ReplaceWithObjectsEqualsTest.class,
+  ReplaceWithOfNullableFixTest.class,
+  ReplaceWithNullCheckFixTest.class,
+  ReplaceFromOfNullableFixTest.class,
+  ReplaceWithTrivialLambdaFixTest.class,
+  AnnotateNullabilityFixTest.class,
+  UnwrapIfStatementFixTest.class,
+  StreamFilterNotNullFixTest.class,
+  RedundantInstanceofFixTest.class,
+  ReplaceComputeWithComputeIfPresentFixTest.class,
+  DeleteSwitchLabelFixTest.class,
+  DeleteRedundantUpdateFixTest.class,
+  ReplaceTypeInCastFixTest.class,
+  ReplaceMinMaxWithArgumentFixTest.class,
+  OptionalOfNullableMisuseInspectionTest.class,
+
+  DataFlowInspectionTrackerTest.class
+  })
 public class DataFlowInspectionTestSuite {
-  public static Test suite() {
-    TestSuite suite = new TestSuite();
-
-    suite.addTestSuite(DataFlowInspectionTest.class);
-    suite.addTestSuite(DataFlowInspection8Test.class);
-    suite.addTestSuite(DataFlowInspection9Test.class);
-    suite.addTestSuite(DataFlowInspection10Test.class);
-    suite.addTestSuite(DataFlowInspectionHeavyTest.class);
-    suite.addTestSuite(DataFlowInspectionAncientTest.class);
-    suite.addTestSuite(DataFlowInspectionCancellingTest.class);
-    suite.addTestSuite(ContractCheckTest.class);
-    suite.addTestSuite(HardcodedContractsTest.class);
-    suite.addTestSuite(DataFlowRangeAnalysisTest.class);
-
-    suite.addTestSuite(ContractInferenceFromSourceTest.class);
-    suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
-    suite.addTestSuite(NullityInferenceFromSourceTestCase.LightInferenceTest.class);
-    suite.addTestSuite(PurityInferenceFromSourceTest.class);
-    suite.addTestSuite(ParameterNullityInferenceFromSourceTest.class);
-
-    suite.addTestSuite(SliceTreeTest.class);
-    suite.addTestSuite(SliceBackwardTest.class);
-
-    suite.addTestSuite(SmartTypeCompletionDfaTest.class);
-    suite.addTestSuite(NormalCompletionDfaTest.class);
-
-    suite.addTestSuite(NullableStuffInspectionTest.class);
-    suite.addTestSuite(NullableStuffInspectionAncientTest.class);
-    
-    suite.addTestSuite(CheckerNullityTest.class);
-
-    suite.addTestSuite(AddAssertStatementFixTest.class);
-    suite.addTestSuite(SurroundWithIfFixTest.class);
-    suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
-    suite.addTestSuite(ReplaceWithObjectsEqualsTest.class);
-    suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
-    suite.addTestSuite(ReplaceWithNullCheckFixTest.class);
-    suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
-    suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
-    suite.addTestSuite(UnwrapIfStatementFixTest.class);
-    suite.addTestSuite(StreamFilterNotNullFixTest.class);
-    suite.addTestSuite(RedundantInstanceofFixTest.class);
-    return suite;
-  }
 }

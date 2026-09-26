@@ -1,0 +1,248 @@
+package fleet.buildtool.bundles
+
+import fleet.buildtool.codecache.HashedJar
+import fleet.buildtool.codecache.findModuleDescriptor
+import fleet.buildtool.codecache.serialize
+import fleet.bundles.Coordinates
+import fleet.bundles.CoordinatesPlatform
+import fleet.bundles.KnownCoordinatesMeta
+import fleet.bundles.KnownMeta
+import fleet.bundles.LayerSelector
+import fleet.bundles.ModuleCoordinates
+import fleet.bundles.PluginLayer
+import fleet.bundles.PluginName
+import fleet.bundles.PluginParts
+import fleet.bundles.PluginVersion
+import fleet.bundles.eliminateIntersections
+import fleet.codecache.CodeCacheHasher
+import fleet.codecache.resourceUrl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
+import org.slf4j.Logger
+import java.lang.module.ModuleDescriptor
+import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.io.path.copyTo
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.outputStream
+
+@OptIn(ExperimentalSerializationApi::class)
+suspend fun generateDescriptorMetadata(
+  pluginVersion: PluginVersion,
+  pluginName: PluginName,
+  originalMetadata: Map<String, String>,
+  marketplaceUrl: String,
+  defaultIcon: Path?,
+  darkIcon: Path?,
+  supportedProducts: List<String>,
+  outputModuleJarsByLayer: Map<LayerSelector, Collection<Path>>,
+  resources: List<FleetResource>,
+  resourcesUsedInDescriptor: Path,
+  pluginPartsFileOutput: Path,
+  iconsUsedInDescriptor: Path,
+  json: Json,
+  logger: Logger,
+): Map<String, String> {
+
+  val partsCoordinates = resolvePartsCoordinates(
+    pluginName = pluginName,
+    pluginVersion = pluginVersion,
+    outputModuleJarsByLayer = outputModuleJarsByLayer,
+    resources = resources,
+    resourcesUsedInDescriptor = resourcesUsedInDescriptor,
+    marketplaceUrl = marketplaceUrl,
+    pluginPartsFileOutput = pluginPartsFileOutput,
+    json = json,
+    logger = logger,
+  )
+
+  logger.info("Writing icons used in descriptor to $iconsUsedInDescriptor")
+  // setting these marketplace filepath is not mandatory, but having the same filename in `iconsDirectory` and in `toCoordinates#remoteName` is mandatory
+  val defaultIcon = defaultIcon?.copyTo(target = iconsUsedInDescriptor.resolve(defaultIconMarketplaceFilepath), overwrite = false)
+  val darkIcon = darkIcon?.copyTo(target = iconsUsedInDescriptor.resolve(darkIconMarketplaceFilepath), overwrite = false)
+  val iconCoordinates = defaultIcon?.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = defaultIcon.name)?.coordinates
+  val iconDarkCoordinates = darkIcon?.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = darkIcon.name)?.coordinates
+
+  return defaultMetadata(pluginName) + originalMetadata + listOfNotNull(
+    KnownMeta.PartsCoordinates to Json.encodeToString(Coordinates.serializer(), partsCoordinates),
+    iconCoordinates?.let { KnownMeta.DefaultIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
+    iconDarkCoordinates?.let { KnownMeta.DarkIconCoordinates to Json.encodeToString(Coordinates.serializer(), it) },
+    KnownMeta.SupportedProducts to supportedProducts.joinToString(","),
+  ).toMap()
+}
+
+suspend fun resolvePartsCoordinates(
+  pluginName: PluginName,
+  pluginVersion: PluginVersion,
+  outputModuleJarsByLayer: Map<LayerSelector, Collection<Path>>,
+  resources: List<FleetResource>,
+  resourcesUsedInDescriptor: Path,
+  marketplaceUrl: String,
+  pluginPartsFileOutput: Path,
+  json: Json,
+  logger: Logger,
+): Coordinates {
+  val parts = generatePluginParts(pluginName, pluginVersion, outputModuleJarsByLayer, resources, resourcesUsedInDescriptor, marketplaceUrl)
+  logger.info("Writing plugin parts to $pluginPartsFileOutput")
+  pluginPartsFileOutput.outputStream().use { outputStream ->
+    json.encodeToStream(PluginParts.serializer(), parts, outputStream)
+  }
+
+  return pluginPartsFileOutput.toCoordinates(pluginName, pluginVersion, marketplaceUrl, remoteName = partsJsonFilename)?.coordinates
+         ?: error("failed to create `partsCoordinates`, $pluginPartsFileOutput must exist")
+}
+
+private suspend fun generatePluginParts(
+  pluginName: PluginName,
+  pluginVersion: PluginVersion,
+  outputModuleJarsByLayer: Map<LayerSelector, Collection<Path>>,
+  resources: List<FleetResource>,
+  resourcesUsedInDescriptor: Path,
+  marketplaceUrl: String,
+): PluginParts {
+  val layers = outputModuleJarsByLayer.map { (layerSelector, moduleJars) ->
+    val resourceFileToMetadata = resources.filter { it.layer == layerSelector.selector }.flatMap { resource ->
+      val metadata = when (val p = resource.platforms) {
+        null -> emptyMap()
+        else -> mapOf(KnownCoordinatesMeta.Platforms to Json.encodeToString(ListSerializer(CoordinatesPlatform.serializer()), p))
+      }
+      resource.files.map { file -> file to metadata }
+    }.toMap()
+    val resourcesCoordinates = resourceFileToMetadata.entries.mapNotNull { (file, metadata) ->
+      file.toCoordinates(pluginName,
+                         pluginVersion,
+                         marketplaceUrl,
+                         file.name,
+                         metadata = metadata)?.coordinates // TODO: maybe we should warn about non existing resources file?
+    }.toSet()
+    resourceFileToMetadata.keys.forEach { file ->
+      file.copyTo(resourcesUsedInDescriptor.resolve(file.name), overwrite = false)
+    }
+
+    // Analyze each module jar concurrently: SHA-256 hashing, module-descriptor extraction and the
+    // Fleet-runtime relevance zip scan are all per-jar and I/O + CPU bound. `awaitAll()` keeps the
+    // original jar order, so the sets below stay deterministic and the output stays reproducible.
+    val analyzedModuleJars = coroutineScope {
+      moduleJars
+        .map { jar ->
+          async(Dispatchers.IO) {
+            when {
+              jar.exists() -> {
+                val descriptor = findModuleDescriptor(jar)
+                AnalyzedModuleJar(
+                  jar = jar,
+                  hash = CodeCacheHasher().hash(jar),
+                  descriptor = descriptor,
+                )
+              }
+              else -> null
+            }
+          }
+        }
+        .awaitAll()
+        .filterNotNull()
+    }
+
+    layerSelector to PluginLayer(
+      modulePath = analyzedModuleJars.mapNotNull { it.toCoordinates(pluginName, pluginVersion, marketplaceUrl) }.toSet(),
+      modules = analyzedModuleJars.filter { it.isRelevantToFleetRuntime() }.map { it.descriptor.name() }.toSet(),
+      resources = resourcesCoordinates,
+    )
+  }.toMap()
+  return PluginParts(layers = layers).eliminateIntersections()
+}
+
+private class AnalyzedModuleJar(
+  val jar: Path,
+  val hash: String,
+  val descriptor: ModuleDescriptor,
+)
+
+private fun AnalyzedModuleJar.toCoordinates(
+  pluginName: PluginName,
+  pluginVersion: PluginVersion,
+  marketplaceUrl: String,
+): ModuleCoordinates? {
+  return jar.toCoordinates(
+    pluginName = pluginName,
+    pluginVersion = pluginVersion,
+    marketplaceUrl = marketplaceUrl,
+    remoteName = jar.name,
+    jarHasher = { hash },
+    // jdkVersionFeature is a target JDK version
+    jarSerializedDescriptorExtractor = { descriptor.serialize(jdkVersionFeature = 21) },
+  )
+}
+
+private const val entityDescriptorFileHeuristic: String = "entityTypes.txt"
+
+internal const val FLEET_KERNEL_PLUGIN_SERVICE: String = "fleet.kernel.plugins.Plugin"
+
+private fun Path.toCoordinates(
+  pluginName: PluginName,
+  pluginVersion: PluginVersion,
+  marketplaceUrl: String,
+  remoteName: String,
+  jarHasher: (Path) -> String = { CodeCacheHasher().hash(it) },
+  jarSerializedDescriptorExtractor: (() -> String)? = null,
+  metadata: Map<String, String> = emptyMap(),
+): ModuleCoordinates? {
+  if (!exists()) {
+    return null
+  }
+
+  val filepath = this
+  val hash = jarHasher(filepath)
+  val moduleDescriptor = when (filepath.extension) {
+    "jar" -> {
+      jarSerializedDescriptorExtractor?.invoke() ?: HashedJar.fromFile(
+        file = filepath,
+        hash = hash,
+        // jdkVersionFeature is a target JDK version
+        jdkVersionFeature = 21,
+      ).moduleDescriptor
+    }
+    else -> null
+  }
+
+  val fileUrl = resourceUrl(marketplaceUrl, pluginName, pluginVersion, remoteName)
+  val coord = Coordinates.Remote(url = fileUrl, hash = hash, meta = metadata)
+  return ModuleCoordinates(coordinates = coord, serializedModuleDescriptor = moduleDescriptor)
+}
+
+/**
+ * Returns [true] if [jar]'s module is "relevant" to Fleet's runtime, it could be:
+ *  1. for plugin's loading reasons
+ *  2. for RhizomeDB entity registration reasons
+ *  3. for documentation reasons
+ */
+private fun AnalyzedModuleJar.isRelevantToFleetRuntime(): Boolean {
+  fun ZipEntry.isDocumentationEntry(): Boolean = !isDirectory && name.endsWith(JSON_DOCUMENTATION_FILENAME_EXTENSION)
+  fun ZipEntry.isRhizomeEntry(): Boolean = !isDirectory && name == entityDescriptorFileHeuristic
+
+  return when { // modules that the Fleet runtime have interest upon, which are:
+    descriptor.provides().any { it.service() == FLEET_KERNEL_PLUGIN_SERVICE } -> true // modules that provides fleet.kernel.plugins.Plugin
+    ZipFile(jar.toFile()).use { zip ->
+      zip.entries().asSequence().any { it.isDocumentationEntry() || it.isRhizomeEntry() }
+    } -> true /* modules of jar that exposes documentation, or that exposes some RhizomeDB entities */
+    else -> false
+  }
+}
+
+private fun defaultMetadata(pluginName: PluginName) = mapOf(
+  KnownMeta.ReadableName to pluginName.name,
+  KnownMeta.Description to "No description was specified by the owner of this plugin.",
+  KnownMeta.VendorId to "JetBrains",
+  KnownMeta.VendorPublicName to "JetBrains s.r.o.",
+)

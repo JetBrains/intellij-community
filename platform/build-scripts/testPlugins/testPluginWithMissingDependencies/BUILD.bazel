@@ -1,0 +1,48 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
+dev_dist_plugin(
+    content_modules = ["intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module"],
+    main_module = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
+)
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
+
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
+jvm_library(
+    name = "testPluginWithMissingDependencies",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "testPluginWithMissingDependencies_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":testPluginWithMissingDependencies"],
+)
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
+
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/intellij.platform.buildScripts.tests.testPluginWithMissingDependencies.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

@@ -1,0 +1,9 @@
+// "Make 'Foo1' public explicitly" "true"
+// PRIORITY: HIGH
+// COMPILER_ARGUMENTS: -Xexplicit-api=strict
+// K2_ERROR: NO_EXPLICIT_VISIBILITY_IN_API_MODE
+
+class <caret>Foo1() {}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

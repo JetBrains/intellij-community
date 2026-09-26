@@ -1,257 +1,731 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.containers.ContainerUtil.getFirstItem
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
-import git4idea.test.GitPlatformTest
-import git4idea.test.createRepository
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.config.GitVersionSpecialty
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.TestDataUtil
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import git4idea.test.tac
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
 import java.io.File
-import java.util.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.util.Locale
 
-class GitConfigTest : GitPlatformTest() {
+private const val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
 
+@TestApplication
+internal class GitConfigTest {
+  private val contextFixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @Test
   fun testRemotes() {
-    val objects = loadRemotes()
-    for (spec in objects) {
+    for (spec in loadConfigData(getTestDataFolder("remote"))) {
       doTestRemotes(spec.name, spec.config, spec.result)
     }
   }
 
+  @Test
   fun testBranches() {
-    val objects = loadBranches()
-    for (spec in objects) {
+    for (spec in loadConfigData(getTestDataFolder("branch"))) {
       doTestBranches(spec.name, spec.config, spec.result)
     }
   }
 
   //inspired by IDEA-135557
-  fun `test branch with hash symbol`() {
-    createRepository()
+  @Test
+  fun `test branch with hash symbol`(): Unit = with(context) {
     addRemote("http://example.git")
     git("update-ref refs/remotes/origin/a#branch HEAD")
     git("branch --track a#branch origin/a#branch")
 
-    val gitDir = File(projectPath, ".git")
-    val config = GitConfig.read(File(gitDir, "config"))
-    val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir)
-    val reader = GitRepositoryReader(GitRepositoryFiles.getInstance(dir!!))
+    val config = GitConfig.read(project, projectNioRoot)
+    val rootDir = StandardFileSystems.local().refreshAndFindFileByPath(File(projectPath).absolutePath)
+    val gitDir = StandardFileSystems.local().refreshAndFindFileByPath(File(projectPath, ".git").absolutePath)
+    val reader = GitRepositoryReader(project, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
-    assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
-               trackInfos.any { it.localBranch.name == "a#branch" && it.remoteBranch.nameForLocalOperations == "origin/a#branch" })
+    assertThat(trackInfos)
+      .describedAs("Couldn't find correct a#branch tracking information")
+      .anyMatch { it.localBranch.name == "a#branch" && it.remoteBranch.nameForLocalOperations == "origin/a#branch" }
   }
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
-  fun `test remote unspecified section`() {
-    createRepository()
+  @Test
+  fun `test remote unspecified section`(): Unit = with(context) {
     addRemote("git@github.com:foo/bar.git")
     git("config remote.pushdefault origin")
 
     assertSingleRemoteInConfig()
   }
 
-  fun `test invalid section with remote prefix is ignored`() {
-    createRepository()
+  @Test
+  fun `test invalid section with remote prefix is ignored`(): Unit = with(context) {
     addRemote("git@github.com:foo/bar.git")
     git("config remote-cfg.newkey newval")
 
     assertSingleRemoteInConfig()
   }
 
-  fun `test config options are case insensitive`() {
-    createRepository()
+  @Test
+  fun `test config options are case insensitive`(): Unit = with(context) {
     addRemote("git@github.com:foo/bar.git")
     val pushUrl = "git@github.com:foo/push.git"
-    git("config remote.origin.pushurl " + pushUrl)
+    git("config remote.origin.pushurl $pushUrl")
 
-    val config = readConfig()
-    val remote = getFirstItem(config.parseRemotes())
-    assertNotNull(remote)
-    assertSameElements("pushurl parsed incorrectly", remote!!.pushUrls, listOf(pushUrl))
+    val remote = readConfig().parseRemotes().firstOrNull()
+    assertThat(remote).isNotNull()
+    remote!!.checkRemoteUrls(listOf("git@github.com:foo/bar.git"), listOf(pushUrl))
   }
 
-  fun `test config values are case sensitive`() {
-    createRepository()
+  @Test
+  fun `test instead of case insensitive`(): Unit = with(context) {
+    addRemote("https://github.com/:foo/bar.git")
+    git("config url.git@github.com:.InsteaDof https://github.com/")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("git@github.com::foo/bar.git"), listOf("git@github.com::foo/bar.git"))
+  }
+
+  @Test
+  fun `test insteadOf resolving when pushInsteadOf is specified`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    git("""config url.https://github.com/.insteadOf test:""")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("git@github.com:group/bar.git"))
+  }
+
+  @Test
+  fun `test pushInsteadOf affects url substitution when declared before insteadOf`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+    git("""config url.https://github.com/.insteadof test:""")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("git@github.com:group/bar.git"))
+  }
+
+  @Test
+  fun `test irrelevant pushInsteadOf with a placeholder doesn't affect URL-resolving of other placeholders`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    git("""config url.git@github.com:.pushInsteadOf notTest:""")
+    git("""config url.https://github.com/.insteadof test:""")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("https://github.com/group/bar.git"))
+  }
+
+  @Test
+  fun `test explicit pushUrl is substituted only with insteadOf`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    git("""config remote.origin.pushurl test:group/push.git""")
+    git("""config url.https://github.com/.insteadOf test:""")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git"), listOf("https://github.com/group/push.git"))
+  }
+
+  @Test
+  fun `test pushUrls not set and longest insteadOf and pushInsteadOf placeholders are applied to urls`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    git("""config url.https://github.com/.insteadOf test:""")
+    git("""config url.https://github.com/special/.insteadOf test:group/""")
+    git("""config url.https://github.com/gr/.insteadOf test:gr""")
+    git("""config url.git@github.com:.pushInsteadOf test:""")
+    git("""config url.ssh://git@github.com/push/group/.pushInsteadOf test:group/""")
+    git("""config url.ssh://git@github.com/other/.pushInsteadOf test:gr""")
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git"), listOf("ssh://git@github.com/push/group/bar.git"))
+  }
+
+  @Test
+  fun `test many explicit pushUrls are substituted only with insteadOf`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [remote "origin"]
+        pushurl = test:group/push.git
+        pushurl = test:group/push2.git
+      [url "https://github.com/"]
+	      insteadOf = test:      
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git"),
+                           listOf("https://github.com/special/push.git", "https://github.com/special/push2.git"))
+  }
+
+  @Test
+  fun `test many urls are substituted for urls and push urls`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [remote "origin"]
+        url = test:group/fetch2.git
+      [url "https://github.com/"]
+	      insteadOf = test:      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/group/bar.git", "https://github.com/group/fetch2.git"),
+                           listOf("git@github.com:group/bar.git", "git@github.com:group/fetch2.git"))
+  }
+
+  @Test
+  fun `test pushUrls not set and longest placeholders are not applied to push urls even if it is not pushInsteadOf`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [url "https://github.com/"]
+	      insteadOf = test:      
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git"), listOf("git@github.com:group/bar.git"))
+  }
+
+  @Test
+  fun `test insteadOf empty value is applied if nothing more suitable is set`(): Unit = with(context) {
+    addRemote("no/prefix/group/bar.git")
+    Executor.append(".git/config", """
+      [url "https://github.com/"]
+	      insteadOf =
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/no/prefix/group/bar.git"),
+                           listOf("https://github.com/no/prefix/group/bar.git"))
+  }
+
+  @Test
+  fun `test insteadOf empty value is not applied if somethings more suitable is set`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [url "https://github.com/"]
+	      insteadOf =
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git"), listOf("git@github.com:group/bar.git"))
+  }
+
+  @Test
+  fun `test pushInsteadOf empty value is applied if nothing more suitable is set`(): Unit = with(context) {
+    addRemote("no/prefix/group/bar.git")
+    Executor.append(".git/config", """
+      [url "https://github.com/"]
+	      pushInsteadOf =
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("no/prefix/group/bar.git"), listOf("https://github.com/no/prefix/group/bar.git"))
+  }
+
+  @Test
+  fun `test empty url section`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [url "empty"]
+
+      [url "https://github.com/special/"]
+	      insteadOf = test:group/      
+      [url "git@github.com:"]
+	      pushInsteadOf = test:
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git"), listOf("git@github.com:group/bar.git"))
+  }
+
+  @Test
+  fun `test duplicated url entry - both used`(): Unit = with(context) {
+    addRemote("test1:group/bar.git")
+    Executor.append(".git/config", """
+      [remote "origin"]
+        url = test2:group/fetch2.git
+      [url "https://github.com/special/"]
+	      insteadOf = test1:group/     
+      [url "https://github.com/special/"]
+	      insteadOf = test2:group/
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special/bar.git", "https://github.com/special/fetch2.git"),
+                           listOf("https://github.com/special/bar.git", "https://github.com/special/fetch2.git"))
+  }
+
+  @Test
+  fun `test duplicated insteadOf prefix, the first one will be used`(): Unit = with(context) {
+    addRemote("test:group/bar.git")
+    Executor.append(".git/config", """
+      [remote "origin"]
+        url = test:group/fetch2.git
+      [url "https://github.com/special1/"]
+	      insteadOf = test:group/     
+      [url "https://github.com/special2/"]
+	      insteadOf = test:group/
+    """.trimIndent())
+    repo.update()
+
+    val remote = readConfig().parseRemotes().first()
+    remote.checkRemoteUrls(listOf("https://github.com/special1/bar.git", "https://github.com/special1/fetch2.git"),
+                           listOf("https://github.com/special1/bar.git", "https://github.com/special1/fetch2.git"))
+  }
+
+  @Test
+  fun `test config values are case sensitive`(): Unit = with(context) {
     val url = "git@GITHUB.com:foo/bar.git"
     addRemote(url)
 
-    val config = readConfig()
-    val remote = getFirstItem(config.parseRemotes())
-    assertNotNull(remote)
-    assertSameElements(remote!!.urls, listOf(url))
+    val remote = readConfig().parseRemotes().firstOrNull()
+    assertThat(remote).isNotNull()
+    remote!!.checkRemoteUrls(listOf(url), listOf(url))
   }
 
-  fun `test config sections are case insensitive`() {
-    createRepository()
+  @Test
+  fun `test config sections are case insensitive`(): Unit = with(context) {
     addRemote("git@github.com:foo/bar.git")
-    val configFile = configFile()
+    val configFile = configFile().toFile()
     FileUtil.writeToFile(configFile, FileUtil.loadFile(configFile).replace("remote", "REMOTE"))
 
     assertSingleRemoteInConfig()
   }
 
-  fun `test config section values are case sensitive`() {
-    createRepository()
+  @Test
+  fun `test config section values are case sensitive`(): Unit = with(context) {
     val expectedName = "ORIGIN"
     addRemote(expectedName, "git@github.com:foo/bar.git")
 
-    val config = readConfig()
-    val remote = getFirstItem(config.parseRemotes())
-    assertNotNull(remote)
-    assertEquals("Remote name is incorrect", expectedName, remote!!.name)
+    val remote = readConfig().parseRemotes().firstOrNull()
+    assertThat(remote).isNotNull()
+    assertThat(remote!!.name).describedAs("Remote name is incorrect").isEqualTo(expectedName)
   }
 
-  private fun createRepository(): GitRepository {
-    return createRepository(myProject, projectPath, true)
+  @Test
+  fun `test relative hook path is extracted from config`(): Unit = with(context) {
+    createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+
+    git("config core.hooksPath .githooks/")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+
+    git("config core.hooksPath .githooks")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file3.txt")
+    }
+
+    git("config core.hooksPath .githooks2")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file4.txt")
+
+    createHook(".githooks2/pre-push")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isTrue()
   }
 
-  private fun readConfig(): GitConfig {
-    return GitConfig.read(configFile())
+  @Test
+  fun `test absolute hook path is extracted from config`(): Unit = with(context) {
+    val hookFile = createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+
+    git("config core.hooksPath " + hookFile.parent)
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
   }
+
+  @Test
+  fun `test last hook path is extracted from config`(): Unit = with(context) {
+    createHook(".githooks4/pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+
+    Executor.append(".git/config", """
+      [core]
+        hooksPath = .githooks1
+        hooksPath = .githooks2
+      [core]
+        hooksPath = .githooks3
+        hooksPath = .githooks4
+    """.trimIndent())
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  @Test
+  fun `test config-based commit hook is extracted from config`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    tac("file1.txt")
+
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  @Test
+  fun `test config-based commit-msg hook is extracted from config`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("spellcheck", "commit-msg")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    assertHookFailure {
+      tac("file1.txt")
+    }
+  }
+
+  @Test
+  fun `test config-based hook is extracted for each of its events`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit", "pre-push")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isTrue()
+  }
+
+  @Test
+  fun `test config-based hook of an unrelated event is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("mailer", "post-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+  }
+
+  @Test
+  fun `test disabled config-based hook is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit", isEnabled = false)
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+  }
+
+  @Test
+  fun `test config-based hook without a command is ignored`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    Executor.append(".git/config", """
+      [hook "linter"]
+        event = pre-commit
+    """.trimIndent())
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+  }
+
+  @Test
+  fun `test empty event value resets the events of a config-based hook`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+
+    Executor.append(".git/config", """
+      [hook "linter"]
+        event =
+    """.trimIndent())
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isFalse()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isFalse()
+
+    tac("file1.txt")
+  }
+
+  @Test
+  fun `test config-based hook is detected along with the hook from the hookdir`(): Unit = with(context) {
+    assumeConfigBasedHooksSupported()
+
+    createHook(".git/hooks/pre-push")
+    addConfigHook("linter", "pre-commit")
+    repo.update()
+
+    assertThat(repo.info.hooksInfo.areCommitHooksAvailable).isTrue()
+    assertThat(repo.info.hooksInfo.isPrePushHookAvailable).isTrue()
+  }
+
+  private fun GitRemote.checkRemoteUrls(expectedUrls: List<String>, expectedPushUrls: List<String>) {
+    val handler = GitLineHandler(context.project, context.projectRoot, GitCommand.REMOTE)
+    handler.isEnableInteractiveCallbacks = false
+    handler.setSilent(true)
+    handler.addParameters("-v")
+    val output = Git.getInstance().runCommand(handler).output
+    assertThat(output.first { it.endsWith("(fetch)") })
+      .describedAs("Git remote response doesn't contain the expected value for fetch")
+      .isEqualTo(expectedUrls.map { "origin\t$it (fetch)" }.first())
+    assertThat(output.filter { it.endsWith("(push)") })
+      .describedAs("Git remote response doesn't contain the expected value for push")
+      .containsExactlyInAnyOrderElementsOf(expectedPushUrls.map { "origin\t$it (push)" })
+    assertThat(urls).isEqualTo(expectedUrls)
+    assertThat(pushUrls).isEqualTo(expectedPushUrls)
+  }
+
+  private fun GitSingleRepoContext.assumeConfigBasedHooksSupported() {
+    assumeTrue(GitVersionSpecialty.CONFIG_BASED_HOOKS.existsIn(vcs.version),
+               "Config-based hooks are not supported in ${vcs.version}")
+  }
+
+  private fun readConfig(): GitConfig = GitConfig.read(context.project, context.projectNioRoot)
+
+  private fun configFile(): Path = Path.of(context.projectPath, ".git", "config")
 
   private fun assertSingleRemoteInConfig() {
     val remotes = readConfig().parseRemotes()
-    assertSingleRemote(remotes)
+    assertThat(remotes).describedAs("Number of remotes is incorrect").hasSize(1)
+    val remote = remotes.first()
+    assertThat(remote.name).isEqualTo("origin")
+    assertThat(remote.firstUrl).isEqualTo("git@github.com:foo/bar.git")
   }
 
-  private fun doTestRemotes(testName: String, configFile: File, resultFile: File) {
-    val config = GitConfig.read(configFile)
+  private fun doTestRemotes(testName: String, configFile: Path, resultFile: File) {
+    Files.copy(configFile, context.projectNioRoot.resolve(".git/config"), StandardCopyOption.REPLACE_EXISTING)
+
+    val config = readConfig()
     VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile))
   }
 
-  private fun configFile(): File {
-    val gitDir = File(projectPath, ".git")
-    return File(gitDir, "config")
-  }
+  private fun doTestBranches(testName: String, configFile: Path, resultFile: File) {
+    Files.copy(configFile, context.projectNioRoot.resolve(".git/config"), StandardCopyOption.REPLACE_EXISTING)
 
-  private fun doTestBranches(testName: String, configFile: File, resultFile: File) {
     val expectedInfos = readBranchResults(resultFile)
     val localBranches = expectedInfos.map { it.localBranch }
     val remoteBranches = expectedInfos.map { it.remoteBranch }
 
-    VcsTestUtil.assertEqualCollections(testName, GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches), expectedInfos)
+    val trackInfos = readConfig().parseTrackInfos(localBranches, remoteBranches)
+    VcsTestUtil.assertEqualCollections(testName, trackInfos, expectedInfos)
   }
-
-  private fun loadRemotes() = loadConfigData(getTestDataFolder("remote"))
-
-  private fun loadBranches() = loadConfigData(getTestDataFolder("branch"))
-
-  private class TestSpec(internal var name: String, internal var config: File, internal var result: File)
-
-  private fun addRemote(url: String) {
-    addRemote("origin", url)
-  }
-
-  private fun addRemote(name: String, url: String) {
-    git("remote add $name $url")
-  }
-
-  private fun assertSingleRemote(remotes: Collection<GitRemote>) {
-    assertEquals("Number of remotes is incorrect", 1, remotes.size)
-    val remote = getFirstItem(remotes)
-    assertNotNull(remote)
-    assertEquals("origin", remote!!.name)
-    assertEquals("git@github.com:foo/bar.git", remote.firstUrl)
-  }
-
-  private fun getTestDataFolder(subfolder: String): File {
-    val pluginRoot = File(PluginPathManager.getPluginHomePath("git4idea"))
-    val testData = File(pluginRoot, "testData")
-    return File(File(testData, "config"), subfolder)
-  }
-
-  private fun loadConfigData(dataFolder: File): Collection<TestSpec> {
-    val tests = dataFolder.listFiles { _, name -> !name.startsWith(".") }
-    val data = mutableListOf<TestSpec>()
-    for (testDir in tests) {
-      var descriptionFile: File? = null
-      var configFile: File? = null
-      var resultFile: File? = null
-      val files = testDir.listFiles()
-      assertNotNull("No test specifications found in " + testDir.path, files)
-      for (file in files!!) {
-        when {
-          file.name.endsWith("_desc.txt") -> descriptionFile = file
-          file.name.endsWith("_config.txt") -> configFile = file
-          file.name.endsWith("_result.txt") -> resultFile = file
-        }
-      }
-      val message = " file not found in $testDir among ${Arrays.toString(testDir.list())}"
-      assertNotNull("description $message", descriptionFile)
-      assertNotNull("config $message", configFile)
-      assertNotNull("result $message", resultFile)
-
-      val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
-      if (!testName.toLowerCase().startsWith("ignore")) {
-        data.add(TestSpec(testName, configFile!!, resultFile!!))
-      }
-    }
-    return data
-  }
-
-  private fun readBranchResults(file: File): Collection<GitBranchTrackInfo> {
-    val content = FileUtil.loadFile(file)
-    val remotes = ArrayList<GitBranchTrackInfo>()
-    val remStrings = StringUtil.split(content, "BRANCH")
-    for (remString in remStrings) {
-      if (StringUtil.isEmptyOrSpaces(remString)) {
-        continue
-      }
-      val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
-      val branch = info[0]
-      val remote = getRemote(info[1])
-      val remoteBranchAtRemote = info[2]
-      val remoteBranchHere = info[3]
-      val merge = info[4] == "merge"
-      remotes.add(GitBranchTrackInfo(GitLocalBranch(branch), GitStandardRemoteBranch(remote, remoteBranchAtRemote), merge))
-    }
-    return remotes
-  }
-
-  private fun getRemote(remoteString: String): GitRemote {
-    val remoteInfo = remoteString.split(" ")
-    return GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
-                     getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4))
-  }
-
-  private fun readRemoteResults(resultFile: File): Set<GitRemote> {
-    val content = FileUtil.loadFile(resultFile)
-    val remotes = mutableSetOf<GitRemote>()
-    for (remString in content.split("REMOTE")) {
-      if (StringUtil.isEmptyOrSpaces(remString)) {
-        continue
-      }
-      val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
-      val name = info[0]
-      val urls = info[1].split(" ")
-      val pushUrls = info[2].split(" ")
-      val fetchSpec = info[3].split(" ")
-      val pushSpec = info[4].split(" ")
-      remotes.add(GitRemote(name, urls, pushUrls, fetchSpec, pushSpec))
-    }
-    return remotes
-  }
-
-  private fun getSingletonOrEmpty(array: List<String>, i: Int) = if (array.size < i + 1) emptyList() else listOf(array[i])
 }
+
+private class TestSpec(val name: String, val config: Path, val result: File)
+
+private fun GitSingleRepoContext.addRemote(url: String) = addRemote("origin", url)
+
+private fun GitSingleRepoContext.addRemote(name: String, url: String) {
+  git("remote add $name $url")
+}
+
+private fun createHook(hookPath: String): File {
+  val hookFile = touch(hookPath,
+                       "#!/bin/sh\n" +
+                       "echo $HOOK_FAILURE_MESSAGE\n" +
+                       "exit 1")
+  hookFile.setExecutable(true)
+  return hookFile
+}
+
+/**
+ * Declares a config-based hook (Git 2.54+) named [name] that fails on each of the given [events].
+ *
+ * The command is a shell one-liner instead of a script file: Git runs it through its own shell on every platform,
+ * so the test doesn't depend on the executable bit, which Windows doesn't have.
+ * The section is appended to `.git/config` verbatim, so that the exact spelling of the keys is a part of the test.
+ */
+private fun addConfigHook(name: String, vararg events: String, isEnabled: Boolean? = null) {
+  Executor.append(".git/config", buildString {
+    append("[hook \"$name\"]\n")
+    events.forEach { append("  event = $it\n") }
+    append("  command = echo $HOOK_FAILURE_MESSAGE && exit 1\n")
+    if (isEnabled != null) append("  enabled = $isEnabled\n")
+  })
+}
+
+private fun assertHookFailure(task: () -> Unit) {
+  try {
+    task()
+    throw AssertionError("Hook failure expected")
+  }
+  catch (e: IllegalStateException) {
+    if (!e.message.orEmpty().contains(HOOK_FAILURE_MESSAGE)) {
+      throw AssertionError("Hook failure expected", e)
+    }
+  }
+}
+
+private fun getTestDataFolder(subfolder: String): File = TestDataUtil.basePath.resolve("config/$subfolder").toFile()
+
+private fun loadConfigData(dataFolder: File): Collection<TestSpec> {
+  val tests = dataFolder.listFiles { _, name -> !name.startsWith(".") }
+  val data = mutableListOf<TestSpec>()
+  for (testDir in tests) {
+    var descriptionFile: File? = null
+    var configFile: File? = null
+    var resultFile: File? = null
+    val files = testDir.listFiles()
+    assertThat(files).describedAs("No test specifications found in ${testDir.path}").isNotNull()
+    for (file in files!!) {
+      when {
+        file.name.endsWith("_desc.txt") -> descriptionFile = file
+        file.name.endsWith("_config.txt") -> configFile = file
+        file.name.endsWith("_result.txt") -> resultFile = file
+      }
+    }
+    val message = " file not found in $testDir among ${testDir.list().contentToString()}"
+    assertThat(descriptionFile).describedAs("description $message").isNotNull()
+    assertThat(configFile).describedAs("config $message").isNotNull()
+    assertThat(resultFile).describedAs("result $message").isNotNull()
+
+    val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
+    if (!testName.lowercase(Locale.getDefault()).startsWith("ignore")) {
+      data.add(TestSpec(testName, configFile!!.toPath(), resultFile!!))
+    }
+  }
+  return data
+}
+
+private fun readBranchResults(file: File): Collection<GitBranchTrackInfo> {
+  val content = FileUtil.loadFile(file)
+  val remotes = ArrayList<GitBranchTrackInfo>()
+  val remStrings = StringUtil.split(content, "BRANCH")
+  for (remString in remStrings) {
+    if (remString.isNullOrBlank()) {
+      continue
+    }
+    val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
+    val branch = info[0]
+    val remote = getRemote(info[1])
+    val remoteBranchAtRemote = info[2]
+    // unused val remoteBranchHere = info[3]
+    val merge = info[4] == "merge"
+    remotes.add(GitBranchTrackInfo(GitLocalBranch(branch), GitStandardRemoteBranch(remote, remoteBranchAtRemote), merge))
+  }
+  return remotes
+}
+
+private fun getRemote(remoteString: String): GitRemote {
+  val remoteInfo = remoteString.split(" ")
+  return GitRemote(remoteInfo[0], getSingletonOrEmpty(remoteInfo, 1), getSingletonOrEmpty(remoteInfo, 2),
+                   getSingletonOrEmpty(remoteInfo, 3), getSingletonOrEmpty(remoteInfo, 4))
+}
+
+private fun readRemoteResults(resultFile: File): Set<GitRemote> {
+  val content = FileUtil.loadFile(resultFile)
+  val remotes = mutableSetOf<GitRemote>()
+  for (remString in content.split("REMOTE")) {
+    if (remString.isBlank()) {
+      continue
+    }
+    val info = StringUtil.splitByLines(remString.trim { it <= ' ' })
+    val name = info[0]
+    val urls = info[1].split(" ")
+    val pushUrls = info[2].split(" ")
+    val fetchSpec = info[3].split(" ")
+    val pushSpec = info[4].split(" ")
+    remotes.add(GitRemote(name, urls, pushUrls, fetchSpec, pushSpec))
+  }
+  return remotes
+}
+
+private fun getSingletonOrEmpty(array: List<String>, i: Int) = if (array.size < i + 1) emptyList() else listOf(array[i])

@@ -24,8 +24,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -34,16 +39,17 @@ import java.util.Set;
 // Just a clever trick that makes use of the already existing quickfix and the completion for missing arguments.
 public class AddOptionalArgumentsIntention extends AddWithParamFix {
 
-    @NotNull
-    public String getFamilyName() {
-        return "Add optional Argument(s)";
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.add.optional.argument");
     }
 
-    @NotNull
-    public String getText() {
+    @Override
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         if (!XsltSupport.isXsltFile(file)) return false;
 
@@ -71,7 +77,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
         }
 
         myTag = tag;
-        return params.size() > 0 && isAvailableAt(element, tag, offset);
+        return !params.isEmpty() && isAvailableAt(element, tag, offset);
     }
 
     protected static boolean isAvailableAt(PsiElement element, XmlTag tag, int offset) {

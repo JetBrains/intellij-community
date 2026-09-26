@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
@@ -23,6 +9,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -36,13 +23,11 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;
@@ -65,7 +50,8 @@ public class FrameworkSupportOptionsComponent {
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
-      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, "Versions:");
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions,
+                                                                  JavaUiBundle.message("framework.support.options.label.versions"));
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
     else {
@@ -83,6 +69,7 @@ public class FrameworkSupportOptionsComponent {
     if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
       ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)myConfigurable).getConfigurable().addListener(
         new FrameworkSupportConfigurableListener() {
+          @Override
           public void frameworkVersionChanged() {
             updateLibrariesPanel();
           }
@@ -108,7 +95,7 @@ public class FrameworkSupportOptionsComponent {
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
-        JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
+        JComponent separator1 = SeparatorFactory.createSeparator(JavaUiBundle.message("configurable.ProjectLibrariesConfigurable.display.name"), null);
         separator1.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
         myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
       }
@@ -139,6 +126,11 @@ public class FrameworkSupportOptionsComponent {
         return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
                ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
       }
+
+      @Override
+      public String toString() {
+        return "FrameworkSupportOptionsFilter(filter = " + myConfigurable.getLibraryVersionFilter() + ")";
+      }
     };
   }
 
@@ -146,8 +138,7 @@ public class FrameworkSupportOptionsComponent {
     return myMainPanel;
   }
 
-  @Nullable
-  public LibraryCompositionSettings getLibraryCompositionSettings() {
+  public @Nullable LibraryCompositionSettings getLibraryCompositionSettings() {
     if (myLibraryCompositionSettings == null && myLibraryOptionsPanel != null) {
       myLibraryCompositionSettings = myLibraryOptionsPanel.apply();
     }

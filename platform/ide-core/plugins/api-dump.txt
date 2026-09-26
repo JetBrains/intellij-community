@@ -1,0 +1,3 @@
+com.intellij.ide.plugins.PluginManagerConfigurableService
+- s:getInstance():com.intellij.ide.plugins.PluginManagerConfigurableService
+- a:showPluginConfigurableAndEnable(com.intellij.openapi.project.Project,java.lang.String[]):V

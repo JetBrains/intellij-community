@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -26,11 +12,14 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryRootsCom
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.projectModel.ProjectModelBundle;
+import com.intellij.ui.IconDeferrer;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
   private LibraryRootsComponent myLibraryEditorComponent;
@@ -39,7 +28,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
-  private boolean myUpdatingName;
+  private final LazyInitializer.LazyValue<Icon> myIcon;
   private boolean myPropertiesLoaded;
 
   protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
@@ -52,11 +41,17 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     myProject = context.getProject();
     myLibrary = library;
     myProjectStructureElement = new LibraryProjectStructureElement(context, myLibrary);
+    myIcon = LazyInitializer.create(() -> {
+      // the icon is initialized on the first access, but because it's on the EDT, even lazily we return a deferred icon
+      return IconDeferrer.getInstance().defer(PlatformIcons.LIBRARY_ICON, new Object(), (_) -> {
+        return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
+      });
+    });
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    myLibraryEditorComponent = new LibraryRootsComponent(myProject, () -> getLibraryEditor());
+    myLibraryEditorComponent = new LibraryRootsComponent(myProject, this::getLibraryEditor);
     myLibraryEditorComponent.addListener(() -> {
       myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
       updateName();
@@ -70,8 +65,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   @Override
-  @NotNull
-  public ProjectStructureElement getProjectStructureElement() {
+  public @NotNull ProjectStructureElement getProjectStructureElement() {
     return myProjectStructureElement;
   }
 
@@ -95,7 +89,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   @Override
   public void setDisplayName(final String name) {
-    if (!myUpdatingName) {
+    if (!isUpdatingNameFieldFromDisplayName()) {
       getLibraryEditor().setName(name);
       if (myLibraryEditorComponent != null) {
         myLibraryEditorComponent.onLibraryRenamed();
@@ -109,18 +103,6 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   @Override
-  public void updateName() {
-    //todo[nik] pull up to NamedConfigurable
-    myUpdatingName = true;
-    try {
-      super.updateName();
-    }
-    finally {
-      myUpdatingName = false;
-    }
-  }
-
-  @Override
   public Library getEditableObject() {
     return myLibrary;
   }
@@ -129,9 +111,9 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   public String getBannerSlogan() {
     final LibraryTable libraryTable = myLibrary.getTable();
     String libraryType = libraryTable == null
-                         ? ProjectBundle.message("module.library.display.name", 1)
+                         ? ProjectModelBundle.message("module.library.display.name", 1)
                          : libraryTable.getPresentation().getDisplayName(false);
-    return ProjectBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
+    return JavaUiBundle.message("project.roots.library.banner.text", getDisplayName(), libraryType);
   }
 
   @Override
@@ -168,14 +150,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   @Override
   public Icon getIcon(boolean open) {
-    return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return "preferences.jdkGlobalLibs";  //todo
+    return myIcon.get();
   }
 
   public void updateComponent() {

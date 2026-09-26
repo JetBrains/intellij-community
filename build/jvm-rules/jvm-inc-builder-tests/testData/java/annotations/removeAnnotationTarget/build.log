@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/annotations/removeAnnotationTarget/a/A.java
+End of files
+Cleaning output files:
+  C2.class
+End of files
+Compiling files:
+  java/annotations/removeAnnotationTarget/a/C2.java
+End of files
+------------------------------------------
+Exit code: ERROR

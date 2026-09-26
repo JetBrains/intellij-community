@@ -1,53 +1,49 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.Condition;
-import com.intellij.ui.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
+import java.util.stream.Stream;
 
-/**
- * @author traff
- */
 public abstract class ListTableWithButtons<T> extends Observable {
-  private final List<T> myElements = ContainerUtil.newArrayList();
-  private final JPanel myPanel;
-  private final TableView<T> myTableView;
+  private final List<T> myElements = new ArrayList<>();
+  private JPanel myPanel;
+  private final @NotNull TableView<T> myTableView;
   private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
+  private final ToolbarDecorator myDecorator;
 
   protected ListTableWithButtons() {
-    myTableView = new TableView(createListModel()) {
+    myTableView = new TableView<T>(createListModel()) {
       @Override
       protected void createDefaultEditors() {
         super.createDefaultEditors();
@@ -58,7 +54,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             public void keyPressed(KeyEvent e) {
               final int column = myTableView.getEditingColumn();
               final int row = myTableView.getEditingRow();
-              if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+              if (e.getModifiersEx() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
                 e.consume();
                 SwingUtilities.invokeLater(() -> {
                   stopEditing();
@@ -66,7 +62,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
                   int nextRow = nextColumn == 0 ? row + 1 : row;
                   if (nextRow > myTableView.getRowCount() - 1) {
                     if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
-                      ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
+                      AnActionButton addButton = ToolbarDecorator.findAddButton(myPanel);
+                      if (addButton != null) {
+                        addButton.actionPerformed(ActionUtil.createEmptyEvent());
+                      }
                       return;
                     }
                     else {
@@ -82,85 +81,87 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
-    myTableView.setRowHeight(new JTextField().getPreferredSize().height);
+    myTableView.setShowGrid(false);
     myTableView.setIntercellSpacing(JBUI.emptySize());
-    myTableView.setStriped(true);
-    
     myTableView.getTableViewModel().setSortable(false);
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
-    myPanel = decorator
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myTableView.stopEditing();
-          setModified();
-          SwingUtilities.invokeLater(() -> {
-            if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
-              myElements.add(createElement());
-              myTableView.getTableViewModel().setItems(myElements);
-            }
-            myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
-            myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
-          });
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeSelected();
-        }
-      }).disableUpDownActions().addExtraActions(createExtraActions()).createPanel();
-
-    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        List<T> selection = getSelection();
-        if (selection.isEmpty() || !myIsEnabled) return false;
-        for (T t : selection) {
-          if (!canDeleteElement(t)) return false;
-        }
-        return true;
-      }
-    });
-    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        return myIsEnabled;
-      }
-    });
-
-    myActionsPanel = decorator.getActionsPanel();
-
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    myDecorator = createToolbarDecorator();
+    myActionsPanel = myDecorator.getActionsPanel();
+  }
+
+  protected ToolbarDecorator createToolbarDecorator() {
+    return ToolbarDecorator.createDecorator(myTableView);
+  }
+
+  protected @Nullable AnActionButtonRunnable createRemoveAction() {
+    return button -> removeSelected();
+  }
+
+  protected @Nullable AnActionButtonRunnable createAddAction() {
+    return button -> addNewElement(createElement());
+  }
+
+  protected @Nullable AnActionButtonRunnable createEditAction() {
+    return null;
+  }
+
+  protected void addNewElement(T newElement) {
+    myTableView.stopEditing();
+    setModified();
+    SwingUtilities.invokeLater(() -> {
+      if (myElements.isEmpty() || !isEmpty(myElements.get(myElements.size() - 1))) {
+        myElements.add(newElement);
+        myTableView.getTableViewModel().setItems(myElements);
+      }
+      myTableView.scrollRectToVisible(myTableView.getCellRect(myElements.size() - 1, 0, true));
+      if (shouldEditRowOnCreation()) {
+        myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+      }
+      myTableView.getComponent().revalidate();
+      myTableView.getComponent().repaint();
+    });
   }
 
   protected void removeSelected() {
-    List<T> selected = getSelection();
-    if (!selected.isEmpty()) {
-      myTableView.stopEditing();
-      setModified();
-      int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
-      myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
-      selected = ContainerUtil.filter(selected, t -> canDeleteElement(t));
-      myElements.removeAll(selected);
-      myTableView.getSelectionModel().clearSelection();
-      myTableView.getTableViewModel().setItems(myElements);
+    int[] selectedRows = myTableView.getComponent().getSelectedRows();
+    if(selectedRows.length == 0)
+      return;
+    myTableView.stopEditing();
+    setModified();
+    int selectedIndex = myTableView.getSelectionModel().getLeadSelectionIndex();
+    myTableView.scrollRectToVisible(myTableView.getCellRect(selectedIndex, 0, true));
 
-      int prev = selectedIndex - 1;
-      if (prev >= 0) {
-        myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
-      }
-      else if (selectedIndex < myElements.size()) {
-        myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+    List<T> aliveElements = new ArrayList<>();
+    for(int row = 0; row < myTableView.getRowCount(); ++row) {
+      T selectedElement = myElements.get(row);
+      if(!myTableView.isRowSelected(row) || !canDeleteElement(selectedElement)) {
+        aliveElements.add(selectedElement);
       }
     }
+    myElements.clear();
+    myElements.addAll(aliveElements);
+
+    myTableView.getSelectionModel().clearSelection();
+    myTableView.getTableViewModel().setItems(myElements);
+
+    int prev = selectedIndex - 1;
+    if (prev >= 0) {
+      myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
+    }
+    else if (selectedIndex < myElements.size()) {
+      myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+    }
+
+    myTableView.getComponent().revalidate();
+    myTableView.getComponent().repaint();
   }
 
-  @NotNull
-  public TableView<T> getTableView() {
+  public @NotNull TableView<T> getTableView() {
     return myTableView;
   }
 
-  protected abstract ListTableModel createListModel();
+  protected abstract ListTableModel<T> createListModel();
 
   protected void setModified() {
     setChanged();
@@ -172,7 +173,41 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   public JComponent getComponent() {
+    if (myPanel == null) {
+      myDecorator.setAddAction(createAddAction())
+        .setRemoveAction(createRemoveAction())
+        .setEditAction(createEditAction());
+      if (!isUpDownSupported()) {
+        myDecorator.disableUpDownActions();
+      }
+      myDecorator.addExtraActions(createExtraToolbarActions());
+      myPanel = myDecorator.createPanel();
+      configureToolbarButtons(myPanel);
+    }
     return myPanel;
+  }
+
+  protected void configureToolbarButtons(@NotNull JPanel panel) {
+    var addButton = ToolbarDecorator.findAddButton(panel);
+    var removeButton = ToolbarDecorator.findRemoveButton(panel);
+    var editButton = ToolbarDecorator.findEditButton(panel);
+    var upButton = ToolbarDecorator.findUpButton(panel);
+    var downButton = ToolbarDecorator.findDownButton(panel);
+
+    Stream.of(addButton, removeButton, editButton, upButton, downButton)
+      .filter(Objects::nonNull)
+      .forEach(it -> it.addCustomUpdater(e -> myIsEnabled));
+
+    if (removeButton != null) {
+      removeButton.addCustomUpdater(e -> {
+        List<T> selection = getSelection();
+        if (selection.isEmpty()) return false;
+        for (T t : selection) {
+          if (!canDeleteElement(t)) return false;
+        }
+        return true;
+      });
+    }
   }
 
   public CommonActionsPanel getActionsPanel() {
@@ -215,16 +250,21 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean isEmpty(T element);
 
-  @NotNull
-  protected AnActionButton[] createExtraActions() {
+  protected AnAction @NotNull [] createExtraToolbarActions() {
+    AnActionButton[] actions = createExtraActions();
+    if (actions.length == 0) return AnAction.EMPTY_ARRAY;
+    return Arrays.copyOf(actions, actions.length, AnAction[].class);
+  }
+
+  /** @deprecated override {@link #createExtraToolbarActions()} instead */
+  @Deprecated(forRemoval = true)
+  protected AnActionButton @NotNull [] createExtraActions() {
     return new AnActionButton[0];
   }
 
-
-  @NotNull
-  protected List<T> getSelection() {
+  protected @NotNull List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();
-    if (selection.length == 0) {
+    if (selection.length == 0 || myElements.isEmpty()) {
       return Collections.emptyList();
     }
     else {
@@ -236,7 +276,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
   }
 
-  public void setValues(List<T> envVariables) {
+  public void setValues(@Unmodifiable List<? extends T> envVariables) {
     myElements.clear();
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));
@@ -244,14 +284,22 @@ public abstract class ListTableWithButtons<T> extends Observable {
     myTableView.getTableViewModel().setItems(myElements);
   }
 
+  protected boolean isUpDownSupported() {
+    return false;
+  }
+
+  protected boolean shouldEditRowOnCreation() {
+    return true;
+  }
+
   protected abstract T cloneElement(T variable);
 
   protected abstract boolean canDeleteElement(T selection);
 
-  protected static abstract class ElementsColumnInfoBase<T> extends ColumnInfo<T, String> {
+  protected abstract static class ElementsColumnInfoBase<T> extends ColumnInfo<T, @NlsContexts.ListItem String> {
     private DefaultTableCellRenderer myRenderer;
 
-    protected ElementsColumnInfoBase(String name) {
+    protected ElementsColumnInfoBase(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -267,7 +315,6 @@ public abstract class ListTableWithButtons<T> extends Observable {
       return myRenderer;
     }
 
-    @Nullable
-    protected abstract String getDescription(T element);
+    protected abstract @Nullable @NlsContexts.Tooltip String getDescription(T element);
   }
 }

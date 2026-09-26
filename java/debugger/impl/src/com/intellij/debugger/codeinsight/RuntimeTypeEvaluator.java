@@ -1,11 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -22,7 +20,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.Type;
@@ -30,9 +35,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiType> {
   public RuntimeTypeEvaluator(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
     super(editor, expression, context, indicator);
@@ -53,34 +55,34 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
 
   protected abstract void typeCalculationFinished(@Nullable PsiType type);
 
-  @Nullable
-  protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
+  @Override
+  protected @Nullable PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     Project project = evaluationContext.getProject();
     SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
+      @Override
       public ExpressionEvaluator compute() throws EvaluateException {
         return EvaluatorBuilderImpl.getInstance().build(myElement, position);
       }
     });
 
     final Value value = evaluator.evaluate(evaluationContext);
-    if(value != null){
+    if (value != null) {
       return getCastableRuntimeType(project, value);
     }
 
-    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
+    throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.surrounded.expression.null"));
   }
 
-  @Nullable
-  public static PsiType getCastableRuntimeType(Project project, Value value) {
+  public static @Nullable PsiType getCastableRuntimeType(Project project, Value value) {
     Type type = value.type();
     PsiType psiType = findPsiType(project, type);
     if (psiType != null) {
       return psiType;
     }
 
-    if (type instanceof ClassType) {
-      ClassType superclass = ((ClassType)type).superclass();
+    if (type instanceof ClassType classType) {
+      ClassType superclass = classType.superclass();
       if (superclass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superclass.name())) {
         psiType = findPsiType(project, superclass);
         if (psiType != null) {
@@ -88,7 +90,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
         }
       }
 
-      for (InterfaceType interfaceType : ((ClassType)type).interfaces()) {
+      for (InterfaceType interfaceType : classType.interfaces()) {
         psiType = findPsiType(project, interfaceType);
         if (psiType != null) {
           return psiType;
@@ -107,8 +109,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     if (type instanceof PsiPrimitiveType) {
       return false;
     }
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (type instanceof PsiClassType classType) {
+      final PsiClass psiClass = classType.resolve();
       if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }

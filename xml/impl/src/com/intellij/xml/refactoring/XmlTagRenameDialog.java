@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
@@ -25,7 +10,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,37 +25,41 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class XmlTagRenameDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameDialog");
-  private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
+public final class XmlTagRenameDialog extends RefactoringDialog {
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameDialog.class);
 
   private final PsiElement myElement;
   private final Editor myEditor;
   private JLabel myTitleLabel;
   private NameSuggestionsField myNameSuggestionsField;
-  private String myHelpID;
   private final XmlTag myTag;
   private NameSuggestionsField.DataChanged myNameChangedListener;
 
-  public XmlTagRenameDialog(@NotNull final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {
+  public XmlTagRenameDialog(final @NotNull Editor editor, final @NotNull PsiElement element, final @NotNull XmlTag tag) {
     super(element.getProject(), true);
 
     myEditor = editor;
     myElement = element;
     myTag = tag;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(RefactoringBundle.message("rename.title"));
     createNewNameComponent();
 
     init();
 
-    myTitleLabel.setText(XmlBundle.message("rename.current.tag", getFullName(tag)));
+    myTitleLabel.setText(XmlBundle.message("xml.refactor.rename.current.tag", getFullName(tag)));
 
     validateButtons();
   }
@@ -87,12 +75,12 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     return false;
   }
 
-  private static String getFullName(@NotNull final XmlTag tag) {
+  private static String getFullName(final @NotNull XmlTag tag) {
     final String name = DescriptiveNameUtil.getDescriptiveName(tag);
     return (UsageViewUtil.getType(tag) + " " + name).trim();
   }
 
-  public static void renameXmlTag(final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {
+  public static void renameXmlTag(final Editor editor, final @NotNull PsiElement element, final @NotNull XmlTag tag) {
     final XmlTagRenameDialog dialog = new XmlTagRenameDialog(editor, element, tag);
     dialog.show();
   }
@@ -139,8 +127,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return null;
   }
 
@@ -161,11 +148,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     panel.add(myNameSuggestionsField.getComponent());
 
     return panel;
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
   public String getNewName() {

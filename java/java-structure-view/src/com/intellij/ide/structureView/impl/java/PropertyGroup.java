@@ -1,57 +1,51 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PropertyAccessorDetector;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
-  @NotNull private final String myPropertyName;
-  @NotNull private final String myTypeText;
+public final class PropertyGroup implements Group, ColoredItemPresentation, AccessLevelProvider, WeighedItem {
+  private final @NotNull String myPropertyName;
+  private final @NotNull String myTypeText;
 
-  private SmartPsiElementPointer myFieldPointer;
-  private SmartPsiElementPointer myGetterPointer;
-  private SmartPsiElementPointer mySetterPointer;
+  private SmartPsiElementPointer<?> myFieldPointer;
+  private SmartPsiElementPointer<?> myGetterPointer;
+  private SmartPsiElementPointer<?> mySetterPointer;
   private boolean myIsStatic;
-  public static final Icon PROPERTY_READ_ICON = loadIcon("/nodes/propertyRead.png");
-  public static final Icon PROPERTY_READ_STATIC_ICON = loadIcon("/nodes/propertyReadStatic.png");
-  public static final Icon PROPERTY_WRITE_ICON = loadIcon("/nodes/propertyWrite.png");
-  public static final Icon PROPERTY_WRITE_STATIC_ICON = loadIcon("/nodes/propertyWriteStatic.png");
-  public static final Icon PROPERTY_READ_WRITE_ICON = loadIcon("/nodes/propertyReadWrite.png");
-  public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = loadIcon("/nodes/propertyReadWriteStatic.png");
+
+  public static final Icon PROPERTY_READ_ICON = AllIcons.Nodes.PropertyRead;
+  public static final Icon PROPERTY_READ_STATIC_ICON = AllIcons.Nodes.PropertyReadStatic;
+  public static final Icon PROPERTY_WRITE_ICON = AllIcons.Nodes.PropertyWrite;
+  public static final Icon PROPERTY_WRITE_STATIC_ICON = AllIcons.Nodes.PropertyWriteStatic;
+  public static final Icon PROPERTY_READ_WRITE_ICON = AllIcons.Nodes.PropertyReadWrite;
+  public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = AllIcons.Nodes.PropertyReadWriteStatic;
+
   private final Project myProject;
   private final Collection<TreeElement> myChildren = new ArrayList<>();
 
@@ -63,28 +57,26 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   }
 
   public static PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
-    if (object instanceof PsiField) {
-      PsiField field = (PsiField)object;
+    if (object instanceof PsiField field) {
       PropertyGroup group = new PropertyGroup(PropertyUtilBase.suggestPropertyName(field), field.getType(),
-                                              field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
+                                              field.hasModifierProperty(PsiModifier.STATIC), field.getProject());
       group.setField(field);
       group.myChildren.add(treeElement);
       return group;
     }
-    else if (object instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)object;
-      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
-        PropertyGroup group = new PropertyGroup(PropertyUtilBase.getPropertyNameByGetter(method), method.getReturnType(),
-                                                method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
-        group.setGetter(method);
-        group.myChildren.add(treeElement);
-        return group;
-      }
-      else if (PropertyUtilBase.isSimplePropertySetter(method)) {
-        PropertyGroup group =
-          new PropertyGroup(PropertyUtilBase.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
-                            method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
-        group.setSetter(method);
+    else if (object instanceof PsiMethod method) {
+      final PropertyAccessorDetector.PropertyAccessorInfo accessorInfo = PropertyAccessorDetector.detectFrom(method);
+      if (null != accessorInfo &&
+          (accessorInfo.isKindOf(PropertyKind.GETTER) || accessorInfo.isKindOf(PropertyKind.SETTER))) {
+
+        PropertyGroup group = new PropertyGroup(accessorInfo.propertyName(), accessorInfo.propertyType(),
+                                                method.hasModifierProperty(PsiModifier.STATIC), method.getProject());
+        if (accessorInfo.isKindOf(PropertyKind.GETTER)) {
+          group.setGetter(method);
+        }
+        else {
+          group.setSetter(method);
+        }
         group.myChildren.add(treeElement);
         return group;
       }
@@ -93,14 +85,12 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   }
 
   @Override
-  @NotNull
-  public Collection<TreeElement> getChildren() {
+  public @NotNull Collection<TreeElement> getChildren() {
     return myChildren;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
@@ -128,7 +118,6 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
         return PROPERTY_WRITE_ICON;
       }
     }
-
   }
 
   private boolean isStatic() {
@@ -136,20 +125,17 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   }
 
   @Override
-  public String getLocationString() {
-    return null;
-  }
-
-  @Override
   public String getPresentableText() {
     return myPropertyName + ": " + myTypeText;
   }
 
+  @Override
   public String toString() {
     return myPropertyName;
   }
 
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PropertyGroup)) return false;
@@ -157,6 +143,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return myPropertyName.equals(((PropertyGroup)o).myPropertyName) && myTypeText.equals(((PropertyGroup)o).myTypeText);
   }
 
+  @Override
   public int hashCode() {
     return myPropertyName.hashCode() * 31 + myTypeText.hashCode();
   }
@@ -215,15 +202,6 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     myChildren.addAll(group.myChildren);
   }
 
-  private static Icon loadIcon(@NonNls String resourceName) {
-    Icon icon = IconLoader.findIcon(resourceName);
-    Application application = ApplicationManager.getApplication();
-    if (icon == null && application != null && application.isUnitTestMode()) {
-      return new ImageIcon();
-    }
-    return icon;
-  }
-
   @Override
   public TextAttributesKey getTextAttributesKey() {
     return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
@@ -233,7 +211,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
     return isDeprecated(getField()) && isDeprecated(getGetter()) && isDeprecated(getSetter());
   }
 
-  private static boolean isDeprecated(@Nullable final PsiDocCommentOwner element) {
+  private static boolean isDeprecated(final @Nullable PsiDocCommentOwner element) {
     try {
       return element != null && element.isValid() && element.isDeprecated();
     }

@@ -1,0 +1,34 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
+
+import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
+import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/poetry_path_dependency")
+internal class PoetryPathDependencyTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
+
+  @Test
+  fun sanity(): Unit = timeoutRunBlocking {
+    f.reloadProject()
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("subpoetry1", contentRoot = "subpoetry1", sourceRoots = listOf("subpoetry1" / "src")),
+      ExpectedModule("subpoetry2", contentRoot = "subpoetry2", deps = listOf("subpoetry1"), sourceRoots = listOf("subpoetry2" / "src")),
+    )
+  }
+}

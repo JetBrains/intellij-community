@@ -1,33 +1,29 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.safeDelete;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,13 +32,12 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
+public final class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   @Override
-  public void createUsageInfoForParameter(PsiReference reference,
-                                          List<UsageInfo> usages,
-                                          final PsiParameter parameter,
-                                          final PsiMethod method) {
-    int index = method.getParameterList().getParameterIndex(parameter);
+  public void createUsageInfoForParameter(@NotNull PsiReference reference,
+                                          @NotNull List<? super UsageInfo> usages,
+                                          @NotNull PsiNamedElement parameter,
+                                          int paramIdx, boolean isVararg) {
     final PsiElement element = reference.getElement();
     GrCall call = null;
     if (element instanceof GrCall) {
@@ -52,35 +47,84 @@ public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
       call = (GrCall)element.getParent();
     }
     if (call != null) {
-      GrClosureSignature signature = GrClosureSignatureUtil.createSignature(call);
+      GrSignature signature = GrClosureSignatureUtil.createSignature(call);
       if (signature == null) return;//todo ???
       GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
       if (argInfos == null) return;          //todo???
 
-      for (PsiElement arg : argInfos[index].args) {
+      for (PsiElement arg : argInfos[paramIdx].args) {
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(arg, parameter, true));
       }
     }
     else if (element instanceof GrDocMethodReference) {
-      @NonNls final StringBuilder newText = new StringBuilder();
+      final @NonNls StringBuilder newText = new StringBuilder();
       newText.append("/** @see ");
       GrDocReferenceElement holder = ((GrDocMethodReference)element).getReferenceHolder();
       if (holder != null) {
         newText.append(holder.getText());
       }
       newText.append('#');
-      newText.append(method.getName());
+      newText.append(((GrDocMethodReference)element).getReferenceName());
       newText.append('(');
-      final List<PsiParameter> parameters = new ArrayList<>(Arrays.asList(method.getParameterList().getParameters()));
-      parameters.remove(parameter);
-      newText.append(StringUtil.join(parameters, psiParameter -> parameter.getType().getCanonicalText(), ","));
+      final List<GrDocMethodParameter> parameters = new ArrayList<>(Arrays.asList(((GrDocMethodReference)element).getParameterList().getParameters()));
+      parameters.remove(paramIdx);
+      newText.append(StringUtil.join(parameters, p -> p.getText(), ","));
       newText.append(")*/");
       usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, true) {
         @Override
         public void deleteElement() throws IncorrectOperationException {
-          ((GrDocMethodReference)element).bindToText(method.getProject(), newText.toString());
+          PsiElement e = getElement();
+          if (e != null) {
+            ((GrDocMethodReference)e).bindToText(e.getProject(), newText.toString());
+          }
         }
       });
     }
+  }
+
+  @Override
+  public void createJavaTypeParameterUsageInfo(@NotNull PsiReference reference, 
+                                               @NotNull List<? super UsageInfo> usages, 
+                                               @NotNull PsiElement typeParameter,
+                                               int paramsCount,
+                                               int index) {
+    if (reference instanceof GrCodeReferenceElementImpl) {
+      final @Nullable GrTypeArgumentList parameterList = ((GrCodeReferenceElementImpl)reference).getTypeArgumentList();
+      if (parameterList != null) {
+        GrTypeElement[] typeArgs = parameterList.getTypeArgumentElements();
+        if (typeArgs.length > index) {
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs.length == 1 ? parameterList : typeArgs[index], typeParameter, true) {
+            @Override
+            public void deleteElement() throws IncorrectOperationException {
+              PsiElement element = getElement();
+              if (element != null) {
+                PsiElement parent = element.getParent();
+                if (parent != null && parent.isValid()) {
+                  @Nullable PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+                  if (next != null && PsiUtilCore.getElementType(next) == GroovyElementTypes.T_COMMA) {
+                    next.delete();
+                  }
+                  else {
+                    @Nullable PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+                    if (prev != null && PsiUtilCore.getElementType(prev) == GroovyElementTypes.T_COMMA) {
+                      prev.delete();
+                    }
+                  }
+                }
+              }
+              super.deleteElement();
+            }
+          });
+        }
+      }
+    }
+  }
+
+  @Override
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) { }
+
+  @Override
+  public UsageInfo createExtendsListUsageInfo(PsiElement refElement, PsiReference reference) {
+    return null;
   }
 }

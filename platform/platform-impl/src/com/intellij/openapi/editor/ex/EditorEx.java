@@ -15,41 +15,64 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorLinePainter;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.EditorHighlightingPredicate;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
+  @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
+  @NonNls String PROP_HIGHLIGHTER = "highlighter";
+  @NonNls String PROP_HEADER_COMPONENT = "headerComponent";
+
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
@@ -69,7 +92,8 @@ public interface EditorEx extends Editor {
    *
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
-   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#addHighlightingPredicate(Key, EditorHighlightingPredicate)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#removeHighlightingPredicate(Key)
    * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
    */
   @NotNull
@@ -78,9 +102,6 @@ public interface EditorEx extends Editor {
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
-  @NotNull
-  EditorHighlighter getHighlighter();
-
   JComponent getPermanentHeaderComponent();
 
   /**
@@ -88,10 +109,15 @@ public interface EditorEx extends Editor {
    */
   void setViewer(boolean isViewer);
 
-  void setPermanentHeaderComponent(JComponent component);
-
   void setHighlighter(@NotNull EditorHighlighter highlighter);
 
+  void setPermanentHeaderComponent(JComponent component);
+
+  /**
+   * This method doesn't set the scheme itself, but the delegate
+   * @param scheme - original scheme
+   * @see com.intellij.openapi.editor.impl.EditorColorSchemeDelegate
+   */
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
   void setInsertMode(boolean val);
@@ -110,12 +136,16 @@ public interface EditorEx extends Editor {
 
   void setHorizontalScrollbarVisible(boolean b);
 
+  @NotNull
   CutProvider getCutProvider();
 
+  @NotNull
   CopyProvider getCopyProvider();
 
+  @NotNull
   PasteProvider getPasteProvider();
 
+  @NotNull
   DeleteProvider getDeleteProvider();
 
   void repaint(int startOffset, int endOffset);
@@ -146,7 +176,7 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
-  void setFile(VirtualFile vFile);
+  void setFile(@NotNull VirtualFile vFile);
 
   @NotNull
   DataContext getDataContext();
@@ -154,6 +184,10 @@ public interface EditorEx extends Editor {
   boolean processKeyTyped(@NotNull KeyEvent e);
 
   void setFontSize(int fontSize);
+
+  default void setFontSize(float fontSize) {
+    setFontSize((int)(fontSize + 0.5));
+  }
 
   @NotNull
   Color getBackgroundColor();
@@ -165,8 +199,12 @@ public interface EditorEx extends Editor {
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
 
+  @Override
+  @Nullable
+  @ApiStatus.Obsolete
   VirtualFile getVirtualFile();
 
+  @NotNull
   TextDrawingCallback getTextDrawingCallback();
 
   @NotNull
@@ -190,13 +228,12 @@ public interface EditorEx extends Editor {
   /**
    * Allows to define {@code 'placeholder text'} for the current editor, i.e. virtual text that will be represented until
    * any user data is entered.
-   *
    * Feel free to see the detailed feature
    * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
-  void setPlaceholder(@Nullable CharSequence text);
+  void setPlaceholder(@Nullable @Nls CharSequence text);
 
   /**
    * Sets text attributes for a placeholder. Font style and color are currently supported. 
@@ -269,9 +306,10 @@ public interface EditorEx extends Editor {
 
   /**
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
-   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
+   * @noinspection TypeParameterExtendsFinalClass -- cannot clean up because used in external plugins
    */
-  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
+  void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.
@@ -284,28 +322,108 @@ public interface EditorEx extends Editor {
   void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 
   /**
-   * @return the offset that the caret is expected to be but maybe not yet.
-   * E.g. when user right-clicks the mouse the caret is not immediately jumps there but the click-handler wants to know that location already.
-   *
-   * When no mouse-clicks happened return the regular caret offset.
+   * @return the offset that the caret is expected to be but maybe not yet. This can be used in
+   * {@link EditorMouseListener#mousePressed(EditorMouseEvent)} implementation, as at the time this method is invoked caret wasn't yet moved
+   * to the press position. In other circumstances it's just equal to primary caret's offset.
    */
   int getExpectedCaretOffset();
 
   /**
-   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to 
-   * {@code null} disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
-   * event listener).
+   * Sets id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right button's
+   * click (with {@code null} value disabling context menu). This method might have no effect if default editor's popup handler was
+   * overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
-   * @see #getContextMenuGroupId() 
+   * @see #getContextMenuGroupId()
    */
   void setContextMenuGroupId(@Nullable String groupId);
 
   /**
-   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. {@code null}
-   * value means built-in logic for showing context menu is disabled.
+   * Returns id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right
+   * button's click ({@code null} value meaning no context menu). Returned value might be meaningless if default editor's popup handler
+   * was overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
    * @see #setContextMenuGroupId(String)
    */
   @Nullable
   String getContextMenuGroupId();
+
+  /**
+   * Allows to override default editor's context popup logic.
+   * <p>
+   * Default handler shows a context menu corresponding to a certain action group
+   * registered in {@link ActionManager}. Group's id can be changed using {@link #setContextMenuGroupId(String)}. For inline custom visual
+   * elements (inlays) action group is determined by {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)} and
+   * {@link EditorCustomElementRenderer#getContextMenuGroup(Inlay)}.
+   * <p>
+   * If multiple handlers are installed, they are processed in order, starting from the most recently installed one. Processing stops when
+   * some handler returns {@code true} from {@link EditorPopupHandler#handlePopup(EditorMouseEvent)} method.
+   *
+   * @see #uninstallPopupHandler(EditorPopupHandler)
+   */
+  void installPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  /**
+   * Removes previously installed {@link EditorPopupHandler}.
+   *
+   * @see #installPopupHandler(EditorPopupHandler)
+   */
+  void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  default @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    return null;
+  }
+
+  /**
+   * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},
+   * otherwise restores default editor cursor management logic ({@code requestor} parameter value should be the same in both setting and
+   * restoring requests). 'Restoring' call for a requestor, which hasn't set a cursor previously, has no effect. If multiple requestors have
+   * currently set custom cursors, one of them will be used (it is unspecified, which one).
+   */
+  void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor);
+
+  @ApiStatus.Internal
+  @Override
+  default @NotNull DocumentEx getElfDocument() {
+    return getDocument();
+  }
+
+  @Override
+  default @NotNull ModNavigator asModNavigator() {
+    return new ModNavigator() {
+      @Override
+      public @NotNull Document getDocument() {
+        return EditorEx.this.getDocument();
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        return Objects.requireNonNull(EditorEx.this.getProject());
+      }
+
+      @Override
+      public @NotNull PsiFile getPsiFile() {
+        return Objects.requireNonNull(EditorContextManager.getPsiFileForEditor(EditorEx.this, getProject()));
+      }
+
+      @Override
+      public void select(@NotNull TextRange range) {
+        getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+
+      @Override
+      public void moveCaretTo(int offset) {
+        getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public int getCaretOffset() {
+        return getCaretModel().getOffset();
+      }
+
+      @Override
+      public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+        TabOutScopesTracker.getInstance().registerScopeRange(EditorEx.this, range.getStartOffset(), range.getEndOffset(), tabOutOffset);
+      }
+    };
+  }
 }

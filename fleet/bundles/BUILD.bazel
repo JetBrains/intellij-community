@@ -1,0 +1,94 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_bundles",
+    module_name = "fleet.bundles",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/bifurcan:wasmjs_module_lib",
+        "@community//fleet/modules/api:wasmjs_module_lib",
+        "@community//fleet/util/core:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
+
+### auto-generated section `build fleet.bundles` start
+create_kotlinc_options(
+    name = "custom_bundles",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "bundles",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bundles",
+    module_name = "fleet.bundles",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/coroutines/core",
+        "//fleet/util/core",
+        "//fleet/modules/api",
+        "//fleet/bifurcan",
+    ],
+)
+
+jvm_library(
+    name = "bundles_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_bundles",
+    module_name = "fleet.bundles",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":bundles",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//fleet/util/core:core_test_lib",
+        "//fleet/modules/api:api_test_lib",
+        "//fleet/bifurcan:bifurcan_test_lib",
+    ],
+)
+### auto-generated section `build fleet.bundles` end
+
+### auto-generated section `iml fleet.bundles` start
+exports_files(
+    [
+        "fleet.bundles.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.bundles` end

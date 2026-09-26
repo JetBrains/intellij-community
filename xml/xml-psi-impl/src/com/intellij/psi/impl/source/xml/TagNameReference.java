@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -21,12 +7,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -35,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TagNameReference implements PsiReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.TagNameReference");
+  private static final Logger LOG = Logger.getInstance(TagNameReference.class);
 
   protected final boolean myStartTagFlag;
   private final ASTNode myNameElement;
@@ -45,24 +29,21 @@ public class TagNameReference implements PsiReference {
     myNameElement = nameElement;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     PsiElement element = myNameElement.getPsi();
     final PsiElement parent = element.getParent();
     return parent instanceof XmlTag ? parent : element;
   }
 
-  @Nullable
-  protected XmlTag getTagElement() {
+  protected @Nullable XmlTag getTagElement() {
     final PsiElement element = getElement();
     if(element == myNameElement.getPsi()) return null;
     return (XmlTag)element;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final ASTNode nameElement = getNameElement();
     if (nameElement == null){
       return TextRange.EMPTY_RANGE;
@@ -70,7 +51,7 @@ public class TagNameReference implements PsiReference {
 
     int colon = getPrefixIndex(nameElement.getText()) + 1;
     if (myStartTagFlag) {
-      final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
+      final int parentOffset = nameElement.getStartOffsetInParent();
       return new TextRange(parentOffset + colon, parentOffset + nameElement.getTextLength());
     }
     else {
@@ -116,14 +97,12 @@ public class TagNameReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getNameElement().getText();
   }
 
   @Override
-  @Nullable
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public @Nullable PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 
@@ -153,8 +132,7 @@ public class TagNameReference implements PsiReference {
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiMetaData metaData = null;
 
-    if (element instanceof PsiMetaOwner){
-      final PsiMetaOwner owner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner owner){
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){
@@ -177,14 +155,8 @@ public class TagNameReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -192,8 +164,7 @@ public class TagNameReference implements PsiReference {
     return false;
   }
 
-  @Nullable
-  static TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
+  static @Nullable TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }

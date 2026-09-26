@@ -1,0 +1,8 @@
+// "Add remaining branches" "true"
+// ERROR: Unresolved reference: TODO
+// K2_ERROR: NO_ELSE_IN_WHEN
+fun test(b: Boolean) = wh<caret>en(b) {
+    false -> 0
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix

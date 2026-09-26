@@ -2,7 +2,7 @@ import java.util.Map;
 
 class Test {
   void baz(){
-    bar(<error descr="Generic array creation">new Map<?, Integer>[3]</error>);
+    bar(new Map<error descr="Generic array creation not allowed"><?, Integer></error>[3]);
   }
 
   void bar(Map<?, Integer> ... x){ }

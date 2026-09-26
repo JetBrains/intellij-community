@@ -1,0 +1,15 @@
+Original text:
+---------------
+def foo():
+    print(1)
+    print(2)
+    return
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>print(1)
+    # this is a comment
+    print(2)
+    return</reparse>
+---------------

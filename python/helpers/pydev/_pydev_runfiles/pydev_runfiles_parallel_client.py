@@ -1,9 +1,9 @@
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_bundle.pydev_imports import xmlrpclib, _queue
 Queue = _queue.Queue
 import traceback
+import sys
 from _pydev_runfiles.pydev_runfiles_coverage import start_coverage_support_from_params
-
+import threading
 
 
 #=======================================================================================================================
@@ -38,7 +38,7 @@ class ServerComm(threading.Thread):
     def __init__(self, job_id, server):
         self.notifications_queue = Queue()
         threading.Thread.__init__(self)
-        self.setDaemon(False) #Wait for all the notifications to be passed before exiting!
+        self.daemon = False #Wait for all the notifications to be passed before exiting!
         assert job_id is not None
         assert port is not None
         self.job_id = job_id

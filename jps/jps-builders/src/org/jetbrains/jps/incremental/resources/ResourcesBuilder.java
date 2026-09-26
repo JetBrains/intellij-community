@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -34,21 +23,24 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- * @since 6.10.2011
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resources.ResourcesBuilder");
-
-  public static final String BUILDER_NAME = "Resource Compiler";
-
   private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
+  }
+
+  private static @NotNull @Nls String getBuilderName() {
+    return JpsBuildBundle.message("builder.name.resource.compiler");
   }
 
   public static void registerEnabler(StandardResourceBuilderEnabler enabler) {
@@ -59,33 +51,25 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   public void build(@NotNull ResourcesTarget target,
                     @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
-                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (!isResourceProcessingEnabled(target.getModule())) {
       return;
     }
 
     try {
-      Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
-      holder.processDirtyFiles((target_, file, sourceRoot) -> {
-        Boolean isSkipped = skippedRoots.get(sourceRoot);
+      final Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
+      holder.processDirtyFiles((t, f, srcRoot) -> {
+        Boolean isSkipped = skippedRoots.get(srcRoot);
         if (isSkipped == null) {
-          File outputDir = target_.getOutputDir();
-          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
-          skippedRoots.put(sourceRoot, isSkipped);
+          File outputDir = t.getOutputDir();
+          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, srcRoot.getRootFile()));
+          skippedRoots.put(srcRoot, isSkipped);
         }
         if (isSkipped.booleanValue()) {
           return true;
         }
-        try {
-          copyResource(context, sourceRoot, file, outputConsumer);
-          return !context.getCancelStatus().isCanceled();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-          context.processMessage(new CompilerMessage("resources", BuildMessage.Kind.ERROR, e.getMessage(), sourcePath));
-          return false;
-        }
+        copyResource(context, srcRoot, f, outputConsumer);
+        return !context.getCancelStatus().isCanceled();
       });
 
       context.checkCanceled();
@@ -111,37 +95,43 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     return true;
   }
 
-  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) throws IOException {
-    final File outputRoot = rd.getTarget().getOutputDir();
+  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) {
+    File outputRoot = rd.getTarget().getOutputDir();
     if (outputRoot == null) {
       return;
     }
-    final String sourceRootPath = FileUtil.toSystemIndependentName(rd.getRootFile().getAbsolutePath());
-    final String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
-    final String prefix = rd.getPackagePrefix();
 
-    final StringBuilder targetPath = new StringBuilder();
-    targetPath.append(FileUtil.toSystemIndependentName(outputRoot.getPath()));
-    if (prefix.length() > 0) {
+    String sourceRootPath = FileUtilRt.toCanonicalPath(rd.getRootFile().getAbsolutePath(), File.separatorChar, true);
+    String relativePath = FileUtilRt.getRelativePath(sourceRootPath, FileUtilRt.toCanonicalPath(file.getPath(), File.separatorChar, true), '/');
+    if (".".equals(relativePath)) {
+      relativePath = file.getName();
+    }
+    String prefix = rd.getPackagePrefix();
+
+    StringBuilder targetPath = new StringBuilder();
+    targetPath.append(FileUtil.toCanonicalPath(outputRoot.getPath()));
+    if (!prefix.isEmpty()) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
 
-    context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
-
-    final String outputPath = targetPath.toString();
-    final File targetFile = new File(outputPath);
-    FileUtil.copyContent(file, targetFile);
+    context.processMessage(
+      new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0", rd.getTarget().getModule().getName()))
+    );
     try {
-      outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
+      File targetFile = new File(targetPath.toString());
+      FSOperations.copy(file, targetFile);
+      outputConsumer.registerOutputFile(targetFile, List.of(file.getPath()));
     }
-    catch (Exception e) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+    catch (IOException e) {
+      context.processMessage(
+        new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e))
+      );
     }
   }
 
-  @NotNull
-  public String getPresentableName() {
-    return "Resource Compiler";
+  @Override
+  public @NotNull String getPresentableName() {
+    return getBuilderName();
   }
 }

@@ -1,55 +1,46 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
 /**
  * @author anna
- * @since 11/4/11
  */
-public class InlineLibraryMethodTest extends RefactoringTestCase {
+public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInlineAllInProjectFromLibrary() throws Exception {
-    configureByText(JavaFileType.INSTANCE, "package mycompany;\n" +
-                                           "public class File {\n" +
-                                           " public static File createTempFile(String pr, String postfix){return createTempFile(pr, postfix, null);}\n" +
-                                           " public static File createTempFile(String pr, String postfix, String base){return new File();}\n" +
-                                           "}");
+  public void testInlineAllInProjectFromLibrary() {
+    myFixture.addClass("""
+                         package mycompany;
+                         import java.util.*; // unused
+                         public class File {
+                           @IntrinsicCandidate
+                           public static File createTempFile(String pr, String postfix) { return createTempFile(pr, postfix, null); }
+                           public static File createTempFile(String pr, String postfix, String base) { return new File(); }
+                         }
+                         @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+                         @Retention(RetentionPolicy.RUNTIME)
+                         @interface IntrinsicCandidate {}""");
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
-    configureByFile(fileName);
+    myFixture.configureByFile(fileName);
 
-    PsiClass fileClass = getJavaFacade().findClass("mycompany.File");
-    assertNotNull(fileClass);
-    final PsiFile file = fileClass.getContainingFile();
+    PsiClass libraryClass = myFixture.findClass("mycompany.File");
+
+    final PsiFile file = libraryClass.getContainingFile();
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
         file.getVirtualFile().setWritable(false);
@@ -59,20 +50,14 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
       }
     });
 
-    PsiMethod element = null;
-    PsiMethod[] createTempFiles = fileClass.findMethodsByName("createTempFile", false);
-    for (PsiMethod createTempFile : createTempFiles) {
-      if (createTempFile.getParameterList().getParametersCount() == 2) {
-        element = createTempFile;
-        break;
-      }
-    }
-    assertNotNull(element);
-    PsiMethod method = element;
-    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
+    PsiMethod[] createTempFiles = libraryClass.findMethodsByName("createTempFile", false);
+    PsiMethod methodToInline =
+      ContainerUtil.find(createTempFiles, createTempFile -> createTempFile.getParameterList().getParametersCount() == 2);
+    assertNotNull(methodToInline);
+    final boolean condition = InlineMethodProcessor.checkBadReturns(methodToInline) && !InlineUtil.allUsagesAreTailCalls(methodToInline);
     assertFalse("Bad returns found", condition);
-    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, null, myEditor, false);
+    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), methodToInline, null, getEditor(), false, false, false, false);
     processor.run();
-    checkResultByFile(fileName + ".after");
+    myFixture.checkResultByFile(fileName + ".after");
   }
 }

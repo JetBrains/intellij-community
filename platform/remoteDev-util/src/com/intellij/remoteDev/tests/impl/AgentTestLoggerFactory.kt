@@ -1,0 +1,20 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.remoteDev.tests.impl
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import java.util.concurrent.atomic.AtomicReference
+
+
+open class AgentTestLoggerFactory(private val loggerFactory: Logger.Factory) : Logger.Factory {
+
+  val testSession = AtomicReference<RdTestSession?>(null)
+  val lambdaTestSession = AtomicReference<LambdaRdTestSession?>(null)
+
+  override fun getLoggerInstance(category: String): Logger {
+    return AgentTestLogger(loggerFactory.getLoggerInstance(category), this)
+  }
+}
+
+

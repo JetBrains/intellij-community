@@ -1,0 +1,17 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.backend.pane
+
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.UiDataRule
+import com.intellij.platform.projectView.pane.ProjectViewPaneId
+
+internal class BackendProjectViewPaneUiDataRule : UiDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    val project = snapshot[CommonDataKeys.PROJECT] ?: return
+    val paneId = snapshot[ProjectViewPaneId.DATA_KEY] ?: return
+    val pane = BackendProjectViewPaneService.getInstance(project).getPane(paneId) ?: return
+    pane.uiDataSnapshot(sink, snapshot)
+  }
+}

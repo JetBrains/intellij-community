@@ -12,7 +12,7 @@ def bar():
 
 class Printer(object):
   def __lshift__(self, what):
-    print what
+    print(what)
 
 cout = Printer()
 cout << "Hello, world" # must not be reported
@@ -41,7 +41,7 @@ def is_good(a):
     return a > 10
 
 def do_something(a):
-    print a
+    print(a)
 
 def process():
     for a in range(20):

@@ -1,0 +1,77 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.tasks.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.tasks",
+        "intellij.platform.tasks.impl",
+        "intellij.platform.tasks.impl.bookmarks",
+        "intellij.platform.tasks.impl.debugger",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.platform.tasks",
+        "intellij.platform.tasks.impl",
+        "intellij.platform.tasks.impl.bookmarks",
+        "intellij.platform.tasks.impl.debugger",
+    ],
+    jars = {
+        "lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"],
+    },
+    main_module = "intellij.platform.tasks.plugin",
+)
+### auto-generated section `dev intellij.platform.tasks.plugin` end
+
+### auto-generated section `build intellij.platform.tasks.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.tasks.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.tasks.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//platform/tasks-platform-api:tasks",
+        "//platform/tasks-platform-impl:tasks-impl",
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks",
+        "//platform/tasks-platform-impl/tasks.impl.debugger",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.platform.tasks.plugin` end
+
+### auto-generated section `iml intellij.platform.tasks.plugin` start
+exports_files(
+    [
+        "intellij.platform.tasks.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.tasks.plugin` end

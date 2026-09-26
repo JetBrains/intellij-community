@@ -15,10 +15,13 @@ package org.zmlx.hg4idea.command;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgActivity;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -27,35 +30,30 @@ import java.util.List;
 
 public class HgRebaseCommand {
 
-  @NotNull private final Project project;
-  @NotNull private final HgRepository repo;
+  private final @NotNull Project project;
+  private final @NotNull HgRepository repo;
 
   public HgRebaseCommand(@NotNull Project project, @NotNull HgRepository repo) {
     this.project = project;
     this.repo = repo;
   }
 
-  @Nullable
-  public HgCommandResult startRebase() {
-    return performRebase(ArrayUtil.EMPTY_STRING_ARRAY);
+  public @Nullable HgCommandResult startRebase() {
+    return performRebase(ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  @Nullable
-  public HgCommandResult continueRebase() {
+  public @Nullable HgCommandResult continueRebase() {
     return performRebase("--continue");
   }
 
-  @Nullable
-  public HgCommandResult abortRebase() {
+  public @Nullable HgCommandResult abortRebase() {
     return performRebase("--abort");
   }
 
-  @Nullable
-  private HgCommandResult performRebase(@NotNull String... args) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
-      final List<String> list = ContainerUtil.newArrayList(args);
-      list.add("--config");
-      list.add("extensions.rebase=");
+  private @Nullable HgCommandResult performRebase(@NonNls String @NotNull ... args) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rebase"), HgActivity.Rebase)) {
+      final List<String> list = ContainerUtil.concat(List.of(args),
+      List.of("--config", "extensions.rebase="));
       HgCommandResult result =
         new HgCommandExecutor(project)
           .executeInCurrentThread(repo.getRoot(), "rebase", list);

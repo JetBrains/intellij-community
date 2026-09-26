@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  C.class
+  META-INF/kotlin_pureKotlin_supertypeArgumentNullabilityChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/supertypeArgumentNullabilityChanged/a/c.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_supertypeArgumentNullabilityChanged-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/supertypeArgumentNullabilityChanged/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

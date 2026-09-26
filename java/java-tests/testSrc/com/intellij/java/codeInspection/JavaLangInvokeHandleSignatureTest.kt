@@ -18,17 +18,14 @@ package com.intellij.java.codeInspection
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
-class JavaLangInvokeHandleSignatureTest : LightCodeInsightFixtureTestCase() {
+class JavaLangInvokeHandleSignatureTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/invokeHandleSignature"
+  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/inspection/invokeHandleSignature"
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightCodeInsightFixtureTestCase.JAVA_9
+    return JAVA_9
   }
 
   override fun setUp() {
@@ -50,7 +47,13 @@ class JavaLangInvokeHandleSignatureTest : LightCodeInsightFixtureTestCase() {
 
   fun testSetter() = doTest()
 
+  fun testSpecial() = doTest()
+
+  fun testVarArgMethodHandle() = doTest()
+
+  fun testSignaturePolymorphic() = doTest()
+
   private fun doTest() {
-    myFixture.testHighlighting(getTestName(false) + ".java")
+    myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

@@ -15,26 +15,26 @@
  */
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.ChooseElementsDialog;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ChooseArtifactsDialog extends ChooseElementsDialog<Artifact> {
 
-  public ChooseArtifactsDialog(Project project, List<? extends Artifact> items, String title, String description) {
+  public ChooseArtifactsDialog(Project project, List<? extends Artifact> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     super(project, items, title, description, true);
   }
 
+  @Override
   protected String getItemText(Artifact item) {
     return item.getName();
   }
 
+  @Override
   protected Icon getItemIcon(Artifact item) {
     return item.getArtifactType().getIcon();
   }

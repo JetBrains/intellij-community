@@ -17,15 +17,17 @@ package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class IntentionFilterOwnerActionFilter implements IntentionActionFilter {
   @Override
-  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-    if (!(file instanceof IntentionFilterOwner)) return true;
+  public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile psiFile) {
+    if (!(psiFile instanceof IntentionFilterOwner owner)) return true;
 
-    final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)file).getIntentionActionsFilter();
+    final IntentionFilterOwner.IntentionActionsFilter actionsFilter = owner.getIntentionActionsFilter();
     if (actionsFilter == null || actionsFilter == IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE) return true;
 
     return actionsFilter.isAvailable(intentionAction);

@@ -18,58 +18,44 @@ package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class RncFileType extends LanguageFileType  {
+public final class RncFileType extends LanguageFileType {
+  @SuppressWarnings("unused")
   public static final String RNC_EXT = "rnc";
 
-  private static final FileType INSTANCE = new RncFileType();
+  public static final FileType INSTANCE = new RncFileType();
 
   private RncFileType() {
     super(RngCompactLanguage.INSTANCE);
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "RNG Compact";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return "RELAX NG Compact Syntax";
+  public @NotNull String getDescription() {
+    return RelaxngBundle.message("filetype.relaxng.compact-syntax.description");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return "rnc";
   }
 
   @Override
-  @Nullable
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 
   public static FileType getInstance() {
     return INSTANCE;
-  }
-
-  public static class Factory extends FileTypeFactory {
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
-      fileTypeConsumer.consume(INSTANCE, RNC_EXT);
-    }
   }
 }

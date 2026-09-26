@@ -1,47 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
-/**
- * @author ven
- */
-public class RenameLocalTest extends LightRefactoringTestCase {
+public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected boolean isRunInCommand() {
+    return false;
   }
 
   public void testIDEADEV3320() {
@@ -72,33 +65,31 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTest("Bar1");
   }
 
+  public void testMethodNameUsedInMethodRefs() {
+    doTest("bar1");
+  }
+
   public void testRenameParamUniqueName() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
+    configureByFile();
     final HashSet<String> result = new HashSet<>();
-    new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
+    new JavaNameSuggestionProvider().getSuggestedNames(getTargetElement(), getFile(), result);
     assertTrue(result.toString(), result.contains("window"));
   }
 
-  private void doTest(final String newName) {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    new RenameProcessor(getProject(), element, newName, true, true).run();
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  private void doTest(String newName) {
+    configureByFile();
+    new RenameProcessor(getProject(), getTargetElement(), newName, true, true).run();
+    checkResultByFile();
   }
 
   public void testRenameInPlaceQualifyFieldReference() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceQualifyFieldReferenceInChild() {
     doTestInplaceRename("myI");
   }
-  
+
   public void testRenameInPlaceThisNeeded() {
     doTestInplaceRename("a");
   }
@@ -110,9 +101,39 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() {
     doTestInplaceRename("pp");
   }
-  
+
   public void testRenameFieldWithConstructorParamAutomatic() {
-    doTest("pp");
+    configureByFile();
+    RenameProcessor processor = new RenameProcessor(getProject(), getTargetElement(), "pp", true, true);
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+      processor.addRenamerFactory(factory);
+    }
+    processor.run();
+    checkResultByFile();
+  }
+
+  public void testConflictWithPattern() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "An existing pattern variable <b><code>s</code></b> has the same name",
+                 () -> doTest("s"));
+  }
+
+  public void testConflictWithPatternInline() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "Variable 's' Already Exists",
+                 () -> doTestInplaceRename("s"));
+  }
+
+  public void testConflictInLambdaParameter() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "Variable 'o' Already Exists",
+                 () -> doTestInplaceRename("o"));
+  }
+
+  public void testConflictWithFutureVar() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "An existing local variable <b><code>y</code></b> has the same name",
+                 () -> doTest("y"));
   }
 
   public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() {
@@ -123,6 +144,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTest("r1");
   }
 
+  public void testRecordCanonicalConstructor() {
+    doTest("Bar");
+  }
+
   public void testRenameResourceInPlace() {
     doTestInplaceRename("r1");
   }
@@ -131,33 +156,57 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("myFoo");
   }
 
+  public void testAnonymousClassFieldConflict() {
+    try {
+      doTestInplaceRename("field");
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'field' Already Exists", e.getMessage());
+    }
+  }
+
+  public void testImplicitClassFieldConflict() {
+    try {
+      doTestInplaceRename("field");
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'field' Already Exists", e.getMessage());
+    }
+  }
+
   public void testRenameInPlaceInStaticContextWithConflictingField() {
     doTestInplaceRename("s");
   }
 
-  private void doTestInplaceRename(final String newName) {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+  public void testUnnamedVariableInLambda() {
+    doTestInplaceRename("pp");
+  }
 
-    final PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull(element);
-    assertTrue("In-place rename not allowed for " + element,
-               JavaRefactoringSupportProvider.mayRenameInplace(element, null));
-
-    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
-
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  public void testUndoAfterEditingOutsideOfTemplate() {
+    configureByFile();
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    EditorTestUtil.testUndoInEditor(getEditor(), () -> {
+      PsiElement element = getTargetElement();
+      assertInPlaceRenameAllowedFor(element);
+      new VariableInplaceRenameHandler().doRename(element, getEditor(),
+                                                  DataManager.getInstance().getDataContext(getEditor().getComponent()));
+      executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+      executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+      executeAction(IdeActions.ACTION_UNDO);
+    });
+    checkResultByFile();
   }
 
   public void testRenameWrongRef() {
     doRenameWrongRef("i");
   }
 
-  private void doRenameWrongRef(final String newName) {
-    final String name = getTestName(false);
-    configureByFile(BASE_PATH + name + ".java");
+  private void doRenameWrongRef(String newName) {
+    configureByFile();
 
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
 
     new RenameWrongRefHandler().invoke(getProject(), getEditor(), getFile(), null);
 
@@ -170,6 +219,35 @@ public class RenameLocalTest extends LightRefactoringTestCase {
                       .run(() -> getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName));
 
     state.gotoEnd(false);
-    checkResultByFile(BASE_PATH + name + "_after.java");
+    checkResultByFile();
+  }
+
+  private void doTestInplaceRename(String newName) {
+    configureByFile();
+
+    PsiElement element = getTargetElement();
+    assertInPlaceRenameAllowedFor(element);
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
+
+    checkResultByFile();
+  }
+
+  private @NotNull PsiElement getTargetElement() {
+    final PsiElement element = TargetElementUtil
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    return element;
+  }
+
+  private static void assertInPlaceRenameAllowedFor(PsiElement element) {
+    assertTrue("In-place rename not allowed for " + element, JavaRefactoringSupportProvider.mayRenameInplace(element, null));
+  }
+
+  private void configureByFile() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+  }
+
+  private void checkResultByFile() {
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }

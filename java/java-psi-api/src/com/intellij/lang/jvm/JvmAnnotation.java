@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm;
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.find;
 
-public interface JvmAnnotation extends JvmElement {
+public interface JvmAnnotation {
 
   /**
    * Returns the fully qualified name of the annotation class.
@@ -37,8 +37,7 @@ public interface JvmAnnotation extends JvmElement {
    *
    * @return attribute if this annotation has an attribute with specified name, otherwise {@code null}
    */
-  @Nullable
-  default JvmAnnotationAttribute findAttribute(@NonNls @NotNull String attributeName) {
+  default @Nullable JvmAnnotationAttribute findAttribute(@NonNls @NotNull String attributeName) {
     return find(getAttributes(), attribute -> attributeName.equals(attribute.getAttributeName()));
   }
 

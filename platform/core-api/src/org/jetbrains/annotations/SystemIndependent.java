@@ -15,18 +15,22 @@
  */
 package org.jetbrains.annotations;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Designates a system-independent path, with {@code /} separators.
  * <p>
  * Corresponding bytecode instrumentation is added by {@code SystemIndependentInstrumentingBuilder}.<p>
  *
- * @see PathUtil#toSystemIndependentName(String)
- * @see PathUtil#toSystemDependentName(String)
+ * @see com.intellij.util.PathUtil#toSystemIndependentName(String)
+ * @see com.intellij.util.PathUtil#toSystemDependentName(String)
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.TYPE_USE})
+@Target(ElementType.TYPE_USE)
 public @interface SystemIndependent {
 }

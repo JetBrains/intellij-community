@@ -1,0 +1,299 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.inMemory.rebase.log.changes
+
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.assertErrorNotification
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
+import git4idea.i18n.GitBundle
+import git4idea.inMemory.rebase.log.GitInMemoryOperationContext
+import git4idea.inMemory.rebase.log.RewrittenCommit
+import git4idea.inMemory.rebase.log.capturePostRewrites
+import git4idea.inMemory.rebase.log.gitInMemoryOperationFixture
+import git4idea.inMemory.rebase.log.run
+import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.test.assertCommitted
+import git4idea.test.assertLastMessage
+import git4idea.test.commit
+import git4idea.test.commitDetails
+import git4idea.test.file
+import git4idea.test.filterChangesByFileName
+import git4idea.test.getHash
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+
+@TestApplication
+internal class GitExtractSelectedChangesOperationTest {
+  private val fixture = gitSingleRepoContextFixture().gitInMemoryOperationFixture()
+  private val context: GitInMemoryOperationContext get() = fixture.get()
+
+  @Test
+  fun `test extract single file from middle commit`(): Unit = with(context) {
+    file("a").create().addCommit("Add a")
+
+    file("b").create().add()
+    file("c").create().add()
+    val targetCommit = commitDetails(commit("Add b, c"))
+
+    file("d").create().addCommit("Add d")
+
+    refresh()
+    updateChangeListManager()
+
+    val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
+    val newMessage = "Extract b"
+
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    file("b").assertExists()
+    file("c").assertExists()
+    file("d").assertExists()
+
+    with(repo) {
+      assertCommitted(1) { added("d") }
+      assertCommitted(2) { added("b") }
+      assertCommitted(3) { added("c") }
+      assertCommitted(4) { added("a") }
+    }
+  }
+
+  @Test
+  fun `test extract fires post-rewrite mapping target to remainder and descendants`(): Unit = with(context) {
+    file("a").create().addCommit("Add a")
+
+    file("b").create().add()
+    file("c").create().add()
+    val targetCommit = commitDetails(commit("Add b, c"))
+    val targetOldHash = targetCommit.id.asString()
+
+    file("d").create().add()
+    val dOldHash = commit("Add d")
+
+    refresh()
+    updateChangeListManager()
+
+    val postRewrites = capturePostRewrites()
+
+    val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, "Extract b", changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    val remainderNewHash = getHash(2)
+    val dNewHash = getHash(0)
+
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(targetOldHash, remainderNewHash),
+      RewrittenCommit(dOldHash, dNewHash)
+    )
+  }
+
+  @Test
+  fun `test extract nested directory structure`(): Unit = with(context) {
+    file("a").create().addCommit("Add a")
+
+    file("src/main/App.java").create().add()
+    file("src/test/AppTest.java").create().add()
+    file("README.md").create().add()
+    val targetCommit = commitDetails(commit("Add project structure"))
+
+    file("b").create().addCommit("Add b")
+
+    refresh()
+    updateChangeListManager()
+
+    val changesToExtract = filterChangesByFileName(targetCommit, listOf("App.java", "AppTest.java"))
+    val newMessage = "Extract src directory"
+
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    file("src/main/App.java").assertExists()
+    file("src/test/AppTest.java").assertExists()
+    file("README.md").assertExists()
+
+    with(repo) {
+      assertCommitted(1) { added("b") }
+      assertCommitted(2) {
+        added("src/main/App.java")
+        added("src/test/AppTest.java")
+      }
+      assertCommitted(3) { added("README.md") }
+      assertCommitted(4) { added("a") }
+    }
+  }
+
+  @Test
+  fun `test extract from initial commit`(): Unit = with(context) {
+    file("b").create().add()
+    file("c").create().add()
+    git("commit --amend --no-edit")
+
+    repo.update()
+    val amendedInitialCommit = commitDetails(repo.currentRevision!!)
+
+    refresh()
+    updateChangeListManager()
+
+    val changesToExtract = filterChangesByFileName(amendedInitialCommit, listOf("b"))
+    val newMessage = "Extract b from initial"
+
+    GitExtractSelectedChangesOperation(objectRepo, amendedInitialCommit.id, newMessage, changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    assertLastMessage(newMessage)
+
+    with(repo) {
+      assertCommitted(1) { added("b") }
+      assertCommitted(2) {
+        added("c")
+        added("initial.txt")
+      }
+    }
+  }
+
+  @Test
+  fun `test extract removal of a file`(): Unit = with(context) {
+    file("a").create("content a").addCommit("Add a")
+    file("b").create("content b").addCommit("Add b")
+
+    file("b").delete().add()
+    file("c").create("content c").add()
+    val targetCommit = commitDetails(commit("Remove b, add c"))
+
+    file("d").create("content d").addCommit("Add d")
+
+    refresh()
+    updateChangeListManager()
+
+    val changesToExtract = filterChangesByFileName(targetCommit, listOf("b"))
+    val newMessage = "Extract removal of b"
+
+    GitExtractSelectedChangesOperation(objectRepo, targetCommit.id, newMessage, changesToExtract).run()
+      as GitCommitEditingOperationResult.Complete
+
+    file("b").assertNotExists()
+    file("c").assertExists()
+    file("d").assertExists()
+
+    with(repo) {
+      assertCommitted(1) { added("d") }
+      assertCommitted(2) { deleted("b") }
+      assertCommitted(3) { added("c") }
+      assertCommitted(4) { added("b") }
+      assertCommitted(5) { added("a") }
+    }
+  }
+
+  @Test
+  fun `test extract from commit where file becomes directory`(): Unit = with(context) {
+    file("component").create("component content").addCommit("Create component")
+
+    file("component").delete().add()
+    file("component/A.java").create("content A").add()
+    file("component/B.java").create("content B").add()
+    file("README.md").create("content README").add()
+
+    val commit = commitDetails(commit("Create component dir"))
+
+    refresh()
+    updateChangeListManager()
+
+    val fileRemoval = filterChangesByFileName(commit, listOf("component"))
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component file removal", fileRemoval).run()
+      as GitCommitEditingOperationResult.Incomplete
+
+    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"),
+                            GitBundle.message("in.memory.split.tree.mixed.error"))
+
+    val filesCreation = filterChangesByFileName(commit, listOf("A.java", "B.java"))
+    val result = GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component files creation", filesCreation).run()
+      as GitCommitEditingOperationResult.Complete
+
+    with(repo) {
+      assertCommitted(1) {
+        added("component/A.java")
+        added("component/B.java")
+      }
+      assertCommitted(2) {
+        deleted("component")
+        added("README.md")
+      }
+    }
+
+    result.undo()
+
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract file removal and component files creation",
+                                       filesCreation + fileRemoval).run()
+      as GitCommitEditingOperationResult.Complete
+
+    with(repo) {
+      assertCommitted(1) {
+        added("component/A.java")
+        added("component/B.java")
+        deleted("component")
+      }
+      assertCommitted(2) {
+        added("README.md")
+      }
+    }
+  }
+
+  @Test
+  fun `test extract from commit where directory becomes file`(): Unit = with(context) {
+    file("component/A.java").create("content A").add()
+    file("component/B.java").create("content B").add()
+    commit("Create component dir")
+
+    file("component").delete().add()
+    file("component").create("component content").add()
+    file("README.md").create("content README").add()
+
+    val commit = commitDetails(commit("Remove component dir, create component file"))
+
+    refresh()
+    updateChangeListManager()
+
+    val fileCreation = filterChangesByFileName(commit, listOf("component"))
+    val result = GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component file creation", fileCreation).run()
+      as GitCommitEditingOperationResult.Complete
+
+    with(repo) {
+      assertCommitted(1) {
+        added("component")
+      }
+    }
+
+    result.undo()
+
+    val directoryFileRemoval = filterChangesByFileName(commit, listOf("A.java"))
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component directory file removal", directoryFileRemoval).run()
+      as GitCommitEditingOperationResult.Incomplete
+
+    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"),
+                            GitBundle.message("in.memory.split.tree.mixed.error"))
+
+    val directoryRemovalAndFileCreation = filterChangesByFileName(commit, listOf("A.java", "B.java", "component"))
+
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract directory removal and file creation",
+                                       directoryRemovalAndFileCreation).run()
+      as GitCommitEditingOperationResult.Complete
+
+    with(repo) {
+      assertCommitted(1) {
+        added("component")
+        deleted("component/A.java")
+        deleted("component/B.java")
+      }
+      assertCommitted(2) {
+        added("README.md")
+      }
+      assertCommitted(3) {
+        added("component/A.java")
+        added("component/B.java")
+      }
+    }
+  }
+}

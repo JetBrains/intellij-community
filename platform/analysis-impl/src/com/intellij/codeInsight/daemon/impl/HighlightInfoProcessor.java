@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,17 +13,18 @@ import java.util.List;
 
 // IMPL class hardcoding logic to react to errors/warnings found during highlighting
 // DO NOT USE directly
+@ApiStatus.Obsolete
 public abstract class HighlightInfoProcessor {
   // HInfos for visible part of file/block are produced.
   // Will remove all range-highlighters from there and replace them with passed infos
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull List<HighlightInfo> infos,
+                                                     @NotNull List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange, int groupId) {}
   public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull List<HighlightInfo> infos,
+                                                      @NotNull List<? extends HighlightInfo> infos,
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange, int groupId) {}
 
@@ -49,17 +39,17 @@ public abstract class HighlightInfoProcessor {
   // this range is over.
   // Can queue to EDT to remove abandoned bijective highlighters from this range. All the rest abandoned highlighters have to wait until *AreProduced().
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
-                                               @NotNull TextRange elementRange,
-                                               @Nullable List<HighlightInfo> infos){}
+                                               long elementRange,
+                                               @Nullable List<? extends HighlightInfo> infos){}
 
-  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
-                                 @Nullable Editor editor,
-                                 double progress){}
+  @RequiresBackgroundThread
+  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession, @Nullable Editor editor, double progress) {
+    ThreadingAssertions.assertBackgroundThread();
+  }
 
 
   private static final HighlightInfoProcessor EMPTY = new HighlightInfoProcessor() { };
-  @NotNull
-  public static HighlightInfoProcessor getEmpty() {
+  public static @NotNull HighlightInfoProcessor getEmpty() {
     return EMPTY;
   }
 }

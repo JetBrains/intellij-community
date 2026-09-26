@@ -1,45 +1,35 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import gnu.trove.THashMap;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;import java.util.HashMap;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class BidirectionalMap<K,V> implements Map<K,V>{
-  private final Map<K,V> myKeyToValueMap = new THashMap<K,V>();
-  private final Map<V,List<K>> myValueToKeysMap = new THashMap<V,List<K>>();
+public final class BidirectionalMap<K, V> implements Map<K, V> {
+  private final Map<K, V> myKeyToValueMap = new HashMap<>();
+  private final Map<V, List<K>> myValueToKeysMap = new HashMap<>();
 
   @Override
-  public V put(K key, V value){
+  public V put(K key, V value) {
     V oldValue = myKeyToValueMap.put(key, value);
-    if (oldValue != null){
-      if (oldValue.equals(value)) return oldValue;
+    if (oldValue != null) {
+      if (oldValue.equals(value)) {
+        return oldValue;
+      }
       List<K> array = myValueToKeysMap.get(oldValue);
       array.remove(key);
+      if (array.isEmpty()) {
+        myValueToKeysMap.remove(oldValue);
+      }
     }
 
-    List<K> array = myValueToKeysMap.get(value);
-    if (array == null){
-      array = new ArrayList<K>();
-      myValueToKeysMap.put(value, array);
-    }
-    array.add(key);
+    myValueToKeysMap.computeIfAbsent(value, __ -> new SmartList<>()).add(key);
     return oldValue;
   }
 
@@ -49,35 +39,32 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     myValueToKeysMap.clear();
   }
 
-  @Nullable
-  public List<K> getKeysByValue(V value){
+  public @Nullable List<K> getKeysByValue(V value) {
     return myValueToKeysMap.get(value);
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return myKeyToValueMap.keySet();
   }
 
   @Override
-  public int size(){
+  public int size() {
     return myKeyToValueMap.size();
   }
 
   @Override
-  public boolean isEmpty(){
+  public boolean isEmpty() {
     return myKeyToValueMap.isEmpty();
   }
 
   @Override
-  public boolean containsKey(Object key){
+  public boolean containsKey(Object key) {
     return myKeyToValueMap.containsKey(key);
-  }                                                               
+  }
 
   @Override
-  @SuppressWarnings({"SuspiciousMethodCalls"})
-  public boolean containsValue(Object value){
+  public boolean containsValue(Object value) {
     return myValueToKeysMap.containsKey(value);
   }
 
@@ -96,38 +83,39 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   }
 
   @Override
-  @SuppressWarnings({"SuspiciousMethodCalls"})
-  public V remove(Object key){
+  public V remove(Object key) {
     final V value = myKeyToValueMap.remove(key);
     final List<K> ks = myValueToKeysMap.get(value);
     if (ks != null) {
-      if(ks.size() > 1) ks.remove(key);
-      else myValueToKeysMap.remove(value);
+      if (ks.size() > 1) {
+        ks.remove(key);
+      }
+      else {
+        myValueToKeysMap.remove(value);
+      }
     }
     return value;
   }
 
   @Override
-  public void putAll(@NotNull Map<? extends K, ? extends V> t){
-    for (final K k1 : t.keySet()) {
-      put(k1, t.get(k1));
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
+    for (final Entry<? extends K, ? extends V> entry : t.entrySet()) {
+      put(entry.getKey(), entry.getValue());
     }
   }
 
-  @NotNull
   @Override
-  public Collection<V> values(){
+  public @NotNull Collection<V> values() {
     return myValueToKeysMap.keySet();
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet(){
+  public @NotNull Set<Entry<K, V>> entrySet() {
     return myKeyToValueMap.entrySet();
   }
 
   @Override
   public String toString() {
-    return new HashMap<K,V>(myKeyToValueMap).toString();
+    return myKeyToValueMap.toString();
   }
 }

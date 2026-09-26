@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.DocumentsEditor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,31 +28,31 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
  * @author Sergey.Vasiliev
  */
-abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
+public abstract class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private final Wrapper myWrapper = new Wrapper();
-  private boolean myInitialised = false;
-  /** createCustomComponent() is in progress */
-  private boolean myInitializing;
-
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
   private final VirtualFile myFile;
   private final UndoHelper myUndoHelper;
+
+  private boolean myInitialised;
+  private boolean myInitializing;  // `createCustomComponent()` is in progress
   private boolean myInvalidated;
 
-  protected PerspectiveFileEditor(final Project project, final VirtualFile file) {
+  protected PerspectiveFileEditor(Project project, VirtualFile file) {
     myProject = project;
     myUndoHelper = new UndoHelper(project, this);
     myFile = file;
 
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerListener() {
+    project.getMessageBus().connect(this).subscribe(
+      FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;
@@ -75,8 +65,8 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
           }
         });
 
-        final FileEditor oldEditor = event.getOldEditor();
-        final FileEditor newEditor = event.getNewEditor();
+        FileEditor oldEditor = event.getOldEditor();
+        FileEditor newEditor = event.getNewEditor();
         if (oldEditor == null || newEditor == null) return;
         if (oldEditor.getComponent().isShowing() && newEditor.getComponent().isShowing()) return;
 
@@ -91,7 +81,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
         }
         else if (PerspectiveFileEditor.this.equals(newEditor)) {
           if (oldEditor instanceof TextEditor) {
-            final DomElement element = getSelectedDomElementFromTextEditor((TextEditor)oldEditor);
+            DomElement element = getSelectedDomElementFromTextEditor((TextEditor)oldEditor);
             if (element != null) {
               ensureInitialized();
               setSelectedDomElement(element);
@@ -106,62 +96,60 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
           }
         }
       }
-    }, this);
+    });
 
     myUndoHelper.startListeningDocuments();
 
-    final PsiFile psiFile = getPsiFile();
+    PsiFile psiFile = getPsiFile();
     if (psiFile != null) {
-      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       if (document != null) {
         addWatchedDocument(document);
       }
     }
   }
 
-  @Nullable
-  abstract protected DomElement getSelectedDomElement();
+  protected abstract @Nullable DomElement getSelectedDomElement();
 
-  abstract protected void setSelectedDomElement(DomElement domElement);
+  protected abstract void setSelectedDomElement(DomElement domElement);
 
-  public final void addWatchedElement(@NotNull final DomElement domElement) {
+  public final void addWatchedElement(@NotNull DomElement domElement) {
     addWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
-  public final void removeWatchedElement(@NotNull final DomElement domElement) {
+  final void removeWatchedElement(@NotNull DomElement domElement) {
     removeWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
-  public final void addWatchedDocument(final Document document) {
+  private void addWatchedDocument(Document document) {
     myUndoHelper.addWatchedDocument(document);
   }
 
-  public final void removeWatchedDocument(final Document document) {
+  private void removeWatchedDocument(Document document) {
     myUndoHelper.removeWatchedDocument(document);
   }
 
-  @Nullable
-  protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
-    final PsiFile psiFile = getPsiFile();
+  private @Nullable DomElement getSelectedDomElementFromTextEditor(TextEditor textEditor) {
+    PsiFile psiFile = getPsiFile();
     if (psiFile == null) return null;
-    final PsiElement psiElement = psiFile.findElementAt(textEditor.getEditor().getCaretModel().getOffset());
+    PsiElement psiElement = psiFile.findElementAt(textEditor.getEditor().getCaretModel().getOffset());
 
     if (psiElement == null) return null;
 
-    final XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
+    XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
 
     return DomManager.getDomManager(myProject).getDomElement(xmlTag);
   }
 
-  public void setSelectionInTextEditor(final TextEditor textEditor, final DomElement element) {
+  private void setSelectionInTextEditor(TextEditor textEditor, DomElement element) {
     if (element != null && element.isValid()) {
-      final XmlTag tag = element.getXmlTag();
+      XmlTag tag = element.getXmlTag();
       if (tag == null) return;
 
-      final PsiFile file = tag.getContainingFile();
+      PsiFile file = tag.getContainingFile();
       if (file == null) return;
 
-      final Document document = getDocumentManager().getDocument(file);
+      Document document = getDocumentManager().getDocument(file);
       if (document == null || !document.equals(textEditor.getEditor().getDocument())) return;
 
       textEditor.getEditor().getCaretModel().moveToOffset(tag.getTextOffset());
@@ -173,13 +161,12 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     return PsiDocumentManager.getInstance(myProject);
   }
 
-  @Nullable
-  public final PsiFile getPsiFile() {
+  public final @Nullable PsiFile getPsiFile() {
     return PsiManager.getInstance(myProject).findFile(myFile);
   }
 
   @Override
-  public final Document[] getDocuments() {
+  public final @NotNull Document @NotNull [] getDocuments() {
     return myUndoHelper.getDocuments();
   }
 
@@ -218,7 +205,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     }
   }
 
-  protected final void setShowing(final boolean b) {
+  protected final void setShowing(boolean b) {
     myUndoHelper.setShowing(b);
   }
 
@@ -239,34 +226,27 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
   public FileEditorLocation getCurrentLocation() {
     return new FileEditorLocation() {
       @Override
-      @NotNull
-      public FileEditor getEditor() {
+      public @NotNull FileEditor getEditor() {
         return PerspectiveFileEditor.this;
       }
 
       @Override
-      public int compareTo(@NotNull final FileEditorLocation fileEditorLocation) {
+      public int compareTo(@NotNull FileEditorLocation fileEditorLocation) {
         return 0;
       }
     };
   }
 
   @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
+  public @NotNull VirtualFile getFile() {
+    return myFile;
   }
 
   @Override
-  public void setState(@NotNull FileEditorState state) {
-  }
+  public void setState(@NotNull FileEditorState state) { }
 
   @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
@@ -281,19 +261,17 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   protected boolean checkIsValid() {
     if (!myInvalidated && !isValid()) {
       myInvalidated = true;
-      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
+      myPropertyChangeSupport.firePropertyChange(FileEditor.getPropValid(), Boolean.TRUE, Boolean.FALSE);
     }
     return !myInvalidated;
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return getWrapper();
   }
 
-  @NotNull
-  protected abstract JComponent createCustomComponent();
+  protected abstract @NotNull JComponent createCustomComponent();
 
   public Wrapper getWrapper() {
     return myWrapper;

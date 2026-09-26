@@ -1,0 +1,12 @@
+// "Create extension function 'Int.!u00A0'" "true"
+// WITH_STDLIB
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test() {
+    val t: Int = 1 `!u00A0` 2
+}
+
+private infix fun Int.`!u00A0`(i: Int): Int {
+    TODO("Not yet implemented")
+}

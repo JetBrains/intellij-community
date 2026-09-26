@@ -1,73 +1,54 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.util.system.OS;
+import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
-public class SystemNotificationsImpl extends SystemNotifications {
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
+
+final class SystemNotificationsImpl extends SystemNotifications {
   interface Notifier {
     void notify(@NotNull String name, @NotNull String title, @NotNull String description);
+
+    default void notify(@NotNull String name, @NotNull String title, @NotNull String description, @Nullable Runnable onActivated) {
+      notify(name, title, description);
+    }
   }
 
-  private final Notifier myNotifier = getPlatformNotifier();
-
-  @Override
-  public boolean isAvailable() {
-    return myNotifier != null;
-  }
+  private final NullableLazyValue<Notifier> myNotifier = atomicLazyNullable(SystemNotificationsImpl::getPlatformNotifier);
 
   @Override
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (myNotifier != null &&
-        NotificationsConfigurationImpl.getInstanceImpl().SYSTEM_NOTIFICATIONS &&
-        !ApplicationManager.getApplication().isActive()) {
-      myNotifier.notify(notificationName, title, text);
+    notify(notificationName, title, text, null);
+  }
+
+  @Override
+  public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text, @Nullable Runnable onActivated) {
+    if (NotificationsConfigurationImpl.getInstanceImpl().SYSTEM_NOTIFICATIONS && !ApplicationManager.getApplication().isActive()) {
+      var notifier = myNotifier.getValue();
+      if (notifier != null) {
+        notifier.notify(notificationName, title, text, onActivated);
+      }
     }
   }
 
-  private static Notifier getPlatformNotifier() {
-    try {
-      if (SystemInfo.isMac) {
-        if (SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled")) {
-          return MountainLionNotifications.getInstance();
-        }
-        if (!Boolean.getBoolean("growl.disable")) {
-          return GrowlNotifications.getInstance();
-        }
+  private static @Nullable Notifier getPlatformNotifier() {
+    if (!GraphicsUtil.isRemoteEnvironment()) {
+      try {
+        return switch (OS.CURRENT) {
+          case Windows -> SystemTrayNotifications.getWin10Instance();
+          case macOS -> MacOsNotifications.getInstance();
+          default -> LibNotifyWrapper.getInstance();
+        };
       }
-
-      if (SystemInfo.isXWindow && Registry.is("ide.libnotify.enabled") ) {
-        return LibNotifyWrapper.getInstance();
-      }
-    }
-    catch (Throwable t) {
-      Logger logger = Logger.getInstance(SystemNotifications.class);
-      if (logger.isDebugEnabled()) {
-        logger.debug(t);
-      }
-      else {
-        logger.info(t.getMessage());
+      catch (Throwable t) {
+        Logger.getInstance(SystemNotificationsImpl.class).infoWithDebug(t);
       }
     }
 

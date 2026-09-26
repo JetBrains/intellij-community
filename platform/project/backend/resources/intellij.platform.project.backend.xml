@@ -1,0 +1,25 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.project.backend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
+                        serviceImplementation="com.intellij.platform.project.backend.BackendProjectEntitiesStorage"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"
+                                            apiInterfaces="com.intellij.platform.project.module.ModuleStateApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.OpenFileChooserApiProvider"
+                                            apiInterfaces="com.intellij.platform.project.OpenFileChooserApi"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,6 @@
+// "Convert to primary constructor" "true"
+class UseParam(x: Int) {
+
+    val y: Int = x
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

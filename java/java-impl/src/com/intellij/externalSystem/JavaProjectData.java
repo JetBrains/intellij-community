@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,67 +6,106 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
+import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.serialization.PropertyMapping;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Denis Zhdanov
- * @since 4/12/13 12:27 PM
- */
-public class JavaProjectData extends AbstractExternalEntityData {
-
+public final class JavaProjectData extends AbstractExternalEntityData {
   public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
   private static final Logger LOG = Logger.getInstance(JavaProjectData.class);
 
-  private static final long serialVersionUID = 1L;
+  private static final Pattern JDK_VERSION_PATTERN = Pattern.compile(".*1.(\\d+).*");
 
-  private static final LanguageLevel  DEFAULT_LANGUAGE_LEVEL = LanguageLevel.JDK_1_6;
-  private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
-  private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1.(\\d+).*");
+  private @Nullable JavaSdkVersion jdkVersion;
 
-  @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
-  @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
+  private @NotNull String compileOutputPath;
+  private @Nullable LanguageLevel languageLevel;
+  private @Nullable String targetBytecodeVersion;
 
-  @NotNull private String myCompileOutputPath;
+  private @NotNull List<String> compilerArguments;
 
-  public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
-    super(owner);
-    myCompileOutputPath = compileOutputPath;
+  /**
+   * @deprecated use {@link #JavaProjectData(ProjectSystemId, String, LanguageLevel, String, List)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public JavaProjectData(
+    @NotNull ProjectSystemId owner,
+    @NotNull String compileOutputPath,
+    @Nullable LanguageLevel languageLevel,
+    @Nullable String targetBytecodeVersion
+  ) {
+    this(owner, compileOutputPath, languageLevel, targetBytecodeVersion, Collections.emptyList());
   }
 
-  @NotNull
-  public String getCompileOutputPath() {
-    return myCompileOutputPath;
+  @PropertyMapping({"owner", "compileOutputPath", "languageLevel", "targetBytecodeVersion", "compilerArguments"})
+  public JavaProjectData(
+    @NotNull ProjectSystemId owner,
+    @NotNull String compileOutputPath,
+    @Nullable LanguageLevel languageLevel,
+    @Nullable String targetBytecodeVersion,
+    @NotNull List<String> compilerArguments
+  ) {
+    super(owner);
+
+    this.compileOutputPath = compileOutputPath;
+    this.languageLevel = languageLevel;
+    this.targetBytecodeVersion = targetBytecodeVersion;
+    this.compilerArguments = compilerArguments;
+  }
+
+  public @NotNull String getCompileOutputPath() {
+    return compileOutputPath;
   }
 
   public void setCompileOutputPath(@NotNull String compileOutputPath) {
-    myCompileOutputPath = ExternalSystemApiUtil.toCanonicalPath(compileOutputPath);
+    this.compileOutputPath = ExternalSystemApiUtil.toCanonicalPath(compileOutputPath);
   }
 
-  @NotNull
-  public JavaSdkVersion getJdkVersion() {
-    return myJdkVersion;
+  /**
+   * @deprecated use {@link ProjectSdkData#getSdkName()} instead
+   */
+  @Deprecated(forRemoval = true) // used externally
+  public @NotNull JavaSdkVersion getJdkVersion() {
+    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(JavaRelease.getHighest()));
   }
 
-  public void setJdkVersion(@NotNull JavaSdkVersion jdkVersion) {
-    myJdkVersion = jdkVersion;
+  /**
+   * @deprecated needed to support backward compatibility
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public void setJdkName(@Nullable String jdk) {
+    jdkVersion = resolveSdkVersion(jdk);
   }
 
-  public void setJdkVersion(@Nullable String jdk) {
+  /**
+   * @deprecated needed to support backward compatibility
+   */
+  @Deprecated(forRemoval = true)
+  private static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
-      return;
+      return null;
     }
     try {
       int version = Integer.parseInt(jdk.trim());
-      if (applyJdkVersion(version)) {
-        return;
+      JavaSdkVersion sdkVersion = resolveSdkVersion(version);
+      if (sdkVersion != null) {
+        return sdkVersion;
       }
     }
     catch (NumberFormatException e) {
@@ -89,56 +114,77 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
     Matcher matcher = JDK_VERSION_PATTERN.matcher(jdk);
     if (!matcher.matches()) {
-      return;
+      return null;
     }
     String versionAsString = matcher.group(1);
     try {
-      applyJdkVersion(Integer.parseInt(versionAsString));
+      return resolveSdkVersion(Integer.parseInt(versionAsString));
     }
     catch (NumberFormatException e) {
       // Ignore.
     }
+    return null;
   }
 
-  public boolean applyJdkVersion(int version) {
+  /**
+   * @deprecated needed to support backward compatibility
+   */
+  @Deprecated(forRemoval = true)
+  private static @Nullable JavaSdkVersion resolveSdkVersion(int version) {
     if (version < 0 || version >= JavaSdkVersion.values().length) {
       LOG.warn(String.format(
         "Unsupported jdk version detected (%d). Expected to get number from range [0; %d]", version, JavaSdkVersion.values().length
       ));
-      return false;
+      return null;
     }
     for (JavaSdkVersion sdkVersion : JavaSdkVersion.values()) {
       if (sdkVersion.ordinal() == version) {
-        myJdkVersion = sdkVersion;
-        return true;
+        return sdkVersion;
       }
     }
     assert false : version + ", max value: " + JavaSdkVersion.values().length;
-    return false;
+    return null;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
+  public @NotNull LanguageLevel getLanguageLevel() {
+    return ObjectUtils.notNull(languageLevel, JavaRelease.getHighest());
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {
-    myLanguageLevel = level;
+    languageLevel = level;
   }
 
   public void setLanguageLevel(@Nullable String languageLevel) {
     LanguageLevel level = LanguageLevel.parse(languageLevel);
     if (level != null) {
-      myLanguageLevel = level;
+      this.languageLevel = level;
     }
+  }
+
+  public @Nullable String getTargetBytecodeVersion() {
+    return targetBytecodeVersion;
+  }
+
+  public void setTargetBytecodeVersion(@Nullable String targetBytecodeVersion) {
+    this.targetBytecodeVersion = targetBytecodeVersion;
+  }
+
+  public @NotNull List<String> getCompilerArguments() {
+    return compilerArguments;
+  }
+
+  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
+    this.compilerArguments = compilerArguments;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myJdkVersion.hashCode();
-    result = 31 * result + myLanguageLevel.hashCode();
-    result = 31 * result + myCompileOutputPath.hashCode();
+    result = 31 * result + Objects.hashCode(jdkVersion);
+    result = 31 * result + Objects.hashCode(languageLevel);
+    result = 31 * result + Objects.hashCode(targetBytecodeVersion);
+    result = 31 * result + compileOutputPath.hashCode();
+    result = 31 * result + compilerArguments.hashCode();
     return result;
   }
 
@@ -150,9 +196,11 @@ public class JavaProjectData extends AbstractExternalEntityData {
 
     JavaProjectData project = (JavaProjectData)o;
 
-    if (!myCompileOutputPath.equals(project.myCompileOutputPath)) return false;
-    if (myJdkVersion != project.myJdkVersion) return false;
-    if (myLanguageLevel != project.myLanguageLevel) return false;
+    if (!compileOutputPath.equals(project.compileOutputPath)) return false;
+    if (Objects.equals(jdkVersion, project.jdkVersion)) return false;
+    if (Objects.equals(languageLevel, project.languageLevel)) return false;
+    if (Objects.equals(targetBytecodeVersion, project.targetBytecodeVersion)) return false;
+    if (Objects.equals(compilerArguments, project.compilerArguments)) return false;
 
     return true;
   }

@@ -1,0 +1,17 @@
+swimlane-beta LR
+  accTitle: Support escalation
+  accDescr: A request starts with the customer, is triaged by support, and may be escalated to engineering.
+
+  subgraph Customer
+    request[Open request]
+  end
+
+  subgraph Support
+    triage[Triage]
+  end
+
+  subgraph Engineering
+    resolve[Resolve]
+  end
+
+  request --> triage --> resolve

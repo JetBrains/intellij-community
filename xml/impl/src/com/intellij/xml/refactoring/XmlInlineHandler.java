@@ -5,10 +5,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlInlineHandler implements InlineHandler {
+  @Override
+  public boolean canInlineElement(@NotNull PsiElement element) {
+    return false;
+  }
+
   @Override
   public Settings prepareInlineElement(@NotNull PsiElement element, Editor editor, boolean invokedOnReference) {
     return null;

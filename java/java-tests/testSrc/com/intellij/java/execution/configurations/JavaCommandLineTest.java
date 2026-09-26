@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -21,14 +7,18 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.util.io.IdeUtilIoBundle;
+import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class JavaCommandLineTest extends BareTestFixtureTestCase {
   @Test
@@ -85,7 +75,7 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     javaParameters.getVMParametersList().add("..");
     commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-cp ..");
-    assertTrue(!containsClassPath(commandLineString));
+    assertFalse(containsClassPath(commandLineString));
 
     javaParameters = new JavaParameters();
     javaParameters.setJdk(internalJdk);
@@ -95,7 +85,26 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     javaParameters.getVMParametersList().add("..");
     commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-classpath ..");
-    assertTrue(!containsClassPath(commandLineString));
+    assertFalse(containsClassPath(commandLineString));
+  }
+
+  @Test
+  public void testWithStdEncoding() throws CantRunException {
+    JavaParameters parameters = new JavaParameters();
+    parameters.setMainClass("FakeMain");
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(18)));
+    assertTrue(parameters.toCommandLine().getCommandLineString().contains("-Dsun.stdout.encoding="));
+    
+    parameters.setJdk(IdeaTestUtil.getMockJdk17());
+    assertFalse(parameters.toCommandLine().getCommandLineString().contains("-Dsun.stdout.encoding="));
+    
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(18)));
+    String consoleEncoding = "-Dsun.stdout.encoding=UTF-8";
+    parameters.getVMParametersList().add(consoleEncoding);
+    String commandLineString = parameters.toCommandLine().getCommandLineString();
+    int i = commandLineString.indexOf(consoleEncoding);
+    assertTrue(i > 0);
+    assertFalse(commandLineString.indexOf(consoleEncoding, i + consoleEncoding.length()) > 0);
   }
 
   private static boolean containsClassPath(String commandLineString) {
@@ -115,7 +124,7 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
       fail("'executable missing' expected");
     }
     catch (ExecutionException e) {
-      assertEquals(IdeBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
+      assertEquals(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"), e.getMessage());
     }
   }
 

@@ -1,30 +1,34 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SyntheticElement;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   private final String myScopeType;
@@ -32,92 +36,113 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public CalleeMethodsTreeStructure(final Project project, final PsiMethod method, final String scopeType) {
-    super(project, new CallHierarchyNodeDescriptor(project, null, method, true, false));
+  public CalleeMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, String scopeType) {
+    super(project, new CallHierarchyNodeDescriptor(project, null, member, true, false));
     myScopeType = scopeType;
   }
 
-  @NotNull
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    if (!(enclosingElement instanceof PsiMethod)) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  @Override
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+    PsiElement targetElement = ((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    PsiElement base = (targetElement instanceof PsiMethod baseMethod) ? baseMethod.getContainingClass() : targetElement;
+    PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    if (enclosingElement instanceof LightDefaultConstructor constructor) {
+      PsiMethod superConstructor = findNoArgSuperConstructor(constructor);
+      return superConstructor != null && isInScope(base, superConstructor, myScopeType)
+             ? new Object[]{new CallHierarchyNodeDescriptor(myProject, descriptor, superConstructor, false, false)}
+             : ArrayUtilRt.EMPTY_OBJECT_ARRAY; 
     }
-    final PsiMethod method = (PsiMethod)enclosingElement;
+    if (!(enclosingElement instanceof PsiMethod method) || enclosingElement instanceof SyntheticElement) {
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    }
 
-    final ArrayList<PsiMethod> methods = new ArrayList<>();
-
-    final PsiCodeBlock body = method.getBody();
+    List<MethodWithReference> methods = new ArrayList<>();
+    PsiCodeBlock body = method.getBody();
     if (body != null) {
-      visitor(body, methods);
+      collectCallees(body, methods);
+    }
+    if (method.isConstructor() && JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method) == null) {
+      PsiMethod superConstructor = findNoArgSuperConstructor(method);
+      if (superConstructor != null) methods.add(new MethodWithReference(superConstructor, null));
     }
 
-    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
-    final PsiClass baseClass = baseMethod.getContainingClass();
+    Map<PsiMethod, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
+    List<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
-    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
+    // also add overriding methods as children
+    SearchScope scope = getSearchScope(myScopeType, base);
+    Iterable<MethodWithReference> allMethods = ContainerUtil.concat(
+      methods,
+      ContainerUtil.map(OverridingMethodsSearch.search(method, scope, true).findAll(), m -> new MethodWithReference(m, null))
+    );
+    for (MethodWithReference entry : allMethods) {
+      PsiMethod callee = entry.method;
+      if (!isInScope(base, callee, myScopeType) || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
+        continue;
+      }
 
-    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<>();
-
-    for (final PsiMethod calledMethod : methods) {
-      if (!isInScope(baseClass, calledMethod, myScopeType)) continue;
-
-      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(calledMethod);
+      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(callee);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, descriptor, calledMethod, false, false);
-        methodToDescriptorMap.put(calledMethod, d);
+        d = new CallHierarchyNodeDescriptor(myProject, descriptor, callee, false, false);
+        methodToDescriptorMap.put(callee, d);
         result.add(d);
       }
       else {
         d.incrementUsageCount();
       }
+      if (entry.reference != null) {
+        d.addReference(entry.reference);
+      }
     }
 
-    // also add overriding methods as children
-    final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
-    for (final PsiMethod overridingMethod : overridingMethods) {
-      if (!isInScope(baseClass, overridingMethod, myScopeType)) continue;
-      final CallHierarchyNodeDescriptor node = new CallHierarchyNodeDescriptor(myProject, descriptor, overridingMethod, false, false);
-      if (!result.contains(node)) result.add(node);
-    }
-
-/*
-    // show method implementations in EJB Class
-    final PsiMethod[] ejbImplementations = EjbUtil.findEjbImplementations(method, null);
-    for (int i = 0; i < ejbImplementations.length; i++) {
-      PsiMethod ejbImplementation = ejbImplementations[i];
-      result.add(new CallHierarchyNodeDescriptor(myProject, descriptor, ejbImplementation, false));
-    }
-*/
     return ArrayUtil.toObjectArray(result);
   }
 
-
-  private static void visitor(final PsiElement element, final ArrayList<PsiMethod> methods) {
-    final PsiElement[] children = element.getChildren();
-    for (final PsiElement child : children) {
-      visitor(child, methods);
-      if (child instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;
-        final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-        final PsiMethod method = (PsiMethod)methodExpression.resolve();
-        if (method != null) {
-          methods.add(method);
-        }
-      }
-      else if (child instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)child;
-        final PsiMethod method = newExpression.resolveConstructor();
-        if (method != null) {
-          methods.add(method);
-        }
-      }
-      else if (child instanceof PsiMethodReferenceExpression) {
-        PsiElement method = ((PsiMethodReferenceExpression)child).resolve();
-        if (method instanceof PsiMethod) {
-          methods.add((PsiMethod)method);
+  private static @Nullable PsiMethod findNoArgSuperConstructor(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return null;
+    PsiMethod[] constructors = superClass.getConstructors();
+    if (constructors.length == 0) {
+      return LightDefaultConstructor.create(superClass);
+    }
+    else {
+      for (PsiMethod constructor : constructors) {
+        if (constructor.getParameterList().isEmpty()) {
+          return constructor;
         }
       }
     }
+    return null;
   }
+
+  private static void collectCallees(@NotNull PsiElement element, @NotNull List<MethodWithReference> methods) {
+    for (PsiElement child : element.getChildren()) {
+      collectCallees(child, methods);
+      if (child instanceof PsiMethodCallExpression callExpression) {
+        PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+        PsiMethod method = (PsiMethod)methodExpression.resolve();
+        if (method != null) {
+          methods.add(new MethodWithReference(method, methodExpression));
+        }
+      }
+      else if (child instanceof PsiNewExpression newExpression) {
+        PsiMethod method = newExpression.resolveConstructor();
+        if (method != null) {
+          methods.add(new MethodWithReference(method, newExpression.getClassOrAnonymousClassReference()));
+        }
+      }
+      else if (child instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
+        methods.add(new MethodWithReference(method, methodRef));
+      }
+    }
+  }
+
+  /**
+   *
+   * @param method resolved method that was called within the caller method
+   * @param reference reference that was used to call the method
+   */
+  private record MethodWithReference(@NotNull PsiMethod method, @Nullable PsiReference reference) {}
 }

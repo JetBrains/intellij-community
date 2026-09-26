@@ -22,6 +22,8 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+import static org.junit.Assert.assertNotEquals;
+
 public class MouseShortcutEqualityTest extends LightPlatformTestCase {
   public void testTheSameMouseShortcutIsEqual () {
     MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON1, 0, 1);
@@ -54,8 +56,8 @@ public class MouseShortcutEqualityTest extends LightPlatformTestCase {
   public void testSubclassesOfMouseEventsAreNotEqualToMouseEvents () {
     MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON2, InputEvent.ALT_DOWN_MASK, 2);
     PressureShortcut pressureShortcut = new PressureShortcut(1);
-    assertFalse("MouseShortcut is not equal to PressureShortcut", mouseShortcut.equals(pressureShortcut));
-    assertFalse("MouseShortcut is not equal to PressureShortcut", pressureShortcut.equals(mouseShortcut));
+    assertNotEquals("MouseShortcut is not equal to PressureShortcut", mouseShortcut, pressureShortcut);
+    assertNotEquals("MouseShortcut is not equal to PressureShortcut", pressureShortcut, mouseShortcut);
   }
 
   public void testPressureShortcutsWithTheSameDataAreEqual () {
@@ -69,7 +71,7 @@ public class MouseShortcutEqualityTest extends LightPlatformTestCase {
     PressureShortcut pressureShortcut = new PressureShortcut(1);
     PressureShortcut anotherPressureShortcut = new PressureShortcut(2);
 
-    assertFalse("Pressure shortcuts with different data are not equal", pressureShortcut.equals(anotherPressureShortcut));
-    assertFalse("Pressure shortcuts with different data are not equal", anotherPressureShortcut.equals(pressureShortcut));
+    assertNotEquals("Pressure shortcuts with different data are not equal", pressureShortcut, anotherPressureShortcut);
+    assertNotEquals("Pressure shortcuts with different data are not equal", anotherPressureShortcut, pressureShortcut);
   }
 }

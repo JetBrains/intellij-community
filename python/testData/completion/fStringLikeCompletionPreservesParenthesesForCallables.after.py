@@ -1,0 +1,1 @@
+s = f'foo{oct(<caret>)}'

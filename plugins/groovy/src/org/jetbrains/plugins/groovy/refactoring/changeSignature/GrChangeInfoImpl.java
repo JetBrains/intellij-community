@@ -1,28 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -32,55 +30,55 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GrChangeInfoImpl implements JavaChangeInfo {
-  GrMethod method;
-  final String newName;
-  @Nullable final CanonicalTypes.Type returnType;
-  final String visibilityModifier;
-  final List<GrParameterInfo> parameters;
-  boolean changeParameters = false;
-  private boolean myIsParameterTypesChanged = false;
-  private boolean myIsParameterNamesChanged = false;
-  private boolean myIsNameChanged = false;
-  private boolean myIsVisibilityChanged = false;
-  private boolean myIsReturnTypeChanged = false;
+  private GrMethod method;
+  private final String newName;
+  private final @Nullable CanonicalTypes.Type returnType;
+  private final String visibilityModifier;
+  private final List<? extends GrParameterInfo> parameters;
+  private final boolean myAreParametersChanged;
+  private final boolean myIsParameterTypesChanged;
+  private final boolean myIsParameterNamesChanged;
+  private final boolean myIsNameChanged;
+  private final boolean myIsVisibilityChanged;
+  private final boolean myIsReturnTypeChanged;
   private final boolean myIsRetainVarargs;
   private final boolean myIsArrayToVarargs;
   private final boolean myIsObtainVarargs;
   private final boolean myWasVarargs;
   private final String myOldName;
-  private PsiIdentifier myNewNameIdentifier;
+  private final PsiIdentifier myNewNameIdentifier;
   private final PsiExpression[] defaultValues;
   private final boolean myDelegate;
   private final ThrownExceptionInfo[] myThrownExceptions;
-  private boolean myExceptionSetChanged;
-  private boolean myExceptionSetOrOrderChanged;
+  private final boolean myExceptionSetChanged;
+  private final boolean myExceptionSetOrOrderChanged;
   private final String[] myOldParameterNames;
   private final String[] myOldParameterTypes;
 
-  public GrChangeInfoImpl(GrMethod method,
+  public GrChangeInfoImpl(@NotNull GrMethod method,
                           @Nullable String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
-                          List<GrParameterInfo> parameters, @Nullable ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
+                          List<? extends GrParameterInfo> parameters, ThrownExceptionInfo @Nullable [] exceptions, boolean generateDelegate) {
     this.method = method;
-    this.visibilityModifier = visibilityModifier;
+    this.visibilityModifier = visibilityModifier == null ? VisibilityUtil.getVisibilityModifier(method.getModifierList()) : visibilityModifier;
     this.returnType = returnType;
     this.parameters = parameters;
     this.newName = newName;
     myDelegate = generateDelegate;
     myOldName = method.getName();
 
-    if (!method.getName().equals(newName)) {
-      myIsNameChanged = true;
-    }
+    myIsNameChanged = !method.getName().equals(newName);
 
     myIsVisibilityChanged = visibilityModifier != null && !method.hasModifierProperty(visibilityModifier);
 
+    boolean isReturnTypeChanged = false;
     if (!method.isConstructor()) {
       PsiType oldReturnType = null;
       if (method.getReturnTypeElementGroovy() != null) {
@@ -88,14 +86,15 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
       }
       try {
         PsiType newReturnType = returnType == null ? null : returnType.getType(method);
-        if ((oldReturnType == null && newReturnType != null) || (oldReturnType != null && !oldReturnType.equals(newReturnType))) {
-          myIsReturnTypeChanged = true;
+        if (!Objects.equals(oldReturnType, newReturnType)) {
+          isReturnTypeChanged = true;
         }
       }
       catch (IncorrectOperationException e) {
-        myIsReturnTypeChanged = true;
+        isReturnTypeChanged = true;
       }
     }
+    myIsReturnTypeChanged = isReturnTypeChanged;
 
     GrParameter[] params = method.getParameters();
     final int oldParameterCount = this.method.getParameters().length;
@@ -108,31 +107,37 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
       myOldParameterTypes[i] = param.getType().getCanonicalText();
     }
 
+    boolean isParameterNamesChanged = false;
+    boolean isParameterTypesChanged = false;
+    boolean areParametersChanged = false;
     if (oldParameterCount != this.parameters.size()) {
-      changeParameters = true;
+      areParametersChanged = true;
     }
     else {
       for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
         GrParameterInfo parameter = parameters.get(i);
         if (parameter.getOldIndex() != i) {
-          changeParameters = true;
+          areParametersChanged = true;
           break;
         }
         if (!params[i].getName().equals(parameter.getName())) {
-          myIsParameterNamesChanged = true;
+          isParameterNamesChanged = true;
         }
         try {
           PsiType type = parameter.createType(method);
           PsiType oldType = params[i].getType();
           if (!oldType.equals(type)) {
-            myIsParameterTypesChanged = true;
+            isParameterTypesChanged = true;
           }
         }
         catch (IncorrectOperationException e) {
-          myIsParameterTypesChanged = true;
+          isParameterTypesChanged = true;
         }
       }
     }
+    myIsParameterNamesChanged = isParameterNamesChanged;
+    myIsParameterTypesChanged = isParameterTypesChanged;
+    myAreParametersChanged = areParametersChanged;
 
     myWasVarargs = method.isVarArgs();
     if (parameters.isEmpty()) {
@@ -146,7 +151,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
       myIsRetainVarargs = lastNewParam.getOldIndex() >= 0 && myIsObtainVarargs;
       if (myIsRetainVarargs) {
         final PsiType oldTypeForVararg = params[lastNewParam.getOldIndex()].getType();
-        myIsArrayToVarargs = (oldTypeForVararg instanceof PsiArrayType && !(oldTypeForVararg instanceof PsiEllipsisType));
+        myIsArrayToVarargs = oldTypeForVararg instanceof PsiArrayType && !(oldTypeForVararg instanceof PsiEllipsisType);
       }
       else {
         myIsArrayToVarargs = false;
@@ -161,18 +166,19 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
         myNewNameIdentifier = getMethod().getNameIdentifier();
       }
     }
+    else {
+      myNewNameIdentifier = null;
+    }
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     defaultValues = new PsiExpression[parameters.size()];
     for (int i = 0; i < parameters.size(); i++) {
-      JavaParameterInfo info = parameters.get(i);
+      GrParameterInfo info = parameters.get(i);
       if (info.getOldIndex() < 0 && !info.isVarargType()) {
-        if (info.getDefaultValue() == null) continue;
         try {
           defaultValues[i] = factory.createExpressionFromText(info.getDefaultValue(), method);
         }
-        catch (IncorrectOperationException e) {
-//          LOG.error(e);
+        catch (IncorrectOperationException ignored) {
         }
       }
     }
@@ -189,36 +195,38 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
         myExceptionSetOrOrderChanged = true;
       }
       else {
-        myExceptionSetChanged = false;
+        boolean exceptionSetChanged = false;
+        boolean exceptionSetOrOrderChanged = false;
         for (int i = 0; i < myThrownExceptions.length; i++) {
           ThrownExceptionInfo info = myThrownExceptions[i];
           if (info.getOldIndex() < 0 || !thrownTypes[info.getOldIndex()].equals(info.createType(method, method.getManager()))) {
-            myExceptionSetChanged = true;
-            myExceptionSetOrOrderChanged = true;
+            exceptionSetChanged = true;
+            exceptionSetOrOrderChanged = true;
             break;
           }
           else if (info.getOldIndex() != i) {
-            myExceptionSetOrOrderChanged = true;
+            exceptionSetOrOrderChanged = true;
           }
         }
+        myExceptionSetChanged = exceptionSetChanged;
+        myExceptionSetOrOrderChanged = exceptionSetOrOrderChanged;
       }
     }
   }
 
   @Override
-  @NotNull
-  public JavaParameterInfo[] getNewParameters() {
+  public JavaParameterInfo @NotNull [] getNewParameters() {
     return parameters.toArray(new GrParameterInfo[0]);
   }
 
   @Override
-  public String getNewVisibility() {
+  public @NotNull String getNewVisibility() {
     return visibilityModifier;
   }
 
   @Override
   public boolean isParameterSetOrOrderChanged() {
-    return changeParameters;
+    return myAreParametersChanged;
   }
 
   @Override
@@ -257,7 +265,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public GrMethod getMethod() {
+  public @NotNull GrMethod getMethod() {
     return method;
   }
 
@@ -282,14 +290,12 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterNames() {
+  public String @NotNull [] getOldParameterNames() {
     return myOldParameterNames;
   }
 
   @Override
-  @NotNull
-  public String[] getOldParameterTypes() {
+  public String @NotNull [] getOldParameterTypes() {
     return myOldParameterTypes;
   }
 
@@ -341,14 +347,14 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public void updateMethod(PsiMethod psiMethod) {
+  public void updateMethod(@NotNull PsiMethod psiMethod) {
     if (psiMethod instanceof GrMethod) {
       method = (GrMethod)psiMethod;
     }
   }
 
   @Override
-  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+  public @NotNull Collection<PsiMethod> getMethodsToPropagateParameters() {
     return Collections.emptyList();
   }
 }

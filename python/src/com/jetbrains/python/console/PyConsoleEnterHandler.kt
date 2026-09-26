@@ -15,13 +15,12 @@
  */
 package com.jetbrains.python.console
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -33,11 +32,13 @@ import com.intellij.util.DocumentUtil
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyStatementListContainer
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyStringLiteralUtil
 import com.jetbrains.python.psi.PyTryPart
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class PyConsoleEnterHandler {
   fun handleEnterPressed(editor: EditorEx): Boolean {
     val project = editor.project ?: throw IllegalArgumentException()
@@ -52,11 +53,11 @@ class PyConsoleEnterHandler {
       } else {
         // otherwise just process enter action
         executeEnterHandler(project, editor)
-        return false;
+        return false
       }
     }
     else {
-      return true;
+      return true
     }
     val psiMgr = PsiDocumentManager.getInstance(project)
     psiMgr.commitDocument(editor.document)
@@ -87,7 +88,9 @@ class PyConsoleEnterHandler {
   private fun executeEnterHandler(project: Project, editor:EditorEx) {
     val enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
     WriteCommandAction.runWriteCommandAction(project) {
-        enterHandler.execute(editor, null, DataManager.getInstance().getDataContext(editor.component))
+        // The enter handler takes its project from the data context, and the console editor's Swing ancestors may
+        // report another project when several projects share one remote development backend (PY-90740).
+        enterHandler.execute(editor, null, EditorUtil.getEditorDataContext(editor))
     }
   }
 
@@ -126,12 +129,12 @@ class PyConsoleEnterHandler {
   }
 
   private fun isMultilineString(str: String): Boolean {
-    val text = str.substring(PyStringLiteralExpressionImpl.getPrefixLength(str))
+    val text = str.substring(PyStringLiteralUtil.getPrefixLength(str))
     return text.startsWith("\"\"\"") || text.startsWith("'''")
   }
 
   private fun isCompleteDocString(str: String): Boolean {
-    val prefixLen = PyStringLiteralExpressionImpl.getPrefixLength(str)
+    val prefixLen = PyStringLiteralUtil.getPrefixLength(str)
     val text = str.substring(prefixLen)
     for (token in arrayOf("\"\"\"", "'''")) {
       if (text.length >= 2 * token.length && text.startsWith(token) && text.endsWith(token)) {

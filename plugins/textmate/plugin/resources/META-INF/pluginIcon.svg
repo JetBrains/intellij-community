@@ -1,0 +1,24 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="20" cy="20" r="16" fill="#C54BD7"/>
+<path d="M20 20C20 20 21.1028 9.08972 26.5 8.74166C28.8971 13.5897 20 20 20 20Z" fill="#F7DFFA"/>
+<path d="M20 19.9999C20 19.9999 9.08972 18.897 8.74166 13.4999C13.5897 11.1028 20 19.9999 20 19.9999Z" fill="#F7DFFA"/>
+<path d="M20 20C20 20 30.9103 21.1028 31.2583 26.5C26.4103 28.8971 20 20 20 20Z" fill="#F7DFFA"/>
+<path d="M20 20C20 20 18.8972 30.9103 13.5 31.2583C11.1029 26.4103 20 20 20 20Z" fill="#F7DFFA"/>
+<path d="M20 20C20 20 26.4102 11.1028 31.2583 13.5C30.9102 18.8971 20 20 20 20Z" fill="#EEC5F3"/>
+<path d="M20 20.0001C20 20.0001 11.1028 13.5899 13.5 8.7418C18.8971 9.08989 20 20.0001 20 20.0001Z" fill="#EEC5F3"/>
+<path d="M20 19.9999C20 19.9999 28.8972 26.4101 26.5 31.2582C21.1029 30.9101 20 19.9999 20 19.9999Z" fill="#EEC5F3"/>
+<path d="M20 20C20 20 13.5898 28.8972 8.74168 26.5C9.08977 21.1029 20 20 20 20Z" fill="#EEC5F3"/>
+<path d="M20.0001 20C20.0001 20 15.5 10 20 7C24.5 10 20.0001 20 20.0001 20Z" fill="#F6ECF7"/>
+<path d="M20 20C20 20 24.5 30 20 33C15.5 30 20 20 20 20Z" fill="#F6ECF7"/>
+<path d="M20 20C20 20 30 15.4999 33 20C30 24.4999 20 20 20 20Z" fill="#F6ECF7"/>
+<path d="M20 20C20 20 10 24.5001 7 20C10 15.5001 20 20 20 20Z" fill="#F6ECF7"/>
+<circle cx="20" cy="20" r="4" fill="url(#paint0_radial_4662_1227)"/>
+<circle cx="20" cy="20" r="3" fill="white"/>
+<defs>
+<radialGradient id="paint0_radial_4662_1227" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(20 20) rotate(90) scale(4)">
+<stop stop-color="#C54BD7"/>
+<stop offset="0.298077" stop-color="#C54BD7" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#C54BD7" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>

@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,16 +16,25 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextComponentAccessors;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ObjectUtils;
@@ -46,11 +42,22 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.PopupMenuEvent;
@@ -64,15 +71,28 @@ import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
-public class SwingHelper {
+public final class SwingHelper {
 
   private static final Logger LOG = Logger.getInstance(SwingHelper.class);
   private static final String DIALOG_RESIZED_TO_FIT_TEXT = "INTELLIJ_DIALOG_RESIZED_TO_FIT_TEXT";
@@ -85,23 +105,19 @@ public class SwingHelper {
    * @param children        children components
    * @return created panel
    */
-  @NotNull
-  public static JPanel newVerticalPanel(float childAlignmentX, Component... children) {
+  public static @NotNull JPanel newVerticalPanel(float childAlignmentX, Component... children) {
     return newGenericBoxPanel(true, childAlignmentX, children);
   }
 
-  @NotNull
-  public static JPanel newLeftAlignedVerticalPanel(Component... children) {
+  public static @NotNull JPanel newLeftAlignedVerticalPanel(Component... children) {
     return newVerticalPanel(Component.LEFT_ALIGNMENT, children);
   }
 
-  @NotNull
-  public static JPanel newLeftAlignedVerticalPanel(@NotNull Collection<Component> children) {
+  public static @NotNull JPanel newLeftAlignedVerticalPanel(@NotNull Collection<Component> children) {
     return newVerticalPanel(Component.LEFT_ALIGNMENT, children);
   }
 
-  @NotNull
-  public static JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
+  public static @NotNull JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
     return newVerticalPanel(childAlignmentX, children.toArray(new Component[0]));
   }
 
@@ -113,8 +129,7 @@ public class SwingHelper {
    * @param children        children components
    * @return created panel
    */
-  @NotNull
-  public static JPanel newHorizontalPanel(float childAlignmentY, Component... children) {
+  public static @NotNull JPanel newHorizontalPanel(float childAlignmentY, Component... children) {
     return newGenericBoxPanel(false, childAlignmentY, children);
   }
 
@@ -126,8 +141,7 @@ public class SwingHelper {
     panel.setLayout(new BoxLayout(panel, axis));
     for (Component child : children) {
       panel.add(child, childAlignment);
-      if (child instanceof JComponent) {
-        JComponent jChild = (JComponent)child;
+      if (child instanceof JComponent jChild) {
         if (verticalOrientation) {
           jChild.setAlignmentX(childAlignment);
         }
@@ -139,27 +153,25 @@ public class SwingHelper {
     return panel;
   }
 
-  @NotNull
-  public static JPanel wrapWithoutStretch(@NotNull JComponent component) {
+  public static @NotNull JPanel wrapWithoutStretch(@NotNull JComponent component) {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(component);
     return panel;
   }
 
-  @NotNull
-  public static JPanel wrapWithHorizontalStretch(@NotNull JComponent component) {
+  public static @NotNull JPanel wrapWithHorizontalStretch(@NotNull JComponent component) {
     JPanel panel = new JPanel(new BorderLayout(0, 0));
     panel.add(component, BorderLayout.NORTH);
     return panel;
   }
 
   public static void setPreferredWidthToFitText(@NotNull TextFieldWithHistoryWithBrowseButton component) {
-    int childWidth = calcWidthToFitText(component.getChildComponent().getTextEditor(), JBUI.scale(32));
+    int childWidth = calcWidthToFitText(component.getChildComponent().getTextEditor(), JBUIScale.scale(32));
     setPreferredWidthForComponentWithBrowseButton(component, childWidth);
   }
 
   public static void setPreferredWidthToFitText(@NotNull TextFieldWithBrowseButton component) {
-    int childWidth = calcWidthToFitText(component.getChildComponent(), JBUI.scale(20));
+    int childWidth = calcWidthToFitText(component.getChildComponent(), JBUIScale.scale(20));
     setPreferredWidthForComponentWithBrowseButton(component, childWidth);
   }
 
@@ -170,7 +182,7 @@ public class SwingHelper {
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField) {
-    setPreferredWidthToFitText(textField, JBUI.scale(15));
+    setPreferredWidthToFitText(textField, JBUIScale.scale(15));
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField, int additionalWidth) {
@@ -178,7 +190,7 @@ public class SwingHelper {
   }
 
   public static void setPreferredWidthToFitText(@NotNull JTextField textField, @NotNull String text) {
-    setPreferredSizeToFitText(textField, text, JBUI.scale(15));
+    setPreferredSizeToFitText(textField, text, JBUIScale.scale(15));
   }
 
   private static void setPreferredSizeToFitText(@NotNull JTextField textField, @NotNull String text, int additionalWidth) {
@@ -215,7 +227,7 @@ public class SwingHelper {
     LOG.debug("DialogWrapper '" + dialogWrapper.getTitle() + "' has been re-sized (added width: " + dw + ", added height: " + dh + ")");
   }
 
-  public static void resizeDialogToFitTextFor(@NotNull final JComponent... components) {
+  public static void resizeDialogToFitTextFor(final JComponent @NotNull ... components) {
     if (components.length == 0) return;
     doWithDialogWrapper(components[0], dialogWrapper -> {
       if (dialogWrapper instanceof SettingsDialog || dialogWrapper instanceof SingleConfigurableEditor) {
@@ -235,7 +247,7 @@ public class SwingHelper {
     });
   }
 
-  private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<DialogWrapper> consumer) {
+  private static void doWithDialogWrapper(final @NotNull JComponent component, final @NotNull Consumer<? super DialogWrapper> consumer) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
         return;
@@ -257,7 +269,7 @@ public class SwingHelper {
   }
 
   public static <T> void updateItems(@NotNull JComboBox<T> comboBox,
-                                     @NotNull List<T> newItems,
+                                     @NotNull List<? extends T> newItems,
                                      @Nullable T newSelectedItemIfSelectionCannotBePreserved) {
     if (!shouldUpdate(comboBox, newItems)) {
       return;
@@ -265,8 +277,8 @@ public class SwingHelper {
     Object itemToSelect = comboBox.getSelectedItem();
     boolean preserveSelection = true;
     //noinspection SuspiciousMethodCalls
-    if (!newItems.contains(itemToSelect)) {
-      if (newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
+    if (itemToSelect == null || !newItems.contains(itemToSelect)) {
+      if (newSelectedItemIfSelectionCannotBePreserved != null && newItems.contains(newSelectedItemIfSelectionCannotBePreserved)) {
         itemToSelect = newSelectedItemIfSelectionCannotBePreserved;
       }
       else {
@@ -290,7 +302,7 @@ public class SwingHelper {
     }
   }
 
-  private static <T> boolean shouldUpdate(@NotNull JComboBox<T> comboBox, @NotNull List<T> newItems) {
+  private static <T> boolean shouldUpdate(@NotNull JComboBox<T> comboBox, @NotNull List<? extends T> newItems) {
     int count = comboBox.getItemCount();
     if (newItems.size() != count) {
       return true;
@@ -330,8 +342,8 @@ public class SwingHelper {
     });
   }
 
-  public static void addHistoryOnExpansion(@NotNull final TextFieldWithHistory textFieldWithHistory,
-                                           @NotNull final NotNullProducer<List<String>> historyProvider) {
+  public static void addHistoryOnExpansion(final @NotNull TextFieldWithHistory textFieldWithHistory,
+                                           final @NotNull NotNullProducer<? extends List<String>> historyProvider) {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -354,9 +366,9 @@ public class SwingHelper {
   public static void setHistory(@NotNull TextFieldWithHistory textFieldWithHistory,
                                 @NotNull List<String> history,
                                 boolean mergeWithPrevHistory) {
-    Set<String> newHistorySet = ContainerUtil.newHashSet(history);
+    Set<String> newHistorySet = new HashSet<>(history);
     List<String> prevHistory = textFieldWithHistory.getHistory();
-    List<String> mergedHistory = ContainerUtil.newArrayListWithCapacity(history.size());
+    List<String> mergedHistory = new ArrayList<>(history.size());
     if (mergeWithPrevHistory) {
       for (String item : prevHistory) {
         if (!newHistorySet.contains(item)) {
@@ -380,7 +392,7 @@ public class SwingHelper {
     }
   }
 
-  public static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
+  private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {
@@ -391,7 +403,7 @@ public class SwingHelper {
     }
     String longest = StringUtil.notNullize(prototypeDisplayValueStr);
     boolean updated = false;
-    for (String s : variants) {
+    for (@NlsSafe String s : variants) {
       if (longest.length() < s.length()) {
         longest = s;
         updated = true;
@@ -402,47 +414,71 @@ public class SwingHelper {
     }
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithHistoryWithBrowseButton,
-              textFieldWithHistoryWithBrowseButton.getChildComponent().getTextEditor(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithHistoryWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithBrowseButton,
-              textFieldWithBrowseButton.getTextField(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getChildComponent().getTextEditor(), fileChooserDescriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
   }
 
-  private static <T extends JComponent> void doInstall(@Nullable Project project,
-                                                       @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
-                                                       @NotNull JTextField textField,
-                                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                       @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                       @NotNull TextComponentAccessor<T> textComponentAccessor) {
-    ComponentsKt.installFileCompletionAndBrowseDialog(project, componentWithBrowseButton, textField, browseDialogTitle,
-                                                      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix), textComponentAccessor);
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
   }
 
-  @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NotNull String url) {
-    return createWebHyperlink(url, url);
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getTextField(), fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
   }
 
-  @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NotNull String text, @NotNull String url) {
+  private static <T extends JComponent> void doInstall(
+    @Nullable Project project,
+    @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
+    @NotNull JTextField textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @NotNull TextComponentAccessor<T> textComponentAccessor
+  ) {
+    ComponentsKt.installFileCompletionAndBrowseDialog(
+      project,
+      componentWithBrowseButton,
+      textField,
+      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix),
+      textComponentAccessor
+    );
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
     HyperlinkLabel hyperlink = new HyperlinkLabel(text);
     hyperlink.setHyperlinkTarget(url);
 
@@ -494,8 +530,8 @@ public class SwingHelper {
     return false;
   }
 
-  private static void getAllElements(Element root, List<Element> list, List<String> toCheck) {
-    if (toCheck.contains(root.getName().toLowerCase(Locale.US))) {
+  private static void getAllElements(Element root, List<? super Element> list, List<String> toCheck) {
+    if (toCheck.contains(StringUtil.toLowerCase(root.getName()))) {
       list.add(root);
     }
     for (int i = 0; i < root.getElementCount(); i++) {
@@ -503,7 +539,7 @@ public class SwingHelper {
     }
   }
 
-  public static class HtmlViewerBuilder {
+  public static final class HtmlViewerBuilder {
     private boolean myCarryTextOver;
     private String myDisabledHtml;
     private Font myFont;
@@ -527,7 +563,7 @@ public class SwingHelper {
         }
 
         @Override
-        public void setText(String t) {
+        public void setText(@NlsSafe String t) {
           if (myDisabledHtml != null) {
             if (myEnabled) {
               myEnabledHtml = t;
@@ -551,8 +587,8 @@ public class SwingHelper {
           }
         }
       };
-      textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
-      textPane.setContentType(UIUtil.HTML_MIME);
+      textPane.setFont(myFont != null ? myFont : StartupUiUtil.getLabelFont());
+      textPane.setEditorKit(HTMLEditorKitBuilder.simple());
       textPane.setEditable(false);
       if (myBackground != null) {
         textPane.setBackground(myBackground);
@@ -591,11 +627,10 @@ public class SwingHelper {
     }
   }
 
-  @NotNull
-  public static JEditorPane createHtmlViewer(boolean lineWrap,
-                                             @Nullable Font font,
-                                             @Nullable Color background,
-                                             @Nullable Color foreground) {
+  public static @NotNull JEditorPane createHtmlViewer(boolean lineWrap,
+                                                      @Nullable Font font,
+                                                      @Nullable Color background,
+                                                      @Nullable Color foreground) {
     final JEditorPane textPane;
     if (lineWrap) {
       textPane = new JEditorPane() {
@@ -612,9 +647,9 @@ public class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
-    UISettings.setupComponentAntialiasing(textPane);
-    textPane.setFont(font != null ? font : UIUtil.getLabelFont());
-    textPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAATextInfoForSwingComponent());
+    textPane.setFont(font != null ? font : StartupUiUtil.getLabelFont());
+    textPane.setEditorKit(HTMLEditorKitBuilder.simple());
     textPane.setEditable(false);
     if (background != null) {
       textPane.setBackground(background);
@@ -628,31 +663,49 @@ public class SwingHelper {
   }
 
   public static void setHtml(@NotNull JEditorPane editorPane,
-                             @NotNull String bodyInnerHtml,
+                             @NotNull @Nls String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
     editorPane.setText(buildHtml(
-      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, JBColor.link(), null),
+      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, JBUI.CurrentTheme.Link.Foreground.ENABLED, null),
       bodyInnerHtml
     ));
   }
 
-  @NotNull
-  public static String buildHtml(@NotNull String headInnerHtml, @NotNull String bodyInnedHtml) {
-    return "<html><head>" + headInnerHtml + "</head><body>" + bodyInnedHtml + "</body></html>";
+  public static @NotNull @Nls String buildHtml(@NotNull @Nls String headInnerHtml, @NotNull @Nls String bodyInnerHtml) {
+    if (bodyInnerHtml.contains("<html>")) {
+      bodyInnerHtml = UIUtil.getHtmlBody(bodyInnerHtml);
+    }
+    return HtmlChunk.html().children(
+      HtmlChunk.head().addRaw(headInnerHtml),
+      HtmlChunk.body().addRaw(bodyInnerHtml)
+    ).toString();
   }
 
-  @NotNull
-  public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
-                                                                                                @NotNull String browseDialogTitle,
-                                                                                                @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                                                                @Nullable NotNullProducer<List<String>> historyProvider) {
-    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
+  /**
+   * @deprecated use {@link #createTextFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, Supplier)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @SuppressWarnings("UsagesOfObsoleteApi") @Nullable NotNullProducer<? extends List<String>> historyProvider
+  ) {
+    return createTextFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), historyProvider);
   }
 
-  @NotNull
-  public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
-                                                                                       @NotNull String infoButtonTooltip,
-                                                                                       @NotNull ActionListener listener) {
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @Nullable Supplier<? extends List<String>> historyProvider
+  ) {
+    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor, historyProvider != null ? () -> historyProvider.get() : null);
+  }
+
+  public static @NotNull <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(final @NotNull C component,
+                                                                                                @NlsContexts.Tooltip @NotNull String infoButtonTooltip,
+                                                                                                @NotNull ActionListener listener) {
     ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<>(component, listener);
     FixedSizeButton uiHelpButton = comp.getButton();
     uiHelpButton.setToolTipText(infoButtonTooltip);
@@ -662,50 +715,59 @@ public class SwingHelper {
     return comp;
   }
 
-  private static class CopyLinkAction extends AnAction {
+  private static final class CopyLinkAction extends DumbAwareAction {
 
     private final String myUrl;
 
     private CopyLinkAction(@NotNull String url) {
-      super("Copy Link Address", null, PlatformIcons.COPY_ICON);
+      super(IdeBundle.message("action.text.copy.link.address"), null, PlatformIcons.COPY_ICON);
       myUrl = url;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Transferable content = new StringSelection(myUrl);
       CopyPasteManager.getInstance().setContents(content);
     }
   }
 
-  private static class OpenLinkInBrowser extends AnAction {
+  private static final class OpenLinkInBrowser extends DumbAwareAction {
 
     private final String myUrl;
 
     private OpenLinkInBrowser(@NotNull String url) {
-      super("Open Link in Browser", null, PlatformIcons.WEB_ICON);
+      super(IdeBundle.message("action.text.open.link.in.browser"), null, PlatformIcons.WEB_ICON);
       myUrl = url;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       BrowserUtil.browse(myUrl);
     }
   }
 
-  public final static String ELLIPSIS = "...";
+  public static final String ELLIPSIS = "...";
   public static final String ERROR_STR = "www";
-  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final FontMetrics fm) {
+  public static @Nls String truncateStringWithEllipsis(final @Nls String text, final int maxWidth, final FontMetrics fm) {
     return truncateStringWithEllipsis(text, maxWidth, new WidthCalculator() {
       @Override
       public int stringWidth(String s) {
@@ -719,12 +781,14 @@ public class SwingHelper {
     });
   }
 
+  @ApiStatus.Internal
   public interface WidthCalculator {
     int stringWidth(final String s);
     int charWidth(final char c);
   }
 
-  public static String truncateStringWithEllipsis(@NotNull final String text, final int maxWidth, final WidthCalculator fm) {
+  @ApiStatus.Internal
+  public static @Nls String truncateStringWithEllipsis(final @Nls @NotNull String text, final int maxWidth, final WidthCalculator fm) {
     final int error = fm.stringWidth(ERROR_STR);
     final int wholeWidth = fm.stringWidth(text) + error;
     if (wholeWidth <= maxWidth || text.isEmpty()) return text;
@@ -737,15 +801,14 @@ public class SwingHelper {
     final String currentSubstring = text.substring(0, currentLen);
     int realWidth = fm.stringWidth(currentSubstring);
 
+    int delta = 0;
     if (realWidth >= availableWidth) {
-      int delta = 0;
       for (int i = currentLen - 1; i >= 0; i--) {
         if ((realWidth - delta) < availableWidth) return text.substring(0, i) + ELLIPSIS;
         delta += fm.charWidth(currentSubstring.charAt(i));
       }
-      return text.substring(0, 1) + ELLIPSIS;
+      return text.charAt(0) + ELLIPSIS;
     } else {
-      int delta = 0;
       for (int i = currentLen; i < text.length(); i++) {
         if ((realWidth + delta) >= availableWidth) return text.substring(0, i) + ELLIPSIS;
         delta += fm.charWidth(text.charAt(i));
@@ -754,27 +817,28 @@ public class SwingHelper {
     }
   }
 
-  public static JEditorPane createHtmlLabel(@NotNull final String innerHtml, @Nullable String disabledHtml,
-                                            @Nullable final Consumer<String> hyperlinkListener) {
-    disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
-    final Font font = UIUtil.getLabelFont();
+  public static @NotNull JEditorPane createHtmlLabel(@NotNull @Nls String bodyInnerHtml,
+                                                     @Nullable @Nls String disabledBodyInnerHtml,
+                                                     @Nullable Consumer<? super String> hyperlinkListener) {
+    final Font font = StartupUiUtil.getLabelFont();
     String html = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
-      innerHtml
+      UIUtil.getCssFontDeclaration(font, UIUtil.getActiveTextColor(), null, null),
+      bodyInnerHtml
     );
-    String disabled = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
-      disabledHtml
+    String disabledHtml = buildHtml(
+      UIUtil.getCssFontDeclaration(font, NamedColorUtil.getInactiveTextColor(), null, null),
+      ObjectUtils.notNull(disabledBodyInnerHtml, bodyInnerHtml)
     );
 
     final JEditorPane pane = new SwingHelper.HtmlViewerBuilder()
       .setCarryTextOver(false)
-      .setFont(UIUtil.getLabelFont())
-      .setDisabledHtml(disabled)
+      .setFont(StartupUiUtil.getLabelFont())
+      .setDisabledHtml(disabledHtml)
       .create();
     pane.setText(html);
     pane.addHyperlinkListener(
       new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             if (hyperlinkListener != null) hyperlinkListener.consume(e.getURL() == null ? "" : e.getURL().toString());
@@ -786,18 +850,15 @@ public class SwingHelper {
     return pane;
   }
 
-  @Nullable
-  public static Component getComponentFromRecentMouseEvent() {
+  public static @Nullable Component getComponentFromRecentMouseEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    if (event instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)event;
+    if (event instanceof MouseEvent mouseEvent) {
       Component component = mouseEvent.getComponent();
       if (component != null) {
         component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
         if (component != null) {
-          if (component instanceof JTabbedPane) {
+          if (component instanceof JTabbedPane tabbedPane) {
             mouseEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
-            JTabbedPane tabbedPane = (JTabbedPane)component;
             int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, mouseEvent.getX(), mouseEvent.getY());
             if (index != -1) return tabbedPane.getComponentAt(index);
           }

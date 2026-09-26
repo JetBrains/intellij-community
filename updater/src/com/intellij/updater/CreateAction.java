@@ -1,25 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class CreateAction extends PatchAction {
   public CreateAction(Patch patch, String path) {
@@ -34,7 +28,7 @@ public class CreateAction extends PatchAction {
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     patchOutput.putNextEntry(new ZipEntry(getPath()));
 
-    if (!newerFile.isDirectory()) {
+    if (!Files.isDirectory(newerFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
       FileType type = getFileType(newerFile);
       writeFileType(patchOutput, type);
       if (type == FileType.SYMLINK) {
@@ -57,19 +51,17 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
-  public ValidationResult validate(File toDir) {
+  public ValidationResult validate(File toDir) throws IOException {
     File toFile = getFile(toDir);
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
 
-    if (toFile.exists()) {
+    if (!isOptional() && toFile.exists()) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(),
-                                  ValidationResult.Action.CREATE,
-                                  ValidationResult.ALREADY_EXISTS_MESSAGE,
-                                  options);
+      String message = UpdaterUI.message("file.exists"), details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile));
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, message, details, options);
     }
     return null;
   }
@@ -81,7 +73,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
+    LOG.info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, getPath());
@@ -131,10 +123,7 @@ public class CreateAction extends PatchAction {
     return new String(bytes, StandardCharsets.UTF_8);
   }
 
-  protected void doBackup(File toFile, File backupFile) {
-    // do nothing
-  }
-
+  @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile);
   }

@@ -1,0 +1,37 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="com.intellij.openapi.vcs.VcsApplicationSettings"/>
+    <projectSettings service="com.intellij.openapi.vcs.VcsConfiguration"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
+                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.changeListDecorator"
+                    interface="com.intellij.openapi.vcs.changes.ChangeListDecorator"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

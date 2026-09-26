@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.dataframe;
 
 import com.google.common.collect.Maps;
@@ -20,7 +6,8 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
@@ -33,23 +20,23 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   public DataFrameTableModel(int rows,
                              int columns,
-                             PyDataViewerPanel dataProvider,
+                             PyDataViewerCommunityPanel dataProvider,
                              PyDebugValue debugValue,
                              DataFrameViewStrategy strategy) {
     super(rows, columns, dataProvider, debugValue, strategy);
     myRowHeaderModel = new RowHeaderModel();
   }
-  /* we use labels for the first column so we need to offset columns by one everywhere */
+  /* we use labels for the first column, so we need to offset columns by one everywhere */
 
   @Override
   public Object getValueAt(int row, int col) {
 
     Object value = super.getValueAt(row, col);
-    if (value == AsyncArrayTableModel.EMPTY_CELL_VALUE) {
+    if (value == EMPTY_CELL_VALUE) {
       return value;
     }
     TableValueDescriptor descriptor = createValueWithDescriptor(col, value);
-    return descriptor != null ? descriptor : AsyncArrayTableModel.EMPTY_CELL_VALUE;
+    return descriptor != null ? descriptor : EMPTY_CELL_VALUE;
   }
 
   private TableValueDescriptor createValueWithDescriptor(int frameCol, Object value) {
@@ -69,8 +56,6 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   @Override
   public String getColumnName(int col) {
-
-
     ArrayChunk.ColHeader header = myColHeaders.get(col);
     if (header != null && header.getLabel() != null) {
       return header.getLabel();
@@ -80,20 +65,30 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
     }
   }
 
+  public @Nullable String getColumnType(int col) {
+    ArrayChunk.ColHeader header = myColHeaders.get(col);
+    if (header != null)
+      return header.getType();
+
+    return null;
+  }
 
   @Override
   protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
-
     myRowHeaderModel.handleChunkAdded(rowOffset, chunk);
-    boolean hasNewCols = false;
+    boolean structureChanged = false;
     List<ArrayChunk.ColHeader> chunkColHeaders = chunk.getColHeaders();
     if (chunkColHeaders != null) {
-      for (int i = 0; i < chunkColHeaders.size(); i++) {
-        ArrayChunk.ColHeader header = chunkColHeaders.get(i);
-        hasNewCols |= (myColHeaders.put(i + colOffset, header) == null);
+      int i = 0;
+      for (ArrayChunk.ColHeader header: chunkColHeaders) {
+        ArrayChunk.ColHeader old = myColHeaders.put(i + colOffset, header);
+        if (old == null || !old.getLabel().equals(header.getLabel())) {
+          structureChanged = true;
+        }
+        i++;
       }
     }
-    if (hasNewCols) {
+    if (structureChanged) {
       UIUtil.invokeLaterIfNeeded(super::fireTableStructureChanged);
     }
   }

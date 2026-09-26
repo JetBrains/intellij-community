@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
@@ -13,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
+import static com.intellij.json.JsonTokenSets.JSON_COMMENTARIES;
 
 /**
  * Various helper methods for working with PSI of JSON language.
@@ -24,7 +26,7 @@ import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
  * @author Mikhail Golubev
  */
 @SuppressWarnings("UnusedDeclaration")
-public class JsonPsiUtil {
+public final class JsonPsiUtil {
   private JsonPsiUtil() {
     // empty
   }
@@ -65,15 +67,14 @@ public class JsonPsiUtil {
   /**
    * Find the furthest sibling element with the same type as given anchor.
    * <p/>
-   * Ignore white spaces for any type of element except {@link com.intellij.json.JsonElementTypes#LINE_COMMENT}
+   * Ignore white spaces for any type of element except {@link JsonElementTypes#LINE_COMMENT}
    * where non indentation white space (that has new line in the middle) will stop the search.
    *
    * @param anchor element to start from
    * @param after  whether to scan through sibling elements forward or backward
    * @return described element or anchor if search stops immediately
    */
-  @NotNull
-  public static PsiElement findFurthestSiblingOfSameType(@NotNull PsiElement anchor, boolean after) {
+  public static @NotNull PsiElement findFurthestSiblingOfSameType(@NotNull PsiElement anchor, boolean after) {
     ASTNode node = anchor.getNode();
     // Compare by node type to distinguish between different types of comments
     final IElementType expectedType = node.getElementType();
@@ -107,21 +108,21 @@ public class JsonPsiUtil {
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.TokenSet)
+   * @see #hasElementType(ASTNode, TokenSet)
    */
   public static boolean hasElementType(@NotNull ASTNode node, IElementType... types) {
     return hasElementType(node, TokenSet.create(types));
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.TokenSet)
+   * @see #hasElementType(ASTNode, TokenSet)
    */
   public static boolean hasElementType(@NotNull PsiElement element, @NotNull TokenSet set) {
     return element.getNode() != null && hasElementType(element.getNode(), set);
   }
 
   /**
-   * @see #hasElementType(com.intellij.lang.ASTNode, com.intellij.psi.tree.IElementType...)
+   * @see #hasElementType(ASTNode, IElementType...)
    */
   public static boolean hasElementType(@NotNull PsiElement element, IElementType... types) {
     return element.getNode() != null && hasElementType(element.getNode(), types);
@@ -134,8 +135,7 @@ public class JsonPsiUtil {
    * @param element PSI element which text is needed
    * @return text of the element with any host escaping removed
    */
-  @NotNull
-  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+  public static @NotNull String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
     if (manager.isInjectedFragment(element.getContainingFile())) {
       return manager.getUnescapedText(element);
@@ -155,11 +155,9 @@ public class JsonPsiUtil {
    * </ul>
    *
    * @param text presumably result of {@link JsonStringLiteral#getText()}
-   * @return
    */
-  @NotNull
-  public static String stripQuotes(@NotNull String text) {
-    if (text.length() > 0) {
+  public static @NotNull String stripQuotes(@NotNull String text) {
+    if (!text.isEmpty()) {
       final char firstChar = text.charAt(0);
       final char lastChar = text.charAt(text.length() - 1);
       if (firstChar == '\'' || firstChar == '"') {
@@ -195,8 +193,7 @@ public class JsonPsiUtil {
    * @param first    if true make new property first in the object, otherwise append in the end of property list
    * @return property as returned by {@link PsiElement#addAfter(PsiElement, PsiElement)}
    */
-  @NotNull
-  public static PsiElement addProperty(@NotNull JsonObject object, @NotNull JsonProperty property, boolean first) {
+  public static @NotNull PsiElement addProperty(@NotNull JsonObject object, @NotNull JsonProperty property, boolean first) {
     final List<JsonProperty> propertyList = object.getPropertyList();
     if (!first) {
       final JsonProperty lastProperty = ContainerUtil.getLastItem(propertyList);
@@ -215,12 +212,11 @@ public class JsonPsiUtil {
     return addedProperty;
   }
 
-  @NotNull
-  public static Set<String> getOtherSiblingPropertyNames(@Nullable JsonProperty property) {
+  public static @NotNull Set<String> getOtherSiblingPropertyNames(@Nullable JsonProperty property) {
     if (property == null) return Collections.emptySet();
     JsonObject object = ObjectUtils.tryCast(property.getParent(), JsonObject.class);
     if (object == null) return Collections.emptySet();
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
     for (JsonProperty jsonProperty : object.getPropertyList()) {
       if (jsonProperty != property) {
         result.add(jsonProperty.getName());

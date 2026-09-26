@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -24,11 +10,17 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.descriptors.data.UserExpressionData;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.*;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
+import com.intellij.debugger.ui.tree.NodeManager;
+import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,8 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public final class EnumerationChildrenRenderer extends TypeRenderer implements ChildrenRenderer{
+public final class EnumerationChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;
@@ -65,14 +58,17 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     return myAppendDefaultChildren;
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public EnumerationChildrenRenderer clone() {
     return (EnumerationChildrenRenderer)super.clone();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -83,13 +79,14 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     List<Element> children = element.getChildren(CHILDREN_EXPRESSION);
     for (Element item : children) {
       String name = item.getAttributeValue(CHILD_NAME);
-      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().get(0));
+      TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().getFirst());
       boolean onDemand = Boolean.parseBoolean(item.getAttributeValue(CHILD_ONDEMAND));
 
       myChildren.add(new ChildInfo(name, text, onDemand));
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
 
@@ -109,6 +106,7 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     }
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     NodeManager nodeManager = builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
@@ -122,6 +120,7 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
                                                        childInfo.myExpression);
       data.setEnumerationIndex(idx++);
       UserExpressionDescriptor descriptor = descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data);
+      XEvaluationOrigin.setOrigin(descriptor, XEvaluationOrigin.RENDERER);
       if (childInfo.myOnDemand) {
         descriptor.putUserData(OnDemandRenderer.ON_DEMAND_CALCULATED, false);
       }
@@ -134,13 +133,20 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     }
   }
 
+  @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return ((ValueDescriptor) node.getDescriptor()).getDescriptorEvaluation(context);
+    return ((ValueDescriptor)node.getDescriptor()).getDescriptorEvaluation(context);
   }
 
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return myChildren.size() > 0 ||
-           (myAppendDefaultChildren && DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor));
+  @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    if (!myChildren.isEmpty()) {
+      return CompletableFuture.completedFuture(true);
+    }
+    if (myAppendDefaultChildren) {
+      return DebugProcessImpl.getDefaultRenderer(value).isExpandableAsync(value, evaluationContext, parentDescriptor);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   public List<ChildInfo> getChildren() {
@@ -151,14 +157,13 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     myChildren = children;
   }
 
-  @Nullable
-  public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
+  public static @Nullable EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
-    if (renderer instanceof CompoundNodeRenderer &&
+    if (renderer instanceof CompoundReferenceRenderer referenceRenderer &&
         NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {
-      ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        return (EnumerationChildrenRenderer)childrenRenderer;
+      ChildrenRenderer childrenRenderer = referenceRenderer.getChildrenRenderer();
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationChildrenRenderer) {
+        return enumerationChildrenRenderer;
       }
     }
     return null;

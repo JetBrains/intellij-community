@@ -1,44 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.plugins.PluginUtil;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class ImplementationConflictException extends RuntimeException {
-
-  @NotNull
-  private final Collection<Class<?>> myConflictingClasses;
-
-  public ImplementationConflictException(String message, Throwable cause, @NotNull Object ...implementationObjects) {
-    super(message, cause);
-    final List<Class<?>> classes = new ArrayList<>(implementationObjects.length);
-    for (Object object : implementationObjects) {
-      classes.add(object.getClass());
-    }
-
-    myConflictingClasses = Collections.unmodifiableList(classes);
+public final class ImplementationConflictException extends RuntimeException {
+  private static final @NotNull PluginId CORE_PLUGIN_ID = PluginId.getId("com.intellij");
+  private final @NotNull Set<PluginId> myConflictingPluginIds;
+  public ImplementationConflictException(@NotNull String message, Throwable cause, Object @NotNull ... implementationObjects) {
+    super(message + ". Conflicting plugins: "+calculateConflicts(implementationObjects), cause);
+    myConflictingPluginIds = calculateConflicts(implementationObjects);
   }
 
-  @NotNull
-  public Collection<Class<?>> getConflictingClasses() {
-    return myConflictingClasses;
+  private static @NotNull Set<PluginId> calculateConflicts(Object @NotNull ... implementationObjects) {
+    Set<PluginId> myConflictingPluginIds = new HashSet<>();
+    for (Object object : implementationObjects) {
+      final ClassLoader classLoader = object.getClass().getClassLoader();
+      myConflictingPluginIds.add(PluginUtil.getPluginId(classLoader));
+    }
+    return myConflictingPluginIds;
+  }
+
+  public @NotNull Set<PluginId> getConflictingPluginIds() {
+    return new HashSet<>(ContainerUtil.subtract(myConflictingPluginIds, Collections.singleton(CORE_PLUGIN_ID)));
+  }
+
+  public boolean isConflictWithPlatform() {
+    return myConflictingPluginIds.contains(CORE_PLUGIN_ID);
   }
 }

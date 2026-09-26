@@ -16,18 +16,35 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Extension point for providing custom jre to be shown at run configuration control.
  * 
- * @author Denis Zhdanov
- * @since 5/9/13 10:04 PM
+ * @author Konstantin Bulenkov
  */
 public interface JreProvider {
 
   ExtensionPointName<JreProvider> EP_NAME = new ExtensionPointName<>("com.intellij.jreProvider");
   
   @NotNull
+  @Contract(pure=true)
   String getJrePath();
+
+  @Contract(pure=true)
+  default boolean isAvailable() {
+    return true;
+  }
+
+  @Contract(pure=true)
+  default @NlsSafe String getPresentableName() {
+    return getJrePath();
+  }
+
+  default @NonNls String getID() {
+    return null;
+  }
 }

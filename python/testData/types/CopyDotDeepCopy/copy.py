@@ -1,2 +1,0 @@
-def deepcopy(x):
-    pass

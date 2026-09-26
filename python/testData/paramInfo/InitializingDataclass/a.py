@@ -89,3 +89,11 @@ class F1:
 
     def to_str(self):
         return self(<arg10>)
+
+
+@dataclasses.dataclass
+class G1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str
+
+G1(<arg11>)

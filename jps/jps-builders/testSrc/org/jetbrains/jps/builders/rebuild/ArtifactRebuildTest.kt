@@ -23,9 +23,6 @@ import java.io.FileInputStream
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 
-/**
- * @author nik
- */
 class ArtifactRebuildTest: JpsRebuildTestCase() {
   fun testArtifactIncludesArchiveArtifact() {
     val name = "artifactIncludesArchiveArtifact"
@@ -41,7 +38,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
       })
     }
     finally {
-      FileUtil.delete(File(FileUtil.toSystemDependentName(testDataRootPath + "/$name/data/a.jar")))
+      FileUtil.delete(File(FileUtil.toSystemDependentName("$testDataRootPath/$name/data/a.jar")))
     }
   }
 
@@ -99,7 +96,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     ZipUtil.extract(jarFile, extracted, null)
     val manifestFile = File(extracted, "META-INF/MANIFEST.MF")
     assertTrue(manifestFile.exists())
-    val manifest = Manifest(FileInputStream(manifestFile))
+    val manifest = FileInputStream(manifestFile).use { Manifest(it) }
     assertEquals("MyClass", manifest.mainAttributes!!.getValue(Attributes.Name.MAIN_CLASS))
   }
 

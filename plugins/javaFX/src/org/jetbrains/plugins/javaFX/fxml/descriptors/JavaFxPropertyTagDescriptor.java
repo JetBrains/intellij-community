@@ -1,17 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -26,7 +29,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
+public final class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
   private final boolean myStatic;
@@ -80,7 +83,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   }
 
   private static void collectSubclassesDescriptors(@Nullable PsiType psiType,
-                                                   @NotNull final List<XmlElementDescriptor> descriptors,
+                                                   final @NotNull List<XmlElementDescriptor> descriptors,
                                                    @NotNull PsiElement context) {
     final PsiClass aClass = PsiUtil.resolveClassInType(psiType);
     if (aClass != null) {
@@ -119,9 +122,8 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     }
   }
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     return JavaFxClassTagDescriptorBase.createTagDescriptor(childTag);
   }
 
@@ -130,9 +132,8 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
     final PsiElement declaration = getDeclaration();
     final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(myPsiClass, declaration);
     if (InheritanceUtil.isInheritor(propertyType, CommonClassNames.JAVA_UTIL_MAP)) {
@@ -141,9 +142,8 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
@@ -152,9 +152,8 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlElementsGroup getTopGroup() {
+  public @Nullable XmlElementsGroup getTopGroup() {
     return null;
   }
 
@@ -163,9 +162,8 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
     return CONTENT_TYPE_UNKNOWN;
   }
 
-  @Nullable
   @Override
-  public String getDefaultValue() {
+  public @Nullable String getDefaultValue() {
     return null;
   }
 
@@ -184,19 +182,13 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   @Override
   public String getName() {
     if (myPsiClass != null && myStatic) {
-      return StringUtil.getQualifiedName(myPsiClass.getName(), myName);
+      return StringUtil.getQualifiedName(myPsiClass.getName(), StringUtil.notNullize(myName));
     }
     return myName;
   }
 
   @Override
   public void init(PsiElement element) {}
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
   @Override
   public String toString() {

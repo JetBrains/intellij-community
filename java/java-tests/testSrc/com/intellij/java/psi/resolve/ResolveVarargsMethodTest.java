@@ -15,13 +15,27 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 
-public class ResolveVarargsMethodTest extends Resolve15TestCase {
+public class ResolveVarargsMethodTest extends LightResolveTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_5;
+  }
 
   public void testPrimitiveObject() throws Exception {
     doTest(1);
@@ -69,7 +83,7 @@ public class ResolveVarargsMethodTest extends Resolve15TestCase {
   }
 
   private PsiReference configureByFile() throws Exception {
-    return configureByFile("method/varargs/" + getTestName(false) + ".java");
+    return findReferenceAtCaret("method/varargs/" + getTestName(false) + ".java");
   }
   private static PsiMethod checkResolvesUnique(final PsiReference ref) {
     assertThat(ref, instanceOf(PsiReferenceExpression.class));

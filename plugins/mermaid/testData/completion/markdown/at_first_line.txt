@@ -1,0 +1,7 @@
+MarkdownFile(0,15)
+  PsiElement(Markdown:Markdown:CODE_FENCE)(0,15)
+    PsiElement(Markdown:Markdown:CODE_FENCE_START)(':::')(0,3)
+    PsiElement(Markdown:Markdown:FENCE_LANG)('mermaid')(3,10)
+    PsiWhiteSpace('\n')(10,11)
+    PsiWhiteSpace('\n')(11,12)
+    PsiElement(Markdown:Markdown:CODE_FENCE_END)(':::')(12,15)

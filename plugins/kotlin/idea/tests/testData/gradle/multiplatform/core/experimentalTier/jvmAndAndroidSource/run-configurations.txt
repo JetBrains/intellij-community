@@ -1,0 +1,50 @@
+MODULES
+project
+
+project.consumer
+
+project.consumer.androidHostTest
+
+project.consumer.androidMain
+
+project.consumer.commonMain
+
+project.consumer.commonTest
+    fqName: test.useCommonTest
+    name: Consumer_commonTest_usagesKt.useCommonTest
+    type: Gradle
+    tasks: [:consumer:cleanTestAndroidHostTest, :consumer:testAndroidHostTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+project.consumer.jvmAndAndroidMain
+
+project.consumer.jvmMain
+
+project.consumer.jvmTest
+
+project.producer
+
+project.producer.androidHostTest
+
+project.producer.androidMain
+
+project.producer.commonMain
+
+project.producer.commonTest
+
+project.producer.jvmAndAndroidMain
+
+project.producer.jvmMain
+
+project.producer.jvmTest
+
+
+Test configuration:
+- Showing runConfiguration detail: name
+- Showing runConfiguration detail: type
+- Showing runConfiguration detail: tasks
+- Showing runConfiguration detail: scriptParameters
+- Showing runConfiguration detail: isDebugAllEnabled
+- Showing runConfiguration detail: isRunAsTest

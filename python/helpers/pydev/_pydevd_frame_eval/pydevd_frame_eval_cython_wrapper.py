@@ -1,11 +1,18 @@
-try:
-    from _pydevd_frame_eval_ext.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
-        dummy_trace_dispatch
+import sys
 
+try:
+    try:
+        major_minor = sys.version_info[:2]
+        if (3, 6) <= major_minor <= (3, 8):
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_36_38 as mod
+        elif (3, 9) <= major_minor <= (3, 10):
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_39_310 as mod
+        else:
+            raise ImportError
+    except ImportError:
+        from _pydevd_frame_eval import pydevd_frame_evaluator as mod
 except ImportError:
     try:
-        import sys
-
         try:
             is_64bits = sys.maxsize > 2 ** 32
         except:
@@ -27,7 +34,15 @@ except ImportError:
         check_name = '_pydevd_frame_eval.%s' % (mod_name,)
         mod = __import__(check_name)
         mod = getattr(mod, mod_name)
-        frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, dummy_trace_dispatch = \
-            mod.frame_eval_func, mod.stop_frame_eval, mod.enable_cache_frames_without_breaks, mod.dummy_trace_dispatch
     except ImportError:
         raise
+
+frame_eval_func = mod.frame_eval_func
+
+stop_frame_eval = mod.stop_frame_eval
+
+dummy_trace_dispatch = mod.dummy_trace_dispatch
+
+get_thread_info_py = mod.get_thread_info_py
+
+clear_thread_local_info = mod.clear_thread_local_info_py

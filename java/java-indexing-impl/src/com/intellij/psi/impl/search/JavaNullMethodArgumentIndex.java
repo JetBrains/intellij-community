@@ -1,78 +1,60 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.java.syntax.element.JavaSyntaxTokenType;
+import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.source.JavaLightTreeUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.indexing.*;
+import com.intellij.platform.syntax.SyntaxElementType;
+import com.intellij.platform.syntax.lexer.TokenList;
+import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.backWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.backWithBraceMatching;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.forwardWhile;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.hasType;
 
-public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> implements PsiDependentIndex {
-  private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
-
+public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
-  private interface Lazy {
-    TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
-  }
-  private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
-                                        !ApplicationManager.getApplication().isUnitTestMode();
 
-  @NotNull
   @Override
-  public ID<MethodCallData, Void> getName() {
+  public @NotNull ID<MethodCallData, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
+  private static final StringSearcher ourSearcher = new StringSearcher("null", true, true);
+
   @Override
-  public DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
     return inputData -> {
-      if (myOfflineMode) {
-        return Collections.emptyMap();
-      }
+      if (ourSearcher.scan(inputData.getContentAsText()) < 0) return Map.of();
 
-      int[] nullOffsets = new StringSearcher(PsiKeyword.NULL, true, true).findAllOccurrences(inputData.getContentAsText());
-      if (nullOffsets.length == 0) return Collections.emptyMap();
+      Map<MethodCallData, Void> result = new HashMap<>();
 
-      LighterAST lighterAst = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
-      Set<LighterASTNode> calls = findCallsWithNulls(lighterAst, nullOffsets);
-      if (calls.isEmpty()) return Collections.emptyMap();
-
-      Map<MethodCallData, Void> result = new THashMap<>();
-      for (LighterASTNode element : calls) {
-        final IntArrayList indices = getNullParameterIndices(lighterAst, element);
-        if (indices != null) {
-          final String name = getMethodName(lighterAst, element, element.getTokenType());
-          if (name != null) {
-            for (int i = 0; i < indices.size(); i++) {
-              result.put(new MethodCallData(name, indices.get(i)), null);
-            }
+      TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
+      for (int i = 0; i < tokens.getTokenCount(); i++) {
+        if (hasType(tokens, i, JavaSyntaxTokenType.NULL_KEYWORD)) {
+          MethodCallData data = findCallData(tokens, i);
+          if (data != null) {
+            result.put(data, null);
           }
         }
       }
@@ -80,62 +62,43 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     };
   }
 
-  @NotNull
-  private static Set<LighterASTNode> findCallsWithNulls(LighterAST lighterAst, int[] nullOffsets) {
-    Set<LighterASTNode> calls = new HashSet<>();
-    for (int offset : nullOffsets) {
-      LighterASTNode leaf = LightTreeUtil.findLeafElementAt(lighterAst, offset);
-      LighterASTNode literal = leaf == null ? null : lighterAst.getParent(leaf);
-      if (isNullLiteral(lighterAst, literal)) {
-        LighterASTNode exprList = lighterAst.getParent(literal);
-        if (exprList != null && exprList.getTokenType() == EXPRESSION_LIST) {
-          ContainerUtil.addIfNotNull(calls, LightTreeUtil.getParentOfType(lighterAst, exprList, Lazy.CALL_TYPES, ElementType.MEMBER_BIT_SET));
-        }
+  private static @Nullable MethodCallData findCallData(TokenList tokens, int nullIndex) {
+    if (!hasType(tokens, forwardWhile(tokens, nullIndex + 1, JavaParserUtil.WS_COMMENTS), JavaSyntaxTokenType.RPARENTH, JavaSyntaxTokenType.COMMA)) return null;
+
+    int i = backWhile(tokens, nullIndex - 1, JavaParserUtil.WS_COMMENTS);
+    if (!hasType(tokens, i, JavaSyntaxTokenType.LPARENTH, JavaSyntaxTokenType.COMMA)) return null;
+
+
+    int commaCount = 0;
+    while (true) {
+      if (hasType(tokens, i, null, JavaSyntaxTokenType.SEMICOLON, JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.RBRACE)) {
+        return null;
       }
-    }
-    return calls;
-  }
 
-  @Nullable
-  private static IntArrayList getNullParameterIndices(LighterAST lighterAst, @NotNull LighterASTNode methodCall) {
-    final LighterASTNode node = LightTreeUtil.firstChildOfType(lighterAst, methodCall, EXPRESSION_LIST);
-    if (node == null) return null;
-    final List<LighterASTNode> parameters = JavaLightTreeUtil.getExpressionChildren(lighterAst, node);
-    IntArrayList indices = new IntArrayList(1);
-    for (int idx = 0; idx < parameters.size(); idx++) {
-      if (isNullLiteral(lighterAst, parameters.get(idx))) {
-        indices.add(idx);
+      SyntaxElementType type = tokens.getTokenType(i);
+      if (type == JavaSyntaxTokenType.COMMA) {
+        commaCount++;
       }
+      else if (type == JavaSyntaxTokenType.LPARENTH) {
+        String name = findMethodName(tokens, i);
+        return name == null ? null : new MethodCallData(name, commaCount);
+      }
+
+      i = backWithBraceMatching(tokens, i, JavaSyntaxTokenType.LPARENTH, JavaSyntaxTokenType.RPARENTH);
     }
-    return indices;
   }
 
-  private static boolean isNullLiteral(LighterAST lighterAst, @Nullable LighterASTNode expr) {
-    return expr != null && expr.getTokenType() == LITERAL_EXPRESSION &&
-           lighterAst.getChildren(expr).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
+  private static @Nullable String findMethodName(TokenList tokens, int lparenth) {
+    int i = backWhile(tokens, lparenth - 1, JavaParserUtil.WS_COMMENTS);
+    if (hasType(tokens, i, JavaSyntaxTokenType.GT)) {
+      i = backWhile(tokens, backWithBraceMatching(tokens, i, JavaSyntaxTokenType.LT, JavaSyntaxTokenType.GT), JavaParserUtil.WS_COMMENTS);
+    }
+    return tokens.getTokenType(i) == JavaSyntaxTokenType.IDENTIFIER ? tokens.getTokenText(i).toString() : null;
   }
 
-  @Nullable
-  private static String getMethodName(LighterAST lighterAst, @NotNull LighterASTNode call, IElementType elementType) {
-    if (elementType == NEW_EXPRESSION || elementType == ANONYMOUS_CLASS) {
-      final List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(lighterAst, call, JAVA_CODE_REFERENCE);
-      if (refs.isEmpty()) return null;
-      final LighterASTNode lastRef = refs.get(refs.size() - 1);
-      return JavaLightTreeUtil.getNameIdentifierText(lighterAst, lastRef);
-    }
-
-    LOG.assertTrue(elementType == METHOD_CALL_EXPRESSION);
-    final LighterASTNode methodReference = lighterAst.getChildren(call).get(0);
-    if (methodReference.getTokenType() == REFERENCE_EXPRESSION) {
-      return JavaLightTreeUtil.getNameIdentifierText(lighterAst, methodReference);
-    }
-    return null;
-  }
-
-  @NotNull
   @Override
-  public KeyDescriptor<MethodCallData> getKeyDescriptor() {
-    return new KeyDescriptor<MethodCallData>() {
+  public @NotNull KeyDescriptor<MethodCallData> getKeyDescriptor() {
+    return new KeyDescriptor<>() {
       @Override
       public int getHashCode(MethodCallData value) {
         return value.hashCode();
@@ -162,16 +125,15 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(file);
+        return JavaFileElementType.isInSourceContent(file);
       }
     };
   }
@@ -181,9 +143,18 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     return true;
   }
 
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
+  }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   public static final class MethodCallData {
-    @NotNull
-    private final String myMethodName;
+    private final @NotNull String myMethodName;
     private final int myNullParameterIndex;
 
     public MethodCallData(@NotNull String name, int index) {
@@ -191,8 +162,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
       myNullParameterIndex = index;
     }
 
-    @NotNull
-    public String getMethodName() {
+    public @NotNull String getMethodName() {
       return myMethodName;
     }
 

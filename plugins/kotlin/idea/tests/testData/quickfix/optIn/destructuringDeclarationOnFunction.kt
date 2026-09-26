@@ -1,0 +1,17 @@
+// "Opt in for 'MyOptIn' on 'reproduceIssue'" "true"
+// K2_ERROR: OPT_IN_USAGE_ERROR
+// K2_ERROR: OPT_IN_USAGE_ERROR
+// K2_ERROR: OPT_IN_USAGE_ERROR
+
+@RequiresOptIn
+annotation class MyOptIn
+
+@MyOptIn
+data class OptInData(val a: String, val b: String)
+
+fun reproduceIssue() {
+    val (x, y) = <caret>OptInData("1", "2")
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

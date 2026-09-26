@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpBackref;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,16 +19,8 @@ import java.util.Collection;
  */
 public class AnonymousGroupInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return "Anonymous capturing group or numeric back reference";
-  }
-
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new AnonymousGroupVisitor(holder);
   }
 
@@ -49,7 +28,7 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public AnonymousGroupVisitor(ProblemsHolder holder) {
+    AnonymousGroupVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -62,7 +41,10 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
       if (types.isEmpty()) {
         return;
       }
-      myHolder.registerProblem(group.getFirstChild(), "Anonymous capturing group");
+      if (group.getNode().getLastChildNode().getElementType() != RegExpTT.GROUP_END) {
+        return;
+      }
+      myHolder.registerProblem(group.getFirstChild(), RegExpBundle.message("inspection.warning.anonymous.capturing.group"));
     }
 
     @Override
@@ -71,7 +53,7 @@ public class AnonymousGroupInspection extends LocalInspectionTool {
       if (types.isEmpty()) {
         return;
       }
-      myHolder.registerProblem(backref, "Numeric back reference");
+      myHolder.registerProblem(backref, RegExpBundle.message("inspection.warning.numeric.back.reference"));
     }
   }
 }

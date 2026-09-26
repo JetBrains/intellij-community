@@ -1,0 +1,9 @@
+// "Change return type of enclosing function 'foo' to 'Unit?'" "true"
+// WITH_STDLIB
+// K2_ERROR: NULL_FOR_NONNULL_TYPE
+
+fun foo(): Unit {
+    return n<caret>ull
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,0 +1,102 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.uv.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.python.uv.backend` end
+
+### auto-generated section `build intellij.python.uv.backend` start
+create_kotlinc_options(
+    name = "custom_backend",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.uv.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/python-uv/common",
+        "//libraries/jetbrains/annotations",
+        "//platform/util",
+        "//python/python-pyproject:pyproject",
+        "//platform/core-api:core",
+        "//python/openapi:community",
+        "//python/common",
+        "//python/python-pytools/backend",
+        "//python/python-exec-service:community-execService",
+        "//platform/eel-provider",
+        "//platform/execution",
+        "//python/python-sdk/backend",
+        "//platform/remote-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util/jdom",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.uv.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//python/python-uv/common:common_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util:util_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/common:common_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//platform/remote-core:remote-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.uv.backend` end
+
+### auto-generated section `iml intellij.python.uv.backend` start
+exports_files(
+    [
+        "intellij.python.uv.backend.iml",
+        "resources/intellij.python.uv.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.uv.backend` end

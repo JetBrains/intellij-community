@@ -1,68 +1,68 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapBracesTest extends UnwrapTestCase {
-  public void testBraces() throws Exception {
-    assertUnwrapped("{\n" +
-                    "    int i;<caret>\n" +
-                    "}\n",
+  public void testBraces() {
+    assertUnwrapped("""
+                      {
+                          int i;<caret>
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
-  public void testEmptyBraces() throws Exception {
-    assertUnwrapped("{\n" +
-                    "    {<caret>}\n" +
-                    "}\n",
+  public void testEmptyBraces() {
+    assertUnwrapped("""
+                      {
+                          {<caret>}
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
-  public void testBracesWithComments() throws Exception {
-    assertUnwrapped("{\n" +
-                    "    // a <caret>comment\n" +
-                    "    int i = 0;\n" +
-                    "}\n",
+  public void testBracesWithComments() {
+    assertUnwrapped("""
+                      {
+                          // a <caret>comment
+                          int i = 0;
+                      }
+                      """,
 
-                    "// a <caret>comment\n" +
-                    "int i = 0;\n");
+                    """
+                      // a <caret>comment
+                      int i = 0;
+                      """);
   }
 
-  public void testTrimmingTheLeadingAndTrailingWhileSpaces() throws Exception {
-    assertUnwrapped("{\n" +
-                    "    \n" +
-                    "    \n" +
-                    "    int i<caret> = 0;\n" +
-                    "    \n" +
-                    "    \n" +
-                    "}\n",
+  public void testTrimmingTheLeadingAndTrailingWhileSpaces() {
+    assertUnwrapped("""
+                      {
+                         \s
+                         \s
+                          int i<caret> = 0;
+                         \s
+                         \s
+                      }
+                      """,
 
                     "int i<caret> = 0;\n");
   }
 
-  public void testBracesOptions() throws Exception {
-    assertOptions("{\n" +
-                  "    {\n" +
-                  "        int i;<caret>\n" +
-                  "    }\n" +
-                  "}\n",
+  public void testBracesOptions() {
+    assertOptions("""
+                    {
+                        {
+                            int i;<caret>
+                        }
+                    }
+                    """,
 
                   "Unwrap braces",
                   "Unwrap braces");

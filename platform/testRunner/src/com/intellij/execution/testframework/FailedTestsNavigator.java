@@ -1,43 +1,34 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FailedTestsNavigator implements OccurenceNavigator {
-  private static final String NEXT_NAME = ExecutionBundle.message("next.faled.test.action.name");
-  private static final String PREVIOUS_NAME = ExecutionBundle.message("prev.faled.test.action.name");
+class FailedTestsNavigator implements OccurenceNavigator {
   private TestFrameworkRunningModel myModel;
 
+  @Override
   public boolean hasNextOccurence() {
     return myModel != null && getNextOccurenceInfo().hasNextOccurence();
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return myModel != null && getPreviousOccurenceInfo().hasNextOccurence();
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
     final FailedTestInfo result = getNextOccurenceInfo();
     myModel.selectAndNotify(result.getDefect());
@@ -45,15 +36,22 @@ public class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     Disposer.register(myModel, new Disposable() {
+      @Override
       public void dispose() {
         myModel = null;
       }
     });
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
     final FailedTestInfo result = getPreviousOccurenceInfo();
     myModel.selectAndNotify(result.getDefect());
@@ -61,12 +59,14 @@ public class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
-  public String getNextOccurenceActionName() {
-    return NEXT_NAME;
+  @Override
+  public @NotNull String getNextOccurenceActionName() {
+    return getNextName();
   }
 
-  public String getPreviousOccurenceActionName() {
-    return PREVIOUS_NAME;
+  @Override
+  public @NotNull String getPreviousOccurenceActionName() {
+    return getPreviousName();
   }
 
   private FailedTestInfo getNextOccurenceInfo() {
@@ -77,7 +77,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     return new PreviousFailedTestInfo().execute();
   }
 
-  protected abstract class FailedTestInfo {
+  private abstract class FailedTestInfo {
     private AbstractTestProxy myDefect = null;
     private List<AbstractTestProxy> myAllTests;
     private List<AbstractTestProxy> myDefects;
@@ -90,9 +90,9 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return myDefect == null ? getDefectsCount() : myDefects.indexOf(myDefect) + 1;
     }
 
-    public FailedTestInfo execute() {
+    FailedTestInfo execute() {
       myAllTests = new ArrayList<>();
-      collectTests(myAllTests, myModel.getTreeBuilder().getRootNode(), myModel.getTreeBuilder().getUi());
+      collectTests(myAllTests, (TreeNode)myModel.getTreeView().getModel().getRoot());
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
       if (myDefects.isEmpty()) {
         return this;
@@ -115,11 +115,15 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return this;
     }
 
-    private void collectTests(List<AbstractTestProxy> tests, TreeNode node, AbstractTreeUi treeUi) {
-      final Object elementFor = treeUi.getElementFor(node);
+    private static void collectTests(List<? super AbstractTestProxy> tests, TreeNode node) {
+      if (node == null) return;
+      Object elementFor = TreeUtil.getUserObject(node);
+      if (elementFor instanceof BaseTestProxyNodeDescriptor) {
+        elementFor = ((BaseTestProxyNodeDescriptor<?>)elementFor).getElement();
+      }
       if (elementFor instanceof AbstractTestProxy) tests.add((AbstractTestProxy)elementFor);
       for(int i = 0; i < node.getChildCount(); i++) {
-        collectTests(tests, node.getChildAt(i), treeUi);
+        collectTests(tests, node.getChildAt(i));
       }
     }
 
@@ -147,22 +151,34 @@ public class FailedTestsNavigator implements OccurenceNavigator {
   }
 
   private class NextFailedTestInfo extends FailedTestInfo {
+    @Override
     protected int nextIndex(final int defectIndex) {
       return defectIndex + 1;
     }
 
+    @Override
     protected int getBoundIndex() {
       return getDefectsCount() - 1;
     }
   }
 
   private class PreviousFailedTestInfo extends FailedTestInfo {
+    @Override
     protected int nextIndex(final int defectIndex) {
       return defectIndex - 1;
     }
 
+    @Override
     protected int getBoundIndex() {
       return 0;
     }
+  }
+
+  static @NlsActions.ActionText String getNextName() {
+    return ExecutionBundle.message("next.failed.test.action.name");
+  }
+
+  static @NlsActions.ActionText String getPreviousName() {
+    return ExecutionBundle.message("prev.failed.test.action.name");
   }
 }

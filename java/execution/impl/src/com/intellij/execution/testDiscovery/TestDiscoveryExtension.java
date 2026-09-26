@@ -1,7 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.TestDiscoveryListener;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -10,13 +14,12 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener;
@@ -27,7 +30,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class TestDiscoveryExtension extends RunConfigurationExtension {
+public final class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
   private static final String TEST_DISCOVERY_AGENT_PATH = "test.discovery.agent.path";
 
@@ -44,15 +46,14 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
 
-  @NotNull
   @Override
-  public String getSerializationId() {
+  public @NotNull String getSerializationId() {
     return "testDiscovery";
   }
 
   @Override
-  protected void attachToProcess(@NotNull final RunConfigurationBase configuration,
-                                 @NotNull final ProcessHandler handler,
+  protected void attachToProcess(@NotNull RunConfigurationBase configuration,
+                                 @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
       Disposable disposable = Disposer.newDisposable();
@@ -65,7 +66,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
             if (testsRoot.getHandler() != handler) return;
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
+            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationWithDiscoverySupport)configuration), 0);
             connection.disconnect();
             Disposer.dispose(disposable);
           }
@@ -77,7 +78,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(@NotNull RunConfigurationBase configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings) {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
@@ -85,6 +86,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (agentPath == null) return;
     params.getVMParametersList().add("-javaagent:" + agentPath);
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
+    params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.DATA_VERSION, String.valueOf(3));
+    if (ApplicationManager.getApplication().isInternal()) {
+      params.getVMParametersList().addProperty(TestDiscoveryProjectData.AFFECTED_ROOTS, configuration.getProject().getBasePath());
+    }
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.HOST_PROP, "127.0.0.1");
@@ -95,8 +100,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  @NotNull
-  private static String getTraceFilePath(RunConfigurationBase configuration) {
+  private static @NotNull String getTraceFilePath(RunConfigurationBase<?> configuration) {
     return baseTestDiscoveryPathForProject(configuration.getProject()) + File.separator + configuration.getUniqueID() + ".tr";
   }
 
@@ -106,21 +110,12 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  public void readExternal(@NotNull final RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {}
-
-  @Override
-  public void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws WriteExternalException {
-    throw new WriteExternalException();
-  }
-
-  @Override
-  protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(final @NotNull RunConfigurationBase configuration) {
     return configuration instanceof JavaTestConfigurationBase && Registry.is(TEST_DISCOVERY_REGISTRY_KEY);
   }
 
-  @NotNull
-  public static Path baseTestDiscoveryPathForProject(Project project) {
-    return ProjectUtil.getProjectCachePath(project, "testDiscovery", true);
+  public static @NotNull Path baseTestDiscoveryPathForProject(Project project) {
+    return ProjectUtil.getProjectCachePath(project, "testDiscovery");
   }
 
   @Override
@@ -129,8 +124,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   private static final Object ourTracesLock = new Object();
-  
-  private static void processTracesFile(JavaTestConfigurationBase configuration) {
+
+  private static void processTracesFile(JavaTestConfigurationWithDiscoverySupport configuration) {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     String moduleName = getConfigurationModuleName(configuration);
@@ -156,17 +151,15 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  @NotNull
-  private static String getConfigurationModuleName(JavaTestConfigurationBase configuration) {
+  private static @NotNull String getConfigurationModuleName(JavaTestConfigurationBase configuration) {
     return configuration.getConfigurationModule().getModuleName();
   }
 
-  @Nullable
-  private static TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase configuration) {
+  private static @Nullable TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase<?> configuration) {
     TestDiscoveryDataSocketListener listener = null;
     if (USE_SOCKET) {
       try {
-        JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
+        JavaTestConfigurationWithDiscoverySupport javaTestConfigurationBase = (JavaTestConfigurationWithDiscoverySupport)configuration;
         listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
                                                        getConfigurationModuleName(javaTestConfigurationBase),
                                                        javaTestConfigurationBase.getTestFrameworkId());

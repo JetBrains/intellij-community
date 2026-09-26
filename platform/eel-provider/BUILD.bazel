@@ -1,0 +1,98 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.eel.provider` start
+content_module_jar(module = ":eel-provider")
+### auto-generated section `dev intellij.platform.eel.provider` end
+
+### auto-generated section `build intellij.platform.eel.provider` start
+create_kotlinc_options(
+    name = "custom_eel-provider",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "eel-provider",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_eel-provider",
+    module_name = "intellij.platform.eel.provider",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel-nioFs",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel-nioFs",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+        "//platform/util/coroutines",
+        "//platform/util/base",
+        "//platform/util/annotations",
+        "//libraries/hash4j",
+        "//platform/ide-core",
+        "//platform/core-nio-fs",
+    ],
+)
+
+jvm_library(
+    name = "eel-provider_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_eel-provider",
+    module_name = "intellij.platform.eel.provider",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-nioFs",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":eel-provider",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
+        "//libraries/hash4j:hash4j_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.eel.provider` end
+
+### auto-generated section `iml intellij.platform.eel.provider` start
+exports_files(
+    [
+        "intellij.platform.eel.provider.iml",
+        "resources/intellij.platform.eel.provider.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.eel.provider` end

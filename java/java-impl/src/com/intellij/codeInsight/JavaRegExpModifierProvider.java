@@ -15,7 +15,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpModifierProvider;
@@ -23,13 +27,13 @@ import org.intellij.lang.regexp.RegExpModifierProvider;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaRegExpModifierProvider implements RegExpModifierProvider {
+public final class JavaRegExpModifierProvider implements RegExpModifierProvider {
   @Override
   public int getFlags(PsiElement elementInHost, PsiFile regexp) {
     final PsiExpressionList list = PsiTreeUtil.getParentOfType(elementInHost, PsiExpressionList.class);
     if (list != null) {
       PsiExpression[] expressions = list.getExpressions();
-      if (expressions.length == 2 && PsiType.INT.equals(expressions[1].getType())) {
+      if (expressions.length == 2 && PsiTypes.intType().equals(expressions[1].getType())) {
         final Object result = JavaConstantExpressionEvaluator.computeConstantExpression(expressions[1], false);
         if (result instanceof Integer) {
           //noinspection MagicConstant

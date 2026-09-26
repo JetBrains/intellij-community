@@ -137,6 +137,8 @@ def create_inputhook_qt5(mgr, app=None):
                 timer.timeout.connect(event_loop.quit)
                 while not stdin_ready():
                     timer.start(50)
+                    # Warning: calling event_loop.exec_() can lead to hangs in REPL on mscOS PY-31931
+                    # Replacing it with event_loop.processEvents() fixes the issue, but leads to high CPU load on every os PY-42688
                     event_loop.exec_()
                     timer.stop()
         except KeyboardInterrupt:

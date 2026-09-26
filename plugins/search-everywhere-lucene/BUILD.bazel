@@ -1,0 +1,80 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.searchEverywhereLucene.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.searchEverywhereLucene.common",
+        "intellij.searchEverywhereLucene.frontend",
+        "intellij.searchEverywhereLucene.backend",
+        "intellij.searchEverywhereLucene.performanceTesting",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.searchEverywhereLucene.backend",
+        "intellij.searchEverywhereLucene.common",
+        "intellij.searchEverywhereLucene.frontend",
+        "intellij.searchEverywhereLucene.performanceTesting",
+    ],
+    jars = {
+        "lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"],
+    },
+    main_module = "intellij.searchEverywhereLucene.plugin",
+    module_jar_paths = {
+        "intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar",
+    },
+)
+### auto-generated section `dev intellij.searchEverywhereLucene.plugin` end
+
+### auto-generated section `build intellij.searchEverywhereLucene.plugin` start
+jvm_library(
+    name = "searchEverywhereLucene-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereLucene.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "searchEverywhereLucene-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereLucene.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":searchEverywhereLucene-plugin"],
+)
+
+ij_plugin(
+    name = "searchEverywhereLucene-plugin_plugin",
+    descriptor_module = ":searchEverywhereLucene-plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/search-everywhere-lucene/common",
+        "//plugins/search-everywhere-lucene/frontend",
+        "//plugins/search-everywhere-lucene/backend",
+        "//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.searchEverywhereLucene.plugin` end
+
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin` start
+exports_files(
+    [
+        "intellij.searchEverywhereLucene.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.searchEverywhereLucene.plugin` end

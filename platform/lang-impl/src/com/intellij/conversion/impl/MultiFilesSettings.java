@@ -1,79 +1,98 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
+import com.intellij.conversion.ArtifactsSettings;
 import com.intellij.conversion.CannotConvertException;
+import com.intellij.conversion.ProjectLibrariesSettings;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
-class MultiFilesSettings {
-  private SettingsXmlFile myProjectFile;
-  private final List<SettingsXmlFile> mySettingsFiles;
+final class MultiFilesSettings implements ArtifactsSettings, ProjectLibrariesSettings {
+  private final SettingsXmlFile projectFile;
+  private @Nullable List<Path> settingsFiles;
+  private final Path dir;
+  private final ConversionContextImpl context;
 
-  protected MultiFilesSettings(@Nullable File projectFile, @Nullable File[] settingsFiles, @NotNull ConversionContextImpl context)
+  MultiFilesSettings(@Nullable SettingsXmlFile projectFile, @Nullable Path dir, @NotNull ConversionContextImpl context)
     throws CannotConvertException {
-    if (projectFile == null && settingsFiles == null) {
+    if (projectFile == null && dir == null) {
       throw new IllegalArgumentException("Either project file or settings files should be not null");
     }
 
-    if (projectFile != null && projectFile.exists()) {
-      myProjectFile = context.getOrCreateFile(projectFile);
-    }
-    mySettingsFiles = new ArrayList<>();
+    this.dir = dir;
+    this.context = context;
+    this.projectFile = projectFile;
+  }
 
-    if (settingsFiles != null) {
-      for (File file : settingsFiles) {
-        mySettingsFiles.add(context.getOrCreateFile(file));
+  private @NotNull List<Path> getSettingsFiles() {
+    if (settingsFiles == null) {
+      if (dir == null) {
+        settingsFiles = Collections.emptyList();
       }
+      else {
+        settingsFiles = getSettingsXmlFiles(dir);
+      }
+    }
+    return settingsFiles;
+  }
+
+  static @NotNull List<Path> getSettingsXmlFiles(@NotNull Path dir) throws CannotConvertException {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+      List<Path> result = new ArrayList<>();
+      for (Path path : stream) {
+        if (path.getFileName().toString().endsWith(".xml")) {
+          result.add(path);
+        }
+      }
+      return result;
+    }
+    catch (NoSuchFileException ignore) {
+      return Collections.emptyList();
+    }
+    catch (IOException e) {
+      throw new CannotConvertException(e);
     }
   }
 
-  @NotNull
-  protected Collection<? extends Element> getSettings(@NotNull String componentName, @NotNull String tagName) {
-    final List<Element> result = new ArrayList<>();
-    if (myProjectFile != null) {
-      result.addAll(JDOMUtil.getChildren(myProjectFile.findComponent(componentName), tagName));
+  private @NotNull Collection<Element> getSettings(@NotNull String componentName, @NotNull String tagName) {
+    List<Element> result = new ArrayList<>();
+    if (projectFile != null) {
+      result.addAll(JDOMUtil.getChildren(projectFile.findComponent(componentName), tagName));
     }
 
-    for (SettingsXmlFile file : mySettingsFiles) {
-      result.addAll(JDOMUtil.getChildren(file.getRootElement(), tagName));
+    for (Path file : getSettingsFiles()) {
+      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile$intellij_platform_lang_impl(file).getRootElement(), tagName));
     }
-
     return result;
   }
 
-  public Collection<File> getAffectedFiles() {
-    final List<File> files = new ArrayList<>();
+  public void collectAffectedFiles(@NotNull Collection<? super Path> files) {
+    if (projectFile != null) {
+      files.add(projectFile.getFile());
+    }
+    files.addAll(getSettingsFiles());
+  }
 
-    if (myProjectFile != null) {
-      files.add(myProjectFile.getFile());
-    }
-    for (SettingsXmlFile file : mySettingsFiles) {
-      files.add(file.getFile());
-    }
-    return files;
+  @Override
+  public @NotNull Collection<Element> getArtifacts() {
+    return getSettings("ArtifactManager", "artifact");
+  }
+
+  @Override
+  public @NotNull Collection<Element> getProjectLibraries() {
+    return getSettings("libraryTable", JpsLibraryTableSerializer.LIBRARY_TAG);
   }
 }

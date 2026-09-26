@@ -16,31 +16,32 @@
 package com.intellij.util.concurrency
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 private const val TIMEOUT_MS = 1000L
 
-class QueueProcessorTest : PlatformTestCase() {
-
+class QueueProcessorTest : LightPlatformTestCase() {
   fun `test waiting for returns on finish condition`() {
-    var stop = false;
+    var stop = false
     val semaphore = Semaphore(0)
     val processor = QueueProcessor<Any>({ semaphore.down() }, { stop })
-    
+
     processor.add(1)
-    stop = true;
+    stop = true
     semaphore.up()
 
-    assertTrue(processor.waitFor(TIMEOUT_MS));
-    processor.waitFor(); // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
+    assertTrue(processor.waitFor(TIMEOUT_MS))
+    processor.waitFor() // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
   }
 
   fun `test works fine after thrown exception`() {
-    LoggedErrorProcessor.getInstance().disableStderrDumping(testRootDisposable)
+    DefaultLogger.disableStderrDumping(testRootDisposable)
 
     val resultQueue = LinkedBlockingQueue<Any>()
     val queueProcessor = QueueProcessor<() -> Any> {
@@ -58,6 +59,7 @@ class QueueProcessorTest : PlatformTestCase() {
       assertEquals(expectedResult, resultQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
       assertEmpty(resultQueue)
     }
+
     fun check(expectedResult: Number) = check(expectedResult) { expectedResult }
     fun check(expectedException: Throwable) = check(expectedException) {
       throw expectedException.also {
@@ -78,5 +80,15 @@ class QueueProcessorTest : PlatformTestCase() {
     check(6)
     check(ExecutionException("EE"))
     check(7)
+  }
+
+  fun `test it's a bad idea to wait in EDT`() {
+    val processor = QueueProcessor<String>({ _, r -> r.run()}, true, QueueProcessor.ThreadToUse.AWT, { _ -> false })
+    processor.add("")
+    ThreadingAssertions.assertEventDispatchThread()
+    assertThrows(Exception::class.java) { processor.waitFor() }
+    assertThrows(Exception::class.java) { processor.waitFor(1) }
+    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor() }, 100_000)
+    PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread { processor.waitFor(2) }, 100_000)
   }
 }

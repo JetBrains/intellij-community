@@ -1,0 +1,155 @@
+package com.intellij.ide.starter.frameworks
+
+import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.path.GlobalPaths
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ProcessExecutor
+import com.intellij.ide.starter.project.GitProjectInfo
+import com.intellij.ide.starter.utils.FileSystem
+import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
+import com.intellij.ide.starter.utils.HttpClient
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.copyRecursively
+import com.intellij.util.system.OS
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.appendText
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.walk
+import kotlin.time.Duration.Companion.minutes
+
+class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
+  companion object {
+    const val DEFAULT_PLATFORM_VERSION: String = "28"
+    const val DEFAULT_BUILD_TOOLS_VERSION: String = "31.0.0"
+    const val DEFAULT_COMMAND_LINE_TOOLS_BUILD: String = "6200805"
+
+    fun downloadAndroidSdk(
+      javaHome: Path,
+      platformVersion: String = DEFAULT_PLATFORM_VERSION,
+      buildToolsVersion: String = DEFAULT_BUILD_TOOLS_VERSION,
+      commandLineToolsBuild: String = DEFAULT_COMMAND_LINE_TOOLS_BUILD,
+    ): Path {
+      val packages = listOf(
+        "build-tools;$buildToolsVersion",
+        //"cmake;3.10.2.4988404",
+        //"docs",
+        //"ndk;20.0.5594570",
+        "platforms;android-$platformVersion",
+        "sources;android-$platformVersion",
+        "platform-tools"
+      )
+
+      val sdkManager = downloadSdkManager(commandLineToolsBuild)
+
+      // we use unique home folder per installation to ensure only expected
+      // packages are included into the SDK home path
+      val packagesHash = DigestUtil.sha1Hex(packages.joinToString("$"))
+      val home = GlobalPaths.instance.getCacheDirectoryFor("android-sdk") / "sdk-roots" / "sdk-root-$packagesHash"
+      if (home.isDirectory() && home.walk().count() > 10) return home
+
+      val envVariablesWithJavaHome = System.getenv() + ("JAVA_HOME" to javaHome.toAbsolutePath().toString())
+
+      try {
+        home.createDirectories()
+        /// https://stackoverflow.com/questions/38096225/automatically-accept-all-sdk-licences
+        /// sending "yes" to the process in the STDIN :(
+        ProcessExecutor(presentableName = "android-sdk-licenses",
+                        workDir = home,
+                        environmentVariables = envVariablesWithJavaHome,
+                        args = listOf(sdkManager.toString(), "--sdk_root=$home", "--licenses"),
+                        stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                        stdInBytes = "yes\n".repeat(10).toByteArray(), // it asks the confirmation at least two times
+                        timeout = 15.minutes
+        ).start()
+
+        //loading SDK
+        ProcessExecutor(presentableName = "android-sdk-loading",
+                        workDir = home,
+                        environmentVariables = envVariablesWithJavaHome,
+                        args = listOf(sdkManager.toString(), "--sdk_root=$home", "--list"),
+                        stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                        timeout = 15.minutes
+        ).start()
+
+        //loading SDK
+        ProcessExecutor(presentableName = "android-sdk-installing",
+                        workDir = home,
+                        environmentVariables = envVariablesWithJavaHome,
+                        args = listOf(sdkManager.toString(), "--sdk_root=$home", "--install", "--verbose") + packages,
+                        stderrRedirect = ExecOutputRedirect.ToStdOut("[sdkmanager-err]"),
+                        timeout = 15.minutes
+        ).start()
+        return home
+      }
+      catch (t: Throwable) {
+        home.deleteRecursivelyQuietly()
+        throw Exception("Failed to prepare Android SDK to $home. ${t.message}", t)
+      }
+    }
+
+    private fun downloadSdkManager(commandLineToolsBuild: String): Path {
+      val platform = when (OS.CURRENT) {
+        OS.macOS -> "mac"
+        OS.Windows -> "win"
+        OS.Linux -> "linux"
+        else -> error("Unsupported OS: ${OS.CURRENT} ${OS.CURRENT.version()}")
+      }
+      val url = "https://dl.google.com/android/repository/commandlinetools-$platform-${commandLineToolsBuild}_latest.zip"
+
+      val name = url.split("/").last()
+      val androidSdkCache = GlobalPaths.instance.getCacheDirectoryFor("android-sdk")
+      val targetArchive = androidSdkCache / "archives" / name
+      val targetUnpack = androidSdkCache / "builds" / name
+      HttpClient.downloadIfMissing(url, targetArchive)
+
+      FileSystem.unpackIfMissing(targetArchive, targetUnpack)
+
+      val ext = if (OS.CURRENT == OS.Windows) ".bat" else ""
+
+      @Suppress("SpellCheckingInspection")
+      val sdkManager = targetUnpack.walk().first {
+        it.endsWith("tools/bin/sdkmanager$ext") || it.endsWith("cmdline-tools/bin/sdkmanager$ext")
+      }
+
+      if (OS.CURRENT == OS.macOS || OS.CURRENT == OS.Linux) {
+        val permissions = Files.getPosixFilePermissions(sdkManager)
+        permissions.add(PosixFilePermission.OWNER_EXECUTE)
+        Files.setPosixFilePermissions(sdkManager, permissions)
+      }
+
+      return sdkManager
+    }
+  }
+
+  fun downloadAndroidPluginProjectForIJCommunity(intellijCommunityVersion: String, commit: String = "") {
+    val androidProject = GitProjectInfo("ssh://git@git.jetbrains.team/ij/android.git", commit, intellijCommunityVersion, true)
+      .apply { downloadAndUnpackProject() }
+
+    // TODO: Hack because of https://youtrack.jetbrains.com/issue/AT-2013/Eel-in-Starter-Make-GitProjectInfo-and-Git-aware-of-target-eel
+    val communityProjectHome = if (testContext.testCase.projectInfo is GitProjectInfo) {
+      testContext.testCase.projectInfo.repositoryRootDir
+    }
+    else testContext.resolvedProjectHome
+
+    val androidPluginPath = communityProjectHome / "android"
+    if (androidPluginPath.exists()) return // TODO find better solution
+    androidProject.repositoryRootDir.copyRecursively(androidPluginPath, arrayOf(LinkOption.NOFOLLOW_LINKS))
+  }
+
+  fun setupAndroidSdkToProject(androidSdkPath: Path) {
+    val localPropertiesFile = testContext.resolvedProjectHome / "local.properties"
+    if (!localPropertiesFile.exists()) {
+      localPropertiesFile.createFile()
+    }
+    val path = androidSdkPath.absolutePathString().replace("""\""", """\\""")
+    localPropertiesFile.appendText("${System.lineSeparator()}sdk.dir=${path}")
+  }
+}

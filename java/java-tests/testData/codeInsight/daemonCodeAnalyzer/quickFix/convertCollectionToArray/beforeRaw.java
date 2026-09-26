@@ -1,4 +1,4 @@
-// "Apply conversion '.toArray()'" "true"
+// "Apply conversion '.toArray()'" "true-preview"
 
 import java.util.*;
 class Raw {

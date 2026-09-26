@@ -1,46 +1,42 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements PsiPolyadicExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPolyadicExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiPolyadicExpressionImpl.class);
 
   public PsiPolyadicExpressionImpl() {
     super(JavaElementType.POLYADIC_EXPRESSION);
   }
 
   @Override
-  @NotNull
-  public IElementType getOperationTokenType() {
+  public @NotNull IElementType getOperationTokenType() {
     return ((PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN)).getTokenType();
   }
 
@@ -59,11 +55,9 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     return JavaResolveCache.getInstance(getProject()).getType(this, MY_TYPE_EVALUATOR);
   }
 
-  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR =
-    (NullableFunction<PsiPolyadicExpressionImpl, PsiType>)expression -> doGetType(expression);
+  private static final Function<PsiPolyadicExpressionImpl,PsiType> MY_TYPE_EVALUATOR = expression -> doGetType(expression);
 
-  @Nullable
-  private static PsiType doGetType(PsiPolyadicExpressionImpl param) {
+  private static @Nullable PsiType doGetType(PsiPolyadicExpressionImpl param) {
     PsiExpression[] operands = param.getOperands();
     PsiType lType = null;
 
@@ -82,13 +76,10 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch (role) {
-      default:
-        return null;
-
-      case ChildRole.OPERATION_SIGN:
-        return findChildByType(OUR_OPERATIONS_BIT_SET);
+    if (role == ChildRole.OPERATION_SIGN) {
+      return findChildByType(OUR_OPERATIONS_BIT_SET);
     }
+    return null;
   }
 
   @Override
@@ -117,14 +108,37 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     }
   }
 
-  @NotNull
   @Override
-  public PsiExpression[] getOperands() {
+  public PsiExpression @NotNull [] getOperands() {
     PsiExpression[] operands = cachedOperands;
     if (operands == null) {
       cachedOperands = operands = getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     }
     return operands;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return processDeclarations(this, processor, state, lastParent, place);
+  }
+
+  static boolean processDeclarations(@NotNull PsiPolyadicExpression expression,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    IElementType tokenType = expression.getOperationTokenType();
+    boolean isAndToken = tokenType.equals(JavaTokenType.ANDAND);
+    boolean isOrToken = tokenType.equals(JavaTokenType.OROR);
+    if (!isAndToken && !isOrToken) return true;
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    PatternResolveState wantedHint = PatternResolveState.fromBoolean(isAndToken);
+    if (state.get(PatternResolveState.KEY) == wantedHint.invert()) return true;
+    return PsiScopesUtil.walkChildrenScopes(expression, processor, wantedHint.putInto(state), lastParent, place);
   }
 
   private volatile PsiExpression[] cachedOperands;
@@ -134,6 +148,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     super.clearCaches();
   }
 
+  @Override
   public String toString() {
     return "PsiPolyadicExpression: " + getText();
   }

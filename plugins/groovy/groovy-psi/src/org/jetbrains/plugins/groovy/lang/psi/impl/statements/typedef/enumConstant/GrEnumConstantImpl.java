@@ -1,49 +1,59 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
 
-/**
- * @author: Dmitry.Krasilschikov
- * @date: 06.04.2007
- */
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MODIFIER_LIST;
+
 public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
-  private final MyReference myReference = new MyReference();
+
+  private final GroovyConstructorReference myReference = new GrEnumConstructorReference(this);
 
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public GrEnumConstantImpl(GrFieldStub stub) {
-    super(stub, GroovyElementTypes.ENUM_CONSTANT);
+    super(stub, GroovyStubElementTypes.ENUM_CONSTANT);
   }
 
+  @Override
   public String toString() {
     return "Enumeration constant";
+  }
+
+  @Override
+  public @Nullable GrModifierList getModifierList() {
+    return getStubOrPsiChild(MODIFIER_LIST);
   }
 
   @Override
@@ -60,26 +70,22 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
+  public @Nullable GrTypeElement getTypeElementGroovy() {
     return null;
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
   }
 
-  @Nullable
   @Override
-  public PsiType getDeclaredType() {
+  public @Nullable PsiType getDeclaredType() {
     return getType();
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     return getType();
   }
 
@@ -89,8 +95,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrExpression getInitializerGroovy() {
+  public @Nullable GrExpression getInitializerGroovy() {
     return null;
   }
 
@@ -106,8 +111,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrArgumentList getArgumentList() {
+  public @Nullable GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }
 
@@ -123,41 +127,35 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return list.addNamedArgument(namedArgument);
   }
 
-  @NotNull
   @Override
-  public GrNamedArgument[] getNamedArguments() {
+  public GrNamedArgument @NotNull [] getNamedArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
   }
 
-  @NotNull
   @Override
-  public GrExpression[] getExpressionArguments() {
+  public GrExpression @NotNull [] getExpressionArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return multiResolve(true);
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
+    return multiResolveGroovy(true);
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
   @Override
-  @Nullable
-  public GrEnumConstantInitializer getInitializingClass() {
-    return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANT_INITIALIZER);
+  public @Nullable GrEnumConstantInitializer getInitializingClass() {
+    return getStubOrPsiChild(GroovyStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
-  @NotNull
   @Override
-  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+  public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
     final GrEnumConstantInitializer initializingClass = getInitializingClass();
     if (initializingClass != null) return initializingClass;
 
@@ -183,87 +181,25 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return resolveMethod();
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
-    PsiClass clazz = getContainingClass();
-    return ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, argTypes, this);
+  public GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode) {
+    return myReference.multiResolve(incompleteCode);
   }
 
-  @NotNull
   @Override
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     PsiClass aClass = super.getContainingClass();
     assert aClass != null;
     return aClass;
   }
 
-  private class MyReference implements PsiPolyVariantReference {
-    @Override
-    @NotNull
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return GrEnumConstantImpl.this.multiResolve(false);
-    }
-
-    @NotNull
-    @Override
-    public PsiElement getElement() {
-      return GrEnumConstantImpl.this;
-    }
-
-    @NotNull
-    @Override
-    public TextRange getRangeInElement() {
-      return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
-    }
-
-    @Override
-    public PsiElement resolve() {
-      return resolveMethod();
-    }
-
-    @NotNull
-    public GroovyResolveResult advancedResolve() {
-      return GrEnumConstantImpl.this.advancedResolve();
-    }
-
-    @Override
-    @NotNull
-    public String getCanonicalText() {
-      return getContainingClass().getName();
-    }
-
-    @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return getElement();
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      throw new IncorrectOperationException("invalid operation");
-    }
-
-    @Override
-    public boolean isReferenceTo(PsiElement element) {
-      return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
-    }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
-    }
+  @Override
+  public @Nullable Object computeConstantValue() {
+    return this;
   }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
-    return this;
+  public @NotNull GroovyConstructorReference getConstructorReference() {
+    return myReference;
   }
 }

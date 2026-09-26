@@ -1,0 +1,15 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.remote.credentialsType" interface="com.intellij.remote.CredentialsType" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

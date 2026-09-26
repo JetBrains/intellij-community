@@ -1,25 +1,31 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -27,17 +33,18 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddTypeArgumentsFix extends MethodArgumentFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix");
+import java.util.Objects;
 
-  private AddTypeArgumentsFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
+public final class AddTypeArgumentsFix extends MethodArgumentFix {
+  private static final Logger LOG = Logger.getInstance(AddTypeArgumentsFix.class);
+
+  private AddTypeArgumentsFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
+  public @NotNull String getText(@NotNull PsiExpressionList list) {
+    if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
 
@@ -46,8 +53,8 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
     @Override
-    public AddTypeArgumentsFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new AddTypeArgumentsFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new AddTypeArgumentsFix(list, i, toType, this).asIntention();
     }
 
     @Override
@@ -56,23 +63,26 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
     }
 
     @Override
-    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(final @NotNull PsiType exprType, final @NotNull PsiType parameterType, final @NotNull PsiElement context) {
       return !(exprType instanceof PsiPrimitiveType) && !(parameterType instanceof PsiPrimitiveType) || TypeConversionUtil.boxingConversionApplicable(exprType, parameterType);
     }
   }
 
-  @Nullable
-  public static PsiExpression addTypeArguments(PsiExpression expression, PsiType toType) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
+  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+    return addTypeArguments(expression, toType, true);
+  }
 
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
+    if (!PsiUtil.isAvailable(JavaFeature.GENERICS, expression)) return null;
+
+    PsiExpression orig = expression;
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodCallExpression methodCall) {
       final PsiReferenceParameterList list = methodCall.getMethodExpression().getParameterList();
       if (list == null || list.getTypeArguments().length > 0) return null;
       final JavaResolveResult resolveResult = methodCall.resolveMethodGenerics();
       final PsiElement element = resolveResult.getElement();
-      if (element instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)element;
+      if (element instanceof PsiMethod method) {
         final PsiType returnType = method.getReturnType();
         if (returnType == null) return null;
 
@@ -83,13 +93,19 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           LanguageLevel level = PsiUtil.getLanguageLevel(expression);
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            final PsiType substitution = toType == null ? resolveResult.getSubstitutor().substitute(typeParameter)
-                                                        : helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
-            if (substitution == null || PsiType.NULL.equals(substitution)) return null;
+            final PsiType substitution;
+            if (toType == null) {
+              substitution = resolveResult.getSubstitutor().substitute(typeParameter);
+              if (!PsiTypesUtil.isDenotableType(substitution, expression)) return null;
+            }
+            else {
+              substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
+            }
+            if (substitution == null || PsiTypes.nullType().equals(substitution)) return null;
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }
 
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
           PsiMethodCallExpression copy = (PsiMethodCallExpression)expression.copy();
           final PsiReferenceExpression methodExpression = copy.getMethodExpression();
           final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
@@ -100,21 +116,31 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           if (methodExpression.getQualifierExpression() == null) {
             final PsiExpression qualifierExpression;
             final PsiClass containingClass = method.getContainingClass();
-            LOG.assertTrue(containingClass != null);
+            if (containingClass == null) return null; // not actual method but some copy in DummyHolder, ignore
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
               qualifierExpression = factory.createReferenceExpression(containingClass);
-            } else {
+            }
+            else {
               qualifierExpression = RefactoringChangeUtil.createThisExpression(method.getManager(), null);
             }
             methodExpression.setQualifierExpression(qualifierExpression);
           }
 
-          return (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
+          PsiExpression result = withShortening
+                                 ? (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy)
+                                 : copy;
+
+          if (orig != expression) {
+            PsiExpression parenthesized = (PsiExpression)orig.copy();
+            Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(parenthesized)).replace(result);
+            return parenthesized;
+          }
+          return result;
         }
       }
     }
     return null;
   }
 
-  public static ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
+  public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
 }

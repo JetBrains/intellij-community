@@ -19,11 +19,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,21 +33,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class HtmlScriptLanguageInjector implements MultiHostInjector {
-
-
+public final class HtmlScriptLanguageInjector implements MultiHostInjector {
   /**
    * Finds language to be injected into &lt;script&gt; tag
    *
    * @param xmlTag &lt;script&gt; tag
    * @return language to inject or null if no language found or not a script tag at all
    */
-  @Nullable
-  public static Language getScriptLanguageToInject(@NotNull XmlTag xmlTag) {
+  public static @Nullable Language getScriptLanguageToInject(@NotNull XmlTag xmlTag) {
     if (!HtmlUtil.isScriptTag(xmlTag)) {
       return null;
     }
     String mimeType = xmlTag.getAttributeValue("type");
+    if (mimeType != null && mimeType.endsWith("+json")) {
+      mimeType = "application/json";
+    }
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
     return !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
   }
@@ -68,16 +69,18 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
 
     if (LanguageUtil.isInjectableLanguage(language)) {
-      registrar
-        .startInjecting(language)
-        .addPlace(null, null, (PsiLanguageInjectionHost)host, TextRange.create(0, host.getTextLength()))
-        .doneInjecting();
+      List<PsiElement> elements = ContainerUtil.filter(host.getChildren(), (child) -> !(child instanceof OuterLanguageElement));
+      if (elements.isEmpty()) return;
+      registrar.startInjecting(language);
+      for (PsiElement child : elements) {
+        registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, child.getTextRangeInParent());
+      }
+      registrar.doneInjecting();
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlText.class);
   }
 }

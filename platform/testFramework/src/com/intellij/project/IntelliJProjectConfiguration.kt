@@ -1,101 +1,105 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
+import com.intellij.project.IntelliJProjectConfiguration.Companion.getLocalMavenRepo
+import com.intellij.util.PathUtil
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
+import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Assert
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
- * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
- * hardcoding paths to their JARs.
- *
- * @author nik
+ * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries
+ * without hard-coding paths to their JARs.
  */
 class IntelliJProjectConfiguration {
-  private val projectHome = PathManager.getHomePath()
+  private val projectHome = PathManager.getHomeDir()
   private val projectLibraries: Map<String, LibraryRoots>
   private val moduleLibraries: Map<String, Map<String, LibraryRoots>>
+  private val remoteRepositoryDescriptions: List<JpsRemoteRepositoryDescription>
 
   init {
     val project = loadIntelliJProject(projectHome)
-    fun extractLibrariesRoots(collection: JpsLibraryCollection) = collection.libraries.associateBy({ it.name }, {
-      LibraryRoots(SmartList(it.getFiles(JpsOrderRootType.COMPILED)), SmartList(it.getFiles(JpsOrderRootType.SOURCES)))
-    })
+    fun extractLibrariesRoots(collection: JpsLibraryCollection): Map<@NlsSafe String, LibraryRoots> =
+      collection.libraries.associateBy(keySelector = { it.name }, valueTransform = {
+        LibraryRoots(
+          classes = java.util.List.copyOf(it.getFiles(JpsOrderRootType.COMPILED)),
+          sources = java.util.List.copyOf(it.getFiles(JpsOrderRootType.SOURCES)),
+        )
+      })
     projectLibraries = extractLibrariesRoots(project.libraryCollection)
-    moduleLibraries = project.modules.associateBy({it.name}, {
-      val libraries = extractLibrariesRoots(it.libraryCollection)
-      if (libraries.isNotEmpty()) libraries else emptyMap()
+    moduleLibraries = project.modules.associateBy(keySelector = {it.name}, valueTransform = {
+      extractLibrariesRoots(it.libraryCollection).ifEmpty { emptyMap() }
     })
+    remoteRepositoryDescriptions = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(project)!!.repositories
   }
 
   companion object {
     private val instance by lazy { IntelliJProjectConfiguration() }
 
     @JvmStatic
-    fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> {
-      return getProjectLibrary(libraryName).classesPaths
-    }
+    fun getRemoteRepositoryDescriptions() : List<JpsRemoteRepositoryDescription> = instance.remoteRepositoryDescriptions
 
     @JvmStatic
-    fun getProjectLibraryClassesRootUrls(libraryName: String): List<String> {
-      return getProjectLibrary(libraryName).classesUrls
-    }
+    fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> = getProjectLibrary(libraryName).classesPaths
 
     @JvmStatic
-    fun getProjectLibrary(libraryName: String): LibraryRoots {
-      return instance.projectLibraries[libraryName]
-             ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
-    }
+    fun getProjectLibraryClassesRootUrls(libraryName: String): List<String> = getProjectLibrary(libraryName).classesUrls
+
+    @JvmStatic
+    fun getProjectLibrary(libraryName: String): LibraryRoots =
+      instance.projectLibraries[libraryName]
+      ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
 
     @JvmStatic
     fun getModuleLibrary(moduleName: String, libraryName: String): LibraryRoots {
-      val moduleLibraries = instance.moduleLibraries[moduleName]
-                            ?: throw IllegalArgumentException("Cannot find module '$moduleName' in ${instance.projectHome}")
-      return moduleLibraries[libraryName]
-             ?: throw IllegalArgumentException("Cannot find module library '$libraryName' in $moduleName")
+      return (instance.moduleLibraries[moduleName]
+              ?: throw IllegalArgumentException("Cannot find module '$moduleName' in ${instance.projectHome}")).let {
+        it[libraryName] ?: throw IllegalArgumentException("Cannot find module library '$libraryName' in $moduleName")
+      }
     }
 
     @JvmStatic
-    fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile {
-      val jarUrl = UsefulTestCase.assertOneElement(getProjectLibraryClassesRootUrls(projectLibraryName))
-      val jarRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl)
-      Assert.assertNotNull(jarRoot)
-      return jarRoot!!
+    fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile = getVirtualFile(getProjectLibrary(projectLibraryName))
+
+    @JvmStatic
+    fun getJarFromSingleJarModuleLibrary(moduleName: String, libraryName: String): VirtualFile =
+      getVirtualFile(getModuleLibrary(moduleName, libraryName))
+
+    @JvmStatic
+    fun getVirtualFile(lib: LibraryRoots): VirtualFile {
+      return lib.classesUrls.single().let { url ->
+        VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)
+        ?: throw IllegalStateException("Cannot find virtual file by $url (nio file exists: ${lib.classes.single().exists()})")
+      }
     }
 
     @JvmStatic
+    fun getJarPathFromSingleJarProjectLibrary(libName: String): Path = getProjectLibrary(libName).classes.single().toPath()
+
     fun loadIntelliJProject(projectHome: String): JpsProject {
-      val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
-      return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
+      return loadIntelliJProject(Path.of(projectHome))
     }
+
+    @JvmStatic
+    fun getLocalMavenRepo(): Path = Path.of(getMavenRepositoryPath())
   }
 
-  class LibraryRoots(val classes: List<File>, val sources: List<File>) {
+  class LibraryRoots(val classes: List<java.io.File>, val sources: List<java.io.File>) {
     val classesPaths: List<String>
       get() = classes.map { FileUtil.toSystemIndependentName(it.absolutePath) }
 
@@ -105,4 +109,23 @@ class IntelliJProjectConfiguration {
     val sourcesUrls: List<String>
       get() = sources.map { JpsPathUtil.getLibraryRootUrl(it) }
   }
+}
+
+fun loadIntelliJProject(projectHome: Path): JpsProject {
+  val project = JpsSerializationManager.getInstance().loadProject(
+    /* projectPath = */ projectHome,
+    /* externalConfigurationDirectory = */ JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty(),
+    /* pathVariables = */ mapOf("MAVEN_REPOSITORY" to getLocalMavenRepo().invariantSeparatorsPathString),
+    /* loadUnloadedModules = */ true
+  )
+  val pathUtilJarPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java))
+  val jpsJavaProjectExtension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project)
+  if (Files.isDirectory(pathUtilJarPath)) {
+    val outPath = pathUtilJarPath.parent.parent
+    jpsJavaProjectExtension.outputUrl = outPath.toString()
+  }
+  else {
+    println("Running from jars, would not change JpsJavaExtensionService.outputUrl, current is '${jpsJavaProjectExtension.outputUrl}'")
+  }
+  return project
 }

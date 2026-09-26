@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -12,20 +11,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -39,77 +36,75 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import java.lang.ref.SoftReference;
 
-/**
- * @author ilyas
- */
+import static com.intellij.reference.SoftReference.dereference;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.areImportsIgnored;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getAnnotationHint;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInFile;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processClassesInPackage;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessMembers;
+
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
   private final CachedValue<DeclarationHolder> myAnnotationsCache;
   private final CachedValue<DeclarationHolder> myDeclarationsCache;
   private final DeclarationHolder myAllCachedDeclarations;
 
-  protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
+  protected GroovyFileBaseImpl(@NotNull FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
     CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(viewProvider.getManager().getProject());
     myAnnotationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
-      buildCache(true), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+      buildCache(true), this, PsiModificationTracker.MODIFICATION_COUNT
     ), false);
     myDeclarationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
-      buildCache(false), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+      buildCache(false), this, PsiModificationTracker.MODIFICATION_COUNT
     ), false);
     myAllCachedDeclarations = (processor, state, place) ->
       myAnnotationsCache.getValue().processDeclarations(processor, state, place) &&
       myDeclarationsCache.getValue().processDeclarations(processor, state, place);
   }
 
-  public GroovyFileBaseImpl(IFileElementType root, IFileElementType root1, FileViewProvider provider) {
+  public GroovyFileBaseImpl(@NotNull IFileElementType root, @NotNull IFileElementType root1, @NotNull FileViewProvider provider) {
     this(provider, root.getLanguage());
     init(root, root1);
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
+  @Override
   public String toString() {
     return "Groovy script";
   }
 
   @Override
-  @NotNull
-  public GrTypeDefinition[] getTypeDefinitions() {
-    final StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
-    }
-
-    return calcTreeElement().getChildrenAsPsiElements(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
+  public GrTypeDefinition @NotNull [] getTypeDefinitions() {
+    return withGreenStubOrAst(
+      stub -> stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY),
+      ast -> ast.getChildrenAsPsiElements(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY)
+    );
   }
 
   @Override
-  @NotNull
-  public GrMethod[] getMethods() {
-    final StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
-    }
-
-    return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
+  public GrMethod @NotNull [] getMethods() {
+    return withGreenStubOrAst(
+      stub -> stub.getChildrenByType(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY),
+      ast -> ast.getChildrenAsPsiElements(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY)
+    );
   }
 
   @Override
-  @NotNull
-  public GrTopStatement[] getTopStatements() {
+  public GrTopStatement @NotNull [] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }
 
@@ -133,15 +128,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
-  @NotNull
   @Override
-  public GrStatement[] getStatements() {
+  public GrStatement @NotNull [] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
 
   @Override
-  @NotNull
-  public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
+  public @NotNull GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     if (anchor != null) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
@@ -182,8 +175,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public PsiClass[] getClasses() {
+  public PsiClass @NotNull [] getClasses() {
     return getTypeDefinitions();
   }
 
@@ -193,17 +185,21 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myControlFlow = null;
   }
 
-  private volatile SoftReference<Instruction[]> myControlFlow;
+  private volatile SoftReference<GroovyControlFlow> myControlFlow;
 
   @Override
   public Instruction[] getControlFlow() {
+    return getGroovyControlFlow().getFlow();
+  }
+
+  public GroovyControlFlow getGroovyControlFlow() {
     assert isValid();
-    Instruction[] result = SoftReference.dereference(myControlFlow);
+    GroovyControlFlow result = dereference(myControlFlow);
     if (result == null) {
-      result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
+      result = ControlFlowBuilder.buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);
     }
-    return ControlFlowBuilder.assertValidPsi(result);
+    return result;
   }
 
   @Override
@@ -224,54 +220,59 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+    for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
       if (!shouldProcessMembers(each)) continue;
-      if (!getAppropriateHolder(processor).processDeclarations(each, state, place)) return false;
+      if (!getAppropriateHolder(getAnnotationHint(processor)).processDeclarations(each, state, place)) return false;
     }
     return true;
   }
 
-  @NotNull
-  private DeclarationHolder getAppropriateHolder(@NotNull PsiScopeProcessor processor) {
-    AnnotationHint hint = getAnnotationHint(processor);
+  private @NotNull DeclarationHolder getAppropriateHolder(@Nullable AnnotationHint hint) {
+    boolean mayUseCache = useCache();
     if (hint == null) {
-      if (useCache()) {
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue() && myDeclarationsCache.hasUpToDateValue()) {
         return myAllCachedDeclarations;
-      }
-      else {
-        return this::processDeclarationsNoCache;
       }
     }
     else if (hint.isAnnotationResolve()) {
-      return myAnnotationsCache.getValue();
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue()) {
+        return myAnnotationsCache.getValue();
+      }
     }
     else {
-      return myDeclarationsCache.getValue();
+      if (mayUseCache || myDeclarationsCache.hasUpToDateValue()) {
+        return myDeclarationsCache.getValue();
+      }
     }
+    return this::processDeclarationsNoCache;
   }
 
   private boolean useCache() {
     if (!isPhysical()) return false;
     if (ApplicationManager.getApplication().isDispatchThread()) return false;
-    return getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE;
+    return PsiFileEx.isBatchReferenceProcessingEnabled(this);
   }
 
-  @NotNull
-  private DeclarationHolder buildCache(boolean annotationCache) {
+  private @NotNull DeclarationHolder buildCache(boolean annotationCache) {
     FileCacheBuilderProcessor processor = new FileCacheBuilderProcessor(annotationCache);
     processDeclarationsNoCache(processor, ResolveState.initial(), this);
     return processor.buildCache();
   }
 
   private boolean processDeclarationsNoCache(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
-    final GroovyFileImports imports = getImports();
     if (!processClassesInFile(this, processor, state)) return false;
+    final GroovyFileImports imports = getImports();
     if (!imports.processAllNamedImports(processor, state, place)) return false;
     if (!processClassesInPackage(this, processor, state, place)) return false;
-    if (!imports.processAllStarImports(processor, state, place)) return false;
-    if (!imports.processDefaultImports(processor, state, place)) return false;
+    if (!areImportsIgnored(state)) {
+      return processComplexImports(processor, state, place);
+    }
     return true;
   }
 
-  protected abstract GroovyFileImports getImports();
+  public boolean processComplexImports(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final GroovyFileImports imports = getImports();
+    if (!imports.processAllStarImports(processor, state, place)) return false;
+    return imports.processDefaultImports(processor, state, place);
+  }
 }

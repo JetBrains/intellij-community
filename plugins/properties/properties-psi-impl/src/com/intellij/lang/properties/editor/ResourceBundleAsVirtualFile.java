@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
@@ -21,36 +21,33 @@ import java.util.List;
  * @author Alexey
  */
 @Presentation(icon = "AllIcons.Nodes.ResourceBundle")
-public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualFileWithoutContent {
+public final class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualFileWithoutContent {
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleAsVirtualFile(@NotNull final ResourceBundle resourceBundle) {
+  public ResourceBundleAsVirtualFile(@NotNull ResourceBundle resourceBundle) {
     myResourceBundle = resourceBundle;
   }
 
-  @NotNull
-  public ResourceBundle getResourceBundle() {
+  public @NotNull ResourceBundle getResourceBundle() {
     return myResourceBundle;
   }
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
-    return LocalFileSystem.getInstance();
+  public @NotNull VirtualFileSystem getFileSystem() {
+    return StandardFileSystems.local();
   }
 
   @Override
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : "";
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -62,6 +59,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myResourceBundle.hashCode();
   }
@@ -97,7 +95,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
 
   @Override
   public VirtualFile getParent() {
-    return myResourceBundle.getBaseDirectory();
+    return myResourceBundle.isValid() ? myResourceBundle.getBaseDirectory() : null;
   }
 
   @Override
@@ -105,15 +103,13 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
     return EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
@@ -128,19 +124,17 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
   }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     //TODO compare files action uses this method
     return new byte[0];
   }

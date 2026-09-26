@@ -1,0 +1,10 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"type": "command",
+				"command": ""
+			}
+		]
+	}
+}

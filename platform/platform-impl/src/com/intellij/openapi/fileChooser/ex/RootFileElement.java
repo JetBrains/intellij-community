@@ -1,41 +1,37 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
+import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class RootFileElement extends FileElement {
-  private VirtualFile[] myFiles;
+@ApiStatus.Internal
+public final class RootFileElement extends FileElement {
+
+  private static final Logger LOG = Logger.getInstance(RootFileElement.class);
+
+  private List<VirtualFile> myFiles;
   private Object[] myChildren;
 
-  public RootFileElement(@NotNull VirtualFile[] files, String name, boolean showFileSystemRoots) {
-    super(files.length == 1 ? files[0] : null, name);
-    myFiles = files.length == 0 && showFileSystemRoots ? null : files;
+  public RootFileElement(@NotNull List<VirtualFile> files, String name, boolean showFileSystemRoots) {
+    super(files.size() == 1 ? files.get(0) : null, name);
+    myFiles = files.isEmpty() && showFileSystemRoots ? null : files;
   }
 
   public Object[] getChildren() {
@@ -44,30 +40,29 @@ public class RootFileElement extends FileElement {
         myFiles = getFileSystemRoots();
       }
 
-      List<FileElement> children = new ArrayList<>();
-      for (final VirtualFile file : myFiles) {
-        if (file != null) {
-          children.add(new FileElement(file, file.getPresentableUrl()));
-        }
-      }
-      myChildren = ArrayUtil.toObjectArray(children);
+      myChildren = myFiles.stream().
+        filter(Objects::nonNull).
+        map(file -> new FileElement(file, file.getPresentableUrl())).
+        toArray();
     }
     return myChildren;
   }
 
-  private static VirtualFile[] getFileSystemRoots() {
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final Set<VirtualFile> roots = new HashSet<>();
-    final File[] ioRoots = File.listRoots();
-    if (ioRoots != null) {
-      for (final File root : ioRoots) {
-        final String path = FileUtil.toSystemIndependentName(root.getAbsolutePath());
-        final VirtualFile file = localFileSystem.findFileByPath(path);
-        if (file != null) {
-          roots.add(file);
-        }
+  private static List<VirtualFile> getFileSystemRoots() {
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
+
+    Stream<Path> paths = StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false);
+
+    if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
+      CompletableFuture<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
+      try {
+        List<WSLDistribution> distributions = future.get(200, TimeUnit.MILLISECONDS);
+        paths = Stream.concat(paths, distributions.stream().map(WSLDistribution::getUNCRootPath));
+      }
+      catch (Exception e) {
+        LOG.info("Cannot fetch WSL distributions", e);
       }
     }
-    return VfsUtilCore.toVirtualFileArray(roots);
+    return paths.map(path -> fileManager.findFileByNioPath(path)).filter(Objects::nonNull).toList();
   }
 }

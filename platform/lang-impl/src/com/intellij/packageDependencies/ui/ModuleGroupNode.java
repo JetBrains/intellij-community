@@ -1,33 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
-public class ModuleGroupNode extends PackageDependenciesNode {
+@ApiStatus.Internal
+public final class ModuleGroupNode extends PackageDependenciesNode {
   private final ModuleGroup myModuleGroup;
 
   public ModuleGroupNode(ModuleGroup moduleGroup, Project project) {
@@ -36,7 +24,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   }
 
   @Override
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -50,8 +38,9 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 
+  @Override
   public String toString() {
-    return myModuleGroup == null ? AnalysisScopeBundle.message("unknown.node.text") : myModuleGroup.toString();
+    return myModuleGroup == null ? CodeInsightBundle.message("unknown.node.text") : myModuleGroup.toString();
   }
 
   public String getModuleGroupName() {
@@ -62,24 +51,23 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     return myModuleGroup;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof ModuleGroupNode)) return false;
-
-    final ModuleGroupNode moduleNode = (ModuleGroupNode)o;
+    if (!(o instanceof ModuleGroupNode moduleNode)) return false;
 
     return Comparing.equal(myModuleGroup, moduleNode.myModuleGroup);
   }
 
+  @Override
   public int hashCode() {
     return myModuleGroup == null ? 0 : myModuleGroup.hashCode();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

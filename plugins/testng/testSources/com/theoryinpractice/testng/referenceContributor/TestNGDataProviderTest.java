@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -25,13 +11,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test
-public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
+public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
   protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        TestNGDataProviderTest.super.setUp();
+        super.setUp();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -42,9 +28,9 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @AfterMethod
   @Override
   protected void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        TestNGDataProviderTest.super.tearDown();
+        super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -56,7 +42,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public Object[][] data() {
     return new Object[][]{
       new Object[]{"private", new String[]{"data"}},
-      new Object[]{"privateinsuper", ArrayUtil.EMPTY_STRING_ARRAY},
+      new Object[]{"privateinsuper", ArrayUtilRt.EMPTY_STRING_ARRAY},
       new Object[]{"protectedinsuper", new String[]{"data"}},
       new Object[]{"privateindataproviderclass", new String[]{"data"}},
     };
@@ -66,7 +52,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
 
   @Test(dataProvider = "data")
   public void checkDataProviders(final String path, final String... results) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
         myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
         myFixture.addClass("package org.testng.annotations; public @interface Test {}");

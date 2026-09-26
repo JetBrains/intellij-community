@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -32,8 +21,8 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   private final boolean myHaveMergeSources;
   private final boolean myHasLocalSource;
 
-  public SvnHistorySession(SvnVcs vcs, final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
-                           @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
+  public SvnHistorySession(SvnVcs vcs, final List<? extends VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
+                           final @Nullable VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
     super(revisions, currentRevision);
     myVcs = vcs;
     myCommittedPath = committedPath;
@@ -44,12 +33,8 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
     }
   }
 
-  public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-    return null;
-  }
-
-  @Nullable
-  public VcsRevisionNumber calcCurrentRevisionNumber() {
+  @Override
+  public @Nullable VcsRevisionNumber calcCurrentRevisionNumber() {
     if (myCommittedPath == null) {
       return null;
     }
@@ -63,7 +48,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
 
   public static VcsRevisionNumber getCurrentCommittedRevision(final SvnVcs vcs, final File file) {
     Info info = vcs.getInfo(file);
-    return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
+    return info != null ? new SvnRevisionNumber(info.getCommitInfo().getRevision()) : null;
   }
 
   public FilePath getCommittedPath() {

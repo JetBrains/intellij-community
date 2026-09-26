@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 internal abstract class CreateMemberAction(
@@ -16,9 +16,9 @@ internal abstract class CreateMemberAction(
   protected open val request: ActionRequest
 ) : IntentionAction {
 
-  private val myTargetPointer = target.createSmartPointer()
+  protected val myTargetPointer = target.createSmartPointer()
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
     return myTargetPointer.element != null && request.isValid
   }
 

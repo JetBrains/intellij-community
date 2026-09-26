@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+class AnnotationModel(val params: List<String>)
+
+fun test() {
+    val annotation = AnnotationModel(params = listOf<caret>())
+}

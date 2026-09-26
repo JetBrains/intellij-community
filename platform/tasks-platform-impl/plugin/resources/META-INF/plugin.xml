@@ -1,0 +1,20 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<!--suppress SplitModeImplicitModuleKind -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.platform.tasks.plugin</id>
+  <name>Tasks and Contexts</name>
+  <description><![CDATA[
+    Automatically saves and restores relevant context information on VCS branch switches, such as
+    a set of bookmarks, breakpoints, and tabs opened in the editor.
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.tasks" loading="required"/>
+    <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.platform.tasks.impl.bookmarks"/>
+    <module name="intellij.platform.tasks.impl.debugger"/>
+  </content>
+</idea-plugin>

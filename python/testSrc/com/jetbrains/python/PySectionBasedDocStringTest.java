@@ -15,10 +15,17 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.documentation.docstrings.*;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
+import com.jetbrains.python.documentation.docstrings.GoogleCodeStyleDocString;
+import com.jetbrains.python.documentation.docstrings.NumpyDocString;
+import com.jetbrains.python.documentation.docstrings.SectionBasedDocString;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -32,6 +39,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.QuickDocumentation
+@Layers.Functional
 public class PySectionBasedDocStringTest extends PyTestCase {
 
   public void testSimpleGoogleDocString() {
@@ -99,7 +108,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   @Nullable
   private String findFirstDocString() {
-    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
+    final PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<>() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof PyStringLiteralExpression && element.getFirstChild().getNode().getElementType() == PyTokenTypes.DOCSTRING) {
@@ -171,24 +180,26 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final SectionField param1 = section1.getFields().get(0);
     assertEquals("x", param1.getName());
     assertEquals("int", param1.getType());
-    assertEquals("first line of the description\n" +
-                 "second line\n" +
-                 "  third line\n" +
-                 "\n" +
-                 "Example::\n" +
-                 "\n" +
-                 "    assert func(42) is None", param1.getDescription());
+    assertEquals("""
+                   first line of the description
+                   second line
+                     third line
+
+                   Example::
+
+                       assert func(42) is None""", param1.getDescription());
   }
 
   public void testMultilineSummary() {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
-    assertEquals("First line\n" +
-                 "Second line\n" +
-                 "Third line", docString.getSummary());
+    assertEquals("""
+                   First line
+                   Second line
+                   Third line""", docString.getSummary());
   }
 
-  public void testNamedReturnsAndYields() {
-    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+  public void testNumpyNamedReturnsAndYields() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
     assertEmpty(docString.getSummary());
     assertSize(2, docString.getSections());
 
@@ -229,10 +240,18 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     final SectionField param1 = paramSection.getFields().get(0);
     assertEquals("x", param1.getName());
     assertEmpty(param1.getType());
-    assertEquals("First line\n" +
-                 "Second line\n" +
-                 "\n" +
-                 "Line after single break", param1.getDescription());
+    assertEquals("""
+                   First line
+                   Second line
+
+                   Line after single break""", param1.getDescription());
+  }
+
+  // PY-21883
+  public void testNumpyCombinesParamsAndOtherParamsSections() {
+    final NumpyDocString docString = findAndParseNumpyStyleDocString();
+    final List<String> parameters = docString.getParameters();
+    assertEquals(List.of("x", "y", "z"), parameters);
   }
 
   public void testGoogleEmptyParamTypeInParenthesis() {
@@ -290,15 +309,17 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-16766
   public void testGoogleDocStringContentDetection() {
-    assertTrue(DocStringUtil.isLikeGoogleDocString(
-      "\n" +
-      "    My Section:\n" +
-      "        some user defined section\n" +
-      "    \n" +
-      "    Parameters:\n" +
-      "        param1: \n" +
-      "\n" +
-      "    Returns:\n"));
+    assertTrue(DocStringParser.isLikeGoogleDocString(
+      """
+
+            My Section:
+                some user defined section
+           \s
+            Parameters:
+                param1:\s
+
+            Returns:
+        """));
   }
 
   public void testNumpyEmptySectionIndent() {
@@ -387,19 +408,39 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-17657, PY-16303
   public void testNotGoogleFormatIfDocstringContainTags() {
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
-                                                                          ":type sub_field: FieldDescriptor | () -> FieldDescriptor\n" +
-                                                                          ":param sub_field: The type of field in this collection\n" +
-                                                                          "    Tip: You can pass a ValueObject class here to ...\n" +
-                                                                          "    Example:\n" +
-                                                                          "        addresses = field.Collection(AddressObject)\n" +
-                                                                          "\"\"\""));
-    
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
-                                                                          "Args:\n" +
-                                                                          "    :param Tuple[int, int] name: Some description\n" +
-                                                                          "\"\"\""));
-    
+    assertEquals(DocStringFormat.REST, DocStringParser.guessDocStringFormat("""
+                                                                            ""\"
+                                                                            :type sub_field: FieldDescriptor | () -> FieldDescriptor
+                                                                            :param sub_field: The type of field in this collection
+                                                                                Tip: You can pass a ValueObject class here to ...
+                                                                                Example:
+                                                                                    addresses = field.Collection(AddressObject)
+                                                                            ""\""""));
+
+    assertEquals(DocStringFormat.REST, DocStringParser.guessDocStringFormat("""
+                                                                            ""\"
+                                                                            Args:
+                                                                                :param Tuple[int, int] name: Some description
+                                                                            ""\""""));
+  }
+
+  // PY-31025
+  public void testGoogleDescriptionOfReturnValueWithoutType() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description", docString.getReturnDescription());
+  }
+
+  // PY-31025
+  public void testGoogleMultilineDescriptionOfReturnValueWithoutType() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description\n" +
+                 "with continuation", docString.getReturnDescription());
+  }
+
+  // PY-31025
+  public void testGoogleDescriptionOfReturnValueOnNextLine() {
+    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
+    assertEquals("return value description", docString.getReturnDescription());
   }
 
   @Override

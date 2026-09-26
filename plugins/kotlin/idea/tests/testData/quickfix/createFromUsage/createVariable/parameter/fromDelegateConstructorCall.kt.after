@@ -1,0 +1,11 @@
+// "Create parameter 'x'" "true"
+// ERROR: None of the following functions can be called with the arguments supplied: <br>public constructor CtorAccess() defined in CtorAccess<br>public constructor CtorAccess(ps: String, x: String) defined in CtorAccess
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_ERROR: CYCLIC_CONSTRUCTOR_DELEGATION_CALL
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class CtorAccess() {
+    constructor(ps: String, x: String) : this(<caret>x,)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: x: kotlin.String

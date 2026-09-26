@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,19 +14,25 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.WalkingState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class SliceNullnessAnalyzerBase {
-  @NotNull
-  private final SliceLeafEquality myLeafEquality;
+  private final @NotNull SliceLeafEquality myLeafEquality;
 
-  @NotNull
-  private final SliceLanguageSupportProvider myProvider;
+  private final @NotNull SliceLanguageSupportProvider myProvider;
 
   public SliceNullnessAnalyzerBase(@NotNull SliceLeafEquality leafEquality,
                                    @NotNull SliceLanguageSupportProvider provider) {
@@ -47,44 +40,44 @@ public abstract class SliceNullnessAnalyzerBase {
     myProvider = provider;
   }
 
-  private void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
-    SliceRootNode root = createNewTree(result, oldRoot, map);
-
-    SliceUsage rootUsage = oldRoot.myCachedChildren.get(0).getValue();
-    SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Nullness") );
+  private static void groupByNullness(SliceRootNode oldRoot, SliceRootNode root) {
+    SliceUsage rootUsage = oldRoot.getCachedChildren().get(0).getValue();
+    SliceManager.getInstance(Objects.requireNonNull(root.getProject()))
+      .createToolWindow(true, root, true,
+                        SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(),
+                                                           JavaBundle.message("tab.title.slices.grouped.by.nullness")));
   }
 
-  @NotNull
-  public SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public @NotNull SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
-    assert oldRoot.myCachedChildren.size() == 1;
-    SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
+    assert oldRoot.getCachedChildren().size() == 1;
+    SliceNode oldRootStart = oldRoot.getCachedChildren().get(0);
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<>();
 
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS);
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS);
-    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS);
-
+    List<SliceLeafValueClassNode> children = new ArrayList<>();
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
+    root.setChildren(children);
     return root;
   }
 
-  private void createValueRootNode(NullAnalysisResult result,
-                                   SliceRootNode oldRoot,
-                                   final Map<SliceNode, NullAnalysisResult> map,
-                                   SliceRootNode root,
-                                   SliceNode oldRootStart,
-                                   String nodeName,
-                                   final int group) {
-    Collection<PsiElement> groupedByValue = result.groupedByValue[group];
+  private SliceLeafValueClassNode createValueRootNode(NullAnalysisResult result,
+                                                      SliceRootNode oldRoot,
+                                                      final Map<SliceNode, NullAnalysisResult> map,
+                                                      SliceRootNode root,
+                                                      SliceNode oldRootStart,
+                                                      String nodeName,
+                                                      final int group) {
+    Collection<PsiElement> groupedByValue = result.groupedByValue.get(group);
     if (groupedByValue.isEmpty()) {
-      return;
+      return null;
     }
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
-    root.myCachedChildren.add(valueRoot);
 
-    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, myLeafEquality);
+    Set<PsiElement> uniqueValues = CollectionFactory.createCustomHashingStrategySet(myLeafEquality);
+    uniqueValues.addAll(groupedByValue);
     for (final PsiElement expression : uniqueValues) {
       SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, oldNode -> {
         if (oldNode.getDuplicate() != null) {
@@ -110,18 +103,22 @@ public abstract class SliceNullnessAnalyzerBase {
                                    Collections.singletonList(newRoot))
       );
     }
+    return valueRoot;
   }
 
   public void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    final Ref<NullAnalysisResult> leafExpressions = Ref.create(null);
+    final Ref<SliceRootNode> newRootRef = Ref.create(null);
     final Map<SliceNode, NullAnalysisResult> map = createMap();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+    String encouragementPiece = " (may very well take the whole day)";
+    ProgressManager.getInstance().run(new Task.Backgroundable(
+      root.getProject(), JavaRefactoringBundle.message("dataflow.to.here.expand.progress", encouragementPiece), true) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
-        leafExpressions.set(l);
+      public void run(final @NotNull ProgressIndicator indicator) {
+        NullAnalysisResult leaves = calcNullableLeaves(root, treeStructure, map);
+        SliceRootNode newRoot = ReadAction.compute(() -> createNewTree(leaves, root, map));
+        newRootRef.set(newRoot);
       }
 
       @Override
@@ -132,10 +129,10 @@ public abstract class SliceNullnessAnalyzerBase {
       @Override
       public void onSuccess() {
         try {
-          NullAnalysisResult leaves = leafExpressions.get();
-          if (leaves == null) return;  //cancelled
+          SliceRootNode newRoot = newRootRef.get();
+          if (newRoot == null) return;  //cancelled
 
-          groupByNullness(leaves, root, map);
+          groupByNullness(root, newRoot);
         }
         finally {
           finish.run();
@@ -144,25 +141,25 @@ public abstract class SliceNullnessAnalyzerBase {
     });
   }
 
-  public static Map<SliceNode, NullAnalysisResult> createMap() {
-    return FactoryMap.createMap(k->new NullAnalysisResult(), ContainerUtil::newIdentityTroveMap);
+  public static @NotNull Map<SliceNode, NullAnalysisResult> createMap() {
+    return FactoryMap.createMap(k -> new NullAnalysisResult(), () -> new Reference2ObjectOpenHashMap<>());
   }
 
   private static NullAnalysisResult node(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls) {
     return nulls.get(node);
   }
+
   private static Collection<PsiElement> group(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls, int group) {
-    return nulls.get(node).groupedByValue[group];
+    return nulls.get(node).groupedByValue.get(group);
   }
 
-  @NotNull
-  public NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                               @NotNull AbstractTreeStructure treeStructure,
-                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  public @NotNull NullAnalysisResult calcNullableLeaves(final @NotNull SliceNode root,
+                                                        @NotNull AbstractTreeStructure treeStructure,
+                                                        final @NotNull Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
       @Override
-      public void visit(@NotNull final SliceNode element) {
+      public void visit(final @NotNull SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
@@ -179,7 +176,7 @@ public abstract class SliceNullnessAnalyzerBase {
             group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
-            Collection<? extends AbstractTreeNode> children = ReadAction.compute(element::getChildren);
+            Collection<? extends AbstractTreeNode<?>> children = ReadAction.compute(element::getChildren);
             if (children.isEmpty()) {
               group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
             }
@@ -202,34 +199,20 @@ public abstract class SliceNullnessAnalyzerBase {
   }
 
   /**
-   * @param element element to find nullness for
-   * @return element nullness
-   * @deprecated for removal; call/override {@link #checkNullability(PsiElement)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @NotNull
-  protected Nullness checkNullness(@SuppressWarnings("unused") final PsiElement element) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
    * Implementors must override this method; default implementation just throws UnsupportedOperationException.
    *
    * @param element element to find nullability for
    * @return element nullability
    */
-  @NotNull
-  protected Nullability checkNullability(final PsiElement element) {
-    //noinspection deprecation
-    return checkNullness(element).toNullability();
+  protected @NotNull Nullability checkNullability(final PsiElement element) {
+    throw new UnsupportedOperationException();
   }
 
-  public static class NullAnalysisResult {
+  public static final class NullAnalysisResult {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;
-    final Collection<PsiElement>[] groupedByValue = new Collection[] {new THashSet<PsiElement>(),new THashSet<PsiElement>(),new THashSet<PsiElement>()};
+    final List<Set<PsiElement>> groupedByValue = Arrays.asList(CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet());
 
     public void clear() {
       for (Collection<PsiElement> elements : groupedByValue) {
@@ -238,9 +221,9 @@ public abstract class SliceNullnessAnalyzerBase {
     }
 
     private void add(NullAnalysisResult duplicate) {
-      for (int i = 0; i < groupedByValue.length; i++) {
-        Collection<PsiElement> elements = groupedByValue[i];
-        Collection<PsiElement> other = duplicate.groupedByValue[i];
+      for (int i = 0; i < groupedByValue.size(); i++) {
+        Collection<PsiElement> elements = groupedByValue.get(i);
+        Collection<PsiElement> other = duplicate.groupedByValue.get(i);
         elements.addAll(other);
       }
     }

@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="fleet:logback-classic" type="repository">
+    <properties maven-id="ch.qos.logback:logback-classic:1.3.14">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.3.14/logback-classic-1.3.14.jar">
+          <sha256sum>f9b07a6dba4df3899381df7e597df450134e1879b1f3a757456b3cd1c8d94e2f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/ch/qos/logback/logback-core/1.3.14/logback-core-1.3.14.jar">
+          <sha256sum>9f53159af18a9d438bc398c970db3bb7e17ddb07b04bbb3b01dfe3454dd18862</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-api" />
+        <dependency maven-id="com.sun.mail:javax.mail" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.3.14/logback-classic-1.3.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-core/1.3.14/logback-core-1.3.14.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-classic/1.3.14/logback-classic-1.3.14-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ch/qos/logback/logback-core/1.3.14/logback-core-1.3.14-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

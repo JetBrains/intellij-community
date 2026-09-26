@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -37,9 +23,9 @@ public class DtdCompletionContributor extends CompletionContributor {
     "NMTOKEN", "NMTOKENS", "SYSTEM", "PUBLIC"
   };
 
-  private static final InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> INSERT_HANDLER = new BasicInsertHandler<>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       super.handleInsert(context, item);
 
       if (item.getObject().toString().startsWith("<!")) {
@@ -57,10 +43,10 @@ public class DtdCompletionContributor extends CompletionContributor {
   };
 
   public DtdCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         PsiElement position = parameters.getPosition();
         PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
@@ -74,8 +60,7 @@ public class DtdCompletionContributor extends CompletionContributor {
     });
   }
 
-  @NotNull
-  private static String keywordPrefix(@NotNull PsiElement position, @NotNull String prefix) {
+  private static @NotNull String keywordPrefix(@NotNull PsiElement position, @NotNull String prefix) {
     final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(position);
     final PsiElement prevPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
 
@@ -99,12 +84,11 @@ public class DtdCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addEntityCompletions(@NotNull final CompletionResultSet result, PsiElement position) {
+  private static void addEntityCompletions(final @NotNull CompletionResultSet result, PsiElement position) {
     final PsiElementProcessor processor = new PsiElementProcessor() {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        if (element instanceof XmlEntityDecl) {
-          final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+      public boolean execute(final @NotNull PsiElement element) {
+        if (element instanceof XmlEntityDecl xmlEntityDecl) {
           String name = xmlEntityDecl.getName();
           if (name != null && xmlEntityDecl.isInternalReference()) {
             result.addElement(LookupElementBuilder.create(name).withInsertHandler(XmlCompletionContributor.ENTITY_INSERT_HANDLER));

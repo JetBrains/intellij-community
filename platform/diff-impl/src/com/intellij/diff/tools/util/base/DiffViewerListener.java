@@ -15,26 +15,36 @@
  */
 package com.intellij.diff.tools.util.base;
 
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 
+/**
+ * @see DiffViewerBase#addListener(DiffViewerListener)
+ */
 public class DiffViewerListener {
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeRediff() {
   }
 
-  @CalledInAwt
+  /**
+   * This is the best place to hook onto the viewer.
+   * Internal state just had been updated and should be consistent.
+   */
+  @RequiresEdt
   protected void onAfterRediff() {
   }
 
-  @CalledInAwt
+  /**
+   * Notifies that something in the world had changed and differences will need to be updated soon.
+   */
+  @RequiresEdt
   protected void onRediffAborted() {
   }
 }

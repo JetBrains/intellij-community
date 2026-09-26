@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -20,15 +6,17 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.CompletableFuture;
@@ -37,13 +25,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Denis Zhdanov
- * @since 8/9/13 4:28 PM
- */
-public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
-
-  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
+@ApiStatus.Internal
+public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
+  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MINUTES.toMillis(3);
 
   private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
   private Future<?> myShutdownFuture = CompletableFuture.completedFuture(null);
@@ -87,18 +71,16 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     }
 
     // running the code indicates remote communication mode with external system
-    Registry.get(
-      System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY) +
-      ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX).setValue(false);
+    Registry.get(System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY) + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX).setValue(false);
 
-    RemoteExternalSystemFacadeImpl facade = new RemoteExternalSystemFacadeImpl(resolverClass, buildManagerClass);
+    RemoteExternalSystemFacadeImpl<?> facade = new RemoteExternalSystemFacadeImpl(resolverClass, buildManagerClass);
     facade.init();
     start(facade);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "unchecked", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
-  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
+  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, final @NotNull C impl)
     throws RemoteException
   {
     if (!myStdOutputConfigured) {
@@ -107,12 +89,15 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
       System.setErr(new LineAwarePrintStream(System.err));
     }
 
-    I proxy = (I)Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{interfaceClass}, new InvocationHandler() {
+    I proxy = ReflectionUtil.proxy(getClass().getClassLoader(), interfaceClass, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         myCallsInProgressNumber.incrementAndGet();
         try {
           return method.invoke(impl, args);
+        }
+        catch (InvocationTargetException e) {
+          throw e.getCause();
         }
         finally {
           myCallsInProgressNumber.decrementAndGet();
@@ -149,17 +134,16 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
     }, (int)myTtlMs.get(), TimeUnit.MILLISECONDS);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static class LineAwarePrintStream extends PrintStream {
-    private LineAwarePrintStream(@NotNull final PrintStream delegate) {
+  private static final class LineAwarePrintStream extends PrintStream {
+    private LineAwarePrintStream(final @NotNull PrintStream delegate) {
       super(new OutputStream() {
 
-        @NotNull private final StringBuilder myBuffer = new StringBuilder();
+        private final @NotNull StringBuilder myBuffer = new StringBuilder();
 
         @Override
         public void write(int b) {
           char c = (char)b;
-          myBuffer.append(Character.toString(c));
+          myBuffer.append(c);
           if (c == '\n') {
             doFlush();
           }
@@ -171,19 +155,19 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
           int maxOffset = off + len;
           for (int i = off; i < maxOffset; i++) {
             if (b[i] == '\n') {
-              myBuffer.append(new String(b, start, i - start + 1));
+              myBuffer.append(new String(b, start, i - start + 1, StandardCharsets.UTF_8));
               doFlush();
               start = i + 1;
             }
           }
 
           if (start < maxOffset) {
-            myBuffer.append(new String(b, start, maxOffset - start));
+            myBuffer.append(new String(b, start, maxOffset - start, StandardCharsets.UTF_8));
           }
         }
 
         private void doFlush() {
-          delegate.print(myBuffer.toString());
+          delegate.print(myBuffer);
           delegate.flush();
           myBuffer.setLength(0);
         }

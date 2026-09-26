@@ -1,0 +1,30 @@
+f:com.intellij.util.io.NettyKt
+- sf:getHostName(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:getOrigin(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:serverBootstrap(io.netty.channel.EventLoopGroup):io.netty.bootstrap.ServerBootstrap
+a:org.jetbrains.ide.HttpRequestHandler
+- <init>():V
+- isAccessible(io.netty.handler.codec.http.HttpRequest):Z
+- p:isOriginAllowed(io.netty.handler.codec.http.HttpRequest):org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- isSupported(io.netty.handler.codec.http.FullHttpRequest):Z
+f:org.jetbrains.ide.HttpRequestHandler$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+e:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- java.lang.Enum
+f:org.jetbrains.io.ChannelExceptionHandler
+- io.netty.channel.ChannelHandlerAdapter
+- s:getInstance():io.netty.channel.ChannelHandler
+f:org.jetbrains.io.ChannelRegistrar
+- io.netty.channel.ChannelInboundHandlerAdapter
+- <init>():V
+- close():V
+f:org.jetbrains.io.FileResponses
+- f:getContentType(java.lang.String):java.lang.String
+f:org.jetbrains.io.NettyUtil
+- s:addHttpServerCodec(io.netty.channel.ChannelPipeline):V
+f:org.jetbrains.io.Responses
+- sf:addCommonHeaders(io.netty.handler.codec.http.HttpResponse):V
+- sf:addNoCache(io.netty.handler.codec.http.HttpResponse):io.netty.handler.codec.http.HttpResponse
+a:org.jetbrains.io.SimpleChannelInboundHandlerAdapter
+- io.netty.channel.SimpleChannelInboundHandler
+- p:<init>():V

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
@@ -13,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl>{
+public class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl> {
   private final @Nullable Value myReturnValue;
   private final @NotNull Method myMethod;
 
@@ -31,11 +29,13 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return myMethod;
   }
 
+  @Override
   protected MethodReturnValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new MethodReturnValueDescriptorImpl(project, myMethod, myReturnValue);
   }
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -43,21 +43,24 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     final MethodReturnValueData that = (MethodReturnValueData)o;
 
     if (!myMethod.equals(that.myMethod)) return false;
-    if (myReturnValue != null ? !myReturnValue.equals(that.myReturnValue) : that.myReturnValue != null) return false;
+    if (!Objects.equals(myReturnValue, that.myReturnValue)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     return Objects.hash(myReturnValue, myMethod);
   }
 
+  @Override
   public DisplayKey<MethodReturnValueDescriptorImpl> getDisplayKey() {
     return new MethodReturnValueDisplayKey(myMethod, myReturnValue);
   }
 
-  private static final class MethodReturnValueDisplayKey extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
-    public MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
+  private static final class MethodReturnValueDisplayKey
+    extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
+    MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
       super(method, value);
     }
   }

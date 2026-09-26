@@ -1,0 +1,120 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.rpc
+
+import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.currentSessionOrNull
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.PlatformUtils
+import fleet.openmap.SerializedValue
+import org.jetbrains.annotations.ApiStatus
+import kotlin.reflect.KClass
+
+private val LOG = fileLogger()
+
+/**
+ * Provides a way to serialize a custom type to [SerializedValue] which will be used to send through Rpc or Rhizome.
+ */
+@ApiStatus.Internal
+abstract class CustomTypeRpcSerializer<T : Any>(internal val serializationClass: KClass<T>) {
+  abstract fun serialize(value: T): SerializedValue?
+
+  abstract fun deserialize(serializedValue: SerializedValue): T?
+
+  @ApiStatus.Internal
+  companion object {
+    val EP_NAME: ExtensionPointName<CustomTypeRpcSerializer<*>> = ExtensionPointName<CustomTypeRpcSerializer<*>>("com.intellij.customTypeRpcSerializer")
+  }
+}
+
+/**
+ * Provides a way to serialize given [value] to [SerializedValue], so it can be passed through Rpc or Rhizome.
+ * Later it can be deserialized by [deserializeFromRpc].
+ *
+ * This function uses [CustomTypeRpcSerializer] extension point implementations only.
+ */
+@ApiStatus.Internal
+fun <ValueClass : Any> serializeToRpc(value: ValueClass, logErrorAsWarning: Boolean = false): SerializedValue? {
+  // IdeProductMode is not available here, so we use an old style session type check
+  if (shouldSkipSerializationInMonolith()) return null
+
+  val serializedValue = CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
+    try {
+      serializer.takeIf { it.serializationClass.isInstance(value) }?.let {
+        @Suppress("UNCHECKED_CAST")
+        (it as CustomTypeRpcSerializer<ValueClass>).serialize(value)
+      }
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      if (logErrorAsWarning) {
+        LOG.warn("Error during custom type serialization", e)
+      }
+      else {
+        LOG.debug("Error during custom type serialization", e)
+      }
+      null
+    }
+  }
+  return serializedValue
+}
+
+private fun shouldSkipSerializationInMonolith(): Boolean {
+  val application = ApplicationManager.getApplication() ?: return true
+  return application.currentSessionOrNull?.isLocal == true
+          && !AppMode.isRemoteDevHost()
+          && !PlatformUtils.isJetBrainsClient()
+}
+
+/**
+ * Provides a way to deserialize given [serializedValue] to [ValueClass].
+ *
+ * This function uses [CustomTypeRpcSerializer] extension point implementations only.
+ */
+internal inline fun <reified ValueClass: Any> deserializeFromRpc(serializedValue: SerializedValue?): ValueClass? {
+  return deserializeFromRpc(serializedValue, ValueClass::class)
+}
+
+@ApiStatus.Internal
+fun <ValueClass: Any> deserializeFromRpc(serializedValue: SerializedValue?, valueClass: KClass<ValueClass>): ValueClass? {
+  return deserializeFromRpcWithDiagnostics(serializedValue, valueClass).value
+}
+
+@ApiStatus.Internal
+fun <ValueClass: Any> deserializeFromRpcWithDiagnostics(
+  serializedValue: SerializedValue?,
+  valueClass: KClass<ValueClass>,
+): RpcDeserializationResult<ValueClass> {
+  serializedValue ?: return RpcDeserializationResult(null, null, null)
+
+  var serializerClassName: String? = null
+  var failure: Throwable? = null
+
+  val value = CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
+    try {
+      serializer.takeIf { it.serializationClass == valueClass }?.let {
+        serializerClassName = it::class.java.name
+        @Suppress("UNCHECKED_CAST")
+        (it as CustomTypeRpcSerializer<ValueClass>).deserialize(serializedValue)
+      }
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      serializerClassName = serializer::class.java.name
+      failure = failure ?: e
+      LOG.warn("Error during custom type deserialization", e)
+      null
+    }
+  }
+
+  return RpcDeserializationResult(value, serializerClassName, failure)
+}
+
+@ApiStatus.Internal
+data class RpcDeserializationResult<T : Any>(
+  val value: T?,
+  val serializerClassName: String?,
+  val failure: Throwable?,
+)

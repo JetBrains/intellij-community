@@ -1,0 +1,118 @@
+Line 1 coverage: FULL
+Fully Covered
+Line 3 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 4 coverage: FULL
+Fully Covered
+Line 7 coverage: FULL
+Fully Covered
+Line 10 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 12 coverage: FULL
+Fully Covered
+Line 14 coverage: FULL
+Fully Covered
+Line 17 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 20 coverage: FULL
+Fully Covered
+Line 22 coverage: FULL
+Fully Covered
+Line 25 coverage: PARTIAL
+Partially Covered
+Covered 2/3 branches
+Line 26 coverage: FULL
+Fully Covered
+Line 27 coverage: FULL
+Fully Covered
+Line 29 coverage: FULL
+Fully Covered
+Line 32 coverage: FULL
+Fully Covered
+Covered 3/3 branches
+Line 33 coverage: FULL
+Fully Covered
+Line 34 coverage: FULL
+Fully Covered
+Line 35 coverage: FULL
+Fully Covered
+Line 37 coverage: FULL
+Fully Covered
+Line 40 coverage: PARTIAL
+Partially Covered
+Covered 2/3 branches
+Line 41 coverage: FULL
+Fully Covered
+Line 42 coverage: FULL
+Fully Covered
+Line 45 coverage: FULL
+Fully Covered
+Line 48 coverage: FULL
+Fully Covered
+Covered 4/4 branches
+Line 49 coverage: FULL
+Fully Covered
+Line 50 coverage: FULL
+Fully Covered
+Line 51 coverage: FULL
+Fully Covered
+Line 53 coverage: FULL
+Fully Covered
+Line 56 coverage: PARTIAL
+Partially Covered
+Covered 1/8 branches
+Line 59 coverage: FULL
+Fully Covered
+Line 65 coverage: FULL
+Fully Covered
+Line 68 coverage: FULL
+Fully Covered
+Line 69 coverage: PARTIAL
+Partially Covered
+Covered 1/2 branches
+Line 72 coverage: FULL
+Fully Covered
+Line 75 coverage: FULL
+Fully Covered
+Covered 4/4 branches
+Line 76 coverage: FULL
+Fully Covered
+Line 77 coverage: FULL
+Fully Covered
+Line 78 coverage: FULL
+Fully Covered
+Line 79 coverage: FULL
+Fully Covered
+Line 81 coverage: FULL
+Fully Covered
+Line 84 coverage: FULL
+Fully Covered
+Covered 5/5 branches
+Line 85 coverage: FULL
+Fully Covered
+Line 86 coverage: FULL
+Fully Covered
+Line 87 coverage: FULL
+Fully Covered
+Line 88 coverage: FULL
+Fully Covered
+Line 89 coverage: FULL
+Fully Covered
+Line 91 coverage: FULL
+Fully Covered
+Line 94 coverage: PARTIAL
+Partially Covered
+Covered 4/5 branches
+Line 95 coverage: FULL
+Fully Covered
+Line 96 coverage: FULL
+Fully Covered
+Line 97 coverage: FULL
+Fully Covered
+Line 98 coverage: FULL
+Fully Covered
+Line 100 coverage: FULL
+Fully Covered

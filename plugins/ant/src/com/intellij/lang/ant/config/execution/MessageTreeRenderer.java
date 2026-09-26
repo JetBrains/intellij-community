@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.process.ConsoleHighlighter;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
 import icons.AntIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import java.awt.Color;
 
 final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 
@@ -43,9 +31,9 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
     return scrollPane;
   }
 
+  @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if(value instanceof MessageNode) {
-      MessageNode messageNode = (MessageNode)value;
+    if(value instanceof MessageNode messageNode) {
       setText(messageNode.getText(), messageNode.getTypeString() + messageNode.getPositionString());
     }
     else {
@@ -61,35 +49,38 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
     if (foreground == null) {
       myDefaultForeground = foreground = getForeground();
     }
-    if (value instanceof MessageNode) {
-      MessageNode node = (MessageNode)value;
+    if (value instanceof MessageNode node) {
       AntBuildMessageView.MessageType type = node.getType();
       if (type == AntBuildMessageView.MessageType.BUILD) {
         icon = AntIcons.Build;
       }
       else if (type == AntBuildMessageView.MessageType.TARGET) {
-        icon = AntIcons.Target;
+        icon = AllIcons.Nodes.Target;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
-        icon = AntIcons.Task;
+        icon = AntIcons.AntTask;
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {
           icon = AllIcons.General.Warning;
-          foreground = ConsoleHighlighter.DARKGRAY.getDefaultAttributes().getForegroundColor();
+          foreground = ConsoleViewContentType.LOG_WARNING_OUTPUT.getAttributes().getForegroundColor();
         }
-        else if (node.getPriority() == AntBuildMessageView.PRIORITY_BRIEF) {
-          icon = AntIcons.Message;
-          foreground = ConsoleHighlighter.BLUE.getDefaultAttributes().getForegroundColor();
+        else if (node.getPriority() == AntBuildMessageView.PRIORITY_INFO) {
+          icon = AllIcons.General.Information;
+          foreground = ConsoleViewContentType.LOG_INFO_OUTPUT.getAttributes().getForegroundColor();
+        }
+        else if (node.getPriority() == AntBuildMessageView.PRIORITY_VERBOSE) {
+          icon = AntIcons.LogVerbose;
+          foreground = ConsoleViewContentType.LOG_VERBOSE_OUTPUT.getAttributes().getForegroundColor();
         }
         else {
-          icon = AntIcons.Message;
-          foreground = ConsoleHighlighter.GREEN.getDefaultAttributes().getForegroundColor();
+          icon = AntIcons.LogDebug;
+          foreground = ConsoleViewContentType.LOG_DEBUG_OUTPUT.getAttributes().getForegroundColor();
         }
       }
       else if (type == AntBuildMessageView.MessageType.ERROR) {
         icon = AllIcons.General.Error;
-        foreground = ConsoleHighlighter.RED.getDefaultAttributes().getForegroundColor();
+        foreground = ConsoleViewContentType.LOG_ERROR_OUTPUT.getAttributes().getForegroundColor();
       }
     }
     if (myUseAnsiColor) {

@@ -1,0 +1,25 @@
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.15
+# =============================================================
+
+# Depends on the ncurses version used to build Python.
+(_curses.BUTTON5_CLICKED)?
+(_curses.BUTTON5_DOUBLE_CLICKED)?
+(_curses.BUTTON5_PRESSED)?
+(_curses.BUTTON5_RELEASED)?
+(_curses.BUTTON5_TRIPLE_CLICKED)?
+
+# Platform/build availability differs across Darwin builds.
+(_socket.SO_BINDTODEVICE)?
+(errno.ENOTCAPABLE)?
+
+# Depends on how readline was built.
+readline.get_pre_input_hook
+
+# Internal implementation details of the sampling profiler.
+profiling.sampling.live_collector
+profiling.sampling.live_collector.collector
+profiling.sampling.live_collector.constants
+profiling.sampling.live_collector.display
+profiling.sampling.live_collector.trend_tracker
+profiling.sampling.live_collector.widgets

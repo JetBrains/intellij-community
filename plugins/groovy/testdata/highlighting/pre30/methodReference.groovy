@@ -1,1 +1,1 @@
-a<error descr="Operator '::' is not supported in current version">::</error>b
+a<error descr="Operator '::' is available in Groovy 3.0 and later">::</error>b

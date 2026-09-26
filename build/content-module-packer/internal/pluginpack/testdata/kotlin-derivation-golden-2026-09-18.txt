@@ -1,0 +1,66 @@
+# kotlin-derivation: the Kotlin preparer's materialization, golden-2026-09-18, recorded by pluginpack_test -record-kotlin-goldens.
+# The assets.json row of the first fixture follows the module-name contract of the asset table: the artifact of an independent asset is the module name, not a label. The packed files are as recorded.
+# fixture	path	kind (directory, file, symlink, or a jar entry when the jar order follows the host)	mode	sha256 or link target
+jars, ownership rows, and the classpath order	bin	directory	0755	-
+jars, ownership rows, and the classpath order	bin/current	symlink	-	./tool
+jars, ownership rows, and the classpath order	bin/tool	file	0755	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+jars, ownership rows, and the classpath order	lib	directory	0755	-
+jars, ownership rows, and the classpath order	lib/demo.jar!META-INF/plugin.xml	entry	-	e4546cce7ed1f68ebbd353a3818171793b4743f2447bdb144f89e6d015279325
+jars, ownership rows, and the classpath order	lib/demo.jar!demo/main/Main.class	entry	-	3643834b519f032605bc37d8d5535a87813320bc258679b0ae94116805d5f324
+jars, ownership rows, and the classpath order	lib/demo.jar!org/two-a/Library.class	entry	-	c51d6df54a10d5f3a093ec072d75b6a7bf25e5b8f9b666a79b22dacc7cd82cb8
+jars, ownership rows, and the classpath order	lib/demo.jar!org/two-b/Library.class	entry	-	82571eeac2d42003d955753b53e131e58a0aa91fa3f9c28a13a9a1df5ccd7cb3
+jars, ownership rows, and the classpath order	lib/empty	directory	0644	-
+jars, ownership rows, and the classpath order	lib/intellij.libraries.foo.jar!META-INF/MANIFEST.MF	entry	-	b3162ab0c5f0c72aeab8262482e211c903446d4b5db835769f4860dbb1642171
+jars, ownership rows, and the classpath order	lib/intellij.libraries.foo.jar!intellij/libraries/foo/Main.class	entry	-	f3bb568fcff431c8d7595e39303d9f3d1190db34ea5a0ed0e636635e7995b28a
+jars, ownership rows, and the classpath order	lib/intellij.libraries.foo.jar!org/one-a/Library.class	entry	-	5fd7b11601c1f08435ddb61efda9599d7ebb88c75ed1faebaa424991d7044670
+jars, ownership rows, and the classpath order	lib/nested	directory	0755	-
+jars, ownership rows, and the classpath order	lib/nested/inner.jar!META-INF/MANIFEST.MF	entry	-	50cc9821d99b9128f82315bfb327305f75aac7ab83c200f0e31a9d2031de09c4
+jars, ownership rows, and the classpath order	lib/nested/inner.jar!demo/main/Main.class	entry	-	3643834b519f032605bc37d8d5535a87813320bc258679b0ae94116805d5f324
+jars, ownership rows, and the classpath order	lib/rt-exec.jar!META-INF/MANIFEST.MF	entry	-	f94c40ed2583460ddc77778bed422fbcf10d868ea5e1cb09c836d0a6cf0b792a
+jars, ownership rows, and the classpath order	lib/rt-exec.jar!demo/rt/Main.class	entry	-	c04a901a97c5e0958577ed993fd746367aa2b7d5fc749063a59c94f480c662ab
+jars, ownership rows, and the classpath order	lib/side.jar!META-INF/MANIFEST.MF	entry	-	3bcf18ff8c1ff79d62179f7f9f929510b519cacc903f45ae7dbe76586d8c11ca
+jars, ownership rows, and the classpath order	lib/side.jar!demo/side/Main.class	entry	-	511ecf5c75b50a3df1914cd980838b13d19ae86924756facd5d6a7d71abed5f7
+jars, ownership rows, and the classpath order	assets.json	json	-	fff6ed88780f683c4fffff6854317826e73e556cbb47c0bcab1807669b198ca0
+jars, ownership rows, and the classpath order	plugin-classpath.txt	file	-	54227bd45ce9a03df06d4647131540539f810cddb337b448a617b66d6bbfe2b4
+layout-assets tree and entries beside a raw copy-tree	lib	directory	0755	-
+layout-assets tree and entries beside a raw copy-tree	lib/localization.jar!demo/l10n/Main.class	entry	-	b374ca8874dbe9957576b38ca722ac3d4d33f621cd6a88af221e98766875776f
+layout-assets tree and entries beside a raw copy-tree	lib/localization.jar!messages/alpha.properties	entry	-	8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8
+layout-assets tree and entries beside a raw copy-tree	lib/localization.jar!notes.txt	entry	-	ab5aa97074c454a0632057e704220d9a6678fbf773a0a5806fc09b8173b07309
+layout-assets tree and entries beside a raw copy-tree	lib/standardDsls	directory	0755	-
+layout-assets tree and entries beside a raw copy-tree	lib/standardDsls/a.gdsl	file	0644	e07a412e2418e2c9d9bc559c6c95683cd12d951fe9ce91cf61796b938cb4857e
+layout-assets tree and entries beside a raw copy-tree	payload	directory	0755	-
+layout-assets tree and entries beside a raw copy-tree	payload/bin	directory	0755	-
+layout-assets tree and entries beside a raw copy-tree	payload/bin/tool	file	0751	7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d
+layout-assets tree and entries beside a raw copy-tree	payload/data.txt	file	0644	3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7
+layout-assets tree and entries beside a raw copy-tree	payload/docs	directory	0750	-
+layout-assets tree and entries beside a raw copy-tree	payload/docs/readme.md	file	0644	711a6108ba2ce6ca93dd47d6817f2361db10d8ab6eec89460b2dfc2c325efabe
+layout-assets tree and entries beside a raw copy-tree	assets.json	json	-	38546595beee950bb69f6d0c528839f9106afd22ecaa512905fc3fc496866c9c
+layout-assets tree and entries beside a raw copy-tree	plugin-classpath.txt	file	-	21f1e3901718e8b1468aa1efa0886bba7e0da19ea84f7c3cc18776bbe2ee900a
+module-filter with a prepared manifest under single-meaningful-source	lib	directory	0755	-
+module-filter with a prepared manifest under single-meaningful-source	lib/main.jar!META-INF/MANIFEST.MF	entry	-	566ad1a80220026d05099562645ce968ff0e7c36cde22634332605bb34cc3eff
+module-filter with a prepared manifest under single-meaningful-source	lib/main.jar!META-INF/listOfEntities.txt	entry	-	0a2b58e1ada4ba4b27f220367a4294c35810703a4463d7a417d18153f600439a
+module-filter with a prepared manifest under single-meaningful-source	lib/main.jar!intellij/libraries/bar/Main.class	entry	-	6b8f8c886eefea84a57748d59fed22aac446133564a311380192f01246be2ec4
+module-filter with a prepared manifest under single-meaningful-source	lib/main.jar!keep/Service.class	entry	-	ca67bd59cc4116ac80db5f64cbf4747f26ba929c85e8cc689a6123368d08719b
+module-filter with a prepared manifest under single-meaningful-source	assets.json	json	-	78f2c9dd6f49f91653c6a81082c684f3a91fc9694f7f0d64544362e2d1a46fcf
+module-filter with a prepared manifest under single-meaningful-source	plugin-classpath.txt	file	-	042ee8092c88f9edac0a8ed52ac410223cd6ea00fbd075b0121879b688d766eb
+module-filter with manifest drop	lib	directory	0755	-
+module-filter with manifest drop	lib/main.jar!META-INF/listOfEntities.txt	entry	-	0a2b58e1ada4ba4b27f220367a4294c35810703a4463d7a417d18153f600439a
+module-filter with manifest drop	lib/main.jar!demo/extra/Main.class	entry	-	7586652333d1d6028f757b8506455afce45d25b8f6a909ae302bf1997a839da0
+module-filter with manifest drop	lib/main.jar!keep/Service.class	entry	-	ca67bd59cc4116ac80db5f64cbf4747f26ba929c85e8cc689a6123368d08719b
+module-filter with manifest drop	assets.json	json	-	78f2c9dd6f49f91653c6a81082c684f3a91fc9694f7f0d64544362e2d1a46fcf
+module-filter with manifest drop	plugin-classpath.txt	file	-	042ee8092c88f9edac0a8ed52ac410223cd6ea00fbd075b0121879b688d766eb
+module-filter with manifest keep	lib	directory	0755	-
+module-filter with manifest keep	lib/main.jar!META-INF/MANIFEST.MF	entry	-	566ad1a80220026d05099562645ce968ff0e7c36cde22634332605bb34cc3eff
+module-filter with manifest keep	lib/main.jar!META-INF/listOfEntities.txt	entry	-	0a2b58e1ada4ba4b27f220367a4294c35810703a4463d7a417d18153f600439a
+module-filter with manifest keep	lib/main.jar!demo/extra/Main.class	entry	-	7586652333d1d6028f757b8506455afce45d25b8f6a909ae302bf1997a839da0
+module-filter with manifest keep	lib/main.jar!keep/Service.class	entry	-	ca67bd59cc4116ac80db5f64cbf4747f26ba929c85e8cc689a6123368d08719b
+module-filter with manifest keep	assets.json	json	-	78f2c9dd6f49f91653c6a81082c684f3a91fc9694f7f0d64544362e2d1a46fcf
+module-filter with manifest keep	plugin-classpath.txt	file	-	042ee8092c88f9edac0a8ed52ac410223cd6ea00fbd075b0121879b688d766eb
+version 3 with a distribution-scope asset	.distribution-root	directory	0755	-
+version 3 with a distribution-scope asset	.distribution-root/bin	directory	0755	-
+version 3 with a distribution-scope asset	.distribution-root/bin/launcher.sh	file	0755	a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf
+version 3 with a distribution-scope asset	lib	directory	0755	-
+version 3 with a distribution-scope asset	lib/scoped.jar!META-INF/MANIFEST.MF	entry	-	50cc9821d99b9128f82315bfb327305f75aac7ab83c200f0e31a9d2031de09c4
+version 3 with a distribution-scope asset	lib/scoped.jar!demo/main/Main.class	entry	-	3643834b519f032605bc37d8d5535a87813320bc258679b0ae94116805d5f324
+version 3 with a distribution-scope asset	assets.json	json	-	65a87d0e5bbc5738d9aacb26e3e6857da2e8c843e69b7dba361fc5f495639e54
+version 3 with a distribution-scope asset	plugin-classpath.txt	file	-	dcad7b50fa2f9d967df9cc3015b82eba8ccb403e03300f1196fa8d4292257e72

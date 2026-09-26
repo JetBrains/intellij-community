@@ -1,0 +1,13 @@
+// "Change parameter 'x' type of function 'bar' to 'T & Any'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+abstract class B<T>() {
+    abstract operator fun times(a: T & Any): B<T>
+
+    fun <T> bar(x: String) {
+        fun foo(a: B<T>): B<T> = a * (<caret>x)
+    }
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

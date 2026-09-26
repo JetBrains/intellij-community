@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 
 /**
@@ -32,10 +20,10 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
   private static final char BIDI_BOUNDARY_MARKER = '|';
 
   protected void prepareText(String text) {
-    prepare(text, TestFileType.TEXT);
+    prepare(text, PlainTextFileType.INSTANCE);
   }
   
-  protected void prepare(String text, TestFileType fileType) {
+  protected void prepare(String text, FileType fileType) {
     init(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR), fileType);
   }
   
@@ -43,59 +31,59 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
     checkResultByText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
   }
   
-  protected static void checkOffsetConversions(int offset,
-                                             LogicalPosition logicalPosition,
-                                             VisualPosition visualPositionTowardsSmallerOffsets,
-                                             VisualPosition visualPositionTowardsLargerOffsets,
-                                             Point xy) {
+  protected void checkOffsetConversions(int offset,
+                                        LogicalPosition logicalPosition,
+                                        VisualPosition visualPositionTowardsSmallerOffsets,
+                                        VisualPosition visualPositionTowardsLargerOffsets,
+                                        Point xy) {
     checkOffsetConversions(offset, logicalPosition, visualPositionTowardsSmallerOffsets, visualPositionTowardsLargerOffsets, xy, xy);
   }
 
-  protected static void checkOffsetConversions(int offset,
-                                             LogicalPosition logicalPosition, 
-                                             VisualPosition visualPositionTowardsSmallerOffsets, 
-                                             VisualPosition visualPositionTowardsLargerOffsets, 
-                                             Point xyTowardsSmallerOffsets, 
-                                             Point xyTowardsLargerOffsets) {
-    assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation", logicalPosition, myEditor.offsetToLogicalPosition(offset));
+  protected void checkOffsetConversions(int offset,
+                                        LogicalPosition logicalPosition,
+                                        VisualPosition visualPositionTowardsSmallerOffsets,
+                                        VisualPosition visualPositionTowardsLargerOffsets,
+                                        Point xyTowardsSmallerOffsets,
+                                        Point xyTowardsLargerOffsets) {
+    assertLogicalPositionsEqual("Wrong offset->logicalPosition calculation", logicalPosition, getEditor().offsetToLogicalPosition(offset));
     assertVisualPositionsEqual("Wrong beforeOffset->visualPosition calculation",
-                               visualPositionTowardsSmallerOffsets, myEditor.offsetToVisualPosition(offset, false, false));
+                               visualPositionTowardsSmallerOffsets, getEditor().offsetToVisualPosition(offset, false, false));
     assertVisualPositionsEqual("Wrong afterOffset->visualPosition calculation",
-                               visualPositionTowardsLargerOffsets, myEditor.offsetToVisualPosition(offset, true, false));
+                               visualPositionTowardsLargerOffsets, getEditor().offsetToVisualPosition(offset, true, false));
     assertEquals("Wrong afterOffset->visualLine calculation", 
-                 visualPositionTowardsLargerOffsets.line, ((EditorImpl)myEditor).offsetToVisualLine(offset));
-    assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, myEditor.offsetToXY(offset, false, false));
-    assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, myEditor.offsetToXY(offset, true, false));
+                 visualPositionTowardsLargerOffsets.line, ((EditorImpl)getEditor()).offsetToVisualLine(offset));
+    assertEquals("Wrong beforeOffset->xy calculation", xyTowardsSmallerOffsets, getEditor().offsetToXY(offset, false, false));
+    assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, getEditor().offsetToXY(offset, true, false));
   }
 
-  protected static void checkLPConversions(int logicalColumn, int offset,
-                                         VisualPosition visualPositionForPrecedingLp, VisualPosition visualPositionForSucceedingLp) {
+  protected void checkLPConversions(int logicalColumn, int offset,
+                                    VisualPosition visualPositionForPrecedingLp, VisualPosition visualPositionForSucceedingLp) {
     checkLPConversions(lB(logicalColumn), offset, visualPositionForPrecedingLp);
     checkLPConversions(lF(logicalColumn), offset, visualPositionForSucceedingLp);
     
   }
   
-  protected static void checkLPConversions(LogicalPosition logicalPosition, int offset, VisualPosition visualPosition) {
-    assertEquals("Wrong logicalPosition->offset calculation", offset, myEditor.logicalPositionToOffset(logicalPosition));
+  protected void checkLPConversions(LogicalPosition logicalPosition, int offset, VisualPosition visualPosition) {
+    assertEquals("Wrong logicalPosition->offset calculation", offset, getEditor().logicalPositionToOffset(logicalPosition));
     assertVisualPositionsEqual("Wrong logicalPosition->visualPosition calculation",
-                               visualPosition, myEditor.logicalToVisualPosition(logicalPosition));
+                               visualPosition, getEditor().logicalToVisualPosition(logicalPosition));
   }
 
-  protected static void checkVPConversions(int visualColumn, LogicalPosition logicalPositionForLeftLeaningVp,
-                                         LogicalPosition logicalPositionForRightLeaningVp, Point xy) {
+  protected void checkVPConversions(int visualColumn, LogicalPosition logicalPositionForLeftLeaningVp,
+                                    LogicalPosition logicalPositionForRightLeaningVp, Point xy) {
     checkVPConversions(vL(visualColumn), logicalPositionForLeftLeaningVp, xy);
     checkVPConversions(vR(visualColumn), logicalPositionForRightLeaningVp, xy);
   }
 
-  protected static void checkVPConversions(VisualPosition visualPosition, LogicalPosition logicalPosition, Point xy) {
+  protected void checkVPConversions(VisualPosition visualPosition, LogicalPosition logicalPosition, Point xy) {
     assertLogicalPositionsEqual("Wrong visualPosition->logicalPosition calculation",
-                                logicalPosition, myEditor.visualToLogicalPosition(visualPosition));
-    assertEquals("Wrong visualPosition->xy calculation", xy, myEditor.visualPositionToXY(visualPosition));
+                                logicalPosition, getEditor().visualToLogicalPosition(visualPosition));
+    assertEquals("Wrong visualPosition->xy calculation", xy, getEditor().visualPositionToXY(visualPosition));
   }
   
-  protected static void checkXYConversion(Point xy,
-                                       VisualPosition visualPosition) {
-    assertVisualPositionsEqual("Wrong xy->visualPosition calculation", visualPosition, myEditor.xyToVisualPosition(xy));
+  protected void checkXYConversion(Point xy,
+                                   VisualPosition visualPosition) {
+    assertVisualPositionsEqual("Wrong xy->visualPosition calculation", visualPosition, getEditor().xyToVisualPosition(xy));
   }
 
   protected static void assertLogicalPositionsEqual(String message, LogicalPosition expectedPosition, LogicalPosition actualPosition) {
@@ -108,17 +96,17 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
     assertEquals(message + " (direction flag)", expectedPosition.leansRight, actualPosition.leansRight);
   }
 
-  protected static void assertCaretPosition(VisualPosition visualPosition) {
-    assertVisualPositionsEqual("Wrong caret position", visualPosition, myEditor.getCaretModel().getVisualPosition());
+  protected void assertCaretPosition(VisualPosition visualPosition) {
+    assertVisualPositionsEqual("Wrong caret position", visualPosition, getEditor().getCaretModel().getVisualPosition());
   }
 
-  protected static void assertVisualCaretLocation(int visualColumn, boolean reversedDirection) {
+  protected void assertVisualCaretLocation(int visualColumn, boolean reversedDirection) {
     assertVisualCaretLocation(0, visualColumn, reversedDirection);
   }
   
-  protected static void assertVisualCaretLocation(int visualLine, int visualColumn, boolean reversedDirection) {
-    assertEquals(1, myEditor.getCaretModel().getCaretCount());
-    Caret caret = myEditor.getCaretModel().getPrimaryCaret();
+  protected void assertVisualCaretLocation(int visualLine, int visualColumn, boolean reversedDirection) {
+    assertEquals(1, getEditor().getCaretModel().getCaretCount());
+    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
     assertEquals(visualLine, caret.getVisualPosition().line);
     assertEquals(visualColumn, caret.getVisualPosition().column);
     assertEquals(reversedDirection, caret.isAtRtlLocation());
@@ -144,8 +132,8 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
 
     java.util.List<Integer> actualBoundaryPositions = new ArrayList<>();
     for (int i = 1; i < rawText.length(); i++) {
-      if (!myEditor.offsetToVisualPosition(i, false, false).equals(
-        myEditor.offsetToVisualPosition(i, true, false))) {
+      if (!getEditor().offsetToVisualPosition(i, false, false).equals(
+        getEditor().offsetToVisualPosition(i, true, false))) {
         actualBoundaryPositions.add(i);
       }
     }
@@ -198,5 +186,9 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
   
   protected static Point xy(int x, int y) {
     return new Point(x, y);
+  }
+
+  protected static int ls(int h) {
+    return (int)(FontPreferences.DEFAULT_LINE_SPACING * h);
   }
 }

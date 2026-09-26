@@ -1,9 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +32,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 /**
  * @author Max Medvedev
  */
-public class GrStaticChecker {
+public final class GrStaticChecker {
   public static boolean isStaticsOK(@NotNull PsiModifierListOwner member,
                                     @NotNull PsiElement place,
                                     @Nullable PsiElement resolveContext,
                                     boolean filterStaticAfterInstanceQualifier) {
     if (!(member instanceof PsiMember)) return true;
+    if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) return true;
 
     if (!(place instanceof GrReferenceExpression)) return true;
 
@@ -157,8 +167,7 @@ public class GrStaticChecker {
     return false;
   }
 
-  @Nullable
-  private static PsiClass getContainingClass(PsiMember member) {
+  private static @Nullable PsiClass getContainingClass(PsiMember member) {
     PsiClass aClass = member.getContainingClass();
 
     if (aClass != null) return aClass;
@@ -175,9 +184,9 @@ public class GrStaticChecker {
   public static boolean isInStaticContext(@NotNull PsiElement place) {
     PsiClass targetClass = null;
     if (place instanceof GrReferenceExpression) {
-      PsiElement qualifier = ((GrQualifiedReference)place).getQualifier();
+      PsiElement qualifier = ((GrQualifiedReference<?>)place).getQualifier();
       if (PsiUtil.isThisReference(place) && qualifier instanceof GrQualifiedReference) {
-        targetClass = (PsiClass)((GrQualifiedReference)qualifier).resolve();
+        targetClass = (PsiClass)((GrQualifiedReference<?>)qualifier).resolve();
       }
     }
     return isInStaticContext(place, targetClass);
@@ -213,8 +222,8 @@ public class GrStaticChecker {
   }
 
   public static boolean isPropertyAccessInStaticMethod(@NotNull GrReferenceExpression referenceExpression) {
-    return isInStaticContext(referenceExpression) &&
+    return !referenceExpression.isQualified() &&
            !(referenceExpression.getParent() instanceof GrMethodCall) &&
-           referenceExpression.getQualifier() == null;
+           isInStaticContext(referenceExpression);
   }
 }

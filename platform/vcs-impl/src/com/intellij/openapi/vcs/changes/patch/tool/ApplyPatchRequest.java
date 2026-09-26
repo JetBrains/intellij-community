@@ -16,30 +16,39 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-interface ApplyPatchRequest extends UserDataHolder{
+@ApiStatus.Internal
+public interface ApplyPatchRequest extends UserDataHolder{
   @NotNull
   DocumentContent getResultContent();
 
+  @NonNls
   @NotNull
   String getLocalContent();
 
   @NotNull
   AppliedTextPatch getPatch();
 
+  @NlsContexts.DialogTitle
   @Nullable
   String getTitle();
 
+  @NlsContexts.Label
   @NotNull
   String getLocalTitle();
 
+  @NlsContexts.Label
   @NotNull
   String getResultTitle();
 
+  @NlsContexts.Label
   @NotNull
   String getPatchTitle();
 }

@@ -1,171 +1,218 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class UnwrapTryTest extends UnwrapTestCase {
-  public void testTryEmpty() throws Exception {
-    assertUnwrapped("{\n" +
-                    "    try {\n" +
-                    "        <caret>\n" +
-                    "    } catch(Exception e) {}\n" +
-                    "}\n",
+  public void testTryEmpty() {
+    assertUnwrapped("""
+                      {
+                          try {
+                              <caret>
+                          } catch(Exception e) {}
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 
-  public void testTryWithStatements() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "    int j;<caret>\n" +
-                    "} catch(Exception e) {}\n",
+  public void testTryInsideIfWithoutBraces() {
+    assertUnwrapped("""
+                      {
+                          if (true) try {
+                              <caret>System.out.println();
+                              System.out.println();
+                          } catch(Exception e) {}
+                      }
+                      """,
 
-                    "int i;\n" +
-                    "int j;<caret>\n");
+                    """
+                      {
+                          if (true) {
+                              <caret>System.out.println();
+                              System.out.println();
+                          }
+                      }
+                      """);
   }
 
-  public void testTryWithCatches() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;<caret>\n" +
-                    "} catch(RuntimeException e) {\n" +
-                    "    int j;\n" +
-                    "} catch(Exception e) {\n" +
-                    "    int k;\n" +
-                    "}\n",
+  public void testTryWithStatements() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                          int j;<caret>
+                      } catch(Exception e) {}
+                      """,
+
+                    """
+                      int i;
+                      int j;<caret>
+                      """);
+  }
+
+  public void testTryWithCatches() {
+    assertUnwrapped("""
+                      try {
+                          int i;<caret>
+                      } catch(RuntimeException e) {
+                          int j;
+                      } catch(Exception e) {
+                          int k;
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
-  public void testTryWithFinally() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;<caret>\n" +
-                    "} finally {\n" +
-                    "    int j;\n" +
-                    "}\n",
+  public void testTryWithFinally() {
+    assertUnwrapped("""
+                      try {
+                          int i;<caret>
+                      } finally {
+                          int j;
+                      }
+                      """,
 
-                    "int i;\n" +
-                    "int j;<caret>\n");
+                    """
+                      int i;
+                      int j;<caret>
+                      """);
   }
 
-  public void testFinallyBlock() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "} finally {\n" +
-                    "    int j;<caret>\n" +
-                    "}\n",
+  public void testFinallyBlock() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                      } finally {
+                          int j;<caret>
+                      }
+                      """,
 
-                    "int i;\n" +
-                    "int j;<caret>\n");
+                    """
+                      int i;
+                      int j;<caret>
+                      """);
   }
 
-  public void testFinallyBlockWithCatch() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "} catch(Exception e) {\n" +
-                    "    int j;\n" +
-                    "} finally {\n" +
-                    "    int k;<caret>\n" +
-                    "}\n",
+  public void testFinallyBlockWithCatch() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                      } catch(Exception e) {
+                          int j;
+                      } finally {
+                          int k;<caret>
+                      }
+                      """,
 
-                    "int i;\n" +
-                    "int k;<caret>\n");
+                    """
+                      int i;
+                      int k;<caret>
+                      """);
   }
 
-  public void testCatchBlock() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "} catch(Exception e) {\n" +
-                    "    int j;<caret>\n" +
-                    "}\n",
+  public void testCatchBlock() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                      } catch(Exception e) {
+                          int j;<caret>
+                      }
+                      """,
 
                     "int i;<caret>\n");
   }
 
-  public void testManyCatchBlocks() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "} catch(RuntimeException e) {\n" +
-                    "    int j;<caret>\n" +
-                    "} catch(Exception e) {\n" +
-                    "    int k;\n" +
-                    "}\n",
+  public void testManyCatchBlocks() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                      } catch(RuntimeException e) {
+                          int j;<caret>
+                      } catch(Exception e) {
+                          int k;
+                      }
+                      """,
 
-                    "try {\n" +
-                    "    int i;\n" +
-                    "} <caret>catch(Exception e) {\n" +
-                    "    int k;\n" +
-                    "}\n");
+                    """
+                      try {
+                          int i;
+                      } <caret>catch(Exception e) {
+                          int k;
+                      }
+                      """);
   }
 
-  public void testWatchBlockWithFinally() throws Exception {
-    assertUnwrapped("try {\n" +
-                    "    int i;\n" +
-                    "} catch(Exception e) {\n" +
-                    "    int j;<caret>\n" +
-                    "} finally {\n" +
-                    "    int k;\n" +
-                    "}\n",
+  public void testWatchBlockWithFinally() {
+    assertUnwrapped("""
+                      try {
+                          int i;
+                      } catch(Exception e) {
+                          int j;<caret>
+                      } finally {
+                          int k;
+                      }
+                      """,
 
-                    "int i;\n" +
-                    "int k;<caret>\n");
+                    """
+                      int i;
+                      int k;<caret>
+                      """);
   }
 
-  public void testTryFinally() throws Exception {
-    assertOptions("try {\n" +
-                  "} finally {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+  public void testTryFinally() {
+    assertOptions("""
+                    try {
+                    } finally {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithOnlyOneCatch() throws Exception {
-    assertOptions("try {\n" +
-                  "} catch(Exception e) {\n" +
-                  "    <caret>\n" +
-                  "}\n",
+  public void testTryWithOnlyOneCatch() {
+    assertOptions("""
+                    try {
+                    } catch(Exception e) {
+                        <caret>
+                    }
+                    """,
 
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithSeveralCatches() throws Exception {
-    assertOptions("try {\n" +
-                  "} catch(Exception e) {\n" +
-                  "} catch(Exception e) {\n" +
-                  "    <caret>\n" +
-                  "} catch(Exception e) {\n" +
-                  "}\n",
+  public void testTryWithSeveralCatches() {
+    assertOptions("""
+                    try {
+                    } catch(Exception e) {
+                    } catch(Exception e) {
+                        <caret>
+                    } catch(Exception e) {
+                    }
+                    """,
 
                   "Remove 'catch...'",
                   "Unwrap 'try...'");
   }
 
-  public void testTryWithResources() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
-    assertUnwrapped("AutoCloseable s = null;\n" +
-                    "try (AutoCloseable r = null; s) {\n" +
-                    "    <caret>System.out.println();\n" +
-                    "}",
+  public void testTryWithResources() {
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_9);
+    assertUnwrapped("""
+                      AutoCloseable s = null;
+                      try (AutoCloseable r = null; s) {
+                          <caret>System.out.println();
+                      }""",
 
-                    "AutoCloseable s = null;\n" +
-                    "AutoCloseable r = null;\n" +
-                    "System.out.println();\n");
+                    """
+                      AutoCloseable s = null;
+                      AutoCloseable r = null;
+                      System.out.println();
+                      """);
   }
 }

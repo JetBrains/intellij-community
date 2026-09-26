@@ -1,26 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.util.function.Supplier
 
+val PARAMETER_NAME_HINTS_EP: ExtensionPointName<LanguageExtensionPoint<InlayParameterHintsProvider>> =
+  ExtensionPointName.create("com.intellij.codeInsight.parameterNameHints")
 
-object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
+object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>(PARAMETER_NAME_HINTS_EP)
 
 /**
  * If you are just implementing parameter hints, only three options are relevant to you: text, offset, isShowOnlyIfExistedBefore. The rest
@@ -30,15 +28,19 @@ object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvi
  * @property offset offset in document where hint should be shown
  * @property isShowOnlyIfExistedBefore defines if hint should be shown only if it was present in editor before update
  *
- * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
+ * @property isFilterByExcludeList allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
  * @property relatesToPrecedingText whether hint is associated with previous or following text
+ * @property widthAdjustment allows resulting hint's width to match certain editor text's width, see [HintWidthAdjustment]
  */
 class InlayInfo(val text: String,
                 val offset: Int,
                 val isShowOnlyIfExistedBefore: Boolean,
-                val isFilterByBlacklist: Boolean,
-                val relatesToPrecedingText: Boolean) {
+                val isFilterByExcludeList: Boolean,
+                val relatesToPrecedingText: Boolean,
+                val widthAdjustment: HintWidthAdjustment?) {
 
+  constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean, isFilterByBlacklist: Boolean, relatesToPrecedingText: Boolean)
+    : this(text, offset, isShowOnlyIfExistedBefore, isFilterByBlacklist, relatesToPrecedingText, null)
   constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean) : this(text, offset, isShowOnlyIfExistedBefore, true, false)
   constructor(text: String, offset: Int) : this(text, offset, false, true, false)
 
@@ -66,17 +68,33 @@ class InlayInfo(val text: String,
 sealed class HintInfo {
 
   /**
-   * @language in case you want to put this method into blacklist of another language
+   * Provides fully qualified method name (e.g. "java.util.Map.put") and list of its parameter names.
+   * Used to match method with exclude list, and to add method into exclude list.
+   * @language in case you want to put this method into blacklist of another language.
    */
   open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>, val language: Language?) : HintInfo() {
     constructor(fullyQualifiedName: String, paramNames: List<String>) : this(fullyQualifiedName, paramNames, null)
 
+    /**
+     * Presentable method name which will be shown to the user when adding it to exclude list.
+     */
     open fun getMethodName(): String {
       val start = fullyQualifiedName.lastIndexOf('.') + 1
       return fullyQualifiedName.substring(start)
     }
+
+    /**
+     * Presentable text which will be shown in the inlay hints popup menu.
+     */
+    @NlsActions.ActionText
+    open fun getDisableHintText(): String {
+      return CodeInsightBundle.message("inlay.hints.show.settings", getMethodName())
+    }
   }
 
+  /**
+   * Provides option to disable/enable by alt-enter.
+   */
   open class OptionInfo(protected val option: Option) : HintInfo() {
 
     open fun disable(): Unit = alternate()
@@ -93,11 +111,30 @@ sealed class HintInfo {
 
   }
 
+  open fun isOwnedByPsiElement(elem: PsiElement, editor: Editor): Boolean {
+    val textRange = elem.textRange
+    if (textRange == null) return false
+    val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
+    return editor.inlayModel.hasInlineElementsInRange(start, textRange.endOffset)
+  }
 }
 
-data class Option(val id: String,
-                  val name: String,
+/**
+ * @param id global unique identifier of this option
+ * @param nameSupplier user visible name supplier
+ */
+data class Option(@NonNls val id: String,
+                  private val nameSupplier: Supplier<@NlsContexts.DetailedDescription String>,
                   val defaultValue: Boolean) {
+
+  @Deprecated("Use default constructor")
+  constructor(@NonNls id: String, @Nls name: String, defaultValue: Boolean) : this(id, Supplier { name }, defaultValue)
+
+  @get:NlsContexts.DetailedDescription
+  val name: String
+    get() = nameSupplier.get()
+
+  var extendedDescriptionSupplier: Supplier<@NlsContexts.DetailedDescription String>? = null
 
   fun isEnabled(): Boolean = get()
 

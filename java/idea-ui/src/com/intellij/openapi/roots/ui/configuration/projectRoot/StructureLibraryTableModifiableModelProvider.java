@@ -16,16 +16,14 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 public class StructureLibraryTableModifiableModelProvider implements LibraryTableModifiableModelProvider {
   private final String myLevel;
   private final StructureConfigurableContext myContext;
 
-  public StructureLibraryTableModifiableModelProvider(String level,
-                                                      final StructureConfigurableContext context) {
+  StructureLibraryTableModifiableModelProvider(@NotNull String level,
+                                               @NotNull StructureConfigurableContext context) {
     myLevel = level;
     myContext = context;
   }

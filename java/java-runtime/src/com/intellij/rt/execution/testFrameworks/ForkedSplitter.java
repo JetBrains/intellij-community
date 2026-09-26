@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.testFrameworks;
 
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.rt.execution.junit.TestsRepeater;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class ForkedSplitter extends ForkedByModuleSplitter {
+public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
 
-  private Object myRootDescription;
+  private T myRootDescription;
 
   public ForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
     super(workingDirsPath, forkMode, newArgs);
   }
 
+  @Override
   protected int startSplitting(String[] args,
                                String configName,
                                String repeatCount) throws Exception {
@@ -41,67 +28,89 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     }
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
-      if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {
-        return startChildFork(createChildArgs(myRootDescription), null, classpath, repeatCount);
+      final String modulePath = System.getProperty("jdk.module.path");
+      final List<String> moduleOptions = new ArrayList<>();
+      if (modulePath != null && !modulePath.isEmpty()) {
+        moduleOptions.add("-p");
+        moduleOptions.add(modulePath);
       }
-      final List children = getChildren(myRootDescription);
+      if (repeatCount != null && myForkMode.equals("repeat")) {
+        return TestsRepeater.repeat(RepeatCount.getCount(repeatCount),
+                                    false,
+                                    new TestsRepeater.TestRun() {
+                                      @Override
+                                      public int execute(boolean sendTree) throws Exception {
+                                        return startChildFork(createChildArgs(myRootDescription), null, classpath, moduleOptions, null);
+                                      }
+                                    });
+      }
+      final List<T> children = getChildren(myRootDescription);
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
-      return splitChildren(children, 0, forkTillMethod, null, classpath, repeatCount);
+      return splitChildren(children, 0, forkTillMethod, null, classpath, moduleOptions, repeatCount);
     }
     else {
       return splitPerModule(repeatCount);
     }
   }
 
+  @Override
   protected int startPerModuleFork(String moduleName,
-                                   List classNames,
+                                   List<String> classNames,
                                    String packageName,
                                    String workingDir,
                                    String classpath,
-                                   String repeatCount, int result) throws Exception {
+                                   List<String> moduleOptions,
+                                   String repeatCount,
+                                   int result,
+                                   String filters) throws Exception {
     if (myForkMode.equals("none")) {
-      final List childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription);
-      return startChildFork(childArgs, new File(workingDir), classpath, repeatCount);
+      final List<String> childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription, filters);
+      return startChildFork(childArgs, new File(workingDir), classpath, moduleOptions, repeatCount);
     }
     else {
-      final List children = new ArrayList(getChildren(myRootDescription));
-      for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+      final List<T> children = new ArrayList<>(getChildren(myRootDescription));
+      for (Iterator<T> iterator = children.iterator(); iterator.hasNext(); ) {
         if (!classNames.contains(getTestClassName(iterator.next()))) {
           iterator.remove();
         }
       }
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
-      return splitChildren(children, result, forkTillMethod, new File(workingDir), classpath, repeatCount);
+      return splitChildren(children, result, forkTillMethod, new File(workingDir), classpath, moduleOptions, repeatCount);
     }
   }
 
-  protected int splitChildren(List children,
+  protected int splitChildren(List<T> children,
                               int result,
                               boolean forkTillMethod,
                               File workingDir,
-                              String classpath, String repeatCount) throws IOException, InterruptedException {
-    for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
-      final Object child = children.get(i);
-      final List childTests = getChildren(child);
+                              String classpath,
+                              List<String> moduleOptions,
+                              String repeatCount) throws IOException, InterruptedException {
+    for (final T child : children) {
+      final List<T> childTests = getChildren(child);
       final int childResult;
       if (childTests.isEmpty() || !forkTillMethod) {
-        childResult = startChildFork(createChildArgs(child), workingDir, classpath, repeatCount);
+        childResult = startChildFork(createChildArgs(child), workingDir, classpath, moduleOptions, repeatCount);
       }
       else {
-        childResult = splitChildren(childTests, result, forkTillMethod, workingDir, classpath, repeatCount);
+        childResult = splitChildren(childTests, result, forkTillMethod, workingDir, classpath, moduleOptions, repeatCount);
       }
       result = Math.min(childResult, result);
     }
     return result;
   }
 
-  protected abstract List createPerModuleArgs(String packageName, String workingDir, List classNames, Object rootDescriptor) throws IOException;
+  protected abstract List<String> createPerModuleArgs(String packageName,
+                                                      String workingDir,
+                                                      List<String> classNames,
+                                                      T rootDescriptor,
+                                                      String filters) throws IOException;
 
-  protected abstract Object createRootDescription(String[] args, String configName) throws Exception;
+  protected abstract T createRootDescription(String[] args, String configName) throws Exception;
 
-  protected abstract String getTestClassName(Object child);
+  protected abstract String getTestClassName(T child);
 
-  protected abstract List createChildArgs(Object child);
+  protected abstract List<String> createChildArgs(T child);
 
-  protected abstract List getChildren(Object child);
+  protected abstract List<T> getChildren(T child);
 }

@@ -1,0 +1,9 @@
+// "Convert to a full name-based destructuring form" "false"
+
+data class Product(val id: String, val productName: String)
+
+fun test(product: Product) {
+    val (id, <caret>name) = product
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

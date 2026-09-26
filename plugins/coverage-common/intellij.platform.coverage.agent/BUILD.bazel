@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.coverage.agent` start
+content_module_jar(
+    libraries = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    module = ":coverage-agent",
+)
+### auto-generated section `dev intellij.platform.coverage.agent` end
+
+### auto-generated section `build intellij.platform.coverage.agent` start
+jvm_library(
+    name = "coverage-agent",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.coverage.agent",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    runtime_deps = ["@lib//:platform-coverage-agent-intellij-coverage"],
+)
+
+jvm_library(
+    name = "coverage-agent_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.coverage.agent",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    runtime_deps = [":coverage-agent"],
+)
+### auto-generated section `build intellij.platform.coverage.agent` end
+
+### auto-generated section `iml intellij.platform.coverage.agent` start
+exports_files(
+    [
+        "intellij.platform.coverage.agent.iml",
+        "resources/intellij.platform.coverage.agent.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.coverage.agent` end

@@ -15,14 +15,15 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A grouping, sorting or filtering action which can be applied to a generic tree.
  *
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getFilters()
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getGroupers()
- * @see com.intellij.ide.util.treeView.smartTree.TreeModel#getSorters()
+ * @see TreeModel#getFilters()
+ * @see TreeModel#getGroupers()
+ * @see TreeModel#getSorters()
  */
 
 public interface TreeAction {
@@ -39,5 +40,5 @@ public interface TreeAction {
    *
    * @return the action identifier.
    */
-  @NotNull String getName();
+  @NonNls @NotNull String getName();
 }

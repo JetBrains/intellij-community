@@ -1,48 +1,79 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
-import com.intellij.util.ui.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.ListModel;
+import javax.swing.RepaintManager;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.Scrollable;
 import javax.swing.Timer;
+import javax.swing.UIManager;
+import javax.swing.ViewportLayout;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
-import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
-import javax.swing.plaf.basic.BasicTreeUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 
-import static com.intellij.util.ui.JBUI.emptyInsets;
-
 public class JBViewport extends JViewport implements ZoomableViewport {
+  public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
+  public static final Key<Boolean> ATTACH_STATUS_TEXT = Key.create("attachStatusText");
+
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
   private static final int NOTIFICATION_TIMEOUT = 1500;
 
   private Notification myPreviousNotification;
 
   private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
-
+    @DirtyUI
     @Override
     public void layoutContainer(Container parent) {
-      if (parent instanceof JViewport) {
-        JViewport viewport = (JViewport)parent;
+      if (parent instanceof JViewport viewport) {
         Component view = viewport.getView();
         if (view != null) {
           Container grand = viewport.getParent();
@@ -56,10 +87,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
     }
 
+    @DirtyUI
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      if (parent instanceof JViewport) {
-        JViewport viewport = (JViewport)parent;
+      if (parent instanceof JViewport viewport) {
         Dimension size = getPreferredScrollableViewportSize(viewport.getView());
         if (size != null) return size; // may be null for for tables or custom components
       }
@@ -79,8 +110,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentAdded(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          myEmptyText = ((ComponentWithEmptyText)child).getEmptyText();
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          myEmptyText = t.getEmptyText();
           myEmptyText.attachTo(JBViewport.this, child);
         }
       }
@@ -88,17 +119,21 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentRemoved(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          ((ComponentWithEmptyText)child).getEmptyText().attachTo(child);
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          t.getEmptyText().attachTo(child);
           myEmptyText = null;
         }
+      }
+
+      private static boolean shouldAttach(Component t) {
+        return t instanceof JBTable || Boolean.TRUE.equals(ClientProperty.get(t, ATTACH_STATUS_TEXT));
       }
     });
   }
 
   @Override
   public void setViewPosition(Point p) {
-    if (ScrollSettings.isDebugEnabled() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
+    if (ScrollSettings.isDebugEnabled.invoke() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
       checkScrollingCapabilities();
     }
     super.setViewPosition(p);
@@ -124,11 +159,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private void checkScrollingCapabilities() {
     if (myPreviousNotification == null || myPreviousNotification.isExpired()) {
       if (!Boolean.TRUE.equals(isWindowBlitterAvailableFor(this))) {
-        myPreviousNotification = notify("Scrolling: cannot use window blitter");
+        myPreviousNotification = notify("Scrolling: cannot use window blitter"); //NON-NLS
       }
       else {
         if (!Boolean.TRUE.equals(isTrueDoubleBufferingAvailableFor(this))) {
-          myPreviousNotification = notify("Scrolling: cannot use true double buffering");
+          myPreviousNotification = notify("Scrolling: cannot use true double buffering"); //NON-NLS
         }
       }
     }
@@ -138,8 +173,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
      Generally, this requires that viewport must not be obscured by its ancestors and must be showing. */
-  @Nullable
-  private static Boolean isWindowBlitterAvailableFor(JViewport viewport) {
+  private static @Nullable Boolean isWindowBlitterAvailableFor(JViewport viewport) {
     if (ourCanUseWindowBlitterMethod.isAvailable()) {
       return (Boolean)ourCanUseWindowBlitterMethod.invoke(viewport);
     }
@@ -149,6 +183,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setView(Component view) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     super.setView(view);
     updateBorder(view);
   }
@@ -162,8 +198,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      Use a breakpoint in JRootPane.disableTrueDoubleBuffering() to detect direct getGraphics() calls.
 
      See GraphicsUtil.safelyGetGraphics() for more info. */
-  @Nullable
-  private static Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
+  private static @Nullable Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
     if (ourGetPaintManagerMethod.isAvailable()) {
       Object paintManager = ourGetPaintManagerMethod.invoke(RepaintManager.currentManager(component));
 
@@ -183,21 +218,21 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
-  private static Notification notify(String message) {
-    Notification notification = NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
+  private static Notification notify(@NlsContexts.NotificationContent String message) {
+    Notification notification = NotificationGroupManager.getInstance().getNotificationGroup("scrolling-capabilities-debug")
+      .createNotification(message, NotificationType.INFORMATION);
     notification.notify(null);
 
     Timer timer = new Timer(NOTIFICATION_TIMEOUT, event -> notification.expire());
     timer.setRepeats(false);
     timer.start();
-
     return notification;
   }
 
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView.invoke()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
         if (child != null) {
@@ -224,6 +259,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  @DirtyUI
   @Override
   public void paint(Graphics g) {
     myPaintingNow = true;
@@ -240,15 +276,18 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     myPaintingNow = false;
   }
 
-  @Nullable
+  protected ZoomingDelegate createZooming() {
+    return new ZoomingDelegate((JComponent)getView(), this);
+  }
+
   @Override
-  public Magnificator getMagnificator() {
-    return UIUtil.getClientProperty(getView(), Magnificator.CLIENT_PROPERTY_KEY);
+  public @Nullable Magnificator getMagnificator() {
+    return ClientProperty.get(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
   @Override
   public void magnificationStarted(Point at) {
-    myZoomer = new ZoomingDelegate((JComponent)getView(), this);
+    myZoomer = createZooming();
     myZoomer.magnificationStarted(at);
   }
 
@@ -313,14 +352,13 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
-    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
-           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
+    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac.invoke()) &&
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent.invoke()));
   }
 
   private static Insets getInnerInsets(JComponent view) {
     Border border = view.getBorder();
-    if (border instanceof ViewBorder) {
-      ViewBorder vb = (ViewBorder)border;
+    if (border instanceof ViewBorder vb) {
       border = vb.myBorder;
     }
     return border == null ? null : border.getBorderInsets(view);
@@ -328,9 +366,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   static Insets getViewInsets(JComponent view) {
     Border border = view.getBorder();
-    if (border instanceof ViewBorder) {
-      ViewBorder vb = (ViewBorder)border;
-      Insets insets = emptyInsets();
+    if (border instanceof ViewBorder vb) {
+      Insets insets = JBInsets.emptyInsets();
       vb.addViewInsets(view, insets);
       return insets;
     }
@@ -396,8 +433,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static void updateBorder(@Nullable Component view) {
     if (ScrollSettings.isNotSupportedYet(view)) return;
-    if (view instanceof JComponent) {
-      JComponent component = (JComponent)view;
+    if (view instanceof JComponent component) {
       Border border = component.getBorder();
       if (border instanceof ViewBorder) return; // already set
       component.setBorder(border == null || border instanceof UIResource
@@ -420,7 +456,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
    * This border is used to add additional space for a view.
    */
   private static class ViewBorder extends AbstractBorder {
-    private final Insets myInsets = emptyInsets();
+    private final Insets myInsets = JBInsets.emptyInsets();
     private final Border myBorder;
 
     ViewBorder(Border border) {
@@ -430,7 +466,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     @Override
     public Insets getBorderInsets(Component view, Insets insets) {
       if (insets == null) {
-        insets = emptyInsets();
+        insets = JBInsets.emptyInsets();
       }
       else {
         insets.set(0, 0, 0, 0);
@@ -444,16 +480,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
       if (!myInsets.equals(insets)) {
         myInsets.set(insets.top, insets.left, insets.bottom, insets.right);
-        if (view instanceof JComponent) {
-          JComponent component = (JComponent)view;
-          if (component instanceof JTree) {
-            // invalidate cached preferred size
-            JTree tree = (JTree)component;
-            TreeUI ui = tree.getUI();
-            if (ui instanceof BasicTreeUI) {
-              BasicTreeUI basic = (BasicTreeUI)ui;
-              basic.setLeftChildIndent(basic.getLeftChildIndent());
-            }
+        if (view instanceof JComponent component) {
+          if (component instanceof JTree tree) {
+            TreeUtil.invalidateCacheAndRepaint(tree.getUI());
           }
           component.revalidate();
         }
@@ -475,19 +504,18 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     private void addViewInsets(JComponent view, Insets insets) {
       if (this == view.getBorder()) {
-        Container parent = view.getParent();
-        if (parent instanceof JViewport) {
-          JViewport viewport = (JViewport)parent;
-          Container grand = viewport.getParent();
-          if (grand instanceof JScrollPane) {
-            JScrollPane pane = (JScrollPane)grand;
+        JViewport viewport = ComponentUtil.getViewport(view);
+        if (viewport != null) {
+          JScrollPane pane = ComponentUtil.getScrollPane(viewport);
+          if (pane != null) {
+            boolean isOverlappingScrollBar = (pane instanceof JBScrollPane) && ((JBScrollPane)pane).isOverlappingScrollBar();
             // calculate empty border under vertical scroll bar
             JScrollBar vsb = pane.getVerticalScrollBar();
-            if (vsb != null && vsb.isVisible()) {
+            if (vsb != null && vsb.isVisible() && !isOverlappingScrollBar) {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport())) {
+                  : (!opaque && viewport == pane.getViewport() && !ClientProperty.isTrue(vsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment va = Alignment.get(vsb);
                 if (va == Alignment.LEFT) {
                   insets.left += vsb.getWidth();
@@ -499,11 +527,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             }
             // calculate empty border under horizontal scroll bar
             JScrollBar hsb = pane.getHorizontalScrollBar();
-            if (hsb != null && hsb.isVisible()) {
+            if (hsb != null && hsb.isVisible() && !isOverlappingScrollBar) {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
-                  : (!opaque && viewport == pane.getViewport())) {
+                  : (!opaque && viewport == pane.getViewport() && !ClientProperty.isTrue(hsb, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS))) {
                 Alignment ha = Alignment.get(hsb);
                 if (ha == Alignment.TOP) {
                   insets.top += hsb.getHeight();
@@ -516,6 +544,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
           }
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return "ViewBorder{" +
+             "myInsets=" + myInsets +
+             ", myBorder=" + myBorder +
+             '}';
     }
   }
 
@@ -543,46 +579,61 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
   }
 
-  private static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
+  private static Dimension getPreferredScrollableViewportSize(@NotNull JList<?> list) {
     if (JList.class != getPreferredScrollableViewportSizeDeclaringClass(list)) {
       return list.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(list);
-    if (size == null) return new Dimension();
     if (JList.VERTICAL != list.getLayoutOrientation()) return size;
 
-    int fixedWidth = list.getFixedCellWidth();
-    int fixedHeight = list.getFixedCellHeight();
-
-    ListModel model = list.getModel();
+    ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
-    if (modelRows <= 0) {
-      if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
-      if (fixedWidth <= 0) fixedWidth = JBUI.scale(256); // scaled value from JDK
-      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16); // scaled value from JDK
-    }
     int visibleRows = list.getVisibleRowCount();
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(ClientProperty.get(list, FORCE_VISIBLE_ROW_COUNT_KEY));
+    if (!forceVisibleRowCount && visibleRows > 0) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
+    if (visibleRows <= 0) {
+      visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
+    }
 
-    boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(list);
     size.height = insets != null ? insets.top + insets.bottom : 0;
-    if (0 < fixedWidth && 0 < fixedHeight) {
+    if (modelRows == 0) {
+      int fixedWidth = list.getFixedCellWidth();
+      int fixedHeight = list.getFixedCellHeight();
+      if (fixedWidth <= 0) {
+        fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width", 256);
+      }
+      if (fixedWidth <= 0) {
+        fixedWidth = JBUIScale.scale(256); // scaled value from JDK
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height", 0);
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = UIManager.getInt("List.rowHeight");
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+      }
+
       size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
       size.height += fixedHeight * visibleRows;
       if (addExtraSpace) size.height += fixedHeight / 2;
     }
-    else if (addExtraSpace) {
-      Rectangle bounds = list.getCellBounds(visibleRows, visibleRows);
-      if (bounds != null) size.height = bounds.y + bounds.height / 2;
-    }
     else if (visibleRows > 0) {
       int lastRow = Math.min(visibleRows, modelRows) - 1;
       Rectangle bounds = list.getCellBounds(lastRow, lastRow);
-      if (bounds != null) {
-        size.height = bounds.y + bounds.height;
-        if (insets != null) size.height += insets.bottom;
+      if (bounds == null) return size; // null UI?
+      size.height = bounds.y + bounds.height;
+      if (insets != null) size.height += insets.bottom;
+      if (modelRows < visibleRows) {
+        size.height += (visibleRows - modelRows) * bounds.height;
+      }
+      else if (modelRows > visibleRows) {
+        if (addExtraSpace) size.height += bounds.height / 2;
       }
     }
     return size;
@@ -593,19 +644,27 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       return tree.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(tree);
-    if (size == null) return new Dimension();
 
     int fixedHeight = tree.getRowHeight();
 
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
-      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16);
+      if (fixedHeight <= 0) {
+        fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height", 0);
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = UIManager.getInt(JBUI.CurrentTheme.Tree.rowHeightKey());
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = JBUIScale.scale(16);
+      }
     }
     int visibleRows = tree.getVisibleRowCount();
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+    if (visibleRows <= 0) {
+      visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
+    }
 
-    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    boolean addExtraSpace = (modelRows != visibleRows) && Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(tree);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedHeight) {
@@ -626,5 +685,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
     }
     return size;
+  }
+
+  @Override
+  protected boolean computeBlit(int dx, int dy, Point blitFrom, Point blitTo, Dimension blitSize, Rectangle blitPaint) {
+    if (JBSwingUtilities.hasCGTransform(this)) {
+      return false; // disable blit scrolling
+    }
+
+    return super.computeBlit(dx, dy, blitFrom, blitTo, blitSize, blitPaint);
   }
 }

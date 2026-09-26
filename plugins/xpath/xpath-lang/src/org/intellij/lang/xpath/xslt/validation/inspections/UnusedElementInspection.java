@@ -25,27 +25,17 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.validation.XsltValidator;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedElementInspection extends XsltInspection {
-
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return "Unused Variable/Parameter";
-    }
-
-    @NonNls
-    @NotNull
-    public String getShortName() {
+public final class UnusedElementInspection extends XsltInspection {
+  @Override
+  public @NonNls @NotNull String getShortName() {
         return "XsltUnusedDeclaration";
     }
 
     @Override
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         return new MyVisitor(holder);
     }
@@ -53,12 +43,12 @@ public class UnusedElementInspection extends XsltInspection {
     private static class MyVisitor extends XmlElementVisitor {
         private final ProblemsHolder myHolder;
 
-        public MyVisitor(ProblemsHolder holder) {
+        MyVisitor(ProblemsHolder holder) {
             myHolder = holder;
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             if (!XsltSupport.isVariableOrParamName(attribute)) {
                 return;
             }
@@ -69,10 +59,10 @@ public class UnusedElementInspection extends XsltInspection {
             }
             final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
             final String name = variable.getName();
-            if (name == null || name.length() == 0) {
+            if (name == null || name.isEmpty()) {
                 return;
             }
-            
+
             XsltValidator.checkUnusedVariable(variable, myHolder);
         }
     }

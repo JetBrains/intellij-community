@@ -1,0 +1,20 @@
+// "Replace with generated @PublishedApi bridge call '`access$test`(...)'" "true"
+// K2_ERROR: PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
+annotation class Z
+
+open class ABase<T> {
+    @Z
+    protected fun test(p: T) {
+    }
+
+    fun param(): T {
+        return null!!
+    }
+
+    inline fun test() {
+        {
+            <caret>test(param())
+        }()
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceProtectedToPublishedApiCallFix

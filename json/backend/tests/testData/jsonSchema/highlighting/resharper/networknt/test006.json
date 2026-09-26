@@ -1,0 +1,17 @@
+{
+  <warning descr="Validates against 'not' schema" textAttributesKey="WARNING_ATTRIBUTES">"compilerOptions": {
+  "noImplicitAny": false,
+  "noEmitOnError": true,
+  "removeComments": true,
+  "sourceMap": true,
+  "target": "es5",
+  "declaration": true,
+  "module": "amd",
+  "moduleResolution": "classic"
+}</warning>,
+  "exclude": [
+    <warning descr="does not match the uri pattern must be a valid RFC 3986 URI" textAttributesKey="WARNING_ATTRIBUTES">"node_modules"</warning>,
+    <warning descr="does not match the uri pattern must be a valid RFC 3986 URI" textAttributesKey="WARNING_ATTRIBUTES">"wwwroot"</warning>
+  ],
+  "files": []
+}

@@ -1,21 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.messages.Topic
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private object XmlTagHelper {
-  val BLACKLISTS = "blacklists"
-  val LANGUAGE_LIST = "blacklist"
-  val LANGUAGE = "language"
-  val ADDED = "added"
-  val REMOVED = "removed"
-  val PATTERN = "pattern"
+  const val BLACKLISTS = "blacklists"
+  const val LANGUAGE_LIST = "blacklist"
+  const val LANGUAGE = "language"
+  const val ADDED = "added"
+  const val REMOVED = "removed"
+  const val PATTERN = "pattern"
+  const val DISABLED_LANGUAGES = "disabledLanguages"
+  const val DISABLED_LANGUAGE_ITEM = "language"
+  const val DISABLED_LANGUAGE_ID = "id"
 }
 
 class Diff(val added: Set<String>, val removed: Set<String>) {
@@ -39,89 +44,121 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
   }
 }
 
-@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))])
+@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))], category = SettingsCategory.CODE)
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
   private val options = hashMapOf<String, Boolean>()
-  
+  private val disabledLanguages = hashSetOf<String>()
+
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
     setAddedPatterns(language, patternsBefore + pattern)
   }
 
-  fun getBlackListDiff(language: Language): Diff {
+  fun getExcludeListDiff(language: Language): Diff {
     val added = getAddedPatterns(language)
     val removed = getRemovedPatterns(language)
 
     return Diff(added, removed)
   }
 
-  fun setBlackListDiff(language: Language, diff: Diff) {
+  fun setExcludeListDiff(language: Language, diff: Diff) {
     setAddedPatterns(language, diff.added)
     setRemovedPatterns(language, diff.removed)
   }
-  
+
   override fun getState(): Element {
     val root = Element("settings")
 
     if (removedPatterns.isNotEmpty() || addedPatterns.isNotEmpty()) {
       val blacklists = Element(XmlTagHelper.BLACKLISTS)
       root.addContent(blacklists)
-      
+
       val allLanguages = removedPatterns.keys + addedPatterns.keys
       allLanguages.forEach {
         val removed = removedPatterns[it] ?: emptySet()
         val added = addedPatterns[it] ?: emptySet()
-        
+
         val languageBlacklist = Element(XmlTagHelper.LANGUAGE_LIST).apply {
           setAttribute(XmlTagHelper.LANGUAGE, it)
           val removedElements = removed.map { it.toPatternElement(XmlTagHelper.REMOVED) }
           val addedElements = added.map { it.toPatternElement(XmlTagHelper.ADDED) }
           addContent(addedElements + removedElements)
         }
-        
+
         blacklists.addContent(languageBlacklist)
       }
     }
-    
-    options.forEach { id, value ->
+
+    options.forEach { (id, value) ->
       val element = Element("option")
       element.setAttribute("id", id)
       element.setAttribute("value", value.toString())
       root.addContent(element)
     }
-    
+
+    if (disabledLanguages.isNotEmpty()) {
+      val disabledLanguagesElement = Element(XmlTagHelper.DISABLED_LANGUAGES)
+      disabledLanguagesElement.addContent(disabledLanguages.map {
+        val element = Element(XmlTagHelper.DISABLED_LANGUAGE_ITEM)
+        element.setAttribute(XmlTagHelper.DISABLED_LANGUAGE_ID, it)
+        element
+      })
+      root.addContent(disabledLanguagesElement)
+    }
+
     return root
+  }
+
+  fun setIsEnabledForLanguage(enabled: Boolean, language: Language) {
+    if (!enabled) {
+      disabledLanguages.add(language.id)
+    } else {
+      disabledLanguages.remove(language.id)
+    }
+  }
+
+  fun isEnabledForLanguage(language: Language): Boolean {
+    return language.id !in disabledLanguages
   }
 
   override fun loadState(state: Element) {
     addedPatterns.clear()
     removedPatterns.clear()
     options.clear()
-    
+    disabledLanguages.clear()
+
     val allBlacklistElements = state.getChild(XmlTagHelper.BLACKLISTS)
                           ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
 
     allBlacklistElements.forEach { blacklistElement ->
       val language = blacklistElement.attributeValue(XmlTagHelper.LANGUAGE) ?: return@forEach
-      
+
       val added = blacklistElement.extractPatterns(XmlTagHelper.ADDED)
       addedPatterns[language] = addedPatterns[language]?.plus(added) ?: added
-      
+
       val removed = blacklistElement.extractPatterns(XmlTagHelper.REMOVED)
       removedPatterns[language] = removedPatterns[language]?.plus(removed) ?: removed
     }
-    
-    state.getChildren("option").forEach { 
+
+    state.getChildren("option").forEach {
       val id = it.getAttributeValue("id")
       options[id] = it.getAttributeBooleanValue("value")
     }
+
+    state.getChild(XmlTagHelper.DISABLED_LANGUAGES)?.apply {
+      getChildren(XmlTagHelper.DISABLED_LANGUAGE_ITEM).forEach {
+        val languageId = it.attributeValue(XmlTagHelper.DISABLED_LANGUAGE_ID) ?: return@forEach
+        disabledLanguages.add(languageId)
+      }
+    }
+    fireExcludeListChanged(null)
   }
-  
+
   companion object {
     @JvmStatic
-    fun getInstance(): ParameterNameHintsSettings = ServiceManager.getService(ParameterNameHintsSettings::class.java)
+    fun getInstance(): ParameterNameHintsSettings = ApplicationManager.getApplication().getService(ParameterNameHintsSettings::class.java)
   }
 
   fun getOption(optionId: String): Boolean? {
@@ -133,7 +170,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       options.remove(optionId)
     }
     else {
-      options[optionId] = value 
+      options[optionId] = value
     }
   }
 
@@ -150,11 +187,32 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private fun setRemovedPatterns(language: Language, removed: Set<String>) {
     val key = language.displayName
     removedPatterns[key] = removed
+    fireExcludeListChanged(language)
   }
 
   private fun setAddedPatterns(language: Language, added: Set<String>) {
     val key = language.displayName
     addedPatterns[key] = added
+    fireExcludeListChanged(language)
+  }
+
+  private fun fireExcludeListChanged(language: Language?) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(ExcludeListListener.TOPIC).excludeListChanged(language)
+  }
+
+  @ApiStatus.Experimental
+  interface ExcludeListListener {
+    companion object {
+      @JvmField
+      @Topic.AppLevel
+      val TOPIC: Topic<ExcludeListListener> = Topic(ExcludeListListener::class.java)
+    }
+
+    /** Fired after the exclude list for [language] has changed.
+     *
+     * @param language The language whose exclude list has changed.
+     * `null` if the exclude list for all languages should be considered as changed. */
+    fun excludeListChanged(language: Language?)
   }
 
 }

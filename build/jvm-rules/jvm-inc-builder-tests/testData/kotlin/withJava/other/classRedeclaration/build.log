@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_classRedeclaration-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/classRedeclaration/a/class2.kt
+End of files
+Cleaning output files:
+  Klass.class
+  META-INF/kotlin_withJava_other_classRedeclaration-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/classRedeclaration/a/class1.kt
+  kotlin/withJava/other/classRedeclaration/a/class2.kt
+End of files
+------------------------------------------
+Exit code: ERROR

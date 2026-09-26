@@ -1,0 +1,8 @@
+// "Add 'E' as upper bound for F" "true"
+// K2_ERROR: UPPER_BOUND_VIOLATED
+
+fun <T, U : T> foo() = 1
+
+fun <E, F : E> bar() = foo<E, F<caret>>()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddGenericUpperBoundFix

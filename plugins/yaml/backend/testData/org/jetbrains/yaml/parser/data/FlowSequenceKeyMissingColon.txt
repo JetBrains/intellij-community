@@ -1,0 +1,17 @@
+YAML file: a.yml
+  YAML document
+    YAML compound value
+      YAML array
+        PsiElement([)('[')
+        YAML sequence item
+          YAML plain scalar text
+            PsiElement(text)('a')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        YAML sequence item
+          YAML plain scalar text
+            PsiElement(text)('b')
+        PsiElement(])(']')
+      PsiWhiteSpace(' ')
+      YAML plain scalar text
+        PsiElement(text)('value')

@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
@@ -109,6 +97,7 @@ public interface CodeStyleSettingsCustomizable {
     KEEP_BLANK_LINES_IN_DECLARATIONS,
     KEEP_BLANK_LINES_IN_CODE,
     KEEP_BLANK_LINES_BEFORE_RBRACE,
+    KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER,
     BLANK_LINES_BEFORE_PACKAGE,
     BLANK_LINES_AFTER_PACKAGE,
     BLANK_LINES_BEFORE_IMPORTS,
@@ -177,6 +166,7 @@ public interface CodeStyleSettingsCustomizable {
     METHOD_ANNOTATION_WRAP,
     CLASS_ANNOTATION_WRAP,
     FIELD_ANNOTATION_WRAP,
+    SWITCH_EXPRESSIONS_WRAP,
     PARAMETER_ANNOTATION_WRAP,
     VARIABLE_ANNOTATION_WRAP,
     ALIGN_MULTILINE_CHAINED_METHODS,
@@ -212,68 +202,23 @@ public interface CodeStyleSettingsCustomizable {
     SPECIAL_ELSE_IF_TREATMENT,
     ENUM_CONSTANTS_WRAP,
     ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS,
+    ALIGN_CONSECUTIVE_ASSIGNMENTS,
     ALIGN_SUBSEQUENT_SIMPLE_METHODS,
-    INDENT_BREAK_FROM_CASE
+    INDENT_BREAK_FROM_CASE,
+    BUILDER_METHODS,
+    KEEP_BUILDER_METHODS_INDENTS
   }
-  
+
   enum CommenterOption {
     LINE_COMMENT_ADD_SPACE,
+    LINE_COMMENT_ADD_SPACE_ON_REFORMAT,
+    LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION,
     LINE_COMMENT_AT_FIRST_COLUMN,
-    BLOCK_COMMENT_AT_FIRST_COLUMN
+    BLOCK_COMMENT_AT_FIRST_COLUMN,
+    BLOCK_COMMENT_ADD_SPACE,
+    DOCUMENTATION_LINE_COMMENT_PREFERRED
   }
-  
 
-  String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
-  String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
-  String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
-  String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
-  String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
-  String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
-  String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
-  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
-  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
-  String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
-
-  String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
-  String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
-
-  String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
-  String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
-  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
-  String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
-  String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
-  String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
-  String WRAPPING_CALL_CHAIN = ApplicationBundle.message("wrapping.chained.method.calls");
-  String WRAPPING_IF_STATEMENT = ApplicationBundle.message("wrapping.if.statement");
-  String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
-  String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
-  String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
-  String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
-  String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
-  String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
-  String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
-  String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
-  String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");
-  String WRAPPING_THROWS_LIST = ApplicationBundle.message("wrapping.throws.list");
-  String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
-  String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
-  String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
-  String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
-  String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
-  String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
-
-  String[] WRAP_OPTIONS = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.chop.down.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
   int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_AS_NEEDED |
@@ -283,23 +228,13 @@ public interface CodeStyleSettingsCustomizable {
   int[] WRAP_VALUES_FOR_SINGLETON = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_ALWAYS};
-  String[] BRACE_OPTIONS = {
-    ApplicationBundle.message("wrapping.force.braces.do.not.force"),
-    ApplicationBundle.message("wrapping.force.braces.when.multiline"),
-    ApplicationBundle.message("wrapping.force.braces.always")
-  };
+
   int[] BRACE_VALUES = {
     CommonCodeStyleSettings.DO_NOT_FORCE,
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = {
-    ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
-  };
+
   int[] BRACE_PLACEMENT_VALUES = {
     CommonCodeStyleSettings.END_OF_LINE,
     CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED,
@@ -308,12 +243,7 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
 
-  String[] WRAP_ON_TYPING_OPTIONS = {
-    ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.default")
-  };
-  int [] WRAP_ON_TYPING_VALUES = {
+  int[] WRAP_ON_TYPING_VALUES = {
     CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue
@@ -321,32 +251,34 @@ public interface CodeStyleSettingsCustomizable {
 
   void showAllStandardOptions();
 
-  void showStandardOptions(String... optionNames);
+  void showStandardOptions(@NonNls String... optionNames);
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @NlsContexts.Label @Nullable String groupName,
+                                Object... options) {
   }
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        @Nullable OptionAnchor anchor,
-                        @Nullable String anchorFieldName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @NlsContexts.Label @Nullable String groupName,
+                                @Nullable OptionAnchor anchor,
+                                @NonNls @Nullable String anchorFieldName,
+                                Object... options) {
   }
 
-  default void renameStandardOption(String fieldName, String newTitle) {
+  default void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
   }
 
   /**
    * Moves a standard option to another group.
+   *
    * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
-  default void moveStandardOption(String fieldName, String newGroup) {
+  default void moveStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newGroup) {
   }
+
 }

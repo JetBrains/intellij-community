@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Collapse loop with stream 'forEach()'" "false"
 import java.util.ArrayList;
 import java.util.List;
 

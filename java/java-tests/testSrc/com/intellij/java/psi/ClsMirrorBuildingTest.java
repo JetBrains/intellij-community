@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -6,19 +6,31 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ClassFileViewProvider;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -50,10 +62,49 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
   public void testGroovy() { doTest(); }
+  public void testGroovyBaseObject() { doTest(); }
   public void testGrEnum() { doTest(); }
   public void testGrTrait() { doTest(); }
   public void testSuspiciousParameterNames() { doTest(); }
+  public void testTimeUnit() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
+  public void testTypeAnno() { doTest(); }
+  public void testTypeAnnoNestedGeneric() { doTest(); }
+  public void testExtendsObjectAnnotated() { doTest(); }
+  public void testRecordTest() { doTest(); }
+  public void testRecordTestCustomHash() { doTest(); }
+  public void testInheritFromDollar() { doTest(); }
+  public void testInheritFromDollar$1() { doTest(); }
+  public void testSealed() { doTest(); }
+  public void testCompanyDO() { doTest(); }
+  public void testGenericRecord() { doTest(); }
+  public void testCompanyDOInDumbMode() {
+    testDumbMode("CompanyDO");
+  }
+
+  public void testFieldWithSimilarAnnotation() {
+    testDumbMode("FieldWithSimilarAnnotation");
+  }
+
+  private void testDumbMode(String testName) {
+    String testDir = getTestDataDir();
+    String clsPath = getClsPath(testName, testDir);
+    String txtPath = getTxtPath(testName, testDir);
+    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
+    assertNotNull(clsPath, file);
+
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(()->{
+        assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
+        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+        if (psiFile instanceof PsiCompiledElement compiledElement) {
+          PsiElement mirror = compiledElement.getMirror();
+          assertNotNull(mirror);
+        }
+        return null;
+      });
+    });
+  }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
@@ -82,7 +133,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, file);
 
-    InnerClassSourceStrategy<VirtualFile> strategy = new InnerClassSourceStrategy<VirtualFile>() {
+    InnerClassSourceStrategy<VirtualFile> strategy = new InnerClassSourceStrategy<>() {
       @Override
       public VirtualFile findInnerClass(String innerName, VirtualFile outerClass) {
         String baseName = outerClass.getNameWithoutExtension();
@@ -98,10 +149,11 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
           byte[] bytes = innerClass.contentsToByteArray();
           new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
         }
-        catch (IOException ignored) { }
+        catch (IOException ignored) {
+        }
       }
     };
-    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("java.lang", true);
+    PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(true);
     StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<>(file, strategy, stub, 0, null);
     new ClassReader(file.contentsToByteArray()).accept(visitor, ClassReader.SKIP_FRAMES);
   }
@@ -118,7 +170,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
     vFile.refresh(false, false);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    String text1 = psiFile.getText();
+    String text1 = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> psiFile.getText());
     assertTrue(text1, text1.contains("private int f1"));
     assertFalse(text1, text1.contains("private int f2"));
     Document doc1 = FileDocumentManager.getInstance().getCachedDocument(vFile);
@@ -142,10 +194,49 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(path, vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(path, psiFile);
-    for (int i = 0; i < psiFile.getTextLength(); i++) {
+    int length = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> psiFile.getTextLength());
+    for (int i = 0; i < length; i++) {
       PsiElement element = psiFile.findElementAt(i);
       assertTrue(i + ":" + element, element != null && !(element instanceof ClsElementImpl));
     }
+  }
+
+  public void testMirrorParsingIsCancellable() {
+    String path = JavaTestUtil.getJavaTestDataPath() + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
+    VirtualFile vFile = StandardFileSystems.jar().refreshAndFindFileByPath(path);
+    assertNotNull(path, vFile);
+    ClsFileImpl clsFile = assertInstanceOf(PsiManager.getInstance(getProject()).findFile(vFile), ClsFileImpl.class);
+
+    boolean[] canceledInsideParsing = {false};
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    CoreProgressManager.CheckCanceledHook hook = __ -> {
+      //try to match inside decompiler
+      if (!indicator.isCanceled() && StackWalker.getInstance().walk(
+        frames -> frames.anyMatch(f -> "ensureParsed".equals(f.getMethodName()) &&
+                                       "com.intellij.psi.impl.source.tree.LazyParseableElement".equals(f.getClassName())))) {
+        canceledInsideParsing[0] = true;
+        indicator.cancel();
+        return true;
+      }
+      return false;
+    };
+
+    ProgressManagerImpl progressManager = (ProgressManagerImpl)ProgressManager.getInstance();
+    try {
+      progressManager.runWithHook(hook, () -> BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> {
+        progressManager.runProcess(() -> clsFile.getMirror(), indicator);
+        return null;
+      }));
+      fail("mirror parsing wasn't canceled; could it be running inside a non-cancelable section?");
+    }
+    catch (ProcessCanceledException e) {
+      assertTrue(canceledInsideParsing[0]);
+    }
+
+    assertNull(clsFile.getCachedMirror());
+
+    PsiElement mirror = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> clsFile.getMirror());
+    assertTrue(assertInstanceOf(mirror, PsiJavaFile.class).getClasses().length > 0);
   }
 
   public void testInnerClassDetection() throws IOException {
@@ -178,27 +269,27 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   private static void doTest(String name) {
     String testDir = getTestDataDir();
-    doTest(testDir + "pkg/" + name + ".class", testDir + name + ".txt");
+    doTest(getClsPath(name, testDir), getTxtPath(name, testDir));
+  }
+
+  private static @NotNull String getTxtPath(String name, String testDir) {
+    return testDir + name + ".txt";
+  }
+
+  private static @NotNull String getClsPath(String name, String testDir) {
+    return testDir + "pkg/" + name + ".class";
   }
 
   private static void doTest(String clsPath, String txtPath) {
     VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
-    String expected;
-    try {
-      expected = StringUtil.trimTrailing(PlatformTestUtil.loadFileText(txtPath));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    assertEquals(expected, ClsFileImpl.decompile(file).toString());
+    assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
   }
 
-  private static boolean isInner(String name) throws IOException {
+  private static boolean isInner(String name) {
     VirtualFile file = StandardFileSystems.local().findFileByPath(getTestDataDir() + name + ".class");
     assertNotNull(file);
-    return ClassFileViewProvider.isInnerClass(file, file.contentsToByteArray(false));
+    return ClassFileViewProvider.isInnerClass(file);
   }
 }

@@ -19,11 +19,8 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 
 import java.util.EventListener;
 
-/**
- * @author lex
- */
 public interface EvaluationListener extends EventListener {
-  void evaluationStarted(SuspendContextImpl context);
+  default void evaluationStarted(SuspendContextImpl context) {}
 
-  void evaluationFinished(SuspendContextImpl context);
+  default void evaluationFinished(SuspendContextImpl context) {}
 }

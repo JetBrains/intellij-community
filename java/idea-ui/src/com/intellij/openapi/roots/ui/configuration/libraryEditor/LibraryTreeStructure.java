@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 class LibraryTreeStructure extends AbstractTreeStructure {
@@ -41,7 +26,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       @Override
       public boolean update() {
-        myName = ProjectBundle.message("library.root.node");
+        myName = JavaUiBundle.message("library.root.node");
         return false;
       }
       @Override
@@ -52,12 +37,12 @@ class LibraryTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElementDescriptor;
   }
 
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
       List<LibraryTableTreeContentElement> elements = new ArrayList<>(3);
@@ -74,8 +59,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
       return elements.toArray();
     }
 
-    if (element instanceof OrderRootTypeElement) {
-      OrderRootTypeElement rootTypeElement = (OrderRootTypeElement)element;
+    if (element instanceof OrderRootTypeElement rootTypeElement) {
       OrderRootType orderRootType = rootTypeElement.getOrderRootType();
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
@@ -86,8 +70,7 @@ class LibraryTreeStructure extends AbstractTreeStructure {
       return items.toArray();
     }
 
-    if (element instanceof ItemElement) {
-      ItemElement itemElement = (ItemElement)element;
+    if (element instanceof ItemElement itemElement) {
       List<String> excludedUrls = new ArrayList<>();
       for (String excludedUrl : libraryEditor.getExcludedRootUrls()) {
         if (VfsUtilCore.isEqualOrAncestor(itemElement.getUrl(), excludedUrl)) {
@@ -95,13 +78,13 @@ class LibraryTreeStructure extends AbstractTreeStructure {
         }
       }
       ExcludedRootElement[] items = new ExcludedRootElement[excludedUrls.size()];
-      Collections.sort(excludedUrls, LibraryRootsComponent.ourUrlComparator);
+      excludedUrls.sort(LibraryRootsComponent.ourUrlComparator);
       for (int i = 0; i < excludedUrls.size(); i++) {
         items[i] = new ExcludedRootElement(itemElement, itemElement.getUrl(), excludedUrls.get(i));
       }
       return items;
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -114,13 +97,12 @@ class LibraryTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
-    return ((NodeDescriptor)element).getParentDescriptor();
+  public Object getParentElement(@NotNull Object element) {
+    return ((NodeDescriptor<?>)element).getParentDescriptor();
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
   }
 }

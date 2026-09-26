@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Replace 'C | D | B' with more generic 'A'" "true-preview"
 import java.io.IOException;
 
 class A extends Exception {}

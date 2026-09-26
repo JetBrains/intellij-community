@@ -1,0 +1,13 @@
+[project]
+name = "monorepo-with-a-separate-pyproject-for-pytest"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "lib/uvlib1",
+    "lib/uvlib2",
+]

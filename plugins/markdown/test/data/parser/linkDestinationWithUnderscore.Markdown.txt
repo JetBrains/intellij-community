@@ -1,0 +1,11 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    MarkdownInlineLink(Markdown:Markdown:INLINE_LINK)
+      MarkdownLinkText(Markdown:Markdown:LINK_TEXT)
+        PsiElement(Markdown:Markdown:[)('[')
+        PsiElement(Markdown:Markdown:TEXT)('link')
+        PsiElement(Markdown:Markdown:])(']')
+      PsiElement(Markdown:Markdown:()('(')
+      MarkdownLinkDestination(Markdown:Markdown:LINK_DESTINATION)
+        PsiElement(Markdown:Markdown:TEXT)('underscore_/file.md')
+      PsiElement(Markdown:Markdown:))(')')

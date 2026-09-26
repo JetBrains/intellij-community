@@ -1,0 +1,13 @@
+fragment groupMember on GroupMember {
+  group {
+    projects(first: 100) {
+      pageInfo {
+        ...pageInfo
+      }
+
+      nodes {
+        ...projectShort
+      }
+    }
+  }
+}

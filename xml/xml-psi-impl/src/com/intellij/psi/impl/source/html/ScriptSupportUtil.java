@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.openapi.util.Key;
@@ -25,7 +11,12 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlPsiUtil;
 import com.intellij.xml.util.HtmlUtil;
@@ -38,7 +29,7 @@ import java.util.List;
 /**
  * @author Maxim.Mossienko
  */
-public class ScriptSupportUtil {
+public final class ScriptSupportUtil {
   private static final Key<CachedValue<XmlTag[]>> CachedScriptTagsKey = Key.create("script tags");
   private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<>();
 
@@ -54,6 +45,8 @@ public class ScriptSupportUtil {
                                             ResolveState state,
                                             PsiElement lastParent,
                                             PsiElement place) {
+    if (PlatformUtils.isJetBrainsClient()) return true; //FileReferenceUtil.findFile possible indexes, and the whole thing seems cross-project-file
+
     CachedValue<XmlTag[]> myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
     if (myCachedScriptTags == null) {
       myCachedScriptTags = CachedValuesManager.getManager(element.getProject())
@@ -64,9 +57,8 @@ public class ScriptSupportUtil {
             if (document != null) {
               PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
                 @Override
-                public boolean execute(@NotNull final PsiElement element1) {
-                  if (element1 instanceof XmlTag) {
-                    final XmlTag tag = (XmlTag)element1;
+                public boolean execute(final @NotNull PsiElement element1) {
+                  if (element1 instanceof XmlTag tag) {
 
                     if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
                       final XmlElementDescriptor descriptor = tag.getDescriptor();
@@ -113,7 +105,7 @@ public class ScriptSupportUtil {
       }
     }
     finally {
-      ProcessingDeclarationsFlag.set(null);
+      ProcessingDeclarationsFlag.remove();
     }
 
     return true;

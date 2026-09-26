@@ -1,0 +1,394 @@
+package pkg;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.function.IntBinaryOperator;
+import java.util.function.Supplier;
+
+public class TestClassLambda {
+   public int field = 0;
+
+   public void testLambda() {
+      List var1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);// 29
+      int var2 = (int)Math.random();// 30
+      var1.forEach((var2x) -> {// 32
+         int var3 = 2 * var2x;// 33
+         System.out.println(var3 + var2 + this.field);// 34
+      });// 35
+   }// 36
+
+   public void testLambda1() {
+      int var1 = (int)Math.random();// 39
+      Runnable var2 = () -> System.out.println("hello1" + var1);// 40
+      Runnable var3 = () -> System.out.println("hello2" + var1);// 41
+   }// 42
+
+   public void testLambda2() {
+      reduce((var0, var1) -> Math.max(var0, var1));// 45
+   }// 46
+
+   public void testLambda3() {
+      reduce(Math::max);// 49
+   }// 50
+
+   public void testLambda4() {
+      reduce(TestClassLambda::localMax);// 53
+   }// 54
+
+   public void testLambda5() {
+      String var1 = "abcd";// 57
+      function(var1::toString);// 58
+   }// 59
+
+   public void testLambda6() {
+      ArrayList var1 = new ArrayList();// 62
+      int var2 = var1.size() * 2;// 63
+      int var3 = var1.size() * 5;// 64
+      var1.removeIf((var2x) -> var2 >= var2x.length() && var2x.length() <= var3);// 65
+   }// 66
+
+   public static void testLambda7(Annotation[] var0) {
+      Arrays.stream(var0).map(Annotation::annotationType);// 69
+   }// 70
+
+   public static OptionalInt reduce(IntBinaryOperator var0) {
+      return null;// 73
+   }
+
+   public static String function(Supplier<String> var0) {
+      return (String)var0.get();// 77
+   }
+
+   public static int localMax(int var0, int var1) {
+      return 0;// 81
+   }
+
+   public void nestedLambdas() {
+      byte var1 = 5;// 85
+      Runnable var2 = () -> {// 86
+         Runnable var1x = () -> System.out.println("hello2" + var1);// 87
+         System.out.println("hello1" + var1);// 88
+      };// 89
+   }// 90
+}
+
+class 'pkg/TestClassLambda' {
+   method 'lambda$testLambda$0 (ILjava/lang/Integer;)V' {
+      0      17
+      1      17
+      2      17
+      3      17
+      4      17
+      5      17
+      6      17
+      7      18
+      8      18
+      9      18
+      a      18
+      b      18
+      c      18
+      d      18
+      e      18
+      f      18
+      10      18
+      11      18
+      12      18
+      13      18
+      14      18
+      15      19
+   }
+
+   method 'testLambda ()V' {
+      7      14
+      8      14
+      9      14
+      a      14
+      e      14
+      f      14
+      10      14
+      11      14
+      15      14
+      16      14
+      17      14
+      18      14
+      1c      14
+      1d      14
+      1e      14
+      1f      14
+      23      14
+      24      14
+      25      14
+      26      14
+      2a      14
+      2b      14
+      2c      14
+      2d      14
+      2e      14
+      33      14
+      34      14
+      35      14
+      36      14
+      37      14
+      39      14
+      3a      14
+      3b      14
+      3c      14
+      3d      15
+      3e      15
+      3f      15
+      40      15
+      41      15
+      42      16
+      4a      16
+      4b      16
+      4c      16
+      4d      16
+      4e      16
+      4f      20
+   }
+
+   method 'lambda$testLambda1$1 (I)V' {
+      0      24
+      1      24
+      2      24
+      a      24
+      b      24
+      f      24
+      13      24
+      14      24
+      15      24
+      16      24
+      17      24
+      18      24
+      19      24
+   }
+
+   method 'lambda$testLambda1$2 (I)V' {
+      0      25
+      1      25
+      2      25
+      a      25
+      b      25
+      f      25
+      13      25
+      14      25
+      15      25
+      16      25
+      17      25
+      18      25
+      19      25
+   }
+
+   method 'testLambda1 ()V' {
+      0      23
+      1      23
+      2      23
+      3      23
+      4      23
+      b      24
+      12      25
+      13      26
+   }
+
+   method 'lambda$testLambda2$3 (II)I' {
+      0      29
+      1      29
+      2      29
+      3      29
+      4      29
+      5      29
+   }
+
+   method 'testLambda2 ()V' {
+      5      29
+      6      29
+      7      29
+      9      30
+   }
+
+   method 'testLambda3 ()V' {
+      5      33
+      6      33
+      7      33
+      9      34
+   }
+
+   method 'testLambda4 ()V' {
+      5      37
+      6      37
+      7      37
+      9      38
+   }
+
+   method 'testLambda5 ()V' {
+      0      41
+      1      41
+      2      41
+      e      42
+      f      42
+      10      42
+      12      43
+   }
+
+   method 'lambda$testLambda6$4 (IILjava/lang/String;)Z' {
+      0      49
+      1      49
+      2      49
+      3      49
+      4      49
+      5      49
+      8      49
+      9      49
+      a      49
+      b      49
+      c      49
+      d      49
+      15      49
+   }
+
+   method 'testLambda6 ()V' {
+      7      46
+      8      47
+      9      47
+      a      47
+      b      47
+      c      47
+      d      47
+      e      47
+      f      47
+      10      47
+      11      48
+      12      48
+      13      48
+      14      48
+      15      48
+      16      48
+      17      48
+      18      48
+      19      48
+      1a      49
+      22      49
+      23      49
+      24      49
+      25      49
+      26      49
+      28      50
+   }
+
+   method 'testLambda7 ([Ljava/lang/annotation/Annotation;)V' {
+      0      53
+      1      53
+      2      53
+      3      53
+      9      53
+      a      53
+      b      53
+      c      53
+      d      53
+      f      54
+   }
+
+   method 'reduce (Ljava/util/function/IntBinaryOperator;)Ljava/util/OptionalInt;' {
+      0      57
+      1      57
+   }
+
+   method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
+      0      61
+      1      61
+      2      61
+      3      61
+      4      61
+      5      61
+      6      61
+      7      61
+      8      61
+      9      61
+   }
+
+   method 'localMax (II)I' {
+      0      65
+      1      65
+   }
+
+   method 'lambda$null$5 (I)V' {
+      0      71
+      1      71
+      2      71
+      a      71
+      b      71
+      f      71
+      13      71
+      14      71
+      15      71
+      16      71
+      17      71
+      18      71
+      19      71
+   }
+
+   method 'lambda$nestedLambdas$6 (I)V' {
+      6      71
+      7      72
+      8      72
+      9      72
+      11      72
+      12      72
+      16      72
+      1a      72
+      1b      72
+      1c      72
+      1d      72
+      1e      72
+      1f      72
+      20      73
+   }
+
+   method 'nestedLambdas ()V' {
+      0      69
+      1      69
+      8      70
+      9      74
+   }
+}
+
+Lines mapping:
+29 <-> 15
+30 <-> 16
+32 <-> 17
+33 <-> 18
+34 <-> 19
+35 <-> 20
+36 <-> 21
+39 <-> 24
+40 <-> 25
+41 <-> 26
+42 <-> 27
+45 <-> 30
+46 <-> 31
+49 <-> 34
+50 <-> 35
+53 <-> 38
+54 <-> 39
+57 <-> 42
+58 <-> 43
+59 <-> 44
+62 <-> 47
+63 <-> 48
+64 <-> 49
+65 <-> 50
+66 <-> 51
+69 <-> 54
+70 <-> 55
+73 <-> 58
+77 <-> 62
+81 <-> 66
+85 <-> 70
+86 <-> 71
+87 <-> 72
+88 <-> 73
+89 <-> 74
+90 <-> 75

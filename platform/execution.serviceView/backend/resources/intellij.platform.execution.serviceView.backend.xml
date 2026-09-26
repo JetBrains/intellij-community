@@ -1,0 +1,25 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.serviceViewLocatableSearcher" interface="com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.serviceView.backend.BackendServiceViewRpcApiProvider"
+                                            apiInterfaces="com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc"/>
+  </extensions>
+</idea-plugin>

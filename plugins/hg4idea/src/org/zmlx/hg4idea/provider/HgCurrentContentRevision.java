@@ -24,13 +24,13 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 class HgCurrentContentRevision extends CurrentContentRevision {
   private final VcsRevisionNumber revisionNumber;
 
-  public HgCurrentContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
+  HgCurrentContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
     super( hgFile.toFilePath() );
     this.revisionNumber = revisionNumber;
   }
 
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  @Override
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return revisionNumber;
   }
 

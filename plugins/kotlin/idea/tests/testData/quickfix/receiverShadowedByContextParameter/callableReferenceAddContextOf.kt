@@ -1,0 +1,21 @@
+// "Use 'contextOf<Foo>()' as receiver" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// WITH_STDLIB
+// API_VERSION: 2.2
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Foo {
+    fun bar() {
+    }
+}
+
+fun withFoo(f: context(Foo) () -> Unit) {}
+
+fun Foo.test() {
+    withFoo {
+        run(::bar<caret>)
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

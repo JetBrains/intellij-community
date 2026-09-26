@@ -1,0 +1,2 @@
+version = "0.28.*"
+upstream-repository = "https://github.com/takluyver/pyxdg"

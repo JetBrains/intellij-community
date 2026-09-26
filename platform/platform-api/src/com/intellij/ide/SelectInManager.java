@@ -1,67 +1,46 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
-public class SelectInManager  {
+@Service(Service.Level.PROJECT)
+public final class SelectInManager {
   private final Project myProject;
-  private final List<SelectInTarget> myTargets = new ArrayList<>();
-  private boolean myLoadedExtensions = false;
-  @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
-  @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
-  @NonNls public static final String ASPECTS = IdeBundle.message("select.in.aspects");
-  @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
-  @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
-  @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
-  @NonNls public static final String SCOPE = IdeBundle.message("select.in.scope");
 
-  public SelectInManager(final Project project) {
+  public SelectInManager(@NotNull Project project) {
     myProject = project;
   }
 
+  public @NotNull List<SelectInTarget> getTargetList() {
+    List<SelectInTarget> targets = new ArrayList<>(DumbService.getDumbAwareExtensions(myProject, SelectInTarget.EP_NAME));
+    targets.sort(SelectInTargetComparator.INSTANCE);
+    return targets;
+  }
+
   /**
-   * "Select In" targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
+   * @deprecated Use {@link #getTargetList()}
    */
   @Deprecated
-  public void addTarget(SelectInTarget target) {
-    myTargets.add(target);
+  public SelectInTarget @NotNull [] getTargets() {
+    return getTargetList().toArray(new SelectInTarget[0]);
   }
 
-  public void removeTarget(SelectInTarget target) {
-    myTargets.remove(target);
-  }
-
-  public SelectInTarget[] getTargets() {
-    checkLoadExtensions();
-    Stream<SelectInTarget> stream = myTargets.stream();
-    if (DumbService.getInstance(myProject).isDumb()) {
-      stream = stream.filter(target -> DumbService.isDumbAware(target));
-    }
-    return stream.sorted(SelectInTargetComparator.INSTANCE).toArray(SelectInTarget[]::new);
-  }
-
-  private void checkLoadExtensions() {
-    if (!myLoadedExtensions) {
-      myLoadedExtensions = true;
-      Collections.addAll(myTargets, Extensions.getExtensions(SelectInTarget.EP_NAME, myProject));
-    }
-  }
-
-  public static SelectInManager getInstance(Project project) {
-    return ServiceManager.getService(project, SelectInManager.class);
+  public static SelectInManager getInstance(@NotNull Project project) {
+    return project.getService(SelectInManager.class);
   }
 
   public static SelectInTarget findSelectInTarget(@NotNull String id, Project project) {
-    SelectInManager manager = project == null || project.isDisposed() ? null : SelectInManager.getInstance(project);
-    SelectInTarget[] targets = manager == null ? null : manager.getTargets();
+    SelectInManager manager = project == null || project.isDisposed() ? null : getInstance(project);
+    List<SelectInTarget> targets = manager == null ? null : manager.getTargetList();
     if (targets != null) {
       for (SelectInTarget target : targets) {
         if (target != null && Objects.equals(id, target.getToolWindowId())) {
@@ -72,11 +51,16 @@ public class SelectInManager  {
     return null;
   }
 
-  public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
+  public static final class SelectInTargetComparator implements Comparator<SelectInTarget> {
     public static final Comparator<SelectInTarget> INSTANCE = new SelectInTargetComparator();
 
+    @Override
     public int compare(final SelectInTarget o1, final SelectInTarget o2) {
       return Float.compare(o1.getWeight(), o2.getWeight());
     }
+  }
+
+  public static @Nls String getProject() {
+    return IdeBundle.message("select.in.project");
   }
 }

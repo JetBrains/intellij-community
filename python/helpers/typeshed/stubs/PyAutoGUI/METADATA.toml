@@ -1,0 +1,3 @@
+version = "0.9.*"
+upstream-repository = "https://github.com/asweigart/pyautogui"
+dependencies = ["types-PyScreeze"]

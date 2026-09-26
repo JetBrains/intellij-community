@@ -1,0 +1,7 @@
+// "Add 'inline' modifier" "true"
+// K2_ERROR: REIFIED_TYPE_PARAMETER_NO_INLINE
+
+inline fun <reified T> fn() {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp

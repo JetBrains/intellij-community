@@ -15,27 +15,49 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 
-/**
- * @author peter
- */
 public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
   public void testCreatingEnumInLanguageLevel3Project() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiDirectory dir = getPsiManager().findDirectory(myFixture.getTempDirFixture().getFile(""));
     PsiClass createdEnum = JavaDirectoryService.getInstance().createEnum(dir, "Foo");
     assertTrue(createdEnum.isEnum());
     assertEquals(LanguageLevel.JDK_1_7, PsiUtil.getLanguageLevel(createdEnum));
+  }
+
+  public void testEffectiveLanguageLevelWorksForLibrarySourceRoot() throws Exception {
+    TempDirTestFixtureImpl temp = new TempDirTestFixtureImpl();
+    temp.setUp();
+
+    try {
+      VirtualFile root = temp.findOrCreateDir("lib");
+      PsiTestUtil.addLibrary(getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
+
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
+      IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+
+      assertEquals(LanguageLevel.JDK_1_3, JavaDirectoryService.getInstance().getLanguageLevel(getPsiManager().findDirectory(root)));
+      assertEquals(LanguageLevel.JDK_1_3, JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(root));
+    }
+    finally {
+      temp.tearDown();
+    }
   }
 
 }

@@ -1,0 +1,7 @@
+// "Remove redundant elvis operator" "true"
+fun test() {
+    ((({ "" } <caret>?: null)))
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessElvisFix

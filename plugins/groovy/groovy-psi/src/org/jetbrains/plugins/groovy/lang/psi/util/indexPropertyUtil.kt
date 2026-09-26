@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyIndexPropertyUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
@@ -20,9 +6,11 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -32,6 +20,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
+import org.jetbrains.plugins.groovy.lang.typing.ListLiteralType
 
 fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
   return getSimpleArrayAccessType() != null
@@ -40,7 +33,7 @@ fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
 fun GrIndexProperty.getSimpleArrayAccessType(): PsiType? {
   val thisType = invokedExpression.type as? PsiArrayType ?: return null
   val argument = argumentList.allArguments.singleOrNull() as? GrExpression ?: return null
-  if (TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argument.type, this) || argument.isSingleCharLiteral()) {
+  if (TypesUtil.isAssignableByMethodCallConversion(PsiTypes.intType(), argument.type, this) || argument.isSingleCharLiteral()) {
     return thisType.componentType
   }
   else {
@@ -74,31 +67,46 @@ fun GrIndexProperty.isClassLiteral(): Boolean {
 
 fun GrIndexProperty.getArrayClassType(): PsiType? {
   val arrayTypeBase = getClassReferenceFromExpression(this) ?: return null
-  return TypesUtil.createJavaLangClassType(arrayTypeBase, project, resolveScope)
+  return TypesUtil.createJavaLangClassType(arrayTypeBase, this)
+}
+
+class ListArgument(
+  private val expressions: List<GrExpression>,
+  private val context: PsiElement
+) : Argument {
+
+  override val type: PsiType? by lazyPub {
+    ListLiteralType(expressions, context)
+  }
+
+  fun unwrap(): Arguments {
+    return expressions.map(::ExpressionArgument)
+  }
+}
+
+private fun tupleType(expressions: Array<out GrExpression>, context: PsiElement): GrImmediateTupleType {
+  val types = expressions.map { it.type }
+  return GrImmediateTupleType(types, JavaPsiFacade.getInstance(context.project), context.resolveScope)
 }
 
 /**
- * If there is one argument (`foo[a]`), then result is a type of `a`.
+ * If there is one argument (`foo[a]`), then result is `a` as is.
  * If there is multiple arguments (`foo[a,b,c]`), then result is a list from Groovy perspective (as in `[a, b, c]` as a literal).
  *
- * @return type of the whole argument list or `null` if there are named arguments.
+ * @return argument of the whole argument list or [UnknownArgument] if there are named arguments.
  */
-fun GrIndexProperty.getArgumentListType(): PsiType? {
+fun GrIndexProperty.getArgumentListArgument(): Argument {
   val argList = argumentList
-  if (argList.namedArguments.isNotEmpty()) return null
-  argList.expressionArguments.singleOrNull()?.let { return it.type }
-  val types = argList.expressionArguments.map { it.type }.toTypedArray()
-  return GrImmediateTupleType(types, JavaPsiFacade.getInstance(project), resolveScope)
-}
-
-fun GrIndexProperty.getArgumentTypes(rhs: Boolean): Array<PsiType>? {
-  val argumentListType = getArgumentListType() ?: return null
-  if (rhs) {
-    return arrayOf(argumentListType)
+  if (argList.namedArguments.isNotEmpty()) {
+    return UnknownArgument
+  }
+  val expressions = argList.expressionArguments
+  val singleExpression = expressions.singleOrNull()
+  if (singleExpression != null) {
+    return ExpressionArgument(singleExpression)
   }
   else {
-    val rType = (parent as? GrAssignmentExpression)?.type ?: return null
-    return arrayOf(argumentListType, rType)
+    return ListArgument(expressions.toList(), this)
   }
 }
 

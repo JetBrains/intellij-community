@@ -1,0 +1,19 @@
+// "Add name to argument: 'x = "Hello"'" "true"
+// K2_AFTER_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: MIXING_NAMED_AND_POSITIONAL_ARGUMENTS
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+
+// LANGUAGE_VERSION: 2.2
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+
+context(x: String)
+fun foo(a: Int, b: String) {}
+
+fun main() {
+    // suggest "x", "a" will be type mismatch
+    foo(b = "World", x = "Hello", 4)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix

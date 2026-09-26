@@ -1,0 +1,46 @@
+================ Step #1 =================
+Cleaning output files:
+  A$Companion.class
+  A.class
+End of files
+Cleaning output files:
+  AChild.class
+  GetAKt.class
+  META-INF/kotlin_withJava_other_classToPackageFacade-a.kotlin_module
+  UseFKt.class
+  UseGKt.class
+  UseHKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/classToPackageFacade/a/AChild.kt
+  kotlin/withJava/other/classToPackageFacade/a/APartF.kt
+  kotlin/withJava/other/classToPackageFacade/a/APartG.kt
+  kotlin/withJava/other/classToPackageFacade/a/getA.kt
+  kotlin/withJava/other/classToPackageFacade/a/useF.kt
+  kotlin/withJava/other/classToPackageFacade/a/useG.kt
+  kotlin/withJava/other/classToPackageFacade/a/useH.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_classToPackageFacade-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/other/classToPackageFacade/a/AChild.kt
+  kotlin/withJava/other/classToPackageFacade/a/APartF.kt
+  kotlin/withJava/other/classToPackageFacade/a/APartG.kt
+  kotlin/withJava/other/classToPackageFacade/a/useF.kt
+  kotlin/withJava/other/classToPackageFacade/a/useG.kt
+End of files
+Cleaning output files:
+  GetAChildKt.class
+  META-INF/kotlin_withJava_other_classToPackageFacade-a.kotlin_module
+  UseJKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/classToPackageFacade/a/getAChild.kt
+  kotlin/withJava/other/classToPackageFacade/a/useJ.kt
+End of files
+------------------------------------------
+Exit code: OK

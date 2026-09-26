@@ -1,0 +1,12 @@
+[project]
+name = "sub-project-b"
+version = "0.1.0"
+description = "Sub-project B"
+dependencies = []
+requires-python = ">=3.12"
+
+
+[project.optional-dependencies]
+instruments-any = [
+  "pytest",
+]

@@ -1,4 +1,4 @@
-// "Remove redundant 'else'" "true"
+// "Remove redundant 'else'" "true-preview"
 class T {
     void three(boolean b) {
         switch (3) {

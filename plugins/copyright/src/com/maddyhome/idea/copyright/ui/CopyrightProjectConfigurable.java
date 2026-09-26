@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
+  public static final String ID = "copyright";
   private final Project project;
   private ProjectSettingsPanel myOptionsPanel = null;
   private final CopyrightProfilesPanel myProfilesPanel;
@@ -34,8 +22,9 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     myProfilesPanel = new CopyrightProfilesPanel(project);
   }
 
+  @Override
   public String getDisplayName() {
-    return "Copyright";
+    return CopyrightBundle.message("configurable.CopyrightProjectConfigurable.display.name");
   }
 
   @Override
@@ -43,12 +32,14 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return getId();
   }
 
+  @Override
   public JComponent createComponent() {
     myOptionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
     myProfilesPanel.setUpdate(this::reloadProfiles);
     return myOptionsPanel.getMainComponent();
   }
 
+  @Override
   public boolean isModified() {
     if (myOptionsPanel != null) {
       return myOptionsPanel.isModified();
@@ -57,32 +48,37 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myOptionsPanel != null) {
       myOptionsPanel.apply();
     }
   }
 
+  @Override
   public void reset() {
     if (myOptionsPanel != null) {
       myOptionsPanel.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     myOptionsPanel = null;
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
-  @NotNull
-  public String getId() {
-    return "copyright";
+  @Override
+  public @NotNull String getId() {
+    return ID;
   }
 
-  protected Configurable[] buildConfigurables() {
+  @Override
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
   }
 
@@ -91,5 +87,8 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
       myOptionsPanel.reloadCopyrightProfiles();
     }
   }
-  
+
+  public boolean hasAnyCopyrights() {
+    return myOptionsPanel.hasAnyCopyrights();
+  }
 }

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
 import org.jetbrains.jps.model.JpsElementCollection;
@@ -30,14 +17,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
-  private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsArtifact>create("synthetic artifact"));
+public final class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
+  private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("synthetic artifact"));
 
   @Override
-  public Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {
+  public @Unmodifiable Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {
     List<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(model.getProject());
     if (!includeSynthetic) {
       return artifacts;
@@ -45,6 +29,7 @@ public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
     return ContainerUtil.concat(artifacts, getSyntheticArtifacts(model));
   }
 
+  @Override
   public List<JpsArtifact> getSyntheticArtifacts(final JpsModel model) {
     JpsElementCollection<JpsArtifact> artifactsCollection = model.getProject().getContainer().getChild(SYNTHETIC_ARTIFACTS);
     if (artifactsCollection == null) {

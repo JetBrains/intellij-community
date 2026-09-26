@@ -15,11 +15,23 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyMethodMayBeStaticInspectionTest extends PyInspectionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testTruePositive() {
     doTest();
@@ -74,12 +86,10 @@ public class PyMethodMayBeStaticInspectionTest extends PyInspectionTestCase {
   }
 
   public void testAbstractProperty() {
-    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
     doTest();
   }
 
   public void testPropertyWithAlias() {
-    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
     doTest();
   }
 

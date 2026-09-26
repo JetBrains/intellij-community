@@ -1,41 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceParameter.*;
-import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.introduceParameter.ChangedMethodCallInfo;
+import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
+import com.intellij.refactoring.introduceParameter.InternalUsageInfo;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -97,9 +95,9 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
         for (UsageInfo usageInfo : usagesIn) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {
-              conflicts.putValue(statements[0], RefactoringBundle
+              conflicts.putValue(statements[0], JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                         CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
+                         CommonRefactoringUtil.htmlEmphasize(JavaKeywords.SUPER)));
               break;
             }
           }
@@ -112,7 +110,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     }
 
     if (!conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
+      final ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, usagesIn);
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
@@ -123,14 +121,13 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     return true;
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
-    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
+    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true).asIterable()) {
       PsiElement ref = ref1.getElement();
       if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));
@@ -165,7 +162,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     final IntroduceParameterData data = new IntroduceParameterDataAdapter();
 
     IntroduceParameterUtil.processUsages(usages, data);
@@ -206,7 +203,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
 
-    final Editor editor = PsiUtilBase.findEditor(newStatement);
+    final Editor editor = PsiEditorUtil.findEditor(newStatement);
     if (editor != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       editor.getSelectionModel().removeSelection();
@@ -217,7 +214,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     fieldConflictsResolver.fix();
   }
 
-  private class IntroduceParameterDataAdapter implements IntroduceParameterData {
+  private final class IntroduceParameterDataAdapter implements IntroduceParameterData {
 
     private final GrClosableBlock myClosure;
     private final GrExpressionWrapper myWrapper;
@@ -227,9 +224,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       myWrapper = new GrExpressionWrapper(myClosure);
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -238,9 +234,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myMethod;
     }
 
-    @NotNull
     @Override
-    public PsiMethod getMethodToSearchFor() {
+    public @NotNull PsiMethod getMethodToSearchFor() {
       return (PsiMethod)myHelper.getToSearchFor();
     }
 
@@ -249,9 +244,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return myWrapper;
     }
 
-    @NotNull
     @Override
-    public String getParameterName() {
+    public @NotNull String getParameterName() {
       return myHelper.getName();
     }
 
@@ -270,16 +264,14 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       return false; //todo
     }
 
-    @NotNull
     @Override
-    public PsiType getForcedType() {
+    public @NotNull PsiType getForcedType() {
       PsiType type = myHelper.getSelectedType();
       return type != null ? type : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     }
 
-    @NotNull
     @Override
-    public TIntArrayList getParametersToRemove() {
+    public @NotNull IntList getParameterListToRemove() {
       return myHelper.parametersToRemove();
     }
 

@@ -20,31 +20,38 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class TestTreeExpander implements TreeExpander {
   private TestFrameworkRunningModel myModel;
 
   public void setModel(final TestFrameworkRunningModel model) {
     myModel = model;
     Disposer.register(model, new Disposable() {
+      @Override
       public void dispose() {
         myModel = null;
       }
     });
   }
 
+  @Override
   public void expandAll() {
-    myModel.getTreeBuilder().expandAll(null);
+    TreeUtil.expandAll(myModel.getTreeView());
   }
 
+  @Override
   public boolean canExpand() {
     return treeHasMoreThanOneLevel();
   }
 
+  @Override
   public void collapseAll() {
     TreeUtil.collapseAll(myModel.getTreeView(), 1);
   }
 
+  @Override
   public boolean canCollapse() {
     return treeHasMoreThanOneLevel();
   }

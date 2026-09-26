@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="4ef0b"/>
-          <text value="Associated &amp;branch"/>
+          <text resource-bundle="messages/TaskBundle" key="associated.branch"/>
         </properties>
       </component>
       <vspacer id="16cf7">
@@ -34,7 +34,7 @@
         </constraints>
         <properties>
           <labelFor value="9ab51"/>
-          <text value="Associated change&amp;list"/>
+          <text resource-bundle="messages/TaskBundle" key="associated.change.list"/>
         </properties>
       </component>
       <component id="9ab51" class="com.intellij.openapi.ui.ComboBox" binding="myChangelist">
@@ -49,7 +49,7 @@
         </constraints>
         <properties>
           <labelFor value="573e5"/>
-          <text value="&amp;Summary"/>
+          <text resource-bundle="messages/TaskBundle" key="label.summary"/>
         </properties>
       </component>
       <component id="573e5" class="javax.swing.JTextField" binding="mySummary">

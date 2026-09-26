@@ -1,102 +1,159 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.util.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
-public class CachedValuesManagerImpl extends CachedValuesManager {
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
+
+@ApiStatus.Internal
+public final class CachedValuesManagerImpl extends CachedValuesManager implements Disposable {
+  private static final Object NULL = new Object();
+
+  private ConcurrentMap<UserDataHolder, Object> myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
+  private Set<Key<?>> myKeys = ConcurrentHashMap.newKeySet();
 
   private final Project myProject;
   private final CachedValuesFactory myFactory;
 
+  public CachedValuesManagerImpl(Project project) {
+    this(project, project.getService(CachedValuesFactory.class));
+  }
+
+  @NonInjectable
   public CachedValuesManagerImpl(Project project, CachedValuesFactory factory) {
     myProject = project;
     myFactory = factory == null ? new DefaultCachedValuesFactory(project) : factory;
   }
 
-  @NotNull
   @Override
-  public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
+  public @NotNull <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     return myFactory.createCachedValue(provider, trackValue);
   }
 
-  @NotNull
   @Override
-  public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
+  public @NotNull <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                       @NotNull CachedValueProvider<T> provider,
+                                                       boolean trackValue) {
+    return myFactory.createCachedValue(userDataHolder, provider, trackValue);
+  }
+
+  @Override
+  public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
+                                                                                       boolean trackValue) {
     return myFactory.createParameterizedCachedValue(provider, trackValue);
   }
 
   @Override
-  @Nullable
-  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                                                        @NotNull Key<CachedValue<T>> key,
-                                                        @NotNull CachedValueProvider<T> provider,
-                                                        boolean trackValue) {
-    CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
-    CachedValue<T> value;
-    if (dataHolder instanceof UserDataHolderEx) {
-      UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
-      value = dh.getUserData(key);
-      while (isOutdated(value)) {
-        if (dh.replace(key, value, null)) {
-          value = null;
-          break;
-        }
-        value = dh.getUserData(key);
-      }
-      if (value == null) {
-        value = createCachedValue(provider, trackValue);
-        assert ((CachedValueBase)value).isFromMyProject(myProject);
-        value = dh.putUserDataIfAbsent(key, value);
-      }
+  protected @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                                                          @NotNull ParameterizedCachedValueProvider<T, P> provider,
+                                                                                          boolean trackValue) {
+    return myFactory.createParameterizedCachedValue(userDataHolder, provider, trackValue);
+  }
+
+  private boolean isFromMyProject(@NotNull CachedValue<?> v) {
+    if (v instanceof CachedValueBase<?>) {
+      return ((CachedValueBase<?>)v).isFromMyProject(myProject);
     }
     else {
-      synchronized (dataHolder) {
-        value = dataHolder.getUserData(key);
-        if (isOutdated(value)) {
-          value = null;
-        }
-        if (value == null) {
-          value = createCachedValue(provider, trackValue);
-          dataHolder.putUserData(key, value);
-        }
+      return true;
+    }
+  }
+
+  @Override
+  public @Nullable <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
+                                        @NotNull Key<CachedValue<T>> key,
+                                        @NotNull CachedValueProvider<T> provider,
+                                        boolean trackValue) {
+    CachedValue<T> value = dataHolder.getUserData(key);
+    if (value != null && isFromMyProject(value)) {
+      Supplier<T> data = value.getUpToDateOrNull();
+      if (data != null) {
+        return data.get();
       }
+      CachedValueStabilityChecker.checkProvidersEquivalent(provider, value.getValueProvider(), key);
+    }
+    if (value == null) {
+      value = saveInUserData(dataHolder, key, freshCachedValue(dataHolder, key, provider, trackValue));
     }
     return value.getValue();
   }
 
-  private boolean isOutdated(CachedValue<?> value) {
-    return value instanceof CachedValueBase &&
-           (!((CachedValueBase)value).isFromMyProject(myProject) || hasOutdatedValue((CachedValueBase)value));
+  private <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder, @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
+    trackKeyHolder(dataHolder, key);
+
+    if (dataHolder instanceof UserDataHolderEx) {
+      return ((UserDataHolderEx)dataHolder).putUserDataIfAbsent(key, value);
+    }
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (dataHolder) {
+      CachedValue<T> existing = dataHolder.getUserData(key);
+      if (existing != null) {
+        return existing;
+      }
+      dataHolder.putUserData(key, value);
+      return value;
+    }
   }
 
-  private static boolean hasOutdatedValue(CachedValueBase base) {
-    return !base.hasUpToDateValue() && base.getRawData() != null;
+  @Override
+  protected void trackKeyHolder(@NotNull UserDataHolder dataHolder, @NotNull Key<?> key) {
+    if (!isClearedOnPluginUnload(dataHolder)) {
+      myCacheHolders.put(dataHolder, NULL);
+      myKeys.add(key);
+    }
   }
 
-  public Project getProject() {
-    return myProject;
+  @ApiStatus.Internal
+  @Override
+  public void dispose() {
+    clearMyCacheHolders();
+  }
+
+  private static boolean isClearedOnPluginUnload(@NotNull UserDataHolder dataHolder) {
+    return dataHolder instanceof PsiElement || dataHolder instanceof ASTNode || dataHolder instanceof FileViewProvider;
+  }
+
+  private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
+    CachedValueLeakChecker.checkProviderDoesNotLeakPSI(provider, key, dh);
+    CachedValue<T> value = myFactory.createCachedValue(dh, provider, trackValue);
+    assert isFromMyProject(value);
+    return value;
+  }
+
+  @ApiStatus.Internal
+  public void clearCachedValues() {
+    clearMyCacheHolders();
+    CachedValueStabilityChecker.cleanupFieldCache();
+    myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
+    myKeys = ConcurrentHashMap.newKeySet();
+  }
+
+  private void clearMyCacheHolders() {
+    for (UserDataHolder holder : myCacheHolders.keySet()) {
+      for (Key<?> key : myKeys) {
+        holder.putUserData(key, null);
+      }
+    }
   }
 }

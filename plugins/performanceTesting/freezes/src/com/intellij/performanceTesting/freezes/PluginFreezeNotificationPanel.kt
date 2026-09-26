@@ -1,0 +1,175 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.performanceTesting.freezes
+
+import com.intellij.diagnostic.FreezeNotifier
+import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.diagnostic.LogMessage
+import com.intellij.diagnostic.MessagePool
+import com.intellij.diagnostic.ThreadDump
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
+import com.intellij.ide.setToolTipText
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService
+import com.intellij.openapi.diagnostic.UnhandledReportSinkService.PluginFreezeReportData
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.performanceTesting.freezes.promo.FREEZE_COUNT_KEY
+import com.intellij.performanceTesting.freezes.promo.FREEZE_THRESHOLD
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotifications
+import com.intellij.util.application
+import java.util.Collections
+import java.util.function.Function
+import javax.swing.JComponent
+
+private val LOG = fileLogger()
+
+internal class PluginFreezeNotifier : FreezeNotifier {
+  override suspend fun notifyFreeze(
+    event: LogMessage,
+    problematicPluginId: PluginId,
+    currentDumps: Collection<ThreadDump>,
+    durationMs: Long,
+  ) {
+    val freezeWatcher = PluginFreezeWatcher.getInstance()
+
+    val freezeReason = freezeWatcher.getFreezeReason()
+    if (freezeReason != null) {
+      LOG.info("Still have previous reason shown to user, ignoring new one")
+      return
+    }
+
+    countFreezes()
+
+    val reason = freezeWatcher.processFreeze(event, problematicPluginId, durationMs)
+    if (reason != null) {
+      if (reason.reportToUser) {
+        readActionBlocking {
+          updateUi()
+        }
+      }
+
+      UnhandledReportSinkService.getInstance()?.report(PluginFreezeReportData(
+        reason.pluginId,
+        reason.event.message,
+        durationMs,
+        reason.event.allAttachments,
+        currentDumps
+      ))
+    }
+  }
+
+  private fun updateUi() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      EditorNotifications.getInstance(project).updateAllNotifications()
+    }
+  }
+
+  internal fun countFreezes() {
+    val props = PropertiesComponent.getInstance()
+    val currentCount = props.getInt(FREEZE_COUNT_KEY, 0)
+    if (currentCount > FREEZE_THRESHOLD) {
+      LOG.debug("Freeze count exceeded threshold, do not count further")
+      return
+    }
+
+    props.setValue(FREEZE_COUNT_KEY, currentCount + 1, 0)
+    LOG.debug("Freeze detected, incrementing freeze count for promo")
+  }
+}
+
+internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
+  private val reported: MutableSet<FreezeReason> = Collections.synchronizedSet(HashSet())
+
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (!Registry.get("ide.diagnostics.notification.freezes.in.plugins").asBoolean()) return null
+
+    val freezeReason = PluginFreezeWatcher.getInstance().getFreezeReason() ?: return null
+    val frozenPlugin = freezeReason.pluginId
+    val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
+    val ijProject = IntelliJProjectUtil.isIntelliJPlatformProject(project) || IntelliJProjectUtil.isIntelliJPluginProject(project)
+
+    return Function {
+      EditorNotificationPanel(EditorNotificationPanel.Status.Warning).apply {
+        text = if (isVendorJetBrains(pluginDescriptor.vendor ?: "")) {
+          PluginFreezeBundle.message("notification.content.freeze.detected", ApplicationInfoImpl.getShadowInstance().versionName)
+        }
+        else {
+          PluginFreezeBundle.message("notification.content.plugin.caused.freeze", pluginDescriptor.name)
+        }
+
+        createActionLabel(PluginFreezeBundle.message("action.report.text")) {
+          reportFreeze(project, pluginDescriptor, freezeReason, ijProject)
+        }
+
+        createActionLabel(PluginFreezeBundle.message("action.ignore.plugin.text")) {
+          PluginsFreezesService.getInstance().mutePlugin(frozenPlugin)
+
+          LifecycleUsageTriggerCollector.pluginFreezeIgnored(frozenPlugin)
+
+          closePanel(project)
+        }.apply {
+          setToolTipText(HtmlChunk.text(PluginFreezeBundle.message("action.ignore.plugin.tooltip")))
+        }
+
+        createActionLabel(PluginFreezeBundle.message("action.close.panel.text")) {
+          closePanel(project)
+        }.apply {
+          setToolTipText(HtmlChunk.text(PluginFreezeBundle.message("action.dismiss.tooltip")))
+        }
+      }
+    }
+  }
+
+  private fun reportFreeze(project: Project, pluginDescriptor: PluginDescriptor, freezeReason: FreezeReason, ijProject: Boolean) {
+    if (reported.add(freezeReason)) {
+      // must be added only once
+      MessagePool.getInstance().addErrorMessage(freezeReason.event).invokeOnCompletion {
+        openInErrorDialog(project, ijProject, freezeReason, pluginDescriptor)
+      }
+    }
+    else { // already added to pool
+      openInErrorDialog(project, ijProject, freezeReason, pluginDescriptor)
+    }
+  }
+
+  private fun openInErrorDialog(project: Project, ijProject: Boolean, freezeReason: FreezeReason, pluginDescriptor: PluginDescriptor) {
+    application.invokeLater(
+      {
+        if (project.isDisposed) return@invokeLater
+
+        val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, ijProject, freezeReason.event) {
+          override fun updateOnSubmit() {
+            super.updateOnSubmit()
+
+            PluginsFreezesService.getInstance().mutePlugin(pluginDescriptor.pluginId)
+
+            LifecycleUsageTriggerCollector.pluginFreezeReported(pluginDescriptor.pluginId)
+            closePanel(project)
+          }
+        }
+
+        dialog.show()
+      }, ModalityState.nonModal())
+  }
+
+  private fun closePanel(project: Project) {
+    PluginFreezeWatcher.getInstance().reset()
+    reported.clear()
+    EditorNotifications.getInstance(project).updateAllNotifications()
+  }
+}

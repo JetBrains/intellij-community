@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,15 +10,12 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
-public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<GradleResourcesTarget> {
+public final class GradleResourcesTargetType extends ModuleBasedBuildTargetType<GradleResourcesTarget> {
   public static final GradleResourcesTargetType PRODUCTION = new GradleResourcesTargetType("gradle-resources-production", false);
   public static final GradleResourcesTargetType TEST = new GradleResourcesTargetType("gradle-resources-test", true);
 
@@ -33,9 +30,8 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
     return myIsTests;
   }
 
-  @NotNull
   @Override
-  public List<GradleResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<GradleResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     final List<GradleResourcesTarget> targets = new ArrayList<>();
     for (JpsModule module : model.getProject().getModules()) {
       if (JpsGradleExtensionService.getInstance().getExtension(module) != null) {
@@ -45,18 +41,12 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
     return targets;
   }
 
-  @NotNull
   @Override
-  public BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<>();
-    for (JpsModule module : model.getProject().getModules()) {
-      modules.put(module.getName(), module);
-    }
+  public @NotNull BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
     return new BuildTargetLoader<GradleResourcesTarget>() {
-      @Nullable
       @Override
-      public GradleResourcesTarget createTarget(@NotNull String targetId) {
-        final JpsModule module = modules.get(targetId);
+      public @Nullable GradleResourcesTarget createTarget(@NotNull String targetId) {
+        final JpsModule module = model.getProject().findModuleByName(targetId);
         return module != null ? new GradleResourcesTarget(GradleResourcesTargetType.this, module) : null;
       }
     };

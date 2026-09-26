@@ -1,0 +1,20 @@
+load("@rules_jvm//:jvm.bzl", "resourcegroup")
+
+resourcegroup(
+    name = "rust_resources",
+    srcs = glob(["resources/**/*"]),
+    strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @ultimate//:dotenv-rust
+)
+
+filegroup(
+    name = "rust_sources",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],  # used by @ultimate//:dotenv-rust
+)

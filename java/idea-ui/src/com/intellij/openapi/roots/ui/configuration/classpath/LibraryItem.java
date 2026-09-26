@@ -15,25 +15,24 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
   private final StructureConfigurableContext myContext;
 
-  public LibraryItem(LibraryOrderEntry orderEntry, StructureConfigurableContext context) {
+  LibraryItem(LibraryOrderEntry orderEntry, StructureConfigurableContext context) {
     super(orderEntry, true);
     myContext = context;
   }
@@ -54,13 +53,15 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     if (name != null) {
       final List<String> invalidUrls = ((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES);
       if (!invalidUrls.isEmpty()) {
-        return ProjectBundle.message("project.roots.tooltip.library.has.broken.paths", name, invalidUrls.size());
+        return JavaUiBundle.message("project.roots.tooltip.library.has.broken.paths", name, invalidUrls.size());
       }
     }
 
-    final List<String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
+    final List<@NlsSafe String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
     if (descriptions.isEmpty()) return null;
 
-    return XmlStringUtil.wrapInHtml(StringUtil.join(descriptions, "<br>"));
+    final HtmlBuilder builder = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(),
+                                                                       ContainerUtil.map(descriptions, HtmlChunk::text));
+    return builder.wrapWithHtmlBody().toString();
   }
 }

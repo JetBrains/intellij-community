@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  module-info.class
+End of files
+Compiling files:
+  kotlin/jpms/exportsNarrowedToQualified/a/module-info.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_jpms_exportsNarrowedToQualified-b.kotlin_module
+  module-info.class
+  qqq/ClientKt.class
+End of files
+Compiling files:
+  kotlin/jpms/exportsNarrowedToQualified/b/qqq/client.kt
+End of files
+------------------------------------------
+Exit code: ERROR

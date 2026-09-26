@@ -1,44 +1,43 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
-
+public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   public NewWelcomeScreen() {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
@@ -47,7 +46,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static WelcomePane createInnerPanel(WelcomeScreen screen) {
-    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Quick Start");
+    WelcomeScreenGroup root = new WelcomeScreenGroup(null, IdeBundle.message("welcome.screen.quick.start.action.text"));
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -55,32 +54,25 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
       root.add(child);
     }
 
-    root.add(buildRootGroup(AllIcons.General.Settings, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
-    root.add(buildRootGroup(AllIcons.Actions.Help, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
+    root.add(buildRootGroup(AllIcons.General.Settings, IdeBundle.message("welcome.screen.configure.action.text"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
+    root.add(buildRootGroup(AllIcons.Actions.Help, IdeBundle.message("welcome.screen.action.docs.how.tos.action.text"), IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
-    // so, we sure this is the last action
-    final AnAction register = actionManager.getAction("WelcomeScreen.Register");
-    if (register != null) {
-      root.add(register);
-    }
     return new WelcomePane(root, screen);
   }
 
-  private static WelcomeScreenGroup buildRootGroup(Icon groupIcon, String groupText, String groupId) {
-    WelcomeScreenGroup docs = new WelcomeScreenGroup(groupIcon, groupText);
+  private static WelcomeScreenGroup buildRootGroup(@NotNull Icon groupIcon, @NotNull @NlsActions.ActionText String groupText, @NotNull String groupId) {
+    WelcomeScreenGroup result = new WelcomeScreenGroup(groupIcon, groupText);
     ActionGroup docsActions = (ActionGroup)ActionManager.getInstance().getAction(groupId);
     for (AnAction child : docsActions.getChildren(null)) {
-      docs.add(child);
+      result.add(child);
     }
-    return docs;
+    return result;
   }
 
   private static JPanel createFooterPanel() {
-    JLabel versionLabel = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName() +
-                             " " +
-                             ApplicationInfo.getInstance().getFullVersion() +
-                             " Build " +
-                             ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode());
+    JLabel versionLabel = new JLabel(IdeBundle.message("label.version.0.1.build.2", ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                       ApplicationInfo.getInstance().getFullVersion(),
+                                                       ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()));
     makeSmallFont(versionLabel);
     versionLabel.setForeground(WelcomeScreenColors.FOOTER_FOREGROUND);
 
@@ -95,25 +87,22 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     });
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
-    footerPanel.add(makeSmallFont(new LinkLabel("Check", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        UpdateChecker.updateAndShowResult(null, null);
-      }
+    footerPanel.add(makeSmallFont(new ActionLink(IdeBundle.message("link.check"), e -> {
+      UpdateCheckerFacade.getInstance().updateAndShowResult(null);
     })));
-    footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
+    footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;
   }
 
-  private static JLabel makeSmallFont(JLabel label) {
+  private static JComponent makeSmallFont(JComponent label) {
     label.setFont(label.getFont().deriveFont((float)10));
     return label;
   }
 
   private static JPanel createHeaderPanel() {
     JPanel header = new JPanel(new BorderLayout());
-    JLabel welcome = new JLabel("Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName(),
-                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getWelcomeScreenLogoUrl()),
+    JLabel welcome = new JLabel(IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName()),
+                                IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getApplicationSvgIconUrl(), NewWelcomeScreen.class.getClassLoader()),
                                 SwingConstants.LEFT);
     welcome.setBorder(new EmptyBorder(10, 15, 10, 15));
     welcome.setFont(welcome.getFont().deriveFont((float) 32));
@@ -146,13 +135,24 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   @Override
   public void dispose() {
   }
-  
+
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
+    return ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
   }
 
-  private static class WelcomeScreenGroup extends DefaultActionGroup {
-    private WelcomeScreenGroup(Icon icon, String text, AnAction... actions) {
+  public static void updateNewProjectIconIfWelcomeScreen(@NotNull AnActionEvent e) {
+    if (isNewWelcomeScreen(e)) {
+      Presentation presentation = e.getPresentation();
+      presentation.setIcon(AllIcons.General.Add);
+      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
+        presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
+        presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
+      }
+    }
+  }
+
+  private static final class WelcomeScreenGroup extends DefaultActionGroup {
+    private WelcomeScreenGroup(Icon icon, @NlsActions.ActionText String text, AnAction... actions) {
       super(text, true);
       for (AnAction action : actions) {
         add(action);

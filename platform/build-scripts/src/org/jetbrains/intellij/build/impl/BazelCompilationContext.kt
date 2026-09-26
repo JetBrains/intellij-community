@@ -1,0 +1,254 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.impl
+
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
+import com.intellij.openapi.application.PathManager
+import com.intellij.platform.bazel.runfiles.BazelRunfiles
+import com.intellij.util.io.URLUtil
+import io.opentelemetry.api.trace.Span
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.BuildLifetime
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JpsCompilationData
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.buildSpan
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
+import java.net.URI
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+
+@Internal
+class BazelCompilationContext(
+  private val delegate: CompilationContext,
+  private val lifetime: BuildLifetime?,
+  @JvmField val outputProviderState: BazelModuleOutputProviderState = BazelModuleOutputProviderState(
+    modules = delegate.project.modules,
+    projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
+  ),
+) : CompilationContext {
+  override val outputProvider: ModuleOutputProvider by lazy {
+    BazelModuleOutputProvider(
+      state = outputProviderState,
+      lifetime = lifetime,
+      useTestCompilationOutput = options.useTestCompilationOutput,
+      testCompilationOutputModules = options.testCompilationOutputModules,
+    )
+  }
+
+  override val options: BuildOptions
+    get() = delegate.options
+  override val messages: BuildMessages
+    get() = delegate.messages
+  override val paths: BuildPaths
+    get() = delegate.paths
+  override val project: JpsProject
+    get() = delegate.project
+  override val projectModel: JpsModel
+    get() = delegate.projectModel
+  override val dependenciesProperties: DependenciesProperties
+    get() = delegate.dependenciesProperties
+  override val bundledRuntime: BundledRuntime
+    get() = delegate.bundledRuntime
+  override val compilationData: JpsCompilationData
+    get() = delegate.compilationData
+  override val stableJavaExecutable: Path
+    get() = delegate.stableJavaExecutable
+
+  override fun getStableJdkHome(): Path = delegate.getStableJdkHome()
+
+  override val classesOutputDirectory: Path
+    get() = delegate.classesOutputDirectory
+
+  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+    val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
+      .also {
+        if (forTests) {
+          it.withoutSdk()
+        }
+      }
+      .includedIn(JpsJavaClasspathKind.runtime(forTests))
+
+    val result = LinkedHashSet<Path>()
+    enumerator.forEachModuleAndLibrary(
+      { depModule ->
+        result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = forTests))
+        if (forTests) {  // incl. production
+          result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = false))
+        }
+      },
+      { library ->
+        val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+        for (path in outputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
+          result.add(path)
+        }
+      }
+    )
+    return result
+  }
+
+  override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(module, relativePath, forTests)
+
+  override fun notifyArtifactBuilt(artifactPath: Path) {
+    delegate.notifyArtifactBuilt(artifactPath)
+  }
+
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
+    val effectiveLifetime = lifetime ?: this.lifetime
+    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths, effectiveLifetime), lifetime = effectiveLifetime, outputProviderState = outputProviderState)
+  }
+
+  override fun prepareForBuild() {
+    delegate.prepareForBuild()
+  }
+
+  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    // Be sure to call ./bazel-build-all.cmd
+    // Later we will add all required Bazel dependencies to the build scripts target
+  }
+
+  override fun withCompilationLock(block: () -> Unit): Unit = delegate.withCompilationLock(block)
+}
+
+private fun computeProjectHomeForModuleOutputs(projectHome: Path): Path {
+  //if build scripts for intellij-community project are started from the ultimate monorepo, we need to take compiled classes from the parent project; otherwise outputs won't be found
+  if (projectHome.name == "community" && PathManager.getHomeDir() == projectHome.parent) {
+    return projectHome.parent
+  }
+  return projectHome
+}
+
+@Internal
+class BazelTargetsInfo {
+  companion object {
+    private val bazelTargetsJson = Json { ignoreUnknownKeys = true }
+
+    /**
+     * One parsed file per project root.
+     *
+     * The file holds every target of the repository, and it is megabytes of JSON. Two readers of one run asked for it
+     * twice, and each parse cost as much as a pipeline stage. The file is a build input, so it cannot change inside a
+     * run.
+     */
+    private val cache = ConcurrentHashMap<Path, TargetsFile>()
+
+    fun loadBazelTargetsJson(projectRoot: Path): TargetsFile = cache.computeIfAbsent(projectRoot) {
+      buildSpan("load bazel-targets.json") { span ->
+        val targetsFilePath = ArchivedCompilationContextUtil.getBazelTargetsJsonPath(it)
+        span.setAttribute("path", targetsFilePath.toString())
+        targetsFilePath.inputStream().use { input -> bazelTargetsJson.decodeFromStream<TargetsFile>(input) }
+      }
+    }
+  }
+
+  @Serializable
+  data class TargetsFileModuleDescription(
+    @JvmField val productionTargets: List<String>,
+    @JvmField val productionJars: List<String>,
+    @JvmField val testTargets: List<String>,
+    @JvmField val testJars: List<String>,
+    @JvmField val exports: List<String>,
+    @JvmField val moduleLibraries: Map<String, LibraryDescription>,
+  )
+
+  @Serializable
+  data class LibraryDescription(
+    @JvmField val target: String,
+    @JvmField val jars: List<String>,
+    @JvmField val jarTargets: List<String>,
+    @JvmField val sourceJars: List<String>,
+  )
+
+  /**
+   * The `ij_plugin` target of one plugin, by its main module name.
+   *
+   * An entry exists only for a plugin whose `META-INF/plugin.xml` carries the `BUILD_USING_BAZEL_MARKER` comment.
+   * Written by `JpsModuleToBazel.PluginDistributionTargetDescription`.
+   */
+  @Serializable
+  data class PluginDistributionTargetDescription(
+    @JvmField val target: String,
+    @JvmField val distributionDirectory: String,
+  )
+
+  @Serializable
+  data class TargetsFile(
+    @JvmField val modules: Map<String, TargetsFileModuleDescription>,
+    @JvmField val imlTargets: List<String> = emptyList(),
+    @JvmField val projectLibraries: Map<String, LibraryDescription>,
+    @JvmField val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
+  )
+}
+
+@Internal
+fun isRunningFromBazelOut(): Boolean = bazelOutputRoot != null
+
+/**
+ * Whether a dev build must be assembled from Bazel outputs.
+ *
+ * [isRunningFromBazelOut] alone cannot answer this: it reads the path of the jar this class was loaded from, and
+ * that path stops pointing into `bazel-out` as soon as anything copies the jar - the AIR UI test daemon localizes
+ * its stable classpath tier onto guest-local storage. The runfiles environment or an explicit Bazel input manifest
+ * survives such a copy, so either counts too; the predicates used to disagree and the dev build silently took the
+ * JPS branch.
+ */
+@Internal
+fun isDevBuildBazelBacked(): Boolean = isRunningFromBazelOut() || BazelRunfiles.isRunningFromBazel || BazelBuildInputs.isConfigured
+
+internal val bazelOutputRoot: Path? by lazy {
+  val url = BazelCompilationContext::class.java.getResource("${BazelCompilationContext::class.java.simpleName}.class")
+            ?: error("Unable to get '${BazelCompilationContext::class.java.simpleName}.class' file from resources")
+
+  if (url.protocol != URLUtil.JAR_PROTOCOL) {
+    return@lazy null
+  }
+
+  val path = Path.of(URI.create(url.path.substringBefore("!/")))
+
+  if (path.none { it.pathString == "bazel-out" }) {
+    // not running from bazel out
+    return@lazy null
+  }
+
+  // resolving all symlinks should lead to the bazel output directory
+  val outputRoot = cutBazelOutputRoot(path.toRealPath()) {
+    "Unable to find 'execroot' directory in the path: $it. class output: url=$url, path=$path"
+  }
+  Span.current().addEvent("Bazel output root: $outputRoot")
+  return@lazy outputRoot
+}
+
+/** Everything above `execroot` in a resolved Bazel path is the output base. */
+private inline fun cutBazelOutputRoot(realPath: Path, message: (Path) -> String): Path {
+  val execRootIndex = realPath.indexOfFirst { it.pathString == "execroot" }
+  check(execRootIndex > 0) { message(realPath) }
+  return realPath.root.resolve(realPath.subpath(0, execRootIndex))
+}
+
+val CompilationContextImpl.asBazelIfNeeded: CompilationContext
+  get() = toBazelIfNeeded(lifetime = null)
+
+fun CompilationContextImpl.toBazelIfNeeded(lifetime: BuildLifetime?, isBazelBacked: Boolean = isRunningFromBazelOut()): CompilationContext {
+  return when {
+    isBazelBacked -> BazelCompilationContext(delegate = this, lifetime = lifetime)
+    else -> this
+  }
+}

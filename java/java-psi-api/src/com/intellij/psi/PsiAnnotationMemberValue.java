@@ -16,12 +16,9 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a PSI element which can be used as the value of an annotation element.
- *
- * @author ven
  */
 public interface PsiAnnotationMemberValue extends PsiElement {
   /**

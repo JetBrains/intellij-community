@@ -1,0 +1,101 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.compose.markdown` start
+content_module_jar(module = ":markdown")
+### auto-generated section `dev intellij.platform.compose.markdown` end
+
+### auto-generated section `build intellij.platform.compose.markdown` start
+jvm_library(
+    name = "markdown",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.compose.markdown",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/compose",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/markdown/extensions/autolink",
+        "//platform/jewel/markdown/extensions/gfm-alerts",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/gfm-tables",
+        "//platform/jewel/markdown/extensions/images",
+        "//platform/jewel/markdown/ide-laf-bridge-styling",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//platform/compose",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/markdown/extensions/autolink",
+        "//platform/jewel/markdown/extensions/gfm-alerts",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/gfm-tables",
+        "//platform/jewel/markdown/extensions/images",
+        "//platform/jewel/markdown/ide-laf-bridge-styling",
+    ],
+)
+
+jvm_library(
+    name = "markdown_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.compose.markdown",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/compose",
+        "//platform/compose:compose_test_lib",
+        "//platform/jewel/markdown/core",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/markdown/extensions/autolink",
+        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-alerts",
+        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-tables",
+        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/jewel/markdown/extensions/images",
+        "//platform/jewel/markdown/extensions/images:images_test_lib",
+        "//platform/jewel/markdown/ide-laf-bridge-styling",
+        "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":markdown",
+        "//platform/compose:compose_test_lib",
+        "//platform/jewel/markdown/core:core_test_lib",
+        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
+        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
+        "//platform/jewel/markdown/extensions/images:images_test_lib",
+        "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.compose.markdown` end
+
+### auto-generated section `iml intellij.platform.compose.markdown` start
+exports_files(
+    [
+        "intellij.platform.compose.markdown.iml",
+        "resources/intellij.platform.compose.markdown.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.compose.markdown` end

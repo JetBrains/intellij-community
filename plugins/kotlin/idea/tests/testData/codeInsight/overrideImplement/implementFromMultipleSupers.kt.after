@@ -1,0 +1,33 @@
+// FIR_IDENTICAL
+interface A {
+    val s: String
+    fun f()
+}
+
+interface B {
+    val s: String
+    fun f()
+    fun g()
+}
+
+abstract class C {
+    abstract val s: String
+    abstract fun f()
+}
+
+class ABC : A, B, C() {
+    override val s: String
+        get() = TODO("Not yet implemented")
+
+    override fun f() {
+        TODO("Not yet implemented")
+    }
+
+    override fun g() {
+        TODO("Not yet implemented")
+    }
+}
+
+// MEMBER: "f(): Unit"
+// MEMBER: "g(): Unit"
+// MEMBER: "s: String"

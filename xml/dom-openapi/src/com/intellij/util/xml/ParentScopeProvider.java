@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ParentScopeProvider extends ScopeProvider{
   @Override
   public DomElement getScope(@NotNull DomElement element) {

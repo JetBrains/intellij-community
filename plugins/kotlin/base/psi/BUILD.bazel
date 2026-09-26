@@ -1,0 +1,105 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.base.psi` start
+content_module_jar(module = ":psi")
+### auto-generated section `dev intellij.kotlin.base.psi` end
+
+### auto-generated section `build intellij.kotlin.base.psi` start
+create_kotlinc_options(
+    name = "custom_psi",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "psi",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_psi",
+    module_name = "intellij.kotlin.base.psi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/guava",
+        "//platform/core-api:core",
+        "//plugins/kotlin/base/util",
+        "//platform/util",
+        "//platform/core-impl",
+        "//platform/util-ex",
+        "//java/java-psi-api:psi",
+        "//platform/code-style-api:codeStyle",
+        "//platform/lang-impl",
+        "//platform/lang-api:lang",
+        "//java/java-psi-impl:psi-impl",
+    ],
+)
+
+jvm_library(
+    name = "psi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_psi",
+    module_name = "intellij.kotlin.base.psi",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":psi",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util-ex:util-ex_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.base.psi` end
+
+### auto-generated section `iml intellij.kotlin.base.psi` start
+exports_files(
+    [
+        "intellij.kotlin.base.psi.iml",
+        "resources/intellij.kotlin.base.psi.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.base.psi` end

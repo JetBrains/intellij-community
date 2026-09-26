@@ -15,32 +15,21 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.numeric.InsertLiteralUnderscoresInspection;
+import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection;
+import org.jetbrains.annotations.NotNull;
 
-public class UnderscoresInLiteralsTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    super.tuneFixture(moduleBuilder);
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
+public class UnderscoresInLiteralsTest extends LightQuickFixParameterizedTestCase {
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/underscoresInLiterals/";
+  protected String getBasePath() {
+    return "/codeInsight/underscoresInLiterals/";
   }
 
-  public void testRemove() {
-    final String removeIntention = CodeInsightBundle.message("intention.remove.literal.underscores");
-    CodeInsightTestUtil.doIntentionTest(myFixture, removeIntention, "WithUnderscores.java", "WithoutUnderscores.java");
-  }
-
-  public void testInsert() {
-    final String insertIntention = CodeInsightBundle.message("intention.insert.literal.underscores");
-    CodeInsightTestUtil.doIntentionTest(myFixture, insertIntention, "WithoutUnderscores.java", "WithUnderscores.java");
+  @Override
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{new RemoveLiteralUnderscoresInspection(), new InsertLiteralUnderscoresInspection()};
   }
 }

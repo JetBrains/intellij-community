@@ -1,0 +1,53 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.diagnostic` start
+jvm_library(
+    name = "diagnostic",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.diagnostic",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/jetbrains/annotations",
+        "//libraries/fastutil",
+    ],
+)
+
+jvm_library(
+    name = "diagnostic_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.diagnostic",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":diagnostic",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.diagnostic` end
+
+### auto-generated section `iml intellij.platform.diagnostic` start
+exports_files(
+    [
+        "intellij.platform.diagnostic.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.diagnostic` end

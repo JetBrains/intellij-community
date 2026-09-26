@@ -1,0 +1,12 @@
+// "Create member function 'A.foo'" "true"
+// ERROR: Unresolved reference: s
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A<T>(val n: T)
+
+fun test(): Int {
+    return A(1).<caret>foo(s, 1)
+}

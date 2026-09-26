@@ -1,0 +1,50 @@
+Line 4 coverage: FULL
+Fully Covered
+Line 5 coverage: FULL
+Fully Covered
+Line 8 coverage: FULL
+Fully Covered
+Line 11 coverage: FULL
+Fully Covered
+Line 14 coverage: FULL
+Fully Covered
+Line 15 coverage: PARTIAL
+Partially Covered
+Covered 1/2 branches
+Line 18 coverage: FULL
+Fully Covered
+Line 19 coverage: FULL
+Fully Covered
+Covered 2/2 branches
+Line 22 coverage: FULL
+Fully Covered
+Line 23 coverage: FULL
+Fully Covered
+Covered 2/2 branches
+Line 27 coverage: FULL
+Fully Covered
+Line 28 coverage: PARTIAL
+Partially Covered
+Covered 1/2 branches
+Line 31 coverage: PARTIAL
+Partially Covered
+Covered 1/2 branches
+Line 32 coverage: FULL
+Fully Covered
+Line 37 coverage: FULL
+Fully Covered
+Line 40 coverage: PARTIAL
+Partially Covered
+Covered 1/2 branches
+Line 41 coverage: FULL
+Fully Covered
+Line 43 coverage: FULL
+Fully Covered
+Line 46 coverage: FULL
+Fully Covered
+Line 48 coverage: FULL
+Fully Covered
+Line 49 coverage: FULL
+Fully Covered
+Line 50 coverage: FULL
+Fully Covered

@@ -1,88 +1,87 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- *  @author dsl
- */
 public class SingleSourceRootMoveDestination implements MoveDestination {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination");
-  private final PackageWrapper myPackage;
-  private final PsiDirectory myTargetDirectory;
+  private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
+  private final @NotNull PackageWrapper myPackage;
+  private final @NotNull PsiDirectory myTargetDirectory;
 
-  public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory targetDirectory) {
+  public SingleSourceRootMoveDestination(@NotNull PackageWrapper aPackage, @NotNull PsiDirectory targetDirectory) {
     LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
     myPackage = aPackage;
     myTargetDirectory = targetDirectory;
   }
 
-  public PackageWrapper getTargetPackage() {
+  @Override
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
+  @Override
   public PsiDirectory getTargetIfExists(PsiDirectory source) {
     return myTargetDirectory;
   }
 
-  public PsiDirectory getTargetIfExists(PsiFile source) {
+  @Override
+  public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
     return myTargetDirectory;
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) {
     return myTargetDirectory;
   }
 
+  @Override
   public String verify(PsiFile source) {
     return null;
   }
 
+  @Override
   public String verify(PsiDirectory source) {
     return null;
   }
 
+  @Override
   public String verify(PsiPackage source) {
     return null;
   }
 
-  public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
-    RefactoringConflictsUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
+  @Override
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
+                                     @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+    final VirtualFile targetDirFile = PsiUtilCore.getVirtualFile(myTargetDirectory);
+    if (targetDirFile == null) return;
+    RefactoringConflictsUtil.getInstance()
+      .analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, targetDirFile, conflicts);
   }
 
   @Override
-  public boolean isTargetAccessible(Project project, VirtualFile place) {
+  public boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place) {
     final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
-    final Module module = ModuleUtil.findModuleForFile(place, project);
+    final Module module = ModuleUtilCore.findModuleForFile(place, project);
     final VirtualFile targetVirtualFile = myTargetDirectory.getVirtualFile();
     if (module != null &&
         !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetVirtualFile)) {
@@ -91,6 +90,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
     return true;
   }
 
+  @Override
   public PsiDirectory getTargetDirectory(PsiFile source) {
     return myTargetDirectory;
   }

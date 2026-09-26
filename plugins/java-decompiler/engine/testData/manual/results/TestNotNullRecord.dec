@@ -1,0 +1,36 @@
+package records;
+
+import org.jetbrains.annotations.NotNull;
+
+public record TestNotNullRecord(Integer integer) {
+   public TestNotNullRecord(@NotNull Integer integer) {
+      this.integer = integer;
+   }
+
+   @NotNull
+   public Integer integer() {
+      return this.integer;// 5
+   }
+}
+
+class 'records/TestNotNullRecord' {
+   method '<init> (Ljava/lang/Integer;)V' {
+      c      6
+      d      6
+      e      6
+      f      6
+      10      6
+      11      7
+   }
+
+   method 'integer ()Ljava/lang/Integer;' {
+      0      11
+      1      11
+      2      11
+      3      11
+      c      11
+   }
+}
+
+Lines mapping:
+5 <-> 12

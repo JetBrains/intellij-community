@@ -15,11 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.execution.filters.Filter;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
 
@@ -28,11 +29,23 @@ public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
     doTest("Build file '/project/build.gradle' line: 7", "/project/build.gradle", 7);
     doTest("  build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);
     doTest("build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);
+    doTest("Settings file 'C:\\project\\settings.gradle' line: 7", "C:\\project\\settings.gradle", 7);
+    doTest("Settings file '/project/settings.gradle' line: 7", "/project/settings.gradle", 7);
+    doTest("Initialization script '/user/.gradle/init.d/offline.gradle' line: 19", "/user/.gradle/init.d/offline.gradle", 19);
+    doTest("Script '/project/script.gradle' line: 7", "/project/script.gradle", 7);
+    doTestExpectingNull("Build file '/home/ezm/projects/intellij/one.com/commons-webservice-utils/build.gradle' line: ");
+    doTestExpectingNull("Garbage");
+  }
+
+  private void doTestExpectingNull(@NotNull String line) {
+    GradleConsoleFilter filter = new GradleConsoleFilter(myFixture.getProject());
+    Filter.Result result = filter.applyFilter(line, line.length());
+    assertNull(result);
   }
 
   private void doTest(String line, String expectedFileName, int expectedLineNumber) {
     GradleConsoleFilter filter = new GradleConsoleFilter(myFixture.getProject());
-    filter.applyFilter(line, 0);
+    filter.applyFilter(line, line.length());
     assertEquals(expectedFileName, filter.getFilteredFileName());
     assertEquals(expectedLineNumber, filter.getFilteredLineNumber());
   }

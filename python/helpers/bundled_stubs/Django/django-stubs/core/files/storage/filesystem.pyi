@@ -1,0 +1,26 @@
+from _typeshed import StrPath
+from django.utils.deconstruct import _Deconstructible
+from django.utils.functional import cached_property
+
+from .base import Storage
+from .mixins import StorageSettingsMixin
+
+class FileSystemStorage(_Deconstructible, Storage, StorageSettingsMixin):
+    def __init__(
+        self,
+        location: StrPath | None = None,
+        base_url: str | None = None,
+        file_permissions_mode: int | None = None,
+        directory_permissions_mode: int | None = None,
+        allow_overwrite: bool = False,
+    ) -> None: ...
+    @cached_property
+    def base_location(self) -> StrPath: ...
+    @cached_property
+    def location(self) -> StrPath: ...
+    @cached_property
+    def base_url(self) -> str: ...
+    @cached_property
+    def file_permissions_mode(self) -> int | None: ...
+    @cached_property
+    def directory_permissions_mode(self) -> int | None: ...

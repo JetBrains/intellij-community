@@ -1,39 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.SmartList;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/**
- * @author nik
- */
-@State(
-  name = "XDebuggerSettings",
-  storages = {
-    @Storage("debugger.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
-public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState> {
-  private Map<String, XDebuggerSettings<?>> mySettingsById;
-  private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
+@State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
+public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
+  implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {
+
+  private static final ExtensionPointName<XDebuggerSettings> SETTINGS_EP = ExtensionPointName.create("com.intellij.xdebugger.settings");
+
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
@@ -47,73 +44,69 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
     settingsState.setDataViewSettings(myDataViewSettings);
     settingsState.setGeneralSettings(myGeneralSettings);
 
-    initSettings();
-    if (!mySettingsById.isEmpty()) {
-      SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
-      for (XDebuggerSettings<?> settings : mySettingsById.values()) {
-        Object subState = settings.getState();
-        if (subState != null) {
-          Element serializedState = XmlSerializer.serializeIfNotDefault(subState, filter);
-          if (!JDOMUtil.isEmpty(serializedState)) {
-            SpecificSettingsState state = new SpecificSettingsState();
-            state.id = settings.getId();
-            state.configuration = serializedState;
-            settingsState.specificStates.add(state);
-          }
+    SETTINGS_EP.forEachExtensionSafe(settings -> {
+      Object subState = settings.getState();
+      if (subState != null) {
+        Element serializedState = XmlSerializer.serialize(subState);
+        if (serializedState != null) {
+          SpecificSettingsState state = new SpecificSettingsState();
+          state.id = settings.getId();
+          state.configuration = serializedState;
+          settingsState.specificStates.add(state);
         }
       }
-    }
+    });
     return settingsState;
   }
 
-  public Collection<XDebuggerSettings<?>> getSettingsList() {
-    initSettings();
-    return Collections.unmodifiableCollection(mySettingsById.values());
-  }
-
   @Override
-  @NotNull
-  public XDebuggerDataViewSettings getDataViewSettings() {
+  public @NotNull XDebuggerDataViewSettings getDataViewSettings() {
     return myDataViewSettings;
   }
 
-  public XDebuggerGeneralSettings getGeneralSettings() {
+  @Override
+  public @NotNull XDebuggerGeneralSettings getGeneralSettings() {
     return myGeneralSettings;
   }
 
   @Override
-  public void loadState(@NotNull final SettingsState state) {
+  public void loadState(final @NotNull SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.specificStates) {
-      XDebuggerSettings<?> settings = findSettings(settingsState.id);
+      XDebuggerSettings<?> settings = SETTINGS_EP.findFirstSafe(e -> settingsState.id.equals(e.getId()));
       if (settings != null) {
         ComponentSerializationUtil.loadComponentState(settings, settingsState.configuration);
       }
     }
   }
 
-  private XDebuggerSettings findSettings(String id) {
-    initSettings();
-    return mySettingsById.get(id);
+  @Override
+  public void noStateLoaded() {
+    loadState(new SettingsState());
   }
 
-  private void initSettings() {
-    if (mySettingsById == null) {
-      XDebuggerSettings[] extensions = XDebuggerSettings.EXTENSION_POINT.getExtensions();
-      mySettingsById = new TreeMap<>();
-      mySettingsByClass = new THashMap<>(extensions.length);
-      for (XDebuggerSettings settings : extensions) {
-        mySettingsById.put(settings.getId(), settings);
-        mySettingsByClass.put(settings.getClass(), settings);
-      }
-    }
+  @Override
+  public void dispose() {
   }
 
-  public <T extends XDebuggerSettings<?>> T getSettings(final Class<T> aClass) {
-    initSettings();
-    //noinspection unchecked
-    return (T)mySettingsByClass.get(aClass);
+  @Override
+  public void forEachSettings(@NotNull Consumer<XDebuggerSettings> consumer) {
+    SETTINGS_EP.forEachExtensionSafe(consumer);
+  }
+
+  public @Nullable <T extends XDebuggerSettings<?>> T getSettings(Class<T> aClass) {
+    return SETTINGS_EP.findExtension(aClass);
+  }
+
+  @Override
+  public @Nullable XDebuggerSettings<?> findFirstSettings(@NotNull Predicate<XDebuggerSettings> predicate) {
+    return SETTINGS_EP.findFirstSafe(predicate);
+  }
+
+  @VisibleForTesting
+  public static ExtensionPointName<XDebuggerSettings> getSettingsEP() {
+    return SETTINGS_EP;
   }
 
   public static class SettingsState {

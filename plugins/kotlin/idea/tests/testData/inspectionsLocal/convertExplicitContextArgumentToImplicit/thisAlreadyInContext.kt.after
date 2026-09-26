@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// COMPILER_ARGUMENTS: -Xexplicit-context-arguments
+
+class JsParserContext {
+    context(parserContext: JsParserContext)
+    fun initializeParser() {}
+
+    fun test() {
+        initializeParser()
+    }
+}

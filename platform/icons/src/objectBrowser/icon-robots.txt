@@ -1,1 +1,0 @@
-deprecated: showModules.png -> /actions/GroupByModule.svg; to be removed in IDEA 2020 - use AllIcons.Actions.GroupByModule

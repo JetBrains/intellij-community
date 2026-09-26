@@ -1,0 +1,80 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_api",
+    module_name = "fleet.reporting.api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)
+
+### auto-generated section `dev fleet.reporting.api` start
+content_module_jar(module = ":api")
+### auto-generated section `dev fleet.reporting.api` end
+
+### auto-generated section `build fleet.reporting.api` start
+create_kotlinc_options(
+    name = "custom_api",
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "api",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_api",
+    module_name = "fleet.reporting.api",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "api_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_api",
+    module_name = "fleet.reporting.api",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":api",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build fleet.reporting.api` end
+
+### auto-generated section `iml fleet.reporting.api` start
+exports_files(
+    [
+        "fleet.reporting.api.iml",
+        "resources/fleet.reporting.api.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.reporting.api` end

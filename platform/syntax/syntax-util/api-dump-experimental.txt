@@ -1,0 +1,3 @@
+*:com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
+- a:buildParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- bs:buildParserRuntime$default(com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime

@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextLeadingTabFixBundle</resource-bundle>
+
+  <actions>
+  <action<caret> id="BundleActionLeadingTab"/>
+  </actions>
+
+</idea-plugin>

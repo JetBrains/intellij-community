@@ -1,0 +1,15 @@
+// PROBLEM: 'plus' call iterates over the argument instead of adding it as a single element
+// FIX: Convert argument to explicit Collection
+// PRIORITY: LOW
+
+// WITH_STDLIB
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
+
+class Path {
+    fun toList(): List<Path> = TODO()
+}
+
+fun test(list: List<Path>, path: Path) {
+    list <caret>+ path
+}

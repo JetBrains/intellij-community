@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
@@ -47,8 +48,6 @@ import java.util.Collection;
  * </pre>
  * 
  * 
- * @author Denis Zhdanov
- * @since 4/12/13 3:59 PM
  * @param <E>  target external project data type
  * @param <I>  target ide project data type
  */
@@ -76,11 +75,8 @@ public interface ProjectDataService<E, I> {
    * </ul>
    * </pre>
    * are created, updated or left as-is if they have the
-   * 
-   * @param toImport
-   * @param project
    */
-  void importData(@NotNull Collection<DataNode<E>> toImport,
+  void importData(Collection<? extends DataNode<E>> toImport,
                   @Nullable ProjectData projectData,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider);
@@ -89,7 +85,7 @@ public interface ProjectDataService<E, I> {
    * Compute orphan data.
    */
   @NotNull
-  Computable<Collection<I>> computeOrphanData(@NotNull Collection<DataNode<E>> toImport,
+  Computable<Collection<I>> computeOrphanData(Collection<? extends DataNode<E>> toImport,
                                               @NotNull ProjectData projectData,
                                               @NotNull Project project,
                                               @NotNull IdeModifiableModelsProvider modelsProvider);
@@ -100,13 +96,26 @@ public interface ProjectDataService<E, I> {
    * <b>Note:</b> as more than one {@link ProjectDataService} might be configured for a target entity type, there is a possible case
    * that the entities have already been removed when this method is called. Then it's necessary to cleanup auxiliary data (if any)
    * or just return otherwise.
-   * 
    * @param toRemove     project entities to remove
-   * @param project      target project
-   */
-  void removeData(@NotNull Computable<Collection<I>> toRemove,
-                  @NotNull Collection<DataNode<E>> toIgnore,
+   * @param project      target project*/
+  void removeData(Computable<? extends Collection<? extends I>> toRemove,
+                  Collection<? extends DataNode<E>> toIgnore,
                   @NotNull ProjectData projectData,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider);
+
+  default void postProcess(@NotNull Collection<? extends DataNode<E>> toImport,
+                           @Nullable ProjectData projectData,
+                           @NotNull Project project,
+                           @NotNull IdeModifiableModelsProvider modelsProvider) {
+  }
+
+  default void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                               @Nullable ProjectData projectData,
+                               @NotNull Project project,
+                               @NotNull IdeModelsProvider modelsProvider) {
+  }
+
+  default void onFailureImport(Project project) {
+  }
 }

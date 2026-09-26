@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableSet;
@@ -21,11 +7,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +24,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
-public class GithubTagListProvider {
+@ApiStatus.Internal
+public final class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);
 
@@ -46,9 +37,8 @@ public class GithubTagListProvider {
     myRepositoryName = repositoryName;
   }
 
-  @Nullable
-  public ImmutableSet<GithubTagInfo> getCachedTags() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @Nullable ImmutableSet<GithubTagInfo> getCachedTags() {
+    ThreadingAssertions.assertEventDispatchThread();
     File cacheFile = getTagsCacheFile();
     if (cacheFile.isFile()) {
       try {
@@ -62,7 +52,7 @@ public class GithubTagListProvider {
     return null;
   }
 
-  public void updateTagListAsynchronously(@NotNull final GithubProjectGeneratorPeer peer) {
+  public void updateTagListAsynchronously(final @NotNull GithubProjectGeneratorPeer peer) {
     Runnable action = createUpdateTagListAction(peer);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
@@ -72,16 +62,16 @@ public class GithubTagListProvider {
     }
   }
 
-  private Runnable createUpdateTagListAction(@NotNull final GithubProjectGeneratorPeer peer) {
+  private Runnable createUpdateTagListAction(final @NotNull GithubProjectGeneratorPeer peer) {
     return () -> {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         peer.onTagsUpdated(Collections.emptySet());
         return;
       }
       final String[] urls = formatTagListDownloadUrls();
-      String firstErrorMessage = null;
+      @NlsContexts.DialogMessage String firstErrorMessage = null;
       for (String url : urls) {
-        String errorMessage;
+        @NlsContexts.DialogMessage String errorMessage;
         try {
           final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
           LOG.info(getGeneratorName() + "Cache has been successfully updated");
@@ -89,11 +79,11 @@ public class GithubTagListProvider {
           return;
         }
         catch (IOException e) {
-          errorMessage = "Can not fetch tags from " + url;
+          errorMessage = LangBundle.message("dialog.message.can.not.fetch.tags.from", url);
           LOG.warn(getGeneratorName() + errorMessage, e);
         }
         catch (GeneratorException e) {
-          errorMessage = "Malformed JSON received from " + url;
+          errorMessage = LangBundle.message("dialog.message.malformed.json.received.from", url);
           LOG.warn(getGeneratorName() + errorMessage, e);
         }
         if (firstErrorMessage == null) {
@@ -106,7 +96,7 @@ public class GithubTagListProvider {
     };
   }
 
-  private ImmutableSet<GithubTagInfo> fetchGithubTagsByUrl(@NotNull final String url) throws IOException, GeneratorException {
+  private ImmutableSet<GithubTagInfo> fetchGithubTagsByUrl(final @NotNull String url) throws IOException, GeneratorException {
     LOG.info(getGeneratorName() + "starting cache update from " + url + " ...");
     File cacheFile = getTagsCacheFile();
     GithubDownloadUtil.downloadAtomically(null, url, cacheFile, myUserName, myRepositoryName);
@@ -117,14 +107,13 @@ public class GithubTagListProvider {
     return "[" + myUserName + "/" + myRepositoryName + "] ";
   }
 
-  @NotNull
-  private ImmutableSet<GithubTagInfo> readTagsFromFile(@NotNull File file) throws GeneratorException {
+  private @NotNull ImmutableSet<GithubTagInfo> readTagsFromFile(@NotNull File file) throws GeneratorException {
     final String content;
     try {
       content = Files.toString(file, StandardCharsets.UTF_8);
     }
     catch (IOException e) {
-      throw new GeneratorException("Can not read '" + file.getAbsolutePath() + "'!", e);
+      throw new GeneratorException(LangBundle.message("dialog.message.can.read", file.getAbsolutePath()), e);
     }
     try {
       return parseContent(content);
@@ -138,29 +127,25 @@ public class GithubTagListProvider {
     }
   }
 
-  @NotNull
-  private static ImmutableSet<GithubTagInfo> parseContent(@NotNull String tagFileContent) throws GeneratorException {
+  private static @NotNull ImmutableSet<GithubTagInfo> parseContent(@NotNull String tagFileContent) throws GeneratorException {
     if (tagFileContent.trim().isEmpty()) {
-      throw new GeneratorException("Can not parse fetched version list: got empty response");
+      throw new GeneratorException(LangBundle.message("dialog.message.can.parse.fetched.version.list.got.empty.response"));
     }
     final JsonElement jsonElement;
     try {
       JsonParser jsonParser = new JsonParser();
       jsonElement = jsonParser.parse(tagFileContent);
     } catch (Exception e) {
-      throw new GeneratorException("Can not parse fetched version list: malformed JSON was received");
+      throw new GeneratorException(LangBundle.message("dialog.message.can.parse.fetched.version.list.malformed.json.was.received"));
     }
     return toGithubTagList(jsonElement);
   }
 
-  @NotNull
-  private static ImmutableSet<GithubTagInfo> toGithubTagList(@NotNull JsonElement jsonElement) throws GeneratorException {
-    if (jsonElement instanceof JsonArray) {
-      JsonArray array = (JsonArray) jsonElement;
+  private static @NotNull ImmutableSet<GithubTagInfo> toGithubTagList(@NotNull JsonElement jsonElement) throws GeneratorException {
+    if (jsonElement instanceof JsonArray array) {
       ImmutableSet.Builder<GithubTagInfo> tags = ImmutableSet.builder();
       for (JsonElement element : array) {
-        if (element instanceof JsonObject) {
-          JsonObject obj = (JsonObject) element;
+        if (element instanceof JsonObject obj) {
           JsonElement nameElement = obj.get("name");
           String name = null;
           if (nameElement != null) {
@@ -176,27 +161,24 @@ public class GithubTagListProvider {
           }
         }
         else {
-          throw new GeneratorException("Unexpected child element " + element.getClass().getName());
+          throw new GeneratorException(LangBundle.message("dialog.message.unexpected.child.element", element.getClass().getName()));
         }
       }
       return tags.build();
     }
     else {
-      throw new GeneratorException("jsonElement is expected be instance of " + JsonArray.class.getName());
+      throw new GeneratorException(LangBundle.message("dialog.message.jsonelement.expected.be.instance", JsonArray.class.getName()));
     }
   }
 
-  @NotNull
-  private File getTagsCacheFile() {
+  private @NotNull File getTagsCacheFile() {
     File dir = GithubDownloadUtil.getCacheDir(myUserName, myRepositoryName);
     return new File(dir, "tags.json");
   }
 
-  @NotNull
-  private String[] formatTagListDownloadUrls() {
+  private String @NotNull [] formatTagListDownloadUrls() {
     return new String[] {
       "https://api.github.com/repos/" + myUserName + "/" + myRepositoryName + "/tags",
-      "http://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
     };
   }
 

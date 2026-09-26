@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<component xmlns="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other" name="ApplicationInfo">
+  <!-- The client template keeps unrelated values. -->
+  <names product="JetBrains Client" fullname="Client" edition="Ultimate" motto="Client motto" other:edition="kept" />
+  <version suffix="Client suffix" major="1" minor="2" micro="3" patch="4" full="{0}.{1}" eap="true" other:suffix="kept" />
+  <build number="__BUILD_NUMBER__" apiVersion="__BUILD__" date="__BUILD_DATE__" majorReleaseDate="__MAJOR_RELEASE_DATE__" branchName="template" />
+  <plugins url="__BUILTIN_PLUGINS_URL__" />
+  <other:build number="__BUILD_NUMBER__" />
+  <note><![CDATA[ __BUILD__ & __BUILD_NUMBER__ ]]></note>
+  <dates seconds="__BUILD_DATE_IN_SECONDS__" unknown="__OTHER__" />
+</component>

@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.wizard;
 
-import javax.swing.*;
+import com.intellij.openapi.util.NlsContexts;
+
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,9 +19,9 @@ public class WizardModel {
 
   private boolean myDropped = false;
   private boolean myAchieved = false;
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
 
-  public WizardModel(String title) {
+  public WizardModel(@NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
@@ -154,7 +142,7 @@ public class WizardModel {
   }
 
   private void checkModel() {
-    if (mySteps.size() == 0) {
+    if (mySteps.isEmpty()) {
       throw new IllegalStateException("Not steps were added");
     }
   }
@@ -198,7 +186,7 @@ public class WizardModel {
     return myAchieved || myDropped;
   }
 
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 

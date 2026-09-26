@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ASTNode;
@@ -20,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -38,11 +25,8 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
-public class GantUtils {
-  @NonNls public static final String GANT_JAR_FILE_PATTERN = "gant((_groovy)?|-)\\d.*\\.jar";
+public final class GantUtils {
+  public static final @NonNls String GANT_JAR_FILE_PATTERN = "gant((_groovy)?|-)\\d.*\\.jar";
 
   private GantUtils() {
   }
@@ -50,8 +34,7 @@ public class GantUtils {
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
     ArrayList<GrArgumentLabel> labels = new ArrayList<>();
     for (PsiElement child : file.getChildren()) {
-      if (child instanceof GrMethodCallExpression) {
-        GrMethodCallExpression call = (GrMethodCallExpression)child;
+      if (child instanceof GrMethodCallExpression call) {
         GrNamedArgument[] arguments = call.getNamedArguments();
         if (arguments.length == 1) {
           GrArgumentLabel label = arguments[0].getLabel();
@@ -71,9 +54,8 @@ public class GantUtils {
     return node.getElementType() == GroovyTokenTypes.mIDENT;
   }
 
-  public static String getGantVersion(String path) {
-    String jarVersion = AbstractConfigUtils.getSDKJarVersion(path + "/lib", "gant-\\d.*\\.jar", AbstractConfigUtils.MANIFEST_PATH);
-    return jarVersion != null ? jarVersion : AbstractConfigUtils.UNDEFINED_VERSION;
+  public static @NlsSafe @Nullable String getGantVersionOrNull(String path) {
+    return AbstractConfigUtils.getSDKJarVersion(path + "/lib", "gant-\\d.*\\.jar", AbstractConfigUtils.MANIFEST_PATH);
   }
 
   public static boolean isGantSdkHome(VirtualFile file) {
@@ -110,10 +92,6 @@ public class GantUtils {
     return name.matches(GANT_JAR_FILE_PATTERN);
   }
 
-  public static String getSDKVersion(@NotNull Library library) {
-    return getGantVersion(getGantLibraryHome(library));
-  }
-
   public static String getGantLibraryHome(Library library) {
     return getGantLibraryHome(library.getFiles(OrderRootType.CLASSES));
   }
@@ -133,8 +111,7 @@ public class GantUtils {
     return "";
   }
 
-  @NotNull
-  public static String getSDKInstallPath(@Nullable Module module, @NotNull Project project) {
+  public static @NotNull String getSDKInstallPath(@Nullable Module module, @NotNull Project project) {
     if (module != null) {
       final String fromClasspath = getSdkHomeFromClasspath(module);
       if (fromClasspath != null) {
@@ -146,8 +123,7 @@ public class GantUtils {
     return sdkHome != null ? sdkHome.getPath() : "";
   }
 
-  @Nullable
-  public static String getSdkHomeFromClasspath(@NotNull Module module) {
+  public static @Nullable String getSdkHomeFromClasspath(@NotNull Module module) {
     Library[] libraries = LibrariesUtil.getLibrariesByCondition(module, library1 -> isSDKLibrary(library1));
     if (libraries.length != 0) {
       final String home = getGantLibraryHome(libraries[0]);
@@ -159,6 +135,6 @@ public class GantUtils {
   }
 
   public static boolean isSDKConfiguredToRun(@NotNull Module module) {
-    return !getSDKInstallPath(module, module.getProject()).isEmpty();
+    return GantSettings.getInstance(module.getProject()).getSdkHome() != null || getSdkHomeFromClasspath(module) != null;
   }
 }

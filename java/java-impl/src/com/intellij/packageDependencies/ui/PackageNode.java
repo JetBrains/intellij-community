@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class PackageNode extends PackageDependenciesNode {
@@ -32,23 +19,25 @@ public class PackageNode extends PackageDependenciesNode {
   private String myPackageName;
   private final String myPackageQName;
   private final PsiPackage myPackage;
+  private boolean isValid = true;
 
 
   public PackageNode(PsiPackage aPackage, boolean showFQName) {
     super(aPackage.getProject());
     myPackage = aPackage;
     myPackageName = showFQName ? aPackage.getQualifiedName() : aPackage.getName();
-    if (myPackageName == null || myPackageName.length() == 0) {
-      myPackageName = CyclicDependenciesPanel.DEFAULT_PACKAGE_ABBREVIATION;
+    if (myPackageName == null || myPackageName.isEmpty()) {
+      myPackageName = CyclicDependenciesPanel.getDefaultPackageAbbreviation();
     }
     String packageQName = aPackage.getQualifiedName();
-    if (packageQName.length() == 0) {
+    if (packageQName.isEmpty()) {
       packageQName = null;
     }
     myPackageQName = packageQName;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -59,6 +48,7 @@ public class PackageNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public String toString() {
     return myPackageName;
   }
@@ -71,29 +61,28 @@ public class PackageNode extends PackageDependenciesNode {
     return myPackageQName;
   }
 
+  @Override
   public PsiElement getPsiElement() {
     return myPackage;
   }
 
+  @Override
   public int getWeight() {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof PackageNode)) return false;
-
-    final PackageNode packageNode = (PackageNode)o;
-
-    if (!myPackageName.equals(packageNode.myPackageName)) return false;
-    if (myPackageQName != null ? !myPackageQName.equals(packageNode.myPackageQName) : packageNode.myPackageQName != null) return false;
-
-    return true;
+    return o instanceof PackageNode packageNode &&
+           myPackageName.equals(packageNode.myPackageName) &&
+           Objects.equals(myPackageQName, packageNode.myPackageQName);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myPackageName.hashCode();
@@ -101,21 +90,27 @@ public class PackageNode extends PackageDependenciesNode {
     return result;
   }
 
+  @Override
   public Icon getIcon() {
-    return PlatformIcons.PACKAGE_ICON;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Package);
   }
 
-
+  @Override
   public boolean isValid() {
-    return myPackage != null && myPackage.isValid();
+    return isValid;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    isValid = myPackage != null && myPackage.isValid();
   }
 
   @Override
   public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
     Set<PsiFile> files = deps.keySet();
-    String packageName = myPackageQName;
     for (PsiFile file : files) {
-      if (file instanceof PsiJavaFile && Comparing.equal(packageName, ((PsiJavaFile)file).getPackageName())) {
+      if (file instanceof PsiJavaFile && Objects.equals(myPackageQName, ((PsiJavaFile)file).getPackageName())) {
         return true;
       }
     }

@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
@@ -34,54 +24,69 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
+
 public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
 
   private final LanguageConsoleView myConsoleView;
   final ConsoleExecuteActionHandler myExecuteActionHandler;
-  private final Condition<LanguageConsoleView> myEnabledCondition;
+  private final Condition<? super LanguageConsoleView> myEnabledCondition;
 
-  @SuppressWarnings("UnusedDeclaration")
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.alwaysTrue());
   }
 
-  ConsoleExecuteAction(@NotNull LanguageConsoleView console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleView> enabledCondition) {
+  ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
                               @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @Nullable Condition<LanguageConsoleView> enabledCondition) {
+                              @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
-                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
-    super(null, null, AllIcons.Actions.Execute);
+                               @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
+    this(consoleView, executeActionHandler, emptyExecuteActionId, enabledCondition, AllIcons.Actions.Execute);
+  }
+
+  public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
+                              @NotNull ConsoleExecuteActionHandler executeActionHandler,
+                              @NotNull String emptyExecuteActionId,
+                              @Nullable Condition<? super LanguageConsoleView> enabledCondition,
+                              @NotNull Icon actionIcon) {
+    super(actionIcon);
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
     myEnabledCondition = enabledCondition == null ? Conditions.alwaysTrue() : enabledCondition;
 
-    EmptyAction.setupAction(this, emptyExecuteActionId, null);
+    ActionUtil.mergeFrom(this, emptyExecuteActionId);
   }
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
     EditorEx editor = myConsoleView.getConsoleEditor();
+    editor = (EditorEx) ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
     boolean enabled = !editor.isRendererMode() && isEnabled() &&
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {
       Lookup lookup = LookupManager.getActiveLookup(editor);
       // we should check getCurrentItem() also - fast typing could produce outdated lookup, such lookup reports isCompletion() true
       enabled = lookup == null || !lookup.isCompletion() || lookup.getCurrentItem() == null ||
-                (lookup instanceof LookupImpl && ((LookupImpl)lookup).getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED);
+                lookup instanceof LookupImpl && ((LookupImpl)lookup).getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED;
     }
 
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -108,14 +113,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler.addToCommandHistoryAndExecute(myConsoleView, text);
   }
 
-  public static abstract class ConsoleExecuteActionHandler {
+  public abstract static class ConsoleExecuteActionHandler {
 
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
 
     boolean myUseProcessStdIn;
 
-    public ConsoleExecuteActionHandler(boolean preserveMarkup) {
+    ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myPreserveMarkup = preserveMarkup;
     }
 

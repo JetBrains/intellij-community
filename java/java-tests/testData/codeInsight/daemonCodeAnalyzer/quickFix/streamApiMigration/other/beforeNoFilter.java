@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Collapse loop with stream 'forEach()'" "false"
 class Sample {
   void foo(It it){
     for (String s : i<caret>t) {

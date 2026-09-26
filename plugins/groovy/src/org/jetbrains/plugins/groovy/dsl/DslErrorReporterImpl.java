@@ -1,35 +1,26 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.event.HyperlinkEvent;
 
-public class DslErrorReporterImpl extends DslErrorReporter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
-  private final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
+final class DslErrorReporterImpl extends DslErrorReporter {
+  private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
   public DslErrorReporterImpl() {
     NotificationsConfigurationImpl.remove("Groovy DSL parsing");
@@ -46,19 +37,27 @@ public class DslErrorReporterImpl extends DslErrorReporter {
     GroovyDslFileIndex.disableFile(vfile, DslActivationStatus.Status.ERROR, exceptionText);
 
 
-    if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
+    if (!ApplicationManager.getApplication().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
       return;
     }
 
-    String content = "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>";
-    NOTIFICATION_GROUP.createNotification("DSL script execution error", content, NotificationType.ERROR,
-                                          new NotificationListener() {
-                                            @Override
-                                            public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                        @NotNull HyperlinkEvent event) {
-                                              InvestigateFix.analyzeStackTrace(project, exceptionText);
-                                              notification.expire();
-                                            }
-                                          }).notify(project);
+    String errorMessage = e.getMessage();
+    String content = new HtmlBuilder().append(
+      HtmlChunk.p().addText(errorMessage == null ? e.toString() : errorMessage)
+    ).append(
+      HtmlChunk.p().child(
+        HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))
+      )
+    ).toString();
+    NotificationGroupManager.getInstance().getNotificationGroup("Groovy DSL errors")
+      .createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR)
+      .setListener(new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          InvestigateFix.analyzeStackTrace(project, exceptionText);
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 }

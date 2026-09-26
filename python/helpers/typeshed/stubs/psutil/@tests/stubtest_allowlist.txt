@@ -1,0 +1,7 @@
+# Stubtest does not support these platforms
+psutil._psaix
+psutil._psbsd
+psutil._pssunos
+psutil._psutil_aix
+psutil._psutil_bsd
+psutil._psutil_sunos

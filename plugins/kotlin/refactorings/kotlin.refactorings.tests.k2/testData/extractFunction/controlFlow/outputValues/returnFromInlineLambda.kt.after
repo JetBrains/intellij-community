@@ -1,0 +1,6 @@
+inline fun <R> inFun(block: (Any) -> R): R = TODO()
+fun foo(): Any {
+    return any()
+}
+
+private fun any(): Any = inFun { a -> return a }

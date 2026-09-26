@@ -1,0 +1,11 @@
+{
+  "name": "${NAME}",
+  "dark": ${IS_DARK},
+  "author": "",
+
+  "editorScheme": "${COLOR_SCHEME_NAME}",
+
+  "ui": {
+
+  }
+}

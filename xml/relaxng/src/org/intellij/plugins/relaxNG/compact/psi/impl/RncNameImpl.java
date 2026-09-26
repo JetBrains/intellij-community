@@ -18,8 +18,10 @@ package org.intellij.plugins.relaxNG.compact.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -30,6 +32,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
@@ -38,14 +41,21 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.psi.XmlPsiBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDecl;
+import org.intellij.plugins.relaxNG.compact.psi.RncElement;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncName;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,15 +71,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @Nullable
-  public String getPrefix() {
+  public @Nullable String getPrefix() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 2 ? parts[0] : null;
   }
 
   @Override
-  @NotNull
-  public String getLocalPart() {
+  public @NotNull String getLocalPart() {
     final String[] parts = EscapeUtil.unescapeText(getNode()).split(":", 2);
     return parts.length == 1 ? parts[0] : parts[1];
   }
@@ -84,21 +92,18 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return getPrefix() == null ? null : this;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return TextRange.from(0, getText().indexOf(':'));
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final MyResolver resolver = new MyResolver(getPrefix(), getKind());
     getContainingFile().processDeclarations(resolver, ResolveState.initial(), this, this);
     return resolver.getResult();
@@ -114,13 +119,12 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getRangeInElement().substring(getText());
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = RenameUtil.createPrefixedNode(getManager(), newElementName, getLocalPart());
     node.getTreeParent().replaceChild(node, child);
@@ -133,14 +137,8 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof RncElement && Comparing.equal(resolve(), element);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -150,14 +148,14 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
-    return "Unresolved namespace prefix ''{0}''";
+  public @NotNull String getUnresolvedMessagePattern() {
+    //The format substitution is performed at the call site
+    //noinspection UnresolvedPropertyKey
+    return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getPrefix() != null) {
       return new LocalQuickFix[] { new CreateDeclFix(this) };
     }
@@ -169,7 +167,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     private final Kind myKind;
     private PsiElement myResult;
 
-    public MyResolver(String prefix, Kind kind) {
+    MyResolver(String prefix, Kind kind) {
       myPrefix = prefix;
       myKind = kind;
     }
@@ -207,31 +205,31 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   public static class CreateDeclFix implements LocalQuickFix {
-    private final RncNameImpl myReference;
+    private final @NotNull @Nls String myName;
 
     public CreateDeclFix(RncNameImpl reference) {
-      myReference = reference;
+      myName = RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(reference.getKind().name()),
+                                     reference.getPrefix());
     }
 
     @Override
-    @NotNull
-    public String getName() {
-      return getFamilyName() + " '" + myReference.getPrefix() + "'";
+    public @NotNull String getName() {
+      return myName;
     }
 
     @Override
-    @NotNull
-      public String getFamilyName() {
-      return "Create " + myReference.getKind().name().toLowerCase() + " declaration";
+    public @NotNull String getFamilyName() {
+      return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.family");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      RncNameImpl myReference = (RncNameImpl)descriptor.getPsiElement();
       final String prefix = myReference.getPrefix();
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",
                                                                   RncFileType.getInstance(),
-                                                                   myReference.getKind().name().toLowerCase() + " " + prefix + " = \"###\"");
+                                                                   StringUtil.toLowerCase(myReference.getKind().name()) + " " + prefix + " = \"###\"");
       final RncFile rncFile = (RncFile)myReference.getContainingFile();
       final RncDecl[] declarations = rncFile.getDeclarations();
       final RncDecl decl = psiFile.getDeclarations()[0];
@@ -276,22 +274,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
           final TemplateManager manager = TemplateManager.getInstance(project);
           final Template t = manager.createTemplate("", "");
           t.addTextSegment(" \"");
-          final Expression expression = new Expression() {
-            @Override
-            public Result calculateResult(ExpressionContext context) {
-              return new TextResult("");
-            }
-
-            @Override
-            public Result calculateQuickResult(ExpressionContext context) {
-              return calculateResult(context);
-            }
-
-            @Override
-            public LookupItem[] calculateLookupItems(ExpressionContext context) {
-              return LookupItem.EMPTY_ARRAY;
-            }
-          };
+          Expression expression = new ConstantNode("");
           t.addVariable("uri", expression, expression, true);
           t.addTextSegment("\"");
           t.addEndVariable();

@@ -51,7 +51,7 @@ internal fun getCredentialsUsingGit(uri: URIish, repository: Repository): Creden
   var password: String? = null
   while (true) {
     val line = reader.readLine()?.trim()
-    if (line == null || line.isEmpty()) {
+    if (line.isNullOrEmpty()) {
       break
     }
 

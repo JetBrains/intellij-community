@@ -1,0 +1,32 @@
+<html>
+<body>
+Reports <code>context(...)</code> calls whose context arguments are never used inside the lambda body.
+<p>
+    When none of the introduced context parameters are consumed, the entire <code>context(...)</code> call is redundant
+    and the lambda body can be inlined. When only some context arguments are unused, the redundant arguments can be removed.
+</p>
+<p><b>Remove redundant context call</b> can be used to amend the code automatically.</p>
+<p>Example:</p>
+<pre><code>
+    context(message: String)
+    fun log() {}
+
+    fun test() {
+        context("string", 42) {
+            log()
+        }
+    }
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+    context(message: String)
+    fun log() {}
+
+    fun test() {
+        context("string") {
+            log()
+        }
+    }
+</code></pre>
+</body>
+</html>

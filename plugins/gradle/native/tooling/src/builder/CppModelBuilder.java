@@ -1,30 +1,35 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.internal.file.FileCollectionInternal;
-import org.gradle.api.internal.file.FileCollectionVisitor;
-import org.gradle.api.internal.file.FileTreeInternal;
-import org.gradle.api.internal.file.collections.DirectoryFileTree;
+import org.gradle.api.internal.project.DefaultProject;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.util.PatternSet;
-import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
 import org.gradle.internal.os.OperatingSystem;
 import org.gradle.language.cpp.CppBinary;
 import org.gradle.language.cpp.CppComponent;
+import org.gradle.language.cpp.CppPlatform;
 import org.gradle.language.cpp.CppSharedLibrary;
 import org.gradle.language.cpp.CppStaticLibrary;
+import org.gradle.language.cpp.ProductionCppComponent;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
 import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingScheme;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingSchemeFactory;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
-import org.gradle.nativeplatform.toolchain.*;
+import org.gradle.nativeplatform.test.cpp.CppTestSuite;
+import org.gradle.nativeplatform.toolchain.Clang;
+import org.gradle.nativeplatform.toolchain.Gcc;
+import org.gradle.nativeplatform.toolchain.NativeToolChain;
+import org.gradle.nativeplatform.toolchain.VisualCpp;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
 import org.gradle.nativeplatform.toolchain.internal.PlatformToolProvider;
 import org.gradle.nativeplatform.toolchain.internal.ToolType;
@@ -34,25 +39,43 @@ import org.gradle.platform.base.internal.toolchain.ToolSearchResult;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary.TargetType;
+import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The prototype of the C++ project gradle tooling model builder.
  * This implementation should be moved or replaced with the similar model builder from the Gradle distribution.
  *
  * @author Vladislav.Soroka
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class CppModelBuilder implements ModelBuilderService {
 
   @Override
@@ -60,9 +83,11 @@ public class CppModelBuilder implements ModelBuilderService {
     return CppProject.class.getName().equals(modelName);
   }
 
-  @Nullable
   @Override
-  public Object buildAll(final String modelName, final Project project) {
+  public @Nullable Object buildAll(final String modelName, final Project project) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
+      return null;
+    }
     PluginContainer pluginContainer = project.getPlugins();
     if (!pluginContainer.hasPlugin(CppBasePlugin.class)) {
       if (pluginContainer.hasPlugin(CppPlugin.class)) {
@@ -76,96 +101,149 @@ public class CppModelBuilder implements ModelBuilderService {
     final CppProjectImpl cppProject = new CppProjectImpl();
     for (SoftwareComponent component : project.getComponents()) {
       if (component instanceof CppComponent) {
-        File cppCompilerExecutable = null;
         CppComponent cppComponent = (CppComponent)component;
+        String cppComponentName = cppComponent.getName();
+        String cppComponentBaseName = cppComponent.getBaseName().get();
+
+        Set<File> headerDirs = new LinkedHashSet<>(cppComponent.getPrivateHeaderDirs().getFiles());
+
+        CppComponentImpl ideCppComponent;
+        if (cppComponent instanceof ProductionCppComponent) {
+          ideCppComponent = new CppComponentImpl(cppComponentName, cppComponentBaseName);
+          cppProject.setMainComponent(ideCppComponent);
+        }
+        else if (cppComponent instanceof CppTestSuite) {
+          CppTestSuiteImpl cppTestSuite = new CppTestSuiteImpl(cppComponentName, cppComponentBaseName);
+          ideCppComponent = cppTestSuite;
+          cppProject.setTestComponent(cppTestSuite);
+        }
+        else {
+          continue;
+        }
+
         for (CppBinary cppBinary : cppComponent.getBinaries().get()) {
-          if (cppCompilerExecutable == null) {
-            cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
-          }
-
-          List<String> compilerArgs = new ArrayList<String>();
-          Set<File> compileIncludePath = cppBinary.getCompileIncludePath().getFiles();
-
-          Set<File> sources = cppBinary.getCppSource().getFiles();
+          String binaryName = cppBinary.getName();
           String baseName = cppBinary.getBaseName().getOrElse("");
-          String variantName = StringUtils.removeStart(cppBinary.getName(), "main");
-          String compileTaskName = null;
-          Set<File> systemIncludes = new LinkedHashSet<File>();
-          Provider<CppCompile> compileTask = cppBinary.getCompileTask();
-          if (compileTask.isPresent()) {
-            CppCompile cppCompile = compileTask.get();
-            compileTaskName = cppCompile.getPath();
-            compilerArgs.addAll(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
-            systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+          String variantName = StringUtils.uncapitalize(StringUtils.removeStart(binaryName, "main"));
+
+          boolean isExecutable = cppBinary instanceof ComponentWithExecutable;
+          CppBinaryImpl binary;
+          if (cppBinary instanceof CppSharedLibrary) {
+            binary = new CppSharedLibraryImpl(binaryName, baseName, variantName);
+          }
+          else if (cppBinary instanceof CppStaticLibrary) {
+            binary = new CppStaticLibraryImpl(binaryName, baseName, variantName);
+          }
+          else if (isExecutable) {
+            binary = new CppExecutableImpl(binaryName, baseName, variantName);
+          }
+          else {
+            continue;
+          }
+          ideCppComponent.addBinary(binary);
+
+          Provider<CppCompile> cppCompileProvider = cppBinary.getCompileTask();
+          if (cppCompileProvider.isPresent()) {
+            CppCompile cppCompile = cppCompileProvider.get();
+            CompilationDetailsImpl compilationDetails = new CompilationDetailsImpl();
+            binary.setCompilationDetails(compilationDetails);
+
+            String compileTaskName = cppCompile.getPath();
+            DefaultExternalTask compileTask = new DefaultExternalTask();
+            compileTask.setName(compileTaskName);
+            compileTask.setQName(compileTaskName);
+            compilationDetails.setCompileTask(compileTask);
+
+            Set<File> compileIncludePath = new LinkedHashSet<>(cppBinary.getCompileIncludePath().getFiles());
+            Set<File> systemIncludes = new LinkedHashSet<>();
+            //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
+            //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
+            if (GradleVersionUtil.isCurrentGradleAtLeast("4.8")) {
+              compileIncludePath.addAll(cppCompile.getIncludes().getFiles());
+              systemIncludes.addAll(cppCompile.getSystemIncludes().getFiles());
+            }
+            else {
+              systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+            }
+            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<>(systemIncludes));
+            compilationDetails.setUserHeaderSearchPaths(new ArrayList<>(compileIncludePath));
+            compilationDetails.setHeaderDirs(headerDirs);
+
+            Set<SourceFile> sources = getSources(project, cppBinary, cppCompile);
+            compilationDetails.setSources(sources);
+
+            File compilerWorkingDir = cppCompile.getObjectFileDir().get().getAsFile();
+            compilationDetails.setCompileWorkingDir(compilerWorkingDir);
+            File cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
+            compilationDetails.setCompilerExecutable(cppCompilerExecutable);
+
+            List<String> compilerArgs = new ArrayList<>(cppCompile.getCompilerArgs().getOrElse(Collections.emptyList()));
+            compilationDetails.setAdditionalArgs(compilerArgs);
           }
 
-          File executableFile = null;
-          String linkTaskName = null;
-          boolean isExecutable = cppBinary instanceof ComponentWithExecutable;
+          LinkageDetailsImpl linkageDetails = new LinkageDetailsImpl();
+          binary.setLinkageDetails(linkageDetails);
+          DefaultExternalTask linkTask = new DefaultExternalTask();
+          linkageDetails.setLinkTask(linkTask);
+          linkTask.setName("");
+          linkTask.setQName("");
           if (isExecutable) {
             Provider<? extends LinkExecutable> fileProvider = ((ComponentWithExecutable)cppBinary).getLinkTask();
             if (fileProvider.isPresent()) {
               LinkExecutable linkExecutable = fileProvider.get();
-              linkTaskName = linkExecutable.getPath();
-              executableFile = getExecutableFile(linkExecutable);
+              String linkTaskName = linkExecutable.getPath();
+              linkTask.setName(linkTaskName);
+              linkTask.setQName(linkTaskName);
+              File executableFile = getExecutableFile(linkExecutable);
+              linkageDetails.setOutputLocation(executableFile);
             }
           }
-
-          TargetType targetType = null;
-          if (isExecutable) {
-            targetType = TargetType.EXECUTABLE;
-          }
-          else if (cppBinary instanceof CppSharedLibrary) {
-            targetType = TargetType.SHARED_LIBRARY;
-          }
-          else if (cppBinary instanceof CppStaticLibrary) {
-            targetType = TargetType.STATIC_LIBRARY;
-          }
-
-          // resolve compiler working dir as compiler executable file parent dir
-          // https://github.com/gradle/gradle/blob/7422d5fc2e04d564dfd73bc539a37b62f8e2113a/subprojects/platform-native/src/main/java/org/gradle/nativeplatform/toolchain/internal/metadata/AbstractMetadataProvider.java#L61
-          File compilerWorkingDir = cppCompilerExecutable == null ? null : cppCompilerExecutable.getParentFile();
-          String compileKind = getCompilerKind(cppBinary);
-          CompilerDetails compilerDetails = new CompilerDetailsImpl(
-            compileKind, compileTaskName, cppCompilerExecutable, compilerWorkingDir, compilerArgs, compileIncludePath, systemIncludes);
-          LinkerDetails linkerDetails = new LinkerDetailsImpl(linkTaskName, executableFile);
-          cppProject.addBinary(new CppBinaryImpl(baseName, variantName, sources, compilerDetails, linkerDetails, targetType));
         }
-
-        addSourceFolders(cppProject, cppComponent);
       }
     }
-
     return cppProject;
   }
 
-  @NotNull
-  private static String getCompilerKind(CppBinary cppBinary) {
-    final String compileKind;
-    NativeToolChain toolChain = cppBinary.getToolChain();
-    if (toolChain instanceof Clang) {
-      compileKind = "Clang";
+  private static Set<SourceFile> getSources(Project project, CppBinary cppBinary, CppCompile cppCompile) {
+    Set<SourceFile> sources = new LinkedHashSet<>();
+    for (File file : cppBinary.getCppSource().getFiles()) {
+      sources.add(new SourceFileImpl(file, null));
     }
-    else if (toolChain instanceof Gcc) {
-      compileKind = "GCC";
+    if (cppCompile.getObjectFileDir().isPresent()) {
+      File objectFileDir = cppCompile.getObjectFileDir().get().getAsFile();
+      Iterator<CompilerOutputFileNamingSchemeFactory> it =
+        ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
+      if (it.hasNext()) {
+        CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
+        boolean isTargetWindows = GradleVersionUtil.isCurrentGradleAtLeast("5.1")
+                                  ? cppBinary.getTargetPlatform().getTargetMachine().getOperatingSystemFamily().isWindows()
+                                  : isWindowsOld(cppBinary.getTargetPlatform());
+        String objectFileExtension = isTargetWindows ? ".obj" : ".o";
+        CompilerOutputFileNamingScheme outputFileNamingScheme = outputFileNamingSchemeFactory.create();
+        outputFileNamingScheme.withOutputBaseFolder(objectFileDir).withObjectFileNameSuffix(objectFileExtension);
+
+        for (SourceFile sourceFile : sources) {
+          File objectFile = outputFileNamingScheme.map(sourceFile.getSourceFile());
+          ((SourceFileImpl)sourceFile).setObjectFile(objectFile);
+        }
+      }
     }
-    else if (toolChain instanceof VisualCpp) {
-      compileKind = "MSVC";
-    }
-    else if (toolChain instanceof Swiftc) {
-      compileKind = "Swiftc";
-    }
-    else {
-      compileKind = "Unknown";
-    }
-    return compileKind;
+    return sources;
   }
 
-  @Nullable
-  private static File getExecutableFile(LinkExecutable linkExecutable) {
+  private static boolean isWindowsOld(CppPlatform platform) {
+    Object operatingSystem = callByReflection(platform, "getOperatingSystem");
+    if (operatingSystem == null) {
+      return false;
+    }
+    Object isWindowsNullable = callByReflection(operatingSystem, "isWindows");
+    return Boolean.TRUE.equals(isWindowsNullable);
+  }
+
+  private static @Nullable File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) >= 0) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       binaryFile = linkExecutable.getLinkedFile();
     }
     else {
@@ -184,44 +262,25 @@ public class CppModelBuilder implements ModelBuilderService {
     return executableFile;
   }
 
-  private static void addSourceFolders(final CppProjectImpl cppProject, CppComponent cppComponent) {
-    for (File dir : cppComponent.getPrivateHeaderDirs()) {
-      cppProject.addSourceFolder(
-        new SourceFolderImpl(dir, new FilePatternSetImpl(Collections.<String>emptySet(), Collections.<String>emptySet())));
-    }
-
-    FileCollection cppSource = cppComponent.getCppSource();
-    // try to resolve cpp source folders
-    ((FileCollectionInternal)cppSource).visitRootElements(new FileCollectionVisitor() {
-      @Override
-      public void visitCollection(FileCollectionInternal internal) {
-      }
-
-      @Override
-      public void visitTree(FileTreeInternal internal) {
-      }
-
-      @Override
-      public void visitDirectoryTree(DirectoryFileTree tree) {
-        File dir = tree.getDir();
-        PatternSet patterns = tree.getPatterns();
-        cppProject.addSourceFolder(new SourceFolderImpl(dir, new FilePatternSetImpl(patterns.getIncludes(), patterns.getExcludes())));
-      }
-    });
-  }
-
-  @Nullable
-  private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+  private static @Nullable File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
     Throwable throwable = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
-        ToolSearchResult toolSearchResult = toolProvider.isToolAvailable(ToolType.CPP_COMPILER);
+        ToolSearchResult toolSearchResult;
+        if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
+          toolSearchResult = toolProvider.locateTool(ToolType.CPP_COMPILER);
+        }
+        else {
+          Method isToolAvailableMethod = toolProvider.getClass().getDeclaredMethod("isToolAvailable", ToolType.class);
+          isToolAvailableMethod.setAccessible(true);
+          toolSearchResult = (ToolSearchResult)isToolAvailableMethod.invoke(toolProvider, ToolType.CPP_COMPILER);
+        }
         if (toolSearchResult.isAvailable()) {
           if (toolSearchResult instanceof CommandLineToolSearchResult) {
             return ((CommandLineToolSearchResult)toolSearchResult).getTool();
           }
-          // dirty hack because of dummy implementation of org.gradle.nativeplatform.toolchain.internal.msvcpp.VisualCppPlatformToolProvider.isToolAvailable
+          // dirty hack for gradle versions <= 4.9 because of dummy implementation of org.gradle.nativeplatform.toolchain.internal.msvcpp.VisualCppPlatformToolProvider.isToolAvailable
           if (toolProvider.getClass().getSimpleName().equals("VisualCppPlatformToolProvider")) {
             Field visualCppField = toolProvider.getClass().getDeclaredField("visualCpp");
             visualCppField.setAccessible(true);
@@ -261,7 +320,7 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
 
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+    if (!GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       project.getLogger().error(
         "[sync error] Unable to resolve compiler executable. " +
         "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
@@ -272,11 +331,36 @@ public class CppModelBuilder implements ModelBuilderService {
     return null;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "C++ project import errors"
-    ).withDescription("Unable to import C++ project");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(this)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("C++ project import errors")
+      .withText("Unable to import C++ project")
+      .withException(exception)
+      .reportMessage(project);
+  }
+
+  private static @Nullable Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
+    Object result = null;
+    try {
+      Method getMethod = receiver.getClass().getMethod(methodName);
+      result = getMethod.invoke(receiver);
+    }
+    catch (NoSuchMethodException e) {
+      Logging.getLogger(CppModelBuilder.class)
+        .warn("Can not find `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current() , e);
+    }
+    catch (IllegalAccessException | InvocationTargetException e) {
+      Logging.getLogger(CppModelBuilder.class)
+        .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
+    }
+    return result;
   }
 }

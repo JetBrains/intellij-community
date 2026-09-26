@@ -17,9 +17,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.VcsException;
 
-/**
- * @author irengrig
- */
 public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistorySessionPartner {
   private VcsAbstractHistorySession mySession;
   private VcsException myException;
@@ -37,18 +34,6 @@ public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistoryS
   @Override
   public void reportException(VcsException exception) {
     myException = exception;
-  }
-
-  @Override
-  public void finished() {
-  }
-
-  @Override
-  public void forceRefresh() {
-  }
-
-  @Override
-  public void beforeRefresh() {
   }
 
   public void check() throws VcsException {

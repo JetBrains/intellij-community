@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +9,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface Queryable {
+  void putInfo(@NotNull Map<? super String, ? super String> info);
 
-  void putInfo(@NotNull Map<String, String> info);
-
-  class PrintInfo {
+  final class PrintInfo {
     private final String[] myIdKeys;
     private final String[] myInfoKeys;
 
@@ -33,22 +19,21 @@ public interface Queryable {
       this(null, null);
     }
 
-    public PrintInfo(@Nullable String[] idKeys) {
+    public PrintInfo(String @Nullable [] idKeys) {
       this(idKeys, null);
     }
 
-    public PrintInfo(@Nullable String[] idKeys, @Nullable String[] infoKeys) {
+    public PrintInfo(String @Nullable [] idKeys, String @Nullable [] infoKeys) {
       myIdKeys = idKeys;
       myInfoKeys = infoKeys;
     }
   }
 
-  class Util {
-    @Nullable
-    public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
+  final class Util {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
 
-      LinkedHashMap<String, String> map = new LinkedHashMap<>();
+      Map<String, String> map = new LinkedHashMap<>();
       ui.putInfo(map);
 
       if (contributor != null) {
@@ -56,14 +41,6 @@ public interface Queryable {
       }
 
       String id = null;
-
-      //String[] names = print.myIdKeys != null ? print.myIdKeys : new String[] {"name"};
-      //for (String eachKey : names) {
-      //  String eachValue = map.get(eachKey);
-      //  if (eachValue != null) {
-      //    id = eachValue;
-      //  }
-      //}
 
       if (!map.isEmpty()) {
         id = map.values().iterator().next();
@@ -82,11 +59,10 @@ public interface Queryable {
         }
       }
 
-      return id + (info.length() > 0 ? " " + info.toString() : "");
+      return id + (info.length() > 0 ? " " + info : "");
     }
 
-    @Nullable
-    public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
+    public static @NonNls @NotNull String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
       return print(ui, printInfo, null);
     }
   }

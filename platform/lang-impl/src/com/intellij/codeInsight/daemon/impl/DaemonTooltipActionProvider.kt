@@ -1,62 +1,85 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.IntentionSource
+import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInspection.ex.QuickFixWrapper
-import com.intellij.ide.actions.ActionsCollector
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
+import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.event.InputEvent
+import java.util.Objects
 
+private val LOG = logger<DaemonTooltipAction>()
+
+@ApiStatus.Internal
 class DaemonTooltipActionProvider : TooltipActionProvider {
   override fun getTooltipAction(info: HighlightInfo, editor: Editor, psiFile: PsiFile): TooltipAction? {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
-    return wrapIntentionToTooltipAction(intention, info)
+    EventTrackingIntentionAction.unwrap(intention)?.suggestionShown(psiFile.project, editor, psiFile)
+    return wrapIntentionToTooltipAction(intention, info, editor)
   }
-
 }
 
-class DaemonTooltipAction(private val myFixText: String, private val myActualOffset: Int) : TooltipAction {
-
+/**
+ * Tooltip link-action that proxies its execution to intention action with text [myActionText]
+ * @param myFixText is a text to show in tooltip
+ * @param myActionText is a text to search for in intentions' actions
+ */
+@ApiStatus.Internal
+class DaemonTooltipAction(
+  @NlsActions.ActionText private val myFixText: String,
+  @NlsContexts.Command val myActionText: String,
+  private val myActualOffset: Int,
+) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }
 
-  override fun execute(editor: Editor) {
-    ActionsCollector.getInstance().record("tooltip.actions.execute")
-
+  override fun execute(editor: Editor, inputEvent: InputEvent?) {
     val project = editor.project ?: return
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
 
-    for (descriptor in intentions) {
-      val action = descriptor.action
-      if (action.text == myFixText) {
-        if (action !is QuickFixWrapper) {
-          //unfortunately it is very common case when q fix uses caret position :(
-          editor.caretModel.moveToOffset(myActualOffset)
-        }
-        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myFixText)
-        return
-      }
+    TooltipActionsLogger.logExecute(project, inputEvent)
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return
+
+    val action = findIntention(editor, psiFile, myActualOffset, myActionText)
+    if (action == null) {
+      LOG.warn("The tooltip action '$myActionText' is not available at the offset $myActualOffset in ${psiFile.name}")
+      return
     }
+    editor.caretModel.moveToOffset(myActualOffset)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(
+      psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP
+    )
   }
 
   override fun showAllActions(editor: Editor) {
-    ActionsCollector.getInstance().record("tooltip.actions.show.all")
-
+    editor.selectionModel.removeSelection()
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+
+    TooltipActionsLogger.showAllEvent.log(project)
+    val psiFile = EditorContextManager.getPsiFileForEditor(editor, project) ?: return
     ShowIntentionActionsHandler().invoke(project, editor, psiFile)
   }
 
@@ -73,14 +96,20 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
 }
 
 
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor: Editor, psiFile: PsiFile): IntentionAction? {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
+  ThreadingAssertions.assertReadAccess()
 
+  val dumbService = DumbService.getInstance(psiFile.project)
+  val virtualFile = psiFile.virtualFile
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
-  val quickFixActionMarkers = highlightInfo.quickFixActionRanges
-  if (quickFixActionMarkers == null || quickFixActionMarkers.isEmpty()) return null
+  highlightInfo.findRegisteredQuickFix<Any?> { desc, _ ->
+    if (dumbService.isUsableInCurrentContext(desc.action, virtualFile)) {
+      fixes.add(desc)
+    }
 
-  fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
+    null
+  }
 
   val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
   ShowIntentionsPass.fillIntentionsInfoForHighlightInfo(highlightInfo, intentionsInfo, fixes)
@@ -93,20 +122,20 @@ fun getFirstAvailableAction(psiFile: PsiFile,
                             editor: Editor,
                             intentionsInfo: ShowIntentionsPass.IntentionsInfo): IntentionAction? {
   val project = psiFile.project
-  
+
   //sort the actions
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFile, editor, intentionsInfo)
   val allActions = cachedIntentions.allActions
-  
+
   if (allActions.isEmpty()) return null
+  val offset = intentionsInfo.offset.takeIf { o -> o >= 0 } ?: editor.caretModel.offset
 
   allActions.forEach {
-    var action = it.action
-    if (action is IntentionActionDelegate) {
-      action = action.delegate
-    }
-
-    if (action !is AbstractEmptyIntentionAction && action.isAvailable(project, editor, psiFile)) {
+    val action = IntentionActionDelegate.unwrap(it.action)
+    if (action !is AbstractEmptyIntentionAction
+        && ShowIntentionActionsHandler.chooseBetweenHostAndInjected(psiFile, editor, offset) { f, e, o ->
+        ShowIntentionActionsHandler.availableFor(f, e, o, action)
+      } != null) {
       val text = it.text
       //we cannot properly render html inside the fix button fixes with html text
       if (!XmlStringUtil.isWrappedInHtml(text)) {
@@ -117,8 +146,43 @@ fun getFirstAvailableAction(psiFile: PsiFile,
   return null
 }
 
-fun wrapIntentionToTooltipAction(intention: IntentionAction, info: HighlightInfo) =
-  DaemonTooltipAction(intention.text, info.actualStartOffset)
+fun wrapIntentionToTooltipAction(intention: IntentionAction,
+                                 info: HighlightInfo,
+                                 editor: Editor): TooltipAction {
+  val editorOffset = editor.caretModel.offset
+  val text = (intention as? CustomizableIntentionAction)?.tooltipText ?: intention.text
 
+  if ((info.actualStartOffset..info.actualEndOffset).contains(editorOffset)) {
+    //try to avoid caret movements
+    return DaemonTooltipAction(text, intention.text, editorOffset)
+  }
+  val offset: Int =
+    info.findRegisteredQuickFix { descriptor, range ->
+      if (descriptor.action == intention) {
+        range.startOffset
+      }
+      else {
+        null
+      }
+    } ?: info.actualStartOffset
+  return DaemonTooltipAction(text, intention.text, offset)
+}
 
+fun findIntention(editor: Editor, file: PsiFile, offset: Int, actionText: String): IntentionAction? {
+  val intentions = SlowOperations.knownIssue("IDEA-301732, EA-660480").use {
+    ShowIntentionsPass.getAvailableFixes(editor, file, -1, offset)
+  }
 
+  for ((index, descriptor) in intentions.withIndex()) {
+    val action = descriptor.action
+    if (action.text == actionText) {
+      // unfortunately it is very common case when quick fixes/refactorings use caret position
+      // Skip the ChoiceTitleIntentionAction if it's the first action: most likely it's a title and not the actual action
+      if (intentions.size > 1 && index == 0 && action is ChoiceTitleIntentionAction) {
+        continue
+      }
+      return action
+    }
+  }
+  return null
+}

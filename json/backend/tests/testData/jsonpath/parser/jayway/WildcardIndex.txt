@@ -1,0 +1,8 @@
+JsonPathFile
+  JsonPathWildcardSegmentImpl(WILDCARD_SEGMENT)
+    PsiElement(*)('*')
+  JsonPathExpressionSegmentImpl(EXPRESSION_SEGMENT)
+    PsiElement([)('[')
+    JsonPathIndexesListImpl(INDEXES_LIST)
+      PsiElement(INTEGER_NUMBER)('0')
+    PsiElement(])(']')

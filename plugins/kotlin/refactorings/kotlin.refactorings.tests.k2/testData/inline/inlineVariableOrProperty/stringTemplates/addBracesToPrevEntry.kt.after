@@ -1,0 +1,4 @@
+fun test() {
+    val a = "1"
+    val c = "${a}2"
+}

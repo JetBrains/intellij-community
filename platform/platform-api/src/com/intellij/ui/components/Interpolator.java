@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayDeque;
@@ -34,10 +20,10 @@ import java.util.function.Supplier;
  */
 public class Interpolator {
   private static final int PERIOD = 7; // ms
-  private static final long TIMEOUT = 500_000000L; // ns
+  private static final long TIMEOUT = 500_000_000L; // ns
 
   private final Supplier<Integer> myInput;
-  private final Consumer<Integer> myOutput;
+  private final Consumer<? super Integer> myOutput;
 
   private final Timer myTimer = new Timer(PERIOD, new TimerListener());
   private final Deque<Segment> mySegments = new ArrayDeque<>();
@@ -51,7 +37,7 @@ public class Interpolator {
    * @param input  a getter of the value
    * @param output a setter of the value
    */
-  public Interpolator(@NotNull Supplier<Integer> input, @NotNull Consumer<Integer> output) {
+  public Interpolator(@NotNull Supplier<Integer> input, @NotNull Consumer<? super Integer> output) {
     myInput = input;
     myOutput = output;
   }
@@ -140,7 +126,7 @@ public class Interpolator {
     }
   }
 
-  private static abstract class Segment {
+  private abstract static class Segment {
     protected final Position myBegin;
     protected final Position myEnd;
 
@@ -176,7 +162,7 @@ public class Interpolator {
     protected abstract Integer get(long moment);
   }
 
-  private static class Line extends Segment {
+  private static final class Line extends Segment {
     private Line(Position begin, Position end) {
       super(begin, end);
     }
@@ -191,7 +177,7 @@ public class Interpolator {
     }
   }
 
-  private static class Position {
+  private static final class Position {
     private final long myMoment;
     private final int myValue;
 

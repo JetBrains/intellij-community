@@ -1,0 +1,54 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.plugin.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.python.community.plugin.frontend` end
+
+### auto-generated section `build intellij.python.community.plugin.frontend` start
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-frontend:frontend",
+        "//platform/platform-impl:ide-impl",
+    ],
+)
+
+jvm_library(
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.community.plugin.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.plugin.frontend` end
+
+### auto-generated section `iml intellij.python.community.plugin.frontend` start
+exports_files(
+    [
+        "intellij.python.community.plugin.frontend.iml",
+        "resources/intellij.python.community.plugin.frontend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.plugin.frontend` end

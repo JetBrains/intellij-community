@@ -1,0 +1,9 @@
+[project]
+name = "frontend"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["mylib"]
+
+# ...but the child overrides parent and points `mylib` at the external project instead.
+[tool.uv.sources]
+mylib = { path = "../../external_mylib" }

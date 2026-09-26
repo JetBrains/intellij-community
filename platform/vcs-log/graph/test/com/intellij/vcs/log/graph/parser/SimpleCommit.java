@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class SimpleCommit<CommitId> implements com.intellij.vcs.log.graph.GraphCommit<CommitId> {
   @NotNull
-  public static SimpleCommit<Integer> asIntegerCommit(@NotNull String commitHash, @NotNull String[] parentsHashes) {
+  public static SimpleCommit<Integer> asIntegerCommit(@NotNull String commitHash, String @NotNull [] parentsHashes) {
     int intCommitHash = CommitParser.createHash(commitHash);
     List<Integer> parents = new ArrayList<>();
     for (String parentsHash : parentsHashes) {
@@ -37,7 +37,7 @@ public class SimpleCommit<CommitId> implements com.intellij.vcs.log.graph.GraphC
   }
 
   @NotNull
-  public static SimpleCommit<String> asStringCommit(@NotNull String commitHash, @NotNull String[] parentsHashes) {
+  public static SimpleCommit<String> asStringCommit(@NotNull String commitHash, String @NotNull [] parentsHashes) {
     int timestamp = CommitParser.createHash(commitHash);
     List<String> parents = new ArrayList<>();
     for (String parentsHash : parentsHashes) {

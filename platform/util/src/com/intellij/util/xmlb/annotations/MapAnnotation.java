@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,11 +14,11 @@ import java.lang.annotation.Target;
 public @interface MapAnnotation {
   boolean surroundWithTag() default true;
 
-  String keyAttributeName() default Constants.KEY;
+  @NonNls String keyAttributeName() default Constants.KEY;
 
-  String valueAttributeName() default Constants.VALUE;
+  @NonNls String valueAttributeName() default Constants.VALUE;
 
-  String entryTagName() default Constants.ENTRY;
+  @NonNls String entryTagName() default Constants.ENTRY;
 
   boolean surroundKeyWithTag() default true;
 

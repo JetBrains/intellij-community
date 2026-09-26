@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -24,6 +10,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,36 +18,31 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
+@ApiStatus.Internal
 public class EncodingReference implements PsiReference, EmptyResolveMessageProvider {
   private final PsiElement myElement;
 
   private final String myCharsetName;
   private final TextRange myRangeInElement;
 
-  public EncodingReference(PsiElement element, final String charsetName, final TextRange rangeInElement) {
+  public EncodingReference(PsiElement element, String charsetName, TextRange rangeInElement) {
     myElement = element;
     myCharsetName = charsetName;
     myRangeInElement = rangeInElement;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRangeInElement;
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return CharsetToolkit.forName(myCharsetName) == null ? null : myElement;
     //if (ApplicationManager.getApplication().isUnitTestMode()) return myValue; // tests do not have full JDK
     //String fqn = charset.getClass().getName();
@@ -68,13 +50,12 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myCharsetName;
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return null;
   }
 
@@ -84,13 +65,12 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
     List<LookupElement> suggestions = new ArrayList<>(charsets.length);
     for (Charset charset : charsets) {
@@ -105,8 +85,7 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return CodeInsightBundle.message("unknown.encoding.0");
   }

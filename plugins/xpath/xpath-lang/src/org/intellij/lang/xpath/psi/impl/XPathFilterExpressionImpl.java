@@ -19,7 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,14 +33,14 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
         super(node);
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
-    @Nullable
-    public XPathExpression getExpression() {
+    @Override
+    public @Nullable XPathExpression getExpression() {
       final XPathExpression expression = findChildByClass(XPathExpression.class);
       if (expression != null) {
         return expression;
@@ -48,13 +53,14 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
 //        return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
-    @NotNull
-    public XPathPredicate getPredicate() {
+    @Override
+    public @NotNull XPathPredicate getPredicate() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathElementTypes.PREDICATE));
         assert nodes.length == 1 : unexpectedPsiAssertion();
         return (XPathPredicate)nodes[0].getPsi();
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathFilterExpression(this);
   }

@@ -1,45 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PatternUtil;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class IgnoredFileBean {
+public final class IgnoredFileBean implements IgnoredFileDescriptor {
   private final String myPath;
   private final String myFilenameIfFile;
   private final String myMask;
-  @Nullable private final Pattern myPattern;
+  private final Pattern myPattern;
   private final IgnoreSettingsType myType;
   private final Project myProject;
-  private volatile VirtualFile myCachedResolved;
+  private volatile FilePath myCachedResolved;
 
-  IgnoredFileBean(String path, IgnoreSettingsType type, Project project) {
+  IgnoredFileBean(@NotNull @NlsSafe String path, @NotNull IgnoreSettingsType type, @Nullable Project project) {
     myPath = path;
     myType = type;
     myFilenameIfFile = IgnoreSettingsType.FILE.equals(type) ? PathUtilRt.getFileName(path) : null;
@@ -48,42 +36,44 @@ public class IgnoredFileBean {
     myPattern = null;
   }
 
-  Project getProject() {
-    return myProject;
-  }
-
-  IgnoredFileBean(String mask) {
+  IgnoredFileBean(@NotNull @NonNls String mask, @Nullable String path) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
-    myPattern = mask != null ? PatternUtil.fromMask(mask) : null;
-    myPath = null;
+    myPattern = PatternUtil.fromMask(mask);
+    myPath = path;
     myFilenameIfFile = null;
     myProject = null;
   }
 
   @Nullable
-  public String getPath() {
+  Project getProject() {
+    return myProject;
+  }
+
+  @Override
+  public @Nullable @NlsSafe String getPath() {
     return myPath;
   }
 
-  @Nullable
-  public String getMask() {
+  @Override
+  public @Nullable @NonNls String getMask() {
     return myMask;
   }
 
-  public IgnoreSettingsType getType() {
+  @Override
+  public @NotNull IgnoreSettingsType getType() {
     return myType;
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     IgnoredFileBean that = (IgnoredFileBean)o;
 
-    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
-    if (myMask != null ? !myMask.equals(that.myMask) : that.myMask != null) return false;
+    if (!Objects.equals(myPath, that.myPath)) return false;
+    if (!Objects.equals(myMask, that.myMask)) return false;
     if (myType != that.myType) return false;
 
     return true;
@@ -97,55 +87,60 @@ public class IgnoredFileBean {
     return result;
   }
 
-  public boolean matchesFile(VirtualFile file) {
+  @Override
+  public boolean matchesFile(@NotNull VirtualFile file) {
+    return matchesFile(VcsUtil.getFilePath(file));
+  }
+
+  @Override
+  public boolean matchesFile(@NotNull FilePath filePath) {
     if (myType == IgnoreSettingsType.MASK) {
-      return myPattern != null && myPattern.matcher(file.getName()).matches();
+      return myPattern.matcher(filePath.getName()).matches();
     }
     else {
       // quick check for 'file' == exact match pattern
-      if (IgnoreSettingsType.FILE.equals(myType) && !StringUtil.equals(myFilenameIfFile, file.getNameSequence())) return false;
+      if (IgnoreSettingsType.FILE.equals(myType) && !StringUtil.equals(myFilenameIfFile, filePath.getName())) return false;
 
-      VirtualFile selector = resolve();
-      if (Comparing.equal(selector, NullVirtualFile.INSTANCE)) return false;
+      FilePath selector = resolve();
+      if (selector == null) return false;
 
       if (myType == IgnoreSettingsType.FILE) {
-        return Comparing.equal(selector, file);
+        return Comparing.equal(selector, filePath);
       }
       else {
         if ("./".equals(myPath)) {
           // special case for ignoring the project base dir (IDEADEV-16056)
-          return !file.isDirectory() && Comparing.equal(file.getParent(), selector);
+          return !filePath.isDirectory() && Comparing.equal(filePath.getParentPath(), selector);
         }
-        return VfsUtilCore.isAncestor(selector, file, false);
+        return FileUtil.startsWith(filePath.getPath(), selector.getPath());
       }
     }
   }
 
-  private VirtualFile resolve() {
+  private @Nullable FilePath resolve() {
+    assert myType != IgnoreSettingsType.MASK;
     if (myCachedResolved == null) {
-      VirtualFile resolved = doResolve();
-      myCachedResolved = resolved != null ? resolved : NullVirtualFile.INSTANCE;
+      myCachedResolved = doResolve(myProject, myPath, myType == IgnoreSettingsType.UNDER_DIR);
     }
 
     return myCachedResolved;
   }
 
-  @Nullable
-  private VirtualFile doResolve() {
-    if (myProject == null || myProject.isDisposed()) {
+  private static @Nullable FilePath doResolve(@Nullable Project project, @NotNull String rawPath, boolean isDirectory) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
-    VirtualFile baseDir = myProject.getBaseDir();
+    VirtualFile baseDir = project.getBaseDir();
 
-    String path = FileUtil.toSystemIndependentName(myPath);
+    String path = FileUtil.toSystemIndependentName(rawPath);
     if (baseDir == null) {
-      return LocalFileSystem.getInstance().findFileByPath(path);
+      return VcsUtil.getFilePath(path, isDirectory);
     }
 
     VirtualFile resolvedRelative = baseDir.findFileByRelativePath(path);
-    if (resolvedRelative != null) return resolvedRelative;
+    if (resolvedRelative != null) return VcsUtil.getFilePath(resolvedRelative);
 
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    return VcsUtil.getFilePath(path, isDirectory);
   }
 
   public void resetCache() {

@@ -1,36 +1,78 @@
+#  Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import argparse
+import json
 import os
 import re
 import sys
 import textwrap
 
-import six
-from six import text_type, u
+from six import text_type
+from six import u
+from six import PY2
 
 ENCODING = 'utf-8'
-_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+# regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
+TAGS_START = re.compile(
+    r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
+
+# Opening fence of a Markdown code block, e.g. ```py or ~~~ with an optional
+# info string. The first token of the info string is treated as the language.
+MARKDOWN_FENCE_START = re.compile(r'^([ \t]*)(`{3,}|~{3,})[ \t]*([^\s`~]*)[ \t]*$')
 
 
-def read_safe():
-    return _stdin.read().decode(ENCODING)
+def format_fragments(fragments_list):
+    formatted_fragments = []
 
+    for element in fragments_list:
+        formatted = format_rest(element['myDescription'])
+        if formatted.startswith('<p>') and formatted.endswith('</p>\n'):
+            formatted = formatted[len('<p>'):][:-len('</p>\n')]
+        formatted_fragments.append({
+            'myName': element['myName'],
+            'myDescription': formatted,
+            'myFragmentType': element['myFragmentType']
+        })
 
-def print_safe(s, error=False):
-    stream = _stderr if error else _stdout
-    stream.write(s.encode(ENCODING))
-    stream.flush()
+    return formatted_fragments
 
 
 def format_rest(docstring):
+    from docutils import Component
     from docutils import nodes
     from docutils.core import publish_string
-    from docutils.frontend import OptionParser
     from docutils.nodes import Text, field_body, field_name, SkipNode
     from docutils.parsers.rst import directives
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+    from docutils.transforms import universal
+    from docutils.transforms.universal import FilterMessages
     from docutils.writers import Writer
     from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
+    from docutils.parsers.rst.directives.body import CodeBlock
+
+    SUPPORTED_LANGUAGES = frozenset([
+        'python', 'python3', 'py', 'java', 'javascript', 'js',
+        'xml', 'html', 'css', 'json', 'yaml', 'sql', 'shell',
+        'bash', 'c', 'cpp', 'csharp', 'ruby', 'go', 'rust',
+        'kotlin', 'scala', 'swift'
+    ])
+
+    class ExtendedCodeBlock(CodeBlock):
+        """CodeBlock with additional Sphinx options support."""
+        option_spec = CodeBlock.option_spec.copy()
+        option_spec.update({
+            'caption': directives.unchanged,
+            'linenos': directives.flag,
+            'lineno-start': directives.nonnegative_int,
+            'emphasize-lines': directives.unchanged,
+            'dedent': directives.nonnegative_int,
+            'force': directives.flag,
+        })
+
+    directives.register_directive('code-block', ExtendedCodeBlock)
+    directives.register_directive('code', ExtendedCodeBlock)
+    directives.register_directive('sourcecode', ExtendedCodeBlock)
 
     # Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
     class seealso(nodes.Admonition, nodes.Element):
@@ -50,7 +92,12 @@ def format_rest(docstring):
         def __init__(self, document):
             # Copied from epydoc.markup.restructuredtext._EpydocHTMLTranslator
             if self.settings is None:
-                settings = OptionParser([HTMLWriter()]).get_default_values()
+                if PY2:
+                    from docutils.frontend import OptionParser
+                    settings = OptionParser([HTMLWriter()]).get_default_values()
+                else:
+                    from docutils.frontend import get_default_settings
+                    settings = get_default_settings(HTMLWriter())
                 self.__class__.settings = settings
             document.settings = self.settings
 
@@ -125,19 +172,19 @@ def format_rest(docstring):
             return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
 
         def visit_rubric(self, node):
-            self.body.append(self.starttag(node, 'h1', '', CLASS='rubric'))
+            self.body.append(self.starttag(node, 'h4', '', CLASS='rubric'))
 
         def depart_rubric(self, node):
-            self.body.append('</h1>\n')
+            self.body.append('</h4>\n')
 
         def visit_note(self, node):
-            self.body.append('<h1 class="heading">Note</h1>\n')
+            self.body.append('<h4 class="heading">Note</h4>\n')
 
         def depart_note(self, node):
             pass
 
         def visit_seealso(self, node):
-            self.body.append('<h1 class="heading">See Also</h1>\n')
+            self.body.append('<h4 class="heading">See Also</h4>\n')
 
         def depart_seealso(self, node):
             pass
@@ -212,24 +259,190 @@ def format_rest(docstring):
             self.body.append('</tt>')
             raise nodes.SkipNode
 
+        def visit_literal_block(self, node):
+            classes = node.get('classes', [])
+            language = None
+
+            for cls in classes:
+                if cls == 'code':
+                    continue
+
+                norm_language = cls.lower()
+                if norm_language in SUPPORTED_LANGUAGES:
+                    language = cls
+                    break
+
+            attrs = {}
+            if language:
+                class_str = 'code-block language-' + language
+                attrs['class'] = class_str
+                attrs['data-language'] = language
+            else:
+                attrs['class'] = 'literal-block'
+
+            self.body.append(self.starttag(node, 'pre', '', **attrs))
+
+            if language:
+                self.body.append('<code class="language-' + language + '">')
+
+            for child in node.traverse(condition=lambda n: isinstance(n, Text)):
+                text = child.astext()
+                encoded = self.encode(text)
+                self.body.append(encoded)
+
+            if language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
+
+            raise nodes.SkipNode
+
+        def depart_literal_block(self, node):
+            classes = node.get('classes', [])
+
+            norm_language = cls.lower()
+            has_language = any(norm_language in SUPPORTED_LANGUAGES for cls in classes)
+
+            if has_language:
+                self.body.append('</code>')
+            self.body.append('</pre>\n')
+
+    class _FilterMessagesKeepProblematic(FilterMessages):
+        """Like `FilterMessages` but preserves `<problematic>` nodes.
+
+        The latest `docutils` converts problematic nodes to plain text.
+        `visit_problematic()` therefore is never called on them.
+        Unknown Sphinx roles (like `:obj:`) are left in the resulting render.
+
+        This subclass skips problematic nodes conversion to text, so they can
+        be processed later by `visit_problematic()`.
+        """
+
+        def apply(self):
+            if PY2:
+                findall = self.document.traverse
+            else:
+                findall = self.document.findall
+
+            for node in tuple(findall(nodes.system_message)):
+                if node['level'] < self.document.reporter.report_level:
+                    node.parent.remove(node)
+                    try:
+                        del self.document.ids[node['ids'][0]]
+                    except IndexError:
+                        pass
+            for node in findall(nodes.section):
+                if "system-messages" in node['classes'] and len(node) == 1:
+                    node.parent.remove(node)
+
     class _DocumentPseudoWriter(Writer):
         def __init__(self):
             self.document = None
             Writer.__init__(self)
 
+        def get_transforms(self):
+            return Component.get_transforms(self) + [
+                universal.Messages,
+                _FilterMessagesKeepProblematic,  # Instead of `FilterMessages`
+                universal.StripClassesAndElements,
+            ]
+
         def translate(self):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
-    publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
-                                                                 'halt_level': 10000,
-                                                                 'warning_stream': None,
-                                                                 'docinfo_xform': False})
+    docstring = convert_markdown_code_blocks(docstring)
+    docstring = add_blank_line_before_first_tag(docstring)
+    publish_string(
+        docstring,
+        writer=writer,
+        settings_overrides={
+            'report_level': 10000,
+            'halt_level': 10000,
+            'warning_stream': None,
+            'docinfo_xform': False,
+            'syntax_highlight': 'none',
+        },
+    )
     document = writer.document
     document.settings.xml_declaration = None
     visitor = RestHTMLTranslator(document)
     document.walkabout(visitor)
     return u('').join(visitor.body)
+
+
+def add_blank_line_before_first_tag(docstring):
+    input_lines = docstring.splitlines()
+    for i, line in enumerate(input_lines):
+        if TAGS_START.match(line):
+            if i > 0 and not input_lines[i - 1].isspace():
+                input_lines.insert(i, '')
+            break
+    return '\n'.join(input_lines)
+
+
+def _is_closing_fence(line, fence_char, min_length):
+    # A CommonMark closing fence is a run of at least `min_length` of the same
+    # fence character, optionally surrounded by whitespace, and nothing else.
+    stripped = line.strip()
+    return len(stripped) >= min_length and all(char == fence_char for char in stripped)
+
+
+def convert_markdown_code_blocks(docstring):
+    """Rewrite Markdown fenced code blocks as reST ``code-block`` directives.
+
+    docutils doesn't understand Markdown fences, so a block like::
+
+        ```py
+        def f(): ...
+        ```
+
+    is otherwise parsed as inline literal (double backtick) markup and rendered
+    as a row of broken tokens (PY-84818). Converting it to a ``.. code-block``
+    directive routes it through the same path as native reST code blocks.
+    """
+    lines = docstring.splitlines()
+    result = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        match = MARKDOWN_FENCE_START.match(lines[i])
+        if not match:
+            result.append(lines[i])
+            i += 1
+            continue
+
+        indent, fence, info = match.group(1), match.group(2), match.group(3)
+        fence_char = fence[0]
+        fence_length = len(fence)
+
+        content = []
+        j = i + 1
+        closed = False
+        while j < n:
+            if _is_closing_fence(lines[j], fence_char, fence_length):
+                closed = True
+                break
+            content.append(lines[j])
+            j += 1
+
+        if not closed:
+            # Unterminated fence: leave the original text untouched.
+            result.append(lines[i])
+            i += 1
+            continue
+
+        directive = indent + '.. code-block::'
+        if info:
+            directive += ' ' + info
+        result.append(directive)
+        result.append('')
+        content_indent = indent + '   '
+        for code_line in content:
+            result.append(content_indent + code_line if code_line.strip() else '')
+        result.append('')
+        i = j + 1
+
+    return '\n'.join(result)
 
 
 def format_google(docstring):
@@ -244,77 +457,62 @@ def format_numpy(docstring):
     return format_rest(transformed)
 
 
-def format_epytext(docstring):
-    if six.PY3:
-        return u('Epydoc is not compatible with Python 3 interpreter')
-
-    import epydoc.markup.epytext
-    from epydoc.markup import DocstringLinker
-    from epydoc.markup.epytext import parse_docstring, ParseError, _colorize
-
-    def _add_para(doc, para_token, stack, indent_stack, errors):
-        """Colorize the given paragraph, and add it to the DOM tree."""
-        para = _colorize(doc, para_token, errors)
-        if para_token.inline:
-            para.attribs['inline'] = True
-        stack[-1].children.append(para)
-
-    epydoc.markup.epytext._add_para = _add_para
-    ParseError.is_fatal = lambda self: False
-
-    errors = []
-
-    class EmptyLinker(DocstringLinker):
-        def translate_indexterm(self, indexterm):
-            return ""
-
-        def translate_identifier_xref(self, identifier, label=None):
-            return identifier
-
-    docstring = parse_docstring(docstring, errors)
-    docstring, fields = docstring.split_fields()
-    html = docstring.to_html(EmptyLinker())
-
-    if errors and not html:
-        # It's not possible to recover original stacktraces of the errors
-        error_lines = '\n'.join(text_type(e) for e in errors)
-        raise Exception('Error parsing docstring. Probable causes:\n' + error_lines)
-
-    return html
+def format_body(docstring_format, input_body):
+    formatter = {
+        'rest': format_rest,
+        'google': format_google,
+        'numpy': format_numpy,
+    }.get(docstring_format, format_rest)
+    return formatter(input_body)
 
 
 def main():
+    _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+    _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+    _stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+    def read_safe():
+        return _stdin.read().decode(ENCODING)
+
+    def print_safe(s, error=False):
+        stream = _stderr if error else _stdout
+        stream.write(s.encode(ENCODING))
+        stream.flush()
+
     # Remove existing Sphinx extensions registered via
     # sphinxcontrib setuptools namespace package, as they
     # conflict with sphinxcontrib.napoleon that we bundle.
     sys.modules.pop('sphinxcontrib', None)
 
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--format', default='rest', nargs='?', const='rest')
+    parser.add_argument('--fragments', action="store_true")
+    parser.add_argument('--input', type=argparse.FileType('rb'), default=_stdin, nargs='?', const=_stdin)
+    args = parser.parse_args()
 
-    docstring_format = args[0] if args else 'rest'
-    if len(args) > 1:
+    if args.input:
         try:
-            f = open(args[1], 'rb')
-            text = f.read().decode('utf-8')
+            text = args.input.read().decode(ENCODING)
         finally:
-            f.close()
+            args.input.close()
     else:
         text = read_safe()
 
-    formatter = {
-        'rest': format_rest,
-        'google': format_google,
-        'numpy': format_numpy,
-        'epytext': format_epytext
-    }.get(docstring_format, format_rest)
-
-    html = formatter(text)
-    print_safe(html)
-
-
-if __name__ == '__main__':
     try:
-        main()
+        if args.fragments:
+            input_json = json.loads(text)
+            formatted_body = format_body(args.format, input_json['body'])
+            formatted_fragments = format_fragments(input_json['fragments'])
+            print_safe(json.dumps({
+                'body': formatted_body,
+                'fragments': formatted_fragments,
+            }, ensure_ascii=False, separators=(',', ':'), sort_keys=True))
+        else:
+            print_safe(format_body(args.format, text))
     except ImportError:
         print_safe('sys.path = %s\n\n' % sys.path, error=True)
         raise
+
+
+if __name__ == '__main__':
+    main()

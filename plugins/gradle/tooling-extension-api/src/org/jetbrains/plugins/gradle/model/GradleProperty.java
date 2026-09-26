@@ -16,13 +16,11 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public interface GradleProperty extends Serializable {
   @NotNull
@@ -30,7 +28,4 @@ public interface GradleProperty extends Serializable {
 
   @NotNull
   String getTypeFqn();
-
-  @Nullable
-  Serializable getValue();
 }

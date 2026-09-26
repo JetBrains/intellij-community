@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -21,31 +6,37 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Comparator;
+import org.jetbrains.annotations.ApiStatus;
 
-public final class FileComparator implements Comparator<NodeDescriptor> {
+@SuppressWarnings("rawtypes")
+@ApiStatus.Internal
+public final class FileComparator implements Comparator<NodeDescriptor<?>> {
   private static final FileComparator INSTANCE = new FileComparator();
 
-  private FileComparator() {
-    // empty
-  }
+  private FileComparator() { }
 
   public static FileComparator getInstance() {
     return INSTANCE;
   }
 
+  @Override
   public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
     int weight1 = getWeight(nodeDescriptor1);
     int weight2 = getWeight(nodeDescriptor2);
+    if (weight1 != weight2) return weight1 - weight2;
 
-    if (weight1 != weight2) {
-      return weight1 - weight2;
-    }
+    String node1Text = nodeDescriptor1.toString();
+    String node2Text = nodeDescriptor2.toString();
+    boolean isNode1Unc = node1Text.startsWith("\\\\");
+    boolean isNode2Unc = node2Text.startsWith("\\\\");
+    if (isNode1Unc && !isNode2Unc) return 1;
+    if (isNode2Unc && !isNode1Unc) return -1;
 
-    return nodeDescriptor1.toString().compareToIgnoreCase(nodeDescriptor2.toString());
+    return node1Text.compareToIgnoreCase(node2Text);
   }
 
-   private static int getWeight(NodeDescriptor descriptor) {
-     VirtualFile file = ((FileNodeDescriptor)descriptor).getElement().getFile();
-     return file == null || file.isDirectory() ? 0 : 1;
-   }
+  private static int getWeight(NodeDescriptor<?> descriptor) {
+    VirtualFile file = ((FileNodeDescriptor)descriptor).getElement().getFile();
+    return file == null || file.isDirectory() ? 0 : 1;
+  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -31,16 +17,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   @Override
-  @NotNull
-  protected CodeInsightActionHandler getHandler(){
+  protected @NotNull CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
-    if (TestFinderHelper.getFinders().length == 0) {
+    if (TestFinderHelper.getFinders().isEmpty()) {
       return;
     }
 
@@ -56,12 +41,13 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     if (TestFinderHelper.findSourceElement(element) == null) return;
 
     presentation.setEnabledAndVisible(true);
+    boolean useShortName = e.isFromMainMenu() || e.isFromContextMenu();
     if (TestFinderHelper.isTest(element)) {
-      presentation.setText(ActionsBundle.message("action.GotoTestSubject.text"));
-      presentation.setDescription(ActionsBundle.message("action.GotoTestSubject.description"));
+      presentation.setText(useShortName ? ActionsBundle.messagePointer("action.GotoTestSubject.MainMenu.text") : ActionsBundle.messagePointer("action.GotoTestSubject.text"));
+      presentation.setDescription(ActionsBundle.messagePointer("action.GotoTestSubject.description"));
     } else {
-      presentation.setText(ActionsBundle.message("action.GotoTest.text"));
-      presentation.setDescription(ActionsBundle.message("action.GotoTest.description"));
+      presentation.setText(useShortName ? ActionsBundle.messagePointer("action.GotoTest.MainMenu.text") : ActionsBundle.messagePointer("action.GotoTest.text"));
+      presentation.setDescription(ActionsBundle.messagePointer("action.GotoTest.description"));
     }
   }
 }

@@ -1,23 +1,21 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -31,33 +29,25 @@ import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrMo
 /**
  * @author Max Medvedev
  */
-public class AddReturnTypeFix implements IntentionAction {
-  @NotNull
-  @Override
-  public String getText() {
-    return GroovyIntentionsBundle.message("add.return.type");
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return GroovyIntentionsBundle.message("add.return.type.to.method.declaration");
+public final class AddReturnTypeFix extends PsiUpdateModCommandAction<PsiElement> {
+  
+  public AddReturnTypeFix() {
+    super(PsiElement.class);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (editor == null) return false;
-    int offset = editor.getCaretModel().getOffset();
-    return findMethod(file, offset) != null;
+  public @NotNull String getFamilyName() {
+    return GroovyBundle.message("add.return.type.to.method.declaration");
   }
 
-  @Nullable
-  private static GrMethod findMethod(PsiFile file, final int offset) {
-    final PsiElement at = file.findElementAt(offset);
-    if (at == null) return null;
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return findMethod(element, context.offset()) != null ? 
+           Presentation.of(GroovyBundle.message("add.return.type")) : null;
+  }
 
-    if (at.getParent() instanceof GrReturnStatement) {
-      final GrReturnStatement returnStatement = ((GrReturnStatement)at.getParent());
+  private static @Nullable GrMethod findMethod(@NotNull PsiElement at, int offset) {
+    if (at.getParent() instanceof GrReturnStatement returnStatement) {
       final PsiElement word = returnStatement.getReturnWord();
 
       if (!word.getTextRange().contains(offset)) return null;
@@ -86,15 +76,10 @@ public class AddReturnTypeFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final GrMethod method = findMethod(file, editor.getCaretModel().getOffset());
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final GrMethod method = findMethod(element, context.offset());
     if (method == null) return;
-    applyFix(project, method);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    applyFix(context.project(), method);
   }
 
   public static void applyFix(@NotNull Project project, @NotNull GrMethod method) {

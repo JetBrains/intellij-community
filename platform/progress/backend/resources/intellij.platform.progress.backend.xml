@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.progress.backend">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.util.progress"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApi apiInterface="com.intellij.platform.ide.progress.rpc.TaskInfoApi"
+                                    implementationClass="com.intellij.platform.progress.backend.BackendTaskInfoApi"/>
+  </extensions>
+
+</idea-plugin>

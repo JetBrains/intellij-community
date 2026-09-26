@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_jvmOverloadsRemoved-a.kotlin_module
+  Util.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmOverloadsRemoved/a/util.kt
+End of files
+Cleaning output files:
+  JavaUser.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmOverloadsRemoved/a/JavaUser.java
+End of files
+------------------------------------------
+Exit code: ERROR

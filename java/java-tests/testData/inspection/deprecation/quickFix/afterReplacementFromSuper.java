@@ -1,4 +1,4 @@
-// "Replace method call with Test2.nnn" "true"
+// "Replace method call with 'Test2.nnn()'" "true-preview"
 class Test extends Test2 {
   static void example() {
     Test t = new Test();

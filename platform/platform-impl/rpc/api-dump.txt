@@ -1,0 +1,6 @@
+f:com.intellij.ide.rpc.AnActionIdKt
+f:com.intellij.ide.rpc.DataContextIdKt
+f:com.intellij.ide.rpc.DocumentIdKt
+f:com.intellij.ide.ui.colors.ColorIdKt
+f:com.intellij.ide.ui.icons.IconIdKt
+f:com.intellij.ide.vfs.VirtualFileIdKt

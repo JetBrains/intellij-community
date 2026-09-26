@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="CGLIB">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/cglib-nodep-3.2.4.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

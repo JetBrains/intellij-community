@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public interface AstTransformationSupport {
+/**
+ * Allows adding synthetic elements to Groovy class. It is expected that synthetic members
+ * are not duplicated between {@link AstTransformationSupport}.
+ */
+public interface AstTransformationSupport extends PossiblyDumbAware {
 
   ExtensionPointName<AstTransformationSupport> EP_NAME = ExtensionPointName.create("org.intellij.groovy.astTransformationSupport");
 

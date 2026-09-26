@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_overrideImplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideImplicit/a/B.kt
+End of files
+Cleaning output files:
+  BA.class
+  META-INF/kotlin_classHierarchyAffected_overrideImplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideImplicit/a/BA.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_overrideImplicit-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/overrideImplicit/a/B.kt
+  kotlin/classHierarchyAffected/overrideImplicit/a/BA.kt
+End of files
+------------------------------------------
+Exit code: OK

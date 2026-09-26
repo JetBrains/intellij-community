@@ -1,0 +1,15 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+<p>
+  Reports <code>val</code> properties in external interfaces that extend React Props or State types in Kotlin/JS projects.
+</p>
+<p>
+  Properties in React component interfaces should be mutable (<code>var</code>) to work correctly with the JavaScript runtime.
+</p>
+<p><b>Example:</b></p>
+<pre><code>external interface MyProps : Props {
+    val title: String // Warning: should be var
+}</code></pre>
+</body>
+</html>

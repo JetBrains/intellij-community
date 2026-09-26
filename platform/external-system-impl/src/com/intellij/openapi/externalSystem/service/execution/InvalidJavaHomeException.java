@@ -19,11 +19,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2014
  */
 public class InvalidJavaHomeException extends ExternalSystemJdkException {
 
   public InvalidJavaHomeException(String invalidPath) {
-    super(ExternalSystemBundle.message("external.system.java.home.invalid", invalidPath), null, null);
+    super(ExternalSystemBundle.message("external.system.java.home.invalid", invalidPath), null);
   }
 }

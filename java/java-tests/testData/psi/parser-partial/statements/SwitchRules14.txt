@@ -1,0 +1,15 @@
+PsiJavaFile:SwitchRules14.java
+  PsiSwitchLabeledRule
+    PsiKeyword:case('case')
+    PsiWhiteSpace(' ')
+    PsiCaseLabelElementList
+      PsiDefaultLabelElement
+        PsiKeyword:default('default')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')

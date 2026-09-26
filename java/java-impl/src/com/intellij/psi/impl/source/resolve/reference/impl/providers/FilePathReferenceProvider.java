@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -21,19 +7,28 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myEndingSlashNotAllowed;
@@ -46,17 +41,15 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     myEndingSlashNotAllowed = endingSlashNotAllowed;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, String text, int offset, final boolean soft) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, final boolean soft) {
     return getReferencesByElement(element, text, offset, soft, Module.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               String text,
-                                               int offset,
-                                               final boolean soft,
-                                               @NotNull final Module... forModules) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                         @NotNull String text,
+                                                         int offset,
+                                                         final boolean soft,
+                                                         final Module @NotNull ... forModules) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
 
 
@@ -78,14 +71,13 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean absoluteUrlNeedsStartSlash() {
         final String s = getPathString();
-        return s != null && !s.isEmpty() && s.charAt(0) == '/';
+        return !s.isEmpty() && s.charAt(0) == '/';
       }
 
       @Override
-      @NotNull
-      public Collection<PsiFileSystemItem> computeDefaultContexts() {
+      public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
         if (forModules.length > 0) {
-          Set<PsiFileSystemItem> rootsForModules = ContainerUtil.newLinkedHashSet();
+          Set<PsiFileSystemItem> rootsForModules = new LinkedHashSet<>();
           for (Module forModule : forModules) {
             rootsForModules.addAll(getRoots(forModule, true));
           }
@@ -108,8 +100,15 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
+  public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+    if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+    return super.acceptsHints(element, hints);
+  }
+
+  @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof PsiFileSystemItem;
+    return target instanceof PsiFileSystemItem || target instanceof PsiDirectoryContainer;
   }
 
   protected boolean isPsiElementAccepted(PsiElement element) {
@@ -121,8 +120,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     String text = null;
     if (element instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)element).getValue();
@@ -137,16 +135,16 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     return getReferencesByElement(element, text, 1, true);
   }
 
-  @NotNull
-  public static Collection<PsiFileSystemItem> getRoots(@Nullable final Module thisModule, boolean includingClasses) {
+  public static @NotNull Collection<PsiFileSystemItem> getRoots(final @Nullable Module thisModule, boolean includingClasses) {
     if (thisModule == null) return Collections.emptyList();
 
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    Set<PsiFileSystemItem> result = ContainerUtil.newLinkedHashSet();
+    Set<PsiFileSystemItem> result = new LinkedHashSet<>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
       VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
       for (VirtualFile file : libraryUrls) {
+        if (!file.isValid()) continue;
         PsiDirectory directory = psiManager.findDirectory(file);
         if (directory != null) {
           result.add(directory);
@@ -158,6 +156,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       .withoutSdk().withoutLibraries()
       .sources().usingCache().getRoots();
     for (VirtualFile root : sourceRoots) {
+      if (!root.isValid()) continue;
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);

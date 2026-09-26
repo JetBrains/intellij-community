@@ -102,4 +102,13 @@ public class VcsLogSorterTest {
     ));
   }
 
+  @Test(timeout = 1000)
+  public void cyclicGraph() {
+    VcsLogSorter.sortByDateTopoOrder(log(
+      "4|-a4|-a3",
+      "3|-a3|-a2",
+      "2|-a2|-a1",
+      "1|-a1|-a4"
+    ));
+  }
 }

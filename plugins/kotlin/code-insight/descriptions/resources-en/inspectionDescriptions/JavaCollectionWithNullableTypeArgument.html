@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports providing nullable type arguments to Java collections that don't accept nulls.
+<p>
+    Some Java collections shipped in Java Standard Library do not support null elements, keys, or values.
+    Such collections' type arguments shouldn't be instantiated with nullable types.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+val map = ConcurrentHashMap&lt;String, String?&gt;()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+val map = ConcurrentHashMap&lt;String, String&gt;()
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

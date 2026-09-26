@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -19,19 +19,30 @@ import org.jetbrains.annotations.Nullable;
 @Experimental
 public abstract class JvmLocalInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         JvmElementVisitor<Boolean> visitor = null;
         for (JvmElement jvmElement : JvmDeclarationSearch.getElementsByIdentifier(element)) {
           if (visitor == null) {
             // don't build visitor until there is at least one JvmElement
             visitor = buildVisitor(
               holder.getProject(),
-              (message, highlightType, fixes) -> holder.registerProblem(element, message, highlightType, fixes),
+              new HighlightSinkImpl() {
+                @Override
+                public void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+                                      @NotNull ProblemHighlightType highlightType,
+                                      LocalQuickFix @NotNull ... fixes) {
+                  holder.registerProblem(element, message, highlightType, fixes);
+                }
+
+                @Override
+                public @NotNull ProblemsHolder getHolder() {
+                  return holder;
+                }
+              },
               isOnTheFly
             );
             if (visitor == null) return;
@@ -47,15 +58,21 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
 
   public interface HighlightSink {
 
-    default void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message, @NotNull LocalQuickFix... fixes) {
+    default void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message, LocalQuickFix @NotNull ... fixes) {
       highlight(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
     }
 
     void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
                    @NotNull ProblemHighlightType highlightType,
-                   @NotNull LocalQuickFix... fixes);
+                   LocalQuickFix @NotNull ... fixes);
   }
 
-  @Nullable
-  protected abstract JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly);
+  public abstract static class HighlightSinkImpl implements HighlightSink {
+    /**
+     * Please highlight only elements withing originally traversed one
+     */
+    public abstract @NotNull ProblemsHolder getHolder();
+  }
+
+  protected abstract @Nullable JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly);
 }

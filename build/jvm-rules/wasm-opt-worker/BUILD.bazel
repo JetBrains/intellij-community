@@ -1,0 +1,32 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm-args.bzl", "get_jvm_flags")
+
+java_binary(
+    name = "wasm-opt-worker",
+    main_class = "org.jetbrains.bazel.wasm.opt.WasmOptWorker",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":wasm-opt-worker-lib"],
+)
+
+kt_jvm_library(
+    name = "wasm-opt-worker-lib",
+    srcs = [
+        "WasmOptWorker.kt",
+    ],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+        "//:opentelemetry-api_import",
+        "//worker-framework",
+    ],
+)
+
+string_list_flag(
+    name = "wasm-opt-worker-jvm_flags",
+    build_setting_default = get_jvm_flags([]),
+    visibility = ["//visibility:public"],
+)

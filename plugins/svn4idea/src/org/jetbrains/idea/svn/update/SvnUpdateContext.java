@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -25,7 +11,12 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class SvnUpdateContext implements SequentialUpdatesContext {
   private final Set<File> myUpdatedExternals;
@@ -35,16 +26,17 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
   public SvnUpdateContext(final SvnVcs vcs, FilePath[] contentRoots) {
     myVcs = vcs;
     myContentRoots = Arrays.asList(contentRoots);
-    Collections.sort(myContentRoots, FilePathByPathComparator.getInstance());
+    myContentRoots.sort(FilePathByPathComparator.getInstance());
     myUpdatedExternals = new HashSet<>();
   }
 
-  @NotNull
-  public String getMessageWhenInterruptedBeforeStart() {
+  @Override
+  public @NotNull String getMessageWhenInterruptedBeforeStart() {
     // never
     return null;
   }
 
+  @Override
   public boolean shouldFail() {
     return false;
   }
@@ -60,7 +52,7 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
       result = false;
     }
     else if (FilePathUtil.isNested(myContentRoots, ioRoot)) {
-      final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
+      final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(ioRoot));
 
       if (info != null) {
         if (NestedCopyType.switched.equals(info.getType())) {

@@ -17,52 +17,53 @@ package com.intellij.psi;
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Visitor which can be used to visit elements for all languages.
- *
+ * @see PsiElement#accept(PsiElementVisitor)
  * @see PsiRecursiveElementVisitor
  */
 public abstract class PsiElementVisitor {
   public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
 
-  public void visitElement(PsiElement element) {
-    ProgressIndicatorProvider.checkCanceled();
-  }
-
-  public void visitFile(PsiFile file) {
-    visitElement(file);
-  }
-
-  public void visitBinaryFile(PsiBinaryFile file){
+  public void visitBinaryFile(@NotNull PsiBinaryFile file){
     visitFile(file);
   }
 
-  public void visitPlainTextFile(PsiPlainTextFile file){
-    visitFile(file);
-  }
-
-  public void visitErrorElement(PsiErrorElement element) {
-    visitElement(element);
-  }
-
-  public void visitPlainText(PsiPlainText content) {
-    visitElement(content);
-  }
-
-  public void visitDirectory(PsiDirectory dir) {
-    visitElement(dir);
-  }
-
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     visitElement(comment);
   }
 
-  public void visitWhiteSpace(PsiWhiteSpace space) {
-    visitElement(space);
+  public void visitDirectory(@NotNull PsiDirectory dir) {
+    visitElement(dir);
   }
 
-  public void visitOuterLanguageElement(OuterLanguageElement element) {
+  public void visitElement(@NotNull PsiElement element) {
+    ProgressIndicatorProvider.checkCanceled();
+  }
+
+  public void visitErrorElement(@NotNull PsiErrorElement element) {
     visitElement(element);
+  }
+
+  public void visitFile(@NotNull PsiFile psiFile) {
+    visitElement(psiFile);
+  }
+
+  public void visitOuterLanguageElement(@NotNull OuterLanguageElement element) {
+    visitElement(element);
+  }
+
+  public void visitPlainText(@NotNull PsiPlainText content) {
+    visitElement(content);
+  }
+
+  public void visitPlainTextFile(@NotNull PsiPlainTextFile file){
+    visitFile(file);
+  }
+
+  public void visitWhiteSpace(@NotNull PsiWhiteSpace space) {
+    visitElement(space);
   }
 }

@@ -1,43 +1,44 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.psi.search.UsageSearchContext.IN_CODE;
+import static com.intellij.psi.search.UsageSearchContext.IN_COMMENTS;
+import static com.intellij.psi.search.UsageSearchContext.IN_PLAIN_TEXT;
+import static com.intellij.psi.search.UsageSearchContext.IN_STRINGS;
 
 /**
  * @author Maxim.Mossienko
 */
 class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
-  private final MyFileProcessor myFileProcessor;
-  private THashSet<PsiFile> filesToScan;
-  private THashSet<PsiFile> filesToScan2;
+  private Set<VirtualFile> filesToScan;
+  private Set<VirtualFile> filesToScan2;
 
   private final Project myProject;
   private final SearchScope myScope;
   private final boolean myCaseSensitive;
 
-  private boolean myTransactionStarted = false;
+  private boolean myTransactionStarted;
 
-  FindInFilesOptimizingSearchHelper(SearchScope scope, boolean caseSensitive, Project project) {
+  FindInFilesOptimizingSearchHelper(SearchScope scope, boolean caseSensitive, @NotNull Project project) {
     myScope = scope;
     myCaseSensitive = caseSensitive;
     myProject = project;
 
-    if (scope instanceof GlobalSearchScope && filesToScan == null) {
-      filesToScan = new THashSet<>();
-      filesToScan2 = new THashSet<>();
+    if (scope instanceof GlobalSearchScope) {
+      filesToScan = new HashSet<>();
+      filesToScan2 = new HashSet<>();
     }
-    myFileProcessor = new MyFileProcessor();
   }
 
   @Override
@@ -58,30 +59,33 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   @Override
   protected void doAddSearchWordInCode(@NotNull String word) {
     myTransactionStarted = true;
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word,
-                                                                     (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_PLAIN_TEXT),
-                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
+    VirtualFile[] files = CacheManager.getInstance(myProject)
+      .getVirtualFilesWithWord(word, (short)(IN_CODE | IN_PLAIN_TEXT), (GlobalSearchScope)myScope, myCaseSensitive);
+    process(files);
   }
 
   @Override
   protected void doAddSearchWordInText(@NotNull String word) {
     myTransactionStarted = true;
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_PLAIN_TEXT,
-                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
+    VirtualFile[] files =
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_PLAIN_TEXT, (GlobalSearchScope)myScope, myCaseSensitive);
+    process(files);
   }
 
   @Override
   protected void doAddSearchWordInComments(@NotNull String word) {
     myTransactionStarted = true;
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_COMMENTS,
-                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
+    VirtualFile[] files =
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_COMMENTS, (GlobalSearchScope)myScope, myCaseSensitive);
+    process(files);
   }
 
   @Override
   protected void doAddSearchWordInLiterals(@NotNull String word) {
     myTransactionStarted = true;
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_STRINGS,
-                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
+    VirtualFile[] files =
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_STRINGS, (GlobalSearchScope)myScope, myCaseSensitive);
+    process(files);
   }
 
   @Override
@@ -89,15 +93,14 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     if (!myTransactionStarted) return;
     myTransactionStarted = false;
     super.endTransaction();
-    final THashSet<PsiFile> map = filesToScan;
+    Set<VirtualFile> map = filesToScan;
     if (!map.isEmpty()) map.clear();
     filesToScan = filesToScan2;
     filesToScan2 = map;
   }
 
-  @NotNull
   @Override
-  public Set<PsiFile> getFilesSetToScan() {
+  public @NotNull Set<VirtualFile> getFilesSetToScan() {
     assert !myTransactionStarted;
     if (filesToScan == null) {
       return Collections.emptySet();
@@ -105,13 +108,16 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return filesToScan;
   }
 
-  private class MyFileProcessor implements Processor<PsiFile> {
-    @Override
-    public boolean process(PsiFile file) {
-      if (scanRequest == 0 || filesToScan.contains(file)) {
-        filesToScan2.add(file);
+  private void process(VirtualFile @NotNull [] files) {
+    if (scanRequest == 0) {
+      Collections.addAll(filesToScan2, files);
+    }
+    else {
+      for (VirtualFile file : files) {
+        if (filesToScan.contains(file)) {
+          filesToScan2.add(file);
+        }
       }
-      return true;
     }
   }
 }

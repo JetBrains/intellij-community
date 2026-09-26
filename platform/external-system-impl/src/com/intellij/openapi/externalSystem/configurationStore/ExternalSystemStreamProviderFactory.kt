@@ -1,68 +1,48 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.externalSystem.configurationStore
 
-import com.intellij.ProjectTopics
+import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.Function
-import gnu.trove.THashMap
 import org.jdom.Element
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val LOG = logger<ExternalSystemStreamProviderFactory>()
-
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val moduleStorage = ModuleFileSystemExternalSystemStorage(project)
-  val fileStorage = ProjectFileSystemExternalSystemStorage(project)
-
-  private var isStorageFlushInProgress = false
+  val moduleStorage by lazy { ModuleFileSystemExternalSystemStorage(project) }
+  val fileStorage by lazy { ProjectFileSystemExternalSystemStorage(project) }
 
   private val isReimportOnMissedExternalStorageScheduled = AtomicBoolean(false)
 
   private val storageSpecLock = ReentrantReadWriteLock()
-  private val storages = THashMap<String, Storage>()
+  private val storages = HashMap<String, Storage>()
 
   init {
-    // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
-    ApplicationManager.getApplication().messageBus
-      .connect(project)
-      .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-        if (it === project && !isStorageFlushInProgress && moduleStorage.isDirty) {
-          isStorageFlushInProgress = true
-          ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-              LOG.runAndLogException { moduleStorage.forceSave() }
-            }
-            finally {
-              isStorageFlushInProgress = false
-            }
-          }
-        }
-      })
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    project.messageBus.simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun moduleRemoved(project: Project, module: Module) {
         moduleStorage.remove(module.name)
       }
 
-      override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
         for (module in modules) {
           moduleStorage.rename(oldNameProvider.`fun`(module), module.name)
         }
@@ -70,18 +50,32 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     })
   }
 
-  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
+  override fun customizeStorageSpecs(
+    component: PersistentStateComponent<*>,
+    storageManager: StateStorageManager,
+    stateSpec: State,
+    storages: List<Storage>,
+    operation: StateStorageOperation,
+  ): List<Storage>? {
     val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
-    // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
-    if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
-      return null
+
+    if (storages.size == 1) {
+      val storage = storages.first()
+      // do not customize project file storage spec, see ProjectStoreBase.PROJECT_FILE_STORAGE_ANNOTATION
+      if (storage is FileStorageAnnotation && storage.value == "\$PROJECT_FILE$" && !storage.deprecated) {
+        return null
+      }
+      // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
+      if (storage.value == StoragePathMacros.WORKSPACE_FILE || !project.isExternalStorageEnabled) {
+        return null
+      }
     }
 
     if (componentManager is Project) {
       val fileSpec = storages.firstOrNull()?.value
       if (fileSpec == "libraries" || fileSpec == "artifacts") {
-        val externalStorageSpec = getOrCreateExternalStorageSpec("$fileSpec.xml", stateSpec)
+        val externalStorageSpec = getOrCreateStorageSpec("$fileSpec.xml", stateSpec)
         if (operation == StateStorageOperation.READ) {
           return listOf(externalStorageSpec)
         }
@@ -97,10 +91,11 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     if (component !is ProjectModelElement) {
       return null
     }
+    val externalStorageOnly = stateSpec.externalStorageOnly
 
     // Keep in mind - this call will require storage for module because module option values are used.
     // We cannot just check that module name exists in the nameToData - new external system module will be not in the nameToData because not yet saved.
-    if (operation == StateStorageOperation.WRITE && component.externalSource == null) {
+    if (operation == StateStorageOperation.WRITE && component.externalSource == null && !externalStorageOnly) {
       return null
     }
 
@@ -110,13 +105,13 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     // on write default storages also returned, because default FileBasedStorage will remove data if component has external source
     val annotation: Storage
     if (componentManager is Project) {
-      annotation = getOrCreateExternalStorageSpec(storages.get(0).value)
+      annotation = getOrCreateStorageSpec(storages.get(0).value)
     }
     else {
-      annotation = getOrCreateExternalStorageSpec(StoragePathMacros.MODULE_FILE)
+      annotation = getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
     }
 
-    if (stateSpec.externalStorageOnly) {
+    if (externalStorageOnly) {
       return listOf(annotation)
     }
 
@@ -126,11 +121,9 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     return result
   }
 
-  private fun getOrCreateExternalStorageSpec(fileSpec: String, inProjectStateSpec: State? = null): Storage {
+  override fun getOrCreateStorageSpec(fileSpec: String, inProjectStateSpec: State?): Storage {
     return storageSpecLock.read { storages.get(fileSpec) } ?: return storageSpecLock.write {
-      storages.getOrPut(fileSpec) {
-        ExternalStorageSpec(fileSpec, inProjectStateSpec)
-      }
+      storages.computeIfAbsent(fileSpec) { ExternalStorageSpec(fileSpec, inProjectStateSpec) }
     }
   }
 

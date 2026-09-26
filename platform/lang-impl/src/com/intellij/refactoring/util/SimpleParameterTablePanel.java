@@ -18,11 +18,13 @@ package com.intellij.refactoring.util;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public abstract class SimpleParameterTablePanel extends AbstractParameterTablePanel<AbstractVariableData> {
-  public SimpleParameterTablePanel(Predicate<String> parameterNameValidator) {
+  public SimpleParameterTablePanel(Predicate<? super String> parameterNameValidator) {
     super(new PassParameterColumnInfo(), new NameColumnInfo(parameterNameValidator));
   }
 

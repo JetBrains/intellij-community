@@ -1,0 +1,28 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <!-- Platform module intellij.emojipicker -->
+
+  <actions resource-bundle="messages.EmojipickerBundle">
+    <action id="EmojiPicker.Open" class="org.jetbrains.plugins.emojipicker.action.OpenEmojiPickerAction">
+      <add-to-group group-id="EditMenu" anchor="before" relative-to-action="EmojiAndSymbols"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt SEMICOLON"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="org.jetbrains.plugins.emojipicker.service.EmojiService"/>
+  </extensions>
+</idea-plugin>

@@ -1,63 +1,61 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
+import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-/**
- * @author Vladislav.Soroka
- * @since 12/24/2014
- */
-public class DefaultExternalMultiLibraryDependency extends AbstractExternalDependency implements ExternalMultiLibraryDependency {
-
+public final class DefaultExternalMultiLibraryDependency extends AbstractExternalDependency implements ExternalMultiLibraryDependency {
   private static final long serialVersionUID = 1L;
-  private Collection<File> files = new LinkedHashSet<File>();
-  private Collection<File> sources = new LinkedHashSet<File>();
-  private Collection<File> javadocs = new LinkedHashSet<File>();
+  private final Collection<File> files;
+  private final Collection<File> sources;
+  private final Collection<File> javadocs;
 
   public DefaultExternalMultiLibraryDependency() {
+    files = new LinkedHashSet<>(0);
+    sources = new LinkedHashSet<>(0);
+    javadocs = new LinkedHashSet<>(0);
   }
 
-  public DefaultExternalMultiLibraryDependency(ExternalMultiLibraryDependency dependency) {
+  public DefaultExternalMultiLibraryDependency(ExternalLibraryDependency dependency) {
     super(dependency);
-    files = dependency.getFiles();
-    sources = dependency.getSources();
-    javadocs = dependency.getJavadoc();
+    files = new LinkedHashSet<>();
+    sources = new LinkedHashSet<>();
+    javadocs = new LinkedHashSet<>();
+
+    addArtifactsFrom(dependency);
   }
 
-  @NotNull
+  public void addArtifactsFrom(ExternalLibraryDependency dependency) {
+    addIfNotNull(files, dependency.getFile());
+    addIfNotNull(sources, dependency.getSource());
+    addIfNotNull(javadocs, dependency.getJavadoc());
+  }
+
+  private static <T> void addIfNotNull(@NotNull Collection<T> targetCollection, @Nullable T file) {
+    if (file != null) {
+      targetCollection.add(file);
+    }
+  }
+
   @Override
-  public Collection<File> getFiles() {
+  public @NotNull Collection<File> getFiles() {
     return files;
   }
 
-  @NotNull
   @Override
-  public Collection<File> getSources() {
+  public @NotNull Collection<File> getSources() {
     return sources;
   }
 
-  @NotNull
   @Override
-  public Collection<File> getJavadoc() {
+  public @NotNull Collection<File> getJavadoc() {
     return javadocs;
   }
 
@@ -67,16 +65,21 @@ public class DefaultExternalMultiLibraryDependency extends AbstractExternalDepen
     if (!(o instanceof DefaultExternalMultiLibraryDependency)) return false;
     if (!super.equals(o)) return false;
     DefaultExternalMultiLibraryDependency that = (DefaultExternalMultiLibraryDependency)o;
-    return Objects.equal(files, that.files);
+    return GradleContainerUtil.match(files.iterator(), that.files.iterator(), new BooleanBiFunction<File, File>() {
+      @Override
+      public Boolean fun(File o1, File o2) {
+        return Objects.equal(o1.getPath(), o2.getPath());
+      }
+    });
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), files);
+    return Objects.hashCode(super.hashCode(), calcFilesPathsHashCode(files));
   }
 
   @Override
   public String toString() {
-    return "library '" + files + '\'';
+    return "library '" + files + '\'' + super.toString();
   }
 }

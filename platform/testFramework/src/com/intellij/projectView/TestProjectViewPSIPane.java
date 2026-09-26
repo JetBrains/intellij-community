@@ -1,27 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultTreeModel;
 
-import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
-
-/**
-* @author yole
-*/
-class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
+@ApiStatus.Internal
+public final class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
   private final TestProjectTreeStructure myTestTreeStructure;
   private final int myWeight;
 
@@ -32,49 +26,63 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public SelectInTarget createSelectInTarget() {
-    return null;
-  }
+  public @NotNull SelectInTarget createSelectInTarget() {
+    return new SelectInTarget() {
+      @Override
+      public boolean canSelect(SelectInContext context) {
+        return false;
+      }
 
-  @Override
-  protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
-    return new AbstractTreeUpdater(treeBuilder);
-  }
+      @Override
+      public void selectIn(SelectInContext context, boolean requestFocus) {
 
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    return null;
-  }
+      }
 
-  @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
-    return myTestTreeStructure;
-  }
-
-  @Override
-  protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(treeModel) {
+      @Override
+      public String getMinorViewId() {
+        return getId();
+      }
     };
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
+    return myTestTreeStructure;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+    return new MyProjectViewTree(treeModel);
+  }
+
+  @Override
+  public @NotNull Icon getIcon() {
+    return AllIcons.General.ProjectTab;
+  }
+
+  @Override
+  public @NotNull String getId() {
     return "";
   }
 
   @Override
-  public String getTitle() {
-    return null;
+  public @NotNull String getTitle() {
+    return "";
   }
 
   @Override
   public int getWeight() {
     return myWeight;
+  }
+
+  @Override
+  public boolean supportsManualOrder() {
+    return true;
+  }
+
+  private static class MyProjectViewTree extends ProjectViewTree {
+    private MyProjectViewTree(@NotNull DefaultTreeModel treeModel) {
+      super(treeModel);
+    }
   }
 }

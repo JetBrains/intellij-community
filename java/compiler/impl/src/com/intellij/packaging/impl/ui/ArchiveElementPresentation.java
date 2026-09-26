@@ -23,9 +23,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ArchiveElementPresentation extends PackagingElementPresentation {
   private final ArchivePackagingElement myElement;
 
@@ -33,10 +30,12 @@ public class ArchiveElementPresentation extends PackagingElementPresentation {
     myElement = element;
   }
 
+  @Override
   public String getPresentableName() {
     return myElement.getArchiveFileName();
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(PlatformIcons.JAR_ICON);
     presentationData.addText(myElement.getArchiveFileName(), mainAttributes);

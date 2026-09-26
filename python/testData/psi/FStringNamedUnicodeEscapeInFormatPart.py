@@ -1,0 +1,1 @@
+s = f'{42:\N{LATIN SMALL LETTER A}}'

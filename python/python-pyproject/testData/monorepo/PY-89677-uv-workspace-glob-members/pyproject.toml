@@ -1,0 +1,9 @@
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+package = {workspace = true}
+app = {workspace = true}
+
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]

@@ -1,35 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.RowIcon;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.ui.icons.RowIcon;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class VisibilityIcons {
-  private VisibilityIcons() {}
+public final class VisibilityIcons {
+  private VisibilityIcons() { }
 
   public static void setVisibilityIcon(PsiModifierList modifierList, RowIcon baseIcon) {
     if (modifierList != null) {
@@ -46,38 +29,35 @@ public class VisibilityIcons {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
+        Icon emptyIcon = IconManager.getInstance().createEmptyIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Public));
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
-    else if (PlatformIcons.PUBLIC_ICON != null) {
-        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
-        baseIcon.setIcon(emptyIcon, 1);
-      }
+    else {
+      Icon emptyIcon = IconManager.getInstance().createEmptyIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Public));
+      baseIcon.setIcon(emptyIcon, 1);
+    }
   }
 
-  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
+  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED,
+    PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {
     Icon icon;
+    IconManager iconManager = IconManager.getInstance();
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
-        icon = PlatformIcons.PUBLIC_ICON;
+        icon = iconManager.getPlatformIcon(PlatformIcons.Public);
         break;
       case PsiUtil.ACCESS_LEVEL_PROTECTED:
-        icon = PlatformIcons.PROTECTED_ICON;
+        icon = iconManager.getPlatformIcon(PlatformIcons.Protected);
         break;
       case PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL:
-        icon = PlatformIcons.PACKAGE_LOCAL_ICON;
+        icon = iconManager.getPlatformIcon(PlatformIcons.Local);
         break;
       case PsiUtil.ACCESS_LEVEL_PRIVATE:
-        icon = PlatformIcons.PRIVATE_ICON;
+        icon = iconManager.getPlatformIcon(PlatformIcons.Private);
         break;
       default:
-        if (PlatformIcons.PUBLIC_ICON != null) {
-          icon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
-        }
-        else {
-          return;
-        }
+        icon = iconManager.createEmptyIcon(iconManager.getPlatformIcon(PlatformIcons.Public));
     }
     baseIcon.setIcon(icon, 1);
   }

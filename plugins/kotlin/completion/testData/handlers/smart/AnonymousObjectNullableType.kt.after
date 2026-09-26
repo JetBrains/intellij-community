@@ -1,0 +1,5 @@
+interface Foo
+
+val a : Foo? = object : Foo {}
+
+// ELEMENT: object

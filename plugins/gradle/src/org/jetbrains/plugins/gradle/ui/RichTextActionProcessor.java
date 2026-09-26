@@ -1,25 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Denis Zhdanov
- * @since 1/16/12 5:20 PM
- */
 public class RichTextActionProcessor implements RichTextControlBuilder.RichTextProcessor {
 
   @Override
@@ -45,6 +48,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     final String text = action.getTemplatePresentation().getText();
     JLabel result = new JLabel(text) {
+      @Override
       public void paint(Graphics g) {
         super.paint(g);
         final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 2;
@@ -52,7 +56,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
         g.drawLine(0, y, width, y);
       }
     };
-    Color color = UIUtil.isUnderDarcula() ? Color.ORANGE : Color.BLUE;
+    Color color = StartupUiUtil.isUnderDarcula() ? Color.ORANGE : Color.BLUE;
     result.setForeground(color);
     result.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -73,9 +77,8 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
     return result;
   }
 
-  @NotNull
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return "action";
   }
 }

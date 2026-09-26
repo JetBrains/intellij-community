@@ -1,6 +1,6 @@
 from typing import Union
 
-from .importsForTypeAnnotations2_import import Foo
+from importsForTypeAnnotations2_import import Foo
 
 
 class Bar(Foo):

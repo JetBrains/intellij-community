@@ -1,18 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifierOwner> extends InspectionElementsMergerBase {
   private final AbstractNamingConventionInspection<T> myNewInspection;
 
@@ -20,21 +20,19 @@ public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifier
     myNewInspection = inspection;
   }
 
-  @NotNull
   @Override
-  public String getMergedToolName() {
+  public @NotNull String getMergedToolName() {
     return myNewInspection.getShortName();
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
-    return ArrayUtil.toStringArray(myNewInspection.getOldToolNames());
+  public String @NotNull [] getSourceToolNames() {
+    return ArrayUtilRt.toStringArray(myNewInspection.getOldToolNames());
   }
 
   @Override
-  protected boolean areSettingsMerged(Map<String, Element> inspectionsSettings, Element inspectionElement) {
-    final Element merge = merge(inspectionsSettings, false);
+  protected boolean areSettingsMerged(@NotNull Map<String, Element> inspectionsSettings, @NotNull Element inspectionElement) {
+    Element merge = merge(inspectionsSettings, false);
     if (merge != null) {
       myNewInspection.readSettings(merge);
       merge.removeContent();
@@ -45,11 +43,9 @@ public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifier
   }
 
   @Override
-  protected Element wrapElement(String sourceToolName, Element sourceElement, Element toolElement) {
+  protected Element transformElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
     Element element = new Element("extension").setAttribute("name", sourceToolName);
-    if (sourceElement != null) {
-      element.setAttribute("enabled", ObjectUtils.notNull(sourceElement.getAttributeValue("enabled"), "false"));
-    }
+    element.setAttribute("enabled", ObjectUtils.notNull(sourceElement.getAttributeValue("enabled"), "false"));
     toolElement.addContent(element);
     return element;
   }

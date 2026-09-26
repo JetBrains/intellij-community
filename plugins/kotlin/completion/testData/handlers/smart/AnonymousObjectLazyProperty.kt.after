@@ -1,0 +1,9 @@
+interface Foo
+
+class Bar {
+    val prop: Foo by lazy {
+        object : Foo {}
+    }
+}
+
+// ELEMENT: object

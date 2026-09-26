@@ -1,0 +1,40 @@
+package com.intellij.python.processOutput.frontend.ui.components
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
+import com.intellij.ui.OnePixelSplitter
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+internal class ProcessOutputToolWindow(toolWindow: ToolWindow) {
+  val component: JComponent
+    field = SimpleToolWindowPanel(true, true)
+
+  val uiContext = ProcessOutputUiContext(toolWindow.project, component, toolWindow.disposable)
+
+  init {
+    val splitter = OnePixelSplitter(false, SPLITTER_PROPORTION_KEY, SPLITTER_DEFAULT_PROPORTION)
+
+    splitter.firstComponent = ProcessTreeSection(uiContext).component
+    splitter.secondComponent = OutputSection(uiContext).component
+
+    val panel = JPanel(BorderLayout())
+
+    panel.add(splitter)
+
+    component.name = Naming.TOOL_WINDOW_PANEL_NAME
+    component.setContent(panel)
+  }
+
+  private object Naming {
+    const val TOOL_WINDOW_PANEL_NAME = "Python.ProcessOutput.ToolWindowPanel"
+  }
+
+  companion object {
+    const val SPLITTER_PROPORTION_KEY = "Python.ProcessOutputToolWindow.Vertical"
+    const val SPLITTER_DEFAULT_PROPORTION = 0.3f
+  }
+}

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,12 +35,16 @@ import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFun
 import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   public void doTest(@Nullable String errorMessage) {
@@ -72,14 +75,12 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     assertNotNull(destination);
     final String finalDestination = destination;
     try {
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-        if (function.getContainingClass() != null) {
-          new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
-        }
-        else {
-          new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
-        }
-      });
+      if (function.getContainingClass() != null) {
+        new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
+      }
+      else {
+        new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
+      }
     }
     catch (IncorrectOperationException e) {
       if (errorMessage == null) {
@@ -90,14 +91,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   private void doMultiFileTest(@Nullable String destination, @Nullable String errorMessage) throws IOException {
-    final String rootBeforePath = getTestName(true) + "/before";
-    final String rootAfterPath = getTestName(true) + "/after";
-    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
-    myFixture.configureByFile("main.py");
-    runRefactoring(destination, errorMessage);
-    if (errorMessage == null) {
-      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
-    }
+    doMultifileTest("main.py", destination, errorMessage);
   }
 
   private boolean isActionEnabled() {
@@ -125,6 +119,45 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
       element = element.getParent();
     }
     return false;
+  }
+
+  private void doMultifileTest(@NotNull String pathToOriginFunction, @Nullable String destination, @Nullable String errorMessage) throws IOException {
+    final String rootBeforePath = getTestName(true) + "/before";
+    final String rootAfterPath = getTestName(true) + "/after";
+    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+    myFixture.configureByFile(pathToOriginFunction);
+    runRefactoring(destination, errorMessage);
+    if (errorMessage == null) {
+      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+    }
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInAnotherDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/b/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInSameDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInParentDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/b/main.py";
+    String destination = "mypkg/a/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInChildDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/b/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
   }
 
   // PY-6637
@@ -265,11 +298,11 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   public void testMethodNotImportableDestinationFile() throws IOException {
-    doMultiFileTest("not-importable.py", PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", "not-importable.py"));
+    doMultiFileTest("not-importable.py", PyBundle.message("refactoring.move.error.cannot.use.module.name", "not-importable.py"));
   }
 
   public void testLocalFunctionNameCollision() {
-    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", "nested"));
+    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function", "nested"));
   }
 
   public void testMethodInsertionPositionSameFileClassAndUsageNotTopLevel() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,16 @@ package com.intellij.ui.treeStructure.treetable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.RowSorter;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 public class ListTreeTableModelOnColumns extends DefaultTreeModel
   implements TreeTableModel, SortableColumnModel{
@@ -40,18 +45,22 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     myTree = tree;
   }
 
+  @Override
   public int getColumnCount() {
     return myColumns.length;
   }
 
+  @Override
   public String getColumnName(int column) {
     return myColumns[column].getName();
   }
 
+  @Override
   public Object getValueAt(Object value, int column) {
     return myColumns[column].valueOf(value);
   }
 
+  @Override
   public Object getChild(Object parent, int index) {
     return ((TreeNode) parent).getChildAt(index);
   }
@@ -71,10 +80,12 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return null;
   }
 
+  @Override
   public int getChildCount(Object parent) {
     return ((TreeNode) parent).getChildCount();
   }
 
+  @Override
   public Class getColumnClass(int column) {
     return myColumns[column].getColumnClass();
   }
@@ -83,17 +94,18 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return myColumns;
   }
 
+  @Override
   public boolean isCellEditable(Object node, int column) {
     return myColumns[column].isCellEditable(node);
   }
 
+  @Override
   public void setValueAt(Object aValue, Object node, int column) {
     myColumns[column].setValue(node, aValue);
   }
 
   /**
-   * @param columns
-   * @return true if changed
+   * @return {@code true} if changed
    */
   public boolean setColumns(ColumnInfo[] columns) {
     if (myColumns != null && Arrays.equals(myColumns, columns)) {
@@ -103,6 +115,7 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     return true;
   }
 
+  @Override
   public ColumnInfo[] getColumnInfos() {
     return myColumns;
   }
@@ -126,9 +139,11 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
     }
   }
 
+  @Override
   public void setSortable(boolean aBoolean) {
   }
 
+  @Override
   public boolean isSortable() {
     return false;
   }

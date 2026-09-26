@@ -1,0 +1,28 @@
+================ Step #1 =================
+Cleaning output files:
+  foo/A.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_classRemoved-module2.kotlin_module
+  foo/B.class
+  use/CreateAKt.class
+  use/UseAfooKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/classRemoved/module2/B.kt
+  kotlin/multiModule/common/classRemoved/module2/createA.kt
+  kotlin/multiModule/common/classRemoved/module2/useAfoo.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_classRemoved-module2.kotlin_module
+End of files
+Compiling files:
+  kotlin/multiModule/common/classRemoved/module2/B.kt
+  kotlin/multiModule/common/classRemoved/module2/createA.kt
+  kotlin/multiModule/common/classRemoved/module2/useAfoo.kt
+End of files
+------------------------------------------
+Exit code: OK

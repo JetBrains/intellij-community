@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,29 +10,27 @@ import java.util.List;
 
 /**
  * Copies PsiType structure with an ability to replace some inner components.
- *
- * @author peter
  */
 public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiTypeMapper");
+  protected static final Logger LOG = Logger.getInstance(PsiTypeMapper.class);
 
-  @Nullable
-  public <T extends PsiType> T mapType(@NotNull T type) {
-    //noinspection unchecked
+  @SuppressWarnings("unchecked")
+  public @Nullable <T extends PsiType> T mapType(@NotNull T type) {
     return (T)type.accept(this);
   }
 
   @Override
-  public PsiType visitArrayType(final PsiArrayType type) {
+  public PsiType visitArrayType(final @NotNull PsiArrayType type) {
     PsiType componentType = type.getComponentType();
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
     if (mappedComponent == componentType) return type;
-    return new PsiArrayType(mappedComponent, type.getAnnotationProvider());
+    return new PsiArrayType(mappedComponent, type.getAnnotationProvider())
+      .withContainerNullability(type);
   }
 
   @Override
-  public PsiType visitEllipsisType(final PsiEllipsisType type) {
+  public PsiType visitEllipsisType(final @NotNull PsiEllipsisType type) {
     PsiType componentType = type.getComponentType();
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
@@ -55,49 +39,48 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitTypeVariable(final PsiTypeVariable var) {
+  public PsiType visitTypeVariable(final @NotNull PsiTypeVariable var) {
     return var;
   }
 
   @Override
-  public PsiType visitBottom(final Bottom bottom) {
+  public PsiType visitBottom(final @NotNull Bottom bottom) {
     return bottom;
   }
 
   @Override
-  public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType type) {
+  public PsiType visitCapturedWildcardType(final @NotNull PsiCapturedWildcardType type) {
     return type;
   }
 
   @Override
-  public abstract PsiType visitClassType(final PsiClassType classType);
+  public abstract PsiType visitClassType(final @NotNull PsiClassType classType);
 
   @Override
-  public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
+  public PsiType visitPrimitiveType(final @NotNull PsiPrimitiveType primitiveType) {
     return primitiveType;
   }
 
   @Override
-  public PsiType visitType(final PsiType type) {
-    LOG.error(type);
+  public PsiType visitType(final @NotNull PsiType type) {
+    LOG.error("No visit* methods were calleed for " + type);
     return null;
   }
 
   @Override
-  public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
+  public PsiType visitWildcardType(final @NotNull PsiWildcardType wildcardType) {
     PsiType bound = wildcardType.getBound();
     final PsiManager manager = wildcardType.getManager();
-    if (bound == null) return PsiWildcardType.createUnbounded(manager);
+    if (bound == null) return wildcardType.unbounded();
 
     bound = mapType(bound);
     if (bound == null) return null;
     return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, bound) : PsiWildcardType.createSuper(manager, bound);
   }
 
-  @Nullable
   @Override
-  public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
-    final List<PsiType> substituted = ContainerUtil.newSmartList();
+  public @Nullable PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
+    final List<PsiType> substituted = new SmartList<>();
     for (PsiType component : intersectionType.getConjuncts()) {
       PsiType mapped = mapType(component);
       if (mapped == null) return null;
@@ -108,8 +91,8 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-    final List<PsiType> substituted = ContainerUtil.newSmartList();
+  public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
+    final List<PsiType> substituted = new SmartList<>();
     for (PsiType component : disjunctionType.getDisjunctions()) {
       PsiType mapped = mapType(component);
       if (mapped == null) return null;
@@ -120,8 +103,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   }
 
   @Override
-  public PsiType visitDiamondType(PsiDiamondType diamondType) {
+  public PsiType visitDiamondType(@NotNull PsiDiamondType diamondType) {
     return diamondType;
   }
-
 }

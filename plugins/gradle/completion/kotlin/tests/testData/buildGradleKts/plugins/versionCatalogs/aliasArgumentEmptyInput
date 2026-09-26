@@ -1,0 +1,22 @@
+// "EXPECTED-SUGGESTION": customLibs, customLibs.plugins.my.plugin.bbb, libs, libs.plugins.my.plugin.aaa
+// FILE: build.gradle.kts
+plugins {
+    alias(<caret>)
+}
+
+// FILE: gradle/libs.versions.toml
+[plugins]
+my-plugin-aaa = "my.plugin.aaa:1.0.0"
+
+// FILE: customPath/customLibs.toml
+[plugins]
+my-plugin-bbb = "my.plugin.bbb:1.0.0"
+
+// FILE: settings.gradle.kts
+dependencyResolutionManagement {
+    dependencyResolutionManagement {
+        versionCatalogs {
+            create("customLibs") { from(files("customPath/customLibs.toml")) }
+        }
+    }
+}

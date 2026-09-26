@@ -1,0 +1,23 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.python.community.impl"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="com.intellij.python.langInjection.PyLanguageInjectionSupport"/>
+    <injectionConfig config="resources/pyInjections.xml"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <patterns.patternClass className="com.intellij.python.langInjection.PythonPatterns" alias="py"/>
+    <multiHostInjector implementation="com.intellij.python.langInjection.PyConfigurationInjector"/>
+    <multiHostInjector implementation="com.intellij.python.langInjection.PyTemporaryInjector"/>
+  </extensions>
+</idea-plugin>

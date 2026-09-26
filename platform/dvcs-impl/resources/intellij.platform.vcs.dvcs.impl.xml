@@ -1,0 +1,144 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.pushSupport"
+                    interface="com.intellij.dvcs.push.PushSupport"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cherryPicker"
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vcsRepositoryCreator"
+                    interface="com.intellij.dvcs.repo.VcsRepositoryCreator"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.clonePathProvider"
+                    interface="com.intellij.dvcs.repo.ClonePathProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pushDialogActionsProvider"
+                    interface="com.intellij.dvcs.push.PushDialogActionsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pushDialogCustomizer"
+                    interface="com.intellij.dvcs.push.PushDialogCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.commitNodeUiRenderExtension"
+                    interface="com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.customPushOptionsPanelFactory"
+                    interface="com.intellij.dvcs.push.CustomPushOptionsPanelFactory"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.commitModeProvider"
+                    interface="com.intellij.dvcs.commit.DvcsCommitModeProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="Vcs.CopyCurrentBranchName"
+            class="com.intellij.dvcs.actions.CopyCurrentBranchNameAction"
+            icon="AllIcons.Actions.Copy"/>
+    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push">
+      <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+      <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
+      <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
+      <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
+    </action>
+
+    <group id="Vcs.Push.Actions">
+      <action id="Vcs.Push.Simple" class="com.intellij.dvcs.push.ui.SimplePushAction"/>
+      <action id="Vcs.Push.Force" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <group id="Dvcs.Log.ContextMenu">
+      <reference ref="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
+    </group>
+    <group id="Dvcs.FileHistory.ContextMenu">
+      <reference ref="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
+    </group>
+
+    <group id="Dvcs.Log.Toolbar">
+      <reference ref="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.Toolbar"/>
+    </group>
+
+    <group id="Vcs.CherryPick.KeymapGroup" searchable="false">
+      <reference ref="Vcs.CherryPick"/>
+      <reference ref="Vcs.Push"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <action id="CheckIgnoredAndNotExcludedDirectories" class="com.intellij.dvcs.ignore.CheckIgnoredToExcludeAction"/>
+  </actions>
+
+  <projectListeners>
+    <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.dvcs.repo.rhizome.RepositoryCountUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <changesGroupingPolicy key="repository" id="repository" weight="30"
+                           implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>
+
+    <vcsStartupActivity implementation="com.intellij.dvcs.repo.VcsRepositoryManager$MyStartupActivity"/>
+    <iconDescriptionBundle resourceBundle="messages.DvcsBundle"/>
+
+    <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.dvcs.DvcsNotificationIdsHolder"/>
+
+    <productivityFeaturesProvider implementation="com.intellij.dvcs.featureStatistics.VcsProductivityFeaturesProvider"/>
+    <featureStatisticsBundle qualifiedName="messages.VcsProductivityFeatures"/>
+
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.dvcs.DvcsRemoteApiProvider"
+                                            apiInterfaces="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"/>
+  </extensions>
+</idea-plugin>

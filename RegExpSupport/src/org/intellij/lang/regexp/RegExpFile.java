@@ -32,16 +32,15 @@ public class RegExpFile extends PsiFileBase {
     super(viewProvider, language);
   }
 
-  @NotNull
-  public FileType getFileType() {
+  @Override
+  public @NotNull FileType getFileType() {
     return RegExpFileType.INSTANCE;
   }
 
   /**
    * @return Regexp groups this file has
    */
-  @NotNull
-  public Collection<RegExpGroup> getGroups() {
+  public @NotNull Collection<RegExpGroup> getGroups() {
     return PsiTreeUtil.findChildrenOfType(this, RegExpGroup.class);
   }
 }

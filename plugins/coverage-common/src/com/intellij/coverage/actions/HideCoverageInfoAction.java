@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,39 +14,52 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.ui.components.labels.LinkLabel;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Collection;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public class HideCoverageInfoAction extends IconWithTextAction {
-  public HideCoverageInfoAction() {
-    super("Hide coverage", "Hide coverage data", null);
+
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    Project project = Objects.requireNonNull(e.getData(CommonDataKeys.PROJECT));
+    doAction(project);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
+  private static void doAction(Project project) {
+    CoverageDataManager manager = CoverageDataManager.getInstance(project);
+    for (CoverageSuitesBundle bundle : manager.activeSuites()) {
+      manager.closeSuitesBundle(bundle);
+    }
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    return new LinkLabel(presentation.getText(), null) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    return new LinkLabel<>(CoverageBundle.message("coverage.hide.coverage.link.name"), null) {
       @Override
       public void doClick() {
         DataContext dataContext = DataManager.getInstance().getDataContext(this);
-        Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
+        Project project = Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
+        doAction(project);
         HintManagerImpl.getInstanceImpl().hideAllHints();
       }
     };
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    presentation.setVisible(e.isFromActionToolbar());
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    if (project != null) {
-      presentation.setEnabledAndVisible(CoverageDataManager.getInstance(project).getCurrentSuitesBundle() != null);
-    }
+    if (project == null) return;
+    Collection<CoverageSuitesBundle> activeSuites = CoverageDataManager.getInstance(project).activeSuites();
+    e.getPresentation().setEnabledAndVisible(!activeSuites.isEmpty());
   }
 }

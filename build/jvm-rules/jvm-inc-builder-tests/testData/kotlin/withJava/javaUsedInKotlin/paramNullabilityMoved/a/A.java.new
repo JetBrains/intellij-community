@@ -1,0 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
+public class A {
+    public void f(String a, @NotNull String b) { }
+}  // annotation moved from param 0 to param 1

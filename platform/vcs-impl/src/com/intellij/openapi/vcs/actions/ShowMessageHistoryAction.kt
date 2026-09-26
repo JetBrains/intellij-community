@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.TextCopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.editor.actions.ContentChooser.RETURN_SYMBOL
+import com.intellij.openapi.editor.actions.ContentChooser
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,21 +18,19 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
-import com.intellij.openapi.util.text.StringUtil.first
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.vcs.commit.CommitMessageInspectionProfile.getSubjectRightMargin
+import com.intellij.vcs.commit.NonModalCommitPanel
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
-import javax.swing.JList
 import javax.swing.ListSelectionModel.SINGLE_SELECTION
 
 /**
@@ -38,7 +38,7 @@ import javax.swing.ListSelectionModel.SINGLE_SELECTION
  * as a sample of using the [CheckinProjectPanel] API. Actions to be shown in the commit dialog
  * should be added to the `Vcs.MessageActionGroup` action group.
  */
-class ShowMessageHistoryAction : DumbAwareAction() {
+internal class ShowMessageHistoryAction : DumbAwareAction() {
   init {
     isEnabledInModalContext = true
   }
@@ -47,8 +47,17 @@ class ShowMessageHistoryAction : DumbAwareAction() {
     val project = e.project
     val commitMessage = getCommitMessage(e)
 
+    if (e.place == NonModalCommitPanel.COMMIT_TOOLBAR_PLACE) {
+      e.presentation.icon = AllIcons.Vcs.HistoryInline
+      e.presentation.hoveredIcon = AllIcons.Vcs.HistoryInlineHovered
+    }
+
     e.presentation.isVisible = project != null && commitMessage != null
     e.presentation.isEnabled = e.presentation.isVisible && !VcsConfiguration.getInstance(project!!).recentMessages.isEmpty()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -74,11 +83,10 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         it?.let { preview(project, commitMessage, it, previewCommandGroup) }
       }
       .setItemChosenCallback { chosenMessage = it }
-      .setRenderer(object : ColoredListCellRenderer<String>() {
-        override fun customizeCellRenderer(list: JList<out String>, value: String, index: Int, selected: Boolean, hasFocus: Boolean) {
-          append(first(convertLineSeparators(value, RETURN_SYMBOL), rightMargin, false))
-
-          applySpeedSearchHighlighting(list, this, true, selected)
+      .setRenderer(listCellRenderer {
+        val text = StringUtil.first(StringUtil.convertLineSeparators(value, ContentChooser.RETURN_SYMBOL), rightMargin, false)
+        text(text) {
+          speedSearch {}
         }
       })
       .addListener(object : JBPopupListener {
@@ -91,6 +99,8 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
+          // IDEA-195094 Regression: New CTRL-E in "commit changes" breaks keyboard shortcuts
+          commitMessage.editorField.requestFocusInWindow()
           // Use invokeLater() as onClosed() is called before callback from setItemChosenCallback
           getApplication().invokeLater { chosenMessage ?: cancelPreview(project, commitMessage) }
         }
@@ -99,13 +109,10 @@ class ShowMessageHistoryAction : DumbAwareAction() {
       .setAutoPackHeightOnFiltering(false)
       .createPopup()
       .apply {
-        setDataProvider { dataId ->
-          when (dataId) {
-          // default list action does not work as "CopyAction" is invoked first, but with other copy provider
-            COPY_PROVIDER.name -> object : TextCopyProvider() {
-              override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
-            }
-            else -> null
+        setUiDataProvider { sink ->
+          sink[COPY_PROVIDER] = object : TextCopyProvider() {
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+            override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
           }
         }
       }

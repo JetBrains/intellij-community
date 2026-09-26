@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents the parameter of a Java method, foreach (enhanced for) statement or catch block.
  */
-public interface PsiParameter extends PsiVariable, JvmParameter {
+public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiersOwner {
   /**
    * The empty array of PSI parameters which can be reused to avoid unnecessary allocations.
    */
@@ -37,11 +24,13 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
    *
    * @return the declaration scope for the parameter.
    */
-  @NotNull
-  PsiElement getDeclarationScope();
+  @NotNull PsiElement getDeclarationScope();
 
   /**
-   * Checks if the parameter accepts a variable number of arguments.
+   * Checks if the parameter is declared as a variable arity parameter (using ellipsis).
+   * If a malformed method is declared where ellipsis is used on non-last parameter (e.g. {@code void test(int... a, int[] b) {}}),
+   * then the parameter is still considered as a variable arity parameter, despite the method is not considered to be 
+   * a variable arity method.
    *
    * @return true if the parameter is a vararg, false otherwise
    */
@@ -51,19 +40,19 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  PsiTypeElement getTypeElement();
+  @Nullable PsiTypeElement getTypeElement();
 
-  /* This explicit declaration is required to force javac generate bridge method 'JvmType getType()'; without it calling
-  JvmParameter#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError. */
-  @NotNull
+  // This explicit declaration is required to force javac to generate a bridge method 'JvmType getType()'; without it calling
+  // JvmParameter#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError.
   @Override
-  PsiType getType();
+  @NotNull PsiType getType();
 
-  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
-  @NotNull
+  // binary compatibility
   @Override
-  default PsiAnnotation[] getAnnotations() {
-    return PsiVariable.super.getAnnotations();
+  default PsiAnnotation @NotNull [] getAnnotations() {
+    return PsiJvmModifiersOwner.super.getAnnotations();
   }
+
+  @Override
+  @NotNull @NlsSafe String getName();
 }

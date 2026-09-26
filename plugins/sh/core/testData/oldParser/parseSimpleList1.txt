@@ -1,0 +1,9 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('a')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('c')

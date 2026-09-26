@@ -1,35 +1,29 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.ByteBuffer;
+import java.io.DataInputStream;
+import java.util.Arrays;
 
 /**
  * A sequence of bytes backed by byte array (or sub-array).
  */
-public class ByteArraySequence implements ByteSequence {
+public final class ByteArraySequence implements ByteSequence {
+  public static final ByteArraySequence EMPTY = new ByteArraySequence(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final byte[] myBytes;
   private final int myOffset;
   private final int myLen;
 
-  public ByteArraySequence(@NotNull byte[] bytes) {
+  public ByteArraySequence(byte @NotNull [] bytes) {
     this(bytes, 0, bytes.length);
   }
 
-  public ByteArraySequence(@NotNull byte[] bytes, int offset, int len) {
+  public ByteArraySequence(byte @NotNull [] bytes, int offset, int len) {
     myBytes = bytes;
     myOffset = offset;
     myLen = len;
@@ -40,10 +34,10 @@ public class ByteArraySequence implements ByteSequence {
 
   /**
    * Implementation method.
-   * @return Internal buffer, irrespective myOffset or myLen. May be larger than length().
+   * @return Internal buffer, irrespective of myOffset or myLen. May be larger than length().
    */
-  @NotNull
-  public byte[] getBytes() {
+  @ApiStatus.Internal
+  public byte @NotNull [] getInternalBuffer() {
     return myBytes;
   }
 
@@ -105,22 +99,26 @@ public class ByteArraySequence implements ByteSequence {
     return myBytes[myOffset + index];
   }
 
-  @NotNull
   @Override
-  public ByteSequence subSequence(int start, int end) {
+  public @NotNull ByteSequence subSequence(int start, int end) {
     return new ByteArraySequence(myBytes, myOffset+start, end-start);
   }
 
-  @NotNull
   @Override
-  public byte[] toBytes() {
-    byte[] bytes = new byte[length()];
-    System.arraycopy(myBytes, myOffset, bytes, 0, length());
-    return bytes;
+  public byte @NotNull [] toBytes() {
+    return Arrays.copyOfRange(myBytes, myOffset, myOffset + length());
   }
 
-  @NotNull
-  public ByteBuffer toByteBuffer() {
-    return ByteBuffer.wrap(getBytes(), getOffset(), getLength());
+  public @NotNull DataInputStream toInputStream() {
+    return new DataInputStream(new UnsyncByteArrayInputStream(myBytes, myOffset, length()));
+  }
+
+  public static @NotNull ByteArraySequence create(byte @NotNull [] bytes) {
+    return bytes.length == 0 ? EMPTY : new ByteArraySequence(bytes);
+  }
+
+  @Override
+  public String toString() {
+    return IOUtil.toHexString(toBytes());
   }
 }

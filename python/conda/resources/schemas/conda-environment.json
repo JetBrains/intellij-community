@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.jetbrains.com/schemas/conda/environment.json",
+  "$comment": "Modeled after CEP 24 - Specification of environment.yml input files (https://conda.org/learn/ceps/cep-0024/).",
+  "title": "Conda environment",
+  "description": "A conda environment definition file (environment.yml / environment.yaml), as consumed by `conda env create` and produced by `conda env export`.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["dependencies"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Preferred name of the environment. Tools may let the user override it.\n\nMust not be `base` or `root`, and must not contain `/`, spaces, `:` or `#`.",
+      "minLength": 1,
+      "pattern": "^[^/ :#]+$",
+      "not": { "enum": ["base", "root"] },
+      "examples": ["myenv", "stats"]
+    },
+    "channels": {
+      "type": "array",
+      "description": "Conda channels queried by the solver, given as names, URLs or local paths. The configured default channels are appended unless `nodefaults` is present.",
+      "items": {
+        "type": "string",
+        "description": "A channel name (e.g. `conda-forge`), URL or local path. Use `nodefaults` to drop the configured default channels."
+      },
+      "examples": [["conda-forge"], ["conda-forge", "nodefaults"]]
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Packages to install. Plain strings are conda MatchSpec requirements; mapping entries are subsections handled by other installers (e.g. `pip`), processed after the conda requirements.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "description": "A conda MatchSpec requirement, e.g. `python`, `numpy>=1.21`, `python=3.11.*` or `conda-forge::numpy=1.21.*`."
+          },
+          {
+            "type": "object",
+            "description": "A non-conda installer subsection (keyed by the installer name).",
+            "minProperties": 1,
+            "properties": {
+              "pip": {
+                "type": "array",
+                "description": "PyPI requirements installed with pip after the conda packages.",
+                "items": {
+                  "type": "string",
+                  "description": "A PyPI requirement specifier, e.g. `requests`, `flask==3.0.*` or `-r requirements.txt`."
+                }
+              }
+            },
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "variables": {
+      "type": "object",
+      "description": "Environment variables associated with the environment. Stored in `conda-meta/state` and retained by `conda env export`.",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean"],
+        "description": "Variable value. Non-string values are converted to strings."
+      },
+      "examples": [{ "MY_VAR": "value" }]
+    },
+    "prefix": {
+      "type": "string",
+      "description": "Preferred absolute path to the environment. Often ignored by tools. Tildes and environment variables are expanded.",
+      "minLength": 1
+    },
+    "platforms": {
+      "type": "array",
+      "description": "Target platforms (conda subdirs) the environment should solve for. Used mainly by lockfile tools. `noarch` is not a valid value here.",
+      "items": {
+        "type": "string",
+        "examples": ["linux-64", "osx-64", "osx-arm64", "win-64", "linux-aarch64"]
+      }
+    },
+    "category": {
+      "type": "string",
+      "description": "Free-form annotation of the kind of dependencies in this file (e.g. `main`, `dev`, `test`). Used mainly by lockfile tools."
+    }
+  }
+}

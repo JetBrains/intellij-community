@@ -1,0 +1,14 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.processOutput.common"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <python.community.common.toolToIconMapper implementation="com.intellij.python.uv.common.impl.UvToolIdMapper"/>
+    <python.processOutput.common.processOutputIconMapping implementation="com.intellij.python.uv.common.impl.UvIconMapping"/>
+  </extensions>
+</idea-plugin>

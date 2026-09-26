@@ -1,0 +1,257 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl;
+
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretVisualAttributes;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+@ApiStatus.Internal
+public class ImaginaryCaret extends UserDataHolderBase implements Caret {
+  private final ImaginaryCaretModel myCaretModel;
+  private int myStart = 0, myPos = 0, myEnd = 0;
+
+  public ImaginaryCaret(ImaginaryCaretModel caretModel) {
+    myCaretModel = caretModel;
+  }
+
+  @Override
+  public int getSelectionStart() {
+    return myStart;
+  }
+
+  @Override
+  public int getSelectionEnd() {
+    return myEnd;
+  }
+
+  @Override
+  public boolean hasSelection() {
+    return myEnd > myStart;
+  }
+
+  @Override
+  public @NotNull ImaginaryEditor getEditor() {
+    return myCaretModel.getEditor();
+  }
+
+  @Override
+  public @NotNull CaretModel getCaretModel() {
+    return myCaretModel;
+  }
+
+  @Override
+  public int getOffset() {
+    return myPos;
+  }
+
+  @Override
+  public void moveToOffset(int offset) {
+    moveToOffset(offset, false);
+  }
+
+  @Override
+  public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
+    offset = clampWithinDocumentBounds(offset);
+    myStart = offset;
+    myPos = offset;
+    myEnd = offset;
+  }
+
+  private RuntimeException notImplemented() {
+    return getEditor().notImplemented();
+  }
+
+  @Override
+  public boolean isValid() {
+    throw notImplemented();
+  }
+
+  @Override
+  public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
+    if (lineShift == 0) {
+      myEnd = clampWithinDocumentBounds(myEnd + columnShift);
+      if (!withSelection) {
+        myStart = myEnd;
+        myPos = myEnd;
+      }
+    }
+    else {
+      var oldPos = myPos;
+      var currentPosition = getLogicalPosition();
+      moveToLogicalPosition(new LogicalPosition(currentPosition.line + lineShift, currentPosition.column + columnShift));
+      if (withSelection) {
+        var newPos = myPos;
+        myStart = Math.min(oldPos, newPos);
+        myEnd = Math.max(oldPos, newPos);
+      }
+    }
+  }
+
+  private int clampWithinDocumentBounds(int value) {
+    return Math.clamp(value, 0, getEditor().getDocument().getTextLength());
+  }
+
+  @Override
+  public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
+    moveToOffset(getEditor().logicalPositionToOffset(pos));
+  }
+
+  @Override
+  public void moveToVisualPosition(@NotNull VisualPosition pos) {
+    moveToOffset(getEditor().visualPositionToOffset(pos));
+  }
+
+  @Override
+  public boolean isUpToDate() {
+    throw notImplemented();
+  }
+
+  @Override
+  public @NotNull LogicalPosition getLogicalPosition() {
+    return getEditor().offsetToLogicalPosition(myStart);
+  }
+
+  @Override
+  public @NotNull VisualPosition getVisualPosition() {
+    return getEditor().offsetToVisualPosition(myStart);
+  }
+
+  @Override
+  public int getVisualLineStart() {
+    throw notImplemented();
+  }
+
+  @Override
+  public int getVisualLineEnd() {
+    throw notImplemented();
+  }
+  @Override
+  public @NotNull VisualPosition getSelectionStartPosition() {
+    return getEditor().offsetToVisualPosition(myStart);
+  }
+
+  @Override
+  public @NotNull VisualPosition getSelectionEndPosition() {
+    return getEditor().offsetToVisualPosition(myEnd);
+  }
+
+  @Override
+  public @Nullable String getSelectedText() {
+    return getEditor().getDocument().getText(new TextRange(myStart, myEnd));
+  }
+
+  @Override
+  public int getLeadSelectionOffset() {
+    return getOffset();
+  }
+
+  @Override
+  public @NotNull VisualPosition getLeadSelectionPosition() {
+    throw notImplemented();
+  }
+
+  @Override
+  public void setSelection(int startOffset, int endOffset) {
+    startOffset = clampWithinDocumentBounds(startOffset);
+    endOffset = clampWithinDocumentBounds(endOffset);
+
+    // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
+    if (startOffset == endOffset) {
+      myStart = myPos;
+      myEnd = myPos;
+      return;
+    }
+
+    if (startOffset > endOffset) {
+      myStart = endOffset;
+      myEnd = startOffset;
+    } else {
+      myStart = startOffset;
+      myEnd = endOffset;
+    }
+    if (myPos < myStart) {
+      myPos = myStart;
+    }
+    else if (myPos > myEnd) {
+      myPos = myEnd;
+    }
+  }
+
+  @Override
+  public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
+    setSelection(startOffset, endOffset);
+  }
+
+  @Override
+  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    throw notImplemented();
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    throw notImplemented();
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition,
+                           int startOffset,
+                           @Nullable VisualPosition endPosition,
+                           int endOffset,
+                           boolean updateSystemSelection) {
+    throw notImplemented();
+  }
+
+  @Override
+  public void removeSelection() {
+    myStart = myEnd;
+    myPos = myEnd;
+  }
+
+  @Override
+  public void selectLineAtCaret() {
+    throw notImplemented();
+  }
+
+  @Override
+  public void selectWordAtCaret(boolean honorCamelWordsSettings) {
+    throw notImplemented();
+  }
+
+  @Override
+  public @Nullable Caret clone(boolean above) {
+    throw notImplemented();
+  }
+
+  @Override
+  public boolean isAtRtlLocation() {
+    throw notImplemented();
+  }
+
+  @Override
+  public boolean isAtBidiRunBoundary() {
+    throw notImplemented();
+  }
+
+  @Override
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
+    throw notImplemented();
+  }
+
+  @Override
+  public void setVisualAttributes(@NotNull CaretVisualAttributes attributes) {
+    throw notImplemented();
+  }
+
+  @Override
+  public void dispose() {
+    throw notImplemented();
+  }
+
+}

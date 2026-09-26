@@ -1,0 +1,40 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.assertj.swing"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.dataextractor.TextExtractorExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.textExtractorExtension" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="expose.ui.hierarchy.url"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Enables UI components hierarchy URL"/>
+
+    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <remotedriver.xpathDataModelExtension implementation="com.jetbrains.performancePlugin.remotedriver.RemoteDriverDataModelExtension"/>
+  </extensions>
+</idea-plugin>

@@ -1,76 +1,56 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.CommonBundle;
+import com.intellij.BundleBase;
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
-/**
- * @author max
- */
-public class FeatureStatisticsBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(key), key, params);
+@ApiStatus.Internal
+public final class FeatureStatisticsBundle {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return BundleBase.messageOrDefault(getBundle(key), key, null, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;
   private static final Logger LOG = Logger.getInstance(FeatureStatisticsBundle.class);
-  @NonNls private static final String BUNDLE = "messages.FeatureStatisticsBundle";
+  private static final @NonNls String BUNDLE = "messages.FeatureStatisticsBundle";
 
   private FeatureStatisticsBundle() {
   }
 
   private static ResourceBundle getBundle(final String key) {
-    ResourceBundle providerBundle = ProvidersBundles.INSTANCE.get(key);
+    ResourceBundle providerBundle = ProviderBundles.INSTANCE.get(key);
     if (providerBundle != null) {
       return providerBundle;
-    }
-    final FeatureStatisticsBundleProvider[] providers = FeatureStatisticsBundleProvider.EP_NAME.getExtensions();
-    for (FeatureStatisticsBundleProvider provider : providers) {
-      final ResourceBundle bundle = provider.getBundle();
-      if (bundle.containsKey(key)) {
-        return bundle;
-      }
     }
 
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
+      bundle = DynamicBundle.getResourceBundle(FeatureStatisticsBundle.class.getClassLoader(), BUNDLE);
       ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
   }
 
-  private static final class ProvidersBundles extends HashMap<String, ResourceBundle> {
+  private static final class ProviderBundles extends HashMap<String, ResourceBundle> {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private static final ProvidersBundles INSTANCE = new ProvidersBundles();
+    private static final ProviderBundles INSTANCE = new ProviderBundles();
 
-    private ProvidersBundles() {
-      for (FeatureStatisticsBundleEP bundleEP : Extensions.getExtensions(FeatureStatisticsBundleEP.EP_NAME)) {
+    private ProviderBundles() {
+      for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
         try {
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), bundleEP.getLoaderForClass());
+          ResourceBundle bundle = DynamicBundle.getResourceBundle(bundleEP.getPluginDescriptor().getClassLoader(), bundleEP.qualifiedName);
           for (String key : bundle.keySet()) {
             put(key, bundle);
           }

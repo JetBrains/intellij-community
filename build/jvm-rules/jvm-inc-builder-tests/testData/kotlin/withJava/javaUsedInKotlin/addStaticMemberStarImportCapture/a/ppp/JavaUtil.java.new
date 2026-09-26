@@ -1,0 +1,11 @@
+package ppp;
+
+public class JavaUtil {
+  public static int other() {
+    return 1;
+  }
+
+  public static int m() {
+    return 2;
+  }
+}

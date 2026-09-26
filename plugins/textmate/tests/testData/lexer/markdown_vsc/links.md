@@ -1,0 +1,1 @@
+[some link](http://foo.bar)

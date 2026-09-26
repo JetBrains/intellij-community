@@ -1,0 +1,10 @@
+private val T.bar: Int
+
+// "Create extension property 'T.bar'" "true"
+fun consume(n: Int) {}
+
+fun <T> foo(t: T) {
+    consume(t.bar)
+}
+// KTIJ-32974
+// IGNORE_K2

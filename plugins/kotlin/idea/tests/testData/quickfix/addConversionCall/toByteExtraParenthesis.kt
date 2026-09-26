@@ -1,0 +1,9 @@
+// "Convert expression to 'Byte'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+fun takeByte(x: Byte) {}
+
+fun foo() {
+    takeByte(1 + (1 + 1)<caret>)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

@@ -1,0 +1,76 @@
+module(
+    name = "jvm-inc-builder-tests",
+    version = "0.1",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+
+bazel_dep(name = "llvm", version = "0.8.9")
+register_toolchains("@llvm//toolchain:all")
+
+bazel_dep(name = "protobuf", version = "33.4")
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = [
+        "protobuf-33.4-reuse-win64-for-arm.patch",
+    ],
+    version = "33.4",
+)
+
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
+    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+)
+
+# the module is supposed to always be overridden with the local version
+bazel_dep(name = "rules_jvm", version = "")
+
+register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+
+archive_override(
+    module_name = "rules_jvm",
+    url = "file://ABSOLUTE_RULES_JVM_ARTIFACT_PATH",
+)
+
+# single_version_override is a root-module-only directive, so patches declared in rules_jvm MODULE.bazel
+# are not applied when rules_jvm is consumed as a dependency.
+# These overrides must be duplicated here for the test workspace.
+# Patch files are extracted from the rules_jvm zip archive at test setup time.
+single_version_override(
+    module_name = "rules_jvm_external",
+    patches = [
+        "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "rules-jvm-external-6.10-optional-source-jars.patch",
+        "rules-jvm-external-6.10-coursier-optional-file-field.patch",
+        "rules-jvm-external-6.10-fix-multi-repo-hash.patch",
+    ],
+    version = "6.10",
+)
+
+single_version_override(
+    module_name = "rules_android",
+    patches = [
+        "rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
+)
+
+single_version_override(
+    module_name = "bazel_worker_java",
+    patches = [
+        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
+)
+
+# hermetic_cc_toolchain (zig) is used in rules_jvm but marked as dev_dependency there.
+# Do NOT register zig toolchains here: the zig C++ toolchain uses x86_64-windows-gnu
+# which lacks pthread.h, causing protobuf/abseil-cpp compilation to fail on Windows.
+# Without registration, Bazel falls back to the auto-detected system C++ toolchain (MSVC).
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk")

@@ -15,17 +15,16 @@
  */
 package com.intellij.notification.impl.ui;
 
-import javax.swing.*;
-import javax.swing.plaf.ButtonUI;
-import java.awt.*;
-import java.awt.event.ActionListener;
+import com.intellij.openapi.util.NlsContexts;
 
-/**
- * @author spleaner
- */
+import javax.swing.BorderFactory;
+import javax.swing.JToggleButton;
+import javax.swing.plaf.ButtonUI;
+import java.awt.Color;
+
 public class StickyButton extends JToggleButton {
 
-  public StickyButton(final String text) {
+  public StickyButton(final @NlsContexts.Button String text) {
     super(text);
 
     setRolloverEnabled(true);

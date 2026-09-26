@@ -1,0 +1,2 @@
+package ppp;
+public class Outer { private static final class Nested { public static int f() { return 1; } } }  // Nested narrowed to private and made final in one step

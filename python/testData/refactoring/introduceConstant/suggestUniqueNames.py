@@ -1,3 +1,3 @@
-S = True
+L = True
 STR = True
 "<caret>"

@@ -1,47 +1,44 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.paint;
 
-public class PaintParameters {
+import org.jetbrains.annotations.ApiStatus;
 
-  private static final int WIDTH_NODE = 15;
-  private static final int CIRCLE_RADIUS = 4;
-  private static final int SELECT_CIRCLE_RADIUS = 5;
-  private static final float THICK_LINE = 1.5f;
-  private static final float SELECT_THICK_LINE = 2.5f;
+@ApiStatus.Internal
+public final class PaintParameters {
+
+  private static final int WIDTH_NODE = 16;
+  public static final int CIRCLE_RADIUS = 4;
+  private static final double THICK_LINE = 1.5;
+  private static final double SELECT_THICK_LINE = 2.5;
+  private static final int GRAPH_TEXT_GAP = 2;
 
   public static final int ROW_HEIGHT = 22;
 
-  public static int getNodeWidth(int rowHeight) {
-    return WIDTH_NODE * rowHeight / ROW_HEIGHT;
+  public static double getElementWidth(int rowHeight) {
+    return scaleWithRowHeight(WIDTH_NODE, rowHeight);
   }
 
-  public static float getLineThickness(int rowHeight) {
-    return THICK_LINE * rowHeight / ROW_HEIGHT;
+  public static double getLineThickness(int rowHeight) {
+    return scaleWithRowHeight(THICK_LINE, rowHeight);
   }
 
-  public static float getSelectedLineThickness(int rowHeight) {
-    return SELECT_THICK_LINE * rowHeight / ROW_HEIGHT;
+  public static double getSelectedLineThickness(int rowHeight) {
+    return scaleWithRowHeight(SELECT_THICK_LINE, rowHeight);
   }
 
-  public static int getSelectedCircleRadius(int rowHeight) {
-    return SELECT_CIRCLE_RADIUS * rowHeight / ROW_HEIGHT;
+  public static double getCircleRadius(int rowHeight) {
+    return scaleWithRowHeight(CIRCLE_RADIUS, rowHeight);
   }
 
-  public static int getCircleRadius(int rowHeight) {
-    return CIRCLE_RADIUS * rowHeight / ROW_HEIGHT;
+  public static double scaleWithRowHeight(double value, int actualHeight) {
+    return (value * actualHeight) / ROW_HEIGHT;
+  }
+
+  public static double scaleWithRowHeight(int value, int actualHeight) {
+    return scaleWithRowHeight((double)value, actualHeight);
+  }
+
+  public static double getGraphTextGap(int rowHeight) {
+    return scaleWithRowHeight(GRAPH_TEXT_GAP, rowHeight);
   }
 }

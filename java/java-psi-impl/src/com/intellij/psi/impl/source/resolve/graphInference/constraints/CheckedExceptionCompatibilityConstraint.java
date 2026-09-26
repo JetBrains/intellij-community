@@ -16,15 +16,25 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -32,20 +42,19 @@ import java.util.List;
 import java.util.Set;
 
 public class CheckedExceptionCompatibilityConstraint extends InputOutputConstraintFormula {
-  private static final Logger LOG = Logger.getInstance(CheckedExceptionCompatibilityConstraint.class);
   private final PsiExpression myExpression;
-  private PsiType myT;
 
   public CheckedExceptionCompatibilityConstraint(PsiExpression expression, PsiType t) {
+    super(t);
     myExpression = expression;
-    myT = t;
   }
 
   @Override
-  public boolean reduce(final InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(final InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
+    PsiType myT = getCurrentType();
     if (myExpression instanceof PsiParenthesizedExpression) {
       constraints.add(new CheckedExceptionCompatibilityConstraint(((PsiParenthesizedExpression)myExpression).getExpression(), myT));
       return true;
@@ -63,7 +72,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
     }
     if (myExpression instanceof PsiLambdaExpression || myExpression instanceof PsiMethodReferenceExpression) {
       if (!LambdaUtil.isFunctionalType(myT)) {
-        session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.not.a.functional.interface", session.getPresentableText(myT)));
         return false;
       }
 
@@ -71,7 +81,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
                                                                                    : FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT);
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(groundTargetType);
       if (interfaceMethod == null) {
-        session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.no.valid.function.type.found", session.getPresentableText(myT)));
         return false;
       }
 
@@ -81,7 +92,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
           final PsiType type = substitutor.substitute(parameter.getType());
           if (!session.isProperType(type)) {
-            session.registerIncompatibleErrorMessage("Parameter type is not yet inferred: " + session.getPresentableText(type));
+            session.registerIncompatibleErrorMessage(
+              JavaPsiBundle.message("error.incompatible.type.parameter.type.is.not.yet.inferred", session.getPresentableText(type)));
             return false;
           }
         }
@@ -91,14 +103,15 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       if (myExpression instanceof PsiLambdaExpression || !((PsiMethodReferenceExpression)myExpression).isExact()) {
         final PsiType type = substitutor.substitute(returnType);
         if (!session.isProperType(type)) {
-          session.registerIncompatibleErrorMessage("Return type is not yet inferred: " + session.getPresentableText(type));
+          session.registerIncompatibleErrorMessage(
+            JavaPsiBundle.message("error.incompatible.type.return.type.is.not.yet.inferred", session.getPresentableText(type)));
           return false;
         }
       }
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(),
-                                                (Function<PsiType, PsiType>)type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
+                                                type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
       final List<PsiType> expectedNonProperThrownTypes = new ArrayList<>();
       for (PsiType type : expectedThrownTypes) {
         if (!session.isProperType(type)) {
@@ -110,15 +123,14 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
       if (body != null) {
         final List<PsiClassType> exceptions =  ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
-        if (exceptions != null) {
-          thrownTypes.addAll(ContainerUtil.filter(exceptions, type -> !ExceptionUtil.isUncheckedException(type)));
-        }
+        thrownTypes.addAll(ContainerUtil.filter(exceptions, type -> !ExceptionUtil.isUncheckedException(type)));
       }
 
       if (expectedNonProperThrownTypes.isEmpty()) {
         for (PsiType thrownType : thrownTypes) {
           if (!isAddressed(expectedThrownTypes, thrownType)) {
-            session.registerIncompatibleErrorMessage("Unhandled exception: " + session.getPresentableText(thrownType));
+            session.registerIncompatibleErrorMessage(
+              JavaPsiBundle.message("error.incompatible.type.unhandled.exception", session.getPresentableText(thrownType)));
             return false;
           }
         }
@@ -161,16 +173,6 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   }
 
   @Override
-  protected PsiType getT() {
-    return myT;
-  }
-
-  @Override
-  protected void setT(PsiType t) {
-    myT = t;
-  }
-
-  @Override
   protected InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression) {
     return new CheckedExceptionCompatibilityConstraint(expression, type);
   }
@@ -178,8 +180,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   @Override
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
-                                            PsiType returnType, 
-                                            Set<InferenceVariable> result) {
+                                            PsiType returnType,
+                                            Set<? super InferenceVariable> result) {
     session.collectDependencies(returnType, result);
   }
 }

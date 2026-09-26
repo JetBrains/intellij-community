@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// WITH_STDLIB
+
+class Point(val x: Int, val y: Int)
+
+operator fun Point.component1(): Int = x
+operator fun Point.component2(): Int = y
+
+fun test() {
+    val <caret>(x, y) = Point(1, 2)
+}

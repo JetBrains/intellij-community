@@ -1,34 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.FrameInfoHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import sun.awt.AWTAccessor;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 
-/**
- * @author Sergey Malenkov
- */
+@ApiStatus.Internal
 public class FrameState {
   private Rectangle myBounds;
   private boolean myMaximized;
@@ -58,25 +48,15 @@ public class FrameState {
     int state = Frame.NORMAL;
     if (component instanceof Frame) {
       state = ((Frame)component).getExtendedState();
-      if (SystemInfo.isMacOSLion) {
+      if (SystemInfoRt.isMac) {
         // workaround: frame.state is not updated by jdk so get it directly from peer
-        ComponentPeer peer = component.getPeer();
+        ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
         if (peer instanceof FramePeer) {
           state = ((FramePeer)peer).getState();
         }
       }
     }
     return state;
-  }
-
-  public static boolean isFullScreen(Component component) {
-    return component instanceof IdeFrameEx
-           && WindowManager.getInstance().isFullScreenSupportedInCurrentOS()
-           && ((IdeFrameEx)component).isInFullScreen();
-  }
-
-  public static boolean isMaximized(int state) {
-    return (state & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
   }
 
   private static FrameState findFrameState(@NotNull Component component) {
@@ -86,17 +66,6 @@ public class FrameState {
       }
     }
     return null;
-  }
-
-  public static FrameState getFrameState(@NotNull Component component) {
-    FrameState state = findFrameState(component);
-    if (state == null) {
-      state = new FrameState();
-    }
-    if (state.myBounds == null) {
-      state.update(component);
-    }
-    return state;
   }
 
   public static void setFrameStateListener(@NotNull Component component) {
@@ -131,8 +100,10 @@ public class FrameState {
 
   final void update(Component component) {
     Rectangle bounds = component.getBounds();
-    myFullScreen = isFullScreen(component);
-    myMaximized = isMaximized(getExtendedState(component));
+    myFullScreen = component instanceof IdeFrame
+                   && FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs()
+                   && ((IdeFrame)component).isInFullScreen();
+    myMaximized = FrameInfoHelper.isMaximized(getExtendedState(component));
     if (myBounds != null) {
       if (myFullScreen || myMaximized) {
         if (bounds.contains(myBounds.x + myBounds.width / 2, myBounds.y + myBounds.height / 2)) {

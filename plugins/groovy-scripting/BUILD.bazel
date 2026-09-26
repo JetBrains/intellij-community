@@ -1,0 +1,99 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.groovy.scripting` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.groovy",
+        "intellij.libraries.groovy.jsr223",
+        "intellij.libraries.ivy",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.groovy",
+        "intellij.libraries.groovy.jsr223",
+        "intellij.libraries.ivy",
+    ],
+    jars = {
+        "lib/intellij.libraries.groovy.jar": [
+            "intellij.libraries.groovy",
+            "@lib//:libraries-groovy-groovy",
+        ],
+        "lib/intellij.libraries.groovy.jsr223.jar": [
+            "intellij.libraries.groovy.jsr223",
+            "@lib//:libraries-groovy-jsr223-groovy-jsr223",
+        ],
+        "lib/intellij.libraries.ivy.jar": [
+            "intellij.libraries.ivy",
+            "@lib//:libraries-ivy-ivy",
+            "@lib//:libraries-ivy-jsch-agent-proxy-connector-factory",
+        ],
+        "lib/groovy-scripting.jar": ["intellij.groovy.scripting"],
+    },
+    main_module = "intellij.groovy.scripting",
+)
+### auto-generated section `dev intellij.groovy.scripting` end
+
+### auto-generated section `build intellij.groovy.scripting` start
+jvm_library(
+    name = "groovy-scripting",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.scripting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/groovy",
+        "//libraries/groovy/jsr223",
+        "//libraries/ivy",
+    ],
+)
+
+jvm_library(
+    name = "groovy-scripting_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.scripting",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":groovy-scripting",
+        "//libraries/groovy:groovy_test_lib",
+        "//libraries/groovy/jsr223:jsr223_test_lib",
+        "//libraries/ivy:ivy_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "groovy-scripting_plugin",
+    descriptor_module = ":groovy-scripting",
+    content_modules = [
+        # do not sort,
+        "//libraries/groovy:groovy_plugin_module",
+        "//libraries/groovy/jsr223:jsr223_plugin_module",
+        "//libraries/ivy:ivy_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.groovy.scripting` end
+
+### auto-generated section `iml intellij.groovy.scripting` start
+exports_files(
+    [
+        "intellij.groovy.scripting.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.groovy.scripting` end

@@ -1,89 +1,76 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
+import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilationDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
-
-import java.io.File;
-import java.util.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkageDetails;
 
 /**
  * @author Vladislav.Soroka
  */
 public class CppBinaryImpl implements CppBinary {
-  private final String myBaseName;
-  private final String myVariantName;
-  private final Set<File> mySources;
-  private final CompilerDetails myCompilerDetails;
-  private final LinkerDetails myLinkerDetails;
-  private final TargetType myTargetType;
+  private final String name;
+  private final String baseName;
+  private final String variantName;
+  private CompilationDetailsImpl compilationDetails;
+  private LinkageDetailsImpl linkageDetails;
 
-  public CppBinaryImpl(String baseName, String variantName,
-                       Collection<File> sources,
-                       CompilerDetails compilerDetails,
-                       LinkerDetails linkerDetails,
-                       TargetType targetType) {
-    myBaseName = baseName;
-    myVariantName = variantName;
-    mySources = new LinkedHashSet<File>(sources);
-    myCompilerDetails = compilerDetails;
-    myLinkerDetails = linkerDetails;
-    myTargetType = targetType;
+  @PropertyMapping({"name", "baseName", "variantName", "compilationDetails", "linkageDetails"})
+  protected CppBinaryImpl(String name,
+                          String baseName,
+                          String variantName,
+                          CompilationDetails compilationDetails,
+                          LinkageDetails linkageDetails) {
+    this(name, baseName, variantName);
+    this.compilationDetails = new CompilationDetailsImpl(compilationDetails);
+    this.linkageDetails = new LinkageDetailsImpl(linkageDetails);
+  }
+
+  public CppBinaryImpl(String name, String baseName, String variantName) {
+    this.name = name;
+    this.baseName = baseName;
+    this.variantName = variantName;
+    compilationDetails = new CompilationDetailsImpl();
+    linkageDetails = new LinkageDetailsImpl();
   }
 
   public CppBinaryImpl(CppBinary binary) {
-    this(binary.getBaseName(), binary.getVariantName(), binary.getSources(),
-         new CompilerDetailsImpl(binary.getCompilerDetails()), new LinkerDetailsImpl(binary.getLinkerDetails()), binary.getTargetType());
+    this(binary.getName(), binary.getBaseName(), binary.getVariantName(),
+         binary.getCompilationDetails(), binary.getLinkageDetails());
   }
 
   @Override
-  public String getBaseName() {
-    return myBaseName;
+  public String getName() {
+    return name;
   }
 
   @Override
   public String getVariantName() {
-    return myVariantName;
+    return variantName;
   }
 
   @Override
-  public Set<File> getSources() {
-    return Collections.unmodifiableSet(mySources);
+  public String getBaseName() {
+    return baseName;
   }
 
   @Override
-  public CompilerDetails getCompilerDetails() {
-    return myCompilerDetails;
+  public CompilationDetailsImpl getCompilationDetails() {
+    return compilationDetails;
+  }
+
+  public void setCompilationDetails(@NotNull CompilationDetailsImpl compilationDetails) {
+    this.compilationDetails = compilationDetails;
   }
 
   @Override
-  public Set<File> getCompileIncludePath() {
-    return myCompilerDetails.getIncludePath();
+  public LinkageDetailsImpl getLinkageDetails() {
+    return linkageDetails;
   }
 
-  @Override
-  public File getCompilerExecutable() {
-    return myCompilerDetails.getExecutable();
-  }
-
-  @Override
-  public List<String> getCompilerArgs() {
-    return myCompilerDetails.getArgs();
-  }
-
-  @Override
-  public LinkerDetails getLinkerDetails() {
-    return myLinkerDetails;
-  }
-
-  @Override
-  public File getOutputFile() {
-    return myLinkerDetails.getOutputFile();
-  }
-
-  @Override
-  public TargetType getTargetType() {
-    return myTargetType;
+  public void setLinkageDetails(@NotNull LinkageDetailsImpl linkageDetails) {
+    this.linkageDetails = linkageDetails;
   }
 }

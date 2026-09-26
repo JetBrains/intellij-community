@@ -6,9 +6,6 @@ import com.intellij.psi.PsiType;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_CLASS;
 
-/**
- * @author ven
- */
 public class ClassResolverProcessor extends ResolverProcessorImpl {
   public ClassResolverProcessor(String refName, PsiElement place) {
     super(refName, RESOLVE_KINDS_CLASS, place, PsiType.EMPTY_ARRAY);

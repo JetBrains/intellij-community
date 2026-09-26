@@ -1,132 +1,260 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.ui.ClientProperty;
+import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
- * Represents an entity that has a state, a presentation and can be performed.
+ * An action has a state, a number of presentations and can be performed.
+ * <p>
+ * For an action to be useful, implement {@link #actionPerformed(AnActionEvent)}.
+ * To alter how the action is presented in UI, implement {@link #update(AnActionEvent)}.
+ * As both methods are {@link ApiStatus.OverrideOnly}, do not call them manually except for delegation.
+ * <p>
+ * Actions have dedicated presentations wherever they are presented to the user.
+ * A single action can be present in different toolbars, popups and menus on the screen at the same time.
+ * The default presentation for each place is a copy of {@link #getTemplatePresentation()}.
+ * <p>
+ * Actions can be wrapped. Use {@link AnActionWrapper}, {@link ActionGroupWrapper} and {@link ActionWrapperUtil} for that.
+ * <p>
  *
- * For an action to be useful, you need to implement {@link AnAction#actionPerformed}
- * and optionally to override {@link AnAction#update}. By overriding the
- * {@link AnAction#update} method you can dynamically change action's presentation
- * depending on the place (for more information on places see {@link com.intellij.openapi.actionSystem.ActionPlaces}.
- *
- * The same action can have various presentations.
- *
- * <pre>
- *  public class MyAction extends AnAction {
- *    public MyAction() {
- *      // ...
- *    }
- *
- *    public void update(AnActionEvent e) {
- *      Presentation presentation = e.getPresentation();
- *      if (e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
- *        presentation.setText("My Menu item name");
- *      } else if (e.getPlace().equals(ActionPlaces.MAIN_TOOLBAR)) {
- *        presentation.setText("My Toolbar item name");
- *      }
- *    }
- *
- *    public void actionPerformed(AnActionEvent e) { ... }
- *  }
- * </pre>
- *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
  * @see Presentation
- * @see com.intellij.openapi.actionSystem.ActionPlaces
+ * @see DataContext
+ * @see AnActionWrapper
+ * @see com.intellij.openapi.actionSystem.ex.ActionUtil
+ * @see com.intellij.openapi.project.DumbAwareAction
  */
-public abstract class AnAction implements PossiblyDumbAware {
+public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
+  @ApiStatus.Internal
+  public static final Key<Integer> ACTIONS_MOD_COUNT = Key.create("AnAction.ACTIONS_MOD_COUNT");
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
   private Presentation myTemplatePresentation;
-  @NotNull
-  private ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
-  private boolean myEnabledInModalContext;
+  private @NotNull ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
 
   private boolean myIsDefaultIcon = true;
-  private boolean myWorksInInjected;
-  private boolean myIsGlobal; // action is registered in ActionManager
+  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
+  @ApiStatus.Internal
+  int myMetaFlags;
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
    */
-  public AnAction(){
+  public AnAction() {
     // avoid eagerly creating template presentation
   }
 
   /**
-   * Creates a new action with {@code icon} provided. Its text, description set to {@code null}.
+   * Creates a new action with the given {@code icon}, but without text or description.
    *
-   * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
+   * @param icon the default icon to appear in toolbars and menus. Note that some platforms don't have icons in the menu.
    */
-  public AnAction(Icon icon){
-    this(null, null, icon);
+  public AnAction(@Nullable Icon icon) {
+    this(Presentation.NULL_STRING, Presentation.NULL_STRING, icon);
   }
 
   /**
-   * Creates a new action with the specified text. Description and icon are
-   * set to {@code null}.
+   * Creates a new action with the given text, but without description or icon.
    *
-   * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item.
+   * @param text serves as a tooltip when the presentation is a button,
+   *             and the name of the menu item when the presentation is a menu item (with mnemonic)
    */
-  public AnAction(@Nullable String text){
+  public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
   }
 
   /**
-   * Constructs a new action with the specified text, description and icon.
+   * Creates a new action with the given text, but without description or icon.
+   * Use this variant if you need to localize the action text.
    *
-   * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item
-   *
-   * @param description Describes current action, this description will appear on
-   *  the status bar when presentation has focus
-   *
-   * @param icon Action's icon
+   * @param dynamicText serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
    */
-  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(text);
-    presentation.setDescription(description);
-    presentation.setIcon(icon);
+    presentation.setText(dynamicText);
+    presentation.setDescription(Presentation.NULL_STRING);
+    presentation.setIconSupplier(null);
   }
 
   /**
-   * Returns the shortcut set associated with this action.
+   * Creates a new action with the given text, description and icon.
    *
-   * @return shortcut set associated with this action
+   * @param text        serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param description describes the current action,
+   *                    this description will appear on the status bar when the presentation has the focus
+   * @param icon        the action's icon
    */
-  @NotNull
-  public final ShortcutSet getShortcutSet(){
+  public AnAction(@Nullable @ActionText String text, @Nullable @ActionDescription String description, @Nullable Icon icon) {
+    this(text == null ? Presentation.NULL_STRING : () -> text,
+         description == null ? Presentation.NULL_STRING : () -> description, icon);
+  }
+
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text,
+                  @Nullable @ActionDescription Supplier<String> description,
+                  @Nullable Supplier<? extends @Nullable Icon> icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    if (description != null) {
+      presentation.setDescription(description);
+    }
+    presentation.setIconSupplier(icon);
+  }
+
+  /**
+   * Creates a new action with the given text, description and both icon flavors.
+   * {@code iconDescriptor} is rendered when the experimental icons pipeline is on
+   * ({@link ExperimentalIcons}), {@code icon} otherwise; pass both during the migration.
+   *
+   * @param text           serves as a tooltip when the presentation is a button,
+   *                       and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param description    describes the current action,
+   *                       this description will appear on the status bar when the presentation has the focus
+   * @param iconDescriptor the action's icon for the experimental icons pipeline
+   * @param icon           the action's icon for the legacy pipeline
+   */
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text,
+                  @Nullable @ActionDescription Supplier<String> description,
+                  @Nullable IconDescriptor iconDescriptor,
+                  @Nullable Icon icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    if (description != null) {
+      presentation.setDescription(description);
+    }
+    presentation.setIconDescriptor(iconDescriptor);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
+  }
+
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text, @NotNull @ActionDescription Supplier<String> description) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    presentation.setDescription(description);
+  }
+
+  /**
+   * Creates a new action with the given text, description and icon.
+   * Use this variant if you need to localize the action text.
+   *
+   * @param dynamicText serves as a tooltip when the presentation is a button,
+   *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param icon        the action's icon
+   */
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(dynamicText);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
+  }
+
+  /**
+   * Creates a new action with the given text, description and icon.
+   * Use this variant if you need to localize the action text or the description.
+   *
+   * @param dynamicText        serves as a tooltip when the presentation is a button,
+   *                           and the name of the menu item when the presentation is a menu item (with mnemonic)
+   * @param dynamicDescription describes the current action,
+   *                           this description will appear on the status bar when the presentation has the focus
+   * @param icon               the action's icon
+   */
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText,
+                  @NotNull Supplier<@ActionDescription String> dynamicDescription,
+                  @Nullable Icon icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(dynamicText);
+    presentation.setDescription(dynamicDescription);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
+  }
+
+  /**
+   * Do not override, but prefer extending from {@link DumbAwareAction} instead.
+   */
+  @Override
+  public boolean isDumbAware() {
+    if (PossiblyDumbAware.super.isDumbAware()) {
+      return true;
+    }
+    return ActionClassMetaData.isDefaultUpdate(this);
+  }
+
+  /**
+   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
+   * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like methods shall be called.
+   * <p>
+   * The preferred value is {@link ActionUpdateThread#BGT}.
+   * <p>
+   * The default value is {@link ActionUpdateThread#EDT}.
+   *
+   * @see ActionUpdateThread
+   */
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
+      return ActionUpdateThread.BGT;
+    }
+    if (ActionClassMetaData.isDefaultUpdate(this)) {
+      return ActionUpdateThread.BGT;
+    }
+    return ActionUpdateThread.EDT;
+  }
+
+  /** Returns the set of shortcuts associated with this action. */
+  public final @NotNull ShortcutSet getShortcutSet() {
     return myShortcutSet;
   }
 
   /**
-   * Registers a set of shortcuts that will be processed when the specified component
-   * is the ancestor of focused component. Note that the action doesn't have
-   * to be registered in action manager in order for that shortcut to work.
+   * Registers a set of shortcuts that will be processed when the specified component is the ancestor of the focused component.
+   * Note that the action doesn't have to be registered in the action manager in order for that shortcut to work.
    *
-   * @param shortcutSet the shortcuts for the action.
-   * @param component   the component for which the shortcuts will be active.
+   * @param shortcutSet the shortcuts for the action
+   * @param component   the component for which the shortcuts will be active
    */
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component) {
     registerCustomShortcutSet(shortcutSet, component, null);
@@ -136,19 +264,27 @@ public abstract class AnAction implements PossiblyDumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   }
 
-  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component, @Nullable Disposable parentDisposable) {
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet,
+                                              @Nullable JComponent component,
+                                              @Nullable Disposable parentDisposable) {
     setShortcutSet(shortcutSet);
     registerCustomShortcutSet(component, parentDisposable);
   }
 
   public final void registerCustomShortcutSet(@Nullable JComponent component, @Nullable Disposable parentDisposable) {
-    if (component == null) return;
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+    if (component == null) {
+      return;
+    }
+
+    List<AnAction> actionList = ClientProperty.get(component, ACTIONS_KEY);
     if (actionList == null) {
-      UIUtil.putClientProperty(component, ACTIONS_KEY, actionList = new SmartList<>());
+      List<AnAction> value = new CopyOnWriteArrayList<>();
+      component.putClientProperty(ACTIONS_KEY, value);
+      actionList = Objects.requireNonNullElse(ClientProperty.get(component, ACTIONS_KEY), value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
+      updateCustomActionsModCount(component);
     }
 
     if (parentDisposable != null) {
@@ -156,22 +292,33 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void unregisterCustomShortcutSet(@Nullable JComponent component) {
-    List<AnAction> actionList = UIUtil.getClientProperty(component, ACTIONS_KEY);
+  public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
+    List<AnAction> actionList = ClientProperty.get(component, ACTIONS_KEY);
     if (actionList != null) {
-      actionList.remove(this);
+      if (actionList.remove(this)) {
+        updateCustomActionsModCount(component);
+      }
     }
   }
 
   /**
-   * Copies template presentation and shortcuts set from {@code sourceAction}.
-   *
-   * @param sourceAction cannot be {@code null}
+   * Update component's "actions mod count" on actions' update.
+   * Allows subscribing on addition/removing of custom shortcut actions.
    */
-  public final void copyFrom(@NotNull AnAction sourceAction){
+  private static void updateCustomActionsModCount(@NotNull JComponent component) {
+    int oldCounter = Objects.requireNonNullElse(ClientProperty.get(component, ACTIONS_MOD_COUNT), 0);
+    ClientProperty.put(component, ACTIONS_MOD_COUNT, oldCounter + 1);
+  }
+
+  /**
+   * Copies the template presentation and the set of shortcuts from {@code sourceAction}.
+   * Consider using {@link com.intellij.openapi.actionSystem.ex.ActionUtil#copyFrom(AnAction, String)} instead.
+   */
+  public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.copyFrom(sourcePresentation);
+    boolean allFlags = this instanceof ActionGroup && sourceAction instanceof ActionGroup;
+    presentation.copyFrom(sourcePresentation, null, allFlags);
     copyShortcutFrom(sourceAction);
   }
 
@@ -179,150 +326,258 @@ public abstract class AnAction implements PossiblyDumbAware {
     setShortcutSet(sourceAction.getShortcutSet());
   }
 
-
   public final boolean isEnabledInModalContext() {
-    return myEnabledInModalContext;
+    return getTemplatePresentation().isEnabledInModalContext();
   }
 
   protected final void setEnabledInModalContext(boolean enabledInModalContext) {
-    myEnabledInModalContext = enabledInModalContext;
+    getTemplatePresentation().setEnabledInModalContext(enabledInModalContext);
   }
 
   /**
-   * Override with true returned if your action has to display its text along with the icon when placed in the toolbar
+   * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
+   * <p>
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SHOW_TEXT_IN_TOOLBAR} presentation property instead.
    */
+  @Deprecated(forRemoval = true)
   public boolean displayTextInToolbar() {
     return false;
   }
 
   /**
-   * Override with true returned if your action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar
+   * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
+   * <p>
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#USE_SMALL_FONT_IN_TOOLBAR} presentation property instead.
    */
+  @Deprecated(forRemoval = true)
   public boolean useSmallerFontForTextInToolbar() {
     return false;
   }
 
   /**
-   * Updates the state of the action. Default implementation does nothing.
-   * Override this method to provide the ability to dynamically change action's
-   * state and(or) presentation depending on the context (For example
-   * when your action state depends on the selection you can check for
-   * selection and change the state accordingly).
-   * This method can be called frequently, for instance, if an action is added to a toolbar,
-   * it will be updated twice a second. This means that this method is supposed to work really fast,
-   * no real work should be done at this phase. For example, checking selection in a tree or a list,
-   * is considered valid, but working with a file system is not. If you cannot understand the state of
-   * the action fast you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
-   * the user that action cannot be executed if it's the case.
+   * Updates the presentation of the action to show a menu, a popup item, a toolbar button,
+   * and when the action is invoked via a shortcut.
+   * The default implementation does nothing.
+   * The Platform tries its best to invoke this method and act upon the updated presentation flags
+   * a little before the action is called.
+   * <p>
+   * Override this method to dynamically change the action's state or presentation depending on the context.
+   * For example, when your action state depends on the selection,
+   * you can check for the selection and change the state accordingly.
+   * <p>
+   * This method can be called frequently.
+   * It shall be fast.
+   * It must not change UI or any state, except populating some caches.
+   * <p>
+   * {@link #getActionUpdateThread()} controls whether the method is called on EDT or BGT.
+   * BGT actions can rely on slow PSI, VFS, etc. but that can lead to slow menus and popups.
+   * To speed them up, you can move slow checks to {@link #actionPerformed(AnActionEvent)} method
+   * and notify the user that the action cannot be executed when it is so.
+   * <p>
+   * If the action is added to a toolbar, its {@code update} method can be called twice a second,
+   * but only if there was any user activity or a focus transfer.
+   * If your action's availability is independent of these events,
+   * call {@code ActivityTracker.getInstance().inc()}
+   * to notify the action subsystem to update all toolbar actions
+   * when your subsystem's determines that its actions' visibility might be affected.
+   * <br/>
+   * This method is called under the {@link com.intellij.openapi.application.ReadAction}
+   * if {@link Presentation#isRWLockRequired()} is set to {@code true}
    *
-   * @param e Carries information on the invocation place and data available
+   * @see #getActionUpdateThread()
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
    */
-  public void update(AnActionEvent e) {
+  @ApiStatus.OverrideOnly
+  public void update(@NotNull AnActionEvent e) {
   }
 
   /**
-   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check guard.
-   * Default implementation delegates to {@link #update(AnActionEvent)}.
+   * Though the platform components (toolbars, menus, etc.) do their best to call update sometime before calling actionPerformed,
+   * implementations MUST NOT rely on it.
+   * Instead, they MUST always check whether the data context is suitable in {@link #actionPerformed(AnActionEvent)} and do nothing if it is not.
    *
-   * @param e Carries information on the invocation place and data available
+   * @deprecated NEVER CALLED. Move any code to {@link #actionPerformed(AnActionEvent)}
    */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.OverrideOnly
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    boolean worksInInjected = isInInjectedContext();
-    e.setInjectedContext(worksInInjected);
-    update(e);
-    if (!e.getPresentation().isEnabled() && worksInInjected) {
-      e.setInjectedContext(false);
-      update(e);
-    }
   }
 
   /**
-   * Returns a template presentation that will be used
-   * as a template for created presentations.
-   *
-   * @return template presentation
+   * Returns the template presentation of the action that is cloned each time
+   * a new presentation of the action is needed.
    */
-  @NotNull
-  public final Presentation getTemplatePresentation() {
+  public final @NotNull Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
-    if (presentation == null){
-      myTemplatePresentation = presentation = new Presentation();
+    if (presentation == null) {
+      presentation = createTemplatePresentation();
+      LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
+      myTemplatePresentation = presentation;
+    }
+    return presentation;
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public Presentation createTemplatePresentation() {
+    Presentation presentation = Presentation.newTemplatePresentation();
+    if (displayTextInToolbar()) {
+      presentation.putClientProperty("SHOW_TEXT_IN_TOOLBAR", true);
+      if (useSmallerFontForTextInToolbar()) {
+        presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
+      }
     }
     return presentation;
   }
 
   /**
-   * Implement this method to provide your action handler.
-   *
-   * @param e Carries information on the invocation place
+   * A shortcut for {@code getTemplatePresentation().getText()}.
    */
-  public abstract void actionPerformed(AnActionEvent e);
+  public final @ActionText String getTemplateText() {
+    return getTemplatePresentation().getText();
+  }
 
-  protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
-    if (myIsGlobal && myShortcutSet != shortcutSet) {
-      LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
-               "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-               "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
+  /**
+   * Performs the action logic.
+   * <p>
+   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
+   * <p>
+   * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
+   * <p>
+   * The implementors should not assume that {@link #update(AnActionEvent)} has been called before,
+   * and MUST to re-check that context is suitable, and do nothing if it is not.
+   * <p>
+   * The method must not be called directly.
+   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performAction} or
+   * (when delegating) {@link ActionWrapperUtil#actionPerformed}
+   * <p>
+   * This method is executed in {@link <a href="https://jb.gg/ij-platform-threading">Write-Intent Read Action</a>}
+   * if {@link Presentation#isRWLockRequired()} is {@code true}.
+   *
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performAction
+   * @see ActionWrapperUtil#actionPerformed
+   * @see AnActionEvent#getCoroutineScope for running suspend computations in Kotlin implementations.
+   */
+  @ApiStatus.OverrideOnly
+  @RequiresEdt(generateAssertion = false)
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
+
+  @ApiStatus.Internal
+  public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
+    if (myShortcutSet != shortcutSet &&
+        !myShortcutSet.equals(shortcutSet) &&
+        myShortcutSet != CustomShortcutSet.EMPTY &&
+        LoadingState.PROJECT_OPENED.isOccurred()) {
+      ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+      if (actionManager != null && actionManager.getId(this) != null) {
+        LOG.warn(PluginException.createByClass(
+          "ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+          "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+          "using `use-shortcut-of` or wrapping with ActionUtil.wrap(). Action: " + this,
+          null,
+          getClass())
+        );
+      }
     }
     myShortcutSet = shortcutSet;
   }
 
   /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
-   * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user.
+   *
+   * @param isDefaultIconSet {@code true} if the icon is internal, {@code false} if the user customizes the icon
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
+  @ApiStatus.Internal
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
   }
 
   /**
-   * Returns true if the action has an internal, not user-customized icon.
-   * @return true if the icon is internal, false if the icon is customized by the user.
+   * @return {@code true} if the icon is internal, {@code false} if the user customizes the icon.
+   * <p>
+   * TODO Move to template presentation client properties and drop the method.
    */
+  @ApiStatus.Internal
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
   }
 
   /**
-   * Enables automatic detection of injected fragments in editor. Values in DataContext, passed to the action, like EDITOR, PSI_FILE
-   * will refer to an injected fragment, if caret is currently positioned on it.
+   * Enables automatic detection of injected fragments in the editor.
+   * Values that are passed to the action in its {@code DataContext}, like EDITOR or PSI_FILE,
+   * will refer to an injected fragment if the caret is currently positioned on it.
    */
   public void setInjectedContext(boolean worksInInjected) {
-    myWorksInInjected = worksInInjected;
+    getTemplatePresentation().setPreferInjectedPsi(worksInInjected);
   }
 
   public boolean isInInjectedContext() {
-    return myWorksInInjected;
+    return getTemplatePresentation().isPreferInjectedPsi();
   }
 
-  public boolean isTransparentUpdate() {
-    return this instanceof TransparentUpdate;
+  public void addTextOverride(@NotNull String place, @NotNull String text) {
+    addTextOverride(place, () -> text);
   }
 
-  /**
-   * @return whether this action should be wrapped into a single transaction. PSI/VFS-related actions
-   * that can show progresses or modal dialogs should return true. The default value is false, to prevent
-   * transaction-related assertions from actions in harmless dialogs like "Enter password" shown inside invokeLater.
-   * @see com.intellij.openapi.application.TransactionGuard
-   */
-  public boolean startInTransaction() {
-    return false;
+  public void addTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
+    myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
-  public interface TransparentUpdate {
+  @ApiStatus.Internal
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace, String id) {
+    Supplier<String> value = myActionTextOverrides.get(fromPlace);
+    if (value == null) {
+      LOG.error(PluginException.createByClass(
+        "Missing override-text for action id: " + id + ", use-text-of-place: " + fromPlace,
+        null,
+        getClass()));
+      return;
+    }
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, value);
   }
 
-  @Nullable
-  public static Project getEventProject(AnActionEvent e) {
+  @ApiStatus.Internal
+  public void applyTextOverride(@NotNull AnActionEvent event) {
+    applyTextOverride(event.getPlace(), event.getPresentation());
+  }
+
+  @ApiStatus.Internal
+  public void applyTextOverride(@NotNull String place, @NotNull Presentation presentation) {
+    Supplier<String> override = myActionTextOverrides.get(place);
+    if (override != null) {
+      presentation.setText(override);
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void copyActionTextOverrides(AnAction targetAction) {
+    for (String place : myActionTextOverrides.keySet()) {
+      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
+    }
+  }
+
+  public void addSynonym(@NotNull Supplier<@Nls String> text) {
+    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
+      mySynonyms = new SmartList<>(text);
+    }
+    else {
+      mySynonyms.add(text);
+    }
+  }
+
+  public @NotNull List<Supplier<@Nls String>> getSynonyms() {
+    return mySynonyms;
+  }
+
+  public static @Nullable Project getEventProject(@Nullable AnActionEvent e) {
     return e == null ? null : e.getData(CommonDataKeys.PROJECT);
   }
 
   @Override
-  public String toString() {
-    return getTemplatePresentation().toString();
-  }
-
-  void markAsGlobal() {
-    myIsGlobal = true;
+  public @NonNls String toString() {
+    Presentation p = getTemplatePresentation();
+    return p.getText() + " (" + p.getDescription() + ")";
   }
 }

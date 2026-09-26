@@ -12,17 +12,16 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-/**
- * @author nik
- */
-public abstract class ConfigurationErrorQuickFix {
-  private final String myActionName;
+import org.jetbrains.annotations.Nls;
 
-  protected ConfigurationErrorQuickFix(String actionName) {
+public abstract class ConfigurationErrorQuickFix {
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myActionName;
+
+  protected ConfigurationErrorQuickFix(@Nls(capitalization = Nls.Capitalization.Title) String actionName) {
     myActionName = actionName;
   }
 
-  public String getActionName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getActionName() {
     return myActionName;
   }
 

@@ -2,9 +2,13 @@
 package com.jetbrains.python.quickFixes
 
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyTypeHintsInspection
 import com.jetbrains.python.psi.LanguageLevel
 
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
 
   // PY-16853
@@ -28,28 +32,23 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
   }
 
   // PY-16853
-  fun testParenthesesAndTypingTarget() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON35)
-  }
-
-  // PY-16853
   fun testParenthesesAndCustomTarget() {
     doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with square brackets", LanguageLevel.PYTHON35)
   }
 
   // PY-28243
   fun testTypeVarAndTargetName() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with target name")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the target name")
   }
 
   // PY-28249
   fun testInstanceCheckOnCallable() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-28249
   fun testInstanceCheckOnCustom() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-28249
@@ -58,12 +57,12 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
     myFixture.configureByFile("${getTestName(true)}.py")
     myFixture.checkHighlighting(true, false, false)
 
-    assertEmpty(myFixture.filterAvailableIntentions("Remove generic parameter(s)"))
+    assertEmpty(myFixture.filterAvailableIntentions("Remove generic parameters"))
   }
 
   // PY-28249
   fun testInstanceCheckOnOperandReference() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameter(s)")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Remove generic parameters")
   }
 
   // PY-20530
@@ -88,12 +87,12 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
 
   // PY-20530
   fun testSelfInAnnotation() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name", LanguageLevel.PYTHON37)
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the type name", LanguageLevel.PYTHON37)
   }
 
   // PY-20530
   fun testSelfInTypeComment() {
-    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with type name")
+    doQuickFixTest(PyTypeHintsInspection::class.java, "Replace with the type name")
   }
 
   // PY-20530
@@ -147,5 +146,17 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
         assertEmpty(myFixture.filterAvailableIntentions("Remove square brackets"))
       }
     )
+  }
+
+  // PY-42418
+  fun testReplacingParameterizedBuiltinWithItsTypingAliasBefore39() {
+    doQuickFixTest(PyTypeHintsInspection::class.java,"Replace with typing alias", LanguageLevel.PYTHON38)
+  }
+
+  // PY-42418
+  fun testBatchReplacingParameterizedBuiltinsWithTheirTypingAliasesBefore39() {
+    doQuickFixTest(PyTypeHintsInspection::class.java,
+                   "Fix all 'Invalid type hints definitions and usages' problems in file",
+                   LanguageLevel.PYTHON38)
   }
 }

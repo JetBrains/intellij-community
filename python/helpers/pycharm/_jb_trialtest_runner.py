@@ -2,7 +2,7 @@
 import os
 from pprint import pprint
 
-from _jb_runner_tools import jb_start_tests, jb_doc_args
+from _jb_runner_tools import jb_start_tests, jb_doc_args, PROJECT_DIR, jb_finish_tests
 from twisted.scripts import trial
 import sys
 
@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     path, targets, additional_args = jb_start_tests()
 
-    sys.path.append(os.getcwd()) # Current dir must be in sys.path according to trial docs
+    sys.path.append(PROJECT_DIR)  # Current dir must be in sys.path according to trial docs
 
     sys.argv.append("--reporter=teamcity")
     sys.argv += additional_args
@@ -26,4 +26,7 @@ if __name__ == '__main__':
         sys.argv += targets
 
     jb_doc_args("trial", sys.argv[1:])
-    trial.run()
+    try:
+        trial.run()
+    finally:
+        jb_finish_tests()

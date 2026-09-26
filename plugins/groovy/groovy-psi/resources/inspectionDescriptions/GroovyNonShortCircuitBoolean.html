@@ -1,12 +1,21 @@
 <html>
 <body>
+Reports the non-short-circuit forms of boolean operators 'and' and 'or' ( <code>&</code>
+and <code>|</code> ).
+<p>
+  The non-short-circuit versions are occasionally useful, but
+  their presence is often due to typos of the short-circuit forms ( <code>&&</code>
+  and <code>||</code> ), and may lead to subtle bugs.
+</p>
 
-This inspection reports any uses of the non-short-circuit forms of boolean 'and' and 'or' ( <b><font
-    color="#000080">&</font></b>
-and <b><font color="#000080">|</font></b> ) in Groovy code. The non-short-circuit versions are occasionally useful, but
-their presence is often due to typos of the short-circuit forms ( <b><font color="#000080">&&</font></b>
-and <b><font color="#000080">||</font></b> ), and may lead to subtle bugs.
-<br>
-<small>Powered by InspectorGroovy</small>
+<p><b>Example:</b></p>
+<pre><code>
+if (a & b) {}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+if (a && b) {}
+</code></pre>
+
 </body>
 </html>

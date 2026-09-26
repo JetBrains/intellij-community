@@ -1,0 +1,25 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+// PRIORITY: LOW
+// INTENTION_TEXT: "Add 'z =' to argument"
+// AFTER-WARNING: Parameter 'x' is never used
+// AFTER-WARNING: Parameter 'y' is never used
+// AFTER-WARNING: Parameter 'z' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// K2_AFTER_ERROR: ARGUMENT_PASSED_TWICE
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
+
+
+context(x: String, y: Int, z: Boolean)
+fun foo(a: String): String = a
+
+fun main() {
+    // "Hello" matches x: String positionally (position 0 -> context param 0)
+    // true at position 1 doesn't match y: Int positionally, but matches z: Boolean by type fallback
+    foo("Hello", <caret>true, a = "World")
+}

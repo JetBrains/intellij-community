@@ -1,39 +1,27 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class PatternUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
+public final class PatternUtil {
+  private static final Logger LOG = Logger.getInstance(PatternUtil.class);
 
   public static final Pattern NOTHING = Pattern.compile("(a\\A)");
 
-  private static final Map<String, String> ourEscapeRules = ContainerUtil.newLinkedHashMap();
+  private static final Map<String, String> ourEscapeRules = new LinkedHashMap<>();
+
+  private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
 
   static {
     // '.' should be escaped first
@@ -44,8 +32,7 @@ public class PatternUtil {
     }
   }
 
-  @NotNull
-  public static String convertToRegex(@NotNull String mask) {
+  public static @NotNull String convertToRegex(@NotNull String mask) {
     List<String> strings = StringUtil.split(mask, "\\");
     StringBuilder pattern = new StringBuilder();
     String separator = "";
@@ -62,10 +49,13 @@ public class PatternUtil {
     return pattern.toString();
   }
 
-  @NotNull
-  public static Pattern fromMask(@NotNull String mask) {
+  public static @NotNull Pattern fromMask(@NotNull String mask) {
+    return fromMask(mask, 0);
+  }
+
+  public static @NotNull Pattern fromMask(@NotNull String mask, int flags) {
     try {
-      return Pattern.compile(convertToRegex(mask));
+      return Pattern.compile(convertToRegex(mask), flags);
     }
     catch (PatternSyntaxException e) {
       LOG.error(mask, e);
@@ -89,8 +79,7 @@ public class PatternUtil {
    * @param regex pattern to match to.
    * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
    */
-  @Nullable
-  public static String getFirstMatch(List<String> lines, Pattern regex) {
+  public static @Nullable String getFirstMatch(List<String> lines, Pattern regex) {
     if (lines == null) return null;
     for (String s : lines) {
       Matcher m = regex.matcher(s);
@@ -101,5 +90,11 @@ public class PatternUtil {
       }
     }
     return null;
+  }
+
+  /// @return whether [text] contains a REGEX meta-character like * or |.
+  @Contract(pure = true)
+  public static boolean containsMetaChar(@NotNull String text) {
+    return StringUtil.containsAnyChar(text, REGEX_META_CHARS);
   }
 }

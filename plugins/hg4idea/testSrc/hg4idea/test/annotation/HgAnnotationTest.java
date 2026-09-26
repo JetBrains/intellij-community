@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.annotation;
 
 import com.intellij.openapi.util.Clock;
@@ -16,11 +17,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgAnnotationTest extends HgPlatformTest {
-
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
   private static final String firstCreatedFile = "file.txt";
   private static final String author1 = "a.bacaba@jetbrains.com";
@@ -45,9 +47,16 @@ public class HgAnnotationTest extends HgPlatformTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    Clock.reset();
-    super.tearDown();
+  protected void tearDown() {
+    try {
+      Clock.reset();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testAnnotationWithVerboseOption() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.CompilerEncodingService;
@@ -30,22 +16,20 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
-public class CompilerEncodingServiceImpl extends CompilerEncodingService {
-  @NotNull private final Project myProject;
+public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
+  private final @NotNull Project myProject;
   private final CachedValue<Map<Module, Set<Charset>>> myModuleFileEncodings;
 
   public CompilerEncodingServiceImpl(@NotNull Project project) {
@@ -57,13 +41,12 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
     }, false);
   }
 
-  @NotNull
-  private Map<Module, Set<Charset>> computeModuleCharsetMap() {
-    final Map<Module, Set<Charset>> map = new THashMap<>();
-    final Map<VirtualFile, Charset> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getAllMappings();
+  private @NotNull Map<Module, Set<Charset>> computeModuleCharsetMap() {
+    final Map<Module, Set<Charset>> map = new HashMap<>();
+    final Map<? extends VirtualFile, ? extends Charset> mappings = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject)).getAllMappings();
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-    for (Map.Entry<VirtualFile, Charset> entry : mappings.entrySet()) {
+    for (Map.Entry<? extends VirtualFile, ? extends Charset> entry : mappings.entrySet()) {
       final VirtualFile file = entry.getKey();
       final Charset charset = entry.getValue();
       if (file == null || charset == null || (!file.isDirectory() && !compilerManager.isCompilableFileType(file.getFileType()))
@@ -96,7 +79,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
       }
       set.add(charset);
     }
-    //todo[nik,jeka] perhaps we should take into account encodings of source roots only not individual files
+    //todo perhaps we should take into account encodings of source roots only not individual files
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots(true)) {
         Charset encoding = EncodingProjectManager.getInstance(myProject).getEncoding(file, true);
@@ -110,20 +93,18 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
         }
       }
     }
-    
+
     return map;
   }
 
   @Override
-  @Nullable
-  public Charset getPreferredModuleEncoding(@NotNull Module module) {
+  public @Nullable Charset getPreferredModuleEncoding(@NotNull Module module) {
     final Set<Charset> encodings = myModuleFileEncodings.getValue().get(module);
     return ContainerUtil.getFirstItem(encodings, EncodingProjectManager.getInstance(myProject).getDefaultCharset());
   }
 
-  @NotNull
   @Override
-  public Collection<Charset> getAllModuleEncodings(@NotNull Module module) {
+  public @NotNull @Unmodifiable Collection<Charset> getAllModuleEncodings(@NotNull Module module) {
     final Set<Charset> encodings = myModuleFileEncodings.getValue().get(module);
     if (encodings != null) {
       return encodings;

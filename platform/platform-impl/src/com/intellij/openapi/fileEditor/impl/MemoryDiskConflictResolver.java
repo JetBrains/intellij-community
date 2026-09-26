@@ -1,142 +1,212 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestPanel;
-import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.comparison.MergeResolveUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.ui.UIBundle;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class MemoryDiskConflictResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.MemoryDiskConflictResolver");
-  private final Set<VirtualFile> myConflicts = new LinkedHashSet<>();
-  private Throwable myConflictAppeared;
+@ApiStatus.Internal
+public class MemoryDiskConflictResolver {
+  private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 
-  void beforeContentChange(@NotNull VirtualFileEvent event) {
-    if (event.isFromSave()) return;
+  /**
+   * The default comes with the call, because the common text is collected as early as the first document load,
+   * and the registry is not ready then.
+   */
+  static boolean isMergeEnabled() {
+    return Registry.is("ide.merge.external.changes", true);
+  }
 
+  private final List<ConflictResolutionOverride> myConflictResolutionOverrides = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  /**
+   * Only the EDT writes. {@link #isInConflictQueue} reads from the thread that saves a document.
+   * The insertion order is the dialog order.
+   */
+  private final Set<VirtualFile> myConflictQueue = Collections.synchronizedSet(new LinkedHashSet<>());
+
+  /**
+   * The EDT alone touches this.
+   */
+  private Throwable myConflictAppearedInUnitTest;
+
+  boolean isInConflictQueue(@NotNull VirtualFile file) {
+    return myConflictQueue.contains(file);
+  }
+
+  void overrideConflictResolution(@NotNull ConflictResolution resolution, @NotNull Disposable parentDisposable) {
+    ConflictResolutionOverride wrapper = new ConflictResolutionOverride(resolution);
+    ContainerUtil.add(wrapper, myConflictResolutionOverrides, parentDisposable);
+  }
+
+  /**
+   * How a conflict has to be resolved right now, honouring the precedence documented on {@link #overrideConflictResolution}.
+   */
+  @NotNull ConflictResolution getConflictResolution() {
+    ConflictResolutionOverride override = ContainerUtil.getLastItem(myConflictResolutionOverrides);
+    ConflictResolution resolution = override == null ? ConflictResolution.ASK : override.resolution;
+    if (resolution != ConflictResolution.MERGE) {
+      return resolution;
+    }
+    if (!isMergeEnabled()) {
+      return ConflictResolution.KEEP_MEMORY_CHANGES;
+    }
+    // MERGE is the only resolution that changes a document without asking, so anyone who opted out of that wins over it
+    for (ConflictResolutionOverride other : myConflictResolutionOverrides) {
+      if (other.resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
+        return ConflictResolution.KEEP_MEMORY_CHANGES;
+      }
+    }
+    return ConflictResolution.MERGE;
+  }
+
+  @RequiresReadLock
+  @Nullable ResolvedConflict tryMerge(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetched) {
+    if (prefetched == null || ConflictResolution.MERGE != getConflictResolution()) {
+      return null;
+    }
     VirtualFile file = event.getFile();
-    if (!file.isValid() || hasConflict(file)) return;
+    Document document = findConflictingDocument(event);
+    if (document == null) {
+      return null;
+    }
+    CharSequence baseText = FileDocumentCommonText.getLastKnownCommonText(document);
+    if (baseText == null) {
+      // resolving the conflict without common base is too fragile
+      return null;
+    }
+    CharSequence diskText = prefetched.decodeText(file);
+    CharSequence memoryText = document.getImmutableCharSequence();
+    CharSequence mergedText = MergeResolveUtil.tryResolve(diskText, baseText, memoryText, ProgressManager::checkCanceled);
+    if (mergedText == null) {
+      // the conflict is too complex
+      return null;
+    }
+    return new ResolvedConflict(mergedText, document.getModificationStamp());
+  }
 
+  /**
+   * This phase cannot tell whether the merge will apply, so it queues every conflict.
+   * A merge that applies calls {@link #cancelConflictDialog}.
+   */
+  void scheduleConflictDialog(@NotNull VFileContentChangeEvent event) {
+    ConflictResolution resolution = getConflictResolution();
+    if (resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
+      // do nothing, ignoring disk content
+      return;
+    }
+    if (event.isFromSave()) {
+      return;
+    }
+    VirtualFile file = event.getFile();
+    if (!file.isValid() || isInConflictQueue(file)) {
+      return;
+    }
+    Document document = findConflictingDocument(event);
+    if (document == null) {
+      return;
+    }
+    queueConflictDialog(file, document, event);
+  }
+
+  void cancelConflictDialog(@NotNull VirtualFile file) {
+    myConflictQueue.remove(file);
+  }
+
+  private void queueConflictDialog(@NotNull VirtualFile file, @NotNull Document document, @NotNull VFileContentChangeEvent event) {
+    LOG.info("conflict queued for " + file.getName() + "; a merge can still resolve it before the dialog runs");
+    LOG.info("  documentStamp:" + document.getModificationStamp());
+    LOG.info("  oldFileStamp:" + event.getOldModificationStamp());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info("  fileStamp:" + event.getModificationStamp());
+      LOG.info("  document content:" + document.getText());
+      // the trace of the last queued conflict, because an earlier one can still leave the queue through a merge
+      myConflictAppearedInUnitTest = new Throwable();
+    }
+    if (myConflictQueue.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(this::showQueuedConflictDialogs);
+    }
+    myConflictQueue.add(file);
+  }
+
+  private void showQueuedConflictDialogs() {
+    List<VirtualFile> conflicts;
+    synchronized (myConflictQueue) {
+      conflicts = new ArrayList<>(myConflictQueue);
+      myConflictQueue.clear();
+    }
+    for (VirtualFile file : conflicts) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (document != null && file.getModificationStamp() != document.getModificationStamp()) {
+        LOG.info("reload " + file.getName() + " from disk?");
+        if (askReloadFromDisk(file, document)) {
+          FileDocumentManager.getInstance().reloadFromDisk(document);
+        }
+      }
+    }
+    myConflictAppearedInUnitTest = null;
+  }
+
+  @VisibleForTesting
+  protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
+    if (myConflictAppearedInUnitTest != null) {
+      Throwable trace = myConflictAppearedInUnitTest;
+      myConflictAppearedInUnitTest = null;
+      throw new IllegalStateException(
+        "Unexpected memory-disk conflict in tests for " + file.getPath() +
+        ", please use FileDocumentManager#reloadFromDisk or avoid VFS refresh",
+        trace
+      );
+    }
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    return new ConflictResolverDialog(project).askReloadFromDisk(file, document);
+  }
+
+  private static @Nullable Document findConflictingDocument(@NotNull VFileContentChangeEvent event) {
+    VirtualFile file = event.getFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document)) return;
-
+    if (document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+      return null;
+    }
     long documentStamp = document.getModificationStamp();
     long oldFileStamp = event.getOldModificationStamp();
     if (documentStamp != oldFileStamp) {
-      LOG.info("reload " + file.getName() + " from disk?");
-      LOG.info("  documentStamp:" + documentStamp);
-      LOG.info("  oldFileStamp:" + oldFileStamp);
-      if (myConflicts.isEmpty()) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          myConflictAppeared = new Throwable();
-        }
-        ApplicationManager.getApplication().invokeLater(this::processConflicts);
-      }
-      myConflicts.add(file);
+      return document;
+    }
+    return null;
+  }
+
+  /**
+   * Deliberately a class and not a record: {@link ContainerUtil#add} unregisters by {@code equals}, so value equality would
+   * let one client's disposal drop another client's entry whenever the two asked for the same resolution.
+   */
+  private static final class ConflictResolutionOverride {
+    private final ConflictResolution resolution;
+
+    ConflictResolutionOverride(@NotNull ConflictResolution resolution) {
+      this.resolution = resolution;
     }
   }
-
-  boolean hasConflict(VirtualFile file) {
-    return myConflicts.contains(file);
-  }
-
-  private void processConflicts() {
-    ArrayList<VirtualFile> conflicts = new ArrayList<>(myConflicts);
-    myConflicts.clear();
-
-    for (VirtualFile file : conflicts) {
-      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null && file.getModificationStamp() != document.getModificationStamp() && askReloadFromDisk(file, document)) {
-        FileDocumentManager.getInstance().reloadFromDisk(document);
-      }
-    }
-    myConflictAppeared = null;
-  }
-
-  boolean askReloadFromDisk(VirtualFile file, Document document) {
-    if (myConflictAppeared != null) {
-      Throwable trace = myConflictAppeared;
-      myConflictAppeared = null;
-      throw new IllegalStateException("Unexpected memory-disk conflict in tests, please use FileDocumentManager#reloadFromDisk or avoid VFS refresh", trace);
-    }
-    
-    String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
-
-    final DialogBuilder builder = new DialogBuilder();
-    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
-    builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
-    builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
-    builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
-
-        FileType fileType = file.getFileType();
-        String fsContent = LoadTextUtil.loadText(file).toString();
-        DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, fileType);
-        DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
-        String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
-        String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
-        String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
-        DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
-        request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true);
-        DialogBuilder diffBuilder = new DialogBuilder(project);
-        DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
-        diffPanel.setRequest(request);
-        diffBuilder.setCenterPanel(diffPanel.getComponent());
-        diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
-        diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
-        diffBuilder.addCancelAction();
-        diffBuilder.setTitle(title);
-        if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
-          builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
-        }
-      }
-    });
-    builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.setHelpId("reference.dialogs.fileCacheConflict");
-    return builder.show() == 0;
-  }
-
 }

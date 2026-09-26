@@ -1,0 +1,11 @@
+// "Add star projections" "true"
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
+class A {
+    class B<T> {
+        inner class C<U> {
+            inner class D<V>
+        }
+    }
+    fun test(x: Any) = x is B.C<caret>.D
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddStarProjectionsFixFactory$AddStartProjectionsForInnerClass

@@ -1,63 +1,64 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.ExitActionType
+import kotlinx.coroutines.CancellationException
+import org.jetbrains.annotations.ApiStatus
 
-object FeatureUsageUiEvents {
-  private const val DIALOGS_ID = "ui.dialogs"
-  private const val SETTINGS_ID = "ui.settings"
-
-  private val SELECT_CONFIGURABLE_DATA = HashMap<String, Any>()
-  private val APPLY_CONFIGURABLE_DATA = HashMap<String, Any>()
-  private val RESET_CONFIGURABLE_DATA = HashMap<String, Any>()
-
-  private val SHOW_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
-  private val CLOSE_OK_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
-  private val CLOSE_CANCEL_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
-  private val CLOSE_CUSTOM_DIALOG_DATA = ContainerUtil.newHashMap<String, Any>()
-
-  init {
-    SELECT_CONFIGURABLE_DATA["type"] = "select"
-    APPLY_CONFIGURABLE_DATA["type"] = "apply"
-    RESET_CONFIGURABLE_DATA["type"] = "reset"
-
-    SHOW_DIALOG_DATA["type"] = "show"
-    CLOSE_OK_DIALOG_DATA["type"] = "close"
-    CLOSE_OK_DIALOG_DATA["code"] = DialogWrapper.OK_EXIT_CODE
-    CLOSE_CANCEL_DIALOG_DATA["type"] = "close"
-    CLOSE_CANCEL_DIALOG_DATA["code"] = DialogWrapper.CANCEL_EXIT_CODE
-    CLOSE_CUSTOM_DIALOG_DATA["type"] = "close"
-    CLOSE_CUSTOM_DIALOG_DATA["code"] = DialogWrapper.NEXT_USER_EXIT_CODE
-  }
-
-  fun logSelectConfigurable(name: String) {
-    FeatureUsageLogger.log(SETTINGS_ID, name, SELECT_CONFIGURABLE_DATA)
-  }
-
-  fun logApplyConfigurable(name: String) {
-    FeatureUsageLogger.log(SETTINGS_ID, name, APPLY_CONFIGURABLE_DATA)
-  }
-
-  fun logResetConfigurable(name: String) {
-    FeatureUsageLogger.log(SETTINGS_ID, name, RESET_CONFIGURABLE_DATA)
-  }
-
-  fun logShowDialog(name: String) {
-    FeatureUsageLogger.log(DIALOGS_ID, name, SHOW_DIALOG_DATA)
-  }
-
-  fun logCloseDialog(name: String, exitCode: Int) {
-    if (FeatureUsageLogger.isEnabled()) {
-      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
-      }
-      else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
-      }
-      else {
-        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CUSTOM_DIALOG_DATA)
-      }
+@ApiStatus.Internal
+fun getUiEventLogger(): FeatureUsageUiEvents {
+  try {
+    if (ApplicationManager.getApplication() != null) {
+      return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
     }
+    // cannot load service if application is not initialized
+    return EmptyFeatureUsageUiEvents
+  }
+  catch (_: CancellationException) {
+    // cancellation in EDT is often unexpected
+    return EmptyFeatureUsageUiEvents
+  }
+  catch (e: Exception) {
+    logger<FeatureUsageUiEvents>().error("UiEventLogger is unavailable", e)
+    return EmptyFeatureUsageUiEvents
+  }
+}
+
+@ApiStatus.Internal
+interface FeatureUsageUiEvents {
+  fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
+
+  fun logApplyConfigurable(configurable: Configurable)
+
+  fun logResetConfigurable(configurable: Configurable)
+
+  fun logShowDialog(dialogClass: Class<*>, invocationPlace: String? = null)
+
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String? = null)
+
+  fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String? = null)
+}
+
+@ApiStatus.Internal
+object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
+  override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
+  }
+
+  override fun logApplyConfigurable(configurable: Configurable) {
+  }
+
+  override fun logResetConfigurable(configurable: Configurable) {
+  }
+
+  override fun logShowDialog(dialogClass: Class<*>, invocationPlace: String?) {
+  }
+
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String?) {
+  }
+
+  override fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 }

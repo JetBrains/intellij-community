@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
+@ApiStatus.Internal
 public class ReceivedChangeList extends CommittedChangeListImpl {
-  @NotNull private final CommittedChangeList myBaseList;
+  private final @NotNull CommittedChangeList myBaseList;
   private final int myBaseCount;
   private boolean myForcePartial;
 
@@ -56,8 +42,7 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     return myBaseList.getVcs();
   }
 
-  @NotNull
-  public CommittedChangeList getBaseList() {
+  public @NotNull CommittedChangeList getBaseList() {
     return myBaseList;
   }
 
@@ -66,6 +51,7 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     myBaseList.setDescription(newMessage);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -77,6 +63,7 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myBaseList.hashCode();
   }

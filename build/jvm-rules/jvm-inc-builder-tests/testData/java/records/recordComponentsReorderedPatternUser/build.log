@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Rec.class
+End of files
+Compiling files:
+  java/records/recordComponentsReorderedPatternUser/a/Rec.java
+End of files
+Cleaning output files:
+  PatternUser.class
+End of files
+Compiling files:
+  java/records/recordComponentsReorderedPatternUser/a/PatternUser.java
+End of files
+------------------------------------------
+Exit code: ERROR

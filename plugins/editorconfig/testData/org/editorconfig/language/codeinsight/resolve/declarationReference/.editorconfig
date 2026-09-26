@@ -1,0 +1,4 @@
+[foo]
+dotnet_naming_rule.my_rule.style = my_style
+
+dotnet_naming_style.my_style.capitalization = pascal_case

@@ -1,0 +1,12 @@
+================ Step #1 =================
+Compiling files:
+  java/common/addClassInDependencyCapture/a/ppp/Helper.java
+End of files
+Cleaning output files:
+  rrr/Use.class
+End of files
+Compiling files:
+  java/common/addClassInDependencyCapture/b/rrr/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

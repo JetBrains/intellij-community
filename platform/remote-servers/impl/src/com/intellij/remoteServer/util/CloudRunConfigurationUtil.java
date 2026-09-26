@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -14,11 +16,11 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-
-public class CloudRunConfigurationUtil {
-
+@ApiStatus.Internal
+public final class CloudRunConfigurationUtil {
   public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
   DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account, Module module, DC deploymentConfiguration) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
@@ -35,17 +37,16 @@ public class CloudRunConfigurationUtil {
     final RunManager runManager = RunManager.getInstance(module.getProject());
     String name = generateRunConfigurationName(account, module);
 
-    final ConfigurationFactoryEx configurationFactory =
-      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
-
-    final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
-
-    final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
-
+    ConfigurationFactory configurationFactory = DeployToServerConfigurationTypesRegistrar.getInstance()
+      .getConfigurationType(account.getType())
+      .getFactoryForType(deploymentSource.getType());
+    final RunnerAndConfigurationSettings runSettings = runManager.createConfiguration(name, configurationFactory);
+    @SuppressWarnings("unchecked")
+    DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
     result.setServerName(account.getName());
     result.setDeploymentSource(deploymentSource);
     result.setDeploymentConfiguration(deploymentConfiguration);
-    configurationFactory.onNewConfigurationCreated(runSettings.getConfiguration());
+    RunManagerImplKt.callNewConfigurationCreated(configurationFactory, runSettings.getConfiguration());
 
     runManager.addConfiguration(runSettings);
     runManager.setSelectedConfiguration(runSettings);
@@ -56,6 +57,6 @@ public class CloudRunConfigurationUtil {
   private static String generateRunConfigurationName(@NotNull RemoteServer<?> account, Module module) {
     String accountName = account.getName();
     String moduleName = module.getName();
-    return CloudBundle.getText("run.configuration.name", accountName, moduleName);
+    return CloudBundle.message("run.configuration.name", accountName, moduleName);
   }
 }

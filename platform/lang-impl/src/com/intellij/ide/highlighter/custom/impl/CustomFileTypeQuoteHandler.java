@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.highlighter.custom.impl;
 
@@ -8,13 +8,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeQuoteHandler implements QuoteHandler {
+@ApiStatus.Internal
+public final class CustomFileTypeQuoteHandler implements QuoteHandler {
   @Override
-  public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+  public boolean isClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
     if (isQuotedToken(tokenType)){
@@ -41,7 +44,7 @@ public class CustomFileTypeQuoteHandler implements QuoteHandler {
   }
 
   @Override
-  public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+  public boolean isOpeningQuote(@NotNull HighlighterIterator iterator, int offset) {
     if (isQuotedToken(iterator.getTokenType())){
       int start = iterator.getStart();
       return offset == start;
@@ -50,7 +53,7 @@ public class CustomFileTypeQuoteHandler implements QuoteHandler {
   }
 
   @Override
-  public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+  public boolean hasNonClosedLiteral(@NotNull Editor editor, @NotNull HighlighterIterator iterator, int offset) {
     try {
       Document doc = editor.getDocument();
       CharSequence chars = doc.getCharsSequence();
@@ -74,7 +77,7 @@ public class CustomFileTypeQuoteHandler implements QuoteHandler {
   }
 
   @Override
-  public boolean isInsideLiteral(HighlighterIterator iterator) {
+  public boolean isInsideLiteral(@NotNull HighlighterIterator iterator) {
     return isQuotedToken(iterator.getTokenType());
   }
 }

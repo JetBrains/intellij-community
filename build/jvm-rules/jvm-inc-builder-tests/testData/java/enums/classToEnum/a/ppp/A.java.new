@@ -1,0 +1,4 @@
+package ppp;
+public enum A { X;
+  public int v() { return 1; }
+}

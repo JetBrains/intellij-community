@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This interface should be implemented by all PsiJavaCodeReference implementations
  * in source.
- * 
- * @author dsl
  */
 public interface SourceJavaCodeReference {
   /**

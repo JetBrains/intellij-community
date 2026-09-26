@@ -1,76 +1,153 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.Language;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.InplaceRefactoringContinuation;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.Renamer;
+import com.intellij.refactoring.rename.RenamerFactory;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameElementAction extends BaseRefactoringAction {
+import java.util.List;
+import java.util.stream.Stream;
+
+public class RenameElementAction extends DumbAwareAction {
 
   public RenameElementAction() {
     setInjectedContext(true);
   }
 
   @Override
-  public boolean isAvailableInEditorOnly() {
-    return false;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(isAvailable(e.getDataContext()));
+  }
+
+  @ApiStatus.Internal
+  public boolean isAvailable(@NotNull DataContext dataContext) {
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return false;
+    }
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
+      return false;
+    }
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    if (editor != null && InplaceRefactoringContinuation.hasInplaceContinuation(editor, RenameElementAction.class)) {
+      return true;
+    }
+    return getAllRenamers(dataContext).anyMatch(getAvailableCondition(project));
+  }
+
+  @Override
+  public final void actionPerformed(@NotNull AnActionEvent e) {
+    WriteIntentReadAction.run( () -> {
+      DataContext dataContext = e.getDataContext();
+      Project project = dataContext.getData(CommonDataKeys.PROJECT);
+      if (project == null) {
+        return;
+      }
+      if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
+        return;
+      }
+      Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+
+      if (editor != null && InplaceRefactoringContinuation.tryResumeInplaceContinuation(project, editor, RenameElementAction.class)) {
+        return;
+      }
+
+      if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
+        return;
+      }
+
+      List<Renamer> allRenamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), _ -> ReadAction.computeBlocking(
+        () -> getAllRenamers(dataContext).toList()));
+
+      List<Renamer> availableRenamers = ContainerUtil.filter(allRenamers, getAvailableCondition(project));
+
+      if (availableRenamers.isEmpty()) {
+        // check if rename is not performed due to dumb mode
+        if (!allRenamers.isEmpty() && DumbService.isDumb(project)) {
+          String actionUnavailableMessage = DumbUtil.dumbModeMessage(
+            IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", this.getTemplateText()),
+            IdeBundle.message("dumb.balloon.0.is.not.available.in.light.mode", this.getTemplateText()));
+          Runnable rerunAction = () -> {
+            ActionManager.getInstance().tryToExecute(this, null, null, null, true);
+          };
+          String id = ActionManager.getInstance().getId(this);
+          List<String> actionIds = id != null ? List.of(id) : List.of();
+          DumbService.getInstance(project).showDumbModeActionBalloon(actionUnavailableMessage, rerunAction, actionIds);
+          return;
+        }
+
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")
+        );
+        CommonRefactoringUtil.showErrorHint(
+          project,
+          e.getData(CommonDataKeys.EDITOR),
+          message,
+          RefactoringBundle.getCannotRefactorMessage(null),
+          null
+        );
+      }
+      else if (availableRenamers.size() == 1) {
+        availableRenamers.get(0).performRename();
+      }
+      else {
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(availableRenamers)
+          .setTitle(RefactoringBundle.message("what.would.you.like.to.do"))
+          .setRenderer(new RenamerRenderer())
+          .setItemChosenCallback(Renamer::performRename)
+          .createPopup()
+          .showInBestPositionFor(dataContext);
+      }
+    });
+  }
+
+  private static @NotNull Stream<Renamer> getAllRenamers(@NotNull DataContext dataContext) {
+    return RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(dataContext).stream());
+  }
+
+  private static @NotNull Condition<Renamer> getAvailableCondition(@NotNull Project project) {
+    DumbService dumbService = DumbService.getInstance(project);
+    return dumbService::isUsableInCurrentContext;
+  }
+
+  public static boolean isRenameEnabledOnElements(PsiElement @NotNull [] elements) {
     if (elements.length != 1) return false;
 
     PsiElement element = elements[0];
     return element instanceof PsiNamedElement &&
-           !(element instanceof SyntheticElement) && 
+           !(element instanceof SyntheticElement) &&
            !PsiElementRenameHandler.isVetoed(element);
-  }
-
-  @Override
-  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
-    return RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-  }
-
-  @Override
-  protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
-    return isEnabledOnDataContext(dataContext);
-  }
-
-  @Override
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
-    return RenameHandlerRegistry.getInstance().hasAvailableHandler(dataContext);
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
-    return RenameHandlerRegistry.getInstance().hasAvailableHandler(context);
   }
 }

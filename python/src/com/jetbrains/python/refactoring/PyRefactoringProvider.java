@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -27,18 +13,13 @@ import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureHandler
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
-import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
-import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
-import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
+import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyRefactoringProvider extends RefactoringSupportProvider {
+public final class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new PyIntroduceVariableHandler();
@@ -49,10 +30,8 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
     return new PyIntroduceConstantHandler();
   }
 
-  @Override
-  public RefactoringActionHandler getIntroduceFieldHandler() {
-    return new PyIntroduceFieldHandler();
-  }
+  // Introduce Field is exposed through the Python-specific PyIntroduceAttributeAction ("Introduce Attribute"),
+  // so the platform IntroduceField action is intentionally hidden for Python by not overriding getIntroduceFieldHandler().
 
   @Override
   public RefactoringActionHandler getPullUpHandler() {
@@ -69,10 +48,8 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
     return new PyExtractSuperclassHandler();
   }
 
-  @Override
-  public RefactoringActionHandler getExtractMethodHandler() {
-    return new PyExtractMethodHandler();
-  }
+  // Extract Method is exposed through the Python-specific PyExtractFunctionAction ("Extract Function"),
+  // so the platform ExtractMethod action is intentionally hidden for Python by not overriding getExtractMethodHandler().
 
   @Override
   public boolean isInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
@@ -86,15 +63,18 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
     return false;
   }
 
-  @Nullable
   @Override
-  public ChangeSignatureHandler getChangeSignatureHandler() {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
+    return false;
+  }
+
+  @Override
+  public @Nullable ChangeSignatureHandler getChangeSignatureHandler() {
     return new PyChangeSignatureHandler();
   }
 
-  @Nullable
   @Override
-  public RefactoringActionHandler getIntroduceParameterHandler() {
+  public @Nullable RefactoringActionHandler getIntroduceParameterHandler() {
     return new PyIntroduceParameterHandler();
   }
 }

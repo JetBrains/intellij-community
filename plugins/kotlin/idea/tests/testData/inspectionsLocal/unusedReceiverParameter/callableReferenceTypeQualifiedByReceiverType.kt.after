@@ -1,0 +1,9 @@
+class C {
+    fun f() {}
+}
+
+fun getF(): (C) -> Unit = C::f
+
+fun main() {
+    getF()(C())
+}

@@ -1,0 +1,1 @@
+Functional interface must have exactly one abstract function. Refactoring would add the abstract function 'bar' to the functional interface 'FunInterface', which already has an abstract function

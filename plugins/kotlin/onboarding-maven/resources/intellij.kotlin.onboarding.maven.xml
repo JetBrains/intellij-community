@@ -1,0 +1,49 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.maven"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.MavenFeedbackBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionSurveyStore"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionSurvey"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.onboarding.maven.MavenBuildProcessSatisfactionListener"
+              topic="com.intellij.task.ProjectTaskListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.MavenFeedbackBundle">
+    <group id="MavenBuildProcessSatisfaction" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction"
+              class="org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

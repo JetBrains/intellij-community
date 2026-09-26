@@ -1,35 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.StringTokenizer;
 
-public class DirectoryUtil {
+public final class DirectoryUtil {
   private DirectoryUtil() {
   }
 
@@ -38,7 +27,7 @@ public class DirectoryUtil {
    * Creates the directory with the given path via PSI, including any
    * necessary but nonexistent parent directories. Must be run in write action.
    * @param path directory path in the local file system; separators must be '/'
-   * @return true if path exists or has been created as the result of this method call; false otherwise
+   * @return psiDirectory if path exists or has been created as the result of this method call; {@code null} otherwise
    */
   public static PsiDirectory mkdirs(PsiManager manager, String path) throws IncorrectOperationException{
     if (File.separatorChar != '/') {
@@ -47,42 +36,14 @@ public class DirectoryUtil {
       }
     }
 
-    String existingPath = path;
-
-    PsiDirectory directory = null;
-
-    // find longest existing path
-    while (existingPath.length() > 0) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(existingPath);
-      if (file != null) {
-        directory = manager.findDirectory(file);
-        if (directory == null) {
-          return null;
-        }
-        break;
-      }
-
-      if (StringUtil.endsWithChar(existingPath, '/')) {
-        existingPath = existingPath.substring(0, existingPath.length() - 1);
-        if (SystemInfo.isWindows && existingPath.length() == 2 && existingPath.charAt(1) == ':') {
-          return null;
-        }
-      }
-
-      int index = existingPath.lastIndexOf('/');
-      if (index == -1) {
-        // nothing to do more
-        return null;
-      }
-
-      existingPath = existingPath.substring(0, index);
-    }
-
-    if (directory == null) {
+    @Nullable Pair<PsiDirectory, String> pair = findLongestExistingDirectoryAndItsPath(manager, path);
+    if (pair == null) {
       return null;
     }
-
-    if (existingPath.equals(path)) {
+    PsiDirectory directory = pair.first;
+    String existingPath = pair.second;
+    
+    if (path.equals(existingPath)) {
       return directory;
     }
 
@@ -95,6 +56,50 @@ public class DirectoryUtil {
     return directory;
   }
 
+  /**
+   * @param path directory path in the local file system; separators must be '/'
+   * @return the inner most existing directory along the given <code>path</code>
+   */
+  public static @Nullable PsiDirectory findLongestExistingDirectory(@NotNull PsiManager manager, @NotNull String path) {
+    Pair<PsiDirectory, String> pair = findLongestExistingDirectoryAndItsPath(manager, path);
+    return pair != null ? pair.first : null;
+  }
+
+  /**
+   * virtualFile.getPath() is not guaranteed to be the same as path by which virtualFile was found, e.g. on case insensitive OS
+   * thus returning the path by which file was found
+   */
+  private static @Nullable Pair<PsiDirectory, String> findLongestExistingDirectoryAndItsPath(@NotNull PsiManager manager, @NotNull String path) {
+    PsiDirectory directory = null;
+    // find longest existing path
+    while (!path.isEmpty()) {
+      VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+      if (file != null) {
+        directory = manager.findDirectory(file);
+        if (directory == null) {
+          return null;
+        }
+        break;
+      }
+
+      if (StringUtil.endsWithChar(path, '/')) {
+        path = path.substring(0, path.length() - 1);
+        if (SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
+          return null;
+        }
+      }
+
+      int index = path.lastIndexOf('/');
+      if (index == -1) {
+        // nothing to do more
+        return null;
+      }
+
+      path = path.substring(0, index);
+    }
+    return Pair.create(directory, path);
+  }
+  
   public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
     StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;

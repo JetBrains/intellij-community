@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -31,8 +15,10 @@ import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 import org.jetbrains.jps.incremental.resources.StandardResourceBuilderEnabler;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.java.impl.JpsJavaAwareProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -41,13 +27,11 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
-public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
+public final class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsGradleExtensionServiceImpl.class);
-  private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
-  private final Map<File, GradleProjectConfiguration> myLoadedConfigs =
-    new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+  private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("gradle production on test");
+  private final Map<File, GradleProjectConfiguration> myLoadedConfigs = FileCollectionFactory.createCanonicalFileMap();
   private final Map<File, Boolean> myConfigFileExists = ConcurrentFactoryMap.createMap(key -> key.exists());
 
   public JpsGradleExtensionServiceImpl() {
@@ -61,18 +45,16 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
     });
   }
 
-  @Nullable
   @Override
-  public JpsGradleModuleExtension getExtension(@NotNull JpsModule module) {
+  public @Nullable JpsGradleModuleExtension getExtension(@NotNull JpsModule module) {
     return module.getContainer().getChild(JpsGradleModuleExtensionImpl.ROLE);
   }
 
-  @NotNull
   @Override
-  public JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, Element rootElement) {
+  public @NotNull JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, @Nullable String moduleType) {
     JpsGradleModuleExtension extension = module.getContainer().getChild(JpsGradleModuleExtensionImpl.ROLE);
     if (extension == null) {
-      extension = new JpsGradleModuleExtensionImpl(rootElement.getAttributeValue("external.system.module.type"));
+      extension = new JpsGradleModuleExtensionImpl(moduleType);
       module.getContainer().setChild(JpsGradleModuleExtensionImpl.ROLE, extension);
     }
     return extension;
@@ -90,24 +72,25 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
 
   @Override
   public boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency) {
+    JpsProject project = dependency.getContainingModule().getProject();
+    if (project instanceof JpsJavaAwareProject) {
+      return ((JpsJavaAwareProject)project).isProductionOnTestDependency(dependency);
+    }
     JpsSimpleElement<Boolean> child = dependency.getContainer().getChild(PRODUCTION_ON_TEST_ROLE);
     return child != null && child.getData();
   }
 
   @Override
   public boolean hasGradleProjectConfiguration(@NotNull BuildDataPaths paths) {
-    return myConfigFileExists.get(new File(paths.getDataStorageRoot(), GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
+    return myConfigFileExists.get(paths.getDataStorageDir().resolve(GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH).toFile());
   }
 
-  @NotNull
   @Override
-  public GradleProjectConfiguration getGradleProjectConfiguration(BuildDataPaths paths) {
-    final File dataStorageRoot = paths.getDataStorageRoot();
-    return getGradleProjectConfiguration(dataStorageRoot);
+  public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(BuildDataPaths paths) {
+    return getGradleProjectConfiguration(paths.getDataStorageDir().toFile());
   }
 
-  @NotNull
-  public GradleProjectConfiguration getGradleProjectConfiguration(@NotNull File dataStorageRoot) {
+  public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(@NotNull File dataStorageRoot) {
     final File configFile = new File(dataStorageRoot, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
     GradleProjectConfiguration config;
     synchronized (myLoadedConfigs) {

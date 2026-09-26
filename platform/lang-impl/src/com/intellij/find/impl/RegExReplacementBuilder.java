@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Generates a replacement string for search/replace operation using regular expressions.
@@ -30,8 +18,9 @@ import java.util.regex.Matcher;
  * <p>
  * Instances of this class are not safe for use by multiple concurrent threads, just as {@link Matcher} instances are.
  */
-public class RegExReplacementBuilder {
-  @NotNull private final Matcher myMatcher;
+@ApiStatus.Internal
+public final class RegExReplacementBuilder {
+  private final @NotNull MatchGroupContainer myMatcher;
 
   private String myTemplate;
   private int myCursor;
@@ -39,7 +28,53 @@ public class RegExReplacementBuilder {
   private List<CaseConversionRegion> myConversionRegions;
 
   public RegExReplacementBuilder(@NotNull Matcher matcher) {
-    myMatcher = matcher;
+    myMatcher = new MatchGroupContainer() {
+      @Override
+      public String group(String name) {
+        return matcher.group(name);
+      }
+
+      @Override
+      public String group(int num) {
+        return matcher.group(num);
+      }
+
+      @Override
+      public int groupCount() {
+        return matcher.groupCount();
+      }
+    };
+  }
+
+  private RegExReplacementBuilder(@NotNull Pattern pattern) {
+    myMatcher = new MatchGroupContainer() {
+      @Override
+      public String group(String name) {
+        return "";
+      }
+
+      @Override
+      public String group(int group) {
+        if (group < 0 || group > groupCount())
+          throw new IllegalArgumentException("No group " + group);
+        return "";
+      }
+
+      @Override
+      public int groupCount() {
+        return pattern.matcher("").groupCount();
+      }
+    };
+  }
+
+  /**
+   * Validates the replacement template. This doesn't check currently whether group names actually exist.
+   * @param pattern current pattern
+   * @param template replacement template
+   * @throws IllegalArgumentException if template is malformed
+   */
+  public static void validate(Pattern pattern, String template) throws IllegalArgumentException {
+    new RegExReplacementBuilder(pattern).createReplacement(template);
   }
 
   /**
@@ -49,7 +84,7 @@ public class RegExReplacementBuilder {
    * Matcher used to create this instance of RegExReplacementBuilder is supposed to be in a state
    * created by a successful {@link Matcher#find() find()} or {@link Matcher#find(int) find(int)} invocation.
    */
-  public String createReplacement(String template) {
+  public @NotNull String createReplacement(@NotNull String template) {
     myTemplate = template;
     resetState();
     while (myCursor < myTemplate.length()) {
@@ -76,17 +111,12 @@ public class RegExReplacementBuilder {
     if (myCursor == myTemplate.length()) throw new IllegalArgumentException("character to be escaped is missing");
     nextChar = myTemplate.charAt(myCursor++);
     switch (nextChar) {
-      case 'n':
-        myReplacement.append('\n'); break;
-      case 'r':
-        myReplacement.append('\r'); break;
-      case 'b':
-        myReplacement.append('\b');  break;
-      case 't':
-        myReplacement.append('\t'); break;
-      case 'f':
-        myReplacement.append('\f'); break;
-      case 'x':
+      case 'n' -> myReplacement.append('\n');
+      case 'r' -> myReplacement.append('\r');
+      case 'b' -> myReplacement.append('\b');
+      case 't' -> myReplacement.append('\t');
+      case 'f' -> myReplacement.append('\f');
+      case 'x' -> {
         if (myCursor + 4 <= myTemplate.length()) {
           try {
             int code = Integer.parseInt(myTemplate.substring(myCursor, myCursor + 4), 16);
@@ -95,14 +125,13 @@ public class RegExReplacementBuilder {
           }
           catch (NumberFormatException ignored) {}
         }
-        break;
-      case 'l': startConversionForCharacter(false); break;
-      case 'u': startConversionForCharacter(true); break;
-      case 'L': startConversionForRegion(false); break;
-      case 'U': startConversionForRegion(true); break;
-      case 'E': resetConversionState(); break;
-      default:
-        myReplacement.append(nextChar);
+      }
+      case 'l' -> startConversionForCharacter(false);
+      case 'u' -> startConversionForCharacter(true);
+      case 'L' -> startConversionForRegion(false);
+      case 'U' -> startConversionForRegion(true);
+      case 'E' -> resetConversionState();
+      default -> myReplacement.append(nextChar);
     }
   }
 
@@ -122,7 +151,7 @@ public class RegExReplacementBuilder {
           break;
         }
       }
-      if (gsb.length() == 0) throw new IllegalArgumentException("named capturing group has 0 length name");
+      if (gsb.isEmpty()) throw new IllegalArgumentException("named capturing group has 0 length name");
       if (nextChar != '}') throw new IllegalArgumentException("named capturing group is missing trailing '}'");
       String gname = gsb.toString();
       if (isDigit(gname.charAt(0))) {
@@ -151,7 +180,7 @@ public class RegExReplacementBuilder {
     }
   }
 
-  private String generateResult() {
+  private @NotNull String generateResult() {
     StringBuilder result;
     if (myConversionRegions.isEmpty()) {
       result = myReplacement;
@@ -225,7 +254,7 @@ public class RegExReplacementBuilder {
     return ((ch-'0')|('9'-ch)) >= 0;
   }
 
-  private static class CaseConversionRegion {
+  private static final class CaseConversionRegion {
     private final int start;
     private int end;
     private boolean toUpperCase;
@@ -235,5 +264,11 @@ public class RegExReplacementBuilder {
       this.end = end;
       this.toUpperCase = toUpperCase;
     }
+  }
+
+  interface MatchGroupContainer {
+    String group(String name);
+    String group(int num);
+    int groupCount();
   }
 }

@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ToggleIgnoredProjectsAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!isAvailable(e)) return;
 
@@ -41,18 +41,18 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      e.getPresentation().setText(ProjectBundle.message("maven.ignore.edit"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore.edit"));
     }
     else if (isIgnored(projectsManager, projects)) {
-      e.getPresentation().setText(ProjectBundle.message("maven.unignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.unignore"));
     }
     else {
-      e.getPresentation().setText(ProjectBundle.message("maven.ignore"));
+      e.getPresentation().setText(MavenProjectBundle.messagePointer("maven.ignore"));
     }
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     final DataContext context = e.getDataContext();
@@ -60,7 +60,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     if(projectsManager == null) return false;
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
-    if (projects == null || projects.isEmpty()) return false;
+    if (projects.isEmpty()) return false;
 
     int ignoredStatesCount = 0;
     int ignoredCount = 0;

@@ -1,0 +1,15 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.icons.api"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.uiDataRule" interface="com.intellij.openapi.actionSystem.UiDataRule" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.uiChangeListener" interface="com.intellij.ui.ExperimentalUI$Listener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

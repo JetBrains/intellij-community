@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,11 @@ public interface Refreshable {
   DataKey<Refreshable> PANEL_KEY = DataKey.create("Panel");
 
   /**
-   * The data ID which can be used to retrieve the active {@code Refreshable}
-   * instance from {@link com.intellij.openapi.actionSystem.DataContext}.
-   *
-   * @see com.intellij.openapi.actionSystem.DataContext#getData(String)
+   * @deprecated unused
    */
-  @Deprecated String PANEL = PANEL_KEY.getName();
-
-  void refresh();
+  @Deprecated
+  default void refresh() {
+  }
 
   void saveState();
 

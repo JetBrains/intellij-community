@@ -106,5 +106,5 @@ Groovy script
     PsiElement(()('(')
     Reference expression
       PsiElement(identifier)('c')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     PsiElement())(')')

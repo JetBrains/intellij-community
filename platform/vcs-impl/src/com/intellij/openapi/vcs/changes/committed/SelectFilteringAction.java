@@ -1,49 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
+@ApiStatus.Internal
 public class SelectFilteringAction extends LabeledComboBoxAction implements DumbAware {
 
-  @NotNull private final Project myProject;
-  @NotNull private final CommittedChangesTreeBrowser myBrowser;
-  @NotNull private ChangeListFilteringStrategy myPreviousSelection;
+  private final @NotNull Project myProject;
+  private final @NotNull CommittedChangesTreeBrowser myBrowser;
+  private @NotNull ChangeListFilteringStrategy myPreviousSelection = NoneChangeListFilteringStrategy.INSTANCE;
 
   public SelectFilteringAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
-    myPreviousSelection = ChangeListFilteringStrategy.NONE;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -51,24 +48,21 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
     e.getPresentation().setText(myPreviousSelection.toString());
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return new DefaultActionGroup(ContainerUtil.map(collectStrategies(),
                                                     (NotNullFunction<ChangeListFilteringStrategy, AnAction>)strategy -> new SetFilteringAction(strategy)));
   }
 
-  @NotNull
   @Override
-  protected Condition<AnAction> getPreselectCondition() {
+  protected @NotNull Condition<AnAction> getPreselectCondition() {
     return action -> ((SetFilteringAction)action).myStrategy.getKey().equals(myPreviousSelection.getKey());
   }
 
-  @NotNull
-  private List<ChangeListFilteringStrategy> collectStrategies() {
-    List<ChangeListFilteringStrategy> result = ContainerUtil.newArrayList();
+  private @NotNull List<ChangeListFilteringStrategy> collectStrategies() {
+    List<ChangeListFilteringStrategy> result = new ArrayList<>();
 
-    result.add(ChangeListFilteringStrategy.NONE);
+    result.add(NoneChangeListFilteringStrategy.INSTANCE);
     result.add(new StructureFilteringStrategy(myProject));
 
     boolean addNameFilter = false;
@@ -92,9 +86,9 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
     return result;
   }
 
-  private class SetFilteringAction extends DumbAwareAction {
+  private final class SetFilteringAction extends DumbAwareAction {
 
-    @NotNull private final ChangeListFilteringStrategy myStrategy;
+    private final @NotNull ChangeListFilteringStrategy myStrategy;
 
     private SetFilteringAction(@NotNull ChangeListFilteringStrategy strategy) {
       super(strategy.toString());
@@ -103,10 +97,10 @@ public class SelectFilteringAction extends LabeledComboBoxAction implements Dumb
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!ChangeListFilteringStrategy.NONE.equals(myPreviousSelection)) {
+      if (!NoneChangeListFilteringStrategy.INSTANCE.equals(myPreviousSelection)) {
         myBrowser.removeFilteringStrategy(myPreviousSelection.getKey());
       }
-      if (!ChangeListFilteringStrategy.NONE.equals(myStrategy)) {
+      if (!NoneChangeListFilteringStrategy.INSTANCE.equals(myStrategy)) {
         myBrowser.setFilteringStrategy(myStrategy);
       }
       myPreviousSelection = myStrategy;

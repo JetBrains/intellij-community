@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "poetry1app"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "poetry1app", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+poetry1lib = { path = "../poetry1lib", develop = true }
+
+[build-system]
+requires = ["poetry-core>=1.0.0,<2.0.0"]
+build-backend = "poetry.core.masonry.api"

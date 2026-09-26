@@ -1,0 +1,8 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Embedded   product</name>
+  <description>&lt;p&gt;Keep &amp; normalize&lt;/p&gt;</description>
+  <xi:include href="optional.xml">
+    <xi:fallback />
+  </xi:include>
+  <xi:include href="dynamic.xml" includeIf="some.product" />
+</idea-plugin>

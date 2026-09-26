@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -12,14 +10,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
-abstract public class AbstractServerPythonRunConfiguration<T extends AbstractServerPythonRunConfiguration<T>> extends AbstractPythonRunConfiguration<T>{
-  @NonNls private static final String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
+public abstract class AbstractServerPythonRunConfiguration<T extends AbstractServerPythonRunConfiguration<T>> extends AbstractPythonRunConfiguration<T>{
+  private static final @NonNls String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
   private boolean myLaunchJavascriptDebugger;
 
-  public AbstractServerPythonRunConfiguration(final Project project, final ConfigurationFactory factory) {
+  public AbstractServerPythonRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(project, factory);
   }
 

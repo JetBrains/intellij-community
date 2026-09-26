@@ -51,17 +51,7 @@ public class MockChangeList extends LocalChangeList {
   }
 
   @Override
-  public void setName(@NotNull String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getComment() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setComment(String comment) {
     throw new UnsupportedOperationException();
   }
 
@@ -72,11 +62,6 @@ public class MockChangeList extends LocalChangeList {
 
   @Override
   public boolean isReadOnly() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setReadOnly(boolean isReadOnly) {
     throw new UnsupportedOperationException();
   }
 

@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PsiDiamondType extends PsiType {
-  public static final RecursionGuard ourDiamondGuard = RecursionManager.createGuard("diamondInference");
+  public static final RecursionGuard<PsiElement> ourDiamondGuard = RecursionManager.createGuard("diamondInference");
 
   public PsiDiamondType() {
     super(TypeAnnotationProvider.EMPTY);
@@ -35,35 +25,32 @@ public abstract class PsiDiamondType extends PsiType {
 
   public static class DiamondInferenceResult {
     public static final DiamondInferenceResult EXPLICIT_CONSTRUCTOR_TYPE_ARGS = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
       @Override
       public String getErrorMessage() {
-        return "Cannot use diamonds with explicit type parameters for constructor";
+        return JavaPsiBundle.message("diamond.error.explicit.type.parameters.for.constructor");
       }
     };
 
     public static final DiamondInferenceResult NULL_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
       @Override
       public String getErrorMessage() {
-        return "Cannot infer arguments";
+        return JavaPsiBundle.message("diamond.error.cannot.infer.arguments");
       }
     };
 
     public static final DiamondInferenceResult RAW_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
@@ -74,33 +61,31 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult UNRESOLVED_CONSTRUCTOR = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
       @Override
       public String getErrorMessage() {
-        return "Cannot infer arguments (unable to resolve constructor)";
+        return JavaPsiBundle.message("diamond.error.cannot.infer.arguments.unable.to.resolve.constructor");
       }
     };
 
     public static final DiamondInferenceResult ANONYMOUS_INNER_RESULT = new DiamondInferenceResult() {
-      @NotNull
       @Override
-      public PsiType[] getTypes() {
+      public PsiType @NotNull [] getTypes() {
         return PsiType.EMPTY_ARRAY;
       }
 
       @Override
       public String getErrorMessage() {
-        return "Cannot use ''<>'' with anonymous inner classes";
+        return JavaPsiBundle.message("diamond.error.anonymous.inner.classes");
       }
     };
 
     private final List<PsiType> myInferredTypes = new ArrayList<>();
-    private String myErrorMessage;
+    private @NlsContexts.DetailedDescription String myErrorMessage;
     private String myNewExpressionPresentableText;
 
     public DiamondInferenceResult() { }
@@ -109,8 +94,7 @@ public abstract class PsiDiamondType extends PsiType {
       myNewExpressionPresentableText = expressionPresentableText;
     }
 
-    @NotNull
-    public PsiType[] getTypes() {
+    public PsiType @NotNull [] getTypes() {
       return myErrorMessage == null ? myInferredTypes.toArray(createArray(myInferredTypes.size())) : PsiType.EMPTY_ARRAY;
     }
 
@@ -121,7 +105,7 @@ public abstract class PsiDiamondType extends PsiType {
       return myInferredTypes;
     }
 
-    public String getErrorMessage() {
+    public @NlsContexts.DetailedDescription String getErrorMessage() {
       return myErrorMessage;
     }
 
@@ -129,10 +113,11 @@ public abstract class PsiDiamondType extends PsiType {
       return myErrorMessage != null;
     }
 
-    protected void addInferredType(PsiType psiType) {
+    @ApiStatus.Internal
+    public void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;
       if (psiType == null) {
-        myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;
+        myErrorMessage = JavaPsiBundle.message("diamond.error.cannot.infer.type.arguments", myNewExpressionPresentableText);
       }
       else {
         myInferredTypes.add(psiType);
@@ -165,7 +150,7 @@ public abstract class PsiDiamondType extends PsiType {
   }
 
   public static PsiDiamondType getDiamondType(PsiNewExpression expression) {
-    if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, expression)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
@@ -189,10 +174,25 @@ public abstract class PsiDiamondType extends PsiType {
         return factory != null ? factory : JavaResolveResult.EMPTY;
       }
     }
+    
+    if (expression instanceof PsiEnumConstant) {
+      final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
+      PsiClass containingClass = enumConstant.getContainingClass();
+      if (containingClass == null) return JavaResolveResult.EMPTY;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(enumConstant.getProject());
+      final PsiClassType type = facade.getElementFactory().createType(containingClass);
+      PsiExpressionList argumentList = enumConstant.getArgumentList();
+      if (argumentList == null) return JavaResolveResult.EMPTY;
+      return facade.getResolveHelper().resolveConstructor(type, argumentList, enumConstant);
+    }
 
     return expression.resolveMethodGenerics();
   }
 
-  @Nullable
-  public abstract JavaResolveResult getStaticFactory();
+  public abstract @Nullable JavaResolveResult getStaticFactory();
+
+  /**
+   * @return array of potentially applicable static factories
+   */
+  public abstract JavaResolveResult @NotNull[] getStaticFactories();
 }

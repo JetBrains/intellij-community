@@ -4,7 +4,7 @@ class Test {
 
   public void foo() {
     if (x != null) {
-      System.out.println(x.<warning descr="Method invocation 'substring' may produce 'java.lang.NullPointerException'">subs<caret>tring</warning>(1));
+      System.out.println(x.<warning descr="Method invocation 'substring' may produce 'NullPointerException'">subs<caret>tring</warning>(1));
     }
   }
 }

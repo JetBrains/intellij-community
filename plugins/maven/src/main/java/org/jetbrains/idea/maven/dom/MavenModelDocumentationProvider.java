@@ -1,42 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.usageView.UsageViewTypeLocation;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+public final class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
+  @Override
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     element = getMavenElement(element);
     if (element == null) return null;
@@ -48,29 +43,24 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
     return Collections.singletonList("http://maven.apache.org/ref/2.2.1/maven-model/maven.html");
   }
 
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  @Override
+  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     return getDoc(element, true);
   }
 
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    return null;
-  }
-
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return null;
-  }
-
-  @Nullable
-  private static String getDoc(PsiElement element, boolean html) {
+  private static @Nullable @Nls String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
-  public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
-    return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
+  @Override
+  public @Nls String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
+    return ReadAction.compute(() ->
+                                getMavenElementDescription(element,
+                                                           location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false)
+    );
   }
 
-  @Nullable
-  private static String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
+  private static @Nullable @NlsContexts.DetailedDescription String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
     e = getMavenElement(e);
     if (e == null) return null;
 
@@ -80,7 +70,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
 
     boolean property = MavenDomUtil.isMavenProperty(e);
 
-    String type = property ? "Property" : "Model Property";
+    String type = property ? MavenDomBundle.message("text.property") : MavenDomBundle.message("text.model.property");
     if (kind == DescKind.TYPE) return type;
 
     String name = buildPropertyName(e, property);
@@ -93,15 +83,28 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
       if (e instanceof XmlTag) {
         valueSuffix = ": " + bold[0] + ((XmlTag)e).getValue().getTrimmedText() + bold[1];
       }
-      return type + br + name + valueSuffix;
+      var tip = getTip(name, kind, valueSuffix, e);
+      if (tip == null) {
+        return type + br + name + valueSuffix;
+      }
+      return type + br + name + valueSuffix + br + tip;
     }
 
     MavenLog.LOG.error("unexpected desc kind: " + kind);
     return null;
   }
 
-  private static String buildPropertyName(PsiElement e, boolean property) {
-    if (property) return DescriptiveNameUtil.getDescriptiveName(e);
+  private static @Nullable @Nls String getTip(String name, DescKind kind, String suffix, PsiElement e) {
+    if (!"project.modelVersion".equals(name)) return null;
+    var project = e.getProject();
+    if (project.isDefault()) return null;
+    var mavenVersion = MavenDistributionsCache.getInstance(project)
+      .getMavenVersion(e.getContainingFile().getVirtualFile());
+    return MavenDomBundle.message("maven.version.tip", mavenVersion);
+  }
+
+  private static @NlsContexts.DetailedDescription String buildPropertyName(PsiElement e, boolean property) {
+    if (property) return DescriptiveNameUtil.getDescriptiveName(e); //NON-NLS - suprress warning
 
     List<String> path = new ArrayList<>();
     do {

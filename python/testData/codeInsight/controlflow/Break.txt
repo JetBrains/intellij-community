@@ -1,0 +1,16 @@
+0(1) element: null
+1(2) element: PyWhileStatement
+2(3,4) READ ACCESS: foo
+3(15) element: null. Condition: foo:false
+4(5) element: null. Condition: foo:true
+5(6) ASSERTTYPE ACCESS: foo
+6(7) element: PyStatementList
+7(8) element: PyIfStatement
+8(9,10) READ ACCESS: condition
+9(14) element: null. Condition: condition:false
+10(11) element: null. Condition: condition:true
+11(12) ASSERTTYPE ACCESS: condition
+12(13) element: PyStatementList
+13(15) element: PyBreakStatement
+14(1) element: PyPrintStatement
+15() element: null

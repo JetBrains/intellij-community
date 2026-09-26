@@ -16,15 +16,12 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemsDraggingObject extends PackagingElementDraggingObject {
   private final PackagingSourceItem[] mySourceItems;
 

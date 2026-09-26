@@ -1,0 +1,38 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework.junit5.eel.params.api
+
+import org.jetbrains.annotations.TestOnly
+import kotlin.reflect.KClass
+
+const val DEFAULT_EEL_TEST_DOCKER_IMAGE: String = "debian"
+
+/**
+ * Tests marked with [mandatory] require docker and will fail without it.
+ * You might provide docker [image] name.
+ *
+ * This annotation is repeatable: you might run one test multiple times with different images, i.e.:
+ * ```kotlin
+ * @DockerMandatoryTest("alpine")
+ * @DockerMandatoryTest("debian")
+ * ```
+ */
+@TestOnly
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@TestApplicationWithEel
+@Repeatable
+annotation class DockerTest(
+  val image: String = DEFAULT_EEL_TEST_DOCKER_IMAGE,
+  val imageProvider: KClass<out DockerTestImageProvider> = DefaultEelDockerTestImageProvider::class,
+  val mandatory: Boolean = true,
+  val setupCommands: Array<String> = [],
+)
+
+interface DockerTestImageProvider {
+  val image: String
+  val furtherLines: List<String>
+}
+
+class DefaultEelDockerTestImageProvider : DockerTestImageProvider {
+  override val image: String = DEFAULT_EEL_TEST_DOCKER_IMAGE
+  override val furtherLines: List<String> = emptyList()
+}

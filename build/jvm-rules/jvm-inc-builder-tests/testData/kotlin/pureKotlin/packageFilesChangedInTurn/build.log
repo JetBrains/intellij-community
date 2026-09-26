@@ -1,0 +1,30 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageFilesChangedInTurn-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageFilesChangedInTurn/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageFilesChangedInTurn-a.kotlin_module
+  test/BKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageFilesChangedInTurn/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #3 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageFilesChangedInTurn-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageFilesChangedInTurn/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

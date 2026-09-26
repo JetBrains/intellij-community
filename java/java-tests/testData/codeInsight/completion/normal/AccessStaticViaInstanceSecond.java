@@ -1,6 +1,6 @@
 public class KeyVO {
   {
-    this.fo<caret>
+    this.<caret>
   }
   static void foo() {}
 }

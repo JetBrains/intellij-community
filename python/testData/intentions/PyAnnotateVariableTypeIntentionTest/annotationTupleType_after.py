@@ -1,3 +1,3 @@
-from typing import Tuple
+from typing import Literal
 
-var: [Tuple[int, str, None]] = (1, 'foo', None)
+var: [tuple[Literal[1], Literal['foo'], None]] = (1, 'foo', None)

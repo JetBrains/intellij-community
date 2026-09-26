@@ -10,22 +10,23 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
+@ApiStatus.Internal
 public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalConfigPathAware> {
 
   public OpenExternalConfigAction() {
     super(ExternalConfigPathAware.class);
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.open.config.text", "external"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.open.config.description", "external"));
+    getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.open.config.text", "External"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.messagePointer("action.open.config.description", "external"));
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
 
     final ExternalEntityData externalData = getExternalData(e, ExternalEntityData.class);
@@ -35,8 +36,8 @@ public class OpenExternalConfigAction extends ExternalSystemNodeAction<ExternalC
     if (config == null) return false;
 
     ProjectSystemId externalSystemId = getSystemId(e);
-    e.getPresentation().setText(ExternalSystemBundle.message("action.open.config.text", externalSystemId.getReadableName()));
-    e.getPresentation().setDescription(ExternalSystemBundle.message("action.open.config.description", externalSystemId.getReadableName()));
+    e.getPresentation().setText(ExternalSystemBundle.messagePointer("action.open.config.text", externalSystemId.getReadableName()));
+    e.getPresentation().setDescription(ExternalSystemBundle.messagePointer("action.open.config.description", externalSystemId.getReadableName()));
     final ExternalSystemUiAware uiAware = getExternalSystemUiAware(e);
     if (uiAware != null) {
       e.getPresentation().setIcon(uiAware.getProjectIcon());

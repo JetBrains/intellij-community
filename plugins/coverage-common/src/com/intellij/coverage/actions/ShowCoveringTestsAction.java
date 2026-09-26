@@ -1,27 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuite;
+import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.coverage.CoverageBundle;
+import com.intellij.coverage.CoverageEngine;
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,94 +22,100 @@ import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.*;
+import javax.swing.JPanel;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
-public class ShowCoveringTestsAction extends AnAction {
+@ApiStatus.Internal
+public final class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
+  private final CoverageSuitesBundle myBundle;
   private final String myClassFQName;
   private final LineData myLineData;
+  private final boolean myTestsAvailable;
 
-  public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
-    super("Show tests covering line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
+  public ShowCoveringTestsAction(@Nullable Project project, CoverageSuitesBundle bundle, final String classFQName, LineData lineData) {
+    super(CoverageBundle.message("action.text.show.tests.covering.line"),
+          CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
+    myBundle = bundle;
     myClassFQName = classFQName;
     myLineData = lineData;
+    myTestsAvailable = isEnabled(project, bundle, lineData);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final DataContext context = e.getDataContext();
+  @ApiStatus.Internal
+  public static boolean isEnabled(Project project, CoverageSuitesBundle bundle, LineData lineData) {
+    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && project != null) {
+      return bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project, bundle);
+    }
+    return false;
+  }
+
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     LOG.assertTrue(editor != null);
 
-    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-    LOG.assertTrue(currentSuite != null);
-
-    final File[] traceFiles = getTraceFiles(project);
+    LOG.assertTrue(myBundle != null);
+    final CoverageEngine coverageEngine = myBundle.getCoverageEngine();
 
     final Set<String> tests = new HashSet<>();
-    Runnable runnable = () -> {
-      for (File traceFile : traceFiles) {
-        DataInputStream in = null;
-        try {
-          in = new DataInputStream(new FileInputStream(traceFile));
-          extractTests(traceFile, in, tests);
-        }
-        catch (Exception ex) {
-          LOG.error(traceFile.getName(), ex);
-        }
-        finally {
-          try {
-            in.close();
-          }
-          catch (IOException ex) {
-            LOG.error(ex);
-          }
-        }
-      }
-    };
-
-    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Extract information about tests", false, project)) { //todo cache them? show nothing found message
-      final String[] testNames = ArrayUtil.toStringArray(tests);
+    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myBundle, myClassFQName, myLineData.getLineNumber())),
+                                                                          CoverageBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
+      final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
+      CoverageLogger.logShowCoveringTests(project, testNames.length);
       if (testNames.length == 0) {
-        HintManager.getInstance().showErrorHint(editor, "Failed to load covered tests");
+        HintManager.getInstance().showErrorHint(editor, CoverageBundle.message("hint.text.failed.to.load.covered.tests"));
         return;
       }
-      final List<PsiElement> elements = currentSuite.getCoverageEngine().findTestsByNames(testNames, project);
+      ThrowableComputable<List<PsiImplementationViewElement>, RuntimeException> computeTestElements =
+        () -> ContainerUtil.map(coverageEngine.findTestsByNames(testNames, project),
+                                el -> ReadAction.computeBlocking(() -> new PsiImplementationViewElement(el)));
+      final List<PsiImplementationViewElement> elements =
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(computeTestElements,
+                                                                          CoverageBundle.message("dialog.title.find.tests.by.names"), true,
+                                                                          project);
       final ImplementationViewComponent component;
-      final String title = "Tests covering line " + myClassFQName + ":" + myLineData.getLineNumber();
+      final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
-        component = new ImplementationViewComponent(PsiUtilCore.toPsiElementArray(elements), 0);
+        Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
+        component = new ImplementationViewComponent(elements, 0);
+        component.setShowInFindWindowProcessor(processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false)
-          .setCouldPin(popup -> {
-            component.showInUsageView();
-            popup.cancel();
-            return false;
+          .addListener(new JBPopupListener() {
+            @Override
+            public void onClosed(@NotNull LightweightWindowEvent event) {
+              component.cleanup();
+            }
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText("Following test" + (testNames.length > 1 ? "s" : "") + " could not be found: " + StringUtil.join(testNames, "<br/>").replace("_", "."));
+        @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");
+        final JPanel panel = new PanelWithText(CoverageBundle.message("following.test.could.not.be.found.1", testNames.length, testsPresentation));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
@@ -134,56 +132,14 @@ public class ShowCoveringTestsAction extends AnAction {
     }
   }
 
-  private void extractTests(final File traceFile, final DataInputStream in, final Set<String> tests) throws IOException {
-    long traceSize = in.readInt();
-    for (int i = 0; i < traceSize; i++) {
-      final String className = in.readUTF();
-      final int linesSize = in.readInt();
-      for(int l = 0; l < linesSize; l++) {
-        final int line = in.readInt();
-        if (Comparing.strEqual(className, myClassFQName)) {
-          if (myLineData.getLineNumber() == line) {
-            tests.add(FileUtil.getNameWithoutExtension(traceFile));
-            return;
-          }
-        }
-      }
-    }
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    final Presentation presentation = e.getPresentation();
+    presentation.setEnabled(myTestsAvailable);
   }
 
   @Override
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE) {
-      final Project project = e.getProject();
-      if (project != null) {
-        final File[] files = getTraceFiles(project);
-        if (files != null && files.length > 0) {
-          presentation.setEnabled(CoverageDataManager.getInstance(project).getCurrentSuitesBundle().isCoverageByTestEnabled());
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static File[] getTraceFiles(Project project) {
-    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-    if (currentSuite == null) return null;
-    final List<File> files = new ArrayList<>();
-    for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
-
-      final String filePath = coverageSuite.getCoverageDataFileName();
-      final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
-
-      final File parentDir = new File(filePath).getParentFile();
-      final File tracesDir = new File(parentDir, dirName);
-      final File[] suiteFiles = tracesDir.listFiles();
-      if (suiteFiles != null) {
-        Collections.addAll(files, suiteFiles);
-      }
-    }
-
-    return files.isEmpty() ? null : files.toArray(new File[0]);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

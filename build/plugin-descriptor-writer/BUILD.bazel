@@ -1,0 +1,210 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
+load("//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl", "dev_dist_embedded_product_descriptor")
+load("//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bzl", "dev_dist_frontend_application_info")
+load(":descriptor_rules_test.bzl", "descriptor_action_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+# The `.syso` objects embed a Windows manifest with `requestedExecutionLevel level="asInvoker"` (see `manifest.xml`).
+# The manifest disables Windows Installer Detection, which otherwise asks for elevation (CreateProcess error 740) for
+# an exe whose name contains `patch`, `setup`, `install` or `update`. The name avoids these words as a second guard.
+# The `_windows_<arch>` suffix keeps the objects out of the Linux and macOS builds.
+go_binary(
+    name = "plugin-descriptor-writer",
+    srcs = [
+        "application_info.go",
+        "embedded_product.go",
+        "main.go",
+        "manifest_windows_amd64.syso",
+        "manifest_windows_arm64.syso",
+    ],
+    # Strip the symbol table and DWARF. A panic trace keeps its function names and line numbers either way, because
+    # those come from the runtime's own pclntab.
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/plugin-descriptor-writer",
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/markers",
+        "//build/plugin-descriptor-writer/internal/stamps",
+        "//build/plugin-descriptor-writer/internal/structural",
+    ],
+)
+
+pkg_zip(
+    name = "unrelated_descriptors_jar",
+    testonly = True,
+    srcs = ["testdata/embedded_product/simple.xml"],
+    out = "unrelated-descriptors.jar",
+)
+
+pkg_files(
+    name = "embedded_descriptor_entries",
+    testonly = True,
+    srcs = [
+        "testdata/embedded_product/META-INF/nested.xml",
+        "testdata/embedded_product/intellij.embedded.jar.xml",
+    ],
+    strip_prefix = strip_prefix.from_pkg("testdata/embedded_product"),
+)
+
+pkg_zip(
+    name = "embedded_descriptors_jar",
+    testonly = True,
+    srcs = [":embedded_descriptor_entries"],
+    out = "embedded-descriptors.jar",
+)
+
+java_import(
+    name = "embedded_descriptor_library",
+    testonly = True,
+    jars = [
+        ":unrelated_descriptors_jar",
+        ":embedded_descriptors_jar",
+    ],
+)
+
+[filegroup(
+    name = name + "_descriptor",
+    testonly = True,
+    srcs = ["testdata/embedded_product/module.xml"],
+) for name in [
+    "existing",
+    "fragment",
+    "notSeparate",
+    "file",
+]]
+
+dev_dist_embedded_product_descriptor(
+    testonly = True,
+    descriptors = {
+        ":existing_descriptor": "intellij.embedded.existing.xml",
+        ":fragment_descriptor": "intellij.embedded.fragment.xml",
+        ":notSeparate_descriptor": "intellij.embedded.notSeparate.xml",
+        ":file_descriptor": "intellij.embedded.file.xml",
+        "testdata/embedded_product/content.xml": "META-INF/content.xml",
+        "testdata/embedded_product/module-extensions.xml": "META-INF/module-extensions.xml",
+        "testdata/embedded_product/no-package.xml": "intellij.embedded.noPackage.xml",
+    },
+    library_descriptors = {
+        ":embedded_descriptor_library": "META-INF/nested.xml intellij.embedded.jar.xml",
+    },
+    main_module = "embedded",
+    modules = [
+        "intellij.embedded",
+        "intellij.embedded.file",
+    ],
+    separate_jar = [
+        "intellij.embedded.existing",
+        "intellij.embedded.noPackage",
+        "intellij.embedded/fragment",
+        "intellij.embedded.jar",
+        "intellij.embedded.file",
+    ],
+    source = "testdata/embedded_product/source.xml",
+)
+
+diff_test(
+    name = "embedded_product_rule_test",
+    file1 = ":embedded_dev_embedded_product_descriptor",
+    file2 = "testdata/embedded_product/expected.xml",
+)
+
+descriptor_action_test(
+    name = "embedded_product_action_test",
+    mnemonic = "DevDistEmbeddedProductDescriptor",
+    mode = "--embedded-product",
+    target_under_test = ":embedded_dev_embedded_product_descriptor",
+)
+
+dev_dist_frontend_application_info(
+    testonly = True,
+    build_number = "testdata/application_info/build.txt",
+    client_application_info = "testdata/application_info/client.xml",
+    main_module = "client_default",
+    product_application_info = "testdata/application_info/product.xml",
+)
+
+dev_dist_frontend_application_info(
+    testonly = True,
+    branch_name = "feature & test",
+    build_number = "testdata/application_info/build.txt",
+    client_application_info = "testdata/application_info/client.xml",
+    main_module = "client_nightly",
+    nightly = True,
+    product_application_info = "testdata/application_info/product.xml",
+)
+
+dev_dist_frontend_application_info(
+    testonly = True,
+    build_number = "testdata/application_info/build.txt",
+    client_application_info = "testdata/application_info/client.xml",
+    eap_override = "custom",
+    main_module = "client_overrides",
+    product_application_info = "testdata/application_info/product.xml",
+    version_suffix_override = "Preview",
+)
+
+[diff_test(
+    name = "application_info_%s_rule_test" % variant,
+    file1 = ":client_%s_dev_frontend_application_info" % variant,
+    file2 = "testdata/application_info/%s.expected.xml" % variant,
+) for variant in [
+    "default",
+    "nightly",
+    "overrides",
+]]
+
+descriptor_action_test(
+    name = "application_info_action_test",
+    mnemonic = "DevDistFrontendApplicationInfo",
+    mode = "--application-info",
+    target_under_test = ":client_default_dev_frontend_application_info",
+)
+
+test_suite(
+    name = "descriptor_rule_tests",
+    tests = [
+        ":application_info_action_test",
+        ":application_info_default_rule_test",
+        ":application_info_nightly_rule_test",
+        ":application_info_overrides_rule_test",
+        ":embedded_product_action_test",
+        ":embedded_product_rule_test",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# The binary and the tests list the same sources, as in `//build/content-module-packer`.
+# These tests cover the requests and compare the XML bytes with Kotlin output.
+go_test(
+    name = "plugin-descriptor-writer_test",
+    srcs = [
+        "application_info.go",
+        "application_info_test.go",
+        "embedded_product.go",
+        "embedded_product_test.go",
+        "main.go",
+        "main_test.go",
+        "manifest_windows_amd64.syso",
+        "manifest_windows_arm64.syso",
+    ],
+    data = glob(["testdata/**"]),
+    pure = "on",
+    deps = [
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
+        "//build/plugin-descriptor-writer/internal/markers",
+        "//build/plugin-descriptor-writer/internal/stamps",
+        "//build/plugin-descriptor-writer/internal/structural",
+    ],
+)

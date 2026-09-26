@@ -1,0 +1,27 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.lsp.core.frontend"/>
+    <module name="intellij.python.pyrefly.common"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.typeEngine.common"/>
+    <module name="intellij.python.typeEngine.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyToolFrontend implementation="com.intellij.python.pyrefly.frontend.PyreflyPyToolFrontend"/>
+    <python.typeEngine.frontend implementation="com.intellij.python.pyrefly.frontend.PyreflyTypeEngineFrontend"/>
+  </extensions>
+</idea-plugin>

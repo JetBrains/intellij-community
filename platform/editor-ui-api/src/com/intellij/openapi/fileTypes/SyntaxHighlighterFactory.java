@@ -1,56 +1,60 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author max
+ * This extension point <pre>{@code <lang.syntaxHighlighterFactory>}</pre> allows highlighting subsystem to provide syntax highlighting for the particular file.
+ * By "syntax highlighting" we mean highlighting of keywords, comments, braces etc. where lexing the file content is enough.
+ *
+ * To provide rich highlighting based on PSI see {@link com.intellij.codeInspection.LocalInspectionTool} or {@link com.intellij.lang.annotation.Annotator}
+ * @see SingleLazyInstanceSyntaxHighlighterFactory
  */
 public abstract class SyntaxHighlighterFactory {
+
+  /**
+   * @deprecated use {@link #getLanguageFactory()} instead
+   */
+  @Deprecated
   public static final SyntaxHighlighterLanguageFactory LANGUAGE_FACTORY = new SyntaxHighlighterLanguageFactory();
+
+  public static @NotNull SyntaxHighlighterLanguageFactory getLanguageFactory() {
+    return LANGUAGE_FACTORY;
+  }
 
   /**
    * Returns syntax highlighter for the given language.
-   *
+   * Requires read lock because some implementations of {@link #getSyntaxHighlighter(Project, VirtualFile)}
+   * may invoke operations that need it.
    * @param language a {@code Language} to get highlighter for
    * @param project  might be necessary to gather various project settings from
    * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
-  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
-    return LANGUAGE_FACTORY.forLanguage(language).getSyntaxHighlighter(project, file);
+  @RequiresReadLock(generateAssertion = false)
+  public static @NotNull SyntaxHighlighter getSyntaxHighlighter(@NotNull Language language, @Nullable Project project, @Nullable VirtualFile file) {
+    return getLanguageFactory().forLanguage(language).getSyntaxHighlighter(project, file);
   }
 
   /**
    * Returns syntax highlighter for the given file type.
    * Note: it is recommended to use {@link #getSyntaxHighlighter(Language, Project, VirtualFile)} in most cases,
-   * and use this method only when you are do not know the language you use.
-   *
+   * and use this method only when do not know the language you use.
+   * </p>
+   * Requires read lock because some implementations of {@link SyntaxHighlighterProvider#create(FileType, Project, VirtualFile)}
+   * may invoke operations that need it.
    * @param fileType a file type to use to select appropriate highlighter
    * @param project  might be necessary to gather various project settings from
    * @param file     might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
-  @Nullable
-  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+  @RequiresReadLock(generateAssertion = false)
+  public static @Nullable SyntaxHighlighter getSyntaxHighlighter(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     return SyntaxHighlighter.PROVIDER.create(fileType, project, file);
   }
 
@@ -60,11 +64,11 @@ public abstract class SyntaxHighlighterFactory {
    * to identify proper highlighting attributes.
    * <p/>
    * Default implementation doesn't highlight anything.
-   *
+   * Requires read lock because some implementations may invoke operations that need it.
    * @param project     might be necessary to gather various project settings from.
    * @param virtualFile might be necessary to collect file specific settings
    * @return {@code SyntaxHighlighter} interface implementation for this particular language.
    */
-  @NotNull
-  public abstract SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile);
+  @RequiresReadLock(generateAssertion = false)
+  public abstract @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile);
 }

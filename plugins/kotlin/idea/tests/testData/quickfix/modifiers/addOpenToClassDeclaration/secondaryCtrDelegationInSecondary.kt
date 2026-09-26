@@ -1,0 +1,12 @@
+// "Make 'B' 'open'" "true"
+// K2_ERROR: FINAL_SUPERTYPE
+class B {
+    constructor() {
+    }
+}
+
+class A : <caret>B {
+    constructor() {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp

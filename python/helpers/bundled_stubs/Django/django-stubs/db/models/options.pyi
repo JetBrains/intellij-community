@@ -1,0 +1,148 @@
+from collections.abc import Iterable, Sequence
+from typing import Any, Generic, TypeAlias, overload
+
+from django.apps.config import AppConfig
+from django.apps.registry import Apps
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.models.base import Model
+from django.db.models.constraints import BaseConstraint, UniqueConstraint
+from django.db.models.fields import AutoField, Field
+from django.db.models.fields.related import ManyToManyField, OneToOneField
+from django.db.models.fields.reverse_related import ForeignObjectRel
+from django.db.models.manager import Manager
+from django.db.models.query import _OrderByFieldName
+from django.db.models.query_utils import PathInfo
+from django.utils.datastructures import ImmutableList, _ListOrTuple
+from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import TypeVar
+
+PROXY_PARENTS: object
+EMPTY_RELATION_TREE: Any
+IMMUTABLE_WARNING: str
+DEFAULT_NAMES: tuple[str, ...]
+
+_OptionTogetherT: TypeAlias = _ListOrTuple[_ListOrTuple[str] | str] | set[tuple[str, ...]]  # noqa: PYI047
+_AnyField: TypeAlias = Field[Any, Any] | ForeignObjectRel
+
+@overload
+def normalize_together(option_together: _ListOrTuple[_ListOrTuple[str] | str]) -> tuple[tuple[str, ...], ...]: ...
+
+# Any other value will be returned unchanged, but probably only set is semantically allowed
+@overload
+def normalize_together(option_together: set[tuple[str, ...]]) -> set[tuple[str, ...]]: ...
+
+_T = TypeVar("_T")
+
+def make_immutable_fields_list(name: str, data: Iterable[_T]) -> ImmutableList[_T]: ...
+
+_M = TypeVar("_M", bound=Model)
+
+class Options(Generic[_M]):
+    constraints: _ListOrTuple[BaseConstraint]
+    FORWARD_PROPERTIES: set[str]
+    REVERSE_PROPERTIES: set[str]
+    default_apps: Any
+    local_fields: list[Field[Any, Any]]
+    local_many_to_many: list[ManyToManyField[Any, Any]]
+    private_fields: list[Any]
+    local_managers: list[Manager[_M]]
+    base_manager_name: str | None
+    default_manager_name: str | None
+    model_name: str | None
+    verbose_name: _StrOrPromise | None
+    verbose_name_plural: _StrOrPromise | None
+    db_table: str
+    db_table_comment: str
+    ordering: Sequence[_OrderByFieldName] | None
+    indexes: _ListOrTuple[Any]
+    unique_together: Sequence[tuple[str, ...]]  # Are always normalized
+    select_on_save: bool
+    default_permissions: Sequence[str]
+    permissions: _ListOrTuple[Any]
+    object_name: str | None
+    app_label: str
+    get_latest_by: Sequence[str] | None
+    order_with_respect_to: str | None
+    db_tablespace: str
+    required_db_features: _ListOrTuple[str]
+    required_db_vendor: str | None
+    meta: type | None
+    pk: Field[Any, Any]
+    auto_field: AutoField[Any, Any] | None
+    abstract: bool
+    managed: bool
+    proxy: bool
+    proxy_for_model: type[Model] | None
+    concrete_model: type[Model] | None
+    swappable: str | None
+    parents: dict[type[Model], Field[Any, Any] | None]
+    auto_created: bool
+    related_fkey_lookups: list[Any]
+    apps: Apps
+    default_related_name: str | None
+    model: type[Model]
+    original_attrs: dict[str, Any]
+    def __init__(self, meta: type | None, app_label: str | None = None) -> None: ...
+    @property
+    def label(self) -> str: ...
+    @property
+    def label_lower(self) -> str: ...
+    @property
+    def app_config(self) -> AppConfig: ...
+    def contribute_to_class(self, cls: type[Model], name: str) -> None: ...
+    def add_manager(self, manager: Manager[_M]) -> None: ...
+    def add_field(self, field: Field[Any, Any], private: bool = False) -> None: ...
+    # if GenericForeignKey is passed as argument, it has primary_key = True set before
+    def setup_pk(self, field: Field[Any, Any]) -> None: ...
+    def setup_proxy(self, target: type[Model]) -> None: ...
+    def can_migrate(self, connection: BaseDatabaseWrapper | str) -> bool: ...
+    @cached_property
+    def verbose_name_raw(self) -> str: ...
+    @cached_property
+    def swapped(self) -> str | None: ...
+    def setting_changed(self, *, setting: str, **kwargs: Any) -> None: ...
+    @cached_property
+    def managers(self) -> ImmutableList[Manager[_M]]: ...
+    @cached_property
+    def managers_map(self) -> dict[str, Manager[_M]]: ...
+    @cached_property
+    def base_manager(self) -> Manager[_M]: ...
+    @cached_property
+    def default_manager(self) -> Manager[_M] | None: ...
+    @cached_property
+    def fields(self) -> ImmutableList[Field[Any, Any]]: ...
+    @cached_property
+    def concrete_fields(self) -> ImmutableList[Field[Any, Any]]: ...
+    @cached_property
+    def local_concrete_fields(self) -> ImmutableList[Field[Any, Any]]: ...
+    @cached_property
+    def many_to_many(self) -> ImmutableList[ManyToManyField[Any, Any]]: ...
+    @cached_property
+    def related_objects(self) -> ImmutableList[ForeignObjectRel]: ...
+    @cached_property
+    def fields_map(self) -> dict[str, _AnyField]: ...
+    def get_field(self, field_name: str) -> _AnyField: ...
+    def get_base_chain(self, model: type[Model]) -> list[type[Model]]: ...
+    @cached_property
+    def all_parents(self) -> tuple[type[Model]]: ...
+    def get_parent_list(self) -> list[type[Model]]: ...
+    def get_ancestor_link(self, ancestor: type[Model]) -> OneToOneField[Any, Any] | None: ...
+    def get_path_to_parent(self, parent: type[Model]) -> list[PathInfo]: ...
+    def get_path_from_parent(self, parent: type[Model]) -> list[PathInfo]: ...
+    def get_fields(self, include_parents: bool = True, include_hidden: bool = False) -> list[_AnyField]: ...
+    def _get_fields(
+        self,
+        forward: bool = True,
+        reverse: bool = True,
+        include_parents: bool | object = True,
+        include_hidden: bool = False,
+        topmost_call: bool = True,
+    ) -> list[_AnyField]: ...
+    @cached_property
+    def total_unique_constraints(self) -> list[UniqueConstraint]: ...
+    @cached_property
+    def pk_fields(self) -> list[Field[Any, Any]]: ...
+    @property
+    def is_composite_pk(self) -> bool: ...
+    @cached_property
+    def db_returning_fields(self) -> list[Field[Any, Any]]: ...

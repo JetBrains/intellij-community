@@ -1,0 +1,12 @@
+{
+  "filesToMove": [
+    "foo/C.kt",
+    "foo/f.kt",
+    "foo/I.kt",
+    "foo/O.kt"
+  ],
+  "type": "MOVE_FILES",
+  "targetPackage": "bar",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

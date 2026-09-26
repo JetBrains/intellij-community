@@ -20,9 +20,6 @@ import junit.framework.TestCase;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-/**
- * @author nik
- */
 public class SortedListTest extends TestCase {
   public void testAdd() {
     SortedList<String> list = createList();

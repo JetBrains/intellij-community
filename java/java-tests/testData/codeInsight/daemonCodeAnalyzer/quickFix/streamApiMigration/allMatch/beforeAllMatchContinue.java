@@ -1,4 +1,4 @@
-// "Replace with allMatch()" "true"
+// "Collapse loop with stream 'allMatch()'" "true-preview"
 
 public class Main {
   boolean find(String[][] data) {

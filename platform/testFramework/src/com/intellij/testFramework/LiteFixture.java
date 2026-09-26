@@ -10,10 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public abstract class LiteFixture extends PlatformLiteFixture {
+public final class LiteFixture {
   public static void setContext(final PsiFile psiFile, final PsiElement context) {
     if (context != null) {
       setFileContext(psiFile, SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(context));

@@ -1,0 +1,38 @@
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithType) -> LightVariableBuilder:varWithType: varWithType
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUNCTION: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithoutType) -> LightVariableBuilder:varWithoutType: varWithoutType
+    UReturnExpression -> USimpleNameReferenceExpression (identifier = result) -> LightVariableBuilder:result: result
+UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+    ULocalVariable (name = a) -> USimpleNameReferenceExpression (identifier = arg) -> SymbolLightValueParameter: arg
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+    ULocalVariable (name = var708e23eb) -> USimpleNameReferenceExpression (identifier = arg) -> SymbolLightValueParameter: arg
+    UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
+    UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of listOf) -> USimpleNameReferenceExpression (identifier = listOf) -> UastFakeDeserializedSourceLightMethod of listOf: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of listOf) -> USimpleNameReferenceExpression (identifier = at) -> LightVariableBuilder:at: at
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    ULocalVariable (name = tsl) -> UQualifiedReferenceExpression -> UastFakeDeserializedSourceLightMethod of map: map
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = tl) -> LightVariableBuilder:tl: tl
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of map) -> USimpleNameReferenceExpression (identifier = map) -> UastFakeDeserializedSourceLightMethod of map: map
+        UReturnExpression -> UQualifiedReferenceExpression -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Light Parameter: it
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = ListOfLists) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends T>>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.util.List<? extends T>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to SymbolLightSimpleMethod of SymbolLightClassForFacade:TypeReferencesKt) -> USimpleNameReferenceExpression (identifier = parameterizedFoo) -> SymbolLightSimpleMethod of SymbolLightClassForFacade:TypeReferencesKt: parameterizedFoo
+    UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to UastFakeDeserializedSourceLightMethod of emptyList) -> USimpleNameReferenceExpression (identifier = emptyList) -> UastFakeDeserializedSourceLightMethod of emptyList: emptyList

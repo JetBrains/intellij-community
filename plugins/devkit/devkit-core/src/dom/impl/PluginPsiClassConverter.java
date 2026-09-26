@@ -1,40 +1,52 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.PsiClassConverter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
-/**
- * @author peter
- */
 public class PluginPsiClassConverter extends PsiClassConverter {
 
+  @Override
+  public PsiClass fromString(final String s, final @NotNull ConvertContext context) {
+    if (s == null) return null;
+    final String fqn = s.trim();
+    if (fqn.isEmpty()) return null;
+    final DomElement element = context.getInvocationElement();
+    final XmlFile file = context.getFile();
+    final Module module = context.getModule();
+    if (!(element instanceof GenericDomValue)) {
+      return DomJavaUtil.findClass(fqn, file, module, null);
+    }
+    final Project project = context.getProject();
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+        // (IJPL-212813) try to find in project sources:
+        PsiClass cls = DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.projectScope(project));
+        if (cls != null) {
+          return cls;
+        }
+        // fallback to all, if not found:
+        return DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.allScope(project));
+    }
+    return DomJavaUtil.findClass(fqn, file, module, super.getScope(context));
+  }
+
+  @Override
   protected GlobalSearchScope getScope(@NotNull ConvertContext context) {
     final Project project = context.getProject();
 
-    if (PsiUtil.isIdeaProject(project)) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       return GlobalSearchScope.allScope(project);
     }
 

@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.refactoring;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,7 +23,6 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,20 +30,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XmlTagInplaceRenamer {
-  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+public final class XmlTagInplaceRenamer {
+  private static final @NonNls String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  private static final @NonNls String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
 
-  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
+  private static final Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
   private ArrayList<RangeHighlighter> myHighlighters;
 
-  private XmlTagInplaceRenamer(@NotNull final Editor editor) {
+  private XmlTagInplaceRenamer(final @NotNull Editor editor) {
     myEditor = editor;
   }
 
-  public static void rename(final Editor editor, @NotNull final XmlTag tag) {
+  public static void rename(final Editor editor, final @NotNull XmlTag tag) {
     if (!ourRenamersStack.isEmpty()) {
       ourRenamersStack.peek().finish();
     }
@@ -65,7 +53,7 @@ public class XmlTagInplaceRenamer {
     renamer.rename(tag);
   }
 
-  private void rename(@NotNull final XmlTag tag) {
+  private void rename(final @NotNull XmlTag tag) {
     final Pair<ASTNode, ASTNode> pair = getNamePair(tag);
     if (pair == null) return;
 
@@ -91,7 +79,7 @@ public class XmlTagInplaceRenamer {
         final Template t = buildTemplate(tag, pair);
         TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
           @Override
-          public void templateFinished(final Template template, boolean brokenOff) {
+          public void templateFinished(final @NotNull Template template, boolean brokenOff) {
             finish();
           }
 
@@ -99,7 +87,7 @@ public class XmlTagInplaceRenamer {
           public void templateCancelled(final Template template) {
             finish();
           }
-        }, (variableName, value) -> value.length() == 0 || value.charAt(value.length() - 1) != ' ');
+        }, (variableName, value) -> value.isEmpty() || value.charAt(value.length() - 1) != ' ');
 
         // restore old offset
         myEditor.getCaretModel().moveToOffset(offset);
@@ -123,7 +111,7 @@ public class XmlTagInplaceRenamer {
     }
   }
 
-  private Pair<ASTNode, ASTNode> getNamePair(@NotNull final XmlTag tag) {
+  private Pair<ASTNode, ASTNode> getNamePair(final @NotNull XmlTag tag) {
     final int offset = myEditor.getCaretModel().getOffset();
 
     final ASTNode node = tag.getNode();
@@ -144,23 +132,13 @@ public class XmlTagInplaceRenamer {
     return Pair.create(selected, other);
   }
 
-  private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<ASTNode, ASTNode> pair) {
+  private static Template buildTemplate(final @NotNull XmlTag tag, final @NotNull Pair<? extends ASTNode, ? extends ASTNode> pair) {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(tag);
 
     final ASTNode selected = pair.first;
     final ASTNode other = pair.second;
 
-    builder.replaceElement(selected.getPsi(), PRIMARY_VARIABLE_NAME, new EmptyExpression() {
-      @Override
-      public Result calculateQuickResult(final ExpressionContext context) {
-        return new TextResult(selected.getText());
-      }
-
-      @Override
-      public Result calculateResult(final ExpressionContext context) {
-        return new TextResult(selected.getText());
-      }
-    }, true);
+    builder.replaceElement(selected.getPsi(), PRIMARY_VARIABLE_NAME, new ConstantNode(selected.getText()), true);
 
     if (other != null) {
       builder.replaceElement(other.getPsi(), OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
@@ -169,7 +147,7 @@ public class XmlTagInplaceRenamer {
     return builder.buildInlineTemplate();
   }
 
-  private static void addHighlights(List<TextRange> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters) {
+  private static void addHighlights(List<? extends TextRange> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
 

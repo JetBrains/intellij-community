@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.psi.PsiClass;
@@ -11,16 +11,14 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
+public final class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   private final XmlTag myXmlTag;
 
   public JavaFxRootTagDescriptor(XmlTag xmlTag) {
@@ -34,9 +32,8 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     return className != null ? JavaFxPsiUtil.findPsiClass(className, myXmlTag) : null;
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
     if (FxmlConstants.TYPE.equals(attributeName)) {
       return new RootTagTypeAttributeDescriptor();
     }
@@ -59,7 +56,8 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     super.validate(context, host);
 
     if (context.getParentTag() != null) {
-      host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document",
+      host.addMessage(context.getNavigationElement(),
+                      JavaFXBundle.message("inspection.message.fx.root.valid.only.as.root.node.fxml.document"),
                       ValidationHost.ErrorType.ERROR);
     }
   }
@@ -76,14 +74,9 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     return psiClass != null ? psiClass : myXmlTag;
   }
 
-  public static class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
+  public static final class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
     public RootTagTypeAttributeDescriptor() {
       super(FxmlConstants.TYPE, null);
-    }
-
-    @Override
-    public boolean hasIdType() {
-      return false;
     }
 
     @Override
@@ -101,16 +94,16 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
       return null;
     }
 
+    @Override
     protected boolean isConstant(PsiField field) {
       return false;
     }
 
-    @Nullable
     @Override
-    public String validateValue(XmlElement context, String value) {
+    public @Nullable String validateValue(XmlElement context, String value) {
       final PsiReference[] references = context.getReferences();
       if (references.length == 0 || references[references.length - 1].resolve() == null) {
-        return "Cannot resolve class " + value;
+        return JavaFXBundle.message("javafx.root.tag.descriptor.cannot.resolve.class", value);
       }
       return null;
     }

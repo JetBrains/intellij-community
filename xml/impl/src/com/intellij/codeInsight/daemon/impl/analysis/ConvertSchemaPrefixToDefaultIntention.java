@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +21,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,14 +32,13 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntentionAction {
-  public static final String NAME = "Reset to default namespace";
 
   public ConvertSchemaPrefixToDefaultIntention() {
-    setText(NAME);
+    setText(XmlBundle.message("xml.intention.reset.to.default.namespace.name"));
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final XmlAttribute xmlns = getXmlnsDeclaration(element);
     if (xmlns == null) return;
     SchemaPrefixReference prefixRef = null;
@@ -71,7 +56,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
     final ArrayList<XmlAttribute> attrs = new ArrayList<>();
     xmlns.getParent().accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         if (ns.equals(tag.getNamespacePrefix())) {
           tags.add(tag);
         }
@@ -79,7 +64,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         if (value.getValue().startsWith(ns + ":")) {
           for (PsiReference ref : value.getReferences()) {
             if (ref instanceof SchemaPrefixReference && ref.isReferenceTo(prefix)) {
@@ -97,25 +82,24 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       ApplicationManager.getApplication().runWriteAction(() -> {
         xmlns.setName("xmlns");
       });
-    }, NAME, null);
+    }, XmlBundle.message("xml.intention.reset.to.default.namespace.command"), null);
 
-    WriteCommandAction.writeCommandAction(project, xmlns.getContainingFile()).withName(NAME).run(() -> {
-      xmlns.setName("xmlns");
-    });
+    WriteCommandAction.writeCommandAction(project, xmlns.getContainingFile()).withName(
+      XmlBundle.message("xml.intention.reset.to.default.namespace.command")).run(() -> xmlns.setName("xmlns"));
   }
 
-  private static void convertTagsAndAttributes(String ns, final List<XmlTag> tags, final List<XmlAttribute> attrs, Project project) {
+  private static void convertTagsAndAttributes(String ns,
+                                               final List<? extends XmlTag> tags,
+                                               final List<? extends XmlAttribute> attrs,
+                                               Project project) {
     final int localNameIndex = ns.length() + 1;
     final int totalCount = tags.size() + attrs.size();
 
-    final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, "Changing to default namespace", true);
+    final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(
+      project, XmlBundle.message("xml.progress.changing.to.default.namespace"), true);
     progressTask.setTask(new SequentialTask() {
       int tagIndex = 0;
       int attrIndex = 0;
-
-      @Override
-      public void prepare() {
-      }
 
       @Override
       public boolean isDone() {
@@ -124,7 +108,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
       @Override
       public boolean iteration() {
-        progressTask.getIndicator().setFraction(((double) (tagIndex + attrIndex)) / totalCount);
+        progressTask.getIndicator().setFraction(((double)(tagIndex + attrIndex)) / totalCount);
         ApplicationManager.getApplication().runWriteAction(() -> {
           if (tagIndex < tags.size()) {
             XmlTag tag = tags.get(tagIndex++);
@@ -142,11 +126,6 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
         return isDone();
       }
-
-      @Override
-      public void stop() {
-
-      }
     });
     ProgressManager.getInstance().run(progressTask);
   }
@@ -156,14 +135,12 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
     return getXmlnsDeclaration(element) != null;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return NAME;
+  public @NotNull String getFamilyName() {
+    return getText();
   }
 
-  @Nullable
-  private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
+  private static @Nullable XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof XmlElement)) return null;
     for (PsiReference ref : parent.getReferences()) {

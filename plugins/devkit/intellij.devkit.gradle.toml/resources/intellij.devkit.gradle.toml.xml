@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.devkit.gradle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionCatalogUpdater"
+                    serviceImplementation="com.intellij.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater"/>
+  </extensions>
+</idea-plugin>

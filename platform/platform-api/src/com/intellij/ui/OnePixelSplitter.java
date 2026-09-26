@@ -17,16 +17,17 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.util.Producer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OnePixelSplitter extends JBSplitter {
-  private Producer<Insets> myBlindZone;
+  private Supplier<Insets> myBlindZone;
 
   public OnePixelSplitter() {
     super();
@@ -38,7 +39,7 @@ public class OnePixelSplitter extends JBSplitter {
     init();
   }
 
-  public OnePixelSplitter(boolean vertical, @NotNull String proportionKey, float defaultProportion) {
+  public OnePixelSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float defaultProportion) {
     super(vertical, proportionKey, defaultProportion);
     init();
   }
@@ -48,7 +49,7 @@ public class OnePixelSplitter extends JBSplitter {
     init();
   }
 
-  public OnePixelSplitter(@NotNull String proportionKey, float defaultProportion) {
+  public OnePixelSplitter(@NotNull @NonNls String proportionKey, float defaultProportion) {
     super(proportionKey, defaultProportion);
 
     init();
@@ -64,8 +65,14 @@ public class OnePixelSplitter extends JBSplitter {
     init();
   }
 
+  public OnePixelSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float minProp, float maxProp) {
+    super(vertical, proportionKey,  minProp, maxProp);
+    init();
+  }
+
   protected void init() {
     setDividerWidth(1);
+    setFocusable(false);
   }
 
   @Override
@@ -73,12 +80,12 @@ public class OnePixelSplitter extends JBSplitter {
     return new OnePixelDivider(isVertical(), this);
   }
 
-  public void setBlindZone(Producer<Insets> blindZone) {
+  public void setBlindZone(Supplier<Insets> blindZone) {
     myDivider.setOpaque(blindZone == null);
     myBlindZone = blindZone;
   }
 
-  public Producer<Insets> getBlindZone() {
+  public Supplier<Insets> getBlindZone() {
     return myBlindZone;
   }
 }

@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class DefUseTest extends LightCodeInsightFixtureTestCase {
+public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/defUse";
@@ -30,6 +16,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testSCR5144() { doTest(); }
   public void testSCR6843() { doTest(); }
   public void testUnusedVariable() { doTest(); }
+  public void testUnusedAssignmentInCompound() { doTest(); }
   public void testArrayIndexUsages() { doTest(); }
   public void testSCR28019() { doTest(); }
   public void testSCR40364() { doTest(); }
@@ -61,6 +48,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testFieldInitializer() { doTest(); }
   public void testChainedFieldInitializer() { doTest(); }
   public void testVarDeclaration() { doTest(); }
+  public void testSelfAssignment() { doTest(); }
   public void testFieldIgnoringRedundantInitializer() {
     DefUseInspection inspection = new DefUseInspection();
     inspection.REPORT_REDUNDANT_INITIALIZER = false;
@@ -69,11 +57,22 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   }
   public void testFieldInitializerUsedInMethodReference() { doTest(); }
   public void testFieldInitializerChainedConstructor() { doTest(); }
+  public void testUnderAlwaysFalseCondition() { doTest(); }
+  public void testLastInTry() { doTest(); }
+  public void testFieldOverwrite() { doTest(); }
+  public void testFieldOverwriteAfterQualifierUpdate() { doTest(); }
+  public void testFieldNoOverwrite() { doTest(); }
+  public void testFieldNoOverwriteEmptyElse() { doTest(); }
+  public void testAssignmentInCatch() { doTest(); }
 
+  public void testFieldCouldBeUsedOutside() { doTest(); }
+  public void testForEachIterationParameter()  { doTest(); }
+  public void testPatternVariable()  { doTest(); }
+ 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_21;
   }
 
   private void doTest() {

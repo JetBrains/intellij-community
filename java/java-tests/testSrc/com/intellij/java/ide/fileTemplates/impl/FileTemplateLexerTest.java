@@ -18,31 +18,31 @@ package com.intellij.java.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class FileTemplateLexerTest extends LexerTestCase {
 
   public void testEscapes() {
-    doTest("\\#include foo $bar", "ESCAPE ('\\#')\n" +
-                                  "TEXT ('include foo ')\n" +
-                                  "MACRO ('$bar')");
+    doTest("\\#include foo $bar", """
+      ESCAPE ('\\#')
+      TEXT ('include foo ')
+      MACRO ('$bar')""");
   }
 
   public void testLiveTemplates() {
-    doTest("#[[$FOO$]]#", "ESCAPE ('#[[')\n" +
-                          "MACRO ('$FOO$')\n" +
-                          "ESCAPE (']]#')");
+    doTest("#[[$FOO$]]#", """
+      ESCAPE ('#[[')
+      MACRO ('$FOO$')
+      ESCAPE (']]#')""");
   }
 
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return FileTemplateConfigurable.createDefaultLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return null;
   }
 }

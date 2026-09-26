@@ -1,75 +1,66 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SetKeywordsDialog extends DialogWrapper {
+  private static final List<String> KNOWN_KEYWORDS = List.of("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
 
-  private static final List<String> KNOWN_KEYWORDS =
-    ContainerUtil.newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
+  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = Map.of(
+    "URL", "HeadURL",
+    "Date", "LastChangedDate",
+    "Revision", "LastChangedRevision",
+    "Rev", "LastChangedRevision",
+    "Author", "LastChangedBy");
 
-  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<String, String>immutableMapBuilder()
-    .put("URL", "HeadURL")
-    .put("Date", "LastChangedDate")
-    .put("Revision", "LastChangedRevision")
-    .put("Rev", "LastChangedRevision")
-    .put("Author", "LastChangedBy")
-    .build();
-
-  @Nullable private final PropertyValue myKeywordsValue;
-  @NotNull private final List<JCheckBox> myKeywordOptions;
+  private final @Nullable PropertyValue myKeywordsValue;
+  private final @NotNull List<JCheckBox> myKeywordOptions;
 
   protected SetKeywordsDialog(Project project, @Nullable PropertyValue keywordsValue) {
     super(project, false);
-    myKeywordOptions = ContainerUtil.newArrayList();
+    myKeywordOptions = new ArrayList<>();
     myKeywordsValue = keywordsValue;
 
-    setTitle("SVN Keywords");
+    setTitle(message("dialog.title.svn.keywords"));
     setResizable(false);
     init();
   }
 
-  @Nullable
-  public String getKeywords() {
+  public @Nullable String getKeywords() {
     List<JCheckBox> selectedKeywords = ContainerUtil.filter(myKeywordOptions, keywordOption -> keywordOption.isSelected());
 
     return StringUtil.nullize(StringUtil.join(selectedKeywords, keywordOption -> keywordOption.getText(), " "));
   }
 
-  @Nullable
-  protected JComponent createCenterPanel() {
+  @Override
+  protected @Nullable JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Select keywords to set: "), BorderLayout.NORTH);
+    panel.add(new JBLabel(message("label.select.keywords.to.set")), BorderLayout.NORTH);
     JPanel buttonsPanel = new JPanel(new GridLayout(5, 1));
 
-    for (String keyword : KNOWN_KEYWORDS) {
+    for (@NlsSafe String keyword : KNOWN_KEYWORDS) {
       JCheckBox keywordOption = new JCheckBox(keyword);
 
       myKeywordOptions.add(keywordOption);
@@ -100,9 +91,8 @@ public class SetKeywordsDialog extends DialogWrapper {
    * TODO: Subversion 1.8 also allow defining custom keywords (in "svn:keywords" property value). But currently it is unnecessary for this
    * TODO: dialog.
    */
-  @NotNull
-  private static Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
-    Set<String> result = ContainerUtil.newHashSet();
+  private static @NotNull Set<String> parseKeywords(@Nullable PropertyValue keywordsValue) {
+    Set<String> result = new HashSet<>();
 
     if (keywordsValue != null) {
       for (String keyword : StringUtil.split(PropertyValue.toString(keywordsValue), " ")) {

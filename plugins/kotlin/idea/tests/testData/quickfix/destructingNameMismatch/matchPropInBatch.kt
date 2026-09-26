@@ -1,0 +1,11 @@
+// "Fix all 'Declaration name mismatch in destructuring declaration' problems in file" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+data class Person(val firstName: String, val lastName: String)
+
+fun test(person: Person) {
+    val (fi<caret>rst , last) = person
+    val (one , two) = person
+}
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

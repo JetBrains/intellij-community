@@ -16,13 +16,16 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.core.Content;
-import com.intellij.history.core.StreamUtil;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.util.Producer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +35,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public class ChangeSet {
+public final class ChangeSet {
+  private static final int VERSION = 1;
   private final long myId;
-  @Nullable private String myName;
   private final long myTimestamp;
   private final List<Change> myChanges;
+
+  private @Nullable @NlsContexts.Label String myName;
+  private @Nullable @NonNls ActivityId myActivityId = null;
 
   private volatile boolean isLocked = false;
 
@@ -48,14 +57,19 @@ public class ChangeSet {
   }
 
   public ChangeSet(DataInput in) throws IOException {
+    int version = DataInputOutputUtil.readINT(in);
     myId = DataInputOutputUtil.readLONG(in);
-    myName = StreamUtil.readStringOrNull(in);
+    myName = DataStreamUtil.readStringOrNull(in); //NON-NLS
     myTimestamp = DataInputOutputUtil.readTIME(in);
+
+    if (version >= 1) {
+      myActivityId = readActivityId(in);
+    }
 
     int count = DataInputOutputUtil.readINT(in);
     List<Change> changes = new ArrayList<>(count);
     while (count-- > 0) {
-      changes.add(StreamUtil.readChange(in));
+      changes.add(DataStreamUtil.readChange(in));
     }
     myChanges = Collections.unmodifiableList(changes);
     isLocked = true;
@@ -63,23 +77,40 @@ public class ChangeSet {
 
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
+    if (LocalHistoryLog.LOG.isTraceEnabled()) {
+      int maximumChanges = Registry.intValue("lvcs.trace.changes.persistence.limit", 100);
+      String lastChanges = myChanges.reversed().stream().limit(maximumChanges)
+        .map(Object::toString)
+        .collect(Collectors.joining("\n"));
+      LocalHistoryLog.LOG.trace("Writing changeset. Changes count: " + myChanges.size() + ". 100 latest changes: \n" + lastChanges);
+    }
+    DataInputOutputUtil.writeINT(out, VERSION);
     DataInputOutputUtil.writeLONG(out, myId);
-    StreamUtil.writeStringOrNull(out, myName);
+    DataStreamUtil.writeStringOrNull(out, myName);
     DataInputOutputUtil.writeTIME(out, myTimestamp);
+
+    writeActivityId(out, myActivityId);
 
     DataInputOutputUtil.writeINT(out, myChanges.size());
     for (Change c : myChanges) {
-      StreamUtil.writeChange(out, c);
+      DataStreamUtil.writeChange(out, c);
     }
   }
 
-  public void setName(@Nullable String name) {
+  public void setName(@Nullable @NlsContexts.Label String name) {
     myName = name;
   }
 
-  @Nullable
-  public String getName() {
+  public @NlsContexts.Label @Nullable String getName() {
     return myName;
+  }
+
+  public void setActivityId(@Nullable ActivityId activityId) {
+    myActivityId = activityId;
+  }
+
+  public @Nullable ActivityId getActivityId() {
+    return myActivityId;
   }
 
   public long getTimestamp() {
@@ -90,9 +121,9 @@ public class ChangeSet {
     isLocked = true;
   }
 
-  @Nullable
-  public String getLabel() {
-    return accessChanges(() -> {
+  public @NlsContexts.Label @Nullable String getLabel() {
+    //noinspection RedundantTypeArguments
+    return this.<@NlsContexts.Label @Nullable String>accessChanges(() -> {
       for (Change each : myChanges) {
         if (each instanceof PutLabelChange) {
           return ((PutLabelChange)each).getName();
@@ -129,19 +160,10 @@ public class ChangeSet {
     return accessChanges(() -> myChanges.isEmpty());
   }
 
-  public boolean affectsPath(final String paths) {
+  public boolean anyChangeMatches(@NotNull Predicate<Change> predicate) {
     return accessChanges(() -> {
       for (Change c : myChanges) {
-        if (c.affectsPath(paths)) return true;
-      }
-      return false;
-    });
-  }
-
-  public boolean isCreationalFor(final String path) {
-    return accessChanges(() -> {
-      for (Change c : myChanges) {
-        if (c.isCreationalFor(path)) return true;
+        if (predicate.test(c)) return true;
       }
       return false;
     });
@@ -165,6 +187,10 @@ public class ChangeSet {
     return accessChanges(() -> myChanges.size() == 1 && getFirstChange() instanceof PutLabelChange);
   }
 
+  public boolean isSystemLabelOnly() {
+    return accessChanges(() -> myChanges.size() == 1 && getFirstChange() instanceof PutSystemLabelChange);
+  }
+
   public Change getFirstChange() {
     return accessChanges(() -> myChanges.get(0));
   }
@@ -185,6 +211,7 @@ public class ChangeSet {
     });
   }
 
+  @Override
   public String toString() {
     return accessChanges(() -> myChanges.toString());
   }
@@ -194,7 +221,7 @@ public class ChangeSet {
   }
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -206,8 +233,8 @@ public class ChangeSet {
   }
 
   @Override
-  public final int hashCode() {
-    return (int)(myId ^ (myId >>> 32));
+  public int hashCode() {
+    return Long.hashCode(myId);
   }
 
   public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
@@ -229,22 +256,32 @@ public class ChangeSet {
     v.end(this);
   }
 
-  private <T> T accessChanges(@NotNull Producer<T> func) {
+  private <T> T accessChanges(@NotNull Supplier<T> func) {
     if (isLocked) {
-      //noinspection ConstantConditions
-      return func.produce();
+      return func.get();
     }
 
     synchronized (myChanges) {
-      //noinspection ConstantConditions
-      return func.produce();
+      return func.get();
     }
   }
 
-  private void accessChanges(@NotNull final Runnable func) {
+  private void accessChanges(final @NotNull Runnable func) {
     accessChanges(() -> {
       func.run();
       return null;
     });
+  }
+
+  private static @Nullable ActivityId readActivityId(@NotNull DataInput in) throws IOException {
+    String kind = DataStreamUtil.readStringOrNull(in);
+    String provider = DataStreamUtil.readStringOrNull(in);
+    if (kind == null || provider == null) return null;
+    return new ActivityId(provider, kind);
+  }
+
+  private static void writeActivityId(@NotNull DataOutput out, @Nullable ActivityId activityId) throws IOException {
+    DataStreamUtil.writeStringOrNull(out, activityId != null ? activityId.getKind() : null);
+    DataStreamUtil.writeStringOrNull(out, activityId != null ? activityId.getProviderId() : null);
   }
 }

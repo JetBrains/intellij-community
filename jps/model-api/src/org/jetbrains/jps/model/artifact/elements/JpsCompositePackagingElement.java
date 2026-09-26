@@ -15,14 +15,13 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * Represents a {@link JpsDirectoryPackagingElement directory} or an {@link JpsArchivePackagingElement archive} node in the output layout.
- *
- * @author nik
  */
 public interface JpsCompositePackagingElement extends JpsPackagingElement {
   /**
@@ -31,7 +30,9 @@ public interface JpsCompositePackagingElement extends JpsPackagingElement {
   @NotNull
   List<JpsPackagingElement> getChildren();
 
+  @ApiStatus.Internal
   <E extends JpsPackagingElement> E addChild(@NotNull E child);
 
+  @ApiStatus.Internal
   void removeChild(@NotNull JpsPackagingElement child);
 }

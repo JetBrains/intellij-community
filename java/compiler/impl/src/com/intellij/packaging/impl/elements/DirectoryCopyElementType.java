@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -27,17 +14,14 @@ import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
 
   DirectoryCopyElementType() {
-    super("dir-copy", "Directory Content");
+    super("dir-copy", JavaCompilerBundle.messagePointer("directory.copy.element.type.name"));
   }
 
   @Override
@@ -50,10 +34,11 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
     return true;
   }
 
-  @NotNull
-  public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                                   @NotNull CompositePackagingElement<?> parent) {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
+  @Override
+  public @NotNull List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+                                                                                @NotNull CompositePackagingElement<?> parent) {
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor()
+      .withEnvironmentRestricted(true);
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
     final List<DirectoryCopyPackagingElement> list = new ArrayList<>();
     for (VirtualFile file : files) {
@@ -62,8 +47,8 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
     return list;
   }
 
-  @NotNull
-  public DirectoryCopyPackagingElement createEmpty(@NotNull Project project) {
+  @Override
+  public @NotNull DirectoryCopyPackagingElement createEmpty(@NotNull Project project) {
     return new DirectoryCopyPackagingElement();
   }
 }

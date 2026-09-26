@@ -1,26 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SingletonInstancesCache;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -31,13 +26,17 @@ import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor
 import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GroovyMethodInfo {
-  
+public final class GroovyMethodInfo {
   private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;
   private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;
 
@@ -58,6 +57,18 @@ public class GroovyMethodInfo {
 
   private final GroovyMethodDescriptor myDescriptor;
 
+  static {
+    GroovyClassDescriptor.EP_NAME.addChangeListener(GroovyMethodInfo::dropCaches, null);
+    GroovyMethodDescriptorExtension.EP_NAME.addChangeListener(GroovyMethodInfo::dropCaches, null);
+  }
+
+  private static void dropCaches() {
+    synchronized (GroovyMethodInfo.class) {
+      METHOD_INFOS = null;
+      LIGHT_METHOD_INFOS = null;
+    }
+  }
+
   private static void ensureInit() {
     if (METHOD_INFOS != null) return;
 
@@ -65,12 +76,13 @@ public class GroovyMethodInfo {
       Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<>();
       Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<>();
 
-      for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
-        ClassLoader classLoader = classDescriptor.getLoaderForClass();
+      GroovyClassDescriptor.EP_NAME.processWithPluginDescriptor((classDescriptor, pluginDescriptor) -> {
+        ClassLoader classLoader = pluginDescriptor.getClassLoader();
         for (GroovyMethodDescriptor method : classDescriptor.methods) {
           addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
         }
-      }
+        return Unit.INSTANCE;
+      });
 
       for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
         if (methodDescriptor.className != null) {
@@ -78,7 +90,6 @@ public class GroovyMethodInfo {
           addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
         }
         else {
-          assert methodDescriptor.className == null;
           addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
         }
       }
@@ -104,8 +115,7 @@ public class GroovyMethodInfo {
     }
  }
 
-  @Nullable
-  private static List<GroovyMethodInfo> getInfos(Map<String, Map<String, List<GroovyMethodInfo>>> map, String key, PsiMethod method) {
+  private static @Nullable List<GroovyMethodInfo> getInfos(Map<String, Map<String, List<GroovyMethodInfo>>> map, String key, PsiMethod method) {
     Map<String, List<GroovyMethodInfo>> methodMap = map.get(key);
     if (methodMap == null) return null;
 
@@ -113,10 +123,10 @@ public class GroovyMethodInfo {
     if (res == null) {
       res = methodMap.get(null);
     }
-    
+
     return res;
   }
-  
+
   public static List<GroovyMethodInfo> getInfos(PsiMethod method) {
     ensureInit();
 
@@ -133,14 +143,14 @@ public class GroovyMethodInfo {
         method = (PsiMethod)prototype;
       }
     }
-    
+
     List<GroovyMethodInfo> methodInfos = null;
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass != null) {
       methodInfos = getInfos(METHOD_INFOS, containingClass.getQualifiedName(), method);
     }
-    
+
     if (methodInfos == null) {
       return lightMethodInfos == null ? Collections.emptyList() : lightMethodInfos;
     }
@@ -229,7 +239,7 @@ public class GroovyMethodInfo {
           values.add(st.nextToken());
         }
 
-        r = new NamedArgumentReference(values.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        r = new NamedArgumentReference(ArrayUtilRt.toStringArray(values));
       }
       else {
         continue;
@@ -259,7 +269,7 @@ public class GroovyMethodInfo {
       }
     }
   }
-  
+
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
                                           @NotNull ClassLoader classLoader,
@@ -280,8 +290,7 @@ public class GroovyMethodInfo {
     methodsList.add(new GroovyMethodInfo(method, classLoader));
   }
 
-  @Nullable
-  public String getReturnType() {
+  public @Nullable String getReturnType() {
     return myReturnType;
   }
 
@@ -289,8 +298,7 @@ public class GroovyMethodInfo {
     return myReturnTypeCalculatorClassName != null;
   }
 
-  @NotNull
-  public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
+  public @NotNull PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
     if (myReturnTypeCalculatorInstance == null) {
       myReturnTypeCalculatorInstance = SingletonInstancesCache.getInstance(myReturnTypeCalculatorClassName, myClassLoader);
     }
@@ -306,16 +314,14 @@ public class GroovyMethodInfo {
   /**
    * @return instance of PsiReferenceProvider or GroovyNamedArgumentReferenceProvider or null.
    */
-  @Nullable
-  public Object getNamedArgReferenceProvider(String namedArgumentName) {
+  public @Nullable Object getNamedArgReferenceProvider(String namedArgumentName) {
     NamedArgumentReference r = myNamedArgReferenceProviders.get(namedArgumentName);
     if (r == null) return null;
 
     return r.getProvider(myClassLoader);
   }
 
-  @Nullable
-  public Map<String, NamedArgumentDescriptor> getNamedArguments() {
+  public @Nullable Map<String, NamedArgumentDescriptor> getNamedArguments() {
     return myNamedArguments;
   }
 
@@ -359,12 +365,12 @@ public class GroovyMethodInfo {
 
     private volatile Object myProvider;
 
-    public NamedArgumentReference(String providerClassName) {
+    NamedArgumentReference(String providerClassName) {
       myProviderClassName = providerClassName;
       myValues = null;
     }
 
-    public NamedArgumentReference(String[] values) {
+    NamedArgumentReference(String[] values) {
       myValues = values;
       myProviderClassName = null;
     }

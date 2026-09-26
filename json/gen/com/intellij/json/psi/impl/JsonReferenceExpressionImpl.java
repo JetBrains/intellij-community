@@ -10,16 +10,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonReferenceExpression {
+public class JsonReferenceExpressionImpl extends JsonReferenceLiteralMixin implements JsonReferenceExpression {
 
-  public JsonReferenceExpressionImpl(ASTNode node) {
+  public JsonReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitReferenceExpression(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);

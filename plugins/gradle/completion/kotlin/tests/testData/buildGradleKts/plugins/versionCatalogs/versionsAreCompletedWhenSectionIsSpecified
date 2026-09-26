@@ -1,0 +1,10 @@
+// "EXPECTED-SUGGESTION": my.version.aaa, my.version.bbb
+// FILE: build.gradle.kts
+plugins {
+    libs.versions.my<caret>
+}
+
+// FILE: gradle/libs.versions.toml
+[versions]
+my-version-aaa = "1.0.0"
+my-version-bbb = "2.0.0"

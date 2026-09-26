@@ -1,0 +1,19 @@
+// FILE: buildSrc/src/main/kotlin/MyTask.kt
+// "UNEXPECTED-SUGGESTION": "hiddenMember"
+// The annotation is declared here rather than taken from the Gradle API so that the test exercises
+// the filter's fully qualified name check without depending on the imported Gradle classpath.
+package org.gradle.api
+
+annotation class Generated
+
+@Generated
+class GradleGeneratedContainer {
+  fun hiddenMember(): String = "declared in a Gradle-generated container, must not be suggested"
+}
+
+class GradleGeneratedContainerProbe {
+  fun probe() {
+    val container = GradleGeneratedContainer()
+    container.<caret>
+  }
+}

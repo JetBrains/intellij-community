@@ -1,0 +1,213 @@
+<component name="libraryTable">
+  <library name="fleet:aws.sdk.kotlin.s3.jvm" type="repository">
+    <properties maven-id="aws.sdk.kotlin:s3-jvm:1.0.69">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/sdk/kotlin/s3-jvm/1.0.69/s3-jvm-1.0.69.jar">
+          <sha256sum>3d6cd0bf48c65e965903fa4720d713badeeaa5433bd7b278075c484e3a5709a8</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-config-jvm/1.0.69/aws-config-jvm-1.0.69.jar">
+          <sha256sum>877ffeaa6fc96192da7383b3c3e16717cb52504f488b80937d796eb875e5565a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-json-jvm/1.0.16/serde-json-jvm-1.0.16.jar">
+          <sha256sum>2f12ed8fbd53e91cb3b2a163b5d06ae2c39f538bd74f23a678889f5be02e8675</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-form-url-jvm/1.0.16/serde-form-url-jvm-1.0.16.jar">
+          <sha256sum>198b9b1ec6c33da8c460e6a2e0859d1308f1fcb3f7d4138100f7dd75207edd80</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-json-protocols-jvm/1.0.16/aws-json-protocols-jvm-1.0.16.jar">
+          <sha256sum>633ccbae483c99b27e311a6a70157cfc0dfa19f8eb3ba263198f40f87266c09c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-core-jvm/1.0.69/aws-core-jvm-1.0.69.jar">
+          <sha256sum>e738ebef7be523c4e1940f5e5b2390ba853d4333f547038b2b31fb3964e99933</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-endpoint-jvm/1.0.69/aws-endpoint-jvm-1.0.69.jar">
+          <sha256sum>d3f30ef5e3b11b358f28f42422226585b72e4a11bf13b1fc3411962dcfde64f3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-jvm/1.0.16/http-client-jvm-1.0.16.jar">
+          <sha256sum>aa584dcd05862a8bbe7eb7db73959d93ca6b527cc44536b7d10fcda733411d4b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/runtime-core-jvm/1.0.16/runtime-core-jvm-1.0.16.jar">
+          <sha256sum>8a2323e7d08ff07d2f869e4bcae834773ce0a0e8704cd7404c9625992a748662</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0.jar">
+          <sha256sum>67543f0736fc422ae927ed0e504b98bc5e269fda0d3500579337cb713da28412</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/smithy-client-jvm/1.0.16/smithy-client-jvm-1.0.16.jar">
+          <sha256sum>ce382d40f998d8dd11008967c3bf4cd51c47182512b84b5f1d48e48d2a3f9770</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-api-jvm/1.0.16/telemetry-api-jvm-1.0.16.jar">
+          <sha256sum>508bde368d4b174402aeeccec68c7e29ad9349a953b1efab75ebeaa6c0a21f0e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-credentials-jvm/1.0.16/aws-credentials-jvm-1.0.16.jar">
+          <sha256sum>01489854c4f9494de6cd5446df8e3c694ad3f6582c5369b9578eb18754f1720c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-event-stream-jvm/1.0.16/aws-event-stream-jvm-1.0.16.jar">
+          <sha256sum>71fe60ba15b5f9c43f5ee1da0edc13fd98f2a85dbf8c9dcafc666bc1c7e668e7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-http-jvm/1.0.69/aws-http-jvm-1.0.69.jar">
+          <sha256sum>6b7584f233e0715f5394edfbfd5536a480113efe99f3d49bfd58d2395072177a</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-protocol-core-jvm/1.0.16/aws-protocol-core-jvm-1.0.16.jar">
+          <sha256sum>6d7028c6e695b872e0ba91679af4dbbabf8e1bfbd6f7fb52be30bb1e398d595d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-common-jvm/1.0.16/aws-signing-common-jvm-1.0.16.jar">
+          <sha256sum>30cf05f9f7ec7d6676031ee2b0c8f4b33b107a93a179ca931d57baa983de70a3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-default-jvm/1.0.16/aws-signing-default-jvm-1.0.16.jar">
+          <sha256sum>dd0616302ce4a3fc1c03326bad37e5cf3509377692b6aca5ea17d581ad582d62</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-xml-protocols-jvm/1.0.16/aws-xml-protocols-jvm-1.0.16.jar">
+          <sha256sum>94cc5ebcb2d819ebb8c628f64ffa352426f23b3b422834bfa8199cf497a1365d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-jvm/1.0.16/http-jvm-1.0.16.jar">
+          <sha256sum>3f0d5d4e67a3097b56b32fa7b26589da9d6bd0968693b395ad1c8f49f60dbdfd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-jvm/1.0.16/http-auth-jvm-1.0.16.jar">
+          <sha256sum>79ed729b7e134609310de7d691b1b80870f467a95bc84f2f6bbf3e43ae83de85</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-api-jvm/1.0.16/http-auth-api-jvm-1.0.16.jar">
+          <sha256sum>9664c8d36468c1f575b356f04025ce17417e584a0bb19b640b115b10a8dce72c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-aws-jvm/1.0.16/http-auth-aws-jvm-1.0.16.jar">
+          <sha256sum>31e3811fd85ba7fcba38a4067d63af8c13c1e05ae7062639fd8c954520315f51</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-default-jvm/1.0.16/http-client-engine-default-jvm-1.0.16.jar">
+          <sha256sum>bbbf92cbc8df78a8fa20f0b35613e8d41024ee6525b538ebda280917e1d7e812</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-okhttp-jvm/1.0.16/http-client-engine-okhttp-jvm-1.0.16.jar">
+          <sha256sum>4bfb91b4c6373ac2b1d94a085c69935ca1b56b7b27b21c5228c5bc5da6f7e2dc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11.jar">
+          <sha256sum>506a1d3aba9f99b55570c7f8813cd79a44946531f29050d5b938474efdb4cf80</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-coroutines-jvm/5.0.0-alpha.11/okhttp-coroutines-jvm-5.0.0-alpha.11.jar">
+          <sha256sum>1452873e0cc9637b7e1a717f2cca0cbccebd00c05aaaf67b8adb06777bf4f461</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/identity-api-jvm/1.0.16/identity-api-jvm-1.0.16.jar">
+          <sha256sum>be3f9bd5ebfb83aa353f407a4389f7b3454a6945f82cea1d41e370aeedae71cd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-jvm/1.0.16/serde-jvm-1.0.16.jar">
+          <sha256sum>c017ee899656cf5abf22c3793603cb33ae35f0a805b9fa0707f8146a73a14a7f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-xml-jvm/1.0.16/serde-xml-jvm-1.0.16.jar">
+          <sha256sum>72c8559a241af92ce122c0df0dc3749d638d616ebd5da3ba3749a95abca3b349</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-defaults-jvm/1.0.16/telemetry-defaults-jvm-1.0.16.jar">
+          <sha256sum>4343154bb1b0a282d86b627932a465722eeda3cccd6cc4986fc5e5c4013bfef4</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/aws/smithy/kotlin/logging-slf4j2-jvm/1.0.16/logging-slf4j2-jvm-1.0.16.jar">
+          <sha256sum>66c0700ca0c27046b0b12e6cf4c4da423800b88c1c72b2709cd5cbc3e0f1eb64</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/s3-jvm/1.0.69/s3-jvm-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-config-jvm/1.0.69/aws-config-jvm-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-json-jvm/1.0.16/serde-json-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-form-url-jvm/1.0.16/serde-form-url-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-json-protocols-jvm/1.0.16/aws-json-protocols-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-core-jvm/1.0.69/aws-core-jvm-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-endpoint-jvm/1.0.69/aws-endpoint-jvm-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-jvm/1.0.16/http-client-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/runtime-core-jvm/1.0.16/runtime-core-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/smithy-client-jvm/1.0.16/smithy-client-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-api-jvm/1.0.16/telemetry-api-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-credentials-jvm/1.0.16/aws-credentials-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-event-stream-jvm/1.0.16/aws-event-stream-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-http-jvm/1.0.69/aws-http-jvm-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-protocol-core-jvm/1.0.16/aws-protocol-core-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-common-jvm/1.0.16/aws-signing-common-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-default-jvm/1.0.16/aws-signing-default-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-xml-protocols-jvm/1.0.16/aws-xml-protocols-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-jvm/1.0.16/http-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-jvm/1.0.16/http-auth-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-api-jvm/1.0.16/http-auth-api-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-aws-jvm/1.0.16/http-auth-aws-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-default-jvm/1.0.16/http-client-engine-default-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-okhttp-jvm/1.0.16/http-client-engine-okhttp-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-coroutines-jvm/5.0.0-alpha.11/okhttp-coroutines-jvm-5.0.0-alpha.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/identity-api-jvm/1.0.16/identity-api-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-jvm/1.0.16/serde-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-xml-jvm/1.0.16/serde-xml-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-defaults-jvm/1.0.16/telemetry-defaults-jvm-1.0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/logging-slf4j2-jvm/1.0.16/logging-slf4j2-jvm-1.0.16.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/s3-jvm/1.0.69/s3-jvm-1.0.69-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-config-jvm/1.0.69/aws-config-jvm-1.0.69-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-json-jvm/1.0.16/serde-json-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-form-url-jvm/1.0.16/serde-form-url-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-json-protocols-jvm/1.0.16/aws-json-protocols-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-core-jvm/1.0.69/aws-core-jvm-1.0.69-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-endpoint-jvm/1.0.69/aws-endpoint-jvm-1.0.69-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-jvm/1.0.16/http-client-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/runtime-core-jvm/1.0.16/runtime-core-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/smithy-client-jvm/1.0.16/smithy-client-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-api-jvm/1.0.16/telemetry-api-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-credentials-jvm/1.0.16/aws-credentials-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-event-stream-jvm/1.0.16/aws-event-stream-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-http-jvm/1.0.69/aws-http-jvm-1.0.69-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-protocol-core-jvm/1.0.16/aws-protocol-core-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-common-jvm/1.0.16/aws-signing-common-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-default-jvm/1.0.16/aws-signing-default-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-xml-protocols-jvm/1.0.16/aws-xml-protocols-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-jvm/1.0.16/http-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-jvm/1.0.16/http-auth-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-api-jvm/1.0.16/http-auth-api-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-aws-jvm/1.0.16/http-auth-aws-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-default-jvm/1.0.16/http-client-engine-default-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-okhttp-jvm/1.0.16/http-client-engine-okhttp-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-coroutines-jvm/5.0.0-alpha.11/okhttp-coroutines-jvm-5.0.0-alpha.11-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/identity-api-jvm/1.0.16/identity-api-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-jvm/1.0.16/serde-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-xml-jvm/1.0.16/serde-xml-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-defaults-jvm/1.0.16/telemetry-defaults-jvm-1.0.16-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/logging-slf4j2-jvm/1.0.16/logging-slf4j2-jvm-1.0.16-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/s3-jvm/1.0.69/s3-jvm-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-config-jvm/1.0.69/aws-config-jvm-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-json-jvm/1.0.16/serde-json-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-form-url-jvm/1.0.16/serde-form-url-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-json-protocols-jvm/1.0.16/aws-json-protocols-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-core-jvm/1.0.69/aws-core-jvm-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-endpoint-jvm/1.0.69/aws-endpoint-jvm-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-jvm/1.0.16/http-client-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/runtime-core-jvm/1.0.16/runtime-core-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/smithy-client-jvm/1.0.16/smithy-client-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-api-jvm/1.0.16/telemetry-api-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-credentials-jvm/1.0.16/aws-credentials-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-event-stream-jvm/1.0.16/aws-event-stream-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/sdk/kotlin/aws-http-jvm/1.0.69/aws-http-jvm-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-protocol-core-jvm/1.0.16/aws-protocol-core-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-common-jvm/1.0.16/aws-signing-common-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-signing-default-jvm/1.0.16/aws-signing-default-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/aws-xml-protocols-jvm/1.0.16/aws-xml-protocols-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-jvm/1.0.16/http-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-jvm/1.0.16/http-auth-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-api-jvm/1.0.16/http-auth-api-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-auth-aws-jvm/1.0.16/http-auth-aws-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-default-jvm/1.0.16/http-client-engine-default-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/http-client-engine-okhttp-jvm/1.0.16/http-client-engine-okhttp-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-coroutines-jvm/5.0.0-alpha.11/okhttp-coroutines-jvm-5.0.0-alpha.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/identity-api-jvm/1.0.16/identity-api-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-jvm/1.0.16/serde-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/serde-xml-jvm/1.0.16/serde-xml-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/telemetry-defaults-jvm/1.0.16/telemetry-defaults-jvm-1.0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/aws/smithy/kotlin/logging-slf4j2-jvm/1.0.16/logging-slf4j2-jvm-1.0.16-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

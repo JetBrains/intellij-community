@@ -375,7 +375,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;this&quot;"/>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -532,13 +533,15 @@
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setNewLineText(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder org.apache.commons.lang.text.StrBuilder setNullText(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -571,6 +574,16 @@
     <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderReader void close()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderReader void mark(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderReader void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderTokenizer StrBuilderTokenizer()'>
@@ -627,9 +640,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.text.StrLookup.MapStrLookup java.lang.String lookup(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher StrMatcher()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -819,7 +829,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(char[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -828,7 +837,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(char[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -837,7 +845,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -846,7 +853,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -855,7 +861,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.String, int, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -864,7 +869,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -873,7 +877,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(java.lang.StringBuffer, int, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -882,7 +885,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(org.apache.commons.lang.text.StrBuilder) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -891,12 +893,8 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String replace(org.apache.commons.lang.text.StrBuilder, int, int) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String resolveVariable(java.lang.String, org.apache.commons.lang.text.StrBuilder, int, int)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor java.lang.String resolveVariable(java.lang.String, org.apache.commons.lang.text.StrBuilder, int, int) 1'>
@@ -922,7 +920,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrSubstitutor setVariablePrefixMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -934,7 +933,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor org.apache.commons.lang.text.StrSubstitutor setVariableSuffixMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -943,6 +943,16 @@
     </item>
     <item name='org.apache.commons.lang.text.StrSubstitutor void checkCyclicSubstitution(java.lang.String, java.util.List) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.text.StrSubstitutor void setEscapeChar(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.text.StrSubstitutor void setVariableResolver(org.apache.commons.lang.text.StrLookup)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer StrTokenizer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1005,20 +1015,10 @@
     <item name='org.apache.commons.lang.text.StrTokenizer int readWithQuotes(char[], int, int, org.apache.commons.lang.text.StrBuilder, java.util.List, int, int) 3'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.lang.text.StrTokenizer java.lang.Object clone()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.lang.text.StrTokenizer java.lang.String getContent()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.text.StrTokenizer java.lang.String nextToken()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.text.StrTokenizer java.lang.String previousToken()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1056,7 +1056,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer reset()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;this&quot;"/>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1077,7 +1078,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setDelimiterMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1089,19 +1091,22 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setEmptyTokenAsNull(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setIgnoreEmptyTokens(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setIgnoredMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1110,7 +1115,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setQuoteMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1119,7 +1125,8 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer org.apache.commons.lang.text.StrTokenizer setTrimmerMatcher(org.apache.commons.lang.text.StrMatcher)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1137,6 +1144,7 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

@@ -1,0 +1,11 @@
+// "Change type to 'Int'" "true"
+// K2_ERROR: PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
+interface X {
+    val x: Int
+}
+
+class A : X {
+    override val x: Number<caret> = 42
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

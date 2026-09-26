@@ -1,0 +1,47 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("SpecificChildEntityModifications")
+
+package com.intellij.platform.workspace.storage.testEntities.entities
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.SpecificChildEntityImpl
+
+@GeneratedCodeApiVersion(3)
+interface SpecificChildEntityBuilder : WorkspaceEntityBuilder<SpecificChildEntity>, AbstractChildEntityBuilder<SpecificChildEntity> {
+  override var entitySource: EntitySource
+  override var data: String
+  override var parent: ParentWithExtensionEntityBuilder
+}
+
+internal object SpecificChildEntityType : EntityType<SpecificChildEntity, SpecificChildEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = SpecificChildEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = SpecificChildEntityImpl.Builder::class.java
+  operator fun invoke(
+    data: String,
+    entitySource: EntitySource,
+    init: (SpecificChildEntityBuilder.() -> Unit)? = null,
+  ): SpecificChildEntityBuilder {
+    val builder = builder()
+    builder.data = data
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifySpecificChildEntity(
+  entity: SpecificChildEntity,
+  modification: SpecificChildEntityBuilder.() -> Unit,
+): SpecificChildEntity = modifyEntity(SpecificChildEntityBuilder::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createSpecificChildEntity")
+fun SpecificChildEntity(
+  data: String,
+  entitySource: EntitySource,
+  init: (SpecificChildEntityBuilder.() -> Unit)? = null,
+): SpecificChildEntityBuilder = SpecificChildEntityType(data, entitySource, init)

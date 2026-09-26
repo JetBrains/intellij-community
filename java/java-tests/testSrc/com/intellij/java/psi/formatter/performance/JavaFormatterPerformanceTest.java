@@ -1,32 +1,34 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.psi.formatter.java.JavaFormatterTestCase;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import static com.intellij.psi.SyntaxTraverser.astTraverser;
 
 /**
  * @author Maxim.Mossienko
- * @since Jan 26, 2007
  */
+@PerformanceUnitTest
 public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   private static final String BASE_PATH = "psi/formatter/java";
 
@@ -37,23 +39,32 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
 
   public void testPerformance1() throws Exception {
     File testFile = new File(PathManagerEx.getTestDataPath(), BASE_PATH + "/performance.java");
-    String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
-    PsiFile file = LightPlatformTestCase.createFile(testFile.getName(), text);
+    String text = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
+    PsiFile file = createFile(testFile.getName(), text);
     astTraverser(SourceTreeToPsiMap.psiElementToTree(file)).forEach(node -> {});
 
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     FormatterImpl formatter = (FormatterImpl)FormatterEx.getInstanceEx();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(StdFileTypes.JAVA);
+    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
 
-    PlatformTestUtil.startPerformanceTest("Java Formatting [1]", 5000, () -> {
-      FormattingModel model = LanguageFormatting.INSTANCE.forContext(file).createModel(file, settings);
+    Benchmark.newBenchmark("Java Formatting [1]", () -> {
+      FormattingModel model =
+        LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
-    }).assertTiming();
+    })
+      .warmupIterations(50)
+      .attempts(200)
+      .start();
+    // attempt.min.ms varies ~3% (from experiments)
   }
 
   public void testPerformance2() {
     getSettings().setDefaultRightMargin(120);
-    PlatformTestUtil.startPerformanceTest("Java Formatting [2]", 8000, () -> doTest()).assertTiming();
+    Benchmark.newBenchmark("Java Formatting [2]", () -> doTest())
+      .warmupIterations(5)
+      .attempts(20)
+      .start();
+    // attempt.min.ms varies ~50% (from experiments)
   }
 
   public void testPerformance3() {
@@ -63,11 +74,15 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     settings.SPACE_BEFORE_METHOD_PARENTHESES = true;
     settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
     settings.ALIGN_MULTILINE_PARAMETERS = false;
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(JavaFileType.INSTANCE);
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.TAB_SIZE = 4;
 
-    PlatformTestUtil.startPerformanceTest("Java Formatting [3]", 3000, () -> doTest()).assertTiming();
+    Benchmark.newBenchmark("Java Formatting [3]", () -> doTest())
+      .warmupIterations(100)
+      .attempts(300)
+      .start();
+    // attempt.min.ms varies ~5% (from experiments)
   }
 
   @Override

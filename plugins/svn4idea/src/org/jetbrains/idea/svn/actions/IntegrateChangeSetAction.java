@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,26 +14,27 @@ public class IntegrateChangeSetAction extends AbstractIntegrateChangesAction<Sel
     super(true);
   }
 
-  @NotNull
-  protected MergerFactory createMergerFactory(SelectedChangeSetChecker checker) {
+  @Override
+  protected @NotNull MergerFactory createMergerFactory(SelectedChangeSetChecker checker) {
     return new ChangeSetMergerFactory(checker.getSelectedLists().get(0), checker.getSelectedChanges());
   }
 
-  @NotNull
-  protected SelectedChangeSetChecker createChecker() {
+  @Override
+  protected @NotNull SelectedChangeSetChecker createChecker() {
     return new SelectedChangeSetChecker();
   }
 
-  @Nullable
   @Override
-  protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+  protected @Nullable Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
     return null;
   }
 
+  @Override
   protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
     return null;
   }
 
+  @Override
   protected String getDialogTitle() {
     return null;
   }

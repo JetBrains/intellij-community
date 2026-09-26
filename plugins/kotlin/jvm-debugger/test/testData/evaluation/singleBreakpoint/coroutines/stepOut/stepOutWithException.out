@@ -1,0 +1,16 @@
+LineBreakpoint created at stepOutWithException.kt:25
+Run Java
+Connected to the target VM
+stepOutWithException.kt:25
+Disconnected from the target VM
+
+Process finished with exit code 1
+Exception in thread "main" java.lang.IllegalStateException: This exception should be thrown
+	at StepOutWithExceptionKt.funWithSuspendLast(stepOutWithException.kt:26)
+	at StepOutWithExceptionKt$funWithSuspendLast$1.invokeSuspend(stepOutWithException.kt)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:697)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)

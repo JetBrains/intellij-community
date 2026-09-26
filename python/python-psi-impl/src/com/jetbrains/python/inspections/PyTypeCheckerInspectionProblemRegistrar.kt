@@ -1,0 +1,495 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.inspections
+
+import com.google.common.collect.Sets
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
+import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeArgumentResult
+import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeCalleeResults
+import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltipFromFragment
+import com.jetbrains.python.psi.PyAugAssignmentStatement
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyTypeParameterListOwner
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.impl.PyPsiUtils.getFirstChildOfType
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyLiteralStringType
+import com.jetbrains.python.psi.types.PyLiteralType
+import com.jetbrains.python.psi.types.PyStructuralType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeMismatchExplanation
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
+import java.util.Optional
+
+internal object PyTypeCheckerInspectionProblemRegistrar {
+  fun registerProblem(
+    holder: ProblemsHolder,
+    callSite: PyCallSiteOwner,
+    calleesResults: List<AnalyzeCalleeResults>,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val code = suppressionCodeFor(callSite)
+    if (calleesResults.size == 1) {
+      registerSingleCalleeProblem(
+        holder,
+        code,
+        callSite,
+        calleesResults[0],
+        context,
+        highlightOverride
+      )
+    }
+    else if (!calleesResults.isEmpty()) {
+      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, highlightOverride)
+    }
+  }
+
+  /**
+   * Argument mismatches map to [PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE], except when the call site is
+   * an operator (binary / augmented assignment) or a subscription, which get their own dedicated codes.
+   */
+  private fun suppressionCodeFor(callSite: PyCallSiteOwner): PyTypeCheckerSuppressionCode = when (callSite) {
+    is PyBinaryExpression, is PyAugAssignmentStatement -> PyTypeCheckerSuppressionCode.UNSUPPORTED_OPERATOR
+    is PySubscriptionExpression -> PyTypeCheckerSuppressionCode.BAD_INDEX
+    else -> PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE
+  }
+
+  private fun registerSingleCalleeProblem(
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
+    callSite: PyCallSiteOwner,
+    calleeResults: AnalyzeCalleeResults,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    for (argumentResult in calleeResults.results) {
+      if (argumentResult.isMatched) continue
+
+      val argument = argumentResult.argument
+      val message = getSingleCalleeProblemMessage(argumentResult, context)
+      val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+      // The breakdown tooltip re-runs the match, so reportWithTooltip invokes the supplier only on-the-fly.
+      val expectedTypeAfterSubstitution = if (argumentResult.expectedTypeAfterSubstitution.isUnknown) null else argumentResult.expectedTypeAfterSubstitution
+      val expected = expectedTypeAfterSubstitution ?: argumentResult.expectedType
+      PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, type) {
+        // The call site lets the breakdown read as "f() needs parameter 'a' … / 'x' is …" instead of a bare tree.
+        val callSite = PyTypeMismatchProse.CallSite(
+          callee = calleeParam(calleeResults.callable),
+          argument = shortenExpression(argument),
+          parameterName = argumentResult.parameter?.name,
+          parameterType = PyInspectionMessages.CodifiedParam.ofType(expected, argument, context),
+          actualType = PyInspectionMessages.CodifiedParam.ofType(argumentResult.actualType, argument, context),
+          // A literal actual (e.g. `"a"`, `42`) restates the argument expression, so its type clause is dropped.
+          actualIsLiteral = argumentResult.actualType.let { it is PyLiteralType || it is PyLiteralStringType },
+        )
+        breakdownTooltip(message,
+                         expected,
+                         argumentResult.actualType,
+                         context,
+                         argument,
+                         callSite)
+      }
+    }
+
+    for (unexpectedArgumentForParamSpec in calleeResults.unmatchedArguments) {
+      val argument = unexpectedArgumentForParamSpec.argument
+      val paramSpecTypeName = unexpectedArgumentForParamSpec.paramSpecType.variableName
+      registerWithOverride(
+        holder, code, argument,
+        PyPsiBundle.problemMessage("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName),
+        highlightOverride
+      )
+    }
+
+    if (callSite is PyCallExpression) {
+      val argumentList = callSite.argumentList
+      if (argumentList != null) {
+        val rpar = getFirstChildOfType(argumentList, PyTokenTypes.RPAR)
+        if (rpar != null) {
+          for (unfilledParameterFromParamSpec in calleeResults.unmatchedParameters) {
+            val parameterName = unfilledParameterFromParamSpec.parameter.name
+            val paramSpecTypeName = unfilledParameterFromParamSpec.paramSpecType.variableName
+            if (parameterName != null) {
+              registerWithOverride(
+                holder, code, rpar, PyPsiBundle.problemMessage(
+                  "INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
+                  paramSpecTypeName
+                ), highlightOverride
+              )
+            }
+          }
+
+          for (unfilledParameterFromParamSpec in calleeResults.unfilledPositionalVarargs) {
+            val varargName = unfilledParameterFromParamSpec.varargName
+            val expectedType = PyInspectionMessages.CodifiedParam.ofType(unfilledParameterFromParamSpec.expectedType, rpar, context)
+            registerWithOverride(
+              holder, code, rpar, PyPsiBundle.problemMessage("INSP.type.checker.unfilled.vararg", varargName, expectedType),
+              highlightOverride
+            )
+          }
+        }
+      }
+    }
+  }
+
+  private fun registerWithOverride(
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
+    element: PsiElement,
+    message: PyInspectionMessages.ProblemMessage,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    PyTypeCheckerProblemReporter.report(holder, code, element, message, type)
+  }
+
+  private fun registerMultiCalleeProblem(
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
+    callSite: PyCallSiteOwner,
+    calleesResults: List<AnalyzeCalleeResults>,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    if (callSite is PyBinaryExpression) {
+      registerMultiCalleeProblemForBinaryExpression(holder, code, callSite, calleesResults, context, highlightOverride)
+    }
+    else {
+      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride)
+    }
+  }
+
+  private fun registerMultiCalleeProblem(
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
+    element: PsiElement?,
+    calleesResults: List<AnalyzeCalleeResults>,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val header = PyMismatchTooltips.header(calleesResults.map { it.callable })
+    val argumentSlots = getReferenceResults(calleesResults).map { argumentResult ->
+      PyMismatchTooltips.Slot.argument(argumentResult.argument, argumentResult.actualType, context,
+                                       !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
+    }
+    val expectedRows = calleesResults.map { calleeResults -> expectedParameterRow(calleeResults, context) }
+    // Each candidate's source type-parameter list (`[T: int]`, empty when it declares none), shown before its params.
+    val expectedTypeParameters = calleesResults.map { typeParameterPrefix(it.callable) }
+
+    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows, expectedTypeParameters)
+    val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    // The aligned-table tooltip is only worth building on-the-fly; reportWithTooltip invokes the supplier then.
+    PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, highlightType) {
+      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, expectedTypeParameters)
+    }
+  }
+
+  /** A callable's type-parameter list in source form (`[T: int]`), or empty when it declares none (or is not a
+   *  `def`/`async def` — a lambda or synthesized callable can't be generic). */
+  private fun typeParameterPrefix(callable: PyCallable?): String {
+    val typeParameterList = (callable as? PyTypeParameterListOwner)?.typeParameterList ?: return ""
+    // The grid shows each candidate on one line, so a type-parameter list that spans several lines is collapsed.
+    return if (typeParameterList.typeParameters.isEmpty()) "" else typeParameterList.text.replace(WHITESPACE_RUN, " ")
+  }
+
+  private fun getSingleCalleeProblemMessage(
+    argumentResult: AnalyzeArgumentResult,
+    context: TypeEvalContext,
+  ): PyInspectionMessages.ProblemMessage {
+    val actualType = argumentResult.actualType
+    val expectedType = argumentResult.expectedType
+
+    checkNotNull(actualType) // see PyTypeCheckerInspection.Visitor.analyzeArgument()
+    checkNotNull(expectedType) // see PyTypeCheckerInspection.Visitor.analyzeArgument()
+
+    val anchor = argumentResult.argument
+    val actualTypeParam = PyInspectionMessages.CodifiedParam.ofType(actualType, anchor, context)
+
+    if (expectedType is PyStructuralType) {
+      val expectedAttributes = expectedType.attributeNames
+      val actualAttributes = getAttributes(actualType, context)
+
+      if (actualAttributes != null) {
+        val missingAttributes = Sets.difference<String?>(expectedAttributes, actualAttributes)
+        return PyPsiBundle.problemMessage(
+          "INSP.type.checker.type.does.not.have.expected.attribute",
+          actualTypeParam, missingAttributes.size,
+          PyInspectionMessages.CodifiedParam.joinNames(missingAttributes.filterNotNull())
+        )
+      }
+    }
+
+    val expectedTypeAfterSubstitution = argumentResult.expectedTypeAfterSubstitution
+    val expectedTypeParam = PyInspectionMessages.CodifiedParam.ofType(expectedType, anchor, context, true)
+    val expectedSubstitutedParam = if (!expectedTypeAfterSubstitution.isUnknown && expectedTypeAfterSubstitution != expectedType)
+      PyInspectionMessages.CodifiedParam.ofType(expectedTypeAfterSubstitution, anchor, context)
+    else
+      null
+
+    if (matchingProtocolDefinitions(expectedType, actualType, context)) {
+      if (expectedSubstitutedParam != null) {
+        return PyPsiBundle.problemMessage(
+          "INSP.type.checker.only.concrete.class.can.be.used.where.matched.protocol.expected",
+          expectedSubstitutedParam, expectedTypeParam
+        )
+      }
+      else {
+        return PyPsiBundle.problemMessage("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeParam)
+      }
+    }
+
+    if (expectedSubstitutedParam != null) {
+      return enrichWithCallableDiff(
+        PyPsiBundle.problemMessage(
+          "INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedParam, expectedTypeParam,
+          actualTypeParam
+        ),
+        expectedTypeAfterSubstitution, actualType, context
+      )
+    }
+    else {
+      return enrichWithCallableDiff(
+        PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedTypeParam, actualTypeParam),
+        expectedType, actualType, context
+      )
+    }
+  }
+
+  /**
+   * Replaces the tooltip of [base] with an aligned callable type diff (see [PyTypeDiff]) when both
+   * [expected] and [actual] are callables; otherwise returns [base] unchanged. The plain-text description is
+   * always preserved for the Problems view.
+   */
+  private fun enrichWithCallableDiff(
+    base: PyInspectionMessages.ProblemMessage,
+    expected: PyType?,
+    actual: PyType?,
+    context: TypeEvalContext,
+  ): PyInspectionMessages.ProblemMessage {
+    val diff = PyTypeDiff.diffTooltip(expected, actual, context)
+    return if (diff != null) base.copy(tooltip = diff) else base
+  }
+
+  private fun registerMultiCalleeProblemForBinaryExpression(
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
+    binaryExpression: PyBinaryExpression,
+    calleesResults: List<AnalyzeCalleeResults>,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val isRightOperatorResults =
+      { calleeResults: AnalyzeCalleeResults -> binaryExpression.isRightOperator(calleeResults.callable) }
+
+    val allCalleesAreRightOperators = calleesResults.all(isRightOperatorResults)
+
+    val preferredOperatorsResults =
+      if (allCalleesAreRightOperators)
+        calleesResults
+      else
+        calleesResults.filter { !isRightOperatorResults(it) }
+
+    if (preferredOperatorsResults.size == 1) {
+      registerSingleCalleeProblem(
+        holder,
+        code,
+        binaryExpression,
+        preferredOperatorsResults[0],
+        context,
+        highlightOverride
+      )
+    }
+    else {
+      registerMultiCalleeProblem(
+        holder,
+        code,
+        if (allCalleesAreRightOperators) binaryExpression.leftExpression else binaryExpression.rightExpression,
+        preferredOperatorsResults, context, highlightOverride
+      )
+    }
+  }
+
+  private fun getMultiCalleeElementToHighlight(callSite: PyCallSiteOwner): PsiElement {
+    return when (callSite) {
+      is PyCallExpression -> {
+        val argumentList = callSite.argumentList
+
+        val result = Optional
+          .ofNullable(argumentList)
+          .map { it.arguments }
+          .filter { it.size == 1 }
+          .map<PsiElement> { it[0] }
+          .orElse(argumentList)
+
+        result ?: callSite
+      }
+      is PySubscriptionExpression -> callSite.indexExpression ?: callSite
+      else -> callSite
+    }
+  }
+
+  /**
+   * Results of the callee that maps the most arguments; used as the source of actual argument types,
+   * so that their order is consistent with the per-callee expected parameter rows.
+   */
+  private fun getReferenceResults(calleesResults: List<AnalyzeCalleeResults>): List<AnalyzeArgumentResult> =
+    calleesResults.map { it.results }.maxByOrNull { it.size } ?: emptyList()
+
+  private fun argumentMatchesNoCallee(
+    argument: PyExpression,
+    calleesResults: List<AnalyzeCalleeResults>,
+  ): Boolean = calleesResults.none { calleeResults ->
+    calleeResults.results.any { it.argument === argument && it.isMatched }
+  }
+
+  private fun getAttributes(type: PyType, context: TypeEvalContext): MutableSet<String?>? {
+    if (type is PyStructuralType) {
+      return type.attributeNames
+    }
+    else if (type is PyClassLikeType) {
+      return type.getMemberNames(true, context)
+    }
+    return null
+  }
+
+  /**
+   * One candidate signature's "Expected one of" row, built from its FULL parameter list — not only the parameters
+   * an argument mapped to — so an optional parameter the call omits is still shown, and a required parameter it
+   * leaves unfilled is shown as wholly missing (name and type highlighted). A parameter an argument mapped to keeps
+   * its per-argument result (its type highlighted only on a real type mismatch).
+   */
+  private fun expectedParameterRow(
+    calleeResults: AnalyzeCalleeResults,
+    context: TypeEvalContext,
+  ): List<PyMismatchTooltips.Slot> {
+    val parameters = calleeResults.callableType.getParameters(context)
+                     ?: return calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) }
+    return parameters.mapNotNull { parameter ->
+      if (parameter.isPositionOnlySeparator || parameter.isKeywordOnlySeparator) return@mapNotNull null
+      val argumentResult = calleeResults.results.firstOrNull { it.parameter === parameter }
+      when {
+        argumentResult != null -> getExpectedParameterSlot(argumentResult, context, argumentResult.isMatched)
+        // A required parameter the call can't fill: the whole parameter is the incompatibility (name + type).
+        calleeResults.unfilledRegularParameters.any { it === parameter } ->
+          PyMismatchTooltips.Slot.parameter(parameter, context, matched = false, nameMismatch = true)
+        // An optional (or otherwise unmapped) parameter: shown for context, not flagged.
+        else -> PyMismatchTooltips.Slot.parameter(parameter, context, matched = true)
+      }
+    }
+  }
+
+  private fun getExpectedParameterSlot(
+    argumentResult: AnalyzeArgumentResult,
+    context: TypeEvalContext,
+    matched: Boolean,
+  ): PyMismatchTooltips.Slot {
+    // Show the parameter's DECLARED type (e.g. the type variable `T`), not the type solved for it at this call site
+    // (`int`) — the signature is written in terms of its type parameters, which are shown as a `[T: bound]` prefix.
+    val parameter = argumentResult.parameter
+                    ?: return PyMismatchTooltips.Slot.ofType(argumentResult.expectedType, context, matched)
+    return PyMismatchTooltips.Slot.parameter(parameter, context, matched)
+  }
+
+  /** The argument expression as a single-line, length-capped label for the call-site prose (e.g. `to_app_page()`). */
+  private fun shortenExpression(expression: PyExpression): String =
+    StringUtil.shortenTextWithEllipsis(expression.text.replace(WHITESPACE_RUN, " ").trim(), 40, 0)
+
+  /**
+   * The callee rendered as a clickable `name()` span (a navigable `#element/` link to the function/method) for
+   * the call-site prose; null for an anonymous callee, which disables the framing.
+   */
+  private fun calleeParam(callable: PyCallable?): PyInspectionMessages.CodifiedParam? {
+    val name = callable?.name ?: return null
+    return PyInspectionMessages.CodifiedParam.ofReference(callable, "$name()")
+  }
+
+  private val WHITESPACE_RUN = Regex("\\s+")
+
+  /**
+   * Renders [headlineFragment] (already an HTML fragment, with any `<code>` spans) followed by the [explanations]
+   * trees, folded into prose by [PyTypeMismatchProse], as an HTML tooltip (on-the-fly only). The result is used as
+   * the problem's tooltip, not its description, so batch results stay one line.
+   *
+   * When the mismatch is a single call-argument failure ([callSite] supplied), the two-line requirement/actual
+   * framing replaces the headline instead; several independent reasons always keep the headline above them.
+   */
+  @NlsContexts.Tooltip
+  private fun breakdownTooltipFromFragment(
+    @NlsContexts.Tooltip headlineFragment: String,
+    explanations: List<PyTypeMismatchExplanation>,
+    callSite: PyTypeMismatchProse.CallSite?,
+  ): @NlsContexts.Tooltip String {
+    val builder = HtmlBuilder()
+    // When the mismatch is a call argument, prefer the two-line requirement/actual framing, which names the
+    // callee and argument and replaces the "Expected type …, got …" headline. It returns null for shapes it
+    // doesn't reframe, in which case we keep the headline followed by the plain folded breakdown.
+    val framed = explanations.singleOrNull()?.let { single -> callSite?.let { PyTypeMismatchProse.argumentProseLines(it, single) } }
+    if (framed != null) {
+      PyTypeMismatchProse.appendLines(builder, framed, leadingBreak = false)
+    }
+    else {
+      builder.appendRaw(headlineFragment)
+      PyTypeMismatchProse.appendLines(builder, PyTypeMismatchProse.proseLines(explanations), leadingBreak = true)
+    }
+    return builder.wrapWith("html").toString()
+  }
+
+  /** [breakdownTooltipFromFragment] with an enriched headline; its `<code>` spans (and any links) are kept. */
+  @NlsContexts.Tooltip
+  @JvmStatic
+  @JvmOverloads
+  fun breakdownTooltip(
+    headline: PyInspectionMessages.ProblemMessage,
+    explanation: PyTypeMismatchExplanation,
+    callSite: PyTypeMismatchProse.CallSite? = null,
+  ): @NlsContexts.Tooltip String =
+    breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), listOf(explanation), callSite)
+
+  /** [breakdownTooltip] for a headline explained by several independent reasons, each folded into its own prose line. */
+  @NlsContexts.Tooltip
+  @JvmStatic
+  fun breakdownTooltip(
+    headline: PyInspectionMessages.ProblemMessage,
+    explanations: List<PyTypeMismatchExplanation>,
+  ): @NlsContexts.Tooltip String? =
+    if (explanations.isEmpty()) null
+    else breakdownTooltipFromFragment(PyInspectionMessages.tooltipFragment(headline), explanations, null)
+
+  /**
+   * The breakdown tooltip explaining why [actual] doesn't match [expected], or null when the failure category
+   * isn't instrumented (no [PyTypeChecker.explainMismatch] result). Pass as the on-the-fly tooltip supplier to
+   * [PyInspectionVisitor.registerProblem]; it re-runs the match, so it must be invoked only on-the-fly.
+   *
+   * [anchor] is the element the problem is reported on; it is used to resolve type and class names in the
+   * breakdown to their declarations so they render as clickable links (as in the enriched headline).
+   *
+   * [callSite], when the mismatch is a call argument, reframes the breakdown as a two-line requirement/actual
+   * sentence naming the callee and argument (see [PyTypeMismatchProse.argumentProseLines]).
+   */
+  @NlsContexts.Tooltip
+  @JvmStatic
+  @JvmOverloads
+  fun breakdownTooltip(
+    headline: PyInspectionMessages.ProblemMessage,
+    expected: PyType?,
+    actual: PyType?,
+    context: TypeEvalContext,
+    anchor: PsiElement?,
+    callSite: PyTypeMismatchProse.CallSite? = null,
+  ): @NlsContexts.Tooltip String? =
+    PyTypeChecker.explainMismatch(expected, actual, context, anchor)?.let { breakdownTooltip(headline, it, callSite) }
+}

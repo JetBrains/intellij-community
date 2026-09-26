@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
@@ -29,18 +17,17 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class AssignMnemonicFix extends QuickFix {
-  public AssignMnemonicFix(final GuiEditor editor, final RadComponent component, final String name) {
+  public AssignMnemonicFix(final GuiEditor editor, final RadComponent component, final @IntentionName String name) {
     super(editor, name, component);
   }
 
+  @Override
   public void run() {
     IProperty textProperty = FormInspectionUtil.findProperty(myComponent, SwingProperties.TEXT);
     StringDescriptor descriptor = (StringDescriptor) textProperty.getPropertyValue(myComponent);
@@ -65,6 +52,7 @@ public class AssignMnemonicFix extends QuickFix {
         container = container.getParent();
       }
       FormEditingUtil.iterate(container, new FormEditingUtil.ComponentVisitor() {
+        @Override
         public boolean visit(final IComponent component) {
           SupportCode.TextWithMnemonic twm = DuplicateMnemonicInspection.getTextWithMnemonic(myEditor.getModule(), component);
           if (twm != null) {
@@ -79,26 +67,26 @@ public class AssignMnemonicFix extends QuickFix {
     // try upper-case and word start characters
     for(int i=0; i<value.length(); i++) {
       final char ch = value.charAt(i);
-      if (i == 0 || Character.isUpperCase(ch) || (i > 0 && value.charAt(i-1) == ' ')) {
-        if (Character.isLetter(ch) && usedMnemonics.indexOf(String.valueOf(ch).toUpperCase()) < 0) {
+      if (i == 0 || Character.isUpperCase(ch) || value.charAt(i - 1) == ' ') {
+        if (Character.isLetter(ch) && usedMnemonics.indexOf(StringUtil.toUpperCase(String.valueOf(ch))) < 0) {
           variants.add(value.substring(0, i) + "&" + value.substring(i));
         }
       }
     }
 
-    if (variants.size() == 0) {
+    if (variants.isEmpty()) {
       // try any unused characters
       for(int i=0; i<value.length(); i++) {
         final char ch = value.charAt(i);
-        if (Character.isLetter(ch) && usedMnemonics.indexOf(String.valueOf(ch).toUpperCase()) < 0) {
+        if (Character.isLetter(ch) && usedMnemonics.indexOf(StringUtil.toUpperCase(String.valueOf(ch))) < 0) {
           variants.add(value.substring(0, i) + "&" + value.substring(i));
         }
       }
     }
 
-    if (variants.size() == 0) {
+    if (variants.isEmpty()) {
       variants.add(value);
     }
-    return ArrayUtil.toStringArray(variants);
+    return ArrayUtilRt.toStringArray(variants);
   }
 }

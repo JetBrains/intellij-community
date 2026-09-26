@@ -1,0 +1,9 @@
+// "Make 'Private' public" "true"
+// PRIORITY: HIGH
+// K2_ERROR: EXPOSED_FUNCTION_RETURN_TYPE
+
+private interface I2 {
+    private class Private
+    fun <caret>pp() = Private()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

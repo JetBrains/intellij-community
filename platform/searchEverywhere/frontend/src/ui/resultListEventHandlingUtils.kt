@@ -1,0 +1,246 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.frontend.ui
+
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
+import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
+import com.intellij.platform.searchEverywhere.isCommand
+import com.intellij.platform.searchEverywhere.isExactMatch
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.ListSelectionModel
+
+@ApiStatus.Internal
+interface SeResultList {
+  val size: Int
+  val frozenCount: Int
+  val pendingReplacementElementUuids: MutableSet<String>
+
+  fun getRow(index: Int): SeResultListRow
+  fun addRow(index: Int, row: SeResultListRow)
+  fun addRow(row: SeResultListRow)
+  fun removeRow(index: Int)
+
+  companion object {
+    private val prioritizedProviders: List<SeProviderId> = listOfNotNull(
+      "CalculatorSEContributor",
+      "AutocompletionContributor",
+      "CommandsContributor",
+      if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null,
+      SeTopHitItemsProvider.id(false),
+      SeTopHitItemsProvider.id(true),
+    ).map { SeProviderId(it) }
+
+    val prioritizedProvidersPriorities: Map<SeProviderId, Int> = prioritizedProviders.withIndex().associate {
+      it.value to (prioritizedProviders.size - it.index)
+    }
+  }
+}
+
+@ApiStatus.Internal
+fun SeResultList.handleEvent(
+  searchContext: SeSearchContext,
+  event: SeResultEvent,
+  isZeroOffset: Boolean,
+  onAdd: ((SeItemData) -> Unit)? = null,
+  onRemove: (() -> Unit)? = null,
+) {
+  when (event) {
+    is SeResultAddedEvent -> {
+      if (pendingReplacementElementUuids.remove(event.itemData.uuid)) {
+        SeLog.log(SeLog.DEFAULT) { "SeResultAddedEvent: uuid ${event.itemData.uuid} was skipped because it was supposed to be replaced by an element which came earlier" }
+      }
+      else {
+        val index = indexToAdd(event.itemData, searchContext.searchPattern, isZeroOffset)
+        addRow(index, SeResultListItemRow(event.itemData))
+        onAdd?.invoke(event.itemData)
+
+        /* Animated icon in the text field disappears when the first result appears.
+         * So let the loading row will be in the list from the moment the first
+         * item appears until the last item appears.
+         */
+        if (size == 1) {
+          addRow(SeResultListMoreRow)
+        }
+      }
+    }
+    is SeResultReplacedEvent -> {
+      val indexes = event.uuidsToReplace.mapNotNull { uuidToReplace ->
+        val index = firstIndexOrNull(true) { uuidToReplace == it.uuid }
+        if (index == null) {
+          pendingReplacementElementUuids.add(uuidToReplace)
+          SeLog.log(SeLog.DEFAULT) { "SeResultReplacedEvent: uuid $uuidToReplace not found in the list, saved to pending replacement" }
+        }
+
+        index
+      }.sortedDescending()
+
+      if (indexes.isEmpty()) {
+        val index = indexToAdd(event.newItemData, searchContext.searchPattern, isZeroOffset)
+        addRow(index, SeResultListItemRow(event.newItemData))
+        onAdd?.invoke(event.newItemData)
+      }
+      else {
+        indexes.forEach { index ->
+          removeRow(index)
+          onRemove?.invoke()
+          if (index == indexes.last()) {
+            // We replace only one element with the smallest index
+            addRow(index, SeResultListItemRow(event.newItemData))
+            onAdd?.invoke(event.newItemData)
+          }
+        }
+      }
+    }
+    is SeResultEndEvent, is SeResultSkippedEvent -> {} // Do nothing
+  }
+}
+
+private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, isZeroOffset: Boolean): Int {
+  if (newItem.isCommand) {
+    val firstNotCommandIndex = firstIndexOrNull(true, true) { item -> !item.isCommand } ?: size
+
+    val comparator = compareBy<SeItemData>(
+      { !it.presentation.text.lowercase().startsWith(searchPattern) },
+      { it.presentation.text.lowercase() }
+    )
+    for (i in 0..<firstNotCommandIndex) {
+      val row = getRow(i)
+      if (row is SeResultListItemRow) {
+        val item = row.item
+        if (comparator.compare(newItem, item) < 0) {
+          return i
+        }
+      }
+    }
+
+    return firstNotCommandIndex
+  }
+
+  val shouldIgnoreFrozenElements = isZeroOffset && newItem.isExactMatch
+
+  return firstIndexOrNull(shouldIgnoreFrozenElements) { item ->
+    if (item.isCommand) return@firstIndexOrNull false
+
+    shouldInsertAbove(
+      newProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0,
+      newIsExactMatch = newItem.isExactMatch,
+      newWeight = newItem.weight,
+      itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0,
+      itemIsExactMatch =  item.isExactMatch,
+      itemWeight = item.weight,
+      prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false) && newItem.providerId == item.providerId
+    )
+  } ?: lastIndexToInsertItem
+}
+
+/**
+ * Decides whether a freshly arrived item should be inserted before an already displayed one, within the not-frozen
+ * region of the result list. Ordering, most-significant first:
+ *  1. provider priority (existing behavior — pinned providers such as Calculator/TopHit stay on top);
+ *  2. exact match of the search pattern (new: an exact match wins over a partial/fuzzy/ML-reweighted sibling);
+ *  3. item weight (existing behavior).
+ *
+ * Kept as a pure function so the ordering can be unit-tested without building the (DB-backed) [SeItemData] items.
+ */
+internal fun shouldInsertAbove(
+  newProviderPriority: Int,
+  newIsExactMatch: Boolean,
+  newWeight: Int,
+  itemProviderPriority: Int,
+  itemIsExactMatch: Boolean,
+  itemWeight: Int,
+  prioritizeExactMatch: Boolean
+): Boolean {
+  if (newProviderPriority != itemProviderPriority) return newProviderPriority > itemProviderPriority
+  if (prioritizeExactMatch && newIsExactMatch != itemIsExactMatch) return newIsExactMatch
+  return newWeight > itemWeight
+}
+
+private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {
+  val startIndex = if (fullSearch) 0 else frozenCount
+
+  return (startIndex until size).firstOrNull { index ->
+    when (val row = getRow(index)) {
+      is SeResultListItemRow -> {
+        predicate(row.item)
+      }
+      SeResultListMoreRow -> acceptMoreRow
+    }
+  }
+}
+
+val SeResultList.lastIndexToInsertItem: Int
+  @ApiStatus.Internal
+  get() =
+    if (size == 0) 0
+    else if (getRow(size - 1) is SeResultListMoreRow) size - 1
+    else size
+
+@ApiStatus.Internal
+class SeResultListModelAdapter(private val listModel: SeResultListModel, private val selectionModel: ListSelectionModel) : SeResultList {
+  override val size: Int get() = listModel.size
+  override val frozenCount: Int get() = listModel.freezer.frozenCount
+  override val pendingReplacementElementUuids: MutableSet<String>
+    get() = listModel.pendingReplacementElementUuids
+
+  override fun getRow(index: Int): SeResultListRow =
+    listModel.getElementAt(index)
+
+  override fun addRow(index: Int, row: SeResultListRow) {
+    val selectedIndexes = selectionModel.selectedIndices
+
+    listModel.add(index, row)
+
+    val newSelectedIndex = if (selectedIndexes.size == 1) {
+      if (selectedIndexes[0] == 0) 0
+      else selectedIndexes[0] + (if (index <= selectedIndexes[0]) 1 else 0)
+    }
+    else if (selectedIndexes.size > 1 && selectedIndexes.any { index <= it }) 0
+    else null
+
+    newSelectedIndex?.let {
+      selectionModel.setSelectionInterval(it, it)
+    }
+  }
+
+  override fun addRow(row: SeResultListRow) {
+    listModel.addElement(row)
+  }
+
+  override fun removeRow(index: Int) {
+    listModel.remove(index)
+  }
+}
+
+@ApiStatus.Internal
+class SeResultListCollection(override val pendingReplacementElementUuids: MutableSet<String>) : SeResultList {
+  val list: MutableList<SeResultListRow> = mutableListOf()
+
+  override val size: Int get() = list.size
+  override val frozenCount: Int get() = 0
+
+  override fun getRow(index: Int): SeResultListRow =
+    list[index]
+
+  override fun addRow(index: Int, row: SeResultListRow) {
+    list.add(index, row)
+  }
+
+  override fun addRow(row: SeResultListRow) {
+    list.add(row)
+  }
+
+  override fun removeRow(index: Int) {
+    list.removeAt(index)
+  }
+}

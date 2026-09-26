@@ -1,92 +1,55 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ThreadLocalCachedIntArray;
+import com.intellij.util.indexing.CustomInputMapIndexExtension;
 import com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension;
+import com.intellij.util.indexing.InputMapExternalizer;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
-public class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIndexExtension<IdIndexEntry> {
-  private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
-  private final FileTypeRegistry myFileTypeManager;
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
 
-  public IdIndexImpl(FileTypeRegistry manager) {
-    myFileTypeManager = manager;
+@ApiStatus.Internal
+public final class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIndexExtension<IdIndexEntry>,
+                                                          CustomInputMapIndexExtension<IdIndexEntry, Integer>,
+                                                          ShardableIndexExtension {
+
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.id-index-shards", 0));
+
+  @Override
+  public @NotNull DataExternalizer<Map<IdIndexEntry, Integer>> createInputMapExternalizer() {
+    DataExternalizer<Collection<IdIndexEntry>> keysExternalizer = createExternalizer();
+    InputMapExternalizer<IdIndexEntry, Integer> fallbackExternalizer = new InputMapExternalizer<>(
+      keysExternalizer,
+      getValueExternalizer(),
+      /*valueIsAbsent: */ false
+    );
+    return new IdIndexEntryMapExternalizer(fallbackExternalizer);
+  }
+
+  @Override
+  public @NotNull DataExternalizer<Collection<IdIndexEntry>> createExternalizer() {
+    return new IdIndexEntriesExternalizer();
+  }
+
+  @Override
+  public int shardsCount() {
+    return SHARDS;
+  }
+
+  @Override
+  public int shardlessVersion() {
+    return super.getVersion();
   }
 
   @Override
   public int getVersion() {
-    FileType[] types = myFileTypeManager.getRegisteredFileTypes();
-    Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
-
-    int version = super.getVersion();
-    for(FileType fileType:types) {
-      if (!isIndexable(fileType)) continue;
-      IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(fileType);
-      if (indexer == null) continue;
-      version = version * 31 + (indexer.getVersion() ^ indexer.getClass().getName().hashCode());
-    }
-    return version;
-  }
-
-  @NotNull
-  @Override
-  public DataExternalizer<Collection<IdIndexEntry>> createExternalizer() {
-    return new DataExternalizer<Collection<IdIndexEntry>>() {
-      @Override
-      public void save(@NotNull DataOutput out, @NotNull Collection<IdIndexEntry> value) throws IOException {
-        int size = value.size();
-        final int[] values = spareBufferLocal.getBuffer(size);
-        int ptr = 0;
-        for(IdIndexEntry ie:value) {
-          values[ptr++] = ie.getWordHashCode();
-        }
-        Arrays.sort(values, 0, size);
-        DataInputOutputUtil.writeINT(out, size);
-        int prev = 0;
-        for(int i = 0; i < size; ++i) {
-          DataInputOutputUtil.writeLONG(out, (long)values[i] - prev);
-          prev = values[i];
-        }
-      }
-
-      @Override
-      public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
-        int length = DataInputOutputUtil.readINT(in);
-        ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
-        int prev = 0;
-        while(length-- > 0) {
-          final int l = (int)(DataInputOutputUtil.readLONG(in) + prev);
-          entries.add(new IdIndexEntry(l));
-          prev = l;
-        }
-        return entries;
-      }
-    };
+    return shardlessVersion() + (SHARDS - 1);
   }
 }

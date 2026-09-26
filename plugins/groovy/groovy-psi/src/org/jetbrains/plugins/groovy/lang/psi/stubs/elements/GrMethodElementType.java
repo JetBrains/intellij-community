@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -6,7 +6,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -19,22 +19,18 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMethod> {
 
   public GrMethodElementType(final String debugName) {
     super(debugName);
   }
 
-  @NotNull
   @Override
-  public GrMethodStub createStub(@NotNull GrMethod psi, StubElement parentStub) {
+  public @NotNull GrMethodStub createStub(@NotNull GrMethod psi, StubElement parentStub) {
 
     Set<String> namedParameters = psi.getNamedParameters().keySet();
     return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
-                            ArrayUtil.toStringArray(namedParameters), this,
+                            ArrayUtilRt.toStringArray(namedParameters), this,
                             GrStubUtils.getTypeText(psi.getReturnTypeElementGroovy()),
                             GrMethodStub.buildFlags(psi));
   }
@@ -49,8 +45,7 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
   }
 
   @Override
-  @NotNull
-  public GrMethodStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrMethodStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     final String[] annNames = GrStubUtils.readStringArray(dataStream);
     String[] namedParameters = GrStubUtils.readStringArray(dataStream);

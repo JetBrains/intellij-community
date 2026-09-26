@@ -1,12 +1,12 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.util.Matrix;
 import com.intellij.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 
-/**
- * @author Sergey.Malenkov
- */
-final class MatrixConverter extends ColorConverter {
+@ApiStatus.Internal
+public final class MatrixConverter extends ColorConverter {
   private final Double myWeight;
   private final Matrix myMatrix;
 
@@ -14,7 +14,7 @@ final class MatrixConverter extends ColorConverter {
     this(null, matrix);
   }
 
-  public MatrixConverter(Double weight, Matrix matrix) {
+  MatrixConverter(Double weight, Matrix matrix) {
     if (weight != null && !(0 < weight && weight < 1)) throw new IllegalArgumentException("unsupported weight");
     int rows = matrix.getRows();
     if (rows != 3 && rows != 4) throw new IllegalArgumentException("unsupported rows");

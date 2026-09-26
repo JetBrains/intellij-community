@@ -1,39 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-/**
- * @author cdr
- */
-public class SliceRootNode extends SliceNode {
+@ApiStatus.Internal
+public final class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
-  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, @NotNull SliceUsage rootUsage) {
-    super(project,
-          LanguageSlicing.getProvider(rootUsage.getElement().getContainingFile()).
-            createRootUsage(rootUsage.getElement().getContainingFile(), rootUsage.params),
-          targetEqualUsages);
-    myRootUsage = rootUsage;
+  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, @NotNull SliceUsage usage) {
+    super(project, createContainingFileNode(project, usage), targetEqualUsages);
+    myRootUsage = usage;
+  }
+
+  private static @NotNull SliceUsage createContainingFileNode(@NotNull Project project, @NotNull SliceUsage usage) {
+    PsiElement element = usage.getElement();
+    PsiFile file;
+    if (element == null) {
+      VirtualFile virtualFile = usage.getFile();
+      file = virtualFile == null ? null : PsiManager.getInstance(project).findFile(virtualFile);
+    }
+    else {
+      file = element.getContainingFile();
+    }
+    return LanguageSlicing.getProvider(Objects.requireNonNull(file)).createRootUsage(file, usage.params);
   }
 
   private void switchToAllLeavesTogether(SliceUsage rootUsage) {
@@ -41,10 +43,9 @@ public class SliceRootNode extends SliceNode {
     myCachedChildren = Collections.singletonList(node);
   }
 
-  @NotNull
   @Override
-  SliceRootNode copy() {
-    SliceUsage newUsage = getValue().copy();
+  public @NotNull SliceRootNode copy() {
+    SliceUsage newUsage = Objects.requireNonNull(getValue()).copy();
     SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
     newNode.dupNodeCalculated = dupNodeCalculated;
     newNode.duplicate = duplicate;
@@ -52,8 +53,7 @@ public class SliceRootNode extends SliceNode {
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     if (myCachedChildren == null) {
       switchToAllLeavesTogether(myRootUsage);
     }
@@ -72,8 +72,11 @@ public class SliceRootNode extends SliceNode {
                                     boolean hasFocus) {
   }
 
-  @NotNull
-  SliceUsage getRootUsage() {
+  public @NotNull SliceUsage getRootUsage() {
     return myRootUsage;
+  }
+
+  public void setChildren(@NotNull List<? extends SliceNode> children) {
+    myCachedChildren = new ArrayList<>(children);
   }
 }

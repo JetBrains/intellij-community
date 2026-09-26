@@ -1,0 +1,83 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.eel.fs
+
+import com.intellij.platform.eel.EelSharedSecrets
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.nio.CharBuffer
+import java.nio.charset.Charset
+import java.nio.charset.CodingErrorAction
+import java.nio.file.OpenOption
+import java.nio.file.Path
+
+/**
+ * A drop-in replacement for some methods of [java.nio.file.Files].
+ *
+ * See also [EelFileUtils].
+ */
+@ApiStatus.Experimental
+object EelFiles {
+  /**
+   * Does the same as [java.nio.file.Files.readAllBytes] but works more effectively with Eel.
+   * In particular, it performs fewer RPC requests to IJent for reading files.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun readAllBytes(path: Path): ByteArray = EelSharedSecrets.filesImpl.readAllBytes(path)
+
+  /**
+   * Does the same as [java.nio.file.Files.readString] but works more effectively with Eel.
+   * In particular, it performs fewer RPC requests to IJent for reading files.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun readString(path: Path): String =
+    readString(path, Charsets.UTF_8)
+
+  /**
+   * Does the same as [java.nio.file.Files.readString] but works more effectively with Eel.
+   * In particular, it performs fewer RPC requests to IJent for reading files.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun readString(path: Path, cs: Charset): String = EelSharedSecrets.filesImpl.readString(path, cs)
+
+  /**
+   * Writes [bytes] to [path] with the same behavior as [java.nio.file.Files.write].
+   * For common open options, IJent opens, writes, and closes the file in one RPC.
+   * [EelOpenOption.CREATE_PARENTS] also creates missing parent directories in the same RPC.
+   * Other options use the file system provider.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun write(path: Path, bytes: ByteArray, vararg options: OpenOption): Path = EelSharedSecrets.filesImpl.write(path, bytes, *options)
+
+  /**
+   * Writes [content] to [path] with the same behavior as [java.nio.file.Files.writeString].
+   * For common open options, IJent opens, writes, and closes the file in one RPC.
+   * [EelOpenOption.CREATE_PARENTS] also creates missing parent directories in the same RPC.
+   * Other options use the file system provider.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun writeString(path: Path, content: CharSequence, vararg options: OpenOption): Path =
+    writeString(path, content, Charsets.UTF_8, *options)
+
+  /**
+   * Writes [content] to [path] with the same behavior as [java.nio.file.Files.writeString].
+   * For common open options, IJent opens, writes, and closes the file in one RPC.
+   * [EelOpenOption.CREATE_PARENTS] also creates missing parent directories in the same RPC.
+   * Other options use the file system provider.
+   */
+  @JvmStatic
+  @Throws(IOException::class)
+  fun writeString(path: Path, content: CharSequence, cs: Charset, vararg options: OpenOption): Path {
+    val encoded = cs.newEncoder()
+      .onMalformedInput(CodingErrorAction.REPORT)
+      .onUnmappableCharacter(CodingErrorAction.REPORT)
+      .encode(CharBuffer.wrap(content))
+    val bytes = ByteArray(encoded.remaining())
+    encoded.get(bytes)
+    return write(path, bytes, *options)
+  }
+}

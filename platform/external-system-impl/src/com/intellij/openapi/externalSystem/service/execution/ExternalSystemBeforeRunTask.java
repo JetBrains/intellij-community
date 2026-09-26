@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.util.Key;
@@ -25,12 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/30/2014
  */
 public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBeforeRunTask> {
-
-  @NotNull
-  private final ExternalSystemTaskExecutionSettings myTaskExecutionSettings;
+  private final @NotNull ExternalSystemTaskExecutionSettings myTaskExecutionSettings;
 
   public ExternalSystemBeforeRunTask(@NotNull Key<ExternalSystemBeforeRunTask> providerId, @NotNull ProjectSystemId systemId) {
     super(providerId);
@@ -38,8 +22,12 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     myTaskExecutionSettings.setExternalSystemIdString(systemId.getId());
   }
 
-  @NotNull
-  public ExternalSystemTaskExecutionSettings getTaskExecutionSettings() {
+  private ExternalSystemBeforeRunTask(@NotNull ExternalSystemBeforeRunTask source) {
+    super(source.myProviderId);
+    myTaskExecutionSettings = source.myTaskExecutionSettings.clone();
+  }
+
+  public @NotNull ExternalSystemTaskExecutionSettings getTaskExecutionSettings() {
     return myTaskExecutionSettings;
   }
 
@@ -55,6 +43,10 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     if (myTaskExecutionSettings.getScriptParameters() != null) {
       element.setAttribute("scriptParameters", myTaskExecutionSettings.getScriptParameters());
     }
+
+    if (!myTaskExecutionSettings.getEnv().isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, myTaskExecutionSettings.getEnv());
+    }
   }
 
   @Override
@@ -64,15 +56,14 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     myTaskExecutionSettings.setExternalProjectPath(element.getAttributeValue("externalProjectPath"));
     myTaskExecutionSettings.setVmOptions(element.getAttributeValue("vmOptions"));
     myTaskExecutionSettings.setScriptParameters(element.getAttributeValue("scriptParameters"));
+    EnvironmentVariablesComponent.readExternal(element, myTaskExecutionSettings.getEnv());
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ExternalSystemBeforeRunTask)) return false;
+    if (!(o instanceof ExternalSystemBeforeRunTask task)) return false;
     if (!super.equals(o)) return false;
-
-    ExternalSystemBeforeRunTask task = (ExternalSystemBeforeRunTask)o;
 
     if (!myTaskExecutionSettings.equals(task.myTaskExecutionSettings)) return false;
 
@@ -84,5 +75,10 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     int result = super.hashCode();
     result = 31 * result + myTaskExecutionSettings.hashCode();
     return result;
+  }
+
+  @Override
+  public BeforeRunTask clone() {
+    return new ExternalSystemBeforeRunTask(this);
   }
 }

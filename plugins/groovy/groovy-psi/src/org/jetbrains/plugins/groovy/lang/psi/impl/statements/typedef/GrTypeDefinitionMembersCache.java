@@ -1,45 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.BodyCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.code.GrCodeMembersProvider;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.transformations.MethodInfo;
 import org.jetbrains.plugins.groovy.transformations.TransformationResult;
+import org.jetbrains.plugins.groovy.transformations.TransformationType;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import static com.intellij.psi.util.PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
+import java.util.List;
+import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
-
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Collections.singletonList(JAVA_STRUCTURE_MODIFICATION_COUNT);
+  private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);
@@ -57,9 +50,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrMethod[] getCodeMethods() {
-    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    )).clone();
+    return StubBuildCachedValuesManager.getCachedValueStubBuildOptimized(
+      myDefinition,
+      GET_CODE_METHODS_STUB_BUILDING_KEY,
+      () -> CachedValueProvider.Result.create(myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies)
+    ).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
@@ -75,39 +70,36 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public PsiClass[] getInnerClasses() {
-    return getTransformationResult().getInnerClasses().clone();
+    return ArrayUtil.mergeArrays(getCodeInnerClasses(), getLightTransformationResult().getInnerClasses()).clone();
   }
 
   public PsiMethod[] getMethods() {
-    return getTransformationResult().getMethods().clone();
+    return ContainerUtil.map(getTransformationResult().getMethodInfos(), MethodInfo::getMethod).toArray(PsiMethod.EMPTY_ARRAY).clone();
   }
 
   public PsiMethod[] getConstructors() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       GrClassImplUtil.getConstructors(myDefinition), myDependencies
     )).clone();
   }
 
   public GrField[] getFields() {
-    return getTransformationResult().getFields().clone();
+    GrField[] fields = getTransformationResult().getFields().clone();
+    return fields;
   }
 
-  @NotNull
-  public PsiClassType[] getExtendsListTypes(boolean includeSynthetic) {
-    if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
-    return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
+  public PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic) {
+    PsiClassType[] types = CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     } : () -> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
       return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     }).clone();
+    return types;
   }
 
-  @NotNull
-  public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
-    if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
+  public PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic) {
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] implementsTypes = getTransformationResult().getImplementsTypes();
       return CachedValueProvider.Result.create(implementsTypes, myDependencies);
@@ -117,10 +109,32 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     }).clone();
   }
 
-  @NotNull
-  private TransformationResult getTransformationResult() {
+  @NotNull List<String> getSyntheticModifiers(@NotNull GrModifierList modifierList) {
+    var modifierMap =  CachedValuesManager.getCachedValue(myDefinition, () -> {
+      Map<GrModifierList, List<String>> modifiers = getTransformationResult().getModifiers();
+      return CachedValueProvider.Result.create(modifiers, myDependencies);
+    });
+    return modifierMap.getOrDefault(modifierList, List.of());
+  }
+
+  private @NotNull TransformationResult getLightTransformationResult() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      TransformationUtilKt.transformDefinition(myDefinition), myDependencies
+      TransformationUtilKt.transformDefinition(myDefinition, TransformationType.LIGHT), myDependencies
     ));
   }
+
+  private @NotNull TransformationResult getTransformationResult() {
+    return CachedValuesManager.getCachedValue(
+      myDefinition,
+      () -> {
+        TransformationResult lightResult = getLightTransformationResult();
+        TransformationResult recursiveResult = TransformationUtilKt.transformDefinition(myDefinition, TransformationType.RECURSIVE);
+        TransformationResult result = TransformationUtilKt.plus(lightResult, recursiveResult);
+        return CachedValueProvider.Result.create(result, myDependencies);
+      }
+    );
+  }
+
+  private static final Key<StubBuildCachedValuesManager.StubBuildCachedValue<GrMethod[]>>
+    GET_CODE_METHODS_STUB_BUILDING_KEY = Key.create("groovy.codeMethods.stub.building");
 }

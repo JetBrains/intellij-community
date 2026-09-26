@@ -1,0 +1,12 @@
+Original text:
+---------------
+first = """first"""
+second = """second"""
+third = """third"""
+---------------
+Subtree: Language: Python
+---------------
+first = """first"""
+second = <reparse>"""secINSERTEDond"""</reparse>
+third = """third"""
+---------------

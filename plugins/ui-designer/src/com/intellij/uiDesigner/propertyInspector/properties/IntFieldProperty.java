@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -31,12 +17,12 @@ import java.lang.reflect.Method;
 public final class IntFieldProperty extends Property<RadComponent, Integer> {
   private final LabelPropertyRenderer<Integer> myRenderer;
   private final IntEditor myEditor;
-  @NotNull private final Property myParent;
+  private final @NotNull Property myParent;
   private final String myFieldName;
   private final Object myTemplateValue;
-  @NonNls private static final String METHOD_CLONE = "clone";
+  private static final @NonNls String METHOD_CLONE = "clone";
 
-  public IntFieldProperty(@NotNull final Property parent, @NonNls final String fieldName, final int lowBoundary, final Object templateValue) {
+  public IntFieldProperty(final @NotNull Property parent, final @NonNls String fieldName, final int lowBoundary, final Object templateValue) {
     super(parent, fieldName);
     myParent = parent;
     myFieldName = fieldName;
@@ -45,6 +31,7 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
     myEditor = new IntEditor(lowBoundary);
   }
 
+  @Override
   public Integer getValue(final RadComponent component) {
     //noinspection unchecked
     final Object parentValue = myParent.getValue(component);
@@ -57,7 +44,8 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
     }
   }
 
-  protected void setValueImpl(final RadComponent component,final Integer value) throws Exception{
+  @Override
+  protected void setValueImpl(final RadComponent component, final Integer value) throws Exception{
     //noinspection unchecked
     Object parentValue = myParent.getValue(component);
     if (parentValue == null) {
@@ -72,11 +60,12 @@ public final class IntFieldProperty extends Property<RadComponent, Integer> {
     myParent.setValue(component, parentValue);
   }
 
-  @NotNull
-  public PropertyRenderer<Integer> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<Integer> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<Integer> getEditor() {
     return myEditor;
   }

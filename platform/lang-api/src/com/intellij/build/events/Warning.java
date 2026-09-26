@@ -15,18 +15,18 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface Warning {
   @NotNull
+  @BuildEventsNls.Title
   String getMessage();
 
   @Nullable
+  @BuildEventsNls.Description
   String getDescription();
 }

@@ -18,7 +18,9 @@ package com.intellij.openapi.wm.impl.content
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.content.TabbedContent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SelectContentTabStep(val content: TabbedContent) : BaseListPopupStep<Int>(null) {
 
   private val myTabs = content.tabs
@@ -31,12 +33,18 @@ class SelectContentTabStep(val content: TabbedContent) : BaseListPopupStep<Int>(
 
   override fun isSpeedSearchEnabled(): Boolean = true
 
-  override fun getTextFor(value: Int): String = myTabs[value].first
+  override fun getTextFor(value: Int): String {
+    val shortText = myTabs[value].first
+    if (shortText.isBlank()) {
+      return content.id.displayName
+    }
+    return shortText
+  }
 
   override fun onChosen(selectedValue: Int, finalChoice: Boolean): PopupStep<*>? {
     val manager = content.manager ?: return FINAL_CHOICE
     content.selectContent(selectedValue)
-    manager.setSelectedContent(content)
+    manager.setSelectedContent(content, true, true)
     return FINAL_CHOICE
   }
 }

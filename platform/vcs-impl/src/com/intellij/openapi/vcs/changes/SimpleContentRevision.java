@@ -1,46 +1,49 @@
 
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
-*/
 public class SimpleContentRevision implements ContentRevision {
   private final String myContent;
   private final FilePath myNewFilePath;
-  private final String myRevision;
+  private final @NotNull VcsRevisionNumber myRevision;
 
-  public SimpleContentRevision(final String content, final FilePath newFilePath, final String revision) {
+  public SimpleContentRevision(final String content, final FilePath newFilePath, final @NotNull String revision) {
+    this(content, newFilePath, new VcsRevisionNumber() {
+      @Override
+      public @NotNull String asString() {
+        return revision;
+      }
+
+      @Override
+      public int compareTo(final VcsRevisionNumber o) {
+        return 0;
+      }
+    });
+  }
+
+  public SimpleContentRevision(final String content, final FilePath newFilePath, final @NotNull VcsRevisionNumber revision) {
     myContent = content;
     myNewFilePath = newFilePath;
     myRevision = revision;
   }
 
-  @Nullable
-  public String getContent() {
+  @Override
+  public @Nullable String getContent() {
     return myContent;
   }
 
-  @NotNull
-  public FilePath getFile() {
+  @Override
+  public @NotNull FilePath getFile() {
     return myNewFilePath;
   }
 
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
-    return new VcsRevisionNumber() {
-      public String asString() {
-        return myRevision;
-      }
-
-      public int compareTo(final VcsRevisionNumber o) {
-        return 0;
-      }
-    };
+  @Override
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
+    return myRevision;
   }
 }

@@ -17,12 +17,8 @@ package com.intellij.application.options.codeStyle.arrangement.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
- * @author Denis Zhdanov
- * @since 11/12/12 12:34 PM
- */
 public interface ArrangementEditorAware {
 
   @NotNull

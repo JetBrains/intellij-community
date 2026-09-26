@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+// FIX: Replace with a function call
+fun test() {
+    [<caret>"aaa", "bb", "c"].map { it.length }.filter { it > 1 }.sorted()
+}

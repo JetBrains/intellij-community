@@ -1,0 +1,13 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.compose.ide.plugin.shared"/>
+    <module name="intellij.platform.core"/>
+    <plugin id="org.jetbrains.android"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.android.tools.idea.npw.template">
+    <wizardPluginPromotionTemplateProvider implementation="com.intellij.compose.ide.plugin.shared.android.kmpPluginPromotion.KmpPluginPlaceholderProvider"/>
+  </extensions>
+</idea-plugin>

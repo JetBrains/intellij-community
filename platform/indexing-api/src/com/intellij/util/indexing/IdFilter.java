@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,52 +12,103 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
 public abstract class IdFilter {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
+  private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
-  private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
-  public static IdFilter getProjectIdFilter(final Project project, final boolean includeNonProjectItems) {
-    Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
-    return CachedValuesManager.getManager(project).getCachedValue(project, key,
-                                                                  () -> CachedValueProvider.Result
-                                                                    .create(buildProjectIdFilter(project, includeNonProjectItems),
-                                                                            ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS), false);
+  @Internal
+  public enum FilterScopeType {
+    OTHER {
+      @Override
+      public @NonNls @NotNull String getId() {
+        throw new UnsupportedOperationException();
+      }
+    },
+    PROJECT {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "false";
+      }
+    },
+    PROJECT_AND_LIBRARIES {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "true";
+      }
+    };
+
+    public abstract @NonNls @NotNull String getId();
   }
 
-  @NotNull
-  private static IdFilter buildProjectIdFilter(Project project, boolean includeNonProjectItems) {
+  public static @NotNull IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
+    if (includeNonProjectItems) {
+      IdFilter filter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+      return filter != null ? filter : new IdFilter() {
+        @Override
+        public boolean containsFileId(int id) {
+          return false;
+        }
+      };
+    }
+    CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilterForContentFiles(project),
+                                                                                     ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
+    return CachedValuesManager.getManager(project).getCachedValue(project, INSIDE_PROJECT, provider, false);
+  }
+
+  private static @NotNull IdFilter buildProjectIdFilterForContentFiles(@NotNull Project project) {
     long started = System.currentTimeMillis();
-    final BitSet idSet = new BitSet();
+    BitSet idSet = new BitSet();
 
     ContentIterator iterator = fileOrDir -> {
-      int id = ((VirtualFileWithId)fileOrDir).getId();
-      if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
-      idSet.set(id);
+      if (fileOrDir instanceof VirtualFileWithId fileWithId) {
+        idSet.set(fileWithId.getId());
+      }//else: if file doesn't have id -- we don't bother adding it to IdFilter?
       ProgressManager.checkCanceled();
       return true;
     };
 
-    if (!includeNonProjectItems) {
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
-    } else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
-    }
+    ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+      long elapsed = System.currentTimeMillis() - started;
+      LOG.debug("Done filter (includeNonProjectItems=" + false+") "+
+                "in " + elapsed + "ms. Total files in set: " + idSet.cardinality());
     }
     return new IdFilter() {
       @Override
       public boolean containsFileId(int id) {
         return id >= 0 && idSet.get(id);
       }
+
+      @Override
+      public @NotNull FilterScopeType getFilteringScopeType() {
+        return FilterScopeType.PROJECT;
+      }
     };
   }
 
   public abstract boolean containsFileId(int id);
+
+  @Internal
+  public @NotNull FilterScopeType getFilteringScopeType() {
+    return FilterScopeType.OTHER;
+  }
+
+  public static final IdFilter ACCEPT_ALL = new IdFilter(){
+    @Override
+    public boolean containsFileId(int id) {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "ACCEPT_ALL";
+    }
+  };
 }

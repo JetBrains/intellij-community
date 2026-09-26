@@ -1,0 +1,34 @@
+flowchart TD
+  A --> B
+  C --> D --> P
+  subgraph name
+    E --> F["This is the (text) in the box"]
+    subgraph name
+      direction RL
+      G -- This is the text! --> H
+      subgraph name
+        I -->|This is the text| G[This is the text in the box]
+      end
+    end
+  end
+  A & B --> C & D
+  A o--o B
+  B <--> C
+  C x--x D
+
+  click A callback "Tooltip for a callback"
+  click B "https://www.github.com" "This is a tooltip for a link"
+  click A call callback() "Tooltip for a callback"
+  click B href "https://www.github.com" "This is a tooltip for a link"
+
+  C(<b>Bold<br/>Text<br/>with<br/>newline</b>)
+  B(<b>Bold text</b>)
+
+  A; B
+
+  A;
+  B
+
+  A;
+
+  B

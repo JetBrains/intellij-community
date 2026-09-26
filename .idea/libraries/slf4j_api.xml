@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="slf4j-api" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.slf4j:slf4j-api:2.0.19">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.jar">
+          <sha256sum>e91ff6d720609e7a194ffe758c3ed5c84e798617ae07b0a0f6a4fe229741b4bb</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-jdk14" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

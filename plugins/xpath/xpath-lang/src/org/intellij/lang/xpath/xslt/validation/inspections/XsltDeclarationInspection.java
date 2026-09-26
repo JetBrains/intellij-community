@@ -1,9 +1,9 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -19,33 +19,28 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltNamedElement;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltDeclarationInspection extends XsltInspection {
+public final class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
-    private NamesValidator myNamesValidator;
 
-    @NotNull
-    public String getDisplayName() {
-        return "Declaration Problems";
-    }
-
-    @NotNull
-    public String getShortName() {
+  @Override
+  public @NotNull String getShortName() {
         return "XsltDeclarations";
     }
 
-    @NotNull
-    public HighlightDisplayLevel getDefaultLevel() {
+    @Override
+    public @NotNull HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
     }
 
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    @Override
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(final XmlTag tag) {
+            public void visitXmlTag(final @NotNull XmlTag tag) {
                 final XmlAttribute nameAttr = tag.getAttribute("name", null);
                 if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
 
@@ -62,37 +57,37 @@ public class XsltDeclarationInspection extends XsltInspection {
                 final XmlTag tag = element.getTag();
 
                 final PsiElement token = element.getNameIdentifier();
-                if (name == null || name.length() == 0) {
+                if (name == null || name.isEmpty()) {
                     if (token != null) {
-                        holder.registerProblem(token, "Empty name not permitted");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                     } else {
                         final XmlAttribute attribute = element.getNameAttribute();
                         if (attribute != null) {
                             final XmlAttributeValue e = attribute.getValueElement();
                             if (e != null) {
-                                holder.registerProblem(e, "Empty name not permitted");
+                                holder.registerProblem(e, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                             }
                         }
                     }
                 } else if (!isLegalName(name, holder.getManager().getProject())) {
                     assert token != null;
-                    holder.registerProblem(token, "Illegal name");
+                    holder.registerProblem(token, XPathBundle.message("inspection.message.illegal.name"));
                 } else {
                     assert token != null;
                     final XmlFile file = (XmlFile)tag.getContainingFile();
                     final XmlTag duplicatedSymbol = DeclarationChecker.getInstance(file).getDuplicatedSymbol(tag);
                     if (duplicatedSymbol != null) {
                       if (duplicatedSymbol.getContainingFile() == file) {
-                        holder.registerProblem(token, "Duplicate declaration");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.duplicate.declaration"));
                       } else {
-                        holder.registerProblem(token, "Duplicates declaration from '" + duplicatedSymbol.getContainingFile().getName() + "'");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.duplicates.declaration.from", duplicatedSymbol.getContainingFile().getName()));
                       }
                     }
                 }
             }
 
-            private boolean isLegalName(String value, Project project) {
-                return getNamesValidator().isIdentifier(value, project);
+            private static boolean isLegalName(String value, Project project) {
+                return LanguageNamesValidation.isIdentifier(XPathFileType.XPATH.getLanguage(), value, project);
             }
         };
     }
@@ -102,12 +97,5 @@ public class XsltDeclarationInspection extends XsltInspection {
             myXsltElementFactory = XsltElementFactory.getInstance();
         }
         return myXsltElementFactory;
-    }
-
-    public NamesValidator getNamesValidator() {
-        if (myNamesValidator == null) {
-            myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
-        }
-        return myNamesValidator;
     }
 }

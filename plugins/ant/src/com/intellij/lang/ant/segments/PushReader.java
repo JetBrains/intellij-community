@@ -1,41 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.segments;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.Reader;
 
-/**
- * @author dyoma
- */
-public class PushReader {
+public final class PushReader {
   private final Reader mySource;
-  private final TIntArrayList myReadAhead = new TIntArrayList();
-  @NonNls
-  protected static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
+  private final IntList myReadAhead = new IntArrayList();
+  private static final @NonNls String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
 
   public PushReader(final Reader source) {
     mySource = source;
   }
 
   public int next() throws IOException {
-    return myReadAhead.isEmpty() ? mySource.read() : myReadAhead.remove(myReadAhead.size() - 1);
+    return myReadAhead.isEmpty() ? mySource.read() : myReadAhead.removeInt(myReadAhead.size() - 1);
   }
 
   public void pushBack(final char[] chars) {
@@ -61,7 +44,7 @@ public class PushReader {
     final char[] chars = new char[charCount];
     int offset = 0;
     for (; offset < chars.length && offset < myReadAhead.size(); offset++)
-      chars[offset] = (char)myReadAhead.remove(myReadAhead.size() - 1);
+      chars[offset] = (char)myReadAhead.removeInt(myReadAhead.size() - 1);
 
     while (offset < chars.length) {
       int bytesRead = mySource.read(chars, offset, chars.length - offset);

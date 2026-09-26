@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -14,12 +14,20 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
     highlightTest("<warning descr=\"Single character alternation in RegExp\">a|b|c|d</warning>");
   }
 
+  public void testSimpleCharacterClass() {
+    highlightTest("<warning descr=\"Single character alternation in RegExp\">\\d|a</warning>");
+  }
+
   public void testNoWarn() {
     highlightTest("a|b|cc|d");
   }
 
   public void testNoWarnNoException() {
     highlightTest("(?i)x|y");
+  }
+
+  public void testNoWarnOnDot() {
+    highlightTest(".|\\r|\\n");
   }
 
   public void testQuickfix() {
@@ -39,9 +47,18 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
                  "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
   }
 
-  @NotNull
+  public void testRedundantEscapeReplacement() {
+    quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\[<caret>|\\]</warning>)", "([\\[\\]])", "Replace with '[\\[\\]]");
+  }
+
+  public void testRedundantEscapeReplacement2() {
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\+|\\-|\\*|/|=|<|>|\\[|\\]|\\.|,|:|;|\\(|\\^</warning>",
+                 "[+\\-*/=<>\\[\\].,:;(^]",
+                 "Replace with '[+\\-*/=<>\\[\\].,:;(^]'");
+  }
+
   @Override
-  protected LocalInspectionTool getInspection() {
+  protected @NotNull LocalInspectionTool getInspection() {
     return new SingleCharAlternationInspection();
   }
 }

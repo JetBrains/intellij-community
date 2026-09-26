@@ -1,151 +1,98 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupPresentationProvider;
+import org.jetbrains.idea.devkit.dom.impl.KeymapConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
+import org.jetbrains.idea.devkit.dom.keymap.KeymapXmlRootElement;
 
 import java.util.List;
 
-/**
- * plugin.dtd:action interface.
- */
+@Presentation(typeName = DevkitDomPresentationConstants.ACTION, provider = ActionOrGroupPresentationProvider.class)
 public interface Action extends ActionOrGroup {
 
-	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
+  @Override
+  @Nullable
+  default String getEffectiveId() {
+    String id = ActionOrGroup.super.getEffectiveId();
+    if (id != null) return id;
+
+    String clazzValue = getClazz().getStringValue();
+    return clazzValue != null ? StringUtilRt.getShortName(clazzValue) : null;
+  }
+
+  @Override
+  default GenericAttributeValue<?> getEffectiveIdAttribute() {
+    if (DomUtil.hasXml(getId())) {
+      return getId();
+    }
+
+    return getClazz();
+  }
+
+  @NotNull
+  @Attribute("class")
+  @Required
+  @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
+    allowNonPublic = true, allowAbstract = false, allowInterface = false)
+  @Convert(PluginPsiClassConverter.class)
+  GenericAttributeValue<PsiClass> getClazz();
 
 
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
+  @NotNull
+  List<KeyboardShortcut> getKeyboardShortcuts();
+
+  KeyboardShortcut addKeyboardShortcut();
 
 
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
+  @NotNull
+  @SubTagList("keyboard-gesture-shortcut")
+  List<KeyboardGestureShortcut> getKeyboardGestureShortcuts();
+
+  KeyboardGestureShortcut addKeyboardGestureShortcut();
 
 
-	/**
-	 * Returns the value of the class child.
-	 * Attribute class
-	 * @return the value of the class child.
-	 */
-	@NotNull
-	@Attribute ("class")
-	@Required
-        @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
-		allowNonPublic = true, allowAbstract = false, allowInterface = false)
-        @Convert(PluginPsiClassConverter.class)
-        GenericAttributeValue<PsiClass> getClazz();
+  @NotNull
+  List<MouseShortcut> getMouseShortcuts();
+
+  MouseShortcut addMouseShortcut();
 
 
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	@Stubbed
-	GenericAttributeValue<String> getText();
+  @NotNull
+  List<Abbreviation> getAbbreviations();
 
-	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-	@NotNull
-	@Required
-	@Stubbed
-	GenericAttributeValue<String> getId();
-
-	/**
-	 * Returns the list of keyboard-shortcut children.
-	 * @return the list of keyboard-shortcut children.
-	 */
-	@NotNull
-	List<KeyboardShortcut> getKeyboardShortcuts();
-	/**
-	 * Adds new child to the list of keyboard-shortcut children.
-	 * @return created child
-	 */
-	KeyboardShortcut addKeyboardShortcut();
+  Abbreviation addAbbreviation();
 
 
-	/**
-	 * Returns the list of mouse-shortcut children.
-	 * @return the list of mouse-shortcut children.
-	 */
-	@NotNull
-	List<MouseShortcut> getMouseShortcuts();
-	/**
-	 * Adds new child to the list of mouse-shortcut children.
-	 * @return created child
-	 */
-	MouseShortcut addMouseShortcut();
+  @NotNull
+  List<AddToGroup> getAddToGroups();
 
-        /**
- 	 * Returns the list of abbreviation children.
- 	 * @return the list of abbreviation children.
- 	 */
- 	@NotNull
- 	List<Abbreviation> getAbbreviations();
+  AddToGroup addAddToGroup();
 
- 	/**
- 	 * Adds new child to the list of abbreviation children.
- 	 * @return created child
- 	 */
-        Abbreviation addAbbreviation();
+  @NotNull
+  List<Synonym> getSynonyms();
 
-	/**
-	 * Returns the list of add-to-group children.
-	 * @return the list of add-to-group children.
-	 */
-	@NotNull
-	List<AddToGroup> getAddToGroups();
-	/**
-	 * Adds new child to the list of add-to-group children.
-	 * @return created child
-	 */
-	AddToGroup addAddToGroup();
+  Synonym addSynonym();
 
-        @NotNull
-	@Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-        GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+  @NotNull
+  @Convert(KeymapConverter.class)
+  GenericAttributeValue<KeymapXmlRootElement> getKeymap();
 
-        @NotNull
-        GenericAttributeValue<String> getKeymap();
-
- 	@NotNull
- 	GenericAttributeValue<String> getProjectType();
+  /**
+   * @see com.intellij.openapi.project.ProjectTypeService
+   */
+  @NotNull
+  GenericAttributeValue<String> getProjectType();
 }

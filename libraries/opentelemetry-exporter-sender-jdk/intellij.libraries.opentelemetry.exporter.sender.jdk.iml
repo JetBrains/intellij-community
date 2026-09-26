@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="opentelemetry-exporter-sender-jdk" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-exporter-sender-jdk:1.66.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0.jar">
+              <sha256sum>f9303420ac7973eb9d05401305358fb9e436822ede9cfc998c0dce42dddc26e8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.66.0/opentelemetry-exporter-sender-jdk-1.66.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

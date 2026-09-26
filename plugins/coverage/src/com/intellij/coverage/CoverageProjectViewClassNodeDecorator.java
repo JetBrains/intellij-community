@@ -1,73 +1,48 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  public CoverageProjectViewClassNodeDecorator(final CoverageDataManager coverageDataManager) {
-    super(coverageDataManager);
-  }
-
-
-  public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
-    final PsiElement element = node.getPsiElement();
-    if (element == null || !element.isValid()) {
-      return;
-    }
-
-    final CoverageDataManager dataManager = getCoverageDataManager();
-    final CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
-    final Project project = element.getProject();
-
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
-    // This decorator is applicable only to JavaCoverageAnnotator
-    if (javaCovAnnotator == null) {
-      return;
-    }
-
-    if (element instanceof PsiClass) {
-      final String qName = ((PsiClass)element).getQualifiedName();
-      if (qName != null) {
-        appendCoverageInfo(cellRenderer, javaCovAnnotator.getClassCoverageInformationString(qName, dataManager));
-      }
-    }
-  }
-
-  public void decorate(ProjectViewNode node, PresentationData data) {
-    final CoverageDataManager coverageDataManager = getCoverageDataManager();
-    final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
-
+final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
+  @Override
+  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     final Project project = node.getProject();
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
-    // This decorator is applicable only to JavaCoverageAnnotator
-    if (javaCovAnnotator == null) {
+    if (project == null) {
       return;
     }
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
+
+    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
+    CoverageSuitesBundle javaSuite = getJavaSuite(coverageDataManager, project);
+    // This decorator is applicable only to java suites
+    if (javaSuite == null) return;
+    final JavaCoverageAnnotator javaCovAnnotator = (JavaCoverageAnnotator) javaSuite.getAnnotator(project);
 
     final Object value = node.getValue();
     PsiElement element = null;
-    if (value instanceof PsiElement) {
-      element = (PsiElement)value;
+    if (value instanceof PsiElement psiElement) {
+      element = psiElement;
     }
-    else if (value instanceof SmartPsiElementPointer) {
-      element = ((SmartPsiElementPointer)value).getElement();
+    else if (value instanceof SmartPsiElementPointer<?> smartPointer) {
+      element = smartPointer.getElement();
     }
-    else if (value instanceof PackageElement) {
-      PackageElement packageElement = (PackageElement)value;
+    else if (value instanceof PackageElement packageElement) {
       final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage(),
                                                                                          packageElement.getModule(),
                                                                                          coverageDataManager);
@@ -75,7 +50,7 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProje
     }
 
     if (element instanceof PsiClass) {
-      final GlobalSearchScope searchScope = currentSuite.getSearchScope(project);
+      final GlobalSearchScope searchScope = javaSuite.getSearchScope(project);
       final VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
       if (vFile != null && searchScope.contains(vFile)) {
         final String qName = ((PsiClass)element).getQualifiedName();
@@ -84,14 +59,27 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProje
         }
       }
     }
+    else if (element instanceof PsiNamedElement namedElement &&
+             // handled in CoverageProjectViewDirectoryNodeDecorator
+             !(element instanceof PsiFile || element instanceof PsiDirectory)) {
+      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+        final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(javaCovAnnotator, namedElement);
+        if (info != null) {
+          data.setLocationString(JavaCoverageAnnotator.getClassCoverageInformationString(info, coverageDataManager));
+          break;
+        }
+      }
+    }
   }
 
-  @Nullable
-  private static JavaCoverageAnnotator getCovAnnotator(final CoverageSuitesBundle currentSuite, Project project) {
-    if (currentSuite != null) {
-      final CoverageAnnotator coverageAnnotator = currentSuite.getAnnotator(project);
+  private static CoverageSuitesBundle getJavaSuite(@Nullable CoverageDataManager dataManager, @NotNull Project project) {
+    if (dataManager == null) {
+      return null;
+    }
+    for (CoverageSuitesBundle bundle : dataManager.activeSuites()) {
+      final CoverageAnnotator coverageAnnotator = bundle.getAnnotator(project);
       if (coverageAnnotator instanceof JavaCoverageAnnotator) {
-        return (JavaCoverageAnnotator) coverageAnnotator;
+        return bundle;
       }
     }
     return null;

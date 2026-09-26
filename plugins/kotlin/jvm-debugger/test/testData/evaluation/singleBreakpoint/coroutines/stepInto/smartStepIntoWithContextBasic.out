@@ -1,0 +1,12 @@
+LineBreakpoint created at smartStepIntoWithContextBasic.kt:11
+Run Java
+Connected to the target VM
+smartStepIntoWithContextBasic.kt:11
+smartStepIntoWithContextBasic.kt:13
+smartStepIntoWithContextBasic.kt:14
+smartStepIntoWithContextBasic.kt:15
+smartStepIntoWithContextBasic.kt:16
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

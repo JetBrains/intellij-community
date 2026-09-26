@@ -32,7 +32,6 @@ public interface InsertNewMethodStrategy {
    *
    * @param clazz     PSIClass.
    * @param newMethod new method.
-   * @param editor
    * @return if the policy was executed normally (not cancelled)
    */
   @Nullable

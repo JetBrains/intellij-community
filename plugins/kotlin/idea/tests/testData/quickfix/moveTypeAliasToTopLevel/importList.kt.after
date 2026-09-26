@@ -1,0 +1,16 @@
+// "Move typealias to top level" "true"
+package bar
+
+import java.util.Hashtable
+
+typealias Foo = String
+
+class C {
+
+    fun bar(foo: Foo) {
+    }
+}
+
+fun baz() {}
+// IGNORE_K2
+// Nested type aliases are introduced by KT-45285

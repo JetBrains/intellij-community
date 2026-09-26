@@ -16,14 +16,14 @@
 package com.intellij.lang.ant.segments;
 
 import com.intellij.openapi.diagnostic.Logger;
-
-import java.awt.*;
+import com.intellij.util.ui.EDT;
 
 public class DeferredActionsQueueImpl implements DeferredActionsQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.segments.DeferedActionsQueueImpl");
+  private static final Logger LOG = Logger.getInstance(DeferredActionsQueueImpl.class);
   private DispatchListener myListener = DispatchListener.DEAF;
   private int myCounter = 0;
 
+  @Override
   public void addLast(final Runnable runnable) {
     checkIsDispatchThread();
     myListener.onStarted();
@@ -38,10 +38,11 @@ public class DeferredActionsQueueImpl implements DeferredActionsQueue {
     myCounter++;
     if (myCounter > 127) {
       myCounter = 0;
-      LOG.assertTrue(EventQueue.isDispatchThread());
+      LOG.assertTrue(EDT.isCurrentThreadEdt());
     }
   }
 
+  @Override
   public void setDispactchListener(final DispatchListener listener) {
     myListener = listener;
   }

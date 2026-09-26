@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.SmartFMap;
@@ -22,11 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class JavaMethod implements AnnotatedElement {
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
   private static final Object NONE = new Object();
@@ -35,39 +19,45 @@ public final class JavaMethod implements AnnotatedElement {
   private final Class myDeclaringClass;
   private final Method myMethod;
   private volatile SmartFMap<Class, Object> myAnnotationsMap = SmartFMap.emptyMap();
+  private volatile List<Method> myHierarchy;
 
-  private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
+  private JavaMethod(@NotNull Class<?> declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
     myMethod = signature.findMethod(declaringClass);
     assert myMethod != null : "No method " + signature + " in class " + declaringClass;
     myDeclaringClass = myMethod.getDeclaringClass();
   }
 
-  public final Class getDeclaringClass() {
+  public Class<?> getDeclaringClass() {
     return myDeclaringClass;
   }
 
-  public final JavaMethodSignature getSignature() {
+  public JavaMethodSignature getSignature() {
     return mySignature;
   }
 
-  public final List<Method> getHierarchy() {
-    return mySignature.getAllMethods(myDeclaringClass);
+  public @NotNull List<Method> getHierarchy() {
+    List<Method> hierarchy = myHierarchy;
+    if (hierarchy == null) {
+      hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
+      myHierarchy = hierarchy;
+    }
+    return hierarchy;
   }
 
   public String getMethodName() {
     return mySignature.getMethodName();
   }
 
-  public final Method getMethod() {
+  public Method getMethod() {
     return myMethod;
   }
 
-  public final Type[] getGenericParameterTypes() {
+  public Type[] getGenericParameterTypes() {
     return myMethod.getGenericParameterTypes();
   }
 
-  public final Type getGenericReturnType() {
+  public Type getGenericReturnType() {
     return myMethod.getGenericReturnType();
   }
 
@@ -79,21 +69,21 @@ public final class JavaMethod implements AnnotatedElement {
     return getMethod(declaringClass, new JavaMethodSignature(method));
   }
 
-  public final Object invoke(final Object o, final Object... args) {
+  public Object invoke(final Object o, final Object... args) {
     return DomReflectionUtil.invokeMethod(myMethod, o, args);
   }
 
+  @Override
   public String toString() {
     return "JavaMethod: " + myMethod.toString();
   }
 
-  @NonNls
-  public final String getName() {
+  public @NonNls String getName() {
     return myMethod.getName();
   }
 
   @Override
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     Object annotation = myAnnotationsMap.get(annotationClass);
     if (annotation == null) {
       myAnnotationsMap = myAnnotationsMap.plus(annotationClass, annotation = findAnnotation(annotationClass));
@@ -102,18 +92,20 @@ public final class JavaMethod implements AnnotatedElement {
     return annotation == NONE ? null : (T)annotation;
   }
 
-  @NotNull
-  private Object findAnnotation(Class<? extends Annotation> annotationClass) {
-    final Annotation annotation = mySignature.findAnnotation(annotationClass, myDeclaringClass);
-    return annotation == null ? NONE : annotation;
+  private @NotNull Object findAnnotation(Class<? extends Annotation> annotationClass) {
+    for (Method method : getHierarchy()) {
+      Annotation annotation = method.getAnnotation(annotationClass);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return NONE;
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaMethod)) return false;
-
-    final JavaMethod that = (JavaMethod)o;
+    if (!(o instanceof JavaMethod that)) return false;
 
     if (!myDeclaringClass.equals(that.myDeclaringClass)) return false;
     if (!mySignature.equals(that.mySignature)) return false;
@@ -128,11 +120,15 @@ public final class JavaMethod implements AnnotatedElement {
     return result;
   }
 
-  public final Class getReturnType() {
+  public Class getReturnType() {
     return myMethod.getReturnType();
   }
 
   public Class<?>[] getParameterTypes() {
     return myMethod.getParameterTypes();
+  }
+
+  public int getParameterCount() {
+    return myMethod.getParameterCount();
   }
 }

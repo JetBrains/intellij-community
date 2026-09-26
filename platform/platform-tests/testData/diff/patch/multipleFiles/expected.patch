@@ -1,15 +1,17 @@
 Index: 1.txt
 ===================================================================
---- 1.txt	(revision before)
-+++ 1.txt	(revision after)
+diff --git a/1.txt b/1.txt
+--- a/1.txt	(revision before)
++++ b/1.txt	(revision after)
 @@ -1,2 +1,2 @@
 -old
 +new
  unchanged
 Index: 2.txt
 ===================================================================
---- 2.txt	(revision before)
-+++ 2.txt	(revision after)
+diff --git a/2.txt b/2.txt
+--- a/2.txt	(revision before)
++++ b/2.txt	(revision after)
 @@ -1,2 +1,2 @@
  unchanged1
 -new

@@ -1,0 +1,19 @@
+public class NPC {
+   public static void main(String[] args) {
+      args.clone();// 4
+   }// 5
+}
+
+class 'NPC' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      2
+      1      2
+      2      2
+      3      2
+      5      3
+   }
+}
+
+Lines mapping:
+4 <-> 3
+5 <-> 4

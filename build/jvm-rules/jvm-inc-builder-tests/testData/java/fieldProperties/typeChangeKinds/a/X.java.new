@@ -1,0 +1,9 @@
+public class X {
+  public long w = 1L;
+  public int n = 1;
+  public Integer b = 1;
+  public int u = 1;
+  public String s = "s";
+  public Long r = 1L;
+  public String[][] arr = {{"x"}};
+}

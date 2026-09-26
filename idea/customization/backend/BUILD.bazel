@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.idea.customization.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.idea.customization.backend` end
+
+### auto-generated section `build intellij.idea.customization.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.customization.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/lang-impl"],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.customization.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.idea.customization.backend` end
+
+### auto-generated section `iml intellij.idea.customization.backend` start
+exports_files(
+    [
+        "intellij.idea.customization.backend.iml",
+        "resources/intellij.idea.customization.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.idea.customization.backend` end

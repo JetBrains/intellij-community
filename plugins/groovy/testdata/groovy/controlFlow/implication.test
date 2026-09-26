@@ -1,0 +1,10 @@
+a ==> b
+-----
+0(1) element: null
+1(2) Condition Logical expression
+2(3) READ a
+3(4,5) element: Logical expression
+4(7) element: Logical expression MAYBE_RETURN
+5(6) READ b
+6(7) element: Logical expression MAYBE_RETURN
+7() element: null

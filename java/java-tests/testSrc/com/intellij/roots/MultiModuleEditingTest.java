@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -30,25 +15,24 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author dsl
- */
-public class MultiModuleEditingTest extends ModuleTestCase {
-
+public class MultiModuleEditingTest extends JavaModuleTestCase {
   private static final String TEST_PATH = PathManagerEx.getTestDataPath() +
                                           "/moduleRootManager/multiModuleEditing".replace('/', File.separatorChar);
   @Override
@@ -62,20 +46,23 @@ public class MultiModuleEditingTest extends ModuleTestCase {
   public void testAddTwoModules() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
     final Module moduleA;
     final Module moduleB;
 
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
     {
       final ModifiableModuleModel modifiableModel = moduleManager.getModifiableModel();
-      moduleA = modifiableModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      moduleA = modifiableModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = modifiableModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
       assertEquals("Changes are not applied until commit", 0, moduleManager.getModules().length);
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
       ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(2, moduleManager.getModules().length);
@@ -90,6 +77,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertEquals("Changes are not applied until commit", 2, moduleManager.getModules().length);
       moduleListener.assertCorrectEvents(new String[][]{{"+a", "+b"}});
       ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(0, moduleManager.getModules().length);
@@ -101,14 +89,16 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
+
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
 
     final Module moduleA;
     final Module moduleB;
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleA);
@@ -119,6 +109,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       contentEntryB.addSourceFolder(getVirtualFileInTestData("b/src"), false);
 
       ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel));
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     final JavaPsiFacade psiManager = getJavaFacade();
@@ -142,15 +133,18 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     final Module moduleA;
     final Module moduleB;
 
+    Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
     {
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
-      moduleA = moduleModel.newModule("a.iml", StdModuleTypes.JAVA.getId());
-      moduleB = moduleModel.newModule("b.iml", StdModuleTypes.JAVA.getId());
-      final Module moduleC = moduleModel.newModule("c.iml", StdModuleTypes.JAVA.getId());
+      moduleA = moduleModel.newModule(dir.resolve("a.iml"), JavaModuleType.getModuleType().getId());
+      moduleB = moduleModel.newModule(dir.resolve("b.iml"), JavaModuleType.getModuleType().getId());
+      final Module moduleC = moduleModel.newModule(dir.resolve("c.iml"), JavaModuleType.getModuleType().getId());
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);
       ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel));
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     final ModuleRootManager rootManagerB = ModuleRootManager.getInstance(moduleB);
@@ -169,6 +163,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertEquals("c", moduleModel.getActualName(moduleA));
       assertSame(moduleA, moduleModel.getModuleToBeRenamed("c"));
       ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(1, rootManagerB.getDependencies().length);
@@ -184,7 +179,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     return WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       final String path =
         TEST_PATH + File.separatorChar + getTestName(true) + File.separatorChar + relativeVfsPath.replace('/', File.separatorChar);
-      final VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      final VirtualFile result = StandardFileSystems.local().refreshAndFindFileByPath(new File(path).getAbsolutePath());
       assertNotNull("File " + path + " doesn't exist", result);
       return result;
     });
@@ -200,10 +195,11 @@ public class MultiModuleEditingTest extends ModuleTestCase {
     }
 
     @Override
-    public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-      myLog.add("+" + module.getName());
+    public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
+      for (Module module : modules) {
+        myLog.add("+" + module.getName());
+      }
     }
-
     public void assertCorrectEvents(String[][] expected) {
       int runningIndex = 0;
       for (int chunkIndex = 0; chunkIndex < expected.length; chunkIndex++) {

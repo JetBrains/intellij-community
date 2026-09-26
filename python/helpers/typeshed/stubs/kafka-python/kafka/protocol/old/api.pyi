@@ -1,0 +1,66 @@
+import abc
+from typing_extensions import Self
+
+from .struct import Struct
+from .types import Schema
+
+class ResponseClassRegistry:
+    @classmethod
+    def register_response_class(cls, response_class) -> None: ...
+    @classmethod
+    def get_response_class(cls, header): ...
+
+class RequestHeader(ResponseClassRegistry, Struct):
+    SCHEMA: Schema
+    def get_response_class(self): ...  # type: ignore[override]
+
+class RequestHeaderV2(ResponseClassRegistry, Struct):
+    SCHEMA: Schema
+    def get_response_class(self): ...  # type: ignore[override]
+
+class ResponseHeader(Struct):
+    SCHEMA: Schema
+
+class ResponseHeaderV2(Struct):
+    SCHEMA: Schema
+
+class RequestResponse(Struct, metaclass=abc.ABCMeta):
+    def __init__(self, *args, **kwargs) -> None: ...
+    @property
+    @abc.abstractmethod
+    def API_KEY(self): ...
+    @property
+    @abc.abstractmethod
+    def API_VERSION(self): ...
+    def to_object(self): ...
+    @classmethod
+    @abc.abstractmethod
+    def is_request(cls): ...
+    @property
+    def header(self): ...
+    def with_header(self, correlation_id: int = 0, client_id="kafka-python") -> None: ...
+    def encode(self, header: bool = False, framed: bool = False) -> bytes: ...
+    @classmethod
+    @abc.abstractmethod
+    def header_class(cls): ...
+    @classmethod
+    def parse_header(cls, read_buffer): ...
+    @classmethod
+    def decode(cls, data, header: bool = False, framed: bool = False) -> Self: ...
+    def __eq__(self, other) -> bool: ...
+
+class Request(RequestResponse, metaclass=abc.ABCMeta):
+    FLEXIBLE_VERSION: bool
+    @classmethod
+    def is_request(cls): ...
+    def expect_response(self): ...
+    @classmethod
+    def header_class(cls): ...
+
+class Response(RequestResponse, metaclass=abc.ABCMeta):
+    FLEXIBLE_VERSION: bool
+    def __init_subclass__(cls, **kwargs) -> None: ...
+    @classmethod
+    def is_request(cls): ...
+    @classmethod
+    def header_class(cls): ...

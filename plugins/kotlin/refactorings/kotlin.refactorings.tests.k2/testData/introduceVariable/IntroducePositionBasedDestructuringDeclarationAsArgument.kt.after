@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+
+fun test() {
+    val pairs = 1 to "one"
+    val [first, second] = pairs
+    val map = hashMapOf(pairs)
+}

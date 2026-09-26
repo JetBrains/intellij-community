@@ -14,6 +14,7 @@ public class ExceptionHandler {
 
   public String exceptionClass = null;
 
+  @Override
   public String toString() {
     String new_line_separator = DecompilerContext.getNewLineSeparator();
     return "from: " + from + " to: " + to + " handler: " + handler + new_line_separator +

@@ -19,21 +19,23 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlDuplicatedIdInspection;
 import com.intellij.xml.util.XmlInvalidIdInspection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class XmlStressTest extends DaemonAnalyzerTestCase {
-
+  private static final Logger LOG = Logger.getInstance(XmlStressTest.class);
   public void testSchemaValidator() throws Exception {
     for (int i = 0; i < 100; i++) {
       doTest("xml/WsdlValidation.wsdl", false, false);
-      System.out.println(i);
+      LOG.debug(String.valueOf(i));
     }
   }
 
@@ -56,17 +58,18 @@ public class XmlStressTest extends DaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new CheckXmlFileWithXercesValidatorInspection());
 
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/",
                                                               getTestDataPath() + BASE_PATH + "wsdl11.xsd",
                                                               getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/soap/",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/soap/",
                                                               getTestDataPath() + BASE_PATH + "wsdl11_soapbinding.xsd",
                                                               getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/soap/encoding/",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://schemas.xmlsoap.org/soap/encoding/",
                                                               getTestDataPath() + BASE_PATH + "soap-encoding.xsd",
                                                               getTestRootDisposable());
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";

@@ -17,20 +17,22 @@ package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService;
 
-/**
- * @author ven
- */
 public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
-  private final InitializationPlace myInitializationPlace;
+  private final JavaIntroduceFieldModCommandService.InitializationPlace myInitializationPlace;
   private final boolean myDeclareStatic;
 
-  public MockIntroduceFieldHandler(final InitializationPlace initializationPlace, final boolean declareStatic) {
+  public MockIntroduceFieldHandler(final JavaIntroduceFieldModCommandService.InitializationPlace initializationPlace, final boolean declareStatic) {
     myInitializationPlace = initializationPlace;
     myDeclareStatic = declareStatic;
   }

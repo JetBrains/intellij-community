@@ -26,3 +26,18 @@ class A:
 
     def foo(self, value):
         return None
+
+# Incompatible by types
+class B:
+    @overload
+    def foo(self, value: int): ...
+
+    # `value: str` do not match `value: int` from implementation
+    @overload
+    def <warning descr="Signature of this @overload-decorated method is not compatible with the implementation">foo</warning>(self, value: str): ...
+
+    # `object` is too wide
+    @overload
+    def <warning descr="Signature of this @overload-decorated method is not compatible with the implementation">foo</warning>(self, value: object): ...
+
+    def foo(self, value: int): ...

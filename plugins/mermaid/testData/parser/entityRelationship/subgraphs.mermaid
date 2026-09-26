@@ -1,0 +1,10 @@
+erDiagram
+  direction LR
+  subgraph domain [Customer domain]
+    direction TB
+    CUSTOMER ||--o{ ORDER : places
+    subgraph nested
+      ORDER ||--|{ LINE_ITEM : contains
+    end
+  end
+  domain ||--|| WAREHOUSE : ships

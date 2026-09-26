@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -41,14 +41,17 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     //setEnabled(false);
   }
 
+  @Override
   public Key<AnyExceptionBreakpoint> getCategory() {
     return ANY_EXCEPTION_BREAKPOINT;
   }
 
+  @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("breakpoint.any.exception.display.name");
+    return JavaDebuggerBundle.message("breakpoint.any.exception.display.name");
   }
 
+  @Override
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!shouldCreateRequest(debugProcess)) {
@@ -57,17 +60,18 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     super.processClassPrepare(debugProcess, null);
   }
 
+  @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     // should be emty - does not make sense for this breakpoint
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     try {
       super.readExternal(parentNode);
     }
     catch (InvalidDataException e) {
-      if(!READ_NO_CLASS_NAME.equals(e.getMessage())) throw e;
+      if (!getReadNoClassName().equals(e.getMessage())) throw e;
     }
   }
-
 }

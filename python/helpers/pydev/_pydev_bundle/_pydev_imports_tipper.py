@@ -3,16 +3,23 @@ import os.path
 import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
-from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_resolver import suppress_warnings
 
 if IS_PY2:
-    from inspect import getargspec
+    from inspect import getargspec as _originalgetargspec
+    def getargspec(*args, **kwargs):
+        ret = list(_originalgetargspec(*args, **kwargs))
+        ret.append([])
+        ret.append({})
+        return ret
+
 else:
     from inspect import getfullargspec
 
     def getargspec(*args, **kwargs):
         arg_spec = getfullargspec(*args, **kwargs)
-        return arg_spec.args, arg_spec.varargs, arg_spec.varkw, arg_spec.defaults
+        return arg_spec.args, arg_spec.varargs, arg_spec.varkw, arg_spec.defaults, arg_spec.kwonlyargs or [], arg_spec.kwonlydefaults or {}
 
 try:
     xrange
@@ -26,6 +33,10 @@ TYPE_FUNCTION = '2'
 TYPE_ATTR = '3'
 TYPE_BUILTIN = '4'
 TYPE_PARAM = '5'
+
+# completion types for IPython console
+TYPE_IPYTHON = '11'
+TYPE_IPYTHON_MAGIC = '12'
 
 def _imp(name, log=None):
     try:
@@ -150,13 +161,15 @@ def check_char(c):
         return '_'
     return c
 
+_SENTINEL = object()
+
 def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=getattr, filter=lambda name:True):
     '''
         @param obj_to_complete: the object from where we should get the completions
-        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
-        @param getattr: the way to get a given object from the obj_to_complete (used for the completer)
-        @param filter: a callable that receives the name and decides if it should be appended or not to the results
-        @return: list of tuples, so that each tuple represents a completion with:
+        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as kwonly_arg parameter
+        @param getattr: the way to get kwonly_arg given object from the obj_to_complete (used for the completer)
+        @param filter: kwonly_arg callable that receives the name and decides if it should be appended or not to the results
+        @return: list of tuples, so that each tuple represents kwonly_arg completion with:
             name, doc, args, type (from the TYPE_* constants)
     '''
     ret = []
@@ -167,6 +180,15 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
             dir_comps.append('__dict__')
         if hasattr(obj_to_complete, '__class__'):
             dir_comps.append('__class__')
+        # Fix for PY-38151 - From python doc, metaclass attributes are not in the list returned by `dir`.
+        # This is why e.g. __name__ does not appear. Let's add the metaclass attributes here.
+        try:
+            if inspect.isclass(obj_to_complete):
+                dir_comps += dir(type(obj_to_complete))
+            # do not do it from instance, it might grab irrelevant items
+        except:
+            # ignore any error just in case
+            pass
 
     get_complete_info = True
 
@@ -188,10 +210,14 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
         args = ''
 
         try:
-            try:
-                obj = getattr(obj_to_complete.__class__, d)
-            except:
-                obj = getattr(obj_to_complete, d)
+            with suppress_warnings():
+                try:
+                    if IS_PY39_OR_GREATER:
+                        obj = getattr(obj_to_complete, d)
+                    else:
+                        obj = getattr(obj_to_complete.__class__, d)
+                except:
+                    obj = getattr(obj_to_complete, d)
         except: #just ignore and get it without additional info
             ret.append((d, '', args, TYPE_BUILTIN))
         else:
@@ -219,17 +245,20 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
                         except: #may happen on jython when checking java classes (so, just ignore it)
                             doc = ''
 
-
                     if inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
                         try:
-                            args, vargs, kwargs, defaults = getargspec(obj)
+                            args, vargs, kwargs, defaults, kwonly_args, kwonly_defaults = getargspec(obj)
 
-                            r = ''
-                            for a in (args):
-                                if len(r) > 0:
-                                    r = r + ', '
-                                r = r + str(a)
-                            args = '(%s)' % (r)
+                            args = args[:]
+
+                            for kwonly_arg in kwonly_args:
+                                default = kwonly_defaults.get(kwonly_arg, _SENTINEL)
+                                if default is not _SENTINEL:
+                                    args.append('%s=%s' % (kwonly_arg, default))
+                                else:
+                                    args.append(str(kwonly_arg))
+
+                            args = '(%s)' % (', '.join(args))
                         except TypeError:
                             #ok, let's see if we can get the arguments from the doc
                             args, doc = signature_from_docstring(doc, getattr(obj, '__name__', None))

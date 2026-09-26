@@ -1,16 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.projectView;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+  public boolean canMove(PsiElement[] elements, final @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     return false;
   }
 
@@ -53,5 +54,10 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
       return source.getParent() == target;
     }
     return super.isMoveRedundant(source, target);
+  }
+
+  @Override
+  public boolean supportsLanguage(@NotNull Language language) {
+    return false;  // only available in project view
   }
 }

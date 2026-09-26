@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -25,17 +10,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author: db
- */
-class Proto implements RW.Savable, Streamable {
+class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;
   public final int signature;
   public final int name;
-  @NotNull
-  public final Set<TypeRepr.ClassType> annotations;
+  public final @NotNull Set<TypeRepr.ClassType> annotations;
 
   protected Proto(final int access, final int signature, final int name, Set<TypeRepr.ClassType> annotations) {
     this.access = access;
@@ -49,7 +31,7 @@ class Proto implements RW.Savable, Streamable {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
-      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
+      annotations = RW.read(TypeRepr.externalizer(context), new HashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -101,6 +83,7 @@ class Proto implements RW.Savable, Streamable {
     return (Opcodes.ACC_ANNOTATION & access) != 0;
   }
 
+  @Override
   public final boolean isFinal() {
     return (Opcodes.ACC_FINAL & access) != 0;
   }
@@ -169,7 +152,7 @@ class Proto implements RW.Savable, Streamable {
 
       @Override
       public boolean packageLocalOn() {
-        return (past.isPrivate() || past.isPublic() || past.isProtected()) && Proto.this.isPackageLocal();
+        return !past.isPackageLocal() && Proto.this.isPackageLocal();
       }
 
       @Override
@@ -183,12 +166,18 @@ class Proto implements RW.Savable, Streamable {
       }
 
       @Override
+      public boolean accessExpanded() {
+        return Difference.weakerAccess(past.access, access);
+      }
+
+      @Override
       public Specifier<TypeRepr.ClassType, Difference> annotations() {
         return ann;
       }
     };
   }
 
+  @Override
   public void toStream(final DependencyContext context, final PrintStream stream) {
     final String d = this instanceof ClassRepr ? "      " : "          ";
 

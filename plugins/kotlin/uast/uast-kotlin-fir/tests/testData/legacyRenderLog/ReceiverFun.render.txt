@@ -1,0 +1,12 @@
+public final class ReceiverFunKt {
+    public static final fun foo(@org.jetbrains.annotations.NotNull @MyReceiverAnnotation $this$foo: java.lang.String) : int {
+        return this.length
+    }
+    public static final fun getRx(@org.jetbrains.annotations.NotNull @MyReceiverAnnotation(name = "RegExp") $this$rx: java.lang.String) : kotlin.text.Regex {
+        return toRegex()
+    }
+}
+
+public abstract annotation MyReceiverAnnotation {
+    public abstract fun name() : java.lang.String = UastEmptyExpression
+}

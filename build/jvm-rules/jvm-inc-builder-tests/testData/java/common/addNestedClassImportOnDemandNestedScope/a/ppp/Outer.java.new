@@ -1,0 +1,8 @@
+package ppp;
+
+public class Outer {
+  public static class Mid {
+    public static class Helper {
+    }
+  }
+}

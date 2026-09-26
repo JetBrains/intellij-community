@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -35,17 +20,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class GrBreakStringOnLineBreaksIntention extends Intention {
+public final class GrBreakStringOnLineBreaksIntention extends GrPsiUpdateIntention {
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final String text = invokeImpl(element);
-    final GrExpression newExpr = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(text);
+    final GrExpression newExpr = GroovyPsiElementFactory.getInstance(context.project()).createExpressionFromText(text);
     ((GrExpression)element).replaceWithExpression(newExpr, true);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -65,7 +49,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
     StringBuilder buffer = new StringBuilder();
     if (element instanceof GrString) {
-      processGString(element, quote, value, buffer);
+      processGString(element, quote, buffer);
     }
     else {
       processSimpleString(quote, value, buffer);
@@ -77,7 +61,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
     return result;
   }
 
-  private static void processGString(PsiElement element, String quote, String value, StringBuilder buffer) {
+  private static void processGString(PsiElement element, String quote, StringBuilder buffer) {
     final ASTNode node = element.getNode();
 
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -87,7 +71,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
         buffer.append(child.getText());
       }
       else {
-        value = child.getText();
+        String value = child.getText();
         int prev = 0;
         if (!isInjection(child.getTreePrev())) {
           buffer.append(quote);
@@ -129,9 +113,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
   private static int checkForR(String value, int pos) {
     pos += 2;
-    if (value.length() > pos + 2 && "\r".equals(value.substring(pos, pos + 2))) return pos + 2;
+    if (value.length() > pos + 2 && "\\r".equals(value.substring(pos, pos + 2))) return pos + 2;
     return pos;
   }
-
-
 }

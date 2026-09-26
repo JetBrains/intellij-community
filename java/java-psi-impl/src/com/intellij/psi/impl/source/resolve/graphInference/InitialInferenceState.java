@@ -16,13 +16,20 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 class InitialInferenceState {
-  private final Set<InferenceVariable> myInferenceVariables;
+  private final List<InferenceVariable> myInferenceVariables;
   private final PsiElement myContext;
 
   private final PsiSubstitutor myInferenceSubstitutor;
@@ -31,7 +38,7 @@ class InitialInferenceState {
   private final InferenceSessionContainer myInferenceSessionContainer;
   private final boolean myErased;
 
-  InitialInferenceState(Collection<InferenceVariable> inferenceVariables,
+  InitialInferenceState(Collection<VariableInfo> inferenceVariables,
                         PsiSubstitutor topInferenceSubstitutor,
                         PsiElement context,
                         PsiSubstitutor inferenceSubstitutor,
@@ -40,17 +47,15 @@ class InitialInferenceState {
                         boolean erased, 
                         InferenceSessionContainer inferenceSessionContainer) {
     myErased = erased;
-    myInferenceVariables = new HashSet<>();
+    myInferenceVariables = new ArrayList<>(inferenceVariables.size());
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-    for (InferenceVariable variable : inferenceVariables) {
-      final PsiType substitute = topInferenceSubstitutor.substitute(variable);
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(substitute);
-      if (aClass instanceof InferenceVariable) {
-        myInferenceVariables.add((InferenceVariable)aClass);
-        if (inferenceSubstitutor.getSubstitutionMap().containsValue(PsiSubstitutor.EMPTY.substitute(variable))) {
-          substitutor = substitutor.put(variable.getParameter(), substitute);
-          subst = subst.put(variable, substitute);
+    for (VariableInfo info : inferenceVariables) {
+      if (info.myResolved instanceof InferenceVariable) {
+        myInferenceVariables.add((InferenceVariable)info.myResolved);
+        if (inferenceSubstitutor.getSubstitutionMap().containsValue(info.myType)) {
+          substitutor = substitutor.put(info.myVariable.getParameter(), info.mySubstituted);
+          subst = subst.put(info.myVariable, info.mySubstituted);
         }
       }
     }
@@ -74,7 +79,7 @@ class InitialInferenceState {
     return myInferenceSessionContainer;
   }
 
-  Set<InferenceVariable> getInferenceVariables() {
+  List<InferenceVariable> getInferenceVariables() {
     return myInferenceVariables;
   }
 
@@ -96,5 +101,19 @@ class InitialInferenceState {
 
   public boolean isErased() {
     return myErased;
+  }
+
+  static class VariableInfo {
+    final InferenceVariable myVariable;
+    final PsiType mySubstituted;
+    final PsiClass myResolved;
+    final PsiClassType myType;
+
+    VariableInfo(InferenceVariable variable, PsiSubstitutor substitutor, PsiElementFactory factory) {
+      myVariable = variable;
+      mySubstituted = substitutor.substitute(variable);
+      myResolved = PsiUtil.resolveClassInClassTypeOnly(mySubstituted);
+      myType = factory.createType(variable);
+    }
   }
 }

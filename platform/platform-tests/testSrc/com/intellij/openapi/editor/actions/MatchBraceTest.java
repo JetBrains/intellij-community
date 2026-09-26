@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,28 +26,25 @@ import org.junit.runner.RunWith;
 /**
  * @author Dennis.Ushakov
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/platform-tests/testData/editor/matchBrace/")
 public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      configureByFile(getBeforeFileName());
-      //EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
-      executeAction("EditorMatchBrace");
-      checkResultByFile(getAfterFileName());
-    });
+    configureByFile(getBeforeFileName());
+    //EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
+    executeAction("EditorMatchBrace");
+    checkResultByFile(getAfterFileName());
   }
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     int pos = fileName.indexOf("-before.");
     if (pos < 0) {
       return null;
     }
-    return pos < 0 ? null : fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
+    return fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
   }
 
   private String getBeforeFileName() {
@@ -57,6 +54,11 @@ public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements 
 
   private String getAfterFileName() {
     int pos = myFileSuffix.indexOf('(');
-    return myFileSuffix.substring(0, pos) + "-after." + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
+    return myFileSuffix.substring(0, pos) + getAnswersSuffix() + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
+  }
+
+  @NotNull
+  protected String getAnswersSuffix() {
+    return "-after.";
   }
 }

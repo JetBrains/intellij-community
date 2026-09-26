@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AnnotationInterface.java</file>
+    <line>4</line>
+    <description>@interface is never used.</description>
+  </problem>
+  <problem>
+    <file>AnnotationInterface.java</file>
+    <line>5</line>
+    <description>Method owner class is never instantiated OR All instantiation are not reachable from the entry points.</description>
+  </problem>
+  <problem>
+    <file>RepeatableAnnotation.java</file>
+    <line>25</line>
+    <description>@interface is never used.</description>
+  </problem>
+  <problem>
+    <file>RepeatableAnnotation.java</file>
+    <line>41</line>
+    <description>Method is never used.</description>
+  </problem>
+</problems>
+

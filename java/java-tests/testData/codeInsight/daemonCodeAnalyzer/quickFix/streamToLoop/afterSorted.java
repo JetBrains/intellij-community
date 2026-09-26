@@ -6,7 +6,7 @@ import java.util.stream.*;
 public class Main {
   public List<String> testSorted(List<String> list) {
       List<String> toSort = new ArrayList<>();
-      for (String s: list) {
+      for (String s : list) {
           if (s != null) {
               toSort.add(s);
           }
@@ -14,7 +14,7 @@ public class Main {
       toSort.sort(null);
       List<String> result = new ArrayList<>();
       Set<String> uniqueValues = new HashSet<>();
-      for (String s: toSort) {
+      for (String s : toSort) {
           String trim = s.trim();
           if (uniqueValues.add(trim)) {
               result.add(trim);
@@ -25,7 +25,7 @@ public class Main {
 
   public List<String> testSortedComparator(List<String> list) {
       List<String> result = new ArrayList<>();
-      for (String s: list) {
+      for (String s : list) {
           result.add(s);
       }
       result.sort(String.CASE_INSENSITIVE_ORDER);
@@ -34,7 +34,7 @@ public class Main {
 
   public List<String> testSortedToArray(List<String> list) {
       List<String> result = new ArrayList<>();
-      for (String s: list) {
+      for (String s : list) {
           result.add(s);
       }
       result.sort(null);

@@ -18,11 +18,18 @@ package com.jetbrains.python.run;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+ */
 public interface PythonCommandLineEnvironmentProvider {
   ExtensionPointName<PythonCommandLineEnvironmentProvider> EP_NAME =
     ExtensionPointName.create("Pythonid.pythonCommandLineEnvironmentProvider");
 
-  void extendEnvironment(@NotNull Project project, @NotNull GeneralCommandLine cmdLine, PythonRunParams runParams);
+  void extendEnvironment(@NotNull Project project,
+                         SdkAdditionalData data,
+                         @NotNull GeneralCommandLine cmdLine,
+                         PythonRunParams runParams);
 }

@@ -1,30 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.testFramework.PlatformTestUtil;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
-/**
- * @author yole
- */
+
+@Subsystems.Inspections
+@Layers.Functional
 public class PyDeprecationTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -34,11 +23,12 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testFunction() {
     myFixture.configureByText(PythonFileType.INSTANCE,
-                              "def getstatus(file):\n" +
-                              "    \"\"\"Return output of \"ls -ld <file>\" in a string.\"\"\"\n" +
-                              "    import warnings\n" +
-                              "    warnings.warn(\"commands.getstatus() is deprecated\", DeprecationWarning, 2)\n" +
-                              "    return getoutput('ls -ld' + mkarg(file))");
+                              """
+                                def getstatus(file):
+                                    ""\"Return output of "ls -ld <file>" in a string.""\"
+                                    import warnings
+                                    warnings.warn("commands.getstatus() is deprecated", DeprecationWarning, 2)
+                                    return getoutput('ls -ld' + mkarg(file))""");
     PyFunction getstatus = ((PyFile) myFixture.getFile()).findTopLevelFunction("getstatus");
     assertEquals("commands.getstatus() is deprecated", getstatus.getDeprecationMessage());
   }
@@ -47,7 +37,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/functionStub.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(file.findTopLevelFunction("getstatus"), ((PsiFileImpl)file).getTreeElement()).ensureCollected();
     assertNotParsed(file);
     
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
@@ -78,33 +68,135 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testAbcDeprecatedAbstracts() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
-        myFixture.checkHighlighting(true, false, false);
-      }
-    );
-  }
-
   public void testFileStub() {
     myFixture.configureByFile("deprecation/deprecatedModule.py");
     PyFile file = (PyFile)myFixture.getFile();
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(((PsiFileImpl)file).getStub(), ((PsiFileImpl)file).getTreeElement()).ensureCollected();
+
     assertNotParsed(file);
 
     assertEquals("the deprecated module is deprecated; use a non-deprecated module instead", file.getDeprecationMessage());
     assertNotParsed(file);
   }
 
-  // PY-28053
-  public void testHashlibMd5() {
+  // PY-38101
+  public void testDeprecatedElementInPyi() {
     myFixture.enableInspections(PyDeprecationInspection.class);
-    myFixture.copyDirectoryToProject("deprecation/hashlibMd5", "");
+    myFixture.copyDirectoryToProject("deprecation/deprecatedElementInPyi", "");
     myFixture.configureByFile("a.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedClass() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedClass", "");
+    myFixture.configureByFile("deprecatedClass.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testFqnDecorator() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/fqnDeprecation.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedMethod() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedMethod.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedAdd() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAdd.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedFromTypingExtension() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedFromTypingExtension.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testDeprecatedWithSeveralArguments() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedWithSeveralArguments.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testStubAndPyFile() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFiles("deprecation/usingDeprecatedMethod.py", "deprecation/deprecatedLibrary.py", "deprecation/deprecatedLibrary.pyi");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testCustomDeprecatedAnnotation() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/customDeprecatedAnnotation.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testAbcDeprecatedAbstracts() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedOverloadedCallee() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedOverloadedCallee.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedPropertyAugAssign() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedPropertyAugAssign.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedCallableInstance() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedCallableInstance.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedFunctionReference() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedFunctionReference.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedAugAssignAdd() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAugAssignAdd.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedInDefiningModule() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedInDefiningModule.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedProtocolMethod() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedProtocolMethod.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80732
+  public void testDeprecatedOverloadWithArgs() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedOverloadWithArgs", "");
+    myFixture.configureByFile("main.py");
     myFixture.checkHighlighting(true, false, false);
   }
 }

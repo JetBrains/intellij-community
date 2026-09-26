@@ -1,0 +1,87 @@
+KotlinUFile:Comments.kt(
+    KotlinUClass:Pizza(
+        UComment(/**
+         * Common Pizza Interface
+         *
+         * @see Margherita
+         */)
+        KotlinUMethod:getSize(
+            UComment(/** The size of [Pizza] */)
+        )
+        KotlinUMethod:getName(
+            UComment(/**
+                 * Human-readable name of type [string_link_alias][java.lang.String]
+                 *
+                 * @throws java.lang.IllegalStateException
+                 * @throws ClassCastException
+                 */)
+        )
+        KotlinUMethod:contains(
+            UComment(/**
+                 * Checks whether pizza contains the specified [Pizza.Ingredient]
+                 *
+                 * @param ingredient the ingredient to check
+                 * @exception kotlin.NotImplementedError
+                 * @sample Margherita.contains
+                 */)
+            KotlinUParameter:ingredient(
+            )
+        )
+        KotlinUClass:Ingredient(
+            UComment(/** Ingredient of [Pizza] */)
+        )
+        KotlinUClass:Builder(
+            UComment(/**
+                 * Abstract [Pizza] builder
+                 *
+                 * @param P well-known hack to solve abstract builder chain problem, see [self]
+                 */)
+            KotlinUField:ingredients(
+            )
+            KotlinUMethod:addIngredient(
+                UComment(/**
+                         * Adds [ingredient] to the [ingredients]
+                         *
+                         * @return value of type [P]
+                         */)
+                KotlinUParameter:ingredient(
+                )
+            )
+            KotlinUMethod:build(
+            )
+            KotlinUMethod:self(
+            )
+            KotlinConstructorUMethod:Builder(
+            )
+        )
+    )
+    KotlinUClass:Margherita(
+        UComment(/**
+         * Pizza Margherita
+         *
+         * @see Pizza
+         * @property size ideal size of [Margherita] is of course 42
+         */)
+        KotlinUField:size(
+        )
+        KotlinUMethod:getName(
+        )
+        KotlinUMethod:contains(
+            UComment(/**
+                 * Checks whether pizza contains the specified [Pizza.Ingredient]
+                 *
+                 * @param ingredient see [Pizza.Ingredient]
+                 */)
+            KotlinUParameter:ingredient(
+            )
+        )
+        KotlinUMethod:getSize(
+        )
+        KotlinConstructorUMethod:Margherita(
+            KotlinUParameter:size(
+            )
+        )
+        KotlinConstructorUMethod:Margherita(
+        )
+    )
+)

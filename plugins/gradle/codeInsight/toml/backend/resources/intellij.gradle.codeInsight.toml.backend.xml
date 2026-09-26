@@ -1,0 +1,24 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.gradle.codeInsight.backend"/>
+    <module name="intellij.gradle.codeInsight.toml"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="TOML" groupPath="Gradle" shortName="UnusedVersionCatalogEntry"
+                     bundle="messages.GradleInspectionBundle" key="inspection.display.name.unused.version.catalog.entry"
+                     groupBundle="messages.GradleInspectionBundle" groupKey="inspection.style"
+                     enabledByDefault="true"
+                     implementationClass="com.intellij.gradle.codeInsight.toml.backend.inspections.UnusedVersionCatalogEntryInspection"/>
+  </extensions>
+</idea-plugin>

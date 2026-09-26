@@ -1,0 +1,48 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.lsp.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.LspUiBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable id="lsp.servers"
+                         bundle="messages.LspUiBundle"
+                         key="lsp.settings.display.name"
+                         instance="com.intellij.lsp.ui.frontend.settings.LspServersConfigurable"
+                         parentId="language"/>
+    <platform.lsp.integrationProvider implementation="com.intellij.lsp.ui.frontend.ConfigurableLspIntegrationProvider"/>
+    <pluginAdvertiserSuppressor implementation="com.intellij.lsp.ui.frontend.LspConfiguredPluginAdvertiserSuppressor"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.frontend.statistics.LspServerUsagesCollector"/>
+
+    <projectService serviceInterface="com.intellij.platform.lsp.api.LspIntegrationSettings"
+                    serviceImplementation="com.intellij.lsp.ui.frontend.settings.LspIntegrationSettingsImpl"/>
+    <!--suppress PluginXmlCapitalization -->
+    <notificationGroup id="Language Servers" displayType="BALLOON" bundle="messages.LspUiBundle" key="lsp.settings.display.name"/>
+  </extensions>
+
+  <actions resource-bundle="messages.LspUiBundle">
+    <action id="ConfigureIntelliJMonster" class="com.intellij.lsp.ui.frontend.internal.ConfigureIntelliJFrankensteinMonsterAction"
+            icon="AllIcons.Nodes.EnterpriseProject"
+            internal="true"/>
+  </actions>
+
+</idea-plugin>
+

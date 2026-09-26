@@ -16,7 +16,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 public interface ModuleProblemDescriptor extends CommonProblemDescriptor {
+  @NotNull
   Module getModule();
 }

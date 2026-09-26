@@ -1,0 +1,7 @@
+com/jetbrains/rd/util/lifetime/Lifetime
+com/jetbrains/rd/util/reactive/Property
+com/jetbrains/rd/util/reactive/Signal
+com/jetbrains/rd/util/reactive/ViewableMap
+it/unimi/dsi/fastutil/ints/Int2ObjectMap
+it/unimi/dsi/fastutil/objects/Object2IntMap
+kotlin/jvm/internal/DefaultConstructorMarker

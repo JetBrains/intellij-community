@@ -16,34 +16,33 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 
 class AttributeReference extends SimpleAttributeReference {
     private final boolean mySoft;
     final ResolveUtil.Matcher myMatcher;
 
-    public AttributeReference(XmlAttribute source, ResolveUtil.Matcher matcher, boolean soft) {
+    AttributeReference(XmlAttribute source, ResolveUtil.Matcher matcher, boolean soft) {
         super(source);
         myMatcher = matcher;
         mySoft = soft;
     }
 
-    @NotNull
-    public Object[] getVariants() {
+    @Override
+    public Object @NotNull [] getVariants() {
         return ResolveUtil.collect(myMatcher.variantMatcher());
     }
 
     @Override
-    @NotNull
-    protected TextRange getTextRange() {
+    protected @NotNull TextRange getTextRange() {
         return TextRange.from(0, myAttribute.getValue().length());
     }
 
+    @Override
     public boolean isSoft() {
         return mySoft;
     }

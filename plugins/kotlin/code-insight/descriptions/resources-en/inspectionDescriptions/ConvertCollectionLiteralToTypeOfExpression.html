@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports collection literals that can be replaced with an explicit <code>Type.of(...)</code> call.
+
+<p>Example:</p>
+<pre><code>
+class MyCustomList&lt;T&gt; {
+    companion object { operator fun &lt;T&gt; of(vararg elements: T): MyCustomList&lt;T&gt; = TODO() }
+}
+
+val nums: MyCustomList&lt;Int&gt; = [1, 2, 3]
+</code></pre>
+<p>After the fix is applied:</p>
+<pre><code>
+val nums = MyCustomList.of(1, 2, 3)
+</code></pre>
+</body>
+</html>

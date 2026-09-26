@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrRecursiveSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -37,7 +26,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrMethodConflictUtil {
+public final class GrMethodConflictUtil {
   private GrMethodConflictUtil() {
   }
 
@@ -75,26 +64,21 @@ public class GrMethodConflictUtil {
     }
     if (!(returnType instanceof GrClosureType)) return;
 
-    final GrSignature signature = ((GrClosureType)returnType).getSignature();
-    signature.accept(new GrRecursiveSignatureVisitor() {
-      @Override
-      public void visitClosureSignature(GrClosureSignature signature) {
-        NextSignature:
-        for (MethodSignature prototypeSignature : prototypeSignatures) {
-          final GrClosureParameter[] params = signature.getParameters();
-          final PsiType[] types = prototypeSignature.getParameterTypes();
-          if (types.length != params.length) continue;
-          for (int i = 0; i < types.length; i++) {
-            if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList())) {
-              continue NextSignature;
-            }
+    final List<GrSignature> signatures = ((GrClosureType)returnType).getSignatures();
+    for (GrSignature signature : signatures) {
+      NextSignature:
+      for (MethodSignature prototypeSignature : prototypeSignatures) {
+        final GrClosureParameter[] params = signature.getParameters();
+        final PsiType[] types = prototypeSignature.getParameterTypes();
+        if (types.length != params.length) continue;
+        for (int i = 0; i < types.length; i++) {
+          if (!TypesUtil.isAssignableByMethodCallConversion(types[i], params[i].getType(), refactoredMethod.getParameterList())) {
+            continue NextSignature;
           }
-          conflicts.putValue(getter, GroovyRefactoringBundle.message("refactored.method.will.cover.closure.property", name, RefactoringUIUtil.getDescription(getter.getContainingClass(), false)));
         }
+        conflicts.putValue(getter, GroovyRefactoringBundle.message("refactored.method.will.cover.closure.property", name, RefactoringUIUtil.getDescription(getter.getContainingClass(), false)));
       }
-    });
-
-
+    }
   }
 
   private static void checkForMethodSignatureOverload(PsiClass clazz,

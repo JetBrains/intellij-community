@@ -1,9 +1,16 @@
 package com.jetbrains.python.psi.impl;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,9 +19,10 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyArgumentListImplTest extends PyClassRefactoringTest {
   private PyElementGeneratorImpl myGenerator;
-  private LanguageLevel myLanguagelevel;
 
   public PyArgumentListImplTest() {
     super("argumentList");
@@ -24,16 +32,14 @@ public class PyArgumentListImplTest extends PyClassRefactoringTest {
   public void setUp() throws Exception {
     super.setUp();
     myGenerator = new PyElementGeneratorImpl(myFixture.getProject());
-    myLanguagelevel = LanguageLevel.PYTHON34;
-    setLanguageLevel(myLanguagelevel);
   }
 
   /**
    * Ensures new keyword argument is set into appropriate place
    */
   public void testAddKeyArgument() {
-    final PyKeywordArgument classKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "metaclass", "ABCMeta");
-    final PyKeywordArgument functionKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "new_param", "spam");
+    final PyKeywordArgument classKeyword = myGenerator.createKeywordArgument(LanguageLevel.getLatest(), "metaclass", "ABCMeta");
+    final PyKeywordArgument functionKeyword = myGenerator.createKeywordArgument(LanguageLevel.getLatest(), "new_param", "spam");
 
 
     doTest(classKeyword, functionKeyword);

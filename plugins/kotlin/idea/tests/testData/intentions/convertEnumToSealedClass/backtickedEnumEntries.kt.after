@@ -1,0 +1,19 @@
+// WITH_STDLIB
+
+sealed class <caret>Token {
+    data object `when` : Token()
+    data object `a-b` : Token()
+    companion object {
+        fun values(): Array<Token> {
+            return arrayOf(`when`, `a-b`)
+        }
+
+        fun valueOf(value: String): Token {
+            return when (value) {
+                "`when`" -> `when`
+                "`a-b`" -> `a-b`
+                else -> throw IllegalArgumentException("No object Token.$value")
+            }
+        }
+    }
+}

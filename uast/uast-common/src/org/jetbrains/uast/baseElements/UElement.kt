@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
+@JvmField
+val EMPTY_ARRAY: Array<UElement> = emptyArray()
 /**
  * The common interface for all Uast elements.
  */
@@ -45,6 +33,7 @@ interface UElement {
    * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
    * this doesn't mean that they are invalid.
    */
+  @Suppress("DEPRECATION")
   val sourcePsi: PsiElement?
     get() = psi
 
@@ -52,6 +41,7 @@ interface UElement {
    * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
    * Will return null if this UElement doesn't have Java representation or it is not implemented.
    */
+  @Suppress("DEPRECATION")
   val javaPsi: PsiElement?
     get() = psi
 
@@ -59,7 +49,7 @@ interface UElement {
    * Returns true if this element is valid, false otherwise.
    */
   val isPsiValid: Boolean
-    get() = psi?.isValid ?: true
+    get() = sourcePsi?.isValid ?: true
 
   /**
    * Returns the list of comments for this element.
@@ -120,18 +110,25 @@ interface UElement {
    * @param visitor the visitor to pass the element to.
    */
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
+
+
+  /**
+   * NOTE: it is called `lang` instead of "language" to avoid clash with [PsiElement.getLanguage] in classes which implements both interfaces,
+   * @return language of the physical [PsiElement] this [UElement] was made from, or `UAST` language if no "physical" language could be found
+   */
+  val lang: Language
+    get() = withContainingElements.mapNotNull { it.sourcePsi }.firstOrNull()?.language
+            // ok. another try
+            ?: withContainingElements.mapNotNull { it.getContainingUFile()?.sourcePsi?.language }.firstOrNull()
+            // UAST in the end, hope it will never happen
+            ?: Language.findLanguageByID("UAST")!!
 }
 
-@Deprecated("No use anymore, all declarations were moved to UElement. To be removed in 2018.2")
-interface JvmDeclarationUElement : UElement
-
-@get:ApiStatus.Experimental
 val UElement?.sourcePsiElement: PsiElement?
   get() = this?.sourcePsi
 
 
-@ApiStatus.Experimental
-@SuppressWarnings("unchecked")
+@Suppress("UNCHECKED_CAST")
 fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
   this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
 

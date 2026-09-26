@@ -1,0 +1,7 @@
+fun foo() {
+    do {
+        for (i in 1..10) {
+            println(i)
+        }
+    } while (<selection><caret>true</selection>)
+}

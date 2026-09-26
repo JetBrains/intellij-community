@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
@@ -25,14 +25,14 @@ public class RepositoryTreeRootNode implements TreeNode, Disposable {
       Disposer.register(this, rootNode);
       myChildren.add(rootNode);
     }
-    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
+    myChildren.sort((o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
   }
 
   public void addRoot(Url url) {
     RepositoryTreeNode rootNode = new RepositoryTreeNode(myModel, this, url, url);
     Disposer.register(this, rootNode);
     myChildren.add(rootNode);
-    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
+    myChildren.sort((o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
     myModel.nodesWereInserted(this, new int[]{myChildren.indexOf(rootNode)});
   }
 
@@ -42,34 +42,42 @@ public class RepositoryTreeRootNode implements TreeNode, Disposable {
     myModel.nodesWereRemoved(this, new int[]{index}, new Object[]{node});
   }
 
+  @Override
   public Enumeration children() {
     return Collections.enumeration(myChildren);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return true;
   }
 
+  @Override
   public TreeNode getChildAt(int childIndex) {
     return myChildren.get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return myChildren.size();
   }
 
+  @Override
   public int getIndex(TreeNode node) {
     return myChildren.indexOf(node);
   }
 
+  @Override
   public TreeNode getParent() {
     return null;
   }
 
+  @Override
   public boolean isLeaf() {
     return false;
   }
 
+  @Override
   public void dispose() {
   }
 }

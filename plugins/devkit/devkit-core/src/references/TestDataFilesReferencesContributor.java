@@ -1,24 +1,36 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.uast.UastPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.UastInjectionHostReferenceProvider;
+import com.intellij.psi.UastReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.TestDataNavigationHandler;
-import org.jetbrains.uast.*;
+import org.jetbrains.idea.devkit.testAssistant.TestFrameworkConstants;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.Collections;
 import java.util.List;
 
-public class TestDataFilesReferencesContributor extends PsiReferenceContributor {
-  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
+final class TestDataFilesReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -26,18 +38,23 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
     UastReferenceRegistrar
       .registerUastReferenceProvider(
         registrar,
-        UastPatterns.stringLiteralExpression().inCall(UastPatterns.callExpression()),
-        new UastLiteralReferenceProvider() {
-          @NotNull
+        UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
+        new UastInjectionHostReferenceProvider() {
+
           @Override
-          public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression expression,
-                                                        @NotNull PsiLanguageInjectionHost host,
-                                                        @NotNull ProcessingContext context) {
+          public boolean acceptsTarget(@NotNull PsiElement target) {
+            return target instanceof PsiFileSystemItem;
+          }
+
+          @Override
+          public @NotNull PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression expression,
+                                                                                 @NotNull PsiLanguageInjectionHost host,
+                                                                                 @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
             PsiParameter targetParameter = UastUtils.getParameterForArgument(call, expression);
-            if (!checkTestDataFileAnnotationPresent(targetParameter)) {
+            if (targetParameter == null || !targetParameter.hasAnnotation(TestFrameworkConstants.TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
               return PsiReference.EMPTY_ARRAY;
             }
 
@@ -50,7 +67,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
             fileReferenceSet.addCustomization(
               FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
               ignore -> {
-                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(directory);
+                VirtualFile file = StandardFileSystems.local().findFileByPath(directory);
                 return file == null ? null : Collections.singleton(host.getManager().findDirectory(file));
               });
 
@@ -60,28 +77,13 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
       );
   }
 
-  private static boolean checkTestDataFileAnnotationPresent(@Nullable PsiParameter targetParameter) {
-    if (targetParameter == null) {
-      return false;
-    }
-    PsiAnnotation[] annotations = targetParameter.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME.equals(annotation.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Nullable
-  private static String getTestDataDirectory(@NotNull ULiteralExpression expression,
-                                             @NotNull UCallExpression methodCallExpression) {
-    Object value = expression.getValue();
-    if (!(value instanceof String)) {
+  private static @Nullable String getTestDataDirectory(@NotNull UExpression expression,
+                                                       @NotNull UCallExpression methodCallExpression) {
+    Object value = expression.evaluate();
+    if (!(value instanceof String relativePath)) {
       return null;
     }
 
-    String relativePath = (String)value;
     PsiMethod testMethod = UElementKt.getAsJavaPsiElement(UastUtils.getParentOfType(methodCallExpression, UMethod.class), PsiMethod.class);
     if (testMethod == null) {
       return null;

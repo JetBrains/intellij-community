@@ -1,38 +1,41 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.i18n.I18nInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.ArrayUtil;
 
 public class ExternalAnnotationsTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
-  private Module myModule;
-  private Project myProject;
- 
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -41,46 +44,111 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations";
     myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    JavaModuleFixtureBuilder<?> builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
+    Module myModule = builder.getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> {
+      DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl + "/src", false);
       final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno")});
     });
-  
-    myProject = myFixture.getProject();
 
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = true;
+    Project myProject = myFixture.getProject();
+
+    JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-      myModule = null;
-      myProject = null;
-  
       super.tearDown();
     }
+  }
+  
+  public void testSafeDelete() {
+    myFixture.enableInspections(new UnusedSymbolLocalInspection());
+    myFixture.configureByFiles("src/safeDelete/Hello.java", "content/anno/safeDelete/annotations.xml");
+    IntentionAction intention = myFixture.getAvailableIntention("Safe delete 'test(List<String>)'");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("content/anno/safeDelete/annotations.xml",
+                                "content/anno/safeDelete/annotations_after.xml",
+                                true);
+  }
+  
+  public void testMakeExplicit() {
+    myFixture.configureByFiles("src/makeExplicit/Hello.java", "content/anno/makeExplicit/annotations.xml");
+    IntentionAction intention = myFixture.getAvailableIntention("Insert '@Contract(pure=true) @NotNull'");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("content/anno/makeExplicit/annotations.xml",
+                                "content/anno/makeExplicit/annotations_after.xml",
+                                true);
+    myFixture.checkResultByFile("src/makeExplicit/Hello.java",
+                                "src/makeExplicit/Hello_after.java",
+                                true);
+  }
+
+  public void testMakeExplicitParam() {
+    myFixture.configureByFiles("src/makeExplicitParam/Hello.java", "content/anno/makeExplicitParam/annotations.xml");
+    IntentionAction intention = myFixture.getAvailableIntention("Insert '@NotNull @Unmodifiable'");
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile("content/anno/makeExplicitParam/annotations.xml",
+                                "content/anno/makeExplicitParam/annotations_after.xml",
+                                true);
+    myFixture.checkResultByFile("src/makeExplicitParam/Hello.java",
+                                "src/makeExplicitParam/Hello_after.java",
+                                true);
+  }
+  
+  public void testDeannotate() {
+    myFixture.configureByFiles("src/deannotate/Hello.java", "content/anno/deannotate/annotations.xml");
+    IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("deannotate.intention.action.several.text"));
+    myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    myFixture.checkResultByFile("content/anno/deannotate/annotations.xml",
+                                "content/anno/deannotate/annotations_after.xml",
+                                true);
+  }
+
+  public void testAddedAnnotationInCodeWhenAlreadyPresent() {
+    myFixture.configureByFile("src/withAnnotation/Foo.java");
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_1_8);
+    PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
+    assertNotNull(method);
+    ActionContext context = myFixture.getActionContext();
+    ModCommandExecutor.executeInteractively(
+      context, "", myFixture.getEditor(),
+      () -> AddAnnotationModCommandAction.createAddNullableFix(method).perform(context));
+    myFixture.checkResultByFile("src/withAnnotation/Foo_after.java");
   }
 
   public void testRenameClassWithExternalAnnotations() {
     myFixture.configureByFiles("src/rename/Foo.java", "content/anno/rename/annotations.xml");
 
     myFixture.renameElementAtCaret("Bar");
-    
+
     myFixture.checkResultByFile("content/anno/rename/annotations.xml",
-                                "content/anno/rename/annotations_after.xml", 
+                                "content/anno/rename/annotations_after.xml",
                                 true);
+  }
+
+  public void testHardcodedStringLiteralWithExternalPackageAnnotation() {
+    myFixture.configureByFiles("src/i18n/Foo.java", "content/anno/i18n/annotations.xml");
+    I18nInspection inspection = new I18nInspection();
+    inspection.setIgnoreForAllButNls(true);
+    myFixture.enableInspections(inspection);
+
+    myFixture.testHighlighting(true, false, false, "src/i18n/Foo.java");
   }
 
   public void testBringToSrc() {
@@ -88,27 +156,42 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
 
     IntentionAction action = myFixture.findSingleIntention("Insert '@Deprecated'");
     assertNotNull(action);
-   
+
     myFixture.launchAction(action);
-    
+
     myFixture.checkResultByFile("src/toSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/toSrc/annotations.xml",
-                                "content/anno/toSrc/annotations_after.xml", 
+                                "content/anno/toSrc/annotations_after.xml",
                                 true);
   }
 
   public void testFromSrcToExternal() {
     myFixture.configureByFiles("src/fromSrc/Foo.java", "content/anno/fromSrc/annotations.xml");
 
-    IntentionAction action = myFixture.findSingleIntention("Annotate externally");
+    IntentionAction action = myFixture.findSingleIntention(JavaBundle.message("intention.text.annotate.externally"));
     assertNotNull(action);
-   
+
     myFixture.launchAction(action);
-    
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
     myFixture.checkResultByFile("src/fromSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/fromSrc/annotations.xml",
-                                "content/anno/fromSrc/annotations_after.xml", 
+                                "content/anno/fromSrc/annotations_after.xml",
                                 true);
 
+  }
+
+  public void testExternalAnnotationsRootRemoved() {
+    myFixture.configureByFiles("src/rootRemoved/Foo.java", "content/anno/rootRemoved/annotations.xml");
+    Project project = myFixture.getProject();
+    PsiClass aClass = JavaPsiFacade.getInstance(project)
+      .findClass("rootRemoved.Foo", GlobalSearchScope.projectScope(project));
+    assertNotNull(aClass);
+    assertTrue(aClass.isDeprecated());
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
+      final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
+      extension.setExternalAnnotationUrls(ArrayUtil.EMPTY_STRING_ARRAY);
+    });
+    assertFalse(aClass.isDeprecated());
   }
 }

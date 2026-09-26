@@ -1,0 +1,22 @@
+{
+  "Default Bicep Configuration": {
+    "scope": "jsonc",
+    "prefix": "Default Bicep Configuration",
+    "body": [
+      "{",
+      "\t// See https://aka.ms/bicep/config for more information on Bicep configuration options",
+      "\t// Press CTRL+SPACE at any location to see Intellisense suggestions",
+      "\t\"analyzers\": {",
+      "\t\t\"core\": {",
+      "\t\t\t\"rules\": {",
+      "\t\t\t\t\"no-unused-params\": {",
+      "\t\t\t\t\t\"level\": ${1|\"warning\",\"off\",\"info\",\"error\"|}",
+      "\t\t\t\t}$0",
+      "\t\t\t}",
+      "\t\t}",
+      "\t}",
+      "}"
+    ],
+    "description": "Scaffolds default configuration for a bicepconfig.json file with linter rule customization"
+  }
+}

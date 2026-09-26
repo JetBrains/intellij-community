@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun foo() {
+    for (i in 0..<2) {
+        println("Hello World")
+    }
+}

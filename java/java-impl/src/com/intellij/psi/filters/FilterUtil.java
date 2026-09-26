@@ -1,42 +1,39 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters;
 
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FilterUtil{
+public final class FilterUtil{
   private FilterUtil() {
   }
 
-  @Nullable
-  public static PsiType getTypeByElement(PsiElement element, PsiElement context){
+  public static @Nullable PsiType getTypeByElement(PsiElement element, PsiElement context){
     //if(!element.isValid()) return null;
     if(element instanceof PsiType){
       return (PsiType)element;
     }
     if(element instanceof PsiClass){
-      return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)element);
     }
     if(element instanceof PsiMethod){
       if (((PsiMethod)element).isConstructor()) {
         final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
         if (containingClass != null) {
-          return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType(containingClass);
+          return JavaPsiFacade.getElementFactory(element.getProject()).createType(containingClass);
         }
       }
       return ((PsiMethod)element).getReturnType();
@@ -54,30 +51,31 @@ public class FilterUtil{
     return null;
   }
 
-  public static PsiType getKeywordItemType(PsiElement context, final String keyword) {
-    if(PsiKeyword.CLASS.equals(keyword)){
+  public static @Nullable PsiType getKeywordItemType(@NotNull PsiElement context, @Nullable String keyword) {
+    if (JavaKeywords.CLASS.equals(keyword)) {
       return PsiType.getJavaLangClass(context.getManager(), context.getResolveScope());
     }
-    else if(PsiKeyword.TRUE.equals(keyword) || PsiKeyword.FALSE.equals(keyword)){
-      return PsiType.BOOLEAN;
+    else if (JavaKeywords.TRUE.equals(keyword) || JavaKeywords.FALSE.equals(keyword)) {
+      return PsiTypes.booleanType();
     }
-    else if(PsiKeyword.THIS.equals(keyword)){
+    else if (JavaKeywords.THIS.equals(keyword)) {
       PsiElement previousElement = getPreviousElement(context, false);
-      if(previousElement != null && ".".equals(previousElement.getText())){
+      if (previousElement != null && ".".equals(previousElement.getText())) {
         previousElement = getPreviousElement(previousElement, false);
         assert previousElement != null;
 
         final String className = previousElement.getText();
         PsiElement walker = context;
-        while(walker != null){
-          if(walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)){
-            if(className.equals(((PsiClass)walker).getName()))
+        while (walker != null) {
+          if (walker instanceof PsiClass && !(walker instanceof PsiAnonymousClass)) {
+            if (className.equals(((PsiClass)walker).getName())) {
               return getTypeByElement(walker, context);
+            }
           }
           walker = walker.getContext();
         }
       }
-      else{
+      else {
         final PsiClass owner = PsiTreeUtil.getContextOfType(context, PsiClass.class, true);
         return getTypeByElement(owner, context);
       }
@@ -85,8 +83,7 @@ public class FilterUtil{
     return null;
   }
 
-  @Nullable
-  public static PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
+  public static @Nullable PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
     PsiElement prev = element;
     if(element != null){
       if(skipReference){

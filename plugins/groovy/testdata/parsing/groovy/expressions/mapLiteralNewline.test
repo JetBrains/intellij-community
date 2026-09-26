@@ -1,0 +1,91 @@
+String key1 = 'key1'
+Map map = [
+  (key1):
+    { /* closure */ },
+  'key2':
+    { /* closure */ },
+  key3:
+    { /* closure */ },
+]
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('String')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('key1')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(single quoted string)(''key1'')
+  PsiElement(new line)('\n')
+  Variable definitions
+    Modifiers
+      <empty list>
+    Type element
+      Reference element
+        PsiElement(identifier)('Map')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('map')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Generalized list
+        PsiElement([)('[')
+        PsiElement(new line)('\n  ')
+        Named argument
+          Argument label
+            Parenthesized expression
+              PsiElement(()('(')
+              Reference expression
+                PsiElement(identifier)('key1')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiElement(new line)('\n    ')
+          Closable block
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            PsiComment(block comment)('/* closure */')
+            PsiWhiteSpace(' ')
+            Parameter list
+              <empty list>
+            PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiElement(new line)('\n  ')
+        Named argument
+          Argument label
+            PsiElement(single quoted string)(''key2'')
+          PsiElement(:)(':')
+          PsiElement(new line)('\n    ')
+          Closable block
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            PsiComment(block comment)('/* closure */')
+            PsiWhiteSpace(' ')
+            Parameter list
+              <empty list>
+            PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiElement(new line)('\n  ')
+        Named argument
+          Argument label
+            PsiElement(identifier)('key3')
+          PsiElement(:)(':')
+          PsiElement(new line)('\n    ')
+          Closable block
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            PsiComment(block comment)('/* closure */')
+            PsiWhiteSpace(' ')
+            Parameter list
+              <empty list>
+            PsiElement(})('}')
+        PsiElement(,)(',')
+        PsiElement(new line)('\n')
+        PsiElement(])(']')

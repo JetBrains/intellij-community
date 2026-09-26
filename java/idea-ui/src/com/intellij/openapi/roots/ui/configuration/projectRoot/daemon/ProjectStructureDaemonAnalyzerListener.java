@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface ProjectStructureDaemonAnalyzerListener extends EventListener {
   void problemsChanged(@NotNull ProjectStructureElement element);
 }

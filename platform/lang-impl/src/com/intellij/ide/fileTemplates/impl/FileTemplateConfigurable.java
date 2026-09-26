@@ -1,85 +1,83 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.function.Supplier;
 
-public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
-  @NonNls private static final String EMPTY_HTML = "<html></html>";
+public final class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
+  private static final @NonNls String EMPTY_HTML = "<html></html>";
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
@@ -89,9 +87,10 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JCheckBox myAdjustBox;
   private JCheckBox myLiveTemplateBox;
   private JPanel myTopPanel;
+  private EditorTextField myFileName;
   private JEditorPane myDescriptionComponent;
   private boolean myModified;
-  private URL myDefaultDescriptionUrl;
+  private Supplier<@NonNls String> defaultDescriptionUrl;
   private final Project myProject;
 
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -107,32 +106,54 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return myTemplate;
   }
 
-  public void setTemplate(FileTemplate template, URL defaultDescription) {
-    myDefaultDescriptionUrl = defaultDescription;
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription) {
+    setTemplate(template, defaultDescription, false);
+  }
+
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription, boolean internalTemplate) {
+    defaultDescriptionUrl = defaultDescription;
     myTemplate = template;
     if (myMainPanel != null) {
       reset();
+      updateTopPanel(internalTemplate);
       myNameField.selectAll();
       myExtensionField.selectAll();
+      myFileName.setPlaceholder(IdeBundle.message(template != null && FileTemplateBase.isChild(template) ? "template.file.name" : "template.file.name.optional"));
     }
   }
 
-  void setShowInternalMessage(String message) {
+  private void updateTopPanel(boolean internalTemplate) {
     myTopPanel.removeAll();
-    if (message == null) {
-      myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
-                     new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                            JBUI.insetsRight(2), 0, 0));
-      myTopPanel.add(myNameField,
-                     new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.HORIZONTAL, JBUI.insets(3, 2), 0, 0));
-      myTopPanel.add(new JLabel(IdeBundle.message("label.extension")),
-                     new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                            JBUI.insets(0, 2), 0, 0));
+    if (!internalTemplate) {
+      boolean child = myTemplate != null && FileTemplateBase.isChild(myTemplate);
+      if (!child) {
+        JLabel label = new JLabel(IdeBundle.message("label.name"));
+        label.setLabelFor(myNameField);
+        myTopPanel.add(label,
+                       new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
+        myTopPanel.add(myNameField,
+                       new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+                                              GridBagConstraints.HORIZONTAL, JBUI.insets(0, 3), 0, 0));
+      }
+      JLabel extLabel = new JLabel(IdeBundle.message("label.extension"));
+      extLabel.setLabelFor(myExtensionField);
+      myTopPanel.add(extLabel,
+                     new GridBagConstraints(child ? 0 : 2, child ? 1 : 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+                                            GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
       myTopPanel.add(myExtensionField,
-                     new GridBagConstraints(3, 0, 1, 1, .3, 0.0, GridBagConstraints.CENTER,
-                                            GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(2), 0, 0));
-      myExtensionField.setColumns(7);
+                     new GridBagConstraints(child ? 1 : 3, child ? 1 : 0, 1, 1, .3, 0.0, GridBagConstraints.WEST,
+                                            child ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
+      if (child || (isEditable() || StringUtil.isNotEmpty(myFileName.getText()))) {
+        JLabel label = new JLabel(IdeBundle.message("label.generate.file.name"));
+        label.setLabelFor(myFileName);
+        myTopPanel.add(label,
+                       new GridBagConstraints(0, child ? 0 : 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
+        myTopPanel.add(myFileName,
+                       new GridBagConstraints(1, child ? 0 : 1, 3, 1, 1.0, 0.0, GridBagConstraints.CENTER,
+                                              GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(3), 0, 0));
+      }
     }
     myMainPanel.revalidate();
     myTopPanel.repaint();
@@ -156,23 +177,29 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   public JComponent createComponent() {
     myMainPanel = new JPanel(new GridBagLayout());
     myNameField = new JTextField();
-    myExtensionField = new JTextField();
+    myExtensionField = new JTextField(7);
     mySplitter = new Splitter(true, myProportion);
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myLiveTemplateBox = new JCheckBox(IdeBundle.message("checkbox.enable.live.templates"));
+
     myTemplateEditor = createEditor(null);
+    myFileName = new EditorTextField(createDocument(createFile("", "file name")), myProject, myVelocityFileType);
+    myFileName.setFont(EditorUtil.getEditorFont());
+    myFileName.setPlaceholder(IdeBundle.message("template.file.name"));
+    myFileName.setShowPlaceholderWhenFocused(true);
 
     myDescriptionComponent = new JEditorPane();
-    myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myDescriptionComponent.setEditorKit(HTMLEditorKitBuilder.simple());
     myDescriptionComponent.setText(EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
     myDescriptionComponent.addHyperlinkListener(new BrowserHyperlinkListener());
 
     myTopPanel = new JPanel(new GridBagLayout());
+    myTopPanel.setBorder(JBUI.Borders.emptyBottom(3));
 
     JPanel descriptionPanel = new JPanel(new GridBagLayout());
-    descriptionPanel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.description"), null),
-                         new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+    descriptionPanel.add(new JLabel(IdeBundle.message("label.description")),
+                         new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                 JBUI.insetsBottom(2), 0, 0));
     descriptionPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionComponent),
                          new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
@@ -180,13 +207,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     myMainPanel.add(myTopPanel,
                     new GridBagConstraints(0, 0, 4, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                           GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                           GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     myMainPanel.add(mySplitter,
                     new GridBagConstraints(0, 2, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                           JBUI.emptyInsets(), 0, 0));
+                                           JBInsets.emptyInsets(), 0, 0));
 
     mySplitter.setSecondComponent(descriptionPanel);
-    setShowInternalMessage(null);
+    updateTopPanel(false);
 
     myNameField.addFocusListener(new FocusAdapter() {
       @Override
@@ -210,7 +237,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   private Editor createEditor(@Nullable PsiFile file) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = createDocument(file, editorFactory);
+    Document doc = createDocument(file);
     Editor editor = editorFactory.createEditor(doc, myProject);
 
     EditorSettings editorSettings = editor.getSettings();
@@ -225,14 +252,14 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         onTextChanged();
       }
     }, ((EditorImpl)editor).getDisposable());
 
     ((EditorEx)editor).setHighlighter(createHighlighter());
-    
-    JPanel topPanel = new JPanel(new BorderLayout());
+
+    JPanel topPanel = new JPanel(new BorderLayout(0, 5));
     JPanel southPanel = new JPanel(new HorizontalLayout(40));
     southPanel.add(myAdjustBox);
     southPanel.add(myLiveTemplateBox);
@@ -243,10 +270,9 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return editor;
   }
 
-  @NotNull
-  private Document createDocument(@Nullable PsiFile file, @NotNull EditorFactory editorFactory) {
-    Document document = file != null ? PsiDocumentManager.getInstance(file.getProject()).getDocument(file) : null;
-    return document != null ? document : editorFactory.createDocument(myTemplate == null ? "" : myTemplate.getText());
+  private @NotNull Document createDocument(@Nullable PsiFile file) {
+    Document document = file != null ? ReadAction.computeBlocking(() -> PsiDocumentManager.getInstance(file.getProject()).getDocument(file)) : null;
+    return document != null ? document : EditorFactory.getInstance().createDocument(myTemplate == null ? "" : myTemplate.getText());
   }
 
   private void onTextChanged() {
@@ -277,14 +303,16 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
     String name = myTemplate == null ? "" : myTemplate.getName();
     String extension = myTemplate == null ? "" : myTemplate.getExtension();
-    if (!Comparing.equal(name, myNameField.getText())) {
+    if (!Objects.equals(name, myNameField.getText())) {
       return true;
     }
-    if (!Comparing.equal(extension, myExtensionField.getText())) {
+    if (!Objects.equals(extension, myExtensionField.getText())) {
       return true;
     }
     if (myTemplate != null) {
-      if (myTemplate.isReformatCode() != myAdjustBox.isSelected() || myTemplate.isLiveTemplateEnabled() != myLiveTemplateBox.isSelected()) {
+      if (myTemplate.isReformatCode() != myAdjustBox.isSelected() ||
+          myTemplate.isLiveTemplateEnabled() != myLiveTemplateBox.isSelected() ||
+          !myTemplate.getFileName().equals(myFileName.getText())) {
         return true;
       }
     }
@@ -298,7 +326,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       String name = myNameField.getText();
       String extension = myExtensionField.getText();
       String filename = name + "." + extension;
-      if (name.length() == 0 || !isValidFilename(filename)) {
+      if (name.isEmpty() || !isValidFilename(filename)) {
         throw new ConfigurationException(IdeBundle.message("error.invalid.template.file.name.or.extension"));
       }
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filename);
@@ -306,6 +334,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
         FileTypeChooser.associateFileType(filename);
       }
       myTemplate.setName(name);
+      myTemplate.setFileName(myFileName.getText());
       myTemplate.setExtension(extension);
       myTemplate.setReformatCode(myAdjustBox.isSelected());
       myTemplate.setLiveTemplateEnabled(myLiveTemplateBox.isSelected());
@@ -327,21 +356,17 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     final String text = myTemplate == null ? "" : myTemplate.getText();
     String name = myTemplate == null ? "" : myTemplate.getName();
     String extension = myTemplate == null ? "" : myTemplate.getExtension();
-    String description = myTemplate == null ? "" : myTemplate.getDescription();
+    @NonNls String description = myTemplate == null ? "" : myTemplate.getDescription();
 
-    if (description.isEmpty() && myDefaultDescriptionUrl != null) {
-      try {
-        description = UrlUtil.loadText(myDefaultDescriptionUrl);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    if (description.isEmpty() && defaultDescriptionUrl != null) {
+      description = defaultDescriptionUrl.get();
     }
 
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
-    myTemplateEditor = createEditor(createFile(text, name));
+    myTemplateEditor = createEditor(myTemplate == null ? null : createFile(text, name));
 
     myNameField.setText(name);
+    myFileName.setText(myTemplate == null ? "" : myTemplate.getFileName());
     myExtensionField.setText(extension);
     myAdjustBox.setSelected(myTemplate != null && myTemplate.isReformatCode());
     myLiveTemplateBox.setSelected(myTemplate != null && myTemplate.isLiveTemplateEnabled());
@@ -353,26 +378,31 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     description = XmlStringUtil.stripHtml(description);
     description = description.replace("\n", "").replace("\r", "");
     description = XmlStringUtil.stripHtml(description);
-    description = description + "<hr> <font face=\"verdana\" size=\"-1\"><a href='http://velocity.apache.org/engine/devel/user-guide.html#Velocity_Template_Language_VTL:_An_Introduction'>\n" +
-                  "Apache Velocity</a> template language is used</font>";
+    description = IdeBundle.message("http.velocity", description);
 
     myDescriptionComponent.setText(description);
     myDescriptionComponent.setCaretPosition(0);
 
-    myNameField.setEditable(myTemplate != null && !myTemplate.isDefault());
-    myExtensionField.setEditable(myTemplate != null && !myTemplate.isDefault());
+    boolean editable = isEditable();
+    myNameField.setEditable(editable);
+    myExtensionField.setEditable(editable);
+    myFileName.setViewer(!editable);
     myModified = false;
   }
 
-  @Nullable
-  private PsiFile createFile(final String text, final String name) {
-    if (myTemplate == null) return null;
+  private boolean isEditable() {
+    return myTemplate != null && !myTemplate.isDefault();
+  }
 
+  private @Nullable PsiFile createFile(final String text, final String name) {
     final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
 
-    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
-    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, FileTemplateManager.getInstance(myProject).getDefaultProperties());
+    final PsiFile file = ReadAction.computeBlocking(() -> PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true));
+    Properties properties = new Properties();
+    properties.putAll(FileTemplateManager.getInstance(myProject).getDefaultProperties());
+    properties.setProperty(FileTemplate.ATTRIBUTE_NAME, IdeBundle.message("name.variable"));
+    file.getViewProvider().putUserData(FileTemplateManager.DEFAULT_TEMPLATE_PROPERTIES, properties);
     return file;
   }
 
@@ -397,56 +427,26 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (fileType == null) {
       fileType = FileTypes.PLAIN_TEXT;
     }
-    
+
     SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
     if (originalHighlighter == null) {
       originalHighlighter = new PlainSyntaxHighlighter();
     }
-    
+
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new TemplateHighlighter(), scheme);
+    LayeredLexerEditorHighlighter highlighter = new LayeredLexerEditorHighlighter(new FileTemplateHighlighter(), scheme);
     highlighter.registerLayer(FileTemplateTokenType.TEXT, new LayerDescriptor(originalHighlighter, ""));
     return highlighter;
   }
 
-  private static class TemplateHighlighter extends SyntaxHighlighterBase {
-    private final Lexer myLexer;
-
-    public TemplateHighlighter() {
-      myLexer = createDefaultLexer();
-    }
-
-    @NotNull
-    @Override
-    public Lexer getHighlightingLexer() {
-      return myLexer;
-    }
-
-    @Override
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      if (tokenType == FileTemplateTokenType.MACRO || tokenType == FileTemplateTokenType.DIRECTIVE) {
-        return pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
-      }
-
-      return EMPTY;
-    }
-  }
-
-  @NotNull
   @VisibleForTesting
-  public static Lexer createDefaultLexer() {
+  public static @NotNull Lexer createDefaultLexer() {
     return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
-
-  public void focusToNameField() {
+  void focusToNameField() {
+    JComponent field = FileTemplateBase.isChild(myTemplate) ? myFileName : myNameField;
     myNameField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
-  }
-
-  public void focusToExtensionField() {
-    myExtensionField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true));
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
   }
 }

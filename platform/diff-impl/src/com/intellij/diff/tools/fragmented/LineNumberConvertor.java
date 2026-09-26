@@ -1,36 +1,28 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
+import com.intellij.diff.util.Range;
 import com.intellij.util.SmartList;
-import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.IntUnaryOperator;
 
-public class LineNumberConvertor {
+public final class LineNumberConvertor {
   // Master -> Slave
-  @NotNull private final TreeMap<Integer, Data> myFragments;
+  private final @NotNull TreeMap<Integer, Data> myFragments;
 
   // Slave -> Master
-  @NotNull private final TreeMap<Integer, Data> myInvertedFragments;
+  private final @NotNull TreeMap<Integer, Data> myInvertedFragments;
 
-  @NotNull private final Corrector myCorrector = new Corrector();
+  private final @NotNull Corrector myCorrector = new Corrector();
 
   private LineNumberConvertor(@NotNull TreeMap<Integer, Data> fragments,
                               @NotNull TreeMap<Integer, Data> invertedFragments) {
@@ -58,13 +50,23 @@ public class LineNumberConvertor {
   // Impl
   //
 
-  @NotNull
-  public TIntFunction createConvertor() {
+  public @NotNull IntUnaryOperator createConvertor() {
     return this::convert;
   }
 
   public int convert(int value, boolean fromMaster, boolean approximate) {
     return myCorrector.convertCorrected(value, fromMaster, approximate);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<Range> getRanges() {
+    List<Range> result = new ArrayList<>(myFragments.size());
+    for (Map.Entry<Integer, Data> entry : myFragments.entrySet()) {
+      int start = entry.getKey();
+      Data data = entry.getValue();
+      result.add(new Range(start, start + data.length, data.otherStart, data.otherStart + data.otherLength));
+    }
+    return Collections.unmodifiableList(result);
   }
 
   /**
@@ -109,8 +111,8 @@ public class LineNumberConvertor {
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Data> myFragments = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
 
     public void put(int masterStart, int slaveStart, int length) {
       put(masterStart, slaveStart, length, length);
@@ -121,10 +123,18 @@ public class LineNumberConvertor {
       myInvertedFragments.put(slaveStart, new Data(slaveLength, masterStart, masterLength));
     }
 
-    @NotNull
-    public LineNumberConvertor build() {
+    public @NotNull LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments, myInvertedFragments);
     }
+  }
+
+  public static @NotNull LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
+    LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
+    for (kotlin.Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
+      Range range = pair.getFirst();
+      builder.put(range.start1, range.start2, range.end1 - range.start1, range.end2 - range.start2);
+    }
+    return builder.build();
   }
 
   private static class Data {
@@ -132,7 +142,7 @@ public class LineNumberConvertor {
     public final int otherStart;
     public final int otherLength;
 
-    public Data(int length, int otherStart, int otherLength) {
+    Data(int length, int otherStart, int otherLength) {
       this.length = length;
       this.otherStart = otherStart;
       this.otherLength = otherLength;
@@ -186,7 +196,6 @@ public class LineNumberConvertor {
   private class Corrector {
     private final List<CorrectedChange> myChanges = new SmartList<>();
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleMasterChange(int startLine, int endLine, int shift, boolean synchronous) {
       int oldLength = endLine - startLine;
       int newLength = oldLength + shift;
@@ -291,7 +300,7 @@ public class LineNumberConvertor {
       }
     }
 
-    private int append(int value, int shift) {
+    private static int append(int value, int shift) {
       return value == -1 ? -1 : value + shift;
     }
   }
@@ -304,7 +313,7 @@ public class LineNumberConvertor {
     public final int oldLength;
     public final int newLength;
 
-    public CorrectedChange(int startMaster, int oldLength, int newLength) {
+    CorrectedChange(int startMaster, int oldLength, int newLength) {
       this.synchronous = false;
       this.startSlave = -1;
 
@@ -313,7 +322,7 @@ public class LineNumberConvertor {
       this.newLength = newLength;
     }
 
-    public CorrectedChange(int startMaster, int startSlave, int oldLength, int newLength) {
+    CorrectedChange(int startMaster, int startSlave, int oldLength, int newLength) {
       this.synchronous = true;
 
       this.startMaster = startMaster;

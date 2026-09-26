@@ -15,23 +15,45 @@
  */
 package com.intellij.java.codeInsight.daemon.lambda;
 
-import com.intellij.psi.*;
+import com.intellij.JavaTestUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedCallReturnType() {
-    myFixture.configureByText("a.java", "import java.util.List;\n" +
-                                        "abstract class Test {\n" +
-                                        "    abstract <R, K> R foo(K k1, K k2);\n" +
-                                        "    {\n" +
-                                        "        String str = \"\";\n" +
-                                        "        List<String> l = f<caret>oo(foo(str, str), str);\n" +
-                                        "    }\n" +
-                                        "}\n");
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      abstract class Test {
+          abstract <R, K> R foo(K k1, K k2);
+          {
+              String str = "";
+              List<String> l = f<caret>oo(foo(str, str), str);
+          }
+      }
+      """);
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     Assert.assertTrue(elementAtCaret instanceof PsiIdentifier);
 
@@ -43,19 +65,20 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCashedTypes() {
-    myFixture.configureByText("a.java", "import java.util.*;\n" +
-                                        "abstract class Main {\n" +
-                                        "    void test(List<Integer> li) {\n" +
-                                        "       foo(li, s -> <caret>s.substr(0), Collections.emptyList());\n" +
-                                        "    }\n" +
-                                        "    abstract <T, U> Collection<U> foo(Collection<T> coll, Fun<Stream<T>, U> f, List<U> it);" +
-                                        "    interface Stream<T> {\n" +
-                                        "        T substr(long startingOffset);\n" +
-                                        "    }\n" +
-                                        "    interface Fun<T, R> {\n" +
-                                        "        R _(T t);\n" +
-                                        "    }\n" +
-                                        "}\n");
+    myFixture.configureByText("a.java", """
+      import java.util.*;
+      abstract class Main {
+          void test(List<Integer> li) {
+             foo(li, s -> <caret>s.substr(0), Collections.emptyList());
+          }
+          abstract <T, U> Collection<U> foo(Collection<T> coll, Fun<Stream<T>, U> f, List<U> it);    interface Stream<T> {
+              T substr(long startingOffset);
+          }
+          interface Fun<T, R> {
+              R _(T t);
+          }
+      }
+      """);
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     Assert.assertTrue(elementAtCaret instanceof PsiIdentifier);
 
@@ -80,10 +103,60 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("R.java", "public interface R {@D void run();}");
     final PsiClass psiClass = file.getClasses()[0];
     final PsiMethod method = psiClass.getMethods()[0];
-    //noinspection UsePrimitiveTypes
-    assertFalse(PsiType.VOID == method.getReturnType());
+    assertNotSame(PsiTypes.voidType(), method.getReturnType());
     myFixture.configureByText("a.java", "class A {{R r = () -> {};}} ");
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  public void testNestedDiamondsInsideAssignmentInMethodsCall() throws IOException {
+    String path = Diamond8HighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java";
+    
+    PsiFile file = myFixture.configureByFile(path);
+    String text = file.getText();
+
+    PsiNewExpression newB =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("new B<>"), PsiNewExpression.class, false);
+
+    PsiNewExpression newC =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("new C<>"), PsiNewExpression.class, false);
+
+    PsiMethodCallExpression get =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("get()"), PsiMethodCallExpression.class, false);
+
+    PsiLambdaExpression lambda =
+      PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("->"), PsiLambdaExpression.class, false);
+
+    assertEquals("B<Double>", newB.getType().getPresentableText());
+    String getType = get.getType().getPresentableText();
+    if (!"Double".equals(getType)) {
+      PsiExpression supplier = get.getMethodExpression().getQualifierExpression();
+      PsiType supplierType = supplier.getType();
+      assertEquals(get.getText() +
+                   " with qualifier resolving to " + ((PsiReferenceExpression)supplier).resolve() +
+                   " of type " + (supplierType == null ? null : supplierType.getCanonicalText()),
+                   "Double", getType);
+    }
+    assertEquals("C<Double>", newC.getType().getPresentableText());
+    assertEquals("Function<Supplier<Double>, Double>", lambda.getFunctionalInterfaceType().getPresentableText());
+
+    checkResolveResultDoesNotDependOnResolveOrder(file);
+  }
+
+  private void checkResolveResultDoesNotDependOnResolveOrder(PsiFile file) {
+    Map<PsiJavaCodeReferenceElement, String> gold = new HashMap<>();
+    for (PsiJavaCodeReferenceElement ref : SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class)) {
+      gold.put(ref, ref.advancedResolve(true).toString());
+    }
+
+    for (PsiJavaCodeReferenceElement ref : gold.keySet()) {
+      getPsiManager().dropPsiCaches();
+      assertEquals("Wrong resolve result for " + ref.getText(), gold.get(ref), ref.advancedResolve(true).toString());
+    }
   }
 
   @NotNull

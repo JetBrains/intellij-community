@@ -1,0 +1,37 @@
+# `CompilationContextImpl` asserts this file exists under the community root before it will treat a directory as
+# IntelliJ Community sources, so a dev assembly that materializes its own project tree has to declare it.
+exports_files(
+    ["idea.properties"],
+    visibility = ["//visibility:public"],
+)
+
+# The native files a distribution's `bin` directory is built from, per OS - see
+# `OsSpecificDistributionBuilder.copyNativeBinFiles`, which copies them for a production and a dev distribution
+# alike. Declared for the same reason as `idea.properties` above: a dev assembly materializes its project tree
+# from what it declares, so an undeclared binary is not on disk at all and the assembly fails on it.
+#
+# Grouped per OS rather than in one filegroup because a distribution is built for one: a macOS dist has no
+# business declaring the Windows binaries, and `intellij_dev_platform_fragments_ultimate` picks the group its
+# `target_platform` implies.
+
+filegroup(
+    name = "bin_mac",
+    srcs = glob(["mac/*"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "bin_linux",
+    srcs = glob(["linux/*/*"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "bin_win",
+    # both what `copyNativeBinFiles` copies for Windows: the architecture subtrees, and the top-level files
+    srcs = glob([
+        "win/*",
+        "win/*/*",
+    ]),
+    visibility = ["//visibility:public"],
+)

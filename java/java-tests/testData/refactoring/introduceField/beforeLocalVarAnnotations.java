@@ -1,5 +1,9 @@
 class Test {
     void foo() {
-        @Deprecated String f<caret>o = "";
+        //c1
+        @Deprecated String f<caret>o =
+           //c2                     
+          ""//c3
+        ;
     }
 }

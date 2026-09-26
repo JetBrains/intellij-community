@@ -22,10 +22,10 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class GuessExprTypeTest extends LightCodeInsightTestCase {
+public class GuessExprTypeTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/guess/exprType";
 
   @NotNull
@@ -47,7 +47,7 @@ public class GuessExprTypeTest extends LightCodeInsightTestCase {
     assertEquals(CommonClassNames.JAVA_LANG_STRING, assertOneElement(result).getCanonicalText());
   }
 
-  private static PsiType[] guessExprTypes() {
+  private PsiType[] guessExprTypes() {
     int offset1 = getEditor().getSelectionModel().getSelectionStart();
     int offset2 = getEditor().getSelectionModel().getSelectionEnd();
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(getFile(), offset1, offset2);

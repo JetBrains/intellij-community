@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- XML "Show History for Selection" support. Kept out of intellij.xml.impl so XML loads without the VCS plugin. -->
+    <vcsSelectionProvider implementation="com.intellij.xml.vcs.XmlVcsSelectionProvider"/>
+  </extensions>
+</idea-plugin>

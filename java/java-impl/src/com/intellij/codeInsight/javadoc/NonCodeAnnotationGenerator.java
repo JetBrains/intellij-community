@@ -1,101 +1,161 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
-import com.intellij.lang.documentation.DocumentationMarkup;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.InferredAnnotationsManager;
+import com.intellij.codeInsight.hints.AnnotationInlayProviderKt;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function2;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-public class NonCodeAnnotationGenerator {
-  private final PsiModifierListOwner myOwner;
-  private final StringBuilder myOutput;
-
-  NonCodeAnnotationGenerator(@NotNull PsiModifierListOwner owner, StringBuilder output) {
-    myOwner = owner;
-    myOutput = output;
+public final class NonCodeAnnotationGenerator {
+  private static <A, B> Function2<A, B, Unit> toFunction2(BiConsumer<A, B> biConsumer) {
+    return new Function2<>() {
+      @Override
+      public Unit invoke(A a, B b) {
+        biConsumer.accept(a, b);
+        return Unit.INSTANCE;
+      }
+    };
   }
 
-  void explainAnnotations() {
-    MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = getSignatureNonCodeAnnotations(myOwner);
-    if (generators.isEmpty()) return;
-
-    myOutput.append(DocumentationMarkup.SECTION_HEADER_START);
-    myOutput.append(getNonCodeHeader(generators.values())).append(":");
-    myOutput.append(DocumentationMarkup.SECTION_SEPARATOR);
-
-    generators.keySet().forEach(owner -> {
-      myOutput.append("<p>");
-      if (generators.size() > 1) {
-        myOutput.append(getKind(owner)).append(" <code>").append(((PsiNamedElement)owner).getName()).append("</code>: ");
-      }
-      List<AnnotationDocGenerator> annotations = ContainerUtil.newArrayList(generators.get(owner));
-      for (int i = 0; i < annotations.size(); i++) {
-        if (i > 0) myOutput.append(" ");
-        annotations.get(i).generateAnnotation(myOutput, AnnotationFormat.JavaDocComplete);
-      }
-    });
-    myOutput.append(DocumentationMarkup.SECTION_END);
-  }
-
-  @NotNull
-  public static MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
-    MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = MultiMap.createLinked();
+  public static @NotNull MultiMap<PsiElement, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
+    MultiMap<PsiElement, AnnotationDocGenerator> generators = MultiMap.createLinked();
+    final Project project = owner.getProject();
+    ExternalAnnotationsManager externalManager = ExternalAnnotationsManager.getInstance(project);
+    InferredAnnotationsManager inferredManager = InferredAnnotationsManager.getInstance(project);
     for (PsiModifierListOwner each : getSignatureOwners(owner)) {
-      List<AnnotationDocGenerator> nonCode =
-        ContainerUtil.filter(AnnotationDocGenerator.getAnnotationsToShow(each), a -> a.isExternal() || a.isInferred());
+      Set<String> shownAnnotations = new HashSet<>();
+      List<AnnotationDocGenerator> nonCode = getGenerators(each, each, externalManager, inferredManager, shownAnnotations);
       if (!nonCode.isEmpty()) {
         generators.putValues(each, nonCode);
       }
+      if (each instanceof PsiTypeParameterListOwner typeParameterListOwner) {
+        PsiTypeParameter[] originalParameters =
+          ((PsiTypeParameterListOwner)typeParameterListOwner.getOriginalElement()).getTypeParameters();
+        PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
+        if (originalParameters.length == parameters.length) {
+          for (int i = 0; i < parameters.length; i++) {
+            AnnotationInlayProviderKt.processTypeParameterAnnotationRecursively(
+              parameters[i],
+              originalParameters[i],
+              toFunction2((element, type) -> {
+                List<AnnotationDocGenerator> typeAnnotationGenerators = getGenerators(element, type.getAnnotations(), new HashSet<>());
+                  if (!typeAnnotationGenerators.isEmpty()) {
+                    generators.putValues(element, typeAnnotationGenerators);
+                  }
+              }),
+              toFunction2((originalTypeElement, typeElement) -> {
+                  List<AnnotationDocGenerator> typeAnnotationGenerators =
+                    getGenerators(typeElement, originalTypeElement.getType().getAnnotations(), new HashSet<>());
+                  if (!typeAnnotationGenerators.isEmpty()) {
+                    generators.putValues(typeElement, typeAnnotationGenerators);
+                  }
+              }),
+              toFunction2((originalParameter, parameter) -> {
+                  List<AnnotationDocGenerator> typeAnnotationGenerators =
+                    getGenerators(originalParameter, parameter, externalManager, inferredManager, new HashSet<>());
+                  if (!typeAnnotationGenerators.isEmpty()) {
+                    generators.putValues(parameter, typeAnnotationGenerators);
+                  }
+              }));
+          }
+        }
+      }
+
+      PsiElement element = each.getOriginalElement();
+      PsiTypeElement typeElement = switch (element) {
+        case PsiMethod method -> method.getReturnTypeElement();
+        case PsiVariable variable -> variable.getTypeElement();
+        default -> null;
+      };
+      if (typeElement != null) {
+        typeElement.accept(new JavaRecursiveElementVisitor() {
+          @Override
+          public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+            List<AnnotationDocGenerator> typeAnnotationGenerators =
+              getGenerators(typeElement, typeElement.getType().getAnnotations(), new HashSet<>());
+            if (!typeAnnotationGenerators.isEmpty()) {
+              generators.putValues(typeElement, typeAnnotationGenerators);
+            }
+            super.visitTypeElement(typeElement);
+          }
+        });
+      }
     }
+
     return generators;
   }
 
-  @NotNull
-  private static List<PsiModifierListOwner> getSignatureOwners(PsiModifierListOwner owner) {
+  private static @NotNull List<AnnotationDocGenerator> getGenerators(@NotNull PsiElement context,
+                                                                     @NotNull PsiAnnotation @NotNull [] annotations,
+                                                                     @NotNull Set<String> shownAnnotations) {
+
+    List<AnnotationDocGenerator> nonCode = StreamEx.of(annotations)
+      .filter(anno -> ExternalAnnotationsManager.isExternal(anno) || InferredAnnotationsManager.isInferredAnnotation(anno))
+      .map(annotation -> AnnotationDocGenerator.forAnnotation(context, shownAnnotations, annotation))
+      .nonNull()
+      .toList();
+    return nonCode;
+  }
+
+  private static @NotNull List<AnnotationDocGenerator> getGenerators(@NotNull PsiModifierListOwner each,
+                                                                     @NotNull PsiElement context,
+                                                                     @NotNull ExternalAnnotationsManager externalManager,
+                                                                     @NotNull InferredAnnotationsManager inferredManager,
+                                                                     @NotNull Set<String> shownAnnotations) {
+    List<AnnotationDocGenerator> nonCode = StreamEx.of(externalManager.findExternalAnnotations(each),
+                                                       inferredManager.findInferredAnnotations(each))
+      .flatArray(Function.identity())
+      .map(annotation -> AnnotationDocGenerator.forAnnotation(context, shownAnnotations, annotation))
+      .nonNull()
+      .toList();
+    return nonCode;
+  }
+
+  private static @NotNull List<PsiModifierListOwner> getSignatureOwners(PsiModifierListOwner owner) {
     List<PsiModifierListOwner> allOwners = new ArrayList<>();
     allOwners.add(owner);
-    if (owner instanceof PsiMethod) {
-      Collections.addAll(allOwners, ((PsiMethod)owner).getParameterList().getParameters());
+    if (owner instanceof PsiMethod method) {
+      Collections.addAll(allOwners, method.getParameterList().getParameters());
     }
     return allOwners;
   }
 
-  @NotNull
-  public static String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
-    boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
-    boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
+  public static @NotNull @Nls String getNonCodeHeaderAvailable(Collection<AnnotationDocGenerator> values) {
+    boolean hasExternal = ContainerUtil.exists(values, AnnotationDocGenerator::isExternal);
+    boolean hasInferred = ContainerUtil.exists(values, AnnotationDocGenerator::isInferred);
 
-    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations";
-  }
-
-  private static String getKind(PsiModifierListOwner owner) {
-    if (owner instanceof PsiParameter) return "Parameter";
-    if (owner instanceof PsiMethod) {
-      return ((PsiMethod)owner).isConstructor() ? "Constructor" : "Method";
+    if (hasExternal && hasInferred) {
+      return JavaBundle.message("non.code.annotations.explanation.external.and.inferred.available");
     }
-    return owner.getClass().getName(); // unexpected
+    if (hasExternal) {
+      return JavaBundle.message("non.code.annotations.explanation.external.available");
+    }
+    return JavaBundle.message("non.code.annotations.explanation.inferred.available");
   }
 }

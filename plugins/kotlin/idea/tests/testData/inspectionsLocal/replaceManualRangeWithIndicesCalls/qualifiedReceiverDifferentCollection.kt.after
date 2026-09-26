@@ -1,0 +1,12 @@
+// WITH_STDLIB
+// FIX: Replace with indices
+// NO_FIX: Replace index loop with collection loop
+private class RC(val a: List<Int>, val b: List<Int>)
+
+fun test() {
+    val rc = RC(a = listOf(1), b = listOf(2))
+
+    for (i in rc.a.indices) {
+        println(rc.a[i] != rc.b[i])
+    }
+}

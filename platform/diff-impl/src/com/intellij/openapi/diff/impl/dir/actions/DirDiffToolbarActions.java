@@ -1,28 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffModelHolder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,11 +26,12 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
-  private final AnAction[] myActions;  
+  private final AnAction[] myActions;
 
-  public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
-    super("Directory Diff Actions", false);
+  public DirDiffToolbarActions(DirDiffTableModel model) {
+    super(DiffBundle.message("directory.diff.actions"), false);
     final List<AnAction> actions = new ArrayList<>(Arrays.asList(
       new RefreshDirDiffAction(model),
       Separator.getInstance(),
@@ -48,32 +45,50 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
       new ChangeCompareModeGroup(model),
       Separator.getInstance()));
 
-    if (model.isOperationsEnabled()) {
+    if (model.getSettings().enableSyncActions && model.isOperationsEnabled()) {
       actions.add(new SynchronizeDiff(model, true));
       actions.add(new SynchronizeDiff(model, false));
     }
 
-    for (AnAction action : model.getSettings().getExtraActions()) {
-      actions.add(action);
-    }
+    actions.addAll(model.getSettings().getExtraActions());
 
-    for (AnAction action : actions) {
-      if (action instanceof ShortcutProvider) {
-        final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
-        if (shortcut != null) {
-          action.registerCustomShortcutSet(shortcut, panel);
-        }
-      }
-      if (action instanceof DirDiffModelHolder) {
-        ((DirDiffModelHolder)action).setModel(model);
-      }
-    }
+    actions.add(Separator.getInstance());
+    actions.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR));
     myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
+  public void setUp(DirDiffTableModel model, JComponent panel) {
+    for (AnAction action : myActions) {
+      setUp(model, panel, action);
+    }
+  }
+
+  private static void setUp(DirDiffTableModel model, JComponent panel, AnAction action) {
+    if (action instanceof ShortcutProvider) {
+      final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
+      if (shortcut != null) {
+        action.registerCustomShortcutSet(shortcut, panel);
+      }
+    }
+    if (action instanceof DirDiffModelHolder) {
+      ((DirDiffModelHolder)action).setModel(model);
+    }
+    if (action instanceof ActionGroup actionGroup) {
+      AnAction[] actionChildren = actionGroup instanceof DefaultActionGroup defaultActionGroup
+                                  ? defaultActionGroup.getChildren(ActionManager.getInstance())
+                                  : actionGroup.getChildren(null);
+      for (AnAction child : actionChildren) {
+        setUp(model, panel, child);
+      }
+    }
+  }
+
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    return myActions;
+  }
+
+  public AnAction @NotNull [] getActions() {
     return myActions;
   }
 }

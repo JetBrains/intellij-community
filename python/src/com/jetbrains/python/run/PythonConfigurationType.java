@@ -1,23 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
+import com.intellij.execution.RunConfigurationConverter;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import icons.PythonIcons;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
+import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
-public class PythonConfigurationType implements ConfigurationType {
+
+public final class PythonConfigurationType implements ConfigurationType, RunConfigurationConverter {
 
   private final PythonConfigurationFactory myFactory = new PythonConfigurationFactory(this);
 
@@ -30,35 +30,62 @@ public class PythonConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    @Override
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonRunConfiguration(project, this);
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return "Python";
     }
   }
 
-  public String getDisplayName() {
-    return "Python";
+  @Override
+  public @NotNull String getDisplayName() {
+    return PyBundle.message("python.run.python");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
-    return "Python run configuration";
+    return PyBundle.message("python.run.configuration");
   }
 
+  @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return  PythonParserIcons.PythonFile;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.PythonConfigurationType";
   }
 
   public PythonConfigurationFactory getFactory() {
     return myFactory;
   }
 
-  @NotNull
-  @NonNls
-  public String getId() {
+  @Override
+  public @NotNull @NonNls String getId() {
     return "PythonConfigurationType";
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  /**
+   * Migrates configurations of the removed standalone {@code uv run} type into this one.
+   */
+  @ApiStatus.Internal
+  @Override
+  public boolean convertRunConfigurationOnDemand(@NotNull Element element) {
+    return LegacyUvRunConfigurationConverterKt.convertLegacyUvRunConfiguration(element);
   }
 }

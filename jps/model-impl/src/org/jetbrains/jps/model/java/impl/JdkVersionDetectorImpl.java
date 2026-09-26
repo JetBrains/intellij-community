@@ -1,88 +1,123 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-/**
- * @author nik
- */
+@ApiStatus.Internal
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.SdkVersionUtil");
-  private static final ActionRunner ACTION_RUNNER = r -> SharedThreadPool.getInstance().executeOnPooledThread(r);
+  private static final Logger LOG = Logger.getInstance(JdkVersionDetectorImpl.class);
 
-  @Nullable
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
-    return detectJdkVersionInfo(homePath, ACTION_RUNNER);
+  public @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
+    return detectJdkVersionInfo(homePath, SharedThreadPool.getInstance());
   }
 
-  @Nullable
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner runner) {
+  public @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService runner) {
     // Java 1.7+
-    File releaseFile = new File(homePath, "release");
-    if (releaseFile.isFile()) {
-      Properties p = new Properties();
-      try (FileInputStream stream = new FileInputStream(releaseFile)) {
-        p.load(stream);
-        String versionString = p.getProperty("JAVA_FULL_VERSION", p.getProperty("JAVA_VERSION"));
-        if (versionString != null) {
-          JavaVersion version = JavaVersion.parse(versionString);
-          String arch = StringUtil.unquoteString(p.getProperty("OS_ARCH", ""));
-          boolean x64 = "x86_64".equals(arch) || "amd64".equals(arch);
-          return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
-        }
-      }
-      catch (IOException | IllegalArgumentException e) {
-        LOG.info(releaseFile.getPath(), e);
-      }
-    }
+    JdkVersionInfo version = detectFromRelease(homePath);
+    if (version != null) return version;
 
     // Java 1.2 - 1.8
-    File rtFile = new File(homePath, "jre/lib/rt.jar");
-    if (rtFile.isFile()) {
-      try (JarFile rtJar = new JarFile(rtFile, false)) {
+    version = detectFromJar(homePath);
+    if (version != null) return version;
+
+    // last resort
+    return detectFromOutput(homePath, runner);
+  }
+
+  private static @Nullable JdkVersionInfo detectFromRelease(String homePath) {
+    final Path releaseFile;
+    try {
+      releaseFile = Path.of(homePath, "release");
+    }
+    catch (InvalidPathException ignored) {
+      return null;
+    }
+
+    if (!Files.isRegularFile(releaseFile)) {
+      return null;
+    }
+
+    Properties p = new Properties();
+    try (InputStream stream = Files.newInputStream(releaseFile)) {
+      p.load(stream);
+      String versionString = p.getProperty("JAVA_FULL_VERSION", p.getProperty("JAVA_VERSION"));
+      if (versionString != null) {
+        JavaVersion version = JavaVersion.parse(versionString);
+
+        Variant variant = detectVariant(p);
+        if (variant == null && version.feature < 9) {
+          // pre-modular release files rarely contain enough information
+          JdkVersionInfo fromJar = detectFromJar(homePath);
+          if (fromJar != null) variant = fromJar.variant;
+        }
+
+        CpuArch arch = CpuArch.fromString(unquoteProperty(p, "OS_ARCH"));
+
+        return new JdkVersionInfo(version, variant, arch, unquoteProperty(p, "GRAALVM_VERSION"));
+      }
+    }
+    catch (IOException | IllegalArgumentException e) {
+      LOG.info(releaseFile.toString(), e);
+    }
+
+    return null;
+  }
+
+  private static @Nullable JdkVersionInfo detectFromJar(String homePath) {
+    Path rtFile = Path.of(homePath, "jre/lib/rt.jar");
+    if (Files.isRegularFile(rtFile)) {
+      try (JarFile rtJar = new JarFile(rtFile.toFile(), false)) {
         Manifest manifest = rtJar.getManifest();
         if (manifest != null) {
-          String versionString = manifest.getMainAttributes().getValue("Implementation-Version");
+          String versionString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
           if (versionString != null) {
             JavaVersion version = JavaVersion.parse(versionString);
-            boolean x64 = SystemInfo.isMac || new File(rtFile.getParent(), "amd64").isDirectory();
-            return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
+            boolean x64 = SystemInfoRt.isMac || Files.isDirectory(rtFile.resolveSibling("amd64"));
+            String vendorString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
+            Variant variant = vendorString != null ? detectVendor(vendorString) : null;
+            return new JdkVersionInfo(version, variant, x64 ? CpuArch.X86_64 : CpuArch.UNKNOWN, null);
           }
         }
       }
       catch (IOException | IllegalArgumentException e) {
-        LOG.info(rtFile.getPath(), e);
+        LOG.info(rtFile.toString(), e);
       }
     }
 
-    // last resort
-    File javaExe = new File(homePath, "bin/" + (SystemInfo.isWindows ? "java.exe" : "java"));
-    if (javaExe.canExecute()) {
+    return null;
+  }
+
+  private static @Nullable JdkVersionInfo detectFromOutput(String homePath, ExecutorService runner) {
+    Path javaExe = Path.of(homePath, "bin/" + (SystemInfoRt.isWindows ? "java.exe" : "java"));
+    if (Files.isExecutable(javaExe)) {
       try {
-        Process process = new ProcessBuilder(javaExe.getPath(), "-version").redirectErrorStream(true).start();
+        Process process = new ProcessBuilder(javaExe.toString(), "-version").redirectErrorStream(true).start();
         VersionOutputReader reader = new VersionOutputReader(process.getInputStream(), runner);
         try {
           reader.waitFor();
@@ -92,44 +127,104 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           process.destroy();
         }
 
-        if (!reader.myLines.isEmpty()) {
-          JavaVersion base = JavaVersion.parse(reader.myLines.get(0));
-          JavaVersion rt = JavaVersion.tryParse(reader.myLines.size() > 2 ? reader.myLines.get(1) : null);
+        List<String> lines = reader.myLines;
+        while (!lines.isEmpty() && lines.get(0).startsWith("Picked up ")) {
+          lines.remove(0);
+        }
+        if (!lines.isEmpty()) {
+          JavaVersion base = JavaVersion.parse(lines.get(0));
+          JavaVersion rt = JavaVersion.tryParse(lines.size() > 2 ? lines.get(1) : null);
           JavaVersion version = rt != null && rt.feature == base.feature && rt.minor == base.minor ? rt : base;
-          boolean x64 = reader.myLines.stream().anyMatch(s -> s.contains("64-Bit") || s.contains("x86_64") || s.contains("amd64"));
-          return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
+          return new JdkVersionInfo(version, null, CpuArch.UNKNOWN, null);
         }
       }
       catch (IOException | IllegalArgumentException e) {
-        LOG.info(javaExe.getPath(), e);
+        LOG.info(javaExe.toString(), e);
       }
     }
 
     return null;
   }
 
+  private static @Nullable String unquoteProperty(Properties properties, String name) {
+    String value = properties.getProperty(name);
+    if (value != null && value.length() >= 2 && value.charAt(0) == '"') value = value.substring(1, value.length() - 1);
+    return value;
+  }
+
+  private static @Nullable Variant detectVariant(Properties p) {
+    String implementorVersion = unquoteProperty(p, "IMPLEMENTOR_VERSION");
+    if (implementorVersion != null) {
+      if (implementorVersion.startsWith("AdoptOpenJDK")) {
+        String variant = unquoteProperty(p, "JVM_VARIANT");
+        return "OpenJ9".equalsIgnoreCase(variant) ? Variant.AdoptOpenJdk_J9 : Variant.AdoptOpenJdk_HS;
+      }
+      if (implementorVersion.startsWith("Corretto")) return Variant.Corretto;
+      if (implementorVersion.endsWith("-IBM")) return Variant.IBM;
+      if (implementorVersion.startsWith("JBR-")) return Variant.JBR;
+      if (implementorVersion.startsWith("SapMachine")) return Variant.SapMachine;
+      if (implementorVersion.startsWith("Zulu")) return Variant.Zulu;
+      if (implementorVersion.startsWith("Homebrew")) return Variant.Homebrew;
+    }
+
+    String implementor = unquoteProperty(p, "IMPLEMENTOR");
+    if (implementor != null) {
+      if (implementor.startsWith("AdoptOpenJDK")) {
+        String variant = unquoteProperty(p, "JVM_VARIANT");
+        return "OpenJ9".equalsIgnoreCase(variant) ? Variant.AdoptOpenJdk_J9 : Variant.AdoptOpenJdk_HS;
+      }
+
+      if (p.getProperty("GRAALVM_VERSION") != null) {
+        if (implementor.startsWith("GraalVM")) return Variant.GraalVMCE;
+        return Variant.GraalVM;
+      }
+
+      return detectVendor(implementor);
+    }
+
+    if (p.getProperty("GRAALVM_VERSION") != null) return Variant.GraalVM;
+
+    return null;
+  }
+
+  private static @Nullable Variant detectVendor(String implementor) {
+    if (implementor.startsWith("Alibaba")) return Variant.Dragonwell;
+    if (implementor.startsWith("Amazon")) return Variant.Corretto;
+    if (implementor.startsWith("Azul")) return Variant.Zulu;
+    if (implementor.startsWith("BellSoft")) return Variant.Liberica;
+    if (implementor.startsWith("BiSheng")) return Variant.BiSheng;
+    if (implementor.startsWith("Eclipse")) return Variant.Temurin;
+    if (implementor.startsWith("IBM")) return Variant.IBM;
+    if (implementor.startsWith("International Business")) return Variant.Semeru;
+    if (implementor.startsWith("JetBrains")) return Variant.JBR;
+    if (implementor.startsWith("Microsoft")) return Variant.Microsoft;
+    if (implementor.startsWith("ojdkbuild")) return Variant.Ojdkbuild;
+    if (implementor.startsWith("Oracle")) return Variant.Oracle;
+    if (implementor.startsWith("Red Hat")) return Variant.RedHat;
+    if (implementor.startsWith("SAP")) return Variant.SapMachine;
+    if (implementor.startsWith("Tencent")) return Variant.Kona;
+    return null;
+  }
+
   private static class VersionOutputReader extends BaseOutputReader {
     private static final BaseOutputReader.Options OPTIONS = new BaseOutputReader.Options() {
-      @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
-      @Override public boolean splitToLines() { return true; }
       @Override public boolean sendIncompleteLines() { return false; }
       @Override public boolean withSeparators() { return false; }
     };
 
-    private final ActionRunner myRunner;
+    private final ExecutorService myRunner;
     private final List<String> myLines;
 
-    public VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
+    VersionOutputReader(@NotNull InputStream stream, @NotNull ExecutorService runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
       myLines = new CopyOnWriteArrayList<>();
       start("java -version");
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return myRunner.run(runnable);
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+      return myRunner.submit(runnable);
     }
 
     @Override

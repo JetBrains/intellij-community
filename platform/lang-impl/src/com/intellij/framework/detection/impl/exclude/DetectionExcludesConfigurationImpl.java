@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -7,6 +7,7 @@ import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExclud
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -15,16 +16,19 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author nik
- */
+@ApiStatus.Internal
 @State(name = "FrameworkDetectionExcludesConfiguration")
-public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
+public final class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {
   private final Map<String, VirtualFilePointerContainer> myExcludedFiles;
   private final Set<String> myExcludedFrameworks;
@@ -33,9 +37,9 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   private boolean myDetectionEnabled = true;
   private boolean myConverted;
 
-  public DetectionExcludesConfigurationImpl(Project project, VirtualFilePointerManager pointerManager) {
+  public DetectionExcludesConfigurationImpl(@NotNull Project project) {
     myProject = project;
-    myPointerManager = pointerManager;
+    myPointerManager = VirtualFilePointerManager.getInstance();
     myExcludedFrameworks = new HashSet<>();
     myExcludedFiles = FactoryMap.create(key -> myPointerManager.createContainer(this));
   }
@@ -43,6 +47,8 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   @Override
   public void addExcludedFramework(@NotNull FrameworkType type) {
     convert();
+    if (!myDetectionEnabled) return;
+
     myExcludedFrameworks.add(type.getId());
     final VirtualFilePointerContainer container = myExcludedFiles.remove(type.getId());
     if (container != null) {
@@ -54,7 +60,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
   public void addExcludedFile(@NotNull VirtualFile file, @Nullable FrameworkType type) {
     convert();
     final String typeId = type != null ? type.getId() : null;
-    if (typeId != null && myExcludedFrameworks.contains(typeId) || isFileExcluded(file, typeId)) {
+    if (!myDetectionEnabled || typeId != null && myExcludedFrameworks.contains(typeId) || isFileExcluded(file, typeId)) {
       return;
     }
 
@@ -80,7 +86,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
     convert();
     final String typeId = type != null ? type.getId() : null;
-    if (typeId != null && myExcludedFrameworks.contains(typeId)) {
+    if (!myDetectionEnabled || typeId != null && myExcludedFrameworks.contains(typeId)) {
       return;
     }
     myExcludedFiles.get(typeId).add(url);
@@ -149,6 +155,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
     final Iterator<VirtualFile> iterator = files.iterator();
     while (iterator.hasNext()) {
+      ProgressManager.checkCanceled();
       VirtualFile file = iterator.next();
       if (isFileExcluded(file, frameworkType.getId())) {
         iterator.remove();
@@ -156,14 +163,13 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     }
   }
 
-  @NotNull
-  public ExcludesConfigurationState getActualState() {
+  public @NotNull ExcludesConfigurationState getActualState() {
     ensureOldSettingsLoaded();
 
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myDetectionEnabled);
     state.getFrameworkTypes().addAll(myExcludedFrameworks);
-    Collections.sort(state.getFrameworkTypes(), String.CASE_INSENSITIVE_ORDER);
+    state.getFrameworkTypes().sort(String.CASE_INSENSITIVE_ORDER);
 
     for (String typeId : myExcludedFiles.keySet()) {
       final VirtualFilePointerContainer container = myExcludedFiles.get(typeId);
@@ -171,13 +177,13 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
         state.getFiles().add(new ExcludedFileState(url, typeId));
       }
     }
-    Collections.sort(state.getFiles(),
-                     (o1, o2) -> StringUtil.comparePairs(o1.getFrameworkType(), o1.getUrl(), o2.getFrameworkType(), o2.getUrl(), true));
+    state.getFiles()
+      .sort((o1, o2) -> StringUtil.comparePairs(o1.getFrameworkType(), o1.getUrl(), o2.getFrameworkType(), o2.getUrl(), true));
     return state;
   }
 
-  @Override @Nullable
-  public ExcludesConfigurationState getState() {
+  @Override
+  public @Nullable ExcludesConfigurationState getState() {
     if (!myConverted) return null;
     return getActualState();
   }

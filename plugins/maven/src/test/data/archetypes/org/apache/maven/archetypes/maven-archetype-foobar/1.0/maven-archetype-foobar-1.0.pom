@@ -8,6 +8,7 @@
   <artifactId>maven-archetype-foobar</artifactId>
   <name>FooBar archetype</name>
   <version>1.0</version>
+  <packaging>maven-archetype</packaging>
   <description>FooBar description.</description>
   <distributionManagement>
     <status>deployed</status>

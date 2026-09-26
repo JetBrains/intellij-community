@@ -1,0 +1,222 @@
+package com.intellij.python.junit5Tests.unit
+
+import com.intellij.python.sdk.backend.evolution.toSectionLabel
+import com.intellij.util.SystemProperties
+import com.intellij.ide.ui.icons.rpcId
+import com.intellij.python.sdk.backend.impl.isNameDerivedFromHomePath
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.common.shortenPath
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import java.nio.file.Path
+import javax.swing.Icon
+import javax.swing.ImageIcon
+
+class ShortenPathTest {
+
+  // --- shortenPath: original path-shortening behavior, untouched ---
+
+  @Test
+  fun `unix path returns last segment when keepPrefix is false`() {
+    assertEquals("myenv", shortenPath("/home/user/.venvs/myenv", 50, keepPrefix = false))
+  }
+
+  @Test
+  fun `unix path keeps prefix and ellipsizes middle when keepPrefix is true`() {
+    val result = shortenPath("/home/user/projects/very/deep/folder/myenv", 25, keepPrefix = true)
+    assertEquals("/home/user/project…/myenv", result)
+  }
+
+  @Test
+  fun `windows path returns last segment`() {
+    assertEquals("myenv", shortenPath("""C:\Users\me\envs\myenv""", 50, keepPrefix = false))
+  }
+
+  // --- isNameDerivedFromHomePath: detect default vs label name ---
+
+  @Test
+  fun `system python name equals home path`() {
+    val home = "/Users/foo/python/3.12/bin/python"
+    assertTrue(isNameDerivedFromHomePath(home, home))
+  }
+
+  @Test
+  fun `system python name with tilde expands and matches home path`() {
+    val userHome = SystemProperties.getUserHome()
+    val home = "$userHome/python/3.12/bin/python"
+    val name = "~/python/3.12/bin/python"
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `venv name is parent directory of home path`() {
+    val userHome = SystemProperties.getUserHome()
+    val home = "$userHome/.venvs/myenv/bin/python"
+    val name = "~/.venvs/myenv"
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `windows venv name is parent directory of home path`() {
+    val name = """C:\Users\me\envs\myenv"""
+    val home = """C:\Users\me\envs\myenv\Scripts\python.exe"""
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  @DisplayName("name (\\) and home path (/) with different separators still match")
+  fun `windows venv name with backslashes matches home path stored with forward slashes`() {
+    // `suggestSdkName` yields the name via Path.toString() (backslashes on Windows), while homePath
+    // may be stored with forward slashes (EEL/nio). The classification must survive that mismatch.
+    val name = """C:\Users\me\envs\myenv"""
+    val home = "C:/Users/me/envs/myenv/Scripts/python.exe"
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `venv name with forward slashes matches home path with backslashes`() {
+    val name = "C:/Users/me/envs/myenv"
+    val home = """C:\Users\me\envs\myenv\Scripts\python.exe"""
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `sibling directory sharing a name prefix is not classified as derived`() {
+    // `myenv2` must not be treated as living under `myenv`.
+    val name = """C:\Users\me\envs\myenv"""
+    val home = """C:\Users\me\envs\myenv2\Scripts\python.exe"""
+    assertFalse(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  @DisplayName("PY-89560: SSH label is not classified as derived from home path")
+  fun `ssh label is not classified as derived from home path`() {
+    val name = "SSH (sftp://user@host:22/usr/bin/python)"
+    val home = "/usr/bin/python"
+    assertFalse(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `wsl label is not classified as derived from home path`() {
+    val name = "WSL (Ubuntu): (/usr/bin/python)"
+    val home = "/usr/bin/python"
+    assertFalse(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `remote fallback label is not classified as derived from home path`() {
+    val name = "Remote (/usr/bin/python)"
+    val home = "/usr/bin/python"
+    assertFalse(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `null home path means not derived`() {
+    assertFalse(isNameDerivedFromHomePath("anything", null))
+  }
+
+  @Test
+  fun `empty name means not derived`() {
+    assertFalse(isNameDerivedFromHomePath("", "/usr/bin/python"))
+  }
+
+  // --- end-to-end: compactName via PyInterpreterItem ---
+
+  @Test
+  fun `path-derived venv name renders basename via shortName`() {
+    val item = newItem(
+      name = "~/.venvs/myenv",
+      isPathDerivedName = true,
+      suffix = "3.12.1",
+    )
+    assertEquals("myenv [3.12.1]", item.shortName)
+  }
+
+  @Test
+  @DisplayName("PY-89560: SSH label is rendered as-is in the status bar shortName")
+  fun `ssh label name renders as-is via shortName`() {
+    val sshName = "SSH (sftp://user@host:22/usr/bin/python)"
+    val item = newItem(
+      name = sshName,
+      isPathDerivedName = false,
+      suffix = "3.12.1",
+    )
+    assertEquals("$sshName [3.12.1]", item.shortName)
+    assertFalse(item.shortName.startsWith("python)"))
+  }
+
+  @Test
+  fun `long ssh label name is trimmed in middle rather than reduced to a segment`() {
+    val sshName = "SSH (sftp://averylongusername@some.really.long.hostname.example.com:22/opt/python/3.12/bin/python3.12)"
+    val item = newItem(
+      name = sshName,
+      isPathDerivedName = false,
+      suffix = null,
+    )
+    assertTrue(item.shortName.startsWith("SSH"), "must preserve the SSH prefix")
+    assertTrue(item.shortName.contains('…'), "must contain the middle-ellipsis marker")
+    assertTrue(item.shortName.length <= 50)
+  }
+
+  @Test
+  @DisplayName("a tool-supplied short label is shown as it stands and leaves the other names alone")
+  fun `tool short name replaces the short name only`() {
+    val cacheEnv = "~/Library/Caches/pypoetry/virtualenvs/myproject-AbCdEf12-py3.12"
+    val item = newItem(
+      name = cacheEnv,
+      isPathDerivedName = true,
+      suffix = "3.12.1",
+      toolShortName = "Python 3.12.1",
+    )
+    // No suffix after it: the tool wrote the whole label, so appending the version would state it twice.
+    assertEquals("Python 3.12.1", item.shortName)
+    assertEquals("$cacheEnv [3.12.1]", item.fullName)
+    assertEquals(cacheEnv, item.name)
+  }
+
+  // --- toSectionLabel: the Evo widget's section headers ---
+
+  @Test
+  @DisplayName("a section label short enough to fit is left alone")
+  fun `short section label is unchanged`() {
+    assertEquals("/opt/envs", Path.of("/opt/envs").toSectionLabel())
+  }
+
+  @Test
+  @DisplayName("a long section label keeps its prefix and last segment, eliding the middle")
+  fun `long section label is elided in the middle`() {
+    val label = Path.of("/opt/.cache/intellij-python-test-env/conda/Miniconda3-py312_24.9.2-0-MacOSX-arm64/envs/child").toSectionLabel()
+    assertEquals("/opt/.cache/intellij-python-test-env/conda/…/child", label)
+    assertTrue(label.length <= 50, "section labels must not exceed the header budget, was ${label.length}")
+  }
+
+  @Test
+  @DisplayName("sibling folders stay distinguishable after eliding")
+  fun `elided section labels keep their last segment`() {
+    val base = "/opt/.cache/intellij-python-test-env/conda/Miniconda3-py312_24.9.2-0-MacOSX-arm64"
+    assertTrue(Path.of("$base/envs/child").toSectionLabel().endsWith("/child"))
+    assertTrue(Path.of("$base/envsSibling").toSectionLabel().endsWith("/envsSibling"))
+  }
+
+  private val noIcon: Icon = ImageIcon()
+
+  private fun newItem(
+    name: String,
+    isPathDerivedName: Boolean,
+    suffix: String?,
+    toolShortName: String? = null,
+  ) = PyInterpreterItem(
+    ref = PyInterpreterRef.ExistingSdk(name),
+    name = name,
+    suffix = suffix,
+    description = "irrelevant",
+    problem = null,
+    icon = noIcon.rpcId(),
+    isPathDerivedName = isPathDerivedName,
+    toolShortName = toolShortName,
+  )
+}

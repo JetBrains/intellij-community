@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.ContainerUtil.newHashMap
-import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.idea.svn.SvnUtil
 import java.text.DateFormat
 import java.text.ParseException
-import java.util.*
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
 private val LOG = logger<Revision>()
 
@@ -54,7 +54,7 @@ class Revision private constructor(private val order: Int, val keyword: String? 
   private fun throwIllegalState(): Nothing = throw IllegalStateException("no keyword, number or date in revision")
 
   companion object {
-    private val ourKeywordRevisions = newHashMap<String, Revision>()
+    private val ourKeywordRevisions: MutableMap<String, Revision> = HashMap()
 
     @JvmField val BASE: Revision = Revision(2, "BASE")
     @JvmField val COMMITTED: Revision = Revision(3, "COMMITTED")
@@ -83,15 +83,15 @@ class Revision private constructor(private val order: Int, val keyword: String? 
 
     private fun fromKeyword(value: String) = ourKeywordRevisions[value]
 
-    private fun fromNumber(value: String) = value.toLongOrNull()?.let { Revision.of(it) }
+    private fun fromNumber(value: String) = value.toLongOrNull()?.let { of(it) }
 
-    private fun fromDate(value: String) = parseDate(value.removeSurrounding("{", "}"))?.let { Revision.of(it) }
+    private fun fromDate(value: String) = parseDate(value.removeSurrounding("{", "}"))?.let { of(it) }
 
     private fun parseDate(value: String) = SvnUtil.parseDate(value, false) ?: parseIso8601(value)
 
     private fun parseIso8601(value: String): Date? {
       try {
-        return DateFormatUtil.getIso8601Format().parse(value)
+        return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)))
       }
       catch (e: ParseException) {
         return null

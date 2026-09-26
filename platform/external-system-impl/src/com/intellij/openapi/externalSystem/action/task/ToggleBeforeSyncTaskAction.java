@@ -16,11 +16,12 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/29/2014
  */
+@ApiStatus.Internal
 public class ToggleBeforeSyncTaskAction extends ToggleTaskActivationAction {
   protected ToggleBeforeSyncTaskAction() {
     super(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);

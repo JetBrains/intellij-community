@@ -31,13 +31,13 @@ public abstract class IncludeAwareMatcher extends BaseMatcher {
         myDocument = document;
     }
 
-    @Nullable
-    public XmlTag getRoot() {
+    @Override
+    public @Nullable XmlTag getRoot() {
         return myDocument.getRootTag();
     }
 
-    @Nullable
-    public final Result match(XmlTag element) {
+    @Override
+    public final @Nullable Result match(XmlTag element) {
         if (XsltSupport.isIncludeOrImport(element)) {
             final XmlAttribute href = element.getAttribute("href", null);
             if (href != null) {
@@ -57,8 +57,7 @@ public abstract class IncludeAwareMatcher extends BaseMatcher {
         return null;
     }
 
-    @Nullable
-    protected Result matchImpl(XmlTag element) {
+    protected @Nullable Result matchImpl(XmlTag element) {
         if (matches(element)) {
             return Result.create(transform(element));
         }

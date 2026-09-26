@@ -1,21 +1,23 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
+@ApiStatus.Internal
 public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model == null) return;
 
@@ -27,18 +29,24 @@ public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model != null) {
       Couple<DirDiffElementImpl> target = getSelectedSourceAndTarget(model);
       if (target != null) {
         e.getPresentation().setEnabled(true);
-        e.getPresentation().setDescription("Compare '" + target.first.getSourceName() + "' with '" + target.second.getTargetName() + "'");
+        e.getPresentation().setDescription(DiffBundle.message("compare.0.with.1", target.first.getSourcePresentableName(),
+                                                              target.second.getTargetPresentableName()));
         return;
       }
     }
-    e.getPresentation().setDescription("Compare selected new files on the left side and on the right side with each other.");
+    e.getPresentation().setDescription(DiffBundle.message("compare.selected.new.files"));
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static Couple<DirDiffElementImpl> getSelectedSourceAndTarget(DirDiffTableModel model) {

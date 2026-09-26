@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ package com.pme.exe.res;
 import com.pme.exe.Bin;
 
 /**
+ * @author Sergey Zhulin
  * Date: Apr 20, 2006
  * Time: 4:32:29 PM
  */
 public class ValuesAdd extends Bin.DWord {
-  private Bin.Value myActual;
-  private Bin.Value myMinus;
+  private final Bin.Value myActual;
+  private final Bin.Value myMinus;
 
   public ValuesAdd(Bin.Value actual, Bin.Value minusConst) {
     super(actual.getName());
@@ -33,10 +34,13 @@ public class ValuesAdd extends Bin.DWord {
     myMinus = minusConst;
   }
 
-  public Value setValue(long value) {
-    return myActual.setValue(value + myMinus.getValue());
+  @Override
+  public DWord setValue(long value) {
+    myActual.setValue(value + myMinus.getValue());
+    return this;
   }
 
+  @Override
   public long getValue() {
     return myActual.getValue() - myMinus.getValue();
   }

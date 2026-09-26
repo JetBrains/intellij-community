@@ -1,72 +1,82 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiConcatenationUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * @author ven
- */
-public class ConcatenationToMessageFormatAction implements IntentionAction {
+public final class ConcatenationToMessageFormatAction extends PsiUpdateModCommandAction<PsiElement> {
+  public ConcatenationToMessageFormatAction() {
+    super(PsiElement.class);
+  }
+  
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
+  public @NotNull String getFamilyName() {
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement element = findElementAtCaret(editor, file);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
-    StringBuilder formatString = new StringBuilder();
     List<PsiExpression> args = new ArrayList<>();
-    PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
+    final String formatString =
+      StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
 
+    Project project = context.project();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
       factory.createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
-    PsiExpression formatArgument = factory.createExpressionFromText("\"" + formatString.toString() + "\"", null);
+    boolean textBlocks = ContainerUtil.exists(concatenation.getOperands(),
+                                              operand -> operand instanceof PsiLiteralExpression literal && literal.isTextBlock());
+    final String expressionText;
+    if (textBlocks) {
+      expressionText = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n", "\"\"\"\n", "\"\"\""));
+    }
+    else {
+      expressionText = "\"" + formatString + "\"";
+    }
+    PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);
-    if (PsiUtil.isLanguageLevel5OrHigher(file)) {
+    if (PsiUtil.isAvailable(JavaFeature.VARARGS, context.file())) {
       for (PsiExpression arg : args) {
         argumentList.add(arg);
       }
@@ -86,35 +96,25 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
-    final PsiElement element = findElementAtCaret(editor, file);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (PsiUtil.getLanguageLevel(context.file()).compareTo(LanguageLevel.JDK_1_4) < 0) return null;
     final PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
-    return concatenation != null && !AnnotationUtil.isInsideAnnotation(concatenation) && !PsiUtil.isConstantExpression(concatenation);
+    if (concatenation == null || AnnotationUtil.isInsideAnnotation(concatenation) || PsiUtil.isConstantExpression(concatenation)) {
+      return null;
+    }
+    return Presentation.of(JavaBundle.message("intention.replace.concatenation.with.formatted.output.text"));
   }
 
-  @Nullable
-  private static PsiElement findElementAtCaret(Editor editor, PsiFile file) {
-    return file.findElementAt(editor.getCaretModel().getOffset());
-  }
-
-  @Nullable
-  private static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement element) {
+  private static @Nullable PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement element) {
     PsiPolyadicExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class, false, PsiMember.class);
     if (binaryExpression == null) return null;
     final PsiClassType stringType = PsiType.getJavaLangString(element.getManager(), element.getResolveScope());
     if (!stringType.equals(binaryExpression.getType())) return null;
     while (true) {
       final PsiElement parent = binaryExpression.getParent();
-      if (!(parent instanceof PsiPolyadicExpression)) return binaryExpression;
-      PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parent;
+      if (!(parent instanceof PsiPolyadicExpression parentBinaryExpression)) return binaryExpression;
       if (!stringType.equals(parentBinaryExpression.getType())) return binaryExpression;
       binaryExpression = parentBinaryExpression;
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

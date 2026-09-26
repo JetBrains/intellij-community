@@ -1,67 +1,83 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
-public abstract class SplitAction extends AnAction implements DumbAware {
-  private final int myOrientation;
-  private final boolean myCloseSource;
+public abstract class SplitAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+  public static final Key<Boolean> FORBID_TAB_SPLIT = FileEditorManagerKeys.FORBID_TAB_SPLIT;
 
-  protected SplitAction(final int orientation) {
+  private final int orientation;
+  private final boolean closeSource;
+
+  protected SplitAction(int orientation) {
     this(orientation, false);
   }
 
-  protected SplitAction(final int orientation, boolean closeSource) {
-    myOrientation = orientation;
-    myCloseSource = closeSource;
+  protected SplitAction(int orientation, boolean closeSource) {
+    this.orientation = orientation;
+    this.closeSource = closeSource;
   }
 
-  public void actionPerformed(final AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    final VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
-
-    fileEditorManager.createSplitter(myOrientation, window);
-    
-    if (myCloseSource && window != null && file != null) {
-      window.closeFile(file, false, false);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    if (window == null) {
+      return;
     }
+
+    VirtualFile file = window.getContextFile();
+    if (closeSource && file != null) {
+      Boolean previousClosingToReopen = file.getUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN);
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true);
+      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY,  window.isFilePinned(file));
+
+      try {
+        window.closeFile(file, false, false);
+      }
+      finally {
+        file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, previousClosingToReopen);
+      }
+    }
+
+    window.split(orientation, true, file, true);
   }
 
-  public void update(final AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    final int minimum = myCloseSource ? 2 : 1;
-    final boolean enabled = project != null
-                            && window != null
-                            && window.getTabCount() >= minimum
-                            && !window.getOwner().isPreview();
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    VirtualFile selectedFile = window == null ? null : window.getContextFile();
+
+    boolean enabled = isEnabled(selectedFile, window);
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  private boolean isEnabled(@Nullable VirtualFile file, @Nullable EditorWindow window) {
+    if (file == null || window == null) {
+      return false;
+    }
+    if (!closeSource && FileEditorManagerImpl.forbidSplitFor(file)) {
+      return false;
+    }
+    int minimum = closeSource ? 2 : 1;
+    return window.getTabCount() >= minimum;
   }
 }

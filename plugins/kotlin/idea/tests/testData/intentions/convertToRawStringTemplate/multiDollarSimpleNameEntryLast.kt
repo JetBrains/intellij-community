@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+
+fun test(foo: String) {
+    foo +<caret> $$"bar$baz$$foo"
+}

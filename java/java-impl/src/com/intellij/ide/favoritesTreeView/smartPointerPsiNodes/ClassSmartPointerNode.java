@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -20,45 +6,52 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
-  public ClassSmartPointerNode(Project project, PsiClass value, ViewSettings viewSettings) {
+
+  private boolean isAlwaysExpand;
+
+  public ClassSmartPointerNode(@NotNull Project project, @NotNull PsiClass value, @NotNull ViewSettings viewSettings) {
     super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 
-  public ClassSmartPointerNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (PsiClass)value, viewSettings);
-  }
-
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode> getChildrenImpl() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getPsiClass();
-    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<>();
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>();
 
-    ArrayList<PsiElement> result = new ArrayList<>();
     if (getSettings().isShowMembers()) {
+      List<PsiElement> result = new ArrayList<>();
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
         psiElement.accept(new JavaElementVisitor() {
-          @Override public void visitClass(PsiClass aClass) {
+          @Override public void visitClass(@NotNull PsiClass aClass) {
             treeNodes.add(new ClassSmartPointerNode(getProject(), aClass, getSettings()));
           }
 
-          @Override public void visitMethod(PsiMethod method) {
+          @Override public void visitMethod(@NotNull PsiMethod method) {
             treeNodes.add(new MethodSmartPointerNode(getProject(), method, getSettings()));
           }
 
-          @Override public void visitField(PsiField field) {
+          @Override public void visitField(@NotNull PsiField field) {
             treeNodes.add(new FieldSmartPointerNode(getProject(), field, getSettings()));
           }
 
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             visitExpression(expression);
           }
         });
@@ -71,13 +64,14 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
   public boolean isAlwaysLeaf() {
     return !getSettings().isShowMembers();
   }
-  
+
   @Override
-  public void updateImpl(PresentationData data) {
+  public void updateImpl(@NotNull PresentationData data) {
     final PsiClass aClass = getPsiClass();
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
     }
+    isAlwaysExpand = getParentValue() instanceof PsiFile;
   }
 
   public boolean isTopLevel() {
@@ -96,6 +90,6 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
 
   @Override
   public boolean isAlwaysExpand() {
-    return getParentValue() instanceof PsiFile;
+    return isAlwaysExpand;
   }
 }

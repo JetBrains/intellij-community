@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,34 +9,42 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryKind;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Predicate;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
-/**
- * @author nik
- */
-public class LibraryEditingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil");
+public final class LibraryEditingUtil {
+  private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
 
   private LibraryEditingUtil() {
   }
@@ -74,12 +68,7 @@ public class LibraryEditingUtil {
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
                                              final String baseName) {
-    String candidateName = baseName;
-    int idx = 1;
-    while (libraryAlreadyExists(table, candidateName)) {
-      candidateName = baseName + (idx++);
-    }
-    return candidateName;
+    return UniqueNameGenerator.generateUniqueNameOneBased(baseName, n -> !libraryAlreadyExists(table, n));
   }
 
   public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {
@@ -87,24 +76,30 @@ public class LibraryEditingUtil {
     final Set<Library> result = new HashSet<>(orderEntries.length);
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
-        final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library != null) {
-          final Library source = library.getSource();
+        final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+        if (library == null) continue;
+
+        if (library instanceof LibraryEx) {
+          final Library source = ((LibraryEx)library).getSource();
           result.add(source != null ? source : library);
+        } else {
+          result.add(library);
         }
       }
     }
     return library -> {
       if (result.contains(library)) return false;
-      if (library instanceof LibraryImpl) {
-        final Library source = ((LibraryImpl)library).getSource();
+      if (library instanceof LibraryEx) {
+        final Library source = ((LibraryEx)library).getSource();
         if (source != null && result.contains(source)) return false;
       }
-      PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
-      if (kind != null) {
-        LibraryType type = LibraryType.findByKind(kind);
-        if (type != null && !type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
-          return false;
+      if (library instanceof LibraryEx) {
+        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+        if (kind != null) {
+          LibraryType type = LibraryType.findByKind(kind);
+          if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+            return false;
+          }
         }
       }
       return true;
@@ -145,20 +140,21 @@ public class LibraryEditingUtil {
 
   public static LibraryTablePresentation getLibraryTablePresentation(@NotNull Project project, @NotNull String level) {
     if (level.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      return ModuleLibraryTableBase.MODULE_LIBRARY_TABLE_PRESENTATION;
     }
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
     LOG.assertTrue(table != null, level);
     return table.getPresentation();
   }
 
-  public static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
-    List<LibraryType> suitableTypes = new ArrayList<>();
-    suitableTypes.add(null);
+  public static List<TypeForNewLibrary> getSuitableTypes(ClasspathPanel classpathPanel) {
+    List<TypeForNewLibrary> suitableTypes = new ArrayList<>();
+    suitableTypes.add(new TypeForNewLibrary(null, JavaUiBundle.message("create.default.library.type.action.name")));
     final Module module = classpathPanel.getRootModel().getModule();
     for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
-      if (libraryType.getCreateActionName() != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
-        suitableTypes.add(libraryType);
+      String createActionName = libraryType.getCreateActionName();
+      if (createActionName != null && libraryType.isSuitableModule(module, classpathPanel.getModuleConfigurationState().getFacetsProvider())) {
+        suitableTypes.add(new TypeForNewLibrary(libraryType, createActionName));
       }
     }
     return suitableTypes;
@@ -168,25 +164,25 @@ public class LibraryEditingUtil {
     return getSuitableTypes(panel).size() > 1;
   }
 
-  public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
-                                                                    final ParameterizedRunnable<LibraryType> action) {
-    return new BaseListPopupStep<LibraryType>(IdeBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-          @NotNull
-          @Override
-          public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : IdeBundle.message("create.default.library.type.action.name");
-          }
+  public static BaseListPopupStep<TypeForNewLibrary> createChooseTypeStep(final ClasspathPanel classpathPanel,
+                                                                    final ParameterizedRunnable<? super LibraryType> action) {
+    return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+      @Override
+      public @NotNull String getTextFor(TypeForNewLibrary value) {
+        //noinspection HardCodedStringLiteral
+        return value.getCreateActionName();
+      }
 
-          @Override
-          public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
-          }
+      @Override
+      public Icon getIconFor(TypeForNewLibrary aValue) {
+        return aValue.getIcon();
+      }
 
-          @Override
-          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(() -> action.run(selectedValue));
-          }
-        };
+      @Override
+      public PopupStep<?> onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> action.run(selectedValue.getType()));
+      }
+    };
   }
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,
@@ -200,7 +196,7 @@ public class LibraryEditingUtil {
 
       if (library != null) {
         final ModuleRootModel rootModel = rootConfigurable.getContext().getModulesConfigurator().getRootModel(module);
-        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).apply(library)) {
+        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).test(library)) {
           continue;
         }
       }
@@ -210,9 +206,26 @@ public class LibraryEditingUtil {
     return modules;
   }
 
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
-                                                           @NotNull Project project,
-                                                           boolean allowEmptySelection) {
-    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
+  public static class TypeForNewLibrary {
+    private final LibraryType<?> myType;
+    private final @NlsContexts.Label String myCreateActionName;
+
+    private TypeForNewLibrary(@Nullable LibraryType<?> type, @NlsContexts.Label String createActionName) {
+      myType = type;
+      myCreateActionName = createActionName;
+    }
+
+    public String getCreateActionName() {
+      return myCreateActionName;
+    }
+
+    public Icon getIcon() {
+      Icon icon = myType != null ? myType.getIcon(null) : null;
+      return icon != null ? icon : PlatformIcons.LIBRARY_ICON;
+    }
+
+    public LibraryType<?> getType() {
+      return myType;
+    }
   }
 }

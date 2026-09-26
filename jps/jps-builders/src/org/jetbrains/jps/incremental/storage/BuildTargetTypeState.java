@@ -1,142 +1,152 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.model.JpsModel;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author nik
- */
-public class BuildTargetTypeState {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetTypeState");
-  private final Map<BuildTarget<?>, Integer> myTargetIds;
-  private final List<Pair<String, Integer>> myStaleTargetIds;
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;
-  private final BuildTargetType<?> myTargetType;
-  private final BuildTargetsState myTargetsState;
-  private final File myTargetsFile;
+@ApiStatus.Internal
+public final class BuildTargetTypeState {
+  private static final int VERSION = 1;
+  private static final Logger LOG = Logger.getInstance(BuildTargetTypeState.class);
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2IntOpenHashMap<BuildTarget<?>> targetIds = new Object2IntOpenHashMap<>();
+  private final List<Pair<String, Integer>> staleTargetIds;
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> configurations;
+  private final BuildTargetType<?> targetType;
+  private final BuildTargetStateManagerImpl targetStateManager;
+  private final Path targetStateFile;
+  private volatile long myAverageTargetBuildTimeMs = -1;
 
-  public BuildTargetTypeState(BuildTargetType<?> targetType, BuildTargetsState state) {
-    myTargetType = targetType;
-    myTargetsState = state;
-    myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
-    myConfigurations = new ConcurrentHashMap<>(16, 0.75f, 1);
-    myTargetIds = new HashMap<>();
-    myStaleTargetIds = new ArrayList<>();
-    load();
+  public BuildTargetTypeState(@NotNull BuildTargetType<?> targetType,
+                              @NotNull BuildTargetStateManagerImpl state,
+                              @NotNull BuildDataPaths dataPaths,
+                              @NotNull JpsModel model) {
+    targetIds.defaultReturnValue(-1);
+
+    this.targetType = targetType;
+    targetStateManager = state;
+    targetStateFile = dataPaths.getTargetTypeDataRootDir(targetType).resolve("targets.dat");
+    configurations = new ConcurrentHashMap<>();
+    staleTargetIds = new ArrayList<>();
+    load(model);
   }
 
-  private boolean load() {
-    if (!myTargetsFile.exists()) {
-      return false;
+  private void load(@NotNull JpsModel model) {
+    if (Files.notExists(targetStateFile)) {
+      return;
     }
 
-    try {
-      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)));
-      try {
-        input.readInt();//reserved for version
-        int size = input.readInt();
-        BuildTargetLoader<?> loader = myTargetType.createLoader(myTargetsState.getModel());
-        while (size-- > 0) {
-          String stringId = IOUtil.readString(input);
-          int intId = input.readInt();
-          myTargetsState.markUsedId(intId);
-          BuildTarget<?> target = loader.createTarget(stringId);
-          if (target != null) {
-            myTargetIds.put(target, intId);
-          }
-          else {
-            myStaleTargetIds.add(Pair.create(stringId, intId));
-          }
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(targetStateFile)))) {
+      int version = input.readInt();
+      int size = input.readInt();
+      BuildTargetLoader<?> loader = targetType.createLoader(model);
+      while (size-- > 0) {
+        String stringId = IOUtil.readString(input);
+        int intId = input.readInt();
+        targetStateManager.markUsedId(intId);
+        BuildTarget<?> target = loader.createTarget(stringId);
+        if (target != null) {
+          targetIds.put(target, intId);
         }
-        return true;
+        else {
+          staleTargetIds.add(Pair.create(stringId, intId));
+        }
       }
-      finally {
-        input.close();
+      if (version >= 1) {
+        myAverageTargetBuildTimeMs = input.readLong();
       }
     }
     catch (IOException e) {
-      LOG.info("Cannot load " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
-      return false;
+      LOG.info("Cannot load " + targetType.getTypeId() + " targets data: " + e.getMessage(), e);
     }
   }
 
   public synchronized void save() {
     try {
-      FileUtil.createParentDirs(myTargetsFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)));
-      try {
-        output.writeInt(0);
-        output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
-        for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
-          IOUtil.writeString(entry.getKey().getId(), output);
-          output.writeInt(entry.getValue());
-        }
-        for (Pair<String, Integer> pair : myStaleTargetIds) {
-          IOUtil.writeString(pair.first, output);
-          output.writeInt(pair.second);
-        }
-      }
-      finally {
-        output.close();
-      }
+      NioFiles.createParentDirectories(targetStateFile);
     }
     catch (IOException e) {
-      LOG.info("Cannot save " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
+      throw new UncheckedIOException(e);
+    }
+
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(targetStateFile)))) {
+      output.writeInt(VERSION);
+      output.writeInt(targetIds.size() + staleTargetIds.size());
+      for (Object2IntMap.Entry<BuildTarget<?>> entry : targetIds.object2IntEntrySet()) {
+        IOUtil.writeString(entry.getKey().getId(), output);
+        output.writeInt(entry.getIntValue());
+      }
+      for (Pair<String, Integer> pair : staleTargetIds) {
+        IOUtil.writeString(pair.first, output);
+        output.writeInt(pair.second);
+      }
+      output.writeLong(myAverageTargetBuildTimeMs);
+    }
+    catch (IOException e) {
+      LOG.info("Cannot save " + targetType.getTypeId() + " targets data: " + e.getMessage(), e);
     }
   }
 
-  public synchronized List<Pair<String, Integer>> getStaleTargetIds() {
-    return new ArrayList<>(myStaleTargetIds);
+  public synchronized @NotNull List<Pair<String, Integer>> getStaleTargetIds() {
+    return new ArrayList<>(staleTargetIds);
   }
 
-  public synchronized void removeStaleTarget(String targetId) {
-    myStaleTargetIds.removeIf(pair -> pair.first.equals(targetId));
+  public synchronized void removeStaleTarget(@NotNull String targetId) {
+    staleTargetIds.removeIf(pair -> pair.first.equals(targetId));
   }
 
   public synchronized int getTargetId(BuildTarget<?> target) {
-    if (!myTargetIds.containsKey(target)) {
-      myTargetIds.put(target, myTargetsState.getFreeId());
+    int result = targetIds.getInt(target);
+    if (result == -1) {
+      result = targetStateManager.getFreeId();
+      targetIds.put(target, result);
     }
-    return myTargetIds.get(target);
+    return result;
   }
 
-  public BuildTargetConfiguration getConfiguration(BuildTarget<?> target) {
-    BuildTargetConfiguration configuration = myConfigurations.get(target);
-    if (configuration == null) {
-      configuration = new BuildTargetConfiguration(target, myTargetsState);
-      final BuildTargetConfiguration existing = myConfigurations.putIfAbsent(target, configuration);
-      if (existing != null) {
-        configuration = existing;
-      }
+  public void setAverageTargetBuildTime(long timeInMs) {
+    myAverageTargetBuildTimeMs = timeInMs;
+  }
+
+  /**
+   * Returns average time required to rebuild a target of this type from scratch or {@code -1} if such information isn't available.
+   */
+  public long getAverageTargetBuildTime() {
+    return myAverageTargetBuildTimeMs;
+  }
+
+  public @NotNull BuildTargetConfiguration getConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths dataPaths) {
+    BuildTargetConfiguration configuration = configurations.get(target);
+    if (configuration != null) {
+      return configuration;
     }
-    return configuration;
+
+    configuration = new BuildTargetConfiguration(target, dataPaths);
+    BuildTargetConfiguration existing = configurations.putIfAbsent(target, configuration);
+    return existing == null ? configuration : existing;
   }
 }

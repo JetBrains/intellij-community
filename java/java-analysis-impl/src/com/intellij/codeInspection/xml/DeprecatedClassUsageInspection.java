@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.xml;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
-import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolvingHint;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -29,23 +22,22 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
+public final class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         if (tag.getValue().getTextElements().length > 0) {
           checkReferences(tag, holder);
         }
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         checkReferences(value, holder);
       }
     };
@@ -55,8 +47,11 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     PsiReference[] references = psiElement.getReferences();
     PsiReference last = ArrayUtil.getLastElement(references);
     if (last != null && (!(last instanceof ResolvingHint) || ((ResolvingHint)last).canResolveTo(PsiDocCommentOwner.class))) {
-      PsiElement resolve = last.resolve();
-      DeprecationInspection.checkDeprecated(resolve, psiElement, last.getRangeInElement(), holder);
+      PsiElement resolved = last.resolve();
+      if (resolved instanceof PsiModifierListOwner) {
+        DeprecationInspectionBase.checkDeprecated((PsiModifierListOwner)resolved, psiElement, last.getRangeInElement(), false, false, true, false,
+                                                  holder, false);
+      }
     }
   }
 
@@ -65,23 +60,13 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     return true;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return "XML";
+  public @Nls @NotNull String getGroupDisplayName() {
+    return JavaAnalysisBundle.message("deprecated.class.usage.group.xml");
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return "Deprecated API usage in XML";
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DeprecatedClassUsageInspection";
   }
 }

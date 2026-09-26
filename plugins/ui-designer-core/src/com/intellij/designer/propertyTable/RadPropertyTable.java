@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -20,32 +6,38 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.model.*;
+import com.intellij.designer.model.ErrorInfo;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
+import com.intellij.designer.model.PropertyContext;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.CopyProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.TextTransferable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
-public class RadPropertyTable extends PropertyTable implements DataProvider, ComponentSelectionListener {
+public class RadPropertyTable extends PropertyTable implements UiDataProvider, ComponentSelectionListener {
   private final MyCopyProvider myCopyProvider = new MyCopyProvider();
 
   private final Project myProject;
@@ -97,16 +89,10 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (myDesigner != null) {
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-        return myDesigner.getEditor();
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && !isEditing()) {
-        return myCopyProvider;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myDesigner == null) return;
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, isEditing() ? null : myCopyProvider);
   }
 
   @Override
@@ -114,8 +100,8 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     return container instanceof RadComponent ? RadComponent.getError((RadComponent)container) : Collections.emptyList();
   }
 
-  @NotNull
-  protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
+  @Override
+  protected @NotNull TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
     return SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
@@ -168,8 +154,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     }
   }
 
-  @Nullable
-  private String getCurrentKey() {
+  private @Nullable String getCurrentKey() {
     PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
     return tab == null ? null : tab.getKey();
   }
@@ -201,24 +186,13 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   private class MyCopyProvider implements CopyProvider {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void performCopy(@NotNull DataContext dataContext) {
-      try {
-        Property property = getSelectionProperty();
-        Object value = getValue(property);
-        Transferable transferable;
-
-        if (value == null) {
-          transferable = new TextTransferable("");
-        }
-        else {
-          transferable = property.doCopy(myContainers.get(0), value);
-        }
-
-        CopyPasteManager.getInstance().setContents(transferable);
-      }
-      catch (Throwable e) {
-        myDesigner.showError("Copy property error", e);
-      }
+      copySelectedProperty();
     }
 
     @Override
@@ -229,6 +203,26 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     @Override
     public boolean isCopyVisible(@NotNull DataContext dataContext) {
       return true;
+    }
+  }
+
+  private void copySelectedProperty() {
+    try {
+      Property property = getSelectionProperty();
+      Object value = getValue(property);
+      Transferable transferable;
+
+      if (value == null) {
+        transferable = new TextTransferable("");
+      }
+      else {
+        transferable = property.doCopy(myContainers.get(0), value);
+      }
+
+      CopyPasteManager.getInstance().setContents(transferable);
+    }
+    catch (Throwable e) {
+      myDesigner.showError(DesignerBundle.message("designer.copy.property.error"), e);
     }
   }
 }

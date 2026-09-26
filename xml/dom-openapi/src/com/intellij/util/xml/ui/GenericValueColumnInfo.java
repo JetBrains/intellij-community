@@ -15,26 +15,24 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.util.xml.GenericDomValue;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
-/**
- * @author peter
- */
 public class GenericValueColumnInfo<T> extends DomColumnInfo<GenericDomValue<T>, String> {
   private final Class<T> myColumnClass;
   private final TableCellEditor myEditor;
 
-  public GenericValueColumnInfo(final String name, final Class<T> columnClass, final TableCellRenderer renderer, final TableCellEditor editor) {
+  public GenericValueColumnInfo(final @ColumnName String name, final Class<T> columnClass, final TableCellRenderer renderer, final TableCellEditor editor) {
     super(name, renderer);
     myColumnClass = columnClass;
     myEditor = editor;
   }
 
-  public GenericValueColumnInfo(final String name, final Class<T> columnClass, final TableCellEditor editor) {
+  public GenericValueColumnInfo(final @ColumnName String name, final Class<T> columnClass, final TableCellEditor editor) {
     this(name, columnClass, new DefaultTableCellRenderer(), editor);
   }
 

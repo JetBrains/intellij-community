@@ -1,46 +1,35 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetEditorHelper;
+import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.MultipleFacetSettingsEditor");
+@ApiStatus.Internal
+public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
+  private static final Logger LOG = Logger.getInstance(MultipleFacetSettingsEditor.class);
   private final List<AbstractBinding> myBindings = new ArrayList<>();
 
   @Override
-  public void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun) {
+  public void bind(@NotNull ThreeStateCheckBox common, FacetEditor @NotNull [] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JCheckBox> fun) {
     List<JCheckBox> checkBoxesList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       checkBoxesList.add(fun.fun(editor));
@@ -51,7 +40,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
   }
 
   @Override
-  public void bind(@NotNull JTextField common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JTextField> fun) {
+  public void bind(@NotNull JTextField common, FacetEditor @NotNull [] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JTextField> fun) {
     List<JTextField> componentsList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       componentsList.add(fun.fun(editor));
@@ -62,7 +51,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
   }
 
   @Override
-  public void bind(@NotNull JComboBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JComboBox> fun) {
+  public void bind(@NotNull JComboBox common, FacetEditor @NotNull [] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JComboBox> fun) {
     List<JComboBox> componentsList = new ArrayList<>();
     for (FacetEditor editor : editors) {
       componentsList.add(fun.fun(editor));
@@ -80,16 +69,16 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     myBindings.clear();
   }
 
-  private static abstract class AbstractBinding {
+  private abstract static class AbstractBinding {
     public abstract void unbind();
   }
 
-  private static class CheckBoxBinding extends AbstractBinding implements ActionListener {
+  private static final class CheckBoxBinding extends AbstractBinding implements ActionListener {
     private final ThreeStateCheckBox myCommon;
-    private final List<JCheckBox> myCheckBoxesList;
+    private final List<? extends JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
 
-    public CheckBoxBinding(final ThreeStateCheckBox common, final List<JCheckBox> checkBoxesList) {
+    CheckBoxBinding(final ThreeStateCheckBox common, final List<? extends JCheckBox> checkBoxesList) {
       LOG.assertTrue(!checkBoxesList.isEmpty());
       myCommon = common;
       myCheckBoxesList = checkBoxesList;
@@ -138,7 +127,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class TextFieldBinding extends AbstractBinding {
+  private static final class TextFieldBinding extends AbstractBinding {
     private final JTextField myCommon;
     private final List<JTextField> myTextFields;
     private final List<String> myInitialValues;
@@ -161,17 +150,17 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
       myListener = new DocumentAdapter() {
         @Override
-        protected void textChanged(final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           TextFieldBinding.this.textChanged();
         }
       };
       myCommon.getDocument().addDocumentListener(myListener);
     }
 
-    protected void textChanged() {
+    private void textChanged() {
       String value = myCommon.getText();
       for (int i = 0; i < myTextFields.size(); i++) {
-        myTextFields.get(i).setText(value.length() == 0 ? myInitialValues.get(i) : value);
+        myTextFields.get(i).setText(value.isEmpty() ? myInitialValues.get(i) : value);
       }
     }
 
@@ -181,12 +170,12 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class CombobBoxBinding extends AbstractBinding implements ItemListener {
+  private static final class CombobBoxBinding extends AbstractBinding implements ItemListener {
     private final JComboBox myCommon;
-    private final List<JComboBox> myComponentsList;
+    private final List<? extends JComboBox> myComponentsList;
     private final List<Object> myInitialValues;
 
-    public CombobBoxBinding(final JComboBox common, final List<JComboBox> componentsList) {
+    CombobBoxBinding(final JComboBox common, final List<? extends JComboBox> componentsList) {
       LOG.assertTrue(!componentsList.isEmpty());
       myCommon = common;
       myComponentsList = componentsList;

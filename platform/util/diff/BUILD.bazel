@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.util.diff` start
+content_module_jar(module = ":diff")
+### auto-generated section `dev intellij.platform.util.diff` end
+
+### auto-generated section `build intellij.platform.util.diff` start
+jvm_library(
+    name = "diff",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.diff",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util/base/multiplatform",
+        "//platform/util/multiplatform",
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "diff_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.diff",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":diff",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.diff` end
+
+### auto-generated section `iml intellij.platform.util.diff` start
+exports_files(
+    [
+        "intellij.platform.util.diff.iml",
+        "resources/intellij.platform.util.diff.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.diff` end

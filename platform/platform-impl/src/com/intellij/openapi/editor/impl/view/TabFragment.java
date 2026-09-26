@@ -1,18 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.util.function.Consumer;
 
 /**
  * A single Tab character
  */
-class TabFragment implements LineFragment {
+final class TabFragment implements LineFragment {
   private final EditorView myView;
   private final Editor myEditor;
 
@@ -39,12 +38,12 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+    return _ -> {};
   }
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     return this;
   }
 
@@ -74,22 +73,26 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
-    if (x <= startX) return new int[] {0, 0};
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
+    if (x <= startX) {
+      return new VisualColumn(0, false);
+    }
     float nextTabStop = getNextTabStop(startX);
-    if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
+    if (x > nextTabStop) {
+      return new VisualColumn(getVisualColumnCount(startX), true);
+    }
     int column;
-    boolean closerToLargerColumns;
+    boolean leansRight;
     if (myEditor.getSettings().isCaretInsideTabs()) {
       float plainSpaceWidth = myView.getPlainSpaceWidth();
       column = Math.round((x - startX)/plainSpaceWidth);
-      closerToLargerColumns = (x - startX) > (column * plainSpaceWidth);
+      leansRight = (x - startX) > (column * plainSpaceWidth);
     }
     else {
       column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
-      closerToLargerColumns = column == 0;
+      leansRight = column == 0;
     }
-    return new int[] {column, closerToLargerColumns ? 1 : 0};
+    return new VisualColumn(column, leansRight);
   }
 
   @Override

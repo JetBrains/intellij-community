@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -9,7 +7,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -17,10 +15,13 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,44 +32,43 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-  public static final String INPUT_FIELD = "input-field";
-  public static final String TEMPLATE = "template";
-  public static final String INPUT_DEFAULT = "default";
+  public static final @NonNls String INPUT_FIELD = "input-field";
+  public static final @NonNls String TEMPLATE = "template";
+  public static final @NonNls String INPUT_DEFAULT = "default";
 
-  protected final String myDisplayName;
-  @Nullable private final String myCategory;
+  protected final @NlsContexts.Label String myDisplayName;
+  private final @Nullable String myCategory;
 
-  private List<WizardInputField> myInputFields = Collections.emptyList();
+  private List<WizardInputField<?>> myInputFields = Collections.emptyList();
   private List<String> myFrameworks = new ArrayList<>();
   private List<Artifact> myArtifacts = new ArrayList<>();
 
-  public ArchivedProjectTemplate(@NotNull String displayName, @Nullable String category) {
+  public ArchivedProjectTemplate(@NotNull @NlsContexts.Label String displayName, @Nullable String category) {
     myDisplayName = displayName;
     myCategory = category;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myDisplayName;
   }
 
+  @Override
   public Icon getIcon() {
     return getModuleType().getIcon();
   }
 
-  protected abstract ModuleType getModuleType();
+  protected abstract ModuleType<?> getModuleType();
 
-  @NotNull
   @Override
-  public ModuleBuilder createModuleBuilder() {
-    return new TemplateModuleBuilder(this, getModuleType(), getInputFields());
+  public @NotNull ModuleBuilder createModuleBuilder() {
+    return new TemplateModuleBuilder(this, null, null);
   }
 
-  @NotNull
-  public List<WizardInputField> getInputFields() {
+  public @NotNull List<WizardInputField<?>> getInputFields() {
     return myInputFields;
   }
 
@@ -82,10 +82,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myArtifacts = artifacts;
   }
 
-  @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName = "framework", valueAttributeName = "")
-  public List<String> getFrameworks() {
+  public @NotNull List<String> getFrameworks() {
     return myFrameworks;
   }
 
@@ -93,24 +92,23 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myFrameworks = frameworks;
   }
 
-  @Nullable
   @Override
-  public ValidationInfo validateSettings() {
+  public @Nullable ValidationInfo validateSettings() {
     return null;
   }
 
-  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
+  public void handleUnzippedDirectories(@NotNull File dir, @NotNull List<? super File> filesToRefresh) throws IOException {
     filesToRefresh.add(dir);
   }
 
-  public static abstract class StreamProcessor<T> {
+  @ApiStatus.Internal
+  public abstract static class StreamProcessor<T> {
     public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
   }
 
   public abstract <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException;
 
-  @Nullable
-  public String getCategory() {
+  public @Nullable String getCategory() {
     return myCategory;
   }
 
@@ -119,21 +117,11 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myInputFields = getFields(element);
   }
 
-  private static List<WizardInputField> getFields(Element templateElement) {
-    //noinspection unchecked
+  private static @Unmodifiable List<WizardInputField<?>> getFields(Element templateElement) {
     return ContainerUtil
       .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
         return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
       });
-  }
-
-  static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
-    try {
-      return consumer.consume(stream);
-    }
-    finally {
-      StreamUtil.closeStream(stream);
-    }
   }
 }

@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -30,11 +19,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -46,7 +43,14 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
-    super("unnamed", true);
+    super(DEFAULT_NAME, true);
+    setIsApplicableChecker(type -> {
+      // do not render 'String' objects for performance reasons
+      if (!(type instanceof ReferenceType) || JAVA_LANG_STRING.equals(type.name())) {
+        return CompletableFuture.completedFuture(false);
+      }
+      return overridesToStringAsync(type);
+    });
   }
 
   @Override
@@ -67,11 +71,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   @Override
   public ToStringRenderer clone() {
     final ToStringRenderer cloned = (ToStringRenderer)super.clone();
-    final ClassFilter[] classFilters = (myClassFilters.length > 0)? new ClassFilter[myClassFilters.length] : ClassFilter.EMPTY_ARRAY;
-    for (int idx = 0; idx < classFilters.length; idx++) {
-      classFilters[idx] = myClassFilters[idx].clone();
-    }
-    cloned.myClassFilters = classFilters;
+    cloned.myClassFilters = ClassFilter.deepCopyOf(myClassFilters);
     return cloned;
   }
 
@@ -83,30 +83,34 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
       return "";
     }
 
-    final Value value = valueDescriptor.getValue();
-    BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
+    Value value = valueDescriptor.getValue();
+    if (value instanceof ObjectReference reference) {
+      DebuggerUtils.ensureNotInsideObjectConstructor(reference, evaluationContext);
+    }
+    DescriptorLabelListener wrappedListener = ValueDescriptorImpl.startLabelUpdate(valueDescriptor, labelListener);
+    BatchEvaluator.getBatchEvaluator(evaluationContext).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
           StringUtil.notNullize(message)
         );
-        labelListener.labelChanged();
+        wrappedListener.labelChanged();
       }
 
       @Override
       public void evaluationError(String message) {
-        final String msg = value != null? message + " " + DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
+        final String msg = value != null ? message + " " + JavaDebuggerBundle
+          .message("evaluation.error.cannot.evaluate.tostring", value.type().name()) : message;
         valueDescriptor.setValueLabelFailed(new EvaluateException(msg, null));
-        labelListener.labelChanged();
+        wrappedListener.labelChanged();
       }
     });
-    return XDebuggerUIConstants.COLLECTING_DATA_MESSAGE;
+    return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
-  @NotNull
   @Override
-  public String getLinkText() {
-    return DebuggerBundle.message("message.node.toString");
+  public @NotNull String getLinkText() {
+    return JavaDebuggerBundle.message("message.node.toString");
   }
 
   public boolean isUseClassFilters() {
@@ -125,26 +129,33 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
   }
 
-  @Override
-  public boolean isApplicable(Type type) {
-    if (!(type instanceof ReferenceType)) {
-      return false;
-    }
-
-    if (JAVA_LANG_STRING.equals(type.name())) {
-      return false; // do not render 'String' objects for performance reasons
-    }
-
-    return overridesToString(type);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      Method toStringMethod = ((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;");
+      Method toStringMethod = DebuggerUtils.findMethod((ReferenceType)type, "toString", "()Ljava/lang/String;");
       return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
+  }
+
+  private static CompletableFuture<Boolean> overridesToStringAsync(Type type) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled()) {
+      return CompletableFuture.completedFuture(overridesToString(type));
+    }
+    if (type instanceof ClassType) {
+      return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
+        if (t instanceof ReferenceType referenceType) {
+          return DebuggerUtilsAsync.methods(referenceType)
+            .thenApply(methods -> {
+              return ContainerUtil.exists(methods,
+                                          m -> !m.isAbstract() &&
+                                               DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                               !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+            });
+        }
+        return CompletableFuture.completedFuture(false);
+      }).thenApply(t -> t != null);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override
@@ -159,23 +170,21 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    return DebugProcessImpl.getDefaultRenderer(value).isExpandableAsync(value, evaluationContext, parentDescriptor);
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) {
     super.readExternal(element);
 
     ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
     USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
-    myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
+    myClassFilters = DebuggerSettingsUtils.readFilters(element.getChildren("filter"));
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
     if (ON_DEMAND) {
@@ -184,7 +193,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
-    DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
+    DebuggerSettingsUtils.writeFilters(element, "filter", myClassFilters);
   }
 
   public ClassFilter[] getClassFilters() {

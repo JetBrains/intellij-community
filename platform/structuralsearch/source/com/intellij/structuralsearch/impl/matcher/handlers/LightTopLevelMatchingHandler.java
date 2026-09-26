@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.dupLocator.iterators.NodeIterator;
 import org.jetbrains.annotations.NotNull;
 
 public final class LightTopLevelMatchingHandler extends MatchingHandler implements DelegatingHandler {
@@ -14,22 +14,22 @@ public final class LightTopLevelMatchingHandler extends MatchingHandler implemen
   }
 
   @Override
-  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final MatchContext matchContext) {
+  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final @NotNull MatchContext matchContext) {
     return myDelegate.match(patternNode, matchedNode, matchContext);
   }
 
   @Override
-  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean canMatch(@NotNull PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     return myDelegate.canMatch(patternNode, matchedNode, context);
   }
 
   @Override
-  public boolean matchSequentially(final NodeIterator patternNodes, final NodeIterator matchNodes, final MatchContext context) {
+  public boolean matchSequentially(final @NotNull NodeIterator patternNodes, final @NotNull NodeIterator matchNodes, final @NotNull MatchContext context) {
     return myDelegate.matchSequentially(patternNodes, matchNodes, context);
   }
 
   @Override
-  public boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+  public boolean isMatchSequentiallySucceeded(final @NotNull NodeIterator matchNodes) {
     return true;
   }
 

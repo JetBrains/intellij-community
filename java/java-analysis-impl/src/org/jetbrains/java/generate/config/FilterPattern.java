@@ -21,11 +21,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -33,10 +33,9 @@ import java.util.regex.PatternSyntaxException;
 /**
  * This is a filtering pattern, used to filter unwanted fields for this action.
  */
-public class FilterPattern {
-
-    private static final Logger LOG = Logger.getInstance("#FilterPattern");
-    private static final Set<String> loggerNames = new THashSet<>();
+public final class FilterPattern {
+    private static final Logger LOG = Logger.getInstance(FilterPattern.class);
+    private static final Set<String> loggerNames = new HashSet<>();
     static {
       Collections.addAll(loggerNames,
                          "org.apache.log4j.Logger", "java.util.logging.Logger", "org.apache.commons.logging.Log", "org.slf4j.Logger");
@@ -194,7 +193,6 @@ public class FilterPattern {
      * Set this to true to filter by enum fields (JDK1.5).
      *
      * @param enumField if true enum fields is unwanted.
-     * @since 3.17
      */
     public void setEnumField(boolean enumField) {
         this.enumField = enumField;
@@ -208,7 +206,6 @@ public class FilterPattern {
      * Set this to true to filter loggers (Log4j, JDK1.4).
      *
      * @param loggers if true logger fields is unwanted.
-     * @since 3.20
      */
     public void setLoggers(boolean loggers) {
         this.loggers = loggers;
@@ -233,7 +230,6 @@ public class FilterPattern {
      * Sets a filtering using the field type FQN.
      *
      * @param fieldType  the field type
-     * @since 3.20
      */
     public void setFieldType(String fieldType) {
         this.fieldType = fieldType;
@@ -258,12 +254,12 @@ public class FilterPattern {
      * Sets a filtering using the method return type FQN.
      *
      * @param methodType  the method return type
-     * @since 3.20
      */
     public void setMethodType(String methodType) {
         this.methodType = methodType;
     }
 
+    @Override
     public String toString() {
         return "FilterPattern{" +
                 "fieldName='" + fieldName + "'" +

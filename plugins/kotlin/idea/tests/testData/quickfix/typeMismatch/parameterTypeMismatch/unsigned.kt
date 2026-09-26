@@ -1,0 +1,8 @@
+// "Change parameter 'u' type of function 'takeUInt' to 'Int'" "true"
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+fun takeUInt(u: UInt) = 0
+
+val b = takeUInt(<caret>1)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

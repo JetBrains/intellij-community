@@ -1,0 +1,38 @@
+// FILE: first.before.kt
+// "Import type alias 'TestAlias'" "true"
+// ERROR: Unresolved reference: TestAlias
+
+package test
+
+fun test() {
+    val a = ::<caret>TestAlias
+}
+
+//-----------------------
+
+
+// FILE: second.kt
+
+package dependency
+
+class A
+
+typealias TestAlias = A
+
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import type alias 'TestAlias'" "true"
+// ERROR: Unresolved reference: TestAlias
+
+package test
+
+import dependency.TestAlias
+
+fun test() {
+    val a = ::<caret>TestAlias
+}
+
+//-----------------------
+

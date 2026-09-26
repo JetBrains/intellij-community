@@ -1,0 +1,22 @@
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> KtLightClassForDecompiledDeclaration of PsiFile:Unit.class: Unit
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Light PSI class: T: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> UastFakeDeserializedSourceLightMethod of TODO: TODO
+UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> PsiClass:Object: Object
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> KtLightClassForDecompiledDeclaration of PsiFile:Unit.class: Unit
+UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> SymbolLightTypeParameter: T
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of TODO) -> USimpleNameReferenceExpression (identifier = TODO) -> UastFakeDeserializedSourceLightMethod of TODO: TODO
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to UastFakeSourceLightMethod of foo) -> USimpleNameReferenceExpression (identifier = foo) -> UastFakeSourceLightMethod of foo: foo
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to UastFakeSourceLightMethod of foo) -> USimpleNameReferenceExpression (identifier = foo) -> UastFakeSourceLightMethod of foo: foo
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to SymbolLightSimpleMethod of SymbolLightClassForFacade:ReifiedResolveKt) -> USimpleNameReferenceExpression (identifier = bar) -> SymbolLightSimpleMethod of SymbolLightClassForFacade:ReifiedResolveKt: bar
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to SymbolLightSimpleMethod of SymbolLightClassForFacade:ReifiedResolveKt) -> USimpleNameReferenceExpression (identifier = bar) -> SymbolLightSimpleMethod of SymbolLightClassForFacade:ReifiedResolveKt: bar
+    ULocalVariable (name = z) -> UQualifiedReferenceExpression -> UastFakeDeserializedSymbolLightMethod of filterIsInstance: filterIsInstance
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to UastFakeDeserializedSourceLightMethod of listOf) -> USimpleNameReferenceExpression (identifier = listOf) -> UastFakeDeserializedSourceLightMethod of listOf: listOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to UastFakeDeserializedSymbolLightMethod of filterIsInstance) -> USimpleNameReferenceExpression (identifier = filterIsInstance) -> UastFakeDeserializedSymbolLightMethod of filterIsInstance: filterIsInstance
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

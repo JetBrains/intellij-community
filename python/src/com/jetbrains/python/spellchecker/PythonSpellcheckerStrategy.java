@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.spellchecker;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
@@ -26,51 +12,54 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.psi.PyStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyStringLiteralUtil;
+import com.jetbrains.python.psi.impl.PyStringLiteralDecoder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
-/**
- * @author yole
- */
-public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
+public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
-    public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {
       final Splitter splitter = PlainTextSplitter.getInstance();
-      final List<ASTNode> strNodes = element.getStringNodes();
-      final List<String> prefixes = ContainerUtil.mapNotNull(strNodes, n -> StringUtil.nullize(new StringNodeInfo(n).getPrefix()));
-      
-      if (element.textContains('\\') && prefixes.stream().noneMatch(PyStringLiteralUtil::isRawPrefix)) {
-        for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
-          final String value = fragment.getSecond();
-          final int startOffset = fragment.getFirst().getStartOffset();
-          consumer.consumeToken(element, value, false, startOffset, TextRange.allOf(value), splitter);
+      for (PyStringElement stringElement : element.getStringElements()) {
+        final List<TextRange> literalPartRanges;
+        if (stringElement.isFormatted()) {
+          literalPartRanges = ((PyFormattedStringElement)stringElement).getLiteralPartRanges();
         }
-      }
-      else if (!prefixes.isEmpty()) {
-        for (TextRange valueTextRange : element.getStringValueTextRanges()) {
-          final String value = valueTextRange.substring(element.getText());
-          final int startOffset = valueTextRange.getStartOffset();
-          consumer.consumeToken(element, value, false, startOffset, TextRange.allOf(value), splitter);
+        else {
+          literalPartRanges = Collections.singletonList(stringElement.getContentRange());
         }
-      }
-      else {
-        consumer.consumeToken(element, splitter);
+        final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(stringElement);
+        final boolean containsEscapes = stringElement.textContains('\\');
+        for (TextRange literalPartRange : literalPartRanges) {
+          final List<TextRange> escapeAwareRanges;
+          if (stringElement.isRaw() || !containsEscapes) {
+            escapeAwareRanges = Collections.singletonList(literalPartRange);
+          }
+          else {
+            escapeAwareRanges = ContainerUtil.map(decoder.decodeRange(literalPartRange), x -> x.getFirst());
+          }
+          for (TextRange escapeAwareRange : escapeAwareRanges) {
+            final String valueText = escapeAwareRange.substring(stringElement.getText());
+            consumer.consumeToken(stringElement, valueText, false, escapeAwareRange.getStartOffset(), TextRange.allOf(valueText), splitter);
+          }
+        }
       }
     }
   }
 
   private static class FormatStringTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
-    public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {
       String stringValue = element.getStringValue();
       List<PyStringFormatParser.FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(stringValue);
       Splitter splitter = PlainTextSplitter.getInstance();
@@ -85,16 +74,23 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
     }
   }
 
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled", false);
+  }
+
   private final StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
   private final FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
+    if (element instanceof PyStringLiteralExpression && !useTextLevelSpellchecking()) {
+      final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+      if (element.getTextLength() >= 2 && injectionManager.getInjectedPsiFiles(element) != null) {
+        return EMPTY_TOKENIZER;
+      }
       PsiElement parent = element.getParent();
-      if (parent instanceof PyBinaryExpression) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression)parent;
+      if (parent instanceof PyBinaryExpression binaryExpression) {
         if (element == binaryExpression.getLeftExpression() && binaryExpression.getOperator() == PyTokenTypes.PERC) {
           return myFormatStringTokenizer;
         }

@@ -17,14 +17,28 @@ interface ii {
   void f2();
 }
 
-<error descr="Duplicate class: 'a'">class a</error> {
+class <error descr="Duplicate class: 'a'">a</error> {
+}
+
+class DuplicateNestedClassesTest {
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+}
+
+class DuplicateLocalClassesTest {
+  public void foo() {
+    class D {}
+    class <error descr="Duplicate class: 'D'">D</error> {}
+    class <error descr="Duplicate class: 'D'">D</error> {}
+  }
 }
 
 class Foo {
     void f() {
         class Bar {
         }
-        <error descr="Duplicate class: 'Bar'">class Bar</error> {
+        class <error descr="Duplicate class: 'Bar'">Bar</error> {
         }
     }
 }
@@ -33,7 +47,7 @@ class Foo {
 class c2 {
   class c3 {
     void f() {
-      <error descr="Duplicate class: 'c2'">class c2</error> {
+      class <error descr="Duplicate class: 'c2'">c2</error> {
       }
     }
   }
@@ -41,13 +55,13 @@ class c2 {
 
 
 class cont {
-        class B {
+        class <error descr="Duplicate class: 'B'">B</error> {
         }
         {
             class B {
             }
         }
-        <error descr="Duplicate class: 'B'">class B</error> {
+        class <error descr="Duplicate class: 'B'">B</error> {
         }
 }
 class cont2 {
@@ -72,4 +86,13 @@ class ok {
 class ok2 {
   public ok2() {}
   public void ok2() {}
+}
+
+public class Outer {
+  public class <error descr="Duplicate class: 'Outer'">Outer</error> {
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+    public<error descr="Identifier or type expected">;</error>
+  }
 }

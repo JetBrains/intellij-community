@@ -1,0 +1,6 @@
+JsonFile: y_array_with_leading_space.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(])(']')

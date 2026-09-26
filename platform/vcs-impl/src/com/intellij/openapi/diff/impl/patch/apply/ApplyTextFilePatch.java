@@ -1,81 +1,97 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.CharsetEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.function.Supplier;
 
-public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
+@ApiStatus.Internal
+public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   public ApplyTextFilePatch(final TextFilePatch patch) {
     super(patch);
   }
 
-  @Nullable
-  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<CharSequence> baseContents) throws IOException {
-    byte[] fileContents = fileToPatch.contentsToByteArray();
-    CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-
-    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(text, myPatch.getHunks());
-    if (appliedPatch != null) {
-      final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-      if (document == null) {
-        throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
-      }
-      document.setText(appliedPatch.patchedText);
-      FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(appliedPatch.status);
+  @Override
+  protected @NotNull Result applyChange(@NotNull Project project,
+                                        @NotNull VirtualFile fileToPatch,
+                                        @NotNull FilePath pathBeforeRename,
+                                        @Nullable Supplier<? extends CharSequence> baseContents) throws IOException {
+    final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
+    if (document == null) {
+      throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
     }
-    return new Result(ApplyPatchStatus.FAILURE) {
+
+    String documentText = document.getText();
+    String fileTextPersistent = TextPresentationTransformers.toPersistent(documentText, fileToPatch).toString();
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(fileTextPersistent, myPatch.getHunks());
+
+    if (appliedPatch != null) {
+      if (appliedPatch.status == ApplyPatchStatus.ALREADY_APPLIED) {
+        return new Result(appliedPatch.status);
+      }
+
+      if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
+        updateDocumentContent(project, document, appliedPatch.patchedText, fileToPatch);
+        return new Result(appliedPatch.status);
+      }
+    }
+
+    ApplyPatchStatus status = appliedPatch != null ? appliedPatch.status : ApplyPatchStatus.FAILURE;
+    assert status == ApplyPatchStatus.PARTIAL || status == ApplyPatchStatus.FAILURE;
+    return new Result(status) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
-        return ApplyPatchForBaseRevisionTexts
-          .create(project, fileToPatch, pathBeforeRename, myPatch, baseContents != null ? baseContents.get() : null);
+        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch,
+                                                     baseContents != null ? baseContents.get() : null);
       }
     };
   }
 
-  protected void applyCreate(Project project, final VirtualFile newFile, CommitContext commitContext) throws IOException {
-    final Document document = FileDocumentManager.getInstance().getDocument(newFile);
+  @Override
+  protected void applyCreate(@NotNull Project project,
+                             @NotNull VirtualFile newFile,
+                             @Nullable CommitContext commitContext) throws IOException {
+    Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
       throw new IOException("Failed to set contents for new file " + newFile.getPath());
     }
-    final String charsetName = CharsetEP.getCharset(newFile.getPath(), commitContext);
+
+    String charsetName = commitContext == null ? null : CharsetEP.getCharset(newFile.getPath(), commitContext);
     if (charsetName != null) {
       try {
-        final Charset charset = Charset.forName(charsetName);
-        newFile.setCharset(charset);
-      } catch (IllegalArgumentException e) {
-        //
+        newFile.setCharset(Charset.forName(charsetName));
+      }
+      catch (IllegalArgumentException ignore) {
       }
     }
-    document.setText(myPatch.getSingleHunkPatchText());
-    FileDocumentManager.getInstance().saveDocument(document);
+
+    String patchText = myPatch.getSingleHunkPatchText();
+    updateDocumentContent(project, document, patchText, newFile);
+  }
+
+  private static void updateDocumentContent(@NotNull Project project,
+                                            @NotNull Document document,
+                                            @NotNull String patchedText, @NotNull VirtualFile fileToPatch) {
+    VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> {
+      String documentPresentation = TextPresentationTransformers.fromPersistent(patchedText, fileToPatch).toString();
+      document.setText(documentPresentation);
+      FileDocumentManager.getInstance().saveDocument(document);
+    });
   }
 }

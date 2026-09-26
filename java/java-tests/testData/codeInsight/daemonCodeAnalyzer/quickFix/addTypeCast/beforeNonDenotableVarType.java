@@ -1,4 +1,4 @@
-// "Cast to 'java.lang.Object'" "false"
+// "Cast expression to 'java.lang.Object'" "false"
 class A {
     void f() {
         var y = new Object();

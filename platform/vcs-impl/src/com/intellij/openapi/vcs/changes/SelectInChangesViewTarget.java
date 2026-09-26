@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.SelectInContext;
@@ -21,14 +7,17 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowIdFor;
+
+@ApiStatus.Internal
 public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   private final Project myProject;
 
@@ -36,8 +25,9 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     myProject = project;
   }
 
+  @Override
   public String toString() {
-    return VcsBundle.message("changes.toolwindow.name");
+    return ChangesViewManager.getLocalChangesToolWindowName(myProject);
   }
 
   @Override
@@ -52,21 +42,24 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final VirtualFile file = context.getVirtualFile();
     Runnable runnable = () -> {
-      ChangesViewContentManager.getInstance(myProject).selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+      ChangesViewContentManager.getInstance(myProject).selectContent(LOCAL_CHANGES);
       ChangesViewManager.getInstance(myProject).selectFile(file);
     };
     if (requestFocus) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);
+      ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+      if (toolWindow != null) toolWindow.activate(runnable);
     }
     else {
       runnable.run();
     }
   }
 
-  public String getToolWindowId() {
-    return ChangesViewContentManager.TOOLWINDOW_ID;
+  @Override
+  public @Nullable String getToolWindowId() {
+    return getToolWindowIdFor(myProject, LOCAL_CHANGES);
   }
 
+  @Override
   public float getWeight() {
     return 9;
   }

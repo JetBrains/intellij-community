@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,66 +25,48 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public void registerFileType(@NotNull FileType fileType) {
-  }
+  public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) { }
 
   @Override
-  public void unregisterFileType(@NotNull FileType fileType) {
-  }
-
-  @Override
-  @NotNull
-  public String getIgnoredFilesList() {
+  public @NotNull String getIgnoredFilesList() {
     throw new IncorrectOperationException();
   }
 
   @Override
-  public void setIgnoredFilesList(@NotNull String list) {
-  }
+  public void setIgnoredFilesList(@NotNull String list) { }
 
   @Override
   public boolean isIgnoredFilesListEqualToCurrent(@NotNull String list) {
     return false;
   }
 
-  public void save() {
-  }
+  public void save() { }
 
   @Override
-  @NotNull
-  public String getExtension(@NotNull String fileName) {
+  public @NotNull String getExtension(@NotNull String fileName) {
     return "";
   }
 
   @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
-  }
+  public void fireFileTypesChanged() { }
 
   @Override
-  public void fireFileTypesChanged() {
-  }
-
-  @Override
-  @NotNull
-  public FileType getFileTypeByFileName(@NotNull String fileName) {
+  public @NotNull FileType getFileTypeByFileName(@NotNull String fileName) {
     return fileType;
   }
 
   @Override
-  @NotNull
-  public FileType getFileTypeByFile(@NotNull VirtualFile file) {
+  public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file) {
     return fileType;
   }
 
   @Override
-  @NotNull
-  public FileType getFileTypeByExtension(@NotNull String extension) {
+  public @NotNull FileType getFileTypeByExtension(@NotNull String extension) {
     return fileType;
   }
 
   @Override
-  @NotNull
-  public FileType[] getRegisteredFileTypes() {
+  public FileType @NotNull [] getRegisteredFileTypes() {
     return FileType.EMPTY_ARRAY;
   }
 
@@ -111,21 +81,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  @NotNull
-  public String[] getAssociatedExtensions(@NotNull FileType type) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
+  public void fireBeforeFileTypesChanged() { }
 
   @Override
-  public void fireBeforeFileTypesChanged() {
-  }
-
-  @Override
-  public void addFileTypeListener(@NotNull FileTypeListener listener) {
-  }
-
-  @Override
-  public void removeFileTypeListener(@NotNull FileTypeListener listener) {
+  public void makeFileTypesChange(@NotNull String message, @NotNull Runnable command) {
+    command.run();
   }
 
   @Override
@@ -134,22 +94,18 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  @NotNull
-  public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
+  public @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type) {
     return Collections.emptyList();
   }
 
   @Override
-  public void associate(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
-  }
+  public void associate(@NotNull FileType type, @NotNull FileNameMatcher matcher) { }
 
   @Override
-  public void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
-  }
+  public void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher) { }
 
   @Override
-  @NotNull
-  public FileType getStdFileType(@NotNull @NonNls final String fileTypeName) {
+  public @NotNull FileType getStdFileType(@NotNull String fileTypeName) {
     if ("ARCHIVE".equals(fileTypeName)) return UnknownFileType.INSTANCE;
     if ("PLAIN_TEXT".equals(fileTypeName)) return PlainTextFileType.INSTANCE;
     if ("CLASS".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.JavaClassFileType", fileTypeName);
@@ -163,10 +119,10 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     if ("JavaScript".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.javascript.JavaScriptFileType", fileTypeName);
     if ("Properties".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.properties.PropertiesFileType", fileTypeName);
     if ("GUI_DESIGNER_FORM".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.uiDesigner.GuiFormFileType", fileTypeName);
-    return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase());
+    return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase(Locale.ENGLISH));
   }
 
-  private static FileType loadFileTypeSafe(final String className, String fileTypeName) {
+  private static FileType loadFileTypeSafe(String className, String fileTypeName) {
     try {
       return (FileType)Class.forName(className).getField("INSTANCE").get(null);
     }
@@ -176,13 +132,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-   return false;
-  }
-
-  @Nullable
-  @Override
-  public FileType findFileTypeByName(@NotNull String fileTypeName) {
+  public @Nullable FileType findFileTypeByName(@NotNull String fileTypeName) {
     return null;
   }
 }

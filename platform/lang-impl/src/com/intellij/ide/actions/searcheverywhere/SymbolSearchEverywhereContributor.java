@@ -1,39 +1,53 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
-import com.intellij.lang.DependentLanguage;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
+import com.intellij.ide.util.gotoByName.LanguageRef;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeUICustomization;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere
+ * ({@code com.intellij.platform.searchEverywhere}).
  */
-public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor<Language> {
+@Deprecated
+public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor implements PossibleSlowContributor,
+                                                                                            SearchEverywherePreviewProvider {
 
-  public SymbolSearchEverywhereContributor(Project project) {
-    super(project);
+  private static final Logger LOG = Logger.getInstance(SymbolSearchEverywhereContributor.class);
+
+  private final PersistentSearchEverywhereContributorFilter<LanguageRef> myFilter;
+
+  @ApiStatus.Internal
+  public SymbolSearchEverywhereContributor(@NotNull AnActionEvent event, @Nullable List<SearchEverywhereContributorModule> contributorModules) {
+    super(event, contributorModules);
+    myFilter = ClassSearchEverywhereContributor.createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
   }
 
-  @NotNull
-  @Override
-  public String getGroupName() {
-    return "Symbols";
+  public SymbolSearchEverywhereContributor(@NotNull AnActionEvent event) {
+    super(event);
+    myFilter = ClassSearchEverywhereContributor.createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
   }
 
   @Override
-  public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.symbols", IdeUICustomization.getInstance().getProjectConceptName());
+  public @NotNull String getGroupName() {
+    return IdeBundle.message("search.everywhere.group.name.symbols");
   }
 
   @Override
@@ -42,30 +56,64 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
-  protected FilteringGotoByModel<Language> createModel(Project project) {
-    return new GotoSymbolModel2(project);
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    final var vanillaInfo = createPsiExtendedInfo();
+    final var contributorModules = getContributorModules();
+    if (contributorModules == null || contributorModules.isEmpty()) return vanillaInfo;
+    return contributorModules.getFirst().mixinExtendedInfo(vanillaInfo);
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Language> {
-    @NotNull
-    @Override
-    public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
-      return new SymbolSearchEverywhereContributor(initEvent.getProject());
+  @Override
+  protected @NotNull FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
+    final var contribModules = getContributorModules();
+    if (contribModules != null) {
+      for (final var it : contribModules) {
+        var customModel = it.createCustomModel(project, this, null);
+        if (customModel != null) return customModel;
+      }
     }
 
-    @Nullable
-    @Override
-    public SearchEverywhereContributorFilter<Language> createFilter() {
-      List<Language> items = Language.getRegisteredLanguages()
-                                     .stream()
-                                     .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
-                                     .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
-                                     .collect(Collectors.toList());
-      return new SearchEverywhereContributorFilterImpl<>(items,
-                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_NAME_EXTRACTOR,
-                                                         ClassSearchEverywhereContributor.Factory.LANGUAGE_ICON_EXTRACTOR
-      );
+    GotoSymbolModel2 model = new GotoSymbolModel2(project, this);
+    if (myFilter != null) {
+      model.setFilterItems(myFilter.getSelectedElements());
     }
+    return model;
   }
 
+  @ApiStatus.Internal
+  @Override
+  protected @NotNull FilteringGotoByModel<?> createModelWithOperationDisposable(@NotNull Project project, @Nullable Disposable operationDisposable) {
+    final var contribModules = getContributorModules();
+    if (contribModules != null) {
+      for (final var it : contribModules) {
+        var customModel = it.createCustomModel(project, this, operationDisposable);
+        if (customModel != null) return customModel;
+      }
+    }
+
+    GotoSymbolModel2 model = new GotoSymbolModel2(project, this);
+    if (myFilter != null) {
+      model.setFilterItems(myFilter.getSelectedElements());
+    }
+    return model;
+  }
+
+  @Override
+  public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
+    return doGetActions(myFilter, new LangFilterCollector(), onChanged);
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new SymbolSearchEverywhereContributor(initEvent));
+    }
+
+    @Override
+    public boolean isAvailable(Project project) {
+      // The welcome-screen project has no source, so the contributor can never return a result.
+      return !WelcomeScreenProjectProvider.isWelcomeScreenProject(project) &&
+             GotoContributorsAvailabilityService.hasLocalSymbolContributors(project);
+    }
+  }
 }

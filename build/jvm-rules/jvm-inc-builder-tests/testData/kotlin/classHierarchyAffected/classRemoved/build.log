@@ -1,0 +1,44 @@
+================ Step #1 =================
+Cleaning output files:
+  foo/A.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_classRemoved-a.kotlin_module
+  foo/B.class
+  use/CreateAKt.class
+  use/UseAfooKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/classRemoved/a/B.kt
+  kotlin/classHierarchyAffected/classRemoved/a/createA.kt
+  kotlin/classHierarchyAffected/classRemoved/a/useAfoo.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_classRemoved-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/classRemoved/a/B.kt
+  kotlin/classHierarchyAffected/classRemoved/a/createA.kt
+  kotlin/classHierarchyAffected/classRemoved/a/funA.kt
+  kotlin/classHierarchyAffected/classRemoved/a/useAfoo.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_classRemoved-a.kotlin_module
+  foo/C.class
+  use/CreateBKt.class
+  use/CreateCKt.class
+  use/UseBbarKt.class
+  use/UseCbazKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/classRemoved/a/C.kt
+  kotlin/classHierarchyAffected/classRemoved/a/createB.kt
+  kotlin/classHierarchyAffected/classRemoved/a/createC.kt
+  kotlin/classHierarchyAffected/classRemoved/a/useBbar.kt
+  kotlin/classHierarchyAffected/classRemoved/a/useCbaz.kt
+End of files
+------------------------------------------
+Exit code: OK

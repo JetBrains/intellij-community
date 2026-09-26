@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,7 @@ import java.util.List;
  * Global context of matching process
  */
 public class MatchContext {
+
   private final Stack<MatchedElementsListener> myMatchedElementsListenerStack = new Stack<>(2);
 
   private MatchResultSink sink;
@@ -21,29 +24,43 @@ public class MatchContext {
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
-  private GlobalMatchingVisitor matcher;
+  private final @NotNull GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
-  private List<PsiElement> myMatchedNodes;
+  private final Stack<List<PsiElement>> mySavedMatchedNodes = new Stack<>();
+  private List<PsiElement> myMatchedNodes = new SmartList<>();
 
-  public List<PsiElement> getMatchedNodes() {
-    return myMatchedNodes;
+  public MatchContext(@NotNull GlobalMatchingVisitor visitor) {
+    matcher = visitor;
   }
 
-  public void setMatchedNodes(final List<PsiElement> matchedNodes) {
-    myMatchedNodes = matchedNodes;
+  public void addMatchedNode(PsiElement node) {
+    myMatchedNodes.add(node);
+  }
+
+  public void removeMatchedNode(PsiElement node) {
+    myMatchedNodes.remove(node);
+  }
+
+  public void saveMatchedNodes() {
+    mySavedMatchedNodes.push(myMatchedNodes);
+    myMatchedNodes = new SmartList<>();
+  }
+
+  public void restoreMatchedNodes() {
+    myMatchedNodes = mySavedMatchedNodes.tryPop();
+  }
+
+  public void clearMatchedNodes() {
+    myMatchedNodes.clear();
   }
 
   @FunctionalInterface
   public interface MatchedElementsListener {
-    void matchedElements(@NotNull Collection<PsiElement> matchedElements);
+    void matchedElements(@NotNull Collection<? extends PsiElement> matchedElements);
   }
 
-  public void setMatcher(GlobalMatchingVisitor matcher) {
-    this.matcher = matcher;
-  }
-
-  public GlobalMatchingVisitor getMatcher() {
+  public @NotNull GlobalMatchingVisitor getMatcher() {
     return matcher;
   }
 
@@ -51,15 +68,26 @@ public class MatchContext {
     return options;
   }
 
-  public void setOptions(MatchOptions options) {
+  public void setOptions(@NotNull MatchOptions options) {
     this.options = options;
   }
 
   public MatchResultImpl getPreviousResult() {
-    return previousResults.isEmpty() ? null : previousResults.peek();
+    if (previousResults.isEmpty()) {
+      return null;
+    }
+    else {
+      int index = previousResults.size() - 1;
+      MatchResultImpl result = previousResults.get(index); // may contain nulls
+      while (result == null && index > 0) {
+        index--;
+        result = previousResults.get(index);
+      }
+      return result;
+    }
   }
 
-  public MatchResultImpl getResult() {
+  public @NotNull MatchResultImpl getResult() {
     if (result==null) result = new MatchResultImpl();
     return result;
   }
@@ -88,7 +116,7 @@ public class MatchContext {
     return pattern;
   }
 
-  public void setPattern(CompiledPattern pattern) {
+  public void setPattern(@NotNull CompiledPattern pattern) {
     this.pattern = pattern;
   }
 
@@ -96,13 +124,12 @@ public class MatchContext {
     return sink;
   }
 
-  public void setSink(MatchResultSink sink) {
+  public void setSink(@NotNull MatchResultSink sink) {
     this.sink = sink;
   }
 
   public void clear() {
     result = null;
-    pattern = null;
   }
 
   public boolean shouldRecursivelyMatch() {
@@ -113,7 +140,7 @@ public class MatchContext {
     this.shouldRecursivelyMatch = shouldRecursivelyMatch;
   }
 
-  public void pushMatchedElementsListener(MatchedElementsListener matchedElementsListener) {
+  public void pushMatchedElementsListener(@NotNull MatchedElementsListener matchedElementsListener) {
     myMatchedElementsListenerStack.push(matchedElementsListener);
   }
 
@@ -121,9 +148,51 @@ public class MatchContext {
     myMatchedElementsListenerStack.pop();
   }
 
-  public void notifyMatchedElements(Collection<PsiElement> matchedElements) {
+  public void notifyMatchedElements(@NotNull Collection<? extends PsiElement> matchedElements) {
     if (!myMatchedElementsListenerStack.isEmpty()) {
       myMatchedElementsListenerStack.peek().matchedElements(matchedElements);
     }
+  }
+
+  public void dispatchMatched() {
+    if (!myMatchedNodes.isEmpty() && !dispatchTargetMatch(getResult())) {
+      dispatchCompleteMatch();
+    }
+  }
+
+  private boolean dispatchTargetMatch(@NotNull MatchResult result) {
+    boolean dispatched = false;
+
+    for (MatchResult r : result.getChildren()) {
+      if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
+        dispatched |= dispatchTargetMatch(r);
+      }
+      else if (r.isTarget()) {
+        getSink().newMatch(r);
+        dispatched = true;
+      }
+    }
+    return dispatched;
+  }
+
+  private void dispatchCompleteMatch() {
+    final MatchResultImpl result = getResult();
+    final boolean complexMatch = myMatchedNodes.size() > 1;
+    final PsiElement match = myMatchedNodes.get(0);
+
+    if (!complexMatch) {
+      result.setMatch(match);
+      result.setMatchImage(match.getText());
+    }
+    else {
+      for (final PsiElement matchStatement : myMatchedNodes) {
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), matchStatement, 0, -1, false));
+      }
+
+      result.setMatch(match);
+      result.setMatchImage(match.getText());
+      result.setName(MatchResult.MULTI_LINE_MATCH);
+    }
+    getSink().newMatch(result);
   }
 }

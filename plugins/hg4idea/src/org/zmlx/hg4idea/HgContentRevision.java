@@ -14,7 +14,6 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
@@ -27,8 +26,8 @@ import java.util.Objects;
 public class HgContentRevision implements ByteBackedContentRevision {
 
   private final Project myProject;
-  @NotNull private final HgFile myHgFile;
-  @NotNull private final HgRevisionNumber myRevisionNumber;
+  private final @NotNull HgFile myHgFile;
+  private final @NotNull HgRevisionNumber myRevisionNumber;
 
   private FilePath filePath;
 
@@ -38,37 +37,36 @@ public class HgContentRevision implements ByteBackedContentRevision {
     myRevisionNumber = revisionNumber;
   }
 
-  @NotNull
-  public static HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+  public static @NotNull HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
     return !hgFile.toFilePath().getFileType().isBinary()
            ? new HgContentRevision(project, hgFile, revisionNumber)
            : new HgBinaryContentRevision(project, hgFile, revisionNumber);
   }
 
-  @Nullable
   @Override
-  public String getContent() {
+  public @Nullable String getContent() {
     if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileContent(myHgFile.getFile().getPath());
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
     return CharsetToolkit.bytesToString(HgUtil.loadContent(myProject, myRevisionNumber, fileToCat), getFile().getCharset());
   }
 
+  @Override
   public byte[] getContentAsBytes() {
     if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileByteContent(myHgFile.getFile());
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
     return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
-  @NotNull
-  public FilePath getFile() {
+  @Override
+  public @NotNull FilePath getFile() {
     if (filePath == null) {
       filePath = myHgFile.toFilePath();
     }
     return filePath;
   }
 
-  @NotNull
-  public HgRevisionNumber getRevisionNumber() {
+  @Override
+  public @NotNull HgRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 

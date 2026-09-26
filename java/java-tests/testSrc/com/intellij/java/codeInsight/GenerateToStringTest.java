@@ -20,14 +20,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.java.generate.GenerateToStringWorker;
 import org.jetbrains.java.generate.config.ReplacePolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.util.Collections;
 
-public class GenerateToStringTest extends LightCodeInsightTestCase {
+public class GenerateToStringTest extends LightJavaCodeInsightTestCase {
 
   public void testAnnotationOnMethod() {
     doTest(new TemplateResource("a.java", "@NotNull() public String toString() {return null;}", false));

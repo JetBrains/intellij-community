@@ -1,69 +1,49 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor;
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
-public class DomUIFactoryImpl extends DomUIFactory {
-
+final class DomUIFactoryImpl extends DomUIFactory {
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();
   private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<>();
 
-  public DomUIFactoryImpl() {
+  DomUIFactoryImpl() {
     final Function<DomElement, TableCellEditor> booleanCreator = domElement -> new BooleanTableCellEditor();
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
     registerCustomCellEditor(String.class, domElement -> new DefaultCellEditor(removeBorder(new JTextField())));
-    Consumer<DomUIFactory>[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (Consumer<DomUIFactory> extension : extensions) {
+    for (Consumer<DomUIFactory> extension : EXTENSION_POINT_NAME.getExtensionList()) {
       extension.consume(this);
     }
   }
@@ -81,11 +61,11 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public final UserActivityWatcher createEditorAwareUserActivityWatcher() {
+  public @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
       private final DocumentListener myListener = new DocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent e) {
+        public void documentChanged(@NotNull DocumentEvent e) {
           fireUIChanged();
         }
       };
@@ -120,7 +100,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
         isProcessingChange = true;
         try {
           for (final DomElement element : elements) {
-            DomElementAnnotationsManagerImpl.outdateProblemHolder(element);
+            ((DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(element.getManager().getProject())).outdateProblemHolder(element);
           }
           CommittableUtil.updateHighlighting(panel);
         }
@@ -133,49 +113,27 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  @Nullable
-  public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
+  public @Nullable BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ClassUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
 
   @Override
-  public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
-    captionComponent.initErrorPanel(new DomElementsErrorPanel(elements));
-    return captionComponent;
-  }
-
-  @Override
   public BackgroundEditorHighlighter createDomHighlighter(final Project project, final PerspectiveFileEditor editor, final DomElement element) {
-    return new BackgroundEditorHighlighter() {
-      @Override
-      @NotNull
-      public HighlightingPass[] createPassesForEditor() {
-        if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
-        
-        final XmlFile psiFile = DomUtil.getFile(element);
+    return () -> {
+      if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
 
-        final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-        final Document document = psiDocumentManager.getDocument(psiFile);
-        if (document == null) return HighlightingPass.EMPTY_ARRAY;
+      final XmlFile psiFile = DomUtil.getFile(element);
 
-        editor.commit();
+      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+      final Document document = psiDocumentManager.getDocument(psiFile);
+      if (document == null) return HighlightingPass.EMPTY_ARRAY;
 
-        GeneralHighlightingPass ghp = new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(),
-                                                                  true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());
-        LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
-                                                            document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                            new DefaultHighlightInfoProcessor());
-        return new HighlightingPass[]{ghp, lip};
-      }
+      editor.commit();
 
-      @Override
-      @NotNull
-      public HighlightingPass[] createPassesForVisibleArea() {
-        return createPassesForEditor();
-      }
+      return TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
+        .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty()).toArray(HighlightingPass.EMPTY_ARRAY);
     };
-
   }
 
   @Override
@@ -189,7 +147,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public void registerCustomCellEditor(@NotNull final Class aClass, final Function<DomElement, TableCellEditor> creator) {
+  public void registerCustomCellEditor(final @NotNull Class aClass, final Function<DomElement, TableCellEditor> creator) {
     myCustomCellEditorCreators.put(aClass, creator);
   }
 

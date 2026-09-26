@@ -53,7 +53,7 @@ public enum SvnCommandName {
   private final String myName;
   private final boolean myWriteable;
 
-  private SvnCommandName(String name, boolean writeable) {
+  SvnCommandName(String name, boolean writeable) {
     myName = name;
     myWriteable = writeable;
   }

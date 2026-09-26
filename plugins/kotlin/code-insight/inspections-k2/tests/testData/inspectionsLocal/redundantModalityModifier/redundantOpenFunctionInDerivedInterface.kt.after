@@ -1,0 +1,7 @@
+interface Interface {
+    fun foo()
+}
+
+interface Derived : Interface {
+    override fun foo() {}
+}

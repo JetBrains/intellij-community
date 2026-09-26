@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
@@ -12,10 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
-public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
+
+public final class PyInheritorRenameFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof PyClass;
@@ -23,7 +22,7 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return "Rename inheritors";
+    return PyBundle.message("refactoring.rename.inheritors");
   }
 
   @Override
@@ -36,9 +35,8 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
     PyCodeInsightSettings.getInstance().RENAME_CLASS_INHERITORS = enabled;
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new PyInheritorRenamer((PyClass) element, newName);
   }
 
@@ -50,17 +48,17 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename Inheritors";
+      return PyBundle.message("refactoring.rename.inheritors.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return "Rename inheritor classes with the following names to:";
+      return PyBundle.message("refactoring.rename.inheritor.classes.with.the.following.names.to");
     }
 
     @Override
     public String entityName() {
-      return "Inheritor Class";
+      return PyBundle.message("refactoring.rename.inheritor.class.entity.name");
     }
   }
 }

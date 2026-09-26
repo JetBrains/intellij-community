@@ -1,0 +1,15 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M13.5447 7.4454C14.2592 6.73044 14.9998 5.84973 15 4.01573V1H11.201C10.1381 1 8.00024 1.97862 8 4.09208C7.99976 1.97862 5.86193 1 4.79904 1H1V4.01573C1.00024 5.84973 1.7408 6.73044 2.45535 7.4454C2.4732 7.46324 4.47934 9.45368 4.51649 9.49087C5.18335 10.1581 5.16066 10.8534 4.36985 11.6447L1 15L8.69321 15L15 15L11.6302 11.6447C10.8393 10.8534 10.8167 10.1581 11.4835 9.49087C11.5207 9.45368 13.5268 7.46324 13.5447 7.4454V7.4454Z" fill="url(#paint0_linear_2890_29)"/>
+    <defs>
+        <linearGradient id="paint0_linear_2890_29" x1="1.67299" y1="1.6694" x2="14.5081" y2="14.4972" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF29FF"/>
+            <stop offset="0.16506" stop-color="#C644FF"/>
+            <stop offset="0.38495" stop-color="#8064FF"/>
+            <stop offset="0.58343" stop-color="#497EFF"/>
+            <stop offset="0.7532" stop-color="#2190FF"/>
+            <stop offset="0.88759" stop-color="#099CFF"/>
+            <stop offset="0.96993" stop-color="#00A0FF"/>
+        </linearGradient>
+    </defs>
+</svg>

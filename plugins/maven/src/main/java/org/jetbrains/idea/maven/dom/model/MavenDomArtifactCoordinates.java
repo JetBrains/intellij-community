@@ -26,4 +26,5 @@ public interface MavenDomArtifactCoordinates extends MavenDomShortArtifactCoordi
   @NoSpellchecking
   @Convert(MavenArtifactCoordinatesVersionConverter.class)
   GenericDomValue<String> getVersion();
+
 }

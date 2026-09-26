@@ -1,0 +1,27 @@
+<html>
+<body>
+<p>Reports coroutines used in boolean contexts (if/while/ternary) without being awaited.</p>
+<p>Using a coroutine object directly in a boolean condition will always evaluate to <code>True</code>,
+  which is likely not the intended behavior. The coroutine must be awaited to get its actual boolean value.</p>
+<p><b>Example:</b></p>
+<pre><code>
+async def check() -> bool:
+    return True
+
+
+async def main():
+    if check():  # Always True - coroutine object is truthy
+        print("hi")
+</code></pre>
+<p>Should be:</p>
+<pre><code>
+async def check() -> bool:
+    return True
+
+
+async def main():
+    if await check():  # Correctly awaits the coroutine
+        print("hi")
+</code></pre>
+</body>
+</html>

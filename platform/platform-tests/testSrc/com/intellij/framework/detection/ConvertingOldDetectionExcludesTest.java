@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl;
@@ -8,20 +8,22 @@ import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionBy
 import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInfo;
 import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
-public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
+public class ConvertingOldDetectionExcludesTest extends HeavyPlatformTestCase {
   public static final String FRAMEWORK_ID = "my-framework";
 
   public void testUseOldConfiguration() {
     final DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
-    final VirtualFile file = getTempDir().createVFile("my-file", ".xml");
+    final VirtualFile file = getTempDir().createVirtualFile("my-file.xml");
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID, myModule.getName(), file.getUrl(), false));
     getOldConfiguration().loadState(state);
 
@@ -30,22 +32,26 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
     assertOneElement(getOldConfiguration().getState().getElements());
   }
 
-  public void testExcludeModuleConfiguration() {
-    final DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
-    final VirtualFile dir = getTempDir().createTempVDir();
-    PsiTestUtil.addContentRoot(myModule, dir);
-    final VirtualFile file = getTempDir().createVFile(dir, "my-file", ".xml");
+  public void testExcludeModuleConfiguration() throws IOException {
+    DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
+    Path dir = getTempDir().newPath();
+    Files.createDirectories(dir);
+    VirtualFile virtualDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dir);
+    PsiTestUtil.addContentRoot(myModule, virtualDir);
+    Path file = dir.resolve("my-file.xml");
+    Files.createFile(file);
+    VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file);
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID, myModule.getName()));
     getOldConfiguration().loadState(state);
 
-    assertTrue(isFileExcluded(file));
+    assertTrue(isFileExcluded(virtualFile));
     assertNull(getNewConfiguration().getState());
     assertOneElement(getOldConfiguration().getState().getElements());
   }
 
   public void testExcludeFrameworkConfiguration() {
     final DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
-    final VirtualFile file = getTempDir().createVFile("my-file", ".xml");
+    final VirtualFile file = getTempDir().createVirtualFile("my-file.xml");
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID));
     getOldConfiguration().loadState(state);
 
@@ -56,7 +62,7 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
 
   public void testUseNewConfiguration() {
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
-    final VirtualFile file = getTempDir().createVFile("xxx", ".xml");
+    final VirtualFile file = getTempDir().createVirtualFile("xxx.xml");
     state.getFiles().add(new ExcludedFileState(file.getUrl(), FRAMEWORK_ID));
     getNewConfiguration().loadState(state);
 
@@ -73,7 +79,7 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
 
   public void testConvert() {
     final DisabledAutodetectionInfo state = new DisabledAutodetectionInfo();
-    final VirtualFile file = getTempDir().createVFile("my-file", ".xml");
+    final VirtualFile file = getTempDir().createVirtualFile("my-file.xml");
     state.getElements().add(new DisabledAutodetectionByTypeElement(FRAMEWORK_ID, myModule.getName(), file.getUrl(), false));
     getOldConfiguration().loadState(state);
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.lang.ASTNode;
@@ -20,14 +6,24 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -35,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.Map;
 
@@ -45,9 +41,8 @@ import java.util.Map;
 public class EmptyXmlTag implements XmlTag {
   public static XmlTag INSTANCE = new EmptyXmlTag();
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
@@ -56,15 +51,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return "";
   }
 
@@ -73,9 +66,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlAttribute[] getAttributes() {
+  public XmlAttribute @NotNull [] getAttributes() {
     return XmlAttribute.EMPTY_ARRAY;
   }
 
@@ -122,21 +114,18 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] getSubTags() {
+  public XmlTag @NotNull [] getSubTags() {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String qname) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String qname) {
     return XmlTag.EMPTY;
   }
 
-  @NotNull
   @Override
-  public XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace) {
+  public XmlTag @NotNull [] findSubTags(@NonNls String localName, @NonNls String namespace) {
     return XmlTag.EMPTY;
   }
 
@@ -145,15 +134,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespacePrefix() {
+  public @NotNull String getNamespacePrefix() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getNamespaceByPrefix(@NonNls String prefix) {
+  public @NotNull String getNamespaceByPrefix(@NonNls String prefix) {
     return "";
   }
 
@@ -164,7 +151,7 @@ public class EmptyXmlTag implements XmlTag {
 
   @Override
   public String[] knownNamespaces() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -172,43 +159,36 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getLocalNamespaceDeclarations() {
+  public @NotNull Map<String, String> getLocalNamespaceDeclarations() {
     return Collections.emptyMap();
   }
 
-  @NotNull
   @Override
-  public XmlTagValue getValue() {
+  public @NotNull XmlTagValue getValue() {
     return new XmlTagValue() {
-      @NotNull
       @Override
-      public XmlTagChild[] getChildren() {
+      public XmlTagChild @NotNull [] getChildren() {
         return XmlTagChild.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public XmlText[] getTextElements() {
+      public XmlText @NotNull [] getTextElements() {
         return XmlText.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public String getText() {
+      public @NotNull String getText() {
         return "";
       }
 
-      @NotNull
       @Override
-      public TextRange getTextRange() {
+      public @NotNull TextRange getTextRange() {
         throw new IncorrectOperationException();
       }
 
-      @NotNull
       @Override
-      public String getTrimmedText() {
+      public @NotNull String getTrimmedText() {
         return "";
       }
 
@@ -267,15 +247,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Project getProject() throws PsiInvalidElementAccessException {
+  public @NotNull Project getProject() throws PsiInvalidElementAccessException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     throw new IncorrectOperationException();
   }
 
@@ -284,9 +262,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -355,9 +332,8 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return new char[0];
   }
 
@@ -472,19 +448,18 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return PsiReference.EMPTY_ARRAY;
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return null;
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, @Nullable T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value) {
 
   }
 
@@ -506,15 +481,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     throw new IncorrectOperationException();
   }
 

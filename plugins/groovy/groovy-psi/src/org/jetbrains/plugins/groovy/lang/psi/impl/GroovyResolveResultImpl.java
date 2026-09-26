@@ -1,33 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
-/**
- * @author ven
- */
 public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final @NotNull PsiElement myElement;
   private final boolean myIsAccessible;
@@ -72,8 +56,12 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getContextSubstitutor() {
+    return mySubstitutor;
+  }
+
+  @Override
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -93,8 +81,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -128,8 +115,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   @Override
-  @Nullable
-  public PsiElement getCurrentFileResolveContext() {
+  public @Nullable PsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
   }
 
@@ -138,22 +124,20 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return myIsInvokedOnProperty;
   }
 
-  @Nullable
   @Override
-  public SpreadState getSpreadState() {
+  public @Nullable SpreadState getSpreadState() {
     return mySpreadState;
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "GroovyResolveResultImpl{" +
            "myElement=" + myElement +
            ", mySubstitutor=" + mySubstitutor +
            '}';
   }
 
-  @NotNull
-  public static GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
+  public static @NotNull GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
     if (classResolveResult.getElement() == null) return EmptyGroovyResolveResult.INSTANCE;
     return new GroovyResolveResultImpl(
       classResolveResult.getElement(),

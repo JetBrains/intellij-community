@@ -1,18 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 
@@ -20,7 +20,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
   protected final String myUrl;
   private final OrderRootType myRootType;
 
-  public ItemElement(@NotNull OrderRootTypeElement parent, @NotNull String url, @NotNull OrderRootType rootType, final boolean isJarDirectory,
+  ItemElement(@NotNull OrderRootTypeElement parent, @NotNull String url, @NotNull OrderRootType rootType, final boolean isJarDirectory,
                      boolean isValid) {
     super(parent);
     myUrl = url;
@@ -35,7 +35,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     if (isValid) {
       VirtualFile presentableFile;
       if (isJarFileRoot(url)) {
-        presentableFile = LocalFileSystem.getInstance().findFileByPath(getPresentablePath(url));
+        presentableFile = StandardFileSystems.local().findFileByPath(getPresentablePath(url));
       }
       else {
         presentableFile = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -84,29 +84,22 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     return (OrderRootTypeElement)getParentDescriptor();
   }
 
-  @NotNull
-  public OrderRootType getRootType() {
+  public @NotNull OrderRootType getRootType() {
     return myRootType;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ItemElement)) return false;
-
-    final ItemElement itemElement = (ItemElement)o;
-
-    if (!getParent().equals(itemElement.getParent())) return false;
-    if (!myRootType.equals(itemElement.myRootType)) return false;
-    if (!myUrl.equals(itemElement.myUrl)) return false;
-
-    return true;
+    if (!(o instanceof ItemElement itemElement)) return false;
+    return getParent().equals(itemElement.getParent()) && myRootType.equals(itemElement.myRootType) && myUrl.equals(itemElement.myUrl);
   }
 
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return myUrl;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = getParent().hashCode();

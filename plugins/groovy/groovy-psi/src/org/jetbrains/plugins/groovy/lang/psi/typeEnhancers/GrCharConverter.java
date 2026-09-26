@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -29,26 +16,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-public class GrCharConverter extends GrTypeConverter {
+public final class GrCharConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
-  }
-
-  @Nullable
-  @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType lType,
-                                          @NotNull PsiType rType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
-    if (!PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
-    if (PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType lType,
+                                                  @NotNull PsiType rType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
+    if (!PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
+    if (PsiTypes.charType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
 
     // can assign numeric types to char
     if (TypesUtil.isNumericType(rType)) {
       if (rType instanceof PsiPrimitiveType || TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
-        return PsiType.CHAR.equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
+        return PsiTypes.charType().equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
       }
       else {
         // BigDecimal && BigInteger
@@ -59,12 +40,10 @@ public class GrCharConverter extends GrTypeConverter {
 
     { // special case 'c = []' will throw RuntimeError
       final GrExpression rValue;
-      if (context instanceof GrAssignmentExpression) {
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)context;
+      if (context instanceof GrAssignmentExpression assignmentExpression) {
         rValue = assignmentExpression.getRValue();
       }
-      else if (context instanceof GrVariable) {
-        final GrVariable assignmentExpression = (GrVariable)context;
+      else if (context instanceof GrVariable assignmentExpression) {
         rValue = assignmentExpression.getInitializerGroovy();
       }
       else {
@@ -75,18 +54,15 @@ public class GrCharConverter extends GrTypeConverter {
       }
     }
 
-    if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
-      switch (currentPosition) {
-        case ASSIGNMENT:
-        case RETURN_VALUE:
-          return ConversionResult.WARNING;
-        default:
-          return null;
-      }
+    if (PsiTypes.booleanType().equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
+      return switch (position) {
+        case ASSIGNMENT, RETURN_VALUE -> ConversionResult.WARNING;
+        default -> null;
+      };
     }
 
     // one-symbol string-to-char conversion doesn't work with return value
-    if (currentPosition == ApplicableTo.RETURN_VALUE) {
+    if (position == Position.RETURN_VALUE) {
       return null;
     }
 

@@ -1,0 +1,74 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.grpc` start
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
+    ],
+    module = ":grpc",
+)
+### auto-generated section `dev intellij.libraries.grpc` end
+
+### auto-generated section `build intellij.libraries.grpc` start
+jvm_library(
+    name = "grpc",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
+    ],
+)
+
+jvm_library(
+    name = "grpc_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:libraries-grpc-grpc-core",
+        "@lib//:libraries-grpc-grpc-stub",
+        "@lib//:libraries-grpc-grpc-kotlin-stub",
+        "@lib//:libraries-grpc-grpc-protobuf",
+    ],
+    runtime_deps = [":grpc"],
+)
+### auto-generated section `build intellij.libraries.grpc` end
+
+### auto-generated section `iml intellij.libraries.grpc` start
+exports_files(
+    [
+        "intellij.libraries.grpc.iml",
+        "resources/intellij.libraries.grpc.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.grpc` end

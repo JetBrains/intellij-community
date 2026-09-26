@@ -1,30 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
 
-import java.security.MessageDigest;
-
 public final class Member implements MemberDescriptor {
-  final String internalClassName;
-  final String methodName;
-  final String methodDesc;
+  final @NonNls String internalClassName;
+  final @NonNls String methodName;
+  final @NonNls String methodDesc;
+
+  /**
+   * Primary constructor
+   *
+   * @param internalClassName class name in asm format
+   * @param methodName method name
+   * @param methodDesc method descriptor in asm format
+   */
+  public Member(@NotNull @NonNls String internalClassName, @NotNull @NonNls String methodName, @NotNull @NonNls String methodDesc) {
+    this.internalClassName = internalClassName;
+    this.methodName = methodName;
+    this.methodDesc = methodDesc;
+  }
+
+  /**
+   * Convenient constructor to convert asm instruction into method key
+   *
+   * @param mNode asm node from which method key is extracted
+   */
+  public Member(MethodInsnNode mNode) {
+    this.internalClassName = mNode.owner;
+    this.methodName = mNode.name;
+    this.methodDesc = mNode.desc;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -42,34 +50,9 @@ public final class Member implements MemberDescriptor {
     return result;
   }
 
-  /**
-   * Primary constructor
-   *
-   * @param internalClassName class name in asm format
-   * @param methodName method name
-   * @param methodDesc method descriptor in asm format
-   */
-  public Member(String internalClassName, String methodName, String methodDesc) {
-    this.internalClassName = internalClassName;
-    this.methodName = methodName;
-    this.methodDesc = methodDesc;
-  }
-
-  /**
-   * Convenient constructor to convert asm instruction into method key
-   *
-   * @param mNode asm node from which method key is extracted
-   */
-  public Member(MethodInsnNode mNode) {
-    this.internalClassName = mNode.owner;
-    this.methodName = mNode.name;
-    this.methodDesc = mNode.desc;
-  }
-
-  @NotNull
   @Override
-  public HMember hashed(@Nullable MessageDigest md) {
-    return new HMember(this, md);
+  public @NotNull HMember hashed() {
+    return new HMember(this);
   }
 
   @Override

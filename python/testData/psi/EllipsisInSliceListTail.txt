@@ -14,7 +14,7 @@ PyFile:EllipsisInSliceListTail.py
           PsiElement(Py:INTEGER_LITERAL)('0')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')
-        PyNoneLiteralExpression
+        PyEllipsisLiteralExpression
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')

@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This policy is to cancel.
  */
-public class CancelPolicy implements ConflictResolutionPolicy {
-
+public final class CancelPolicy implements ConflictResolutionPolicy {
     private static final CancelPolicy instance = new CancelPolicy();
 
     private CancelPolicy() {}
@@ -33,14 +32,17 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         return instance;
     }
 
+    @Override
     public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
         // not used as this is cancel
     }
 
+    @Override
     public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) {
         return null;
     }
 
+    @Override
     public String toString() {
         return "Cancel";
     }

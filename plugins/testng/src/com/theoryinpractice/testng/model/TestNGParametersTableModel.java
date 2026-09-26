@@ -19,12 +19,14 @@ package com.theoryinpractice.testng.model;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.theoryinpractice.testng.TestngBundle;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String, String>>
@@ -34,24 +36,28 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
 
     public TestNGParametersTableModel() {
         super(
-                new ColumnInfo<Map.Entry<String, String>, String>("Name")
+                new ColumnInfo<Map.Entry<String, String>, String>(TestngBundle.message("testng.parameters.table.model.name"))
                 {
+                    @Override
                     public String valueOf(Map.Entry<String, String> object) {
                         return object.getKey();
                     }
 
+                    @Override
                     public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
                         final JTextField textField = new JTextField();
                         textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
                         return new DefaultCellEditor(textField);
                     }
                 },
-                new ColumnInfo<Map.Entry<String, String>, String>("Value")
+                new ColumnInfo<Map.Entry<String, String>, String>(TestngBundle.message("testng.parameters.table.model.value"))
                 {
+                    @Override
                     public String valueOf(Map.Entry<String, String> object) {
                         return object.getValue();
                     }
 
+                    @Override
                     public TableCellEditor getEditor(final Map.Entry<String, String>  item) {
                         final JTextField textField = new JTextField();
                         textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
@@ -61,6 +67,7 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         );
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
@@ -77,18 +84,15 @@ public class TestNGParametersTableModel extends ListTableModel<Map.Entry<String,
         setParameterList(parameterList);
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Map.Entry<String, String> entry = parameterList.get(rowIndex);
         String key = entry.getKey();
         String value = entry.getValue();
 
         switch (columnIndex) {
-            case 0:
-                key = (String)aValue;
-                break;
-            case 1:
-                value = (String)aValue;
-                break;
+          case 0 -> key = (String)aValue;
+          case 1 -> value = (String)aValue;
         }
 
         Map<String, String> map = new HashMap<>();

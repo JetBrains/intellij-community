@@ -15,10 +15,10 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.intellij.plugins.xpathView.util.Copyable;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ import java.util.Collections;
 public final class HistoryElement implements Copyable<HistoryElement> {
     public static final HistoryElement EMPTY = new HistoryElement();
 
-    public final String expression;
+    public final @NlsSafe String expression;
     public final Collection<Variable> variables;
     public final Collection<Namespace> namespaces;
 
@@ -37,26 +37,28 @@ public final class HistoryElement implements Copyable<HistoryElement> {
         this.namespaces = Collections.unmodifiableCollection(namespaces);
     }
 
-    @SuppressWarnings({"unchecked"})
     private HistoryElement() {
         expression = null;
         variables = Collections.emptySet();
         namespaces = Collections.emptySet();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         final HistoryElement that = (HistoryElement)o;
 
-        return !(expression != null ? !expression.equals(that.expression) : that.expression != null); 
+        return !(expression != null ? !expression.equals(that.expression) : that.expression != null);
     }
 
+    @Override
     public int hashCode() {
         return (expression != null ? expression.hashCode() : 0);
     }
 
+    @Override
     public HistoryElement copy() {
         return new HistoryElement(expression, Copyable.Util.copy(this.variables), Copyable.Util.copy(namespaces));
     }

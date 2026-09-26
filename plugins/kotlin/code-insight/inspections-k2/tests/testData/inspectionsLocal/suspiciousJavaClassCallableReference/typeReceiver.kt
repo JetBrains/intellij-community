@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// FIX: Replace with '::class.java' call
+package test
+
+fun usage() {
+    Any::javaClass<caret>
+}

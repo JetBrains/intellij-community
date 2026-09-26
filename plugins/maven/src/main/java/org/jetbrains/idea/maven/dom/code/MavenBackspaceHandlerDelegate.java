@@ -19,7 +19,7 @@ import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 
-public class MavenBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
+public final class MavenBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
   }

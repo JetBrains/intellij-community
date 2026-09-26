@@ -17,7 +17,8 @@
 package com.intellij.conversion;
 
 /**
- * @author nik
+ * Inherit from this class and return an instance of the implementation from one of {@link ProjectConverter}'s methods to provide conversion
+ * for some part of the project configuration.
  */
 public abstract class ConversionProcessor<Settings> {
   /**

@@ -1,0 +1,5 @@
+<node text="foo() (J)" base="true">
+  <node text="A (2 usages) ()"/>
+  <node text="Main1Kt ()"/>
+  <node text="test(J) (Main1Kt)"/>
+</node>

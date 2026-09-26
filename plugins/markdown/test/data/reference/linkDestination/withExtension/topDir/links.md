@@ -1,0 +1,12 @@
+[near](stub_in_t<caret>op_dir.md)
+[below](innerDir/stub_in_inner_di<caret>r.md)
+[above](../stub_in_r<caret>oot.md)
+[withHeader](stub_in_t<caret>op_dir.md#header)
+[withNonexistentHeader](stub_in_t<caret>op_dir.md#nonexistent_header)
+[header](stub_in_top_dir.md#he<caret>ader)
+
+[isNotReferenceBecauseOfWrongPathPrefix](innerDir/stub_in_top_d<caret>ir.md)
+[isNotReferenceBecauseResolvingIsRelative](stub_i<caret>n_root.md)
+[isNotReferenceBecauseOfFullMatchWithOtherFile](stub_in_to<caret>p_dir.md)
+[isNotReferenceToFileBecauseCaretIsAtHeader](stub_in_top_dir.md#he<caret>ader)
+[isNotReferenceToFileBecauseCaretIsAtNonexistentHeader](stub_in_top_dir.md#nonexistent_he<caret>ader)

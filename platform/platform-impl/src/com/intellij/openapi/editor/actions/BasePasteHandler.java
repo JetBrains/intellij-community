@@ -18,9 +18,13 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +47,16 @@ public class BasePasteHandler extends EditorWriteActionHandler {
     try {
       super.doExecute(editor, caret, dataContext);
     }
+    catch (EditorCopyPasteHelper.TooLargeContentException e) {
+      contentLengthLimitExceededMessage(e.getContentLength());
+    }
     finally {
       myTransferable = null;
     }
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (myTransferable != null) {
       EditorCopyPasteHelper.getInstance().pasteTransferable(editor, myTransferable);
     }
@@ -60,4 +67,14 @@ public class BasePasteHandler extends EditorWriteActionHandler {
     return EditorModificationUtil.getContentsToPasteToEditor(producer);
   }
 
+  public static boolean isContentTooLarge(int contentLength) {
+    return contentLength > FileSizeLimit.getDefaultContentLoadLimit();
+  }
+
+  public static void contentLengthLimitExceededMessage(int contentLength) {
+    Messages.showErrorDialog(EditorBundle.message("content.to.paste.too.large.message",
+                                                  StringUtil.formatFileSize(contentLength),
+                                                  StringUtil.formatFileSize(FileSizeLimit.getDefaultContentLoadLimit())),
+                             EditorBundle.message("content.to.paste.too.large.title"));
+  }
 }

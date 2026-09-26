@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -22,14 +8,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntCompletionTest extends LightCodeInsightTestCase {
+public class AntCompletionTest extends LightJavaCodeInsightTestCase {
 
   @NotNull
   @Override
@@ -38,9 +24,9 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   }
 
   @Override
-  protected void configureByFile(@NotNull @TestDataFile @NonNls String filePath) {
-    super.configureByFile(filePath);
-    AntSupport.markFileAsAntFile(myVFile, myFile.getProject(), true);
+  protected void configureByFile(@NotNull @TestDataFile @NonNls String relativePath) {
+    super.configureByFile(relativePath);
+    AntSupport.markFileAsAntFile(getVFile(), getFile().getProject(), true);
   }
 
   public void testSimpleProperty() {
@@ -144,6 +130,15 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile("EntityCompletion-out.xml");
   }
 
+  public void testRestrictedTagCompletion() {
+    configureByFile("RestrictedTagCompletion.xml");
+    performNormalCompletion();
+    assertNotNull(getItems());
+    assertTrue(getItems().length > 0);
+    select();
+    checkResultByFile("RestrictedTagCompletion-out.xml");
+  }
+
   public void testTargetAttributesCompletion() {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
@@ -189,37 +184,27 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  private static void select() {
+  private void select() {
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
   }
 
-  private static void performNormalCompletion() {
+  private void performNormalCompletion() {
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
-  private static void select(char completionChar, LookupElement item) {
+  private void select(char completionChar, LookupElement item) {
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private static LookupElement getSelected() {
+  private LookupElement getSelected() {
     final Lookup lookup = LookupManager.getInstance(getProject()).getActiveLookup();
     return lookup.getCurrentItem();
   }
 
-  @NotNull
-  private static LookupElement[] getItems() {
+  private LookupElement @NotNull [] getItems() {
     final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
     return list.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      LookupManager.getInstance(getProject()).hideActiveLookup();
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 
 }

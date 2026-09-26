@@ -7,7 +7,7 @@ s.bar = 4;
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, s.bar = 5);
 
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, getProperty("bar"));
-org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, s.bar);
+invokeMethod("print", new java.lang.Object[]{s.bar});
 }
 
 private static <Value>Value setProperty0(A propOwner, java.lang.String s, Value o) {

@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports missing or invalid YAML front matter in <code>SKILL.md</code> files.
+The front matter must define a valid <code>name</code> and a non-empty <code>description</code>.
+<p><b>Before:</b></p>
+<pre><code>
+# My skill
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+---
+name: my-skill
+description:
+---
+# My skill
+</code></pre>
+</body>
+</html>

@@ -1,36 +1,41 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.AutoScrollToSourceOptionProvider;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.CollapseAllAction;
+import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.ExpandAllAction;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 
-/**
- * @author max
- */
-public class CommonActionsManagerImpl extends CommonActionsManager {
+final class CommonActionsManagerImpl extends CommonActionsManager {
+  @Override
   public AnAction createPrevOccurenceAction(OccurenceNavigator navigator) {
     return new PreviousOccurenceToolbarAction(navigator);
   }
 
+  @Override
   public AnAction createNextOccurenceAction(OccurenceNavigator navigator) {
     return new NextOccurenceToolbarAction(navigator);
   }
 
-  public AnAction createExpandAllAction(TreeExpander expander) {
-    return new ExpandAllToolbarAction(expander);
-  }
-
+  @Override
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
-    final ExpandAllToolbarAction expandAllToolbarAction = new ExpandAllToolbarAction(expander);
+    ExpandAllAction expandAllToolbarAction = new ExpandAllAction(event -> expander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
     return expandAllToolbarAction;
   }
@@ -38,8 +43,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createExpandAllAction(expander, component);
-    action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
+    action.getTemplatePresentation().setIcon(AllIcons.Actions.Expandall);
     return action;
   }
 
@@ -48,12 +52,9 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
-  public AnAction createCollapseAllAction(TreeExpander expander) {
-    return new CollapseAllToolbarAction(expander);
-  }
-
+  @Override
   public AnAction createCollapseAllAction(TreeExpander expander, JComponent component) {
-    final CollapseAllToolbarAction collapseAllToolbarAction = new CollapseAllToolbarAction(expander);
+    CollapseAllAction collapseAllToolbarAction = new CollapseAllAction(event -> expander);
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), component);
     return collapseAllToolbarAction;
   }
@@ -61,8 +62,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createCollapseAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createCollapseAllAction(expander, component);
-    action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
+    action.getTemplatePresentation().setIcon(AllIcons.Actions.Collapseall);
     return action;
   }
 
@@ -71,16 +71,20 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return createCollapseAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
+  @Override
   public AnAction createHelpAction(String helpId) {
     return new ContextHelpAction(helpId);
   }
 
+  @Override
   public AnAction installAutoscrollToSourceHandler(Project project, JTree tree, final AutoScrollToSourceOptionProvider optionProvider) {
     AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+      @Override
       public boolean isAutoScrollMode() {
         return optionProvider.isAutoScrollMode();
       }
 
+      @Override
       public void setAutoScrollMode(boolean state) {
         optionProvider.setAutoScrollMode(state);
       }
@@ -89,6 +93,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return handler.createToggleAction();
   }
 
+  @Override
   public AnAction createExportToTextFileAction(@NotNull ExporterToTextFile exporter) {
     return new ExportToTextFileToolbarAction(exporter);
   }

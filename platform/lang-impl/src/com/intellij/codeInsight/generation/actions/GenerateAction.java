@@ -1,91 +1,89 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GenerateAction extends DumbAwareAction {
+import java.util.Objects;
+
+@ApiStatus.Internal
+public final class GenerateAction extends DumbAwareAction {
+
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
-    Project project = ObjectUtils.assertNotNull(getEventProject(e));
-    final ListPopup popup =
+    Project project = Objects.requireNonNull(getEventProject(e));
+    ListPopup popup =
       JBPopupFactory.getInstance().createActionGroupPopup(
-          CodeInsightBundle.message("generate.list.popup.title"),
-                                                          wrapGroup(getGroup(), dataContext, project),
-                                                          dataContext,
-                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                          false);
+        CodeInsightBundle.message("generate.list.popup.title"),
+        wrapGroup(getGroup(), project, e),
+        dataContext,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        false);
 
     popup.showInBestPositionFor(dataContext);
   }
 
   @Override
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
+  public void update(@NotNull AnActionEvent event){
+    Project project = event.getProject();
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    boolean enabled = project != null && editor != null &&
+                      getGroup().getChildrenCount() > 0;
+    if (event.isFromContextMenu()) {
+      event.getPresentation().setEnabledAndVisible(enabled);
     }
-
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null) {
-      presentation.setEnabled(false);
-      return;
+    else {
+      event.getPresentation().setEnabled(enabled);
     }
-
-    boolean groupEmpty = ActionGroupUtil.isGroupEmpty(getGroup(), event, LaterInvocator.isInModalContext());
-    presentation.setEnabled(!groupEmpty);
   }
 
-  private static DefaultActionGroup getGroup() {
+  private static @NotNull DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 
-  private static DefaultActionGroup wrapGroup(DefaultActionGroup actionGroup, DataContext dataContext, @NotNull Project project) {
+  private static DefaultActionGroup wrapGroup(@NotNull DefaultActionGroup actionGroup,
+                                              @NotNull Project project,
+                                              @NotNull AnActionEvent event) {
     final DefaultActionGroup copy = new DefaultActionGroup();
-    for (final AnAction action : actionGroup.getChildren(null)) {
+    for (final AnAction action : actionGroup.getChildren(event.getActionManager())) {
       if (DumbService.isDumb(project) && !action.isDumbAware()) {
         continue;
       }
-      
-      if (action instanceof GenerateActionPopupTemplateInjector) {
-        final AnAction editTemplateAction = ((GenerateActionPopupTemplateInjector)action).createEditTemplateAction(dataContext);
+
+      if (action instanceof GenerateActionPopupTemplateInjector o) {
+        final AnAction editTemplateAction = o.createEditTemplateAction(event.getDataContext());
         if (editTemplateAction != null) {
           copy.add(new GenerateWrappingGroup(action, editTemplateAction));
           continue;
         }
       }
-      if (action instanceof DefaultActionGroup) {
-        copy.add(wrapGroup((DefaultActionGroup)action, dataContext, project));
+      if (action instanceof DefaultActionGroup o) {
+        copy.add(wrapGroup(o, project, event));
       }
       else {
         copy.add(action);
@@ -94,41 +92,38 @@ public class GenerateAction extends DumbAwareAction {
     return copy;
   }
 
-  private static class GenerateWrappingGroup extends ActionGroup {
+  private static final class GenerateWrappingGroup extends ActionGroup {
 
     private final AnAction myAction;
     private final AnAction myEditTemplateAction;
 
-    public GenerateWrappingGroup(AnAction action, AnAction editTemplateAction) {
+    GenerateWrappingGroup(AnAction action, AnAction editTemplateAction) {
       myAction = action;
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);
       setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
-    public boolean canBePerformed(DataContext context) {
-      return true;
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myAction.getActionUpdateThread();
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {myEditTemplateAction};
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      final Project project = getEventProject(e);
-      assert project != null;
-      final DumbService dumbService = DumbService.getInstance(project);
-      try {
-        dumbService.setAlternativeResolveEnabled(true);
-        myAction.actionPerformed(e);
-      }
-      finally {
-        dumbService.setAlternativeResolveEnabled(false);
-      }
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      DumbService.getInstance(Objects.requireNonNull(getEventProject(e)))
+        .withAlternativeResolveEnabled(() -> myAction.actionPerformed(e));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      myAction.update(e);
     }
   }
 }

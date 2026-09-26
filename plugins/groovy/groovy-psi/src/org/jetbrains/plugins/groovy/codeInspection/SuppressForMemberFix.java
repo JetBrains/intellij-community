@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix;
 import com.intellij.codeInspection.BatchSuppressManager;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -38,21 +28,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 
-/**
- * @author peter
- */
-public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentFix {
-  private String myKey;
+public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentModCommandFix {
+  private @PropertyKey(resourceBundle = "messages.JavaAnalysisBundle") String myKey = "suppress.inspection.member";
   private final boolean myForClass;
 
-  public SuppressForMemberFix(@NotNull HighlightDisplayKey key, boolean forClass) {
-    super(key.getID(), false);
+  public SuppressForMemberFix(String toolId, boolean forClass) {
+    super(toolId, false);
     myForClass = forClass;
   }
 
   @Override
-  @Nullable
-  public GrDocCommentOwner getContainer(final PsiElement context) {
+  public @Nullable GrDocCommentOwner getContainer(final PsiElement context) {
     if (context == null || context instanceof PsiFile) {
       return null;
     }
@@ -72,9 +58,9 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
       if (container == null) return null;
     }
     if (myForClass) {
-      while (container != null ) {
+      while (container != null) {
         final GrTypeDefinition parentClass = PsiTreeUtil.getParentOfType(container, GrTypeDefinition.class);
-        if (parentClass == null && container instanceof GrTypeDefinition){
+        if (parentClass == null && container instanceof GrTypeDefinition) {
           return container;
         }
         container = parentClass;
@@ -84,21 +70,22 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return myKey != null ? InspectionsBundle.message(myKey) : "Suppress for member";
+  public @NotNull String getText() {
+    return JavaAnalysisBundle.message(myKey);
   }
 
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+  public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
-    myKey = container instanceof PsiClass ? "suppress.inspection.class" : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
-    return container != null && context.getManager().isInProject(context);
+    myKey = container instanceof PsiClass ? "suppress.inspection.class"
+                                          : container instanceof PsiMethod ? "suppress.inspection.method"
+                                                                           : "suppress.inspection.field";
+    return container != null && context.getManager().isInProject(context.getContainingFile().getOriginalFile());
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     return false;
   }
 
@@ -109,17 +96,17 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
     if (modifierList != null) {
       addSuppressAnnotation(project, modifierList, myID);
     }
-    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
-  private static void addSuppressAnnotation(final Project project, final GrModifierList modifierList, final String id) throws IncorrectOperationException {
+  private static void addSuppressAnnotation(Project project, GrModifierList modifierList, String id) throws IncorrectOperationException {
     PsiAnnotation annotation = modifierList.findAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-    final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"" + id + "\"");
+    final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("'" + id + "'");
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(null);
       if (value instanceof GrAnnotationArrayInitializer) {
         value.add(toAdd);
-      } else if (value != null) {
+      }
+      else if (value != null) {
         GrAnnotation anno = GroovyPsiElementFactory.getInstance(project).createAnnotationFromText("@A([])");
         final GrAnnotationArrayInitializer list = (GrAnnotationArrayInitializer)anno.findDeclaredAttributeValue(null);
         list.add(value);
@@ -131,5 +118,4 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
       modifierList.addAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME).setDeclaredAttributeValue(null, toAdd);
     }
   }
-
 }

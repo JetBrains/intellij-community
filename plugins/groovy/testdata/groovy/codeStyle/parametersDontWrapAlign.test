@@ -1,0 +1,9 @@
+private foo(   a,
+           b,
+                                  c,
+                d) {}
+-----
+private foo(a,
+            b,
+            c,
+            d) {}

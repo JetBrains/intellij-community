@@ -14,14 +14,14 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.StandardVcsGroup;
 import org.zmlx.hg4idea.HgVcs;
 
 public class HgMercurialMenu extends StandardVcsGroup {
 
+  @Override
   public AbstractVcs getVcs(Project project) {
-    return ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
+    return HgVcs.getInstance(project);
   }
 
   @Override

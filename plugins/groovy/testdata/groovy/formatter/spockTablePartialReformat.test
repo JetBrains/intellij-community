@@ -1,0 +1,25 @@
+class MathSpec extends spock.lang.Specification {
+  def "maximum of two numbers"(int a, int b, int c) {
+    expect:
+    Math.max(a, b) == c
+
+    where:
+    description         | a | b | c
+    'second arg is max' | 1 | 3 | 3
+    'first arg is max'  | 7 | 4 | 7
+    'both args'              | 0 | 0 | 0
+  }
+}
+-----
+class MathSpec extends spock.lang.Specification {
+  def "maximum of two numbers"(int a, int b, int c) {
+    expect:
+    Math.max(a, b) == c
+
+    where:
+    description         | a | b | c
+    'second arg is max' | 1 | 3 | 3
+    'first arg is max'  | 7 | 4 | 7
+    'both args'         | 0 | 0 | 0
+  }
+}

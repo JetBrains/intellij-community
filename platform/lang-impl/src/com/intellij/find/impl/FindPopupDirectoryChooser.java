@@ -1,63 +1,58 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.project.OpenFileChooserService;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
-public class FindPopupDirectoryChooser extends JPanel {
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final ComboBox<String> myDirectoryComboBox;
+@ApiStatus.Internal
+public final class FindPopupDirectoryChooser extends JPanel {
+  private final @NotNull FindUIHelper myHelper;
+  private final @NotNull Project myProject;
+  private final @NotNull FindPopupPanel myFindPopupPanel;
+  private final @NotNull ComboBox<String> myDirectoryComboBox;
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
-    super(new BorderLayout());
-
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
@@ -65,11 +60,10 @@ public class FindPopupDirectoryChooser extends JPanel {
     myDirectoryComboBox.setEditable(true);
 
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField) {
-      JTextField field = (JTextField)editorComponent;
+    if (editorComponent instanceof JTextField field) {
       field.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myFindPopupPanel.scheduleResultsUpdate();
         }
       });
@@ -79,60 +73,85 @@ public class FindPopupDirectoryChooser extends JPanel {
 
     ActionListener restartSearchListener = e -> myFindPopupPanel.scheduleResultsUpdate();
     myDirectoryComboBox.addActionListener(restartSearchListener);
+    myDirectoryComboBox.getAccessibleContext().setAccessibleName(FindBundle.message("find.usages.directory.combobox.accessible.name"));
 
     FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
-    mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
+    mySelectDirectoryButton.setMargin(JBInsets.emptyInsets());
+    mySelectDirectoryButton.getAccessibleContext().setAccessibleName(FindBundle.message(
+      "find.usages.select.directory.button.accessible.name"));
 
-    mySelectDirectoryButton.addActionListener(__ -> {
-      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      descriptor.setForcedToUseIdeaFileChooser(true);
-      myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, null, null,
-                              new FileChooser.FileChooserConsumer() {
-        @Override
-        public void consume(List<VirtualFile> files) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myFindPopupPanel.getCanClose().set(true);
-            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-            myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
-            myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
-          });
-        }
+    // TODO: Remove this 'if' branch once FindKey is enabled by default. Keep only the 'else' branch.
+    if (!FindKey.isEnabled()) {
+        mySelectDirectoryButton.addActionListener(_ -> {
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        descriptor.setForcedToUseIdeaFileChooser(true);
+        myFindPopupPanel.getCanClose().set(false);
+        FileChooser.chooseFiles(descriptor, myProject, null,
+                                VfsUtil.findFileByIoFile(new File(getDirectory()), true),
+                                new FileChooser.FileChooserConsumer() {
+          @Override
+          public void consume(List<VirtualFile> files) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myFindPopupPanel.getCanClose().set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+              myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
+              myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
+            });
+          }
 
-        @Override
-        public void cancelled() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myFindPopupPanel.getCanClose().set(true);
-            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-          });
-        }
+          @Override
+          public void cancelled() {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myFindPopupPanel.getCanClose().set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+            });
+          }
+        });
       });
-    });
+    } else {
+      mySelectDirectoryButton.addActionListener(_ -> {
+        OpenFileChooserService.getInstance(myProject).chooseDirectory(getDirectory(), (result) -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+            if (result == null) return;
+            myHelper.getModel().setDirectoryName(result);
+            myDirectoryComboBox.getEditor().setItem(result);
+          });
+          return null;
+        });
+      });
+    }
 
     MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
-    int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
-    add(myDirectoryComboBox, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
-    buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent()); //check if toolbar updates the button with no delays
-    add(buttonsPanel, BorderLayout.EAST);
+    // Disable directory selection in CWM client environment to prevent exposure of host filesystem structure
+    boolean isCwmClient = FindKey.isCwmClient();
+    if (isCwmClient) {
+      mySelectDirectoryButton.setEnabled(false);
+      myDirectoryComboBox.setEnabled(false);
+      mySelectDirectoryButton.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+      myDirectoryComboBox.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+    }
+
+    RowBuilder builder = new RowBuilder(this);
+    builder
+      .addResizable(myDirectoryComboBox)
+      .add(mySelectDirectoryButton, FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent());
   }
 
   @SuppressWarnings("WeakerAccess")
   public void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
-    java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
+    List<@NlsSafe String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 
     if (myDirectoryComboBox.getItemCount() > 0) {
       myDirectoryComboBox.removeAllItems();
     }
     if (directoryName != null && !directoryName.isEmpty()) {
-      if (strings.contains(directoryName)) {
-        strings.remove(directoryName);
-      }
+      strings.remove(directoryName);
       myDirectoryComboBox.addItem(directoryName);
     }
     for (int i = strings.size() - 1; i >= 0; i--) {
@@ -143,37 +162,44 @@ public class FindPopupDirectoryChooser extends JPanel {
     }
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return myDirectoryComboBox;
   }
 
-  @NotNull
-  public String getDirectory() {
+  public @NotNull String getDirectory() {
     return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
-  @Nullable
-  public ValidationInfo validate(@NotNull FindModel model) {
+  public @Nullable ValidationInfo validate(@NotNull FindModel model) {
+    if (FindKey.isEnabled()) return null;
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
-    if (directory == null) {
-      return new ValidationInfo(FindBundle.message("find.directory.not.found.error", getDirectory()), myDirectoryComboBox);
+    return getDirectoryValidationInfo(directory != null);
+  }
+
+  public ValidationInfo getDirectoryValidationInfo(boolean isDirectoryExists) {
+    if (!isDirectoryExists) {
+      return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);
     }
     return null;
   }
 
-  private class MyRecursiveDirectoryAction extends ToggleAction {
+  private final class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(FindBundle.messagePointer("find.recursively.hint"), Presentation.NULL_STRING, AllIcons.Actions.ShowAsTree);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHelper.getModel().isWithSubdirectories();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHelper.getModel().setWithSubdirectories(state);
       myFindPopupPanel.scheduleResultsUpdate();
     }

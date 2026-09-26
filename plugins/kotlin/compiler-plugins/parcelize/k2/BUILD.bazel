@@ -1,0 +1,113 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.compilerPlugins.parcelize` start
+content_module_jar(module = ":kotlin-compilerPlugins-parcelize")
+### auto-generated section `dev intellij.kotlin.compilerPlugins.parcelize` end
+
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` start
+create_kotlinc_options(
+    name = "custom_kotlin-compilerPlugins-parcelize",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "kotlin-compilerPlugins-parcelize",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
+    module_name = "intellij.kotlin.compilerPlugins.parcelize",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/frontend-independent",
+        "//java/java-psi-api:psi",
+        "//platform/analysis-api:analysis",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//plugins/kotlin/base/psi",
+    ],
+)
+
+jvm_library(
+    name = "kotlin-compilerPlugins-parcelize_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
+    module_name = "intellij.kotlin.compilerPlugins.parcelize",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-compilerPlugins-parcelize",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize` start
+exports_files(
+    [
+        "intellij.kotlin.compilerPlugins.parcelize.iml",
+        "resources/intellij.kotlin.compilerPlugins.parcelize.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize` end

@@ -1,339 +1,533 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogDetailsFilter;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogStructureFilter;
+import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.VcsLogUserFilter;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.FileNamesData;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
-import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.history.EdgeData;
+import com.intellij.vcs.log.history.FileHistoryData;
+import com.intellij.vcs.log.history.VcsDirectoryRenamesProvider;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
+import com.intellij.vcs.log.util.IntCollectionUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterable;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
-public class IndexDataGetter {
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+import static com.intellij.vcs.log.data.index.PhmVcsLogStorageBackendKt.getHashes;
+import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
+
+public final class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
+  private final @NotNull Project myProject;
+  private final @Unmodifiable @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
+  private final @NotNull VcsLogStorageBackend myIndexStorageBackend;
+  private final @NotNull VcsLogStorage myLogStorage;
+  private final @NotNull VcsLogErrorHandler myErrorHandler;
+  private final @NotNull VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
+  private final boolean myIsProjectLog;
 
-  @NotNull private final Project myProject;
-  @NotNull private final Set<VirtualFile> myRoots;
-  @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
-  @NotNull private final VcsLogStorage myLogStorage;
-  @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
-
-  public IndexDataGetter(@NotNull Project project,
-                         @NotNull Set<VirtualFile> roots,
-                         @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
-                         @NotNull VcsLogStorage logStorage,
-                         @NotNull FatalErrorHandler fatalErrorsConsumer) {
+  IndexDataGetter(@NotNull Project project,
+                  @NotNull @Unmodifiable Map<VirtualFile, VcsLogProvider> providers,
+                  @NotNull VcsLogStorageBackend indexStorageBackend,
+                  @NotNull VcsLogStorage logStorage,
+                  @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
-    myRoots = roots;
-    myIndexStorage = indexStorage;
+    myProviders = providers;
+    myIndexStorageBackend = indexStorageBackend;
     myLogStorage = logStorage;
-    myFatalErrorsConsumer = fatalErrorsConsumer;
+    myErrorHandler = errorHandler;
+
+    myDirectoryRenamesProvider = VcsDirectoryRenamesProvider.getInstance(myProject);
+
+    myIsProjectLog = VcsLogUtil.isProjectLog(myProject, myProviders);
   }
 
-  @Nullable
-  public String getFullMessage(int index) {
-    return executeAndCatch(() -> myIndexStorage.messages.get(index));
+  void iterateIndexedCommits(int limit, @NotNull IntFunction<Boolean> processor) {
+    executeAndCatch(() -> myIndexStorageBackend.iterateIndexedCommits(limit, processor));
   }
 
-  @NotNull
-  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
-    if (myRoots.contains(root)) {
-      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
-      if (result != null) return result;
-    }
+  //
+  // Getters from forward index
+  //
 
-    return Collections.emptySet();
+  public @Nullable VcsUser getAuthor(int commit) {
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorForCommit(commit));
   }
 
-  @NotNull
-  public FileNamesData buildFileNamesData(@NotNull FilePath path) {
-    FileNamesData result = new MyFileNamesData();
-
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
-    if (myRoots.contains(root)) {
-      executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
-          List<Integer> parents = myIndexStorage.parents.get(commit);
-          if (parents == null) {
-            throw new CorruptedDataException("No parents for commit " + commit);
-          }
-          result.add(commit, changes.first, changes.second, parents);
-          return null;
-        }));
-        return null;
-      });
-    }
-
-    return result;
+  public @Nullable Map<Integer, VcsUser> getAuthor(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorForCommits(commitIds));
   }
 
-  @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
-    try {
-      return computable.compute();
-    }
-    catch (IOException | StorageException | CorruptedDataException e) {
-      myIndexStorage.markCorrupted();
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return null;
+  public @Nullable VcsUser getCommitter(int commit) {
+    return executeAndCatch(() -> {
+      return myIndexStorageBackend.getCommitterForCommit(commit);
+    });
   }
 
-  @Nullable
-  public List<Hash> getParents(int index) {
-    try {
-      List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
+  public @NotNull Map<Integer, VcsUser> getCommitter(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitterForCommits(commitIds), Collections.emptyMap());
+  }
+
+  public @Nullable Long getAuthorTime(int commit) {
+    return executeAndCatch(() -> {
+      long[] time = myIndexStorageBackend.getTimestamp(commit);
+      return time == null ? null : time[0];
+    });
+  }
+
+  public @Nullable Map<Integer, Long> getAuthorTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorTime(commitIds));
+  }
+
+  public @Nullable Long getCommitTime(int commit) {
+    return executeAndCatch(() -> {
+      long[] time = myIndexStorageBackend.getTimestamp(commit);
+      return time == null ? null : time[1];
+    });
+  }
+
+  public @Nullable Map<Integer, Long> getCommitTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitTime(commitIds));
+  }
+
+  public @Nullable String getFullMessage(int index) {
+    return executeAndCatch(() -> myIndexStorageBackend.getMessage(index));
+  }
+
+  public @Nullable Map<Integer, String> getFullMessage(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getMessages(commitIds));
+  }
+
+  public @Nullable List<Hash> getParents(int index) {
+    return executeAndCatch(() -> {
+      int[] parentsIndexes = myIndexStorageBackend.getParents(index);
       if (parentsIndexes == null) return null;
-      List<Hash> result = ContainerUtil.newArrayList();
-      for (int parentIndex : parentsIndexes) {
-        CommitId id = myLogStorage.getCommitId(parentIndex);
-        if (id == null) return null;
-        result.add(id.getHash());
-      }
-      return result;
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    return null;
+      return getHashes(myLogStorage, parentsIndexes);
+    });
   }
 
-  @NotNull
-  private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
-    try {
-      return myIndexStorage.users.getCommitsForUsers(users);
-    }
-    catch (IOException | StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return new TIntHashSet();
+  public @Nullable Map<Integer, List<Hash>> getParents(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getParents(commitIds));
   }
 
-  @NotNull
-  private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
-    try {
-      return myIndexStorage.paths.getCommitsForPaths(paths);
-    }
-    catch (IOException | StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return new TIntHashSet();
-  }
-
-  @NotNull
-  private TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
-    try {
-      if (!filter.isRegex()) {
-        TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(filter.getText());
-        if (commitsForSearch != null) {
-          TIntHashSet result = new TIntHashSet();
-          commitsForSearch.forEach(commit -> {
-            try {
-              String value = myIndexStorage.messages.get(commit);
-              if (value != null) {
-                if (VcsLogTextFilterImpl.matches(filter, value)) {
-                  result.add(commit);
-                }
-              }
-            }
-            catch (IOException e) {
-              myFatalErrorsConsumer.consume(this, e);
-              return false;
-            }
-            return true;
-          });
-          return result;
-        }
-      }
-    }
-    catch (StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-
-    return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
-  }
-
-  @NotNull
-  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
-    TIntHashSet result = new TIntHashSet();
-    try {
-      Processor<Integer> processor = integer -> {
-        try {
-          T value = map.get(integer);
-          if (value != null) {
-            if (condition.value(value)) {
-              result.add(integer);
-            }
-          }
-        }
-        catch (IOException e) {
-          myFatalErrorsConsumer.consume(this, e);
-          return false;
-        }
-        return true;
-      };
-      if (myIndexStorage.messages instanceof PersistentHashMap) {
-        ((PersistentHashMap<Integer, T>)myIndexStorage.messages).processKeysWithExistingMapping(processor);
-      }
-      else {
-        myIndexStorage.messages.processKeys(processor);
-      }
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-
-    return result;
-  }
+  //
+  // Filters
+  //
 
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
-    for (VcsLogDetailsFilter filter : filters) {
+
+    return ContainerUtil.all(filters, filter -> {
       if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
+          filter instanceof VcsLogUserFilter) {
+        return true;
+      }
+      if (filter instanceof VcsLogStructureFilter) {
+        Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
+        return ContainerUtil.find(files, file -> file.isDirectory() && myProviders.containsKey(file.getVirtualFile())) == null;
       }
       return false;
-    }
-    return true;
+    });
   }
 
-  @NotNull
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+  public @NotNull IntSet filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    return filter(detailsFilters, null);
+  }
+
+  public @NotNull IntSet filter(@NotNull List<VcsLogDetailsFilter> detailsFilters, @Nullable IntSet candidates) {
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
     VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
     VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
 
-    TIntHashSet filteredByMessage = null;
-    if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter);
-    }
-
-    TIntHashSet filteredByUser = null;
+    IntSet filteredByUser = null;
     if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
-      for (VirtualFile root : myRoots) {
+      Set<VcsUser> users = new HashSet<>();
+      for (VirtualFile root : myProviders.keySet()) {
         users.addAll(userFilter.getUsers(root));
       }
 
       filteredByUser = filterUsers(users);
     }
 
-    TIntHashSet filteredByPath = null;
+    IntSet filteredByPath = null;
     if (pathFilter != null) {
       filteredByPath = filterPaths(pathFilter.getFiles());
     }
 
-    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
+    IntSet filteredByUserAndPath = IntCollectionUtil.intersect(filteredByUser, filteredByPath, candidates);
+    if (textFilter == null) {
+      return filteredByUserAndPath == null ? IntSets.EMPTY_SET : filteredByUserAndPath;
+    }
+    return filterMessages(textFilter, filteredByUserAndPath);
   }
 
-  @Nullable
-  public VcsUser getAuthor(int commit) {
-    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
+  private @NotNull IntSet filterUsers(@NotNull Set<? extends VcsUser> users) {
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitsForUsers(users), new IntOpenHashSet());
   }
 
-  @Nullable
-  public VcsUser getCommitter(int commit) {
+  private @NotNull IntSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
     return executeAndCatch(() -> {
-      Integer committer = myIndexStorage.committers.get(commit);
-      if (committer != null) {
-        return myIndexStorage.users.getUserById(committer);
+      IntSet result = new IntOpenHashSet();
+      for (FilePath path : paths) {
+        result.addAll(createFileHistoryData(path).build().getCommits());
+        ProgressManager.checkCanceled();
       }
-      if (myIndexStorage.commits.contains(commit)) {
-        return myIndexStorage.users.getAuthorForCommit(commit);
-      }
-      return null;
-    });
+      return result;
+    }, new IntOpenHashSet());
   }
 
-  @Nullable
-  public Long getAuthorTime(int commit) {
-    return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.first;
-    });
+  private @NotNull IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
+    IntSet result = new IntOpenHashSet();
+    filterMessages(filter, candidates, result::add);
+    return result;
   }
 
-  @Nullable
-  public Long getCommitTime(int commit) {
-    return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.second;
-    });
+  public void filterMessages(@NotNull VcsLogTextFilter filter, @NotNull IntConsumer consumer) {
+    filterMessages(filter, null, consumer);
   }
 
-  private void processRuntimeException(@NotNull RuntimeException e) {
-    if (e instanceof ProcessCanceledException) throw e;
-    myIndexStorage.markCorrupted();
-    if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myFatalErrorsConsumer.consume(this, e);
+  private void filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates, @NotNull IntConsumer consumer) {
+    if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
+      executeAndCatch(() -> {
+        List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
+                                      ((VcsLogMultiplePatternsTextFilter)filter).getPatterns() :
+                                      Collections.singletonList(filter.getText());
+        List<String> noTrigramSources = new ArrayList<>();
+        for (String string : trigramSources) {
+          myIndexStorageBackend.getCommitsForSubstring(string, candidates, noTrigramSources, consumer, filter);
+        }
+
+        if (!noTrigramSources.isEmpty()) {
+          VcsLogTextFilter noTrigramFilter = VcsLogFilterObject.fromPatternsList(noTrigramSources, filter.matchesCase());
+          filter(candidates, noTrigramFilter::matches, consumer);
+        }
+      });
     }
     else {
-      throw new RuntimeException(e);
+      executeAndCatch(() -> {
+        filter(candidates, filter::matches, consumer);
+      });
     }
   }
 
-  private class MyFileNamesData extends FileNamesData {
-    protected FilePath getPathById(int pathId) {
-      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
+  private void filter(@Nullable IntIterable candidates,
+                      @NotNull Predicate<String> condition,
+                      @NotNull IntConsumer consumer) throws IOException {
+    if (candidates == null) {
+      myIndexStorageBackend.processMessages((commit, message) -> {
+        if (condition.test(message)) {
+          consumer.accept(commit);
+        }
+        return true;
+      });
+    }
+    else {
+      for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
+        int commit = iterator.nextInt();
+        String value = myIndexStorageBackend.getMessage(commit);
+        if (value != null && condition.test(value)) {
+          consumer.accept(commit);
+        }
+      }
     }
   }
 
-  private static class CorruptedDataException extends RuntimeException {
-    public CorruptedDataException(@NotNull String message) {
+  //
+  // File history
+  //
+
+  private @NotNull Int2ObjectMap<Int2ObjectMap<ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+    Int2ObjectMap<Int2ObjectMap<ChangeKind>> affectedCommits = new Int2ObjectOpenHashMap<>();
+
+    VirtualFile root = getRoot(path);
+    if (myProviders.containsKey(root) && root != null) {
+      List<Exception> corruptedDataExceptions = new ArrayList<>();
+      try {
+        executeAndCatch(() -> {
+          myIndexStorageBackend.iterateChangesInCommits(root, path, (changes, commit) -> {
+            collectCorruptedDataExceptions(corruptedDataExceptions, () -> {
+              int[] parents = myIndexStorageBackend.getParents(commit);
+              if (parents == null) {
+                throw new CorruptedDataException("No parents for commit " + commit);
+              }
+
+              Int2ObjectMap<ChangeKind> changeMap = new Int2ObjectOpenHashMap<>(parents.length);
+              if (parents.length == 0 && !changes.isEmpty()) {
+                changeMap.put(commit, ContainerUtil.getFirstItem(changes));
+              }
+              else {
+                if (parents.length != changes.size()) {
+                  throw new CorruptedDataException("Commit " + commit + " has " + parents.length +
+                                                   " parents, but " + changes.size() + " changes.");
+                }
+                for (int i = 0, length = parents.length; i < length; i++) {
+                  changeMap.put(parents[i], changes.get(i));
+                }
+              }
+
+              affectedCommits.put(commit, changeMap);
+            });
+          });
+        });
+      } finally {
+        if (!corruptedDataExceptions.isEmpty()) {
+          handleCorruptedData(corruptedDataExceptions);
+        }
+      }
+    }
+    return affectedCommits;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull FileHistoryData createFileHistoryData(@NotNull FilePath path) {
+    return createFileHistoryData(Collections.singletonList(path));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
+    if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
+      return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));
+    }
+    return new FileHistoryDataImpl(paths);
+  }
+
+  private class FileHistoryDataImpl extends FileHistoryData {
+    private FileHistoryDataImpl(@NotNull FilePath startPath) {
+      super(startPath);
+    }
+
+    private FileHistoryDataImpl(@NotNull Collection<? extends FilePath> startPaths) {
+      super(startPaths);
+    }
+
+    @Override
+    public @NotNull Int2ObjectMap<Int2ObjectMap<ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+      return IndexDataGetter.this.getAffectedCommits(path);
+    }
+
+    @Override
+    public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      VirtualFile root = Objects.requireNonNull(getRoot(path));
+      return executeAndCatch(() -> {
+        return myIndexStorageBackend.findRename(parent, child, root, path, isChildPath);
+      });
+    }
+  }
+
+  private final class DirectoryHistoryData extends FileHistoryDataImpl {
+    private final Map<EdgeData<Integer>, EdgeData<FilePath>> renamesMap = new HashMap<>();
+
+    private DirectoryHistoryData(@NotNull FilePath startPath) {
+      super(startPath);
+
+      for (Map.Entry<EdgeData<CommitId>, Collection<EdgeData<FilePath>>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
+        EdgeData<CommitId> commits = entry.getKey();
+        for (EdgeData<FilePath> rename : entry.getValue()) {
+          if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
+            FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
+                                                       VcsFileUtil.relativePath(rename.child, startPath), true);
+            renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
+                                          myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
+                           new EdgeData<>(renamedPath, startPath));
+          }
+        }
+      }
+    }
+
+    @Override
+    public @NotNull Int2ObjectMap<Int2ObjectMap<ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+      Int2ObjectMap<Int2ObjectMap<ChangeKind>> affectedCommits = super.getAffectedCommits(path);
+      if (!path.isDirectory()) return affectedCommits;
+      hackAffectedCommits(path, affectedCommits);
+      return affectedCommits;
+    }
+
+    private void hackAffectedCommits(@NotNull FilePath path,
+                                     @NotNull Int2ObjectMap<Int2ObjectMap<ChangeKind>> affectedCommits) {
+      for (Map.Entry<EdgeData<Integer>, EdgeData<FilePath>> entry : renamesMap.entrySet()) {
+        int childCommit = entry.getKey().child;
+        if (affectedCommits.containsKey(childCommit)) {
+          EdgeData<FilePath> rename = entry.getValue();
+
+          ChangeKind newKind;
+          if (FILE_PATH_HASHING_STRATEGY.equals(rename.child, path)) {
+            newKind = ChangeKind.ADDED;
+          }
+          else if (FILE_PATH_HASHING_STRATEGY.equals(rename.parent, path)) {
+            newKind = ChangeKind.REMOVED;
+          }
+          else {
+            continue;
+          }
+
+          Int2ObjectMap<ChangeKind> changesMap = affectedCommits.get(childCommit);
+          changesMap.keySet().forEach(key -> {
+            changesMap.put(key, newKind);
+          });
+        }
+      }
+    }
+
+    @Override
+    public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      if (path.isDirectory()) return findFolderRename(parent, child, path, isChildPath);
+      return super.findRename(parent, child, path, isChildPath);
+    }
+
+    private @Nullable EdgeData<FilePath> findFolderRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      EdgeData<FilePath> rename = renamesMap.get(new EdgeData<>(parent, child));
+      if (rename == null) return null;
+      return FILE_PATH_HASHING_STRATEGY.equals(isChildPath ? rename.child : rename.parent, path) ? rename : null;
+    }
+  }
+
+  //
+  // Util
+  //
+
+  public @NotNull VcsLogStorage getLogStorage() {
+    return myLogStorage;
+  }
+
+  @NotNull VcsLogStorageBackend getIndexStorageBackend() {
+    return myIndexStorageBackend;
+  }
+
+  @Nullable VirtualFile getRoot(@NotNull FilePath path) {
+    if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
+    return VcsLogUtil.getActualRoot(myProject, myProviders, path);
+  }
+
+  private void executeAndCatch(@NotNull Throwable2Runnable<IOException, StorageException> runnable) {
+    executeAndCatch(() -> {
+      runnable.run();
+      return null;
+    }, null);
+  }
+
+  private @Nullable <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+    return executeAndCatch(computable, null);
+  }
+
+  @Contract("_, !null -> !null")
+  private @Nullable <T> T executeAndCatch(@NotNull Throwable2Computable<? extends T, IOException, StorageException> computable,
+                                          @Nullable T defaultValue) {
+    try {
+      return computable.compute();
+    }
+    catch (Exception e) {
+      rethrowControlFlowException(e);
+
+      if (myIndexStorageBackend.isDisposed()) {
+        LOG.debug("Vcs Log index storage is closed", e);
+        throw new AlreadyDisposedException("Vcs Log index storage is closed: " + myIndexStorageBackend.getStorageId());
+      }
+      else if (isCorruptedDataException(e)) {
+        handleCorruptedData(Collections.singletonList(e));
+      }
+      else {
+        LOG.error("Unknown exception in Vcs Log index processing", e);
+        throw new RuntimeException(e);
+      }
+    }
+
+    return defaultValue;
+  }
+
+  private void handleCorruptedData(List<Exception> exceptions) {
+    if (myIndexStorageBackend.isDisposed()) {
+      for (Exception e : exceptions) {
+        LOG.debug("Vcs Log index storage is closed", e);
+      }
+      return;
+    }
+
+    for (Exception e : exceptions) {
+      myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+    }
+    myIndexStorageBackend.markCorrupted();
+  }
+
+  private static final class CorruptedDataException extends RuntimeException {
+    CorruptedDataException(@NotNull String message) {
       super(message);
     }
+  }
+
+  private static boolean isCorruptedDataException(@NotNull Exception e) {
+    if (e instanceof IOException ||
+        e instanceof UncheckedIOException ||
+        e instanceof StorageException ||
+        e instanceof CorruptedDataException) {
+      return true;
+    }
+
+    if (e instanceof RuntimeException) {
+      return e.getCause() instanceof IOException || e.getCause() instanceof StorageException;
+    }
+
+    return false;
+  }
+
+  private static void collectCorruptedDataExceptions(List<Exception> corruptedDataExceptions, Runnable runnable) {
+    try {
+      runnable.run();
+    } catch (Exception e) {
+      if (isCorruptedDataException(e)) {
+        corruptedDataExceptions.add(e);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  @FunctionalInterface
+  private interface Throwable2Runnable<E1 extends Throwable, E2 extends Throwable> {
+    void run() throws E1, E2;
   }
 }

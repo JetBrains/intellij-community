@@ -1,0 +1,307 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes.shelf
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.ShelfPatchBuilder
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.project.stateStore
+import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.io.createDirectories
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.readBytes
+import kotlin.io.path.writeBytes
+
+@TestApplication
+@OptIn(ExperimentalPathApi::class)
+class ShelveChangesManagerTest {
+  private lateinit var shelvedChangesManager: ShelveChangesManager
+
+  private lateinit var project: Project
+
+  @TempDir
+  lateinit var tempDir: Path
+
+  @BeforeEach
+  fun setUp() {
+    // test data expects not directory-based project
+    val baseDir = tempDir.resolve("project").createDirectories()
+    val projectFile = baseDir.resolve("p.ipr")
+    val shelfDir = baseDir.resolve(".shelf")
+    val testDataFile = Paths.get("${VcsTestUtil.getTestDataPath()}/shelf/shelvedChangeLists")
+    testDataFile.copyToRecursively(shelfDir, followLinks = true)
+
+    refreshProjectDir(projectFile)
+
+    project = ProjectManagerEx.getInstanceEx().openProject(projectFile, createTestOpenProjectOptions())!!
+    shelvedChangesManager = ShelveChangesManager.getInstance(project)
+    runBlocking {
+      shelvedChangesManager.scheduleShelvesLoading().await()
+    }
+    assertThat(shelvedChangesManager.shelvedChangeLists).isNotEmpty
+  }
+
+  @AfterEach
+  fun closeProject() {
+    if (::project.isInitialized && !project.isDisposed) {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    }
+  }
+
+  @Test
+  fun `unshelve list`() {
+    runInEdtAndWait(false) {
+      doTestUnshelve(0, 0, 2, 1)
+    }
+  }
+
+  @Test
+  fun `unshelve files`() {
+    runInEdtAndWait(false) {
+      doTestUnshelve(changeCount = 1, binariesNum = 1, expectedListNum = 3, expectedRecycledNum = 1)
+    }
+  }
+
+  @Test
+  fun `unshelve all files`() {
+    runInEdtAndWait(false) {
+      doTestUnshelve(2, 2, 2, 1)
+    }
+  }
+
+  @Test
+  fun `do not remove files when unshelve`() {
+    runInEdtAndWait(false) {
+      doTestUnshelve(0, 0, 3, 0, false)
+    }
+  }
+
+  @Test
+  fun `delete list`() {
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1)
+    }
+  }
+
+  @Test
+  fun `delete files`() {
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1)
+    }
+  }
+
+  @Test
+  fun `delete all files`() {
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 2, 2, 2, 1)
+    }
+  }
+
+  @Test
+  fun `delete deleted list`() {
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 0, 0, 2, 0)
+    }
+  }
+
+  @Test
+  fun `delete deleted files`() {
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 1, 1, 2, 1)
+    }
+  }
+
+  @Test
+  fun `delete all deleted files`() {
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 2, 2, 2, 0)
+    }
+  }
+
+  @Test
+  fun `undo list deletion`() {
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1, true)
+    }
+  }
+
+  @Test
+  fun `undo file deletion`() {
+    runInEdtAndWait(false) {
+      //correct undo depends on ability to merge 2 shelved lists with separated changes inside
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1, true)
+    }
+  }
+
+  @Test
+  fun `create patch from shelf`() {
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangeList.loadChangesIfNeeded(project)
+      val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, emptyList())
+      val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+      val changeSize = shelvedChangeList.changes?.size ?: 0
+      assertTrue(patches.size == (changeSize + shelvedChangeList.binaryFiles.size))
+    }
+  }
+
+  @Test
+  fun `create patch from shelved changes`() {
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangeList.loadChangesIfNeeded(project)
+      val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first(), shelvedChangeList).path,
+                                 ShelvedWrapper(shelvedChangeList.binaryFiles!!.first(), shelvedChangeList).path)
+      val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
+      val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+      assertTrue(patches.size == selectedPaths.size)
+    }
+  }
+
+  @Test
+  fun `shelve added binary file`() {
+    val content = byteArrayOf(0, 1, 2, 3)
+    val file = Paths.get(project.basePath!!).resolve("image.bin")
+    file.writeBytes(content)
+
+    val change = Change(null, CurrentBinaryContentRevision(LocalFilePath(file, false)))
+    val shelvedChangeList = shelvedChangesManager.shelveChanges(listOf(change), "add binary", false)
+
+    val binaryFile = shelvedChangeList.binaryFiles.single()
+    assertNull(binaryFile.BEFORE_PATH)
+    assertEquals("image.bin", binaryFile.AFTER_PATH)
+    assertArrayEquals(content, Paths.get(binaryFile.SHELVED_PATH!!).readBytes())
+  }
+
+  @Test
+  fun `shelve deleted binary file`() {
+    val file = Paths.get(project.basePath!!).resolve("image.bin")
+    val change = Change(CurrentBinaryContentRevision(LocalFilePath(file, false)), null)
+
+    val shelvedChangeList = shelvedChangesManager.shelveChanges(listOf(change), "delete binary", false)
+
+    val binaryFile = shelvedChangeList.binaryFiles.single()
+    assertEquals("image.bin", binaryFile.BEFORE_PATH)
+    assertNull(binaryFile.AFTER_PATH)
+    assertNull(binaryFile.SHELVED_PATH)
+  }
+
+  @Test
+  fun `cleanup task does not retain closed project from scheduler`() {
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+
+    val baseDir = tempDir.resolve("leak-project")
+    baseDir.createDirectories()
+    val projectFile = baseDir.resolve("leak.ipr")
+    refreshProjectDir(projectFile)
+
+    val closedProject = ProjectManagerEx.getInstanceEx().openProject(projectFile, createTestOpenProjectOptions())!!
+    ShelveChangesManager.getInstance(closedProject)
+    DumbService.getInstance(closedProject).waitForSmartMode()
+    PlatformTestUtil.forceCloseProjectWithoutSaving(closedProject)
+
+    runReadActionBlocking {
+      LeakHunter.checkLeak({ mapOf(JobScheduler.getScheduler() to "JobScheduler") }, ProjectImpl::class.java) { it === closedProject }
+    }
+  }
+
+  private fun doTestUnshelve(
+    changeCount: Int,
+    binariesNum: Int,
+    expectedListNum: Int,
+    expectedRecycledNum: Int,
+    removeFilesFromShelf: Boolean = true,
+  ) {
+    shelvedChangesManager.isRemoveFilesFromShelf = removeFilesFromShelf
+    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+    shelvedChangeList.loadChangesIfNeeded(project)
+    val originalDate = shelvedChangeList.date
+    val changes = if (changeCount == 0) null else shelvedChangeList.changes!!.subList(0, changeCount)
+    val binaries = if (changeCount == 0) null else shelvedChangeList.binaryFiles.subList(0, binariesNum)
+
+    shelvedChangesManager.unshelveChangeList(shelvedChangeList, changes, binaries, null, false)
+
+    // unshelveChangeList uses GuiUtils.invokeLaterIfNeeded
+    runInEdtAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+
+    val recycledShelvedChangeLists = shelvedChangesManager.recycledShelvedChangeLists
+    assertThat(shelvedChangesManager.shelvedChangeLists.size).isEqualTo(expectedListNum)
+    assertThat(recycledShelvedChangeLists.size).isEqualTo(expectedRecycledNum)
+    if (recycledShelvedChangeLists.isNotEmpty()) {
+      assertThat(originalDate.before(recycledShelvedChangeLists[0].date)).isTrue()
+    }
+  }
+
+  private fun doTestDelete(
+    shelvedChangeList: ShelvedChangeList,
+    changesNum: Int,
+    binariesNum: Int,
+    expectedListNum: Int,
+    expectedDeletedNum: Int,
+    undoDeletion: Boolean = false,
+  ) {
+    val originalDate = shelvedChangeList.date
+    shelvedChangeList.loadChangesIfNeeded(project)
+    val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.changes!!.subList(0, changesNum)
+    val binaries = if (changesNum == 0) emptyList<ShelvedBinaryFile>() else shelvedChangeList.binaryFiles.subList(0, binariesNum)
+
+    val shouldDeleteEntireList = changesNum == 0 && binariesNum == 0
+    val deleteShelvesWithDates = shelvedChangesManager.deleteShelves(
+      if (shouldDeleteEntireList) listOf(shelvedChangeList) else emptyList(),
+      if (!shouldDeleteEntireList) listOf(shelvedChangeList) else emptyList(),
+      changes, binaries)
+
+    val deletedLists = shelvedChangesManager.deletedLists
+    assertEquals(expectedListNum, shelvedChangesManager.shelvedChangeLists.size)
+    assertEquals(expectedDeletedNum, deletedLists.size)
+    if (deletedLists.isNotEmpty() && deleteShelvesWithDates.isNotEmpty())
+      assertThat(originalDate.before(deletedLists[0].date)).isTrue()
+
+    if (undoDeletion) {
+      for ((l, d) in deleteShelvesWithDates) {
+        shelvedChangesManager.restoreList(l, d)
+      }
+      assertEquals(expectedListNum + expectedDeletedNum, shelvedChangesManager.shelvedChangeLists.size)
+    }
+  }
+
+  private fun refreshProjectDir(projectFile: Path) {
+    val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectFile.parent)!!
+    ApplicationManager.getApplication().runWriteIntentReadAction<Unit, Nothing?> {
+      VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    }
+  }
+}

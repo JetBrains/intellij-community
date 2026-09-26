@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,17 +7,16 @@ import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author nik
- */
-public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTarget> {
+public final class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTarget> {
   public static final ResourcesTargetType PRODUCTION = new ResourcesTargetType("resources-production", false);
   public static final ResourcesTargetType TEST = new ResourcesTargetType("resources-test", true);
-  public static final List<ResourcesTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
+  public static final List<ResourcesTargetType> ALL_TYPES = List.of(PRODUCTION, TEST);
 
   private final boolean myTests;
 
@@ -40,9 +25,8 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
     myTests = tests;
   }
 
-  @NotNull
   @Override
-  public List<ResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<ResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
     List<ResourcesTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
@@ -51,9 +35,8 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
     return targets;
   }
 
-  @NotNull
   @Override
-  public Loader createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<ResourcesTarget> createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
@@ -65,20 +48,16 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
     return tests ? TEST : PRODUCTION;
   }
 
-  private class Loader extends BuildTargetLoader<ResourcesTarget> {
-    private final Map<String, JpsModule> myModules;
+  private final class Loader extends BuildTargetLoader<ResourcesTarget> {
+    private final @NotNull JpsProject myProject;
 
-    public Loader(JpsModel model) {
-      myModules = new HashMap<>();
-      for (JpsModule module : model.getProject().getModules()) {
-        myModules.put(module.getName(), module);
-      }
+    Loader(JpsModel model) {
+      myProject = model.getProject();
     }
 
-    @Nullable
     @Override
-    public ResourcesTarget createTarget(@NotNull String targetId) {
-      JpsModule module = myModules.get(targetId);
+    public @Nullable ResourcesTarget createTarget(@NotNull String targetId) {
+      JpsModule module = myProject.findModuleByName(targetId);
       return module != null ? new ResourcesTarget(module, ResourcesTargetType.this) : null;
     }
   }

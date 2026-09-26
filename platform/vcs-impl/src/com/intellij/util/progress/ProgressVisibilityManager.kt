@@ -9,17 +9,19 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows to run multiple processes with a single UI indicator
  */
+@ApiStatus.Internal
 abstract class ProgressVisibilityManager : Disposable {
   private val indicators: MutableList<ProgressIndicator> = ArrayList()
-  var disposed = false
+  var disposed: Boolean = false
     private set
 
-  @CalledInAwt
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun run(task: Task.Backgroundable): ProgressIndicator {
     val indicator = EmptyProgressIndicator(getModalityState())
     indicators.add(indicator)

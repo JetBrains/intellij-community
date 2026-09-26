@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.awt.Color;
 import java.util.Locale;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class ValueElementReaderTest extends LightPlatformTestCase {
   private final ValueElementReader myReader = new ValueElementReader();
 
@@ -39,7 +23,7 @@ public final class ValueElementReaderTest extends LightPlatformTestCase {
 
   private <T> T read(Class<T> type, String attribute, Option option) throws Exception {
     myReader.setAttribute(attribute);
-    return myReader.read(type, option == null ? null : Option.element(option));
+    return myReader.read(type, option == null ? null : JDOMUtil.load(option.toString()));
   }
 
   public void testString() throws Exception {
@@ -75,9 +59,9 @@ public final class ValueElementReaderTest extends LightPlatformTestCase {
     assertNull(read(Color.class, null));
     assertNull(read(Color.class, ""));
     assertNull(read(Color.class, "Z"));
-    assertEquals(new Color(0x00CAFE), read(Color.class, "CAFE"));
+    assertEquals(new Color(0x00CAFE), read(Color.class, "00CAFE"));
     assertEquals(new Color(0x123456), read(Color.class, "0x123456"));
-    assertEquals(new Color(0x345678), read(Color.class, "12345678"));
+    assertEquals(new Color(0x78123456, true), read(Color.class, "12345678"));
   }
 
   public void testEnum() throws Exception {

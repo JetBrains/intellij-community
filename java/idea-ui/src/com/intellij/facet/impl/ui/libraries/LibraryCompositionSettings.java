@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -34,17 +20,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
-*/
-public class LibraryCompositionSettings implements Disposable {
+public final class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
-  @NotNull private final NotNullComputable<String> myPathProvider;
+  private final @NotNull NotNullComputable<String> myPathProvider;
   private FrameworkLibraryVersionFilter myVersionFilter;
   private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
@@ -52,8 +36,7 @@ public class LibraryCompositionSettings implements Disposable {
   private Library mySelectedLibrary;
   private boolean myDownloadLibraries;
   private LibraryDownloadSettings myDownloadSettings;
-  private final Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
-    ContainerUtil.newIdentityTroveMap();
+  private final Map<Library, ExistingLibraryEditor> myExistingLibraryEditors = new IdentityHashMap<>();
   private FrameworkLibraryProvider myLibraryProvider;
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
@@ -99,6 +82,10 @@ public class LibraryCompositionSettings implements Disposable {
     return result;
   }
 
+  FrameworkLibraryVersionFilter getVersionFilter() {
+    return myVersionFilter;
+  }
+
   private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
     return baseDirectoryPath.isEmpty() ? "lib" : baseDirectoryPath + "/lib";
   }
@@ -117,18 +104,15 @@ public class LibraryCompositionSettings implements Disposable {
     return libraryEditor;
   }
 
-  @NotNull
-  public CustomLibraryDescription getLibraryDescription() {
+  public @NotNull CustomLibraryDescription getLibraryDescription() {
     return myLibraryDescription;
   }
 
-  @Nullable
-  public LibraryDownloadSettings getDownloadSettings() {
+  public @Nullable LibraryDownloadSettings getDownloadSettings() {
     return myDownloadSettings;
   }
 
-  @NotNull
-  public String getBaseDirectoryPath() {
+  public @NotNull String getBaseDirectoryPath() {
     return myPathProvider.compute();
   }
 
@@ -140,11 +124,15 @@ public class LibraryCompositionSettings implements Disposable {
     mySelectedLibrary = library;
   }
 
+  public @Nullable Library getSelectedLibrary() {
+    return mySelectedLibrary;
+  }
+
   public void setNewLibraryLevel(final LibrariesContainer.LibraryLevel newLibraryLevel) {
     myNewLibraryLevel = newLibraryLevel;
   }
 
-  public boolean downloadFiles(final @NotNull JComponent parent) {
+  public boolean downloadFiles(final @Nullable JComponent parent) {
     if (myDownloadLibraries && myDownloadSettings != null) {
       final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent, getBaseDirectoryPath());
       if (libraryEditor != null) {
@@ -158,8 +146,7 @@ public class LibraryCompositionSettings implements Disposable {
     return myDownloadLibraries || myNewLibraryEditor != null || mySelectedLibrary != null || myLibraryProvider != null;
   }
 
-  @Nullable
-  private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
+  private @Nullable Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myNewLibraryEditor != null) {
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myNewLibraryEditor, getLibraryLevel());
@@ -175,9 +162,8 @@ public class LibraryCompositionSettings implements Disposable {
     return myNewLibraryLevel;
   }
 
-  @Nullable
-  public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
-                              final @Nullable LibrariesContainer librariesContainer) {
+  public @Nullable Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<? super Library> addedLibraries,
+                                        final @Nullable LibrariesContainer librariesContainer) {
     Library newLibrary = createLibrary(rootModel, librariesContainer);
 
     if (newLibrary != null) {

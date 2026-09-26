@@ -1,39 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 /**
+ * @deprecated implement {@link ModelBuilderService#reportErrorMessage} instead
+ *
  * @author Vladislav.Soroka
- * @since 5/13/2014
  */
-public class ErrorMessageBuilder {
-  public static final String GROUP_TAG = "<ij_msg_gr>";
-  public static final String NAV_TAG = "<ij_nav>";
-  public static final String EOL_TAG = "<eol>";
-
-  @NotNull private final Project myProject;
-  @Nullable private final Exception myException;
-  @NotNull private final String myGroup;
-  @Nullable private String myDescription;
+@Deprecated
+public final class ErrorMessageBuilder {
+  private final @NotNull Project myProject;
+  private final @Nullable Exception myException;
+  private final @NotNull String myGroup;
+  private @Nullable String myTitle;
+  private @Nullable String myDescription;
 
   private ErrorMessageBuilder(@NotNull Project project, @Nullable Exception exception, @NotNull String group) {
     myProject = project;
@@ -49,37 +33,26 @@ public class ErrorMessageBuilder {
     return new ErrorMessageBuilder(project, exception, group);
   }
 
+  public ErrorMessageBuilder withTitle(@NotNull String title) {
+    myTitle = title;
+    return this;
+  }
+
   public ErrorMessageBuilder withDescription(@NotNull String description) {
     myDescription = description;
     return this;
   }
 
-  public String build() {
-    String group = myGroup.replaceAll("\r\n|\n\r|\n|\r", " ");
-    final File projectBuildFile = myProject.getBuildFile();
-    return (
-      GROUP_TAG + group + GROUP_TAG +
-      (projectBuildFile != null ? (NAV_TAG + projectBuildFile.getPath() + NAV_TAG) : "") +
-      (
-        "<i>" +
-        "<b>" + myProject + ((myDescription != null) ? ": " + myDescription : "") + "</b>" +
-        (myException != null ? "\nDetails: " + getErrorMessage(myException) : "") +
-        "</i>"
-      ).replaceAll("\r\n|\n\r|\n|\r", EOL_TAG)
-    );
-  }
-
-
-  private static String getErrorMessage(@NotNull Throwable e) {
-    StringBuilder buf = new StringBuilder();
-    Throwable cause = e;
-    while (cause != null) {
-      if (buf.length() != 0) {
-        buf.append("\nCaused by: ");
-      }
-      buf.append(cause.getClass().getName()).append(": ").append(cause.getMessage());
-      cause = cause.getCause();
-    }
-    return buf.toString();
+  @ApiStatus.Internal
+  public Message buildMessage() {
+    return new DefaultMessageBuilder()
+      .withTitle(myTitle)
+      .withText(myDescription)
+      // custom model builders failures often not so critical to the import results and reported as warnings to avoid useless distraction
+      .withKind(Message.Kind.WARNING)
+      .withException(myException)
+      .withGroup(myGroup)
+      .withProject(myProject)
+      .build();
   }
 }

@@ -1,59 +1,161 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
-@State(name = "PackageRequirementsSettings")
-public class PyPackageRequirementsSettings implements PersistentStateComponent<PyPackageRequirementsSettings> {
-  public static final String DEFAULT_REQUIREMENTS_PATH = "requirements.txt";
+import java.nio.file.Path;
 
-  @NotNull
-  private String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
 
-  @NotNull
-  @Override
-  public PyPackageRequirementsSettings getState() {
-    return this;
+@ApiStatus.Internal
+public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwareService<
+  PyPackageRequirementsSettings.ServiceState,
+  PyPackageRequirementsSettings,
+  PyPackageRequirementsSettings.AppService,
+  PyPackageRequirementsSettings.ModuleService> {
+
+
+  static final String MODULE_STATE_COMPONENT = "PackageRequirementsSettings";
+
+  private static final PyDefaultProjectAwareServiceClasses<
+    ServiceState,
+    PyPackageRequirementsSettings,
+    AppService,
+    ModuleService,
+    PyPackageRequirementsSettingsFactory> SERVICE_CLASSES =
+    new PyDefaultProjectAwareServiceClasses<>(AppService.class, PyPackageRequirementsSettingsFactory.class);
+
+  protected PyPackageRequirementsSettings() {
+    super(new ServiceState());
   }
 
-  @Override
-  public void loadState(@NotNull PyPackageRequirementsSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  protected PyPackageRequirementsSettings(Module module) {
+    super(new ServiceState(), MODULE_STATE_COMPONENT, ServiceState.class, module);
+  }
+  /**
+   * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#resolvePersistedRequirementsFile(Sdk)}  instead.
+   */
+  @Deprecated(forRemoval = true)
+  public final @NotNull String getRequirementsPath() {
+    return getState().myRequirementsPath;
   }
 
-  @NotNull
-  public String getRequirementsPath() {
-    return myRequirementsPath;
-  }
-
+  /**
+   * @deprecated Use {@link PythonRequirementTxtSdkUtils#saveRequirementsTxtPath(Project, Sdk, Path)}  instead.
+   */
+  @Deprecated(forRemoval = true)
   public void setRequirementsPath(@NotNull String path) {
-    myRequirementsPath = path;
+    var state = getState();
+    state.myRequirementsPath = path;
+    if (myModule != null) {
+      loadState(state);
+    }
   }
 
-  @NotNull
-  public static PyPackageRequirementsSettings getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, PyPackageRequirementsSettings.class);
+  public boolean getSpecifyVersion() {
+    return getState().myVersionSpecifier != PyRequirementsVersionSpecifierType.NO_VERSION;
+  }
+
+  public final PyRequirementsVersionSpecifierType getVersionSpecifier() {
+    return getState().myVersionSpecifier;
+  }
+
+  public final void setVersionSpecifier(PyRequirementsVersionSpecifierType versionSpecifier) {
+    ServiceState state = getState();
+    state.myVersionSpecifier = versionSpecifier;
+    if (myModule != null) {
+      loadState(state);
+    }
+  }
+
+  public final boolean getRemoveUnused() {
+    return getState().myRemoveUnused;
+  }
+
+  public final boolean setRemoveUnused(boolean removeUnused) {
+    ServiceState state = getState();
+    state.myRemoveUnused = removeUnused;
+    if (myModule != null) {
+      loadState(state);
+    }
+    return state.myRemoveUnused;
+  }
+
+  public final boolean getModifyBaseFiles() {
+    return getState().myModifyBaseFiles;
+  }
+
+  public final boolean setModifyBaseFiles(boolean modifyBaseFiles) {
+    ServiceState state = getState();
+    state.myModifyBaseFiles = modifyBaseFiles;
+    if (myModule != null) {
+      loadState(state);
+    }
+    return state.myModifyBaseFiles;
+  }
+
+  public final boolean getKeepMatchingSpecifier() {
+    return getState().myKeepMatchingSpecifier;
+  }
+
+  public final void setKeepMatchingSpecifier(boolean forceUpdateVersionSpecifier) {
+    ServiceState state = getState();
+    state.myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
+    if (myModule != null) {
+     loadState(state);
+    }
+  }
+
+  public static @NotNull PyPackageRequirementsSettings getInstance(@Nullable Module module) {
+    return SERVICE_CLASSES.getService(module);
+  }
+
+  public static @NotNull PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+    return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES);
+  }
+
+  public static final class ServiceState {
+    /**
+     * @deprecated Use {@link {@link PythonRequirementTxtSdkUtils#resolvePersistedRequirementsFile(Sdk)}  instead.
+     */
+    @Deprecated(forRemoval = true)
+    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.toString();
+
+    @OptionTag("versionSpecifier") public @NotNull PyRequirementsVersionSpecifierType myVersionSpecifier =
+      PyRequirementsVersionSpecifierType.COMPATIBLE;
+
+    @OptionTag("removeUnused")
+    public boolean myRemoveUnused = false;
+
+    @OptionTag("modifyBaseFiles")
+    public boolean myModifyBaseFiles = false;
+
+    @OptionTag("keepMatchingSpecifier")
+    public boolean myKeepMatchingSpecifier = true;
+  }
+
+  @State(name = "AppPackageRequirementsSettings", storages = @Storage(value = "PackageRequirementsSettings.xml", roamingType = RoamingType.DISABLED))
+  public static final class AppService extends PyPackageRequirementsSettings {
+
+  }
+
+  public static final class ModuleService extends PyPackageRequirementsSettings {
+    ModuleService(Module module) {
+      super(module);
+    }
   }
 }

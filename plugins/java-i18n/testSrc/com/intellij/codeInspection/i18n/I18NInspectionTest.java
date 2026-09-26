@@ -1,23 +1,35 @@
-/*
- * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lesya
- */
-public class I18NInspectionTest extends InspectionTestCase {
+
+public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
+  I18nInspection myTool = new I18nInspection();
+  
   private void doTest() {
-    doTest(new I18nInspection());
+    myTool.setReportUnannotatedReferences(true);
+    myFixture.enableInspections(myTool);
+    myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }
-  private void doTest(I18nInspection tool) {
-    doTest("i18n/" + getTestName(true), tool);
+
+  private void doTestNlsMode() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   public void testHardCodedStringLiteralAsParameter() { doTest(); }
@@ -26,33 +38,136 @@ public class I18NInspectionTest extends InspectionTestCase {
   public void testParameterInheritsNonNlsAnnotationFromSuper() { doTest(); }
   public void testLocalVariables() { doTest(); }
   public void testFields() { doTest(); }
+  public void testInAnnotationArguments() { doTest(); }
   public void testAnonymousClassConstructorParameter() { doTest(); }
   public void testStringBufferNonNls() { doTest(); }
-  public void testEnum() {
-     final JavaPsiFacade facade = getJavaFacade();
-     final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-     try {
-       doTest();
-     }
-     finally {
-       LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
-     }
-   }
+  public void testEnum() { doTest(); }
+  public void testIgnoredLines() { doTest(); }
+  public void testStringMethods() { doTest(); }
 
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
   public void testNonNlsArray() { doTest(); }
+  public void testNonNlsEquals() { doTest(); }
+  public void testNonNlsTernary() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
+  public void _testConstructorChains() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
+  public void testNestedArrayParenthesized() { doTest(); }
   public void testNonNlsComment() {
-    I18nInspection inspection = new I18nInspection();
-    inspection.nonNlsCommentPattern = "MYNON-NLS";
-    inspection.cacheNonNlsCommentPattern();
-    doTest(inspection);
+    myTool.setNonNlsCommentPattern("MYNON-NLS");
+    doTest();
   }
+  public void testPropagateToInterfaceMethod() {
+    doTest();
+  }
+
+  public void testNlsOnly() {
+    doTestNlsMode();
+  }
+  
+  public void testNlsOnlyTernary() {
+    doTestNlsMode();
+  }
+  
+  public void testNlsOnlyFields() {
+    doTestNlsMode();
+  }
+
+  public void testNlsPackage() {
+    myFixture.addFileToProject("package-info.java", """
+      @Nls
+      package foo;
+      import org.jetbrains.annotations.Nls;""");
+    doTestNlsMode();
+  }
+
   public void testAnnotationArgument() { doTest(); }
+  public void testAssertionStmt() { doTest(); }
+  public void testPropertyKeyAnnotated() {
+    String oldPattern = myTool.nonNlsCommentPattern;
+    try {
+      myTool.setNonNlsLiteralPattern("");
+      doTest();
+    }
+    finally {
+      myTool.setNonNlsLiteralPattern(oldPattern);
+    }
+  }
+  public void testExceptionCtor() { doTest(); }
+  public void testSpecifiedExceptionCtor() {
+    boolean old = myTool.ignoreForExceptionConstructors;
+    try {
+      myTool.ignoreForSpecifiedExceptionConstructors = "java.io.IOException";
+      myTool.ignoreForExceptionConstructors = false;
+      doTest();
+    }
+    finally {
+      myTool.ignoreForSpecifiedExceptionConstructors = "";
+      myTool.ignoreForExceptionConstructors = old;
+    }
+  }
+
+  public void testEnumConstantIgnored() {
+    boolean oldState = myTool.setIgnoreForEnumConstants(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForEnumConstants(oldState);
+    }
+  }
+  
+  public void testNlsTypeUse() { doTestNlsMode(); }
+
+  public void testNonNlsIndirect() { doTest(); }
+
+  public void testNlsIndirect() { doTestNlsMode(); }
+  
+  public void testNonNlsMeta() { doTest(); }
+  
+  public void testNlsMeta() { doTestNlsMode(); }
+  
+  public void testUseConstant() { doTest(); }
+
+  public void testNonNlsOnContainer() { doTest(); }
+  
+  public void testUseConstantNls() { doTestNlsMode(); }
+  
+  public void testHtmlEntitiesNlsMode() {
+    doTestNlsMode();
+  }
+
+  public void testArrayInitializerInNlsMode() { doTestNlsMode(); }
+
+  public void testSwitchInNlsMode() { doTestNlsMode(); }
+
+  public void testReturnCallWithArgs() { doTest(); }
+  
+  public void testConverterMethods() { doTestNlsMode(); }
+  
+  public void testPassthroughMethods() { doTestNlsMode(); }
+  
+  public void testNlsSafeStringBuilder() { doTestNlsMode(); }
+  
+  public void testUnannotatedReferencesQualified() { doTestNlsMode(); }
+  
+  public void testCharSequenceMethods() { doTestNlsMode(); }
+  
+  public void testRefsNonNlsMode() { doTest(); }
+  
+  public void testRefsMetaAnnotation() { doTest(); }
+  
+  public void testStringBuilderAppend() { doTest(); }
+  
+  public void testComputeIfAbsent() { doTest(); }
+  
+  public void testNonNlsFieldInitializer() { doTest(); }
+
+  public void testQualifiedReferences() { doTest(); }
+
+  public void testLoops() { doTest(); }
 
   @Override
   protected String getTestDataPath() {

@@ -1,39 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.TextEditorLocation;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public interface Usage extends Navigatable {
+
   Usage[] EMPTY_ARRAY = new Usage[0];
 
   @NotNull
   UsagePresentation getPresentation();
+
   boolean isValid();
+
   boolean isReadOnly();
 
   @Nullable
   FileEditorLocation getLocation();
 
   void selectInEditor();
+
   void highlightInEditor();
+
+  /**
+   * @return offset of this usage in its containing file to which the corresponding "Go to Source" action should navigate,
+   * or {@code -1} if the offset can't be computed for some reason.
+   * This offset is used in "Find Usages" tool window tree to group usages by containing file and then by their offsets.
+   * Please consider overriding this method if you implement {@link Usage} from scratch and can compute its offset efficiently.
+   * The already existing implementations in the core, like {@link UsageInfo2UsageAdapter} implement this method efficiently enough, so there's no need to override them.
+   * Also, please make your {@link Usage} implementation extend {@link com.intellij.usages.rules.UsageInFile} to be able to group usages in "Find Usages" tool window.
+   */
+  default int getNavigationOffset() {
+    FileEditorLocation location = getLocation();
+    if (location instanceof TextEditorLocation tel) {
+      LogicalPosition position = tel.getPosition();
+      return ((TextEditor)location.getEditor()).getEditor().logicalPositionToOffset(position);
+    }
+    return -1;
+  }
 }

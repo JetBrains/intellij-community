@@ -1,0 +1,231 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.core.overrideImplement
+
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.scopes.memberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.symbols.implementationState
+import org.jetbrains.kotlin.analysis.api.symbols.intersectionOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
+import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
+import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+
+@ApiStatus.Internal
+open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
+    override fun getChooserTitle(): String = KotlinIdeaCoreBundle.message("implement.members.handler.title")
+
+    override fun getNoMembersFoundHint(): String = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
+
+    override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
+        return analyze(classOrObject) {
+            getUnimplementedMembers(classOrObject).map { createKtClassMember(it, BodyType.FromTemplate, false) }
+        }
+    }
+
+    fun collectMembersToAddOverride(classOrObject: KtClassOrObject): List<KtCallableDeclaration> {
+        analyze(classOrObject) {
+            val classSymbol = classOrObject.classSymbol
+            return classSymbol?.memberScope?.callables?.toList()?.mapNotNull { symbol ->
+                (symbol.psi as? KtCallableDeclaration)?.takeIf {
+                    when (val implementationState = symbol.implementationState(classSymbol)) {
+                        is KaCallableImplementationState.Inherited -> {
+                            !implementationState.isOverridable && symbol.directlyOverriddenSymbols.any()
+                        }
+                        else -> false
+                    }
+                }
+            } ?: emptyList()
+        }
+    }
+}
+
+internal class KtImplementMembersQuickfix(private val members: Collection<KtClassMemberInfo>) : KtImplementMembersHandler(),
+                                                                                                IntentionAction {
+    override fun getText() = familyName
+    override fun getFamilyName() = KotlinIdeaCoreBundle.message("implement.members.handler.family")
+
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) = true
+
+    override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
+        return analyze(classOrObject) {
+            members
+                .mapNotNull { memberInfo -> memberInfo.symbolPointer.restoreSymbol() }
+                .mapToKtClassMemberInfo()
+                .map { createKtClassMember(it, BodyType.FromTemplate, false) }
+        }
+    }
+}
+
+internal class KtImplementAsConstructorParameterQuickfix(private val members: Collection<KtClassMemberInfo>) : KtImplementMembersHandler(),
+                                                                                                               IntentionAction {
+    override fun getText() = KotlinIdeaCoreBundle.message("action.text.implement.as.constructor.parameters")
+
+    override fun getFamilyName() = KotlinIdeaCoreBundle.message("implement.members.handler.family")
+
+    override fun isAvailable(project: Project, editor: Editor, file: PsiFile) = true
+
+    override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
+        return analyze(classOrObject) {
+            members
+                .mapNotNull { memberInfo -> memberInfo.symbolPointer.restoreSymbol() }
+                .mapToKtClassMemberInfo()
+                .filter { it.isProperty }
+                .map { createKtClassMember(it, BodyType.FromTemplate, true) }
+        }
+    }
+}
+
+object MemberNotImplementedQuickfixFactories {
+
+    val abstractMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractMemberNotImplemented> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractMemberNotImplemented ->
+            getUnimplementedMemberFixes(diagnostic.psi)
+        }
+
+    val abstractClassMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractClassMemberNotImplemented> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractClassMemberNotImplemented ->
+            getUnimplementedMemberFixes(diagnostic.psi)
+        }
+
+    val manyInterfacesMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ManyInterfacesMemberNotImplemented> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ManyInterfacesMemberNotImplemented ->
+            getUnimplementedMemberFixes(diagnostic.psi)
+        }
+
+    val manyImplMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ManyImplMemberNotImplemented> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ManyImplMemberNotImplemented ->
+            getUnimplementedMemberFixes(diagnostic.psi, false)
+        }
+
+    val abstractMemberNotImplementedByEnumEntry: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractMemberNotImplementedByEnumEntry> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractMemberNotImplementedByEnumEntry ->
+            val missingDeclarations = diagnostic.missingDeclarations
+            if (missingDeclarations.isEmpty()) return@IntentionBased emptyList()
+            listOf(KtImplementMembersQuickfix(missingDeclarations.map { KtClassMemberInfo.create(it) }))
+        }
+
+    context(session: KaSession)
+    private fun getUnimplementedMemberFixes(
+        classWithUnimplementedMembers: KtClassOrObject,
+        includeImplementAsConstructorParameterQuickfix: Boolean = true
+    ): List<IntentionAction> {
+        val classSymbol = classWithUnimplementedMembers.classSymbol ?: return emptyList()
+        val unimplementedMemberSymbols = getUnimplementedMemberSymbols(classSymbol)
+
+        val unimplementedMembers = unimplementedMemberSymbols.map { symbol -> KtClassMemberInfo.create(symbol = symbol) }
+
+        return buildList {
+            add(KtImplementMembersQuickfix(unimplementedMembers))
+            if (includeImplementAsConstructorParameterQuickfix && classWithUnimplementedMembers is KtClass &&
+                classWithUnimplementedMembers !is KtEnumEntry &&
+                !classWithUnimplementedMembers.isInterface() &&
+                !classWithUnimplementedMembers.isExpectDeclaration() &&
+                !(classWithUnimplementedMembers.hasActualModifier() && (ExpectActualSupport.getInstance(classWithUnimplementedMembers.project)
+                    .expectDeclarationIfAny(classWithUnimplementedMembers) as? KtClass)?.primaryConstructor != null)
+            ) {
+                val unimplementedProperties = unimplementedMemberSymbols
+                    .filter { symbol -> symbol is KaPropertySymbol && symbol.contextParameters.isEmpty() && symbol.receiverParameter == null }
+                    .map { symbol -> KtClassMemberInfo.create(symbol = symbol) }
+                if (unimplementedProperties.isNotEmpty()) {
+                    add(KtImplementAsConstructorParameterQuickfix(unimplementedProperties))
+                }
+            }
+        }
+    }
+}
+
+context(_: KaSession)
+private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
+    return map { unimplementedMemberSymbol ->
+        val containingSymbol = unimplementedMemberSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
+
+        @NlsSafe
+        val fqName = (containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
+        KtClassMemberInfo.create(
+            symbol = unimplementedMemberSymbol,
+            memberText = renderMemberText(unimplementedMemberSymbol),
+            memberIcon = KotlinIconProvider.getIcon(unimplementedMemberSymbol),
+            containingSymbolText = fqName,
+            containingSymbolIcon = containingSymbol?.let { symbol -> KotlinIconProvider.getIcon(symbol) }
+        )
+    }
+}
+
+context(_: KaSession)
+private fun isManyMemberNotImplementedError(callableSymbols: Collection<KaCallableSymbol>): Boolean {
+    if (callableSymbols.size < 2) return false
+
+    // No compiler errors occur here:
+    // open class Shape {
+    //     open fun draw(): Unit = Unit
+    // }
+    //
+    // interface Drawable {
+    //     fun draw()
+    // }
+    //
+    // class Circle : Shape(), Drawable
+    val singleOpenMethod = callableSymbols.singleOrNull { it.modality == KaSymbolModality.OPEN } ?: return true
+    return (singleOpenMethod.containingSymbol as? KaClassSymbol)?.classKind != KaClassKind.CLASS
+}
+
+context(_: KaSession)
+fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+    classWithUnimplementedMembers.classSymbol?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
+        .mapToKtClassMemberInfo()
+
+context(_: KaSession)
+internal fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassSymbol): List<KaCallableSymbol> {
+    return buildList {
+        classWithUnimplementedMembers.memberScope.callables.forEach { symbol ->
+            if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
+            when (val implementationState = symbol.implementationState(classWithUnimplementedMembers)) {
+                is KaCallableImplementationState.Missing -> {
+                    add(symbol)
+                }
+
+                is KaCallableImplementationState.Inherited if implementationState.isOverridable -> {
+                    val intersectionOverriddenSymbols = symbol.intersectionOverriddenSymbols
+                    val (abstractSymbols, nonAbstractSymbols) = intersectionOverriddenSymbols.partition {
+                        it.modality == KaSymbolModality.ABSTRACT
+                    }
+                    if (isManyMemberNotImplementedError(intersectionOverriddenSymbols)) {
+                        // This for the [MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED] and [MANY_IMPL_MEMBER_NOT_IMPLEMENTED] compiler errors.
+                        addAll(abstractSymbols.ifEmpty { intersectionOverriddenSymbols })
+                    } else if (abstractSymbols.isNotEmpty() && nonAbstractSymbols.isEmpty()) {
+                        addAll(abstractSymbols)
+                    }
+                }
+
+                else -> {}
+            }
+        }
+    }
+}

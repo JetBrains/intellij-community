@@ -1,63 +1,52 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Provides project management.
  */
+@ApiStatus.NonExtendable
 public abstract class ProjectManager {
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
+  @Topic.AppLevel
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   /**
-   * Gets {@code ProjectManager} instance.
-   *
-   * @return {@code ProjectManager} instance
+   * @return {@code ProjectManager} instance.
+   * For coroutines, see <pre>ProjectManagerEx</pre>
    */
   public static ProjectManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return ApplicationManager.getApplication().getService(ProjectManager.class);
+  }
+
+  public static @Nullable ProjectManager getInstanceIfCreated() {
+    return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected ProjectManager() {
   }
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
-  public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated Use {@link Topic}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
@@ -80,11 +69,9 @@ public abstract class ProjectManager {
 
   /**
    * Returns the list of currently opened projects.
-   *
-   * @return the array of currently opened projects.
+   * {@link Project#isDisposed()} must be checked for each project before use (if the whole operation is not under read action).
    */
-  @NotNull
-  public abstract Project[] getOpenProjects();
+  public abstract @NotNull Project @NotNull [] getOpenProjects();
 
   /**
    * Returns the project which is used as a template for new projects. The template project
@@ -95,30 +82,35 @@ public abstract class ProjectManager {
    *
    * @return the template project instance.
    */
-  @NotNull
-  public abstract Project getDefaultProject();
+  public abstract @NotNull Project getDefaultProject();
 
   /**
    * Loads and opens a project with the specified path. If the project file is from an older IDEA
    * version, prompts the user to convert it to the latest version. If the project file is from a
    * newer version, shows a message box telling the user that the load failed.
+   * <p>
+   * This method opens the project as-is.
+   * If the project is new and should be imported, use {@link com.intellij.ide.impl.ProjectUtil#openOrImportAsync} or
+   * {@link com.intellij.ide.impl.ProjectUtil#openOrImport} instead.
    *
    * @param filePath the .ipr file path
    * @return the opened project file, or null if the project failed to load because of version mismatch
    *         or because the project is already open.
    * @throws IOException          if the project file was not found or failed to read
    * @throws JDOMException        if the project file contained invalid XML
-   * @throws InvalidDataException if the project file contained invalid data
    */
-  @Nullable
-  public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
+  public abstract @Nullable Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
 
   /**
-   * Closes the specified project, but does not dispose it.
-   *
-   * @param project the project to close.
-   * @return true if the project was closed successfully, false if the closing was disallowed by the close listeners.
+   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
+   * @return true on success
    */
+  public abstract boolean closeAndDispose(@NotNull Project project);
+
+  /**
+   * @deprecated Use {@link #closeAndDispose}
+   */
+  @Deprecated
   public abstract boolean closeProject(@NotNull Project project);
 
   /**
@@ -129,13 +121,13 @@ public abstract class ProjectManager {
   public abstract void reloadProject(@NotNull Project project);
 
   /**
-   * Create new project in given location.
-   *
-   * @param name project name
-   * @param path project location
-   *
-   * @return newly crated project
+   * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
-  @Nullable
-  public abstract Project createProject(@Nullable String name, @NotNull String path);
+  @Deprecated
+  @ApiStatus.Internal
+  public abstract @NotNull Project createProject(@Nullable String name, @NotNull String path);
+
+  public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {
+    return null;
+  }
 }

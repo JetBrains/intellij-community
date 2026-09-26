@@ -1,0 +1,8 @@
+// "Remove forbidden opt-in annotation targets" "true"
+// K2_ERROR: OPT_IN_MARKER_WITH_WRONG_TARGET
+
+@Target(Annotati<caret>onTarget.TYPE, AnnotationTarget.TYPEALIAS, AnnotationTarget.FUNCTION)
+@RequiresOptIn
+annotation class Foo
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFix

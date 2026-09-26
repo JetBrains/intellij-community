@@ -1,65 +1,51 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 
-/**
- * @author yole
- */
 public class TestDataGroupFileEditor extends UserDataHolderBase implements TextEditor {
-  private WeakReference<Splitter> myComponent;
-  private final TestDataGroupVirtualFile myFile;
   private final Project myProject;
+  private final TestDataGroupVirtualFile myFile;
   private final TextEditor myBeforeEditor;
   private final TextEditor myAfterEditor;
+  private WeakReference<Splitter> myComponent;
 
   public TestDataGroupFileEditor(Project project, TestDataGroupVirtualFile file) {
-    myFile = file;
     myProject = project;
+    myFile = file;
     myBeforeEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file.getBeforeFile());
     myAfterEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file.getAfterFile());
   }
 
-  @NotNull
-  public JComponent getComponent() {
+  @Override
+  public @NotNull JComponent getComponent() {
     Splitter result = SoftReference.dereference(myComponent);
     if (result == null) {
       myComponent = new WeakReference<>(result = createComponent());
@@ -74,13 +60,9 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
     return splitter;
   }
 
-  @NotNull
   @Override
-  public Editor getEditor() {
-    if (SwingUtilities.isEventDispatchThread() && isBeforeEditorFocused()) {
-      return myBeforeEditor.getEditor();
-    }
-    return myAfterEditor.getEditor();
+  public @NotNull Editor getEditor() {
+    return (EDT.isCurrentThreadEdt() && isBeforeEditorFocused() ? myBeforeEditor : myAfterEditor).getEditor();
   }
 
   private boolean isBeforeEditorFocused() {
@@ -96,62 +78,52 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
   }
 
   @Override
-  public void navigateTo(@NotNull Navigatable navigatable) {
-  }
+  public void navigateTo(@NotNull Navigatable navigatable) { }
 
-  private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
+  private static JComponent wrapWithTitle(@NlsSafe String name, FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JBLabel(name, UIUtil.ComponentStyle.SMALL);
+    JLabel label = new JBLabel(name, UIUtil.ComponentStyle.SMALL);
     label.setBorder(JBUI.Borders.empty(1, 4, 2, 0));
     panel.add(BorderLayout.NORTH, label);
     panel.add(BorderLayout.CENTER, beforeEditor.getComponent());
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return null;
   }
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
-  public void setState(@NotNull FileEditorState state) {
-  }
+  @Override
+  public void setState(@NotNull FileEditorState state) { }
 
+  @Override
   public boolean isModified() {
     return myBeforeEditor.isModified() || myAfterEditor.isModified();
   }
 
+  @Override
   public boolean isValid() {
     return myBeforeEditor.isValid() && myAfterEditor.isValid();
   }
 
-  public void selectNotify() {
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+
+  @Override
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+
+  @Override
+  public @NotNull VirtualFile getFile() {
+    return myFile;
   }
 
-  public void deselectNotify() {
-  }
-
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
-  }
-
+  @Override
   public void dispose() {
     TextEditorProvider.getInstance().disposeEditor(myBeforeEditor);
     TextEditorProvider.getInstance().disposeEditor(myAfterEditor);

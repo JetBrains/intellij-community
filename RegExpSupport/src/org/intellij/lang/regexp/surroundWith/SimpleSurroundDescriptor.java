@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.RegExpAtom;
 import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -33,13 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleSurroundDescriptor implements SurroundDescriptor {
-  private static final Surrounder[] SURROUNDERS = {
-    new GroupSurrounder("Capturing Group (pattern)", "("),
-    new GroupSurrounder("Non-Capturing Group (?:pattern)", "(?:"),
-  };
 
-  @NotNull
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  @Override
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     // adjust start/end
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
@@ -69,7 +66,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
       }
     }
 
-    if (startOffset == endOffset && atoms.size() > 0) {
+    if (startOffset == endOffset && !atoms.isEmpty()) {
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(atoms);
       if ((atoms.size() == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent())) {
         return elements;
@@ -78,9 +75,17 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public Surrounder[] getSurrounders() {
-    return SURROUNDERS;
+  @Override
+  public Surrounder @NotNull [] getSurrounders() {
+    return new Surrounder[]{
+      new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
+      new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?>"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookbehind.pattern"), "(?<="),
+      new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookbehind.pattern"), "(?<!"),
+      new GroupSurrounder(RegExpBundle.message("surrounder.positive.lookahead.pattern"), "(?="),
+      new GroupSurrounder(RegExpBundle.message("surrounder.negative.lookahead.pattern"), "(?!"),
+    };
   }
 
   @Override
@@ -88,10 +93,8 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
-  @Nullable
-  private static <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
+  private static @Nullable <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
     T element = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, clazz);
-    if (element == null || element.getTextRange().getEndOffset() < endOffset) return null;
-    return element;
+    return (element == null || element.getTextRange().getEndOffset() < endOffset) ? null : element;
   }
 }

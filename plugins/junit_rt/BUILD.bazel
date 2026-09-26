@@ -1,0 +1,56 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+### auto-generated section `build intellij.junit.rt` start
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_library(
+    name = "junit-rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.junit.rt",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/java-runtime:rt",
+        ":libraries_junit4_provided",
+    ],
+)
+
+jvm_library(
+    name = "junit-rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.junit.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":junit-rt",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//java/java-runtime:rt_test_lib",
+    ],
+)
+### auto-generated section `build intellij.junit.rt` end
+
+### auto-generated section `iml intellij.junit.rt` start
+exports_files(
+    [
+        "intellij.junit.rt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.junit.rt` end

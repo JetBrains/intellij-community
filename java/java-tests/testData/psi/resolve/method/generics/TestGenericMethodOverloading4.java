@@ -5,6 +5,6 @@ public class TestGenericMethodOverloading4 {
         }
     }
     {
-        new A<String>().<ref>equals(new String());
+        new A<String>().<caret>equals(new String());
     }
 }

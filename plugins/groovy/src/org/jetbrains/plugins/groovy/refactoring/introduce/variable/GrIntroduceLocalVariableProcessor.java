@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,11 +9,17 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -39,6 +31,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,7 +48,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
 
   public GrIntroduceLocalVariableProcessor(@NotNull GrIntroduceContext context,
                                            @NotNull GroovyIntroduceVariableSettings settings,
-                                           @NotNull PsiElement[] occurrences,
+                                           PsiElement @NotNull [] occurrences,
                                            @NotNull GrExpression expression,
                                            boolean processUsages) {
 
@@ -66,8 +59,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     myExpression = expression;
   }
 
-  @NotNull
-  public GrVariable processExpression(@NotNull GrVariableDeclaration declaration) {
+  public @NotNull GrVariable processExpression(@NotNull GrVariableDeclaration declaration) {
     resolveLocalConflicts(myContext.getScope(), mySettings.getName());
 
     preprocessOccurrences();
@@ -93,7 +85,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
 
   private PsiElement[] processOccurrences() {
 
-    List<PsiElement> result = ContainerUtil.newArrayList();
+    List<PsiElement> result = new ArrayList<>();
 
     GrReferenceExpression templateRef =
       GroovyPsiElementFactory.getInstance(myContext.getProject()).createReferenceExpressionFromText(mySettings.getName());
@@ -109,8 +101,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @NotNull
-  private GrExpression preprocessOccurrences() {
+  private @NotNull GrExpression preprocessOccurrences() {
     GroovyRefactoringUtil.sortOccurrences(myOccurrences);
     if (myOccurrences.length == 0 || !(myOccurrences[0] instanceof GrExpression)) {
       throw new IncorrectOperationException("Wrong expression occurrence");
@@ -127,7 +118,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
           final PsiElement resolved = psiReference.resolve();
           if (resolved != null) {
             String fieldName = getFieldName(resolved);
-            if (fieldName != null && varName.equals(fieldName)) {
+            if (varName.equals(fieldName)) {
               GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
               ((GrReferenceExpression)child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
             }
@@ -140,10 +131,9 @@ public abstract class GrIntroduceLocalVariableProcessor {
     }
   }
 
-  @NotNull
-  private GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration,
-                                              @NotNull GrStatement anchor,
-                                              @Nullable PsiElement expression) throws IncorrectOperationException {
+  private @NotNull GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration,
+                                                       @NotNull GrStatement anchor,
+                                                       @Nullable PsiElement expression) throws IncorrectOperationException {
     GrLabeledStatement labeledStatement = expression != null && expression.getParent() instanceof GrLabeledStatement ? (GrLabeledStatement)expression.getParent() : null;
 
     boolean expressionMustBeDeleted = expression != null && PsiUtil.isExpressionStatement(expression) && !isSingleGStringInjectionExpr(expression);
@@ -197,8 +187,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     }
   }
 
-  @NotNull
-  static GrStatement insertBraces(@NotNull GrStatement anchor) {
+  static @NotNull GrStatement insertBraces(@NotNull GrStatement anchor) {
     GrBlockStatement blockStatement = GroovyPsiElementFactory.getInstance(anchor.getProject()).createBlockStatement();
 
     blockStatement.getBlock().addStatementBefore(anchor, null);
@@ -211,8 +200,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     return parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection;
   }
 
-  @Nullable
-  private static String getFieldName(@Nullable PsiElement element) {
+  private static @Nullable String getFieldName(@Nullable PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
     return element instanceof GrField ? ((GrField)element).getName() : null;
   }

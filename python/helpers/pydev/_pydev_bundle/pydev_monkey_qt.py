@@ -1,12 +1,15 @@
 from __future__ import nested_scopes
+
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import IS_PY38
 import os
 
 def set_trace_in_qt():
-    from _pydevd_bundle import pydevd_tracing
     from _pydevd_bundle.pydevd_comm import get_global_debugger
     debugger = get_global_debugger()
     if debugger is not None:
-        pydevd_tracing.SetTrace(debugger.trace_dispatch)
+        threading.current_thread()  # Create the dummy thread for qt.
+        debugger.enable_tracing()
 
 
 _patched_qt = False
@@ -35,24 +38,75 @@ def patch_qt(qt_support_mode):
 
         patch_qt_on_import = None
         try:
-            import PySide  # @UnresolvedImport @UnusedImport
-            qt_support_mode = 'pyside'
+            if IS_PY38:
+                raise ImportError
+            import PySide6
+            qt_support_mode = 'pyside6'
         except:
             try:
-                import PyQt5  # @UnresolvedImport @UnusedImport
-                qt_support_mode = 'pyqt5'
+                # PY-50959
+                # Problem:
+                # 1. We have Python 3.8;
+                # 2. PyQt compatible = Auto or PySide2;
+                # 3. We try to import numpy, we get "AttributeError: module 'numpy.core' has no attribute 'numerictypes'"
+                #
+                # Solution:
+                # We decided to turn off patching for PySide2 if we have Python 3.8
+                # Here we skip 'import PySide2' and keep trying to import another qt libraries
+                if IS_PY38:
+                    raise ImportError
+                import PySide2  # @UnresolvedImport @UnusedImport
+                qt_support_mode = 'pyside2'
             except:
                 try:
-                    import PyQt4  # @UnresolvedImport @UnusedImport
-                    qt_support_mode = 'pyqt4'
+                    import Pyside  # @UnresolvedImport @UnusedImport
+                    qt_support_mode = 'pyside'
                 except:
-                    return
+                    try:
+                        import PyQt6  # @UnresolvedImport @UnusedImport
+                        qt_support_mode = 'pyqt6'
+                    except:
+                        try:
+                            import PyQt5  # @UnresolvedImport @UnusedImport
+                            qt_support_mode = 'pyqt5'
+                        except:
+                            try:
+                                import PyQt4  # @UnresolvedImport @UnusedImport
+                                qt_support_mode = 'pyqt4'
+                            except:
+                                return
 
+    if qt_support_mode == 'pyside6':
+        if IS_PY38:
+            return
+        try:
+            import PySide6.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PySide6.QtCore, qt_support_mode)
+        except:
+            return
+    elif qt_support_mode == 'pyside2':
+        # PY-50959
+        # We can get here only if PyQt compatible = PySide2, in this case we should return
+        # See comment above about PY-50959
+        if IS_PY38:
+            return
+        try:
+            import PySide2.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PySide2.QtCore, qt_support_mode)
+        except:
+            return
 
-    if qt_support_mode == 'pyside':
+    elif qt_support_mode == 'pyside':
         try:
             import PySide.QtCore  # @UnresolvedImport
             _internal_patch_qt(PySide.QtCore, qt_support_mode)
+        except:
+            return
+
+    elif qt_support_mode == 'pyqt6':
+        try:
+            import PyQt6.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PyQt6.QtCore)
         except:
             return
 
@@ -134,14 +188,17 @@ def _internal_patch_qt(QtCore, qt_support_mode='auto'):
             QtCore.QObject.__init__(self)
             self.thread = thread
             self.original_started = original_started
-            if qt_support_mode == 'pyside':
+            if qt_support_mode in ('pyside', 'pyside2', 'pyside6'):
                 self._signal = original_started
             else:
                 self._signal.connect(self._on_call)
                 self.original_started.connect(self._signal)
 
         def connect(self, func, *args, **kwargs):
-            if qt_support_mode == 'pyside':
+            _is_signal_instance = False
+            if hasattr(QtCore, 'SignalInstance'):
+                _is_signal_instance = isinstance(func, QtCore.SignalInstance)
+            if qt_support_mode in ('pyside', 'pyside2', 'pyside6') and not _is_signal_instance:
                 return self._signal.connect(FuncWrapper(func), *args, **kwargs)
             else:
                 return self._signal.connect(func, *args, **kwargs)
@@ -181,8 +238,8 @@ def _internal_patch_qt(QtCore, qt_support_mode='auto'):
 
     class RunnableWrapper(QtCore.QRunnable):  # Wrapper for QRunnable
 
-        def __init__(self, *args, **kwargs):
-            _original_runnable_init(self, *args, **kwargs)
+        def __init__(self, *args):
+            _original_runnable_init(self, *args)
 
             self._original_run = self.run
             self.run = self._new_run

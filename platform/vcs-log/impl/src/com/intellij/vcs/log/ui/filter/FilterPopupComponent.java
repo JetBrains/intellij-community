@@ -1,47 +1,49 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
  */
-abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends VcsLogPopupComponent {
-
+@ApiStatus.Internal
+public abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> extends VcsLogPopupComponent {
   /**
    * Special value that indicates that no filtering is on.
    */
-  protected static final String ALL = "All";
-  @NotNull protected final FilterModel<Filter> myFilterModel;
+  protected static final Supplier<@Nls String> EMPTY_FILTER_TEXT = () -> "";
 
-  FilterPopupComponent(@NotNull String filterName, @NotNull FilterModel<Filter> filterModel) {
-    super(filterName);
+  protected static final Supplier<@Nls String> ALL_ACTION_TEXT = VcsLogBundle.messagePointer("vcs.log.filter.all");
+
+  protected final @NotNull Model myFilterModel;
+
+  FilterPopupComponent(@NotNull Supplier<@NlsContexts.Label @NotNull String> displayName, @NotNull Model filterModel) {
+    super(displayName);
     myFilterModel = filterModel;
   }
 
   @Override
-  public String getCurrentText() {
+  public @NotNull String getCurrentText() {
     Filter filter = myFilterModel.getFilter();
-    return filter == null ? ALL : getText(filter);
+    return filter == null ? getEmptyFilterValue() : getText(filter);
+  }
+
+  @Override
+  public @Nls @NotNull String getEmptyFilterValue() {
+    return EMPTY_FILTER_TEXT.get();
+  }
+
+  @Override
+  protected boolean isValueSelected() {
+    return myFilterModel.getFilter() != null;
   }
 
   @Override
@@ -49,35 +51,21 @@ abstract class FilterPopupComponent<Filter extends VcsLogFilter> extends VcsLogP
     myFilterModel.addSetFilterListener(onChange);
   }
 
-  @NotNull
-  protected abstract String getText(@NotNull Filter filter);
+  protected abstract @NotNull @Nls String getText(@NotNull Filter filter);
 
-  @Nullable
-  protected abstract String getToolTip(@NotNull Filter filter);
+  protected abstract @Nullable @NlsContexts.Tooltip String getToolTip(@NotNull Filter filter);
 
   @Override
-  public String getToolTipText() {
+  public @NlsContexts.Tooltip String getToolTipText() {
     Filter filter = myFilterModel.getFilter();
     return filter == null ? null : getToolTip(filter);
   }
 
-  /**
-   * Returns the special action that indicates that no filtering is selected in this component.
-   */
-  @NotNull
-  protected AnAction createAllAction() {
-    return new AllAction();
-  }
-
-  private class AllAction extends DumbAwareAction {
-
-    AllAction() {
-      super(ALL);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+  @Override
+  protected Runnable createResetAction() {
+    return () -> {
       myFilterModel.setFilter(null);
-    }
+      VcsLogUsageTriggerCollector.triggerFilterReset(VcsLogUsageTriggerCollector.FilterResetType.CLOSE_BUTTON);
+    };
   }
 }

@@ -1,0 +1,23 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '2.2.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm {
+        withJava()
+    }
+    sourceSets {
+        jvmMain {
+
+        }
+        all {
+            languageSettings {
+                languageVersion = "2.2"
+            }
+        }
+    }
+}

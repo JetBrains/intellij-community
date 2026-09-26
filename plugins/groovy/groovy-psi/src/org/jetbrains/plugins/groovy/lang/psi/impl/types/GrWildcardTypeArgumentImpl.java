@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -8,17 +7,18 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 28.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements GrWildcardTypeArgument {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.types.GrWildcardTypeArgumentImpl");
+  private static final Logger LOG = Logger.getInstance(GrWildcardTypeArgumentImpl.class);
 
   public GrWildcardTypeArgumentImpl(@NotNull ASTNode node) {
     super(node);
@@ -29,13 +29,13 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     visitor.visitWildcardTypeArgument(this);
   }
 
+  @Override
   public String toString() {
     return "Type argument";
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     final GrTypeElement boundTypeElement = getBoundTypeElement();
     if (boundTypeElement == null) return PsiWildcardType.createUnbounded(getManager());
     if (isExtends()) return PsiWildcardType.createExtends(getManager(), boundTypeElement.getType());
@@ -50,13 +50,16 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     return findChildByClass(GrTypeElement.class);
   }
 
-  @Override
-  public boolean isExtends() {
+  private boolean isExtends() {
     return findChildByType(GroovyTokenTypes.kEXTENDS) != null;
   }
 
-  @Override
-  public boolean isSuper() {
+  private boolean isSuper() {
     return findChildByType(GroovyTokenTypes.kSUPER) != null;
+  }
+
+  @Override
+  public GrAnnotation @NotNull [] getAnnotations() {
+    return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

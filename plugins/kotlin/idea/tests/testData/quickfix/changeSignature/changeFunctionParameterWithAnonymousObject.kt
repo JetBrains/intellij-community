@@ -1,0 +1,14 @@
+// "Change parameter 'param' type of function 'handle' to 'Callback'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+interface Callback {
+    fun onEvent()
+}
+
+fun handle(param: Int) {}
+
+fun test() {
+    handle(<caret>object : Callback {
+        override fun onEvent() {}
+    })
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

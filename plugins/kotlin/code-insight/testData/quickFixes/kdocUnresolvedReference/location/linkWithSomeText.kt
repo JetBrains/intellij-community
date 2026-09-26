@@ -1,0 +1,9 @@
+// "Add link qualifier" "true"
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocUnresolvedReferenceInspection
+
+/**
+ * [map][Concurren<caret>tHashMap]
+ */
+fun aaa(){}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedLinkQuickFix

@@ -34,11 +34,10 @@ public class DocumentFragment {
     return myTextRange;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DocumentFragment)) return false;
-
-    final DocumentFragment documentFragment = (DocumentFragment)o;
+    if (!(o instanceof DocumentFragment documentFragment)) return false;
 
     if (!myDocument.equals(documentFragment.myDocument)) return false;
     if (!myTextRange.equals(documentFragment.myTextRange)) return false;
@@ -46,6 +45,7 @@ public class DocumentFragment {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myDocument.hashCode();

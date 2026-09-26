@@ -1,0 +1,20 @@
+LineBreakpoint created at StopInsideQualifier.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! StopInsideQualifier
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at StopInsideQualifier.java:6
+=== before makeArray (bytecode offset 0) ===
+  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+=== after makeArray (bytecode offset 3) ===
+  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+=== before stream (bytecode offset 3) ===
+  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+=== after stream (bytecode offset 6) ===
+  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+=== before map (bytecode offset 11) ===
+  [0] traceable Arrays.stream(makeArray()) -> map -> sum
+=== before sum (bytecode offset 16) ===
+  [0] filtered  Arrays.stream(makeArray()) -> map -> sum
+Resuming StopInsideQualifier.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo
 
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.api.ErrorCode.MERGE_INFO_PARSE_ERROR
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 
@@ -8,7 +9,8 @@ data class MergeRangeList(val ranges: Set<MergeRange>) {
   companion object {
     @JvmStatic
     @Throws(SvnBindException::class)
-    fun parseMergeInfo(value: String): Map<String, MergeRangeList> = value.lineSequence().map { parseLine(it) }.toMap()
+    fun parseMergeInfo(value: String): Map<String, MergeRangeList> = if (value.isEmpty()) emptyMap()
+    else value.lineSequence().map { parseLine(it) }.toMap()
 
     @Throws(SvnBindException::class)
     fun parseRange(value: String): MergeRange {
@@ -34,6 +36,7 @@ data class MergeRangeList(val ranges: Set<MergeRange>) {
       throwParseFailed(value)
     }
 
-    private fun throwParseFailed(value: String): Nothing = throw SvnBindException(MERGE_INFO_PARSE_ERROR, "Could not parse $value")
+    private fun throwParseFailed(value: String): Nothing =
+      throw SvnBindException(MERGE_INFO_PARSE_ERROR, message("error.could.not.parse.merge.info", value))
   }
 }

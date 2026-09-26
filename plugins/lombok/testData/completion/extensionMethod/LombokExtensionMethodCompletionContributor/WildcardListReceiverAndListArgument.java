@@ -1,0 +1,15 @@
+import java.util.List;
+
+import lombok.experimental.ExtensionMethod;
+
+@ExtensionMethod(Test.Extensions.class)
+class Test {
+  void test(List<String> list) {
+    list.<caret>
+  }
+
+  static class Extensions {
+    public static void myExtensionMethod(List<? extends String> list) {
+    }
+  }
+}

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.ASTNode;
@@ -28,9 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/**
- * @author oleg
- */
 public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbAware {
   private final TokenSet myTokenSet;
 
@@ -39,14 +22,13 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   }
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new LinkedList<>();
     collectDescriptors(astNode, descriptors);
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
-  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<? super FoldingDescriptor> descriptors) {
+  private void collectDescriptors(final @NotNull ASTNode node, final @NotNull List<? super FoldingDescriptor> descriptors) {
     final Queue<ASTNode> toProcess = new LinkedList<>();
     toProcess.add(node);
     while (!toProcess.isEmpty()) {
@@ -64,18 +46,12 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   }
 
   @Override
-  @Nullable
-  public String getPlaceholderText(@NotNull final ASTNode node) {
+  public @Nullable String getPlaceholderText(final @NotNull ASTNode node) {
     final StringBuilder builder = new StringBuilder();
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       String text = child.getText();
-      if (text == null) {
-        if (builder.length() > 0) {
-          break;
-        }
-      }
-      else if (!text.contains("\n")) {
+      if (!text.contains("\n")) {
         builder.append(text);
       }
       else if (builder.length() > 0) {
@@ -93,8 +69,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     return builder.toString();
   }
 
-  @NotNull
-  private static String getFirstNonEmptyLine(@NotNull final String text) {
+  private static @NotNull String getFirstNonEmptyLine(final @NotNull String text) {
     int start = 0;
     int end;
     while ((end = text.indexOf('\n', start)) != -1 && start >= end) {

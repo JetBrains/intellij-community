@@ -15,10 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-/**
- * @author nik
- */
-class UnknownPackagingElementTypeException extends Exception {
+public class UnknownPackagingElementTypeException extends Exception {
   private final String myTypeId;
 
   public UnknownPackagingElementTypeException(String typeId) {
@@ -27,5 +24,12 @@ class UnknownPackagingElementTypeException extends Exception {
 
   public String getTypeId() {
     return myTypeId;
+  }
+
+  @Override
+  public String toString() {
+    return "UnknownPackagingElementTypeException{" +
+           "myTypeId='" + myTypeId + '\'' +
+           '}';
   }
 }

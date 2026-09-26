@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -32,15 +18,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class FlattenAction extends AbstractGuiEditorAction {
   public FlattenAction() {
     super(true);
   }
 
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
       RadContainer container = (RadContainer) c;
       final RadContainer parent = container.getParent();
@@ -74,7 +59,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
     if (contents.size() == 1) {
       contents.get(0).setCustomLayoutConstraints(container.getCustomLayoutConstraints());
     }
-    
+
     FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
     for(RadComponent child: contents) {
       final GridConstraints childConstraints = child.getConstraints();
@@ -107,7 +92,7 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
     for(RadComponent c: selection) {
       if (!canFlatten(c)) {
         e.getPresentation().setVisible(false);
@@ -117,13 +102,12 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canFlatten(final RadComponent c) {
-    if (!(c instanceof RadContainer)) {
+    if (!(c instanceof RadContainer container)) {
       return false;
     }
     if (c.getParent() instanceof RadRootContainer) {
       return false;
     }
-    RadContainer container = (RadContainer) c;
     if (container.getLayoutManager().isGrid() && container.getParent().getLayoutManager().isGrid()) {
       return true;
     }
@@ -133,8 +117,8 @@ public class FlattenAction extends AbstractGuiEditorAction {
     return false;
   }
 
-  @Override @Nullable
-  protected String getCommandName() {
+  @Override
+  protected @Nullable String getCommandName() {
     return UIDesignerBundle.message("command.flatten");
   }
 }

@@ -160,7 +160,7 @@ Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);
 ///////////////////////
 class Axx {
   <T extends Runnable> T a() {
-    String s = a();
+    String s = <warning descr="Intersection type 'Runnable & String' cannot be instantiated, because 'java.lang.String' is final">a</warning>();
     s.hashCode();
     return null;
   }

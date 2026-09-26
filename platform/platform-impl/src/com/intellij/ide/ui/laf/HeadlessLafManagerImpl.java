@@ -1,32 +1,43 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.openapi.Disposable;
+import com.intellij.ide.ui.LafReference;
+import com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.components.BasicOptionButtonUI;
+import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
+import com.intellij.ui.components.DefaultLinkButtonUI;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
-public class HeadlessLafManagerImpl extends LafManager {
-  @NotNull
+final class HeadlessLafManagerImpl extends LafManager {
+  HeadlessLafManagerImpl() {
+    UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+    defaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
+    defaults.put("SearchFieldWithExtensionUI", DarculaSearchFieldWithExtensionUI.class.getName());
+    defaults.put("TreeUI", DefaultTreeUI.class.getName());
+    defaults.put("ComboBoxButtonUI", ComboBoxButtonUI.class.getName());
+  }
+
   @Override
-  public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
+  public UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels() {
     return new UIManager.LookAndFeelInfo[0];
+  }
+
+  @Override
+  public Sequence<UIThemeLookAndFeelInfo> getInstalledThemes() {
+    return SequencesKt.emptySequence();
   }
 
   @Override
@@ -35,7 +46,37 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) { }
+  public UIThemeLookAndFeelInfo getCurrentUIThemeLookAndFeel() {
+    return null;
+  }
+
+  @Override
+  public LafReference getLookAndFeelReference() {
+    return null;
+  }
+
+  @Override
+  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component) {
+    return null;
+  }
+
+  @Override
+  public @NotNull JComponent createSettingsToolbar() {
+    return new JComponent() {};
+  }
+
+  @Override
+  public void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
+
+  @Override
+  public @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
+    return new CollectionComboBoxModel<>();
+  }
+
+  @Override
+  public UIThemeLookAndFeelInfo findLaf(@NotNull String themeId) {
+    return null;
+  }
 
   @Override
   public void updateUI() { }
@@ -44,11 +85,39 @@ public class HeadlessLafManagerImpl extends LafManager {
   public void repaintUI() { }
 
   @Override
+  public boolean getAutodetect() {
+    return false;
+  }
+
+  @Override
+  public void setAutodetect(boolean value) {}
+
+  @Override
+  public boolean getAutodetectSupported() {
+    return false;
+  }
+
+  @Override
+  public void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value) { }
+
+  @Override
+  public void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value) { }
+
+  @Override
+  public void resetPreferredEditorColorScheme() { }
+
+  @Override
+  public void setRememberSchemeForLaf(boolean rememberSchemeForLaf) { }
+
+  @Override
+  public void rememberSchemeForLaf(@NotNull EditorColorsScheme scheme) { }
+
+  @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override
-  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) { }
+  public UIThemeLookAndFeelInfo getDefaultLightLaf() { return null; }
 
   @Override
-  public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
+  public UIThemeLookAndFeelInfo getDefaultDarkLaf() { return null; }
 }

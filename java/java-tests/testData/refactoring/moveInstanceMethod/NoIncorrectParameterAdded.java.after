@@ -1,0 +1,22 @@
+class AbstractMoveInstanceMethod {
+  public String code;
+
+}
+
+class MoveInstanceMethod extends AbstractMoveInstanceMethod {
+  void setup(Application application, Integer properties) {
+    application.setupApplication(code, properties);
+  }
+}
+
+abstract class Application {
+  abstract void setCode(String code);
+  abstract void setProperties(Integer properties);
+  abstract void start();
+
+    protected void setupApplication(String code, Integer properties) {
+      setCode(code);
+      setProperties(properties);
+      start();
+    }
+}

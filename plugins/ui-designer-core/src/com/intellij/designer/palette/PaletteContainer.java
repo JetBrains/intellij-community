@@ -15,8 +15,13 @@
  */
 package com.intellij.designer.palette;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas
@@ -64,8 +69,7 @@ public class PaletteContainer extends JPanel implements Scrollable {
       int height = 0;
 
       for (Component component : parent.getComponents()) {
-        if (component instanceof PaletteGroupComponent) {
-          PaletteGroupComponent groupComponent = (PaletteGroupComponent)component;
+        if (component instanceof PaletteGroupComponent groupComponent) {
           groupComponent.setLocation(0, height);
           if (groupComponent.isVisible()) {
             int groupHeight = groupComponent.getPreferredSize().height;
@@ -91,8 +95,7 @@ public class PaletteContainer extends JPanel implements Scrollable {
       int height = 0;
 
       for (Component component : parent.getComponents()) {
-        if (component instanceof PaletteGroupComponent) {
-          PaletteGroupComponent groupComponent = (PaletteGroupComponent)component;
+        if (component instanceof PaletteGroupComponent groupComponent) {
           height += groupComponent.getHeight();
           if (groupComponent.isSelected()) {
             height += groupComponent.getItemsComponent().getPreferredHeight(width);

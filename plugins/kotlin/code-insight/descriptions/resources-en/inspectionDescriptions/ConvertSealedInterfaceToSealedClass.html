@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports sealed interfaces that have no properties and can be converted to sealed classes.
+<p>
+    Sealed classes may be preferred over sealed interfaces when you want to ensure
+    a single inheritance hierarchy or plan to add state (properties) in the future.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+sealed interface Result&lt;out T : Any&gt;
+class Success&lt;T : Any&gt;(val result: T) : Result&lt;T&gt;
+class Error(val throwable: Throwable) : Result&lt;Nothing&gt;
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code>
+sealed class Result&lt;out T : Any&gt;
+class Success&lt;T : Any&gt;(val result: T) : Result&lt;T&gt;()
+class Error(val throwable: Throwable) : Result&lt;Nothing&gt;()
+</code></pre>
+</body>
+</html>

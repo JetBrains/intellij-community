@@ -20,7 +20,7 @@ import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas

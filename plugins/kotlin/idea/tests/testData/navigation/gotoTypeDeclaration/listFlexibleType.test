@@ -1,0 +1,6 @@
+// FILE: before.kt
+
+val <caret>item /*: (Mutable)List<String>! */ = java.util.Collections.singletonList("hello")
+
+// FILE: after.kt
+public actual interface <caret>List<out E> : Collection<E> {

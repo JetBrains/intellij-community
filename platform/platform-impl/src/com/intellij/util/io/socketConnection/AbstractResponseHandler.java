@@ -15,9 +15,10 @@
  */
 package com.intellij.util.io.socketConnection;
 
-/**
- * @author nik
- */
-public abstract class AbstractResponseHandler<R extends AbstractResponse> {
-  public abstract void processResponse(R response);
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+@ApiStatus.Internal
+public interface AbstractResponseHandler<R extends AbstractResponse> {
+  void processResponse(@NotNull R response);
 }

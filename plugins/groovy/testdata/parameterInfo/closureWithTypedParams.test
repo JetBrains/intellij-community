@@ -1,0 +1,9 @@
+static void main(String[] args) {
+    def sampleClosure = { String name, int age ->
+        printf "$name, $age"
+    }
+    sampleClosure("Agatha", 44<caret>)
+}
+
+-----
+<html>String name, <b>int age</b></html>

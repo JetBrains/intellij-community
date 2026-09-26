@@ -1,0 +1,4 @@
+<node text="xyzzy() (B)" base="true">
+  <node text="main(String[]) (A)">
+  </node>
+</node>

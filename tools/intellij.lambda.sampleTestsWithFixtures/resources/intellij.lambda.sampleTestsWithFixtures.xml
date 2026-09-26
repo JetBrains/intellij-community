@@ -1,0 +1,17 @@
+<idea-plugin visibility="internal">
+  <!-- @skip-dependency-generation: Lambda fixture tests intentionally keep only wrapper-level dependencies. -->
+  <dependencies>
+    <module name="intellij.lambda.testFramework"/>
+    <module name="intellij.libraries.assertj.core"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
+                        testServiceImplementation="com.intellij.project.TestProjectManager"
+                        overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.ide.DataManager"
+                        testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

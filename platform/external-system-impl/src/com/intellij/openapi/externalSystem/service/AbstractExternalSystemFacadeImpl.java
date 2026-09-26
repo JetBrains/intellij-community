@@ -1,78 +1,102 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.service.remote.*;
+import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolverImpl;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolverImpl;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManagerImpl;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author Denis Zhdanov
- * @since 8/8/11 12:51 PM
- */
+@ApiStatus.Internal
 public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
   implements RemoteExternalSystemFacade<S>
 {
 
-  private final ConcurrentMap<Class<?>, RemoteExternalSystemService<S>> myRemotes = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Class<?>, RemoteExternalSystemService<S>> myRemotes = new ConcurrentHashMap<>();
 
   private final AtomicReference<S> mySettings              = new AtomicReference<>();
   private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<>(new ExternalSystemTaskNotificationListenerAdapter() {
-    });
+    new AtomicReference<>(ExternalSystemTaskNotificationListener.NULL_OBJECT);
 
-  @NotNull private final RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
-  @NotNull private final RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
+  private final @NotNull RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
+  private final @NotNull RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
 
   public AbstractExternalSystemFacadeImpl(@NotNull Class<ExternalSystemProjectResolver<S>> projectResolverClass,
                                           @NotNull Class<ExternalSystemTaskManager<S>> buildManagerClass)
-    throws IllegalAccessException, InstantiationException
-  {
-    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.newInstance());
-    myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.newInstance());
+    throws IllegalAccessException, InstantiationException {
+    try {
+      myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.getConstructor().newInstance());
+      myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.getConstructor().newInstance());
+    }
+    catch (InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void init() throws RemoteException {
     applyProgressManager(RemoteExternalSystemProgressNotificationManager.NULL_OBJECT);
   }
 
-  @Nullable
-  protected S getSettings() {
+  protected @Nullable S getSettings() {
     return mySettings.get();
   }
-  
-  @NotNull
-  protected ExternalSystemTaskNotificationListener getNotificationListener() {
+
+  protected @NotNull ExternalSystemTaskNotificationListener getNotificationListener() {
     return myNotificationListener.get();
   }
-  
+
   @SuppressWarnings("unchecked")
-  @NotNull
   @Override
-  public RemoteExternalSystemProjectResolver<S> getResolver() throws IllegalStateException {
+  public @NotNull RemoteExternalSystemProjectResolver<S> getResolver() throws IllegalStateException {
     try {
       return getService(RemoteExternalSystemProjectResolver.class, myProjectResolver);
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
   @Override
-  public RemoteExternalSystemTaskManager<S> getTaskManager() {
+  public @NotNull RawExternalSystemProjectResolver<S> getRawProjectResolver() throws IllegalStateException {
+    try {
+      return getService(RawExternalSystemProjectResolver.class, new RawExternalSystemProjectResolverImpl<>(myProjectResolver));
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()), e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public @NotNull RemoteExternalSystemTaskManager<S> getTaskManager() {
     try {
       return getService(RemoteExternalSystemTaskManager.class, myTaskManager);
     }
@@ -81,9 +105,9 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
   }
 
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings("unchecked")
   private <I extends RemoteExternalSystemService<S>, C extends I> I getService(@NotNull Class<I> interfaceClass,
-                                                                               @NotNull final C impl)
+                                                                               final @NotNull C impl)
     throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
   {
     Object cachedResult = myRemotes.get(interfaceClass);
@@ -129,16 +153,14 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws IllegalAccessException   in case of incorrect assumptions about server class interface
    * @throws InstantiationException   in case of incorrect assumptions about server class interface
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
-   * @throws RemoteException
    */
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
-                                                                                              @NotNull final C impl)
+                                                                                              final @NotNull C impl)
   throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException;
 
   @Override
   public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       if (service.isTaskInProgress(id)) {
         return true;
       }
@@ -146,11 +168,10 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     return false;
   }
 
-  @NotNull
   @Override
-  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+  public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
     Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> result = null;
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       final Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> tasks = service.getTasksInProgress();
       if (tasks.isEmpty()) {
         continue;
@@ -175,7 +196,8 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   @Override
   public void applySettings(@NotNull S settings) throws RemoteException {
     mySettings.set(settings);
-    List<RemoteExternalSystemService<S>> services = ContainerUtilRt.newArrayList(myRemotes.values());
+    List<RemoteExternalSystemService<S>> services =
+      new ArrayList<>(myRemotes.values());
     for (RemoteExternalSystemService<S> service : services) {
       service.setSettings(settings);
     }
@@ -200,26 +222,24 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   private static class SwallowingNotificationListener implements ExternalSystemTaskNotificationListener {
 
-    @NotNull private final RemoteExternalSystemProgressNotificationManager myManager;
+    private final @NotNull RemoteExternalSystemProgressNotificationManager myManager;
 
     SwallowingNotificationListener(@NotNull RemoteExternalSystemProgressNotificationManager manager) {
       myManager = manager;
     }
 
     @Override
-    public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
+    public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onEnvironmentPrepared(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
     }
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-    }
-
-    @Override
-    public void onStart(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+    public synchronized void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
       try {
         myManager.onStatusChange(event);
       }
@@ -229,33 +249,15 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    public synchronized void onTaskOutput(@NotNull ExternalSystemTaskId id,
+                                          @NotNull String text,
+                                          @NotNull ProcessOutputType processOutputType) {
       try {
-        myManager.onTaskOutput(id, text, stdOut);
+        myManager.onTaskOutput(id, text, processOutputType);
       }
       catch (RemoteException e) {
         // Ignore
       }
-    }
-
-    @Override
-    public void onEnd(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onSuccess(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
-    }
-
-    @Override
-    public void beforeCancel(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onCancel(@NotNull ExternalSystemTaskId id) {
     }
   }
 }

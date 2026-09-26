@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
-import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -32,48 +16,50 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 class InstancesWithStackFrameView {
   private static final float DEFAULT_SPLITTER_PROPORTION = 0.7f;
-  private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
-  private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
-  private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
 
   private float myHidedProportion;
 
   private final JBSplitter mySplitter = new JBSplitter(false, DEFAULT_SPLITTER_PROPORTION);
   private boolean myIsHided = false;
 
-  InstancesWithStackFrameView(@NotNull XDebugSession debugSession, @NotNull InstancesTree tree,
+  InstancesWithStackFrameView(@NotNull XDebugSession debugSession,
+                              @NotNull JComponent component,
+                              @NotNull InstancesTree tree,
                               @NotNull StackFrameList list, @NotNull String className) {
-    mySplitter.setFirstComponent(new JBScrollPane(tree));
+    mySplitter.setFirstComponent(component);
 
     final Project project = debugSession.getProject();
-    list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
+    list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
     JLabel stackTraceLabel;
     if (isArrayType(className)) {
-      stackTraceLabel = new JBLabel(TEXT_FOR_ARRAYS, SwingConstants.CENTER);
+      stackTraceLabel = new JBLabel(JavaDebuggerBundle.message("label.arrays.could.not.be.tracked"), SwingConstants.CENTER);
     }
     else {
-      ActionLink actionLink = new ActionLink("Enable tracking for new instances",
-                                             AllIcons.Debugger.MemoryView.ClassTracked,
+      ActionLink actionLink = new ActionLink(JavaDebuggerBundle.message("enable.tracking.for.new.instances"),
+                                             AllIcons.Debugger.Watch,
                                              new AnAction() {
                                                @Override
-                                               public void actionPerformed(AnActionEvent e) {
+                                               public void actionPerformed(@NotNull AnActionEvent e) {
                                                  final Project project = e.getProject();
                                                  if (project != null && !project.isDisposed()) {
                                                    InstancesTracker.getInstance(project).add(className, TrackingType.CREATION);
@@ -114,46 +100,36 @@ class InstancesWithStackFrameView {
     mySplitter.setHonorComponentsMinimumSize(false);
     myHidedProportion = DEFAULT_SPLITTER_PROPORTION;
 
-    final MemoryViewDebugProcessData data =
-      DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
-        .getUserData(MemoryViewDebugProcessData.KEY);
+    DebugProcessImpl debugProcess = ((DebugProcessImpl)DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler()));
+    final MemoryViewDebugProcessData data = debugProcess.getUserData(MemoryViewDebugProcessData.KEY);
     tree.addTreeSelectionListener(e -> {
       ObjectReference ref = getSelectedReference(tree);
       if (ref != null && data != null) {
         List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
-          list.setFrameItems(stack);
+          list.setFrameItems(stack, debugProcess);
           if (mySplitter.getProportion() == 1.f) {
             mySplitter.setProportion(DEFAULT_SPLITTER_PROPORTION);
           }
           return;
         }
-        list.setEmptyText(EMPTY_TEXT_WHEN_STACK_NOT_FOUND);
+        list.setEmptyText(JavaDebuggerBundle.message("status.text.no.stack.frame.for.this.instance"));
       }
       else {
-        list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
+        list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
       }
 
-      list.setFrameItems(Collections.emptyList());
+      list.clearFrameItems();
     });
   }
-  @Nullable
-  private static ObjectReference getSelectedReference(InstancesTree tree) {
+
+  private static @Nullable ObjectReference getSelectedReference(InstancesTree tree) {
     TreePath selectionPath = tree.getSelectionPath();
     Object selectedItem = selectionPath != null ? selectionPath.getLastPathComponent() : null;
-    if (selectedItem instanceof XValueNodeImpl) {
-      XValueNodeImpl xValueNode = (XValueNodeImpl)selectedItem;
-      XValue valueContainer = xValueNode.getValueContainer();
-
-      if (valueContainer instanceof NodeDescriptorProvider) {
-        NodeDescriptor descriptor = ((NodeDescriptorProvider)valueContainer).getDescriptor();
-
-        if (descriptor instanceof ValueDescriptor) {
-          Value value = ((ValueDescriptor)descriptor).getValue();
-
-          if (value instanceof ObjectReference) return (ObjectReference)value;
-        }
-      }
+    if (selectedItem instanceof XValueNodeImpl xValueNode &&
+        xValueNode.getValueContainer() instanceof NodeDescriptorProvider descriptorProvider &&
+        descriptorProvider.getDescriptor() instanceof ValueDescriptor valueDescriptor) {
+      return ObjectUtils.tryCast(valueDescriptor.getValue(), ObjectReference.class);
     }
 
     return null;

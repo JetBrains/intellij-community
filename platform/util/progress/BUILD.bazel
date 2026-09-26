@@ -1,0 +1,153 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "progress-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":progress-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.util.progress.tests`
+
+### auto-generated section `dev intellij.platform.util.progress` start
+content_module_jar(module = ":progress")
+### auto-generated section `dev intellij.platform.util.progress` end
+
+### auto-generated section `build intellij.platform.util.progress` start
+create_kotlinc_options(
+    name = "custom_progress",
+    jvm_target = "8",
+    opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"],
+)
+
+jvm_library(
+    name = "progress",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_progress",
+    module_name = "intellij.platform.util.progress",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/guava",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//platform/util/multiplatform",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
+)
+
+jvm_library(
+    name = "progress_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_progress",
+    module_name = "intellij.platform.util.progress",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":progress",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.progress` end
+
+### auto-generated section `iml intellij.platform.util.progress` start
+exports_files(
+    [
+        "intellij.platform.util.progress.iml",
+        "resources/intellij.platform.util.progress.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.progress` end
+
+### auto-generated section `build intellij.platform.util.progress.tests` start
+jvm_library(
+    name = "progress-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.util.progress.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "progress-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "tests/**/*.kt",
+            "tests/**/*.java",
+            "tests/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.util.progress.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":progress-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/util/progress",
+        "//platform/util/progress:progress_test_lib",
+        "//platform/testFramework/common",
+        "//platform/testFramework/common:common_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.progress.tests` end
+
+### auto-generated section `iml intellij.platform.util.progress.tests` start
+exports_files(
+    [
+        "intellij.platform.util.progress.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.progress.tests` end

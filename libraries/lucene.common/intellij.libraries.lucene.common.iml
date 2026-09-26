@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="lucene-analysis-common" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analysis-common:10.5.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1.jar">
+              <sha256sum>f710afd91a820987a48f3a215e076715b9237b324cf5458281109ef0d2a17b73</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/10.5.1/lucene-analysis-common-10.5.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="lucene-core" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-core:10.5.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1.jar">
+              <sha256sum>2b4912cc792f462e8e7b350f7c958f538ee7ec42da4cf4b65902fb9d546bba53</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/10.5.1/lucene-core-10.5.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -17,8 +17,8 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +26,11 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
   private final ArtifactEditorEx myArtifactsEditor;
-  private final List<PackagingElementNode<?>> myNodes;
+  private final List<? extends PackagingElementNode<?>> myNodes;
 
-  public LayoutNodesDraggingObject(ArtifactEditorEx artifactsEditor, List<PackagingElementNode<?>> nodes) {
+  public LayoutNodesDraggingObject(ArtifactEditorEx artifactsEditor, List<? extends PackagingElementNode<?>> nodes) {
     myArtifactsEditor = artifactsEditor;
     myNodes = nodes;
   }

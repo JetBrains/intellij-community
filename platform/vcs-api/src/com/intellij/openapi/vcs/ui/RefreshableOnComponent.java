@@ -15,11 +15,16 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
- * author: lesya
+ * @see com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
  */
 public interface RefreshableOnComponent extends Refreshable {
+  /**
+   * Implementations are encouraged to return {@link com.intellij.openapi.ui.DialogPanel}.
+   *
+   * @see com.intellij.ui.dsl.builder.BuilderKt#panel
+   */
   JComponent getComponent();
 }

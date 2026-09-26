@@ -20,11 +20,16 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.PsiChangeTracker;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiFilter;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 
 import java.io.File;
 import java.util.HashMap;
@@ -33,7 +38,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiChangeTrackerTest extends IdeaTestCase {
+public class PsiChangeTrackerTest extends JavaProjectTestCase {
   private PsiFile myOriginalFile;
   private PsiFile myChangedFile;
 
@@ -111,7 +116,7 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
   protected static VirtualFile getTestRoot() {
     final File root = new File(PathManagerEx.getTestDataPath());
     final File testRoot = new File(new File(root, "vfs"), "changes");
-    final VirtualFile ioFile = LocalFileSystem.getInstance().findFileByIoFile(testRoot);
+    final VirtualFile ioFile = StandardFileSystems.local().findFileByPath(testRoot.getAbsolutePath());
     assert ioFile != null : "Can't find directory vfs/changes";
     return ioFile;
   }

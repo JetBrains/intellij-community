@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports test project descriptors and descriptor builders
+(subclasses of <code>com.intellij.testFramework.LightProjectDescriptor</code>)
+that do not override both <code>equals()</code> and <code>hashCode()</code>.
+
+<p>
+  A light test reuses the already opened project only when the previously used descriptor
+  <code>equals()</code> the one requested by the current test
+  (see <code>com.intellij.testFramework.LightPlatformTestCase#doSetup</code>).
+  With the default identity <code>equals()</code>, every freshly created descriptor instance is considered different,
+  which forces a full project re-setup and slows the tests down.
+</p>
+<p>
+  Either implement <code>equals()</code> and <code>hashCode()</code>, or reuse a single shared descriptor instance
+  (for example, a <code>static final</code> field or a Kotlin <code>object</code>).
+</p>
+
+<p>
+  Classes that publish their own shared descriptor instance in a <code>static</code> field are not reported.
+  Descriptors that are only referenced through a <code>static final</code> field of the <i>test</i> class cannot be
+  recognized as reused and may still be reported; the inspection is therefore disabled by default.
+</p>
+</body>
+</html>

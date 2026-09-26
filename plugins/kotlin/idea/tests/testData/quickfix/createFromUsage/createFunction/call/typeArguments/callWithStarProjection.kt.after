@@ -1,0 +1,14 @@
+// "Create function 'foo'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_AFTER_ERROR: PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
+// K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
+// K2_ERROR: PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test(): Int {
+    return foo<String, *>(2, "2")
+}
+
+fun <T> foo(i: Int, t: T): Int {
+    TODO("Not yet implemented")
+}

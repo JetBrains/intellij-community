@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,37 +16,43 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.CreateClassUtil;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
-/**
- * @author peter
- */
-public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
-  private final List<PsiDirectory> myWritableDirectoryList;
+public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static final Logger LOG = Logger.getInstance(CreateClassOrPackageFix.class);
+  private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
-  @Nullable private final ClassKind myClassKind;
-  @Nullable private final String mySuperClass;
+  private final @Nullable ClassKind myClassKind;
+  private final @Nullable String mySuperClass;
   private final String myRedPart;
-  @Nullable private final String myTemplateName;
+  private final @Nullable String myTemplateName;
 
-  @Nullable
-  public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
-                                                  @NotNull final GlobalSearchScope scope,
-                                                  @NotNull final PsiElement context,
-                                                  @Nullable final PsiPackage basePackage,
-                                                  @Nullable ClassKind kind,
-                                                  @Nullable String superClass,
-                                                  @Nullable String templateName) {
+  public static @Nullable CreateClassOrPackageFix createFix(final @NotNull String qualifiedName,
+                                                            final @NotNull GlobalSearchScope scope,
+                                                            final @NotNull PsiElement context,
+                                                            final @Nullable PsiPackage basePackage,
+                                                            @Nullable ClassKind kind,
+                                                            @Nullable String superClass,
+                                                            @Nullable String templateName) {
     final List<PsiDirectory> directories = getWritableDirectoryListDefault(basePackage, scope, context.getManager());
     if (directories.isEmpty()) {
       return null;
@@ -69,11 +61,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     final int dot = redPart.indexOf('.');
     final boolean fixPath = dot >= 0;
     final String firstRedName = fixPath ? redPart.substring(0, dot) : redPart;
-    for (Iterator<PsiDirectory> i = directories.iterator(); i.hasNext(); ) {
-      if (!checkCreateClassOrPackage(kind != null && !fixPath, i.next(), firstRedName)) {
-        i.remove();
-      }
-    }
+    directories.removeIf(directory -> !checkCreateClassOrPackage(kind != null && !fixPath, directory, firstRedName));
     return new CreateClassOrPackageFix(directories,
                                        context,
                                        fixPath ? qualifiedName : redPart,
@@ -83,21 +71,20 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
                                        templateName);
   }
 
-  @Nullable
-  public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
-                                                  @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind,
-                                                  String superClass) {
+  public static @Nullable CreateClassOrPackageFix createFix(final @NotNull String qualifiedName,
+                                                            final @NotNull PsiElement context,
+                                                            @Nullable ClassKind kind,
+                                                            String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
-  private CreateClassOrPackageFix(@NotNull List<PsiDirectory> writableDirectoryList,
+  private CreateClassOrPackageFix(@NotNull List<? extends PsiDirectory> writableDirectoryList,
                                   @NotNull PsiElement context,
                                   @NotNull String presentation,
                                   @NotNull String redPart,
                                   @Nullable ClassKind kind,
                                   @Nullable String superClass,
-                                  @Nullable final String templateName) {
+                                  final @Nullable String templateName) {
     super(context);
     myRedPart = redPart;
     myTemplateName = templateName;
@@ -108,27 +95,25 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message(
-      myClassKind == ClassKind.INTERFACE ? "create.interface.text" : myClassKind != null ? "create.class.text" : "create.package.text",
-      myPresentation);
+  public @NotNull String getText() {
+    return CommonQuickFixBundle.message("fix.create.title.x",
+                                        (myClassKind == null ? JavaElementKind.PACKAGE : myClassKind.getElementKind()).object(),
+                                        myPresentation);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
-                     @NotNull final PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
-                     @NotNull final PsiElement startElement,
+  public void invoke(final @NotNull Project project,
+                     final @NotNull PsiFile psiFile,
+                     @Nullable Editor editor,
+                     final @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (isAvailable(project, null, file)) {
-      PsiDirectory directory = chooseDirectory(project, file);
+    if (isAvailable(project, null, psiFile)) {
+      PsiDirectory directory = chooseDirectory(project, psiFile);
       if (directory == null) return;
       WriteAction.run(() -> doCreate(directory, startElement));
     }
@@ -149,8 +134,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     }
   }
 
-  @Nullable
-  private PsiDirectory chooseDirectory(final Project project, final PsiFile file) {
+  private @Nullable PsiDirectory chooseDirectory(final Project project, final PsiFile file) {
     PsiDirectory preferredDirectory = myWritableDirectoryList.isEmpty() ? null : myWritableDirectoryList.get(0);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -223,9 +207,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     return false;
   }
 
-  public static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
-                                                                   final GlobalSearchScope scope,
-                                                                   final PsiManager psiManager) {
+  private static List<PsiDirectory> getWritableDirectoryListDefault(final @Nullable PsiPackage context,
+                                                                    final GlobalSearchScope scope,
+                                                                    final PsiManager psiManager) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Getting writable directory list for package '" + (context == null ? null : context.getQualifiedName()) + "', scope=" + scope);
     }

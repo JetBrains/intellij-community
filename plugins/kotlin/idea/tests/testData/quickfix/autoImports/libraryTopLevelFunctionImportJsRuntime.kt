@@ -1,0 +1,10 @@
+// "Import function 'cos'" "true"
+// JS
+// K2_ERROR: UNRESOLVED_REFERENCE
+package some
+
+fun testFun() {
+  <caret>cos(0.0)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

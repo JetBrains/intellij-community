@@ -1,0 +1,23 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"
+                                            apiInterfaces="com.intellij.platform.recentFiles.shared.FileSwitcherApi"/>
+    <recentFiles.presentationContributor implementation="com.intellij.platform.recentFiles.backend.BackendRecentFilePathContributor"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.recentFiles.backend.RecentFilesVcsStatusListener"
+              topic="com.intellij.openapi.vcs.FileStatusListener" activeInTestMode="false"/>
+  </projectListeners>
+</idea-plugin>

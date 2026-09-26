@@ -35,6 +35,7 @@ public final class TimestampValidityState implements ValidityState {
     myTimestamp = timestamp;
   }
 
+  @Override
   public boolean equalsTo(ValidityState otherState) {
     if (!(otherState instanceof TimestampValidityState)) {
       return false;
@@ -45,9 +46,9 @@ public final class TimestampValidityState implements ValidityState {
   /**
    * Saves the validity state to the specified stream.
    *
-   * @param out
    * @throws IOException if the stream write fails.
    */
+  @Override
   public void save(DataOutput out) throws IOException {
     out.writeLong(myTimestamp);
   }
@@ -57,7 +58,6 @@ public final class TimestampValidityState implements ValidityState {
    *
    * @param is the stream to load the validity state from.
    * @throws IOException if the stream read fails.
-   * @since 5.0.2
    */
   public static TimestampValidityState load(DataInput is) throws IOException {
     return new TimestampValidityState(is.readLong());

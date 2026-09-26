@@ -2,7 +2,7 @@ import attr
 
 
 @attr.dataclass(repr=True, cmp=True, str=True)
-class A:
+class A1:
     a: int = 1
 
     def <warning descr="'__repr__' is ignored if the class already defines 'repr' parameter">__repr__</warning>(self):
@@ -11,7 +11,15 @@ class A:
     def <warning descr="'__str__' is ignored if the class already defines 'str' parameter">__str__</warning>(self):
         return "str1"
 
-    def <warning descr="'__eq__' is ignored if the class already defines 'cmp' parameter">__eq__</warning>(self, other):
+    def <warning descr="'__eq__' is ignored if the class already defines 'cmp/order' parameter">__eq__</warning>(self, other):
+        return "eq1"
+
+
+@attr.dataclass(eq=True)
+class A2:
+    a: int = 1
+
+    def <warning descr="'__eq__' is ignored if the class already defines 'cmp/order' parameter">__eq__</warning>(self, other):
         return "eq1"
 
 
@@ -51,12 +59,13 @@ class B2:
 class C1:
     c: int = 1
 
-    def <warning descr="'__eq__' is ignored if the class already defines 'cmp' parameter">__eq__</warning>(self, other):
+    def <warning descr="'__eq__' is ignored if the class already defines 'cmp/order' parameter">__eq__</warning>(self, other):
         return "eq1"
 
-print(repr(A()))
-print(str(A()))
-print(A() == A())
+print(repr(A1()))
+print(str(A1()))
+print(A1() == A1())
+print(A2() == A2())
 
 print(repr(Derived()))
 print(str(Derived()))

@@ -1,7 +1,7 @@
 Test tree:
-[root]
-.test_escape_me
-..test_get_facebook_username
+[root](+)
+.test_escape_me(+)
+..test_get_facebook_username(+)
 ...(None-https://facebook_com/)(+)
 ...(None-https://facebook_com/share_php?http://foo_com/)(+)
 ...(None-https://facebook_com/home_php)(+)

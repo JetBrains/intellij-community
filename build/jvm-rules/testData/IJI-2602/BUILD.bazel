@@ -1,0 +1,15 @@
+load("//:jvm.bzl", "jvm_library")
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.java"]),
+)
+
+jvm_library(
+    name = "b",
+    srcs = ["b/B.kt"],
+    deps = [
+        ":a",
+        "//:kotlin-stdlib",
+    ],
+)

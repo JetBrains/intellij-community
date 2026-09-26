@@ -15,15 +15,20 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.Dimension;
+import java.awt.Insets;
 
-public final class EqualSizeCellsTest extends TestCase{
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public final class EqualSizeCellsTest {
   /**
    * field1 | field2 | field3
    */ 
+  @Test
   public void test1() {
     final GridLayoutManager layout = new GridLayoutManager(1,3, new Insets(0,0,0,0), 7, 0);
 
@@ -51,6 +56,8 @@ public final class EqualSizeCellsTest extends TestCase{
 
     panel.add(field3, new GridConstraints(0,2,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension minimumSize = panel.getMinimumSize();
     assertEquals(70 + 7 + 70 + 7 + 70, minimumSize.width);
@@ -83,6 +90,7 @@ public final class EqualSizeCellsTest extends TestCase{
    * ------
    * field3
    */
+  @Test
   public void test2() {
     final GridLayoutManager layout = new GridLayoutManager(3,1, new Insets(0,0,0,0), 0, 7);
 
@@ -110,6 +118,8 @@ public final class EqualSizeCellsTest extends TestCase{
 
     panel.add(field3, new GridConstraints(2,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_WANT_GROW | GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension minimumSize = panel.getMinimumSize();
     assertEquals(70 + 7 + 70 + 7 + 70, minimumSize.height);

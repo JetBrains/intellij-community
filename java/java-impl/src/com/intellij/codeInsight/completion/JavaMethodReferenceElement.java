@@ -1,0 +1,64 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.completion;
+
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import java.util.Objects;
+
+class JavaMethodReferenceElement extends LookupElement implements TypedLookupItem {
+  private final @NotNull PsiMethod myMethod;
+  private final @NotNull PsiElement myRefPlace;
+  private final @Nullable PsiType myType;
+  private final Icon myIcon;
+  private final @NotNull String myReferenceName;
+
+  JavaMethodReferenceElement(@NotNull PsiMethod method, @NotNull PsiElement refPlace, @Nullable PsiType type) {
+    myMethod = method;
+    myRefPlace = refPlace;
+    myType = type;
+    myIcon = myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+    myReferenceName = myMethod.isConstructor() ? "new" : myMethod.getName();
+  }
+
+  @Override
+  public @Nullable PsiType getType() {
+    return myType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof JavaMethodReferenceElement element && getLookupString().equals(element.getLookupString()) &&
+           myRefPlace.equals(element.myRefPlace);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getLookupString(), myRefPlace);
+  }
+
+  @Override
+  public @NotNull Object getObject() {
+    return myMethod;
+  }
+
+  @Override
+  public @NotNull String getLookupString() {
+    return myReferenceName;
+  }
+
+  @Override
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
+    presentation.setIcon(myIcon);
+    super.renderElement(presentation);
+  }
+}

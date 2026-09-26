@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -7,7 +8,7 @@ import com.intellij.diff.requests.DiffRequest;
 import org.jetbrains.annotations.NotNull;
 
 public class SvnDiffViewerWrapper implements DiffViewerWrapper {
-  @NotNull private final DiffRequest myPropertyRequest;
+  private final @NotNull DiffRequest myPropertyRequest;
 
   public SvnDiffViewerWrapper(@NotNull DiffRequest propertyRequest) {
     myPropertyRequest = propertyRequest;

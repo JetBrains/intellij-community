@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -11,15 +12,15 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.io.File;
 
-/**
- * @author irengrig
- */
 public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
+  protected final Project myProject;
   private final FileStatusManager myFileStatusManager;
   private final boolean myIgnoreFileStatus;
 
@@ -28,6 +29,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
   }
 
   public VirtualFileListCellRenderer(final Project project, final boolean ignoreFileStatus) {
+    myProject = project;
     myIgnoreFileStatus = ignoreFileStatus;
     myFileStatusManager = FileStatusManager.getInstance(project);
   }
@@ -40,11 +42,11 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     append(getName(path), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
     putParentPath(value, path, path);
     setBackground(selected
-                  ? (hasFocus ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground())
+                  ? (hasFocus ? UIUtil.getListSelectionBackground(true) : UIUtil.getListUnfocusedSelectionBackground())
                   : UIUtil.getListBackground());
   }
 
-  protected String getName(FilePath path) {
+  protected @Nls String getName(FilePath path) {
     return path.getName();
   }
 
@@ -69,7 +71,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     if (path.isDirectory()) {
       setIcon(PlatformIcons.FOLDER_ICON);
     } else {
-      setIcon(path.getFileType().getIcon());
+      setIcon(VcsUtil.getIcon(myProject, path));
     }
   }
 
@@ -83,7 +85,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     }
   }
 
-  protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
+  protected void putParentPathImpl(Object value, @NlsSafe String parentPath, FilePath self) {
     append(parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 }

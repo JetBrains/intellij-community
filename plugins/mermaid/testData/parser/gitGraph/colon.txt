@@ -1,0 +1,9 @@
+FILE
+  MermaidGitGraphHeaderImpl(GIT_GRAPH_HEADER)
+    PsiElement(GitGraph.GIT_GRAPH)('gitGraph')
+    PsiElement(COLON)(':')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
+  MermaidGitGraphBodyImpl(GIT_GRAPH_BODY)
+    MermaidCommitStatementImpl(COMMIT_STATEMENT)
+      PsiElement(GitGraph.COMMIT)('commit')

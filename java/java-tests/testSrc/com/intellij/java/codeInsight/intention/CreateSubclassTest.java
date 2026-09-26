@@ -1,34 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.refactoring.MultiFileTestCase;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.PathUtil;
 
-/**
- * @author yole
- */
-public class CreateSubclassTest extends MultiFileTestCase {
+
+public class CreateSubclassTest extends LightMultiFileTestCase {
+ 
   public void testGenerics() {
     doTest();
   }
@@ -38,43 +28,75 @@ public class CreateSubclassTest extends MultiFileTestCase {
   }
 
   public void testInnerClassImplement() {
-    doTestInner();
+    doTestIntention("Implement abstract class");
   }
 
   public void testInnerClass() {
-    doTestInner();
+    doTestIntention("Implement interface");
   }
 
-  private void doTestInner() {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
-        PsiClass superClass = myJavaFacade.findClass("Test", ProjectScope.getAllScope(myProject));
-        assertNotNull(superClass);
-        final PsiClass inner = superClass.findInnerClassByName("Inner", false);
-        assertNotNull(inner);
-        CreateSubclassAction.createInnerClass(inner);
-        UIUtil.dispatchAllInvocationEvents();
-      }
+  public void testPublicNonStaticInnerClass() {
+    doTestIntention("Create subclass");
+  }
+
+  public void testLocalClass() {
+    doTestIntention("Create subclass");
+  }
+
+  public void testSealed() {
+    doTest();
+  }
+
+  public void testSealedWithSameFileInheritors() {
+    doTestSameFileClass();
+  }
+
+  public void testScratch() {
+    VirtualFile scratch =
+      ScratchRootType.getInstance()
+        .createScratchFile(getProject(), PathUtil.makeFileName("scratch", "java"), JavaLanguage.INSTANCE,
+                           "class Scrat<caret>ch { }", ScratchFileService.Option.create_if_missing);
+    assertNotNull(scratch);
+    myFixture.configureFromExistingVirtualFile(scratch);
+    IntentionAction intention = myFixture.findSingleIntention("Create subclass");
+    assertNotNull(intention);
+    intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.checkResult("""
+                            class Scratch { }
+
+                            class <caret>ScratchImpl extends Scratch {
+                            }""");
+  }
+
+  private void doTestIntention(String hint) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction action = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
+  private void doTestSameFileClass() {
+    doTest(() -> {
+      PsiClass superClass = myFixture.findClass("Superclass");
+      ApplicationManager.getApplication().invokeLater(
+        () -> CreateSubclassAction.createSameFileClass("Subclass", superClass));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     });
   }
 
   private void doTest() {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) {
-        PsiDirectory root = myPsiManager.findDirectory(rootDir);
-        PsiClass superClass = myJavaFacade.findClass("Superclass", ProjectScope.getAllScope(myProject));
-        ApplicationManager.getApplication().invokeLater(
-          () -> CreateSubclassAction.createSubclass(superClass, root, "Subclass"));
-        UIUtil.dispatchAllInvocationEvents();
-      }
+    doTest(() -> {
+      PsiDirectory root = getPsiManager().findDirectory(myFixture.getTempDirFixture().findOrCreateDir(""));
+      PsiClass superClass = myFixture.findClass("Superclass");
+      ApplicationManager.getApplication().invokeLater(
+        () -> CreateSubclassAction.createSubclass(superClass, root, "Subclass"));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     });
   }
 
-  @NotNull
   @Override
-  protected String getTestRoot() {
-    return "/codeInsight/createSubclass/";
+  protected String getTestDataPath() {
+    return PathManagerEx.getTestDataPath() + "/codeInsight/createSubclass/";
   }
 }

@@ -1,0 +1,180 @@
+View root() {
+  rootProject() {
+    Tasks() {
+      build setup() {
+        init()
+        updateDaemonJvm()
+        wrapper()
+      }
+      help() {
+        artifactTransforms()
+        buildEnvironment()
+        dependencies()
+        dependencyInsight()
+        help()
+        javaToolchains()
+        outgoingVariants()
+        projects()
+        properties()
+        resolvableConfigurations()
+        tasks()
+      }
+      other() {
+        prepareKotlinBuildScriptModel()
+      }
+    }
+    p1() {
+      Tasks() {
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+      }
+      leaf() {
+        Tasks() {
+          help() {
+            artifactTransforms()
+            buildEnvironment()
+            dependencies()
+            dependencyInsight()
+            help()
+            javaToolchains()
+            outgoingVariants()
+            projects()
+            properties()
+            resolvableConfigurations()
+            tasks()
+          }
+        }
+      }
+      sub() {
+        Tasks() {
+          help() {
+            artifactTransforms()
+            buildEnvironment()
+            dependencies()
+            dependencyInsight()
+            help()
+            javaToolchains()
+            outgoingVariants()
+            projects()
+            properties()
+            resolvableConfigurations()
+            tasks()
+          }
+        }
+        sp1() {
+          Tasks() {
+            help() {
+              artifactTransforms()
+              buildEnvironment()
+              dependencies()
+              dependencyInsight()
+              help()
+              javaToolchains()
+              outgoingVariants()
+              projects()
+              properties()
+              resolvableConfigurations()
+              tasks()
+            }
+          }
+        }
+      }
+    }
+    p2() {
+      Tasks() {
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+      }
+      leaf() {
+        Tasks() {
+          help() {
+            artifactTransforms()
+            buildEnvironment()
+            dependencies()
+            dependencyInsight()
+            help()
+            javaToolchains()
+            outgoingVariants()
+            projects()
+            properties()
+            resolvableConfigurations()
+            tasks()
+          }
+        }
+      }
+      p2sub() {
+        Tasks() {
+          help() {
+            artifactTransforms()
+            buildEnvironment()
+            dependencies()
+            dependencyInsight()
+            help()
+            javaToolchains()
+            outgoingVariants()
+            projects()
+            properties()
+            resolvableConfigurations()
+            tasks()
+          }
+        }
+        sub() {
+          Tasks() {
+            help() {
+              artifactTransforms()
+              buildEnvironment()
+              dependencies()
+              dependencyInsight()
+              help()
+              javaToolchains()
+              outgoingVariants()
+              projects()
+              properties()
+              resolvableConfigurations()
+              tasks()
+            }
+          }
+          sp2() {
+            Tasks() {
+              help() {
+                artifactTransforms()
+                buildEnvironment()
+                dependencies()
+                dependencyInsight()
+                help()
+                javaToolchains()
+                outgoingVariants()
+                projects()
+                properties()
+                resolvableConfigurations()
+                tasks()
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

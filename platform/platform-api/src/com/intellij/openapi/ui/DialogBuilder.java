@@ -1,51 +1,47 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The DialogBuilder is a simpler alternative to {@link DialogWrapper}.
  * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
  */
 public class DialogBuilder implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
-  @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
+  public static final @NonNls String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;
   private JComponent myNorthPanel;
-  private String myTitle;
+  private @DialogTitle String myTitle;
   private JComponent myPreferedFocusComponent;
-  private String myDimensionServiceKey;
+  private @NonNls String myDimensionServiceKey;
   private ArrayList<ActionDescriptor> myActions = null;
   private final MyDialogWrapper myDialogWrapper;
   private Runnable myCancelOperation = null;
@@ -74,7 +70,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public DialogBuilder() {
-    this(((Project)null));
+    this((Project)null);
   }
 
   @Override
@@ -96,24 +92,21 @@ public class DialogBuilder implements Disposable {
     myCenterPanel = centerPanel;
   }
 
-  @NotNull
-  public DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
+  public @NotNull DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
     myCenterPanel = centerPanel;
     return this;
   }
 
-  @NotNull
-  public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
+  public @NotNull DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
     myNorthPanel = northPanel;
     return this;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@DialogTitle String title) {
     myTitle = title;
   }
 
-  @NotNull
-  public DialogBuilder title(@NotNull String title) {
+  public @NotNull DialogBuilder title(@NotNull @DialogTitle String title) {
     myTitle = title;
     return this;
   }
@@ -126,13 +119,18 @@ public class DialogBuilder implements Disposable {
     myDimensionServiceKey = dimensionServiceKey;
   }
 
-  public DialogBuilder dimensionKey(@NotNull String dimensionServiceKey) {
+  public DialogBuilder dimensionKey(@NotNull @NlsSafe String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
 
   public void addAction(Action action) {
     addActionDescriptor(new CustomActionDescriptor(action));
+  }
+
+  public DialogBuilder addLeftSideAction(Action action) {
+    myDialogWrapper.addLeftSideAction(action);
+    return this;
   }
 
   public <T extends ActionDescriptor> T addActionDescriptor(T actionDescriptor) {
@@ -176,6 +174,10 @@ public class DialogBuilder implements Disposable {
     Disposer.register(this, disposable);
   }
 
+  /**
+   * @deprecated Dialog action buttons should be right-aligned.
+   */
+  @Deprecated(forRemoval = true)
   public void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     myDialogWrapper.setButtonsAlignment(alignment);
   }
@@ -209,14 +211,12 @@ public class DialogBuilder implements Disposable {
     myDialogWrapper.setOKActionEnabled(isEnabled);
   }
 
-  @NotNull
-  public DialogBuilder okActionEnabled(boolean isEnabled) {
+  public @NotNull DialogBuilder okActionEnabled(boolean isEnabled) {
     myDialogWrapper.setOKActionEnabled(isEnabled);
     return this;
   }
 
-  @NotNull
-  public DialogBuilder resizable(boolean resizable) {
+  public @NotNull DialogBuilder resizable(boolean resizable) {
     myDialogWrapper.setResizable(resizable);
     return this;
   }
@@ -225,7 +225,7 @@ public class DialogBuilder implements Disposable {
     return get(getActionDescriptors(), OkActionDescriptor.class);
   }
 
-  private static CustomizableAction get(final ArrayList<ActionDescriptor> actionDescriptors, final Class aClass) {
+  private static CustomizableAction get(final List<? extends ActionDescriptor> actionDescriptors, final Class aClass) {
     for (ActionDescriptor actionDescriptor : actionDescriptors) {
       if (actionDescriptor.getClass().isAssignableFrom(aClass)) return (CustomizableAction)actionDescriptor;
     }
@@ -245,11 +245,11 @@ public class DialogBuilder implements Disposable {
   }
 
   public abstract static class DialogActionDescriptor implements ActionDescriptor {
-    private final String myName;
+    private final @NlsActions.ActionText String myName;
     private final Object myMnemonicChar;
     private boolean myIsDefault = false;
 
-    protected DialogActionDescriptor(String name, int mnemonicChar) {
+    protected DialogActionDescriptor(@NlsActions.ActionText String name, int mnemonicChar) {
       myName = name;
       myMnemonicChar = mnemonicChar == -1 ? null : Integer.valueOf(mnemonicChar);
     }
@@ -277,7 +277,7 @@ public class DialogBuilder implements Disposable {
       this(CommonBundle.getCloseButtonText(), -1, DialogWrapper.CLOSE_EXIT_CODE);
     }
 
-    public CloseDialogAction(String name, int mnemonicChar, int exitCode) {
+    public CloseDialogAction(@NlsActions.ActionText String name, int mnemonicChar, int exitCode) {
       super(name, mnemonicChar);
       myExitCode = exitCode;
     }
@@ -300,7 +300,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public interface CustomizableAction {
-    void setText(String text);
+    void setText(@NlsActions.ActionText String text);
   }
 
   public static class CustomActionDescriptor implements ActionDescriptor {
@@ -316,8 +316,9 @@ public class DialogBuilder implements Disposable {
     }
   }
 
-  private abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
-    protected String myText = null;
+  @ApiStatus.Internal
+  public abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
+    protected @NlsActions.ActionText String myText = null;
 
     @Override
     public void setText(String text) {
@@ -331,25 +332,27 @@ public class DialogBuilder implements Disposable {
       return builtinAction;
     }
 
-    protected abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
+    abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
   }
 
-  public static class OkActionDescriptor extends BuiltinAction {
+  public static final class OkActionDescriptor extends BuiltinAction {
     @Override
-    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getOKAction();
     }
   }
 
-  public static class CancelActionDescriptor extends BuiltinAction {
+  public static final class CancelActionDescriptor extends BuiltinAction {
     @Override
-    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getCancelAction();
     }
   }
 
-  private class MyDialogWrapper extends DialogWrapper {
-    private String myHelpId = null;
+  private final class MyDialogWrapper extends DialogWrapper {
+    private @NonNls String myHelpId = null;
+    private @Nullable List<Action> myLeftSideActions = null;
+
     private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
@@ -358,24 +361,28 @@ public class DialogBuilder implements Disposable {
       super(parent, canBeParent);
     }
 
-    public void setHelpId(String helpId) {
+    public void setHelpId(@NonNls String helpId) {
       myHelpId = helpId;
     }
 
-    @Nullable
+    public void addLeftSideAction(Action action) {
+      if (myLeftSideActions == null) {
+        myLeftSideActions = new ArrayList<>();
+      }
+      myLeftSideActions.add(action);
+    }
+
     @Override
-    protected String getHelpId() {
+    protected @Nullable String getHelpId() {
       return myHelpId;
     }
 
     @Override
     public void init() { super.init(); }
     @Override
-    @NotNull
-    public Action getOKAction() { return super.getOKAction(); } // Make it public
+    public @NotNull Action getOKAction() { return super.getOKAction(); } // Make it public
     @Override
-    @NotNull
-    public Action getCancelAction() { return super.getCancelAction(); } // Make it public
+    public @NotNull Action getCancelAction() { return super.getCancelAction(); } // Make it public
 
     @Override
     protected JComponent createCenterPanel() { return myCenterPanel; }
@@ -440,18 +447,7 @@ public class DialogBuilder implements Disposable {
     }
 
     @Override
-    protected void doHelpAction() {
-      if (myHelpId == null) {
-        super.doHelpAction();
-        return;
-      }
-
-      HelpManager.getInstance().invokeHelp(myHelpId);
-    }
-
-    @Override
-    @NotNull
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       if (myActions == null) return super.createActions();
       ArrayList<Action> actions = new ArrayList<>(myActions.size());
       for (ActionDescriptor actionDescriptor : myActions) {
@@ -460,13 +456,22 @@ public class DialogBuilder implements Disposable {
       if (myHelpId != null) actions.add(getHelpAction());
       return actions.toArray(new Action[0]);
     }
+
+    @Override
+    protected Action @NotNull [] createLeftSideActions() {
+      if (myLeftSideActions == null) {
+        return new Action[0];
+      } else {
+        return myLeftSideActions.toArray(new Action[0]);
+      }
+    }
   }
 
-  public void setErrorText(@Nullable final String text) {
+  public void setErrorText(final @NlsContexts.DialogMessage @Nullable String text) {
     myDialogWrapper.setErrorText(text);
   }
 
-  public void setErrorText(@Nullable final String text, @Nullable JComponent component) {
+  public void setErrorText(final @NlsContexts.DialogMessage @Nullable String text, @Nullable JComponent component) {
     myDialogWrapper.setErrorText(text, component);
   }
 }

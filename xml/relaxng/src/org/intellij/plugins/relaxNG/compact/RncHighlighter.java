@@ -17,11 +17,11 @@
 package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.compact.lexer.CompactSyntaxLexerAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RncHighlighter extends SyntaxHighlighterBase {
+public class RncHighlighter extends SyntaxHighlighterBase implements DumbAware {
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new CompactSyntaxLexerAdapter();
   }
 
@@ -66,8 +65,7 @@ public class RncHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
     return pack(ourMap1.get(tokenType));
   }
 }

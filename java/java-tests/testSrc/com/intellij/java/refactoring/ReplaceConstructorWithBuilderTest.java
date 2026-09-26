@@ -1,41 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderProcessor;
-import java.util.HashMap;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
+public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/replaceConstructorWithBuilder/";
   }
 
   public void testVarargs() {
@@ -72,36 +53,40 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
   }
 
   public void testConstructorTree() {
-    doTest(true, null, "Found constructors are not reducible to simple chain");
+    doTest(true, null, "Constructors of class <b><code>Test</code></b> do not form a simple chain.");
   }
 
   public void testGenerics() {
+    doTest(true);
+  }
+  
+  public void testGenericsImport() {
     doTest(true);
   }
 
   public void testImports() {
     doTest(true, null, null, "foo");
   }
+  
+  public void testAnonymousInheritor() {
+    doTest(true);
+  }
 
-  private void doTest(final boolean createNewBuilderClass) {
+  private void doTest(boolean createNewBuilderClass) {
     doTest(createNewBuilderClass, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults) {
+  private void doTest(boolean createNewBuilderClass, Map<String, String> expectedDefaults) {
     doTest(createNewBuilderClass, expectedDefaults, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults, final String conflicts) {
+  private void doTest(boolean createNewBuilderClass, Map<String, String> expectedDefaults, String conflicts) {
     doTest(createNewBuilderClass, expectedDefaults, conflicts, "");
   }
 
-  private void doTest(final boolean createNewBuilderClass,
-                      final Map<String, String> expectedDefaults,
-                      final String conflicts,
-                      final String packageName) {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
-      assertNotNull("Class Test not found", aClass);
+  private void doTest(boolean createNew, Map<String, String> expectedDefaults, String conflicts, String packageName) {
+    doTest(() -> {
+      final PsiClass aClass = myFixture.findClass("Test");
 
       final LinkedHashMap<String, ParameterData> map = new LinkedHashMap<>();
       final PsiMethod[] constructors = aClass.getConstructors();
@@ -116,26 +101,21 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
         }
       }
       try {
-        new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNewBuilderClass).run();
+        final ReplaceConstructorWithBuilderProcessor processor =
+          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNew, false);
+        processor.run();
         if (conflicts != null) {
-          fail("Conflicts were not detected:" + conflicts);
+          fail("Conflicts were not detected: " + conflicts);
         }
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-
         if (conflicts == null) {
-          fail("Conflict detected:" + e.getMessage());
+          fail("Conflict detected: " + e.getMessage());
+        }
+        else if (!conflicts.equals(e.getMessage())) {
+          fail("Conflicts do not match. Expected:\n" + conflicts + "\nActual:\n" + e.getMessage());
         }
       }
-      LocalFileSystem.getInstance().refresh(false);
-      FileDocumentManager.getInstance().saveAllDocuments();
     });
-  }
-
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/replaceConstructorWithBuilder/";
   }
 }

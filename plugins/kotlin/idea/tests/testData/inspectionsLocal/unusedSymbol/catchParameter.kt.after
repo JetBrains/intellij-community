@@ -1,0 +1,10 @@
+
+
+class Foo {
+    fun foo() {
+        try {
+            println();
+        } catch (_: Throwable) {
+        }
+    }
+}

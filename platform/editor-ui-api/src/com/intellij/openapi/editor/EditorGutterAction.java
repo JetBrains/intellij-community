@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.editor;
 
-import java.awt.*;
+import java.awt.Cursor;
 
 /**
  * Interface for executing actions when text annotations in the editor gutter are clicked.
  *
  * @author lesya
- * @since 5.1
  * @see EditorGutter#registerTextAnnotation(TextAnnotationGutterProvider, EditorGutterAction)
  */
 public interface EditorGutterAction {

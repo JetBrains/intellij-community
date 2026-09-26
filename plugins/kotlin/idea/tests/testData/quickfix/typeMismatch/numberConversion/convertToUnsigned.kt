@@ -1,0 +1,9 @@
+// "Convert expression to 'UInt'" "true"
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+fun foo(param: UInt) {}
+
+fun test(expr: Int) {
+    foo(<caret>expr)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

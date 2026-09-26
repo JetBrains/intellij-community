@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.Enumeration;
 
-/**
- * @author cdr
- */
-public class DuplicateNodeRenderer {
+@ApiStatus.Internal
+public final class DuplicateNodeRenderer {
+  @ApiStatus.Internal
   public interface DuplicatableNode<T> {
     //returns first duplicate node, if any, or null if there are none
     //duplicate nodes are painted gray
     @Nullable T getDuplicate();
-
   }
 
   public static void paintDuplicateNodesBackground(Graphics g, JTree tree) {
@@ -50,8 +37,7 @@ public class DuplicateNodeRenderer {
       TreePath accumPath = null;
       while (node != null) {
         Object userObject = node.getUserObject();
-        if (!(userObject instanceof DuplicatableNode)) break;
-        DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
+        if (!(userObject instanceof DuplicatableNode duplicatableNode)) break;
         Object duplicate = duplicatableNode.getDuplicate();
         if (duplicate == null) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();
@@ -75,8 +61,7 @@ public class DuplicateNodeRenderer {
     g.setColor(old);
   }
 
-  @NotNull
-  private static Rectangle union(Rectangle r1, Rectangle r2) {
+  private static @NotNull Rectangle union(Rectangle r1, Rectangle r2) {
     if (r1 == null) return r2;
     if (r2 == null) return r1;
     return r1.union(r2);

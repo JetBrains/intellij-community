@@ -1,44 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -47,37 +31,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
-public class EachToForIntention extends Intention {
+public final class EachToForIntention extends GrPsiUpdateIntention {
 
-  @NonNls public static final String OUTER = "Outer";
-  @NonNls public static final String HINT = "Replace with For-In";
+  public static final @NonNls String OUTER = "Outer";
+  public static final @NonNls String HINT = "Replace with for-in";
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new EachToForPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrMethodCallExpression expression = (GrMethodCallExpression)element;
     final GrClosableBlock block = expression.getClosureArguments()[0];
     final GrParameterList parameterList = block.getParameterList();
     final GrParameter[] parameters = parameterList.getParameters();
-
-    String var;
-    if (parameters.length == 1) {
-      var = parameters[0].getText();
-      var = StringUtil.replace(var, GrModifier.DEF, "");
-    }
-    else {
-      var = "it";
-    }
 
     final GrExpression invokedExpression = expression.getInvokedExpression();
     GrExpression qualifier = ((GrReferenceExpression)invokedExpression).getQualifierExpression();
@@ -87,7 +63,7 @@ public class EachToForIntention extends Intention {
     }
 
     StringBuilder builder = new StringBuilder();
-    builder.append("for (").append(var).append(" in ").append(qualifier.getText()).append(") {\n");
+    builder.append("for (").append(constructTextForVariables(parameters)).append(" in ").append(qualifier.getText()).append(") {\n");
     String text = block.getText();
     final PsiElement blockArrow = block.getArrow();
     int index;
@@ -105,28 +81,35 @@ public class EachToForIntention extends Intention {
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
     GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
     final GrForClause clause = forStatement.getClause();
-    GrVariable variable = clause.getDeclaredVariable();
+    if (!(clause instanceof GrForInClause)) return;
+    final GrVariable variable = ((GrForInClause)clause).getDeclaredVariable();
+    if (variable != null) {
+      updater.rename(variable, List.of(variable.getName()));
+    }
 
-    forStatement = updateReturnStatements(forStatement);
-
-    if (variable == null) return;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document doc = documentManager.getDocument(element.getContainingFile());
-    if (doc == null) return;
-
-    documentManager.doPostponedOperationsAndUnblockDocument(doc);
-    editor.getCaretModel().moveToOffset(variable.getTextOffset());
-    new VariableInplaceRenamer(variable, editor).performInplaceRename();
+    updateReturnStatements(forStatement);
   }
 
-  private static GrForStatement updateReturnStatements(GrForStatement forStatement) {
+  private static @NotNull String constructTextForVariables(GrParameter[] parameters) {
+    if (parameters.length == 2) {
+      return convertParameter(parameters[1]) + ", " + convertParameter(parameters[0]);
+    } else if (parameters.length == 1) {
+      return convertParameter(parameters[0]);
+    }
+    else {
+      return "it";
+    }
+  }
+
+  private static String convertParameter(@NotNull GrParameter parameter) {
+    return StringUtil.replace(parameter.getText(), GrModifier.DEF, "");
+  }
+
+  private static void updateReturnStatements(GrForStatement forStatement) {
     GrStatement body = forStatement.getBody();
     assert body != null;
 
-    final Set<String> usedLabels = ContainerUtil.newHashSet();
+    final Set<String> usedLabels = new HashSet<>();
     final Ref<Boolean> needLabel = Ref.create(false);
 
     body.accept(new GroovyRecursiveElementVisitor() {
@@ -218,33 +201,30 @@ public class EachToForIntention extends Intention {
         //don't go into anonymous
       }
     });
-
-    return forStatement;
   }
 
   private static class EachToForPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (element instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression expression = (GrMethodCallExpression)element;
-//        final PsiElement parent = expression.getParent();
+      if (element instanceof GrMethodCallExpression expression) {
+        //        final PsiElement parent = expression.getParent();
 //        if (parent instanceof GrAssignmentExpression) return false;
 //        if (parent instanceof GrArgumentList) return false;
 //        if (parent instanceof GrReturnStatement) return false;
 //        if (!(parent instanceof GrCodeBlock || parent instanceof GrIfStatement|| parent instanceof GrCaseSection)) return false;
 
         final GrExpression invokedExpression = expression.getInvokedExpression();
-        if (invokedExpression instanceof GrReferenceExpression) {
-          GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
-          if ("each".equals(referenceExpression.getReferenceName())) {
+        if (invokedExpression instanceof GrReferenceExpression referenceExpression) {
+          String referenceName = referenceExpression.getReferenceName();
+          if ("each".equals(referenceName) || "eachWithIndex".equals(referenceName)) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;
             if (PsiImplUtil.hasNamedArguments(argumentList)) return false;
             final GrClosableBlock[] closureArguments = expression.getClosureArguments();
             if (closureArguments.length != 1) return false;
             final GrParameter[] parameters = closureArguments[0].getParameterList().getParameters();
-            if (parameters.length > 1) return false;
-            return true;
+            return "each".equals(referenceName) && parameters.length <= 1 ||
+                   "eachWithIndex".equals(referenceName) && parameters.length == 2;
           }
         }
       }

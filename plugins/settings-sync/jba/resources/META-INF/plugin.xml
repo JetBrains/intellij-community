@@ -1,0 +1,49 @@
+<idea-plugin allow-bundled-update="true">
+  <name>Backup and Sync</name>
+  <id>com.intellij.settingsSync</id>
+  <category>IDE Settings</category>
+  <description><![CDATA[
+    <p>Backs up and synchronizes settings across all JetBrains IDE instances using your JetBrains account.
+    The list of synced settings is customizable and includes UI, keymaps, code style, plugins, and much more.</p>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.marketplace"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.settingsSync.core"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.settingsSync.performanceTesting"/>
+  </content>
+
+  <content>
+    <module name="intellij.libraries.cloud.config.client" loading="embedded"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <settingsSync.communicatorProvider implementation="com.intellij.settingsSync.jba.JbaCommunicatorProvider"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.settingsSync.jba.SettingsSyncPromotion" topic="com.intellij.openapi.options.newEditor.SettingsDialogListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
+  </applicationListeners>
+  <actions resource-bundle="messages.SettingsSyncJbaBundle">
+    <action class="com.intellij.settingsSync.jba.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
+            icon="AllIcons.General.Settings"/>
+  </actions>
+</idea-plugin>

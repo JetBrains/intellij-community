@@ -1,0 +1,134 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.completion;
+
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.lookup.Classifier;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.WeighingContext;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionResult;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * A lightweight implementation of completion using ModCompletion providers 
+ * @see ModCompletionItemProvider 
+ */
+@NotNullByDefault
+@ApiStatus.Internal
+public final class LightModCompletionServiceImpl {
+  public static void getItems(PsiFile file, int caretOffset, int invocationCount, CompletionType type,
+                              ModCompletionResult sink) {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      int start = computePrefixStart(file, caretOffset);
+      getItems(file, start, caretOffset, invocationCount, type, sink);
+    });
+  }
+
+  public static int computePrefixStart(PsiFile file, int caretOffset) {
+    int start = findStart(caretOffset, file.getFileDocument().getCharsSequence());
+    PsiElement original = file.findElementAt(start);
+    if (original != null) {
+      String prefix = CompletionUtil.findReferencePrefix(original, start);
+      if (prefix != null) {
+        start -= prefix.length();
+      }
+    }
+    return start;
+  }
+
+  private static int findStart(int caretOffset, CharSequence sequence) {
+    int start = caretOffset;
+    while (start > 0 && StringUtil.isJavaIdentifierPart(sequence.charAt(start - 1))) {
+      start--;
+    }
+    return start;
+  }
+
+  public static void getItems(PsiFile file, int startOffset, int caretOffset, int invocationCount, CompletionType type,  
+                              ModCompletionResult sink) {
+    PsiElement element;
+    PsiElement original = file.findElementAt(startOffset);
+    if (startOffset == caretOffset) {
+      PsiFile copy = (PsiFile)file.copy();
+      Document document = copy.getFileDocument();
+      document.insertString(caretOffset, CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+      manager.commitDocument(document);
+      element = Objects.requireNonNull(copy.findElementAt(caretOffset));
+    } else {
+      element = Objects.requireNonNullElse(original, file);
+    }
+    List<ModCompletionItemProvider> providers = ModCompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
+    String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
+    var matcher = new CamelHumpMatcher(prefix);
+    ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
+      () -> false, file, caretOffset, original, element, matcher, invocationCount, type, null);
+    ProcessingContext processingContext = createContext(matcher);
+    Map<CompletionSorterImpl, Classifier<LookupElement>> sortMap = new LinkedHashMap<>();
+    Map<CompletionSorterImpl, Set<LookupElement>> allItems = new LinkedHashMap<>();
+    for (ModCompletionItemProvider provider : providers) {
+      CompletionSorterImpl sorter = (CompletionSorterImpl)provider.getSorter(context);
+      provider.provideItems(context, new ModCompletionResult() {
+        @Nullable Classifier<LookupElement> classifier;
+
+        @Override
+        public void accept(ModCompletionItem item) {
+          if (matcher.prefixMatches(item.mainLookupString()) ||
+              ContainerUtil.exists(item.additionalLookupStrings(), matcher::prefixMatches)) {
+            CompletionItemLookupElement le = new CompletionItemLookupElement(item);
+            if (classifier == null) {
+              classifier = sortMap.computeIfAbsent(sorter, s -> s.buildClassifier(Classifier.empty()));
+            }
+            classifier.addElement(le, processingContext);
+            allItems.computeIfAbsent(sorter, k -> new LinkedHashSet<>()).add(le);
+          }
+        }
+      });
+    }
+    for (Map.Entry<CompletionSorterImpl, Classifier<LookupElement>> entry : sortMap.entrySet()) {
+      Iterable<LookupElement> items = entry.getValue().classify(allItems.getOrDefault(entry.getKey(), Set.of()), processingContext);
+      for (LookupElement item : items) {
+        sink.accept(((CompletionItemLookupElement)item).item());
+      }
+    }
+  }
+
+  private static ProcessingContext createContext(CamelHumpMatcher matcher) {
+    ProcessingContext processingContext = new ProcessingContext();
+    processingContext.put(CompletionLookupArranger.WEIGHING_CONTEXT, new SimpleWeighingContext(matcher));
+    processingContext.put(CompletionLookupArranger.PREFIX_CHANGES, 0);
+    return processingContext;
+  }
+
+  private record SimpleWeighingContext(PrefixMatcher myMatcher) implements WeighingContext {
+    @Override
+    public String itemPattern(LookupElement element) {
+      return myMatcher.getPrefix();
+    }
+
+    @Override
+    public PrefixMatcher itemMatcher(LookupElement item) {
+      return myMatcher;
+    }
+  }
+}

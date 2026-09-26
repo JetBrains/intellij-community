@@ -113,6 +113,10 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
     doTest();
   }
 
+  public void testMakeStaticOnOverride() {
+    doTest(false);
+  }
+
   public void testReplaceDuplicateInsideAnonymous() {
     doTest();
   }

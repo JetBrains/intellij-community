@@ -1,18 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -21,11 +33,17 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescriptor, Validator<XmlTag> {
   private final String myName;
@@ -92,20 +110,20 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     return null;
   }
 
-  static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
+  static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<? super XmlAttributeDescriptor> simpleAttrs) {
     if (context == null) return;
     collectParentStaticProperties(context.getParentTag(), simpleAttrs,
                                   method -> new JavaFxSetterAttributeDescriptor(method, method.getContainingClass()));
   }
 
-  protected static void collectStaticElementDescriptors(XmlTag context, List<XmlElementDescriptor> children) {
+  protected static void collectStaticElementDescriptors(XmlTag context, List<? super XmlElementDescriptor> children) {
     collectParentStaticProperties(context, children, method -> {
       final PsiClass aClass = method.getContainingClass();
       return new JavaFxPropertyTagDescriptor(aClass, PropertyUtilBase.getPropertyName(method.getName()), true);
     });
   }
 
-  private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
+  private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<? super PsiMethod, ? extends T> factory) {
     XmlTag tag = context;
     while (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
@@ -123,7 +141,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
                 }
               }
             }
-            return CachedValueProvider.Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(meths, PsiModificationTracker.MODIFICATION_COUNT);
           });
           for (PsiMethod setter : setters) {
             children.add(factory.fun(setter));
@@ -134,9 +152,8 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     }
   }
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
     if (FxmlConstants.FX_BUILT_IN_TAGS.contains(name)) {
       return new JavaFxBuiltInTagDescriptor(name, childTag);
@@ -184,7 +201,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         }
       }
     }
-    if (name.length() != 0 && Character.isLowerCase(name.charAt(0))) {
+    if (!name.isEmpty() && Character.isLowerCase(name.charAt(0))) {
       return new JavaFxPropertyTagDescriptor(psiClass, name, false);
     }
     return new JavaFxClassTagDescriptor(name, childTag);
@@ -194,7 +211,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
     if (context != null) {
       final String name = context.getName();
-      if (Comparing.equal(name, getName())) {
+      if (Objects.equals(name, getName())) {
         final PsiClass psiClass = getPsiClass();
         if (psiClass != null) {
           final List<XmlAttributeDescriptor> descriptors = new ArrayList<>();
@@ -222,8 +239,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     }
   }
 
-  @NotNull
-  private <T> Set<String> collectWritableProperties(final List<T> children, final Function<PsiMember, T> factory) {
+  private @NotNull <T> Set<String> collectWritableProperties(final List<T> children, final Function<PsiMember, T> factory) {
     final Map<String, PsiMember> fieldList = JavaFxPsiUtil.getWritableProperties(getPsiClass());
     for (PsiMember field : fieldList.values()) {
       children.add(factory.fun(field));
@@ -231,9 +247,8 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     return fieldList.keySet();
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
     final PsiClass psiClass = getPsiClass();
     if (psiClass == null) return null;
     if (FxmlConstants.FX_BUILT_IN_ATTRIBUTES.contains(attributeName)) {
@@ -253,9 +268,8 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
@@ -264,9 +278,8 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     return null;
   }
 
-  @Nullable
   @Override
-  public XmlElementsGroup getTopGroup() {
+  public @Nullable XmlElementsGroup getTopGroup() {
     return null;
   }
 
@@ -275,9 +288,8 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
     return CONTENT_TYPE_UNKNOWN;
   }
 
-  @Nullable
   @Override
-  public String getDefaultValue() {
+  public @Nullable String getDefaultValue() {
     return null;
   }
 
@@ -300,28 +312,23 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
   public void init(PsiElement element) {
   }
 
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
   @Override
   public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
     final XmlTag parentTag = context.getParentTag();
     if (parentTag != null) {
       final XmlAttribute attribute = context.getAttribute(FxmlConstants.FX_CONTROLLER);
       if (attribute != null) {
-        host.addMessage(attribute.getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
+        host.addMessage(attribute.getNameElement(),
+                        JavaFXBundle.message("inspection.message.fx.controller.can.only.be.applied.to.root.element"), ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
     final Pair<PsiClass, Boolean> tagValueClassInfo = JavaFxPsiUtil.getTagValueClass(context, getPsiClass());
     final PsiClass aClass = tagValueClassInfo.getFirst();
-    JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (errorMessage, errorType) ->
+    JavaFxPsiUtil.isClassAcceptable(parentTag, aClass, (@InspectionMessage var errorMessage, var errorType) ->
       host.addMessage(context.getNavigationElement(), errorMessage, errorType));
     boolean needInstantiate = !tagValueClassInfo.getSecond();
     if (needInstantiate && aClass != null && aClass.isValid()) {
-      JavaFxPsiUtil.isAbleToInstantiate(aClass, errorMessage ->
+      JavaFxPsiUtil.isAbleToInstantiate(aClass, (@InspectionMessage var errorMessage) ->
         host.addMessage(context, errorMessage, ValidationHost.ErrorType.ERROR));
     }
   }
@@ -333,8 +340,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
            !JavaFxPsiUtil.getConstructorNamedArgProperties(psiClass).contains(attributeName);
   }
 
-  @NotNull
-  public static XmlElementDescriptor createTagDescriptor(XmlTag xmlTag) {
+  public static @NotNull XmlElementDescriptor createTagDescriptor(XmlTag xmlTag) {
     final String name = xmlTag.getName();
     if (FxmlConstants.FX_BUILT_IN_TAGS.contains(name)) {
       return new JavaFxBuiltInTagDescriptor(name, xmlTag);

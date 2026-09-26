@@ -1,0 +1,5 @@
+import a.b.AmbiguousClazzForFilter
+
+fun test() {
+    val x = AmbiguousClazzForFilter().f()
+}

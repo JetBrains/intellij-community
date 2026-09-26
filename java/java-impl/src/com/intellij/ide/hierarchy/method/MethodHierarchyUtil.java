@@ -19,19 +19,25 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.MethodSignatureUtil;
+import org.jetbrains.annotations.NotNull;
 
 final class MethodHierarchyUtil {
-  public static PsiMethod findBaseMethodInClass(final PsiMethod baseMethod, final PsiClass aClass, final boolean checkBases) {
+  public static PsiMethod findBaseMethodInClass(PsiMethod baseMethod, @NotNull PsiClass aClass, boolean checkBases) {
     if (baseMethod == null) return null; // base method is invalid
     if (cannotBeOverridding(baseMethod)) return null;
-    /*if (!checkBases) return MethodSignatureUtil.findMethodBySignature(aClass, signature, false);*/
-    return MethodSignatureUtil.findMethodBySuperMethod(aClass, baseMethod, checkBases);
-    /*final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(baseMethod, aClass, checkBases, false).findFirst();
-    return signature == null ? null : signature.getMethod();*/
+    PsiMethod subMethod = MethodSignatureUtil.findMethodBySuperMethod(aClass, baseMethod, checkBases);
+    if (subMethod != null) return subMethod;
+    PsiMethod[] methods = baseMethod.findSuperMethods(aClass);
+    for (PsiMethod method : methods) {
+      if (checkBases || method.getContainingClass() == aClass) {
+        return method;
+      }
+    }
+    return null;
   }
 
-  private static boolean cannotBeOverridding(final PsiMethod method) {
-    final PsiClass parentClass = method.getContainingClass();
+  private static boolean cannotBeOverridding(@NotNull PsiMethod method) {
+    PsiClass parentClass = method.getContainingClass();
     return parentClass == null
            || method.isConstructor()
            || method.hasModifierProperty(PsiModifier.STATIC)

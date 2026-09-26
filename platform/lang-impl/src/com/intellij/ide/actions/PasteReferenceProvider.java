@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,19 +14,25 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actions.PasteAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
-public class PasteReferenceProvider implements PasteProvider {
+@ApiStatus.Internal
+public final class PasteReferenceProvider implements PasteProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -46,10 +40,11 @@ public class PasteReferenceProvider implements PasteProvider {
     if (project == null || editor == null) return;
 
     final String fqn = getCopiedFqn(dataContext);
+    if (fqn == null) return;
 
     QualifiedNameProvider theProvider = null;
     PsiElement element = null;
-    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+    for(QualifiedNameProvider provider: QualifiedNameProvider.EP_NAME.getExtensionList()) {
       element = provider.qualifiedNameToElement(fqn, project);
       if (element != null) {
         theProvider = provider;
@@ -73,25 +68,22 @@ public class PasteReferenceProvider implements PasteProvider {
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
-    if (project == null || fqn == null) {
-      return false;
-    }
-    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      if (provider.qualifiedNameToElement(fqn, project) != null) {
-        return true;
-      }
-    }
-    return false;
+    return project != null && fqn != null && QualifiedNameProviderUtil.qualifiedNameToElement(fqn, project) != null;
   }
 
-  private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {
+  private static void insert(
+    @NotNull String fqn,
+    @NotNull PsiElement element,
+    @NotNull Editor editor,
+    @NotNull QualifiedNameProvider provider
+  ) {
     final Project project = editor.getProject();
     if (project == null) return;
 
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(editor.getDocument());
 
-    final PsiFile file = documentManager.getPsiFile(editor.getDocument());
+    final PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
@@ -103,8 +95,7 @@ public class PasteReferenceProvider implements PasteProvider {
     }), IdeBundle.message("command.pasting.reference"), null);
   }
 
-  @Nullable
-  private static String getCopiedFqn(final DataContext context) {
+  private static @Nullable String getCopiedFqn(final DataContext context) {
     Producer<Transferable> producer = PasteAction.TRANSFERABLE_PROVIDER.getData(context);
 
     if (producer != null) {

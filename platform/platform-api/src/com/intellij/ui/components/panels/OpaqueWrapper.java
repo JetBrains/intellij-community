@@ -16,8 +16,11 @@
 package com.intellij.ui.components.panels;
 
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
 
 /**
  * @author Eugene Belyaev
@@ -34,6 +37,7 @@ public class OpaqueWrapper extends Wrapper {
     setBackground(color);
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     g.setColor(getBackground());
     Dimension size = getSize();

@@ -1,0 +1,1 @@
+class B : A(<caret>/* i = */ 4)

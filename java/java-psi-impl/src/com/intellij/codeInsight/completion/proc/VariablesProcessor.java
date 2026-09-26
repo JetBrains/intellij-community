@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion.proc;
 
@@ -12,7 +12,6 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -23,22 +22,17 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
   private final String myPrefix;
   private boolean myStaticScopeFlag;
   private final boolean myStaticSensitiveFlag;
-  private final List<PsiVariable> myResultList;
+  private final List<? super PsiVariable> myResultList;
 
   /** Collecting _all_ variables in scope */
-  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag){
-    this(_prefix, staticSensitiveFlag, new ArrayList<>());
-  }
-
-  /** Collecting _all_ variables in scope */
-  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<PsiVariable> lst){
+  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<? super PsiVariable> lst){
     myPrefix = _prefix;
     myStaticSensitiveFlag = staticSensitiveFlag;
     myResultList = lst;
   }
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
@@ -60,8 +54,9 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
 
   @Override
   public final void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC)
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
+    }
   }
 
   /** sometimes it is important to get results as array */

@@ -1,0 +1,4 @@
+interface Date {
+
+  int <spot>getMonth</spot>();
+}

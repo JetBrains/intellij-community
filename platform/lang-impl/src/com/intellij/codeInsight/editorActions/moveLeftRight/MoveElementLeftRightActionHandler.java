@@ -1,58 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorLastActionTracker;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
-import java.util.HashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
-public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler {
-  private static final Comparator<PsiElement> BY_OFFSET = (o1, o2) -> o1.getTextOffset() - o2.getTextOffset();
+@ApiStatus.Internal
+public final class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
+  private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
 
-  private static final Set<String> OUR_ACTIONS = new HashSet<>(Arrays.asList(
-    IdeActions.MOVE_ELEMENT_LEFT,
-    IdeActions.MOVE_ELEMENT_RIGHT
-  ));
-  
   private final boolean myIsLeft;
 
   public MoveElementLeftRightActionHandler(boolean isLeft) {
-    super(true);
     myIsLeft = isLeft;
+  }
+
+  @Override
+  public boolean reverseCaretOrder() {
+    return !myIsLeft;
   }
 
   @Override
@@ -62,14 +44,13 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     Document document = editor.getDocument();
     if (!(document instanceof DocumentEx)) return false;
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     if (file == null) return false;
     PsiElement[] elementList = getElementList(file, caret.getSelectionStart(), caret.getSelectionEnd());
     return elementList != null;
   }
 
-  @Nullable
-  private static PsiElement[] getElementList(@NotNull PsiFile file, int rangeStart, int rangeEnd) {
+  private static PsiElement @Nullable [] getElementList(@NotNull PsiFile file, int rangeStart, int rangeEnd) {
     PsiElement startElement = file.findElementAt(rangeStart);
     if (startElement == null) return null;
     if (rangeEnd > rangeStart) {
@@ -85,10 +66,9 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     return getElementList(startElement, rangeStart, rangeStart);
   }
 
-  @Nullable
-  private static PsiElement[] getElementList(PsiElement element, int rangeStart, int rangeEnd) {
+  private static PsiElement @Nullable [] getElementList(PsiElement element, int rangeStart, int rangeEnd) {
     while (element != null) {
-      List<MoveElementLeftRightHandler> handlers = MoveElementLeftRightHandler.EXTENSION.allForLanguage(element.getLanguage());
+      List<MoveElementLeftRightHandler> handlers = MoveElementLeftRightHandler.EXTENSION.allForLanguageOrAny(element.getLanguage());
       for (MoveElementLeftRightHandler handler : handlers) {
         PsiElement[] elementList = handler.getMovableSubElements(element);
         if (elementList.length > 1) {
@@ -108,13 +88,11 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     DocumentEx document = (DocumentEx)editor.getDocument();
     Project project = editor.getProject();
     assert project != null;
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    PsiFile file = psiDocumentManager.getPsiFile(document);
+    PsiFile file = EditorContextManager.getPsiFileForEditor(editor, project);
     assert file != null;
     int selectionStart = caret.getSelectionStart();
     int selectionEnd = caret.getSelectionEnd();
@@ -125,20 +103,16 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     Range<Integer> elementRange = findRangeOfElementsToMove(elementList, selectionStart, selectionEnd);
     if (elementRange == null) return;
 
-    if (!OUR_ACTIONS.contains(EditorLastActionTracker.getInstance().getLastActionId())) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("move.element.left.right");
-    }
-
     int toMoveStart = elementList[elementRange.getFrom()].getTextRange().getStartOffset();
     int toMoveEnd = elementList[elementRange.getTo()].getTextRange().getEndOffset();
     int otherIndex = myIsLeft ? elementRange.getFrom() - 1 : elementRange.getTo() + 1;
     int otherStart = elementList[otherIndex].getTextRange().getStartOffset();
     int otherEnd = elementList[otherIndex].getTextRange().getEndOffset();
-    
+
     selectionStart = trim(selectionStart, toMoveStart, toMoveEnd);
     selectionEnd = trim(selectionEnd, toMoveStart, toMoveEnd);
     int caretOffset = trim(caret.getOffset(), toMoveStart, toMoveEnd);
-    
+
     int caretShift;
     if (toMoveStart < otherStart) {
       document.moveText(toMoveStart, toMoveEnd, otherStart);
@@ -153,9 +127,8 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     caret.moveToOffset(caretOffset + caretShift);
     caret.setSelection(selectionStart + caretShift, selectionEnd + caretShift);
   }
-  
-  @Nullable
-  private Range<Integer> findRangeOfElementsToMove(@NotNull PsiElement[] elements, int startOffset, int endOffset) {
+
+  private @Nullable Range<Integer> findRangeOfElementsToMove(PsiElement @NotNull [] elements, int startOffset, int endOffset) {
     int startIndex = elements.length;
     int endIndex = -1;
     if (startOffset == endOffset) {
@@ -174,8 +147,8 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
         if (endOffset > range.getStartOffset()) endIndex = i; else break;
       }
     }
-    return startIndex > endIndex || (myIsLeft ? startIndex == 0 : endIndex == elements.length - 1) 
-           ? null 
+    return startIndex > endIndex || (myIsLeft ? startIndex == 0 : endIndex == elements.length - 1)
+           ? null
            : new Range<>(startIndex, endIndex);
   }
 

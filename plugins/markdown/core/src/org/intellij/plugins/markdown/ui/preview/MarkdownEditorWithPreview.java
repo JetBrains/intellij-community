@@ -1,0 +1,221 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.markdown.ui.preview;
+
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBSplitter;
+import org.intellij.plugins.markdown.MarkdownBundle;
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecKt;
+import org.intellij.plugins.markdown.settings.MarkdownSettings;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
+
+import java.awt.Point;
+import java.util.Objects;
+
+public final class MarkdownEditorWithPreview extends TextEditorWithPreview implements MarkdownHeaderNavigationHandler {
+  @VisibleForTesting
+  public static final String LIVE_PREVIEW_PROPERTY = "markdown.editor.live.preview.layout";
+  private static final String EDITOR_ONLY_ACTION_ID = "Markdown.Layout.EditorOnly";
+  private static final String LIVE_PREVIEW_ACTION_ID = "Markdown.Layout.LivePreview";
+
+  private final MarkdownSettings settings;
+  private final boolean previewAvailable;
+  private boolean autoScrollPreview;
+
+  /**
+   * @deprecated use constructor overload with {@link MarkdownSettings} parameter
+   */
+  @Deprecated
+  public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview, @NotNull Project project) {
+    this(editor, preview, project, MarkdownSettings.getInstance(project));
+  }
+
+  public MarkdownEditorWithPreview(@NotNull TextEditor editor,
+                                   @NotNull MarkdownPreviewFileEditor preview,
+                                   @NotNull Project project,
+                                   @NotNull MarkdownSettings settings) {
+    this(editor, preview, project, settings, MarkdownHtmlPanelProvider.hasAvailableProviders());
+  }
+
+  private MarkdownEditorWithPreview(@NotNull TextEditor editor,
+                                    @NotNull MarkdownPreviewFileEditor preview,
+                                    @NotNull Project project,
+                                    @NotNull MarkdownSettings settings,
+                                    boolean previewAvailable) {
+    super(
+      editor,
+      preview,
+      MarkdownBundle.message("markdown.editor.name"),
+      Layout.SHOW_EDITOR_AND_PREVIEW,
+      !settings.isVerticalSplit(),
+      // Without a preview, the last used layout of other editors must not apply.
+      previewAvailable ? null : Layout.SHOW_EDITOR
+    );
+
+    this.settings = settings;
+    this.previewAvailable = previewAvailable;
+    MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(editor.getEditor(), PropertiesComponent.getInstance().getBoolean(LIVE_PREVIEW_PROPERTY));
+
+    // allow launching actions while in preview mode;
+    // FIXME: better solution IDEA-354102
+    editor.getEditor().getContentComponent().putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
+    preview.setMainEditor(editor.getEditor());
+
+    autoScrollPreview = settings.isAutoScrollEnabled();
+
+    project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, new MarkdownSettings.ChangeListener() {
+      private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
+
+      @Override
+      public void beforeSettingsChanged(@NotNull MarkdownSettings settings1) {
+        wasVerticalSplitBefore = settings1.isVerticalSplit();
+      }
+
+      @Override
+      public void settingsChanged(@NotNull MarkdownSettings settings1) {
+        setAutoScrollPreview(settings1.isAutoScrollEnabled());
+        if (wasVerticalSplitBefore != settings1.isVerticalSplit()) {
+          handleLayoutChange(!settings1.isVerticalSplit());
+        }
+      }
+    });
+    editor.getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
+  }
+
+  @Override
+  protected @NotNull JBSplitter createSplitter() {
+    JBSplitter splitter = super.createSplitter();
+    // "Preview layout" must apply to a freshly created editor, not just to an already open one.
+    splitter.setOrientation(!settings.isVerticalSplit());
+    return splitter;
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    var restoredState = state;
+    if (state instanceof MyFileEditorState editorState && editorState.getSplitLayout() != null) {
+      var layout = supportedLayout(editorState.getSplitLayout());
+      if (layout != Layout.SHOW_EDITOR) {
+        MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(myEditor.getEditor(), false);
+      }
+      if (layout != editorState.getSplitLayout()) {
+        restoredState = new MyFileEditorState(
+          layout, editorState.getFirstState(), editorState.getSecondState(), editorState.isVerticalSplit()
+        );
+      }
+    }
+    super.setState(restoredState);
+    // "Preview layout" is a global default, so it must win over the per-file orientation
+    // that super.setState() restores from the editor state. See IJPL-253568.
+    handleLayoutChange(!settings.isVerticalSplit());
+  }
+
+  @Override
+  public void setLayout(@NotNull Layout layout) {
+    setViewMode(layout, false);
+  }
+
+  /**
+   * Shows the text editor alone with Markdown live preview on.
+   */
+  public void setLivePreviewLayout() {
+    setViewMode(Layout.SHOW_EDITOR, true);
+  }
+
+  /**
+   * Returns true when the text editor is shown alone with Markdown live preview on.
+   */
+  public boolean isLivePreviewLayout() {
+    return getLayout() == Layout.SHOW_EDITOR && MarkdownLivePreviewSpecKt.isLivePreviewEnabled(myEditor.getEditor());
+  }
+
+  private void setViewMode(@NotNull Layout layout, boolean livePreview) {
+    PropertiesComponent.getInstance().setValue(LIVE_PREVIEW_PROPERTY, livePreview, false);
+    MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(myEditor.getEditor(), livePreview);
+    super.setLayout(supportedLayout(layout));
+  }
+
+  private @NotNull Layout supportedLayout(@NotNull Layout layout) {
+    return previewAvailable ? layout : Layout.SHOW_EDITOR;
+  }
+
+  @Override
+  protected @NotNull ActionGroup createViewActionGroup() {
+    var livePreviewAction = Objects.requireNonNull(ActionUtil.getAction(LIVE_PREVIEW_ACTION_ID));
+    if (!previewAvailable) {
+      return new DefaultActionGroup(getShowEditorAction(), livePreviewAction);
+    }
+    return new DefaultActionGroup(getShowEditorAction(), getShowEditorAndPreviewAction(), livePreviewAction, getShowPreviewAction());
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowEditorAction() {
+    // The platform action is selected for any SHOW_EDITOR layout, and so also in the live preview layout.
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction(EDITOR_ONLY_ACTION_ID));
+  }
+
+  @Override
+  protected void onLayoutChange(Layout oldValue, Layout newValue) {
+    super.onLayoutChange(oldValue, newValue);
+    // Editor tab will lose focus after switching to JCEF preview for some reason.
+    // So we should explicitly request focus for our editor here.
+    if (newValue == Layout.SHOW_PREVIEW) {
+      requestFocusForPreview();
+    }
+  }
+
+  private void requestFocusForPreview() {
+    final var preferredComponent = myPreview.getPreferredFocusedComponent();
+    if (preferredComponent != null) {
+      preferredComponent.requestFocus();
+      return;
+    }
+    myPreview.getComponent().requestFocus();
+  }
+
+  public boolean isAutoScrollPreview() {
+    return autoScrollPreview;
+  }
+
+  public void setAutoScrollPreview(boolean autoScrollPreview) {
+    this.autoScrollPreview = autoScrollPreview;
+  }
+
+  @Override
+  public void navigateToHeader(int textOffset, int lineNumber) {
+    ((MarkdownPreviewFileEditor)myPreview).scrollToLine(myEditor.getEditor(), lineNumber);
+  }
+
+  private final class MyVisibleAreaListener implements VisibleAreaListener {
+    private int previousLine = 0;
+
+    @Override
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent event) {
+      if (!isAutoScrollPreview()) {
+        return;
+      }
+
+      final Editor editor = event.getEditor();
+      int y = editor.getScrollingModel().getVerticalScrollOffset();
+      int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
+      if (currentLine == previousLine) {
+        return;
+      }
+
+      previousLine = currentLine;
+      ((MarkdownPreviewFileEditor)myPreview).scrollToLine(editor, currentLine);
+    }
+  }
+}

@@ -1,0 +1,14 @@
+// "Replace ',' with '||' in when" "true"
+// K2_ERROR: COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
+// K2_ERROR: COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
+fun test(i: Int, j: Int) {
+    var b = false
+    when {
+        i == 0 -> { /* code 1 */ }
+        i > 0<caret>, j > 0 -> { /* code 2 */ }
+        j == 0 -> { /* code 3 */ }
+        i < 0, j < 0, j > i -> { /* code 4 */ }
+        else -> { /* other code */ }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

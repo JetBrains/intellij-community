@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |Aacgr|  unicode:: U+00386 .. GREEK CAPITAL LETTER ALPHA WITH TONOS
 .. |aacgr|  unicode:: U+003AC .. GREEK SMALL LETTER ALPHA WITH TONOS

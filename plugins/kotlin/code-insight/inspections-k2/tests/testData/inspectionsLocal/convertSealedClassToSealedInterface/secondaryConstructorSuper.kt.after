@@ -1,0 +1,6 @@
+// FIX: Convert to sealed interface
+sealed interface Result
+class Failure : Result {
+    constructor(message: String)
+    constructor(code: Int)
+}

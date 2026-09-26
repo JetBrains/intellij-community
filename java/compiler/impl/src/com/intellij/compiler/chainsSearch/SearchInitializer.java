@@ -17,14 +17,18 @@ package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
 
 public class SearchInitializer {
   private final ChainCompletionContext myContext;
   private final LinkedList<OperationChain> myQueue;
   private final LinkedHashMap<RefChainOperation, OperationChain> myChains;
 
-  public SearchInitializer(SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
+  public SearchInitializer(SortedSet<? extends ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
@@ -48,7 +52,7 @@ public class SearchInitializer {
   }
 
   private void populateFrequentlyUsedMethod(SortedSet<? extends ChainOpAndOccurrences> operations,
-                                            List<OperationChain> chains) {
+                                            List<? super OperationChain> chains) {
     int bestOccurrences = -1;
     for (ChainOpAndOccurrences indexValue : operations) {
       OperationChain operationChain = OperationChain.create(indexValue.getOperation(), indexValue.getOccurrenceCount(), myContext);

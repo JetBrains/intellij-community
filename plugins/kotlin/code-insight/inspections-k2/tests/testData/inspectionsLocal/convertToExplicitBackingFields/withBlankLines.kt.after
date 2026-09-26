@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+internal class ClassConsumer {
+    val allClasses: Collection<Int>
+        field = mutableListOf<Int>()
+
+    val sealedClasses: Collection<Int>
+        field = mutableListOf<Int>()
+}

@@ -1,0 +1,10 @@
+// "Add context parameter to function" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+context(i: Int) fun String.callReceiver(): String = ""
+
+fun foo() {
+    "hello".<caret>callReceiver().toString()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForEnclosingFunction

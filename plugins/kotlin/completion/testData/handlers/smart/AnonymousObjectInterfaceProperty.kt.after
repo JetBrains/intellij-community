@@ -1,0 +1,15 @@
+interface PropertyOnlyInterface {
+    val id: Int
+    val name: String
+}
+
+fun test() : PropertyOnlyInterface {
+    return object : PropertyOnlyInterface {
+        override val id: Int
+            get() = TODO("Not yet implemented")
+        override val name: String
+            get() = TODO("Not yet implemented")
+    }
+}
+
+// ELEMENT: object

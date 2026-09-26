@@ -1,32 +1,35 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.containers.IntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class ChainSearcher {
-  @NotNull
-  public static List<OperationChain> search(int pathMaximalLength,
-                                            ChainSearchTarget searchTarget,
-                                            int maxResultSize,
-                                            ChainCompletionContext context,
-                                            CompilerReferenceServiceEx compilerReferenceServiceEx) {
+public final class ChainSearcher {
+  public static @NotNull List<OperationChain> search(int pathMaximalLength,
+                                                     ChainSearchTarget searchTarget,
+                                                     int maxResultSize,
+                                                     ChainCompletionContext context,
+                                                     CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx, initializer, pathMaximalLength, maxResultSize, context);
   }
 
-  @NotNull
-  private static SearchInitializer createInitializer(ChainSearchTarget target,
-                                                     CompilerReferenceServiceEx referenceServiceEx,
-                                                     ChainCompletionContext context) {
+  private static @NotNull SearchInitializer createInitializer(ChainSearchTarget target,
+                                                              CompilerReferenceServiceEx referenceServiceEx,
+                                                              ChainCompletionContext context) {
     SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> operations = new TreeSet<>();
     for (byte kind : target.getArrayKind()) {
       SortedSet<ChainOpAndOccurrences<MethodCall>> methods = referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind, context);
@@ -43,12 +46,11 @@ public class ChainSearcher {
     return new SearchInitializer(operations, context);
   }
 
-  @NotNull
-  private static List<OperationChain> search(CompilerReferenceServiceEx referenceServiceEx,
-                                             SearchInitializer initializer,
-                                             int chainMaxLength,
-                                             int maxResultSize,
-                                             ChainCompletionContext context) {
+  private static @NotNull List<OperationChain> search(CompilerReferenceServiceEx referenceServiceEx,
+                                                      SearchInitializer initializer,
+                                                      int chainMaxLength,
+                                                      int maxResultSize,
+                                                      ChainCompletionContext context) {
     LinkedList<OperationChain> q = initializer.getChainQueue();
 
     List<OperationChain> result = new ArrayList<>();
@@ -63,15 +65,15 @@ public class ChainSearcher {
       // otherwise try to find chain continuation
       boolean updated = false;
       SortedSet<ChainOpAndOccurrences<MethodCall>> candidates = referenceServiceEx.findMethodReferenceOccurrences(head.getQualifierRawName(), SignatureData.ZERO_DIM, context);
-      LightRef ref = head.getLightRef();
+      CompilerRef ref = head.getCompilerRef();
       for (ChainOpAndOccurrences<MethodCall> candidate : candidates) {
         if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
         MethodCall sign = candidate.getOperation();
         if ((sign.isStatic() || !sign.getQualifierRawName().equals(context.getTarget().getClassQName())) &&
-            (!(ref instanceof LightRef.JavaLightMethodRef) ||
-             referenceServiceEx.mayHappen(candidate.getOperation().getLightRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
+            (!(ref instanceof CompilerRef.JavaCompilerMethodRef) ||
+             referenceServiceEx.mayHappen(candidate.getOperation().getCompilerRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
 
           OperationChain
             continuation = currentChain.continuationWithMethod(candidate.getOperation(), candidate.getOccurrenceCount(), context);
@@ -89,9 +91,9 @@ public class ChainSearcher {
         }
       }
 
-      if (ref instanceof LightRef.JavaLightMethodRef) {
-        LightRef.LightClassHierarchyElementDef def =
-          referenceServiceEx.mayCallOfTypeCast((LightRef.JavaLightMethodRef)ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
+      if (ref instanceof CompilerRef.JavaCompilerMethodRef) {
+        CompilerRef.CompilerClassHierarchyElementDef def =
+          referenceServiceEx.mayCallOfTypeCast((CompilerRef.JavaCompilerMethodRef)ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
         if (def != null) {
           OperationChain
             continuation = currentChain.continuationWithCast(new TypeCast(def, head.getQualifierDef(), referenceServiceEx), context);
@@ -124,9 +126,9 @@ public class ChainSearcher {
     // type cast + introduced qualifier: it's too complex chain
     if (currentChain.hasCast()) return;
     if (!context.getTarget().getClassQName().equals(signature.getQualifierRawName())) {
-      Set<LightRef> references = context.getContextClassReferences();
+      Set<CompilerRef> references = context.getContextClassReferences();
       boolean isRelevantQualifier = false;
-      for (LightRef ref: references) {
+      for (CompilerRef ref: references) {
         if (referenceServiceEx.mayHappen(signature.getQualifierDef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
           isRelevantQualifier = true;
           break;
@@ -162,24 +164,18 @@ public class ChainSearcher {
       return;
     }
     boolean doAdd = true;
-    IntStack indicesToRemove = new IntStack();
+    @SuppressWarnings("SSBasedInspection") IntArrayList indicesToRemove = new IntArrayList();
     for (int i = 0; i < result.size(); i++) {
       OperationChain chain = result.get(i);
       OperationChain.CompareResult r = OperationChain.compare(chain, newChain);
       switch (r) {
-        case LEFT_CONTAINS_RIGHT:
-          indicesToRemove.push(i);
-          break;
-        case RIGHT_CONTAINS_LEFT:
-        case EQUAL:
-          doAdd = false;
-          break;
-        case NOT_EQUAL:
-          break;
+        case LEFT_CONTAINS_RIGHT -> indicesToRemove.push(i);
+        case RIGHT_CONTAINS_LEFT, EQUAL -> doAdd = false;
+        case NOT_EQUAL -> {}
       }
     }
-    while (!indicesToRemove.empty()) {
-      result.remove(indicesToRemove.pop());
+    while (!indicesToRemove.isEmpty()) {
+      result.remove(indicesToRemove.popInt());
     }
     if (doAdd) {
       result.add(newChain);

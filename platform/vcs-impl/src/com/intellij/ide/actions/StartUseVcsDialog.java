@@ -1,30 +1,47 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.vcs.configurable.SuggestedVcsComparator;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.dialog.VcsDialogUtils;
+import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-class StartUseVcsDialog extends DialogWrapper {
-  private final VcsDataWrapper myData;
-  private VcsCombo myVcsCombo;
-  private String mySelected;
+public final class StartUseVcsDialog extends DialogWrapper {
 
-  StartUseVcsDialog(final VcsDataWrapper data) {
-    super(data.getProject(), true);
-    myData = data;
+  private final ComboBox<AbstractVcs> myVcsCombo;
+
+  private final @NotNull String myTargetDirectory;
+
+  public StartUseVcsDialog(@NotNull Project project, @NotNull String targetDirectory) {
+    super(project, true);
+
+    myTargetDirectory = targetDirectory;
+    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss();
+    ContainerUtil.sort(vcses, SuggestedVcsComparator.create(project));
+    myVcsCombo = new ComboBox<>(vcses);
+    myVcsCombo.setRenderer(SimpleListCellRenderer.create("", AbstractVcs::getDisplayName));
+
     setTitle(VcsBundle.message("dialog.enable.version.control.integration.title"));
+    setOKButtonText(ApplicationBundle.message("button.enable"));
 
     init();
   }
@@ -34,47 +51,33 @@ class StartUseVcsDialog extends DialogWrapper {
     return myVcsCombo;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
-    final JLabel selectText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text"));
+    JLabel selectText = new JLabel(
+      VcsBundle.message("dialog.enable.version.control.integration.select.vcs.label.text", PathUtil.getFileName(myTargetDirectory)));
     selectText.setUI(new MultiLineLabelUI());
 
-    final JPanel mainPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.BASELINE, GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
-
+    JPanel mainPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.BASELINE, GridBagConstraints.NONE, JBUI.insets(5),
+                                                   0, 0);
     mainPanel.add(selectText, gb);
 
-    ++ gb.gridx;
+    ++gb.gridx;
 
-    myVcsCombo = new VcsCombo(prepareComboData());
     mainPanel.add(myVcsCombo, gb);
 
-    myVcsCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        validateVcs();
-      }
-    });
-    validateVcs();
+    ++gb.gridx;
 
-    final JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text"));
-    helpText.setUI(new MultiLineLabelUI());
-    helpText.setForeground(UIUtil.getInactiveTextColor());
+    mainPanel.add(VcsDialogUtils.getMorePluginsLink(mainPanel, () -> {
+      close(CANCEL_EXIT_CODE);
+      return Unit.INSTANCE;
+    }), gb);
 
-    gb.anchor = GridBagConstraints.NORTHWEST;
-    gb.gridx = 0;
-    ++ gb.gridy;
-    gb.gridwidth = 2;
-    mainPanel.add(helpText, gb);
-
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(mainPanel, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                  new Insets(0,0,0,0), 0,0));
+    JPanel wrapper = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                    JBInsets.emptyInsets(), 0, 0);
+    wrapper.add(mainPanel, gbc);
     return wrapper;
-  }
-
-  private void validateVcs() {
-    final String selectedVcs = myVcsCombo.getSelectedItem();
-    setOKActionEnabled(selectedVcs.length() > 0);
   }
 
   @Override
@@ -82,36 +85,7 @@ class StartUseVcsDialog extends DialogWrapper {
     return "reference.version.control.enable.version.control.integration";
   }
 
-  @Override
-  protected void doOKAction() {
-    mySelected = myVcsCombo.getSelectedItem();
-    super.doOKAction();    
+  public @NotNull AbstractVcs getVcs() {
+    return myVcsCombo.getItem();
   }
-
-  private Object[] prepareComboData() {
-    final Collection<String> displayNames = myData.getVcses().keySet();
-    final List<String> keys = new ArrayList<>(displayNames.size() + 1);
-    keys.add("");
-    keys.addAll(displayNames);
-    Collections.sort(keys);
-    return ArrayUtil.toObjectArray(keys);
-  }
-
-  String getVcs() {
-    return myData.getVcses().get(mySelected);
-  }
-
-  private static class VcsCombo extends JComboBox {
-    private VcsCombo(final Object[] items) {
-      super(items);
-      setSelectedIndex(0);
-      setEditable(false);
-    }
-
-    @Override
-    public String getSelectedItem() {
-      return (String) super.getSelectedItem();
-    }
-  }
-
 }

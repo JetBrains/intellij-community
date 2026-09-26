@@ -1,0 +1,1 @@
+echo "<TYPO descr="Typo: In word 'Configues'">Configues</TYPO> and starts the Aggregator"

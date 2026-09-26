@@ -1,0 +1,14 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "jvm"
+plugins {
+    kotlin("multiplatform") version "2.0.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jv<caret>
+}
+

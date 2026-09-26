@@ -1,0 +1,7 @@
+# Error: is not present in stub
+# =============================
+# Erlang support is currently broken, so it's better to pretend
+# that this decorator doesn't exist
+uwsgidecorators.erlang
+# This should really only be internal API, so we don't export it
+uwsgidecorators.harakiri.real_call

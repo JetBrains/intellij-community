@@ -15,34 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GroovyEmptySyncBlockInspection extends BaseInspection {
+public final class GroovyEmptySyncBlockInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Empty 'synchronized' block";
+  protected @Nullable String buildErrorString(Object... args) {
+    return GroovyBundle.message("inspection.message.empty.ref.block");
+
   }
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Empty '#ref' block #loc";
-
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

@@ -1,0 +1,4 @@
+<node text="method() (p.BaseClass)" base="true">
+  <node text="Show1 (p)"/>
+  <node text="Show2 (p)"/>
+</node>

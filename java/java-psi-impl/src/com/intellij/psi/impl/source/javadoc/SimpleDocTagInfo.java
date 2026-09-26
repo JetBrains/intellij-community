@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -23,16 +9,13 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author mike
- */
 class SimpleDocTagInfo implements JavadocTagInfo {
   private final String myName;
   private final Class[] myContexts;
   private final boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
-  SimpleDocTagInfo(@NotNull String name, @NotNull LanguageLevel level, boolean isInline, @NotNull Class... contexts) {
+  SimpleDocTagInfo(@NotNull String name, @NotNull LanguageLevel level, boolean isInline, Class @NotNull ... contexts) {
     myName = name;
     myContexts = contexts;
     myInline = isInline;

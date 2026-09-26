@@ -1,0 +1,15 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.searchEverywhereLucene.backend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.commandProvider
+      implementation="com.intellij.searchEverywhereLucene.performanceTesting.LuceneTestCommandProvider"/>
+  </extensions>
+</idea-plugin>

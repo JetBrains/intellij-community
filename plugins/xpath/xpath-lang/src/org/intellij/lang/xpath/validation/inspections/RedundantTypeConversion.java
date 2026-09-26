@@ -27,34 +27,31 @@ import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantTypeConversion extends XPathInspection {
-    @NonNls
-    private static final String SHORT_NAME = "RedundantTypeConversion";
+    private static final @NonNls String SHORT_NAME = "RedundantTypeConversion";
 
     public boolean CHECK_ANY = false;
 
-    @NotNull
-    public String getDisplayName() {
-        return "Redundant Type Conversion";
-    }
-
-    @NotNull
-    @NonNls
-    public String getShortName() {
+  @Override
+  public @NotNull @NonNls String getShortName() {
         return SHORT_NAME;
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
         return new MyElementVisitor(manager, isOnTheFly);
     }
 
+  @Override
   protected boolean acceptsLanguage(Language language) {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
@@ -65,34 +62,35 @@ public class RedundantTypeConversion extends XPathInspection {
             super(manager, isOnTheFly);
         }
 
+        @Override
         protected void checkExpression(final @NotNull XPathExpression expr) {
             if (ExpectedTypeUtil.isExplicitConversion(expr)) {
                 final XPathExpression expression = ExpectedTypeUtil.unparenthesize(expr);
                 assert expression != null;
-                
+
                 final XPathType convertedType = ((XPathFunctionCall)expression).getArgumentList()[0].getType();
                 if (isSameType(expression, convertedType)) {
                     final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();
                     LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
-                    addProblem(myManager.createProblemDescriptor(expression,
-                            "Redundant conversion to type '" + convertedType.getName() + "'", myOnTheFly, fixes,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                  final String message = XPathBundle.message("inspection.message.redundant.conversion.to.type", convertedType.getName());
+                  addProblem(myManager.createProblemDescriptor(expression, message, myOnTheFly, fixes,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                 } else if (CHECK_ANY) {
                     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
                     if (expectedType == XPathType.ANY) {
                         final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();
                         LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
-                        addProblem(myManager.createProblemDescriptor(expression,
-                                "Redundant conversion to type '" + expectedType.getName() + "'", myOnTheFly, fixes,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                      final String message = XPathBundle.message("inspection.message.redundant.conversion.to.type", expectedType.getName());
+                      addProblem(myManager.createProblemDescriptor(expression, message, myOnTheFly, fixes,
+                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                     }
                 }
             }
         }
 
-      private boolean isSameType(XPathExpression expression, XPathType convertedType) {
+      private static boolean isSameType(XPathExpression expression, XPathType convertedType) {
         XPathType type = ExpectedTypeUtil.mapType(expression, expression.getType());
         while (type instanceof XPath2SequenceType) {
           type = ((XPath2SequenceType)type).getType();

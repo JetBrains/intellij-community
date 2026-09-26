@@ -1,0 +1,13 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2018 the original author or authors."
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    test<caret>Implementation(kotlin("test"))
+}

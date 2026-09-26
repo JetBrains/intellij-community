@@ -20,53 +20,61 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import icons.XpathIcons;
-import org.jetbrains.annotations.NonNls;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class XsltRunConfigType implements ConfigurationType {
+public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   public XsltRunConfigType() {
-    myFactory = new MyConfigurationFactory(this);
+    myFactory = new ConfigurationFactory(this) {
+      @Override
+      public @NotNull RunConfiguration createTemplateConfiguration(final @NotNull Project project) {
+        return new XsltRunConfiguration(project, this);
+      }
+
+      @Override
+      public @NotNull String getId() {
+        return "XSLT";
+      }
+    };
   }
 
   public static XsltRunConfigType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class);
   }
 
-  public String getDisplayName() {
+  @Override
+  public @NotNull String getDisplayName() {
+    return getId();
+  }
+
+  @Override
+  public @NotNull @NlsSafe String getId() {
     return "XSLT";
   }
 
-  @NonNls
-  @NotNull
-  public String getId() {
-    return "XSLT";
-  }
-
+  @Override
   public String getConfigurationTypeDescription() {
-    return "Run XSLT Script";
+    return XPathBundle.message("run.configuration.description.xslt.script");
   }
 
+  @Override
   public Icon getIcon() {
     return XpathIcons.Xslt;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
   }
 
-  private static class MyConfigurationFactory extends ConfigurationFactory {
-    MyConfigurationFactory(XsltRunConfigType type) {
-      super(type);
-    }
-
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(final Project project) {
-      return new XsltRunConfiguration(project, this);
-    }
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.XSLT";
   }
 }

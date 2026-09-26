@@ -1,0 +1,161 @@
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence, Sized
+from typing import Any, overload
+
+from django.template.base import FilterExpression, Parser
+from django.template.context import Context
+from django.utils.safestring import SafeString
+from typing_extensions import TypeVar
+
+from .base import Node, NodeList, Template
+
+class InvalidTemplateLibrary(Exception): ...
+
+_C = TypeVar("_C", bound=Callable[..., Any])
+
+class Library:
+    filters: dict[str, Callable[..., Any]]
+    tags: dict[str, Callable[..., Any]]
+    def __init__(self) -> None: ...
+    @overload
+    def tag(self, name: _C) -> _C: ...
+    @overload
+    def tag(self, name: str, compile_function: _C) -> _C: ...
+    @overload
+    def tag(self, name: str | None = None, compile_function: None = None) -> Callable[[_C], _C]: ...
+    def tag_function(self, func: _C) -> _C: ...
+    @overload
+    def filter(
+        self,
+        name: _C,
+        filter_func: None = None,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> _C: ...
+    @overload
+    def filter(
+        self,
+        name: str | None,
+        filter_func: _C,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> _C: ...
+    @overload
+    def filter(
+        self,
+        name: str | None = None,
+        filter_func: None = None,
+        *,
+        is_safe: bool = False,
+        needs_autoescape: bool = False,
+        expects_localtime: bool = False,
+    ) -> Callable[[_C], _C]: ...
+    def filter_function(self, func: _C, **flags: Any) -> _C: ...
+    @overload
+    def simple_tag(self, func: _C, takes_context: bool | None = None, name: str | None = None) -> _C: ...
+    @overload
+    def simple_tag(
+        self, func: None = None, takes_context: bool | None = None, name: str | None = None
+    ) -> Callable[[_C], _C]: ...
+    @overload
+    def simple_block_tag(
+        self,
+        func: _C,
+        takes_context: bool | None = None,
+        name: str | None = None,
+        end_name: str | None = None,
+    ) -> _C: ...
+    @overload
+    def simple_block_tag(
+        self,
+        func: None = None,
+        takes_context: bool | None = None,
+        name: str | None = None,
+        end_name: str | None = None,
+    ) -> Callable[[_C], _C]: ...
+    @overload
+    def inclusion_tag(
+        self,
+        filename: Template | str,
+        func: _C,
+        takes_context: bool | None = None,
+        name: str | None = None,
+    ) -> _C: ...
+    @overload
+    def inclusion_tag(
+        self,
+        filename: Template | str,
+        func: None = None,
+        takes_context: bool | None = None,
+        name: str | None = None,
+    ) -> Callable[[_C], _C]: ...
+
+class TagHelperNode(Node):
+    func: Any
+    takes_context: Any
+    args: Any
+    kwargs: Any
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        takes_context: bool | None,
+        args: list[FilterExpression],
+        kwargs: dict[str, FilterExpression],
+    ) -> None: ...
+    def get_resolved_arguments(self, context: Context) -> tuple[list[int], dict[str, SafeString | int]]: ...
+
+class SimpleNode(TagHelperNode):
+    args: list[FilterExpression]
+    func: Callable[..., Any]
+    kwargs: dict[str, FilterExpression]
+    takes_context: bool | None
+    target_var: str | None
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        takes_context: bool | None,
+        args: list[FilterExpression],
+        kwargs: dict[str, FilterExpression],
+        target_var: str | None,
+    ) -> None: ...
+
+class SimpleBlockNode(SimpleNode):
+    nodelist: NodeList
+
+    def __init__(
+        self,
+        nodelist: NodeList,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None: ...
+
+class InclusionNode(TagHelperNode):
+    args: list[FilterExpression]
+    func: Callable[..., Any]
+    kwargs: dict[str, FilterExpression]
+    takes_context: bool | None
+    filename: Template | str
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        takes_context: bool | None,
+        args: list[FilterExpression],
+        kwargs: dict[str, FilterExpression],
+        filename: Template | str | None,
+    ) -> None: ...
+
+def parse_bits(
+    parser: Parser,
+    bits: Iterable[str],
+    params: Sequence[str],
+    varargs: str | None,
+    varkw: str | None,
+    defaults: Sized | None,
+    kwonly: Collection[str],
+    kwonly_defaults: Mapping[str, int] | None,
+    name: str,
+) -> tuple[list[FilterExpression], dict[str, FilterExpression]]: ...
+def import_library(name: str) -> Library: ...

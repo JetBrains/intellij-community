@@ -1,90 +1,228 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AnnotationsPanel;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.ui.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.xmlb.XmlSerializer;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.ResourceBundle;
 
-/**
- * @author egor
- */
-public class CaptureConfigurable implements SearchableConfigurable {
+public final class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
+  private final Project myProject;
 
-  private JCheckBox myDebuggerAgent;
+  private final JCheckBox myDebuggerAgent;
+  private final JCheckBox myThrottling;
+  private final JButton myConfigureAnnotationsButton;
+  private final JPanel myCapturePanel;
   private MyTableModel myTableModel;
-  private JCheckBox myCaptureVariables;
+  private final JCheckBox myCaptureVariables;
+  private final JPanel myPanel;
 
-  @NotNull
+  public CaptureConfigurable(Project project) {
+    myProject = project;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myDebuggerAgent = new JBCheckBox();
+      this.$$$loadButtonText$$$(myDebuggerAgent, this.$$$getMessageFromBundle$$$("messages/JavaDebuggerBundle",
+                                                                                 "label.capture.configurable.debugger.agent"));
+      myPanel.add(myDebuggerAgent, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                                       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                       0, false));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myConfigureAnnotationsButton = new JButton();
+      this.$$$loadButtonText$$$(myConfigureAnnotationsButton, this.$$$getMessageFromBundle$$$("messages/JavaDebuggerBundle",
+                                                                                              "label.capture.configurable.annotations.configure"));
+      myPanel.add(myConfigureAnnotationsButton,
+                  new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myThrottling = new JBCheckBox();
+      this.$$$loadButtonText$$$(myThrottling,
+                                this.$$$getMessageFromBundle$$$("messages/JavaDebuggerBundle", "label.capture.configurable.throttling"));
+      myPanel.add(myThrottling,
+                  new GridConstraints(1, 0, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+      myCapturePanel = new JPanel();
+      myCapturePanel.setLayout(new BorderLayout(0, 0));
+      myPanel.add(myCapturePanel, new GridConstraints(2, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null, null, 0, false));
+      myCaptureVariables = new JBCheckBox();
+      this.$$$loadButtonText$$$(myCaptureVariables, this.$$$getMessageFromBundle$$$("messages/JavaDebuggerBundle",
+                                                                                    "label.capture.configurable.capture.variables"));
+      myCapturePanel.add(myCaptureVariables, BorderLayout.SOUTH);
+    }
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.idesettings.debugger.capture";
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
+    myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
+
+    myDebuggerAgent.addChangeListener(e -> setThrottlingCheckboxEnabled());
+    setThrottlingCheckboxEnabled();
+
     myTableModel = new MyTableModel();
+
+    boolean breakpointsEnabled = Registry.is("debugger.async.stacks.via.breakpoints", false);
+    myCaptureVariables.setVisible(breakpointsEnabled);
+    if (!breakpointsEnabled) {
+      return myPanel;
+    }
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
+    table.setShowGrid(false);
+
+    JTextField stringCellEditor = new JTextField();
+    stringCellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
+    table.setDefaultEditor(String.class, new DefaultCellEditor(stringCellEditor));
+    table.setDefaultRenderer(String.class, new DefaultTableCellRenderer() {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        Dimension editorSize = stringCellEditor.getPreferredSize();
+        size.height = Math.max(size.height, editorSize.height);
+        return size;
+      }
+    });
 
     TableColumnModel columnModel = table.getColumnModel();
     TableUtil.setupCheckboxColumn(columnModel.getColumn(MyTableModel.ENABLED_COLUMN));
@@ -115,10 +253,17 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.duplicate"),
+                                                 PlatformIcons.COPY_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() == 1;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() == 1);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -135,10 +280,17 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.enable.selected"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.enable.selected"),
+                                                 PlatformIcons.SELECT_ALL_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -147,10 +299,17 @@ public class CaptureConfigurable implements SearchableConfigurable {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.disable.selected"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.disable.selected"),
+                                                 PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -160,36 +319,33 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(CommonBundle.message("action.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
         table.repaint();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.import"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
+                                                 AllIcons.Actions.Install) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return super.isFileVisible(file, showHiddenFiles) &&
-                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == FileTypes.ARCHIVE);
-          }
-
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return file.getFileType() == StdFileTypes.XML;
-          }
-        };
-        descriptor.setDescription("Please select a file to import.");
-        descriptor.setTitle("Import Capture Points");
+      public void actionPerformed(final @NotNull AnActionEvent e) {
+        var descriptor = new FileChooserDescriptor(true, false, true, false, true, true)
+          .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
+          .withTitle(JavaDebuggerBundle.message("import.capture.points"))
+          .withDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
@@ -198,26 +354,33 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
         for (VirtualFile file : files) {
           try {
-            Document document = JDOMUtil.loadDocument(file.getInputStream());
-            List<Element> children = document.getRootElement().getChildren();
-            children.forEach(element -> {
+            for (Element element : JDOMUtil.load(file.getInputStream()).getChildren()) {
               int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
               table.getSelectionModel().addSelectionInterval(idx, idx);
-            });
+            }
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+            Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
+                                     JavaDebuggerBundle.message("export.failed"));
           }
         }
       }
-    });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
+
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+    });
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
+                                                 AllIcons.ToolbarDecorator.Export) {
+      @Override
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
-          .createSaveFileDialog(new FileSaverDescriptor("Export Selected Capture Points to File...", "", "xml"), e.getProject())
-          .save(null, null);
+          .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"),
+                                e.getProject())
+          .save((Path)null, null);
         if (wrapper == null) return;
 
         Element rootElement = new Element("capture-points");
@@ -232,40 +395,43 @@ public class CaptureConfigurable implements SearchableConfigurable {
           }
         });
         try {
-          JDOMUtil.write(rootElement, wrapper.getFile());
+          JDOMUtil.write(rootElement, wrapper.getFile().toPath());
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
+                                   JavaDebuggerBundle.message("export.failed"));
         }
       }
 
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
 
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
-    myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
-    panel.addToTop(myDebuggerAgent);
+    myCapturePanel.setBorder(
+      IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
+        .setShowLine(false));
+    myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
-    BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
-    debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
-    debuggerPanel.addToCenter(decorator.createPanel());
+    return myPanel;
+  }
 
-    myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
-    debuggerPanel.addToBottom(myCaptureVariables);
-
-    panel.addToCenter(debuggerPanel);
-    return panel;
+  private void setThrottlingCheckboxEnabled() {
+    myThrottling.setEnabled(myDebuggerAgent.isSelected());
   }
 
   private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
     return IntStreamEx.of(table.getSelectedRows()).map(table::convertRowIndexToModel).mapToObj(myTableModel::get);
   }
 
-  private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
+  private static final class MyTableModel extends AbstractTableModel implements ItemRemovable {
     public static final int ENABLED_COLUMN = 0;
     public static final int CLASS_COLUMN = 1;
     public static final int METHOD_COLUMN = 2;
@@ -274,84 +440,22 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int INSERT_METHOD_COLUMN = 5;
     public static final int INSERT_KEY_EXPR = 6;
 
-    static final String[] COLUMN_NAMES =
-      new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
+    static final String[] COLUMN_NAMES = getColumns();
+
+    private static @NotNull String @NotNull [] getColumns() {
+      return new String[]{"",
+        JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.capture.key.expression"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.class.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.method.name"),
+        JavaDebuggerBundle.message("settings.capture.column.insert.key.expression")};
+    }
+
     List<CapturePoint> myCapturePoints;
 
     private MyTableModel() {
       myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-      scanPoints();
-    }
-
-    private void scanPoints() {
-      if (Registry.is("debugger.capture.points.annotations")) {
-        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations((capture, e) -> {
-          if (e instanceof PsiMethod) {
-            addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
-          }
-          else if (e instanceof PsiParameter) {
-            PsiParameter psiParameter = (PsiParameter)e;
-            PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
-            addCapturePointIfNeeded(psiParameter, psiMethod,
-                                    DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
-                                    capture, capturePointsFromAnnotations);
-          }
-        });
-
-        capturePointsFromAnnotations.forEach(this::addIfNeeded);
-      }
-    }
-
-    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
-                                                PsiMethod psiMethod,
-                                                String defaultExpression,
-                                                boolean capture,
-                                                List<CapturePoint> capturePointsFromAnnotations) {
-      CapturePoint capturePoint = new CapturePoint();
-      capturePoint.myEnabled = false;
-      if (capture) {
-        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
-        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
-      }
-      else {
-        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
-        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
-      }
-
-      PsiModifierList modifierList = psiElement.getModifierList();
-      if (modifierList != null) {
-        PsiAnnotation annotation = modifierList.findAnnotation(getAnnotationName(capture));
-        if (annotation != null) {
-          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
-          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
-          if (StringUtil.isEmpty(keyExpression)) {
-            keyExpression = defaultExpression;
-          }
-          if (capture) {
-            capturePoint.myCaptureKeyExpression = keyExpression;
-          }
-          else {
-            capturePoint.myInsertKeyExpression = keyExpression;
-          }
-
-          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
-          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
-          if (!StringUtil.isEmpty(group)) {
-            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
-              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
-                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
-                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
-                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
-                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
-                return;
-              }
-            }
-          }
-        }
-      }
-
-      capturePointsFromAnnotations.add(capturePoint);
     }
 
     @Override
@@ -372,23 +476,16 @@ public class CaptureConfigurable implements SearchableConfigurable {
     @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
-      switch (col) {
-        case ENABLED_COLUMN:
-          return point.myEnabled;
-        case CLASS_COLUMN:
-          return point.myClassName;
-        case METHOD_COLUMN:
-          return point.myMethodName;
-        case PARAM_COLUMN:
-          return point.myCaptureKeyExpression;
-        case INSERT_CLASS_COLUMN:
-          return point.myInsertClassName;
-        case INSERT_METHOD_COLUMN:
-          return point.myInsertMethodName;
-        case INSERT_KEY_EXPR:
-          return point.myInsertKeyExpression;
-      }
-      return null;
+      return switch (col) {
+        case ENABLED_COLUMN -> point.myEnabled;
+        case CLASS_COLUMN -> point.myClassName;
+        case METHOD_COLUMN -> point.myMethodName;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression;
+        default -> null;
+      };
     }
 
     @Override
@@ -400,38 +497,20 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
-        case ENABLED_COLUMN:
-          point.myEnabled = (boolean)value;
-          break;
-        case CLASS_COLUMN:
-          point.myClassName = (String)value;
-          break;
-        case METHOD_COLUMN:
-          point.myMethodName = (String)value;
-          break;
-        case PARAM_COLUMN:
-          point.myCaptureKeyExpression = (String)value;
-          break;
-        case INSERT_CLASS_COLUMN:
-          point.myInsertClassName = (String)value;
-          break;
-        case INSERT_METHOD_COLUMN:
-          point.myInsertMethodName = (String)value;
-          break;
-        case INSERT_KEY_EXPR:
-          point.myInsertKeyExpression = (String)value;
-          break;
+        case ENABLED_COLUMN -> point.myEnabled = (boolean)value;
+        case CLASS_COLUMN -> point.myClassName = (String)value;
+        case METHOD_COLUMN -> point.myMethodName = (String)value;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression = (String)value;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName = (String)value;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName = (String)value;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression = (String)value;
       }
       fireTableCellUpdated(row, col);
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      return String.class;
+    public Class<?> getColumnClass(int columnIndex) {
+      return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
     CapturePoint get(int idx) {
@@ -479,6 +558,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
            DebuggerSettings.getInstance().INSTRUMENTING_AGENT != myDebuggerAgent.isSelected() ||
+           DebuggerSettings.getInstance().AGENT_THROTTLING != myThrottling.isSelected() ||
            !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
@@ -487,50 +567,113 @@ public class CaptureConfigurable implements SearchableConfigurable {
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
     DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
     DebuggerSettings.getInstance().INSTRUMENTING_AGENT = myDebuggerAgent.isSelected();
+    DebuggerSettings.getInstance().AGENT_THROTTLING = myThrottling.isSelected();
   }
 
   @Override
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
+    myThrottling.setSelected(DebuggerSettings.getInstance().AGENT_THROTTLING);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-    myTableModel.scanPoints();
     myTableModel.fireTableDataChanged();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
-    return DebuggerBundle.message("async.stacktraces.configurable.display.name");
+  public @Nls String getDisplayName() {
+    return JavaDebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  static void processCaptureAnnotations(BiConsumer<Boolean, PsiModifierListOwner> consumer) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    scanPointsInt(true, consumer);
-    scanPointsInt(false, consumer);
+  interface CapturePointConsumer<R> {
+    R accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
   }
 
-  private static void scanPointsInt(boolean capture, BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+  static <R> List<R> processCaptureAnnotations(@Nullable Project project, CapturePointConsumer<R> consumer) {
+    if (project == null) { // fallback
+      project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    }
+    if (project.isDefault()) {
+      return Collections.emptyList();
+    }
+    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+    return ContainerUtil.concat(
+      scanPointsInt(project, debuggerProjectSettings, true, consumer),
+      scanPointsInt(project, debuggerProjectSettings, false, consumer));
+  }
+
+  private static <R> List<R> scanPointsInt(Project project,
+                                           DebuggerProjectSettings debuggerProjectSettings,
+                                           boolean capture,
+                                           CapturePointConsumer<R> consumer) {
     try {
-      String annotationName = getAnnotationName(capture);
-      Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-      PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
-      if (annotationClass != null) {
-        AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
-          .forEach(e -> {
-            consumer.accept(capture, e);
-          });
-      }
+      return NodeRendererSettings.visitAnnotatedElements(getAsyncAnnotations(debuggerProjectSettings, capture), project,
+                                                         (e, annotation) -> consumer.accept(capture, e, annotation),
+                                                         PsiMethod.class, PsiParameter.class);
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);
     }
+    return Collections.emptyList();
   }
 
   static String getAnnotationName(boolean capture) {
     return (capture ? Async.Schedule.class : Async.Execute.class).getName().replace("$", ".");
+  }
+
+  private static List<String> getAsyncAnnotations(DebuggerProjectSettings debuggerProjectSettings, boolean capture) {
+    return StreamEx.of(capture ? debuggerProjectSettings.myAsyncScheduleAnnotations : debuggerProjectSettings.myAsyncExecuteAnnotations)
+      .prepend(getAnnotationName(capture))
+      .toList();
+  }
+
+  private final class AsyncAnnotationsDialog extends DialogWrapper {
+    private final AnnotationsPanel myAsyncSchedulePanel;
+    private final AnnotationsPanel myAsyncExecutePanel;
+    private final DebuggerProjectSettings mySettings;
+
+    private AsyncAnnotationsDialog(@NotNull Project project) {
+      super(project, true);
+      mySettings = DebuggerProjectSettings.getInstance(myProject);
+      myAsyncSchedulePanel = new AnnotationsPanel(project,
+                                                  JavaDebuggerBundle.message("settings.async.schedule"),
+                                                  getAsyncAnnotations(mySettings, true),
+                                                  Collections.singletonList(getAnnotationName(true))
+      );
+      myAsyncExecutePanel = new AnnotationsPanel(project,
+                                                 JavaDebuggerBundle.message("settings.async.execute"),
+                                                 getAsyncAnnotations(mySettings, false),
+                                                 Collections.singletonList(getAnnotationName(false))
+      );
+      init();
+      setTitle(JavaDebuggerBundle.message("settings.async.annotations.configuration"));
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final Splitter splitter = new Splitter(true);
+      splitter.setFirstComponent(myAsyncSchedulePanel.getComponent());
+      splitter.setSecondComponent(myAsyncExecutePanel.getComponent());
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setPreferredSize(JBUI.size(300, 400));
+      return splitter;
+    }
+
+    @Override
+    protected void doOKAction() {
+      mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
+        .filter(e -> !e.equals(getAnnotationName(true)))
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
+      mySettings.myAsyncExecuteAnnotations = StreamEx.of(myAsyncExecutePanel.getAnnotations())
+        .filter(e -> !e.equals(getAnnotationName(false)))
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
+      super.doOKAction();
+    }
+
+    @Override
+    protected @NotNull String getHelpId() {
+      return "reference.idesettings.debugger.customAsyncAnnotations";
+    }
   }
 }

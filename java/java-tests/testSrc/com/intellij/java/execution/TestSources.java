@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.openapi.module.Module;
@@ -20,31 +6,29 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.TempFiles;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.VfsTestUtil;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.util.Collection;
-
-public class TestSources {
+public final class TestSources {
   private final Project myProject;
-  private final TempFiles myTempFiles;
-  private File mySrc;
+  private final TemporaryDirectory tempDir;
+  private VirtualFile mySrc;
   private Module myModule;
 
-  public TestSources(Project project, Collection<File> filesToDelete) {
+  public TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
     myProject = project;
-    myTempFiles = new TempFiles(filesToDelete);
+    tempDir = temporaryDirectory;
   }
 
   public void tearDown() {
@@ -54,63 +38,60 @@ public class TestSources {
     }
   }
 
-  public PsiPackage createPackage(String name) {
-    File dir = new File(mySrc, name);
-    dir.mkdir();
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+  public @NotNull PsiPackage createPackage(@NotNull String name) {
+    VfsTestUtil.createDir(mySrc, name);
     return findPackage(name);
   }
 
-  public PsiPackage findPackage(String name) {
+  public PsiPackage findPackage(@NotNull String name) {
     return JavaPsiFacade.getInstance(myProject).findPackage(name);
   }
 
-  @Nullable
-  public PsiClass createClass(String className, String code) throws FileNotFoundException {
-    File file = new File(mySrc, className + ".java");
-    PrintStream stream = new PrintStream(new FileOutputStream(file));
-    try {
-      stream.println(code);
-    }
-    finally {
-      stream.close();
-    }
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+  public @NotNull PsiClass createClass(@NotNull String className, @NotNull @Language("JAVA") String code) {
+    VfsTestUtil.createFile(mySrc, className + ".java", code + System.lineSeparator());
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
   }
 
-  public void initModule() {
-    if (myModule != null) disposeModule(myModule);
-    mySrc = myTempFiles.createTempDir();
-    myModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
-    VirtualFile moduleContent = TempFiles.getVFileByFile(mySrc);
-    PsiTestUtil.addSourceRoot(myModule, moduleContent);
-
-    Module tempModule = BaseConfigurationTestCase.createTempModule(myTempFiles, myProject);
-    ModuleRootModificationUtil.addDependency(myModule, tempModule);
-    disposeModule(tempModule);
+  public @NotNull PsiFile createFile(@NotNull String fileName, @NotNull @Language("JAVA") String code) {
+    VirtualFile file = VfsTestUtil.createFile(mySrc, fileName, code + System.lineSeparator());
+    return PsiManager.getInstance(myProject).findFile(file);
   }
 
-  private void disposeModule(Module tempModule) {
+  public void initModule() {
+    if (myModule != null) {
+      disposeModule(myModule);
+    }
+
+    mySrc = tempDir.createVirtualDir();
+    myModule = BaseConfigurationTestCase.createTempModule(tempDir, myProject);
+    PsiTestUtil.addSourceRoot(myModule, mySrc);
+
+    Module tempModule = BaseConfigurationTestCase.createTempModule(tempDir, myProject);
+    ModuleRootModificationUtil.addDependency(myModule, tempModule);
+    disposeModule(tempModule);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
+  }
+
+  private void disposeModule(@NotNull Module tempModule) {
     ModuleManager.getInstance(myProject).disposeModule(tempModule);
   }
 
-  public void copyJdkFrom(Module module) {
+  public void copyJdkFrom(@NotNull Module module) {
     ModuleRootModificationUtil.setModuleSdk(myModule, ModuleRootManager.getInstance(module).getSdk());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
-  public void addLibrary(VirtualFile lib) {
+  public void addLibrary(@NotNull VirtualFile lib) {
     ModuleRootModificationUtil.addModuleLibrary(myModule, lib.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
-  public VirtualFile createPackageDir(String packageName) {
-    File pkg = new File(mySrc, packageName);
-    pkg.mkdirs();
-    VirtualFile pkgFile = TempFiles.getVFileByFile(pkg);
-    return pkgFile;
+  public @NotNull VirtualFile createPackageDir(@NotNull String packageName) {
+    VirtualFile result = mySrc.findChild(packageName);
+    return result == null ? VfsTestUtil.createDir(mySrc, packageName) : result;
   }
 
-  public PsiClass findClass(String fqName) {
+  public PsiClass findClass(@NotNull String fqName) {
     return JavaPsiFacade.getInstance(myProject).findClass(fqName, GlobalSearchScope.moduleScope(myModule));
   }
 }

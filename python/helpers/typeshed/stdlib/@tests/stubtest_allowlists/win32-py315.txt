@@ -1,0 +1,11 @@
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.15
+# =============================================================
+
+# Depends on whether the C _decimal extension or pure-Python fallback is used.
+(_decimal.SPEC_VERSION)?
+(decimal.SPEC_VERSION)?
+
+# Undocumented internal method, not really for public consumption.
+# Hard to add types for unless we add stubs for the undocumented _overlapped module.
+asyncio.windows_events.IocpProactor.finish_socket_func

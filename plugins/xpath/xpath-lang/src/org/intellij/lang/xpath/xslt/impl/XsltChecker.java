@@ -16,12 +16,11 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.util.xml.NanoXmlBuilder;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
-import com.intellij.util.xml.NanoXmlUtil;
-
-public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
+public class XsltChecker implements NanoXmlBuilder {
     public enum LanguageLevel { NONE(null), V1(XPathVersion.V1), V2(XPathVersion.V2);
       private final XPathVersion myVersion;
 
@@ -41,7 +40,7 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     private State myState;
 
     @Override
-    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
         if (("stylesheet".equals(name) || "transform".equals(name)) && XsltSupport.XSLT_NS.equals(nsURI)) {
             myState = State.POSSIBLY;
         } else {
@@ -52,14 +51,14 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     @Override
     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
         if (myState == State.POSSIBLY) {
-            if ("version".equals(key) && (nsURI == null || nsURI.length() == 0)) {
+            if ("version".equals(key) && (nsURI == null || nsURI.isEmpty())) {
                 checkVersion(value, State.YES);
-                stop();
+                NanoXmlBuilder.stop();
             }
         } else if (myState == State.POSSIBLY_SIMPLIFIED_SYNTAX) {
             if ("version".equals(key) && XsltSupport.XSLT_NS.equals(nsURI)) {
                 checkVersion(value, State.SIMPLIFIED);
-                stop();
+                NanoXmlBuilder.stop();
             }
         }
     }
@@ -67,41 +66,37 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
     private void checkVersion(String value, State yes) {
         if (isVersion1(value)) {
             myState = yes;
-        } else if (isVersion2(value)) {
+        } else if (isVersion2(value) || isVersion3(value)) {
             myState = State.VERSION2;
         } else {
             myState = State.NO;
         }
     }
 
-    public static boolean isSupportedVersion(String value) {
-        return isVersion1(value) || isVersion2(value);
-    }
-
-    public static boolean isVersion1(String value) {
+    private static boolean isVersion1(String value) {
         return "1.0".equals(value) || "1.1".equals(value);
     }
 
-    public static boolean isVersion2(String value) {
+    private static boolean isVersion2(String value) {
         return "2.0".equals(value);
+    }
+
+    private static boolean isVersion3(String value) {
+        return "3.0".equals(value);
     }
 
     @Override
     public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
-        stop();  // the first element (or its attrs) decides - stop here
+        NanoXmlBuilder.stop();  // the first element (or its attrs) decides - stop here
     }
 
     @Override
     public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-        stop();  // the first element (or its attrs) decides - stop here
+        NanoXmlBuilder.stop();  // the first element (or its attrs) decides - stop here
     }
 
     public boolean isFullySupportedXsltFile() {
         return myState == State.YES || myState == State.SIMPLIFIED;
-    }
-
-    public boolean isSimplifiedSyntax() {
-        return myState == State.SIMPLIFIED;
     }
 
     public static LanguageLevel getLanguageLevel(String value) {
@@ -112,6 +107,9 @@ public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
             return LanguageLevel.V1;
         }
         if (isVersion2(value)) {
+            return LanguageLevel.V2;
+        }
+        if (isVersion3(value)) {
             return LanguageLevel.V2;
         }
         return LanguageLevel.NONE;

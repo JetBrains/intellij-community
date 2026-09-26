@@ -1,77 +1,158 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmLanguageDumbAware;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.testIntegration.createTest.CreateTestAction;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
 
-public abstract class JavaTestFramework implements TestFramework {
+public abstract class JavaTestFramework implements JvmTestFramework {
+
+  private static final Logger LOG = Logger.getInstance(JavaTestFramework.class);
+
+  @Override
   public boolean isLibraryAttached(@NotNull Module module) {
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    PsiClass c = JavaPsiFacade.getInstance(module.getProject()).findClass(getMarkerClassFQName(), scope);
-    return c != null;
+    Project project = module.getProject();
+    Module moduleToCheck = CreateTestAction.suggestModuleForTests(project, module);
+
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleToCheck, true);
+    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+      for (String markerClassFQName : getMarkerClassFQNames()) {
+        if (JavaPsiFacade.getInstance(project).findClass(markerClassFQName, scope) != null) return true;
+      }
+      return false;
+    });
   }
 
-  @Nullable
   @Override
-  public String getLibraryPath() {
+  public @Nullable String getLibraryPath() {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      return descriptor.getLibraryClassesRoots().get(0);
+      return descriptor.getLibraryClassesRoots().getFirst();
     }
     return null;
   }
 
+  @Override
   public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return null;
   }
 
+  protected Collection<String> getMarkerClassFQNames() {
+    return Collections.singleton(getMarkerClassFQName());
+  }
+
+  /**
+   * @deprecated Use {@link #getMarkerClassFQNames()} instead
+   */
+  @Deprecated
   protected abstract String getMarkerClassFQName();
 
+  /**
+   * Return {@code true} iff {@link #getMarkerClassFQNames()} can be found in the resolve scope of {@code clazz}
+   */
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    for (String markerClassFQName : getMarkerClassFQNames()) {
+      if (isFrameworkApplicable(clazz, markerClassFQName)) return true;
+    }
+    return false;
+  }
+
+  protected static boolean isFrameworkApplicable(@NotNull PsiElement clazz, String markerClassFQName) {
+    if (markerClassFQName == null) return true;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
+        var project = clazz.getProject();
+        return new CachedValueProvider.Result<>(
+          ConcurrentFactoryMap.createMap(
+            markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
+          ProjectRootManager.getInstance(project));
+      }).get(markerClassFQName) != null;
+    }, false);
+  }
+
+  protected static <T> T callWithAlternateResolver(Project project, Callable<? extends T> callable, T defaultValue) {
+    try {
+      DumbService dumbService = DumbService.getInstance(project);
+      if (dumbService.isAlternativeResolveEnabled()) {
+        try {
+          return callable.call();
+        }
+        catch (Exception e) {
+          if (e instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+          }
+          throw new RuntimeException(e);
+        }
+      }
+      return dumbService
+        .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
+    }
+    catch (IndexNotReadyException e) {
+      return defaultValue;
+    }
+  }
+
+  @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, false);
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
+    return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, false);
+  }
+
+  private static boolean supportDumbMode(@NotNull PsiElement psiElement) {
+    return JvmLanguageDumbAware.isSupported(psiElement);
   }
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, true);
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
+    return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 
   protected abstract boolean isTestClass(PsiClass clazz, boolean canBePotential);
 
   protected boolean isUnderTestSources(PsiClass clazz) {
+    return isUnderTestSources((PsiElement)clazz);
+  }
+
+  protected boolean isUnderTestSources(PsiElement clazz) {
     PsiFile psiFile = clazz.getContainingFile();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return false;
@@ -79,26 +160,81 @@ public abstract class JavaTestFramework implements TestFramework {
   }
 
   @Override
-  @Nullable
-  public PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass ? findSetUpMethod((PsiClass)clazz) : null;
+  public @Nullable PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return null;
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findSetUpMethod((PsiClass)clazz);
+    }
+    return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
 
   @Override
-  @Nullable
-  public PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass ? findTearDownMethod((PsiClass)clazz) : null;
+  public @Nullable PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return null;
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findTearDownMethod((PsiClass)clazz);
+    }
+    return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+
+  @Override
+  public @Nullable PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findBeforeClassMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Override
+  public @Nullable PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findAfterClassMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  @Override
+  public @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findBeforeSuiteMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  @Override
+  public @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiElement clazz) {
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findAfterSuiteMethod((PsiClass)clazz);
+    }
+    return null;
+  }
+
+  protected @Nullable PsiElement findBeforeSuiteMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
+
+  protected @Nullable PsiElement findAfterSuiteMethod(@NotNull PsiClass clazz) {
+    return null;
+  }
 
   @Override
   public PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException {
-    return clazz instanceof PsiClass ? findOrCreateSetUpMethod((PsiClass)clazz) : null;
+    if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
+      return findOrCreateSetUpMethod((PsiClass)clazz);
+    }
+    return null;
   }
 
   @Override
@@ -107,29 +243,33 @@ public abstract class JavaTestFramework implements TestFramework {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
-    return JavaLanguage.INSTANCE;
+  public @NotNull Language getLanguage() {
+    // despite the class name, it could handle (utilizing LightClasses) test frameworks
+    // in different (JVM-like) languages like java, groovy, kotlin, scala and so on
+    return Language.ANY;
   }
 
-  @Nullable
-  protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
-  
+  protected abstract @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
+
   public boolean isParameterized(PsiClass clazz) {
     return false;
   }
 
-  @Nullable
-  public PsiMethod findParametersMethod(PsiClass clazz) {
+  public @Nullable PsiMethod findParametersMethod(PsiClass clazz) {
     return null;
   }
 
-  @Nullable
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+  public @Nullable FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
   }
-  
-  public abstract char getMnemonic();
+
+  /**
+   * @deprecated Mnemonics are not required anymore; frameworks are loaded in the combobox now
+   */
+  @Deprecated(forRemoval = true)
+  public char getMnemonic() {
+    return 0;
+  }
 
   public PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
     final FileTemplate template = FileTemplateManager.getDefaultInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());
@@ -140,18 +280,23 @@ public abstract class JavaTestFramework implements TestFramework {
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return null;
   }
-  
-  public void setupLibrary(Module module) {
+
+  public Promise<Void> setupLibrary(Module module) {
+    Project project = module.getProject();
+    Module targetModule = CreateTestAction.suggestModuleForTests(project, module);
+
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      JavaProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+      return JavaProjectModelModificationService.getInstance(project).addDependency(targetModule, descriptor, DependencyScope.TEST);
     }
     else {
       String path = getLibraryPath();
       if (path != null) {
-        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+        OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, targetModule, null);
+        return Promises.resolvedPromise(null);
       }
     }
+    return Promises.rejectedPromise();
   }
 
   public boolean isSingleConfig() {
@@ -159,7 +304,7 @@ public abstract class JavaTestFramework implements TestFramework {
   }
 
   /**
-   * @return true for junit 3 classes with suite method and for junit 4 tests with @Suite annotation
+   * @return true for junit 3 classes with suite method and for junit 4/junit 5 tests with @Suite annotation
    */
   public boolean isSuiteClass(PsiClass psiClass) {
     return false;
@@ -177,9 +322,5 @@ public abstract class JavaTestFramework implements TestFramework {
   @Override
   public boolean isTestMethod(PsiElement element) {
     return isTestMethod(element, true);
-  }
-
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return false;
   }
 }

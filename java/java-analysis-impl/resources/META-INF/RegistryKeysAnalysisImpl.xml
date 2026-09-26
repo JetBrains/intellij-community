@@ -1,0 +1,19 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="java.unused.symbol.strict.entry.points" defaultValue="true"
+                 description="Do not consider implicit usages part of the entry points (editor only)"/>
+    <registryKey defaultValue="false"
+                 description="Use shallow unused declaration analysis in batch mode (like in the editor, Java only)"
+                 key="java.unused.declaration.inspection.use.shallow.local.anaysis.as.global"/>
+    <registryKey key="java.annotations.inference.aggressive.hardcoded.purity" defaultValue="true" restartRequired="true"
+                 description="Assume any implementation of methods like Object.toString() or Iterable.iterator() to be pure during bytecode inference. This assumption might lead to false-positives in some inspections, though it's believed to uncover more bugs."/>
+    <!--used with DataFlowInspection-->
+    <registryKey key="ide.dfa.report.imprecise" defaultValue="false"
+                 description="Whether to report methods for which data flow analysis was imprecise"/>
+    <!--used together with DeprecationInspection-->
+    <registryKey key="kotlin.deprecation.inspection.enabled" defaultValue="false" description="DeprecationInspection will be enabled for Kotlin"/>
+    <registryKey key="idea.report.nullity.missing.in.generated.overriders" defaultValue="true"
+                 description="Whether &quot;Nullability problems&quot; inspection should report overriding methods or parameters missing non-null annotation, which occur in generated code"/>
+  </extensions>
+</idea-plugin>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.actions.CommonEditActionsProvider;
@@ -20,20 +6,26 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.NonNls;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +33,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteProvider {
+public class CaptionPanel extends JBLayeredPane implements UiDataProvider {
   private static final int SIZE = 16;
 
   private final boolean myHorizontal;
@@ -60,6 +52,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
       setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
     }
 
+    setFullOverlayLayout(true);
     setFocusable(true);
 
     myHorizontal = horizontal;
@@ -169,17 +162,11 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
 
   public void attachToScrollPane(JScrollPane scrollPane) {
     scrollPane.getViewport().addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         repaint();
       }
     });
-  }
-
-  public void doLayout() {
-    for (int i = getComponentCount() - 1; i >= 0; i--) {
-      Component component = getComponent(i);
-      component.setBounds(0, 0, getWidth(), getHeight());
-    }
   }
 
   @Override
@@ -193,21 +180,8 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return this;
-    }
-    return null;
-  }
-
-  @Override
-  public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    return myActionsProvider.canDeleteElement(dataContext);
-  }
-
-  @Override
-  public void deleteElement(@NotNull DataContext dataContext) {
-    myActionsProvider.deleteElement(dataContext);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myActionsProvider);
   }
 
   public void update() {
@@ -226,7 +200,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
 
     boolean update = !myRootChildren.isEmpty();
 
-    IntArrayList oldSelection = null;
+    IntList oldSelection = null;
     if (myCaption != null) {
       oldSelection = new IntArrayList();
       for (RadComponent component : myArea.getSelection()) {
@@ -265,7 +239,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
         int selectionSize = oldSelection.size();
 
         for (int i = 0; i < selectionSize; i++) {
-          int index = oldSelection.get(i);
+          int index = oldSelection.getInt(i);
           if (0 <= index && index < componentSize) {
             newSelection.add(myRootChildren.get(index));
           }

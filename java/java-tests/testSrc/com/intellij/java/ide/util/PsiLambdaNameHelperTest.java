@@ -19,27 +19,28 @@ import com.intellij.ide.util.PsiLambdaNameHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.Collection;
 
-public class PsiLambdaNameHelperTest extends LightCodeInsightFixtureTestCase {
+public class PsiLambdaNameHelperTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNames() {
-    final PsiClass aClass = myFixture.addClass("class Test {\n" +
-                                               "    Runnable r = () -> {\n" +
-                                               "    };\n" +
-                                               "    public void method() {\n" +
-                                               "        Runnable r = () -> {\n" +
-                                               "            Integer s = RedundantRename.this.s;\n" +
-                                               "            Runnable rr = () -> {};\n" +
-                                               "            new Runnable() {\n" +
-                                               "                Runnable r1 = () -> {};\n" +
-                                               "                @Override\n" +
-                                               "                public void run() {}\n" +
-                                               "            };\n" +
-                                               "        };\n" +
-                                               "    }\n" +
-                                               "}");
+    final PsiClass aClass = myFixture.addClass("""
+                                                 class Test {
+                                                     Runnable r = () -> {
+                                                     };
+                                                     public void method() {
+                                                         Runnable r = () -> {
+                                                             Integer s = RedundantRename.this.s;
+                                                             Runnable rr = () -> {};
+                                                             new Runnable() {
+                                                                 Runnable r1 = () -> {};
+                                                                 @Override
+                                                                 public void run() {}
+                                                             };
+                                                         };
+                                                     }
+                                                 }""");
     final Collection<PsiLambdaExpression> lambdaExpressions = PsiTreeUtil.findChildrenOfType(aClass, PsiLambdaExpression.class);
     final String[] expectedNames = {"lambda$new$0",
                                     "lambda$method$1",

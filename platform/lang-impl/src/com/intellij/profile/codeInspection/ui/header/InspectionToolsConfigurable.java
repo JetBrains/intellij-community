@@ -1,30 +1,39 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.util.Arrays;
 
 public abstract class InspectionToolsConfigurable implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
-  public static final String ID = "Errors";
-  public static final String DISPLAY_NAME = "Inspections";
+  private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
+  public static final @NonNls String ID = "Errors";
 
   protected final BaseInspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
@@ -41,13 +50,13 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     return myProjectProfileManager.getProject();
   }
 
-  protected boolean setActiveProfileAsDefaultOnApply() {
+  boolean setActiveProfileAsDefaultOnApply() {
     return true;
   }
 
   @Override
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return getInspectionsDisplayName();
   }
 
   @Override
@@ -56,8 +65,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
@@ -109,8 +117,6 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     };
     wholePanel.add(myProfilePanelHolder, BorderLayout.CENTER);
 
-    JPanel profilesHolder = new JPanel();
-    profilesHolder.setLayout(new CardLayout());
     myAbstractSchemesPanel = new InspectionProfileSchemesPanel(getProject(),
                                                                myApplicationProfileManager,
                                                                myProjectProfileManager,
@@ -149,26 +155,29 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
 
   @Override
   public void reset() {
-    doReset();
-  }
-
-  private void doReset() {
+    assert myAbstractSchemesPanel != null;
     disposeProfilePanels();
     myAbstractSchemesPanel.reset();
     final InspectionProfileModifiableModel currentModifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(getCurrentProfile());
     myAbstractSchemesPanel.selectScheme(currentModifiableModel);
+    InspectionProfileModifiableModel selected = myAbstractSchemesPanel.getSelectedScheme();
+    if (selected == null) {
+      LOG.error("No profile is selected. Current profile: " + getCurrentProfile().getName() + " . Existing profiles: " +
+                Arrays.toString(InspectionProfileSchemesModel.getSortedProfiles(myApplicationProfileManager, myProjectProfileManager).stream().map(p -> p.getName()).toArray()));
+      myAbstractSchemesPanel.selectAnyProfile();
+    }
     showProfile(currentModifiableModel);
 
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
       panel.setVisible(true);//make sure that UI was initialized
-      mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+      mySelectionAlarm = new Alarm();
       mySelectionAlarm.cancelAllRequests();
       mySelectionAlarm.addRequest(panel::updateSelection, 200);
     }
   }
 
-  public SingleInspectionProfilePanel createPanel(InspectionProfileModifiableModel profile) {
+  public @NotNull SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel profile) {
     return new SingleInspectionProfilePanel(myProjectProfileManager, profile) {
       @Override
       protected boolean accept(InspectionToolWrapper entry) {
@@ -180,7 +189,10 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   @Override
   public void disposeUIResources() {
     disposeProfilePanels();
-    Disposer.dispose(myAbstractSchemesPanel);
+    if (myAbstractSchemesPanel != null) {
+      Disposer.dispose(myAbstractSchemesPanel);
+      myAbstractSchemesPanel = null;
+    }
   }
 
   private void disposeProfilePanels() {
@@ -199,7 +211,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   @Override
   public void selectProfile(InspectionProfileImpl profile) {
     final InspectionProfileModifiableModel modifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(profile);
-    showProfile(modifiableModel);
+    if (modifiableModel != null) showProfile(modifiableModel);
   }
 
   @Override
@@ -215,16 +227,15 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   }
 
 
-  @NotNull
   @Override
-  public InspectionProfileModifiableModel getSelectedObject() {
+  public @NotNull InspectionProfileModifiableModel getSelectedObject() {
     return myAbstractSchemesPanel.getSelectedScheme();
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    final SingleInspectionProfilePanel panel = getSelectedPanel();
-    return panel == null ? null : panel.getPreferredFocusedComponent();
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    SingleInspectionProfilePanel panel = myAbstractSchemesPanel != null ? getSelectedPanel() : null;
+    return panel != null ? panel.getPreferredFocusedComponent() : null;
   }
 
   void removeProfilePanel(SingleInspectionProfilePanel profilePanel) {
@@ -236,13 +247,18 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     return myAbstractSchemesPanel.getModel().getProfilePanel(inspectionProfile);
   }
 
-  private void showProfile(InspectionProfileModifiableModel profile) {
+  private void showProfile(@NotNull InspectionProfileModifiableModel profile) {
     final SingleInspectionProfilePanel panel = myAbstractSchemesPanel.getModel().getProfilePanel(profile);
-    if (!ArrayUtil.contains(panel, myAbstractSchemesPanel.getModel().getProfilePanels())) {
+    if (myAbstractSchemesPanel.getModel().getProfilePanels().contains(panel)) {
       myProfilePanelHolder.add(panel);
     }
     for (Component component : myProfilePanelHolder.getComponents()) {
       component.setVisible(component == panel);
     }
+    myAbstractSchemesPanel.selectScheme(profile);
+  }
+
+  public static @NotNull @NlsContexts.ConfigurableName String getInspectionsDisplayName() {
+    return CodeInsightBundle.message("configurable.InspectionToolsConfigurable.display.name");
   }
 }

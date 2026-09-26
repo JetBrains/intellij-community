@@ -1,0 +1,192 @@
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:wasmjs.bzl", "wasmjs_import", "wasmjs_library", "wasmjs_test")
+
+# End-to-end validation of wasmjs_test: a real wasmJs kotlin-test module exercising the
+# passing/ignored paths, package-relative testdata fetching, configuration scripts, npm
+# packages both explicit on the test (nanoid through npm_packages and the generated import
+# map) and propagated from the module's runtime closure (the @js-joda/core package declared
+# by the kotlinx-datetime wasmjs_import, whose compiler-generated import `:e2e` must
+# resolve), and module runtime files (import-map remapped, with an awaited readiness export).
+
+wasmjs_import(
+    name = "kotlin-stdlib-wasm-js",
+    klib = "@kotlin-stdlib-wasm-js_http//file",
+)
+
+wasmjs_import(
+    name = "kotlin-test-wasm-js",
+    exported_deps = [":kotlin-stdlib-wasm-js"],
+    klib = "@kotlin-test-wasm-js_http//file",
+)
+
+wasmjs_import(
+    name = "kotlinx-datetime-wasm-js",
+    exported_deps = [":kotlin-stdlib-wasm-js"],  # this is missing `kotlinx-serialization-core` dependency, which the e2e sources never reach, so we omit it to avoid bloating our MODULE.bazel
+    klib = "@kotlinx-datetime-wasm-js_http//file",
+    # The klib's embedded package.json requests @js-joda/core 3.2.0; the pinned archive is a newer
+    # (API-compatible) version. In the monorepo the kmp_deps extension declares this automatically.
+    npm_packages = {"@js-joda/core": "@js_joda_core//:package"},
+)
+
+filegroup(
+    name = "e2e-sources",
+    srcs = glob(["src/**/*.kt"]),
+)
+
+wasmjs_library(
+    name = "e2e-module",
+    testonly = True,
+    fragment_sources = {"wasmJsTest": ":e2e-sources"},
+    module_name = "wasmjs-test-e2e",
+    deps = [
+        ":kotlin-stdlib-wasm-js",
+        ":kotlin-test-wasm-js",
+        ":kotlinx-datetime-wasm-js",  # Used by KotlinxDatetimeTest so the compiler generates the @js-joda/core import that its propagated npm package must resolve
+    ],
+)
+
+wasmjs_test(
+    name = "e2e",
+    awaited_imports = {"marker.mjs": "ready"},
+    configuration_scripts = ["config/set-global.js"],
+    module = ":e2e-module",
+    module_name = "wasmjs-test-e2e",
+    module_runtime_files = ["runtime/marker.mjs"],
+    npm_packages = {"nanoid": "@nanoid//:package"},
+    # The default value, behavior unchanged; exercises the macro -> flagfile -> harness plumbing.
+    test_completion_grace_period_ms = 3000,
+    testdata = ["testdata/sample.txt"],
+)
+
+filegroup(
+    name = "e2e-failing-sources",
+    srcs = glob(["failing/**/*.kt"]),
+)
+
+wasmjs_library(
+    name = "e2e-failing-module",
+    testonly = True,
+    fragment_sources = {"wasmJsTest": ":e2e-failing-sources"},
+    module_name = "wasmjs-test-e2e-failing",
+    deps = [
+        ":kotlin-stdlib-wasm-js",
+        ":kotlin-test-wasm-js",
+    ],
+)
+
+# The fixtures below are deliberately red (failing, hanging, or unloadable), so they are
+# `manual`; :e2e-outcomes executes them through the runner's --flagfile entry point and
+# asserts their exit codes and JUnit XML on CI.
+
+wasmjs_test(
+    name = "e2e-failing",
+    module = ":e2e-failing-module",
+    module_name = "wasmjs-test-e2e-failing",
+    tags = ["manual"],
+    # Its tests are synchronous, so a short window only makes :e2e-outcomes finish sooner.
+    test_completion_grace_period_ms = 3000,
+)
+
+filegroup(
+    name = "e2e-hanging-sources",
+    srcs = glob(["hanging/**/*.kt"]),
+)
+
+wasmjs_library(
+    name = "e2e-hanging-module",
+    testonly = True,
+    fragment_sources = {"wasmJsTest": ":e2e-hanging-sources"},
+    module_name = "wasmjs-test-e2e-hanging",
+    deps = [
+        ":kotlin-stdlib-wasm-js",
+        ":kotlin-test-wasm-js",
+    ],
+)
+
+wasmjs_test(
+    name = "e2e-hanging",
+    module = ":e2e-hanging-module",
+    module_name = "wasmjs-test-e2e-hanging",
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "e2e-throwing-sources",
+    srcs = glob(["throwing/**/*.kt"]),
+)
+
+wasmjs_library(
+    name = "e2e-throwing-module",
+    testonly = True,
+    fragment_sources = {"wasmJsTest": ":e2e-throwing-sources"},
+    module_name = "wasmjs-test-e2e-throwing",
+    deps = [
+        ":kotlin-stdlib-wasm-js",
+        ":kotlin-test-wasm-js",
+    ],
+)
+
+wasmjs_test(
+    name = "e2e-throwing",
+    module = ":e2e-throwing-module",
+    module_name = "wasmjs-test-e2e-throwing",
+    tags = ["manual"],
+)
+
+wasmjs_test(
+    name = "e2e-awaited-missing",
+    awaited_imports = {"marker.mjs": "nonexistent"},
+    module = ":e2e-failing-module",
+    module_name = "wasmjs-awaited-missing",
+    module_runtime_files = ["runtime/marker.mjs"],
+    tags = ["manual"],
+)
+
+wasmjs_test(
+    name = "e2e-awaited-hanging",
+    awaited_imports = {"never.mjs": "never"},
+    module = ":e2e-failing-module",
+    module_name = "wasmjs-awaited-hanging",
+    module_runtime_files = ["runtime/never.mjs"],
+    tags = ["manual"],
+)
+
+kt_jvm_library(
+    name = "e2e-outcomes-lib",
+    testonly = True,
+    srcs = glob(["outcomes/**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "//:junit4",
+        "//:kotlin-stdlib_import",
+        "@bazel_tools//tools/java/runfiles",
+    ],
+)
+
+# The anti-false-positive guarantee of wasmjs_test, enforced end to end: a failing, hanging,
+# or unloadable test module must fail the run with the reason in the JUnit XML — and the green
+# fixture must report every one of its tests, which is what catches an end-of-run decision taken
+# too early.
+java_test(
+    name = "e2e-outcomes",
+    size = "large",
+    data = [
+        ":e2e",
+        ":e2e-awaited-hanging",
+        ":e2e-awaited-missing",
+        ":e2e-failing",
+        ":e2e-hanging",
+        ":e2e-throwing",
+    ],
+    env = {
+        "E2E_AWAITED_HANGING": "$(rlocationpath :e2e-awaited-hanging)",
+        "E2E_AWAITED_MISSING": "$(rlocationpath :e2e-awaited-missing)",
+        "E2E_FAILING": "$(rlocationpath :e2e-failing)",
+        "E2E_GREEN": "$(rlocationpath :e2e)",
+        "E2E_HANGING": "$(rlocationpath :e2e-hanging)",
+        "E2E_THROWING": "$(rlocationpath :e2e-throwing)",
+    },
+    test_class = "org.jetbrains.bazel.wasmjs.test.e2e.E2eOutcomesTest",
+    runtime_deps = [":e2e-outcomes-lib"],
+)

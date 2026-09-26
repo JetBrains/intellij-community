@@ -21,13 +21,10 @@ import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class ExcludeFilter implements ElementFilter {
   private final PsiElement myExcluded;
 
-  public ExcludeFilter(@NotNull PsiVariable excluded) {
+  ExcludeFilter(@NotNull PsiVariable excluded) {
     myExcluded = excluded;
   }
 

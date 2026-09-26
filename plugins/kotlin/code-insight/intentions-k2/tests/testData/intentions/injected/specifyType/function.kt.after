@@ -1,0 +1,7 @@
+// language=kotlin
+val x = """
+    class Foo {
+        val x = 42 
+        fun <T> id(x: T): T = x 
+    }
+""".trimIndent()

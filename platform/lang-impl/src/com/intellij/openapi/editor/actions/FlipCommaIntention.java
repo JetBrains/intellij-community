@@ -1,69 +1,66 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.*;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.BracePair;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageBraceMatching;
+import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FlipCommaIntention implements IntentionAction {
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
+import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
+
+public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
+  @ApiStatus.Internal
+  public FlipCommaIntention() {
+    super(PsiElement.class);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public String getFamilyName() {
-    return "Flip ','";
+  public @NotNull String getFamilyName() {
+    return CodeInsightBundle.message("intention.family.name.flip");
   }
 
+  @ApiStatus.Internal
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement comma = currentCommaElement(editor, file);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    PsiElement comma = currentCommaElement(context);
     if (comma == null) {
-      return false;
+      return null;
     }
     final PsiElement left = smartAdvance(comma, false);
     final PsiElement right = smartAdvance(comma, true);
-    return left != null && right != null && !left.getText().equals(right.getText());
+    if (left == null || right == null || left.getText().equals(right.getText()) || !Flipper.isCanFlip(left, right)) return null;
+    return Presentation.of(CodeInsightBundle.message("intention.name.flip"));
   }
 
+  @ApiStatus.Internal
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    final PsiElement element = currentCommaElement(editor, file);
-    if (element != null) {
-      swapAtComma(element);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PsiElement comma = updater.getWritable(currentCommaElement(context));
+    if (comma != null) {
+      swapAtComma(comma);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   private static void swapAtComma(@NotNull PsiElement comma) {
@@ -79,8 +76,7 @@ public class FlipCommaIntention implements IntentionAction {
 
   // not via PSI because such language-unaware change can lead to PSI-text inconsistencies
   private static void swapViaDocument(@NotNull PsiElement comma, PsiElement prev, PsiElement next) {
-    DocumentEx document = (DocumentEx)comma.getContainingFile().getViewProvider().getDocument();
-    if (document == null) return;
+    DocumentEx document = (DocumentEx)comma.getContainingFile().getFileDocument();
 
     String prevText = prev.getText();
     String nextText = next.getText();
@@ -97,9 +93,16 @@ public class FlipCommaIntention implements IntentionAction {
     LanguageExtension<Flipper> EXTENSION = new LanguageExtension<>("com.intellij.flipCommaIntention.flipper");
 
     /**
-     * @return true, if elements were flipped; false, if default flip implementation should be used.
+     * @return true, if the elements were flipped; false, if the default flip implementation should be used.
      */
-    boolean flip(PsiElement left, PsiElement right);
+    boolean flip(@NotNull PsiElement left, @NotNull PsiElement right);
+
+    /**
+     * @return false, if the elements should not be flipped; true, if the default flip implementation should be used.
+     */
+    default boolean canFlip(@NotNull PsiElement left, @NotNull PsiElement right) {
+      return true;
+    }
 
     static boolean tryFlip(PsiElement left, PsiElement right) {
       final Language language = left.getLanguage();
@@ -110,33 +113,29 @@ public class FlipCommaIntention implements IntentionAction {
       }
       return false;
     }
+
+    static boolean isCanFlip(PsiElement left, PsiElement right) {
+      final Language language = left.getLanguage();
+      for (Flipper handler : EXTENSION.allForLanguage(language)) {
+        if (!handler.canFlip(left, right)) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
-  private static PsiElement currentCommaElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static PsiElement currentCommaElement(@NotNull ActionContext context) {
     PsiElement element;
-    if (!isComma(element = leftElement(editor, file)) && !isComma(element = rightElement(editor, file))) {
+    if (!isComma(element = context.findLeafOnTheLeft()) && !isComma(element = context.findLeaf())) {
       return null;
     }
     return element;
   }
 
-  @Nullable
-  private static PsiElement leftElement(@NotNull Editor editor, @NotNull PsiFile file) {
-    return file.findElementAt(editor.getCaretModel().getOffset() - 1);
-  }
-
-  @Nullable
-  private static PsiElement rightElement(@NotNull Editor editor, @NotNull PsiFile file) {
-    return file.findElementAt(editor.getCaretModel().getOffset());
-  }
-
-  private static boolean isComma(@Nullable PsiElement element) {
-    return element != null && element.getText().equals(",");
-  }
-
-  @NotNull
-  private static JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
+  private static @NotNull JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
     SyntaxTraverser.ApiEx<PsiElement> api = fwd ? SyntaxTraverser.psiApi() : SyntaxTraverser.psiApiReversed();
+    api.next(element);
     JBIterable<PsiElement> flatSiblings = JBIterable.generate(element, api::next).skip(1);
     return SyntaxTraverser.syntaxTraverser(api)
       .withRoots(flatSiblings)
@@ -145,12 +144,11 @@ public class FlipCommaIntention implements IntentionAction {
   }
 
   private static boolean isFlippable(PsiElement e) {
-    if (e instanceof PsiWhiteSpace || e instanceof PsiComment) return false;
-    return StringUtil.isNotEmpty(e.getText());
+    if (e instanceof PsiWhiteSpace || e instanceof PsiComment || e.textMatches("\n")) return false;
+    return !StringUtil.collapseWhiteSpace(e.getText()).isEmpty();
   }
 
-  @Nullable
-  private static PsiElement smartAdvance(PsiElement element, boolean fwd) {
+  private static @Nullable PsiElement smartAdvance(PsiElement element, boolean fwd) {
     final PsiElement candidate = getSiblings(element, fwd).filter(e -> isFlippable(e)).first();
     if (candidate != null && isBrace(candidate)) return null;
     return candidate;

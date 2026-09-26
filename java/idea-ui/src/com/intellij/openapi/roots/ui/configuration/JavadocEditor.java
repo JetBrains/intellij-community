@@ -1,40 +1,37 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.List;
 
 /**
@@ -42,8 +39,6 @@ import java.util.List;
  */
 public class JavadocEditor extends ModuleElementsEditor {
   private JTable myTable;
-
-  private static final String NAME = ProjectBundle.message("module.javadoc.title");
 
   public JavadocEditor(ModuleConfigurationState state) {
     super(state);
@@ -55,8 +50,8 @@ public class JavadocEditor extends ModuleElementsEditor {
   }
 
   @Override
-  public String getDisplayName() {
-    return NAME;
+  public @NlsContexts.ConfigurableName String getDisplayName() {
+    return getName();
   }
 
   @Override
@@ -89,9 +84,9 @@ public class JavadocEditor extends ModuleElementsEditor {
         @Override
         public void run(AnActionButton button) {
           FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-          myDescriptor.setTitle(ProjectBundle.message("module.javadoc.add.path.title"));
-          myDescriptor.setDescription(ProjectBundle.message("module.javadoc.add.path.prompt"));
-          VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, myProject, null);
+          myDescriptor.setTitle(JavaUiBundle.message("module.javadoc.add.path.title"));
+          myDescriptor.setDescription(JavaUiBundle.message("module.javadoc.add.path.prompt"));
+          VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, getProject(), null);
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;
           for (final VirtualFile file : files) {
@@ -105,9 +100,10 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(ProjectBundle.message("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      })
+      .addExtraAction(new DumbAwareAction(JavaUiBundle.messagePointer("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
           final MyTableModel tableModel = (MyTableModel)myTable.getModel();
           boolean changes = false;
@@ -122,22 +118,24 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final List removedItems = TableUtil.removeSelectedItems(myTable);
-          if (removedItems.size() > 0) {
+          final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
+          if (!removedItems.isEmpty()) {
             saveData();
           }
         }
-      }).setButtonComparator("Add", ProjectBundle.message("module.javadoc.add.url.button"), "Remove").createPanel();
+      })
+      .setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
+                             CommonBundle.message("button.remove")).createPanel();
 
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(tablePanel, BorderLayout.CENTER);
-    mainPanel.add(
-      new JBLabel(ProjectBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
-      BorderLayout.NORTH);
-    return mainPanel;
+    return new JavadocEditorUi().createPanel(tablePanel);
+  }
+
+  private @NotNull Project getProject() {
+    return myProject;
   }
 
   protected DefaultTableModel createModel() {
@@ -161,7 +159,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     private static final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
     @Override
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
@@ -180,7 +178,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<TableItem> getColumnClass(int columnIndex) {
       return TableItem.class;
     }
 
@@ -201,5 +199,9 @@ public class JavadocEditor extends ModuleElementsEditor {
     public void addTableItem(TableItem item) {
       addRow(new Object[]{item});
     }
+  }
+
+  private static @NlsContexts.ConfigurableName String getName() {
+    return JavaUiBundle.message("module.javadoc.title");
   }
 }

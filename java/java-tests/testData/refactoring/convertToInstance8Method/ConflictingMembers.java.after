@@ -1,0 +1,16 @@
+class Test {
+  int i;
+  void run() {}
+
+  Test getDelegate() {
+    return new Test() {
+      int i;
+
+      @Override
+      void run() {
+        System.out.println(Test.this.i);
+        Test.this.run();
+      }
+    };
+  }
+}

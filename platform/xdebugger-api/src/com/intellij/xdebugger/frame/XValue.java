@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.util.ThreeState;
@@ -20,15 +6,17 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a value in debugger tree.
  * Override {@link XValueContainer#computeChildren} if value has a properties which should be shown as child nodes
- *
- * @author nik
  */
 public abstract class XValue extends XValueContainer {
   /**
@@ -43,36 +31,50 @@ public abstract class XValue extends XValueContainer {
   /**
    * @return expression which evaluates to the current value
    */
-  @Nullable
-  public String getEvaluationExpression() {
+  public @Nullable String getEvaluationExpression() {
     return null;
   }
 
   /**
    * Asynchronously calculates expression which evaluates to the current value
    */
-  @NotNull
-  public Promise<XExpression> calculateEvaluationExpression() {
+  public @NotNull Promise<XExpression> calculateEvaluationExpression() {
     String expression = getEvaluationExpression();
     XExpression res =
       expression != null ? XDebuggerUtil.getInstance().createExpression(expression, null, null, EvaluationMode.EXPRESSION) : null;
-    return Promise.resolve(res);
+    return Promises.resolvedPromise(res);
   }
 
   /**
    * @return evaluator to calculate value of the current object instance
    */
-  @Nullable
-  public XInstanceEvaluator getInstanceEvaluator() {
+  public @Nullable XInstanceEvaluator getInstanceEvaluator() {
     return null;
   }
 
   /**
    * @return {@link XValueModifier} instance which can be used to modify the value
    */
-  @Nullable
-  public XValueModifier getModifier() {
+  public @Nullable XValueModifier getModifier() {
     return null;
+  }
+
+  /**
+   * Asynchronously computes {@link XValueModifier} instance which can be used to modify the value.
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@Nullable XValueModifier> getModifierAsync() {
+    return CompletableFuture.completedFuture(getModifier());
+  }
+
+
+  /**
+   * Provides {@link CompletableFuture} which finishes when all XValue's methods can be used
+   * (like {@link XValue#getModifier} or {@link XValueMarkerProvider#getMarker})
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<Void> isReady() {
+    return CompletableFuture.completedFuture(null);
   }
 
   /**
@@ -91,8 +93,7 @@ public abstract class XValue extends XValueContainer {
    * {@link ThreeState#YES} if applicable
    * {@link ThreeState#NO} if not applicable
    */
-  @NotNull
-  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+  public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
     return ThreeState.UNSURE;
   }
 
@@ -116,6 +117,14 @@ public abstract class XValue extends XValueContainer {
   }
 
   /**
+   * Async version of {@link #canNavigateToTypeSource()}
+   */
+  public Promise<Boolean> canNavigateToTypeSourceAsync() {
+    return Promises.resolvedPromise(canNavigateToTypeSource());
+  }
+
+
+  /**
    * Start computing source position of the value's type and call {@link XNavigatable#setSourcePosition(com.intellij.xdebugger.XSourcePosition)}
    * when computation is finished.
    * Note that this method is called from the Event Dispatch thread so it should return quickly.
@@ -130,8 +139,15 @@ public abstract class XValue extends XValueContainer {
    * @return provider that creates an XValue returning objects that refer to the current value
    * or null if showing referrers for the value is disabled
    */
-  @Nullable
-  public XReferrersProvider getReferrersProvider() {
+  public @Nullable XReferrersProvider getReferrersProvider() {
+    return null;
+  }
+
+  /**
+   * Provides additional information about XValue, which frontend may use.
+   */
+  @ApiStatus.Internal
+  public @Nullable CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
     return null;
   }
 }

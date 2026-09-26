@@ -1,0 +1,12 @@
+// "Change function signature to 'fun f(a: Int, x: T)'" "true"
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
+interface A<R> {
+    fun f(a: Int, b: R)
+}
+
+class B<T> : A<T> {
+    <caret>override fun f(x: T) {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

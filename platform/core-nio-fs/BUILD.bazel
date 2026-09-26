@@ -1,0 +1,128 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+
+jps_test(
+    name = "core-nio-fs-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":core-nio-fs-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.core.nio.fs.tests`
+
+### auto-generated section `build intellij.platform.core.nio.fs` start
+kt_javac_options(
+    name = "custom-javac-options",
+    add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"],
+    no_proc = True,
+    warn = "off",
+    x_ep_disable_all_checks = True,
+)
+
+jvm_library(
+    name = "core-nio-fs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    javac_opts = ":custom-javac-options",
+    module_name = "intellij.platform.core.nio.fs",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = ["//libraries/jetbrains/annotations"],
+)
+
+jvm_library(
+    name = "core-nio-fs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    javac_opts = ":custom-javac-options",
+    module_name = "intellij.platform.core.nio.fs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core-nio-fs",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.core.nio.fs` end
+
+### auto-generated section `iml intellij.platform.core.nio.fs` start
+exports_files(
+    [
+        "intellij.platform.core.nio.fs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.core.nio.fs` end
+
+### auto-generated section `build intellij.platform.core.nio.fs.tests` start
+jvm_library(
+    name = "core-nio-fs-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.core.nio.fs.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-nio-fs",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "core-nio-fs-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.core.nio.fs.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":core-nio-fs-tests"],
+    deps = [
+        # do not sort,
+        "//platform/core-nio-fs",
+        "//platform/core-nio-fs:core-nio-fs_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/mockk",
+        "//libraries/mockk:mockk_test_lib",
+        "//libraries/mockk/jvm",
+        "//libraries/mockk/jvm:jvm_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.core.nio.fs.tests` end
+
+### auto-generated section `iml intellij.platform.core.nio.fs.tests` start
+exports_files(
+    [
+        "intellij.platform.core.nio.fs.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.core.nio.fs.tests` end

@@ -1,144 +1,135 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CompositeShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileEditor.impl.text.QuickDefinitionProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.list.LeftRightRenderer;
 import com.intellij.usages.UsageView;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
-public class ImplementationViewComponent extends JPanel {
-  @NonNls private static final String TEXT_PAGE_KEY = "Text";
-  @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Logger LOG = Logger.getInstance(ImplementationViewComponent.class);
+public final class ImplementationViewComponent extends JPanel {
+  private static final @NonNls String TEXT_PAGE_KEY = "Text";
+  private static final @NonNls String BINARY_PAGE_KEY = "Binary";
+  private final EditorFactory factory;
+  private final Project project;
+  private final DefinitionSwitcher<ImplementationViewElement> mySwitcher;
 
-  private PsiElement[] myElements;
-  private int myIndex;
-
-  private final Editor myEditor;
+  private EditorEx myEditor;
   private volatile boolean myEditorReleased;
   private final JPanel myViewingPanel;
-  private final JLabel myLocationLabel;
-  private final JLabel myCountLabel;
   private final CardLayout myBinarySwitch;
   private final JPanel myBinaryPanel;
-  private ComboBox myFileChooser;
+  private ComboBox<FileDescriptor> myFileChooser;
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
-  private String myTitle;
+  private @NlsContexts.TabTitle String myTitle;
   private final ActionToolbar myToolbar;
-  private JLabel myLabel;
+  private JPanel mySingleEntryPanel;
+  private volatile @Nullable Consumer<? super ImplementationViewComponent> myShowInFindWindowProcessor;
 
-  public void setHint(final JBPopup hint, @NotNull String title) {
+  public void setHint(final JBPopup hint, @NotNull @NlsContexts.TabTitle String title) {
     myHint = hint;
     myTitle = title;
   }
 
   public boolean hasElementsToShow() {
-    return myElements != null && myElements.length > 0;
+    return mySwitcher.getElements().length > 0;
   }
 
-  private static class FileDescriptor {
-    public final PsiFile myFile;
-    public final String myElementPresentation;
-    private final String myLocationString;
-
-    public FileDescriptor(PsiFile file, PsiElement element) {
-      myFile = file;
-      final ItemPresentation presentation = element instanceof NavigationItem ? ((NavigationItem)element).getPresentation() : null;
-      if (presentation != null) {
-        myElementPresentation = presentation.getPresentableText();
-        myLocationString = presentation.getLocationString();
-      }
-      else {
-        myElementPresentation = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-        myLocationString = null;
-      }
-    }
-
-    public String getPresentableName(VirtualFile vFile) {
-      final String presentableName = vFile.getPresentableName();
-      if (myElementPresentation == null) {
-        return presentableName;
-      }
-
-      if (Comparing.strEqual(vFile.getName(), myElementPresentation + "." + vFile.getExtension())){
-        return presentableName + (!StringUtil.isEmptyOrSpaces(myLocationString) ? " " + myLocationString : "");
-      }
-
-      return presentableName + " (" + myElementPresentation + ")";
-    }
+  @ApiStatus.Internal
+  public record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
-  public ImplementationViewComponent(PsiElement[] elements, final int index) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
+                                     final int index) {
     super(new BorderLayout());
 
-    final Project project = elements.length > 0 ? elements[0].getProject() : null;
-    EditorFactory factory = EditorFactory.getInstance();
+    project = !elements.isEmpty() ? elements.iterator().next().getProject() : null;
+    factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
-    myEditor = factory.createEditor(doc, project);
-    ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
-
-    final EditorSettings settings = myEditor.getSettings();
-    settings.setAdditionalLinesCount(1);
-    settings.setAdditionalColumnsCount(1);
-    settings.setLineMarkerAreaShown(false);
-    settings.setIndentGuidesShown(false);
-    settings.setLineNumbersShown(false);
-    settings.setFoldingOutlineShown(false);
+    myEditor = (EditorEx)factory.createEditor(doc, project, EditorKind.PREVIEW);
+    tuneEditor();
 
     myBinarySwitch = new CardLayout();
     myViewingPanel = new JPanel(myBinarySwitch);
-    myEditor.setBorder(null);
-    ((EditorEx)myEditor).getScrollPane().setViewportBorder(JBScrollPane.createIndentBorder());
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
 
     myBinaryPanel = new JPanel(new BorderLayout());
@@ -146,150 +137,213 @@ public class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    myToolbar = createToolbar();
-    myLocationLabel = new JLabel();
-    myCountLabel = new JLabel();
-
-    final JPanel header = new JPanel(new BorderLayout(2, 0));
-    header.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.emptyRight(5)));
-    final JPanel toolbarPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0);
-    toolbarPanel.add(myToolbar.getComponent(), gc);
+    mySwitcher = new DefinitionSwitcher<>(elements.toArray(new ImplementationViewElement[0]), this, (element) -> {
+      updateControls();
+      return null;
+    });
+    mySwitcher.setIndex(index);
+    myToolbar = mySwitcher.createToolbar(createGearActionButton());
 
     setPreferredSize(JBUI.size(600, 400));
 
     update(elements, (psiElements, fileDescriptors) -> {
       if (psiElements.length == 0) return false;
-      myElements = psiElements;
+      mySwitcher.setElements(psiElements);
+      mySwitcher.setIndex(index < psiElements.length ? index : 0);
+      VirtualFile virtualFile = mySwitcher.getCurrentElement().getContainingFile();
 
-      myIndex = index < myElements.length ? index : 0;
-      PsiFile psiFile = getContainingFile(myElements[myIndex]);
+      tuneEditor(virtualFile);
 
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      EditorHighlighter highlighter;
-      if (virtualFile != null)
-        highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-      else {
-        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-        highlighter = HighlighterFactory.createHighlighter(project, fileName);
-      }
+      final JPanel toolbarPanel = new JPanel(new GridBagLayout());
+      final GridBagConstraints gc =
+        new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                               JBUI.emptyInsets(), 0, 0);
 
-      ((EditorEx)myEditor).setHighlighter(highlighter);
+      mySingleEntryPanel = new JPanel(new BorderLayout());
+      toolbarPanel.add(mySingleEntryPanel, gc);
 
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.weightx = 1;
-      myLabel = new JLabel();
-      myFileChooser = new ComboBox(fileDescriptors.toArray(new FileDescriptor[0]), 250);
-      myFileChooser.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          int index1 = myFileChooser.getSelectedIndex();
-          if (myIndex != index1) {
-            myIndex = index1;
-            updateControls();
-          }
+      myFileChooser = new ComboBox<>(fileDescriptors.toArray(new FileDescriptor[0]), 250);
+      myFileChooser.setOpaque(false);
+      myFileChooser.addActionListener(e -> {
+        int index1 = myFileChooser.getSelectedIndex();
+        if (mySwitcher.getIndex() != index1) {
+          mySwitcher.setIndex(index1);
+          UIEventLogger.ImplementationViewComboBoxSelected.log(project);
+          updateControls();
         }
       });
       toolbarPanel.add(myFileChooser, gc);
 
-      if (myElements.length > 1) {
+      if (mySwitcher.getElements().length > 1) {
+        mySingleEntryPanel.setVisible(false);
         updateRenderer(project);
-        myLabel.setVisible(false);
       }
       else {
         myFileChooser.setVisible(false);
-        myCountLabel.setVisible(false);
 
-        VirtualFile file = psiFile.getVirtualFile();
-        if (file != null) {
-          myLabel.setIcon(getIconForFile(psiFile));
-          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-          myLabel.setText(file.getPresentableName());
-          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
+        if (virtualFile != null) {
+          updateSingleEntryLabel(virtualFile);
         }
-        toolbarPanel.add(myLabel, gc);
       }
 
       gc.fill = GridBagConstraints.NONE;
       gc.weightx = 0;
-      toolbarPanel.add(myCountLabel, gc);
 
-      header.add(toolbarPanel, BorderLayout.CENTER);
-      header.add(myLocationLabel, BorderLayout.EAST);
+      JComponent component = myToolbar.getComponent();
+      component.setBorder(null);
+      toolbarPanel.add(component, gc);
 
-      add(header, BorderLayout.NORTH);
+      toolbarPanel.setBackground(UIUtil.getToolTipActionBackground());
+      toolbarPanel.setBorder(JBUI.Borders.empty(3));
+      toolbarPanel.setOpaque(false);
+      add(toolbarPanel, BorderLayout.NORTH);
 
       updateControls();
       return true;
     });
   }
 
-  private void updateRenderer(final Project project) {
-    myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>() {
+  private DefaultActionGroup createGearActionButton() {
+    DefaultActionGroup gearActions = new DefaultActionGroup() {
       @Override
-      public void customize(JList list, FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-        final PsiFile file = value.myFile;
-        setIcon(getIconForFile(file));
-        final VirtualFile vFile = file.getVirtualFile();
-        setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
-        //noinspection ConstantConditions
-        setText(value.getPresentableName(vFile));
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setIcon(AllIcons.Actions.More);
+        e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
       }
-    });
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+    };
+    gearActions.setPopup(true);
+    EditSourceActionBase edit = new EditSourceAction();
+    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
+    gearActions.add(edit);
+
+    ShowInFindWindowAction showInWindow = new ShowInFindWindowAction();
+    gearActions.add(showInWindow);
+
+    return gearActions;
+  }
+
+  private  void updateSingleEntryLabel(VirtualFile virtualFile) {
+    mySingleEntryPanel.removeAll();
+    ImplementationViewElement element = mySwitcher.getCurrentElement();
+    JLabel label = new JLabel(element.getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
+    mySingleEntryPanel.add(label, BorderLayout.CENTER);
+    label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
+
+    mySingleEntryPanel.add(new JLabel(element.getLocationText(), element.getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
+    mySingleEntryPanel.setOpaque(false);
+    mySingleEntryPanel.setVisible(true);
+    mySingleEntryPanel.setBorder(JBUI.Borders.empty(4, 3));
+  }
+
+  private void tuneEditor(VirtualFile virtualFile) {
+    if (virtualFile != null) {
+      myEditor.setHighlighter(HighlighterFactory.createHighlighter(project, virtualFile));
+    }
+  }
+
+  private void tuneEditor() {
+    Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.DOCUMENTATION_COLOR);
+    if (color != null) {
+      myEditor.setBackgroundColor(color);
+    }
+    final EditorSettings settings = myEditor.getSettings();
+    settings.setAdditionalLinesCount(1);
+    settings.setAdditionalColumnsCount(1);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setCaretRowShown(false);
+
+    myEditor.setBorder(JBUI.Borders.empty(12, 6));
+    myEditor.getScrollPane().setViewportBorder(JBScrollPane.createIndentBorder());
+  }
+
+  private void updateRenderer(final Project project) {
+    myFileChooser.setRenderer(createRenderer(project));
+  }
+
+  private static ListCellRenderer<FileDescriptor> createRenderer(Project project) {
+    ListCellRenderer<FileDescriptor> mainRenderer = new ColoredListCellRenderer<>() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
+                                           FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setBackground(UIUtil.getListBackground(selected, true));
+        if (value != null) {
+          @NotNull TargetPresentation targetPresentation = value.element;
+          setIcon(getIconForFile(value.file, project));
+          append(targetPresentation.getPresentableText());
+          String presentation = targetPresentation.getContainerText();
+          if (presentation != null) {
+            append("  ");
+            append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+      }
+    };
+    ListCellRenderer<FileDescriptor> rightRenderer = new SimpleListCellRenderer<>() {
+      @Override
+      public void customize(@NotNull JList<? extends FileDescriptor> list,
+                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setForeground(UIUtil.getListForeground(selected, true));
+        if (value != null) {
+          setText(value.element.getLocationText());
+          setIcon(value.element.getLocationIcon());
+        }
+      }
+    };
+    return new LeftRightRenderer<>(mainRenderer, rightRenderer);
   }
 
   @TestOnly
   public String[] getVisibleFiles() {
-    final ComboBoxModel model = myFileChooser.getModel();
+    final ComboBoxModel<FileDescriptor> model = myFileChooser.getModel();
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
-      FileDescriptor o = (FileDescriptor)model.getElementAt(i);
-      result[i] = o.getPresentableName(o.myFile.getVirtualFile());
+      FileDescriptor o = model.getElementAt(i);
+      result[i] = o.element.getPresentableText();
     }
     return result;
   }
 
-  public void update(@NotNull final PsiElement[] elements, final int index) {
-    update(elements, (psiElements, fileDescriptors) -> {
+  public void setShowInFindWindowProcessor(@Nullable Consumer<? super ImplementationViewComponent> showInFindWindowProcessor) {
+    myShowInFindWindowProcessor = showInFindWindowProcessor;
+  }
+
+  public void update(final @NotNull Collection<? extends ImplementationViewElement> elements, final int index) {
+    update(elements, (viewElements, fileDescriptors) -> {
       if (myEditor.isDisposed()) return false;
-      if (psiElements.length == 0) return false;
+      if (viewElements.length == 0) return false;
 
-      final Project project = psiElements[0].getProject();
-      myElements = psiElements;
+      final Project project = viewElements[0].getProject();
+      mySwitcher.setElements(viewElements);
+      mySwitcher.setIndex(index < viewElements.length ? index : 0);
+      VirtualFile virtualFile = mySwitcher.getCurrentElement().getContainingFile();
 
-      myIndex = index < myElements.length ? index : 0;
-      PsiFile psiFile = getContainingFile(myElements[myIndex]);
-
-      VirtualFile virtualFile = psiFile.getVirtualFile();
       EditorHighlighter highlighter;
-      if (virtualFile != null)
+      if (virtualFile != null) {
         highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
-      else {
-        String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
-        highlighter = HighlighterFactory.createHighlighter(project, fileName);
+        myEditor.setHighlighter(highlighter);
       }
 
-      ((EditorEx)myEditor).setHighlighter(highlighter);
-
-      if (myElements.length > 1) {
+      if (viewElements.length > 1) {
         myFileChooser.setVisible(true);
-        myCountLabel.setVisible(true);
-        myLabel.setVisible(false);
+        mySingleEntryPanel.setVisible(false);
 
-        myFileChooser.setModel(new DefaultComboBoxModel(fileDescriptors.toArray(new FileDescriptor[0])));
+        myFileChooser.setModel(new DefaultComboBoxModel<>(fileDescriptors.toArray(new FileDescriptor[0])));
         updateRenderer(project);
       }
       else {
         myFileChooser.setVisible(false);
-        myCountLabel.setVisible(false);
 
-        VirtualFile file = psiFile.getVirtualFile();
-        if (file != null) {
-          myLabel.setIcon(getIconForFile(psiFile));
-          myLabel.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-          myLabel.setText(file.getPresentableName());
-          myLabel.setBorder(new CompoundBorder(IdeBorderFactory.createRoundedBorder(), JBUI.Borders.emptyRight(5)));
-          myLabel.setVisible(true);
+        if (virtualFile != null) {
+          updateSingleEntryLabel(virtualFile);
         }
       }
 
@@ -300,53 +354,69 @@ public class ImplementationViewComponent extends JPanel {
 
       return true;
     });
-
   }
 
-  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
-    List<PsiElement> candidates = new ArrayList<>(elements.length);
-    List<FileDescriptor> files = new ArrayList<>(elements.length);
+  private static void update(@NotNull Collection<? extends ImplementationViewElement> viewElements,
+                             @NotNull PairFunction<? super ImplementationViewElement[], ? super List<FileDescriptor>, Boolean> fun) {
+    List<ImplementationViewElement> candidates = new ArrayList<>(viewElements.size());
+    List<FileDescriptor> files = new ArrayList<>(viewElements.size());
     final Set<String> names = new HashSet<>();
-    for (PsiElement element : elements) {
-      if (element instanceof PsiNamedElement) {
-        names.add(((PsiNamedElement)element).getName());
+    for (ImplementationViewElement viewElement : viewElements) {
+      if (viewElement.isNamed()) {
+        names.add(viewElement.getName());
       }
       if (names.size() > 1) {
         break;
       }
     }
 
-    for (PsiElement element : elements) {
-      PsiFile file = getContainingFile(element);
+    for (ImplementationViewElement element : viewElements) {
+      VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, element));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        final PsiElement parent = PsiTreeUtil.getStubOrPsiParent(element);
-        if (parent == file) {
-          files.add(new FileDescriptor(file, element));
-        }
-        else {
-          files.add(new FileDescriptor(file, parent));
-        }
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
-    
-    fun.fun(PsiUtilCore.toPsiElementArray(candidates), files);
+
+    fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
   }
-  
-  private static Icon getIconForFile(PsiFile psiFile) {
-    return psiFile.getNavigationElement().getIcon(0);
+
+  private static @NotNull TargetPresentation getPresentation(ImplementationViewElement element) {
+    return TargetPresentation.builder(element.getPresentableText())
+      .locationText(element.getLocationText(), element.getLocationIcon())
+      .containerText(element.getContainerPresentation())
+      .icon(element.getLocationIcon())
+      .presentation();
+  }
+
+  private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
+    return IconUtil.getIcon(virtualFile, 0, project);
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
+    return mySwitcher.getElements().length > 1 ? myFileChooser : myEditor.getContentComponent();
+  }
+
+  @ApiStatus.Internal
+  public ComboBox<FileDescriptor> getFileChooserComboBox() {
+    return myFileChooser;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getSingleEntryPanel() {
+    return mySingleEntryPanel;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getViewingPanel() {
+    return myViewingPanel;
   }
 
   private void updateControls() {
-    updateLabels();
     updateCombo();
     updateEditorText();
     myToolbar.updateActionsImmediately();
@@ -354,24 +424,29 @@ public class ImplementationViewComponent extends JPanel {
 
   private void updateCombo() {
     if (myFileChooser != null && myFileChooser.isVisible()) {
-      myFileChooser.setSelectedIndex(myIndex);
+      myFileChooser.setSelectedIndex(mySwitcher.getIndex());
     }
   }
 
   private void updateEditorText() {
     disposeNonTextEditor();
 
-    final PsiElement foundElement = myElements[myIndex];
-    final PsiElement elt = foundElement.getNavigationElement();
-    LOG.assertTrue(elt != null, foundElement);
+    final ImplementationViewElement foundElement = mySwitcher.getCurrentElement();
     final Project project = foundElement.getProject();
-    final PsiFile psiFile = getContainingFile(elt);
-    final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
+    final VirtualFile vFile = foundElement.getContainingFile();
     if (vFile == null) return;
-    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
-    for (FileEditorProvider provider : providers) {
-      if (provider instanceof TextEditorProvider) {
-        updateTextElement(elt);
+
+    for (ImplementationViewDocumentFactory documentFactory : ImplementationViewDocumentFactory.EP_NAME.getExtensions()) {
+      Document document = documentFactory.createDocument(foundElement);
+      if (document != null) {
+        replaceEditor(project, vFile, documentFactory, document);
+        return;
+      }
+    }
+
+    for (FileEditorProvider provider : FileEditorProviderManager.getInstance().getProviderList(project, vFile)) {
+      if (provider instanceof QuickDefinitionProvider) {
+        updateTextElement(foundElement);
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
         break;
       }
@@ -386,6 +461,17 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
+  private void replaceEditor(Project project, VirtualFile vFile, ImplementationViewDocumentFactory documentFactory, Document document) {
+    myViewingPanel.remove(myEditor.getComponent());
+    factory.releaseEditor(myEditor);
+    myEditor = (EditorEx)factory.createEditor(document, project, EditorKind.PREVIEW);
+    tuneEditor(vFile);
+    documentFactory.tuneEditorBeforeShow(myEditor);
+    myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);
+    myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
+    documentFactory.tuneEditorAfterShow(myEditor);
+  }
+
   private void disposeNonTextEditor() {
     if (myNonTextEditor != null) {
       myCurrentNonTextEditorProvider.disposeEditor(myNonTextEditor);
@@ -394,24 +480,33 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private void updateTextElement(final PsiElement elt) {
-    final String newText = getNewText(elt);
+  private void updateTextElement(final ImplementationViewElement elt) {
+    final String newText = elt.getText();
     if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       Document fragmentDoc = myEditor.getDocument();
       fragmentDoc.setReadOnly(false);
+      try {
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+      }
+      finally {
+        fragmentDoc.setReadOnly(true);
+      }
 
-      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-      fragmentDoc.setReadOnly(true);
+      PsiElement element = elt.getElementForShowUsages();
+      PsiFile file = element == null ? null : element.getContainingFile();
+      myEditor.getSettings().setTabSize(file != null ? CodeStyle.getIndentOptions(file).TAB_SIZE
+                                                     : CodeStyle.getSettings(elt.getProject()).getTabSize(null));
+
       myEditor.getCaretModel().moveToOffset(0);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });
   }
 
-  @Nullable
-  public static String getNewText(PsiElement elt) {
+  public static @Nullable String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
+    if (psiFile == null) return null;
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
@@ -433,7 +528,7 @@ public class ImplementationViewComponent extends JPanel {
     final int lineEnd = end < doc.getTextLength() ? doc.getLineEndOffset(doc.getLineNumber(end)) : doc.getTextLength();
     final String text = doc.getCharsSequence().subSequence(lineStart, lineEnd).toString();
     final ImplementationTextProcessor processor = LanguageImplementationTextProcessor.INSTANCE.forLanguage(elt.getLanguage());
-    return processor!=null ? processor.process(text, elt) : text;
+    return processor != null ? processor.process(text, elt) : text;
   }
 
   private static PsiFile getContainingFile(final PsiElement elt) {
@@ -445,105 +540,39 @@ public class ImplementationViewComponent extends JPanel {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this) && !myEditorReleased) {
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      cleanup();
+    }
+  }
+
+  public void cleanup() {
+    if (!myEditorReleased) {
       myEditorReleased = true; // remove notify can be called several times for popup windows
       EditorFactory.getInstance().releaseEditor(myEditor);
       disposeNonTextEditor();
     }
   }
 
-  private void updateLabels() {
-    //TODO: Move from JavaDoc to somewhere more appropriate place.
-    ElementLocationUtil.customizeElementLabel(myElements[myIndex], myLocationLabel);
-    //noinspection AutoBoxing
-    myCountLabel.setText(CodeInsightBundle.message("n.of.m", myIndex + 1, myElements.length));
-  }
-
-  private ActionToolbar createToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-
-    BackAction back = new BackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), this);
-    group.add(back);
-
-    ForwardAction forward = new ForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
-    group.add(forward);
-
-    EditSourceActionBase edit = new EditSourceAction();
-    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
-    group.add(edit);
-
-    edit = new ShowSourceAction();
-    edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getViewSource(), CommonShortcuts.CTRL_ENTER), this);
-    group.add(edit);
-
-    return ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
-  }
-
-  private void goBack() {
-    myIndex--;
-    updateControls();
-  }
-
-  private void goForward() {
-    myIndex++;
-    updateControls();
-  }
-
   public int getIndex() {
-    return myIndex;
+    return mySwitcher.getIndex();
   }
 
-  public PsiElement[] getElements() {
-    return myElements;
+  public ImplementationViewElement[] getElements() {
+    return mySwitcher.getElements();
   }
 
   public UsageView showInUsageView() {
-    return FindUtil.showInUsageView(null, collectNonBinaryElements(), myTitle, myEditor.getProject());
+    UIEventLogger.ImplementationViewToolWindowOpened.log(project);
+    return FindUtil.showInUsageView(null, collectElementsForShowUsages(), myTitle, project);
   }
 
-  private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    public BackAction() {
-      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      goBack();
-    }
-
-
-    @Override
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex > 0);
-    }
-  }
-
-  private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    public ForwardAction() {
-      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      goForward();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
-    }
-  }
-
-  private class EditSourceAction extends EditSourceActionBase {
-    public EditSourceAction() {
+  private final class EditSourceAction extends EditSourceActionBase {
+    EditSourceAction() {
       super(true, AllIcons.Actions.EditSource, CodeInsightBundle.message("quick.definition.edit.source"));
     }
 
-    @Override public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       super.actionPerformed(e);
       if (myHint.isVisible()) {
         myHint.cancel();
@@ -551,47 +580,67 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private class ShowSourceAction extends EditSourceActionBase implements HintManagerImpl.ActionToIgnore {
-    public ShowSourceAction() {
-      super(false, AllIcons.Actions.Preview, CodeInsightBundle.message("quick.definition.show.source"));
-    }
-  }
-
   private class EditSourceActionBase extends AnAction {
     private final boolean myFocusEditor;
 
-    public EditSourceActionBase(boolean focusEditor, Icon icon, String text) {
+    EditSourceActionBase(boolean focusEditor, Icon icon, @NlsActions.ActionText String text) {
       super(text, null, icon);
       myFocusEditor = focusEditor;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      PsiElement element = myElements[myIndex];
-      PsiElement navigationElement = element.getNavigationElement();
-      PsiFile file = getContainingFile(navigationElement);
-      if (file == null) return;
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) return;
-      Project project = element.getProject();
-      FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, navigationElement.getTextOffset());
-      fileEditorManager.openTextEditor(descriptor, myFocusEditor);
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      mySwitcher.getCurrentElement().navigate(myFocusEditor);
     }
   }
 
-  private PsiElement[] collectNonBinaryElements() {
+  private class ShowInFindWindowAction extends AnAction {
+    ShowInFindWindowAction() {
+      super(() -> IdeBundle.message("show.in.find.window.button.name"),
+            ToolWindowManager.getInstance(project).getShowInFindToolWindowIcon());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myShowInFindWindowProcessor != null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Consumer<? super ImplementationViewComponent> processor = myShowInFindWindowProcessor;
+      if (processor != null) {
+        processor.accept(ImplementationViewComponent.this);
+      }
+      if (myHint.isVisible()) {
+        myHint.cancel();
+      }
+    }
+  }
+
+  private PsiElement[] collectElementsForShowUsages() {
     List<PsiElement> result = new ArrayList<>();
-    for (PsiElement element : myElements) {
-      if (!(element instanceof PsiBinaryFile)) {
-        result.add(element);
+    for (ImplementationViewElement element : mySwitcher.getElements()) {
+      PsiElement psiElement = element.getElementForShowUsages();
+      if (psiElement != null) {
+        result.add(psiElement);
       }
     }
     return PsiUtilCore.toPsiElementArray(result);
   }
 }
+

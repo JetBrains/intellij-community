@@ -27,32 +27,42 @@ import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.plugins.xpathView.XPathBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class RenameVariableFix extends AbstractFix {
     private final XsltElement myElement;
     private final String myPlace;
 
-    public RenameVariableFix(XmlTag tag, String place) {
+    public RenameVariableFix(XmlTag tag, @Nls String place) {
         myElement = XsltElementFactory.getInstance().wrapElement(tag, XsltElement.class);
         myPlace = place;
     }
 
-    @NotNull
-    public String getText() {
-        final String type = LanguageFindUsages.INSTANCE.forLanguage(myElement.getLanguage()).getType(myElement);
-        return "Rename " + myPlace + " " + StringUtil.capitalize(type);
+    @Override
+    public @NotNull String getText() {
+        final String type = LanguageFindUsages.getType(myElement);
+        return XPathBundle.message("intention.name.rename.variable", myPlace, StringUtil.capitalize(type));
     }
 
+  @Override
+  public @NotNull String getFamilyName() {
+    return XPathBundle.message("intention.family.name.rename.variable");
+  }
+
+  @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myElement.isValid();
     }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
                                                                                DataManager.getInstance().getDataContext());
   }
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }

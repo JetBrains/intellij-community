@@ -1,0 +1,14 @@
+// PROBLEM: Arguments to 'assertEquals()' are in wrong order
+// FIX: Flip compared arguments
+
+// WITH_STDLIB
+
+package sample
+
+import org.testng.Assert
+
+class DeviceInfoTest {
+    fun testDeviceInfo(info: DeviceInfo) {
+        Assert.<caret>assertEquals("release-keys", info.buildTags)
+    }
+}

@@ -1,16 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public interface SearchScopeProvider {
-  ExtensionPointName<SearchScopeProvider> EP = ExtensionPointName.create("com.intellij.searchScopesProvider");
+  ExtensionPointName<SearchScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.searchScopesProvider");
+
+  default @Nullable @NlsContexts.Separator String getDisplayName() {
+    return null;
+  }
+
+  default @NotNull List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
+    return Collections.emptyList();
+  }
 
   /**
    * General project scopes are added after 'Project', 'Everything' but before 'Production', 'Tests', etc.
+   *
    * @see PredefinedSearchScopeProvider
    */
-  List<SearchScope> getGeneralProjectScopes();
+  default List<SearchScope> getGeneralSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
+    return Collections.emptyList();
+  }
 }

@@ -1,0 +1,3 @@
+public void m(List<String> value) {
+  new HashSet<>(value)<spot></spot>
+}

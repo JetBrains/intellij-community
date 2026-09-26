@@ -1,83 +1,58 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
+import com.jetbrains.python.debugger.dataframe.DataViewCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 /**
  * @author amarch
  */
-class ArrayTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
+class ArrayTableCellRenderer extends DataViewCellRenderer implements ColoredCellRenderer {
   private static final Logger LOG = Logger.getInstance(ArrayTableCellRenderer.class);
-  private double myMin = Double.MIN_VALUE;
-  private double myMax = Double.MIN_VALUE;
+  private double myMin;
+  private double myMax;
   private String myComplexMin;
   private String myComplexMax;
   private boolean myColored = true;
   private final String myType;
 
-  public ArrayTableCellRenderer(double min, double max, String type) {
-    setHorizontalAlignment(CENTER);
+  ArrayTableCellRenderer(double min, double max, String type) {
+    setHorizontalAlignment(LEFT);
     setHorizontalTextPosition(LEFT);
-    setVerticalAlignment(BOTTOM);
+    setVerticalAlignment(CENTER);
     myMin = min;
     myMax = max;
     myType = type;
   }
 
+  @Override
   public void setColored(boolean colored) {
     myColored = colored;
   }
 
-  public Component getTableCellRendererComponent(JTable table, Object value,
-                                                 boolean isSelected, boolean hasFocus, int row, int col) {
-    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-    if (value != null) {
-      setText(value.toString());
-    }
-
-    if (hasFocus) {
-      this.setBorder(new LineBorder(JBColor.BLUE, 2));
-    }
-
+  @Override
+  protected void colorize(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    Color background = null;
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
-          double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
+          String valueStr = value.toString();
+          if (!valueStr.isEmpty()) {
+            double rangedValue = PyNumericViewUtil.getRangedValue(valueStr, myType, myMin, myMax, myComplexMax, myComplexMin);
+            background = PyNumericViewUtil.rangedValueToColor(rangedValue);
+          }
         }
         catch (NumberFormatException ignored) {
         }
       }
-      else {
-        this.setBackground(UIUtil.getBgFillColor(table));
-      }
     }
-
-    return this;
+    this.setBackground(background);
   }
 
   public void setMin(double min) {

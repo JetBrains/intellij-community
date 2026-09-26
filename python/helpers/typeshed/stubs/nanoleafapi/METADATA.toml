@@ -1,0 +1,2 @@
+version = "2.1.*"
+upstream-repository = "https://github.com/MylesMor/nanoleafapi"

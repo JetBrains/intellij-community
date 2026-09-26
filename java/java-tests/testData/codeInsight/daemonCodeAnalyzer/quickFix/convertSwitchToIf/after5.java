@@ -1,11 +1,11 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 abstract class Test {
   abstract Object getObject();
 
   void foo() {
-      Class<?> i = getObject().getClass();
-      if (RuntimeException.class.equals(i)) {
-      } else if (IOException.class.equals(i)) {
+      Class<?> aClass = getObject().getClass();
+      if (aClass.equals(RuntimeException.class)) {
+      } else if (aClass.equals(IOException.class)) {
       }
   }
 }

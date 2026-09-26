@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.isMacOsCredentialStoreSupported
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
@@ -34,13 +21,13 @@ import org.jetbrains.settingsRepository.showAuthenticationForm
 import java.util.concurrent.TimeUnit
 
 class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsStore>, private val repository: Repository) : CredentialsProvider() {
-  private val credentialsFromGit = CacheBuilder.newBuilder()
+  private val credentialsFromGit: LoadingCache<URIish, Credentials> by lazy {
+    Caffeine.newBuilder()
       .expireAfterAccess(5, TimeUnit.MINUTES)
-      .build(object : CacheLoader<URIish, Credentials>() {
-        override fun load(it: URIish) = getCredentialsUsingGit(it, repository) ?: Credentials(null)
-      })
+      .build { getCredentialsUsingGit(it, repository) ?: Credentials(null) }
+  }
 
-  override fun isInteractive(): Boolean = true
+  override fun isInteractive() = true
 
   override fun supports(vararg items: CredentialItem): Boolean {
     for (item in items) {
@@ -76,7 +63,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
       else if (item is CredentialItem.YesNoType) {
         UIUtil.invokeAndWaitIfNeeded(Runnable {
-          item.value = MessageDialogBuilder.yesNo("", item.promptText!!).show() == Messages.YES
+          item.value = MessageDialogBuilder.yesNo("", item.promptText!!).guessWindowAndAsk()
         })
         return true
       }
@@ -85,10 +72,13 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
     if (userNameItem == null && passwordItem == null) {
       return false
     }
-    return doGet(uri, userNameItem, passwordItem, sshKeyFile)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    return runBlockingCancellable {
+      doGet(uri, userNameItem, passwordItem, sshKeyFile)
+    }
   }
 
-  private fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
+  private suspend fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {
     var credentials: Credentials? = null
 
     // SSH URL git@github.com:develar/_idea_settings.git, so, username will be "git", we ignore it because in case of SSH credentials account name equals to key filename, but not to username

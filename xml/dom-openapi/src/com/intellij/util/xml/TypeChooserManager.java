@@ -16,14 +16,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public class TypeChooserManager {
   private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<>();
 
@@ -54,7 +52,14 @@ public class TypeChooserManager {
     myClassChoosers.remove(aClass);
   }
 
+  @ApiStatus.Internal
   public final void copyFrom(TypeChooserManager manager) {
     myClassChoosers.putAll(manager.myClassChoosers);
   }
+
+  @ApiStatus.Internal
+  public void clearCache() {
+    myClassChoosers.clear();
+  }
+
 }

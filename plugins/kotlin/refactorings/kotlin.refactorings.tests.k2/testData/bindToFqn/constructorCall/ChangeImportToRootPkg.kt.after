@@ -1,0 +1,10 @@
+// FILE: test/ChangeImport.kt
+// BIND_TO A
+package test
+
+import A
+
+fun foo() {
+    val x = <caret>A()
+}
+

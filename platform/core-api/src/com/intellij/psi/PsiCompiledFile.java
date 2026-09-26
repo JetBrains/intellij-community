@@ -15,10 +15,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Evgeny Gerashchenko
- * @since 3/1/12
  */
 public interface PsiCompiledFile extends PsiFile, PsiCompiledElement {
+  @NotNull
   PsiFile getDecompiledPsiFile();
 }

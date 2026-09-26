@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 public class GoToInstruction extends BranchingInstruction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.GoToInstruction");
+  private static final Logger LOG = Logger.getInstance(GoToInstruction.class);
 
   public final boolean isReturn; //true if goto has been generated as a result of return statement
 
@@ -34,7 +34,7 @@ public class GoToInstruction extends BranchingInstruction {
     this.isReturn = isReturn;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     final String sRole = "["+role.toString()+"]";
     return "GOTO " + sRole + " " + offset + (isReturn ? " RETURN" : "");

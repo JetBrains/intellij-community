@@ -1,0 +1,46 @@
+<idea-plugin visibility="internal">
+  <!--Plugin for other (not PyCharm) IDEs, including IU-->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <!--Any IDE but NOT PyCharm-->
+    <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.sdk.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
+                        serviceImplementation="com.intellij.python.community.plugin.impl.run.PyPluginCommonOptionsFormFactory"/>
+    <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
+                        serviceImplementation="com.intellij.python.community.plugin.impl.run.PyPluginCommonFragmentsBuilder"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PyBundle">
+    <action id="PyManagePackages" class="com.intellij.python.community.plugin.impl.packaging.PyManagePackagesAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+    <action id="RunPythonToolwindowAction" class="com.intellij.python.community.plugin.impl.RunPythonToolwindowAction">
+    </action>
+  </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.python.community.plugin.impl.facet.PythonSdkTableListener" topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+  </applicationListeners>
+
+</idea-plugin>

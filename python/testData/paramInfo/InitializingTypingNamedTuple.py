@@ -31,6 +31,15 @@ class MyTup8(typing.NamedTuple):
     baz: str = ""
 
 
+class MyTup9(typing.NamedTuple):
+    bar: int
+    baz: str
+
+    @classmethod
+    def factory(cls):
+        return cls(<arg8>)
+
+
 MyTup2(<arg1>)
 MyTup3(<arg2>)
 MyTup4(<arg3>)

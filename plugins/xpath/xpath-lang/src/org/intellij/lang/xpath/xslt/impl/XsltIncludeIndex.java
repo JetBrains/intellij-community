@@ -28,9 +28,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class XsltIncludeIndex {
+import java.util.List;
+
+public final class XsltIncludeIndex {
 
   private XsltIncludeIndex() {
   }
@@ -50,7 +51,7 @@ public class XsltIncludeIndex {
     return false;
   }
 
-  public static boolean processForwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
+  public static boolean processForwardDependencies(@NotNull XmlFile file, Processor<? super XmlFile> processor) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return true;
@@ -61,7 +62,7 @@ public class XsltIncludeIndex {
     return _process(files, project, processor);
   }
 
-  public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
+  public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<? super XmlFile> processor) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return true;
@@ -72,9 +73,9 @@ public class XsltIncludeIndex {
     return _process(files, project, processor);
   }
 
-  private static boolean _process(VirtualFile[] files, Project project, Processor<XmlFile> processor) {
+  private static boolean _process(VirtualFile[] files, Project project, Processor<? super XmlFile> processor) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, (NullableFunction<VirtualFile, PsiFile>)file -> psiManager.findFile(file));
+    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFile>)file -> psiManager.findFile(file));
     for (final PsiFile psiFile : psiFiles) {
       if (XsltSupport.isXsltFile(psiFile)) {
         if (!processor.process((XmlFile)psiFile)) {

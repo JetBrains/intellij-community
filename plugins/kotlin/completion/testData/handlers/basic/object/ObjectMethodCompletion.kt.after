@@ -1,0 +1,14 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
+object Foo {
+
+    fun foo() {}
+}
+
+fun bar() {
+    Foo.foo()<caret>
+}
+
+// ELEMENT: foo
+// INVOCATION_COUNT: 2

@@ -16,13 +16,10 @@
 
 package com.intellij.facet.ui.libraries;
 
-import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.Facet;
+import com.intellij.facet.ui.FacetEditorValidator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FacetLibrariesValidator extends FacetEditorValidator {
 
   public abstract void setRequiredLibraries(LibraryInfo[] requiredLibraries);

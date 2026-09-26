@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -10,36 +10,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author max
- */
+@ApiStatus.Internal
 public class DeletedFilesHolder implements FileHolder {
   private final Map<String, LocallyDeletedChange> myFiles = new HashMap<>();
 
+  @Override
   public void cleanAll() {
     myFiles.clear();
   }
-  
+
   public void takeFrom(final DeletedFilesHolder holder) {
     myFiles.clear();
     myFiles.putAll(holder.myFiles);
   }
 
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  @Override
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
       if (scope.belongsTo(change.getPath())) {
         myFiles.remove(change.getPresentableUrl());
       }
     }
-  }
-
-  public HolderType getType() {
-    return HolderType.DELETED;
-  }
-
-  @Override
-  public void notifyVcsStarted(AbstractVcs scope) {
   }
 
   public void addFile(final LocallyDeletedChange change) {
@@ -55,12 +47,14 @@ public class DeletedFilesHolder implements FileHolder {
     return myFiles.containsKey(url);
   }
 
+  @Override
   public DeletedFilesHolder copy() {
     final DeletedFilesHolder copyHolder = new DeletedFilesHolder();
     copyHolder.myFiles.putAll(myFiles);
     return copyHolder;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -72,6 +66,7 @@ public class DeletedFilesHolder implements FileHolder {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myFiles.hashCode();
   }

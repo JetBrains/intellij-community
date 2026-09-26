@@ -1,73 +1,100 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
+import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Encapsulates EDT-related checks and processing. The general idea is that intellij threading model is tightly bound with EDT
+ * <p>Encapsulates EDT-related checks and processing. The general idea is that IntelliJ threading model is tightly bound with EDT
  * (e.g. write access is allowed from EDT only and any task executed from EDT is implicitly granted read access). That makes
- * a huge bottleneck in non-intellij environments like upsource - every vcs revision there is represented as a separate ide project
- * object, hence, global shared write lock and single EDT become a problem.
- * <p/>
- * That's why it should be possible to change that model in non-intellij environment - that involves either custom read/write locks
- * processing or custom EDT processing as well. This interface covers EDT part.
+ * a huge bottleneck in non-IntelliJ environments like Upsource - every vcs revision there is represented as a separate ide project
+ * object, hence, global shared write lock and single EDT become a problem.</p>
+ *
+ * <p>That's why it should be possible to change that model in non-IntelliJ environment - that involves either custom read/write locks
+ * processing or custom EDT processing as well. This interface covers EDT part.</p>
  */
 public abstract class EdtInvocationManager {
+  private static final AtomicReference<EdtInvocationManager> ourInstance = new AtomicReference<>();
 
-  @NotNull private static volatile EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
+  /**
+   * Please use Application.invokeLater() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use GuiUtils, application.invoke* or TransactionGuard methods.<p/>
+   *
+   * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
+   */
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
+    if (EDT.isCurrentThreadEdt()) {
+      runnable.run();
+    }
+    else {
+      getInstance().invokeLater(runnable);
+    }
+  }
 
-  public abstract boolean isEventDispatchThread();
+  /**
+   * @deprecated Use {@link EDT#isCurrentThreadEdt()}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final boolean isEventDispatchThread() {
+    return EventQueue.isDispatchThread();
+  }
 
   public abstract void invokeLater(@NotNull Runnable task);
 
   public abstract void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException;
 
-  @NotNull
-  public static EdtInvocationManager getInstance() {
-    return ourInstance;
-  }
-
-  @SuppressWarnings("unused") // Used in upsource
-  public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
-    ourInstance = edtInvocationManager;
+  public static @NotNull EdtInvocationManager getInstance() {
+    EdtInvocationManager result = ourInstance.get();
+    if (result == null) {
+      result = new SwingEdtInvocationManager();
+      if (!ourInstance.compareAndSet(null, result)) {
+        result = ourInstance.get();
+      }
+    }
+    return result;
   }
 
   /**
-   * The default {@link EdtInvocationManager} implementation which works with the EDT via SwingUtilities.
+   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
+   *
+   * Invoke and wait in the event dispatch thread
+   * or in the current thread if the current thread
+   * is event queue thread.
+   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    */
-  private static class SwingEdtInvocationManager extends EdtInvocationManager {
-    @Override
-    public boolean isEventDispatchThread() {
-      return SwingUtilities.isEventDispatchThread();
+  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
+    if (EDT.isCurrentThreadEdt()) {
+      runnable.run();
     }
+    else {
+      try {
+        getInstance().invokeAndWait(runnable);
+      }
+      catch (Exception e) {
+        Logger.getInstance(EdtInvocationManager.class).error(e);
+      }
+    }
+  }
 
+  /**
+   * The default {@link EdtInvocationManager} implementation that uses {@link EventQueue}.
+   */
+  public static class SwingEdtInvocationManager extends EdtInvocationManager {
     @Override
     public void invokeLater(@NotNull Runnable task) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(task);
+      EventQueue.invokeLater(task);
     }
 
     @Override
     public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeAndWait(task);
+      EventQueue.invokeAndWait(task);
     }
   }
 }

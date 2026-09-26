@@ -1,0 +1,40 @@
+sequenceDiagram
+  actor Alice
+  links Alice: { "Dashboard": "https://dashboard.contoso.com/alice", "Wiki": "https://wiki.contoso.com/alice" }
+  participant B as Bob
+  Alice ->> John: Hello John, how are you ?
+  activate John
+  John -->> Alice: Great!
+  deactivate John
+  Alice -) John: See you later!
+
+  Alice ->>+ John: Hello John, how are you?
+  John -->>- Alice: Great!
+  Note right of John: Text in note
+
+  loop Every minute
+    John --> Alice: Great!
+  end
+  alt is sick
+    Bob ->> Alice: Not so good :(
+  else is well
+    Bob ->> Alice: Feeling fresh like a daisy
+  end
+  opt Extra response
+    Bob ->> Alice: Thanks for asking
+  end
+  par Alice to Bob
+    Alice ->> Bob: Go help John
+  and Alice to John
+    Alice ->> John: I want this done today
+    par John to Charlie
+      John ->> Charlie: Can we do this today?
+    and John to Diana
+      John ->> Diana: Can you help us today?
+    end
+  end
+
+  rect rgb(200, 150, 255)
+    Alice ->>+ John: John, can you hear me?
+    John -->>- Alice: Hi Alice, I can hear you!
+  end

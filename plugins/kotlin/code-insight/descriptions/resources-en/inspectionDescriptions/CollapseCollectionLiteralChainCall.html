@@ -1,0 +1,14 @@
+<html>
+<body>
+Flags chain expressions with collection literals that change the expression's type.
+<p>A quick-fix replaces a collection literal with a function call.</p>
+<p><b>Example:</b></p>
+<pre><code>
+    val mutableList = ["a", "b", "c"].toMutableList()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+    val mutableList = mutableListOf("a", "b", "c")
+</code></pre>
+</body>
+</html>

@@ -31,7 +31,7 @@ public class SoftFileReferenceSet extends FileReferenceSet {
                               PsiReferenceProvider provider,
                               boolean caseSensitive,
                               boolean endingSlashNotAllowed,
-                              @Nullable FileType[] suitableFileTypes) {
+                              FileType @Nullable [] suitableFileTypes) {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes);
   }
 
@@ -40,7 +40,7 @@ public class SoftFileReferenceSet extends FileReferenceSet {
                               int startInElement,
                               PsiReferenceProvider provider,
                               boolean caseSensitive,
-                              boolean endingSlashNotAllowed, @Nullable FileType[] suitableFileTypes, boolean init) {
+                              boolean endingSlashNotAllowed, FileType @Nullable [] suitableFileTypes, boolean init) {
     super(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, init);
   }
 

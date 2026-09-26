@@ -1,0 +1,18 @@
+[project]
+name = "sub-project-a"
+version = "0.1.0"
+description = "Sub-project A"
+dependencies = [
+    "extra-utils[some-group]",
+]
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "sub-project-b"
+]
+
+[tool.uv.sources]
+extra-utils = { path = "../../local-libs/extra-utils" }
+sub-project-b = { workspace = true }

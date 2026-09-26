@@ -28,6 +28,5 @@ public interface GrReflectedMethod extends GrMethod, PsiMirrorElement {
   @NotNull
   GrMethod getBaseMethod();
 
-  @NotNull
-  GrParameter[] getSkippedParameters();
+  GrParameter @NotNull [] getSkippedParameters();
 }

@@ -1,0 +1,13 @@
+// "Assign to property" "true"
+// WITH_STDLIB
+// K2_ERROR: VAL_REASSIGNMENT
+class Test {
+    var foo = 1
+
+    fun test(foo: Int) {
+        "".run {
+            <caret>foo = foo
+        }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AssignToPropertyFix

@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  A$B.class
+  A.class
+End of files
+Compiling files:
+  java/common/memberClassBecomesLocal/a/A.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/common/memberClassBecomesLocal/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

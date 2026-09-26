@@ -1,0 +1,7 @@
+// FIX: Convert to sealed interface
+sealed interface Result {
+    fun process()
+}
+class Success : Result {
+    override fun process() {}
+}

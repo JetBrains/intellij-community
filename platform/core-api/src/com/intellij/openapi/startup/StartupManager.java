@@ -1,65 +1,65 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to register activities which are run during project loading. Methods of StartupManager are typically
- * called from {@link com.intellij.openapi.components.ProjectComponent#projectOpened()}.
+ * Allows registering activities that are run during project loading.
+ *
+ * @see ProjectActivity
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html#project-open">IntelliJ Platform Docs</a>
  */
 public abstract class StartupManager {
   /**
-   * Returns the startup manager instance for the specified project.
-   *
-   * @param project the project for which the instance should be returned.
-   * @return the startup manager instance.
+   * @return Startup manager instance for the specified project.
    */
-  public static StartupManager getInstance(Project project) {
-    return ServiceManager.getService(project, StartupManager.class);
+  public static StartupManager getInstance(@NotNull Project project) {
+    return project.getService(StartupManager.class);
   }
 
-  public abstract void registerPreStartupActivity(@NotNull Runnable runnable);
-
   /**
-   * Registers an activity which is performed during project load while the "Loading Project"
-   * progress bar is displayed. You may NOT access the PSI structures from the activity.
-   *
-   * @param runnable the activity to execute.
+   * Registers an activity performed during the project load while the "Loading Project" progress bar is displayed.
+   * You may NOT access PSI from this activity.
+   * @deprecated Do not use.
    */
+  @ApiStatus.Internal
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**
-   * Registers an activity which is performed during project load after the "Loading Project"
-   * progress bar is displayed. You may access the PSI structures from the activity.
-   *
-   * @param runnable the activity to execute.
-   * @see StartupActivity#POST_STARTUP_ACTIVITY
+   * @deprecated Consider using extension point {@link ProjectActivity} instead.
    */
+  @Deprecated
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 
   /**
-   * Executes the specified runnable immediately if invoked from AWT thread and the initialization of the current project
-   * is complete. Otherwise registers it as a post-startup activity. In the latter case, the runnable will be executed later on AWT thread in a non-modal state.
+   * Registers activity that is executed on pooled thread after the project is opened.
+   * The runnable will be executed in the current thread if the project is already opened.
    *
-   * @param runnable the activity to execute.
-   * @see com.intellij.openapi.application.ModalityState
-   * @see com.intellij.openapi.application.Application#invokeLater(Runnable)
+   * @implNote Consider using extension point {@link ProjectActivity} instead.
    */
+  @ApiStatus.Internal
+  public abstract void runAfterOpened(@NotNull Runnable runnable);
+
+  public abstract boolean postStartupActivityPassed();
+
+  /**
+   * Registers activity that is executed after the project is opened.
+   * If runnable implements {@link DumbAware}, it will be executed on EDT thread in a non-modal state.
+   * Otherwise, it will be executed on EDT when indexes are ready.
+   * <p>
+   * The runnable can be executed immediately if the method is called from EDT and the project is already opened.
+   *
+   * @deprecated Consider using extension point {@link ProjectActivity} instead.
+   */
+  @Deprecated
   public abstract void runWhenProjectIsInitialized(@NotNull Runnable runnable);
+
+  @ApiStatus.Internal
+  public abstract @NotNull Job getAllActivitiesPassedFuture();
 }

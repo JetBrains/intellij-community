@@ -1,4 +1,4 @@
-// "Replace with sum()" "false"
+// "Collapse loop with stream 'sum()'" "false"
 
 import java.io.BufferedReader;
 import java.io.IOException;

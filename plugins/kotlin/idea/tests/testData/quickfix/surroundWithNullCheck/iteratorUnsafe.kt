@@ -1,0 +1,8 @@
+// "Surround with null check" "true"
+// WITH_STDLIB
+// K2_ERROR: ITERATOR_ON_NULLABLE
+
+fun foo(list: List<String>?) {
+    for (element in <caret>list) {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundWithNullCheckFixFactory$SurroundWithNullCheckFix

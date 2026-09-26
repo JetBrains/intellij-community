@@ -1,0 +1,36 @@
+MODULES
+include-plugin
+
+include-plugin.main
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    targetPlatform = JVM (17)
+
+include-plugin.test
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    additionalVisibleModuleNames = :include-plugin:main
+    targetPlatform = JVM (17)
+
+project
+
+project.buildSrc
+
+project.buildSrc.main
+    externalProjectId =
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    targetPlatform = JVM (11)
+
+project.buildSrc.test
+    externalProjectId =
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    additionalVisibleModuleNames = :buildSrc:main
+    targetPlatform = JVM (11)
+
+
+Test configuration:
+- excluding following facet fields: compilerSettings

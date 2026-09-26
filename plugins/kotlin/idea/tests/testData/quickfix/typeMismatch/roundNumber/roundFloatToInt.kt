@@ -1,0 +1,10 @@
+// "Round using roundToInt()" "true"
+// PRIORITY: LOW
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+fun test(f: Float) {
+    foo(f<caret>)
+}
+
+fun foo(x: Int) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RoundNumberFix

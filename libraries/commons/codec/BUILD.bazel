@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.commons.codec` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-codec-commons-codec"],
+    module = ":codec",
+)
+### auto-generated section `dev intellij.libraries.commons.codec` end
+
+### auto-generated section `build intellij.libraries.commons.codec` start
+jvm_library(
+    name = "codec",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.codec",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-codec-commons-codec"],
+    runtime_deps = ["@lib//:libraries-commons-codec-commons-codec"],
+)
+
+jvm_library(
+    name = "codec_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.codec",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-codec-commons-codec"],
+    runtime_deps = [":codec"],
+)
+### auto-generated section `build intellij.libraries.commons.codec` end
+
+### auto-generated section `iml intellij.libraries.commons.codec` start
+exports_files(
+    [
+        "intellij.libraries.commons.codec.iml",
+        "resources/intellij.libraries.commons.codec.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.commons.codec` end

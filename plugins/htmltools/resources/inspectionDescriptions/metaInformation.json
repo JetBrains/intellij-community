@@ -1,0 +1,48 @@
+{
+  "inspections": [
+    {
+      "id": "HtmlRequiredSummaryAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlRequiredTitleAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlRequiredAltAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlPresentationalElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlDeprecatedTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlFormInputWithoutLabel",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredTitleElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlDeprecatedAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CheckImageSize",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredLangAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlNonExistentInternetResource",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

@@ -25,37 +25,35 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.SmartList;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.Grammar;
 import org.intellij.plugins.relaxNG.model.resolve.GrammarFactory;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 
-class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
+final class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
 
   private final Define myDefine;
 
-  public OverriddenDefineRenderer(@NotNull Define define) {
+  OverriddenDefineRenderer(@NotNull Define define) {
     myDefine = define;
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.OverridenMethod;
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @NotNull AnAction getClickAction() {
     return new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PsiElement element = myDefine.getPsiElement();
         if (element == null || !element.isValid()) return;
 
@@ -72,8 +70,8 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
           grammar.acceptChildren(searcher);
         }
 
-        if (result.size() > 0) {
-          OverridingDefineRenderer.doClickAction(e, result, "Go to overriding define(s)");
+        if (!result.isEmpty()) {
+          OverridingDefineRenderer.doClickAction(e, result, RelaxngBundle.message("relaxng.gutter.go-to-overriding-defines"));
         }
       }
     };
@@ -85,9 +83,8 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
-    return "Is overridden";
+  public @NotNull String getTooltipText() {
+    return RelaxngBundle.message("relaxng.gutter.is-overridden");
   }
 
   @Override

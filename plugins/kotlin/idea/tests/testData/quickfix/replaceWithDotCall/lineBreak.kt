@@ -1,0 +1,7 @@
+// "Replace with dot call" "true"
+// WITH_STDLIB
+fun foo(a: String) {
+    val b = a
+            ?.<caret>length
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix

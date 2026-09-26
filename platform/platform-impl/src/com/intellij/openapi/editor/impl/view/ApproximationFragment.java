@@ -1,14 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.util.function.Consumer;
 
 /**
- * Used for quick estimation of editor's viewable area size (without full text layout)
+ * Used for quick estimation of editor's viewable area size (without a full text layout)
  */
-class ApproximationFragment implements LineFragment {
+final class ApproximationFragment implements LineFragment {
   private final int myLength;
   private final int myColumnCount;
   private final float myWidth;
@@ -55,10 +56,11 @@ class ApproximationFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
     float relX = x - startX;
-    int column = relX < myWidth / 2 ? 0 : myColumnCount;
-    return new int[] {column, relX <= visualColumnToX(startX, column) ? 0 : 1};
+    int column = (relX < myWidth / 2) ? 0 : myColumnCount;
+    boolean leansRight = relX > visualColumnToX(startX, column);
+    return new VisualColumn(column, leansRight);
   }
 
   @Override
@@ -67,13 +69,12 @@ class ApproximationFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     throw new UnsupportedOperationException();
   }
 }

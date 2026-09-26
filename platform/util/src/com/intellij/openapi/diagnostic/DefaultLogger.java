@@ -1,96 +1,137 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.apache.log4j.Level;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DefaultLogger extends Logger {
-  private static boolean ourMirrorToStderr = true;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-  @SuppressWarnings("UnusedParameters")
-  public DefaultLogger(String category) { }
+public class DefaultLogger extends Logger {
+  private static boolean mirrorToStderr = true;
+
+  private final String category;
+  private LogLevel level = LogLevel.WARNING;
+
+  public DefaultLogger(String category) {
+    this.category = category;
+  }
 
   @Override
   public boolean isDebugEnabled() {
-    return false;
+    return level.compareTo(LogLevel.DEBUG) >= 0;
   }
 
   @Override
-  public void debug(String message) { }
-
-  @Override
-  public void debug(Throwable t) { }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) { }
-
-  @Override
-  public void info(String message) { }
-
-  @Override
-  public void info(String message, Throwable t) { }
-
-  @Override
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public void warn(@NonNls String message, @Nullable Throwable t) {
-    t = checkException(t);
-    System.err.println("WARN: " + message);
-    if (t != null) t.printStackTrace(System.err);
+  public boolean isTraceEnabled() {
+    return level.compareTo(LogLevel.TRACE) >= 0;
   }
 
   @Override
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
-    t = checkException(t);
-    message += attachmentsToString(t);
-    if (shouldDumpExceptionToStderr()) {
-      System.err.println("ERROR: " + message);
-      if (t != null) t.printStackTrace(System.err);
-      if (details.length > 0) {
-        System.err.println("details: ");
-        for (String detail : details) {
-          System.err.println(detail);
-        }
+  public void trace(String message) {
+    if (isTraceEnabled()) {
+      System.out.println("TRACE[" + category + "]: " + message);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void trace(@Nullable Throwable t) {
+    if (t != null && isTraceEnabled()) {
+      System.out.print("TRACE[" + category + "]: ");
+      t.printStackTrace(System.out);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void debug(String message, @Nullable Throwable t) {
+    if (isDebugEnabled()) {
+      System.out.println("DEBUG[" + category + "]: " + message);
+      if (t != null) t.printStackTrace(System.out);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void info(String message, Throwable t) {
+    if (level.compareTo(LogLevel.INFO) >= 0) {
+      System.out.println("INFO[" + category + "]: " + message);
+      if (t != null) {
+        t.printStackTrace(System.out);
       }
     }
-
-    AssertionError error = new AssertionError(message);
-    error.initCause(t);
-    throw error;
   }
 
   @Override
-  public void setLevel(Level level) { }
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void warn(String message, @Nullable Throwable t) {
+    t = ensureNotControlFlow(t);
+    System.err.println("WARN: " + message);
+    if (t != null) {
+      t.printStackTrace(System.err);
+    }
+  }
 
-  public static String attachmentsToString(@Nullable Throwable t) {
-    //noinspection ThrowableResultOfMethodCallIgnored
-    Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
-    if (rootCause instanceof ExceptionWithAttachments) {
-      return "\n\nAttachments:\n" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING, "\n----\n");
+  @Override
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    t = ensureNotControlFlow(t);
+    if (shouldDumpExceptionToStderr()) {
+      System.err.println("ERROR: " + message + detailsToString(details) + attachmentsToString(t));
+      if (t != null) {
+        t.printStackTrace(System.err);
+      }
+    }
+    throw new AssertionError(message, t);
+  }
+
+  @Override
+  public void setLevel(@NotNull LogLevel level) {
+    this.level = level;
+  }
+
+  @ApiStatus.Internal
+  public LogLevel getLevel() {
+    return level;
+  }
+
+  public static @NotNull String detailsToString(String @NotNull ... details) {
+    return details.length > 0 ? "\nDetails:\n" + String.join("\n", details) : "";
+  }
+
+  public static @NotNull String attachmentsToString(@Nullable Throwable t) {
+    if (t != null) {
+      String prefix = "\n\nAttachments:\n";
+      String attachments = ExceptionUtil.causeAndSuppressed(t, ExceptionWithAttachments.class)
+        .flatMap(e -> Stream.of(e.getAttachments()).map(attachment -> {
+          if (attachment == null) {
+            throw new NullPointerException(e + " returned null attachment from getAttachments() method");
+          }
+          return ATTACHMENT_TO_STRING.apply(attachment);
+        }))
+        .collect(Collectors.joining("\n----\n", prefix, ""));
+      if (!attachments.equals(prefix)) {
+        return attachments;
+      }
     }
     return "";
   }
 
   public static boolean shouldDumpExceptionToStderr() {
-    return ourMirrorToStderr;
+    return mirrorToStderr;
   }
 
   public static void disableStderrDumping(@NotNull Disposable parentDisposable) {
-    final boolean prev = ourMirrorToStderr;
-    ourMirrorToStderr = false;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourMirrorToStderr = prev;
-      }
+    boolean prev = mirrorToStderr;
+    mirrorToStderr = false;
+    Disposer.register(parentDisposable, () -> {
+      mirrorToStderr = prev;
     });
   }
-
 }

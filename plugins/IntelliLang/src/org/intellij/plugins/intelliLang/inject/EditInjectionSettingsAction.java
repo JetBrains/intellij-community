@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.plugins.intelliLang.inject;
 
@@ -28,8 +14,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.InjectionsSettingsUI;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,19 +23,19 @@ import java.util.Collections;
 /**
  * @author Gregory.Shrago
  */
-public class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
-  public static final String EDIT_INJECTION_TITLE = "Language Injection Settings";
+final class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
 
-  @NotNull
-  public String getText() {
-    return EDIT_INJECTION_TITLE;
+  @Override
+  public @NotNull String getText() {
+    return IntelliLangBundle.message("intention.name.language.injection.settings");
   }
 
-  @NotNull
-  public String getFamilyName() {
-    return "Edit Injection Settings";
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntelliLangBundle.message("intention.family.name.edit.injection.settings");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
@@ -58,11 +44,12 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     return support != null;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
+  @Override
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, psiFile));
   }
 
-  private static void invokeImpl(Project project, Editor editor, PsiFile file) {
+  private static void invokeImpl(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
     if (psiFile == null) return;
     final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile);
@@ -71,7 +58,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     if (support == null) return;
     try {
       if (!support.editInjectionInPlace(host)) {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getProjectInstance(project)));
+        ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project));
       }
     }
     finally {
@@ -79,6 +66,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

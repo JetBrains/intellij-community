@@ -1,0 +1,14 @@
+// FILE: before.kt
+
+fun some() {
+    do {
+        <caret>break
+    } while (true)
+}
+// FILE: after.kt
+
+fun some() {
+    do {
+        break
+    } while (true)<caret>
+}

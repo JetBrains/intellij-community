@@ -1,16 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.projectView.impl.PackageViewPane
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Queryable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.project.stateStore
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import com.intellij.workspaceModel.ide.registerProjectRoot
 
-/**
- * @author nik
- */
-class ModulesInProjectViewTest : BaseProjectViewTestCase() {
+abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()
   }
@@ -20,6 +27,21 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     myStructure.isShowLibraryContents = false
   }
 
+  override fun doCreateRealModule(moduleName: String): Module {
+    return WriteAction.computeAndWait<Module, RuntimeException> {
+      /* iml files are created under .idea directory to ensure that they won't affect expected structure of Project View;
+         this is needed to ensure that tests work the same way under the old project model and under workspace model where all modules
+         are saved when a single module is unloaded */
+      val imlPath = project.stateStore.projectBasePath.resolve(".idea/$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      ModuleManager.getInstance(myProject).newModule(imlPath, moduleType.id)
+    }
+  }
+
+  override fun getTestPath(): String? = null
+}
+
+// directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
+class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
   fun `test unloaded modules`() {
     val root = directoryContent {
       dir("loaded") {
@@ -35,31 +57,38 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
         }
       }
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("loaded"), root.findChild("loaded"))
-    PsiTestUtil.addContentRoot(createModule("unloaded-inner"), root.findFileByRelativePath("loaded/unloaded-inner"))
-    PsiTestUtil.addContentRoot(createModule("unloaded"), root.findChild("unloaded"))
-    PsiTestUtil.addContentRoot(createModule("loaded-inner"), root.findFileByRelativePath("unloaded/loaded-inner"))
+    PsiTestUtil.addContentRoot(createModule("loaded"), root.findChild("loaded")!!)
+    PsiTestUtil.addContentRoot(createModule("unloaded-inner"), root.findFileByRelativePath("loaded/unloaded-inner")!!)
+    PsiTestUtil.addContentRoot(createModule("unloaded"), root.findChild("unloaded")!!)
+    PsiTestUtil.addContentRoot(createModule("loaded-inner"), root.findFileByRelativePath("unloaded/loaded-inner")!!)
     val expected = """
-          |Project
-          | loaded
-          |  unloaded-inner
-          |   subdir
-          |   y.txt
-          | loaded-inner.iml
-          | loaded.iml
-          | test unloaded modules.iml
-          | unloaded
-          |  loaded-inner
-          |   subdir
-          |   z.txt
-          | unloaded-inner.iml
-          | unloaded.iml
-          |
-          """.trimMargin()
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+
+    """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
-    assertStructureEqual(expected)
+    runWithModalProgressBlocking(myProject, "") {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
+    }
+    assertStructureEqual("""
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+    """.trimIndent())
   }
 
   fun `test unloaded module with qualified name`() {
@@ -72,26 +101,47 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
         dir("subdir") {}
       }
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("foo.bar.unloaded"), root.findChild("unloaded"))
-    PsiTestUtil.addContentRoot(createModule("unloaded2"), root.findChild("unloaded2"))
+    PsiTestUtil.addContentRoot(createModule("foo.bar.unloaded"), root.findChild("unloaded")!!)
+    PsiTestUtil.addContentRoot(createModule("unloaded2"), root.findChild("unloaded2")!!)
 
     val expected = """
-          |Project
-          | Group: foo.bar
-          |  unloaded
-          |   subdir
-          |   y.txt
-          | foo.bar.unloaded.iml
-          | test unloaded module with qualified name.iml
-          | unloaded2
-          |  subdir
-          | unloaded2.iml
-          |
-          """.trimMargin()
+      Project
+       Group: foo.bar
+        unloaded
+         subdir
+         y.txt
+       unloaded2
+        subdir
+    """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    runWithModalProgressBlocking(myProject, "") {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    }
     assertStructureEqual(expected)
+  }
+
+  fun `test module and plain project root`() {
+    val root = directoryContent {
+      dir("module") {
+        dir("subdir") {}
+      }
+      dir("projectRoot") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
+    runWithModalProgressBlocking(myProject, "") {
+      registerProjectRoot(myProject, root.findChild("projectRoot")!!.toNioPath())
+    }
+    assertStructureEqual("""
+          |Project
+          | module
+          |  subdir
+          | projectRoot
+          |  subdir
+          |
+          """.trimMargin())
   }
 
   fun `test do not show parent groups for single module`() {
@@ -100,13 +150,11 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
         dir("subdir") {}
       }
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("foo.bar.module"), root.findChild("module"))
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module"), root.findChild("module")!!)
     assertStructureEqual("""
           |Project
-          | foo.bar.module.iml
           | module
           |  subdir
-          | test do not show parent groups for single module.iml
           |
           """.trimMargin())
   }
@@ -116,16 +164,13 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       dir("module1") {}
       dir("module2") {}
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1"))
-    PsiTestUtil.addContentRoot(createModule("foo.bar.module2"), root.findChild("module2"))
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module2"), root.findChild("module2")!!)
     myStructure.isFlattenModules = true
     assertStructureEqual("""
           |Project
-          | foo.bar.module1.iml
-          | foo.bar.module2.iml
           | module1
           | module2
-          | test flatten modules option.iml
           |
           """.trimMargin())
   }
@@ -135,16 +180,13 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       dir("foo") {}
       dir("foo.bar") {}
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("xxx.foo"), root.findChild("foo"))
-    PsiTestUtil.addContentRoot(createModule("xxx.foo.bar"), root.findChild("foo.bar"))
+    PsiTestUtil.addContentRoot(createModule("xxx.foo"), root.findChild("foo")!!)
+    PsiTestUtil.addContentRoot(createModule("xxx.foo.bar"), root.findChild("foo.bar")!!)
     assertStructureEqual("""
           |Project
           | Group: xxx
           |  foo
           |  foo.bar
-          | test do not show groups duplicating module names.iml
-          | xxx.foo.bar.iml
-          | xxx.foo.iml
           |
           """.trimMargin())
   }
@@ -158,23 +200,184 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
         dir("subdir") {}
       }
     }.generateInVirtualTempDir()
-    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1"))
-    PsiTestUtil.addContentRoot(createModule("foo.baz.module2"), root.findChild("module2"))
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("foo.baz.module2"), root.findChild("module2")!!)
     assertStructureEqual("""
-          |Project
-          | Group: foo
-          |  Group: bar
-          |   module1
-          |    subdir
-          |  Group: baz
-          |   module2
-          |    subdir
-          | foo.bar.module1.iml
-          | foo.baz.module2.iml
-          | test modules with common parent group.iml
-          |
-          """.trimMargin())
+      |Project
+      | Group: foo
+      |  Group: bar
+      |   module1
+      |    subdir
+      |  Group: baz
+      |   module2
+      |    subdir
+      |
+      """.trimMargin())
   }
 
-  override fun getTestPath() = null
+  fun `test three-level modules`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module1.module2") {
+        dir("subdir") {}
+      }
+      dir("module1.module2.module3") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module2"), root.findChild("module1.module2")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module2.module3"), root.findChild("module1.module2.module3")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: module1
+      |  module1.module2
+      |   subdir
+      |  module1.module2.module3
+      |   subdir
+      | module1
+      |  subdir
+      |
+      """.trimMargin())
+  }
+
+  fun `test modules in nested groups`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module2") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("foo.module2"), root.findChild("module2")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: foo
+      |  Group: bar
+      |   module1
+      |    subdir
+      |  module2
+      |   subdir
+      |
+      """.trimMargin())
+  }
+
+  // BAZEL-3331: reproduces the "dummy module" case where a directory belongs to a different module than the files inside it.
+  fun `test directory with children from another module is shown in flatten packages mode`() {
+    val root = directoryContent {
+      dir("moduleA") {
+        file("File1.kt")
+        file("File2.kt")
+      }
+    }.generateInVirtualTempDir()
+    val moduleADir = root.findChild("moduleA")!!
+    val file1 = moduleADir.findChild("File1.kt")!!
+    val file2 = moduleADir.findChild("File2.kt")!!
+    val moduleA = createModule("moduleA")
+    PsiTestUtil.addContentRoot(moduleA, moduleADir)
+    PsiTestUtil.addSourceRoot(moduleA, moduleADir)
+    val moduleB = createModule("moduleB")
+    PsiTestUtil.addSourceRoot(moduleB, file1)
+    PsiTestUtil.addSourceRoot(moduleB, file2)
+    val projectFileIndex = ProjectRootManager.getInstance(myProject).fileIndex
+    assertEquals(moduleA, projectFileIndex.getModuleForFile(moduleADir))
+    assertEquals(moduleB, projectFileIndex.getModuleForFile(file1))
+    assertEquals(moduleB, projectFileIndex.getModuleForFile(file2))
+    assertFalse(ModuleRootManager.getInstance(moduleA).fileIndex.isInContent(file1))
+    myStructure.isFlattenPackages = true
+    val psiDirectory = PsiManager.getInstance(myProject).findDirectory(moduleADir)!!
+    assertStructureEqual(psiDirectory, """
+      moduleA
+       File1.kt
+       File2.kt
+      """.trimIndent())
+  }
+}
+
+class ModulesInPackageViewTest : ModulesInProjectViewTestCase() {
+  
+  init {
+    myPrintInfo = Queryable.PrintInfo(arrayOf("id"), arrayOf("name"))
+  }
+
+  override fun setUp() {
+    packageViewPaneId = PackageViewPane.ID
+    super.setUp()
+  }
+
+  fun `test nested modules`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("module11") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+        dir("module12") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+      }
+      dir("module2") {
+        dir("module22") {
+          dir("main") {
+            dir("src") {}
+          }
+          dir("test") {
+            dir("src") {}
+          }
+        }
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module1"), root.findFileByRelativePath("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module11"), root.findFileByRelativePath("module1/module11")!!)
+    val module11main = createModule("module1.module11.main")
+    PsiTestUtil.addContentRoot(module11main, root.findFileByRelativePath("module1/module11/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module11main, root.findFileByRelativePath("module1/module11/main/src")!!)
+    val module11test = createModule("module1.module11.test")
+    PsiTestUtil.addContentRoot(module11test, root.findFileByRelativePath("module1/module11/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module11test, root.findFileByRelativePath("module1/module11/test/src")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module12"), root.findFileByRelativePath("module1/module12")!!)
+    val module12main = createModule("module1.module12.main")
+    PsiTestUtil.addContentRoot(module12main, root.findFileByRelativePath("module1/module12/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module12main, root.findFileByRelativePath("module1/module12/main/src")!!)
+    val module12test = createModule("module1.module12.test")
+    PsiTestUtil.addContentRoot(module12test, root.findFileByRelativePath("module1/module12/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module12test, root.findFileByRelativePath("module1/module12/test/src")!!)
+    PsiTestUtil.addContentRoot(createModule("module2"), root.findFileByRelativePath("module2")!!)
+    PsiTestUtil.addContentRoot(createModule("module2.module22"), root.findFileByRelativePath("module2/module22")!!)
+    val module22main = createModule("module2.module22.main")
+    PsiTestUtil.addContentRoot(module22main, root.findFileByRelativePath("module2/module22/main")!!)
+    PsiTestUtil.addSourceContentToRoots(module22main, root.findFileByRelativePath("module2/module22/main/src")!!)
+    val module22test = createModule("module2.module22.test")
+    PsiTestUtil.addContentRoot(module22test, root.findFileByRelativePath("module2/module22/test")!!)
+    PsiTestUtil.addSourceContentToRoots(module22test, root.findFileByRelativePath("module2/module22/test/src")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: module1
+      |  Module name=module1.module11
+      |  Module name=module1.module11.main
+      |  Module name=module1.module11.test
+      |  Module name=module1.module12
+      |  Module name=module1.module12.main
+      |  Module name=module1.module12.test
+      | Group: module2
+      |  Module name=module2.module22
+      |  Module name=module2.module22.main
+      |  Module name=module2.module22.test
+      |
+      """.trimMargin())
+  }
+
 }

@@ -19,16 +19,19 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.SmartCompletionDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author peter
- */
 class GroovyMembersGetter extends MembersGetter {
   private final PsiClassType myExpectedType;
 
@@ -42,7 +45,7 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   @Override
-  protected LookupElement createFieldElement(PsiField field) {
+  protected LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass) {
     if (!isSuitableType(field.getType())) {
       return null;
     }
@@ -51,7 +54,8 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   @Override
-  protected LookupElement createMethodElement(PsiMethod method) {
+  protected LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass) {
+    if (method.isConstructor()) return null; // TODO support suggesting constructors
     PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, myExpectedType);
     PsiType type = substitutor.substitute(method.getReturnType());
     if (!isSuitableType(type)) {

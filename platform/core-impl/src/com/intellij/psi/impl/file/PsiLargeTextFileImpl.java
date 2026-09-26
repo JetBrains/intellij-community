@@ -18,7 +18,9 @@ package com.intellij.psi.impl.file;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiLargeTextFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class PsiLargeTextFileImpl extends PsiPlainTextFileImpl implements PsiLargeTextFile {
   public PsiLargeTextFileImpl(FileViewProvider viewProvider) {
     super(viewProvider);

@@ -1,0 +1,10 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pkg-core"
+version = "0.1.0"
+description = "Core package providing shared API"
+requires-python = ">=3.11"
+dependencies = []

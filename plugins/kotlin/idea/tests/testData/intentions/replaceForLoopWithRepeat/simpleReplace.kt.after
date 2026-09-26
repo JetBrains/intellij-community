@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun foo() {
+    repeat(2) {
+        println("Hello World")
+    }
+}

@@ -1,0 +1,44 @@
+package pkg;
+
+import java.util.function.BiFunction;
+
+public class TestNestedCalls<K, V> {
+   public static void main(String[] var0) {
+   }// 8
+
+   V merge(V var1, BiFunction<? super V, ? super V, ? extends V> var2, V var3) {
+      Object var4 = var3 == null ? var1 : var2.apply(var3, var1);// 11
+      return var4 == null ? var3 : var4;// 12 13 15
+   }
+}
+
+class 'pkg/TestNestedCalls' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+   }
+
+   method 'merge (Ljava/lang/Object;Ljava/util/function/BiFunction;Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      9
+      1      9
+      4      9
+      8      9
+      9      9
+      a      9
+      b      9
+      10      9
+      11      9
+      12      10
+      13      10
+      14      10
+      17      10
+      19      10
+      1a      10
+   }
+}
+
+Lines mapping:
+8 <-> 7
+11 <-> 10
+12 <-> 11
+13 <-> 11
+15 <-> 11

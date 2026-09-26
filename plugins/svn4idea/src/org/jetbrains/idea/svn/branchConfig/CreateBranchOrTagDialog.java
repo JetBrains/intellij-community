@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -13,8 +13,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,46 +36,61 @@ import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 import static org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog.DECODED_URL_RENDERER;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
-  @NotNull private final File mySrcFile;
-  @NotNull private final Url mySrcURL;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final Project myProject;
+  private final @NotNull File mySrcFile;
+  private final @NotNull Url mySrcURL;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull Project myProject;
 
-  private TextFieldWithBrowseButton myToURLText;
+  private final TextFieldWithBrowseButton myToURLText;
 
-  private JTextArea myCommentText;
-  private JPanel myTopPanel;
-  private JRadioButton myWorkingCopyRadioButton;
-  private JRadioButton myRepositoryRadioButton;
-  private TextFieldWithBrowseButton myWorkingCopyField;
-  private TextFieldWithBrowseButton myRepositoryField;
-  private SvnRevisionPanel myRevisionPanel;
-  private ComboboxWithBrowseButton myBranchTagBaseComboBox;
-  @NotNull private final CollectionComboBoxModel<Url> myBranchTagBaseModel = new CollectionComboBoxModel<>();
-  private JTextField myBranchTextField;
-  private JRadioButton myBranchOrTagRadioButton;
-  private JRadioButton myAnyLocationRadioButton;
-  private JButton myProjectButton;
-  private JLabel myUseThisVariantToLabel;
-  private JBCheckBox mySwitchOnCreate;
+  private final JTextArea myCommentText;
+  private final JPanel myTopPanel;
+  private final JRadioButton myWorkingCopyRadioButton;
+  private final JRadioButton myRepositoryRadioButton;
+  private final TextFieldWithBrowseButton myWorkingCopyField;
+  private final TextFieldWithBrowseButton myRepositoryField;
+  private final SvnRevisionPanel myRevisionPanel;
+  private final ComboboxWithBrowseButton myBranchTagBaseComboBox;
+  private final @NotNull CollectionComboBoxModel<Url> myBranchTagBaseModel = new CollectionComboBoxModel<>();
+  private final JTextField myBranchTextField;
+  private final JRadioButton myBranchOrTagRadioButton;
+  private final JRadioButton myAnyLocationRadioButton;
+  private final JButton myProjectButton;
+  private final JLabel myUseThisVariantToLabel;
+  private final JBCheckBox mySwitchOnCreate;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.branch";
+  private static final @NonNls String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
   private final Url myWcRootUrl;
@@ -79,24 +101,185 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     super(vcs.getProject(), true);
     mySrcFile = file;
     myVcs = vcs;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myTopPanel = new JPanel();
+      myTopPanel.setLayout(new GridBagLayout());
+      final JBScrollPane jBScrollPane1 = new JBScrollPane();
+      GridBagConstraints gbc;
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 3;
+      gbc.gridwidth = 3;
+      gbc.weightx = 1.0;
+      gbc.weighty = 1.0;
+      gbc.anchor = GridBagConstraints.WEST;
+      gbc.fill = GridBagConstraints.BOTH;
+      gbc.insets = new Insets(2, 2, 2, 2);
+      myTopPanel.add(jBScrollPane1, gbc);
+      myCommentText = new JTextArea();
+      myCommentText.setColumns(25);
+      myCommentText.setLineWrap(true);
+      myCommentText.setRows(4);
+      myCommentText.setWrapStyleWord(true);
+      jBScrollPane1.setViewportView(myCommentText);
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(6, 4, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 0;
+      gbc.gridwidth = 3;
+      gbc.fill = GridBagConstraints.BOTH;
+      myTopPanel.add(panel1, gbc);
+      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                                                      "label.copy.from"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      myWorkingCopyRadioButton = new JRadioButton();
+      myWorkingCopyRadioButton.setSelected(true);
+      this.$$$loadButtonText$$$(myWorkingCopyRadioButton, this.$$$getMessageFromBundle$$$("messages/SvnBundle", "radio.copy.working.copy"));
+      panel1.add(myWorkingCopyRadioButton, new GridConstraints(0, 0, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myWorkingCopyField = new TextFieldWithBrowseButton();
+      panel1.add(myWorkingCopyField, new GridConstraints(1, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                         null, 2, false));
+      myRepositoryRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myRepositoryRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/SvnBundle", "radio.copy.repository.location"));
+      panel1.add(myRepositoryRadioButton, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myRepositoryField = new TextFieldWithBrowseButton();
+      panel1.add(myRepositoryField, new GridConstraints(4, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                        GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                        null, 2, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/SvnBundle", "label.copy.from.revision"));
+      panel1.add(label1,
+                 new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 2, false));
+      myRevisionPanel = new SvnRevisionPanel();
+      panel1.add(myRevisionPanel.$$$getRootComponent$$$(),
+                 new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,
+                                     false));
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(5, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myProjectButton = new JButton();
+      myProjectButton.setMargin(new Insets(2, 2, 2, 2));
+      myProjectButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages/SvnBundle", "tooltip.use.project.location"));
+      panel1.add(myProjectButton, new GridConstraints(4, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUseThisVariantToLabel = new JLabel();
+      this.$$$loadLabelText$$$(myUseThisVariantToLabel, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                        "dialog.create.branch.or.tag.from.working.copy.warning"));
+      panel1.add(myUseThisVariantToLabel,
+                 new GridConstraints(2, 0, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 2, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      gbc = new GridBagConstraints();
+      gbc.gridx = 0;
+      gbc.gridy = 1;
+      gbc.gridwidth = 3;
+      gbc.fill = GridBagConstraints.BOTH;
+      myTopPanel.add(panel2, gbc);
+      panel2.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                                                      "label.copy.to"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      myToURLText = new TextFieldWithBrowseButton();
+      panel2.add(myToURLText, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                  2, false));
+      final JLabel label2 = new JLabel();
+      this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/SvnBundle", "label.branch.base.url"));
+      panel2.add(label2,
+                 new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 2, false));
+      myBranchTagBaseComboBox = new ComboboxWithBrowseButton();
+      panel2.add(myBranchTagBaseComboBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                              GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                              null, null, 0, false));
+      final JLabel label3 = new JLabel();
+      this.$$$loadLabelText$$$(label3, this.$$$getMessageFromBundle$$$("messages/SvnBundle", "label.branch.name"));
+      panel2.add(label3,
+                 new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 2, false));
+      myBranchTextField = new JTextField();
+      myBranchTextField.setColumns(25);
+      myBranchTextField.setText(this.$$$getMessageFromBundle$$$("messages/SvnBundle", "value.new.branch.name"));
+      panel2.add(myBranchTextField, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                        GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                        new Dimension(90, -1), null, 0, false));
+      myBranchOrTagRadioButton = new JRadioButton();
+      myBranchOrTagRadioButton.setSelected(true);
+      this.$$$loadButtonText$$$(myBranchOrTagRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/SvnBundle", "radio.copy.to.branch.or.tag"));
+      panel2.add(myBranchOrTagRadioButton, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAnyLocationRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myAnyLocationRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/SvnBundle", "radio.copy.to.any.location"));
+      panel2.add(myAnyLocationRadioButton, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final TitledSeparator titledSeparator1 = new TitledSeparator();
+      titledSeparator1.setText(this.$$$getMessageFromBundle$$$("messages/SvnBundle", "label.copy.comment"));
+      gbc = new GridBagConstraints();
+      gbc.gridx = 2;
+      gbc.gridy = 2;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
+      myTopPanel.add(titledSeparator1, gbc);
+      mySwitchOnCreate = new JBCheckBox();
+      gbc = new GridBagConstraints();
+      gbc.gridx = 2;
+      gbc.gridy = 4;
+      gbc.anchor = GridBagConstraints.WEST;
+      myTopPanel.add(mySwitchOnCreate, gbc);
+      label2.setLabelFor(myBranchTagBaseComboBox);
+      label3.setLabelFor(myBranchTextField);
+      titledSeparator1.setLabelFor(myCommentText);
+      ButtonGroup buttonGroup;
+      buttonGroup = new ButtonGroup();
+      buttonGroup.add(myWorkingCopyRadioButton);
+      buttonGroup.add(myRepositoryRadioButton);
+      buttonGroup = new ButtonGroup();
+      buttonGroup.add(myBranchOrTagRadioButton);
+      buttonGroup.add(myAnyLocationRadioButton);
+    }
     myProject = vcs.getProject();
     setResizable(true);
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
-    myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
+    mySwitchOnCreate.setBorder(JBUI.Borders.emptyTop(10));
+    myProjectButton.setIcon(ProductIcons.getInstance().getProjectIcon());
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
 
     Info info = myVcs.getInfo(file);
-    if (info == null || info.getURL() == null) {
-      throw new VcsException("Can not find url for file: " + file.getPath());
+    if (info == null || info.getUrl() == null) {
+      throw new VcsException(message("error.can.not.find.url.for.file", file.getPath()));
     }
-    mySrcURL = info.getURL();
+    mySrcURL = info.getUrl();
 
-    myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
-                                               myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myWorkingCopyField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(message("dialog.title.select.working.copy.location"))
+      .withDescription(message("label.select.location.to.copy.from")));
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(final @NotNull DocumentEvent e) {
+        updateSwitchOnCreate();
         updateControls();
       }
     });
@@ -107,7 +290,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateToURL();
       }
     });
@@ -115,8 +299,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       try {
         Url url = createUrl(myToURLText.getText(), false);
         String dstName = mySrcURL.getTail();
-        Url destination = SelectLocationDialog
-          .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
+        Url destination = SelectLocationDialog.selectCopyDestination(myProject, removePathTail(url), dstName);
 
         if (destination != null) {
           myToURLText.setText(destination.toDecodedString());
@@ -127,9 +310,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
 
-    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
+    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (root == null) {
-      throw new VcsException("Can not find working copy for file: " + file.getPath());
+      throw new VcsException(message("error.can.not.find.working.copy.for.file", file.getPath()));
     }
     mySrcVirtualFile = root.getVirtualFile();
     myWcRootUrl = root.getUrl();
@@ -141,6 +324,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateBranchTagBases();
 
     init();
+    ActionListener switchOnCreateListener = e -> updateSwitchOnCreate();
+    myWorkingCopyRadioButton.addActionListener(switchOnCreateListener);
+    myRepositoryRadioButton.addActionListener(switchOnCreateListener);
     ActionListener listener = e -> updateControls();
     myWorkingCopyRadioButton.addActionListener(listener);
     myRepositoryRadioButton.addActionListener(listener);
@@ -148,7 +334,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myAnyLocationRadioButton.addActionListener(listener);
     updateControls();
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateToURL();
       }
     });
@@ -168,6 +355,78 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       updateControls();
     });
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myTopPanel; }
 
   private void updateBranchTagBases() {
     myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
@@ -194,9 +453,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  private void updateSwitchOnCreate() {
+    mySwitchOnCreate.setText(message("checkbox.switch.to.newly.created.branch.or.tag", getSourceFile()));
+  }
+
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
-    mySwitchOnCreate.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
     myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
     myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
@@ -204,15 +466,16 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myBranchTagBaseComboBox.setEnabled(myBranchOrTagRadioButton.isSelected());
     myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
     myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
-    myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
+    myUseThisVariantToLabel.setForeground(
+      myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : NamedColorUtil.getInactiveTextColor());
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return HELP_ID;
   }
 
+  @Override
   protected void init() {
     super.init();
     myWorkingCopyField.setText(mySrcFile.toString());
@@ -221,6 +484,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateControls();
 
     myWorkingCopyRadioButton.setSelected(true);
+    updateSwitchOnCreate();
   }
 
   public String getComment() {
@@ -241,8 +505,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private Url getRepositoryFieldUrl() {
+  private @Nullable Url getRepositoryFieldUrl() {
     try {
       return createUrl(myRepositoryField.getText(), false);
     }
@@ -251,14 +514,17 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBranchTextField;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.copyDialog";
   }
@@ -268,24 +534,22 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     ValidationInfo info = validateSource();
     return info != null ? info : validateDestination();
   }
 
-  @Nullable
-  private ValidationInfo validateSource() {
+  private @Nullable ValidationInfo validateSource() {
     if (myRepositoryRadioButton.isSelected()) {
       Url url = getRepositoryFieldUrl();
       if (url == null) {
-        return new ValidationInfo("Invalid repository location", myRepositoryField.getTextField());
+        return new ValidationInfo(message("dialog.message.invalid.repository.location"), myRepositoryField.getTextField());
       }
 
       Revision revision = getRevision();
       if (!revision.isValid() || revision.isLocal()) {
-        return new ValidationInfo(message("create.branch.invalid.revision.error"), myRevisionPanel.getRevisionTextField());
+        return new ValidationInfo(message("dialog.message.invalid.revision"), myRevisionPanel.getRevisionTextField());
       }
 
       mySource = Target.on(url, revision);
@@ -297,23 +561,22 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
-  private ValidationInfo validateDestination() {
+  private @Nullable ValidationInfo validateDestination() {
     if (myBranchOrTagRadioButton.isSelected()) {
       Url branchLocation = myBranchTagBaseModel.getSelected();
       if (branchLocation == null) {
-        return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
+        return new ValidationInfo(message("dialog.message.no.branch.base.location.selected"), myBranchTagBaseComboBox.getComboBox());
       }
 
       if (isEmptyOrSpaces(myBranchTextField.getText())) {
-        return new ValidationInfo("Branch name is empty", myBranchTextField);
+        return new ValidationInfo(message("dialog.message.branch.name.is.empty"), myBranchTextField);
       }
 
       try {
         myDestination = branchLocation.appendPath(myBranchTextField.getText(), false);
       }
       catch (SvnBindException e) {
-        return new ValidationInfo("Invalid branch name", myBranchTextField);
+        return new ValidationInfo(message("dialog.message.invalid.branch.name"), myBranchTextField);
       }
     }
     else {
@@ -321,33 +584,26 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         myDestination = createUrl(myToURLText.getText(), false);
       }
       catch (SvnBindException e) {
-        return new ValidationInfo("Invalid branch url", myToURLText.getTextField());
+        return new ValidationInfo(message("dialog.message.invalid.branch.url"), myToURLText.getTextField());
       }
     }
 
     return null;
   }
 
-  public boolean isCopyFromWorkingCopy() {
-    return myWorkingCopyRadioButton.isSelected();
-  }
-
   public boolean isSwitchOnCreate() {
     return mySwitchOnCreate.isSelected();
   }
 
-  @Nullable
-  public Target getSource() {
+  public @Nullable Target getSource() {
     return mySource;
   }
 
-  @NotNull
-  public File getSourceFile() {
-    return new File(myWorkingCopyField.getText());
+  public @NotNull File getSourceFile() {
+    return myRepositoryRadioButton.isSelected() ? mySrcFile : new File(myWorkingCopyField.getText());
   }
 
-  @Nullable
-  public Url getDestination() {
+  public @Nullable Url getDestination() {
     return myDestination;
   }
 }

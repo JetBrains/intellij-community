@@ -15,40 +15,41 @@
  */
 package com.intellij.java.codeInsight.folding;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class JavaFoldingGotoTest extends JavaCodeInsightFixtureTestCase {
 
   public void testIDEA127145() {
     PsiFile file = myFixture.addFileToProject("Program.java",
-                                              "import java.io.InputStream;\n" +
-                                              "import java.util.HashMap;\n" +
-                                              "import java.util.Map;\n" +
-                                              "\n" +
-                                              "class Program {\n" +
-                                              "  private static InputStream getFile(String name, Map<String, Object> args) {\n" +
-                                              "    return Program.class.getResourceAsStream(name);\n" +
-                                              "  }\n" +
-                                              "\n" +
-                                              "  public static void main(String[] args) {\n" +
-                                              "    // Ctrl + B or Ctrl + Left Mouse Button work correctly for following string:\n" +
-                                              "    final String name = \"file.sql\";\n" +
-                                              "    // But it jumps only to folder in following case:\n" +
-                                              "    final InputStream inputStream = getFile(\"dir/fil<caret>e.sql\", new HashMap<String, Object>());\n" +
-                                              "  }\n" +
-                                              "}");
+                                              """
+                                                import java.io.InputStream;
+                                                import java.util.HashMap;
+                                                import java.util.Map;
+
+                                                class Program {
+                                                  private static InputStream getFile(String name, Map<String, Object> args) {
+                                                    return Program.class.getResourceAsStream(name);
+                                                  }
+
+                                                  public static void main(String[] args) {
+                                                    // Ctrl + B or Ctrl + Left Mouse Button work correctly for following string:
+                                                    final String name = "file.sql";
+                                                    // But it jumps only to folder in following case:
+                                                    final InputStream inputStream = getFile("dir/fil<caret>e.sql", new HashMap<String, Object>());
+                                                  }
+                                                }""");
 
     PsiFile fileSql = myFixture.addFileToProject("dir/file.sql", "select 1;");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     Editor editor = myFixture.getEditor();
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(editor);
+    EditorTestUtil.buildInitialFoldingsInBackground(editor);
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.rebuild();
     myFixture.doHighlighting();

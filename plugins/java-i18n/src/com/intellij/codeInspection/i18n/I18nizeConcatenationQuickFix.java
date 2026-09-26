@@ -1,160 +1,168 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiConcatenationUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PartiallyKnownString;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIfExpression;
+import org.jetbrains.uast.UParenthesizedExpression;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
-  @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
+public final class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolyadicExpression> {
+  public static final @NonNls String PARAMETERS_OPTION_KEY = "PARAMETERS";
+
+  I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
+    super(info);
+  }
 
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
-    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    UPolyadicExpression concatenation = getEnclosingLiteral(psiFile, editor);
     if (concatenation != null) return;
-    String message = CodeInsightBundle.message("quickfix.i18n.concatentation.error");
+    String message = JavaI18nBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
   @Override
-  public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
-    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
-    PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
-    if (literalExpression == null) return null;
-    return createDialog(project, psiFile, literalExpression);
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return CodeInsightBundle.message("quickfix.i18n.concatentation");
-  }
-
-  @Override
-  protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,
-                                           @NotNull final Editor editor,
-                                           @Nullable PsiLiteralExpression literalExpression,
-                                           String i18nizedText) throws IncorrectOperationException {
-    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
-    PsiExpression expression = JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
-    return concatenation.replace(expression);
-  }
-
-  private static String composeParametersText(final List<PsiExpression> args) {
-    final StringBuilder result = new StringBuilder();
-    for (Iterator<PsiExpression> iterator = args.iterator(); iterator.hasNext();) {
-      PsiExpression psiExpression = iterator.next();
-      result.append(psiExpression.getText());
-      if (iterator.hasNext()) {
-        result.append(",");
-      }
-    }
-    return result.toString();
-  }
-
-  @Override
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
-    PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
-    StringBuilder formatString = new StringBuilder();
-    final List<PsiExpression> args = new ArrayList<>();
-    try {
-      PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString.toString(), null, true, true) {
-      @Override
-      @Nullable
-      protected String getTemplateName() {
-        return myResourceBundleManager.getConcatenationTemplateName();
-      }
-
-      @Override
-      protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
-                                    final PsiLiteralExpression literalExpression) {
-        return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
-      }
-
-      @Override
-      public PsiExpression[] getParameters() {
-        return args.toArray(PsiExpression.EMPTY_ARRAY);
-      }
-
-      @Override
-      protected void addAdditionalAttributes(final Map<String, String> attributes) {
-        attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
-      }
-    };
-  }
-
-  @Nullable
-  private static PsiPolyadicExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
+  public UPolyadicExpression getEnclosingLiteral(PsiFile file, Editor editor) {
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
     return getEnclosingLiteralConcatenation(elementAt);
   }
 
-  @Nullable
-  static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
-    PsiPolyadicExpression element = PsiTreeUtil.getParentOfType(psiElement, PsiPolyadicExpression.class, false, PsiMember.class);
-    if (element == null) return null;
-
-    PsiPolyadicExpression concatenation = null;
-    boolean stringLiteralOccured = false;
-    while (true) {
-      if (element.getOperationTokenType() != JavaTokenType.PLUS) return concatenation;
-      for (PsiExpression operand : element.getOperands()) {
-        stringLiteralOccured |= operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).getValue() instanceof String;
-        if (stringLiteralOccured) {
-          break;
-        }
-      }
-
-      if (stringLiteralOccured) {
-        concatenation = element;
-      }
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPolyadicExpression)) return concatenation;
-      element = (PsiPolyadicExpression) parent;
-    }
+  @Override
+  public JavaI18nizeQuickFixDialog<UPolyadicExpression> createDialog(Project project, Editor editor, PsiFile psiFile) {
+    UPolyadicExpression concatenation = getEnclosingLiteral(psiFile, editor);
+    return concatenation == null ? null : createDialog(project, psiFile, concatenation);
   }
 
-  private static PsiLiteralExpression getContainingLiteral(final PsiPolyadicExpression concatenation) {
-    for (PsiExpression operand : concatenation.getOperands()) {
-      if (operand instanceof PsiLiteralExpression) {
-        return (PsiLiteralExpression)operand;
+  @Override
+  public @NotNull String getFamilyName() {
+    return JavaI18nBundle.message("quickfix.i18n.concatentation");
+  }
+
+  @Override
+  protected void doReplacement(final @NotNull PsiFile psiFile,
+                               final @NotNull Editor editor,
+                               @Nullable UPolyadicExpression literalExpression,
+                               String i18nizedText) throws IncorrectOperationException {
+    @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
+    assert concatenation != null;
+    UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(psiFile.getLanguage());
+    doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument(), generationPlugin);
+  }
+
+  @Override
+  protected JavaI18nizeQuickFixDialog<UPolyadicExpression> createDialog(final Project project,
+                                                                        final PsiFile context,
+                                                                        @NotNull UPolyadicExpression concatenation) {
+    final List<UExpression> args = new ArrayList<>();
+    String formatString = JavaI18nUtil
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
+
+    return new JavaI18nizeQuickFixDialog<>(project, context, concatenation, formatString, getCustomization(formatString), true, true) {
+      @Override
+      protected @Nullable String getTemplateName() {
+        return myResourceBundleManager.getConcatenationTemplateName();
       }
+
+      @Override
+      protected String generateText(final I18nizedTextGenerator textGenerator,
+                                    final @NotNull String propertyKey,
+                                    final PropertiesFile propertiesFile,
+                                    final PsiElement context) {
+        return textGenerator.getI18nizedConcatenationText(
+          propertyKey,
+          JavaI18nUtil.composeParametersText(args),
+          propertiesFile,
+          concatenation.getSourcePsi()
+        );
+      }
+
+      @Override
+      public UExpression[] getParameters() {
+        return args.toArray(new UExpression[0]);
+      }
+
+      @Override
+      protected void addAdditionalAttributes(final Map<String, String> attributes) {
+        attributes.put(PARAMETERS_OPTION_KEY, JavaI18nUtil.composeParametersText(args));
+      }
+    };
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(descriptor.getPsiElement());
+    if (concatenation == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final List<UExpression> args = new ArrayList<>();
+    @NlsSafe
+    String string = JavaI18nUtil
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
+    return new IntentionPreviewInfo.Html(new HtmlBuilder().append(JavaI18nBundle.message("i18n.quickfix.preview.description"))
+                                           .br().append(HtmlChunk.text(string).code()).toFragment());
+  }
+
+
+  public static @Nullable UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+    return getEnclosingLiteralConcatenation(UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class));
+  }
+
+  public static @Nullable UPolyadicExpression getEnclosingLiteralConcatenation(@Nullable UExpression literalExpression) {
+    if (literalExpression == null) {
+      return null;
+    }
+    UExpression topExpression = UastUtils.getParentOfType(literalExpression, UPolyadicExpression.class, false);
+    UStringConcatenationsFacade concatenation = null;
+    while (topExpression != null) {
+      UStringConcatenationsFacade nextConcatenation = UStringConcatenationsFacade.createFromTopConcatenation(topExpression);
+      if (nextConcatenation != null) {
+        concatenation = nextConcatenation;
+      }
+      UElement parent = topExpression.getUastParent();
+      if (parent instanceof UParenthesizedExpression ||
+          parent instanceof UIfExpression ||
+          parent instanceof UPolyadicExpression && !UastExpressionUtils.isAssignment(parent)) {
+        topExpression = (UExpression)parent;
+      }
+      else {
+        break;
+      }
+    }
+
+    if (concatenation != null) {
+      PartiallyKnownString pks = concatenation.asPartiallyKnownString();
+      if (pks.getSegments().size() == 1) {
+        return null;
+      }
+      return (UPolyadicExpression)concatenation.getRootUExpression();
     }
     return null;
   }

@@ -1,0 +1,31 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.fir.highlighter
+
+import com.intellij.testFramework.LexerTestCase
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingLexer
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
+
+@RunWith(JUnit38ClassRunner::class)
+class KotlinHighlightingLexerTest : LexerTestCase() {
+    override fun createLexer() = KotlinHighlightingLexer()
+
+    fun testCharLiteralValidEscape() {
+        doTest(
+            "'\\n'", """CHARACTER_LITERAL (''')
+                           |VALID_STRING_ESCAPE_TOKEN ('\n')
+                           |CHARACTER_LITERAL (''')""".trimMargin()
+        )
+    }
+
+    fun testCharLiteralInvalidEscape() {
+        doTest(
+            "'\\q'", """CHARACTER_LITERAL (''')
+                           |INVALID_CHARACTER_ESCAPE_TOKEN ('\q')
+                           |CHARACTER_LITERAL (''')""".trimMargin()
+        )
+    }
+
+    override fun getDirPath() = throw UnsupportedOperationException()
+}

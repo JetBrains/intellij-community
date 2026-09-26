@@ -1,0 +1,3 @@
+<node text="Object (java.lang)">
+  <node text="Nested (com.mypackage.Outer.Middle)" base="true"/>
+</node>

@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  * A special change representing a change in a merge commit.
  * It contains a list of changes to each parent that were merged.
  */
+@ApiStatus.Internal
 public abstract class MergedChange extends Change {
   public MergedChange(@NotNull Change change) {
     super(change.getBeforeRevision(), change.getAfterRevision(), change.getFileStatus());
@@ -33,4 +35,21 @@ public abstract class MergedChange extends Change {
    * Returns a list of changes that were merged in a merge commit.
    */
   public abstract List<Change> getSourceChanges();
+
+  /**
+   * A simple implementation with a merge change and a list of source changes inside.
+   */
+  public static class SimpleMergedChange extends MergedChange {
+    private final List<Change> mySourceChanges;
+
+    public SimpleMergedChange(@NotNull Change mergedChange, @NotNull List<Change> sourceChanges) {
+      super(mergedChange);
+      mySourceChanges = sourceChanges;
+    }
+
+    @Override
+    public List<Change> getSourceChanges() {
+      return mySourceChanges;
+    }
+  }
 }

@@ -1,0 +1,11 @@
+// "Replace 'emptySet()' with 'mutableSetOf()'" "true"
+// PRIORITY: HIGH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+
+fun foo() {
+    val set: MutableSet<Int>? =<caret> emptySet()
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithMutableCollectionFactoryFix

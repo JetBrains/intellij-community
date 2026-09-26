@@ -1,0 +1,22 @@
+// FILE: includedBuild1/gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "includedBuild1/build.gradle.kts libs.plugins.kotlin"
+[plugins]
+kotl<caret>in = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+
+[versions]
+kotlin = "1.9.24"
+
+// FILE: includedBuild1/build.gradle.kts
+plugins {
+    id("java")
+    alias(libs.plugins.kotlin) apply false
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+}
+
+// FILE: settings.gradle.kts
+// this is the settings file for the root build of a composite build
+includeBuild("includedBuild1")

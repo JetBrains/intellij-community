@@ -1,0 +1,2 @@
+version = "0.8.*"
+upstream-repository = "https://github.com/roy-ht/editdistance"

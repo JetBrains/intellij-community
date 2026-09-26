@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
@@ -25,42 +25,42 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
     @Storage("other.xml")}
 )
 public class SvnApplicationSettings implements PersistentStateComponent<SvnApplicationSettings.ConfigurationBean> {
-  private SvnFileSystemListener myVFSHandler;
-  private int mySvnProjectCount;
   private LimitedStringsList myLimitedStringsList;
 
   public static class ConfigurationBean {
     public List<String> myCheckoutURLs = new ArrayList<>();
     public List<String> myTypedURLs = new ArrayList<>();
-    public String mySvnCommandLine = "svn";
+    public @NlsSafe String mySvnCommandLine = "svn";
   }
 
   private ConfigurationBean myConfigurationBean;
 
   public static SvnApplicationSettings getInstance() {
-    return ServiceManager.getService(SvnApplicationSettings.class);
+    return ApplicationManager.getApplication().getService(SvnApplicationSettings.class);
   }
 
   public SvnApplicationSettings() {
     myConfigurationBean = new ConfigurationBean();
   }
 
+  @Override
   public ConfigurationBean getState() {
     myConfigurationBean.myTypedURLs.clear();
     myConfigurationBean.myTypedURLs.addAll(getTypedList().getList());
     return myConfigurationBean;
   }
 
+  @Override
   public void loadState(@NotNull ConfigurationBean object) {
     myConfigurationBean = object;
     getTypedList();
   }
 
-  public void setCommandLinePath(final String path) {
+  public void setCommandLinePath(@NlsSafe String path) {
     myConfigurationBean.mySvnCommandLine = path;
   }
 
-  public String getCommandLinePath() {
+  public @NlsSafe String getCommandLinePath() {
     return myConfigurationBean.mySvnCommandLine;
   }
 
@@ -75,23 +75,6 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   private void checkFillTypedFromCheckout() {
     if (myConfigurationBean.myTypedURLs.isEmpty() && (! myConfigurationBean.myCheckoutURLs.isEmpty())) {
       myConfigurationBean.myTypedURLs.addAll(myConfigurationBean.myCheckoutURLs);
-    }
-  }
-
-  public void svnActivated() {
-    if (myVFSHandler == null) {
-      myVFSHandler = new SvnFileSystemListener();
-    }
-    mySvnProjectCount++;
-  }
-
-  public void svnDeactivated() {
-    mySvnProjectCount--;
-    if (mySvnProjectCount == 0) {
-      Disposer.dispose(myVFSHandler);
-      myVFSHandler = null;
-      // todo what should be done instead?
-      //SVNSSHSession.shutdown();
     }
   }
 

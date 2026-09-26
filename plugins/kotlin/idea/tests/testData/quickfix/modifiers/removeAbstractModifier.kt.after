@@ -1,0 +1,10 @@
+// "Make 'abstract()' not abstract" "true"
+// K2_ERROR: MISSING_CONSTRUCTOR_KEYWORD
+// K2_ERROR: WRONG_MODIFIER_TARGET
+
+class A {
+
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

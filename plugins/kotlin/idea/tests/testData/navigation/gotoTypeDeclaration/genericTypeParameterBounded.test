@@ -1,0 +1,5 @@
+// FILE: before.kt
+fun <T : CharSequence> echo(value: T): T = va<caret>lue
+
+// FILE: after.kt
+fun <<caret>T : CharSequence> echo(value: T): T = value

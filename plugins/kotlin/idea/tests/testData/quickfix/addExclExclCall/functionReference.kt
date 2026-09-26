@@ -1,0 +1,11 @@
+// "Add non-null asserted (foo!!) call" "true"
+// K2_ERROR: UNSAFE_CALLABLE_REFERENCE
+class Foo {
+    fun f() = 1
+}
+
+fun test(foo: Foo?) {
+    val f = foo::f<caret>
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

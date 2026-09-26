@@ -1,0 +1,92 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.impl.poetry.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.python.community.impl.poetry.backend` end
+
+### auto-generated section `build intellij.python.community.impl.poetry.backend` start
+create_kotlinc_options(
+    name = "custom_backend",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.community.impl.poetry.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//python/python-poetry/common",
+        "//python/openapi:community",
+        "//python/python-pyproject:pyproject",
+        "//platform/util/base/multiplatform",
+        "//python/common",
+        "//platform/util/jdom",
+        "//python/python-sdk/backend",
+        "//platform/projectModel-api:projectModel",
+        "//python/python-pytools/backend",
+        "//platform/core-api:core",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.community.impl.poetry.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//python/python-poetry/common:common_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//python/common:common_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.impl.poetry.backend` end
+
+### auto-generated section `iml intellij.python.community.impl.poetry.backend` start
+exports_files(
+    [
+        "intellij.python.community.impl.poetry.backend.iml",
+        "resources/intellij.python.community.impl.poetry.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.impl.poetry.backend` end

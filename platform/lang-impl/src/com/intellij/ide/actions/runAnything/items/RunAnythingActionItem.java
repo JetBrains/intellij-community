@@ -1,31 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
 
-public class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBase {
+@ApiStatus.Internal
+public final class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBase {
+  private final @NotNull T myAction;
+
   public RunAnythingActionItem(@NotNull T action, @NotNull String fullCommand, @Nullable Icon icon) {
     super(fullCommand, icon);
+    myAction = action;
   }
 
-  @NotNull
-  public static String getCommand(@NotNull AnAction action, @NotNull String command) {
-    return command + " " + (action.getTemplatePresentation().getText() != null ? action.getTemplatePresentation().getText() : "undefined");
+  public static @NotNull String getCommand(@NotNull AnAction action, @NotNull String command) {
+    return command + " " + (action.getTemplatePresentation().getText() != null ? action.getTemplatePresentation().getText() : "undefined"); //NON-NLS
   }
 
-  @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
-    SimpleColoredComponent component = new SimpleColoredComponent();
-    component.append(getCommand());
-    setupIcon(component, myIcon);
-
-    return component;
+  public @Nullable String getDescription() {
+    return myAction.getTemplatePresentation().getDescription();
   }
 }

@@ -1,0 +1,150 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "extensions-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":extensions-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.syntax.extensions.tests`
+
+### auto-generated section `dev intellij.platform.syntax.extensions` start
+content_module_jar(module = ":extensions")
+### auto-generated section `dev intellij.platform.syntax.extensions` end
+
+### auto-generated section `build intellij.platform.syntax.extensions` start
+create_kotlinc_options(
+    name = "custom_extensions",
+    jvm_target = "8",
+    x_no_call_assertions = True,
+    x_no_param_assertions = True,
+)
+
+jvm_provided_library(
+    name = "platform_multiplatformSupport_provided",
+    lib = "//platform/multiplatformSupport",
+)
+
+jvm_library(
+    name = "extensions",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_extensions",
+    module_name = "intellij.platform.syntax.extensions",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//platform/syntax/syntax-api:syntax",
+        ":platform_multiplatformSupport_provided",
+    ],
+)
+
+jvm_library(
+    name = "extensions_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_extensions",
+    module_name = "intellij.platform.syntax.extensions",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":extensions",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.syntax.extensions` end
+
+### auto-generated section `iml intellij.platform.syntax.extensions` start
+exports_files(
+    [
+        "intellij.platform.syntax.extensions.iml",
+        "resources/intellij.platform.syntax.extensions.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.syntax.extensions` end
+
+### auto-generated section `build intellij.platform.syntax.extensions.tests` start
+jvm_library(
+    name = "extensions-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.syntax.extensions.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "extensions-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/syntax/syntax-extensions:extensions",
+        "//platform/syntax/syntax-extensions:extensions_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":extensions-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.syntax.extensions.tests` end
+
+### auto-generated section `iml intellij.platform.syntax.extensions.tests` start
+exports_files(
+    [
+        "intellij.platform.syntax.extensions.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.syntax.extensions.tests` end

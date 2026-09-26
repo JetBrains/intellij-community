@@ -41,7 +41,7 @@ class Main {
 
         A a = y.get();
         B b = y.get();
-        <error descr="Incompatible types. Found: 'capture<? extends B>', required: 'C'">C c = y.get();</error>
+        C c = y.<error descr="Incompatible types. Found: 'capture<? extends B>', required: 'C'">get</error>();
     }
 
     <M> M[] m(M m) {
@@ -63,5 +63,16 @@ class RecursiveBound {
 
     void test(C<? super Integer> c) {
         var x = c;
+    }
+}
+
+class RecursiveBound2 {
+    public static <T extends Comparable<T>> void merge(T array) {
+        var auxArray = getGenericArrayInstance();
+        auxArray = array;
+    }
+
+    private static <P extends Comparable<P>> P getGenericArrayInstance() {
+        return null;
     }
 }

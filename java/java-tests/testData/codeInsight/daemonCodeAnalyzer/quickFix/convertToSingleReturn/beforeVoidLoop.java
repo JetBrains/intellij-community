@@ -1,0 +1,11 @@
+// "Transform method body to single exit-point form" "true-preview"
+class Test {
+    void <caret>test2(String[] arr) {
+        for(String s : arr) {
+            if (s.isEmpty()) {
+                System.out.println(s);
+                return;
+            }
+        }
+    }
+}

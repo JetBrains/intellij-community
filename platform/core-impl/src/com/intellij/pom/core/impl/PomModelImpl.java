@@ -1,31 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
@@ -33,22 +25,28 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
-import com.intellij.psi.*;
+import com.intellij.pom.wrappers.PsiEventWrapperAspect;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.ChangedPsiRangeUtil;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.DiffLog;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.BlockSupportImpl;
-import com.intellij.psi.impl.DiffLog;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IReparseableLeafElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -56,60 +54,36 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private final Project myProject;
-  private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<>();
-  private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<>();
-  private final Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<>();
+  private final TreeAspect myTreeAspect;
+  private final PsiEventWrapperAspect myPsiAspect;
   private final Collection<PomModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public PomModelImpl(Project project) {
+  public PomModelImpl(@NotNull Project project) {
     myProject = project;
+    myTreeAspect = TreeAspect.getInstance(project);
+    myPsiAspect = new PsiEventWrapperAspect(myTreeAspect);
   }
 
   @Override
   public <T extends PomModelAspect> T getModelAspect(@NotNull Class<T> aClass) {
     //noinspection unchecked
-    return (T)myAspects.get(aClass);
-  }
-
-  @Override
-  public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<PomModelAspect> dependencies) {
-    myAspects.put(aClass, aspect);
-    final Iterator<PomModelAspect> iterator = dependencies.iterator();
-    final List<PomModelAspect> deps = new ArrayList<>();
-    // todo: reorder dependencies
-    while (iterator.hasNext()) {
-      final PomModelAspect depend = iterator.next();
-      deps.addAll(getAllDependencies(depend));
-    }
-    deps.add(aspect); // add self to block same aspect transactions from event processing and update
-    for (final PomModelAspect pomModelAspect : deps) {
-      final List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(pomModelAspect);
-      if (pomModelAspects != null) {
-        pomModelAspects.add(aspect);
-      }
-      else {
-        myInvertedIncidence.put(pomModelAspect, new ArrayList<>(Collections.singletonList(aspect)));
-      }
-    }
-    myIncidence.put(aspect, deps);
-  }
-
-  //private final Pair<PomModelAspect, PomModelAspect> myHolderPair = new Pair<PomModelAspect, PomModelAspect>(null, null);
-  private List<PomModelAspect> getAllDependencies(PomModelAspect aspect){
-    List<PomModelAspect> pomModelAspects = myIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.emptyList();
-  }
-
-  private List<PomModelAspect> getAllDependants(PomModelAspect aspect){
-    List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.emptyList();
+    return myTreeAspect.getClass().equals(aClass) ? (T)myTreeAspect :
+           myPsiAspect.getClass().equals(aClass) ? (T)myPsiAspect :
+           null;
   }
 
   @Override
@@ -118,7 +92,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
+  public void addModelListener(final @NotNull PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
     Disposer.register(parentDisposable, () -> removeModelListener(listener));
   }
@@ -129,27 +103,28 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private final ThreadLocal<Stack<Pair<PomModelAspect, PomTransaction>>> myBlockedAspects = ThreadLocal.withInitial(Stack::new);
+  private final ThreadLocal<Stack<PomTransaction>> myTransactionStack = ThreadLocal.withInitial(Stack::new);
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    final PomModelAspect aspect = transaction.getTransactionAspect();
-    ProgressManager.getInstance().executeNonCancelableSection(()->{
-      startTransaction(transaction);
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      PsiElement changeScope = transaction.getChangeScope();
+      PsiFile containingFileByTree = getContainingFileByTree(changeScope);
+      Document document = startTransaction(transaction, containingFileByTree);
 
-      Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
+      PomTransaction block = getBlockingTransaction(changeScope);
       if (block != null) {
-        block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
+        block.getAccumulatedEvent().beforeNestedTransaction();
       }
 
       List<Throwable> throwables = new ArrayList<>(0);
       DebugUtil.performPsiModification(null, ()->{
         try{
-          Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
-          blockedAspects.push(Pair.create(aspect, transaction));
+          Stack<PomTransaction> blockedAspects = myTransactionStack.get();
+          blockedAspects.push(transaction);
 
           final PomModelEvent event;
           try{
@@ -167,22 +142,14 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
             blockedAspects.pop();
           }
           if(block != null){
-            block.getSecond().getAccumulatedEvent().merge(event);
+            block.getAccumulatedEvent().merge(event);
             return;
           }
 
-          { // update
-            final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-            final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
-            for (final PomModelAspect pomModelAspect : changedAspects) {
-              dependants.addAll(getAllDependants(pomModelAspect));
-            }
-            for (final PomModelAspect modelAspect : dependants) {
-              if (!changedAspects.contains(modelAspect)) {
-                modelAspect.update(event);
-              }
-            }
+          if (event.getChangedAspects().contains(myTreeAspect)) {
+            updateDependentAspects(event);
           }
+
           for (final PomModelListener listener : myListeners) {
             final Set<PomModelAspect> changedAspects = event.getChangedAspects();
             for (PomModelAspect modelAspect : changedAspects) {
@@ -201,7 +168,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         }
         finally {
           try {
-            commitTransaction(transaction);
+            if (containingFileByTree != null) {
+              commitTransaction(containingFileByTree, document);
+            }
           }
           catch (ProcessCanceledException e) {
             throw e;
@@ -215,34 +184,28 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     });
   }
 
-  @Nullable
-  private Pair<PomModelAspect,PomTransaction> getBlockingTransaction(final PomModelAspect aspect, PomTransaction transaction) {
-    final List<PomModelAspect> allDependants = getAllDependants(aspect);
-    for (final PomModelAspect pomModelAspect : allDependants) {
-      Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
-      ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = blockedAspects.listIterator(blockedAspects.size());
-      while (blocksIterator.hasPrevious()) {
-        final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
-        if (pomModelAspect == pair.getFirst() && // aspect dependence
-            PsiTreeUtil.isAncestor(getContainingFileByTree(pair.getSecond().getChangeScope()), transaction.getChangeScope(), false) // same file
-          ) {
-          return pair;
-        }
+  protected void updateDependentAspects(PomModelEvent event) {
+    myPsiAspect.update(event);
+  }
+
+  private @Nullable PomTransaction getBlockingTransaction(PsiElement changeScope) {
+    Stack<PomTransaction> blockedAspects = myTransactionStack.get();
+    ListIterator<PomTransaction> iterator = blockedAspects.listIterator(blockedAspects.size());
+    while (iterator.hasPrevious()) {
+      PomTransaction transaction = iterator.previous();
+      if (PsiTreeUtil.isAncestor(getContainingFileByTree(transaction.getChangeScope()), changeScope, false)) {
+        return transaction;
       }
     }
     return null;
   }
 
-  private void commitTransaction(final PomTransaction transaction) {
-    final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+  private void commitTransaction(@NotNull PsiFile containingFileByTree, @Nullable Document document) {
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
-    final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
-    Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
 
-    boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
-                           ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
-    boolean isPhysicalPsiChange = containingFileByTree != null && !isFromCommit && !synchronizer.isIgnorePsiEvents();
+    boolean isFromCommit = manager.isCommitInProgress();
+    boolean isPhysicalPsiChange = !isFromCommit && !synchronizer.isIgnorePsiEvents() && !InternalPsiVersioning.isInsideVersioningButNotLocks();
     if (isPhysicalPsiChange) {
       reparseParallelTrees(containingFileByTree, synchronizer);
     }
@@ -252,7 +215,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final int oldLength = containingFileByTree.getTextLength();
       docSynced = synchronizer.commitTransaction(document);
       if (docSynced) {
-        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
+        sendAfterChildrenChangedEvent(containingFileByTree, oldLength);
       }
     }
 
@@ -263,7 +226,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void reparseParallelTrees(PsiFile changedFile, PsiToDocumentSynchronizer synchronizer) {
-    List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
+    List<PsiFile> allFiles = getAllFiles(changedFile);
     if (allFiles.size() <= 1) {
       return;
     }
@@ -284,85 +247,77 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
-  @Nullable
-  private Runnable reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
+  private static @NotNull @Unmodifiable List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
+    VirtualFile file = changedFile.getVirtualFile();
+    if (file == null) {
+      return changedFile.getViewProvider().getAllFiles();
+    }
+    FileManager fileManager = ((PsiManagerEx)changedFile.getManager()).getFileManager();
+    List<FileViewProvider> providers = fileManager.findCachedViewProviders(file);
+    return ContainerUtil.flatMap(providers, p -> p.getAllFiles());
+  }
+
+  /**
+   * Reparses the file and returns a runnable which actually changes the PSI structure to match the new text.
+   */
+  @ApiStatus.Internal
+  public @Nullable Runnable reparseFile(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
     TextRange changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return null;
 
-    Runnable reparseLeaf = tryReparseOneLeaf(treeElement, newText, changedPsiRange);
-    if (reparseLeaf != null) return reparseLeaf;
-
-    final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, treeElement, changedPsiRange, newText, new EmptyProgressIndicator(),
-                                                                         treeElement.getText());
-    return () -> runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
+    ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator());
+    DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, treeElement, changedPsiRange, newText, indicator,
+                                                                   treeElement.getText());
+    return () -> runTransaction(new PomTransactionBase(file) {
       @Override
-      public PomModelEvent runInner() throws IncorrectOperationException {
-        return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
+      public @NotNull PomModelEvent runInner() throws IncorrectOperationException {
+        return new PomModelEvent(PomModelImpl.this, log.performActualPsiChange(file));
       }
     });
   }
 
-  @Nullable
-  private static Runnable tryReparseOneLeaf(@NotNull FileElement treeElement, @NotNull CharSequence newText, @NotNull TextRange changedPsiRange) {
-    final LeafElement leaf = treeElement.findLeafElementAt(changedPsiRange.getStartOffset());
-    IElementType leafType = leaf == null ? null : leaf.getElementType();
-    if (!(leafType instanceof IReparseableLeafElementType)) return null;
-
-    CharSequence newLeafText = getLeafChangedText(leaf, treeElement, newText, changedPsiRange);
-    //noinspection unchecked
-    final ASTNode copy = newLeafText == null ? null : ((IReparseableLeafElementType)leafType).reparseLeaf(leaf, newLeafText);
-    return copy == null ? null : () -> leaf.getTreeParent().replaceChild(leaf, copy);
-  }
-
-  private static CharSequence getLeafChangedText(LeafElement leaf, FileElement treeElement, CharSequence newFileText, TextRange changedPsiRange) {
-    if (leaf.getTextRange().getEndOffset() >= changedPsiRange.getEndOffset()) {
-      int leafStart = leaf.getTextRange().getStartOffset();
-      int newLeafEnd = newFileText.length() - (treeElement.getTextLength() - leaf.getTextRange().getEndOffset());
-      if (newLeafEnd > leafStart) {
-        return newFileText.subSequence(leafStart, newLeafEnd);
-      }
-    }
-    return null;
-  }
-
-  private void startTransaction(@NotNull PomTransaction transaction) {
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+  @Contract("_,null -> null")
+  private @Nullable Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
 
-    final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
-    if (containingFileByTree != null && !(containingFileByTree instanceof DummyHolder) && !manager.isCommitInProgress()) {
-      PsiUtilCore.ensureValid(containingFileByTree);
+    if (psiFile != null && !(psiFile instanceof DummyHolder) && !manager.isCommitInProgress()) {
+      PsiUtilCore.ensureValid(psiFile);
     }
 
-    boolean physical = changeScope.isPhysical();
+    boolean physical = shouldFirePhysicalPsiEvents(changeScope);
     if (synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
-      // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
-      // so it's important to throw something outside event processing
-      if (isDocumentUncommitted(containingFileByTree)) {
+      if (isDocumentUncommitted(psiFile)) {
         throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
       }
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (physical && !commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
+      if (physical && !commandProcessor.isUndoTransparentActionInProgress() && !commandProcessor.isCommandInProgress()) {
         throw new IncorrectOperationException("Must not change PSI outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
       }
     }
 
-    if (containingFileByTree != null) {
-      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(containingFileByTree.getViewProvider().getVirtualFile());
-      if (containingFileByTree instanceof PsiFileImpl) {
-        ((PsiFileImpl)containingFileByTree).beforeAstChange();
+    VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
+    if (psiFile != null) {
+      if (!InternalPsiVersioning.isInForkedTimeline()) {
+        SmartPointerManagerEx.getInstanceEx(myProject).fastenBelts(vFile);
+      }
+      // `beforeAstChange` performs switch to strong references for `FileTrees`
+      // this operation is well-defined and needed for correct behavior of versioning
+      if (psiFile instanceof PsiFileImpl) {
+        ((PsiFileImpl)psiFile).beforeAstChange();
       }
     }
 
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), changeScope, true);
-    Document document = containingFileByTree == null ? null : 
-                        physical ? manager.getDocument(containingFileByTree) : 
-                        manager.getCachedDocument(containingFileByTree);
-    if(document != null) {
-      synchronizer.startTransaction(myProject, document, changeScope);
+    sendBeforeChildrenChangeEvent(changeScope);
+    Document document = psiFile == null || psiFile instanceof DummyHolder ? null :
+                        physical ? FileDocumentManager.getInstance().getDocument(vFile) :
+                        FileDocumentManager.getInstance().getCachedDocument(vFile);
+    if (document != null) {
+      synchronizer.startTransaction(myProject, document, psiFile);
     }
+    return document;
   }
 
   private boolean isDocumentUncommitted(@Nullable PsiFile file) {
@@ -373,8 +328,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return cachedDocument != null && manager.isUncommited(cachedDocument);
   }
 
-  @Nullable
-  private static PsiFile getContainingFileByTree(@NotNull final PsiElement changeScope) {
+  private static @Nullable PsiFile getContainingFileByTree(final @NotNull PsiElement changeScope) {
     // there could be pseudo physical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
     final PsiFile psiFile;
@@ -383,7 +337,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       psiFile = changeScope.getContainingFile();
     }
     else {
-      final FileElement fileElement = TreeUtil.getFileElement((TreeElement)node);
+      final FileASTNode fileElement = TreeUtil.getFileElement(node);
       // assert fileElement != null : "Can't find file element for node: " + node;
       // Hack. the containing tree can be invalidated if updating supplementary trees like HTML in JSP.
       if (fileElement == null) return null;
@@ -408,5 +362,60 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   public static boolean isAllowPsiModification() {
     return allowPsiModification;
+  }
+
+  private void sendBeforeChildrenChangeEvent(@NotNull PsiElement scope) {
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
+    if (!shouldFirePhysicalPsiEvents(scope)) {
+      getPsiManager().beforeChange(false);
+      return;
+    }
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
+    event.setParent(scope);
+    PsiFile containingFile = scope.getContainingFile();
+    if (containingFile != null) {
+      event.setFile(containingFile);
+    }
+    TextRange range = scope.getTextRange();
+    event.setOffset(range == null ? 0 : range.getStartOffset());
+    event.setOldLength(scope.getTextLength());
+    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
+    event.setGenericChange(true);
+    getPsiManager().beforeChildrenChange(event);
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldFirePhysicalPsiEvents(@NotNull PsiElement scope) {
+    if (!scope.isPhysical()) return false;
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return false;
+    }
+
+    PsiFile file = scope.getContainingFile();
+    PsiElement hostElement = FileContextUtil.getFileContext(file);
+    return hostElement == null || hostElement.isPhysical();
+  }
+
+  private void sendAfterChildrenChangedEvent(@NotNull PsiFile scope, int oldLength) {
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
+    if (!shouldFirePhysicalPsiEvents(scope)) {
+      getPsiManager().afterChange(false);
+      return;
+    }
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
+    event.setParent(scope);
+    event.setFile(scope);
+    event.setOffset(0);
+    event.setOldLength(oldLength);
+    event.setGenericChange(true);
+    getPsiManager().childrenChanged(event);
+  }
+
+  private @NotNull PsiManagerEx getPsiManager() {
+    return PsiManagerEx.getInstanceEx(myProject);
   }
 }

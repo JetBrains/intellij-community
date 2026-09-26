@@ -1,37 +1,63 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindUtil;
+import com.intellij.find.SearchSession;
 import com.intellij.find.impl.FindResultImpl;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
+public final class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
   public static final int MATCHES_LIMIT = 10000;
-  protected EditorSearchSession myComponent;
+
+  /**
+   * Makes an update in a test run where a production one runs - on the pooled alarm thread, which is the only place a
+   * search is {@linkplain SearchResults#updateThreadSafe chunked} - instead of running synchronously on the EDT.
+   * <p>
+   * The typing debounce goes with it: a test types far faster than a human, so keeping it would coalesce away the very
+   * updates the test means to trigger. A test that sets this has to pump the event queue for a search to make progress
+   * and for its chunks to be applied.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> ourTestingBackgroundUpdate = Key.create("find.live.preview.testing.background.update");
+  private final SearchSession myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
   private final Alarm myLivePreviewAlarm;
-  protected SearchResults mySearchResults;
+  private final SearchResults mySearchResults;
   private LivePreview myLivePreview;
-  private final boolean myReplaceDenied = false;
   private boolean mySuppressUpdate;
 
   private boolean myTrackingDocument;
@@ -39,7 +65,12 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private boolean myListeningSelection;
 
-  private final SelectionListener mySelectionListener = e -> smartUpdate();
+  private final SelectionListener mySelectionListener = new SelectionListener() {
+    @Override
+    public void selectionChanged(@NotNull SelectionEvent e) {
+      smartUpdate();
+    }
+  };
   private boolean myDisposed;
 
   public void setTrackingSelection(boolean b) {
@@ -56,9 +87,9 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
 
-  private final DocumentListener myDocumentListener = new DocumentListener() {
+  private final DocumentListener myDocumentListener = new BulkAwareDocumentListener.Simple() {
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void afterDocumentChange(final @NotNull Document document) {
       if (!myTrackingDocument) {
         myChanged = true;
         return;
@@ -73,7 +104,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private void smartUpdate() {
     if (myLivePreview == null) return;
-    myLivePreview.inSmartUpdate();
     FindModel findModel = mySearchResults.getFindModel();
     if (findModel != null) {
       updateInBackground(findModel, false);
@@ -89,43 +119,55 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     }
   }
 
-  public boolean isReplaceDenied() {
-    return myReplaceDenied;
+  public boolean isLast(SearchResults.Direction direction) {
+    List<FindResult> occurrences = mySearchResults.getOccurrences();
+    FindResult cursor = mySearchResults.getCursor();
+    FindResult last = direction == SearchResults.Direction.UP
+                      ? ContainerUtil.getFirstItem(occurrences)
+                      : ContainerUtil.getLastItem(occurrences);
+    return cursor == last;
   }
 
-  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
+  /**
+   * @param parentDisposable owns this controller: disposing it disposes the update alarm and the controller itself,
+   *                         which releases the {@link LivePreview} and with it the editor and the search results it
+   *                         holds. That is the only way to dispose a controller - a caller that wants an earlier
+   *                         disposal gives it a disposable of its own and disposes that one.
+   */
+  public LivePreviewController(SearchResults searchResults, @Nullable SearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
     myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
-  }
-
-  public int getUserActivityDelay() {
-    return myUserActivityDelay;
+    Disposer.register(parentDisposable, this::dispose);
   }
 
   public void setUserActivityDelay(int userActivityDelay) {
     myUserActivityDelay = userActivityDelay;
   }
 
+  /**
+   * Has to be called on the EDT: it updates the search toolbar, and it is re-entered from the rejection handler below
+   * to run the search again, which is why {@link SearchResults#updateThreadSafe} completes its callback there.
+   */
+  @RequiresEdt
   public void updateInBackground(@NotNull FindModel findModel, final boolean allowedToChangedEditorSelection) {
     final int stamp = mySearchResults.getStamp();
     myLivePreviewAlarm.cancelAllRequests();
     final FindModel copy = new FindModel();
     copy.copyFrom(findModel);
-
-    Runnable request = () -> {
-      if (myDisposed) return;
-      Project project = mySearchResults.getProject();
-      if (project != null && project.isDisposed()) return;
-      mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp)
-        .doWhenRejected(() -> updateInBackground(findModel, allowedToChangedEditorSelection));
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    mySearchResults.setUpdating(true);
+    if (myComponent != null) {
+      myComponent.getComponent().updateActions();
+    }
+    Runnable request = () -> mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp)
+      .doWhenRejected(() -> updateInBackground(findModel, allowedToChangedEditorSelection));
+    boolean backgroundInTest = TestModeFlags.is(ourTestingBackgroundUpdate);
+    if (ApplicationManager.getApplication().isUnitTestMode() && !backgroundInTest) {
       request.run();
     }
     else {
-      myLivePreviewAlarm.addRequest(request, myUserActivityDelay);
+      myLivePreviewAlarm.addRequest(request, backgroundInTest ? 0 : myUserActivityDelay);
     }
   }
 
@@ -145,10 +187,9 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return null;
   }
 
-  @Nullable
-  public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
+  public @Nullable TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
     Project project = mySearchResults.getProject();
-    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
     CommandProcessor.getInstance().runUndoTransparentAction(() -> getEditor().getCaretModel().moveToOffset(occurrence.getEndOffset()));
     TextRange result = FindUtil.doReplace(project,
@@ -158,7 +199,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
                                           replacement,
                                           true,
                                           new ArrayList<>());
-    myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
   }
@@ -182,7 +222,13 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       else {
         offset = selectionModel.getBlockSelectionStarts()[0];
       }
-      FindUtil.replace(project, e, offset, copy, this);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(
+        FindBundle.message("find.replace.all.local.history.action", copy.getStringToFind(), copy.getStringToReplace()));
+      try {
+        FindUtil.replace(project, e, offset, copy, this);
+      } finally {
+        action.finish();
+      }
     }
   }
 
@@ -194,21 +240,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       }
     }
     return true;
-  }
-
-  public boolean canReplace() {
-    if (mySearchResults != null && mySearchResults.getCursor() != null && !isReplaceDenied()) {
-
-      final String replacement;
-      try {
-        replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
-      }
-      catch (FindManager.MalformedReplacementStringException e) {
-        return false;
-      }
-      return replacement != null;
-    }
-    return false;
   }
 
   private Editor getEditor() {
@@ -225,10 +256,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     if (textRange == null) {
       mySuppressUpdate = false;
     }
-    if (myComponent != null) {
-      myComponent.addTextToRecent(myComponent.getComponent().getReplaceTextComponent());
-      myComponent.clearUndoInTextFields();
-    }
   }
 
   public void exclude() {
@@ -239,7 +266,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     performReplaceAll(getEditor());
   }
 
-  public void setTrackingDocument(boolean trackingDocument) {
+  private void setTrackingDocument(boolean trackingDocument) {
     myTrackingDocument = trackingDocument;
   }
 
@@ -254,7 +281,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     }
   }
 
-  public void dispose() {
+  private void dispose() {
     if (myDisposed) return;
 
     off();
@@ -275,12 +302,25 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       myChanged = false;
     }
 
-    setLivePreview(new LivePreview(mySearchResults));
+    var presentation = new EditorLivePreviewPresentation(getEditor().getColorsScheme());
+    setLivePreview(new LivePreview(mySearchResults, presentation));
+  }
+
+  /**
+   * Removes only the cursor highlight (the frame around the current match), keeping match highlights intact.
+   * No-op if the live preview is not currently active.
+   */
+  @ApiStatus.Internal
+  public void clearCursorHighlight() {
+    if (myLivePreview != null) {
+      myLivePreview.clearCursorHighlight();
+    }
   }
 
   public void off() {
     if (myDisposed) return;
 
+    mySearchResults.clear();
     setTrackingDocument(false);
     setLivePreview(null);
     setTrackingSelection(false);

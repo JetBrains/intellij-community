@@ -1,0 +1,18 @@
+// "Make 'Nested' public" "true"
+// PRIORITY: HIGH
+// ACTION: Convert parameter to receiver
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Make 'Nested' internal
+// ACTION: Make 'Nested' public
+// ACTION: Remove parameter 'arg'
+// K2_ERROR: EXPOSED_PARAMETER_TYPE
+// K2_ERROR: INVISIBLE_REFERENCE
+
+class Outer {
+    private class Nested
+}
+
+class Generic<T>
+
+internal fun foo(<caret>arg: Generic<Outer.Nested>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

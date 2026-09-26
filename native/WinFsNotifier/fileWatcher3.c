@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <windows.h>
+#include <Windows.h>
 
 typedef struct {
     char rootPath[4];
@@ -20,9 +20,9 @@ typedef struct {
 #define ROOT_COUNT ('Z'-'A'+1)
 static WatchDrive watchDrive[ROOT_COUNT];
 
-typedef struct __WatchRoot {
+typedef struct WatchRoot {
     char *path;
-    struct __WatchRoot *next;
+    struct WatchRoot *next;
 } WatchRoot;
 
 static WatchRoot *firstWatchRoot = NULL;
@@ -37,6 +37,12 @@ static UINT32 _calls_ = 0, _max_events_ = 0;
 #endif
 
 // -- Utilities ---------------------------------------------------
+
+#define IS_SET(flags, flag) (((flags) & (flag)) == (flag))
+#define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
+
+typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
+static GetFinalPathNameByHandlePtr pGetFinalPathNameByHandle = NULL;
 
 typedef struct {
     char *text;
@@ -79,21 +85,38 @@ static bool IsDriveWatchable(const char *rootPath) {
 
 static bool IsPathWatchable(const char *pathToWatch) {
     bool watchable = true;
-
     int pathLen = MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, NULL, 0);
-    wchar_t *path = (wchar_t *)calloc((size_t)pathLen, sizeof(wchar_t));
+    wchar_t *path = (wchar_t *)calloc((size_t)pathLen + 1, sizeof(wchar_t));
     MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, path, pathLen);
+    wchar_t buffer[1024];
+    const unsigned int bufferSize = 1024;
 
-    while (wcschr(path, L'\\') != NULL) {
+    wchar_t *pSlash;
+    while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
         DWORD attributes = GetFileAttributesW(path);
-        if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-            watchable = false;
-            break;
+        if (attributes != INVALID_FILE_ATTRIBUTES && IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+            if (pGetFinalPathNameByHandle != NULL) {
+                HANDLE h = CreateFileW(path, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                if (h != INVALID_HANDLE_VALUE) {
+                    DWORD result = pGetFinalPathNameByHandle(h, buffer, bufferSize, 0);
+                    CloseHandle(h);
+                    if (result > 0 && result < bufferSize && wcsncmp(buffer, L"\\\\?\\UNC\\", 8) == 0) {
+                        watchable = false;
+                        break;
+                    }
+                }
+            }
+
+            path[pathLen - 1] = L'\\';
+            path[pathLen] = L'\0';
+            if (GetVolumeNameForVolumeMountPointW(path, buffer, bufferSize) != 0) {
+                watchable = false;
+                break;
+            }
         }
-        wchar_t *pSlash = wcsrchr(path, L'\\');
-        if (pSlash != NULL) {
-            *pSlash = L'\0';
-        }
+
+        *pSlash = L'\0';
+        pathLen = (int)(pSlash - path);
     }
 
     free(path);
@@ -102,7 +125,7 @@ static bool IsPathWatchable(const char *pathToWatch) {
 
 static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
     for (int i = 0; i < ROOT_COUNT; i++) {
-        if ((unwatchable & (1 << i)) != 0) {
+        if (IS_SET(unwatchable, 1 << i)) {
             AppendString(buffer, watchDrive[i].rootPath);
             AppendString(buffer, "\n");
         }
@@ -112,8 +135,9 @@ static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
 static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
     for (WatchRoot *root = firstWatchRoot; root; root = root->next) {
         const char *path = root->path;
-        int drive = path[0] - 'A';
-        if ((unwatchable & (1 << drive)) == 0 && !IsPathWatchable(path)) {
+        int drive = toupper(*path);
+        if (drive < 'A' || drive > 'Z' ||
+            (!IS_SET(unwatchable, 1 << (drive - 'A')) && !IsPathWatchable(path))) {
             AppendString(buffer, path);
             AppendString(buffer, "\n");
         }
@@ -142,7 +166,7 @@ static void PrintRemapForSubstDrives(PrintBuffer *buffer) {
 
 static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info) {
     const char *event;
-    if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+    if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
         event = "CREATE";
     } else if (info->Action == FILE_ACTION_REMOVED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
         event = "DELETE";
@@ -153,7 +177,7 @@ static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info)
     }
 
     char utfBuffer[4 * MAX_PATH + 1];
-    int wcsLen = info->FileNameLength / sizeof(wchar_t);
+    int wcsLen = (int)(info->FileNameLength / sizeof(wchar_t));
     int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, wcsLen, utfBuffer, sizeof(utfBuffer), NULL, NULL);
     utfBuffer[converted] = '\0';
 
@@ -227,13 +251,15 @@ static DWORD WINAPI WatcherThread(void *param) {
                 PrintEverythingChangedUnderRoot(rootPath);
             } else {
                 FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *)buffer;
+                bool hasNext = false;
                 do {
                     PrintChangeInfo(rootPath, info);
+                    hasNext = (info->NextEntryOffset != 0);
                     info = (FILE_NOTIFY_INFORMATION *)((char *)info + info->NextEntryOffset);
 #ifdef __PRINT_STATS
                     nEvents++;
 #endif
-                } while (info->NextEntryOffset != 0);
+                } while (hasNext);
             }
 
 #ifdef __PRINT_STATS
@@ -336,6 +362,7 @@ static void FreeWatchRootsList() {
 
 int main(int argc, char *argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS);
+    pGetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
     InitializeCriticalSection(&csOutput);
 
     for (int i = 0; i < ROOT_COUNT; i++) {
@@ -361,15 +388,18 @@ int main(int argc, char *argv[]) {
                     failed = true;
                     break;
                 }
+                if (strlen(buffer) == 0) {
+                    continue;
+                }
                 if (buffer[0] == '#') {
                     break;
                 }
 
                 char *root = buffer;
                 if (*root == '|') root++;
+                AddWatchRoot(root);
                 int driveLetter = toupper(*root);
                 if (driveLetter >= 'A' && driveLetter <= 'Z') {
-                    AddWatchRoot(root);
                     watchDrive[driveLetter - 'A'].bUsed = true;
                 }
             }

@@ -1,35 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.impl.FindPopupPanel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.JBUI;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -38,138 +43,139 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class DirectoryComboBoxWithButtons extends JPanel {
-  @NotNull private final Project myProject;
-  @NotNull private final ComboBox<String> myDirectoryComboBox;
-  private boolean myRecursive = true;
+  private final @NotNull ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
+    new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
+  private volatile boolean myUpdating = false;
 
-  @SuppressWarnings("WeakerAccess")
+  boolean myRecursive = true;
+  Runnable myCallback;
+
   public DirectoryComboBoxWithButtons(@NotNull Project project) {
     super(new BorderLayout());
 
-    myProject = project;
-    myDirectoryComboBox = new ComboBox<>(200);
-    myDirectoryComboBox.setEditable(true);
+    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    comboBox.addActionListener(e -> {
+      if (myUpdating) return;
+      final VirtualFile directory = getDirectory();
+      final ComboBox<?> source = (ComboBox<?>)e.getSource();
+      if (directory == null) {
 
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
+        source.putClientProperty("JComponent.outline", "error");
+        final Balloon balloon = JBPopupFactory.getInstance()
+          .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
+          .createBalloon();
+        balloon.show(new RelativePoint(source, new Point(source.getWidth() / 2, 0)), Balloon.Position.above);
+        source.requestFocus();
+      }
+      else {
+        source.putClientProperty("JComponent.outline", null);
+      }
+      if (myCallback != null && directory != null) {
+        myCallback.run();
+      }
+    });
+    comboBox.setEditable(true);
+
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setForcedToUseIdeaFileChooser(true);
+    final Component editorComponent = comboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
-      JTextField field = (JTextField)editorComponent;
-      field.setColumns(40);
-      FileChooserFactory.getInstance().installFileCompletion(field, descriptor, true, null);
+      FileChooserFactory.getInstance().installFileCompletion((JTextField)editorComponent, descriptor, true, null);
     }
-    myDirectoryComboBox.setMaximumRowCount(8);
+    comboBox.setMaximumRowCount(8);
 
-    FixedSizeButton mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
-    TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
-    mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
+    myDirectoryComboBox.addBrowseFolderListener(project, descriptor, new TextComponentAccessor<>() {
+      @Override
+      public String getText(ComboBox comboBox) {
+        return comboBox.getEditor().getItem().toString();
+      }
 
-    mySelectDirectoryButton.addActionListener(__ -> {
-      FileChooser.chooseFiles(descriptor, myProject, null, null,
-                              new FileChooser.FileChooserConsumer() {
-                                @Override
-                                public void consume(List<VirtualFile> files) {
-                                  ApplicationManager.getApplication().invokeLater(() -> {
-                                    IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-                                    myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
-                                  });
-                                }
-
-                                @Override
-                                public void cancelled() {
-                                  ApplicationManager.getApplication().invokeLater(() -> {
-                                    IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
-                                  });
-                                }
-                              });
+      @Override
+      public void setText(ComboBox component, @NotNull String text) {
+        comboBox.getEditor().setItem(text);
+      }
     });
 
-    RecursiveAction
-      recursiveDirectoryAction = new RecursiveAction();
-    int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    final RecursiveAction recursiveDirectoryAction = new RecursiveAction();
+    final int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myDirectoryComboBox);
 
     add(myDirectoryComboBox, BorderLayout.CENTER);
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
-    buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(FindPopupPanel.createToolbar(recursiveDirectoryAction).getComponent()); //check if toolbar updates the button with no delays
-    add(buttonsPanel, BorderLayout.EAST);
+    add(FindPopupPanel.createToolbar(recursiveDirectoryAction), BorderLayout.EAST);
   }
 
-  public void init(@Nullable String currentDirectory, @NotNull List<String> recentDirectories) {
-    if (myDirectoryComboBox.getItemCount() > 0) {
-      myDirectoryComboBox.removeAllItems();
-    }
-    if (currentDirectory != null && !currentDirectory.isEmpty()) {
-      recentDirectories.remove(currentDirectory);
-      myDirectoryComboBox.addItem(currentDirectory);
-    }
-    for (int i = recentDirectories.size() - 1; i >= 0; i--) {
-      myDirectoryComboBox.addItem(recentDirectories.get(i));
-    }
-    if (myDirectoryComboBox.getItemCount() == 0) {
-      myDirectoryComboBox.addItem("");
-    }
+  public ComboBox<String> getComboBox() {
+    return myDirectoryComboBox.getChildComponent();
   }
 
-  public void setCurrentDirectory(@NotNull VirtualFile directory) {
-    final String text = directory.getPresentableUrl();
-    final int count = myDirectoryComboBox.getItemCount();
-    for (int i = 0; i < count; i++) {
-      if (text.equals(myDirectoryComboBox.getItemAt(i))) {
-        myDirectoryComboBox.removeItemAt(i);
+  public void setCallback(Runnable callback) {
+    myCallback = callback;
+  }
+
+  public void setRecentDirectories(@NotNull List<@NlsSafe String> recentDirectories) {
+    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    myUpdating = true;
+    try {
+      comboBox.removeAllItems();
+      for (int i = recentDirectories.size() - 1; i >= 0; i--) {
+        comboBox.addItem(recentDirectories.get(i));
       }
+    } finally {
+      myUpdating = false;
     }
-    myDirectoryComboBox.setSelectedItem(text);
   }
 
-  @Nullable
-  public VirtualFile getDirectory() {
-    String directoryName = (String)myDirectoryComboBox.getSelectedItem();
+  public void setDirectory(@Nullable VirtualFile directory) {
+    if (directory == null) {
+      return;
+    }
+    final String url = directory.getPresentableUrl();
+    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    comboBox.getEditor().setItem(url);
+    myDirectoryComboBox.getChildComponent().setSelectedItem(url);
+  }
+
+  public @Nullable VirtualFile getDirectory() {
+    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    final String directoryName = (String)comboBox.getSelectedItem();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
     }
 
-    String path = FileUtil.toSystemIndependentName(directoryName);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-    if (virtualFile == null || !virtualFile.isDirectory()) {
-      virtualFile = null;
-      @SuppressWarnings("deprecation") VirtualFileSystem[] fileSystems = ApplicationManager.getApplication().getComponents(VirtualFileSystem.class);
-      for (VirtualFileSystem fs : fileSystems) {
-        if (fs instanceof LocalFileProvider) {
-          @SuppressWarnings("deprecation") VirtualFile file = ((LocalFileProvider)fs).findLocalVirtualFileByPath(path);
-          if (file != null && file.isDirectory()) {
-            if (file.getChildren().length > 0) {
-              virtualFile = file;
-              break;
-            }
-            if (virtualFile == null) {
-              virtualFile = file;
-            }
-          }
-        }
-      }
-    }
-    return virtualFile;
+    final String path = FileUtil.toSystemIndependentName(directoryName);
+    final VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(path);
+    return virtualFile == null || !virtualFile.isDirectory() ? null : virtualFile;
   }
 
   public boolean isRecursive() {
     return myRecursive;
   }
 
+  public void setRecursive(boolean recursive) {
+    myRecursive = recursive;
+  }
+
   private class RecursiveAction extends ToggleAction {
     RecursiveAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(FindBundle.messagePointer("find.scope.directory.recursive.checkbox"),
+            FindBundle.messagePointer("find.recursively.hint"),
+            AllIcons.Actions.ShowAsTree);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myRecursive;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myRecursive = true;
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myRecursive = state;
+      myCallback.run();
     }
   }
 }
-

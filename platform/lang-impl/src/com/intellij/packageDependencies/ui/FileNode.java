@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,16 +12,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Map;
 import java.util.Set;
 
-public class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
+public final class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
   private final VirtualFile myVFile;
   private final boolean myMarked;
+  private Icon myIcon;
 
   public FileNode(VirtualFile file, Project project, boolean marked) {
     super(project);
@@ -43,12 +32,24 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
   }
 
   @Override
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+  }
+
+  private @NotNull Icon doGetIcon() {
+    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
+  }
+
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
-    final PsiFile file = getFile();
-    if (file != null && file.isValid()) {
-      set.add(file);
-    }
+    ReadAction.runBlocking(() -> {
+      final PsiFile file = getFile();
+      if (file != null && file.isValid()) {
+        set.add(file);
+      }
+    });
   }
 
   @Override
@@ -61,13 +62,14 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     return myMarked;
   }
 
+  @Override
   public String toString() {
     return myVFile.getName();
   }
 
   @Override
   public Icon getIcon() {
-    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
+    return myIcon;
   }
 
   @Override
@@ -96,20 +98,20 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     return myColor == NOT_CHANGED ? null : myColor;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof FileNode)) return false;
-
-    final FileNode fileNode = (FileNode)o;
+    if (!(o instanceof FileNode fileNode)) return false;
 
     if (!myVFile.equals(fileNode.myVFile)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myVFile.hashCode();
   }
@@ -125,8 +127,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     return deps.containsKey(getFile());
   }
 
-  @Nullable
-  private PsiFile getFile() {
+  private @Nullable PsiFile getFile() {
     return myVFile.isValid() && !myProject.isDisposed() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
   }
 

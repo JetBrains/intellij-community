@@ -1,0 +1,5 @@
+rootProject.name = 'project'
+include 'app'
+include 'app:feature'
+project(':app').projectDir = file('modules/app')
+project(':app:feature').projectDir = file('components/feature')

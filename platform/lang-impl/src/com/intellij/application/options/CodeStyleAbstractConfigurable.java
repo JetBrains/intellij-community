@@ -1,39 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Map;
 import java.util.Set;
 
 public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
-  private final CodeStyleSettings mySettings;
+  private final @NotNull CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
-  private final String myDisplayName;
-  private CodeStyleSchemesModel myModel;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
 
-  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
-                                       final String displayName) {
+  public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings,
+                                       @NotNull CodeStyleSettings cloneSettings,
+                                       @NlsContexts.ConfigurableName String displayName) {
     mySettings = settings;
     myCloneSettings = cloneSettings;
     myDisplayName = displayName;
@@ -47,11 +35,10 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
-    myPanel.setModel(myModel);
     return myPanel.getPanel();
   }
 
-  protected abstract CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings);
+  protected abstract @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings);
 
   @Override
   public void apply() throws ConfigurationException {
@@ -100,11 +87,10 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel;
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myPanel != null) {
       myPanel.setModel(model);
     }
-    myModel = model;
   }
 
   public void onSomethingChanged() {
@@ -112,11 +98,20 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   }
 
   @Override
-  public Set<String> processListOptions() {
-    return myPanel.processListOptions();
+  public @NotNull Set<String> processListOptions() {
+    return myPanel.getOptionIndexer().processListOptions();
+  }
+
+  @Override
+  public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
+    return myPanel.getOptionIndexer().processListOptionsWithPaths();
   }
 
   protected CodeStyleSettings getCurrentSettings() {
     return mySettings;
+  }
+
+  public void highlightOptions(@NotNull String searchString) {
+    myPanel.highlightOptions(searchString);
   }
 }

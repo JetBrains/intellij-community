@@ -1,4 +1,4 @@
-// "Replace with sum()" "true"
+// "Collapse loop with stream 'sum()'" "true-preview"
 
 import java.util.List;
 

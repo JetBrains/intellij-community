@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.parameterInfo;
 
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,29 +27,35 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     this(editor, file, null);
   }
 
-  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, @Nullable Object[] items) {
+  public MockUpdateParameterInfoContext(@NotNull Editor editor, @NotNull PsiFile file, Object @Nullable [] items) {
     myEditor = editor;
     myFile = file;
-    myItems = items == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : items;
+    myItems = items == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : items;
     myCompEnabled = items == null ? null : new boolean[items.length];
   }
 
+  @Override
   public void removeHint() {}
 
+  @Override
   public void setParameterOwner(PsiElement o) {
     myParameterOwner = o;
   }
 
+  @Override
   public PsiElement getParameterOwner() { return myParameterOwner; }
 
+  @Override
   public void setHighlightedParameter(Object parameter) {
     myHighlightedParameter = parameter;
   }
 
+  @Override
   public Object getHighlightedParameter() {
     return myHighlightedParameter;
   }
 
+  @Override
   public void setCurrentParameter(int index) {
     myCurrentParameter = index;
   }
@@ -58,20 +64,24 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
     return myCurrentParameter;
   }
 
+  @Override
   public boolean isUIComponentEnabled(int index) {
     return myCompEnabled != null && myCompEnabled[index];
   }
 
+  @Override
   public void setUIComponentEnabled(int index, boolean b) {
     if (myCompEnabled != null) {
       myCompEnabled[index] = b;
     }
   }
 
+  @Override
   public int getParameterListStart() {
     return myEditor.getCaretModel().getOffset();
   }
 
+  @Override
   public Object[] getObjectsToView() {
     return myItems;
   }
@@ -92,24 +102,32 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   }
 
   @Override
+  public boolean isSingleParameterInfo() {
+    return false;
+  }
+
+  @Override
   public UserDataHolderEx getCustomContext() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Project getProject() {
     return myFile.getProject();
   }
 
+  @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @Override
   public int getOffset() {
     return myEditor.getCaretModel().getOffset();
   }
 
-  @NotNull
-  public Editor getEditor() {
+  @Override
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 }

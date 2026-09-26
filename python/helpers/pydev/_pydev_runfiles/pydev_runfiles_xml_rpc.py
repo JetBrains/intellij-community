@@ -99,7 +99,7 @@ class ServerComm(threading.Thread):
 
     def __init__(self, notifications_queue, port, daemon=False):
         threading.Thread.__init__(self)
-        self.setDaemon(daemon) # If False, wait for all the notifications to be passed before exiting!
+        self.daemon = daemon # If False, wait for all the notifications to be passed before exiting!
         self.finished = False
         self.notifications_queue = notifications_queue
 

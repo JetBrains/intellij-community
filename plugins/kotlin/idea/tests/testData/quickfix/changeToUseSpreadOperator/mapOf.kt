@@ -1,0 +1,12 @@
+// "Change 'pairs' to '*pairs'" "true"
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+
+fun <K, V> yourMapOf(vararg pairs: Pair<K, V>) {}
+
+fun myMapOf(vararg pairs: Pair<String,String>) {
+    val myMap = yourMapOf(<caret>pairs)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix

@@ -1,0 +1,30 @@
+================ Step #1 =================
+Cleaning output files:
+  A$AA.class
+  A.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectToSimpleObject-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectToSimpleObject/a/A.kt
+End of files
+Cleaning output files:
+  CompanionReferenceExplicitKt.class
+  CompanionReferenceImplicitKt.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectToSimpleObject-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectToSimpleObject/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectToSimpleObject/a/companionReferenceImplicit.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_companionObjectToSimpleObject-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectToSimpleObject/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectToSimpleObject/a/companionReferenceImplicit.kt
+End of files
+------------------------------------------
+Exit code: OK

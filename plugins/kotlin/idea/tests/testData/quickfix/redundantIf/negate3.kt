@@ -1,0 +1,12 @@
+// "Remove redundant 'if' statement" "false"
+operator fun String.not(): Boolean = false
+
+fun bar(value: Int): Boolean {
+    <caret>if (!"hello") {
+        return false
+    }
+    else {
+        return true
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBase$RemoveRedundantIf

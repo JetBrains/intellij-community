@@ -1,0 +1,36 @@
+================ Step #1 =================
+Cleaning output files:
+  A$AA.class
+  A.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectMemberChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/A.kt
+End of files
+Cleaning output files:
+  CompanionExtensionKt.class
+  CompanionReferenceExplicitKt.class
+  CompanionReferenceImplicitKt.class
+  ImportedMemberKt.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectMemberChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionExtension.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionReferenceImplicit.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/importedMember.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_companionObjectMemberChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionExtension.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/companionReferenceImplicit.kt
+  kotlin/classHierarchyAffected/companionObjectMemberChanged/a/importedMember.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,49 @@
+test.java.file
+  FOR_STATEMENT
+    FOR_KEYWORD
+    LPARENTH
+    EXPRESSION_LIST_STATEMENT
+      EXPRESSION_LIST
+        METHOD_CALL_EXPRESSION
+          REFERENCE_EXPRESSION
+            REFERENCE_PARAMETER_LIST
+              <empty list>
+            IDENTIFIER
+          EXPRESSION_LIST
+            LPARENTH
+            RPARENTH
+        COMMA
+        WHITE_SPACE
+        METHOD_CALL_EXPRESSION
+          REFERENCE_EXPRESSION
+            REFERENCE_PARAMETER_LIST
+              <empty list>
+            IDENTIFIER
+          EXPRESSION_LIST
+            LPARENTH
+            RPARENTH
+      SEMICOLON
+    WHITE_SPACE
+    BINARY_EXPRESSION
+      REFERENCE_EXPRESSION
+        REFERENCE_PARAMETER_LIST
+          <empty list>
+        IDENTIFIER
+      WHITE_SPACE
+      LT
+      WHITE_SPACE
+      LITERAL_EXPRESSION
+        INTEGER_LITERAL
+    SEMICOLON
+    WHITE_SPACE
+    EXPRESSION_STATEMENT
+      POSTFIX_EXPRESSION
+        REFERENCE_EXPRESSION
+          REFERENCE_PARAMETER_LIST
+            <empty list>
+          IDENTIFIER
+        PLUSPLUS
+    RPARENTH
+    WHITE_SPACE
+    EMPTY_STATEMENT
+      SEMICOLON

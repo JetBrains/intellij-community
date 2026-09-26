@@ -1,0 +1,162 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.platform.workspace.storage.testEntities.entities.impl
+
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.instrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultipleBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultiple
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsOppositeMultipleBuilder
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithNullsOppositeMultipleData) :
+  ChildWithNullsOppositeMultiple, WorkspaceEntityBase(dataSource) {
+  private companion object {
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsOppositeMultiple::class.java,
+                                                                                ChildWithNullsOppositeMultiple::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
+  }
+
+  override val childData: String
+    get() {
+      readField("childData")
+      return dataSource.childData
+    }
+  override val parentEntity: ParentWithNullsOppositeMultiple?
+    get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? ParentWithNullsOppositeMultiple
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  internal class Builder(result: ChildWithNullsOppositeMultipleData?) :
+    ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple, ChildWithNullsOppositeMultipleData>(result),
+    ChildWithNullsOppositeMultipleBuilder {
+    internal constructor() : this(ChildWithNullsOppositeMultipleData())
+
+    override fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isChildDataInitialized()) {
+        error("Field ChildWithNullsOppositeMultiple#childData should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ChildWithNullsOppositeMultiple
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.childData != dataSource.childData) this.childData = dataSource.childData
+      updateChildToParentReferences(parents)
+    }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+      }
+    override var childData: String
+      get() = getEntityData().childData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).childData = value
+        changedProperty.add("childData")
+      }
+    override var parentEntity: ParentWithNullsOppositeMultipleBuilder?
+      get() = getParent(PARENTENTITY_CONNECTION_ID) as? ParentWithNullsOppositeMultipleBuilder?
+              ?: error("parentEntity is null for ChildWithNullsOppositeMultiple")
+      set(value) {
+        changeParentOfMany(value, PARENTENTITY_CONNECTION_ID)
+        changedProperty.add("parentEntity")
+      }
+
+    override fun getEntityClass(): Class<ChildWithNullsOppositeMultiple> = ChildWithNullsOppositeMultiple::class.java
+  }
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOppositeMultiple>() {
+  lateinit var childData: String
+  internal fun isChildDataInitialized(): Boolean = ::childData.isInitialized
+  override fun newInstance(): ChildWithNullsOppositeMultiple = ChildWithNullsOppositeMultipleImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ChildWithNullsOppositeMultiple, *> =
+    ChildWithNullsOppositeMultipleImpl.Builder(null)
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.ChildWithNullsOppositeMultiple") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ChildWithNullsOppositeMultiple::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return ChildWithNullsOppositeMultiple(childData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultipleBuilder>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ChildWithNullsOppositeMultipleData
+    if (this.entitySource != other.entitySource) return false
+    if (this.childData != other.childData) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ChildWithNullsOppositeMultipleData
+    if (this.childData != other.childData) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + childData.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childData.hashCode()
+    return result
+  }
+}

@@ -1,0 +1,4 @@
+<node text="main() (A)" base="true">
+  <node text="xyzzy() (B)">
+  </node>
+</node>

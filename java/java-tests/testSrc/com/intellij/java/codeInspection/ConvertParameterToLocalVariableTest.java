@@ -30,17 +30,12 @@ public class ConvertParameterToLocalVariableTest extends LightQuickFixParameteri
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ParameterCanBeLocalInspection()};
   }
 
   
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   @NonNls
   protected String getBasePath() {

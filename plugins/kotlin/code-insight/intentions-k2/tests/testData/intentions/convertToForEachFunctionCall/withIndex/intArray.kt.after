@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun test() {
+    intArrayOf(1).forEachIndexed { index, element ->
+        println("$index:$element")
+    }
+}

@@ -57,10 +57,10 @@ class MyTest1 {
         I2 s2 = MyTest1 :: m2;
         call2(MyTest1::m2);
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s3 = MyTest1 :: m3;</error>
-        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m3)</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I2'">I2 s4 = MyTest1 ::m4;</error>
-        call2<error descr="'call2(MyTest1.I2)' in 'MyTest1' cannot be applied to '(<method reference>)'">(MyTest1::m4)</error>;
+        I2 s3 = MyTest1 :: <error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest1, String)' and 'm3(String)' match">m3</error>;
+        call2(MyTest1::<error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest1, String)' and 'm3(String)' match">m3</error>);
+        I2 s4 = MyTest1 ::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest1, String)' and 'm4(String)' match">m4</error>;
+        call2(MyTest1::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest1, String)' and 'm4(String)' match">m4</error>);
     }
 }
 
@@ -106,10 +106,10 @@ class MyTest2 {
         I2 s2 = MyTest2 :: m2;
         call2(MyTest2::m2);
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s3 = MyTest2 :: m3;</error>
-        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m3)</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest2.I2'">I2 s4 = MyTest2 ::m4;</error>
-        call2<error descr="'call2(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
+        I2 s3 = MyTest2 :: <error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest2, String)' and 'm3(String)' match">m3</error>;
+        call2(MyTest2::<error descr="Reference to 'm3' is ambiguous, both 'm3(MyTest2, String)' and 'm3(String)' match">m3</error>);
+        I2 s4 = MyTest2 ::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>;
+        call2(MyTest2::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>);
     }
 
     static void call3(I1 s) {}
@@ -118,7 +118,7 @@ class MyTest2 {
           call3(MyTest2::m1);
           call3<error descr="Ambiguous method call: both 'MyTest2.call3(I1)' and 'MyTest2.call3(I2)' match">(MyTest2::m2)</error>;
           call3(MyTest2::m3);
-          call3<error descr="'call3(MyTest2.I2)' in 'MyTest2' cannot be applied to '(<method reference>)'">(MyTest2::m4)</error>;
+          call3(MyTest2::<error descr="Reference to 'm4' is ambiguous, both 'm4(MyTest2, String)' and 'm4(String)' match">m4</error>);
     }
 }
 

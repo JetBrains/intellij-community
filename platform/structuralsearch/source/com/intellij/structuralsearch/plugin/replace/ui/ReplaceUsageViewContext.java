@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.history.LocalHistory;
@@ -30,39 +16,39 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class ReplaceUsageViewContext extends UsageViewContext {
-  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
-  private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getReplaceOptions());
-  private UsageView myUsageView;
+  private final Map<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
+  private final Replacer replacer = new Replacer(mySearchContext.getProject(), myConfiguration.getReplaceOptions());
 
-  ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {
+  ReplaceUsageViewContext(@NotNull SearchContext context, @NotNull Configuration configuration, @NotNull Runnable searchStarter) {
     super(configuration, context, searchStarter);
   }
 
-  @Override
-  public void setUsageView(UsageView usageView) {
-    myUsageView = usageView;
-  }
-
-  public void addReplaceUsage(Usage usage, MatchResult result) {
+  public void addReplaceUsage(@NotNull Usage usage, @NotNull MatchResult result) {
     usage2ReplacementInfo.put(usage, replacer.buildReplacement(result));
   }
 
-  private static boolean isValid(UsageInfo2UsageAdapter info) {
+  private static boolean isValid(@NotNull UsageInfo2UsageAdapter info) {
     final PsiElement element = info.getUsageInfo().getElement();
     return element != null && element.isValid();
   }
 
   @Override
   protected void configureActions() {
+    super.configureActions();
     myUsageView.addButtonToLowerPane(() -> replace(myUsageView.getSortedUsages()), SSRBundle.message("do.replace.all.button"));
     myUsageView.addButtonToLowerPane(() -> replace(myUsageView.getSelectedUsages()), SSRBundle.message("replace.selected.button"));
 
@@ -88,16 +74,16 @@ class ReplaceUsageViewContext extends UsageViewContext {
     myUsageView.addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
   }
 
-  private void replace(@NotNull Collection<Usage> usages) {
+  private void replace(@NotNull Collection<? extends Usage> usages) {
     final Set<Usage> excluded = myUsageView.getExcludedUsages();
     usages = usages.stream().filter(u -> !excluded.contains(u)).filter(u -> isValid((UsageInfo2UsageAdapter)u)).collect(Collectors.toList());
 
-    final List<VirtualFile> files = usages.stream().map(i -> ((UsageInFile)i).getFile()).collect(Collectors.toList());
+    final List<VirtualFile> files = ContainerUtil.map(usages, i -> ((UsageInFile)i).getFile());
     if (ReadonlyStatusHandler.getInstance(mySearchContext.getProject()).ensureFilesWritable(files).hasReadonlyFiles()) {
       return;
     }
     removeUsagesAndSelectNext(usages, excluded);
-    final List<ReplacementInfo> replacementInfos = usages.stream().map(usage2ReplacementInfo::get).collect(Collectors.toList());
+    final List<ReplacementInfo> replacementInfos = ContainerUtil.map(usages, usage2ReplacementInfo::get);
     final LocalHistoryAction action = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
     try {
       CommandProcessor.getInstance().executeCommand(
@@ -107,7 +93,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
     }
   }
 
-  private void removeUsagesAndSelectNext(Collection<Usage> usages, Collection<Usage> excluded) {
+  private void removeUsagesAndSelectNext(@NotNull Collection<? extends Usage> usages, @NotNull Collection<? extends Usage> excluded) {
     final List<Usage> sortedUsages = myUsageView.getSortedUsages();
     if (sortedUsages.size() == usages.size()) {
       myUsageView.close();

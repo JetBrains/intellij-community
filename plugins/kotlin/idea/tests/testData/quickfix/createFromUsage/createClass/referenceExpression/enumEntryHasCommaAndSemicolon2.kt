@@ -1,0 +1,11 @@
+// "Create enum constant 'C'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+enum class Baz {
+    A,
+    B, ;
+}
+
+fun main() {
+    Baz.C<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

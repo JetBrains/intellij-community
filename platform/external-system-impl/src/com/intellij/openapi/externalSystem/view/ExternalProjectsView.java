@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,15 +29,20 @@ import java.awt.event.InputEvent;
 import java.util.List;
 
 /**
- * @author Vladislav.Soroka
- * @since 4/15/2015
+ * Describes what data and how it should be shown in external project tree view.
+ * Also, this view is a container of project structure UI info and UI utils.
+ *
+ * @see ExternalProjectsStructure
+ * @see com.intellij.ui.treeStructure.Tree
+ * @see com.intellij.openapi.externalSystem.service.ui.SelectExternalSystemNodeDialog
+ * @see com.intellij.openapi.externalSystem.service.task.ui.AbstractExternalSystemToolWindowFactory
  */
 public interface ExternalProjectsView {
   ExternalSystemUiAware getUiAware();
 
-  @Nullable
-  ExternalProjectsStructure getStructure();
+  @Nullable ExternalProjectsStructure getStructure();
 
+  @ApiStatus.Internal
   ExternalSystemShortcutsManager getShortcutsManager();
 
   ExternalSystemTaskActivator getTaskActivator();
@@ -45,11 +51,15 @@ public interface ExternalProjectsView {
 
   List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView, @Nullable ExternalSystemNode<?> parent, @NotNull DataNode<?> dataNode);
 
+  ExternalProjectsStructure.ErrorLevel getErrorLevelRecursively(@NotNull DataNode node);
+
   Project getProject();
 
   boolean showInheritedTasks();
 
   boolean getGroupTasks();
+
+  boolean getGroupModules();
 
   boolean useTasksNode();
 
@@ -60,6 +70,9 @@ public interface ExternalProjectsView {
   void addListener(@NotNull ExternalProjectsView.Listener listener);
 
   boolean getShowIgnored();
+
+  @Nullable
+  String getDisplayName(@Nullable DataNode node);
 
   interface Listener {
     void onDoubleClickOrEnter(@NotNull ExternalSystemNode node, InputEvent inputEvent);

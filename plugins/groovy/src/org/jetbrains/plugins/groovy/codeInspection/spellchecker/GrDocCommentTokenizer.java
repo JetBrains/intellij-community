@@ -21,7 +21,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.CommentSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -30,15 +29,14 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class GrDocCommentTokenizer extends Tokenizer<PsiDocComment> {
-  private static final Set<String> excludedTags = ContainerUtil.immutableSet("author", "see", "by", "link");
+  private static final Set<String> excludedTags = Set.of("author", "see", "by", "link");
 
   @Override
-  public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiDocComment comment, @NotNull TokenConsumer consumer) {
     final CommentSplitter splitter = CommentSplitter.getInstance();
 
     for (PsiElement el : comment.getChildren()) {
-      if (el instanceof PsiDocTag) {
-        PsiDocTag tag = (PsiDocTag)el;
+      if (el instanceof PsiDocTag tag) {
         if (!excludedTags.contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
             consumer.consumeToken(data, splitter);

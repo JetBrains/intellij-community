@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.alignment;
 
 import com.intellij.formatting.Alignment;
@@ -20,7 +6,11 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 
@@ -124,8 +114,7 @@ public abstract class AlignmentStrategy {
    * @param childType     target child type
    * @return              alignment to use
    */
-  @Nullable
-  public Alignment getAlignment(@Nullable IElementType childType) {
+  public @Nullable Alignment getAlignment(@Nullable IElementType childType) {
     return getAlignment(null, childType);
   }
 
@@ -136,14 +125,13 @@ public abstract class AlignmentStrategy {
    * @param childType     child type to use for filtering (if not {@code null})
    * @return              alignment to use for the given arguments
    */
-  @Nullable
-  public abstract Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
+  public abstract @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
 
   /**
    * Stands for {@link AlignmentStrategy} implementation that is configured to return single pre-configured {@link Alignment} object
    * or {@code null} for all calls to {@link #getAlignment(IElementType)}.
    */
-  private static class SharedAlignmentStrategy extends AlignmentStrategy {
+  private static final class SharedAlignmentStrategy extends AlignmentStrategy {
 
     private final Set<IElementType> myFilterElementTypes = new HashSet<>();
 
@@ -157,8 +145,7 @@ public abstract class AlignmentStrategy {
     }
 
     @Override
-    @Nullable
-    public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+    public @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
       return myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes ? myAlignment : null;
     }
   }
@@ -167,7 +154,7 @@ public abstract class AlignmentStrategy {
    * Alignment strategy that creates and caches alignments for target element types and returns them for elements with the
    * same types.
    */
-  public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
+  public static final class AlignmentPerTypeStrategy extends AlignmentStrategy {
     private final Map<IElementType, Alignment> myAlignments = new HashMap<>();
 
     private final IElementType     myParentType;

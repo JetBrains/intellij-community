@@ -15,13 +15,12 @@
  */
 package com.intellij.util.io.socketConnection;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
+@ApiStatus.Internal
 public interface ResponseReader<R extends AbstractResponse> {
   @Nullable
   R readResponse() throws IOException, InterruptedException;

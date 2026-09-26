@@ -1,36 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author traff
- */
-public class SubstitutedFileType extends LanguageFileType{
-  @NotNull private final FileType myOriginalFileType;
-  @NotNull private final FileType myFileType;
+public final class SubstitutedFileType extends LanguageFileType {
+  private final @NotNull FileType myOriginalFileType;
+  private final @NotNull FileType myFileType;
 
   private SubstitutedFileType(@NotNull FileType originalFileType,
                               @NotNull LanguageFileType substitutionFileType,
@@ -40,38 +24,34 @@ public class SubstitutedFileType extends LanguageFileType{
     myFileType = substitutionFileType;
   }
 
-  @NotNull
-  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, Project project) {
+  public static @NotNull FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
     if (project == null) {
       return fileType;
     }
     if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-      LanguageFileType substFileType = substitutedLanguage.getAssociatedFileType();
-      if (!substitutedLanguage.equals(language) && substFileType != null) {
-        return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
+      Language substLang = LanguageUtil.getLanguageForPsi(project, file, fileType);
+      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
+                                       substLang.getAssociatedFileType() : null;
+      if (substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType, substLang);
       }
     }
 
     return fileType;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFileType.getName();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myFileType.getDescription();
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return myFileType.getDefaultExtension();
   }
 
@@ -81,17 +61,15 @@ public class SubstitutedFileType extends LanguageFileType{
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return myFileType.getCharset(file, content);
   }
 
-  @NotNull
-  public FileType getOriginalFileType() {
+  public @NotNull FileType getOriginalFileType() {
     return myOriginalFileType;
   }
 
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myFileType;
   }
 
@@ -102,5 +80,25 @@ public class SubstitutedFileType extends LanguageFileType{
   @Override
   public String toString() {
     return "SubstitutedFileType: original="+myOriginalFileType+"; substituted="+myFileType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SubstitutedFileType type = (SubstitutedFileType)o;
+
+    if (!myOriginalFileType.equals(type.myOriginalFileType)) return false;
+    if (!myFileType.equals(type.myFileType)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myOriginalFileType.hashCode();
+    result = 31 * result + myFileType.hashCode();
+    return result;
   }
 }

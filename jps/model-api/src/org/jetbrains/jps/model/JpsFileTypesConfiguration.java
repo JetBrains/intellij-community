@@ -15,13 +15,12 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface JpsFileTypesConfiguration extends JpsElement {
   String getIgnoredPatternString();
 
+  @ApiStatus.Internal
   void setIgnoredPatternString(@NotNull String ignoredPatternString);
 }

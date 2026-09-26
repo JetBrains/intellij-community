@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.versionBrowser;
 
@@ -42,14 +28,17 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myNumber = number;
   }
 
+  @Override
   public String getCommitterName() {
     return myCommitterName;
   }
 
+  @Override
   public Date getCommitDate() {
     return myCommitDate;
   }
 
+  @Override
   public long getNumber() {
     return myNumber;
   }
@@ -59,6 +48,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return null;
   }
 
+  @Override
   public AbstractVcs getVcs() {
     return null;
   }
@@ -73,15 +63,17 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myComment = newMessage;
   }
 
+  @Override
   public Collection<Change> getChanges() {
     return myChanges;
   }
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return myName;
   }
 
+  @Override
   public String getComment() {
     return myComment;
   }

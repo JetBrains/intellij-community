@@ -1,0 +1,16 @@
+
+
+object Foo {
+
+    operator fun component0(): Int = 42
+
+    operator fun component1(): String = ""
+}
+
+fun bar() {
+    Foo.let { <caret> }
+}
+
+// INVOCATION_COUNT: 0
+// EXIST: { itemText: "foo", tailText: " -> ", allLookupStrings: "foo", typeText: "Foo" }
+// ABSENT: { tailText: " -> ", typeText: "(Int, String)" }

@@ -1,21 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * An object that returns annotations for {@link PsiType}. Since computing type annotations might be computationally expensive sometimes,
@@ -27,10 +18,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TypeAnnotationProvider {
   TypeAnnotationProvider EMPTY = new TypeAnnotationProvider() {
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
       return PsiAnnotation.EMPTY_ARRAY;
+    }
+
+    @Override
+    public boolean hasAnnotations() {
+      return false;
+    }
+
+    @Override
+    public @NotNull TypeAnnotationProvider removeExternalAnnotations() {
+      return this;
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
     }
 
     @Override
@@ -39,26 +44,75 @@ public interface TypeAnnotationProvider {
     }
   };
 
-  @NotNull
-  PsiAnnotation[] getAnnotations();
+  @NotNull PsiAnnotation @NotNull [] getAnnotations();
+
+  /**
+   * @return true if this provider has annotations.
+   */
+  default boolean hasAnnotations() {
+    return getAnnotations().length > 0;
+  }
+
+  /**
+   * @return true if all the annotations of this provider are valid
+   */
+  default boolean isValid() {
+    for (PsiAnnotation annotation : getAnnotations()) {
+      if (!annotation.isValid()) return false;
+    }
+    return true;
+  }
+
+  /**
+   * @return new provider that doesn't contain external annotations from this provider
+   */
+  default @NotNull TypeAnnotationProvider removeExternalAnnotations() {
+    TypeAnnotationProvider self = this;
+    return new TypeAnnotationProvider() {
+      @Override
+      public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+        return Stream.of(self.getAnnotations())
+          .filter(annotation -> !ExternalAnnotationsManager.isExternal(annotation))
+          .toArray(PsiAnnotation[]::new);
+      }
+    };
+  }
+
+  /**
+   * @param owner owner for annotations in this provider
+   * @return a provider whose annotations are updated to return the supplied owner. 
+   * May return itself if changing the owner is not supported, or owner is already set for all the annotations.
+   */
+  @ApiStatus.Internal
+  default @NotNull TypeAnnotationProvider withOwner(@NotNull PsiAnnotationOwner owner) {
+    return this;
+  }
 
 
-  class Static implements TypeAnnotationProvider {
-    private final PsiAnnotation[] myAnnotations;
+  final class Static implements TypeAnnotationProvider {
+    private final @NotNull PsiAnnotation @NotNull [] myAnnotations;
 
-    private Static(PsiAnnotation[] annotations) {
+    private Static(@NotNull PsiAnnotation @NotNull [] annotations) {
       myAnnotations = annotations;
     }
 
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
       return myAnnotations;
     }
 
-    @NotNull
-    public static TypeAnnotationProvider create(@NotNull PsiAnnotation[] annotations) {
-      return annotations.length == 0 ? EMPTY : new Static(annotations);
+    @Override
+    public boolean hasAnnotations() {
+      // Array is always non-empty
+      return true;
+    }
+
+    public static @NotNull TypeAnnotationProvider create(@NotNull PsiAnnotation @NotNull [] annotations) {
+      if (annotations.length == 0) return EMPTY;
+      for (PsiAnnotation annotation : annotations) {
+        Objects.requireNonNull(annotation);
+      }
+      return new Static(annotations);
     }
   }
 }

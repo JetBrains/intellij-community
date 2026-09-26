@@ -1,83 +1,139 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
+import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import gnu.trove.THashSet;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.SmartList;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * @author Rustam Vishnyakov
+ * A persistent {@code Set<VirtualFile>} or persistent {@code Map<VirtualFile, String>}
  */
-class PersistentFileSetManager implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
-  private static final String PATH_ATTR = "url";
+  private static final String URL_ATTR = "url";
+  private static final String VALUE_ATTR = "value";
 
-  private final Set<VirtualFile> myFiles = new THashSet<>();
-  
-  protected boolean addFile(@NotNull VirtualFile file) {
-    if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
-    myFiles.add(file);
-    return true;
+  private final Map<VirtualFile, String> myMap = new HashMap<>();
+
+  boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
+    return addFiles(Collections.singletonMap(file, type));
   }
-  
-  protected boolean containsFile(@NotNull VirtualFile file) {
-    return myFiles.contains(file);
+
+  boolean addFiles(@NotNull Map<? extends VirtualFile, FileType> files) {
+    List<VirtualFile> changedFiles = new SmartList<>();
+    for (Map.Entry<? extends VirtualFile, FileType> entry : files.entrySet()) {
+      VirtualFile file = entry.getKey();
+      if (!(file instanceof VirtualFileWithId)) {
+        //@formatter:off
+        throw new IllegalArgumentException("file must be instanceof VirtualFileWithId but got: " + file + " (" + file.getClass() + ")");
+      }
+      if (file.isDirectory()) {
+        //@formatter:off
+        throw new IllegalArgumentException("file must not be directory but got: " + file + "; File.isDirectory():" + new File(file.getPath()).isDirectory());
+      }
+
+      String value = entry.getValue().getName();
+      String prevValue = myMap.put(file, value);
+
+      if (!value.equals(prevValue)) {
+        changedFiles.add(file);
+      }
+    }
+
+    boolean isAdded = !changedFiles.isEmpty();
+    if (isAdded) {
+      onFileSettingsChanged(changedFiles);
+    }
+    return isAdded;
   }
-  
-  protected boolean removeFile(@NotNull VirtualFile file) {
-    if (!myFiles.contains(file)) return false;
-    myFiles.remove(file);
-    return true;
+
+  public boolean removeFile(@NotNull VirtualFile file) {
+    boolean isRemoved = myMap.remove(file) != null;
+    if (isRemoved) {
+      onFileSettingsChanged(Collections.singleton(file));
+    }
+    return isRemoved;
+  }
+
+  @VisibleForTesting
+  public String getFileValue(@NotNull VirtualFile file) {
+    return myMap.get(file);
+  }
+
+  private static void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
+    // later because component load could be performed in background
+    ApplicationManager.getApplication().invokeLater(() -> {
+      CachedFileType.clearCache();
+      FileContentUtilCore.reparseFiles(files);
+    });
   }
 
   @NotNull
-  public Collection<VirtualFile> getFiles() {
-    return myFiles;
+  Collection<VirtualFile> getFiles() {
+    return myMap.keySet();
   }
 
-  @NotNull
-  private Collection<VirtualFile> getSortedFiles() {
-    List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
-    Collections.sort(sortedFiles, Comparator.comparing(file -> file.getPath().toLowerCase()));
-    return sortedFiles;
-  }
-  
   @Override
   public Element getState() {
-    final Element root = new Element("root");
-    for (VirtualFile vf : getSortedFiles()) {
-      final Element vfElement = new Element(FILE_ELEMENT);
-      final Attribute filePathAttr = new Attribute(PATH_ATTR, VfsUtilCore.pathToUrl(vf.getPath()));
-      vfElement.setAttribute(filePathAttr);
-      root.addContent(vfElement);
+    Element root = new Element("root");
+    List<Map.Entry<VirtualFile, String>> sorted = new ArrayList<>(myMap.entrySet());
+    sorted.sort(Comparator.comparing(e -> e.getKey().getPath()));
+    for (Map.Entry<VirtualFile, String> e : sorted) {
+      Element element = new Element(FILE_ELEMENT);
+      element.setAttribute(URL_ATTR, VfsUtilCore.pathToUrl(e.getKey().getPath()));
+      String fileTypeName = e.getValue();
+      if (fileTypeName != null && !PlainTextFileType.INSTANCE.getName().equals(fileTypeName)) {
+        element.setAttribute(VALUE_ATTR, fileTypeName);
+      }
+      root.addContent(element);
     }
     return root;
   }
 
   @Override
   public void loadState(@NotNull Element state) {
-    final VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (Object child : state.getChildren(FILE_ELEMENT)) {
-      if (child instanceof Element) {
-        final Element fileElement = (Element)child;
-        final Attribute filePathAttr = fileElement.getAttribute(PATH_ATTR);
-        if (filePathAttr != null) {
-          final String filePath = filePathAttr.getValue();
-          VirtualFile vf = vfManager.findFileByUrl(filePath);
-          if (vf != null) {
-            myFiles.add(vf);
-          }
+    Set<VirtualFile> oldFiles = new HashSet<>(getFiles());
+    myMap.clear();
+    for (Element fileElement : state.getChildren(FILE_ELEMENT)) {
+      Attribute urlAttr = fileElement.getAttribute(URL_ATTR);
+      if (urlAttr != null) {
+        String url = urlAttr.getValue();
+        VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (vf != null) {
+          String value = fileElement.getAttributeValue(VALUE_ATTR);
+          myMap.put(vf, Objects.requireNonNullElse(value, PlainTextFileType.INSTANCE.getName()));
         }
       }
     }
+
+    Collection<VirtualFile> toReparse = Sets.symmetricDifference(myMap.keySet(), oldFiles);
+    onFileSettingsChanged(toReparse);
   }
-  
 }

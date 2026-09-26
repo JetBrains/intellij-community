@@ -17,7 +17,7 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import org.intellij.plugins.intelliLang.inject.config.Injection;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public interface InjectionPanel<T extends Injection> {
 

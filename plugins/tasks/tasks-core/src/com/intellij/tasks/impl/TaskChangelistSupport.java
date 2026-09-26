@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.impl;
 
@@ -22,68 +8,67 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 
-/**
- * @author Dmitry Avdeev
- */
-public class TaskChangelistSupport implements EditChangelistSupport {
+@VisibleForTesting
+public final class TaskChangelistSupport implements EditChangelistSupport {
+  private final Project project;
 
-  private final Project myProject;
-  private final TaskManagerImpl myTaskManager;
-
-  public TaskChangelistSupport(Project project, TaskManagerImpl taskManager) {
-    myProject = project;
-    myTaskManager = taskManager;
+  public TaskChangelistSupport(Project project) {
+    this.project = project;
   }
 
-  public void installSearch(EditorTextField name, final EditorTextField comment) {
+  @Override
+  public void installSearch(@NotNull EditorTextField name, @NotNull EditorTextField comment) {
     Document document = name.getDocument();
-    final TaskAutoCompletionListProvider completionProvider =
-      new TaskAutoCompletionListProvider(myProject);
-
-    TextFieldWithAutoCompletion.installCompletion(document, myProject, completionProvider, false);
+    TaskAutoCompletionListProvider completionProvider = new TaskAutoCompletionListProvider(project);
+    TextFieldWithAutoCompletion.installCompletion(document, project, completionProvider, false);
   }
 
-  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {
-    final JCheckBox checkBox = new JCheckBox("Track context");
-    checkBox.setMnemonic('t');
-    checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
+  @Override
+  public @NotNull Consumer<@NotNull LocalChangeList> addControls(@NotNull JPanel bottomPanel, @Nullable LocalChangeList initial) {
+    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
+
+    JCheckBox checkBox = new JCheckBox(TaskBundle.message("switch.changelist.track.context.checkbox"));
+    checkBox.setToolTipText(TaskBundle.message("switch.changelist.track.context.checkbox.tooltip"));
     checkBox.setSelected(initial == null ?
-                         myTaskManager.getState().trackContextForNewChangelist :
-                         myTaskManager.getAssociatedTask(initial) != null);
+                         taskManager.getState().trackContextForNewChangelist :
+                         taskManager.getAssociatedTask(initial) != null);
     bottomPanel.add(checkBox);
     return changeList -> {
       if (initial == null) {
-        myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
+        taskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
         if (checkBox.isSelected()) {
-          myTaskManager.trackContext(changeList);
+          taskManager.trackContext(changeList);
         }
         else {
-          myTaskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
+          taskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
         }
       }
       else {
-        final LocalTask associatedTask = myTaskManager.getAssociatedTask(changeList);
+        final LocalTask associatedTask = taskManager.getAssociatedTask(changeList);
         if (checkBox.isSelected()) {
           if (associatedTask == null) {
-            myTaskManager.trackContext(changeList);
+            taskManager.trackContext(changeList);
           }
         }
         else {
           if (associatedTask != null) {
-            myTaskManager.removeTask(associatedTask);
+            taskManager.removeTask(associatedTask);
           }
         }
       }
     };
-  }
-
-  public void changelistCreated(LocalChangeList changeList) {
   }
 }

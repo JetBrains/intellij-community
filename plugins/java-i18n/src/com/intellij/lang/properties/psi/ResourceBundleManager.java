@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ResourceBundleManager {
   private static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.java-i18n.resourceBundleManager");
@@ -38,48 +28,64 @@ public abstract class ResourceBundleManager {
   /**
    * By default returns java.util.ResourceBundle class in context JDK
    */
-  @Nullable
-  public abstract PsiClass getResourceBundle();
+  public abstract @Nullable PsiClass getResourceBundle();
 
-  public List<String> suggestPropertiesFiles(){
-    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
+  public List<String> suggestPropertiesFiles(@NotNull Set<Module> contextModules){
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject, contextModules);
   }
 
-  @Nullable
-  public I18nizedTextGenerator getI18nizedTextGenerator() {
+  public @Nullable I18nizedTextGenerator getI18nizedTextGenerator() {
     return null;
   }
 
-  @Nullable @NonNls
-  public abstract String getTemplateName();
+  public abstract @Nullable @NonNls String getTemplateName();
 
-  @Nullable @NonNls
-  public abstract String getConcatenationTemplateName();
+  public abstract @Nullable @NonNls String getConcatenationTemplateName();
 
-  public abstract boolean isActive(PsiFile context) throws ResourceBundleNotFoundException;
+  public abstract boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException;
 
   public abstract boolean canShowJavaCodeInfo();
-
-  @Nullable
-  public static ResourceBundleManager getManager(PsiFile context) throws ResourceBundleNotFoundException {
-    final Project project = context.getProject();
-    final ResourceBundleManager[] managers = project.getExtensions(RESOURCE_BUNDLE_MANAGER);
-    for (ResourceBundleManager manager : managers) {
-      if (manager.isActive(context)) {
-        return manager;
-      }
-    }
-    final DefaultResourceBundleManager manager = new DefaultResourceBundleManager(project);
-    return manager.isActive(context) ? manager : null;
+  
+  public String escapeValue(String value) {
+    return value;
   }
 
-  @Nullable
-  public PropertyCreationHandler getPropertyCreationHandler() {
+  public static @Nullable ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {
+    return getManager(Collections.singletonList(context), context.getProject());
+  }
+
+  public static @Nullable ResourceBundleManager getManager(@NotNull Collection<PsiFile> contexts, @NotNull Project project) throws ResourceBundleNotFoundException {
+    ResourceBundleManager result = null;
+    for (ResourceBundleManager manager : RESOURCE_BUNDLE_MANAGER.getExtensions(project)) {
+      if (isActiveForAny(manager, contexts)) {
+        if (result != null) {
+          //multiple managers are active
+          return null;
+        }
+        result = manager;
+      }
+    }
+    if (result != null) {
+      return result;
+    }
+    final DefaultResourceBundleManager manager = new DefaultResourceBundleManager(project);
+    return isActiveForAny(manager, contexts) ? manager : null;
+  }
+
+  private static boolean isActiveForAny(ResourceBundleManager manager, Collection<PsiFile> contexts) throws ResourceBundleNotFoundException {
+    for (PsiFile context : contexts) {
+      if (manager.isActive(context)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public @Nullable PropertyCreationHandler getPropertyCreationHandler() {
     return null;
   }
 
-  @Nullable
-  public String suggestPropertyKey(@NotNull final String value) {
+  public @Nullable String suggestPropertyKey(final @NotNull String value) {
     return null;
   }
 

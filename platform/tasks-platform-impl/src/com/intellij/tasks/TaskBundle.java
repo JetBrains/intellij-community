@@ -1,51 +1,25 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks;
 
-import com.intellij.CommonBundle;
-import com.intellij.reference.SoftReference;
-import org.apache.commons.httpclient.HttpStatus;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-/**
- * Contains common and repository specific messages for "Tasks and Contexts" subsystem.
- * Initialization logic follows the same pattern as most of the other bundles in project.
- *
- * @author Mikhail Golubev
- */
-public class TaskBundle {
+public final class TaskBundle {
+  private static final @NonNls String BUNDLE = "messages.TaskBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(TaskBundle.class, BUNDLE);
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String BUNDLE = "com.intellij.tasks.TaskBundle";
+  private TaskBundle() {}
 
-  private TaskBundle() {
-    // empty
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  @NotNull
-  public static String messageForStatusCode(int statusCode) {
-    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-      return message("failure.login");
-    }
-    else if (statusCode == HttpStatus.SC_FORBIDDEN) {
-      return message("failure.permissions");
-    }
-    return message("failure.http.error", statusCode, HttpStatus.getStatusText(statusCode));
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

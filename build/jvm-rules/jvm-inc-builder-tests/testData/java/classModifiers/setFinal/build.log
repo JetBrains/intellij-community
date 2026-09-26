@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Service.class
+End of files
+Compiling files:
+  java/classModifiers/setFinal/a/Service.java
+End of files
+Cleaning output files:
+  SubService.class
+End of files
+Compiling files:
+  java/classModifiers/setFinal/a/SubService.java
+End of files
+------------------------------------------
+Exit code: ERROR

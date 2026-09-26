@@ -1,0 +1,2 @@
+package ppp;
+public class Outer { static class Nested { public static int value = 1; } }  // Nested narrowed to package-private

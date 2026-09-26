@@ -1,0 +1,79 @@
+*:com.intellij.find.DirectorySearchEngine
+- a:canSearch(com.intellij.find.FindModel):Z
+- a:canSearchNames():Z
+- a:getWeight(com.intellij.openapi.vfs.VirtualFile):I
+- a:searchDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.find.FindModel,java.util.function.Consumer):V
+- a:searchNames(com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.util.function.Consumer):V
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- *sf:Companion:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$Companion
+- *s:fromPath(java.nio.file.Path):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- *s:fromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+- a:getName():java.lang.String
+- a:resolveVirtualFile():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$Companion
+- f:fromPath(java.nio.file.Path):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- f:fromVirtualFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromPath
+- com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- a:getPath():java.nio.file.Path
+*:com.intellij.find.DirectorySearchEngine$FileSearchCandidate$FromVirtualFile
+- com.intellij.find.DirectorySearchEngine$FileSearchCandidate
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+*:com.intellij.find.FindInProjectSearchEngine
+- a:createSearcher(com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
+*:com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
+- a:isCovered(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isReliable():Z
+- a:searchForOccurrences():java.util.Collection
+*c:com.intellij.refactoring.RefactoringUiService
+- <init>():V
+- createConflictsDialog(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable,Z,Z):com.intellij.refactoring.ConflictsDialogBase
+- createRenameRefactoringDialog(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):com.intellij.refactoring.rename.RenameRefactoringDialog
+- findUsages(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,com.intellij.openapi.fileEditor.FileEditor,Z,com.intellij.psi.search.SearchScope):V
+- s:getInstance():com.intellij.refactoring.RefactoringUiService
+- highlightUsageReferences(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,Z):V
+- setStatusBarInfo(com.intellij.openapi.project.Project,java.lang.String):V
+- showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):Z
+- showReplacePromptDialog(Z,java.lang.String,com.intellij.openapi.project.Project):I
+- startFindUsages(com.intellij.psi.PsiElement,com.intellij.find.findUsages.FindUsagesOptions):V
+*:com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
+- a:createOverrideUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,Z,Z,java.util.List):com.intellij.usageView.UsageInfo
+- a:createUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,Z,Z):com.intellij.usageView.UsageInfo
+*:com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+- com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
+- canProcessElementHeadless(com.intellij.psi.PsiElement):Z
+- findExistingNameConflictsHeadless(com.intellij.psi.PsiElement,java.lang.String,com.intellij.util.containers.MultiMap,java.util.Map):V
+- prepareRenamingHeadless(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
+- processorCore():com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- substituteElementToRenameHeadless(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+*:com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canProcessElementHeadless(com.intellij.psi.PsiElement):Z
+- a:findExistingNameConflictsHeadless(com.intellij.psi.PsiElement,java.lang.String,com.intellij.util.containers.MultiMap,java.util.Map):V
+- a:prepareRenamingHeadless(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
+- a:processorCore():com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- s:processorOf(com.intellij.psi.PsiElement):com.intellij.refactoring.rename.RenamePsiElementProcessorBase
+- a:substituteElementToRenameHeadless(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+*:com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- sf:DEFAULT:com.intellij.refactoring.rename.RenamePsiElementProcessorCore
+- createUsageInfo(com.intellij.psi.PsiElement,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement):com.intellij.usageView.UsageInfo
+- findCollisions(com.intellij.psi.PsiElement,java.lang.String,java.util.Map,java.util.List):V
+- findReferences(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,Z):java.util.Collection
+- getElementToSearchInStringsAndComments(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
+- getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,java.util.Collection,java.util.Map,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
+- getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
+- getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
+- renameElement(com.intellij.psi.PsiElement,java.lang.String,com.intellij.usageView.UsageInfo[],com.intellij.refactoring.listeners.RefactoringElementListener):V
+*f:com.intellij.refactoring.rename.RenamePsiElementProcessorCore$TextOccurrenceSearchStrings
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- toReplace():java.lang.String
+- toSearch():java.lang.String
+*:com.intellij.refactoring.rename.Renamer
+- a:getPresentableText():java.lang.String
+- a:performRename():V
+*:com.intellij.refactoring.rename.RenamerFactory
+- a:createRenamers(com.intellij.openapi.actionSystem.DataContext):java.util.Collection

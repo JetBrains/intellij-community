@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.compiler.options;
 
@@ -16,17 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-/**
- * @author nik
- */
 public class ExcludedEntriesConfiguration implements PersistentStateComponent<ExcludedEntriesConfiguration>, JDOMExternalizable, Disposable,
                                                      ExcludesConfiguration {
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String DIRECTORY = "directory";
-  @NonNls private static final String URL = "url";
-  @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
+  private static final @NonNls String FILE = "file";
+  private static final @NonNls String DIRECTORY = "directory";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
   private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<>();
-  @Nullable private final ExcludedEntriesListener myEventPublisher;
+  private final @Nullable ExcludedEntriesListener myEventPublisher;
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
   @SuppressWarnings("unused")
@@ -79,6 +76,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     return myExcludeEntryDescriptions.contains(description);
   }
 
+  @Override
   public void readExternal(final Element node) {
     removeAllExcludeEntryDescriptions();
     for (final Element element : node.getChildren()) {
@@ -96,6 +94,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     }
   }
 
+  @Override
   public void writeExternal(final Element element) {
     for (final ExcludeEntryDescription description : getExcludeEntryDescriptions()) {
       if (description.isFile()) {
@@ -141,17 +140,20 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     return false;
   }
 
+  @Override
   public void dispose() {
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       Disposer.dispose(description);
     }
   }
 
+  @Override
   public ExcludedEntriesConfiguration getState() {
     return this;
   }
 
-  public void loadState(@NotNull final ExcludedEntriesConfiguration state) {
+  @Override
+  public void loadState(final @NotNull ExcludedEntriesConfiguration state) {
     for (ExcludeEntryDescription description : state.getExcludeEntryDescriptions()) {
       addExcludeEntryDescription(description.copy(this));
     }

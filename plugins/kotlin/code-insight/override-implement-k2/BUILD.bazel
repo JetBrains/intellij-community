@@ -1,0 +1,123 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.codeInsight.overrideImplement` start
+content_module_jar(module = ":kotlin-codeInsight-overrideImplement")
+### auto-generated section `dev intellij.kotlin.codeInsight.overrideImplement` end
+
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` start
+create_kotlinc_options(
+    name = "custom_kotlin-codeInsight-overrideImplement",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "kotlin-codeInsight-overrideImplement",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-codeInsight-overrideImplement",
+    module_name = "intellij.kotlin.codeInsight.overrideImplement",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/kdoc",
+        "//plugins/kotlin/base/resources:kotlin-base-resources",
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/kotlin/code-insight/api",
+        "//platform/core-impl",
+        "//platform/lang-impl",
+        "//platform/lang-api:lang",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//platform/core-ui",
+        "//platform/platform-impl:ide-impl",
+        "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
+        "//plugins/kotlin/base/analysis",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//plugins/kotlin/base/code-insight",
+        "//plugins/kotlin/base/psi",
+    ],
+)
+
+jvm_library(
+    name = "kotlin-codeInsight-overrideImplement_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-codeInsight-overrideImplement",
+    module_name = "intellij.kotlin.codeInsight.overrideImplement",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-overrideImplement",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/kdoc:kdoc_test_lib",
+        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
+        "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.overrideImplement` start
+exports_files(
+    [
+        "intellij.kotlin.codeInsight.overrideImplement.iml",
+        "resources/intellij.kotlin.codeInsight.overrideImplement.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.codeInsight.overrideImplement` end

@@ -1,0 +1,11 @@
+// "Add constructor parameters from Base(Int, Int, String, List<String>)" "true"
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
+open class Base<T>(p1: Int, private val p2: Int, p3: T, private val p4: List<T>)
+
+class C(p1: Int, p3: String) : Base<String><caret>
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParametersFix

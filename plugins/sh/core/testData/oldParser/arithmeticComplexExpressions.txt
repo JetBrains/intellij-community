@@ -1,0 +1,53 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('1')
+        PsiWhiteSpace(' ')
+        PsiElement(<)('<')
+        PsiWhiteSpace(' ')
+        STRING
+          PsiElement(OPEN_QUOTE)('"')
+          PsiElement(STRING_CONTENT)('x')
+          PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('1')
+        PsiWhiteSpace(' ')
+        PsiElement(<)('<')
+        PsiWhiteSpace(' ')
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('a')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('123#')
+      VARIABLE
+        PsiElement(var)('$a')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('a')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('variable')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('as')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('value')

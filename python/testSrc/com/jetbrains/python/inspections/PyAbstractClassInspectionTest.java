@@ -1,10 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
 
   public void testAbstract() {
@@ -15,18 +20,19 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSuperMethodRaisesNotImplementerError() {
+  // PY-38680
+  public void testClassWithMethodWhichRaisesNotImplementedErrorNotTreatedAsAbstract() {
     doTest();
   }
 
   // PY-16035
   public void testHiddenForAbstractSubclassWithExplicitMetaclass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-16035
   public void testHiddenForAbstractSubclassWithExplicitMetaclassPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
+    doTest();
   }
 
   // PY-16035
@@ -67,7 +73,32 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
 
   // PY-26628
   public void testTypingProtocolSubclass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
+  }
+
+  // PY-30789
+  public void testHiddenForAbstractSubclassWithABCSuperclass() {
+    doMultiFileTest();
+  }
+
+  // PY-12132
+  public void testInstantiateAbstractClass() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testInstantiateAbstractClass2() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testInstantiateAbstractClass3() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testAbstractMethodInNonAbstractClass() {
+    doTest();
   }
 
   @NotNull

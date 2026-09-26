@@ -1,0 +1,158 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.productLayout.generator
+
+import com.intellij.platform.pluginGraph.ContentModuleName
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
+import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
+import org.jetbrains.intellij.build.productLayout.pipeline.GenerationModel
+import org.jetbrains.intellij.build.productLayout.pipeline.NodeIds
+import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
+import org.jetbrains.intellij.build.productLayout.pipeline.ProductModuleDepsOutput
+import org.jetbrains.intellij.build.productLayout.pipeline.Slots
+import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
+import org.jetbrains.intellij.build.productLayout.stats.SuppressionType
+import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
+import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
+import org.jetbrains.intellij.build.productLayout.xml.visitAllModules
+import org.jetbrains.intellij.build.mapConcurrent
+
+/**
+ * Generator for product module dependency XML files.
+ *
+ * Generates `<dependencies>` sections in module descriptor XML files for modules
+ * declared in module sets (e.g., `corePlatform()`, `ideCommon()`).
+ *
+ * **Input:** Module sets from [GenerationModel.discovery]
+ * **Output:** Updated `moduleName.xml` descriptor files with dependencies
+ *
+ * **Publishes:** [Slots.PRODUCT_MODULE_DEPS] with generation results
+ *
+ * **No dependencies** - can run immediately (level 0).
+ *
+ * @see org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleSetValidator for self-contained module set validation
+ * @see org.jetbrains.intellij.build.productLayout.validator.ProductModuleSetValidator for product module set validation
+ */
+internal object ProductModuleDependencyGenerator : PipelineNode {
+  override val id get() = NodeIds.PRODUCT_MODULE_DEPS
+  override val produces: Set<DataSlot<*>> get() = setOf(Slots.PRODUCT_MODULE_DEPS)
+
+  override fun execute(ctx: ComputeContext) {
+    run {
+      val model = ctx.model
+      val allModuleSets = buildList {
+        addAll(model.discovery.communityModuleSets)
+        addAll(model.discovery.coreModuleSets)
+        addAll(model.discovery.libraryModuleSets)
+        addAll(model.discovery.ultimateModuleSets)
+      }
+      val modulesToProcess = collectModulesToProcess(allModuleSets)
+      if (modulesToProcess.isEmpty()) {
+        ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = emptyList()))
+        return@run
+      }
+
+      val cache = model.descriptorCache
+      val graph = model.pluginGraph
+      val strategy = model.generatedArtifactWritePolicy
+      val suppressionConfig = model.suppressionConfig
+      val updateSuppressions = model.updateSuppressions
+
+      // Write XML files in parallel
+      val results = modulesToProcess.mapConcurrent { moduleName ->
+        run {
+          val info = cache.getOrAnalyze(moduleName) ?: return@mapConcurrent null
+          if (info.skipDependencyGeneration) {
+            return@mapConcurrent null
+          }
+
+          val contentModuleName = ContentModuleName(moduleName)
+          val suppressedModules = suppressionConfig.getSuppressedModules(contentModuleName)
+
+          // Compute dependencies from the same JPS-scope-aware path as content module XML generation.
+          val productionDeps = computeJpsDeps(
+            graph = graph,
+            moduleName = contentModuleName,
+            includeTestScope = false,
+            outputProvider = model.outputProvider,
+          ).moduleDeps
+          val testAwareDeps = computeJpsDeps(
+            graph = graph,
+            moduleName = contentModuleName,
+            includeTestScope = true,
+            outputProvider = model.outputProvider,
+          ).moduleDeps
+          val dependencies = productionDeps.sortedBy { it.value }
+          val nonProductionDependencies = testAwareDeps - productionDeps
+          val existingXmlModules = info.existingModuleDependencies.toSet()
+          val existingXmlModulesAsContentModuleName = existingXmlModules.mapTo(HashSet(), ::ContentModuleName)
+          val xmlOnlySuppressionCandidateDeps = existingXmlModulesAsContentModuleName.filterTo(LinkedHashSet()) {
+            it !in nonProductionDependencies
+          }
+          val dependencyNames = dependencies.mapTo(HashSet()) { it.value }
+          val moduleHandling = computeExistingDependencyHandling(
+            updateSuppressions = updateSuppressions,
+            existingXmlDeps = existingXmlModulesAsContentModuleName,
+            jpsDeps = dependencies.toSet(),
+            suppressedDeps = suppressedModules,
+            xmlOnlySuppressionCandidateDeps = xmlOnlySuppressionCandidateDeps,
+          )
+          val effectiveSuppressedModules = moduleHandling.effectiveSuppressedDeps
+          val suppressionUsages = ArrayList<SuppressionUsage>()
+          val moduleDeps = collectModuleDepsWithSuppressions(
+            contentModuleName = contentModuleName,
+            dependencies = dependencies,
+            suppressedModules = effectiveSuppressedModules,
+            suppressionUsages = suppressionUsages,
+          )
+
+          for (existingDep in existingXmlModules) {
+            val notInGraph = existingDep !in dependencyNames
+            if (notInGraph && effectiveSuppressedModules.contains(ContentModuleName(existingDep))) {
+              suppressionUsages.add(SuppressionUsage(contentModuleName, existingDep, SuppressionType.MODULE_DEP))
+            }
+          }
+
+          val status = updateXmlDependencies(
+            path = info.descriptorPath,
+            content = info.content,
+            moduleDependencies = moduleDeps.distinct().sorted(),
+            preserveExistingModule = { moduleNameToPreserve ->
+              effectiveSuppressedModules.contains(ContentModuleName(moduleNameToPreserve))
+            },
+            preserveExistingPlugin = { true },
+            allowInsideSectionRegion = false,
+            strategy = strategy,
+          )
+          DependencyFileResult(
+            contentModuleName = contentModuleName,
+            descriptorPath = info.descriptorPath,
+            status = status,
+            writtenDependencies = moduleDeps.sorted().map(::ContentModuleName),
+            existingXmlModuleDependencies = existingXmlModulesAsContentModuleName,
+            suppressionUsages = suppressionUsages,
+          )
+        }
+      }.filterNotNull()
+
+      ctx.publish(Slots.PRODUCT_MODULE_DEPS, ProductModuleDepsOutput(files = results))
+    }
+  }
+}
+
+private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
+  val result = LinkedHashSet<String>()
+  for (set in moduleSets) {
+    visitAllModules(set) { module ->
+      val moduleName = module.moduleId.name
+      if (moduleName.startsWith(LIB_MODULE_PREFIX) ||
+          moduleName.startsWith("intellij.platform.settings.")) {
+        result.add(moduleName)
+      }
+    }
+  }
+  return result
+}

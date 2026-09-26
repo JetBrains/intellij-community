@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -28,7 +15,14 @@ interface UFile : UElement, UAnnotated {
   /**
    * Returns the original [PsiFile].
    */
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile
+
+  @Suppress("DEPRECATION")
+  override val sourcePsi: PsiFile
+    get() = psi
 
   /**
    * Returns the Java package name of this file.
@@ -40,6 +34,10 @@ interface UFile : UElement, UAnnotated {
    * Returns the import statements for this file.
    */
   val imports: List<UImportStatement>
+
+  @Suppress("DEPRECATION")
+  val implicitImports: List<String>
+    get() = emptyList()
 
   /**
    * Returns the list of top-level classes declared in this file.
@@ -59,22 +57,22 @@ interface UFile : UElement, UAnnotated {
   override fun asLogString(): String = log("package = $packageName")
 
   override fun asRenderString(): String = buildString {
-    if (annotations.isNotEmpty()) {
-      annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
+    if (uAnnotations.isNotEmpty()) {
+      uAnnotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
     }
 
     val packageName = this@UFile.packageName
-    if (packageName.isNotEmpty()) appendln("package $packageName").appendln()
+    if (packageName.isNotEmpty()) appendLine("package $packageName").appendLine()
 
     val imports = this@UFile.imports
     if (imports.isNotEmpty()) {
-      imports.forEach { appendln(it.asRenderString()) }
-      appendln()
+      imports.forEach { appendLine(it.asRenderString()) }
+      appendLine()
     }
 
     classes.forEachIndexed { index, clazz ->
-      if (index > 0) appendln()
-      appendln(clazz.asRenderString())
+      if (index > 0) appendLine()
+      appendLine(clazz.asRenderString())
     }
   }
 
@@ -86,7 +84,7 @@ interface UFile : UElement, UAnnotated {
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitFile(this)) return
-    annotations.acceptList(visitor)
+    uAnnotations.acceptList(visitor)
     imports.acceptList(visitor)
     classes.acceptList(visitor)
     visitor.afterVisitFile(this)

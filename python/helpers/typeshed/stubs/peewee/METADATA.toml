@@ -1,0 +1,10 @@
+# We're not providing stubs for all playhouse modules right now
+# https://github.com/python/typeshed/pull/11731#issuecomment-2065729058
+version = "4.5.1"
+upstream-repository = "https://github.com/coleifer/peewee"
+partial-stub = true
+
+[tool.stubtest]
+stubtest-dependencies = ["Flask>=2.0.0"]
+# Using stubtest_allowlist to ignore playhouse modules we don't provide.
+ignore-missing-stub = false

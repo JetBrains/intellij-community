@@ -1,38 +1,23 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
-public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAware {
+public class ScrollToTheEndToolbarAction extends AnAction implements DumbAware {
   private final Editor myEditor;
 
-  public ScrollToTheEndToolbarAction(@NotNull final Editor editor) {
+  public ScrollToTheEndToolbarAction(final @Nullable Editor editor) {
     super();
     myEditor = editor;
     final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");
@@ -42,20 +27,14 @@ public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAwa
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    Document document = myEditor.getDocument();
-    return document.getLineCount() == 0 || document.getLineNumber(myEditor.getCaretModel().getOffset()) == document.getLineCount() - 1;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    if (state) {
-      EditorUtil.scrollToTheEnd(myEditor);
-    } else {
-      int lastLine = Math.max(0, myEditor.getDocument().getLineCount() - 1);
-      LogicalPosition currentPosition = myEditor.getCaretModel().getLogicalPosition();
-      LogicalPosition position = new LogicalPosition(Math.max(0, Math.min(currentPosition.line, lastLine - 1)), currentPosition.column);
-      myEditor.getCaretModel().moveToLogicalPosition(position);
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (myEditor == null) return;
+    Editor editor  = ClientEditorManager.Companion.getClientEditor(myEditor, ClientId.getCurrentOrNull());
+    EditorUtil.scrollToTheEnd(editor);
   }
 }

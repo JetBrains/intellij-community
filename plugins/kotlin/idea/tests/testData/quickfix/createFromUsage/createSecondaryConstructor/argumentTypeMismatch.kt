@@ -1,0 +1,11 @@
+// "Create secondary constructor" "true"
+// K2_ACTION: "Add secondary constructor to 'Foo'" "true"
+// ERROR: None of the following functions can be called with the arguments supplied: <br>public constructor Foo(n: Int) defined in Foo<br>public constructor Foo(n: String) defined in Foo
+// K2_AFTER_ERROR: CYCLIC_CONSTRUCTOR_DELEGATION_CALL
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+class Foo(val n: Int)
+
+fun test() {
+    val foo = Foo("a<caret>bc${1}")
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

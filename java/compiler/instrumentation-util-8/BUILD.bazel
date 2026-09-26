@@ -1,0 +1,55 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.compiler.instrumentationUtil.java8` start
+content_module_jar(module = ":java-compiler-instrumentationUtil-java8")
+### auto-generated section `dev intellij.java.compiler.instrumentationUtil.java8` end
+
+### auto-generated section `build intellij.java.compiler.instrumentationUtil.java8` start
+jvm_library(
+    name = "java-compiler-instrumentationUtil-java8",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.compiler.instrumentationUtil.java8",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = ["//java/compiler/instrumentation-util"],
+)
+
+jvm_library(
+    name = "java-compiler-instrumentationUtil-java8_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.compiler.instrumentationUtil.java8",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java-compiler-instrumentationUtil-java8",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.compiler.instrumentationUtil.java8` end
+
+### auto-generated section `iml intellij.java.compiler.instrumentationUtil.java8` start
+exports_files(
+    [
+        "intellij.java.compiler.instrumentationUtil.java8.iml",
+        "resources/intellij.java.compiler.instrumentationUtil.java8.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.compiler.instrumentationUtil.java8` end

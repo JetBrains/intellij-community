@@ -1,0 +1,10 @@
+// "Change to property access" "true"
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: UNRESOLVED_REFERENCE_WRONG_RECEIVER
+
+fun x() {
+    val y = (1 + 2<caret>)()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix$ChangeToPropertyAccessQuickFix

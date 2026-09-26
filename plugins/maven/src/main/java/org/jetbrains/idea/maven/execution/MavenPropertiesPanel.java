@@ -1,34 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author Sergey Evdokimov
-*/
 public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
   private final Map<String, String> myAvailableProperties;
 
@@ -38,20 +23,22 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
     myAvailableProperties = availableProperties;
   }
 
+  @Override
   protected Pair<String, String> addItem() {
     return doAddOrEdit(null);
   }
 
+  @Override
   protected boolean removeItem(Pair<String, String> o) {
     return true;
   }
 
+  @Override
   protected Pair<String, String> editItem(@NotNull Pair<String, String> o) {
     return doAddOrEdit(o);
   }
 
-  @Nullable
-  private Pair<String, String> doAddOrEdit(@Nullable Pair<String, String> o) {
+  private @Nullable Pair<String, String> doAddOrEdit(@Nullable Pair<String, String> o) {
     EditMavenPropertyDialog d = new EditMavenPropertyDialog(o, myAvailableProperties);
     if (!d.showAndGet()) {
       return null;
@@ -76,14 +63,17 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   }
 
   private static class MyPropertiesTableModel extends AddEditRemovePanel.TableModel<Pair<String, String>> {
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
-    public String getColumnName(int c) {
-      return c == 0 ? "Name" : "Value";
+    @Override
+    public @NlsContexts.ColumnName String getColumnName(int c) {
+      return c == 0 ? MavenConfigurableBundle.message("column.name.name") : MavenConfigurableBundle.message("column.name.value");
     }
 
+    @Override
     public Object getField(Pair<String, String> o, int c) {
       return c == 0 ? o.getFirst() : o.getSecond();
     }

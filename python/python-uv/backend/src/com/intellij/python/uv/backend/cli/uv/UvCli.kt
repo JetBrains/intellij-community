@@ -1,0 +1,216 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.uv.backend.cli.uv
+
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
+import com.intellij.python.pytools.backend.runtime.cliOption
+import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.backend.runtime.executeAndMatch
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+
+sealed class UvCommand(private val command: Array<String>, protected val runtime: PyToolRuntime) {
+  @Suppress("unused")
+  constructor(command: String, runtime: PyToolRuntime) : this(arrayOf(command), runtime)
+
+  protected suspend fun <T> executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
+    return runtime.executeAndHandleErrors(*command, *arguments, transformer = transformer)
+  }
+
+  @Suppress("unused")
+  protected suspend fun <T> executeAndMatch(vararg arguments: String, expectedOutput: Regex, transformer: (MatchResult) -> Result<T, @NlsSafe String?>): PyResult<T> {
+    return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
+  }
+}
+
+/**
+ * Mutually exclusive project layout/kind selectors for `uv init`; at most one may be passed.
+ *
+ * @see <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv init</a>
+ */
+@Suppress("unused")
+enum class UvInitKind(@NlsSafe val flag: String) {
+  /** `--package`: set up the project to be built as a Python package (a `src/` layout). */
+  PACKAGE("--package"),
+
+  /** `--no-package`: set up the project to not be built as a Python package. */
+  NO_PACKAGE("--no-package"),
+
+  /** `--app`: create a project for an application (uv's default). */
+  APP("--app"),
+
+  /** `--lib`: create a project for a library. */
+  LIB("--lib"),
+
+  /** `--script`: create a script. */
+  SCRIPT("--script"),
+}
+
+/**
+ * The value of `uv init --vcs`: the version control system uv initializes in the new project.
+ *
+ * uv defaults to [GIT] when the flag is absent, so a caller that must not create a repository has to pass [NONE]
+ * rather than omit the flag.
+ *
+ * @see <a href="https://docs.astral.sh/uv/reference/cli/#uv-init">uv init</a>
+ */
+enum class UvInitVcs(@NlsSafe val value: String) {
+  /** `--vcs git`: initialize a git repository, and write uv's Python `.gitignore` next to it. */
+  GIT("git"),
+
+  /** `--vcs none`: initialize no repository. */
+  NONE("none"),
+}
+
+@Suppress("unused")
+class UvCli(private val runtime: PyToolRuntime) {
+  /**
+   * Manage authentication
+   */
+  fun auth(): UvAuth = UvAuth(runtime)
+
+  /**
+   * Run a command or script
+   */
+  suspend fun run(): PyResult<Unit> = TODO()
+
+  /**
+   * Create a new project.
+   *
+   * @param name Name or path of the new project. When a relative path is passed, uv creates the
+   *   project in a subdirectory with that name under the working directory.
+   * @param bare Passes `--bare`: only create a `pyproject.toml`, skipping the sample file, README,
+   *   `.python-version`, VCS init, etc.
+   * @param kind The project layout/kind. These uv flags are mutually exclusive, so at most one is
+   *   passed. See [UvInitKind].
+   * @param python Passes `--python`: the version `requires-python` and `.python-version` are written from. Left null,
+   *   uv derives both from whichever interpreter it defaults to — the newest one in an empty directory, but any version
+   *   its own preference order lands on once a `.python-version` or a `requires-python` above applies. So a caller that
+   *   knows the version the user asked for must name it here, or the project is pinned to something else. uv only
+   *   records the request, so a version it has yet to download is accepted.
+   * @param vcs Passes `--vcs`: the version control system to initialize. Left null, uv initializes a git repository,
+   *   which is why a caller that offers the user the choice must pass [UvInitVcs.NONE] and not merely omit the flag.
+   */
+  suspend fun init(
+    name: String? = null,
+    bare: Boolean = false,
+    kind: UvInitKind? = null,
+    python: String? = null,
+    vcs: UvInitVcs? = null,
+  ): PyResult<String> {
+    val arguments = cliArgs(
+      cliArg("--bare".takeIf { bare }),
+      cliArg(kind?.flag),
+      cliOption("--python", python),
+      cliOption("--vcs", vcs?.value),
+      cliArg(name), // uv takes the project name by position, so it goes after every named argument.
+    )
+    return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)
+  }
+
+  /**
+   * Add dependencies to the project
+   */
+  suspend fun add(): PyResult<Unit> = TODO()
+
+  /**
+   * Remove dependencies from the project
+   */
+  suspend fun remove(): PyResult<Unit> = TODO()
+
+  /**
+   * Read or update the project's version
+   */
+  suspend fun getVersion(): PyResult<String> {
+    return runtime.executeAndHandleErrors("version", "--short", transformer = ZeroCodeStdoutTransformer)
+  }
+
+  /**
+   * Set the project's version.
+   */
+  suspend fun setVersion(): PyResult<Unit> = TODO()
+
+  /**
+   * Update the project's environment
+   */
+  suspend fun sync(frozen: Boolean? = null, locked: Boolean? = null): PyResult<String> {
+    val arguments = cliArgs(
+      cliArg("--frozen".takeIf { frozen == true }),
+      cliArg("--locked".takeIf { locked == true }),
+    )
+    return runtime.executeAndHandleErrors("sync", *arguments, transformer = ZeroCodeStdoutTransformer)
+  }
+
+  /**
+   * Update the project's lockfile
+   */
+  suspend fun lock(): PyResult<Unit> = TODO()
+
+  /**
+   * Export the project's lockfile to an alternate format
+   */
+  suspend fun export(): PyResult<Unit> = TODO()
+
+  /**
+   * Display the project's dependency tree
+   */
+  suspend fun tree(): PyResult<Unit> = TODO()
+
+  /**
+   * Format Python code in the project
+   */
+  suspend fun format(): PyResult<Unit> = TODO()
+
+  /**
+   * Run and install commands provided by Python packages
+   */
+  fun tool(): UvTool = UvTool(runtime)
+
+  /**
+   * Manage Python versions and installations
+   */
+  fun python(): UvPython = UvPython(runtime)
+
+  /**
+   * Manage Python packages with a pip-compatible interface
+   */
+  fun pip(): UvPip = UvPip(runtime)
+
+  /**
+   * Create a virtual environment
+   */
+  suspend fun venv(): PyResult<Unit> = TODO()
+
+  /**
+   * Build Python packages into source distributions and wheels
+   */
+  suspend fun build(): PyResult<Unit> = TODO()
+
+  /**
+   * Upload distributions to an index
+   */
+  suspend fun publish(): PyResult<Unit> = TODO()
+
+  /**
+   * Manage uv's cache
+   */
+  fun cache(): UvCache = UvCache(runtime)
+
+  /**
+   * Manage the uv executable
+   */
+  fun self(): UvSelf = UvSelf(runtime)
+
+  /**
+   * Display documentation for a command
+   */
+  suspend fun help(vararg command: String): PyResult<String> {
+    return runtime.executeAndHandleErrors("help", *command, transformer = ZeroCodeStdoutTransformer)
+  }
+}
+
+

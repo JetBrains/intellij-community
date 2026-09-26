@@ -1,6 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyParserUtils")
-@file:Suppress("UNUSED_PARAMETER")
+@file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
 package org.jetbrains.plugins.groovy.lang.parser
 
@@ -8,23 +8,66 @@ import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_T
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilder.Marker
 import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
-import com.intellij.lang.parser.GeneratedParserUtilBase.*
+import com.intellij.lang.parser.GeneratedParserUtilBase.Builder
+import com.intellij.lang.parser.GeneratedParserUtilBase.ErrorState
+import com.intellij.lang.parser.GeneratedParserUtilBase.Hook
+import com.intellij.lang.parser.GeneratedParserUtilBase.Parser
+import com.intellij.lang.parser.GeneratedParserUtilBase.addVariant
+import com.intellij.lang.parser.GeneratedParserUtilBase.consumeTokenFast
+import com.intellij.lang.parser.GeneratedParserUtilBase.register_hook_
+import com.intellij.lang.parser.GeneratedParserUtilBase.report_error_
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.tree.TokenSet.create
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
-import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kPERMITS
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kRECORD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSEALED
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTRAIT
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kYIELD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.lambda_expression_head
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_INDEX
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NEW_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REFERENCE_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.KEYWORDS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.RESERVED_KEYWORDS
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
-import java.util.*
+import java.util.Deque
+import java.util.LinkedList
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
 
-private val collapseHook = Hook<IElementType> { _, marker: Marker?, elementType: IElementType ->
+private val collapseHook = Hook { _, marker: Marker?, elementType: IElementType ->
   marker ?: return@Hook null
   val newMarker = marker.precede()
   marker.drop()
@@ -37,16 +80,28 @@ fun parseBlockLazy(builder: PsiBuilder, level: Int, deepParser: Parser, elementT
     deepParser.parse(builder, level + 1)
   }
   else {
-    register_hook_(builder, collapseHook, elementType)
-    parseBlockLazy(builder, T_LBRACE, T_RBRACE, elementType) != null
+    val contextAwareElementType = induceContext(elementType, builder)
+    register_hook_(builder, collapseHook, contextAwareElementType)
+    parseBlockLazy(builder, T_LBRACE, T_RBRACE, contextAwareElementType) != null
   }
+}
+
+private fun induceContext(elementType: IElementType, builder: PsiBuilder) : IElementType = if (builder[insideSwitchExpression]) {
+  when(elementType) {
+    OPEN_BLOCK -> OPEN_BLOCK_SWITCH_AWARE
+    BLOCK_LAMBDA_BODY -> BLOCK_LAMBDA_BODY_SWITCH_AWARE
+    CLOSURE -> CLOSURE_SWITCH_AWARE
+    else -> elementType
+  }
+} else {
+  elementType
 }
 
 fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovyParser.parseExtendedStatement(builder)
 
 fun extendedSeparator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf { builder.groovyParser.isExtendedSeparator(tokenType) }
 
-private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList<String>() }
+private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList() }
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
@@ -58,17 +113,31 @@ private val referenceWasCapitalized: Key<Boolean> = Key.create("groovy.parse.ref
 private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.primitive")
 private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
+private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
+private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
+private val insideParentheses: Key<Boolean> = Key.create("groovy.parse.inside.parentheses")
+private val insideSwitchExpression: Key<Boolean> = Key.create("groovy.parse.inside.switch.expression")
+private val forbidLambdaExpression: Key<Boolean> = Key.create("groovy.parse.defer.lambda.expressions")
+private val compactConstructors: Key<Boolean> = Key.create("groovy.parse.contracted.constructors")
+private val identifiers: TokenSet = create(
+  mIDENT,
+  kAS,
+  // 'def' not included
+  kIN,
+  kPERMITS,
+  kRECORD,
+  kSEALED,
+  kTRAIT,
+  kVAL,
+  kVAR,
+  kYIELD
+)
 
-@Suppress("LiftReturnOrAssignment")
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType === IDENTIFIER) {
-    builder[currentClassNames]!!.push(builder.tokenText)
-    builder.advanceLexer()
-    return true
-  }
-  else {
-    return false
-  }
+  if (!identifiers.contains(builder.tokenType)) return false
+  builder[currentClassNames]!!.push(builder.tokenText)
+  builder.advanceLexer()
+  return true
 }
 
 fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
@@ -77,9 +146,9 @@ fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
 }
 
 fun constructorIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  return builder.advanceIf {
-    tokenType === IDENTIFIER && tokenText == this[currentClassNames]!!.peek()
-  }
+  if (!identifiers.contains(builder.tokenType) || builder.tokenText != builder[currentClassNames]!!.peek()) return false
+  builder.advanceLexer()
+  return true
 }
 
 fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
@@ -138,28 +207,27 @@ fun codeReferenceIdentifier(builder: PsiBuilder, level: Int, identifier: Parser)
 
 private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
   val text = tokenText
-  return text != null && text.isNotEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
+  return !text.isNullOrEmpty() && text != DUMMY_IDENTIFIER_TRIMMED && text.first().isUpperCase()
 }
 
 fun definitelyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
-  try {
-    return builder.withKey(parseDefinitelyTypeElement, true) {
-      typeElement.parse(builder, level) && check.parse(builder, level)
-    }
-  }
-  finally {
-    builder[typeWasPrimitive] = null
-    builder[referenceHadTypeArguments] = null
-    builder[referenceWasQualified] = null
-  }
+  val result = builder.withKey(parseDefinitelyTypeElement, true) {
+    typeElement.parse(builder, level)
+  } && (builder.wasDefinitelyTypeElement() || check.parse(builder, level))
+  builder.clearTypeInfo()
+  return result
 }
 
 private val PsiBuilder.definitelyTypeElementParsing get() = this[parseDefinitelyTypeElement] && !anyTypeElementParsing
 
-fun wasDefinitelyTypeElement(builder: PsiBuilder, level: Int): Boolean {
-  return builder[typeWasPrimitive] ||
-         builder[referenceHadTypeArguments] ||
-         builder[referenceWasQualified]
+private fun PsiBuilder.wasDefinitelyTypeElement(): Boolean {
+  return this[typeWasPrimitive] || this[referenceHadTypeArguments] || this[referenceWasQualified]
+}
+
+private fun PsiBuilder.clearTypeInfo() {
+  this[typeWasPrimitive] = null
+  this[referenceHadTypeArguments] = null
+  this[referenceWasQualified] = null
 }
 
 fun setTypeWasPrimitive(builder: PsiBuilder, level: Int): Boolean {
@@ -181,6 +249,34 @@ fun setRefHadTypeArguments(builder: PsiBuilder, level: Int): Boolean {
     builder[referenceHadTypeArguments] = true
   }
   return true
+}
+
+fun closureParameter(builder: PsiBuilder, level: Int, parameterParser: Parser): Boolean {
+  return builder.withKey(parseClosureParameter, true) {
+    parameterParser.parse(builder, level)
+  }
+}
+
+fun isClosureParameter(builder: PsiBuilder, level: Int): Boolean = builder[parseClosureParameter]
+
+fun enableNlBeforeClosure(builder: PsiBuilder, level: Int, parameterParser: Parser): Boolean {
+  return builder.withKey(parseNlBeforeClosureArgument, true) {
+    parameterParser.parse(builder, level)
+  }
+}
+
+fun disableNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
+  builder[parseNlBeforeClosureArgument] = false
+  return true
+}
+
+fun callTail(builder: PsiBuilder, level: Int, withNl: Parser, withoutNl: Parser): Boolean {
+  if (builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]) {
+    return withNl.parse(builder, level)
+  }
+  else {
+    return withoutNl.parse(builder, level)
+  }
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
@@ -258,44 +354,22 @@ fun parseApplication(builder: PsiBuilder, level: Int,
       callParser.parse(builder, nextLevel) ||
       refParser.parse(builder, nextLevel)
     }
+    INSTANCEOF_EXPRESSION -> false
     else -> applicationParser.parse(builder, nextLevel)
   }
 }
 
-fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Parser): Boolean {
-  val argumentMarker = builder.mark()
-  val labelMarker = builder.mark()
-  if (expression.parse(builder, level + 1)) {
-    if (T_COLON === builder.tokenType) {
-      labelMarker.done(ARGUMENT_LABEL)
-      builder.advanceLexer()
-      if (report_error_(builder, expression.parse(builder, level + 1))) {
-        argumentMarker.done(NAMED_ARGUMENT)
-      }
-      else {
-        argumentMarker.drop()
-      }
-    }
-    else {
-      labelMarker.drop()
-      argumentMarker.drop()
-    }
-    return true
-  }
-  else {
-    labelMarker.drop()
-    argumentMarker.rollbackTo()
-    return false
-  }
-}
+fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)
+
+fun parseReservedKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(RESERVED_KEYWORDS)
 
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
-fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENT_OPERATORS)
+fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENTS)
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
-fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun error(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.latestDoneMarker ?: return false
   val elementType = marker.tokenType
   val newMarker = (marker as Marker).precede()
@@ -305,11 +379,11 @@ fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
   return true
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   return unexpected(builder, level, Parser { b, _ -> b.any() }, key)
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.mark()
   if (parser.parse(builder, level)) {
     marker.error(GroovyBundle.message(key))
@@ -320,7 +394,6 @@ fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, key: String): Bo
   return true
 }
 
-@Suppress("LiftReturnOrAssignment")
 fun parseTailLeftFlat(builder: PsiBuilder, level: Int, head: Parser, tail: Parser): Boolean {
   val marker = builder.mark()
   if (!head.parse(builder, level)) {
@@ -342,11 +415,17 @@ fun parseTailLeftFlat(builder: PsiBuilder, level: Int, head: Parser, tail: Parse
   }
 }
 
+private fun <T> PsiBuilder.lookahead(action: PsiBuilder.() -> T): T {
+  val marker = mark()
+  val result = action()
+  marker.rollbackTo()
+  return result
+}
+
 private fun PsiBuilder.any(): Boolean = advanceIf { true }
 
 private fun PsiBuilder.advanceIf(tokenSet: TokenSet): Boolean = advanceIf { tokenType in tokenSet }
 
-@Suppress("LiftReturnOrAssignment")
 private inline fun PsiBuilder.advanceIf(crossinline condition: PsiBuilder.() -> Boolean): Boolean {
   if (condition()) {
     advanceLexer()
@@ -382,7 +461,6 @@ fun clearError(builder: PsiBuilder, level: Int): Boolean {
 fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
   val state = builder.state
   val prev = state.currentFrame.lastVariantAt
-  @Suppress("LiftReturnOrAssignment")
   if (parser.parse(builder, level)) {
     return true
   }
@@ -393,3 +471,179 @@ fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser)
 }
 
 private val PsiBuilder.state: ErrorState get() = ErrorState.get(this)
+
+fun castOperandCheck(builder: PsiBuilder, level: Int): Boolean {
+  return builder.tokenType !== T_LPAREN || builder.lookahead {
+    castOperandCheckInner(this)
+  }
+}
+
+private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
+  var parenCount = 0
+  while (!builder.eof()) {
+    builder.advanceLexer()
+    val tokenType = builder.tokenType
+    when {
+      tokenType === T_LPAREN -> {
+        parenCount++
+      }
+      tokenType === T_RPAREN -> {
+        if (parenCount == 0) {
+          // we discovered closing parenthesis and didn't find any commas
+          return true
+        }
+        parenCount--
+      }
+      tokenType === T_COMMA -> {
+        if (parenCount == 0) {
+          // comma on the same level of parentheses means we are in argument list
+          return false
+        }
+      }
+    }
+  }
+  return false
+}
+
+fun isAfterClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.latestDoneMarker?.tokenType is GrClosureElementType
+}
+
+fun isParameterizedClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    isParameterizedClosureInner(this, level)
+  }
+}
+
+private fun isParameterizedClosureInner(builder: PsiBuilder, level: Int): Boolean {
+  if (!consumeTokenFast(builder, T_LBRACE)) return false
+  GroovyGeneratedParser.mb_nl(builder, level)
+  return closure_header_with_arrow(builder, level)
+}
+
+fun isParameterizedLambda(builder: PsiBuilder, level: Int): Boolean {
+  return builder.lookahead {
+    lambda_expression_head(builder, level)
+  }
+}
+
+private val explicitLeftMarker = Key.create<Marker>("groovy.parse.left.marker")
+
+/**
+ * Stores [PsiBuilder.getLatestDoneMarker] in user data to be able to use it later in [wrapLeft].
+ */
+fun markLeft(builder: PsiBuilder, level: Int): Boolean {
+  builder[explicitLeftMarker] = builder.latestDoneMarker as? Marker
+  return true
+}
+
+/**
+ * Let sequence `a b c d` result in the following tree: `(a) (b) (c) (d)`.
+ * Then `a b <<markLeft>> c d <<wrapLeft>>` will result in: `(a) ((b) (c) d)`
+ */
+fun wrapLeft(builder: PsiBuilder, level: Int): Boolean {
+  val explicitLeft = builder[explicitLeftMarker] ?: return false
+  val latest = builder.latestDoneMarker ?: return false
+  explicitLeft.precede().done(latest.tokenType)
+  (latest as? Marker)?.drop()
+  return true
+}
+
+fun forceWrapLeft(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  val marker = builder.latestDoneMarker as? Marker ?: return false
+  val r = parser.parse(builder, level)
+  if (!r) return false
+  val latest = builder.latestDoneMarker ?: return false
+  marker.precede().done(latest.tokenType)
+  (latest as? Marker)?.drop()
+  return true
+}
+
+fun choice(builder: PsiBuilder, level: Int, vararg parsers: Parser): Boolean {
+  assert(parsers.size > 1)
+  for (parser in parsers) {
+    if (parser.parse(builder, level)) return true
+  }
+  return false
+}
+
+fun isBlockParseable(text: CharSequence): Boolean {
+  val lexer = GroovyLexer().apply {
+    start(text)
+  }
+  if (lexer.tokenType !== T_LBRACE) return false
+  lexer.advance()
+
+  val leftStack = LinkedList<IElementType>().apply {
+    push(T_LBRACE)
+  }
+
+  while (true) {
+    ProgressManager.checkCanceled()
+    val type = lexer.tokenType ?: return leftStack.isEmpty()
+    if (leftStack.isEmpty()) {
+      return false
+    }
+    when (type) {
+      T_LBRACE,
+      T_LPAREN -> leftStack.push(type)
+      T_RBRACE -> {
+        if (leftStack.isEmpty() || leftStack.pop() != T_LBRACE) {
+          return false
+        }
+      }
+      T_RPAREN -> {
+        if (leftStack.isEmpty() || leftStack.pop() != T_LPAREN) {
+          return false
+        }
+      }
+    }
+    lexer.advance()
+  }
+}
+
+fun insideParentheses(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  // enables 'yield' keyword in this and all inner code blocks
+  return builder.withKey(insideParentheses, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun insideParentheses(builder: PsiBuilder, level: Int): Boolean = builder[insideParentheses]
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int, parser: Parser): Boolean = builder.withKey(insideSwitchExpression, true) {
+  parser.parse(builder, level)
+}
+
+fun insideSwitchExpression(builder: PsiBuilder, level: Int): Boolean = builder[insideSwitchExpression]
+
+/**
+ * Suppose we have a case section 'case a -> 10' somewhere inside the switch expression.
+ * Then, as an expression list is expected after 'case', the token set 'a -> 10' is recognized as a lambda expression.
+ * This function forbid the choice of lambda expression, making unqualified reference an only choice
+ */
+fun forbidLambdaExpressions(builder: PsiBuilder, level: Int, parser : Parser): Boolean {
+  return builder.withKey(forbidLambdaExpression, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isLambdaExpressionAllowed(builder : PsiBuilder, level: Int) : Boolean {
+  return !builder[forbidLambdaExpression]
+}
+
+fun enableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun disableCompactConstructors(builder : PsiBuilder, level : Int, parser : Parser) : Boolean {
+  return builder.withKey(compactConstructors, false) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isCompactConstructorAllowed(builder: PsiBuilder, level : Int) : Boolean {
+  return builder[compactConstructors]
+}

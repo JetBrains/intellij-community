@@ -1,85 +1,91 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.platform.eel.fs.EelFileUtils;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 
-/**
- * @author yole
- */
-public class CleanPycAction extends AnAction {
+@ApiStatus.Internal
+final class CleanPycAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
-    if (elements == null) return;
-    final List<File> pycFiles = new ArrayList<>();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    var elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
+    if (!isAllDirectories(elements)) return;
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      for (PsiElement element : elements) {
-        PsiDirectory dir = (PsiDirectory) element;
-        collectPycFiles(new File(dir.getVirtualFile().getPath()), pycFiles);
-      }
-      FileUtil.asyncDelete(pycFiles);
-    }, "Cleaning up .pyc files...", false, e.getProject());
-    final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
-    statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
-  }
+      try {
+        for (PsiElement element : elements) {
+          var vfsDir = ((PsiDirectory)element).getVirtualFile();
+          var nioDir = vfsDir.getFileSystem().getNioPath(vfsDir);
+          if (nioDir == null || !Files.isDirectory(nioDir)) continue;
+          Files.walkFileTree(nioDir, new SimpleFileVisitor<>() {
+            @Override
+            public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
+              if (PyNames.PYCACHE.equals(NioFiles.getFileName(dir))) {
+                EelFileUtils.deleteRecursively(dir);
+                return FileVisitResult.SKIP_SUBTREE;
+              }
+              return FileVisitResult.CONTINUE;
+            }
 
-  private static void collectPycFiles(File directory, final List<File> pycFiles) {
-    FileUtil.processFilesRecursively(directory, file -> {
-      if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
-          FileUtilRt.extensionEquals(file.getName(), "pyc") ||
-          FileUtilRt.extensionEquals(file.getName(), "pyo") ||
-          file.getName().endsWith("$py.class")) {
-        pycFiles.add(file);
+            @Override
+            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+              var name = NioFiles.getFileName(file);
+              if (name.endsWith(".pyc") || name.endsWith(".pyo") || name.endsWith("$py.class")) {
+                Files.deleteIfExists(file);
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
+        }
       }
-      return true;
-    });
+      catch (IOException ex) {
+        Logger.getInstance(CleanPycAction.class).warn(ex);
+      }
+    }, PyBundle.message("action.CleanPyc.progress.title.cleaning.up.pyc.files"), false, e.getProject());
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
-    e.getPresentation().setEnabled(isAllDirectories(elements));
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
-  private static boolean isAllDirectories(@Nullable PsiElement[] elements) {
-    if (elements == null || elements.length == 0) return false;
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiDirectory) || FileIndexFacade.getInstance(element.getProject())
-        .isInLibraryClasses(((PsiDirectory)element).getVirtualFile())) {
-        return false;
-      }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    var elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
+    if (e.isFromContextMenu()) {
+      e.getPresentation().setEnabledAndVisible(isAllDirectories(elements));
     }
-    return true;
+    else {
+      e.getPresentation().setEnabled(isAllDirectories(elements));
+    }
+  }
+
+  private static boolean isAllDirectories(PsiElement @Nullable [] elements) {
+    return elements != null && elements.length > 0 && ContainerUtil.all(elements, element ->
+      element instanceof PsiDirectory pd &&
+      !FileIndexFacade.getInstance(pd.getProject()).isInLibraryClasses(pd.getVirtualFile())
+    );
   }
 }

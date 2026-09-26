@@ -1,70 +1,70 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public interface ScopeInfo {
-  FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo);
-  String getScopeName(VcsContext dataContext, final ActionInfo actionInfo);
+
+  List<FilePath> getRoots(@NotNull DataContext dataContext, @NotNull ActionInfo actionInfo);
+
+  @Nls(capitalization = Title) String getScopeName(@NotNull DataContext dataContext, final ActionInfo actionInfo);
+
   boolean filterExistsInVcs();
 
   ScopeInfo PROJECT = new ScopeInfo() {
-    public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
+    @Override
+    public String getScopeName(@NotNull DataContext dataContext, final ActionInfo actionInfo) {
       return VcsBundle.message("update.project.scope.name");
     }
 
+    @Override
     public boolean filterExistsInVcs() {
       return true;
     }
 
-    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
+    @Override
+    public List<FilePath> getRoots(@NotNull DataContext dataContext, @NotNull ActionInfo actionInfo) {
       ArrayList<FilePath> result = new ArrayList<>();
-      Project project = context.getProject();
+      Project project = dataContext.getData(CommonDataKeys.PROJECT);
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs[] vcses = vcsManager.getAllActiveVcss();
-      for(AbstractVcs vcs: vcses) {
+      for (AbstractVcs vcs : vcses) {
         if (actionInfo.getEnvironment(vcs) != null) {
           final VirtualFile[] files = vcsManager.getRootsUnderVcs(vcs);
-          for(VirtualFile file: files) {
+          for (VirtualFile file : files) {
             result.add(VcsUtil.getFilePath(file));
           }
         }
       }
-      return result.toArray(new FilePath[0]);
+      return result;
     }
   };
 
   ScopeInfo FILES = new ScopeInfo() {
-    public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
-      FilePath[] roots = getRoots(dataContext, actionInfo);
-      if (roots == null || roots.length == 0) {
+    @Override
+    public String getScopeName(@NotNull DataContext dataContext, final ActionInfo actionInfo) {
+      List<FilePath> roots = getRoots(dataContext, actionInfo);
+      if (roots.isEmpty()) {
         return VcsBundle.message("update.files.scope.name");
       }
-      boolean directory = roots[0].isDirectory();
-      if (roots.length == 1) {
+      boolean directory = roots.get(0).isDirectory();
+      if (roots.size() == 1) {
         if (directory) {
           return VcsBundle.message("update.directory.scope.name");
         }
@@ -80,16 +80,16 @@ public interface ScopeInfo {
           return VcsBundle.message("update.files.scope.name");
         }
       }
-
     }
 
+    @Override
     public boolean filterExistsInVcs() {
       return true;
     }
 
-    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
-      return context.getSelectedFilePaths();
+    @Override
+    public List<FilePath> getRoots(@NotNull DataContext dataContext, final @NotNull ActionInfo actionInfo) {
+      return VcsContextUtil.selectedFilePaths(dataContext);
     }
-
   };
 }

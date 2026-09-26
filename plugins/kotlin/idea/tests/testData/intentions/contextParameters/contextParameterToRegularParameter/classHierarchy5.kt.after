@@ -1,0 +1,25 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface IFace {
+    context(i: Int)
+    fun foo(s: String, d: Double)
+
+    context(s: String, i: Int)
+    fun foo()
+}
+
+open class OpenClass : IFace {
+    context(i: Int)
+    override fun foo(s: String, d: Double) {}
+
+    context(s: String, i: Int)
+    override fun foo() {}
+}
+
+class FinalClass : OpenClass(), IFace {
+    context(i: Int)
+    override fun foo(s: String, d: Double) {}
+
+    context(s: String, i: Int)
+    override fun foo() {}
+}

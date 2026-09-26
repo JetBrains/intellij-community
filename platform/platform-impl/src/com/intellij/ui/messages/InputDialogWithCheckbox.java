@@ -1,35 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-class InputDialogWithCheckbox extends Messages.InputDialog {
+final class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
-  public InputDialogWithCheckbox(String message,
-                                 @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                 String checkboxText,
-                                 boolean checked,
-                                 boolean checkboxEnabled,
-                                 @Nullable Icon icon,
-                                 @Nullable String initialValue,
-                                 @Nullable InputValidator validator) {
+  InputDialogWithCheckbox(@NlsContexts.DialogMessage String message,
+                          @NlsContexts.DialogTitle String title,
+                          @NlsContexts.Checkbox String checkboxText,
+                          boolean checked,
+                          boolean checkboxEnabled,
+                          @Nullable Icon icon,
+                          @Nullable @NlsSafe String initialValue,
+                          @Nullable InputValidator validator) {
     super(message, title, icon, initialValue, validator);
     myCheckBox.setText(checkboxText);
     myCheckBox.setSelected(checked);
     myCheckBox.setEnabled(checkboxEnabled);
   }
 
-  @NotNull
   @Override
-  protected JPanel createMessagePanel() {
+  protected @NotNull JPanel createMessagePanel() {
     JPanel messagePanel = new JPanel(new BorderLayout());
     if (myMessage != null) {
       JComponent textComponent = createTextComponent();

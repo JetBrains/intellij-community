@@ -1,70 +1,126 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.OccurenceNavigatorSupport;
+import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.TextChunk;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.rules.UsageFilteringRule;
+import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.regex.Pattern;
+import java.util.List;
 
-public class ConflictsDialog extends DialogWrapper{
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
+
+public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
+  private static final int MAX_CONFLICTS_SHOWN = 20;
+  private static final @NonNls String EXPAND_LINK = "expand";
 
   protected final String[] myConflictDescriptions;
-  protected MultiMap<PsiElement, String> myElementConflictDescription;
+  protected final MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
-  private Runnable myDoRefactoringRunnable;
+  private final Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;
-  private String myCommandName;
+  private @NlsContexts.Command String myCommandName;
+  private JTree myTree;
+  private final boolean myUpdatedDialog;
 
-  public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
+  public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions) {
     this(project, conflictDescriptions, null, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
-                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable) {
     this(project, conflictDescriptions, doRefactoringRunnable, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
-                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable,
                          boolean alwaysShowOkButton,
                          boolean canShowConflictsInView) {
@@ -72,40 +128,38 @@ public class ConflictsDialog extends DialogWrapper{
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
     myCanShowConflictsInView = canShowConflictsInView;
-    final LinkedHashSet<String> conflicts = new LinkedHashSet<>();
 
-    for (String conflict : conflictDescriptions.values()) {
-      conflicts.add(conflict);
-    }
-    myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
+    LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
+    myConflictDescriptions = ArrayUtilRt.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
-    setTitle(RefactoringBundle.message("problems.detected.title"));
-    setOKButtonText(RefactoringBundle.message("continue.button"));
+    myUpdatedDialog = Registry.is("refactorings.use.updated.conflicts.detected.dialog");
+    setTitle(myUpdatedDialog
+             ? RefactoringBundle.message("conflicts.detected.title")
+             : RefactoringBundle.message("problems.detected.title"));
+    setOKButtonText(myUpdatedDialog 
+                    ? RefactoringBundle.message("refactor.anyway.button")
+                    : RefactoringBundle.message("continue.button"));
     setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
   }
 
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
-    this(project, ArrayUtil.toStringArray(conflictDescriptions));
-  }
-
-  @Deprecated
-  public ConflictsDialog(Project project, String... conflictDescriptions) {
-    super(project, true);
-    myProject = project;
-    myConflictDescriptions = conflictDescriptions;
-    myCanShowConflictsInView = true;
-    setTitle(RefactoringBundle.message("problems.detected.title"));
-    setOKButtonText(RefactoringBundle.message("continue.button"));
-    init();
+  public List<String> getConflictDescriptions() {
+    return List.of(myConflictDescriptions);
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions(){
-    final Action okAction = getOKAction();
+  public boolean showAndGet() {
+    if (UiInterceptors.tryIntercept(this)) {
+      disposeIfNeeded();
+      return true;
+    }
+    return super.showAndGet();
+  }
+
+  @Override
+  protected Action @NotNull [] createActions() {
+    if (myUpdatedDialog) return super.createActions();
+    Action okAction = getOKAction();
     boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
 
     if (showUsagesButton || !okAction.isEnabled()) {
@@ -115,47 +169,251 @@ public class ConflictsDialog extends DialogWrapper{
     if (!showUsagesButton) {
       return new Action[]{okAction,new CancelAction()};
     }
-    return new Action[]{okAction, new MyShowConflictsInUsageViewAction(), new CancelAction()};
+    return new Action[]{okAction, new ShowConflictsInUsageViewAction(), new CancelAction()};
   }
 
+  @Override
+  protected Action @NotNull [] createLeftSideActions() {
+    if (myElementConflictDescription == null || !myCanShowConflictsInView || !myUpdatedDialog) return super.createLeftSideActions();
+    return new Action[] {
+      new ShowConflictsInUsageViewAction()
+    };
+  }
+
+  @Override
   public boolean isShowConflicts() {
     return getExitCode() == SHOW_CONFLICTS_EXIT_CODE;
   }
 
   @Override
+  protected @NotNull DialogStyle getStyle() {
+    return myUpdatedDialog ? DialogStyle.COMPACT : DialogStyle.NO_STYLE;
+  }
+
+    @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout(0, 2));
+    JPanel panel;
+    
+    if (myUpdatedDialog && myElementConflictDescription != null) {
+      panel = new JPanel(new BorderLayout());
+      UsageViewPresentation presentation = new UsageViewPresentation();
+      presentation.setMergeDupLinesAvailable(false);
+      presentation.setExcludeAvailable(false);
+      presentation.setNonCodeUsageAvailable(false);
+      UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(myProject)
+        .createUsageView(UsageTarget.EMPTY_ARRAY, createUsages(), presentation, null);
+      usageView.setFilteringRules(UsageFilteringRule.EMPTY_ARRAY);
+      usageView.expandAll();
+      Disposer.register(getDisposable(), usageView);
+      myTree = usageView.getTree();
+      myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+      for (MouseListener listener : myTree.getMouseListeners()) {
+        if (listener instanceof PopupHandler) {
+          myTree.removeMouseListener(listener);
+          break;
+        }
+      }
 
-    panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
+      SimpleColoredComponent previewTitle = new SimpleColoredComponent();
+      PopupUtil.applyPreviewTitleInsets(previewTitle);
+      UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(myProject, presentation);
+      Disposer.register(getDisposable(), usagePreviewPanel);
+      usagePreviewPanel.setShowTooltipBalloon(true);
+      myTree.addTreeSelectionListener(e -> previewNode(myProject, e.getNewLeadSelectionPath(), usagePreviewPanel, previewTitle));
+      
+      JPanel previewPanel = new JPanel(new BorderLayout());
+      if (ExperimentalUI.isNewUI()) previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      previewPanel.add(previewTitle, BorderLayout.NORTH);
+      previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
 
-    @NonNls StringBuilder buf = new StringBuilder();
-    for (String description : myConflictDescriptions) {
-      buf.append(description);
-      buf.append("<br><br>");
+      class MySplitter extends OnePixelSplitter implements UiDataProvider {
+
+        MySplitter() {
+          super(true, "conflicts.dialog.splitter", 0.4f);
+        }
+
+        @Override
+        public void uiDataSnapshot(@NotNull DataSink sink) {
+          sink.set(UsageView.USAGE_VIEW_SETTINGS_KEY, usageView.getUsageViewSettings());
+        }
+      }
+      Splitter splitter = new MySplitter();
+      splitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
+      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
+      splitter.setSecondComponent(previewPanel);
+
+      CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+      JPanel toolbarPanel = new JPanel(new BorderLayout());
+      Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0);
+      toolbarPanel.setBorder(line);
+      DefaultActionGroup groupBy = new DefaultActionGroup(createGroupingActions(usageView, splitter));
+      groupBy.setPopup(true);
+      groupBy.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+      groupBy.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
+      ConflictOccurenceNavigatorSupport occurenceNavigator = new ConflictOccurenceNavigatorSupport(myTree);
+      AnAction prevOccurenceAction = actionsManager.createPrevOccurenceAction(occurenceNavigator);
+      prevOccurenceAction.registerCustomShortcutSet(myTree, getDisposable());
+      AnAction nextOccurenceAction = actionsManager.createNextOccurenceAction(occurenceNavigator);
+      nextOccurenceAction.registerCustomShortcutSet(myTree, getDisposable());
+      DefaultActionGroup toolbarGroup = new DefaultActionGroup(
+        prevOccurenceAction,
+        nextOccurenceAction,
+        new Separator(),
+        groupBy,
+        actionsManager.createExpandAllHeaderAction(myTree),
+        actionsManager.createCollapseAllHeaderAction(myTree)
+      );
+      ActionManager actionManager = ActionManager.getInstance();
+      ActionToolbarImpl toolbar = (ActionToolbarImpl)actionManager.createActionToolbar("ConflictsDialog", toolbarGroup, true);
+      toolbar.setTargetComponent(myTree);
+
+      toolbarPanel.add(toolbar.getComponent(), BorderLayout.WEST);
+      JLabel conflictsLabel = new JLabel(RefactoringBundle.message("conflicts.count.label", myElementConflictDescription.values().size()));
+      conflictsLabel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
+      toolbarPanel.add(conflictsLabel, BorderLayout.EAST);
+      SwingUtilities.invokeLater(() -> previewNode(myProject, myTree.getSelectionPath(), usagePreviewPanel, previewTitle));
+      
+      panel.add(splitter, BorderLayout.CENTER);
+      panel.add(toolbarPanel, BorderLayout.NORTH);
     }
-    JEditorPane messagePane = new JEditorPane();
-    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
-    messagePane.setText(buf.toString());
-    messagePane.setEditable(false);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
-                                                                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                                                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setPreferredSize(JBUI.size(500, 400));
-    panel.add(scrollPane, BorderLayout.CENTER);
+    else {
+      panel = new JPanel(new BorderLayout(0, 2));
+      panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
-    if (getOKAction().isEnabled()) {
-      panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+      HtmlBuilder buf = new HtmlBuilder();
+      for (int i = 0; i < Math.min(myConflictDescriptions.length, MAX_CONFLICTS_SHOWN); i++) {
+        buf.appendRaw(myConflictDescriptions[i]).br().br();
+      }
+      if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
+        buf.appendLink(EXPAND_LINK, RefactoringBundle.message("show.more.conflicts.link"));
+      }
+
+      JEditorPane messagePane = new JEditorPane();
+      messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
+      messagePane.setText(buf.toString());
+      messagePane.setEditable(false);
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
+                                                                  ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setPreferredSize(JBUI.size(500, 400));
+      messagePane.addHyperlinkListener(e -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && EXPAND_LINK.equals(e.getDescription())) {
+          messagePane.setText(StringUtil.join(myConflictDescriptions, "<br><br>"));
+        }
+      });
+      panel.add(scrollPane, BorderLayout.CENTER);
+
+      if (getOKAction().isEnabled()) {
+        panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+      }
     }
-
     return panel;
   }
 
-  public void setCommandName(String commandName) {
+  private List<AnAction> createGroupingActions(UsageView usageView, JComponent component) {
+    List<AnAction> list = new ArrayList<>();
+    list.add(new Separator(UsageViewBundle.message("action.group.by.title")));
+    ActionManager actionManager = ActionManager.getInstance();
+    for (UsageGroupingRuleProvider provider : UsageGroupingRuleProvider.EP_NAME.getExtensionList()) {
+      for (@NotNull AnAction action : provider.createGroupingActions(usageView)) {
+        action.registerCustomShortcutSet(component, getDisposable());
+        list.add(action);
+      }
+    }
+    AnAction groupByModuleAction = ActionManager.getInstance().getAction("UsageGrouping.Module");
+    AnAction flattenModulesAction = actionManager.getAction("UsageGrouping.FlattenModules");
+    list.sort((o1, o2) -> {
+      if (o1 == groupByModuleAction && o2 == flattenModulesAction) {
+        return -1;
+      }
+      else if (o1 == flattenModulesAction && o2 == groupByModuleAction) {
+        return 1;
+      }
+      return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
+    });
+    return list;
+  }
+
+  private static @NotNull UsageViewPresentation createPresentation() {
+    UsageViewPresentation presentation = new UsageViewPresentation();
+    String codeUsagesString = RefactoringBundle.message("conflicts.tab.name");
+    presentation.setCodeUsagesString(codeUsagesString);
+    presentation.setTabName(codeUsagesString);
+    presentation.setTabText(codeUsagesString);
+    return presentation;
+  }
+
+  private Usage @NotNull [] createUsages() {
+    ArrayList<Usage> usages = new ArrayList<>(myElementConflictDescription.values().size());
+    for (PsiElement element : myElementConflictDescription.keySet()) {
+      assert element != null;
+      for (@NlsContexts.Tooltip String conflictDescription : myElementConflictDescription.get(element)) {
+        UsagePresentation usagePresentation = new ConflictPresentation(conflictDescription);
+        UsageInfo usageInfo = new UsageInfo(element) {
+          @Override
+          public @NlsSafe String getTooltipText() {
+            return myUpdatedDialog ? "<html><body style='width: 300px'>" + usagePresentation.getPlainText() + "</body></html>" : null;
+          }
+
+          @Override
+          public boolean equals(Object o) {
+            return this == o;
+          }
+        };
+        Usage usage = new UsageInfo2UsageAdapter(usageInfo) {
+          @Override
+          public @NotNull UsagePresentation getPresentation() {
+            return usagePresentation;
+          }
+        };
+        usages.add(usage);
+      }
+    }
+    return usages.toArray(Usage.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myUpdatedDialog ? myTree : null;
+  }
+
+  private static void previewNode(Project project, TreePath path, UsagePreviewPanel usagePreviewPanel, SimpleColoredComponent previewTitle) {
+    if (path == null) return;
+    Object node = path.getLastPathComponent();
+    Object userObject = TreeUtil.getUserObject(node);
+    if (userObject instanceof UsageInfo2UsageAdapter adapter) {
+      VirtualFile vFile = adapter.getFile();
+      if (vFile != null) {
+        previewTitle.clear();
+        previewTitle.append(vFile.getPresentableName(), REGULAR_ATTRIBUTES);
+        previewTitle.append(spaceAndThinSpace() + getPresentablePath(project, vFile),
+                            new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+      }
+      usagePreviewPanel.updateLayout(project, List.of(adapter.getUsageInfo()));
+    }
+  }
+
+  private static @NlsSafe String getPresentablePath(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    String path;
+    if (ScratchUtil.isScratch(virtualFile)) {
+      path = ScratchUtil.getRelativePath(project, virtualFile);
+    }
+    else {
+      VirtualFile baseDir = project.getBaseDir();
+      path = VfsUtilCore.isAncestor(baseDir, virtualFile, true)
+             ? VfsUtilCore.getRelativeLocation(virtualFile, baseDir)
+             : FileUtil.getLocationRelativeToUserHome(virtualFile.getPath());
+    }
+    return path == null ? null : StringUtil.trimMiddle(path, 120);
+  }
+
+  @Override
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }
 
-  private class CancelAction extends AbstractAction {
-    public CancelAction() {
+  private final class CancelAction extends AbstractAction {
+    CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
       putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
@@ -170,143 +428,137 @@ public class ConflictsDialog extends DialogWrapper{
     return myDoRefactoringRunnable;
   }
 
-  private class MyShowConflictsInUsageViewAction extends AbstractAction {
+  @Override
+  protected @Nullable String getDimensionServiceKey() {
+    return myUpdatedDialog ? "conflicts.dialog" : null;
+  }
 
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(800, 600);
+  }
 
-    public MyShowConflictsInUsageViewAction() {
-      super("Show Conflicts in View");
+  @Override
+  public Dimension getPreferredSize() {
+    return getInitialSize();
+  }
+
+  private final class ShowConflictsInUsageViewAction extends AbstractAction {
+
+    ShowConflictsInUsageViewAction() {
+      super(myUpdatedDialog 
+            ? RefactoringBundle.message("action.open.in.find.window")
+            : RefactoringBundle.message("action.show.conflicts.in.view.text"));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String codeUsagesString = "Conflicts";
-      presentation.setCodeUsagesString(codeUsagesString);
-      presentation.setTabName(codeUsagesString);
-      presentation.setTabText(codeUsagesString);
+      UsageViewPresentation presentation = createPresentation();
       presentation.setShowCancelButton(true);
 
-      final ArrayList<Usage> usages = new ArrayList<>(myElementConflictDescription.values().size());
-      for (final PsiElement element : myElementConflictDescription.keySet()) {
-        if (element == null) {
-          usages.add(new DescriptionOnlyUsage());
-          continue;
-        }
-        boolean isRead = false;
-        boolean isWrite = false;
-        ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
-        if (detector != null) {
-          final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(element);
-          isRead = access != ReadWriteAccessDetector.Access.Write;
-          isWrite = access != ReadWriteAccessDetector.Access.Read;
-        }
-
-        for (final String conflictDescription : myElementConflictDescription.get(element)) {
-          final UsagePresentation usagePresentation = new DescriptionOnlyUsage(conflictDescription).getPresentation();
-          Usage usage = isRead || isWrite ? new ReadWriteAccessUsageInfo2UsageAdapter(new UsageInfo(element), isRead, isWrite) {
-            @NotNull
-            @Override
-            public UsagePresentation getPresentation() {
-              return usagePresentation;
-            }
-          } : new UsageInfo2UsageAdapter(new UsageInfo(element)) {
-            @NotNull
-            @Override
-            public UsagePresentation getPresentation() {
-              return usagePresentation;
-            }
-          };
-          usages.add(usage);
-        }
-      }
-      final UsageView usageView = UsageViewManager.getInstance(myProject)
-        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(Usage.EMPTY_ARRAY), presentation);
+      UsageView usageView =
+        UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, createUsages(), presentation);
       Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
       if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
           doRefactoringRunnable,
-          myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"), 
-          "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
+          myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"),
+          LangBundle.message("conflicts.dialog.message.unable.to.perform.refactoring.changes.in.code.after.usages.have.been.found"),
+          RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);
     }
+  }
+  
+  private static final class ConflictPresentation implements UsagePresentation {
+    private static final String CODE_START = " <b>";
+    private static final String CODE_END = "</b>";
+    private final @NlsContexts.Tooltip String myConflictDescription;
+    private final boolean myUpdatedDialog;
 
-    private class DescriptionOnlyUsage implements Usage {
-      private final String myConflictDescription;
-
-      public DescriptionOnlyUsage(String conflictDescription) {
-        myConflictDescription = StringUtil.unescapeXml(conflictDescription)
-          .replaceAll("<code>", "")
-          .replaceAll("</code>", "")
-          .replaceAll("<b>", "")
-          .replaceAll("</b>", "");
+    ConflictPresentation(@NotNull @NlsContexts.Tooltip String conflictDescription) {
+      myUpdatedDialog = Registry.is("refactorings.use.updated.conflicts.detected.dialog");
+      if (myUpdatedDialog) {
+        myConflictDescription = conflictDescription;
       }
-
-      public DescriptionOnlyUsage() {
-        myConflictDescription =
-          Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
+      else {
+        myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
+          .replace("<code>", "")
+          .replace("</code>", "")
+          .replace("<b>", "")
+          .replace("</b>", "");
       }
+    }
 
-      @Override
-      @NotNull
-      public UsagePresentation getPresentation() {
-        return new UsagePresentation() {
-          @Override
-          @NotNull
-          public TextChunk[] getText() {
-            return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
+    @Override
+    public TextChunk @NotNull [] getText() {
+      if (myUpdatedDialog) {
+        List<TextChunk> chunks = new SmartList<>();
+        int start = 0;
+        String conflictDescription = StringUtil.unescapeXmlEntities(myConflictDescription)
+          .replace("<b><code>", "<b>")
+          .replace("<code>", "<b>")
+          .replace("</code></b>", "</b>")
+          .replace("</code>", "</b>");
+        int refStart = conflictDescription.indexOf(CODE_START);
+        while (refStart > 0) {
+          // workaround for UsageViewTreeCellRenderer adding a space after the first chunk
+          String substring = conflictDescription.substring(start, chunks.isEmpty() ? refStart : refStart + 1);
+          chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), substring));
+          int refEnd = conflictDescription.indexOf(CODE_END, refStart);
+          if (refEnd < 0) {
+            return new TextChunk[]{new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), conflictDescription)};
           }
-
-          @Override
-          @Nullable
-          public Icon getIcon() {
-            return null;
-          }
-
-          @Override
-          public String getTooltipText() {
-            return myConflictDescription;
-          }
-
-          @Override
-          @NotNull
-          public String getPlainText() {
-            return myConflictDescription;
-          }
-        };
+          chunks.add(new TextChunk(REGULAR_BOLD_ATTRIBUTES.toTextAttributes(),
+                                   conflictDescription.substring(refStart + CODE_START.length(), refEnd)));
+          start = refEnd + CODE_END.length();
+          refStart = conflictDescription.indexOf(CODE_START, refEnd);
+        }
+        chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), conflictDescription.substring(start)));
+        return chunks.toArray(TextChunk.EMPTY_ARRAY);
       }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
+      else {
+        return new TextChunk[] {new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
       }
+    }
 
-      @Override
-      public boolean canNavigate() {
-        return false;
-      }
-      @Override
-      public void navigate(boolean requestFocus) {}
+    @Override
+    public @Nullable Icon getIcon() {
+      return null;
+    }
 
-      @Override
-      public FileEditorLocation getLocation() {
-        return null;
-      }
+    @Override
+    public String getTooltipText() {
+      return myUpdatedDialog ? null : myConflictDescription;
+    }
 
-      @Override
-      public boolean isReadOnly() {
-        return false;
-      }
+    @Override
+    public @NotNull String getPlainText() {
+      return myConflictDescription;
+    }
+  }
+  
+  private static class ConflictOccurenceNavigatorSupport extends OccurenceNavigatorSupport {
 
-      @Override
-      public boolean isValid() {
-        return true;
-      }
+    public static final Navigatable DUMMY = new Navigatable() {};
 
-      @Override
-      public void selectInEditor() {}
-      @Override
-      public void highlightInEditor() {}
+    private ConflictOccurenceNavigatorSupport(@NotNull JTree tree) {
+      super(tree);
+    }
+
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return RefactoringBundle.message("action.next.conflict");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return RefactoringBundle.message("action.previous.conflict");
+    }
+
+    @Override
+    protected @Nullable Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
+      return node.isLeaf() ? DUMMY : null;
     }
   }
 }

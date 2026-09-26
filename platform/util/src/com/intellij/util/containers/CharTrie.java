@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class CharTrie {
+@ApiStatus.Internal
+public final class CharTrie {
   private int myAllNodesSize;
   private char[] myAllNodesChars;
   private char[] myAllNodesParents; // unsigned short
@@ -68,11 +55,11 @@ public class CharTrie {
    * Returns reversed string by unique hash code.
    */
   public String getReversedString(int hashCode) {
-    return StringFactory.createShared(getReversedChars(hashCode));
+    return new String(getReversedChars(hashCode));
   }
 
   public String getString(int hashCode) {
-    return StringFactory.createShared(getChars(hashCode));
+    return new String(getChars(hashCode));
   }
 
   public int getHashCode(char[] chars) {
@@ -111,8 +98,7 @@ public class CharTrie {
     return index + (((long)resultingLength) << 32);
   }
 
-  @NotNull
-  public char[] getChars(int hashCode) {
+  public char @NotNull [] getChars(int hashCode) {
     int length = 0;
     int run = hashCode;
     while (run > 0) {
@@ -143,8 +129,7 @@ public class CharTrie {
     return index;
   }
 
-  @NotNull
-  public char[] getReversedChars(final int hashCode) {
+  public char @NotNull [] getReversedChars(final int hashCode) {
     int length = 0;
     int run = hashCode;
     while (run > 0) {
@@ -221,11 +206,5 @@ public class CharTrie {
     init();
   }
 
-  private static final ArrayFactory<char[]> FACTORY = new ArrayFactory<char[]>() {
-    @NotNull
-    @Override
-    public char[][] create(int count) {
-      return new char[count][];
-    }
-  };
+  private static final ArrayFactory<char[]> FACTORY = char[][]::new;
 }

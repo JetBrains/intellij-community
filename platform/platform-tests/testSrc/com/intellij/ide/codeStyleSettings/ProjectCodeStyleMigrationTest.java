@@ -1,37 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager;
-import org.jdom.Document;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 
 import static com.intellij.psi.codeStyle.CodeStyleScheme.CODE_STYLE_TAG_NAME;
 
 public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -42,6 +30,9 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   public void tearDown() throws Exception {
     try {
       CodeStyle.getSettings(getProject()).copyFrom(CodeStyleSettings.getDefaults());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -74,15 +65,27 @@ public class ProjectCodeStyleMigrationTest extends CodeStyleTestCase {
   }
 
   @Override
-  protected void setupProject() throws Exception {
-    LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = ServiceManager.getService(getProject(), LegacyCodeStyleSettingsManager.class);
-    Document document = JDOMUtil.loadDocument(new File(getTestDataPath() + getTestName(true) + ".xml"));
-    legacyCodeStyleSettingsManager.loadState(document.getRootElement());
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    setupLegacyManager();
+    return super.getProjectDescriptor();
   }
 
-  @Nullable
+  private void setupLegacyManager() {
+    ProjectServiceContainerCustomizer.Companion.getEp().maskAll(Collections.singletonList(project -> {
+      try {
+        LegacyCodeStyleSettingsManager legacyCodeStyleSettingsManager = new LegacyCodeStyleSettingsManager();
+        Element element = JDOMUtil.load(new File(getTestDataPath() + getTestName(true) + ".xml"));
+        legacyCodeStyleSettingsManager.loadState(element);
+        ServiceContainerUtil.registerServiceInstance(project, LegacyCodeStyleSettingsManager.class, legacyCodeStyleSettingsManager);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }), getTestRootDisposable(), false);
+  }
+
   @Override
-  protected String getTestDir() {
+  protected @Nullable String getTestDir() {
     return "projectSettingsMigration";
   }
 }

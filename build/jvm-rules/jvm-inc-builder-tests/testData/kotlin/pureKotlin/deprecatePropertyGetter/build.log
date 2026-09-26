@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_deprecatePropertyGetter-a.kotlin_module
+  test/Util.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/deprecatePropertyGetter/a/util.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_deprecatePropertyGetter-a.kotlin_module
+  test/ClientGet.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/deprecatePropertyGetter/a/clientGet.kt
+End of files
+------------------------------------------
+Exit code: ERROR

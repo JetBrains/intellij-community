@@ -1,70 +1,102 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.util.Arrays;
-import java.util.List;
+import java.util.ListIterator;
 
+/**
+ * To install the speed search on a {@link JList} component,
+ * use {@link TreeUIHelper#installListSpeedSearch} or one of the {@link ListSpeedSearch#installOn} static methods
+ */
 public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
-  @Nullable private final Function<T, String> myToStringConvertor;
+  private final @Nullable Function<? super T, String> myToStringConvertor;
 
-  public ListSpeedSearch(JList<T> list) {
+  protected ListSpeedSearch(@NotNull JList<T> list, Void sig, @Nullable Function<? super T, String> convertor) {
+    super(list, sig);
+    myToStringConvertor = convertor;
+  }
+
+  /**
+   * Prefer {@link TreeUIHelper#installListSpeedSearch(JList)} as it located in the API module
+   */
+  public static <T> @NotNull ListSpeedSearch<T> installOn(@NotNull JList<T> list) {
+    return installOn(list, null);
+  }
+
+  /**
+   * Prefer {@link TreeUIHelper#installListSpeedSearch(JList, Convertor)} as it located in the API module
+   */
+  public static <T> @NotNull ListSpeedSearch<T> installOn(@NotNull JList<T> list, @Nullable Function<? super T, String> convertor) {
+    ListSpeedSearch<T> search = new ListSpeedSearch<>(list, null, convertor);
+    search.setupListeners();
+    return search;
+  }
+
+  /**
+   * @deprecated Use {@link TreeUIHelper#installListSpeedSearch(JList)}
+   * or the static method {@link ListSpeedSearch#installOn(JList)} to install a speed search on list.
+   * The {@link TreeUIHelper#installListSpeedSearch(JList)} is preferable over the static call as it located in the API module
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link ListSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
+  public ListSpeedSearch(@NotNull JList<T> list) {
     super(list);
     myToStringConvertor = null;
     registerSelectAll(list);
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public ListSpeedSearch(final JList<T> list, @NotNull Function<T, String> convertor) {
+  /**
+   * @deprecated Use {@link TreeUIHelper#installListSpeedSearch(JList, Convertor)}
+   * or the static method {@link ListSpeedSearch#installOn(JList, Function)} to install a speed search on list.
+   * The {@link TreeUIHelper#installListSpeedSearch(JList, Convertor)} is preferable over the static call as it located in the API module
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link ListSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
+  public ListSpeedSearch(@NotNull JList<T> list, @NotNull Function<? super T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
     registerSelectAll(list);
   }
 
-  /**
-   * @deprecated use {@link #ListSpeedSearch(JList, Function)}
-   */
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<T, String> convertor) {
-    super(list);
-    myToStringConvertor = convertor == null ? null : convertor::convert;
-    registerSelectAll(list);
+  @Override
+  public void setupListeners() {
+    super.setupListeners();
+
+    registerSelectAll(myComponent);
   }
 
-  private void registerSelectAll(JList<T> list) {
-    new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
+  private void registerSelectAll(@NotNull JList<T> list) {
+    new MySelectAllAction<>(list, this).registerCustomShortcutSet(list, null);
   }
 
   @Override
   protected void selectElement(Object element, String selectedText) {
     if (element != null) {
-      ScrollingUtil.selectItem(myComponent, element);
+      //noinspection unchecked
+      ScrollingUtil.selectItem(myComponent, (T)element);
     }
     else {
       myComponent.clearSelection();
@@ -76,24 +108,14 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return myComponent.getSelectedIndex();
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
-    return getAllListElements(myComponent);
+  protected int getElementCount() {
+    return myComponent.getModel().getSize();
   }
 
-  public static Object[] getAllListElements(final JList list) {
-    ListModel model = list.getModel();
-    if (model instanceof DefaultListModel){ // optimization
-      return ((DefaultListModel)model).toArray();
-    }
-    else{
-      Object[] elements = new Object[model.getSize()];
-      for(int i = 0; i < elements.length; i++){
-        elements[i] = model.getElementAt(i);
-      }
-      return elements;
-    }
+  @Override
+  protected Object getElementAt(int viewIndex) {
+    return myComponent.getModel().getElementAt(viewIndex);
   }
 
   @Override
@@ -105,24 +127,25 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return element == null ? null : element.toString();
   }
 
-  @NotNull
-  private TIntArrayList findAllFilteredElements(String s) {
-    TIntArrayList indices = new TIntArrayList();
-    String _s = s.trim();
+  private @NotNull IntList findAllFilteredElements(@NotNull String s) {
+    IntList indices = new IntArrayList();
+    String trimmed = s.trim();
 
-    Object[] elements = getAllListElements(myComponent);
-    for (int i = 0; i < elements.length; i++) {
-      final Object element = elements[i];
-      if (isMatchingElement(element, _s)) indices.add(i);
+    ListIterator<Object> iterator = getElementIterator(0);
+    while (iterator.hasNext()) {
+      Object element = iterator.next();
+      if (isMatchingElement(element, trimmed)) {
+        indices.add(iterator.previousIndex());
+      }
     }
     return indices;
   }
 
-  private static class MySelectAllAction extends DumbAwareAction {
-    @NotNull private final JList myList;
-    @NotNull private final ListSpeedSearch mySearch;
+  private static final class MySelectAllAction<T> extends DumbAwareAction {
+    private final @NotNull JList<T> myList;
+    private final @NotNull ListSpeedSearch<T> mySearch;
 
-    MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
+    MySelectAllAction(@NotNull JList<T> list, @NotNull ListSpeedSearch<T> search) {
       myList = list;
       mySearch = search;
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);
@@ -133,22 +156,29 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myList.getSelectionModel().getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListSelectionModel sm = myList.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();
       if (query == null) return;
 
-      TIntArrayList filtered = mySearch.findAllFilteredElements(query);
-      if (filtered.isEmpty()) return;
+      IntList filtered = mySearch.findAllFilteredElements(query);
+      if (filtered.isEmpty()) {
+        return;
+      }
 
-      boolean alreadySelected = Arrays.equals(filtered.toNativeArray(), myList.getSelectedIndices());
+      boolean alreadySelected = Arrays.equals(filtered.toIntArray(), myList.getSelectedIndices());
 
       if (alreadySelected) {
         int anchor = myList.getAnchorSelectionIndex();
@@ -162,12 +192,17 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
         int anchor = -1;
         Object currentElement = mySearch.findElement(query);
         if (currentElement != null) {
-          List<Object> elements = Arrays.asList(getAllListElements(myList));
-          anchor = ContainerUtil.indexOfIdentity(elements, currentElement);
+          ListIterator<Object> iterator = mySearch.getElementIterator(0);
+          while (iterator.hasNext()) {
+            if (iterator.next() == currentElement) {
+              anchor = iterator.previousIndex();
+              break;
+            }
+          }
         }
-        if (anchor == -1) anchor = filtered.get(0);
+        if (anchor == -1) anchor = filtered.getInt(0);
 
-        myList.setSelectedIndices(filtered.toNativeArray());
+        myList.setSelectedIndices(filtered.toIntArray());
         sm.setAnchorSelectionIndex(anchor);
       }
     }

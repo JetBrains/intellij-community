@@ -1,0 +1,10 @@
+// PROBLEM: Data class can be converted to value class
+// FIX: Convert to value class
+// CHOSEN_OPTION: Generate 'componentN' function
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+value class User(val firstName: String, val lastName: String) {
+    fun fullName(): String = "$firstName $lastName"
+    operator fun component1(): String = firstName
+    operator fun component2(): String = lastName
+}

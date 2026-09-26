@@ -1,53 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
+import com.intellij.compiler.ModuleSourceSet;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class OneProjectItemCompileScope extends ExportableUserDataHolderBase implements CompileScope{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.OneProjectItemCompileScope");
+  private static final Logger LOG = Logger.getInstance(OneProjectItemCompileScope.class);
   private final Project myProject;
   private final VirtualFile myFile;
   private final String myUrl;
 
-  public OneProjectItemCompileScope(Project project, VirtualFile file) {
+  public OneProjectItemCompileScope(Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
     final String url = file.getUrl();
     myUrl = file.isDirectory()? url + "/" : url;
   }
 
-  @NotNull
-  public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
+  @Override
+  public VirtualFile @NotNull [] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<>(1);
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
@@ -57,24 +47,47 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
     else{
       iterator.processFile(myFile);
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     if (myFile.isDirectory()){
       return FileUtil.startsWith(url, myUrl);
     }
     return FileUtil.pathsEqual(url, myUrl);
   }
 
-  @NotNull
-  public Module[] getAffectedModules() {
-    final Module module = ModuleUtil.findModuleForFile(myFile, myProject);
-    if (module == null) {
-      LOG.error("Module is null for file " + myFile.getPresentableUrl());
+  @Override
+  public Module @NotNull [] getAffectedModules() {
+    final Collection<ModuleSourceSet> sets = getAffectedSourceSets();
+    if (sets.isEmpty()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Module is null for file " + myFile.getPresentableUrl());
+      }
       return Module.EMPTY_ARRAY;
     }
-    return new Module[] {module};
+    return new Module[] {sets.iterator().next().getModule()};
   }
 
+  @Override
+  public Collection<ModuleSourceSet> getAffectedSourceSets() {
+    if (myProject.isDefault()) {
+      return Collections.emptyList();
+    }
+    final @NotNull ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+    final Module module = fileIndex.getModuleForFile(myFile);
+    if (module == null || !fileIndex.isInSourceContent(myFile)) {
+      return Collections.emptyList();
+    }
+
+    JpsModuleSourceRootType<?> rootType = fileIndex.getContainingSourceRootType(myFile);
+    if (rootType == null) return Collections.emptyList();
+    
+    final boolean isResource = rootType instanceof JavaResourceRootType;
+    final ModuleSourceSet.Type type = rootType.isForTests()?
+      isResource? ModuleSourceSet.Type.RESOURCES_TEST :  ModuleSourceSet.Type.TEST :
+      isResource? ModuleSourceSet.Type.RESOURCES :  ModuleSourceSet.Type.PRODUCTION;
+    return Collections.singleton(new ModuleSourceSet(module, type));
+  }
 }

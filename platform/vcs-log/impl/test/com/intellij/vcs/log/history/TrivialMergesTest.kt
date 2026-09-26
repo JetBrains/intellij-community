@@ -213,4 +213,30 @@ class TrivialMergesTest {
     8(9)
     9()
   }
+
+  @Test
+  fun tripleMerge() = graph {
+    0(1, 3)
+    1.UNM(2)
+    2(7)
+    3.UNM(4, 5)
+    4.UNM(10)
+    5.UNM(6)
+    6(8)
+    7.UNM(9)
+    8.UNM(9)
+    9(11)
+    10(12)
+    11.UNM(13)
+    12.UNM(13)
+    13(14)
+    14()
+  }.assert(0, 10) {
+    0(2.dot, 6.dot, 13.dot)
+    2(9.dot)
+    6(9.dot)
+    9(13.dot)
+    13(14)
+    14()
+  }
 }

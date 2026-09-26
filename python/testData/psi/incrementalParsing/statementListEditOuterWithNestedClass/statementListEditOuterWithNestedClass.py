@@ -1,0 +1,10 @@
+class Outer:
+    class Inner:
+        def method(self):
+            return 1
+
+    x = 10
+    y = 20
+
+    def outer_method(self):
+        return self.x

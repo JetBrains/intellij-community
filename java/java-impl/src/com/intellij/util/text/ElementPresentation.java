@@ -1,26 +1,26 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nls;
 
 public abstract class ElementPresentation {
   private final Noun myKind;
@@ -50,20 +50,20 @@ public abstract class ElementPresentation {
     return virtualFile != null && virtualFile.isValid();
   }
 
-  public abstract String getQualifiedName();
+  public abstract @NlsSafe String getQualifiedName();
 
   public Noun getKind() {
     return myKind;
   }
 
-  public abstract String getName();
+  public abstract @NlsSafe String getName();
 
-  public abstract String getComment();
+  public abstract @Nls String getComment();
 
   public String getNameWithFQComment() {
     String comment = getComment();
     String result = getName();
-    if (comment.trim().length() == 0) return result;
+    if (comment.trim().isEmpty()) return result;
     return result + " (" + comment + ")";
   }
 
@@ -89,19 +89,22 @@ public abstract class ElementPresentation {
   }
 
   private static class InvalidPresentation extends ElementPresentation {
-    public InvalidPresentation() {
+    InvalidPresentation() {
       super(new Noun(-1));
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       return "";
     }
 
-    public String getName() {
-      return "INVALID";
+    @Override
+    public @NlsSafe String getName() {
+      return JavaBundle.message("presentable.text.invalid.element.name");
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       return getName();
     }
   }
@@ -109,22 +112,25 @@ public abstract class ElementPresentation {
   private static class ForDirectory extends ElementPresentation {
     private final PsiDirectory myPsiDirectory;
 
-    public ForDirectory(PsiDirectory psiDirectory) {
+    ForDirectory(PsiDirectory psiDirectory) {
       super(Noun.DIRECTORY);
       myPsiDirectory = psiDirectory;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       VirtualFile virtualFile = myPsiDirectory.getVirtualFile();
       if (validNotNull(virtualFile)) return virtualFile.getPresentableUrl();
       return myPsiDirectory.getName();
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return myPsiDirectory.getName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       PsiDirectory parentDirectory = myPsiDirectory.getParentDirectory();
       if (parentDirectory == null) return "";
       return ElementPresentation.forElement(parentDirectory).getQualifiedName();
@@ -134,22 +140,25 @@ public abstract class ElementPresentation {
   private static class ForFile extends ElementPresentation {
     private final PsiFile myFile;
 
-    public ForFile(PsiFile file) {
+    ForFile(PsiFile file) {
       super(Noun.FILE);
       myFile = file;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       VirtualFile virtualFile = myFile.getVirtualFile();
       if (validNotNull(virtualFile)) return virtualFile.getPresentableUrl();
       return myFile.getName();
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return myFile.getName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       PsiDirectory directory = myFile.getContainingDirectory();
       if (directory == null) return "";
       return ElementPresentation.forElement(directory).getQualifiedName();
@@ -164,17 +173,20 @@ public abstract class ElementPresentation {
       myPsiPackage = psiPackage;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       String qualifiedName = myPsiPackage.getQualifiedName();
-      if (qualifiedName.length() == 0) return PsiBundle.message("default.package.presentation");
+      if (qualifiedName.isEmpty()) return JavaBundle.message("default.package.presentable.name");
       return qualifiedName;
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return getQualifiedName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       return "";
     }
   }
@@ -182,22 +194,25 @@ public abstract class ElementPresentation {
   private static class ForAnonymousClass extends ElementPresentation {
     private final PsiAnonymousClass myPsiAnonymousClass;
 
-    public ForAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
+    ForAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
       super(Noun.FRAGMENT);
       myPsiAnonymousClass = psiAnonymousClass;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
-      if (psiClass != null) return PsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
-      return PsiBundle.message("anonymous.class.display");
+      if (psiClass != null) return JavaPsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
+      return JavaBundle.message("presentable.text.anonymous.class");
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return getQualifiedName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       return "";
     }
   }
@@ -206,20 +221,23 @@ public abstract class ElementPresentation {
     private static final Logger LOG = Logger.getInstance(ForClass.class);
     private final PsiClass myPsiClass;
 
-    public ForClass(PsiClass psiClass) {
+    ForClass(PsiClass psiClass) {
       super(Noun.CLASS);
       myPsiClass = psiClass;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       return myPsiClass.getQualifiedName();
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return myPsiClass.getName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       PsiFile file = myPsiClass.getContainingFile();
       PsiDirectory dir = file.getContainingDirectory();
       if (dir == null) {
@@ -233,25 +251,30 @@ public abstract class ElementPresentation {
   }
 
   private static class ForMethod extends ElementPresentation {
-    private static final int FQ_OPTIONS = PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME |
-                                          PsiFormatUtil.SHOW_PARAMETERS;
-    private static final int NAME_OPTIONS = PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS;
+    private static final int FQ_OPTIONS = PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                          PsiFormatUtilBase.SHOW_FQ_NAME | PsiFormatUtilBase.SHOW_NAME |
+                                          PsiFormatUtilBase.SHOW_PARAMETERS;
+    private static final int NAME_OPTIONS = PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
+                                            PsiFormatUtilBase.SHOW_PARAMETERS;
     private final PsiMethod myPsiMethod;
 
-    public ForMethod(PsiMethod psiMethod) {
+    ForMethod(PsiMethod psiMethod) {
       super(Noun.METHOD);
       myPsiMethod = psiMethod;
     }
 
-    public String getQualifiedName() {
-      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, FQ_OPTIONS, PsiFormatUtil.SHOW_TYPE);
+    @Override
+    public @NlsSafe String getQualifiedName() {
+      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, FQ_OPTIONS, PsiFormatUtilBase.SHOW_TYPE);
     }
 
-    public String getName() {
-      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, NAME_OPTIONS, PsiFormatUtil.SHOW_TYPE);
+    @Override
+    public @NlsSafe String getName() {
+      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, NAME_OPTIONS, PsiFormatUtilBase.SHOW_TYPE);
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       PsiClass containingClass = myPsiMethod.getContainingClass();
       if (containingClass == null) return "";
       return forElement(containingClass).getComment();
@@ -261,26 +284,29 @@ public abstract class ElementPresentation {
   private static class ForField extends ElementPresentation {
     private final PsiField myPsiField;
 
-    public ForField(PsiField psiField) {
+    ForField(PsiField psiField) {
       super(Noun.FIELD);
       myPsiField = psiField;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       PsiClass psiClass = myPsiField.getContainingClass();
       String name = myPsiField.getName();
       if (psiClass != null) return forElement(psiClass).getQualifiedName() + "." + name;
       else return name;
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       PsiClass psiClass = myPsiField.getContainingClass();
       String name = myPsiField.getName();
       if (psiClass == null) return name;
       return forElement(psiClass).getName() + "." + name;
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       PsiClass psiClass = myPsiField.getContainingClass();
       if (psiClass == null) return "";
       return forElement(psiClass).getComment();
@@ -290,22 +316,25 @@ public abstract class ElementPresentation {
   private static class ForGeneralElement extends ElementPresentation {
     private final PsiElement myPsiElement;
 
-    public ForGeneralElement(PsiElement psiElement) {
+    ForGeneralElement(PsiElement psiElement) {
       super(Noun.FRAGMENT);
       myPsiElement = psiElement;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       PsiFile containingFile = myPsiElement.getContainingFile();
-      if (containingFile != null) return PsiBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
-      return PsiBundle.message("code.display");
+      if (containingFile != null) return JavaBundle.message("presentable.text.code.from.context", forElement(containingFile).getQualifiedName());
+      return JavaBundle.message("presentable.text.code.display");
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return getQualifiedName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       return "";
     }
   }
@@ -313,20 +342,23 @@ public abstract class ElementPresentation {
   private static class ForXmlTag extends ElementPresentation {
     private final XmlTag myXmlTag;
 
-    public ForXmlTag(XmlTag xmlTag) {
+    ForXmlTag(XmlTag xmlTag) {
       super(Noun.XML_TAG);
       myXmlTag = xmlTag;
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       return "<" + myXmlTag.getLocalName() + ">";
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return getQualifiedName();
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       return "";
     }
   }
@@ -334,12 +366,13 @@ public abstract class ElementPresentation {
   private static class ForVirtualFile extends ElementPresentation {
     private final VirtualFile myFile;
 
-    public ForVirtualFile(VirtualFile file) {
+    ForVirtualFile(VirtualFile file) {
       super(file.isDirectory() ? Noun.DIRECTORY : Noun.FILE);
       myFile = file;
     }
 
-    public String getComment() {
+    @Override
+    public @Nls String getComment() {
       String name = myFile.getName();
       if (!myFile.isValid()) return name;
       VirtualFile parent = myFile.getParent();
@@ -347,11 +380,13 @@ public abstract class ElementPresentation {
       return parent.getPresentableUrl();
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
       return myFile.getName();
     }
 
-    public String getQualifiedName() {
+    @Override
+    public @NlsSafe String getQualifiedName() {
       if (!myFile.isValid()) return myFile.getName();
       return myFile.getPresentableUrl();
     }

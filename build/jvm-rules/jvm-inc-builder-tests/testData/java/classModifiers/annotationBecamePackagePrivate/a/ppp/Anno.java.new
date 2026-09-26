@@ -1,0 +1,2 @@
+package ppp;
+@interface Anno { }  // Anno narrowed to package-private

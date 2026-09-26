@@ -1,0 +1,3 @@
+@Outer
+public class Use {
+}

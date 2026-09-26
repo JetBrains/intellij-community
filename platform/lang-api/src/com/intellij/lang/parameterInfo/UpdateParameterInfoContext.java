@@ -12,7 +12,15 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   PsiElement getParameterOwner();
 
   void setHighlightedParameter(final Object parameter);
+
+  /**
+   * @return signature that is considered as primary in the current highlighting context
+   */
   Object getHighlightedParameter();
+
+  /**
+   * Sets the parameter inside the signature that corresponds to the currently typing parameter
+   */
   void setCurrentParameter(final int index);
   boolean isUIComponentEnabled(int index);
   void setUIComponentEnabled(int index, boolean enabled);
@@ -24,6 +32,7 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   boolean isPreservedOnHintHidden();
   void setPreservedOnHintHidden(boolean value);
   boolean isInnermostContext();
-  
+  boolean isSingleParameterInfo();
+
   UserDataHolderEx getCustomContext();
 }

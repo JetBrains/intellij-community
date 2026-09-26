@@ -1,2 +1,2 @@
-class A {<caret>
+class A<caret> {
 }

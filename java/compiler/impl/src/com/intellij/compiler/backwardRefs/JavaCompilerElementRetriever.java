@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -33,20 +19,24 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-public class JavaCompilerElementRetriever {
+public final class JavaCompilerElementRetriever {
   private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
 
-  private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
+  private static final TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
-  @NotNull
-  static PsiFunctionalExpression[] retrieveFunExpressionsByIndices(@NotNull TIntHashSet indices,
-                                                                   @NotNull PsiFileWithStubSupport psiFile) {
+  static PsiFunctionalExpression @NotNull [] retrieveFunExpressionsByIndices(@NotNull IntSet indices,
+                                                                             @NotNull PsiFileWithStubSupport psiFile) {
     StubbedSpine spine = psiFile.getStubbedSpine();
 
     PsiFunctionalExpression[] result = new PsiFunctionalExpression[indices.size()];
@@ -59,25 +49,22 @@ public class JavaCompilerElementRetriever {
     }
 
     if (result.length != resIdx) {
-      final CompilerReferenceServiceImpl compilerReferenceService =
-        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
-      final Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
-      final VirtualFile file = psiFile.getVirtualFile();
-      final Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
+      CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
+      Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
+      VirtualFile file = psiFile.getVirtualFile();
+      Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
       LOG.error("Compiler functional expression index doesn't match to stub index.\n" +
                 "Functional expression indices: " + indices + "\n" +
                 "Does the file belong to dirty scope?: " + state.contains(moduleForFile),
                 new Attachment(psiFile.getName(), psiFile.getText()));
-
       return ContainerUtil.filter(result, Objects::nonNull).toArray(PsiFunctionalExpression.EMPTY_ARRAY);
     }
 
     return result;
   }
 
-  @NotNull
-  static PsiClass[] retrieveClassesByInternalIds(@NotNull SearchId[] internalIds,
-                                                 @NotNull PsiFileWithStubSupport psiFile) {
+  static PsiClass @NotNull [] retrieveClassesByInternalIds(SearchId @NotNull [] internalIds,
+                                                           @NotNull PsiFileWithStubSupport psiFile) {
     ClassMatcher matcher = ClassMatcher.create(internalIds);
     return ReadAction.compute(() -> matcher.retrieveClasses(psiFile));
   }
@@ -108,14 +95,12 @@ public class JavaCompilerElementRetriever {
     }
   }
 
-  private static class ClassMatcher {
-    @Nullable
-    private final TIntHashSet myAnonymousIndices;
-    @NotNull
-    private final Collection<InternalNameMatcher> myClassNameMatchers;
+  private static final class ClassMatcher {
+    private final @Nullable IntSet myAnonymousIndices;
+    private final @NotNull Collection<? extends InternalNameMatcher> myClassNameMatchers;
 
-    private ClassMatcher(@Nullable TIntHashSet anonymousIndices,
-                         @NotNull Collection<InternalNameMatcher> nameMatchers) {
+    private ClassMatcher(@Nullable IntSet anonymousIndices,
+                         @NotNull Collection<? extends InternalNameMatcher> nameMatchers) {
       myAnonymousIndices = anonymousIndices;
       myClassNameMatchers = nameMatchers;
     }
@@ -145,7 +130,7 @@ public class JavaCompilerElementRetriever {
       return result.toArray(PsiClass.EMPTY_ARRAY);
     }
 
-    private static boolean match(PsiClass psiClass, Collection<InternalNameMatcher> matchers) {
+    private static boolean match(PsiClass psiClass, Collection<? extends InternalNameMatcher> matchers) {
       for (InternalNameMatcher matcher : matchers) {
         if (matcher.matches(psiClass)) {
           //qualified name is unique among file's classes
@@ -158,13 +143,13 @@ public class JavaCompilerElementRetriever {
       return false;
     }
 
-    private static ClassMatcher create(@NotNull SearchId[] internalIds) {
+    private static ClassMatcher create(SearchId @NotNull [] internalIds) {
       List<InternalNameMatcher> nameMatchers = new SmartList<>();
-      TIntHashSet anonymousIndices = null;
+      IntSet anonymousIndices = null;
       for (SearchId internalId : internalIds) {
         if (internalId.getId() != -1) {
           if (anonymousIndices == null) {
-            anonymousIndices = new TIntHashSet();
+            anonymousIndices = new IntOpenHashSet();
           }
           anonymousIndices.add(internalId.getId());
         }

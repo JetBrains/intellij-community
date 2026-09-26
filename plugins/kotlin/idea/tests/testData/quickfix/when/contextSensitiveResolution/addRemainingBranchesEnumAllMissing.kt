@@ -1,0 +1,15 @@
+// "Add remaining branches" "true"
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+// WITH_STDLIB
+// K2_ERROR: NO_ELSE_IN_WHEN
+
+package test
+
+enum class Foo { A, B, C }
+
+fun test(e: Foo) {
+    wh<caret>en(e) {
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix

@@ -17,7 +17,13 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.wm.ToolWindow;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated See {@link ToolWindowViewModeAction} \
+ **/
+@ApiStatus.Internal
+@Deprecated
 public class ToggleSideModeAction extends BaseToolWindowToggleAction {
 
   @Override

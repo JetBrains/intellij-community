@@ -1,95 +1,110 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.requestHandlers.BuiltInServerConnectionData;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.List;
 
-/**
- * @author anna
- * @since Mar 4, 2005
- */
-public class JUnitDevKitPatcher extends JUnitPatcher {
+import static com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt.IJENT_BOOT_CLASSPATH_MODULE;
+
+@ApiStatus.Internal
+public final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
-  private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
 
   @Override
-  public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
-    Sdk jdk = javaParameters.getJdk();
+  public void patchJavaParameters(@NotNull Project project, @Nullable Module module, JavaParameters javaParameters) {
+    var jdk = javaParameters.getJdk();
     if (jdk == null) return;
 
-    ParametersList vm = javaParameters.getVMParametersList();
+    var vm = javaParameters.getVMParametersList();
 
-    if (module != null &&
-        PsiUtil.isIdeaProject(module.getProject()) &&
-        !vm.hasProperty(SYSTEM_CL_PROPERTY) &&
-        !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
-      String qualifiedName = UrlClassLoader.class.getName();
-      if (findLoader(module, qualifiedName) != null) {
-        vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+      BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
+
+      // Mirrors COMMON_VM_OPTIONS in VmOptionsGenerator.kt
+      if (!vm.hasProperty("java.util.zip.use.nio.for.zip.file.access")) {
+        vm.addProperty("java.util.zip.use.nio.for.zip.file.access", "true");
+      }
+      if (!vm.hasProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
+        // check that UrlClassLoader is available in the test module classpath
+        // if module-path is used, skip custom loader
+        var qualifiedName = "com.intellij.util.lang.UrlClassLoader";
+        if (DevKitPatcherHelper.loaderValid(project, module, qualifiedName)) {
+          vm.addProperty(DevKitPatcherHelper.SYSTEM_CL_PROPERTY, qualifiedName);
+          vm.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true");
+        }
+      }
+
+      var basePath = project.getBasePath();
+      if (module != null && hasIjentDefaultFsProviderInClassPath(module)) {
+        DevKitPatcherHelper.enableIjentDefaultFsProvider(project, vm);
+      }
+      if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
+        assert basePath != null;
+        vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "system/test").toAbsolutePath()));
+      }
+      if (!vm.hasProperty(PathManager.PROPERTY_CONFIG_PATH)) {
+        assert basePath != null;
+        vm.addProperty(PathManager.PROPERTY_CONFIG_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "config/test").toAbsolutePath()));
+      }
+
+      DevKitPatcherHelper.appendAddOpensWhenNeeded(project, jdk, vm);
+
+      if (!Boolean.parseBoolean(vm.getPropertyValue("intellij.devkit.junit.skip.settings.from.intellij.yaml"))) {
+        JUnitDevKitUnitTestingSettings.getInstance(project).apply(module, javaParameters);
       }
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);
     if (jdk == null) return;
 
-    String libPath = jdk.getHomePath() + File.separator + "lib";
-    String bootJarPath = libPath + File.separator + "boot.jar";
-    if (new File(bootJarPath).exists()) {
-      //there is no need to add boot.jar in modern IDE builds (181.*)
-      vm.add("-Xbootclasspath/a:" + bootJarPath);
-    }
-
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
-      String id = DescriptorUtil.getPluginId(module);
-      if (id != null) {
-        vm.defineProperty("idea.load.plugins.id", id);
+      //non-optional dependencies of 'idea.load.plugin.id' are automatically enabled (see com.intellij.ide.plugins.PluginManagerCore.detectReasonToNotLoad)
+      //we need to explicitly add optional dependencies to properly test them
+      var ids = DescriptorUtil.getPluginAndOptionalDependenciesIds(module);
+      if (!ids.isEmpty()) {
+        vm.defineProperty("idea.load.plugins.id", String.join(",", ids));
       }
     }
 
-    File sandboxHome = getSandboxPath(jdk);
+    var sandboxHome = getSandboxPath(jdk);
     if (sandboxHome != null) {
-      if (!vm.hasProperty("idea.home.path")) {
-        File homeDir = new File(sandboxHome, "test");
-        FileUtil.createDirectory(homeDir);
-        String buildNumber = IdeaJdk.getBuildNumber(jdk.getHomePath());
+      if (!vm.hasProperty(PathManager.PROPERTY_HOME_PATH)) {
+        var homeDir = sandboxHome.resolve("test");
+        try {
+          Files.createDirectories(homeDir);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+
+        var buildNumber = IdeaJdk.getBuildNumber(jdk.getHomePath());
         if (buildNumber != null) {
           try {
-            FileUtil.writeToFile(new File(homeDir, "build.txt"), buildNumber);
+            Files.writeString(homeDir.resolve("build.txt"), buildNumber);
           }
           catch (IOException e) {
             LOG.warn("failed to create build.txt in " + homeDir + ": " + e.getMessage(), e);
@@ -98,41 +113,43 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
         else {
           LOG.warn("Cannot determine build number for " + jdk.getHomePath());
         }
-        vm.defineProperty("idea.home.path", homeDir.getAbsolutePath());
+        vm.defineProperty(PathManager.PROPERTY_HOME_PATH, homeDir.toString());
       }
-      if (!vm.hasProperty("idea.plugins.path")) {
-        vm.defineProperty("idea.plugins.path", new File(sandboxHome, "plugins").getAbsolutePath());
+      if (!vm.hasProperty(PathManager.PROPERTY_PLUGINS_PATH)) {
+        vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, sandboxHome.resolve("plugins").toString());
       }
     }
 
-    javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
-    javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
-    javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+    var libPath = jdk.getHomePath() + java.io.File.separator + "lib" + java.io.File.separator;
+    javaParameters.getClassPath().addFirst(libPath + "idea.jar");
+    javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
-  private static PsiClass findLoader(Module module, String qualifiedName) {
-    Project project = module.getProject();
-    DumbService dumbService = DumbService.getInstance(project);
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    dumbService.setAlternativeResolveEnabled(true);
-    try {
-      return ReadAction.compute(() -> facade.findClass(qualifiedName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)));
-    }
-    finally {
-      dumbService.setAlternativeResolveEnabled(false);
-    }
-  }
 
-  @Nullable
-  private static File getSandboxPath(final Sdk jdk) {
-    SdkAdditionalData additionalData = jdk.getSdkAdditionalData();
-    if (additionalData instanceof Sandbox) {
-      String sandboxHome = ((Sandbox)additionalData).getSandboxHome();
+  private static @Nullable Path getSandboxPath(Sdk jdk) {
+    if (jdk.getSdkAdditionalData() instanceof Sandbox sandbox) {
+      var sandboxHome = sandbox.getSandboxHome();
       if (sandboxHome != null) {
-        return new File(FileUtil.toCanonicalPath(sandboxHome));
+        return Path.of(sandboxHome).normalize().toAbsolutePath();
       }
     }
-
     return null;
+  }
+
+  private static boolean hasIjentDefaultFsProviderInClassPath(Module startModule) {
+    var queue = new ArrayDeque<>(List.of(ModuleRootManager.getInstance(startModule).getModuleDependencies()));
+    var seen = new HashSet<Module>();
+    seen.add(startModule);
+    while (!queue.isEmpty()) {
+      var module = queue.removeFirst();
+      if (IJENT_BOOT_CLASSPATH_MODULE.equals(module.getName())) {
+        return true;
+      }
+      if (seen.add(module)) {
+        queue.addAll(List.of(ModuleRootManager.getInstance(module).getModuleDependencies()));
+      }
+    }
+    return false;
   }
 }

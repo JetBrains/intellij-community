@@ -1,28 +1,24 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
-import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
+ * @deprecated Do not use.
  */
-public class VcsLogIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, VcsLogIcons.class);
+@Deprecated(forRemoval = true)
+public final class VcsLogIcons {
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated(forRemoval = true)
+  public static final class Process {
+    /** 16x16 */ public static final @NotNull Icon Dots_1 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_1;
+    /** 16x16 */ public static final @NotNull Icon Dots_2 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_2;
+    /** 16x16 */ public static final @NotNull Icon Dots_3 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_3;
+    /** 16x16 */ public static final @NotNull Icon Dots_4 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_4;
+    /** 16x16 */ public static final @NotNull Icon Dots_5 = com.intellij.vcs.log.impl.VcsLogIcons.Process.Dots_5;
   }
-
-  public static final Icon Branch = load("/icons/branch.svg"); // 16x16
-  public static final Icon IntelliSort = load("/icons/IntelliSort.svg"); // 16x16
-
-  public static class Process {
-    public static final Icon Dots_1 = load("/icons/process/dots_1.png"); // 16x16
-    public static final Icon Dots_2 = load("/icons/process/dots_2.png"); // 16x16
-    public static final Icon Dots_3 = load("/icons/process/dots_3.png"); // 16x16
-    public static final Icon Dots_4 = load("/icons/process/dots_4.png"); // 16x16
-    public static final Icon Dots_5 = load("/icons/process/dots_5.png"); // 16x16
-
-  }
-  public static final Icon ShowOtherBranches = load("/icons/ShowOtherBranches.png"); // 16x16
 }

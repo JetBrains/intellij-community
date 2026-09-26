@@ -1,0 +1,8 @@
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHT_WARNINGS
+// HIGHLIGHT_SEVERITY: SYMBOL_TYPE_SEVERITY
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+fun castSpecial(p: String) {
+    val v = p as String
+}

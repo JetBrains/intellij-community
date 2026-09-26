@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -24,21 +11,21 @@ import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class MethodSmartStepTarget extends SmartStepTarget {
   private final PsiMethod myMethod;
+  private int myOrdinal;
 
   public MethodSmartStepTarget(@NotNull PsiMethod method, @Nullable String label, @Nullable PsiElement highlightElement, boolean needBreakpointRequest, Range<Integer> lines) {
     super(label, highlightElement, needBreakpointRequest, lines);
     myMethod = method;
   }
 
-  @NotNull
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return myMethod;
   }
 
@@ -47,9 +34,8 @@ public class MethodSmartStepTarget extends SmartStepTarget {
     return myMethod.getIcon(0);
   }
 
-  @NotNull
   @Override
-  public String getPresentation() {
+  public @NotNull String getPresentation() {
     String label = getLabel();
     String formatted = PsiFormatUtil.formatMethod(
       myMethod,
@@ -58,27 +44,19 @@ public class MethodSmartStepTarget extends SmartStepTarget {
       PsiFormatUtilBase.SHOW_TYPE,
       999
     );
-    return label != null? label + formatted : formatted;
+    return label != null ? label + formatted : formatted;
   }
 
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    final MethodSmartStepTarget that = (MethodSmartStepTarget)o;
-
-    if (!myMethod.equals(that.myMethod)) {
-      return false;
-    }
-
-    return true;
+  public int getOrdinal() {
+    return myOrdinal;
   }
 
-  public int hashCode() {
-    return myMethod.hashCode();
+  public void setOrdinal(int ordinal) {
+    myOrdinal = ordinal;
+  }
+
+  @Override
+  public @Nullable String getClassName() {
+    return JVMNameUtil.getClassVMName(myMethod.getContainingClass());
   }
 }

@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  package3/C.class
+End of files
+Compiling files:
+  java/common/addClassHidingImportedClass2/a/package2/A.java
+  java/common/addClassHidingImportedClass2/a/package3/C.java
+End of files
+Cleaning output files:
+  package2/B.class
+End of files
+Compiling files:
+  java/common/addClassHidingImportedClass2/a/package2/B.java
+End of files
+Cleaning output files:
+  package3/C.class
+End of files
+Compiling files:
+  java/common/addClassHidingImportedClass2/a/package3/C.java
+End of files
+------------------------------------------
+Exit code: OK

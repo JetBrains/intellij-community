@@ -1,0 +1,37 @@
+[build-system]
+requires = [
+  "scikit-build",
+  "sematic-release",
+  "ninja>=1.11",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.autoflake]
+
+[tool.autoimport]
+
+[tool.basedpyright]
+
+[tool.check-jsonschema]
+
+[tool.cibuildwheel]
+
+[tool.comfy]
+
+[tool.conda-lock]
+
+[tool.dagster]
+
+[tool.flit]
+
+[tool.great-expectations]
+
+[tool.make-env]
+
+[tool.mkdoc]
+[tool.pdoc]
+[tool.pixi]
+[tool.poe]
+[tool.py-spy]
+[tool.pytkdocs]
+[tool.pytoniq]

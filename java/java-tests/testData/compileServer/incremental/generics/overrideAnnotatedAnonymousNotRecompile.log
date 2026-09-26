@@ -4,10 +4,3 @@ End of files
 Compiling files:
 src/packageA/Base.java
 End of files
-Cleaning output files:
-out/production/OverrideAnnotatedAnonymousNotRecompile/packageA/Derived$1.class
-out/production/OverrideAnnotatedAnonymousNotRecompile/packageA/Derived.class
-End of files
-Compiling files:
-src/packageA/Derived.java
-End of files

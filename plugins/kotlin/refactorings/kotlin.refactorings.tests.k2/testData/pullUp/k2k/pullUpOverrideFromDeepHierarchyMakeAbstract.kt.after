@@ -1,0 +1,15 @@
+abstract class Foo {
+    abstract fun foo()
+}
+
+abstract class Bar : Foo() {
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    abstract override fun foo()
+}
+
+abstract class Baz : Bar() {
+    // INFO: {"checked": "true", "toAbstract": "true"}
+    override fun foo() {
+
+    }
+}

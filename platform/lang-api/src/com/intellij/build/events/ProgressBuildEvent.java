@@ -15,12 +15,14 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.eventBuilders.ProgressBuildEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface ProgressBuildEvent extends BuildEvent {
   /**
    * Returns the total amount of work that the event operation is in the progress of performing, or -1 if not known.
@@ -41,5 +43,13 @@ public interface ProgressBuildEvent extends BuildEvent {
    *
    * @return The measure used to express the amount of work.
    */
-  String getUnit();
+  @NotNull String getUnit();
+
+  @CheckReturnValue
+  static @NotNull ProgressBuildEventBuilder builder(
+    @NotNull Object startId,
+    @NotNull @Message String message
+  ) {
+    return BuildEvents.getInstance().progress(startId, message);
+  }
 }

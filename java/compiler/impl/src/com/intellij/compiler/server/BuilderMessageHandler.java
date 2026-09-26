@@ -16,6 +16,7 @@
 package com.intellij.compiler.server;
 
 import io.netty.channel.Channel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.UUID;
@@ -26,7 +27,7 @@ import java.util.UUID;
 public interface BuilderMessageHandler {
   BuilderMessageHandler DEAF = new BuilderMessageHandler() {
     @Override
-    public void buildStarted(UUID sessionId) {
+    public void buildStarted(@NotNull UUID sessionId) {
     }
 
     @Override
@@ -34,19 +35,19 @@ public interface BuilderMessageHandler {
     }
 
     @Override
-    public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+    public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
     }
 
     @Override
-    public void sessionTerminated(UUID sessionId) {
+    public void sessionTerminated(@NotNull UUID sessionId) {
     }
   };
   
-  void buildStarted(UUID sessionId);
+  void buildStarted(@NotNull UUID sessionId);
   
   void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg);
 
-  void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure);
+  void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure);
 
-  void sessionTerminated(UUID sessionId);
+  void sessionTerminated(@NotNull UUID sessionId);
 }

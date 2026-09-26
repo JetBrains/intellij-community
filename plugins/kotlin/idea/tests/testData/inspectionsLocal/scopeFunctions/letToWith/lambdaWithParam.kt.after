@@ -1,0 +1,12 @@
+// WITH_STDLIB
+// FIX: Convert to 'with'
+
+
+fun main() {
+    val text: String = "Kotlin"
+
+    val length = with(text) {
+        val trimmed = trim()
+        trimmed.length
+    }
+}

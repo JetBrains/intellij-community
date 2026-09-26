@@ -1,3 +1,3 @@
-class A<T> {
-    class B extends A<<error descr="B is not accessible in current context">B.B</error>>{}
+class A<<warning descr="Type parameter 'T' is never used">T</warning>> {
+    class B extends A<<warning descr="B is not accessible in current context">B.B</warning>>{}
 }

@@ -1,40 +1,48 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.PlatformTestUtil;
 
-public class MoveFileTest extends MultiFileTestCase {
+public class MoveFileTest extends LightMultiFileTestCase {
   @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";
+  protected void setUp() throws Exception {
+    super.setUp();
+    // Wait for all other projects to be closed to avoid VFS cross-project conflicts
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (project != getProject() && !project.isDisposed()) {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project);
+      }
+    }
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
-  @NotNull
   @Override
-  protected String getTestRoot() {
-    return "/move/";
+  protected void tearDown() throws Exception {
+    try {
+      // Ensure all invokeLater tasks are processed to avoid leaking project state
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData/move/";
   }
 
   public void testMoveIcon() {
@@ -43,27 +51,17 @@ public class MoveFileTest extends MultiFileTestCase {
 
   //Both names are relative to root directory
   private void doTest(final String targetDirName, final String fileToMove) {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
-        final VirtualFile child = rootDir.findFileByRelativePath(fileToMove);
-        assertNotNull("File " + fileToMove + " not found", child);
-        PsiFile file = myPsiManager.findFile(child);
+    doTest(() -> {
+      final VirtualFile child = myFixture.findFileInTempDir(fileToMove);
+      assertNotNull("File " + fileToMove + " not found", child);
+      PsiFile file = getPsiManager().findFile(child);
 
-        final VirtualFile child1 = rootDir.findChild(targetDirName);
-        assertNotNull("File " + targetDirName + " not found", child1);
-        final PsiDirectory targetDirectory = myPsiManager.findDirectory(child1);
+      final VirtualFile child1 = myFixture.findFileInTempDir(targetDirName);
+      assertNotNull("File " + targetDirName + " not found", child1);
+      final PsiDirectory targetDirectory = getPsiManager().findDirectory(child1);
 
-        new MoveFilesOrDirectoriesProcessor(myProject, new PsiElement[] {file}, targetDirectory,
-                                            false, false, null, null).run();
-        /*assert targetDirectory != null;
-        final PsiFile psiFile = targetDirectory.findFile(fileToMove);
-        assert psiFile != null;
-        final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-        assert document != null;
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);*/
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+      new MoveFilesOrDirectoriesProcessor(getProject(), new PsiElement[]{file}, targetDirectory,
+                                          false, false, null, null).run();
     });
   }
 }

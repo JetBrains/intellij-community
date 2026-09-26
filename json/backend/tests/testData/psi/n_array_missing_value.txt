@@ -1,0 +1,12 @@
+JsonFile: n_array_missing_value.json
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace('   ')
+    PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
+      PsiElement(,)(',')
+    PsiErrorElement:<value> or ']' expected, got 'DOUBLE_QUOTED_STRING'
+      <empty list>
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('""')
+    PsiElement(])(']')

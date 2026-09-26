@@ -1,89 +1,48 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
- * @author yole
+ * Provides simple directory-oriented generators, which usually used in small IDEs, where there is only one module
+ * {@link com.intellij.ide.util.projectWizard.AbstractNewProjectStep}
+ * {@link com.intellij.ide.util.projectWizard.ProjectSettingsStepBase}
+ * {@link com.intellij.ide.util.projectWizard.CustomStepProjectGenerator}
+ * {@link HideableProjectGenerator}
+ * 
  */
 public interface DirectoryProjectGenerator<T> {
-  ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
-
-  @Deprecated
-  @Nullable
-  default Integer getPreferredDescriptionWidth() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  /**
-   * @deprecated todo[vokin]: delete in 2016.3
-   */
-  @Nullable
-  default T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
+  default @Nullable String getHelpId() {
     return null;
-  }
-
-  @Nullable
-  default String getDescription() {
-    return null;
-  }
-
-  @Nullable
-  default String getHelpId() {
-    return null;
-  }
-
-  // to be removed in 2017.3
-  @Deprecated
-  default boolean isPrimaryGenerator() {
-    return true;
   }
 
   @NotNull
-  @Nls
+  @NlsContexts.Label
   String getName();
 
-  @NotNull
-  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
-    return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
-      @NotNull
-      @Override
-      protected ProjectGeneratorPeer<T> compute() {
-        return createPeer();
-      }
-    };
+  default @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**
    * Creates new peer - new project settings and UI for them
    */
-  @NotNull
-  default ProjectGeneratorPeer<T> createPeer() {
+  default @NotNull ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 
@@ -93,10 +52,11 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
-  void generateProject(@NotNull final Project project,
-                       @NotNull final VirtualFile baseDir,
-                       @NotNull final T settings,
-                       @NotNull final Module module);
+  @RequiresEdt
+  void generateProject(@NotNull Project project,
+                       @NotNull VirtualFile baseDir,
+                       @NotNull T settings,
+                       @NotNull Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

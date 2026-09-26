@@ -1,0 +1,9 @@
+fun <T> create(param: Int): List<T> = listOf()
+
+// T - is not inferrable neither from 'param' (return type value is not taken into account)
+
+fun test() {
+    val create: List<Int> = create<Int>(5).subList(<caret>)
+}
+
+// ELEMENT: subList

@@ -1,0 +1,16 @@
+Original text:
+---------------
+def foo():
+    x = 1 + \
+        2
+    y = 3
+    return x + y
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>x = 1 + \
+        2
+    y = 4
+    return x + y</reparse>
+---------------

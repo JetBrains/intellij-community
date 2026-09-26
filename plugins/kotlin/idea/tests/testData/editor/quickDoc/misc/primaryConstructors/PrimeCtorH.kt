@@ -1,0 +1,2 @@
+class PrimeCtorH internal constructor<caret>()
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">internal</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">PrimeCtorH</span>()</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PrimeCtorH"><code><span style="color:#000000;">PrimeCtorH</span></code></a><br/></div>

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.ForcedAntFileAttribute;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -26,24 +11,25 @@ import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
+public final class AntDomFileDescription extends AntFileDescription<AntDomProject> {
   private static final String ROOT_TAG_NAME = "project";
 
   public AntDomFileDescription() {
     super(AntDomProject.class, ROOT_TAG_NAME);
   }
 
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && isAntFile(file);
+  @Override
+  public boolean isMyFile(@NotNull XmlFile file) {
+    return super.isMyFile(file) && isAntFile(file);
   }
 
-  @Nullable
-  public Icon getFileIcon(@Iconable.IconFlags int flags) {
+  @Override
+  public @Nullable Icon getFileIcon(@Iconable.IconFlags int flags) {
     return AntIcons.AntBuildXml;
   }
 

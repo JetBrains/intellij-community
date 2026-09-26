@@ -1,0 +1,27 @@
+Node: AnnotationTarget
+User object class: KtClassOrObjectTreeNode
+
+Value: CLASS
+Value file: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
+
+Navigation item #0: CLASS
+Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
+Navigation item #1: CLASS
+Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation/Annotations.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+...
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+     -PsiDirectory: annotation
+...
+      [AnnotationTarget]
+...
+     +PsiDirectory: collections
+...
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.klib

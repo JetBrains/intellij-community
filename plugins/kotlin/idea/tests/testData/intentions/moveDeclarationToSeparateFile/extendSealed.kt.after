@@ -1,0 +1,3 @@
+// INTENTION_TEXT: Extract 'B' from current file
+sealed class A
+<caret>

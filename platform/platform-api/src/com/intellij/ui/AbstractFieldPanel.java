@@ -1,42 +1,49 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-/**
- * @author Alexey Kudravtsev
- */
 public abstract class AbstractFieldPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractFieldPanel");
+  private static final Logger LOG = Logger.getInstance(AbstractFieldPanel.class);
   private final JComponent myComponent;
   private Runnable myChangeListener;
   protected ArrayList<JButton> myButtons = new ArrayList<>(1);
   protected JLabel myLabel;
   private ActionListener myBrowseButtonActionListener;
-  private String myViewerDialogTitle;
-  private String myLabelText;
+  private final @NlsContexts.DialogTitle String myViewerDialogTitle;
+  private @NlsContexts.Label String myLabelText;
   private TextFieldWithBrowseButton.MyDoClickAction myDoClickAction;
 
   public AbstractFieldPanel(JComponent component) {
@@ -44,8 +51,8 @@ public abstract class AbstractFieldPanel extends JPanel {
   }
 
   public AbstractFieldPanel(JComponent component,
-                            String labelText,
-                            final String viewerDialogTitle,
+                            @NlsContexts.Label String labelText,
+                            @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
     myComponent = component;
@@ -56,10 +63,11 @@ public abstract class AbstractFieldPanel extends JPanel {
   }
 
 
-  public abstract String getText();
+  public abstract @Nls String getText();
 
-  public abstract void setText(String text);
+  public abstract void setText(@Nls String text);
 
+  @Override
   public void setEnabled(boolean enabled) {
     getComponent().setEnabled(enabled);
     if (myLabel != null) {
@@ -70,6 +78,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     }
   }
 
+  @Override
   public boolean isEnabled() {
     return myComponent != null && myComponent.isEnabled();
   }
@@ -84,7 +93,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     if (myLabel == null){
       myLabel = new JLabel(myLabelText);
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsBottom(5), 0, 0));
-      myLabel.setLabelFor(getComponent());      
+      myLabel.setLabelFor(getComponent());
     }
     return myLabel;
   }
@@ -107,31 +116,17 @@ public abstract class AbstractFieldPanel extends JPanel {
       myLabel.setLabelFor(myComponent);
     }
 
-    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                 JBInsets.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
-      if (Experiments.isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
-        ExtendableTextComponent.Extension action = new ExtendableTextComponent.Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
-          }
-
-          @Override
-          public String getTooltip() {
-            return UIBundle.message("component.with.browse.button.browse.button.tooltip.text");
-          }
-
-          @Override
-          public Runnable getActionOnClick() {
-            return () -> myBrowseButtonActionListener.actionPerformed(new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action"));
-          }
-        };
-        ((ExtendableTextComponent)myComponent).addExtension(action);
+      if (myComponent instanceof ExtendableTextComponent) {
+        ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
+          getDefaultIcon(), getHoveredIcon(), getIconTooltip(), true, this::notifyActionListener));
         new DumbAwareAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
-            action.getActionOnClick().run();
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            notifyActionListener();
           }
         }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
 
@@ -151,8 +146,9 @@ public abstract class AbstractFieldPanel extends JPanel {
         myDoClickAction = new TextFieldWithBrowseButton.MyDoClickAction(showViewerButton);
       }
       showViewerButton.setFocusable(false);
-      showViewerButton.setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
+      showViewerButton.setIcon(AllIcons.Actions.Preview);
       showViewerButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           Viewer viewer = new Viewer();
           viewer.setTitle(myViewerDialogTitle);
@@ -160,19 +156,34 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       });
       myButtons.add(showViewerButton);
-      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+      this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                        JBInsets.emptyInsets(), 0, 0));
     }
+  }
+
+  protected @NotNull Icon getDefaultIcon() {
+    return AllIcons.General.OpenDisk;
+  }
+
+  protected @NotNull Icon getHoveredIcon() {
+    return AllIcons.General.OpenDiskHover;
+  }
+
+  protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
+    return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
+           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
+  }
+
+  private void notifyActionListener() {
+    ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
+    if (myBrowseButtonActionListener != null) myBrowseButtonActionListener.actionPerformed(event);
   }
 
   public void setBrowseButtonActionListener(ActionListener browseButtonActionListener) {
     myBrowseButtonActionListener = browseButtonActionListener;
   }
 
-  public void setViewerDialogTitle(String viewerDialogTitle) {
-    myViewerDialogTitle = viewerDialogTitle;
-  }
-
-  public void setLabelText(String labelText) {
+  public void setLabelText(@NlsContexts.Label String labelText) {
     myLabelText = labelText;
   }
 
@@ -192,27 +203,31 @@ public abstract class AbstractFieldPanel extends JPanel {
       init();
     }
 
-    @NotNull
-    protected Action[] createActions() {
+    @Override
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myTextArea;
     }
 
+    @Override
     protected void doOKAction() {
       setText(myTextArea.getText());
       super.doOKAction();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       myTextArea = new JTextArea(10, 50);
       myTextArea.setText(getText());
       myTextArea.setWrapStyleWord(true);
       myTextArea.setLineWrap(true);
       myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
-        public void textChanged(DocumentEvent event) {
+        @Override
+        public void textChanged(@NotNull DocumentEvent event) {
           if (myChangeListener != null) {
             myChangeListener.run();
           }

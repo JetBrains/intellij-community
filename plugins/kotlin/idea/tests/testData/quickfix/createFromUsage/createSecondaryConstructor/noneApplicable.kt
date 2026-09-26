@@ -1,0 +1,14 @@
+// "Create secondary constructor" "true"
+// K2_ACTION: "Add secondary constructor to 'CtorSecondary'" "true"
+// ERROR: Primary constructor call expected
+// K2_ERROR: NONE_APPLICABLE
+
+class CtorSecondary() {
+    constructor(p: Int) : this()
+}
+
+fun construct() {
+    // todo: add this()
+    val vA = <caret>CtorSecondary(2, 3)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

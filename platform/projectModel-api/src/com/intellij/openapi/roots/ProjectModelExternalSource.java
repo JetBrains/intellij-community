@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * Describes an external project system (e.g. Maven, Gradle, sbt) from which a project model element can be imported.
  *
  * @see ProjectModelElement#getExternalSource()
- * @author nik
  */
 @ApiStatus.Experimental
 public interface ProjectModelExternalSource {

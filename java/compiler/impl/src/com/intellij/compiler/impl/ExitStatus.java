@@ -27,6 +27,7 @@ public class ExitStatus {
     myName = name;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

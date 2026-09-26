@@ -2,14 +2,20 @@
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model;
 
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public interface CppProject extends Serializable {
-  Set<SourceFolder> getSourceFolders();
+  @Nullable
+  CppComponent getMainComponent();
 
-  Set<CppBinary> getBinaries();
+  @Nullable
+  CppTestSuite getTestComponent();
 }

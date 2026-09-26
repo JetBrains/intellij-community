@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,19 +7,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.tasks.config.TaskRepositoryEditor;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import java.util.Collection;
 
 /**
  * @author Mikhail Golubev
  */
-public class TaskUiUtil {
+public final class TaskUiUtil {
 
   private static final Logger LOG = Logger.getInstance(TaskUiUtil.class);
 
@@ -38,11 +40,11 @@ public class TaskUiUtil {
     /**
      * Should be called only from EDT, so current modality state can be captured.
      */
-    protected RemoteFetchTask(@Nullable Project project, @NotNull String title) {
+    protected RemoteFetchTask(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title) {
       this(project, title, ModalityState.current());
     }
 
-    protected RemoteFetchTask(@Nullable Project project, @NotNull String title, @NotNull ModalityState modalityState) {
+    protected RemoteFetchTask(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title, @NotNull ModalityState modalityState) {
       super(project, title);
       myModalityState = modalityState;
     }
@@ -62,15 +64,13 @@ public class TaskUiUtil {
      * {@link #onSuccess()} can't be used for this purpose, because it doesn't consider current modality state
      * which will prevent UI updating in modal dialog (e.g. in {@link TaskRepositoryEditor}).
      */
-    @Nullable
     @Override
-    public final NotificationInfo notifyFinished() {
+    public final @Nullable NotificationInfo notifyFinished() {
       ApplicationManager.getApplication().invokeLater(() -> updateUI(), myModalityState);
       return null;
     }
 
-    @NotNull
-    protected abstract T fetch(@NotNull ProgressIndicator indicator) throws Exception;
+    protected abstract @NotNull T fetch(@NotNull ProgressIndicator indicator) throws Exception;
 
     protected abstract void updateUI();
   }
@@ -79,10 +79,10 @@ public class TaskUiUtil {
    * Auxiliary remote fetcher designed to simplify updating of combo boxes in repository editors, which is
    * indeed a rather common task.
    */
-  public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
-    protected final JComboBox myComboBox;
+  public abstract static class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
+    protected final JComboBox<T> myComboBox;
 
-    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull JComboBox comboBox) {
+    public ComboBoxUpdater(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title, @NotNull JComboBox<T> comboBox) {
       super(project, title, ModalityState.any());
       myComboBox = comboBox;
     }
@@ -92,8 +92,7 @@ public class TaskUiUtil {
      *
      * @return extra first combo box item
      */
-    @Nullable
-    public T getExtraItem() {
+    public @Nullable T getExtraItem() {
       return null;
     }
 
@@ -104,8 +103,7 @@ public class TaskUiUtil {
      * @return selected combo box item
      * @see #addSelectedItemIfMissing()
      */
-    @Nullable
-    public T getSelectedItem() {
+    public @Nullable T getSelectedItem() {
       return getExtraItem();
     }
 
@@ -116,10 +114,10 @@ public class TaskUiUtil {
       return false;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void updateUI() {
       if (myResult != null) {
+        //noinspection unchecked
         myComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(myResult)));
         final T extra = getExtraItem();
         if (extra != null) {
@@ -164,25 +162,4 @@ public class TaskUiUtil {
     }
   }
 
-  /**
-   * Very simple wrapper around {@link ListCellRendererWrapper} useful for
-   * combo boxes where each item has plain text representation with special message for
-   * {@code null} value.
-   */
-  public static class SimpleComboBoxRenderer<T> extends ListCellRendererWrapper<T> {
-    private final String myNullDescription;
-    public SimpleComboBoxRenderer(@NotNull String nullDescription) {
-      myNullDescription = nullDescription;
-    }
-
-    @Override
-    public final void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
-      setText(value == null ? myNullDescription : getDescription(value));
-    }
-
-    @NotNull
-    protected String getDescription(@NotNull T item) {
-      return item.toString();
-    }
-  }
 }

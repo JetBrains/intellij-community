@@ -1,0 +1,4 @@
+// INPLACE_VARIABLE_NAME: foo
+fun test() {
+    val foo = $$"Foo"
+}

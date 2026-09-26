@@ -1,0 +1,27 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_inferredTypeChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/B.kt
+End of files
+Cleaning output files:
+  C.class
+  GetBKt.class
+  GetBorCKt.class
+  GetBorDKt.class
+  GetCKt.class
+  GetCorDKt.class
+  META-INF/kotlin_classHierarchyAffected_inferredTypeChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/C.kt
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/getB.kt
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/getBorC.kt
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/getBorD.kt
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/getC.kt
+  kotlin/classHierarchyAffected/inferredTypeChanged/a/getCorD.kt
+End of files
+------------------------------------------
+Exit code: OK

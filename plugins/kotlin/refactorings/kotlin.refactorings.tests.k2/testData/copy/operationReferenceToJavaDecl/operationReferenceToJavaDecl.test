@@ -1,0 +1,6 @@
+{
+  "mainFile": "a/main.kt",
+  "targetPackage": "b",
+  "newName": "Test",
+  "enabledInK1": "false"
+}

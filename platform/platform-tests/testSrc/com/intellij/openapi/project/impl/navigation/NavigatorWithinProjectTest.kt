@@ -1,0 +1,172 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.project.impl.navigation
+
+import com.intellij.ide.trustedProjects.TrustedFiles
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.navigation.LocationToOffsetConverter
+import com.intellij.navigation.NavigatorWithinProject
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.containers.ComparatorUtil.max
+import org.junit.ClassRule
+import org.junit.Test
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.test.assertNull
+
+class NavigatorWithinProjectTest : NavigationTestBase() {
+  companion object {
+    @JvmField @ClassRule val appRule = ApplicationRule()
+  }
+
+  @Test fun pathTabInLinePositionCharacterOneBased() = runNavigationTest(
+    navigationAction = { navigateByPath("A.java:3:20", locationToOffsetAsCharacterOneBased) }
+  ) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
+      assertThat(line + 1).isEqualTo(3)
+      assertThat(column + 1).isEqualTo(20)
+    }
+  }
+
+  @Test fun pathTabInLinePositionLogical() = runNavigationTest(
+    navigationAction = { navigateByPath("A.java:2:10", locationToOffsetAsLogicalPosition) }
+  ) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentLogicalPosition()) {
+      assertThat(line).isEqualTo(2)
+      assertThat(column).isEqualTo(10)
+    }
+  }
+
+  @Test fun pathNegativeOffset() = runNavigationTest (
+    navigationAction = { navigateByPath("A.java:3:5", locationToOffsetNegativeOffset) }
+  ) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
+      assertThat(line).isEqualTo(0)
+      assertThat(column).isEqualTo(0)
+    }
+  }
+
+  @Test fun selectionRange() = runNavigationTest(
+    navigationAction = {
+      NavigatorWithinProject(
+        project,
+        mapOf("path" to "A.java:1:0", "selection" to "1:0-1:5"),
+        locationToOffsetAsLogicalPosition,
+      ).navigate(listOf(NavigatorWithinProject.NavigationKeyPrefix.PATH))
+    }
+  ) {
+    assertThat(FileEditorManager.getInstance(project).selectedTextEditor?.selectionModel?.selectedText).isEqualTo("class")
+  }
+
+  @Test fun pathNoColumn() = runNavigationTest(
+    navigationAction = { navigateByPath("A.java:3", locationToOffsetAsCharacterOneBased) }
+  ) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
+      assertThat(line + 1).isEqualTo(3)
+      assertThat(column).isEqualTo(0)
+    }
+  }
+
+  @Test fun pathNoLineNoColumn() = runNavigationTest(
+    navigationAction = { navigateByPath("A.java", locationToOffsetAsCharacterOneBased) }
+  ) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
+      assertThat(line).isEqualTo(0)
+      assertThat(column).isEqualTo(0)
+    }
+  }
+
+  @Test fun pathOutsideProjectOpensInSafeMode() {
+    lateinit var outsideFile: Path
+    runNavigationTest(
+      navigationAction = {
+        // a jetbrains:// link can name any local file, see IJPL-255702
+        outsideFile = tempDir.newPath("outside").resolve("data.txt")
+        Files.createDirectories(outsideFile.parent)
+        Files.writeString(outsideFile, "text")
+        navigateByPath(outsideFile.toString(), locationToOffsetAsCharacterOneBased)
+      }
+    ) {
+      val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+      assertThat(FileEditorManager.getInstance(project).isFileOpen(file)).isTrue()
+      // the trust check is off in a headless run; the mark itself does not depend on it
+      PlatformTestUtil.withSystemProperty<RuntimeException>(TrustedProjects.TRUST_HEADLESS_DISABLED_PROPERTY, "false") {
+        assertThat(TrustedFiles.isTrustDecidedByFile(file, project)).isTrue()
+      }
+    }
+  }
+
+  @Test fun parseValidNavigationPathFull() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("A.java:1:10")
+    assertThat(file).isEqualTo("A.java")
+    assertThat(line).isEqualTo("1")
+    assertThat(column).isEqualTo("10")
+  }
+
+  @Test fun parseValidNavigationPathNoColumn() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("A.java:1")
+    assertThat(file).isEqualTo("A.java")
+    assertThat(line).isEqualTo("1")
+    assertNull(column)
+  }
+
+  @Test fun parseValidNavigationPathNoLineNoColumn() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("A.java")
+    assertThat(file).isEqualTo("A.java")
+    assertNull(line)
+    assertNull(column)
+  }
+
+  @Test fun parseInvalidNavigationPathNoFile() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath(":1:10")
+    assertNull(file)
+    assertNull(line)
+    assertNull(column)
+  }
+
+  @Test fun parseInvalidNavigationPathNoLine() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("A.java::10")
+    assertNull(file)
+    assertNull(line)
+    assertNull(column)
+  }
+
+  @Test fun parseInvalidNavigationPathNoValues() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("::")
+    assertNull(file)
+    assertNull(line)
+    assertNull(column)
+  }
+
+  @Test fun parseInvalidNavigationPathEmpty() {
+    val (file, line, column) = NavigatorWithinProject.parseNavigationPath("")
+    assertNull(file)
+    assertNull(line)
+    assertNull(column)
+  }
+
+  private suspend fun navigateByPath(path: String, locationToOffsetConverter: LocationToOffsetConverter) =
+    NavigatorWithinProject(project, mapOf("path" to path), locationToOffsetConverter)
+      .navigate(listOf(NavigatorWithinProject.NavigationKeyPrefix.PATH))
+
+  private val locationToOffsetAsLogicalPosition: LocationToOffsetConverter = { locationInFile, editor ->
+    editor.logicalPositionToOffset(LogicalPosition(locationInFile.line, locationInFile.column))
+  }
+
+  private val locationToOffsetAsCharacterOneBased: LocationToOffsetConverter = { locationInFile, editor ->
+    val offsetOfLine = editor.logicalPositionToOffset(LogicalPosition(max(locationInFile.line - 1, 0), 0))
+    val offsetInLine = max(locationInFile.column - 1, 0)
+    offsetOfLine + offsetInLine
+  }
+
+  private val locationToOffsetNegativeOffset: LocationToOffsetConverter = { _, _ -> -1 }
+}

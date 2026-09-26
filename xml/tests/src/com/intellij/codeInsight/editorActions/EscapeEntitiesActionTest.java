@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Dennis.Ushakov
  */
-public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
-  private static final String N_DASH = new String(new byte[]{-30, -128, -109}, CharsetToolkit.UTF8_CHARSET);
-  private static final String COPY = new String(new byte[]{-62, -82}, CharsetToolkit.UTF8_CHARSET);
+public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String N_DASH = new String(new byte[]{-30, -128, -109}, StandardCharsets.UTF_8);
+  private static final String COPY = new String(new byte[]{-62, -82}, StandardCharsets.UTF_8);
 
   public void testSimpleHtml() {
     doTest("<<<", "html", "&lt;&lt;&lt;");
@@ -55,44 +42,54 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDoctypeSystemPublic() {
-    doTest("<!DOCTYPE html\n" +
-           "        PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
-           "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">", "html",
-           "<!DOCTYPE html\n" +
-           "        PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n" +
-           "        \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
+    doTest("""
+             <!DOCTYPE html
+                     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">""", "html",
+           """
+             <!DOCTYPE html
+                     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">""");
   }
 
   public void testXmlAmp() {
-    doTest("<component>\n" +
-           "  amp  &    U+0026 (38) XML 1.0 ampersand\n" +
-           "</component>", "xml",
-           "<component>\n" +
-           "  amp  &amp;    U+0026 (38) XML 1.0 ampersand\n" +
-           "</component>");
+    doTest("""
+             <component>
+               amp  &    U+0026 (38) XML 1.0 ampersand
+             </component>""", "xml",
+           """
+             <component>
+               amp  &amp;    U+0026 (38) XML 1.0 ampersand
+             </component>""");
   }
 
   public void testXmlLt() {
-    doTest("<component>\n" +
-           "  lt   <    U+003C (60) XML 1.0 less-than sign\n" +
-           "</component>", "xml",
-           "<component>\n" +
-           "  lt   &lt;    U+003C (60) XML 1.0 less-than sign\n" +
-           "</component>");
+    doTest("""
+             <component>
+               lt   <    U+003C (60) XML 1.0 less-than sign
+             </component>""", "xml",
+           """
+             <component>
+               lt   &lt;    U+003C (60) XML 1.0 less-than sign
+             </component>""");
   }
 
   public void testMultiCaret() {
-    doTest("<a><selection><</selection></a>\n" +
-           "<a><selection><</selection></a>\n" +
-           "<a><selection><</selection></a>\n", "html",
-           "<a>&lt;</a>\n" +
-           "<a>&lt;</a>\n" +
-           "<a>&lt;</a>\n");
+    doTest("""
+             <a><selection><</selection></a>
+             <a><selection><</selection></a>
+             <a><selection><</selection></a>
+             """, "html",
+           """
+             <a>&lt;</a>
+             <a>&lt;</a>
+             <a>&lt;</a>
+             """);
   }
 
   private void doTest(String text, final String extension, final String expected) {
     String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
-    PlatformTestUtil.withEncoding("UTF8", () -> {
+    PlatformTestUtil.withEncoding(StandardCharsets.UTF_8, () -> {
       myFixture.configureByText(getTestName(true) + "." + extension, finalText);
       myFixture.performEditorAction("EscapeEntities");
       myFixture.checkResult(expected);

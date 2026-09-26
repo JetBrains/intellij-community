@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,20 @@ package com.intellij.ide.projectView;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
+/**
+ * Specifies that the element corresponds to several virtual files.
+ * For example, a package may correspond to several folders in a project,
+ * or a resource bundle may correspond to several properties files.
+ */
 public interface RootsProvider {
 
-  Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
-
-  @NotNull
+  /**
+   * @return a collection of corresponding virtual files
+   */
+  @NotNull @Unmodifiable
   Collection<VirtualFile> getRoots();
-
 }

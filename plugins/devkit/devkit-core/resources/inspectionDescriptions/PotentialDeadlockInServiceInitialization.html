@@ -1,0 +1,113 @@
+<html>
+<body>
+Reports read/write actions and <code>invokeAndWait</code> called from the scope of service initialization:
+<ul>
+  <li>service constructors and initialization blocks (including static)</li>
+  <li>service companion object's initialization blocks (Kotlin)</li>
+  <li>service methods used in initialization blocks and fields initialization</li>
+  <li><code>PersistentStateComponent</code> initialization lifecycle methods:
+    <ul>
+      <li><code>loadState</code></li>
+      <li><code>noStateLoaded</code></li>
+      <li><code>initializeComponent</code></li>
+    </ul>
+</ul>
+
+<p>Running a read/write action or calling <code>invokeAndWait</code> during service initialization may cause deadlocks.</p>
+
+<p><b>Examples:</b></p>
+<p>Kotlin:</p>
+<pre><code lang="kotlin">
+@Service
+internal class MyService {
+  private val myData = initMyData();
+
+  constructor() {
+    val data = runReadAction { // bad: read action run in a constructor
+      // read data
+    }
+  }
+
+  private fun initMyData(): Data {
+    return runWriteAction { // bad: invoked while initializing myData property
+      // write data
+    }
+  }
+
+  companion object {
+    lateinit var companionData: String
+    init {
+      companionData = runReadAction { // bad: read action run in an init block
+        // read data
+      }
+    }
+  }
+}
+</code></pre>
+
+<p>Java:</p>
+<pre><code lang="java">
+@Service
+class MyService {
+  private static final Data ourData1 = ReadAction.compute(() -> {
+    // read data
+  });
+  private static final Data ourData2;
+
+  static {
+    ourData2 = ReadAction.compute(() -> { // bad: read action in a static initialization block
+      // read data
+    });
+  }
+
+  private final Data myData2 = initMyData();
+
+  MyService() {
+    Data data = WriteAction.compute(() -> { // bad: read action run in a constructor
+      // write data
+    });
+  }
+
+  private Data initMyData() {
+    return ReadAction.compute(() -> { // bad: invoked while initializing myData property
+      // read data
+    });
+  }
+}
+</code></pre>
+
+<p><code>PersistentStateComponent</code>:</p>
+<pre><code lang="kotlin">
+@Service
+@State(...)
+internal class MySettings : PersistentStateComponent&lt;MyService> {
+  var stateValue: String? = null
+
+  override fun loadState(state: MySettings) {
+    val data = runReadAction { // bad: read action run in loadState
+      // read data
+    }
+    // ...
+  }
+
+  override fun noStateLoaded() {
+    val data = runWriteAction { // bad: read action run in noStateLoaded
+      // write data
+    }
+    // ...
+  }
+
+  override fun initializeComponent() {
+    val data = runReadAction { // bad: read action run in initializeComponent
+      // read data
+    }
+    // ...
+  }
+
+}
+</code></pre>
+
+<!-- tooltip end -->
+<p><small>New in 2024.2</small>
+</body>
+</html>

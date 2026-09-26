@@ -15,7 +15,7 @@
  */
 package com.intellij.formatting.engine
 
-import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.application.options.CodeStyle
 import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Test
 
@@ -94,7 +94,7 @@ a
 
   @Test
   fun `test indents composition`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     doReformatTest("""
 [i_none]aaa [i_none]bbb
@@ -170,7 +170,7 @@ foo   goo
 
   @Test
   fun `test space properties`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     doReformatTest(
       """
@@ -221,7 +221,7 @@ aaa
 
   @Test
   fun `test wrap`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
     doReformatTest(
@@ -244,7 +244,7 @@ bbb
 
   @Test
   fun `test wrap one more time`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
     doReformatTest(
@@ -261,7 +261,7 @@ bbb
 
   @Test
   fun `test chop down`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     
     doReformatTest(
@@ -281,7 +281,7 @@ aaa
 
   @Test
   fun `test wrap in the middle`() {
-    val settings = CodeStyleSettings()
+    val settings = CodeStyle.createTestSettings()
     settings.indentOptions!!.LABEL_INDENT_SIZE = 1
     doReformatTest(
       "[]aaa [s_min2_max2]bbb " +

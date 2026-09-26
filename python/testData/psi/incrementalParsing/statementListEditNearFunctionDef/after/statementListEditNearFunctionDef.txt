@@ -1,0 +1,14 @@
+Original text:
+---------------
+class MyClass:
+    def method(self, a, b, c):
+        result = a + b + c
+        return result
+---------------
+Subtree: Language: Python
+---------------
+class MyClass:
+    def method(self, a, b, c):
+        <reparse>result = a * b * c
+        return result</reparse>
+---------------

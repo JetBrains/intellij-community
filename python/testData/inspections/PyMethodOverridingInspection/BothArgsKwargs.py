@@ -19,5 +19,5 @@ class B3:
 
 
 class C3(B3):
-    def foo<warning descr="Signature of method 'C3.foo()' does not match signature of base method in class 'B3'">(self, arg1, arg2=None)</warning>: # fail
+    def foo<warning descr="Signature of method 'C3.foo()' does not match signature of the base method in class 'B3'">(self, arg1, arg2=None)</warning>: # fail
         pass

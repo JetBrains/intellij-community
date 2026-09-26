@@ -1,40 +1,42 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitLauncherDependencies;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-// Author: dyoma
+import java.util.function.BiConsumer;
 
 public class JUnitConfigurationModel {
   public static final int ALL_IN_PACKAGE = 0;
@@ -48,11 +50,16 @@ public class JUnitConfigurationModel {
   public static final int BY_SOURCE_POSITION = 8;
   public static final int BY_SOURCE_CHANGES = 9;
 
+  private static final String[] FORK_MODE_ALL =
+    {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
+  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
+  private static final String[] FORK_MODE_NONE = {JUnitConfiguration.FORK_NONE};
+
   private static final List<String> ourTestObjects;
 
   static {
     ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE,
-                                   JUnitConfiguration.TEST_CLASS, 
+                                   JUnitConfiguration.TEST_CLASS,
                                    JUnitConfiguration.TEST_METHOD,
                                    JUnitConfiguration.TEST_PATTERN,
                                    JUnitConfiguration.TEST_DIRECTORY,
@@ -64,7 +71,7 @@ public class JUnitConfigurationModel {
   }
 
 
-  private JUnitConfigurable myListener;
+  private BiConsumer<Integer, Integer> myListener;
   private int myType = -1;
   private final Object[] myJUnitDocuments = new Object[6];
   private final Project myProject;
@@ -75,78 +82,68 @@ public class JUnitConfigurationModel {
 
   public boolean setType(int type) {
     if (type == myType) return false;
+    int oldType = myType;
     if (type < 0 || type >= ourTestObjects.size()) type = CLASS;
     myType = type;
-    fireTypeChanged(type);
+    fireTypeChanged(oldType, type);
     return true;
   }
 
-  private void fireTypeChanged(final int newType) {
-    myListener.onTypeChanged(newType);
+  private void fireTypeChanged(final int oldType, final int newType) {
+    myListener.accept(oldType, newType);
   }
 
-  public void setListener(final JUnitConfigurable listener) {
+  public void setListener(final BiConsumer<Integer, Integer> listener) {
     myListener = listener;
-  }
-
-  public Object getJUnitDocument(final int i) {
-    return myJUnitDocuments[i];
   }
 
   public void setJUnitDocument(final int i, Object doc) {
      myJUnitDocuments[i] = doc;
   }
 
-  public void apply(final Module module, final JUnitConfiguration configuration) {
+  public void apply(final JUnitConfiguration configuration, @NotNull ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    applyTo(configuration.getPersistentData(), module);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-359592")) {
+      applyTo(configuration.getPersistentData(), classField);
+    }
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }
 
-  private void applyTo(final JUnitConfiguration.Data data, final Module module) {
+  private void applyTo(final JUnitConfiguration.Data data, @NotNull ClassEditorField classField) {
     final String testObject = getTestObject();
-    final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE &&
-        testObject != JUnitConfiguration.TEST_PATTERN &&
-        testObject != JUnitConfiguration.TEST_DIRECTORY &&
-        testObject != JUnitConfiguration.TEST_CATEGORY  &&
-        testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      try {
-        data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
-        if (testClass != null && testClass.isValid()) {
-          data.setMainClass(testClass);
-        }
-        else {
-          data.MAIN_CLASS_NAME = className;
-        }
-      }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
-        data.MAIN_CLASS_NAME = className;
-      }
-    }
-    else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
-        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
-      }
-      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
-        data.setDirName(getJUnitTextValue(DIR));
-      }
-      else if (testObject == JUnitConfiguration.TEST_CATEGORY) {
-        data.setCategoryName(getJUnitTextValue(CATEGORY));
+    if (!JUnitConfiguration.TEST_PACKAGE.equals(testObject) &&
+        !JUnitConfiguration.TEST_PATTERN.equals(testObject) &&
+        !JUnitConfiguration.TEST_DIRECTORY.equals(testObject) &&
+        !JUnitConfiguration.TEST_CATEGORY.equals(testObject) &&
+        !JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      data.METHOD_NAME = getJUnitTextValue(METHOD);
+      String jvmName = classField.getClassName();
+      if (jvmName != null) {
+        data.MAIN_CLASS_NAME = jvmName;
+        data.PACKAGE_NAME = StringUtil.getPackageName(jvmName);
       }
       else {
-        final LinkedHashSet<String> set = new LinkedHashSet<>();
-        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
-        for (String pattern : patterns) {
-          if (pattern.length() > 0) {
-            set.add(pattern);
+        data.MAIN_CLASS_NAME = getJUnitTextValue(CLASS);
+      }
+    }
+    else if (!JUnitConfiguration.BY_SOURCE_CHANGES.equals(testObject)) {
+      switch (testObject) {
+        case JUnitConfiguration.TEST_PACKAGE -> data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+        case JUnitConfiguration.TEST_DIRECTORY -> data.setDirName(getJUnitTextValue(DIR));
+        case JUnitConfiguration.TEST_CATEGORY -> data.setCategoryName(getJUnitTextValue(CATEGORY));
+        default -> {
+          final LinkedHashSet<String> set = new LinkedHashSet<>();
+          final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+          for (String pattern : patterns) {
+            if (!pattern.isEmpty()) {
+              set.add(pattern);
+            }
           }
+          data.setPatterns(set);
         }
-        data.setPatterns(set);
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
@@ -178,11 +175,15 @@ public class JUnitConfigurationModel {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
-    setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
+    setJUnitTextValue(CLASS, replaceRuntimeClassName(data.getMainClassName()));
     setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
     setJUnitTextValue(CATEGORY, data.getCategory());
+  }
+
+  private static String replaceRuntimeClassName(String mainClassName) {
+    return mainClassName.replace('$', '.');
   }
 
   private void setJUnitTextValue(final int index, final String text) {
@@ -201,12 +202,151 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
+      WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                               () -> ((Document)document).replaceString(0, ((Document)document).getTextLength(), text));
     }
   }
 
   private void setTestType(final String testObject) {
     setType(ourTestObjects.indexOf(testObject));
+  }
+
+  public static @NotNull @NlsContexts.Label String getKindName(int value) {
+    return switch (value) {
+      case ALL_IN_PACKAGE -> JUnitBundle.message("junit.configuration.kind.all.in.package");
+      case DIR -> JUnitBundle.message("junit.configuration.kind.all.in.directory");
+      case PATTERN -> JUnitBundle.message("junit.configuration.kind.by.pattern");
+      case CLASS -> JUnitBundle.message("junit.configuration.kind.class");
+      case METHOD -> JUnitBundle.message("junit.configuration.kind.method");
+      case CATEGORY -> JUnitBundle.message("junit.configuration.kind.category");
+      case UNIQUE_ID -> JUnitBundle.message("junit.configuration.kind.by.unique.id");
+      case TAGS -> JUnitBundle.message("junit.configuration.kind.by.tags");
+      case BY_SOURCE_POSITION -> "Through source location"; //NON-NLS internal option
+      case BY_SOURCE_CHANGES -> "Over changes in sources"; //NON-NLS internal option
+      default -> throw new IllegalArgumentException(String.valueOf(value));
+    };
+  }
+
+  /**
+   * Both this and {@link #getForkModeName} are also called for values that came from the run configuration XML, which
+   * {@link JUnitConfiguration#readExternal} does not validate. An unrecognized value is presented as-is rather than
+   * rejected, so that a stale or hand-edited configuration cannot break the whole settings editor.
+   */
+  public static @NotNull @NlsContexts.Label String getRepeatModeName(@NotNull @NonNls String value) {
+    String key = switch (value) {
+      case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
+      case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
+      case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
+      case RepeatCount.UNTIL_SUCCESS -> "junit.configuration.repeat.mode.until.success";
+      case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
+      default -> null;
+    };
+    //noinspection HardCodedStringLiteral
+    return key == null ? value : JUnitBundle.message(key);
+  }
+
+  public static @NotNull @NlsContexts.Label String getForkModeName(@NotNull @NonNls String value) {
+    String key = switch (value) {
+      case JUnitConfiguration.FORK_NONE -> "junit.configuration.fork.mode.none";
+      case JUnitConfiguration.FORK_METHOD -> "junit.configuration.fork.mode.method";
+      case JUnitConfiguration.FORK_KLASS -> "junit.configuration.fork.mode.class";
+      case JUnitConfiguration.FORK_REPEAT -> "junit.configuration.fork.mode.repeat";
+      default -> null;
+    };
+    //noinspection HardCodedStringLiteral
+    return key == null ? value : JUnitBundle.message(key);
+  }
+
+  /**
+   * Clamps a persisted {@code repeat_mode} to a variant the settings editor can offer, see {@link #normalizeForkMode}.
+   */
+  public static @NotNull String normalizeRepeatMode(@Nullable String value) {
+    return value != null && ArrayUtil.contains(value, RepeatCount.REPEAT_TYPES) ? value : RepeatCount.ONCE;
+  }
+
+  /**
+   * Clamps a persisted {@code fork_mode} to a variant the settings editor can offer. Unlike {@link #getForkModeName},
+   * which only has to present an unrecognized value, the editor writes back whatever variant it holds - so without
+   * clamping, merely opening and confirming the dialog would re-persist a value that
+   * {@link JUnitConfiguration#readExternal} had accepted verbatim.
+   * <p>
+   * {@link JUnitConfiguration#FORK_REPEAT} is deliberately not accepted here: it is a run-time translation of
+   * {@code method}/{@code class} (see {@code TestMethod#getForkMode}) and is never persisted.
+   */
+  public static @NotNull String normalizeForkMode(@Nullable String value) {
+    return value != null && ArrayUtil.contains(value, FORK_MODE_ALL) ? value : JUnitConfiguration.FORK_NONE;
+  }
+
+  static @NotNull String updateForkMethod(int selectedType, String forkMethod, Object repeat) {
+    if (forkMethod == null) {
+      forkMethod = JUnitConfiguration.FORK_NONE;
+    }
+    else if (selectedType == CLASS && JUnitConfiguration.FORK_KLASS.equals(forkMethod) && RepeatCount.ONCE.equals(repeat)) {
+      forkMethod = JUnitConfiguration.FORK_METHOD;
+    }
+    return forkMethod;
+  }
+
+  static String @NotNull [] getForkModel(int selectedType, Object repeat) {
+    if (selectedType != CLASS && selectedType != METHOD && selectedType != BY_SOURCE_POSITION) {
+      return FORK_MODE_ALL;
+    }
+
+    boolean isMethod = selectedType == METHOD || selectedType == BY_SOURCE_POSITION;
+    boolean once = RepeatCount.ONCE.equals(repeat);
+    String[] model = FORK_MODE;
+    if (once && isMethod) {
+      model = FORK_MODE_NONE;
+    }
+    else if (!once && !isMethod) {
+      model = FORK_MODE_ALL;
+    }
+    return model;
+  }
+
+  public void reloadTestKindModel(@NotNull JComboBox<Integer> comboBox, @Nullable Module module, @Nullable Runnable onDone) {
+    Object selectedItem = comboBox.getSelectedItem();
+    ReadAction.nonBlocking(() -> {
+      final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+      aModel.addElement(ALL_IN_PACKAGE);
+      aModel.addElement(DIR);
+      aModel.addElement(PATTERN);
+      aModel.addElement(CLASS);
+      aModel.addElement(METHOD);
+
+      GlobalSearchScope searchScope = JUnitUtil.getScope(module, myProject);
+
+      if (myProject.isDefault() || JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+        aModel.addElement(CATEGORY);
+      }
+
+      if (myProject.isDefault() ||
+          JUnitUtil.isJUnit5(searchScope, myProject) ||
+          JUnitLauncherDependencies.hasJupiterEnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
+        aModel.addElement(UNIQUE_ID);
+        aModel.addElement(TAGS);
+      }
+
+      if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+        aModel.addElement(BY_SOURCE_POSITION);
+        aModel.addElement(BY_SOURCE_CHANGES);
+      }
+      return aModel;
+    }).finishOnUiThread(ModalityState.any(), model -> {
+      comboBox.setModel(model);
+      comboBox.setSelectedItem(selectedItem == null ? myType : selectedItem);
+      if (onDone != null) {
+        onDone.run();
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  public boolean disableModuleClasspath(boolean wholeProjectSelected) {
+    return wholeProjectSelected && (myType == ALL_IN_PACKAGE ||
+                                    myType == PATTERN ||
+                                    myType == CATEGORY ||
+                                    myType == TAGS ||
+                                    myType == UNIQUE_ID);
   }
 }
 

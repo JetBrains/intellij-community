@@ -1,0 +1,3 @@
+f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
+- com.intellij.analysis.problemsView.toolWindow.Node
+- *f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext

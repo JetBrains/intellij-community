@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -22,8 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.*;
+import javax.swing.JComponent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
 
@@ -54,9 +45,8 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
         return false;
       }
 
-      @Nullable
       @Override
-      public OutputStream getProcessInput() {
+      public @Nullable OutputStream getProcessInput() {
         return terminalInput;
       }
     });
@@ -64,8 +54,7 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
     Disposer.register(this, myLoggingHandler);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput));
-      try {
+      try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput, StandardCharsets.UTF_8))) {
         while (!isClosed()) {
           String line = outputReader.readLine();
           if (line == null) {
@@ -76,14 +65,6 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
       }
       catch (IOException e) {
         LOG.debug(e);
-      }
-      finally {
-        try {
-          outputReader.close();
-        }
-        catch (IOException ignored) {
-
-        }
       }
     });
   }

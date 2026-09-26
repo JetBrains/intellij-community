@@ -5,7 +5,7 @@ class Foo {
                                                               final Computable<String> elementComputable,
                                                               Object processingContext) {
         return new WeighingComparable<String, ProximityLocation>(elementComputable, new ProximityLocation(), new Weigher[0]);
-    }
+  }
 
   public static final Key<ProximityWeigher> WEIGHER_KEY = null;
 }

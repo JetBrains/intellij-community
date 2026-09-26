@@ -1,0 +1,17 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.remoteDev.tests
+
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentInfo
+import org.jetbrains.annotations.ApiStatus
+import java.lang.reflect.Method
+import java.util.Queue
+
+/**
+ * This internal interface should be implemented by distributed tests
+ * Agent uses this interface to replay test and perform required test operations
+ */
+@ApiStatus.Internal
+interface DistributedTestPlayer {
+  fun initAgent(agent: RdAgentInfo, method: Method): Map<String, Queue<AgentAction>>
+  fun invokeTestMethod(testMethod: Method)
+}

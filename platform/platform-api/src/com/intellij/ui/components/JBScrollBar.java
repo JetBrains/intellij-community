@@ -1,29 +1,25 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scroll.TouchScrollUtil;
+import com.intellij.ui.tabs.impl.UIThemeCustomization;
+import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.Scrollable;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ScrollBarUI;
@@ -43,10 +39,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   /**
    * This key defines a region painter, which is used by the custom ScrollBarUI
    * to draw additional paintings (i.e. error stripes) on the scrollbar's track.
-   *
-   * @see UIUtil#putClientProperty
    */
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
+
   /**
    * This constraint should be used to add a component that will be shown before the scrollbar's track.
    * Note that the previously added leading component will be removed.
@@ -62,7 +57,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   public static final String TRAILING = "JB_SCROLL_BAR_TRAILING_COMPONENT";
 
-  private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
   private double myFractionalRemainder;
   private boolean wasPositiveDelta;
@@ -87,9 +81,11 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   protected void addImpl(Component component, Object name, int index) {
     Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
     if (key != null) {
-      Component old = UIUtil.getClientProperty(this, key);
-      UIUtil.putClientProperty(this, key, component);
-      if (old != null) remove(old);
+      Component old = ClientProperty.get(this, key);
+      ClientProperty.put(this, key, component);
+      if (old != null) {
+        remove(old);
+      }
     }
     super.addImpl(component, name, index);
   }
@@ -98,7 +94,21 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void updateUI() {
     ScrollBarUI ui = getUI();
     if (ui instanceof DefaultScrollBarUI) return;
-    setUI(createUI(this));
+    setUI(createUI(this, isThin()));
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  public static @NotNull ScrollBarUI createUI(JComponent c) {
+    return createUI(c, false);
+  }
+
+  /**
+   * Returns a new instance of {@link DefaultScrollBarUI}.
+   * Use only to replace a more specific ScrollBarUI and release resources correctly.
+   */
+  @ApiStatus.Internal
+  public static @NotNull ScrollBarUI createDefaultUI() {
+    return new DefaultScrollBarUI();
   }
 
   /**
@@ -109,8 +119,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a new instance of {@link ScrollBarUI}
    */
   @SuppressWarnings("UnusedParameters")
-  public static ScrollBarUI createUI(JComponent c) {
-    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
+  public static @NotNull ScrollBarUI createUI(JComponent c, boolean isThin) {
+    UIThemeCustomization provider = UIThemeCustomization.getInstance();
+    if (SystemInfo.isMac || (provider != null && provider.isMacScrollBar())) {
+      return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
+    }
+    else {
+      return isThin ? new ThinScrollBarUI() : new DefaultScrollBarUI();
+    }
   }
 
   /**
@@ -139,6 +155,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setUnitIncrement(int increment) {
     isUnitIncrementSet = true;
     super.setUnitIncrement(increment);
+  }
+
+  public void toggle(boolean isOn) {
+    ScrollBarUI ui = getUI();
+    if (ui instanceof DefaultScrollBarUI) {
+      ((DefaultScrollBarUI)ui).toggle(isOn);
+    }
   }
 
   /**
@@ -176,7 +199,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return {@code true} if glass pane can process the specified event, {@code false} otherwise
    */
   @Override
-  public boolean canBePreprocessed(MouseEvent event) {
+  public boolean canBePreprocessed(@NotNull MouseEvent event) {
     return JBScrollPane.canBePreprocessed(event, this);
   }
 
@@ -184,10 +207,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setValue(int value) {
     int delay = 0;
     Component parent = getParent();
-    if (parent instanceof JBScrollPane) {
-      JBScrollPane pane = (JBScrollPane)parent;
+    if (parent instanceof JBScrollPane pane) {
       JViewport viewport = pane.getViewport();
-      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
+      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.INSTANCE.isInterpolationEligibleFor(this)) {
         delay = pane.getInitialDelay(getValueIsAdjusting());
       }
     }
@@ -217,7 +239,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return {@code true} if the specified event is handled and consumed, {@code false} otherwise
    */
   public boolean handleMouseWheelEvent(MouseWheelEvent event) {
-    if (MouseWheelEvent.WHEEL_UNIT_SCROLL != event.getScrollType()) return false;
+    if (!isSupportedScrollType(event)) return false;
     if (event.isShiftDown() == (orientation == VERTICAL)) return false;
     if (!ScrollSettings.isEligibleFor(this)) return false;
 
@@ -225,9 +247,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
-    double minDelta = (double)(getMinimum() - value);
-    double maxDelta = (double)(getMaximum() - getVisibleAmount() - value);
-    double deltaAdjusted = Math.max(minDelta, Math.min(maxDelta, delta));
+    double deltaAdjusted = getDeltaAdjusted(value, delta);
     if (deltaAdjusted != 0.0) {
       boolean isPositiveDelta = deltaAdjusted > 0.0;
       if (wasPositiveDelta != isPositiveDelta) {
@@ -245,14 +265,20 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
         setValue(value + valueAdjusted);
       }
     }
+    else if (delta != 0.0) {
+      return true; // do not consume event if it can be processed by parent component
+    }
     event.consume();
     return true;
   }
 
+  private static boolean isSupportedScrollType(MouseWheelEvent e) {
+    return e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL || TouchScrollUtil.isUpdate(e);
+  }
+
   private JViewport getViewport() {
     Component parent = getParent();
-    if (parent instanceof JScrollPane) {
-      JScrollPane pane = (JScrollPane)parent;
+    if (parent instanceof JScrollPane pane) {
       return pane.getViewport();
     }
     return null;
@@ -272,6 +298,25 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     return Math.max(minDelta, Math.min(maxDelta, delta));
   }
 
+  protected double getDeltaAdjusted(MouseWheelEvent event) {
+    int value = getTargetValue();
+    double delta = getPreciseDelta(event);
+    return getDeltaAdjusted(value, delta);
+  }
+
+  /**
+   * Calculates adjusted delta for the bar.
+   *
+   * @param value the target value for the bar
+   * @param delta the supposed delta
+   * @return the delta itself or an adjusted delta
+   */
+  private double getDeltaAdjusted(int value, double delta) {
+    double minDelta = getMinimum() - value;
+    double maxDelta = getMaximum() - getVisibleAmount() - value;
+    return Math.max(minDelta, Math.min(maxDelta, delta));
+  }
+
   /**
    * Calculates a scrolling delta from the specified event.
    *
@@ -279,8 +324,11 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a scrolling delta for this scrollbar
    */
   private double getPreciseDelta(MouseWheelEvent event) {
+    if (TouchScrollUtil.isTouchScroll(event)) {
+      return TouchScrollUtil.getDelta(event);
+    }
     double rotation = event.getPreciseWheelRotation();
-    if (ScrollSettings.isPixelPerfectEnabled()) {
+    if (ScrollSettings.isPixelPerfectEnabled.invoke()) {
       // calculate an absolute delta if possible
       if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
@@ -289,15 +337,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);
-      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
-    if (ScrollSettings.isHighPrecisionEnabled()) {
+    if (ScrollSettings.isHighPrecisionEnabled.invoke()) {
       // calculate a relative delta if possible
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
       double delta = unitIncrement * rotation * event.getScrollAmount();
-      if (-THRESHOLD > delta && delta > THRESHOLD) return delta;
       // When the scrolling speed is set to maximum, it's possible to scroll by more units than will fit in the visible area.
       // To make for more accurate low-speed scrolling, we limit scrolling to the block increment
       // if the wheel was only rotated one click.
@@ -305,6 +352,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       return boundDelta(-blockIncrement, blockIncrement, delta);
     }
     return Double.NaN;
+  }
+
+  public boolean isThin() {
+    return false;
   }
 
   private static final class Model extends DefaultBoundedRangeModel {

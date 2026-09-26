@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
+public class GroovyLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "lineMarker/";
@@ -74,7 +74,7 @@ public class GroovyLineMarkerTest extends LightCodeInsightFixtureTestCase {
 
     myFixture.doHighlighting();
 
-    final List<LineMarkerInfo> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project);
+    final List<LineMarkerInfo<?>> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project);
     assertEquals(count, infoList.size());
   }
 }

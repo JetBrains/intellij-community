@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.python.sdk.WinRegistryService;
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.easymock.MockType;
@@ -34,8 +24,9 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
+@Subsystems.Interpreters
+@Layers.Functional
 public final class WinPythonSdkFlavorTest {
-
   private IMocksControl myControl;
   private WinRegistryService myMock;
 
@@ -50,11 +41,8 @@ public final class WinPythonSdkFlavorTest {
    */
   @Test
   public void testFindPythonUsingRegistry() throws Exception {
-
-
     EasyMock.expect(myMock.listBranches(caseInsensitive("HKEY_CURRENT_USER\\Software\\Python")))
       .andReturn(Arrays.asList("PythonCore", "CompanyFoo")).anyTimes();
-
 
     EasyMock.expect(myMock.listBranches(caseInsensitive("HKEY_CURRENT_USER\\Software\\Python\\PythonCore")))
       .andReturn(Collections.singletonList("3.5")).anyTimes();
@@ -72,7 +60,13 @@ public final class WinPythonSdkFlavorTest {
 
     myControl.replay();
 
-    final WinPythonSdkFlavor systemUnderTest = new WinPythonSdkFlavor(myMock);
+    final WinPythonSdkFlavor systemUnderTest = new WinPythonSdkFlavor() {
+      @NotNull
+      @Override
+      protected WinRegistryService getWinRegistryService() {
+        return myMock;
+      }
+    };
     final List<String> result = new ArrayList<>();
     systemUnderTest.findInRegistry(result);
     Assert.assertThat("Python should be found by registry, but failed to do so", result,
@@ -82,9 +76,8 @@ public final class WinPythonSdkFlavorTest {
   /**
    * @return case insensitive matcher for string
    */
-  private String caseInsensitive(@NotNull final String source) {
+  private static String caseInsensitive(@NotNull final String source) {
     // Never returns null: lame EasyMock api
-    //noinspection ConstantConditions
     return EasyMock.matches(String.format("(?i)%s", source.replace("\\", "\\\\")));
   }
 }

@@ -16,7 +16,7 @@ public class GrDelegatingScopeProcessorWithHints extends GrScopeProcessorWithHin
 
   public GrDelegatingScopeProcessorWithHints(@NotNull PsiScopeProcessor delegate,
                                              @NotNull DeclarationKind target,
-                                             @NotNull DeclarationKind... targets) {
+                                             DeclarationKind @NotNull ... targets) {
     this(delegate, EnumSet.of(target, targets));
   }
 

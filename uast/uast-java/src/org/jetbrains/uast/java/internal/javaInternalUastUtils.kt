@@ -15,15 +15,20 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaToken
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastBinaryOperator
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 internal fun IElementType.getOperatorType() = when (this) {
   JavaTokenType.EQ -> UastBinaryOperator.ASSIGN
@@ -64,18 +69,40 @@ internal fun <T> singletonListOrEmpty(element: T?) = if (element != null) listOf
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun String?.orAnonymous(kind: String = ""): String {
-  return this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
+  return this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 }
-
-internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
 
 val PsiModifierListOwner.annotations: Array<PsiAnnotation>
   get() = modifierList?.annotations ?: emptyArray()
 
 internal inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
-  val unwrapped = if (element is T) element.psi else element
+  val unwrapped = if (element is T) element.javaPsi else element
   assert(unwrapped !is UElement)
   return unwrapped as P
 }
 
 internal fun PsiElement.getChildByRole(role: Int) = (this as? CompositeElement)?.findChildByRoleAsPsiElement(role)
+
+/** Returns true if the given element is written in Java. */
+fun isJava(element: PsiElement?): Boolean {
+  return element != null && isJava(element.language)
+}
+
+/** Returns true if the given language is Java. */
+fun isJava(language: Language?): Boolean {
+  return language == JavaLanguage.INSTANCE
+}
+
+@OptIn(ExperimentalContracts::class)
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? {
+  contract {
+    returnsNotNull() implies (this@asSafely is T)
+  }
+  return this as? T
+}
+fun PsiElement?.isSemicolon(): Boolean {
+  if (this !is PsiJavaToken) return false
+
+  return tokenType == JavaTokenType.SEMICOLON
+}

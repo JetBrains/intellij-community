@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Robot;
 import java.io.File;
 import java.util.Set;
 
@@ -30,11 +19,13 @@ public abstract class PlaybackContext  {
   private final boolean myUseDirectActionCall;
   private final PlaybackCommand myCurrentCmd;
   private File myBaseDir;
-  private final Set<Class> myCallClasses;
-  private final PlaybackRunner myRunner;
+  private final Set<Class<?>> myCallClasses;
+  @ApiStatus.Internal
+  protected final PlaybackRunner myRunner;
   private final boolean myUseTypingTargets;
 
-  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
+  @ApiStatus.Internal
+  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class<?>> callClasses) {
     myRunner = runner;
     myCallback = callback;
     myCurrentLine = currentLine;
@@ -46,6 +37,7 @@ public abstract class PlaybackContext  {
     myCallClasses = callClasses;
   }
 
+  @ApiStatus.Internal
   public PlaybackRunner.StatusCallback getCallback() {
     return myCallback;
   }
@@ -55,6 +47,9 @@ public abstract class PlaybackContext  {
   }
 
   public Robot getRobot() {
+    if (myRobot == null) {
+      throw new RuntimeException("Robot is not available in the headless mode");
+    }
     return myRobot;
   }
 
@@ -74,6 +69,7 @@ public abstract class PlaybackContext  {
     return myBaseDir != null ? myBaseDir : new File(System.getProperty("user.dir"));
   }
   
+  @ApiStatus.Internal
   public PathMacro getPathMacro() {
     return new PathMacro().setScriptDir(getCurrentCmd().getScriptDir()).setBaseDir(getBaseDir());
   }
@@ -82,32 +78,8 @@ public abstract class PlaybackContext  {
     myBaseDir = dir;
   }
 
-  public Set<Class> getCallClasses() {
+  public Set<Class<?>> getCallClasses() {
     return myCallClasses;
-  }
-
-  public void flushAwtAndRunInEdt(final Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        getRobot().waitForIdle();
-        SwingUtilities.invokeLater(runnable);
-      });
-    } else {
-      getRobot().waitForIdle();
-      SwingUtilities.invokeLater(runnable);
-    }
-  }
-
-  public void delayAndRunInEdt(final Runnable runnable, final long delay) {
-    runPooledThread(() -> {
-      try {
-        Thread.currentThread().sleep(delay);
-      }
-      catch (InterruptedException e) {
-
-      }
-      SwingUtilities.invokeLater(runnable);
-    });
   }
   
   public void runPooledThread(Runnable runnable) {
@@ -130,15 +102,22 @@ public abstract class PlaybackContext  {
     getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.code);
   }
 
+  @ApiStatus.Internal
   public abstract void pushStage(StageInfo info);
 
+  @ApiStatus.Internal
   public abstract StageInfo popStage();
 
   public abstract int getCurrentStageDepth();
 
+  @ApiStatus.Internal
   public abstract void addPassed(StageInfo stage);
 
   public abstract boolean isDisposed();
 
   public abstract void storeRegistryValue(String key);
+
+  public abstract void setProject(@Nullable Project project);
+
+  public abstract @NotNull Project getProject();
 }

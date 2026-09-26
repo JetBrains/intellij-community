@@ -1,0 +1,11 @@
+// "Create class 'Bar'" "true"
+// DISABLE_ERRORS
+private class Foo
+
+val bar = Bar(Foo())
+
+class Bar private constructor(foo: Foo) {
+
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

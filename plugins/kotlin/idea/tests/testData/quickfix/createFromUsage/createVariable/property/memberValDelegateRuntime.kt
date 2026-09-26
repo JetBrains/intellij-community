@@ -1,0 +1,12 @@
+// "Create property 'foo'" "true"
+// ERROR: Property must be initialized or be abstract
+// ERROR: Variable 'foo' must be initialized
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_AFTER_ERROR: UNINITIALIZED_VARIABLE
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A<T> {
+    val x: A<Int> by <caret>foo
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

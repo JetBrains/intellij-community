@@ -1,0 +1,17 @@
+<!--suppress PluginXmlDynamicPlugin -->
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint name="welcomeScreenProjectProvider" interface="com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider" dynamic="true"/>
+    <extensionPoint name="noProjectStateHandler" interface="com.intellij.openapi.wm.ex.NoProjectStateHandler"/>
+    <extensionPoint name="projectClosingTransitionHandler" interface="com.intellij.openapi.wm.ex.ProjectClosingTransitionHandler"/>
+  </extensionPoints>
+</idea-plugin>

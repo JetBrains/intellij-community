@@ -1,41 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
- * @author yole
+ * Locates plugin sources and runtime resources within an JetBrains IDE installation.
  */
-public class PluginPathManager {
+public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubrepoHolder {
-    public static List<File> subrepos = findSubrepos();
+  private static final class SubRepoHolder {
+    private static final @NonNls List<String> ROOT_NAMES = List.of(
+      "android",
+      "community",
+      "community/android",
+      "contrib",
+      "CIDR");
 
-    private static List<File> findSubrepos() {
+    private static final List<File> subRepos = findSubRepos();
+
+    private static List<File> findSubRepos() {
       List<File> result = new ArrayList<>();
-      File[] gitRoots = getSortedGitRoots(new File(PathManager.getHomePath()));
+      File[] gitRoots = getSortedSubReposRoots(new File(PathManager.getHomePath()));
       for (File subdir : gitRoots) {
+        //noinspection IdentifierGrammar
         File pluginsDir = new File(subdir, "plugins");
         if (pluginsDir.exists()) {
           result.add(pluginsDir);
@@ -43,33 +48,46 @@ public class PluginPathManager {
         else {
           result.add(subdir);
         }
-        result.addAll(Arrays.asList(getSortedGitRoots(subdir)));
+        result.addAll(Arrays.asList(getSortedSubReposRoots(subdir)));
       }
       return result;
     }
 
-    @NotNull
-    private static File[] getSortedGitRoots(@NotNull File dir) {
-      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && new File(child, ".git").exists());
-      if (gitRoots == null) {
-        return new File[0];
+    private static File @NotNull [] getSortedSubReposRoots(@NotNull File dir) {
+      Set<File> result = new HashSet<>();
+      for (String root : ROOT_NAMES) {
+        var subRepo = new File(dir, root);
+        if (subRepo.isDirectory()) {
+          result.add(subRepo.toPath().normalize().toFile());
+        }
       }
-      Arrays.sort(gitRoots, (file, file2) -> FileUtil.compareFiles(file, file2));
+      File[] gitRoots = result.toArray(new File[0]);
+
+      Arrays.sort(gitRoots, FileUtil::compareFiles);
       return gitRoots;
     }
   }
 
-  public static File getPluginHome(String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
-      return subrepo;
-    }
-    return new File(PathManager.getHomePath(), "plugins/" + pluginName);
+  private static ConcurrentMap<String, File> ourPluginHomes = new ConcurrentHashMap<>();
+
+  /**
+   * Returns the source directory of the plugin with the given name, searching the known
+   * sub-repositories of an IntelliJ development checkout.
+   *
+   * <p>If no matching directory is found, returns a synthetic {@code <home>/plugins/<pluginName>}
+   * path which may not exist on disk. Results are cached.
+   */
+  public static File getPluginHome(@NonNls String pluginName) {
+    File subRepo = ourPluginHomes.computeIfAbsent(pluginName, k -> {
+      File repo = findSubRepo(k);
+      return repo != null ? repo : new File(PathManager.getHomePath(), "plugins/" + k);
+    });
+    return subRepo;
   }
 
-  private static File findSubrepo(String pluginName) {
-    for (File subrepo : SubrepoHolder.subrepos) {
-      File candidate = new File(subrepo, pluginName);
+  private static File findSubRepo(String pluginName) {
+    for (File subRepo : SubRepoHolder.subRepos) {
+      File candidate = new File(subRepo, pluginName);
       if (candidate.isDirectory()) {
         return candidate;
       }
@@ -77,16 +95,69 @@ public class PluginPathManager {
     return null;
   }
 
+  /** Convenience wrapper around {@link #getPluginHome(String)} returning the absolute path string. */
   public static String getPluginHomePath(String pluginName) {
     return getPluginHome(pluginName).getPath();
   }
 
+  /**
+   * Returns the plugin source directory as a path relative to {@link PathManager#getHomePath()},
+   * using {@code '/'} as separator and a leading slash (for example {@code /community/plugins/foo}).
+   *
+   * <p>If the plugin is not located in any known sub-repository, returns the default
+   * {@code /plugins/<pluginName>}.
+   */
   public static String getPluginHomePathRelative(String pluginName) {
-    File subrepo = findSubrepo(pluginName);
-    if (subrepo != null) {
+    File subRepo = findSubRepo(pluginName);
+    if (subRepo != null) {
       String homePath = FileUtil.toSystemIndependentName(PathManager.getHomePath());
-      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subrepo.getPath()), '/');
+      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subRepo.getPath()), '/');
     }
     return "/plugins/" + pluginName;
+  }
+
+  /**
+   * Resolves a resource that lives next to a plugin's distribution directory, given any class
+   * loaded from that plugin.
+   *
+   * @return the resolved {@link File}, or {@code null} if no plausible location could be found
+   * (note that the returned file is not guaranteed to exist).
+   */
+  public static @Nullable File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+    Path result = PluginManagerCoreKt.getPluginDistDirByClass(pluginClass);
+    if (result != null) {
+      return result.resolve(resourceName).toFile();
+    }
+
+    try {
+      String pathForClass = PathManager.getJarPathForClass(pluginClass);
+      assert pathForClass != null : pluginClass;
+      if (!pathForClass.endsWith(".jar")) {
+        URL resource = pluginClass.getClassLoader().getResource(resourceName);
+        if (resource == null) {
+          return null;
+        }
+        return new File(URLUtil.decode(resource.getPath()));
+      }
+      File jarFile = new File(pathForClass);
+      if (!jarFile.isFile()) {
+        return null;
+      }
+
+      File pluginBaseDir = jarFile.getParentFile().getParentFile();
+      return new File(pluginBaseDir, resourceName);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Resolves a path within the distribution directory of the plugin that owns {@code pluginClass}.
+   */
+  public static @Nullable Path getPluginDistPath(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+    Path baseDir = PluginManagerCoreKt.getPluginDistDirByClass(pluginClass);
+    if (baseDir == null) return null;
+    return baseDir.resolve(resourceName);
   }
 }

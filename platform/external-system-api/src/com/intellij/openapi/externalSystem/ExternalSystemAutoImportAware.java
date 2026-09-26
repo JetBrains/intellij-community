@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem;
 
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,9 +25,6 @@ import java.util.List;
  * that there are other auxiliary config files/directories which modification should trigger external project refresh. This interface
  * is supposed to handle that situation, i.e. any {@link ExternalSystemManager external system implementation} which requires
  * the functionality described above should implement this interface.
- * 
- * @author Denis Zhdanov
- * @since 6/7/13 6:44 PM
  */
 public interface ExternalSystemAutoImportAware {
 
@@ -48,7 +36,7 @@ public interface ExternalSystemAutoImportAware {
    * <p/>
    * <b>Note2:</b> this method is assume to be called rather often, that's why it's very important to return from it quickly.
    * Caching and simple check algorithms are welcomed.
-   * 
+   *
    * @param changedFileOrDirPath  changed file/dir path
    * @param project               current project
    * @return                      {@code null} if target change should not trigger external project refresh;
@@ -57,7 +45,22 @@ public interface ExternalSystemAutoImportAware {
   @Nullable
   String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
 
-  default List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+  default @NotNull @Unmodifiable List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+    return ContainerUtil.map(getAffectedExternalProjectFiles(projectPath, project), File::toPath);
+  }
+
+  /**
+   * @deprecated Use and override {@link #getAffectedExternalProjectFilePaths(String, Project)}.
+   */
+  @Deprecated(since = "2026.2", forRemoval = true)
+  default @NotNull List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return Collections.emptyList();
   }
+
+  /**
+   * Checks if project resolve running with specified policy can be used to update `auto-import` state.
+   * Can be used to indicate project partial refresh when not all data are gathered during the resolve and normal project import is still required.
+   */
+  @ApiStatus.Experimental
+  default boolean isApplicable(@Nullable ProjectResolverPolicy resolverPolicy) {return true;}
 }

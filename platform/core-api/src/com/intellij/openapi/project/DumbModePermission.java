@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.ApiStatus;
+
+/**
+ * @deprecated obsolete API
+ */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public enum DumbModePermission {
   MAY_START_MODAL,
   MAY_START_BACKGROUND

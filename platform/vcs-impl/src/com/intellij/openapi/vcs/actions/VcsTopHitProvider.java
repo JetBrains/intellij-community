@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.ActionsTopHitProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class VcsTopHitProvider extends ActionsTopHitProvider {
+final class VcsTopHitProvider extends ActionsTopHitProvider {
   private static final String[][] ACTION_MATRIX = {
      {"his", "history ", "Vcs.ShowTabbedFileHistory"},
      {"upd", "update ", "Vcs.UpdateProject"},
@@ -28,8 +15,13 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
      {"check", "check in ", "CheckinProject"},
      {"check", "checkin ", "CheckinProject"},
      {"comm", "commit ", "CheckinProject"},
+     {"check", "check in ", "ChangesView.ToggleCommitUi"},
+     {"check", "checkin ", "ChangesView.ToggleCommitUi"},
+     {"comm", "commit ", "ChangesView.ToggleCommitUi"},
      {"reve", "revert ", "ChangesView.Revert"},
      {"roll", "rollback ", "ChangesView.Revert"},
+     {"reve", "revert ", "ChangesView.RevertFiles"},
+     {"roll", "rollback ", "ChangesView.RevertFiles"},
      {"compare", "compare ", "Compare.SameVersion"},
      {"create p", "create patch ", "ChangesView.CreatePatch"},
      {"pat", "patch ", "ChangesView.CreatePatch"},
@@ -38,7 +30,7 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
   };
 
   @Override
-  protected String[][] getActionsMatrix() {
+  protected String[] @NotNull [] getActionsMatrix() {
     return ACTION_MATRIX;
   }
 }

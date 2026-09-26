@@ -1,0 +1,3 @@
+<node text="testMethod() (A)" base="true">
+  <node text="returnAString(String) (A)"/>
+</node>

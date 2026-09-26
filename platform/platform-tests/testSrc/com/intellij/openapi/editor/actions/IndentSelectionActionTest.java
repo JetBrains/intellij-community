@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public class IndentSelectionActionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class IndentSelectionActionTest extends BasePlatformTestCase {
 
   public void testWithoutSelection() {
     verifyAction("some text",
@@ -36,7 +36,7 @@ public class IndentSelectionActionTest extends LightPlatformCodeInsightFixtureTe
 
   public void testWithLineSelection() {
     verifyAction("<selection>some text</selection>",
-                 "    <selection>some text</selection>");
+                 "<selection>    some text</selection>");
   }
 
   public void testWithLineSelectionExcludingSpaces() {

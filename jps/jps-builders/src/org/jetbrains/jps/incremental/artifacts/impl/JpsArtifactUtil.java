@@ -1,42 +1,30 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
-public class JpsArtifactUtil {
+public final class JpsArtifactUtil {
   public static boolean processPackagingElements(@NotNull JpsPackagingElement element,
-                                                 @NotNull Processor<JpsPackagingElement> processor) {
+                                                 @NotNull Processor<? super JpsPackagingElement> processor) {
     return processPackagingElements(element, processor, new HashSet<>());
   }
 
   private static boolean processPackagingElements(@NotNull JpsPackagingElement element,
-                                                 @NotNull Processor<JpsPackagingElement> processor,
-                                                 final Set<JpsPackagingElement> processed) {
+                                                 @NotNull Processor<? super JpsPackagingElement> processor,
+                                                 final Set<? super JpsPackagingElement> processed) {
     if (!processed.add(element)) {
       return false;
     }
@@ -59,5 +47,18 @@ public class JpsArtifactUtil {
 
   public static boolean isArchiveName(String name) {
     return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
+  }
+
+  public static Set<JpsModule> getModulesIncludedInArtifacts(final @NotNull Collection<? extends JpsArtifact> artifacts) {
+    final Set<JpsModule> modules = new HashSet<>();
+    for (JpsArtifact artifact : artifacts) {
+      processPackagingElements(artifact.getRootElement(), element -> {
+        if (element instanceof JpsModuleOutputPackagingElement) {
+          ContainerUtil.addIfNotNull(modules, ((JpsModuleOutputPackagingElement)element).getModuleReference().resolve());
+        }
+        return true;
+      });
+    }
+    return modules;
   }
 }

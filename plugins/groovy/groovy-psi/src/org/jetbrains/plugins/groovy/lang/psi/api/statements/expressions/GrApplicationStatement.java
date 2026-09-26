@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
-/**
- * @author ilyas
- */
 public interface GrApplicationStatement extends GrStatement, GrMethodCall {
 
   @NotNull

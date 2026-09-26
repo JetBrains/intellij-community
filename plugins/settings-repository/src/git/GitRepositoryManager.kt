@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
-import com.intellij.util.io.*
-import org.eclipse.jgit.api.AddCommand
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
@@ -32,15 +16,30 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.transport.*
-import org.jetbrains.settingsRepository.*
+import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.OperationResult
+import org.eclipse.jgit.transport.RefSpec
+import org.eclipse.jgit.transport.RemoteConfig
+import org.eclipse.jgit.transport.Transport
+import org.jetbrains.settingsRepository.AuthenticationException
+import org.jetbrains.settingsRepository.BaseRepositoryManager
+import org.jetbrains.settingsRepository.IcsCredentialsStore
+import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
+import org.jetbrains.settingsRepository.RepositoryService
+import org.jetbrains.settingsRepository.SyncType
+import org.jetbrains.settingsRepository.UpdateResult
 import java.io.IOException
-import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.inputStream
 
-class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>, dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
+class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>,
+                           dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
   override val repository: Repository
     get() {
       var r = _repository
@@ -54,16 +53,21 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       return r
     }
 
-  // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
-  var _repository: Repository? = null
+  // we must recreate the repository if dir changed because the repository stores old state and cannot be reinitialized
+  // (so, old instance cannot be reused, and we must instantiate new one)
+  private var _repository: Repository? = null
 
   override val credentialsProvider: CredentialsProvider by lazy {
     JGitCredentialsProvider(credentialsStore, repository)
   }
 
+  fun dispose() {
+    _repository?.close()
+  }
+
   private var ignoreRules: IgnoreNode? = null
 
-  override fun createRepositoryIfNeed(): Boolean {
+  override fun createRepositoryIfNeeded(): Boolean {
     ignoreRules = null
 
     if (isRepositoryExists()) {
@@ -78,16 +82,19 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun deleteRepository() {
     ignoreRules = null
 
-    super.deleteRepository()
-
-    val r = _repository
-    if (r != null) {
-      _repository = null
-      r.close()
+    try {
+      super.deleteRepository()
+    }
+    finally {
+      val r = _repository
+      if (r != null) {
+        _repository = null
+        r.close()
+      }
     }
   }
 
-  override fun getUpstream(): String? = repository.upstream
+  override fun getUpstream() = repository.upstream
 
   override fun setUpstream(url: String?, branch: String?) {
     repository.setUpstream(url, branch ?: Constants.MASTER)
@@ -96,28 +103,28 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setup().objectDirectory.exists()
+      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setAutonomous(true).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()
     }
   }
 
-  override fun hasUpstream(): Boolean = getUpstream() != null
+  override fun hasUpstream() = getUpstream() != null
 
-  override fun addToIndex(file: Path, path: String, content: ByteArray, size: Int) {
-    repository.edit(AddLoadedFile(path, content, size, file.lastModified().toMillis()))
+  override fun addToIndex(file: Path, path: String, content: ByteArray) {
+    repository.edit(AddLoadedFile(path, content, file.getLastModifiedTime().toMillis()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {
     repository.deletePath(path, isFile, false)
   }
 
-  override fun commit(indicator: ProgressIndicator?, syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
+  override suspend fun commit(syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
     lock.write {
       try {
-        // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
-        return commitIfCan(indicator, if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.repositoryState else repository.fixAndGetState())
+        // will be reset if OVERWRITE_LOCAL, so, we should not fix the state in this case
+        return commitIfCan(if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.repositoryState else repository.fixAndGetState())
       }
       catch (e: UnmergedPathsException) {
         if (syncType == SyncType.OVERWRITE_LOCAL) {
@@ -125,11 +132,11 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
           return false
         }
         else {
-          indicator?.checkCanceled()
+          coroutineContext.ensureActive()
           LOG.warn("Unmerged detected, will be attempted to resolve", e)
           resolveUnmergedConflicts(repository)
-          indicator?.checkCanceled()
-          return commitIfCan(indicator, repository.fixAndGetState())
+          coroutineContext.ensureActive()
+          return commitIfCan(repository.fixAndGetState())
         }
       }
       catch (e: NoHeadException) {
@@ -139,9 +146,9 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  private fun commitIfCan(indicator: ProgressIndicator?, state: RepositoryState): Boolean {
+  private suspend fun commitIfCan(state: RepositoryState): Boolean {
     if (state.canCommit()) {
-      return commit(repository, indicator)
+      return commit(repository)
     }
     else {
       LOG.warn("Cannot commit, repository in state ${state.description}")
@@ -149,9 +156,9 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun getAheadCommitsCount(): Int = repository.getAheadCommitsCount()
+  override fun getAheadCommitsCount() = repository.getAheadCommitCount()
 
-  override fun push(indicator: ProgressIndicator?) {
+  override suspend fun push():Unit = reportRawProgress { reporter ->
     LOG.debug("Push")
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
@@ -162,7 +169,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       }
     }
 
-    val monitor = indicator.asProgressMonitor()
+    val monitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
       for (attempt in 0..1) {
         transport.credentialsProvider = credentialsProvider
@@ -200,15 +207,15 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun fetch(indicator: ProgressIndicator?): Updater {
-    val pullTask = Pull(this, indicator ?: EmptyProgressIndicator())
+  override suspend fun fetch(): Updater {
+    val pullTask = Pull(this)
     val refToMerge = pullTask.fetch()
     return object : Updater {
       override var definitelySkipPush = false
 
       // KT-8632
-      override fun merge(): UpdateResult? = lock.write {
-        val committed = commit(pullTask.indicator)
+      override suspend fun merge(): UpdateResult? = lock.write {
+        val committed = commit()
         if (refToMerge == null) {
           definitelySkipPush = !committed && getAheadCommitsCount() == 0
           return null
@@ -218,64 +225,13 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun pull(indicator: ProgressIndicator?): UpdateResult? = Pull(this, indicator).pull()
+  override suspend fun pull() = Pull(this).pull()
 
-  override fun resetToTheirs(indicator: ProgressIndicator): UpdateResult = Reset(this, indicator).reset(true)
+  override suspend fun resetToTheirs() = Reset(this).reset(true)
 
-  override fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?): UpdateResult = Reset(this, indicator).reset(false, localRepositoryInitializer)
+  override suspend fun resetToMy(localRepositoryInitializer: (() -> Unit)?) = Reset(this).reset(false, localRepositoryInitializer)
 
-  override fun canCommit(): Boolean = repository.repositoryState.canCommit()
-
-  fun renameDirectory(pairs: Map<String, String?>, commitMessage: String): Boolean {
-    var addCommand: AddCommand? = null
-    val toDelete = SmartList<DeleteDirectory>()
-    for ((oldPath, newPath) in pairs) {
-      val old = dir.resolve(oldPath)
-      if (!old.exists()) {
-        continue
-      }
-
-      LOG.info("Rename $oldPath to $newPath")
-      old.directoryStreamIfExists {
-        val new = if (newPath == null) dir else dir.resolve(newPath)
-        for (file in it) {
-          LOG.runAndLogException {
-            if (file.isHidden()) {
-              file.delete()
-            }
-            else {
-              try {
-                file.move(new.resolve(file.fileName))
-              }
-              catch (ignored: FileAlreadyExistsException) {
-                return@runAndLogException
-              }
-
-              if (addCommand == null) {
-                addCommand = AddCommand(repository)
-              }
-              addCommand!!.addFilepattern(if (newPath == null) file.fileName.toString() else "$newPath/${file.fileName}")
-            }
-          }
-        }
-        toDelete.add(DeleteDirectory(oldPath))
-      }
-
-      LOG.runAndLogException {
-        old.delete()
-      }
-    }
-
-    if (toDelete.isEmpty() && addCommand == null) {
-      return false
-    }
-
-    repository.edit(toDelete)
-    addCommand?.call()
-
-    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append(commitMessage).toString())
-    return true
-  }
+  override fun canCommit() = repository.repositoryState.canCommit()
 
   private fun getIgnoreRules(): IgnoreNode? {
     var node = ignoreRules
@@ -299,7 +255,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 fun printMessages(fetchResult: OperationResult) {
   if (LOG.isDebugEnabled) {
     val messages = fetchResult.messages
-    if (!StringUtil.isEmptyOrSpaces(messages)) {
+    if (!messages.isNullOrBlank()) {
       LOG.debug(messages)
     }
   }

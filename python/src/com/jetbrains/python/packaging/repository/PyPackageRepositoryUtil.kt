@@ -1,0 +1,91 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("PyPackageRepositoryUtil")
+
+package com.jetbrains.python.packaging.repository
+
+import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.RequestBuilder
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.intellij.python.requirements.PyPackageVersionComparator
+import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
+import com.jetbrains.python.packaging.common.ProjectUrl
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
+import kotlinx.io.IOException
+import org.jetbrains.annotations.ApiStatus
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
+
+@ApiStatus.Experimental
+internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageRepository?): RequestBuilder {
+  if (repository == null) return this
+  val login = repository.login ?: return this
+  val password = repository.getPassword().ifEmpty { return this }
+  val credentials = Base64.getEncoder().encode("${login}:${password}".toByteArray()).toString(StandardCharsets.UTF_8)
+  this.tuner { connection -> connection.setRequestProperty("Authorization", "Basic $credentials") }
+  return this
+}
+
+@ApiStatus.Experimental
+internal fun PyPackageRepository.checkValid(): Boolean {
+  val url = repositoryUrl.ifEmpty { return false }
+  return HttpRequests
+    .request(url)
+    .withBasicAuthorization(this)
+    .connectTimeout(3000)
+    .throwStatusCodeException(false)
+    .tryConnect() == 200
+}
+
+@ApiStatus.Experimental
+object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, null) {
+  override var enabled: Boolean
+    get() = service<PyPackageRepositories>().isDefaultRepoEnabled(name)
+    set(value) { service<PyPackageRepositories>().setDefaultRepoEnabled(name, value) }
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  override fun search(needle: String, pageSize: Int): PythonPackageSearchResult =
+    service<PyPiPackageCache>().search(needle, pageSize)
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  override fun hasPackage(name: String): Boolean =
+    name in service<PyPiPackageCache>()
+
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  override fun getSize(): Int =
+    service<PyPiPackageCache>().size
+  
+  override fun getProjectUrl(packageName: String): ProjectUrl = ProjectUrl(name, PyPIPackageUtil.buildProjectUrl(packageName))
+
+  override fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {
+    super.buildPackageDetails(packageName).getOrNull()?.let {
+      return PyResult.success(it)
+    }
+
+    val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name)) }
+
+    val versions = runCatching {
+      PyPIPackageUtil.parsePackageVersionsFromRepository(repositoryUrl, packageName)
+    }.getOrElse { throwable ->
+      when (throwable) {
+        is PyPIPackageUtil.NotSimpleRepositoryApiUrlException, is IOException -> return PyResult.localizedError(throwable.localizedMessage)
+        else -> throw throwable
+      }
+    }
+
+    val simplePackageDetails = PythonSimplePackageDetails(
+      name = packageName,
+      availableVersions = versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
+      repository = this,
+      description = PyBundle.message("python.packages.no.details.in.repo", name)
+    )
+    return PyResult.success(simplePackageDetails)
+  }
+}

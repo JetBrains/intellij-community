@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.openapi.util.Pair;
@@ -24,9 +10,9 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -39,24 +25,15 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class ClashingGettersInspection extends BaseInspection {
+public final class ClashingGettersInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Clashing getters";
+  protected @Nullable String buildErrorString(Object... args) {
+    return GroovyBundle.message("getter.0.clashes.with.getter.1", args);
   }
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("getter.0.clashes.with.getter.1", args);
-  }
-
-  @NotNull
-  @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
@@ -89,26 +66,26 @@ public class ClashingGettersInspection extends BaseInspection {
     };
   }
 
-  private static Pair<PsiElement, String> getGetterDescription(PsiMethod getter) {
+  private static Pair<PsiElement, @Nls String> getGetterDescription(PsiMethod getter) {
     final String name = getter.getName();
     if (getter instanceof GrGdkMethod) {
-      return new Pair<>(null, "GDK method '" + name + "'");
+      return new Pair<>(null, GroovyBundle.message("getter.kind.gdk.method.0", name));
     }
     else if (getter instanceof GrReflectedMethod) {
       getter = ((GrReflectedMethod)getter).getBaseMethod();
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "method " + info);
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), GroovyBundle.message("getter.kind.method.0", info));
     }
     else if (getter instanceof GrMethod) {
-      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), "getter '" + name + "'");
+      return Pair.create(((GrMethod)getter).getNameIdentifierGroovy(), GroovyBundle.message("getter.kind.getter.0", name));
     }
     else {
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return new Pair<>(null, "method " + info);
+      return new Pair<>(null, GroovyBundle.message("getter.kind.method.0", info));
     }
   }
 }

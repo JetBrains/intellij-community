@@ -24,6 +24,6 @@ fScript.previewTask(taskName)
 11(10)  RETURN
 12(13) READ fScript
 13(14) READ taskName
-14(15) ARGUMENT element: Reference expression
+14(15) ARGUMENTS element: Method call
 15(16) element: Method call MAYBE_RETURN
 16() element: null

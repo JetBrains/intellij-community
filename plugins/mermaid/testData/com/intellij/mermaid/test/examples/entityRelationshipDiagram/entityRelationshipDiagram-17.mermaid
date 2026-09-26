@@ -1,0 +1,16 @@
+erDiagram
+    direction LR
+    subgraph TOP
+        direction TB
+        subgraph B1
+            direction RL
+            I1 ||--|| F1 : links
+        end
+        subgraph B2
+            direction BT
+            I2 ||--|| F2 : links
+        end
+    end
+    A ||--|| TOP : links
+    TOP ||--|| B : links
+    B1 ||--|| B2 : links

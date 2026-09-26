@@ -29,12 +29,15 @@ k
 long
 native
 new
+non-sealed
 null
 package
 private
 protected
 public
+record
 return
+sealed
 short
 static
 strictfp
@@ -47,6 +50,8 @@ trait
 transient
 true
 try
+val
+var
 void
 volatile
 while

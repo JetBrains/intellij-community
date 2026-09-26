@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.search;
 
@@ -22,50 +8,56 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
-  private final PsiFile myFile;
+import java.util.List;
+
+
+final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
+  private final PsiFile myPsiFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final IndexPattern myPattern;
+  private final List<TextRange> myAdditionalRanges;
 
-  public IndexPatternOccurrenceImpl(PsiFile file, int startOffset, int endOffset, IndexPattern pattern) {
-    myFile = file;
+  IndexPatternOccurrenceImpl(@NotNull PsiFile psiFile, int startOffset, int endOffset,
+                             @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPattern = pattern;
+    myAdditionalRanges = additionalRanges;
   }
 
   @Override
-  @NotNull
-  public PsiFile getFile() {
-    return myFile;
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
   @Override
-  @NotNull
-  public IndexPattern getPattern() {
+  public @NotNull List<TextRange> getAdditionalTextRanges() {
+    return myAdditionalRanges;
+  }
+
+  @Override
+  public @NotNull IndexPattern getPattern() {
     return myPattern;
   }
 
+  @Override
   public int hashCode(){
-    return myFile.hashCode()+myStartOffset+myEndOffset+myPattern.hashCode();
+    return myPsiFile.hashCode() + myStartOffset + myEndOffset + myPattern.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj){
-    if(!(obj instanceof IndexPatternOccurrenceImpl)){
+    if(!(obj instanceof IndexPatternOccurrenceImpl todoItem)){
       return false;
     }
-    IndexPatternOccurrenceImpl todoItem=(IndexPatternOccurrenceImpl)obj;
-    return myFile.equals(todoItem.myFile) &&
+    return myPsiFile.equals(todoItem.myPsiFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&
            myPattern.equals(todoItem.myPattern);

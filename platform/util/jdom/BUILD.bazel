@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.util.jdom` start
+jvm_library(
+    name = "jdom",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.jdom",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jaxen",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "jdom_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.jdom",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jdom",
+        "//libraries/jaxen:jaxen_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.jdom` end
+
+### auto-generated section `iml intellij.platform.util.jdom` start
+exports_files(
+    [
+        "intellij.platform.util.jdom.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.jdom` end

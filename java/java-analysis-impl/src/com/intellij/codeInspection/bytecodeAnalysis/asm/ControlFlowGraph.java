@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -27,9 +14,6 @@ import java.util.Set;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_NATIVE;
 
-/**
- * @author lambdamix
- */
 public final class ControlFlowGraph {
   public static final class Edge {
     public final int from, to;
@@ -42,10 +26,9 @@ public final class ControlFlowGraph {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Edge)) {
+      if (!(o instanceof Edge edge)) {
         return false;
       }
-      Edge edge = (Edge) o;
       return from == edge.from && to == edge.to;
     }
 
@@ -64,7 +47,7 @@ public final class ControlFlowGraph {
   /**
    * Where execution goes if NPE occurs at given instruction
    */
-  public final TIntIntHashMap npeTransitions;
+  public final Int2IntMap npeTransitions;
 
   ControlFlowGraph(String className,
                    MethodNode methodNode,
@@ -72,7 +55,7 @@ public final class ControlFlowGraph {
                    int edgeCount,
                    boolean[] errors,
                    Set<Edge> errorTransitions,
-                   TIntIntHashMap npeTransitions) {
+                   Int2IntMap npeTransitions) {
     this.className = className;
     this.methodNode = methodNode;
     this.transitions = transitions;
@@ -90,9 +73,9 @@ public final class ControlFlowGraph {
 final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   final String className;
   final MethodNode methodNode;
-  final TIntArrayList[] transitions;
-  final Set<ControlFlowGraph.Edge> errorTransitions;
-  final TIntIntHashMap npeTransitions;
+  final IntArrayList[] transitions;
+  final Set<Edge> errorTransitions;
+  final Int2IntMap npeTransitions;
   final FramelessAnalyzer myAnalyzer;
   private final boolean[] errors;
   private int edgeCount;
@@ -101,28 +84,28 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     myAnalyzer = jsr ? new FramelessAnalyzer(this) : new LiteFramelessAnalyzer(this);
     this.className = className;
     this.methodNode = methodNode;
-    transitions = new TIntArrayList[methodNode.instructions.size()];
+    transitions = new IntArrayList[methodNode.instructions.size()];
     errors = new boolean[methodNode.instructions.size()];
     for (int i = 0; i < transitions.length; i++) {
-      transitions[i] = new TIntArrayList();
+      transitions[i] = new IntArrayList();
     }
     errorTransitions = new HashSet<>();
-    npeTransitions = new TIntIntHashMap();
+    npeTransitions = new Int2IntOpenHashMap();
   }
 
-  final ControlFlowGraph buildCFG() throws AnalyzerException {
+  ControlFlowGraph buildCFG() throws AnalyzerException {
     if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
       myAnalyzer.analyze(methodNode);
     }
     int[][] resultTransitions = new int[transitions.length][];
     for (int i = 0; i < resultTransitions.length; i++) {
-      resultTransitions[i] = transitions[i].toNativeArray();
+      resultTransitions[i] = transitions[i].toIntArray();
     }
     return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions, npeTransitions);
   }
 
   @Override
-  public final void newControlFlowEdge(int insn, int successor) {
+  public void newControlFlowEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;
@@ -130,17 +113,16 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   }
 
   @Override
-  public final boolean newControlFlowExceptionEdge(int insn, int successor, boolean npe) {
+  public void newControlFlowExceptionEdge(int insn, int successor, boolean npe) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;
       Edge edge = new Edge(insn, successor);
       errorTransitions.add(edge);
-      if(npe && !npeTransitions.containsKey(insn)) {
+      if (npe && !npeTransitions.containsKey(insn)) {
         npeTransitions.put(insn, successor);
       }
       errors[successor] = true;
     }
-    return true;
   }
 }

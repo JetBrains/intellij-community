@@ -1,0 +1,8 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    PsiElement(Markdown:Markdown:TEXT)('An example of')
+    PsiWhiteSpace(' ')
+    MarkdownCodeSpan(Markdown:Markdown:CODE_SPAN)
+      PsiElement(Markdown:Markdown:BACKTICK)('`')
+      PsiElement(Markdown:Markdown:TEXT)('CodeSpan')
+      PsiElement(Markdown:Markdown:BACKTICK)('`')

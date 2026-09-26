@@ -1,0 +1,7 @@
+fragment pullRequestPendingReview on PullRequestReview {
+  ...nodeInfo
+  state
+  comments(first: 0) {
+    totalCount
+  }
+}

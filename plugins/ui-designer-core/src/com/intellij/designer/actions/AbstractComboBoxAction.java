@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -27,8 +14,13 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,7 +62,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     myPresentation = presentation;
     update();
 
@@ -82,12 +74,14 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
   }
 
   @Override
-  protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
     if (myShowDisabledActions) {
       return new ComboBoxButton(presentation) {
         @Override
-        protected JBPopup createPopup(Runnable onDispose) {
-          ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, createPopupActionGroup(this), getDataContext(), true, onDispose, getMaxRows());
+        protected @NotNull JBPopup createPopup(Runnable onDispose) {
+          DataContext context = getDataContext();
+          ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+            null, createPopupActionGroup(this, context), context, true, onDispose, getMaxRows());
           popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
           return popup;
         }
@@ -100,9 +94,8 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     update(mySelection, myPresentation == null ? getTemplatePresentation() : myPresentation, false);
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     for (final T item : myItems) {
@@ -112,7 +105,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
 
       AnAction action = new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (mySelection != item && selectionChanged(item)) {
             mySelection = item;
             AbstractComboBoxAction.this.update(item, myPresentation, false);

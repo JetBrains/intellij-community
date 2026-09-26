@@ -1,48 +1,52 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.DefaultExecutionTarget;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.ExecutionTargetProvider;
+import com.intellij.execution.Executor;
+import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Arrays;
 
 /**
@@ -55,16 +59,27 @@ import java.util.Arrays;
 public abstract class AbstractImportTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractImportTestsAction.class);
   public static final String TEST_HISTORY_SIZE = "test_history_size";
-  private SMTRunnerConsoleProperties myProperties;
+  private final Executor myExecutor;
 
-  public AbstractImportTestsAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  public AbstractImportTestsAction() {
+    super();
+    myExecutor = null;
+  }
+
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                 @Nullable @NlsActions.ActionDescription String description,
+                                 @Nullable Icon icon) {
+    this(text, description, icon, null);
+  }
+
+  public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
+                                   @Nullable @NlsActions.ActionDescription String description,
+                                   @Nullable Icon icon,
+                                   @Nullable Executor executor) {
     super(text, description, icon);
+    myExecutor = executor;
   }
 
-  public AbstractImportTestsAction(SMTRunnerConsoleProperties properties, @Nullable String text, @Nullable String description, @Nullable Icon icon) {
-    this(text, description, icon);
-    myProperties = properties;
-  }
 
   public static int getHistorySize() {
     int historySize;
@@ -78,45 +93,55 @@ public abstract class AbstractImportTestsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
-  @Nullable
-  public abstract VirtualFile getFile(@NotNull Project project);
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  protected abstract @Nullable VirtualFile getFile(@NotNull Project project);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final VirtualFile file = getFile(project);
-    if (file != null) {
-      try {
-        final ImportRunProfile profile = new ImportRunProfile(file, project);
-        SMTRunnerConsoleProperties properties = profile.getProperties();
-        if (properties == null) {
-          properties = myProperties;
-          LOG.info("Failed to detect test framework in " + file.getPath() +
-                   "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
-        }
-        final Executor executor = properties != null ? properties.getExecutor()
-                                                     : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
-        ExecutionTarget target = profile.getTarget();
-        if (target != null) {
-          builder = builder.target(target);
-        }
-        final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
-        final ProgramRunner runner =
-          initialConfiguration != null ? RunnerRegistry.getInstance().getRunner(executor.getId(), initialConfiguration) : null;
-        if (runner != null) {
-          builder = builder.runner(runner);
-        }
-        builder.buildAndExecute();
+    if (file == null) {
+      return;
+    }
+
+    doImport(project, file, null, myExecutor != null ? myExecutor : DefaultRunExecutor.getRunExecutorInstance());
+  }
+
+  public static void doImport(Project project,
+                              VirtualFile file,
+                              Long executionId) {
+    doImport(project, file, executionId, DefaultRunExecutor.getRunExecutorInstance());
+  }
+
+  private static void doImport(Project project,
+                               VirtualFile file,
+                               Long executionId,
+                               Executor executor) {
+    try {
+      final ImportRunProfile profile = new ImportRunProfile(file, project, executor);
+      Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
+      //runner should be default to be able to execute ImportProfile, thus it's required to pass defaultExecutor
+      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, defaultExecutor, profile);
+      //to correct icon in com.intellij.execution.runners.FakeRerunAction (appended in RunTab), let's set executor here
+      builder.executor(executor);
+
+      builder.target(profile.getTarget());
+      if (executionId != null) {
+        builder.executionId(executionId);
       }
-      catch (ExecutionException e1) {
-        Messages.showErrorDialog(project, e1.getMessage(), "Import Failed");
-      }
+      builder.buildAndExecute();
+    }
+    catch (ExecutionException e1) {
+      Messages.showErrorDialog(project, e1.getMessage(), SmRunnerBundle.message("sm.test.runner.abstract.import.test.error.title"));
     }
   }
 
@@ -140,35 +165,89 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private final Project myProject;
     private RunConfiguration myConfiguration;
     private boolean myImported;
-    private SMTRunnerConsoleProperties myProperties;
     private String myTargetId;
+    private final Executor myExecutor;
 
     public ImportRunProfile(VirtualFile file, Project project) {
+      this(file, project, DefaultRunExecutor.getRunExecutorInstance());
+    }
+
+    public ImportRunProfile(VirtualFile file, Project project, Executor executor) {
       myFile = file;
       myProject = project;
-      try {
-        final Element config = JDOMUtil.load(VfsUtilCore.virtualToIoFile(myFile)).getChild("config");
-        if (config != null) {
-          String configTypeId = config.getAttributeValue("configId");
-          if (configTypeId != null) {
-            final ConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(configTypeId);
-            if (configurationType != null) {
-              myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
-              myConfiguration.setName(config.getAttributeValue("name"));
-              myConfiguration.readExternal(config);
+      myExecutor = executor;
+      class TerminateParsingException extends SAXException { }
+      try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
+        SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.newSAXParser().parse(inputStream, new DefaultHandler() {
+          boolean isConfigContent = false;
+          final StringBuilder builder = new StringBuilder();
 
-              final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-              if (executor != null) {
-                if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
-                  myProperties = ((SMRunnerConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor);
-                }
+          @Override
+          public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            if (qName.equals("root")) {
+              throw new TerminateParsingException();
+            }
+            if (qName.equals("config")) {
+              isConfigContent = true;
+            }
+            if (isConfigContent) {
+              builder.append("<").append(qName);
+              for (int i = 0; i < attributes.getLength(); i++) {
+                builder.append(" ")
+                  .append(attributes.getQName(i))
+                  .append("=\"")
+                  .append(JDOMUtil.escapeText(attributes.getValue(i)))
+                  .append("\"");
               }
+              builder.append(">");
             }
           }
-          myTargetId = config.getAttributeValue("target");
-        }
+
+          @Override
+          public void characters(char[] ch, int start, int length) {
+            if (isConfigContent) {
+              builder.append(ch, start, length);
+            }
+          }
+
+          @Override
+          public void endElement(String uri, String localName, String qName) throws SAXException {
+            if (isConfigContent) {
+              builder.append("</").append(qName).append(">");
+            }
+            if (qName.equals("config")) {
+              isConfigContent = false;
+              try {
+                Element config = JDOMUtil.load(new StringReader(builder.toString()));
+                String configTypeId = config.getAttributeValue("configId");
+                if (configTypeId != null) {
+                  final ConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(configTypeId);
+                  if (configurationType != null) {
+                    myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
+                    myConfiguration.setName(config.getAttributeValue("name"));
+                    myConfiguration.readExternal(config);
+                    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+                    runManager.readBeforeRunTasks(config.getChild("method"),
+                                                  new RunnerAndConfigurationSettingsImpl(runManager), myConfiguration);
+                  }
+                }
+                myTargetId = config.getAttributeValue("target");
+              }
+              catch (Exception e) {
+                LOG.debug(e);
+              }
+              throw new TerminateParsingException();
+            }
+          }
+        });
       }
-      catch (Exception ignore) {
+      catch (TerminateParsingException ignored) {
+        //expected termination
+      }
+      catch (Exception e) {
+        LOG.debug(e);
       }
     }
 
@@ -177,10 +256,8 @@ public abstract class AbstractImportTestsAction extends AnAction {
         if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
           return DefaultExecutionTarget.INSTANCE;
         }
-        final RunnerAndConfigurationSettingsImpl settings =
-          new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
-        for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
-          for (ExecutionTarget target : provider.getTargets(myProject, settings)) {
+        for (ExecutionTargetProvider provider : ExecutionTargetProvider.EXTENSION_NAME.getExtensionList()) {
+          for (ExecutionTarget target : provider.getTargets(myProject, myConfiguration)) {
             if (myTargetId.equals(target.getId())) {
               return target;
             }
@@ -191,42 +268,41 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return DefaultExecutionTarget.INSTANCE;
     }
 
-    @Nullable
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws
+                                                                                                           ExecutionException {
       if (!myImported) {
         myImported = true;
         return new ImportedTestRunnableState(this, VfsUtilCore.virtualToIoFile(myFile));
       }
       if (myConfiguration != null) {
         try {
+          if (!executor.equals(myExecutor)) { //restart initial configuration with predefined executor
+            ExecutionEnvironmentBuilder.create(myExecutor, myConfiguration).target(getTarget()).buildAndExecute();
+            return null;
+          }
           return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {
           if (myTargetId != null && getTarget() == null) {
-            throw new ExecutionException("The target " + myTargetId + " does not exist");
+            throw new ExecutionException(SmRunnerBundle.message("dialog.message.target.does.not.exist", myTargetId));
           }
 
           LOG.info(e);
-          throw new ExecutionException("Unable to run the configuration: settings are corrupted");
+          throw new ExecutionException(SmRunnerBundle.message("dialog.message.unable.to.run.configuration.settings.are.corrupted"));
         }
       }
-      throw new ExecutionException("Unable to run the configuration: failed to detect test framework");
+      throw new ExecutionException(SmRunnerBundle.message("dialog.message.unable.to.run.configuration.failed.to.detect.test.framework"));
     }
 
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myImported && myConfiguration != null ? myConfiguration.getName() : myFile.getNameWithoutExtension();
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
-      return myProperties != null ? myProperties.getConfiguration().getIcon() : null;
-    }
-
-    public SMTRunnerConsoleProperties getProperties() {
-      return myProperties;
+    public @Nullable Icon getIcon() {
+      return myConfiguration != null ? myConfiguration.getIcon() : null;
     }
 
     public RunConfiguration getInitialConfiguration() {

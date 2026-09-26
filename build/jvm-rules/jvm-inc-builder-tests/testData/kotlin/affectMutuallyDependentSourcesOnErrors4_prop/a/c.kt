@@ -1,0 +1,1 @@
+val f3 : Int = f1

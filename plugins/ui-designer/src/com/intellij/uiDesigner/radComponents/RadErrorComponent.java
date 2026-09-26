@@ -1,47 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlWriter;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadErrorComponent extends RadAtomicComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.RadErrorComponent");
 
   private final String myComponentClassName;
   private final Element myProperties;
-  private final String myErrorDescription;
+  private final @Nls String myErrorDescription;
 
   public static RadErrorComponent create(
     final ModuleProvider module,
     final String id,
     final String componentClassName,
     final Element properties,
-    @NotNull final String errorDescription
+    final @NotNull @Nls String errorDescription
   ) {
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }
@@ -49,9 +32,9 @@ public final class RadErrorComponent extends RadAtomicComponent {
   private RadErrorComponent(
     final ModuleProvider module,
     final String id,
-    @NotNull final String componentClassName,
-    @Nullable final Element properties,
-    @NotNull final String errorDescription
+    final @NotNull String componentClassName,
+    final @Nullable Element properties,
+    final @NotNull @Nls String errorDescription
   ) {
     super(module, MyComponent.class, id);
 
@@ -60,15 +43,16 @@ public final class RadErrorComponent extends RadAtomicComponent {
     myProperties = properties;
   }
 
-  @NotNull
-  public String getComponentClassName() {
+  @Override
+  public @NotNull String getComponentClassName() {
     return myComponentClassName;
   }
 
-  public String getErrorDescription() {
+  public @Nls String getErrorDescription() {
     return myErrorDescription;
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     writer.startElement("component");
     try {
@@ -91,10 +75,11 @@ public final class RadErrorComponent extends RadAtomicComponent {
   }
 
   private static final class MyComponent extends JComponent {
-    public MyComponent() {
+    MyComponent() {
       setMinimumSize(new Dimension(20, 20));
     }
 
+    @Override
     public void paint(final Graphics g) {
       g.setColor(Color.red);
       g.fillRect(0, 0, getWidth(), getHeight());

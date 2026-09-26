@@ -122,7 +122,7 @@ PsiJavaFile:TypeAnno.java
             PsiWhiteSpace(' ')
             PsiJavaToken:EQ('=')
             PsiWhiteSpace(' ')
-            PsiInstanceofExpression:this instanceof @F C
+            PsiInstanceofExpression
               PsiThisExpression:this
                 PsiReferenceParameterList
                   <empty list>

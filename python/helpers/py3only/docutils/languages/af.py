@@ -1,11 +1,11 @@
-# $Id: af.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: af.py 9030 2022-03-05 23:28:32Z milde $
 # Author: Jannie Hofmeyr <jhsh@sun.ac.za>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Afrikaans-language mappings for language-dependent features of Docutils.
@@ -33,7 +33,7 @@ labels = {
       'hint': 'Wenk',
       'important': 'Belangrik',
       'note': 'Nota',
-      'tip': 'Tip', # hint and tip both have the same translation: wenk
+      'tip': 'Tip',  # hint and tip both have the same translation: wenk
       'warning': 'Waarskuwing',
       'contents': 'Inhoud'}
 """Mapping of node class name to label text."""

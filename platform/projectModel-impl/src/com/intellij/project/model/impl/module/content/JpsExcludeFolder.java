@@ -17,9 +17,6 @@ package com.intellij.project.model.impl.module.content;
 
 import com.intellij.openapi.roots.ExcludeFolder;
 
-/**
- * @author nik
- */
 public class JpsExcludeFolder extends JpsContentFolderBase implements ExcludeFolder {
   public JpsExcludeFolder(String url, JpsContentEntry contentEntry) {
     super(url, contentEntry);

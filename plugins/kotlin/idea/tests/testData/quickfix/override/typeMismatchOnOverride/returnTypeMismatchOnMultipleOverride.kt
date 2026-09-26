@@ -1,0 +1,18 @@
+// "Change return type to 'T'" "true"
+open class S {}
+open class T : S() {}
+
+abstract class A {
+    abstract fun foo() : S;
+}
+
+interface X {
+    fun foo() : T;
+}
+
+abstract class B : A(), X {
+    override abstract fun foo(): Int<caret>
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

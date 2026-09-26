@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection;
 
-import java.util.Collections;
 import java.util.List;
 
-public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestCase {
+public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNoProblem() {
     doTest("Manifest-Version: 1.0", 0);
   }
@@ -45,10 +33,11 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
 
   public void testFix() {
     myFixture.enableInspections(new MisspelledHeaderInspection());
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "ManifestVersion: 1.0\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, "ManifestVersion: 1.0\n");
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Change to");
     assertEquals(1, intentions.size());
-    myFixture.launchAction(intentions.get(0));
+    myFixture.checkPreviewAndLaunchAction(intentions.get(0));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("Manifest-Version: 1.0\n");
   }
 
@@ -56,23 +45,29 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
     MisspelledHeaderInspection inspection = new MisspelledHeaderInspection();
     inspection.CUSTOM_HEADERS.add("Custom-Header");
     myFixture.enableInspections(inspection);
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "Custom-Header: -\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
     myFixture.checkHighlighting();
   }
 
   public void testCustomHeaderFix() {
-    MisspelledHeaderInspection inspection = new MisspelledHeaderInspection();
-    myFixture.enableInspections(inspection);
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "Custom-Header: -\n");
-    List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
-    assertEquals(1, intentions.size());
-    myFixture.launchAction(intentions.get(0));
-    assertEquals(Collections.singleton("Custom-Header"), inspection.CUSTOM_HEADERS);
+    try {
+      InspectionProfileImpl.INIT_INSPECTIONS = true;
+      myFixture.enableInspections(MisspelledHeaderInspection.class);
+      myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
+      IntentionAction intention = myFixture.findSingleIntention(ManifestBundle.message("inspection.header.remember.fix", "Custom-Header"));
+      InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+      assertEquals(List.of(), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
+      myFixture.launchAction(intention);
+      assertEquals(List.of("Custom-Header"), ((MisspelledHeaderInspection)profile.getToolById("MisspelledHeader", getFile()).getTool()).CUSTOM_HEADERS);
+    }
+    finally {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
   }
 
   private void doTest(String text, int expected) {
     myFixture.enableInspections(new MisspelledHeaderInspection());
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, text + "\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, text + "\n");
     myFixture.checkHighlighting();
     assertEquals(expected, myFixture.filterAvailableIntentions("Change to").size());
   }

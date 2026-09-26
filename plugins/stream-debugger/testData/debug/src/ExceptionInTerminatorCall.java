@@ -10,7 +10,7 @@ public class ExceptionInTerminatorCall {
   }
 
   private static void check() {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final Integer ex = Stream.of(1, 2, 3).reduce(0, (l, r) -> {
       throw new RuntimeException();
     });

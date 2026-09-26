@@ -1,0 +1,221 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import {deepStrictEqual, strictEqual} from 'node:assert/strict'
+import {describe, it} from 'bun:test'
+import {
+  createPathPrefixTransformer,
+  extractPathArg,
+  isMergeTool,
+  isRiderPath,
+  resolveIdeForPath,
+  resolveRoute,
+  rewriteArgsForTarget,
+  riderItemTransformer,
+  splitPathListArgsByIde
+} from './routing'
+
+const PROJECT_ROOT = '/repo'
+
+describe('ij MCP proxy routing', () => {
+  describe('isRiderPath', () => {
+    it('matches dotnet/ prefix', () => {
+      strictEqual(isRiderPath('dotnet/Foo.cs', PROJECT_ROOT), true)
+      strictEqual(isRiderPath('dotnet/sub/Bar.cs', PROJECT_ROOT), true)
+    })
+
+    it('matches bare dotnet', () => {
+      strictEqual(isRiderPath('dotnet', PROJECT_ROOT), true)
+    })
+
+    it('rejects non-dotnet paths', () => {
+      strictEqual(isRiderPath('community/Foo.kt', PROJECT_ROOT), false)
+      strictEqual(isRiderPath('src/Main.java', PROJECT_ROOT), false)
+    })
+
+    it('rejects dotnet-prefixed but not a directory', () => {
+      strictEqual(isRiderPath('dotnetFoo.cs', PROJECT_ROOT), false)
+    })
+
+    it('rejects paths outside project root', () => {
+      strictEqual(isRiderPath('../outside/dotnet/Foo.cs', PROJECT_ROOT), false)
+    })
+
+    it('handles empty path', () => {
+      strictEqual(isRiderPath('', PROJECT_ROOT), false)
+    })
+  })
+
+  describe('extractPathArg', () => {
+    it('finds pathInProject', () => {
+      strictEqual(extractPathArg({pathInProject: 'dotnet/Foo.cs'}), 'dotnet/Foo.cs')
+    })
+
+    it('returns undefined for no path args', () => {
+      strictEqual(extractPathArg({q: 'hello'}), undefined)
+    })
+
+    it('skips empty strings', () => {
+      strictEqual(extractPathArg({pathInProject: '', filePath: 'real.txt'}), 'real.txt')
+    })
+  })
+
+  describe('resolveIdeForPath', () => {
+    it('returns rider for dotnet paths', () => {
+      strictEqual(resolveIdeForPath({pathInProject: 'dotnet/Foo.cs'}, PROJECT_ROOT), 'rider')
+    })
+
+    it('returns idea for non-dotnet paths', () => {
+      strictEqual(resolveIdeForPath({pathInProject: 'community/Foo.kt'}, PROJECT_ROOT), 'idea')
+    })
+
+    it('returns idea when no path arg present', () => {
+      strictEqual(resolveIdeForPath({q: 'search query'}, PROJECT_ROOT), 'idea')
+    })
+  })
+
+  describe('resolveRoute', () => {
+    it('returns merge for search tools', () => {
+      strictEqual(resolveRoute('search_text', {}, PROJECT_ROOT), 'merge')
+      strictEqual(resolveRoute('search_regex', {}, PROJECT_ROOT), 'merge')
+      strictEqual(resolveRoute('search_file', {}, PROJECT_ROOT), 'merge')
+      strictEqual(resolveRoute('search_symbol', {}, PROJECT_ROOT), 'merge')
+    })
+
+    it('returns split-merge for batched path tools', () => {
+      strictEqual(resolveRoute('lint_files', {}, PROJECT_ROOT), 'split-merge')
+      strictEqual(resolveRoute('reformat_file', {}, PROJECT_ROOT), 'split-merge')
+    })
+
+    it('returns target-rider for dotnet path-scoped tools', () => {
+      strictEqual(resolveRoute('get_file_problems', {pathInProject: 'dotnet/Foo.cs'}, PROJECT_ROOT), 'target-rider')
+    })
+
+    it('returns primary for non-dotnet path-scoped tools', () => {
+      strictEqual(resolveRoute('get_file_problems', {pathInProject: 'src/Main.java'}, PROJECT_ROOT), 'primary')
+    })
+
+    it('returns primary for tools without path args', () => {
+      strictEqual(resolveRoute('some_other_tool', {}, PROJECT_ROOT), 'primary')
+    })
+  })
+
+  describe('isMergeTool', () => {
+    it('identifies search tools', () => {
+      strictEqual(isMergeTool('search_text'), true)
+      strictEqual(isMergeTool('search_regex'), true)
+      strictEqual(isMergeTool('search_file'), true)
+      strictEqual(isMergeTool('search_symbol'), true)
+    })
+
+    it('rejects non-search tools', () => {
+      strictEqual(isMergeTool('rename'), false)
+      strictEqual(isMergeTool('get_file_problems'), false)
+    })
+  })
+
+  describe('rewriteArgsForTarget', () => {
+    it('strips dotnet/ prefix for target-rider', () => {
+      const result = rewriteArgsForTarget('target-rider', {pathInProject: 'dotnet/Foo.cs'})
+      strictEqual(result.pathInProject, 'Foo.cs')
+    })
+
+    it('strips dotnet/ from all path keys', () => {
+      const result = rewriteArgsForTarget('target-rider', {
+        pathInProject: 'dotnet/Foo.cs',
+        filePath: 'dotnet/Bar.cs',
+        directoryPath: 'dotnet/src'
+      })
+      strictEqual(result.pathInProject, 'Foo.cs')
+      strictEqual(result.filePath, 'Bar.cs')
+      strictEqual(result.directoryPath, 'src')
+    })
+
+    it('does not strip for non-rider routes', () => {
+      const result = rewriteArgsForTarget('target-idea', {pathInProject: 'dotnet/Foo.cs'})
+      strictEqual(result.pathInProject, 'dotnet/Foo.cs')
+    })
+
+    it('does not strip for primary route', () => {
+      const result = rewriteArgsForTarget('primary', {pathInProject: 'dotnet/Foo.cs'})
+      strictEqual(result.pathInProject, 'dotnet/Foo.cs')
+    })
+
+    it('leaves non-dotnet paths unchanged for rider', () => {
+      const result = rewriteArgsForTarget('target-rider', {pathInProject: 'src/Main.java'})
+      strictEqual(result.pathInProject, 'src/Main.java')
+    })
+
+    it('handles backslash separator', () => {
+      const result = rewriteArgsForTarget('target-rider', {pathInProject: 'dotnet\\Foo.cs'})
+      strictEqual(result.pathInProject, 'Foo.cs')
+    })
+
+    it('returns shallow copy of args', () => {
+      const original = {pathInProject: 'src/Main.java', extra: 'data'}
+      const result = rewriteArgsForTarget('primary', original)
+      strictEqual(result !== original, true)
+      strictEqual(result.extra, 'data')
+    })
+  })
+
+  describe('splitPathListArgsByIde', () => {
+    it('splits mixed batches across IDEs', () => {
+      const result = splitPathListArgsByIde({
+        files: ['src/Main.java', 'dotnet/Foo.cs', 'dotnet/sub/Bar.cs']
+      }, PROJECT_ROOT)
+
+      deepStrictEqual(result.ideaArgs, {files: ['src/Main.java']})
+      deepStrictEqual(result.riderArgs, {files: ['Foo.cs', 'sub/Bar.cs']})
+    })
+
+    it('preserves sibling arguments', () => {
+      const result = splitPathListArgsByIde({
+        files: ['dotnet/Foo.cs'],
+        min_severity: 'warning',
+        timeout: 1000
+      }, PROJECT_ROOT)
+
+      deepStrictEqual(result.riderArgs, {
+        files: ['Foo.cs'],
+        min_severity: 'warning',
+        timeout: 1000
+      })
+    })
+
+    it('splits custom path-list arguments across IDEs', () => {
+      const result = splitPathListArgsByIde({
+        paths: ['src/Main.java', 'dotnet/Foo.cs']
+      }, PROJECT_ROOT, 'paths')
+
+      deepStrictEqual(result.ideaArgs, {paths: ['src/Main.java']})
+      deepStrictEqual(result.riderArgs, {paths: ['Foo.cs']})
+    })
+  })
+
+  describe('riderItemTransformer', () => {
+    it('prefixes filePath with dotnet/', () => {
+      const items = [{filePath: 'Psi.Features/Foo.cs', startLine: 1}]
+      const result = riderItemTransformer(items)
+      strictEqual(result[0].filePath, 'dotnet/Psi.Features/Foo.cs')
+    })
+
+    it('preserves other fields', () => {
+      const items = [{filePath: 'Foo.cs', startLine: 42, startColumn: 5}]
+      const result = riderItemTransformer(items)
+      strictEqual(result[0].startLine, 42)
+      strictEqual(result[0].startColumn, 5)
+    })
+
+    it('handles empty array', () => {
+      deepStrictEqual(riderItemTransformer([]), [])
+    })
+  })
+
+  describe('createPathPrefixTransformer', () => {
+    it('creates transformer with custom prefix', () => {
+      const transformer = createPathPrefixTransformer('custom')
+      const result = transformer([{filePath: 'Foo.cs'}])
+      strictEqual(result[0].filePath, 'custom/Foo.cs')
+    })
+  })
+})

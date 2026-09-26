@@ -1,0 +1,14 @@
+{
+  "filesToMove": [
+    "C.kt",
+    "f.kt",
+    "I.kt",
+    "O.kt"
+  ],
+  "type": "MOVE_FILES",
+  "targetDirectory": "implicit",
+  "targetPackage": "implicit",
+  "explicitPackage": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

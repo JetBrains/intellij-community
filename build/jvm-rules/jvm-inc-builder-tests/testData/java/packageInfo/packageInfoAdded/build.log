@@ -1,0 +1,19 @@
+================ Step #1 =================
+Compiling files:
+  java/packageInfo/packageInfoAdded/a/ppp/package-info.java
+End of files
+Cleaning output files:
+  META-INF/java_packageInfo_packageInfoAdded-a.kotlin_module
+  use/UseKt.class
+End of files
+Compiling files:
+  java/packageInfo/packageInfoAdded/a/use/use.kt
+End of files
+Cleaning output files:
+  ppp/A.class
+End of files
+Compiling files:
+  java/packageInfo/packageInfoAdded/a/ppp/A.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,46 +1,42 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
+import com.intellij.ui.picker.ColorListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Highlighter;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.beans.EventHandler.create;
-import static java.util.Locale.ENGLISH;
 
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
-  private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
-  private final JTextField myTextField = new JBTextField(8);
+  private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final JTextField myTextField = new JBTextField(9);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
+  private boolean mySupportTransparency;
 
   public ColorPanel() {
     addImpl(myTextField, null, 0);
@@ -49,8 +45,10 @@ public class ColorPanel extends JComponent {
     myTextField.addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
     myTextField.addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
     myTextField.setEditable(false);
+    myTextField.putClientProperty(JBTextField.IS_FORCE_INNER_BACKGROUND_PAINT, true);
     MONOSPACED_FONT.install(myTextField);
-    Painter.BACKGROUND.install(myTextField, true);
+
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.toUnscaledGaps(myTextField.getInsets()));
   }
 
   @SuppressWarnings("unused") // used from event handler
@@ -62,21 +60,24 @@ public class ColorPanel extends JComponent {
 
   public void onPressed() {
     if (myEditable && isEnabled()) {
-      Color color = ColorChooser.chooseColor(this, UIBundle.message("color.panel.select.color.dialog.description"), myColor);
-      if (color != null) {
-        setSelectedColor(color);
-        if (!myListeners.isEmpty() && (myEvent == null)) {
-          try {
-            myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
-            for (ActionListener listener : myListeners) {
-              listener.actionPerformed(myEvent);
+      RelativePoint location = new RelativePoint(this, new Point(getWidth() / 2, getHeight()));
+      ColorChooserService.getInstance().showPopup(null, myColor, new ColorListener() {
+        @Override
+        public void colorChanged(Color color, Object source) {
+          setSelectedColor(color);
+          if (!myListeners.isEmpty() && (myEvent == null)) {
+            try {
+              myEvent = new ActionEvent(ColorPanel.this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
+              for (ActionListener listener : myListeners) {
+                listener.actionPerformed(myEvent);
+              }
+            }
+            finally {
+              myEvent = null;
             }
           }
-          finally {
-            myEvent = null;
-          }
         }
-      }
+      }, location, mySupportTransparency);
     }
   }
 
@@ -106,12 +107,21 @@ public class ColorPanel extends JComponent {
     myListeners.remove(actionlistener);
   }
 
+  /**
+   * Adds a listener that reacts to color selection changes.
+   * <p>
+   *   The given listener will be invoked when the popup for selecting a new color closes.
+   *   The event source will be {@code this} instance,
+   *   the event ID will be {@link ActionEvent#ACTION_PERFORMED}
+   *   and the command will be {@code "colorPanelChanged"}.
+   * </p>
+   * @param actionlistener the listener to register
+   */
   public void addActionListener(ActionListener actionlistener) {
     myListeners.add(actionlistener);
   }
 
-  @Nullable
-  public Color getSelectedColor() {
+  public @Nullable Color getSelectedColor() {
     return myColor;
   }
 
@@ -133,7 +143,7 @@ public class ColorPanel extends JComponent {
     }
     Color color = enabled ? myColor : null;
     if (color != null) {
-      myTextField.setText(' ' + ColorUtil.toHex(color).toUpperCase(ENGLISH) + ' ');
+      myTextField.setText(StringUtil.toUpperCase(ColorUtil.toHex(color, mySupportTransparency)));
     }
     else {
       myTextField.setText(null);
@@ -165,38 +175,7 @@ public class ColorPanel extends JComponent {
     updateSelectedColor();
   }
 
-  private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {
-    private static final String PROPERTY = "highlighter";
-    private static final Painter BACKGROUND = new Painter();
-
-    @Override
-    public void paint(Graphics g, int p0, int p1, Shape shape, JTextComponent component) {
-      Color color = component.getBackground();
-      if (color != null) {
-        g.setColor(color);
-        Rectangle bounds = shape instanceof Rectangle ? (Rectangle)shape : shape.getBounds();
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      if ((source instanceof JTextComponent) && PROPERTY.equals(event.getPropertyName())) {
-        install((JTextComponent)source, false);
-      }
-    }
-
-    private void install(JTextComponent component, boolean listener) {
-      try {
-        Highlighter highlighter = component.getHighlighter();
-        if (highlighter != null) highlighter.addHighlight(0, 0, this);
-      }
-      catch (BadLocationException ignored) {
-      }
-      if (listener) {
-        component.addPropertyChangeListener(PROPERTY, this);
-      }
-    }
+  public void setSupportTransparency(boolean supportTransparency) {
+    mySupportTransparency = supportTransparency;
   }
 }

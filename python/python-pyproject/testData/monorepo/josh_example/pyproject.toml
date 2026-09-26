@@ -1,0 +1,30 @@
+[project]
+name = "josh_example"
+version = "0.1.0"
+description = "example multi-project"
+authors = [
+    { name = "Josh Taylor", email = "joshuataylorx@gmail.com" },
+]
+requires-python = "==3.11.14"
+readme = "README.md"
+license = { text = "OpenSource" }
+
+dependencies = []
+
+[tool.uv.workspace]
+members = ["packages/josh_example_bar", "packages/josh_example_foo"]
+
+[tool.uv.sources]
+josh_example_bar = { workspace = true }
+lookout_analytics_codegen_tool = { workspace = true }
+
+[tool.uv]
+link-mode = "copy" # Fixes issue with PyCharm not picking up changes
+# #https://docs.astral.sh/uv/concepts/projects/config/#project-packaging
+package = false # Root project doesn't need to be a package
+no-binary-package = ["psycopg2", "psycopg"]
+#no-build-package = ["psycopg"]
+environments = [
+ "sys_platform == 'darwin'",
+ "sys_platform == 'linux'",
+]

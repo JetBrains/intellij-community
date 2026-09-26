@@ -1,71 +1,66 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Experimental
-public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
+@ApiStatus.Internal
+public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
   public EmptyInputDataDiffBuilder(int inputId) {
     super(inputId);
   }
 
   @Override
-  public boolean differentiate(@NotNull Map<Key, Value> newData,
-                            @NotNull final KeyValueUpdateProcessor<Key, Value> addProcessor,
-                            @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                            @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
-    return processKeys(newData, addProcessor, myInputId);
+  public @NotNull Collection<Key> getKeys() {
+    return Collections.emptySet();
   }
 
-  static <Key, Value > boolean processKeys(@NotNull Map<Key, Value> currentData,
-                                       @NotNull final KeyValueUpdateProcessor<Key, Value> processor,
-                                       final int inputId)
-    throws StorageException {
-    if (currentData instanceof THashMap) {
-      final StorageException[] exception = new StorageException[]{null};
-      ((THashMap<Key, Value>)currentData).forEachEntry(new TObjectObjectProcedure<Key, Value>() {
-        @Override
-        public boolean execute(Key k, Value v) {
-          try {
-            processor.process(k, v, inputId);
-          }
-          catch (StorageException e) {
-            exception[0] = e;
-            return false;
-          }
-          return true;
-        }
-      });
-      if (exception[0] != null) {
-        throw exception[0];
-      }
-    }
-    else {
-      for (Map.Entry<Key, Value> entry : currentData.entrySet()) {
-        processor.process(entry.getKey(), entry.getValue(), inputId);
-      }
-    }
+  @Override
+  public boolean differentiate(@NotNull Map<Key, Value> newData,
+                               @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor) throws StorageException {
+    return processAllKeyValuesAsAdded(myInputId, newData, changesProcessor);
+  }
 
-    return true;
+  public static <Key, Value> boolean processAllKeyValuesAsAdded(int inputId,
+                                                                @NotNull Map<Key, Value> addedData,
+                                                                @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor)
+    throws StorageException {
+    boolean[] anyAdded = {false};
+    try {
+      addedData.forEach((key, value) -> {
+        try {
+          changesProcessor.added(key, value, inputId);
+        }
+        catch (StorageException e) {
+          throw new RuntimeException(e);
+        }
+        anyAdded[0] = true;
+      });
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
+    }
+    return anyAdded[0];
+  }
+
+  public static <Key, Value> boolean processAllKeyValuesAsRemoved(int inputId,
+                                                                  @NotNull Map<Key, Value> removedData,
+                                                                  @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor)
+    throws StorageException {
+    boolean anyRemoved = false;
+    for (Key key : removedData.keySet()) {
+      changesProcessor.removed(key, inputId);
+      anyRemoved = true;
+    }
+    return anyRemoved;
   }
 }

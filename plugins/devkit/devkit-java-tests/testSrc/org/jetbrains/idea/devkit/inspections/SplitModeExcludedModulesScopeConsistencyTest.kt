@@ -1,0 +1,64 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.inspections
+
+import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.UsefulTestCase.assertSameLinesWithFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.jetbrains.idea.devkit.inspections.remotedev.MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH
+import org.jetbrains.idea.devkit.inspections.remotedev.SPLIT_MODE_EXCLUDED_MODULES_SCOPE_RELATIVE_PATHS
+import org.jetbrains.idea.devkit.inspections.remotedev.SPLIT_MODE_EXCLUDED_PATHS_SCOPE_RELATIVE_PATHS
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReadMode
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReader
+import org.jetbrains.idea.devkit.inspections.remotedev.createSplitModeExcludedModulesScopeXml
+import org.jetbrains.idea.devkit.inspections.remotedev.createSplitModeExcludedPathsScopeXml
+import org.junit.jupiter.api.Test
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
+import kotlin.io.path.writeText
+
+private const val UPDATE_SPLIT_MODE_EXCLUDED_MODULES_SCOPE_PROPERTY = "devkit.split.mode.excluded.modules.scope.update"
+
+@TestApplication
+internal class SplitModeExcludedModulesScopeConsistencyTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  private val project get() = projectFixture.get()
+
+  @Test
+  fun `split mode exclusion scopes are generated from monorepo features without split mode support`() {
+    val projectRoot = getMonorepoRoot()
+    val resourceReader = SplitModeInspectionResourceReader.getInstance(project)
+    val generatedScopes = listOf(
+      SPLIT_MODE_EXCLUDED_MODULES_SCOPE_RELATIVE_PATHS to createSplitModeExcludedModulesScopeXml(
+        resourceReader,
+        SplitModeInspectionResourceReadMode.BUNDLED_ONLY,
+      ),
+      SPLIT_MODE_EXCLUDED_PATHS_SCOPE_RELATIVE_PATHS to createSplitModeExcludedPathsScopeXml(
+        resourceReader,
+        SplitModeInspectionResourceReadMode.BUNDLED_ONLY,
+      ),
+    )
+
+    for ((relativePaths, expectedXml) in generatedScopes) {
+      for (relativePath in relativePaths) {
+        val scopeFile = projectRoot.resolve(relativePath)
+        if (java.lang.Boolean.getBoolean(UPDATE_SPLIT_MODE_EXCLUDED_MODULES_SCOPE_PROPERTY)) {
+          scopeFile.writeText(expectedXml)
+        }
+
+        assertSameLinesWithFile(
+          scopeFile.pathString,
+          expectedXml
+        ) { "$relativePath must be generated from $MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH" }
+      }
+    }
+  }
+
+  private fun getMonorepoRoot() = sequenceOf(PathManager.getHomeDir(), PathManager.getHomeDir().parent)
+    .filterNotNull()
+    .firstOrNull { it.resolve(MONOREPO_FEATURES_WITHOUT_SPLIT_MODE_SUPPORT_RELATIVE_PATH).exists() }
+    ?: PathManager.getHomeDir()
+}

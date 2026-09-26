@@ -1,0 +1,17 @@
+// "Replace 'runBlocking' with 'run'" "true"
+// WITH_COROUTINES
+
+import kotlinx.coroutines.runBlocking
+
+suspend fun something() {
+    val str = run<caret>Blocking {
+        println()
+        code()
+    }
+}
+
+suspend fun code(): String {
+    TODO()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.RunBlockingInSuspendFunctionInspection$createQuickFix$1

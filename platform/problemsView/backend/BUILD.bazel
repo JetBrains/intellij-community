@@ -1,0 +1,214 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "problemView-backend-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":problemView-backend-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.problemView.backend.tests`
+
+### auto-generated section `dev intellij.platform.problemView.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.problemView.backend` end
+
+### auto-generated section `build intellij.platform.problemView.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/kernel/shared:kernel",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/problemsView/collector",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/ui",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/platform-impl/rpc",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/editor/shared:editor",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/projectModel-api:projectModel",
+        "//platform/backend",
+        "//fleet/rpc",
+        "//platform/project/shared:project",
+        "//platform/kernel/rpc.backend",
+        "//platform/util/coroutines",
+        "//platform/util/concurrency",
+        "//platform/core-impl",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/problemsView/collector:collector_test_lib",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui:ui_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/editor/shared:editor_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.problemView.backend` end
+
+### auto-generated section `iml intellij.platform.problemView.backend` start
+exports_files(
+    [
+        "intellij.platform.problemView.backend.iml",
+        "resources/intellij.platform.problemView.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.problemView.backend` end
+
+### auto-generated section `build intellij.platform.problemView.backend.tests` start
+jvm_library(
+    name = "problemView-backend-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.backend.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/platform-impl/rpc",
+    ],
+)
+
+jvm_library(
+    name = "problemView-backend-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/problemsView/backend",
+        "//platform/problemsView/backend:backend_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":problemView-backend-tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/problemsView/collector",
+        "//platform/problemsView/collector:collector_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui",
+        "//platform/problemsView/ui:ui_test_lib",
+        "//platform/problemsView/plugin",
+        "//platform/problemsView/plugin:plugin_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util/coroutines",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/platform-impl/rpc",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.problemView.backend.tests` end
+
+### auto-generated section `iml intellij.platform.problemView.backend.tests` start
+exports_files(
+    [
+        "intellij.platform.problemView.backend.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.problemView.backend.tests` end

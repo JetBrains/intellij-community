@@ -1,0 +1,13 @@
+[*]
+<error>charset
+=utf-8</error>
+<error>charset=utf-8
+,
+
+
+
+
+utf-9</error>
+<error>charset =
+utf-8</error>
+charset = utf-8

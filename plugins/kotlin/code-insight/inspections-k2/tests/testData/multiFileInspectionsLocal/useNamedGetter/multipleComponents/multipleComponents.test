@@ -1,0 +1,6 @@
+{
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.java.UseNamedGetterInspection",
+    "mainFile": "Test.java",
+    "problem": "Use 'getY()' instead of 'component2()'",
+    "fix": "Replace with named getter 'getY()'"
+}

@@ -1,0 +1,116 @@
+@file:OptIn(EntityStorageInstrumentationApi::class)
+package com.intellij.workspaceModel.test.api.impl
+
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.workspaceModel.test.api.SimpleEntity
+import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
+import com.intellij.workspaceModel.test.api.SimpleId
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class SimpleEntityImpl(private val dataSource: SimpleEntityData): SimpleEntity, WorkspaceEntityBase(dataSource){
+override val symbolicId: SimpleId = super.symbolicId
+
+override val name: String
+get(){
+readField("name")
+return dataSource.name
+}
+override val entitySource: EntitySource
+get(){
+readField("entitySource")
+return dataSource.entitySource
+}
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
+}
+internal class Builder(result: SimpleEntityData?): ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder{
+internal constructor(): this(SimpleEntityData())
+override fun checkInitialization(){
+val _diff = diff
+if (!getEntityData().isEntitySourceInitialized()){
+error("Field WorkspaceEntity#entitySource should be initialized")
+}
+if (!getEntityData().isNameInitialized()){
+error("Field SimpleEntity#name should be initialized")
+}
+}
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
+}
+// Relabeling code, move information from dataSource to this builder
+override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
+dataSource as SimpleEntity
+if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+if (this.name != dataSource.name) this.name = dataSource.name
+updateChildToParentReferences(parents)
+}
+override var entitySource: EntitySource
+get() = getEntityData().entitySource
+set(value){
+checkModificationAllowed()
+getEntityData(true).entitySource = value
+changedProperty.add("entitySource")
+}
+override var name: String
+get() = getEntityData().name
+set(value){
+checkModificationAllowed()
+getEntityData(true).name = value
+changedProperty.add("name")
+}
+override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
+}
+}
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>(){
+lateinit var name: String
+internal fun isNameInitialized(): Boolean = ::name.isInitialized
+override fun newInstance(): SimpleEntity = SimpleEntityImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SimpleEntity, *> = SimpleEntityImpl.Builder(null)
+override fun getMetadata(): EntityMetadata{
+return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleEntity") as EntityMetadata
+}
+override fun getEntityInterface(): Class<out WorkspaceEntity>{
+return SimpleEntity::class.java
+}
+override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
+return SimpleEntity(name, entitySource)
+}
+override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
+val res = mutableListOf<Class<out WorkspaceEntity>>()
+return res
+}
+override fun equals(other: Any?): Boolean{
+if (other == null) return false
+if (this.javaClass != other.javaClass) return false
+other as SimpleEntityData
+if (this.entitySource != other.entitySource) return false
+if (this.name != other.name) return false
+return true
+}
+override fun equalsIgnoringEntitySource(other: Any?): Boolean{
+if (other == null) return false
+if (this.javaClass != other.javaClass) return false
+other as SimpleEntityData
+if (this.name != other.name) return false
+return true
+}
+override fun hashCode(): Int{
+var result = entitySource.hashCode()
+result = 31 * result + name.hashCode()
+return result
+}
+override fun hashCodeIgnoringEntitySource(): Int{
+var result = javaClass.hashCode()
+result = 31 * result + name.hashCode()
+return result
+}
+}

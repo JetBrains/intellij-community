@@ -1,56 +1,92 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 /**
- * @author yole
+ * Allows for customizing behavior of creating new files from templates.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/using-file-templates.html#creating-new-files-from-template">Creating New Files from Template (IntelliJ Platform Docs)</a>
  */
 public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
 
-  boolean handlesTemplate(FileTemplate template);
+  /**
+   * Marks the in-memory {@link PsiFile} that a handler made from a template.
+   *
+   * <p>A handler must set the key before it adds the file to a directory. The template renders the package of the
+   * target directory, so the added file needs no update of a reference. A consumer can use the key to skip work that
+   * only a real original file needs.</p>
+   */
+  @ApiStatus.Internal
+  Key<Boolean> CREATED_FROM_TEMPLATE = Key.create("CREATED_FROM_TEMPLATE");
 
+  /**
+   * @return {@code true} if this handler can handle a given template
+   */
+  boolean handlesTemplate(@NotNull FileTemplate template);
+
+  /**
+   * Creates a file from a template.
+   *
+   * @return the created PSI element.
+   * It is usually PsiFile, but can be an element created in the file in case it needs additional validation or processing.
+   */
   @NotNull
-  PsiElement createFromTemplate(Project project,
-                                PsiDirectory directory,
+  PsiElement createFromTemplate(@NotNull Project project,
+                                @NotNull PsiDirectory directory,
                                 String fileName,
-                                FileTemplate template,
-                                String templateText,
+                                @NotNull FileTemplate template,
+                                @NotNull String templateText,
                                 @NotNull Map<String, Object> props) throws IncorrectOperationException;
 
-  boolean canCreate(PsiDirectory[] dirs);
+  /**
+   * @return {@code true} if this handler can create files in given directories
+   */
+  boolean canCreate(PsiDirectory @NotNull [] dirs);
 
+  /**
+   * Determines if the created file name is required.
+   * If returned value is true and name is not provided, then create from template dialog will render a file name field.
+   */
   boolean isNameRequired();
 
+  /**
+   * @return an error message displayed in the error dialog title when error occurred during file from template creation
+   */
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getErrorMessage();
 
-  void prepareProperties(Map<String, Object> props);
+  /**
+   * Allows for extending template properties map.
+   */
+  void prepareProperties(@NotNull Map<String, Object> props);
 
-  @NotNull
-  default String commandName(@NotNull FileTemplate template) {
+  /**
+   * Allows for extending template properties map.
+   */
+  default void prepareProperties(@NotNull Map<String, Object> props,
+                                 String fileName,
+                                 @NotNull FileTemplate template,
+                                 @NotNull Project project) {}
+
+  /**
+   * @return command name used in the Undo/Redo UI elements
+   */
+  default @NotNull @Nls(capitalization = Nls.Capitalization.Title) String commandName(@NotNull FileTemplate template) {
     return IdeBundle.message("command.create.file.from.template");
   }
 }

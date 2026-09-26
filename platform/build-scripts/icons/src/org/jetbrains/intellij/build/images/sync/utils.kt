@@ -1,35 +1,48 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
-import java.util.function.Consumer
+import java.io.OutputStream
+import java.io.PrintStream
+import java.nio.file.Path
+import java.util.Locale
+import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeUnit
 
-internal lateinit var logger: Consumer<String>
-
-internal fun log(msg: String) = logger.accept(msg)
+internal fun log(msg: String) = println(msg)
 
 internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
 
-internal fun String.splitNotBlank(delimiter : String): List<String> = this.split(delimiter).filter { it.isNotBlank() }
+internal fun String.splitNotBlank(delimiter: String): List<String> = this.split(delimiter).filter { it.isNotBlank() }
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
-internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): String {
+internal fun execute(workingDir: Path?, vararg command: String, withTimer: Boolean = false): String {
+  val errOutputFile = File.createTempFile("errOutput", "txt")
   val processCall = {
-    val process = ProcessBuilder(*this.filter { it.isNotBlank() }.toTypedArray())
-      .directory(workingDir)
+    val process = ProcessBuilder(*command.filter { it.isNotBlank() }.toTypedArray())
+      .directory(workingDir?.toFile())
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
-      .redirectError(ProcessBuilder.Redirect.PIPE)
-      .start()
+      .redirectError(errOutputFile)
+      .apply {
+        environment()["LANG"] = "en_US.UTF-8"
+        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty() && environment()["GIT_SSH"].isNullOrEmpty()) {
+          environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        }
+      }.start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
-    process.waitFor()
+    process.waitFor(1, TimeUnit.MINUTES)
+    val error = errOutputFile.readText().trim()
+    if (process.exitValue() != 0) {
+      error("Command ${command.joinToString(" ")} failed in ${workingDir?.toAbsolutePath()} with ${process.exitValue()} : $output\n$error")
+    }
     output
   }
-  return if (silent) {
-    processCall()
+  return try {
+    if (withTimer) callWithTimer("Executing command ${command.joinToString(" ")}", processCall) else processCall()
   }
-  else {
-    callWithTimer("Executing command ${this.joinToString(" ")}", processCall)
+  finally {
+    errOutputFile.delete()
   }
 }
 
@@ -38,21 +51,25 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   val result = mutableListOf<List<T>>()
   var start = 0
   while (start < this.size) {
-    val sub = this.subList(start, Math.min(start + eachSize, this.size))
-    if (!sub.isEmpty()) result += sub
+    val sub = this.subList(start, (start + eachSize).coerceAtMost(this.size))
+    if (sub.isNotEmpty()) result += sub
     start += eachSize
   }
   return result
 }
 
-internal fun callSafely(call: () -> Unit) {
-  try {
-    call()
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    log(e.message ?: e.javaClass.canonicalName)
-  }
+internal fun <T> callSafely(printStackTrace: Boolean = false, call: () -> T): T? = try {
+  call()
+}
+catch (e: InterruptedException) {
+  throw e
+}
+catch (e: CancellationException) {
+  throw e
+}
+catch (e: Exception) {
+  if (printStackTrace) e.printStackTrace() else log(e.message ?: e::class.java.simpleName)
+  null
 }
 
 internal fun <T> callWithTimer(msg: String? = null, call: () -> T): T {
@@ -64,4 +81,71 @@ internal fun <T> callWithTimer(msg: String? = null, call: () -> T): T {
   finally {
     log("Took ${System.currentTimeMillis() - start} ms")
   }
+}
+
+internal fun <T> retry(maxRetries: Int = 20,
+                       secondsBeforeRetry: Long = 30,
+                       doRetry: (Throwable) -> Boolean = { true },
+                       action: () -> T): T {
+  repeat(maxRetries) {
+    val number = it + 1
+    try {
+      return action()
+    }
+    catch (e: Exception) {
+      log("$number attempt of $maxRetries has failed with ${e.message}")
+      if (number < maxRetries && doRetry(e)) {
+        log("Retrying in ${secondsBeforeRetry}s..")
+        TimeUnit.SECONDS.sleep(secondsBeforeRetry)
+      }
+      else throw e
+    }
+  }
+  error("Unable to complete")
+}
+
+internal fun guessEmail(invalidEmail: String): Collection<String> {
+  val (username, domain) = invalidEmail.split("@")
+  val guesses = mutableListOf(
+    username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain",
+    invalidEmail.lowercase(Locale.getDefault())
+  )
+  if (domain != "jetbrains.com") guesses += "$username@jetbrains.com"
+  return guesses
+}
+
+internal inline fun <T> protectStdErr(block: () -> T): T {
+  val err = System.err
+  return try {
+    block()
+  }
+  finally {
+    System.setErr(err)
+  }
+}
+
+private val mutedStream = PrintStream(object : OutputStream() {
+  override fun write(b: ByteArray) {}
+  override fun write(b: ByteArray, off: Int, len: Int) {}
+  override fun write(b: Int) {}
+})
+
+internal inline fun <T> muteStdOut(block: () -> T): T {
+  val out = System.out
+  System.setOut(mutedStream)
+  return try {
+    block()
+  }
+  finally {
+    System.setOut(out)
+  }
+}
+
+internal inline fun <T> muteStdErr(block: () -> T): T = protectStdErr {
+  System.setErr(mutedStream)
+  return block()
+}
+
+internal fun Path.isAncestorOf(file: Path): Boolean {
+  return file.startsWith(this)
 }

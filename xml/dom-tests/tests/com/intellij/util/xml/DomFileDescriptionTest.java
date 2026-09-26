@@ -22,10 +22,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.impl.DomApplicationComponent;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.MockDomFileDescription;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class DomFileDescriptionTest extends DomHardCoreTestCase {
   private VirtualFile myFooElementFile;
   private VirtualFile myBarElementFile;
@@ -52,12 +51,13 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     myBarElementFile = createFile("b.xml", "<b/>").getVirtualFile();
 
-    getDomManager().registerFileDescription(new DomFileDescription<BarElement>(BarElement.class, "b") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(BarElement.class, "b") {
       @Override
-      public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
+      public boolean isMyFile(@NotNull final XmlFile file) {
         String text = LoadTextUtil.loadText(myFooElementFile).toString();
         return text.contains("239");
       }
+
       @Override
       public boolean isAutomaticHighlightingEnabled() {
         return false;
@@ -72,10 +72,12 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     try {
       Disposer.dispose(myDisposable);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFooElementFile = null;
       myBarElementFile = null;
-
       super.tearDown();
     }
   }
@@ -87,11 +89,11 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
   public void testIsDomValue() throws Throwable {
     final XmlFile file = (XmlFile)createFile("a.xml", "<b>42</b>");
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "b") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "b") {
 
       @Override
-      public boolean isMyFile(@NotNull final XmlFile file, final Module module) {
-        return /*super.isMyFile(file, module) && */file.getText().contains("239");
+      public boolean isMyFile(@NotNull final XmlFile file) {
+        return /*super.isMyFile(file) && */file.getText().contains("239");
       }
     }, myDisposable);
 
@@ -99,9 +101,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      file.getDocument().getRootTag().getValue().setText("239");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getDocument().getRootTag().getValue().setText("239"));
     assertTrue(getDomManager().isDomFile(file));
     final DomFileElementImpl<MyElement> root = getDomManager().getFileElement(file);
     assertNotNull(root);
@@ -109,9 +109,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     assertTrue(root.isValid());
     assertTrue(child.isValid());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      file.getDocument().getRootTag().getValue().setText("57121");
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getDocument().getRootTag().getValue().setText("57121"));
     assertFalse(getDomManager().isDomFile(file));
     assertNull(getDomManager().getFileElement(file));
     assertFalse(root.isValid());
@@ -137,7 +135,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     getDomManager().registerFileDescription(new MockDomFileDescription<>(MyElement.class, "b", null), myDisposable);
     for (int i = 0; i < 239; i++) {
-      getDomManager().registerFileDescription(new MockDomFileDescription<AbstractElement>(AbstractElement.class, "b", null) {
+      getDomManager().registerFileDescription(new MockDomFileDescription<>(AbstractElement.class, "b", null) {
         @Override
         @NotNull
         public Set getDependencyItems(final XmlFile file) {
@@ -151,7 +149,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testCheckNamespace() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -170,7 +168,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testCheckDtdPublicId() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<NamespacedElement>(NamespacedElement.class, "xxx", "bar") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(NamespacedElement.class, "xxx", "bar") {
 
       @Override
       protected void initializeFileDescription() {
@@ -191,9 +189,9 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
   }
 
   public void testChangeCustomDomness() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription<MyElement>(MyElement.class, "xxx") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "xxx") {
       @Override
-      public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
+      public boolean isMyFile(@NotNull final XmlFile file) {
         return file.getText().contains("foo");
       }
     }, myDisposable);
@@ -212,7 +210,55 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     getDomManager().registerFileDescription(description, myDisposable);
     DomFileElementImpl<FooElement> fileElement = getDomManager().getFileElement(file, FooElement.class);
     assertNotNull(fileElement);
-    assertEquals("a", fileElement.getFileDescription().myRootTagName);
+    assertEquals("a", fileElement.getFileDescription().getRootTagName());
+  }
+
+  public void testModuleFreeIsMyFile() throws Exception {
+    final XmlFile file = (XmlFile)createFile("xxx.xml", "<xxx zzz=\"foo\"/>");
+    DomFileDescription<MyElement> description = new DomFileDescription<>(MyElement.class, "xxx") {
+      @Override
+      public boolean isMyFile(@NotNull XmlFile file) {
+        return file.getText().contains("foo");
+      }
+    };
+    getDomManager().registerFileDescription(description, myDisposable);
+
+    assertTrue(getDomManager().isDomFile(file));
+    DomFileElementImpl<MyElement> fileElement = getDomManager().getFileElement(file, MyElement.class);
+    assertNotNull(fileElement);
+    assertSame(description, fileElement.getFileDescription());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getDocument().getRootTag().setAttribute("zzz", "bar");
+    });
+    assertFalse(getDomManager().isDomFile(file));
+    assertNull(getDomManager().getFileElement(file, MyElement.class));
+  }
+
+  public void testModuleAwareIsMyFileReceivesModule() throws Exception {
+    final XmlFile file = (XmlFile)createFile("xxx.xml", "<xxx/>");
+    Ref<Module> seenModule = Ref.create();
+    Ref<Boolean> called = Ref.create(false);
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyElement.class, "xxx") {
+      @SuppressWarnings("deprecation")
+      @Override
+      public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
+        called.set(true);
+        seenModule.set(module);
+        return true;
+      }
+    }, myDisposable);
+
+    assertTrue(getDomManager().isDomFile(file));
+    assertTrue(called.get());
+    assertSame(getModule(), seenModule.get());
+  }
+
+  public void testNoDescriptionForRootTag() throws Exception {
+    final XmlFile file = (XmlFile)createFile("zzz.xml", "<zzz/>");
+    assertNull(DomApplicationComponent.getInstance().findDescription(file));
+    assertFalse(getDomManager().isDomFile(file));
+    assertNull(getDomManager().getFileElement(file, MyElement.class));
   }
 
   public interface AbstractElement extends GenericDomValue<String> {

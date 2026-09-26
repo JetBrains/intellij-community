@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.editor.Document;
@@ -12,15 +10,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
 
-/**
- * @author cdr
- */
-public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
+@ApiStatus.Internal
+public final class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   private final DocumentFragment myDocumentFragment;
 
   public DocumentFragmentTooltipRenderer(DocumentFragment documentFragment) {
@@ -28,7 +27,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   }
 
   @Override
-  public LightweightHint show(@NotNull final Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo) {
+  public LightweightHint show(final @NotNull Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo) {
     final JComponent editorComponent = editor.getComponent();
 
     TextRange range = myDocumentFragment.getTextRange();
@@ -63,6 +62,6 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     if (endOffset < startOffset) return null;
 
     TextRange textRange = new TextRange(startOffset, endOffset);
-    return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true, true);
+    return EditorFragmentHint.showAt(editor, textRange, p.y, false, false, true, true);
   }
 }

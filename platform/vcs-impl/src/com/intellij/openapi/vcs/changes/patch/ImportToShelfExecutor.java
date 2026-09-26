@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +12,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -43,12 +30,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
+public final class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
 
-  private static final String IMPORT_TO_SHELF = "Import to Shelf";
   private final Project myProject;
 
   public ImportToShelfExecutor(Project project) {
@@ -57,14 +46,16 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
 
   @Override
   public String getName() {
-    return IMPORT_TO_SHELF;
+    return VcsBundle.message("action.import.to.shelf");
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
-                    @Nullable final String fileName,
-                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable String fileName,
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>,
+                    PatchSyntaxException> additionalInfo) {
     if (fileName == null) {
       LOG.error("Patch file name shouldn't be null");
       return;
@@ -87,7 +78,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
           }));
         }
         if (!allPatches.isEmpty()) {
-          PatchEP[] patchTransitExtensions = null;
+          List<PatchEP> patchTransitExtensions = null;
           if (additionalInfo != null) {
             try {
               final Map<String, PatchEP> extensions = new HashMap<>();
@@ -103,17 +94,16 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
                   patchEP.put(filePath, innerEntry.getValue());
                 }
               }
-              Collection<PatchEP> values = extensions.values();
-              patchTransitExtensions = values.toArray(new PatchEP[0]);
+              patchTransitExtensions = new ArrayList<>(extensions.values());
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier
-                .showOverChangesView(myProject, "Can not import additional patch info: " + e.getMessage(), MessageType.ERROR);
+                .showOverChangesView(myProject, VcsBundle.message("patch.import.additional.info.error", e.getMessage()), MessageType.ERROR);
             }
           }
           try {
-            final ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject).
-              importFilePatches(fileName, allPatches, patchTransitExtensions);
+            ShelvedChangeList shelvedChangeList = ShelveChangesManager.getInstance(myProject)
+              .importFilePatches(fileName, allPatches, patchTransitExtensions);
             ShelvedChangesViewManager.getInstance(myProject).activateView(shelvedChangeList);
           }
           catch (IOException e) {
@@ -122,13 +112,14 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import Patch to Shelf", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable,
+                                                                      VcsBundle.message("patch.import.to.shelf.progress.title"), true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
+      AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), VcsBundle.message("action.import.to.shelf"));
     }
   }
 
-  private static class TransitExtension implements PatchEP {
+  private static final class TransitExtension implements PatchEP {
     private final String myName;
     private final Map<String, CharSequence> myMap;
 
@@ -137,24 +128,21 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
       myMap = new HashMap<>();
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
     @Override
-    public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
+    public CharSequence provideContent(@NotNull Project project,
+                                       @NotNull String path,
+                                       CommitContext commitContext) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void consumeContentBeforePatchApplied(@NotNull String path,
+    public void consumeContentBeforePatchApplied(@NotNull Project project,
+                                                 @NotNull String path,
                                                  @NotNull CharSequence content,
                                                  CommitContext commitContext) {
       throw new UnsupportedOperationException();

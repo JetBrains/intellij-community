@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -24,16 +23,16 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class SingleCommittedListProvider {
 
   private static final Logger LOG = Logger.getInstance(SingleCommittedListProvider.class);
 
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile file;
-  @NotNull private final VcsRevisionNumber number;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile file;
+  private final @NotNull VcsRevisionNumber number;
   private SvnChangeList[] changeList;
   private Revision revisionBefore;
   private Url repositoryUrl;
@@ -63,7 +62,7 @@ public class SingleCommittedListProvider {
   private boolean setup() {
     boolean result = false;
 
-    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
@@ -74,7 +73,7 @@ public class SingleCommittedListProvider {
         SvnUtil.getRelativeUrl(repositoryUrl, svnRootUrl),
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
-      filePath = VcsUtil.getFilePath(file);
+      filePath = getFilePath(file);
 
       result = true;
     }
@@ -128,8 +127,7 @@ public class SingleCommittedListProvider {
     return path == null ? filePath : path;
   }
 
-  @NotNull
-  private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
+  private @NotNull SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
     return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl);
   }
 

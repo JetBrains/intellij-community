@@ -1,20 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.module;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.project.ProjectKt;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.assertj.core.util.Maps;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author nik
- */
-public class ModulePointerTest extends PlatformTestCase {
+public class ModulePointerTest extends HeavyPlatformTestCase {
   public void testCreateByName() {
     final ModulePointer pointer = getPointerManager().create("m");
     assertSame(pointer, getPointerManager().create("m"));
@@ -84,8 +87,8 @@ public class ModulePointerTest extends PlatformTestCase {
     ModulePointerManager pointerManager = getPointerManager();
     final ModulePointer pointer = pointerManager.create("xxx");
 
-    final ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
-    final Module module = modifiableModel.newModule(myProject.getBasePath() + "/xxx.iml", EmptyModuleType.getInstance().getId());
+    ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
+    Module module = modifiableModel.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("xxx.iml"), EmptyModuleType.getInstance().getId());
     assertThat(pointerManager.create(module)).isSameAs(pointer);
     assertThat(pointerManager.create("xxx")).isSameAs(pointer);
 
@@ -165,16 +168,8 @@ public class ModulePointerTest extends PlatformTestCase {
 
   private Module addModule(final String name) {
     final ModifiableModuleModel model = getModuleManager().getModifiableModel();
-    final Module module = model.newModule(myProject.getBasePath() + "/" + name + ".iml", EmptyModuleType.getInstance().getId());
+    final Module module = model.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve(name + ".iml"), EmptyModuleType.getInstance().getId());
     commitModel(model);
-    disposeOnTearDown(new Disposable() {
-      @Override
-      public void dispose() {
-        if (!module.isDisposed()) {
-          getModuleManager().disposeModule(module);
-        }
-      }
-    });
     return module;
   }
 

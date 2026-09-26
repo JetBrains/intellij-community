@@ -1,52 +1,45 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
-
-  public AddDomElementAction() {
-    super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
+ public AddDomElementAction() {
+    super(XmlDomBundle.messagePointer("dom.action.add"), AllIcons.General.Add);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (!isEnabled(e)) {
       e.getPresentation().setEnabled(false);
       return;
@@ -62,19 +55,23 @@ public abstract class AddDomElementAction extends AnAction {
     }
     if (actions.length == 1) {
       e.getPresentation().setText(actions[0].getTemplatePresentation().getText());
-    } else {
+    }
+    else {
       final String actionText = getActionText(e);
       if (!actionText.endsWith("...")) {
         e.getPresentation().setText(actionText + (actions.length > 1 ? "..." : ""));
       }
     }
-    e.getPresentation().setIcon(DomCollectionControl.ADD_ICON);
-
-    super.update(e);
+    e.getPresentation().setIcon(AllIcons.General.Add);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final AnAction[] actions = getChildren(e);
     if (actions.length > 1) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -94,7 +91,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
   }
 
-  protected String getActionText(final AnActionEvent e) {
+  protected @NlsActions.ActionText String getActionText(final AnActionEvent e) {
     return e.getPresentation().getText();
   }
 
@@ -107,13 +104,13 @@ public abstract class AddDomElementAction extends AnAction {
 
     if (component instanceof ActionButtonComponent) {
       groupPopup.showUnderneathOf(component);
-    } else {
+    }
+    else {
       groupPopup.showInBestPositionFor(e.getDataContext());
     }
   }
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     Project project = e == null ? null : e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
 
@@ -123,23 +120,22 @@ public abstract class AddDomElementAction extends AnAction {
       final TypeChooser chooser = DomManager.getDomManager(project).getTypeChooserManager().getTypeChooser(description.getType());
       for (Type type : chooser.getChooserTypes()) {
 
-        final Class<?> rawType = ReflectionUtil.getRawType(type);
+        final Class<?> rawType = ClassUtil.getRawType(type);
 
         String name = TypePresentationService.getService().getTypePresentableName(rawType);
         Icon icon = null;
         if (!showAsPopup() || descriptions.length == 1) {
-//          if (descriptions.length > 1) {
-            icon = ElementPresentationManager.getIconForClass(rawType);
-//          }
+          //          if (descriptions.length > 1) {
+          icon = ElementPresentationManager.getIconForClass(rawType);
+          //          }
         }
-        actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, type, description));
+        actions.add(createAddingAction(e, XmlDomBundle.message("dom.action.add") + " " + name, icon, type, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {
       ActionGroup group = new ActionGroup() {
         @Override
-        @NotNull
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return actions.toArray(AnAction.EMPTY_ARRAY);
         }
       };
@@ -148,8 +144,6 @@ public abstract class AddDomElementAction extends AnAction {
     else {
       if (actions.size() > 1) {
         actions.add(Separator.getInstance());
-      } else if (actions.size() == 1) {
-
       }
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
@@ -161,11 +155,9 @@ public abstract class AddDomElementAction extends AnAction {
                                                  final Type type,
                                                  final DomCollectionChildDescription description);
 
-  @NotNull
-  protected abstract DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e);
+  protected abstract DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e);
 
-  @Nullable
-  protected abstract DomElement getParentDomElement(final AnActionEvent e);
+  protected abstract @Nullable DomElement getParentDomElement(final AnActionEvent e);
 
   protected abstract JComponent getComponent(AnActionEvent e);
 
@@ -178,13 +170,13 @@ public abstract class AddDomElementAction extends AnAction {
     protected final ActionGroup myGroup;
 
     protected ShowPopupAction(ActionGroup group) {
-      super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
+      super(XmlDomBundle.message("dom.action.add"), null, AllIcons.General.Add);
       myGroup = group;
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final ListPopup groupPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null,
                                                             myGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);

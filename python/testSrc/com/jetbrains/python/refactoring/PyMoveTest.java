@@ -1,36 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
@@ -38,27 +40,37 @@ import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHe
 import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
-/**
- * @author vlan
- */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyMoveTest extends PyTestCase {
+  private List<String> myEvents = new ArrayList<>();
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    SystemProperties.setTestUserName("user1");
-  }
+    var connection = myFixture.getProject().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, new RefactoringEventListener() {
+      @Override
+      public void refactoringStarted(String refactoringId, RefactoringEventData beforeData) {
+        myEvents.add("started: " + refactoringId);
+      }
 
-  @Override
-  protected void tearDown() throws Exception {
-    SystemProperties.setTestUserName(null);
-    super.tearDown();
+      @Override
+      public void refactoringDone(String refactoringId, RefactoringEventData afterData) {
+        myEvents.add("done: " + refactoringId);
+      }
+    });
   }
 
   public void testFunction() {
@@ -76,17 +88,15 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-11923
   public void testMovableTopLevelAssignmentDetection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X2")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X4")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X5")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X6")));
-      assertFalse(isMovableModuleMember(findFirstNamedElement("X7")));
-      assertTrue(isMovableModuleMember(findFirstNamedElement("X8")));
-    });
+    myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X2")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X4")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X5")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X6")));
+    assertFalse(isMovableModuleMember(findFirstNamedElement("X7")));
+    assertTrue(isMovableModuleMember(findFirstNamedElement("X8")));
   }
 
   // PY-15348
@@ -151,7 +161,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-5168
   public void testModuleToNonPackage() {
-    doMoveFileTest("p1/p2/m1.py", "nonp3");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doMoveFileTest("p1/p2/m1.py", "nonp3"));
   }
 
   // PY-6432, PY-15347
@@ -211,22 +221,43 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-7378
   public void testMoveNamespacePackage1() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg", ""));
+    doMoveFileTest("nspkg/nssubpkg", "");
   }
 
   // PY-7378
   public void testMoveNamespacePackage2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg/a.py", ""));
+    doMoveFileTest("nspkg/nssubpkg/a.py", "");
   }
 
   // PY-7378
   public void testMoveNamespacePackage3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg"));
+    doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg");
   }
 
   // PY-14384
   public void testRelativeImportInsideNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg", ""));
+    String fileName = "nspkg/nssubpkg";
+    String toDirName = "";
+    doComparingDirectories(testDir -> {
+      PyNamespacePackagesService.getInstance(myFixture.getModule())
+        .toggleMarkingAsNamespacePackage(testDir.findFileByRelativePath("nspkg"));
+
+      final Project project = myFixture.getProject();
+      final PsiManager manager = PsiManager.getInstance(project);
+      final VirtualFile virtualFile = testDir.findFileByRelativePath(fileName);
+      assertNotNull(virtualFile);
+      PsiElement file = manager.findFile(virtualFile);
+      if (file == null) {
+        file = manager.findDirectory(virtualFile);
+      }
+      assertNotNull(file);
+      final VirtualFile toVirtualDir = testDir.findFileByRelativePath(toDirName);
+      assertNotNull(toVirtualDir);
+      final PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+      new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
+
+      PyNamespacePackagesService.getInstance(myFixture.getModule()).setNamespacePackageFolders(new ArrayList<>());
+    });
   }
 
   // PY-14384
@@ -247,7 +278,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14595
   public void testNamespacePackageUsedInMovedFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveSymbolTest("func", "b.py"));
+    doMoveSymbolTest("func", "b.py");
   }
 
   // PY-14599
@@ -267,7 +298,7 @@ public class PyMoveTest extends PyTestCase {
       fail();
     }
     catch (IncorrectOperationException e) {
-      assertEquals("Cannot use module name 'dst-unimportable.py' in imports", e.getMessage());
+      assertEquals("Cannot use a module name 'dst-unimportable.py' in imports", e.getMessage());
     }
   }
 
@@ -287,6 +318,35 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  @TestFor(issues = "PY-6591")
+  public void testImportForMovedElementWithPreferredQualifiedImportStyleModule() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = false;
+      doMoveSymbolTest("usage", "lib/dst.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
+  }
+
+  @TestFor(issues = "PY-6591")
+  public void testImportForMovedElementWithPreferredFromImportStyleModule() {
+    doMoveSymbolTest("usage", "lib/dst.py");
+  }
+
+  @TestFor(issues = "PY-84659")
+  public void testQualifiedUsageRespectsPreferFromImport() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = true;
+      doMoveSymbolTest("C", "lib/dst.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
+  }
+
   // PY-10553
   public void testMoveModuleWithSameNameAsSymbolInside() {
     doMoveFileTest("Animals/Carnivore.py", "Animals/test");
@@ -294,7 +354,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14617
   public void testOldStyleRelativeImport() {
-    doMoveFileTest("pkg/a.py", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doMoveFileTest("pkg/a.py", ""));
   }
 
   // PY-14617
@@ -304,7 +364,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14617
   public void testUsagesOfUnqualifiedOldStyleRelativeImportsInsideMovedModule() {
-    doMoveFileTest("pkg/m1.py", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doMoveFileTest("pkg/m1.py", ""));
   }
 
   // PY-15324
@@ -315,6 +375,16 @@ public class PyMoveTest extends PyTestCase {
   // PY-15343
   public void testDunderAll() {
     doMoveSymbolTest("func", "b.py");
+  }
+
+  // PY-54168
+  public void testMoveFromInitPyPreserveDunderAll() {
+    doMoveSymbolTest("MyClass", "my_class.py");
+  }
+
+  // PY-54168
+  public void testMoveInHierarchyUpdatesDunderAllInInitPy() {
+    doMoveSymbolTest("MyClass", "new.py");
   }
 
   // PY-15343
@@ -418,62 +488,144 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("b.py", "pkg");
   }
 
-  private void doMoveFileTest(String fileName, String toDirName) {
-    Project project = myFixture.getProject();
-    PsiManager manager = PsiManager.getInstance(project);
+  // PY-20100
+  public void testMoveDoesntMergeFromImportsAccordingToCodeStyle() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    doMoveSymbolsTest("dst.py", "func");
+  }
 
-    String root = "/refactoring/move/" + getTestName(true);
-    String rootBefore = root + "/before/src";
-    String rootAfter = root + "/after/src";
+  // PY-8415
+  public void testMoveSymbolDoesntCreateInitPyInSourceRoot() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass"));
+    });
+  }
 
-    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  public void testMoveSymbolFromTopLevelModuleToNewPackageCreatesInitPy() {
+    doComparingDirectories(testDir -> {
+      moveSymbols(testDir, "pkg/subpkg/b.py", "MyClass");
+    });
+  }
 
-    VirtualFile virtualFile = dir1.findFileByRelativePath(fileName);
-    assertNotNull(virtualFile);
-    PsiElement file = manager.findFile(virtualFile);
-    if (file == null) {
-      file = manager.findDirectory(virtualFile);
-    }
-    assertNotNull(file);
-    VirtualFile toVirtualDir = dir1.findFileByRelativePath(toDirName);
-    assertNotNull(toVirtualDir);
-    PsiDirectory toDir = manager.findDirectory(toVirtualDir);
-    new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToAnotherDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
 
-    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesInSameDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToParentDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToChildDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/A/B/module_b.py", "myfunc");
+  }
+
+  // PY-23968
+  public void testUpdatingNamesInFromImportsRespectsOrder() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMoveSymbolTest("func", "dst.py");
+  }
+
+  // PY-16221
+  public void testFromFutureImports() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-16221
+  public void testExistingFromFutureImportsNotDuplicated() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-23831
+  public void testWithImportedForwardReferencesInTypeHints() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedFunctionTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  @TestFor(issues = "PY-86616")
+  public void testMoveEvents() {
+    var fileA = myFixture.configureByText("a.py", "class C: pass");
+    var destination = myFixture.configureByText("b.py", "").getVirtualFile();
+    var pyClass = PsiTreeUtil.findChildOfType(fileA, PyClass.class);
+
+    new PyMoveModuleMembersProcessor(new PyClass[]{pyClass}, destination.getPath()).run();
+
+    assertContainsElements(
+      myEvents,
+      "started: refactoring.python.move.module.members",
+      "done: refactoring.python.move.module.members"
+    );
+  }
+
+  private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {
+    final String root = "/refactoring/move/" + getTestName(true);
+    final String rootBefore = root + "/before/src";
+    final String rootAfter = root + "/after/src";
+
+    final VirtualFile testDir = myFixture.copyDirectoryToProject(rootBefore, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+
+    testDirConsumer.consume(testDir);
+
+    final VirtualFile expectedDir = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
+      PlatformTestUtil.assertDirectoriesEqual(expectedDir, testDir);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void doMoveSymbolsTest(@NotNull String toFileName, String... symbolNames) {
-    String root = "/refactoring/move/" + getTestName(true);
-    String rootBefore = root + "/before/src";
-    String rootAfter = root + "/after/src";
-    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+  private void doMoveFileTest(String fileName, String toDirName) {
+    doComparingDirectories(testDir -> {
+      final Project project = myFixture.getProject();
+      final PsiManager manager = PsiManager.getInstance(project);
+      final VirtualFile virtualFile = testDir.findFileByRelativePath(fileName);
+      assertNotNull(virtualFile);
+      PsiElement file = manager.findFile(virtualFile);
+      if (file == null) {
+        file = manager.findDirectory(virtualFile);
+      }
+      assertNotNull(file);
+      final VirtualFile toVirtualDir = testDir.findFileByRelativePath(toDirName);
+      assertNotNull(toVirtualDir);
+      final PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+      new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
+    });
+  }
 
+  private void doMoveSymbolsTest(@NotNull String toFileName, String... symbolNames) {
+    doComparingDirectories(testDir -> moveSymbols(testDir, toFileName, symbolNames));
+  }
+
+  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, String @NotNull ... symbolNames) {
     final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, name -> {
       final PsiNamedElement found = findFirstNamedElement(name);
       assertNotNull("Symbol '" + name + "' does not exist", found);
       return found;
     });
 
-    VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
-    String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
+    final VirtualFile toVirtualFile = testDir.findFileByRelativePath(toFileName);
+    final String path = toVirtualFile != null ? toVirtualFile.getPath() : (testDir.getPath() + "/" + toFileName);
     new PyMoveModuleMembersProcessor(symbols, path).run();
-
-    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
-    try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
 
@@ -484,18 +636,25 @@ public class PyMoveTest extends PyTestCase {
   @Nullable
   private PsiNamedElement findFirstNamedElement(String name) {
     final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
+    final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
+
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, scope);
     if (classes.size() > 0) {
       return classes.iterator().next();
     }
-    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project);
+    final Collection<PyFunction> functions = PyFunctionNameIndex.find(name, project, scope);
     if (functions.size() > 0) {
       return functions.iterator().next();
     }
-    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, ProjectScope.getAllScope(project));
+    final Collection<PyTargetExpression> targets = PyVariableNameIndex.find(name, project, scope);
     if (targets.size() > 0) {
       return targets.iterator().next();
     }
     return null;
+  }
+
+  @NotNull
+  private PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 }

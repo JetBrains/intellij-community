@@ -1,0 +1,46 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.properties.psi"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Properties" language="Properties" extensions="properties" fieldName="INSTANCE"
+              implementationClass="com.intellij.lang.properties.PropertiesFileType"/>
+    <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
+    <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
+
+    <virtualFileCustomDataConsumer implementation="com.intellij.lang.properties.PropertiesCodeStyleSettingsCustomDataSynchronizer"/>
+    <lang.formatter language="Properties" implementationClass="com.intellij.lang.properties.formatting.PropertiesFormattingModelBuilder"/>
+
+    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighterImpl"/>
+    <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
+
+    <applicationService serviceInterface="com.intellij.lang.properties.PropertiesUtilService" open="true"
+                        serviceImplementation="com.intellij.lang.properties.PropertiesUtilService$Empty"/>
+
+    <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
+    <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
+    <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
+    <renameInputValidator implementation="com.intellij.lang.properties.rename.PropertyKeyRenameInputValidator"/>
+
+    <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
+  </extensions>
+</idea-plugin>

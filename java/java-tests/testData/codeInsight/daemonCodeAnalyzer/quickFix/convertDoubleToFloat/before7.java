@@ -1,4 +1,4 @@
-// "Convert '1e137' to float" "false"
+// "Cast argument to 'float'" "true-preview"
 class Test {
   void bar() {
     foo(1e1<caret>37);

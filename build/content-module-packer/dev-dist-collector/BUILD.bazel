@@ -1,0 +1,55 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+go_binary(
+    name = "dev-dist-collector",
+    srcs = [
+        "collect.go",
+        "local_home.go",
+        "main.go",
+        "manifest.go",
+        "metadata.go",
+        "plugin_classpath.go",
+        "plugin_component.go",
+    ],
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/content-module-packer/dev-dist-collector",
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
+        "//build/content-module-packer/internal/span",
+    ],
+)
+
+go_test(
+    name = "dev-dist-collector_test",
+    srcs = [
+        "collect.go",
+        "collect_test.go",
+        "local_home.go",
+        "local_home_test.go",
+        "main.go",
+        "main_test.go",
+        "manifest.go",
+        "manifest_test.go",
+        "metadata.go",
+        "metadata_test.go",
+        "plugin_classpath.go",
+        "plugin_classpath_test.go",
+        "plugin_component.go",
+        "plugin_component_test.go",
+    ],
+    data = glob(["testdata/*"]),
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/filemetadata",
+        "//build/content-module-packer/internal/pluginclasspath",
+        "//build/content-module-packer/internal/pluginpack",
+        "//build/content-module-packer/internal/span",
+    ],
+)

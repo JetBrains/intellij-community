@@ -1,0 +1,14 @@
+// "Make 'doSth' protected" "true"
+// K2_ERROR: INVISIBLE_REFERENCE
+
+open class A {
+    private fun doSth() {
+    }
+}
+
+class B : A() {
+    fun bar() {
+        <caret>doSth()
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToProtectedModCommandAction

@@ -1,0 +1,14 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyParenthesizedExpression
+    PsiElement(Py:LPAR)('(')
+    PsiErrorElement:')' expected
+      <empty list>
+  PsiErrorElement:Unexpected token
+    <empty list>
+  PsiElement(Py:DEF_KEYWORD)('def')
+  PsiWhiteSpace(' ')
+  PyReferenceExpression: foo
+    PsiElement(Py:IDENTIFIER)('foo')
+  PsiErrorElement:Unexpected token
+    <empty list>
+  PsiElement(Py:RPAR)(')')

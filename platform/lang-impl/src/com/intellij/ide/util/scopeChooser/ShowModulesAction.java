@@ -18,10 +18,14 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ShowModulesAction extends ToggleAction {
   private final Runnable myUpdate;
 
@@ -32,12 +36,15 @@ public final class ShowModulesAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_MODULES;
   }
-
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+  @Override
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
     myUpdate.run();
   }

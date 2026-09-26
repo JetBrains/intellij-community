@@ -1,0 +1,7 @@
+// "Suppress 'unused' for file emptyClassSuppressOnFile.kt" "true"
+
+class SomeUnusedEmptyClass<caret>
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

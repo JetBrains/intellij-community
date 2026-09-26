@@ -1,18 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JViewport;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -21,41 +32,65 @@ public class EditorStressTest extends AbstractEditorTest {
   private static final int ITERATIONS = 10_000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
-  private static final List<? extends Action> ourActions = Arrays.asList(new AddText("a"),
-                                                                         new AddText("\n"),
-                                                                         new AddText("\t"),
-                                                                         new AddText(HIGH_SURROGATE),
-                                                                         new AddText(LOW_SURROGATE),
-                                                                         new RemoveCharacter(),
-                                                                         new MoveCharacter(),
-                                                                         new AddFoldRegion(),
-                                                                         new RemoveFoldRegion(),
-                                                                         new ExpandOrCollapseFoldRegions(),
-                                                                         new ClearFoldRegions(),
-                                                                         new ChangeBulkModeState(),
-                                                                         new ChangeEditorVisibility(),
-                                                                         new AddInlay(),
-                                                                         new RemoveInlay(),
-                                                                         new MoveCaret());
-
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
 
+  private static final String CHARS_TO_USE = "a\r\n\t" + SURROGATE_PAIR;
+  private static final int MAX_CHARS_TO_ADD = 10;
+  private static final int MAX_CHARS_TO_REMOVE = 5;
+  private static final int MIN_INLAY_WIDTH = 1;
+  private static final int MAX_INLAY_WIDTH = 9;
+  private static final int MAX_INLAY_OPERATIONS_IN_BATCH = 3;
+  private static final int MAX_CUSTOM_FOLD_REGION_WIDTH = 50;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setUpCustomWrapSupport();
+  }
+
+  private static final List<? extends Action> CUSTOM_WRAP_ACTIONS = Arrays.asList(
+    new AddCustomWrap(),
+    new RemoveCustomWrap(),
+    new ToggleSoftWrapping()
+  );
+
+  private static final List<? extends Action> INLAY_PRIMITIVE_ACTIONS = Arrays.asList(
+    new AddInlay(),
+    new RemoveInlay(),
+    new UpdateInlay()
+  );
+  private final List<? extends Action> ACTIONS = ContainerUtil.concat(Arrays.asList(
+    new AddText(),
+    new RemoveText(),
+    new MoveText(),
+    new AddFoldRegion(),
+    new AddCustomFoldRegion(),
+    new UpdateCustomFoldRegion(),
+    new RemoveFoldRegion(),
+    new ExpandOrCollapseFoldRegions(),
+    new ClearFoldRegions(),
+    new ValidateInBulkState(),
+    new ChangeEditorVisibility(),
+    new BatchInlayOperation(),
+    new MoveCaret()
+  ), INLAY_PRIMITIVE_ACTIONS, CUSTOM_WRAP_ACTIONS);
+
   public void testRandomActions() {
     LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
+      ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
       configureSoftWraps(10);
-      EditorImpl editor = (EditorImpl)myEditor;
+      EditorImpl editor = (EditorImpl)getEditor();
       for (i = 0; i < ITERATIONS; i++) {
-        doRandomAction(editor);
+        doRandomAction(editor, myRandom, ACTIONS);
         editor.validateState();
       }
-      if (editor.getDocument().isInBulkUpdate()) editor.getDocument().setInBulkUpdate(false);
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
@@ -64,8 +99,8 @@ public class EditorStressTest extends AbstractEditorTest {
     }
   }
 
-  private void doRandomAction(EditorEx editor) {
-    ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
+  private static void doRandomAction(EditorEx editor, Random random, List<? extends Action> actions) {
+    actions.get(random.nextInt(actions.size())).perform(editor, random);
   }
 
   @FunctionalInterface
@@ -73,43 +108,43 @@ public class EditorStressTest extends AbstractEditorTest {
     void perform(EditorEx editor, Random random);
   }
 
-  private static class AddText implements Action {
-    private final String myText;
-
-    AddText(String text) {
-      myText = text;
-    }
-
+  private class AddText implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
+      StringBuilder text = new StringBuilder();
+      int count = 1 + random.nextInt(MAX_CHARS_TO_ADD);
+      for (int i = 0; i < count; i++) {
+        text.append(CHARS_TO_USE.charAt(random.nextInt(CHARS_TO_USE.length())));
+      }
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, myText));
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, text.toString()));
     }
   }
 
-  private static class RemoveCharacter implements Action {
+  private class RemoveText implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
-      int offset = random.nextInt(textLength);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + 1));
+      int count = 1 + random.nextInt(Math.min(MAX_CHARS_TO_REMOVE, textLength));
+      int offset = random.nextInt(textLength - count + 1);
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + count));
     }
   }
 
-  private static class MoveCharacter implements Action {
+  private class MoveText implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
       int textLength = document.getTextLength();
-      if (textLength <= 0) return;
-      int offset = random.nextInt(textLength);
-      int targetOffset = random.nextInt(textLength + 1);
-      if (targetOffset < offset || targetOffset > offset + 1) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(offset, offset + 1, targetOffset));
-      }
+      if (textLength <= 1) return;
+      int count = 1 + random.nextInt(textLength - 1);
+      int srcStart = random.nextInt(textLength - count + 1);
+      int targetPos = random.nextInt(textLength - count);
+      int targetOffset = targetPos < srcStart ? targetPos : targetPos + count + 1;
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(srcStart, srcStart + count, targetOffset));
     }
   }
 
@@ -126,7 +161,36 @@ public class EditorStressTest extends AbstractEditorTest {
       final FoldingModel foldingModel = editor.getFoldingModel();
       foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(Math.min(startOffset, endOffset),
                                                                              Math.max(startOffset, endOffset),
-                                                                             "."));
+                                                                             random.nextBoolean() ? "." : ""));
+    }
+  }
+
+  private static class AddCustomFoldRegion implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      DocumentEx document = editor.getDocument();
+      if (document.isInBulkUpdate()) return;
+      int lineCount = Math.max(1, document.getLineCount());
+      final int startLine = random.nextInt(lineCount);
+      final int endLine = random.nextInt(lineCount);
+      final FoldingModel foldingModel = editor.getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(Math.min(startLine, endLine),
+                                                                                     Math.max(startLine, endLine),
+                                                                                     MyCustomFoldRegionRenderer.INSTANCE));
+    }
+  }
+
+  private static class UpdateCustomFoldRegion implements Action {
+    @Override
+    public void perform(final EditorEx editor, Random random) {
+      if (editor.getDocument().isInBulkUpdate()) return;
+      List<CustomFoldRegion> customRegions = ContainerUtil.findAll(editor.getFoldingModel().getAllFoldRegions(), CustomFoldRegion.class);
+      int count = customRegions.size();
+      if (count > 0) {
+        CustomFoldRegion region = customRegions.get(random.nextInt(count));
+        region.putUserData(REGION_WIDTH, random.nextInt(MAX_CUSTOM_FOLD_REGION_WIDTH));
+        region.update();
+      }
     }
   }
 
@@ -170,15 +234,17 @@ public class EditorStressTest extends AbstractEditorTest {
       foldingModel.runBatchFoldingOperation(foldingModel::clearFoldRegions);
     }
   }
-  
-  private static class ChangeBulkModeState implements Action {
+
+  private static class ValidateInBulkState implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
-      document.setInBulkUpdate(!document.isInBulkUpdate());
+      DocumentUtil.executeInBulk(document, () -> {
+        ((EditorImpl)editor).validateState();
+      });
     }
   }
-  
+
   private static class ChangeEditorVisibility implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
@@ -192,15 +258,43 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class AddInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      addInlay(random.nextInt(editor.getDocument().getTextLength() + 1));
+      int offset = random.nextInt(editor.getDocument().getTextLength() + 1);
+      editor.getInlayModel().addInlineElement(offset, false, new MyInlayRenderer());
     }
   }
 
   private static class RemoveInlay implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
-      List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
-      if (!inlays.isEmpty()) Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
+      List<Inlay<?>> inlays = editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength());
+      if (!inlays.isEmpty()) {
+        Disposer.dispose(inlays.get(random.nextInt(inlays.size())));
+      }
+    }
+  }
+
+  private static final class UpdateInlay implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      List<Inlay<? extends MyInlayRenderer>> inlays =
+        editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength(), MyInlayRenderer.class);
+      if (!inlays.isEmpty()) {
+        Inlay<? extends MyInlayRenderer> inlay = inlays.get(random.nextInt(inlays.size()));
+        inlay.getRenderer().width = MIN_INLAY_WIDTH + random.nextInt(MAX_INLAY_WIDTH - MIN_INLAY_WIDTH + 1);
+        inlay.update();
+      }
+    }
+  }
+
+  private static class BatchInlayOperation implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      editor.getInlayModel().execute(true, () -> {
+        int count = 1 + random.nextInt(MAX_INLAY_OPERATIONS_IN_BATCH);
+        for (int i = 0; i < count; i++) {
+          doRandomAction(editor, random, INLAY_PRIMITIVE_ACTIONS);
+        }
+      });
     }
   }
 
@@ -209,7 +303,67 @@ public class EditorStressTest extends AbstractEditorTest {
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
       if (document.isInBulkUpdate()) return;
-      myEditor.getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
+      editor.getCaretModel().moveToOffset(random.nextInt(document.getTextLength() + 1));
     }
+  }
+
+  private static class AddCustomWrap implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      int offset = random.nextInt(editor.getDocument().getTextLength() + 1);
+      int indentInColumns = random.nextInt(5);
+      int priority = random.nextInt(5);
+      editor.getCustomWrapModel().runBatchMutation(mutator -> mutator.addWrap(offset, indentInColumns, priority));
+    }
+  }
+
+  private static class RemoveCustomWrap implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      List<CustomWrap> wraps = editor.getCustomWrapModel().getWraps();
+      if (wraps.isEmpty()) return;
+      editor.getCustomWrapModel().runBatchMutation(mutator -> mutator.removeWrap(wraps.get(random.nextInt(wraps.size()))));
+    }
+  }
+
+  private static class ToggleSoftWrapping implements Action {
+    @Override
+    public void perform(EditorEx editor, Random random) {
+      if (editor.getDocument().isInBulkUpdate()) return;
+      boolean shouldToggle = random.nextBoolean();
+      if (!shouldToggle) return;
+      boolean newIsUseSoftWraps = !editor.getSettings().isUseSoftWraps();
+      editor.getSettings().setUseSoftWraps(newIsUseSoftWraps);
+    }
+  }
+
+  private static class MyInlayRenderer implements EditorCustomElementRenderer {
+    int width = 1;
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return width; }
+  }
+
+  private static final Key<Integer> REGION_WIDTH = Key.create("custom.region.width");
+
+  private static final class MyCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final MyCustomFoldRegionRenderer INSTANCE = new MyCustomFoldRegionRenderer();
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      Integer value = region.getUserData(REGION_WIDTH);
+      return value == null ? 0 : value;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return 1;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {}
   }
 }

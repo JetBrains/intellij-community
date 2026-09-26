@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +11,12 @@ import org.jetbrains.annotations.Nullable;
  * Interface for breaking a file into a sequence of tokens.
  *
  * @see LexerBase for certain methods' implementation
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/implementing-lexer.html">Implementing Lexer (IntelliJ Platform Docs)</a>
+ * @see RestartableLexer
  */
 public abstract class Lexer {
+  private static final Logger LOG = Logger.getInstance(Lexer.class);
+  private static final long LEXER_START_THRESHOLD = 500;
 
   /**
    * Prepare for lexing character data from {@code buffer} passed. Internal lexer state is supposed to be {@code initialState}. It is guaranteed
@@ -35,25 +27,38 @@ public abstract class Lexer {
    * @param startOffset  offset to start lexing from
    * @param endOffset    offset to stop lexing at
    * @param initialState the initial state of the lexer.
-   * @since IDEA 7
    */
   public abstract void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState);
 
+  private void startMeasured(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    if (!LOG.isDebugEnabled()) {
+      start(buffer, startOffset, endOffset, initialState);
+      return;
+    }
+    long start = System.currentTimeMillis();
+    start(buffer, startOffset, endOffset, initialState);
+    long startDuration = System.currentTimeMillis() - start;
+    if (startDuration > LEXER_START_THRESHOLD) {
+      LOG.debug("Starting lexer took: ", startDuration,
+                "; at ", startOffset, " - ", endOffset, "; state: ", initialState,
+                "; text: ", StringUtil.shortenTextWithEllipsis(buffer.toString(), 1024, 500)
+      );
+    }
+  }
+
   public final void start(@NotNull CharSequence buf, int start, int end) {
-    start(buf, start, end, 0);
+    startMeasured(buf, start, end, 0);
   }
 
   public final void start(@NotNull CharSequence buf) {
-    start(buf, 0, buf.length(), 0);
+    startMeasured(buf, 0, buf.length(), 0);
   }
 
-  @NotNull
-  public CharSequence getTokenSequence() {
+  public @NotNull CharSequence getTokenSequence() {
     return getBufferSequence().subSequence(getTokenStart(), getTokenEnd());
   }
 
-  @NotNull
-  public String getTokenText() {
+  public @NotNull String getTokenText() {
     return getTokenSequence().toString();
   }
 
@@ -69,8 +74,7 @@ public abstract class Lexer {
    *
    * @return the current token.
    */
-  @Nullable
-  public abstract IElementType getTokenType();
+  public abstract @Nullable IElementType getTokenType();
 
   /**
    * Returns the start offset of the current token.
@@ -97,11 +101,12 @@ public abstract class Lexer {
    *
    * @return the lexer position and state.
    */
-  @NotNull
-  public abstract LexerPosition getCurrentPosition();
+  public abstract @NotNull LexerPosition getCurrentPosition();
 
   /**
    * Restores the lexer to the specified state and position.
+   * Lexer can only be restored if the {@code buffer} and {@code bufferEnd}
+   * have not changed since acquiring the position with {@link #getCurrentPosition()}.
    *
    * @param position the state and position to restore to.
    */
@@ -112,10 +117,8 @@ public abstract class Lexer {
    * same buffer instance which was passed to the {@code start()} method.
    *
    * @return the lexer buffer.
-   * @since IDEA 7
    */
-  @NotNull
-  public abstract CharSequence getBufferSequence();
+  public abstract @NotNull CharSequence getBufferSequence();
 
   /**
    * Returns the offset at which the lexer will stop lexing. This method should return

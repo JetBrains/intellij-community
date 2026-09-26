@@ -1,0 +1,3 @@
+Directives.OPEN_DIRECTIVE ('%%')
+Directives.DIRECTIVE_TEXT ('{ some: "42", other: 42, more: "value" }')
+Directives.CLOSE_DIRECTIVE ('%%')

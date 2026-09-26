@@ -16,48 +16,52 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlDeprecatedElementInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 
 import java.io.File;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlInspectionsTest extends BasePlatformTestCase {
 
   public void testDefaultAttributeValue() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=<warning descr=\"Redundant default attribute value assignment\">\"unqua<caret>lified\"</warning>>\n" +
                                                     "</schema>");
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family") + " e");
+    IntentionAction action = myFixture.findSingleIntention(XmlAnalysisBundle.message("xml.quickfix.remove.attribute.family") + " e");
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");
   }
 
-  public void _testHtmlFromRncSchema() {
+  public void testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
-    myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
-                                                     "<html lang=\"en\">\n" +
-                                                     "<head>\n" +
-                                                     "    <meta charset=\"UTF-8\">\n" +
-                                                     "    <title>Title</title>\n" +
-                                                     "</head>\n" +
-                                                     "<body>\n" +
-                                                     "<form action=\"index.php\">\n" +
-                                                     "    <input type=\"hidden\" name=\"name_1\" value=\"val_1\">\n" +
-                                                     "    <input type=\"hidden\" name=\"name_2\" value=\"val_2\">\n" +
-                                                     "    <button type=\"button\">Proper js button</button>\n" +
-                                                     "    <button type=<warning descr=\"Redundant default attribute value assignment\">\"submit\"</warning>>Proper submit button</button>\n" +
-                                                     "    <button>Behave as submit when missing type=\"button\"</button>\n" +
-                                                     "</form>\n" +
-                                                     "</body>\n" +
-                                                     "</html>\n");
+    myFixture.configureByText(HtmlFileType.INSTANCE, """
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <title>Title</title>
+      </head>
+      <body>
+      <form action="index.php">
+          <input type="hidden" name="name_1" value="val_1">
+          <input type="hidden" name="name_2" value="val_2">
+          <button type="button">Proper js button</button>
+          <button type="submit">Proper submit button</button>
+          <button>Behave as submit when missing type="button"</button>
+      </form>
+      </body>
+      </html>
+      """);
     myFixture.checkHighlighting();
   }
 
@@ -70,6 +74,33 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
   public void testRequiredFixedAttribute() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.testHighlighting("def.xml", "def.xsd");
+  }
+
+  public void testEmptyDefaultAttributeValue() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.addFileToProject("foo.xsd", """
+      <schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="def/attr">
+        <element name="foo">
+          <complexType>
+            <attribute name="bar" default=""/>
+          </complexType>
+        </element>
+      </schema>""");
+    myFixture.configureByText("foo.xml", "<foo xmlns=\"def/attr\" bar=/>");
+    myFixture.doHighlighting();
+  }
+
+  public void testDeprecations() {
+    myFixture.enableInspections(new XmlDeprecatedElementInspection());
+    myFixture.testHighlighting("deprecated.xml", "deprecated.xsd");
+  }
+
+  public void testCDataEndHighlightingXml() {
+    myFixture.testHighlighting("cdataEndHighlighting.xml");
+  }
+
+  public void testCDataEndHighlightingHtml() {
+    myFixture.testHighlighting("cdataEndHighlighting.html");
   }
 
   @Override

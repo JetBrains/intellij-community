@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.grpc.netty.shaded` start
+content_module_jar(
+    libraries = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
+    module = ":grpc-netty-shaded",
+)
+### auto-generated section `dev intellij.libraries.grpc.netty.shaded` end
+
+### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
+jvm_library(
+    name = "grpc-netty-shaded",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc.netty.shaded",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
+    deps = [
+        # do not sort,
+        "@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded",
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/grpc",
+    ],
+)
+
+jvm_library(
+    name = "grpc-netty-shaded_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.grpc.netty.shaded",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
+    runtime_deps = [
+        # do not sort,
+        ":grpc-netty-shaded",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/grpc:grpc_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.grpc.netty.shaded` end
+
+### auto-generated section `iml intellij.libraries.grpc.netty.shaded` start
+exports_files(
+    [
+        "intellij.libraries.grpc.netty.shaded.iml",
+        "resources/intellij.libraries.grpc.netty.shaded.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.grpc.netty.shaded` end

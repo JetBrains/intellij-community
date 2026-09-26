@@ -33,15 +33,17 @@ public class DeleteUnusedParameterFix extends DeleteUnusedElementBase<XsltParame
         super(name, param);
     }
 
+    @Override
     public String getType() {
         return "Parameter";
     }
 
+    @Override
     protected void deleteElement(@NotNull XsltParameter obj) throws IncorrectOperationException {
         final XsltTemplate template = XsltCodeInsightUtil.getTemplate(obj.getTag(), false);
         if (template == null || template.getMatchExpression() == null) {
             final SearchScope searchScope = obj.getResolveScope();
-          for (PsiReference reference : ReferencesSearch.search(obj, searchScope, false)) {
+          for (PsiReference reference : ReferencesSearch.search(obj, searchScope, false).asIterable()) {
                 final XmlTag t = PsiTreeUtil.getContextOfType(reference.getElement(), XmlTag.class, true);
                 if (t != null && XsltSupport.XSLT_NS.equals(t.getNamespace())) {
                     assert "with-param".equals(t.getLocalName());

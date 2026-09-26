@@ -1,37 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.mac.foundation.CoreGraphics;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.FoundationLibrary;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.Native;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Event;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Transparency;
+import java.awt.Window;
 import java.awt.color.ColorSpace;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -39,24 +37,25 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
+import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 
-public class MacColorPipette extends ColorPipetteBase {
+@ApiStatus.Internal
+public final class MacColorPipette extends ColorPipetteBase {
   private static final Logger LOG = Logger.getInstance(MacColorPipette.class);
   private static final int PIXELS = 17;
   private static final int ZOOM = 10;
   private static final int SIZE = PIXELS * ZOOM;
   private static final int DIALOG_SIZE = SIZE + 20;
 
-  @SuppressWarnings("UseJBColor") private final Color myTransparentColor = new Color(0, 0, 0, 1);
+  @SuppressWarnings("UseJBColor") private static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 1);
 
   public MacColorPipette(@NotNull ColorPicker picker, @NotNull ColorListener listener) {
     super(picker, listener);
   }
 
-  @NotNull
   @Override
-  protected Dialog getOrCreatePickerDialog() {
+  protected @NotNull Dialog getOrCreatePickerDialog() {
     Dialog pickerDialog = getPickerDialog();
     if (pickerDialog == null) {
       pickerDialog = super.getOrCreatePickerDialog();
@@ -68,18 +67,10 @@ public class MacColorPipette extends ColorPipetteBase {
           Point location = updateLocation();
           if (myRobot != null && location != null) {
             switch (event.getKeyCode()) {
-              case KeyEvent.VK_DOWN:
-                myRobot.mouseMove(location.x, location.y + diff);
-                break;
-              case KeyEvent.VK_UP:
-                myRobot.mouseMove(location.x, location.y - diff);
-                break;
-              case KeyEvent.VK_LEFT:
-                myRobot.mouseMove(location.x - diff, location.y);
-                break;
-              case KeyEvent.VK_RIGHT:
-                myRobot.mouseMove(location.x + diff, location.y);
-                break;
+              case KeyEvent.VK_DOWN -> myRobot.mouseMove(location.x, location.y + diff);
+              case KeyEvent.VK_UP -> myRobot.mouseMove(location.x, location.y - diff);
+              case KeyEvent.VK_LEFT -> myRobot.mouseMove(location.x - diff, location.y);
+              case KeyEvent.VK_RIGHT -> myRobot.mouseMove(location.x + diff, location.y);
             }
             updateLocation();
           }
@@ -134,8 +125,8 @@ public class MacColorPipette extends ColorPipetteBase {
       };
       pickerDialog.add(label);
       pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
-      pickerDialog.setBackground(myTransparentColor);
-      
+      pickerDialog.setBackground(TRANSPARENT_COLOR);
+
       BufferedImage emptyImage = UIUtil.createImage(pickerDialog, 1, 1, Transparency.TRANSLUCENT);
       pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
     }
@@ -143,12 +134,14 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   private static void applyRenderingHints(@NotNull Graphics graphics) {
-    UIUtil.applyRenderingHints(graphics);
-    if (graphics instanceof Graphics2D) {
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    if (!(graphics instanceof Graphics2D g2d)) {
+      return;
     }
+
+    GraphicsUtil.applyRenderingHints(g2d);
+    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
   }
 
   private static void drawCurrentColorRectangle(@NotNull Graphics2D graphics, @NotNull Point offset, @NotNull Color currentColor) {
@@ -158,7 +151,7 @@ public class MacColorPipette extends ColorPipetteBase {
     int width = SIZE / 2;
     int height = SIZE / 8;
     graphics.fillRoundRect(x, y, width, height, 10, 10);
-    
+
     graphics.setColor(Gray._255);
     String colorString = currentColor.getRed() + " " + currentColor.getGreen() + " " + currentColor.getBlue();
     FontMetrics metrics = graphics.getFontMetrics();
@@ -192,31 +185,39 @@ public class MacColorPipette extends ColorPipetteBase {
     return captureScreen(null, new Rectangle(0, 0, 1, 1)) != null;
   }
 
-  @Nullable
-  static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  // TODO-ank: Screen capturing looks like self-contained feature and should be placed to separate class. Note that it is also used from
+  //  com.android.tools.idea.ui.resourcechooser.colorpicker2.GraphicalColorPipette) to pick a color from any window on the screen
+  public static @Nullable BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
-      Foundation.NSRect nsRect = new Foundation.NSRect(rect.x, rect.y, rect.width, rect.height);
-      ID cgWindowId = windowId != null ? Foundation.invoke(windowId, "windowNumber") : ID.NIL;
-      int windowListOptions = cgWindowId != null
+      CoreGraphics.CGRect cgRect = new CoreGraphics.CGRect(rect.x, rect.y, rect.width, rect.height);
+      int cgWindowId = windowId != null ? Foundation.invoke(windowId, "windowNumber").intValue() : 0;
+      int windowListOptions = cgWindowId != 0
                               ? FoundationLibrary.kCGWindowListOptionOnScreenBelowWindow
-                              : FoundationLibrary.kCGWindowListOptionAll;
+                              : FoundationLibrary.kCGWindowListOptionOnScreenOnly;
+
       int windowImageOptions = FoundationLibrary.kCGWindowImageNominalResolution;
-      ID cgImageRef = Foundation.cgWindowListCreateImage(nsRect, windowListOptions, cgWindowId, windowImageOptions);
+      ID cgImageRef = CoreGraphics.cgWindowListCreateImage(cgRect, windowListOptions, cgWindowId, windowImageOptions);
+      if (Foundation.isNil(cgImageRef)) return null;
+      byte[] bytes;
+      ID bitmapRep = ID.NIL;
+      ID nsImage = ID.NIL;
+      try {
+        bitmapRep = Foundation.invoke(Foundation.invoke("NSBitmapImageRep", "alloc"), "initWithCGImage:", cgImageRef);
+        nsImage = Foundation.invoke(Foundation.invoke("NSImage", "alloc"), "init");
+        Foundation.invoke(nsImage, "addRepresentation:", bitmapRep);
+        ID data = Foundation.invoke(nsImage, "TIFFRepresentation");
+        if (Foundation.isNil(data)) return null;
+        bytes = new Foundation.NSData(data).bytes();
+      }
+      finally {
+        Foundation.invoke(nsImage, "release");
+        Foundation.invoke(bitmapRep, "release");
+        Foundation.cfRelease(cgImageRef);
+      }
 
-      ID bitmapRep = Foundation.invoke(Foundation.invoke("NSBitmapImageRep", "alloc"), "initWithCGImage:", cgImageRef);
-      ID nsImage = Foundation.invoke(Foundation.invoke("NSImage", "alloc"), "init");
-      Foundation.invoke(nsImage, "addRepresentation:", bitmapRep);
-      ID data = Foundation.invoke(nsImage, "TIFFRepresentation");
-      ID bytes = Foundation.invoke(data, "bytes");
-      ID length = Foundation.invoke(data, "length");
-      ByteBuffer byteBuffer = Native.getDirectByteBuffer(bytes.longValue(), length.longValue());
-      Foundation.invoke(nsImage, "release");
-      byte[] b = new byte[byteBuffer.remaining()];
-      byteBuffer.get(b);
-
-      BufferedImage result = ImageIO.read(new ByteArrayInputStream(b));
+      BufferedImage result = ImageIO.read(new ByteArrayInputStream(bytes));
       if (result != null) {
         ColorSpace ics = ColorSpace.getInstance(ColorSpace.CS_sRGB);
         ColorConvertOp cco = new ColorConvertOp(ics, null);

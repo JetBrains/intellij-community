@@ -1,0 +1,7 @@
+// AFTER-WARNING: Parameter 'i' is never used
+// AFTER-WARNING: Variable 'a' is never used
+fun foo() {
+    val a: (Int) -> Unit = { bar(it) }
+}
+
+fun bar(i: Int) {}

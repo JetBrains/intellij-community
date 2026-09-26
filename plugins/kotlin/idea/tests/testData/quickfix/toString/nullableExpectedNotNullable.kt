@@ -1,0 +1,14 @@
+// "Add 'toString()' call" "true"
+// PRIORITY: LOW
+// ACTION: Add 'toString()' call
+// ACTION: Change parameter 'a' type of function 'bar' to 'Any?'
+// ACTION: Create function 'bar'
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+fun foo() {
+    bar(null as Any?<caret>)
+}
+
+fun bar(a: String) {
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddToStringFix

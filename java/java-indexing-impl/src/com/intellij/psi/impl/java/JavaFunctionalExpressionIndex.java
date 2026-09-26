@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
@@ -35,10 +24,15 @@ import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.PsiDependentFileContent;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -49,14 +43,45 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ARRAY_INITIALIZER_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSIGNMENT_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BINARY_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CONDITIONAL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXTENDS_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_REF_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.NEW_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARENTH_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POLYADIC_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PREFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RETURN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_CAST_EXPRESSION;
 
-public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<FunExprOccurrence>> implements PsiDependentIndex {
-  public static final ID<FunctionalExpressionKey, List<FunExprOccurrence>> INDEX_ID = ID.create("java.fun.expression");
-  private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<FunctionalExpressionKey>() {
+public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<JavaFunctionalExpressionIndex.IndexEntry>> {
+  public static final ID<FunctionalExpressionKey, List<IndexEntry>> INDEX_ID = ID.create("java.fun.expression");
+  private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<>() {
     @Override
     public int getHashCode(FunctionalExpressionKey value) {
       return value.hashCode();
@@ -78,8 +103,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     }
   };
 
-  @NotNull
-  private static List<ReferenceChainLink> createCallChain(FileLocalResolver resolver, @Nullable LighterASTNode expr) {
+  private static @NotNull List<ReferenceChainLink> createCallChain(FileLocalResolver resolver, @Nullable LighterASTNode expr) {
     List<ReferenceChainLink> chain = new ArrayList<>();
     while (true) {
       if (expr == null) return reversedChain(chain);
@@ -108,8 +132,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     }
   }
 
-  @NotNull
-  private static List<ReferenceChainLink> reversedChain(List<ReferenceChainLink> chain) {
+  private static @NotNull List<ReferenceChainLink> reversedChain(List<ReferenceChainLink> chain) {
     Collections.reverse(chain);
     return chain;
   }
@@ -119,8 +142,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return args == null ? -1 : args.size();
   }
 
-  @Nullable
-  private static LighterASTNode getQualifier(LighterAST tree, LighterASTNode expr, boolean isCall) {
+  private static @Nullable LighterASTNode getQualifier(LighterAST tree, LighterASTNode expr, boolean isCall) {
     LighterASTNode qualifier = tree.getChildren(expr).get(0);
     if (isCall) {
       List<LighterASTNode> children = tree.getChildren(qualifier);
@@ -129,8 +151,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getTokenType()) ? qualifier : null;
   }
 
-  @Nullable
-  private static String getReferencedMemberName(LighterAST tree, LighterASTNode expr, boolean isCall) {
+  private static @Nullable String getReferencedMemberName(LighterAST tree, LighterASTNode expr, boolean isCall) {
     if (isCall) {
       return getCalledMethodName(tree, expr);
     }
@@ -140,11 +161,10 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return null;
   }
 
-  @Nullable
-  private static ReferenceChainLink createChainStart(FileLocalResolver resolver,
-                                                     LighterASTNode expr,
-                                                     boolean isCall,
-                                                     String referenceName) {
+  private static @Nullable ReferenceChainLink createChainStart(FileLocalResolver resolver,
+                                                               LighterASTNode expr,
+                                                               boolean isCall,
+                                                               String referenceName) {
     if (!isCall) {
       FileLocalResolver.LightResolveResult result = resolver.resolveLocally(expr);
       if (result == FileLocalResolver.LightResolveResult.UNKNOWN) return null;
@@ -158,24 +178,38 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return new ReferenceChainLink(referenceName, isCall, getArgCount(resolver.getLightTree(), expr));
   }
 
-  @NotNull
-  private static String calcExprType(LighterASTNode funExpr, FileLocalResolver resolver) {
-    LighterASTNode scope = skipExpressionsUp(resolver.getLightTree(), funExpr, TokenSet.create(LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT, ASSIGNMENT_EXPRESSION));
+  private static @NotNull String calcExprType(LighterASTNode funExpr, FileLocalResolver resolver) {
+    LighterAST tree = resolver.getLightTree();
+    LighterASTNode scope = skipExpressionsUp(tree, funExpr, TokenSet.create(
+      LOCAL_VARIABLE, FIELD, TYPE_CAST_EXPRESSION, RETURN_STATEMENT, ASSIGNMENT_EXPRESSION, ARRAY_INITIALIZER_EXPRESSION));
+    int arrayDepth = 0;
+    while (scope != null && scope.getTokenType() == ARRAY_INITIALIZER_EXPRESSION) {
+      scope = tree.getParent(scope);
+      // should be either new-expression or variable/field declaration
+      arrayDepth++;
+    }
     if (scope != null) {
       if (scope.getTokenType() == ASSIGNMENT_EXPRESSION) {
-        LighterASTNode lValue = findExpressionChild(scope, resolver.getLightTree());
+        LighterASTNode lValue = findExpressionChild(scope, tree);
         scope = lValue == null ? null : resolver.resolveLocally(lValue).getTarget();
       }
       else if (scope.getTokenType() == RETURN_STATEMENT) {
-        scope = LightTreeUtil.getParentOfType(resolver.getLightTree(), scope,
+        scope = LightTreeUtil.getParentOfType(tree, scope,
                                               TokenSet.create(METHOD),
                                               TokenSet.orSet(ElementType.MEMBER_BIT_SET, TokenSet.create(LAMBDA_EXPRESSION)));
       }
+      else if (scope.getTokenType() == NEW_EXPRESSION) {
+        assert arrayDepth > 0;
+        if (arrayDepth != LightTreeUtil.getChildrenOfType(tree, scope, JavaTokenType.LBRACKET).size()) return "";
+        LighterASTNode typeRef = LightTreeUtil.firstChildOfType(tree, scope, JAVA_CODE_REFERENCE);
+        String refName = JavaLightTreeUtil.getNameIdentifierText(tree, typeRef);
+        return StringUtil.notNullize(refName);
+      }
     }
-    return StringUtil.notNullize(scope == null ? null : resolver.getShortClassTypeName(scope));
+    return StringUtil.notNullize(scope == null ? null : resolver.getShortClassTypeName(scope, arrayDepth));
   }
 
-  private static int getArgIndex(List<LighterASTNode> args, LighterASTNode expr) {
+  private static int getArgIndex(List<? extends LighterASTNode> args, LighterASTNode expr) {
     for (int i = 0; i < args.size(); i++) {
       if (args.get(i).getEndOffset() >= expr.getEndOffset()) {
         return i;
@@ -232,8 +266,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return returnsSomething.get() ? FunctionalExpressionKey.CoarseType.NON_VOID : FunctionalExpressionKey.CoarseType.VOID;
   }
 
-  @Nullable
-  private static LighterASTNode findExpressionChild(@NotNull LighterASTNode element, LighterAST tree) {
+  private static @Nullable LighterASTNode findExpressionChild(@NotNull LighterASTNode element, LighterAST tree) {
     return LightTreeUtil.firstChildOfType(tree, element, ElementType.EXPRESSION_BIT_SET);
   }
 
@@ -271,8 +304,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return LightTreeUtil.getChildrenOfType(tree, paramList, Constants.PARAMETER_BIT_SET).size();
   }
 
-  @Nullable
-  private static String getCalledMethodName(LighterAST tree, LighterASTNode call) {
+  private static @Nullable String getCalledMethodName(LighterAST tree, LighterASTNode call) {
     if (call.getTokenType() == NEW_EXPRESSION) {
       LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, JAVA_CODE_REFERENCE);
@@ -290,19 +322,16 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return JavaLightTreeUtil.getNameIdentifierText(tree, methodExpr);
   }
 
-  @Nullable
-  private static String getSuperClassName(LighterAST tree, LighterASTNode call) {
+  private static @Nullable String getSuperClassName(LighterAST tree, LighterASTNode call) {
     LighterASTNode aClass = findClass(tree, call);
     return getReferenceName(tree, LightTreeUtil.firstChildOfType(tree, aClass, EXTENDS_LIST));
   }
 
-  @Nullable
-  private static String getReferenceName(LighterAST tree, LighterASTNode refParent) {
+  private static @Nullable String getReferenceName(LighterAST tree, LighterASTNode refParent) {
     return JavaLightTreeUtil.getNameIdentifierText(tree, LightTreeUtil.firstChildOfType(tree, refParent, JAVA_CODE_REFERENCE));
   }
 
-  @Nullable
-  private static LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
+  private static @Nullable LighterASTNode getContainingCall(LighterAST tree, LighterASTNode node) {
     LighterASTNode expressionList = skipExpressionsUp(tree, node, TokenSet.create(EXPRESSION_LIST));
     if (expressionList != null) {
       LighterASTNode parent = tree.getParent(expressionList);
@@ -331,60 +360,72 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
     return JBIterable.generate(node, tree::getParent).find(n -> n.getTokenType() == CLASS);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<FunctionalExpressionKey> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<FunctionalExpressionKey> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
   @Override
   public int getVersion() {
-    return 2;
+    return 6;
   }
 
-  @NotNull
   @Override
-  public ID<FunctionalExpressionKey, List<FunExprOccurrence>> getName() {
+  public @NotNull ID<FunctionalExpressionKey, List<IndexEntry>> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<FunctionalExpressionKey, List<FunExprOccurrence>, FileContent> getIndexer() {
+  public boolean hasSnapshotMapping() {
+    return true;
+  }
+
+  @Override
+  public @NotNull DataIndexer<FunctionalExpressionKey, List<IndexEntry>, FileContent> getIndexer() {
     return inputData -> {
+      ProgressManager.checkCanceled();
       CharSequence text = inputData.getContentAsText();
+      ProgressManager.checkCanceled();
       int[] offsets = ArrayUtil.mergeArrays(
         new StringSearcher("->", true, true).findAllOccurrences(text),
         new StringSearcher("::", true, true).findAllOccurrences(text));
       if (offsets.length == 0) return Collections.emptyMap();
 
-      Map<FunctionalExpressionKey, List<FunExprOccurrence>> result = new HashMap<>();
-      LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
+      Map<FunctionalExpressionKey, List<IndexEntry>> result = new HashMap<>();
+      LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
-      for (int offset : offsets) {
-        LighterASTNode leaf = LightTreeUtil.findLeafElementAt(tree, offset);
-        LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
-        if (element == null) continue;
+      ProgressManager.checkCanceled();
+      LightTreeUtil.processLeavesAtOffsets(offsets, tree, new BiConsumer<>() {
+        int index = 0;
 
-        if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
-          FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
-                                                                    calcReturnType(tree, element),
-                                                                    calcExprType(element, resolver));
-          List<FunExprOccurrence> list = result.get(key);
-          if (list == null) {
-            result.put(key, list = new SmartList<>());
+        @Override
+        public void accept(LighterASTTokenNode leaf, Integer offset) {
+          LighterASTNode element = tree.getParent(leaf);
+          if (element == null) return;
+
+          if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
+            FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
+                                                                      calcReturnType(tree, element),
+                                                                      calcExprType(element, resolver));
+
+            LighterASTNode context = LightTreeUtil.getParentOfType(tree, element, ElementType.MEMBER_BIT_SET, TokenSet.EMPTY);
+            if (context != null) {
+              List<IndexEntry> list = result.computeIfAbsent(key, _ -> new ArrayList<>());
+              list.add(new IndexEntry(element.getStartOffset(), index,
+                                      context.getStartOffset(), context.getEndOffset(),
+                                      createOccurrence(element, resolver)));
+            }
+            index++;
           }
-          list.add(createOccurrence(element, resolver));
         }
-      }
+      });
 
       return result;
     };
   }
 
-  @NotNull
-  private static FunExprOccurrence createOccurrence(@NotNull LighterASTNode funExpr, FileLocalResolver resolver) {
+  private static @NotNull FunExprOccurrence createOccurrence(@NotNull LighterASTNode funExpr, FileLocalResolver resolver) {
     LighterAST tree = resolver.getLightTree();
     LighterASTNode containingCall = getContainingCall(tree, funExpr);
     List<LighterASTNode> args = JavaLightTreeUtil.getArgList(tree, containingCall);
@@ -398,37 +439,26 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       }
     }
 
-    return new FunExprOccurrence(funExpr.getStartOffset(), argIndex,
-                                 createCallChain(resolver, chainExpr));
+    return new FunExprOccurrence(argIndex, createCallChain(resolver, chainExpr));
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<List<FunExprOccurrence>> getValueExternalizer() {
-    return new DataExternalizer<List<FunExprOccurrence>>() {
+  public @NotNull DataExternalizer<List<IndexEntry>> getValueExternalizer() {
+    return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull DataOutput out, List<FunExprOccurrence> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size());
-        for (FunExprOccurrence info : value) {
-          info.serialize(out);
-        }
+      public void save(@NotNull DataOutput out, List<IndexEntry> value) throws IOException {
+        DataInputOutputUtilRt.writeSeq(out, value, entry -> entry.serialize(out));
       }
 
       @Override
-      public List<FunExprOccurrence> read(@NotNull DataInput in) throws IOException {
-        int length = DataInputOutputUtil.readINT(in);
-        List<FunExprOccurrence> list = new SmartList<>();
-        for (int i = 0; i < length; i++) {
-          list.add(FunExprOccurrence.deserialize(in));
-        }
-        return list;
+      public List<IndexEntry> read(@NotNull DataInput in) throws IOException {
+        return DataInputOutputUtilRt.readSeq(in, () -> IndexEntry.deserialize(in));
       }
     };
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -440,5 +470,64 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   @Override
   public boolean dependsOnFileContent() {
     return true;
+  }
+
+  public static class IndexEntry {
+    public final int exprStart;
+    public final int exprIndex;
+    public final int contextStart;
+    public final int contextEnd;
+    public final FunExprOccurrence occurrence;
+
+    IndexEntry(int exprStart, int exprIndex, int contextStart, int contextEnd, FunExprOccurrence occurrence) {
+      this.exprStart = exprStart;
+      this.exprIndex = exprIndex;
+      this.contextStart = contextStart;
+      this.contextEnd = contextEnd;
+      this.occurrence = occurrence;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof IndexEntry entry)) return false;
+      return exprStart == entry.exprStart &&
+             exprIndex == entry.exprIndex &&
+             contextStart == entry.contextStart &&
+             contextEnd == entry.contextEnd &&
+             occurrence.equals(entry.occurrence);
+    }
+
+    @Override
+    public String toString() {
+      return "IndexEntry{" +
+             "exprStart=" + exprStart +
+             ", exprIndex=" + exprIndex +
+             ", contextStart=" + contextStart +
+             ", contextEnd=" + contextEnd +
+             '}';
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(exprStart, exprIndex, contextStart, contextEnd, occurrence);
+    }
+
+    void serialize(DataOutput out) throws IOException {
+      DataInputOutputUtil.writeINT(out, exprStart);
+      DataInputOutputUtil.writeINT(out, exprIndex);
+      DataInputOutputUtil.writeINT(out, contextStart);
+      DataInputOutputUtil.writeINT(out, contextEnd);
+      occurrence.serialize(out);
+    }
+
+    static IndexEntry deserialize(DataInput in) throws IOException {
+      return new IndexEntry(DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            FunExprOccurrence.deserialize(in));
+    }
+
   }
 }

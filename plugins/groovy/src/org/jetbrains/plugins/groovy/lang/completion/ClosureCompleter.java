@@ -1,9 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -11,13 +15,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -27,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.StringParameterNameExpression;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,11 +46,10 @@ import java.util.List;
 public abstract class ClosureCompleter {
   private static final ExtensionPointName<ClosureCompleter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureCompleter");
 
-  @Nullable
-  protected abstract List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
-                                                                  PsiMethod method,
-                                                                  PsiSubstitutor substitutor,
-                                                                  PsiElement place);
+  protected abstract @Nullable List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
+                                                                            PsiMethod method,
+                                                                            PsiSubstitutor substitutor,
+                                                                            PsiElement place);
 
   public static boolean runClosureCompletion(InsertionContext context,
                                              PsiMethod method,
@@ -63,7 +73,7 @@ public abstract class ClosureCompleter {
                                             int offset,
                                             PsiSubstitutor substitutor,
                                             PsiMethod method,
-                                            final List<ClosureParameterInfo> parameters) {
+                                            final List<? extends ClosureParameterInfo> parameters) {
     document.insertString(offset, "{\n}");
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
     final GrClosableBlock closure =
@@ -74,7 +84,7 @@ public abstract class ClosureCompleter {
     return true;
   }
 
-  public static void runTemplate(List<ClosureParameterInfo> parameters,
+  public static void runTemplate(List<? extends ClosureParameterInfo> parameters,
                                  GrClosableBlock block,
                                  PsiSubstitutor substitutor,
                                  PsiMethod method, final Project project,
@@ -87,7 +97,7 @@ public abstract class ClosureCompleter {
     StringBuilder buffer = new StringBuilder();
     buffer.append("{");
 
-    List<PsiType> paramTypes = ContainerUtil.newArrayList();
+    List<PsiType> paramTypes = new ArrayList<>();
     for (ClosureParameterInfo parameter : parameters) {
       final String type = parameter.getType();
       final String name = parameter.getName();
@@ -140,7 +150,7 @@ public abstract class ClosureCompleter {
 
     TemplateEditingListener templateListener = new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           PsiDocumentManager.getInstance(project).commitDocument(document);
           final CaretModel caretModel = editor.getCaretModel();

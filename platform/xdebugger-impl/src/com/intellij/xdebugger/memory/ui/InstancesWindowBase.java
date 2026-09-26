@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 public abstract class InstancesWindowBase extends DialogWrapper {
 
@@ -33,19 +34,18 @@ public abstract class InstancesWindowBase extends DialogWrapper {
   }
 
   protected void addWarningMessage(@Nullable String message) {
-    String warning = message == null ? "" : String.format(". Warning: %s", message);
-    setTitle(String.format("Instances of %s%s", className, warning));
+    setTitle(message == null ?
+             XDebuggerBundle.message("memory.view.instances.dialog.title", className) :
+             XDebuggerBundle.message("memory.view.instances.dialog.title.warning", className, message));
   }
 
-  @NotNull
   @Override
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return "#org.jetbrains.debugger.memory.view.InstancesWindow";
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
+  protected Action @NotNull [] createActions() {
+    return new Action[]{new DialogWrapperExitAction(XDebuggerBundle.message("memory.instances.close.text"), CLOSE_EXIT_CODE)};
   }
 }

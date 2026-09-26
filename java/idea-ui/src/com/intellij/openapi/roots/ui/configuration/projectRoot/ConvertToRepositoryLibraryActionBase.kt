@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAttachDialog
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -23,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
@@ -32,36 +20,35 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Properties
 
-/**
- * @author nik
- */
 private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
-abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) : DumbAwareAction(
-  "Convert to Repository Library...",
-  "Convert a regular library to a repository library which additionally stores its Maven coordinates, so the IDE can automatically download the library JARs if they are missing",
-  null) {
+abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) :
+  DumbAwareAction(JavaUiBundle.messagePointer("action.text.convert.to.repository.library"),
+                  JavaUiBundle.messagePointer("action.description.convert.to.repository.library")) {
+
   protected val project: Project = context.project
 
   protected abstract fun getSelectedLibrary(): LibraryEx?
@@ -90,7 +77,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
     val downloadedFiles = roots.filter { it.type == OrderRootType.CLASSES }.map { VfsUtilCore.virtualToIoFile(it.file) }
     if (downloadedFiles.isEmpty()) {
-      if (Messages.showYesNoDialog("No files were downloaded. Do you want to try different coordinates?", "Failed to Download Library",
+      if (Messages.showYesNoDialog(JavaUiBundle.message("dialog.message.no.files.were.downloaded"),
+                                   JavaUiBundle.message("dialog.title.no.files.were.downloaded"),
                                    null) != Messages.YES) {
         return
       }
@@ -105,7 +93,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
     if (!task.filesAreTheSame) {
       val dialog = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
-                                         LibraryUtil.getPresentableName(library), project)
+                                         library.presentableName, project)
       dialog.show()
       task.deleteTemporaryFiles()
       when (dialog.exitCode) {
@@ -135,12 +123,15 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun detectOrSpecifyMavenCoordinates(library: Library): JpsMavenRepositoryLibraryDescriptor? {
     val detectedCoordinates = detectMavenCoordinates(library.getFiles(OrderRootType.CLASSES))
-    LOG.debug("Maven coordinates for ${LibraryUtil.getPresentableName(library)} JARs: $detectedCoordinates")
+    LOG.debug("Maven coordinates for ${library.presentableName} JARs: $detectedCoordinates")
     if (detectedCoordinates.size == 1) {
       return detectedCoordinates[0]
     }
-    val message = if (detectedCoordinates.isEmpty()) "Cannot detect Maven coordinates from the library JARs" else "Multiple Maven coordinates are found in the library JARs"
-    if (Messages.showYesNoDialog(project, "$message. Do you want to search Maven repositories manually?", "Cannot Detect Maven Coordinates", null) != Messages.YES) {
+    val message = if (detectedCoordinates.isEmpty()) JavaUiBundle.message("dialog.message.cannot.detect.maven.coordinates")
+    else JavaUiBundle.message("dialog.message.multiple.maven.coordinates")
+
+    if (Messages.showYesNoDialog(project, "$message. ${JavaUiBundle.message("dialog.message.do.you.want")}",
+                                 JavaUiBundle.message("dialog.title.cannot.detect.maven.coordinates"), null) != Messages.YES) {
       return null
     }
     return specifyMavenCoordinates(detectedCoordinates)
@@ -152,14 +143,13 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies,
-                                               emptyList<String>())
+    return dialog.selectedLibraryDescriptor
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
-    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
-                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
+    val libraryRoots = library.getFiles(OrderRootType.CLASSES) + library.getFiles(OrderRootType.SOURCES)
+    context.modulesConfigurator.projectStructureConfigurable.registerObsoleteLibraryRoots(libraryRoots.asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()
@@ -198,7 +188,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 }
 
 private class ComparingJarFilesTask(project: Project, private val downloadedFiles: List<File>,
-                                    private val libraryFiles: List<File>) : Task.Modal(project, "Comparing JAR Files...", true) {
+                                    private val libraryFiles: List<File>) : Task.Modal(project, JavaUiBundle.message("task.title.comparing.jar.files"), true) {
   var cancelled = false
   var filesAreTheSame = false
   lateinit var downloadedFileToCompare: VirtualFile
@@ -236,8 +226,8 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
       }
 
       WriteAction.computeAndWait(ThrowableComputable<Unit, RuntimeException> {
-        libraryFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryIoFileToCompare)!!
-        downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
+        libraryFileToCompare = StandardFileSystems.local().refreshAndFindFileByPath(libraryIoFileToCompare.absolutePath)!!
+        downloadedFileToCompare = StandardFileSystems.local().refreshAndFindFileByPath(downloadedIoFileToCompare.absolutePath)!!
       })
 
       RefreshQueue.getInstance().refresh(false, false, null, libraryFileToCompare, downloadedFileToCompare)
@@ -256,14 +246,14 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     if (file.isDirectory) {
       file.children.forEach { collectNestedJars(it, result) }
     }
-    else if (file.fileType == StdFileTypes.ARCHIVE) {
+    else if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) {
       val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)?.let { result.add(it) }
     }
   }
 
   fun deleteTemporaryFiles() {
-    FileUtil.asyncDelete(filesToDelete)
+    filesToDelete.forEach { FileUtil.delete(it) }
   }
 
   override fun onCancel() {
@@ -276,16 +266,23 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     if (downloadedFiles.size != libraryFiles.size) {
       return false
     }
-    val contentHashing = object : TObjectHashingStrategy<File> {
-      override fun computeHashCode(file: File) = file.length().toInt()
+    val contentHashing = object : Hash.Strategy<File> {
+      override fun hashCode(file: File?) = file?.length()?.toInt() ?: 0
 
-      override fun equals(o1: File, o2: File): Boolean {
+      override fun equals(o1: File?, o2: File?): Boolean {
+        if (o1 === o2) {
+          return true
+        }
+        if (o1 == null || o2 == null) {
+          return true
+        }
+
         val equal = contentEqual(o1, o2)
-        LOG.debug(" comparing files: ${o1.absolutePath}${if (equal) "==" else "!="}${o2.absolutePath}")
+        LOG.debug { " comparing files: ${o1.absolutePath}${if (equal) "==" else "!="}${o2.absolutePath}" }
         return equal
       }
     }
-    return THashSet(downloadedFiles, contentHashing) == THashSet(libraryFiles, contentHashing)
+    return ObjectOpenCustomHashSet(downloadedFiles, contentHashing) == ObjectOpenCustomHashSet(libraryFiles, contentHashing)
   }
 
   private fun contentEqual(file1: File, file2: File): Boolean {

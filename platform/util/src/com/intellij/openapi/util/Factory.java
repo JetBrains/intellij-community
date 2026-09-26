@@ -15,9 +15,20 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.function.Supplier;
+
 /**
- * @author dsl
+ * Obsolete, use {@link java.util.function.Supplier} instead.
  */
-public interface Factory<T> {
+@ApiStatus.Obsolete
+@FunctionalInterface
+public interface Factory<T> extends Supplier<T> {
   T create();
+
+  @Override
+  default T get() {
+    return create();
+  }
 }

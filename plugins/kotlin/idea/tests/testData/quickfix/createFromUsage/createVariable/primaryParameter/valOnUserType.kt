@@ -1,0 +1,12 @@
+// "Create property 'foo' as constructor parameter" "true"
+// ERROR: No value passed for parameter 'foo'
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A<T>(val n: T)
+
+fun test() {
+    val a: A<Int> = A(1).<caret>foo
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

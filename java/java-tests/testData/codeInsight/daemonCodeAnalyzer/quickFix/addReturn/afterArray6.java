@@ -1,4 +1,4 @@
-// "Add 'return' statement" "true"
+// "Add 'return' statement" "true-preview"
 import java.util.*;
 class A<T> {
     T[] f() {

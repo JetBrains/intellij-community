@@ -17,13 +17,10 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
 
-public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
-
-  public ShowChangesFromParentsAction() {
-    super("Show Changes to Parents", "Display changes to each merged commit separately", null);
-  }
-
+@ApiStatus.Internal
+public final class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;

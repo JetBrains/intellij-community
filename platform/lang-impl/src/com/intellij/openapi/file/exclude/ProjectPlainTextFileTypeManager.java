@@ -1,47 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+
 /**
- * @author Rustam Vishnyakov
+ * @deprecated use {@link OverrideFileTypeManager} instead
  */
+@Deprecated(forRemoval = true)
 @State(name = "ProjectPlainTextFileTypeManager")
-public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
-  private final ProjectFileIndex myIndex;
-
-  public ProjectPlainTextFileTypeManager(ProjectFileIndex projectFileIndex) {
-    myIndex = projectFileIndex;
+public final class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
+  public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {
+    return project.getService(ProjectPlainTextFileTypeManager.class);
   }
 
-  boolean isInContent(@NotNull VirtualFile file) {
-    return myIndex.isInContent(file);
+  /**
+  * @deprecated use {@link OverrideFileTypeManager#getFiles()} instead
+  */
+  @Deprecated
+  @Override
+  public @NotNull Collection<VirtualFile> getFiles() {
+    return OverrideFileTypeManager.getInstance().getFiles();
   }
 
-  boolean isInLibrarySource(@NotNull final VirtualFile file) {
-    return myIndex.isInLibrarySource(file);
-  }
+  @Override
+  public void loadState(@NotNull Element state) {
+    super.loadState(state);
 
-  public static ProjectPlainTextFileTypeManager getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectPlainTextFileTypeManager.class);
+    LinkedHashMap<VirtualFile, FileType> files = new LinkedHashMap<>();
+    for (VirtualFile file : super.getFiles()) {
+      if (OverrideFileTypeManager.isOverridable(file.getFileType())) {
+        files.put(file, PlainTextFileType.INSTANCE);
+      }
+    }
+
+    OverrideFileTypeManager.getInstance().addFiles(files);
   }
 }

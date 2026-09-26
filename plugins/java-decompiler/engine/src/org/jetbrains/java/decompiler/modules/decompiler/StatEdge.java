@@ -1,70 +1,66 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class StatEdge {
-  public static final int TYPE_REGULAR = 1;
-  public static final int TYPE_EXCEPTION = 2;
-  public static final int TYPE_BREAK = 4;
-  public static final int TYPE_CONTINUE = 8;
-  public static final int TYPE_FINALLYEXIT = 32;
-
-  public static final int[] TYPES = new int[]{
-    TYPE_REGULAR,
-    TYPE_EXCEPTION,
-    TYPE_BREAK,
-    TYPE_CONTINUE,
-    TYPE_FINALLYEXIT
-  };
-
-  private int type;
-
+  private @NotNull EdgeType type;
   private Statement source;
-
   private Statement destination;
-
   private List<String> exceptions;
-
   public Statement closure;
-
   public boolean labeled = true;
-
   public boolean explicit = true;
+  public boolean canInline = true;
 
-  public StatEdge(int type, Statement source, Statement destination, Statement closure) {
+  private StatEdge(@NotNull EdgeType type,
+                  Statement source,
+                  Statement destination,
+                  List<String> exceptions,
+                  Statement closure,
+                  boolean labeled,
+                  boolean explicit) {
+    this.type = type;
+    this.source = source;
+    this.destination = destination;
+    this.exceptions = exceptions;
+    this.closure = closure;
+    this.labeled = labeled;
+    this.explicit = explicit;
+  }
+
+  public StatEdge(@NotNull EdgeType type, Statement source, Statement destination, Statement closure) {
     this(type, source, destination);
     this.closure = closure;
   }
 
-  public StatEdge(int type, Statement source, Statement destination) {
+  public StatEdge(@NotNull EdgeType type, Statement source, Statement destination) {
     this.type = type;
     this.source = source;
     this.destination = destination;
   }
 
   public StatEdge(Statement source, Statement destination, List<String> exceptions) {
-    this(TYPE_EXCEPTION, source, destination);
+    this(EdgeType.EXCEPTION, source, destination);
     if (exceptions != null) {
       this.exceptions = new ArrayList<>(exceptions);
     }
   }
 
-  public int getType() {
+  public @NotNull EdgeType getType() {
     return type;
   }
-
-  public void setType(int type) {
+  public void setType(@NotNull EdgeType type) {
     this.type = type;
   }
 
   public Statement getSource() {
     return source;
   }
-
   public void setSource(Statement source) {
     this.source = source;
   }
@@ -72,7 +68,6 @@ public class StatEdge {
   public Statement getDestination() {
     return destination;
   }
-
   public void setDestination(Statement destination) {
     this.destination = destination;
   }
@@ -81,7 +76,48 @@ public class StatEdge {
     return this.exceptions;
   }
 
-  //	public void setException(String exception) {
-  //		this.exception = exception;
-  //	}
+  public StatEdge copy() {
+    return new StatEdge(type, source, destination, exceptions, closure, labeled, explicit);
+  }
+
+  /**
+   * Type of the edges between statements.
+   *
+   * @see Statement
+   */
+  public enum EdgeType {
+    REGULAR(1),
+    EXCEPTION(2),
+    REGULAR_EXCEPTION(1 | 2),
+    BREAK(4),
+    CONTINUE(8),
+    CONTINUE_BREAK(4|8),
+    FINALLY_EXIT(32),
+    ALL(0x80000000),
+    DIRECT_ALL(0x40000000),
+    NULL(-1);
+
+    private final int mask;
+
+    EdgeType(int mask) {
+      this.mask = mask;
+    }
+
+    public int mask() {
+      return mask;
+    }
+
+    public static EdgeType[] types() {
+      return new EdgeType[]{REGULAR, EXCEPTION, BREAK, CONTINUE, FINALLY_EXIT};
+    }
+  }
+
+  /**
+   * Represents a direction of edge.
+   * Backward for input edges, forward for output edges.
+   */
+  public enum EdgeDirection {
+    BACKWARD,
+    FORWARD
+  }
 }

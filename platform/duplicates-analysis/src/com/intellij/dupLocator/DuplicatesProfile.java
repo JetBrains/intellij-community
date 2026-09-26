@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.dupLocator;
 
@@ -20,34 +6,36 @@ import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class DuplicatesProfile {
-  public static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
+  private static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
 
-  @NotNull
-  public abstract DuplocateVisitor createVisitor(@NotNull FragmentsCollector collector);
+  public abstract @NotNull DuplocateVisitor createVisitor(@NotNull FragmentsCollector collector);
 
-  @NotNull
-  public DuplocateVisitor createVisitor(@NotNull FragmentsCollector collector, boolean forIndexing) {
+  public @NotNull DuplocateVisitor createVisitor(@NotNull FragmentsCollector collector, boolean forIndexing) {
     return createVisitor(collector);
   }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
-  @NotNull
-  public abstract DuplocatorState getDuplocatorState(@NotNull Language language);
+  public abstract @NotNull DuplocatorState getDuplocatorState(@NotNull Language language);
 
-  @Nullable
-  public String getComment(@NotNull DupInfo info, int index) {
+  public @Nullable @Nls String getComment(@NotNull DupInfo info, int index) {
     return null;
   }
 
-  public abstract boolean isMyDuplicate(@NotNull DupInfo info, int index);
+  public boolean isMyDuplicate(@NotNull DupInfo info, int index) {
+    PsiFragment[] fragments = info.getFragmentOccurences(index);
+    Language language = fragments.length > 0 ? fragments[0].getLanguage() : null;
+    return language != null && isMyLanguage(language);
+  }
 
   public boolean supportIndex() {
     return true;
@@ -73,18 +61,15 @@ public abstract class DuplicatesProfile {
     return true;
   }
 
-  @Nullable
-  public static DuplicatesProfile findProfileForLanguage(@NotNull Language language) {
-    return findProfileForLanguage(EP_NAME.getExtensions(), language);
+  public static @Nullable DuplicatesProfile findProfileForLanguage(@NotNull Language language) {
+    return findProfileForLanguage(EP_NAME.getExtensionList(), language);
   }
 
-  @NotNull
-  public static DuplicatesProfile[] getAllProfiles() {
-    return Extensions.getExtensions(EP_NAME);
+  public static @NotNull List<DuplicatesProfile> getAllProfiles() {
+    return EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public static DuplicatesProfile findProfileForLanguage(DuplicatesProfile[] profiles, @NotNull Language language) {
+  public static @Nullable DuplicatesProfile findProfileForLanguage(List<? extends DuplicatesProfile> profiles, @NotNull Language language) {
     for (DuplicatesProfile profile : profiles) {
       if (profile.isMyLanguage(language)) {
         return profile;
@@ -94,13 +79,24 @@ public abstract class DuplicatesProfile {
     return null;
   }
 
-  @NotNull
-  public Language getLanguage(@NotNull PsiElement element) {
+  public static @Nullable DuplicatesProfile findProfileForDuplicate(@NotNull DupInfo dupInfo, int index) {
+    for (DuplicatesProfile profile : EP_NAME.getExtensionList()) {
+      if (profile.isMyDuplicate(dupInfo, index)) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
+  public static <T extends DuplicatesProfile> DuplicatesProfile getProfile(Class<T> profileClass) {
+    return EP_NAME.findExtensionOrFail(profileClass);
+  }
+
+  public @NotNull Language getLanguage(@NotNull PsiElement element) {
     return element.getLanguage();
   }
 
-  @Nullable
-  public PsiElementRole getRole(@NotNull PsiElement element) {
+  public @Nullable PsiElementRole getRole(@NotNull PsiElement element) {
     return null;
   }
 }

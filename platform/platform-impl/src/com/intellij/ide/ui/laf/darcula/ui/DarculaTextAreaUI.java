@@ -1,40 +1,64 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTextAreaUI;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Caret;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.Position;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public class DarculaTextAreaUI extends BasicTextAreaUI{
+public class DarculaTextAreaUI extends BasicTextAreaUI {
+
+  private RoundedBorderSupportHandler helper;
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaTextAreaUI();
   }
 
   @Override
+  protected void installListeners() {
+    super.installListeners();
+    helper = new RoundedBorderSupportHandler(getComponent());
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    super.uninstallListeners();
+    if (helper != null) {
+      helper.dispose();
+      helper = null;
+    }
+  }
+
+  @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-    if (SystemInfo.isMac) {
+    if (ClientSystemInfo.isMac()) {
       InputMap inputMap = getComponent().getInputMap();
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), DefaultEditorKit.upAction);
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), DefaultEditorKit.downAction);
@@ -52,6 +76,76 @@ public class DarculaTextAreaUI extends BasicTextAreaUI{
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new") ? new TextFieldWithPopupHandlerUI.MouseDragAwareCaret() : new TextFieldWithPopupHandlerUI.MarginAwareCaret();
+    return new TextFieldWithPopupHandlerUI.MouseDragAwareCaret();
+  }
+
+  @Override
+  protected void paintSafely(Graphics g) {
+    if (SystemInfo.isMacOSCatalina) {
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+    }
+    super.paintSafely(g);
+  }
+
+  private static class RoundedBorderSupportHandler {
+
+    private final JTextComponent component;
+
+    private final FocusListener focusListener = new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaintParentScrollPane();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaintParentScrollPane();
+      }
+    };
+
+    private final DocumentListener documentListener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        repaintParentScrollPane();
+      }
+    };
+
+    private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if ("JComponent.outline".equals(evt.getPropertyName())) {
+          repaintParentScrollPane();
+        }
+
+        if ("document".equals(evt.getPropertyName())) {
+          if (evt.getOldValue() instanceof Document document) {
+            document.removeDocumentListener(documentListener);
+          }
+          if (evt.getNewValue() instanceof Document document) {
+            document.addDocumentListener(documentListener);
+          }
+        }
+      }
+    };
+
+    private RoundedBorderSupportHandler(JTextComponent component) {
+      this.component = component;
+
+      component.addFocusListener(focusListener);
+      component.addPropertyChangeListener(propertyChangeListener);
+      component.getDocument().addDocumentListener(documentListener);
+    }
+
+    public void dispose() {
+      component.removeFocusListener(focusListener);
+      component.removePropertyChangeListener(propertyChangeListener);
+      component.getDocument().removeDocumentListener(documentListener);
+    }
+
+    private void repaintParentScrollPane() {
+      if (component.getParent() instanceof JViewport viewport && viewport.getParent() instanceof JBScrollPane scrollPane) {
+        scrollPane.repaint();
+      }
+    }
   }
 }

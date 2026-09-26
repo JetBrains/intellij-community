@@ -21,19 +21,20 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author ven
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class FirstWordMacro extends MacroBase {
   public FirstWordMacro() {
     super("firstWord", CodeInsightBundle.message("macro.firstWord.string"));
   }
 
   @Override
-  protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
+  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context);
     if (text != null) {
       final int index = text.indexOf(' ');

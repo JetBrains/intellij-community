@@ -1,37 +1,55 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.List;
 
 /**
- * Allows to register a language extension for a group of languages defined by a certain criterion.
- * To use this, specify the ID of a meta-language in the "language" attribute of an extension in plugin.xml.
- *
- * @author yole
+ * Allows registering a language extension for a group of languages defined by a certain criterion.
+ * To use this, specify the ID of a meta-language in the "{@code language}" attribute of an extension in {@code plugin.xml}.
  */
 public abstract class MetaLanguage extends Language {
-  public static final ExtensionPointName<MetaLanguage> EP_NAME = ExtensionPointName.create("com.intellij.metaLanguage");
+  /** @deprecated use {@link MetaLanguageProvider} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final ExtensionPointName<MetaLanguage> EP_NAME = new ExtensionPointName<>("com.intellij.metaLanguage");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<MetaLanguageProvider> PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.metaLanguageProvider");
 
-  protected MetaLanguage(@NotNull String ID) {
+  /** @noinspection deprecation */
+  protected MetaLanguage(@NotNull @NonNls String ID) {
     super(ID);
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<MetaLanguage>() {
+      @Override
+      public void extensionRemoved(@NotNull MetaLanguage metaLanguage, @NotNull PluginDescriptor pluginDescriptor) {
+        onExtensionRemoved(pluginDescriptor, metaLanguage);
+      }
+    }, null);
+    PROVIDER_EP_NAME.addExtensionPointListener(new ExtensionPointListener<MetaLanguageProvider>() {
+      @Override
+      public void extensionRemoved(@NotNull MetaLanguageProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        onExtensionRemoved(pluginDescriptor, provider.getLanguage());
+      }
+    }, null);
   }
 
-  @NotNull
-  public static MetaLanguage[] all() {
-    return Extensions.getExtensions(EP_NAME);
-  }
-
-  @NotNull
-  public static Stream<MetaLanguage> getAllMatchingMetaLanguages(@NotNull Language language) {
-    if (language instanceof MetaLanguage) return Stream.empty();
-    return Arrays.stream(all()).filter(l -> l.matchesLanguage(language));
+  public static @NotNull @Unmodifiable List<MetaLanguage> all() {
+    return ContainerUtil.concat(
+      EP_NAME.getExtensionList(),
+      ContainerUtil.map(PROVIDER_EP_NAME.getExtensionList(), MetaLanguageProvider::getLanguage)
+    );
   }
 
   /**
@@ -42,11 +60,34 @@ public abstract class MetaLanguage extends Language {
   /**
    * Returns the list of all languages matching this meta-language.
    */
-  @NotNull
-  public Collection<Language> getMatchingLanguages() {
-    return Language.getRegisteredLanguages()
-      .stream()
-      .filter(language -> matchesLanguage(language))
-      .collect(Collectors.toList());
+  public @NotNull @Unmodifiable Collection<Language> getMatchingLanguages() {
+    List<Language> result = new ArrayList<>();
+    for (Language t : getRegisteredLanguages()) {
+      if (matchesLanguage(t)) {
+        result.add(t);
+      }
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public static void clearAllMatchingMetaLanguagesCache() {
+    for (Language language : getRegisteredLanguages()) {
+      LanguageUtil.clearMatchingMetaLanguagesCache(language);
+    }
+  }
+
+  private void onExtensionRemoved(@NotNull PluginDescriptor pluginDescriptor, @NotNull MetaLanguage metaLanguage) {
+    if (metaLanguage != this) return;
+    for (Language matchingLanguage : getMatchingLanguages()) {
+      LanguageUtil.clearMatchingMetaLanguagesCache(matchingLanguage);
+    }
+    unregisterLanguage(pluginDescriptor);
+  }
+
+  static boolean isEPRegistered() {
+    ExtensionsArea area = ApplicationManager.getApplication().getExtensionArea();
+    return area.hasExtensionPoint(EP_NAME) ||
+           area.hasExtensionPoint(PROVIDER_EP_NAME);
   }
 }

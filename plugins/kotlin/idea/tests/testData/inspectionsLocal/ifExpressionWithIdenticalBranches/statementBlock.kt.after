@@ -1,0 +1,8 @@
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression
+
+fun test(flag: Boolean) {
+    val localFlag = flag
+    println("same")
+    println("same again")
+}

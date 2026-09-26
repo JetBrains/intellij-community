@@ -1,20 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the type of a variable arguments array passed as a method parameter.
- *
- * @author ven
  */
 public class PsiEllipsisType extends PsiArrayType {
   public PsiEllipsisType(@NotNull PsiType componentType) {
     super(componentType);
   }
 
-  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+  public PsiEllipsisType(@NotNull PsiType componentType, PsiAnnotation @NotNull [] annotations) {
     super(componentType, annotations);
   }
 
@@ -22,22 +22,26 @@ public class PsiEllipsisType extends PsiArrayType {
     super(componentType, provider);
   }
 
-  @NotNull
-  @Override
-  public String getPresentableText(boolean annotated) {
-    return getText(getComponentType().getPresentableText(), "...", false, annotated);
+  private PsiEllipsisType(@NotNull PsiType componentType,
+                          @NotNull TypeAnnotationProvider provider,
+                          @Nullable TypeNullability nullability,
+                          @Nullable PsiModifierListOwner containerNullabilityOwner) {
+    super(componentType, provider, nullability, containerNullabilityOwner);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
-    return getText(getComponentType().getCanonicalText(annotated), "...", true, annotated);
+  public @NotNull String getPresentableText(boolean annotated) {
+    return getText(getDeepComponentType().getPresentableText(annotated), "...", false, annotated);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
-    return getText(getComponentType().getInternalCanonicalText(), "...", true, true);
+  public @NotNull String getCanonicalText(boolean annotated) {
+    return getText(getDeepComponentType().getCanonicalText(annotated), "...", true, annotated);
+  }
+
+  @Override
+  public @NotNull String getInternalCanonicalText() {
+    return getText(getDeepComponentType().getInternalCanonicalText(), "...", true, true);
   }
 
   @Override
@@ -46,13 +50,34 @@ public class PsiEllipsisType extends PsiArrayType {
            super.equalsToText(text);
   }
 
+  @NotNull
+  @Override
+  public PsiType withContainerNullability(@Nullable PsiModifierListOwner containerNullabilityContext) {
+    if (containerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability, containerNullabilityContext);
+  }
+
+  @NotNull
+  @Override
+  public PsiType withContainerNullability(@Nullable PsiArrayType arrayType) {
+    if (arrayType == null && myContainerNullabilityContext == null) return this;
+    if (arrayType != null && arrayType.myContainerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability,
+                              arrayType != null ? arrayType.myContainerNullabilityContext : null);
+  }
+
+  @Override
+  public @NotNull PsiEllipsisType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), nullability, this.myContainerNullabilityContext);
+  }
+
   /**
    * Converts the ellipsis type to an array type with the same component type.
    *
    * @return the array type instance.
    */
   @Contract(pure = true)
-  public PsiType toArrayType() {
+  public @NotNull PsiType toArrayType() {
     return new PsiArrayType(getComponentType(), getAnnotationProvider());
   }
 

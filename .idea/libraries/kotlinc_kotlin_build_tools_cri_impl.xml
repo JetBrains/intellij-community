@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-build-tools-cri-impl" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-cri-impl:2.5.0-dev-8355">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-8355/kotlin-build-tools-cri-impl-2.5.0-dev-8355.jar">
+          <sha256sum>c869f2d486e4570b9d752b542a726b2f2beeee52c910ddf2f6015b33552ade58</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-8355/kotlin-build-tools-cri-impl-2.5.0-dev-8355.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.5.0-dev-8355/kotlin-build-tools-cri-impl-2.5.0-dev-8355-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

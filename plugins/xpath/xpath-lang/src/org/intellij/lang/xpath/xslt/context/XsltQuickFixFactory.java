@@ -32,11 +32,12 @@ import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveRedundantCo
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable;
 import org.intellij.lang.xpath.xslt.validation.inspections.InspectionUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XsltQuickFixFactory implements XPathQuickFixFactory {
+public final class XsltQuickFixFactory implements XPathQuickFixFactory {
     public static final XsltQuickFixFactory INSTANCE = new XsltQuickFixFactory();
 
     private XsltQuickFixFactory() {
@@ -71,10 +72,9 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
     @Override
-    @NotNull
-    public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
+    public SuppressIntentionAction @NotNull [] getSuppressActions(XPathInspection inspection) {
         final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(inspection, true);
-        return actions.toArray(new SuppressIntentionAction[0]);
+        return actions.toArray(SuppressIntentionAction.EMPTY_ARRAY);
     }
 
     @Override
@@ -83,10 +83,11 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
     private static class EditAssociationsFix extends Fix<XPathNodeTest> {
-        public EditAssociationsFix(XPathNodeTest test) {
+        EditAssociationsFix(XPathNodeTest test) {
             super(test);
         }
 
+        @Override
         public boolean startInWriteAction() {
             return false;
         }
@@ -96,14 +97,14 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
             FileAssociationsConfigurable.editAssociations(project, PsiTreeUtil.getContextOfType(file, XmlFile.class, false));
         }
 
-        @NotNull
-        public String getText() {
-            return "Edit File Associations";
+        @Override
+        public @NotNull String getText() {
+            return getFamilyName();
         }
 
-        @NotNull
-        public String getFamilyName() {
-            return "Edit File Associations";
+        @Override
+        public @NotNull String getFamilyName() {
+            return XPathBundle.message("intention.family.name.edit.file.associations");
         }
     }
 }

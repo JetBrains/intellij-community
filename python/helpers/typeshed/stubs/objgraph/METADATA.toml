@@ -1,0 +1,2 @@
+version = "3.6.*"
+upstream-repository = "https://github.com/mgedmin/objgraph"

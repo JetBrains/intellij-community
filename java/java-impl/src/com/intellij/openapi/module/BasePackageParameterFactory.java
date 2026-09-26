@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
@@ -29,7 +18,7 @@ import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +26,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
+public final class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
 
   private static final Condition<PsiPackage> PACKAGE_CONDITION =
     aPackage -> PsiNameHelper.getInstance(aPackage.getProject()).isQualifiedName(aPackage.getQualifiedName()) &&
@@ -53,11 +42,16 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
     return new WizardInputField<JTextField>(IJ_BASE_PACKAGE, defaultValue) {
 
-      private final JTextField myField = new JTextField(PropertiesComponent.getInstance().getValue(IJ_BASE_PACKAGE, defaultValue));
+      private final JTextField myField;
+
+      {
+        final @NlsSafe String value = PropertiesComponent.getInstance().getValue(IJ_BASE_PACKAGE, defaultValue);
+        myField = new JTextField(value);
+      }
 
       @Override
-      public String getLabel() {
-        return "Base \u001Bpackage:";
+      public @NlsContexts.Label String getLabel() {
+        return JavaBundle.message("base.package.parameter.wizard.label");
       }
 
       @Override
@@ -83,7 +77,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
       public boolean validate() throws ConfigurationException {
         String value = getValue();
         if (!StringUtil.isEmpty(value) && !PsiNameHelperImpl.getInstance().isQualifiedName(value)) {
-          throw new ConfigurationException(value + " is not a valid package name");
+          throw new ConfigurationException(JavaBundle.message("base.package.project.wizard.error.x.not.valid.package", value));
         }
         PropertiesComponent.getInstance().setValue(IJ_BASE_PACKAGE, value);
         return true;

@@ -1,46 +1,69 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 /**
  * Describes a hyperlink inside a debugger node
  */
 public abstract class XDebuggerTreeNodeHyperlink {
-  public static final SimpleTextAttributes TEXT_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0x779dbd, 0x5676a0));
+  public static final SimpleTextAttributes TEXT_ATTRIBUTES = new SimpleTextAttributes(
+    SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.SECONDARY);
 
-  private final String linkText;
+  private final @Nls String linkText;
 
-  protected XDebuggerTreeNodeHyperlink(@NotNull String linkText) {
-    this.linkText = linkText;
+  private final @Nullable @Nls String linkTooltip;
+
+  private final @Nullable Icon linkIcon;
+
+  private final @Nullable Supplier<String> shortcutSupplier;
+
+  protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText) {
+    this(linkText, null, null, null);
   }
 
-  @NotNull
-  public String getLinkText() {
+  protected XDebuggerTreeNodeHyperlink(@NotNull @Nls String linkText, @Nullable XFullValueEvaluator.LinkAttributes linkAttributes) {
+    this(
+      linkText,
+      linkAttributes != null ? linkAttributes.getLinkTooltipText() : null,
+      linkAttributes != null ? linkAttributes.getLinkIcon() : null,
+      linkAttributes != null ? linkAttributes.getShortcutSupplier() : null
+    );
+  }
+
+  private XDebuggerTreeNodeHyperlink(
+    @NotNull @Nls String linkText,
+    @Nullable @Nls String toolTipText,
+    @Nullable Icon icon,
+    @Nullable Supplier<String> shortcutSupplier
+  ) {
+    this.linkText = linkText;
+    this.linkTooltip = toolTipText;
+    this.linkIcon = icon;
+    this.shortcutSupplier = shortcutSupplier;
+  }
+
+  public @NotNull @Nls String getLinkText() {
     return linkText;
   }
 
-  @NotNull
-  public SimpleTextAttributes getTextAttributes() {
+  public @Nullable @Nls String getLinkTooltip() {
+    return linkTooltip;
+  }
+
+  public @Nullable Icon getLinkIcon() {
+    return linkIcon;
+  }
+
+  public @NotNull SimpleTextAttributes getTextAttributes() {
     return TEXT_ATTRIBUTES;
   }
 
@@ -48,5 +71,9 @@ public abstract class XDebuggerTreeNodeHyperlink {
 
   public boolean alwaysOnScreen() {
     return false;
+  }
+
+  public @Nullable Supplier<String> getShortcutSupplier() {
+    return shortcutSupplier;
   }
 }

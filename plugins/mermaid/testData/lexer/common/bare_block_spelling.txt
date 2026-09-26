@@ -1,0 +1,8 @@
+Block.BLOCK_DIAGRAM ('block')
+EOL ('\n')
+WHITE_SPACE ('  ')
+ID ('a')
+WHITE_SPACE (' ')
+ID ('b')
+WHITE_SPACE (' ')
+ID ('c')

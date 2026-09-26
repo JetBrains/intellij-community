@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
-public class GeneralGroupNode extends PackageDependenciesNode {
+@ApiStatus.Internal
+public final class GeneralGroupNode extends PackageDependenciesNode {
   private final String myName;
   private final Icon myIcon;
 
@@ -31,7 +19,8 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     myIcon = icon;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -40,14 +29,17 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public String toString() {
     return myName;
   }
 
+  @Override
   public int getWeight() {
     return 6;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -56,10 +48,12 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     return myName.equals(((GeneralGroupNode)o).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }

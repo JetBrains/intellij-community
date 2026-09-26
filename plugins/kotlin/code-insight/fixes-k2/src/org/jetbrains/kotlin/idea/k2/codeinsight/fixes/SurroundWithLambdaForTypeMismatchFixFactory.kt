@@ -1,0 +1,64 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
+
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
+import org.jetbrains.kotlin.psi.KtExpression
+
+internal object SurroundWithLambdaForTypeMismatchFixFactory {
+
+    val argumentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
+        listOfNotNull(
+            createFixIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        )
+    }
+
+    val assignmentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
+        listOfNotNull(
+            createFixIfAvailable(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
+        )
+    }
+
+    val returnTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
+        listOfNotNull(
+            createFixIfAvailable(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
+        )
+    }
+
+    val initializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
+        listOfNotNull(
+            createFixIfAvailable(diagnostic.initializer, diagnostic.expectedType, diagnostic.actualType)
+        )
+    }
+
+    context(session: KaSession)
+    private fun createFixIfAvailable(
+        element: PsiElement?,
+        expectedType: KaType,
+        actualType: KaType,
+    ): SurroundWithLambdaForTypeMismatchFix? {
+        if (element !is KtExpression || expectedType !is KaFunctionType) return null
+        if (expectedType.parameters.size > 1) return null
+        val lambdaReturnType = expectedType.returnType
+
+        if (actualType.withNullability(isMarkedNullable = false).isSubtypeOf(lambdaReturnType) ||
+            (actualType.isPrimitiveNumberType() && lambdaReturnType.isPrimitiveNumberType())
+        ) {
+            return SurroundWithLambdaForTypeMismatchFix(element)
+        }
+        return null
+    }
+
+    context(_: KaSession)
+    private fun KaType.isPrimitiveNumberType(): Boolean =
+        classId in KaStandardTypeClassIds.PRIMITIVES && classId != KaStandardTypeClassIds.BOOLEAN
+}

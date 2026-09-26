@@ -1,13 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -19,20 +19,29 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NORTHWEST;
+import static java.awt.GridBagConstraints.RELATIVE;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,32 +51,34 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private final CommonJavaParametersPanel myCommonProgramParameters;
   private final LabeledComponent<JTextField> myMainClass;
   private final LabeledComponent<TextFieldWithBrowseButton> myScratchPathField;
-  private final LabeledComponent<ModulesComboBox> myModule;
+  private final LabeledComponent<ModuleDescriptionsComboBox> myModule;
   private final JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
+  private final LabeledComponent<JBCheckBox> myIncludeProvidedDeps;
   private final JrePathEditor myJrePathEditor;
+  private final LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComponent myAnchor;
 
-  public JavaScratchConfigurable(final Project project) {
+  public JavaScratchConfigurable(@NotNull  Project project) {
     myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
-    myMainClass.setText("Main &class:");
+    myMainClass.setText(ExecutionBundle.message("main.class"));
     myMainClass.setComponent(new JTextField());
 
     myScratchPathField = new LabeledComponent<>();
     myScratchPathField.setLabelLocation(BorderLayout.WEST);
-    myScratchPathField.setText("&Path to scratch file:");
+    myScratchPathField.setText(ExecutionBundle.message("path.to.scratch.file"));
     myScratchPathField.setComponent(new TextFieldWithBrowseButton(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         VirtualFile toSelect = getVFileFromEditor();
         if (toSelect == null) {
           final String scratchesRoot = ScratchFileService.getInstance().getRootPath(ScratchRootType.getInstance());
-          toSelect = LocalFileSystem.getInstance().findFileByPath(scratchesRoot);
+          toSelect = StandardFileSystems.local().findFileByPath(scratchesRoot);
         }
         final VirtualFile file =
-          FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), myScratchPathField.getComponent(), project, toSelect);
+          FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withEnvironmentRestricted(true), myScratchPathField.getComponent(), project, toSelect);
         if (file != null) {
           setVFileToEditor(file);
         }
@@ -76,27 +87,39 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
 
     myModule = new LabeledComponent<>();
     myModule.setLabelLocation(BorderLayout.WEST);
-    myModule.setComponent(new ModulesComboBox());
-    myModule.setText("Use classpath of &module:");
+    myModule.setComponent(new ModuleDescriptionsComboBox());
+    myModule.setText(ExecutionBundle.message("use.classpath.of.module"));
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
 
-    myCommonProgramParameters = new CommonJavaParametersPanel();
+    myCommonProgramParameters = new CommonJavaParametersPanel(project);
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
-    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project), project);
+
+    myIncludeProvidedDeps = new LabeledComponent<>();
+    myIncludeProvidedDeps.setLabelLocation(BorderLayout.WEST);
+    myIncludeProvidedDeps.setComponent(new JBCheckBox(ExecutionBundle.message("application.configuration.include.provided.scope")));
+    myShortenClasspathModeCombo = new LabeledComponent<>();
+    myShortenClasspathModeCombo.setLabelLocation(BorderLayout.WEST);
+    myShortenClasspathModeCombo.setText(ExecutionBundle.message("application.configuration.shorten.command.line.label"));
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, myJrePathEditor, myModule.getComponent()));
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.add(myMainClass, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myScratchPathField, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
-    myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(RELATIVE, 2, 1, 1, 1.0, 1.0, NORTHWEST, BOTH, JBUI.insets(12, 0), 0, 0 ));
-    myWholePanel.add(myModule, new GridBagConstraints(RELATIVE, 3, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0 ));
-    myWholePanel.add(myJrePathEditor, new GridBagConstraints(RELATIVE, 4, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
+    myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(RELATIVE, 2, 1, 1, 1.0, 1.0, NORTHWEST, BOTH, JBInsets.create(12, 0), 0, 0 ));
+    myWholePanel.add(myModule, new GridBagConstraints(RELATIVE, 3, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0 ));
+    myWholePanel.add(myIncludeProvidedDeps, new GridBagConstraints(RELATIVE, 4, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
+    myWholePanel.add(myJrePathEditor, new GridBagConstraints(RELATIVE, 5, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(12), 0, 0 ));
+    myWholePanel.add(myShortenClasspathModeCombo, new GridBagConstraints(RELATIVE, 6, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
 
-    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myScratchPathField, myCommonProgramParameters, myJrePathEditor, myModule);
+    myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myScratchPathField, myCommonProgramParameters, myJrePathEditor, myModule,
+                                                myShortenClasspathModeCombo, myIncludeProvidedDeps);
   }
 
   @Override
@@ -107,15 +130,16 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     configuration.setMainClassName(myMainClass.getComponent().getText().trim());
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
+    configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
+    configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 
     final VirtualFile vFile = getVFileFromEditor();
     configuration.setScratchFileUrl(vFile != null ? vFile.getUrl() : null);
   }
 
-  @Nullable
-  private VirtualFile getVFileFromEditor() {
+  private @Nullable VirtualFile getVFileFromEditor() {
     final String path = FileUtil.toSystemIndependentName(myScratchPathField.getComponent().getText().trim());
-    return !StringUtil.isEmpty(path) ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+    return !StringUtil.isEmpty(path) ? StandardFileSystems.local().findFileByPath(path) : null;
   }
 
   @Override
@@ -125,6 +149,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
 
     myMainClass.getComponent().setText(configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "");
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
+    myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
     setVFileToEditor(configuration.getScratchVirtualFile());
   }
 
@@ -132,9 +158,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myScratchPathField.getComponent().setText(file != null? FileUtil.toSystemDependentName(file.getPath()): "");
   }
 
-  @NotNull
   @Override
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 
@@ -151,5 +176,6 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters.setAnchor(anchor);
     myJrePathEditor.setAnchor(anchor);
     myModule.setAnchor(anchor);
+    myShortenClasspathModeCombo.setAnchor(anchor);
   }
 }

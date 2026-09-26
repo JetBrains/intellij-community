@@ -1,108 +1,57 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Document;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
 
-public class SchemeImportUtil {
-  @Nullable
-  public static VirtualFile selectImportSource(@NotNull final String[] sourceExtensions,
-                                               @NotNull Component parent,
-                                               @Nullable VirtualFile preselect,
-                                               @Nullable String description) {
-    final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return
-          (file.isDirectory() || extensions.contains(file.getExtension())) &&
-          (showHiddenFiles || !FileElement.isFileHidden(file));
-      }
-
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return !file.isDirectory() && extensions.contains(file.getExtension());
-      }
-    };
+public final class SchemeImportUtil {
+  public static @Nullable VirtualFile selectImportSource(
+    @NotNull String @NotNull [] sourceExtensions,
+    @NotNull Component parent,
+    @Nullable VirtualFile preselect,
+    @Nullable @NlsContexts.Label String description
+  ) {
+    var descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false);
+    if (sourceExtensions.length == 1) {
+      descriptor.withExtensionFilter(sourceExtensions[0]);
+    }
+    else if (sourceExtensions.length > 1) {
+      descriptor.withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", sourceExtensions[0].toUpperCase(Locale.ROOT)), sourceExtensions);
+    }
     if (description != null) {
       descriptor.setDescription(description);
     }
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(descriptor, null, parent);
-    final VirtualFile[] preselectFiles;
-    if (preselect != null) {
-      preselectFiles = new VirtualFile[1];
-      preselectFiles[0] = preselect;
-    }
-    else {
-      preselectFiles = VirtualFile.EMPTY_ARRAY;
-    }
-    final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles); 
+    var fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, null, parent);
+    var preselectFiles = preselect != null ? new VirtualFile[]{preselect} : VirtualFile.EMPTY_ARRAY;
+    var virtualFiles = fileChooser.choose(null, preselectFiles);
     if (virtualFiles.length != 1) return null;
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
   }
 
-  private static boolean canSelectJarFile(@NotNull String[] sourceExtensions) {
-    for (String ext : sourceExtensions) {
-      if ("jar".equals(ext)) return true;
-    }
-    return false;
+  private static boolean canSelectJarFile(String[] sourceExtensions) {
+    return ArrayUtil.contains("jar", sourceExtensions);
   }
 
-  @NotNull
-  public static Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
-    InputStream inputStream = null;
-    try {
-      inputStream = file.getInputStream();
-      final Document document = JDOMUtil.loadDocument(inputStream);
-      final Element root = document.getRootElement();
-      inputStream.close();
-      return root;
+  public static @NotNull Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
+    try (var inputStream = file.getInputStream()) {
+      return JDOMUtil.load(inputStream);
     }
     catch (IOException | JDOMException e) {
       throw new SchemeImportException();
     }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException e) {
-          // ignore
-        }
-      }
-    }
   }
-
 }

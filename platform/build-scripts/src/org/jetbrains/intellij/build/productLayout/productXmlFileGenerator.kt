@@ -1,0 +1,56 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.productLayout
+
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.runtime.product.impl.ProductModeLoadingRules
+import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.mapConcurrent
+import org.jetbrains.intellij.build.dev.createProductProperties
+import org.jetbrains.intellij.build.impl.getBundledPluginModules
+import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
+import java.nio.file.Files
+import java.nio.file.Path
+
+/**
+ * Discovers all products from dev-build.json registry with their ProductProperties instances.
+ * This is the only function in build-scripts that depends on ProductProperties.
+ * All other product-related generation logic has been moved to product-dsl module.
+ *
+ * @param projectRoot The project root path
+ * @param outputProvider Module output provider for creating ProductProperties
+ * @return List of discovered products with ProductProperties instances
+ */
+fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider): List<DiscoveredProduct> {
+  val jsonContent = Files.readString(projectRoot.resolve(PRODUCT_REGISTRY_PATH))
+  val productToConfiguration = Json.decodeFromString<ProductConfigurationRegistry>(jsonContent).products
+
+  return productToConfiguration.entries.mapConcurrent { (productName, productConfig) ->
+    val productProperties = createProductProperties(
+      productConfiguration = productConfig,
+      outputProvider = outputProvider,
+      projectDir = projectRoot,
+      platformPrefix = productName,
+    )
+    DiscoveredProduct(
+      name = productName,
+      config = productConfig,
+      properties = productProperties,
+      spec = productProperties.getProductContentDescriptor(),
+      pluginXmlPath = productConfig.pluginXmlPath,
+      bundledModuleSetPluginModules = productProperties.productLayout.bundledPluginModules
+        .asSequence()
+        .filter(::isModuleSetPluginModuleName)
+        .map { TargetName(it) }
+        .toList(),
+      coreClassloaderModules = productProperties.productLayout.productImplementationModules.map { TargetName(it) },
+      bundledPluginModules = getBundledPluginModules(productProperties, outputProvider).map(::TargetName),
+      productModeId = productProperties.productMode.id,
+      productModeExcludedModules = ProductModeLoadingRules.getIncompatibleRootModules(productProperties.productMode)
+        .mapTo(LinkedHashSet()) { ContentModuleName(it.name) },
+    )
+  }
+}

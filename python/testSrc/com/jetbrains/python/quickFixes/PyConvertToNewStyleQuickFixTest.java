@@ -15,22 +15,31 @@
  */
 package com.jetbrains.python.quickFixes;
 
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
+import org.jetbrains.annotations.Nullable;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyConvertToNewStyleQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyConvertToNewStyleQuickFixTest extends PyQuickFixTestCase {
 
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   public void testEmptySuperClassList() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
-    doQuickFixTest(PyOldStyleClassesInspection.class, PyBundle.message("QFIX.convert.to.new.style"));
+    doQuickFixTest(PyOldStyleClassesInspection.class, PyPsiBundle.message("QFIX.convert.to.new.style"));
   }
 
   public void testSlots() {
-    doQuickFixTest(PyOldStyleClassesInspection.class, PyBundle.message("QFIX.convert.to.new.style"));
+    doQuickFixTest(PyOldStyleClassesInspection.class, PyPsiBundle.message("QFIX.convert.to.new.style"));
   }
 
 }

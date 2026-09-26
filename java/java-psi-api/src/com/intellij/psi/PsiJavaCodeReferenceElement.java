@@ -53,8 +53,14 @@ public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualif
    *
    * @return the array of types, or an empty array if the reference does not have any type arguments.
    */
-  @NotNull
-  PsiType[] getTypeParameters();
+  PsiType @NotNull [] getTypeParameters();
+
+  /**
+   * @return number of type parameters
+   */
+  default int getTypeParameterCount() {
+    return getTypeParameters().length;
+  }
 
   /**
    * Checks if the reference is qualified (consists of elements separated with periods).

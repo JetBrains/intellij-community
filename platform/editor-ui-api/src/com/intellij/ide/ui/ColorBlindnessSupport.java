@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.ImageFilter;
 import java.util.EnumMap;
+import java.util.List;
 
 /**
  * This is a base class for plugin extensions supporting color-blindness.
@@ -33,23 +20,19 @@ import java.util.EnumMap;
  * &nbsp;&nbsp;&nbsp;&nbsp;&lt;tritanopiaSupport implementation="my.package.BlueColorIssuesSupport"/&gt;
  * &nbsp;&nbsp;&nbsp;&nbsp;&lt;achromatopsiaSupport implementation="my.package.ColorVisionIssuesSupport"/&gt;
  * &lt;/extensions&gt;</pre>
- *
- * @author Sergey.Malenkov
  */
 public class ColorBlindnessSupport {
   /**
    * Returns an instance of extension to support the specified color-blindness.
    */
-  @Nullable
-  public static ColorBlindnessSupport get(@Nullable ColorBlindness blindness) {
+  public static @Nullable ColorBlindnessSupport get(@Nullable ColorBlindness blindness) {
     return blindness == null ? null : Lazy.MAP.get(blindness);
   }
 
   /**
    * Returns an image filter for the supported color-blindness.
    */
-  @Nullable
-  public ImageFilter getFilter() {
+  public @Nullable ImageFilter getFilter() {
     return null;
   }
 
@@ -67,7 +50,9 @@ public class ColorBlindnessSupport {
     }
 
     private static void init(EnumMap<ColorBlindness, ColorBlindnessSupport> map, ColorBlindness blindness, String extensionName) {
-      ColorBlindnessSupport[] extensions = (ColorBlindnessSupport[])Extensions.getExtensions(extensionName);
+      List<ColorBlindnessSupport>
+        extensions = Extensions.getRootArea().<ColorBlindnessSupport>getExtensionPoint(extensionName)
+        .getExtensionList();
       ColorBlindnessSupport support = null;
       for (ColorBlindnessSupport ext : extensions) {
         if (support == null) support = ext;

@@ -1,0 +1,129 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "pluginSystem-parser-impl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":pluginSystem-parser-impl-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.pluginSystem.parser.impl.tests`
+
+### auto-generated section `dev intellij.platform.pluginSystem.parser.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.platform.pluginSystem.parser.impl` end
+
+### auto-generated section `build intellij.platform.pluginSystem.parser.impl` start
+jvm_library(
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.pluginSystem.parser.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/xmlDom",
+        "//libraries/aalto-xml",
+        "//platform/util",
+        "//platform/util/base/multiplatform",
+    ],
+)
+
+jvm_library(
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.pluginSystem.parser.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//libraries/aalto-xml:aalto-xml_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.pluginSystem.parser.impl` end
+
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` start
+exports_files(
+    [
+        "intellij.platform.pluginSystem.parser.impl.iml",
+        "resources/intellij.platform.pluginSystem.parser.impl.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` end
+
+### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` start
+jvm_library(
+    name = "pluginSystem-parser-impl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.pluginSystem.parser.impl.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "pluginSystem-parser-impl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/pluginSystem/parser/impl",
+        "//platform/pluginSystem/parser/impl:impl_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":pluginSystem-parser-impl-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util/xmlDom",
+        "//platform/util/xmlDom:xmlDom_test_lib",
+        "//libraries/aalto-xml",
+        "//libraries/aalto-xml:aalto-xml_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` end
+
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl.tests` start
+exports_files(
+    [
+        "intellij.platform.pluginSystem.parser.impl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.pluginSystem.parser.impl.tests` end

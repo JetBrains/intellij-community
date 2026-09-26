@@ -1,41 +1,39 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.io.IOUtil
-import org.jdom.*
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jdom.Attribute
+import org.jdom.CDATA
+import org.jdom.Element
+import org.jdom.Text
+import org.jdom.Verifier
 import java.io.DataOutputStream
 
-private fun String.isEmptySafe(): Boolean {
-  return try {
-    isEmpty()
-  }
-  catch (e: NullPointerException) {
-    LOG.error(e)
-    true
-  }
-}
-
 internal class BinaryXmlWriter(private val out: DataOutputStream) {
-  private val strings = ObjectIntHashMap<String>()
+  private val strings = Object2IntOpenHashMap<String>()
+
+  init {
+    strings.defaultReturnValue(-1)
+  }
 
   fun write(element: Element) {
     writeElement(element)
   }
 
-  private fun writeString(string: String) {
-    if (string.isEmptySafe()) {
+  private fun writeString(string: String?) {
+    if (string.isNullOrEmpty()) {
       out.write(1)
       return
     }
 
-    val reference = strings.get(string)
+    val reference = strings.getInt(string)
     if (reference != -1) {
       writeUInt29(reference shl 1)
       return
     }
 
-    strings.put(string, strings.size())
+    strings.put(string, strings.size)
     // don't write actual length, IOUtil does it
     out.write((1 shl 1) or 1)
     IOUtil.writeUTF(out, string)
@@ -44,7 +42,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   private fun writeElement(element: Element) {
     writeString(element.name)
 
-    writeAttributes(element.attributes)
+    writeAttributes(if (element.hasAttributes()) element.attributes else null)
 
     val content = element.content
     for (item in content) {
@@ -57,9 +55,12 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
           out.writeByte(TypeMarker.CDATA.ordinal)
           writeString(item.text)
         }
-        is Text -> if (!isAllWhitespace(item)) {
-          out.writeByte(TypeMarker.TEXT.ordinal)
-          writeString(item.text)
+        is Text -> {
+          val text = item.text
+          if (text != null && !Verifier.isAllXMLWhitespace(text)) {
+            out.writeByte(TypeMarker.TEXT.ordinal)
+            writeString(text)
+          }
         }
       }
     }
@@ -100,15 +101,11 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
       }
       v < 0x40000000 -> {
         out.write(v shr 22 and 0x7F or 0x80)
-        out.write (v shr 15 and 0x7F or 0x80)
+        out.write(v shr 15 and 0x7F or 0x80)
         out.write(v shr 8 and 0x7F or 0x80)
         out.write(v and 0xFF)
       }
       else -> throw IllegalArgumentException("Integer out of range: $v")
     }
-  }
-
-  private fun isAllWhitespace(obj: Text): Boolean {
-    return obj.text?.all { Verifier.isXMLWhitespace(it) } ?: return true
   }
 }

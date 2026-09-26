@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +21,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ReadWriteAccessDetector {
   public static final ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
 
-  @Nullable
-  public static ReadWriteAccessDetector findDetector(@NotNull PsiElement element) {
+  public static @Nullable ReadWriteAccessDetector findDetector(@NotNull PsiElement element) {
     ReadWriteAccessDetector detector = null;
-    for(ReadWriteAccessDetector accessDetector: Extensions.getExtensions(EP_NAME)) {
+    for(ReadWriteAccessDetector accessDetector: EP_NAME.getExtensionList()) {
       if (accessDetector.isReadWriteAccessible(element)) {
         detector = accessDetector;
         break;
@@ -48,12 +32,18 @@ public abstract class ReadWriteAccessDetector {
     return detector;
   }
 
-  public enum Access { Read, Write, ReadWrite }
+  public enum Access {
+    Read, Write, ReadWrite;
+    public boolean isReferencedForRead() {
+      return this == Read || this == ReadWrite;
+    }
+    public boolean isReferencedForWrite() {
+      return this == Write || this == ReadWrite;
+    }
+  }
 
   public abstract boolean isReadWriteAccessible(@NotNull PsiElement element);
   public abstract boolean isDeclarationWriteAccess(@NotNull PsiElement element);
-  @NotNull
-  public abstract Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference);
-  @NotNull
-  public abstract Access getExpressionAccess(@NotNull PsiElement expression);
+  public abstract @NotNull Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference);
+  public abstract @NotNull Access getExpressionAccess(@NotNull PsiElement expression);
 }

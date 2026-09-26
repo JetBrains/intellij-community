@@ -1,0 +1,16 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+ <idea-plugin allow-bundled-update="true">
+  <id>com.intellij.searchEverywhereLucene</id>
+  <name>Search Everywhere Lucene</name>
+  <vendor>JetBrains</vendor>
+  <description>Enables Lucene based Search-Everywhere Tabs</description>
+
+  <!-- Declare split content modules that belong to this plugin -->
+  <content namespace="jetbrains">
+    <module name="intellij.searchEverywhereLucene.common" loading="embedded"/>
+    <module name="intellij.searchEverywhereLucene.frontend"/>
+    <module name="intellij.searchEverywhereLucene.backend"/>
+    <module name="intellij.searchEverywhereLucene.performanceTesting"/>
+  </content>
+</idea-plugin>

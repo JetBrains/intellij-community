@@ -1,67 +1,62 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
+import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.IntConsumer;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
-/**
- * @author ven
- */
-public class ReachingDefinitionsCollector {
+public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
 
-  @NotNull
-  public static FragmentVariableInfos obtainVariableFlowInformation(@NotNull final GrStatement first,
-                                                                    @NotNull final GrStatement last,
-                                                                    @NotNull final GrControlFlowOwner flowOwner,
-                                                                    @NotNull final Instruction[] flow) {
+  public static @NotNull FragmentVariableInfos obtainVariableFlowInformation(final @NotNull GrStatement first,
+                                                                             final @NotNull GrStatement last,
+                                                                             final @NotNull GrControlFlowOwner flowOwner,
+                                                                             @NotNull GroovyControlFlow flow) {
 
-    final DefinitionMap dfaResult = inferDfaResult(flow);
+    final Int2ObjectMap<int[]> dfaResult = inferDfaResult(flow.getFlow());
 
-    final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
-    final int[] postorder = reversedPostOrder(flow);
-    LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
-    LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
+    final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow.getFlow());
+    final int[] postorder = reversedPostOrder(flow.getFlow());
+    LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow.getFlow(), dfaResult, postorder);
+    LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow.getFlow());
 
     final Map<String, VariableInfo> imap = new LinkedHashMap<>();
     final Map<String, VariableInfo> omap = new LinkedHashMap<>();
@@ -69,56 +64,82 @@ public class ReachingDefinitionsCollector {
     final PsiManager manager = first.getManager();
 
     for (final Integer ref : fragmentReads) {
-      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow[ref];
-      String name = rwInstruction.getVariableName();
-      final int[] defs = dfaResult.getDefinitions(ref);
-      if (!allDefsInFragment(defs, fragmentInstructions)) {
-        addVariable(name, imap, manager, getType(rwInstruction.getElement()));
+      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow.getFlow()[ref];
+      final int[] defs = dfaResult.get((int)ref);
+      assert defs != null;
+      int descriptorId = rwInstruction.getDescriptor();
+      VariableDescriptor descriptor = flow.getVarIndices()[descriptorId];
+      if (!allDefsInFragment(defs, fragmentInstructions) || isLocallyDeclaredOutOf(rwInstruction.getElement(), descriptor, flowOwner)) {
+        addVariable(descriptor.getName(), imap, manager, getType(rwInstruction.getElement()));
       }
     }
 
+    Set<Integer> outerBound = getFragmentOuterBound(fragmentInstructions, flow.getFlow());
     for (final Integer ref : reachableFromFragmentReads) {
-      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow[ref];
-      String name = rwInstruction.getVariableName();
-      final int[] defs = dfaResult.getDefinitions(ref);
+      ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow.getFlow()[ref];
+      int descriptorId = rwInstruction.getDescriptor();
+      VariableDescriptor descriptor = flow.getVarIndices()[descriptorId];
+      final int[] defs = dfaResult.get((int)ref);
+      assert defs != null;
       if (anyDefInFragment(defs, fragmentInstructions)) {
-        for (int def : defs) {
-          if (fragmentInstructions.contains(def)) {
-            PsiType outputType = getType(flow[def].getElement());
-            addVariable(name, omap, manager, outputType);
-          }
+        for (int insnNum : outerBound) {
+          addVariable(descriptor.getName(), omap, manager, getVariableTypeAt(flowOwner, flow.getFlow()[insnNum], descriptorId, descriptor));
         }
 
         if (!allProperDefsInFragment(defs, ref, fragmentInstructions, postorder)) {
           PsiType inputType = getType(rwInstruction.getElement());
-          addVariable(name, imap, manager, inputType);
+          addVariable(descriptor.getName(), imap, manager, inputType);
         }
       }
     }
 
     addClosureUsages(imap, omap, first, last, flowOwner);
 
-    final VariableInfo[] iarr = filterNonlocals(imap, last);
-    final VariableInfo[] oarr = filterNonlocals(omap, last);
-
     return new FragmentVariableInfos() {
       @Override
       public VariableInfo[] getInputVariableNames() {
-        return iarr;
+        return imap.values().toArray(VariableInfo.EMPTY_ARRAY);
       }
 
       @Override
       public VariableInfo[] getOutputVariableNames() {
-        return oarr;
+        return omap.values().toArray(VariableInfo.EMPTY_ARRAY);
       }
     };
   }
 
-  private static DefinitionMap inferDfaResult(Instruction[] flow) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
+  private static PsiType getVariableTypeAt(GrControlFlowOwner flowOwner, Instruction instruction, int descriptorId, VariableDescriptor descriptor) {
+    PsiElement context = instruction.getElement();
+    PsiType outputType = TypeInferenceHelper.getInferredType(descriptorId, instruction, flowOwner);
+    if (outputType == null) {
+      GrVariable variable = resolveToLocalVariable(context, descriptor.getName());
+      if (variable != null) {
+        outputType = variable.getDeclaredType();
+      }
+    }
+    return outputType;
+  }
+
+
+  private static @Nullable GrVariable resolveToLocalVariable(@Nullable PsiElement element, @NotNull String name) {
+    if (element == null) return null;
+    ElementResolveResult<GrVariable> result = GrReferenceResolveRunnerKt.resolveToLocalVariable(element, name);
+    return result != null ? result.getElement() : null;
+  }
+
+  private static boolean isLocallyDeclaredOutOf(@Nullable PsiElement element,
+                                                @NotNull VariableDescriptor descriptor,
+                                                @NotNull GrControlFlowOwner flowOwner) {
+    GrVariable variable = resolveToLocalVariable(element, descriptor.getName());
+    if (variable == null) return false;
+    return !PsiImplUtilKt.isDeclaredIn(variable, flowOwner);
+  }
+
+  private static @NotNull Int2ObjectMap<int[]> inferDfaResult(Instruction @NotNull [] flow) {
+    final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    return postprocess(engine.performForceDFA(), flow, dfaInstance);
+    return postprocess(engine.performForceDFA(), flow);
   }
 
   private static void addClosureUsages(final Map<String, VariableInfo> imap,
@@ -133,33 +154,25 @@ public class ReachingDefinitionsCollector {
         super.visitClosure(closure);
       }
 
-      private void addUsagesInClosure(final Map<String, VariableInfo> imap,
-                                      final Map<String, VariableInfo> omap,
-                                      final GrClosableBlock closure,
-                                      final GrStatement first,
-                                      final GrStatement last) {
+      private static void addUsagesInClosure(final Map<String, VariableInfo> imap,
+                                             final Map<String, VariableInfo> omap,
+                                             final GrClosableBlock closure,
+                                             final GrStatement first,
+                                             final GrStatement last) {
         closure.accept(new GroovyRecursiveElementVisitor() {
           @Override
           public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
             if (refExpr.isQualified()) {
               return;
             }
-            PsiElement resolved = refExpr.resolve();
-            if (!(resolved instanceof GrVariable)) {
-              return;
-            }
-            GrVariable variable = (GrVariable)resolved;
-            if (PsiTreeUtil.isAncestor(closure, variable, true)) {
-              return;
-            }
-            if (variable instanceof ClosureSyntheticParameter &&
-                PsiTreeUtil.isAncestor(closure, ((ClosureSyntheticParameter)variable).getClosure(), false)) {
-              return;
-            }
+            String name = refExpr.getReferenceName();
+            if (name == null) return;
+            GrVariable variable = resolveToLocalVariable(refExpr, name);
+            if (variable == null) return;
+            if (PsiImplUtilKt.isDeclaredIn(variable, closure)) return;
 
-            String name = variable.getName();
             if (!(variable instanceof GrField)) {
-              if (!isInFragment(first, last, resolved)) {
+              if (!isInFragment(first, last, variable)) {
                 if (isInFragment(first, last, closure)) {
                   addVariable(name, imap, variable.getManager(), variable.getType());
                 }
@@ -221,41 +234,12 @@ public class ReachingDefinitionsCollector {
     return false;
   }
 
-  @Nullable
-  private static PsiType getType(PsiElement element) {
+  private static @Nullable PsiType getType(PsiElement element) {
     if (element instanceof GrVariable) {
       return ((GrVariable)element).getTypeGroovy();
     }
     else if (element instanceof GrReferenceExpression) return ((GrReferenceExpression)element).getType();
     return null;
-  }
-
-  private static VariableInfo[] filterNonlocals(Map<String, VariableInfo> infos, GrStatement place) {
-    List<VariableInfo> result = new ArrayList<>();
-    for (Iterator<VariableInfo> iterator = infos.values().iterator(); iterator.hasNext(); ) {
-      VariableInfo info = iterator.next();
-      String name = info.getName();
-      GroovyPsiElement property = ResolveUtil.resolveProperty(place, name);
-      if (property instanceof GrVariable) {
-        iterator.remove();
-      }
-      else if (property instanceof GrReferenceExpression) {
-        GrMember member = PsiTreeUtil.getParentOfType(property, GrMember.class);
-        if (member == null) {
-          continue;
-        }
-        else if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-          if (member.getContainingClass() instanceof GroovyScriptClass) {
-            //binding variable
-            continue;
-          }
-        }
-      }
-      if (ResolveUtil.resolveClass(place, name) == null) {
-        result.add(info);
-      }
-    }
-    return result.toArray(new VariableInfo[0]);
   }
 
   private static LinkedHashSet<Integer> getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
@@ -293,17 +277,18 @@ public class ReachingDefinitionsCollector {
 
   private static LinkedHashSet<Integer> getReachable(final LinkedHashSet<Integer> fragmentInsns,
                                                      final Instruction[] flow,
-                                                     final DefinitionMap dfaResult,
+                                                     final @NotNull Int2ObjectMap<int[]> dfaResult,
                                                      final int[] postorder) {
     final LinkedHashSet<Integer> result = new LinkedHashSet<>();
     for (final Instruction insn : flow) {
       if (isReadInsn(insn)) {
         final int ref = insn.num();
-        int[] definitions = dfaResult.getDefinitions(ref);
+        int[] definitions = dfaResult.get(ref);
         if (definitions != null) {
           for (final int def : definitions) {
             if (fragmentInsns.contains(def) &&
-                (!fragmentInsns.contains(ref) || postorder[ref] < postorder[def] && checkPathIsOutsideOfFragment(def, ref, flow, fragmentInsns))) {
+                (!fragmentInsns.contains(ref) ||
+                 postorder[ref] < postorder[def] && checkPathIsOutsideOfFragment(def, ref, flow, fragmentInsns))) {
               result.add(ref);
               break;
             }
@@ -312,6 +297,18 @@ public class ReachingDefinitionsCollector {
       }
     }
 
+    return result;
+  }
+
+  private static Set<Integer> getFragmentOuterBound(@NotNull LinkedHashSet<Integer> fragmentInstructions, Instruction @NotNull [] flow) {
+    final Set<Integer> result = new HashSet<>();
+    for (Integer num : fragmentInstructions) {
+      for (Instruction successor : flow[num].allSuccessors()) {
+        if (!fragmentInstructions.contains(successor.num())) {
+          result.add(num);
+        }
+      }
+    }
     return result;
   }
 
@@ -324,8 +321,7 @@ public class ReachingDefinitionsCollector {
   /**
    * return true if path is outside of fragment, null if there is no pathand false if path is inside fragment
    */
-  @Nullable
-  private static Boolean findPath(Instruction cur,
+  private static @Nullable Boolean findPath(Instruction cur,
                                   int destination,
                                   LinkedHashSet<Integer> fragmentInsns,
                                   boolean wasOutside,
@@ -369,23 +365,18 @@ public class ReachingDefinitionsCollector {
     return insn instanceof ReadWriteVariableInstruction && !((ReadWriteVariableInstruction)insn).isWrite();
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  private static String dumpDfaResult(ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
-    final StringBuffer buffer = new StringBuffer();
+  @SuppressWarnings("UnusedDeclaration")
+  private static @NonNls String dumpDfaResult(ArrayList<Int2ObjectMap<IntSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
+    final @NonNls StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
-      TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
+      Int2ObjectMap<IntSet> map = dfaResult.get(i);
       buffer.append("At ").append(i).append(":\n");
-      map.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-        @Override
-        public boolean execute(int i, TIntHashSet defs) {
-          buffer.append(i).append(" -> ");
-          defs.forEach(i1 -> {
-            buffer.append(i1).append(" ");
-            return true;
-          });
-          return true;
-        }
-      });
+      for (IntSet v : map.values()) {
+        buffer.append(i).append(" -> ");
+        v.forEach((IntConsumer)i1 -> {
+          buffer.append(i1).append(" ");
+        });
+      }
       buffer.append("\n");
     }
 
@@ -393,10 +384,10 @@ public class ReachingDefinitionsCollector {
   }
 
   private static class VariableInfoImpl implements VariableInfo {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
     private final PsiManager myManager;
 
-    @Nullable private
+    private @Nullable
     PsiType myType;
 
     VariableInfoImpl(@NotNull String name, PsiManager manager) {
@@ -405,14 +396,12 @@ public class ReachingDefinitionsCollector {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
     @Override
-    @Nullable
-    public PsiType getType() {
+    public @Nullable PsiType getType() {
       if (myType instanceof PsiIntersectionType) return ((PsiIntersectionType)myType).getConjuncts()[0];
       return myType;
     }
@@ -436,20 +425,28 @@ public class ReachingDefinitionsCollector {
     }
   }
 
-  @NotNull
-  private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
-                                           @NotNull Instruction[] flow,
-                                           @NotNull ReachingDefinitionsDfaInstance dfaInstance) {
-    DefinitionMap result = new DefinitionMap();
+  /**
+   * @return map instruction index -> definitions for variable in the instruction
+   */
+  private static @NotNull Int2ObjectMap<int[]> postprocess(final @NotNull List<DefinitionMap> dfaResult,
+                                                  Instruction @NotNull [] flow) {
+    Int2ObjectMap<int[]> result = new Int2ObjectOpenHashMap<>();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];
-      if (insn instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction)insn;
-        if (!rwInsn.isWrite()) {
-          int idx = dfaInstance.getVarIndex(rwInsn.getVariableName());
-          result.copyFrom(dfaResult.get(i), idx, i);
-        }
+      if (!(insn instanceof ReadWriteVariableInstruction rwInsn)) {
+        continue;
       }
+      if (rwInsn.isWrite()) {
+        continue;
+      }
+      DefinitionMap definitionMap = dfaResult.get(i);
+      definitionMap = definitionMap == null ? DefinitionMap.NEUTRAL : definitionMap;
+      int varIndex = rwInsn.getDescriptor();
+      IntSet defs = definitionMap.getDefinitions(varIndex);
+      if (defs == null) {
+        defs = IntSet.of();
+      }
+      result.put(i, defs.toIntArray());
     }
     return result;
   }

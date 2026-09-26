@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.ide.DataManager;
 import com.intellij.lexer.Lexer;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -34,7 +34,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TemplateEditorUtil {
+public final class TemplateEditorUtil {
   private TemplateEditorUtil() {}
 
   public static Editor createEditor(boolean isReadOnly, CharSequence text) {
@@ -76,7 +76,7 @@ public class TemplateEditorUtil {
     if (file != null) {
       EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
       ((EditorEx) editor).setHighlighter(highlighter);
-      
+
     }
 
     return editor;
@@ -110,7 +110,7 @@ public class TemplateEditorUtil {
     if (templateEditor != null && !templateEditor.isDisposed()) {
       final Project project = templateEditor.getProject();
       if (project != null && !project.isDisposed()) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(templateEditor.getDocument());
+        final PsiFile psiFile = EditorContextManager.getPsiFileForEditor(templateEditor, project);
         if (psiFile != null) {
           DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
         }
@@ -122,20 +122,18 @@ public class TemplateEditorUtil {
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
 
-    public TemplateHighlighter() {
+    TemplateHighlighter() {
       myLexer = new MergingLexerAdapter(new TemplateTextLexer(), TokenSet.create(TemplateTokenType.TEXT));
     }
 
     @Override
-    @NotNull
-    public Lexer getHighlightingLexer() {
+    public @NotNull Lexer getHighlightingLexer() {
       return myLexer;
     }
 
     @Override
-    @NotNull
-    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-      return tokenType == TemplateTokenType.VARIABLE ? pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES) : EMPTY;
+    public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
+      return tokenType == TemplateTokenType.VARIABLE ? pack(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES) : TextAttributesKey.EMPTY_ARRAY;
     }
   }
 }

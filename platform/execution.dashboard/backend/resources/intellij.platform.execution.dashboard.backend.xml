@@ -1,0 +1,56 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 restartRequired="true"
+                 description="Enable displaying backend Run toolwindow content in services view via LUX"
+                 key="services.view.split.run.luxing.enabled"/>
+    <runDashboardManagerProxy implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardManagerProxy" order="last"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardApiProviderApiProvider"
+                                            apiInterfaces="com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc,
+                                                           com.intellij.platform.execution.dashboard.splitApi.RunDashboardManagerRpc"/>
+    <serviceViewLocatableSearcher implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardLocatableSearcher"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardCheckerActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.BackendDashboardListenerInstaller"/>
+    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
+                       key="notification.group.services"
+                       notificationIds="run.dashboard.multiple.run.configurations"/>
+    <backendServiceViewSelectedItemProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardSelectedItemProvider"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.execution.dashboard.backend.RunDashboardConfigurationsListener"
+              topic="com.intellij.execution.RunManagerListener"/>
+  </projectListeners>
+</idea-plugin>

@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.testFramework.EdtTestUtilKt;
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class TreeExpandCollapseTest extends TestCase {
   private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode();
   private final DefaultTreeModel myTreeModel = new DefaultTreeModel(myRoot);
-  private JTree myTree = new JTree(myTreeModel);
+  private JTree myTree;
   private final DefaultMutableTreeNode myChildA = new DefaultMutableTreeNode();
   private final DefaultMutableTreeNode myChild2 = new DefaultMutableTreeNode();
   private TreePath myChildAPath;
@@ -34,9 +25,19 @@ public class TreeExpandCollapseTest extends TestCase {
   private final DefaultMutableTreeNode myChildB = new DefaultMutableTreeNode();
   private TreePath myChildBPath;
 
+  private static @NotNull JTree createTree(@NotNull TreeModel model) {
+    @SuppressWarnings("UndesirableClassUsage")
+    JTree tree = new JTree(model);
+    TreeTestUtil.assertTreeUI(tree);
+    tree.setRootVisible(true);
+    return tree;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    TestApplicationManager.getInstance();
+    myTree = createTree(myTreeModel);
     myTreeModel.insertNodeInto(myChildA, myRoot, 0);
     myTreeModel.insertNodeInto(myChildB, myRoot, 1);
     myTreeModel.insertNodeInto(myChild2, myChildA, 0);
@@ -48,110 +49,144 @@ public class TreeExpandCollapseTest extends TestCase {
   }
 
   public void testCollapse() {
-    myTree.expandPath(myChildAPath);
-    myTree.expandPath(myChild2Path);
-    checkExpanded(myChild2Path);
-    myTree.setSelectionPath(myChild2Path);
-    TreeExpandCollapse.collapse(myTree);
-    checkCollapsed(myChild2Path);
-    checkExpanded(myChildAPath);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      myTree.expandPath(myChildAPath);
+      myTree.expandPath(myChild2Path);
+      checkExpanded(myChild2Path);
+      myTree.setSelectionPath(myChild2Path);
+      TreeExpandCollapse.collapse(myTree);
+      checkCollapsed(myChild2Path);
+      checkExpanded(myChildAPath);
+      return null;
+    });
   }
 
   public void testCollapseWithoutSelection() {
-    myTree.clearSelection();
-    TreeExpandCollapse.collapse(myTree);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      myTree.clearSelection();
+      TreeExpandCollapse.collapse(myTree);
+      return null;
+    });
   }
 
   public void testExpandWithoutSelection() {
-    myTree.clearSelection();
-    TreeExpandCollapse.expand(myTree);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      myTree.clearSelection();
+      TreeExpandCollapse.expand(myTree);
+      return null;
+    });
   }
 
   public void testExpand() {
-    TreePath rootPath = collapseRoot();
-    myTree.setSelectionPath(rootPath);
-    TreeExpandCollapse.expand(myTree);
-    checkExpanded(rootPath);
-    checkCollapsed(myChildAPath);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      TreePath rootPath = collapseRoot();
+      myTree.setSelectionPath(rootPath);
+      TreeExpandCollapse.expand(myTree);
+      checkExpanded(rootPath);
+      checkCollapsed(myChildAPath);
+      return null;
+    });
   }
 
   public void testTotalFiniteExpand() {
-    TreePath rootPath = collapseRoot();
-    myTree.setSelectionPath(rootPath);
-    TreeExpandCollapse.expandAll(myTree);
-    checkExpanded(rootPath);
-    checkExpanded(myChildAPath);
-    checkExpanded(myChild2Path);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      TreePath rootPath = collapseRoot();
+      myTree.setSelectionPath(rootPath);
+      TreeExpandCollapse.expandAll(myTree);
+      checkExpanded(rootPath);
+      checkExpanded(myChildAPath);
+      checkExpanded(myChild2Path);
+      return null;
+    });
   }
 
   public void testInfiniteExpand() {
-    InfiniteTreeModel model = new InfiniteTreeModel();
-    myTree = new JTree(model);
-    TreePath rootPath = new TreePath(model.getRoot());
-    myTree.setSelectionPath(rootPath);
-    myTree.collapsePath(rootPath);
-    TreeExpandCollapse.expandAll(myTree);
-    checkExpanded(rootPath);
-    TreeExpandCollapse.expandAll(myTree);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      InfiniteTreeModel model = new InfiniteTreeModel();
+      myTree = createTree(model);
+      TreePath rootPath = new TreePath(model.getRoot());
+      myTree.setSelectionPath(rootPath);
+      myTree.collapsePath(rootPath);
+      TreeExpandCollapse.expandAll(myTree);
+      checkExpanded(rootPath);
+      TreeExpandCollapse.expandAll(myTree);
+      return null;
+    });
   }
 
   public void testSubsequentExpand() {
-    InfiniteTreeModel model = new InfiniteTreeModel();
-    myTree = new JTree(model);
-    TreeExpandCollapse.expandAll(myTree);
-    TreePath path = new TreePath(model.getRoot());
-    while (myTree.isExpanded(path)) path = path.pathByAddingChild(model.getChild(path.getLastPathComponent(), 0));
-    checkCollapsed(path);
-    TreeExpandCollapse.expandAll(myTree);
-    checkExpanded(path);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      InfiniteTreeModel model = new InfiniteTreeModel();
+      myTree = createTree(model);
+      TreeExpandCollapse.expandAll(myTree);
+      TreePath path = new TreePath(model.getRoot());
+      while (myTree.isExpanded(path)) {
+        path = path.pathByAddingChild(model.getChild(path.getLastPathComponent(), 0));
+      }
+      checkCollapsed(path);
+      TreeExpandCollapse.expandAll(myTree);
+      checkExpanded(path);
+      return null;
+    });
   }
 
   public void testTotalExpandWithoutSelection() {
-    collapseRoot();
-    myTree.clearSelection();
-    TreeExpandCollapse.expand(myTree);
-    checkCollapsed(new TreePath(myRoot));
-    checkCollapsed(myChildAPath);
-    checkCollapsed(myChildBPath);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      collapseRoot();
+      myTree.clearSelection();
+      TreeExpandCollapse.expand(myTree);
+      checkCollapsed(new TreePath(myRoot));
+      checkCollapsed(myChildAPath);
+      checkCollapsed(myChildBPath);
+      return null;
+    });
   }
 
   public void testTotalExpandWithSelection() {
-    myTree.expandPath(new TreePath(myRoot));
-    myTree.collapsePath(myChildAPath);
-    myTree.collapsePath(myChildBPath);
-    myTree.setSelectionPath(myChildAPath);
-    TreeExpandCollapse.expandAll(myTree);
-    checkExpanded(myChildAPath);
-    checkCollapsed(myChildBPath);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      myTree.expandPath(new TreePath(myRoot));
+      myTree.collapsePath(myChildAPath);
+      myTree.collapsePath(myChildBPath);
+      myTree.setSelectionPath(myChildAPath);
+      TreeExpandCollapse.expandAll(myTree);
+      checkExpanded(myChildAPath);
+      checkCollapsed(myChildBPath);
+      return null;
+    });
   }
 
   public void testExpandAllWithManyLeafs() {
-    collapseRoot();
-    addChildren(500, myChild2);
-    addChildren(500, myChildA);
-    addChildren(500, myChildB);
-    myTree.setSelectionPath(new TreePath(myRoot));
-    TreeExpandCollapse.expandAll(myTree);
-    checkExpanded(new TreePath(myRoot));
-    checkExpanded(myChildAPath);
-    checkExpanded(myChildBPath);
-    checkExpanded(myChild2Path);
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      collapseRoot();
+      addChildren(500, myChild2);
+      addChildren(500, myChildA);
+      addChildren(500, myChildB);
+      myTree.setSelectionPath(new TreePath(myRoot));
+      TreeExpandCollapse.expandAll(myTree);
+      checkExpanded(new TreePath(myRoot));
+      checkExpanded(myChildAPath);
+      checkExpanded(myChildBPath);
+      checkExpanded(myChild2Path);
+      return null;
+    });
   }
 
   public void testExpandManyNotLeafs() {
-    collapseRoot();
-    TreePath[] treePaths = new TreePath[20];
-    for (int i = 0; i < treePaths.length; i++) {
-      DefaultMutableTreeNode child = new DefaultMutableTreeNode();
-      myTreeModel.insertNodeInto(child, myChild2, 0);
-      addChildren(20, child);
-      treePaths[i] = myChild2Path.pathByAddingChild(child);
-    }
-    TreeExpandCollapse.expandAll(myTree);
-    for (int i = 0; i < treePaths.length; i++) {
-      TreePath treePath = treePaths[i];
-      checkExpanded(treePath);
-    }
+    EdtTestUtilKt.runInEdtAndWait(() -> {
+      collapseRoot();
+      TreePath[] treePaths = new TreePath[20];
+      for (int i = 0; i < treePaths.length; i++) {
+        DefaultMutableTreeNode child = new DefaultMutableTreeNode();
+        myTreeModel.insertNodeInto(child, myChild2, 0);
+        addChildren(20, child);
+        treePaths[i] = myChild2Path.pathByAddingChild(child);
+      }
+      TreeExpandCollapse.expandAll(myTree);
+      for (TreePath treePath : treePaths) {
+        checkExpanded(treePath);
+      }
+      return null;
+    });
   }
 
   private void addChildren(int childCount, DefaultMutableTreeNode node) {

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
@@ -23,10 +10,13 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -36,9 +26,9 @@ import java.util.Arrays;
  */
 class TableToolbarDecorator extends ToolbarDecorator {
   private final JTable myTable;
-  @Nullable private final ElementProducer<?> myProducer;
+  private final @Nullable ElementProducer<?> myProducer;
 
-  TableToolbarDecorator(@NotNull JTable table, @Nullable final ElementProducer<?> producer) {
+  TableToolbarDecorator(@NotNull JTable table, final @Nullable ElementProducer<?> producer) {
     myTable = table;
     myProducer = producer;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = isModelEditable();
@@ -60,8 +50,16 @@ class TableToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  protected JComponent getComponent() {
+  protected @NotNull JComponent getComponent() {
     return myTable;
+  }
+
+  @Override
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
+    if (myTable instanceof JBTable) {
+      ((JBTable) myTable).setVisibleRowCount(rowCount);
+    }
+    return this;
   }
 
   @Override
@@ -101,7 +99,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     }
   }
 
-  private void createDefaultTableActions(@Nullable final ElementProducer<?> producer) {
+  private void createDefaultTableActions(final @Nullable ElementProducer<?> producer) {
     final JTable table = myTable;
     final EditableModel tableModel = (EditableModel)table.getModel();
 
@@ -130,9 +128,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
             table.scrollRectToVisible(bounds);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true));
           }
         });
 
@@ -145,9 +141,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
       public void run(AnActionButton button) {
         if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
         }
       }
@@ -164,6 +158,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
       public void run(AnActionButton button) {
         int row = table.getEditingRow();
         int col = table.getEditingColumn();
+        int rowCount = table.getModel().getRowCount();
         TableUtil.stopEditing(table);
         int[] idx = table.getSelectedRows();
         Arrays.sort(idx);
@@ -173,18 +168,20 @@ class TableToolbarDecorator extends ToolbarDecorator {
 
         if (idx.length == 0) return;
         if (idx[0] + delta < 0) return;
-        if (idx[idx.length - 1] + delta > table.getModel().getRowCount()) return;
+        if (idx[idx.length - 1] + delta > rowCount) return;
 
         for (int i = 0; i < idx.length; i++) {
           tableModel.exchangeRows(idx[i], idx[i] + delta);
           idx[i] += delta;
         }
         TableUtil.selectRows(table, idx);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
-        if (row > 0 && col != -1) {
-          table.editCellAt(row - 1, col);
+        TableUtil.scrollSelectionToVisible(table);
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
+        if (row != -1 && col != -1) {
+          int newEditingRow = row + delta;
+          if (newEditingRow != -1 && newEditingRow < rowCount) {
+            table.editCellAt(newEditingRow, col);
+          }
         }
       }
     }

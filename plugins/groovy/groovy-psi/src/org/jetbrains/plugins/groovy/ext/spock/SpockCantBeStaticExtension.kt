@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.ext.spock
 
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.ext.spock.SpockUtils.*
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils.isFeatureMethod
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils.isFixtureMethod
+import org.jetbrains.plugins.groovy.ext.spock.SpockUtils.isSpecification
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 class SpockCantBeStaticExtension : Condition<PsiElement> {

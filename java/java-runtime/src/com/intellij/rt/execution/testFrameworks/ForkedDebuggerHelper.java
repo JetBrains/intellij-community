@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.execution.testFrameworks;
 
 import java.io.DataOutputStream;
@@ -30,8 +16,7 @@ public class ForkedDebuggerHelper {
 
   // copied from NetUtils
   protected static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -42,24 +27,20 @@ public class ForkedDebuggerHelper {
           serverSocket.wait(1);
         }
         catch (InterruptedException e) {
-          System.err.println(e);
+          e.printStackTrace();
         }
       }
       return port;
     }
-    finally {
-      serverSocket.close();
-    }
   }
 
-  public void setupDebugger(List parameters) throws IOException {
+  public void setupDebugger(List<String> parameters) throws IOException {
     if (myDebugPort > -1) {
       int debugAddress = findAvailableSocketPort();
       boolean found = false;
       for (int i = 0; i < parameters.size(); i++) {
-        String parameter = (String)parameters.get(i);
-        final String debuggerParam = "transport=dt_socket";
-        final int indexOf = parameter.indexOf(debuggerParam);
+        String parameter = parameters.get(i);
+        final int indexOf = Math.max(parameter.indexOf("transport=dt_socket"), parameter.indexOf("transport=dt_shmem"));
         if (indexOf >= 0) {
           if (debugAddress > -1) {
             parameter = parameter.substring(0, indexOf) + "transport=dt_socket,server=n,suspend=y,address=" + debugAddress;
@@ -95,9 +76,9 @@ public class ForkedDebuggerHelper {
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith(DEBUG_SOCKET)) {
-        final List list = new ArrayList(Arrays.asList(args));
+        final List<String> list = new ArrayList<>(Arrays.asList(args));
         list.remove(arg);
-        args = (String[])list.toArray(new String[0]);
+        args = list.toArray(new String[0]);
         myDebugPort = Integer.parseInt(arg.substring(DEBUG_SOCKET.length()));
         break;
       }

@@ -1,0 +1,18 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.exporter.otlp.common"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.util.http"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

@@ -1,0 +1,2398 @@
+{
+  "inspections": [
+    {
+      "id": "ArrayHashCode",
+      "cweIds": [
+        328
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ArrayObjectsEquals",
+      "cweIds": [
+        480
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CastConflictsWithInstanceof",
+      "cweIds": [
+        704
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CastToIncompatibleInterface",
+      "cweIds": [
+        704
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CollectionAddedToSelf",
+      "cweIds": [
+        664,
+        688
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComparableImplementedButEqualsNotOverridden",
+      "cweIds": [
+        697
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComparatorMethodParameterNotUsed",
+      "cweIds": [
+        628
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComparatorNotSerializable",
+      "cweIds": [
+        502
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantAssertCondition",
+      "cweIds": [
+        570,
+        571
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DesignForExtension",
+      "cweIds": [
+        668
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EqualsUsesNonFinalVariable",
+      "cweIds": [
+        697
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EqualsWhichDoesntCheckParameterClass",
+      "cweIds": [
+        697
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EqualsWithItself",
+      "cweIds": [
+        571
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectMessageFormat",
+      "cweIds": [
+        628,
+        707
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InfiniteRecursion",
+      "cweIds": [
+        674,
+        835
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JDBCExecuteWithNonConstantString",
+      "cweIds": [
+        89,
+        564
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "JDBCPrepareStatementWithNonConstantString",
+      "cweIds": [
+        89
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "LoadLibraryWithNonConstantString",
+      "cweIds": [
+        114,
+        494,
+        676,
+        829
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "MathRandomCastToInt",
+      "cweIds": [
+        330,
+        681
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MathRoundingWithIntArgument",
+      "cweIds": [
+        681
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MismatchedArrayReadWrite",
+      "cweIds": [
+        561,
+        563
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MismatchedStringBuilderQueryUpdate",
+      "cweIds": [
+        561,
+        563
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NewObjectEquality",
+      "cweIds": [
+        480
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NewStringBufferWithCharArgument",
+      "cweIds": [
+        628,
+        704
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonShortCircuitBoolean",
+      "cweIds": [
+        480,
+        691
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NullArgumentToVariableArgMethod",
+      "cweIds": [
+        628
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NumberEquality",
+      "cweIds": [
+        480
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObjectEquality",
+      "cweIds": [
+        480
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReplaceAllDot",
+      "cweIds": [
+        20,
+        185,
+        628
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RuntimeExecWithNonConstantString",
+      "cweIds": [
+        20,
+        77,
+        78,
+        88,
+        94
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "StringConcatenationInFormatCall",
+      "cweIds": [
+        116,
+        134
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "StringConcatenationInMessageFormatCall",
+      "cweIds": [
+        116,
+        134
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringEquality",
+      "cweIds": [
+        597
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringEqualsCharSequence",
+      "cweIds": [
+        597
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousArrayCast",
+      "cweIds": [
+        704
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousIndentAfterControlStatement",
+      "cweIds": [
+        483
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousIntegerDivAssignment",
+      "cweIds": [
+        682
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousMethodCalls",
+      "cweIds": [
+        628
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousToArrayCall",
+      "cweIds": [
+        704
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SystemProperties",
+      "cweIds": [
+        250,
+        668
+      ],
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "SystemSetSecurityManager",
+      "cweIds": [
+        250
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "ThrowableNotThrown",
+      "cweIds": [
+        390,
+        703
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsatisfiedRange",
+      "cweIds": [
+        129,
+        682
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsecureRandomNumberGeneration",
+      "cweIds": [
+        330
+      ],
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "VariableNotUsedInsideIf",
+      "cweIds": [
+        563
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KeySetIterationMayUseEntrySet",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "DoubleBraceInitialization",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "DoubleNegation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SingleClassImport",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BadOddness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerializableStoresNonSerializable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantValueVariableUse",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnusedLibrary",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ObsoleteCollection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FinalizeNotProtected",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryTemporaryOnConversionFromString",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UseOfConcreteClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryContinue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousInvocationHandlerImplementation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlTagCanBeJavadocTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NestedAssignment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConfusingFloatingPointLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ImplicitArrayToString",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FinalMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousReturnByteInputStream",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryBoxing",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ClassOnlyUsedInOneModule",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConditionSignal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassNestingDepth",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryUnaryMinus",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ContinueStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CaughtExceptionImmediatelyRethrown",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WaitNotInLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SafeLock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReturnThis",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NakedNotify",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonFinalClone",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "LossyConversionCompoundAssignment",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticNonFinalField",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MultipleVariablesInDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DoubleLiteralMayBeFloatLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ParametersPerMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverlyLongLambda",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CloneDeclaresCloneNotSupported",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "BooleanExpressionMayBeConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PropertyValueSetToItself",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReplaceAssignmentWithOperatorAssignment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReturnFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessarySemicolon",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrivialIf",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SingleStatementInBlock",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ExpressionComparedToItself",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryReturn",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessarySuperQualifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UseOfPropertiesAsHashtable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "VariableTypeCanBeExplicit",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Java8ListSort",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EqualsReplaceableByObjectsCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringEqualsEmptyString",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReturnOfInnerClass",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ManualArrayToCollectionCopy",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "SerialVersionUIDNotStaticFinal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnusedLabel",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InstantiationOfUtilityClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseCompareMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WaitWhileHoldingTwoLocks",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NegativeIntConstantInLongContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InstanceofCatchParameter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OnDemandImport",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FallthruInSwitchStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AtomicFieldUpdaterNotStaticFinal",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NativeMethods",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ImplicitNumericConversion",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverlyStrongTypeCast",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SimplifiableAssertion",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantEscapeInRegexReplacement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UseOfSunClasses",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantCast",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IteratorNextDoesNotThrowNoSuchElementException",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringBufferReplaceableByStringBuilder",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "SynchronizedMethod",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "AbstractMethodWithMissingImplementations",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnnecessaryToStringCall",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ClassOnlyUsedInOnePackage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NumericOverflow",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssignmentToSuperclassField",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticFieldReferenceOnSubclass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SwitchExpressionCanBePushedDown",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InnerClassReferencedViaSubclass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassMayBeInterface",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryCallToStringValueOf",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConstantOnWrongSideOfComparison",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ObjectToString",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessarilyQualifiedStaticallyImportedElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryTemporaryOnConversionToString",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "InterfaceMayBeAnnotatedFunctional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BreakStatementWithLabel",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NotifyWithoutCorrespondingWait",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ArrayEquality",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassComplexity",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EmptyFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FinalStaticMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassWithTooManyDependencies",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PackageWithTooManyClasses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AwaitWithoutCorrespondingSignal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InstanceofIncompatibleInterface",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnqualifiedMethodAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CustomClassloader",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "UnnecessarySuperConstructor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThisEscapedInConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonPublicClone",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MultipleReturnPointsPerMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaRequiresAutoModule",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RuntimeExec",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConnectionResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtendsAnnotation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssignmentToNull",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "WaitCalledOnCondition",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DanglingJavadoc",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HibernateResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComparisonOfShortAndChar",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EmptyInitializer",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryBreak",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PublicConstructorInNonPublicClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticGuardedByInstance",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ManualArrayCopy",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NonFinalFieldInEnum",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LengthOneStringInIndexOf",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "RandomDoubleForRandomInteger",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "DivideByZero",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringConcatenationMissingWhitespace",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExceptionFromCatchWhichDoesntWrap",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MethodOnlyUsedFromInnerClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ResultSetIndexZero",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MISSORTED_IMPORTS",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantMethodOverride",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SignalWithoutCorrespondingAwait",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncrementDecrementUsedAsExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SerialPersistentFieldsWithWrongSignature",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryParentheses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThreadYield",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Singleton",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DefaultNotLastCaseInSwitch",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NullThrown",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LocalCanBeFinal",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ProblematicVarargsMethodOverride",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AtomicFieldUpdaterIssues",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThreadStartInConstruction",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SwitchStatementWithTooManyBranches",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LoopConditionNotUpdatedInsideLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonSerializableObjectBoundToHttpSession",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CallToNativeMethodWhileLocked",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NestingDepth",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SocketResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtendsThrowable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AutoBoxing",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ThreadDeathRethrown",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CloneCallsConstructors",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ArraysAsListWithZeroOrOneArgument",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "CodeBlock2Expr",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NoopMethodInAbstractClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverlyLargePrimitiveArrayInitializer",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ExpressionMayBeFactorized",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CharUsedInArithmeticContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SingleCharacterStartsWith",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnnecessaryJavaDocLink",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FinalClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryEmptyArrayUsage",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "BooleanConstructor",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ThreadPriority",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonFinalFieldOfException",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtendsUtilityClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NestedSynchronizedStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NegatedConditional",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AssignmentToStaticFieldFromInstanceMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AbstractClassWithOnlyOneDirectInheritor",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "DuplicateCondition",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SystemRunFinalizersOnExit",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassIndependentOfModule",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DateToString",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LawOfDemeter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IntegerDivisionInFloatingPointContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssertWithoutMessage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BlockMarkerComments",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantImplements",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConstantConditionalExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassWithTooManyDependents",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CovariantEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Convert2Lambda",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SimplifiableIfStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThrowCaughtLocally",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NonSerializableWithSerialVersionUIDField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncompatibleMask",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EqualsCalledOnEnumConstant",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryConstantArrayCreationExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnknownGuard",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AbstractClassExtendsConcreteClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PrimitiveArrayArgumentToVariableArgMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "BigDecimalEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LoopStatementsThatDontLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantMathCall",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "BoxingBoxedValue",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "AbstractClassWithoutAbstractMethods",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CastThatLosesPrecision",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringBufferMustHaveInitialCapacity",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NumericToString",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnqualifiedFieldAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CharacterComparison",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SynchronizeOnThis",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "HashCodeUsesNonFinalVariable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InstanceofThis",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PackageInMultipleModules",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FloatingPointEquality",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerialAnnotationUsedOnWrongMember",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JNDIResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LongLiteralsEndingWithLowercaseL",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Convert2Diamond",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckForOutOfMemoryOnLargeArrayAllocation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassWithoutConstructor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PackageInfoWithoutPackage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "BigDecimalMethodWithoutRoundingCalled",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DriverManagerGetConnection",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "FinalMethodInFinalClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FinalPrivateMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PublicStaticArrayField",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "MethodWithMultipleLoops",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SleepWhileHoldingLock",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "DeprecatedClassUsageInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InstanceVariableInitialization",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "OverloadedVarargsMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NegatedIfElse",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryQualifierForThis",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnsupportedChronoFieldUnitCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UNUSED_IMPORT",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FieldAccessedSynchronizedAndUnsynchronized",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NegatedEqualityExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringConcatenationInLoops",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PackageWithTooFewClasses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BreakStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassGetClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InfiniteLoopStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassUnconnectedToPackage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonFinalStaticVariableUsedInClassInitialization",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CStyleArrayDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SystemExit",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DeclareCollectionAsInterface",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrivialStringConcatenation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AutoUnboxing",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "CallToStringConcatCanBeReplacedByOperator",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SynchronizationOnLocalVariableOrMethodParameter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NegatedConditionalExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousSystemArraycopy",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseOfClone",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NestedTryStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConditionalExpressionWithIdenticalBranches",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessarilyQualifiedStaticUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TextLabelInSwitchStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MisorderedAssertEqualsArguments",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticVariableInitialization",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExternalizableWithSerializationMethods",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CanBeFinal",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryLabelOnBreakStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassCoupling",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EmptySynchronizedStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObjectAllocationInLoop",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ChainedEquality",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThrowFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonCommentSourceStatements",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverloadedMethodsWithSameNumberOfParameters",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TransientFieldNotInitialized",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ContinueOrBreakFromFinallyBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LengthOneStringsInConcatenation",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ClassWithTooManyTransitiveDependencies",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryThis",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AssertStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TypeParameterExtendsFinalClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UtilityClassWithPublicConstructor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InstanceGuardedByStatic",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ReadObjectAndWriteObjectPrivate",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ListenerMayUseAdapter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EqualsOnSuspiciousObject",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MethodCoupling",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AbstractMethodCallInConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObjectEqualsCanBeEquality",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "InvalidComparatorMethodReference",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Java9ModuleExportsPackageToItself",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MarkerInterface",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WaitWithoutCorrespondingNotify",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerializableWithUnconstructableAncestor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CustomSecurityManager",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "TimeToString",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "WhileLoopSpinsOnField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantScheduledForRemovalAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassLoaderInstantiation",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "ClassInheritanceDepth",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MarkedForRemoval",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NestedConditionalExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NotifyCalledOnCondition",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavaLangImport",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OptionalContainsCollection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OctalLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AwaitNotInLoop",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticVariableUninitializedUse",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CyclicClassDependency",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MultiplyOrDivideByPowerOfTwo",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ForLoopReplaceableByWhile",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MethodCount",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConfusingElse",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringReplaceableByStringBuffer",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "FinallyBlockCannotCompleteNormally",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseOfJDBCDriverClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JDBCResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousLiteralUnderscore",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReadResolveAndWriteReplaceProtected",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "UnnecessaryLabelOnContinueStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MethodCanBeVariableArityMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AbstractClassNeverImplemented",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassInitializerMayBeStatic",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "SystemGC",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "SetReplaceableByEnumSet",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnnecessaryFinalOnLocalVariableOrParameter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WeakerAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InconsistentLanguageLevel",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "FieldHasSetterButNoGetter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ErrorRethrown",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Contract",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TryFinallyCanBeTryWithResources",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SamePackageImport",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThreadLocalSetWithNull",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "Java9RedundantRequiresStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BusyWait",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ForLoopWithMissingComponent",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SimplifiableConditionalExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UseOfProcessBuilder",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantAssertArgument",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticInitializerReferencesSubClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantDeclaredInAbstractClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousGetterSetter",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonSynchronizedMethodOverridesSynchronizedMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "WaitNotifyNotInSynchronizedContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnqualifiedStaticUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ControlFlowStatementWithoutBraces",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AnonymousHasLambdaAlternative",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MissingSerialAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ComparisonToNaN",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryModifier",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConditionalCanBePushedInsideExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CloneInNonCloneableClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "BigDecimalLegacyMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryConstructor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringBufferField",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ContinueStatementWithLabel",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SimplifiableBooleanExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaModuleNaming",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnaryPlus",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstructorCount",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DisjointPackage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MethodMayBeSynchronized",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ListIndexOfReplaceableByContains",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CompareToUsesNonFinalVariable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SwitchStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThreadLocalNotStaticFinal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MaskedAssertion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StringTokenizerDelimiter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReflectionForUnavailableAnnotation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InstantiatingObjectToGetClassObject",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnnecessaryModuleDependencyInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SerializableRecordContainsIgnoredMembers",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessarilyQualifiedInnerClassAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AbstractMethodOverridesConcreteMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantFieldInitialization",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonAtomicOperationOnVolatileField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SwitchStatementDensity",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SimplifiableAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ImplicitCallToSuper",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MissingDeprecatedAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CachedNumberConstructorCall",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "MarkdownDocumentationCommentsMigration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MathClampMigration",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "SimpleDateFormatWithoutLocale",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AnnotationClass",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "Finalize",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ObjectNotify",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnconditionalWait",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UtilityClassCanBeEnum",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ExtendsObject",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReassignedVariable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EmptyTryBlock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NestedSwitchStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CollectionsFieldAccessReplaceableByMethodCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AssertWithSideEffects",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "WaitOrAwaitWithoutTimeout",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IfStatementMissingBreakInLoop",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "RedundantStringFormatCall",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnclearBinaryExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BooleanParameter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EqualsBetweenInconvertibleTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThrownExceptionsPerMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PointlessBitwiseExpression",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DuplicateThrows",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PrivateMemberAccessBetweenOuterAndInnerClass",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "AmbiguousFieldAccess",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonProtectedConstructorInAbstractClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MapReplaceableByEnumMap",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnpredictableBigDecimalConstructorCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IfStatementWithIdenticalBranches",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InterfaceWithOnlyOneDirectInheritor",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "FieldNotUsedInToString",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LabeledStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Annotation",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnnecessaryUnicodeEscape",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConfusingOctalEscape",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MissortedModifiers",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ExceptionPackage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TypeParameterExtendsObject",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringConcatenationInsideStringBufferAppend",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "OverriddenMethodCallDuringObjectConstruction",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThreadWithDefaultRunMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThreeNegationsPerMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousDateFormat",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "VolatileArrayField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryInheritDoc",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonReproducibleMathCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssignmentUsedAsCondition",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TryWithIdenticalCatches",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AmbiguousMethodCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticInheritance",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "VarargParameter",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "ArrayLengthInLoopCondition",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "CloneReturnsClassType",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonSerializableWithSerializationMethods",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnnecessaryBlockStatement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryUnboxing",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "IteratorHasNextCallsIteratorNext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SynchronizationOnStaticField",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "SuspiciousArrayMethodCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassHasNoToStringMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FieldAccessNotGuarded",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IfStatementWithTooManyBranches",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonSerializableObjectPassedToObjectStream",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConstantDeclaredInInterface",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NoExplicitFinalizeCalls",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FieldCount",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConvertToBasicLatin",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UncheckedExceptionClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckedExceptionClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ThreadStopSuspendResume",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassEscapesItsScope",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonFinalFieldInImmutable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AbsoluteAlignmentInUserInterface",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SimplifiableEqualsExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryExplicitNumericCast",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LoopWithImplicitTerminationCondition",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonFinalGuard",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ImplicitSubclassInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SynchronizeOnLock",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RecordStoreResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InterfaceMethodClashesWithObject",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "SynchronizeOnNonFinalField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassNewInstance",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ChannelResource",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticCallOnSubclass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticCollection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ClassWithoutNoArgConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NewExceptionWithoutArguments",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ArrayEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IntLiteralMayBeLongLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PointlessNullCheck",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AssertMessageNotString",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ParameterTypePreventsOverriding",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InstanceofChain",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SystemGetenv",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PointlessIndexOfComparison",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ModuleWithTooFewClasses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CallToSuspiciousStringMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ModuleWithTooManyClasses",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HardcodedFileSeparators",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "OctalAndDecimalIntegersMixed",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Deprecation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EscapedSpace",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IntegerMultiplicationImplicitCastToLong",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseOfAWTPeerClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PublicFieldAccessedInSynchronizedContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ForeachStatement",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "OptionalUsedAsFieldOrParameterType",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IndexOfReplaceableByContains",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SynchronizedOnLiteralObject",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CyclomaticComplexity",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CyclicPackageDependency",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DeprecatedIsStillUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EnumClass",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ClassWithTooManyTransitiveDependents",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ShiftOutOfRange",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReadObjectInitialization",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PointlessArithmeticExpression",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LiteralAsArgToStringEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectDateTimeFormat",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SynchronizationOnGetClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantThrows",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassReferencesSubclass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConditionalBreakInInfiniteLoop",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HardcodedLineSeparators",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SafeVarargsDetector",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StringTokenizer",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AbstractMethodOverridesAbstractMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TransientFieldInNonSerializableClass",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThreadDumpStack",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SwitchStatementWithConfusingDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MethodReturnAlwaysConstant",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseOfObsoleteDateTimeApi",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SafeVarargsHasNoEffect",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SafeVarargsOnNonReifiableType",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaModuleDefinition",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MismatchedStringCase",
+      "cweIds": [
+        597
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ObjectsEqualsCanBeSimplified",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassOverriddenAtRuntime",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComparatorMinMaxCanBeUsed",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

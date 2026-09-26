@@ -1,0 +1,73 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.webp` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    main_module = "intellij.webp",
+)
+
+exports_files(
+    ["intellij.webp.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev intellij.webp` end
+
+### auto-generated section `build intellij.webp` start
+jvm_library(
+    name = "webp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.webp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-impl",
+        "//images",
+        "//plugins/webp/lib:webp-libwebp",
+    ],
+)
+
+jvm_library(
+    name = "webp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.webp",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":webp",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//images:images_test_lib",
+    ],
+)
+### auto-generated section `build intellij.webp` end
+
+### auto-generated section `iml intellij.webp` start
+exports_files(
+    [
+        "intellij.webp.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.webp` end

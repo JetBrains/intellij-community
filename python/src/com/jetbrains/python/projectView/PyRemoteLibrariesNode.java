@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.google.common.base.Function;
@@ -26,42 +12,46 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author traff
- */
-public class PyRemoteLibrariesNode extends PsiDirectoryNode {
-  private final Sdk mySdk;
-  private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
+public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
+  private final @NotNull RemoteSdkProperties myRemoteSdkData;
 
-  private PyRemoteLibrariesNode(Sdk sdk, Project project, PsiDirectory value, ViewSettings viewSettings) {
+  private PyRemoteLibrariesNode(@NotNull Project project,
+                                @NotNull RemoteSdkProperties sdkAdditionalData,
+                                @NotNull PsiDirectory value,
+                                ViewSettings viewSettings) {
     super(project, value, viewSettings);
-    mySdk = sdk;
-    assert mySdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase;
 
-    myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+    myRemoteSdkData = sdkAdditionalData;
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
-    data.setPresentableText("Remote Libraries");
+  protected void updateImpl(@NotNull PresentationData data) {
+    data.setPresentableText(PyBundle.message("python.project.view.remote.libraries"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  @Nullable
-  public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
-      VirtualFile remoteLibrary = PySdkUtil.findAnyRemoteLibrary(sdk);
+  public static @Nullable PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof RemoteSdkProperties && sdkAdditionalData instanceof PythonSdkAdditionalData) {
+      VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
 
       if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
         remoteLibrary = JarFileSystem.getInstance().getLocalByEntry(remoteLibrary);
@@ -71,24 +61,21 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
         final VirtualFile remoteLibraries = remoteLibrary.getParent();
 
         final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
-        return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+        if (remoteLibrariesDirectory != null) {
+          return new PyRemoteLibrariesNode(project, (RemoteSdkProperties)sdkAdditionalData, remoteLibrariesDirectory, settings);
+        }
       }
     }
     return null;
   }
 
   @Override
-  public Collection<AbstractTreeNode> getChildrenImpl() {
-
-    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform((Function<PsiElement, AbstractTreeNode>)input -> {
+  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
+    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform((Function<PsiElement, AbstractTreeNode<?>>)input -> {
       if (input instanceof PsiFileSystemItem) {
         String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
-
-
         PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
-
-
-        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
+        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path) && dir != null) {
           return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
                                       getProject(), dir, getSettings());
         }
@@ -98,8 +85,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
     }).filter(Predicates.notNull()).toList();
   }
 
-  @Nullable
-  private PsiDirectory getDirectoryForJar(PsiFile input) {
+  private @Nullable PsiDirectory getDirectoryForJar(PsiFile input) {
     VirtualFile jarRoot = getJarRoot(input);
     if (myProject != null && jarRoot != null) {
       return PsiManager.getInstance(myProject).findDirectory(jarRoot);
@@ -109,8 +95,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
     }
   }
 
-  @Nullable
-  private static VirtualFile getJarRoot(PsiFile input) {
+  private static @Nullable VirtualFile getJarRoot(PsiFile input) {
     final VirtualFile file = input.getVirtualFile();
     if (file == null || !file.isValid() || !(file.getFileType() instanceof ArchiveFileType)) {
       return null;
@@ -122,13 +107,13 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
     private final String myRemotePath;
 
-    public PyRemoteRootNode(String remotePath, Project project, PsiDirectory value, ViewSettings viewSettings) {
+    public PyRemoteRootNode(String remotePath, Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
       super(project, value, viewSettings);
       myRemotePath = remotePath;
     }
 
     @Override
-    protected void updateImpl(PresentationData data) {
+    protected void updateImpl(@NotNull PresentationData data) {
       data.setPresentableText(myRemotePath);
       data.setIcon(PlatformIcons.FOLDER_ICON);
     }

@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/A.class
+End of files
+Compiling files:
+  java/methodModifiers/incConstructorAccess/a/ppp/A.java
+End of files
+Cleaning output files:
+  qqq/New.class
+End of files
+Compiling files:
+  java/methodModifiers/incConstructorAccess/a/qqq/New.java
+End of files
+------------------------------------------
+Exit code: OK

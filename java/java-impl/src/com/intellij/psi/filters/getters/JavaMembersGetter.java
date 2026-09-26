@@ -1,43 +1,57 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.JavaTailTypes;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
+import com.intellij.codeInsight.completion.JavaStaticMemberProcessor;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInspection.magicConstant.MagicCompletionContributor;
-import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaMembersGetter extends MembersGetter {
-  private final PsiType myExpectedType;
+  private final @NotNull PsiType myExpectedType;
   private final CompletionParameters myParameters;
 
   public JavaMembersGetter(@NotNull PsiType expectedType, CompletionParameters parameters) {
@@ -46,17 +60,19 @@ public class JavaMembersGetter extends MembersGetter {
     myParameters = parameters;
   }
 
-  public void addMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+  public void addMembers(boolean searchInheritors, final Consumer<? super LookupElement> results) {
     if (MagicCompletionContributor.getAllowedValues(myParameters.getPosition()) != null) {
       return;
     }
 
+    addKnownConstants(results);
+
     addConstantsFromTargetClass(results, searchInheritors);
-    if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
+    if (myExpectedType instanceof PsiPrimitiveType && PsiTypes.doubleType().isAssignableFrom(myExpectedType)) {
       addConstantsFromReferencedClassesInSwitch(results);
     }
 
-    if (myPlace.getParent().getParent() instanceof PsiSwitchLabelStatement) {
+    if (JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) {
       return; //non-enum values are processed above, enum values will be suggested by reference completion
     }
 
@@ -68,8 +84,41 @@ public class JavaMembersGetter extends MembersGetter {
     }
   }
 
-  private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {
-    final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(myPlace);
+  private record ConstantClass(@NotNull String constantContainingClass, @NotNull LanguageLevel languageLevel,
+                               @Nullable String priorityConstant) {
+  }
+  
+  private static final Map<String, ConstantClass> CONSTANT_SUGGESTIONS = Map.of(
+    "java.nio.charset.Charset", new ConstantClass("java.nio.charset.StandardCharsets", LanguageLevel.JDK_1_7, "UTF_8"),
+    "java.time.temporal.TemporalUnit", new ConstantClass("java.time.temporal.ChronoUnit", LanguageLevel.JDK_1_8, null),
+    "java.time.temporal.TemporalField", new ConstantClass("java.time.temporal.ChronoField", LanguageLevel.JDK_1_8, null)
+  );
+
+  private void addKnownConstants(Consumer<? super LookupElement> results) {
+    PsiFile file = myParameters.getOriginalFile();
+    ConstantClass constantClass = CONSTANT_SUGGESTIONS.get(myExpectedType.getCanonicalText());
+    if (constantClass != null && PsiUtil.getLanguageLevel(file).isAtLeast(constantClass.languageLevel)) {
+      PsiClass charsetsClass =
+        JavaPsiFacade.getInstance(file.getProject()).findClass(constantClass.constantContainingClass, file.getResolveScope());
+      if (charsetsClass != null) {
+        for (PsiField field : charsetsClass.getFields()) {
+          if (field.hasModifierProperty(PsiModifier.STATIC) &&
+              field.hasModifierProperty(PsiModifier.PUBLIC) && myExpectedType.isAssignableFrom(field.getType())) {
+            LookupElement element = createFieldElement(field, charsetsClass);
+            if (element != null && field.getName().equals(constantClass.priorityConstant)) {
+              element = PrioritizedLookupElement.withPriority(element, 1.0);
+            }
+            results.consume(element);
+          }
+        }
+      }
+    }
+  }
+
+  private void addConstantsFromReferencedClassesInSwitch(final Consumer<? super LookupElement> results) {
+    if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(myPlace)) return;
+    PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(myPlace, PsiSwitchBlock.class));
+    final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(block);
     final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {
       ContainerUtil.addIfNotNull(classes, field.getContainingClass());
@@ -78,13 +127,13 @@ public class JavaMembersGetter extends MembersGetter {
       processMembers(element -> {
         //noinspection SuspiciousMethodCalls
         if (!fields.contains(element.getObject())) {
-          results.consume(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
+          results.consume(TailTypeDecorator.withTail(element, JavaTailTypes.forSwitchLabel(block)));
         }
       }, aClass, true, false);
     }
   }
 
-  private void addConstantsFromTargetClass(Consumer<LookupElement> results, boolean searchInheritors) {
+  private void addConstantsFromTargetClass(Consumer<? super LookupElement> results, boolean searchInheritors) {
     PsiElement parent = myPlace.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;
@@ -92,8 +141,7 @@ public class JavaMembersGetter extends MembersGetter {
 
     PsiElement prev = parent;
     parent = parent.getParent();
-    while (parent instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+    while (parent instanceof PsiBinaryExpression binaryExpression) {
       final IElementType op = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
         if (prev == binaryExpression.getROperand()) {
@@ -110,21 +158,20 @@ public class JavaMembersGetter extends MembersGetter {
     }
   }
 
-  @Nullable
-  private static PsiClass getCalledClass(@Nullable PsiElement call) {
-    if (call instanceof PsiMethodCallExpression) {
-      for (final JavaResolveResult result : ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)) {
+  private static @Nullable PsiClass getCalledClass(@Nullable PsiElement call) {
+    if (call instanceof PsiMethodCallExpression methodCall) {
+      for (final JavaResolveResult result : methodCall.multiResolve(true)) {
         final PsiElement element = result.getElement();
-        if (element instanceof PsiMethod) {
-          final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+        if (element instanceof PsiMethod method) {
+          final PsiClass aClass = method.getContainingClass();
           if (aClass != null && !CommonClassNames.JAVA_LANG_MATH.equals(aClass.getQualifiedName())) {
             return aClass;
           }
         }
       }
     }
-    if (call instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)call).getClassReference();
+    if (call instanceof PsiNewExpression newExpression) {
+      final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
       if (reference != null) {
         for (final JavaResolveResult result : reference.multiResolve(true)) {
           final PsiElement element = result.getElement();
@@ -138,18 +185,17 @@ public class JavaMembersGetter extends MembersGetter {
   }
 
   @Override
-  @Nullable
-  protected LookupElement createFieldElement(PsiField field) {
+  protected @Nullable LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass) {
     if (!myExpectedType.isAssignableFrom(field.getType())) {
       return null;
     }
 
-    return new VariableLookupItem(field, false);
+    return new VariableLookupItem(field, false)
+      .qualifyIfNeeded(ObjectUtils.tryCast(myParameters.getPosition().getParent(), PsiJavaCodeReferenceElement.class), origClass);
   }
 
   @Override
-  @Nullable
-  protected LookupElement createMethodElement(PsiMethod method) {
+  protected @Nullable LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass) {
     JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
     item.setInferenceSubstitutorFromExpectedType(myPlace, myExpectedType);
     PsiType type = item.getType();

@@ -14,13 +14,22 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BinaryOSProcessHandler;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.vcs.VcsLocaleHelper;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +40,7 @@ import java.util.List;
 public final class ShellCommand {
   private final GeneralCommandLine myCommandLine;
 
-  public ShellCommand(@NotNull List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
+  public ShellCommand(@NotNull List<@NonNls String> commandLine, @Nullable @NonNls String dir, @Nullable Charset charset) {
     if (commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
@@ -49,8 +58,7 @@ public final class ShellCommand {
     myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("hg"));
   }
 
-  @NotNull
-  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
+  public @NotNull HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
     CommandResultCollector listener = new CommandResultCollector(isBinary);
     execute(showTextOnIndicator, isBinary, listener);
     return listener.getResult();
@@ -60,12 +68,12 @@ public final class ShellCommand {
     throws ShellCommandException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
-      ProcessAdapter outputAdapter = new ProcessAdapter() {
+      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new KillableProcessHandler(myCommandLine);
+      ProcessListener outputAdapter = new ProcessListener() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          for (String line : LineHandlerHelper.splitText(event.getText())) {
-            if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
+          for (@NlsSafe String line : LineHandlerHelper.splitText(event.getText())) {
+            if (ProcessOutputType.isStdout(outputType) && indicator != null && showTextOnIndicator) {
               indicator.setText2(line);
             }
             listener.onLineAvailable(line, outputType);
@@ -80,10 +88,12 @@ public final class ShellCommand {
       processHandler.addProcessListener(outputAdapter);
       processHandler.startNotify();
       while (!processHandler.waitFor(300)) {
-        if (indicator != null && indicator.isCanceled()) {
+        try {
+          ProgressManager.checkCanceled();
+        } catch (ProcessCanceledException pce) {
           processHandler.destroyProcess();
           listener.setExitCode(255);
-          break;
+          throw pce;
         }
       }
       if (isBinary) {
@@ -96,7 +106,7 @@ public final class ShellCommand {
   }
 
   public static class CommandResultCollector extends HgLineProcessListener {
-    @NotNull private final ProcessOutput myOutput;
+    private final @NotNull ProcessOutput myOutput;
     private final boolean myIsBinary;
 
     public CommandResultCollector(boolean binary) {

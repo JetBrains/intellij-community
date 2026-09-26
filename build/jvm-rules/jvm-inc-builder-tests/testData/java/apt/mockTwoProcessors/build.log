@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/MockHints
+  META-INF/MockList
+  a/BenchOne.class
+  a/BenchTwo.class
+  a/gen/BenchOneGen.class
+  a/gen/BenchTwoGen.class
+End of files
+Compiling files:
+  java/apt/mockTwoProcessors/a/BenchOne.java
+  java/apt/mockTwoProcessors/a/BenchTwo.java
+End of files
+------------------------------------------
+Exit code: OK

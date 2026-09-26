@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
@@ -21,55 +6,89 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase>{
+/**
+ * Allows changing behaviour for already created {@link RunConfigurationBase}
+ */
+public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase<?>> {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME =
     new ExtensionPointName<>("com.intellij.runConfigurationExtension");
 
-  public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
+  public <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
+                                                                       @NotNull JavaParameters params,
+                                                                       RunnerSettings runnerSettings,
+                                                                       @NotNull Executor executor) throws ExecutionException {
+    updateJavaParameters(configuration, params, runnerSettings);
+  }
 
+  /**
+   * Note that there is no guarantee that this method is called under a read action,
+   * so implementations are responsible for acquiring read access for project model, PSI, and other read-protected data access.
+   *
+   * @param params java parameters to be updated. E.g. put additional jars on classpath or module path, additional VM options, etc.
+   */
+  public abstract <T extends RunConfigurationBase<?>> void updateJavaParameters(@NotNull T configuration,
+                                                                                @NotNull JavaParameters params,
+                                                                                @Nullable RunnerSettings runnerSettings) throws ExecutionException;
 
   @Override
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
                                   RunnerSettings runnerSettings,
                                   @NotNull GeneralCommandLine cmdLine,
-                                  @NotNull String runnerId)  throws ExecutionException {}
+                                  @NotNull String runnerId) throws ExecutionException { }
 
   @Override
-  protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
+  public boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
     return true;
   }
 
-  public void cleanUserData(RunConfigurationBase runConfigurationBase) {}
+  public void cleanUserData(RunConfigurationBase<?> runConfigurationBase) { }
 
-  public static void cleanExtensionsUserData(RunConfigurationBase runConfigurationBase) {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+  public static void cleanExtensionsUserData(@NotNull RunConfigurationBase<?> runConfigurationBase) {
+    for (RunConfigurationExtension extension : EP_NAME.getExtensionList()) {
       extension.cleanUserData(runConfigurationBase);
     }
   }
 
+  /**
+   * Allows updating custom settings for existing configuration when {@code element} is moved or renamed.
+   */
   public RefactoringElementListener wrapElementListener(PsiElement element,
-                                                        RunConfigurationBase runJavaConfiguration,
+                                                        RunConfigurationBase<?> runJavaConfiguration,
                                                         RefactoringElementListener listener) {
     return listener;
   }
 
   public static RefactoringElementListener wrapRefactoringElementListener(PsiElement element,
-                                                                          RunConfigurationBase runConfigurationBase,
+                                                                          RunConfigurationBase<?> runConfigurationBase,
                                                                           RefactoringElementListener listener) {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
+    for (RunConfigurationExtension extension : EP_NAME.getExtensionList()) {
       listener = extension.wrapElementListener(element, runConfigurationBase, listener);
     }
     return listener;
   }
 
-  public  boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
+  /**
+   * @return true if {@code runnerSettings} explicitly says that current extension should be disabled,
+   * e.g. for run without coverage, coverage listeners should not be enabled
+   */
+  public boolean isListenerDisabled(RunConfigurationBase<?> configuration, Object listener, RunnerSettings runnerSettings) {
     return false;
+  }
+
+  /**
+   * Enhances the run process console by adding any extension-specific information to it.
+   *
+   * @deprecated use {@code com.intellij.execution.application.JavaConsoleDecorator.decorate}
+   */
+  @Deprecated(forRemoval = true)
+  protected @NotNull ConsoleView decorate(@NotNull ConsoleView console, @NotNull RunConfigurationBase<?> configuration, @NotNull Executor executor) {
+    return console;
   }
 }

@@ -1,0 +1,5 @@
+HtmlFile:comment.md
+  PsiElement(HTML_DOCUMENT)
+    PsiElement(XML_PROLOG)
+      <empty list>
+  PsiElement(MARKDOWN_OUTER_BLOCK)('[//]: #a (comment)\n[//]: # (comment)')

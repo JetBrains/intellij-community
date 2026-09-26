@@ -1,0 +1,165 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.visualization.ui.providers.frame
+
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
+import com.intellij.notebooks.ui.afterDistinctChange
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.overlappingVerticalScrollbarLeftShift
+import com.intellij.notebooks.ui.visualization.NotebookUtil.visibleNotebookCellWidth
+import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.notebookEditor
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.FlowPreview
+import java.awt.geom.Line2D
+
+@OptIn(FlowPreview::class)
+class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable {  // PY-74106
+  private val editor
+    get() = editorCell.editor
+  private val cellType
+    get() = editorCell.intervalOrNull?.type
+
+  private val isSelected
+    get() = editorCell.isSelected.get()
+  private val isHovered
+    get() = editorCell.isHovered.get()
+
+  val state: AtomicProperty<CellFrameState> = AtomicProperty(CellFrameState())
+
+  private var cachedRightLine: Line2D? = null
+
+  init {
+    editorCell.isSelected.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
+
+    editorCell.isHovered.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
+
+    editorCell.isUnfolded.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
+
+    JupyterBoundsChangeNotifier.get(editor).subscribe(this) {
+      cachedRightLine = null
+    }
+
+    updateCellFrameShow()
+  }
+
+  override fun dispose() {
+    state.set(CellFrameState(false))
+  }
+
+  fun getOrCalculateLineFrameVerticalLine(): Line2D? {
+    if (state.get().isVisible.not())
+      return null
+
+    cachedRightLine?.let {
+      return it
+    }
+    return calculateRightLine().also { cachedRightLine = it }
+  }
+
+  fun getLineFrameVerticalLineNoCache(): Line2D? {
+    if (state.get().isVisible.not())
+      return null
+    return calculateRightLine()
+  }
+
+  private fun calculateRightLine(): Line2D.Double? {
+    val interval = editorCell.intervalOrNull ?: return null
+    val startOffset = interval.getCellStartOffset(editor)
+    val endOffset = interval.getCellEndOffset(editor)
+
+    val upperInlayBounds = editor.inlayModel.getBlockElementsInRange(startOffset, startOffset)
+      .asSequence()
+      .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove }
+      .mapNotNull { it.bounds }
+      .maxByOrNull { it.x + it.width }
+
+    val lowerInlayBounds = editor.inlayModel.getBlockElementsInRange(endOffset, endOffset)
+      .asSequence()
+      .filter { it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove }
+      .mapNotNull { it.bounds }
+      .maxByOrNull { it.x + it.width }
+
+    val viewportRightX = calculateRightBorderXFromViewport()
+    val inlayRightX = upperInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
+                      ?: lowerInlayBounds?.let { it.x + it.width - PIXEL_GRID_OFFSET }
+    val x = inlayRightX?.let { maxOf(it, viewportRightX) } ?: viewportRightX
+
+    if (upperInlayBounds != null && lowerInlayBounds != null) {
+      val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + PIXEL_GRID_OFFSET
+      val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
+      return Line2D.Double(x, startY, x, endY)
+    }
+
+    val inputBounds = editorCell.view?.input?.calculateBounds() ?: return null
+    val startY = inputBounds.y.toDouble()
+    val endY = (inputBounds.y + inputBounds.height).toDouble() - 1
+    return Line2D.Double(x, startY, x, endY)
+  }
+
+  private fun calculateRightBorderXFromViewport(): Double {
+    val visibleArea = editor.scrollingModel.visibleArea
+    val leftShift = editor.overlappingVerticalScrollbarLeftShift()
+    val visibleWidth = editor.visibleNotebookCellWidth()
+    return visibleArea.x + leftShift + visibleWidth - PIXEL_GRID_OFFSET
+  }
+
+  fun updateCellFrameShow() {
+    if (cellType == CellType.MARKDOWN) {
+      updateCellFrameShowMarkdown()
+    }
+    else {
+      updateCellFrameShowCode()
+    }
+  }
+
+  private fun updateCellFrameShowMarkdown() {
+    if (editor.notebookEditor.singleFileDiffMode.get()) {
+      // under diff, it is necessary to make the selected cell more visible with blue frame for md cells
+      updateCellFrameShowCode()
+      return
+    }
+
+    when {
+      isSelected -> {
+        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor()))
+      }
+      isHovered -> {
+        state.set(CellFrameState(true, editor.notebookAppearance.cellFrameHoveredColor()))
+      }
+      else -> {
+        state.set(CellFrameState(false))
+      }
+    }
+  }
+
+  private fun updateCellFrameShowCode() {
+    if (isSelected) {
+      state.set(CellFrameState(true, editor.notebookAppearance.cellFrameSelectedColor()))
+    }
+    else {
+      state.set(CellFrameState(false))
+    }
+  }
+
+  companion object {
+    private const val PIXEL_GRID_OFFSET: Double = 0.5
+
+    fun create(editorCell: EditorCell): EditorCellFrameManager? =
+      if (editorCell.interval.type == CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border") ||
+          Registry.`is`("jupyter.code.cells.border")) {
+        EditorCellFrameManager(editorCell)
+      }
+      else {
+        null
+      }
+  }
+}

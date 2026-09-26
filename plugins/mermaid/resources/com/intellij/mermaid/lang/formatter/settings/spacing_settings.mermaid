@@ -1,0 +1,45 @@
+classDiagram
+  direction  RL
+  note       "From Duck till Zebra"
+  class      Animal:::styleClass
+  Animal <|-- Duck
+  note for Duck "can fly\ncan swim\ncan dive\ncan help in debugging"
+  Animal <|--|> Zebra
+
+  class Animal["Animal with a label"]
+  class Car["Car with *! symbols"]
+
+  class           Shape
+  <<interface>>   Shape
+
+  class Square~Shape~ {
+    int        id
+    [int, int] center
+    List~int~  position
+    setPoints(List~int~ points)
+    getPoints() List~int~
+  }
+
+  Square: -List~string~ messages
+  Square: +setMessages(List~string~ messages)
+  Square: +getMessages() List~string~
+  Square: +getDistanceMatrix() List~List~int~~
+
+  classA --|> classB: Inheritance
+
+  namespace BaseShapes {
+    class Triangle
+    class Rectangle {
+      double width
+      double height
+    }
+  }
+
+  Customer "1" --> "*" Ticket
+  Student "1" --> "1..*" Course
+  Galaxy --> "many" Star: Contains
+
+  class Shape
+  link  Shape       "https://www.github.com"   "This is a tooltip for a link"
+  class Shape2
+  click Shape2 href "https://www.github.com"   "This is a tooltip for a link"

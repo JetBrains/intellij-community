@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -29,7 +19,19 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrForBodyFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrIfConditionFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrListFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrLiteralFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrMethodBodyFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrMethodCallFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrMethodCallWithSingleClosureArgFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrMethodParametersFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrMissingIfStatement;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrSwitchBodyFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrSynchronizedFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrWhileBodyFixer;
+import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrWhileConditionFixer;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
@@ -51,32 +53,32 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
+public final class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public GroovySmartEnterProcessor() {
     final List<SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>> ourFixers = Arrays.asList(
-        new SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>() {
-          @Override
-          public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-            GrCatchClause catchClause = PsiTreeUtil.getParentOfType(psiElement, GrCatchClause.class);
-            if (catchClause == null || catchClause.getBody() != null) return;
-            if (!PsiTreeUtil.isAncestor(catchClause.getParameter(), psiElement, false)) return;
-        
-            final Document doc = editor.getDocument();
-        
-            PsiElement lBrace = catchClause.getLBrace();
-            if (lBrace != null) return;
-        
-            PsiElement eltToInsertAfter = catchClause.getRParenth();
-            String text = "{\n}";
-            if (eltToInsertAfter == null) {
-              eltToInsertAfter = catchClause.getParameter();
-              text = "){\n}";
-            }
-            if (eltToInsertAfter != null) {
-              doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
-            }
+      new SmartEnterProcessorWithFixers.Fixer<>() {
+        @Override
+        public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
+          GrCatchClause catchClause = PsiTreeUtil.getParentOfType(psiElement, GrCatchClause.class);
+          if (catchClause == null || catchClause.getBody() != null) return;
+          if (!PsiTreeUtil.isAncestor(catchClause.getParameter(), psiElement, false)) return;
+
+          final Document doc = editor.getDocument();
+
+          PsiElement lBrace = catchClause.getLBrace();
+          if (lBrace != null) return;
+
+          PsiElement eltToInsertAfter = catchClause.getRParenth();
+          String text = "{\n}";
+          if (eltToInsertAfter == null) {
+            eltToInsertAfter = catchClause.getParameter();
+            text = "){\n}";
           }
-        },
+          if (eltToInsertAfter != null) {
+            doc.insertString(eltToInsertAfter.getTextRange().getEndOffset(), text);
+          }
+        }
+      },
         new GrClassBodyFixer() ,
         new GrMissingIfStatement(),
         new GrIfConditionFixer(),
@@ -99,8 +101,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   @Override
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
     PsiElement parent = atCaret.getParent();
-    if (parent instanceof GrCodeBlock) {
-      final GrCodeBlock block = (GrCodeBlock) parent;
+    if (parent instanceof GrCodeBlock block) {
       if (block.getStatements().length > 0 && block.getStatements()[0] == atCaret) {
         atCaret = block;
       }
@@ -149,8 +150,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   }
 
   @Override
-  @Nullable
-  protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
+  protected @Nullable PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
@@ -164,7 +164,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   }
 
   @Override
-  protected void moveCaretInsideBracesIfAny(@NotNull final Editor editor, @NotNull final PsiFile file) throws IncorrectOperationException {
+  protected void moveCaretInsideBracesIfAny(final @NotNull Editor editor, final @NotNull PsiFile file) throws IncorrectOperationException {
     int caretOffset = editor.getCaretModel().getOffset();
     final CharSequence chars = editor.getDocument().getCharsSequence();
 

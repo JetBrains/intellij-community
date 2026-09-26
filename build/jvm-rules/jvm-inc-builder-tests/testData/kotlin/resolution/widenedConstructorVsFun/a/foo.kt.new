@@ -1,0 +1,1 @@
+class Foo constructor(val x: Int)  // constructor widened private -> public

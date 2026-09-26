@@ -1,0 +1,81 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.psi` start
+content_module_jar(module = ":psi")
+### auto-generated section `dev intellij.java.psi` end
+
+### auto-generated section `build intellij.java.psi` start
+jvm_library(
+    name = "psi",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.psi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/testIntegration"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/testIntegration",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "@lib//:kotlin-stdlib",
+        "//java/java-syntax:syntax",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+)
+
+jvm_library(
+    name = "psi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.psi",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/testIntegration",
+        "//platform/testIntegration:testIntegration_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":psi",
+        "//platform/core-api:core_test_lib",
+        "//platform/testIntegration:testIntegration_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/java-syntax:syntax_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.psi` end
+
+### auto-generated section `iml intellij.java.psi` start
+exports_files(
+    [
+        "intellij.java.psi.iml",
+        "resources/intellij.java.psi.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.psi` end

@@ -21,13 +21,12 @@ import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class DeprecationInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DeprecationInspection()};
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    DeprecationInspection inspection = new DeprecationInspection();
+    inspection.IGNORE_IN_SAME_OUTERMOST_CLASS = false;
+    return new LocalInspectionTool[]{inspection};
   }
-
-  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

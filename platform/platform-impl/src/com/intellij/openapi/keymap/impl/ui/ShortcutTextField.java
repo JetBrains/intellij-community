@@ -1,37 +1,46 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.icons.AllIcons.General;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.KeyStroke;
 import javax.swing.text.DefaultCaret;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.AWTKeyStroke;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
-public final class ShortcutTextField extends JTextField {
+@ApiStatus.Internal
+public final class ShortcutTextField extends ExtendableTextField {
   private KeyStroke myKeyStroke;
+  private int myLastPressedKeyCode = KeyEvent.VK_UNDEFINED;
+  private @Nullable Consumer<? super KeyEvent> myKeyEventConsumer;
 
-  ShortcutTextField() {
+  ShortcutTextField(boolean isFocusTraversalKeysEnabled) {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
-    setFocusTraversalKeysEnabled(false);
+    setFocusTraversalKeysEnabled(isFocusTraversalKeysEnabled);
+    if (isFocusTraversalKeysEnabled) {
+      setExtensions(Extension.create(General.InlineAdd, General.InlineAddHover, getPopupTooltip(), this::showPopup));
+    }
     setCaret(new DefaultCaret() {
       @Override
       public boolean isVisible() {
@@ -40,31 +49,49 @@ public final class ShortcutTextField extends JTextField {
     });
   }
 
-  private static boolean absolutelyUnknownKey (KeyEvent e) {
+  private static boolean absolutelyUnknownKey(KeyEvent e) {
     return e.getKeyCode() == 0
-           && e.getExtendedKeyCode() == 0
            && e.getKeyChar() == KeyEvent.CHAR_UNDEFINED
            && e.getKeyLocation() == KeyEvent.KEY_LOCATION_UNKNOWN
            && e.getExtendedKeyCode() == 0;
   }
 
+  @Override
   protected void processKeyEvent(KeyEvent e) {
-    if (e.getID() == KeyEvent.KEY_PRESSED) {
-      int keyCode = e.getKeyCode();
-
-      if (keyCode != KeyEvent.VK_SHIFT &&
-          keyCode != KeyEvent.VK_ALT &&
-          keyCode != KeyEvent.VK_CONTROL &&
-          keyCode != KeyEvent.VK_ALT_GRAPH &&
-          keyCode != KeyEvent.VK_META &&
-          !absolutelyUnknownKey(e))
-      {
-        setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
+    int keyCode = e.getKeyCode();
+    if (getFocusTraversalKeysEnabled() && e.getModifiers() == 0 && e.getModifiersEx() == 0) {
+      if (keyCode == KeyEvent.VK_ESCAPE || (keyCode == KeyEvent.VK_ENTER && myKeyStroke != null)) {
+        super.processKeyEvent(e);
+        return;
       }
     }
+
+    Consumer<? super KeyEvent> keyEventConsumer = myKeyEventConsumer;
+    if (keyEventConsumer != null) {
+      keyEventConsumer.accept(e);
+    }
+
+    final boolean isNotModifierKey = !isModifierKey(keyCode) && !absolutelyUnknownKey(e);
+
+    if (isNotModifierKey) {
+      // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
+      // RIGHT_PRESSED can be skipped, it depends on WM
+      if (
+        e.getID() == KeyEvent.KEY_PRESSED
+        || (e.getID() == KeyEvent.KEY_RELEASED &&
+            SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
+      ) {
+        setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
+      }
+
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myLastPressedKeyCode = keyCode;
+      }
+    }
+
     // Ensure TAB/Shift-TAB work as focus traversal keys, otherwise
     // there is no proper way to move the focus outside the text field.
-    if (ScreenReader.isActive()) {
+    if (!getFocusTraversalKeysEnabled() && ScreenReader.isActive()) {
       setFocusTraversalKeysEnabled(true);
       try {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().processKeyEvent(this, e);
@@ -89,6 +116,18 @@ public final class ShortcutTextField extends JTextField {
     return myKeyStroke;
   }
 
+  void setKeyEventConsumer(@Nullable Consumer<? super KeyEvent> keyEventConsumer) {
+    myKeyEventConsumer = keyEventConsumer;
+  }
+
+  private static boolean isModifierKey(int keyCode) {
+    return keyCode == KeyEvent.VK_SHIFT ||
+           keyCode == KeyEvent.VK_ALT ||
+           keyCode == KeyEvent.VK_CONTROL ||
+           keyCode == KeyEvent.VK_ALT_GRAPH ||
+           keyCode == KeyEvent.VK_META;
+  }
+
   @Override
   public void enableInputMethods(boolean enable) {
     super.enableInputMethods(enable && Registry.is("ide.settings.keymap.input.method.enabled"));
@@ -101,6 +140,59 @@ public final class ShortcutTextField extends JTextField {
     if (text == null || text.isEmpty()) {
       myKeyStroke = null;
       firePropertyChange("keyStroke", null, null);
+    }
+  }
+
+  private void showPopup() {
+    JBPopupMenu menu = new JBPopupMenu();
+    getKeyStrokes().forEach(stroke -> menu.add(getPopupAction(stroke)));
+    Insets insets = getInsets();
+    menu.show(this, getWidth() - insets.right, insets.top);
+  }
+
+  private @NotNull Action getPopupAction(@NotNull KeyStroke stroke) {
+    return new AbstractAction(IdeBundle.message("button.set.0", KeymapUtil.getKeystrokeText(stroke))) {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        setKeyStroke(stroke);
+      }
+    };
+  }
+
+  private @NotNull @NlsContexts.Tooltip String getPopupTooltip() {
+    StringBuilder sb = new StringBuilder();
+    String prefix = "";
+    for (KeyStroke stroke : getKeyStrokes()) {
+      if (0 == stroke.getModifiers()) {
+        sb.append(prefix).append(KeymapUtil.getKeystrokeText(stroke));
+        prefix = ", ";
+      }
+    }
+    return IdeBundle.message("tooltip.text.add.shortcut.with.special.keys", sb.toString());
+  }
+
+  private @NotNull Iterable<KeyStroke> getKeyStrokes() {
+    ArrayList<KeyStroke> list = new ArrayList<>();
+    addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+    addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
+    addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS));
+    addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS));
+
+    list.add(0, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+    list.add(1, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+    return list;
+  }
+
+  private static void addKeyStrokes(@NotNull ArrayList<? super KeyStroke> list, @Nullable Iterable<? extends AWTKeyStroke> strokes) {
+    if (strokes != null) {
+      for (AWTKeyStroke stroke : strokes) {
+        int keyCode = stroke.getKeyCode();
+        if (keyCode != KeyEvent.VK_UNDEFINED) {
+          list.add(stroke instanceof KeyStroke
+                   ? (KeyStroke)stroke
+                   : KeyStroke.getKeyStroke(keyCode, stroke.getModifiers(), stroke.isOnKeyRelease()));
+        }
+      }
     }
   }
 }

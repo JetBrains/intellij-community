@@ -1,0 +1,225 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.dataformat.yaml"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.platform.syntax.util"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.spellchecker"/>
+  </dependencies>
+  <!-- endregion -->
+  
+  <actions resource-bundle="messages.JsonBundle">
+    <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
+    </action>
+    <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
+    </action>
+    <action id="JsonJacksonReformatAction" class="com.intellij.json.actions.JsonJacksonReformatAction">
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="after" relative-to-action="ReformatCode"/>
+      <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <virtualFileCustomDataProvider implementation="com.intellij.json.split.JsonCodeStyleSettingsCustomDataSynchronizer"/>
+
+    <registryKey key="json.schema.object.v2.enable.nested.remote.schema.resolve" defaultValue="false" description="Try loading remote schema parts on the fly"/>
+    <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
+    <registryKey key="json.schema.use.networknt.validation" defaultValue="true" description="Use networknt validator as primary JSON Schema validation engine"/>
+
+    <registryKey key="json.schema.networknt.remote.allow.in.tests" defaultValue="false" description="Allow remote schema downloads in unit test mode (blocked by default to prevent accidental HTTP traffic)"/>
+    <registryKey key="json.schema.networknt.show.source.prefix" defaultValue="false" description="Prepend '[networknt] ' prefix to all validation errors produced by the networknt library (demo/diagnostic aid)"/>
+    <registryKey key="json.schema.networknt.resolve.remote.refs" defaultValue="true" description="Resolve remote HTTP $ref URLs during networknt validation. When false, all remote $refs return null immediately (no cache lookup, no async fetch). Useful for benchmarking local-only validation overhead."/>
+    <registryKey key="json.schema.networknt.raw.error.cap" defaultValue="500"
+                 description="Threshold for raw networknt errors before composition branch pruning kicks in. Not a cap on final displayed errors — all errors below this threshold are fully mapped."/>
+    <registryKey key="json.schema.networknt.max.branch.subvalidations" defaultValue="32"
+                 description="Cap on per-slot branch sub-validations performed by the multi-value JsonPropertyAdapter pass (e.g. JS ternaries). Coverage is per-slot, not Cartesian; raise if real configurations exhaust the cap."/>
+    <registryKey key="remote.schema.cache.validity.duration" defaultValue="1"
+                 description="The time period (in minutes) a file is being kept in cache for. Applicable to references that contain remote URLs."/>
+
+    <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
+    <outerLanguageRangePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher"/>
+    <statusBarWidgetFactory id="JSONSchemaSelector" implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory"
+                            order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
+    <editorNotificationProvider implementation="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogNotificationProvider"/>
+    <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
+
+    <!-- Codeinsight -->
+    <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
+    <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
+    <completion.contributor language="JSON" id="JsonCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
+    <lang.namesValidator language="JSON" implementationClass="com.intellij.json.JsonNamesValidator"/>
+    <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
+    <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
+    <liveTemplateContext contextId="JSON" implementation="com.intellij.json.liveTemplates.JsonContextType"/>
+    <liveTemplateContext contextId="JSON_STRING_VALUES" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
+    <liveTemplateContext contextId="JSON_PROPERTY_KEYS" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
+
+    <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
+
+    <!-- Inspections -->
+    <localInspection language="JSON" shortName="JsonStandardCompliance"
+                     bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
+    <localInspection language="JSON5" shortName="Json5StandardCompliance"
+                     bundle="messages.JsonBundle" key="inspection.compliance5.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.json.json5.codeinsight.Json5StandardComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonDuplicatePropertyKeys"
+                     bundle="messages.JsonBundle" key="inspection.duplicate.keys.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaCompliance"
+                     bundle="messages.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaDeprecation"
+                     bundle="messages.JsonBundle" key="json.schema.inspection.deprecation.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaDeprecationInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaRefReference"
+                     bundle="messages.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection"/>
+
+    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema"
+                         bundle="messages.JsonBundle"
+                         key="configurable.JsonSchemaMappingsConfigurable.display.name"
+                         instance="com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog"
+                         bundle="messages.JsonBundle"
+                         key="configurable.JsonSchemaCatalogConfigurable.display.name"
+                         instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
+    <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
+                    serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
+    <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
+                            implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
+    <lang.documentationProvider language="JSON"
+                                id="JsonSchemaDocumentationProvider"
+                                implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
+    <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
+
+    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
+    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
+    <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler"
+                            implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
+    <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
+    <intentionAction>
+      <language>JSON</language>
+      <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>JSON</language>
+      <className>com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention</className>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
+    </intentionAction>
+
+    <notificationGroup id="JSON Schema" displayType="NONE" bundle="messages.JsonBundle" key="notification.group.json.schema"/>
+
+    <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
+
+    <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
+
+    <lang.floatingToolbar language="JSON" minimal="true"/>
+
+    <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonHttpFileLoadingUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonSchemaCatalogNotificationUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.jsonSchema.fus.JsonSchemaIdValidationRule"/>
+    <projectSettings service="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
+    <projectSettings service="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript">
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaCatalogImplicitProviderFactory" order="last"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ContentAwareSchemaFileProvider"
+                    interface="com.jetbrains.jsonSchema.extension.ContentAwareJsonSchemaFileProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaGotoDeclarationSuppressor" dynamic="true"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
+                    interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaNestedCompletionsTreeProvider"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaCompletionCustomizer" interface="com.jetbrains.jsonSchema.extension.JsonSchemaCompletionCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"
+                    interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaQuickFixSuppressor"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaQuickFixSuppressor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion"
+                    interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory"
+                    interface="com.intellij.json.structureView.JsonCustomStructureViewFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.shorthandValueHandler"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaShorthandValueHandler" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

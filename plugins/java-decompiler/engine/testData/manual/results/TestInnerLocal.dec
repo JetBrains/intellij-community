@@ -1,0 +1,162 @@
+package pkg;
+
+public class TestInnerLocal {
+   public static void testStaticMethod() {
+      class Inner {
+         final String x;
+
+         public Inner(@Deprecated String x) {
+            this.x = x;// 8
+         }// 9
+      }
+
+      new Inner("test");// 11
+      new Inner1Static("test");// 12
+      new Inner1Static.Inner2Static("test");// 13
+   }// 14
+
+   public void testMethod() {
+      class Inner {
+         final String x;
+
+         public Inner(@Deprecated String x) {
+            this.x = x;// 20
+         }// 21
+      }
+
+      new Inner("test");// 23
+      new Inner1Static("test");// 24
+      new Inner1("test");// 25
+      new Inner1Static.Inner2Static("test");// 26
+   }// 27
+
+   class Inner1 {
+      final String x;
+
+      public Inner1(@Deprecated String x) {
+         this.x = x;// 32
+      }// 33
+   }
+
+   static class Inner1Static {
+      final String x;
+
+      public Inner1Static(@Deprecated String x) {
+         this.x = x;// 39
+      }// 40
+
+      public static class Inner2Static {
+         final String x;
+
+         public Inner2Static(@Deprecated String x) {
+            this.x = x;// 45
+         }// 46
+      }
+   }
+}
+
+class 'pkg/TestInnerLocal$1Inner' {
+   method '<init> (Ljava/lang/String;)V' {
+      4      8
+      5      8
+      6      8
+      7      8
+      8      8
+      9      9
+   }
+}
+
+class 'pkg/TestInnerLocal' {
+   method 'testStaticMethod ()V' {
+      4      12
+      5      12
+      e      13
+      f      13
+      18      14
+      19      14
+      1e      15
+   }
+
+   method 'testMethod ()V' {
+      5      26
+      6      26
+      f      27
+      10      27
+      1a      28
+      1b      28
+      24      29
+      25      29
+      2a      30
+   }
+}
+
+class 'pkg/TestInnerLocal$2Inner' {
+   method '<init> (Lpkg/TestInnerLocal;Ljava/lang/String;)V' {
+      9      22
+      a      22
+      b      22
+      c      22
+      d      22
+      e      23
+   }
+}
+
+class 'pkg/TestInnerLocal$Inner1' {
+   method '<init> (Lpkg/TestInnerLocal;Ljava/lang/String;)V' {
+      9      36
+      a      36
+      b      36
+      c      36
+      d      36
+      e      37
+   }
+}
+
+class 'pkg/TestInnerLocal$Inner1Static' {
+   method '<init> (Ljava/lang/String;)V' {
+      4      44
+      5      44
+      6      44
+      7      44
+      8      44
+      9      45
+   }
+}
+
+class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
+   method '<init> (Ljava/lang/String;)V' {
+      4      51
+      5      51
+      6      51
+      7      51
+      8      51
+      9      52
+   }
+}
+
+Lines mapping:
+8 <-> 9
+9 <-> 10
+11 <-> 13
+12 <-> 14
+13 <-> 15
+14 <-> 16
+20 <-> 23
+21 <-> 24
+23 <-> 27
+24 <-> 28
+25 <-> 29
+26 <-> 30
+27 <-> 31
+32 <-> 37
+33 <-> 38
+39 <-> 45
+40 <-> 46
+45 <-> 52
+46 <-> 53
+Not mapped:
+7
+19
+31
+38
+44

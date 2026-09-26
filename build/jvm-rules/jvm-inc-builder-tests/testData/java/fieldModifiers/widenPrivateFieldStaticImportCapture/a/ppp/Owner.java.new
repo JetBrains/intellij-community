@@ -1,0 +1,5 @@
+package ppp;
+public class Owner {
+  public static int F = 1;
+  static int use() { return F; }
+}

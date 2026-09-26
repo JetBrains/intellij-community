@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Holder.class
+  META-INF/kotlin_withJava_kotlinUsedInJava_jvmFieldBecameSynthetic-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmFieldBecameSynthetic/a/Holder.kt
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/jvmFieldBecameSynthetic/a/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

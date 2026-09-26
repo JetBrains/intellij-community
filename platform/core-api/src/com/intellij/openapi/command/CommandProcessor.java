@@ -1,105 +1,120 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A class for defining command scopes.
+ * <p>
+ * Every undoable change should be executed as part of a command.
+ * A command is simply a {@link Runnable} wrapped with metadata and executed through a {@link CommandProcessor} to enable proper undo/redo tracking.
+ * <p>
+ * Commands can nest.
+ * In such a case only the outermost command is taken into account when undo is requested.
+ * <p>
+ * Commands with the same "group id" are merged for undo/redo purposes.
+ * <p>
+ * <i>Transparent actions (commands)</i> are similar to usual commands but don't create a separate undo/redo step –
+ * they are undone/redone together with the 'adjacent' non-transparent command.
+ */
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance() {
-    return ServiceManager.getService(CommandProcessor.class);
+    return ApplicationManager.getApplication().getService(CommandProcessor.class);
   }
 
-  /**
-   * @deprecated use {@link #executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object)}
-   */
-  public abstract void executeCommand(@NotNull Runnable runnable,
-                                      @Nullable String name,
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable runnable,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
-                                      @Nullable Object groupId);
-
-  public abstract void executeCommand(@Nullable Project project,
-                                      @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
                                       @Nullable Document document);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable runnable,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
-                                      @NotNull UndoConfirmationPolicy confirmationPolicy);
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
-                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                                       @Nullable Document document);
 
   /**
-   * @param shouldRecordCommandForActiveDocument false if the action is not supposed to be recorded into the currently open document's history.
+   * @param shouldRecordCommandForActiveDocument {@code false} if the action is not supposed to be recorded into the currently open document's history.
    *                                             Examples of such actions: Create New File, Change Project Settings etc.
-   *                                             Default is true.
+   *                                             Default is {@code true}.
    */
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
-                                      @Nullable String name,
+                                      @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
-                                      @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                                       boolean shouldRecordCommandForActiveDocument);
 
-  public abstract void setCurrentCommandName(@Nullable String name);
+  @ApiStatus.Experimental
+  public abstract void executeCommand(@Nullable Project project,
+                                      @NotNull Runnable command,
+                                      @Nullable @NlsContexts.Command String name,
+                                      @Nullable Object groupId,
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
+                                      boolean shouldRecordCommandForActiveDocument,
+                                      @Nullable Document document);
+
+  public abstract void setCurrentCommandName(@Nullable @NlsContexts.Command String name);
 
   public abstract void setCurrentCommandGroupId(@Nullable Object groupId);
 
-  @Nullable
-  public abstract Runnable getCurrentCommand();
+  public abstract @Nullable Runnable getCurrentCommand();
 
-  @Nullable
-  public abstract String getCurrentCommandName();
+  public abstract @Nullable @Nls String getCurrentCommandName();
 
-  @Nullable
-  public abstract Object getCurrentCommandGroupId();
+  public abstract @Nullable Object getCurrentCommandGroupId();
 
-  @Nullable
-  public abstract Project getCurrentCommandProject();
+  public abstract @Nullable Project getCurrentCommandProject();
 
+  /**
+   * Defines a scope which contains undoable actions, for which there won't be a separate undo/redo step - they will be undone/redone along
+   * with 'adjacent' command.
+   */
   public abstract void runUndoTransparentAction(@NotNull Runnable action);
 
+  @ApiStatus.Internal
+  public abstract AutoCloseable withUndoTransparentAction();
+
+  /**
+   * @see #runUndoTransparentAction(Runnable)
+   */
   public abstract boolean isUndoTransparentActionInProgress();
 
   public abstract void markCurrentCommandAsGlobal(@Nullable Project project);
 
-  public abstract void addAffectedDocuments(@Nullable Project project, @NotNull Document... docs);
+  public abstract void addAffectedDocuments(@Nullable Project project, Document @NotNull ... docs);
 
-  public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
+  public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
-  public abstract void addCommandListener(@NotNull CommandListener listener);
+  /**
+   * Global commands will be merged during {@code action} execution
+   */
+  @ApiStatus.Experimental
+  public abstract void allowMergeGlobalCommands(@NotNull Runnable action);
 
-  public abstract void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable);
-
-  public abstract void removeCommandListener(@NotNull CommandListener listener);
+  @ApiStatus.Experimental
+  public boolean isCommandInProgress() {
+    return getCurrentCommand() != null;
+  }
 }

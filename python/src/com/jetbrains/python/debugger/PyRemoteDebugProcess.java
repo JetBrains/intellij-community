@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -5,25 +6,24 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 
-/**
- * @author traff
- */
 public class PyRemoteDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
-  private final String mySettraceCall;
+  private final @NlsSafe String mySettraceCall;
   private boolean isStopCalled = false;
 
   public PyRemoteDebugProcess(@NotNull XDebugSession session,
-                              @NotNull final ServerSocket serverSocket,
-                              @NotNull final ExecutionConsole executionConsole,
-                              @Nullable final ProcessHandler processHandler, @Nullable final String settraceCall) {
+                              final @NotNull ServerSocket serverSocket,
+                              final @NotNull ExecutionConsole executionConsole,
+                              final @Nullable ProcessHandler processHandler, final @Nullable String settraceCall) {
     super(session, serverSocket, executionConsole, processHandler, false);
     if (processHandler instanceof PyRemoteDebugProcessAware) {
       ((PyRemoteDebugProcessAware)processHandler).setRemoteDebugProcess(this);
@@ -39,8 +39,8 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
   }
 
   protected void printConsoleInfo() {
-    printToConsole("Starting debug server at port " + myLocalPort + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-    printToConsole("Use the following code to connect to the debugger:\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole(PyBundle.message("debugger.remote.starting.debug.server.at.port", myLocalPort), ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole(PyBundle.message("debugger.use.the.following.code.to.connect.to.the.debugger"), ConsoleViewContentType.SYSTEM_OUTPUT);
     if (!StringUtil.isEmpty(mySettraceCall)) {
       printToConsole(mySettraceCall + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
     }
@@ -48,12 +48,12 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
 
   @Override
   protected String getConnectionMessage() {
-    return "Waiting for process connection...";
+    return PyBundle.message("debugger.remote.waiting.for.process.connection");
   }
 
   @Override
   protected String getConnectionTitle() {
-    return "Waiting for connection";
+    return PyBundle.message("debugger.remote.waiting.for.connection");
   }
 
   @Override
@@ -77,10 +77,6 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
     printToConsole(getCurrentStateMessage() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  @Override
-  protected void afterConnect() {
-  }
-
   public void waitForNextConnection() {
     if (isConnected()) {
       disconnect();
@@ -89,9 +85,11 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
       getSession().resume();
     }
     if (!isWaitingForConnection()) {
-      setWaitingForConnection(true);
-      ApplicationManager.getApplication().invokeLater(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()),
-                                                      ModalityState.defaultModalityState());
+      if (!isStopCalled) {
+        setWaitingForConnection(true);
+        ApplicationManager.getApplication().invokeLater(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()),
+                                                        ModalityState.defaultModalityState());
+      }
     }
   }
 

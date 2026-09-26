@@ -15,8 +15,14 @@
  */
 package com.intellij.psi.scope.processor;
 
-import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
@@ -28,34 +34,40 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates;
 
   public MethodResolverProcessor(@NotNull PsiMethodCallExpression place, @NotNull PsiFile placeFile) {
-    this(place, place.getArgumentList(), placeFile);
-  }
-
-  public MethodResolverProcessor(@NotNull PsiCallExpression place,
-                                 @NotNull PsiExpressionList argumentList, 
-                                 @NotNull PsiFile placeFile){
-    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(placeFile))});
-    setArgumentList(argumentList);
+    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList(), null,
+                                                                                     PsiUtil.getLanguageLevel(placeFile), placeFile)});
+    setArgumentList(place.getArgumentList());
     obtainTypeArguments(place);
   }
 
   public MethodResolverProcessor(PsiClass classConstr, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place, @NotNull PsiFile placeFile) {
-    super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList,
-                                                                                      PsiUtil.getLanguageLevel(placeFile))},
+    super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, null,
+                                                                                      PsiUtil.getLanguageLevel(placeFile), placeFile)},
           new SmartList<>());
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
+    obtainConstructorTypeArguments(argumentList);
   }
 
-  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers) {
+  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, PsiConflictResolver @NotNull [] resolvers) {
     super(place, placeFile, resolvers, new SmartList<>());
+  }
+
+  private void obtainConstructorTypeArguments(@NotNull PsiExpressionList argumentList) {
+    PsiElement psiElement = argumentList.getParent();
+    if (psiElement instanceof PsiAnonymousClass) {
+      psiElement = psiElement.getParent();
+    }
+    if (psiElement instanceof PsiCallExpression) {
+      obtainTypeArguments((PsiCallExpression) psiElement);
+    }
   }
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated) {
-    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
-      if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL && myHasAccessibleStaticCorrectCandidate) {
+      myStopAcceptingCandidates = true;
     }
     super.handleEvent(event, associated);
   }

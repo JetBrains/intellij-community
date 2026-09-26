@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import org.jetbrains.annotations.Nls;
 
 import java.util.LinkedHashMap;
 
@@ -42,32 +31,9 @@ public interface ActionInfo {
     }
 
     @Override
-    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
-                                                           final String scopeName) {
-      return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
-        @Override
-        protected String getRealTitle() {
-          return VcsBundle.message("action.display.name.update.scope", scopeName);
-        }
-
-        @Override
-        protected String getActionNameForDimensions() {
-          return "update";
-        }
-
-        @Override
-        protected boolean isToBeShown() {
-          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
-        }
-
-        @Override
-        protected void setToBeShown(boolean value, boolean onOk) {
-          if (onOk) {
-            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
-          }
-        }
-      };
+    public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
+      String title = VcsBundle.message("action.display.name.update.scope", scopeName);
+      return UpdateOptionsDialogProvider.createOptionsDialog(project, title, envToConfMap);
     }
 
     @Override
@@ -103,14 +69,8 @@ public interface ActionInfo {
     }
 
     @Override
-    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project,
-                                                           LinkedHashMap<Configurable, AbstractVcs> envToConfMap, final String scopeName) {
-      return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
-        @Override
-        protected String getRealTitle() {
-          return VcsBundle.message("action.display.name.check.scope.status", scopeName);
-        }
-
+    public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
+      return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.check.scope.status", scopeName), envToConfMap) {
         @Override
         protected String getActionNameForDimensions() {
           return "status";
@@ -168,16 +128,10 @@ public interface ActionInfo {
     }
 
     @Override
-    public UpdateOrStatusOptionsDialog createOptionsDialog(final Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
-                                                           final String scopeName) {
-      return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
+    public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
+      return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.integrate.scope", scopeName), envToConfMap) {
         @Override
-        protected String getRealTitle() {
-          return VcsBundle.message("action.display.name.integrate.scope", scopeName);
-        }
-
-        @Override
-        protected String getActionNameForDimensions() {
+        protected @NlsSafe String getActionNameForDimensions() {
           return "integrate";
         }
 
@@ -192,8 +146,7 @@ public interface ActionInfo {
         }
 
         @Override
-        protected void setToBeShown(boolean value, boolean onOk) {
-        }
+        protected void setToBeShown(boolean value, boolean onOk) { }
       };
     }
 
@@ -227,13 +180,13 @@ public interface ActionInfo {
 
   UpdateEnvironment getEnvironment(AbstractVcs vcs);
 
-  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap,
-                                                  final String scopeName);
+  UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName);
 
-  String getActionName(String scopeName);
+  @NlsActions.ActionText String getActionName(String scopeName);
 
   String getActionName();
 
+  @Nls
   String getGroupName(FileGroup fileGroup);
 
   boolean canGroupByChangelist();

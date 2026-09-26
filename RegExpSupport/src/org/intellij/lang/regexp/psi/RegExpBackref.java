@@ -17,15 +17,27 @@ package org.intellij.lang.regexp.psi;
 
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A reference back to a group (RegExpGroup).
+ */
 public interface RegExpBackref extends RegExpAtom {
     /**
      * Returns the group-index the backref refers to
+     * Can be negative for relative references: {@link org.intellij.lang.regexp.RegExpCapability#PCRE_BACK_REFERENCES}
+     * @return the index of the group this backref refers to
      */
     int getIndex();
 
     /**
-     * The referenced group, or null if no such group exists
+     * @return The referenced group, or null if no such group exists
      */
     @Nullable
     RegExpGroup resolve();
+
+    /**
+     * @return true, if this is a PCRE recursive group reference; false, otherwise.
+     */
+    default boolean isRecursiveGroup() {
+        return false;
+    }
 }

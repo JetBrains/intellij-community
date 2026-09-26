@@ -1,0 +1,15 @@
+import lombok.Builder;
+import lombok.NonNull;
+
+@Builder
+public class SomeClass {
+    Integer someInteger;
+    Double someDouble;
+    String someString;
+    @NonNull
+    String someStringNonNull;
+
+    public static void main(String[] args) {
+        SomeClass.builder().someStringNonNull().build();
+    }
+}

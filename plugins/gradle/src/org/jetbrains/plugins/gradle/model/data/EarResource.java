@@ -1,58 +1,59 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/11/2015
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public class EarResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final String myEarDirectory;
-  @NotNull
-  private final String relativePath;
-  @NotNull
-  private final File file;
+  private final @NotNull String earDirectory;
+  private final @NotNull String relativePath;
+  private final @NotNull Path filePath;
 
+  /**
+   * @deprecated use {@link #EarResource(String, String, Path)} instead.
+   */
+  @Deprecated
+  @PropertyMapping({"earDirectory", "relativePath", "file"})
   public EarResource(@NotNull String earDirectory, @NotNull String relativePath, @NotNull File file) {
-    myEarDirectory = earDirectory;
+    this(earDirectory, relativePath, file.toPath());
+  }
+
+  @PropertyMapping({"earDirectory", "relativePath", "file"})
+  public EarResource(@NotNull String earDirectory, @NotNull String relativePath, @NotNull Path filePath) {
+    this.earDirectory = earDirectory;
     this.relativePath = getAdjustedPath(relativePath);
-    this.file = file;
+    this.filePath = filePath;
   }
 
-  @NotNull
-  public String getEarDirectory() {
-    return myEarDirectory;
+  public @NotNull String getEarDirectory() {
+    return earDirectory;
   }
 
-  @NotNull
-  public String getRelativePath() {
+  public @NotNull String getRelativePath() {
     return relativePath;
   }
 
-  @NotNull
-  public File getFile() {
-    return file;
+  /**
+   * @deprecated use {@link #getFilePath()} instead.
+   */
+  @Deprecated
+  public @NotNull File getFile() {
+    return filePath.toFile();
+  }
+
+  public @NotNull Path getFilePath() {
+    return filePath;
   }
 
   private static String getAdjustedPath(final @NotNull String path) {
@@ -61,31 +62,24 @@ public class EarResource implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof EarResource)) return false;
-
+    if (o == null || getClass() != o.getClass()) return false;
     EarResource resource = (EarResource)o;
-    if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (myEarDirectory != resource.myEarDirectory) return false;
-    if (!relativePath.equals(resource.relativePath)) return false;
-
-    return true;
+    return Objects.equals(earDirectory, resource.earDirectory) &&
+           Objects.equals(relativePath, resource.relativePath) &&
+           Objects.equals(filePath, resource.filePath);
   }
 
   @Override
   public int hashCode() {
-    int result = myEarDirectory.hashCode();
-    result = 31 * result + relativePath.hashCode();
-    result = 31 * result + file.getPath().hashCode();
-    return result;
+    return Objects.hash(earDirectory, relativePath, filePath);
   }
 
   @Override
   public String toString() {
-    return "Resource{" +
-           "earDirectory=" + myEarDirectory +
+    return "EarResource{" +
+           "earDirectory='" + earDirectory + '\'' +
            ", relativePath='" + relativePath + '\'' +
-           ", file=" + file +
+           ", filePath=" + filePath +
            '}';
   }
 }

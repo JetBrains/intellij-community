@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -34,35 +38,28 @@ import java.util.Map;
  */
 public class LibraryNameAndLevelPanel {
   private final JTextField myLibraryNameField;
-  private final JComboBox myLevelComboBox;
+  private final JComboBox<LibrariesContainer.LibraryLevel> myLevelComboBox;
   private String myDefaultLibraryName;
 
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
-    this(formBuilder, libraryName, Arrays.asList(LibrariesContainer.LibraryLevel.values()), level);
+    this(formBuilder, libraryName, new ArrayList<>(Arrays.asList(LibrariesContainer.LibraryLevel.values())), level);
   }
 
+  @Contract(mutates = "param3")
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @NotNull List<LibrariesContainer.LibraryLevel> availableLevels,
                                   @Nullable LibrariesContainer.LibraryLevel level) {
     myLibraryNameField = new JTextField(25);
-    formBuilder.addLabeledComponent("&Name:", myLibraryNameField);
+    formBuilder.addLabeledComponent(JavaUiBundle.message("label.library.name"), myLibraryNameField);
     myLibraryNameField.setText(libraryName);
-    myLevelComboBox = new JComboBox();
+    myLevelComboBox = new ComboBox<>();
     if (level != null && !availableLevels.isEmpty()) {
-      formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
+      formBuilder.addLabeledComponent(JavaUiBundle.message("label.library.level"), myLevelComboBox);
       final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<>();
-      levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
-      levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
-      levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));
-      myLevelComboBox.setRenderer(new ListCellRendererWrapper() {
-        @Override
-        public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof LibrariesContainer.LibraryLevel) {
-            final LibrariesContainer.LibraryLevel level = (LibrariesContainer.LibraryLevel)value;
-            setText(levels.get(level));
-          }
-        }
-      });
-      myLevelComboBox.setModel(new CollectionComboBoxModel(availableLevels, level));
+      levels.put(LibrariesContainer.LibraryLevel.GLOBAL, JavaUiBundle.message("combobox.item.global.library"));
+      levels.put(LibrariesContainer.LibraryLevel.PROJECT, JavaUiBundle.message("combobox.item.project.library"));
+      levels.put(LibrariesContainer.LibraryLevel.MODULE, JavaUiBundle.message("combobox.item.module.library"));
+      myLevelComboBox.setRenderer(BuilderKt.textListCellRenderer("", levels::get));
+      myLevelComboBox.setModel(new CollectionComboBoxModel<>(availableLevels, level));
     }
   }
 

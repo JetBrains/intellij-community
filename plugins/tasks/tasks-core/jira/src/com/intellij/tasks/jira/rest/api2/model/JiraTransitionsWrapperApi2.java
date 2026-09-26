@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api2.model;
 
 import com.google.gson.JsonElement;
@@ -7,7 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.CustomTaskState;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
@@ -30,8 +36,7 @@ public class JiraTransitionsWrapperApi2 {
     }
   }
 
-  @NotNull
-  public Set<CustomTaskState> getTransitions() {
+  public @NotNull Set<CustomTaskState> getTransitions() {
     final Set<CustomTaskState> result = new LinkedHashSet<>();
     nextTransition:
     for (JiraTransition transition : transitions) {

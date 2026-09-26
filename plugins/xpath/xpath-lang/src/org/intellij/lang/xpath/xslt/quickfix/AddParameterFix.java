@@ -15,15 +15,16 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 
 public class AddParameterFix extends AddParamBase {
     private final String myName;
@@ -34,21 +35,33 @@ public class AddParameterFix extends AddParamBase {
         myTemplate = template;
     }
 
-    @NotNull
-    public String getText() {
-        return "Add Parameter '" + myName + "' to Template '" + myTemplate.getName() + "'";
+    @Override
+    public @NotNull String getText() {
+        return XPathBundle.message("intention.name.add.parameter.to.template", myName, myTemplate.getName());
     }
 
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.add.parameter.to.template");
+    }
+
+    @Override
     protected String getParamName() {
         return myName;
     }
 
-    @Nullable
-    protected XmlTag findTemplateTag() {
+    @Override
+    protected @Nullable XmlTag findTemplateTag() {
         return PsiTreeUtil.getParentOfType(myTemplate.getNavigationElement(), XmlTag.class, false);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myTemplate.isValid();
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new AddParameterFix(myName, PsiTreeUtil.findSameElementInCopy(myTemplate, target));
     }
 }

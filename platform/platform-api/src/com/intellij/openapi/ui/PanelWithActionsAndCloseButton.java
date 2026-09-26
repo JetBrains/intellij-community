@@ -1,26 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-
-public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
+public abstract class PanelWithActionsAndCloseButton extends JPanel implements UiCompatibleDataProvider, Disposable {
   protected final ContentManager myContentManager;
-  private final String myHelpId;
+  private final @NonNls String myHelpId;
   private final boolean myVerticalToolbar;
   private boolean myCloseEnabled;
-  private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup(null, false);
+  private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup();
 
   public PanelWithActionsAndCloseButton(ContentManager contentManager, @NonNls String helpId) {
     this(contentManager, helpId, true);
@@ -34,8 +45,9 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = true;
 
     if (myContentManager != null) {
-      myContentManager.addContentManagerListener(new ContentManagerAdapter(){
-        public void contentRemoved(ContentManagerEvent event) {
+      myContentManager.addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void contentRemoved(@NotNull ContentManagerEvent event) {
           if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
             Disposer.dispose(PanelWithActionsAndCloseButton.this);
             myContentManager.removeContentManagerListener(this);
@@ -43,10 +55,9 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
         }
       });
     }
-
   }
 
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return myHelpId;
   }
 
@@ -54,30 +65,30 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = false;
   }
 
-  protected void init(){
+  protected void init() {
     addActionsTo(myToolbarGroup);
     myToolbarGroup.add(new MyCloseAction());
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, !myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
-    for (AnAction action : myToolbarGroup.getChildren(null)) {
+    for (AnAction action : myToolbarGroup.getChildren(actionManager)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 
     add(centerPanel, BorderLayout.CENTER);
     if (myVerticalToolbar) {
       add(toolbar.getComponent(), BorderLayout.WEST);
-    } else {
+    }
+    else {
       add(toolbar.getComponent(), BorderLayout.NORTH);
     }
   }
 
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)){
-      return myHelpId;
-    }
-    return null;
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
   }
 
   protected abstract JComponent createCenterPanel();
@@ -86,24 +97,22 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   private class MyCloseAction extends CloseTabToolbarAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCloseEnabled);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
           ContentsUtil.closeContentTab(myContentManager, content);
-          if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
-            final TabbedContent tabbedContent = (TabbedContent)content;
-            final JComponent component = content.getComponent();
-            tabbedContent.removeContent(component);
-            myContentManager.setSelectedContent(content, true, true); //we should request focus here
-          } else {
-            myContentManager.removeContent(content, true);
-          }
         }
       }
     }

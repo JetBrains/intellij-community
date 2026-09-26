@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -27,66 +13,70 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.ArrayUtilRt;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
+public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
   private final IntroduceParameterInfo myInfo;
-  private final TIntArrayList myParametersToRemove;
+  private final IntList myParametersToRemove;
 
   private JBCheckBox myDelegateCB;
 
   private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(GrIntroduceParameterHandler.REFACTORING_NAME, choice, context);
+    super(RefactoringBundle.message("introduce.parameter.title"), choice, context);
     myInfo = info;
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     mySuggestedNames = GroovyIntroduceParameterUtil.suggestNames(localVar, context.getExpression(), context.getStringPart(), info.getToReplaceIn(), context.getProject());
 
-    myParametersToRemove = new TIntArrayList(GroovyIntroduceParameterUtil.findParametersToRemove(info).getValues());
+    myParametersToRemove = new IntArrayList(GroovyIntroduceParameterUtil.findParametersToRemove(info).values());
   }
 
   @Override
   protected String getActionName() {
-    return GrIntroduceParameterHandler.REFACTORING_NAME;
+    return "IntroduceParameter";
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
-    return ArrayUtil.toStringArray(mySuggestedNames);
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+    return ArrayUtilRt.toStringArray(mySuggestedNames);
   }
 
   @Override
   protected JComponent getComponent() {
-
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.add(getPreviewEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
 
-    myDelegateCB = new JBCheckBox("Delegate via overloading method");
-    myDelegateCB.setMnemonic('l');
+    myDelegateCB = new JBCheckBox(GroovyBundle.message("checkbox.delegate.via.overloading.method"));
+    myDelegateCB.setMnemonic(KeyEvent.VK_L);
     myDelegateCB.setFocusable(false);
 
     JPanel panel = new JPanel(new BorderLayout());
@@ -110,8 +100,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
   protected void updateTitle(@Nullable GrVariable variable, String value) {
     if (getPreviewEditor() == null || variable == null) return;
     final PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
-    if (declarationScope instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)declarationScope;
+    if (declarationScope instanceof PsiMethod psiMethod) {
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
@@ -184,12 +173,11 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     else {
       WriteAction.run(() -> new GrIntroduceParameterProcessor(settings, wrapper).performRefactoring(UsageInfo.EMPTY_ARRAY));
     }
-    GrParametersOwner owner = settings.getToReplaceIn();
+    GrParameterListOwner owner = settings.getToReplaceIn();
     return ArrayUtil.getLastElement(owner.getParameters());
   }
 
-  @NotNull
-  private static GrExpressionWrapper createExpressionWrapper(@NotNull GrIntroduceContext context) {
+  private static @NotNull GrExpressionWrapper createExpressionWrapper(@NotNull GrIntroduceContext context) {
     GrExpression expression = context.getExpression();
     GrVariable var = context.getVar();
     assert expression != null || var != null ;
@@ -198,18 +186,17 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     return new GrExpressionWrapper(initializer);
   }
 
-  @Nullable
   @Override
-  protected GrIntroduceParameterSettings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
-                                                                      @NotNull OccurrencesChooser.ReplaceChoice choice,
-                                                                      String[] names) {
+  protected @Nullable GrIntroduceParameterSettings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,
+                                                                                @NotNull OccurrencesChooser.ReplaceChoice choice,
+                                                                                String[] names) {
     GrExpression expression = context.getExpression();
     GrVariable var = context.getVar();
     PsiType type = var != null ? var.getDeclaredType() :
                    expression != null ? expression.getType() :
                    null;
 
-    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, new TIntArrayList(), false,
+    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, new IntArrayList(), false,
                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, expression,
                                                  var, type, false, false, false);
 

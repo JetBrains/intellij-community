@@ -1,4 +1,4 @@
-// "Fix all ''equals()' called on 'java.math.BigDecimal'' problems in file" "true"
+// "Fix all ''equals()' called on 'BigDecimal'' problems in file" "true"
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -18,5 +18,15 @@ class BigDecimalEquals {
     if(qux != null && qux.compareTo(bar) == 0) {
       System.out.println("equals");
     }
+  }
+
+  boolean x(BigDecimal upper, BigDecimal lower) {
+    return upper == null ? lower == null : upper.compareTo(lower) == 0;
+  }
+
+  boolean test(int x, BigDecimal d1, BigDecimal d2) {
+    return switch(x) {
+      default -> d1.compareTo(d2) == 0;
+    };
   }
 }

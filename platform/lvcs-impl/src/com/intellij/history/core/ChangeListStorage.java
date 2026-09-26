@@ -1,35 +1,36 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.util.Consumer;
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
+
+@ApiStatus.Internal
 public interface ChangeListStorage {
-  void close();
+  void close(boolean drop);
 
+  void flush();
+
+  /**
+   * Generate a unique ID
+   * Can be used for a new changeset or a change (!)
+   */
   long nextId();
 
-  @Nullable
-  ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard);
+  /**
+   * Purges the changesets older than the specified [period].
+   * Changesets are considered "related" and are not purged if their timestamps are closer than [intervalBetweenActivities].
+   */
+  void purge(long period, long intervalBetweenActivities);
 
-  void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
+  void writeNextSet(@NotNull ChangeSet changeSet);
 
-  void writeNextSet(ChangeSet changeSet);
+  /**
+   * Returns an iterator over the change sets in the storage.
+   *
+   * @return iterator over change sets, starting from the last written change set at the time of the call
+   */
+  @NotNull Iterator<@NotNull ChangeSet> iterate();
 }

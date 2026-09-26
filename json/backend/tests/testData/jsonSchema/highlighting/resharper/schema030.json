@@ -1,0 +1,21 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+
+	"type": "object",
+	"anyOf": [
+		{
+			"properties": {
+				"startTime": {
+					"type": "string"
+				}
+			}
+		},
+		{
+			"properties": {
+				"startTime": {
+					"type": "string"
+				}
+			}
+		}
+	]
+}

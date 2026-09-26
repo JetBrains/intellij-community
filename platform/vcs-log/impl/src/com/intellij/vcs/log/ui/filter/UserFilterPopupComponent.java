@@ -1,118 +1,108 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 /**
  * Show a popup to select a user or enter the user name.
  */
-class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private final List<String> myAllUsers;
+public class UserFilterPopupComponent
+  extends MultipleValueFilterPopupComponent<VcsLogUserFilter, FilterModel.SingleFilterModel<VcsLogUserFilter>> {
+  private final @NotNull VcsLogData myLogData;
 
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
-                           @NotNull FilterModel<VcsLogUserFilter> filterModel) {
-    super("User", uiProperties, filterModel);
+                           @NotNull FilterModel.SingleFilterModel<VcsLogUserFilter> filterModel) {
+    super("User", VcsLogBundle.messagePointer("vcs.log.user.filter.label"), uiProperties, filterModel);
     myLogData = logData;
-    myAllUsers = collectUsers(logData);
-  }
-
-  @NotNull
-  @Override
-  protected String getText(@NotNull VcsLogUserFilter filter) {
-    return displayableText(myFilterModel.getFilterValues(filter));
-  }
-
-  @Nullable
-  @Override
-  protected String getToolTip(@NotNull VcsLogUserFilter filter) {
-    return tooltip(myFilterModel.getFilterValues(filter));
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(createAllAction());
+  protected @NotNull ActionGroup createActionGroup() {
+    List<AnAction> group = new ArrayList<>();
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
-      group.add(new PredefinedValueAction(VcsLogUserFilterImpl.ME));
+      group.add(new PredefinedValueAction(Collections.singletonList(VcsLogFilterObject.ME), () -> me(), true));
     }
     group.addAll(createRecentItemsActionGroup());
-    return group;
+    return new DefaultActionGroup(group);
   }
 
-  @NotNull
-  protected ActionGroup createSpeedSearchActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new SpeedsearchPredefinedValueAction(VcsLogUserFilterImpl.ME));
+  protected @NotNull ActionGroup createSpeedSearchActionGroup() {
+    List<AnAction> group = new ArrayList<>();
+    group.add(new SpeedsearchPredefinedValueAction(VcsLogFilterObject.ME, () -> me()));
     group.add(Separator.getInstance());
-    for (String user : myAllUsers) {
-      group.add(new SpeedsearchPredefinedValueAction(user));
+    for (String user : collectUsers(myLogData)) {
+      group.add(new SpeedsearchPredefinedValueAction(user, () -> user));
     }
-    return group;
-  }
-
-  @NotNull
-  @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredUserGroups();
+    return new DefaultActionGroup(group);
   }
 
   @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<>(values));
+  protected @Unmodifiable @NotNull List<String> getAllValues() {
+    return ContainerUtil.concat(Collections.singletonList(me()), collectUsers(myLogData));
   }
 
-  @NotNull
   @Override
-  protected List<String> getAllValues() {
-    return myAllUsers;
-  }
-
-  @NotNull
-  @Override
-  protected ListPopup createPopupMenu() {
+  protected @NotNull ListPopup createPopupMenu() {
     ActionGroup actionGroup = createActionGroup();
     ActionGroup speedsearchGroup = createSpeedSearchActionGroup();
     return new UserLogSpeedSearchPopup(new DefaultActionGroup(actionGroup, speedsearchGroup),
                                        DataManager.getInstance().getDataContext(this));
   }
 
-  @NotNull
-  private static List<String> collectUsers(@NotNull VcsLogData logData) {
+  @Override
+  protected @Nullable VcsLogUserFilter createFilter(@NotNull List<String> values) {
+    return myFilterModel.createFilter(values);
+  }
+
+  @Override
+  protected @NotNull List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
+    return myFilterModel.getFilterValues(filter);
+  }
+
+  @Override
+  protected @NotNull @Unmodifiable List<String> parseLocalizedValues(@NotNull Collection<String> values) {
+    return ContainerUtil.map(values, user -> user.equals(me()) ? VcsLogFilterObject.ME : user);
+  }
+
+  @Override
+  protected @NotNull @Unmodifiable List<String> getLocalizedValues(@NotNull Collection<String> values) {
+    return ContainerUtil.map(values, user -> user.equals(VcsLogFilterObject.ME) ? me() : user);
+  }
+
+  private static @NotNull String me() {
+    return VcsLogBundle.message("vcs.log.user.filter.me");
+  }
+
+  private static @NotNull List<String> collectUsers(@NotNull VcsLogData logData) {
     List<String> users = ContainerUtil.map(logData.getAllUsers(), user -> {
       String shortPresentation = VcsUserUtil.getShortPresentation(user);
       Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
@@ -124,8 +114,8 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   }
 
   private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
-    public UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
-      super(null, actionGroup, dataContext, null, false);
+    UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
+      super(null, actionGroup, dataContext, ActionPlaces.getPopupPlace("VCS.Log.UserWidget"), null, false);
       setMinimumSize(new JBDimension(200, 0));
     }
 
@@ -146,6 +136,8 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   }
 
   private class SpeedsearchPredefinedValueAction extends PredefinedValueAction implements FlatSpeedSearchPopup.SpeedsearchAction {
-    public SpeedsearchPredefinedValueAction(String user) {super(user);}
+    SpeedsearchPredefinedValueAction(@NotNull String user, @NotNull Supplier<String> supplier) {
+      super(Collections.singletonList(user), supplier, true);
+    }
   }
 }

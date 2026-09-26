@@ -1,0 +1,27 @@
+<html>
+<body>
+Reports local variable types that can be inferred from context and replaced with <code>var</code>.
+<p><b>Example:</b></p>
+<pre><code>
+  void test(InputStream s) {
+    try (InputStream in = s) {}
+  }
+</code></pre>
+<p>After the fix is applied:</p>
+<pre><code>
+  void test(InputStream s) {
+    try (var in = s) {}
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+Use the <b>Only report when the variable type is obvious from the initializer</b> checkbox
+to only report the types of variables initialized with a new expression, a type cast or a literal.
+<p><b>Example:</b></p>
+<pre><code>
+  int    codePointAt = "hello".codePointAt(1); // not reported
+  Random random      = new Random();           // reported
+  String s           = (String)object;         // reported
+</code></pre>
+</body>
+</html>

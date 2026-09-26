@@ -1,0 +1,165 @@
+load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_rhizomedb.transactor",
+    module_name = "fleet.rhizomedb.transactor",
+    plugins = [
+        "@community//fleet/compiler-plugins/rpc:rpc-plugin",
+        "@lib//:kotlin-serialization-plugin",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        "@community//fleet/rpc:wasmjs_module_lib",
+        "@community//fleet/util/core:wasmjs_module_lib",
+    ],
+    deps = [
+        "@community//fleet/bifurcan:wasmjs_module_lib",
+        "@community//fleet/fastutil:wasmjs_module_lib",
+        "@community//fleet/multiplatform.shims:wasmjs_module_lib",
+        "@community//fleet/openmap:wasmjs_module_lib",
+        "@community//fleet/reporting/api:wasmjs_module_lib",
+        "@community//fleet/reporting/shared:wasmjs_module_lib",
+        "@community//fleet/rhizomedb:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
+
+### auto-generated section `dev fleet.rhizomedb.transactor` start
+content_module_jar(module = ":rhizomedb.transactor")
+### auto-generated section `dev fleet.rhizomedb.transactor` end
+
+### auto-generated section `build fleet.rhizomedb.transactor` start
+create_kotlinc_options(
+    name = "custom_rhizomedb.transactor",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+        "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
+)
+
+fleet_plugin_services_resources(
+    name = "rhizomedb.transactor_fleet_plugin_services_resources",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    deps = [
+        "//fleet/bifurcan",
+        "//fleet/fastutil",
+        "//fleet/multiplatform.shims",
+        "//fleet/openmap",
+        "//fleet/reporting/api",
+        "//fleet/reporting/shared",
+        "//fleet/rhizomedb",
+        "//fleet/rpc",
+        "//fleet/util/core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "@lib//:kotlin-stdlib",
+    ],
+)
+
+jvm_library(
+    name = "rhizomedb.transactor",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_rhizomedb.transactor",
+    module_name = "fleet.rhizomedb.transactor",
+    resource_jars = [":rhizomedb.transactor_fleet_plugin_services_resources"],
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/util/core",
+        "//fleet/rpc",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/rhizomedb",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//fleet/util/core",
+        "//fleet/rpc",
+        "//libraries/kotlinx/coroutines/core",
+        "//fleet/reporting/api",
+        "//fleet/reporting/shared",
+        "//fleet/multiplatform.shims",
+        "//fleet/bifurcan",
+        "//fleet/fastutil",
+        "//fleet/openmap",
+    ],
+)
+
+jvm_library(
+    name = "rhizomedb.transactor_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_rhizomedb.transactor",
+    module_name = "fleet.rhizomedb.transactor",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/util/core",
+        "//fleet/util/core:core_test_lib",
+        "//fleet/rpc",
+        "//fleet/rpc:rpc_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":rhizomedb.transactor",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//fleet/util/core:core_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//fleet/reporting/api:api_test_lib",
+        "//fleet/reporting/shared:shared_test_lib",
+        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
+        "//fleet/bifurcan:bifurcan_test_lib",
+        "//fleet/fastutil:fastutil_test_lib",
+        "//fleet/openmap:openmap_test_lib",
+    ],
+)
+### auto-generated section `build fleet.rhizomedb.transactor` end
+
+### auto-generated section `iml fleet.rhizomedb.transactor` start
+exports_files(
+    [
+        "fleet.rhizomedb.transactor.iml",
+        "resources/fleet.rhizomedb.transactor.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.rhizomedb.transactor` end

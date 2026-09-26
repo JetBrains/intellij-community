@@ -1,0 +1,2 @@
+package ppp;
+public class Outer { static class Nested extends Base { } }  // Nested narrowed to package-private

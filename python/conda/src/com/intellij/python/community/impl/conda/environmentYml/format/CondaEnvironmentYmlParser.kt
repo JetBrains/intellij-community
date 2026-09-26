@@ -1,0 +1,130 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.impl.conda.environmentYml.format
+
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
+import com.jetbrains.python.packaging.PyRequirement
+import com.intellij.python.requirements.parser.PyRequirementParser
+import com.intellij.python.requirements.parser.RequirementsParserHelper
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import kotlinx.io.IOException
+import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.JsonNode
+import tools.jackson.dataformat.yaml.YAMLMapper
+
+@ApiStatus.Internal
+object CondaEnvironmentYmlParser {
+  private val yamlMapper = YAMLMapper.builder().build()
+
+  suspend fun readNameFromFile(file: VirtualFile): String? = readFieldFromFile(file, "name")
+  suspend fun readPrefixFromFile(file: VirtualFile): String? = readFieldFromFile(file, "prefix")
+
+  private suspend fun readFieldFromFile(file: VirtualFile, field: String): String? {
+    val text = readAction { FileDocumentManager.getInstance().getDocument(file)?.text } ?: return null
+    val environment: JsonNode = yamlMapper.readTree(text)
+    return environment.path(field).asString().takeIf { it.isNotEmpty() }
+  }
+
+  suspend fun fromFile(file: VirtualFile): List<PyRequirement>? {
+    val pyRequirements = try {
+      readDeps(file)
+    }
+    catch (e: IOException) {
+      thisLogger().info("Cannot parse deps from ${file.readText()}", e)
+      return null
+    }
+    catch (e: JacksonException) {
+      thisLogger().info("Cannot parse deps from ${file.readText()}", e)
+      return null
+    }
+    return pyRequirements.filter { it.name != "python" }.distinct()
+  }
+
+  @Throws(IOException::class)
+  private suspend fun readDeps(file: VirtualFile): List<PyRequirement> {
+    val text = readAction { FileDocumentManager.getInstance().getDocument(file)?.text } ?: return emptyList()
+    val environment: JsonNode = yamlMapper.readTree(text)
+
+    val result = mutableListOf<PyRequirement>()
+
+    val dependencies = environment.path("dependencies")
+    if (!dependencies.isArray) return emptyList()
+
+    for (dependency in dependencies) {
+      when {
+        dependency.isString -> {
+          val dep = dependency.asString()
+          val parsed = parseCondaDep(dep) ?: continue
+          result.add(parsed)
+        }
+
+        // Pip section (map with "pip" key)
+        dependency.isObject -> {
+          val pipList = dependency.path("pip")
+          if (!pipList.isArray) continue
+
+          val pipListDeps = parsePipListDeps(pipList, file)
+          result.addAll(pipListDeps)
+        }
+      }
+    }
+    return result
+  }
+
+  fun parseCondaDep(dep: String): PyRequirement? {
+    // Skip URL-based, local file, git dependencies, and pip itself
+
+    if (dep.startsWith("http") ||
+        dep.startsWith("/") ||
+        dep.startsWith("file:") ||
+        RequirementsParserHelper.VCS_SCHEMES.any { dep.startsWith(it) } ||
+        dep == "pip") {
+      return null
+    }
+
+    // Handle channel-specific packages (strip channel prefix)
+    val packageSpec = if (dep.contains("::")) {
+      dep.substringAfter("::")
+    }
+    else {
+      dep
+    }
+
+    val operations = PyRequirementRelation.entries.map { it.presentableText }
+    // Check if the dependency already has version operators (>=, <=, >, <, !=)
+    if (operations.any { dep.contains(it) }) {
+      return PyRequirementParser.fromLine(packageSpec)
+    }
+
+    // Handle complex version constraints with commas
+    if (packageSpec.contains(",")) {
+      return PyRequirementParser.fromLine(packageSpec)
+    }
+
+    // Convert conda version format to pip format
+    // Handle build strings and build numbers (package=version=build -> package==version)
+    val parts = packageSpec.split("=")
+    val packageName = parts[0]
+
+    if (parts.size == 1) {
+      // No version specified
+      return PyRequirementParser.fromLine(packageName)
+    }
+
+    // Handle version specification
+    val version = parts[1]
+
+    // Ignore build strings (third part after =)
+    // Convert = to == for exact version match
+    return PyRequirementParser.fromLine("$packageName==$version")
+  }
+
+  private suspend fun parsePipListDeps(pipList: JsonNode, file: VirtualFile): List<PyRequirement> {
+    val pipText = pipList.filter { it.isString }.joinToString("\n") { it.asString() }
+    return readAction { PyRequirementParser.fromText(pipText, file, mutableSetOf<VirtualFile>()) }
+  }
+}

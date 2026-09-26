@@ -1,43 +1,35 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
+@ApiStatus.Internal
+public final class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private final OfflineDescriptorResolveResult myDescriptorResolveResult;
+  private final OfflineProblemDescriptor myOfflineDescriptor;
 
-  private OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
-                                       @NotNull InspectionToolPresentation presentation,
-                                       @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine);
+  public OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
+                                      @NotNull InspectionToolPresentation presentation,
+                                      @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                      @NotNull InspectionTreeNode parent) {
+    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine, parent);
     myDescriptorResolveResult = descriptorResolveResult;
-    if (descriptorResolveResult.getResolvedDescriptor() == null) {
-      setUserObject(offlineDescriptor);
-    }
+    myOfflineDescriptor = offlineDescriptor;
   }
 
-  static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
-                                             @NotNull OfflineDescriptorResolveResult resolveResult,
-                                             @NotNull InspectionToolPresentation presentation) {
-    return new OfflineProblemDescriptorNode(resolveResult,
-                                            presentation,
-                                            offlineDescriptor);
-  }
-
-  @NotNull
   @Override
-  protected String calculatePresentableName() {
+  protected @NotNull String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
-    return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
-           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())).trim()
+    return presentableName.isEmpty() && getDescriptor() == null
+           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(myOfflineDescriptor.getDescription())).trim()
            : presentableName;
   }
 

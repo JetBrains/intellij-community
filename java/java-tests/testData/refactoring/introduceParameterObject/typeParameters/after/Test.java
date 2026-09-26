@@ -1,10 +1,10 @@
 class Test<R> {
   void foo(Param<R> param) {
-    if (param.getR() == null) {
+    if (param.r() == null) {
     }
   }
 
   void bar(R r){
-    foo(new Param<R>(r));
+    foo(new Param<>(r));
   }
 }

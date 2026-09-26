@@ -1,0 +1,28 @@
+<html>
+<body>
+Reports incorrect usage of path annotations.
+
+<p>
+  This inspection detects cases where a string annotated with one path annotation is used in a context that expects a string with a different path annotation.
+  It helps ensure proper usage of <code>@MultiRoutingFileSystemPath</code> and <code>@NativePath</code> annotations.
+</p>
+
+<p>The inspection highlights the following issues:</p>
+<ul>
+  <li>When a string annotated with <code>@NativePath</code> is used in a Path constructor or factory method</li>
+  <li>When a string annotated with <code>@NativePath</code> is passed to a method parameter annotated with <code>@MultiRoutingFileSystemPath</code></li>
+  <li>When a string annotated with <code>@MultiRoutingFileSystemPath</code> is passed to a method parameter annotated with <code>@NativePath</code></li>
+  <li>When a string literal is used in a context that expects either annotation</li>
+</ul>
+
+<p>
+  Quick fixes are provided to add the appropriate annotation where needed.
+</p>
+<!-- tooltip end -->
+<p>
+  This inspection helps prevent runtime errors that can occur when paths with different formats are used incorrectly.
+  The <code>@MultiRoutingFileSystemPath</code> annotation is used for paths that should work across different file systems,
+  while the <code>@NativePath</code> annotation is used for paths that are specific to the native file system.
+</p>
+</body>
+</html>

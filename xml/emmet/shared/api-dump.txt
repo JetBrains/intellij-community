@@ -1,0 +1,21 @@
+com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc
+- fleet.rpc.RemoteApi
+- sf:Companion:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$Companion
+- a:cancel(I,com.intellij.openapi.editor.impl.EditorId,kotlin.coroutines.Continuation):java.lang.Object
+- a:enter(I,com.intellij.openapi.editor.impl.EditorId,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:isValid(I,com.intellij.openapi.editor.impl.EditorId,kotlin.coroutines.Continuation):java.lang.Object
+- a:isValidTemplateKey(I,com.intellij.openapi.editor.impl.EditorId,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$Companion
+- f:instance(kotlin.coroutines.Continuation):java.lang.Object
+bf:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$_generated_ClientStub
+- com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc
+- <init>(kotlin.jvm.functions.Function3):V
+- f:cancel(I,com.intellij.openapi.editor.impl.EditorId,kotlin.coroutines.Continuation):java.lang.Object
+- f:enter(I,com.intellij.openapi.editor.impl.EditorId,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:getInvocationHandler():kotlin.jvm.functions.Function3
+- f:isValid(I,com.intellij.openapi.editor.impl.EditorId,kotlin.coroutines.Continuation):java.lang.Object
+- f:isValidTemplateKey(I,com.intellij.openapi.editor.impl.EditorId,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$_generated_RemoteApiDescriptor
+- fleet.rpc.RemoteApiDescriptor
+- sf:INSTANCE:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$_generated_RemoteApiDescriptor
+- <init>():V

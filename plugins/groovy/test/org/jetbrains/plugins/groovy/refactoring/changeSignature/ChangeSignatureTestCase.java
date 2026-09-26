@@ -15,10 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +34,7 @@ import java.util.Arrays;
 /**
  * @author Maxim.Medvedev
  */
-public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class ChangeSignatureTestCase extends LightJavaCodeInsightFixtureTestCase {
   void executeRefactoring(@Nullable @PsiModifier.ModifierConstant String newVisibility,
                           @Nullable String newName,
                           @Nullable String newReturnType,

@@ -1,0 +1,17 @@
+MODULES
+project
+
+project.main
+    src/main/java (Java)
+    src/main/kotlin (Java)
+    src/main/resources (Java, Resources)
+
+project.test
+    src/test/java (Java, Test)
+    src/test/kotlin (Java, Test)
+    src/test/kotlinGen (Java, Test)
+    src/test/resources (Java, Test, Resources)
+
+
+Test configuration:
+- hiding following roots: android-specific roots, generated

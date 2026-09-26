@@ -1,0 +1,63 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.color.scheme.blackboard` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/color-scheme-blackboard.jar": ["intellij.color.scheme.blackboard"],
+    },
+    main_module = "intellij.color.scheme.blackboard",
+)
+### auto-generated section `dev intellij.color.scheme.blackboard` end
+
+### auto-generated section `build intellij.color.scheme.blackboard` start
+jvm_library(
+    name = "color-scheme-blackboard",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.blackboard",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/projectModel-impl"],
+)
+
+jvm_library(
+    name = "color-scheme-blackboard_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.color.scheme.blackboard",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":color-scheme-blackboard",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "color-scheme-blackboard_plugin",
+    descriptor_module = ":color-scheme-blackboard",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.color.scheme.blackboard` end
+
+### auto-generated section `iml intellij.color.scheme.blackboard` start
+exports_files(
+    [
+        "intellij.color.scheme.blackboard.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/colorSchemes/blackboard.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.color.scheme.blackboard` end

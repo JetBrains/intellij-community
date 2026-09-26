@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+annotation class Annotation
+
+@Annotation
+context(p: Int)
+fun f() {}

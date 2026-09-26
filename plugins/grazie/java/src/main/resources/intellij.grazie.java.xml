@@ -1,0 +1,21 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <textExtractor language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavaTextExtractor"/>
+    <problemFilter language="JAVA" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
+    <problemFilter language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavadocProblemFilter"/>
+  </extensions>
+</idea-plugin>
+

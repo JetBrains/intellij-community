@@ -1,0 +1,12 @@
+// "Remove 'private' modifier" "true"
+// K2_ERROR: PRIVATE_SETTER_FOR_OPEN_PROPERTY
+interface Foo {
+    val bar: String
+}
+
+open class FooImpl : Foo {
+    override var bar: String = ""
+        <caret>private set
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

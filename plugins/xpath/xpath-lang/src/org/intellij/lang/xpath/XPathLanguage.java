@@ -28,6 +28,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -35,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +55,8 @@ public final class XPathLanguage extends Language {
   public static class XPathPairedBraceMatcher implements PairedBraceMatcher {
         private BracePair[] myBracePairs;
 
-        @NotNull
         @Override
-        public BracePair[] getPairs() {
+        public BracePair @NotNull [] getPairs() {
             if (myBracePairs == null) {
                 myBracePairs = new BracePair[]{
                         new BracePair(XPathTokenTypes.LPAREN, XPathTokenTypes.RPAREN, false),
@@ -78,8 +79,7 @@ public final class XPathLanguage extends Language {
 
     public static class XPathFindUsagesProvider implements FindUsagesProvider {
         @Override
-        @Nullable
-        public WordsScanner getWordsScanner() {
+        public @Nullable WordsScanner getWordsScanner() {
             return new SimpleWordsScanner();
         }
 
@@ -89,26 +89,23 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        @Nullable
-        public String getHelpId(@NotNull PsiElement psiElement) {
+        public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
             return null;
         }
 
         @Override
-        @NotNull
-        public String getType(@NotNull PsiElement element) {
+        public @NotNull String getType(@NotNull PsiElement element) {
           if (element instanceof XPathFunction) {
-            return "function";
+            return XPathBundle.message("find.usages.type.function");
           } else if (element instanceof XPathVariable) {
-            return "variable";
+            return XPathBundle.message("find.usages.type.variable");
           } else {
-            return "unknown";
+            return XPathBundle.message("find.usages.type.unknown");
           }
         }
 
         @Override
-        @NotNull
-        public String getDescriptiveName(@NotNull PsiElement element) {
+        public @NotNull @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
             if (element instanceof PsiNamedElement) {
                 final String name = ((PsiNamedElement)element).getName();
                 if (name != null) return name;
@@ -117,12 +114,10 @@ public final class XPathLanguage extends Language {
         }
 
         @Override
-        @NotNull
-        public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+        public @NotNull @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {
-                if (element instanceof NavigationItem) {
-                    final NavigationItem navigationItem = ((NavigationItem)element);
-                    final ItemPresentation presentation = navigationItem.getPresentation();
+                if (element instanceof NavigationItem navigationItem) {
+                  final ItemPresentation presentation = navigationItem.getPresentation();
                     if (presentation != null) {
                       final String text = presentation.getPresentableText();
                       if (text != null) {
@@ -174,8 +169,7 @@ public final class XPathLanguage extends Language {
 
     public static class XPathSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
         @Override
-        @NotNull
-        protected SyntaxHighlighter createHighlighter() {
+        protected @NotNull SyntaxHighlighter createHighlighter() {
             return new XPathHighlighter(false);
         }
     }

@@ -1,0 +1,11 @@
+// "Let 'Foo?' extend interface 'Foo'" "false"
+// ACTION: Add non-null asserted (foo!!) call
+// ACTION: Change type of 'x' to 'Foo?'
+// ERROR: Type mismatch: inferred type is Foo? but Foo was expected
+// K2_AFTER_ERROR: INITIALIZER_TYPE_MISMATCH
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+interface Foo
+
+fun test(foo: Foo?) {
+    val x: Foo = foo<caret>
+}

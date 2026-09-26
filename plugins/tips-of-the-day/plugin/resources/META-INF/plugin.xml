@@ -1,0 +1,17 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.tipsOfTheDay</id>
+  <name>Tips of the Day</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <description><![CDATA[
+    Shows a rotating dialog of usage tips at IDE startup, with a manual entry point under
+    <b>Help | Tips of the Day</b>.
+  ]]></description>
+  <incompatible-with>com.intellij.modules.rider</incompatible-with>
+  <incompatible-with>com.intellij.modules.rustrover</incompatible-with>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <content namespace="jetbrains">
+    <module name="intellij.tips" loading="required"/>
+  </content>
+</idea-plugin>

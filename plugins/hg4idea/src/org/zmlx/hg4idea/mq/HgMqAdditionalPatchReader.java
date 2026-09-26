@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.mq;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -27,32 +13,32 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class HgMqAdditionalPatchReader {
 
-  private static final String NODE_ID = "# Node ID ";
-  private static final String PARENT_ID = "# Parent ";
-  private static final String DATE = "# Date ";
-  private static final String BRANCH = "# Branch ";
-  private static final String USER = "# User ";
-  private static final String DIFF_INFO = "diff -";
+  private static final @NonNls String HG_PATCH_PREFIX = "# HG changeset patch";
+  private static final @NonNls String NODE_ID = "# Node ID ";
+  private static final @NonNls String PARENT_ID = "# Parent ";
+  private static final @NonNls String DATE = "# Date ";
+  private static final @NonNls String BRANCH = "# Branch ";
+  private static final @NonNls String USER = "# User ";
+  private static final @NonNls String DIFF_INFO = "diff -";
 
-  @NotNull
-  public static MqPatchDetails readMqPatchInfo(@Nullable VirtualFile root, @Nullable File patchFile) {
+  public static @NotNull MqPatchDetails readMqPatchInfo(@Nullable VirtualFile root, @Nullable File patchFile) {
     if (patchFile == null) return MqPatchDetails.EMPTY_PATCH_DETAILS;
     String context = DvcsUtil.tryLoadFileOrReturn(patchFile, "");
     return parseAdditionalMqInfo(root == null ? HgUtil.getNearestHgRoot(VfsUtil.findFileByIoFile(patchFile, true)) : root, context);
   }
 
-  @NotNull
-  private static MqPatchDetails parseAdditionalMqInfo(@Nullable VirtualFile root, @NotNull String context) {
+  private static @NotNull MqPatchDetails parseAdditionalMqInfo(@Nullable VirtualFile root, @NotNull String context) {
     String[] lines = StringUtil.splitByLines(context, false);
     String user = null;
     Date date = null;
     String branch = null;
-    List<String> messageLines = ContainerUtil.newArrayList();
+    List<String> messageLines = new ArrayList<>();
     String nodeId = null;
     String parent = null;
 
@@ -82,13 +68,11 @@ public class HgMqAdditionalPatchReader {
     return new MqPatchDetails(nodeId, parent, date, root, branch, StringUtil.join(messageLines, "\n"), user);
   }
 
-  @NotNull
-  private static String extractField(@NotNull String line, @NotNull String prefix) {
+  private static @NotNull String extractField(@NotNull String line, @NotNull String prefix) {
     return line.substring(prefix.length()).trim();
   }
 
-  @Nullable
-  private static Date tryParseDate(@NotNull String substring) {
+  private static @Nullable Date tryParseDate(@NotNull String substring) {
     try {
       return new Date(NumberFormat.getInstance().parse(substring).longValue() * 1000);
     }
@@ -100,6 +84,6 @@ public class HgMqAdditionalPatchReader {
   @SuppressWarnings("unused")
   // for future custom additional patch reader implementation
   public boolean isMqPatch(@NotNull File file) {
-    return DvcsUtil.tryLoadFileOrReturn(file, "").startsWith("# HG changeset patch");
+    return DvcsUtil.tryLoadFileOrReturn(file, "").startsWith(HG_PATCH_PREFIX);
   }
 }

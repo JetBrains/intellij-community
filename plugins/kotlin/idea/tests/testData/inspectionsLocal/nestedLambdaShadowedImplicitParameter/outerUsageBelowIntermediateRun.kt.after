@@ -1,0 +1,13 @@
+// FIX: Add explicit parameter name to outer lambda
+
+
+class Foo {
+    fun test() {
+        "".let { it ->
+            run {
+                "".let { it }
+            }
+            it
+        }
+    }
+}

@@ -1,91 +1,84 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.project.Project;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KeyProcessorContext {
+@ApiStatus.Internal
+public final class KeyProcessorContext {
   private final List<AnAction> myActions = new ArrayList<>();
-  private WeakReference<JComponent> myFoundComponent;
-  private boolean myHasSecondStroke;
+  private final List<AnAction> mySecondStrokeActions = new ArrayList<>();
 
+  private WeakReference<JComponent> myFoundComponent;
   private DataContext myDataContext;
+  private Project myProject;
   private boolean isModalContext;
   private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
+  private Shortcut myShortcut;
 
-  @NotNull
-  List<AnAction> getActions() {
+  @NotNull List<AnAction> getActions() {
     return myActions;
   }
 
-  @Nullable
-  public JComponent getFoundComponent() {
+  @NotNull List<AnAction> getSecondStrokeActions() {
+    return mySecondStrokeActions;
+  }
+
+  public @Nullable JComponent getFoundComponent() {
     return SoftReference.dereference(myFoundComponent);
   }
 
-  public void setFoundComponent(final JComponent foundComponent) {
+  public void setFoundComponent(JComponent foundComponent) {
     myFoundComponent = new WeakReference<>(foundComponent);
-  }
-
-  public void setHasSecondStroke(final boolean hasSecondStroke) {
-    myHasSecondStroke = hasSecondStroke;
-  }
-
-  public boolean isHasSecondStroke() {
-    return myHasSecondStroke;
   }
 
   public DataContext getDataContext() {
     return myDataContext;
   }
 
-  public void setDataContext(final DataContext dataContext) {
+  public void setDataContext(@NotNull DataContext dataContext) {
     myDataContext = dataContext;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public void setProject(@Nullable Project project) {
+    myProject = project;
   }
 
   public boolean isModalContext() {
     return isModalContext;
   }
 
-  public void setModalContext(final boolean modalContext) {
+  public void setModalContext(boolean modalContext) {
     isModalContext = modalContext;
   }
 
-  @Nullable
-  public Component getFocusOwner() {
+  public @Nullable Component getFocusOwner() {
     return SoftReference.dereference(myFocusOwner);
   }
 
-  public void setFocusOwner(final Component focusOwner) {
+  public void setFocusOwner(Component focusOwner) {
     myFocusOwner = new WeakReference<>(focusOwner);
   }
 
-  public void setInputEvent(final KeyEvent e) {
+  public void setInputEvent(KeyEvent e) {
     myInputEvent = e;
   }
 
@@ -93,10 +86,21 @@ public class KeyProcessorContext {
     return myInputEvent;
   }
 
+  public Shortcut getShortcut() {
+    return myShortcut;
+  }
+
+  public void setShortcut(Shortcut shortcut) {
+    myShortcut = shortcut;
+  }
+
   public void clear() {
     myInputEvent = null;
+    myShortcut = null;
     myActions.clear();
+    mySecondStrokeActions.clear();
     myFocusOwner = null;
     myDataContext = null;
+    myProject = null;
   }
 }

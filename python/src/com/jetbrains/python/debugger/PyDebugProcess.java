@@ -1,107 +1,158 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.remote.RemoteProcessControl;
+import com.intellij.remote.RemoteSdkException;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
-import com.jetbrains.python.debugger.pydev.*;
+import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
+import com.jetbrains.python.debugger.pydev.MultiProcessDebugger;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.RemoteDebuggerCloseListener;
+import com.jetbrains.python.debugger.pydev.ResumeOrStepCommand;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
+import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.remote.RemoteProcessControl;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author yole
- */
-// todo: bundle messages
-// todo: pydevd supports module reloading - look for a way to use the feature
-public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
+import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
+public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole, PyStepIntoSupport {
+  private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
   private static final int CONNECTION_TIMEOUT = 60000;
 
+  public static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Python Debugger");
+  }
+
   private final ProcessDebugger myDebugger;
-  private final XBreakpointHandler[] myBreakpointHandlers;
+  private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
-  private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<>();
-  private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
+  private final Map<PySourcePosition, XLineBreakpoint<?>> myRegisteredBreakpoints = new ConcurrentHashMap<>();
+  private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties<?>>> myRegisteredExceptionBreakpoints =
     new ConcurrentHashMap<>();
 
-  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
+  private final Set<PyThreadInfo> mySuspendedThreads = Collections.synchronizedSet(new HashSet<>());
+
+  private record BreakpointHitContext(@NotNull XBreakpoint<?> breakpoint,
+                                      @Nullable String evaluatedLogExpression,
+                                      @NotNull XSuspendContext suspendContext) {
+  }
+
+  private final List<BreakpointHitContext> myBreakpointHits = new LinkedList<>();
+
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
   private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
   private boolean myDownloadSources = false;
 
-  private boolean myClosing = false;
-
-  private PyPositionConverter myPositionConverter;
-  private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  protected PyPositionConverter myPositionConverter;
+  private final @NotNull XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private boolean isCythonWarningShown = false;
-  @Nullable private XCompositeNode myCurrentRootNode;
+  private @Nullable XCompositeNode myCurrentRootNode;
+
+  private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
+
+  private final AtomicBoolean myInlayForFailedTestIsAlreadyShownSentinel = new AtomicBoolean();
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -113,32 +164,31 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyDebugProcess(final @NotNull XDebugSession session,
-                        @NotNull final ExecutionConsole executionConsole,
-                        @Nullable final ProcessHandler processHandler,
+                        final @NotNull ExecutionConsole executionConsole,
+                        final @Nullable ProcessHandler processHandler,
                         @NotNull String serverHost, int serverPort) {
     this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
   }
 
   private PyDebugProcess(@NotNull XDebugSession session,
-                        @NotNull DebuggerFactory debuggerFactory,
-                        @NotNull ExecutionConsole executionConsole,
-                        @Nullable ProcessHandler processHandler) {
+                         @NotNull DebuggerFactory debuggerFactory,
+                         @NotNull ExecutionConsole executionConsole,
+                         @Nullable ProcessHandler processHandler) {
     super(session);
 
     session.setPauseActionSupported(true);
 
     myDebugger = debuggerFactory.createDebugger(this);
 
-    List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
+    List<XBreakpointHandler<?>> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
     breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
-    for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
+    for (PyBreakpointHandlerFactory factory : PyBreakpointHandlerFactory.EP_NAME.getExtensionList()) {
       breakpointHandlers.add(factory.createBreakpointHandler(this));
     }
     myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
 
     myEditorsProvider = new PyDebuggerEditorsProvider();
-    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
     if (myProcessHandler != null) {
@@ -150,6 +200,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     else {
       myPositionConverter = new PyLocalPositionConverter();
     }
+
+    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
 
     PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(getProject());
     executionService.sessionStarted(this);
@@ -185,7 +237,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (currentFrame instanceof PyStackFrame) {
           currentFrameThreadId = ((PyStackFrame)currentFrame).getThreadId();
         }
-        final XExecutionStack activeStack = session.getSuspendContext().getActiveExecutionStack();
+        var suspendContext = session.getSuspendContext();
+        if (suspendContext == null) {
+          return;
+        }
+        XExecutionStack activeStack = suspendContext.getActiveExecutionStack();
         if ((activeStack == null) || (currentFrameThreadId == null)) {
           return;
         }
@@ -207,15 +263,33 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        PyFrameListener.publisher().frameChanged();
         for (PyFrameListener listener : myFrameListeners) {
           listener.frameChanged();
         }
+      }
+
+      @Override
+      public void sessionStopped() {
+        PyFrameListener.publisher().sessionStopped(null);
+        XDebugSessionListener.super.sessionStopped();
+        for (PyFrameListener listener : myFrameListeners) {
+          listener.sessionStopped(null);
+        }
+      }
+    });
+
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionStopped() {
+        PyUnitTestsDebuggingService.removeInlaysAssociatedWithSession(session);
       }
     });
   }
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
-    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout());
+    boolean useDispatcher = Registry.get("python.debugger.use.dispatcher").asBoolean();
+    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout(), useDispatcher);
     debugger.addOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
       public void threadsClosed(Set<String> threadIds) {
@@ -233,7 +307,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   protected void detachDebuggedProcess() {
-    handleStop(); //in case of normal debug we stop the session
+    // We can get here because the debugger reader socket is closed, which means the debugger is exiting.
+    // Now we have to wait for the main debuggee process to finish. Otherwise, `XDebugSession` will terminate it,
+    // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
+    // This issue happens frequently with multiprocess debugging.
+    handleStop(); // In case of normal debug, we stop the session
   }
 
   protected void handleStop() {
@@ -250,44 +328,60 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myPositionConverter;
   }
 
-  @NotNull
   @Override
-  public XBreakpointHandler<?>[] getBreakpointHandlers() {
+  public XBreakpointHandler<?> @NotNull [] getBreakpointHandlers() {
     return myBreakpointHandlers;
   }
 
   @Override
-  @NotNull
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }
 
   @Override
-  @Nullable
-  protected ProcessHandler doGetProcessHandler() {
+  protected @Nullable ProcessHandler doGetProcessHandler() {
     return myProcessHandler;
   }
 
   @Override
-  @NotNull
-  public ExecutionConsole createConsole() {
+  public @NotNull ExecutionConsole createConsole() {
     return myExecutionConsole;
   }
 
   @Override
-  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  public @NotNull XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
   @Override
   public void sessionInitialized() {
+    if (PyDebuggerOptionsProvider.getInstance(getProject()).isRunDebuggerInServerMode() &&
+        Registry.is("python.debug.use.single.port")) {
+      // In the case of a single port, the debugger is already connected at this point.
+      // An additional connection attempt will result in an error.
+      return;
+    }
     waitForConnection(getConnectionMessage(), getConnectionTitle());
   }
 
-  protected void waitForConnection(final String connectionMessage, String connectionTitle) {
+  @Override
+  public @NotNull XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        if (ExperimentalUI.isNewUI()) {
+          ui.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                 XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                 new LayoutAttractionPolicy.FocusOnce());
+        }
+      }
+    };
+  }
+
+  protected void waitForConnection(final @ProgressText String connectionMessage, @ProgressTitle String connectionTitle) {
     ProgressManager.getInstance().run(new Task.Backgroundable(getSession().getProject(), connectionTitle, false) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         indicator.setText(connectionMessage);
         try {
           beforeConnect();
@@ -306,7 +400,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             myProcessHandler.destroyProcess();
           }
           if (shouldLogConnectionException(e)) {
-            LOG.error(e);
+            getNotificationGroup()
+              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
+              .setDisplayId(CONNECTION_FAILED)
+              .notify(myProject);
           }
         }
       }
@@ -321,24 +418,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
-    setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
+    setUserTypeRenderersSettings();
+    setUnitTestDebuggingMode();
+    myDebugger.setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
   }
 
   @Override
   public int handleDebugPort(int localPort) throws IOException {
     if (myProcessHandler instanceof RemoteProcessControl) {
-      return getRemoteTunneledPort(localPort, (RemoteProcessControl)myProcessHandler);
+      return getRemoteHostPortForDebuggerConnection(localPort, (RemoteProcessControl)myProcessHandler).getSecond();
     }
     else {
       return localPort;
     }
   }
 
-  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessControl handler) throws IOException {
+  protected static Pair<String, Integer> getRemoteHostPortForDebuggerConnection(int localPort, @NotNull RemoteProcessControl handler)
+    throws IOException {
     try {
-      return handler.getRemoteSocket(localPort).getSecond();
+      return handler.getRemoteSocket(localPort);
     }
-    catch (Exception e) {
+    catch (RemoteSdkException e) {
       throw new IOException(e);
     }
   }
@@ -349,15 +449,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void recordLogEvent(PyConcurrencyEvent event) {
-    PyConcurrencyService.getInstance(getSession().getProject()).recordEvent(getSession(), event, event.isAsyncio());
-  }
-
-  @Override
   public void showConsole(PyThreadInfo thread) {
     myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
-    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      PythonDebugLanguageConsoleView consoleView = (PythonDebugLanguageConsoleView)myExecutionConsole;
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView consoleView) {
       UIUtil.invokeLaterIfNeeded(() -> {
         consoleView.enableConsole(false);
         consoleView.getPydevConsoleView().setConsoleEnabled(true);
@@ -379,10 +473,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void showCythonWarning() {
-    if (!isCythonWarningShown) {
-      PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
-      isCythonWarningShown = true;
+  public void showWarning(String warningId) {
+    if (warningId.equals("cython")) {
+      if (!PyDebugShowingNotificationsService.getInstance().isCythonNotificationShown()) {
+        PyDebugNotificationForCythonExtension.showCythonExtensionWarning(getSession().getProject());
+        PyDebugShowingNotificationsService.getInstance().setCythonNotificationShown(true);
+      }
     }
   }
 
@@ -392,12 +488,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   protected void beforeConnect() {
   }
 
-  protected String getConnectionMessage() {
-    return "Waiting for connection...";
+  protected @ProgressText String getConnectionMessage() {
+    return PyBundle.message("python.debugger.settings.waiting.for.connection");
   }
 
-  protected String getConnectionTitle() {
-    return "Connecting To Debugger";
+  protected @ProgressTitle String getConnectionTitle() {
+    return PyBundle.message("python.debugger.settings.connecting.to.debugger");
   }
 
   private void handshake() throws PyDebuggerException {
@@ -406,25 +502,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
       remoteVersion = currentBuild;
     }
-    else if (remoteVersion.startsWith("PY-")) {
-      remoteVersion = remoteVersion.substring(3);
-    }
     else {
-      remoteVersion = null;
+      remoteVersion = StringUtil.trimStart(remoteVersion, "PY-");
     }
-    printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole(PyBundle.message("debugger.connected.to.pydev.debugger.build", remoteVersion), ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (remoteVersion != null) {
-      if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
-        LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
-        printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
-                       ConsoleViewContentType.ERROR_OUTPUT);
-      }
+    if (!remoteVersion.startsWith(currentBuild)) {
+      LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
+      printToConsole(PyBundle.message("debugger.warning.wrong.debugger.version", currentBuild), ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
   @Override
-  public void printToConsole(String text, ConsoleViewContentType contentType) {
+  public void printToConsole(@Nls String text, ConsoleViewContentType contentType) {
     ((ConsoleView)myExecutionConsole).print(text, contentType);
   }
 
@@ -434,13 +524,32 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void registerExceptionBreakpoints() {
-    for (XBreakpoint<? extends ExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
+    for (XBreakpoint<? extends ExceptionBreakpointProperties<?>> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
     }
   }
 
+  @Override
+  public void setUserTypeRenderersSettings() {
+    PyUserTypeRenderersSettings settings = PyUserTypeRenderersSettings.getInstance();
+    if (settings == null) {
+      return;
+    }
+    if (isConnected()) {
+      List<PyUserTypeRenderer> renderersList = settings.getApplicableRenderers();
+      if (!renderersList.isEmpty()) {
+        myDebugger.setUserTypeRenderers(renderersList);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
+  }
+
   public void registerLineBreakpoints() {
-    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
+    for (Map.Entry<PySourcePosition, XLineBreakpoint<?>> entry : myRegisteredBreakpoints.entrySet()) {
       addBreakpoint(entry.getKey(), entry.getValue());
     }
   }
@@ -450,51 +559,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
-    settings.add(new WatchReturnValuesAction(this));
-    settings.add(new PyVariableViewSettings.SimplifiedView(this));
-    settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    PyVariableViewSettings.registerSettingsActions(settings, this, new WatchReturnValuesAction(this, myDebugger::setShowReturnValues),
+                                                    true);
   }
 
-  private static class WatchReturnValuesAction extends ToggleAction {
-    private volatile boolean myWatchesReturnValues;
-    private final PyDebugProcess myProcess;
-    private final String myText;
-
-    public WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
-      super("", "Enables watching executed functions return values", null);
-      myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
-      myProcess = debugProcess;
-      myText = "Show Return Values";
+  public void setUnitTestDebuggingMode() {
+    ExecutionEnvironment environment = getSession().getExecutionEnvironment();
+    if (environment == null) return;
+    RunProfile runProfile = environment.getRunProfile();
+    if (runProfile instanceof AbstractPythonTestRunConfiguration
+        && PyDebuggerOptionsProvider.getInstance(getProject()).isDropIntoDebuggerOnFailedTest()) {
+      myDebugger.setUnitTestDebuggingMode();
     }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(true);
-      presentation.setText(myText);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myWatchesReturnValues;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean watch) {
-      myWatchesReturnValues = watch;
-      PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
-      final Project project = e.getProject();
-      if (project != null) {
-        myProcess.setShowReturnValues(myWatchesReturnValues);
-        myProcess.getSession().rebuildViews();
-      }
-    }
-  }
-
-
-  public void setShowReturnValues(boolean showReturnValues) {
-    myDebugger.setShowReturnValues(showReturnValues);
   }
 
   @Override
@@ -511,6 +587,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (!checkCanPerformCommands()) return;
     getSession().sessionResumed();
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isStepIntoMyCodeAvailable() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable String getStepIntoMyCodeUnavailableReason() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void performStepIntoMyCode() {
+    startStepIntoMyCode(getSession().getSuspendContext());
   }
 
   public void startSetNextStatement(@Nullable XSuspendContext context,
@@ -534,12 +628,31 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
   }
 
-  public void startSmartStepInto(String functionName) {
-    dropFrameCaches();
+  public void startSmartStepInto(@NotNull PySmartStepIntoVariant variant) {
+    String threadId = variant.getContext().getFrame().getThreadId();
+    String frameId = variant.getContext().getFrame().getFrameId();
     if (isConnected()) {
+      dropFrameCaches();
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
-        myDebugger.smartStepInto(suspendedThread.getId(), functionName);
+        if (threadId.equals(suspendedThread.getId())) {
+          PySmartStepIntoContext context = variant.getContext();
+          myDebugger.smartStepInto(threadId, frameId, variant.getFunctionName(), variant.getCallOrder(),
+                                   context.getStartLine(), context.getEndLine());
+          break;
+        }
       }
+    }
+  }
+
+  public @NotNull List<Pair<String, Boolean>> getSmartStepIntoVariants(int startContextLine, int endContextLine) {
+    try {
+      PyStackFrame frame = currentFrame();
+      var smartStepIntoVariants = myDebugger.getSmartStepIntoVariants(
+        frame.getThreadId(), frame.getFrameId(), startContextLine, endContextLine);
+      return smartStepIntoVariants != null ? smartStepIntoVariants : Collections.emptyList();
+    }
+    catch (PyDebuggerException e) {
+      return Collections.emptyList();
     }
   }
 
@@ -550,7 +663,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void resume(@Nullable XSuspendContext context) {
-    passToAllThreads(ResumeOrStepCommand.Mode.RESUME);
+    if (myBreakpointHits.isEmpty()) {
+      passResumeToAllThreads();
+    }
+    else {
+      var breakpointHitContext = myBreakpointHits.removeFirst();
+      var shouldStop = getSession().breakpointReached(breakpointHitContext.breakpoint, breakpointHitContext.evaluatedLogExpression,
+                                                      breakpointHitContext.suspendContext);
+      if (!shouldStop) {
+        resume(breakpointHitContext.suspendContext);
+      }
+    }
   }
 
   @Override
@@ -560,12 +683,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public void suspendAllOtherThreads(PyThreadInfo thread) {
     myDebugger.suspendOtherThreads(thread);
   }
 
   /**
-   * Check if there is the thread suspended on the breakpoint with "Suspend all" policy
+   * Check if there is the thread suspended on the breakpoint with the "Suspend all" policy
    *
    * @return true if this thread exists
    */
@@ -577,7 +701,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if ((threadInfo.getState() == PyThreadInfo.State.SUSPENDED) && (frames != null)) {
           XBreakpoint<?> breakpoint = null;
           if (threadInfo.isStopOnBreakpoint()) {
-            final PySourcePosition position = frames.get(0).getPosition();
+            final PySourcePosition position = frames.getFirst().getPosition();
             breakpoint = myRegisteredBreakpoints.get(position);
           }
           else if (threadInfo.isExceptionBreak()) {
@@ -596,17 +720,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return false;
   }
 
-  private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
+  private void passResumeToAllThreads() {
     dropFrameCaches();
+    myInlayForFailedTestIsAlreadyShownSentinel.set(false);
     if (isConnected()) {
       for (PyThreadInfo thread : myDebugger.getThreads()) {
-        myDebugger.resumeOrStep(thread.getId(), mode);
+        myDebugger.resumeOrStep(thread.getId(), ResumeOrStepCommand.Mode.RESUME);
       }
     }
   }
 
   private void passToCurrentThread(@Nullable XSuspendContext context, final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
+    myBreakpointHits.clear();
     if (isConnected()) {
       String threadId = threadIdBeforeResumeOrStep(context);
 
@@ -619,8 +745,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  @Nullable
-  private static String threadIdBeforeResumeOrStep(@Nullable XSuspendContext context) {
+  private static @Nullable String threadIdBeforeResumeOrStep(@Nullable XSuspendContext context) {
     if (context instanceof PySuspendContext) {
       return ((PySuspendContext)context).getActiveExecutionStack().getThreadId();
     }
@@ -629,7 +754,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  protected boolean isConnected() {
+  public boolean isConnected() {
     return myDebugger.isConnected();
   }
 
@@ -652,24 +777,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void runToPosition(@NotNull final XSourcePosition position, @Nullable XSuspendContext context) {
+  public void runToPosition(final @NotNull XSourcePosition position, @Nullable XSuspendContext context) {
     dropFrameCaches();
     if (isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
       String type =
         ReadAction.compute(() -> {
-          String t = PyLineBreakpointType.ID;
+          String breakpointTypeId = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
-            for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
+            for (XBreakpointType<?, ?> breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
-                  ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
-                t = breakpointType.getId();
+                  ((PyBreakpointType)breakpointType).isBreakpointTypeAllowedInDocument(getSession().getProject(), document)) {
+                breakpointTypeId = breakpointType.getId();
                 break;
               }
             }
           }
-          return t;
+          return breakpointTypeId;
         });
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 
@@ -685,10 +810,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private PyDebugValue evaluate(String expression, boolean execute, PyStackFrame frame, boolean trimResult) throws PyDebuggerException {
-    return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
+    PyDebuggerOptionsProvider settings = PyDebuggerOptionsProvider.getInstance(getProject());
+    return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute,
+                               settings.getEvaluationResponseTimeout(), trimResult);
   }
 
-  public void consoleExec(String command, PyDebugCallback<String> callback) {
+  @Override
+  public void consoleExec(String command, @NotNull PyDebugCallback<String> callback) {
     dropFrameCaches();
     try {
       final PyStackFrame frame = currentFrame();
@@ -700,37 +828,107 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public boolean isCurrentFrameCached() {
-    try {
-      synchronized (myFrameCacheObject) {
-        final PyStackFrame frame = currentFrame();
-        return myStackFrameCache.containsKey(frame.getThreadFrameId());
-      }
-    }
-    catch (PyDebuggerException ignored) {
-    }
-    return false;
+  public String execTableCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
 
   @Override
-  @Nullable
-  public XValueChildrenList loadFrame() throws PyDebuggerException {
+  public String execTableImageCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    synchronized (myFrameCacheObject) {
-      //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
-      if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
-        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
-        myStackFrameCache.put(frame.getThreadFrameId(), values);
-      }
-    }
-    return applyNewValue(myStackFrameCache.get(frame.getThreadFrameId()), frame.getThreadFrameId());
+    return myDebugger.execTableImageCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
   }
 
-  public void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
+  @Override
+  public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
+    synchronized (myFrameCacheObject) {
+      final PyStackFrame frame = (PyStackFrame)contextFrame;
+      return myStackFrameCache.containsKey(frame.getThreadFrameId());
+    }
+  }
+
+  @Override
+  public @Nullable XValueChildrenList loadFrame(final @Nullable XStackFrame contextFrame) throws PyDebuggerException {
+    final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
+    synchronized (myFrameCacheObject) {
+      // Do not reload the frame every time it is necessary, because due to a bug in pdb, reloading the frame clears all variable changes.
+      if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
+        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
+        // Could be null when the current function is called for a thread that is already dead.
+        // In this case, a new element shouldn't be added to myStackFrameCache.
+        if (values == null) {
+          return null;
+        }
+        myStackFrameCache.put(frame.getThreadFrameId(), values);
+      }
+      showFailedTestInfoIfNecessary(frame);
+    }
+    return applyNewValue(getFrameFromCache(frame), frame.getThreadFrameId());
+  }
+
+  @Override
+  public @NotNull XValueChildrenList loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), groupType);
+    if (values != null) {
+      PyDebugValue.getAsyncValues(frame, this, values);
+    }
+    else {
+      values = XValueChildrenList.EMPTY;
+    }
+
+    return values;
+  }
+
+  private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {
+    PyExecutionStack pyExecutionStack = null;
+    XSuspendContext suspendContext = getSession().getSuspendContext();
+    if (suspendContext != null) {
+      XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+      pyExecutionStack = executionStack != null ? (PyExecutionStack)executionStack : null;
+    }
+
+    if (pyExecutionStack == null || !isFailedTestStop(pyExecutionStack.getThreadInfo())) return;
+
+    XValueChildrenList values = getFrameFromCache(frame);
+    if (values == null) return;
+
+    if (!myInlayForFailedTestIsAlreadyShownSentinel.getAndSet(true)) {
+      PyDebugValue exceptionDataContainer = getExceptionDataFromFrame(values);
+      if (exceptionDataContainer == null) return;
+
+      XValueChildrenList exceptionDataValues = loadVariable(exceptionDataContainer);
+      if (exceptionDataValues == null || exceptionDataValues.size() < 2) return;
+
+      PyDebugValue exceptionData = ((PyDebugValue)exceptionDataValues.getValue(1));
+      String exceptionType = exceptionData.getType();
+      String errorMessage = exceptionData.getValue();
+      if (exceptionType == null || errorMessage == null) return;
+
+      if (exceptionType.equals("EqualsAssertionError") && errorMessage.startsWith(" :: ")) {
+        errorMessage = errorMessage.replaceFirst(" :: ", "");
+      }
+
+      PyThreadInfo threadInfo = pyExecutionStack.getThreadInfo();
+      List<PyStackFrameInfo> threadFrames = threadInfo.getFrames();
+      boolean isTestSetUpFail = false;
+      if (threadFrames != null &&
+          (threadFrames.size() == 1 || threadFrames.size() > 1 && PyUnitTestsDebuggingService.isErrorInTestSetUpOrTearDown(threadFrames))) {
+        isTestSetUpFail = true;
+      }
+      getProject().getService(PyUnitTestsDebuggingService.class).showFailedTestInlay(
+        getSession(), frame, exceptionType, errorMessage, isTestSetUpFail);
+    }
+  }
+
+  @Override
+  public void loadAsyncVariablesValues(@Nullable XStackFrame contextFrame, final @NotNull List<PyAsyncValue<String>> pyAsyncValues) {
     PyDebugValueExecutionService.getInstance(getProject()).submitTask(this, () -> {
       try {
         if (isConnected()) {
-          final PyStackFrame frame = currentFrame();
+          final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
           XSuspendContext context = getSession().getSuspendContext();
           String threadId = threadIdBeforeResumeOrStep(context);
           for (PyThreadInfo suspendedThread : mySuspendedThreads) {
@@ -745,14 +943,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (!isConnected()) return;
         for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
           PyDebugValue value = asyncValue.getDebugValue();
-          XValueNode node = value.getLastNode();
-          if (node != null && !node.isObsolete()) {
-            if (e.getMessage().startsWith("Timeout")) {
-              value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
-              PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
-            }
-            else {
-              LOG.error(e);
+          for (XValueNode node : value.getValueNodes()) {
+            if (node != null && !node.isObsolete()) {
+              if (e.getMessage().startsWith("Timeout")) {
+                value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
+                ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
+                if (node instanceof XValueNodeEx valueNode) {
+                  valueNode.clearAdditionalHyperlinks();
+                  valueNode.addAdditionalHyperlink(configureLink);
+                }
+              }
+              else {
+                LOG.error(e);
+              }
             }
           }
         }
@@ -781,14 +984,30 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
+  public @NotNull XValueChildrenList loadVariableDefaultView(final PyDebugValue variable) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    PyDebugValue debugValue = new PyDebugValue(var, var.getFullName());
-    return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
+    PyDebugValue debugValue = new PyDebugValue(variable, variable.getFullName());
+    var result = myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
+    if (result == null) {
+      throw new PyDebuggerException("Failed to load a variable");
+    }
+    return result;
   }
 
   @Override
-  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+  public @Nullable XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
+    PyDebugValue debugValue = new PyDebugValue(var, var.getFullName());
+    PyUserNodeRenderer typeRenderer = getTypeRenderer(var);
+    if (typeRenderer != null) {
+      return loadTypeRendererChildren(this, debugValue, typeRenderer);
+    }
+    else {
+      return loadVariableDefaultView(debugValue);
+    }
+  }
+
+  @Override
+  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
     try {
       final PyStackFrame frame = currentFrame();
       myDebugger.loadReferrers(frame.getThreadId(), frame.getFrameId(), var, callback);
@@ -805,9 +1024,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
   }
 
-  @Nullable
   @Override
-  public PyReferrersLoader getReferrersLoader() {
+  public @Nullable PyReferrersLoader getReferrersLoader() {
     if (myReferrersProvider == null) {
       myReferrersProvider = new PyReferrersLoader(this);
     }
@@ -821,8 +1039,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.loadArrayItems(frame.getThreadId(), frame.getFrameId(), var, rowOffset, colOffset, rows, cols, format);
   }
 
-  @Nullable
-  public String loadSource(String path) {
+  @Override
+  public DataViewerCommandResult executeDataViewerCommand(DataViewerCommandBuilder builder) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    builder.setThreadId(frame.getThreadId());
+    builder.setFrameId(frame.getFrameId());
+    return myDebugger.executeDataViewerCommand(builder);
+  }
+
+  public @Nullable String loadSource(String path) {
     return myDebugger.loadSource(path);
   }
 
@@ -837,14 +1062,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myCurrentRootNode = currentRootNode;
   }
 
-  @Nullable
   @Override
-  public XCompositeNode getCurrentRootNode() {
+  public @Nullable XCompositeNode getCurrentRootNode() {
     return myCurrentRootNode;
   }
 
-  @NotNull
-  private PyStackFrame currentFrame() throws PyDebuggerException {
+  private @NotNull PyStackFrame currentFrame() throws PyDebuggerException {
     if (!isConnected()) {
       throw new PyDebuggerException("Disconnected");
     }
@@ -856,25 +1079,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
 
     if (frame == null) {
-      throw new PyDebuggerException("Process is running");
+      throw new PyDebuggerException(PyBundle.message("debugger.debug.process.running"));
     }
 
     return frame;
   }
 
-  private String getFunctionNameForBreakpoint(final XLineBreakpoint breakpoint) {
+  private String getFunctionNameForBreakpoint(final XLineBreakpoint<?> breakpoint) {
     XSourcePosition sourcePosition = breakpoint.getSourcePosition();
     return sourcePosition == null ? null : getFunctionName(sourcePosition);
   }
 
-  @Nullable
-  private String getFunctionName(@NotNull final XSourcePosition position) {
+  private @Nullable String getFunctionName(final @NotNull XSourcePosition position) {
     final VirtualFile file = position.getFile();
     return ReadAction.compute(() -> {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
       if (document != null) {
-        if (file.getFileType() == PythonFileType.INSTANCE) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, PythonFileType.INSTANCE)) {
           int breakpointLine = position.getLine();
           if (breakpointLine < document.getLineCount()) {
             PsiElement psiElement = XDebuggerUtil.getInstance().
@@ -890,7 +1112,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
-  public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
+  public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint<?> breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (isConnected()) {
       final String conditionExpression = breakpoint.getConditionExpression() == null
@@ -899,7 +1121,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final String logExpression = breakpoint.getLogExpressionObject() == null
                                    ? null
                                    : breakpoint.getLogExpressionObject().getExpression();
-      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported()? breakpoint.getSuspendPolicy(): SuspendPolicy.NONE;
+      SuspendPolicy policy = breakpoint.getType().isSuspendThreadSupported() ? breakpoint.getSuspendPolicy() : SuspendPolicy.NONE;
       myDebugger.setBreakpoint(breakpoint.getType().getId(),
                                position.getFile(),
                                position.getLine(),
@@ -911,14 +1133,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void addTemporaryBreakpoint(String typeId, String file, int line) {
-    if (isConnected()) {
-      myDebugger.setTempBreakpoint(typeId, file, line);
-    }
-  }
-
   public void removeBreakpoint(final PySourcePosition position) {
-    XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
+    XLineBreakpoint<?> breakpoint = myRegisteredBreakpoints.get(position);
     if (breakpoint != null) {
       myRegisteredBreakpoints.remove(position);
       if (isConnected()) {
@@ -927,8 +1143,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
+  public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties<?>> breakpoint) {
+    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getExceptionBreakpointId(), breakpoint);
     if (isConnected()) {
       String conditionExpression = breakpoint.getConditionExpression() == null
                                    ? null
@@ -942,8 +1158,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
+  public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties<?>> breakpoint) {
+    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getExceptionBreakpointId());
     if (isConnected()) {
       myDebugger.removeExceptionBreakpoint(breakpoint.getProperties());
     }
@@ -964,7 +1180,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
         XBreakpoint<?> breakpoint = null;
         if (threadInfo.isStopOnBreakpoint()) {
-          final PySourcePosition position = frames.get(0).getPosition();
+          final PySourcePosition framePosition = frames.getFirst().getPosition();
+          PySourcePosition position = myPositionConverter.convertFrameToPython(framePosition);
           breakpoint = myRegisteredBreakpoints.get(position);
           if (breakpoint == null) {
             myDebugger.removeTempBreakpoint(position.getFile(), position.getLine());
@@ -972,7 +1189,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
         else if (threadInfo.isExceptionBreak()) {
           String exceptionName = threadInfo.getMessage();
-          threadInfo.setMessage(null);
           if (exceptionName != null) {
             breakpoint = myRegisteredExceptionBreakpoints.get(exceptionName);
           }
@@ -990,15 +1206,20 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             }
           }
           else {
-            getSession().positionReached(suspendContext);
+            getSession().positionReached(suspendContext, isFailedTestStop(threadInfo));
+          }
+        }
+        else {
+          if (breakpoint != null) {
+            // Hit a breakpoint while already suspended. We have to remember it and stop on this breakpoint later.
+            myBreakpointHits.add(new BreakpointHitContext(breakpoint, threadInfo.getMessage(), suspendContext));
           }
         }
       }
     }
   }
 
-  @NotNull
-  protected PySuspendContext createSuspendContext(PyThreadInfo threadInfo) {
+  protected @NotNull PySuspendContext createSuspendContext(PyThreadInfo threadInfo) {
     return new PySuspendContext(this, threadInfo);
   }
 
@@ -1007,35 +1228,34 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     mySuspendedThreads.remove(threadInfo);
   }
 
-  private void dropFrameCaches() {
+  public void dropFrameCaches() {
     myStackFrameCache.clear();
     myNewVariableValue.clear();
-    PyDebugValueExecutionService.getInstance(getProject()).cancelSubmittedTasks(this);
   }
 
-  @NotNull
-  public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
+  @Override
+  public @NotNull List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
     if (isConnected()) {
-      dropFrameCaches();
       final PyStackFrame frame = currentFrame();
       return myDebugger.getCompletions(frame.getThreadId(), frame.getFrameId(), prefix);
     }
-    return Lists.newArrayList();
+    return new ArrayList<>();
   }
 
-  @NotNull
-  public String getDescription(String prefix) throws Exception {
+  @Override
+  public @NotNull String getDescription(String prefix) throws Exception {
     if (isConnected()) {
-      dropFrameCaches();
       final PyStackFrame frame = currentFrame();
       return myDebugger.getDescription(frame.getThreadId(), frame.getFrameId(), prefix);
     }
     return "";
   }
 
-
   @Override
-  public void startNotified(@NotNull ProcessEvent event) {
+  public void interruptDebugConsole() {
+    if (isConnected()) {
+      myDebugger.interruptDebugConsole();
+    }
   }
 
   @Override
@@ -1043,22 +1263,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myDebugger.close();
   }
 
-  @Override
-  public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-    myClosing = true;
-  }
-
-  @Override
-  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-  }
-
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(getSession().getProject(), this, frameInfo,
-                            getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
+    final PyStackFrame frame = new PyStackFrame(getSession().getProject(), this, frameInfo,
+                                                getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
+    frame.restoreChildrenDescriptors(myDescriptorsCache);
+    return frame;
   }
 
   @Override
-  public String getCurrentStateMessage() {
+  public @ProgressText String getCurrentStateMessage() {
     if (getSession().isStopped()) {
       return XDebuggerBundle.message("debugger.state.message.disconnected");
     }
@@ -1089,110 +1302,33 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return CONNECTION_TIMEOUT;
   }
 
-
-  @Nullable
-  private XSourcePosition getCurrentFrameSourcePosition() {
-    try {
-      PyStackFrame frame = currentFrame();
-
-      return frame.getSourcePosition();
-    }
-    catch (PyDebuggerException e) {
-      return null;
-    }
-  }
-
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return getSession().getProject();
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getSourcePositionForName(String name, String parentType) {
-    if (name == null) return null;
-    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
-
-    final PsiFile file = getPsiFile(currentPosition);
-
-    if (file == null) return null;
-
-    if (Strings.isNullOrEmpty(parentType)) {
-      final Ref<PsiElement> elementRef = resolveInCurrentFrame(name, currentPosition, file);
-      return elementRef.isNull() ? null : XDebuggerUtil.getInstance().createPositionByElement(elementRef.get());
-    }
-    else {
-      final PyType parentDef = resolveTypeFromString(parentType, file);
-      if (parentDef == null) {
-        return null;
-      }
-      List<? extends RatedResolveResult> results =
-        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits());
-      if (results != null && !results.isEmpty()) {
-        return XDebuggerUtil.getInstance().createPositionByElement(results.get(0).getElement());
-      }
-      else {
-        return typeToPosition(parentDef); // at least try to return parent
-      }
-    }
-  }
-
-
-  @NotNull
-  private static Ref<PsiElement> resolveInCurrentFrame(final String name, XSourcePosition currentPosition, PsiFile file) {
-    final Ref<PsiElement> elementRef = Ref.create();
-    PsiElement currentElement = file.findElementAt(currentPosition.getOffset());
-
-    if (currentElement == null) {
-      return elementRef;
-    }
-
-
-    PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if ((element instanceof PyImportElement)) {
-          PyImportElement importElement = (PyImportElement)element;
-          if (name.equals(importElement.getVisibleName())) {
-            if (elementRef.isNull()) {
-              elementRef.set(element);
-            }
-            return false;
-          }
-          return true;
-        }
-        else {
-          if (elementRef.isNull()) {
-            elementRef.set(element);
-          }
-          return false;
-        }
-      }
-    }, currentElement, name, null);
-    return elementRef;
-  }
-
-  @Nullable
-  private PsiFile getPsiFile(XSourcePosition currentPosition) {
-    if (currentPosition == null) {
+  public @Nullable XSourcePosition getSourcePositionForName(String name, String parentType) {
+    try {
+      PyStackFrame frame = currentFrame();
+      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
+      return resolver.getSourcePositionForName(name, parentType);
+    } catch (PyDebuggerException e) {
+      LOG.warn("Could not retrieve current frame for source position resolution", e);
       return null;
     }
-
-    return PsiManager.getInstance(getProject()).findFile(currentPosition.getFile());
   }
 
-
-  @Nullable
   @Override
-  public XSourcePosition getSourcePositionForType(String typeName) {
-    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
-
-    final PsiFile file = getPsiFile(currentPosition);
-
-    if (typeName == null || !(file instanceof PyFile)) return null;
-
-
-    final PyType pyType = resolveTypeFromString(typeName, file);
-    return pyType == null ? null : typeToPosition(pyType);
+  public @Nullable XSourcePosition getSourcePositionForType(String typeName) {
+    try {
+      PyStackFrame frame = currentFrame();
+      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
+      return resolver.getSourcePositionForType(typeName);
+    } catch (PyDebuggerException e) {
+      LOG.warn("Could not retrieve current frame for source position resolution", e);
+      return null;
+    }
   }
 
   @Override
@@ -1205,41 +1341,30 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myFrameListeners.add(listener);
   }
 
-  @Nullable
-  private static XSourcePosition typeToPosition(PyType pyType) {
-    final PyClassType classType = PyUtil.as(pyType, PyClassType.class);
+  @Override
+  public boolean isSimplifiedView() {
+    return PyDebuggerSettings.getInstance().isSimplifiedView();
+  }
 
-    if (classType != null) {
-      return XDebuggerUtil.getInstance().createPositionByElement(classType.getPyClass());
-    }
+  boolean isFailedTestStop(@NotNull PyThreadInfo threadInfo) {
+    return threadInfo.isExceptionBreak() && !myRegisteredExceptionBreakpoints.containsKey(threadInfo.getMessage());
+  }
 
-    final PyModuleType moduleType = PyUtil.as(pyType, PyModuleType.class);
-    if (moduleType != null) {
-      return XDebuggerUtil.getInstance().createPositionByElement(moduleType.getModule());
+  private @Nullable XValueChildrenList getFrameFromCache(@NotNull PyStackFrame frame) {
+    return myStackFrameCache.getOrDefault(frame.getThreadFrameId(), null);
+  }
+
+  private static @Nullable PyDebugValue getExceptionDataFromFrame(@NotNull XValueChildrenList values) {
+    for (int i = 0; i < values.size(); i++) {
+      if (values.getName(i).equals("__exception__")) {
+        return (PyDebugValue)values.getValue(i);
+      }
     }
     return null;
   }
 
-  private PyType resolveTypeFromString(String typeName, PsiFile file) {
-    typeName = typeName.replace("__builtin__.", "");
-    PyType pyType = null;
-    if (!typeName.contains(".")) {
-
-      pyType = PyTypeParser.getTypeByName(file, typeName);
-    }
-    if (pyType == null) {
-      PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
-      PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile(((PyFile)file).getLanguageLevel(), "");
-      Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
-      dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
-
-      pyType = psiFacade.parseTypeAnnotation(typeName, dummyFile);
-    }
-    return pyType;
-  }
-
   private interface DebuggerFactory {
-    @NotNull ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
+    @NotNull
+    ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
   }
 }

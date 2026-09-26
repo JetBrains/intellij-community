@@ -1,4 +1,4 @@
-// "Convert to atomic" "true"
+// "Convert to atomic" "true-preview"
 class Test {
   int[] i<caret>i = new int[12];
 

@@ -1,0 +1,18 @@
+// "Annotate containing class with '@Parcelize'" "true"
+// WITH_STDLIB
+// ERROR: No 'Parcelable' supertype
+// K2_ERROR: CLASS_SHOULD_BE_PARCELIZE
+// K2_AFTER_ERROR: NO_PARCELABLE_SUPERTYPE
+
+package com.myapp.activity
+
+import android.os.*
+import kotlinx.parcelize.*
+
+object StringParceler : Parceler<String> {
+    override fun create(parcel: Parcel) = TODO()
+    override fun String.write(parcel: Parcel, flags: Int) = TODO()
+}
+
+class Foo(@<caret>TypeParceler<String, StringParceler> val a: String)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.AnnotateWithParcelizeQuickFix

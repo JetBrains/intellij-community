@@ -1,0 +1,97 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.pty4j.plugin` start
+dev_dist_plugin(
+    content_modules = ["intellij.libraries.pty4j"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.libraries.pty4j"],
+    main_module = "intellij.pty4j.plugin",
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//plugins/pty4j/plugin:plugin.jar": "intellij.pty4j.plugin",
+    },
+    descriptor = "//plugins/pty4j/plugin:intellij.pty4j.plugin_dev_descriptor",
+    execution_version = 3,
+    independent_artifacts = ["//libraries/pty4j:pty4j_content_module_jar"],
+    main_module = "intellij.pty4j.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "b64hdaotesp7l3zk1imzna6ln",
+        },
+        "darwin_x64": {
+            "layoutSignature": "cd3so8z124enzowf3vcq2pxde",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "sbkf5z0apbsbye0vumtzup7t",
+        },
+        "linux_x64": {
+            "layoutSignature": "2hl03t8ihteqtbzzitbbfdc4o",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "bfsir0nfsodxs4x2zf2bibdep",
+        },
+        "windows_x64": {
+            "layoutSignature": "e57cmp8x7w54jqpgux3mpmyow",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+)
+### auto-generated section `dev intellij.pty4j.plugin` end
+
+### auto-generated section `build intellij.pty4j.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pty4j.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/jna/plugin",
+    ],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.pty4j.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//plugins/jna/plugin:plugin_test_lib",
+    ],
+)
+### auto-generated section `build intellij.pty4j.plugin` end
+
+### auto-generated section `iml intellij.pty4j.plugin` start
+exports_files(
+    [
+        "intellij.pty4j.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pty4j.plugin` end

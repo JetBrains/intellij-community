@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports methods whose names are too short, too long, or do not follow
+the specified regular expression pattern.
+<p>A quick-fix to rename such methods is available only in the editor.</p>
+<p>Instance methods that override library
+  methods and constructors are ignored by this inspection.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  public static int n() {
+    return 0;
+  }
+</code></pre>
+This example will be reported if the inspection is enabled for <code>static</code> methods with the default settings where a method name should have a minimum length of 4.
+<!-- tooltip end -->
+<p>Use the list in the <b>Options</b> section to specify the types of methods that should be checked.</p>
+<p>
+  For each method type, you can specify the minimum length, maximum length, and regular expression for acceptable method names.
+  Specify <b>0</b> in a length field to skip the corresponding check.
+  Regular expressions use the standard <code>java.util.regex</code> format.
+</p>
+</body>
+</html>

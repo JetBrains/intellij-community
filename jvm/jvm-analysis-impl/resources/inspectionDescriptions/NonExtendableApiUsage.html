@@ -1,0 +1,36 @@
+<html>
+<body>
+Reports classes, interfaces, and methods that extend, implement, or override API elements marked with <code>@ApiStatus.NonExtendable</code>.
+<p>
+  The <code>@ApiStatus.NonExtendable</code> annotation indicates that the class, interface, or method <strong>must not be extended,
+  implemented, or overridden</strong>.
+  Since casting such interfaces and classes to the internal library implementation is rather common,
+  if a client provides a different implementation, you will get <code>ClassCastException</code>.
+  Adding new abstract methods to such classes and interfaces will break the compatibility with the client's implementations.
+</p>
+
+<p><b>Example:</b></p>
+<pre><code lang="java">
+  // In upstream library code
+  @ApiStatus.NonExtendable
+  public interface MyService {
+    public void perform();
+  }
+
+  // In downstream client code
+  public class MyServiceImpl implements MyService {
+    @Override
+    public void perform() {
+      // ...
+    }
+  }
+</code></pre>
+
+This inspection also detects the following problems related to applying the annotation incorrectly:
+<ul>
+  <li>Annotating classes/methods that cannot be extended/overridden</li>
+  <li>Redundantly annotating methods from a class already annotated with <code>@ApiStatus.NonExtendable</code></li>
+</ul>
+
+</body>
+</html>

@@ -1,96 +1,102 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
 public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
-  public static final String COMMAND_NAME = "Rearrange code";
-  public static final String PROGRESS_TEXT = CodeInsightBundle.message("process.rearrange.code");
-
   private static final Logger LOG = Logger.getInstance(RearrangeCodeProcessor.class);
   private SelectionModel mySelectionModel;
+  private final Collection<TextRange> myRanges = new ArrayList<>();
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
-    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    super(previousProcessor, getCommandName(), getProgressText());
   }
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
-    super(previousProcessor, COMMAND_NAME, PROGRESS_TEXT);
+    super(previousProcessor, getCommandName(), getProgressText());
     mySelectionModel = selectionModel;
   }
 
-  public RearrangeCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile, @NotNull SelectionModel selectionModel) {
+    super(psiFile.getProject(), psiFile, getProgressText(), getCommandName(), false);
     mySelectionModel = selectionModel;
   }
 
-  public RearrangeCodeProcessor(@NotNull PsiFile file) {
-    super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile) {
+    super(psiFile.getProject(), psiFile, getProgressText(), getCommandName(), false);
+  }
+
+  @SuppressWarnings("unused") // Used in Rider
+  public RearrangeCodeProcessor(@NotNull PsiFile psiFile, TextRange[] ranges) {
+    super(psiFile.getProject(), psiFile, getProgressText(), getCommandName(), false);
+    for (TextRange range : ranges) {
+      if (range != null) {
+        myRanges.add(range);
+      }
+    }
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public RearrangeCodeProcessor(@NotNull Project project,
-                                @NotNull PsiFile[] files,
-                                @NotNull String commandName,
+                                PsiFile @NotNull [] files,
+                                @NlsContexts.Command @NotNull String commandName,
                                 @Nullable Runnable postRunnable) {
     this(project, files, commandName, postRunnable, false);
   }
 
   public RearrangeCodeProcessor(@NotNull Project project,
-                                @NotNull PsiFile[] files,
-                                @NotNull String commandName,
+                                PsiFile @NotNull [] files,
+                                @NlsContexts.Command @NotNull String commandName,
                                 @Nullable Runnable postRunnable,
                                 boolean processChangedTextOnly) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
+    super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
-  @NotNull
+  public RearrangeCodeProcessor(@NotNull Project project,
+                                PsiFile @NotNull [] files,
+                                @Nullable Runnable postRunnable,
+                                boolean processChangedTextOnly) {
+    super(project, files, getProgressText(), getCommandName(), postRunnable, processChangedTextOnly);
+  }
+
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
+    // Task prepared by prepareTask is executed on EDT, but calculation of VCS changes may include operations
+    // forbidden on EDT (e.g., git cli invocations).
+    // It should not be wrapped in read action, as needsReadActionToPrepareTask returns true.
+    Collection<TextRange> preComputedRanges =
+      !processChangedTextOnly ? null : VcsFacade.getInstance().getChangedTextRanges(myProject, psiFile);
     return new FutureTask<>(() -> {
       try {
-        Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+        Collection<TextRange> ranges = preComputedRanges == null ? getRangesToFormat(psiFile, processChangedTextOnly) : preComputedRanges;
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
 
-        if (document != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null) {
+        if (document != null && Rearranger.EXTENSION.forLanguage(psiFile.getLanguage()) != null) {
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
           PsiDocumentManager.getInstance(myProject).commitDocument(document);
-          Runnable command = prepareRearrangeCommand(file, ranges);
+          Runnable command = prepareRearrangeCommand(psiFile, ranges);
           try {
-            CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
+            CommandProcessor.getInstance().executeCommand(myProject, command, getCommandName(), null);
           }
           finally {
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -100,17 +106,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
         return true;
       }
       catch (FilesTooBigForDiffException e) {
-        handleFileTooBigException(LOG, e, file);
+        handleFileTooBigException(LOG, e, psiFile);
         return false;
       }
     });
   }
 
-  @NotNull
-  private Runnable prepareRearrangeCommand(@NotNull final PsiFile file, @NotNull final Collection<TextRange> ranges) {
-    final ArrangementEngine engine = ServiceManager.getService(myProject, ArrangementEngine.class);
+  private @NotNull Runnable prepareRearrangeCommand(final @NotNull PsiFile psiFile, final @NotNull Collection<TextRange> ranges) {
+    ArrangementEngine engine = ArrangementEngine.getInstance();
     return () -> {
-      engine.arrange(file, ranges);
+      engine.arrange(psiFile, ranges);
       if (getInfoCollector() != null) {
         String info = engine.getUserNotificationInfo();
         getInfoCollector().setRearrangeCodeNotification(info);
@@ -118,15 +123,23 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     };
   }
 
-  public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) throws FilesTooBigForDiffException {
+  public Collection<TextRange> getRangesToFormat(@NotNull PsiFile psiFile, boolean processChangedTextOnly) throws FilesTooBigForDiffException {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
 
     if (processChangedTextOnly) {
-      return FormatChangedTextUtil.getInstance().getChangedTextRanges(myProject, file);
+      return VcsFacade.getInstance().getChangedTextRanges(myProject, psiFile);
     }
 
-    return ContainerUtil.newSmartList(file.getTextRange());
+    return !myRanges.isEmpty() ? myRanges : new SmartList<>(psiFile.getTextRange());
+  }
+
+  public static @NlsContexts.ProgressText String getProgressText() {
+    return CodeInsightBundle.message("process.rearrange.code");
+  }
+
+  private static @NlsContexts.Command String getCommandName() {
+    return CodeInsightBundle.message("command.rearrange.code");
   }
 }

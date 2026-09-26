@@ -1,0 +1,103 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.compilerPlugins.assignment.fixes` start
+content_module_jar(module = ":kotlin-compilerPlugins-assignment-fixes")
+### auto-generated section `dev intellij.kotlin.compilerPlugins.assignment.fixes` end
+
+### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` start
+create_kotlinc_options(
+    name = "custom_kotlin-compilerPlugins-assignment-fixes",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "kotlin-compilerPlugins-assignment-fixes",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-compilerPlugins-assignment-fixes",
+    module_name = "intellij.kotlin.compilerPlugins.assignment.fixes",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/code-insight/api",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//plugins/kotlin/fir",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//platform/util",
+        "//platform/core-impl",
+        "//platform/analysis-api:analysis",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
+        "//plugins/kotlin/base/project-structure",
+    ],
+)
+
+jvm_library(
+    name = "kotlin-compilerPlugins-assignment-fixes_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-compilerPlugins-assignment-fixes",
+    module_name = "intellij.kotlin.compilerPlugins.assignment.fixes",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-compilerPlugins-assignment-fixes",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//plugins/kotlin/fir:fir_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes_test_lib",
+        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.assignment.fixes` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.assignment.fixes` start
+exports_files(
+    [
+        "intellij.kotlin.compilerPlugins.assignment.fixes.iml",
+        "resources/intellij.kotlin.compilerPlugins.assignment.fixes.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.compilerPlugins.assignment.fixes` end

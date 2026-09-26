@@ -1,49 +1,48 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/2014
  */
+@ApiStatus.Internal
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 
   private ExternalProjectsViewImpl myView;
 
+
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return getView() != null;
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     final ExternalProjectsViewImpl view = getView();
     return view != null && isSelected(view);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectsViewImpl view = getView();
     if (view != null){
+      // es system id does not available in the action context, get it from the view
+      ProjectSystemId systemId = view.getSystemId();
+      ExternalSystemActionsCollector.trigger(getProject(e), systemId, this, e);
       setSelected(view, state);
     }
   }
@@ -52,8 +51,7 @@ public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleA
 
   protected abstract void setSelected(@NotNull ExternalProjectsViewImpl view, boolean value);
 
-  @Nullable
-  protected ExternalProjectsViewImpl getView() {
+  protected @Nullable ExternalProjectsViewImpl getView() {
     return myView;
   }
 

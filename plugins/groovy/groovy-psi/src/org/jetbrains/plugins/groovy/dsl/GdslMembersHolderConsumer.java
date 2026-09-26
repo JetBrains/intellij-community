@@ -24,9 +24,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 
-/**
- * @author ilyas
- */
 public interface GdslMembersHolderConsumer {
   void addMemberHolder(CustomMembersHolder holder);
   Project getProject();

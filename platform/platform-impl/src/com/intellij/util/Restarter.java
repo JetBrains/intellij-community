@@ -1,253 +1,301 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.ide.actions.CreateDesktopEntryAction;
-import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.WString;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.win32.StdCallLibrary;
+import com.intellij.platform.ide.productInfo.IdeProductInfo;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
+import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-public class Restarter {
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+
+@ApiStatus.Internal
+public final class Restarter {
+  private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
+
+  private static volatile boolean copyRestarterFiles = false;
+  private static volatile List<String> mainAppArgs = List.of();
+  private static volatile Map<String, String> restarterEnv = Map.of();
+
   private Restarter() { }
 
   public static boolean isSupported() {
-    return ourRestartSupported.getValue();
+    return ourRestartSupported.get();
   }
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      String problem;
+  private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
+    var baseName = ApplicationNamesInfo.getInstance().getScriptName();
+    var launcher = switch (OS.CURRENT) {
+      case Windows -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "64.exe" : ".bat"));
+      case macOS -> PathManager.getHomeDir().resolve("MacOS").resolve(baseName);
+      case Linux -> PathManager.getBinDir().resolve(baseName + (Boolean.getBoolean("ide.native.launcher") ? "" : ".sh"));
+      default -> null;
+    };
+    return launcher != null && Files.exists(launcher) ? launcher : null;
+  });
 
-      if (SystemInfo.isWindows) {
-        if (!JnaLoader.isLoaded()) {
-          problem = "JNA not loaded";
-        }
-        else {
-          problem = checkRestarter("restarter.exe");
-        }
-      }
-      else if (SystemInfo.isMac) {
-        if (getMacOsAppDir() == null) {
-          problem = "not a bundle: " + PathManager.getHomePath();
-        }
-        else {
-          problem = checkRestarter("restarter");
-        }
-      }
-      else if (SystemInfo.isUnix) {
-        if (UnixProcessManager.getCurrentProcessId() <= 0) {
-          problem = "cannot detect process ID";
-        }
-        else if (CreateDesktopEntryAction.getLauncherScript() == null) {
-          problem = "cannot find launcher script in " + PathManager.getBinPath();
-        }
-        else if (PathEnvironmentVariableUtil.findInPath("python") == null) {
-          problem = "cannot find 'python' in PATH";
-        }
-        else {
-          problem = checkRestarter("restart.py");
-        }
-      }
-      else {
-        problem = "unknown platform: " + SystemInfo.OS_NAME;
-      }
+  private static final NullableLazyValue<Path> ourBinLauncher = Boolean.getBoolean("ide.native.launcher") ? ourLauncher : lazyNullable(() -> {
+    var baseName = ApplicationNamesInfo.getInstance().getScriptName();
+    var launcher = switch (OS.CURRENT) {
+      case Windows -> PathManager.getBinDir().resolve(baseName + "64.exe");
+      case macOS -> PathManager.getHomeDir().resolve("MacOS").resolve(baseName);
+      case Linux -> PathManager.getBinDir().resolve(baseName);
+      default -> null;
+    };
+    return launcher != null && Files.exists(launcher) ? launcher : null;
+  });
 
-      if (problem == null) {
-        return true;
+  // the RemDev starter binary is an implementation detail that should not be exposed externally
+  private static final NullableLazyValue<Path> ourLauncherWithRemDevOverride = lazyNullable(() -> {
+    if (Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
+      var launcher = PathManager.getBinDir().resolve(OS.CURRENT.getBinaryName("remote-dev-server"));
+      if (Files.exists(launcher)) return launcher;
+      Logger.getInstance(Restarter.class).error(
+        "RemDev starter property is set, but launcher file at " + launcher + " was not found? Will restart using the default entry point"
+      );
+    }
+
+    var launcher = ourLauncher.getValue();
+    if (launcher != null) return launcher;
+
+    if (PlatformUtils.isJetBrainsClient()) {
+      var launchData = IdeProductInfo.getInstance().getCurrentProductInfo().getLaunch();
+      if (launchData.size() == 1) {
+        var hostLauncher = PathManager.getHomeDir()
+          .resolve(OS.CURRENT == OS.macOS ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME)
+          .getParent()
+          .resolve(launchData.getFirst().getLauncherPath())
+          .normalize();
+        if (Files.exists(hostLauncher)) return hostLauncher;
       }
-      else {
-        Logger.getInstance(Restarter.class).info("not supported: " + problem);
-        return false;
+      Logger.getInstance(Restarter.class).warn("Cannot find an actual launcher for the frontend");
+    }
+
+    return null;
+  });
+
+  private static final Supplier<Boolean> ourRestartSupported = new SynchronizedClearableLazy<>(() -> {
+    String problem;
+
+    var restartExitCode = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    if (restartExitCode != null) {
+      try {
+        var code = Integer.parseInt(restartExitCode);
+        if (code >= 0 && code <= 255) {
+          return true;
+        }
+        else {
+          problem = "Requested exit code out of range (" + code + ")";
+        }
+      }
+      catch (NumberFormatException ex) {
+        problem = SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR + " contains a value that can't be parsed as an integer (" + restartExitCode + ")";
       }
     }
-  };
+    else if (OS.CURRENT == OS.Windows) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
+        problem = "cannot find the launcher executable in " + PathManager.getBinDir();
+      }
+      else {
+        problem = checkRestarter("restarter.exe");
+      }
+    }
+    else if (OS.CURRENT == OS.macOS) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
+        problem = "cannot find the launcher executable in " + PathManager.getHomeDir().resolve("MacOS");
+      }
+      else {
+        problem = checkRestarter("restarter");
+      }
+    }
+    else if (OS.CURRENT == OS.Linux) {
+      if (ourLauncherWithRemDevOverride.getValue() == null) {
+        problem = "cannot find the launcher executable in " + PathManager.getBinDir();
+      }
+      else {
+        problem = checkRestarter("restarter");
+      }
+    }
+    else {
+      problem = OS.CURRENT + " (" + System.getProperty("os.name") + ')';
+    }
+
+    if (problem == null) {
+      return true;
+    }
+    else {
+      Logger.getInstance(Restarter.class).info("not supported: " + problem);
+      return false;
+    }
+  });
 
   private static String checkRestarter(String restarterName) {
-    File restarter = PathManager.findBinFile(restarterName);
-    return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
+    var restarter = PathManager.getBinDir().resolve(restarterName);
+    return Files.isExecutable(restarter) ? null : "not an executable file: " + restarter;
   }
 
-  public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
-    scheduleRestart(false, beforeRestart);
-  }
-
-  public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
-    Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
-    if (SystemInfo.isWindows) {
-      restartOnWindows(elevate, beforeRestart);
+  public static void scheduleRestart(boolean elevate, @SuppressWarnings("SSBasedInspection") @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
+    var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
+    var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
+    if (exitCodeVariable != null) {
+      if (!beforeRestartCommands.isEmpty()) {
+        throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
+      }
+      try {
+        System.exit(Integer.parseInt(exitCodeVariable));
+      }
+      catch (NumberFormatException ex) {
+        throw new IOException("Cannot restart application: can't parse required exit code", ex);
+      }
     }
-    else if (SystemInfo.isMac) {
-      restartOnMac(beforeRestart);
+    else if (OS.CURRENT == OS.Windows) {
+      restartOnWindows(elevate, beforeRestartCommands, mainAppArgs);
     }
-    else if (SystemInfo.isUnix) {
-      restartOnUnix(beforeRestart);
+    else if (OS.CURRENT == OS.macOS) {
+      restartOnMac(beforeRestartCommands, mainAppArgs);
+    }
+    else if (OS.CURRENT == OS.Linux) {
+      restartOnLinux(beforeRestartCommands, mainAppArgs);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
     }
   }
 
-  private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
-    Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
-    Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
+  public static @Nullable Path getIdeStarter() {
+    return ourLauncher.getValue();
+  }
 
-    int pid = kernel32.GetCurrentProcessId();
-    IntByReference argc = new IntByReference();
-    Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
-    kernel32.LocalFree(argvPtr);
+  public static @Nullable Path getBinStarter() {
+    return ourBinLauncher.getValue();
+  }
 
-    // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
-    // argv[0] as the program name is only a convention, i.e. there is no guarantee
-    // the name is the full path to the executable.
-    //
-    // See https://msdn.microsoft.com/en-us/library/windows/desktop/ms683197(v=vs.85).aspx
-    // To retrieve the full path to the executable, use "GetModuleFileName(NULL, ...)".
-    //
-    // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
-    char[] buffer = new char[32767];
-    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
-      argv[0] = Native.toString(buffer);
-    }
-
-    ArrayList<String> args = new ArrayList<>();
-    args.add(String.valueOf(pid));
-    args.add(String.valueOf(beforeRestart.length));
-    Collections.addAll(args, beforeRestart);
+  private static void restartOnWindows(boolean elevate, List<List<String>> beforeRestart, List<String> args) throws IOException {
+    var starter = ourLauncherWithRemDevOverride.getValue();
+    if (starter == null) throw new IOException("Starter executable wasn't found in " + PathManager.getBinDir());
+    var command = prepareCommand("restarter.exe", beforeRestart);
+    command.add(String.valueOf((elevate ? 2 : 1) + args.size()));
     if (elevate) {
-      File launcher = PathManager.findBinFile("launcher.exe");
-      if (launcher != null) {
-        args.add(launcher.getPath());
-        args.add(String.valueOf(argv.length + 1));
+      command.add(PathManager.getBinDir().resolve("launcher.exe").toString());
+    }
+    command.add(starter.toString());
+    command.addAll(args);
+    runRestarter(command);
+  }
+
+  private static void restartOnMac(List<List<String>> beforeRestart, List<String> args) throws IOException {
+    var starter = ourLauncherWithRemDevOverride.getValue();
+    if (starter == null) throw new IOException("Starter executable wasn't found in: " + PathManager.getHomeDir());
+    var command = prepareCommand("restarter", beforeRestart);
+    command.add(String.valueOf(args.size() + 1));
+    command.add(starter.toString());
+    command.addAll(args);
+    runRestarter(command);
+  }
+
+  private static void restartOnLinux(List<List<String>> beforeRestart, List<String> args) throws IOException {
+    var starterScript = ourLauncherWithRemDevOverride.getValue();
+    if (starterScript == null) throw new IOException("Starter script wasn't found in " + PathManager.getBinDir());
+    var command = prepareCommand("restarter", beforeRestart);
+    command.add(String.valueOf(args.size() + 1));
+    command.add(starterScript.toString());
+    command.addAll(args);
+    runRestarter(command);
+  }
+
+  public static void setCopyRestarterFiles() {
+    copyRestarterFiles = true;
+  }
+
+  public static void setMainAppArgs(@NotNull List<String> args) {
+    mainAppArgs = new ArrayList<>(args);
+  }
+
+  public static void setRestarterEnv(@NotNull Map<String, String> env) {
+    restarterEnv = new HashMap<>(env);
+  }
+
+  private static List<String> prepareCommand(String restarterName, List<List<String>> beforeRestart) throws IOException {
+    var restarter = PathManager.getBinDir().resolve(restarterName);
+    var command = new ArrayList<String>();
+    command.add(copyWhenNeeded(restarter, beforeRestart).toString());
+    command.add(String.valueOf(ProcessHandle.current().pid()));
+    for (var cmd : beforeRestart) {
+      if (!cmd.isEmpty()) {
+        command.add(String.valueOf(cmd.size()));
+        command.addAll(cmd);
       }
-      else {
-        args.add(String.valueOf(argv.length));
-      }
+    }
+    return command;
+  }
+
+  private static Path copyWhenNeeded(Path binFile, List<List<String>> commands) throws IOException {
+    if (copyRestarterFiles || ContainerUtil.exists(commands, cmd -> cmd.contains(UpdateInstaller.UPDATER_MAIN_CLASS))) {
+      var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
+      return Files.copy(binFile, tempDir.resolve(binFile.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     }
     else {
-      args.add(String.valueOf(argv.length));
+      return binFile;
     }
-    Collections.addAll(args, argv);
-
-    File restarter = PathManager.findBinFile("restarter.exe");
-    if (restarter == null) {
-      throw new IOException("Can't find restarter.exe; please reinstall the IDE");
-    }
-    runRestarter(restarter, args);
-
-    // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
-    // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
-    // process which happened to have the same process ID.
-    TimeoutUtil.sleep(500);
   }
 
-  private static String[] getRestartArgv(String[] argv) {
-    String mainClass = System.getProperty("idea.main.class.name", "com.intellij.idea.Main");
+  private static void runRestarter(List<String> command) throws IOException {
+    Logger.getInstance(Restarter.class).info("run restarter: " + command);
 
-    int countArgs = argv.length;
-    for (int i = argv.length-1; i >=0; i--) {
-      if (argv[i].equals(mainClass) || argv[i].endsWith(".exe")) {
-        countArgs = i + 1;
-        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
-          //absolute path
-          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
+    @SuppressWarnings("IO_FILE_USAGE")
+    var processBuilder = new ProcessBuilder(command)
+      .directory(Path.of(SystemProperties.getUserHome()).toFile())
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.DISCARD);
+    processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
+    processBuilder.environment().putAll(restarterEnv);
+
+    if (OS.isGenericUnix()) setDesktopStartupId(processBuilder);
+
+    processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
+
+    processBuilder.start();
+  }
+
+  // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
+  private static void setDesktopStartupId(ProcessBuilder processBuilder) {
+    if (SystemInfo.isJetBrainsJvm && StartupUiUtil.isXToolkit()) {
+      try {
+        var lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
+        if (lastUserActionTime == null) {
+          Logger.getInstance(Restarter.class).warn("Couldn't get the last user action's timestamp");
         }
-        break;
+        else {
+          // this doesn't initiate a "proper" startup sequence (by sending the 'new:' message to the root window),
+          // but passing the event timestamp to the started process should be enough to prevent focus stealing
+          var restartId = ApplicationNamesInfo.getInstance().getProductName() + "-restart_TIME" + lastUserActionTime;
+          processBuilder.environment().put("DESKTOP_STARTUP_ID", restartId);
+        }
+      }
+      catch (Exception e) {
+        Logger.getInstance(Restarter.class).warn("Couldn't set DESKTOP_STARTUP_ID", e);
       }
     }
-
-    String[] restartArg = new String[countArgs];
-    System.arraycopy(argv, 0, restartArg, 0, countArgs);
-    return restartArg;
-  }
-
-  private static void restartOnMac(String... beforeRestart) throws IOException {
-    File appDir = getMacOsAppDir();
-    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
-    List<String> args = new ArrayList<>();
-    args.add(appDir.getPath());
-    Collections.addAll(args, beforeRestart);
-    runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
-  }
-
-  private static File getMacOsAppDir() {
-    File appDir = new File(PathManager.getHomePath()).getParentFile();
-    return appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory() ? appDir : null;
-  }
-
-  private static void restartOnUnix(String... beforeRestart) throws IOException {
-    String launcherScript = CreateDesktopEntryAction.getLauncherScript();
-    if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
-
-    int pid = UnixProcessManager.getCurrentProcessId();
-    if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
-
-    List<String> args = new ArrayList<>();
-    args.add(String.valueOf(pid));
-    args.add(launcherScript);
-    Collections.addAll(args, beforeRestart);
-    runRestarter(new File(PathManager.getBinPath(), "restart.py"), args);
-  }
-
-  private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
-    restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
-  }
-
-  @NotNull
-  public static File createTempExecutable(@NotNull File executable) throws IOException {
-    File tempDir = new File(PathManager.getSystemPath(), "restart");
-    if (!FileUtilRt.createDirectory(tempDir)) {
-      throw new IOException("Cannot create directory: " + tempDir);
-    }
-
-    File copy = new File(tempDir, executable.getName());
-    if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
-      String prefix = FileUtilRt.getNameWithoutExtension(copy.getName());
-      String ext = FileUtilRt.getExtension(executable.getName());
-      String suffix = StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext);
-      copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
-    }
-    FileUtilRt.copy(executable, copy);
-
-    if (executable.canExecute() && !copy.setExecutable(true)) {
-      throw new IOException("Cannot make file executable: " + copy);
-    }
-
-    return copy;
-  }
-
-  @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
-  private interface Kernel32 extends StdCallLibrary {
-    int GetCurrentProcessId();
-    WString GetCommandLineW();
-    Pointer LocalFree(Pointer pointer);
-    WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
-  }
-
-  private interface Shell32 extends StdCallLibrary {
-    Pointer CommandLineToArgvW(WString command_line, IntByReference argc);
   }
 }

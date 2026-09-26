@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xmlb.Converter;
@@ -15,14 +12,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
 import java.util.List;
+import java.util.Objects;
 
 @Tag("splitter-proportions")
 public class SplitterProportionsDataImpl implements SplitterProportionsData {
   private static final String DATA_VERSION = "1";
-  @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
+  private static final @NonNls String ATTRIBUTE_PROPORTIONS = "proportions";
+  private static final @NonNls String ATTRIBUTE_VERSION = "version";
 
   private List<Float> proportions = new SmartList<>();
 
@@ -87,7 +86,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     proportions.clear();
     String prop = element.getAttributeValue(ATTRIBUTE_PROPORTIONS);
     String version = element.getAttributeValue(ATTRIBUTE_VERSION);
-    if (prop != null && Comparing.equal(version, DATA_VERSION)) {
+    if (prop != null && Objects.equals(version, DATA_VERSION)) {
       StringTokenizer tokenizer = new StringTokenizer(prop, ",");
       while (tokenizer.hasMoreTokens()) {
         String p = tokenizer.nextToken();
@@ -110,9 +109,8 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   }
 
   public static final class SplitterProportionsConverter extends Converter<SplitterProportionsDataImpl> {
-    @NotNull
     @Override
-    public SplitterProportionsDataImpl fromString(@NotNull String value) {
+    public @NotNull SplitterProportionsDataImpl fromString(@NotNull String value) {
       SplitterProportionsDataImpl data = new SplitterProportionsDataImpl();
       StringTokenizer tokenizer = new StringTokenizer(value, ",");
       while (tokenizer.hasMoreTokens()) {
@@ -121,9 +119,8 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
       return data;
     }
 
-    @NotNull
     @Override
-    public String toString(@NotNull SplitterProportionsDataImpl data) {
+    public @NotNull String toString(@NotNull SplitterProportionsDataImpl data) {
       StringBuilder result = new StringBuilder();
       String sep = "";
       for (Float proportion : data.proportions) {

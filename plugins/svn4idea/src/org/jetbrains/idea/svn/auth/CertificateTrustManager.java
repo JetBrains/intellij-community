@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.ClientOnlyTrustManager;
+import com.intellij.util.net.ssl.ConfirmingTrustManager;
 import org.apache.http.client.utils.URIBuilder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -20,18 +22,16 @@ import java.security.cert.X509Certificate;
  * - java trust store
  * - "Server Certificates" settings
  * - ask user
- *
- * @author Konstantin Kolosovsky.
  */
 public class CertificateTrustManager extends ClientOnlyTrustManager {
 
   private static final Logger LOG = Logger.getInstance(CertificateTrustManager.class);
 
-  private static final String CMD_SSL_SERVER = "cmd.ssl.server";
+  private static final @NonNls String CMD_SSL_SERVER = "cmd.ssl.server";
 
-  @NotNull private final AuthenticationService myAuthenticationService;
-  @NotNull private final Url myRepositoryUrl;
-  @NotNull private final String myRealm;
+  private final @NotNull AuthenticationService myAuthenticationService;
+  private final @NotNull Url myRepositoryUrl;
+  private final @NotNull String myRealm;
 
   public CertificateTrustManager(@NotNull AuthenticationService authenticationService, @NotNull Url repositoryUrl) {
     myAuthenticationService = authenticationService;
@@ -44,7 +44,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   @Override
-  public void checkServerTrusted(@Nullable X509Certificate[] chain, String authType) throws CertificateException {
+  public void checkServerTrusted(X509Certificate @Nullable [] chain, String authType) throws CertificateException {
     if (chain != null && chain.length > 0 && chain[0] != null) {
       X509Certificate certificate = chain[0];
 
@@ -65,11 +65,11 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
     return certificate.equals(cachedData);
   }
 
-  private static boolean isAcceptedByIdea(@NotNull X509Certificate[] chain, String authType) {
+  private static boolean isAcceptedByIdea(X509Certificate @NotNull [] chain, String authType) {
     boolean result;
 
     try {
-      CertificateManager.getInstance().getTrustManager().checkServerTrusted(chain, authType, false, false);
+      CertificateManager.getInstance().getTrustManager().checkServerTrusted(chain, authType, ConfirmingTrustManager.CertificateConfirmationParameters.doNotAskConfirmation());
       result = true;
     }
     catch (CertificateException e) {
@@ -86,14 +86,14 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
       .acceptServerAuthentication(myRepositoryUrl, myRealm, certificate, isStorageEnabled);
 
     switch (result) {
-      case ACCEPTED_PERMANENTLY:
+      case ACCEPTED_PERMANENTLY -> {
         // TODO: --trust-server-cert command line key does not allow caching credentials permanently - so permanent caching should be
         // TODO: separately implemented. Try utilizing "Server Certificates" settings for this.
-      case ACCEPTED_TEMPORARILY:
+      }
+      case ACCEPTED_TEMPORARILY -> {
         // acknowledge() is called in checkServerTrusted()
-        break;
-      case REJECTED:
-        throw new CertificateException("Server SSL certificate rejected");
+      }
+      case REJECTED -> throw new CertificateException("Server SSL certificate rejected");
     }
   }
 

@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyAugmentAssignmentInspectionTest extends PyInspectionTestCase {
 
   public void testMult() {
@@ -74,6 +79,9 @@ public class PyAugmentAssignmentInspectionTest extends PyInspectionTestCase {
   public void testSequenceConcatenation() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-15985
+  public void testNotSuggestedForChainedTarget() { doTest(); }
 
   @NotNull
   @Override

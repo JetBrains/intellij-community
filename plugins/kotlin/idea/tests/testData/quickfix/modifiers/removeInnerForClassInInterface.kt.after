@@ -1,0 +1,7 @@
+// "Remove 'inner' modifier" "true"
+// K2_ERROR: WRONG_MODIFIER_CONTAINING_DECLARATION
+interface A {
+    class B
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

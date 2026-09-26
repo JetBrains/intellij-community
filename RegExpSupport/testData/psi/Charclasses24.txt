@@ -10,5 +10,5 @@ REGEXP_FILE
             PsiElement(ESC_CTRL_CHARACTER)('\t')
           PsiElement(MINUS)('-')
           RegExpCharImpl: <->
-            PsiElement(MINUS)('-')
+            PsiElement(CHARACTER)('-')
         PsiElement(CLASS_END)(']')

@@ -6,7 +6,7 @@ internal fun appendMethodSignatureJava(method: Method, paramNames: List<String>,
   out.append(method.name).append('(')
   var firstArg = true
   val types = method.genericParameterTypes
-  for (i in 0..types.size - 1) {
+  for (i in types.indices) {
     val arg = types[i]
     if (firstArg) {
       firstArg = false
@@ -21,7 +21,7 @@ internal fun appendMethodSignatureJava(method: Method, paramNames: List<String>,
   out.append(')')
 }
 
-fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String> = listOf<String>()) {
+fun writeMethodDeclarationJava(out: TextOutput, m: Method, paramNames: List<String> = listOf()) {
   out.append("override fun ")
   appendMethodSignatureJava(m, paramNames, out)
 }

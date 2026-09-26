@@ -54,4 +54,14 @@ class IdempotentLoopBody {
     }
     return result;
   }
+  
+  volatile int x;
+  
+  int testVolatile() {
+    while(true) {
+      int localX = x;
+      if (localX > 0) return localX;
+      if (localX % 2 == 0) return localX / 2;
+    }
+  }
 }

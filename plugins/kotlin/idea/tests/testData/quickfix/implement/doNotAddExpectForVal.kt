@@ -1,0 +1,17 @@
+// "Implement members" "true"
+// ENABLE_MULTIPLATFORM
+// ERROR: Expected interface 'InterfaceWithVals' has no actual declaration in module light_idea_test_case for JVM
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+
+fun TODO(s: String): Nothing = null!!
+
+expect interface InterfaceWithVals {
+    fun funInInterface()
+
+    val importantVal: Int
+}
+
+class <caret>ChildOfInterface : InterfaceWithVals{
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersQuickfix

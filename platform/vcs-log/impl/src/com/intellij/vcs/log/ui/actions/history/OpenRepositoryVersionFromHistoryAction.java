@@ -20,16 +20,20 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.history.FileHistoryModel;
+import com.intellij.vcs.log.history.FileHistoryUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCommitAction {
+@ApiStatus.Internal
+public class OpenRepositoryVersionFromHistoryAction extends FileHistoryMetadataAction {
+
   @Override
-  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryModel model, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
     if (detail != null) {
-      VirtualFile file = ui.createVcsVirtualFile(detail);
+      VirtualFile file = FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
       if (file == null) return false;
     }
     return true;
@@ -37,10 +41,10 @@ public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCom
 
   @Override
   protected void performAction(@NotNull Project project,
-                               @NotNull FileHistoryUi ui,
-                               @NotNull VcsFullCommitDetails detail,
+                               @NotNull FileHistoryModel model,
+                               @NotNull VcsCommitMetadata detail,
                                @NotNull AnActionEvent e) {
-    VirtualFile file = ui.createVcsVirtualFile(detail);
+    VirtualFile file = FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
     if (file != null) {
       OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, file));
     }

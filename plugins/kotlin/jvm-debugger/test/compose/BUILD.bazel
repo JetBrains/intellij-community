@@ -1,0 +1,114 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "compose_test",
+    data = [
+        "@community//plugins/kotlin/jvm-debugger/test:testData",
+    ] + all_test_dep_targets,
+    sandbox = True,
+    runtime_deps = [
+        ":compose_test_lib",
+        "//:main_test_lib",
+    ],
+)
+
+### skip generation section `test intellij.kotlin.jvm.debugger.test.compose`
+
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` start
+jvm_library(
+    name = "compose",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.test.compose",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/execution.serviceView/plugin",
+    ],
+)
+
+jvm_library(
+    name = "compose_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.test.compose",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":compose",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//platform/execution.serviceView/plugin:plugin_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
+        "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/jvm-debugger/testFramework",
+        "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/tests-common:common-tests",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//java/openapi:java",
+        "//java/openapi:java_test_lib",
+        "//platform/lang-core",
+        "//platform/lang-core:lang-core_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//android/compose-ide-plugin",
+        "//android/compose-ide-plugin:compose-ide-plugin_test_lib",
+        "//java/debugger/impl",
+        "//java/debugger/impl:impl_test_lib",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
+        "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
+        "//android/streaming",
+        "//android/streaming:streaming_test_lib",
+        "//plugins/kotlin/tests-compose",
+        "//plugins/kotlin/tests-compose:tests-compose_test_lib",
+        "//plugins/kotlin/jvm-debugger/test/compose/testFramework",
+        "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
+        "//android/logcat/gradle",
+        "//android/logcat/gradle:gradle_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//plugins/groovy-scripting",
+        "//plugins/groovy-scripting:groovy-scripting_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.compose` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.compose` start
+exports_files(
+    [
+        "intellij.kotlin.jvm.debugger.test.compose.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.compose` end

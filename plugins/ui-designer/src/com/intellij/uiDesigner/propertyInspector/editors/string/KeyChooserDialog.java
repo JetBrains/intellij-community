@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.ide.DataManager;
@@ -30,29 +16,32 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class KeyChooserDialog extends DialogWrapper{
   private final PropertiesFile myBundle;
   private final String myBundleName;
@@ -61,7 +50,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
   private final JTable myTable;
-  @NonNls private static final String NULL = "null";
+  private static final @NonNls String NULL = "null";
   private final MyTableModel myModel;
   private final GuiEditor myEditor;
 
@@ -76,8 +65,8 @@ public final class KeyChooserDialog extends DialogWrapper{
    */
   public KeyChooserDialog(
     final Component parent,
-    @NotNull final PropertiesFile bundle,
-    @NotNull final String bundleName,
+    final @NotNull PropertiesFile bundle,
+    final @NotNull String bundleName,
     final String keyToPreselect,
     final GuiEditor editor
   ) {
@@ -96,11 +85,13 @@ public final class KeyChooserDialog extends DialogWrapper{
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    new MySpeedSearch(myTable);
+    MySpeedSearch search = new MySpeedSearch(myTable);
+    search.setupListeners();
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
 
     myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0), OK_ACTION);
     myTable.getActionMap().put(OK_ACTION, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         getOKAction().actionPerformed(e);
       }
@@ -129,8 +120,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
-    if (defaultRenderer instanceof JComponent) {
-      final JComponent component = (JComponent)defaultRenderer;
+    if (defaultRenderer instanceof JComponent component) {
       component.putClientProperty("html.disable", Boolean.TRUE);
     }
     selectKey(keyToPreselect);
@@ -138,7 +128,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     init();
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         doOKAction();
         return true;
       }
@@ -156,7 +146,7 @@ public final class KeyChooserDialog extends DialogWrapper{
         myPairs.add(Couple.of(key, value != null ? value : NULL));
       }
     }
-    Collections.sort(myPairs, new MyPairComparator());
+    myPairs.sort(new MyPairComparator());
   }
 
   private void selectKey(final String keyToPreselect) {
@@ -174,8 +164,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
-  @NotNull
-  @Override protected Action[] createLeftSideActions() {
+  @Override protected Action @NotNull [] createLeftSideActions() {
     return new Action[] { new NewKeyValueAction() };
   }
 
@@ -184,11 +173,12 @@ public final class KeyChooserDialog extends DialogWrapper{
     myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
-  @NotNull
-  protected String getDimensionServiceKey() {
+  @Override
+  protected @NotNull String getDimensionServiceKey() {
     return getClass().getName();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
@@ -210,21 +200,25 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myCenterPanel;
   }
 
   private static final class MyPairComparator implements Comparator<Couple<String>>{
+    @Override
     public int compare(final Couple<String> p1, final Couple<String> p2) {
       return p1.getFirst().compareToIgnoreCase(p2.getFirst());
     }
   }
 
   private final class MyTableModel extends AbstractTableModel{
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public String getColumnName(final int column) {
       if(column == 0){
         return UIDesignerBundle.message("column.key");
@@ -237,7 +231,8 @@ public final class KeyChooserDialog extends DialogWrapper{
       }
     }
 
-    public Class getColumnClass(final int column) {
+    @Override
+    public Class<?> getColumnClass(final int column) {
       if(column == 0){
         return String.class;
       }
@@ -249,6 +244,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       }
     }
 
+    @Override
     public Object getValueAt(final int row, final int column) {
       if(column == 0){
         return myPairs.get(row).getFirst();
@@ -261,6 +257,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       }
     }
 
+    @Override
     public int getRowCount() {
       return myPairs.size();
     }
@@ -270,12 +267,12 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
-  private class MySpeedSearch extends SpeedSearchBase<JTable> {
-    private TObjectIntHashMap<Object> myElements;
+  private final class MySpeedSearch extends SpeedSearchBase<JTable> {
+    private Object2IntMap<Object> myElements;
     private Object[] myElementsArray;
 
-    public MySpeedSearch(final JTable component) {
-      super(component);
+    private MySpeedSearch(final JTable component) {
+      super(component, null);
     }
 
     @Override
@@ -283,15 +280,15 @@ public final class KeyChooserDialog extends DialogWrapper{
       return getComponent().convertRowIndexToModel(viewIndex);
     }
 
+    @Override
     public int getSelectedIndex() {
       return myComponent.getSelectedRow();
     }
 
-    @NotNull
     @Override
-    public Object[] getAllElements() {
+    public Object @NotNull [] getAllElements() {
       if (myElements == null) {
-        myElements = new TObjectIntHashMap<>();
+        myElements = new Object2IntOpenHashMap<>();
         myElementsArray = myPairs.toArray();
         for (int idx = 0; idx < myElementsArray.length; idx++) {
           Object element = myElementsArray[idx];
@@ -301,6 +298,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       return myElementsArray;
     }
 
+    @Override
     public String getElementText(final Object element) {
       //noinspection unchecked
       return ((Couple<String>)element).getFirst();
@@ -308,16 +306,17 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     @Override
     public void selectElement(final Object element, final String selectedText) {
-      final int index = myElements.get(element);
+      final int index = myElements.getInt(element);
       selectElementAt(getComponent().convertRowIndexToView(index));
     }
   }
 
   private class NewKeyValueAction extends AbstractAction {
-    public NewKeyValueAction() {
+    NewKeyValueAction() {
       putValue(Action.NAME, UIDesignerBundle.message("key.chooser.new.property"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       NewKeyDialog dlg = new NewKeyDialog(getWindow());
       if (dlg.showAndGet()) {

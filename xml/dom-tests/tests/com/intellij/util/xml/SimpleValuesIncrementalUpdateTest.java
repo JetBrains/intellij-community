@@ -19,9 +19,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.impl.DomTestCase;
 
-/**
- * @author peter
- */
 public class SimpleValuesIncrementalUpdateTest extends DomTestCase {
 
   public void testAttributeChange() {

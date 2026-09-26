@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.importWizard;
 
@@ -20,25 +6,27 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.HashSet;
 import java.util.Set;
 
 class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<String> {
 
-  Set<String> duplicateNames;
+  Set<@NlsSafe String> duplicateNames;
 
-  public SelectEclipseImportedProjectsStep(WizardContext context) {
+  SelectEclipseImportedProjectsStep(WizardContext context) {
     super(context);
-    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
+    fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
+      @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
         duplicateNames = null;
         fileChooser.repaint();
@@ -64,6 +52,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
     }
   }
 
+  @Override
   protected String getElementText(final String item) {
     StringBuilder stringBuilder = new StringBuilder();
     final String projectName = EclipseProjectFinder.findProjectName(item);
@@ -75,31 +64,35 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
     return stringBuilder.toString();
   }
 
-  @Nullable
-  protected Icon getElementIcon(final String item) {
+  @Override
+  protected @Nullable Icon getElementIcon(final String item) {
     return isInConflict(item) ? AllIcons.Actions.Cancel : null;
   }
 
+  @Override
   public void updateStep() {
     super.updateStep();
     duplicateNames = null;
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     calcDuplicates();
     if (!duplicateNames.isEmpty()) {
-      throw new ConfigurationException("Duplicate names found:" + StringUtil.join(ArrayUtil.toStringArray(duplicateNames), ","), "Unable to proceed");
+      throw new ConfigurationException(
+        EclipseBundle.message("duplicate.names.found.import.error.message", StringUtil.join(duplicateNames, ",")),
+        EclipseBundle.message("unable.to.proceed.import.title"));
     }
     return super.validate();
   }
 
   @Override
   public String getName() {
-    return "Eclipse Projects to Import";
+    return EclipseBundle.message("eclipse.projects.to.import.selection.step.name");
   }
 
-  @NonNls
-  public String getHelpId() {
+  @Override
+  public @NonNls String getHelpId() {
     return "reference.dialogs.new.project.import.eclipse.page2";
   }
 }

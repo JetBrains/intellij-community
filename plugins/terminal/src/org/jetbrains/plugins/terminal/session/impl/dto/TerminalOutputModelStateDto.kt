@@ -1,0 +1,47 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.session.impl.dto
+
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
+
+@Serializable
+@ApiStatus.Internal
+data class TerminalOutputModelStateDto(
+  val text: String,
+  val trimmedLinesCount: Long,
+  val trimmedCharsCount: Long,
+  val firstLineTrimmedCharsCount: Int,
+  val cursorOffset: Int,
+  val screenTopOffset: Int,
+  val highlightings: List<StyleRangeDto>,
+  val osc8Hyperlinks: List<Osc8HyperlinkDto>,
+)
+
+@ApiStatus.Internal
+fun TerminalOutputModelState.toDto(): TerminalOutputModelStateDto {
+  return TerminalOutputModelStateDto(
+    text = text,
+    trimmedLinesCount = trimmedLinesCount,
+    trimmedCharsCount = trimmedCharsCount,
+    firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
+    cursorOffset = cursorOffset,
+    screenTopOffset = screenTopOffset,
+    highlightings = highlightings.map { it.toDto() },
+    osc8Hyperlinks = osc8Hyperlinks.map { it.toDto() },
+  )
+}
+
+@ApiStatus.Internal
+fun TerminalOutputModelStateDto.toState(): TerminalOutputModelState {
+  return TerminalOutputModelState(
+    text = text,
+    trimmedLinesCount = trimmedLinesCount,
+    trimmedCharsCount = trimmedCharsCount,
+    firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
+    cursorOffset = cursorOffset,
+    screenTopOffset = screenTopOffset,
+    highlightings = highlightings.map { it.toStyleRange() },
+    osc8Hyperlinks = osc8Hyperlinks.map { it.toOsc8Hyperlink() },
+  )
+}

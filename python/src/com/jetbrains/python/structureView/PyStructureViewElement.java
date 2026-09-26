@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -9,21 +9,31 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Handles nodes in Structure View.
- * @author yole
  */
 public class PyStructureViewElement implements StructureViewTreeElement {
 
@@ -56,9 +66,8 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return new PyStructureViewElement(element, visibility, inherited, field);
   }
 
-  @Nullable
   @Override
-  public PyElement getValue() {
+  public @Nullable PyElement getValue() {
     return myElement.isValid() ? myElement : null;
   }
 
@@ -111,8 +120,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement[] getChildren() {
+  public StructureViewTreeElement @NotNull [] getChildren() {
     final PyElement element = getValue();
     if (element == null) {
       return EMPTY_ARRAY;
@@ -126,7 +134,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     if (element instanceof PyClass) {
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
       for (PyClass c : ((PyClass)element).getAncestorClasses(context)) {
-        for (PyElement e: getElementChildren(c)) {
+        for (PyElement e : getElementChildren(c)) {
           final StructureViewTreeElement inherited = createChild(e, getElementVisibility(e), true, elementIsField(e));
           if (!children.contains(inherited)) {
             children.add(inherited);
@@ -151,11 +159,11 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
-    Collection<PyElement> children = ContainerUtil.newLinkedHashSet();
+    Collection<PyElement> children = new LinkedHashSet<>();
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override
-      public void visitElement(PsiElement e) {
+      public void visitElement(@NotNull PsiElement e) {
         if (isWorthyItem(e, element)) {
           children.add((PyElement)e);
         }
@@ -181,7 +189,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         final String n2 = e2.getName();
         return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
       };
-      Collections.sort(filtered, comparator);
+      filtered.sort(comparator);
       children.addAll(filtered);
     }
     return children;
@@ -227,40 +235,30 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     return false;
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     final PyElement element = getValue();
     final ItemPresentation presentation = element != null ? element.getPresentation() : null;
 
     return new ColoredItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @Nullable String getPresentableText() {
         if (element instanceof PyFile) {
           return element.getName();
         }
         return presentation != null ? presentation.getPresentableText() : PyNames.UNNAMED_ELEMENT;
       }
 
-      @Nullable
       @Override
-      public TextAttributesKey getTextAttributesKey() {
+      public @Nullable TextAttributesKey getTextAttributesKey() {
         if (isInherited()) {
           return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
         }
         return null;
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon(boolean open) {
+      public @Nullable Icon getIcon(boolean open) {
         if (element == null) {
           return null;
         }
@@ -275,13 +273,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
           if (myVisibility == Visibility.PRIVATE || myVisibility == Visibility.PROTECTED) {
-            overlay = PythonIcons.Python.Nodes.Lock;
+            overlay = PythonPsiApiIcons.Nodes.Lock;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
-            overlay = PythonIcons.Python.Nodes.Cyan_dot;
+            overlay = PythonPsiApiIcons.Nodes.CyanDot;
           }
           else if (myVisibility == Visibility.INVISIBLE) {
-            overlay = PythonIcons.Python.Nodes.Red_inv_triangle;
+            overlay = PythonPsiApiIcons.Nodes.RedInvTriangle;
           }
           if (overlay != null) {
             icon.setIcon(overlay, 1);

@@ -1,0 +1,9 @@
+// "Change return type of enclosing function 'boo' to 'String'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun boo(): Int {
+    return ((if (true) {
+        val a = ""
+        <caret>a
+    } else ""))
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

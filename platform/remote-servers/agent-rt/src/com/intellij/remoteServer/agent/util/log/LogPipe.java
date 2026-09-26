@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.agent.util.log;
 
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
@@ -27,16 +13,24 @@ import java.io.InputStreamReader;
  * @author michael.golubev
  */
 public abstract class LogPipe extends LogPipeBase {
+  private static int ourInstanceCounter = 0;
 
   private final String myDeploymentName;
   private final String myLogPipeName;
   private final CloudAgentLogger myLogger;
   private final CloudAgentLoggingHandler myLoggingHandler;
 
-  private boolean myClosed;
+  private volatile boolean myClosed;
+  private volatile boolean myLogDebugEnabled;
 
   private int myTotalLines;
   private int myLines2Skip;
+
+  private final int myInstanceNumber;
+
+  private static int advanceInstanceCounter() {
+    return ourInstanceCounter++;
+  }
 
   public LogPipe(String deploymentName, String logPipeName, CloudAgentLogger logger, CloudAgentLoggingHandler loggingHandler) {
     myDeploymentName = deploymentName;
@@ -44,8 +38,10 @@ public abstract class LogPipe extends LogPipeBase {
     myLogger = logger;
     myLoggingHandler = loggingHandler;
     myClosed = false;
+    myInstanceNumber = advanceInstanceCounter();
   }
 
+  @Override
   public void open() {
     InputStream inputStream = createInputStream(myDeploymentName);
     if (inputStream == null) {
@@ -62,20 +58,24 @@ public abstract class LogPipe extends LogPipeBase {
 
       @Override
       public void run() {
+        //init log listener
+        onStartListening(getLogListener());
         try {
           while (true) {
             String line = bufferedReader.readLine();
-            if (myClosed) {
-              myLogger.debug("log pipe closed for: " + myDeploymentName);
-              break;
-            }
             if (line == null) {
-              myLogger.debug("end of log stream for: " + myDeploymentName);
+              if (isLogDebugEnabled()) {
+                debug("Thread[LP]: end of log stream found: " + this);
+              }
               break;
             }
 
+            if (isLogDebugEnabled()) {
+              debug("Thread[LP]: read line: ``" + line + "`` :" + this);
+            }
+
             if (myLines2Skip == 0) {
-              getLogListener().lineLogged(line);
+              getLogListener().lineLogged(line + "\n");
               myTotalLines++;
             }
             else {
@@ -84,14 +84,37 @@ public abstract class LogPipe extends LogPipeBase {
           }
         }
         catch (IOException e) {
+          debugEx(e);
           myLoggingHandler.println(e.toString());
         }
+        finally {
+          LogListener logListener = getLogListener();
+          if (isLogDebugEnabled()) {
+            debug("Thread[LP]: Pipe thread about to quit, closing LogListener: " + logListener + " :" + this);
+          }
+          logListener.close();
+        }
+      }
+
+      @Override
+      public String toString() {
+        int NAME_SIZE = 8;
+        String shortName = myDeploymentName.length() < NAME_SIZE ? myDeploymentName : myDeploymentName.substring(0, NAME_SIZE);
+        return "Thread[LP]@" + Integer.toHexString(System.identityHashCode(this)) + " for: " + shortName + "[" + myLogPipeName + "]";
       }
     }.start();
   }
 
+  @Override
   public void close() {
     myClosed = true;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this)) +
+           " {" + myInstanceNumber + "}" +
+           ", closed: " + isClosed();
   }
 
   protected final void cutTail() {
@@ -104,7 +127,31 @@ public abstract class LogPipe extends LogPipeBase {
 
   protected abstract InputStream createInputStream(String deploymentName);
 
-  protected LogListener getLogListener() {
+  protected final LogListener getLogListener() {
     return myLoggingHandler.getOrCreateLogListener(myLogPipeName);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  protected final void setLogDebugEnabled(boolean enabled) {
+    myLogDebugEnabled = enabled;
+  }
+
+  protected boolean isLogDebugEnabled() {
+    return myLogDebugEnabled;
+  }
+
+  protected void debug(String message) {
+    if (myLogDebugEnabled) {
+      myLogger.debug(this + ": " + message);
+    }
+  }
+
+  protected void debugEx(Exception e) {
+    if (myLogDebugEnabled) {
+      myLogger.debugEx(e);
+    }
+  }
+
+  protected void onStartListening(LogListener logListener) {
   }
 }

@@ -35,11 +35,8 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     }
 
     @Override
-    @NotNull
-    public Type getType() {
-        final ASTNode child = getNode().getFirstChildNode();
-        assert child != null;
-        final IElementType t = child.getElementType();
+    public @NotNull Type getType() {
+        final IElementType t = getNode().getFirstChildNode().getElementType();
         if (OCT_CHARS.contains(t)) {
             return Type.OCT;
         } else if (HEX_CHARS.contains(t)) {
@@ -48,6 +45,10 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
             return Type.UNICODE;
         } else if (t == RegExpTT.NAMED_CHARACTER) {
             return Type.NAMED;
+        } else if (t == RegExpTT.CTRL) {
+            return Type.CONTROL;
+        } else if (t == RegExpTT.ESC_CTRL_CHARACTER) {
+            return Type.ESCAPE;
         } else {
             return Type.CHAR;
         }
@@ -55,87 +56,68 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
 
     @Override
     public int getValue() {
-      final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
-      return unescapeChar(s);
+        final ASTNode node = getNode();
+        final IElementType type = node.getFirstChildNode().getElementType();
+        if (type == RegExpTT.BAD_OCT_VALUE ||
+            type == RegExpTT.BAD_HEX_VALUE ||
+            type == RegExpTT.BAD_CHARACTER ||
+            type == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {
+            return -1;
+        }
+        final String text = getUnescapedText();
+        if (text.length() == 1 && (type == RegExpTT.CHARACTER ||  type == RegExpTT.CTRL_CHARACTER)) {
+            return text.codePointAt(0);
+        }
+        else if (type == RegExpTT.UNICODE_CHAR) {
+            final int i = text.indexOf('\\', 1);
+            if (i >= 0) return Character.toCodePoint((char)unescapeChar(text.substring(0, i)), (char)unescapeChar(text.substring(i)));
+        }
+        return unescapeChar(text);
     }
 
-    private static int unescapeChar(String s) {
+    public static int unescapeChar(String s) {
+        final int c = s.codePointAt(0);
         final int length = s.length();
-        assert length > 0;
-
-        boolean escaped = false;
-        for (int idx = 0; idx < length; idx++) {
-            final char ch = s.charAt(idx);
-            if (!escaped) {
-                if (ch == '\\') {
-                    escaped = true;
-                } else {
-                    return ch;
-                }
-            } else {
-                switch (ch) {
-                    case 'n':
-                        return '\n';
-                    case 'r':
-                        return '\r';
-                    case 't':
-                        return '\t';
-                    case 'a':
-                        return '\u0007';
-                    case 'e':
-                        return '\u001b';
-                    case 'f':
-                        return '\f';
-                    case 'b':
-                        return '\b';
-                    case 'c':
-                        return (char)(ch ^ 64);
-                    case 'N':
-                        if (length < idx + 3 || s.charAt(idx + 1) != '{' || s.charAt(length - 1) != '}') {
-                            return -1;
-                        }
-                        final int codePoint = UnicodeCharacterNames.getCodePoint(s.substring(idx + 2, length - 1));
-                        if (codePoint == -1) {
-                            return -1;
-                        }
-                        return codePoint;
-                    case 'x':
-                      if (length <= idx + 1) return -1;
-                      if (s.charAt(idx + 1) == '{') {
-                        final char c = s.charAt(length - 1);
-                        return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
-                      }
-                      if (length == 3) {
-                          return parseNumber(s, idx + 1, 16);
-                      }
-                      return length == 4 ? parseNumber(s, idx + 1, 16) : -1;
-                    case 'u':
-                        if (length <= idx + 1) return -1;
-                        if (length > idx + 1 && s.charAt(idx + 1) == '{') {
-                            final char c = s.charAt(length - 1);
-                            return (c != '}') ? -1 : parseNumber(s, idx + 2, 16);
-                        }
-                        if (length != 6) {
-                            return ch;
-                        }
-                        return parseNumber(s, idx + 1, 16);
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                        return parseNumber(s, idx, 8);
-                    default:
-                        return ch;
-                }
-            }
+        if (length == 1 || c != '\\') return -1;
+        final int codePoint = s.codePointAt(1);
+      return switch (codePoint) {
+        case 'n' -> '\n';
+        case 'r' -> '\r';
+        case 't' -> '\t';
+        case 'a' -> '\u0007'; // The alert (bell) character
+        case 'e' -> '\u001b'; // The escape character
+        case 'f' -> '\f'; // The form-feed character
+        case 'b' -> '\b';
+        case 'c' -> {
+          if (length != 3) yield -1;
+          yield s.codePointAt(2) ^ 64; // control character
         }
-
-        return -1;
+        case 'N' -> {
+          if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
+            yield -1;
+          }
+          yield UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
+        }
+        case 'x' -> {
+          if (length == 2) yield -1;
+          if (s.charAt(2) == '{') {
+            yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
+          }
+          if (length == 3) {
+            yield parseNumber(s, 2, 16);
+          }
+          yield length == 4 ? parseNumber(s, 2, 16) : -1;
+        }
+        case 'u' -> {
+          if (length == 2) yield 'u';
+          if (s.charAt(2) == '{') {
+            yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
+          }
+          yield length != 6 ? -1 : parseNumber(s, 2, 16);
+        }
+        case '0', '1', '2', '3', '4', '5', '6', '7' -> parseNumber(s, 1, 8);
+        default -> codePoint;
+      };
     }
 
     private static int parseNumber(String s, int offset, int radix) {

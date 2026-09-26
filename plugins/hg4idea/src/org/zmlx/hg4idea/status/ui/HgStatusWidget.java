@@ -1,67 +1,65 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.status.ui;
 
-import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgProjectSettings;
-import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.branch.HgBranchPopup;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import java.util.Objects;
 
 /**
  * Widget to display basic hg status in the status bar.
  */
-public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
+final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
+  private static final @NonNls String ID = "hg";
 
-  @NotNull private final HgVcs myVcs;
-  @NotNull private final HgProjectSettings myProjectSettings;
+  private final @NotNull HgVcs myVcs;
+  private final @NotNull HgProjectSettings myProjectSettings;
 
-  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
+  HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
+
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
   }
 
   @Override
-  public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, ObjectUtils.assertNotNull(getProject()), myProjectSettings);
+  public @NotNull String ID() {
+    return ID;
   }
 
-  @Nullable
   @Override
-  @CalledInAwt
-  protected HgRepository guessCurrentRepository(@NotNull Project project) {
-    return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
-                                                HgProjectSettings.getInstance(project).getRecentRootPath());
+  public @NotNull StatusBarWidget copy() {
+    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
-  @NotNull
   @Override
-  protected String getFullBranchName(@NotNull HgRepository repository) {
+  @CalledInAny
+  protected @Nullable HgRepository guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
+    return HgUtil.guessWidgetRepository(project, selectedFile);
+  }
+
+  @Override
+  protected @NotNull String getFullBranchName(@NotNull HgRepository repository) {
     return HgUtil.getDisplayableBranchOrBookmarkText(repository);
   }
 
@@ -70,24 +68,49 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     return HgUtil.getRepositoryManager(project).moreThanOneRoot();
   }
 
-  @NotNull
   @Override
-  protected ListPopup getPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository).asListPopup();
-  }
-
-  @Override
-  protected void subscribeToRepoChangeEvents(@NotNull Project project) {
-    project.getMessageBus().connect().subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
-      @Override
-      public void update(Project project, @Nullable VirtualFile root) {
-        updateLater();
-      }
-    });
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+    StatusBar statusBar = myStatusBar;
+    return statusBar == null ? null : HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(statusBar.getComponent())).asListPopup();
   }
 
   @Override
   protected void rememberRecentRoot(@NotNull String path) {
     myProjectSettings.setRecentRootPath(path);
+  }
+
+  static final class Listener implements VcsRepositoryMappingListener {
+    private final Project myProject;
+
+    Listener(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void mappingChanged() {
+      myProject.getService(StatusBarWidgetsManager.class).updateWidget(Factory.class);
+    }
+  }
+
+  static final class Factory implements StatusBarWidgetFactory {
+    @Override
+    public @NotNull String getId() {
+      return ID;
+    }
+
+    @Override
+    public @NotNull String getDisplayName() {
+      return HgBundle.message("hg4idea.status.bar.widget.name");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project) {
+      return !project.getService(HgRepositoryManager.class).getRepositories().isEmpty();
+    }
+
+    @Override
+    public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+      return new HgStatusWidget(Objects.requireNonNull(HgVcs.getInstance(project)), project, HgProjectSettings.getInstance(project));
+    }
   }
 }

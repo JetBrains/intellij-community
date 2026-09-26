@@ -1,0 +1,8 @@
+{
+  "mainFile": "a/main.java",
+  "type": "MOVE_INNER_CLASS",
+  "targetPackage": "a",
+  "newClassName": "Y",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

@@ -1,0 +1,79 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.workspace.entities
+
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
+
+
+/**
+ * **Do not add new fields to this entity.** New fields are not serialized to the .iml file and will be
+ * lost when the project is reopened. To store additional data, declare a new entity with a
+ * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
+ */
+interface JavaProjectSettingsEntity : WorkspaceEntity {
+  @Parent
+  val projectSettings: ProjectSettingsEntity
+
+  val compilerOutput: VirtualFileUrl?
+  val languageLevelId: String?
+  val languageLevelDefault: Boolean?
+
+  //region generated code
+  @Deprecated(message = "Use JavaProjectSettingsEntityBuilder instead")
+  interface Builder : JavaProjectSettingsEntityBuilder {
+    @Deprecated(message = "Use new API instead")
+    fun getProjectSettings(): ProjectSettingsEntity.Builder = projectSettings as ProjectSettingsEntity.Builder
+
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use new API instead")
+    fun setProjectSettings(value: ProjectSettingsEntity.Builder) {
+      projectSettings = value
+    }
+  }
+
+  companion object : EntityType<JavaProjectSettingsEntity, Builder>() {
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use new API instead")
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder = JavaProjectSettingsEntityType.compatibilityInvoke(entitySource, init)
+  }
+  //endregion
+
+}
+
+//region generated code
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Use new API instead")
+fun MutableEntityStorage.modifyJavaProjectSettingsEntity(
+  entity: JavaProjectSettingsEntity,
+  modification: JavaProjectSettingsEntity.Builder.() -> Unit,
+): JavaProjectSettingsEntity {
+  return modifyEntity(JavaProjectSettingsEntity.Builder::class.java, entity, modification)
+}
+
+@Deprecated(message = "Use new API instead")
+var ProjectSettingsEntity.Builder.javaProjectSettings: JavaProjectSettingsEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
+  get() = (this as ProjectSettingsEntityBuilder).javaProjectSettings as JavaProjectSettingsEntity.Builder?
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use new API instead")
+  set(value) {
+    (this as ProjectSettingsEntityBuilder).javaProjectSettings = value
+  }
+//endregion
+
+val ProjectSettingsEntity.javaProjectSettings: JavaProjectSettingsEntity?
+  by WorkspaceEntity.extension()

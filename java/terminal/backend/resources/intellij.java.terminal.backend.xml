@@ -1,0 +1,40 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.terminal.shared"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <consoleFilterProvider implementation="com.intellij.java.terminal.backend.NoJavaExecutableFilter"/>
+    <postStartupActivity implementation="com.intellij.java.terminal.backend.JavaTerminalSettingsReloadActivity"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <shellExecOptionsCustomizer implementation="com.intellij.java.terminal.backend.JdkCustomizer"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavaShellCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="com.intellij.java.terminal.backend.JavacShellCommandSpecsProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">
+    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.backend.ExternalJavaConfigurationDownloadInTerminalAction" order="first"/>
+  </extensions>
+</idea-plugin>

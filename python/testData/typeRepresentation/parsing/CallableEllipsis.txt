@@ -1,0 +1,14 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyFunctionTypeRepresentation
+    PyParameterTypeListRepresentation
+      PsiElement(Py:LPAR)('(')
+      PyEllipsisLiteralExpression
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:DOT)('.')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:RARROW)('->')
+    PsiWhiteSpace(' ')
+    PyNoneLiteralExpression
+      PsiElement(Py:NONE_KEYWORD)('None')

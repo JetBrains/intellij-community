@@ -22,17 +22,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
-* @author nik
-*/
+@ApiStatus.Internal
 public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootButtonDescriptor {
-  public ChooserBasedAttachRootButtonDescriptor(@NotNull OrderRootType rootType, @NotNull String buttonText) {
+  public ChooserBasedAttachRootButtonDescriptor(@NotNull OrderRootType rootType, @NotNull @NlsContexts.Button String buttonText) {
     super(rootType, buttonText);
   }
 
@@ -40,8 +40,8 @@ public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootB
     return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
   }
 
-  public abstract String getChooserTitle(final @Nullable String libraryName);
-  public abstract String getChooserDescription();
+  public abstract @NlsContexts.DialogTitle String getChooserTitle(final @Nullable String libraryName);
+  public abstract @NlsContexts.Label String getChooserDescription();
 
   @Override
   public VirtualFile[] selectFiles(final @NotNull JComponent parent, @Nullable VirtualFile initialSelection,

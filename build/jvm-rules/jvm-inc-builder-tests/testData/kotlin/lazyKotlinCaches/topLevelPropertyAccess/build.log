@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_lazyKotlinCaches_topLevelPropertyAccess-a.kotlin_module
+  constant/ConstantKt.class
+End of files
+Compiling files:
+  kotlin/lazyKotlinCaches/topLevelPropertyAccess/a/constant.kt
+End of files
+------------------------------------------
+Exit code: OK

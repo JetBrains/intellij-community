@@ -15,22 +15,22 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.Iconable;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.util.PlatformIcons;
-import icons.XpathIcons;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+class NodeLookup extends AbstractLookup {
+  private final XPathNodeTest.PrincipalType principalType;
 
-public class NodeLookup extends AbstractLookup implements Lookup, Iconable {
-    private final XPathNodeTest.PrincipalType principalType;
+  NodeLookup(String name, XPathNodeTest.PrincipalType principalType) {
+    super(name, name);
+    this.principalType = principalType;
+  }
 
-    public NodeLookup(String name, XPathNodeTest.PrincipalType principalType) {
-        super(name, name);
-        this.principalType = principalType;
-    }
-
-    public Icon getIcon(int flags) {
-        return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : XpathIcons.Tag;
-    }
+  @Override
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
+    super.renderElement(presentation);
+    presentation.setIcon(principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : PlatformIcons.XML_TAG_ICON);
+  }
 }

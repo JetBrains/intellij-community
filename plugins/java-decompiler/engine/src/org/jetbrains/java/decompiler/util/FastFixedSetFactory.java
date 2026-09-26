@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,7 +47,7 @@ public class FastFixedSetFactory<E> {
     return colValuesInternal;
   }
 
-  public static class FastFixedSet<E> implements Iterable<E> {
+  public static final class FastFixedSet<E> implements Iterable<E> {
 
     private final FastFixedSetFactory<E> factory;
 
@@ -66,8 +67,7 @@ public class FastFixedSetFactory<E> {
       FastFixedSet<E> copy = new FastFixedSet<>(factory);
 
       int arrlength = data.length;
-      int[] cpdata = new int[arrlength];
-      System.arraycopy(data, 0, cpdata, 0, arrlength);
+      int[] cpdata = Arrays.copyOf(data, arrlength);
       copy.setData(cpdata);
 
       return copy;
@@ -146,11 +146,12 @@ public class FastFixedSetFactory<E> {
     }
 
 
+    @Override
     public boolean equals(Object o) {
       if (o == this) return true;
       if (!(o instanceof FastFixedSet)) return false;
 
-      int[] extdata = ((FastFixedSet)o).getData();
+      int[] extdata = ((FastFixedSet<?>)o).getData();
       int[] intdata = data;
 
       for (int i = intdata.length - 1; i >= 0; i--) {
@@ -174,6 +175,7 @@ public class FastFixedSetFactory<E> {
       return true;
     }
 
+    @Override
     public Iterator<E> iterator() {
       return new FastFixedSetIterator<>(this);
     }
@@ -202,6 +204,7 @@ public class FastFixedSetFactory<E> {
       return cl;
     }
 
+    @Override
     public String toString() {
 
       StringBuilder buffer = new StringBuilder("{");
@@ -241,7 +244,7 @@ public class FastFixedSetFactory<E> {
     }
   }
 
-  public static class FastFixedSetIterator<E> implements Iterator<E> {
+  public static final class FastFixedSetIterator<E> implements Iterator<E> {
 
     private final VBStyleCollection<int[], E> colValuesInternal;
     private final int[] data;
@@ -288,11 +291,13 @@ public class FastFixedSetFactory<E> {
       return -1;
     }
 
+    @Override
     public boolean hasNext() {
       next_pointer = getNextIndex(pointer);
       return (next_pointer >= 0);
     }
 
+    @Override
     public E next() {
       if (next_pointer >= 0) {
         pointer = next_pointer;
@@ -308,6 +313,7 @@ public class FastFixedSetFactory<E> {
       return pointer < size ? colValuesInternal.getKey(pointer) : null;
     }
 
+    @Override
     public void remove() {
       int[] index = colValuesInternal.get(pointer);
       data[index[0]] &= ~index[1];

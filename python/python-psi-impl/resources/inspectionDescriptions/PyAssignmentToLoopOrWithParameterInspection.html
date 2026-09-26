@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports the cases when you rewrite a loop variable with an inner loop.
+<p><b>Example:</b></p>
+<pre><code>
+for i in range(5):
+    for i in range(20, 25):
+        print("Inner", i)
+    print("Outer", i)
+</code></pre>
+
+It also warns you if a variable declared in the <code>with</code> statement is redeclared inside the statement body:
+<pre><code>
+with open("file") as f:
+    outer = f.read()
+    with open("file") as f:
+        inner = f.read()
+</code></pre>
+</body>
+</html>

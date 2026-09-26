@@ -1,0 +1,18 @@
+// FILE: gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts libs.plugins.kotlin"
+[plugins]
+kotl<caret>in = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+
+[versions]
+kotlin = "1.9.24"
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+    alias(libs.plugins.kotlin) apply false
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+}

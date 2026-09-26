@@ -1,57 +1,69 @@
-/*
-* Copyright 2000-2009 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-public class CopyPathsAction extends AnAction implements DumbAware {
+import static com.intellij.openapi.actionSystem.ActionPlaces.KEYBOARD_SHORTCUT;
+
+@ApiStatus.Internal
+public final class CopyPathsAction extends AnAction implements DumbAware {
   public CopyPathsAction() {
     setEnabledInModalContext(true);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    if (files != null && files.length > 0) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (isEnabled(files)) {
       CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(files)));
     }
   }
 
-  private static String getPaths(VirtualFile[] files) {
+  private static @NotNull String getPaths(VirtualFile[] files) {
     StringBuilder buf = new StringBuilder(files.length * 64);
     for (VirtualFile file : files) {
-      if (buf.length() > 0) buf.append('\n');
+      if (!buf.isEmpty()) {
+        buf.append('\n');
+      }
       buf.append(file.getPresentableUrl());
     }
     return buf.toString();
   }
 
   @Override
-  public void update(AnActionEvent event) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(event.getDataContext());
-    int num = files != null ? files.length : 0;
-    Presentation presentation = event.getPresentation();
-    presentation.setEnabled(num > 0);
-    presentation.setVisible(num > 0 || !ActionPlaces.isPopupPlace(event.getPlace()));
-    presentation.setText(IdeBundle.message(num == 1 ? "action.copy.path" : "action.copy.paths"));
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    boolean enabled = KEYBOARD_SHORTCUT.equals(e.getPlace()) && isEnabled(files);
+
+    e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  private static boolean isEnabled(VirtualFile[] files) {
+    if (files == null || files.length == 0) {
+      return false;
+    }
+
+    for (VirtualFile file : files) {
+      if (file.getFileSystem() instanceof NonPhysicalFileSystem) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -1,0 +1,190 @@
+<idea-plugin>
+  <id>com.intellij</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <resource-bundle>MyBundle</resource-bundle>
+  <resource-bundle><error descr="Cannot resolve property bundle">INVALID_VALUE</error></resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint name="localInspection"
+                    beanClass="com.intellij.codeInspection.LocalInspectionEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
+    </extensionPoint>
+    <!-- qualifiedName EPs must work, too -->
+    <extensionPoint qualifiedName="custom.myCustomInspection"
+                    beanClass="com.intellij.codeInspection.LocalInspectionEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
+    </extensionPoint>
+
+
+    <extensionPoint name="projectConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP"
+                    area="IDEA_PROJECT">
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+    <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
+    </extensionPoint>
+    <extensionPoint name="groupConfigurable"
+                    beanClass="com.intellij.openapi.options.ex.ConfigurableGroupEP"/>
+
+    <extensionPoint name="notificationGroup"
+                    beanClass="com.intellij.notification.impl.NotificationGroupEP"/>
+    
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="advancedSetting"
+                    beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean"/>
+
+    <extensionPoint name="schemeImporter"
+                    beanClass="com.intellij.openapi.options.SchemeImporterEP">
+      <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
+      <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeImporter"/>
+    </extensionPoint>
+
+    <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP">
+      <with attribute="className" implements="java.lang.Object"/>
+    </extensionPoint>
+
+    <extensionPoint name="intentionAction"
+                    beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
+      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+    </extensionPoint>
+
+    <extensionPoint name="codeInsight.declarativeInlayProvider"
+                    beanClass="com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayHintsProvider"/>
+    </extensionPoint>
+
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="" groupKey="my.key" key="my.key"/>
+    <localInspection language="" groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
+    <localInspection language="" groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+                     key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+
+    <projectConfigurable key="my.key"/>
+    <projectConfigurable key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                         bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <projectConfigurable>
+       <configurable key="my.key" bundle="MyBundle"/>
+       <configurable key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+    </projectConfigurable>
+
+
+    <generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                            bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <groupConfigurable id="myGroup" descriptionKey="my.key" displayNameKey="my.key" />
+    <groupConfigurable id="myGroup2" bundle="AnotherBundle" descriptionKey="another.key" displayNameKey="another.key" />
+    <groupConfigurable id="myGroupInvalid"
+                       bundle="<error descr="Cannot resolve property bundle">INVALID_VALUE</error>"
+                       descriptionKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>"
+                       displayNameKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>" />
+
+    <notificationGroup id="myNotification" displayType="BALLOON"
+                       key="my.key" bundle="MyBundle"/>
+    <notificationGroup id="myNotificationInvalid" displayType="BALLOON"
+                       key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                       bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <!-- 'id' = property key if 'titleKey' is not present -->
+    <advancedSetting id="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     default="dummy"/>
+    <advancedSetting id="mySettingKey" default="this key exists"/>
+
+    <advancedSetting id="myAdvancedSetting"
+                     default="dummy"
+                     bundle="MyBundle"
+                     groupKey="my.key"
+                     titleKey="my.key"
+                     trailingLabelKey="my.key"
+                     descriptionKey="my.key"/>
+    <advancedSetting id="myAdvancedSettingDefaultBundle"
+                     default="dummy"
+                     groupKey="my.key"
+                     titleKey="my.key"
+                     trailingLabelKey="my.key"
+                     descriptionKey="my.key"/>
+    <advancedSetting id="myAdvancedSettingInvalid"
+                     default="dummy"
+                     bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+                     groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     titleKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     trailingLabelKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+
+    <schemeImporter nameKey="my.key" nameBundle="MyBundle"/>
+    <schemeImporter nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                    nameBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <typeName className="java.lang.String" resourceKey="my.key"/>
+    <typeName className="java.lang.String"
+              resourceKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+              resourceBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <intentionAction>
+      <categoryKey>my.key</categoryKey>
+      <className>com.intellij.codeInsight.intention.IntentionAction</className>
+    </intentionAction>
+    <intentionAction>
+      <categoryKey><error descr="Cannot resolve property key">INVALID_KEY</error></categoryKey>
+      <bundleName><error descr="Cannot resolve property bundle">INVALID_BUNDLE</error></bundleName>
+      <className>com.intellij.codeInsight.intention.IntentionAction</className>
+    </intentionAction>
+
+    <codeInsight.declarativeInlayProvider
+      bundle="MyBundle"
+      nameKey="my.key"
+      descriptionKey="my.key"
+
+      language="<error descr="Cannot resolve language with id ''LANGUAGE_ID''">LANGUAGE_ID</error>"
+      providerId="test.providerId"
+      group="ANNOTATIONS_GROUP"
+      isEnabledByDefault="true"
+      implementationClass="com.intellij.codeInsight.hints.declarative.InlayHintsProvider">
+
+      <option
+        bundle="MyBundle"
+        nameKey="my.key"
+        descriptionKey="my.key"
+
+        optionId="optionId"
+        enabledByDefault="true"
+      />
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+      bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+      nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+      descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+
+      language="<error descr="Cannot resolve language with id ''LANGUAGE_ID''">LANGUAGE_ID</error>"
+      providerId="test.providerId"
+      group="<error descr="Cannot resolve 'INVALID_INLAY_GROUP' in com.intellij.codeInsight.hints.InlayGroup">INVALID_INLAY_GROUP</error>"
+      isEnabledByDefault="true"
+      implementationClass="com.intellij.codeInsight.hints.declarative.InlayHintsProvider">
+      <option
+        bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+        nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+        descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+
+        optionId="optionId"
+        enabledByDefault="true"
+      />
+    </codeInsight.declarativeInlayProvider>
+
+  </extensions>
+  
+  <extensions defaultExtensionNs="custom">
+    <myCustomInspection language="" groupKey="my.key" key="my.key"/>
+    <myCustomInspection language="" groupKey="my.key" key="my.key" bundle="MyBundle" groupBundle="MyBundle"/>
+    <myCustomInspection language="" groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+                        key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+  </extensions>
+
+</idea-plugin>

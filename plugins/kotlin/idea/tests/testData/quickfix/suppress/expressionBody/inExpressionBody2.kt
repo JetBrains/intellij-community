@@ -1,0 +1,8 @@
+// "Suppress 'DEPRECATION' for statement " "true"
+
+@Deprecated("x")
+class XXX
+
+fun xxx() = XX<caret>X()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

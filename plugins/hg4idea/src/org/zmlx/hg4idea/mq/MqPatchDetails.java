@@ -1,44 +1,50 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.mq;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.Map;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class MqPatchDetails {
 
-  public enum MqPatchEnum {Name, Subject, Author, Branch, Date}
+  public enum MqPatchEnum {
+    Name("column.mq.patch.name"),
+    Subject("column.mq.patch.subject"),
+    Author("column.mq.patch.author"),
+    Branch("column.mq.patch.branch"),
+    Date("column.mq.patch.date");
 
-  @NotNull private final Map<MqPatchEnum, String> myPatchDetailsPresentationMap = ContainerUtil.newEnumMap(MqPatchEnum.class);
+    private final String myId;
 
-  @Nullable private final String myNodeId;
-  @Nullable private final String myParent;
-  @Nullable private final Date myDate;
-  @Nullable private final VirtualFile myRoot;
-  @Nullable private final String myBranch;
-  @Nullable private final String myMessage;
-  @Nullable private final String myUser;
+    MqPatchEnum(@NotNull @NonNls @PropertyKey(resourceBundle = HgBundle.BUNDLE) String id) {
+      myId = id;
+    }
+
+    public @NlsContexts.ColumnName String getColumnName() {
+      return HgBundle.message(myId);
+    }
+  }
+
+  private final @NotNull Map<MqPatchEnum, String> myPatchDetailsPresentationMap = new EnumMap<>(MqPatchEnum.class);
+
+  private final @Nullable String myNodeId;
+  private final @Nullable String myParent;
+  private final @Nullable Date myDate;
+  private final @Nullable VirtualFile myRoot;
+  private final @Nullable String myBranch;
+  private final @Nullable String myMessage;
+  private final @Nullable String myUser;
 
   public static final MqPatchDetails EMPTY_PATCH_DETAILS = new MqPatchDetails(null, null, null, null, null, null, null);
 
@@ -59,33 +65,27 @@ public class MqPatchDetails {
     createPresentationModel();
   }
 
-  @Nullable
-  public String getNodeId() {
+  public @Nullable String getNodeId() {
     return myNodeId;
   }
 
-  @Nullable
-  public String getParent() {
+  public @Nullable String getParent() {
     return myParent;
   }
 
-  @Nullable
-  public Date getDate() {
+  public @Nullable Date getDate() {
     return myDate;
   }
 
-  @Nullable
-  public String getBranch() {
+  public @Nullable String getBranch() {
     return myBranch;
   }
 
-  @Nullable
-  public String getMessage() {
+  public @Nullable String getMessage() {
     return myMessage;
   }
 
-  @Nullable
-  public String getUser() {
+  public @Nullable String getUser() {
     return myUser;
   }
 
@@ -100,8 +100,7 @@ public class MqPatchDetails {
     }
   }
 
-  @Nullable
-  public String getPresentationDataFor(MqPatchEnum field) {
+  public @Nullable String getPresentationDataFor(MqPatchEnum field) {
     return myPatchDetailsPresentationMap.get(field);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.console.ConsoleHistoryModel.Entry
@@ -21,24 +7,21 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.containers.ContainerUtil
-import gnu.trove.TIntStack
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 /**
  * @author Yuli Fiterman
  */
-
-private val MasterModels = ConcurrentFactoryMap.createMap<String, MasterModel>(
+private val MasterModels = ConcurrentFactoryMap.create<String, MasterModel>(
   {
     MasterModel()
   }, {
-    ContainerUtil.createConcurrentWeakValueMap()
+  CollectionFactory.createConcurrentWeakValueMap()
   })
 
-
-private fun assertDispatchThread() = ApplicationManager.getApplication().assertIsDispatchThread()
-
+private fun assertWriteThread() = ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
 fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHistoryModel {
   val masterModel: MasterModel = MasterModels[persistenceId]!!
@@ -50,8 +33,8 @@ fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHis
 }
 
 
-private class PrefixHistoryModel constructor(private val masterModel: MasterModel,
-                                             private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
+private class PrefixHistoryModel(private val masterModel: MasterModel,
+                                 private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
                                                                                       ConsoleHistoryModel {
   var userContent: String = ""
   override fun setContent(userContent: String) {
@@ -60,7 +43,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private var currentIndex: Int? = null
   private var currentEntries: List<String>? = null
-  private var prevEntries: TIntStack = TIntStack()
+  private var prevEntries = IntArrayList()
   private var historyPrefix: String = ""
 
   init {
@@ -73,7 +56,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
   }
 
   override fun addToHistory(statement: String?) {
-    assertDispatchThread()
+    assertWriteThread()
     if (statement.isNullOrEmpty()) {
       return
     }
@@ -82,7 +65,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
   }
 
   override fun removeFromHistory(statement: String?) {
-    assertDispatchThread()
+    assertWriteThread()
     if (statement.isNullOrEmpty()) {
       return
     }
@@ -118,8 +101,8 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   override fun getHistoryPrev(): Entry? {
     val entries = currentEntries ?: return null
-    return if (prevEntries.size() > 0) {
-      val index = prevEntries.pop()
+    return if (prevEntries.size > 0) {
+      val index = prevEntries.popInt()
       currentIndex = index
       createEntry(entries[index])
     }
@@ -131,7 +114,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private fun createEntry(prevEntry: String): Entry = Entry(prevEntry, prevEntry.length)
 
-  override fun getCurrentIndex(): Int = currentIndex ?: entries.size-1
+  override fun getCurrentIndex(): Int = currentIndex ?: (entries.size - 1)
 
   override fun prevOnLastLine(): Boolean = true
 
@@ -143,7 +126,6 @@ private class MasterModel(private val modTracker: SimpleModificationTracker = Si
   @Volatile
   private var entries: MutableList<String> = mutableListOf()
 
-  @Suppress("UNCHECKED_CAST")
   override fun getEntries(): MutableList<String> = entries.toMutableList()
 
   override fun resetEntries(ent: List<String>) {
@@ -166,9 +148,9 @@ private class MasterModel(private val modTracker: SimpleModificationTracker = Si
     modTracker.incModificationCount()
   }
 
-  override fun getMaxHistorySize(): Int = UISettings.instance.consoleCommandHistoryLimit
+  override fun getMaxHistorySize() = UISettings.getInstance().state.consoleCommandHistoryLimit
 
-  override fun isEmpty(): Boolean = entries.isEmpty()
+  override fun isEmpty() = entries.isEmpty()
 
-  override fun getHistorySize(): Int = entries.size
+  override fun getHistorySize() = entries.size
 }

@@ -1,0 +1,7 @@
+{
+  "mainFile": "foo/MemberEndJava.java",
+  "type": "MOVE_INNER_CLASS",
+  "targetPackage": "foo",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

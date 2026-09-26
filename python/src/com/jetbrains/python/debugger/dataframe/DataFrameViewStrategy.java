@@ -1,32 +1,43 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.dataframe;
 
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
+import com.jetbrains.python.debugger.containerview.ColumnFilter;
 import com.jetbrains.python.debugger.containerview.DataViewStrategy;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFrameViewStrategy extends DataViewStrategy {
-  private static final String DATA_FRAME = "DataFrame";
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 
-  public AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel dataProvider, @NotNull PyDebugValue debugValue) {
+public class DataFrameViewStrategy extends DataViewStrategy {
+
+  private final String myTypeName;
+
+  public static @NotNull DataFrameViewStrategy createInstanceForDataFrame() {
+    return new DataFrameViewStrategy("DataFrame");
+  }
+
+  public static @NotNull DataFrameViewStrategy createInstanceForGeoDataFrame() {
+    return new DataFrameViewStrategy("GeoDataFrame");
+  }
+
+  public static @NotNull DataFrameViewStrategy createInstanceForDataset() {
+    return new DataFrameViewStrategy("Dataset");
+  }
+
+  protected DataFrameViewStrategy(final @NotNull String typeName) {
+    this.myTypeName = typeName;
+  }
+
+  @Override
+  public AsyncArrayTableModel createTableModel(int rowCount,
+                                               int columnCount,
+                                               @NotNull PyDataViewerCommunityPanel dataProvider,
+                                               @NotNull PyDebugValue debugValue) {
     return new DataFrameTableModel(rowCount, columnCount, dataProvider, debugValue, this);
   }
 
@@ -40,9 +51,25 @@ public class DataFrameViewStrategy extends DataViewStrategy {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getTypeName() {
-    return DATA_FRAME;
+  public @NotNull String sortModifier(@NotNull String varName, @NotNull RowSorter.SortKey key) {
+    return String.format("%s.sort_values(by=%s.columns[%d]%s)", varName, varName, key.getColumn(),
+                         key.getSortOrder() == SortOrder.ASCENDING ? "" : ", ascending=False");
+  }
+
+  @Override
+  public @NotNull String filterModifier(@NotNull String varName, @NotNull ColumnFilter filter) {
+    if (filter.isSubstring()) {
+      return String.format("%1$s[%1$s.iloc[:, %2$d].apply(str).str.contains('%3$s', regex=%4$s)]",
+                           varName, filter.getColumn(), filter.getFilter(), filter.isRegex() ? "True" : "False");
+    }
+
+    return String.format("%1$s[%1$s.iloc[:, %2$d].apply(lambda %4$s: bool(%3$s))]",
+                         varName, filter.getColumn(), filter.getFilter(), ColumnFilter.VAR_ALIAS);
+  }
+
+  @Override
+  public @NotNull String getTypeName() {
+    return myTypeName;
   }
 }

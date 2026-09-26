@@ -1,86 +1,106 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildIdentifier;
+import org.gradle.tooling.model.BuildModel;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.idea.IdeaModule;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.model.GradleLightBuild;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext;
 
 import java.util.Collection;
 
 /**
+ * Context passed to Gradle project resolvers for one Gradle sync scope.
+ * <p>
+ * {@link #getProject()} returns the IDE project that owns the sync. A single IDE project may have several linked Gradle projects, and
+ * each linked Gradle project is synced with a separate context. {@link #getProjectPath()} identifies the current Gradle sync scope,
+ * usually by the linked Gradle project path. For Gradle older than 8.0, buildSrc can use a more granular sync scope.
+ *
  * @author Vladislav.Soroka
- * @since 10/15/13
  */
-public interface ProjectResolverContext extends UserDataHolderEx {
-  @NotNull
-  ExternalSystemTaskId getExternalSystemTaskId();
+@ApiStatus.NonExtendable
+public interface ProjectResolverContext extends GradleExecutionContext, UserDataHolderEx {
 
-  @Nullable
-  String getIdeProjectPath();
+  @NotNull String getExternalProjectPath();
 
-  @NotNull
-  String getProjectPath();
+  @NotNull ExternalSystemTaskId getExternalSystemTaskId();
 
-  @Nullable
-  GradleExecutionSettings getSettings();
+  @NotNull String getProjectGradleVersion();
 
-  @NotNull
-  ProjectConnection getConnection();
+  @Nullable String getIdeProjectPath();
 
-  @Nullable
-  CancellationTokenSource getCancellationTokenSource();
-
-  @NotNull
-  ExternalSystemTaskNotificationListener getListener();
-
-  boolean isPreviewMode();
+  @ApiStatus.Internal
+  boolean isPhasedSyncEnabled();
 
   boolean isResolveModulePerSourceSet();
 
   boolean isUseQualifiedModuleNames();
 
-  @NotNull
-  ProjectImportAction.AllModels getModels();
-
-  public void setModels(@NotNull ProjectImportAction.AllModels models) ;
-
-  @Nullable
-  <T> T getExtraProject(Class<T> modelClazz);
-
-  @Nullable
-  <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz);
+  boolean isDelegatedBuild();
 
   @NotNull
-  Collection<String> findModulesWithModel(@NotNull Class modelClazz);
+  GradleLightBuild getRootBuild();
 
-  boolean hasModulesWithModel(@NotNull Class modelClazz);
+  /**
+   * Returns the list of the nested builds.
+   * There are several types of nested builds:
+   * <ul>
+   * <li>Included builds</li>
+   * <li>buildSrc builds for Gradle at least 8.0</li>
+   * </ul>
+   */
+  @NotNull
+  Collection<? extends GradleLightBuild> getNestedBuilds();
 
-  void checkCancelled() throws ProcessCanceledException;
-
-  String getProjectGradleVersion();
+  @NotNull
+  Collection<? extends GradleLightBuild> getAllBuilds();
 
   @Nullable
-  String getDefaultGroupId();
+  <T> T getRootModel(@NotNull Class<T> modelClass);
+
+  @Nullable
+  <T> T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass);
+
+  @Nullable
+  <T> T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass);
+
+  /**
+   * @deprecated use {@link #getRootModel} instead
+   */
+  @Deprecated
+  default <T> @Nullable T getExtraProject(@NotNull Class<T> modelClass) {
+    return getRootModel(modelClass);
+  }
+
+  default @Nullable <T> T getExtraProject(@Nullable IdeaModule module, @NotNull Class<T> modelClass) {
+    return module == null ? getRootModel(modelClass) : getProjectModel(module, modelClass);
+  }
+
+  boolean hasModulesWithModel(@NotNull Class<?> modelClass);
+
+  @Nullable
+  String getBuildSrcGroup();
+
+  @Nullable
+  String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier);
+
+  @ApiStatus.Experimental
+  void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue);
+
+  @ApiStatus.Experimental
+  @Nullable GradlePartialResolverPolicy getPolicy();
+
+  /**
+   * @return Maps of artifact paths to moduleIds
+   */
+  @NotNull
+  ArtifactMappingService getArtifactsMap();
 }

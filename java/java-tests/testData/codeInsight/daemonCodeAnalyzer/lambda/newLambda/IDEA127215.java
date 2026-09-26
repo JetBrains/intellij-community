@@ -22,14 +22,10 @@ abstract class FooBar<M> {
 }
 class Test {
   <T> List<List<Object>> foo(List<T> objects, Function<T, ?>... functions) {
-    return <error descr="Incompatible types. Required List<List<Object>> but 'collect' was inferred to R:
-no instance(s) of type variable(s)  exist so that List<capture of ?> conforms to List<Object>
-inference variable T has incompatible bounds:
- equality constraints: List<Object>
-lower bounds: List<capture of ?>">objects.stream()
+    return objects.stream()
       .map(object -> Arrays.stream(functions)
         .map(fn -> fn.apply(object))
         .collect(toList()))
-      .collect(toList());</error>
+      .<error descr="Incompatible types. Found: 'java.util.List<java.util.List<capture<?>>>', required: 'java.util.List<java.util.List<java.lang.Object>>'">collect</error>(toList());
   }
 }

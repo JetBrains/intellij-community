@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeSignature/a/JavaClass.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_changeSignature-a.kotlin_module
+  UsageKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeSignature/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,32 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.impl
+
+import org.jetbrains.intellij.build.ModuleSourceFileIndex
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
+import java.nio.file.Path
+
+internal class ModuleOutputProviderIndex(
+  @JvmField val modules: List<JpsModule>,
+) {
+  private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+
+  @JvmField val sourceFiles: ModuleSourceFileIndex = ModuleSourceFileIndex(modules)
+
+  fun findModule(name: String): JpsModule? = nameToModule.get(name)
+
+  fun findRequiredModule(name: String): JpsModule {
+    return requireNotNull(findModule(name)) {
+      "Cannot find required module '$name' in the project"
+    }
+  }
+
+  fun getModuleImlFile(module: JpsModule): Path {
+    val baseDir = requireNotNull(JpsModelSerializationDataService.getBaseDirectoryPath(module)) {
+      "Cannot find base directory for module ${module.name}"
+    }
+    return baseDir.resolve("${module.name}.iml")
+  }
+}

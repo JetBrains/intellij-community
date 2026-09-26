@@ -15,7 +15,12 @@
  */
 package com.intellij.codeInsight.generation.actions;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 
 import java.util.HashSet;
@@ -51,7 +56,7 @@ public class GenerateCreateUIAction extends BaseGenerateAction {
     return false;
   }
 
-  private static boolean isComponentUI(PsiClass aClass, HashSet<PsiClass> classes) {
+  private static boolean isComponentUI(PsiClass aClass, HashSet<? super PsiClass> classes) {
     while (aClass != null) {
       if (!classes.add(aClass)) return false;
       if ("javax.swing.plaf.ComponentUI".equals(aClass.getQualifiedName())) {

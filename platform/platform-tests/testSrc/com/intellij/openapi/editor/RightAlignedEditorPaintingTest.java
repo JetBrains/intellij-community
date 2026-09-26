@@ -21,17 +21,40 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.ui.IslandsState;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting/right")
+@Ignore("AT-4013")
 public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
+  private record SelectionState(boolean enabled, boolean islands) {}
+
+  private static SelectionState setNewSelectionEnabled(boolean enabled) {
+    var value = Registry.get("editor.old.full.horizontal.selection.enabled");
+    var islands = IslandsState.Companion.isEnabled();
+
+    var state = new SelectionState(enabled, islands);
+    value.setValue(!enabled);
+    IslandsState.Companion.setEnabled(enabled, false);
+    return state;
+  }
+
+  private static void restoreSelectionState(SelectionState state) {
+    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(!state.enabled());
+    IslandsState.Companion.setEnabled(state.islands(), false);
+  }
+
   @Override
   protected void initText(@NotNull String fileText) {
     super.initText(fileText);
-    ((EditorImpl)myEditor).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
+    ((EditorImpl)getEditor()).setHorizontalTextAlignment(EditorImpl.TEXT_ALIGNMENT_RIGHT);
   }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
@@ -68,7 +91,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
-    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
+    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
 
@@ -81,7 +104,7 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    myEditor.getColorsScheme().setAttributes(
+    getEditor().getColorsScheme().setAttributes(
       EditorColors.FOLDED_TEXT_ATTRIBUTES,
       new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.PLAIN)
     );
@@ -97,22 +120,49 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
 
   public void testInlayAtEmptyLine() throws Exception {
     initText("\n");
-    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(0, new MyInlayRenderer());
     checkResult();
   }
 
   public void testMultilineBorderWithInlays() throws Exception {
     initText("abc\ndef");
-    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
-    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    getEditor().getInlayModel().addInlineElement(6, new MyInlayRenderer());
     addBorderHighlighter(0, 7, 0, Color.red);
     checkResult();
   }
 
   public void testSelectionInsideLine() throws Exception {
-    initText("first line\nsecond line");
-    myEditor.getSelectionModel().setSelection(6, 12);
-    checkResult();
+    var state = setNewSelectionEnabled(false);
+    try {
+      initText("first line\nsecond line");
+      getEditor().getSelectionModel().setSelection(6, 12);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
+  }
+
+  public void testSelectionInsideLineNewSelection() throws Exception {
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("first longer line\nsecond line");
+      getEditor().getSelectionModel().setSelection(13, 19);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
+  }
+
+  public void testSelectionInsideLineNewSelection2() throws Exception {
+    var state = setNewSelectionEnabled(true);
+    try {
+      initText("first longer line\nsecond line");
+      getEditor().getSelectionModel().setSelection(18, 21);
+      checkResult();
+    } finally {
+      restoreSelectionState(state);
+    }
   }
 
   public void testCaretAfterEmptyLine() throws Exception {

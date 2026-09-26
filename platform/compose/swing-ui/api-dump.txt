@@ -1,0 +1,14 @@
+f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
+f:com.intellij.platform.compose.swing.components.ActionLinkKt
+f:com.intellij.platform.compose.swing.components.BrowserLinkKt
+f:com.intellij.platform.compose.swing.components.ComboBoxKt
+f:com.intellij.platform.compose.swing.components.CommentKt
+f:com.intellij.platform.compose.swing.components.DropDownLinkKt
+f:com.intellij.platform.compose.swing.components.FormPanelKt
+f:com.intellij.platform.compose.swing.components.OptionButtonKt
+f:com.intellij.platform.compose.swing.components.SearchTextFieldKt
+f:com.intellij.platform.compose.swing.components.SegmentedButtonKt
+f:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxKt
+f:com.intellij.platform.compose.swing.components.TitledSeparatorKt
+f:com.intellij.platform.compose.swing.modifier.ActionLinkModifiersKt
+f:com.intellij.platform.compose.swing.modifier.OutlineKt

@@ -1,0 +1,54 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.vcs.gitlab` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.vcs.gitlab.shared",
+        "intellij.vcs.gitlab.backend",
+        "intellij.vcs.gitlab.frontend",
+        "intellij.vcs.gitlab.git",
+        "intellij.vcs.gitlab.yaml",
+    ],
+    main_module = "intellij.vcs.gitlab",
+)
+### auto-generated section `dev intellij.vcs.gitlab` end
+
+### auto-generated section `build intellij.vcs.gitlab` start
+jvm_library(
+    name = "gitlab",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.gitlab",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "gitlab_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.gitlab",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":gitlab"],
+)
+### auto-generated section `build intellij.vcs.gitlab` end
+
+### auto-generated section `iml intellij.vcs.gitlab` start
+exports_files(
+    [
+        "intellij.vcs.gitlab.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.vcs.gitlab` end

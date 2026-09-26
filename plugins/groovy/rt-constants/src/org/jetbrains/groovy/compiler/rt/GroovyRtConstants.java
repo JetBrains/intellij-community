@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
-/**
- * @author nik
- */
-public class GroovyRtConstants {
+public final class GroovyRtConstants {
   public static final String PATCHERS = "patchers";
   public static final String ENCODING = "encoding";
   public static final String OUTPUTPATH = "outputpath";
@@ -37,10 +20,15 @@ public class GroovyRtConstants {
   public static final String OPTIMIZE = "optimize";
   public static final String GROOVYC_STUB_GENERATION_FAILED = "Groovyc stub generation failed";
 
-  public static final String STUBS_GENERATED = "Stubs generated";
   public static final String JAVAC_COMPLETED = "Javac completed";
   public static final String BUILD_ABORTED = "Build aborted";
 
+  /**
+   * Older version of groovyc generated malformed annotations in stubs, so give a possibility to skip those
+   */
+  public static final String GROOVYC_LEGACY_REMOVE_ANNOTATIONS = "groovyc.remove.annotations.for.stub.generation";
+
   public static final String GROOVYC_ASM_RESOLVING_ONLY = "groovyc.asm.resolving.only";
   public static final String GROOVYC_CONFIG_SCRIPT = "groovyc.config.script";
+  public static final String GROOVY_TARGET_BYTECODE = "groovy.target.bytecode";
 }

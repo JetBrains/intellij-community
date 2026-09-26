@@ -1,44 +1,49 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
-import com.intellij.lang.ant.config.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
+
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(project != null);
-    presentation.setVisible(project != null);
+    presentation.setEnabledAndVisible(project != null);
   }
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
     Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;
@@ -64,24 +69,19 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     if (model.getDefaultTargetName() != null) {
       DefaultActionGroup subgroup = new DefaultActionGroup();
       subgroup.add(getOrCreateAction(
-        buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null, model.getDefaultTargetActionId())
+        buildFile, TargetAction.getDefaultTargetName(), Collections.singletonList(TargetAction.getDefaultTargetName()), null, model.getDefaultTargetActionId())
       );
       group.add(subgroup);
     }
 
-    final Set<String> addedTargetNames = StringSetSpinAllocator.alloc();
-    try {
-      addGroupOfTargets(buildFile, model.getFilteredTargets(), addedTargetNames, group);
-      addGroupOfTargets(buildFile, antConfiguration.getMetaTargets(buildFile), addedTargetNames, group);
-    }
-    finally {
-      StringSetSpinAllocator.dispose(addedTargetNames);
-    }
+    final Set<String> addedTargetNames = new HashSet<>();
+    addGroupOfTargets(buildFile, model.getFilteredTargets(), addedTargetNames, group);
+    addGroupOfTargets(buildFile, antConfiguration.getMetaTargets(buildFile), addedTargetNames, group);
   }
 
   private static void addGroupOfTargets(final AntBuildFile buildFile,
                                         final AntBuildTarget[] targets,
-                                        final Set<String> addedTargetNames,
+                                        final Set<? super String> addedTargetNames,
                                         final DefaultActionGroup group) {
     final DefaultActionGroup subgroup = new DefaultActionGroup();
     for (final AntBuildTarget target : targets) {
@@ -100,9 +100,9 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   }
 
   private static AnAction getOrCreateAction(final AntBuildFile buildFile,
-                                            final String displayName,
+                                            final @ActionText String displayName,
                                             final List<String> targets,
-                                            final String targetDescription,
+                                            final @ActionDescription String targetDescription,
                                             final String actionId) {
     AnAction action = null;
     if (actionId != null) {

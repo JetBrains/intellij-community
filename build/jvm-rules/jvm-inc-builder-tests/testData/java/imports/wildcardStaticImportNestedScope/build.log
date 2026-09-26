@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Outer$Mid.class
+  ppp/Outer.class
+End of files
+Compiling files:
+  java/imports/wildcardStaticImportNestedScope/a/ppp/Outer.java
+End of files
+Cleaning output files:
+  rrr/Use.class
+End of files
+Compiling files:
+  java/imports/wildcardStaticImportNestedScope/a/rrr/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

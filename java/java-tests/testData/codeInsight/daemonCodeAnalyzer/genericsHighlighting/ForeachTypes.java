@@ -8,7 +8,7 @@ class a {
     for (double i:db) {}
     for (<error descr="Incompatible types. Found: 'int', required: 'double'">int i</error>:db) {
       // highlight header event if body has problems
-      <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int di = "";</error>
+      int di = <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">"";</error>
     }
 
     java.util.List list = null;
@@ -30,7 +30,7 @@ class a {
       for (<error descr="Incompatible types. Found: 'int', required: 'java.lang.Object'">int p</error>: list) {}
     }
 
-    for (int gjkh : <error descr="foreach not applicable to type 'int'">222</error>) {
+    for (int gjkh : <error descr="Foreach not applicable to type 'int'">222</error>) {
     }
   }
 }

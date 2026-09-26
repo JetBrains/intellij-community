@@ -1,0 +1,968 @@
+package org.jetbrains.jewel.ui
+
+import androidx.compose.foundation.LocalContextMenuRepresentation
+import androidx.compose.foundation.text.LocalTextContextMenu
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidedValue
+import androidx.compose.runtime.Stable
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
+import org.jetbrains.jewel.ui.component.TextContextMenu
+import org.jetbrains.jewel.ui.component.gotit.GotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.LocalGotItTooltipStyle
+import org.jetbrains.jewel.ui.component.gotit.fallbackGotItTooltipButtonStyle
+import org.jetbrains.jewel.ui.component.gotit.fallbackGotItTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.BadgeStyles
+import org.jetbrains.jewel.ui.component.styling.ButtonStyle
+import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
+import org.jetbrains.jewel.ui.component.styling.ChipStyle
+import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
+import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles
+import org.jetbrains.jewel.ui.component.styling.DividerStyle
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
+import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
+import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
+import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalBadgeStyle
+import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
+import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSlimButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
+import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
+import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
+import org.jetbrains.jewel.ui.component.styling.LocalHorizontalProgressBarStyle
+import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalInlineBannerStyle
+import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
+import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
+import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSlimButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupAdStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
+import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchTextFieldStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalUndecoratedDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupAdStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
+import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
+import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
+import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
+import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
+import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
+import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
+import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
+import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
+import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
+import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackBadgeStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackDefaultSlimButtonStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackOutlinedSlimButtonStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackPopupAdStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackSearchTextField
+import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
+
+/** Default implementation of [ComponentStyling] that aggregates style objects for all built-in Jewel components. */
+@Stable
+@GenerateDataFunctions
+@Suppress("LargeClass")
+public class DefaultComponentStyling(
+    /** The style for checkboxes. */
+    public val checkboxStyle: CheckboxStyle,
+    /** The style for chips. */
+    public val chipStyle: ChipStyle,
+    /** The style for circular progress indicators. */
+    public val circularProgressStyle: CircularProgressStyle,
+    /** The styles for default (block-level) banners. */
+    public val defaultBannerStyle: DefaultBannerStyles,
+    /** The style for combo boxes. */
+    public val comboBoxStyle: ComboBoxStyle,
+    /** The style for default (filled) buttons. */
+    public val defaultButtonStyle: ButtonStyle,
+    /** The style for default dropdowns. */
+    public val defaultDropdownStyle: DropdownStyle,
+    /** The style for default split buttons. */
+    public val defaultSplitButtonStyle: SplitButtonStyle,
+    /** The style for default tabs. */
+    public val defaultTabStyle: TabStyle,
+    /** The style for dividers. */
+    public val dividerStyle: DividerStyle,
+    /** The style for editor tabs. */
+    public val editorTabStyle: TabStyle,
+    /** The style for group headers. */
+    public val groupHeaderStyle: GroupHeaderStyle,
+    /** The style for horizontal progress bars. */
+    public val horizontalProgressBarStyle: HorizontalProgressBarStyle,
+    /** The style for icon buttons. */
+    public val iconButtonStyle: IconButtonStyle,
+    /** The style for transparent icon buttons. */
+    public val transparentIconButtonStyle: IconButtonStyle,
+    /** The styles for inline banners. */
+    public val inlineBannerStyle: InlineBannerStyles,
+    /** The style for lazy tree components. */
+    public val lazyTreeStyle: LazyTreeStyle,
+    /** The style for links. */
+    public val linkStyle: LinkStyle,
+    /** The style for menus. */
+    public val menuStyle: MenuStyle,
+    /** The style for outlined buttons. */
+    public val outlinedButtonStyle: ButtonStyle,
+    /** The style for popup containers. */
+    public val popupContainerStyle: PopupContainerStyle,
+    /** The style for outlined split buttons. */
+    public val outlinedSplitButtonStyle: SplitButtonStyle,
+    /** The style for radio buttons. */
+    public val radioButtonStyle: RadioButtonStyle,
+    /** The style for scrollbars. */
+    public val scrollbarStyle: ScrollbarStyle,
+    /** The style for segmented control buttons. */
+    public val segmentedControlButtonStyle: SegmentedControlButtonStyle,
+    /** The style for segmented controls. */
+    public val segmentedControlStyle: SegmentedControlStyle,
+    /** The style for selectable lazy columns. */
+    public val selectableLazyColumnStyle: SelectableLazyColumnStyle,
+    /** The style for simple list items. */
+    public val simpleListItemStyle: SimpleListItemStyle,
+    /** The style for sliders. */
+    public val sliderStyle: SliderStyle,
+    /** The style for text areas. */
+    public val textAreaStyle: TextAreaStyle,
+    /** The style for text fields. */
+    public val textFieldStyle: TextFieldStyle,
+    /** The style for tooltips. */
+    public val tooltipStyle: TooltipStyle,
+    /** The style for undecorated dropdowns. */
+    public val undecoratedDropdownStyle: DropdownStyle,
+    /** The style for speed search overlays. */
+    public val speedSearchStyle: SpeedSearchStyle,
+    /** The style for search match highlights. */
+    public val searchMatchStyle: SearchMatchStyle,
+    /** The style for popup ads. */
+    public val popupAdStyle: PopupAdStyle,
+    /** The style for default slim buttons. */
+    public val defaultSlimButtonStyle: ButtonStyle,
+    /** The style for outlined slim buttons. */
+    public val outlinedSlimButtonStyle: ButtonStyle,
+    /** The styles for badges. */
+    public val badgeStyle: BadgeStyles,
+    /** The style for Got It tooltips. */
+    public val gotItTooltipStyle: GotItTooltipStyle,
+    /** The style for the buttons shown inside Got It tooltips. */
+    public val gotItButtonStyle: ButtonStyle,
+    /** The style for search text fields. */
+    public val searchTextFieldStyle: SearchTextFieldStyle,
+) : ComponentStyling {
+    @Deprecated(message = "Please use the variant with `searchTextFieldStyle`.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
+        badgeStyle: BadgeStyles,
+        gotItTooltipStyle: GotItTooltipStyle,
+        gotItButtonStyle: ButtonStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
+        badgeStyle,
+        gotItTooltipStyle,
+        gotItButtonStyle,
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated(
+        message = "Use the constructor with `gotItTooltipStyle` and `gotItButtonStyle`.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
+        badgeStyle: BadgeStyles,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
+        badgeStyle,
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+        defaultSlimButtonStyle: ButtonStyle,
+        outlinedSlimButtonStyle: ButtonStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        defaultSlimButtonStyle,
+        outlinedSlimButtonStyle,
+        fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated(
+        message = "Use the variant with defaultSlimButtonStyle and outlinedSlimButtonStyle.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+        popupAdStyle: PopupAdStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        popupAdStyle,
+        fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
+        fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated("Use the variant with popupAdStyle and gotItTooltipStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        fallbackPopupAdStyle(),
+        fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
+        fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        fallbackSpeedSearchStyle(),
+        fallbackSearchMatchStyle(),
+        fallbackPopupAdStyle(),
+        fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
+        fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle = iconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        fallbackSpeedSearchStyle(),
+        fallbackSearchMatchStyle(),
+        fallbackPopupAdStyle(),
+        fallbackDefaultSlimButtonStyle(defaultButtonStyle.colors),
+        fallbackOutlinedSlimButtonStyle(outlinedButtonStyle.colors),
+        fallbackBadgeStyle(),
+        fallbackGotItTooltipStyle(),
+        fallbackGotItTooltipButtonStyle(),
+        fallbackSearchTextField(),
+    )
+
+    @Composable
+    override fun styles(): Array<out ProvidedValue<*>> =
+        arrayOf(
+            LocalCheckboxStyle provides checkboxStyle,
+            LocalChipStyle provides chipStyle,
+            LocalCircularProgressStyle provides circularProgressStyle,
+            LocalContextMenuRepresentation provides ContextMenuRepresentation,
+            LocalTextContextMenu provides TextContextMenu,
+            LocalDefaultBannerStyle provides defaultBannerStyle,
+            LocalDefaultComboBoxStyle provides comboBoxStyle,
+            LocalDefaultButtonStyle provides defaultButtonStyle,
+            LocalDefaultSplitButtonStyle provides defaultSplitButtonStyle,
+            LocalDefaultDropdownStyle provides defaultDropdownStyle,
+            LocalDefaultTabStyle provides defaultTabStyle,
+            LocalDividerStyle provides dividerStyle,
+            LocalEditorTabStyle provides editorTabStyle,
+            LocalGroupHeaderStyle provides groupHeaderStyle,
+            LocalHorizontalProgressBarStyle provides horizontalProgressBarStyle,
+            LocalIconButtonStyle provides iconButtonStyle,
+            LocalTransparentIconButtonStyle provides transparentIconButtonStyle,
+            LocalInlineBannerStyle provides inlineBannerStyle,
+            LocalLazyTreeStyle provides lazyTreeStyle,
+            LocalLinkStyle provides linkStyle,
+            LocalMenuStyle provides menuStyle,
+            LocalOutlinedButtonStyle provides outlinedButtonStyle,
+            LocalPopupContainerStyle provides popupContainerStyle,
+            LocalOutlinedSplitButtonStyle provides outlinedSplitButtonStyle,
+            LocalRadioButtonStyle provides radioButtonStyle,
+            LocalScrollbarStyle provides scrollbarStyle,
+            LocalSegmentedControlButtonStyle provides segmentedControlButtonStyle,
+            LocalSegmentedControlStyle provides segmentedControlStyle,
+            LocalSelectableLazyColumnStyle provides selectableLazyColumnStyle,
+            LocalSimpleListItemStyleStyle provides simpleListItemStyle,
+            LocalSliderStyle provides sliderStyle,
+            LocalTextAreaStyle provides textAreaStyle,
+            LocalTextFieldStyle provides textFieldStyle,
+            LocalTooltipStyle provides tooltipStyle,
+            LocalUndecoratedDropdownStyle provides undecoratedDropdownStyle,
+            LocalSpeedSearchStyle provides speedSearchStyle,
+            LocalSearchMatchStyle provides searchMatchStyle,
+            LocalPopupAdStyle provides popupAdStyle,
+            LocalDefaultSlimButtonStyle provides defaultSlimButtonStyle,
+            LocalOutlinedSlimButtonStyle provides outlinedSlimButtonStyle,
+            LocalBadgeStyle provides badgeStyle,
+            LocalGotItTooltipStyle provides gotItTooltipStyle,
+            LocalGotItButtonStyle provides gotItButtonStyle,
+            LocalSearchTextFieldStyle provides searchTextFieldStyle,
+        )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DefaultComponentStyling
+
+        if (checkboxStyle != other.checkboxStyle) return false
+        if (chipStyle != other.chipStyle) return false
+        if (circularProgressStyle != other.circularProgressStyle) return false
+        if (defaultBannerStyle != other.defaultBannerStyle) return false
+        if (comboBoxStyle != other.comboBoxStyle) return false
+        if (defaultButtonStyle != other.defaultButtonStyle) return false
+        if (defaultDropdownStyle != other.defaultDropdownStyle) return false
+        if (defaultSplitButtonStyle != other.defaultSplitButtonStyle) return false
+        if (defaultTabStyle != other.defaultTabStyle) return false
+        if (dividerStyle != other.dividerStyle) return false
+        if (editorTabStyle != other.editorTabStyle) return false
+        if (groupHeaderStyle != other.groupHeaderStyle) return false
+        if (horizontalProgressBarStyle != other.horizontalProgressBarStyle) return false
+        if (iconButtonStyle != other.iconButtonStyle) return false
+        if (transparentIconButtonStyle != other.transparentIconButtonStyle) return false
+        if (inlineBannerStyle != other.inlineBannerStyle) return false
+        if (lazyTreeStyle != other.lazyTreeStyle) return false
+        if (linkStyle != other.linkStyle) return false
+        if (menuStyle != other.menuStyle) return false
+        if (outlinedButtonStyle != other.outlinedButtonStyle) return false
+        if (popupContainerStyle != other.popupContainerStyle) return false
+        if (outlinedSplitButtonStyle != other.outlinedSplitButtonStyle) return false
+        if (radioButtonStyle != other.radioButtonStyle) return false
+        if (scrollbarStyle != other.scrollbarStyle) return false
+        if (segmentedControlButtonStyle != other.segmentedControlButtonStyle) return false
+        if (segmentedControlStyle != other.segmentedControlStyle) return false
+        if (selectableLazyColumnStyle != other.selectableLazyColumnStyle) return false
+        if (simpleListItemStyle != other.simpleListItemStyle) return false
+        if (sliderStyle != other.sliderStyle) return false
+        if (textAreaStyle != other.textAreaStyle) return false
+        if (textFieldStyle != other.textFieldStyle) return false
+        if (tooltipStyle != other.tooltipStyle) return false
+        if (undecoratedDropdownStyle != other.undecoratedDropdownStyle) return false
+        if (speedSearchStyle != other.speedSearchStyle) return false
+        if (searchMatchStyle != other.searchMatchStyle) return false
+        if (popupAdStyle != other.popupAdStyle) return false
+        if (defaultSlimButtonStyle != other.defaultSlimButtonStyle) return false
+        if (outlinedSlimButtonStyle != other.outlinedSlimButtonStyle) return false
+        if (badgeStyle != other.badgeStyle) return false
+        if (gotItTooltipStyle != other.gotItTooltipStyle) return false
+        if (gotItButtonStyle != other.gotItButtonStyle) return false
+        if (searchTextFieldStyle != other.searchTextFieldStyle) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = checkboxStyle.hashCode()
+        result = 31 * result + chipStyle.hashCode()
+        result = 31 * result + circularProgressStyle.hashCode()
+        result = 31 * result + defaultBannerStyle.hashCode()
+        result = 31 * result + comboBoxStyle.hashCode()
+        result = 31 * result + defaultButtonStyle.hashCode()
+        result = 31 * result + defaultDropdownStyle.hashCode()
+        result = 31 * result + defaultSplitButtonStyle.hashCode()
+        result = 31 * result + defaultTabStyle.hashCode()
+        result = 31 * result + dividerStyle.hashCode()
+        result = 31 * result + editorTabStyle.hashCode()
+        result = 31 * result + groupHeaderStyle.hashCode()
+        result = 31 * result + horizontalProgressBarStyle.hashCode()
+        result = 31 * result + iconButtonStyle.hashCode()
+        result = 31 * result + transparentIconButtonStyle.hashCode()
+        result = 31 * result + inlineBannerStyle.hashCode()
+        result = 31 * result + lazyTreeStyle.hashCode()
+        result = 31 * result + linkStyle.hashCode()
+        result = 31 * result + menuStyle.hashCode()
+        result = 31 * result + outlinedButtonStyle.hashCode()
+        result = 31 * result + popupContainerStyle.hashCode()
+        result = 31 * result + outlinedSplitButtonStyle.hashCode()
+        result = 31 * result + radioButtonStyle.hashCode()
+        result = 31 * result + scrollbarStyle.hashCode()
+        result = 31 * result + segmentedControlButtonStyle.hashCode()
+        result = 31 * result + segmentedControlStyle.hashCode()
+        result = 31 * result + selectableLazyColumnStyle.hashCode()
+        result = 31 * result + simpleListItemStyle.hashCode()
+        result = 31 * result + sliderStyle.hashCode()
+        result = 31 * result + textAreaStyle.hashCode()
+        result = 31 * result + textFieldStyle.hashCode()
+        result = 31 * result + tooltipStyle.hashCode()
+        result = 31 * result + undecoratedDropdownStyle.hashCode()
+        result = 31 * result + speedSearchStyle.hashCode()
+        result = 31 * result + searchMatchStyle.hashCode()
+        result = 31 * result + popupAdStyle.hashCode()
+        result = 31 * result + defaultSlimButtonStyle.hashCode()
+        result = 31 * result + outlinedSlimButtonStyle.hashCode()
+        result = 31 * result + badgeStyle.hashCode()
+        result = 31 * result + gotItTooltipStyle.hashCode()
+        result = 31 * result + gotItButtonStyle.hashCode()
+        result = 31 * result + searchTextFieldStyle.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "DefaultComponentStyling(" +
+            "checkboxStyle=$checkboxStyle, " +
+            "chipStyle=$chipStyle, " +
+            "circularProgressStyle=$circularProgressStyle, " +
+            "defaultBannerStyle=$defaultBannerStyle, " +
+            "comboBoxStyle=$comboBoxStyle, " +
+            "defaultButtonStyle=$defaultButtonStyle, " +
+            "defaultDropdownStyle=$defaultDropdownStyle, " +
+            "defaultSplitButtonStyle=$defaultSplitButtonStyle, " +
+            "defaultTabStyle=$defaultTabStyle, " +
+            "dividerStyle=$dividerStyle, " +
+            "editorTabStyle=$editorTabStyle, " +
+            "groupHeaderStyle=$groupHeaderStyle, " +
+            "horizontalProgressBarStyle=$horizontalProgressBarStyle, " +
+            "iconButtonStyle=$iconButtonStyle, " +
+            "transparentIconButtonStyle=$transparentIconButtonStyle, " +
+            "inlineBannerStyle=$inlineBannerStyle, " +
+            "lazyTreeStyle=$lazyTreeStyle, " +
+            "linkStyle=$linkStyle, " +
+            "menuStyle=$menuStyle, " +
+            "outlinedButtonStyle=$outlinedButtonStyle, " +
+            "popupContainerStyle=$popupContainerStyle, " +
+            "outlinedSplitButtonStyle=$outlinedSplitButtonStyle, " +
+            "radioButtonStyle=$radioButtonStyle, " +
+            "scrollbarStyle=$scrollbarStyle, " +
+            "segmentedControlButtonStyle=$segmentedControlButtonStyle, " +
+            "segmentedControlStyle=$segmentedControlStyle, " +
+            "selectableLazyColumnStyle=$selectableLazyColumnStyle, " +
+            "simpleListItemStyle=$simpleListItemStyle, " +
+            "sliderStyle=$sliderStyle, " +
+            "textAreaStyle=$textAreaStyle, " +
+            "textFieldStyle=$textFieldStyle, " +
+            "tooltipStyle=$tooltipStyle, " +
+            "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
+            "speedSearchStyle=$speedSearchStyle, " +
+            "searchMatchStyle=$searchMatchStyle, " +
+            "popupAdStyle=$popupAdStyle, " +
+            "defaultSlimButtonStyle=$defaultSlimButtonStyle, " +
+            "outlinedSlimButtonStyle=$outlinedSlimButtonStyle, " +
+            "badgeStyle=$badgeStyle, " +
+            "gotItTooltipStyle=$gotItTooltipStyle, " +
+            "gotItButtonStyle=$gotItButtonStyle, " +
+            "searchTextFieldStyle=$searchTextFieldStyle" +
+            ")"
+}

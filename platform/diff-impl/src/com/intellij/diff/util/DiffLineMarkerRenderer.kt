@@ -1,38 +1,33 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
+import com.intellij.diff.util.DiffDrawUtil.BackgroundType
+import com.intellij.diff.util.DiffDrawUtil.BorderType
+import com.intellij.diff.util.DiffDrawUtil.PaintMode
+import com.intellij.diff.util.DiffDrawUtil.drawChunkBorderLine
+import com.intellij.diff.util.DiffDrawUtil.getGutterMarkerPaintRange
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-internal class DiffLineMarkerRenderer(
-  private val myHighlighter: RangeHighlighter,
-  private val myDiffType: TextDiffType,
-  private val myIgnoredFoldingOutline: Boolean,
-  private val myResolved: Boolean,
-  private val myExcluded: Boolean,
-  private val myHideWithoutLineNumbers: Boolean,
-  private val myEmptyRange: Boolean,
-  private val myFirstLine: Boolean,
-  private val myLastLine: Boolean
+@ApiStatus.Internal
+open class DiffLineMarkerRenderer(
+  val highlighter: RangeHighlighter,
+  val diffType: TextDiffType,
+  val editorMode: PaintMode,
+  val gutterMode: PaintMode,
+  val hideWithoutLineNumbers: Boolean,
+  val isEmptyRange: Boolean,
+  val isFirstLine: Boolean,
+  val isLastLine: Boolean,
+  val alignedSides: Boolean,
+  private val clearThinLineBetweenGutterAndEditor: Boolean
 ) : LineMarkerRendererEx {
 
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
@@ -41,27 +36,26 @@ internal class DiffLineMarkerRenderer(
     val gutter = editor.gutterComponentEx
 
     var x1 = 0
-    val x2 = x1 + gutter.width
+    val x2 = gutter.width
 
-    var y1: Int
-    var y2: Int
-    if (myEmptyRange && myLastLine) {
-      y1 = DiffDrawUtil.lineToY(editor, DiffUtil.getLineCount(editor.document))
-      y2 = y1
+    val startLine: Int
+    val endLine: Int
+    if (isEmptyRange) {
+      if (isLastLine) {
+        startLine = DiffUtil.getLineCount(editor.document)
+      }
+      else {
+        startLine = editor.document.getLineNumber(highlighter.startOffset)
+      }
+      endLine = startLine
     }
     else {
-      val startLine = editor.document.getLineNumber(myHighlighter.startOffset)
-      val endLine = editor.document.getLineNumber(myHighlighter.endOffset) + 1
-      y1 = DiffDrawUtil.lineToY(editor, startLine)
-      y2 = if (myEmptyRange) y1 else DiffDrawUtil.lineToY(editor, endLine)
+      startLine = editor.document.getLineNumber(highlighter.startOffset)
+      endLine = editor.document.getLineNumber(highlighter.endOffset) + 1
     }
+    val (y1, y2) = getGutterMarkerPaintRange(editor, startLine, endLine)
 
-    if (myEmptyRange && myFirstLine) {
-      y1++
-      y2++
-    }
-
-    if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown) {
+    if (hideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown) {
       // draw only in "editor" part of the gutter (rightmost part of foldings' "[+]" )
       x1 = gutter.whitespaceSeparatorOffset
     }
@@ -69,49 +63,52 @@ internal class DiffLineMarkerRenderer(
       val annotationsOffset = gutter.annotationsAreaOffset
       val annotationsWidth = gutter.annotationsAreaWidth
       if (annotationsWidth != 0) {
-        drawMarker(editor, g, x1, annotationsOffset, y1, y2)
+        drawMarker(editor, g, x1, annotationsOffset, y1, y2, alignedSides, gutterMode)
         x1 = annotationsOffset + annotationsWidth
       }
     }
 
-    if (myExcluded) {
-      val xOutline = gutter.whitespaceSeparatorOffset
-      drawMarker(editor, g, xOutline, x2, y1, y2, paintBackground = false, paintBorder = true) // over "editor"
-      drawMarker(editor, g, x1, xOutline, y1, y2, paintBackground = true, paintBorder = true, useIgnoredBackgroundColor = true) // over "gutter"
-    }
-    else if (myIgnoredFoldingOutline) {
-      val xOutline = gutter.whitespaceSeparatorOffset
-      drawMarker(editor, g, xOutline, x2, y1, y2, useIgnoredBackgroundColor = true) // over "editor"
-      drawMarker(editor, g, x1, xOutline, y1, y2) // over "gutter"
+    if (editorMode == gutterMode) {
+      drawMarker(editor, g, x1, x2, y1, y2, alignedSides, gutterMode)
     }
     else {
-      drawMarker(editor, g, x1, x2, y1, y2)
+      val xOutline = gutter.whitespaceSeparatorOffset
+      val thinLineForcedColor = if (clearThinLineBetweenGutterAndEditor) editor.backgroundColor else null
+      drawMarker(editor, g, xOutline, x2, y1, y2, alignedSides, editorMode, thinLineForcedColor)
+      drawMarker(editor, g, x1, xOutline, y1, y2, alignedSides, gutterMode)
     }
   }
 
-  private fun drawMarker(editor: Editor, g: Graphics2D,
-                         x1: Int, x2: Int, y1: Int, y2: Int,
-                         paintBackground: Boolean = !myResolved,
-                         paintBorder: Boolean = myResolved,
-                         dottedLine: Boolean = myResolved,
-                         useIgnoredBackgroundColor: Boolean = false) {
+  @ApiStatus.Internal
+  fun drawMarker(editor: Editor, g: Graphics2D,
+                 x1: Int, x2: Int, y1: Int, y2: Int,
+                 alignedSides: Boolean, mode: PaintMode,
+                 forcedBackgroundColor: Color? = null) {
     if (x1 >= x2) return
 
-    val color = myDiffType.getColor(editor)
-    if (y2 - y1 > 2) {
-      if (paintBackground) {
-        g.color = if (useIgnoredBackgroundColor) myDiffType.getIgnoredColor(editor) else color
+    val dottedLine = mode.border == BorderType.DOTTED
+    val color = diffType.getColor(editor)
+    val backgroundColor = forcedBackgroundColor ?: when (mode.background) {
+      BackgroundType.NONE -> null
+      BackgroundType.DEFAULT -> color
+      BackgroundType.IGNORED -> diffType.getIgnoredColor(editor)
+    }
+
+    val isEmptyRange = y2 - y1 <= 2
+    if (!isEmptyRange) {
+      if (backgroundColor != null) {
+        g.color = backgroundColor
         g.fillRect(x1, y1, x2 - x1, y2 - y1)
       }
-      if (paintBorder) {
-        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1, color, false, dottedLine)
-        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y2 - 1, color, false, dottedLine)
+      if (mode.border != BorderType.NONE && !alignedSides) {
+        drawChunkBorderLine(g, x1, x2, y1, color, false, dottedLine)
+        drawChunkBorderLine(g, x1, x2, y2 - 1, color, false, dottedLine)
       }
     }
-    else {
+    else if (!alignedSides) {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1 - 1, color, true, dottedLine)
+      drawChunkBorderLine(g, x1, x2, y1 - 1, color, true, dottedLine)
     }
   }
 

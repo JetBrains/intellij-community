@@ -24,7 +24,7 @@ Groovy script
                 Reference expression
                   PsiElement(identifier)('actionName')
                 PsiElement())(')')
-          PsiWhiteSpace('\n')
+          PsiElement(new line)('\n')
           PsiElement(&&)('&&')
           PsiWhiteSpace(' ')
           Unary expression
@@ -40,7 +40,7 @@ Groovy script
                 Reference expression
                   PsiElement(identifier)('actionName')
                 PsiElement())(')')
-        PsiWhiteSpace('\n')
+        PsiElement(new line)('\n')
         PsiElement(&&)('&&')
         PsiWhiteSpace(' ')
         Unary expression
@@ -54,9 +54,9 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(string)(''*'')
+                PsiElement(single quoted string)(''*'')
               PsiElement())(')')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(&&)('&&')
       PsiWhiteSpace(' ')
       Unary expression
@@ -70,7 +70,7 @@ Groovy script
           Arguments
             PsiElement(()('(')
             Literal
-              PsiElement(string)(''*'')
+              PsiElement(single quoted string)(''*'')
             PsiElement())(')')
     PsiElement())(')')
     PsiWhiteSpace(' ')

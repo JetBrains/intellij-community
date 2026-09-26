@@ -1,0 +1,655 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
+
+import com.intellij.codeInsight.Nullability
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.types.JvmType
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.asFacadePsiClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expectedType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asKaType
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
+import org.jetbrains.kotlin.analysis.api.session.useSiteSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.render
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeList
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtTypeParameterList
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.hasInnerModifier
+import org.jetbrains.kotlin.types.Variance
+
+internal data class TypeArgumentInfo(
+    val typeParameterName: String,
+    val renderedTypeArgument: String,
+)
+
+internal data class CallTypeParameterInfo(
+    val typeParameterDeclarations: List<TypeArgumentInfo>,
+    val substitutionMap: Map<String, String>,
+) {
+    companion object {
+        val EMPTY = CallTypeParameterInfo(emptyList(), emptyMap())
+    }
+}
+
+
+object K2CreateFunctionFromUsageUtil {
+    fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
+        this,
+        KtTypeReference::class.java, KtAnnotationEntry::class.java, KtImportDirective::class.java
+    ) != null
+
+    fun KtModifierList?.hasAbstractModifier(): Boolean = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
+
+    context(_: KaSession)
+    internal fun KaType.hasAbstractDeclaration(): Boolean {
+        val classSymbol = expandedSymbol ?: return false
+        if (classSymbol.classKind == KaClassKind.INTERFACE) return true
+        val declaration = classSymbol.psi as? KtDeclaration ?: return false
+        return declaration.modifierList.hasAbstractModifier()
+    }
+
+    context(_: KaSession)
+    internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
+
+    context(_: KaSession)
+    internal fun KaType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
+
+    context(_: KaSession)
+    internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
+        var expectedType = expectedType
+        if (expectedType == null) {
+            var parent = this.parent
+            var current = this
+            if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+                current = parent
+                parent = parent.parent
+            }
+            expectedType = when {
+                parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.boolean
+                parent is KtStringTemplateEntryWithExpression -> builtinTypes.string
+                parent is KtPropertyDelegate -> {
+                    val variable = parent.parent as KtProperty
+                    val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
+                    val ktType = variable.returnType
+                    val symbol = variable.symbol as? KaCallableSymbol
+                    val parameterType = symbol?.receiverType ?: (variable.symbol
+                        .containingDeclaration as? KaNamedClassSymbol)?.defaultType ?: builtinTypes.nullableAny
+                    typeCreator.classType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
+                        invariantTypeArgument(parameterType)
+                        invariantTypeArgument(ktType)
+                    }
+                }
+                parent is KtParameter && parent.defaultValue == current -> parent.returnType // KT-77254
+                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == current && parent.parent is KtValueArgument -> {
+                    (parent.expectedType as? KaFunctionType)?.returnType
+                }
+                parent is KtBinaryExpression && parent.operationToken == KtTokens.EQ && parent.left == current -> {
+                    parent.right?.expressionType
+                }
+                else -> null
+            }
+            if (expectedType == null && this is KtExpression) {
+                expectedType = getExpectedTypeByFunctionExpressionBody(this)
+            }
+            if (expectedType == null && this is KtExpression) {
+                expectedType = getExpectedTypeByStringTemplateEntry(this)
+            }
+        }
+        if (expectedType == null) return null
+
+        val receiverExpression = when (this) {
+            is KtBinaryExpression -> left
+            else -> (parent as? KtDotQualifiedExpression)?.receiverExpression
+        }
+        val receiverType = receiverExpression?.expressionType
+
+        expectedType = makeAccessibleInCreationPlace(expectedType, this) ?: return null
+
+        if (receiverType is KaClassType) {
+            expectedType = guessAccessibleTypeByArguments(receiverType, expectedType)
+        }
+
+        val jvmType = expectedType.convertToJvmType(this) ?: return null
+        return ExpectedKotlinType.create(expectedType, jvmType)
+    }
+
+    // Given: `println("a = ${A().foo()}")`
+    // Expected type of `foo()` is `String`
+    context(_: KaSession)
+    private fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KaType? {
+        var e:PsiElement = expression
+        while (e is KtExpression && e !is KtStringTemplateEntry) {
+            val parent = e.parent
+            if (parent is KtQualifiedExpression && parent.selectorExpression != e) break
+            e = parent
+        }
+        if (e is KtStringTemplateEntry) {
+            return useSiteSession.builtinTypes.string
+        }
+        return null
+    }
+
+    // Given: `fun f(): T = expression`
+    // Expected type of `expression` is `T`
+    context(_: KaSession)
+    private fun getExpectedTypeByFunctionExpressionBody(expression: KtExpression): KaType? {
+        var e:PsiElement = expression
+        while (e is KtExpression && e !is KtFunction) {
+            e=e.parent
+        }
+        if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
+            // workaround of the bug when KtFunction.expectedType is always null
+            val expectedType = e.expectedType ?:
+                e.returnType.let { if (it is KaErrorType) null else it } ?: useSiteSession.builtinTypes.any
+            return expectedType
+        }
+        return null
+    }
+
+    context(_: KaSession)
+    fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
+
+    context(_: KaSession)
+    fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
+        //is KaCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
+        is KaClassLikeSymbol -> symbol // When the receiver is an object
+        else -> expressionType?.expandedSymbol
+    }?.psi
+
+    context(_: KaSession)
+    internal fun ValueArgument.getExpectedParameterInfo(
+        defaultParameterName: String,
+        isTheOnlyAnnotationParameter: Boolean,
+        receiverType: KaType?
+    ): ExpectedParameter {
+        val parameterNameAsString = getArgumentName()?.asName?.render()
+        return createExpectedParameterInfo(
+            argumentExpression = getArgumentExpression(),
+            defaultParameterName = defaultParameterName,
+            parameterNameAsString = parameterNameAsString,
+            isTheOnlyAnnotationParameter = isTheOnlyAnnotationParameter,
+            receiverType = receiverType,
+        )
+    }
+
+    context(_: KaSession)
+    internal fun createExpectedParameterInfo(
+        argumentExpression: KtExpression?,
+        defaultParameterName: String,
+        parameterNameAsString: String?,
+        isTheOnlyAnnotationParameter: Boolean,
+        receiverType: KaType?
+    ): ExpectedParameter {
+        var expectedArgumentType = argumentExpression?.expressionType?.approximateAnonymousObjectToSupertypeOrSelf()
+        if (expectedArgumentType != null && receiverType is KaClassType) {
+            expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
+        }
+        val parameterNames = when {
+            parameterNameAsString != null -> sequenceOf(parameterNameAsString)
+            expectedArgumentType is KaTypeParameterType -> NAME_SUGGESTER.suggestTypeNames(expectedArgumentType)
+            else -> argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
+        }
+        val jvmParameterType = argumentExpression?.let { expectedArgumentType?.convertToJvmType(it) }
+        val expectedType = when (jvmParameterType) {
+            null if expectedArgumentType != null ->
+                ExpectedTypeWithNullability.createExpectedKotlinType(
+                    PsiType.getJavaLangObject(
+                        argumentExpression!!.manager,
+                        argumentExpression.resolveScope
+                    ), Nullability.UNKNOWN
+                )
+
+            null -> ExpectedTypeWithNullability.INVALID_TYPE
+            else -> ExpectedKotlinType.create(expectedArgumentType!!, jvmParameterType)
+        }
+        val names = parameterNames?.toList() ?: listOf(defaultParameterName)
+        val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString == null) listOf("value") + names else names).toTypedArray()
+        return expectedParameter(expectedType, *nameArray)
+    }
+
+    context(_: KaSession)
+    private fun guessAccessibleTypeByArguments(
+        receiverType: KaClassType, expectedArgumentType: KaType
+    ): KaType {
+        val substitutions = receiverType.symbol.typeParameters.zip(receiverType.typeArguments).mapNotNull { (typeParameter, typeArgument) ->
+            typeArgument.type?.let { it to typeCreator.typeParameterType(typeParameter) }
+        }
+        return guessUnsubstitutedType(expectedArgumentType, substitutions)
+    }
+
+    context(_: KaSession)
+    private fun guessUnsubstitutedType(type: KaType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
+        val matchedArg = substitutions.find { (receiverTypeArgument, _) ->
+            type.semanticallyEquals(receiverTypeArgument)
+        }
+
+        return when {
+            matchedArg != null -> matchedArg.second
+            type is KaFunctionType -> guessUnsubstitutedType(type, substitutions)
+            type is KaClassType -> guessUnsubstitutedType(type, substitutions)
+            else -> null
+        }?.let { if (type.isMarkedNullable) it.withNullability(true) else it } ?: type
+    }
+
+    context(_: KaSession)
+    private fun guessUnsubstitutedType(type: KaClassType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
+        return typeCreator.classType(type.symbol) {
+            type.typeArguments.forEach { typeArgument ->
+                when (typeArgument) {
+                    is KaStarTypeProjection -> typeArgument(starTypeProjection())
+                    is KaTypeArgumentWithVariance -> {
+                        val substitutedArgumentType = guessUnsubstitutedType(typeArgument.type, substitutions)
+                        typeArgument(typeArgument.variance, substitutedArgumentType)
+                    }
+                }
+            }
+        }
+    }
+
+    context(_: KaSession)
+    private fun guessUnsubstitutedType(type: KaFunctionType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
+        val substitutedReceiverType = type.receiverType?.let { originalReceiverType ->
+            guessUnsubstitutedType(originalReceiverType, substitutions)
+        }
+        val substitutedParameterTypes = type.parameters.map { parameter ->
+            guessUnsubstitutedType(parameter.type, substitutions)
+        }
+        val substitutedReturnType = guessUnsubstitutedType(type.returnType, substitutions)
+
+        return typeCreator.functionType {
+            isSuspend = type.isSuspend
+            receiverType = substitutedReceiverType
+            type.parameters.zip(substitutedParameterTypes).forEach { (parameter, substitutedType) ->
+                valueParameter(parameter.name, substitutedType)
+            }
+            returnType = substitutedReturnType
+        }
+    }
+
+    context(_: KaSession)
+    internal fun KtSimpleNameExpression.getReceiverOrContainerClass(containerPsi: PsiElement?): JvmClass? {
+        return when(containerPsi) {
+            is PsiClass -> containerPsi
+            is KtClass -> containerPsi.getContainerClass()
+            is KtClassOrObject -> containerPsi.classSymbol?.asPsiClass()
+            else -> getContainerClass()
+        }
+    }
+
+    context(_: KaSession)
+    internal fun KtSimpleNameExpression.getReceiverOrContainerClassPackageName(): FqName? =
+        when (val ktClassOrPsiClass = getReceiverExpression()?.getClassOfExpressionType()) {
+            is PsiClass -> ktClassOrPsiClass.getNonStrictParentOfType<PsiPackage>()?.kotlinFqName
+            is KtClassOrObject -> ktClassOrPsiClass.classIdIfNonLocal?.packageFqName
+            else -> null
+        }
+
+    context(_: KaSession)
+    private fun KtElement.getContainerClass(): JvmClass? {
+        val containingClass = PsiTreeUtil.getParentOfType(
+            /* element = */ this,
+            /* aClass = */ KtClassOrObject::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
+        )
+        return containingClass?.classSymbol?.asPsiClass() ?: getContainingFileAsJvmClass()
+    }
+
+    context(_: KaSession)
+    private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
+        containingKtFile.symbol.asFacadePsiClass() ?: JvmClassWrapperForKtClass(containingKtFile).takeUnless { containingKtFile.isCompiled }
+
+    private val NAME_SUGGESTER = KotlinNameSuggester()
+
+    @KaExperimentalApi
+    val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+        // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
+        flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
+            override fun renderType(
+                analysisSession: KaSession,
+                type: KaFlexibleType,
+                typeRenderer: KaTypeRenderer,
+                printer: PrettyPrinter
+            ) {
+                typeRenderer.renderType(analysisSession, type.lowerBound, printer)
+            }
+        }
+        // Without this, it can render `kotlin.String & kotlin.Any`, which causes a syntax error.
+        definitelyNotNullTypeRenderer = object : KaDefinitelyNotNullTypeRenderer {
+            override fun renderType(
+                analysisSession: KaSession,
+                type: KaDefinitelyNotNullType,
+                typeRenderer: KaTypeRenderer,
+                printer: PrettyPrinter
+            ) {
+                typeRenderer.renderType(analysisSession, type.original, printer)
+            }
+        }
+        // Listing variances will cause a syntax error.
+        typeProjectionRenderer = KaTypeProjectionRenderer.WITHOUT_VARIANCE
+        functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+        // qualified names except starting with "kotlin."
+        classIdRenderer = object: KaClassTypeQualifierRenderer {
+                override fun renderClassTypeQualifier(
+                    analysisSession: KaSession,
+                    type: KaType,
+                    qualifiers: List<KaClassTypeQualifier>,
+                    typeRenderer: KaTypeRenderer,
+                    printer: PrettyPrinter,
+                ) {
+                    printer {
+                        ".".separated(
+                            {
+                                if (type is KaClassType && type.classId.packageFqName != CallableId.PACKAGE_FQ_NAME_FOR_LOCAL && type.classId.packageFqName.asString() != "kotlin") {
+                                    append(type.classId.packageFqName.render())
+                                }
+                            },
+                            {
+                                WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
+                                    .renderClassTypeQualifier(analysisSession, type, qualifiers, typeRenderer, printer)
+                            },
+                        )
+                    }
+                }
+            }
+
+    }
+
+    context(_: KaSession)
+    private fun JvmType.toKtType(useSitePosition: PsiElement): KaType? = when (this) {
+        is PsiType -> if (isValid) {
+            try {
+                asKaType(useSitePosition)
+            } catch (e: Throwable) {
+                rethrowControlFlowException(e)
+
+                // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
+                // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
+                // API cannot get a KaType from this weird type. We return `Any?` for this case.
+                builtinTypes.nullableAny
+            }
+        } else {
+            null
+        }
+
+        else -> null
+    }
+
+    context(_: KaSession)
+    fun ExpectedType.toKtTypeWithNullability(useSitePosition: PsiElement): KaType? {
+        val nullability = if (this is ExpectedTypeWithNullability) this.nullability else null
+        val ktTypeNullability = when (nullability) {
+            Nullability.NOT_NULL, Nullability.UNKNOWN -> false
+            Nullability.NULLABLE -> true
+            null -> null
+        }
+        return theType.toKtType(useSitePosition)?.let { if (ktTypeNullability == null) it else it.withNullability(ktTypeNullability) }
+    }
+
+    context(_: KaSession)
+    fun KaType.getNullability() : Nullability {
+        return when {
+            this.hasFlexibleNullability -> Nullability.NOT_NULL
+            this.isMarkedNullable -> Nullability.NULLABLE
+            else -> Nullability.UNKNOWN
+        }
+    }
+
+    // inspect `type` recursively and call `predicate` on all types inside, return true if all calls returned true
+    context(_: KaSession)
+    private fun accept(type: KaType?, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) : Boolean {
+        if (type == null || !visited.add(type)) return true
+        if (!predicate.invoke(type)) return false
+        return when (type) {
+            is KaClassType -> {
+                acceptTypeQualifiers(type.qualifiers, visited, predicate)
+                        && (type !is KaFunctionType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+            }
+            is KaClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
+            is KaFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
+            is KaCapturedType -> accept(type.projection.type, visited, predicate)
+            is KaDefinitelyNotNullType -> accept(type.original, visited, predicate)
+            is KaIntersectionType -> type.conjuncts.all { accept(it, visited, predicate) }
+            else -> true
+        }
+    }
+
+    context(_: KaSession)
+    private fun acceptTypeQualifiers(qualifiers: List<KaClassTypeQualifier>, visited: MutableSet<KaType>, predicate: (KaType) -> Boolean) =
+        qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
+
+    /**
+     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null, if can't figure out which type to use
+     */
+    context(_: KaSession)
+    private fun makeAccessibleInCreationPlace(ktType: KaType, call: KtElement): KaType? {
+        var type = ktType
+        do {
+            if (allTypesInsideAreAccessible(type, call)) return ktType
+            type = type.expandedSymbol?.superTypes?.firstOrNull() ?: return null
+        }
+        while(true)
+    }
+
+    context(_: KaSession)
+    private fun allTypesInsideAreAccessible(ktType: KaType, call: KtElement) : Boolean {
+        fun KtTypeParameter.getOwningTypeParameterOwner(): KtTypeParameterListOwner? {
+            val parameterList = parent as? KtTypeParameterList ?: return null
+            return parameterList.parent as? KtTypeParameterListOwner
+        }
+        return accept(ktType, mutableSetOf()) { ktLeaf ->
+                if (ktLeaf is KaTypeParameterType) {
+                    // having `<T> caller(T t) { unknownMethod(t); }` the type `T` is not accessible in created method unknownMethod(t)
+                    val owner = (ktLeaf.symbol.psi as? KtTypeParameter)?.getOwningTypeParameterOwner()
+                    // todo must have been "insertion point" instead of `call`
+                    if (owner == null) true
+                    else if (owner is KtCallableDeclaration) false
+                    else PsiTreeUtil.isAncestor(owner, call, false)
+                } else {
+                    // KaErrorType means this type is unresolved in the context of container
+                    ktLeaf !is KaErrorType
+                }
+            }
+    }
+
+    fun JvmClass.toKtClassOrFile(): KtElement? = if (this is JvmClassWrapperForKtClass<*>) {
+        ktClassOrFile
+    } else {
+        when (val psi = sourceElement) {
+            is KtClassOrObject -> psi
+            is KtLightClassForFacade -> psi.files.firstOrNull()
+            is KtLightElement<*, *> -> psi.kotlinOrigin
+            is KtFile -> psi
+            else -> null
+        }
+    }
+
+    context(_: KaSession)
+    fun computeExpectedParams(call: KtCallElement, isAnnotation:Boolean=false): List<ExpectedParameter> {
+        val receiverExpression = (call.parent as? KtDotQualifiedExpression)?.receiverExpression
+        val receiverType = receiverExpression?.expressionType
+        return call.valueArguments.mapIndexed { index, valueArgument ->
+            valueArgument.getExpectedParameterInfo("p$index", isAnnotation && call.valueArguments.size == 1, receiverType)
+        }
+    }
+
+    context(_: KaSession)
+    internal fun computeCallTypeParameterInfo(
+        call: KtCallElement,
+        targetContainerClass: KtClassOrObject?,
+    ): CallTypeParameterInfo {
+        val typeArguments = call.typeArguments
+        if (typeArguments.isEmpty()) return CallTypeParameterInfo.EMPTY
+
+        val containerTypeParameters = generateSequence(targetContainerClass) {
+            if (it.hasInnerModifier()) it.containingClass() else null
+        }
+            .flatMap { it.typeParameters }
+            .toSet()
+
+        val renderedTypes = typeArguments.mapNotNull {
+            it.typeReference?.type?.render(WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, Variance.INVARIANT)
+        }
+
+        val validator = CollectingNameValidator(containerTypeParameters.mapNotNull { it.name })
+        val freshNames = KotlinNameSuggester.suggestNamesForTypeParameters(renderedTypes.size, validator)
+
+        val declarations = mutableListOf<TypeArgumentInfo>()
+        val substitutionMap = mutableMapOf<String, String>()
+        var freshIndex = 0
+
+        for (rendered in renderedTypes) {
+            val freshName = freshNames[freshIndex++]
+            declarations.add(TypeArgumentInfo(freshName, rendered))
+            substitutionMap[rendered] = freshName
+        }
+
+        return CallTypeParameterInfo(declarations, substitutionMap)
+    }
+
+    /**
+     * This renderer is similar to [KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS],
+     * but filters out implementation detail outer classes of a given class, such as `Line_1_jupyter`.
+     */
+    @KaExperimentalApi
+    private val WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS: KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaType,
+            qualifiers: List<KaClassTypeQualifier>,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter,
+        ) {
+            KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS.renderClassTypeQualifier(
+                analysisSession,
+                type,
+                filterOutImplementationDetailQualifiers(type, qualifiers),
+                typeRenderer,
+                printer
+            )
+        }
+    }
+
+    @KaExperimentalApi
+    val WITH_SHORT_NAMES_FOR_CREATE_ELEMENTS: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        classIdRenderer = WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS_WITHOUT_IMPLEMENTATION_DETAILS
+    }
+
+    /**
+     * Filters out implementation detail qualifiers from the given list of class type qualifiers.
+     *
+     * @param contextType The context used to determine the appropriate implementation detail checker
+     * @param qualifiers List of class type qualifiers to filter
+     * @return Filtered list containing only qualifiers that are not implementation details
+     */
+    fun filterOutImplementationDetailQualifiers(
+        contextType: KaType,
+        qualifiers: List<KaClassTypeQualifier>,
+    ): List<KaClassTypeQualifier> {
+        val checker = ImplementationDetailClassNameCheckerProvider.get(contextType.symbol?.psi)
+        return qualifiers.filterNot {
+            checker.isImplementationDetail(it.name.asString())
+        }
+    }
+}

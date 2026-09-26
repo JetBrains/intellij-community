@@ -39,10 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
+public final class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
   private CachedValue<MultiValuesMap<VirtualFile, Artifact>> myFile2Artifacts;
   private final Project myProject;
 
@@ -71,11 +68,11 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
     for (final Artifact artifact : artifactManager.getArtifacts()) {
       final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
-      ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
+      ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<>() {
         @Override
         public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
           if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
-            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement<?>)element).findFile();
             if (root != null) {
               result.put(root, artifact);
             }

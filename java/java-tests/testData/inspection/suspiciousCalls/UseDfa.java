@@ -15,7 +15,7 @@ class Clazz {
     if(o instanceof Integer && !list.contains(o)) {
       System.out.println("oops");
     }
-    if(list.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>)) {
+    if(list.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>)) {
       System.out.println("suspicious");
     }
   }
@@ -30,14 +30,14 @@ class Clazz {
         }
         System.out.println(l1.contains(o));
         System.out.println(l2.contains(o));
-        System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
+        System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
       }
-      System.out.println(l1.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
+      System.out.println(l1.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
       System.out.println(l2.contains(o));
-      System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
+      System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
     }
-    System.out.println(l1.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
-    System.out.println(l2.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
-    System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains'">o</warning>));
+    System.out.println(l1.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
+    System.out.println(l2.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
+    System.out.println(l3.contains(<warning descr="Suspicious call to 'List.contains()'">o</warning>));
   }
 }

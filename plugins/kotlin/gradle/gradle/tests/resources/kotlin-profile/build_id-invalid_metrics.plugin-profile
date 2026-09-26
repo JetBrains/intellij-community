@@ -1,0 +1,12 @@
+Build: build_id
+BUILD_FAILED=false
+BUILD_FINISH_TIME=10000000
+UNKNOWN_METRIC=1000000
+BUILD_SRC_EXISTS=false
+COMPILATION_STARTED=invalid_boolean_value
+CONFIGURATION_API_COUNT=1
+CPU_NUMBER_OF_CORES=10 invalid int value
+GRADLE_BUILD_DURATION=10=20
+OS_TYPE=unexpected_value
+PROJECT_PATH=line with special symbols !^&*()_+{\n}[@#$%]
+BUILD FINISHED

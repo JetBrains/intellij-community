@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
@@ -39,10 +26,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.Collection;
 import java.util.List;
 
@@ -50,7 +37,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
-  @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
+  private static final @NonNls String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
@@ -59,7 +46,6 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   /**
    * @param project dialog project
    * @param elements elements to move
-   * @param source
    * @param destination destination where elements have to be moved
    */
   public PyMoveModuleMembersDialog(@NotNull Project project,
@@ -132,6 +118,7 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     });
 
     init();
+    initValidation();
   }
 
   @Override
@@ -139,7 +126,15 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     super.setUpDialog();
     enlargeDialogHeightIfNecessary();
   }
-  
+
+  @Override
+  protected ValidationInfo doValidate() {
+    if (!areButtonsValid()) {
+      return new ValidationInfo(PyBundle.message("refactoring.move.module.members.error.selection.empty"));
+    }
+    return super.doValidate();
+  }
+
   private void enlargeDialogHeightIfNecessary() {
     if (mySeveralElementsSelected && !PropertiesComponent.getInstance(getProject()).getBoolean(BULK_MOVE_TABLE_VISIBLE)) {
       final DialogWrapperPeer peer = getPeer();
@@ -151,9 +146,8 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     }
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog";
   }
 
@@ -170,28 +164,25 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   /**
    * @return selected elements in the same order as they are declared in the original file
    */
-  @NotNull
-  public List<PyElement> getSelectedTopLevelSymbols() {
+  public @NotNull List<PyElement> getSelectedTopLevelSymbols() {
     final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
     final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, MemberInfoBase::getMember);
     return ContainerUtil.sorted(selectedElements, (e1, e2) -> PyPsiUtils.isBefore(e1, e2) ? -1 : 1);
   }
 
-  @NotNull
-  private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
+  private static @NotNull List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
     final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
     return ContainerUtil.mapNotNull(moduleMembers, PyModuleMemberInfo::new);
   }
 
   static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, PyModuleMemberInfo> {
-    public TopLevelSymbolsSelectionTable(Collection<PyModuleMemberInfo> memberInfos,
+    TopLevelSymbolsSelectionTable(Collection<PyModuleMemberInfo> memberInfos,
                                          @Nullable MemberInfoModel<PyElement, PyModuleMemberInfo> memberInfoModel) {
       super(memberInfos, memberInfoModel, null);
     }
 
-    @Nullable
     @Override
-    protected Object getAbstractColumnValue(PyModuleMemberInfo memberInfo) {
+    protected @Nullable Object getAbstractColumnValue(PyModuleMemberInfo memberInfo) {
       return null;
     }
 

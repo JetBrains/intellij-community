@@ -1,0 +1,7 @@
+import kotlin.enums.enumEntries
+
+enum class EnumClass
+
+fun foo() {
+    enumEntries<EnumClass>().toTypedArray()::clone
+}

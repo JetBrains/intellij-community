@@ -1,10 +1,11 @@
+syntax = "proto2";
+
 package org.jetbrains.jpsservice;
 
 option java_package = "org.jetbrains.jps.api";
 option optimize_for = LITE_RUNTIME;
 
 message Message {
-
   message UUID {
     required sint64 most_sig_bits = 1;
     required sint64 least_sig_bits = 2;
@@ -65,6 +66,8 @@ message Message {
       repeated TargetTypeBuildScope scope = 4;
       repeated string file_path = 5;
       repeated KeyValuePair builder_parameter = 6;
+      // 7 was `CacheDownloadSettings cache_download_settings`, removed with JPS Caches
+      reserved 7;
     }
 
     message ConstantSearchResult {
@@ -86,6 +89,9 @@ message Message {
       BUILD_EVENT = 2;
       COMPILE_MESSAGE = 3;
       CONSTANT_SEARCH_TASK = 4;
+      // 5 to 7 were CACHE_DOWNLOAD_MESSAGE, SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE and SAVE_LATEST_BUILT_COMMIT_MESSAGE,
+      // removed with JPS Caches
+      reserved 5 to 7;
     }
 
     message BuildEvent {
@@ -139,6 +145,7 @@ message Message {
       optional uint64 line = 7;
       optional uint64 column = 8;
       optional float  done = 9;
+      repeated string module_names = 10;
     }
 
     message ConstantSearchTask {
@@ -153,6 +160,9 @@ message Message {
     optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
     optional ConstantSearchTask constant_search_task = 4;
+    // 5 and 6 were `CacheDownloadMessage cache_download_message` and `CommitAndDownloadStatistics commit_and_download_statistics`,
+    // removed with JPS Caches
+    reserved 5, 6;
   }
 
   required UUID session_id = 1;
@@ -161,5 +171,3 @@ message Message {
   optional BuilderMessage builder_message = 4;
   optional Failure failure = 5;
 }
-
-

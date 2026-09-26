@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+internal class Foo {
+
+    private val _x = mutableListOf<Int>()
+    val x: List<Int>
+            /*
+        very important comment!
+        */
+        get() = _x
+}

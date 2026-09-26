@@ -1,49 +1,31 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class VFileMoveEvent extends VFileEvent {
+public final class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VFileMoveEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileMoveEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myOldParent = file.getParent();
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public VirtualFile getNewParent() {
+  public @NotNull VirtualFile getNewParent() {
     return myNewParent;
   }
 
@@ -52,26 +34,22 @@ public class VFileMoveEvent extends VFileEvent {
   }
 
   @Override
-  @NonNls
   public String toString() {
     return "VfsEvent[move " + myFile.getName() +" from " + myOldParent + " to " + myNewParent + "]";
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return computePath();
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -102,7 +80,11 @@ public class VFileMoveEvent extends VFileEvent {
     return result;
   }
 
-  public String getOldPath() {
+  public @NotNull String getOldPath() {
     return myOldParent.getPath() + "/" + myFile.getName();
+  }
+
+  public @NotNull String getNewPath() {
+    return myNewParent.getPath() + "/" + myFile.getName();
   }
 }

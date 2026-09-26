@@ -1,0 +1,7 @@
+Index: C:\Users\test\AppData\a.yaml
+===================================================================
+--- C:\Users\test\AppData\a.yaml
++++ C:\Users\test\AppData\a.yaml
+@@ -1 +1 @@
+-old
++new

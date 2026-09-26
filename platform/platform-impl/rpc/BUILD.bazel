@@ -1,0 +1,91 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.rpc` start
+content_module_jar(module = ":rpc")
+### auto-generated section `dev intellij.platform.ide.rpc` end
+
+### auto-generated section `build intellij.platform.ide.rpc` start
+jvm_library(
+    name = "rpc",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.rpc",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//fleet/openmap"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/util:util-ui",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/extensions",
+        "//fleet/util/core",
+        "@lib//:kotlin-stdlib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-ui",
+        "//platform/usageView",
+        "//fleet/rpc",
+        "//fleet/openmap",
+        "//platform/ide-core",
+        "//platform/kernel/rpc.lite",
+        "//platform/platform-api:ide",
+        "//platform/runtime/product",
+    ],
+)
+
+jvm_library(
+    name = "rpc_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.rpc",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/openmap",
+        "//fleet/openmap:openmap_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":rpc",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//fleet/util/core:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/usageView:usageView_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//fleet/openmap:openmap_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/runtime/product:product_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.rpc` end
+
+### auto-generated section `iml intellij.platform.ide.rpc` start
+exports_files(
+    [
+        "intellij.platform.ide.rpc.iml",
+        "resources/intellij.platform.ide.rpc.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.rpc` end

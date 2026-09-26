@@ -21,11 +21,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class ExpressionCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
     private final Project project;
@@ -34,11 +35,12 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
         this.project = project;
     }
 
+    @Override
     public Component getTableCellRendererComponent(final JTable jtable, Object obj, boolean flag, boolean flag1, int i, int j) {
         super.getTableCellRendererComponent(jtable, "", flag, flag1, i, j);
 
         Expression expression = (Expression)obj;
-        if (expression != null && expression.getExpression().length() != 0) {
+        if (expression != null && !expression.getExpression().isEmpty()) {
             final Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getFile());
             return new MyEditorTextField(document, project, expression.getFileType());
         } else {
@@ -48,15 +50,17 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
 
     private class MyEditorTextField extends EditorTextField {
 
-        public MyEditorTextField(Document document, Project project, FileType fileType) {
+        MyEditorTextField(Document document, Project project, FileType fileType) {
             super(document, project, fileType, false);
         }
 
+        @Override
         protected boolean shouldHaveBorder() {
             return false;
         }
 
-        protected EditorEx createEditor() {
+        @Override
+        protected @NotNull EditorEx createEditor() {
             final EditorEx editor = super.createEditor();
             editor.setBackgroundColor(ExpressionCellRenderer.this.getBackground());
             return editor;

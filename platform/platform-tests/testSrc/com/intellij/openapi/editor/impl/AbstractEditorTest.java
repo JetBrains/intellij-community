@@ -15,17 +15,29 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.MockFontLayoutService;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,16 +50,14 @@ import static org.junit.Assert.assertArrayEquals;
 /**
  * Base super class for tests that check various IJ editor functionality on managed document modification.
  * <p/>
- * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
- * 
- * @author Denis Zhdanov
- * @since 11/18/10 7:43 PM
+ * Its main purpose is to provide utility methods like fold regions addition and setup; typing etc.
  */
+@SuppressWarnings({"UnusedReturnValue", "SameParameterValue", "rawtypes"})
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
   public static final int TEST_LINE_HEIGHT = 10;
   public static final int TEST_DESCENT = 2;
-  
+
   public static final String LOREM_IPSUM =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
@@ -66,42 +76,66 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
   protected void initText(@NotNull @NonNls String fileText) {
-    init(fileText, TestFileType.TEXT);
-  }
-  
-  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) {
-    configureFromFileText(getFileName(type), fileText);
+    init(fileText, PlainTextFileType.INSTANCE);
   }
 
-  private String getFileName(TestFileType type) {
-    return getTestName(false) + type.getExtension();
+  protected void init(@NotNull @NonNls String fileText, @NotNull FileType type) {
+    String name = getFileName(type);
+    assertFileTypeResolved(type, name);
+    configureFromFileText(name, fileText);
   }
 
-  protected static FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+  private String getFileName(@NotNull FileType type) {
+    return getTestName(false) + "." + type.getDefaultExtension();
+  }
+
+  protected static void assertFileTypeResolved(@NotNull FileType type, @NotNull String path) {
+    String name = PathUtil.getFileName(path);
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    assertEquals(type + " file type must be in this test classpath, but only " + fileType + " was found by '" +
+                 name + "' file name (with default extension '" + fileType.getDefaultExtension() + "')", type, fileType);
+  }
+
+  protected FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     final FoldRegion[] result = new FoldRegion[1];
-    myEditor.getFoldingModel().runBatchFoldingOperation(
-      () -> result[0] = myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder));
+    getEditor().getFoldingModel().runBatchFoldingOperation(
+      () -> result[0] = getEditor().getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder));
     return result[0];
   }
 
-  protected static FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+  protected FoldRegion addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     FoldRegion region = addFoldRegion(startOffset, endOffset, placeholder);
     toggleFoldRegionState(region, false);
     return region;
   }
 
-  protected static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setExpanded(expanded));
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine);
   }
 
-  protected static FoldRegion getFoldRegion(int startOffset) {
-    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, heightInPixels);
+  }
+
+  protected @Nullable CustomFoldRegion addCustomFoldRegion(int startLine, int endLine, int widthInPixels, int heightInPixels) {
+    return EditorTestUtil.addCustomFoldRegion(getEditor(), startLine, endLine, widthInPixels, heightInPixels);
+  }
+
+  protected void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
+    getEditor().getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setExpanded(expanded));
+  }
+
+  protected FoldRegion getFoldRegion(int startOffset) {
+    FoldRegion[] foldRegions = getEditor().getFoldingModel().getAllFoldRegions();
     for (FoldRegion foldRegion : foldRegions) {
       if (foldRegion.getStartOffset() == startOffset) {
         return foldRegion;
@@ -109,15 +143,15 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
     throw new IllegalArgumentException(String.format(
       "Can't find fold region with start offset %d. Registered fold regions: %s. Document text: '%s'",
-      startOffset, Arrays.toString(foldRegions), myEditor.getDocument().getCharsSequence()
+      startOffset, Arrays.toString(foldRegions), getEditor().getDocument().getCharsSequence()
     ));
   }
 
-  protected static void foldOccurrences(String textToFoldRegexp, final String placeholder) {
-    final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(myEditor.getDocument().getCharsSequence());
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+  protected void foldOccurrences(String textToFoldRegexp, final String placeholder) {
+    final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(getEditor().getDocument().getCharsSequence());
+    getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
       while (matcher.find()) {
-        FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
+        FoldRegion foldRegion = getEditor().getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
         assertNotNull(foldRegion);
         foldRegion.setExpanded(false);
       }
@@ -125,34 +159,34 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public void assertSelectionRanges(int[][] ranges) {
-    int[] selectionStarts = myEditor.getSelectionModel().getBlockSelectionStarts();
-    int[] selectionEnds = myEditor.getSelectionModel().getBlockSelectionEnds();
+    int[] selectionStarts = getEditor().getSelectionModel().getBlockSelectionStarts();
+    int[] selectionEnds = getEditor().getSelectionModel().getBlockSelectionEnds();
     int actualRangeCount = selectionStarts.length;
     int[][] actualRanges = new int[actualRangeCount][];
     for (int i = 0; i < actualRangeCount; i++) {
-      actualRanges[i] = new int[] {selectionStarts[i], selectionEnds[i]};
+      actualRanges[i] = new int[]{selectionStarts[i], selectionEnds[i]};
     }
     assertEquals("Wrong selected ranges", Arrays.deepToString(ranges), Arrays.deepToString(actualRanges));
   }
 
   public EditorMouseFixture mouse() {
-    return new EditorMouseFixture((EditorImpl)myEditor);
+    return new EditorMouseFixture((EditorImpl)getEditor());
   }
 
   public void setEditorVisibleSize(int widthInChars, int heightInChars) {
-    EditorTestUtil.setEditorVisibleSize(myEditor, widthInChars, heightInChars);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), widthInChars, heightInChars);
   }
 
   /**
    * Verifies visual positions of carets and their selection ranges. It's assumed that for each caret its position and selection range
    * are within the same visual line.
-   *
+   * <p>
    * For each caret its visual position and visual positions of selection start an and should be provided in the following order:
    * line, caretColumn, selectionStartColumn, selectionEndColumn
    */
-  public static void verifyCaretsAndSelections(int... coordinates) {
+  public void verifyCaretsAndSelections(int... coordinates) {
     int caretCount = coordinates.length / 4;
-    List<Caret> carets = myEditor.getCaretModel().getAllCarets();
+    List<Caret> carets = getEditor().getCaretModel().getAllCarets();
     assertEquals("Unexpected caret count", caretCount, carets.size());
     for (int i = 0; i < caretCount; i++) {
       Caret caret = carets.get(i);
@@ -162,27 +196,74 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  public static void verifySoftWrapPositions(Integer... positions) {
+  public void verifySoftWrapPositions(Integer... positions) {
     List<Integer> softWrapPositions = new ArrayList<>();
-    for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+    for (SoftWrap softWrap : getEditor().getSoftWrapModel().getSoftWrapsForRange(0, getEditor().getDocument().getTextLength())) {
       softWrapPositions.add(softWrap.getStart());
     }
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
-  protected static void configureSoftWraps(int charCountToWrapAt) {
-    EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
+  public void verifyFoldingState(String state) {
+    assertEquals(state, Arrays.toString(getEditor().getFoldingModel().getAllFoldRegions()));
   }
 
-  public static Inlay addInlay(int offset) {
+  protected final void configureSoftWraps(int charCountToWrapAt) {
+    configureSoftWraps(charCountToWrapAt, true);
+  }
+
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
+    EditorTestUtil.configureSoftWraps(getEditor(), charCountToWrapAt, useCustomSoftWrapIndent);
+  }
+
+  public Inlay addInlay(int offset) {
     return addInlay(offset, false);
   }
 
-  public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
-    return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
+  public Inlay addInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addInlay(getEditor(), offset, false, widthInPixels);
   }
 
-  protected static void runWriteCommand(ThrowableRunnable r) {
+  public Inlay addInlay(int offset, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addInlay(getEditor(), offset, relatesToPrecedingText);
+  }
+
+  public Inlay addBlockInlay(int offset) {
+    return addBlockInlay(offset, false);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove) {
+    return addBlockInlay(offset, showAbove, 0);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, null);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, relatesToPrecedingText, showAbove, 0, null);
+  }
+
+  public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels, int heightInPixels) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, heightInPixels);
+  }
+
+  public Inlay addAfterLineEndInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addAfterLineEndInlay(getEditor(), offset, widthInPixels);
+  }
+
+  @ApiStatus.Experimental
+  protected void setUpCustomWrapSupport() {
+    setUpCustomWrapSupport(getTestRootDisposable());
+  }
+
+  @ApiStatus.Experimental
+  protected void setUpCustomWrapSupport(@NotNull Disposable disposable) {
+    Registry.get("editor.use.new.soft.wraps.impl").setValue(true, disposable);
+    Registry.get("editor.custom.soft.wraps.support.enabled").setValue(true, disposable);
+  }
+
+  protected void runWriteCommand(ThrowableRunnable r) {
     try {
       WriteCommandAction.writeCommandAction(getProject()).run(r);
     }
@@ -191,7 +272,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  protected static void runFoldingOperation(Runnable r) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(r);
+  protected void runFoldingOperation(Runnable r) {
+    getEditor().getFoldingModel().runBatchFoldingOperation(r);
   }
 }

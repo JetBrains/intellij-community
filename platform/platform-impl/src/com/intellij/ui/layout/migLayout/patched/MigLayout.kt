@@ -33,28 +33,47 @@
  */
 package com.intellij.ui.layout.migLayout.patched
 
-import gnu.trove.THashMap
-import net.miginfocom.layout.*
-import java.awt.*
+import net.miginfocom.layout.AC
+import net.miginfocom.layout.BoundSize
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.ComponentWrapper
+import net.miginfocom.layout.ContainerWrapper
+import net.miginfocom.layout.Grid
+import net.miginfocom.layout.LC
+import net.miginfocom.layout.LayoutUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager2
+import java.awt.Point
+import java.awt.Window
 import java.awt.event.ActionListener
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JPopupMenu
+import javax.swing.JTextArea
+import javax.swing.OverlayLayout
+import javax.swing.SwingUtilities
+import javax.swing.Timer
+import kotlin.math.max
+import kotlin.math.roundToInt
 
-/** A very flexible layout manager.
- * Read the documentation that came with this layout manager for information on usage.
- */
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(), val columnConstraints: AC = AC(), val rowConstraints: AC = AC()) : LayoutManager2 {
   @Transient
   private var cacheParentW: ContainerWrapper? = null
 
   @Transient
-  private val componentWrapperToConstraints = THashMap<ComponentWrapper, CC>()
+  private val componentWrapperToConstraints = HashMap<ComponentWrapper, CC>()
   @Transient
   private var debugTimer: Timer? = null
 
   @Transient
   private var grid: Grid? = null
-  @Transient
-  private var lastModCount = PlatformDefaults.getModCount()
+
   @Transient
   private var lastHash = -1
   @Transient
@@ -138,14 +157,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
       grid = null
     }
 
-    componentWrapperToConstraints.retainEntries { wrapper, _ -> (wrapper as SwingComponentWrapper).component.parent === parent }
-
-    // check if the grid is valid
-    val mc = PlatformDefaults.getModCount()
-    if (lastModCount != mc) {
-      grid = null
-      lastModCount = mc
-    }
+    componentWrapperToConstraints.keys.removeIf { (it as SwingComponentWrapper).component.parent !== parent }
 
     if (parent.isValid) {
       lastWasInvalid = false
@@ -154,7 +166,8 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
       lastWasInvalid = true
 
       var hash = 0
-      var resetLastInvalidOnParent = false // Added in 3.7.3 to resolve a timing regression introduced in 3.7.1
+      // added in 3.7.3 to resolve a timing regression introduced in 3.7.1
+      var resetLastInvalidOnParent = false
       for (wrapper in componentWrapperToConstraints.keys) {
         val component = wrapper.component
         if (component is JTextArea || component is JEditorPane) {
@@ -181,7 +194,6 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     }
 
     val par = checkParent(parent)
-
     if (debugMillis > 0) {
       startDebug(par)
     }
@@ -196,9 +208,6 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     dirty = false
   }
 
-  /**
-   * @since 3.7.3
-   */
   private fun resetLastInvalidOnParent(parent: Container?) {
     @Suppress("NAME_SHADOWING")
     var parent = parent
@@ -283,8 +292,8 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
     val p = if (packable.isShowing) packable.locationOnScreen else packable.location
 
-    val x = Math.round(p.x - (targetW - packable.width) * (1 - layoutConstraints.packWidthAlign))
-    val y = Math.round(p.y - (targetH - packable.height) * (1 - layoutConstraints.packHeightAlign))
+    val x = (p.x - (targetW - packable.width) * (1 - layoutConstraints.packWidthAlign)).roundToInt()
+    val y = (p.y - (targetH - packable.height) * (1 - layoutConstraints.packHeightAlign)).roundToInt()
 
     if (packable is JPopupMenu) {
       val popupMenu = packable as JPopupMenu?
@@ -335,12 +344,11 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     }
 
     retSize = constrain.constrain(retSize, prefSize.toFloat(), parent)
-
-    return if (constrain.gapPush) Math.max(winSize, retSize) else retSize
+    return if (constrain.gapPush) max(winSize, retSize) else retSize
   }
 
   fun getComponentConstraints(): Map<Component, CC> {
-    val result = THashMap<Component, CC>()
+    val result = HashMap<Component, CC>()
     for (entry in componentWrapperToConstraints) {
       result.put((entry.key as SwingComponentWrapper).component, entry.value)
     }
@@ -398,9 +406,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun addLayoutComponent(comp: Component, constraints: Any?) {
     synchronized(comp.parent.treeLock) {
-      val componentWrapper = SwingComponentWrapper(comp as JComponent)
-      if (constraints != null) {
-        componentWrapperToConstraints.put(componentWrapper, constraints as CC)
+      if (constraints is CC && comp is JComponent) {
+        val componentWrapper = SwingComponentWrapper(comp)
+        componentWrapperToConstraints.put(componentWrapper, constraints)
       }
 
       dirty = true
@@ -409,7 +417,9 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
 
   override fun removeLayoutComponent(comp: Component) {
     synchronized(comp.parent.treeLock) {
-      componentWrapperToConstraints.remove(SwingComponentWrapper(comp as JComponent))
+      if (comp is JComponent) {
+        componentWrapperToConstraints.remove(SwingComponentWrapper(comp))
+      }
       // to clear references
       grid = null
     }

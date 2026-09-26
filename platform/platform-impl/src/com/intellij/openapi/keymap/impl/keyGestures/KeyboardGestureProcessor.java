@@ -1,38 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionEventVisitor;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardGestureAction;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
-public class KeyboardGestureProcessor {
-
-  IdeKeyEventDispatcher myDispatcher;
-
-  StateContext myContext = new StateContext();
+public final class KeyboardGestureProcessor {
+  final IdeKeyEventDispatcher myDispatcher;
+  final StateContext myContext = new StateContext();
 
   final KeyGestureState myWaitForStart = new KeyGestureState.WaitForStart(this);
   final KeyGestureState myModifierPressed = new KeyGestureState.ModifierPressed(this);
@@ -43,13 +35,10 @@ public class KeyboardGestureProcessor {
 
   KeyGestureState myState = myWaitForStart;
 
+  final Timer myHoldTimer = TimerUtil.createNamedTimer("Keyboard hold", 1200, e -> { });
 
-  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold",1200, new ActionListener() {
-    public void actionPerformed(final ActionEvent e) {
-    }
-  });
-
-  final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click",Registry.intValue("actionSystem.keyGestureDblClickTime"), new ActionListener() {
+  final Timer myDblClickTimer = TimerUtil.createNamedTimer("Double click", SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), new ActionListener() {
+    @Override
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();
     }
@@ -63,7 +52,7 @@ public class KeyboardGestureProcessor {
   public boolean process() {
     boolean wasNotInWaitState = myState != myWaitForStart;
 
-    if (Registry.is("ide.debugMode") && wasNotInWaitState) {
+    if (Boolean.getBoolean("ide.debugMode") && wasNotInWaitState) {
       System.out.println("-- key gesture context: before process, state=" + myState);
       System.out.println(myContext);
     }
@@ -74,7 +63,7 @@ public class KeyboardGestureProcessor {
 
     boolean result = myState.process();
 
-    if (Registry.is("ide.debugMode") && (wasNotInWaitState || myState != myWaitForStart)) {
+    if (Boolean.getBoolean("ide.debugMode") && (wasNotInWaitState || myState != myWaitForStart)) {
       System.out.println("-- key gesture context: after process, state=" + myState);
       System.out.println(myContext);
     }
@@ -83,18 +72,20 @@ public class KeyboardGestureProcessor {
   }
 
   public boolean processInitState() {
-    if (!Registry.is("actionSystem.keyGestures.enabled")) return false;
+    if (!Boolean.getBoolean("actionSystem.keyGestures.enabled")) {
+      return false;
+    }
 
     myContext.focusOwner = myDispatcher.getContext().getFocusOwner();
     return process();
   }
 
   void executeAction() {
-    myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut(), myContext.isModal);
+    myDispatcher.updateCurrentContext(myContext.focusOwner, getCurrentShortcut());
     myDispatcher.processAction(myContext.keyToProcess, myActionProcessor);
   }
 
-  private Shortcut getCurrentShortcut() {
+  private @NotNull Shortcut getCurrentShortcut() {
     return KeyboardModifierGestureShortcut.newInstance(myContext.modifierType, myContext.actionShortcut);
   }
 
@@ -105,52 +96,48 @@ public class KeyboardGestureProcessor {
       if (isGestureProcessingState) {
         myDispatcher.setState(KeyState.STATE_INIT);
       }
-    } else if (state == myWaitForAction) {
+    }
+    else if (state == myWaitForAction) {
       myDispatcher.setState(KeyState.STATE_KEY_GESTURE_PROCESSOR);
     }
     myState = state;
   }
 
-  private class MyActionProcessor implements ActionProcessor {
-    @NotNull
-    public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     final ActionManager manager) {
+  private final class MyActionProcessor extends ActionProcessor {
+    @Override
+    public @NotNull AnActionEvent createEvent(@NotNull InputEvent inputEvent,
+                                              @NotNull DataContext context,
+                                              @NotNull String place,
+                                              @NotNull Presentation presentation,
+                                              @NotNull ActionManager manager) {
       myContext.actionPresentation = presentation;
       myContext.actionPlace = place;
       return myState.createActionEvent();
     }
 
-    public void onUpdatePassed(final InputEvent inputEvent, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
-    }
-
-    public void performAction(final InputEvent e, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
-      final boolean isGestureAction = action instanceof KeyboardGestureAction;
-      actionEvent.accept(new AnActionEventVisitor() {
+    @Override
+    public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+      Runnable runnable = () -> super.performAction(inputEvent, action, event);
+      event.accept(new AnActionEventVisitor() {
         @Override
-        public void visitGestureInitEvent(final AnActionEvent anActionEvent) {
-          if (isGestureAction) {
-            execute(anActionEvent, action, e);
+        public void visitGestureInitEvent(@NotNull AnActionEvent anActionEvent) {
+          if (action instanceof KeyboardGestureAction) {
+            runnable.run();
           }
         }
 
         @Override
-        public void visitGesturePerformedEvent(final AnActionEvent anActionEvent) {
-          execute(anActionEvent, action, e);
+        public void visitGesturePerformedEvent(@NotNull AnActionEvent anActionEvent) {
+          runnable.run();
         }
 
         @Override
-        public void visitGestureFinishEvent(final AnActionEvent anActionEvent) {
-          if (isGestureAction) {
-            execute(anActionEvent, action, e);
+        public void visitGestureFinishEvent(@NotNull AnActionEvent anActionEvent) {
+          if (action instanceof KeyboardGestureAction) {
+            runnable.run();
           }
         }
       });
     }
-
-    private void execute(final AnActionEvent anActionEvent, final AnAction action, final InputEvent e) {
-      action.actionPerformed(anActionEvent);
-      e.consume();
-    }
   }
-
 }

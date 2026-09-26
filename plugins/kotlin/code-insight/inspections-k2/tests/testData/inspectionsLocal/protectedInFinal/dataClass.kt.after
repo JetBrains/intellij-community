@@ -1,0 +1,6 @@
+// PROBLEM: 'protected' visibility is effectively 'private' in a final class
+// FIX: Make private
+// NO_FIX: Make class open
+data class C(val x: Int) {
+    private fun foo() {}
+}

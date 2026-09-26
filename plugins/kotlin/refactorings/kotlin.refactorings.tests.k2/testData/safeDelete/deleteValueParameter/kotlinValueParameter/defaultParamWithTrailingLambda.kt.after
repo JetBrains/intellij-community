@@ -1,0 +1,13 @@
+fun myFunction(first: String, last: () -> Unit) {
+
+}
+
+fun usage() {
+    myFunction("str") {
+        Unit
+    }
+
+    myFunction("str") {
+        Unit
+    }
+}

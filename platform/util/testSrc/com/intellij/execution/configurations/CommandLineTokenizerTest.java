@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import junit.framework.TestCase;
@@ -47,7 +33,7 @@ public class CommandLineTokenizerTest extends TestCase {
     assertTokens("\\\"a\\ b\\\"", false, "\"a\\", "b\"");
 
     // Check tail \" as Java does (most compatible way to go: doubling the tail backslash), see comment in
-    // http://cr.openjdk.java.net/~uta/openjdk-webrevs/JDK-8016046/webrev.01/src/windows/classes/java/lang/ProcessImpl.java.frames.html
+    // http://cr.openjdk.org/~uta/openjdk-webrevs/JDK-8016046/webrev.01/src/windows/classes/java/lang/ProcessImpl.java.frames.html
     // line L188/R199
     assertTokens("\"-lib=c:\\My Lib\\\\\" \"-include=c:\\My Include\\\\\"", true, "-lib=c:\\My Lib\\\\", "-include=c:\\My Include\\\\");
   }

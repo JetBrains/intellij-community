@@ -14,7 +14,18 @@ class JavaIdentifiersTest : AbstractJavaIdentifiersTest() {
   fun testAnonymous() = doTest("Simple/Anonymous.java")
 
   @Test
+  fun testComments() = doTest("Simple/Comments.java")
+
+  @Test
   fun testTryWithResources() = doTest("Simple/TryWithResources.java")
 
+  @Test
+  fun testInnerClass() = doTest("Simple/InnerClass.java")
+
+  @Test
+  fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
+
+  @Test
+  fun testRecord() = doTest("Simple/Record.java")
 
 }

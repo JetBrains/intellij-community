@@ -15,8 +15,10 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.debugger.values.Value;
 
+@ApiStatus.Internal
 public abstract class ExceptionDataBase implements ExceptionData {
   private final Value exceptionValue;
 

@@ -1,22 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,16 +20,12 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.impl.TypeCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   @Override
@@ -63,7 +53,7 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
         if (argumentName != null && !argumentName.equals(propertyName)) continue;
 
         PsiType methodReturnType = method.getReturnType();
-        if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) continue;
+        if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) continue;
 
         PsiParameter[] parameters = method.getParameterList().getParameters();
 
@@ -80,10 +70,6 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
             typeMap.put(propertyName, new Pair<>(newType, method));
           }
           else {
-            PsiType type = TypesUtil.getLeastUpperBound(oldPair.first, newType, manager);
-            if (type == null) {
-              type = PsiType.getJavaLangObject(manager, aClass.getResolveScope());
-            }
             typeMap.put(propertyName, new Pair<>(newType, null));
           }
         }

@@ -1,0 +1,205 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.util.indexing.impl.storage;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.VfsAwareIndexStorage;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.StorageLockContext;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+
+@Internal
+public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  /**
+   * Enables {@link #processKeys(Processor, GlobalSearchScope, IdFilter)} optimization in multi-project environment:
+   * {@link KeyHashLog} persists (key.hash, fileId) pairs, and caches `Set(keyHash : fileId in project)` in memory,
+   * so keys that do not belong to the project -- could be filtered early, before submitting them to {@link Processor}.
+   * An optimization works well for >1 _significantly different_ projects -- it doesn't work so well for N +/- copies
+   * of the same project, i.e. different branches of the same project, since in this case almost all the keys belong to
+   * all the projects => pre-filter does nothing, while still costs something.
+   */
+  private final boolean myBuildKeyHashToVirtualFileMapping;
+  private @Nullable KeyHashLog<Key> myKeyHashToVirtualFileMapping;
+
+  @TestOnly
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean readOnly
+  ) throws IOException {
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, null);
+    myBuildKeyHashToVirtualFileMapping = false;
+  }
+
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean keyIsUniqueForIndexedFile,
+                                 boolean buildKeyHashToVirtualFileMapping) throws IOException {
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, buildKeyHashToVirtualFileMapping, null);
+  }
+
+  /**@deprecated use ctor without enableWal param -- it is not supported anymore */
+  @Deprecated
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean keyIsUniqueForIndexedFile,
+                                 boolean buildKeyHashToVirtualFileMapping,
+                                 boolean enableWal) throws IOException {
+    this(storageFile,
+         keyDescriptor,
+         valueExternalizer,
+         cacheSize,
+         keyIsUniqueForIndexedFile,
+         buildKeyHashToVirtualFileMapping,
+         null);
+  }
+
+  /**
+   * Uses the supplied lock context for all persistent map files owned by this index storage.
+   * @deprecated use ctor without enableWal param -- it is not supported anymore
+   */
+  @Deprecated
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean keyIsUniqueForIndexedFile,
+                                 boolean buildKeyHashToVirtualFileMapping,
+                                 boolean enableWal,
+                                 @Nullable StorageLockContext storageLockContext) throws IOException {
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, buildKeyHashToVirtualFileMapping, storageLockContext);
+  }
+
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean keyIsUniqueForIndexedFile,
+                                 boolean buildKeyHashToVirtualFileMapping,
+                                 @Nullable StorageLockContext storageLockContext) throws IOException {
+    super(storageFile,
+          keyDescriptor,
+          valueExternalizer,
+          cacheSize,
+          keyIsUniqueForIndexedFile,
+          /* initialize: */ false,
+          /* readOnly: */   false,
+          /* inputRemapping: */ null,
+          storageLockContext
+    );
+    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
+    withWriteLock(this::initMapAndCache);
+  }
+
+  @Override
+  protected void initMapAndCache() throws IOException {
+    super.initMapAndCache();
+    if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
+      FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
+      assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
+      myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile, storageLockContext());
+    }
+    else {
+      myKeyHashToVirtualFileMapping = null;
+    }
+  }
+
+  @Override
+  public void flush() throws IOException {
+    withWriteLock(() -> {
+      super.flush();
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.force();
+    });
+  }
+
+  @Override
+  public void close() throws IOException {
+    super.close();
+    if (myKeyHashToVirtualFileMapping != null) {
+      myKeyHashToVirtualFileMapping.close();
+    }
+  }
+
+  @Override
+  public void clear() throws StorageException {
+    try {
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
+    }
+    catch (Exception ignored) {
+    }
+    super.clear();
+  }
+
+  @Override
+  public boolean processKeys(@NotNull Processor<? super Key> processor,
+                             @NotNull GlobalSearchScope scope,
+                             @Nullable IdFilter idFilter)
+    throws StorageException {
+    return withReadLock(() -> {
+      try {
+        invalidateCachedMappings();
+
+        Project project = scope.getProject();
+        if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
+          IntSet keyHashesBelongingToProject = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
+          return doProcessKeys(key -> {
+            if (!keyHashesBelongingToProject.contains(myKeyDescriptor.getHashCode(key))) return true;
+            return processor.process(key);
+          });
+        }
+        return doProcessKeys(processor);
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        throw unwrapCauseAndRethrow(e);
+      }
+    });
+  }
+
+  @Override
+  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    withWriteLock(() -> {
+      if (myKeyHashToVirtualFileMapping != null) {
+        myKeyHashToVirtualFileMapping.removeKeyHashToVirtualFileMapping(key, inputId);
+      }
+      super.removeAllValues(key, inputId);
+    });
+  }
+
+  @Override
+  public void addValue(Key key, int inputId, Value value) throws StorageException {
+    if (myKeyHashToVirtualFileMapping == null) {
+      //skip additional lock acquisition
+      super.addValue(key, inputId, value);
+    }
+    else {
+      withWriteLock(() -> {
+        if (myKeyHashToVirtualFileMapping != null) {
+          myKeyHashToVirtualFileMapping.addKeyHashToVirtualFileMapping(key, inputId);
+        }
+        super.addValue(key, inputId, value);
+      });
+    }
+  }
+}

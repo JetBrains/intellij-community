@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentApplication;
 import com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
-import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntime {
@@ -32,7 +18,7 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
   }
 
   @Override
-  public void undeploy(@NotNull final UndeploymentTaskCallback callback) {
+  public void undeploy(final @NotNull UndeploymentTaskCallback callback) {
     myTaskExecutor.submit(() -> getApplication().undeploy(new CloudAgentDeploymentCallback() {
       @Override
       public void succeeded() {
@@ -40,12 +26,13 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
       }
 
       @Override
-      public void errorOccurred(String errorMessage) {
+      public void errorOccurred(@Nls String errorMessage) {
         callback.errorOccurred(errorMessage);
       }
     }), callback);
   }
 
+  @Override
   protected ServerTaskExecutor getTaskExecutor() {
     return myTaskExecutor;
   }

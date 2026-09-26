@@ -1,0 +1,29 @@
+package com.intellij.terminal.frontend.view.hyperlinks
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.project.projectId
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.plugins.terminal.hyperlinks.rpc.TerminalHyperlinksSessionRemoteApi
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalFilterResultInfoDto
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHoverLineRequest
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinkClickedEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksInputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksOutputEvent
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSession
+import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
+
+internal class FrontendTerminalHyperlinksSession(
+  private val project: Project,
+  override val id: TerminalHyperlinksSessionId,
+  override val inputEventsSink: SendChannel<TerminalHyperlinksInputEvent>,
+  override val hyperlinkUpdatesChannel: ReceiveChannel<TerminalHyperlinksOutputEvent>,
+) : TerminalHyperlinksSession {
+  override suspend fun handleHyperlinkClick(event: TerminalHyperlinkClickedEvent) {
+    TerminalHyperlinksSessionRemoteApi.getInstance().handleHyperlinkClick(project.projectId(), id, event)
+  }
+
+  override suspend fun findInvisibleHyperlinks(request: TerminalHoverLineRequest): List<TerminalFilterResultInfoDto> {
+    return TerminalHyperlinksSessionRemoteApi.getInstance().findInvisibleHyperlinks(project.projectId(), id, request)
+  }
+}

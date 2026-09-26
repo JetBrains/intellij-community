@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Interface DebuggerContextImpl
@@ -39,14 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 
 public final class DebuggerContextImpl implements DebuggerContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerContextImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerContextImpl.class);
 
-  public static final DebuggerContextImpl EMPTY_CONTEXT = createDebuggerContext((DebuggerSession)null, null, null, null);
+  public static final DebuggerContextImpl EMPTY_CONTEXT = createDebuggerContext(null, null, null, null);
 
   private boolean myInitialized;
 
-  @Nullable
-  private final DebuggerSession myDebuggerSession;
+  private final @Nullable DebuggerSession myDebuggerSession;
   private final SuspendContextImpl mySuspendContext;
   private final ThreadReferenceProxyImpl myThreadProxy;
 
@@ -71,19 +56,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
     myInitialized = initialized;
   }
 
-  @Nullable
-  public DebuggerSession getDebuggerSession() {
+  public @Nullable DebuggerSession getDebuggerSession() {
     return myDebuggerSession;
   }
 
-  @Nullable
   @Override
-  public DebugProcessImpl getDebugProcess() {
+  public @Nullable DebugProcessImpl getDebugProcess() {
     return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;
   }
 
-  @Nullable
-  public ThreadReferenceProxyImpl getThreadProxy() {
+  public @Nullable ThreadReferenceProxyImpl getThreadProxy() {
     return myThreadProxy;
   }
 
@@ -98,10 +80,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   @Override
-  @Nullable
-  public StackFrameProxyImpl getFrameProxy() {
+  public @Nullable StackFrameProxyImpl getFrameProxy() {
     LOG.assertTrue(myInitialized);
     return myFrameProxy;
+  }
+
+  public @Nullable DebuggerManagerThreadImpl getManagerThread() {
+    if (mySuspendContext != null) return mySuspendContext.getManagerThread();
+    DebugProcessImpl debugProcess = getDebugProcess();
+    //noinspection UsagesOfObsoleteApi
+    return debugProcess != null ? debugProcess.getManagerThread() : null;
   }
 
   public SourcePosition getSourcePosition() {
@@ -112,7 +100,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   public PsiElement getContextElement() {
     LOG.assertTrue(myInitialized);
     PsiElement contextElement = myContextElement;
-    if(contextElement != null && !contextElement.isValid()) {
+    if (contextElement != null && !contextElement.isValid()) {
       myContextElement = ContextUtil.getContextElement(mySourcePosition);
     }
     return myContextElement;
@@ -123,32 +111,35 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), thisObject);
   }
 
-  @Nullable
-  public EvaluationContextImpl createEvaluationContext() {
+  public @Nullable EvaluationContextImpl createEvaluationContext() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     SuspendContextImpl context = getSuspendContext();
     return context != null ? new EvaluationContextImpl(context, getFrameProxy()) : null;
   }
 
-  @NotNull
-  public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
-                                                          @Nullable SuspendContextImpl context,
-                                                          ThreadReferenceProxyImpl threadProxy,
-                                                          StackFrameProxyImpl frameProxy) {
+  public static @NotNull DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
+                                                                   @Nullable SuspendContextImpl context,
+                                                                   ThreadReferenceProxyImpl threadProxy,
+                                                                   StackFrameProxyImpl frameProxy) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     return new DebuggerContextImpl(session, context, threadProxy, frameProxy, null, null, context == null);
   }
 
   public void initCaches() {
-    if(myInitialized) return;
+    if (myInitialized) return;
 
     myInitialized = true;
-    if(myFrameProxy == null) {
-      if(myThreadProxy != null) {
-        try {
-          myFrameProxy = myThreadProxy.frameCount() > 0 ? myThreadProxy.frame(0) : null;
+    if (myFrameProxy == null) {
+      if (myThreadProxy != null) {
+        if (mySuspendContext != null && myThreadProxy.equals(mySuspendContext.getThread())) {
+          myFrameProxy = mySuspendContext.getFrameProxy();
         }
-        catch (EvaluateException ignored) {
+        else {
+          try {
+            myFrameProxy = myThreadProxy.frameCount() > 0 ? myThreadProxy.frame(0) : null;
+          }
+          catch (EvaluateException ignored) {
+          }
         }
       }
     }
@@ -172,6 +163,6 @@ public final class DebuggerContextImpl implements DebuggerContext {
 
   public boolean isEvaluationPossible() {
     final DebugProcessImpl debugProcess = getDebugProcess();
-    return debugProcess != null && debugProcess.getSuspendManager().getPausedContext() != null;
+    return debugProcess != null && debugProcess.isEvaluationPossible();
   }
 }

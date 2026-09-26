@@ -1,34 +1,43 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.Step;
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
-import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Nikolay.Tropin
  * 8/20/13
  */
-public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> 
+public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>>
   extends AbstractWizard<Step> {
-  
+
   protected final C myClass;
 
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myEqualsPanel;
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myHashCodePanel;
+  @Nullable
   protected final AbstractMemberSelectionPanel<M, I> myNonNullPanel;
   protected final Map<M, I> myFieldsToHashCode;
   protected final Map<M, I> myFieldsToNonNull;
@@ -53,7 +62,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   protected final Builder<C, M, I> myBuilder;
 
-  public static abstract class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
+  public abstract static class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
     protected abstract C getPsiClass();
     protected abstract List<I> getClassFields();
     protected abstract HashMap<M, I> getFieldsToHashCode();
@@ -61,12 +70,13 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     protected abstract AbstractMemberSelectionPanel<M, I> getEqualsPanel();
     protected abstract AbstractMemberSelectionPanel<M, I> getHashCodePanel();
     protected abstract AbstractMemberSelectionPanel<M, I> getNonNullPanel();
-    protected abstract void updateHashCodeMemberInfos(Collection<I> equalsMemberInfos);
-    protected abstract void updateNonNullMemberInfos(Collection<I> equalsMemberInfos);
+    protected abstract void updateHashCodeMemberInfos(Collection<? extends I> equalsMemberInfos);
+    protected abstract void updateNonNullMemberInfos(Collection<? extends I> equalsMemberInfos);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   public AbstractGenerateEqualsWizard(Project project, Builder<C, M, I> builder) {
-    super(CodeInsightBundle.message("generate.equals.hashcode.wizard.title"), project);
+    super(JavaBundle.message("generate.equals.hashcode.wizard.title"), project);
     myBuilder = builder;
     myClass = builder.getPsiClass();
     myClassFields = builder.getClassFields();
@@ -119,7 +129,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     return "editing.altInsert.equals";
   }
 
@@ -159,6 +169,11 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     return true;
   }
 
+  @TestOnly
+  public Set<Map.Entry<M,I>> getFieldsToNonNull() {
+    return new LinkedHashSet<>(myFieldsToNonNull.entrySet());
+  }
+
   @Override
   public JComponent getPreferredFocusedComponent() {
     final Component stepComponent = getCurrentStepComponent();
@@ -171,6 +186,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   private class MyTableModelListener implements TableModelListener {
+    @Override
     public void tableChanged(TableModelEvent modelEvent) {
       updateButtons();
     }
@@ -179,7 +195,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   private static class MyStep extends StepAdapter {
     final AbstractMemberSelectionPanel myPanel;
 
-    public MyStep(AbstractMemberSelectionPanel panel) {
+    MyStep(AbstractMemberSelectionPanel panel) {
       myPanel = panel;
     }
 

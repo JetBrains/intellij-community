@@ -22,33 +22,36 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
 
-  private final Set<Define> mySet;
-  private final String myMessage;
+  private final Set<? extends Define> mySet;
+  private final @Tooltip String myMessage;
 
-  public OverridingDefineRenderer(String message, Set<Define> set) {
+  OverridingDefineRenderer(@Tooltip String message, Set<? extends Define> set) {
     mySet = set;
     myMessage = message;
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.OverridingMethod;
   }
 
@@ -58,31 +61,31 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @Nullable AnAction getClickAction() {
     return new MyClickAction();
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return myMessage;
   }
 
   private class MyClickAction extends AnAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      doClickAction(e, mySet, "Go to overridden define");
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      doClickAction(e, mySet, RelaxngBundle.message("relaxng.gutter.go-to-overridden-define"));
     }
   }
 
-  static void doClickAction(AnActionEvent e, Collection<Define> set, String title) {
+  static void doClickAction(AnActionEvent e, Collection<? extends Define> set, @PopupTitle String title) {
     if (set.size() == 1) {
       final Navigatable n = (Navigatable)set.iterator().next().getPsiElement();
       OpenSourceUtil.navigate(true, n);
-    } else {
+    }
+    else {
       final Define[] array = set.toArray(new Define[0]);
-      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, define -> define.getPsiElement(), PsiElement.EMPTY_ARRAY), title).show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      NavigationUtil.getPsiElementPopup(ContainerUtil.map(array, define -> define.getPsiElement(), PsiElement.EMPTY_ARRAY), title)
+        .show(new RelativePoint((MouseEvent)e.getInputEvent()));
     }
   }
 
@@ -93,8 +96,8 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
 
     OverridingDefineRenderer that = (OverridingDefineRenderer)o;
 
-    if (myMessage != null ? !myMessage.equals(that.myMessage) : that.myMessage != null) return false;
-    if (mySet != null ? !mySet.equals(that.mySet) : that.mySet != null) return false;
+    if (!Objects.equals(myMessage, that.myMessage)) return false;
+    if (!Objects.equals(mySet, that.mySet)) return false;
 
     return true;
   }

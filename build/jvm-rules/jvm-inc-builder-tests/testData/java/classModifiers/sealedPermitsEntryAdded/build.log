@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/classModifiers/sealedPermitsEntryAdded/a/A.java
+  java/classModifiers/sealedPermitsEntryAdded/a/C.java
+End of files
+Cleaning output files:
+  Switcher.class
+End of files
+Compiling files:
+  java/classModifiers/sealedPermitsEntryAdded/a/Switcher.java
+End of files
+------------------------------------------
+Exit code: ERROR

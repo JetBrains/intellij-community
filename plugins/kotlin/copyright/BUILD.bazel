@@ -1,0 +1,85 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.kotlin.copyright` end
+
+### auto-generated section `build intellij.kotlin.copyright` start
+create_kotlinc_options(
+    name = "custom_copyright",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "copyright",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_copyright",
+    module_name = "intellij.kotlin.copyright",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//plugins/copyright",
+    ],
+)
+
+jvm_library(
+    name = "copyright_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_copyright",
+    module_name = "intellij.kotlin.copyright",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":copyright",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/copyright:copyright_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.copyright` end
+
+### auto-generated section `iml intellij.kotlin.copyright` start
+exports_files(
+    [
+        "intellij.kotlin.copyright.iml",
+        "resources/intellij.kotlin.copyright.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.copyright` end

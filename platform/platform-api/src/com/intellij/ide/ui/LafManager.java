@@ -1,51 +1,110 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.CollectionComboBoxModel;
+import kotlin.sequences.Sequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIManager;
 
-/**
- * @author anna
- * @since 17-May-2006
- */
 public abstract class LafManager {
   public static LafManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(LafManager.class);
+    return ApplicationManager.getApplication().getService(LafManager.class);
   }
 
-  @NotNull
-  public abstract UIManager.LookAndFeelInfo[] getInstalledLookAndFeels();
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
-  @Nullable
+  @SuppressWarnings("unused")
+  @ApiStatus.Experimental
+  public abstract Sequence<UIThemeLookAndFeelInfo> getInstalledThemes();
+
+  @ApiStatus.Internal
+  public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();
+
+  @ApiStatus.Internal
+  public abstract UIThemeLookAndFeelInfo findLaf(@NotNull String themeId);
+
+  /**
+   * @deprecated Use {@link LafManager#getCurrentUIThemeLookAndFeel()}
+   */
+  @Deprecated(forRemoval = true)
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+  public abstract UIThemeLookAndFeelInfo getCurrentUIThemeLookAndFeel();
+
+  @ApiStatus.Internal
+  public abstract LafReference getLookAndFeelReference();
+
+  @ApiStatus.Internal
+  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component);
+
+  @ApiStatus.Internal
+  public abstract @NotNull JComponent createSettingsToolbar();
+
+  public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
+    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  }
+
+  public abstract void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 
   public abstract void repaintUI();
 
+  @ApiStatus.Internal
+  public void checkRestart() {
+  }
+
+  /**
+   * @return if autodetect is supported and enabled
+   */
+  public abstract boolean getAutodetect();
+
+  public abstract void setAutodetect(boolean value);
+
+  public abstract boolean getAutodetectSupported();
+
+  @ApiStatus.Internal
+  public @Nullable String getPreferredDarkThemeId() {
+    return null;
+  }
+
+  public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
+
+  public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);
+
+  public abstract void resetPreferredEditorColorScheme();
+
+  @ApiStatus.Internal
+  public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
+
+  @ApiStatus.Internal
+  public abstract void rememberSchemeForLaf(@NotNull EditorColorsScheme scheme);
+
+  @ApiStatus.Internal
+  public void applyDensity() { }
+
+  @ApiStatus.Internal
+  public void applyAltColors() { }
+
+  /**
+   * @deprecated Use {@link LafManagerListener#TOPIC}
+   */
+  @Deprecated(forRemoval = true)
   public abstract void addLafManagerListener(@NotNull LafManagerListener listener);
 
-  public abstract void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable);
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultLightLaf();
 
-  public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultDarkLaf();
 }

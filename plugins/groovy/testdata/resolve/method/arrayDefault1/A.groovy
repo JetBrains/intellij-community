@@ -1,3 +1,3 @@
 int[] array = [1, 2, 3]
 
-array.<ref>inspect()
+array.<caret>inspect()

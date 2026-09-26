@@ -1,38 +1,28 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-/**
- * @author Denis Zhdanov
- * @since 11/12/12 4:05 PM
- */
-public class TitleWithToolbar extends JPanel {
+@ApiStatus.Internal
+public final class TitleWithToolbar extends JPanel {
 
-  public TitleWithToolbar(@NotNull String title,
+  public TitleWithToolbar(@NlsContexts.BorderTitle @NotNull String title,
                           @NotNull String actionGroupId,
                           @NotNull String place,
                           @NotNull JComponent targetComponent)
@@ -42,37 +32,16 @@ public class TitleWithToolbar extends JPanel {
     ActionGroup group = (ActionGroup)actionManager.getAction(actionGroupId);
     ActionToolbar actionToolbar = actionManager.createActionToolbar(place, group, true);
     actionToolbar.setTargetComponent(targetComponent);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
-    add(new MyTitleComponent(title), new GridBag().weightx(1).anchor(GridBagConstraints.WEST).fillCellHorizontally());
-    add(actionToolbar.getComponent(), new GridBag().anchor(GridBagConstraints.CENTER));
-  }
+    JLabel label = new JLabel(title.startsWith("<html>") ? title : UIUtil.replaceMnemonicAmpersand(title));
+    label.setLabelFor(targetComponent);
 
-  private class MyTitleComponent extends JComponent {
+    GridBag gb = new GridBag().nextLine();
+    add(label, gb.anchor(GridBagConstraints.WEST));
+    add(new JPanel(), gb.next().weightx(1).fillCellHorizontally());
+    add(actionToolbar.getComponent(), gb.next().anchor(GridBagConstraints.CENTER));
 
-    private final Dimension myMinimumSize;
-    @NotNull private final Border myBorder;
-
-    MyTitleComponent(@NotNull String title) {
-      myBorder = IdeBorderFactory.createTitledBorder(title);
-      Insets insets = myBorder.getBorderInsets(TitleWithToolbar.this);
-      myMinimumSize = new Dimension(1, insets.top);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return myMinimumSize;
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return myMinimumSize;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      Rectangle bounds = getBounds();
-      myBorder.paintBorder(this, g, bounds.x, bounds.y, bounds.width, bounds.height);
-    }
+    setBorder(JBUI.Borders.empty(12, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 }

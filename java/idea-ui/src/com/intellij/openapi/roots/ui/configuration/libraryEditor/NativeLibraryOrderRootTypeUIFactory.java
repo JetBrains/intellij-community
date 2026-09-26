@@ -17,14 +17,14 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public Icon getIcon() {
     return AllIcons.Nodes.NativeLibrariesFolder;
@@ -32,7 +32,7 @@ public class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFacto
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("project.roots.native.library.node.text");
+    return JavaUiBundle.message("project.roots.native.library.node.text");
   }
 
   @Override

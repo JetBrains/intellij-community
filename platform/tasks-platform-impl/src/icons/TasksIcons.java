@@ -1,6 +1,8 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -8,14 +10,10 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class TasksIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, TasksIcons.class);
+public final class TasksIcons {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, TasksIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  public static final Icon Bug = load("/icons/bug.png"); // 16x16
-  public static final Icon Exception = load("/icons/exception.png"); // 16x16
-  public static final Icon Feature = load("/icons/feature.png"); // 16x16
-  public static final Icon Other = load("/icons/other.png"); // 16x16
-  public static final Icon Unknown = load("/icons/unknown.png"); // 16x16
+  /** 16x16 */ public static final @NotNull Icon Bug = load("icons/bug.svg", 686822332, 0);
+  /** 16x16 */ public static final @NotNull Icon Exception = load("icons/exception.svg", 1810096812, 0);
 }

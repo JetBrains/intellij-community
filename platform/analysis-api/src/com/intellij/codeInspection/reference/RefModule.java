@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * A node in the reference graph corresponding to a module.
  *
  * @author anna
- * @since 6.0
  * @see RefManager#getRefModule
  */
 public interface RefModule extends RefEntity {
@@ -31,5 +30,6 @@ public interface RefModule extends RefEntity {
    *
    * @return the module for the node.
    */
-  @NotNull Module getModule();
+  @NotNull
+  Module getModule();
 }

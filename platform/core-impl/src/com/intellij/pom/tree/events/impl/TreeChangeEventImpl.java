@@ -1,70 +1,84 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * @author ik
+ * Accumulates all AST child-level changes within a single POM transaction for one file.
+ * <p>
+ * Each mutation site reports the parent node via {@link #addElementaryChange}. The event maintains a set of
+ * non-overlapping {@link TreeChangeImpl} records (one per changed parent) and keeps them deduplicated:
+ * if a change is reported on a node whose ancestor already has a {@code TreeChangeImpl}, it is folded in;
+ * if a new change covers an ancestor of existing ones, the descendants are absorbed.
+ * <p>
+ * When the transaction completes, {@link #fireEvents()} sorts the changes in document order
+ * and dispatches PSI tree-change notifications ({@code childAdded}, {@code childRemoved}, etc.)
+ * through {@link com.intellij.psi.impl.PsiManagerEx}.
  */
-public class TreeChangeEventImpl implements TreeChangeEvent{
-  private final Map<CompositeElement, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
-  private final MultiMap<CompositeElement, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
-  private final PomModelAspect myAspect;
-  private final FileElement myFileElement;
+@ApiStatus.Internal
+public class TreeChangeEventImpl implements TreeChangeEvent {
+  private final @NotNull Map<ASTNode, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
+  /** Index: ancestor node → all descendant {@link TreeChangeImpl} records underneath it. Used by {@link #mergeChange} for fast lookup. */
+  private final @NotNull MultiMap<ASTNode, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
+  private final @NotNull PomModelAspect myAspect;
+  private final @NotNull FileASTNode myFileElement;
 
-  public TreeChangeEventImpl(@NotNull PomModelAspect aspect, @NotNull FileElement treeElement) {
+  public TreeChangeEventImpl(@NotNull PomModelAspect aspect, @NotNull FileASTNode treeElement) {
     myAspect = aspect;
     myFileElement = treeElement;
   }
 
   @Override
-  @NotNull
-  public FileElement getRootElement() {
+  public @NotNull FileASTNode getRootElement() {
     return myFileElement;
   }
 
   @Override
-  @NotNull
-  public ASTNode[] getChangedElements() {
+  public @NotNull ASTNode @NotNull [] getChangedElements() {
     return myChangedElements.keySet().toArray(ASTNode.EMPTY_ARRAY);
   }
 
   @Override
-  public TreeChange getChangesByElement(@NotNull ASTNode element) {
-    return myChangedElements.get((CompositeElement)element);
+  public @NotNull TreeChange getChangesByElement(@NotNull ASTNode element) {
+    TreeChangeImpl change = myChangedElements.get(element);
+    if (change == null) {
+      throw new IllegalArgumentException("Element not found in change event: " + element);
+    }
+    return change;
   }
 
-  public void addElementaryChange(@NotNull CompositeElement parent) {
+  /**
+   * Notifies that the direct children of {@code parent} have been structurally modified
+   * (a child added, removed, or replaced).
+   * <p>
+   * Three cases:
+   * <ul>
+   *   <li>This parent is already tracked — the cached diff is invalidated so it will be recomputed.</li>
+   *   <li>An ancestor of this parent is already tracked — the change is folded into the ancestor.</li>
+   *   <li>Otherwise — a new change record is created, absorbing any previously tracked descendant changes.</li>
+   * </ul>
+   */
+  public void addElementaryChange(@NotNull ASTNode parent) {
     TreeChangeImpl existing = myChangedElements.get(parent);
     if (existing != null) {
       existing.clearCache();
@@ -74,9 +88,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
-  private boolean integrateIntoExistingChanges(CompositeElement nextParent) {
-    for (CompositeElement eachParent : JBIterable.generate(nextParent, TreeElement::getTreeParent)) {
-      CompositeElement superParent = eachParent.getTreeParent();
+  private boolean integrateIntoExistingChanges(@NotNull ASTNode nextParent) {
+    for (ASTNode eachParent : JBIterable.generate(nextParent, ASTNode::getTreeParent)) {
+      ASTNode superParent = eachParent.getTreeParent();
       TreeChangeImpl superChange = myChangedElements.get(superParent);
       if (superChange != null) {
         superChange.markChildChanged(eachParent, 0);
@@ -86,11 +100,11 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     return false;
   }
 
-  private void mergeChange(TreeChangeImpl nextChange) {
-    CompositeElement newParent = nextChange.getChangedParent();
+  private void mergeChange(@NotNull TreeChangeImpl nextChange) {
+    ASTNode newParent = nextChange.getChangedParent();
 
     for (TreeChangeImpl descendant : new ArrayList<>(myChangesByAllParents.get(newParent))) {
-      TreeElement ancestorChild = findAncestorChild(newParent, descendant);
+      ASTNode ancestorChild = findAncestorChild(newParent, descendant);
       if (ancestorChild != null) {
         nextChange.markChildChanged(ancestorChild, descendant.getLengthDelta());
       }
@@ -101,33 +115,31 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     registerChange(nextChange);
   }
 
-  private void registerChange(TreeChangeImpl nextChange) {
+  private void registerChange(@NotNull TreeChangeImpl nextChange) {
     myChangedElements.put(nextChange.getChangedParent(), nextChange);
-    for (CompositeElement eachParent : nextChange.getSuperParents()) {
+    for (ASTNode eachParent : nextChange.getSuperParents()) {
       myChangesByAllParents.putValue(eachParent, nextChange);
     }
   }
 
-  private void unregisterChange(TreeChangeImpl change) {
+  private void unregisterChange(@NotNull TreeChangeImpl change) {
     myChangedElements.remove(change.getChangedParent());
-    for (CompositeElement superParent : change.getSuperParents()) {
+    for (ASTNode superParent : change.getSuperParents()) {
       myChangesByAllParents.remove(superParent, change);
     }
   }
 
   /** @return a direct child of {@code ancestor} which contains {@code change} */
-  @Nullable
-  private static TreeElement findAncestorChild(@NotNull CompositeElement ancestor, @NotNull TreeChangeImpl change) {
-    List<CompositeElement> superParents = change.getSuperParents();
+  private static @Nullable ASTNode findAncestorChild(@NotNull ASTNode ancestor, @NotNull TreeChangeImpl change) {
+    List<ASTNode> superParents = change.getSuperParents();
     int index = superParents.indexOf(ancestor);
-    return index < 0 ? null : 
-           index == 0 ? change.getChangedParent() : 
+    return index < 0 ? null :
+           index == 0 ? change.getChangedParent() :
            superParents.get(index - 1);
   }
 
   @Override
-  @NotNull
-  public PomModelAspect getAspect() {
+  public @NotNull PomModelAspect getAspect() {
     return myAspect;
   }
 
@@ -145,23 +157,27 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void fireEvents() {
-    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values());
+    Collection<TreeChangeImpl> changes = getSortedChanges();
     for (TreeChangeImpl change : changes) {
       change.fireEvents((PsiFile)myFileElement.getPsi());
     }
   }
 
+  public @NotNull @Unmodifiable List<TreeChangeImpl> getSortedChanges() {
+    return ContainerUtil.sorted(myChangedElements.values());
+  }
+
   @Override
   public void beforeNestedTransaction() {
     // compute changes and remember them, to prevent lazy computation to happen in another transaction
-    // when more changes might have occurred but shouldn't count in this transaction 
+    // when more changes might have occurred but shouldn't count in this transaction
     for (TreeChangeImpl change : myChangedElements.values()) {
-      change.getAffectedChildren(); 
+      change.getAffectedChildren();
     }
   }
 
+  @Override
   public String toString() {
     return new ArrayList<>(myChangedElements.values()).toString();
   }
-
 }

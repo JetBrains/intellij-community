@@ -35,6 +35,7 @@ package com.intellij.ui.layout.migLayout.patched
  *         Date: 2006-sep-08
  */
 
+import com.intellij.util.ui.GraphicsUtil
 import net.miginfocom.layout.ComponentWrapper
 import net.miginfocom.layout.ContainerWrapper
 import java.awt.BasicStroke
@@ -56,11 +57,11 @@ internal class SwingContainerWrapper(c: JComponent) : SwingComponentWrapper(c), 
     }
   }
 
-  override fun getComponentCount() = component.componentCount
+  override fun getComponentCount(): Int = component.componentCount
 
   override fun getLayout(): LayoutManager = component.layout
 
-  override fun isLeftToRight() = component.componentOrientation.isLeftToRight
+  override fun isLeftToRight(): Boolean = component.componentOrientation.isLeftToRight
 
   override fun paintDebugCell(x: Int, y: Int, width: Int, height: Int) {
     val c = component
@@ -68,15 +69,15 @@ internal class SwingContainerWrapper(c: JComponent) : SwingComponentWrapper(c), 
       return
     }
 
-    val g = c.graphics as? Graphics2D ?: return
+    val g = GraphicsUtil.safelyGetGraphics(c) as? Graphics2D ?: return
 
     g.stroke = BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10f, floatArrayOf(2f, 3f), 0f)
     g.paint = DB_CELL_OUTLINE
     g.drawRect(x, y, width - 1, height - 1)
   }
 
-  override fun getComponentType(disregardScrollPane: Boolean) = ComponentWrapper.TYPE_CONTAINER
+  override fun getComponentType(disregardScrollPane: Boolean): Int = ComponentWrapper.TYPE_CONTAINER
 
   // Removed for 2.3 because the parent.isValid() in MigLayout will catch this instead.
-  override fun getLayoutHashCode() = 0
+  override fun getLayoutHashCode(): Int = 0
 }

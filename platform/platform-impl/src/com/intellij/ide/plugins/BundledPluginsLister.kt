@@ -1,0 +1,158 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.google.common.collect.Comparators
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType
+import com.intellij.util.io.jackson.array
+import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.jackson.writeStringField
+import com.intellij.util.lang.UrlClassLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.ObjectWriteContext
+import tools.jackson.core.json.JsonFactory
+import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrSelf
+
+internal class BundledPluginsLister : ModernApplicationStarter() {
+  // not premain because FileTypeManager is used to report extensions
+  override suspend fun start(args: List<String>) {
+    try {
+      val out = if (args.size == 2) {
+        val outFile = Path.of(args[1])
+        withContext(Dispatchers.IO) {
+          Files.createDirectories(outFile.parent)
+          Files.newBufferedWriter(outFile)
+        }
+      }
+      else {
+        // noinspection UseOfSystemOutOrSystemErr
+        OutputStreamWriter(System.out, StandardCharsets.UTF_8)
+      }
+
+      JsonFactory().createGenerator(ObjectWriteContext.empty(), out).use { writer ->
+        val plugins = PluginManagerCore.getPluginSet().enabledPlugins
+        val layout = HashSet<LayoutItemDescriptor>()
+        val pluginIds = ArrayList<String>(plugins.size)
+        val homeDir = PathManager.getHomeDir()
+
+        for (plugin in plugins) {
+          var jarFiles = plugin.ownClassPath
+          if (jarFiles == null && plugin.pluginId == PluginManagerCore.CORE_ID) {
+            jarFiles = (@Suppress("DEPRECATION") plugin.classLoader as? UrlClassLoader)?.files
+          }
+
+          layout.add(LayoutItemDescriptor(
+            name = plugin.pluginId.idString,
+            kind = ProductInfoLayoutItemKind.plugin,
+            classPath = jarFiles?.map { it.relativeToOrSelf(homeDir).invariantSeparatorsPathString } ?: emptyList()
+          ))
+
+          pluginIds.add(plugin.pluginId.idString)
+          plugin.pluginAliases.mapTo(layout) {
+            LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
+          }
+          for (module in plugin.contentModules) {
+            layout.add(LayoutItemDescriptor(
+              name = module.moduleId.name,
+              kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
+                ProductInfoLayoutItemKind.productModuleV2
+              }
+              else {
+                ProductInfoLayoutItemKind.moduleV2
+              },
+              classPath = module.ownClassPath?.map { file ->
+                file.relativeTo(homeDir).invariantSeparatorsPathString
+              } ?: emptyList(),
+            ))
+
+            module.pluginAliases.mapTo(layout) {
+              LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
+            }
+          }
+        }
+
+        pluginIds.sort()
+
+        val fileTypeManager = FileTypeManager.getInstance()
+        val extensions = ArrayList<String>()
+        for (type in fileTypeManager.registeredFileTypes) {
+          if (type !is PlainTextLikeFileType) {
+            for (matcher in fileTypeManager.getAssociations(type!!)) {
+              extensions.add(matcher.presentableString)
+            }
+          }
+        }
+        extensions.sort()
+
+        writer.obj {
+          writer.array("layout") {
+            val order = compareBy(LayoutItemDescriptor::name)
+              .thenBy(LayoutItemDescriptor::kind)
+              .thenBy(Comparators.lexicographical(Comparator.naturalOrder()), LayoutItemDescriptor::classPath)
+            for ((name, kind, classPath) in layout.sortedWith(order)) {
+              writer.obj {
+                writer.writeStringField("name", name)
+                writer.writeStringField("kind", kind.name)
+                if (classPath.isNotEmpty()) {
+                  writeList(writer, "classPath", classPath)
+                }
+              }
+            }
+          }
+          writeList(writer, "plugins", pluginIds)
+          writeList(writer, "fileExtensions", extensions)
+        }
+      }
+    }
+    catch (e: Exception) {
+      try {
+        logger<BundledPluginsLister>().error("Bundled plugins list builder failed", e)
+      }
+      catch (_: Throwable) { }
+      e.printStackTrace(System.err)
+      closeApplication(1)
+    }
+
+    closeApplication(0)
+  }
+
+  private suspend fun closeApplication(exitCode: Int) {
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().exit(false, true, false, exitCode)
+    }
+  }
+
+  private data class LayoutItemDescriptor(
+    @JvmField val name: String,
+    @JvmField val kind: ProductInfoLayoutItemKind,
+    @JvmField val classPath: List<String>,
+  )
+
+  @Suppress("EnumEntryName")
+  @Serializable
+  private enum class ProductInfoLayoutItemKind {
+    plugin, pluginAlias, productModuleV2, moduleV2
+  }
+
+  private fun writeList(writer: JsonGenerator, name: String, elements: Collection<String>) {
+    writer.array(name) {
+      for (module in elements) {
+        writer.writeString(module)
+      }
+    }
+  }
+}

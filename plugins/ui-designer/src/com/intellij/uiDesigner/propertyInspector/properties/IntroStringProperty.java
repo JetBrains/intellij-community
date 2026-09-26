@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.uiDesigner.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.StringDescriptorManager;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -29,27 +19,24 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroStringProperty extends IntrospectedProperty<StringDescriptor> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.IntroStringProperty");
+  private static final Logger LOG = Logger.getInstance(IntroStringProperty.class);
 
   /**
    * value: HashMap<String, StringDescriptor>
    */
-  @NonNls
-  private static final String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
+  private static final @NonNls String CLIENT_PROP_NAME_2_DESCRIPTOR = "name2descriptor";
 
   private final StringRenderer myRenderer;
   private StringEditor myEditor;
@@ -65,11 +52,12 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     myRenderer = new StringRenderer();
   }
 
-  @NotNull
-  public PropertyRenderer<StringDescriptor> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<StringDescriptor> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public PropertyEditor<StringDescriptor> getEditor() {
     if (myEditor == null) {
       myEditor = new StringEditor(myProject, this);
@@ -80,8 +68,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
   /**
    * @return per RadComponent map between string property name and its StringDescriptor value.
    */
-  @NotNull
-  private static HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
+  private static @NotNull HashMap<String, StringDescriptor> getName2Descriptor(final RadComponent component){
     //noinspection unchecked
     HashMap<String, StringDescriptor> name2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR);
     if(name2Descriptor == null){
@@ -112,7 +99,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       index = -1;
     }
 
-    final StringBuffer buffer = new StringBuffer(text);
+    final StringBuilder buffer = new StringBuilder(text);
     if(index != -1){
       buffer.insert(index, '&');
       // Quote all '&' except inserted one
@@ -130,6 +117,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
    *
    * @return instance of {@link StringDescriptor}
    */
+  @Override
   public StringDescriptor getValue(final RadComponent component) {
     // 1. resource bundle
     {
@@ -146,15 +134,13 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
   private StringDescriptor stringDescriptorFromValue(final RadComponent component, final JComponent delegee) {
     final StringDescriptor result;
-    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
-      final JLabel label = (JLabel)delegee;
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel label)){
       result = StringDescriptor.create(
         mergeTextAndMnemonic(label.getText(), label.getDisplayedMnemonic(), label.getDisplayedMnemonicIndex())
       );
     }
     else
-    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton)){
-      final AbstractButton button = (AbstractButton)delegee;
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton button)){
       result = StringDescriptor.create(
         mergeTextAndMnemonic(button.getText(), button.getMnemonic(), button.getDisplayedMnemonicIndex())
       );
@@ -180,6 +166,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     return result;
   }
 
+  @Override
   protected void setValueImpl(final RadComponent component, final StringDescriptor value) throws Exception {
     // 1. Put value into map
     if(value == null || (value.getBundleName() == null && !value.isNoI18n())) {
@@ -209,9 +196,9 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     if(SwingProperties.TEXT.equals(getName())) {
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      if (delegee instanceof JLabel) {
-        final JLabel label = (JLabel)delegee;
-        label.setText(textWithMnemonic.myText);
+      if (delegee instanceof JLabel label) {
+        @NlsSafe String text = textWithMnemonic.myText;
+        label.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           label.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
           label.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
@@ -220,9 +207,9 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
           label.setDisplayedMnemonic(0);
         }
       }
-      else if (delegee instanceof AbstractButton) {
-        final AbstractButton button = (AbstractButton)delegee;
-        button.setText(textWithMnemonic.myText);
+      else if (delegee instanceof AbstractButton button) {
+        @NlsSafe String text = textWithMnemonic.myText;
+        button.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           button.setMnemonic(textWithMnemonic.getMnemonicChar());
           button.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
@@ -249,7 +236,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     if (value.getValue() == null) {
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
       Locale locale = root.getStringDescriptorLocale();
-      if (locale != null && locale.getDisplayName().length() > 0) {
+      if (locale != null && !locale.getDisplayName().isEmpty()) {
         return;
       }
     }
@@ -271,7 +258,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     descriptor.setResolvedValue(null);
     try {
       setValueImpl(component, descriptor);
-      return !Comparing.equal(oldResolvedValue, descriptor.getResolvedValue());
+      return !Objects.equals(oldResolvedValue, descriptor.getResolvedValue());
     }
     catch (Exception e) {
       LOG.error(e);
@@ -279,22 +266,11 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     }
   }
 
-  public void write(@NotNull final StringDescriptor value, final XmlWriter writer) {
+  @Override
+  public void write(final @NotNull StringDescriptor value, final XmlWriter writer) {
     writer.writeStringDescriptor(value,
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
                                  UIFormXmlConstants.ATTRIBUTE_KEY);
-  }
-
-  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      if (value != null) {
-        setValue(radComponent, stringDescriptorFromValue(null, component));
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 }

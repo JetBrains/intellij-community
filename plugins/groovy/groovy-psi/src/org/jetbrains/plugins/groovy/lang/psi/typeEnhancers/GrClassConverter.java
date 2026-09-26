@@ -1,55 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 
-public class GrClassConverter extends GrTypeConverter {
+public final class GrClassConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    switch (position) {
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+  public boolean isApplicableTo(@NotNull Position position) {
+    return switch (position) {
+      case ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
-  @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
-    if (!(targetType instanceof PsiClassType) ||
-        !((PsiClassType)targetType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                  @NotNull PsiType actualType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
+    if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
-    if (actualType instanceof PsiClassType &&
-        ((PsiClassType)actualType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+    if (PsiTypesUtil.classNameEquals(actualType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
-    if (actualType == PsiType.NULL) return ConversionResult.OK;
+    if (actualType == PsiTypes.nullType()) return ConversionResult.OK;
     final GrLiteral literal = getLiteral(context);
     final Object value = literal == null ? null : literal.getValue();
     final String fqn = value == null ? null : value.toString();

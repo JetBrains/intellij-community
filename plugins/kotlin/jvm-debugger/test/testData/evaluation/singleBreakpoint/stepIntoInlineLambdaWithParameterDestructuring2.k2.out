@@ -1,0 +1,12 @@
+LineBreakpoint created at stepIntoInlineLambdaWithParameterDestructuring2.kt:10
+Run Java
+Connected to the target VM
+stepIntoInlineLambdaWithParameterDestructuring2.kt:10
+stepIntoInlineLambdaWithParameterDestructuring2.kt:16
+Compile bytecode for x + w
+KotlinStackFrame (stepIntoInlineLambdaWithParameterDestructuring2.kt:16)
+    JavaValue[local] w: int = 1 (stepIntoInlineLambdaWithParameterDestructuring2.kt:15)
+    JavaValue[local] x: int = 1 (stepIntoInlineLambdaWithParameterDestructuring2.kt:15)
+Disconnected from the target VM
+
+Process finished with exit code 0

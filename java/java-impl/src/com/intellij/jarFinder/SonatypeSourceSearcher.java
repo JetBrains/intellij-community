@@ -1,33 +1,29 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SonatypeSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(SonatypeSourceSearcher.class);
 
-  @Nullable
   @Override
-  public String findSourceJar(@NotNull final ProgressIndicator indicator,
-                              @NotNull String artifactId,
-                              @NotNull String version,
-                              @NotNull VirtualFile classesJar)
+  public @Nullable String findSourceJar(final @NotNull ProgressIndicator indicator,
+                                        @NotNull String artifactId,
+                                        @NotNull String version,
+                                        @NotNull VirtualFile classesJar)
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
-      indicator.setText("Connecting to https://oss.sonatype.org");
+      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
 
       indicator.checkCanceled();
 
@@ -37,13 +33,12 @@ public class SonatypeSourceSearcher extends SourceSearcher {
         url += ("&g=" + groupId);
       }
 
-      List<Element> artifactList = (List<Element>)XPath.newInstance("/searchNGResponse/data/artifact").selectNodes(readDocumentCancelable(indicator, url));
+      List<Element> artifactList = findElements("./data/artifact", readElementCancelable(indicator, url));
       if (artifactList.isEmpty()) {
         return null;
       }
 
       Element element;
-
       if (artifactList.size() == 1) {
         element = artifactList.get(0);
       }
@@ -52,9 +47,7 @@ public class SonatypeSourceSearcher extends SourceSearcher {
         return null;
       }
 
-      List<Element> artifactHintList =
-        (List<Element>)XPath.newInstance("artifactHits/artifactHit/artifactLinks/artifactLink/classifier[text()='sources']/../../..")
-          .selectNodes(element);
+      List<Element> artifactHintList = findElements("artifactHits/artifactHit/artifactLinks/artifactLink/classifier[text()='sources']/../../..", element);
       if (artifactHintList.isEmpty()) {
         return null;
       }
@@ -67,10 +60,6 @@ public class SonatypeSourceSearcher extends SourceSearcher {
                            groupId + "&a=" +
                            artifactId + "&v=" +
                            version + "&e=jar&c=sources";
-    }
-    catch (JDOMException e) {
-      LOG.warn(e);
-      throw new SourceSearchException("Failed to parse response from server. See log for more details.");
     }
     catch (IOException e) {
       indicator.checkCanceled(); // Cause of IOException may be canceling of operation.

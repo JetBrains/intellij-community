@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+interface A
+object B : A
+
+private val _pet = B
+val pet: A
+    get() = _pet

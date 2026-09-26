@@ -1,0 +1,1 @@
+abstract fun noofGears(): Int

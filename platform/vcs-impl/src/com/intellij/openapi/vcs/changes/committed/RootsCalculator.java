@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,29 +7,32 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.addAll;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.function.Function.identity;
 
-public class RootsCalculator {
-  private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
+@ApiStatus.Internal
+public final class RootsCalculator {
+  private static final Logger LOG = Logger.getInstance(RootsCalculator.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final AbstractVcs<?> myVcs;
-  @NotNull private final ProjectLevelVcsManager myPlManager;
-  @NotNull private final RepositoryLocationCache myLocationCache;
+  private final @NotNull Project myProject;
+  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull ProjectLevelVcsManager myPlManager;
+  private final @NotNull RepositoryLocationCache myLocationCache;
 
   public RootsCalculator(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull RepositoryLocationCache locationCache) {
     myProject = project;
@@ -52,12 +41,11 @@ public class RootsCalculator {
     myVcs = vcs;
   }
 
-  @NotNull
-  public Map<VirtualFile, RepositoryLocation> getRoots() {
+  public @NotNull Map<VirtualFile, RepositoryLocation> getRoots() {
     LOG.debug("Collecting roots for " + myVcs);
     // TODO: It is not quite clear why using just ProjectLevelVcsManager.getRootsUnderVcs() is not sufficient
     List<VirtualFile> roots = getRootsFromMappings();
-    addAll(roots, myPlManager.getRootsUnderVcs(myVcs));
+    ContainerUtil.addAll(roots, myPlManager.getRootsUnderVcs(myVcs));
 
     logRoots("Candidates", roots);
 
@@ -65,18 +53,20 @@ public class RootsCalculator {
 
     logRoots("Candidates with repository location", roots);
 
-    Map<VirtualFile, RepositoryLocation> result = StreamEx.of(myVcs.filterUniqueRoots(roots, identity()))
-      .distinct()
-      .mapToEntry(this::getLocation)
-      .nonNullValues()
-      .toMap();
+    Map<VirtualFile, RepositoryLocation> result = new LinkedHashMap<>();
+    for (VirtualFile root : myVcs.filterUniqueRoots(roots, identity())) {
+      if (result.containsKey(root)) continue;
+      RepositoryLocation location = getLocation(root);
+      if (location != null) {
+        result.put(root, location);
+      }
+    }
     logRoots("Unique roots", result.keySet());
     return result;
   }
 
-  @NotNull
-  private List<VirtualFile> getRootsFromMappings() {
-    List<VirtualFile> result = newArrayList();
+  private @NotNull List<VirtualFile> getRootsFromMappings() {
+    List<VirtualFile> result = new ArrayList<>();
 
     for (VcsDirectoryMapping mapping : myPlManager.getDirectoryMappings(myVcs)) {
       if (mapping.isDefaultMapping()) {
@@ -85,7 +75,7 @@ public class RootsCalculator {
         }
       }
       else {
-        VirtualFile newFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mapping.getDirectory());
+        VirtualFile newFile = StandardFileSystems.local().refreshAndFindFileByPath(mapping.getDirectory());
         if (newFile != null) {
           result.add(newFile);
         }
@@ -98,12 +88,11 @@ public class RootsCalculator {
     return result;
   }
 
-  @Nullable
-  private RepositoryLocation getLocation(@NotNull VirtualFile file) {
+  private @Nullable RepositoryLocation getLocation(@NotNull VirtualFile file) {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 
-  private static void logRoots(@NotNull String prefix, @NotNull Collection<VirtualFile> roots) {
+  private static void logRoots(@NonNls @NotNull String prefix, @NotNull Collection<? extends VirtualFile> roots) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(prefix + ": " + join(roots, VirtualFile::getPath, ", "));
     }

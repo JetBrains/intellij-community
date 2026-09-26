@@ -1,56 +1,123 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
+public class JavaWithTryCatchSurrounder extends JavaStatementsModCommandSurrounder {
   protected boolean myGenerateFinally;
 
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.try.catch.template");
+    return JavaBundle.message("surround.with.try.catch.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
-    throws IncorrectOperationException {
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
-    statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
-    if (statements.length == 0) {
-      return null;
-    }
+    PsiElement[] statements1 = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
+    if (statements1.length == 0) return;
 
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
+      List<PsiClassType> exceptions = getExceptionTypes(container, statements1, factory);
+
+      @NonNls StringBuilder buffer = new StringBuilder();
+      buffer.append("try{\n}");
+      for (PsiClassType ignored : exceptions) {
+        buffer.append("catch(Exception e){\n}");
+      }
+      if (myGenerateFinally) {
+        buffer.append("finally{\n}");
+      }
+      String text = buffer.toString();
+      PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
+      tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
+
+      tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements1);
+
+      PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements1);
+      addRangeWithinContainer(tryBlock, container, statements1, true);
+
+      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+
+      for (int i = 0; i < exceptions.size(); i++) {
+        PsiClassType exception = exceptions.get(i);
+        PsiClass target = exception.resolve();
+        if (target instanceof PsiTypeParameter) {
+          PsiClassType[] extendsListTypes = target.getExtendsListTypes();
+          if (extendsListTypes.length > 0) {
+            exception = extendsListTypes[0];
+          }
+        }
+        String name =
+          new VariableNameGenerator(tryBlock, VariableKind.PARAMETER).byName("e", "ex", "exc").byType(exception).generate(false);
+        PsiCatchSection catchSection;
+        try {
+          catchSection = factory.createCatchSection(exception, name, tryBlock);
+        }
+        catch (IncorrectOperationException e) {
+          updater.cancel(JavaBundle.message("surround.with.try.catch.incorrect.template.message"));
+          return;
+        }
+        catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);
+        codeStyleManager.shortenClassReferences(catchSection);
+      }
+
+      container.deleteChildRange(statements1[0], statements1[statements1.length - 1]);
+
+      PsiCodeBlock firstCatch = tryStatement.getCatchBlocks()[0];
+
+      updater.select(SurroundWithUtil.getRangeToSelect(firstCatch));
+    });
+  }
+
+  public void doSurround(ActionContext context, PsiElement element, ModPsiUpdater updater) {
+    if (element instanceof PsiExpression expression) {
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ExpressionUtils.getTopLevelExpression(expression));
+      if (surrounder == null) return;
+      element = surrounder.surround().getAnchor();
+    } else {
+      element = CommonJavaRefactoringUtil.getParentStatement(element, false);
+      if (element == null) return;
+    }
+    surroundStatements(context, element.getParent(), new PsiElement[]{element}, updater);
+  }
+
+  private static @NotNull List<PsiClassType> getExceptionTypes(PsiElement container, PsiElement[] statements, PsiElementFactory factory) {
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(statements);
     if (exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(statements);
@@ -58,47 +125,6 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
         exceptions = Collections.singletonList(factory.createTypeByFQClassName("java.lang.Exception", container.getResolveScope()));
       }
     }
-
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append("try{\n}");
-    for (PsiClassType exception : exceptions) {
-      buffer.append("catch(Exception e){\n}");
-    }
-    if (myGenerateFinally) {
-      buffer.append("finally{\n}");
-    }
-    String text = buffer.toString();
-    PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
-    tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
-
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
-
-    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
-
-    PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-
-    for (int i = 0; i < exceptions.size(); i++) {
-      PsiClassType exception = exceptions.get(i);
-      String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exception).names;
-      String name = codeStyleManager.suggestUniqueVariableName(nameSuggestions[0], tryBlock, false);
-      PsiCatchSection catchSection;
-      try {
-        catchSection = factory.createCatchSection(exception, name, null);
-      }
-      catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(project, CodeInsightBundle.message("surround.with.try.catch.incorrect.template.message"),
-                                 CodeInsightBundle.message("surround.with.try.catch.incorrect.template.title"));
-        return null;
-      }
-      catchSection = (PsiCatchSection)catchSections[i].replace(catchSection);
-      codeStyleManager.shortenClassReferences(catchSection);
-    }
-
-    container.deleteChildRange(statements[0], statements[statements.length - 1]);
-
-    PsiCodeBlock firstCatch = tryStatement.getCatchBlocks()[0];
-    return SurroundWithUtil.getRangeToSelect(firstCatch);
+    return exceptions;
   }
 }

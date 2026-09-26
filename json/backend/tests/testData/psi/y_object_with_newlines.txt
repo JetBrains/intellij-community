@@ -1,0 +1,13 @@
+JsonFile: y_object_with_newlines.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace('\n')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+    PsiWhiteSpace('\n')
+    PsiElement(})('}')

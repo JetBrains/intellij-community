@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class PackagingNodeSource {
   private final ComplexPackagingElement<?> mySourceElement;
   private final PackagingElementNode<?> mySourceParentNode;
@@ -40,27 +24,23 @@ public class PackagingNodeSource {
     myParentSources = parentSources;
   }
 
-  @NotNull
-  public ComplexPackagingElement<?> getSourceElement() {
+  public @NotNull ComplexPackagingElement<?> getSourceElement() {
     return mySourceElement;
   }
 
-  @NotNull
-  public PackagingElementNode<?> getSourceParentNode() {
+  public @NotNull PackagingElementNode<?> getSourceParentNode() {
     return mySourceParentNode;
   }
 
-  @NotNull
-  public CompositePackagingElement<?> getSourceParentElement() {
+  public @NotNull CompositePackagingElement<?> getSourceParentElement() {
     return mySourceParentElement;
   }
 
-  @NotNull
-  public Collection<PackagingNodeSource> getParentSources() {
+  public @NotNull Collection<PackagingNodeSource> getParentSources() {
     return myParentSources;
   }
 
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return mySourceElement.createPresentation(mySourceParentNode.getContext()).getPresentableName();
   }
 }

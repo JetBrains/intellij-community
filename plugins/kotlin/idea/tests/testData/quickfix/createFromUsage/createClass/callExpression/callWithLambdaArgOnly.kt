@@ -1,0 +1,7 @@
+// "Create class 'Foo'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test() {
+    val a = <caret>Foo { p: Int -> p + 1 }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

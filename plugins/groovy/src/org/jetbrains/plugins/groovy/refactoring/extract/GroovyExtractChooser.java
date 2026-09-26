@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +6,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -42,9 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializedPolicy;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -59,13 +48,14 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyExtractChooser {
+public final class GroovyExtractChooser {
   private static final Logger LOG = Logger.getInstance(GroovyExtractChooser.class);
 
   public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end, boolean forceStatements) throws GrRefactoringError {
@@ -83,7 +73,7 @@ public class GroovyExtractChooser {
 
     final StringPartInfo stringPart = StringPartInfo.findStringPart(file, start, end);
     if (stringPart != null) {
-      return new InitialInfo(new VariableInfo[0], new VariableInfo[0], PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<>(), stringPart, project, null);
+      return new InitialInfo(VariableInfo.EMPTY_ARRAY, VariableInfo.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY, GrStatement.EMPTY_ARRAY, new ArrayList<>(), stringPart, project, null);
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -101,14 +91,13 @@ public class GroovyExtractChooser {
     return buildInfo(project, file, start, end, forceStatements, selectionModel, null);
   }
 
-  @NotNull
-  private static InitialInfo buildInfo(@NotNull Project project,
-                                       @NotNull PsiFile file,
-                                       int start,
-                                       int end,
-                                       boolean forceStatements,
-                                       @NotNull SelectionModel selectionModel,
-                                       @Nullable GrVariable variable) throws GrRefactoringError {
+  private static @NotNull InitialInfo buildInfo(@NotNull Project project,
+                                                @NotNull PsiFile file,
+                                                int start,
+                                                int end,
+                                                boolean forceStatements,
+                                                @NotNull SelectionModel selectionModel,
+                                                @Nullable GrVariable variable) throws GrRefactoringError {
     PsiElement[] elements = getElementsInOffset(file, start, end, forceStatements);
     //if (elements.length == 1 && elements[0] instanceof GrExpression) {
     //  selectionModel.setSelection(start, elements[0].getTextRange().getEndOffset());
@@ -135,7 +124,7 @@ public class GroovyExtractChooser {
     if (declarationOwner == null &&
         ExtractUtil.isSingleExpression(statements) &&
         statement0 instanceof GrExpression &&
-        PsiType.VOID.equals(((GrExpression)statement0).getType())) {
+        PsiTypes.voidType().equals(((GrExpression)statement0).getType())) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
@@ -154,8 +143,8 @@ public class GroovyExtractChooser {
     Set<GrStatement> allReturnStatements = new HashSet<>();
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
     LOG.assertTrue(controlFlowOwner != null);
-    final Instruction[] flow = new ControlFlowBuilder(project, GrAllVarsInitializedPolicy.getInstance()).buildControlFlow(controlFlowOwner);
-    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, true));
+    final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(controlFlowOwner, GrAllVarsInitializedPolicy.getInstance());
+    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow.getFlow(), controlFlowOwner, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<>();
     for (GrStatement returnStatement : allReturnStatements) {
@@ -241,7 +230,7 @@ public class GroovyExtractChooser {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
-      return checked & returnStatements.isEmpty();
+      return checked && returnStatements.isEmpty();
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

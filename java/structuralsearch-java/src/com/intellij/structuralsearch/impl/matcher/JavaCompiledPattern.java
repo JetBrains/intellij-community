@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Eugene.Kudelevsky
-*/
 public class JavaCompiledPattern extends CompiledPattern {
-  private static final String TYPED_VAR_PREFIX = "__$_";
+  public static final String TYPED_VAR_PREFIX = "__$_";
 
   private boolean requestsSuperFields;
   private boolean requestsSuperMethods;
@@ -33,48 +19,20 @@ public class JavaCompiledPattern extends CompiledPattern {
     setStrategy(JavaMatchingStrategy.getInstance());
   }
 
-  public String[] getTypedVarPrefixes() {
+  @Override
+  public String @NotNull [] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
   }
 
-  public boolean isTypedVar(final String str) {
-    if (str.isEmpty()) return false;
-    if (str.charAt(0)=='@') {
-      return str.regionMatches(1,TYPED_VAR_PREFIX,0,TYPED_VAR_PREFIX.length());
-    } else {
-      return str.startsWith(TYPED_VAR_PREFIX);
-    }
+  @Override
+  public boolean isTypedVar(final @NotNull String str) {
+    return str.startsWith(TYPED_VAR_PREFIX, (!str.isEmpty() && str.charAt(0) == '@') ? 1 : 0);
   }
 
   @Override
-  public boolean isToResetHandler(PsiElement element) {
+  public boolean isToResetHandler(@NotNull PsiElement element) {
     return !(element instanceof PsiJavaToken) &&
            !(element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnnotation);
-  }
-
-  @Nullable
-  @Override
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    // Short class name is matched with fully qualified name
-    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
-      PsiElement element = (node instanceof PsiJavaCodeReferenceElement)?
-                           ((PsiJavaCodeReferenceElement)node).resolve():
-                           node;
-
-      if (element instanceof PsiClass) {
-        String text = ((PsiClass)element).getQualifiedName();
-        if (text != null && text.equals(previousText)) {
-          text = ((PsiClass)element).getName();
-        }
-
-        if (text != null) {
-          return text;
-        }
-      }
-    } else if (node instanceof PsiLiteralExpression) {
-      return node.getText();
-    }
-    return null;
   }
 
   public boolean isRequestsSuperFields() {

@@ -20,18 +20,15 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class FilePropertiesChanged extends ActionOnFile {
 
-  public FilePropertiesChanged(PsiFile file) {
+  public FilePropertiesChanged(@NotNull PsiFile file) {
     super(file);
   }
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    env.logMessage(toString());
+    env.logMessage("FilePropertiesChanged " + getVirtualFile().getPath());
     PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(getVirtualFile(), Conditions.alwaysTrue());
   }
 

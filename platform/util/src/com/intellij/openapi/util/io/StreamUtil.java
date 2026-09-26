@@ -1,99 +1,82 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
-import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.CharArrayWriter;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
-public class StreamUtil {
-  private static final Logger LOG = Logger.getInstance(StreamUtil.class);
-
-  private StreamUtil() {
-  }
+public final class StreamUtil {
+  private StreamUtil() { }
 
   /**
-   * Copy stream. Use NetUtils.copyStreamContent(ProgressIndicator, ...) if you want use ProgressIndicator.
+   * Buffers up to this size avoid native memory allocation in stream implementations.
+   */
+  public static final int BUFFER_SIZE = 8192;
+
+  /**
+   * Use {@link com.intellij.util.net.NetUtils#copyStreamContent NetUtils.copyStreamContent()} if you want a progress indicator.
    *
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied
    */
-  public static int copyStreamContent(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    final byte[] buffer = new byte[10 * 1024];
-    int count;
+  public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
+    byte[] buffer = new byte[BUFFER_SIZE];
+    int read;
     int total = 0;
-    while ((count = inputStream.read(buffer)) > 0) {
-      outputStream.write(buffer, 0, count);
-      total += count;
+    while ((read = inputStream.read(buffer)) > 0) {
+      outputStream.write(buffer, 0, read);
+      total += read;
     }
     return total;
   }
 
-  @NotNull
-  public static byte[] loadFromStream(@NotNull InputStream inputStream) throws IOException {
-    final UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
-    try {
-      copyStreamContent(inputStream, outputStream);
-    }
-    finally {
-      inputStream.close();
-    }
+  @ReviseWhenPortedToJDK(value = "9", description = "InputStream#readAllBytes")
+  public static byte @NotNull [] readBytes(@NotNull InputStream inputStream) throws IOException {
+    UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
+    copy(inputStream, outputStream);
     return outputStream.toByteArray();
   }
 
-  /**
-   * @deprecated depends on the default encoding, use StreamUtil#readText(java.io.InputStream, String) instead
-   */
-  @NotNull
-  public static String readText(@NotNull InputStream inputStream) throws IOException {
-    final byte[] data = loadFromStream(inputStream);
-    return new String(data);
+  @ReviseWhenPortedToJDK(value = "11", description = "InputStream#readNBytes")
+  public static byte @NotNull [] readBytes(@NotNull InputStream inputStream, int len) throws IOException {
+    byte[] buffer = new byte[len];
+    int p = 0;
+    while (p < len) {
+      p += inputStream.read(buffer, p, len - p);
+    }
+    return buffer;
   }
 
-  @NotNull
-  public static String readText(@NotNull InputStream inputStream, @NotNull String encoding) throws IOException {
-    final byte[] data = loadFromStream(inputStream);
-    return new String(data, encoding);
-  }
-  @NotNull
-  public static String readText(@NotNull InputStream inputStream, @NotNull Charset encoding) throws IOException {
-    final byte[] data = loadFromStream(inputStream);
-    return new String(data, encoding);
+  public static @NotNull String readText(@NotNull Reader reader) throws IOException {
+    return readChars(reader).toString();
   }
 
-  @NotNull
-  public static String convertSeparators(@NotNull String s) {
-    return StringFactory.createShared(convertSeparators(s.toCharArray()));
+  public static @NotNull String convertSeparators(@NotNull String s) {
+    char[] source = s.toCharArray();
+    char[] converted = convertSeparators(source);
+    return converted == source ? s : new String(converted);
   }
 
-  @NotNull
-  public static char[] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
-    char[] buffer = readText(reader);
-
-    return convertSeparators(buffer);
+  public static char @NotNull [] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
+    CharArrayWriter chars = readChars(reader);
+    return convertSeparators(chars.toCharArray());
   }
 
-  @NotNull
-  private static char[] convertSeparators(@NotNull char[] buffer) {
+  private static char[] convertSeparators(char[] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -113,41 +96,76 @@ public class StreamUtil {
       prev = c;
     }
 
-    if (dst == buffer.length) {
-      return buffer;
-    }
-    char[] result = new char[dst];
-    System.arraycopy(buffer, 0, result, 0, result.length);
-    return result;
+    if (dst == buffer.length) return buffer;
+    return Arrays.copyOf(buffer, dst);
   }
 
-  @NotNull
-  public static String readTextFrom(@NotNull Reader reader) throws IOException {
-    return StringFactory.createShared(readText(reader));
-  }
-
-  @NotNull
-  private static char[] readText(@NotNull Reader reader) throws IOException {
+  private static CharArrayWriter readChars(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
-
     char[] buffer = new char[2048];
-    while (true) {
-      int read = reader.read(buffer);
-      if (read < 0) break;
-      writer.write(buffer, 0, read);
-    }
-
-    return writer.toCharArray();
+    int read;
+    while ((read = reader.read(buffer)) > 0) writer.write(buffer, 0, read);
+    return writer;
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated unfortunate name; please use {@link #copy(InputStream, OutputStream)} instead */
+  @Deprecated
+  public static int copyStreamContent(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
+    return copy(inputStream, outputStream);
+  }
+
+  /** @deprecated bad style (resource closing should be caller's responsibility); use {@link #readBytes(InputStream)} instead */
+  @Deprecated
+  public static byte @NotNull [] loadFromStream(@NotNull InputStream inputStream) throws IOException {
+    UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
+    try {
+      copy(inputStream, outputStream);
+    }
+    finally {
+      inputStream.close();
+    }
+    return outputStream.toByteArray();
+  }
+
+  /** @deprecated bad style (resource closing should be caller's responsibility); use {@link #readText(Reader)} instead */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public static @NotNull String readText(@NotNull InputStream inputStream) throws IOException {
+    return readText(inputStream, StandardCharsets.UTF_8);
+  }
+
+  /** @deprecated bad style (resource closing should be caller's responsibility); use {@link #readText(Reader)} instead */
+  @Deprecated
+  public static @NotNull String readText(@NotNull InputStream inputStream, @NotNull String encoding) throws IOException {
+    return readText(inputStream, Charset.forName(encoding));
+  }
+
+  /** @deprecated bad style (resource closing should be caller's responsibility); use {@link #readText(Reader)} instead */
+  @Deprecated
+  public static @NotNull String readText(@NotNull InputStream inputStream, @NotNull Charset encoding) throws IOException {
+    byte[] data = loadFromStream(inputStream);
+    return new String(data, encoding);
+  }
+
+  /** @deprecated unfortunate name; please use {@link #readText(Reader)} instead */
+  @Deprecated
+  public static @NotNull String readTextFrom(@NotNull Reader reader) throws IOException {
+    return readText(reader);
+  }
+
+  /** @deprecated outdated pattern; use try-with-resources instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void closeStream(@Nullable Closeable stream) {
     if (stream != null) {
       try {
         stream.close();
       }
       catch (IOException e) {
-        LOG.error(e);
+        Logger.getInstance(StreamUtil.class).error(e);
       }
     }
   }
+  //</editor-fold>
 }

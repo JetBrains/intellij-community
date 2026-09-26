@@ -1,53 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
+import com.intellij.ui.tree.TreeVisitor.Action;
 import com.intellij.util.Function;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class ProjectViewTestUtil {
-  public static VirtualFile[] getFiles(AbstractTreeNode kid, Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
+public final class ProjectViewTestUtil {
+  public static VirtualFile[] getFiles(AbstractTreeNode<?> kid, Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)value);
@@ -63,9 +48,9 @@ public class ProjectViewTestUtil {
   }
 
   public static void collect(AbstractTreeNode node,
-                              MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                              final AbstractTreeStructure structure,
-                              Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
+                             MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map,
+                             AbstractTreeStructure structure,
+                             Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
     Object[] kids = structure.getChildElements(node);
     for (Object kid1 : kids) {
       ProjectViewNode kid = (ProjectViewNode)kid1;
@@ -85,21 +70,18 @@ public class ProjectViewTestUtil {
 
   public static void checkContainsMethod(final Object rootElement,
                                          final AbstractTreeStructure structure,
-                                         Function<AbstractTreeNode, VirtualFile[]> converterFunction) {
-    MultiValuesMap<VirtualFile, AbstractTreeNode> map = new MultiValuesMap<>();
+                                         Function<? super AbstractTreeNode<?>, VirtualFile[]> converterFunction) {
+    MultiValuesMap<VirtualFile, AbstractTreeNode<?>> map = new MultiValuesMap<>();
     collect((AbstractTreeNode)rootElement, map, structure, converterFunction);
 
     for (VirtualFile eachFile : map.keySet()) {
-      Collection<AbstractTreeNode> nodes = map.values();
+      Collection<AbstractTreeNode<?>> nodes = map.values();
       for (final AbstractTreeNode node : nodes) {
         ProjectViewNode eachNode = (ProjectViewNode)node;
         boolean actual = eachNode.contains(eachFile);
         boolean expected = map.get(eachFile).contains(eachNode);
         if (actual != expected) {
-          boolean actual1 = eachNode.contains(eachFile);
-          boolean expected1 = map.get(eachFile).contains(eachNode);
-
-          Assert.assertTrue("file=" + eachFile + " node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
+          Assert.fail("file=" + eachFile + "\n node=" + eachNode.getTestPresentation() + " expected:" + expected);
         }
       }
     }
@@ -127,56 +109,36 @@ public class ProjectViewTestUtil {
                                           @Nullable Queryable.PrintInfo printInfo) {
     checkGetParentConsistency(structure, rootNode);
     String actual = PlatformTestUtil.print(structure, rootNode, 0, comparator, maxRowCount, ' ', printInfo).toString();
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expected.trim(), actual.trim());
   }
 
-  protected static boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
-    TreePath path = new TreePath(nodeForElement.getPath());
-    return pane.getTree().isExpanded(path.getParentPath());
+  public static boolean isExpanded(PsiElement element, AbstractProjectViewPane pane) {
+    return null != getVisiblePath(element, pane);
   }
 
-  public static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
-    JTree tree = pane.getTree();
-    TreeModel model = tree.getModel();
-    Object root = model.getRoot();
-    return getNodeForElement(root, model, element);
-  }
-
-  private static DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
-    if (root instanceof DefaultMutableTreeNode) {
-      Object userObject = ((DefaultMutableTreeNode)root).getUserObject();
-      if (userObject instanceof AbstractTreeNode) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
-        if (element.equals(treeNode.getValue())) return (DefaultMutableTreeNode)root;
-        for (int i = 0; i < model.getChildCount(root); i++) {
-          DefaultMutableTreeNode nodeForChild = getNodeForElement(model.getChild(root, i), model, element);
-          if (nodeForChild != null) return nodeForChild;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
-    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
-    return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
+  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPane pane) {
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
+    return TreeUtil.visitVisibleRows(pane.getTree(), path -> {
+      AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
+      return node != null && element.equals(node.getValue()) ? Action.INTERRUPT : Action.CONTINUE;
+    });
   }
 
   public static void setupImpl(@NotNull Project project, boolean loadPaneExtensions) {
-    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
+    ToolWindowHeadlessManagerImpl toolWindowManager = (ToolWindowHeadlessManagerImpl)ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
 
     if (toolWindow == null) {
-      ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-      for (final ToolWindowEP bean : beans) {
+      for (ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (bean.id.equals(ToolWindowId.PROJECT_VIEW)) {
-          toolWindow = toolWindowManager.registerToolWindow(bean.id, new JLabel(), ToolWindowAnchor.fromText(bean.anchor), project,
-                                                            false, bean.canCloseContents);
+          toolWindow = toolWindowManager.doRegisterToolWindow(bean.id);
           break;
         }
       }
     }
 
+    assert toolWindow != null;
+    LafManager.getInstance();
     ((ProjectViewImpl)ProjectView.getInstance(project)).setupImpl(toolWindow, loadPaneExtensions);
   }
 }

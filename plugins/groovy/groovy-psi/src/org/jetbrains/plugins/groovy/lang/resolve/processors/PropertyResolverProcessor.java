@@ -15,9 +15,6 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_PROPERTY;
 
-/**
- * @author ven
- */
 public class PropertyResolverProcessor extends ResolverProcessorImpl implements DynamicMembersHint {
 
   public PropertyResolverProcessor(String name, PsiElement place) {
@@ -29,9 +26,8 @@ public class PropertyResolverProcessor extends ResolverProcessorImpl implements 
     return super.execute(element, state) || element instanceof PsiField;
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCandidates() {
+  public GroovyResolveResult @NotNull [] getCandidates() {
     //do not have more than one correct result. And if it exists it is the last
     final List<GroovyResolveResult> candidates = getCandidatesInternal();
     final int size = candidates.size();

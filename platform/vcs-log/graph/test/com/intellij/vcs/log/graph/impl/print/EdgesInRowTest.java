@@ -83,5 +83,4 @@ public class EdgesInRowTest extends AbstractTestWithTwoTextFile {
   public void notLoadNode() throws IOException {
     doTest("notLoadNode");
   }
-
 }

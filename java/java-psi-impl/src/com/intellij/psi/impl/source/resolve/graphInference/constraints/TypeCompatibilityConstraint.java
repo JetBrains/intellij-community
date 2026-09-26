@@ -15,9 +15,19 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.psi.*;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,22 +44,23 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
       if (!assignable) {
-        session.registerIncompatibleErrorMessage("Incompatible types: " + session.getPresentableText(myS) + " is not convertible to " + session.getPresentableText(myT));
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.not.convertible", session.getPresentableText(myS), session.getPresentableText(myT)));
       }
       return assignable;
     }
-    if (myS instanceof PsiPrimitiveType && !PsiType.VOID.equals(myS)) {
+    if (myS instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(myS)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myS).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeCompatibilityConstraint(myT, boxedType));
         return true;
       }
     }
-    if (myT instanceof PsiPrimitiveType && !PsiType.VOID.equals(myT)) {
+    if (myT instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(myT)) {
       final PsiClassType boxedType = ((PsiPrimitiveType)myT).getBoxedType(session.getManager(), session.getScope());
       if (boxedType != null) {
         constraints.add(new TypeEqualityConstraint(boxedType, myS));
@@ -57,7 +68,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
       }
     }
 
-    if (isUncheckedConversion(myT, myS)) {
+    if (isUncheckedConversion(myT, myS, session)) {
       session.setErased();
       return true;
     }
@@ -66,26 +77,51 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     return true;
   }
 
-  public static boolean isUncheckedConversion(final PsiType t, final PsiType s) {
-    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw() && s instanceof PsiClassType) {
+  public static boolean isUncheckedConversion(final PsiType t,
+                                              final PsiType s,
+                                              InferenceSession session) {
+    if (t instanceof PsiClassType && !((PsiClassType)t).isRaw()) {
       final PsiClassType.ClassResolveResult tResult = ((PsiClassType)t).resolveGenerics();
-      final PsiClassType.ClassResolveResult sResult = ((PsiClassType)s).resolveGenerics();
       final PsiClass tClass = tResult.getElement();
-      final PsiClass sClass = sResult.getElement();
-      if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
-        final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
-        if (sSubstitutor != null) {
-          if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
+      if (s instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)s, session)) {
+        return true;
+      }
+      else if (s instanceof PsiIntersectionType) {
+        for (PsiType conjunct : ((PsiIntersectionType)s).getConjuncts()) {
+          if (conjunct instanceof PsiClassType && isUncheckedConversion(tClass, (PsiClassType)conjunct, session)) {
             return true;
           }
         }
-        else if (tClass instanceof InferenceVariable && ((PsiClassType)s).isRaw() && tClass.isInheritor(sClass, true)) {
+      }
+    }
+    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
+      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType(), session);
+    }
+    return false;
+  }
+
+  private static boolean isUncheckedConversion(PsiClass tClass,
+                                               PsiClassType s,
+                                               InferenceSession session) {
+    final PsiClassType.ClassResolveResult sResult = s.resolveGenerics();
+    final PsiClass sClass = sResult.getElement();
+    if (tClass != null && sClass != null && !(sClass instanceof InferenceVariable)) {
+      final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(tClass, sClass, sResult.getSubstitutor());
+      if (sSubstitutor != null) {
+        if (PsiUtil.isRawSubstitutor(tClass, sSubstitutor)) {
           return true;
         }
       }
-    } 
-    else if (t instanceof PsiArrayType && s != null && t.getArrayDimensions() == s.getArrayDimensions()) {
-      return isUncheckedConversion(t.getDeepComponentType(), s.getDeepComponentType());
+      else if (tClass instanceof InferenceVariable && s.isRaw()) {
+        for (PsiType bound : ((InferenceVariable)tClass).getBounds(InferenceBound.UPPER)) {
+          if (!session.isProperType(bound)) {
+            PsiClass boundClass = PsiUtil.resolveClassInClassTypeOnly(bound);
+            if (InheritanceUtil.isInheritorOrSelf(boundClass, sClass, true)) {
+              return true;
+            }
+          }
+        }
+      }
     }
     return false;
   }
@@ -102,17 +138,13 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     TypeCompatibilityConstraint that = (TypeCompatibilityConstraint)o;
-
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myT.hashCode();
-    result = 31 * result + myS.hashCode();
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 

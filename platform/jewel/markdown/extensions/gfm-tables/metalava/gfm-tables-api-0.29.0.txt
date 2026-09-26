@@ -1,0 +1,74 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.markdown.extensions.github.tables {
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GfmTableColors {
+    ctor @KotlinOnly public GfmTableColors(androidx.compose.ui.graphics.Color borderColor, androidx.compose.ui.graphics.Color rowBackgroundColor, androidx.compose.ui.graphics.Color alternateRowBackgroundColor, org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle rowBackgroundStyle);
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle getRowBackgroundStyle();
+    property public androidx.compose.ui.graphics.Color alternateRowBackgroundColor;
+    property public androidx.compose.ui.graphics.Color borderColor;
+    property public androidx.compose.ui.graphics.Color rowBackgroundColor;
+    property public org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle rowBackgroundStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableColors.Companion Companion;
+  }
+
+  public static final class GfmTableColors.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GfmTableMetrics {
+    ctor @KotlinOnly public GfmTableMetrics(androidx.compose.ui.unit.Dp borderWidth, androidx.compose.foundation.layout.PaddingValues cellPadding, androidx.compose.ui.Alignment.Horizontal defaultCellContentAlignment, androidx.compose.ui.Alignment.Horizontal headerDefaultCellContentAlignment);
+    method public androidx.compose.foundation.layout.PaddingValues getCellPadding();
+    method public androidx.compose.ui.Alignment.Horizontal getDefaultCellContentAlignment();
+    method public androidx.compose.ui.Alignment.Horizontal getHeaderDefaultCellContentAlignment();
+    property public androidx.compose.ui.unit.Dp borderWidth;
+    property public androidx.compose.foundation.layout.PaddingValues cellPadding;
+    property public androidx.compose.ui.Alignment.Horizontal defaultCellContentAlignment;
+    property public androidx.compose.ui.Alignment.Horizontal headerDefaultCellContentAlignment;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics.Companion Companion;
+  }
+
+  public static final class GfmTableMetrics.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GfmTableStyling {
+    ctor @KotlinOnly public GfmTableStyling(androidx.compose.ui.graphics.Color borderColor, androidx.compose.ui.graphics.Color rowBackgroundColor, androidx.compose.ui.graphics.Color alternateRowBackgroundColor, org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle rowBackgroundStyle, androidx.compose.ui.unit.Dp borderWidth, androidx.compose.foundation.layout.PaddingValues cellPadding, androidx.compose.ui.Alignment.Horizontal defaultCellContentAlignment, androidx.compose.ui.Alignment.Horizontal headerDefaultCellContentAlignment, androidx.compose.ui.text.font.FontWeight headerBaseFontWeight);
+    ctor public GfmTableStyling(org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableColors colors, org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics metrics, androidx.compose.ui.text.font.FontWeight headerBaseFontWeight);
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableColors getColors();
+    method public androidx.compose.ui.text.font.FontWeight getHeaderBaseFontWeight();
+    method public org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics getMetrics();
+    property public org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableColors colors;
+    property public androidx.compose.ui.text.font.FontWeight headerBaseFontWeight;
+    property public org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics metrics;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling.Companion Companion;
+  }
+
+  public static final class GfmTableStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubTableBlockRenderer implements org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension {
+    ctor public GitHubTableBlockRenderer(org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling, org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling tableStyling);
+    method public boolean canRender(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block);
+    method @androidx.compose.runtime.Composable public void render(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, boolean enabled, androidx.compose.ui.Modifier modifier, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick, kotlin.jvm.functions.Function0<kotlin.Unit> onTextClick);
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubTableProcessorExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension {
+    method public org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension getBlockProcessorExtension();
+    method public org.commonmark.parser.Parser.ParserExtension getParserExtension();
+    method public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension getTextRendererExtension();
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension blockProcessorExtension;
+    property public org.commonmark.parser.Parser.ParserExtension parserExtension;
+    property public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension textRendererExtension;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubTableRendererExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension {
+    ctor public GitHubTableRendererExtension(org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling tableStyling, org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling);
+    method public org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension getBlockRenderer();
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension blockRenderer;
+  }
+
+  @SuppressCompatibility @org.jetbrains.jewel.foundation.ExperimentalJewelApi public enum RowBackgroundStyle {
+    enum_constant public static final org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle Normal;
+    enum_constant public static final org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle Striped;
+  }
+
+}

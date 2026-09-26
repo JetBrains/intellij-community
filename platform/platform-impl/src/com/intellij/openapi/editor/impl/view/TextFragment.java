@@ -1,48 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 
 /**
  * Fragment of text using a common font
  */
-abstract class TextFragment implements LineFragment {
-  @NotNull
-  final float[] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
-  
-  TextFragment(int charCount) {
+@ApiStatus.Internal
+public abstract sealed class TextFragment implements LineFragment permits SimpleTextFragment, ComplexTextFragment {
+  protected final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  private final boolean myIsRtl;
+  private final @Nullable EditorView myView;
+
+  TextFragment(int charCount, boolean isRtl, @Nullable EditorView view) {
     assert charCount > 0;
-    myCharPositions = new float[charCount]; // populated by subclasses' constructors
+    this.myCharPositions = new float[charCount]; // populated by subclasses' constructors
+    this.myIsRtl = isRtl;
+    this.myView = view;
   }
+
+  protected abstract int offsetToLogicalColumn(int offset);
 
   @Override
   public int getLength() {
     return myCharPositions.length;
-  }
-
-  abstract boolean isRtl();
-
-  @NotNull
-  @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
-    assert startOffset >= 0;
-    assert endOffset <= myCharPositions.length;
-    assert startOffset < endOffset;
-    if (startOffset == 0 && endOffset == myCharPositions.length) return this;
-    return new TextFragmentWindow(startOffset, endOffset);
-  }
-
-  abstract int offsetToLogicalColumn(int offset);
-
-  @Override
-  public float offsetToX(float startX, int startOffset, int offset) {
-    return startX + getX(offset) - getX(startOffset);
-  }
-  
-  float getX(int offset) {
-    return offset <= 0 ? 0 : myCharPositions[Math.min(myCharPositions.length, offset) - 1];
   }
 
   @Override
@@ -55,101 +40,58 @@ abstract class TextFragment implements LineFragment {
     return column;
   }
 
-  private class TextFragmentWindow implements LineFragment {
-    private final int myStartOffset;
-    private final int myEndOffset;
-    private final int myStartColumn; // logical
-    private final int myEndColumn; // logical
+  @Override
+  public float offsetToX(float startX, int startOffset, int offset) {
+    return startX + getX(offset) - getX(startOffset);
+  }
 
-    private TextFragmentWindow(int startOffset, int endOffset) {
-      myStartOffset = startOffset;
-      myEndOffset = endOffset;
-      myStartColumn = TextFragment.this.offsetToLogicalColumn(startOffset);
-      myEndColumn = TextFragment.this.offsetToLogicalColumn(endOffset);
+  @Override
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
+    assert startOffset >= 0;
+    assert endOffset <= myCharPositions.length;
+    assert startOffset < endOffset;
+    if (startOffset == 0 && endOffset == myCharPositions.length) {
+      return this;
     }
+    return new TextFragmentWindow(
+      this,
+      startOffset,
+      endOffset,
+      offsetToLogicalColumn(startOffset),
+      offsetToLogicalColumn(endOffset)
+    );
+  }
 
-    @Override
-    public int getLength() {
-      return myEndOffset - myStartOffset;
-    }
+  protected boolean isRtl() {
+    return myIsRtl;
+  }
 
-    @Override
-    public int getLogicalColumnCount(int startColumn) {
-      return myEndColumn - myStartColumn;
+  protected float getX(int offset) {
+    if (offset <= 0) {
+      return 0;
     }
+    return myCharPositions[Math.min(myCharPositions.length, offset) - 1];
+  }
 
-    @Override
-    public int getVisualColumnCount(float startX) {
-      return myEndColumn - myStartColumn;
-    }
+  protected boolean isGridCellAlignmentEnabled() {
+    return myView != null && myView.getEditor().getCharacterGrid() != null;
+  }
 
-    @Override
-    public int logicalToVisualColumn(float startX, int startColumn, int column) {
-      return column;
-    }
+  protected float adjustedWidth(int codePoint) {
+    assert myView != null;
+    // in the grid mode all font styles should have identical widths
+    return myView.getCodePointWidth(codePoint, Font.PLAIN);
+  }
 
-    @Override
-    public int visualToLogicalColumn(float startX, int startColumn, int column) {
-      return column;
-    }
+  int visualOffsetShift(int startOffset, int endOffset) {
+    return isRtl() ? myCharPositions.length - endOffset : startOffset;
+  }
 
-    @Override
-    public int visualColumnToOffset(float startX, int column) {
-      int startColumnInParent = visualColumnToParent(0);
-      float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
-      int columnInParent = visualColumnToParent(column);
-      int offsetInParent = TextFragment.this.visualColumnToOffset(parentStartX, columnInParent);
-      return visualOffsetFromParent(offsetInParent);
-    }
+  int visualColumnShift(int startColumn, int endColumn) {
+    return isRtl() ? getVisualColumnCount(0) - endColumn : startColumn;
+  }
 
-    @Override
-    public float offsetToX(float startX, int startOffset, int offset) {
-      return TextFragment.this.offsetToX(startX, visualOffsetToParent(startOffset), visualOffsetToParent(offset));
-    }
-
-    @Override
-    public float visualColumnToX(float startX, int column) {
-      int startColumnInParent = visualColumnToParent(0);
-      float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
-      int columnInParent = visualColumnToParent(column);
-      return TextFragment.this.visualColumnToX(parentStartX, columnInParent);
-    }
-
-    @Override
-    public int[] xToVisualColumn(float startX, float x) {
-      int startColumnInParent = visualColumnToParent(0);
-      float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
-      int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
-      int column = parentColumn[0] - startColumnInParent;
-      int columnCount = getVisualColumnCount(startX);
-      return column < 0 ? new int[] {0, 0} : column > columnCount ? new int[] {columnCount, 1} : new int[] {column, parentColumn[1]};
-    }
-
-    private int visualOffsetToParent(int offset) {
-      return offset + visualOffsetShift();
-    }
-
-    private int visualOffsetFromParent(int offset) {
-      return offset - visualOffsetShift();
-    }
-
-    private int visualOffsetShift() {
-      return isRtl() ? myCharPositions.length - myEndOffset : myStartOffset;
-    }
-
-    private int visualColumnToParent(int column) {
-      return column + (isRtl() ? TextFragment.this.getVisualColumnCount(0) - myEndColumn : myStartColumn);
-    }
-
-    @Override
-    public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-      TextFragment.this.draw(g, x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
-    }
-
-    @NotNull
-    @Override
-    public LineFragment subFragment(int startOffset, int endOffset) {
-      return TextFragment.this.subFragment(startOffset + myStartOffset, endOffset + myStartOffset);
-    }
+  protected static boolean isTooClose(float width, float newWidth) {
+    return Math.abs(width - newWidth) < 0.001;
   }
 }

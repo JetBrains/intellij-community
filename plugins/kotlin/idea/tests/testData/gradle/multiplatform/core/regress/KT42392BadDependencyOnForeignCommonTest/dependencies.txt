@@ -1,0 +1,6 @@
+MODULES
+
+Test configuration:
+- showing only modules matching .*p1\.main.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- dependencies order is not checked

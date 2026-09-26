@@ -1,28 +1,24 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.actions
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets
 
-class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
-
+internal class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
   private var myWithinTripleQuoted: Boolean = false
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
     myWithinTripleQuoted = false
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return
     if (c != '\'' && c != '"') return
-    editor as? EditorEx ?: return
     val offset = editor.caretModel.offset
     val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
     val tokenType = iterator.tokenType
-    if (tokenType == mSTRING_LITERAL || tokenType == mGSTRING_LITERAL) {
+    if (tokenType in GroovyTokenSets.STRING_LITERALS) {
       myWithinTripleQuoted = iterator.start + 3 == offset && iterator.end - 3 == offset
     }
   }

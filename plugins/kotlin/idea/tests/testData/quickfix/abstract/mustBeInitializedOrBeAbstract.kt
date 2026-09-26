@@ -1,0 +1,7 @@
+// "Make 'i' 'abstract'" "true"
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+abstract class A() {
+    var <caret>i : Int
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp

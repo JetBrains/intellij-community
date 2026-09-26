@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  AliasKt.class
+  META-INF/kotlin_pureKotlin_typealiasDeprecatedError-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasDeprecatedError/a/alias.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasDeprecatedError-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasDeprecatedError/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

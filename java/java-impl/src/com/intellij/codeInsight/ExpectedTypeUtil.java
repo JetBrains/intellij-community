@@ -1,22 +1,21 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
@@ -24,13 +23,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-public class ExpectedTypeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
+public final class ExpectedTypeUtil {
+  private static final Logger LOG = Logger.getInstance(ExpectedTypeUtil.class);
 
-  @NotNull
-  public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {
+  public static ExpectedTypeInfo @NotNull [] intersect(List<ExpectedTypeInfo[]> typeInfos) {
     if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY_ARRAY;
 
     ExpectedTypeInfos result = new ExpectedTypeInfos(typeInfos.get(0));
@@ -89,8 +91,7 @@ public class ExpectedTypeUtil {
       return myInfos.iterator();
     }
 
-    @NotNull
-    public ExpectedTypeInfo[] toArray() {
+    public ExpectedTypeInfo @NotNull [] toArray() {
       return myInfos.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
@@ -123,33 +124,28 @@ public class ExpectedTypeUtil {
 
   public static boolean matches (PsiType type, ExpectedTypeInfo info) {
     PsiType infoType = info.getType();
-    switch (info.getKind()) {
-      case ExpectedTypeInfo.TYPE_STRICTLY:
-        return type.equals(infoType);
-      case ExpectedTypeInfo.TYPE_OR_SUBTYPE:
-        return infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(infoType);
-      case ExpectedTypeInfo.TYPE_BETWEEN:
-        return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_SAME_SHAPED:
-        return true;
-    }
-
-    LOG.error("Unexpected ExpectedInfo kind");
-    return false;
+    return switch (info.getKind()) {
+      case ExpectedTypeInfo.TYPE_STRICTLY -> type.equals(infoType);
+      case ExpectedTypeInfo.TYPE_OR_SUBTYPE -> infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE -> type.isAssignableFrom(infoType);
+      case ExpectedTypeInfo.TYPE_BETWEEN -> type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_SAME_SHAPED -> true;
+      default -> {
+        LOG.error("Unexpected ExpectedInfo kind");
+        yield false;
+      }
+    };
   }
 
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
-    private final Set<PsiClass> myOccurrenceClasses;
+    private final Set<? extends PsiClass> myOccurrenceClasses;
 
-    public ExpectedClassesFromSetProvider(@NotNull Set<PsiClass> occurrenceClasses) {
+    public ExpectedClassesFromSetProvider(@NotNull Set<? extends PsiClass> occurrenceClasses) {
       myOccurrenceClasses = occurrenceClasses;
     }
 
-    @NotNull
     @Override
-    public PsiField[] findDeclaredFields(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiField @NotNull [] findDeclaredFields(final @NotNull PsiManager manager, @NotNull String name) {
       List<PsiField> fields = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiField field = aClass.findFieldByName(name, true);
@@ -158,9 +154,8 @@ public class ExpectedTypeUtil {
       return fields.toArray(PsiField.EMPTY_ARRAY);
     }
 
-    @NotNull
     @Override
-    public PsiMethod[] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiMethod @NotNull [] findDeclaredMethods(final @NotNull PsiManager manager, @NotNull String name) {
       List<PsiMethod> methods = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
@@ -170,8 +165,7 @@ public class ExpectedTypeUtil {
     }
   }
 
-  @Nullable
-  public static PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, boolean forCompletion) {
+  public static @Nullable PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, boolean forCompletion) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiExpression[] args = callExpr.getArgumentList().getExpressions();
@@ -179,7 +173,7 @@ public class ExpectedTypeUtil {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method.getContainingClass())) {
       PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(),
                                                             forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE);
-      if (PsiType.NULL.equals(type)) return null;
+      if (PsiTypes.nullType().equals(type)) return null;
       result = result.put(typeParameter, type);
     }
 

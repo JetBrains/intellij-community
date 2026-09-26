@@ -1,0 +1,107 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
+package org.jetbrains.intellij.build.impl
+
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
+import com.intellij.platform.buildScripts.licenses.LibraryLicensesListGenerator
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.getLibraryFileName
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.module.JpsModule
+
+internal fun createLibraryLicensesListGenerator(
+  context: BuildContext,
+  licenseList: List<LibraryLicense>,
+  usedModulesNames: Set<String>,
+  allowEmpty: Boolean = false,
+): LibraryLicensesListGenerator {
+  val generator = createLibraryLicensesListGenerator(context.project, licenseList, usedModulesNames, allowEmpty)
+  checkLibraryUrls(generator.libraryLicenses, context)
+  return generator
+}
+
+fun createLibraryLicensesListGenerator(
+  project: JpsProject,
+  licenseList: List<LibraryLicense>,
+  usedModulesNames: Set<String>,
+  allowEmpty: Boolean = false,
+): LibraryLicensesListGenerator {
+  val licences = generateLicenses(project = project, licensesList = licenseList, usedModulesNames = usedModulesNames)
+  check(allowEmpty || !licences.isEmpty()) {
+    "Empty licenses table for ${licenseList.size} licenses and ${usedModulesNames.size} used modules names"
+  }
+  return LibraryLicensesListGenerator(licences)
+}
+
+private fun generateLicenses(project: JpsProject, licensesList: List<LibraryLicense>, usedModulesNames: Set<String>): List<LibraryLicense> {
+  Span.current().setAttribute(AttributeKey.stringArrayKey("modules"), usedModulesNames.toList())
+  val usedModules = project.modules.filterTo(HashSet()) { usedModulesNames.contains(it.name) }
+  val usedLibraries = HashMap<String, Pair<JpsLibrary, JpsModule>>()
+  for (module in usedModules) {
+    for (item in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+      usedLibraries.put(getLibraryFileName(item), item to module)
+    }
+  }
+
+  val librariesWithKnownLicences = licensesList.flatMapTo(HashSet()) { it.getLibraryNames() }
+  val missing = usedLibraries.entries.asSequence().filterNot { (libraryName, _) ->
+    librariesWithKnownLicences.contains(libraryName)
+  }.filter {
+    val mavenDescriptor = it.value.first.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data
+    mavenDescriptor != null && !LibraryLicense.isJetBrainsOwnLibrary(mavenDescriptor.groupId)
+  }.toList()
+  check(missing.none()) {
+    "Missing licenses for libraries:\n" +
+    missing.joinToString(separator = "\n") {
+      "${it.key}: " +
+      (it.value.first.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data ?: it.value.first.name) +
+      " used in the module ${it.value.second.name}"
+    }
+  }
+
+  val libraryVersions = (project.libraryCollection.libraries.asSequence() +
+                         project.modules.asSequence().flatMap { it.libraryCollection.libraries })
+    .mapNotNull { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
+    .associate { it.name to it.properties.data.version }
+
+  val result = HashSet<LibraryLicense>()
+
+  for (item in licensesList) {
+    if (item.license == LibraryLicense.JETBRAINS_OWN) {
+      continue
+    }
+
+    @Suppress("NAME_SHADOWING") var item = item
+    if (item.libraryName != null && item.version == null && libraryVersions.containsKey(item.libraryName)) {
+      item = LibraryLicense(name = item.name,
+                            url = item.url,
+                            version = libraryVersions.get(item.libraryName)!!,
+                            libraryName = item.libraryName,
+                            additionalLibraryNames = item.additionalLibraryNames,
+                            attachedTo = item.attachedTo,
+                            transitiveDependency = item.transitiveDependency,
+                            license = item.license,
+                            licenseUrl = item.licenseUrl)
+    }
+
+    if (usedModulesNames.contains(item.attachedTo)) {
+      // item.attachedTo
+      result.add(item)
+    }
+    else {
+      for (name in item.getLibraryNames()) {
+        if (usedLibraries.containsKey(name)) {
+          result.add(item)
+        }
+      }
+    }
+  }
+  return result.sortedBy { it.presentableName }
+}

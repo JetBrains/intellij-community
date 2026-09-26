@@ -4,7 +4,7 @@ class A(object):
         a = 1
 
 class C(A):
-    def <warning descr="Call to __init__ of super class is missed">__i<caret>nit__</warning>(self):
+    def <warning descr="Call to '__init__' of super class is missing">__i<caret>nit__</warning>(self):
         pass
 
     def foo(self):

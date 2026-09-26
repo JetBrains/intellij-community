@@ -1,22 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetFinder;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetRootsProvider;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ProjectWideFacetListener;
+import com.intellij.facet.ProjectWideFacetListenersRegistry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -30,16 +22,19 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public class FacetFinderImpl extends FacetFinder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetFinderImpl");
+@ApiStatus.Internal
+public final class FacetFinderImpl extends FacetFinder {
+  private static final Logger LOG = Logger.getInstance(FacetFinderImpl.class);
   private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<>();
   private final Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
     new HashMap<>();
@@ -54,7 +49,7 @@ public class FacetFinderImpl extends FacetFinder {
   }
 
   @Override
-  public <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
+  public <F extends Facet<?>> @NotNull ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
     AllFacetsOfTypeModificationTracker tracker = myAllFacetTrackers.get(type);
     if (tracker == null) {
       tracker = new AllFacetsOfTypeModificationTracker<>(myProject, type);
@@ -64,7 +59,7 @@ public class FacetFinderImpl extends FacetFinder {
     return tracker;
   }
 
-  private <F extends Facet & FacetRootsProvider> Map<VirtualFile, List<Facet>> getRootToFacetsMap(final FacetTypeId<F> type) {
+  private <F extends Facet<?> & FacetRootsProvider> Map<VirtualFile, List<Facet>> getRootToFacetsMap(final FacetTypeId<F> type) {
     CachedValue<Map<VirtualFile, List<Facet>>> cachedValue = myCachedMaps.get(type);
     if (cachedValue == null) {
       cachedValue = myCachedValuesManager.createCachedValue(() -> {
@@ -78,8 +73,7 @@ public class FacetFinderImpl extends FacetFinder {
     return value;
   }
 
-  @NotNull
-  private <F extends Facet&FacetRootsProvider> Map<VirtualFile, List<Facet>> computeRootToFacetsMap(final FacetTypeId<F> type) {
+  private @NotNull <F extends Facet&FacetRootsProvider> Map<VirtualFile, List<Facet>> computeRootToFacetsMap(final FacetTypeId<F> type) {
     final Module[] modules = myModuleManager.getModules();
     final HashMap<VirtualFile, List<Facet>> map = new HashMap<>();
     for (Module module : modules) {
@@ -99,19 +93,18 @@ public class FacetFinderImpl extends FacetFinder {
   }
 
   @Override
-  @Nullable
-  public <F extends Facet & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
+  public @Nullable <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
     final List<F> list = findFacets(file, type);
-    return list.size() > 0 ? list.get(0) : null;
+    return !list.isEmpty() ? list.get(0) : null;
   }
 
   @Override
-  @NotNull
-  public <F extends Facet & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
+  public @NotNull <F extends Facet<?> & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
     final Map<VirtualFile, List<Facet>> map = getRootToFacetsMap(type);
     if (!map.isEmpty()) {
       while (file != null) {
-        final List<F> list = (List<F>)((List)map.get(file));
+        @SuppressWarnings("unchecked")
+        List<F> list = (List<F>)((List)map.get(file));
         if (list != null) {
           return list;
         }
@@ -121,23 +114,23 @@ public class FacetFinderImpl extends FacetFinder {
     return Collections.emptyList();
   }
 
-  private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
-    public AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
+  private static final class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
+    AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 
     @Override
-    public void facetAdded(final F facet) {
+    public void facetAdded(final @NotNull F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetRemoved(final F facet) {
+    public void facetRemoved(final @NotNull F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetConfigurationChanged(final F facet) {
+    public void facetConfigurationChanged(final @NotNull F facet) {
       incModificationCount();
     }
 
@@ -147,7 +140,7 @@ public class FacetFinderImpl extends FacetFinder {
     }
 
     @Override
-    public void beforeFacetRemoved(F facet) {
+    public void beforeFacetRemoved(@NotNull F facet) {
 
     }
 

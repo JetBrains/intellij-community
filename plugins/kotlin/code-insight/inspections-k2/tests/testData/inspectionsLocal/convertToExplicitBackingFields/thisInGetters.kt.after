@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+
+class UserViewModel {
+    val x: Set<String>
+        field: MutableSet<String>
+
+    init {
+        x = mutableSetOf("John, Jack")
+    }
+
+    fun updateName(newName: String) {
+        x += newName
+    }
+}

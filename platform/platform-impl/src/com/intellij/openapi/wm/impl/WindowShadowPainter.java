@@ -1,39 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.impl.ShadowPainter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.icons.AllIcons.Ide.Shadow.Popup.*;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Bottom;
+import static com.intellij.icons.AllIcons.Ide.Shadow.BottomLeft;
+import static com.intellij.icons.AllIcons.Ide.Shadow.BottomRight;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Left;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Right;
+import static com.intellij.icons.AllIcons.Ide.Shadow.Top;
+import static com.intellij.icons.AllIcons.Ide.Shadow.TopLeft;
+import static com.intellij.icons.AllIcons.Ide.Shadow.TopRight;
 
-/**
- * @author Sergey.Malenkov
- */
 final class WindowShadowPainter extends AbstractPainter {
-  private static final ShadowPainter PAINTER = new ShadowPainter(Top, Top_right, Right, Bottom_right, Bottom, Bottom_left, Left, Top_left);
+  private static final ShadowPainter PAINTER = new ShadowPainter(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft);
   private static final long MASK = AWTEvent.WINDOW_EVENT_MASK | AWTEvent.WINDOW_STATE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK;
   private static final AtomicReference<AWTEventListener> WINDOW_LISTENER = new AtomicReference<>(new AWTEventListener() {
     @Override
@@ -45,7 +47,7 @@ final class WindowShadowPainter extends AbstractPainter {
           if (root != null) {
             Component pane = root.getGlassPane();
             if (pane instanceof IdeGlassPaneImpl) {
-              WindowShadowPainter painter = ((IdeGlassPaneImpl)pane).myWindowShadowPainter;
+              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).windowShadowPainter;
               if (painter != null && pane == painter.myComponent) {
                 List<Rectangle> shadows = painter.myShadows;
                 painter.myShadows = getShadows(pane, (Window)c);
@@ -60,7 +62,7 @@ final class WindowShadowPainter extends AbstractPainter {
   private List<Rectangle> myShadows;
   private Component myComponent;
 
-  public WindowShadowPainter() {
+  WindowShadowPainter() {
     AWTEventListener listener = WINDOW_LISTENER.getAndSet(null); // add only one window listener
     if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, MASK);
   }
@@ -71,8 +73,8 @@ final class WindowShadowPainter extends AbstractPainter {
   }
 
   @Override
-  public void executePaint(Component component, Graphics2D g) {
-    Window window = UIUtil.getWindow(component);
+  public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
+    Window window = ComponentUtil.getWindow(component);
     if (window != null) {
       if (myComponent != component) {
         myComponent = component;
@@ -98,7 +100,7 @@ final class WindowShadowPainter extends AbstractPainter {
       for (Window window : windows) {
         Rectangle bounds = getShadowBounds(point, window);
         if (bounds != null) {
-          if (list == null) list = newArrayList();
+          if (list == null) list = new ArrayList<>();
           list.add(bounds);
         }
         list = getShadows(list, point, window.getOwnedWindows());
@@ -110,16 +112,13 @@ final class WindowShadowPainter extends AbstractPainter {
   private static Rectangle getShadowBounds(Point point, Window window) {
     if (!window.isShowing()) return null;
     if (!window.isDisplayable()) return null;
-    if (window instanceof Frame) {
-      Frame frame = (Frame)window;
+    if (window instanceof Frame frame) {
       if (!frame.isUndecorated()) return null;
     }
-    if (window instanceof Dialog) {
-      Dialog dialog = (Dialog)window;
+    if (window instanceof Dialog dialog) {
       if (!dialog.isUndecorated()) return null;
     }
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       JRootPane root = container.getRootPane();
       if (root != null) {
         Object property = root.getClientProperty("Window.shadow");

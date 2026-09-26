@@ -1,0 +1,2 @@
+c<caret>lass A{
+}

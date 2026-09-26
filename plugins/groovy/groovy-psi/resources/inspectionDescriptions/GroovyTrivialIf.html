@@ -1,24 +1,20 @@
 <html>
 <body>
-
-This inspection reports instances of Groovy <b><font color="#000080">if</font></b> statements which can be simplified to single assignment
+Reports <code>if</code> statements which can be simplified to single assignment
 or
-<b><font color="#000080">return</font></b> statements. For example:
- <pre>
-    <b><font color="#000080">if</font></b>(foo())
-    {
-       <b><font color="#000080">return true</font></b>;
-    }
-    <b><font color="#000080">else</font></b>
-    {
-       <b><font color="#000080">return false</font></b>;
-    }
-</pre>
-can be simplified to
- <pre>
-    <b><font color="#000080">return</font></b> foo();
-</pre>
-<br>
-<small>Powered by InspectorGroovy</small>
+<code>return</code> statements.
+
+<p><b>Example:</b></p>
+<pre><code>
+  if (foo())
+    return true;
+  else
+    return false;
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  return foo();
+</code></pre>
 </body>
 </html>

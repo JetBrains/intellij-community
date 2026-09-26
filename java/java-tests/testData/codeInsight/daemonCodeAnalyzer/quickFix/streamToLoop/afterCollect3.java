@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.Arrays;
 import java.util.List;
@@ -7,7 +7,7 @@ import java.util.Objects;
 public class Main {
   private static void test(List<String> list) {
       StringBuilder sb = new StringBuilder();
-      for (String str: list) {
+      for (String str : list) {
           if (str != null) {
               sb.append(str);
           }

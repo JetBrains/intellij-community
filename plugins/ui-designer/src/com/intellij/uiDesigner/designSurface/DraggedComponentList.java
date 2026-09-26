@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +9,11 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -32,13 +21,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 
-/**
- * @author yole
- */
-public class DraggedComponentList implements Transferable, ComponentDragObject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.DraggedComponentList");
+
+public final class DraggedComponentList implements Transferable, ComponentDragObject {
+  private static final Logger LOG = Logger.getInstance(DraggedComponentList.class);
 
   private static DataFlavor ourDataFlavor;
 
@@ -61,7 +47,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private int myDragDeltaY = 0;
   private boolean myHasDragDelta = false;
 
-  private DraggedComponentList(Collection<RadComponent> selection) {
+  private DraggedComponentList(Collection<? extends RadComponent> selection) {
     mySelection = new ArrayList<>(selection);
     fillOriginalConstraints();
   }
@@ -71,7 +57,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     mySelection = FormEditingUtil.getSelectedComponents(editor);
 
     // sort selection in correct grid order
-    Collections.sort(mySelection, (o1, o2) -> {
+    mySelection.sort((o1, o2) -> {
       if (o1.getParent() == o2.getParent()) {
         int result = o1.getConstraints().getRow() - o2.getConstraints().getRow();
         if (result == 0) {
@@ -83,7 +69,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     });
 
     RadComponent componentUnderMouse = null;
-    int componentUnderMouseIndex = mySelection.size() == 0 ? -1 : 0;
+    int componentUnderMouseIndex = mySelection.isEmpty() ? -1 : 0;
     if (pnt != null) {
       for(int i=0; i<mySelection.size(); i++) {
         RadComponent c = mySelection.get(i);
@@ -153,8 +139,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return new DraggedComponentList(list);
   }
 
-  @Nullable
-  public static DraggedComponentList fromTransferable(final Transferable transferable) {
+  public static @Nullable DraggedComponentList fromTransferable(final Transferable transferable) {
     if (transferable.isDataFlavorSupported(ourDataFlavor)) {
       Object data;
       try {
@@ -182,6 +167,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return mySelection;
   }
 
+  @Override
   public int getComponentCount() {
     return mySelection.size();
   }
@@ -209,18 +195,22 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return myOriginalBounds [mySelection.indexOf(c)];
   }
 
+  @Override
   public DataFlavor[] getTransferDataFlavors() {
     return new DataFlavor[] { ourDataFlavor };
   }
 
+  @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     return flavor.equals(ourDataFlavor);
   }
 
+  @Override
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     return this;
   }
 
+  @Override
   public boolean isHGrow() {
     for(GridConstraints c: myOriginalConstraints) {
       if ((c.getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) return true;
@@ -228,6 +218,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return false;
   }
 
+  @Override
   public boolean isVGrow() {
     for(GridConstraints c: myOriginalConstraints) {
       if ((c.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) return true;
@@ -235,28 +226,33 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return false;
   }
 
+  @Override
   public int getRelativeRow(int componentIndex) {
     return myOriginalConstraints [componentIndex].getRow() - myComponentUnderMouseRow;
   }
 
+  @Override
   public int getRelativeCol(int componentIndex) {
     return myOriginalConstraints [componentIndex].getColumn() - myComponentUnderMouseColumn;
   }
 
+  @Override
   public int getRowSpan(int componentIndex) {
     return myOriginalConstraints [componentIndex].getRowSpan();
   }
 
+  @Override
   public int getColSpan(int componentIndex) {
     return myOriginalConstraints [componentIndex].getColSpan();
   }
 
+  @Override
   public Point getDelta(int componentIndex) {
     return null;
   }
 
-  @NotNull
-  public Dimension getInitialSize(final RadContainer targetContainer) {
+  @Override
+  public @NotNull Dimension getInitialSize(final RadContainer targetContainer) {
     if (myOriginalBounds.length == 1) {
       return myOriginalBounds [0].getSize();
     }

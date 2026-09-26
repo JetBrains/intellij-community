@@ -1,0 +1,6 @@
+// "Convert to primary constructor" "true"
+class Protected protected constructor(internal var s: String) {
+
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

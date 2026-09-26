@@ -18,12 +18,13 @@ package com.intellij.psi.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author maxim.mossienko
  */
 public interface XmlConditionalSection extends XmlElement {
-  boolean isIncluded(PsiFile target);
+  boolean isIncluded(@Nullable PsiFile target);
 
   PsiElement getBodyStart();
 }

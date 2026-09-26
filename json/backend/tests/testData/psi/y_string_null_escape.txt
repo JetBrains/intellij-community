@@ -1,0 +1,6 @@
+JsonFile: y_string_null_escape.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u0000"')
+    PsiElement(])(']')

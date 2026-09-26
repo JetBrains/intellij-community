@@ -1,4 +1,4 @@
-from __builtin__ import staticmethod, divmod
+from builtins import staticmethod, divmod
 
 quotient, rem = divmod(42, 3)
 

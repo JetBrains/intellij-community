@@ -1,48 +1,55 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-public class DeleteLineAction extends TextComponentEditorAction {
+@ApiStatus.Internal
+public final class DeleteLineAction extends TextComponentEditorAction {
   public DeleteLineAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  public static final class CheckHandler extends EditorWriteActionHandler {
+    private final EditorWriteActionHandler myOriginal;
+
+    public CheckHandler(EditorActionHandler original) {
+      myOriginal = (EditorWriteActionHandler)original;
+    }
+
     @Override
-    public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");
-      CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (CtrlYActionChooser.isCurrentShortcutOk(dataContext)) super.doExecute(editor, caret, dataContext);
+    }
+
+    @Override
+    public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      myOriginal.executeWriteAction(editor, caret, dataContext);
+    }
+  }
+
+  private static final class Handler extends EditorWriteActionHandler {
+
+    @Override
+    public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
+      CommandProcessor.getInstance().setCurrentCommandGroupId(null);
       CopyPasteManager.getInstance().stopKillRings();
-      final Document document = editor.getDocument();
 
       final List<Caret> carets = caret == null ? editor.getCaretModel().getAllCarets() : Collections.singletonList(caret);
 
@@ -68,20 +75,21 @@ public class DeleteLineAction extends TextComponentEditorAction {
           }
           int targetLine = editor.offsetToVisualPosition(currentRange.getStartOffset()).line;
 
-          document.deleteString(currentRange.getStartOffset(), currentRange.getEndOffset());
+          DocumentGuardedTextUtil.deleteString(editor.getDocument(), currentRange.getStartOffset(), currentRange.getEndOffset());
 
           for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
             carets.get(i).moveToVisualPosition(new VisualPosition(targetLine, caretColumns[i]));
           }
         }
       });
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
   private static TextRange getRangeToDelete(Editor editor, Caret caret) {
     int selectionStart = caret.getSelectionStart();
     int selectionEnd = caret.getSelectionEnd();
-    int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, selectionStart);
+    int startOffset = EditorUtil.getNotFoldedLineStartOffset(editor, selectionStart, true);
     // There is a possible case that selection ends at the line start, i.e. something like below ([...] denotes selected text,
     // '|' is a line start):
     //   |line 1
@@ -92,7 +100,8 @@ public class DeleteLineAction extends TextComponentEditorAction {
     //   |[line 2
     //   |line] 3
     // Line 3 must be removed here.
-    int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, selectionEnd > 0 && selectionEnd != selectionStart ? selectionEnd - 1 : selectionEnd);
+    if (selectionEnd > 0 && selectionEnd != selectionStart) selectionEnd--;
+    int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, selectionEnd, true);
     if (endOffset < editor.getDocument().getTextLength()) {
       endOffset++;
     }

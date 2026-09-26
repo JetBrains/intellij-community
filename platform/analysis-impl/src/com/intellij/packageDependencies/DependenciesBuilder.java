@@ -1,53 +1,41 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author anna
- * @since Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
   private final Project myProject;
   private final AnalysisScope myScope;
-  private final AnalysisScope myScopeOfInterest;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<>();
+  private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies = Collections.emptyMap();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
-  protected int myTransitive = 0;
 
-  protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
-    this(project, scope, null);
-  }
-
-  public DependenciesBuilder(final Project project, final AnalysisScope scope, @Nullable final AnalysisScope scopeOfInterest) {
+  protected DependenciesBuilder(final @NotNull Project project, final @NotNull AnalysisScope scope) {
     myProject = project;
     myScope = scope;
-    myScopeOfInterest = scopeOfInterest;
     myTotalFileCount = scope.getFileCount();
   }
 
@@ -59,39 +47,40 @@ public abstract class DependenciesBuilder {
     myTotalFileCount = totalFileCount;
   }
 
-  public int getTotalFileCount() {
-    return myTotalFileCount;
-  }
-
-  public Map<PsiFile, Set<PsiFile>> getDependencies() {
+  public @NotNull Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
   }
 
-  public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
+  public @NotNull Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return getDependencies();
   }
 
-  public AnalysisScope getScope() {
+  public @NotNull AnalysisScope getScope() {
     return myScope;
   }
 
-  public AnalysisScope getScopeOfInterest() {
-    return myScopeOfInterest;
-  }
-
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  public abstract String getRootNodeNameInUsageView();
+  public abstract @Nls String getRootNodeNameInUsageView();
 
-  public abstract String getInitialUsagesPosition();
+  public abstract @Nls String getInitialUsagesPosition();
 
   public abstract boolean isBackward();
 
-  public abstract void analyze();
+  public void analyze() {
+    doAnalyze();
+    myIllegalDependencies = ReadAction.computeBlocking(this::doGetIllegalDependencies);
+  }
 
-  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
+  public abstract void doAnalyze();
+
+  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies() {
+    return myIllegalDependencies;
+  }
+
+  private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> doGetIllegalDependencies(){
     Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
     for (PsiFile file : getDirectDependencies().keySet()) {
@@ -135,7 +124,7 @@ public abstract class DependenciesBuilder {
           if (!getScope().contains(file)) { //exclude paths through scope
             final List<List<PsiFile>> paths = findPaths(file, to, processed);
             for (List<PsiFile> path : paths) {
-              path.add(0, file);
+              path.addFirst(file);
             }
             result.addAll(paths);
           }
@@ -145,15 +134,7 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
-  public boolean isTransitive() {
-    return myTransitive > 0;
-  }
-
-  public int getTransitiveBorder() {
-    return myTransitive;
-  }
-
-  public String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
+  @NlsSafe String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 
@@ -164,12 +145,20 @@ public abstract class DependenciesBuilder {
   public static void analyzeFileDependencies(@NotNull PsiFile file,
                                              @NotNull DependencyProcessor processor,
                                              @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    file = (PsiFile)file.getNavigationElement();
+    if (file == null || file instanceof PsiCompiledElement) return;
+    Boolean prev = file.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING);
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
+    try {
+      file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
+    }
+    finally {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, prev);
+    }
   }
 
+  @FunctionalInterface
   public interface DependencyProcessor {
-    void process(PsiElement place, PsiElement dependency);
+    void process(@NotNull PsiElement place, @NotNull PsiElement dependency);
   }
 }

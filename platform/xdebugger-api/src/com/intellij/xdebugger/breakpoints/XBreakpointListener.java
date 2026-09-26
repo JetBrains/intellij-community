@@ -1,29 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.util.messages.Topic;
+import com.intellij.xdebugger.BreakpointErrorData;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
 /**
- * @author nik
+ * Listener interface for receiving notifications about changes to breakpoints managed by the XBreakpointManager.
+ * <p/>
+ * A thread where the listener is invoked is unspecified and may vary depending on the implementation.
  */
 public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventListener {
+
+  @Topic.ProjectLevel
+  Topic<XBreakpointListener> TOPIC = new Topic<>("XBreakpointManager events", XBreakpointListener.class);
+
   default void breakpointAdded(@NotNull B breakpoint) {
   }
 
@@ -31,5 +27,26 @@ public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventList
   }
 
   default void breakpointChanged(@NotNull B breakpoint) {
+  }
+
+  default void breakpointPresentationUpdated(@NotNull B breakpoint, @Nullable XDebugSession session) {
+  }
+
+  /**
+   * Called when a breakpoint error is occurred, e.g., when a condition expression is invalid
+   * <p>
+   * Currently supported only for JVM debugger
+   */
+  @ApiStatus.Experimental
+  default void breakpointError(@NotNull B breakpoint, @NotNull XDebugSession session, @NotNull BreakpointErrorData error) {
+  }
+
+  /**
+   * Called when a breakpoint with a log expression is hit
+   * <p>
+   * Currently supported only for JVM debugger
+   */
+  @ApiStatus.Experimental
+  default void breakpointLogMessage(@NotNull B breakpoint, @NotNull XDebugSession session, @NotNull String message) {
   }
 }

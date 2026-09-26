@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>com.intellij.myPlugin</id>
+    <extensionPoints>
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP" dynamic="true"/>
+        <extensionPoint name="experimentalPackageApiEP" interface="experimental.MyEpInExperimentalPackage" dynamic="true"/>
+        <extensionPoint name="experimentalOuterClassApiEP" interface="foo.MyExperimentalOuter$MyNestedEP" dynamic="true"/>
+        <extensionPoint name="stableApiEP" interface="foo.MyStableEP" dynamic="true"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <weak_warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <weak_warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="value"</weak_warning>/></weak_warning>
+
+        <weak_warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalPackageApiEP implementation="experimental.MyEpInExperimentalPackage"/></weak_warning>
+
+        <weak_warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalOuterClassApiEP implementation="foo.MyExperimentalOuter$MyNestedEP"/></weak_warning>
+
+        <myPlugin.stableApiEP implementation="foo.MyStableEP" stableAttribute="value"/>
+    </extensions>
+</idea-plugin>

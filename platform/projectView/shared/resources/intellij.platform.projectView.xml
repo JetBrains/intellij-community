@@ -1,0 +1,136 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.rpc.lite"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="project.view.toolwindow.split" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window in all modes" />
+    <registryKey key="project.view.toolwindow.split.monolith" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window in monolith only" />
+    <registryKey key="project.view.toolwindow.split.remdev" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window in remdev only" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
+    <projectService
+      serviceInterface="com.intellij.ide.projectView.actions.SelectFileActionService"
+      serviceImplementation="com.intellij.platform.projectView.actions.SelectFileActionServiceImpl"
+    />
+  </extensions>
+  <actions>
+    <group id="ProjectView.ToolWindow.SecondaryActions">
+      <group id="ProjectView.ToolWindow.Behavior.Actions" popup="true">
+        <action id="ProjectView.OpenInPreviewTab"
+                class="com.intellij.platform.projectView.actions.OpenInPreviewTab"/>
+        <action id="ProjectView.AutoscrollToSource"
+                class="com.intellij.platform.projectView.actions.AutoscrollToSource"
+                icon="AllIcons.General.AutoscrollToSource"/>
+        <action id="ProjectView.OpenDirectoriesWithSingleClick"
+                class="com.intellij.platform.projectView.actions.OpenDirectoriesWithSingleClick"/>
+        <action id="ProjectView.AutoscrollFromSource"
+                class="com.intellij.platform.projectView.actions.AutoscrollFromSource"
+                icon="AllIcons.General.AutoscrollFromSource"/>
+      </group>
+      <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
+        <separator key="group.ProjectView.ToolWindow.Appearance.Show.text"/>
+        <action id="ProjectView.ShowModules"
+                class="com.intellij.platform.projectView.actions.ShowModules"
+                icon="AllIcons.Actions.GroupByModule">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowMembers"
+                class="com.intellij.platform.projectView.actions.ShowMembers"
+                icon="AllIcons.ObjectBrowser.ShowMembers">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowExcludedFiles"
+                class="com.intellij.platform.projectView.actions.ShowExcludedFiles">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowVisibilityIcons"
+                class="com.intellij.platform.projectView.actions.ShowVisibilityIcons">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowLibraryContents"
+                class="com.intellij.platform.projectView.actions.ShowLibraryContents"
+                icon="AllIcons.ObjectBrowser.ShowLibraryContents">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowScratchesAndConsoles"
+                class="com.intellij.platform.projectView.actions.ShowScratchesAndConsoles">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <reference ref="ViewInplaceComments"/>
+        <separator/>
+        <action id="ProjectView.FlattenModules"
+                class="com.intellij.platform.projectView.actions.FlattenModules"
+                icon="AllIcons.ObjectBrowser.FlattenModules"/>
+        <action id="ProjectView.FlattenPackages"
+                class="com.intellij.platform.projectView.actions.FlattenPackages"
+                icon="AllIcons.ObjectBrowser.FlattenPackages"/>
+        <action id="ProjectView.AbbreviatePackageNames"
+                class="com.intellij.platform.projectView.actions.AbbreviatePackageNames"
+                icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+        <action id="ProjectView.HideEmptyMiddlePackages"
+                class="com.intellij.platform.projectView.actions.HideEmptyMiddlePackages"/>
+        <action id="ProjectView.CompactDirectories"
+                class="com.intellij.platform.projectView.actions.CompactDirectories"/>
+        <separator/>
+        <action id="ProjectView.FileNesting"
+                class="com.intellij.platform.projectView.actions.ConfigureFilesNestingAction"/>
+        <separator/>
+        <reference ref="ProjectView.CustomizeTrees"/>
+      </group>
+      <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
+        <action id="ProjectView.ManualOrder"
+                class="com.intellij.platform.projectView.actions.ManualOrder"
+                icon="AllIcons.ObjectBrowser.Sorted"/>
+        <action id="ProjectView.SortByName"
+                class="com.intellij.platform.projectView.actions.SortByName">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.SortByType"
+                class="com.intellij.platform.projectView.actions.SortByType"
+                icon="AllIcons.ObjectBrowser.SortByType">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.SortByTimeDescending"
+                class="com.intellij.platform.projectView.actions.SortByTimeDescending">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.SortByTimeAscending"
+                class="com.intellij.platform.projectView.actions.SortByTimeAscending">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <separator/>
+        <action id="ProjectView.FoldersAlwaysOnTop"
+                class="com.intellij.platform.projectView.actions.FoldersAlwaysOnTop"/>
+      </group>
+      <reference ref="ScopeView.EditScopes"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,64 +1,62 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * This class provides basic functionality for running consoles.
  * It launches external process and handles line input with history
- *
- * @author oleg
  */
 public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
-  private final String myConsoleTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
   private final String myWorkingDir;
 
   private T myConsoleView;
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
-  public AbstractConsoleRunnerWithHistory(@NotNull Project project, @NotNull String consoleTitle, @Nullable String workingDir) {
+  public AbstractConsoleRunnerWithHistory(@NotNull Project project,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String consoleTitle,
+                                          @Nullable String workingDir) {
     myProject = project;
     myConsoleTitle = consoleTitle;
     myWorkingDir = workingDir;
@@ -67,11 +65,12 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   /**
    * Launch process, setup history, actions etc.
    *
-   * @throws ExecutionException
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process
     final Process process = createProcess();
+    if (process == null) return;
+
     UIUtil.invokeLaterIfNeeded(() -> {
       // Init console view
       myConsoleView = createConsoleView();
@@ -84,7 +83,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
       ProcessTerminatedListener.attach(myProcessHandler);
 
-      myProcessHandler.addProcessListener(new ProcessAdapter() {
+      myProcessHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           finishConsole();
@@ -133,12 +132,11 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     showConsole(defaultExecutor, contentDescriptor);
   }
 
-  @Nullable
-  protected Icon getConsoleIcon() {
+  protected @Nullable Icon getConsoleIcon() {
     return null;
   }
 
-  protected String constructConsoleTitle(final @NotNull String consoleTitle) {
+  protected @BuildEventsNls.Title String constructConsoleTitle(final @NotNull @NlsContexts.TabTitle String consoleTitle) {
     return new ConsoleTitleGen(myProject, consoleTitle, shouldAddNumberToTitle()).makeTitle();
   }
 
@@ -152,7 +150,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
     // Show in run toolwindow
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, contentDescriptor);
+    RunContentManager.getInstance(myProject).showRunContent(defaultExecutor, contentDescriptor);
   }
 
   protected void finishConsole() {
@@ -161,16 +159,13 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   protected abstract T createConsoleView();
 
-  @Nullable
-  protected abstract Process createProcess() throws ExecutionException;
+  protected abstract @Nullable Process createProcess() throws ExecutionException;
 
   protected abstract OSProcessHandler createProcessHandler(final Process process);
 
-  public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
+  public static void registerActionShortcuts(final List<? extends AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
-      if (action.getShortcutSet() != null) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), component);
-      }
+      action.registerCustomShortcutSet(action.getShortcutSet(), component);
     }
   }
 
@@ -178,7 +173,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
                                               final Executor defaultExecutor,
                                               final RunContentDescriptor contentDescriptor) {
 
-    List<AnAction> actionList = ContainerUtil.newArrayList();
+    List<AnAction> actionList = new ArrayList<>();
 
     //stop
     actionList.add(createStopAction());
@@ -210,15 +205,13 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, emptyAction, consoleExecuteActionHandler);
   }
 
-  @NotNull
-  protected abstract ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler();
+  protected abstract @NotNull ProcessBackedConsoleExecuteActionHandler createExecuteActionHandler();
 
   public T getConsoleView() {
     return myConsoleView;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 

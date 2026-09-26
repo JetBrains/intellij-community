@@ -1,40 +1,39 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.*;
+import com.intellij.util.ConstantFunction;
+import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.PropertyAccessor;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author peter
- */
-public class StaticGenericInfo extends DomGenericInfoEx {
-  private final Class myClass;
+public final class StaticGenericInfo extends DomGenericInfoEx {
+  private final Class<? extends DomElement> myClass;
 
   private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes = new ChildrenDescriptionsHolder<>();
   private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixed = new ChildrenDescriptionsHolder<>();
@@ -42,23 +41,23 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   private Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> myFixedChildrenMethods;
   private Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenGetterMethods;
-  private final Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new THashMap<>();
+  private final Map<JavaMethodSignature, CollectionChildDescriptionImpl> myCollectionChildrenAdditionMethods = new HashMap<>();
   private Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributeChildrenMethods;
 
-  private final Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new THashMap<>();
+  private final Map<JavaMethodSignature, Set<CollectionChildDescriptionImpl>> myCompositeChildrenMethods = new HashMap<>();
   private final Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods =
-    new THashMap<>();
+    new HashMap<>();
 
-  @Nullable private JavaMethod myNameValueGetter;
+  private @Nullable JavaMethod myNameValueGetter;
   private boolean myValueElement;
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(Class clazz) {
+  StaticGenericInfo(Class<? extends DomElement> clazz) {
     myClass = clazz;
   }
 
-  public final synchronized boolean buildMethodMaps() {
+  synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
       final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
@@ -88,7 +87,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       }
 
       final NotNullFunction<String, CollectionChildDescriptionImpl> mapper =
-        xmlName -> ObjectUtils.assertNotNull(myCollections.findDescription(xmlName));
+        xmlName -> Objects.requireNonNull(myCollections.findDescription(xmlName));
       final Map<JavaMethodSignature, String[]> getters = builder.getCompositeCollectionGetters();
       for (final JavaMethodSignature signature : getters.keySet()) {
         myCompositeChildrenMethods.put(signature, ContainerUtil.map2Set(getters.get(signature), mapper));
@@ -118,8 +117,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     return buildMethodMaps();
   }
 
-  @Override
-  public final Invocation createInvocation(final JavaMethod method) {
+  Invocation createInvocation(JavaMethod method) {
     buildMethodMaps();
 
     final JavaMethodSignature signature = method.getSignature();
@@ -142,13 +140,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
-      return new Invocation() {
-        @Override
-        @Nullable
-        public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
-          return myCustomDescription.getValues(handler);
-        }
-      };
+      return (handler, args) -> myCustomDescription.getValues(handler);
     }
 
     final Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>> pair = myCompositeCollectionAdditionMethods.get(signature);
@@ -160,7 +152,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     if (description != null) {
       return new GetCollectionChildInvocation(description);
     }
-                                                      
+
     description = myCollectionChildrenAdditionMethods.get(signature);
     if (description != null) {
       return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), description, description.getType());
@@ -170,12 +162,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
-      return new Function.First<>();
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(Class.class)) {
+      return s -> (Type)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(Class.class)) {
       return s -> (Type)s[1];
     }
 
@@ -184,12 +175,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
 
   private static Function<Object[], Integer> getIndexGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
-      return new Function.First<>();
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(int.class)) {
+      return s -> (Integer)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(int.class)) {
       return s -> (Integer)s[1];
     }
 
@@ -197,8 +187,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @Nullable
-  public GenericDomValue getNameDomElement(DomElement element) {
+  public @Nullable GenericDomValue getNameDomElement(DomElement element) {
     buildMethodMaps();
 
     Object o = getNameObject(element);
@@ -206,29 +195,25 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
-    return myCustomDescription == null ? Collections.emptyList() : Collections.singletonList(myCustomDescription);
+  public @Unmodifiable @NotNull List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
+    return ContainerUtil.createMaybeSingletonList(myCustomDescription);
   }
 
-  @Nullable
-  private Object getNameObject(DomElement element) {
+  private @Nullable Object getNameObject(DomElement element) {
     return myNameValueGetter == null ? null : myNameValueGetter.invoke(element);
   }
 
   @Override
-  @Nullable
-  public String getElementName(DomElement element) {
+  public @Nullable String getElementName(DomElement element) {
     buildMethodMaps();
     Object o = getNameObject(element);
-    return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
+    return o == null || o instanceof String ? (String)o : ((GenericValue<?>)o).getStringValue();
   }
 
   @Override
-  @NotNull
-  public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
+  public @NotNull List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     buildMethodMaps();
-    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
+    List<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
     myFixed.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
@@ -237,15 +222,13 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<? extends DomFixedChildDescription> getFixedChildrenDescriptions() {
+  public @NotNull List<? extends DomFixedChildDescription> getFixedChildrenDescriptions() {
     buildMethodMaps();
     return myFixed.getDescriptions();
   }
 
   @Override
-  @NotNull
-  public List<? extends DomCollectionChildDescription> getCollectionChildrenDescriptions() {
+  public @NotNull List<? extends DomCollectionChildDescription> getCollectionChildrenDescriptions() {
     buildMethodMaps();
     return myCollections.getDescriptions();
   }
@@ -257,56 +240,49 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
+  public @NotNull List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     buildMethodMaps();
     return new ArrayList<>(myAttributeChildrenMethods.values());
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(Processor<? super AttributeChildDescriptionImpl> processor) {
     List<AttributeChildDescriptionImpl> descriptions = getAttributeChildrenDescriptions();
     return ContainerUtil.process(descriptions, processor);
   }
 
   @Override
-  @Nullable
-  public DomFixedChildDescription getFixedChildDescription(@NonNls final String tagName) {
+  public @Nullable DomFixedChildDescription getFixedChildDescription(final @NonNls String tagName) {
     buildMethodMaps();
     return myFixed.findDescription(tagName);
   }
 
   @Override
-  @Nullable
-  public DomFixedChildDescription getFixedChildDescription(@NonNls final String tagName, @NonNls final String namespaceKey) {
+  public @Nullable DomFixedChildDescription getFixedChildDescription(final @NonNls String tagName, final @NonNls String namespaceKey) {
     buildMethodMaps();
     return myFixed.getDescription(tagName, namespaceKey);
   }
 
   @Override
-  @Nullable
-  public DomCollectionChildDescription getCollectionChildDescription(@NonNls final String tagName) {
+  public @Nullable DomCollectionChildDescription getCollectionChildDescription(final @NonNls String tagName) {
     buildMethodMaps();
     return myCollections.findDescription(tagName);
   }
 
   @Override
-  @Nullable
-  public DomCollectionChildDescription getCollectionChildDescription(@NonNls final String tagName, @NonNls final String namespaceKey) {
+  public @Nullable DomCollectionChildDescription getCollectionChildDescription(final @NonNls String tagName, final @NonNls String namespaceKey) {
     buildMethodMaps();
     return myCollections.getDescription(tagName, namespaceKey);
   }
 
   @Override
-  @Nullable
-  public DomAttributeChildDescription getAttributeChildDescription(@NonNls final String attributeName) {
+  public @Nullable DomAttributeChildDescription getAttributeChildDescription(final @NonNls String attributeName) {
     buildMethodMaps();
     return myAttributes.findDescription(attributeName);
   }
 
   @Override
-  @Nullable
-  public DomAttributeChildDescription getAttributeChildDescription(@NonNls final String attributeName, @NonNls final String namespaceKey) {
+  public @Nullable DomAttributeChildDescription getAttributeChildDescription(final @NonNls String attributeName, final @NonNls String namespaceKey) {
     buildMethodMaps();
     return myAttributes.getDescription(attributeName, namespaceKey);
   }

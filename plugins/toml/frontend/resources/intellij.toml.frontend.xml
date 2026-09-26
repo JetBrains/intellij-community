@@ -1,0 +1,30 @@
+<idea-plugin>
+    <dependencies>
+      <!--<module name="intellij.platform.frontend"/> IJPL-189393 -->
+      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+      <module name="intellij.platform.analysis"/>
+      <module name="intellij.platform.core"/>
+      <module name="intellij.platform.core.impl"/>
+      <module name="intellij.platform.editor.ui"/>
+      <module name="intellij.platform.ide"/>
+      <module name="intellij.platform.ide.core"/>
+      <module name="intellij.platform.lang"/>
+      <module name="intellij.platform.lang.impl"/>
+      <module name="intellij.platform.util.ui"/>
+      <module name="intellij.toml.core"/>
+      <!-- endregion -->
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
+        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
+
+        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
+
+        <enterBetweenBracesDelegate language="TOML"
+                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+
+        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
+    </extensions>
+</idea-plugin>

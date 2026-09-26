@@ -1,0 +1,83 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.system;
+
+import com.intellij.openapi.util.SystemInfoRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public enum CpuArch {
+  X86(32), X86_64(64), ARM32(32), ARM64(64), OTHER(0), UNKNOWN(0);
+
+  /// A CPU architecture this Java VM is executed on.
+  /// Here, [CpuArch#OTHER] is an architecture not yet supported by JetBrains Runtime,
+  /// and [CpuArch#UNKNOWN] means the code was unable to detect an architecture.
+  ///
+  /// **Note**: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).
+  ///
+  /// For project files, prefer the Eel API instead (see `EelProviderProjectUtilKt.getEelDescriptor(Project)`
+  /// and `EelPathDescriptorKt#getEelDescriptor(Path)`).
+  ///
+  /// @see LowLevelLocalMachineAccess
+  @LowLevelLocalMachineAccess
+  public static final @NotNull CpuArch CURRENT = fromString(System.getProperty("os.arch"));
+  private static @Nullable Boolean ourEmulated;
+  /// Machine word size, in bits.
+  public final int width;
+
+  CpuArch(int width) {
+    if (width == 0) {
+      try {
+        width = Integer.parseInt(System.getProperty("sun.arch.data.model", "32"));
+      }
+      catch (NumberFormatException ignored) { }
+    }
+    this.width = width;
+  }
+
+  public static @NotNull CpuArch fromString(@Nullable String arch) {
+    if ("x86_64".equals(arch) || "amd64".equals(arch)) return X86_64;
+    if ("i386".equals(arch) || "x86".equals(arch)) return X86;
+    if ("aarch64".equals(arch) || "arm64".equals(arch)) return ARM64;
+    return arch == null || arch.trim().isEmpty() ? UNKNOWN : OTHER;
+  }
+
+  public static boolean isIntel32() { return CURRENT == X86; }
+
+  public static boolean isIntel64() { return CURRENT == X86_64; }
+
+  public static boolean isArm32() { return CURRENT == ARM32; }
+
+  public static boolean isArm64() { return CURRENT == ARM64; }
+
+  public static boolean is32Bit() { return CURRENT.width == 32; }
+
+  /// The method tries to detect whether this JVM is executed in a known emulated environment - Rosetta 2, WoW64, etc.
+  public static boolean isEmulated() {
+    if (ourEmulated == null) {
+      if (CURRENT == X86_64) {
+        ourEmulated = SystemInfoRt.isMac && isUnderRosetta() || SystemInfoRt.isWindows && !matchesWindowsNativeArch();
+      }
+      else if (CURRENT == X86) {
+        ourEmulated = SystemInfoRt.isWindows && !matchesWindowsNativeArch();
+      }
+      else {
+        ourEmulated = Boolean.FALSE;
+      }
+    }
+
+    return ourEmulated;
+  }
+
+  //<editor-fold desc="Emulated environment detection">
+  // https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
+  private static boolean isUnderRosetta() {
+    return Boolean.TRUE.equals(NativeAccess.getInstance().isTranslatedProcess());
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2
+  private static boolean matchesWindowsNativeArch() {
+    CpuArch nativeArch = NativeAccess.getInstance().getWindowsNativeArch();
+    return nativeArch == null || nativeArch == CURRENT;
+  }
+  //</editor-fold>
+}

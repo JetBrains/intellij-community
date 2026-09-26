@@ -1,3 +1,3 @@
 import c
 
-c.foo(<warning descr="Parameter(s) unfilledPossible callees:foo(value: str)foo(value: int)foo(value: None)">)</warning>
+c.foo(<warning descr="No overload of 'foo' matches the arguments. Argument types: (). Expected one of: (value: None), (value: int), (value: str)">)</warning>

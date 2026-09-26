@@ -2,12 +2,13 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Text;
 import org.jetbrains.idea.svn.api.Depth;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SvnConfigurationState {
   @Property(surroundWithTag = false)
   public ConfigurationDirectory directory = new ConfigurationDirectory();
@@ -53,7 +54,6 @@ public class SvnConfigurationState {
 
   public boolean MERGE_DRY_RUN;
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
-  public boolean UPDATE_LOCK_ON_DEMAND;
   public boolean IGNORE_SPACES_IN_MERGE;
   public boolean CHECK_NESTED_FOR_QUICK_MERGE;
   public boolean IGNORE_SPACES_IN_ANNOTATE = !PlatformUtils.isPyCharm();

@@ -17,19 +17,22 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DarculaTreeUI extends WideSelectionTreeUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaTreeUI();
   }
 
-  @Override protected void installDefaults() {
+  @Override
+  protected void installDefaults() {
     super.installDefaults();
     if (tree.isForegroundSet()) {
       tree.setForeground(null);

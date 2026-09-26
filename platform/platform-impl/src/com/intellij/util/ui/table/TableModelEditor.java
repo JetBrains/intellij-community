@@ -1,28 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
@@ -32,18 +25,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CollectionItemEditor;
 import com.intellij.util.ui.CollectionModelEditor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +46,9 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   private final MyListTableModel model;
 
-  public TableModelEditor(@NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(ColumnInfo @NotNull [] columns,
+                          @NotNull CollectionItemEditor<T> itemEditor,
+                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String emptyText) {
     this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 
@@ -63,19 +57,22 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
    *
    * Implement {@link DialogItemEditor} instead of {@link CollectionItemEditor} if you want provide dialog to edit.
    */
-  public TableModelEditor(@NotNull List<T> items, @NotNull ColumnInfo[] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(@NotNull List<T> items, ColumnInfo @NotNull [] columns, @NotNull CollectionItemEditor<T> itemEditor,
+                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String emptyText) {
     super(itemEditor);
 
     model = new MyListTableModel(columns, new ArrayList<>(items));
     table = new TableView<>(model);
+    table.setShowGrid(false);
     table.setDefaultEditor(Enum.class, ComboBoxTableCellEditor.INSTANCE);
-    table.setStriped(true);
     table.setEnableAntialiasing(true);
-    preferredScrollableViewportHeightInRows(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
-    new TableSpeedSearch(table);
+    table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
+    table.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
+    TableSpeedSearch.installOn(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
-      TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
+      TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
+      JBTable.setupCheckboxShortcut(table, 0);
     }
 
    boolean needTableHeader = false;
@@ -99,67 +96,52 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public TableModelEditor<T> preferredScrollableViewportHeightInRows(int rows) {
-    table.setPreferredScrollableViewportSize(new Dimension(200, table.getRowHeight() * rows));
-    return this;
-  }
-
   private void addDialogActions() {
-    toolbarDecorator.setEditAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        T item = table.getSelectedObject();
-        if (item != null) {
-          Function<T, T> mutator;
-          if (helper.isMutable(item)) {
-            mutator = FunctionUtil.id();
-          }
-          else {
-            final int selectedRow = table.getSelectedRow();
-            mutator = item12 -> helper.getMutable(item12, selectedRow);
-          }
-          ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+    toolbarDecorator.setEditAction(button -> {
+      T item = table.getSelectedObject();
+      if (item != null) {
+        Function<T, T> mutator;
+        if (helper.isMutable(item)) {
+          mutator = FunctionUtil.id();
         }
+        else {
+          final int selectedRow = table.getSelectedRow();
+          mutator = item12 -> helper.getMutable(item12, selectedRow);
+        }
+        ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
       }
-    }).setEditActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        T item = table.getSelectedObject();
-        return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
-      }
+    }).setEditActionUpdater(e -> {
+      T item = table.getSelectedObject();
+      return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
     });
 
-    if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
-      toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          T item = createElement();
-          ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
-            model.addRow(item1);
-            return item1;
-          }, true);
-        }
+    if (((DialogItemEditor<?>)itemEditor).isUseDialogToAdd()) {
+      toolbarDecorator.setAddAction(button -> {
+        T item = createElement();
+        ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
+          model.addRow(item1);
+          return item1;
+        }, true);
       });
     }
   }
 
-  @NotNull
-  public TableModelEditor<T> disableUpDownActions() {
+  public @NotNull TableModelEditor<T> disableUpDownActions() {
     toolbarDecorator.disableUpDownActions();
     return this;
   }
 
-  @NotNull
-  public TableModelEditor<T> enabled(boolean value) {
+  public void setShowGrid(boolean v) {
+    table.setShowGrid(v);
+  }
+
+  public @NotNull TableModelEditor<T> enabled(boolean value) {
     table.setEnabled(value);
     return this;
   }
 
-  public static abstract class DataChangedListener<T> implements TableModelListener {
+  public abstract static class DataChangedListener<T> implements TableModelListener {
     public abstract void dataChanged(@NotNull ColumnInfo<T, ?> columnInfo, int rowIndex);
 
     @Override
@@ -173,13 +155,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return this;
   }
 
-  @NotNull
-  public ListTableModel<T> getModel() {
+  public @NotNull ListTableModel<T> getModel() {
     return model;
   }
 
   public interface DialogItemEditor<T> extends CollectionItemEditor<T> {
-    void edit(@NotNull T item, @NotNull Function<T, T> mutator, boolean isAdd);
+    void edit(@NotNull T item, @NotNull Function<? super T, ? extends T> mutator, boolean isAdd);
 
     void applyEdited(@NotNull T oldItem, @NotNull T newItem);
 
@@ -192,20 +173,18 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public static <T> T cloneUsingXmlSerialization(@NotNull T oldItem, @NotNull T newItem) {
-    Element serialized = XmlSerializer.serialize(oldItem, new SkipDefaultValuesSerializationFilters());
-    if (!JDOMUtil.isEmpty(serialized)) {
+  public static <T> void cloneUsingXmlSerialization(@NotNull T oldItem, @NotNull T newItem) {
+    Element serialized = com.intellij.configurationStore.XmlSerializer.serialize(oldItem);
+    if (serialized != null) {
       XmlSerializer.deserializeInto(newItem, serialized);
     }
-    return newItem;
   }
 
   private final class MyListTableModel extends ListTableModel<T> {
     private List<T> items;
     private DataChangedListener<T> dataChangedListener;
 
-    public MyListTableModel(@NotNull ColumnInfo[] columns, @NotNull List<T> items) {
+    MyListTableModel(ColumnInfo @NotNull [] columns, @NotNull List<T> items) {
       super(columns, items);
 
       this.items = items;
@@ -244,7 +223,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   public abstract static class EditableColumnInfo<Item, Aspect> extends ColumnInfo<Item, Aspect> {
-    public EditableColumnInfo(@NotNull String name) {
+    public EditableColumnInfo(@NotNull @NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -258,52 +237,61 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public JComponent createComponent() {
-    return toolbarDecorator.addExtraAction(
-      new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          TableUtil.stopEditing(table);
+  public @NotNull JComponent createComponent() {
+    AnActionButton copyAction = new AnActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        TableUtil.stopEditing(table);
 
-          List<T> selectedItems = table.getSelectedObjects();
-          if (selectedItems.isEmpty()) {
-            return;
-          }
-
-          for (T item : selectedItems) {
-            model.addRow(itemEditor.clone(item, false));
-          }
-
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
-          TableUtil.updateScroller(table);
+        List<T> selectedItems = table.getSelectedObjects();
+        if (selectedItems.isEmpty()) {
+          return;
         }
+
+        for (T item : selectedItems) {
+          model.addRow(itemEditor.clone(item, false));
+        }
+
+        table.clearSelection();
+        TableUtil.selectRows(table, new int[]{table.getRowCount() - selectedItems.size()});
+        TableUtil.scrollSelectionToVisible(table);
       }
-    ).createPanel();
+
+      @Override
+      public void updateButton(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!table.getSelectedObjects().isEmpty());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
+    copyAction.setShortcut(CommonShortcuts.getDuplicate());
+    return toolbarDecorator.addExtraAction(copyAction).createPanel();
   }
 
-  @NotNull
   @Override
-  protected List<T> getItems() {
+  protected @NotNull List<T> getItems() {
     return model.items;
   }
 
-  public void selectItem(@NotNull final T item) {
+  public void selectItem(final @NotNull T item) {
     table.clearSelection();
 
-    final Ref<T> ref;
+    Ref<T> ref;
     if (helper.hasModifiedItems()) {
       ref = Ref.create();
-      helper.process(new TObjectObjectProcedure<T, T>() {
-        @Override
-        public boolean execute(T modified, T original) {
-          if (item == original) {
-            ref.set(modified);
-          }
-          return ref.isNull();
+      helper.process((modified, original) -> {
+        if (item == original) {
+          ref.set(modified);
         }
+        return ref.isNull();
       });
     }
     else {
@@ -313,27 +301,23 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.addSelection(ref == null || ref.isNull() ? item : ref.get());
   }
 
-  @NotNull
-  public List<T> apply() {
+  public @NotNull List<T> apply() {
     if (helper.hasModifiedItems()) {
       @SuppressWarnings("unchecked")
       final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
-      helper.process(new TObjectObjectProcedure<T, T>() {
-        @Override
-        public boolean execute(T newItem, @NotNull T oldItem) {
-          for (ColumnInfo<T, Object> column : columns) {
-            if (column.isCellEditable(newItem)) {
-              column.setValue(oldItem, column.valueOf(newItem));
-            }
+      helper.process((newItem, oldItem) -> {
+        for (ColumnInfo<T, Object> column : columns) {
+          if (column.isCellEditable(newItem)) {
+            column.setValue(oldItem, column.valueOf(newItem));
           }
-
-          if (itemEditor instanceof DialogItemEditor) {
-            ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
-          }
-
-          model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
-          return true;
         }
+
+        if (itemEditor instanceof DialogItemEditor) {
+          ((DialogItemEditor<T>)itemEditor).applyEdited(oldItem, newItem);
+        }
+
+        model.items.set(ContainerUtil.indexOfIdentity(model.items, newItem), oldItem);
+        return true;
       });
     }
 
@@ -341,18 +325,17 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return model.items;
   }
 
-  public void reset(@NotNull List<T> items) {
+  @Override
+  public void reset(@NotNull List<? extends T> items) {
     super.reset(items);
     model.setItems(new ArrayList<>(items));
   }
 
-  private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
+  private final class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
     @Override
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         TableUtil.updateScroller(table);
       }
     }
@@ -364,7 +347,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
 
     @Override
-    public boolean isEnabled(AnActionEvent e) {
+    public boolean isEnabled(@NotNull AnActionEvent e) {
       return areSelectedItemsRemovable(table.getSelectionModel());
     }
   }

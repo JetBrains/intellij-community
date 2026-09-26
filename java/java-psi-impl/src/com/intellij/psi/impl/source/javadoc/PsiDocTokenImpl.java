@@ -15,15 +15,20 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
   public PsiDocTokenImpl(@NotNull IElementType type, CharSequence text) {
@@ -45,15 +50,27 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
     }
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     if (getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       return ReferenceProvidersRegistry.getReferencesFromProviders(this);
     }
     return super.getReferences();
   }
 
+  @Override
+  public @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    if (getTokenType() == JavaDocTokenType.DOC_TAG_NAME && getText().equals("@inheritDoc")) {
+      return Collections.singleton(
+        JavaPsiImplementationHelper
+          .getInstance(getProject())
+          .getInheritDocSymbol(this)
+      );
+    }
+    return super.getOwnReferences();
+  }
+
+  @Override
   public String toString(){
     return "PsiDocToken:" + getTokenType().toString();
   }

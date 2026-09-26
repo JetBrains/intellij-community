@@ -1,41 +1,57 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.treeConflict;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.SimpleContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
 import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnContentRevision;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
@@ -43,21 +59,26 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
+import static com.intellij.openapi.ui.MessageDialogBuilder.yesNo;
+import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.findValidParentAccurately;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.function.Function.identity;
@@ -65,20 +86,20 @@ import static java.util.stream.Collectors.partitioningBy;
 import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-public class MergeFromTheirsResolver extends BackgroundTaskGroup {
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final TreeConflictDescription myDescription;
-  @NotNull private final Change myChange;
-  @NotNull private final FilePath myOldFilePath;
-  @NotNull private final FilePath myNewFilePath;
-  @NotNull private final String myOldPresentation;
-  @NotNull private final String myNewPresentation;
+public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull TreeConflictDescription myDescription;
+  private final @NotNull Change myChange;
+  private final @NotNull FilePath myOldFilePath;
+  private final @NotNull FilePath myNewFilePath;
+  private final @NotNull String myOldPresentation;
+  private final @NotNull String myNewPresentation;
   private final SvnRevisionNumber myCommittedRevision;
   private Boolean myAdd;
 
-  @NotNull private final List<Change> myTheirsChanges;
-  @NotNull private final List<Change> myTheirsBinaryChanges;
-  private List<TextFilePatch> myTextPatches;
+  private final @NotNull List<Change> myTheirsChanges;
+  private final @NotNull List<Change> myTheirsBinaryChanges;
+  private List<FilePatch> myTextPatches;
   private final VirtualFile myBaseForPatch;
   private boolean myThereAreCreations;
 
@@ -86,43 +107,43 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
                                  @NotNull TreeConflictDescription description,
                                  @NotNull Change change,
                                  SvnRevisionNumber revision) {
-    super(vcs.getProject(), TreeConflictRefreshablePanel.TITLE);
+    super(vcs.getProject(), message("progress.title.resolve.tree.conflict"));
     myVcs = vcs;
     myDescription = description;
     myChange = change;
     myCommittedRevision = revision;
-    myOldFilePath = notNull(myChange.getBeforeRevision()).getFile();
-    myNewFilePath = notNull(myChange.getAfterRevision()).getFile();
+    myOldFilePath = Objects.requireNonNull(myChange.getBeforeRevision()).getFile();
+    myNewFilePath = Objects.requireNonNull(myChange.getAfterRevision()).getFile();
     myBaseForPatch = findValidParentAccurately(myNewFilePath);
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
 
-    myTheirsChanges = newArrayList();
-    myTheirsBinaryChanges = newArrayList();
+    myTheirsChanges = new ArrayList<>();
+    myTheirsBinaryChanges = new ArrayList<>();
     myTextPatches = emptyList();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void execute() {
-    String messageKey =
-      myChange.isMoved() ? "confirmation.resolve.tree.conflict.merge.moved" : "confirmation.resolve.tree.conflict.merge.renamed";
-    String message = message(messageKey, myOldPresentation, myNewPresentation);
-    int ok = Messages.showOkCancelDialog(myVcs.getProject(), message, TreeConflictRefreshablePanel.TITLE, Messages.getQuestionIcon());
+    String message = myChange.isMoved()
+                     ? message("confirmation.resolve.tree.conflict.merge.moved", myOldPresentation, myNewPresentation)
+                     : message("confirmation.resolve.tree.conflict.merge.renamed", myOldPresentation, myNewPresentation);
+    int ok = showOkCancelDialog(myVcs.getProject(), message, message("dialog.title.resolve.tree.conflict"), Messages.getQuestionIcon());
     if (Messages.OK != ok) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    runInBackground("Getting base and theirs revisions content", indicator -> preloadContent());
+    runInBackground(message("progress.title.getting.base.and.theirs.revisions.content"), indicator -> preloadContent());
     runInEdt(this::convertTextPaths);
-    runInBackground("Creating patch for theirs changes", indicator -> createPatches());
+    runInBackground(message("progress.title.creating.patch.for.theirs.changes"), indicator -> createPatches());
     runInEdt(() -> selectPatchesInApplyPatchDialog(exception -> {
       if (exception == null) {
-        runInBackground("Accepting working state", indicator -> resolveConflicts());
+        runInBackground(message("progress.title.accepting.working.state"), indicator -> resolveConflicts());
         if (myThereAreCreations) {
-          runInBackground("Adding " + myOldPresentation + " to Subversion", indicator -> addDirectories());
+          runInBackground(message("progress.title.adding.file.to.subversion", myOldPresentation), indicator -> addDirectories());
         }
         runInEdt(this::selectBinaryFiles);
-        runInBackground("Applying binary changes", indicator -> applyBinaryChanges());
+        runInBackground(message("progress.title.applying.binary.changes"), indicator -> applyBinaryChanges());
         runInEdt(this::notifyMergeIsFinished);
       }
       else {
@@ -133,7 +154,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void notifyMergeIsFinished() {
-    VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Theirs changes merged for " + myOldPresentation, MessageType.INFO);
+    showOverChangesView(myVcs.getProject(), message("message.theirs.changes.merged.for.file", myOldPresentation), MessageType.INFO);
     showErrors();
   }
 
@@ -141,7 +162,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     new SvnTreeConflictResolver(myVcs, myOldFilePath, null).resolveSelectMineFull();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void convertTextPaths() throws VcsException {
     // revision contents is preloaded, so ok to call in awt
     List<Change> convertedChanges = convertPaths(myTheirsChanges);
@@ -149,7 +170,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myTheirsChanges.addAll(convertedChanges);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) {
     LocalChangeList changeList = ChangeListManager.getInstance(myVcs.getProject()).getChangeList(myChange);
     TreeConflictApplyTheirsPatchExecutor patchExecutor = new TreeConflictApplyTheirsPatchExecutor(myVcs, myBaseForPatch);
@@ -163,11 +184,11 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private class TreeConflictApplyTheirsPatchExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
-    @NotNull private final SvnVcs myVcs;
+    private final @NotNull SvnVcs myVcs;
     private final VirtualFile myBaseDir;
-    @NotNull private final AsyncPromise<VcsException> myPromise;
+    private final @NotNull AsyncPromise<VcsException> myPromise;
 
-    public TreeConflictApplyTheirsPatchExecutor(@NotNull SvnVcs vcs, final VirtualFile baseDir) {
+    TreeConflictApplyTheirsPatchExecutor(@NotNull SvnVcs vcs, final VirtualFile baseDir) {
       myVcs = vcs;
       myBaseDir = baseDir;
       myPromise = new AsyncPromise<>();
@@ -175,31 +196,36 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
     @Override
     public String getName() {
-      return "Apply Patch";
+      return VcsBundle.message("button.apply.patch");
     }
 
     @Override
-    public void apply(@NotNull List<FilePatch> remaining,
+    public void apply(@NotNull List<? extends FilePatch> remaining,
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
                       @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-      List<FilePatch> patches = null;
-      VcsException exception = null;
-      try {
-        patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
-      }
-      catch (IOException e) {
-        exception = new VcsException(e);
-      }
+      new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("patch.apply.progress.title")) {
+        VcsException myException = null;
 
-      if (patches != null) {
-        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null).execute(false, true);
-        myThereAreCreations =
-          patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
-      }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
+            new PatchApplier(Objects.requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
+            myThereAreCreations =
+              ContainerUtil.exists(patches, patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
+          }
+          catch (IOException e) {
+            myException = new VcsException(e);
+          }
+        }
 
-      myPromise.setResult(exception);
+        @Override
+        public void onFinished() {
+          myPromise.setResult(myException);
+        }
+      }.queue();
     }
   }
 
@@ -211,11 +237,11 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, notNull(myBaseForPatch).getPath(), false);
-    myTextPatches = map(patches, TextFilePatch.class::cast);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false);
+    myTextPatches = map(patches, patch -> patch);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void selectBinaryFiles() throws VcsException {
     List<Change> converted = convertPaths(myTheirsBinaryChanges);
     if (!converted.isEmpty()) {
@@ -232,7 +258,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void applyBinaryChanges() throws VcsException {
-    List<FilePath> dirtyPaths = newArrayList();
+    List<FilePath> dirtyPaths = new ArrayList<>();
     for (Change change : myTheirsBinaryChanges) {
       try {
         WriteAction.runAndWait(() -> {
@@ -253,8 +279,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void processBinaryChangeError(@NotNull Throwable error) throws VcsException {
-    if (error instanceof VcsException) {
-      VcsException vcsError = (VcsException)error;
+    if (error instanceof VcsException vcsError) {
       if (vcsError.isWarning()) {
         addError(vcsError);
       }
@@ -269,69 +294,54 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private static void applyBinaryChange(@NotNull Change change) throws IOException, VcsException {
     if (change.getAfterRevision() == null) {
-      FilePath path = notNull(change.getBeforeRevision()).getFile();
-      VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
+      FilePath path = Objects.requireNonNull(change.getBeforeRevision()).getFile();
+      VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path.getPath());
       if (file == null) {
-        throw new VcsException("Can not delete file: " + path.getPath(), true);
+        throw new VcsException(message("error.can.not.delete.file", path.getPath()), true);
       }
       file.delete(TreeConflictRefreshablePanel.class);
     }
     else {
       FilePath file = change.getAfterRevision().getFile();
-      String parentPath = notNull(file.getParentPath()).getPath();
+      String parentPath = Objects.requireNonNull(file.getParentPath()).getPath();
       VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
       if (parentFile == null) {
-        throw new VcsException("Can not create directory: " + parentPath, true);
+        throw new VcsException(message("error.can.not.create.directory", parentPath), true);
       }
       VirtualFile child = parentFile.createChildData(TreeConflictRefreshablePanel.class, file.getName());
       byte[] content = ((BinaryContentRevision)change.getAfterRevision()).getBinaryContent();
       // actually it was the fix for IDEA-91572 Error saving merged data: Argument 0 for @NotNull parameter of > com/intellij/
       if (content == null) {
-        throw new VcsException("Can not load Theirs content for file " + file.getPath(), true);
+        throw new VcsException(message("error.can.not.load.theirs.content.for.file", file.getPath()), true);
       }
       child.setBinaryContent(content);
     }
   }
 
-  @Nullable
-  private Collection<FilePath> chooseBinaryFiles(@NotNull List<Change> changes, @NotNull Set<FilePath> paths) {
-    String singleMessage = "";
-    if (changes.size() == 1) {
-      FileStatus status = changes.get(0).getFileStatus();
-      FilePath path = getFilePath(changes.get(0));
-      String prefix = FileStatus.DELETED.equals(status)
-                      ? "Delete"
-                      : FileStatus.ADDED.equals(status)
-                        ? "Create"
-                        : "Apply changes to";
-
-      singleMessage = prefix + "binary file " + TreeConflictRefreshablePanel.filePath(path) + " (according to theirs changes)?";
-    }
+  private @Nullable Collection<FilePath> chooseBinaryFiles(@NotNull List<Change> changes, @NotNull Set<FilePath> paths) {
     return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(
-      newArrayList(paths), TreeConflictRefreshablePanel.TITLE, "Select binary files to patch", TreeConflictRefreshablePanel.TITLE,
-      singleMessage, new VcsShowConfirmationOption() {
-        @Override
-        public Value getValue() {
-          return null;
-        }
-
-        @Override
-        public void setValue(Value value) {
-        }
-
-        @Override
-        public boolean isPersistent() {
-          return false;
-        }
-      });
+      new ArrayList<>(paths),
+      message("dialog.title.resolve.tree.conflict"), message("dialog.message.select.binary.files.to.patch"),
+      message("dialog.title.resolve.tree.conflict"), changes.size() == 1 ? getSingleBinaryFileMessage(changes.get(0)) : "",
+      VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION
+    );
   }
 
-  @CalledInAwt
-  @NotNull
-  private List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
+  private static @DialogMessage @NotNull String getSingleBinaryFileMessage(@NotNull Change change) {
+    String path = TreeConflictRefreshablePanel.filePath(getFilePath(change));
+
+    return FileStatus.DELETED.equals(change.getFileStatus())
+           ? message("dialog.message.merge.from.theirs.delete.binary.file", path)
+           : FileStatus.ADDED.equals(change.getFileStatus())
+             ? message("dialog.message.merge.from.theirs.create.binary.file", path)
+             : message("dialog.message.merge.from.theirs.modify.binary.file", path);
+  }
+
+  @RequiresEdt
+  private @NotNull List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
     initAddOption();
 
-    List<Change> result = newArrayList();
+    List<Change> result = new ArrayList<>();
     for (Change change : changes) {
       if (isUnderOldDir(change, myOldFilePath)) {
         result
@@ -341,20 +351,17 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     return result;
   }
 
-  @Nullable
-  private ContentRevision convertBeforeRevision(@Nullable ContentRevision revision) throws VcsException {
+  private @Nullable ContentRevision convertBeforeRevision(@Nullable ContentRevision revision) throws VcsException {
     return revision != null ? toSimpleRevision(revision, true) : null;
   }
 
-  @Nullable
-  private ContentRevision convertAfterRevision(@NotNull Change change, @Nullable ContentRevision revision) throws VcsException {
+  private @Nullable ContentRevision convertAfterRevision(@NotNull Change change, @Nullable ContentRevision revision) throws VcsException {
     if (revision == null) return null;
     return myAdd && (change.getBeforeRevision() == null || change.isMoved() || change.isRenamed()) ? revision : toSimpleRevision(revision,
                                                                                                                                  true);
   }
 
-  @NotNull
-  private SimpleContentRevision toSimpleRevision(@NotNull ContentRevision revision, boolean rebasePath) throws VcsException {
+  private @NotNull SimpleContentRevision toSimpleRevision(@NotNull ContentRevision revision, boolean rebasePath) throws VcsException {
     return new SimpleContentRevision(revision.getContent(),
                                      rebasePath ? rebasePath(myOldFilePath, myNewFilePath, revision.getFile()) : myNewFilePath,
                                      revision.getRevisionNumber().asString());
@@ -368,9 +375,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
            afterPath != null && isAncestor(path.getPath(), afterPath.getPath(), true);
   }
 
-  @NotNull
-  private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
-    String relativePath = notNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
+  private static @NotNull FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
+    String relativePath = Objects.requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
     return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
 
@@ -396,7 +402,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       preloadRevisionContents(change.getBeforeRevision());
       preloadRevisionContents(change.getAfterRevision());
     }
-    Map<Boolean, List<Change>> changesSplit = changes.stream().collect(partitioningBy(ChangesUtil::isBinaryChange));
+    Map<Boolean, List<Change>> changesSplit = changes.stream().collect(partitioningBy(MergeFromTheirsResolver::isBinaryChange));
     myTheirsBinaryChanges.addAll(changesSplit.get(Boolean.TRUE));
     myTheirsChanges.addAll(changesSplit.get(Boolean.FALSE));
   }
@@ -412,8 +418,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
   }
 
-  @NotNull
-  private List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
+  private @NotNull List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
     SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot());
@@ -422,14 +427,16 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     settings.CHANGE_BEFORE = String.valueOf(max);
     settings.CHANGE_AFTER = String.valueOf(min);
 
+    @SuppressWarnings("rawtypes")
+    CachingCommittedChangesProvider provider = Objects.requireNonNull(myVcs.getCachingCommittedChangesProvider());
     //noinspection unchecked
-    List<SvnChangeList> committedChanges = notNull(myVcs.getCachingCommittedChangesProvider()).getCommittedChanges(settings, location, 0);
+    List<SvnChangeList> committedChanges = provider.getCommittedChanges(settings, location, 0);
     return filter(committedChanges, changeList -> changeList.getNumber() != min);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initAddOption() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myAdd == null) {
       myAdd = getAddedFilesPlaceOption();
     }
@@ -446,40 +453,50 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       return false;
     }
     return Messages.YES ==
-           MessageDialogBuilder.yesNo(TreeConflictRefreshablePanel.TITLE, "Keep newly created file(s) in their original place?")
-             .yesText("Keep").noText("Move").doNotAsk(
-             new DialogWrapper.DoNotAskOption() {
-               @Override
-               public boolean isToBeShown() {
-                 return true;
-               }
-
-               @Override
-               public void setToBeShown(boolean value, int exitCode) {
-                 if (!value) {
-                   configuration.setKeepNewFilesAsIsForTreeConflictMerge(exitCode == 0);
+           yesNo(message("dialog.title.resolve.tree.conflict"), message("dialog.message.keep.newly.created.files.in.their.original.place"))
+             .yesText(message("button.keep"))
+             .noText(message("button.move"))
+             .doNotAsk(
+               new DoNotAskOption() {
+                 @Override
+                 public boolean isToBeShown() {
+                   return true;
                  }
-               }
 
-               @Override
-               public boolean canBeHidden() {
-                 return true;
-               }
+                 @Override
+                 public void setToBeShown(boolean value, int exitCode) {
+                   if (!value) {
+                     configuration.setKeepNewFilesAsIsForTreeConflictMerge(exitCode == 0);
+                   }
+                 }
 
-               @Override
-               public boolean shouldSaveOptionsOnCancel() {
-                 return true;
-               }
+                 @Override
+                 public boolean canBeHidden() {
+                   return true;
+                 }
 
-               @NotNull
-               @Override
-               public String getDoNotShowMessage() {
-                 return CommonBundle.message("dialog.options.do.not.ask");
-               }
-             }).show();
+                 @Override
+                 public boolean shouldSaveOptionsOnCancel() {
+                   return true;
+                 }
+
+                 @Override
+                 public @NotNull String getDoNotShowMessage() {
+                   return IdeCoreBundle.message("dialog.options.do.not.ask");
+                 }
+               })
+             .show();
   }
 
   private static boolean containAdditions(@NotNull List<Change> changes) {
-    return changes.stream().anyMatch(change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
+    return ContainerUtil.exists(changes, change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
+  }
+
+  private static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {
+    return revision instanceof BinaryContentRevision && !revision.getFile().isDirectory();
+  }
+
+  private static boolean isBinaryChange(@NotNull Change change) {
+    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
   }
 }

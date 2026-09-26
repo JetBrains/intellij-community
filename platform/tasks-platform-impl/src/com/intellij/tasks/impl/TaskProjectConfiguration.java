@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.project.Project;
+import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,9 +22,10 @@ import java.util.List;
 /**
 * @author Dmitry Avdeev
 */
+@Service(Service.Level.PROJECT)
 @State(name = "TaskProjectConfiguration")
-public class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
-
+@ApiStatus.Internal
+public final class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
   @Tag("server")
   public static class SharedServer {
     @Attribute("type")
@@ -66,20 +58,22 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
   @XCollection(elementName = "server")
   public List<SharedServer> servers = new ArrayList<>();
 
-  private final TaskManagerImpl myManager;
+  private final Project myProject;
 
   // for serialization
+  @NonInjectable
   public TaskProjectConfiguration() {
-    myManager = null;
+    myProject = null;
   }
 
-  public TaskProjectConfiguration(TaskManagerImpl manager) {
-    myManager = manager;
+  public TaskProjectConfiguration(@NotNull Project project) {
+    myProject = project;
   }
 
+  @Override
   public TaskProjectConfiguration getState() {
     LinkedHashSet<SharedServer> set = new LinkedHashSet<>(this.servers);
-    for (TaskRepository repository : myManager.getAllRepositories()) {
+    for (TaskRepository repository : TaskManager.getManager(myProject).getAllRepositories()) {
       if (repository.isShared()) {
         SharedServer server = new SharedServer();
         server.type = repository.getRepositoryType().getName();
@@ -92,6 +86,7 @@ public class TaskProjectConfiguration implements PersistentStateComponent<TaskPr
     return this;
   }
 
+  @Override
   public void loadState(@NotNull TaskProjectConfiguration state) {
     servers.clear();
     for (final SharedServer server : state.servers) {

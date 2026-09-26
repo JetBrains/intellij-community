@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,13 +7,19 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBreakStatement;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyReturnStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -35,10 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author oleg
- */
-public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public PyHighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -46,15 +35,18 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
     myTarget = target;
   }
 
-  public List<PsiElement> getTargets() {
+  @Override
+  public @NotNull List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
-  protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
+  @Override
+  protected void selectTargets(final @NotNull List<? extends PsiElement> targets, final @NotNull Consumer<? super List<? extends PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
-  public void computeUsages(final List<PsiElement> targets) {
+  @Override
+  public void computeUsages(final @NotNull List<? extends PsiElement> targets) {
     final PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PyReturnStatement)) {
       return;
@@ -68,8 +60,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
     highlightExitPoints((PyReturnStatement)parent, function);
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiElement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiElement exitStatement) {
     if (exitStatement instanceof PyReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PyFunction.class);
     }
@@ -118,12 +109,6 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
         statements.add(statement);
       }
     }
-    return statements; 
-  }
-
-  @Nullable
-  @Override
-  public String getFeatureId() {
-    return super.getFeatureId();
+    return statements;
   }
 }

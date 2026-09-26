@@ -1,0 +1,145 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.pane
+
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+sealed interface ProjectViewPaneStateEvent {
+  fun toDTO(): ProjectViewPaneStateEventDTO
+}
+
+@ApiStatus.Internal
+@Serializable
+sealed interface ProjectViewPaneStateEventDTO {
+  fun toEvent(): ProjectViewPaneStateEvent
+}
+
+@ApiStatus.Internal
+@Serializable
+sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, ProjectViewPaneStateEventDTO {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = this
+
+  override fun toEvent(): ProjectViewPaneStateEvent = this
+}
+
+@ApiStatus.Internal
+@Serializable
+data object ProjectViewActivateStateEvent : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+@Serializable
+data object ProjectViewClearStateEvent : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewSettingsStateEvent(
+    val settingsState: ProjectViewPaneSettingsStateDTO,
+) : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+data class ProjectViewChildrenLoaded(
+  val parentId: Long,
+  val children: List<ProjectViewNodeModelImpl<*>>,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewChildrenLoadedDTO(
+    parentId, children.map { it.toDTO() }
+  )
+}
+
+@ApiStatus.Internal
+data class ProjectViewNodeAdded(
+  val parentId: Long,
+  val index: Int,
+  val model: ProjectViewNodeModelImpl<*>,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeAddedDTO(
+    parentId, index, model.toDTO()
+  )
+}
+
+@Serializable
+internal data class ProjectViewChildrenLoadedDTO(
+  val parentId: Long,
+  val childrenDTO: List<ProjectViewNodeModelDTO>,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewChildrenLoaded(
+    parentId, childrenDTO.map { it.toModel() }
+  )
+}
+
+@Serializable
+internal data class ProjectViewNodeAddedDTO(
+  val parentId: Long,
+  val index: Int,
+  val modelDTO: ProjectViewNodeModelDTO,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeAdded(
+    parentId, index, modelDTO.toModel()
+  )
+}
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewChildRemoved(
+  val parentId: Long,
+  val index: Int,
+) : ProjectViewPaneStateSerializableEvent()
+
+/**
+ * A transient request to select the node identified by [nodePath] in the Swing tree on the frontend.
+ *
+ * Unlike the other events, it doesn't mutate the persistent tree state, so it's forwarded to currently
+ * connected frontends but is never part of a snapshot, and therefore not replayed to reconnecting ones.
+ */
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewSelectNodeEvent(
+  val nodePath: ProjectViewNodePathImpl,
+  val requestFocus: Boolean,
+) : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewChildrenRemoved(val parentId: Long) : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+data class ProjectViewNodeUpdated(
+  val model: ProjectViewNodeModelImpl<*>,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeUpdatedDTO(
+    model.toDTO()
+  )
+}
+
+@Serializable
+internal data class ProjectViewNodeUpdatedDTO(
+  val modelDTO: ProjectViewNodeModelDTO,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeUpdated(
+    modelDTO.toModel(),
+  )
+}
+
+@ApiStatus.Internal
+data class ProjectViewNodeMoved(
+  val parentId: Long,
+  val childModel: ProjectViewNodeModelImpl<*>,
+  val newIndex: Int,
+) : ProjectViewPaneStateEvent {
+  override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeMovedDTO(
+    parentId, childModel.toDTO(), newIndex
+  )
+}
+
+@Serializable
+internal data class ProjectViewNodeMovedDTO(
+  val parentId: Long,
+  val childModelDTO: ProjectViewNodeModelDTO,
+  val newIndex: Int,
+) : ProjectViewPaneStateEventDTO {
+  override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeMoved(
+    parentId, childModelDTO.toModel(), newIndex
+  )
+}

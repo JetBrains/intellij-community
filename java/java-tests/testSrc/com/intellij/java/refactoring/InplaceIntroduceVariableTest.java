@@ -1,48 +1,55 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
-  @Nullable
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+
+public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
   @Override
-  protected PsiExpression getExpressionFromEditor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
+
+  @Override
+  protected @Nullable PsiExpression getExpressionFromEditor() {
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      return IntroduceVariableUtil.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    }
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
       return expression;
@@ -57,138 +64,101 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testFromExpression() {
-     doTest(new Pass<AbstractInplaceIntroducer>() {
-       @Override
-       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-         type("expr");
-       }
-     });
+     doTest(_ -> type("expr"));
+  }
+
+  public void testFromSelection() {
+     doTest(_ -> type("a"));
   }
 
   public void testConflictingInnerClassName() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final boolean oldOption = settings.INSERT_INNER_CLASS_IMPORTS;
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    doTest(_ -> type("constants"));
+  }
+
+  public void testUnresolvedVariable() {
+    JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+    Boolean oldValue = instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE;
+    instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
     try {
-      settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doTest(new Pass<AbstractInplaceIntroducer>() {
-         @Override
-         public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-           type("constants");
-         }
-       });
+      doTest(_ -> type("o"));
     }
     finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = oldOption;
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = oldValue;
     }
+
   }
 
   public void testInsideInjectedString() {
-    doTestInsideInjection(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("expr");
-      }
-    });
+    doTestInsideInjection(_ -> type("expr"));
   }
 
   public void testInjectedString() {
-    doTestInsideInjection(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        bringRealEditorBack();
-        type("expr");
-      }
-    });
+    doTestInsideInjection(_ -> {
+     bringRealEditorBack();
+     type("expr");
+   });
+  }
+
+  public void testNoNameSuggested() {
+    doTest(_ -> type("xyz"));
   }
 
   public void testPlaceInsideLoopAndRename() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("expr");
-      }
-    });
+    doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
   }
   
+  public void testPlaceOutsideLoopAndRename() {
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
+  }
+
+  public void testPlaceOutsideLambdaInIfWithoutBraces() {
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
+  }
+
+  public void testPlaceOutsideLambdaInClass() {
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), _ -> type("expr"));
+  }
+
   public void testPlaceInsideLambdaBody() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("expr");
-      }
-    });
+    doTestReplaceChoice("Runnable: () -> {...}", _ -> type("expr"));
+  }
+
+  public void testPlaceInsideLambdaBody1() {
+    doTestReplaceChoice("Predicate<String>: s -> {...}", _ -> type("first"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("expr");
-      }
-    });
+    doTestReplaceChoice("Replace all 0 occurrences", "Runnable: () -> {...}", _ -> type("expr"), null);
   }
 
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("expr");
-      }
-    });
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("expr"));
   }
 
   public void testReplaceAllIntroduceFieldInLocalClass() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("smth");
-      }
-    });
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("smth"));
   }
 
   public void testReplaceAllWithScopeInvalidation() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("newType");
-      }
-    });
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("newType"));
   }
 
   public void testRanges() {
-     doTest(new Pass<AbstractInplaceIntroducer>() {
-       @Override
-       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-         type("expr");
-       }
-     });
+     doTest(_ -> type("expr"));
   }
 
   public void testFromParenthesis() {
-     doTest(new Pass<AbstractInplaceIntroducer>() {
-       @Override
-       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-         type("expr");
-       }
-     });
+     doTest(_ -> type("expr"));
   }
 
   public void testConflictWithField() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        type("height");
-      }
-    });
+    doTest(_ -> type("height"));
   }
 
   public void testConflictWithFieldNoCast() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        type("weights");
-      }
-    });
+    doTest(_ -> type("weights"));
   }
 
   public void testCast() {
@@ -200,83 +170,249 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testEscapePosition() {
-    doTestStopEditing(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-        invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-      }
-    });
+    doTestStopEditing(_ -> {
+     invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+     invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+   });
   }
 
   public void testEscapePositionIfTyped() {
-    doTestStopEditing(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        type("fooBar");
-        invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-      }
+    doTestStopEditing(_ -> {
+     type("fooBar");
+     invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+   });
+  }
+
+  public void testRestoreEditorState() {
+    doTestStopEditing(_ -> {
+      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+      invokeEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
     });
   }
 
   public void testWritable() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)");
   }
-  
+
   public void testNoWritable() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.NO_WRITE);
+    doTestReplaceChoice("Replace all occurrences but write");
   }
-  
+
   public void testAllInsertFinal() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace all 0 occurrences");
   }
-  
+
   public void testAllIncomplete() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL);
+    doTestReplaceChoice("Replace all 0 occurrences");
   }
 
   public void testStreamSimple() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
+    doTestReplaceChoice("Extract as 'map' operation");
   }
 
   public void testStreamMultiple() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN_ALL);
+    doTestReplaceChoice("Replace all 0 occurrences and extract as 'mapToInt' operation");
   }
 
   public void testStreamMultiline() {
-    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.CHAIN);
+    doTestReplaceChoice("Extract as 'map' operation");
   }
 
+  public void testDuplicateInsideLiteral() { doTestReplaceChoice("Replace all 0 occurrences"); }
+
   public void testBrokenFormattingWithInValidation() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        type("bool");
-      }
-    });
+    doTest(_ -> type("bool"));
   }
 
   public void testStopEditing() {
-    doTestStopEditing(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer introducer) {
-        invokeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
-        invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-        invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+    doTestStopEditing(_ -> {
+     invokeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
+     invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+     invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
+   });
+  }
+
+  public void testInBlock1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'else' block");
+  }
+
+  public void testSubExpression() {
+    doTestReplaceChoice("Replace 0 occurrences in 'if' block");
+  }
+
+  public void testInBlock2() {
+    doTestReplaceChoice("Replace 0 occurrences in 'if-then' block");
+  }
+
+  public void testInBlock3() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testInBlockLambda1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'lambda' block");
+  }
+
+  public void testInBlockLambda2() {
+    doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
+  }
+
+  public void testAllLValues() {
+    doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null, null,
+                        List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
+  }
+
+  public void testSelectLValueThenFilterIt() {
+    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)", null, null,
+                        List.of("Replace this occurrence only", "Replace read and write occurrences (will change semantics!)"));
+  }
+
+  public void testSelectLValueThenFilterItFinal() {
+    doTest(null);
+  }
+
+  public void testSuperExpression() {
+    try {
+      doTest(null);
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Selected expression cannot be extracted", e.getMessage());
+    }
+  }
+
+  public void testHeavilyBrokenFile() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile2() {
+    try {
+      doTest(null);
+      fail("Refactoring should not be performed");
+    } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" + JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class"), e.getMessage());
+    }
+  }
+
+  public void testHeavilyBrokenFile3() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile4() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile5() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile7() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testHeavilyBrokenFile8() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile9() {
+    doTest(null);
+  }
+
+  public void testHeavilyBrokenFile10() {
+    doTestReplaceChoice("Replace all 0 occurrences", _ -> type("xyz"));
+  }
+
+  public void testHeavilyBrokenFile11() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,
+                 "Selected block should represent an expression", () -> doTest(null));
+  }
+
+  public void testHeavilyBrokenFile12() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testTernaryInstanceOfVar() {
+    // Java 17 suggests pattern replacement which is undesired in this test
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, () -> doTest(null));
+  }
+
+  public void testAnnotationArgument() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,
+                 "Introduce Variable refactoring is not supported in the current context", () -> doTest(null));
+  }
+
+  public void testNullTypeAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testLambdaParameterAddCast() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+
+  public void testWhileTrue() {
+    doTest(null);
+  }
+
+  public void testWhilePolyadicWholeCondition() {
+    doTest(null);
+  }
+
+  public void testWhilePolyadicWholeConditionParens() {
+    doTest(null);
+  }
+
+  public void testPatternUsedInSubsequentCondition() {
+    doTest(null);
+  }
+
+  public void testNoExternalTypeAnnotations() {
+    doTest(null);
+  }
+
+  public void testNoIllegalArgumentException() {
+    doTest(null);
+  }
+
+  public void testVarWithCapture() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+      try {
+        doTest(null);
+      }
+      finally {
+        instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
+      }
+    });
+  }
+  
+  public void testVarWithCapture2() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+      try {
+        doTest(null);
+      }
+      finally {
+        instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
       }
     });
   }
 
-  private void doTestStopEditing(Pass<AbstractInplaceIntroducer> pass) {
+  public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
+
+  public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
+
+  private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final AbstractInplaceIntroducer introducer = invokeRefactoring();
-      pass.pass(introducer);
+      pass.accept(introducer);
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
@@ -288,25 +424,20 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private void doTestTypeChange(final String newType) {
-    final Pass<AbstractInplaceIntroducer> typeChanger = new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type(newType);
-      }
-    };
+  private void doTestTypeChange(String newType) {
+    final Consumer<AbstractInplaceIntroducer> typeChanger = _ -> type(newType);
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final AbstractInplaceIntroducer introducer = invokeRefactoring();
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.previousTab();
-      typeChanger.pass(introducer);
+      typeChanger.accept(introducer);
       state.gotoEnd(false);
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
@@ -315,23 +446,35 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice) {
-    doTestReplaceChoice(choice, null);
+  private void doTestReplaceChoice(String choiceText) {
+    doTestReplaceChoice(choiceText, null);
   }
 
-  private void doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice choice, Pass<AbstractInplaceIntroducer> pass) {
+  private void doTestReplaceChoice(String choiceText, Consumer<AbstractInplaceIntroducer<?, ?>> pass) {
+    doTestReplaceChoice(choiceText, null, pass, null);
+  }
+
+
+  private void doTestReplaceChoice(String choiceText,
+                                   String secondChoiceText,
+                                   Consumer<AbstractInplaceIntroducer<?, ?>> pass,
+                                   @Nullable List<String> expectedOptions) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       MyIntroduceHandler handler = createIntroduceHandler();
-      ((MyIntroduceVariableHandler)handler).setChoice(choice);
-      final AbstractInplaceIntroducer introducer = invokeRefactoring(handler);
+      UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
+      if (secondChoiceText != null) {
+        UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
+      }
+      final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       if (pass != null) {
-        pass.pass(introducer);
+        pass.accept(introducer);
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
@@ -343,7 +486,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     }
   }
 
-  private static void invokeEditorAction(String actionId) {
+  private void invokeEditorAction(String actionId) {
     EditorActionManager.getInstance().getActionHandler(actionId)
       .execute(getEditor(), getEditor().getCaretModel().getCurrentCaret(), new MapDataContext());
   }
@@ -360,12 +503,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public static class MyIntroduceVariableHandler extends IntroduceVariableHandler implements MyIntroduceHandler {
-    private JavaReplaceChoice myChoice = null;
-
-    public void setChoice(JavaReplaceChoice choice) {
-      myChoice = choice;
-    }
-
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);
@@ -374,16 +511,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     @Override
     public boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
       return super.invokeImpl(project, localVariable, editor);
-    }
-
-    @Override
-    protected JavaReplaceChoice getOccurrencesChoice() {
-      return myChoice;
-    }
-
-    @Override
-    protected boolean isInplaceAvailableInTestMode() {
-      return true;
     }
   }
 }

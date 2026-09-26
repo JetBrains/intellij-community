@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -27,32 +14,38 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SurroundAction extends AbstractGuiEditorAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.SurroundAction");
+  private static final Logger LOG = Logger.getInstance(SurroundAction.class);
 
   private final String myComponentClass;
 
-  public SurroundAction(String componentClass) {
+  public SurroundAction(@NlsSafe String componentClass) {
     final String className = componentClass.substring(componentClass.lastIndexOf('.') + 1);
     getTemplatePresentation().setText(className);
     myComponentClass = componentClass;
   }
 
-  public void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  public void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> input, final AnActionEvent e) {
     // the action is also reused as quickfix for NoScrollPaneInspection, so this code should be kept here
-    FormEditingUtil.remapToActionTargets(selection);
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     if (!editor.ensureEditable()) {
       return;
     }
@@ -133,7 +126,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer = panel;
           }
           else {
-            if (selection.size() > 0) {
+            if (!selection.isEmpty()) {
               selection.get(0).setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
             }
             if (selection.size() > 1) {
@@ -173,8 +166,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
       }, null, null);
   }
 
-  protected void update(@NotNull final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    FormEditingUtil.remapToActionTargets(selection);
+  @Override
+  protected void update(final @NotNull GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
+    List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     Palette palette = Palette.getInstance(editor.getProject());
     e.getPresentation().setEnabled(palette.getItem(myComponentClass) != null &&
@@ -184,17 +178,17 @@ public class SurroundAction extends AbstractGuiEditorAction {
                                    canWrapSelection(selection)));
   }
 
-  private boolean canWrapSelection(final ArrayList<RadComponent> selection) {
+  private boolean canWrapSelection(final List<? extends RadComponent> selection) {
     if (myComponentClass.equals(JScrollPane.class.getName())) {
       if (selection.size() > 1) return false;
-      RadComponent component = selection.get(0);
-      return component.getDelegee() instanceof Scrollable;
+      JComponent liveComponent = selection.get(0).getDelegee();
+      return liveComponent instanceof Scrollable || liveComponent instanceof JPanel;
     }
     return true;
   }
 
   private static boolean isSelectionContiguous(RadContainer selectionParent,
-                                               ArrayList<RadComponent> selection) {
+                                               List<? extends RadComponent> selection) {
     if (!selectionParent.getLayoutManager().isGrid()) {
       return false;
     }

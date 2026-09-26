@@ -17,9 +17,6 @@ package com.intellij.util.xmlb;
 
 import junit.framework.TestCase;
 
-/**
- * @author nik
- */
 public class XmlSerializerUtilTest extends TestCase {
   public void testCreateCopy() {
     BaseBean copy = XmlSerializerUtil.createCopy(new BaseBean("x", 1));

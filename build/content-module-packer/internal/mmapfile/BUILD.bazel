@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "mmapfile",
+    srcs = [
+        "mmapfile.go",
+        "mmapfile_other.go",
+        "mmapfile_unix.go",
+    ],
+    importpath = "jetbrains.com/content-module-packer/internal/mmapfile",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "mmapfile_test",
+    srcs = ["mmapfile_test.go"],
+    embed = [":mmapfile"],
+    pure = "on",
+)

@@ -1,125 +1,134 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 abstract class UndoRedo {
-  protected final UndoManagerImpl myManager;
-  protected final FileEditor myEditor;
-  protected final UndoableGroup myUndoableGroup;
+  private final @Nullable Project project;
+  private final @Nullable FileEditor editor;
+  private final @NotNull UndoRedoStacksHolder stacksHolder;
+  private final @NotNull UndoRedoStacksHolder stacksHolderReversed;
+  private final @NotNull UndoProblemReport undoProblemReport;
+  protected final @NotNull UndoableGroup undoableGroup;
+  private final UndoCapabilities undoCapabilities;
+  private final boolean isRedo;
 
-  //public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
-  //  do {
-  //    UndoRedo undoOrRedo = isUndo ? new Undo(manager, editor) : new Redo(manager, editor);
-  //    undoOrRedo.doExecute();
-  //    boolean shouldRepeat = undoOrRedo.isTransparent() && undoOrRedo.hasMoreActions();
-  //    if (!shouldRepeat) break;
-  //  }
-  //  while (true);
-  //}
-  //
-  protected UndoRedo(UndoManagerImpl manager, FileEditor editor) {
-    myManager = manager;
-    myEditor = editor;
-    myUndoableGroup = getLastAction();
+  protected UndoRedo(
+    @Nullable Project project,
+    @Nullable FileEditor editor,
+    @NotNull UndoRedoStacksHolder stacksHolder,
+    @NotNull UndoRedoStacksHolder stacksHolderReversed,
+    @NotNull UndoCapabilities undoCapabilities,
+    boolean isRedo
+  ) {
+    this.project = project;
+    this.editor = editor;
+    this.stacksHolder = stacksHolder;
+    this.stacksHolderReversed = stacksHolderReversed;
+    this.undoCapabilities = undoCapabilities;
+    this.isRedo = isRedo;
+    this.undoProblemReport = new UndoProblemReport(project, isRedo);
+    this.undoableGroup = Objects.requireNonNull(stacksHolder.getLastAction(getDocRefs()), "undo is not available");
   }
 
-  private UndoableGroup getLastAction() {
-    return getStackHolder().getLastAction(getDecRefs());
+  protected abstract @DialogTitle String getActionName();
+
+  protected abstract @DialogMessage String getActionName(String commandName);
+
+  protected abstract @Nullable EditorAndState getBeforeState();
+
+  protected abstract @Nullable EditorAndState getAfterState();
+
+  protected abstract void performAction() throws UnexpectedUndoException;
+
+  protected abstract void setBeforeState(@NotNull EditorAndState state);
+
+  boolean isGlobal() {
+    return undoableGroup.isGlobal();
   }
 
   boolean isTransparent() {
-    return myUndoableGroup.isTransparent();
+    return undoableGroup.isTransparent();
   }
 
   boolean isTemporary() {
-    return myUndoableGroup.isTemporary();
+    return undoableGroup.isTemporary();
   }
 
   boolean hasMoreActions() {
-    return getStackHolder().canBeUndoneOrRedone(getDecRefs());
+    return stacksHolder.canBeUndoneOrRedone(getDocRefs());
   }
 
-  private Set<DocumentReference> getDecRefs() {
-    return myEditor == null ? Collections.emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
-  }
-
-  protected abstract UndoRedoStacksHolder getStackHolder();
-
-  protected abstract UndoRedoStacksHolder getReverseStackHolder();
-
-  protected abstract String getActionName();
-
-  protected abstract String getActionName(String commandName);
-
-  protected abstract EditorAndState getBeforeState();
-
-  protected abstract EditorAndState getAfterState();
-
-  protected abstract void performAction();
-
-  protected abstract void setBeforeState(EditorAndState state);
-
-  public boolean execute(boolean drop, boolean disableConfirmation) {
-    if (!myUndoableGroup.isUndoable()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
-                       myUndoableGroup.getAffectedDocuments());
+  boolean execute(boolean drop, boolean disableConfirmation) {
+    if (!undoableGroup.isUndoable()) {
+      String operationName = Objects.requireNonNull(
+        CommandProcessor.getInstance().getCurrentCommandName(),
+        "performing undo/redo operation outside command context"
+      );
+      undoProblemReport.reportNonUndoable(operationName, undoableGroup.getAffectedDocuments());
       return false;
     }
 
-    Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
+    Set<DocumentReference> clashing = stacksHolder.collectClashingActions(undoableGroup);
     if (!clashing.isEmpty()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
+      undoProblemReport.reportClashingDocuments(clashing);
       return false;
     }
 
-
-    if (!disableConfirmation && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
-      if (!askUser()) return false;
+    if (!(disableConfirmation || !undoCapabilities.isConfirmationSupported()) && undoableGroup.shouldAskConfirmation(isRedo) && !isNeverAskUser()) {
+      if (!askUser()) {
+        return false;
+      }
     }
     else {
-      if (restore(getBeforeState(), true)) {
-        setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
-        return true;
+      if (editor != null) {
+        EditorAndState stateToRestore = getBeforeState();
+        FileEditorState restoredState = restore(stateToRestore, true);
+        if (restoredState != null) {
+          setBeforeState(new EditorAndState(editor, restoredState));
+          if (!isCaretMovementUndoTransparent()) {
+            return true;
+          }
+        }
       }
     }
 
-    Collection<VirtualFile> readOnlyFiles = collectReadOnlyAffectedFiles();
+    Collection<VirtualFile> readOnlyFiles = UndoDocumentUtil.collectReadOnlyAffectedFiles(undoableGroup.getActions());
     if (!readOnlyFiles.isEmpty()) {
-      final Project project = myManager.getProject();
-      final VirtualFile[] files = VfsUtil.toVirtualFileArray(readOnlyFiles);
-
       if (project == null) {
         return false;
       }
-
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
       if (operationStatus.hasReadonlyFiles()) {
         return false;
       }
     }
 
-    Collection<Document> readOnlyDocuments = collectReadOnlyDocuments();
+    Collection<Document> readOnlyDocuments = UndoDocumentUtil.collectReadOnlyDocuments(undoableGroup.getActions());
     if (!readOnlyDocuments.isEmpty()) {
       for (Document document : readOnlyDocuments) {
         document.fireReadOnlyModificationAttempt();
@@ -127,104 +136,189 @@ abstract class UndoRedo {
       return false;
     }
 
-    getStackHolder().removeFromStacks(myUndoableGroup);
+    stacksHolder.removeFromStacks(undoableGroup);
     if (!drop) {
-      getReverseStackHolder().addToStacks(myUndoableGroup);
+      stacksHolderReversed.addToStacks(undoableGroup);
     }
 
-    performAction();
+    try {
+      performAction();
+    } catch (UnexpectedUndoException e) {
+      undoProblemReport.reportException(e);
+      return false;
+    }
 
     restore(getAfterState(), false);
 
     return true;
   }
 
-  protected abstract boolean isRedo();
+  boolean isInsideStartFinishGroup(boolean isInsideStartFinishGroup) {
+    return undoableGroup.isInsideStartFinishGroup(!isRedo, isInsideStartFinishGroup);
+  }
 
-  private Collection<Document> collectReadOnlyDocuments() {
-    Collection<Document> readOnlyDocs = new ArrayList<>();
-    for (UndoableAction action : myUndoableGroup.getActions()) {
-      if (action instanceof MentionOnlyUndoableAction) continue;
+  boolean isBlockedByOtherChanges() {
+    return undoableGroup.isGlobal() &&
+           undoableGroup.isUndoable() &&
+           !stacksHolder.collectClashingActions(undoableGroup).isEmpty();
+  }
 
-      DocumentReference[] refs = action.getAffectedDocuments();
-      if (refs == null) continue;
-
-      for (DocumentReference ref : refs) {
-        if (ref instanceof DocumentReferenceByDocument) {
-          Document doc = ref.getDocument();
-          if (doc != null && !doc.isWritable()) readOnlyDocs.add(doc);
-        }
+  /**
+   * In case of global group blocking undo we can perform undo locally and separate undone changes from others stacks
+   */
+  boolean splitGlobalCommand() {
+    if (isRedo) {
+      throw new IllegalStateException("splitGlobalCommand is allowed only for Undo but current operation is Redo");
+    }
+    Collection<DocumentReference> refs = getDocRefs();
+    if (refs == null || refs.size() != 1) {
+      return false;
+    }
+    DocumentReference docRef = refs.iterator().next();
+    UndoRedoList<UndoableGroup> stack = stacksHolder.getStack(docRef);
+    if (stack.getLast() == undoableGroup) {
+      var actions = UndoDocumentUtil.separateLocalAndNonLocalActions(
+        undoableGroup.getActions(),
+        docRef
+      );
+      List<UndoableAction> localActions = actions.getFirst();
+      List<UndoableAction> nonLocalActions = actions.getSecond();
+      if (localActions.isEmpty()) {
+        return false;
       }
-    }
-    return readOnlyDocs;
-  }
-
-  private Collection<VirtualFile> collectReadOnlyAffectedFiles() {
-    Collection<VirtualFile> readOnlyFiles = new ArrayList<>();
-    for (UndoableAction action : myUndoableGroup.getActions()) {
-      if (action instanceof MentionOnlyUndoableAction) continue;
-
-      DocumentReference[] refs = action.getAffectedDocuments();
-      if (refs == null) continue;
-
-      for (DocumentReference ref : refs) {
-        VirtualFile file = ref.getFile();
-        if ((file != null) && file.isValid() && !file.isWritable()) {
-          readOnlyFiles.add(file);
-        }
+      stack.removeLast();
+      UndoableGroup replacingGroup = new UndoableGroup(
+        undoableGroup.getCommandIds(),
+        IdeBundle.message("undo.command.local.name") + undoableGroup.getCommandName(),
+        localActions, // only action that changes file locally
+        undoableGroup.getConfirmationPolicy(),
+        undoableGroup.getStateBefore(),
+        undoableGroup.getStateAfter(),
+        null,
+        undoableGroup.getCommandTimestamp(),
+        undoableGroup.isLocalHistoryActivity(),
+        undoableGroup.isTransparent(),
+        false,
+        undoableGroup.isValid()
+      );
+      stack.add(replacingGroup);
+      UndoableGroup groupWithoutLocalChanges = new UndoableGroup(
+        undoableGroup.getCommandIds(),
+        undoableGroup.getCommandName(),
+        nonLocalActions, // all action except local
+        undoableGroup.getConfirmationPolicy(),
+        undoableGroup.getStateBefore(),
+        undoableGroup.getStateAfter(),
+        null,
+        undoableGroup.getCommandTimestamp(),
+        undoableGroup.isLocalHistoryActivity(),
+        undoableGroup.isTransparent(),
+        undoableGroup.isGlobal(),
+        undoableGroup.isValid()
+      );
+      if (stacksHolder.replaceOnStacks(undoableGroup, groupWithoutLocalChanges)) {
+        replacingGroup.setOriginalContext(new UndoableGroupOriginalContext(
+          undoableGroup,
+          groupWithoutLocalChanges
+        ));
       }
+      return true;
     }
-    return readOnlyFiles;
+    return false;
   }
 
-  private void reportCannotUndo(String message, Collection<DocumentReference> problemFiles) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException(
-        message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));
+  /**
+   * If we redo group that was split before, we gather that group into global command(as it was before splitting)
+   * and recover that command on all stacks
+   */
+  void gatherGlobalCommand() {
+    if (!isRedo) {
+      throw new IllegalStateException("gatherGlobalCommand is allowed only for Redo but current operation is Undo");
     }
-    new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();
+    UndoableGroupOriginalContext context = undoableGroup.getOriginalContext();
+    if (context == null) {
+      return;
+    }
+    Collection<DocumentReference> refs = getDocRefs();
+    if (refs.size() > 1) {
+      return;
+    }
+    DocumentReference docRef = refs.iterator().next();
+    UndoRedoStacksHolder undoStacksHolder = stacksHolderReversed;
+    UndoRedoList<UndoableGroup> undoStack = undoStacksHolder.getStack(docRef);
+    if (undoStack.getLast() != undoableGroup) {
+      return;
+    }
+    boolean shouldGatherGroup = undoStacksHolder.replaceOnStacks(context.currentStackGroup(), context.originalGroup());
+    if (!shouldGatherGroup) {
+      return;
+    }
+    undoStack.removeLast();
+    undoStack.add(context.originalGroup());
   }
 
-  private boolean askUser() {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String actionText = getActionName(myUndoableGroup.getCommandName());
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+  boolean isSameUndoableGroup(@NotNull UndoRedo otherUndoRedo) {
+    return undoableGroup == otherUndoRedo.undoableGroup;
   }
 
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String message = CommonBundle.message("undo.conflicting.change.confirmation.message") + "\n" +
-                       getActionName(other.myUndoableGroup.getCommandName()) + "?";
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+    if (!undoCapabilities.isConfirmationSupported()) {
+      return true;
+    }
+    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
+                     getActionName(other.undoableGroup.getCommandName()) + "?";
+    return showDialog(message);
   }
 
-  private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
+  private boolean askUser() {
+    return showDialog(getActionName(undoableGroup.getCommandName()) + "?");
+  }
+
+  private boolean showDialog(@DialogMessage @NotNull String message) {
+    return Messages.OK == Messages.showOkCancelDialog(project, message, getActionName(), Messages.getQuestionIcon());
+  }
+
+  private static boolean isNeverAskUser() {
+    //noinspection TestOnlyProblems
+    return UndoManagerImpl.ourNeverAskUser;
+  }
+
+  private @Nullable FileEditorState restore(@Nullable EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
-    if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
-    
+    if (pair == null || editor == null || !editor.isValid() || !pair.canBeAppliedTo(editor)) {
+      return null;
+    }
+
+    FileEditorState stateToRestore = pair.getState();
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
     // not possible to restore it. For example, it's not possible to
     // restore scroll proportion if editor doesn not have scrolling any more.
-    FileEditorState currentState = myEditor.getState(FileEditorStateLevel.UNDO);
-    if (onlyIfDiffers && currentState.equals(pair.getState())) {
-      return false;
+    FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
+    if (onlyIfDiffers && currentState.equals(stateToRestore)) {
+      return null;
     }
 
-    myEditor.setState(pair.getState());
-    return true;
+    editor.setState(stateToRestore);
+    FileEditorState newState = editor.getState(FileEditorStateLevel.UNDO);
+    return newState.equals(stateToRestore) ? newState : null;
   }
 
-  public boolean isBlockedByOtherChanges() {
-    return myUndoableGroup.isGlobal() && myUndoableGroup.isUndoable() &&
-           !getStackHolder().collectClashingActions(myUndoableGroup).isEmpty();
+  private Collection<DocumentReference> getDocRefs() {
+    return editor == null ? Collections.emptySet() : UndoDocumentUtil.getDocumentReferences(editor);
+  }
+
+  @Override
+  public String toString() {
+    return (isRedo ? "Redo" : "Undo") + "{" + undoableGroup + "}";
+  }
+
+  /**
+   * Returns {@code true} if caret movement is not a separate undo step, see IJPL-28593
+   */
+  private boolean isCaretMovementUndoTransparent() {
+    return Registry.is("ide.undo.transparent.caret.movement") ||
+           AdvancedSettings.getBoolean("editor.undo.transparent.caret.movement") ||
+           !undoCapabilities.isEditorStateRestoreSupported();
   }
 }

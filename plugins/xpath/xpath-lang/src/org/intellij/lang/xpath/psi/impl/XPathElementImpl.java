@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
@@ -38,6 +37,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     super(node);
   }
 
+  @Override
   public String toString() {
     final String name = getClass().getName();
     return name.substring(name.lastIndexOf('.') + 1) + ": " + getText();
@@ -69,6 +69,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return node.getPsi();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode child = psiElement.getNode();
     assert child != null;
@@ -76,6 +77,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return getNode().getPsi();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     final ASTNode node = getNode();
 
@@ -92,6 +94,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode newNode = psiElement.getNode();
     final ASTNode myNode = getNode();
@@ -102,9 +105,9 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return newNode.getPsi();
   }
 
-  @NotNull
-  @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
-  public final ASTNode getNode() {
+  @Override
+  @SuppressWarnings({"EmptyMethod"})
+  public final @NotNull ASTNode getNode() {
     return super.getNode();
   }
 
@@ -136,15 +139,12 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathElement(this);
   }
 
   public final String getUnescapedText() {
-    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
-      // do not attempt to decode text if PsiElement is part of prefix/suffix
-      return getText();
-    }
     return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
   }
 }

@@ -1,0 +1,2 @@
+open class SecondCtorI { private constructor<caret>() }
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">private</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">SecondCtorI</span>()</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://SecondCtorI"><code><span style="color:#000000;">SecondCtorI</span></code></a><br/></div>

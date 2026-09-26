@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
@@ -11,19 +12,15 @@ import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
-/**
- * @author peter
- */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final MemberLookupHelper myHelper;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
   private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsertion;
 
-  public JavaGlobalMemberLookupElement(List<PsiMethod> overloads,
+  public JavaGlobalMemberLookupElement(List<? extends PsiMethod> overloads,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
                                        InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
@@ -41,31 +38,28 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
     myImportInsertion = importInsertion;
   }
 
-  @NotNull
   @Override
-  public PsiMember getObject() {
+  public @NotNull PsiMember getObject() {
     return myHelper.getMember();
   }
 
-  @NotNull
-  public PsiClass getContainingClass() {
-    return assertNotNull(myHelper.getContainingClass());
-  }
-
-  @NotNull
-  @Override
-  public String getLookupString() {
-    return assertNotNull(getObject().getName());
+  public @NotNull PsiClass getContainingClass() {
+    return Objects.requireNonNull(myHelper.getContainingClass());
   }
 
   @Override
-  public Set<String> getAllLookupStrings() {
+  public @NotNull String getLookupString() {
+    return Objects.requireNonNull(getObject().getName());
+  }
+
+  @Override
+  public @NotNull Set<String> getAllLookupStrings() {
     return JavaCompletionUtil.getAllLookupStrings(getObject());
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
     myHelper.renderElement(presentation, !myHelper.willBeImported(), true, PsiSubstitutor.EMPTY);
   }
 
@@ -85,7 +79,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
 
     (willBeImported() ? myImportInsertion : myQualifiedInsertion).handleInsert(context, this);

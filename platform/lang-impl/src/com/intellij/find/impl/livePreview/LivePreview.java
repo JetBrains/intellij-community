@@ -1,117 +1,168 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
-
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
-import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ObjectUtils;
+import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener {
-  private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
-  private static final Object IN_SELECTION1 = ObjectUtils.sentinel("LivePreview.IN_SELECTION1");
-  private static final Object IN_SELECTION2 = ObjectUtils.sentinel("LivePreview.IN_SELECTION2");
-  private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
+public final class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
+  private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
 
-  private boolean myListeningSelection = false;
+  private final Disposable myDisposable = Disposer.newDisposable("livePreview");
   private boolean mySuppressedUpdate = false;
-  private boolean myInSmartUpdate = false;
+  /** Set by {@link #cursorMoved} so that the general update it is paired with does not redo the occurrence highlighting. */
+  private boolean myCursorMoveOnly = false;
 
-  private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
-  private static final Object YES = ObjectUtils.sentinel("LivePreview.YES");
-  private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
+  private static final Key<Boolean> MARKER_USED = Key.create("LivePreview.MARKER_USED");
+  private static final Key<Boolean> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
 
   public static PrintStream ourTestOutput;
   private String myReplacementPreviewText;
   private static boolean NotFound;
 
-  private final Set<RangeHighlighter> myHighlighters = new HashSet<>();
+  private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  /**
+   * The occurrences that currently carry an {@link #IN_SELECTION_KEY} companion. Tracking them is what lets a selection
+   * change touch only the occurrences it can actually affect, instead of asking every match on screen.
+   */
+  private final Set<RangeHighlighter> myInSelectionHighlighters = new HashSet<>();
+  /**
+   * Coalesces the in-selection refresh, which several listeners ask for in a row over one gesture and only the last
+   * result of which is ever painted. One mouse-moved event of a drag selection asks for it five times: the drag sets
+   * the selection, {@link SearchResults#caretPositionChanged} then collapses it onto the occurrence under the caret and
+   * clears it again, each of which is a selection change, and the cursor it moved is reported twice over.
+   */
+  private final SingleEdtTaskScheduler myInSelectionUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private boolean myInSelectionUpdatePending;
   private RangeHighlighter myCursorHighlighter;
-  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<>();
+  private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
+  private final LivePreviewPresentation myPresentation;
   private Balloon myReplacementBalloon;
 
   @Override
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(@NotNull SelectionEvent e) {
+    requestInSelectionUpdate();
+  }
+
+  /**
+   * Asks for the in-selection highlighting to be brought up to date once the gesture that changed the selection is over,
+   * rather than once per change it makes along the way.
+   */
+  private void requestInSelectionUpdate() {
+    myInSelectionUpdatePending = true;
+    // Throttled, not debounced: a gesture that keeps changing the selection must still be caught up with promptly.
+    myInSelectionUpdateAlarm.request(0, this::applyPendingInSelectionUpdate);
+  }
+
+  private void applyPendingInSelectionUpdate() {
+    if (!myInSelectionUpdatePending) return;
+    myInSelectionUpdatePending = false;
     updateInSelectionHighlighters();
   }
 
-  public void inSmartUpdate() {
-    myInSmartUpdate = true;
+  /**
+   * Applies a pending {@link #requestInSelectionUpdate} right now, for when the highlighting has to be up to date
+   * before the end of the event it was requested in. Kept separate from the task the alarm runs, which must not cancel
+   * the job it is itself running under.
+   */
+  private void flushInSelectionUpdate() {
+    myInSelectionUpdateAlarm.cancel();
+    applyPendingInSelectionUpdate();
   }
 
   public static void processNotFound() {
     NotFound = true;
   }
 
+  @ApiStatus.Internal
   public interface Delegate {
-    @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
-  }
-
-  private static TextAttributes strikeout() {
-    Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
-    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
+    @NlsSafe @Nullable String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
+      throws FindManager.MalformedReplacementStringException;
   }
 
   @Override
-  public void searchResultsUpdated(SearchResults sr) {
-    final Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return;
+  public void searchResultsUpdated(@NotNull SearchResults sr) {
     if (mySuppressedUpdate) {
       mySuppressedUpdate = false;
       return;
     }
-    if (!myInSmartUpdate) {
-      removeFromEditor();
+    if (myCursorMoveOnly) {
+      // Everything this update would do has just been done by cursorMoved, which is the only thing that changed.
+      myCursorMoveOnly = false;
+      return;
     }
-
     highlightUsages();
     updateCursorHighlighting();
-    if (myInSmartUpdate) {
-      clearUnusedHightlighters();
-      myInSmartUpdate = false;
+  }
+
+  @Override
+  public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<FindResult> added) {
+    if (!isBelowMatchesLimit()) {
+      // Same call as a full update would make: past the limit nothing is highlighted at all.
+      dropHighlighters();
+      return;
     }
+    // Only the appended occurrences can need a highlighter, and none of the existing ones can have become stale, so
+    // there is nothing to look for among the occurrences already on screen. The same goes for the in-selection
+    // highlighting: neither the selection nor the cursor moves while a search streams - the cursor is only settled once
+    // the whole search is over - so the highlighters already on screen keep whatever they were given. Revisiting them
+    // per chunk would make a streamed search quadratic in the number of matches. The cursor being unsettled is also why
+    // there is no cursor highlighting to redo here.
+    List<RangeHighlighter> newHighlighters = addNewHighlighters(added);
+    myHighlighters.addAll(newHighlighters);
+    updateInSelectionHighlighters(newHighlighters);
   }
 
   private void dumpState() {
     if (ApplicationManager.getApplication().isUnitTestMode() && ourTestOutput != null) {
+      flushInSelectionUpdate(); // the dump is of the markup model, so everything owed to it has to be in place first
       dumpEditorMarkupAndSelection(ourTestOutput);
     }
   }
@@ -127,6 +178,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     Editor editor = mySearchResults.getEditor();
 
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
+    Arrays.sort(highlighters, Segment.BY_START_OFFSET_THEN_END_OFFSET);
     List<Pair<Integer, Character>> ranges = new ArrayList<>();
     for (RangeHighlighter highlighter : highlighters) {
       ranges.add(new Pair<>(highlighter.getStartOffset(), '['));
@@ -162,7 +214,8 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     for (int i = 0; i < ranges.size()-1; ++i) {
       Pair<Integer, Character> pair = ranges.get(i);
       Pair<Integer, Character> pair1 = ranges.get(i + 1);
-      dumpStream.print(pair.second + document.getText(TextRange.create(Math.max(pair.first, 0), Math.min(pair1.first, document.getTextLength() ))));
+      dumpStream.print(pair.second + document.getText(TextRange.create(Math.max(pair.first, 0),
+                                                                       Math.min(pair1.first, document.getTextLength()))));
     }
     dumpStream.println("\n--");
 
@@ -173,33 +226,43 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     for (RangeHighlighter highlighter : highlighters) {
-      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes());
+      dumpStream.println("highlighter: "+highlighter.getTextRange() + "; layer: "+highlighter.getLayer()+" : " + highlighter.getTextAttributes(editor.getColorsScheme()).getEffectType());
     }
     dumpStream.println("------------");
   }
 
-  private void clearUnusedHightlighters() {
-    Set<RangeHighlighter> unused = new HashSet<>();
-    for (RangeHighlighter highlighter : myHighlighters) {
-      if (highlighter.getUserData(MARKER_USED) == null) {
-        unused.add(highlighter);
-      } else {
-        highlighter.putUserData(MARKER_USED, null);
+  private void clearUnusedHighlighters() {
+    myHighlighters.removeIf(h -> {
+      if (h.getUserData(MARKER_USED) == null) {
+        removeHighlighterWithDependent(h);
+        return true;
       }
-    }
-    myHighlighters.removeAll(unused);
-    Project project = mySearchResults.getProject();
-    if (project != null && !project.isDisposed()) {
-      for (RangeHighlighter highlighter : unused) {
-        HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
+      else {
+        h.putUserData(MARKER_USED, null);
+        return false;
       }
+    });
+  }
+
+  private void removeHighlighterWithDependent(@NotNull RangeHighlighter highlighter) {
+    removeHighlighter(highlighter);
+    myInSelectionHighlighters.remove(highlighter);
+    RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
+    if (additionalHighlighter != null) {
+      removeHighlighter(additionalHighlighter);
     }
   }
 
   @Override
   public void cursorMoved() {
-    updateInSelectionHighlighters();
+    requestInSelectionUpdate();
     updateCursorHighlighting();
+    // SearchResults.notifyCursorMoved reports a cursor move to each listener as a cursor move and then, immediately, as
+    // a general update. Redoing the occurrence highlighting for the second of those is pure waste: a cursor move cannot
+    // change which occurrences exist, and with a whole file's matches highlighted rederiving them is the most expensive
+    // thing a caret move does. This relies on the two notifications staying adjacent, which is the only way
+    // notifyCursorMoved issues them.
+    myCursorMoveOnly = true;
   }
 
   @Override
@@ -207,151 +270,238 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     dumpState();
   }
 
-  private void updateCursorHighlighting() {
+  @ApiStatus.Internal
+  public void clearCursorHighlight() {
     hideBalloon();
-
     if (myCursorHighlighter != null) {
-      HighlightManager.getInstance(mySearchResults.getProject()).removeSegmentHighlighter(mySearchResults.getEditor(), myCursorHighlighter);
+      removeHighlighter(myCursorHighlighter);
       myCursorHighlighter = null;
     }
+  }
+
+  private void updateCursorHighlighting() {
+    clearCursorHighlight();
 
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
-      Set<RangeHighlighter> dummy = new HashSet<>();
-      Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN), dummy);
-      if (!dummy.isEmpty()) {
-        myCursorHighlighter = dummy.iterator().next();
-      }
-
+      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes(),
+                                           myPresentation.getCursorLayer());
       editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
 
-  public LivePreview(SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults, @NotNull LivePreviewPresentation presentation) {
     mySearchResults = searchResults;
+    myPresentation = presentation;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
-    myListeningSelection = true;
-    mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
+    EditorUtil.addBulkSelectionListener(mySearchResults.getEditor(), this, myDisposable);
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(EditorColorsManager.TOPIC, this);
   }
 
+  @ApiStatus.Internal
   public Delegate getDelegate() {
     return myDelegate;
   }
 
+  @ApiStatus.Internal
   public void setDelegate(Delegate delegate) {
     myDelegate = delegate;
   }
 
-
-  public void cleanUp() {
-    removeFromEditor();
+  @Override
+  public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+    highlightUsages();
+    updateCursorHighlighting();
   }
 
   public void dispose() {
-    cleanUp();
+    hideBalloon();
+
+    myInSelectionUpdatePending = false;
+    myInSelectionUpdateAlarm.dispose();
+
+    dropHighlighters();
+
+    if (myCursorHighlighter != null) {
+      removeHighlighter(myCursorHighlighter);
+    }
+    myCursorHighlighter = null;
+
+    Disposer.dispose(myDisposable);
+
     mySearchResults.removeListener(this);
   }
 
-  private void removeFromEditor() {
-    Editor editor = mySearchResults.getEditor();
-    if (myReplacementBalloon != null) {
-      myReplacementBalloon.hide();
-    }
-
-    if (editor != null) {
-
-      for (VisibleAreaListener visibleAreaListener : myVisibleAreaListenersToRemove) {
-        editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
-      }
-      myVisibleAreaListenersToRemove.clear();
-      Project project = mySearchResults.getProject();
-      if (project != null && !project.isDisposed()) {
-        for (RangeHighlighter h : myHighlighters) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, h);
-        }
-        if (myCursorHighlighter != null) {
-          HighlightManager.getInstance(project).removeSegmentHighlighter(editor, myCursorHighlighter);
-          myCursorHighlighter = null;
-        }
-      }
-      myHighlighters.clear();
-      if (myListeningSelection) {
-        editor.getSelectionModel().removeSelectionListener(this);
-        myListeningSelection = false;
-      }
-    }
-  }
-
   private void highlightUsages() {
-    if (mySearchResults.getEditor() == null) return;
-    if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
-      return;
-    for (FindResult range : mySearchResults.getOccurrences()) {
-      if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
-      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-      if (range.getLength() == 0) {
-        attributes = attributes.clone();
-        attributes.setEffectType(EffectType.BOXED);
-        attributes.setEffectColor(attributes.getBackgroundColor());
-      }
-      if (mySearchResults.isExcluded(range)) {
-        highlightRange(range, strikeout(), myHighlighters);
-      } else {
-        highlightRange(range, attributes, myHighlighters);
-      }
-    }
-    updateInSelectionHighlighters();
-    if (!myListeningSelection) {
-      mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
-      myListeningSelection = true;
-    }
-
+    // Only the in-selection tail is deferred: addNewHighlighters marks the highlighters it reused and
+    // clearUnusedHighlighters drops the ones it did not, so those two have to stay together and stay synchronous, or a
+    // chunk appended in between would be taken for a leftover of the previous search and removed.
+    List<RangeHighlighter> newHighlighters = isBelowMatchesLimit()
+                                             ? addNewHighlighters(mySearchResults.getOccurrences()) : Collections.emptyList();
+    clearUnusedHighlighters();
+    myHighlighters.addAll(newHighlighters);
+    requestInSelectionUpdate();
   }
 
+  private boolean isBelowMatchesLimit() {
+    return mySearchResults.getMatchesCount() < mySearchResults.getMatchesLimit();
+  }
+
+  private void dropHighlighters() {
+    for (RangeHighlighter h : myHighlighters) {
+      removeHighlighterWithDependent(h);
+    }
+    myHighlighters.clear();
+    myInSelectionHighlighters.clear();
+  }
+
+  private List<RangeHighlighter> addNewHighlighters(@NotNull List<FindResult> occurrences) {
+    List<RangeHighlighter> newHighlighters = new ArrayList<>(occurrences.size());
+    for (FindResult range : occurrences) {
+      if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
+      TextAttributes attributes = createAttributes(range);
+      RangeHighlighter existingHighlighter = findExistingHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
+      if (existingHighlighter == null) {
+        RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                      attributes, myPresentation.getDefaultLayer());
+        if (highlighter != null) {
+          highlighter.putUserData(SEARCH_MARKER, Boolean.TRUE);
+          newHighlighters.add(highlighter);
+        }
+      }
+      else {
+        existingHighlighter.putUserData(MARKER_USED, Boolean.TRUE);
+      }
+    }
+    return newHighlighters;
+  }
+
+  private TextAttributes createAttributes(FindResult range) {
+    if (mySearchResults.isExcluded(range)) {
+      return myPresentation.getExcludedAttributes();
+    }
+    else if (range.isEmpty()) {
+      return myPresentation.getEmptyRangeAttributes();
+    }
+    else {
+      return myPresentation.getDefaultAttributes();
+    }
+  }
+
+  private RangeHighlighter findExistingHighlighter(int startOffset, int endOffset, TextAttributes attributes) {
+    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
+    RangeHighlighter[] existing = new RangeHighlighter[1];
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, startOffset, highlighter -> {
+      if (highlighter.getUserData(SEARCH_MARKER) != null &&
+          highlighter.getStartOffset() == startOffset && highlighter.getEndOffset() == endOffset &&
+          Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
+        existing[0] = highlighter;
+        return false;
+      }
+      return true;
+    });
+    return existing[0];
+  }
+
+  /**
+   * Brings the in-selection highlighting in line with a selection that has just changed.
+   * <p>
+   * Only two kinds of occurrence can need anything done to them: the ones the new selection covers, which the markup
+   * model can hand over directly, and the ones that were covered by the previous selection, which are the ones already
+   * tracked in {@link #myInSelectionHighlighters}. Everything else is left alone, so a selection change costs what the
+   * selection covers rather than a walk over every match in the document - a mouse drag over a file with tens of
+   * thousands of matches highlighted fires this on every mouse-moved event.
+   */
   private void updateInSelectionHighlighters() {
-    if (mySearchResults.getEditor() == null) return;
-    final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
 
-    final HashSet<RangeHighlighter> toRemove = new HashSet<>();
-    Set<RangeHighlighter> toAdd = new HashSet<>();
-    for (RangeHighlighter highlighter : myHighlighters) {
-      if (!highlighter.isValid()) continue;
-      boolean intersectsWithSelection = false;
-      for (int i = 0; i < starts.length; ++i) {
-        TextRange selectionRange = new TextRange(starts[i], ends[i]);
-        intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
-                                  selectionRange.getEndOffset() != highlighter.getStartOffset() &&
-                                  highlighter.getEndOffset() != selectionRange.getStartOffset();
-        if (intersectsWithSelection) break;
-      }
-
-      final Object userData = highlighter.getUserData(IN_SELECTION_KEY);
-      if (userData != null) {
-        if (!intersectsWithSelection) {
-          if (userData == IN_SELECTION2) {
-            HighlightManager.getInstance(mySearchResults.getProject()).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
-            toRemove.add(highlighter);
-          } else {
-            highlighter.putUserData(IN_SELECTION_KEY, null);
-          }
+    // Collected rather than acted on inside the processor: that runs under the markup model lock, which forbids both
+    // touching the model and doing any real work.
+    Set<RangeHighlighter> covered = new HashSet<>();
+    for (int i = 0; i < starts.length; ++i) {
+      int selectionStart = starts[i];
+      int selectionEnd = ends[i];
+      markupModel.processRangeHighlightersOverlappingWith(selectionStart, selectionEnd, highlighter -> {
+        if (highlighter.getUserData(SEARCH_MARKER) != null && isInSelection(highlighter, cursor, selectionStart, selectionEnd)) {
+          covered.add(highlighter);
         }
-      } else if (intersectsWithSelection) {
-        TextRange cursor = mySearchResults.getCursor();
-        if (cursor != null && highlighter.getStartOffset() == cursor.getStartOffset() &&
-            highlighter.getEndOffset() == cursor.getEndOffset()) continue;
-        final RangeHighlighter toAnnotate = highlightRange(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                           new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN), toAdd);
-        highlighter.putUserData(IN_SELECTION_KEY, IN_SELECTION1);
-        toAnnotate.putUserData(IN_SELECTION_KEY, IN_SELECTION2);
+        return true;
+      });
+    }
+
+    // Over a copy: dropping the highlighting writes back to the tracking set.
+    for (RangeHighlighter highlighter : new ArrayList<>(myInSelectionHighlighters)) {
+      if (!covered.contains(highlighter)) {
+        dropInSelectionHighlighting(highlighter);
       }
     }
-    myHighlighters.removeAll(toRemove);
-    myHighlighters.addAll(toAdd);
+    for (RangeHighlighter highlighter : covered) {
+      addInSelectionHighlighting(highlighter);
+    }
+  }
+
+  /**
+   * The same update for a set of occurrences known up front, which is what a still running search appends. The
+   * selection cannot have changed under a search - it is the occurrences that are new - so the ones already on screen
+   * keep whatever they were given.
+   */
+  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
+    SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+    int[] starts = selectionModel.getBlockSelectionStarts();
+    int[] ends = selectionModel.getBlockSelectionEnds();
+    TextRange cursor = mySearchResults.getCursor();
+
+    for (RangeHighlighter highlighter : highlighters) {
+      if (!highlighter.isValid()) continue;
+      boolean needsAdditionalHighlighting = false;
+      for (int i = 0; i < starts.length && !needsAdditionalHighlighting; ++i) {
+        needsAdditionalHighlighting = isInSelection(highlighter, cursor, starts[i], ends[i]);
+      }
+      if (needsAdditionalHighlighting) {
+        addInSelectionHighlighting(highlighter);
+      }
+      else {
+        dropInSelectionHighlighting(highlighter);
+      }
+    }
+  }
+
+  /**
+   * Whether an occurrence lies inside one selection range and so has to be shown as selected. The cursor is shown as
+   * the cursor instead, and an occurrence that merely touches the edge of the selection is not inside it.
+   */
+  private static boolean isInSelection(@NotNull RangeHighlighter highlighter,
+                                       @Nullable TextRange cursor,
+                                       int selectionStart,
+                                       int selectionEnd) {
+    int start = highlighter.getStartOffset();
+    int end = highlighter.getEndOffset();
+    if (cursor != null && start == cursor.getStartOffset() && end == cursor.getEndOffset()) return false;
+    return Math.max(selectionStart, start) <= Math.min(selectionEnd, end) && selectionEnd != start && end != selectionStart;
+  }
+
+  private void addInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    if (highlighter.getUserData(IN_SELECTION_KEY) != null) return;
+    RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
+                                                            myPresentation.getSelectionAttributes(),
+                                                            myPresentation.getDefaultLayer());
+    if (additionalHighlighter == null) return; // the project is gone; nothing to track and nothing to remove later
+    highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
+    myInSelectionHighlighters.add(highlighter);
+  }
+
+  private void dropInSelectionHighlighting(@NotNull RangeHighlighter highlighter) {
+    RangeHighlighter additionalHighlighter = highlighter.getUserData(IN_SELECTION_KEY);
+    myInSelectionHighlighters.remove(highlighter);
+    if (additionalHighlighter == null) return;
+    removeHighlighter(additionalHighlighter);
+    highlighter.putUserData(IN_SELECTION_KEY, null);
   }
 
   private void showReplacementPreview() {
@@ -371,32 +521,20 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       if (replacementPreviewText == null) {
         return;//malformed replacement string
       }
-      if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
-        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
-      }
-      else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
+      if (!replacementPreviewText.equals(findModel.getStringToReplace()) ||
+          Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
         showBalloon(editor, replacementPreviewText);
       }
     }
   }
 
-  private void showBalloon(Editor editor, String replacementPreviewText) {
+  private void showBalloon(Editor editor, @NotNull @NlsSafe String replacementPreviewText) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myReplacementPreviewText = replacementPreviewText;
       return;
     }
 
-    ReplacementView replacementView = new ReplacementView(replacementPreviewText);
-
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
-    balloonBuilder.setFadeoutTime(0);
-    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-    balloonBuilder.setAnimationCycle(0);
-    balloonBuilder.setHideOnClickOutside(false);
-    balloonBuilder.setHideOnKeyOutside(false);
-    balloonBuilder.setHideOnAction(false);
-    balloonBuilder.setCloseButtonEnabled(true);
-    myReplacementBalloon = balloonBuilder.createBalloon();
+    myReplacementBalloon = UsagePreviewPanel.createPreviewBalloon(UsagePreviewPanel.createPreviewHtml(replacementPreviewText));
     EditorUtil.disposeWithEditor(editor, myReplacementBalloon);
     myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
@@ -411,82 +549,43 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       myReplacementBalloon.hide();
       myReplacementBalloon = null;
     }
+
+    removeVisibleAreaListener();
   }
 
-  @NotNull
-  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
-    if (myInSmartUpdate) {
-      for (RangeHighlighter highlighter : myHighlighters) {
-        if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
-          if (attributes.equals(highlighter.getTextAttributes())) {
-            highlighter.putUserData(MARKER_USED, YES);
-            if (highlighters != myHighlighters) {
-              highlighters.add(highlighter);
-            }
-            return highlighter;
-          }
-        }
-      }
+  private void removeVisibleAreaListener() {
+    if (myVisibleAreaListener != null) {
+      mySearchResults.getEditor().getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+      myVisibleAreaListener = null;
     }
-    final RangeHighlighter highlighter = doHightlightRange(textRange, attributes, highlighters);
-    if (myInSmartUpdate) {
-      highlighter.putUserData(MARKER_USED, YES);
-    }
+  }
+
+  private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes, int layer) {
+    Project project = mySearchResults.getProject();
+    if (project.isDisposed()) return null;
+    var markupModel = mySearchResults.getEditor().getMarkupModel();
+    var highlighter = markupModel.addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    if (highlighter instanceof RangeHighlighterEx ex) ex.setVisibleIfFolded(true);
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
-    HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
-
-    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
-
-    final RangeHighlighter[] candidate = new RangeHighlighter[1];
-
-    boolean notFound = markupModel.processRangeHighlightersOverlappingWith(
-      textRange.getStartOffset(), textRange.getEndOffset(),
-      highlighter -> {
-        TextAttributes textAttributes =
-          highlighter.getTextAttributes();
-        if (highlighter.getUserData(SEARCH_MARKER) != null &&
-            textAttributes != null &&
-            textAttributes.equals(attributes) &&
-            highlighter.getStartOffset() == textRange.getStartOffset() &&
-            highlighter.getEndOffset() == textRange.getEndOffset()) {
-          candidate[0] = highlighter;
-          return false;
-        }
-        return true;
-      });
-
-    if (!notFound && highlighters.contains(candidate[0])) {
-      return candidate[0];
-    }
-    final ArrayList<RangeHighlighter> dummy = new ArrayList<>();
-    highlightManager.addRangeHighlight(mySearchResults.getEditor(),
-                                       textRange.getStartOffset(),
-                                       textRange.getEndOffset(),
-                                       attributes,
-                                       false,
-                                       dummy);
-    final RangeHighlighter h = dummy.get(0);
-    highlighters.add(h);
-    h.putUserData(SEARCH_MARKER, YES);
-    if (h instanceof RangeHighlighterEx) ((RangeHighlighterEx)h).setVisibleIfFolded(true);
-    return h;
+  private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
+    Project project = mySearchResults.getProject();
+    if (project.isDisposed()) return;
+    mySearchResults.getEditor().getMarkupModel().removeHighlighter(highlighter);
   }
 
-
-  private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
+  private final class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
-    public ReplacementBalloonPositionTracker(Editor editor) {
+    ReplacementBalloonPositionTracker(Editor editor) {
       super(editor.getContentComponent());
       myEditor = editor;
 
     }
 
     @Override
-    public RelativePoint recalculateLocation(final Balloon object) {
+    public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
       FindResult cursor = mySearchResults.getCursor();
       if (cursor == null) return null;
       final TextRange cur = cursor;
@@ -494,41 +593,30 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       int endOffset = cur.getEndOffset();
 
       if (endOffset > myEditor.getDocument().getTextLength()) {
-        if (!object.isDisposed()) {
-          requestBalloonHiding(object);
+        if (!balloon.isDisposed()) {
+          requestBalloonHiding(balloon);
         }
         return null;
       }
       if (!SearchResults.insideVisibleArea(myEditor, cur)) {
-        requestBalloonHiding(object);
+        requestBalloonHiding(balloon);
 
-        VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
-          @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
-            if (SearchResults.insideVisibleArea(myEditor, cur)) {
-              showReplacementPreview();
-              final VisibleAreaListener visibleAreaListener = this;
-              final boolean remove = myVisibleAreaListenersToRemove.remove(visibleAreaListener);
-              if (remove) {
-                myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
-              }
-            }
-          }
+        removeVisibleAreaListener();
+        myVisibleAreaListener = e -> {
+          if (SearchResults.insideVisibleArea(myEditor, cur)) showReplacementPreview();
         };
-        myEditor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
-        myVisibleAreaListenersToRemove.add(visibleAreaListener);
-
+        myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
       }
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y + myEditor.getLineHeight());
+      Point point = new Point((startPoint.x + endPoint.x)/2, endPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }
   }
 
-  private static void requestBalloonHiding(final Balloon object) {
-    ApplicationManager.getApplication().invokeLater(() -> object.hide());
+  private static void requestBalloonHiding(Balloon balloon) {
+    ApplicationManager.getApplication().invokeLater(() -> balloon.hide());
   }
 }

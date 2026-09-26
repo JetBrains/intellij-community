@@ -1,0 +1,85 @@
+name: IDE Build and Upload
+
+on:
+  workflow_call:
+    inputs:
+      product:
+        description: 'a product, available options: intellij_idea, pycharm'
+        type: string
+        required: true
+      artifacts_dir:
+        description: 'artifacts directory'
+        type: string
+        required: true
+      system_properties:
+        default: ''
+        description: 'any custom system properties'
+        type: string
+        required: false
+      upload_artifacts:
+        default: true
+        description: 'whether to make artifacts available for download'
+        type: boolean
+
+jobs:
+  distributions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: ./.github/actions/build_ide
+        with:
+          product: ${{inputs.product}}
+          system_properties: ${{inputs.system_properties}}
+      - name: upload-linux-x64
+        uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
+        with:
+          os: linux
+          suffix: .tar.gz
+          artifacts_dir: ${{inputs.artifacts_dir}}
+      - name: upload-windows-x64
+        uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
+        with:
+          os: windows
+          suffix: .exe
+          artifacts_dir: ${{inputs.artifacts_dir}}
+      - name: upload-mac-aarch64
+        uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
+        with:
+          os: mac
+          suffix: -aarch64.sit
+          artifacts_dir: ${{inputs.artifacts_dir}}
+      - name: Upload .dmg build scripts
+        uses: actions/upload-artifact@v6.0.0
+        if: ${{inputs.upload_artifacts}}
+        with:
+          name: dmg-build-scripts
+          if-no-files-found: 'error'
+          retention-days: 1
+          path: ${{inputs.artifacts_dir}}/macos-dmg-build/
+  dmg:
+    runs-on: macos-latest
+    needs: distributions
+    if: ${{inputs.upload_artifacts}}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: Download .dmg build scripts
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: dmg-build-scripts
+      - name: Download aarch64.sit
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: mac-aarch64.sit-unsigned
+      - name: Build aarch64.dmg
+        shell: bash
+        # language=bash
+        run: /bin/bash ./build.sh
+      - name: Upload .dmg
+        uses: ./.github/actions/upload_ide
+        with:
+          os: mac
+          suffix: -aarch64.dmg
+          artifacts_dir: .

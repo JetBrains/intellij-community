@@ -1,102 +1,62 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
-import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- * @since 3/15/13 10:02 PM
- */
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.externalSystemTaskStarted;
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskId.ExecuteTask;
+
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  @NotNull private final List<String> myTasksToExecute;
-  @Nullable private final String myVmOptions;
-  @Nullable private String myArguments;
-  @Nullable private final String myJvmAgentSetup;
+  private final @NotNull List<String> myTasksToExecute;
+  private final @Nullable String myVmOptions;
+  private @Nullable String myArguments;
+  private final @Nullable String myJvmParametersSetup;
   private final boolean myPassParentEnvs;
   private final Map<String, String> myEnv;
+  private final @NotNull ExternalSystemRunConfiguration myConfiguration;
 
   public ExternalSystemExecuteTaskTask(@NotNull Project project,
                                        @NotNull ExternalSystemTaskExecutionSettings settings,
-                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
+                                       @Nullable String jvmParametersSetup,
+                                       @NotNull ExternalSystemRunConfiguration configuration) throws IllegalArgumentException {
     super(settings.getExternalSystemId(), ExternalSystemTaskType.EXECUTE_TASK, project, settings.getExternalProjectPath());
-    myTasksToExecute = ContainerUtilRt.newArrayList(settings.getTaskNames());
+    myTasksToExecute = new ArrayList<>(settings.getTaskNames());
     myVmOptions = settings.getVmOptions();
     myArguments = settings.getScriptParameters();
     myPassParentEnvs = settings.isPassParentEnvs();
     myEnv = settings.getEnv();
-    myJvmAgentSetup = jvmAgentSetup;
+    myJvmParametersSetup = jvmParametersSetup;
+    myConfiguration = configuration;
+
+    configuration.copyUserDataTo(this);
   }
 
-  /**
-   * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
-   */
-  public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
-                                       @NotNull Project project,
-                                       @NotNull List<ExternalTaskPojo> tasksToExecute,
-                                       @Nullable String vmOptions,
-                                       @Nullable String arguments,
-                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
-    super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
-    myTasksToExecute = ContainerUtil.map(tasksToExecute, ExternalTaskPojo::getName);
-    myVmOptions = vmOptions;
-    myArguments = arguments;
-    myJvmAgentSetup = jvmAgentSetup;
-    myPassParentEnvs = true;
-    myEnv = Collections.emptyMap();
-  }
-
-  @NotNull
-  public List<String> getTasksToExecute() {
+  public @NotNull List<String> getTasksToExecute() {
     return myTasksToExecute;
   }
 
-  @Nullable
-  public String getVmOptions() {
+  public @Nullable String getVmOptions() {
     return myVmOptions;
   }
 
-  @Nullable
-  public String getArguments() {
+  public @Nullable String getArguments() {
     return myArguments;
   }
 
@@ -104,83 +64,69 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
   }
 
-  @Deprecated
-  @NotNull
-  private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
-    if (tasks.isEmpty()) {
-      throw new IllegalArgumentException("Can't execute external tasks. Reason: given tasks list is empty");
-    }
-    String result = null;
-    for (ExternalTaskPojo task : tasks) {
-      String path = task.getLinkedExternalProjectPath();
-      if (result == null) {
-        result = path;
-      }
-      else if (!result.equals(path)) {
-        throw new IllegalArgumentException(String.format(
-          "Can't execute given external system tasks. Reason: expected that all of them belong to the same external project " +
-          "but they are not (at least two different projects detected - '%s' and '%s'). Tasks: %s",
-          result,
-          task.getLinkedExternalProjectPath(),
-          tasks
-        ));
-      }
-    }
-    assert result != null;
-    return result;
-  }
-
-  @SuppressWarnings("unchecked")
   @Override
   protected void doExecute() throws Exception {
-    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
-    ExternalSystemTaskId id = getId();
-    String projectPath = getExternalProjectPath();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
 
-    ExternalSystemExecutionSettings settings;
-    RemoteExternalSystemTaskManager taskManager;
-    try {
-      progressNotificationManager.onStart(id, projectPath);
+    var progressNotificationManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
+    var progressNotificationListener = wrapWithListener(progressNotificationManager);
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
+    }
 
-      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-      settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
-                                                            projectPath,
-                                                            getExternalSystemId());
-      KeyFMap keyFMap = getUserMap();
-      for (Key key : keyFMap.getKeys()) {
-        settings.putUserData(key, keyFMap.get(key));
+    var settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId)
+      .withVmOptions(parseCmdParameters(myVmOptions))
+      .withArguments(parseCmdParameters(myArguments))
+      .withEnvironmentVariables(myEnv)
+      .passParentEnvs(myPassParentEnvs);
+
+    settings.setTasks(myTasksToExecute);
+    settings.setJvmParameters(myJvmParametersSetup);
+
+    putUserDataTo(settings);
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      if (environmentConfigurationProvider == null) {
+        environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myConfiguration, project);
       }
-
-      RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), projectPath, getExternalSystemId());
-      taskManager = facade.getTaskManager();
-      final List<String> vmOptions = parseCmdParameters(myVmOptions);
-      final List<String> arguments = parseCmdParameters(myArguments);
-      settings
-        .withVmOptions(vmOptions)
-        .withArguments(arguments)
-        .withEnvironmentVariables(myEnv)
-        .passParentEnvs(myPassParentEnvs);
     }
-    catch (Exception e) {
-      progressNotificationManager.onFailure(id, e);
-      progressNotificationManager.onEnd(id);
-      throw e;
-    }
+    ExternalSystemExecutionAware.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
 
-    taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmAgentSetup);
+    executeTasks(settings);
+  }
+
+  private void executeTasks(@NotNull ExternalSystemExecutionSettings settings) throws Exception {
+    var id = getId();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
+
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(settings);
+    var activity = externalSystemTaskStarted(project, projectSystemId, ExecuteTask, environmentConfigurationProvider);
+    try {
+      var manager = ExternalSystemFacadeManager.getInstance();
+      var facade = manager.getFacade(project, projectPath, projectSystemId);
+      var taskManager = facade.getTaskManager();
+      //noinspection unchecked
+      taskManager.executeTasks(projectPath, id, settings);
+    }
+    finally {
+      activity.finished();
+    }
   }
 
   @Override
   protected boolean doCancel() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
-    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-
+    var manager = ExternalSystemFacadeManager.getInstance();
+    var facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
+    var taskManager = facade.getTaskManager();
     return taskManager.cancelTask(getId());
   }
 
   private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
-    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine, false, true) : ContainerUtil.newArrayList();
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine, false, true) : new ArrayList<>();
   }
 }

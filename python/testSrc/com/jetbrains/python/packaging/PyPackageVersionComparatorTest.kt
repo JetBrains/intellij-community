@@ -1,9 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
+import com.intellij.python.requirements.PyPackageVersion
+import com.intellij.python.requirements.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionNormalizer
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.fixtures.PyTestCase
 import one.util.streamex.StreamEx
 
+@Subsystems.PackagingRequirements
+@Layers.Functional
 class PyPackageVersionComparatorTest : PyTestCase() {
 
   fun testEpoch() {
@@ -42,6 +49,10 @@ class PyPackageVersionComparatorTest : PyTestCase() {
     check(normalize("1.2a1"),
           normalize("1.2a1"),
           normalize("1.2a2"))
+
+    check(normalize("1.2a2"),
+          normalize("1.2a2"),
+          normalize("1.2a10"))
   }
 
   fun testDev() {

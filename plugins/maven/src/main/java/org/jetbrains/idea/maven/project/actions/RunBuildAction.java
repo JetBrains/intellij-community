@@ -32,7 +32,7 @@ import java.util.List;
 
 public class RunBuildAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && checkOrPerform(e.getDataContext(), false);
   }
 
@@ -46,14 +46,14 @@ public class RunBuildAction extends MavenAction {
     if (goals == null || goals.isEmpty()) return false;
 
     final Project project = MavenActionUtil.getProject(context);
-    if(project == null) return false;
+    if (project == null) return false;
     final MavenProject mavenProject = MavenActionUtil.getMavenProject(context);
     if (mavenProject == null) return false;
 
     if (!perform) return true;
 
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
-    if(projectsManager == null) return false;
+    if (projectsManager == null) return false;
     MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
     final MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                    mavenProject.getDirectory(),
@@ -61,8 +61,8 @@ public class RunBuildAction extends MavenAction {
                                                                    goals,
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());
-    MavenRunConfigurationType.runConfiguration(project, params, null);
 
+    MavenRunConfigurationType.runConfiguration(project, params, null);
     return true;
   }
 }

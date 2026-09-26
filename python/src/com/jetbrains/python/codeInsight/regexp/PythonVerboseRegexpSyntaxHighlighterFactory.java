@@ -17,7 +17,7 @@ package com.jetbrains.python.codeInsight.regexp;
 
 import org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory;
 
-public class PythonVerboseRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
+public final class PythonVerboseRegexpSyntaxHighlighterFactory extends RegExpSyntaxHighlighterFactory {
   public PythonVerboseRegexpSyntaxHighlighterFactory() {
     super(PythonVerboseRegexpLanguage.INSTANCE);
   }

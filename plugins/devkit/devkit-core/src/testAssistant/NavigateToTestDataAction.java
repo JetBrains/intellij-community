@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -23,120 +9,152 @@ import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.Parameterized;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UClassLiteralExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+public final class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = e.getProject();
-    List<String> fileNames = findTestDataFiles(dataContext);
-    if (fileNames == null || fileNames.isEmpty()) {
-      String testData = guessTestData(dataContext);
-      if (testData == null) {
-        String message = "Cannot find testdata files for class";
-        final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
-        Notifications.Bus.notify(notification, project);
-        return;
-      }
-      fileNames = Collections.singletonList(testData);
-    }
-
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
-
-    TestDataNavigationHandler.navigate(point, fileNames, project);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
-  @Nullable
-  static List<String> findTestDataFiles(@NotNull DataContext context) {
-    final PsiMethod method = findTargetMethod(context);
-    if (method == null) {
-      return null;
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = e.getProject();
+    if (project == null) return;
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
+                                popupFactory.guessBestPopupLocation(dataContext);
+
+    List<TestDataFile> fileNames = findTestDataFiles(dataContext, project, true);
+    if (fileNames.isEmpty()) {
+      Notification notification = new Notification(
+        "testdata",
+        DevKitBundle.message("testdata.notification.no.test.datafiles.title"),
+        DevKitBundle.message("testdata.notification.no.test.datafiles.content"),
+        NotificationType.INFORMATION);
+      Notifications.Bus.notify(notification, project);
+    } else {
+      TestDataNavigationHandler.navigate(point, fileNames, project);
     }
-    final String name = method.getName();
+  }
+
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      List<TestDataFile> fileNames = tryFindTestDataFiles(dataContext);
+      if (fileNames.isEmpty() && shouldGuess) {
+        //noinspection RedundantTypeArguments
+        return ReadAction.<List<TestDataFile>, RuntimeException>compute(() -> {
+          PsiMethod method = findTargetMethod(dataContext);
+          return method == null ? Collections.emptyList() : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
+        });
+      }
+      return fileNames;
+    }, DevKitBundle.message("testdata.searching"), true, project);
+  }
+
+  private static @NotNull List<TestDataFile> tryFindTestDataFiles(@NotNull DataContext context) {
+    final PsiMethod method = ReadAction.compute(() -> findTargetMethod(context));
+    if (method == null) {
+      PsiClass parametrizedTestClass = ReadAction.compute(() -> findParametrizedClass(context));
+      return parametrizedTestClass == null ? Collections.emptyList() : TestDataGuessByTestDiscoveryUtil.collectTestDataByExistingFiles(parametrizedTestClass);
+    }
+    final String name = ReadAction.compute(() -> method.getName());
 
     if (name.startsWith("test")) {
-      String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
-      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name.substring(4));
+      String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
+      final TestDataReferenceCollector collector =
+        new TestDataReferenceCollector(testDataPath, TestDataGuessByExistingFilesUtil.getTestName(name));
       return collector.collectTestDataReferences(method);
     }
 
-    final Location<?> location = Location.DATA_KEY.getData(context);
-    if (location instanceof PsiMemberParameterizedLocation) {
-      PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
-      if (containingClass == null) {
-        containingClass = UastContextKt.getUastParentOfType(location.getPsiElement(), UClass.class, false);
-      }
-      if (containingClass != null) {
-        final UAnnotation annotation =
-          UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
-        if (annotation != null) {
-          UExpression value = annotation.findAttributeValue("value");
-          if (value instanceof UClassLiteralExpression) {
-            UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
-            PsiType type = classLiteralExpression.getType();
-            if (type != null && type.equalsToText(Parameterized.class.getName())) {
-              final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
-              final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-              final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-              return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, containingClass);
-            }
-          }
-        }
-      }
-    }
+    List<TestDataFile> result = ReadAction.compute(() -> {
+     final Location<?> location = Location.DATA_KEY.getData(context);
+     if (location instanceof PsiMemberParameterizedLocation) {
+       PsiClass parametrizedTestClass = findParametrizedClass(context);
+       if (parametrizedTestClass != null) {
+         String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
+         String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+         String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+         return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
+       }
+     }
+      return Collections.emptyList();
+    });
 
-    return null;
+    if (result.isEmpty()) {
+      String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
+      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name);
+      return collector.collectTestDataReferences(method);
+    } else {
+      return result;
+    }
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(findTargetMethod(e.getDataContext()) != null || findParametrizedClass(e.getDataContext()) != null);
   }
 
-  @Nullable
-  private static PsiMethod findTargetMethod(@NotNull DataContext context) {
+  static @Nullable PsiClass findParametrizedClass(@NotNull DataContext context) {
+    PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
+    UClass uClass = UastContextKt.getUastParentOfType(element, UClass.class);
+    if (uClass == null) return null;
+    final UAnnotation annotation = UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(uClass.getJavaPsi(), Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
+    if (annotation == null) return null;
+    UExpression value = annotation.findAttributeValue("value");
+    if (!(value instanceof UClassLiteralExpression classLiteralExpression)) return null;
+    PsiType type = classLiteralExpression.getType();
+    return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
+  }
+
+  private static @Nullable PsiMethod findTargetMethod(@NotNull DataContext context) {
     final Location<?> location = Location.DATA_KEY.getData(context);
     if (location != null) {
-      final PsiElement element = location.getPsiElement();
-      PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
+      UMethod method = UastContextKt.getUastParentOfType(location.getPsiElement(), UMethod.class, false);
       if (method != null) {
-        return method;
+        return method.getJavaPsi();
       }
     }
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
-      return UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      UMethod method = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      return method != null ? method.getJavaPsi() : null;
     }
 
     return null;
-  }
-
-  private static String guessTestData(DataContext context) {
-    PsiMethod method = findTargetMethod(context);
-    return method == null ? null : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
   }
 }

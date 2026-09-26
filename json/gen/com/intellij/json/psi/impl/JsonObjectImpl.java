@@ -13,14 +13,16 @@ import com.intellij.navigation.ItemPresentation;
 
 public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
 
-  public JsonObjectImpl(ASTNode node) {
+  public JsonObjectImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitObject(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
@@ -32,8 +34,8 @@ public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
   }
 
-  @Nullable
-  public ItemPresentation getPresentation() {
+  @Override
+  public @Nullable ItemPresentation getPresentation() {
     return JsonPsiImplUtils.getPresentation(this);
   }
 

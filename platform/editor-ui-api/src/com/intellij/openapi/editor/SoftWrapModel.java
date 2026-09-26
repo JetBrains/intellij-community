@@ -65,9 +65,6 @@ import java.util.List;
  * (note that {@code "test6"} at example below is aligned to the parameters start).
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- *
- * @author Denis Zhdanov
- * @since Jun 8, 2010 3:15:18 PM
  */
 public interface SoftWrapModel {
 

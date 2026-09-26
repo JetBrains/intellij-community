@@ -1,0 +1,2 @@
+/// [#equals(Object]
+class C{}

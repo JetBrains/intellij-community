@@ -15,7 +15,7 @@
  */
 package com.intellij.cyclicDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 
@@ -24,8 +24,9 @@ public class CycleNode extends PackageDependenciesNode{
     super(project);
   }
 
+  @Override
   public String toString() {
-    return AnalysisScopeBundle.message("cyclic.dependencies.tree.cycle.node.text");
+    return JavaBundle.message("cyclic.dependencies.tree.cycle.node.text");
   }
 
 }

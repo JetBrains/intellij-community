@@ -20,9 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Renders a value as a string
- *
- * @author nik
-*/
+ */
 public class XStringValuePresentation extends XValuePresentation {
   private final String myValue;
 

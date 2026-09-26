@@ -15,16 +15,13 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlElementType;
-import org.jetbrains.annotations.NotNull;
 
-public class XmlFileElement extends FileElement implements XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.XmlFileElement");
+import static com.intellij.psi.xml.XmlElementType.XML_FILE;
+
+public class XmlFileElement extends FileElement {
+  private static final Logger LOG = Logger.getInstance(XmlFileElement.class);
 
   public XmlFileElement(CharSequence text) {
     super(XML_FILE, text);
@@ -32,17 +29,5 @@ public class XmlFileElement extends FileElement implements XmlElementType {
 
   public XmlFileElement(IElementType type, CharSequence text) {
     super(type, text);
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XML_DOCUMENT ||
-        child.getElementType() == HTML_DOCUMENT) {
-      return XmlChildRole.XML_DOCUMENT;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 }

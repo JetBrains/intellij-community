@@ -1,31 +1,30 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyForPart;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
@@ -38,7 +37,7 @@ import java.util.List;
 
 public class PyIntroduceParameterHandler extends IntroduceHandler {
   public PyIntroduceParameterHandler() {
-    super(new VariableValidator(), PyBundle.message("refactoring.introduce.parameter.dialog.title"));
+    super(new VariableValidator(), PyBundle.message("refactoring.extract.parameter.dialog.title"));
   }
 
   @Override
@@ -46,11 +45,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return "python.reference.introduceParameter";
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression,
-                                      @NotNull PsiElement declaration,
-                                      @NotNull IntroduceOperation operation) {
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression,
+                                                @NotNull PsiElement declaration,
+                                                @NotNull IntroduceOperation operation) {
     return doIntroduceParameter(expression, (PyAssignmentStatement)declaration);
   }
 
@@ -66,12 +64,12 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
+  protected @Nullable PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 
+  @Override
   protected boolean isValidIntroduceContext(PsiElement element) {
     if (element != null) {
       if (!isValidPlace(element)) return false;
@@ -92,7 +90,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       }
       new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
+        public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
 
           final String name = node.getName();
@@ -123,11 +121,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   }
 
   private static boolean isResolvedToParameter(PsiElement element) {
-    while (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
-      if (reference != null && reference.resolve() instanceof PyNamedParameter)
+    while (element instanceof PyReferenceExpression ref) {
+      if (ref.getReference().resolve() instanceof PyNamedParameter)
         return true;
-      element = ((PyReferenceExpression)element).getQualifier();
+      element = ref.getQualifier();
     }
     return false;
   }
@@ -149,10 +146,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   private static class PyInplaceParameterIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyNamedParameter myTarget;
 
-    public PyInplaceParameterIntroducer(PyNamedParameter target,
-                                       IntroduceOperation operation,
-                                       List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Parameter",
+    PyInplaceParameterIntroducer(PyNamedParameter target,
+                                 IntroduceOperation operation,
+                                 List<PsiElement> occurrences) {
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.parameter.dialog.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }

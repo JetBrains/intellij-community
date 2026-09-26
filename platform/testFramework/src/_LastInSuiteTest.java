@@ -1,41 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.lang.LanguageTestUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.testFramework.GlobalState;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestApplicationManager;
 import junit.framework.TestCase;
-
-import java.util.concurrent.TimeUnit;
-
-import static com.intellij.testFramework.PlatformTestUtil.captureMemorySnapshot;
-import static com.intellij.testFramework.PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks;
+import org.junit.FixMethodOrder;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 /**
  * This must be the last test.
  *
  * @author max
  */
-@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr", "TestInProductSource"})
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class _LastInSuiteTest extends TestCase {
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -44,40 +30,37 @@ public class _LastInSuiteTest extends TestCase {
 
   @Override
   public String getName() {
-    String name = super.getName();
+    return getTestName(super.getName());
+  }
+
+  private static String getTestName(String name) {
     String buildConf = System.getProperty("teamcity.buildConfName");
     return buildConf == null ? name : name + "[" + buildConf + "]";
   }
 
   public void testProjectLeak() {
-    if (Boolean.getBoolean("idea.test.guimode")) {
-      Application application = ApplicationManager.getApplication();
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        IdeEventQueue.getInstance().flushQueue();
-        ((ApplicationImpl)application).exit(true, true, false);
-      });
-      ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
-      return;
-    }
+    TestApplicationManager.testProjectLeak();
+  }
 
-    disposeApplicationAndCheckForProjectLeaks();
-
-    try {
-      Disposer.assertIsEmpty(true);
-    }
-    catch (AssertionError | Exception e) {
-      captureMemorySnapshot();
-      throw e;
-    }
+  // should be run as late as possible to give the Languages the chance to instantiate as many of them as possible
+  public void testLanguagesHaveDifferentDisplayNames() {
+    LanguageTestUtil.assertAllLanguagesHaveDifferentDisplayNames();
   }
 
   public void testStatistics() {
     long started = _FirstInSuiteTest.getSuiteStartTime();
     if (started != 0) {
       long testSuiteDuration = System.nanoTime() - started;
-      System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']", testSuiteDuration / 1000000));
+      System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']%n", testSuiteDuration / 1_000_000);
     }
     LightPlatformTestCase.reportTestExecutionStatistics();
   }
 
+  public void testFilenameIndexConsistency() {
+    FSRecords.checkFilenameIndexConsistency();
+  }
+
+  public void testGlobalState() {
+    GlobalState.checkSystemStreams();
+  }
 }

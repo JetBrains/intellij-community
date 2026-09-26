@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,23 +26,25 @@ public class CompilerMessage extends BuildMessage {
   private final String mySourcePath;
   private final long myLine;
   private final long myColumn;
+  private final Collection<String> myModuleNames = new HashSet<>();
 
   /**
    * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
    */
-  public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
+  @Deprecated
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText, String sourcePath) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText, String sourcePath) {
     this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
@@ -68,13 +61,11 @@ public class CompilerMessage extends BuildMessage {
     myColumn = locationColumn;
   }
 
-  @NotNull
-  public String getCompilerName() {
+  public @NotNull String getCompilerName() {
     return myCompilerName;
   }
 
-  @Nullable
-  public String getSourcePath() {
+  public @Nullable String getSourcePath() {
     return mySourcePath;
   }
 
@@ -98,6 +89,15 @@ public class CompilerMessage extends BuildMessage {
     return myProblemLocationOffset;
   }
 
+  public void addModuleName(String moduleName) {
+    myModuleNames.add(moduleName);
+  }
+
+  public Collection<String> getModuleNames() {
+    return Collections.unmodifiableCollection(myModuleNames);
+  }
+
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());
@@ -117,35 +117,35 @@ public class CompilerMessage extends BuildMessage {
   /**
    * Return a message describing an exception in the underlying compiler. Such messages will be reported as compilation errors.
    */
-  public static CompilerMessage createInternalCompilationError(@NotNull String compilerName, @NotNull Throwable t) {
+  public static CompilerMessage createInternalCompilationError(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
+                                                               @NotNull Throwable t) {
     return new CompilerMessage(compilerName, t);
   }
 
   /**
-   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logger
+   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logged
    * as fatal errors of the IDE.
    */
-  public static CompilerMessage createInternalBuilderError(@NotNull String compilerName, @NotNull Throwable t) {
+  public static CompilerMessage createInternalBuilderError(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
+                                                           @NotNull Throwable t) {
     return new CompilerMessage(compilerName, Kind.INTERNAL_BUILDER_ERROR, getTextFromThrowable(t));
   }
 
-  public static String getTextFromThrowable(Throwable internalError) {
-    StringBuilder text = new StringBuilder();
-    text.append("Error: ");
-    final String msg = internalError.getMessage();
-    if (!StringUtil.isEmptyOrSpaces(msg)) {
-      text.append(msg);
-    }
-    else {
-      text.append(internalError.getClass().getName());
-    }
-    text.append("\n");
-
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    internalError.printStackTrace(new PrintStream(out));
-    text.append(out.toString());
-
-    return text.toString();
+  @Override
+  public @Nls String getMessageText() {
+    //noinspection HardCodedStringLiteral
+    return super.getMessageText();
   }
 
+  public static @NlsSafe String getTextFromThrowable(Throwable t) {
+    String message = t.getMessage();
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      message = t.getClass().getName();
+    }
+
+    StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+
+    return "Error: " + message + '\n' + writer.getBuffer();
+  }
 }

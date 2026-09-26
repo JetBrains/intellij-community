@@ -1,126 +1,50 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.awt.*;
+import java.awt.Window;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class DiffApplicationBase extends ApplicationStarterEx {
-  protected static final String NULL_PATH = "/dev/null";
+@ApiStatus.Internal
+public final class DiffApplicationBase {
+  static final @NlsSafe String NULL_PATH = "/dev/null";
 
-  protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
+  static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
-  protected abstract boolean checkArguments(@NotNull String[] args);
-
-  @NotNull
-  protected abstract String getUsageMessage();
-
-  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory)
-    throws Exception;
+  private DiffApplicationBase() {
+  }
 
   //
   // Impl
   //
 
-  @Override
-  public boolean isHeadless() {
-    return false;
-  }
-
-  @Override
-  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
-    if (!checkArguments(args)) {
-      Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
-      return;
-    }
-    try {
-      processCommand(args, currentDirectory);
-    }
-    catch (Exception e) {
-      Messages.showMessageDialog(String.format("Error showing %s: %s", getCommandName(), e.getMessage()),
-                                 StringUtil.toTitleCase(getCommandName()),
-                                 Messages.getErrorIcon());
-    }
-    finally {
-      saveAll();
-    }
-  }
-
-  private static void saveAll() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    ApplicationManager.getApplication().saveSettings();
-  }
-
-  @Override
-  public void premain(String[] args) {
-    if (!checkArguments(args)) {
-      System.out.println(getUsageMessage());
-      System.exit(1);
-    }
-  }
-
-  @Override
-  public void main(String[] args) {
-    try {
-      processCommand(args, null);
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      System.exit(1);
-    }
-    catch (Throwable t) {
-      t.printStackTrace();
-      System.exit(2);
-    }
-    finally {
-      saveAll();
-    }
-
-    System.exit(0);
-  }
-
-  @NotNull
-  public static List<VirtualFile> findFiles(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
+  public static @NotNull List<@Nullable VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths,
+                                                                      @Nullable String currentDirectory) throws Exception {
     List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
@@ -129,61 +53,68 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
       }
       else {
         VirtualFile virtualFile = findFile(path, currentDirectory);
-        if (virtualFile == null) throw new Exception("Can't find file: " + path);
+        if (virtualFile == null) throw new Exception(DiffBundle.message("cannot.find.file.error", path));
         files.add(virtualFile);
       }
     }
 
-    refreshAndEnsureFilesValid(ContainerUtil.skipNulls(files));
+    refreshAndEnsureFilesValid(files);
 
     return files;
   }
 
-  private static void refreshAndEnsureFilesValid(@NotNull List<VirtualFile> files) throws Exception {
+  public static void refreshAndEnsureFilesValid(@NotNull List<? extends VirtualFile> files) throws Exception {
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
 
     for (VirtualFile file : files) {
-      if (!file.isValid()) throw new Exception("Can't find file: " + file.getPresentableUrl());
+      if (file != null && !file.isValid()) throw new Exception(DiffBundle.message("cannot.find.file.error", file.getPresentableUrl()));
     }
   }
 
-  @Nullable
-  public static VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
+  public static @Nullable VirtualFile findFile(@NotNull String path, @Nullable String currentDirectory) {
     File file = getFile(path, currentDirectory);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
     if (virtualFile == null) {
       LOG.warn(String.format("Can't find file: current directory - %s; path - %s", currentDirectory, path));
     }
     return virtualFile;
   }
 
-  @NotNull
-  public static File getFile(@NotNull String path, @Nullable String currentDirectory) {
-    File file = new File(path);
+  public static @Nullable VirtualFile findOrCreateFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
+    File file = getFile(path, currentDirectory);
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
+    if (virtualFile == null) {
+      boolean wasCreated = file.createNewFile();
+      if (wasCreated) {
+        virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(file.getAbsolutePath());
+      }
+    }
+    if (virtualFile == null) {
+      LOG.warn(String.format("Can't create file: current directory - %s; path - %s", currentDirectory, path));
+    }
+    return virtualFile;
+  }
+
+  public static @NotNull File getFile(@NotNull String path, @Nullable String currentDirectory) {
+    String unquotedPath = StringUtilRt.unquoteString(path);
+    File file = new File(unquotedPath);
     if (!file.isAbsolute() && currentDirectory != null) {
-      file = new File(currentDirectory, path);
+      file = new File(currentDirectory, unquotedPath);
     }
     return file;
   }
 
-  @NotNull
-  public List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<VirtualFile> contents) {
-    return ContainerUtil.map(contents, file -> {
-      return ObjectUtils.notNull(file, () -> new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
-    });
+  public static @Unmodifiable @NotNull List<@NotNull VirtualFile> replaceNullsWithEmptyFile(@NotNull List<? extends @Nullable VirtualFile> contents) {
+    return ContainerUtil.mapNotNull(contents,
+                                    file -> file != null ? file : new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
   }
 
-
-  @Override
-  public boolean canProcessExternalCommandLine() {
-    return true;
-  }
-
-  @Nullable
-  protected static Project guessProject(@NotNull List<VirtualFile> files) {
+  static @Nullable Project guessProject(@NotNull List<? extends @Nullable VirtualFile> files) {
     Set<Project> projects = new HashSet<>();
     for (VirtualFile file : files) {
-      projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));
+      if (file != null) {
+        projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));
+      }
     }
 
     if (projects.isEmpty()) {

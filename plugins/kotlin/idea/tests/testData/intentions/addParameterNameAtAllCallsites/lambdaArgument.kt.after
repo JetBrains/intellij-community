@@ -1,0 +1,10 @@
+// INTENTION_TEXT: "Add parameter name to all callsites"
+
+fun foo(f<caret>: () -> Unit) {}
+
+fun bar() {
+    foo(f = { 1 })
+    foo(f = { 2 })
+    foo(f = { 3 })
+    foo(f = { 4 })
+}

@@ -16,8 +16,14 @@
 
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.PyPsiBundle;
 
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PythonDemorganLawIntentionTest extends PyIntentionTestCase {
   public void testOr() {
     doTest();
@@ -41,6 +47,6 @@ public class PythonDemorganLawIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest() {
-    doIntentionTest(PyBundle.message("INTN.demorgan.law"));
+    doIntentionTest(PyPsiBundle.message("INTN.NAME.demorgan.law"));
   }
 }

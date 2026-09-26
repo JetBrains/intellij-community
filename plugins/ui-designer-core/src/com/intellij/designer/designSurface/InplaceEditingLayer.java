@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerBundle;
@@ -31,13 +17,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -45,13 +38,12 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class InplaceEditingLayer extends JComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.InplaceEditingLayer");
+  private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 
   private final FocusWatcher myFocusWatcher = new FocusWatcher() {
+    @Override
     protected void focusLostImpl(FocusEvent e) {
       Component opposite = e.getOppositeComponent();
       if (e.isTemporary() || opposite != null && SwingUtilities.isDescendingFrom(opposite, getTopComponent())) {
@@ -59,7 +51,7 @@ public class InplaceEditingLayer extends JComponent {
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishEditing(true), ModalityState.nonModal());
     }
   };
   private final ComponentSelectionListener mySelectionListener = new ComponentSelectionListener() {
@@ -70,17 +62,17 @@ public class InplaceEditingLayer extends JComponent {
   };
   private final PropertyEditorListener myEditorListener = new PropertyEditorListener() {
     @Override
-    public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
+    public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       finishEditing(true);
     }
 
     @Override
-    public void editingCanceled(PropertyEditor source) {
+    public void editingCanceled(@NotNull PropertyEditor source) {
       finishEditing(false);
     }
 
     @Override
-    public void preferredSizeChanged(PropertyEditor source) {
+    public void preferredSizeChanged(@NotNull PropertyEditor source) {
       adjustInplaceComponentSize();
     }
   };
@@ -116,7 +108,7 @@ public class InplaceEditingLayer extends JComponent {
       myInplaceComponent.setBorder(new LineMarginBorder(5, 5, 5, 5));
       new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           finishEditing(false);
         }
       }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myInplaceComponent);
@@ -242,17 +234,7 @@ public class InplaceEditingLayer extends JComponent {
   }
 
   private void removeInplaceComponent() {
-    // [vova] before removing component from Swing tree we have to
-    // request component into glass layer. Otherwise focus from component being removed
-    // can go to some RadComponent.
-
-    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myDesigner.getPreferredFocusedComponent());
-    try {
-      remove(myInplaceComponent);
-    }
-    finally {
-      LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-    }
+    remove(myInplaceComponent);
   }
 
   /**
@@ -260,6 +242,7 @@ public class InplaceEditingLayer extends JComponent {
    * and finish editing by any MOUSE_PRESSED or MOUSE_RELEASED event.
    * We are acting like yet another glass pane over the standard glass layer.
    */
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     if (myInplaceComponent != null && (MouseEvent.MOUSE_PRESSED == e.getID() || MouseEvent.MOUSE_RELEASED == e.getID())) {
       finishEditing(true);

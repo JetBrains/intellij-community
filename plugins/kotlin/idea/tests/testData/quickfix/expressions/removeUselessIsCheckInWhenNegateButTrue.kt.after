@@ -1,0 +1,14 @@
+// "Remove redundant 'is' check" "true"
+// K2_ERROR: IMPOSSIBLE_IS_CHECK_ERROR
+
+interface Base
+interface Derived: Base
+
+fun foo(bar: Base):Int {
+    return when (bar) {
+        is Derived -> 0
+        <caret>else -> 42
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFixForWhen

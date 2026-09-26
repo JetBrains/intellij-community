@@ -1,4 +1,4 @@
-// "Defer assignment to 'i' using temp variable" "true"
+// "Defer assignment to 'i' using temp variable" "true-preview"
 class a {
     {
         final int i;

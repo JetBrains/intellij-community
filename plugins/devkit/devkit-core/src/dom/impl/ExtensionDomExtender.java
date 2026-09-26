@@ -1,393 +1,357 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.google.common.base.CaseFormat;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomJavaUtil;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ExtendClassImpl;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.PsiClassConverter;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
-import com.intellij.util.xmlb.Constants;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.With;
+import org.jetbrains.idea.devkit.references.extensions.ExtensionPointBinding;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author mike
- */
-public class ExtensionDomExtender extends DomExtender<Extensions> {
+public class ExtensionDomExtender extends DomExtender<Extension> {
+
+  private static final XmlName IMPLEMENTATION_XML_NAME = new XmlName(Extension.IMPLEMENTATION_ATTRIBUTE);
+
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
-  private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
-  private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
-    public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
-      final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
-      assert extensionPoint != null;
+  private static final LanguageResolvingConverter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
+  private static final Converter<String> ACTION_CONVERTER = new ActionOrGroupReferencingConverter.OnlyActions();
 
-      final String interfaceName = extensionPoint.getInterface().getStringValue();
-      if (interfaceName != null) {
-        final DomExtension implementationAttribute =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
-            .setConverter(CLASS_CONVERTER)
-            .addCustomAnnotation(new MyExtendClass(interfaceName))
-            .addCustomAnnotation(new MyRequired());
+  @Override
+  public void registerExtensions(final @NotNull Extension extension, final @NotNull DomExtensionsRegistrar registrar) {
+    final ExtensionPoint extensionPoint = extension.getExtensionPoint();
+    if (extensionPoint == null) return;
 
-        final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
-        if (interfaceClass != null) {
-          implementationAttribute.setDeclaringElement(interfaceClass);
-        } else {
-          implementationAttribute.setDeclaringElement(extensionPoint);
-        }
-
-        registerXmlb(registrar, interfaceClass, Collections.emptyList());
-      }
-      else {
-        final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
-        registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
-      }
-    }
-  };
-
-  private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
-    MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
-    collectDependencies(ideaPlugin, result, byId);
-    //noinspection NullableProblems
-    result.addAll(byId.get(null));
-    return result;
-  }
-
-  private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
-    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<>();
-    for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
-      byId.putValue(each.getPluginId(), each);
-    }
-    return byId;
-  }
-
-  private static void collectDependencies(final IdeaPlugin ideaPlugin, Set<IdeaPlugin> result, final MultiMap<String, IdeaPlugin> byId) {
-    if (!result.add(ideaPlugin)) {
-      return;
-    }
-
-    for (String id : getDependencies(ideaPlugin)) {
-      for (IdeaPlugin dep : byId.get(id)) {
-        collectDependencies(dep, result, byId);
-      }
-    }
-  }
-
-  private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
-                                             final ExtensionPoint extensionPoint,
-                                             String epPrefix,
-                                             @Nullable String pluginId) {
-    String epName = extensionPoint.getName().getStringValue();
-    if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
-    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
-    if (epName == null) return;
-    if (!epName.startsWith(epPrefix)) return;
-
-    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class);
-    domExtension.setDeclaringElement(extensionPoint);
-    domExtension.addExtender(EXTENSION_EXTENDER);
-  }
-
-  private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
-    if (beanClass == null) return;
-
-    PsiField[] fields;
-    UClass beanClassNavigationClass = UastContextKt.toUElement(beanClass.getNavigationElement(), UClass.class);
-    if (beanClassNavigationClass != null) {
-      fields = beanClassNavigationClass.getAllFields();
+    final String interfaceName = extensionPoint.getInterface().getStringValue();
+    if (interfaceName != null) {
+      processInterfaceBasedExtension(registrar, extensionPoint, interfaceName);
     }
     else {
-      fields = beanClass.getAllFields(); // fallback
-    }
-
-    for (PsiField field : fields) {
-      registerField(registrar, field, findWithElement(elements, field));
+      processBeanBasedExtension(registrar, extensionPoint);
     }
   }
 
-  @Nullable
-  public static With findWithElement(List<With> elements, PsiField field) {
-    for (With element : elements) {
-      if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
-        return element;
-      }
-    }
-    return null;
-  }
+  private static void processInterfaceBasedExtension(@NotNull DomExtensionsRegistrar registrar,
+                                                     ExtensionPoint extensionPoint,
+                                                     String interfaceName) {
+    final DomExtension implementationAttribute =
+      registrar.registerGenericAttributeValueChildExtension(IMPLEMENTATION_XML_NAME, PsiClass.class)
+        .setConverter(CLASS_CONVERTER)
+        .addCustomAnnotation(new MyImplementationExtendClass(interfaceName))
+        .addCustomAnnotation(MyRequired.INSTANCE);
 
-  private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
-    final PsiMethod getter = PropertyUtilBase.findGetterForField(field);
-    final PsiMethod setter = PropertyUtilBase.findSetterForField(field);
-    if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
-      return;
-    }
-
-    final String fieldName = field.getName();
-    assert fieldName != null;
-    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
-    final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
-    if (attrAnno != null) {
-      final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
-      if (attrName != null) {
-        Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
-          clazz = PsiClass.class;
-        } else if (PsiType.BOOLEAN.equals(field.getType())) {
-          clazz = Boolean.class;
-        }
-        final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
-        markAsClass(extension, fieldName, withElement);
-        if (clazz.equals(String.class)) {
-          markAsLanguage(extension, fieldName);
-        }
-      }
-      return;
-    }
-    final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
-    final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
-    final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
-    //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
-    final String tagName = tagAnno != null? getStringAttribute(tagAnno, "value", evalHelper) :
-                           propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
-    if (tagName != null) {
-      if (collectionAnnotation == null) {
-        final DomExtension extension =
-          registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class).setDeclaringElement(field);
-        markAsClass(extension, fieldName, withElement);
-      }
-      else {
-        registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
-          @Override
-          public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
-          }
-        });
-      }
-    }
-    else if (collectionAnnotation != null) {
-      registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
-    }
-  }
-
-  private static void markAsLanguage(DomExtension extension, String fieldName) {
-    if ("language".equals(fieldName)) {
-      extension.setConverter(LANGUAGE_CONVERTER);
-    }
-  }
-
-  private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
-    if (withElement != null) {
-      final String withClassName = withElement.getImplements().getStringValue();
-      extension.addCustomAnnotation(new ExtendClassImpl() {
-        @Override
-        public String value() {
-          return withClassName;
-        }
-      });
-    }
-    if (withElement != null || isClassField(fieldName)) {
-      extension.setConverter(CLASS_CONVERTER);
-    }
-  }
-
-  public static boolean isClassField(String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || 
-           fieldName.equals("implementation") || 
-           fieldName.equals("serviceInterface") || 
-           fieldName.equals("serviceImplementation");
-  }
-
-  @Nullable
-  static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
-    for (PsiMember member : members) {
-      if (member != null) {
-        final PsiModifierList modifierList = member.getModifierList();
-        if (modifierList != null) {
-          final PsiAnnotation annotation = modifierList.findAnnotation(annotationClass.getName());
-          if (annotation != null) {
-            return annotation;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static void registerCollectionBinding(PsiType type,
-                                                DomExtensionsRegistrar registrar,
-                                                PsiAnnotation anno,
-                                                PsiConstantEvaluationHelper evalHelper) {
-    final boolean surroundWithTag = getBooleanAttribute(anno, "surroundWithTag", evalHelper);
-    if (surroundWithTag) return; // todo Set, List, Array
-    final String tagName = getStringAttribute(anno, "elementTag", evalHelper);
-    final String attrName = getStringAttribute(anno, "elementValueAttribute", evalHelper);
-    final PsiType elementType = getElementType(type);
-    if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
-        || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
-        || TypeConversionUtil.isEnumType(elementType)) {
-      if (tagName != null && attrName == null) {
-        registrar.registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class);
-      }
-      else if (tagName != null) {
-        registrar.registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
-          @Override
-          public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
-          }
-        });
-      }
+    final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
+    if (interfaceClass != null) {
+      implementationAttribute.setDeclaringElement(interfaceClass);
     }
     else {
-      final PsiClass psiClass = PsiTypesUtil.getPsiClass(elementType);
-      if (psiClass != null) {
-        final PsiModifierList modifierList = psiClass.getModifierList();
-        final PsiAnnotation tagAnno = modifierList == null? null : modifierList.findAnnotation(Tag.class.getName());
-        final String classTagName = tagAnno == null? psiClass.getName() : getStringAttribute(tagAnno, "value", evalHelper);
-        if (classTagName != null) {
-          registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
+      implementationAttribute.setDeclaringElement(extensionPoint);
+    }
+    registerXmlb(registrar, interfaceClass, Collections.emptyList());
+  }
+
+  private static void processBeanBasedExtension(@NotNull DomExtensionsRegistrar registrar, ExtensionPoint extensionPoint) {
+    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+    registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
+  }
+
+  private static void registerXmlb(DomExtensionsRegistrar registrar,
+                                   @Nullable PsiClass psiClass,
+                                   @NotNull List<With> elements) {
+    if (psiClass == null) return;
+
+    ExtensionPointBinding binding = new ExtensionPointBinding(psiClass);
+    binding.visit(new ExtensionPointBinding.BindingVisitor() {
+
+      @Override
+      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, RequiredFlag required) {
+        final With withElement = findWithElement(elements, field);
+        final PsiType fieldType = field.getType();
+        Class<?> attributeValueClass = getAttributeValueClass(attributeName, fieldType, withElement);
+        final DomExtension extension =
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), attributeValueClass)
+            .setDeclaringElement(field);
+        markAsRequiredIfNeeded(extension, required);
+
+        if (attributeValueClass == String.class) {
+          markAsString(extension, field, fieldType, attributeName);
+        }
+        else if (attributeValueClass == PsiClass.class) {
+          markAsClass(extension, true, withElement);
+        }
+      }
+
+      private static @NotNull Class<?> getAttributeValueClass(@NonNls @NotNull String attributeName, PsiType fieldType, With withElement) {
+        if (PsiTypes.booleanType().equals(fieldType)) {
+          return Boolean.class;
+        }
+        else if (PsiTypes.intType().equals(fieldType) || fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
+          return Integer.class;
+        }
+        else if (withElement != null || Extension.isClassField(attributeName)) {
+          return PsiClass.class;
+        }
+        return String.class;
+      }
+
+      private static void markAsRequiredIfNeeded(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
+        switch (required) {
+          case REQUIRED -> extension.addCustomAnnotation(MyRequired.INSTANCE);
+          case REQUIRED_ALLOW_EMPTY -> extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+        }
+      }
+
+      private static void markAsString(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
+        if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
+          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+        }
+        else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
+          if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
+            extension.setConverter(createEnumConverter(fieldPsiClass));
+            return;
+          }
+        }
+
+        if ("language".equals(propertyName) ||
+            StringUtil.endsWith(propertyName, "Language")) // NON-NLS
+        {
+          extension.setConverter(LANGUAGE_CONVERTER);
+        }
+        else if ("action".equals(propertyName) ||
+                 "actionId".equals(propertyName)) {
+          extension.setConverter(ACTION_CONVERTER);
+        }
+      }
+
+      private static void markAsClass(DomExtension extension, boolean isClassField, @Nullable With withElement) {
+        if (withElement != null) {
+          final String withClassName = withElement.getImplements().getStringValue();
+          extension.addCustomAnnotation(new ExtendClassImpl() {
+            @Override
+            public String[] value() {
+              return new String[]{withClassName};
+            }
+          });
+        }
+        if (withElement != null || isClassField) {
+          extension.setConverter(CLASS_CONVERTER);
+        }
+      }
+
+      @Override
+      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
+        boolean isBoolean = PsiTypes.booleanType().equals(field.getType());
+
+        final DomExtension extension =
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), isBoolean ? SimpleBooleanTagValue.class : SimpleTagValue.class)
+            .setDeclaringElement(field);
+        markAsRequiredIfNeeded(extension, required);
+
+        if (!isBoolean) {
+          final With withElement = findWithElement(elements, field);
+          markAsClass(extension, Extension.isClassField(field.getName()), withElement);
+          markAsString(extension, field, field.getType(), tagName);
+        }
+      }
+
+      @Override
+      public void visitXCollection(@NotNull PsiField field,
+                                   @Nullable String tagName,
+                                   @NotNull PsiAnnotation collectionAnnotation,
+                                   RequiredFlag required) {
+        if (tagName != null) {
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class)
+            .addExtender(new DomExtender() {
+              @Override
+              public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+                registerCollectionBinding(field, registrar, collectionAnnotation, required);
+              }
+            });
+        }
+        else {
+          registerCollectionBinding(field, registrar, collectionAnnotation, required);
+        }
+      }
+
+      private static void registerCollectionBinding(PsiField field,
+                                                    DomExtensionsRegistrar registrar,
+                                                    PsiAnnotation collectionAnnotation,
+                                                    ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
+        final boolean surroundWithTag = PsiUtil.getAnnotationBooleanAttribute(collectionAnnotation, "surroundWithTag");
+        if (surroundWithTag) return; // todo Set, List, Array
+
+        final PsiType elementType = getElementType(field.getType());
+
+        final String tagName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementName", null);
+        final String propertyElementName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "propertyElementName", null);
+        final String attrName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "valueAttributeName", null);
+
+        if (elementType == null || isSimpleOrEnumType(elementType)) {
+          registerSimpleElementCollectionBinding(field, registrar, required, tagName, propertyElementName, attrName);
+        }
+        else {
+          registerClassElementCollectionBinding(field, registrar, required, elementType);
+        }
+      }
+
+      private static @Nullable PsiType getElementType(final PsiType psiType) {
+        if (psiType instanceof PsiArrayType) {
+          return ((PsiArrayType)psiType).getComponentType();
+        }
+        if (psiType instanceof PsiClassType) {
+          final PsiType[] types = ((PsiClassType)psiType).getParameters();
+          return types.length == 1 ? types[0] : null;
+        }
+        return null;
+      }
+
+      private static boolean isSimpleOrEnumType(PsiType elementType) {
+        return TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
+               || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
+               || TypeConversionUtil.isEnumType(elementType);
+      }
+
+      private static void registerSimpleElementCollectionBinding(PsiField field,
+                                                                 DomExtensionsRegistrar registrar,
+                                                                 ExtensionPointBinding.BindingVisitor.RequiredFlag required,
+                                                                 String tagName,
+                                                                 String propertyElementName,
+                                                                 String attrName) {
+        if (tagName != null && propertyElementName != null && attrName == null) {
+          DomExtension extension = registrar
+            .registerCollectionChildrenExtension(new XmlName(propertyElementName), DomElement.class)
+            .setDeclaringElement(field);
+          extension.addExtender(new DomExtender() {
             @Override
             public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-              registerXmlb(registrar, psiClass, Collections.emptyList());
+              registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class);
+            }
+          });
+
+          markAsRequiredIfNeeded(extension, required);
+        }
+        else if (tagName != null && attrName == null) {
+          final DomExtension extension = registrar
+            .registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class)
+            .setDeclaringElement(field);
+          markAsRequiredIfNeeded(extension, required);
+        }
+        else if (tagName != null) {
+          final DomExtension extension = registrar
+            .registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class)
+            .setDeclaringElement(field);
+          markAsRequiredIfNeeded(extension, required);
+          extension.addExtender(new DomExtender() {
+            @Override
+            public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+              registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
             }
           });
         }
       }
-    }
+
+      private static void registerClassElementCollectionBinding(PsiField field,
+                                                                DomExtensionsRegistrar registrar,
+                                                                ExtensionPointBinding.BindingVisitor.RequiredFlag required,
+                                                                PsiType elementType) {
+        final PsiClass elementPsiClass = PsiTypesUtil.getPsiClass(elementType);
+        if (elementPsiClass != null) {
+          final PsiModifierList modifierList = elementPsiClass.getModifierList();
+          final PsiAnnotation tagAnno = modifierList == null ? null : modifierList.findAnnotation(Tag.class.getName());
+          final String classTagName = tagAnno == null ? elementPsiClass.getName() :
+                                      PsiUtil.getAnnotationStringAttribute(tagAnno, "value", null);
+          if (classTagName != null) {
+            final DomExtension extension = registrar
+              .registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class)
+              .setDeclaringElement(field);
+            markAsRequiredIfNeeded(extension, required);
+            extension.addExtender(new DomExtender() {
+              @Override
+              public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+                registerXmlb(registrar, elementPsiClass, Collections.emptyList());
+              }
+            });
+          }
+        }
+      }
+    });
   }
 
-  @Nullable
-  static String getStringAttribute(final PsiAnnotation annotation,
-                                   final String name,
-                                   final PsiConstantEvaluationHelper evalHelper) {
-    String value = getAttributeValue(annotation, name);
-    if (value != null) return value;
-    final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof String && StringUtil.isNotEmpty((String)o)? (String)o : null;
-  }
-
-  private static boolean getBooleanAttribute(final PsiAnnotation annotation,
-                                             final String name,
-                                             final PsiConstantEvaluationHelper evalHelper) {
-    String value = getAttributeValue(annotation, name);
-    if (value != null) return Boolean.parseBoolean(value);
-    final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof Boolean && ((Boolean)o).booleanValue();
-  }
-
-  @Nullable
-  private static String getAttributeValue(PsiAnnotation annotation, String name) {
-    for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
-      if (name.equals(attribute.getName())) {
-        return attribute.getLiteralValue();
+  static @Nullable With findWithElement(List<? extends With> withElements, PsiField field) {
+    for (With with : withElements) {
+      PsiField withPsiField = DomUtil.hasXml(with.getTag()) ? with.getTag().getValue() : with.getAttribute().getValue();
+      if (field.getManager().areElementsEquivalent(field, withPsiField)) {
+        return with;
       }
     }
     return null;
   }
 
-  @Nullable
-  public static PsiType getElementType(final PsiType psiType) {
-    if (psiType instanceof PsiArrayType) {
-      return ((PsiArrayType)psiType).getComponentType();
-    }
-    else if (psiType instanceof PsiClassType) {
-      final PsiType[] types = ((PsiClassType)psiType).getParameters();
-      return types.length == 1? types[0] : null;
-    }
-    else {
-      return null;
-    }
+  public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
-  public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    Set<String> result = new HashSet<>();
-
-    result.add(PluginManagerCore.CORE_PLUGIN_ID);
-
-    for (Dependency dependency : ideaPlugin.getDependencies()) {
-      ContainerUtil.addIfNotNull(result, dependency.getStringValue());
-    }
-
-    if (ideaPlugin.getPluginId() == null) {
-      final VirtualFile file = DomUtil.getFile(ideaPlugin).getOriginalFile().getVirtualFile();
-      if (file != null) {
-        final String fileName = file.getName();
-        if (!"plugin.xml".equals(fileName)) {
-          final VirtualFile mainPluginXml = file.findFileByRelativePath("../plugin.xml");
-          if (mainPluginXml != null) {
-            final PsiFile psiFile = PsiManager.getInstance(ideaPlugin.getManager().getProject()).findFile(mainPluginXml);
-            if (psiFile instanceof XmlFile) {
-              final XmlFile xmlFile = (XmlFile)psiFile;
-              final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
-              if (fileElement != null) {
-                final IdeaPlugin mainPlugin = fileElement.getRootElement();
-                ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
-                for (Dependency dependency : mainPlugin.getDependencies()) {
-                  ContainerUtil.addIfNotNull(result, dependency.getStringValue());
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return result;
+  public interface SimpleBooleanTagValue extends GenericDomValue<Boolean> {
   }
 
-  public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
-    IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
-    if (ideaPlugin == null) return;
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyNoSpellchecking implements NoSpellchecking {
 
-    String epPrefix = extensions.getEpPrefix();
-    for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
-      final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
-      for (ExtensionPoints points : plugin.getExtensionPoints()) {
-        for (ExtensionPoint point : points.getExtensionPoints()) {
-          registerExtensionPoint(registrar, point, epPrefix, pluginId);
-        }
-      }
+    private static final MyNoSpellchecking INSTANCE = new MyNoSpellchecking();
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return NoSpellchecking.class;
     }
-  }
-
-  @Override
-  public boolean supportsStubs() {
-    return false;
-  }
-
-  public interface SimpleTagValue extends DomElement {
-    @SuppressWarnings("UnusedDeclaration")
-    @TagValue
-    String getTagValue();
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyRequired implements Required {
+
+    private static final MyRequired INSTANCE = new MyRequired();
+
     @Override
     public boolean value() {
       return true;
@@ -409,10 +373,36 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
-  private static class MyExtendClass extends ExtendClassImpl {
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyRequiredCanBeEmpty implements Required {
+
+    private static final MyRequiredCanBeEmpty INSTANCE = new MyRequiredCanBeEmpty();
+
+    @Override
+    public boolean value() {
+      return true;
+    }
+
+    @Override
+    public boolean nonEmpty() {
+      return false;
+    }
+
+    @Override
+    public boolean identifier() {
+      return false;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
+  }
+
+  private static final class MyImplementationExtendClass extends ExtendClassImpl {
     private final String myInterfaceName;
 
-    private MyExtendClass(String interfaceName) {
+    private MyImplementationExtendClass(String interfaceName) {
       myInterfaceName = interfaceName;
     }
 
@@ -432,9 +422,91 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
 
     @Override
-    public String value() {
-      return myInterfaceName;
+    public String[] value() {
+      return new String[]{myInterfaceName};
     }
   }
 
+  private static @NotNull ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
+    return new PsiEnumConstantResolvingConverter(fieldPsiClass.getQualifiedName());
+  }
+
+  private static class PsiEnumConstantResolvingConverter extends ResolvingConverter<PsiEnumConstant> {
+
+    private final String myEnumFqn;
+
+    private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
+      Set.of(
+        "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
+        "com.intellij.notification.impl.NotificationGroupEP.DisplayType",
+        "com.intellij.codeInsight.hints.InlayGroup",
+        "com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind" // Kotlin naming style
+      );
+
+    private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
+      Set.of(
+        "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
+      );
+
+    PsiEnumConstantResolvingConverter(String enumFqn) { myEnumFqn = enumFqn; }
+
+    @Override
+    public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
+      return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
+    }
+
+    @Override
+    public @NotNull @Unmodifiable Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return Collections.emptyList();
+
+      return ContainerUtil.findAll(enumClass.getFields(), PsiEnumConstant.class);
+    }
+
+    @Override
+    public @Nullable LookupElement createLookupElement(PsiEnumConstant constant) {
+      return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
+    }
+
+    @Override
+    public @Nullable PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
+      if (s == null) return null;
+
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return null;
+
+      final PsiField name = enumClass.findFieldByName(fromXmlName(s), false);
+      return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
+    }
+
+    @Override
+    public @Nullable String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
+      return constant == null ? null : toXmlName(constant);
+    }
+
+    private @Nullable PsiClass getEnumClass(ConvertContext context) {
+      return DomJavaUtil.findClass(myEnumFqn, context.getInvocationElement());
+    }
+
+    private String fromXmlName(@NotNull String name) {
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_UNDERSCORE, name);
+      return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
+    }
+
+    private String toXmlName(PsiEnumConstant constant) {
+      String name = constant.getName();
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_UNDERSCORE, name);
+      return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name);
+    }
+
+    private boolean doNotTransformName() {
+      return myEnumFqn != null && LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+
+    private boolean enumLowerUnderscore() {
+      return myEnumFqn != null && LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+  }
 }

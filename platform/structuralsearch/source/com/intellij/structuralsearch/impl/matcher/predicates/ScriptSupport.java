@@ -1,61 +1,52 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
 import com.intellij.structuralsearch.StructuralSearchScriptException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
-import groovy.lang.Script;
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.control.ErrorCollector;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.codehaus.groovy.control.messages.Message;
-import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
-import org.codehaus.groovy.syntax.SyntaxException;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author Maxim.Mossienko
- */
-public class ScriptSupport {
+@Internal
+public final class ScriptSupport {
+  private static final Logger LOG = Logger.getInstance(ScriptSupport.class);
   /**
    * Artificial filename without extension must be different from any variable name or the variable will get hidden by the script.
    * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
    * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
    */
-  static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
+  public static final @NlsSafe String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
-  private final Script script;
+  private final StructuralSearchScriptEngine.CompiledScript myScript;
   private final ScriptLog myScriptLog;
   private final String myName;
   private final Collection<String> myVariableNames;
 
-  public ScriptSupport(Project project, String text, String name, Collection<String> variableNames) {
+  public ScriptSupport(Project project, StructuralSearchScriptEngine.CompiledScript script, String name, Collection<String> variableNames) {
     myScriptLog = new ScriptLog(project);
     myName = name;
     myVariableNames = variableNames;
-    final GroovyShell shell = new GroovyShell();
-    try {
-      final File scriptFile = new File(text);
-      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name + UUID + ".groovy");
-    }
-    catch (Exception ex) {
-      Logger.getInstance(getClass().getName()).error(ex);
-      throw new RuntimeException(ex);
-    }
+    myScript = script;
   }
 
-  private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
+  private static void buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
     final String name = result.getName();
     if (name != null && !result.isMultipleMatch()) {
       final Object value = out.get(name);
@@ -80,12 +71,11 @@ public class ScriptSupport {
     for (MatchResult son : result.getChildren()) {
       buildVariableMap(son, out);
     }
-    return out;
   }
 
-  public String evaluate(MatchResult result, PsiElement context) {
+  public Object evaluate(MatchResult result, PsiElement context) {
     try {
-      final HashMap<String, Object> variableMap = new HashMap<>();
+      Map<String, Object> variableMap = new HashMap<>();
       myVariableNames.forEach(n -> variableMap.put(n, null));
       variableMap.put(ScriptLog.SCRIPT_LOG_VAR_NAME, myScriptLog);
       if (result != null) {
@@ -99,47 +89,39 @@ public class ScriptSupport {
       variableMap.put(myName, context);
       variableMap.put(Configuration.CONTEXT_VAR_NAME, context);
 
-      script.setBinding(new Binding(variableMap));
-
-      final Object o = script.run();
-      return String.valueOf(o);
+      return myScript.evaluate(variableMap);
     }
-    catch (ThreadDeath | ProcessCanceledException t) {
+    catch (ProcessCanceledException t) {
       throw t;
     }
     catch (Throwable t) {
-      Logger.getInstance(ScriptSupport.class).warn("Exception thrown by Structural Search Groovy Script", t);
+      Logger.getInstance(ScriptSupport.class).info("Exception thrown by Structural Search script", t);
       throw new StructuralSearchScriptException(t);
-    }
-    finally {
-      script.setBinding(null);
     }
   }
 
-  public static String checkValidScript(String scriptText) {
+  public static StructuralSearchScriptEngine.CompiledScript buildScript(
+    @NotNull Project project,
+    @NotNull String scriptName,
+    @NotNull String scriptText,
+    @NotNull MatchOptions matchOptions
+  ) throws MalformedPatternException {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      throw new MalformedPatternException(SSRBundle.message("error.scripts.untrusted"));
+    }
+    final List<StructuralSearchScriptEngine> engines = StructuralSearchScriptEngine.EP_NAME.getExtensionList();
+    if (engines.isEmpty()) {
+      throw new MalformedPatternException(SSRBundle.message("error.groovy.script.engine.not.available"));
+    }
     try {
-      final File scriptFile = new File(scriptText);
-      final GroovyShell shell = new GroovyShell();
-      final Script script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(scriptText);
-      return null;
+      return engines.getFirst().compile(project, scriptName, scriptText, matchOptions);
     }
-    catch (IOException e) {
-      return e.getMessage();
+    catch (MalformedPatternException | ProcessCanceledException e) {
+      throw e;
     }
-    catch (MultipleCompilationErrorsException e) {
-      final ErrorCollector errorCollector = e.getErrorCollector();
-      @SuppressWarnings("unchecked") final List<Message> errors = errorCollector.getErrors();
-      for (Message error : errors) {
-        if (error instanceof SyntaxErrorMessage) {
-          final SyntaxErrorMessage errorMessage = (SyntaxErrorMessage)error;
-          final SyntaxException cause = errorMessage.getCause();
-          return cause.getMessage();
-        }
-      }
-      return e.getMessage();
-    }
-    catch (CompilationFailedException ex) {
-      return ex.getLocalizedMessage();
+    catch (Throwable e) {
+      LOG.warn(e);
+      throw new MalformedPatternException(SSRBundle.message("error.in.groovy.parser"));
     }
   }
 }

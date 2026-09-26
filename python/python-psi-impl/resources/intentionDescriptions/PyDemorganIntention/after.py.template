@@ -1,0 +1,2 @@
+if <spot>not foo and bar</spot>:
+  pass

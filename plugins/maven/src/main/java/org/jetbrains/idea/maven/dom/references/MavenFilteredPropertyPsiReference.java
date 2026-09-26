@@ -17,12 +17,13 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -40,7 +41,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     if (result != null) return result;
 
     for (String each : myMavenProject.getFilterPropertiesFiles()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
+      VirtualFile file = StandardFileSystems.local().findFileByPath(each);
       if (file == null) continue;
       IProperty property = MavenDomUtil.findProperty(myProject, file, myText);
       if (property != null) return property.getPsiElement();
@@ -54,14 +55,14 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
     super.collectVariants(result, variants);
 
     for (String each : myMavenProject.getFilterPropertiesFiles()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
+      VirtualFile file = StandardFileSystems.local().findFileByPath(each);
       if (file == null) continue;
       collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result, variants);
     }
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newText = myRange.replace(myElement.getText(), newElementName);
     PsiFile psiFile = myElement.getContainingFile();
     String newFileText = myElement.getTextRange().replace(psiFile.getText(), newText);

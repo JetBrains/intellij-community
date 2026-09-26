@@ -1,0 +1,11 @@
+// ENABLE_CALL_EXTENSIONS
+// EXPECT_VARIANT_IN_ORDER "public fun bar(p: kotlin.String): kotlin.Unit defined in my.test.pkg1 in file NotAnnotatedContainer.dependency1.kt"
+// EXPECT_VARIANT_IN_ORDER "public fun bar(p: kotlin.String): kotlin.Unit defined in my.test.pkg2 in file NotAnnotatedContainer.dependency2.kt"
+package my.test.root
+
+import my.test.pkg1.bar
+
+// extension is enabled, but containing expression is not annotated, so we expect the default behavior
+fun foo() {
+    bar<caret>("a")
+}

@@ -1,0 +1,14 @@
+LineBreakpoint created at stopInCoroutineScope.kt:9
+LineBreakpoint created at stopInCoroutineScope.kt:12
+Run Java
+Connected to the target VM
+stopInCoroutineScope.kt:9
+stopInCoroutineScope.kt:10
+stopInCoroutineScope.kt:12
+stopInCoroutineScope.kt:9
+resuming stopInCoroutineScope.kt:12
+resuming stopInCoroutineScope.kt:9
+resuming stopInCoroutineScope.kt:12
+Disconnected from the target VM
+
+Process finished with exit code 0

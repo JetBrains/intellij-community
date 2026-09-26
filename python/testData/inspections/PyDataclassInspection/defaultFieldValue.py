@@ -19,6 +19,7 @@ class A:
     l = list()
     m: Dict[int, int] = <error descr="Mutable default 'OrderedDict()' is not allowed. Use 'default_factory'">OrderedDict()</error>
     n: FrozenSet[int] = frozenset()
+    o: List = dataclasses.field(default_factory=list)
     a2: Type[List[int]] = list
     b2: Type[Set[int]] = set
     c2: Type[Tuple[int, ...]] = tuple

@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// COMPILER_ARGUMENTS: -Xexplicit-context-arguments
+
+class C {
+    context(s: String)
+    fun foo(i: Int) {}
+
+    context(s: String)
+    fun test() {
+        listOf(1, 2, 3).forEach {
+            foo(it)
+        }
+    }
+}

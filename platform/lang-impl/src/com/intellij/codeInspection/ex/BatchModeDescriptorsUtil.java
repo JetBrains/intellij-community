@@ -1,23 +1,42 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionToolResultExporter;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.TripleFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
-public class BatchModeDescriptorsUtil {
+@ApiStatus.Internal
+public final class BatchModeDescriptorsUtil {
   private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT =
     (tool, element, context) -> {
-      final PsiNamedElement problemElement = getContainerElement(element, tool, context);
+      PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(context.getProject()).getInjectionHost(element);
+      if (injectionHost != null) {
+        element = injectionHost;
+      }
+
+      PsiNamedElement problemElement = getContainerElement(element, tool, context);
 
       RefElement refElement = context.getRefManager().getReference(problemElement);
       if (refElement == null && problemElement != null) {  // no need to lose collected results
@@ -26,18 +45,18 @@ public class BatchModeDescriptorsUtil {
       return refElement;
     };
 
-  static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
+  static void addProblemDescriptors(@NotNull Collection<? extends ProblemDescriptor> descriptors,
                                     boolean filterSuppressed,
                                     @NotNull GlobalInspectionContext context,
                                     @Nullable LocalInspectionTool tool,
-                                    @NotNull TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> getProblemElementFunction,
-                                    @NotNull InspectionToolPresentation dpi) {
+                                    @NotNull InspectionToolResultExporter dpi,
+                                    @NotNull TripleFunction<? super LocalInspectionTool, ? super PsiElement, ? super GlobalInspectionContext, ? extends RefElement> getProblemElementFunction) {
     if (descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<>();
-    final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
+    RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
-      final PsiElement element = descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
       if (element == null) continue;
       if (filterSuppressed) {
         String alternativeId;
@@ -55,28 +74,24 @@ public class BatchModeDescriptorsUtil {
 
       RefElement refElement = getProblemElementFunction.fun(tool, element, context);
 
-      List<ProblemDescriptor> elementProblems = problems.get(refElement);
-      if (elementProblems == null) {
-        elementProblems = new ArrayList<>();
-        problems.put(refElement, elementProblems);
-      }
+      List<ProblemDescriptor> elementProblems = problems.computeIfAbsent(refElement, _ -> new ArrayList<>());
       elementProblems.add(descriptor);
     }
 
     for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
-      final List<ProblemDescriptor> problemDescriptors = entry.getValue();
       RefElement refElement = entry.getKey();
+      Collection<ProblemDescriptor> problemDescriptors = new LinkedHashSet<>(entry.getValue()); // can be duplicates if GlobalInspectionContextImpl.findProblemsInFile() is canceled and restarted mid-execution, thanks to outer ReadAction.nonBlocking()
       CommonProblemDescriptor[] descriptions = problemDescriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       dpi.addProblemElement(refElement, filterSuppressed, descriptions);
     }
   }
 
-  public static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
-                                           @NotNull InspectionToolPresentation dpi,
+  public static void addProblemDescriptors(@NotNull Collection<? extends ProblemDescriptor> descriptors,
+                                           @NotNull InspectionToolResultExporter dpi,
                                            boolean filterSuppressed,
                                            @NotNull GlobalInspectionContext inspectionContext,
                                            @NotNull LocalInspectionTool tool) {
-    addProblemDescriptors(descriptors, filterSuppressed, inspectionContext, tool, CONVERT, dpi);
+    addProblemDescriptors(descriptors, filterSuppressed, inspectionContext, tool, dpi, CONVERT);
   }
 
   public static PsiNamedElement getContainerElement(@Nullable PsiElement element,
@@ -91,8 +106,7 @@ public class BatchModeDescriptorsUtil {
     return container != null ? container : containerFromTool;
   }
 
-  @NotNull
-  public static CommonProblemDescriptor[] flattenDescriptors(@NotNull List<CommonProblemDescriptor[]> descriptors) {
+  public static CommonProblemDescriptor @NotNull [] flattenDescriptors(@NotNull List<CommonProblemDescriptor[]> descriptors) {
     return descriptors.stream().flatMap(ds -> Arrays.stream(ds)).toArray(CommonProblemDescriptor.ARRAY_FACTORY::create);
   }
 }

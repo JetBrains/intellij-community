@@ -1,0 +1,206 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.experiment.ab.impl
+
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
+import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.EnumSet
+import kotlin.math.absoluteValue
+
+/**
+ * Complete list of all available AB experiments.
+ *
+ * The plugins are welcome to use [ABExperimentOption.isEnabled] to check whether the experiment is enabled on the user's machine
+ */
+enum class ABExperimentOption {
+  KUBERNETES_SEPARATE_SERVICE_VIEW,
+  FUZZY_FILE_SEARCH,
+  SHOW_TRIAL_SURVEY,
+  NEW_USERS_ONBOARDING,
+  CLION_WIZARD_REMOVAL,
+  RIDER_REPO_VIEW,
+
+  /**
+   * A group for users which are not assigned to any experiment.
+   */
+  UNASSIGNED;
+
+  fun isEnabled(): Boolean = isEnabled(experimentsPartition, ::getCurrentUserDecision)
+
+  @VisibleForTesting
+  internal fun isEnabled(partition: List<ExperimentAssignment>, getUserDecision: () -> ABExperimentDecision): Boolean {
+    require(this != UNASSIGNED) {
+      "UNASSIGNED experiment option is not supposed to be used in the isEnabled() method"
+    }
+    if (partition.none { it.experiment == this }) {
+      return false
+    }
+    val decision = getUserDecision()
+    if (decision.option != UNASSIGNED) {
+      ABExperimentCountCollector.logABExperimentOptionUsed(decision)
+    }
+    return isAllowed(decision.option) && decision.option == this && !decision.isControlGroup
+  }
+}
+
+/**
+ * Total number of "containers" where users are distributed. Each user belongs exactly to one bucket.
+ * Each bucket has at most one experimental option enabled, which are controlled by [experimentsPartition].
+ */
+@ApiStatus.Internal
+const val NUMBER_OF_BUCKETS: Int = 1024
+
+/**
+ * Mapping of buckets to experiments.
+ * Each experiment is assigned a non-overlapping range of buckets in [0..[NUMBER_OF_BUCKETS])
+ * The buckets that are not assigned to any experiment are considered to be in the UNASSIGNED experiment (i.e., no experiments are enabled for them).
+ */
+@VisibleForTesting
+@ApiStatus.Internal
+val experimentsPartition: List<ExperimentAssignment> = listOf(
+  //ExperimentAssignment(
+  //  experiment = KUBERNETES_SEPARATE_SERVICE_VIEW,
+  //  experimentBuckets = (0 until 128).toSet(),
+  //  controlBuckets = (128 until 256).toSet(),
+  //  majorVersion = "2025.2"
+  //),
+  ExperimentAssignment(
+    experiment = ABExperimentOption.CLION_WIZARD_REMOVAL,
+    experimentBuckets = (256 until 768).toSet(),
+    controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
+    majorVersion = "2026.2",
+    products = EnumSet.of(IntelliJPlatformProduct.CLION),
+  ),
+  // Do NOT delete -- will be activated for 2026.2.2
+  //ExperimentAssignment(
+  //  experiment = ABExperimentOption.RIDER_REPO_VIEW,
+  //  experimentBuckets = (0 until 256).toSet(),
+  //  controlBuckets = (256 until 512).toSet(),
+  //  majorVersion = "2026.2.2",
+  //  products = EnumSet.of(IntelliJPlatformProduct.RIDER)
+  //)
+  // the rest belongs to the "unassigned" experiment
+)
+
+/**
+ * This method can be configured to allow options only in particular IDEs.
+ */
+fun isAllowed(option: ABExperimentOption): Boolean = true
+
+// ================= IMPLEMENTATION ====================
+
+@ApiStatus.Internal
+data class ABExperimentDecision(val option: ABExperimentOption, val isControlGroup: Boolean, val bucketNumber: Int)
+
+@ApiStatus.Internal
+data class ABExperimentUserData(
+  val product: IntelliJPlatformProduct,
+  val fullVersion: String,
+  val bucketNumber: Int,
+)
+
+internal fun ABExperimentOption.reportableName(): String {
+  return toString().lowercase().replace('_', '.')
+}
+
+@ApiStatus.Internal
+fun getCurrentUserDecision(): ABExperimentDecision = getExperimentDecision(getABExperimentUserData())
+
+@ApiStatus.Internal
+fun getExperimentDecision(userData: ABExperimentUserData): ABExperimentDecision {
+  val currentBucket = userData.bucketNumber
+  val currentVersion = userData.fullVersion
+  val currentProduct = userData.product
+  val option = experimentsPartition.find {
+    (it.majorVersion == null || currentVersion.startsWith(it.majorVersion)) &&
+    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket)) &&
+    it.products.contains(currentProduct)
+  } ?: return ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
+  return ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
+}
+
+@ApiStatus.Internal
+data class ExperimentAssignment(
+  val experiment: ABExperimentOption,
+  val experimentBuckets: Set<Int>,
+  val controlBuckets: Set<Int>,
+  val majorVersion: String? = null,
+  val products: Set<IntelliJPlatformProduct> = EnumSet.allOf(IntelliJPlatformProduct::class.java)
+)
+
+@Volatile
+private var userDataOverride: ABExperimentUserData? = null
+
+@ApiStatus.Internal
+fun getABExperimentUserData(): ABExperimentUserData = userDataOverride ?: getActualUserData()
+
+@ApiStatus.Internal
+fun getActualABExperimentUserData(): ABExperimentUserData = getActualUserData()
+
+@ApiStatus.Internal
+fun setABExperimentUserDataOverride(userData: ABExperimentUserData?) {
+  require(userData == null || userData.bucketNumber in 0 until NUMBER_OF_BUCKETS) {
+    "Bucket number must be in [0, $NUMBER_OF_BUCKETS)"
+  }
+  userDataOverride = userData
+}
+
+private fun getActualUserData(): ABExperimentUserData = ABExperimentUserData(
+  product = IntelliJPlatformProduct.get(),
+  fullVersion = ApplicationInfo.getInstance().fullVersion,
+  bucketNumber = getActualUserBucketNumber(),
+)
+
+private fun getActualUserBucketNumber(): Int {
+  val overridingBucket = Integer.getInteger("ide.ab.test.overriding.bucket")
+  if (overridingBucket != null) {
+    LOG.info("Overriding bucket number: $overridingBucket")
+    return overridingBucket
+  }
+  val deviceId = LOG.runAndLogException {
+    MachineIdManager.getAnonymizedMachineId(getDeviceIdPurpose())
+  }
+
+  val bucketNumber = deviceId.hashCode().absoluteValue % NUMBER_OF_BUCKETS
+  LOG.debug { "User bucket number is: $bucketNumber." }
+  return bucketNumber
+}
+
+private fun getDeviceIdPurpose(): String {
+  return "A/B Experiment" + ApplicationInfo.getInstance().shortVersion
+}
+
+private val LOG = logger<ABExperimentOption>()
+
+/**
+ * There is no need to list all available products. Add if a product-specific experiment is needed.
+ */
+@ApiStatus.Internal
+enum class IntelliJPlatformProduct {
+  WEBSTORM,
+  IDEA,
+  PYCHARM,
+  RIDER,
+  CLION,
+  OTHER,
+  ;
+
+  companion object {
+    fun get(): IntelliJPlatformProduct =
+      when {
+        PlatformUtils.isWebStorm() -> WEBSTORM
+        PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() -> IDEA
+        PlatformUtils.isPyCharm() -> PYCHARM
+        PlatformUtils.isRider() -> RIDER
+        PlatformUtils.isCLion() -> CLION
+        else -> OTHER
+      }
+  }
+}

@@ -1,0 +1,23 @@
+// FILE: includedBuild1/build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.some.t<caret>est.library)
+}
+
+// FILE: includedBuild1/gradle/libs.versions.toml
+# EXPECTED
+# notice that this version catalog belongs to the included build, not the root build
+[libraries]
+some_test-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: includedBuild1/settings.gradle.kts
+rootProject.name = "includedBuild1"
+
+// FILE: settings.gradle.kts
+// this is the settings file for the root build of a composite build
+includeBuild("includedBuild1")

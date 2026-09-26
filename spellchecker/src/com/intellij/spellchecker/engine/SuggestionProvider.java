@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface SuggestionProvider {
-
   @NotNull
-  List<String> getSuggestions(@NotNull String text);
+  List<String> getSuggestions(@NotNull String text, int maxSuggestions, int maxMetrics);
 }

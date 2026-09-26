@@ -1,0 +1,64 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.gradle.tooling"/>
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.toolingExtension"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
+    <projectResolve implementation="org.jetbrains.idea.devkit.gradle.DevKitGradleProjectResolverExtension"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <attachSourcesProvider implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformAttachSourcesProvider"/>
+    <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
+    <completion.contributor language="kotlin"
+                            implementationClass="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionsCompletionContributor"/>
+    <externalProjectDataService implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleDataService"/>
+    <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProvider"
+                    serviceImplementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProviderImpl"/>
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="" shortName="OutdatedIntelliJPlatformGradlePluginVersion"
+                     bundle="messages.DevKitGradleBundle"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.gradle.OutdatedIntelliJPlatformGradlePluginVersionInspection"
+                     key="inspection.intellij.platform.gradle.plugin.outdated.version.name"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleSyncListener"
+              topic="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener"/>
+  </applicationListeners>
+</idea-plugin>

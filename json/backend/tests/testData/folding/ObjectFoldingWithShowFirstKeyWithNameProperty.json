@@ -1,0 +1,5 @@
+<fold text='{"first": "value"...}'>{
+  "first": "value",
+  "name": "test",
+  "other": "property"
+}</fold>

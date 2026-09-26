@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.JBColor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTabbedPane;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 
@@ -34,9 +25,10 @@ import java.awt.event.HierarchyListener;
  * @author evgeny.zakrevsky
  */
 public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
-  @NonNls public static final String LABEL_FROM_TABBED_PANE = "JBTabbedPane.labelFromTabbedPane";
-  private int previousSelectedIndex = -1;
-  
+  public static final String LABEL_FROM_TABBED_PANE = "JBTabbedPane.labelFromTabbedPane";
+
+  private Insets myTabComponentInsets = UIUtil.PANEL_SMALL_INSETS;
+
   public JBTabbedPane() {
   }
 
@@ -52,26 +44,25 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   public void setComponentAt(int index, Component component) {
     super.setComponentAt(index, component);
     component.addHierarchyListener(this);
-    UIUtil.setNotOpaqueRecursively(component);
     setInsets(component);
     revalidate();
     repaint();
   }
 
   @Override
-  public void insertTab(String title, Icon icon, Component component, String tip, int index) {
+  public void insertTab(@Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon, Component component,
+                        @Nls(capitalization = Nls.Capitalization.Sentence) String tip, int index) {
     super.insertTab(title, icon, component, tip, index);
 
     //set custom label for correct work spotlighting in settings
     JLabel label = new JLabel(title);
     label.setIcon(icon);
-    label.setBorder(new EmptyBorder(1,1,1,1));
+    label.setBorder(JBUI.Borders.empty(1));
+    label.setFont(getFont());
     setTabComponentAt(index, label);
-    updateSelectedTabForeground();
     label.putClientProperty(LABEL_FROM_TABBED_PANE, Boolean.TRUE);
 
     component.addHierarchyListener(this);
-    UIUtil.setNotOpaqueRecursively(component);
     setInsets(component);
 
     revalidate();
@@ -79,48 +70,71 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    updateTabComponentLabelsFont();
+  }
+
+  private void updateTabComponentLabelsFont() {
+    int tabsCount = getTabCount();
+    for (int i = 0; i < tabsCount; i++) {
+      Component tabComp = getTabComponentAt(i);
+      if (tabComp instanceof JLabel) {
+        tabComp.setFont(getFont());
+      }
+    }
+  }
+
+  @Override
+  public void setTitleAt(int index, @NlsContexts.TabTitle String title) {
+    super.setTitleAt(index, title);
+    Component tabComponent = getTabComponentAt(index);
+    if (tabComponent instanceof JLabel label) {
+      if (Boolean.TRUE.equals(label.getClientProperty(LABEL_FROM_TABBED_PANE))) {
+        label.setText(title);
+      }
+    }
+  }
+
+  @Override
   public void setSelectedIndex(int index) {
-    previousSelectedIndex = getSelectedIndex();
     super.setSelectedIndex(index);
-    updateSelectedTabForeground();
     revalidate();
     repaint();
   }
 
-  private void updateSelectedTabForeground() {
-    if (UIUtil.isUnderAquaLookAndFeel() && SystemInfo.isMacOSLion) {
-      if (getSelectedIndex() != -1 && getTabComponentAt(getSelectedIndex()) != null) {
-        getTabComponentAt(getSelectedIndex()).setForeground(Color.WHITE);
-      }
-      if (previousSelectedIndex != -1 && getTabComponentAt(previousSelectedIndex) != null) {
-        getTabComponentAt(previousSelectedIndex).setForeground(JBColor.foreground());
-      }
-    }
-  }
-
   private void setInsets(Component component) {
-    if (component instanceof JComponent) {
+    if (component instanceof JComponent && myTabComponentInsets != null) {
       UIUtil.addInsets((JComponent)component, getInsetsForTabComponent());
     }
   }
 
-  @NotNull
-  protected Insets getInsetsForTabComponent() {
-    return UIUtil.PANEL_SMALL_INSETS;
+  /** @deprecated Use {@link JBTabbedPane#setTabComponentInsets(Insets)} instead of overriding */
+  @Deprecated(forRemoval = true)
+  protected @NotNull Insets getInsetsForTabComponent() {
+    return myTabComponentInsets;
+  }
+
+  public @Nullable Insets getTabComponentInsets() {
+    return myTabComponentInsets;
+  }
+
+  public void setTabComponentInsets(@Nullable Insets tabInsets) {
+    myTabComponentInsets = tabInsets;
   }
 
   @Override
   public void hierarchyChanged(HierarchyEvent e) {
-    UIUtil.setNotOpaqueRecursively(e.getComponent());
     repaint();
   }
 
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+    if (!ScreenUtil.isStandardAddRemoveNotify(this)) {
       return;
-    for (int i=0; i<getTabCount(); i++) {
+    }
+    for (int i = 0; i < getTabCount(); i++) {
       getComponentAt(i).removeHierarchyListener(this);
     }
   }

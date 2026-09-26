@@ -1,0 +1,9 @@
+fun foo(vararg strings: String, optional: String = ""){ }
+
+fun bar(arr: Array<String>){
+    foo(*arr<caret>)
+}
+
+// ELEMENT: arr
+
+// IGNORE_K2

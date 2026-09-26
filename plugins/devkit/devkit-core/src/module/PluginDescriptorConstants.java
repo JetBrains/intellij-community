@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.module;
 
-import com.intellij.util.descriptors.ConfigFileVersion;
 import com.intellij.util.descriptors.ConfigFileMetaData;
+import com.intellij.util.descriptors.ConfigFileVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 

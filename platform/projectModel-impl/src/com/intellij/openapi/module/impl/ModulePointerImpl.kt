@@ -21,9 +21,7 @@ import com.intellij.openapi.module.ModulePointer
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 
-private val LOG = Logger.getInstance(ModulePointerImpl::class.java)
-
-class ModulePointerImpl : ModulePointer {
+internal class ModulePointerImpl : ModulePointer {
   private var module: Module? = null
   private var moduleName: String? = null
   private val lock: ReentrantReadWriteLock
@@ -63,4 +61,7 @@ class ModulePointerImpl : ModulePointer {
   }
 
   override fun toString(): String = "moduleName: $moduleName, module: $module"
+  companion object {
+    private val LOG = Logger.getInstance(ModulePointerImpl::class.java)
+  }
 }

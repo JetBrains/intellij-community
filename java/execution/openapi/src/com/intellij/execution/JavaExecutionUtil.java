@@ -1,43 +1,32 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,16 +36,58 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
-public class JavaExecutionUtil {
+public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
   private JavaExecutionUtil() {
   }
 
-  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
+  /**
+   * A module at a preview language level makes class files that the JVM loads only with
+   * {@link com.intellij.execution.configurations.JavaParameters#JAVA_ENABLE_PREVIEW_PROPERTY}. A launch that loads
+   * such a class file needs the flag.
+   * <p>
+   * The JDK is not part of the answer. A caller that adds the flag also has to know that its JDK accepts the flag.
+   *
+   * @param module the module to inspect together with every module it depends on. The dependencies count, because the
+   *               JVM refuses the class files that it loads, and not only the ones of the launched module.
+   * @return {@code true} if the module or a dependency of it sits at an
+   * {@linkplain LanguageLevelUtil#getEffectiveLanguageLevel effective} language level that
+   * {@linkplain com.intellij.pom.java.LanguageLevel#isPreview() is a preview level}.
+   */
+  public static boolean compilesPreviewFeatures(@NotNull Module module) {
+    return compilesPreviewFeatures(OrderEnumerator.orderEntries(module).recursively());
+  }
+
+  /**
+   * The same question as {@link #compilesPreviewFeatures(Module)} asks, for every module of a project.
+   *
+   * @param project the project whose modules to inspect.
+   * @return {@code true} if a module of the project sits at an
+   * {@linkplain LanguageLevelUtil#getEffectiveLanguageLevel effective} language level that
+   * {@linkplain com.intellij.pom.java.LanguageLevel#isPreview() is a preview level}.
+   */
+  public static boolean compilesPreviewFeatures(@NotNull Project project) {
+    return compilesPreviewFeatures(OrderEnumerator.orderEntries(project));
+  }
+
+  /**
+   * The answer only turns from {@code false} to {@code true}. A {@code false} from the callback of
+   * {@link OrderEnumerator#forEachModule} ends the walk of one dependency, and not of the whole graph. The answer
+   * must therefore survive a plain module that the walk visits after a preview module.
+   */
+  private static boolean compilesPreviewFeatures(@NotNull OrderEnumerator enumerator) {
+    Ref<Boolean> preview = Ref.create(false);
+    enumerator.forEachModule(module -> {
+      if (LanguageLevelUtil.getEffectiveLanguageLevel(module).isPreview()) {
+        preview.set(true);
+      }
+      return !preview.get();
+    });
+    return preview.get();
+  }
+
+  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<? super PsiClass> isTestMethod) {
     final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
@@ -79,26 +110,44 @@ public class JavaExecutionUtil {
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;
       }
+      return null;
     }
-    return null;
-  }
-
-  @Nullable
-  public static String getRuntimeQualifiedName(@NotNull final PsiClass aClass) {
-    return ClassUtil.getJVMClassName(aClass);
-  }
-
-  @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName) {
-    return getPresentableClassName(rtClassName, null);
+    return contextModule;
   }
 
   /**
-   * {@link JavaExecutionUtil#getPresentableClassName(java.lang.String)}
+   * Returns the runtime-qualified (aka "binary") name of the specified class.
+   * <p>
+   * Returns null if the class is local or anonymous (because those classes cannot be entrypoint to the program).
+   * <p>
+   * Below is a case where the <i>fully qualified name</i> of the class {@code NestedMain} differs from its <i>binary name</i>:
+   *
+   * <pre>{@code
+   * package simple;
+   *
+   * public class Main {
+   *   public static class NestedMain {
+   *     public static void main(String[] args) {
+   *       System.out.println("hello world");
+   *     }
+   *   }
+   * }}
+   *
+   * Fully qualified name is {@code simple.Main.NestedMain}, but the binary name is {@code simple.Main$NestedMain}.
+   * <p>
+   * See also:
+   * <ul>
+   *   <li>JLS 6.7. Fully Qualified Names and Canonical Names</li>
+   *   <li>JLS 13.1. The Form of a Binary</li>
+   * </ul>
+   * @see ClassUtil#getJVMClassName(PsiClass)
+   * @see ClassUtil#getBinaryClassName(PsiClass)
    */
-  @Deprecated
-  @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName, JavaRunConfigurationModule configurationModule) {
+  public static @Nullable String getRuntimeQualifiedName(final @NotNull PsiClass aClass) {
+    return ClassUtil.getJVMClassName(aClass);
+  }
+
+  public static @Nullable @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
     if (StringUtil.isEmpty(rtClassName)) {
       return null;
     }
@@ -107,24 +156,32 @@ public class JavaExecutionUtil {
     return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1);
   }
 
-  public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtilCore.findModuleForPsiElement(psiClass);
+  public static Module findModule(final @NotNull PsiClass psiClass) {
+    return ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile());
   }
 
-  @Nullable
-  public static PsiClass findMainClass(final Module module, final String mainClassName) {
+  public static @Nullable PsiClass findMainClass(final Module module, final String mainClassName) {
     return findMainClass(module.getProject(), mainClassName, module.getModuleRuntimeScope(true));
   }
 
-  @Nullable
-  public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
-    if (project.isDefault() || DumbService.isDumb(project) && !DumbService.getInstance(project).isAlternativeResolveEnabled()) return null;
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final String shortName = StringUtil.getShortName(mainClassName);
-    final String packageName = StringUtil.getPackageName(mainClassName);
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
-    final PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
-    return psiClass == null ? psiFacade.findClass(mainClassName, scope) : psiClass;
+  public static @Nullable PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
+    if (project.isDefault() ||
+        (DumbService.isDumb(project) &&
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) == null &&
+         !DumbService.getInstance(project).isAlternativeResolveEnabled())) {
+      return null;
+    }
+    PsiManager psiManager = PsiManager.getInstance(project);
+    String shortName = StringUtil.getShortName(mainClassName);
+    String packageName = StringUtil.getPackageName(mainClassName);
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    try {
+      PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
+      return psiClass == null ? psiFacade.findClass(mainClassName, scope) : psiClass;
+    }
+    catch (IndexNotReadyException ex) {
+      return null;
+    }
   }
 
 
@@ -132,8 +189,9 @@ public class JavaExecutionUtil {
     return name == null || name.startsWith(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
   }
 
-  public static Location stepIntoSingleClass(@NotNull final Location location) {
+  public static Location stepIntoSingleClass(final @NotNull Location location) {
     PsiElement element = location.getPsiElement();
+    TextRange elementTextRange = element.getTextRange();
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
@@ -142,7 +200,9 @@ public class JavaExecutionUtil {
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
-    if (classes[0].getTextRange() == null) return location;
+    TextRange textRange = classes[0].getTextRange();
+    if (textRange == null) return location;
+    if (elementTextRange != null && textRange.contains(elementTextRange)) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 
@@ -150,32 +210,32 @@ public class JavaExecutionUtil {
     return fqName == null ? "" : StringUtil.getShortName(fqName);
   }
 
-  public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated(forRemoval = true)
+  public static void showExecutionErrorMessage(ExecutionException e, @NlsContexts.DialogTitle String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }
 
-  @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath,
-                                               @NotNull String copyDirName,
-                                               @Nullable String agentPathPropertyKey) {
+  public static @Nullable String handleSpacesInAgentPath(@NotNull String agentPath,
+                                                         @NotNull String copyDirName,
+                                                         @Nullable String agentPathPropertyKey) {
     return handleSpacesInAgentPath(agentPath, copyDirName, agentPathPropertyKey, null);
   }
 
-  @Nullable
-  public static String handleSpacesInAgentPath(@NotNull String agentPath,
-                                               @NotNull String copyDirName,
-                                               @Nullable String agentPathPropertyKey,
-                                               @Nullable FileFilter fileFilter) {
+  public static @Nullable String handleSpacesInAgentPath(@NotNull String agentPath,
+                                                         @NotNull String copyDirName,
+                                                         @Nullable String agentPathPropertyKey,
+                                                         @Nullable FileFilter fileFilter) {
     String agentName = new File(agentPath).getName();
-    String containingDir = handleSpacesInContainingDir(agentPath, copyDirName, agentPathPropertyKey, fileFilter);
+    String containingDir = handleSpacesInContainingDir(agentPath, agentName, copyDirName, agentPathPropertyKey, fileFilter);
     return containingDir == null ? null : FileUtil.join(containingDir, agentName);
   }
 
-  @Nullable
-  private static String handleSpacesInContainingDir(@NotNull String agentPath,
-                                                    @NotNull String copyDirName,
-                                                    @Nullable String agentPathPropertyKey,
-                                                    @Nullable FileFilter fileFilter) {
+  private static @Nullable String handleSpacesInContainingDir(@NotNull String agentPath,
+                                                              @NotNull String agentName,
+                                                              @NotNull String copyDirName,
+                                                              @Nullable String agentPathPropertyKey,
+                                                              @Nullable FileFilter fileFilter) {
     String agentContainingDir;
     String userDefined = agentPathPropertyKey == null ? null : System.getProperty(agentPathPropertyKey);
     if (userDefined != null && new File(userDefined).exists()) {
@@ -184,10 +244,10 @@ public class JavaExecutionUtil {
       agentContainingDir = new File(agentPath).getParent();
     }
     if (agentContainingDir.contains(" ")) {
-      String res = tryCopy(agentContainingDir, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
+      String res = tryCopy(agentContainingDir, agentName, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
       if (res == null) {
         try {
-          res = tryCopy(agentContainingDir, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
+          res = tryCopy(agentContainingDir, agentName, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
           if (res == null) {
             String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
             if (agentPathPropertyKey != null) {
@@ -206,17 +266,19 @@ public class JavaExecutionUtil {
     return agentContainingDir;
   }
 
-  @Nullable
-  private static String tryCopy(@NotNull String agentDir,
-                                @NotNull File targetDir,
-                                @Nullable FileFilter fileFilter) {
+  private static @Nullable String tryCopy(@NotNull String agentDir,
+                                          @NotNull String agentName,
+                                          @NotNull File targetDir,
+                                          @Nullable FileFilter fileFilter) {
     if (targetDir.getAbsolutePath().contains(" ")) return null;
     try {
-      LOG.info("Agent jars were copied to " + targetDir.getPath());
       if (fileFilter == null) {
-        fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+        FileUtil.copy(new File(agentDir, agentName), new File(targetDir, agentName));
       }
-      FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      else {
+        FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      }
+      LOG.info("Agent jars were copied to " + targetDir.getPath());
       return targetDir.getPath();
     }
     catch (IOException e) {

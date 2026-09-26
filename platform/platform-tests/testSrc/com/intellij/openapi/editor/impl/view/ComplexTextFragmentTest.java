@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -22,15 +8,22 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.*;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_DESCENT;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_LINE_HEIGHT;
+import static com.intellij.openapi.editor.impl.AbstractEditorTest.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class ComplexTextFragmentTest {
   @Test
@@ -40,7 +33,7 @@ public class ComplexTextFragmentTest {
       10, 20, 30
     );
   }
-  
+
   @Test
   public void testSimpleRtlText() {
     assertCaretPositionsForGlyphVector(
@@ -48,7 +41,7 @@ public class ComplexTextFragmentTest {
       10, 20, 30
     );
   }
-  
+
   @Test
   public void testLigature() {
     assertCaretPositionsForGlyphVector(
@@ -56,7 +49,7 @@ public class ComplexTextFragmentTest {
       4, 8, 12
     );
   }
-  
+
   @Test
   public void testRtlLigature() {
     assertCaretPositionsForGlyphVector(
@@ -89,11 +82,24 @@ public class ComplexTextFragmentTest {
     );
   }
 
+  @Test
+  public void testEndPositionLeaning() {
+    assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 20, false);
+    assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 21, true);
+  }
+
+  @Test
+  public void testSubFragmentAfterSurrogatePair() {
+    assertSubFragmentOffsetMapping(glyph(0, 10).glyph(10, 20).noGlyph().glyph(20, 30));
+    // in RTL, the sub-fragment's character is the first visual character
+    assertSubFragmentOffsetMapping(rtl().glyph(0, 10).noGlyph().glyph(10, 20).glyph(20, 30));
+  }
+
   private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
       @Override
-      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, @NotNull char[] chars,
+      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
                                            int start, int end, boolean isRtl) {
         return gv;
       }
@@ -102,8 +108,8 @@ public class ComplexTextFragmentTest {
       int length = gv.getNumChars();
       char[] text = new char[length];
       FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0, 
-                                                             fontInfo);
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                             fontInfo, null);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);
@@ -114,16 +120,66 @@ public class ComplexTextFragmentTest {
       FontLayoutService.setInstance(null);
     }
   }
-  
+
+  private static void assertEndVisualColumnForGlyphVector(MyGlyphVector gv, float x, boolean expectedLeansRight) {
+    FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
+      @NotNull
+      @Override
+      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
+                                           int start, int end, boolean isRtl) {
+        return gv;
+      }
+    });
+    try {
+      int length = gv.getNumChars();
+      char[] text = new char[length];
+      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                             fontInfo, null);
+      VisualColumn column = fragment.xToVisualColumn(0, x);
+      assertEquals(length, column.column);
+      assertEquals(expectedLeansRight, column.leansRight);
+    }
+    finally {
+      FontLayoutService.setInstance(null);
+    }
+  }
+
+  private static void assertSubFragmentOffsetMapping(MyGlyphVector gv) {
+    FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
+      @NotNull
+      @Override
+      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
+                                           int start, int end, boolean isRtl) {
+        return gv;
+      }
+    });
+    try {
+      // logical text "a<surrogate pair>b", one glyph per code point
+      char[] text = {'a', '\uD83D', '\uDE00', 'b'};
+      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
+                                                             fontInfo, null);
+      LineFragment window = fragment.subFragment(3, 4); // the trailing 'b'
+      assertEquals(1, window.getLength());
+      assertEquals(0, window.visualColumnToOffset(0, 0));
+      assertEquals(1, window.visualColumnToOffset(0, 1));
+      assertEquals(10, window.offsetToX(0, 0, 1), 0.01f);
+    }
+    finally {
+      FontLayoutService.setInstance(null);
+    }
+  }
+
   private static MyGlyphVector rtl() {
     return new MyGlyphVector(true, new Integer[0], new Integer[0]);
   }
-  
+
   private static MyGlyphVector glyph(int xStart, int xEnd) {
     return new MyGlyphVector(false, new Integer[]{xStart}, new Integer[]{xEnd - xStart});
   }
 
-  private static class MyGlyphVector extends AbstractMockGlyphVector {
+  private static final class MyGlyphVector extends AbstractMockGlyphVector {
     private final boolean myRtl;
     private final Integer[] myGlyphPositions;
     private final Integer[] myGlyphWidths;

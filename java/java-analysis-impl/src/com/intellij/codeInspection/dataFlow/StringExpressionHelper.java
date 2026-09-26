@@ -1,42 +1,45 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
-public class StringExpressionHelper {
+public final class StringExpressionHelper {
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression) {
+  public static @Nullable Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression) {
     return evaluateExpression(expression, new HashSet<>());
   }
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression, @NotNull Collection<PsiElement> visited) {
+  public static @Nullable Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression, @NotNull Collection<PsiElement> visited) {
     if (!visited.add(expression)) {
       return null;
     }
@@ -61,17 +64,17 @@ public class StringExpressionHelper {
       if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();
         if (body != null) {
-          final Set<PsiExpression> returns = new java.util.HashSet<>();
+          final Set<PsiExpression> returns = new HashSet<>();
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
 
             @Override
-            public void visitLambdaExpression(PsiLambdaExpression expression) {}
+            public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
             @Override
-            public void visitReturnStatement(PsiReturnStatement statement) {
+            public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
               PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returns.add(returnValue);
@@ -97,9 +100,8 @@ public class StringExpressionHelper {
       return constantExpression;
     }
 
-    if (expression instanceof PsiBinaryExpression) {
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       // a="a"; b="b"  return a+b;
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       return evaluatePolyadicExpressions(expression, visited, binaryExpression.getLOperand(), binaryExpression.getROperand());
     }
     if (expression instanceof PsiPolyadicExpression) {
@@ -117,10 +119,9 @@ public class StringExpressionHelper {
     return null;
   }
 
-  @Nullable
-  private static Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
-                                                                      @NotNull Collection<PsiElement> visited,
-                                                                      @NotNull PsiExpression... operands) {
+  private static @Nullable Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
+                                                                                @NotNull Collection<PsiElement> visited,
+                                                                                PsiExpression @NotNull ... operands) {
     StringBuilder sb = new StringBuilder();
     for (PsiExpression operand : operands) {
       Pair<PsiElement, String> pair = evaluateExpression(operand, visited);
@@ -130,13 +131,11 @@ public class StringExpressionHelper {
     return Pair.create(expression, sb.toString());
   }
 
-  @Nullable
-  private static Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
+  private static @NotNull Pair<PsiElement, String> evaluatePsiLiteralExpression(@NotNull PsiElement expression) {
     return Pair.create(expression, ElementManipulators.getValueText(expression));
   }
 
-  @Nullable
-  public static Pair<PsiElement, String> evaluateConstantExpression(@NotNull PsiElement expression) {
+  public static @Nullable Pair<PsiElement, String> evaluateConstantExpression(@NotNull PsiElement expression) {
     PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
     Object result = helper.computeConstantExpression(expression);
     if (result instanceof String) {
@@ -145,13 +144,14 @@ public class StringExpressionHelper {
     return null;
   }
 
-  @NotNull
-  public static Set<Pair<PsiElement, String>> searchStringExpressions(@NotNull final PsiMethod psiMethod,
-                                                                      @NotNull SearchScope searchScope,
-                                                                      int expNum) {
-    Set<Pair<PsiElement, String>> pairs = new java.util.HashSet<>();
-    for (PsiMethodCallExpression methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
-      final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+  public static @NotNull Set<Pair<PsiElement, String>> searchStringExpressions(final @NotNull PsiMethod psiMethod,
+                                                                               @NotNull SearchScope searchScope,
+                                                                               int expNum) {
+    Set<Pair<PsiElement, String>> pairs = new HashSet<>();
+    for (PsiCall methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
+      PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList == null) continue;
+      final PsiExpression[] expressions = argumentList.getExpressions();
       if (expressions.length > expNum) {
         final PsiExpression expression = expressions[expNum];
         Pair<PsiElement, String> pair = evaluateExpression(expression);
@@ -164,16 +164,14 @@ public class StringExpressionHelper {
     return pairs;
   }
 
-  @NotNull
-  public static Set<PsiMethodCallExpression> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
-    final Set<PsiMethodCallExpression> callExpressions = new java.util.HashSet<>();
+  public static @NotNull Set<PsiCall> searchMethodCalls(final @NotNull PsiMethod psiMethod, @NotNull SearchScope searchScope) {
+    final Set<PsiCall> callExpressions = new HashSet<>();
     final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 
     MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);
 
     for (PsiReference psiReference : consumer.getResults()) {
-      final PsiMethodCallExpression methodCallExpression =
-        PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethodCallExpression.class);
+      final PsiCall methodCallExpression = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiCall.class);
 
       if (methodCallExpression != null) {
         callExpressions.add(methodCallExpression);

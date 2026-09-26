@@ -1,31 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
+import java.util.Collections;
+
+import static com.intellij.java.codeInspection.DataFlowInspectionTest.addJavaxNullabilityAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNonNull;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
+
+public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   private final GeneratedSourcesFilter myGeneratedSourcesFilter = new GeneratedSourcesFilter() {
@@ -38,7 +41,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_21_ANNOTATED;
   }
 
   @Override
@@ -51,29 +54,46 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  private void doTestWithFix(String intentionAction) {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention(intentionAction));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
+    ExtensionTestUtil
+      .maskExtensions(GeneratedSourcesFilter.EP_NAME, Collections.singletonList(myGeneratedSourcesFilter), getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
     myInspection = null;
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     super.tearDown();
   }
 
   public void testProblems() { doTest();}
 
   public void testAnnotatingPrimitivesTypeUse() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeParameterShouldNotWarn() {
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testAnnotatingPrimitivesAmbiguous() {
-    DataFlowInspection8Test.setupAmbiguousAnnotations("withTypeUse", myFixture);
+    DataFlowInspectionTestCase.setupAmbiguousAnnotations("withTypeUse", myFixture);
+    doTest();
+  }
+
+  public void testAnnotatingArrayAmbiguous() {
+    DataFlowInspectionTestCase.setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
   }
 
@@ -82,25 +102,28 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testNotNullFieldNullableParam() { doTest(); }
   public void testNotNullCustomException() { doTest(); }
 
-  public void testNotNullFieldNotInitialized() { doTest(); }
-  public void testNotNullFieldInitializedInLambda() { doTest(); }
-  public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
-  public void testNotNullFieldNotInitializedSetting() {
-    myInspection.REQUIRE_NOTNULL_FIELDS_INITIALIZED = false;
-    doTest();
-  }
-
-  public void testNotNullByDefaultFieldNotInitialized() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
-    doTest();
-  }
-
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
   public void testGetterSetterProblems() { doTest(); }
   public void testNonTrivialGettersSetters() { doTest(); }
-  
+  public void testGetterSetterFieldMismatch() { doTest(); }
+  public void testAbstractMapAndSortedMap() { doTest(); }
+
   public void testOverriddenMethods() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
+  public void testStaticMethodHiding() { doTest(); }
+
+  public void testNoOverridingChecksOnInapplicableAnnotations() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
+  public void testOverriddenMethodsWithDefaults() {
+    addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
   }
@@ -113,6 +136,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testOverriddenViaMethodReference() { doTest(); }
+  public void testMethodReferenceListOf() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
@@ -125,15 +149,36 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNullMarkedParameterOverridesNotAnnotated() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNotNullByDefaultParameterOverridesNotAnnotated() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
+  public void testNotNullByDefaultParameterOverridesNullable() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
   public void testNullableSiblingOverriding() { doTest(); }
-  
+
   public void testNonAnnotatedSiblingOverriding() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
-    doTest(); 
+    doTest();
   }
 
   public void testHonorSuperParameterDefault() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
@@ -144,7 +189,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testHonorThisParameterDefault() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
@@ -154,7 +199,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testHonorCustomDefault() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass("package foo;" +
                        "import static java.lang.annotation.ElementType.*;" +
                        "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, FIELD, METHOD, LOCAL_VARIABLE}) " +
@@ -169,7 +214,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testOverrideCustomDefault() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass("package custom;" +
                        "public @interface CheckForNull {}");
 
@@ -190,20 +235,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testNullPassedToNotNullParameter() {
-    doTest();
-  }
-
-  public void testNullPassedToNotNullConstructorParameter() {
-    doTest();
-  }
-
-  public void testNullPassedAsPartNotNullAnnotatedOfVarArg() {
-    doTest();
-  }
-
   public void testHonorParameterDefaultInSetters() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
 
@@ -213,7 +246,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testNullableDefaultOnClassVsNonnullOnPackage() {
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     myFixture.addFileToProject("foo/package-info.java", "@NonnullByDefault package foo;");
 
@@ -222,73 +255,458 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testDefaultOverridesExplicit() {
+    addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
   public void testBeanValidationNotNull() {
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
-    DataFlowInspection8Test.setCustomAnnotations(getProject(), getTestRootDisposable(), "javax.annotation.constraints.NotNull", "javax.annotation.constraints.Nullable");
+    DataFlowInspectionTestCase.setCustomAnnotations(getProject(), getTestRootDisposable(), "javax.annotation.constraints.NotNull", "javax.annotation.constraints.Nullable");
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();
   }
 
   public void testForeachParameterNullability() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testPassingNullableCollectionWhereNotNullIsExpected() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testPassingNullableMapWhereNotNullIsExpected() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testPassingNullableMapValueWhereNotNullIsExpected() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testOverridingNotNullCollectionWithNullable() {
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testNotNullCollectionItemWithNullableSuperType() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testNotNullTypeArgumentWithNullableSuperType() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testUnannotatedInstantiationOfNonNullTypeParameter() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testUnannotatedInstantiationOfNonNullTypeParameterOn() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 
   public void testNullableTypeArgumentSOE() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
-  public void testTypeUseNotNullField() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+  public void testOverrideGenericMethod() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
   public void testTypeUseNotNullOverriding() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
-  }
-
-  public void testAnnotateQuickFixOnMethodReference() {
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    doTestWithFix("Annotate overriding method parameters");
   }
 
-  public void testNullPassedToNullableParameter() {
+  public void testRemoveMethodAnnotationRemovesOverriders() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTestWithFix("Remove annotation");
+  }
+
+  public void testRemoveParameterAnnotationRemovesOverriders() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTestWithFix("Remove annotation");
+  }
+
+  public void testNullabilityAnnotationInPattern() { doTest(); }
+
+  public void testRemovePatternNullabilityAnnotation() { doTestWithFix("Remove annotation"); }
+
+  public void testTypeUseArrayAnnotation() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testIncorrectPlacement() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testInheritTypeUse() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testMismatchOnArrayElementTypeUse() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testInheritAmbiguous() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspectionTestCase.setupAmbiguousAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testIncorrectPlacementAmbiguous() {
+    DataFlowInspectionTestCase.setupAmbiguousAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testIncorrectPlacementAmbiguousJava6() {
+    DataFlowInspectionTestCase.setupAmbiguousAnnotations("typeUse", myFixture);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
+  }
+
+  public void testOverridersHaveNonDefaultAnnotation() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTestWithFix("Annotate overriding method parameters");
+  }
+
+  public void testQuickFixOnTypeArgument() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTestWithFix("Annotate as '@NotNull'");
+  }
+
+  public void testRemoveAnnotationWithImportQuickFix() {
+    doTestWithFix("Remove annotation");
+  }
+
+  public void testQuickFixOnTypeArgumentNullable() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTestWithFix("Annotate as '@NotNull'");
+  }
+
+  public void testCheckerDefaultTypeUseRecursiveGeneric() {
+    DataFlowInspectionTestCase.addCheckerAnnotations(myFixture);
+    doTest();
+  }
+
+  public void testMapComputeLambdaAnnotation() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testDisableOnLocals() {
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testDisableOnLocals2() {
+    myInspection.REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = false;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testOverriddenWithNullMarked() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyUnboundedWildcardReturnOverride() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testNullableParameterOverride() {
+    doTest();
+  }
+
+  public void testDisableOnClass() {
+    doTest();
+  }
+
+  public void testRedundantNotNull() {
+    doTest();
+  }
+
+  public void testRedundantNotNullDisabled() {
+    boolean previousValue = myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER;
+    try {
+      myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = false;
+      doTest();
+    }
+    finally {
+      myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = previousValue;
+    }
+  }
+
+  public void testRedundantNotNull2() {
+    doTest();
+  }
+  
+  public void testNoNotNullWarningIfIndirectSuperMethodIsAnnotated() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest();
+  }
+  
+  public void testIncompatibleConstructors() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+    IntentionAction action = myFixture.findSingleIntention("Fix all 'Nullability problems' problems in file");
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  
+  public void testIncompatibleInstantiation() {
+    addJSpecifyNullMarked(myFixture);
+    addJavaxNullabilityAnnotations(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testStreamFilterPatching() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testStreamFilterPatchingInFunction() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNullableExtendsNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testIncompatibleContainer() {
+    addJSpecifyNullMarked(myFixture);
+    addJSpecifyNonNull(myFixture);
+    doTest();
+  }
+
+  public void testReturnIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testAssignmentIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundContainment() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundTransitive() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testReferenceBoundPositions() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionBoundSuperVsExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testReturnDerivedWithNullableBound() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNewExpressionOuterBoundSuperVsExtends() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testArrayUnderContainerAnnotation() {
+    myInspection.REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = true;
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+  
+  public void testDefaultNotNullTypeParameterOverrides() {
+    doTest();
+  }
+  
+  public void testNotNullTypeParameterMethodArgument() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest();
+  }
+
+  public void testCallIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testConstructorCallIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testCallIncompatibilitiesWithGenericWithNotNullToNull() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericSimple() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifySameInstanceGenericInheritedBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyNullableParameterOverridesNotNull() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = true;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableParameterOverridesNotNullOptionOff() {
+    myInspection.REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = false;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyTypeParameterBoundOverridesNullable() {
+    //without it, conflicts in the overridden return type (NOT_NULL_TO_NULL) are not reported at all
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyNullableBoundInstantiatedWithNotNull() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiClass superClass = myFixture.addClass("""
+                                               import org.jspecify.annotations.NullMarked;
+                                               import org.jspecify.annotations.Nullable;
+
+                                               @NullMarked
+                                               public class SupWithNullableBound<T extends @Nullable Object> {
+                                                 public void test(T arg) {}
+                                               }""");
+    doTest();
+    // The bound has to be read from the stub, where the extends-list reference is rebuilt in a DummyHolder and the
+    // @Nullable annotation reports no owner. .
+    assertFalse(((PsiFileImpl)superClass.getContainingFile()).isContentsLoaded());
+  }
+
+  public void testJSpecifyUnspecifiedTypeArgumentInstantiatedWithNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    addNullnessUnspecified();
+    doTest();
+  }
+
+  public void testJSpecifyUnboundedWildcardFromUnmarkedScope() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyCyclicTypeParameterBounds() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  private void addNullnessUnspecified() {
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+                         
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
+  }
+  
+  public void testNoOverrideWarningOnParameterization() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testJSpecifyNullMarkedDiamond() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 }

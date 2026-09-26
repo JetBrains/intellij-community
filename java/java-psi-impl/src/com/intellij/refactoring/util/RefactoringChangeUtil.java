@@ -1,36 +1,47 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiQualifiedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RefactoringChangeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.ChangeUtil");
+import java.util.Objects;
 
-  public static PsiType getTypeByExpression(PsiExpression expr) {
-    PsiType type = expr != null ? expr.getType() : null;
+public final class RefactoringChangeUtil {
+  private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
+
+  @Contract("null -> null")
+  public static PsiType getTypeByExpression(@Nullable PsiExpression expr) {
+    if (expr == null) return null;
+    PsiType type = expr.getType();
     if (type == null) {
       if (expr instanceof PsiArrayInitializerExpression) {
         PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
@@ -42,17 +53,19 @@ public class RefactoringChangeUtil {
       }
 
       if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
-        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+        PsiAssignmentExpression assignmentExpression =
+          (PsiAssignmentExpression)PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+        return getTypeByExpression(Objects.requireNonNull(assignmentExpression).getRExpression());
       }
       return null;
     }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);
   }
-  
+
   public static PsiReferenceExpression qualifyReference(@NotNull PsiReferenceExpression referenceExpression,
                                                         @NotNull PsiMember member,
-                                                        @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
+                                                        final @Nullable PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
     while (methodCallExpression != null) {
@@ -62,7 +75,7 @@ public class RefactoringChangeUtil {
       methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);
     }
     PsiReferenceExpression expressionFromText;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (qualifyingClass == null) {
       PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
       final PsiClass containingClass = member.getContainingClass();
@@ -113,10 +126,35 @@ public class RefactoringChangeUtil {
     }
   }
 
+  /**
+   * Calculates class or interface where referenced member should be searched
+   * @param expression reference to the class member
+   * @return class based on the type of the qualifier expression,
+   *         or containing class, if {@code expression} is not qualified
+   */
+  public static @Nullable PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
+    PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (qualifierExpression != null) {
+      PsiType expressionType = qualifierExpression.getType();
+      if (expressionType instanceof PsiCapturedWildcardType) {
+        expressionType = ((PsiCapturedWildcardType)expressionType).getUpperBound();
+      }
+      PsiClass aClass = PsiUtil.resolveClassInType(expressionType);
+      if (aClass != null) return aClass;
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement qResolved = ((PsiReferenceExpression)qualifierExpression).resolve();
+        return qResolved instanceof PsiClass ? (PsiClass)qResolved : null;
+      }
+      return null;
+    }
+    return getThisClass(expression);
+  }
+
+  @SuppressWarnings("unchecked")
   static <T extends PsiQualifiedExpression> T createQualifiedExpression(@NotNull PsiManager manager,
                                                                         PsiClass qualifierClass,
                                                                         @NotNull String qName) throws IncorrectOperationException {
-     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
      if (qualifierClass != null) {
        T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, qualifierClass);
        qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
@@ -130,11 +168,11 @@ public class RefactoringChangeUtil {
      }
    }
 
-  public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "this");
   }
 
-  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "super");
   }
 }

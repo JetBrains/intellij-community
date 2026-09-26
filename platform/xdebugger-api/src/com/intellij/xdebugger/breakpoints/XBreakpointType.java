@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -11,12 +11,14 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -32,8 +34,6 @@ import java.util.List;
  *
  * Use this class only for breakpoints like exception breakpoints in Java. If a breakpoint will be put on some line in a file use
  * {@link XLineBreakpointType} instead 
- *
- * @author nik
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
@@ -45,7 +45,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @param id an unique id of breakpoint type
    * @param title title of tab in the breakpoints dialog
    */
-  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
+  protected XBreakpointType(final @NonNls @NotNull String id, final @Nls @NotNull String title) {
     this(id, title, false);
   }
 
@@ -54,14 +54,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @param title                  title of tab in the breakpoints dialog
    * @param suspendThreadSupported {@code true} if suspending only one thread is supported for this type of breakpoints
    */
-  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
+  protected XBreakpointType(final @NonNls @NotNull String id, final @Nls @NotNull String title, boolean suspendThreadSupported) {
     myId = id;
     myTitle = title;
     mySuspendThreadSupported = suspendThreadSupported;
   }
 
-  @Nullable
-  public P createProperties() {
+  public @Nullable P createProperties() {
     return null;
   }
 
@@ -70,6 +69,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    */
   public boolean isSuspendThreadSupported() {
     return mySuspendThreadSupported;
+  }
+
+  /**
+   * @return {@code true} if this type supports removing a breakpoint after its first suspending hit
+   */
+  public boolean isTemporaryBreakpointSupported() {
+    return false;
   }
 
   public SuspendPolicy getDefaultSuspendPolicy() {
@@ -82,105 +88,113 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return EnumSet.allOf(StandardPanels.class);
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return myId;
   }
 
-  @NotNull
-  public String getTitle() {
+  public @NotNull @Nls String getTitle() {
     return myTitle;
   }
 
-  @NotNull 
-  public Icon getEnabledIcon() {
+  public @NotNull Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_set_breakpoint;
   }
 
-  @NotNull
-  public Icon getDisabledIcon() {
+  public @NotNull Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_breakpoint;
   }
 
-  @NotNull
-  public Icon getSuspendNoneIcon() {
+  public @NotNull Icon getSuspendNoneIcon() {
     return AllIcons.Debugger.Db_no_suspend_breakpoint;
   }
 
-  @NotNull
-  public Icon getMutedEnabledIcon() {
+  public @NotNull Icon getSuspendNoneDisabledIcon() {
+    return AllIcons.Breakpoints.BreakpointUnsuspendentDisabled;
+  }
+
+  public @NotNull Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_breakpoint;
   }
 
-  @NotNull
-  public Icon getMutedDisabledIcon() {
+  public @NotNull Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_breakpoint;
   }
 
   /**
    * @return the icon shown for a breakpoint which is scheduled but not yet set (validated, resolved) in the debugger engine
    */
-  @Nullable
-  public Icon getPendingIcon() {
+  public @Nullable Icon getPendingIcon() {
     return null;
   }
 
   /**
    * @return the icon which is shown for a dependent breakpoint until its master breakpoint is reached
    */
-  @NotNull
-  public Icon getInactiveDependentIcon() {
-    return getDisabledDependentIcon();
-  }
-
-  /**
-   * @deprecated override {@link #getInactiveDependentIcon()} instead
-   */
-  @NotNull
-  public Icon getDisabledDependentIcon() {
+  public @NotNull Icon getInactiveDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
-  public abstract String getDisplayText(B breakpoint);
+  /**
+   * Description of breakpoint target
+   * (e.g.,
+   * "Line 20 in Hello.foo()" for line breakpoint,
+   * "foo.Bar.workHard()" for method breakpoint,
+   * ...).
+   */
+  public abstract @Nls String getDisplayText(B breakpoint);
 
-  @Nullable 
-  public XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
-    return null;
-  }
-
-  @Nullable
-  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
-    return createCustomPropertiesPanel();
+  /**
+   * Laconic breakpoint description with specification of its kind (type of target).
+   * Primarily used for tooltip in the editor, when an exact target is obvious but overall semantics might be unclear.
+   * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
+   *
+   * @see XLineBreakpointType#getGeneralDescription(XLineBreakpointType.XLineBreakpointVariant)
+   */
+  public @Nls String getGeneralDescription(B breakpoint) {
+    // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
+    return getDisplayText(breakpoint);
   }
 
   /**
-   * @deprecated override {@link #createCustomPropertiesPanel(Project)} instead
+   * Description lines of specific breakpoint properties (e.g., class filter for Java line breakpoints),
+   * XML formatted.
    */
-  @Nullable
-  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
+  public List<@Nls String> getPropertyXMLDescriptions(B breakpoint) {
+    return Collections.emptyList();
+  }
+
+  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
     return null;
   }
 
-  @Nullable
-  public XBreakpointCustomPropertiesPanel<B> createCustomRightPropertiesPanel(@NotNull Project project) {
+  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
     return null;
   }
 
-  @Nullable
-  public XBreakpointCustomPropertiesPanel<B> createCustomTopPropertiesPanel(@NotNull Project project) {
+  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomRightPropertiesPanel(@NotNull Project project) {
+    return null;
+  }
+
+  /**
+   * A custom panel placed at the very top of the breakpoint properties editor, above the "Enabled" checkbox and the
+   * breakpoint name. Use it for information that identifies the breakpoint itself (e.g. the watched address and size
+   * of a data breakpoint), as opposed to editable settings which belong to {@link #createCustomPropertiesPanel}.
+   * If the panel fully identifies the breakpoint, it may override
+   * {@link XBreakpointCustomPropertiesPanel#hidesBreakpointNameLabel()} to hide the generic name label.
+   */
+  public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomTopPropertiesPanel(@NotNull Project project) {
     return null;
   }
 
   /**
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
-  @Nullable
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  @Deprecated(forRemoval = true)
+  public @Nullable XDebuggerEditorsProvider getEditorsProvider() {
     return null;
   }
 
-  @Nullable
-  public XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint, @NotNull Project project) {
+  public @Nullable XDebuggerEditorsProvider getEditorsProvider(@NotNull B breakpoint, @NotNull Project project) {
     return getEditorsProvider();
   }
 
@@ -188,9 +202,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return Collections.emptyList();
   }
 
-  @NotNull 
-  public Comparator<B> getBreakpointComparator() {
-    return (b, b1) -> (int)(b1.getTimeStamp() - b.getTimeStamp());
+  public @NotNull Comparator<B> getBreakpointComparator() {
+    return (b, b1) -> Long.compare(b1.getTimeStamp(), b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 
@@ -204,13 +217,19 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
+   * Override to return {@code true} while this type is newly added — the add-breakpoint "+" popup then shows a "New"
+   * badge on its item (time-limited on the client: it disappears about a month after the user first sees it).
+   */
+  @ApiStatus.Internal
+  public boolean isNewBadgeVisible() {
+    return false;
+  }
+
+  /**
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
-   * @param project
-   * @param parentComponent
    * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
-  @Nullable
-  public B addBreakpoint(final Project project, JComponent parentComponent) {
+  public @Nullable B addBreakpoint(final Project project, JComponent parentComponent) {
     return null;
   }
 
@@ -220,8 +239,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    *
    * @return a default breakpoint or {@code null} if default breakpoint isn't supported
    */
-  @Nullable
-  public XBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
+  public @Nullable XBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
     return null;
   }
 
@@ -229,21 +247,35 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return true;
   }
 
-  @Nullable @NonNls
-  public String getBreakpointsDialogHelpTopic() {
+  public @Nullable @NonNls String getBreakpointsDialogHelpTopic() {
     return null;
   }
 
   /**
    * Override this method to define source position for a breakpoint. It will be used e.g. by 'Go To' and 'View Source' buttons in 'Breakpoints' dialog
    */
-  @Nullable
-  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
+  public @Nullable XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
   }
 
-  public String getShortText(B breakpoint) {
+  /**
+   * Laconic textual description identifying this breakpoint among other ones of the same type.
+   * Usually used in the list of breakpoints.
+   * It is expected to be short.
+   */
+  public @Nls String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
+  }
+
+  /**
+   * Returns true if the given breakpoint has an additional custom condition
+   * independent from {@link XBreakpoint#getConditionExpression()}.
+   * <p/>
+   * Breakpoints for which this method returns true get a question mark badge
+   * for their icon in the gutter.
+   */
+  public boolean hasCustomCondition(B breakpoint) {
+    return false;
   }
 
   public interface XBreakpointCreator<P extends XBreakpointProperties> {
@@ -253,5 +285,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull B breakpoint, @Nullable XDebugSession currentSession) {
     return Collections.emptyList();
+  }
+
+  @Override
+  public String toString() {
+    return myId;
   }
 }

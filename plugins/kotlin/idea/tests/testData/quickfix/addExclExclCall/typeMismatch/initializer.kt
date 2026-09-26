@@ -1,0 +1,6 @@
+// "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+fun test(s: String?) {
+    val z: String = <caret>s
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

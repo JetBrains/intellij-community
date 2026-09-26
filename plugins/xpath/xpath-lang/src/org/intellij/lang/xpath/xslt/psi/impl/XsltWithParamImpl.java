@@ -15,27 +15,28 @@
  */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 
-import com.intellij.psi.xml.XmlTag;
+final class XsltWithParamImpl extends XsltElementImpl implements XsltWithParam {
+  XsltWithParamImpl(XmlTag target) {
+    super(target);
+  }
 
-public class XsltWithParamImpl extends XsltElementImpl implements XsltWithParam {
-    public XsltWithParamImpl(XmlTag target) {
-        super(target);
-    }
+  @Override
+  public String getParamName() {
+    return getName();
+  }
 
-    public String getParamName() {
-        return getName();
-    }
+  @Override
+  public XPathExpression getExpression() {
+    return XsltCodeInsightUtil.getXPathExpression(this, "select");
+  }
 
-    public XPathExpression getExpression() {
-        return XsltCodeInsightUtil.getXPathExpression(this, "select");
-    }
-
-    @Override
-    public String toString() {
-        return "XsltWithParam: " + getName();
-    }
+  @Override
+  public String toString() {
+    return "XsltWithParam: " + getName();
+  }
 }

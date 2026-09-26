@@ -1,0 +1,25 @@
+{
+    "modules" : [
+        {
+            "name": "moduleA",
+            "content_roots": ["production", "resources"]
+        },
+        {
+            "name": "moduleB",
+            "content_roots": ["production", "tests", "resources", "testResources"]
+        },
+        {
+            "name": "moduleC",
+            "content_roots": [
+                { "path": "src1", "kind": "PRODUCTION" },
+                { "path": "src2", "kind": "PRODUCTION" },
+                "resources", "testResources"
+            ]
+        },
+        {
+            "name": "unrelatedModule",
+            "content_roots": ["production", "tests", "resources", "testResources"]
+        }
+    ],
+    "excluded_modules": ["unrelatedModule"]
+}

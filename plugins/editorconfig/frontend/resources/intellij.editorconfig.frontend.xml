@@ -1,0 +1,24 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.editorconfig.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="EditorConfig" implementationClass="com.intellij.editorconfig.frontend.highlighting.EditorConfigAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.editorconfig.frontend.settings.EditorConfigColorSettingsPage"/>
+    <lang.foldingBuilder language="EditorConfig"
+                         implementationClass="com.intellij.editorconfig.frontend.lang.editor.EditorConfigFoldingBuilder"/>
+  </extensions>
+</idea-plugin>

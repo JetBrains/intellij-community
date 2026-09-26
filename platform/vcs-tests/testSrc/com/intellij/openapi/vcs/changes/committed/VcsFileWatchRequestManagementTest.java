@@ -1,60 +1,54 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.mock.MockLocalFileSystem;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.components.ComponentManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.openapi.vcs.impl.projectlevelman.VcsMappingsFileWatchesManager;
+import com.intellij.openapi.vfs.WatchRoots;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * @author irengrig
- */
-public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
+public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
   private static final String ourVcsName = "vcs";
 
   private NewMappings myNewMappings;
-  private MyMockLocalFileSystem myMockLocalFileSystem;
+  private MockWatchRoots myWatchRoots;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myNewMappings = new NewMappings(myProject, vcsManager, FileStatusManager.getInstance(myProject));
-    myMockLocalFileSystem = new MyMockLocalFileSystem();
-    myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(myProject, myNewMappings, myMockLocalFileSystem));
+    Project project = getProject();
+    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project), ((ComponentManagerEx)project).getCoroutineScope());
+    Disposer.register(getTestRootDisposable(), myNewMappings);
+    myWatchRoots = new MockWatchRoots();
+    myNewMappings.setFileWatchRequestsManager(new TestVcsMappingsFileWatchesManager(project, myNewMappings, myWatchRoots));
     myNewMappings.activateActiveVcses();
+  }
+
+  @Override
+  protected void tearDown() {
+    new RunAll(
+      () -> myWatchRoots.disposed(),
+      () -> super.tearDown()
+    ).run();
   }
 
   public void testAdd() {
     final String path = "/a/b/c";
-    myMockLocalFileSystem.add(path);
+    myWatchRoots.add(path);
 
     myNewMappings.setMapping("", ourVcsName);
     myNewMappings.setMapping(path, ourVcsName);
@@ -65,42 +59,42 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
   public void testAddRemove() {
     final String path = "/a/b/c";
 
-    myMockLocalFileSystem.add(path);
+    myWatchRoots.add(path);
     myNewMappings.setMapping(path, ourVcsName);
 
-    myMockLocalFileSystem.remove(path);
+    myWatchRoots.remove(path);
     myNewMappings.removeDirectoryMapping(new VcsDirectoryMapping(path, ourVcsName));
   }
 
   public void testAddSwitch() {
     final String path = "/a/b/c";
-    myMockLocalFileSystem.add(path);
+    myWatchRoots.add(path);
     myNewMappings.setMapping(path, ourVcsName);
 
-    myMockLocalFileSystem.add(path);
-    myMockLocalFileSystem.remove(path);
+    myWatchRoots.add(path);
+    myWatchRoots.remove(path);
     myNewMappings.setMapping(path, "scv");
   }
 
   public void testAddSwitchRemoveAdd() {
     final String path = "/a/b/c";
     final String path2 = "/a1/b1/c1";
-    myMockLocalFileSystem.add(path);
-    myMockLocalFileSystem.add(path2);
+    myWatchRoots.add(path);
+    myWatchRoots.add(path2);
     myNewMappings.setMapping(path, ourVcsName);
     myNewMappings.setMapping(path2, ourVcsName);
 
     // switch
-    myMockLocalFileSystem.add(path);
-    myMockLocalFileSystem.remove(path);
+    myWatchRoots.add(path);
+    myWatchRoots.remove(path);
     myNewMappings.setMapping(path, "scv");
 
     // remove
-    myMockLocalFileSystem.remove(path2);
+    myWatchRoots.remove(path2);
     myNewMappings.removeDirectoryMapping(new VcsDirectoryMapping(path2, ourVcsName));
 
     // add back
-    myMockLocalFileSystem.add(path2);
+    myWatchRoots.add(path2);
     myNewMappings.setMapping(path2, ourVcsName);
   }
 
@@ -113,10 +107,10 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
 
     final String anotherVcs = "another";
 
-    myMockLocalFileSystem.add(path);
-    myMockLocalFileSystem.add(path2);
-    myMockLocalFileSystem.add(path3);
-    myMockLocalFileSystem.add(path4);
+    myWatchRoots.add(path);
+    myWatchRoots.add(path2);
+    myWatchRoots.add(path3);
+    myWatchRoots.add(path4);
 
     myNewMappings.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping(path, ourVcsName),
                                                      new VcsDirectoryMapping(path2, ourVcsName),
@@ -124,80 +118,78 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
                                                      new VcsDirectoryMapping(path4, anotherVcs)));
 
     // set another
-    myMockLocalFileSystem.remove(path2);
-    myMockLocalFileSystem.remove(path3);
-    myMockLocalFileSystem.remove(path4);
-    myMockLocalFileSystem.add(path5);
+    myWatchRoots.remove(path2);
+    myWatchRoots.remove(path3);
+    myWatchRoots.remove(path4);
+    myWatchRoots.add(path5);
     myNewMappings.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping(path, ourVcsName),
                                                      new VcsDirectoryMapping(path5, anotherVcs)));
   }
 
-  private static class MyMockLocalFileSystem extends MockLocalFileSystem {
+  private static final class MockWatchRoots implements WatchRoots {
     private final Set<String> myAdd;
     private final Set<String> myRemove;
+    private final Map<String, Integer> myOpen;
+    private boolean myDisposed;
 
-    private MyMockLocalFileSystem() {
+    private MockWatchRoots() {
       myAdd = new HashSet<>();
       myRemove = new HashSet<>();
+      myOpen = new HashMap<>();
     }
 
-    @NotNull
     @Override
-    public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                                 @Nullable Collection<String> recursiveRoots,
-                                                 @Nullable Collection<String> flatRoots) {
-      for (WatchRequest watchRequest : watchRequests) {
-        assertTrue(myRemove.remove(watchRequest.getRootPath()));
+    public @NotNull Token watch(@NotNull String rootPath, boolean recursive) {
+      assertTrue(recursive);
+      assertFalse(myDisposed);
+      if (myOpen.merge(rootPath, 1, Integer::sum) == 1) {
+        assertTrue(myAdd.remove(rootPath));
       }
-
-      Set<WatchRequest> requests = new HashSet<>();
-
-      if (recursiveRoots != null) {
-        for (String rootPath : recursiveRoots) {
-          assertTrue(myAdd.remove(rootPath));
-          requests.add(new MockKey(rootPath, true));
-        }
-      }
-
-      if (flatRoots != null) {
-        for (String rootPath : flatRoots) {
-          assertTrue(myAdd.remove(rootPath));
-          requests.add(new MockKey(rootPath, false));
-        }
-      }
-
-      return requests;
+      return new MockKey(rootPath);
     }
 
     public void add(final String path) {
+      assertFalse(myDisposed);
       myAdd.add(path);
     }
 
     public void remove(final String path) {
+      assertFalse(myDisposed);
       myRemove.add(path);
+    }
+
+    public void disposed() {
+      myDisposed = true;
+    }
+
+    // should be, as originals, compared by references
+    private final class MockKey implements Token {
+      private final String myPath;
+
+      MockKey(String path) {
+        myPath = path;
+      }
+
+      @Override
+      public void close() {
+        if (myOpen.merge(myPath, -1, Integer::sum) == 0) {
+          myOpen.remove(myPath);
+          if (!myDisposed) assertTrue(myRemove.remove(myPath));
+        }
+      }
     }
   }
 
-  // should be, as originals, compared by references
-  private static class MockKey implements LocalFileSystem.WatchRequest {
-    private final String myPath;
-    private final boolean myRecursively;
-
-    public MockKey(String path, boolean recursively) {
-      myPath = path;
-      myRecursively = recursively;
-    }
-
-
-    @NotNull
-    @Override
-    public String getRootPath() {
-      return myPath;
+  private static class TestVcsMappingsFileWatchesManager extends VcsMappingsFileWatchesManager {
+    TestVcsMappingsFileWatchesManager(@NotNull Project project,
+                                      @NotNull NewMappings newMappings,
+                                      @NotNull WatchRoots watchRoots) {
+      super(project, newMappings, watchRoots);
     }
 
     @Override
-    public boolean isToWatchRecursively() {
-      return myRecursively;
+    public void ping() {
+      pingImmediately();
     }
   }
 }

@@ -1,0 +1,23 @@
+// IS_APPLICABLE: true
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test() {
+    // double dollar sequences don't go before an identifier
+    val sql = $$"""
+            CREATE FUNCTION check_password(uname TEXT, pass TEXT)
+            RETURNS BOOLEAN AS $$
+            DECLARE passed BOOLEAN;
+            BEGIN
+                SELECT  (pwd = $2) INTO passed
+                FROM    pwds
+                WHERE   username = $1;
+                RETURN passed;
+                
+                update accounts_2
+                set balance = balance + amount 
+                where id = receiver;
+            END;
+            $$  LANGUAGE plpgsql
+                SECURITY DEFINER
+        """.trimIndent()
+}

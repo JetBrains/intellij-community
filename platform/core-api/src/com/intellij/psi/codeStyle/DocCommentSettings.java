@@ -25,7 +25,7 @@ public interface DocCommentSettings {
   DocCommentSettings DEFAULTS = new Defaults();
 
   /**
-   * @return True if doc comment formatting enabled.
+   * @return True if doc comment formatting is enabled.
    */
   boolean isDocFormattingEnabled();
 
@@ -39,6 +39,19 @@ public interface DocCommentSettings {
    * @return True if a leading asterisk '*' should be inserted on a new comment line.
    */
   boolean isLeadingAsteriskEnabled();
+
+  /**
+   * @return True if at least some empty tags can be removed.
+   */
+  boolean isRemoveEmptyTags();
+
+  default void setRemoveEmptyLines(boolean removeEmptyLines) {}
+
+  /**
+   * Force or disable empty tags removal.
+   * @param removeEmptyTags True if all empty tags must be removed, false if all of them must be preserved.
+   */
+  void setRemoveEmptyTags(boolean removeEmptyTags);
 
   final class Defaults implements DocCommentSettings {
 
@@ -54,6 +67,15 @@ public interface DocCommentSettings {
     @Override
     public boolean isLeadingAsteriskEnabled() {
       return true;
+    }
+
+    @Override
+    public boolean isRemoveEmptyTags() {
+      return false;
+    }
+
+    @Override
+    public void setRemoveEmptyTags(boolean removeEmptyTags) {
     }
   }
 }

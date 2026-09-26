@@ -1,0 +1,8 @@
+class Declaration() {
+}
+
+fun call() {
+    val declaration = Declaration()
+    val i = 0
+}
+

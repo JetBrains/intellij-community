@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+enum class EnumIssue {
+
+    A {
+        override fun foo() {
+            TODO("Not yet implemented")
+        }
+    };
+
+    abstract fun foo()
+}

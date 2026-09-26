@@ -1,0 +1,7 @@
+// "Suppress 'RemoveSingleExpressionStringTemplate' for val statementSuppressedOnVal" "true"
+
+val statementSuppressedOnVal = fun(ps: String): String { return "<caret>$ps" }
+
+// K1_TOOL: org.jetbrains.kotlin.idea.intentions.RemoveSingleExpressionStringTemplateInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveSingleExpressionStringTemplateInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

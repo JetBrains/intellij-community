@@ -1,0 +1,21 @@
+load("@rules_jvm//:jvm.bzl", "jvm_import", "jvm_library")
+
+jvm_library(
+    name = "processor",
+    srcs = glob(["processor/**/*.java"]),
+    resources = glob(["res/**/*"]),
+    resource_strip_prefix = "res",
+)
+
+# bridge via jvm_import so that the consumer gets the full processor jar on its compile classpath:
+# a jvm_library dependency would expose only the ABI jar, where the processor's code is stripped and cannot be executed by javac
+jvm_import(
+    name = "processor-jar",
+    jar = ":processor.jar",
+)
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/**/*.java"], allow_empty = True),
+    deps = [":processor-jar"],
+)

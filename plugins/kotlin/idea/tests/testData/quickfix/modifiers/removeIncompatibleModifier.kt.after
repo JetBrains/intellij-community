@@ -1,0 +1,8 @@
+// "Remove 'public' modifier" "true"
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
+// K2_ERROR: INCOMPATIBLE_MODIFIERS
+class Foo {
+    private fun bar() { }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

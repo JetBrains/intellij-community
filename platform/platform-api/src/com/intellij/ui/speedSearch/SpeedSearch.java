@@ -1,37 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
-import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchedFragment;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.List;
 
-public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
-  public static final String PUNCTUATION_MARKS = "*_-\"'/.#$>: ,;?!@%^&";
+public class SpeedSearch extends SpeedSearchSupply implements KeyListener, SpeedSearchActivator {
+  public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final boolean myMatchAllOccurrences;
@@ -39,6 +30,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+  private boolean myJustActivated = false;
 
   public SpeedSearch() {
     this(false);
@@ -53,14 +45,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public void backspace() {
-    if (myString.length() > 0) {
+    if (!myString.isEmpty()) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
+           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -68,13 +60,29 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
 
     String old = myString;
     if (e.getID() == KeyEvent.KEY_PRESSED) {
-      if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-        backspace();
-        e.consume();
+      if (KeymapUtil.isEventForAction(e, "EditorDeleteToWordStart")) {
+        if (isHoldingFilter()) {
+          while (!myString.isEmpty() && !Character.isWhitespace(myString.charAt(myString.length() - 1))) {
+            backspace();
+          }
+          e.consume();
+        }
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+        if (isHoldingFilter()) {
+          backspace();
+          e.consume();
+        }
       }
       else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         if (isHoldingFilter()) {
           updatePattern("");
+          e.consume();
+        }
+        else if (myJustActivated) {
+          // Special case: speed search was activated through the API without typing anything, should be cancelled on Esc.
+          myJustActivated = false;
+          update();
           e.consume();
         }
       }
@@ -85,15 +93,21 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
       // for example: key-char on ctrl-J PRESSED is \n
       // see https://en.wikipedia.org/wiki/Control_character
       char ch = e.getKeyChar();
-      if (Character.isLetterOrDigit(ch) || PUNCTUATION_MARKS.indexOf(ch) != -1) {
+      if (Character.isLetterOrDigit(ch) || !startedWithWhitespace(ch) && PUNCTUATION_MARKS.indexOf(ch) != -1) {
         type(Character.toString(ch));
         e.consume();
       }
     }
 
     if (!old.equalsIgnoreCase(myString)) {
-      update();
+      WriteIntentReadAction.run(() -> {
+        update();
+      });
     }
+  }
+
+  private boolean startedWithWhitespace(char ch) {
+    return !isHoldingFilter() && Character.isWhitespace(ch);
   }
 
   public void update() {
@@ -104,7 +118,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && myString.length() > 0;
+    return myEnabled && !myString.isEmpty();
   }
 
   public void setEnabled(boolean enabled) {
@@ -125,15 +139,15 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return myString;
   }
 
-  public void updatePattern(final String string) {
+  public void updatePattern(final String searchText) {
+    if (myString.equals(searchText)) return;
+
+    myJustActivated = false;
+
     String prevString = myString;
-    myString = string;
+    myString = searchText;
     try {
-      String pattern = "*" + string;
-      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
-      String separators = "";
-      myMatcher = myMatchAllOccurrences ? new AllOccurrencesMatcher(pattern, caseSensitivity, separators)
-                                        : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      myMatcher = createNewMatcher(searchText);
     }
     catch (Exception e) {
       myMatcher = null;
@@ -141,16 +155,30 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     fireStateChanged(prevString);
   }
 
-  @Nullable
-  public Matcher getMatcher() {
+  protected @NotNull Matcher createNewMatcher(String searchText) {
+    String pattern = "*" + searchText;
+    MatchingMode matchingMode = MatchingMode.IGNORE_CASE;
+    String separators = SpeedSearchUtil.getDefaultHardSeparators();
+    NameUtil.MatcherBuilder builder =
+      new NameUtil.MatcherBuilder(pattern)
+        .withMatchingMode(matchingMode)
+        .withSeparators(separators);
+    if (myMatchAllOccurrences) {
+      builder = builder.allOccurrences();
+    }
+    return builder.build();
+  }
+
+  public @Nullable Matcher getMatcher() {
     return myMatcher;
   }
 
-  @Nullable
   @Override
-  public Iterable<TextRange> matchingFragments(@NotNull String text) {
-    if (myMatcher instanceof MinusculeMatcher) {
-      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
+    if (getMatcher() instanceof MinusculeMatcher matcher) {
+      List<@NotNull MatchedFragment> fragments = matcher.match(text);
+      return fragments != null ? ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()))
+                               : null;
     }
     return null;
   }
@@ -164,10 +192,42 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return isHoldingFilter();
   }
 
-  @Nullable
   @Override
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return myString;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return false; // Disabled by default because has to be implemented differently for every subclass.
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return true; // Convenient default for implementations, is ignored anyway when isSupported() == false.
+  }
+
+  @Override
+  public boolean isActive() {
+    return isPopupActive();
+  }
+
+  protected boolean shouldBeActive() {
+    return myJustActivated || isHoldingFilter();
+  }
+
+  @Override
+  public @Nullable JComponent getTextField() {
+    return null;
+  }
+
+  @Override
+  public void activate() {
+    myJustActivated = true;
+    doActivate();
+  }
+
+  protected void doActivate() {
   }
 
   @Override
@@ -181,7 +241,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   private void fireStateChanged(String prevString) {
-    myChangeSupport.firePropertyChange(SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
+    myChangeSupport.firePropertyChange(ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
   }
 
   @Override

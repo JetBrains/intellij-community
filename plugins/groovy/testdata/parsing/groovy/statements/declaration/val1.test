@@ -1,0 +1,15 @@
+val
+ val = 1
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(val)('val')
+    PsiElement(new line)('\n ')
+    Variable
+      PsiElement(val)('val')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('1')

@@ -1,33 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class SvnEditCommitMessageDialog extends DialogWrapper {
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final String myOldText;
   private CommitMessage myCommitMessage;
 
@@ -39,9 +32,8 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel parentPanel = new JPanel(new BorderLayout());
     final JPanel labelPanel = new JPanel(new GridBagLayout());
     final JLabel label1 = new JLabel(SvnBundle.message("svn.edit.commit.message.attention"));
@@ -59,25 +51,23 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     wrapper.add(labelPanel, BorderLayout.WEST);
     parentPanel.add(wrapper, BorderLayout.NORTH);
     myCommitMessage = new CommitMessage(myProject, false, true, true);
+    Disposer.register(getDisposable(), myCommitMessage);
     myCommitMessage.setText(myOldText);
     parentPanel.add(myCommitMessage, BorderLayout.CENTER);
     return parentPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myCommitMessage.getEditorField();
   }
 
-  @NotNull
-  public String getMessage() {
+  public @NotNull String getMessage() {
     return myCommitMessage.getComment();
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "org.jetbrains.idea.svn.history.SvnEditCommitMessageDialog";
   }
 }

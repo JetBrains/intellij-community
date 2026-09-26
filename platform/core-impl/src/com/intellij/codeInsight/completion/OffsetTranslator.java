@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
@@ -24,41 +10,43 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author peter
- */
-class OffsetTranslator implements Disposable {
+@ApiStatus.Internal
+public class OffsetTranslator implements Disposable {
   static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
 
   private final PsiFile myOriginalFile;
   private final Document myCopyDocument;
-  private final LinkedList<DocumentEvent> myTranslation = new LinkedList<>();
+  private final List<DocumentEvent> myTranslation = new ArrayList<>();
 
-  OffsetTranslator(Document originalDocument, PsiFile originalFile, Document copyDocument, int start, int end, String replacement) {
+  public OffsetTranslator(@NotNull Document originalDocument, @NotNull PsiFile originalFile, @NotNull Document copyDocument, int start, int end, @NotNull String replacement) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
-    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end), replacement, 0, false));
+    myTranslation.add(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end),
+                                            replacement, 0, false, start, end-start, start, copyDocument.getTextLength()));
     Disposer.register(originalFile.getProject(), this);
 
-    final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
+    List<DocumentEvent> sinceCommit = new ArrayList<>();
     originalDocument.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (isUpToDate()) {
           DocumentEventImpl inverse =
-            new DocumentEventImpl(originalDocument, e.getOffset(), e.getNewFragment(), e.getOldFragment(), 0, false);
-          sinceCommit.addLast(inverse);
+            new DocumentEventImpl(originalDocument, e.getOffset(), e.getNewFragment(), e.getOldFragment(), 0, false, e.getOffset(), e.getNewFragment().length(), e.getOffset(), originalDocument.getTextLength());
+          sinceCommit.add(inverse);
         }
       }
     }, this);
-    
+
     originalFile.getProject().getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      long lastModCount = originalFile.getViewProvider().getModificationStamp();
+      final long lastModCount = originalFile.getViewProvider().getModificationStamp();
       @Override
       public void modificationCountChanged() {
         if (isUpToDate() && lastModCount != originalFile.getViewProvider().getModificationStamp()) {
@@ -71,12 +59,16 @@ class OffsetTranslator implements Disposable {
   }
 
   private boolean isUpToDate() {
-    return this == myCopyDocument.getUserData(RANGE_TRANSLATION) && myOriginalFile.isValid();
+     return isPresentInUserData() && myOriginalFile.isValid();
+  }
+
+  private boolean isPresentInUserData() {
+    return this == myCopyDocument.getUserData(RANGE_TRANSLATION);
   }
 
   @Override
   public void dispose() {
-    if (isUpToDate()) {
+    if (isPresentInUserData()) {
       myCopyDocument.putUserData(RANGE_TRANSLATION, null);
     }
   }
@@ -92,8 +84,7 @@ class OffsetTranslator implements Disposable {
     return offset;
   }
 
-  @Nullable
-  private static Integer translateOffset(int offset, DocumentEvent event) {
+  private static @Nullable Integer translateOffset(int offset, DocumentEvent event) {
     if (event.getOffset() < offset && offset < event.getOffset() + event.getNewLength()) {
       if (event.getOldLength() == 0) {
         return event.getOffset();

@@ -15,42 +15,36 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingNodeSource;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class HideContentAction extends DumbAwareAction {
   private final ArtifactEditorEx myArtifactEditor;
 
   public HideContentAction(ArtifactEditorEx artifactEditor) {
-    super("Hide Content");
+    super(JavaUiBundle.message("action.text.hide.content"));
     myArtifactEditor = artifactEditor;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node != null) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
       if (!sources.isEmpty()) {
-        String description;
-        if (sources.size() == 1) {
-          description = "Hide Content of '" + sources.iterator().next().getPresentableName() + "'";
-        }
-        else {
-          description = "Hide Content";
-        }
+        final String name = sources.iterator().next().getPresentableName();
         e.getPresentation().setVisible(true);
-        e.getPresentation().setText(description);
+        e.getPresentation().setText(JavaUiBundle.message("action.hide.content.text", name, sources.size()));
         return;
       }
     }
@@ -58,7 +52,12 @@ public class HideContentAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     if (node == null) return;

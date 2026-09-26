@@ -26,48 +26,65 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.intellij.lang.xpath.psi.impl.XPathAxisSpecifierImpl;
+import org.intellij.lang.xpath.psi.impl.XPathBinaryExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPathEmbeddedContentImpl;
+import org.intellij.lang.xpath.psi.impl.XPathFilterExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPathFunctionCallImpl;
+import org.intellij.lang.xpath.psi.impl.XPathLocationPathImpl;
+import org.intellij.lang.xpath.psi.impl.XPathNodeTestImpl;
+import org.intellij.lang.xpath.psi.impl.XPathNodeTypeTestImpl;
+import org.intellij.lang.xpath.psi.impl.XPathNumberImpl;
+import org.intellij.lang.xpath.psi.impl.XPathParenthesizedExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPathPredicateImpl;
+import org.intellij.lang.xpath.psi.impl.XPathPrefixExpressionImpl;
+import org.intellij.lang.xpath.psi.impl.XPathStepImpl;
+import org.intellij.lang.xpath.psi.impl.XPathStringImpl;
+import org.intellij.lang.xpath.psi.impl.XPathTokenImpl;
+import org.intellij.lang.xpath.psi.impl.XPathVariableReferenceImpl;
 import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.xpath.psi.impl.*;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"NullableProblems"})
 public class XPathParserDefinition implements ParserDefinition {
+    public static final IFileElementType FILE = new IFileElementType("XPATH_FILE", XPathFileType.XPATH.getLanguage());
 
-    @NotNull
-    public Lexer createLexer(Project project) {
+    @Override
+    public @NotNull Lexer createLexer(Project project) {
         return XPathLexer.create(false);
     }
 
-    public IFileElementType getFileNodeType() {
-        return XPathElementTypes.FILE;
+    @Override
+    public @NotNull IFileElementType getFileNodeType() {
+      return FILE;
     }
 
-    @NotNull
-    public TokenSet getWhitespaceTokens() {
+    @Override
+    public @NotNull TokenSet getWhitespaceTokens() {
         return TokenSet.create(XPathTokenTypes.WHITESPACE);
     }
 
-    @NotNull
-    public TokenSet getCommentTokens() {
+    @Override
+    public @NotNull TokenSet getCommentTokens() {
         return TokenSet.EMPTY;
     }
 
-    @NotNull
-    public TokenSet getStringLiteralElements() {
+    @Override
+    public @NotNull TokenSet getStringLiteralElements() {
         return TokenSet.create(XPathTokenTypes.STRING_LITERAL);
     }
 
-    public PsiParser createParser(Project project) {
-        return new XPathParser();
-    }
+  @Override
+  public @NotNull PsiParser createParser(Project project) {
+    return new XPathParser();
+  }
 
-    public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-        return SpaceRequirements.MUST_NOT;
-    }
+  @Override
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MUST_NOT;
+  }
 
-    @NotNull
-    public final PsiElement createElement(ASTNode node) {
+    @Override
+    public final @NotNull PsiElement createElement(ASTNode node) {
       final IElementType type = node.getElementType();
 
       final PsiElement element = createElement(type, node);
@@ -77,8 +94,7 @@ public class XPathParserDefinition implements ParserDefinition {
       return new XPathTokenImpl(node);
     }
 
-  @Nullable
-  protected PsiElement createElement(IElementType type, ASTNode node) {
+  protected @Nullable PsiElement createElement(IElementType type, ASTNode node) {
     if (type == XPathElementTypes.NUMBER) {
         return new XPathNumberImpl(node);
     } else if (type == XPathElementTypes.STRING) {
@@ -114,7 +130,8 @@ public class XPathParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public PsiFile createFile(FileViewProvider viewProvider) {
-        return new XPathFile(viewProvider, XPathFileType.XPATH);
-    }
+  @Override
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+    return new XPathFile(viewProvider, XPathFileType.XPATH);
+  }
 }

@@ -2,7 +2,7 @@
 
 class A:
     def __init__(self):
-        self.a = 1
+        self.A_NEW_NAME = 1
 
     def _foo(self):
         pass
@@ -10,5 +10,5 @@ class A:
 
 a_class = A()
 a_class._foo()
-print(a_class.a)
+print(a_class.A_NEW_NAME)
 

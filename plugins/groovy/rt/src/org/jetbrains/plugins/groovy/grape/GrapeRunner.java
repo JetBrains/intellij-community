@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.grape;
 
 import groovy.lang.GroovyShell;
@@ -5,13 +6,9 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.ExceptionMessage;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class GrapeRunner {
+public final class GrapeRunner {
   public static final String URL_PREFIX = "URL:";
 
   private GrapeRunner() {
@@ -24,8 +21,7 @@ public class GrapeRunner {
     }
     catch (MultipleCompilationErrorsException e) {
       List errors = e.getErrorCollector().getErrors();
-      for (Iterator iterator = errors.iterator(); iterator.hasNext();) {
-        Object o = iterator.next();
+      for (Object o : errors) {
         if (o instanceof ExceptionMessage) {
           Exception cause = ((ExceptionMessage)o).getCause();
           String message = cause.getMessage();
@@ -44,8 +40,8 @@ public class GrapeRunner {
     }
 
     URL[] urls = shell.getClassLoader().getURLs();
-    for (int i = 0; i < urls.length; i++) {
-      System.out.println(URL_PREFIX + urls[i]);
+    for (URL url : urls) {
+      System.out.println(URL_PREFIX + url);
     }
   }
 

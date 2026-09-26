@@ -1,151 +1,331 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.ide.util.RunOnceUtil
+import com.intellij.idea.AppMode
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.util.SystemInfo
-import java.io.File
+import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
+import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
+import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * @author traff
- */
+@Suppress("DEPRECATION")
+@State(name = TerminalOptionsProvider.COMPONENT_NAME,
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
+       storages = [Storage(value = "terminal.xml")])
+class TerminalOptionsProvider(internal val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
+  private var state = State()
 
-@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
-class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
-  private val myState = State()
+  override fun getState(): State = state
 
-  var shellPath: String? by ValueWithDefault(State::myShellPath, myState) { defaultShellPath }
+  override fun loadState(newState: State) {
+    state = newState
 
-  override fun getState(): State? {
-    return myState
+    ExperimentalTerminalMigration.migrateTerminalEngineOnce(options = this)
+    ClassicTerminalMigration.migrateTerminalEngineOnce(options = this)
+    migrateApplicationTitleSettingOnce()
+
+    // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
+    // So, notify the listeners on every `loadState` to not miss the change.
+    fireSettingsChanged()
   }
 
-  override fun loadState(state: State) {
-    myState.myCloseSessionOnLogout = state.myCloseSessionOnLogout
-    myState.myReportMouse = state.myReportMouse
-    myState.mySoundBell = state.mySoundBell
-    myState.myTabName = state.myTabName
-    myState.myCopyOnSelection = state.myCopyOnSelection
-    myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton
-    myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts
-    myState.myShellIntegration = state.myShellIntegration
-    myState.myShellPath = state.myShellPath
-    myState.myHighlightHyperlinks = state.myHighlightHyperlinks
-  }
-
-  fun closeSessionOnLogout(): Boolean {
-    return myState.myCloseSessionOnLogout
-  }
-
-  fun enableMouseReporting(): Boolean {
-    return myState.myReportMouse
-  }
-
-  fun audibleBell(): Boolean {
-    return myState.mySoundBell
-  }
-
-  var tabName: String
-    get() = myState.myTabName
-    set(tabName) {
-      myState.myTabName = tabName
-    }
-
-  fun overrideIdeShortcuts(): Boolean {
-    return myState.myOverrideIdeShortcuts
-  }
-
-  fun setOverrideIdeShortcuts(overrideIdeShortcuts: Boolean) {
-    myState.myOverrideIdeShortcuts = overrideIdeShortcuts
-  }
-
-  fun shellIntegration(): Boolean {
-    return myState.myShellIntegration
-  }
-
-  fun setShellIntegration(shellIntegration: Boolean) {
-    myState.myShellIntegration = shellIntegration
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   class State {
-    var myShellPath: String? = null
-    var myTabName: String = "Local"
+    @ApiStatus.Internal
+    var terminalEngine: TerminalEngine = TerminalEngine.REWORKED
+
+    @ApiStatus.Internal
+    var showCompletionPopupAutomatically: Boolean = true
+    @ApiStatus.Internal
+    var commandCompletionShowingMode: TerminalCommandCompletionShowingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
+
+    @ApiStatus.Internal
+    var enforceMinContrastRatio: Boolean = true
+
+    @ApiStatus.Internal
+    var minContrastRatio: Float = TerminalContrastRatio.DEFAULT_VALUE.value
+
+    @ApiStatus.Internal
+    var showApplicationTitle: Boolean = true
+
+    @ApiStatus.Internal
+    var applicationTitleShowingMode: TerminalApplicationTitleShowingMode = TerminalApplicationTitleShowingMode.WHEN_COMMAND_RUNNING
+
+    var myTabName: @Nls String = defaultTabName()
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
-    var myCopyOnSelection: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
+    var useOptionAsMetaKey: Boolean = false
+    var cursorShape: CursorShape = CursorShape.BLOCK
+
+    @Deprecated("Use BlockTerminalOptions#promptStyle instead")
+    var useShellPrompt: Boolean = false
+
+    @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
+    var myShellPath: String? = null
   }
 
-  fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
-    myState.myCloseSessionOnLogout = closeSessionOnLogout
+  private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
+
+  fun addListener(disposable: Disposable, listener: () -> Unit) {
+    TerminalUtil.addItem(listeners, listener, disposable)
   }
 
-  fun setReportMouse(reportMouse: Boolean) {
-    myState.myReportMouse = reportMouse
+  private fun fireSettingsChanged() {
+    for (listener in listeners) {
+      listener()
+    }
   }
 
-  fun setSoundBell(soundBell: Boolean) {
-    myState.mySoundBell = soundBell
-  }
+  // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
-  fun copyOnSelection(): Boolean {
-    return myState.myCopyOnSelection
-  }
-
-  fun setCopyOnSelection(copyOnSelection: Boolean) {
-    myState.myCopyOnSelection = copyOnSelection
-  }
-
-  fun pasteOnMiddleMouseButton(): Boolean {
-    return myState.myPasteOnMiddleMouseButton
-  }
-
-  fun setPasteOnMiddleMouseButton(pasteOnMiddleMouseButton: Boolean) {
-    myState.myPasteOnMiddleMouseButton = pasteOnMiddleMouseButton
-  }
-
-  fun highlightHyperlinks(): Boolean {
-    return myState.myHighlightHyperlinks
-  }
-
-  fun setHighlightHyperlinks(highlight: Boolean) {
-    myState.myHighlightHyperlinks = highlight
-  }
-
-  val defaultShellPath: String
-    get() {
-      val shell = System.getenv("SHELL")
-
-      if (shell != null && File(shell).canExecute()) {
-        return shell
-      }
-
-      if (SystemInfo.isUnix) {
-        if (File("/bin/bash").exists()) {
-          return "/bin/bash"
-        }
-        else {
-          return "/bin/sh"
-        }
-      }
-      else {
-        return "cmd.exe"
+  var terminalEngine: TerminalEngine
+    get() = state.terminalEngine
+    set(value) {
+      if (state.terminalEngine != value) {
+        state.terminalEngine = value
+        fireSettingsChanged()
       }
     }
 
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showCompletionPopupAutomatically: Boolean
+    get() = state.showCompletionPopupAutomatically
+    set(value) {
+      if (state.showCompletionPopupAutomatically != value) {
+        state.showCompletionPopupAutomatically = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var commandCompletionShowingMode: TerminalCommandCompletionShowingMode
+    get() = state.commandCompletionShowingMode
+    set(value) {
+      if (state.commandCompletionShowingMode != value) {
+        state.commandCompletionShowingMode = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var enforceMinContrastRatio: Boolean
+    get() = state.enforceMinContrastRatio
+    set(value) {
+      if (state.enforceMinContrastRatio != value) {
+        state.enforceMinContrastRatio = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var minContrastRatio: TerminalContrastRatio
+    get() = TerminalContrastRatio.ofFloat(state.minContrastRatio)
+    set(value) {
+      if (TerminalContrastRatio.ofFloat(state.minContrastRatio) != value) {
+        state.minContrastRatio = value.value
+        fireSettingsChanged()
+      }
+    }
+
+  @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
+  var shellPath: String?
+    get() = TerminalLocalOptions.getInstance().shellPath
+    set(value) {
+      val options = TerminalLocalOptions.getInstance()
+      if (options.shellPath != value) {
+        options.shellPath = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showApplicationTitle: Boolean
+    get() = state.showApplicationTitle
+    set(value) {
+      if (state.showApplicationTitle != value) {
+        state.showApplicationTitle = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var applicationTitleShowingMode: TerminalApplicationTitleShowingMode
+    get() = state.applicationTitleShowingMode
+    set(value) {
+      if (state.applicationTitleShowingMode != value) {
+        state.applicationTitleShowingMode = value
+        fireSettingsChanged()
+      }
+    }
+
+  var tabName: @Nls String
+    get() = state.myTabName
+    set(@Nls tabName) {
+      if (state.myTabName != tabName) {
+        state.myTabName = tabName
+        fireSettingsChanged()
+      }
+    }
+
+  var closeSessionOnLogout: Boolean
+    get() = state.myCloseSessionOnLogout
+    set(value) {
+      if (state.myCloseSessionOnLogout != value) {
+        state.myCloseSessionOnLogout = value
+        fireSettingsChanged()
+      }
+    }
+
+  var mouseReporting: Boolean
+    get() = state.myReportMouse
+    set(value) {
+      if (state.myReportMouse != value) {
+        state.myReportMouse = value
+        fireSettingsChanged()
+      }
+    }
+
+  var audibleBell: Boolean
+    get() = state.mySoundBell
+    set(value) {
+      if (state.mySoundBell != value) {
+        state.mySoundBell = value
+        fireSettingsChanged()
+      }
+    }
+
+  /**
+   * Enables emulation of Linux-like system selection clipboard behavior on Windows and macOS.
+   * Makes no sense on Linux, because system selection clipboard is enabled by default there.
+   */
+  var copyOnSelection: Boolean
+    get() = state.myCopyOnSelection
+    set(value) {
+      if (state.myCopyOnSelection != value) {
+        state.myCopyOnSelection = value
+        fireSettingsChanged()
+      }
+    }
+
+  var pasteOnMiddleMouseButton: Boolean
+    get() = state.myPasteOnMiddleMouseButton
+    set(value) {
+      if (state.myPasteOnMiddleMouseButton != value) {
+        state.myPasteOnMiddleMouseButton = value
+        fireSettingsChanged()
+      }
+    }
+
+  var overrideIdeShortcuts: Boolean
+    get() = state.myOverrideIdeShortcuts
+    set(value) {
+      if (state.myOverrideIdeShortcuts != value) {
+        state.myOverrideIdeShortcuts = value
+        fireSettingsChanged()
+      }
+    }
+
+  var shellIntegration: Boolean
+    get() = state.myShellIntegration
+    set(value) {
+      if (state.myShellIntegration != value) {
+        state.myShellIntegration = value
+        fireSettingsChanged()
+      }
+    }
+
+  var highlightHyperlinks: Boolean
+    get() = state.myHighlightHyperlinks
+    set(value) {
+      if (state.myHighlightHyperlinks != value) {
+        state.myHighlightHyperlinks = value
+        fireSettingsChanged()
+      }
+    }
+
+  var useOptionAsMetaKey: Boolean
+    get() = state.useOptionAsMetaKey
+    set(value) {
+      if (state.useOptionAsMetaKey != value) {
+        state.useOptionAsMetaKey = value
+        fireSettingsChanged()
+      }
+    }
+
+  @Deprecated("Use BlockTerminalOptions#promptStyle instead")
+  var useShellPrompt: Boolean
+    get() = state.useShellPrompt
+    set(value) {
+      if (state.useShellPrompt != value) {
+        state.useShellPrompt = value
+        fireSettingsChanged()
+      }
+    }
+
+  var cursorShape: CursorShape
+    get() = state.cursorShape
+    set(value) {
+      if (state.cursorShape != value) {
+        state.cursorShape = value
+        TerminalUiSettingsManager.getInstance().cursorShape = value
+        fireSettingsChanged()
+      }
+    }
+
+  private fun migrateApplicationTitleSettingOnce() {
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.appTitleMigration.2026.1.1") {
+      updateFrontendSettingsAndSync(coroutineScope) {
+        val enabled = AdvancedSettings.getBoolean("terminal.show.application.title")
+        if (enabled) {
+          state.showApplicationTitle = true
+          state.applicationTitleShowingMode = TerminalApplicationTitleShowingMode.ALWAYS
+        }
+      }
+    }
+  }
+
   companion object {
     val instance: TerminalOptionsProvider
-      get() = ServiceManager.getService(TerminalOptionsProvider::class.java)
+      @JvmStatic
+      get() = service()
+
+    internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
+
+    private fun defaultTabName(): @Nls String = TerminalBundle.message(if (AppMode.isMonolith()) "local.terminal.default.name" else "remote.terminal.default.name")
+  }
+
+  class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {
+    override fun get(): String = TerminalBundle.message("toolwindow.stripe.Terminal")
   }
 }
-
-
-
-
-

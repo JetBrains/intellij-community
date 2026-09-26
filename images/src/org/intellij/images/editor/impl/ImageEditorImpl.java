@@ -19,17 +19,22 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
-import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * Image viewer implementation.
@@ -40,13 +45,22 @@ public final class ImageEditorImpl implements ImageEditor {
   private final Project project;
   private final VirtualFile file;
   private final ImageEditorUI editorUI;
+  private final @NotNull ImageFileLoader imageFileLoader;
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
+    this(project, file, false, false);
+  }
+
+    /**
+     * @param isEmbedded if it's true the toolbar and the image info are disabled and an image is left-side aligned
+     * @param isOpaque if it's false, all components of the editor are transparent
+     */
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded, boolean isOpaque) {
     this.project = project;
     this.file = file;
 
-    editorUI = new ImageEditorUI(this);
+    editorUI = new ImageEditorUI(this, isEmbedded, isOpaque);
     Disposer.register(this, editorUI);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
@@ -61,77 +75,100 @@ public final class ImageEditorImpl implements ImageEditor {
       }
     }, this);
 
+    imageFileLoader = project.getService(ImageFileService.class).createImageFileLoader(this);
+    Disposer.register(this, imageFileLoader);
+
     setValue(file);
   }
 
   void setValue(VirtualFile file) {
-    try {
-      editorUI.setImageProvider(IfsUtil.getImageProvider(file), IfsUtil.getFormat(file));
-    }
-    catch (Exception e) {
-      //     Error loading image file
-      editorUI.setImageProvider(null, null);
-    }
+    imageFileLoader.loadFile(file);
   }
 
+  void setImageProvider(@Nullable ImageDocument.ScaledImageProvider imageProvider, @Nullable String format) {
+    editorUI.setImageProvider(imageProvider, format);
+  }
+
+  @Override
   public boolean isValid() {
     ImageDocument document = editorUI.getImageComponent().getDocument();
     return document.getValue() != null;
   }
 
+  @Override
   public ImageEditorUI getComponent() {
     return editorUI;
   }
 
+  @Override
   public JComponent getContentComponent() {
     return editorUI.getImageComponent();
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  @Override
+  public @NotNull VirtualFile getFile() {
     return file;
   }
 
-  @NotNull
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return project;
   }
 
+  @Override
   public ImageDocument getDocument() {
     return editorUI.getImageComponent().getDocument();
   }
 
+  @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     editorUI.getImageComponent().setTransparencyChessboardVisible(visible);
     editorUI.repaint();
   }
 
+  @Override
   public boolean isTransparencyChessboardVisible() {
     return editorUI.getImageComponent().isTransparencyChessboardVisible();
   }
 
+  @Override
   public boolean isEnabledForActionPlace(String place) {
     // Disable for thumbnails action
     return !ThumbnailViewActions.ACTION_PLACE.equals(place);
   }
 
+  @Override
   public void setGridVisible(boolean visible) {
     editorUI.getImageComponent().setGridVisible(visible);
     editorUI.repaint();
   }
 
+  @Override
+  public void setEditorBackground(Color color) {
+    editorUI.getImageComponent().getParent().setBackground(color);
+  }
+
+  @Override
+  public void setBorderVisible(boolean visible) {
+    editorUI.getImageComponent().setBorderVisible(visible);
+  }
+
+  @Override
   public boolean isGridVisible() {
     return editorUI.getImageComponent().isGridVisible();
   }
 
+  @Override
   public boolean isDisposed() {
     return disposed;
   }
 
+  @Override
   public ImageZoomModel getZoomModel() {
     return editorUI.getZoomModel();
   }
 
+  @Override
   public void dispose() {
     disposed = true;
   }
@@ -156,8 +193,12 @@ public final class ImageEditorImpl implements ImageEditor {
   void contentsChanged(@NotNull VirtualFileEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      Runnable postRunnable = () -> setValue(file);
-      RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
+      refreshFile();
     }
+  }
+
+  public void refreshFile() {
+    Runnable postRunnable = () -> setValue(file);
+    RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
   }
 }

@@ -1,0 +1,21 @@
+## PY-92333: these are fetched from the pinned Space Files version in bin.debugpy-attach.properties,
+## never committed. See ../../../pydev/pydevd_attach_to_process/linux_and_mac/.gitignore for the
+## upstream pydevd precedent this follows.
+/attach.dylib
+/attach_arm64.dylib
+/attach_x86_64.dylib
+/attach_x86.dll
+/attach_x86.pdb
+/attach_amd64.dll
+/attach_amd64.pdb
+/attach_linux_x86.so
+/attach_linux_amd64.so
+/attach_linux_aarch64.so
+/inject_dll_x86.exe
+/inject_dll_x86.pdb
+/inject_dll_amd64.exe
+/inject_dll_amd64.pdb
+/run_code_on_dllmain_x86.dll
+/run_code_on_dllmain_x86.pdb
+/run_code_on_dllmain_amd64.dll
+/run_code_on_dllmain_amd64.pdb

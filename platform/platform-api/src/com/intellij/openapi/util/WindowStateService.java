@@ -1,35 +1,36 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class WindowStateService {
+  private final Project project;
+
+  /**
+   * (DialogWrapper.getDimensionServiceKey()) Start your key with this string to store state independently of the project
+   */
+  public static final String USE_APPLICATION_WIDE_STORE_KEY_PREFIX = "APPLICATION_WIDE_STORE_";
+
+  protected WindowStateService(@Nullable Project project) {
+    this.project = project;
+  }
+
+
   /**
    * @return an instance of the service for the application
    */
   public static WindowStateService getInstance() {
-    return ServiceManager.getService(WindowStateService.class);
+    return ApplicationManager.getApplication().getService(WindowStateService.class);
   }
 
   /**
@@ -37,53 +38,35 @@ public abstract class WindowStateService {
    * @return an instance of the service for the specified project
    */
   public static WindowStateService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, WindowStateService.class);
+    return Registry.is("ui.app.wide.dimension.service", false)
+           ? getInstance()
+           : project.getService(WindowStateService.class);
+  }
+
+
+  /**
+   * Returns a window state by the specified key.
+   * Also it adds a listener to save a modified state automatically.
+   *
+   * @param key    an unique string key
+   * @param window a window state which should be watched for
+   * @return a corresponding window state
+   */
+  public final WindowState getState(@NotNull String key, @NotNull Window window) {
+    return getStateFor(project, key, window);
   }
 
   /**
-   * Loads a state of the specified component by the specified key.
+   * Returns a window state by the given project and the specified key.
+   * Also it adds a listener to save a modified state automatically.
    *
-   * @param key       an unique string key
-   * @param component a component which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   * @param project an project that specifies a main screen
+   * @param key     an unique string key
+   * @param window  a window state which should be watched for
+   * @return a corresponding window state
    */
-  public final boolean loadState(@NotNull String key, @NotNull Component component) {
-    return loadStateFor(null, key, component);
-  }
+  public abstract WindowState getStateFor(@Nullable Project project, @NotNull String key, @NotNull Window window);
 
-  /**
-   * Loads a state of the specified component by the given screen and the specified key.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
-   *
-   * @param object    an object that specifies a screen to which a component state belongs
-   * @param key       an unique string key
-   * @param component a component which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
-   */
-  public abstract boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component);
-
-  /**
-   * Stores the specified location that corresponds to the specified key.
-   * If it is {@code null} the stored location will be removed.
-   *
-   * @param key       an unique string key
-   * @param component a component which state should be saved
-   */
-  public final void saveState(@NotNull String key, @NotNull Component component) {
-    saveStateFor(null, key, component);
-  }
-
-  /**
-   * Stores the specified location that corresponds to the given screen and the specified key.
-   * If it is {@code null} the stored location will be removed.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
-   * Do not use a screen which is calculated from the specified component.
-   *
-   * @param object    an object that specifies a screen to which a component state belongs
-   * @param key       an unique string key
-   * @param component a component which state should be saved
-   */
-  public abstract void saveStateFor(Object object, @NotNull String key, @NotNull Component component);
 
   /**
    * Returns a location that corresponds to the specified key or {@code null}
@@ -93,7 +76,7 @@ public abstract class WindowStateService {
    * @return a corresponding location
    */
   public final Point getLocation(@NotNull String key) {
-    return getLocationFor(null, key);
+    return getLocationFor(project, key);
   }
 
   /**
@@ -114,7 +97,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putLocation(@NotNull String key, Point location) {
-    putLocationFor(null, key, location);
+    putLocationFor(project, key, location);
   }
 
   /**
@@ -136,7 +119,7 @@ public abstract class WindowStateService {
    * @return a corresponding size
    */
   public final Dimension getSize(@NotNull String key) {
-    return getSizeFor(null, key);
+    return getSizeFor(project, key);
   }
 
   /**
@@ -157,7 +140,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putSize(@NotNull String key, Dimension size) {
-    putSizeFor(null, key, size);
+    putSizeFor(project, key, size);
   }
 
   /**
@@ -179,7 +162,7 @@ public abstract class WindowStateService {
    * @return a corresponding bounds
    */
   public final Rectangle getBounds(@NotNull String key) {
-    return getBoundsFor(null, key);
+    return getBoundsFor(project, key);
   }
 
   /**
@@ -200,7 +183,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putBounds(@NotNull String key, Rectangle bounds) {
-    putBoundsFor(null, key, bounds);
+    putBoundsFor(project, key, bounds);
   }
 
   /**

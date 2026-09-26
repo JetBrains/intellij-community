@@ -1,26 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +33,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DynamicMemberUtils {
+public final class DynamicMemberUtils {
 
   public static final Key<Map<String, String>> COMMENT_KEY = Key.create("DynamicMemberUtils:COMMENT_KEY");
 
@@ -54,13 +53,7 @@ public class DynamicMemberUtils {
   }
 
   public static ClassMemberHolder getMembers(@NotNull Project project, @NotNull String source) {
-    ConcurrentHashMap<String, ClassMemberHolder> map = project.getUserData(KEY);
-
-    if (map == null) {
-      map = new ConcurrentHashMap<>();
-      map = ((UserDataHolderEx)project).putUserDataIfAbsent(KEY, map);
-    }
-
+    ConcurrentHashMap<String, ClassMemberHolder> map = ConcurrencyUtil.computeIfAbsent(project, KEY, () -> new ConcurrentHashMap<>());
     ClassMemberHolder res = map.get(source);
 
     if (res == null) {
@@ -71,7 +64,7 @@ public class DynamicMemberUtils {
       }
     }
 
-    assert source == res.myClassSource : "Store class sources in static constant, do not generate it in each call.";
+    assert source.equals(res.myClassSource) : "Store class sources in static constant, do not generate it in each call.";
 
     return res;
   }
@@ -110,14 +103,13 @@ public class DynamicMemberUtils {
     return version.compareTo(since) >= 0;
   }
 
-  @Nullable
-  public static String getCommentValue(PsiMethod method, String commentTagName) {
+  public static @NlsSafe @Nullable String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
   }
 
-  public static class ClassMemberHolder {
+  public static final class ClassMemberHolder {
     private final String myClassSource;
 
     private final GrTypeDefinition myClass;
@@ -129,7 +121,6 @@ public class DynamicMemberUtils {
     private final Map<String, PsiField[]> myStaticFieldMap;
 
     private final Map<String, PsiMethod[]> myNonStaticMethodMap;
-    private final Map<String, PsiField[]> myNonStaticFieldMap;
 
     private ClassMemberHolder(Project project, String classSource) {
       myClassSource = classSource;
@@ -143,17 +134,16 @@ public class DynamicMemberUtils {
       // Collect fields.
       myFieldMap = new HashMap<>();
       myStaticFieldMap = new HashMap<>();
-      myNonStaticFieldMap = new HashMap<>();
 
       GrField[] fields = myClass.getCodeFields();
 
       PsiField[] allFields = new PsiField[fields.length];
 
       int i = 0;
-      for (PsiField field : fields) {
-        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
+      for (GrField field : fields) {
+        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, field, null, classSource);
 
-        Map<String, String> commentMap = parseComment(((GrField)field).getDocComment());
+        Map<String, String> commentMap = parseComment(field.getDocComment());
         String originalInfo = commentMap.get("originalInfo");
         if (originalInfo == null) {
           originalInfo = classCommentMap.get("originalInfo");
@@ -165,9 +155,6 @@ public class DynamicMemberUtils {
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
           myStaticFieldMap.put(field.getName(), dynamicFieldArray);
         }
-        else {
-          myNonStaticFieldMap.put(field.getName(), dynamicFieldArray);
-        }
 
         Object oldValue = myFieldMap.put(field.getName(), dynamicFieldArray);
         assert oldValue == null : "Duplicated field in dynamic class: " + myClass.getName() + ":" + field.getName();
@@ -177,7 +164,7 @@ public class DynamicMemberUtils {
 
       myFieldMap.put(null, allFields);
 
-      // Collect methods..
+      // Collect methods
       checkDuplicatedMethods(myClass);
 
       MultiMap<String, PsiMethod> multiMap = new MultiMap<>();
@@ -224,7 +211,7 @@ public class DynamicMemberUtils {
       myNonStaticMethodMap = convertMap(nonStaticMultiMap);
     }
 
-    private static Map<String, String> parseComment(@Nullable GrDocComment comment) {
+    private static @NlsSafe Map<String, String> parseComment(@Nullable GrDocComment comment) {
       if (comment == null) return Collections.emptyMap();
 
       GrDocTag[] docTags = comment.getTags();
@@ -348,7 +335,7 @@ public class DynamicMemberUtils {
     private String myOriginalInfo;
     public final String mySource;
 
-    public GrDynamicMethodWithCache(GrMethod method, String source) {
+    GrDynamicMethodWithCache(GrMethod method, String source) {
       super(method);
       myTypeParameters = super.getTypeParameters();
       myParameterList = super.getParameterList();
@@ -361,21 +348,18 @@ public class DynamicMemberUtils {
       return myMethod.getText();
     }
 
-    @NotNull
     @Override
-    public PsiTypeParameter[] getTypeParameters() {
+    public PsiTypeParameter @NotNull [] getTypeParameters() {
       return myTypeParameters;
     }
 
-    @NotNull
     @Override
-    public GrParameterList getParameterList() {
+    public @NotNull GrParameterList getParameterList() {
       return myParameterList;
     }
 
-    @NotNull
     @Override
-    public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
       return namedParameters;
     }
 
@@ -394,9 +378,8 @@ public class DynamicMemberUtils {
       return myMethod.getContainingClass();
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginalInfo;
     }
 
@@ -405,7 +388,7 @@ public class DynamicMemberUtils {
     }
   }
 
-  private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
+  private static final class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
     private final String mySource;
     private final PsiClass myClass;
 
@@ -427,9 +410,8 @@ public class DynamicMemberUtils {
       return myClass;
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginalInfo;
     }
 

@@ -1,34 +1,27 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
+
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class PythonAutoPopupTest extends PyTestCase {
-  private static final String FOO_CLASS = "class Foo(object):\n" +
-                                          "    def bar(self):\n" +
-                                          "        pass\n\n";
+  private static final String FOO_CLASS = """
+    class Foo(object):
+        def bar(self):
+            pass
+
+    """;
   private CompletionAutoPopupTester myTester;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myTester = new CompletionAutoPopupTester(myFixture);
@@ -40,8 +33,8 @@ public class PythonAutoPopupTest extends PyTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    myTester.runWithAutoPopupEnabled(runnable);
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    myTester.runWithAutoPopupEnabled(testRunnable);
   }
 
   public void testAutoPopupAfterDot() {
@@ -67,4 +60,23 @@ public class PythonAutoPopupTest extends PyTestCase {
     assertFalse(lookup2.isFocused());
   }
 
+  // PY-32808
+  public void testNoAutoPopupOnTypingFStringPrefix() {
+    myFixture.configureByText("a.py", "s = <caret>'foo'");
+    myTester.typeWithPauses("f");
+    assertNull(myTester.getLookup());
+  }
+
+  // PY-36639
+  public void testNoAutoPopupOnTypingPrefixesOfGluedStringElements() {
+    myFixture.configureByText("a.py", "s = (<caret>'foo'\n" +
+                                      "     'bar')");
+    myTester.typeWithPauses("r");
+    assertNull(myTester.getLookup());
+
+    myFixture.configureByText("a.py", "s = ('foo'\n" +
+                                      "     <caret>'bar')");
+    myTester.typeWithPauses("r");
+    assertNull(myTester.getLookup());
+  }
 }

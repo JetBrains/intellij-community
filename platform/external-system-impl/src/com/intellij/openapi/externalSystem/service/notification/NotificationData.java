@@ -1,61 +1,55 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.pom.NavigatableAdapter;
+import com.intellij.pom.NonNavigatable;
+import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/28/14
  */
 public class NotificationData implements Disposable {
 
-  @NotNull private String myTitle;
-  @NotNull private String myMessage;
-  @NotNull private NotificationCategory myNotificationCategory;
-  @NotNull private final NotificationSource myNotificationSource;
-  @NotNull private final NotificationListener myListener;
-  @Nullable private String myFilePath;
-  @Nullable private Navigatable navigatable;
+  private @NotNull @NotificationTitle String myTitle;
+  private @NotNull @NotificationContent String myMessage;
+  private @NotNull NotificationCategory myNotificationCategory;
+  private final @NotNull NotificationSource myNotificationSource;
+  private final @NotNull NotificationListener myListener;
+  private @Nullable String myFilePath;
+  private @Nullable Navigatable navigatable;
   private int myLine;
   private int myColumn;
   private boolean myBalloonNotification;
-  @Nullable private String myBalloonGroup;
+  private @Nullable NotificationGroup myBalloonGroup;
+  private boolean myIsSuggestion;
 
   private final Map<String, NotificationListener> myListenerMap;
 
-  public NotificationData(@NotNull String title,
-                          @NotNull String message,
+  public NotificationData(@NotNull @NotificationTitle String title,
+                          @NotNull @NotificationContent String message,
                           @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource) {
     this(title, message, notificationCategory, notificationSource, null, -1, -1, false);
   }
 
-  public NotificationData(@NotNull String title,
-                          @NotNull String message,
+  public NotificationData(@NotNull @NotificationTitle String title,
+                          @NotNull @NotificationContent String message,
                           @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource,
                           @Nullable String filePath,
@@ -66,7 +60,7 @@ public class NotificationData implements Disposable {
     myMessage = message;
     myNotificationCategory = notificationCategory;
     myNotificationSource = notificationSource;
-    myListenerMap = ContainerUtil.newHashMap();
+    myListenerMap = new HashMap<>();
     myListener = new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -84,26 +78,23 @@ public class NotificationData implements Disposable {
     myBalloonNotification = balloonNotification;
   }
 
-  @NotNull
-  public String getTitle() {
+  public @NotNull @NotificationTitle String getTitle() {
     return myTitle;
   }
 
-  public void setTitle(@NotNull String title) {
+  public void setTitle(@NotNull @NotificationTitle String title) {
     myTitle = title;
   }
 
-  @NotNull
-  public String getMessage() {
+  public @NotNull @NotificationContent String getMessage() {
     return myMessage;
   }
 
-  public void setMessage(@NotNull String message) {
+  public void setMessage(@NotNull @NotificationContent String message) {
     myMessage = message;
   }
 
-  @NotNull
-  public NotificationCategory getNotificationCategory() {
+  public @NotNull NotificationCategory getNotificationCategory() {
     return myNotificationCategory;
   }
 
@@ -111,18 +102,15 @@ public class NotificationData implements Disposable {
     myNotificationCategory = notificationCategory;
   }
 
-  @NotNull
-  public NotificationSource getNotificationSource() {
+  public @NotNull NotificationSource getNotificationSource() {
     return myNotificationSource;
   }
 
-  @NotNull
-  public NotificationListener getListener() {
+  public @NotNull NotificationListener getListener() {
     return myListener;
   }
 
-  @Nullable
-  public String getFilePath() {
+  public @Nullable String getFilePath() {
     return myFilePath;
   }
 
@@ -130,8 +118,7 @@ public class NotificationData implements Disposable {
     myFilePath = filePath;
   }
 
-  @NotNull
-  public Integer getLine() {
+  public @NotNull Integer getLine() {
     return myLine;
   }
 
@@ -164,11 +151,28 @@ public class NotificationData implements Disposable {
   }
 
   public List<String> getRegisteredListenerIds() {
-    return ContainerUtil.newArrayList(myListenerMap.keySet());
+    return new ArrayList<>(myListenerMap.keySet());
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
+    if (navigatable == null || navigatable == NonNavigatable.INSTANCE) {
+      for (String id : myListenerMap.keySet()) {
+        if (id.startsWith("openFile:")) {
+          return new NavigatableAdapter() {
+            @Override
+            public void navigate(boolean requestFocus) {
+              NotificationListener listener = myListenerMap.get(id);
+              if (listener != null) {
+                // Notification here used only to be able to call 'NotificationListener.hyperlinkUpdate'
+                //noinspection UnresolvedPluginConfigReference
+                listener.hyperlinkUpdate(new Notification("", "", NotificationType.INFORMATION),
+                                         IJSwingUtilities.createHyperlinkEvent(id, listener));
+              }
+            }
+          };
+        }
+      }
+    }
     return navigatable;
   }
 
@@ -176,12 +180,11 @@ public class NotificationData implements Disposable {
     this.navigatable = navigatable;
   }
 
-  @Nullable
-  public String getBalloonGroup() {
+  public @Nullable NotificationGroup getBalloonGroup() {
     return myBalloonGroup;
   }
 
-  public void setBalloonGroup(@Nullable String balloonGroup) {
+  public void setBalloonGroup(NotificationGroup balloonGroup) {
     myBalloonGroup = balloonGroup;
   }
 

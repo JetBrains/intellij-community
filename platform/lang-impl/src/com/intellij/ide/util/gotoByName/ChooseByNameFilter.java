@@ -1,10 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -13,13 +21,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +76,7 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull ChooseByNameFilterConfiguration<T> filterConfiguration,
                             @NotNull Project project) {
     myParentPopup = popup;
-    DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
+    DefaultActionGroup actionGroup = DefaultActionGroup.createFlatGroup(() -> "go.to.file.filter");
     ToggleAction action = new FilterAction() {
       @Override
       protected boolean isActive() {
@@ -75,13 +85,13 @@ public abstract class ChooseByNameFilter<T> {
     };
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
-    myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
+    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myToolbar.getComponent().setFocusable(false);
     myToolbar.getComponent().setBorder(null);
     myProject = project;
     myChooser = createChooser(model, filterConfiguration);
     myChooserPanel = createChooserPanel();
+    myToolbar.setTargetComponent(myChooserPanel);
     popup.setToolArea(myToolbar.getComponent());
   }
 
@@ -93,29 +103,14 @@ public abstract class ChooseByNameFilter<T> {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.add(myChooser);
     JPanel buttons = new JPanel();
-    JButton all = new JButton("All");
-    all.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.setAllElementsMarked(true);
-      }
-    });
+    JButton all = new JButton(LangBundle.message("label.all"));
+    all.addActionListener(_ -> myChooser.setAllElementsMarked(true));
     buttons.add(all);
-    JButton none = new JButton("None");
-    none.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.setAllElementsMarked(false);
-      }
-    });
+    JButton none = new JButton(LangBundle.message("label.none"));
+    none.addActionListener(_ -> myChooser.setAllElementsMarked(false));
     buttons.add(none);
-    JButton invert = new JButton("Invert");
-    invert.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        myChooser.invertSelection();
-      }
-    });
+    JButton invert = new JButton(LangBundle.message("label.invert"));
+    invert.addActionListener(_ -> myChooser.invertSelection());
     buttons.add(invert);
     panel.add(buttons);
     return panel;
@@ -126,21 +121,19 @@ public abstract class ChooseByNameFilter<T> {
    *
    *
    * @param model a model to update
-   * @param filterConfiguration
    * @return a created file chooser
    */
-  @NotNull
-  protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
-                                             @NotNull final ChooseByNameFilterConfiguration<T> filterConfiguration) {
+  protected @NotNull ElementsChooser<T> createChooser(final @NotNull FilteringGotoByModel<T> model,
+                                             final @NotNull ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
-    final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
+    final ElementsChooser<T> chooser = new ElementsChooser<>(elements, true) {
       @Override
-      protected String getItemText(@NotNull final T value) {
+      protected String getItemText(final @NotNull T value) {
         return textForFilterValue(value);
       }
 
       @Override
-      protected Icon getItemIcon(@NotNull final T value) {
+      protected Icon getItemIcon(final @NotNull T value) {
         return iconForFilterValue(value);
       }
     };
@@ -148,28 +141,23 @@ public abstract class ChooseByNameFilter<T> {
     final int count = chooser.getElementCount();
     for (int i = 0; i < count; i++) {
       T type = chooser.getElementAt(i);
-      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isFileTypeVisible(type)) {
+      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isVisible(type)) {
         chooser.setElementMarked(type, false);
       }
     }
     updateModel(model, chooser, true);
-    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<T>() {
-      @Override
-      public void elementMarkChanged(final T element, final boolean isMarked) {
-        filterConfiguration.setVisible(element, isMarked);
-        updateModel(model, chooser, false);
-      }
+    chooser.addElementsMarkListener((ElementsChooser.ElementsMarkListener<T>)(element, isMarked) -> {
+      filterConfiguration.setVisible(element, isMarked);
+      updateModel(model, chooser, false);
     });
     return chooser;
   }
 
-  protected abstract String textForFilterValue(@NotNull T value);
+  protected abstract @NlsSafe String textForFilterValue(@NotNull T value);
 
-  @Nullable
-  protected abstract Icon iconForFilterValue(@NotNull T value);
+  protected abstract @Nullable Icon iconForFilterValue(@NotNull T value);
 
-  @NotNull
-  protected abstract Collection<T> getAllFilterValues();
+  protected abstract @NotNull Collection<T> getAllFilterValues();
 
   /**
    * Update model basing on the chooser state
@@ -195,7 +183,7 @@ public abstract class ChooseByNameFilter<T> {
         .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         myPopup = null;
       }
     });
@@ -212,17 +200,23 @@ public abstract class ChooseByNameFilter<T> {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
-      super("Filter", "Filter files by type", AllIcons.General.Filter);
+    FilterAction() {
+      super(IdeBundle.messagePointer("action.ToggleAction.text.filter"),
+            IdeBundle.messagePointer("action.ToggleAction.text.filter.files.by.type"), AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(final @NotNull AnActionEvent e) {
       return myPopup != null;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();
       }

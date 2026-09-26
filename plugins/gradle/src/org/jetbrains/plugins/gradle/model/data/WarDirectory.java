@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class WarDirectory implements Serializable {
   /**
@@ -48,38 +34,43 @@ public class WarDirectory implements Serializable {
    */
   public static final WarDirectory WEB_INF_LIB = new WarDirectory("/WEB-INF/lib");
   /**
+   * Spring-Boot convention directory of provided library
+   * Subdirectory can store JAR files used by the Web module,
+   * that are required when running embedded but are not required when deploying to a traditional web container.
+   */
+  public static final WarDirectory WEB_INF_LIB_PROVIDED = new WarDirectory("/WEB-INF/lib-provided");
+  /**
    * Subdirectory contains the compiled Java code for the Web module.
    */
   public static final WarDirectory WEB_INF_CLASSES = new WarDirectory("/WEB-INF/classes");
 
-  private static final WarDirectory[] WAR_DIRECTORIES = new WarDirectory[]{WAR_ROOT, META_INF, WEB_INF, WEB_INF_LIB, WEB_INF_CLASSES};
+  private static final WarDirectory[] WAR_DIRECTORIES =
+    new WarDirectory[]{WAR_ROOT, META_INF, WEB_INF, WEB_INF_LIB, WEB_INF_LIB_PROVIDED, WEB_INF_CLASSES};
 
-  @NotNull
-  private final String myRelativePath;
+  private final @NotNull String relativePath;
 
-  WarDirectory(@NotNull final String relativePath) {
-    myRelativePath = getAdjustedPath(relativePath);
+  @PropertyMapping({"relativePath"})
+  WarDirectory(final @NotNull String relativePath) {
+    this.relativePath = getAdjustedPath(relativePath);
   }
 
-  @NotNull
-  public String getRelativePath() {
-    return myRelativePath;
+  public @NotNull String getRelativePath() {
+    return relativePath;
   }
 
   public boolean isCustomDirectory() {
     for (WarDirectory warDirectory : WAR_DIRECTORIES) {
-      if (myRelativePath.equals(warDirectory.getRelativePath())) return false;
+      if (relativePath.equals(warDirectory.getRelativePath())) return false;
     }
     return true;
   }
 
-  @NotNull
-  public static WarDirectory fromPath(final @NotNull String path) {
+  public static @NotNull WarDirectory fromPath(final @NotNull String path) {
     if (StringUtil.isEmpty(path)) return WAR_ROOT;
 
     final String adjustedPath = getAdjustedPath(path);
     for (WarDirectory warDirectory : WAR_DIRECTORIES) {
-      if (warDirectory.myRelativePath.equals(adjustedPath)) return warDirectory;
+      if (warDirectory.relativePath.equals(adjustedPath)) return warDirectory;
     }
     return new WarDirectory(adjustedPath);
   }
@@ -90,7 +81,7 @@ public class WarDirectory implements Serializable {
 
   @Override
   public String toString() {
-    return myRelativePath;
+    return relativePath;
   }
 
   @Override
@@ -98,12 +89,12 @@ public class WarDirectory implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     WarDirectory directory = (WarDirectory)o;
-    if (!myRelativePath.equals(directory.myRelativePath)) return false;
+    if (!relativePath.equals(directory.relativePath)) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myRelativePath.hashCode();
+    return relativePath.hashCode();
   }
 }

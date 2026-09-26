@@ -18,23 +18,30 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitStringLiteral(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
   }
 
-  @NotNull
-  public List<Pair<TextRange, String>> getTextFragments() {
+  @Override
+  public @NotNull List<Pair<TextRange, String>> getTextFragments() {
     return JsonPsiImplUtils.getTextFragments(this);
   }
 
-  @NotNull
-  public String getValue() {
+  @Override
+  public @NotNull String getValue() {
     return JsonPsiImplUtils.getValue(this);
+  }
+
+  @Override
+  public boolean isPropertyName() {
+    return JsonPsiImplUtils.isPropertyName(this);
   }
 
 }

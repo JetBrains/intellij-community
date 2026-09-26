@@ -1,0 +1,44 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.refused` start
+jvm_library(
+    name = "refused",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.refused",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "refused_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.libraries.refused",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":refused",
+        "//libs:libraries-refused-testonly",
+    ],
+)
+### auto-generated section `build intellij.libraries.refused` end
+
+### auto-generated section `iml intellij.libraries.refused` start
+exports_files(
+    [
+        "intellij.libraries.refused.iml",
+        "resources/intellij.libraries.refused.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.refused` end

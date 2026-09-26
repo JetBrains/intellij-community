@@ -1,58 +1,83 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDiamondTypeImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiDiamondTypeUtil {
+public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
+
+  /**
+   * Limits the walk of {@link #changesNullability}, so that a recursive generic type cannot make it loop.
+   */
+  private static final int MAX_NULLABILITY_CHECK_DEPTH = 10;
 
   private PsiDiamondTypeUtil() {
   }
 
-  public static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType) {
+  public static boolean canCollapseToDiamond(PsiNewExpression expression,
+                                             PsiNewExpression context,
+                                             @Nullable PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
-  public static boolean canChangeContextForDiamond(final PsiNewExpression expression, final PsiType expectedType) {
+  public static boolean canChangeContextForDiamond(PsiNewExpression expression, PsiType expectedType) {
     final PsiNewExpression copy = (PsiNewExpression)expression.copy();
     return canCollapseToDiamond(copy, copy, expectedType, true);
   }
 
-  private static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType,
-                                             boolean skipDiamonds) {
-    if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
+  private static boolean canCollapseToDiamond(PsiNewExpression expression,
+                                              PsiNewExpression context,
+                                              @Nullable PsiType expectedType,
+                                              boolean skipDiamonds) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
@@ -62,6 +87,12 @@ public class PsiDiamondTypeUtil {
             if (!skipDiamonds && typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return false;
             final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(expression, context);
             if (inferenceResult.getErrorMessage() == null) {
+              PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+              if (anonymousClass != null &&
+                  ContainerUtil.exists(anonymousClass.getMethods(),
+                                       method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+                return false;
+              }
               final List<PsiType> types = inferenceResult.getInferredTypes();
               PsiType[] typeArguments = null;
               if (expectedType instanceof PsiClassType) {
@@ -86,7 +117,7 @@ public class PsiDiamondTypeUtil {
     return false;
   }
 
-  public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
+  public static PsiElement createExplicitReplacement(PsiElement psiElement) {
     if (psiElement instanceof PsiReferenceParameterList) {
       final PsiNewExpression expression =
         (PsiNewExpression)JavaPsiFacade.getElementFactory(psiElement.getProject()).createExpressionFromText("new a<>()", psiElement);
@@ -94,9 +125,9 @@ public class PsiDiamondTypeUtil {
       LOG.assertTrue(classReference != null);
       final PsiReferenceParameterList parameterList = classReference.getParameterList();
       LOG.assertTrue(parameterList != null);
-      return psiElement.replace(parameterList);
+      return parameterList;
     }
-    return psiElement;
+    return null;
   }
 
   public static PsiElement replaceDiamondWithExplicitTypes(PsiElement element) {
@@ -125,13 +156,23 @@ public class PsiDiamondTypeUtil {
 
   public static PsiExpression expandTopLevelDiamondsInside(PsiExpression expr) {
     if (expr instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expr).getClassReference();
+      PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expr).getClassReference();
+      if (classReference == null) {
+        classReference = ((PsiNewExpression)expr).getClassOrAnonymousClassReference();
+      }
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
         if (parameterList != null) {
           final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
           if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
-            return  (PsiExpression)replaceDiamondWithExplicitTypes(parameterList).getParent();
+            PsiElement parent = replaceDiamondWithExplicitTypes(parameterList).getParent();
+            if (parent instanceof PsiExpression) {
+              return (PsiExpression)parent;
+            }
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiExpression) {
+              return (PsiExpression)grandParent;
+            }
           }
         }
       }
@@ -141,7 +182,7 @@ public class PsiDiamondTypeUtil {
 
   public static String getCollapsedType(PsiType type, PsiElement context) {
     String typeText = type.getCanonicalText();
-    if (PsiUtil.isLanguageLevel7OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final int idx = typeText.indexOf('<');
       if (idx >= 0) {
         return typeText.substring(0, idx) + "<>";
@@ -162,19 +203,21 @@ public class PsiDiamondTypeUtil {
     }
     return typeElement != null && PsiAugmentProvider.getInferredType(typeElement) != null;
   }
-  
+
   public static boolean areTypeArgumentsRedundant(PsiType[] typeArguments,
                                                   PsiExpression context,
                                                   boolean constructorRef,
-                                                  @Nullable PsiMethod method, 
+                                                  @Nullable PsiMethod method,
                                                   PsiTypeParameter[] typeParameters) {
+    PsiElement encoded = null;
     try {
       final PsiElement copy;
       final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(context);
-      if (typeByParent != null) {
+      if (typeByParent != null && PsiTypesUtil.isDenotableType(typeByParent, context)) {
         if (isAugmented(context)) {
           return false;
         }
+        RecaptureTypeMapper.encode(encoded = context);
         copy = LambdaUtil.copyWithExpectedType(context, typeByParent);
       }
       else {
@@ -183,6 +226,7 @@ public class PsiDiamondTypeUtil {
         PsiTreeUtil.mark(argumentList != null ? argumentList : context, marker);
         final PsiCall call = LambdaUtil.treeWalkUp(context);
         if (call != null) {
+          RecaptureTypeMapper.encode(encoded = call);
           final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
           copy = callCopy != null ? PsiTreeUtil.releaseMark(callCopy, marker) : null;
         }
@@ -204,18 +248,22 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
+
+      if (copy != null && copy.getContainingFile() != null) {
+        GlobalSearchScope.markFileForWeakScope(copy.getContainingFile().getViewProvider().getVirtualFile());
+      }
+      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (context instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
         if (methodRefCopy != null && !isInferenceEquivalent(typeArguments, typeParameters, method, methodRefCopy)) {
           return false;
         }
-        return true;
       }
-      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
-      if (exprCopy != null) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory();
+      else if (exprCopy != null) {
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(exprCopy.getProject());
         if (constructorRef) {
-          if (!(exprCopy instanceof PsiNewExpression) || !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
+          if (!(exprCopy instanceof PsiNewExpression) ||
+              !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
             return false;
           }
         }
@@ -226,10 +274,31 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
+
+      if (typeByParent != null) {
+        return true;
+      }
+
+      PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
+      PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
+      if (newParentCall != null && oldParentCall != null) {
+        JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
+        JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
+        if (newResult.getElement() == null ||
+            !newResult.getElement().isEquivalentTo(oldResult.getElement()) ||
+            !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
+          return false;
+        }
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.info(e);
       return false;
+    }
+    finally {
+      if (encoded != null) {
+        RecaptureTypeMapper.clean(encoded);
+      }
     }
     return true;
   }
@@ -238,7 +307,7 @@ public class PsiDiamondTypeUtil {
                                                PsiTypeParameter[] typeParameters,
                                                PsiMethod method,
                                                PsiMethodReferenceExpression methodRefCopy) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodRefCopy.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodRefCopy.getProject());
     PsiTypeElement qualifierType = methodRefCopy.getQualifierType();
     if (qualifierType != null) {
       qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
@@ -257,7 +326,7 @@ public class PsiDiamondTypeUtil {
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-      if (!typeArguments[i].equals(inferredType)) {
+      if (!typeArguments[i].equals(inferredType) || changesNullability(typeArguments[i], inferredType)) {
         return false;
       }
     }
@@ -267,18 +336,18 @@ public class PsiDiamondTypeUtil {
   private static boolean isInferenceEquivalent(PsiType[] typeArguments,
                                                PsiElementFactory elementFactory,
                                                PsiCallExpression exprCopy,
-                                               PsiMethod method, 
+                                               PsiMethod method,
                                                PsiTypeParameter[] typeParameters) throws IncorrectOperationException {
     PsiReferenceParameterList list = ((PsiCallExpression)elementFactory.createExpressionFromText("foo()", null)).getTypeArgumentList();
     exprCopy.getTypeArgumentList().replace(list);
 
     final JavaResolveResult copyResult = exprCopy.resolveMethodGenerics();
-    if (method != copyResult.getElement()) return false;
+    if (!method.isEquivalentTo(copyResult.getElement())) return false;
     final PsiSubstitutor psiSubstitutor = copyResult.getSubstitutor();
     for (int i = 0, length = typeParameters.length; i < length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
-      if (!typeArguments[i].equals(inferredType)) {
+      if (!typeArguments[i].equals(inferredType) || changesNullability(typeArguments[i], inferredType)) {
         return false;
       }
       if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) {
@@ -289,8 +358,51 @@ public class PsiDiamondTypeUtil {
     return checkParentApplicability(exprCopy);
   }
 
-  private static boolean isInferenceEquivalent(PsiType[] typeArguments, 
-                                               PsiElementFactory elementFactory, 
+  /**
+   * A type argument and the type inferred for the same position may be equal as types and still differ in nullability,
+   * as {@link PsiType#equals(Object)} ignores the annotations. Removing such a type argument is not a no-op: it changes
+   * the nullability of the expression type. For example, inside a {@code @NullMarked} scope, the explicit {@code Object}
+   * in {@code stream.<Object>map(Foo::toNullable)} keeps the stream elements non-null, while the inferred type argument
+   * would be {@code @Nullable Object}.
+   * <p>
+   * Only a difference between two known nullabilities counts. An unspecified nullability on either side is not a change
+   * worth keeping the type argument for: it neither states an intent nor produces a warning of its own.
+   *
+   * @param typeArgument type argument written explicitly
+   * @param inferredType type inferred for the same position once the explicit type argument is removed
+   * @return true if the explicit type argument specifies a nullability that differs from the inferred one
+   */
+  private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType) {
+    return changesNullability(typeArgument, inferredType, 0);
+  }
+
+  private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType, int depth) {
+    if (depth > MAX_NULLABILITY_CHECK_DEPTH) return false;
+    Nullability nullability = typeArgument.getNullability().nullability();
+    Nullability inferredNullability = inferredType.getNullability().nullability();
+    if (nullability != Nullability.UNKNOWN && inferredNullability != Nullability.UNKNOWN && nullability != inferredNullability) {
+      return true;
+    }
+    if (typeArgument instanceof PsiArrayType && inferredType instanceof PsiArrayType) {
+      return changesNullability(((PsiArrayType)typeArgument).getComponentType(),
+                                ((PsiArrayType)inferredType).getComponentType(), depth + 1);
+    }
+    // A wildcard needs no branch of its own: PsiWildcardType#getNullability already reports the nullability of an
+    // `extends` bound, and a type argument that contains a wildcard does not reach here anyway, as capture conversion
+    // makes the inferred type unequal to the written one.
+    if (typeArgument instanceof PsiClassType && inferredType instanceof PsiClassType) {
+      PsiType[] parameters = ((PsiClassType)typeArgument).getParameters();
+      PsiType[] inferredParameters = ((PsiClassType)inferredType).getParameters();
+      if (parameters.length != inferredParameters.length) return false;
+      for (int i = 0; i < parameters.length; i++) {
+        if (changesNullability(parameters[i], inferredParameters[i], depth + 1)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isInferenceEquivalent(PsiType[] typeArguments,
+                                               PsiElementFactory elementFactory,
                                                PsiNewExpression exprCopy) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement collapsedClassReference = ((PsiNewExpression)elementFactory.createExpressionFromText("new A<>()", null)).getClassOrAnonymousClassReference();
     LOG.assertTrue(collapsedClassReference != null);
@@ -326,7 +438,7 @@ public class PsiDiamondTypeUtil {
         return false;
       }
     }
-    
+
     return checkParentApplicability(exprCopy);
   }
 
@@ -339,35 +451,5 @@ public class PsiDiamondTypeUtil {
       exprCopy = PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class, true);
     }
     return true;
-  }
-
-  /**
-   * Removes redundant type arguments which appear in any descendants of the supplied element.
-   *
-   * @param element element to start the replacement from
-   */
-  public static void removeRedundantTypeArguments(PsiElement element) {
-    for(PsiNewExpression newExpression : PsiTreeUtil.collectElementsOfType(element, PsiNewExpression.class)) {
-      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
-      if(classReference != null && canCollapseToDiamond(newExpression, newExpression, null)) {
-        replaceExplicitWithDiamond(classReference.getParameterList());
-      }
-    }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
-    for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
-      PsiType[] arguments = call.getTypeArguments();
-      if (arguments.length == 0) continue;
-      PsiMethod method = call.resolveMethod();
-      if(method != null) {
-        PsiTypeParameter[] parameters = method.getTypeParameters();
-        if(arguments.length == parameters.length &&
-           areTypeArgumentsRedundant(arguments, call, false, method, parameters)) {
-          PsiMethodCallExpression expr =
-            (PsiMethodCallExpression)factory
-              .createExpressionFromText("foo()", null);
-          call.getTypeArgumentList().replace(expr.getTypeArgumentList());
-        }
-      }
-    }
   }
 }

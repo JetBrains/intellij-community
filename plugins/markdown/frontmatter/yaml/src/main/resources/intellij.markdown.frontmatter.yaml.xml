@@ -1,0 +1,17 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.yaml"/>
+    <module name="intellij.yaml.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <languageInjectionContributor language="Markdown"
+                                  implementationClass="org.intellij.plugins.markdown.frontmatter.yaml.FrontMatterHeaderYamlInjectionContributor"/>
+  </extensions>
+</idea-plugin>

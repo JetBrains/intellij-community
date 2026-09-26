@@ -1,25 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceUtil;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -27,14 +24,13 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private static final Function<PsiMethodCallExpression, Function<PsiType, String>>
     MAP_NAME_ADJUSTER = (PsiMethodCallExpression call) -> (PsiType type) -> {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -42,9 +38,9 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
       PsiType inType = StreamApiUtil.getStreamElementType(qualifier.getType());
       if (type.equals(inType)) return "map";
     }
-    if (PsiType.INT.equals(type)) return "mapToInt";
-    if (PsiType.LONG.equals(type)) return "mapToLong";
-    if (PsiType.DOUBLE.equals(type)) return "mapToDouble";
+    if (PsiTypes.intType().equals(type)) return "mapToInt";
+    if (PsiTypes.longType().equals(type)) return "mapToLong";
+    if (PsiTypes.doubleType().equals(type)) return "mapToDouble";
     return "mapToObj";
   };
   private static final Function<PsiType, String> FLAT_MAP_NAME_ADJUSTER = type -> {
@@ -69,57 +65,53 @@ public class AdjustFunctionContextFix extends LocalQuickFixAndIntentionActionOnP
   private final String myOriginalName;
   private final String myNewName;
 
-  protected AdjustFunctionContextFix(@NotNull PsiMethodCallExpression call, @NotNull String targetMethodName) {
+  private AdjustFunctionContextFix(@NotNull PsiMethodCallExpression call, @NotNull String targetMethodName) {
     super(call);
     myOriginalName = call.getMethodExpression().getReferenceName();
     myNewName = targetMethodName;
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(startElement, PsiMethodCallExpression.class);
-    if (call == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     ExpressionUtils.bindCallTo(call, myNewName);
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.text", myOriginalName, myNewName);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    return Presentation.of(QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.text", myOriginalName, myNewName)).withPriority(
+      PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.family.name");
   }
 
-  @Contract("null -> null")
-  @Nullable
-  public static AdjustFunctionContextFix createFix(PsiElement context) {
-    if (!(context instanceof PsiExpression)) return null;
-    PsiExpression expression = (PsiExpression)context;
-    PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
+  public static @Nullable IntentionAction createFix(@NotNull PsiExpression expression) {
+    PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(expression, PsiFunctionalExpression.class, false);
     if (fn == null) return null;
+    PsiType actualReturnType;
+    if(expression instanceof PsiMethodReferenceExpression methodRef) {
+      actualReturnType = PsiMethodReferenceUtil.getMethodReferenceReturnType(methodRef);
+    } else {
+      actualReturnType = expression.getType();
+    }
+    return createFix(actualReturnType, fn);
+  }
+
+  /**
+   * @param actualReturnType actual (unexpected) return type of functional expression
+   * @param fn functional expression
+   * @return a fix that aims to adjust the surroundings
+   */
+  public static @Nullable IntentionAction createFix(@Nullable PsiType actualReturnType, @NotNull PsiFunctionalExpression fn) {
     PsiExpressionList expressionList = ObjectUtils.tryCast(fn.getParent(), PsiExpressionList.class);
     if (expressionList == null || expressionList.getExpressionCount() != 1) return null;
     PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
     Function<PsiType, String> remapper = METHOD_NAME_ADJUSTER.mapFirst(call);
     if (remapper == null) return null;
-    PsiType actualReturnType;
-    if(expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
-      actualReturnType = PsiMethodReferenceUtil.getMethodReferenceReturnType(methodRef);
-    } else {
-      actualReturnType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, () -> expression.getType());
-    }
     String targetMethodName = remapper.apply(actualReturnType);
     if (targetMethodName == null) return null;
-    return new AdjustFunctionContextFix(call, targetMethodName);
+    return new AdjustFunctionContextFix(call, targetMethodName).asIntention();
   }
 }

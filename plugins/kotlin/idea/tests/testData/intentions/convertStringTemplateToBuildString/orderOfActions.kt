@@ -1,0 +1,12 @@
+// PRIORITY: NORMAL
+// WITH_STDLIB
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Convert to 'buildString' call
+// K2_ACTIONS_LIST: Convert to multi-dollar string
+// K2_ACTIONS_LIST: Convert to raw string literal
+// K2_ACTIONS_LIST: Add 'foo =' to argument
+// AFTER-WARNING: Parameter 'foo' is never used
+// AFTER-WARNING: Variable 's' is never used
+fun test(foo: String) {
+    test(<caret>"aaa\nbbb")
+}

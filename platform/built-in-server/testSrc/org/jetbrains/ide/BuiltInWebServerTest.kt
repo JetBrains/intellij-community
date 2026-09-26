@@ -1,25 +1,40 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.*
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
-import com.intellij.util.io.writeChild
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TrustedProjectsTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.useProject
+import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
+import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
+import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.writeText
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
@@ -46,69 +61,124 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   private fun testIndex(vararg paths: String) {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
-    newPath.writeChild(manager.filePath!!, "hello")
-    newPath.refreshVfs()
+    newPath.resolve(manager.filePath!!).createParentDirectories().writeText("hello")
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
 
-    createModule(newPath.systemIndependentPath, project)
+    createModule(newPath, project)
 
     for (path in paths) {
-      doTest(path) {
-        assertThat(it.inputStream.reader().readText()).isEqualTo("hello")
+      doTest(urlSuffix = "/$path") {
+        assertThat(it.body().reader().readText()).isEqualTo("hello")
       }
     }
   }
 }
 
-private fun createModule(systemIndependentPath: String, project: Project) {
-  runInEdtAndWait {
-    runWriteAction {
-      val module = ModuleManager.getInstance(project).newModule("$systemIndependentPath/test.iml", EmptyModuleType.EMPTY_MODULE)
-      ModuleRootModificationUtil.addContentRoot(module, systemIndependentPath)
-    }
+private fun createModule(projectDir: Path, project: Project) {
+  runWriteActionAndWait {
+    val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml"), EmptyModuleType.EMPTY_MODULE)
+    ModuleRootModificationUtil.addContentRoot(module, projectDir.invariantSeparatorsPathString)
   }
 }
 
 internal class HeavyBuiltInWebServerTest {
   companion object {
     @JvmField
-    @ClassRule val appRule = ProjectRule()
+    @ClassRule
+    val appRule = ApplicationRule()
+
+    @BeforeClass
+    @JvmStatic
+    fun runServer() {
+      BuiltInServerManager.getInstance().waitForStart()
+    }
   }
 
   @Rule
   @JvmField
   val tempDirManager = TemporaryDirectory()
 
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
+
   @Test
   fun `path outside of project`() {
-    val projectDir = tempDirManager.newPath().resolve("foo/bar")
-    val projectDirPath = projectDir.systemIndependentPath
-    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+    val projectDir = tempDirManager.newPath()
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
-      createModule(projectDirPath, project)
+      createModule(projectDir, project)
 
-      val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").systemIndependentPath
-      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
-      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND)
+      val path = tempDirManager.newPath("doNotExposeMe.txt").apply { writeText("doNotExposeMe") }
+      val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
+      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}"), "%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND, asSignedRequest = true)
     }
   }
 
   @Test
   fun `file in hidden folder`() {
-    val projectDir = tempDirManager.newPath().resolve("foo/bar")
-    val projectDirPath = projectDir.systemIndependentPath
-    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+    val projectDir = tempDirManager.newPath()
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
-      createModule(projectDirPath, project)
+      createModule(projectDir, project)
 
-      val dir = projectDir.resolve(".coverage")
-      dir.createDirectories()
-      val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
-      val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
-      val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
-      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK)
+      // DefaultWebServerPathHandler uses module roots as virtual file - must be refreshed
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)
+
+      val dir = projectDir.resolve(".coverage").createDirectories()
+      val path = dir.resolve("foo").apply { writeText("exposeMe") }
+      val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
+      val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}").replace("%2F", "/")
+      testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/${webPath}", HttpResponseStatus.FORBIDDEN, asSignedRequest = true)
     }
+  }
+
+  @Test
+  fun `service worker in safe mode`() {
+    val projectDir = tempDirManager.newPath()
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
+      projectDir.createDirectories()
+      projectDir.resolve("sw.js").writeText("")
+      VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)
+      createModule(projectDir, project)
+
+      val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+      val builder = HttpRequest.newBuilder(URI("$host/${project.name}/sw.js"))
+      builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
+      builder.header("Service-Worker", "script")
+
+      val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+      TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+        TrustedProjects.setProjectTrusted(project, true)
+        val responseTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        assertThat(HttpResponseStatus.valueOf(responseTrusted.statusCode())).isEqualTo(HttpResponseStatus.OK)
+
+        TrustedProjects.setProjectTrusted(project, false)
+        val responseNotTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        assertThat(HttpResponseStatus.valueOf(responseNotTrusted.statusCode())).isEqualTo(HttpResponseStatus.NOT_FOUND)
+      }
+    }
+  }
+}
+
+internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
+  @Test
+  fun `absolute path reference`() {
+    val project = projectRule.project
+    val newPath = tempDirManager.newPath().createDirectories()
+    newPath.resolve("script.js").writeText("hello")
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
+    createModule(newPath, project)
+
+    val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+    val builder = HttpRequest.newBuilder(URI("$host/script.js"))
+    builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
+    builder.header(HttpHeaderNames.REFERER.toString(), "${host}/${project.name}/index.html")
+
+    val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+    val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+    assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(HttpResponseStatus.OK)
+    assertThat(response.body().reader().readText()).isEqualTo("hello")
   }
 }

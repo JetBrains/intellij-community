@@ -1,0 +1,387 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.codeInsight.stdlib
+
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
+import com.intellij.util.ArrayUtil
+import com.intellij.util.containers.mapSmartNotNull
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider.Helper.isTypingNamedTupleDirectInheritor
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.PyWithAncestors
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.StubAwareComputation
+import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.stubs.PyNamedTupleStub
+import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyNamedTupleType
+import com.jetbrains.python.psi.types.PyOverloadType
+import com.jetbrains.python.psi.types.PySelfType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
+import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeParameterMapping
+import com.jetbrains.python.psi.types.PyTypeProviderBase
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+
+private typealias NTFields = LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>
+private typealias ImmutableNTFields = Map<String, PyNamedTupleType.FieldTypeAndDefaultValue>
+
+class PyNamedTupleTypeProvider : PyTypeProviderBase() {
+
+  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    val anchor = anchor?.let(PyCallExpressionNavigator::getPyCallExpressionByCallee)
+    val type = when (referenceTarget) {
+      is PyFunction if anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
+      is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
+      is PyClass if anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
+      else -> null
+    }
+    return type.notNullToRef()
+  }
+
+  override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    if (!param.isSelf) return null
+    val cls = func.containingClass ?: return null
+    val type = getNamedTupleTypeForClass(cls, context) ?: return null
+    val scopeClassType = if (func.modifier == PyAstFunction.Modifier.CLASSMETHOD) type.toClass() else type.toInstance()
+    return Ref.create(PySelfType(scopeClassType))
+  }
+
+  override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
+    return getFieldTypeForNamedTupleAsTarget(referenceExpression, context)
+           ?: getFieldTypeForTypingNTFunctionInheritor(referenceExpression, context)
+           ?: getNamedTupleReplaceType(referenceExpression, context)
+  }
+
+  override fun prepareCalleeTypeForCall(type: PyType?, callee: PyExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+    return if (type is PyNamedTupleType) Ref.create(type) else null
+  }
+
+  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypeMember>? {
+    val typeEvalContext = context.typeEvalContext
+    if (PyNames.MATCH_ARGS == name && Helper.isNamedTuple(type, typeEvalContext)) {
+      val fieldNames = getCallableType(type, typeEvalContext, type.pyClass)?.getParameters(typeEvalContext)?.mapNotNull { it.name }
+      if (fieldNames == null) return null
+      val matchArgsType = PyTypeUtil.createTupleOfLiteralStringsType(type.pyClass, fieldNames) ?: return null
+      return listOf(PyTypeMember(null, matchArgsType))
+    }
+    if (type !is PyNamedTupleType) return null
+    type.fields[name]?.let {
+      return listOf(PyTypeMember(null, it.type))
+    }
+    return null
+  }
+
+  object Helper {
+    @OptIn(ExperimentalContracts::class)
+    fun isNamedTuple(type: PyType?, context: TypeEvalContext): Boolean {
+      contract { returns(true) implies (type is PyClassType) }
+      if (type is PyNamedTupleType) return true
+
+      val isNT = { t: PyClassLikeType? -> t is PyNamedTupleType || t != null && PyTypingTypeProvider.NAMEDTUPLE == t.classQName }
+      return type is PyClassType && type.getAncestorTypes(context).any(isNT)
+    }
+
+    fun isTypingNamedTupleDirectInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
+      val isTypingNT = { type: PyClassLikeType? ->
+        type != null && type !is PyNamedTupleType && PyTypingTypeProvider.NAMEDTUPLE == type.classQName
+      }
+
+      return cls.getSuperClassTypes(context).any(isTypingNT)
+    }
+  }
+}
+
+private fun getFieldTypeForNamedTupleAsTarget(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
+  val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType ?: return null
+  return qualifierNTType.fields[referenceExpression.name]?.type
+}
+
+private fun getFieldTypeForTypingNTFunctionInheritor(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
+  val qualifierType = referenceExpression.qualifier?.let { context.getType(it) } as? PyWithAncestors
+  if (qualifierType == null || qualifierType is PyNamedTupleType) return null
+
+  val fieldTypes = qualifierType
+    .getAncestorTypes(context)
+    .filterIsInstance<PyNamedTupleType>()
+    .mapNotNull { it.fields[referenceExpression.name] }
+    .map { it.type }
+    .toList()
+  if (fieldTypes.isEmpty()) return null
+  return PyUnionType.unionOrUnknown(fieldTypes)
+}
+
+/**
+ * Applies [typeArguments] to the fields of a generic named tuple.
+ *
+ * A named tuple type reports its field types as its type arguments. So [PyTypeChecker.parameterizeType] cannot
+ * bind the type parameters of the class. This function maps the type parameters to [typeArguments]. It then
+ * rewrites each field type. For `class Base(NamedTuple, Generic[T])` with the field `path: T`, `Base[str]`
+ * gets `path: str`.
+ *
+ * The function returns `null` when the class is not generic, or when the type arguments do not match the
+ * type parameters.
+ */
+internal fun parameterizeNamedTupleType(
+  type: PyNamedTupleType,
+  typeArguments: List<PyType?>,
+  context: TypeEvalContext,
+): PyNamedTupleType? {
+  val typeParameters = PyTypeChecker.findGenericDefinitionType(type.pyClass, context)?.typeArguments ?: return null
+  if (typeParameters.isEmpty()) return null
+  val substitutions = PyTypeChecker.mapTypeParametersToSubstitutions(
+    typeParameters,
+    typeArguments,
+    PyTypeParameterMapping.Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
+    PyTypeParameterMapping.Option.USE_DEFAULTS,
+  ) ?: return null
+  val fields = type.fields.entries.associateTo(NTFields()) { (name, field) ->
+    // A field without a type parameter keeps its type. `substitutePlainly` also keeps a literal tuple,
+    // because a parameterization must not widen the declared type of a field.
+    val fieldType = if (field.type.hasGenerics(context)) PyTypeChecker.substitute(field.type, substitutions, context)
+    else field.type
+    name to PyNamedTupleType.FieldTypeAndDefaultValue(fieldType, field.defaultValue)
+  }
+  return PyNamedTupleType(type.pyClass, type.name, fields, type.isDefinition, type.isTyped, type.declarationElement)
+}
+
+private fun getNamedTupleReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
+  val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
+
+  val qualifier = referenceExpression.qualifier
+  if (qualifier != null && "_replace" == referenceExpression.referencedName) {
+    val qualifierType = context.getType(qualifier) as? PyClassLikeType ?: return null
+
+    return getCallableType(qualifierType, context, call)
+  }
+
+  return null
+}
+
+private fun getCallableType(
+  qualifierType: PyClassLikeType,
+  context: TypeEvalContext,
+  anchor: PsiElement,
+): PyCallableType? {
+  val namedTupleType = sequenceOf(qualifierType)
+    .plus(qualifierType.getSuperClassTypes(context))
+    .filterIsInstance<PyNamedTupleType>()
+    .firstOrNull()
+
+  if (namedTupleType != null) {
+    return if (namedTupleType.isTyped) createTypedNamedTupleReplaceType(anchor, namedTupleType.fields, qualifierType)
+    else createUntypedNamedTupleReplaceType(anchor, namedTupleType.fields, qualifierType, context)
+  }
+
+  if (qualifierType is PyClassType) {
+    val cls = qualifierType.pyClass
+    if (isTypingNamedTupleDirectInheritor(cls, context)) {
+      return createTypedNamedTupleReplaceType(anchor, collectTypingNTInheritorFields(cls, context), qualifierType)
+    }
+  }
+  return null
+}
+
+private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyType? {
+  val isCollectionsNamedTuple = ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3)
+  val isTypingNamedTupleInit = !isCollectionsNamedTuple &&
+                               PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName
+  if (!isCollectionsNamedTuple && !isTypingNamedTupleInit) return null
+  if (!context.maySwitchToAST(call)) return null
+
+  val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+
+  // `typing.NamedTuple.__init__` is overloaded; build a signature per overload and keep them as a single `PyOverloadType`
+  // (matching any signature is enough), rather than a union of signatures, which would force every signature to match the call.
+  val constructors = if (isTypingNamedTupleInit) function.containingClass?.multiFindInitOrNew(false, context)?.takeIf { it.isNotEmpty() }
+                     else null
+  val signatures = (constructors ?: listOf(function)).mapSmartNotNull { constructor ->
+    val constructorType = context.getType(constructor) as? PyCallableType ?: return@mapSmartNotNull null
+    val parameters = constructorType.getParameters(context)
+    PyCallableTypeImpl(
+      if (isTypingNamedTupleInit) parameters?.drop(1) else parameters,
+      returnType,
+      constructorType.callable,
+      constructorType.modifier
+    )
+  }
+  return when (signatures.size) {
+    0 -> null
+    1 -> signatures.single()
+    else -> PyOverloadType(signatures, null)
+  }
+}
+
+private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
+  return StubAwareComputation.on(target)
+    .withCustomStub { it.getCustomStub(PyNamedTupleStub::class.java) }
+    .overStub { getNamedTupleTypeFromStub(target, it, context) }
+    .withStubBuilder { PyNamedTupleStubImpl.create(it) }
+    .compute(context)
+}
+
+private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
+  return getNamedTupleTypeForClass(cls, context)
+         ?: cls.multiFindInitOrNew(false, context).firstOrNull()?.let { getNamedTupleFunctionType(it, context, call) }
+}
+
+internal fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
+  if (cls.findInitOrNew(false, context) != null) return null
+
+  val name = cls.name ?: return null
+
+  return if (isTypingNamedTupleDirectInheritor(cls, context)) {
+    PyNamedTupleType(cls, name, collectTypingNTInheritorFields(cls, context), true, true, cls)
+  }
+  else {
+    val base = cls.getSuperClassTypes(context).filterIsInstance<PyNamedTupleType>().firstOrNull() ?: return null
+    PyNamedTupleType(cls, name, LinkedHashMap(base.fields), true, true, cls)
+  }
+}
+
+private fun getNamedTupleTypeFromStub(targetOrCall: PsiElement, stub: PyNamedTupleStub?, context: TypeEvalContext): PyNamedTupleType? {
+  if (stub == null) return null
+
+  val tupleClass = PyPsiFacade
+                     .getInstance(targetOrCall.project)
+                     .createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, targetOrCall) ?: return null
+  val fields = stub.fields
+
+  return PyNamedTupleType(tupleClass,
+                          stub.name,
+                          parseNamedTupleFields(targetOrCall, fields, context),
+                          true,
+                          fields.values.any { it.type != null },
+                          getDeclaration(targetOrCall))
+}
+
+private fun createTypedNamedTupleReplaceType(
+  anchor: PsiElement,
+  fields: ImmutableNTFields,
+  qualifierType: PyClassLikeType,
+): PyCallableType {
+  val parameters = mutableListOf<PyCallableParameter>()
+  val resultType = qualifierType.toInstance()
+  val elementGenerator = PyElementGenerator.getInstance(anchor.project)
+
+  if (qualifierType.isDefinition) {
+    parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+  }
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
+
+  val ellipsis = elementGenerator.createEllipsis()
+
+  for ((name, typeAndValue) in fields) {
+    parameters.add(PyCallableParameterImpl.nonPsi(name, typeAndValue.type, typeAndValue.defaultValue ?: ellipsis))
+  }
+
+  return PyCallableTypeImpl(parameters, resultType)
+}
+
+private fun createUntypedNamedTupleReplaceType(
+  anchor: PsiElement,
+  fields: ImmutableNTFields,
+  qualifierType: PyClassLikeType,
+  context: TypeEvalContext,
+): PyCallableType? {
+  val parameters = mutableListOf<PyCallableParameter>()
+  val resultType = qualifierType.toInstance()
+
+  if (qualifierType.isDefinition) {
+    parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+  }
+  parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
+
+  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, PyAnyType.unknown, PyNames.ELLIPSIS) }
+
+  return if (resultType is PyNamedTupleType && anchor is PyCallExpression) {
+    val newFields = mutableMapOf<String?, PyType?>()
+    val call = anchor
+
+    for (argument in call.arguments) {
+      if (argument is PyKeywordArgument) {
+        val value = argument.valueExpression
+        if (value != null) {
+          newFields[argument.keyword] = context.getType(value)
+        }
+      }
+    }
+
+    PyCallableTypeImpl(parameters, resultType.clarifyFields(newFields))
+  }
+  else PyCallableTypeImpl(parameters, resultType)
+}
+
+private fun collectTypingNTInheritorFields(cls: PyClass, context: TypeEvalContext): NTFields {
+  val fields = mutableListOf<PyTargetExpression>()
+
+  cls.processClassLevelDeclarations { element, _ ->
+    if (element is PyTargetExpression && element.annotationValue != null) {
+      fields.add(element)
+    }
+
+    true
+  }
+
+  val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
+
+  return fields.associateTo(NTFields()) { field ->
+    val value = when {
+      context.maySwitchToAST(field) -> field.findAssignedValue()
+      field.hasAssignedValue() -> ellipsis
+      else -> null
+    }
+
+    field.name!! to PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), value)
+  }
+}
+
+private fun parseNamedTupleFields(
+  anchor: PsiElement,
+  fields: LinkedHashMap<String, PyNamedTupleStub.FieldTypeAndHasDefault>,
+  context: TypeEvalContext,
+): NTFields {
+  return fields.entries.associateTo(NTFields()) { (name, typeAndDefault) ->
+    val type = typeAndDefault.type()
+    val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) } ?: PyAnyType.unknown
+    val defaultValue = if (typeAndDefault.hasDefault()) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
+    name to PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)
+  }
+}
+
+private fun getDeclaration(referenceTarget: PsiElement): PyQualifiedNameOwner? {
+  return when (referenceTarget) {
+    is PyTargetExpression -> referenceTarget
+    is PyCallExpression -> (referenceTarget.parent as? PyAssignmentStatement)?.leftHandSideExpression as? PyTargetExpression
+    else -> null
+  }
+}

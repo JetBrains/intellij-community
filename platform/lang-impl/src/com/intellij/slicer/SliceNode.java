@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -25,38 +11,36 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
+@ApiStatus.Internal
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
-  protected List<SliceNode> myCachedChildren;
+  protected volatile List<SliceNode> myCachedChildren;
   boolean dupNodeCalculated;
   protected SliceNode duplicate;
-  final DuplicateMap targetEqualUsages;
+  public final DuplicateMap targetEqualUsages;
   protected boolean changed;
   private int index; // my index in parent's mycachedchildren
 
-  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
+  protected SliceNode(@NotNull Project project, @NotNull SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
   }
 
-  @NotNull
-  SliceNode copy() {
+  public @NotNull SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -65,8 +49,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     if (isUpToDate()) return myCachedChildren == null ? Collections.emptyList() : myCachedChildren;
     try {
       List<SliceNode> nodes;
@@ -74,27 +57,24 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
       if (current == null) {
         ProgressIndicator indicator = new ProgressIndicatorBase();
-        indicator.start();
-
         Ref<List<SliceNode>> nodesRef = Ref.create();
-        try {
-          ProgressManager.getInstance().executeProcessUnderProgress(
-            () -> nodesRef.set(doGetChildren()), indicator);
-        }
-        finally {
-          indicator.stop();
-        }
-
+        ProgressManager.getInstance().runProcess(() -> nodesRef.set(doGetChildren()), indicator);
         nodes = nodesRef.get();
-      } else {
+      }
+      else {
         nodes = doGetChildren();
       }
 
       synchronized (nodes) {
-        myCachedChildren = nodes;
+        if (myCachedChildren != null) {
+          nodes = myCachedChildren;
+        } else {
+          myCachedChildren = nodes;
+        }
       }
       return nodes;
-    } catch (ProcessCanceledException pce) {
+    }
+    catch (ProcessCanceledException pce) {
       changed = true;
       throw pce;
     }
@@ -105,6 +85,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     Processor<SliceUsage> processor = sliceUsage -> {
       progress.checkCanceled();
+
+      //don't open a node if there is a duplicate above
+      calculateDupNode();
+      if (duplicate != this && duplicate != null) {
+        return true;
+      }
+
       SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
       synchronized (children) {
         node.index = children.size();
@@ -136,24 +123,25 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return false;
   }
 
-  @NotNull
   @Override
-  protected PresentationData createPresentation() {
+  protected @NotNull PresentationData createPresentation() {
     return new PresentationData(){
-      @NotNull
       @Override
-      public Object[] getEqualityObjects() {
+      public Object @NotNull [] getEqualityObjects() {
         return ArrayUtil.append(super.getEqualityObjects(), changed);
       }
     };
   }
 
   @Override
-  protected void update(PresentationData presentation) {
-    if (presentation != null) {
-      presentation.setChanged(presentation.isChanged() || changed);
-      changed = false;
+  protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
     }
+
+    presentation.setChanged(presentation.isChanged() || changed);
+    changed = false;
   }
 
   public void calculateDupNode() {
@@ -187,7 +175,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   public boolean isValid() {
-    return ReadAction.compute(() -> getValue().isValid());
+    return ReadAction.computeBlocking(() -> getValue().isValid());
   }
 
   @Override
@@ -204,7 +192,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       renderer.setToolTipText(sliceUsage.getPresentation().getTooltipText());
     }
     else {
-      renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
+      renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
     }
   }
 
@@ -212,21 +200,16 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     changed = true;
   }
 
-  @Nullable
-  public SliceLanguageSupportProvider getProvider(){
+  public @Nullable SliceLanguageSupportProvider getProvider() {
     AbstractTreeNode<SliceUsage> element = getElement();
-    if(element == null){
+    if (element == null) {
       return null;
     }
     SliceUsage usage = element.getValue();
-    if(usage == null){
+    if (usage == null) {
       return null;
     }
-    PsiElement psiElement = usage.getElement();
-    if(psiElement == null){
-      return null;
-    }
-    return LanguageSlicing.getProvider(psiElement);
+    return usage.getSliceLanguageSupportProvider();
   }
 
   public String getNodeText() {
@@ -235,7 +218,6 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   public String toString() {
-    return ReadAction.compute(() -> getValue() == null ? "<null>" : getValue().toString());
+    return ReadAction.computeBlocking(() -> getValue() == null ? "<null>" : getValue().toString());
   }
-
 }

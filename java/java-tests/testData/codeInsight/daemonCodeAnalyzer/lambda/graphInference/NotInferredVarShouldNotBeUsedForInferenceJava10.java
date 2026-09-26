@@ -7,11 +7,11 @@ import java.util.stream.Collectors;
 class MyTest {
 
     public List<Integer> someMethod() {
-        <error descr="Cannot infer type: 'var' on variable without initializer">var</error> listOfInteger;
+        <error descr="Cannot infer type: 'var' on variable without an initializer">var</error> listOfInteger;
         Integer[] arrayOfInteger = {2, 4, 8};
-        <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.Integer>', required: 'null'">listOfInteger = Arrays.stream(arrayOfInteger)
+        listOfInteger = Arrays.stream(arrayOfInteger)
                 .filter(number -> number >= 4)
-                .collect(Collectors.toCollection(ArrayList::new))</error>;
+                .collect(Collectors.toCollection(ArrayList::new));
         return listOfInteger;
     }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -25,14 +26,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuil
 /**
  * Annotation attribute 'includeSuperProperties' not supported by groovy.transform.builder.SimpleStrategy
  */
-public class BuilderAnnotationChecker extends CustomAnnotationChecker {
+public final class BuilderAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (!BuilderAnnotationContributor.BUILDER_FQN.equals(annotation.getQualifiedName())) return false;
 
     if(BuilderAnnotationContributor.isApplicable(annotation, SimpleBuilderStrategySupport.SIMPLE_STRATEGY_NAME) &&
        BuilderAnnotationContributor.isIncludeSuperProperties(annotation)) {
-      holder.createErrorAnnotation(annotation, GroovyBundle.message("builder.annotation.not.support.super.for.simple.strategy"));
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("builder.annotation.not.support.super.for.simple.strategy")).range(annotation).create();
       return true;
     }
 

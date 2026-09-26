@@ -1,0 +1,18 @@
+// "Add constructor parameters from Base(Int)" "true"
+// ACTION: Add constructor parameters from Base(Char, Char, String, Int, Any?, String)
+// ACTION: Add constructor parameters from Base(Char, Char, String, Int, Any?, String, Boolean,...)
+// ACTION: Add constructor parameters from Base(Int)
+// ACTION: Change to constructor invocation
+// ACTION: Introduce import alias
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
+
+open class Base {
+    constructor(p: Int){}
+    constructor(p1: Char, p2: Char, p3: String, p4: Int, p5: Any?, p6: String, b: Boolean, c: Char){}
+    constructor(p1: Char, p2: Char, p3: String, p4: Int, _p5: Any?, p6: String){}
+}
+
+class C : Base<caret>
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParametersFix

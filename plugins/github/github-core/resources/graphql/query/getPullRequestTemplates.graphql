@@ -1,0 +1,11 @@
+query($repoOwner: String!, $repoName: String!) {
+  repository(owner: $repoOwner, name: $repoName) {
+    pullRequestTemplates {
+      ...pullRequestTemplate
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

@@ -15,7 +15,6 @@
  */
 package com.intellij.java.psi.util.proximity;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
@@ -23,11 +22,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ProximityTest extends JavaCodeInsightFixtureTestCase {
 
   public void testSameSourceRoot() throws Throwable {
@@ -39,8 +34,8 @@ public class ProximityTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        PsiTestUtil.addSourceContentToRoots(myModule, root1.getFile(""));
-        PsiTestUtil.addSourceContentToRoots(myModule, root2.getFile(""));
+        PsiTestUtil.addSourceContentToRoots(getModule(), root1.getFile(""));
+        PsiTestUtil.addSourceContentToRoots(getModule(), root2.getFile(""));
       });
 
       final VirtualFile file1 = root1.createFile("buy.txt", "");

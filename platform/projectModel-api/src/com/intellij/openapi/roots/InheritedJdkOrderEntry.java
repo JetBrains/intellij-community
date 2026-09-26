@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots;
 
-/**
- * @author dsl
- */
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.NonExtendable
 public interface InheritedJdkOrderEntry extends JdkOrderEntry {
 }

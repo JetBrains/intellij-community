@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(i: Int, b: Boolean) {
+    when (i) {
+        0 if b -> {
+            println("Foo")
+        }
+        7 if !b -> {
+            println("Bar")
+        }
+        else -> {
+            println("Else")
+        }
+    }
+}

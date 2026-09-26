@@ -1,50 +1,76 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.serviceContainer.NonInjectable;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-public class ModulePathMacroManager extends BasePathMacroManager {
-  private final Module myModule;
+import java.util.Map;
+import java.util.function.Supplier;
 
-  public ModulePathMacroManager(@NotNull PathMacros pathMacros, @NotNull Module module) {
-    super(pathMacros);
+public final class ModulePathMacroManager extends PathMacroManager {
+  private final @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer;
+  private final @NotNull Supplier<@NotNull @SystemIndependent String> myModuleDirPointer;
 
-    myModule = module;
+  public ModulePathMacroManager(@NotNull Module module, @NotNull PathMacros globalPathMacros) {
+    super(globalPathMacros);
+
+    projectFilePathPointer = module.getProject()::getProjectFilePath;
+    myModuleDirPointer = module::getModuleFilePath;
   }
 
-  @NotNull
+  @NonInjectable
+  @Internal
+  public ModulePathMacroManager(@NotNull PathMacros globalPathMacros,
+                                @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
+                                @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
+    super(globalPathMacros);
+
+    this.projectFilePathPointer = projectFilePathPointer;
+    myModuleDirPointer = moduleDirPointer;
+  }
+
   @Override
-  public ExpandMacroToPathMap getExpandMacroMap() {
+  public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = super.getExpandMacroMap();
-    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
+    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()));
+    String projectFile = projectFilePathPointer.get();
+    if (projectFile != null) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributorKt.getAllMacros(projectFile).entrySet()) {
+        result.addMacroExpand(entry.getKey(), entry.getValue());
+      }
+    }
     return result;
   }
 
-  @NotNull
   @Override
-  public ReplacePathToMacroMap getReplacePathMap() {
-    final ReplacePathToMacroMap result = super.getReplacePathMap();
-    final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
-    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
+  public @NotNull ReplacePathToMacroMap computeReplacePathMap() {
+    ReplacePathToMacroMap result = super.computeReplacePathMap();
+    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModuleDirPointer.get()), PathMacroUtil.getUserHomePath());
+    String projectFile = projectFilePathPointer.get();
+    if (projectFile != null) {
+      for (Map.Entry<String, String> entry : ProjectWidePathMacroContributorKt.getAllMacros(projectFile).entrySet()) {
+        result.addMacroReplacement(entry.getValue(), entry.getKey());
+      }
+    }
     return result;
+  }
+
+  @Internal
+  public void onImlFileMoved() {
+    resetCachedReplacePathMap();
+  }
+
+  public static ModulePathMacroManager createInstance(@NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
+                                                      @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
+    return new ModulePathMacroManager(PathMacros.getInstance(), projectFilePathPointer, moduleDirPointer);
   }
 }

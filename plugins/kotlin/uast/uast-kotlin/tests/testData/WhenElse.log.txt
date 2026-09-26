@@ -1,0 +1,17 @@
+UFile (package = )
+    UClass (name = WhenElseKt)
+        UMethod (name = foo)
+            UBlockExpression
+                UReturnExpression
+                    USwitchExpression
+                        UExpressionList (when)
+                            USwitchClauseExpressionWithBody
+                                UExpressionList (when_entry)
+                                    UYieldExpression
+                                        USwitchExpression
+                                            UExpressionList (when)
+                                                USwitchClauseExpressionWithBody
+                                                    UExpressionList (when_entry)
+                                                        UYieldExpression
+                                                            UPolyadicExpression (operator = +)
+                                                                ULiteralExpression (value = "")

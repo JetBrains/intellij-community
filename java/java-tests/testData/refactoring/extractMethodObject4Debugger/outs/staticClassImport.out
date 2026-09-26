@@ -1,0 +1,8 @@
+imports: import java.util.Comparator;import java.util.Map;
+call text: Comparator result = Test.invoke();
+class: 
+public class GeneratedEvaluationClass {
+    static Comparator invoke() {
+        return Map.Entry.comparingByKey();
+    }
+}

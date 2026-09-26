@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  maketest/BaseBaseImpl.class
+  maketest/BaseImplementation.class
+End of files
+Compiling files:
+  java/generics/changeToCovariantMethodInBase4/a/maketest/BaseBaseImpl.java
+  java/generics/changeToCovariantMethodInBase4/a/maketest/BaseImplementation.java
+End of files
+Cleaning output files:
+  maketest/IImpl.class
+  maketest/Mediator.class
+End of files
+Compiling files:
+  java/generics/changeToCovariantMethodInBase4/a/maketest/IImpl.java
+  java/generics/changeToCovariantMethodInBase4/a/maketest/Mediator.java
+End of files
+------------------------------------------
+Exit code: OK

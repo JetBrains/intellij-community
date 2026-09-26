@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -13,19 +13,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ModuleRequiresRepr extends Proto {
-
+final class ModuleRequiresRepr extends Proto {
   private final int myVersion;
 
-  public ModuleRequiresRepr(DependencyContext context, int access, int name, String version) {
+  ModuleRequiresRepr(DependencyContext context, int access, int name, String version) {
     super(access, context.get(null), name, Collections.emptySet());
     myVersion = context.get(version);
   }
 
-  public ModuleRequiresRepr(DependencyContext context, DataInput in) {
+  ModuleRequiresRepr(DependencyContext context, DataInput in) {
     super(context, in);
     try {
       myVersion = DataInputOutputUtil.readINT(in);
@@ -56,18 +52,19 @@ public class ModuleRequiresRepr extends Proto {
 
   public static DataExternalizer<ModuleRequiresRepr> externalizer(DependencyContext context) {
     return new DataExternalizer<ModuleRequiresRepr>() {
-      public void save(@NotNull DataOutput out, ModuleRequiresRepr value) throws IOException {
+      @Override
+      public void save(@NotNull DataOutput out, ModuleRequiresRepr value) {
         value.save(out);
       }
 
-      public ModuleRequiresRepr read(@NotNull DataInput in) throws IOException {
+      @Override
+      public ModuleRequiresRepr read(@NotNull DataInput in) {
         return new ModuleRequiresRepr(context, in);
       }
     };
   }
 
-  public abstract static class Diff extends DifferenceImpl {
-
+  abstract static class Diff extends DifferenceImpl {
     Diff(@NotNull Difference delegate) {
       super(delegate);
     }
@@ -76,24 +73,29 @@ public class ModuleRequiresRepr extends Proto {
 
     public abstract boolean becameNonTransitive();
   }
-  
+
+  @Override
   public Diff difference(Proto past) {
     final ModuleRequiresRepr pastRequirement = (ModuleRequiresRepr)past;
     return new Diff(super.difference(past)) {
+      @Override
       public boolean versionChanged() {
         return pastRequirement.myVersion != myVersion;
       }
 
+      @Override
       public boolean no() {
         return super.no() && !versionChanged();
       }
 
+      @Override
       public boolean becameNonTransitive() {
         return pastRequirement.isTransitive() && !ModuleRequiresRepr.this.isTransitive();
       }
     };
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -104,6 +106,7 @@ public class ModuleRequiresRepr extends Proto {
     return name == ((ModuleRequiresRepr)o).name;
   }
 
+  @Override
   public int hashCode() {
     return 31 * name;
   }

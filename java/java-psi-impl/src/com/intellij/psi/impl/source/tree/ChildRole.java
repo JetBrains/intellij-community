@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.tree.ChildRoleBase;
 
-public class ChildRole {
+public final class ChildRole {
   public static final int PACKAGE_STATEMENT = 1; // in FILE
   public static final int IMPORT_LIST = 2; // in FILE
   public static final int CLASS = 3; // in FILE, CLASS
@@ -27,7 +13,7 @@ public class ChildRole {
   public static final int DOC_COMMENT = 7; // in CLASS, FIELD, METHOD
   public static final int MODIFIER_LIST = 8; // in CLASS, FIELD, METHOD, CLASS_INITIALIZER, PARAMETER, LOCAL_VARIABLE
   public static final int NAME = 9; // in CLASS, FIELD, METHOD, PARAMETER, LOCAL_VARIABLE, NAME_VALUE_PAIR
-  public static final int TYPE = 10; // in FIELD, METHOD, PARAMETER, LOCAL_VARIABLE, TYPE_CAST_EXPRESSION, INSTANCEOF_EXPRESSION, CLASS_OBJECT_ACCESS_EXPRESSION
+  public static final int TYPE = 10; // in FIELD, METHOD, PARAMETER, LOCAL_VARIABLE, TYPE_CAST_EXPRESSION, CLASS_OBJECT_ACCESS_EXPRESSION
   public static final int CLASS_OR_INTERFACE_KEYWORD = 11; // in CLASS
   public static final int EXTENDS_LIST = 12; // in CLASS
   public static final int IMPLEMENTS_LIST = 13; // in CLASS
@@ -146,6 +132,8 @@ public class ChildRole {
 
   public static final int ENUM_CONSTANT_LIST_DELIMITER = 126; // in CLASS
 
+  public static final int PERMITS_LIST = 127; // in CLASS
+
   public static final int DOC_TAG_VALUE = 242;
 
   public static final int TYPE_PARAMETER_IN_LIST = 244;
@@ -164,9 +152,6 @@ public class ChildRole {
 
   public static boolean isUnique(int role) {
     switch(role){
-      default:
-        return true;
-
       case ChildRoleBase.NONE:
       case CLASS:
       case FIELD:
@@ -180,6 +165,8 @@ public class ChildRole {
       case TYPE_PARAMETER_IN_LIST:
       case ANNOTATION_VALUE:
         return false;
+      default:
+        return true;
     }
   }
 }

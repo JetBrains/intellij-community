@@ -1,0 +1,15 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <name>GitHub Color Scheme</name>
+  <id>com.intellij.plugins.github.colorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <description>
+    Github editor color scheme for all IntelliJ-based IDEs.
+  </description>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme id="Github" path="colorSchemes/github"/>
+  </extensions>
+</idea-plugin>

@@ -1,4 +1,4 @@
-// "Replace Optional.isPresent() condition with functional style expression" "INFORMATION"
+// "Replace Optional presence condition with functional style expression" "INFORMATION"
 
 import java.util.Optional;
 

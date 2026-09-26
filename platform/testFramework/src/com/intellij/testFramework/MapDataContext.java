@@ -15,14 +15,21 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.impl.AsyncDataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-public class MapDataContext implements DataContext {
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.impl.SimpleDataContext} instead */
+@Deprecated(forRemoval = true)
+public final class MapDataContext implements DataContext, AsyncDataContext {
   private final Map<String, Object> myMap = new HashMap<>();
 
   public MapDataContext() { }
@@ -32,8 +39,13 @@ public class MapDataContext implements DataContext {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    return myMap.get(dataId);
+  public @Nullable Object getData(@NotNull String dataId) {
+    return DataManager.getInstance().getCustomizedData(dataId, EMPTY_CONTEXT, this::getRawCustomData);
+  }
+
+  private @Nullable Object getRawCustomData(@NotNull String dataId) {
+    return myMap.containsKey(dataId) ?
+           Objects.requireNonNullElse(myMap.get(dataId), CustomizedDataContext.EXPLICIT_NULL) : null;
   }
 
   public void put(@NotNull String dataId, Object data) {

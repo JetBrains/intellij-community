@@ -1,0 +1,146 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.pytools.common
+
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.RemoteApiProviderService
+import fleet.rpc.RemoteApi
+import fleet.rpc.Rpc
+import fleet.rpc.remoteApiDescriptor
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+
+@Serializable
+@JvmInline
+value class FusId(val value: String)
+
+@Serializable
+data class PyToolRequest(val projectId: ProjectId, val fusId: FusId)
+
+@Serializable
+data class PyToolsRequest(val projectId: ProjectId, val fusIds: List<FusId>)
+
+@Serializable
+enum class PyToolActionSource { SETTINGS_TABLE, SETTINGS_DETAIL }
+
+@Serializable
+enum class PyToolEventKind { CONFIGURATION_CHANGED, INSTALLED, UPDATED }
+
+@Serializable
+data class PyToolLogEventRequest(
+  val tool: PyToolRequest,
+  val source: PyToolActionSource,
+  val event: PyToolEventKind,
+)
+
+@Serializable
+data class PyToolPathDto(val value: String, val kind: PyToolPathKind)
+
+@Serializable
+enum class PyToolPathKind { CUSTOM, DETECTED }
+
+@Serializable
+data class PyToolDescriptorDto(
+  val minimumSupportedVersion: String? = null,
+)
+
+@Serializable
+data class PyToolStateDto(
+  val fusId: FusId,
+  val descriptor: PyToolDescriptorDto,
+  val enabled: Boolean,
+  val path: PyToolPathDto?,
+  /** Set only when the tool manager already knows the version of the resolved file; see [PyToolApi.getVersion]. */
+  val version: String?,
+  val canInstall: Boolean,
+  val latestVersion: String? = null,
+  val selectedAsTypeEngine: Boolean = false,
+)
+
+/** The resolved path of one tool, without the version or the manager data that a full state carries. */
+@Serializable
+data class PyToolPathStateDto(val fusId: FusId, val path: PyToolPathDto?)
+
+@Serializable
+data class PyToolPathRequest(val tool: PyToolRequest, val path: String)
+
+@Serializable
+data class PyToolSetPathRequest(val tool: PyToolRequest, val path: String?)
+
+@Serializable
+sealed interface PyToolValidationDto {
+  @Serializable data class Valid(val version: String?) : PyToolValidationDto
+  @Serializable data class Invalid(val message: String) : PyToolValidationDto
+}
+
+@Serializable
+sealed interface PyToolOperationResultDto {
+  @Serializable data class Success(val state: PyToolStateDto) : PyToolOperationResultDto
+  @Serializable data class Failure(val message: String) : PyToolOperationResultDto
+}
+
+@Serializable
+sealed interface PyToolSdkOperationResultDto {
+  @Serializable data class Success(val state: PyToolSdkStateDto) : PyToolSdkOperationResultDto
+  @Serializable data class Failure(val message: String) : PyToolSdkOperationResultDto
+}
+
+@Serializable
+data class PyToolSdkDto(val token: String, val label: String)
+
+@Serializable
+data class PyToolSdkStateDto(val sdk: PyToolSdkDto, val path: String?, val version: String?)
+
+@Serializable
+enum class PyToolDependencyGroupKind { DEPENDENCY_GROUP, OPTIONAL_DEPENDENCY }
+
+@Serializable
+data class PyToolDependencyGroupDto(val name: String, val kind: PyToolDependencyGroupKind)
+
+@Serializable
+data class PyToolSdkRequest(val tool: PyToolRequest, val sdk: PyToolSdkDto)
+
+@Serializable
+data class PyToolSdkInstallRequest(
+  val target: PyToolSdkRequest,
+  val dependencyGroup: PyToolDependencyGroupDto?,
+)
+
+/**
+ * Backend tool lifecycle: where a tool resolves, what version it is, installing and upgrading it.
+ *
+ * Enabling a tool and its configuration are a configurable tool's own concern and live on
+ * [ProjectLevelPyToolApi]. No EEL, filesystem, SDK, cache, process, manager, or backend entity crosses the wire.
+ */
+@ApiStatus.Internal
+@Rpc
+interface PyToolApi : RemoteApi<Unit> {
+  suspend fun getStates(request: PyToolsRequest): List<PyToolStateDto>
+  /**
+   * The resolved paths only, so the settings pages can show a known path at once.
+   *
+   * [getStates] runs the tool manager and a `--version` process per tool, which takes seconds. This
+   * call reads the custom path and the detection cache, and it probes no version.
+   */
+  suspend fun getPaths(request: PyToolsRequest): List<PyToolPathStateDto>
+
+  /**
+   * The version of one tool's resolved executable, or `null` when the tool resolves nowhere or reports no
+   * usable version.
+   *
+   * Ask for it where the version is shown. It is free when the tool manager already knows the file, and
+   * costs a `<path> --version` run otherwise, which is why [getStates] never resolves it on its own.
+   */
+  suspend fun getVersion(request: PyToolRequest): String?
+  suspend fun validatePath(request: PyToolPathRequest): PyToolValidationDto
+  suspend fun setPath(request: PyToolSetPathRequest): PyToolStateDto
+  suspend fun install(request: PyToolRequest): PyToolOperationResultDto
+  suspend fun upgrade(request: PyToolRequest): PyToolOperationResultDto
+  suspend fun getSdkStates(request: PyToolRequest): List<PyToolSdkStateDto>
+  suspend fun getDependencyGroups(request: PyToolSdkRequest): List<PyToolDependencyGroupDto>
+  suspend fun installIntoSdk(request: PyToolSdkInstallRequest): PyToolSdkOperationResultDto
+  suspend fun logEvent(request: PyToolLogEventRequest)
+
+  companion object {
+    suspend fun getInstance(): PyToolApi = RemoteApiProviderService.resolve(remoteApiDescriptor<PyToolApi>())
+  }
+}

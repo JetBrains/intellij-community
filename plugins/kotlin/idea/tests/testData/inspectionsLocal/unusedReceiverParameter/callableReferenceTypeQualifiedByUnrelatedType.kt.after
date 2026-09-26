@@ -1,0 +1,11 @@
+class Other {
+    fun f() {}
+}
+
+class C
+
+fun getF(): (Other) -> Unit = Other::f
+
+fun main() {
+    getF()(Other())
+}

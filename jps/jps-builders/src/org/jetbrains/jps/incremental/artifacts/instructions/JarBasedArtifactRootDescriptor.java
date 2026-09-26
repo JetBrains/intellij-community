@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -29,18 +15,22 @@ import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/**
- * @author nik
- */
-public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+@ApiStatus.Internal
+public final class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
-  private final Condition<String> myPathInJarFilter;
+  private final Predicate<? super String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
@@ -48,7 +38,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         int index,
                                         @NotNull ArtifactBuildTarget target,
                                         @NotNull DestinationInfo destinationInfo,
-                                        @NotNull Condition<String> pathInJarFilter) {
+                                        @NotNull Predicate<? super String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
     myPathInJarFilter = pathInJarFilter;
@@ -57,30 +47,24 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   public void processEntries(EntryProcessor processor) throws IOException {
     if (!myRoot.isFile()) return;
 
-    String prefix = StringUtil.trimStart(myPathInJar, "/");
-    if (!StringUtil.endsWithChar(prefix, '/')) prefix += "/";
+    String prefix = Strings.trimStart(myPathInJar, "/");
+    if (!Strings.endsWithChar(prefix, '/')) prefix += "/";
     if (prefix.equals("/")) {
       prefix = "";
     }
 
-    try {
-      ZipFile zipFile = new ZipFile(myRoot);
-      try {
-        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    try (ZipFile zipFile = new ZipFile(myRoot)) {
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          final String name = entry.getName();
-          if (name.startsWith(prefix)) {
-            String relativePath = name.substring(prefix.length());
-            if (myPathInJarFilter.value(relativePath)) {
-              processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
-            }
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        final String name = entry.getName();
+        if (name.startsWith(prefix)) {
+          String relativePath = name.substring(prefix.length());
+          if (myPathInJarFilter.test(relativePath)) {
+            processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
           }
         }
-      }
-      finally {
-        zipFile.close();
       }
     }
     catch (IOException e) {
@@ -93,14 +77,17 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
   }
 
-  public void copyFromRoot(final String filePath,
-                           final int rootIndex, final String outputPath,
-                           CompileContext context, final BuildOutputConsumer outputConsumer,
-                           final ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+  @Override
+  public void copyFromRoot(String filePath,
+                           int rootIndex,
+                           String outputPath,
+                           CompileContext context,
+                           BuildOutputConsumer outputConsumer,
+                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     if (!myRoot.isFile()) return;
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
     if (logger.isEnabled()) {
-      logger.logCompiledPaths(Collections.singletonList(filePath), IncArtifactBuilder.BUILDER_NAME, "Extracting archive:");
+      logger.logCompiledPaths(Collections.singletonList(filePath), IncArtifactBuilder.BUILDER_ID, "Extracting archive:");
     }
     processEntries(new EntryProcessor() {
       @Override
@@ -108,20 +95,15 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
         final String fullOutputPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
         final File outputFile = new File(fullOutputPath);
 
-        FileUtil.createParentDirs(outputFile);
+        FileUtilRt.createParentDirs(outputFile);
         if (inputStream == null) {
           outputFile.mkdir();
         }
         else {
           if (outSrcMapping.getState(fullOutputPath) == null) {
-            final BufferedInputStream from = new BufferedInputStream(inputStream);
-            final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
-            try {
-              FileUtil.copy(from, to);
-            }
-            finally {
-              from.close();
-              to.close();
+            try (BufferedInputStream from = new BufferedInputStream(inputStream);
+                 BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile))) {
+              FileUtilRt.copy(from, to);
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }

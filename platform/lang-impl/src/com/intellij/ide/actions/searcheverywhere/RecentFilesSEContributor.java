@@ -1,47 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ */
+@Deprecated
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
-  public RecentFilesSEContributor(Project project) {
-    super(project);
+  public RecentFilesSEContributor(@NotNull AnActionEvent event) {
+    super(event);
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return RecentFilesSEContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
-    return "Recent Files";
-  }
-
-  @Override
-  public String includeNonProjectItemsText() {
-    return null;
+  public @NotNull String getGroupName() {
+    return IdeBundle.message("search.everywhere.group.name.recent.files");
   }
 
   @Override
@@ -50,30 +53,65 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter, ProgressIndicator progressIndicator, int elementsLimit) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 5;
+  }
+
+  @Override
+  public void fetchWeightedElements(@NotNull String pattern,
+                                    @NotNull ProgressIndicator progressIndicator,
+                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
     String searchString = filterControlSymbols(pattern);
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
+    boolean preferStartMatches = !searchString.startsWith("*");
+    MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
-    List<Object> res = new ArrayList<>();
-    ApplicationManager.getApplication().runReadAction(
+    boolean shouldIncludeOpened = WelcomeScreenProjectProvider.isWelcomeScreenProject(myProject);
+    List<FoundItemDescriptor<Object>> res = new ArrayList<>();
+    ProgressIndicatorUtils.yieldToPendingWriteActions();
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> {
         PsiManager psiManager = PsiManager.getInstance(myProject);
         Stream<VirtualFile> stream = history.stream();
         if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
-        res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                         .distinct()
-                         .map(vf -> psiManager.findFile(vf))
-                         .collect(Collectors.toList())
-        );
-      }
-    );
 
-    return elementsLimit > 0 && res.size() > elementsLimit
-           ? new ContributorSearchResult<>(res.subList(0, elementsLimit), true)
-           : new ContributorSearchResult<>(res);
+        Comparator<FoundItemDescriptor<?>> comparator = Comparator.comparing(it -> it.getWeight());
+        stream.filter(vf -> (shouldIncludeOpened || !opened.contains(vf)) && vf.isValid())
+          .distinct()
+          .map(vf -> {
+            PsiFile f = psiManager.findFile(vf);
+            String name = vf.getName();
+            return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
+          })
+          .filter(Objects::nonNull)
+          .sorted(comparator.reversed())
+          .forEachOrdered(res::add);
+
+        ContainerUtil.process(res, consumer);
+      }, progressIndicator);
+  }
+
+  private static MinusculeMatcher createMatcher(String searchString, boolean preferStartMatches) {
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
+    if (preferStartMatches) {
+      builder = builder.preferringStartMatches();
+    }
+    return builder.build();
+  }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent));
+    }
   }
 }

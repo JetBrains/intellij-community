@@ -1,0 +1,2 @@
+# The available constants differ based on the local environment.
+(jack\.METADATA_.*)?

@@ -1,53 +1,59 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
-class SimpleTextFragment extends TextFragment {
-  @NotNull
-  private final char[] myText;
-  @NotNull
-  private final Font myFont;
+final class SimpleTextFragment extends TextFragment {
+  private final char @NotNull [] myText;
+  private final @NotNull Font myFont;
+  private final float @Nullable [] myCharAlignment;
 
-  SimpleTextFragment(@NotNull char[] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
-    super(end - start);
+  SimpleTextFragment(
+    char @NotNull [] lineChars,
+    int start,
+    int end,
+    @NotNull FontInfo fontInfo,
+    @Nullable EditorView view
+  ) {
+    super(end - start, false, view);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     float x = 0;
-    for (int i = 0; i < myText.length; i++) {
-      x += fontInfo.charWidth2D(myText[i]);
+    char[] text = myText;
+    float[] charAlignment = null;
+    boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
+    for (int i = 0; i < text.length; i++) {
+      int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
+      float charWidth = fontInfo.charWidth2D(codePoint);
+      if (gridCellAlignmentEnabled) {
+        float newWidth = adjustedWidth(codePoint);
+        if (!isTooClose(charWidth, newWidth)) {
+          if (charAlignment == null) {
+            charAlignment = new float[text.length];
+          }
+          charAlignment[i] = newWidth - charWidth;
+          charWidth = newWidth;
+        }
+      }
+      x += charWidth;
       myCharPositions[i] = x;
     }
+    myCharAlignment = charAlignment;
   }
 
   @Override
-  boolean isRtl() {
-    return false;
-  }
-
-  @Override
-  int offsetToLogicalColumn(int offset) {
+  protected int offsetToLogicalColumn(int offset) {
     return offset;
-  }
-
-  @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
-    g.setFont(myFont);
-    int xAsInt = (int)x;
-    int yAsInt = (int)y;
-    if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
-      g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
-    }
-    else {
-      g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
-    }
   }
 
   @Override
@@ -66,21 +72,72 @@ class SimpleTextFragment extends TextFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public float visualColumnToX(float startX, int column) {
+    return startX + getX(column);
+  }
+
+  @Override
+  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX <= prevPos ? 0 : 1};
+        return new VisualColumn(i, relX > prevPos);
       }
       prevPos = newPos;
     }
-    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+    boolean leansRight = relX > myCharPositions[myCharPositions.length - 1];
+    return new VisualColumn(myCharPositions.length, leansRight);
   }
 
   @Override
-  public float visualColumnToX(float startX, int column) {
-    return startX + getX(column);
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+    return g -> {
+      g.setFont(myFont);
+      int xAsInt = (int)x;
+      int yAsInt = (int)y;
+      if (myCharAlignment != null) {
+        drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
+      }
+      else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
+        g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
+      }
+      else {
+        g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
+      }
+    };
+  }
+
+  private void drawAligned(Graphics2D g, char[] text, int start, int length, float startX, float y) {
+    assert myCharAlignment != null;
+    if (length == 0) return;
+    int end = start + length;
+    int i = start;
+    int j = start;
+    float firstCharPosition = start == 0 ? 0.0f : myCharPositions[start - 1];
+    float x = startX;
+    while (i < end) {
+      while (j < end && myCharAlignment[j] == 0.0f) {
+        ++j;
+      }
+      // Postcondition: either j == end or j is the index of the first non-standard-width character.
+      // In the first case, we just draw the rest until j.
+      // In the second case, we also draw the rest until j, and then draw the non-standard-width character.
+      if (j > i) { // draw the normal part, if any
+        g.drawString(new String(text, i, j - i), x, y);
+        x = startX + (myCharPositions[j - 1] - firstCharPosition);
+        i = j;
+      }
+      // Postcondition: i == j == end or the next non-standard-width character.
+      if (i < end) { // draw the unusual character, if any
+        x += myCharAlignment[i] / 2.0f; // center the character within the grid
+        j = i + 1;
+        g.drawString(new String(text, i, j - i), x, y);
+        x = startX + (myCharPositions[j - 1] - firstCharPosition);
+        i = j;
+      }
+      // Postcondition: i == j == end or the next character to draw.
+    }
   }
 }

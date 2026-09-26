@@ -1,0 +1,110 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.impl.conda` start
+content_module_jar(module = ":conda")
+### auto-generated section `dev intellij.python.community.impl.conda` end
+
+### auto-generated section `build intellij.python.community.impl.conda` start
+create_kotlinc_options(
+    name = "custom_conda",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "conda",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_conda",
+    module_name = "intellij.python.community.impl.conda",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//python/conda/common",
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//python/python-process-output/common",
+        "//python/openapi:community",
+        "//python/python-requirements/backend",
+        "//platform/projectModel-api:projectModel",
+        "//python/python-sdk/backend",
+        "//platform/analysis-api:analysis",
+        "//platform/platform-util-io:ide-util-io",
+        "//python/python-pytools/backend",
+        "//python/installer",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/io",
+        "//plugins/yaml",
+        "//json/backend",
+    ],
+)
+
+jvm_library(
+    name = "conda_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_conda",
+    module_name = "intellij.python.community.impl.conda",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":conda",
+        "//python/conda/common:common_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//python/python-process-output/common:common_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-requirements/backend:backend_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/installer:installer_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/io:io_test_lib",
+        "//plugins/yaml:yaml_test_lib",
+        "//json/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.impl.conda` end
+
+### auto-generated section `iml intellij.python.community.impl.conda` start
+exports_files(
+    [
+        "intellij.python.community.impl.conda.iml",
+        "resources/intellij.python.community.impl.conda.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.impl.conda` end

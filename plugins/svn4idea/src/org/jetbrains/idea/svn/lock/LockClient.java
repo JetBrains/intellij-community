@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.api.SvnClient;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface LockClient extends SvnClient {
 
   void lock(@NotNull File file,

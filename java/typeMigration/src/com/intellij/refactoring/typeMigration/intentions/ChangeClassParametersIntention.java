@@ -1,46 +1,60 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
  */
-public class ChangeClassParametersIntention extends PsiElementBaseIntentionAction {
+public final class ChangeClassParametersIntention extends PsiElementBaseIntentionAction {
 
-  private static final Logger LOG = Logger.getInstance("#" + ChangeClassParametersIntention.class);
+  private static final Logger LOG = Logger.getInstance(ChangeClassParametersIntention.class);
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return "Change class type parameter";
+  public @NotNull String getFamilyName() {
+    return TypeMigrationBundle.message("change.class.type.parameter.family.name");
   }
 
   @Override
@@ -61,7 +75,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(element, PsiTypeElement.class);
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(typeElement, PsiReferenceParameterList.class);
     if (parameterList != null) {
@@ -79,7 +93,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
         final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
 
         final String oldTypeText = typeElement.getText();
-        final String varName = "param";
+        final @NonNls String varName = "param";
         templateBuilder.replaceElement(typeElement, varName, new TypeExpression(project, new PsiType[]{typeElement.getType()}), true);
 
         final Template template = templateBuilder.buildInlineTemplate();
@@ -87,7 +101,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
           private String myNewType;
 
           @Override
-          public void beforeTemplateFinished(TemplateState state, Template template) {
+          public void beforeTemplateFinished(@NotNull TemplateState state, Template template) {
             final TextResult value = state.getVariableValue(varName);
             myNewType = value != null ? value.getText() : "";
             final int segmentsCount = state.getSegmentsCount();
@@ -101,32 +115,30 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
           }
 
           @Override
-          public void templateFinished(Template template, boolean brokenOff) {
+          public void templateFinished(@NotNull Template template, boolean brokenOff) {
             if (!brokenOff) {
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
-                if (!(targetParam instanceof PsiClassType)) {
+                if (!(targetParam instanceof PsiClassType classType)) {
                   HintManager.getInstance().showErrorHint(editor,
-                                                          JavaErrorMessages.message("generics.type.argument.cannot.be.of.primitive.type"));
+                                                          JavaCompilationErrorBundle.message("type.argument.primitive"));
                   return;
                 }
-                final PsiClassType classType = (PsiClassType)targetParam;
                 final PsiClass target = classType.resolve();
                 if (target == null) {
-                  HintManager.getInstance().showErrorHint(editor, JavaErrorMessages.message("cannot.resolve.symbol",
-                                                                                            classType.getPresentableText()));
+                  HintManager.getInstance().showErrorHint(editor, JavaErrorBundle.message("cannot.resolve.symbol",
+                                                                                          classType.getPresentableText()));
                   return;
                 }
-                final TypeMigrationRules myRules = new TypeMigrationRules(project);
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
-                myRules.setBoundScope(new LocalSearchScope(aClass));
-                TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, myRules,
-                                                                    ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
+                var supportProvider = CommonJavaRefactoringUtil.getRefactoringSupport();
+                var handler = supportProvider.getChangeTypeSignatureHandler();
+                handler.runHighlightingTypeMigrationSilently(project, editor, new LocalSearchScope(aClass), ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
               }
               catch (IncorrectOperationException e) {
-                HintManager.getInstance().showErrorHint(editor, "Incorrect type");
+                HintManager.getInstance().showErrorHint(editor, TypeMigrationBundle.message("change.class.parameter.incorrect.type.error.hint"));
               }
             }
           }

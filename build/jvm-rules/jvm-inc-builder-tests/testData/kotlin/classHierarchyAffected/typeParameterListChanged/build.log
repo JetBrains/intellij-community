@@ -1,0 +1,52 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_typeParameterListChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_typeParameterListChanged-a.kotlin_module
+  bar/ImportStarKt.class
+  bar/ReferencedByFqNameKt.class
+  foo/AChild.class
+  foo/AGrandChild.class
+  foo/ATypeParameter.class
+  foo/FunctionParameterKt.class
+  foo/GetAKt.class
+  foo/ReturnTypeImplicitKt.class
+  foo/ReturnTypeKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/AGrandChild.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/ATypeParameter.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/functionParameter.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/getA.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/importStar.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/referencedByFqName.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/returnType.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/returnTypeImplicit.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_typeParameterListChanged-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/A.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/AChild.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/AGrandChild.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/ATypeParameter.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/functionParameter.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/getA.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/importStar.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/referencedByFqName.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/returnType.kt
+  kotlin/classHierarchyAffected/typeParameterListChanged/a/returnTypeImplicit.kt
+End of files
+------------------------------------------
+Exit code: OK

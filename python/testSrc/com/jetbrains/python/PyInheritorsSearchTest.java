@@ -1,19 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
+
+import com.intellij.openapi.application.ReadAction;
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,28 +15,29 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
+@Subsystems.CodeInsight
+@Components.Navigation
+@Layers.Functional
 public class PyInheritorsSearchTest extends PyTestCase {
   public void testSimple() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, false).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, false).findAll());
     assertEquals(2, inheritors.size());
   }
 
   public void testDeep() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, true).findAll());
     assertEquals(2, inheritors.size());
   }
 
   public void testDotted() {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
+    Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, true).findAll());
     assertEquals(1, inheritors.size());
   }
 
@@ -53,7 +45,7 @@ public class PyInheritorsSearchTest extends PyTestCase {
   public void testInheritorsWhenSuperClassImportedWithAs() {
     setupProject();
     final PyClass pyClass = findClass("C");
-    final Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, false).findAll();
+    final Collection<PyClass> inheritors = ReadAction.computeBlocking(() -> PyClassInheritorsSearch.search(pyClass, false).findAll());
     assertSameElements(inheritors, findClass("D"));
   }
 

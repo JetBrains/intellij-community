@@ -6,9 +6,6 @@ import com.intellij.util.messages.Topic;
  * Defines various callbacks for the gradle integration UI processing.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- * 
- * @author Denis Zhdanov
- * @since 3/6/12 11:59 AM
  */
 public interface GradleUiListener {
 

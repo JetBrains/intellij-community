@@ -1,48 +1,64 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import org.jetbrains.uast.*
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
+@ApiStatus.Internal
+class JavaUFile(
+  override val sourcePsi: PsiJavaFile,
+  override val languagePlugin: UastLanguagePlugin
+) : UFile, UElement, JavaUElementWithComments {
+
+  private val importsPart = UastLazyPart<List<UImportStatement>>()
+  private val classesPart = UastLazyPart<List<UClass>>()
+  private val allCommentsInFilePart = UastLazyPart<List<UComment>>()
+
   override val packageName: String
-    get() = psi.packageName
+    get() = sourcePsi.packageName
 
-  override val imports: List<JavaUImportStatement> by lz {
-    psi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
-  }
+  override val imports: List<UImportStatement>
+    get() = importsPart.getOrBuild {
+      sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
+    }
 
-  override val annotations: List<UAnnotation>
-    get() = psi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
+  override val implicitImports: List<String>
+    get() = sourcePsi.implicitlyImportedPackages.toList()
 
-  override val classes: List<UClass> by lz { psi.classes.map { JavaUClass.create(it, this) } }
+  override val uAnnotations: List<UAnnotation>
+    get() = sourcePsi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
-  override val allCommentsInFile: ArrayList<UComment> by lz {
-    val comments = ArrayList<UComment>(0)
-    psi.accept(object : PsiRecursiveElementWalkingVisitor() {
-      override fun visitComment(comment: PsiComment) {
-        comments += UComment(comment, this@JavaUFile)
-      }
-    })
-    comments
-  }
+  override val classes: List<UClass>
+    get() = classesPart.getOrBuild { sourcePsi.classes.map { JavaUClass.create(it, this) } }
 
-  override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.psi == psi
+  override val allCommentsInFile: List<UComment>
+    get() = allCommentsInFilePart.getOrBuild {
+      val comments = ArrayList<UComment>(0)
+      sourcePsi.accept(object : PsiRecursiveElementWalkingVisitor() {
+        override fun visitComment(comment: PsiComment) {
+          comments += UComment(comment, this@JavaUFile)
+        }
+      })
+      comments
+    }
+
+  override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.sourcePsi == sourcePsi
+
+  override fun hashCode(): Int = sourcePsi.hashCode()
+
+  @Suppress("OverridingDeprecatedMember")
+  override val psi: PsiJavaFile
+    get() = sourcePsi
 }

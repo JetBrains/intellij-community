@@ -1,0 +1,1 @@
+fun u(s: String): Int = s.ext

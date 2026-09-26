@@ -1,30 +1,45 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -33,6 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,8 +74,8 @@ public class OldReferencesResolver {
   private final PsiElement myParameterInitializer;
   private final PsiManager myManager;
   private final PsiParameter[] myParameters;
-  private final GrClosureSignature mySignature;
-  
+  private final GrSignature mySignature;
+
   private final Set<PsiParameter> myParamsToNotInline = new HashSet<>();
 
   public OldReferencesResolver(GrCall context,
@@ -66,7 +83,7 @@ public class OldReferencesResolver {
                                PsiElement toReplaceIn,
                                int replaceFieldsWithGetters,
                                PsiElement parameterInitializer,
-                               final GrClosureSignature signature,
+                               final GrSignature signature,
                                final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, PsiParameter[] parameters) throws IncorrectOperationException {
     myContext = context;
     myExpr = expr;
@@ -80,8 +97,7 @@ public class OldReferencesResolver {
     myProject = myContext.getProject();
     myManager = myContext.getManager();
 
-    if (myContext instanceof GrMethodCallExpression) {
-      final GrMethodCallExpression methodCall = (GrMethodCallExpression)myContext;
+    if (myContext instanceof GrMethodCallExpression methodCall) {
       final GrExpression methodExpression = methodCall.getInvokedExpression();
       if (methodExpression instanceof GrReferenceExpression) {
         myInstanceRef = ((GrReferenceExpression)methodExpression).getQualifierExpression();
@@ -100,10 +116,8 @@ public class OldReferencesResolver {
 
   /**
    * checks for the case: qualifier.getFoo()(args)
-   * @param methodExpression
    */
-  @Nullable
-  private static GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {
+  private static @Nullable GrExpression getQualifierFromGetterCall(GrMethodCall methodExpression) {
     final GroovyResolveResult result = methodExpression.advancedResolve();
     if (!(result.getElement() instanceof GrAccessorMethod) || result.isInvokedOnProperty()) return null;
 
@@ -133,7 +147,7 @@ public class OldReferencesResolver {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
     PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
-    if (oldExpr instanceof GrReferenceExpression) {
+    if (oldExpr instanceof GrReferenceExpression oldRef) {
       if (isThisReferenceToContainingClass(oldExpr) || isSimpleSuperReference(oldExpr)) {
         if (myInstanceRef != null) {
           newExpr.replace(getInstanceRef(factory));
@@ -141,7 +155,6 @@ public class OldReferencesResolver {
         return;
       }
 
-      final GrReferenceExpression oldRef = (GrReferenceExpression)oldExpr;
       newExpr = newExpr.replace(decodeReferenceExpression((GrReferenceExpression)newExpr, oldRef));
       //newExpr = ((GrReferenceExpression)newExpr).getReferenceNameElement();
       final GroovyResolveResult adv = oldRef.advancedResolve();
@@ -252,12 +265,12 @@ public class OldReferencesResolver {
 
   private PsiElement inlineParam(PsiElement newExpr, GrExpression actualArg, PsiParameter parameter) {
     if (myParamsToNotInline.contains(parameter)) return newExpr;
-    
+
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
     if (myExpr instanceof GrClosableBlock) {
       int count = 0;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer))) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer)).asIterable()) {
         count++;
         if (count > 1) break;
       }
@@ -272,7 +285,7 @@ public class OldReferencesResolver {
           type = parameter.getType();
         }
         final GrVariableDeclaration declaration =
-          factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, actualArg, type, parameter.getName());
+          factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, actualArg, type, parameter.getName());
 
         final GrStatement[] statements = ((GrClosableBlock)myExpr).getStatements();
         GrStatement anchor = statements.length > 0 ? statements[0] : null;
@@ -290,8 +303,7 @@ public class OldReferencesResolver {
   }
 
   private static boolean isSimpleSuperReference(PsiElement oldExpr) {
-    if (oldExpr instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)oldExpr;
+    if (oldExpr instanceof GrReferenceExpression ref) {
       if (ref.getQualifier() == null) {
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null) {
@@ -313,8 +325,7 @@ public class OldReferencesResolver {
     return myManager.areElementsEquivalent(resolved, contextClass);
   }
 
-  @NotNull
-  private GrExpression getActualArg(int index) {
+  private @NotNull GrExpression getActualArg(int index) {
     if (myActualArgs == null || myActualArgs[index] == null) {
       final GrExpression[] arguments = myContext.getArgumentList().getExpressionArguments();
       if (index < arguments.length) return arguments[index];
@@ -405,8 +416,7 @@ public class OldReferencesResolver {
     return newExpr;
   }
 
-  @Nullable
-  private static PsiElement getClassContainingResolve(final GroovyResolveResult result) {
+  private static @Nullable PsiElement getClassContainingResolve(final GroovyResolveResult result) {
     final PsiElement elem = result.getElement();
     if (elem != null) {
       if (elem instanceof PsiMember) {
@@ -431,10 +441,13 @@ public class OldReferencesResolver {
 
       if (refMember != null && refMember.isValid()) {
         PsiClass containingClass = refMember.getContainingClass();
-        if (refMember.hasModifierProperty(PsiModifier.STATIC)) {
+        if (containingClass != null && refMember.hasModifierProperty(PsiModifier.STATIC)) {
           PsiElement refElement = newExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)) {
-            newExpr.setQualifier(factory.createReferenceExpressionFromText("" + containingClass.getQualifiedName()));
+            String qualifiedName = containingClass.getQualifiedName();
+            if (qualifiedName != null) {
+              newExpr.setQualifier(factory.createReferenceExpressionFromText(qualifiedName));
+            }
           }
         }
       }
@@ -471,8 +484,7 @@ public class OldReferencesResolver {
 
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(refExpr.getProject());
 
-      if (refExpr.getParent() instanceof GrMethodCallExpression) {
-        GrMethodCallExpression methodCall = (GrMethodCallExpression)refExpr.getParent();
+      if (refExpr.getParent() instanceof GrMethodCallExpression methodCall) {
         GrMethodCallExpression newMethodCall =
           (GrMethodCallExpression)factory.createExpressionFromText(refExpr.getReferenceName() + "()", refExpr);
         newMethodCall.getArgumentList().replace(methodCall.getArgumentList());

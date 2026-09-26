@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.allopen.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.impl.base" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.incremental-compilation-impl-tests" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-common-tests" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-cli" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fe10" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.fir" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.ir" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-gradle-statistics" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.lombok.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.noarg.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.parcelize.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.assignment.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.scripting.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.compose.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.js.plain.objects.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-objcexport-header-generator" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-swift-export" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.dependencies" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-api" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-impl" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-cri-impl" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-plugin-tests" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-dist" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" level="project" />
+  </component>
+</module>

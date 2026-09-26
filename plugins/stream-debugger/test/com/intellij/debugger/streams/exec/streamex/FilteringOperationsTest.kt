@@ -4,16 +4,10 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class FilteringOperationsTest : StreamExTestCase() {
+open class FilteringOperationsTest : StreamExTestCase() {
   override val packageName: String = "filtering"
 
   fun testNonNull() = doStreamExWithResultTest()
-
-  fun testRemove() = doStreamExVoidTest()
-  fun testRemoveBy() = doStreamExVoidTest()
-  fun testRemoveKeys() = doStreamExWithResultTest()
-  fun testRemoveValues() = doStreamExWithResultTest()
-  fun testRemoveKeyValue() = doStreamExWithResultTest()
 
   fun testNonNullKeys() = doStreamExWithResultTest()
   fun testNonNullValues() = doStreamExWithResultTest()

@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports plugin descriptor dependency lists that mix frontend-only and backend-only dependencies.
+<p>
+  Plugin and content module descriptors must target one side of split mode at a time.
+
+  This inspection checks <code>&lt;dependencies&gt;</code> in both main plugin descriptors and content module descriptors and highlights all
+  frontend-only and backend-only dependencies when they are declared together.
+
+  Such violations will prevent the plugin or its module from loading both on the frontend and on the backend in split mode.
+</p>
+</body>
+</html>

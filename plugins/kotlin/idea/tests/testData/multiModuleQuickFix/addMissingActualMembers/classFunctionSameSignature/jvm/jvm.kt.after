@@ -1,0 +1,13 @@
+// "Add missing actual members" "true"
+// DISABLE_ERRORS
+
+
+actual object O {
+    fun <T> hello(): MutableMap<String, T> {
+        TODO("not implemented")
+    }
+
+    actual fun <T : Any> hello(): MutableMap<String, T> {
+        TODO("Not yet implemented")
+    }
+}

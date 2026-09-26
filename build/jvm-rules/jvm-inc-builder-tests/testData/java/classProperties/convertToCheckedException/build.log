@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/SomeException.class
+End of files
+Compiling files:
+  java/classProperties/convertToCheckedException/a/ppp/SomeException.java
+End of files
+Cleaning output files:
+  ppp/Client.class
+  ppp/Task.class
+End of files
+Compiling files:
+  java/classProperties/convertToCheckedException/a/ppp/Client.java
+  java/classProperties/convertToCheckedException/a/ppp/Task.java
+End of files
+------------------------------------------
+Exit code: ERROR

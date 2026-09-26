@@ -1,38 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lang;
 
+import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-public interface HTMLComposerExtension<T> {
+import java.util.Collection;
+import java.util.Collections;
+
+/**
+ * An extension to output HTML (see {@link HTMLComposer}).
+ */
+public interface HTMLComposerExtension<T extends HTMLComposerExtension<T>> {
   Key<T> getID();
   Language getLanguage();
+  default @Unmodifiable @NotNull Collection<Language> getLanguages() {
+    return Collections.singletonList(getLanguage());
+  }
 
-  void appendShortName(RefEntity entity, final StringBuffer buf);
+  /**
+   * Appends HTML corresponding to the {@link RefEntity} short name.
+   */
+  void appendShortName(RefEntity entity, @NotNull StringBuilder buf);
 
-  void appendLocation(RefEntity entity, final StringBuffer buf);
+  /**
+   * Appends HTML corresponding to the {@link RefEntity} location.
+   */
+  void appendLocation(RefEntity entity, @NotNull StringBuilder buf);
 
+  /**
+   * Returns the qualified name of the given {@link RefEntity}.
+   */
   @Nullable
   String getQualifiedName(RefEntity entity);
 
-  void appendReferencePresentation(RefEntity entity, final StringBuffer buf, final boolean isPackageIncluded);
-
-
+  /**
+   * Appends HTML presenting the {@link RefEntity}.
+   */
+  void appendReferencePresentation(RefEntity entity, @NotNull StringBuilder buf, final boolean isPackageIncluded);
 }

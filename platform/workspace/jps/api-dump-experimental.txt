@@ -1,0 +1,2 @@
+*:com.intellij.platform.workspace.jps.serialization.CustomImlComponentNameContributor
+- a:getComponentName():java.lang.String

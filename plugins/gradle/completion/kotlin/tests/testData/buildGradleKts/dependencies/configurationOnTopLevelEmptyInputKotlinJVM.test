@@ -1,0 +1,21 @@
+// "EXPECTED-SUGGESTION": annotationProcessor, api, compileOnly, customSourceSetAnnotationProcessor, customSourceSetApi, customSourceSetCompileOnly, customSourceSetImplementation, customSourceSetImplementationDependenciesMetadata, customSourceSetKotlinScriptDef, customSourceSetKotlinScriptDefExtensions, customSourceSetRuntimeOnly, implementation, implementationDependenciesMetadata, kotlinBuildToolsApiClasspath, kotlinCompilerClasspath, kotlinCompilerPluginClasspath, kotlinCompilerPluginClasspathCustomSourceSet, kotlinCompilerPluginClasspathMain, kotlinCompilerPluginClasspathTest, kotlinInternalAbiValidation, kotlinKlibCommonizerClasspath, kotlinNativeCompilerPluginClasspath, kotlinScriptDef, kotlinScriptDefExtensions, runtimeOnly, testAnnotationProcessor, testApi, testCompileOnly, testImplementation, testImplementationDependenciesMetadata, testKotlinScriptDef, testKotlinScriptDefExtensions, testRuntimeOnly
+// "EXPECTED-SUGGESTION": implementation("myGroup1:myArtifact1:myVersion1"), implementation("myGroup2:myArtifact2:myVersion2"), implementation("myGroup3:myArtifact3:myVersion3"), implementation("fooGroup:compileArtifact:barVersion")
+// "OTHER-SUGGESTIONS-ARE-NOT-EXPECTED"
+// "SUGGESTION-INDEX-TO-APPLY": 1
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+// FILE: build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+dependencies {
+    <caret>
+}
+
+// FILE: build.gradle.after.kts
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+dependencies {
+    api(<caret>)
+}
+

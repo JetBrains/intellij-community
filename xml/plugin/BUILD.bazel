@@ -1,0 +1,116 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.xml.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.xml.dom",
+        "intellij.xml.dom.impl",
+        "intellij.xml.structureView",
+        "intellij.xml.structureView.impl",
+        "intellij.xml.psi",
+        "intellij.xml.psi.impl",
+        "intellij.xml.analysis",
+        "intellij.xml.emmet",
+        "intellij.xml.emmet.shared",
+        "intellij.xml.emmet.backend",
+        "intellij.xml.emmet.frontend",
+        "intellij.xml.ui.common",
+        "intellij.xml.parser",
+        "intellij.xml.syntax",
+        "intellij.relaxng",
+        "intellij.libraries.isorelax",
+        "intellij.libraries.jing",
+        "intellij.libraries.xerces",
+        "intellij.libraries.xml.resolver",
+        "intellij.xml.impl",
+        "intellij.xml.analysis.impl",
+        "intellij.xml.langInjection",
+        "intellij.xml.vcs",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.isorelax",
+        "intellij.libraries.jing",
+        "intellij.libraries.xerces",
+        "intellij.libraries.xml.resolver",
+        "intellij.relaxng",
+        "intellij.xml.analysis",
+        "intellij.xml.analysis.impl",
+        "intellij.xml.dom",
+        "intellij.xml.dom.impl",
+        "intellij.xml.emmet",
+        "intellij.xml.emmet.backend",
+        "intellij.xml.emmet.frontend",
+        "intellij.xml.emmet.shared",
+        "intellij.xml.impl",
+        "intellij.xml.langInjection",
+        "intellij.xml.parser",
+        "intellij.xml.psi",
+        "intellij.xml.psi.impl",
+        "intellij.xml.structureView",
+        "intellij.xml.structureView.impl",
+        "intellij.xml.syntax",
+        "intellij.xml.ui.common",
+        "intellij.xml.vcs",
+    ],
+    jars = {
+        "lib/xml-plugin.jar": ["intellij.xml.plugin"],
+    },
+    main_module = "intellij.xml.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.xml.dom",
+            "intellij.xml.dom.impl",
+            "intellij.xml.structureView",
+            "intellij.xml.structureView.impl",
+            "intellij.xml.analysis",
+            "intellij.xml.emmet.backend",
+            "intellij.relaxng",
+            "intellij.xml.impl",
+            "intellij.xml.analysis.impl",
+            "intellij.xml.langInjection",
+            "intellij.xml.vcs",
+        ],
+    },
+)
+### auto-generated section `dev intellij.xml.plugin` end
+
+### auto-generated section `build intellij.xml.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.xml.plugin` end
+
+### auto-generated section `iml intellij.xml.plugin` start
+exports_files(
+    [
+        "intellij.xml.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xml.plugin` end

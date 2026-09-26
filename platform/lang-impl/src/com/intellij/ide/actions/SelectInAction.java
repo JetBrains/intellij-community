@@ -1,73 +1,77 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.ide.CompositeSelectInTarget;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.DirtyUI;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class SelectInAction extends AnAction implements DumbAware {
+public final class SelectInAction extends DumbAwareAction implements PerformWithDocumentsCommitted, ActionRemoteBehaviorSpecification.Frontend {
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     SelectInContext context = SelectInContextImpl.createContext(e);
     if (context == null) return;
     invoke(e.getDataContext(), context);
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    super.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
     if (SelectInContextImpl.createContext(event) == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
     else {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 
   private static void invoke(@NotNull DataContext dataContext, @NotNull SelectInContext context) {
-    final List<SelectInTarget> targetVector = Arrays.asList(getSelectInManager(context.getProject()).getTargets());
+    List<SelectInTarget> targetVector = SelectInManager.getInstance(context.getProject()).getTargetList();
+    ListPopup popup;
+    if (Registry.is("ide.selectIn.experimental.popup", true)) {
+      popup = createActionPopup(dataContext, context, targetVector);
+    }
+    else {
+      popup = createLegacyPopup(dataContext, context, targetVector);
+    }
+    popup.showInBestPositionFor(dataContext);
+  }
+
+  private static @NotNull ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
@@ -78,35 +82,69 @@ public class SelectInAction extends AnAction implements DumbAware {
     else {
       popup = JBPopupFactory.getInstance().createListPopup(new SelectInActionsStep(targetVector, context));
     }
-
-    popup.showInBestPositionFor(dataContext);
+    return popup;
   }
 
-  private static class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
+  private static @NotNull ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    if (targetVector.isEmpty()) {
+      group.add(new NoTargetsAction());
+    }
+    else {
+      for (int i = 0; i < targetVector.size(); i++) {
+        SelectInTarget target = targetVector.get(i);
+        group.add(SelectInTargetActionKt.createSelectInTargetAction(target, context));
+      }
+    }
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      IdeBundle.message("title.popup.select.target"),
+      group,
+      dataContext,
+      JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
+      true
+    );
+  }
+
+  private static final class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
     private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
-    public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
+    SelectInActionsStep(@NotNull Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = ContainerUtil.newArrayList(targetVector);
-      init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
+      myVisibleTargets = new ArrayList<>(targetVector);
+      List<Icon> icons = fillInIcons(targetVector, selectInContext);
+      init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
+    }
+
+    private static @NotNull List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
+      List<Icon> list = new ArrayList<>();
+      for (SelectInTarget target : targets) {
+        String id = target.getMinorViewId() == null ? target.getToolWindowId() : null;
+        ToolWindow toolWindow = id == null ? null : toolWindowManager.getToolWindow(id);
+        Icon icon = toolWindow != null ? toolWindow.getIcon() : EmptyIcon.ICON_13;
+        list.add(icon);
+      }
+      return list;
     }
 
     @Override
-    @NotNull
-    public String getTextFor(final SelectInTarget value) {
+    public @NotNull String getTextFor(final SelectInTarget value) {
       String text = value.toString();
       String id = value.getMinorViewId() == null ? value.getToolWindowId() : null;
       ToolWindow toolWindow = id == null ? null : ToolWindowManager.getInstance(mySelectInContext.getProject()).getToolWindow(id);
       if (toolWindow != null) {
+        //this code is left for compatibility with external plugins; plugins from intellij project return proper localized text from SelectInTarget::toString
+        //noinspection HardCodedStringLiteral
         text = text.replace(value.getToolWindowId(), toolWindow.getStripeTitle());
       }
       int n = myVisibleTargets.indexOf(value);
       return numberingText(n, text);
     }
 
+    @DirtyUI
     @Override
-    public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
+    public PopupStep<?> onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
         PsiDocumentManager.getInstance(mySelectInContext.getProject()).commitAllDocuments();
         target.selectIn(mySelectInContext, true);
@@ -114,8 +152,8 @@ public class SelectInAction extends AnAction implements DumbAware {
       }
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
-        if (subTargets.size() > 0) {
-          Collections.sort(subTargets, new SelectInManager.SelectInTargetComparator());
+        if (!subTargets.isEmpty()) {
+          subTargets.sort(new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);
         }
       }
@@ -128,9 +166,10 @@ public class SelectInAction extends AnAction implements DumbAware {
              ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() > 1;
     }
 
+    @DirtyUI
     @Override
     public boolean isSelectable(final SelectInTarget target) {
-      if (DumbService.isDumb(mySelectInContext.getProject()) && !DumbService.isDumbAware(target)) {
+      if (target == null || !DumbService.getInstance(mySelectInContext.getProject()).isUsableInCurrentContext(target)) {
         return false;
       }
       return target.canSelect(mySelectInContext);
@@ -155,17 +194,14 @@ public class SelectInAction extends AnAction implements DumbAware {
     return text;
   }
 
-  private static SelectInManager getSelectInManager(Project project) {
-    return SelectInManager.getInstance(project);
-  }
-
-  private static class NoTargetsAction extends AnAction {
-    public NoTargetsAction() {
-      super(IdeBundle.message("message.no.targets.available"));
+  private static final class NoTargetsAction extends AnAction {
+    NoTargetsAction() {
+      //noinspection DialogTitleCapitalization
+      super(IdeBundle.messagePointer("message.no.targets.available"));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
     }
   }
 }

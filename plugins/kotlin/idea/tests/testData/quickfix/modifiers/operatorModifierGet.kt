@@ -1,0 +1,9 @@
+// "Add 'operator' modifier" "true"
+// K2_ERROR: OPERATOR_MODIFIER_REQUIRED
+class A {
+    fun get(i: Int): String = ""
+}
+
+fun foo() = A()<caret>[0]
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ModifierRequiredFixFactoriesKt$createFixIfAvailable$1

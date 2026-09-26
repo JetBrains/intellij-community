@@ -1,0 +1,40 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin allow-bundled-update="true">
+  <id>intellij.xml.plugin</id>
+  <name>XML and HTML</name>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <description><![CDATA[
+    Provides XML, HTML, DTD and XSD editing support: highlighting,
+    code completion, Emmet, structure view, and language injection.
+  ]]></description>
+  <module value="com.intellij.modules.xml"/>
+
+  <!-- intellij.libraries.cglib stays embedded in the core classloader,
+       see embeddedModule("intellij.libraries.cglib") in CommunityModuleSets.ideCommon(). -->
+  <content namespace="jetbrains">
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.dom.impl"/>
+    <module name="intellij.xml.structureView"/>
+    <module name="intellij.xml.structureView.impl"/>
+    <module name="intellij.xml.psi" loading="required"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.emmet"/>
+    <module name="intellij.xml.emmet.shared"/>
+    <module name="intellij.xml.emmet.backend"/>
+    <module name="intellij.xml.emmet.frontend"/>
+    <module name="intellij.xml.ui.common"/>
+    <module name="intellij.xml.parser" loading="required"/>
+    <module name="intellij.xml.syntax" loading="required"/>
+    <module name="intellij.relaxng"/>
+    <module name="intellij.libraries.isorelax"/>
+    <module name="intellij.libraries.jing"/>
+    <module name="intellij.libraries.xerces"/>
+    <module name="intellij.libraries.xml.resolver"/>
+    <module name="intellij.xml.impl"/>
+    <module name="intellij.xml.analysis.impl"/>
+    <module name="intellij.xml.langInjection"/>
+    <module name="intellij.xml.vcs"/>
+  </content>
+</idea-plugin>

@@ -17,21 +17,24 @@
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
   private final int myTransitiveBorder;
 
-  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
+  public AnalyzeDependenciesHandler(@NotNull Project project, List<? extends AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
     super(project, scopes, excluded);
     myTransitiveBorder = transitiveBorder;
   }
@@ -47,11 +50,11 @@ public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
 
   @Override
   protected String getPanelDisplayName(final AnalysisScope scope) {
-    return AnalysisScopeBundle.message("package.dependencies.toolwindow.title", scope.getDisplayName());
+    return CodeInsightBundle.message("package.dependencies.toolwindow.title", scope.getDisplayName());
   }
 
   @Override
   protected String getProgressTitle() {
-    return AnalysisScopeBundle.message("package.dependencies.progress.title");
+    return CodeInsightBundle.message("package.dependencies.progress.title");
   }
 }

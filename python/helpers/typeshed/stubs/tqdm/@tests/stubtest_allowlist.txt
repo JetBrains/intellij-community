@@ -1,0 +1,6 @@
+# Cannot import in stubtest
+tqdm.__main__
+
+# Fails to import as of v4.68.0 since it attempts to re-export functions that were
+# removed from 'tqdm.utils' (e.g. _screen_shape_linux).
+tqdm._utils

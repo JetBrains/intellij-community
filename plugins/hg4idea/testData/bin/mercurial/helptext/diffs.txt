@@ -1,0 +1,29 @@
+Mercurial's default format for showing changes between two versions of
+a file is compatible with the unified format of GNU diff, which can be
+used by GNU patch and many other standard tools.
+
+While this standard format is often enough, it does not encode the
+following information:
+
+- executable status and other permission bits
+- copy or rename information
+- changes in binary files
+- creation or deletion of empty files
+
+Mercurial also supports the extended diff format from the git VCS
+which addresses these limitations. The git diff format is not produced
+by default because a few widespread tools still do not understand this
+format.
+
+This means that when generating diffs from a Mercurial repository
+(e.g. with :hg:`export`), you should be careful about things like file
+copies and renames or other things mentioned above, because when
+applying a standard diff to a different repository, this extra
+information is lost. Mercurial's internal operations (like push and
+pull) are not affected by this, because they use an internal binary
+format for communicating changes.
+
+To make Mercurial produce the git extended diff format, use the --git
+option available for many commands, or set 'git = True' in the [diff]
+section of your configuration file. You do not need to set this option
+when importing diffs in this format or using them in the mq extension.

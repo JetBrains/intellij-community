@@ -21,13 +21,14 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public interface ScalaModel extends Serializable {
 
   Set<File> getScalaClasspath();
 
   Set<File> getZincClasspath();
+
+  Set<File> getScalaCompilerPlugins();
 
   ScalaCompileOptions getScalaCompileOptions();
 

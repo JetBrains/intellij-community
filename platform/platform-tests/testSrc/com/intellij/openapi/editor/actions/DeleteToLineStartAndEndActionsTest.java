@@ -27,7 +27,7 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
     doTestDeleteToEnd("<caret>", "<caret>");
   }
   public void testEmptyLine() {
-    doTestDeleteToStart("\n<caret>\n\n", "\n<caret>\n\n");
+    doTestDeleteToStart("\n<caret>\n\n", "<caret>\n\n");
     doTestDeleteToEnd("\n<caret>\n\n", "\n<caret>\n");
   }
 
@@ -40,7 +40,7 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
   }
 
   public void testBeginningOfNonEmptyLine() {
-    doTestDeleteToStart("\n<caret> a a a \n\n", "\n<caret> a a a \n\n");
+    doTestDeleteToStart("\n<caret> a a a \n\n", "<caret> a a a \n\n");
     doTestDeleteToEnd("\n<caret> a a a \n\n", "\n<caret>\n\n");
 
     doTestDeleteToStart("<caret> a a a ", "<caret> a a a ");

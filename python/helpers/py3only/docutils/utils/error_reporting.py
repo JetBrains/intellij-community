@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# :Id: $Id: error_reporting.py 7668 2013-06-04 12:46:30Z milde $
+#!/usr/bin/env python3
+# :Id: $Id: error_reporting.py 9078 2022-06-17 11:31:40Z milde $
 # :Copyright: © 2011 Günter Milde.
 # :License: Released under the terms of the `2-Clause BSD license`_, in short:
 #
@@ -10,13 +8,24 @@
 #    notice and this notice are preserved.
 #    This file is offered as-is, without any warranty.
 #
-# .. _2-Clause BSD license: http://www.spdx.org/licenses/BSD-2-Clause
+# .. _2-Clause BSD license: https://opensource.org/licenses/BSD-2-Clause
 
 """
+Deprecated module to handle Exceptions across Python versions.
+
+.. warning::
+   This module is deprecated with the end of support for Python 2.7
+   and will be removed in Docutils 0.21 or later.
+
+   Replacements:
+     | SafeString  -> str
+     | ErrorString -> docutils.io.error_string()
+     | ErrorOutput -> docutils.io.ErrorOutput
+
 Error reporting should be safe from encoding/decoding errors.
 However, implicit conversions of strings and exceptions like
 
->>> u'%s world: %s' % ('H\xe4llo', Exception(u'H\xe4llo')
+>>> u'%s world: %s' % ('H\xe4llo', Exception(u'H\xe4llo'))
 
 fail in some Python versions:
 
@@ -35,28 +44,22 @@ The `SafeString`, `ErrorString` and `ErrorOutput` classes handle
 common exceptions.
 """
 
-import codecs
 import sys
+import warnings
 
-# Guess the locale's encoding.
-# If no valid guess can be made, locale_encoding is set to `None`:
-try:
-    import locale # module missing in Jython
-except ImportError:
-    locale_encoding = None
-else:
-    locale_encoding = locale.getlocale()[1] or locale.getdefaultlocale()[1]
-    # locale.getpreferredencoding([do_setlocale=True|False])
-    # has side-effects | might return a wrong guess.
-    # (cf. Update 1 in http://stackoverflow.com/questions/4082645/using-python-2-xs-locale-module-to-format-numbers-and-currency)
-    try:
-        codecs.lookup(locale_encoding or '') # None -> ''
-    except LookupError:
-        locale_encoding = None
+from docutils.io import _locale_encoding as locale_encoding  # noqa
+
+warnings.warn('The `docutils.utils.error_reporting` module is deprecated '
+              'and will be removed in Docutils 0.21 or later.\n'
+              'Details with help("docutils.utils.error_reporting").',
+              DeprecationWarning, stacklevel=2)
 
 
+if sys.version_info >= (3, 0):
+    unicode = str  # noqa
 
-class SafeString(object):
+
+class SafeString:
     """
     A wrapper providing robust conversion to `str` and `unicode`.
     """
@@ -64,23 +67,22 @@ class SafeString(object):
     def __init__(self, data, encoding=None, encoding_errors='backslashreplace',
                  decoding_errors='replace'):
         self.data = data
-        self.encoding = (encoding or getattr(data, 'encoding', None) or
-                         locale_encoding or 'ascii')
+        self.encoding = (encoding or getattr(data, 'encoding', None)
+                         or locale_encoding or 'ascii')
         self.encoding_errors = encoding_errors
         self.decoding_errors = decoding_errors
-
 
     def __str__(self):
         try:
             return str(self.data)
-        except UnicodeEncodeError as err:
+        except UnicodeEncodeError:
             if isinstance(self.data, Exception):
                 args = [str(SafeString(arg, self.encoding,
-                                        self.encoding_errors))
+                                       self.encoding_errors))
                         for arg in self.data.args]
                 return ', '.join(args)
-            if isinstance(self.data, str):
-                if sys.version_info > (3,0):
+            if isinstance(self.data, unicode):
+                if sys.version_info > (3, 0):
                     return self.data
                 else:
                     return self.data.encode(self.encoding,
@@ -100,25 +102,28 @@ class SafeString(object):
         * else decode with `self.encoding` and `self.decoding_errors`.
         """
         try:
-            u = str(self.data)
+            u = unicode(self.data)
             if isinstance(self.data, EnvironmentError):
                 u = u.replace(": u'", ": '") # normalize filename quoting
             return u
         except UnicodeError as error: # catch ..Encode.. and ..Decode.. errors
             if isinstance(self.data, EnvironmentError):
-                return  "[Errno %s] %s: '%s'" % (self.data.errno,
+                return "[Errno %s] %s: '%s'" % (
+                    self.data.errno,
                     SafeString(self.data.strerror, self.encoding,
                                self.decoding_errors),
                     SafeString(self.data.filename, self.encoding,
                                self.decoding_errors))
             if isinstance(self.data, Exception):
-                args = [str(SafeString(arg, self.encoding,
-                            decoding_errors=self.decoding_errors))
+                args = [unicode(SafeString(
+                                    arg, self.encoding,
+                                    decoding_errors=self.decoding_errors))
                         for arg in self.data.args]
-                return ', '.join(args)
+                return u', '.join(args)
             if isinstance(error, UnicodeDecodeError):
-                return str(self.data, self.encoding, self.decoding_errors)
+                return unicode(self.data, self.encoding, self.decoding_errors)
             raise
+
 
 class ErrorString(SafeString):
     """
@@ -126,17 +131,17 @@ class ErrorString(SafeString):
     """
     def __str__(self):
         return '%s: %s' % (self.data.__class__.__name__,
-                            super(ErrorString, self).__str__())
+                           super(ErrorString, self).__str__())
 
     def __unicode__(self):
-        return '%s: %s' % (self.data.__class__.__name__,
+        return u'%s: %s' % (self.data.__class__.__name__,
                             super(ErrorString, self).__unicode__())
 
 
-class ErrorOutput(object):
+class ErrorOutput:
     """
     Wrapper class for file-like error streams with
-    failsave de- and encoding of `str`, `bytes`, `unicode` and
+    failsafe de- and encoding of `str`, `bytes`, `unicode` and
     `Exception` instances.
     """
 
@@ -154,19 +159,19 @@ class ErrorOutput(object):
         """
         if stream is None:
             stream = sys.stderr
-        elif not(stream):
+        elif not stream:
             stream = False
         # if `stream` is a file name, open it
         elif isinstance(stream, str):
             stream = open(stream, 'w')
-        elif isinstance(stream, str):
+        elif isinstance(stream, unicode):
             stream = open(stream.encode(sys.getfilesystemencoding()), 'w')
 
         self.stream = stream
         """Where warning output is sent."""
 
-        self.encoding = (encoding or getattr(stream, 'encoding', None) or
-                         locale_encoding or 'ascii')
+        self.encoding = (encoding or getattr(stream, 'encoding', None)
+                         or locale_encoding or 'ascii')
         """The output character encoding."""
 
         self.encoding_errors = encoding_errors
@@ -184,17 +189,22 @@ class ErrorOutput(object):
         if self.stream is False:
             return
         if isinstance(data, Exception):
-            data = str(SafeString(data, self.encoding,
-                                  self.encoding_errors, self.decoding_errors))
+            data = unicode(SafeString(data, self.encoding,
+                                      self.encoding_errors,
+                                      self.decoding_errors))
         try:
             self.stream.write(data)
         except UnicodeEncodeError:
             self.stream.write(data.encode(self.encoding, self.encoding_errors))
-        except TypeError: # in Python 3, stderr expects unicode
+        except TypeError:
+            if isinstance(data, unicode): # passed stream may expect bytes
+                self.stream.write(data.encode(self.encoding,
+                                              self.encoding_errors))
+                return
             if self.stream in (sys.stderr, sys.stdout):
                 self.stream.buffer.write(data) # write bytes to raw stream
             else:
-                self.stream.write(str(data, self.encoding,
+                self.stream.write(unicode(data, self.encoding,
                                           self.decoding_errors))
 
     def close(self):

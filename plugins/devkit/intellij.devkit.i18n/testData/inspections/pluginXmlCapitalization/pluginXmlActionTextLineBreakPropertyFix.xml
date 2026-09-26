@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextLineBreakFixBundle</resource-bundle>
+
+  <actions>
+  <action<caret> id="BundleActionLineBreak"/>
+  </actions>
+
+</idea-plugin>

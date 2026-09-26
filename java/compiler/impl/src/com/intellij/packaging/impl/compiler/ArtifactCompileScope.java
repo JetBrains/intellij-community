@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
@@ -31,16 +17,17 @@ import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author nik
- */
-public class ArtifactCompileScope {
+public final class ArtifactCompileScope {
   private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
   private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
-  
+
   private ArtifactCompileScope() {
   }
 
@@ -50,22 +37,22 @@ public class ArtifactCompileScope {
   }
 
   public static CompileScope createArtifactsScope(@NotNull Project project,
-                                                  @NotNull Collection<Artifact> artifacts) {
+                                                  @NotNull Collection<? extends Artifact> artifacts) {
     return createArtifactsScope(project, artifacts, false);
   }
 
   public static CompileScope createArtifactsScope(@NotNull Project project,
-                                                  @NotNull Collection<Artifact> artifacts,
+                                                  @NotNull Collection<? extends Artifact> artifacts,
                                                   final boolean forceArtifactBuild) {
     return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, forceArtifactBuild);
   }
 
   public static CompileScope createScopeWithArtifacts(final CompileScope baseScope,
-                                                      @NotNull Collection<Artifact> artifacts) {
+                                                      @NotNull Collection<? extends Artifact> artifacts) {
     return createScopeWithArtifacts(baseScope, artifacts, false);
   }
 
-  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts, final boolean forceArtifactBuild) {
+  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<? extends Artifact> artifacts, final boolean forceArtifactBuild) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[0]));
     if (forceArtifactBuild) {
       baseScope.putUserData(FORCE_ARTIFACT_BUILD, Boolean.TRUE);
@@ -89,7 +76,7 @@ public class ArtifactCompileScope {
     }
 
     Set<Artifact> artifacts = new HashSet<>();
-    final Set<Module> modules = new HashSet<>(Arrays.asList(compileScope.getAffectedModules()));
+    final Set<Module> modules = Set.of(compileScope.getAffectedModules());
     final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
@@ -104,8 +91,7 @@ public class ArtifactCompileScope {
     return result;
   }
 
-  @Nullable
-  public static Artifact[] getArtifacts(CompileScope compileScope) {
+  public static Artifact @Nullable [] getArtifacts(CompileScope compileScope) {
     return compileScope.getUserData(ARTIFACTS_KEY);
   }
 
@@ -113,7 +99,7 @@ public class ArtifactCompileScope {
     return Boolean.TRUE.equals(scope.getUserData(FORCE_ARTIFACT_BUILD));
   }
 
-  private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, final PackagingElementResolvingContext context) {
+  private static boolean containsModuleOutput(Artifact artifact, final Set<? extends Module> modules, final PackagingElementResolvingContext context) {
     return !ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE,
                                                   moduleOutputPackagingElement -> {
                                                     final Module module = moduleOutputPackagingElement.findModule(context);
@@ -121,10 +107,9 @@ public class ArtifactCompileScope {
                                                   }, context, true);
   }
 
-  @NotNull
-  private static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts,
-                                                    @NotNull PackagingElementResolvingContext context,
-                                                    final boolean withOutputPathOnly) {
+  private static @NotNull Set<Artifact> addIncludedArtifacts(@NotNull Collection<? extends Artifact> artifacts,
+                                                             @NotNull PackagingElementResolvingContext context,
+                                                             final boolean withOutputPathOnly) {
     Set<Artifact> result = new HashSet<>();
     for (Artifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, context, new HashSet<>(), result, withOutputPathOnly);
@@ -133,7 +118,7 @@ public class ArtifactCompileScope {
   }
 
   private static void collectIncludedArtifacts(Artifact artifact, final PackagingElementResolvingContext context,
-                                               final Set<Artifact> processed, final Set<Artifact> result, final boolean withOutputPathOnly) {
+                                               final Set<? super Artifact> processed, final Set<? super Artifact> result, final boolean withOutputPathOnly) {
     if (!processed.add(artifact)) {
       return;
     }

@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
@@ -23,16 +28,14 @@ import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 /**
  * @author Medvedev Max
  */
-public class GroovyMethodImplementor implements MethodImplementor {
-  @NotNull
+public final class GroovyMethodImplementor implements MethodImplementor {
   @Override
-  public PsiMethod[] getMethodsToImplement(PsiClass aClass) {
+  public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
+  public PsiMethod @NotNull [] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
     if (!(inClass instanceof GrTypeDefinition)) return PsiMethod.EMPTY_ARRAY;
     if (method instanceof GrTraitMethod) return PsiMethod.EMPTY_ARRAY;
 
@@ -51,12 +54,11 @@ public class GroovyMethodImplementor implements MethodImplementor {
     return null;
   }
 
-  @NotNull
   @Override
-  public Consumer<PsiMethod> createDecorator(final PsiClass targetClass,
-                                             final PsiMethod baseMethod,
-                                             final boolean toCopyJavaDoc,
-                                             final boolean insertOverrideIfPossible) {
+  public @NotNull Consumer<PsiMethod> createDecorator(final PsiClass targetClass,
+                                                      final PsiMethod baseMethod,
+                                                      final boolean toCopyJavaDoc,
+                                                      final boolean insertOverrideIfPossible) {
     return new PsiMethodConsumer(targetClass, toCopyJavaDoc, baseMethod, insertOverrideIfPossible);
   }
 
@@ -66,7 +68,7 @@ public class GroovyMethodImplementor implements MethodImplementor {
     private final PsiMethod myBaseMethod;
     private final boolean myInsertOverrideIfPossible;
 
-    public PsiMethodConsumer(PsiClass targetClass, boolean toCopyJavaDoc, PsiMethod baseMethod, boolean insertOverrideIfPossible) {
+    PsiMethodConsumer(PsiClass targetClass, boolean toCopyJavaDoc, PsiMethod baseMethod, boolean insertOverrideIfPossible) {
       myTargetClass = targetClass;
       myToCopyJavaDoc = toCopyJavaDoc;
       myBaseMethod = baseMethod;

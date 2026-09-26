@@ -1,0 +1,4 @@
+class C {
+    var p: Int = 1
+        set(value) { field = value + 1 }
+}

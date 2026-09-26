@@ -17,23 +17,21 @@ package com.intellij.packaging.ui;
 
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface ArtifactProblemsHolder {
   @NotNull
   PackagingElementResolvingContext getContext();
 
-  void registerError(@NotNull String message, @NotNull String problemTypeId);
+  void registerError(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @NotNull String problemTypeId);
 
-  void registerError(@NotNull String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
-                     @NotNull ArtifactProblemQuickFix... quickFixes);
+  void registerError(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
+                     ArtifactProblemQuickFix @NotNull ... quickFixes);
 
-  void registerWarning(@NotNull String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
-                       @NotNull ArtifactProblemQuickFix... quickFixes);
+  void registerWarning(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
+                       ArtifactProblemQuickFix @NotNull ... quickFixes);
 }

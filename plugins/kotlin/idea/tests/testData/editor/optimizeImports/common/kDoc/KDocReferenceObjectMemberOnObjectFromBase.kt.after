@@ -1,0 +1,15 @@
+
+package pack
+
+open class BaseClass {
+    fun objectFunction() {}
+}
+
+object MyObject : BaseClass() {
+    /**
+     * [objectFunction]
+     */
+    fun usage() {
+
+    }
+}

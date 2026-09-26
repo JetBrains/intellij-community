@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +26,13 @@ import java.util.Objects;
 public class HgRevisionNumber implements VcsRevisionNumber {
 
   private static final int SHORT_HASH_SIZE = 12;
-  @NotNull private final String revision;
-  @NotNull private final String changeset;
-  @NotNull private final String commitMessage;
-  @NotNull private final String author;
-  @NotNull private final String email;
-  @NotNull private final List<HgRevisionNumber> parents;
-  @NotNull private final String mySubject;
+  private final @NotNull String revision;
+  private final @NotNull String changeset;
+  private final @NotNull String commitMessage;
+  private final @NotNull String author;
+  private final @NotNull String email;
+  private final @NotNull List<? extends HgRevisionNumber> parents;
+  private final @NotNull String mySubject;
 
   private final boolean isWorkingVersion;
 
@@ -43,7 +44,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     }
 
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return NULL.asString();
     }
   };
@@ -56,7 +57,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, changeset, "", "", Collections.emptyList());
   }
 
-  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull  List<HgRevisionNumber> parents) {
+  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull List<? extends HgRevisionNumber> parents) {
     return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
 
@@ -68,7 +69,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String changeset,
                           @NotNull String authorInfo,
                           @NotNull String commitMessage,
-                          @NotNull List<HgRevisionNumber> parents) {
+                          @NotNull List<? extends HgRevisionNumber> parents) {
     this(revision, changeset, HgUtil.parseUserNameAndEmail(authorInfo).getFirst(), HgUtil.parseUserNameAndEmail(authorInfo).getSecond(),
          commitMessage, parents);
   }
@@ -78,7 +79,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String author,
                           @NotNull String email,
                           @NotNull String commitMessage,
-                          @NotNull List<HgRevisionNumber> parents) {
+                          @NotNull List<? extends HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
     this.author = author;
     this.email = email;
@@ -89,13 +90,11 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     mySubject = HgBaseLogParser.extractSubject(commitMessage);
   }
 
-  @NotNull
-  public String getChangeset() {
+  public @NlsSafe @NotNull String getChangeset() {
     return changeset;
   }
 
-  @NotNull
-  public String getRevision() {
+  public @NlsSafe @NotNull String getRevision() {
     return revision;
   }
 
@@ -103,23 +102,19 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return java.lang.Long.parseLong(revision);
   }
 
-  @NotNull
-  public String getCommitMessage() {
+  public @NlsSafe @NotNull String getCommitMessage() {
     return commitMessage;
   }
 
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return author;
   }
 
-  @NotNull
-  public String getEmail() {
+  public @NlsSafe @NotNull String getEmail() {
     return email;
   }
 
-  @NotNull
-  public String getAuthor() {
+  public @NlsSafe @NotNull String getAuthor() {
     return VcsUserUtil.getUserName(author, email);
   }
 
@@ -127,27 +122,27 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return isWorkingVersion;
   }
 
-  public String asString() {
+  @Override
+  public @NotNull String asString() {
     if (revision.isEmpty()) {
       return changeset;
     }
     return revision + ":" + changeset;
   }
 
-  @NotNull
-  public List<HgRevisionNumber> getParents() {
+  public @NotNull List<? extends HgRevisionNumber> getParents() {
     return parents;
   }
 
+  @Override
   public int compareTo(VcsRevisionNumber o) {
     // boundary cases
     if (this == o) {
       return 0;
     }
-    if (!(o instanceof HgRevisionNumber)) {
+    if (!(o instanceof HgRevisionNumber other)) {
       return -1;
     }
-    final HgRevisionNumber other = (HgRevisionNumber) o;
     if (changeset.equals(other.changeset)) {
       return 0;
     }
@@ -202,10 +197,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     if (object == this) {
       return true;
     }
-    if (!(object instanceof HgRevisionNumber)) {
+    if (!(object instanceof HgRevisionNumber that)) {
       return false;
     }
-    HgRevisionNumber that = (HgRevisionNumber) object;
     return compareTo(that) == 0;
   }
 
@@ -214,8 +208,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return asString();
   }
 
-  @NotNull
-  public String getSubject() {
+  public @NotNull String getSubject() {
     return mySubject;
   }
 }

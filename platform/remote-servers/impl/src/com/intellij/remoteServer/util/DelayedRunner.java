@@ -19,9 +19,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public abstract class DelayedRunner implements Disposable {
 
   private static final int CHANGES_CHECK_TIME = 500;
@@ -32,12 +35,14 @@ public abstract class DelayedRunner implements Disposable {
 
   private int myChangesPastTime = NO_CHANGES;
 
-  public DelayedRunner(JComponent activationComponent) {
-    myAlarm = new Alarm().setActivationComponent(activationComponent);
-    queueChangesCheck();
+  /**
+   * Call {@link DelayedRunner#queueChangesCheck()} to start the runner
+   */
+  public DelayedRunner(@NotNull JComponent activationComponent) {
+    myAlarm = new Alarm(activationComponent, this);
   }
 
-  private void queueChangesCheck() {
+  public void queueChangesCheck() {
     if (myAlarm.isDisposed()) {
       return;
     }

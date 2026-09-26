@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -8,13 +6,14 @@ import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -27,6 +26,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jdom.Element;
@@ -34,6 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Objects;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * Parent of all python test old-style test runners.
@@ -45,25 +48,24 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   implements AbstractPythonRunConfigurationParams,
              AbstractPythonTestRunConfigurationParams,
              RefactoringListenerProvider {
-  protected String myClassName = "";
-  protected String myScriptName = "";
-  protected String myMethodName = "";
-  protected String myFolderName = "";
+  protected @NlsSafe String myClassName = "";
+  protected @NlsSafe String myScriptName = "";
+  protected @NlsSafe String myMethodName = "";
+  protected @NlsSafe String myFolderName = "";
   protected TestType myTestType = TestType.TEST_SCRIPT;
 
-  private String myPattern = ""; // pattern for modules in folder to match against
+  private @NlsSafe String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
-  protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
-    super(project, configurationFactory);
+  protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory, PackageAvailabilitySpec packageSpec) {
+    super(project, configurationFactory, packageSpec);
   }
 
-  @NotNull
   @Override
-  public String getWorkingDirectorySafe() {
+  public @NotNull String getWorkingDirectorySafe() {
     final String workingDirectoryFromConfig = getWorkingDirectory();
     if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
-      return workingDirectoryFromConfig;
+      return getExpandedWorkingDir(this);
     }
 
     final String folderName = myFolderName;
@@ -72,7 +74,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     }
     final String scriptName = myScriptName;
     if (!StringUtil.isEmptyOrSpaces(scriptName)) {
-      final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
+      final VirtualFile script = StandardFileSystems.local().findFileByPath(scriptName);
       if (script != null) {
         return script.getParent().getPath();
       }
@@ -113,62 +115,77 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     JDOMExternalizerUtil.writeField(element, "USE_PATTERN", String.valueOf(usePattern));
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return this;
   }
 
+  @Override
   public String getClassName() {
     return myClassName;
   }
 
+  @Override
   public void setClassName(String className) {
     myClassName = className;
   }
 
+  @Override
   public String getFolderName() {
     return myFolderName;
   }
 
+  @Override
   public void setFolderName(String folderName) {
     myFolderName = folderName;
   }
 
+  @Override
   public String getScriptName() {
     return myScriptName;
   }
 
+  @Override
   public void setScriptName(@NotNull String scriptName) {
     myScriptName = scriptName;
   }
 
+  @Override
   public String getMethodName() {
     return myMethodName;
   }
 
+  @Override
   public void setMethodName(String methodName) {
     myMethodName = methodName;
   }
 
+  @Override
   public TestType getTestType() {
     return myTestType;
   }
 
+  @Override
   public void setTestType(TestType testType) {
     myTestType = testType;
   }
 
+  @Override
   public String getPattern() {
     return myPattern;
   }
 
+  @Override
   public void setPattern(String pattern) {
     myPattern = pattern;
   }
 
+  @Override
   public boolean usePattern() {
     return usePattern;
   }
 
+  @Override
   public void usePattern(boolean usePattern) {
     this.usePattern = usePattern;
   }
@@ -207,28 +224,21 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
     if (getTestType() != cfg.getTestType()) return false;
 
-    switch (getTestType()) {
-      case TEST_FOLDER:
-        return getFolderName().equals(cfg.getFolderName());
-      case TEST_SCRIPT:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory());
-      case TEST_CLASS:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName());
-      case TEST_METHOD:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getClassName().equals(cfg.getClassName()) &&
-               getMethodName().equals(cfg.getMethodName());
-      case TEST_FUNCTION:
-        return getScriptName().equals(cfg.getScriptName()) &&
-               getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
-               getMethodName().equals(cfg.getMethodName());
-      default:
-        throw new IllegalStateException("Unknown test type: " + getTestType());
-    }
+    return switch (getTestType()) {
+      case TEST_FOLDER -> getFolderName().equals(cfg.getFolderName());
+      case TEST_SCRIPT -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory());
+      case TEST_CLASS -> getScriptName().equals(cfg.getScriptName()) &&
+                         getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                         getClassName().equals(cfg.getClassName());
+      case TEST_METHOD -> getScriptName().equals(cfg.getScriptName()) &&
+                          getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                          getClassName().equals(cfg.getClassName()) &&
+                          getMethodName().equals(cfg.getMethodName());
+      case TEST_FUNCTION -> getScriptName().equals(cfg.getScriptName()) &&
+                            getWorkingDirectory().equals(cfg.getWorkingDirectory()) &&
+                            getMethodName().equals(cfg.getMethodName());
+    };
   }
 
   public static void copyParams(AbstractPythonTestRunConfigurationParams source, AbstractPythonTestRunConfigurationParams target) {
@@ -250,43 +260,39 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
 
   @Override
   public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return getPluralTitle() + " in " + myClassName;
-      case TEST_METHOD:
-        return getTitle() + " " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
+    return switch (myTestType) {
+      case TEST_CLASS -> PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
+      case TEST_METHOD -> getTitle() + " " + myClassName + "." + myMethodName;
+      case TEST_SCRIPT -> {
         String name = new File(getScriptName()).getName();
         name = StringUtil.trimEnd(name, ".py");
-        return getPluralTitle() + " in " + name;
-      case TEST_FOLDER:
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
+      }
+      case TEST_FOLDER -> {
         String folderName = new File(myFolderName).getName();
-        return getPluralTitle() + " in " + folderName;
-      case TEST_FUNCTION:
-        return getTitle() + " " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
+        yield PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
+      }
+      case TEST_FUNCTION -> getTitle() + " " + myMethodName;
+    };
   }
 
-  @Nullable
   @Override
-  public String getActionName() {
+  public @Nullable String getActionName() {
     if (TestType.TEST_METHOD.equals(myTestType)) {
       return getTitle() + " " + myMethodName;
     }
     return suggestedName();
   }
 
-  protected abstract String getTitle();
+  protected abstract @NlsActions.ActionText String getTitle();
 
-  protected abstract String getPluralTitle();
+  protected abstract @NlsActions.ActionText String getPluralTitle();
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {
     if (element instanceof PsiDirectory) {
       VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
-      if ((myTestType == TestType.TEST_FOLDER && pathsEqual(vFile, myFolderName)) || pathsEqual(vFile, getWorkingDirectory())) {
+      if ((myTestType == TestType.TEST_FOLDER && pathsEqual(vFile, myFolderName)) || pathsEqual(vFile, getExpandedWorkingDir(this))) {
         return new RefactoringElementAdapter() {
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
@@ -314,11 +320,11 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     }
     File scriptFile = new File(myScriptName);
     if (!scriptFile.isAbsolute()) {
-      scriptFile = new File(getWorkingDirectory(), myScriptName);
+      scriptFile = new File(getExpandedWorkingDir(this), myScriptName);
     }
     PsiFile containingFile = element.getContainingFile();
     VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
-    if (vFile != null && Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), scriptFile.getAbsolutePath())) {
+    if (vFile != null && Objects.equals(new File(vFile.getPath()).getAbsolutePath(), scriptFile.getAbsolutePath())) {
       if (element instanceof PsiFile) {
         return new RefactoringElementAdapter() {
           @Override
@@ -336,7 +342,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
         };
       }
       if (element instanceof PyClass && (myTestType == TestType.TEST_CLASS || myTestType == TestType.TEST_METHOD) &&
-          Comparing.equal(((PyClass)element).getName(), myClassName)) {
+          Objects.equals(((PyClass)element).getName(), myClassName)) {
         return new RefactoringElementAdapter() {
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
@@ -350,10 +356,10 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
         };
       }
       if (element instanceof PyFunction &&
-          Comparing.equal(((PyFunction)element).getName(), myMethodName)) {
+          Objects.equals(((PyFunction)element).getName(), myMethodName)) {
         ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
         if ((myTestType == TestType.TEST_FUNCTION && scopeOwner instanceof PyFile) ||
-            (myTestType == TestType.TEST_METHOD && scopeOwner instanceof PyClass && Comparing.equal(scopeOwner.getName(), myClassName))) {
+            (myTestType == TestType.TEST_METHOD && scopeOwner instanceof PyClass && Objects.equals(scopeOwner.getName(), myClassName))) {
           return new RefactoringElementAdapter() {
             @Override
             protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
@@ -375,6 +381,6 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   }
 
   private static boolean pathsEqual(VirtualFile vFile, final String folderName) {
-    return Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(folderName).getAbsolutePath());
+    return Objects.equals(new File(vFile.getPath()).getAbsolutePath(), new File(folderName).getAbsolutePath());
   }
 }

@@ -1,0 +1,220 @@
+c:com.intellij.remote.ColoredRemoteProcessHandler
+- com.intellij.remote.BaseRemoteProcessHandler
+- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- <init>(com.intellij.remote.RemoteProcess,java.lang.String,java.nio.charset.Charset):V
+- coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
+- f:notifyTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
+f:com.intellij.remote.CredentialsTypeUtil
+- s:getContributions(java.lang.Class):java.util.List
+- s:isCredentialsTypeSupportedForLanguage(com.intellij.remote.CredentialsType,java.lang.Class):Z
+f:com.intellij.remote.DeferredRemoteProcess
+- com.intellij.remote.RemoteProcess
+- <init>(org.jetbrains.concurrency.Promise):V
+- destroy():V
+- destroyForcibly():java.lang.Process
+- exitValue():I
+- getErrorStream():java.io.InputStream
+- getInputStream():java.io.InputStream
+- getLocalTunnel(I):com.google.common.net.HostAndPort
+- getOutputStream():java.io.OutputStream
+- isAlive():Z
+- isDisconnected():Z
+- killProcessTree():Z
+- onExit():java.util.concurrent.CompletableFuture
+- setWindowSize(I,I):V
+- supportsNormalTermination():Z
+- waitFor():I
+- waitFor(J,java.util.concurrent.TimeUnit):Z
+a:com.intellij.remote.PathMappingProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:accepts(com.intellij.remote.RemoteSdkAdditionalData):Z
+- a:getPathMappingSettings(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData):com.intellij.util.PathMappingSettings
+- a:getProviderPresentableName(com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
+com.intellij.remote.ProcessControlWithMappings
+- a:getFileMappings():java.util.List
+e:com.intellij.remote.RemoteConnectionType
+- sf:CURRENT_VAGRANT:com.intellij.remote.RemoteConnectionType
+- sf:DEFAULT_SDK:com.intellij.remote.RemoteConnectionType
+- sf:DEPLOYMENT_SERVER:com.intellij.remote.RemoteConnectionType
+- sf:NONE:com.intellij.remote.RemoteConnectionType
+- sf:REMOTE_SDK:com.intellij.remote.RemoteConnectionType
+- sf:SSH_CONFIG:com.intellij.remote.RemoteConnectionType
+- s:findByName(java.lang.String):com.intellij.remote.RemoteConnectionType
+- s:valueOf(java.lang.String):com.intellij.remote.RemoteConnectionType
+- s:values():com.intellij.remote.RemoteConnectionType[]
+com.intellij.remote.RemoteMappingsListener
+- sf:REMOTE_MAPPINGS_CHANGED:com.intellij.util.messages.Topic
+- a:mappingsChanged():V
+- a:mappingsChanged(java.lang.String,java.lang.String):V
+f:com.intellij.remote.RemoteMappingsManager
+- <init>():V
+- create(java.lang.String,java.lang.String,java.util.List):com.intellij.remote.RemoteMappingsManager$Mappings
+- getForServer(java.lang.String,java.lang.String):com.intellij.remote.RemoteMappingsManager$Mappings
+- getState():com.intellij.remote.RemoteMappingsManager$State
+- loadState(com.intellij.remote.RemoteMappingsManager$State):V
+c:com.intellij.remote.RemoteMappingsManager$Mappings
+- getDisabled():java.util.Map
+- getServerId():java.lang.String
+- setDisabled(java.util.Map):V
+- setServerId(java.lang.String):V
+- setServerId(java.lang.String,java.lang.String):V
+c:com.intellij.remote.RemoteMappingsManager$State
+- <init>():V
+- getList():java.util.List
+f:com.intellij.remote.RemoteProcessUtil
+- <init>():V
+- s:buildRemoteCommand(com.intellij.util.AbstractPathMapper,java.util.Collection):java.lang.String[]
+- s:remapPathsList(java.lang.String,com.intellij.util.PathMapper,java.lang.String):java.lang.String
+- s:toRemoteFileSystemStyle(java.lang.String):java.lang.String
+a:com.intellij.remote.RemoteSdkFactoryImpl
+- <init>():V
+- canSaveUnfinished():Z
+- createRemoteSdk(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String,java.util.Collection):com.intellij.openapi.projectRoots.Sdk
+- s:getDefaultUnfinishedInterpreterName(java.lang.String):java.lang.String
+- a:getDefaultUnfinishedName():java.lang.String
+- pa:getSdkName(com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):java.lang.String
+- pa:getSdkType(com.intellij.remote.RemoteSdkAdditionalData):com.intellij.openapi.projectRoots.SdkType
+- pa:getSdkVersion(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
+f:com.intellij.remote.SshConfigCredentialsHolder
+- sf:SSH_CONFIG_PREFIX:java.lang.String
+- <init>():V
+- <init>(com.intellij.remote.PresentableId):V
+- cleanConfigData():V
+- copyFrom(com.intellij.remote.SshConfigCredentialsHolder):V
+- equals(java.lang.Object):Z
+- getCredentialsId():java.lang.String
+- getSshId():com.intellij.remote.PresentableId
+- hashCode():I
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+- setSshId(com.intellij.remote.PresentableId):V
+com.intellij.remote.SshCredentialProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCredentialsList(com.intellij.openapi.project.Project):java.util.Collection
+f:com.intellij.remote.VagrantBasedCredentialsHolder
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- getMachineName():java.lang.String
+- getVagrantFolder():java.lang.String
+- hashCode():I
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+- setMachineName(java.lang.String):V
+- setVagrantFolder(java.lang.String):V
+f:com.intellij.remote.VagrantNotStartedException
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+a:com.intellij.remote.VagrantSupport
+- <init>():V
+- a:checkVagrantRunning(java.lang.String,java.lang.String,Z):Z
+- a:computeVagrantSettings(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.google.common.util.concurrent.ListenableFuture
+- a:findVagrantFolder(com.intellij.openapi.project.Project):java.lang.String
+- a:getCredentials(java.lang.String,java.lang.String):com.intellij.remote.RemoteCredentials
+- s:getInstance():com.intellij.remote.VagrantSupport
+- a:getMachineNames(java.lang.String):java.util.List
+- a:getMappedFolders(java.lang.String):com.intellij.util.PathMappingSettings
+- a:getVagrantInstancesConnectors(com.intellij.openapi.project.Project):java.util.Collection
+- s:isNotReadyForSsh(java.lang.String):Z
+- isNotReadyForSsh(java.lang.Throwable):Z
+- a:isVagrantInstance(com.intellij.openapi.vfs.VirtualFile):Z
+- a:runVagrant(java.lang.String,java.lang.String):V
+- s:showMissingVagrantSupportMessage(com.intellij.openapi.project.Project):V
+f:com.intellij.remote.VagrantSupport$MultipleMachinesException
+- java.lang.Exception
+- <init>():V
+f:com.intellij.remote.WebDeploymentCredentialsHolder
+- sf:WEB_SERVER_CONFIG_ID:java.lang.String
+- sf:WEB_SERVER_CONFIG_NAME:java.lang.String
+- sf:WEB_SERVER_CREDENTIALS_ID:java.lang.String
+- <init>():V
+- <init>(java.lang.String,java.lang.String,com.intellij.remote.RemoteCredentials):V
+- copyFrom(com.intellij.remote.WebDeploymentCredentialsHolder):com.intellij.remote.WebDeploymentCredentialsHolder
+- equals(java.lang.Object):Z
+- getCredentialsId():java.lang.String
+- getWebServerConfigId():java.lang.String
+- getWebServerConfigName():java.lang.String
+- hashCode():I
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+- setWebServerConfigId(java.lang.String):V
+- setWebServerConfigName(java.lang.String):V
+com.intellij.remote.ext.CredentialsEditor
+- a:getMainPanel():javax.swing.JPanel
+- a:getName():java.lang.String
+- a:init(java.lang.Object):V
+- a:onSelected():V
+- a:saveCredentials(java.lang.Object):V
+- a:validate():com.intellij.openapi.ui.ValidationInfo
+- a:validateFinal(java.util.function.Supplier,java.util.function.Consumer):java.lang.String
+a:com.intellij.remote.ext.CredentialsLanguageContribution
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:getLanguageContribution():java.lang.Object
+- a:getLanguageContributionClass():java.lang.Class
+- a:getType():com.intellij.remote.CredentialsType
+com.intellij.remote.ext.FormWithAlignableLabelsColumn
+- sf:Companion:com.intellij.remote.ext.FormWithAlignableLabelsColumn$Companion
+- s:findLabelWithMaxPreferredWidth(com.intellij.remote.ext.FormWithAlignableLabelsColumn):com.intellij.ui.components.JBLabel
+- a:getLabelsColumn():java.util.List
+f:com.intellij.remote.ext.FormWithAlignableLabelsColumn$Companion
+- f:findLabelWithMaxPreferredWidth(com.intellij.remote.ext.FormWithAlignableLabelsColumn):com.intellij.ui.components.JBLabel
+a:com.intellij.remote.ext.LanguageCaseCollector
+- collectCases(java.lang.Class,com.intellij.remote.ext.CredentialsCase[]):com.intellij.remote.ext.CredentialsCase[]
+- pa:processLanguageContribution(java.lang.Object,java.lang.Object):V
+a:com.intellij.remote.ext.PathMappingProviderEx
+- com.intellij.remote.PathMappingProvider
+- <init>():V
+- a:getMappingType():com.intellij.remote.ext.PathMappingType
+f:com.intellij.remote.ext.PathMappingType
+- sf:DEPLOYMENT:com.intellij.remote.ext.PathMappingType
+- sf:REPLICATED_FOLDER:com.intellij.remote.ext.PathMappingType
+- <init>(javax.swing.Icon,java.util.function.Supplier):V
+- getIcon():javax.swing.Icon
+- getTooltip():java.lang.String
+com.intellij.remote.ext.PathsBrowserDialogProvider
+- a:showPathsBrowserDialog(com.intellij.openapi.project.Project,javax.swing.JTextField,java.lang.String,java.util.function.Supplier):V
+f:com.intellij.remote.ext.SshConfigCredentialsHandler
+- com.intellij.remote.ext.RemoteCredentialsHandlerBase
+- <init>(com.intellij.remote.SshConfigCredentialsHolder):V
+- getId():java.lang.String
+- getPresentableDetails(java.lang.String):java.lang.String
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+f:com.intellij.remote.ext.SshCredentialsHandler
+- com.intellij.remote.ext.RemoteCredentialsHandlerBase
+- <init>(com.intellij.remote.RemoteCredentialsHolder):V
+- getId():java.lang.String
+- getPresentableDetails(java.lang.String):java.lang.String
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+f:com.intellij.remote.ext.VagrantCredentialsHandler
+- com.intellij.remote.ext.RemoteCredentialsHandlerBase
+- sf:VAGRANT_PREFIX:java.lang.String
+- <init>(com.intellij.remote.VagrantBasedCredentialsHolder):V
+- getId():java.lang.String
+- getPresentableDetails(java.lang.String):java.lang.String
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+f:com.intellij.remote.ext.WebDeploymentCredentialsHandler
+- com.intellij.remote.ext.RemoteCredentialsHandlerBase
+- <init>(com.intellij.remote.WebDeploymentCredentialsHolder):V
+- getId():java.lang.String
+- getPresentableDetails(java.lang.String):java.lang.String
+- load(org.jdom.Element):V
+- save(org.jdom.Element):V
+f:com.intellij.remote.ui.ApplicationOnlySdkScopeController
+- com.intellij.remote.ui.SdkScopeController
+- sf:INSTANCE:com.intellij.remote.ui.ApplicationOnlySdkScopeController
+- addListener(com.intellij.remote.ui.SdkScopeController$SdkScopeChangeListener):V
+- isProjectLevel():Z
+- isProjectLevelSupported():Z
+- setProjectLevel(Z):V
+com.intellij.remote.ui.BundleAccessor
+- a:message(java.lang.String,java.lang.Object[]):java.lang.String
+- a:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
+com.intellij.remote.ui.RemoteSdkEditorContainer
+- a:getDisposable():com.intellij.openapi.Disposable
+- a:updateSize():V
+com.intellij.remote.ui.RemoteSdkUpdatedCallback
+- a:updated(com.intellij.remote.RemoteSdkProperties):V

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -6,14 +6,17 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class RenamePyVariableProcessor extends RenamePyElementProcessor {
+
+public final class RenamePyVariableProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     // extension ordering in python-plugin-common.xml ensures that classes and functions are handled by their own processors
@@ -40,14 +43,11 @@ public class RenamePyVariableProcessor extends RenamePyElementProcessor {
     PyCodeInsightSettings.getInstance().RENAME_SEARCH_NON_CODE_FOR_VARIABLE = enabled;
   }
 
-  @Nullable
   @Override
-  public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
-    if (element instanceof PyLambdaExpression) {
-      final PyLambdaExpression lambdaExpression = (PyLambdaExpression)element;
+  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
+    if (element instanceof PyLambdaExpression lambdaExpression) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(lambdaExpression);
-      if (owner instanceof PyClass) {
-        final PyClass cls = (PyClass)owner;
+      if (owner instanceof PyClass cls) {
         final Property property = cls.findPropertyByCallable(lambdaExpression);
         if (property != null) {
           final PyTargetExpression site = property.getDefinitionSite();

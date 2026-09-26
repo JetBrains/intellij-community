@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -25,6 +10,7 @@ import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -33,7 +19,6 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -44,34 +29,54 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Function;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.StyleContext;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
 
-/**
- * @author nik
- */
 public class AddSupportForFrameworksPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
-  @NonNls private static final String EMPTY_CARD = "empty";
-  private JPanel myMainPanel;
-  private JPanel myFrameworksPanel;
-  private JLabel myLabel;
+  private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
+  private static final @NonNls String EMPTY_CARD = "empty";
+  private final JPanel myMainPanel;
+  private final JPanel myFrameworksPanel;
+  private final JLabel myLabel;
 
-  private List<FrameworkSupportInModuleProvider> myProviders;
-  private List<FrameworkSupportNodeBase> myRoots;
+  private List<? extends FrameworkSupportInModuleProvider> myProviders;
+  private List<FrameworkSupportNodeBase<?>> myRoots;
 
   private final LibrariesContainer myLibrariesContainer;
   private final FrameworkSupportModelBase myModel;
@@ -79,16 +84,37 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final FrameworksTree myFrameworksTree;
   private final Map<FrameworkSupportNode, FrameworkSupportOptionsComponent> myInitializedOptionsComponents = new HashMap<>();
   private final Map<FrameworkGroup<?>, JPanel> myInitializedGroupPanels = new HashMap<>();
-  private FrameworkSupportNodeBase myLastSelectedNode;
+  private FrameworkSupportNodeBase<?> myLastSelectedNode;
 
-  private Collection<FrameworkSupportNodeBase> myAssociatedFrameworks;
-  @Nullable
-  private final JPanel myAssociatedFrameworksPanel;
+  private Collection<FrameworkSupportNodeBase<?>> myAssociatedFrameworks;
+  private final @Nullable JPanel myAssociatedFrameworksPanel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportInModuleProvider> providers,
                                       final FrameworkSupportModelBase model, boolean vertical, @Nullable JPanel associatedFrameworksPanel) {
     myModel = model;
     myAssociatedFrameworksPanel = associatedFrameworksPanel;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myMainPanel = new JPanel();
+      myMainPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myLabel = new JLabel();
+      myLabel.setEnabled(true);
+      Font myLabelFont = this.$$$getFont$$$(null, -1, -1, myLabel.getFont());
+      if (myLabelFont != null) myLabel.setFont(myLabelFont);
+      this.$$$loadLabelText$$$(myLabel,
+                               this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.text.please.select.desired.technologies"));
+      myMainPanel.add(myLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                   false));
+      myFrameworksPanel = new JPanel();
+      myFrameworksPanel.setLayout(new BorderLayout(0, 0));
+      myMainPanel.add(myFrameworksPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+    }
     myLibrariesContainer = model.getLibrariesContainer();
 
     myLabel.setVisible(!vertical);
@@ -97,9 +123,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        if (!(node instanceof FrameworkSupportNode)) return;
+        if (!(node instanceof FrameworkSupportNode frameworkSupportNode)) return;
 
-        final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
         if (frameworkSupportNode == getSelectedNode()) {
           updateOptionsPanel();
         }
@@ -117,6 +142,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }, this);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         onSelectionChanged();
       }
@@ -138,29 +164,103 @@ public class AddSupportForFrameworksPanel implements Disposable {
     setProviders(providers);
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+  /** @noinspection ALL */
+  private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+    if (currentFont == null) return null;
+    String resultName;
+    if (fontName == null) {
+      resultName = currentFont.getName();
+    }
+    else {
+      Font testFont = new Font(fontName, Font.PLAIN, 10);
+      if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+        resultName = fontName;
+      }
+      else {
+        resultName = currentFont.getName();
+      }
+    }
+    Font font = new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
+    boolean isMac = System.getProperty("os.name", "").toLowerCase(Locale.ENGLISH).startsWith("mac");
+    Font fontWithFallback = isMac
+                            ? new Font(font.getFamily(), font.getStyle(), font.getSize())
+                            : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
+    return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myMainPanel; }
+
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers) {
     setProviders(providers, Collections.emptySet(), Collections.emptySet());
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);
-    for (FrameworkSupportNodeBase node : myRoots) {
-      if (preselected.contains(node.getId())) {
-        node.setChecked(true);
-      }
-    }
     setAssociatedFrameworks();
 
     myFrameworksTree.setRoots(myRoots);
     myFrameworksTree.setSelectionRow(0);
+
+    for (FrameworkSupportNodeBase<?> node : myRoots) {
+      if (preselected.contains(node.getId())) {
+        // we need to trigger `FrameworksTree::onNodeStateChanged`
+        // in order to preconfigure `FrameworkSupportNode`s
+        myFrameworksTree.setNodeState(node, true);
+      }
+    }
   }
 
   public void setAssociatedFrameworks() {
 
     if (myAssociatedFrameworksPanel == null) return;
-    for (FrameworkSupportNodeBase nodeBase : myAssociatedFrameworks) {
+    for (FrameworkSupportNodeBase<?> nodeBase : myAssociatedFrameworks) {
       if (nodeBase instanceof FrameworkSupportNode) {
         ((FrameworkSupportNode)nodeBase).getConfigurable().onFrameworkSelectionChanged(true);
         FrameworkSupportOptionsComponent component = initializeOptionsPanel((FrameworkSupportNode)nodeBase, false);
@@ -175,17 +275,17 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private static void addAssociatedFrameworkComponent(JPanel component, JPanel panel) {
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
-  protected void onFrameworkStateChanged() {}
+  protected void onFrameworkStateChanged() { }
 
   private void onSelectionChanged() {
     if (!myFrameworksTree.isProcessingMouseEventOnCheckbox()) {
       updateOptionsPanel();
     }
-    
-    final FrameworkSupportNodeBase selectedNode = getSelectedNode();
+
+    final FrameworkSupportNodeBase<?> selectedNode = getSelectedNode();
     if (!Comparing.equal(selectedNode, myLastSelectedNode)) {
       applyLibraryOptionsForSelected();
 
@@ -199,7 +299,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void applyLibraryOptionsForSelected() {
     if (myLastSelectedNode instanceof FrameworkSupportNode) {
-      final FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get((FrameworkSupportNode)myLastSelectedNode);
+      final FrameworkSupportOptionsComponent optionsComponent =
+        myInitializedOptionsComponents.get((FrameworkSupportNode)myLastSelectedNode);
       if (optionsComponent != null) {
         final LibraryOptionsPanel optionsPanel = optionsComponent.getLibraryOptionsPanel();
         if (optionsPanel != null) {
@@ -210,9 +311,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void updateOptionsPanel() {
-    final FrameworkSupportNodeBase node = getSelectedNode();
-    if (node instanceof FrameworkSupportNode) {
-      FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
+    final FrameworkSupportNodeBase<?> node = getSelectedNode();
+    if (node instanceof FrameworkSupportNode frameworkSupportNode) {
       initializeOptionsPanel(frameworkSupportNode, true);
       showCard(frameworkSupportNode.getId());
       UIUtil.setEnabled(myOptionsPanel, frameworkSupportNode.isChecked(), true);
@@ -232,7 +332,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel initializeGroupPanel(FrameworkGroup<?> group, boolean addToOptions) {
     JPanel panel = myInitializedGroupPanels.get(group);
     if (panel == null) {
-      FrameworkVersionComponent component = new FrameworkVersionComponent(myModel, group.getId(), group.getGroupVersions(), group.getPresentableName() + " version:");
+      FrameworkVersionComponent component = new FrameworkVersionComponent(myModel, group.getId(), group.getGroupVersions(),
+                                                                          JavaUiBundle.message("add.framework.support.label.version",
+                                                                                               group.getPresentableName()));
       panel = component.getMainPanel();
       myInitializedGroupPanels.put(group, panel);
       if (addToOptions) {
@@ -242,16 +344,15 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return panel;
   }
 
-  @Nullable
-  public FrameworkSupportNodeBase getSelectedNode() {
-    final FrameworkSupportNodeBase[] nodes = myFrameworksTree.getSelectedNodes(FrameworkSupportNodeBase.class, null);
+  public @Nullable FrameworkSupportNodeBase<?> getSelectedNode() {
+    final FrameworkSupportNodeBase<?>[] nodes = myFrameworksTree.getSelectedNodes(FrameworkSupportNodeBase.class, null);
     return nodes.length == 1 ? nodes[0] : null;
   }
 
   private FrameworkSupportOptionsComponent initializeOptionsPanel(final FrameworkSupportNode node, boolean addToOptions) {
     FrameworkSupportOptionsComponent component = myInitializedOptionsComponents.get(node);
     if (component == null) {
-      final FrameworkSupportNodeBase parentNode = node.getParentNode();
+      final FrameworkSupportNodeBase<?> parentNode = node.getParentNode();
       if (parentNode instanceof FrameworkSupportNode) {
         initializeOptionsPanel((FrameworkSupportNode)parentNode, addToOptions);
       }
@@ -290,44 +391,42 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return list;
   }
 
-  @Nullable
-  private LibraryCompositionSettings getLibraryCompositionSettings(FrameworkSupportNode node) {
+  private @Nullable LibraryCompositionSettings getLibraryCompositionSettings(FrameworkSupportNode node) {
     final FrameworkSupportOptionsComponent optionsComponent = myInitializedOptionsComponents.get(node);
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
-                                                           Set<String> associated,
-                                                           final Set<String> preselected) {
+  private Collection<FrameworkSupportNodeBase<?>> createNodes(List<? extends FrameworkSupportInModuleProvider> providers,
+                                                              Set<String> associated,
+                                                              final Collection<String> preselected) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<>();
     Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<>();
-    List<FrameworkSupportNodeBase> roots = new ArrayList<>();
-    Map<String, FrameworkSupportNodeBase> associatedNodes = new LinkedHashMap<>();
+    List<FrameworkSupportNodeBase<?>> roots = new ArrayList<>();
+    Map<String, FrameworkSupportNodeBase<?>> associatedNodes = new LinkedHashMap<>();
     for (FrameworkSupportInModuleProvider provider : providers) {
       createNode(provider, nodes, groups, roots, providers, associated, associatedNodes);
     }
 
     FrameworkSupportNodeBase.sortByName(roots,
-                                        (o1, o2) -> Comparing.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
+                                        (o1, o2) -> Boolean.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
     myRoots = roots;
     return associatedNodes.values();
   }
 
-  @Nullable
-  private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
-                                          final Map<String, FrameworkSupportNode> nodes,
-                                          final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots,
-                                          List<FrameworkSupportInModuleProvider> providers,
-                                          Set<String> associated,
-                                          Map<String, FrameworkSupportNodeBase> associatedNodes) {
+  private @Nullable FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
+                                                    final Map<String, FrameworkSupportNode> nodes,
+                                                    final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
+                                                    List<? super FrameworkSupportNodeBase<?>> roots,
+                                                    List<? extends FrameworkSupportInModuleProvider> providers,
+                                                    Set<String> associated,
+                                                    Map<String, FrameworkSupportNodeBase<?>> associatedNodes) {
     String id = provider.getFrameworkType().getId();
     FrameworkSupportNode node = nodes.get(id);
     if (node != null || associatedNodes.containsKey(id)) {
       return node;
     }
     String underlyingTypeId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
-    FrameworkSupportNodeBase parentNode = null;
+    FrameworkSupportNodeBase<?> parentNode = null;
     final FrameworkGroup<?> group = provider.getFrameworkType().getParentGroup();
     if (underlyingTypeId != null) {
       FrameworkSupportInModuleProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingTypeId, providers);
@@ -381,29 +480,29 @@ public class AddSupportForFrameworksPanel implements Disposable {
     if (myRoots != null) {
       addChildFrameworks(myRoots, list);
     }
-    list.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<>(FrameworkSupportNode.class)));
+    list.addAll(ContainerUtil.findAll(myAssociatedFrameworks, FrameworkSupportNode.class));
     return list;
   }
 
-  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result) {
-    for (FrameworkSupportNodeBase node : list) {
+  private static void addChildFrameworks(final List<? extends FrameworkSupportNodeBase<?>> list,
+                                         final List<? super FrameworkSupportNode> result) {
+    for (FrameworkSupportNodeBase<?> node : list) {
       if (node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
           result.add((FrameworkSupportNode)node);
         }
-        //noinspection unchecked
         addChildFrameworks(node.getChildren(), result);
       }
     }
   }
 
-  public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
+  public boolean downloadLibraries(final @NotNull JComponent parentComponent) {
     applyLibraryOptionsForSelected();
     for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              JavaUiBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              JavaUiBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }
@@ -425,8 +524,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     if (!frameworksWithoutRequiredLibraries.isEmpty()) {
       String frameworksText = StringUtil.join(frameworksWithoutRequiredLibraries, ", ");
-      Messages.showErrorDialog(myMainPanel, ProjectBundle.message("error.message.required.library.is.not.configured", frameworksText, frameworksWithoutRequiredLibraries.size()),
-                               ProjectBundle.message("error.title.required.library.is.not.configured"));
+      Messages.showErrorDialog(myMainPanel, JavaUiBundle.message("error.message.required.library.is.not.configured", frameworksText,
+                                                                 frameworksWithoutRequiredLibraries.size()),
+                               JavaUiBundle.message("error.title.required.library.is.not.configured"));
       return false;
     }
     return true;
@@ -434,8 +534,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<>();
-    List<FrameworkSupportNode> selectedFrameworks = getSelectedNodes();
-    sortFrameworks(selectedFrameworks);
+    List<? extends FrameworkSupportNode> selectedFrameworks = sortFrameworks(getSelectedNodes());
     List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
     final IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     for (FrameworkSupportNode node : selectedFrameworks) {
@@ -446,8 +545,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
       final LibraryCompositionSettings settings = getLibraryCompositionSettings(node);
       Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries, myLibrariesContainer) : null;
       if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-        ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable().addSupport(module, rootModel,
-                                                                                                                         library);
+        ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable()
+          .addSupport(module, rootModel,
+                      library);
       }
       else {
         configurable.addSupport(module, rootModel, modifiableModelsProvider);
@@ -458,7 +558,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (provider instanceof OldFrameworkSupportProviderWrapper) {
         final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper)provider).getProvider();
         if (oldProvider instanceof FacetBasedFrameworkSupportProvider && !addedLibraries.isEmpty()) {
-          ((FacetBasedFrameworkSupportProvider)oldProvider).processAddedLibraries(module, addedLibraries);
+          ((FacetBasedFrameworkSupportProvider<?>)oldProvider).processAddedLibraries(module, addedLibraries);
         }
       }
     }
@@ -467,8 +567,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
-    final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
-    Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
+  private @Unmodifiable List<? extends FrameworkSupportNode> sortFrameworks(@Unmodifiable List<? extends FrameworkSupportNode> nodes) {
+    final Comparator<FrameworkSupportInModuleProvider> comparator =
+      FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
+    return ContainerUtil.sorted(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }
 }

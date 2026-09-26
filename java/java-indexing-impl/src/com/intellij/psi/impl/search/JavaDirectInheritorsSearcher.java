@@ -1,23 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.concurrency.ConcurrencyUtils;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
@@ -31,46 +45,42 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-/**
- * @author max
- */
-public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
+  public boolean execute(final @NotNull DirectClassInheritorsSearch.SearchParameters parameters, final @NotNull Processor<? super PsiClass> processor) {
+    if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
+      return true;
+    }
+
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
+
+    SearchScope scope = parameters.getScope();
 
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
       SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
-      return AllClassesSearch.search(useScope, project).forEach(psiClass -> {
+      SearchScope actualScope = useScope.intersectWith(scope);
+      return AllClassesSearch.search(actualScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
-        if (psiClass.isInterface()) {
-          return consumer.process(psiClass);
-        }
-        final PsiClass superClass = psiClass.getSuperClass();
-        return superClass == null || !JavaClassInheritorsSearcher.isJavaLangObject(superClass) || consumer.process(psiClass);
+        if (shortCircuitCandidate(psiClass)) return true;
+        return processor.process(psiClass);
       });
     }
 
-    SearchScope scope;
-    SearchScope useScope;
-    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
-    if (info == null) {
-      scope = parameters.getScope();
-      useScope = ReadAction.compute(baseClass::getUseScope);
-    }
-    else {
-      if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous())) return false;
-      scope = ReadAction.compute(() -> parameters.getScope().intersectWith(info.getDirtyScope()));
-      useScope = ReadAction.compute(() -> baseClass.getUseScope().intersectWith(info.getDirtyScope()));
-    }
-
-    PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, useScope);
+    PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, parameters);
 
     if (cache.length == 0) {
       return true;
@@ -82,53 +92,77 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     boolean sameJarClassFound = false;
     String currentFQN = null;
     boolean[] isOutOfScope = new boolean[cache.length]; // here we cache results of isInScope(scope, subClass) to avoid calculating it twice
-    for (int i = 0; i <= cache.length; i++) {
+    for (int i = 0; i < cache.length; i++) {
       ProgressManager.checkCanceled();
 
-      PsiClass subClass = i == cache.length ? null : cache[i];
+      PsiClass subClass = cache[i];
       if (subClass instanceof PsiAnonymousClass) {
         // we reached anonymous classes tail, process them all and exit
         if (!parameters.includeAnonymous()) {
-          return true;
+          return flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, i, processor);
         }
       }
-      if (i != cache.length && !isInScope(scope, subClass)) {
+      if (!isInScope(scope, subClass)) {
         isOutOfScope[i] = true;
         continue;
       }
 
-      String fqn = i == cache.length ? null : ReadAction.compute(subClass::getQualifiedName);
+      String fqn = ReadAction.compute(subClass::getQualifiedName);
 
-      if (currentFQN != null && Comparing.equal(fqn, currentFQN)) {
+      if (currentFQN != null && Objects.equals(fqn, currentFQN)) {
         VirtualFile currentJarFile = getJarFile(subClass);
         if (baseClassJarFile == null) {
           baseClassJarFile = getJarFile(baseClass);
         }
         boolean fromSameJar = Comparing.equal(currentJarFile, baseClassJarFile);
         if (fromSameJar) {
-          if (!consumer.process(subClass)) return false;
+          if (!processor.process(subClass)) return false;
           sameJarClassFound = true;
         }
       }
       else {
         currentFQN = fqn;
         // the end of the same-FQN group. Process only same-jar classes in subClasses[groupStart..i-1] group or the whole group if there were none.
-        if (!sameJarClassFound) {
-          for (int g=groupStart; g<i; g++) {
-            ProgressManager.checkCanceled();
-            if (isOutOfScope[g]) continue;
-            PsiClass subClassCandidate = cache[g];
-            if (!consumer.process(subClassCandidate)) return false;
-          }
-        }
+        if (!flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, i, processor)) return false;
         groupStart = i;
         sameJarClassFound = false;
       }
     }
 
+    return flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, cache.length, processor);
+  }
+
+  private static boolean flushCurrentGroup(PsiClass @NotNull [] cache,
+                                           boolean @NotNull [] isOutOfScope,
+                                           boolean sameJarClassFound,
+                                           int groupStart,
+                                           int afterGroup,
+                                           @NotNull Processor<? super PsiClass> processor) {
+    if (!sameJarClassFound) {
+      for (int g = groupStart; g < afterGroup; g++) {
+        ProgressManager.checkCanceled();
+        if (!isOutOfScope[g] && !processor.process(cache[g])) {
+          return false;
+        }
+      }
+    }
     return true;
   }
 
+  // true if processor should return true, false if the processor should return result of consumer.process(psiClass)
+  private static boolean shortCircuitCandidate(@NotNull PsiClass psiClass) {
+    return ReadAction.compute(() -> {
+      if (psiClass.isInterface()) {
+        return false;
+      }
+      final PsiClass superClass = psiClass.getSuperClass();
+      if (superClass == null || !superClass.isValid()) {
+        return true;
+      }
+      boolean isJavaLangObject = CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName());
+      return !isJavaLangObject;
+    });
+  }
   private static PsiClass getClassToSearch(@NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     return ReadAction.compute(() -> (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess()));
   }
@@ -139,60 +173,92 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   // The list starts with non-anonymous classes, ends with anonymous sub classes
   // Classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
-  @NotNull
-  private static PsiClass[] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull SearchScope useScope) {
+  private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project,
+                                                                     @NotNull PsiClass baseClass,
+                                                                     @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+    List<PsiClass> sealedInheritors =
+      ReadAction.compute(() -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> processSealed(baseClass)));
+    if (sealedInheritors != null) {
+      if (parameters.restrictSealedHierarchy()) {
+        // Do not cache: this list is fast to compute
+        return sealedInheritors.toArray(PsiClass.EMPTY_ARRAY);
+      }
+    }
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
-    if (cache != null) {
-      return cache;
+    if (cache == null) {
+      final String baseClassName = ReadAction.compute(baseClass::getName);
+      if (StringUtil.isEmpty(baseClassName)) {
+        return PsiClass.EMPTY_ARRAY;
+      }
+      cache = calculateDirectSubClasses(project, baseClass, baseClassName, parameters);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ReadAction.compute(baseClass::isPhysical)) {
+        cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
+      }
     }
-
-    final String baseClassName = ReadAction.compute(baseClass::getName);
-    if (StringUtil.isEmpty(baseClassName)) {
-      return PsiClass.EMPTY_ARRAY;
-    }
-    cache = calculateDirectSubClasses(project, baseClass, baseClassName, useScope);
-    // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-    if (ReadAction.compute(baseClass::isPhysical)) {
-      cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
+    if (sealedInheritors != null) {
+      // Do not cache invalid sealed inheritors
+      return Stream.concat(sealedInheritors.stream(), Stream.of(cache))
+        .distinct()
+        .toArray(PsiClass[]::new);
     }
     return cache;
   }
 
-  private static <T> boolean processConcurrentlyIfTooMany(@NotNull Collection<T> collection, @NotNull Processor<? super T> processor) {
+  private static <T> void processConcurrentlyIfTooMany(@NotNull Collection<? extends T> collection, @NotNull Processor<? super T> processor) {
     int size = collection.size();
     if (size == 0) {
-      return true;
+      return;
     }
     if (size > 100) {
-      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
+      ConcurrencyUtils.runWithIndicatorOrContextCancellation(_ ->
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(collection), processor));
     }
-    return ContainerUtil.process(collection, processor);
+    else {
+      ContainerUtil.process(collection, processor);
+    }
   }
 
-  @NotNull
-  private static PsiClass[] calculateDirectSubClasses(@NotNull Project project,
-                                                      @NotNull PsiClass baseClass,
-                                                      @NotNull String baseClassName,
-                                                      @NotNull SearchScope useScope) {
+  private static PsiClass @NotNull [] calculateDirectSubClasses(@NotNull Project project,
+                                                                @NotNull PsiClass baseClass,
+                                                                @NotNull String baseClassName,
+                                                                @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     DumbService dumbService = DumbService.getInstance(project);
-    GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
-      () -> StubHierarchyInheritorSearcher.restrictScope(new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project))));
+    SearchScope useScope;
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
+    useScope = ReadAction.compute(() -> {
+      SearchScope resultScope = PsiSearchHelper.getInstance(project).getUseScope(baseClass);
+      if (info == null) return resultScope;
+      return resultScope.intersectWith(info.getDirtyScope());
+    });
+
+    GlobalSearchScope globalUseScope = ReadAction.compute(
+      () -> new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
-      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().getOccurrences(baseClassName, project, globalUseScope));
 
     RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(baseClass));
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
     final Map<String, Object> classesWithFqn = new HashMap<>();
 
+    List<PsiAnonymousClass> anonymous = new ArrayList<>();
+
     processConcurrentlyIfTooMany(candidates,
        referenceList -> {
          ProgressManager.checkCanceled();
          dumbService.runReadActionInSmartMode(() -> {
-           final PsiClass candidate = (PsiClass)referenceList.getParent();
-           if (checker.checkInheritance(candidate)) {
+           PsiElement parent = referenceList.getParent();
+           PsiClass candidate;
+           if (parent instanceof PsiClass && checker.checkInheritance(candidate = (PsiClass)parent)) {
              String fqn = candidate.getQualifiedName();
+
              synchronized (classesWithFqn) {
+               if (candidate instanceof PsiAnonymousClass) {
+                 anonymous.add((PsiAnonymousClass)candidate);
+                 return;
+               }
+
                Object value = classesWithFqn.get(fqn);
                if (value == null) {
                  classesWithFqn.put(fqn, candidate);
@@ -204,7 +270,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                  classesWithFqn.put(fqn, list);
                }
                else {
-                 @SuppressWarnings("unchecked")
+                 //noinspection unchecked
                  List<PsiClass> list = (List<PsiClass>)value;
                  list.add(candidate);
                }
@@ -216,24 +282,27 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
        });
 
     final List<PsiClass> result = new ArrayList<>();
-    for (Object value : classesWithFqn.values()) {
-      if (value instanceof PsiClass) {
-        result.add((PsiClass)value);
-      }
-      else {
-        @SuppressWarnings("unchecked")
-        List<PsiClass> list = (List<PsiClass>)value;
-        result.addAll(list);
+    synchronized (classesWithFqn) {
+      for (Object value : classesWithFqn.values()) {
+        if (value instanceof PsiClass) {
+          result.add((PsiClass)value);
+        }
+        else {
+          //noinspection unchecked
+          List<PsiClass> list = (List<PsiClass>)value;
+          result.addAll(list);
+        }
       }
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance()
+        .getOccurences(baseClassName, project, globalUseScope));
 
     processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
       if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
         synchronized (result) {
-          result.add(candidate);
+          anonymous.add(candidate);
         }
       }
       return true;
@@ -249,43 +318,78 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           PsiEnumConstantInitializer initializingClass =
             ReadAction.compute(((PsiEnumConstant)field)::getInitializingClass);
           if (initializingClass != null) {
-            result.add(initializingClass); // it surely is an inheritor
+            synchronized (result) {
+              anonymous.add(initializingClass); // it surely is an inheritor
+            }
           }
         }
       }
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+    if (info != null) {
+      info.getHierarchyChildren().forEach(aClass -> {
+        if (aClass instanceof PsiAnonymousClass) {
+          anonymous.add((PsiAnonymousClass)aClass);
+        }
+        else if (aClass instanceof PsiClass) {
+          result.add((PsiClass)aClass);
+        }
+      });
+    }
+
+    synchronized (result) {
+      if (result.isEmpty() && anonymous.isEmpty()) return PsiClass.EMPTY_ARRAY;
+
+      result.addAll(anonymous);
+      return result.toArray(PsiClass.EMPTY_ARRAY);
+    }
+  }
+
+  private static @Nullable List<PsiClass> processSealed(@NotNull PsiClass baseClass) {
+    if (!baseClass.hasModifierProperty(PsiModifier.SEALED)) return null;
+    PsiReferenceList permitsList = baseClass.getPermitsList();
+    if (permitsList == null) {
+      // all inheritors are in the current file
+      PsiFile file = baseClass.getContainingFile();
+      List<PsiClass> result = new ArrayList<>();
+      if (file instanceof PsiClassOwner owner) {
+        ArrayDeque<PsiClass> queue = new ArrayDeque<>();
+        Collections.addAll(queue, owner.getClasses());
+        while (!queue.isEmpty()) {
+          PsiClass aClass = queue.pop();
+          if (aClass.isInheritor(baseClass, false)) {
+            result.add(aClass);
+          }
+          Collections.addAll(queue, aClass.getInnerClasses());
+          for (PsiField field : aClass.getFields()) {
+            if (field instanceof PsiEnumConstant constant) {
+              ContainerUtil.addIfNotNull(queue, constant.getInitializingClass());
+            }
+          }
+        }
+      }
+      return result;
+    }
+    return Arrays.stream(permitsList.getReferencedTypes()).map(PsiClassType::resolve)
+      .filter(Predicates.nonNull())
+      .toList();
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {
     return ReadAction.compute(() -> PsiUtil.getJarFile(aClass));
   }
 
-  @Nullable
-  private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                               @NotNull Project project) {
+  private static @Nullable CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                                                         @NotNull Project project) {
     SearchScope scope = parameters.getScope();
-    if (!(scope instanceof GlobalSearchScope)) return null;
-
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-    if (compilerReferenceService == null) return null; //This is possible in CLion, where Java compiler is not defined
-
-    return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters),
-                                                        (GlobalSearchScope)scope,
-                                                        JavaFileType.INSTANCE);
-  }
-
-  private static boolean processInheritorCandidates(@NotNull Stream<PsiElement> classStream,
-                                                    @NotNull Processor<? super PsiClass> consumer,
-                                                    boolean acceptAnonymous) {
-    if (!acceptAnonymous) {
-      classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));
+    if (!(scope instanceof GlobalSearchScope)) {
+      return null;
     }
-    return ContainerUtil.process(classStream.iterator(), e -> {
-      ProgressManager.checkCanceled();
-      PsiClass c = (PsiClass) e;
-      return consumer.process(c);
-    });
+
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
+    if (compilerReferenceService == null) {
+      return null;
+    }
+    return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters), (GlobalSearchScope)scope, JavaFileType.INSTANCE);
   }
 }

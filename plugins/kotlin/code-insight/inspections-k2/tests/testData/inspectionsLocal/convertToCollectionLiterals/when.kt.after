@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+
+val x = when {
+    true -> []
+    else -> emptyList<String>()
+}

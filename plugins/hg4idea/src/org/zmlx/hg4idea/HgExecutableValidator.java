@@ -20,8 +20,9 @@ import org.zmlx.hg4idea.util.HgUtil;
 public class HgExecutableValidator extends ExecutableValidator {
   public HgExecutableValidator(@NotNull Project project) {
     super(project,
-          HgVcsMessages.message("hg4idea.executable.notification.title"),
-          HgVcsMessages.message("hg4idea.executable.notification.description"));
+          HgBundle.message("hg4idea.executable.notification.title"),
+          HgBundle.message("hg4idea.executable.notification.description"),
+          HgBundle.message("hg4idea.executable.notification.cant.run.in.safe.mode"));
   }
 
   @Override
@@ -29,14 +30,13 @@ public class HgExecutableValidator extends ExecutableValidator {
     return HgExecutableManager.getInstance().getHgExecutable(myProject);
   }
 
-  @NotNull
   @Override
-  protected String getConfigurableDisplayName() {
-    return HgProjectConfigurable.DISPLAY_NAME;
+  protected @NotNull String getConfigurableDisplayName() {
+    return HgBundle.message("hg4idea.mercurial");
   }
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return HgUtil.isExecutableValid(executable);
+    return HgUtil.isExecutableValid(myProject, executable);
   }
 }

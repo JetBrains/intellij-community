@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +11,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.auth.AcceptResult;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
 public class ServerSSHDialog extends DialogWrapper {
   private AcceptResult myResult;
-  private final String myFingerprints;
+  private final @NlsSafe @NotNull String myFingerprints;
   private JCheckBox myJCheckBox;
   private final boolean myStore;
   private final String myHost;
@@ -37,9 +30,9 @@ public class ServerSSHDialog extends DialogWrapper {
 
   public ServerSSHDialog(Project project,
                          boolean store,
-                         @NotNull final String host,
-                         @Nullable final String algorithm,
-                         @NotNull String fingerprints) {
+                         final @NotNull String host,
+                         final @Nullable String algorithm,
+                         @NlsSafe @NotNull String fingerprints) {
     super(project, true);
     myStore = store;
     myHost = host;
@@ -54,20 +47,23 @@ public class ServerSSHDialog extends DialogWrapper {
     setResizable(false);
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return false;
   }
 
-  @NotNull
-  protected Action[] createActions() {
+  @Override
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void doOKAction() {
     myResult = myJCheckBox.isSelected() ? AcceptResult.ACCEPTED_PERMANENTLY : AcceptResult.ACCEPTED_TEMPORARILY;
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     myResult = AcceptResult.REJECTED;
     super.doCancelAction();
@@ -77,6 +73,7 @@ public class ServerSSHDialog extends DialogWrapper {
     return myResult;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "org.jetbrains.idea.svn.dialogs.ServerSSHDialog";
   }

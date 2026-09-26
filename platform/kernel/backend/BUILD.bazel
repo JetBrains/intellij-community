@@ -1,0 +1,91 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.kernel.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.kernel.backend` end
+
+### auto-generated section `build intellij.platform.kernel.backend` start
+create_kotlinc_options(
+    name = "custom_backend",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlin.ExperimentalStdlibApi",
+    ],
+)
+
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.platform.kernel.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//platform/kernel/shared:kernel"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//platform/extensions",
+        "//platform/util",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/jetbrains/annotations",
+        "//platform/util/coroutines",
+        "//platform/kernel/shared:kernel",
+        "//platform/kernel/rpc.backend",
+        "//platform/core-api:core",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.platform.kernel.backend",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/kernel/shared:kernel",
+        "//platform/kernel/shared:kernel_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/backend:backend_test_lib",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.kernel.backend` end
+
+### auto-generated section `iml intellij.platform.kernel.backend` start
+exports_files(
+    [
+        "intellij.platform.kernel.backend.iml",
+        "resources/intellij.platform.kernel.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.kernel.backend` end

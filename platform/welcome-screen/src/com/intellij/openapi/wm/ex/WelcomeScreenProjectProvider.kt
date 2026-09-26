@@ -1,0 +1,259 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.ex
+
+import com.intellij.ide.GeneralLocalSettings
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
+import kotlin.io.path.absolute
+
+private val LOG = logger<WelcomeScreenProjectProvider>()
+private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
+private const val PROPERTY_PROJECT_PATH = "%s.project.path"
+
+@Volatile
+private var cachedProjectsBasePath: String? = null
+
+@Internal
+fun getWelcomeScreenProjectProvider(): WelcomeScreenProjectProvider? {
+  val providers = EP_NAME.extensionsIfPointIsRegistered
+  if (providers.isEmpty()) {
+    return null
+  }
+
+  if (providers.size > 1) {
+    LOG.warn("Multiple WelcomeScreenProjectProvider extensions")
+    return null
+  }
+  return providers.first()
+}
+
+@Internal
+interface WelcomeScreenProjectSupport {
+  /**
+   * @param forceOpenInNewFrame open the project in a frame of its own, without the "this window or a new one"
+   * question the platform asks while another project is open. An automatic open at IDE start passes `true`.
+   */
+  suspend fun createOrOpenWelcomeScreenProject(
+    extension: WelcomeScreenProjectProvider,
+    projectToClose: Project? = null,
+    forceOpenInNewFrame: Boolean = false,
+  ): Project
+
+  suspend fun openProject(path: Path, name: String, forceOpenInNewFrame: Boolean = false): Project
+}
+
+/**
+ * Allows identifying projects that act as a welcome screen tab.
+ * This is needed for customizing actions context.
+ *
+ * E.g., if a project is created/opened/cloned from a welcome screen project,
+ * we should close the welcome screen project to preserve the welcome screen experience.
+ *
+ * This customization is intended to be used per-IDE, not per language.
+ */
+@Internal
+abstract class WelcomeScreenProjectProvider {
+  companion object {
+    @JvmStatic
+    fun isWelcomeScreenProject(project: Project): Boolean {
+      val extension = getWelcomeScreenProjectProvider() ?: return false
+      return extension.doIsWelcomeScreenProject(project)
+    }
+
+    @Suppress("unused")
+    fun isEditableWelcomeProject(project: Project): Boolean {
+      val extension = getWelcomeScreenProjectProvider() ?: return false
+      return extension.doIsWelcomeScreenProject(project) && extension.doIsEditableProject(project)
+    }
+
+    fun isVcsEnabled(project: Project): Boolean {
+      val isEditable = isEditableWelcomeProject(project)
+      return isEditable && getWelcomeScreenProjectProvider()?.doIsVcsEnabled() ?: false
+    }
+
+    fun isForceDisabledFileColors(): Boolean {
+      val extension = getWelcomeScreenProjectProvider() ?: return false
+      return extension.doIsForceDisabledFileColors()
+    }
+
+    fun getCreateNewFileProjectPrefix(): String {
+      val extension = getWelcomeScreenProjectProvider() ?: return ""
+      return extension.doGetCreateNewFileProjectPrefix()
+    }
+
+    fun getWelcomeScreenProjectPath(): Path? {
+      return getWelcomeScreenProjectProvider()?.getWelcomeScreenProjectPath()
+    }
+
+    @Suppress("unused")
+    fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
+      return getWelcomeScreenProjectProvider()?.canOpenFilesFromSystemFileManager(filePath) ?: false
+    }
+
+    fun getProjectPaneToActivateId(): String? {
+      return getWelcomeScreenProjectProvider()?.doGetProjectPaneToActivateId()
+    }
+
+    fun getStartupToolWindowIdToActivate(): String? {
+      return getWelcomeScreenProjectProvider()?.doGetStartupToolWindowIdToActivate()
+    }
+
+    fun getToolWindowIdsToExclusiveShowing(): Set<String> {
+      return getWelcomeScreenProjectProvider()?.getToolWindowIdsToExclusiveShowing() ?: emptySet()
+    }
+
+    suspend fun createOrOpenWelcomeScreenProject(
+      extension: WelcomeScreenProjectProvider,
+      projectToClose: Project? = null,
+      forceOpenInNewFrame: Boolean = false,
+    ): Project {
+      return serviceAsync<WelcomeScreenProjectSupport>().createOrOpenWelcomeScreenProject(extension, projectToClose, forceOpenInNewFrame)
+    }
+  }
+
+  open suspend fun createSimpleProject(projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? = null
+
+  /**
+   * Return true if the welcome screen project can open [filePath] from the file manager (Explorer, Finder) or command line.
+   */
+  abstract fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean
+
+  /**
+   * When [canOpenFilesFromSystemFileManager] returns true for a file that is already inside a known
+   * IntelliJ project (some ancestor contains a `.idea/` directory), this hook decides whether to
+   * open it in the welcome project or in the existing project right away.
+   */
+  open fun shouldOpenInWelcomeScreenIfFileBelongsToProject(filePath: Path): Boolean = true
+
+  protected open fun getWelcomeScreenProjectPath(): Path {
+    return Path.of(getProjectsBasePath(), getWelcomeScreenProjectDirName()).absolute()
+  }
+
+  @Internal
+  fun getWelcomeScreenProjectPathForInternalUsage(): Path {
+    return getWelcomeScreenProjectPath()
+  }
+
+  protected open fun getWelcomeScreenProjectDirName(): String {
+    val productName = if (PlatformUtils.isIntelliJ() || PlatformUtils.isMPS()) {
+      ApplicationNamesInfo.getInstance().lowercaseProductName
+    }
+    else {
+      ApplicationNamesInfo.getInstance().productName
+    }
+    return "${productName}Home"
+  }
+
+  open fun getWelcomeScreenProjectName(): String {
+    return "${ApplicationNamesInfo.getInstance().fullProductName} Home"
+  }
+
+  protected open fun doIsWelcomeScreenProject(project: Project): Boolean {
+    val name = project.name
+    return name == getWelcomeScreenProjectName() || name == getWelcomeScreenProjectDirName()
+  }
+
+  open fun showHomeActionInProjectWidget(): Boolean = true
+
+  /**
+   * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
+   * Junie and other features might be disabled for non-editable welcome screen projects.
+   * See MTRH-1423
+   */
+  protected open fun doIsEditableProject(project: Project): Boolean {
+    return false
+  }
+
+  /**
+   * Return true if your project is a welcome screen that supports version control operations. This setting will be ignored unless the
+   * project is also editable. See [doIsEditableProject]
+   */
+  protected open fun doIsVcsEnabled(): Boolean = false
+
+  protected abstract fun doIsForceDisabledFileColors(): Boolean
+
+  protected abstract fun doGetCreateNewFileProjectPrefix(): String
+
+  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose = null)
+  }
+
+  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path, projectToClose: Project?): Project {
+    return serviceAsync<WelcomeScreenProjectSupport>().openProject(path, getWelcomeScreenProjectName())
+  }
+
+  /**
+   * Opens the welcome project in a frame of its own, with no "this window or a new one" question.
+   *
+   * The default opens through [WelcomeScreenProjectSupport.openProject]. A product with an open of its own
+   * overrides this too when it can honour the flag; otherwise its own open runs and may ask.
+   */
+  protected open suspend fun doCreateOrOpenWelcomeScreenProjectInNewFrame(path: Path): Project {
+    return serviceAsync<WelcomeScreenProjectSupport>().openProject(path, getWelcomeScreenProjectName(), forceOpenInNewFrame = true)
+  }
+
+  @Internal
+  suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path): Project {
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose = null)
+  }
+
+  @Internal
+  suspend fun doCreateOrOpenWelcomeScreenProjectForInternalUsage(path: Path, projectToClose: Project?, forceOpenInNewFrame: Boolean = false): Project {
+    if (forceOpenInNewFrame) {
+      return doCreateOrOpenWelcomeScreenProjectInNewFrame(path)
+    }
+    return doCreateOrOpenWelcomeScreenProject(path, projectToClose)
+  }
+
+  protected open fun doIsHiddenInRecentProjects(): Boolean = true
+
+  protected open fun doGetProjectPaneToActivateId(): String? = null
+
+  protected open fun doGetStartupToolWindowIdToActivate(): String? = null
+
+  protected open fun getToolWindowIdsToExclusiveShowing(): Set<String> = emptySet()
+
+  open fun addWelcomeProjectNewAction(): Boolean = true
+}
+
+@Suppress("DuplicatedCode")
+private fun getProjectsBasePath(): String {
+  val application = ApplicationManager.getApplication()
+  val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralLocalSettings.getInstance().defaultProjectDirectory
+  if (!fromSettings.isNullOrEmpty()) {
+    return PathManager.getAbsolutePath(fromSettings)
+  }
+
+  if (cachedProjectsBasePath == null) {
+    val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
+    val propertyName = String.format(PROPERTY_PROJECT_PATH, productName)
+    val propertyValue = System.getProperty(propertyName)
+    cachedProjectsBasePath = if (propertyValue != null) {
+      PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '"'))
+    }
+    else {
+      getUserHomeProjectDir()
+    }
+  }
+  return cachedProjectsBasePath!!
+}
+
+private fun getUserHomeProjectDir(): String {
+  val appNamesInfo = ApplicationNamesInfo.getInstance()
+  val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
+    appNamesInfo.productName
+  }
+  else {
+    appNamesInfo.lowercaseProductName
+  }
+  return Path.of(System.getProperty("user.home"), productName + "Projects").toString()
+}

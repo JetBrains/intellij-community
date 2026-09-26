@@ -1,20 +1,25 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
-  @Nullable private final FileAnnotation.PreviousFileRevisionProvider myProvider;
+  private final @Nullable FileAnnotation.PreviousFileRevisionProvider myProvider;
 
-  public AnnotatePreviousRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
-    super("Annotate Previous Revision", "Annotate successor of selected revision in new tab", AllIcons.Actions.Annotate,
-          annotation, vcs);
+  AnnotatePreviousRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
+    super(VcsBundle.messagePointer("action.annotate.previous.revision.text"),
+          VcsBundle.messagePointer("action.annotate.successor.selected.revision.in.new.tab.description"),
+          AllIcons.Actions.Annotate,
+          annotation,
+          vcs);
     myProvider = annotation.getPreviousFileRevisionProvider();
   }
 
@@ -27,11 +32,11 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
     super.update(e);
   }
 
-  @Nullable
   @Override
-  protected VcsFileRevision getRevision(int lineNumber) {
+  protected @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     assert myProvider != null;
 
+    int lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (lineNumber == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) {
       return myProvider.getLastRevision();
     }
@@ -39,5 +44,10 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
       if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
       return myProvider.getPreviousRevision(lineNumber);
     }
+  }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext(), true);
   }
 }

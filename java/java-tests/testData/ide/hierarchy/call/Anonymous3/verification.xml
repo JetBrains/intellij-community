@@ -1,0 +1,4 @@
+<node text="foo() (B)" base="true">
+  <node text="blabla() (A)"/>
+  <node text="run() (B.B())"/>
+</node>

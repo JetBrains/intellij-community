@@ -1,0 +1,24 @@
+<html>
+<body>
+<p>Reports invalid definitions and usages of classes recognized through a <code>@dataclass_transform()</code>-decorated
+  base class, metaclass, or decorator, as defined by PEP 681.</p>
+<p>
+  Detected problems include conflicting dataclass arguments or hand-written dunder methods, inconsistent
+  <code>frozen</code> settings across a class hierarchy, and <code>field(...)</code> calls that specify both
+  <code>default</code> and <code>default_factory</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+from typing import dataclass_transform
+
+
+@dataclass_transform()
+class ModelBase:
+    ...
+
+
+class User(ModelBase):
+    name: str
+</code></pre>
+</body>
+</html>

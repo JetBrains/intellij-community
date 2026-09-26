@@ -1,36 +1,29 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.history.integration.ui.models.RecentChange;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 
-public class RecentChangeDialog extends DirectoryHistoryDialog {
+@ApiStatus.Internal
+public final class RecentChangeDialog extends DirectoryHistoryDialog {
   private final RecentChange myChange;
 
   public RecentChangeDialog(Project p, IdeaGateway gw, RecentChange c) {
@@ -45,7 +38,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected JComponent createComponent() {
+  protected @NotNull JComponent createComponent() {
     JPanel result = new JPanel(new BorderLayout());
     result.add(super.createComponent(), BorderLayout.CENTER);
     result.add(createButtonsPanel(), BorderLayout.SOUTH);
@@ -62,8 +55,9 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
     return false;
   }
 
-  private JPanel createButtonsPanel() {
+  private @NotNull JPanel createButtonsPanel() {
     AbstractAction revert = new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         revert();
         close();
@@ -79,7 +73,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected String getHelpId() {
+  protected @NotNull String getHelpId() {
     return "reference.dialogs.recentChanges";
   }
 }

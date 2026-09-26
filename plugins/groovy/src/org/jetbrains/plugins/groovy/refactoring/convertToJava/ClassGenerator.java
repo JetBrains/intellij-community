@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.PsiClass;
@@ -27,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -57,7 +44,7 @@ public class ClassGenerator {
     }
   }
 
-  public void writeTypeDefinition(StringBuilder text, @NotNull final PsiClass typeDefinition, boolean toplevel, boolean insertPackageSmst) {
+  public void writeTypeDefinition(StringBuilder text, final @NotNull PsiClass typeDefinition, boolean toplevel, boolean insertPackageSmst) {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     final GroovyFile containingFile = (GroovyFile)typeDefinition.getContainingFile();
@@ -140,7 +127,7 @@ public class ClassGenerator {
 
   private void writeAllMethods(StringBuilder text, Collection<PsiMethod> methods, PsiClass aClass) {
     for (PsiMethod method : methods) {
-      if (!shouldBeGenerated(method)) continue;
+      if (!shouldBeGenerated(method, aClass)) continue;
 
       if (method.isConstructor()) {
         classItemGenerator.writeConstructor(text, method, aClass.isEnum());
@@ -153,7 +140,12 @@ public class ClassGenerator {
   }
 
 
-  private static boolean shouldBeGenerated(PsiMethod method) {
+  private static boolean shouldBeGenerated(PsiMethod method, PsiClass containingClass) {
+    if (containingClass instanceof GrEnumTypeDefinitionImpl &&
+        ((GrEnumTypeDefinitionImpl)containingClass).isPredefinedEnumMethod(method)) {
+      return false;
+    }
+
     for (PsiMethod psiMethod : method.findSuperMethods()) {
       if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final PsiType type = method.getReturnType();

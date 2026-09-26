@@ -1,55 +1,41 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
+import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
-/**
- * @author Denis Zhdanov
- * @since 23.05.13 18:46
- */
-public class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
-
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+@ApiStatus.Internal
+public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myProjectPathLabel;
@@ -65,7 +51,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   private RawCommandLineEditor myArgumentsEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
 
-  @Nullable private ExternalSystemTaskExecutionSettings myOriginalSettings;
+  private @Nullable ExternalSystemTaskExecutionSettings myOriginalSettings;
 
   public ExternalSystemTaskSettingsControl(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -77,18 +63,11 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   }
 
   @Override
-  public void fillUi(@NotNull final PaintAwarePanel canvas, int indentLevel) {
+  public void fillUi(final @NotNull PaintAwarePanel canvas, int indentLevel) {
     myProjectPathLabel = new JBLabel(ExternalSystemBundle.message(
       "run.configuration.settings.label.project", myExternalSystemId.getReadableName()
     ));
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
-    FileChooserDescriptor projectPathChooserDescriptor = null;
-    if (manager instanceof ExternalSystemUiAware) {
-      projectPathChooserDescriptor = ((ExternalSystemUiAware)manager).getExternalProjectConfigDescriptor();
-    }
-    if (projectPathChooserDescriptor == null) {
-      projectPathChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    }
+    FileChooserDescriptor projectPathChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(myExternalSystemId);
     String title = ExternalSystemBundle.message("settings.label.select.project", myExternalSystemId.getReadableName());
     myProjectPathField = new ExternalProjectPathField(myProject, myExternalSystemId, projectPathChooserDescriptor, title) {
       @Override
@@ -102,9 +81,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
     myTasksTextField = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
-    c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
-    canvas.add(myTasksTextField, c);
+    canvas.add(myTasksTextField, ExternalSystemUiUtil.getFillLineConstraints(0));
 
     new TaskCompletionProvider(myProject, myExternalSystemId, myProjectPathField).apply(myTasksTextField);
 
@@ -146,8 +123,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksTextField.setText(StringUtil.join(myOriginalSettings.getTaskNames(), " "));
     myVmOptionsEditor.setText(myOriginalSettings.getVmOptions());
     myArgumentsEditor.setText(myOriginalSettings.getScriptParameters());
-    myEnvVariablesComponent.setEnvData(
-      EnvironmentVariablesData.create(myOriginalSettings.getEnv(), myOriginalSettings.isPassParentEnvs()));
+    myEnvVariablesComponent.setEnvData(EnvironmentVariablesData.create(myOriginalSettings.getEnv(), myOriginalSettings.isPassParentEnvs()));
   }
 
   @Override
@@ -156,14 +132,11 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
       return false;
     }
 
-    return !Comparing.equal(normalizePath(myProjectPathField.getText()),
-                            normalizePath(myOriginalSettings.getExternalProjectPath()))
-           || !Comparing.equal(normalizePath(myTasksTextField.getText()),
-                               normalizePath(StringUtil.join(myOriginalSettings.getTaskNames(), " ")))
-           || !Comparing.equal(normalizePath(myVmOptionsEditor.getText()),
-                               normalizePath(myOriginalSettings.getVmOptions()))
-           || !Comparing.equal(normalizePath(myArgumentsEditor.getText()),
-                               normalizePath(myOriginalSettings.getScriptParameters()))
+    return !Objects.equals(normalizePath(myProjectPathField.getText()), normalizePath(myOriginalSettings.getExternalProjectPath()))
+           || !Objects
+      .equals(normalizePath(myTasksTextField.getText()), normalizePath(StringUtil.join(myOriginalSettings.getTaskNames(), " ")))
+           || !Objects.equals(normalizePath(myVmOptionsEditor.getText()), normalizePath(myOriginalSettings.getVmOptions()))
+           || !Objects.equals(normalizePath(myArgumentsEditor.getText()), normalizePath(myOriginalSettings.getScriptParameters()))
            || myEnvVariablesComponent.isPassParentEnvs() != myOriginalSettings.isPassParentEnvs()
            || !myEnvVariablesComponent.getEnvs().equals(myOriginalSettings.getEnv());
 
@@ -173,22 +146,20 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   public void apply(@NotNull ExternalSystemTaskExecutionSettings settings) {
     String projectPath = myProjectPathField.getText();
     settings.setExternalProjectPath(projectPath);
-    settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));
+    List<String> tasks = ParametersListUtil.parse(myTasksTextField.getText(), true, true);
+    settings.setTaskNames(tasks);
     settings.setVmOptions(myVmOptionsEditor.getText());
     settings.setScriptParameters(myArgumentsEditor.getText());
     settings.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
-    settings.setEnv(ContainerUtil.newHashMap(myEnvVariablesComponent.getEnvs()));
+    settings.setEnv(myEnvVariablesComponent.getEnvs().isEmpty() ? Collections.emptyMap() : new HashMap<>(myEnvVariablesComponent.getEnvs()));
   }
 
   @Override
   public boolean validate(@NotNull ExternalSystemTaskExecutionSettings settings) throws ConfigurationException {
     String projectPath = myProjectPathField.getText();
     if (myOriginalSettings == null) {
-      throw new ConfigurationException(String.format(
-        "Can't store external task settings into run configuration. Reason: target run configuration is undefined. Tasks: '%s', " +
-        "external project: '%s', vm options: '%s', arguments: '%s'",
-        myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText(), myArgumentsEditor.getText()
-      ));
+      throw new ConfigurationException(
+        ExternalSystemBundle.message("dialog.message.can.t.store.external.task.settings.into.run.configuration", myTasksTextField.getText(),projectPath,myVmOptionsEditor.getText(),myArgumentsEditor.getText()));
     }
     return true;
   }

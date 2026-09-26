@@ -1,0 +1,436 @@
+package pkg;
+
+public class TestBitwiseParentheses {
+   public static void main(String[] args) {
+      System.out.println(bitwiseAndWithAdd(255, 3, 5));// 6
+      System.out.println(bitwiseOrWithMul(15, 3, 5));// 7
+      System.out.println(bitwiseXorWithSub(255, 10, 3));// 8
+      System.out.println(shiftRightWithSub(65280, 8, 4));// 9
+      System.out.println(shiftLeftWithAdd(1, 2, 3));// 10
+      System.out.println(unsignedShiftWithMul(-1, 2, 4));// 11
+      System.out.println(addInsideBitwiseLeft(3, 5, 255));// 12
+      System.out.println(mulInsideShiftLeft(3, 2, 4));// 13
+      System.out.println(complexMixed(255, 65280, 8, 4));// 14
+      System.out.println(pureArithmetic(10, 3, 5));// 16
+      System.out.println(pureBitwiseSame(255, 15, 240));// 17
+      System.out.println(pureBitwiseDifferentPrec(255, 15, 1));// 18
+      System.out.println(bitwiseChildInsideArithmetic(15, 3, 10));// 19
+      System.out.println(shiftChildInsideArithmetic(8, 2, 5));// 20
+   }// 21
+
+   static int bitwiseAndWithAdd(int a, int b, int c) {
+      return a & (b + c);// 24
+   }
+
+   static int bitwiseOrWithMul(int a, int b, int c) {
+      return a | (b * c);// 28
+   }
+
+   static int bitwiseXorWithSub(int a, int b, int c) {
+      return a ^ (b - c);// 32
+   }
+
+   static int shiftRightWithSub(int a, int b, int c) {
+      return a >> (b - c);// 36
+   }
+
+   static int shiftLeftWithAdd(int a, int b, int c) {
+      return a << (b + c);// 40
+   }
+
+   static int unsignedShiftWithMul(int a, int b, int c) {
+      return a >>> (b * c);// 44
+   }
+
+   static int addInsideBitwiseLeft(int a, int b, int c) {
+      return (a + b) & c;// 48
+   }
+
+   static int mulInsideShiftLeft(int a, int b, int c) {
+      return (a * b) << c;// 52
+   }
+
+   static int complexMixed(int mask, int value, int total, int bits) {
+      return mask & value >> (total - bits);// 56
+   }
+
+   static int pureArithmetic(int a, int b, int c) {
+      return a + b * c;// 60
+   }
+
+   static int pureBitwiseSame(int a, int b, int c) {
+      return a & b & c;// 64
+   }
+
+   static int pureBitwiseDifferentPrec(int a, int b, int c) {
+      return a | b & c;// 68
+   }
+
+   static int bitwiseChildInsideArithmetic(int a, int b, int c) {
+      return (a & b) + c;// 72
+   }
+
+   static int shiftChildInsideArithmetic(int a, int b, int c) {
+      return (a << b) + c;// 76
+   }
+}
+
+class 'pkg/TestBitwiseParentheses' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+      1      4
+      2      4
+      3      4
+      4      4
+      5      4
+      6      4
+      7      4
+      8      4
+      9      4
+      a      4
+      b      4
+      c      4
+      d      4
+      e      5
+      f      5
+      10      5
+      11      5
+      12      5
+      13      5
+      14      5
+      15      5
+      16      5
+      17      5
+      18      5
+      19      5
+      1a      5
+      1b      6
+      1c      6
+      1d      6
+      1e      6
+      1f      6
+      20      6
+      21      6
+      22      6
+      23      6
+      24      6
+      25      6
+      26      6
+      27      6
+      28      6
+      29      6
+      2a      7
+      2b      7
+      2c      7
+      2d      7
+      2e      7
+      2f      7
+      30      7
+      31      7
+      32      7
+      33      7
+      34      7
+      35      7
+      36      7
+      37      7
+      38      8
+      39      8
+      3a      8
+      3b      8
+      3c      8
+      3d      8
+      3e      8
+      3f      8
+      40      8
+      41      8
+      42      8
+      43      8
+      44      9
+      45      9
+      46      9
+      47      9
+      48      9
+      49      9
+      4a      9
+      4b      9
+      4c      9
+      4d      9
+      4e      9
+      4f      9
+      50      10
+      51      10
+      52      10
+      53      10
+      54      10
+      55      10
+      56      10
+      57      10
+      58      10
+      59      10
+      5a      10
+      5b      10
+      5c      10
+      5d      10
+      5e      11
+      5f      11
+      60      11
+      61      11
+      62      11
+      63      11
+      64      11
+      65      11
+      66      11
+      67      11
+      68      11
+      69      11
+      6a      12
+      6b      12
+      6c      12
+      6d      12
+      6e      12
+      6f      12
+      70      12
+      71      12
+      72      12
+      73      12
+      74      12
+      75      12
+      76      12
+      77      12
+      78      12
+      79      12
+      7a      12
+      7b      13
+      7c      13
+      7d      13
+      7e      13
+      7f      13
+      80      13
+      81      13
+      82      13
+      83      13
+      84      13
+      85      13
+      86      13
+      87      13
+      88      14
+      89      14
+      8a      14
+      8b      14
+      8c      14
+      8d      14
+      8e      14
+      8f      14
+      90      14
+      91      14
+      92      14
+      93      14
+      94      14
+      95      14
+      96      14
+      97      14
+      98      14
+      99      15
+      9a      15
+      9b      15
+      9c      15
+      9d      15
+      9e      15
+      9f      15
+      a0      15
+      a1      15
+      a2      15
+      a3      15
+      a4      15
+      a5      15
+      a6      15
+      a7      15
+      a8      16
+      a9      16
+      aa      16
+      ab      16
+      ac      16
+      ad      16
+      ae      16
+      af      16
+      b0      16
+      b1      16
+      b2      16
+      b3      16
+      b4      16
+      b5      16
+      b6      17
+      b7      17
+      b8      17
+      b9      17
+      ba      17
+      bb      17
+      bc      17
+      bd      17
+      be      17
+      bf      17
+      c0      17
+      c1      17
+      c2      17
+      c3      18
+   }
+
+   method 'bitwiseAndWithAdd (III)I' {
+      0      21
+      1      21
+      2      21
+      3      21
+      4      21
+      5      21
+   }
+
+   method 'bitwiseOrWithMul (III)I' {
+      0      25
+      1      25
+      2      25
+      3      25
+      4      25
+      5      25
+   }
+
+   method 'bitwiseXorWithSub (III)I' {
+      0      29
+      1      29
+      2      29
+      3      29
+      4      29
+      5      29
+   }
+
+   method 'shiftRightWithSub (III)I' {
+      0      33
+      1      33
+      2      33
+      3      33
+      4      33
+      5      33
+   }
+
+   method 'shiftLeftWithAdd (III)I' {
+      0      37
+      1      37
+      2      37
+      3      37
+      4      37
+      5      37
+   }
+
+   method 'unsignedShiftWithMul (III)I' {
+      0      41
+      1      41
+      2      41
+      3      41
+      4      41
+      5      41
+   }
+
+   method 'addInsideBitwiseLeft (III)I' {
+      0      45
+      1      45
+      2      45
+      3      45
+      4      45
+      5      45
+   }
+
+   method 'mulInsideShiftLeft (III)I' {
+      0      49
+      1      49
+      2      49
+      3      49
+      4      49
+      5      49
+   }
+
+   method 'complexMixed (IIII)I' {
+      0      53
+      1      53
+      2      53
+      3      53
+      4      53
+      5      53
+      6      53
+      7      53
+   }
+
+   method 'pureArithmetic (III)I' {
+      0      57
+      1      57
+      2      57
+      3      57
+      4      57
+      5      57
+   }
+
+   method 'pureBitwiseSame (III)I' {
+      0      61
+      1      61
+      2      61
+      3      61
+      4      61
+      5      61
+   }
+
+   method 'pureBitwiseDifferentPrec (III)I' {
+      0      65
+      1      65
+      2      65
+      3      65
+      4      65
+      5      65
+   }
+
+   method 'bitwiseChildInsideArithmetic (III)I' {
+      0      69
+      1      69
+      2      69
+      3      69
+      4      69
+      5      69
+   }
+
+   method 'shiftChildInsideArithmetic (III)I' {
+      0      73
+      1      73
+      2      73
+      3      73
+      4      73
+      5      73
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+8 <-> 7
+9 <-> 8
+10 <-> 9
+11 <-> 10
+12 <-> 11
+13 <-> 12
+14 <-> 13
+16 <-> 14
+17 <-> 15
+18 <-> 16
+19 <-> 17
+20 <-> 18
+21 <-> 19
+24 <-> 22
+28 <-> 26
+32 <-> 30
+36 <-> 34
+40 <-> 38
+44 <-> 42
+48 <-> 46
+52 <-> 50
+56 <-> 54
+60 <-> 58
+64 <-> 62
+68 <-> 66
+72 <-> 70
+76 <-> 74

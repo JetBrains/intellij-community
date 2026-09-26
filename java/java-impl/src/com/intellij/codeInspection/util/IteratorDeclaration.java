@@ -1,26 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -32,40 +33,24 @@ import java.util.Objects;
 
 /**
  * Represents the iterator which traverses the iterable within the loop
- *
- * @author Tagir Valeev
  */
-public class IteratorDeclaration {
+public final class IteratorDeclaration extends IterableTraversal {
   private final @NotNull PsiLocalVariable myIterator;
-  private final @Nullable PsiExpression myIterable;
-  private final boolean myCollection;
 
   private IteratorDeclaration(@NotNull PsiLocalVariable iterator, @Nullable PsiExpression iterable, boolean collection) {
+    super(iterable, collection);
     myIterator = iterator;
-    myIterable = iterable;
-    myCollection = collection;
   }
 
-  @NotNull
-  public PsiLocalVariable getIterator() {
+  public @NotNull PsiLocalVariable getIterator() {
     return myIterator;
-  }
-
-  @Nullable
-  public PsiExpression getIterable() {
-    return myIterable;
-  }
-
-  public boolean isCollection() {
-    return myCollection;
   }
 
   public boolean isHasNextCall(PsiExpression condition) {
     return isIteratorMethodCall(condition, "hasNext");
   }
 
-  @Nullable
-  public PsiElement findOnlyIteratorRef(PsiExpression parent) {
+  public @Nullable PsiElement findOnlyIteratorRef(PsiExpression parent) {
     PsiElement element = PsiUtil.getVariableCodeBlock(myIterator, null);
     PsiCodeBlock block =
       element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
@@ -76,35 +61,39 @@ public class IteratorDeclaration {
   }
 
   public boolean isIteratorMethodCall(PsiElement candidate, String method) {
-    if (!(candidate instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
+    while (candidate instanceof PsiParenthesizedExpression) {
+      candidate = ((PsiParenthesizedExpression)candidate).getExpression();
+    }
+    if (!(candidate instanceof PsiMethodCallExpression call)) return false;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression expression = call.getMethodExpression();
     return method.equals(expression.getReferenceName()) && ExpressionUtils.isReferenceTo(expression.getQualifierExpression(), myIterator);
   }
 
+  @Override
+  public boolean isRemoveCall(PsiExpression candidate) {
+    return isIteratorMethodCall(candidate, "remove");
+  }
+
   public PsiVariable getNextElementVariable(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) return null;
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-    if (declaration.getDeclaredElements().length != 1) return null;
-    PsiElement element = declaration.getDeclaredElements()[0];
-    if (!(element instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable var = (PsiLocalVariable)element;
-    if (!isIteratorMethodCall(var.getInitializer(), "next")) return null;
+    PsiLocalVariable var = getDeclaredVariable(statement);
+    if (var == null || !isIteratorMethodCall(var.getInitializer(), "next")) return null;
     return var;
+  }
+
+  public static @Nullable PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
+    if (!(statement instanceof PsiDeclarationStatement declaration)) return null;
+    PsiElement[] elements = declaration.getDeclaredElements();
+    if (elements.length != 1) return null;
+    return ObjectUtils.tryCast(elements[0], PsiLocalVariable.class);
   }
 
   @Contract("null -> null")
   private static IteratorDeclaration extract(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) return null;
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-    if (declaration.getDeclaredElements().length != 1) return null;
-    PsiElement element = declaration.getDeclaredElements()[0];
-    if (!(element instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable variable = (PsiLocalVariable)element;
-    PsiExpression initializer = variable.getInitializer();
-    if (!(initializer instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
+    PsiLocalVariable variable = getDeclaredVariable(statement);
+    if (variable == null) return null;
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    if (!(initializer instanceof PsiMethodCallExpression call)) return null;
     if (!call.getArgumentList().isEmpty()) return null;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     boolean listIterator = "listIterator".equals(methodExpression.getReferenceName());
@@ -123,8 +112,7 @@ public class IteratorDeclaration {
     return new IteratorDeclaration(variable, methodExpression.getQualifierExpression(), isCollection);
   }
 
-  @Nullable
-  private static IteratorDeclaration fromForLoop(PsiForStatement statement) {
+  private static @Nullable IteratorDeclaration fromForLoop(PsiForStatement statement) {
     if (statement.getUpdate() != null) return null;
     PsiStatement initialization = statement.getInitialization();
     IteratorDeclaration declaration = extract(initialization);
@@ -132,15 +120,13 @@ public class IteratorDeclaration {
     return declaration;
   }
 
-  @Nullable
-  private static IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
+  private static @Nullable IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
     PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);
     if (declaration == null || !declaration.isHasNextCall(statement.getCondition())) return null;
-    if (!ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope()).forEach(ref -> {
-      return PsiTreeUtil.isAncestor(statement, ref.getElement(), true);
-    })) {
+    if (ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope())
+      .anyMatch(ref -> !PsiTreeUtil.isAncestor(statement, ref.getElement(), true))) {
       return null;
     }
     return declaration;

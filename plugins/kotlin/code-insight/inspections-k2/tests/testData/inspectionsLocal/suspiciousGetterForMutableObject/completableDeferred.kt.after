@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// PROBLEM: Getter returns a new 'CompletableDeferred' on each access
+// FIX: Convert property getter to initializer
+
+import kotlinx.coroutines.CompletableDeferred
+
+class Service {
+    val result = CompletableDeferred<String>()
+}

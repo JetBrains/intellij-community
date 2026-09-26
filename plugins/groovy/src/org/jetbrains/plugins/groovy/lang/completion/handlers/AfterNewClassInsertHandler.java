@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
@@ -26,8 +12,15 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -45,7 +38,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupElement> 
   }
 
   @Override
-  public void handleInsert(final InsertionContext context, LookupElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
     final PsiClassType.ClassResolveResult resolveResult = myClassType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || !psiClass.isValid()) {
@@ -96,8 +89,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupElement> 
     }
   }
 
-  @Nullable
-  private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
+  private static @Nullable Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

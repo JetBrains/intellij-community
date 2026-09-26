@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.configurations.RunProfile;
@@ -27,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import icons.GradleIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -36,20 +23,19 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/26/14
  */
-public class OpenGradleTestResultActionProvider implements ToggleModelActionProvider {
+public final class OpenGradleTestResultActionProvider implements ToggleModelActionProvider {
   public static final BooleanProperty OPEN_GRADLE_REPORT = new BooleanProperty("openGradleReport", false);
 
+  @Override
   public ToggleModelAction createToggleModelAction(TestConsoleProperties properties) {
     return new MyToggleModelAction(properties);
   }
 
   private static class MyToggleModelAction extends ToggleModelAction {
-    @Nullable
-    private ProjectSystemId mySystemId;
+    private @Nullable ProjectSystemId mySystemId;
 
-    public MyToggleModelAction(TestConsoleProperties properties) {
+    MyToggleModelAction(TestConsoleProperties properties) {
       super(GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.text"),
             GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.desc"),
                                  GradleIcons.GradleNavigate, properties, OPEN_GRADLE_REPORT);
@@ -64,7 +50,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       final String reportFilePath = getReportFilePath();
       if (reportFilePath != null) {
         BrowserUtil.browse(reportFilePath);
@@ -82,11 +68,9 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
       return GradleConstants.SYSTEM_ID.equals(mySystemId);
     }
 
-    @Nullable
-    private String getReportFilePath() {
+    private @Nullable String getReportFilePath() {
       final AbstractProperty.AbstractPropertyContainer properties = getProperties();
-      if (properties instanceof GradleConsoleProperties) {
-        GradleConsoleProperties gradleConsoleProperties = (GradleConsoleProperties)properties;
+      if (properties instanceof GradleConsoleProperties gradleConsoleProperties) {
         final File testReport = gradleConsoleProperties.getGradleTestReport();
         if (testReport != null && testReport.isFile()) return testReport.getPath();
       }

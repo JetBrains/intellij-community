@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.components;
 
-import javax.swing.*;
+import javax.swing.ListModel;
 
 /**
 * @author Konstantin Bulenkov
@@ -23,7 +23,7 @@ import javax.swing.*;
 class FixedRowsModel extends MultiColumnListModel {
   private final int myMaxRows;
 
-  public FixedRowsModel(ListModel model, int rows) {
+  FixedRowsModel(ListModel model, int rows) {
     super(model);
     myMaxRows = rows;
   }

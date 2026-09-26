@@ -1,24 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-/**
- * @author Sergey.Malenkov
- */
+@ApiStatus.Internal
 public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
-  static final JBColor FOREGROUND = new JBColor(0x8C8C8C, 0x8C8C8C);
-  static final JBColor BACKGROUND = new JBColor(0xF5F5F5, 0x4B4F52);
-  static final JBColor BORDER = new JBColor(0xDEDEDE, 0x383B3D);
+  private static final JBColor BACKGROUND = JBColor.namedColor("Panel.mouseShortcutBackground", new JBColor(0xF5F5F5, 0x4B4F52));
 
   private final int myClickCount;
   private MouseShortcut myMouseShortcut = null;
@@ -56,13 +52,14 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
-    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       new MacGestureSupportForMouseShortcutPanel(this, () -> myMouseShortcut = null);
     }
     setBackground(BACKGROUND);
     setOpaque(true);
   }
 
+  @Override
   public void setShortcut(MouseShortcut shortcut) {
     MouseShortcut old = getShortcut();
     if (old != null || shortcut != null) {

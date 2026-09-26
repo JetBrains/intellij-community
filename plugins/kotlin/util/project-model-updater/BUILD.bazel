@@ -1,0 +1,80 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build kotlin.util.project-model-updater` start
+create_kotlinc_options(
+    name = "custom_project-model-updater",
+    jvm_target = "21",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "project-model-updater",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_project-model-updater",
+    module_name = "kotlin.util.project-model-updater",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/okio:squareup-okio-jvm"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlin/reflect",
+        "//platform/util/jdom",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kaml",
+    ],
+)
+
+jvm_library(
+    name = "project-model-updater_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_project-model-updater",
+    module_name = "kotlin.util.project-model-updater",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":project-model-updater",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kaml:kaml_test_lib",
+        "//libraries/okio:squareup-okio-jvm_test_lib",
+    ],
+)
+### auto-generated section `build kotlin.util.project-model-updater` end
+
+### auto-generated section `iml kotlin.util.project-model-updater` start
+exports_files(
+    [
+        "kotlin.util.project-model-updater.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml kotlin.util.project-model-updater` end

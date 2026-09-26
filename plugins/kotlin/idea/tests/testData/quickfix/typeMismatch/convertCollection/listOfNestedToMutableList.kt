@@ -1,0 +1,9 @@
+// "Replace 'listOf(…)' with 'mutableListOf(…)'" "true"
+// PRIORITY: HIGH
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun foo(): MutableList<List<String>> {
+    return list<caret>Of(listOf(""))
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithMutableCollectionFactoryFix

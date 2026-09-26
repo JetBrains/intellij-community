@@ -1,0 +1,5 @@
+version = "7.2.2"
+upstream-repository = "https://github.com/giampaolo/psutil"
+
+[tool.stubtest]
+ci-platforms = ["darwin", "linux", "win32"]

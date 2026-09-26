@@ -1,0 +1,309 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.platform.pluginSystem.testFramework.isLibraryXiIncludeTarget
+import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.assertions.CleanupSnapshots
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.intellij.lang.annotations.Language
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TestName
+import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.invariantSeparatorsPathString
+
+private val testSnapshotDir = Path.of(getCommunityPath(), "platform/platform-tests/testSnapshots/plugin-validator")
+
+private const val TEST_PLUGIN_ID = "plugin"
+
+@TestDataPath($$"$CONTENT_ROOT/testSnapshots/plugin-validator")
+class PluginModelValidatorTest {
+  @Rule
+  @JvmField
+  val tempDirectory = TempDirectory()
+
+  @Rule
+  @JvmField
+  val testName = TestName()
+
+  private val snapshot: Path
+    get() = testSnapshotDir / "${sanitizeFileName(testName.methodName)}.json"
+
+  private val root: Path
+    get() = tempDirectory.rootPath
+
+  companion object {
+    @ClassRule
+    @JvmField
+    val cleanupSnapshots = CleanupSnapshots(testSnapshotDir)
+  }
+
+  @Test
+  fun `dependency on a plugin is specified as a plugin`() = runBlocking(Dispatchers.Default) {
+    val project = produceDependencyAndDependentPlugins()
+    val result = validatePluginModel(project)
+    assertThat(result.errors).isEmpty()
+    assertWithMatchSnapshot(result.graphAsString(root))
+  }
+
+  @Test
+  fun `dependency on a plugin must be specified as a plugin`() = runBlocking(Dispatchers.Default) {
+    val project = produceDependencyAndDependentPlugins {
+      it.replace("<plugin id=\"dependency\"/>", "<module name=\"intellij.dependent\"/>")
+    }
+
+    val errors = validatePluginModel(project).errorsAsString()
+    assertWithMatchSnapshot(errors)
+  }
+
+  @Test
+  fun `dependency on a plugin must be resolvable`() = runBlocking(Dispatchers.Default) {
+    val project = produceDependencyAndDependentPlugins {
+      it.replace("<plugin id=\"dependency\"/>", "<plugin id=\"incorrectId\"/>")
+    }
+
+    val errors = validatePluginModel(project).errorsAsString()
+    assertWithMatchSnapshot(errors)
+  }
+
+  @Test
+  fun `content module in the same source module`() = runBlocking(Dispatchers.Default) {
+    val project = producePluginWithContentModuleInTheSameSourceModule()
+    val result = validatePluginModel(project)
+    assertWithMatchSnapshot(result.errorsAsString())
+  }
+
+  @Test
+  fun `the descriptor named after the module wins over a same-named content fragment`() {
+    // Regression test for non-reproducible models: a content module's descriptor is the file named exactly
+    // `<module>.xml`. A module may also contain `<module>.*.xml` files (e.g. `<module>.content.xml`) that match the
+    // descriptor-discovery glob in SourceCodeBasedPluginModelBuilder but are NOT standalone descriptors. Registering
+    // every match under the source-module name made the winner depend on the order in which the filesystem enumerates
+    // directory entries (last write wins) — that order differs between machines, so a dependency-less fragment could
+    // shadow the real `<module>.xml` and silently flip dependency-based decisions. The canonical descriptor must win.
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
+            <idea-plugin>
+              <id>$TEST_PLUGIN_ID</id>
+              <content>
+                <module name="intellij.plugin.module"/>
+              </content>
+            </idea-plugin>
+          """,
+    )
+    createModuleWithXml(
+      name = "intellij.plugin.module",
+      project = project,
+      sourceRoot = root / "intellij.plugin.module",
+      path = "intellij.plugin.module",
+      content = """
+                  <idea-plugin package="plugin.module">
+                    <dependencies>
+                      <plugin id="com.intellij.modules.lang"/>
+                    </dependencies>
+                  </idea-plugin>
+                """,
+    )
+    // A dependency-less fragment that also matches the `intellij.plugin.module.*` glob; it must not shadow `<module>.xml`.
+    writeIdeaPluginXml(
+      file = root / "intellij.plugin.module" / "intellij.plugin.module.content.xml",
+      content = "<idea-plugin/>",
+      mutator = { it },
+    )
+
+    val model = SourceCodeBasedPluginModelBuilder(project, SourceCodeBasedPluginModelBuilderOptions())
+      .buildSourceCodeBasedPluginModel()
+
+    val info = model.moduleNameToInfo["intellij.plugin.module"]
+    assertThat(info?.descriptorFile?.fileName?.toString()).isEqualTo("intellij.plugin.module.xml")
+  }
+
+  @Test
+  fun `library xi include target uses prefix match only when target ends with wildcard`() {
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-*"))).isTrue()
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-"))).isFalse()
+    assertThat(isLibraryXiIncludeTarget("/META-INF/tips-java.xml", listOf("META-INF/tips-java.xml"))).isTrue()
+  }
+
+  private suspend fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(project, root)
+
+  private fun producePluginWithContentModuleInTheSameSourceModule(): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.angularJs",
+      project = project,
+      sourceRoot = root / "intellij.angularJs",
+      content = """
+        <!--suppress PluginXmlValidity -->
+        <idea-plugin>
+          <id>AngularJs</id>
+            <content>
+              <module name="intellij.angularJs/diagram"/>
+            </content>
+        </idea-plugin>
+      """,
+    )
+
+    writeIdeaPluginXml(
+      file = (root / "intellij.angularJs" / "intellij.angularJs.diagram.xml"),
+      content = """
+      <idea-plugin package="org.angularjs.diagram">
+        <dependencies>
+        </dependencies>
+      </idea-plugin>
+    """,
+    )
+    return project
+  }
+
+  @Test
+  fun `module must not have dependencies in old format`(): Unit = runBlocking(Dispatchers.Default) {
+    val project = producePluginWithContentModule {
+      it.replace("</dependencies>", "</dependencies><depends>com.intellij.modules.lang</depends>")
+    }
+    val result = validatePluginModel(project, root, PluginValidationOptions(
+      referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
+    ))
+    assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
+      Element 'depends' has no effect in a content module descriptor (
+        referencedDescriptorFile=intellij.plugin.module/intellij.plugin.module.xml
+      ), Old format must be not used for a module but `depends` tag is used (
+        descriptorFile=intellij.plugin.module/intellij.plugin.module.xml,
+        depends=DependsElement(pluginId=com.intellij.modules.lang)
+      )
+    """.trimIndent())
+  }
+
+  @Test
+  fun `a lazy rpc extension must declare the id the registry routes by`(): Unit = runBlocking(Dispatchers.Default) {
+    val project = producePluginWithContentModule {
+      it.replace("</dependencies>", """
+        </dependencies>
+        <extensions defaultExtensionNs="com.intellij">
+          <platform.rpc.backend.remoteApiProvider implementation="plugin.module.Provider"/>
+          <platform.rpc.projectRemoteTopicListener implementation="plugin.module.Listener" topicId="plugin.topic"/>
+          <platform.rpc.applicationRemoteTopicListener implementation="plugin.module.AppListener" topicId=""/>
+        </extensions>
+      """)
+    }
+    val result = validatePluginModel(project, root, PluginValidationOptions(
+      referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
+    ))
+    val messages = result.errors.map { it.message!!.lineSequence().first() }
+    assertThat(messages).containsExactlyInAnyOrder(
+      "Extension 'com.intellij.platform.rpc.backend.remoteApiProvider' with implementation 'plugin.module.Provider' has no 'apiInterfaces' attribute.",
+      "Extension 'com.intellij.platform.rpc.applicationRemoteTopicListener' with implementation 'plugin.module.AppListener' has no 'topicId' attribute.",
+    )
+  }
+
+  private fun produceDependencyAndDependentPlugins(mutator: (String) -> String = { it }): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.dependency",
+      project = project,
+      sourceRoot = root / "dependency",
+      content = """
+            <!--suppress PluginXmlValidity -->
+            <idea-plugin package="dependencyPackagePrefix">
+              <id>dependency</id>
+            </idea-plugin>
+          """,
+    )
+    createModuleWithXml(
+      name = "intellij.dependent",
+      project = project,
+      sourceRoot = root / "dependent",
+      content = """
+            <idea-plugin package="dependentPackagePrefix">
+              <id>dependent</id>
+              <dependencies>
+                <plugin id="dependency"/>
+              </dependencies>
+            </idea-plugin>
+          """,
+      mutator = mutator,
+    )
+    return project
+  }
+
+  private fun producePluginWithContentModule(mutator: (String) -> String = { it }): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
+            <!--suppress PluginXmlValidity -->
+            <idea-plugin package="plugin">
+              <id>${TEST_PLUGIN_ID}</id>
+              <content>
+                <module name="intellij.plugin.module"/>
+              </content>
+            </idea-plugin>
+          """,
+    )
+    createModuleWithXml(
+      name = "intellij.plugin.module",
+      project = project,
+      sourceRoot = root / "intellij.plugin.module",
+      path = "intellij.plugin.module",
+      content = """
+                  <idea-plugin package="plugin.module">
+                    <dependencies>
+                      <plugin id="com.intellij.modules.lang"/>
+                    </dependencies>
+                  </idea-plugin>
+                """,
+      mutator = mutator,
+    )
+    return project
+  }
+
+  private fun assertWithMatchSnapshot(charSequence: CharSequence) = assertThat(charSequence).toMatchSnapshot(snapshot)
+}
+
+private fun writeIdeaPluginXml(file: Path, @Language("xml") content: String, mutator: (String) -> String = { it }): Path {
+  return file.write(mutator(content).trimIndent())
+}
+
+private fun createModuleWithXml(
+  name: String,
+  project: JpsProject,
+  sourceRoot: Path,
+  path: String = "META-INF/plugin",
+  @Language("xml") content: String,
+  mutator: (String) -> String = { it },
+) {
+  writeIdeaPluginXml(file = sourceRoot.resolve("$path.xml"), content = content, mutator = mutator)
+  val module = project.addModule(name, JpsJavaModuleType.INSTANCE)
+  module.addSourceRoot(JpsPathUtil.pathToUrl(sourceRoot.invariantSeparatorsPathString), JavaSourceRootType.SOURCE)
+}
+
+private fun PluginValidationResult.errorsAsString(): CharSequence {
+  if (errors.isEmpty()) return ""
+  val sb = StringBuilder()
+  sb.append("${errors.size} errors:\n")
+  errors.zip(errors.indices).joinTo(sb, "\n") { (error, idx) ->
+    "[${idx + 1}]: ${"-".repeat(30)}\n" +
+    error.message!!.trim()
+  }
+  sb.append("\n${"-".repeat(35)}\n")
+  return sb
+}

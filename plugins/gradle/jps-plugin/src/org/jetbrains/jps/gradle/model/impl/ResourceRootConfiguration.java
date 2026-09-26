@@ -1,30 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
+import com.dynatrace.hash4j.hashing.HashFunnel;
+import com.dynatrace.hash4j.hashing.HashSink;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 @Tag("resource")
-public class ResourceRootConfiguration extends FilePattern {
-  @Tag("directory")
-  @NotNull
-  public String directory;
+public final class ResourceRootConfiguration extends FilePattern {
+  @Tag("directory") public @NotNull String directory;
 
-  @Tag("targetPath")
-  @Nullable
-  public String targetPath;
+  @Tag("targetPath") public @Nullable String targetPath;
 
   @Attribute("filtered")
   public boolean isFiltered;
@@ -32,15 +29,33 @@ public class ResourceRootConfiguration extends FilePattern {
   @XCollection(propertyElementName = "filters", elementName = "filter")
   public List<ResourceRootFilter> filters = new ArrayList<>();
 
-  public int computeConfigurationHash() {
-    int result = directory.hashCode();
-    result = 31 * result + (targetPath != null ? targetPath.hashCode() : 0);
-    result = 31 * result + (isFiltered ? 1 : 0);
-    result = 31 * result + includes.hashCode();
-    result = 31 * result + excludes.hashCode();
-    for (ResourceRootFilter filter : filters) {
-       result = 31 * result + filter.computeConfigurationHash();
+  public void computeConfigurationHash(@Nullable PathRelativizerService pathRelativizerService, @NotNull HashSink hash) {
+    if (pathRelativizerService == null) {
+      hash.putString(directory);
+      if (targetPath == null) {
+        hash.putInt(-1);
+      }
+      else {
+        hash.putString(targetPath);
+      }
     }
-    return result;
+    else {
+      hash.putString(pathRelativizerService.toRelative(directory));
+      if (targetPath == null) {
+        hash.putInt(-1);
+      }
+      else {
+        hash.putString(pathRelativizerService.toRelative(targetPath));
+      }
+    }
+
+    hash.putBoolean(isFiltered);
+    hash.putUnorderedIterable(includes, HashFunnel.forString(), Hashing.komihash5_0());
+    hash.putUnorderedIterable(excludes, HashFunnel.forString(), Hashing.komihash5_0());
+
+    for (ResourceRootFilter filter : filters) {
+      filter.computeConfigurationHash(hash);
+    }
+    hash.putInt(filters.size());
   }
 }

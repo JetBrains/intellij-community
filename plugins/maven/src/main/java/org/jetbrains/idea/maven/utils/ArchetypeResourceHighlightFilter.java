@@ -5,10 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
-public class ArchetypeResourceHighlightFilter extends ProblemHighlightFilter {
+public final class ArchetypeResourceHighlightFilter extends ProblemHighlightFilter {
 
   @Override
   public boolean shouldHighlight(@NotNull PsiFile psiFile) {

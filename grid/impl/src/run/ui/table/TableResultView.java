@@ -1,0 +1,3715 @@
+package com.intellij.database.run.ui.table;
+
+import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.database.actions.ShowEditMaximizedAction;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridListener;
+import com.intellij.database.datagrid.DataGridWithNestedTables;
+import com.intellij.database.datagrid.GridCellRequest;
+import com.intellij.database.datagrid.GridCellRequestKt;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridColumnLayout;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridSortingModel;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.GridUtilCore;
+import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
+import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.datagrid.HierarchicalReader;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.NestedTable;
+import com.intellij.database.datagrid.RawIndexConverter;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ResultViewColumn;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.datagrid.SelectionModelUtil;
+import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.datagrid.ViewIndexSet;
+import com.intellij.database.extractors.DisplayType;
+import com.intellij.database.remote.jdbc.LobInfo;
+import com.intellij.database.run.actions.ColumnLocalFilterAction;
+import com.intellij.database.run.ui.DataAccessType;
+import com.intellij.database.run.ui.DataGridRequestPlace;
+import com.intellij.database.run.ui.EditMaximizedView;
+import com.intellij.database.run.ui.GridTableCellEditor;
+import com.intellij.database.run.ui.ColumnOrderRestorer;
+import com.intellij.database.run.ui.ResultViewWithCells;
+import com.intellij.database.run.ui.ResultViewWithColumns;
+import com.intellij.database.run.ui.ResultViewWithRows;
+import com.intellij.database.run.ui.TableAggregatorWidgetHelper;
+import com.intellij.database.run.ui.ValueTabInfoProvider;
+import com.intellij.database.run.ui.grid.CellAttributes;
+import com.intellij.database.run.ui.grid.CellRenderingUtils;
+import com.intellij.database.run.ui.grid.DataGridSearchSession;
+import com.intellij.database.run.ui.grid.DummyGridColumnLayout;
+import com.intellij.database.run.ui.grid.GridColorsScheme;
+import com.intellij.database.run.ui.grid.GridRowHeader;
+import com.intellij.database.run.ui.grid.GridSearchSession;
+import com.intellij.database.run.ui.grid.JBTableWithResizableCells;
+import com.intellij.database.run.ui.grid.ResizableCellEditorsSupport;
+import com.intellij.database.run.ui.grid.TableCellImageCache;
+import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory;
+import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider;
+import com.intellij.database.run.ui.grid.renderers.GridCellRenderer;
+import com.intellij.database.run.ui.grid.renderers.GridCellRendererFactories;
+import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
+import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
+import com.intellij.database.settings.DataGridSettings;
+import com.intellij.database.settings.DataGridSettings.AutoTransposeMode;
+import com.intellij.find.FindModel;
+import com.intellij.find.SearchSession;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.bookmark.BookmarksManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.TableCell;
+import com.intellij.ui.TableExpandableItemsHandler;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SwingTextTrimmer;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
+import javax.swing.CellRendererPane;
+import javax.swing.DefaultRowSorter;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.RowFilter;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EventObject;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
+import java.util.function.Supplier;
+
+import static com.intellij.database.datagrid.GridUtilKt.isArrayCell;
+import static com.intellij.database.datagrid.GridUtilKt.setupDynamicRowHeight;
+import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
+import static com.intellij.database.run.ui.EditMaximizedViewKt.EDIT_MAXIMIZED_GRID_KEY;
+import static com.intellij.database.run.ui.GridTableCellEditor.TABLE_CELL_EDITOR_PROPERTY;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetBackground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetForeground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetGridColor;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionBackground;
+import static com.intellij.database.run.ui.grid.GridColorSchemeUtil.doGetSelectionForeground;
+import static com.intellij.database.run.ui.grid.TableCellImageCache.MAX_COLUMNS;
+import static com.intellij.database.run.ui.grid.TableCellImageCache.MAX_ROWS;
+import static com.intellij.database.run.ui.table.UnparsedValueHoverListener.Companion.Place.CENTER;
+import static com.intellij.util.containers.ContainerUtil.all;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.ui.UIUtil.getFontWithFallback;
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+
+/**
+ * The table that renders the grid's data. A subclass gives it its role: every role-specific concern below is a
+ * method with an inert body, so the subclass states what it does instead of the table asking which one it is.
+ *
+ * @author gregsh
+ */
+public class TableResultView extends JBTableWithResizableCells
+  implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows,
+             EditorColorsListener, UISettingsListener, UiDataProvider {
+
+  private final DataGrid myResultPanel;
+  private final MyTableColumnCache myColumnCache;
+  private final Renderers myRenderers;
+  private final TableCellImageCache myCellImageCache;
+  private final TableRawIndexConverter myRawIndexConverter;
+  private final ActionGroup myColumnHeaderPopupActions;
+  private final ActionGroup myRowHeaderPopupActions;
+  private final GridColumnLayout<GridRow, GridColumn> myColumnLayout;
+  private final GridSelectionGrower myGrower;
+  private final List<Consumer<Boolean>> mySelectionListeners = new ArrayList<>();
+
+  private ModelIndex<GridColumn> myClickedHeaderColumnIdx;
+  private Point myClickedHeaderPoint;
+  private double myFontSizeIncrement = 0.0d;
+  private double myFontSizeScale = 1.0d;
+  private final UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
+
+  private int myColumnsHashCode;
+  private PaintingSession myPaintingSession;
+
+  private Ref<Object> myCommonValue;
+  private boolean myWasAutomaticallyTransposed = false;
+  private boolean myDisableSelectionListeners = false;
+  private Consumer<Boolean> myColumnHeaderBgListener;
+  private Boolean myIsTransparentColumnHeaderBg;
+  private boolean myAllowMultilineColumnLabel = false;
+  private final AtomicInteger editingBlocked = new AtomicInteger(0); // TODO: currently only locks column reordering
+  private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
+  private TableFloatingToolbar myFloatingToolbar;
+
+  private StatisticsTableHeader myStatisticsHeader;
+
+  private static final Logger LOG = Logger.getInstance(TableResultView.class);
+
+  private final FrozenColumnsController myFrozenColumnsController;
+  private Int2ObjectMap<ColumnWidthState> myUntransposedColumnWidths;
+
+  private record ColumnWidthState(int width, boolean setByUser) {
+  }
+
+  /**
+   * @param frozenColumnsController the controller the strip is given. The grid's own table passes null and builds one.
+   */
+  protected TableResultView(@NotNull DataGrid resultPanel,
+                            @NotNull ActionGroup columnHeaderPopupActions,
+                            @NotNull ActionGroup rowHeaderPopupActions,
+                            @Nullable FrozenColumnsController frozenColumnsController) {
+    super(new RegularGridTableModel(resultPanel), new MyTableColumnModel());
+    myFrozenColumnsController = frozenColumnsController == null
+                                ? new FrozenColumnsController(this, resultPanel, columnHeaderPopupActions, rowHeaderPopupActions)
+                                : frozenColumnsController;
+    myResultPanel = resultPanel;
+    myCellImageCache = new TableCellImageCache(this, this);
+    myColumnHeaderPopupActions = columnHeaderPopupActions;
+    myRowHeaderPopupActions = rowHeaderPopupActions;
+    myRawIndexConverter = new TableRawIndexConverter(this, () -> isTransposed());
+    myColumnCache = new MyTableColumnCache();
+    myRenderers = new Renderers(myResultPanel, this);
+    myClickedHeaderColumnIdx = ModelIndex.forColumn(myResultPanel, -1);
+    myColumnLayout = ApplicationManager.getApplication().isUnitTestMode()
+                     ? new DummyGridColumnLayout()
+                     : GridHelper.get(myResultPanel).createColumnLayout(this, myResultPanel);
+    myGrower = new GridSelectionGrower(myResultPanel, this, this);
+    getTableHeader().setDefaultRenderer(createHeaderRenderer());
+    ComponentWithExpandableItems<?> tableHeader = ObjectUtils.tryCast(getTableHeader(), ComponentWithExpandableItems.class);
+    if (tableHeader != null) tableHeader.setExpandableItemsEnabled(false);
+    putClientProperty(BookmarksManager.ALLOWED, true);
+
+    ResizableCellEditorsSupport.install(this);
+
+    setupFocusListener();
+    setupMagnificator();
+    setEnableAntialiasing(true);
+    setShowLastHorizontalLine(true);
+
+    setFont(getColorsScheme().getFont(EditorFontType.PLAIN));
+    updateFonts();
+
+    adjustDefaultActions();
+    addPropertyChangeListener(TABLE_CELL_EDITOR_PROPERTY, e -> GridUtil.activeGridChanged(resultPanel));
+    getColumnModel().getSelectionModel().addListSelectionListener(e -> myGrower.reset());
+
+    addSelectionChangedListener(isAdjusting -> {
+      JScrollPane scrollPane = getScrollPane();
+      if (scrollPane != null) scrollPane.repaint();
+    });
+    new UnparsedValueHoverListener(CENTER, this).addTo(this);
+
+    setShowHorizontalLines(false);
+
+    installNestedTableClickHandler();
+  }
+
+  /**
+   * Wires the parts only the grid's own table has: grid-global helpers, the floating toolbar, the data-grid
+   * listener and column dragging. The strip shares the grid's data but none of these, so it leaves this alone.
+   * Called by the subclass after construction, because a constructor must not reach into a subclass that is not
+   * built yet.
+   */
+  final void installGridIntegration() {
+    TableSelectionModel.install(this, myResultPanel);
+    TableGoToRowHelper.install(this, myResultPanel);
+    TableAggregatorWidgetHelper.install(this, myResultPanel);
+    TablePositionWidgetHelper.install(this, myResultPanel);
+    TableScrollPositionManager.install(this, myResultPanel);
+    myFloatingToolbar = new TableFloatingToolbar(this, myResultPanel, myResultPanel.getCoroutineScope());
+
+    myResultPanel.addDataGridListener(new DataGridListener() {
+      @Override
+      public void onValueEdited(DataGrid dataGrid, @Nullable Object object) {
+        myCommonValue = Ref.create(object);
+      }
+    }, this);
+
+    var moveColumnListener = new MoveColumnListener(myResultPanel, this);
+    getTableHeader().addMouseListener(moveColumnListener);
+    columnModel.addColumnModelListener(moveColumnListener);
+    myFrozenColumnsController.installColumnResizeHandle();
+    ((MyTableColumnModel)getColumnModel()).setMoveTargetAdjuster(myFrozenColumnsController::adjustColumnMoveTarget);
+  }
+
+  private void installNestedTableClickHandler() {
+    if (!(myResultPanel instanceof DataGridWithNestedTables dataGridWithNestedTables) ||
+        !dataGridWithNestedTables.isNestedTableSupportEnabled()) {
+      return;
+    }
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON3) return;
+        int viewRow = rowAtPoint(e.getPoint());
+        int viewColumn = columnAtPoint(e.getPoint());
+        int modelRow = getRawIndexConverter().row2Model().applyAsInt(viewRow);
+        int modelColumn = getRawIndexConverter().column2Model().applyAsInt(viewColumn);
+        if (modelRow < 0 || modelColumn < 0) return;
+        if (dataGridWithNestedTables.onCellClick(ModelIndex.forRow(myResultPanel, modelRow),
+                                                 ModelIndex.forColumn(myResultPanel, modelColumn))) {
+          e.consume();
+        }
+      }
+    });
+  }
+
+  @Override
+  public boolean isCellComponent(@Nullable Component component) {
+    return component == this;
+  }
+
+  /** The controller that pairs this table with the other one. Both roles hold the same instance. */
+  protected final @NotNull FrozenColumnsController getFrozenColumnsController() {
+    return myFrozenColumnsController;
+  }
+
+  /**
+   * The same controller, or null while the base constructor still runs. {@link javax.swing.JTable} calls back into
+   * this class from its own constructor, before the field is assigned, so a role method that Swing can reach that
+   * early reads it through here.
+   */
+  protected final @Nullable FrozenColumnsController getFrozenColumnsControllerIfBuilt() {
+    return myFrozenColumnsController;
+  }
+
+  /** Drops the frozen columns before a transpose. The strip has none of its own to drop. */
+  protected void dropFrozenColumns() {
+  }
+
+  /** Runs after the model was swapped for a transpose, so a role can refresh what it owns. */
+  protected void onTransposed() {
+  }
+
+  /** Where the hint for an expanded cell may reach. The strip clips it to its own width; the grid's own table does not. */
+  protected @NotNull Rectangle narrowExpandedCellHint(@NotNull Rectangle visible, @NotNull TableCell key) {
+    return visible;
+  }
+
+  /** Paints the divider the strip draws on its trailing edge. The grid's own table draws none. */
+  protected void paintTrailingDivider(@NotNull Graphics g, int bottom) {
+  }
+
+  /**
+   * Hands a column selection to the table that owns the unified column selection, and answers whether it took it.
+   */
+  protected boolean forwardColumnSelection(int viewColumn, @NotNull MouseEvent e, @NotNull TableResultView primaryView) {
+    return false;
+  }
+
+  /** The strip this table owns, or null while it owns none. */
+  public @Nullable TableResultView getFrozenView() {
+    return null;
+  }
+
+  /** The table this strip was cut from, or null when this table is not a strip. */
+  protected @Nullable TableResultView getOwningPrimaryView() {
+    return null;
+  }
+
+  /** The other table of the pinned pair, seen from either side. */
+  private @Nullable TableResultView getPairedView() {
+    TableResultView frozenView = getFrozenView();
+    return frozenView != null ? frozenView : getOwningPrimaryView();
+  }
+
+  /**
+   * Shares the main table's floating toolbar with the strip so pinned cells offer the same actions.
+   */
+  void shareFloatingToolbarWith(@NotNull TableResultView frozenStrip) {
+    if (myFloatingToolbar != null) myFloatingToolbar.attach(frozenStrip);
+  }
+
+  /** Stops offering the toolbar in a strip that is being discarded, so a stale one is neither shown nor held on to. */
+  void stopSharingFloatingToolbarWith(@NotNull TableResultView frozenStrip) {
+    if (myFloatingToolbar != null) myFloatingToolbar.detach(frozenStrip);
+  }
+
+  @TestOnly
+  public @Nullable TableFloatingToolbar getFloatingToolbar() {
+    return myFloatingToolbar;
+  }
+
+  /** The table that owns the active cell editor: a pinned cell edits in the frozen strip rather than in this table. */
+  public @Nullable TableResultView getEditingView() {
+    if (isEditing()) return this;
+    TableResultView frozenView = getFrozenView();
+    return frozenView != null && frozenView.isEditing() ? frozenView : null;
+  }
+
+  private @NotNull TableResultView getUnifiedSelectionView() {
+    TableResultView primaryView = getOwningPrimaryView();
+    return primaryView == null ? this : primaryView;
+  }
+
+  /** Unscaled width of the divider the pinned strip paints on its trailing edge. */
+  static final int PIN_DIVIDER_WIDTH = 1;
+
+  @Override
+  public boolean isEditingAnywhere() {
+    return isEditing();
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.CONTEXT_MENU_POINT, myClickedHeaderPoint);
+  }
+
+  @Override
+  public void setShowHorizontalLines(boolean v) {
+    if (v) {
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 1));
+    }
+    super.setShowHorizontalLines(v);
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setShowHorizontalLines(v);
+  }
+
+  @Override
+  public void setShowVerticalLines(boolean showVerticalLines) {
+    if (showVerticalLines) {
+      setIntercellSpacing(new Dimension(1, getIntercellSpacing().height));
+    }
+    super.setShowVerticalLines(showVerticalLines);
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setShowVerticalLines(showVerticalLines);
+  }
+
+  /** The trailing blank rows grow the preferred height, so a strip without them ends above the main view. */
+  @Override
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    super.setAdditionalRowsCount(additionalRowsCount);
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setAdditionalRowsCount(additionalRowsCount);
+  }
+
+  @Override
+  public void setVisibleRowCount(int visibleRowCount) {
+    super.setVisibleRowCount(visibleRowCount);
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setVisibleRowCount(visibleRowCount);
+  }
+
+  @Override
+  public void setStriped(boolean striped) {
+    super.setStriped(striped);
+    if (striped) {
+      setShowHorizontalLines(false);
+      setShowVerticalLines(true);
+    }
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setStriped(striped);
+  }
+
+  @Override
+  protected @Nullable Color getStripeColor() {
+    return myResultPanel.getStripeRowBackground();
+  }
+
+  @Override
+  public @NotNull JComponent getComponent() {
+    return this;
+  }
+
+  @Override
+  public void showRowNumbers(boolean v) {
+    // The strip shows no gutter of its own. The grid's own table drives one through the controller.
+  }
+
+  /** Row-number header with its width computed now: created after rows are loaded (e.g. gutter restore on unpin) it
+   *  misses the data event that sizes it and would stay 1px wide. */
+  @NotNull GridRowHeader createSizedRowHeader() {
+    GridRowHeader header = myResultPanel.createRowHeader(this);
+    header.updatePreferredSize();
+    return header;
+  }
+
+  void syncAppearanceToFrozenView(@NotNull TableResultView frozenView) {
+    frozenView.setStriped(isStriped());
+    frozenView.setShowHorizontalLines(getShowHorizontalLines());
+    frozenView.setShowVerticalLines(getShowVerticalLines());
+    if (myIsTransparentColumnHeaderBg != null) {
+      frozenView.setTransparentColumnHeaderBackground(myIsTransparentColumnHeaderBg);
+    }
+    frozenView.setAllowMultilineLabel(myAllowMultilineColumnLabel);
+    frozenView.setHoveredRowHighlightMode(myHoveredRowMode);
+    frozenView.myFontSizeIncrement = myFontSizeIncrement;
+    frozenView.myFontSizeScale = myFontSizeScale;
+    frozenView.updateFonts();
+    frozenView.setRowHeight(getRowHeight());
+    frozenView.setAdditionalRowsCount(getAdditionalRowsCount());
+    frozenView.setVisibleRowCount(getVisibleRowCount());
+  }
+
+  /** A plain gesture in the frozen view collapses to one cell across both regions by reducing the main column
+   * selection to the clicked pinned column; Ctrl/Shift gestures stay additive. */
+  @Override
+  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    if (!myFrozenColumnsController.stopEditingBeforeSelectionChange(this, rowIndex, columnIndex)) return;
+    if (extend && myFrozenColumnsController.handleCellRangeSelection(this, rowIndex, columnIndex, toggle)) return;
+    super.changeSelection(rowIndex, columnIndex, toggle, extend);
+    myFrozenColumnsController.afterChangeSelection(this, columnIndex, toggle, extend);
+  }
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    myFrozenColumnsController.processMouseEvent(this, e, () -> super.processMouseEvent(e));
+  }
+
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    super.processMouseMotionEvent(e);
+    myFrozenColumnsController.processMouseMotionEvent(this, e);
+  }
+
+  @Override
+  public void setTransparentColumnHeaderBackground(boolean v) {
+    myIsTransparentColumnHeaderBg = v;
+    if (myColumnHeaderBgListener != null) myColumnHeaderBgListener.accept(myIsTransparentColumnHeaderBg);
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setTransparentColumnHeaderBackground(v);
+  }
+
+  public void addColumnHeaderBackgroundChangedListener(@NotNull Consumer<Boolean> listener) {
+    myColumnHeaderBgListener = listener;
+    if (myIsTransparentColumnHeaderBg != null) myColumnHeaderBgListener.accept(myIsTransparentColumnHeaderBg);
+  }
+
+  @Override
+  public void setAllowMultilineLabel(boolean v) {
+    myAllowMultilineColumnLabel = v;
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setAllowMultilineLabel(v);
+  }
+
+  @Override
+  protected @NotNull ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
+    return new TableExpandableItemsHandler(this) {
+      @Override
+      public @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
+        // A pinned column stays here as a zero-width placeholder, which always counts as truncated. Expanding it
+        // would draw the pinned value, selected, on top of the columns next to the strip.
+        if (isColumnFrozenHidden(key.column)) return null;
+        return super.getCellRendererAndBounds(key);
+      }
+
+      @Override
+      public Rectangle getVisibleRect(TableCell key) {
+        return narrowExpandedCellHint(super.getVisibleRect(key), key);
+      }
+
+      @Override
+      protected void handleSelectionChange(TableCell selected, boolean processIfUnfocused) {
+        if (selected == null) {
+          super.handleSelectionChange(null, processIfUnfocused);
+          return;
+        }
+        SelectionModel<GridRow, GridColumn> selectionModel = SelectionModelUtil.get(myResultPanel, TableResultView.this);
+        ViewIndex<GridRow> row = ViewIndex.forRow(myResultPanel, isTransposed() ? selected.column : selected.row);
+        ViewIndex<GridColumn> column = ViewIndex.forColumn(myResultPanel, isTransposed() ? selected.row : selected.column);
+
+        Object val = myResultPanel.getDataModel(DATA_WITH_MUTATIONS)
+          .getValueAt(row.toModel(myResultPanel), toModelColumn(column.asInteger()));
+        if (val instanceof NestedTable) {
+          super.handleSelectionChange(null, processIfUnfocused);
+          return;
+        }
+
+        boolean isSelected = selectionModel.isSelected(row, column);
+        EditMaximizedView view = myResultPanel.getUserData(EDIT_MAXIMIZED_GRID_KEY);
+        boolean suppress = isSelected && view != null && view.getCurrentTabInfoProvider() instanceof ValueTabInfoProvider;
+        super.handleSelectionChange(suppress ? null : selected, processIfUnfocused);
+      }
+    };
+  }
+
+  @Override
+  public void setValueAt(@Nullable Object v,
+                         @NotNull ModelIndex<GridRow> row,
+                         @NotNull ModelIndex<GridColumn> column,
+                         boolean allowImmediateUpdate,
+                         @NotNull GridRequestSource source) {
+    setValueAt(v, row, column, allowImmediateUpdate, source, null);
+  }
+
+  @Override
+  public void setValueAt(@Nullable Object v,
+                         @NotNull ModelIndex<GridRow> row,
+                         @NotNull ModelIndex<GridColumn> column,
+                         boolean allowImmediateUpdate,
+                         @NotNull GridRequestSource source,
+                         @Nullable Object metadata) {
+    int viewRowIdx = isTransposed() ? column.toView(myResultPanel).asInteger() : row.toView(myResultPanel).asInteger();
+    int viewColumnIdx = isTransposed() ? row.toView(myResultPanel).asInteger() : column.toView(myResultPanel).asInteger();
+    setValueAt(v, viewRowIdx, viewColumnIdx, allowImmediateUpdate, source, metadata);
+  }
+
+  @Override
+  public void setTransposed(boolean transposed) {
+    myWasAutomaticallyTransposed = false;
+    if (isTransposed() == transposed) return;
+    if (transposed) {
+      dropFrozenColumns();
+      rememberUntransposedColumnWidths();
+    }
+    GridUtil.saveAndRestoreSelection(myResultPanel, () -> {
+      doTranspose();
+      createDefaultColumnsFromModel();
+      if (!transposed) {
+        if (myResultPanel instanceof ColumnOrderRestorer grid) grid.restoreColumnsOrder();
+        restoreUntransposedColumnWidths();
+      }
+    });
+  }
+
+  private void rememberUntransposedColumnWidths() {
+    myUntransposedColumnWidths = new Int2ObjectOpenHashMap<>();
+    TableColumnModel columns = getColumnModel();
+    for (int i = 0; i < columns.getColumnCount(); i++) {
+      TableResultViewColumn column = (TableResultViewColumn)columns.getColumn(i);
+      int width = Math.max(column.getWidth(), column.getColumnWidth());
+      myUntransposedColumnWidths.put(column.getModelIndex(), new ColumnWidthState(width, column.isWidthSetByUser()));
+    }
+  }
+
+  private void restoreUntransposedColumnWidths() {
+    if (myUntransposedColumnWidths == null) return;
+    for (Int2ObjectMap.Entry<ColumnWidthState> entry : myUntransposedColumnWidths.int2ObjectEntrySet()) {
+      ResultViewColumn resultColumn = getColumnForPersistence(ModelIndex.forColumn(myResultPanel, entry.getIntKey()));
+      if (!(resultColumn instanceof TableResultViewColumn column)) continue;
+      ColumnWidthState state = entry.getValue();
+      if (state.setByUser()) {
+        column.setColumnWidthByUser(state.width());
+      }
+      else {
+        column.setColumnWidth(state.width());
+      }
+      column.setWidth(state.width());
+    }
+    myUntransposedColumnWidths = null;
+  }
+
+  public boolean isEditingBlocked() {
+    return editingBlocked.get() > 0;
+  }
+
+  public void setEditingBlocked(boolean editingBlocked) {
+    if (editingBlocked) {
+      this.editingBlocked.incrementAndGet();
+    }
+    else {
+      this.editingBlocked.decrementAndGet();
+    }
+  }
+
+  @Override
+  public @Nullable JScrollBar getVerticalScrollBar() {
+    JScrollPane scrollPane = getScrollPane();
+    return scrollPane == null ? null : scrollPane.getVerticalScrollBar();
+  }
+
+  private @Nullable JScrollPane getScrollPane() {
+    return ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, this);
+  }
+
+  @Override
+  public @Nullable JScrollBar getHorizontalScrollBar() {
+    JScrollPane scrollPane = getScrollPane();
+    return scrollPane == null ? null : scrollPane.getHorizontalScrollBar();
+  }
+
+  @Override
+  public void resetLayout() {
+    myColumnLayout.resetLayout();
+    // The pinned strip has its own layout, so relayout it too.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.resetLayout();
+  }
+
+  @Override
+  public void growSelection() {
+    myGrower.growSelection();
+  }
+
+  @Override
+  public void shrinkSelection() {
+    myGrower.shrinkSelection();
+  }
+
+  @Override
+  public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
+    ListSelectionListener l = e -> {
+      if (!myDisableSelectionListeners) {
+        WriteIntentReadAction.run(() -> {
+          listener.accept(e.getValueIsAdjusting());
+        });
+      }
+    };
+    getColumnModel().getSelectionModel().addListSelectionListener(l);
+    getSelectionModel().addListSelectionListener(l);
+    mySelectionListeners.add(listener);
+  }
+
+  @Override
+  public void restoreColumnsOrder(Map<Integer, ModelIndex<GridColumn>> expectedToModel) {
+    if (isTransposed()) return;
+    IntUnaryOperator column2View = getRawIndexConverter().column2View();
+    int columnsCount = myResultPanel.getVisibleColumnCount();
+    for (int expectedPos = 0; expectedPos < columnsCount; expectedPos++) {
+      ModelIndex<GridColumn> modelIndex = expectedToModel.get(expectedPos);
+      if (modelIndex == null) continue;
+      int actualPos = column2View.applyAsInt(modelIndex.value);
+      if (actualPos != -1 && actualPos != expectedPos) moveColumn(actualPos, expectedPos);
+    }
+  }
+
+  private void removeViewColumnFromColumnModel(ViewIndex<?> viewColumnIdx) {
+    getTableHeader().setDraggedColumn(null); // a workaround for JDK-6586009
+    myResultPanel.runWithIgnoreSelectionChanges(
+      () -> getColumnModel().removeColumn(getColumnModel().getColumn(viewColumnIdx.asInteger())));
+  }
+
+  private void addColumnAndMoveToTheCorrectPosition(ModelIndex<?> modelColumnIdx) {
+    addColumn(getColumnCache().getOrCreateColumn(modelColumnIdx.asInteger()));
+
+    int lastColumnIndex = getColumnCount() - 1;
+    myResultPanel.runWithIgnoreSelectionChanges(() -> {
+      for (int viewTargetColumnIdx = 0; viewTargetColumnIdx < lastColumnIndex; viewTargetColumnIdx++) {
+        if (getColumnModel().getColumn(viewTargetColumnIdx).getModelIndex() > modelColumnIdx.asInteger()) {
+          moveColumn(lastColumnIndex, viewTargetColumnIdx);
+          break;
+        }
+      }
+    });
+  }
+
+  public void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible) {
+    ViewIndex<?> viewColumnIdx = modelColumnIdx.toView(myResultPanel);
+    if (visible && viewColumnIdx.asInteger() < 0) {
+      boolean firstTimeShown = !getColumnCache().hasCachedColumn(modelColumnIdx.asInteger());
+      addColumnAndMoveToTheCorrectPosition(modelColumnIdx);
+      if (firstTimeShown) {
+        myColumnLayout.columnsShown(
+          isTransposed() ?
+          ModelIndexSet.forRows(myResultPanel, modelColumnIdx.asInteger()) :
+          ModelIndexSet.forColumns(myResultPanel, modelColumnIdx.asInteger()));
+      }
+    }
+    else if (!visible && viewColumnIdx.asInteger() >= 0) {
+      removeViewColumnFromColumnModel(viewColumnIdx);
+    }
+  }
+
+  public @NotNull ModelIndex<GridColumn> uiColumn(int uiColumn) {
+    int modelIndex = uiColumn < 1 || uiColumn >= myResultPanel.getVisibleColumnCount() + 1
+                     ? -1
+                     : getRawIndexConverter().column2Model().applyAsInt(uiColumn - 1);
+    return ModelIndex.forColumn(myResultPanel, modelIndex);
+  }
+
+  public int fromRealRowIdx(int uiRow) {
+    // produced model index can refer to pages other than current
+    return uiRow < 1 ? -1 : uiRow - 1;
+  }
+
+  @Override
+  public void showFirstCell(int rowNumOnCurrentPage) {
+    myResultPanel.showCell(fromRealRowIdx(rowNumOnCurrentPage), uiColumn(0));
+  }
+
+  private @NotNull GridColorsScheme getColorsScheme() {
+    return myResultPanel.getColorsScheme();
+  }
+
+  @Override
+  public void searchSessionUpdated() {
+    updateRowFilter();
+    getComponent().repaint();
+  }
+
+  public @Nullable JComponent getCellRendererComponent(@NotNull ViewIndex<GridRow> viewRow,
+                                                       @NotNull ViewIndex<GridColumn> viewColumn,
+                                                       boolean forDisplay) {
+    if (!viewRow.isValid(myResultPanel) || !viewColumn.isValid(myResultPanel)) {
+      return null;
+    }
+
+    int row = (isTransposed() ? viewColumn : viewRow).asInteger();
+    int column = (isTransposed() ? viewRow : viewColumn).asInteger();
+    TableCellRenderer renderer = getCellRenderer(row, column);
+    if (renderer == null) {
+      return null;
+    }
+
+    return (JComponent)prepareRenderer(renderer, row, column, forDisplay);
+  }
+
+  @Override
+  public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state) {
+    if (isTransposed()) {
+      getModel().fireTableDataChanged();
+    }
+    else {
+      setViewColumnVisible(columnIdx, state);
+    }
+  }
+
+  @Override
+  public void setRowEnabled(@NotNull ModelIndex<GridRow> rowIdx, boolean state) {
+    if (isTransposed()) {
+      setViewColumnVisible(rowIdx, state);
+    }
+    else {
+      getModel().fireTableDataChanged();
+    }
+  }
+
+  private @NotNull MyCellRenderer createHeaderRenderer() {
+    return new MyCellRenderer(this);
+  }
+
+  public void startPaintingSession() {
+    myPaintingSession = new PaintingSession();
+  }
+
+  public void endPaintingSession() {
+    myPaintingSession = null;
+  }
+
+  private void dropCaches() {
+    myCellImageCache.reset();
+  }
+
+  public MyTableColumnCache getColumnCache() {
+    return myColumnCache;
+  }
+
+  @Override
+  public @NotNull ModelIndex<GridColumn> getContextColumn() {
+    return myClickedHeaderColumnIdx;
+  }
+
+  /** Only the column popup sets this, and a test cannot show one. */
+  @TestOnly
+  public void setContextColumn(@NotNull ModelIndex<GridColumn> columnIdx) {
+    myClickedHeaderColumnIdx = columnIdx;
+  }
+
+  @Override
+  public void updateSortKeysFromColumnAttributes() {
+    RowSorter<? extends TableModel> rowSorter = getRowSorter();
+    if (rowSorter != null) {
+      rowSorter.setSortKeys(isTransposed() || myResultPanel.isSortViaOrderBy() ? null : createSortKeys());
+    }
+    // Mirror sort keys to the frozen view's own sorter so pinned rows stay aligned.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.updateSortKeysFromColumnAttributes();
+  }
+
+  @Override
+  public void orderingAndVisibilityChanged() {
+    getModel().fireTableDataChanged();
+  }
+
+  private @NotNull List<RowSorter.SortKey> createSortKeys() {
+    if (isTransposed()) return emptyList();
+
+    TreeMap<Integer, GridColumn> sortOrderMap = myResultPanel.getSortOrderMap();
+    int orderIdx = 0;
+    RowSorter.SortKey[] keys = new RowSorter.SortKey[sortOrderMap.size()];
+    for (GridColumn column : sortOrderMap.values()) {
+      RowSorter.SortKey key = new RowSorter.SortKey(column.getColumnNumber(),
+                                                    myResultPanel.getSortOrder(column) < 0
+                                                    ? SortOrder.ASCENDING
+                                                    : SortOrder.DESCENDING);
+      keys[orderIdx++] = key;
+    }
+
+    return List.of(keys);
+  }
+
+  @Override
+  public @NotNull RawIndexConverter getRawIndexConverter() {
+    return myRawIndexConverter;
+  }
+
+  @Override
+  public void addMouseListenerToComponents(@NotNull MouseListener listener) {
+    JScrollPane scrollPane = getScrollPane();
+    if (scrollPane != null) scrollPane.addMouseListener(listener);
+    addMouseListener(listener);
+    myFrozenColumnsController.addMouseListenerToComponents(listener);
+  }
+
+  @Override
+  public boolean supportsCustomSearchSession() {
+    return true;
+  }
+
+  @Override
+  public @NotNull DataGridSearchSession createSearchSession(@Nullable FindModel findModel, @Nullable Component previousFilterComponent) {
+    FindModel newFindModel = new FindModel();
+    if (findModel != null) newFindModel.copyFrom(findModel);
+    DataGridSearchSession.configureFindModel(myResultPanel, newFindModel);
+    return new DataGridSearchSession(myResultPanel.getProject(), myResultPanel, newFindModel, previousFilterComponent);
+  }
+
+  @Override
+  public void searchSessionStarted(@NotNull SearchSession searchSession) {
+    if (!(searchSession instanceof GridSearchSession<?, ?>)) return;
+    ((GridSearchSession<?, ?>)searchSession).addListener(this, this);
+  }
+
+  public void doTranspose() {
+    myColumnCache.retainColumns(emptyList());
+    myColumnLayout.invalidateCache();
+    setModel(isTransposed() ? new RegularGridTableModel(myResultPanel) : new TransposedGridTableModel(myResultPanel));
+    onTransposed();
+    myResultPanel.updateSortKeysFromColumnAttributes();
+    getModel().fireTableDataChanged();
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    layoutColumnsIfNeeded();
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    if (getWidth() != 0) {
+      layoutColumnsIfNeeded();
+    }
+  }
+
+  private void layoutColumnsIfNeeded() {
+    if (myColumnsHashCode != 0) return;
+    int hash = computeColumnsHashCode();
+    if (hash == 0) return;
+    layoutColumns().doWhenDone(() -> myColumnsHashCode = hash);
+  }
+
+  @Override
+  protected void paintComponent(@NotNull Graphics g) {
+    adjustCacheSize();
+    super.paintComponent(g);
+    paintCellsEffects(g);
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    super.paint(g);
+    paintTrailingDivider(g, getLastRowBottom());
+  }
+
+  private int getLastRowBottom() {
+    if (getRowCount() == 0) return 0;
+    Rectangle lastRow = getCellRect(getRowCount() - 1, 0, true);
+    return lastRow.y + lastRow.height;
+  }
+
+  /**
+   * The pinned strip owns the pixel column the divider occupies, so any partial repaint that starts inside the strip
+   * paints the divider again. An overlay in an ancestor is skipped by such repaints and gets erased or ghosted. The
+   * line follows the visible rect, so the hosting viewport must not blit, or a scroll copies it along.
+   */
+  static void paintPinDivider(@NotNull Graphics g, @NotNull JComponent c, int height) {
+    int width = JBUIScale.scale(PIN_DIVIDER_WIDTH);
+    Rectangle visibleRect = c.getVisibleRect();
+    int leadingEdge = Math.max(0, visibleRect.x);
+    int trailingEdge = Math.min(c.getWidth(), visibleRect.x + visibleRect.width);
+    int x = c.getComponentOrientation().isLeftToRight()
+            ? Math.max(leadingEdge, trailingEdge - width)
+            : leadingEdge;
+    g.setColor(JBUI.CurrentTheme.EditorTabs.underlineColor());
+    g.fillRect(x, 0, width, Math.min(height, c.getHeight()));
+  }
+
+  private void adjustCacheSize() {
+    if (!myCellImageCache.isCacheEnabled()) return;
+    TableColumnModel columnModel = getColumnModel();
+    int columnCount = columnModel == null ? 0 : columnModel.getColumnCount();
+    int rowCount = getRowCount();
+    Rectangle visibleRect = getVisibleRect();
+    if (columnCount == 0 || rowCount == 0 || visibleRect.isEmpty()) return;
+
+    int minColumnWidth = Integer.MAX_VALUE;
+    for (int i = 0; i < columnCount; i++) {
+      TableColumn column = columnModel.getColumn(i);
+      minColumnWidth = Math.min(minColumnWidth, column.getMinWidth());
+    }
+    int rowHeight = getRowHeight();
+
+    int rowsMax = rowHeight == 0 ? rowCount : Math.min(rowCount, (int)Math.ceil(visibleRect.height / (float)rowHeight));
+    rowsMax = Math.min(MAX_ROWS, rowsMax);
+    int colsMax = minColumnWidth == 0 ? columnCount : Math.min(columnCount, (int)Math.ceil(visibleRect.width / (float)minColumnWidth));
+    colsMax = Math.min(MAX_COLUMNS, colsMax);
+    int factor = Math.max(1, Registry.intValue("database.grid.cache.factor"));
+    myCellImageCache.adjustCacheSize(rowsMax * colsMax * factor);
+  }
+
+  @Override
+  public int rowAtPoint(@NotNull Point point) {
+    int y = point.y;
+
+    var result = super.rowAtPoint(point);
+    if (result == -1 && y >= 0) { // we detect that the point is below all rows, not above
+      return getRowCount() - 1;
+    }
+    return result;
+  }
+
+  private void paintCellsEffects(Graphics g) {
+    Rectangle visibleArea = g.getClipBounds();
+    int fromRow, fromColumn, toRow, toColumn;
+    Point at = new Point((int)visibleArea.getMinX(), (int)visibleArea.getMinY());
+    fromRow = rowAtPoint(at);
+    fromColumn = columnAtPoint(at);
+    at.setLocation(visibleArea.getMaxX(), visibleArea.getMaxY());
+    toRow = rowAtPoint(at);
+    toColumn = columnAtPoint(at);
+    if (fromColumn == -1) fromColumn = 0;
+    if (toRow == -1) toRow = 0;
+    if (toColumn == -1) toColumn = getColumnCount() - 1;
+    if (fromRow == -1) toRow = getRowCount() - 1;
+
+    for (int row = fromRow; row <= toRow; ++row) {
+      for (int column = fromColumn; column <= toColumn; ++column) {
+        paintCellEffects(g, row, column);
+      }
+    }
+  }
+
+  private void paintCellEffects(Graphics g, int row, int column) {
+    CellAttributes attributes = myResultPanel.getMarkupModel().getCellAttributes(
+      ViewIndex.forRow(myResultPanel, isTransposed() ? column : row).toModel(myResultPanel),
+      toModelColumn(isTransposed() ? row : column),
+      getColorsScheme());
+    if (attributes != null) {
+      CellRenderingUtils.paintCellEffect(g, getCellRect(row, column, true), attributes);
+    }
+  }
+
+  private int computeColumnsHashCode() {
+    int hash = 0;
+    List<GridColumn> columns = myResultPanel.getDataModel(DataAccessType.DATABASE_DATA).getColumns();
+    for (GridColumn column : columns) {
+      hash = System.identityHashCode(column) + 31 * hash;
+    }
+    return hash;
+  }
+
+  @Override
+  public boolean isViewModified() {
+    for (int viewColumnIdx = 0; viewColumnIdx < getColumnCount(); viewColumnIdx++) {
+      ViewIndex<?> viewIndex =
+        isTransposed() ? ViewIndex.forRow(myResultPanel, viewColumnIdx) : ViewIndex.forColumn(myResultPanel, viewColumnIdx);
+      ModelIndex<?> modelIndex = viewIndex.toModel(myResultPanel);
+      if (modelIndex.isValid(myResultPanel) && viewIndex.isValid(myResultPanel) && modelIndex.asInteger() != viewIndex.asInteger()) {
+        return true;
+      }
+    }
+
+    for (TableResultViewColumn tableColumn : myColumnCache) {
+      if (!tableColumn.isWidthSetByLayout()) {
+        return true;
+      }
+    }
+
+    int defaultRowHeight = getRowHeight();
+    for (int i = 0; i < getRowCount(); i++) {
+      if (getRowHeight(i) != defaultRowHeight) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @Override
+  public void contentLanguageUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Language language) {
+    clearCache(columnIdx);
+  }
+
+  @Override
+  public void displayTypeUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull DisplayType displayType) {
+    clearCache(columnIdx);
+  }
+
+  private void clearCache(@NotNull ModelIndex<GridColumn> columnIdx) {
+    if (isTransposed() ? getColumnCount() == 0 : getRowCount() == 0) return;
+    int viewRow = isTransposed() ? columnIdx.toView(myResultPanel).asInteger() : 0;
+    int viewColumn = isTransposed() ? 0 : columnIdx.toView(myResultPanel).asInteger();
+
+    if (viewRow == -1 || viewColumn == -1) {
+      // this can happen when column exist in grid model but is not yet created in table
+      // when this method is called from createDefaultColumnsFromModel via methods updating binary display type
+      // DBE-16996
+      return;
+    }
+
+    TableCellImageCache.CachingCellRendererWrapper renderer =
+      ObjectUtils.tryCast(getCellRenderer(viewRow, viewColumn), TableCellImageCache.CachingCellRendererWrapper.class);
+    if (renderer != null) {
+      renderer.clearCache();
+      GridCellRendererWrapper rendererWrapper = ObjectUtils.tryCast(renderer.getDelegate(), GridCellRendererWrapper.class);
+      if (rendererWrapper != null) rendererWrapper.delegate.clearCache();
+    }
+    revalidate();
+    repaint();
+    // Rendering changes must invalidate the strip's separate cell-image cache too.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) {
+      frozenView.dropCaches();
+      frozenView.repaint();
+    }
+  }
+
+  private void setupFocusListener() {
+    addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(@NotNull FocusEvent e) {
+        if (isEditing()) {
+          Component component = getEditorComponent();
+          if (component != null) {
+            IdeFocusManager.getGlobalInstance()
+              .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
+          }
+        }
+      }
+    });
+  }
+
+  private void setupMagnificator() {
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, (Magnificator)(scale, at) -> {
+      int column = columnAtPoint(at);
+      int row = rowAtPoint(at);
+      Rectangle r1 = column < 0 || row < 0 ? getBounds() : getCellRect(row, column, true);
+      if (r1.width == 0 || r1.height == 0) return at;
+
+      double xPerc = (at.x - r1.x) / (double)r1.width;
+      double yPerc = (at.y - r1.y) / (double)r1.height;
+
+      changeFontSize(0, scale);
+
+      Rectangle r2 = column < 0 || row < 0 ? getBounds() : getCellRect(row, column, true);
+      return new Point((int)(r2.x + r2.width * xPerc), (int)(r2.y + r2.height * yPerc));
+    });
+  }
+
+  private void adjustDefaultActions() {
+    ActionMap actionMap = getActionMap();
+    Action selectPreviousRowCell = actionMap.get("selectPreviousRowCell");
+    actionMap.put("selectPreviousRowCell", new AbstractAction() {
+      @Override
+      public boolean isEnabled() {
+        return false;
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectPreviousRowCell.actionPerformed(e);
+      }
+    });
+    Action startEditing = actionMap.get("startEditing");
+    actionMap.put("startEditing", new AbstractAction() {
+      @Override
+      public boolean isEnabled() {
+        return false;
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        startEditing.actionPerformed(e);
+      }
+    });
+    myFrozenColumnsController.installColumnNavigationActions(this, actionMap);
+  }
+
+  @Override
+  public void columnMarginChanged(ChangeEvent e) {
+    // same as JTable#columnMarginChanged except for it doesn't stop editing
+    JTableHeader tableHeader = getTableHeader();
+    TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
+    if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
+      if (resizingColumn instanceof TableResultViewColumn column) {
+        int width = myFrozenColumnsController == null
+                    ? resizingColumn.getWidth()
+                    : myFrozenColumnsController.constrainFrozenColumnResize(this, column, resizingColumn.getWidth());
+        if (resizingColumn.getWidth() != width) resizingColumn.setWidth(width);
+        column.setColumnWidthByUser(width);
+      }
+      else {
+        resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+      }
+    }
+    resizeAndRepaint();
+    if (myFrozenColumnsController != null) myFrozenColumnsController.columnMarginChanged(this);
+  }
+
+  @Override
+  public String getToolTipText(@NotNull MouseEvent event) {
+    return "";
+  }
+
+  @Override
+  public void setRowHeight(int row, int rowHeight) {
+    if (row < 0 || row >= getRowCount()) {
+      return;
+    }
+
+    super.setRowHeight(row, rowHeight);
+
+    if (myFrozenColumnsController != null) myFrozenColumnsController.syncRowHeight(this, row, rowHeight);
+
+    Container parent = getParent();
+    if (parent instanceof JViewport) {
+      Container grandParent = parent.getParent();
+      if (grandParent instanceof JScrollPane) {
+        JViewport rowHeader = ((JScrollPane)grandParent).getRowHeader();
+        if (rowHeader != null) {
+          rowHeader.revalidate();
+          rowHeader.repaint();
+        }
+      }
+    }
+  }
+
+  @Override
+  protected @NotNull JTableHeader createDefaultTableHeader() {
+    return new MyTableHeader();
+  }
+
+  @Override
+  public void columnsAdded(ModelIndexSet<GridColumn> columnIndices) {
+    columnAttributesUpdated();
+    getModel().columnsAdded(columnIndices);
+    dropCaches();
+    myColumnLayout.newColumnsAdded(columnIndices);
+  }
+
+  @Override
+  public void columnAttributesUpdated() {
+    List<GridColumn> columns = myResultPanel.getDataModel(DataAccessType.DATABASE_DATA).getColumns();
+    if (!isTransposed()) {
+      getColumnCache().retainColumns(columns);
+      createDefaultColumnsFromModel();
+    }
+  }
+
+  @Override
+  public void columnsRemoved(ModelIndexSet<GridColumn> columns) {
+    getModel().columnsRemoved(columns);
+    if (!isTransposed()) createDefaultColumnsFromModel();
+    dropCaches();
+  }
+
+  @Override
+  public void rowsAdded(ModelIndexSet<GridRow> rows) {
+    getModel().rowsAdded(rows);
+    if (isTransposed()) createDefaultColumnsFromModel();
+    myColumnLayout.newRowsAdded(rows);
+  }
+
+  @Override
+  public void afterLastRowAdded() {
+    DataGridSettings settings = GridUtil.getSettings(myResultPanel);
+    if (!isTransposed() &&
+        getViewRowCount() == 1 &&
+        settings != null && settings.getAutoTransposeMode() == AutoTransposeMode.ONE_ROW) {
+      setTransposed(true);
+      myWasAutomaticallyTransposed = true;
+      return;
+    }
+    if (myWasAutomaticallyTransposed && isTransposed() && getViewRowCount() != 1) {
+      setTransposed(false);
+      return;
+    }
+
+    SingleRowModeHelper.expandRowIfNeeded(myResultPanel);
+
+    JComponent mainResultViewComponent = myResultPanel.getMainResultViewComponent();
+    JViewport header = mainResultViewComponent instanceof JScrollPane ? ((JScrollPane)mainResultViewComponent).getRowHeader() : null;
+    Component rowHeader = header == null ? null : header.getView();
+    if (rowHeader == null) return;
+    if (rowHeader instanceof TableResultRowHeader) {
+      ((TableResultRowHeader)rowHeader).updatePreferredSize();
+    }
+    rowHeader.revalidate();
+    rowHeader.repaint();
+  }
+
+  @Override
+  public void addSpaceForHorizontalScrollbar(boolean v) {
+    if (myResultPanel.getMainResultViewComponent() instanceof TableScrollPane scrollPane) {
+      scrollPane.addSpaceForHorizontalScrollbar(v);
+    }
+  }
+
+  @Override
+  public void expandMultilineRows(boolean v) {
+    if (v) {
+      setupDynamicRowHeight(this);
+    }
+  }
+
+  @Override
+  public void rowsRemoved(ModelIndexSet<GridRow> rows) {
+    getModel().rowsRemoved(rows);
+    if (isTransposed()) createDefaultColumnsFromModel();
+  }
+
+  @Override
+  public void cellsUpdated(ModelIndexSet<GridRow> rows, ModelIndexSet<GridColumn> columns, @Nullable GridRequestSource.RequestPlace place) {
+    getModel().cellsUpdated(rows, columns, place);
+    myColumnLayout.newRowsAdded(rows);
+  }
+
+  @Override
+  public void dispose() {
+    removeEditor();
+  }
+
+  @Override
+  public void changeSelectedColumnsWidth(int delta) {
+    int[] selectedColumns = getSelectedColumns();
+    int constrainedDelta = myFrozenColumnsController == null
+                           ? delta
+                           : myFrozenColumnsController.constrainSelectedColumnWidthDelta(this, selectedColumns, delta);
+    for (int column : selectedColumns) {
+      if (column < 0) continue;
+      ResultViewColumn tableColumn = renderedColumnAt(column);
+      if (tableColumn == null) continue;
+      tableColumn.setColumnWidthByUser(Math.max(0, tableColumn.getColumnWidth() + constrainedDelta));
+    }
+  }
+
+  @Override
+  public void fitColumnsToViewport() {
+    int totalColumns = renderedColumnCount();
+    if (totalColumns == 0) return;
+    int availableWidth = getAvailableColumnsWidth();
+    if (availableWidth <= 0) return;
+    int columnWidth = Math.max(JBUI.scale(40), availableWidth / totalColumns);
+    forEachRenderedColumn(column -> column.setColumnWidthByUser(columnWidth));
+  }
+
+  /**
+   * The width the columns share: the scrollable viewport plus the pinned strip, which is the row header and so sits
+   * outside that viewport. Zero or less while the grid is not laid out.
+   */
+  public int getAvailableColumnsWidth() {
+    int mainWidth = getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
+    return mainWidth;
+  }
+
+  /**
+   * Brings the leftmost of {@code columns} back into view. The rows stay where they are, because unpinning returns
+   * the columns and must not move the caller's place in the data.
+   */
+  public void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
+    if (isTransposed()) return;
+    IntUnaryOperator column2View = getRawIndexConverter().column2View();
+    int target = -1;
+    for (ModelIndex<GridColumn> column : columns) {
+      int viewColumn = column2View.applyAsInt(column.value);
+      if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
+    }
+    if (target < 0) return;
+    Rectangle visible = getVisibleRect();
+    Rectangle cell = getCellRect(Math.max(0, getSelectionModel().getLeadSelectionIndex()), target, true);
+    cell.y = visible.y;
+    cell.height = visible.height;
+    scrollRectToVisible(cell);
+  }
+
+  /**
+   * Whether pinning exactly {@code pinnedColumns} would leave the unpinned table usable. Widths are the ones the
+   * strip would render, so the scroll position does not matter and a column hidden from the view counts for nothing,
+   * just as the pin operation skips it.
+   */
+  public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
+    int availableWidth = getAvailableColumnsWidth();
+    if (availableWidth <= 0) return true;
+    IntSet pinned = new IntOpenHashSet(pinnedColumns.size());
+    for (ModelIndex<GridColumn> column : pinnedColumns) pinned.add(column.value);
+    TableColumnModel columnModel = getColumnModel();
+    int pinnedWidth = 0;
+    int unpinnedWidth = 0;
+    for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
+      if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
+      int width = column.getFrozenStripWidth();
+      if (pinned.contains(columnModel.getColumn(viewColumn).getModelIndex())) pinnedWidth += width;
+      else unpinnedWidth += width;
+    }
+    return PinnedColumnsFit.fits(pinnedWidth, unpinnedWidth, availableWidth);
+  }
+
+  /** Runs the operation over the pinned strip columns plus the visible main columns, so column actions span both. */
+  private void forEachRenderedColumn(@NotNull Consumer<ResultViewColumn> op) {
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) {
+      TableColumnModel frozenModel = frozenView.getColumnModel();
+      for (int i = 0; i < frozenModel.getColumnCount(); i++) op.accept((ResultViewColumn)frozenModel.getColumn(i));
+    }
+    TableColumnModel columnModel = getColumnModel();
+    for (int i = 0; i < columnModel.getColumnCount(); i++) {
+      if (isColumnFrozenHidden(i)) continue;
+      op.accept((ResultViewColumn)columnModel.getColumn(i));
+    }
+  }
+
+  private int renderedColumnCount() {
+    TableResultView frozenView = getFrozenView();
+    int count = frozenView == null ? 0 : frozenView.getColumnModel().getColumnCount();
+    TableColumnModel columnModel = getColumnModel();
+    for (int i = 0; i < columnModel.getColumnCount(); i++) {
+      if (!isColumnFrozenHidden(i)) count++;
+    }
+    return count;
+  }
+
+  /** The column controlling the rendered width at this view index: its frozen counterpart if pinned, else the main one. */
+  private @Nullable ResultViewColumn renderedColumnAt(int viewColumn) {
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null && isColumnFrozenHidden(viewColumn)) {
+      int frozenColumn = toViewColumnIn(viewColumn, frozenView);
+      return frozenColumn < 0 ? null : (ResultViewColumn)frozenView.getColumnModel().getColumn(frozenColumn);
+    }
+    TableColumnModel columnModel = getColumnModel();
+    return viewColumn < columnModel.getColumnCount() ? (ResultViewColumn)columnModel.getColumn(viewColumn) : null;
+  }
+
+  @Override
+  public void resetColumnWidths() {
+    for (TableResultViewColumn column : myColumnCache) {
+      column.clearWidthSetByUser();
+    }
+    // The frozen strip keeps its own column cache, so reset it too.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.resetColumnWidths();
+  }
+
+  @Override
+  public void resetRowHeights() {
+    int defaultRowHeight = getRowHeight();
+    for (int i = 0; i < getRowCount(); i++) {
+      if (getRowHeight(i) != defaultRowHeight) {
+        setRowHeight(i, defaultRowHeight);
+      }
+    }
+  }
+
+  public void disableSelectionListeners(Runnable runnable) {
+    try {
+      myDisableSelectionListeners = true;
+      runnable.run();
+    }
+    finally {
+      myDisableSelectionListeners = false;
+    }
+  }
+
+  public void fireSelectionChanged() {
+    for (Consumer<Boolean> listener : mySelectionListeners) {
+      listener.accept(false);
+    }
+  }
+
+  public @NotNull LocalFilterState getLocalFilterState() {
+    return myResultPanel.getLocalFilterState();
+  }
+
+  public static class MyCellRenderer extends MyHeaderCellComponent implements TableCellRenderer {
+    private final TableCellRenderer myOriginalRenderer;
+
+    public MyCellRenderer(@NotNull TableResultView table) {
+      super(table);
+      myOriginalRenderer = table.getTableHeader().getDefaultRenderer();
+    }
+
+    @Override
+    public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                            Object value,
+                                                            boolean isSelected,
+                                                            boolean hasFocus,
+                                                            int row,
+                                                            int column) {
+      return row == -1 ?
+             getHeaderCellRendererComponent(table.convertColumnIndexToModel(column), true) :
+             myOriginalRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    }
+
+    public Component getHeaderCellRendererComponent(int columnDataIdx, boolean forDisplay) {
+      GridModel<?, GridColumn> model = myTable.myResultPanel.getDataModel(DATA_WITH_MUTATIONS);
+      HierarchicalReader reader = model.getHierarchicalReader();
+
+      return prepare(columnDataIdx, forDisplay, reader);
+    }
+  }
+
+  /** Constrains where a column move may land; see {@link FrozenColumnsController#adjustColumnMoveTarget}. */
+  interface MoveTargetAdjuster {
+    int adjust(int targetIndex);
+  }
+
+  static class MyTableColumnModel extends DefaultTableColumnModel {
+    private @Nullable MoveTargetAdjuster myMoveTargetAdjuster;
+
+    private void setMoveTargetAdjuster(@NotNull MoveTargetAdjuster adjuster) {
+      myMoveTargetAdjuster = adjuster;
+    }
+
+    @Override
+    public void moveColumn(int columnIndex, int newIndex) {
+      int adjusted = myMoveTargetAdjuster == null ? newIndex : myMoveTargetAdjuster.adjust(newIndex);
+      super.moveColumn(columnIndex, adjusted);
+    }
+
+    @Override
+    public void addColumn(TableColumn aColumn) {
+      if (!(aColumn instanceof TableResultViewColumn)) {
+        throw new IllegalArgumentException("Unexpected column type");
+      }
+      super.addColumn(aColumn);
+    }
+
+    @Override
+    public TableResultViewColumn getColumn(int columnIndex) {
+      return (TableResultViewColumn)super.getColumn(columnIndex);
+    }
+
+    /**
+     * Deletes all columns from this model.
+     * <p>
+     * Causes selection model to be changed only once as opposed to
+     * multiple invocations of {@link #removeColumn}.
+     *
+     * @see #removeColumn
+     */
+    public void removeAllColumns() {
+      int columnCount = tableColumns.size();
+      if (columnCount == 0) return;
+
+      if (selectionModel != null) {
+        selectionModel.removeIndexInterval(0, columnCount - 1);
+      }
+      for (TableColumn column : tableColumns) {
+        column.removePropertyChangeListener(this);
+      }
+      totalColumnWidth = -1; // javax.swing.table.DefaultTableColumnModel.invalidateWidthCache
+      for (int i = columnCount - 1; i >= 0; i--) {
+        tableColumns.remove(i);
+        fireColumnRemoved(new TableColumnModelEvent(this, i, 0));
+      }
+    }
+  }
+
+  protected class MyTableHeader extends JBTableHeader {
+    private int myLastPositiveHeight = 0;
+    private @Nullable ModelIndex<GridColumn> hoveredFilterLabelIdx = null;
+    private @Nullable ModelIndex<GridColumn> hoveredSortLabelIdx = null;
+
+    @Override
+    public void setExpandableItemsEnabled(boolean enabled) {
+      super.setExpandableItemsEnabled(false); // we never want this
+    }
+
+    private void onColumnHeaderMouseMoved(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
+      var gridColumn = myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
+      var isHierarchicalColumn = gridColumn instanceof HierarchicalGridColumn;
+
+      // Map to this view's own column index; the grid-level index would overrun the smaller frozen column model.
+      var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
+      if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
+      var headerRect = tableHeader.getHeaderRect(currentViewIdx);
+
+      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx);
+
+      var point = e.getPoint();
+      var relativePoint = new Point(point.x - headerRect.x, point.y);
+      var filterLabel = currentHeader.filterLabel;
+      var sortLabel = currentHeader.myIconLabels.isEmpty() ?
+                      null :
+                      currentHeader.myIconLabels.getLast();
+
+      var previousFilterLabelIdx = hoveredFilterLabelIdx;
+      if (filterLabel.getBounds().contains(relativePoint)) {
+        hoveredFilterLabelIdx = columnIdx;
+      }
+      else {
+        hoveredFilterLabelIdx = null;
+      }
+
+      var previousSortLabelIdx = hoveredSortLabelIdx;
+      if (!isHierarchicalColumn && sortLabel != null && sortLabel.getBounds().contains(relativePoint)) {
+        hoveredSortLabelIdx = columnIdx;
+      }
+      else {
+        hoveredSortLabelIdx = null;
+      }
+
+      if (!Objects.equals(previousFilterLabelIdx, hoveredFilterLabelIdx) ||
+          !Objects.equals(previousSortLabelIdx, hoveredSortLabelIdx)) {
+        tableHeader.repaint();
+      }
+    }
+
+    {
+      setOpaque(false);
+      setFocusable(false);
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(final @NotNull MouseEvent e) {
+          processEvent(e);
+        }
+
+        @Override
+        public void mousePressed(final @NotNull MouseEvent e) {
+          processEvent(e);
+        }
+
+        @Override
+        public void mouseReleased(final @NotNull MouseEvent e) {
+          processEvent(e);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          if (isTransposed()) {
+            return;
+          }
+
+          if (MyTableHeader.this.hoveredFilterLabelIdx != null || MyTableHeader.this.hoveredSortLabelIdx != null) {
+            MyTableHeader.this.hoveredFilterLabelIdx = null;
+            MyTableHeader.this.hoveredSortLabelIdx = null;
+            MyTableHeader.this.repaint();
+          }
+        }
+
+        private void processEvent(MouseEvent e) {
+          if (isTransposed()) {
+            int modelRow = myRawIndexConverter.row2Model().applyAsInt(columnAtPoint(e.getPoint()));
+            if (modelRow >= 0) {
+              onRowHeaderClicked(ModelIndex.forRow(myResultPanel, modelRow), e);
+            }
+          }
+          else {
+            int modelColumn = myRawIndexConverter.column2Model().applyAsInt(columnAtPoint(e.getPoint()));
+            if (modelColumn >= 0) {
+              onColumnHeaderClicked(ModelIndex.forColumn(myResultPanel, modelColumn), e);
+            }
+          }
+        }
+      });
+      addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          if (isTransposed()) {
+            return;
+          }
+
+          int modelColumn = myRawIndexConverter.column2Model().applyAsInt(columnAtPoint(e.getPoint()));
+          if (modelColumn >= 0) {
+            onColumnHeaderMouseMoved(ModelIndex.forColumn(myResultPanel, modelColumn), e);
+          }
+        }
+      });
+    }
+
+    @Override
+    public boolean getReorderingAllowed() {
+      if (isTransposed() || isEditingBlocked()) return false;
+
+      List<GridColumn> columns = myResultPanel
+        .getDataModel(DATA_WITH_MUTATIONS)
+        .getColumns();
+
+      return !exists(
+        columns,
+        c -> c instanceof HierarchicalGridColumn hierarchicalColumn && !hierarchicalColumn.isTopLevelColumn()
+      );
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension d = super.getPreferredSize();
+      if (!isPreferredSizeSet() && d.height > 0 && myAllowMultilineColumnLabel) {
+        // DS-4208
+        // Here we need to calculate maximum height of column header because
+        // BasicTableHeaderUI.getHeaderHeight returns first column's height when
+        // columns use default renderer
+        int maxHeight = d.height;
+        for (int idx = 0; idx < columnModel.getColumnCount(); ++idx) {
+          Component comp = getHeaderRenderer(idx);
+          int rendererHeight = comp.getPreferredSize().height;
+          maxHeight = Math.max(maxHeight, rendererHeight);
+        }
+        d.height = maxHeight;
+      }
+      else if (d.height <= 0) {
+        d.height = myLastPositiveHeight;
+      }
+      return d;
+    }
+
+    // similar to javax.swing.plaf.basic.BasicTableHeaderUI.getHeaderRenderer
+    private Component getHeaderRenderer(int idx) {
+      TableColumn column = columnModel.getColumn(idx);
+      TableCellRenderer renderer = column.getHeaderRenderer();
+      if (renderer == null) {
+        renderer = getDefaultRenderer();
+      }
+
+      return renderer.getTableCellRendererComponent(getTable(), column.getHeaderValue(), false, false, -1, idx);
+    }
+
+    @Override
+    public void setSize(int width, int height) {
+      super.setSize(width, height);
+      if (height > 0) {
+        myLastPositiveHeight = height;
+      }
+    }
+
+    @Override
+    public void paint(@NotNull Graphics g) {
+      Rectangle clip = g.getClipBounds();
+      if (clip == null) {
+        return;
+      }
+      clip.width = Math.max(0, Math.min(clip.width, getTable().getWidth() - clip.x));
+      g.setClip(clip);
+      super.paint(g);
+      paintTrailingDivider(g, getHeight());
+    }
+  }
+
+  @Override
+  public void setModel(@NotNull TableModel model) {
+    super.setModel(model);
+
+    final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
+    rowSorter.setMaxSortKeys(1);
+    rowSorter.setSortsOnUpdates(isSortOnUpdates());
+
+    SwingUtilities.invokeLater(() -> {
+      if (getRowSorter() == rowSorter) {
+        // row sorter will be set after the table is updated from passed model
+        updateRowFilter();
+      }
+    });
+
+    setRowSorter(rowSorter);
+  }
+
+  public void updateRowFilter() {
+    DefaultRowSorter<? extends TableModel, Integer> sorter = (DefaultRowSorter<? extends TableModel, Integer>)getRowSorter();
+    sorter.setRowFilter(createFilter());
+    // The frozen region is a separate table with its own sorter; keep its row filtering in step so rows stay aligned.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.updateRowFilter();
+  }
+
+  private @NotNull RowFilter<TableModel, Integer> createFilter() {
+    RowFilter<TableModel, Integer> baseFilter = isTransposed() ?
+                                                new MyTransposedViewColumnFilter(myResultPanel) :
+                                                new MySearchRowFilter(myResultPanel, getLocalFilterState());
+    return new RowFilter<>() {
+      @Override
+      public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+        if (!baseFilter.include(entry)) return false;
+        int intIdx = entry.getIdentifier().intValue();
+        ModelIndex<?> rowIdx = isTransposed() ? ModelIndex.forColumn(myResultPanel, intIdx) : ModelIndex.forRow(myResultPanel, intIdx);
+        return !myResultPanel.isRowFilteredOut(rowIdx);
+      }
+    };
+  }
+
+  @Override
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    return prepareRenderer(renderer, row, column, true);
+  }
+
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column, boolean forDisplay) {
+    Component component = super.prepareRenderer(renderer, row, column);
+
+    ViewIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row);
+    ViewIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : column);
+    return ResultViewWithCells.prepareComponent(component, myResultPanel, this, rowIdx, columnIdx, forDisplay);
+  }
+
+  @Override
+  public @Nullable Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, boolean selected) {
+    return selected ?
+           getSelectionBackground() :
+           myResultPanel.getColorModel().getCellBackground(row.toModel(myResultPanel), toModelColumn(column.asInteger()));
+  }
+
+  /** The strip shows a subset of the columns, so its indices are not the grid's and must go through the model. */
+  private @NotNull ModelIndex<GridColumn> toModelColumn(int viewColumn) {
+    return ModelIndex.forColumn(myResultPanel, myRawIndexConverter.column2Model().applyAsInt(viewColumn));
+  }
+
+  /** The view index of a model column here, or -1 when this view does not show it. */
+  int viewColumnOf(int modelColumn) {
+    return myRawIndexConverter.column2View().applyAsInt(modelColumn);
+  }
+
+  /** The column at {@code viewColumn} here, as a view index in {@code target}. */
+  int toViewColumnIn(int viewColumn, @NotNull TableResultView target) {
+    int modelColumn = myRawIndexConverter.column2Model().applyAsInt(viewColumn);
+    return modelColumn < 0 ? -1 : target.viewColumnOf(modelColumn);
+  }
+
+  /** This view's column index in the grid's own space, which is the main table's. */
+  private int toGridViewColumn(int viewColumn) {
+    TableResultView owner = getUnifiedSelectionView();
+    return owner == this ? viewColumn : toViewColumnIn(viewColumn, owner);
+  }
+
+  @Override
+  public @NotNull Color getCellForeground(boolean selected) {
+    return selected ? getSelectionForeground() : getForeground();
+  }
+
+  @Override
+  public void reinitSettings() {
+    GridCellRendererFactories.get(myResultPanel).reinitSettings();
+    dropCaches();
+    updateFonts();
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) {
+      frozenView.dropCaches();
+      frozenView.updateFonts();
+    }
+  }
+
+  @Override
+  public boolean isCellEditable(int row, int column) {
+    return myResultPanel.isCellEditingAllowed();
+  }
+
+  public void withCurrentValue(@Nullable Object value, boolean shouldMoveFocus, @NotNull Runnable r) {
+    ClientProperty.put(this, GridTableCellEditor.CURRENT_VALUE_CLIENT_PROPERTY_KEY, value);
+    ClientProperty.put(this, GridTableCellEditor.SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY, !shouldMoveFocus);
+    try {
+      r.run();
+    }
+    finally {
+      ClientProperty.remove(this, GridTableCellEditor.CURRENT_VALUE_CLIENT_PROPERTY_KEY);
+      ClientProperty.remove(this, GridTableCellEditor.SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY);
+    }
+  }
+
+  @Override
+  public boolean editCellAt(int row, int column, EventObject e) {
+    // JTable finishes only its own editor; commit the paired table's editor before opening another.
+    if (!stopPairedViewEditing()) return false;
+    ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
+    if (shouldDisplayValueEditor(row, column)) {
+      showValueEditor(e);
+      return false;
+    }
+    try {
+      return WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
+    }
+    finally {
+      ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, null);
+    }
+  }
+
+  /** @return false when the other table keeps its editor, which leaves this cell out of edit mode as well. */
+  private boolean stopPairedViewEditing() {
+    TableResultView paired = getPairedView();
+    TableCellEditor editor = paired == null ? null : paired.getCellEditor();
+    return editor == null || editor.stopCellEditing();
+  }
+
+  private boolean shouldDisplayValueEditor(int row, int column) {
+    var tableModel = getModel();
+    var cellValue = tableModel.getValueAt(row, column);
+    if ((cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
+        (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
+        isArrayViewCell(row, column)) {
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isArrayViewCell(int row, int column) {
+    var settings = GridUtil.getSettings(myResultPanel);
+    if (Registry.is("database.new.arrays.editor", false) && (settings != null && !settings.isEditArrayAsText())) {
+      int modelColumnIdx = convertColumnIndexToModel(column);
+      int modelRowIdx = convertRowIndexToModel(row);
+      var columnIndex = ModelIndex.forColumn(myResultPanel, modelColumnIdx);
+      var rowIndex = ModelIndex.forRow(myResultPanel, modelRowIdx);
+      return isArrayCell(GridCellRequestKt.request(myResultPanel, rowIndex, columnIndex));
+    }
+    return false;
+  }
+
+  private void showValueEditor(EventObject e) {
+    if (e instanceof MouseEvent mouseEvent && mouseEvent.getClickCount() < 2) return;
+    if (e instanceof KeyEvent && !UIUtil.isReallyTypedEvent((KeyEvent)e)) return;
+
+    var action = ActionUtil.wrap("Console.TableResult.EditValueMaximized");
+    var dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
+    var view = ShowEditMaximizedAction.getView(this.myResultPanel, event);
+    view.open(tabInfoProvider -> tabInfoProvider instanceof ValueTabInfoProvider);
+  }
+
+  @Override
+  public void createDefaultColumnsFromModel() {
+    GridTableModel model = getModel();
+    if (model == null) return;
+
+    getTableHeader().setDraggedColumn(null); // EA-59152
+
+    ((MyTableColumnModel)getColumnModel()).removeAllColumns();
+
+    IntList newColumnIndices = new IntArrayList();
+    for (int columnDataIdx = 0; columnDataIdx < model.getColumnCount(); columnDataIdx++) {
+      boolean notShownEarlier = !myColumnCache.hasCachedColumn(columnDataIdx);
+      TableResultViewColumn tableColumn = myColumnCache.getOrCreateColumn(columnDataIdx);
+      HierarchicalColumnsCollapseManager collapseManager = myResultPanel.getHierarchicalColumnsCollapseManager();
+      // prevents myColumnLayout.columnsShown call in setColumnEnabled
+      boolean enabled = isTransposed() ||
+                        myResultPanel.isColumnEnabled(ModelIndex.forColumn(myResultPanel, columnDataIdx)) &&
+                        !(collapseManager != null &&
+                          collapseManager.isColumnHiddenDueToCollapse(ModelIndex.forColumn(myResultPanel, columnDataIdx)));
+      if (enabled) {
+        addColumn(tableColumn);
+        if (notShownEarlier) {
+          newColumnIndices.add(columnDataIdx);
+        }
+      }
+    }
+
+    if (!newColumnIndices.isEmpty()) {
+      ModelIndexSet<?> dataIndices = isTransposed() ?
+                                     ModelIndexSet.forRows(myResultPanel, newColumnIndices.toIntArray()) :
+                                     ModelIndexSet.forColumns(myResultPanel, newColumnIndices.toIntArray());
+      myColumnLayout.columnsShown(dataIndices);
+    }
+  }
+
+  @Override
+  public int getScrollableUnitIncrement(@NotNull Rectangle visibleRect, int orientation, int direction) {
+    if (orientation == SwingConstants.VERTICAL) {
+      // use original font size and ignore magnification!
+      return getColorsScheme().getEditorFontSize();
+    }
+    return super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+  }
+
+  @Override
+  public Font getFont() {
+    return myPaintingSession != null ? myPaintingSession.getFont() :
+           myResultPanel == null ? super.getFont() :
+           doGetFont();
+  }
+
+  @Override
+  public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+    updateFonts();
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.globalSchemeChange(scheme);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) {
+      myUpdateScaleHelper.saveScaleAndRunIfChanged(() -> {
+        updateFonts();
+      });
+    }
+  }
+
+  public void changeFontSize(int increment, double scale) {
+    double newIncrement = myFontSizeIncrement * scale + increment;
+    double newScale = myFontSizeScale * scale;
+    int newFontSize = fontSize(newIncrement, newScale);
+
+    int oldFontSize = getFont().getSize();
+    if (newFontSize == oldFontSize) return;
+
+    myFontSizeIncrement = newIncrement;
+    myFontSizeScale = newScale;
+
+    updateFonts();
+    // Zoom the pinned strip in step so both tables keep the same font and row height.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.changeFontSize(increment, scale);
+  }
+
+  private void updateFonts() {
+    Font font = getFont();
+    setFont(font);
+    setRowHeight(getRowHeight());
+    JTableHeader tableHeader = getTableHeader();
+    if (tableHeader != null) tableHeader.setFont(getScaledFont(font));
+    myResultPanel.trueLayout();
+    layoutColumns();
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    if (changeHeaderFont(uiSettings)) {
+      myResultPanel.trueLayout();
+      layoutColumns();
+    }
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.uiSettingsChanged(uiSettings);
+  }
+
+  private boolean changeHeaderFont(UISettings settings) {
+    JTableHeader header = getTableHeader();
+    if (settings == null || header == null || header.getFont() == null) return false;
+    int fontSize = header.getFont().getSize();
+    float scaledFontSize = UISettingsUtils.with(settings).getPresentationModeFontSize();
+    boolean presentationMode = settings.getPresentationMode() && fontSize != scaledFontSize;
+    if (presentationMode) header.setFont(header.getFont().deriveFont(scaledFontSize));
+    boolean normalMode = !settings.getPresentationMode() && fontSize == scaledFontSize;
+    if (normalMode) header.setFont(getScaledFont(header.getFont()));
+    return presentationMode || normalMode;
+  }
+
+  private int fontSize(double fontSizeIncrement, double fontSizeScale) {
+    int baseFontSize = Math.round(UISettingsUtils.getInstance().scaleFontSize(getColorsScheme().getEditorFontSize()));
+    int newFontSize = (int)Math.max(fontSizeScale * baseFontSize + fontSizeIncrement, 8);
+    return Math.min(Math.max(EditorFontsConstants.getMaxEditorFontSize(), baseFontSize), newFontSize);
+  }
+
+  @Override
+  public int getRowHeight() {
+    return myPaintingSession != null ? myPaintingSession.getRowHeight() : doGetRowHeight();
+  }
+
+  public int getTextLineHeight() {
+    return (int)Math.ceil(getFontMetrics(getFont()).getHeight() * getColorsScheme().getLineSpacing());
+  }
+
+  @Override
+  public Color getSelectionForeground() {
+    return myPaintingSession != null ? myPaintingSession.getSelectionForeground() :
+           myResultPanel == null ? super.getSelectionForeground() :
+           doGetSelectionForeground(getColorsScheme());
+  }
+
+  @Override
+  public Color getSelectionBackground() {
+    return myPaintingSession != null ? myPaintingSession.getSelectionBackground() :
+           myResultPanel == null ? super.getSelectionBackground() :
+           doGetSelectionBackground(getColorsScheme());
+  }
+
+  @Override
+  public Color getForeground() {
+    return myPaintingSession != null ? myPaintingSession.getForeground() :
+           myResultPanel == null ? super.getBackground() :
+           doGetForeground(getColorsScheme());
+  }
+
+  @Override
+  public Color getBackground() {
+    return myPaintingSession != null ? myPaintingSession.getBackground() :
+           myResultPanel == null ? super.getForeground() :
+           doGetBackground(getColorsScheme());
+  }
+
+  @Override
+  public void setBackground(@NotNull Color bg) {
+    // prevent background change events from being fired
+  }
+
+  @Override
+  public Color getGridColor() {
+    return myPaintingSession != null ? myPaintingSession.getGridColor() :
+           myResultPanel == null ? super.getGridColor() :
+           doGetGridColor(getColorsScheme());
+  }
+
+  /**
+   * Reveals a pinned placeholder's row without scrolling horizontally to the zero-width column.
+   */
+  @Override
+  public void scrollRectToVisible(@NotNull Rectangle rect) {
+    if (rect.width <= 0 && getFrozenView() != null) {
+      Rectangle visible = getVisibleRect();
+      rect = new Rectangle(visible.x, rect.y, visible.width, rect.height);
+    }
+    super.scrollRectToVisible(rect);
+  }
+
+  @Override
+  public void tableChanged(TableModelEvent e) {
+    if (myResultPanel == null) {
+      super.tableChanged(e);
+      return;
+    }
+    myResultPanel.getAutoscrollLocker().runWithLock(() -> super.tableChanged(e));
+    myResultPanel.fireContentChanged(
+      e instanceof GridTableModel.RequestedTableModelEvent ? ((GridTableModel.RequestedTableModelEvent)e).getPlace() : null);
+  }
+
+  @Override
+  public GridTableModel getModel() {
+    return (GridTableModel)super.getModel();
+  }
+
+  @Override
+  public Object getValueAt(int row, int column) {
+    Ref<Object> commonValue = getSharedCommonValue();
+    boolean useCommonValue = commonValue != null && isEditing() && isCellSelected(row, column) && isMultiEditingAllowed();
+    return useCommonValue ? commonValue.get() : super.getValueAt(row, column);
+  }
+
+  @Override
+  public void removeEditor() {
+    try {
+      super.removeEditor();
+    }
+    finally {
+      myCommonValue = null;
+      TableResultView primaryView = getOwningPrimaryView();
+      if (primaryView != null) primaryView.myCommonValue = null;
+    }
+  }
+
+  private @Nullable Ref<Object> getSharedCommonValue() {
+    TableResultView primaryView = getOwningPrimaryView();
+    return primaryView != null ? primaryView.myCommonValue : myCommonValue;
+  }
+
+  @Override
+  public boolean isTransposed() {
+    return getModel() instanceof TransposedGridTableModel;
+  }
+
+  private void onRowHeaderClicked(ModelIndex<GridRow> rowIdx, MouseEvent e) {
+    if (e.getID() != MouseEvent.MOUSE_PRESSED) return;
+
+    if (myResultPanel.isHeaderSelecting() && isTransposed()) {
+      int tableViewColumnIdx = myRawIndexConverter.row2View().applyAsInt(rowIdx.value);
+      selectViewColumnInterval(tableViewColumnIdx, e);
+    }
+
+    if (e.isPopupTrigger()) {
+      invokeRowPopup(e.getComponent(), e.getX(), e.getY());
+    }
+  }
+
+  void invokeRowPopup(@NotNull Component component, int x, int y) {
+    if (myRowHeaderPopupActions != ActionGroup.EMPTY_GROUP) {
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("TableResultViewHeader", myRowHeaderPopupActions);
+      popupMenu.getComponent().show(component, x, y);
+    }
+  }
+
+  private void onColumnHeaderClicked(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getButton() == MouseEvent.BUTTON1) {
+      handleClickOnColumnHeader(columnIdx, e);
+      return;
+    }
+    if (e.getID() != MouseEvent.MOUSE_CLICKED && e.getButton() == MouseEvent.BUTTON2 && e.getClickCount() == 1) {
+      if (columnIdx.value >= 0) {
+        myResultPanel.setColumnEnabled(columnIdx, false);
+      }
+      return;
+    }
+    if (e.isPopupTrigger()) {
+      if (myResultPanel.isHeaderSelecting() && !isTransposed()) {
+        int tableViewColumnIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
+        // Right-clicking a column already in the selection keeps it; only a click outside collapses to that column.
+        if (!isSelectedColumnInOwner(tableViewColumnIdx)) selectViewColumnInterval(tableViewColumnIdx, e);
+      }
+
+      invokeColumnPopup(columnIdx, e.getComponent(), new Point(e.getX(), e.getY()));
+    }
+  }
+
+  private void handleClickOnColumnHeader(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
+    GridColumn column = myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
+    if (column instanceof HierarchicalGridColumn hierarchicalColumn) {
+      handleClickOnHierarchicalColumnHeader(hierarchicalColumn, columnIdx, e);
+    }
+    else {
+      // Map to this view's own column index; the grid-level index would overrun the smaller frozen column model.
+      var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
+      if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
+      var headerRect = tableHeader.getHeaderRect(currentViewIdx);
+
+      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, currentViewIdx);
+
+      var point = e.getPoint();
+      var relativePoint = new Point(point.x - headerRect.x, point.y);
+      var filterLabel = currentHeader.filterLabel;
+      var sortLabel = currentHeader.myIconLabels.isEmpty() ?
+                      null :
+                      currentHeader.myIconLabels.getLast();
+
+      if (filterLabel.getBounds().contains(relativePoint)) {
+        var popup = ColumnLocalFilterAction.createFilterPopup(myResultPanel, columnIdx);
+        if (popup != null) {
+          popup.show(new RelativePoint(e.getComponent(), point));
+        }
+      }
+      else if (sortLabel != null && sortLabel.getBounds().contains(relativePoint)) {
+        handleClickToSortColumn(columnIdx, e);
+      }
+      else {
+        selectViewColumnInterval(currentViewIdx, e);
+      }
+    }
+  }
+
+  private void handleClickOnHierarchicalColumnHeader(@NotNull HierarchicalGridColumn hierarchicalColumn,
+                                                     @NotNull ModelIndex<GridColumn> columnIdx,
+                                                     @NotNull MouseEvent e) {
+    OptionalInt clickedHeaderLineIndex = getIndexOfClickedHeaderLine(columnIdx, e);
+    if (clickedHeaderLineIndex.isEmpty()) return;
+
+    if (isLeafColumnHeaderLineClicked(hierarchicalColumn, clickedHeaderLineIndex.getAsInt())) {
+      // Handle sorting if the clicked header line corresponds to a leaf column.
+      handleClickToSortColumn(columnIdx, e);
+    }
+    else {
+      // Collapse the columns subtree for any other clicked header line.
+      myResultPanel.getAutoscrollLocker()
+        .runWithLock(() -> GridUtil.collapseColumnsSubtree(myResultPanel, columnIdx, clickedHeaderLineIndex.getAsInt(),
+          /* onCollapseCompleted */ () -> onColumnHierarchyChanged()));
+    }
+  }
+
+  @Override
+  public void onColumnHierarchyChanged() {
+    GridModel<?, GridColumn> model = myResultPanel.getDataModel(DATA_WITH_MUTATIONS);
+    HierarchicalReader hierarchicalReader = model.getHierarchicalReader();
+    HierarchicalColumnsCollapseManager collapseManager = myResultPanel.getHierarchicalColumnsCollapseManager();
+    if (hierarchicalReader != null && collapseManager != null) {
+      hierarchicalReader.updateDepthOfHierarchy((column) -> {
+        return isColumnDisabledOrCollapsed(column, myResultPanel) || collapseManager.isColumnCollapsedSubtree(column);
+      });
+    }
+  }
+
+  private static boolean isColumnDisabledOrCollapsed(@NotNull HierarchicalGridColumn column, @NotNull DataGrid grid) {
+    return !isColumnEnabled(column, grid) || isSubtreeHiddenDueToCollapse(column, grid);
+  }
+
+  private static boolean isColumnEnabled(@NotNull HierarchicalGridColumn column, @NotNull DataGrid grid) {
+    if (column.isLeaf()) {
+      return grid.isColumnEnabled(modelIndexOf(column, grid));
+    }
+
+    return grid.isColumnEnabled(modelIndexOf(getFirstItem(column.getChildren()), grid));
+  }
+
+  private static @NotNull ModelIndex<GridColumn> modelIndexOf(@NotNull GridColumn column, @NotNull DataGrid grid) {
+    return ModelIndex.forColumn(grid, column.getColumnNumber());
+  }
+
+  private static boolean isSubtreeHiddenDueToCollapse(@NotNull HierarchicalGridColumn column, @NotNull DataGrid grid) {
+    HierarchicalColumnsCollapseManager collapseManager = grid.getHierarchicalColumnsCollapseManager();
+    if (collapseManager == null) return false;
+
+    if (column.isLeaf()) {
+      return collapseManager.isColumnHiddenDueToCollapse(column);
+    }
+
+    return collapseManager.isColumnHiddenDueToCollapse(getFirstItem(column.getLeaves()));
+  }
+
+  private boolean isLeafColumnHeaderLineClicked(@NotNull HierarchicalGridColumn hierarchicalColumn, int clickedLineIdx) {
+    int leafColumnHeaderLineIdx = hierarchicalColumn.getPathFromRoot().length - 1;
+    return leafColumnHeaderLineIdx == clickedLineIdx;
+  }
+
+  private void handleClickToSortColumn(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
+    if (!GridHelper.get(myResultPanel).isSortingApplicable(columnIdx)) return;
+    boolean alt = e.getModifiersEx() == ALT_DOWN_MASK;
+    DataGridSettings settings = GridUtil.getSettings(myResultPanel);
+    GridSortingModel<GridRow, GridColumn> model = myResultPanel.getDataHookup().getSortingModel();
+    boolean supportsAdditiveSorting = model == null || !model.isSortingEnabled() || model.supportsAdditiveSorting();
+    toggleSortOrder(columnIdx, supportsAdditiveSorting && (settings == null || settings.isAddToSortViaAltClick()) == alt);
+  }
+
+  private OptionalInt getIndexOfClickedHeaderLine(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
+    int viewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
+    if (viewIdx < 0 || viewIdx >= getColumnModel().getColumnCount()) return OptionalInt.empty();
+    Component headerRenderer = getHeaderRenderer(this, viewIdx);
+
+    if (!(headerRenderer instanceof MyHeaderCellComponent customHeaderComponent)) {
+      return OptionalInt.empty();
+    }
+
+    Rectangle headerRect = getTableHeader().getHeaderRect(viewIdx);
+
+    return findIndexOfClickedHeaderLineWithNonEmptyLabel(e, customHeaderComponent, headerRect.x, headerRect.width);
+  }
+
+  private static Component getHeaderRenderer(@NotNull TableResultView table, int viewIdx) {
+    TableColumn column = table.getColumnModel().getColumn(viewIdx);
+    return table
+      .getTableHeader()
+      .getDefaultRenderer()
+      .getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, viewIdx);
+  }
+
+  private MyHeaderCellComponent renderWithActualBounds(JTableHeader header, int columnViewIndex) {
+
+    MyHeaderCellComponent currentHeaderCell = (MyHeaderCellComponent)getHeaderRenderer(this, columnViewIndex);
+    var cellRendererPane = new CellRendererPane();
+    cellRendererPane.add(currentHeaderCell);
+    header.add(cellRendererPane);
+    // The same rectangle `BasicTableHeaderUI` gives the renderer when it paints. Another width moves the
+    // right-anchored sort and filter labels away from where the user sees them.
+    Rectangle headerRect = header.getHeaderRect(columnViewIndex);
+    currentHeaderCell.setBounds(0, 0, headerRect.width, headerRect.height);
+    currentHeaderCell.validate();
+    header.remove(cellRendererPane);
+
+    return currentHeaderCell;
+  }
+
+  private OptionalInt findIndexOfClickedHeaderLineWithNonEmptyLabel(@NotNull MouseEvent e,
+                                                                    @NotNull MyHeaderCellComponent customHeaderComponent,
+                                                                    int clickedColumnX,
+                                                                    int columnWidth) {
+    for (int idx = 0; idx < customHeaderComponent.myNameLabels.size(); ++idx) {
+      JLabel nameLabel = customHeaderComponent.myNameLabels.get(idx);
+      if (isColumnNameLabelNotEmpty(nameLabel) && isClickedWithinHeaderLine(e, clickedColumnX, columnWidth, idx)) {
+        return OptionalInt.of(idx);
+      }
+    }
+    return OptionalInt.empty();
+  }
+
+  private static boolean isColumnNameLabelNotEmpty(@NotNull JLabel nameLabel) {
+    String labelText = nameLabel.getText();
+    return labelText != null && !labelText.isBlank();
+  }
+
+  private boolean isClickedWithinHeaderLine(@NotNull MouseEvent e, int clickedColumnX, int columnWidth, int idx) {
+    Rectangle bounds = getHeaderLineBounds(clickedColumnX, columnWidth, idx);
+    return bounds.contains(e.getPoint());
+  }
+
+  private Rectangle getHeaderLineBounds(int clickedColumnX, int columnWidth, int idx) {
+    Rectangle headerLineBounds = new Rectangle();
+    int rowHeight = getRowHeight();
+    headerLineBounds.setLocation(clickedColumnX, rowHeight * idx);
+    headerLineBounds.height = rowHeight;
+    headerLineBounds.width = columnWidth;
+
+    return headerLineBounds;
+  }
+
+  void invokeColumnPopup(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Component component, @NotNull Point point) {
+    if (myColumnHeaderPopupActions != ActionGroup.EMPTY_GROUP) {
+      // The panel reads the context column from the primary view, so a frozen (secondary) header must set it there.
+      TableResultView primaryView = getOwningPrimaryView();
+      TableResultView contextOwner = primaryView != null ? primaryView : this;
+      contextOwner.myClickedHeaderColumnIdx = columnIdx;
+      myClickedHeaderPoint = point;
+      ListPopup popupMenu = JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, myColumnHeaderPopupActions, DataManager.getInstance().getDataContext(getComponent()),
+                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+      popupMenu.addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          SwingUtilities.invokeLater(() -> {
+            if (contextOwner.myClickedHeaderColumnIdx.equals(columnIdx)) {
+              // if not clicked on another column
+              contextOwner.myClickedHeaderColumnIdx = ModelIndex.forColumn(myResultPanel, -1);
+              myClickedHeaderPoint = null;
+            }
+          });
+        }
+      });
+      popupMenu.show(new RelativePoint(component, point));
+    }
+  }
+
+  // Whether the view column is selected in the view owning the real selection model (the primary view for a frozen strip).
+  private boolean isSelectedColumnInOwner(int viewColumn) {
+    if (viewColumn < 0) return false;
+    TableResultView owner = getUnifiedSelectionView();
+    int ownerColumn = owner == this ? viewColumn : toViewColumnIn(viewColumn, owner);
+    return ownerColumn >= 0 && owner.getColumnModel().getSelectionModel().isSelectedIndex(ownerColumn);
+  }
+
+  void selectViewColumnInterval(int viewColumn, @NotNull MouseEvent e) {
+    boolean interval = GridUtil.isIntervalModifierSet(e);
+    boolean exclusive = GridUtil.isExclusiveModifierSet(e);
+    TableResultView primaryView = getUnifiedSelectionView();
+    TableSelectionModel selectionModel =
+      ObjectUtils.tryCast(SelectionModelUtil.get(myResultPanel, primaryView), TableSelectionModel.class);
+    if (interval && selectionModel != null &&
+        myFrozenColumnsController.selectDisplayedColumnRange(this, viewColumn, exclusive)) {
+      if (exclusive) selectionModel.addRowSelectionInterval(primaryView.getRowCount() - 1, 0);
+      else selectionModel.setRowSelectionInterval(primaryView.getRowCount() - 1, 0);
+      return;
+    }
+    if (forwardColumnSelection(viewColumn, e, primaryView)) return;
+    if (selectionModel == null) return;
+    if (interval) {
+      int lead = getColumnModel().getSelectionModel().getLeadSelectionIndex();
+      // Shift-click can be the first column selection gesture; use the clicked column as the range anchor.
+      if (lead == -1) lead = viewColumn;
+      if (exclusive) {
+        selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.addColumnSelectionInterval(viewColumn, lead);
+      }
+      else {
+        selectionModel.setRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.setColumnSelectionInterval(viewColumn, lead);
+      }
+    }
+    else if (exclusive) {
+      if (isColumnSelected(viewColumn)) {
+        removeColumnSelectionInterval(viewColumn, viewColumn);
+      }
+      else {
+        selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.addColumnSelectionInterval(viewColumn, viewColumn);
+      }
+    }
+    else {
+      selectionModel.setRowSelectionInterval(getRowCount() - 1, 0);
+      selectionModel.setColumnSelectionInterval(viewColumn, viewColumn);
+    }
+  }
+
+  @Override
+  public @Nullable ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column) {
+    return getLayoutColumn(column, column.toView(myResultPanel));
+  }
+
+  @Override
+  public @Nullable ResultViewColumn getColumnForPersistence(@NotNull ModelIndex<?> column) {
+    ResultViewColumn layoutColumn = getLayoutColumn(column);
+    TableResultView frozenView = getFrozenView();
+    if (layoutColumn == null || !layoutColumn.isFrozenHidden() || frozenView == null) return layoutColumn;
+    int frozenViewIndex = frozenView.getRawIndexConverter().column2View().applyAsInt(column.asInteger());
+    return frozenViewIndex < 0 ? layoutColumn : (ResultViewColumn)frozenView.getColumnModel().getColumn(frozenViewIndex);
+  }
+
+  public @Nullable ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column, @NotNull ViewIndex<?> viewColumnIdx) {
+    return viewColumnIdx.asInteger() != -1 ? getColumnCache().getOrCreateColumn(column.asInteger()) : null;
+  }
+
+  @Override
+  public @Nullable ResultViewColumn getLayoutColumnForDataColumn(@NotNull ModelIndex<GridColumn> column) {
+    // Layout columns of a transposed table are backed by rows, so a data column has no layout column of its own.
+    return isTransposed() ? null : getLayoutColumn(column);
+  }
+
+  @Override
+  public @NotNull ModelIndexSet<GridRow> getVisibleRows() {
+    int rowCount = isTransposed() ? getModel().getColumnCount() : getModel().getRowCount();
+    int[] viewRowIndices = new int[rowCount];
+    for (int i = 0; i < rowCount; i++) {
+      viewRowIndices[i] = i;
+    }
+    ModelIndexSet<GridRow> rowIndices = ViewIndexSet.forRows(myResultPanel, viewRowIndices).toModel(myResultPanel);
+    return validIndexSet(rowIndices, rowIndices1 -> ModelIndexSet.forRows(myResultPanel, rowIndices1));
+  }
+
+  @Override
+  public @NotNull ModelIndexSet<GridColumn> getVisibleColumns() {
+    int visibleColumns = getViewColumnCount();
+    int[] viewIndices = new int[visibleColumns];
+    for (int i = 0; i < visibleColumns; i++) {
+      viewIndices[i] = i;
+    }
+    ModelIndexSet<GridColumn> columnIndices = ViewIndexSet.forColumns(myResultPanel, viewIndices).toModel(myResultPanel);
+    return validIndexSet(columnIndices, columnIndices1 -> ModelIndexSet.forColumns(myResultPanel, columnIndices1));
+  }
+
+  @Override
+  public int getViewColumnCount() {
+    return isTransposed() ? getRowCount() : getColumnCount();
+  }
+
+  @Override
+  public int getViewRowCount() {
+    return isTransposed() ? getColumnCount() : getRowCount();
+  }
+
+  private @NotNull <T> ModelIndexSet<T> validIndexSet(@NotNull ModelIndexSet<T> indexSet,
+                                                      @NotNull Function<int[], ModelIndexSet<T>> factory) {
+    IntList validIndices = new IntArrayList(indexSet.size());
+    for (ModelIndex<T> idx : indexSet.asIterable()) {
+      if (idx.isValid(myResultPanel)) {
+        validIndices.add(idx.asInteger());
+      }
+    }
+    return factory.fun(validIndices.toIntArray());
+  }
+
+  @Override
+  public boolean stopEditing() {
+    // A pinned cell edits in the frozen view while stopEditing() routes here, so that editor is committed as well.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null && frozenView.isEditing() && !frozenView.stopEditing()) return false;
+    TableCellEditor editor = getCellEditor();
+    if (editor == null) return true;
+
+    boolean multiEditingAllowed = isMultiEditingAllowed();
+    TableResultView selectionView = getUnifiedSelectionView();
+    TableResultView columnIndexView = multiEditingAllowed ? selectionView : this;
+    int[] columnDataIdx = Arrays.stream(
+      !multiEditingAllowed ? new int[]{getEditingColumn()} : selectionView.getSelectedColumns()
+    ).map(columnIndexView::convertColumnIndexToModel).toArray();
+
+    TableResultView rowIndexView = multiEditingAllowed ? selectionView : this;
+    int[] rowDataIdx = Arrays.stream(
+      !multiEditingAllowed ? new int[]{getEditingRow()} : selectionView.getSelectedRows()
+    ).map(rowIndexView::convertRowIndexToModel).toArray();
+
+    ModelIndexSet<GridRow> myEditingRowIdx = ModelIndexSet.forRows(myResultPanel, isTransposed() ? columnDataIdx : rowDataIdx);
+    ModelIndexSet<GridColumn> myEditingColumnIdx = ModelIndexSet.forColumns(myResultPanel, isTransposed() ? rowDataIdx : columnDataIdx);
+
+    return myResultPanel.isSafeToUpdate(myEditingRowIdx, myEditingColumnIdx, editor.getCellEditorValue()) && editor.stopCellEditing();
+  }
+
+  @Override
+  public void cancelEditing() {
+    TableCellEditor editor = getCellEditor();
+    if (editor != null) {
+      editor.cancelCellEditing();
+    }
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null && frozenView.isEditing()) frozenView.cancelEditing();
+  }
+
+  @Override
+  public boolean isCellEditingAllowed() {
+    return true;
+  }
+
+  @Override
+  public void editSelectedCell() {
+    int leadRow = getSelectionModel().getLeadSelectionIndex();
+    int leadColumn = getColumnModel().getSelectionModel().getLeadSelectionIndex();
+    if (leadRow == -1 || leadColumn == -1) return;
+    // A pinned column is hidden here, so edit it in the strip, at the lead cell rather than the strip's own lead,
+    // which can differ with several pinned columns selected.
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null && isColumnFrozenHidden(leadColumn)) {
+      int frozenColumn = toViewColumnIn(leadColumn, frozenView);
+      if (frozenColumn >= 0) TableUtil.editCellAt(frozenView, leadRow, frozenColumn);
+      return;
+    }
+    TableUtil.editCellAt(this, leadRow, leadColumn);
+  }
+
+  @Override
+  public void editSelectedCellWithValue(Object value) {
+    editSelectedCellWithValue(value, true);
+  }
+
+  public void editSelectedCellWithValue(Object value, boolean shouldMoveFocus) {
+    int leadColumn = getColumnModel().getSelectionModel().getLeadSelectionIndex();
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null && isColumnFrozenHidden(leadColumn)) {
+      int leadRow = getSelectionModel().getLeadSelectionIndex();
+      int frozenColumn = toViewColumnIn(leadColumn, frozenView);
+      if (leadRow < 0 || frozenColumn < 0) return;
+      frozenView.withCurrentValue(value, shouldMoveFocus, () -> TableUtil.editCellAt(frozenView, leadRow, frozenColumn));
+      return;
+    }
+    withCurrentValue(value, shouldMoveFocus, this::editSelectedCell);
+  }
+
+  private boolean isColumnFrozenHidden(int viewColumn) {
+    return viewColumn >= 0 && viewColumn < getColumnModel().getColumnCount() &&
+           getColumnModel().getColumn(viewColumn) instanceof TableResultViewColumn column && column.isFrozenHidden();
+  }
+
+  @Override
+  public boolean isMultiEditingAllowed() {
+    TableResultView selectionView = getUnifiedSelectionView();
+    int[] selectedColumns = isTransposed() ? selectionView.getSelectedRows() : selectionView.getSelectedColumns();
+    int[] selectedRows = isTransposed() ? selectionView.getSelectedColumns() : selectionView.getSelectedRows();
+    ModelIndexSet<GridColumn> indexSet = ViewIndexSet.forColumns(myResultPanel, selectedColumns).toModel(myResultPanel);
+    List<GridColumn> columns = myResultPanel.getDataModel(DataAccessType.DATABASE_DATA).getColumns(indexSet);
+    GridColumn uniqueColumn = GridHelper.get(myResultPanel).findUniqueColumn(myResultPanel, columns);
+    GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
+    boolean uniqueOk = uniqueColumn == null || selectedRows.length == 1 || (editor != null && editor.allowsUniqueMultiEdit());
+    return getSharedCommonValue() != null &&
+           uniqueOk &&
+           GridHelper.get(myResultPanel).canEditTogether(myResultPanel, columns);
+  }
+
+  void toggleSortOrder(@NotNull ModelIndex<GridColumn> idx, boolean additive) {
+    myResultPanel.getAutoscrollLocker().runWithLock(() -> myResultPanel.toggleSortColumns(Collections.singletonList(idx), additive));
+  }
+
+  @Override
+  protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
+    final GridTableModel m = getModel();
+    return new TableRowSorter<>(m) {
+      {
+        setModelWrapper(new ModelWrapper<>() {
+          @Override
+          public TableModel getModel() {
+            return m;
+          }
+
+          @Override
+          public int getColumnCount() {
+            return m.getColumnCount();
+          }
+
+          @Override
+          public int getRowCount() {
+            return m.getRowCount();
+          }
+
+          @Override
+          public Object getValueAt(int row, int column) {
+            return getRow(row);
+          }
+
+          @Override
+          public Integer getIdentifier(int row) {
+            return row;
+          }
+        });
+      }
+
+      @Override
+      public void toggleSortOrder(int columnDataIdx) {
+        // this method is triggered only once on double click
+        // so I moved sorting toggle to onColumnHeaderClicked
+      }
+
+      @Override
+      protected boolean useToString(int column) {
+        return false;
+      }
+
+      @Override
+      public Comparator<?> getComparator(int modelColumnIdx) {
+        Comparator<?> comparator = null;
+        if (!isTransposed()) {
+          comparator = myResultPanel.getComparator(ModelIndex.forColumn(myResultPanel, modelColumnIdx));
+        }
+        return comparator != null ? comparator : super.getComparator(modelColumnIdx);
+      }
+
+      @Override
+      public boolean isSortable(int columnDataIdx) {
+        return !isTransposed() && myResultPanel.getComparator(ModelIndex.forColumn(myResultPanel, columnDataIdx)) != null;
+      }
+    };
+  }
+
+  @Override
+  public TableCellEditor getCellEditor(int row, int column) {
+    ModelIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row).toModel(myResultPanel);
+    ModelIndex<GridColumn> columnIdx = toModelColumn(isTransposed() ? row : column);
+    GridCellRequest<GridRow, GridColumn> request = GridCellRequestKt.request(myResultPanel, rowIdx, columnIdx);
+    Object currentValue = ClientProperty.get(this, GridTableCellEditor.CURRENT_VALUE_CLIENT_PROPERTY_KEY);
+    if (currentValue != null) {
+      request = GridCellRequestKt.overrideValue(request, currentValue);
+    }
+    GridCellEditorFactory editorFactory = GridCellEditorFactoryProvider.provideEditorFactory(request);
+    GridColumn dataColumn = request.getColumn();
+    return dataColumn != null && !GridUtilCore.isRowId(dataColumn) && !GridUtilCore.isVirtualColumn(dataColumn) && editorFactory != null ?
+           new GridTableCellEditor(myResultPanel, rowIdx, columnIdx, editorFactory) :
+           null;
+  }
+
+  @Override
+  public TableCellRenderer getCellRenderer(int row, int column) {
+    TableCellRenderer renderer = myRenderers.getRenderer(row, column);
+    return myCellImageCache.wrapCellRenderer(renderer);
+  }
+
+  @Override
+  public void setValueAt(Object value, int viewRowIdx, int viewColumnIdx) {
+    setValueAt(value, viewRowIdx, viewColumnIdx, true, new GridRequestSource(new DataGridRequestPlace(myResultPanel)), null);
+  }
+
+  private void setValueAt(Object value,
+                          int viewRowIdx,
+                          int viewColumnIdx,
+                          boolean allowImmediateUpdate,
+                          @NotNull GridRequestSource source,
+                          @Nullable Object metadata) {
+    boolean allowed = isMultiEditingAllowed();
+    TableResultView selectionView = getUnifiedSelectionView();
+    // The selection is read from the view the grid selects in, so a single cell of the strip has to be named there too.
+    int gridColumn = allowed ? viewColumnIdx : toGridViewColumn(viewColumnIdx);
+    if (gridColumn < 0) return;
+    int[] rows = allowed ? selectionView.getSelectedRows() : new int[]{viewRowIdx};
+    int[] columns = allowed ? selectionView.getSelectedColumns() : new int[]{gridColumn};
+    ViewIndexSet<GridRow> rowsSet = ViewIndexSet.forRows(myResultPanel, isTransposed() ? columns : rows);
+    ViewIndexSet<GridColumn> columnsSet = ViewIndexSet.forColumns(myResultPanel, isTransposed() ? rows : columns);
+    GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
+    Runnable moveToNextCellRunnable = editor != null && editor.shouldMoveFocus()
+                                      ? () -> IdeFocusManager.findInstanceByComponent(this).doWhenFocusSettlesDown(
+      // doWhenFocusSettlesDown causes "Write-unsafe context" so we need to call invokeLater
+      () -> ApplicationManager.getApplication().invokeLater(() -> moveToNextCell(rowsSet.last(), columnsSet.last())))
+                                      : null;
+    myResultPanel.setValueAt(rowsSet.toModel(myResultPanel),
+                             columnsSet.toModel(myResultPanel),
+                             value,
+                             allowImmediateUpdate,
+                             moveToNextCellRunnable,
+                             source,
+                             metadata);
+  }
+
+  private void moveToNextCell(@NotNull ViewIndex<GridRow> rowIndex, @NotNull ViewIndex<GridColumn> colIndex) {
+    SelectionModel<GridRow, GridColumn> selectionModel = myResultPanel.getSelectionModel();
+    if (selectionModel.getSelectedRowCount() != 1 || selectionModel.getSelectedColumnCount() != 1 ||
+        !ApplicationManager.getApplication().isUnitTestMode() && (!UIUtil.isFocusAncestor(this) || isEditing())) {
+      return;
+    }
+
+    // if selection has already been changed by Tab or Shift-Tab we don't need to change it
+    if (!Comparing.equal(selectionModel.getSelectedRow(), rowIndex.toModel(myResultPanel)) ||
+        !Comparing.equal(selectionModel.getSelectedColumn(), colIndex.toModel(myResultPanel))) {
+      return;
+    }
+
+    if (GridUtil.isInsertedRow(myResultPanel, rowIndex.toModel(myResultPanel))) {
+      ViewIndex<GridColumn> nextColumn = ViewIndex.forColumn(myResultPanel, colIndex.asInteger() + 1);
+      colIndex = nextColumn.isValid(myResultPanel) ? nextColumn : colIndex;
+    }
+    else {
+      ViewIndex<GridRow> nextRow = ViewIndex.forRow(myResultPanel, rowIndex.asInteger() + 1);
+      rowIndex = nextRow.isValid(myResultPanel) ? nextRow : rowIndex;
+    }
+
+    GridUtil.scrollToLocally(myResultPanel, rowIndex, colIndex);
+  }
+
+  private Font doGetFont() {
+    return getScaledFont(getColorsScheme().getFont(EditorFontType.PLAIN));
+  }
+
+  private Font getScaledFont(Font font) {
+    return UISettings.getInstance().getPresentationMode() ? font :
+           font == null ? null : font.deriveFont((float)fontSize(myFontSizeIncrement, myFontSizeScale));
+  }
+
+  private int doGetRowHeight() {
+    return getTextLineHeight() + getRowMargin() + (isStriped() || !showHorizontalLines ? 1 : 0) + JBUI.scale(4);
+  }
+
+  public static Rectangle getLabelTextRect(JLabel label) {
+    Dimension pref = label.getPreferredSize();
+    Rectangle bounds = label.getBounds();
+    Insets insets = label.getInsets();
+    int w = Math.min(pref.width, bounds.width);
+    bounds.setSize(w - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
+    bounds.translate(insets.left, insets.top);
+    return bounds;
+  }
+
+  private @Nullable GridRow getRow(int modelRowIdx) {
+    return myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getRow(ModelIndex.forRow(myResultPanel, modelRowIdx));
+  }
+
+  private @Nullable GridColumn getColumn(int modelColumnIdx) {
+    return myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(ModelIndex.forColumn(myResultPanel, modelColumnIdx));
+  }
+
+  public static @NotNull Icon getSortOrderIcon(int sortOrder) {
+    return sortOrder < 0 ? AllIcons.General.ArrowUp :
+           sortOrder > 0 ? AllIcons.General.ArrowDown :
+           AllIcons.General.ArrowSplitCenterV;
+  }
+
+  private @NotNull ActionCallback layoutColumns() {
+    ActionCallback callback = new ActionCallback();
+    SwingUtilities.invokeLater(() -> {
+      if (SwingUtilities.getWindowAncestor(this) != null && myColumnLayout.resetLayout()) callback.setDone();
+    });
+    return callback;
+  }
+
+  public static @NlsSafe String getSortOrderText(int sortOrder) {
+    return sortOrder != 0 ? String.valueOf(Math.abs(sortOrder)) : "";
+  }
+
+  private class PaintingSession {
+    private Font myFont;
+    private Color myGridColor;
+    private Color myForeground;
+    private Color myBackground;
+    private Color mySelectionForeground;
+    private Color mySelectionBackground;
+    private int myRowHeight = -1;
+
+    public Font getFont() {
+      return myFont != null ? myFont : (myFont = doGetFont());
+    }
+
+    public int getRowHeight() {
+      return myRowHeight != -1 ? myRowHeight : (myRowHeight = doGetRowHeight());
+    }
+
+    public Color getGridColor() {
+      return myGridColor != null ? myGridColor : (myGridColor = doGetGridColor(getColorsScheme()));
+    }
+
+    public Color getForeground() {
+      return myForeground != null ? myForeground : (myForeground = doGetForeground(getColorsScheme()));
+    }
+
+    public Color getBackground() {
+      return myBackground != null ? myBackground : (myBackground = doGetBackground(getColorsScheme()));
+    }
+
+    public Color getSelectionForeground() {
+      return mySelectionForeground != null ? mySelectionForeground : (mySelectionForeground = doGetSelectionForeground(getColorsScheme()));
+    }
+
+    public Color getSelectionBackground() {
+      return mySelectionBackground != null ? mySelectionBackground : (mySelectionBackground = doGetSelectionBackground(getColorsScheme()));
+    }
+  }
+
+
+  private static final class Renderers {
+    private final DataGrid myGrid;
+    final TableResultView myResultView;
+    final Map<GridCellRenderer, TableCellRenderer> myTableCellRenderers = new Reference2ObjectOpenHashMap<>();
+
+    Renderers(DataGrid grid, TableResultView resultView) {
+      myGrid = grid;
+      myResultView = resultView;
+    }
+
+    public @NotNull TableCellRenderer getRenderer(int row, int column) {
+      ModelIndex<GridRow> rowIdx = ViewIndex.forRow(myGrid, myResultView.isTransposed() ? column : row).toModel(myGrid);
+      ModelIndex<GridColumn> columnIdx = myResultView.toModelColumn(myResultView.isTransposed() ? row : column);
+      GridCellRequest<GridRow, GridColumn> request = GridCellRequestKt.request(myGrid, rowIdx, columnIdx);
+      GridCellRenderer gridCellRenderer = GridCellRenderer.getRenderer(request);
+
+      TableCellRenderer renderer = myTableCellRenderers.get(gridCellRenderer);
+      if (renderer == null) {
+        renderer = new GridCellRendererWrapper(gridCellRenderer, myResultView);
+        myTableCellRenderers.put(gridCellRenderer, renderer);
+      }
+      return renderer;
+    }
+  }
+
+  private static final class GridCellRendererWrapper implements TableCellRenderer {
+    final GridCellRenderer delegate;
+    final TableResultView myResultView;
+
+    private GridCellRendererWrapper(GridCellRenderer renderer, TableResultView resultView) {
+      delegate = renderer;
+      myResultView = resultView;
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      DataGrid grid = delegate.myGrid;
+      ViewIndex<GridRow> rowIdx = ViewIndex.forRow(grid, myResultView.isTransposed() ? column : row);
+      // The renderer works in the grid's column space, which is the main table's, not the frozen strip's.
+      ViewIndex<GridColumn> columnIdx =
+        ViewIndex.forColumn(grid, myResultView.toGridViewColumn(myResultView.isTransposed() ? row : column));
+      return delegate.getComponent(rowIdx, columnIdx, value);
+    }
+  }
+
+  protected static class MyHeaderCellComponent extends CellRendererPanel {
+    private static final String HEADER_PLACEHOLDER = "    ";
+
+    protected final TableResultView myTable;
+    private final List<JLabel> myNameLabels;
+    private final JPanel myCompositeLabel;
+    private final List<JLabel> myIconLabels;
+    private JLabel filterLabel;
+    private final Icon filterIconEnabled =
+      IconManager.getInstance().withIconBadge(AllIcons.General.Filter, JBUI.CurrentTheme.IconBadge.SUCCESS);
+
+    private final List<JPanel> myHeaderLinePanels;
+    private TableResultViewColumn myCurrentColumn;
+
+    private boolean isInitialized = false;
+
+    public MyHeaderCellComponent(@NotNull TableResultView table) {
+      myTable = table;
+      myCompositeLabel = new JPanel();
+      myCompositeLabel.setLayout(new BoxLayout(myCompositeLabel, BoxLayout.Y_AXIS));
+      myNameLabels = new ArrayList<>();
+      myIconLabels = new ArrayList<>();
+      myHeaderLinePanels = new ArrayList<>();
+      setLayout(new BorderLayout());
+      add(myCompositeLabel, BorderLayout.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      UISettings.setupAntialiasing(g);
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+      setSelected(true);
+      super.paintComponent(g);
+    }
+
+    protected Rectangle getNameRect() {
+      return getLabelTextRect(myNameLabels.getFirst());
+    }
+
+    protected int getModelIdx() {
+      return myCurrentColumn.getModelIndex();
+    }
+
+    /** Roughly four visible column-name characters. */
+    private int headerNameMinWidth() {
+      var fm = myTable.getFontMetrics(myTable.getFont());
+      return fm.charWidth('W') * 4 + JBUI.scale(6);
+    }
+
+    /** Label that fades overflowing content into the header background. */
+    private static class FadingLabel extends LabelWithFallbackFont {
+      private static final SwingTextTrimmer NO_TRIM =
+        SwingTextTrimmer.createCustomTrimmer((text, _, _) -> text);
+
+      private final Supplier<Color> myBackground;
+
+      FadingLabel(@NotNull TableResultView table, @NotNull Supplier<Color> background) {
+        super(table);
+        myBackground = background;
+        putClientProperty(SwingTextTrimmer.KEY, NO_TRIM);
+      }
+
+      /** Icon and text width, excluding insets. */
+      private int contentWidth() {
+        int width = 0;
+        Icon icon = getIcon();
+        if (icon != null) width += icon.getIconWidth();
+        String text = getText();
+        if (text != null && !text.isEmpty() && !text.startsWith("<html")) {
+          if (icon != null) width += getIconTextGap();
+          width += getFontMetrics(getFont()).stringWidth(text);
+        }
+        return width;
+      }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        String text = getText();
+        if (text != null && text.startsWith("<html")) return;
+        Insets insets = getInsets();
+        int available = getWidth() - insets.left - insets.right;
+        // Avoid premature blur on tiny overflows.
+        if (available <= 0 || contentWidth() <= available + JBUI.scale(4)) return;
+        // Keep hover highlights crisp.
+        if (isOpaque()) return;
+        Color bg = myBackground.get();
+        if (bg == null) return;
+        // Fade to the true right edge; JLabel icons may paint into the right inset.
+        int fadeWidth = Math.min(JBUI.scale(12), getWidth() - insets.left);
+        int x = getWidth() - fadeWidth;
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setPaint(new GradientPaint(x, 0, ColorUtil.withAlpha(bg, 0), x + fadeWidth, 0, bg));
+          g2.fillRect(x, insets.top, fadeWidth, getHeight() - insets.top - insets.bottom);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+    }
+
+    /** Lays out one header line, shrinking sort first, then filter, to preserve the name. */
+    private final class HeaderLineLayout implements LayoutManager {
+      private final JLabel myName;
+      private final JLabel mySort;
+      private final @Nullable JLabel myFilter;
+
+      private HeaderLineLayout(@NotNull JLabel name, @NotNull JLabel sort, @Nullable JLabel filter) {
+        myName = name;
+        mySort = sort;
+        myFilter = filter;
+      }
+
+      @Override public void addLayoutComponent(String name, Component comp) { }
+      @Override public void removeLayoutComponent(Component comp) { }
+
+      private boolean hasSort() { return mySort.getIcon() != null || !StringUtil.isEmpty(mySort.getText()); }
+      private boolean hasFilter() { return myFilter != null && myFilter.getIcon() != null; }
+
+      private int sortPrefWidth() { return hasSort() ? mySort.getPreferredSize().width : 0; }
+      private int filterPrefWidth() { return myFilter != null && myFilter.getIcon() != null ? myFilter.getPreferredSize().width : 0; }
+      private int nameFilterGap() { return hasFilter() ? JBUI.scale(2) : 0; }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        int width = myName.getPreferredSize().width + JBUI.scale(6) + sortPrefWidth();
+        if (hasFilter()) width += nameFilterGap() + filterPrefWidth();
+        return new Dimension(width, myTable.getRowHeight());
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return new Dimension(JBUI.scale(10), myTable.getRowHeight());
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        int total = parent.getWidth();
+        int height = parent.getHeight();
+        int[] d = distribute(total);
+        int sortW = d[0], filterW = d[1], trail = d[2];
+        int gap = nameFilterGap();
+        int nameW = Math.max(0, total - gap - filterW - sortW - trail);
+
+        myName.setBounds(0, 0, nameW, height);
+        if (myFilter != null) myFilter.setBounds(nameW + gap, 0, filterW, height);
+        // Pin the sort by its kept width (the flexible space sits to its left), so its slot never overlaps the filter.
+        mySort.setBounds(total - trail - sortW, 0, sortW, height);
+      }
+
+      /** Name slot left after trailing gap and icon slots. */
+      int nameWidth(int total) {
+        int[] d = distribute(total);
+        return Math.max(0, total - nameFilterGap() - d[1] - d[0] - d[2]);
+      }
+
+      /** {sortWidth, filterWidth, trailingGap}, shrunk in priority order. */
+      private int[] distribute(int total) {
+        int gap = nameFilterGap();
+        int sortW = sortPrefWidth();
+        int filterW = filterPrefWidth();
+        int trail = JBUI.scale(6);
+
+        // Remove trailing padding first, so sort can sit flush right.
+        int trailDeficit = myName.getPreferredSize().width + gap + filterW + sortW + trail - total;
+        if (trailDeficit > 0) trail -= Math.min(trailDeficit, trail);
+
+        int deficit = headerNameMinWidth() - (total - gap - filterW - sortW - trail);
+        if (deficit > 0) { int d = Math.min(deficit, sortW); sortW -= d; deficit -= d; }
+        if (deficit > 0) { int d = Math.min(deficit, filterW); filterW -= d; }
+        return new int[]{sortW, filterW, trail};
+      }
+    }
+
+    private static int getHeaderLineNum(@Nullable HierarchicalReader reader) {
+      return reader == null ? 1 : reader.getDepthOfHierarchy();
+    }
+
+    public MyHeaderCellComponent prepare(int columnDataIdx, boolean forDisplay, @Nullable HierarchicalReader reader) {
+      myCurrentColumn = myTable.getColumnCache().getOrCreateColumn(columnDataIdx);
+
+      if (!isInitialized) {
+        initializeLabelsForEachHeaderLine(getHeaderLineNum(reader));
+        isInitialized = true;
+      }
+
+      resetLabelsValues(myNameLabels);
+      resetLabelsValues(myIconLabels);
+      resetHeaderLinesBg();
+      setBorder(null);
+
+      List<String> headerLineValues = myCurrentColumn.getMultilineHeaderValues();
+      if (headerLineValues.size() > myNameLabels.size()) {
+        clearAllLabelsAndPanels();
+        initializeLabelsForEachHeaderLine(getHeaderLineNum(reader));
+      }
+      else if (myNameLabels.size() != getHeaderLineNum(reader)) {
+        clearAllLabelsAndPanels();
+        initializeLabelsForEachHeaderLine(getHeaderLineNum(reader));
+      }
+
+      if (headerLineValues.isEmpty()) return this;
+
+      GridColumn column = myTable.getColumn(columnDataIdx);
+      boolean isHierarchicalColumn = column instanceof HierarchicalGridColumn;
+
+      if (isHierarchicalColumn) {
+        HierarchicalColumnsCollapseManager collapseManager =
+          myTable.myResultPanel.getHierarchicalColumnsCollapseManager();
+        boolean isCollapsedSubtree = collapseManager != null
+                                     && collapseManager.isColumnCollapsedSubtree(column);
+
+        for (int i = 0; i < myHeaderLinePanels.size(); ++i) {
+          if (isCollapsedSubtree) {
+            prepareHeaderLineForCollapsedColumn(i, headerLineValues, (HierarchicalGridColumn)column, forDisplay);
+          }
+          else {
+            prepareHeaderLineForExpandedColumn(i, headerLineValues, (HierarchicalGridColumn)column, forDisplay);
+          }
+
+          myHeaderLinePanels.get(i).setBackground(getHeaderCellBackground(i));
+        }
+      }
+      else {
+        setValueForLastNonEmptyHeaderLine(myCurrentColumn.getHeaderValue().trim(), 0, columnDataIdx, forDisplay);
+        setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+      }
+
+      myCompositeLabel.revalidate();
+      return this;
+    }
+
+    private void clearAllLabelsAndPanels() {
+      myCompositeLabel.removeAll();
+      myIconLabels.clear();
+      myNameLabels.clear();
+      myHeaderLinePanels.clear();
+    }
+
+    private void prepareHeaderLineForCollapsedColumn(int headerLineIdx,
+                                                     @NotNull List<String> headerLineValues,
+                                                     @NotNull HierarchicalGridColumn column,
+                                                     boolean forDisplay) {
+      setHeaderLineContentForCollapsedColumn(headerLineIdx, headerLineValues, forDisplay, column);
+      setHeaderLineBorderForCollapsedColumn(headerLineIdx, headerLineValues, column);
+    }
+
+    private void setHeaderLineContentForCollapsedColumn(int headerLineIdx,
+                                                        @NotNull List<String> headerLineValues,
+                                                        boolean forDisplay,
+                                                        @NotNull HierarchicalGridColumn column) {
+      boolean isLeafColumnName = headerLineIdx == headerLineValues.size() - 1;
+      boolean isResidualLine = headerLineIdx >= headerLineValues.size();
+
+      setPlaceholderIntoHeaderLine(headerLineIdx);
+
+      HierarchicalGridColumn ancestorCorrespondingToHeaderLine = column.getAncestorAtDepth(headerLineIdx);
+      if (ancestorCorrespondingToHeaderLine == null || ancestorCorrespondingToHeaderLine.isLeaf()) {
+        return;
+      }
+      List<HierarchicalGridColumn> siblings =
+        filter(ancestorCorrespondingToHeaderLine.getSiblings(), (col) -> col != ancestorCorrespondingToHeaderLine);
+      boolean allSiblingsCollapsed =
+        !siblings.isEmpty() && all(siblings, (col) -> isSubtreeHiddenDueToCollapse(col, myTable.myResultPanel));
+      if (allSiblingsCollapsed) {
+        setPlaceholderIntoHeaderLine(headerLineIdx);
+        return;
+      }
+
+      if (!isLeafColumnName && !isResidualLine) {
+        String headerLineValue = headerLineValues.get(headerLineIdx);
+        setHeaderLineValueExceptLast(headerLineValue, headerLineIdx, forDisplay);
+        if (!headerLineValue.isBlank()) {
+          myIconLabels.get(headerLineIdx).setIcon(forDisplay ? AllIcons.Actions.ArrowExpand : null);
+        }
+      }
+    }
+
+    private void setHeaderLineBorderForCollapsedColumn(int headerLineIdx,
+                                                       @NotNull List<String> headerLineValues,
+                                                       @NotNull HierarchicalGridColumn column) {
+      boolean isLeafColumnName = headerLineIdx == headerLineValues.size() - 1;
+      boolean isResidualLine = headerLineIdx >= headerLineValues.size();
+      boolean isLastLine = headerLineIdx == myHeaderLinePanels.size() - 1;
+
+      if (isLeafColumnName || isResidualLine || isLastLine) {
+        myHeaderLinePanels.get(headerLineIdx).setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+        return;
+      }
+
+      int border = SideBorder.NONE;
+      boolean nextLineIsLeafColumnName = headerLineIdx == headerLineValues.size() - 2;
+      if (!nextLineIsLeafColumnName) {
+        border |= SideBorder.BOTTOM;
+      }
+
+      HierarchicalGridColumn ancestorCorrespondingToHeaderLine = column.getAncestorAtDepth(headerLineIdx);
+      if (column.isRightMostChildOfAncestor(ancestorCorrespondingToHeaderLine,
+                                            (col) -> isColumnDisabledOrCollapsed(col, myTable.myResultPanel))) {
+        border |= SideBorder.RIGHT;
+      }
+
+      myHeaderLinePanels.get(headerLineIdx).setBorder(IdeBorderFactory.createBorder(border));
+    }
+
+    private void prepareHeaderLineForExpandedColumn(int headerLineIdx,
+                                                    @NotNull List<String> headerLineValues,
+                                                    @NotNull HierarchicalGridColumn column,
+                                                    boolean forDisplay) {
+      setHeaderLineContentForExpandedColumn(headerLineIdx, headerLineValues, column, forDisplay);
+      setHeaderLineBorderForExpandedColumn(headerLineIdx, headerLineValues, column);
+    }
+
+    private void setHeaderLineContentForExpandedColumn(int headerLineIdx,
+                                                       @NotNull List<String> headerLineValues,
+                                                       @NotNull HierarchicalGridColumn column,
+                                                       boolean forDisplay) {
+      boolean isLeafColumnName = headerLineIdx == headerLineValues.size() - 1;
+      boolean isResidualLine = headerLineIdx >= headerLineValues.size();
+
+      if (isLeafColumnName) {
+        setValueForLastNonEmptyHeaderLine(headerLineValues.get(headerLineIdx), headerLineIdx, column.getColumnNumber(), forDisplay);
+        return;
+      }
+
+      if (isResidualLine) {
+        setPlaceholderIntoHeaderLine(headerLineIdx);
+        return;
+      }
+
+      String value = headerLineValues.get(headerLineIdx);
+      setHeaderLineValueExceptLast(headerLineValues.get(headerLineIdx), headerLineIdx, forDisplay);
+      if (!value.isBlank()) {
+        myIconLabels.get(headerLineIdx).setIcon(forDisplay ? AllIcons.Actions.ArrowCollapse : null);
+      }
+    }
+
+    private void setHeaderLineBorderForExpandedColumn(int headerLineIdx,
+                                                      @NotNull List<String> headerLineValues,
+                                                      @NotNull HierarchicalGridColumn column) {
+      boolean isLeafColumnName = headerLineIdx == headerLineValues.size() - 1;
+      boolean isResidualLine = headerLineIdx >= headerLineValues.size();
+
+      if (isLeafColumnName || isResidualLine) {
+        myHeaderLinePanels.get(headerLineIdx).setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
+        return;
+      }
+
+      int border = SideBorder.BOTTOM;
+      HierarchicalGridColumn ancestorCorrespondingToHeaderLine = column.getAncestorAtDepth(headerLineIdx);
+      if (column.isRightMostChildOfAncestor(ancestorCorrespondingToHeaderLine,
+                                            (col) -> isColumnDisabledOrCollapsed(col, myTable.myResultPanel))) {
+        border |= SideBorder.RIGHT;
+      }
+
+      int[] path = column.getPathFromRoot();
+      int nextSiblingIndex = path[path.length - 1] + 1;
+      if (ancestorCorrespondingToHeaderLine == column.getParent() &&
+          hasAllSiblingsFromIndexDisabled(column, nextSiblingIndex)) {
+        border |= SideBorder.RIGHT;
+      }
+
+      myHeaderLinePanels.get(headerLineIdx).setBorder(IdeBorderFactory.createBorder(border));
+    }
+
+    private boolean hasAllSiblingsFromIndexDisabled(@NotNull HierarchicalGridColumn column, int startIdx) {
+      List<HierarchicalGridColumn> siblings = column.getSiblings();
+
+      if (startIdx < 0 || startIdx >= siblings.size()) return false;
+
+      for (int i = startIdx; i < siblings.size(); ++i) {
+        HierarchicalGridColumn sibling = siblings.get(i);
+
+        if (sibling.isLeaf()) {
+          if (isColumnEnabled(sibling, myTable.myResultPanel)) return false;
+        }
+        else {
+          HierarchicalGridColumn leftMostChildOfSibling = sibling.getChildren().getFirst();
+          if (isColumnEnabled(leftMostChildOfSibling, myTable.myResultPanel)) return false;
+          // We do not check every descendant down to the leaf level.
+          // It is not possible to disable all child columns without disabling the leftmost column, and vice versa,
+          // disabling the leftmost column automatically disables all sibling columns.
+        }
+      }
+
+      return true;
+    }
+
+    private void setPlaceholderIntoHeaderLine(int headerLineIdx) {
+      if (headerLineIdx < 0 || headerLineIdx >= myNameLabels.size()) {
+        LOG.error("Header line index out of bounds: idx=" + headerLineIdx +
+                  ", myNameLabels.size()=" + myNameLabels.size() +
+                  ", myHeaderLinePanels.size()=" + myHeaderLinePanels.size());
+        return;
+      }
+      myNameLabels.get(headerLineIdx).setText(HEADER_PLACEHOLDER);
+    }
+
+    private void initializeLabelsForEachHeaderLine(int headerLineNum) {
+      filterLabel = new FadingLabel(myTable, this::getHeaderCellBackground);
+      filterLabel.setVerticalAlignment(SwingConstants.CENTER);
+      filterLabel.setHorizontalAlignment(SwingConstants.LEFT);
+      filterLabel.setBorder(JBUI.Borders.empty(0, 5));
+
+      for (int i = 0; i < headerLineNum; ++i) {
+        JLabel nameLabel = new FadingLabel(myTable, this::getHeaderCellBackground);
+        nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        nameLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.NAME_LABEL_INSETS));
+        myNameLabels.add(nameLabel);
+
+        JLabel sortLabel = new FadingLabel(myTable, this::getHeaderCellBackground) {
+          @Override
+          public Font getFont() {
+            return RelativeFont.TINY.derive(super.getFont());
+          }
+        };
+        sortLabel.setVerticalAlignment(SwingConstants.CENTER);
+        sortLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        sortLabel.setIconTextGap(JBUI.scale(0));
+        sortLabel.setBorder(IdeBorderFactory.createEmptyBorder(CellRenderingUtils.SORT_LABEL_INSETS));
+        myIconLabels.add(sortLabel);
+
+        JLabel filterForLine = i + 1 == headerLineNum ? filterLabel : null;
+        JPanel panel = new JPanel(new HeaderLineLayout(nameLabel, sortLabel, filterForLine));
+        panel.add(nameLabel);
+        panel.add(sortLabel);
+        if (filterForLine != null) panel.add(filterForLine);
+
+        myHeaderLinePanels.add(panel);
+        myCompositeLabel.add(panel);
+      }
+    }
+
+    private void setHeaderLineValueExceptLast(@NlsSafe String value, int lineIdx, boolean forDisplay) {
+      myNameLabels.get(lineIdx).setText(myTable.myAllowMultilineColumnLabel && StringUtil.containsLineBreak(value)
+                                        ? "<html>" + StringUtil.replace(value, "\n", "<br>") + "</html>"
+                                        : value);
+      if (!value.isBlank()) {
+        myNameLabels.get(lineIdx).setIcon(forDisplay ? AllIcons.Json.Object : null);
+        myNameLabels.get(lineIdx).setHorizontalTextPosition(SwingConstants.RIGHT);
+        myNameLabels.get(lineIdx).setVerticalTextPosition(SwingConstants.CENTER);
+        myNameLabels.get(lineIdx).setHorizontalAlignment(SwingConstants.LEFT);
+      }
+    }
+
+    private void setValueForLastNonEmptyHeaderLine(@NlsSafe String value, int lineIdx, int columnDataIdx, boolean forDisplay) {
+      JLabel nameLabel = myNameLabels.get(lineIdx);
+      JLabel sortLabel = myIconLabels.get(lineIdx);
+
+      Icon columnIcon = myCurrentColumn.getIcon(forDisplay);
+      nameLabel.setIcon(columnIcon);
+      nameLabel.setForeground(getHeaderCellForeground());
+      nameLabel.setText(myTable.myAllowMultilineColumnLabel && StringUtil.containsLineBreak(value)
+                        ? "<html>" + StringUtil.replace(value, "\n", "<br>") + "</html>"
+                        : value);
+
+      Icon sortLabelIcon = null;
+      String sortLabelText = "";
+      Icon filterLabelIcon = null;
+      GridColumn column = myTable.getColumn(columnDataIdx);
+      if (!myTable.isTransposed()) {
+        if (column != null) {
+          ModelIndex<GridColumn> columnIdx = ModelIndex.forColumn(myTable.myResultPanel, columnDataIdx);
+          if (GridHelper.get(myTable.myResultPanel).isSortingApplicable(columnIdx)) {
+            if (myTable.myResultPanel.getComparator(columnIdx) != null) {
+              int sortOrder = myTable.myResultPanel.getSortOrder(column);
+              sortLabelIcon = getSortOrderIcon(sortOrder);
+              sortLabelText = myTable.myResultPanel.countSortedColumns() > 1 ? getSortOrderText(sortOrder) : "";
+            }
+          }
+
+          LocalFilterState localFilterState = myTable.myResultPanel.getLocalFilterState();
+          if (localFilterState.isEnabled()) {
+            if (localFilterState.columnFilterEnabled(columnIdx)) {
+              filterLabelIcon = filterIconEnabled;
+            }
+            else {
+              filterLabelIcon = AllIcons.General.Filter;
+            }
+          }
+        }
+      }
+
+      nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+      sortLabel.setIcon(sortLabelIcon);
+      sortLabel.setText(sortLabelText);
+      if (forDisplay) {
+        myHeaderLinePanels.get(lineIdx).setBackground(getHeaderCellBackground());
+        if (myTable.tableHeader instanceof MyTableHeader tableHeader &&
+            columnDataIdx == (tableHeader.hoveredSortLabelIdx != null ? tableHeader.hoveredSortLabelIdx.value : -1)) {
+          sortLabel.setOpaque(true);
+          sortLabel.setBackground(UIUtil.getTableSelectionBackground(false));
+        }
+        else {
+          sortLabel.setOpaque(false);
+        }
+      }
+
+      boolean filterLabelNeeded = !(column instanceof HierarchicalGridColumn) && (filterLabelIcon != null);
+      filterLabel.setVisible(filterLabelNeeded);
+      if (filterLabelNeeded) {
+        filterLabel.setIcon(filterLabelIcon);
+        if (myTable.tableHeader instanceof MyTableHeader tableHeader &&
+            columnDataIdx == (tableHeader.hoveredFilterLabelIdx != null ? tableHeader.hoveredFilterLabelIdx.value : -1)) {
+          filterLabel.setOpaque(true);
+          filterLabel.setBackground(UIUtil.getTableSelectionBackground(false));
+        }
+        else {
+          filterLabel.setOpaque(false);
+        }
+      }
+      else {
+        filterLabel.setIcon(null);
+      }
+
+      // Drop the type icon once the name slot falls below its minimum width.
+      if (forDisplay && columnIcon != null &&
+          ((HeaderLineLayout)myHeaderLinePanels.get(lineIdx).getLayout()).nameWidth(myCurrentColumn.getWidth()) < headerNameMinWidth()) {
+        nameLabel.setIcon(null);
+      }
+    }
+
+    private void resetHeaderLinesBg() {
+      for (JPanel panel : myHeaderLinePanels) {
+        panel.setBackground(null);
+        panel.setBorder(null);
+      }
+    }
+
+    private static void resetLabelsValues(List<JLabel> labels) {
+      for (JLabel l : labels) {
+        l.setText(null);
+        l.setIcon(null);
+      }
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      return myCurrentColumn != null ? myCurrentColumn.getTooltipText() : super.getToolTipText(event);
+    }
+
+    private Color getHeaderCellForeground() {
+      if (myCurrentColumn == null) return super.getForeground();
+      return myTable.isTransposed() ?
+             myTable.myResultPanel.getColorModel().getRowHeaderForeground(
+               ModelIndex.forRow(myTable.myResultPanel, myCurrentColumn.getModelIndex())
+             ) :
+             myTable.myResultPanel.getColorModel().getColumnHeaderForeground(
+               ModelIndex.forColumn(myTable.myResultPanel, myCurrentColumn.getModelIndex())
+             );
+    }
+
+    private Color getHeaderCellBackground() {
+      return getHeaderCellBackground(0);
+    }
+
+    private Color getHeaderCellBackground(int headerLine) {
+      if (myCurrentColumn == null) return super.getBackground();
+      Color color = myTable.isTransposed() ?
+                    myTable.myResultPanel.getColorModel().getRowHeaderBackground(
+                      ModelIndex.forRow(myTable.myResultPanel, myCurrentColumn.getModelIndex())
+                    ) :
+                    myTable.myResultPanel.getColorModel().getColumnHeaderBackground(
+                      ModelIndex.forColumn(myTable.myResultPanel, myCurrentColumn.getModelIndex()),
+                      headerLine
+                    );
+      return color == null ? myTable.getBackground() : color;
+    }
+  }
+
+  public static class LabelWithFallbackFont extends JBLabel {
+    private final TableResultView myTable;
+
+    public LabelWithFallbackFont(@NotNull TableResultView table) {
+      myTable = table;
+    }
+
+    @Override
+    public Font getFont() {
+      return myTable == null ? super.getFont() : getFontWithFallback(myTable.getTableHeader().getFont());
+    }
+  }
+
+  public class MyTableColumnCache implements Iterable<TableResultViewColumn> {
+    private static final class Entry {
+      public final @NotNull Object myColumnData;
+      public final @NotNull TableResultViewColumn myTableColumn;
+
+      Entry(@NotNull Object columnData, @NotNull TableResultViewColumn tableColumn) {
+        myColumnData = columnData;
+        myTableColumn = tableColumn;
+      }
+    }
+
+    private final Int2ObjectMap<Entry> myColumnDataIndicesToEntries = new Int2ObjectOpenHashMap<>();
+
+    public boolean hasCachedColumn(int columnDataIdx) {
+      boolean isCached = hasValidEntry(columnDataIdx);
+      if (!isCached) {
+        myColumnDataIndicesToEntries.remove(columnDataIdx);
+        return false;
+      }
+      return true;
+    }
+
+    public TableResultViewColumn getOrCreateColumn(int columnDataIdx) {
+      Entry e = myColumnDataIndicesToEntries.get(columnDataIdx);
+      if (!hasCachedColumn(columnDataIdx) || e == null) {
+        e = createEntry(columnDataIdx);
+        myColumnDataIndicesToEntries.put(columnDataIdx, e);
+      }
+      return e.myTableColumn;
+    }
+
+    private @NotNull Entry createEntry(int columnDataIdx) {
+      TableResultViewColumn tableColumn = getModel().createColumn(columnDataIdx);
+      Object columnData = getColumnData(columnDataIdx);
+      return new Entry(Objects.requireNonNull(columnData), tableColumn);
+    }
+
+    public void retainColumns(final Collection<? extends GridColumn> columnsToRetain) {
+      myColumnDataIndicesToEntries.values().removeIf(entry -> !columnsToRetain.contains(entry.myColumnData));
+    }
+
+    @Override
+    public Iterator<TableResultViewColumn> iterator() {
+      return myColumnDataIndicesToEntries.values().stream().map(entry -> entry.myTableColumn).iterator();
+    }
+
+    private boolean hasValidEntry(int columnDataIdx) {
+      Entry e = myColumnDataIndicesToEntries.get(columnDataIdx);
+      if (e == null) return false;
+
+      Object cachedColumnData = e.myColumnData;
+      Object currentColumnData = getColumnData(columnDataIdx);
+      if (Comparing.equal(cachedColumnData, currentColumnData)) return true;
+
+      // let's attempt to detect if it's the same column data
+      //TODO try using primary keys and ROWID columns for it
+      if (cachedColumnData instanceof GridRow cachedRow && currentColumnData instanceof GridRow currentRow) {
+        if (cachedRow.getRowNum() == currentRow.getRowNum() && cachedRow.getSize() == currentRow.getSize()) {
+          int mismatchedValuesCount = 0;
+          for (int i = 0; i < cachedRow.getSize(); i++) {
+            if (!Comparing.equal(cachedRow.getValue(i), currentRow.getValue(i))) {
+              mismatchedValuesCount++;
+            }
+          }
+          if (mismatchedValuesCount < 2) return true;
+        }
+      }
+      return false;
+    }
+
+    private Object getColumnData(int columnDataIdx) {
+      return isTransposed() ? getRow(columnDataIdx) : getColumn(columnDataIdx);
+    }
+  }
+
+  private static class MyTransposedViewColumnFilter extends RowFilter<TableModel, Integer> {
+    final DataGrid myGrid;
+
+    MyTransposedViewColumnFilter(@NotNull DataGrid grid) {
+      myGrid = grid;
+    }
+
+    @Override
+    public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+      ModelIndex<GridColumn> column = ModelIndex.forColumn(myGrid, entry.getIdentifier().intValue());
+      return column.isValid(myGrid) && myGrid.isColumnEnabled(column);
+    }
+  }
+
+  private static class MySearchRowFilter extends RowFilter<TableModel, Integer> {
+    private final DataGrid myGrid;
+    private final LocalFilterState myLocalFilterState;
+
+    MySearchRowFilter(@NotNull DataGrid grid, @NotNull LocalFilterState state) {
+      myGrid = grid;
+      myLocalFilterState = state;
+    }
+
+    @Override
+    public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+      final ModelIndex<GridRow> row = ModelIndex.forRow(myGrid, entry.getIdentifier().intValue());
+      if (!myLocalFilterState.include(myGrid, row, null)) {
+        return false;
+      }
+      //noinspection unchecked
+      GridSearchSession<GridRow, GridColumn> searchSession = ObjectUtils.tryCast(myGrid.getSearchSession(), GridSearchSession.class);
+      if (searchSession == null || !searchSession.isFilteringEnabled() ||
+          StringUtil.isEmpty(searchSession.getFindModel().getStringToFind()) || searchSession.isSearchInProgress()) {
+        return true;
+      }
+
+      return !myGrid.getVisibleColumns().asIterable().filter(column -> searchSession.isMatchedCell(row, column)).isEmpty();
+    }
+  }
+
+  @Override
+  protected @Nullable Color getHoveredRowBackground() {
+    return myResultPanel.getHoveredRowBackground();
+  }
+
+  @Override
+  public void resetScroll() {
+    JScrollBar horizontal = getHorizontalScrollBar();
+    if (horizontal != null) horizontal.setValue(0);
+    JScrollBar vertical = getVerticalScrollBar();
+    if (vertical != null) vertical.setValue(0);
+  }
+
+  @Override
+  public boolean isHoveredRowBgHighlightingEnabled() {
+    if (isStriped()) {
+      return false;
+    }
+
+    return switch (myHoveredRowMode) {
+      case AUTO -> ResultView.super.isHoveredRowBgHighlightingEnabled();
+      case HIGHLIGHT -> true;
+      case NOT_HIGHLIGHT -> false;
+    };
+  }
+
+  @Override
+  public void setHoveredRowHighlightMode(HoveredRowBgHighlightMode mode) {
+    myHoveredRowMode = mode;
+    TableResultView frozenView = getFrozenView();
+    if (frozenView != null) frozenView.setHoveredRowHighlightMode(mode);
+  }
+
+  public void setStatisticsHeader(StatisticsTableHeader statisticsHeader) {
+    myStatisticsHeader = statisticsHeader;
+  }
+
+  public StatisticsTableHeader getStatisticsHeader() {
+    return myStatisticsHeader;
+  }
+
+  public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
+    StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
+    if (previousPanelMode == newPanelMode) return;
+    if (myStatisticsHeader == null) return;
+
+    myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
+
+    if (previousPanelMode != null) {
+      myColumnLayout.resetLayout();
+    }
+  }
+
+  public StatisticsPanelMode getStatisticsPanelMode() {
+    if (myStatisticsHeader != null) {
+      return myStatisticsHeader.getStatisticsPanelMode();
+    }
+    return null;
+  }
+
+  @Override
+  public void onLocalFilterStateChanged() {
+    updateRowFilter();
+  }
+}

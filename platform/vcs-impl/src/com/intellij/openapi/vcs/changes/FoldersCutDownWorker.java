@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class FoldersCutDownWorker {
   private final Set<String> myPaths;
 
@@ -29,15 +31,13 @@ public class FoldersCutDownWorker {
   }
 
   public boolean addCurrent(final VirtualFile file) {
-    String filePath = file.getPath();
-
     for (String path : myPaths) {
-      if (FileUtil.startsWith(filePath, path)) {
+      if (VfsUtilCore.isAncestorOrSelf(path, file)) {
         return false;
       }
     }
 
-    myPaths.add(filePath);
+    myPaths.add(file.getPath());
     return true;
   }
 }

@@ -1,86 +1,91 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 
-public class IdeGlassPaneUtil {
-
+public final class IdeGlassPaneUtil {
   private IdeGlassPaneUtil() {
   }
 
-  public static IdeGlassPane find(Component component) {
-    if (!(component instanceof JComponent)) throw new IllegalArgumentException("Component must be instance of JComponent");
+  public static @NotNull IdeGlassPane find(@NotNull Component component) {
+    if (!(component instanceof JComponent)) {
+      throw new IllegalArgumentException("Component must be instance of JComponent");
+    }
 
-    final JRootPane root = ((JComponent)component).getRootPane();
-    if (root == null) throw new IllegalArgumentException("Component must be visible in order to find glass pane for it");
+    JRootPane root = ((JComponent)component).getRootPane();
+    if (root == null) {
+      throw new IllegalArgumentException("Component must be visible in order to find glass pane for it");
+    }
 
-    final Component gp = root.getGlassPane();
+    Component gp = root.getGlassPane();
     if (!(gp instanceof IdeGlassPane)) {
-      throw new IllegalArgumentException("Glass pane should be " + IdeGlassPane.class.getName());
+      throw new IllegalArgumentException("Glass pane should be " + IdeGlassPane.class.getName() + " but was " + gp + " in " + root);
     }
     return (IdeGlassPane)gp;
   }
 
-  public static void installPainter(final JComponent target, final Painter painter, final Disposable parent) {
-    final UiNotifyConnector connector = new UiNotifyConnector(target, new Activatable() {
-
-      IdeGlassPane myPane;
-
-      public void showNotify() {
-        IdeGlassPane pane = find(target);
-        if (myPane != null && myPane != pane) {
-          myPane.removePainter(painter);
-        }
-        myPane = pane;
-        myPane.addPainter(target, painter, parent);
-      }
-
-      public void hideNotify() {
-        if (myPane != null) {
-          myPane.removePainter(painter);
-        }
-      }
-    });
+  public static void installPainter(@NotNull JComponent target, @NotNull Painter painter, @NotNull Disposable parent) {
+    Activatable listeners = createPainterActivatable(target, painter);
+    UiNotifyConnector connector = UiNotifyConnector.installOn(target, listeners);
     Disposer.register(parent, connector);
   }
 
-  public static boolean canBePreprocessed(MouseEvent e) {
-    Component c = UIUtil.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+  @ApiStatus.Internal
+  public static @NotNull Activatable createPainterActivatable(@NotNull JComponent target, @NotNull Painter painter) {
+    return new Activatable() {
+      private Disposable panePainterListeners;
 
-    if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null && e.getID() != MouseEvent.MOUSE_DRAGGED) {
-      return false;
+      @Override
+      public void showNotify() {
+        IdeGlassPane pane = find(target);
+        if (panePainterListeners != null) {
+          Disposer.dispose(panePainterListeners);
+        }
+
+        panePainterListeners = Disposer.newDisposable("PanePainterListeners");
+        pane.addPainter(target, painter, panePainterListeners);
+      }
+
+      @Override
+      public void hideNotify() {
+        if (panePainterListeners != null) {
+          Disposer.dispose(panePainterListeners);
+        }
+      }
+    };
+  }
+
+  public static boolean canBePreprocessed(@NotNull MouseEvent e) {
+    Component component = UIUtil.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+    if (component == null) {
+      return true;
     }
 
-    if (c instanceof IdeGlassPane.TopComponent) {
-      return ((IdeGlassPane.TopComponent)c).canBePreprocessed(e);
+    if (e.getID() != MouseEvent.MOUSE_DRAGGED) {
+      JBPopupFactory popupFactory = ApplicationManager.getApplication().getServiceIfCreated(JBPopupFactory.class);
+      if (popupFactory != null && popupFactory.getParentBalloonFor(component) != null) {
+        return false;
+      }
+    }
+
+    if (component instanceof IdeGlassPane.TopComponent) {
+      return ((IdeGlassPane.TopComponent)component).canBePreprocessed(e);
     }
 
     return true;
   }
-
 }

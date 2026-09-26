@@ -1,0 +1,5 @@
+fun foo(list: List<String>) {
+    list<caret>
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.IterateExpressionIntention

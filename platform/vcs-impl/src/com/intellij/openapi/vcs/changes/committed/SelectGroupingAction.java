@@ -1,44 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author yole
- */
+
+@ApiStatus.Internal
 public class SelectGroupingAction extends LabeledComboBoxAction implements DumbAware {
 
-  @NotNull private final Project myProject;
-  @NotNull private final CommittedChangesTreeBrowser myBrowser;
+  private final @NotNull Project myProject;
+  private final @NotNull CommittedChangesTreeBrowser myBrowser;
 
   public SelectGroupingAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.group.title"));
@@ -47,27 +40,29 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(myBrowser.getGroupingStrategy().toString());
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return new DefaultActionGroup(
       ContainerUtil.map(collectStrategies(),
                         (NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>)strategy -> new SetGroupingAction(strategy)));
   }
 
-  @NotNull
   @Override
-  protected Condition<AnAction> getPreselectCondition() {
+  protected @NotNull Condition<AnAction> getPreselectCondition() {
     return action -> ((SetGroupingAction)action).myStrategy.equals(myBrowser.getGroupingStrategy());
   }
 
-  @NotNull
-  private List<ChangeListGroupingStrategy> collectStrategies() {
-    List<ChangeListGroupingStrategy> result = ContainerUtil.newArrayList();
+  private @NotNull List<ChangeListGroupingStrategy> collectStrategies() {
+    List<ChangeListGroupingStrategy> result = new ArrayList<>();
 
     result.add(new DateChangeListGroupingStrategy());
     result.add(ChangeListGroupingStrategy.USER);
@@ -87,9 +82,9 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     return result;
   }
 
-  private class SetGroupingAction extends DumbAwareAction {
+  private final class SetGroupingAction extends DumbAwareAction {
 
-    @NotNull private final ChangeListGroupingStrategy myStrategy;
+    private final @NotNull ChangeListGroupingStrategy myStrategy;
 
     private SetGroupingAction(@NotNull ChangeListGroupingStrategy strategy) {
       super(strategy.toString());
@@ -102,9 +97,9 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     }
   }
 
-  private static class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {
+  private static final class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {
 
-    @NotNull private final ChangeListColumn<CommittedChangeList> myColumn;
+    private final @NotNull ChangeListColumn<CommittedChangeList> myColumn;
 
     private CustomChangeListColumnGroupingStrategy(@NotNull ChangeListColumn column) {
       // The column is coming from a call to CommittedChangesProvider::getColumns(), which is typed as
@@ -127,8 +122,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     @Override
     public String getGroupName(@NotNull CommittedChangeList changeList) {
       Object value = myColumn.getValue(changeList);
-
-      return value != null ? value.toString() : null;
+      return value != null ? value.toString() : null; //NON-NLS
     }
 
     @Override

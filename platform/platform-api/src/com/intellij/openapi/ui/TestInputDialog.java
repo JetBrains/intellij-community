@@ -21,11 +21,13 @@ import org.jetbrains.annotations.Nullable;
 public interface TestInputDialog {
 
   TestInputDialog DEFAULT = new TestInputDialog() {
+    @Override
     public String show(String message) {
       throw new RuntimeException(message);
     }
   };
   TestInputDialog OK = new TestInputDialog() {
+    @Override
     public String show(String message) {
       return "";
     }

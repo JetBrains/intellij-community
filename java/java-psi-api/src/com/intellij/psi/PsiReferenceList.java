@@ -31,14 +31,12 @@ public interface PsiReferenceList extends PsiElement {
   /**
    * Returns the array of reference elements contained in the list.
    */
-  @NotNull
-  PsiJavaCodeReferenceElement[] getReferenceElements();
+  PsiJavaCodeReferenceElement @NotNull [] getReferenceElements();
 
   /**
    * Returns the array of classes referenced by elements in the list.
    */
-  @NotNull
-  PsiClassType[] getReferencedTypes();
+  PsiClassType @NotNull [] getReferencedTypes();
 
   Role getRole();
 
@@ -46,6 +44,7 @@ public interface PsiReferenceList extends PsiElement {
     THROWS_LIST,
     EXTENDS_LIST,
     IMPLEMENTS_LIST,
+    PERMITS_LIST,
     EXTENDS_BOUNDS_LIST,
     PROVIDES_WITH_LIST
   }

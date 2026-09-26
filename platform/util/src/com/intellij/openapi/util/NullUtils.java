@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +29,7 @@ public final class NullUtils {
    * @return <tt>true</tt> if all objects are not <tt>null</tt>,
    *         otherwise <tt>false</tt>
    */
-  public static boolean notNull(@NotNull Object... objects) {
+  public static boolean notNull(Object @NotNull ... objects) {
     return !hasNull(objects);
   }
 
@@ -39,25 +40,8 @@ public final class NullUtils {
    * @return <tt>false</tt> if all objects are not <tt>null</tt>,
    *         otherwise <tt>true</tt>
    */
-  public static boolean hasNull(@NotNull Object... objects) {
-    for (Object object : objects) {
-      if (object == null) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Returns <tt>true</tt> if and only if at least one object is not <tt>null</tt>
-   *
-   * @param objects objects to check
-   * @return <tt>false</tt> if all objects are <tt>null</tt>,
-   *         otherwise <tt>true</tt>
-   */
-  public static boolean hasNotNull(@NotNull Object... objects) {
-    for (Object object : objects) {
-      if (object != null) return true;
-    }
-    return false;
+  public static boolean hasNull(Object @NotNull ... objects) {
+    return ArrayUtil.contains(null, objects);
   }
 
   private NullUtils() {}

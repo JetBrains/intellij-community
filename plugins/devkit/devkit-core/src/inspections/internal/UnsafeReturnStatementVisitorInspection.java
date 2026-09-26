@@ -1,118 +1,140 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHolderUtilKt;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
 
-public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase {
+import java.util.List;
 
-  private static final String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
-  private static final String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
-  
-  private static final String EMPTY_LAMBDA = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
-  private static final String EMPTY_CLASS  = "public void visitClass(PsiClass aClass) {}";
+@VisibleForTesting
+@ApiStatus.Internal
+public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
 
-  @NotNull
-  @Override
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
-      @Override
-      public void visitClass(PsiClass aClass) {
-        super.visitClass(aClass);
-        if (InheritanceUtil.isInheritor(aClass, true, BASE_WALKING_VISITOR_NAME) ||
-            InheritanceUtil.isInheritor(aClass, true, BASE_VISITOR_NAME)) {
-          if (findVisitMethod(aClass, "visitReturnStatement", PsiReturnStatement.class.getName()) ) {
-            final boolean skipLambdaFound = findVisitMethod(aClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
-            final boolean skipClassFound = findVisitMethod(aClass, "visitClass", PsiClass.class.getName());
-            if (!(skipClassFound && skipLambdaFound)) {
-              
-              final String[] methods;
-              final String name;
-              if (!skipLambdaFound ^ !skipClassFound) {
-                if (!skipLambdaFound) {
-                  name = "Insert visitLambdaExpression method";
-                  methods = new String[]{EMPTY_LAMBDA};
-                } else {
-                  name = "Insert visitClass method";
-                  methods = new String[]{EMPTY_CLASS};
-                }
-              }
-              else {
-                name = "Insert visitLambdaExpression/visitClass methods";
-                methods = new String[]{EMPTY_LAMBDA, EMPTY_CLASS};
-              }
-              holder.registerProblem(aClass, HighlightNamesUtil.getClassDeclarationTextRange(aClass).shiftRight(-aClass.getTextRange().getStartOffset()),
-                                     "Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions",
-                                     new MySkipVisitFix(name, methods));
-            }
-          }
-        }
-      }
-    };
+  private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
+  private static final @NonNls String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
+
+  private static final @NonNls String EMPTY_VISIT_LAMBDA_METHOD = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
+  private static final @NonNls String EMPTY_VISIT_CLASS_METHOD = "public void visitClass(PsiClass aClass) {}";
+
+  public UnsafeReturnStatementVisitorInspection() {
+    super(UClass.class);
   }
 
-  private static boolean findVisitMethod(PsiClass aClass, String visitMethodName, String argumentType) {
-    final PsiMethod[] visitReturnStatements = aClass.findMethodsByName(visitMethodName, false);
-    for (PsiMethod method : visitReturnStatements) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 1 && parameters[0].getType().equalsToText(argumentType)) {
-        return true;
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           DevKitInspectionUtil.isClassAvailable(holder, BASE_VISITOR_NAME);
+  }
+
+  @Override
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    PsiClass aClass = uClass.getJavaPsi();
+    if (InheritanceUtil.isInheritor(aClass, true, BASE_WALKING_VISITOR_NAME) ||
+        InheritanceUtil.isInheritor(aClass, true, BASE_VISITOR_NAME)) {
+      if (hasMethod(uClass, "visitReturnStatement", PsiReturnStatement.class.getName())) {
+        final boolean visitLambdaMissing = !hasMethod(uClass, "visitLambdaExpression", PsiLambdaExpression.class.getName());
+        final boolean visitClassMissing = !hasMethod(uClass, "visitClass", PsiClass.class.getName());
+        if (visitLambdaMissing || visitClassMissing) {
+          final ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
+          ProblemHolderUtilKt.registerUProblem(holder, uClass,
+                                               DevKitBundle.message("inspections.unsafe.return.message"),
+                                               createFixes(uClass, visitLambdaMissing, visitClassMissing));
+          return holder.getResultsArray();
+        }
       }
     }
-    return false;
+    return ProblemDescriptor.EMPTY_ARRAY;
+  }
+
+  private static boolean hasMethod(UClass uClass, String visitMethodName, String argumentType) {
+    return ContainerUtil.exists(uClass.getMethods(),
+                                uMethod -> visitMethodName.equals(uMethod.getName()) && hasSingleParameterOfType(uMethod, argumentType));
+  }
+
+  private static boolean hasSingleParameterOfType(UMethod uMethod, String argumentType) {
+    final List<UParameter> parameters = uMethod.getUastParameters();
+    return parameters.size() == 1 && parameters.get(0).getType().equalsToText(argumentType);
+  }
+
+  private static LocalQuickFix[] createFixes(@NotNull UClass uClass, boolean visitLambdaMissing, boolean visitClassMissing) {
+    if (!uClass.getLang().is(JavaLanguage.INSTANCE)) return LocalQuickFix.EMPTY_ARRAY;
+    final String fixName;
+    final String[] methodsToInsert;
+    if (visitLambdaMissing && visitClassMissing) {
+      fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression.and.class.methods");
+      methodsToInsert = new String[]{EMPTY_VISIT_LAMBDA_METHOD, EMPTY_VISIT_CLASS_METHOD};
+    }
+    else if (visitLambdaMissing) {
+      fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.lambda.expression");
+      methodsToInsert = new String[]{EMPTY_VISIT_LAMBDA_METHOD};
+    }
+    else {
+      fixName = DevKitBundle.message("inspections.unsafe.return.insert.visit.class.method");
+      methodsToInsert = new String[]{EMPTY_VISIT_CLASS_METHOD};
+    }
+    return new LocalQuickFix[]{new MySkipVisitFix(fixName, methodsToInsert)};
   }
 
   private static class MySkipVisitFix implements LocalQuickFix {
-    private final String myName;
+    private final @IntentionName String myName;
     private final String[] myMethods;
 
-    public MySkipVisitFix(String name, String[] methods) {
+    MySkipVisitFix(@IntentionName String name, String[] methods) {
       myName = name;
       myMethods = methods;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @IntentionName @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return "Skip anonymous/local classes";
+    public @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.unsafe.return.insert.family.name");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiClass) {
+      PsiClass aClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
+      if (aClass != null) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        for (String method : myMethods) {
-          element.add(factory.createMethodFromText(method, element));
+        for (String methodText : myMethods) {
+          final PsiMethod method = factory.createMethodFromText(methodText, aClass);
+          PsiMethod overridden = aClass.findMethodBySignature(method, true);
+          if (overridden != null) {
+            OverrideImplementUtil.annotateOnOverrideImplement(method, aClass, overridden);
+          }
+          aClass.add(method);
         }
       }
     }

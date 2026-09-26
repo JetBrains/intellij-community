@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ package com.pme.exe;
 import java.io.IOException;
 
 /**
+ * @author Sergey Zhulin
  * Date: Mar 31, 2006
  * Time: 2:09:25 PM
  */
 public class InvalidMsDosHeaderException extends IOException {
-  public InvalidMsDosHeaderException() {
-  }
-
   public InvalidMsDosHeaderException(String s) {
     super(s);
   }

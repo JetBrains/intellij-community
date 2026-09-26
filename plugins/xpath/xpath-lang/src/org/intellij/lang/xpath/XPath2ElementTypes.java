@@ -16,12 +16,9 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public final class XPath2ElementTypes {
-  public static final IFileElementType FILE = new IFileElementType("XPATH2_FILE", XPathFileType.XPATH2.getLanguage());
-
   public static final IElementType SEQUENCE = new XPath2ElementType("SEQUENCE");
   public static final IElementType RANGE_EXPRESSION = new XPath2ElementType("RANGE_EXPRESSION");
   public static final IElementType IF = new XPath2ElementType("IF");

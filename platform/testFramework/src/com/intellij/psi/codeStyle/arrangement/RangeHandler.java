@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- * @since 19.12.2012
- */
 public class RangeHandler implements RichTextHandler {
   @Override
   public String getMarker() {

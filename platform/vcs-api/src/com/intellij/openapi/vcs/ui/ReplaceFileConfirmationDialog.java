@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.CommonBundle;
@@ -21,11 +7,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import org.jetbrains.annotations.Nls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,9 +23,9 @@ import java.util.Collection;
 public class ReplaceFileConfirmationDialog {
   private final FileStatusManager myFileStatusManager;
   ProgressIndicator myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-  private final String myActionName;
+  private final @Nls String myActionName;
 
-  public ReplaceFileConfirmationDialog(Project project, String actionName) {
+  public ReplaceFileConfirmationDialog(Project project, @Nls String actionName) {
     myFileStatusManager = FileStatusManager.getInstance(project);
     myActionName = actionName;
   }
@@ -59,30 +47,29 @@ public class ReplaceFileConfirmationDialog {
     if (modifiedFiles.isEmpty()) return true;
 
     return Messages.showOkCancelDialog(createMessage(modifiedFiles), myActionName,
-                                    createOwerriteButtonName(modifiedFiles), getCancelButtonText(),
-                               Messages.getWarningIcon()) ==
+                                       createOverwriteButtonName(modifiedFiles), getCancelButtonText(),
+                                       Messages.getWarningIcon()) ==
            Messages.OK;
 
   }
 
-  protected String getCancelButtonText() {
+  protected @NlsContexts.Button String getCancelButtonText() {
     return CommonBundle.getCancelButtonText();
   }
 
-  private String createOwerriteButtonName(Collection modifiedFiles) {
-
+  private @NlsContexts.Button String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
-  protected String getOkButtonTextForOneFile() {
+  protected @NlsContexts.Button String getOkButtonTextForOneFile() {
     return VcsBundle.message("button.text.overwrite.modified.file");
   }
 
-  protected String getOkButtonTextForFiles() {
+  protected @NlsContexts.Button String getOkButtonTextForFiles() {
     return VcsBundle.message("button.text.overwrite.modified.files");
   }
 
-  protected String createMessage(Collection modifiedFiles) {
+  protected @NlsContexts.DialogMessage String createMessage(Collection modifiedFiles) {
     if (modifiedFiles.size() == 1) {
       VirtualFile virtualFile = ((VirtualFile)modifiedFiles.iterator().next());
       return VcsBundle.message("message.text.file.locally.modified",
@@ -99,8 +86,7 @@ public class ReplaceFileConfirmationDialog {
 
     if (files == null) return result;
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       if (myProgressIndicator != null) {
         myProgressIndicator.setText(VcsBundle.message("progress.text.searching.for.modified.files"));
         myProgressIndicator.setText2(file.getPresentableUrl());

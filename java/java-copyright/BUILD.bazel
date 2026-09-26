@@ -1,0 +1,68 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.java.copyright` end
+
+### auto-generated section `build intellij.java.copyright` start
+jvm_library(
+    name = "copyright",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.copyright",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//plugins/copyright",
+        "//platform/core-api:core",
+        "//java/java-psi-api:psi",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/util",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+)
+
+jvm_library(
+    name = "copyright_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.copyright",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":copyright",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//plugins/copyright:copyright_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.copyright` end
+
+### auto-generated section `iml intellij.java.copyright` start
+exports_files(
+    [
+        "intellij.java.copyright.iml",
+        "resources/intellij.java.copyright.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.copyright` end

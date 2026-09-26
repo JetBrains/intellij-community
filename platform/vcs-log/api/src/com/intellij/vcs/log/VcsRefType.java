@@ -2,7 +2,7 @@ package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Kirill Likhodedov

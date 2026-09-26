@@ -1,9 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaXmlDocumentKt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -12,19 +14,20 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class ComboBoxWithHistory extends JComboBox {
+public final class ComboBoxWithHistory extends JComboBox {
   private final String myHistoryId;
   private Project myProject;
   private final HashMap<Object, Long> myWeights = new HashMap<>();
@@ -42,7 +45,7 @@ public class ComboBoxWithHistory extends JComboBox {
   }
 
   public ComboBoxWithHistory(String historyId) {
-    this(null, historyId, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    this(null, historyId, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   public void setModelFrom(Object... items) {
@@ -58,7 +61,7 @@ public class ComboBoxWithHistory extends JComboBox {
   }
 
   public void save() {
-    final StringBuilder buf = new StringBuilder("<map>");
+    @NonNls StringBuilder buf = new StringBuilder("<map>");
     for (Object key : myWeights.keySet()) {
       if (key != null) {
         final Long value = myWeights.get(key);
@@ -88,8 +91,7 @@ public class ComboBoxWithHistory extends JComboBox {
     if (xml == null) return;
 
     try {
-      final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-      final DocumentBuilder db = dbf.newDocumentBuilder();
+      final DocumentBuilder db = JavaXmlDocumentKt.createDocumentBuilder();
       final InputSource is = new InputSource();
       is.setCharacterStream(new StringReader(xml));
 
@@ -121,7 +123,7 @@ public class ComboBoxWithHistory extends JComboBox {
   }
 
 
-  private class MyModel extends DefaultComboBoxModel {
+  private final class MyModel extends DefaultComboBoxModel {
     private MyModel(Object[] items) {
       super(sort(items, myWeights));
     }
@@ -136,7 +138,7 @@ public class ComboBoxWithHistory extends JComboBox {
     }
   }
 
-  private static class LastUsedComparator implements Comparator<Object> {
+  private static final class LastUsedComparator implements Comparator<Object> {
     private final HashMap<Object, Long> myWeights;
     private final List<Object> myInitialPositions;
 

@@ -1,0 +1,21 @@
+Original text:
+---------------
+class MyClass:
+    def foo(self):
+        return 1
+
+    def bar(self):
+        return 2
+---------------
+Subtree: Language: Python
+---------------
+class MyClass:
+    <reparse>def foo(self):
+        return 1
+
+    def baz(self):
+        return 3
+
+    def bar(self):
+        return 2</reparse>
+---------------

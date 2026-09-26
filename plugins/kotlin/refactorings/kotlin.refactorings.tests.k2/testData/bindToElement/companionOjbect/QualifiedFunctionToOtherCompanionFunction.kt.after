@@ -1,0 +1,19 @@
+// BIND_TO test.Bar.Companion.foo
+
+package test
+
+fun test() {
+    Bar.<caret>foo()
+}
+
+class Foo {
+    companion object {
+       fun foo() {}
+    }
+}
+
+class Bar {
+    companion object {
+        fun foo() {}
+    }
+}

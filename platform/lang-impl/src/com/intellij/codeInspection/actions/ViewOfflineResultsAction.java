@@ -1,138 +1,137 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformUtils;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ViewOfflineResultsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
-  @NonNls private static final String XML_EXTENSION = "xml";
+public final class ViewOfflineResultsAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
 
   @Override
-  public void update(AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+    Project project = event.getProject();
     presentation.setEnabled(project != null);
-    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && !PlatformUtils.isCidr());
+    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    Project project = event.getProject();
 
     LOG.assertTrue(project != null);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false){
-      @Override
-      public Icon getIcon(VirtualFile file) {
-        if (file.isDirectory()) {
-          if (file.findChild(InspectionApplication.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
-            return AllIcons.Nodes.InspectionResults;
-          }
-        }
-        return super.getIcon(file);
-      }
-    };
-    descriptor.setTitle("Select Path");
-    descriptor.setDescription("Select directory which contains exported inspections results");
-    final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
-    if (virtualFile == null || !virtualFile.isDirectory()) return;
+    FileType xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(xmlFileType)
+      .withTitle(InspectionsBundle.message("view.offline.inspections.select.path.title"))
+      .withDescription(InspectionsBundle.message("view.offline.inspections.select.path.description"));
+    VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
+    if (virtualFile == null) return;
 
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
-      new HashMap<>();
-    final String [] profileName = new String[1];
+    Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<>();
+    String [] profileName = new String[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(project,
                                                               InspectionsBundle.message("parsing.inspections.dump.progress.title"),
                                                               true,
                                                               new PerformAnalysisInBackgroundOption(project)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        //for non project directories ensure refreshed directory 
+        //for non-project directories ensure refreshed directory
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
-        final VirtualFile[] files = virtualFile.getChildren();
+        VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
-          for (final VirtualFile inspectionFile : files) {
+          for (VirtualFile inspectionFile : files) {
             if (inspectionFile.isDirectory()) continue;
-            final String shortName = inspectionFile.getNameWithoutExtension();
-            final String extension = inspectionFile.getExtension();
-            if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-              profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString()));
+            String shortName = inspectionFile.getNameWithoutExtension();
+            String extension = inspectionFile.getExtension();
+            Path inspectionIoFile = inspectionFile.toNioPath();
+            try {
+              if (shortName.equals(InspectionsResultUtil.DESCRIPTIONS)) {
+                profileName[0] = ReadAction.computeBlocking(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
+              }
+              else if (StdFileTypes.XML.getDefaultExtension().equals(extension)) {
+                resMap.put(shortName, ReadAction.computeBlocking(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
+              }
             }
-            else if (XML_EXTENSION.equals(extension)) {
-              resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString())));
+            catch (Exception e) {
+              throw new RuntimeException("Can't read file: " + inspectionFile.getName(), e);
             }
           }
+          if (profileName[0] == null) {
+            profileName[0] = virtualFile.getNameWithoutExtension();
+          }
         }
-        catch (final Exception e) {  //all parse exceptions
+        catch (Exception e) {  //all parse exceptions
           ApplicationManager.getApplication()
-            .invokeLater(() -> Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title")));
-          throw new ProcessCanceledException(); //cancel process
+            .invokeLater(() -> Messages.showInfoMessage(ExceptionUtil.getThrowableText(e), InspectionsBundle.message("offline.view.parse.exception.title")));
+          throw new ProcessCanceledException(e); //cancel process
         }
       }
 
       @Override
       public void onSuccess() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          final String name = profileName[0];
-          showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+        if (resMap.isEmpty()) return;
+        DumbService.getInstance(project).smartInvokeLater(() -> {
+          String name = profileName[0];
+          LOG.assertTrue(name != null);
+          showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + name + ")");
         });
       }
     });
@@ -140,10 +139,9 @@ public class ViewOfflineResultsAction extends AnAction {
 
   @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
   public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @Nullable
-                                                      final String profileName,
-                                                      @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull String title) {
+                                                      @Nullable String profileName,
+                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                      @NotNull @NlsContexts.TabTitle String title) {
     InspectionProfileImpl profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
@@ -154,42 +152,51 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfileImpl inspectionProfile;
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+      @Override
+      public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
+        return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
+      }
+    };
     if (profile != null) {
-      inspectionProfile = profile;
+      inspectionProfile.copyFrom(profile);
     }
-    else {
-      inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-        @Override
-        public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
-          return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
-        }
-      };
-      for (String id : resMap.keySet()) {
-        if (inspectionProfile.getToolsOrNull(id, project) != null) {
-          inspectionProfile.enableTool(id, project);
-        }
+    for (Tools tool : inspectionProfile.getAllEnabledInspectionTools(project)) {
+      String id = tool.getShortName();
+      if (!resMap.containsKey(id)) {
+        ((ToolsImpl)tool).setEnabled(false);
+      }
+    }
+    for (String id : resMap.keySet()) {
+      if (inspectionProfile.getToolsOrNull(id, project) != null) {
+        inspectionProfile.enableTool(id, project);
       }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);
   }
 
-  @NotNull
-  public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull InspectionProfileImpl inspectionProfile,
-                                                      @NotNull String title) {
-    final AnalysisScope scope = new AnalysisScope(project);
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+  public static @NotNull InspectionResultsView showOfflineView(@NotNull Project project,
+                                                               @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                               @NotNull InspectionProfileImpl inspectionProfile,
+                                                               @NotNull @NlsContexts.TabTitle String title) {
+    AnalysisScope scope = new AnalysisScope(project);
+    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+    GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    final InspectionResultsView view = new InspectionResultsView(context,
-                                                                 new OfflineInspectionRVContentProvider(resMap, project));
+    InspectionResultsView view = new InspectionResultsView(context,
+                                                                 new OfflineInspectionRVContentProvider(resMap));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     context.addView(view, title, true);
-    view.update();
+    Collection<Tools> tools = new ArrayList<>(context.getTools().values());
+    ProgressManager.getInstance().run(new Task.Backgroundable(project,
+                                                              InspectionsBundle.message("progress.title.load.offline.inspection.results")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        view.updateResults(tools);
+      }
+    });
     return view;
   }
 }

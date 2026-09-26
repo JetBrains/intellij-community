@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports calls to a companion object's <code>of</code> operator function that can be replaced with a collection literal.
+<p>Example:</p>
+<pre><code>
+class MyCustomList&lt;T&gt; {
+    companion object { operator fun &lt;T&gt; of(vararg elements: T): MyCustomList&lt;T&gt; = TODO() }
+}
+
+val nums = MyCustomList.of(1, 2, 3)
+</code></pre>
+<p>After the fix is applied:</p>
+<pre><code>
+val nums: MyCustomList&lt;Int&gt; = [1, 2, 3]
+</code></pre>
+</body>
+</html>

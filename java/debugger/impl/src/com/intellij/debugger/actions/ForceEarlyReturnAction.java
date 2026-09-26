@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.JavaValue;
@@ -15,28 +16,31 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Objects;
 
 public class ForceEarlyReturnAction extends DebuggerAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    final JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame == null || project == null) {
       return;
     }
@@ -49,7 +53,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     final StackFrameProxyImpl proxy = stackFrame.getStackFrameProxy();
     final ThreadReferenceProxyImpl thread = proxy.threadProxy();
 
-    debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Method method;
@@ -57,7 +61,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           method = proxy.location().method();
         }
         catch (EvaluateException e) {
-          showError(project, DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          showError(project, JavaDebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
           return;
         }
 
@@ -67,7 +71,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         else {
           ApplicationManager.getApplication().invokeLater(
             () -> new XExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), "forceReturnValue",
-                                        "Return Value", stackFrame.getSourcePosition(), null) {
+                                        JavaDebuggerBundle.message("dialog.title.return.value"), stackFrame.getSourcePosition(), null) {
               @Override
               protected void doOKAction() {
                 evaluateAndReturn(project, stackFrame, debugProcess, getExpression(), this);
@@ -81,10 +85,9 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   private static void forceEarlyReturnWithFinally(final Value value,
                                                   final JavaStackFrame frame,
                                                   final DebugProcessImpl debugProcess,
-                                                  @Nullable final DialogWrapper dialog) {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
+                                                  final @Nullable DialogWrapper dialog) {
+    DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
+      if (JvmDropFrameActionHandler.evaluateFinallyBlocks(debugProcess.getProject(),
                                                UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
                                                frame,
                                                new XDebuggerEvaluator.XEvaluationCallback() {
@@ -96,7 +99,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                  @Override
                                                  public void errorOccurred(@NotNull String errorMessage) {
                                                    showError(debugProcess.getProject(),
-                                                             DebuggerBundle.message("error.executing.finally", errorMessage));
+                                                             JavaDebuggerBundle.message("error.executing.finally", errorMessage));
                                                  }
                                                })) {
         return;
@@ -108,19 +111,19 @@ public class ForceEarlyReturnAction extends DebuggerAction {
   private static void forceEarlyReturn(final Value value,
                                        final ThreadReferenceProxyImpl thread,
                                        final DebugProcessImpl debugProcess,
-                                       @Nullable final DialogWrapper dialog) {
+                                       final @Nullable DialogWrapper dialog) {
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
         try {
+          debugProcess.startWatchingMethodReturn(thread);
           thread.forceEarlyReturn(value);
         }
         catch (Exception e) {
-          showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
           return;
         }
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
@@ -141,8 +144,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                          new XDebuggerEvaluator.XEvaluationCallback() {
                            @Override
                            public void evaluated(@NotNull XValue result) {
-                             if (result instanceof JavaValue) {
-                               forceEarlyReturnWithFinally(((JavaValue)result).getDescriptor().getValue(),
+                             if (result instanceof JavaValue value) {
+                               forceEarlyReturnWithFinally(value.getDescriptor().getValue(),
                                                            stackFrame,
                                                            debugProcess,
                                                            dialog);
@@ -150,8 +153,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                            }
 
                            @Override
-                           public void errorOccurred(@NotNull final String errorMessage) {
-                             showError(project, DebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
+                           public void errorOccurred(final @NotNull @NlsContexts.DialogMessage String errorMessage) {
+                             showError(project, JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
                            }
                          }, stackFrame.getSourcePosition());
     }
@@ -160,23 +163,24 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     }
   }
 
-  private static void showError(Project project, String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
+  private static void showError(Project project, @NlsContexts.DialogMessage String message) {
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
 
-    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0) {
       enable = stackFrame.getStackFrameProxy().getVirtualMachine().canForceEarlyReturn();
     }
 
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(enable);
-    }
-    else {
-      e.getPresentation().setVisible(enable);
-    }
+    DebuggerUIUtil.setActionEnabled(e, enable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

@@ -1,0 +1,47 @@
+<problems>
+  <problem>
+    <file>test.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="test.TestKt void testSetConcatenation(java.util.Set&lt;java.lang.String&gt; set1, java.util.Set&lt;java.lang.String&gt; set2, java.util.Set&lt;java.lang.String&gt; set3)" />
+    <problem_class id="CollectionConcatenationToBuildCollection" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Collection concatenation can be converted to collection builder</problem_class>
+    <description>Collection concatenation can be converted to collection builder</description>
+    <highlighted_element>set1</highlighted_element>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="test.TestKt void testSetConcatenation(java.util.Set&lt;java.lang.String&gt; set1, java.util.Set&lt;java.lang.String&gt; set2, java.util.Set&lt;java.lang.String&gt; set3)" />
+    <problem_class id="CollectionConcatenationToBuildCollection" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Collection concatenation can be converted to collection builder</problem_class>
+    <description>Collection concatenation can be converted to collection builder</description>
+    <highlighted_element>+</highlighted_element>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="test.TestKt void testSetConcatenation(java.util.Set&lt;java.lang.String&gt; set1, java.util.Set&lt;java.lang.String&gt; set2, java.util.Set&lt;java.lang.String&gt; set3)" />
+    <problem_class id="CollectionConcatenationToBuildCollection" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Collection concatenation can be converted to collection builder</problem_class>
+    <description>Collection concatenation can be converted to collection builder</description>
+    <highlighted_element>set2</highlighted_element>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="test.TestKt void testSetConcatenation(java.util.Set&lt;java.lang.String&gt; set1, java.util.Set&lt;java.lang.String&gt; set2, java.util.Set&lt;java.lang.String&gt; set3)" />
+    <problem_class id="CollectionConcatenationToBuildCollection" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Collection concatenation can be converted to collection builder</problem_class>
+    <description>Collection concatenation can be converted to collection builder</description>
+    <highlighted_element>+</highlighted_element>
+  </problem>
+  <problem>
+    <file>test.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="method" FQNAME="test.TestKt void testSetConcatenation(java.util.Set&lt;java.lang.String&gt; set1, java.util.Set&lt;java.lang.String&gt; set2, java.util.Set&lt;java.lang.String&gt; set3)" />
+    <problem_class id="CollectionConcatenationToBuildCollection" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Collection concatenation can be converted to collection builder</problem_class>
+    <description>Collection concatenation can be converted to collection builder</description>
+    <highlighted_element>set2</highlighted_element>
+  </problem>
+</problems>

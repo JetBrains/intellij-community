@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -21,22 +7,19 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class AstBufferUtil {
+public final class AstBufferUtil {
   private AstBufferUtil() { }
 
-  public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset) {
+  public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset) {
     return toBuffer(element, buffer, offset, false);
   }
 
-  public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset, boolean skipWhitespaceAndComments) {
-    BufferVisitor visitor = new BufferVisitor(skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
+  public static int toBuffer(@NotNull ASTNode element, char @Nullable [] buffer, int offset, boolean skipWhitespaceAndComments) {
+    BufferVisitor visitor = new BufferVisitor(element, skipWhitespaceAndComments, skipWhitespaceAndComments, offset, buffer);
     ((TreeElement)element).acceptTree(visitor);
     return visitor.end;
   }
@@ -45,7 +28,7 @@ public class AstBufferUtil {
     int length = toBuffer(element, null, 0, true);
     char[] buffer = new char[length];
     toBuffer(element, buffer, 0, true);
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
   public static class BufferVisitor extends RecursiveTreeElementWalkingVisitor {
@@ -57,12 +40,13 @@ public class AstBufferUtil {
     protected final char[] buffer;
 
     public BufferVisitor(PsiElement element, boolean skipWhitespace, boolean skipComments) {
-      this(skipWhitespace, skipComments, 0, new char[element.getTextLength()]);
+      this(element.getNode(), skipWhitespace, skipComments, 0, new char[element.getTextLength()]);
       ((TreeElement)element.getNode()).acceptTree(this);
     }
 
-    public BufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, @Nullable char[] buffer) {
-      super(false);
+    @ApiStatus.Experimental
+    public BufferVisitor(@NotNull ASTNode element, boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+      super(element, false);
 
       this.skipWhitespace = skipWhitespace;
       this.skipComments = skipComments;
@@ -75,8 +59,7 @@ public class AstBufferUtil {
       return end;
     }
 
-    @NotNull
-    public char[] getBuffer() {
+    public char @NotNull [] getBuffer() {
       assert buffer != null;
       return buffer;
     }

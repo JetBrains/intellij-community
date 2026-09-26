@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
@@ -14,13 +14,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.jetbrains.TestEnv;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
-import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -29,13 +26,11 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
-import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -43,16 +38,16 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-/**
- * @author traff
- */
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
   @Test(expected = RuntimeConfigurationWarning.class)
@@ -70,44 +65,59 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     new ConfigurationTarget("foo.bar", PyRunTargetVariant.PYTHON).checkValid();
   }
 
+  ///PY-31827
+  @Test
+  public void testNameChanged() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nameChanged", "test_name_changed.py") {
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //old runner is used
+        return runner;
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      final int exitCode) {
+        assertEquals("Test should not lead to errors, but:" + stderr, 0, exitCode);
+      }
+    });
+  }
+
   /**
    * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI
    * from that moment
    */
   @Test
   public void testCantRerun() {
-    startMessagesCapture();
-
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/testRunner/env/unit", "test_with_skips_and_errors.py",
-                                                                            this::createTestRunner) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_with_skips_and_errors.py",
+                                                     config -> {
+                                                       // Second rerun should lead to exception
+                                                       return createTestRunner(config.increaseRerunCount(2));
+                                                     }) {
+        @Override
+        protected void exceptionThrown(@NotNull Throwable e, @NotNull PyUnitTestProcessRunner runner) {
+          assertEquals("Wrong type of exception", e.getClass(), ExecutionException.class);
+          assertTrue("Exception should be thrown on the first or second rerun", runner.getCurrentRerunStep() > 0);
+          assertEquals(e.getMessage(), PyBundle.message("runcfg.tests.cant_rerun"));
+        }
 
         @Override
         protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           assert runner.getFailedTestsCount() > 0 : "We need failed tests to test broken rerun";
-
-          startMessagesCapture();
-
+          assertEquals("No exception thrown or rerun, but it should", 0, runner.getCurrentRerunStep());
           EdtTestUtil.runInEdtAndWait(() -> {
+            // Delete files, so next rerun should lead to exception
             deleteAllTestFiles(myFixture);
-            runner.rerunFailedTests();
           });
-
-          final List<Throwable> throwables = getCapturesMessages().first;
-          assertThat(throwables)
-            .describedAs("Exception shall be thrown")
-            .isNotEmpty();
-          final Throwable exception = throwables.get(0);
-          assertThat(exception).isInstanceOf(ExecutionException.class);
-          assertThat(exception.getMessage()).isEqualTo(PyBundle.message("runcfg.tests.cant_rerun"));
-          assertThat(getCapturesMessages().second)
-            .describedAs("No messages displayed for exception")
-            .isNotEmpty();
-
-          stopMessageCapture();
         }
       });
   }
@@ -129,12 +139,17 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         EdtTestUtil.runInEdtAndWait(() -> {
           final PythonConsoleView console = new PythonConsoleView(project, "test", sdk, true);
-          Disposer.register(myFixture.getModule(), console);
+
           console.getComponent(); //To init editor
 
           Arrays.stream(messages).forEach((s) -> console.print(s, ConsoleViewContentType.NORMAL_OUTPUT));
           console.flushDeferredText();
-          assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          try {
+            assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          }
+          finally {
+            Disposer.dispose(console);
+          }
         });
       }
     });
@@ -164,7 +179,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         Assert.assertEquals("test failed: " + runner.getAllConsoleText(), 1, runner.getPassedTestsCount());
       }
     });
@@ -178,9 +193,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
-        Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
-        Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
+                                      @NotNull final String all, int exitCode) {
+        Assert.assertThat("No expected", stdout, containsString("expected='1'"));
+        Assert.assertThat("No actual", stdout, containsString("actual='2'"));
+        var consoleError = MockPrinter.fillPrinter(runner.getTestProxy()).getStdErr();
+        Assert.assertThat("No stacktrace", consoleError, containsString("test_test.py\", line 4,"));
+        Assert.assertThat("Garbage in stack trace", consoleError, not(containsString("diff_tools.py")));
       }
     });
   }
@@ -195,11 +213,19 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     // We need to make sure setup.py is called using different runner
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "setup.py") {
 
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //setup.py doesn't support exit codes now
+        return runner;
+      }
+
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertThat(all)
           .describedAs("Wrong runner used")
           .contains(PythonHelper.SETUPPY.asParamString());
@@ -211,7 +237,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
         PyUnitTestConfiguration.class));
   }
 
@@ -223,7 +249,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         @NotNull
         @Override
         protected PyUnitTestFactory createFactory() {
-          return PyUnitTestFactory.INSTANCE;
+          return PythonTestConfigurationType.getInstance().getUnitTestFactory();
         }
 
         @Override
@@ -261,13 +287,54 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
-        assertEquals("Bad tree produced for failfast", "Test tree:\n" +
-                                                       "[root]\n" +
-                                                       ".test_test\n" +
-                                                       "..SomeTestCase\n" +
-                                                       "...test_1_test(-)\n", runner.getFormattedTestTree());
+        assertEquals("Bad tree produced for failfast", """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..SomeTestCase(-)
+          ...test_1_test(-)
+          """, runner.getFormattedTestTree());
+      }
+    });
+  }
+
+  /**
+   * test should be launched from __init__.py
+   */
+  @Test
+  public void testTestInInit() {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/testInInit", "") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() {
+        return new PyUnitTestProcessRunner("", 0) {
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+            configuration.getTarget().setTarget("mymodule.ExampleModuleTestCase");
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all, int exitCode) {
+        assertEquals("wrong test launched", """
+          Test tree:
+          [root](+)
+          .mymodule(+)
+          ..ExampleModuleTestCase(+)
+          ...test1(+)
+          ...test2(+)
+          """, runner.getFormattedTestTree());
+        assertEquals("wrong exit code", 0, exitCode);
       }
     });
   }
@@ -277,7 +344,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
    * check non-ascii (127+) chars are supported in skip messaged
    */
   @Test
-  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {})
   public void testNonAsciiMessage() {
 
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nonAscii", "test_test.py") {
@@ -287,15 +354,17 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
 
         runner.getFormattedTestTree();
         assertEquals("Skipped test with non-ascii message broke tree",
-                     "Test tree:\n" +
-                     "[root]\n" +
-                     ".test_test\n" +
-                     "..TestCase\n" +
-                     "...test(~)\n", runner.getFormattedTestTree());
+                     """
+                       Test tree:
+                       [root](~)
+                       .test_test(~)
+                       ..TestCase(~)
+                       ...test(~)
+                       """, runner.getFormattedTestTree());
         assertThat(stdout)
           .describedAs("non-ascii char broken in output")
           .contains("ошибка");
@@ -306,29 +375,24 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
-  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final String formattedTestTree = runner.getFormattedTestTree();
-        assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
-                                                      "[root]\n" +
-                                                      ".test_test\n" +
-                                                      "..TestThis\n" +
-                                                      "...test_this\n" +
-                                                      "....[test](-)\n", formattedTestTree);
+        assertEquals("Bad tree:" + formattedTestTree, """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..TestThis(-)
+          ...test_this(-)
+          ....[test](-)
+          """, formattedTestTree);
       }
     });
   }
@@ -337,26 +401,50 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // Ensure failed and error subtests work
   @Test
   @EnvTestTagsRequired(tags = "python3")
-  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   public void testSubTestAssertEqualsError() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 0);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py", true) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
-        final MockPrinter printer = new MockPrinter();
-        runner.findTestByName("[test]").printOn(printer);
+                                      @NotNull final String all, int exitCode) {
+        var printer = MockPrinter.fillPrinter(runner.findTestByName("[test]"));
         assertThat(printer.getStdErr())
           .describedAs("Subtest assertEquals broken")
           .contains("AssertionError: 'D' != 'a'");
+      }
+    });
+  }
+
+  /**
+   * subtest may have names
+   */
+  @EnvTestTagsRequired(tags = "python3")
+  @Test
+  public void testWithNamedSubTests() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withNamedSubtests", "test_test.py", true, 1) {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all, int exitCode) {
+        assertEquals(3, runner.getFailedTestsCount());
+        assertEquals(6, runner.getAllTestsCount());
+        assertEquals("""
+                       Test tree:
+                       [root](-)
+                       .test_test(-)
+                       ..NumbersTest(-)
+                       ...test_even (Test that numbers between 0 and 5 are all even_)(-)
+                       ....(i=0)(+)
+                       ....(i=1)(-)
+                       ....(i=2)(+)
+                       ....(i=3)(-)
+                       ....(i=4)(+)
+                       ....(i=5)(-)
+                       """, runner.getFormattedTestTree());
       }
     });
   }
@@ -368,70 +456,30 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @EnvTestTagsRequired(tags = "python3")
   @Test
   public void testDotsInSubtest() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
-        assertEquals("dots in subtest names broke output", "Test tree:\n" +
-                                                           "[root]\n" +
-                                                           ".test_test\n" +
-                                                           "..SampleTest\n" +
-                                                           "...test_sample\n" +
-                                                           "....(i='0_0')(-)\n" +
-                                                           "....(i='1_1')(-)\n" +
-                                                           "....(i='2_2')(+)\n" +
-                                                           "....(i='3_3')(+)\n" +
-                                                           "....(i='4_4')(+)\n" +
-                                                           "....(i='5_5')(+)\n" +
-                                                           "....(i='6_6')(+)\n" +
-                                                           "....(i='7_7')(+)\n" +
-                                                           "....(i='8_8')(+)\n" +
-                                                           "....(i='9_9')(+)\n", runner.getFormattedTestTree());
-      }
-    });
-  }
-
-  @EnvTestTagsRequired(tags = "unittest2")
-  @Test
-  public void testUnitTest2() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
-
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all) {
-        runner.getFormattedTestTree();
-        assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
-                                                      "[root]\n" +
-                                                      ".test_test\n" +
-                                                      "..SampleTest\n" +
-                                                      "...test_sample\n" +
-                                                      "....(i=0)(-)\n" +
-                                                      "....(i=1)(-)\n" +
-                                                      "....(i=2)(-)\n" +
-                                                      "....(i=3)(-)\n" +
-                                                      "....(i=4)(+)\n" +
-                                                      "....(i=5)(+)\n" +
-                                                      "....(i=6)(+)\n" +
-                                                      "....(i=7)(+)\n" +
-                                                      "....(i=8)(+)\n" +
-                                                      "....(i=9)(+)\n", runner.getFormattedTestTree());
+                                      @NotNull final String all, int exitCode) {
+        assertEquals("dots in subtest names broke output", """
+          Test tree:
+          [root](-)
+          .test_test(-)
+          ..SampleTest(-)
+          ...test_sample(-)
+          ....(i='0_0')(-)
+          ....(i='1_1')(-)
+          ....(i='2_2')(+)
+          ....(i='3_3')(+)
+          ....(i='4_4')(+)
+          ....(i='5_5')(+)
+          ....(i='6_6')(+)
+          ....(i='7_7')(+)
+          ....(i='8_8')(+)
+          ....(i='9_9')(+)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -449,14 +497,16 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
-        assertEquals("Output tree broken for skipped exception thrown in setup method", "Test tree:\n" +
-                                                                                        "[root]\n" +
-                                                                                        ".test_test\n" +
-                                                                                        "..TestSimple\n" +
-                                                                                        "...setUpClass(~)\n" +
-                                                                                        "..TestSubSimple\n" +
-                                                                                        "...setUpClass(~)\n",
+                                      @NotNull final String all, int exitCode) {
+        assertEquals("Output tree broken for skipped exception thrown in setup method", """
+                       Test tree:
+                       [root](~)
+                       .test_test(~)
+                       ..TestSimple(~)
+                       ...setUpClass(~)
+                       ..TestSubSimple(~)
+                       ...setUpClass(~)
+                       """,
                      runner.getFormattedTestTree());
       }
     });
@@ -469,19 +519,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   @EnvTestTagsRequired(tags = "python3")
   public void testScriptWithHyphen() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withHyphen", "test-foobar.py", true, 1) {
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
           assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
@@ -522,7 +566,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(stderr, 2, runner.getAllTestsCount());
         }
@@ -575,7 +619,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
         }
@@ -588,37 +632,37 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
-  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   public void testSubtest() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
-        final String expectedResult = "Test tree:\n" +
-                                      "[root]\n" +
-                                      ".test_subtest\n" +
-                                      "..SpamTest\n" +
-                                      "...test_test\n" +
-                                      "....(i=0)(-)\n" +
-                                      "....(i=1)(+)\n" +
-                                      "....(i=2)(-)\n" +
-                                      "....(i=3)(+)\n" +
-                                      "....(i=4)(-)\n" +
-                                      "....(i=5)(+)\n" +
-                                      "....(i=6)(-)\n" +
-                                      "....(i=7)(+)\n" +
-                                      "....(i=8)(-)\n" +
-                                      "....(i=9)(+)\n";
+                                      @NotNull String all, int exitCode) {
+        final String expectedResult = """
+          Test tree:
+          [root](-)
+          .test_subtest(-)
+          ..SpamTest(-)
+          ...test_test(-)
+          ....(i=0)(-)
+          ....(i=1)(+)
+          ....(i=2)(-)
+          ....(i=3)(+)
+          ....(i=4)(-)
+          ....(i=5)(+)
+          ....(i=6)(-)
+          ....(i=7)(+)
+          ....(i=8)(-)
+          ....(i=9)(+)
+          """;
         final String tree = runner.getFormattedTestTree();
-        assertEquals("Bad tree:" + tree, expectedResult, tree);
+        assertEquals("Bad tree:" + tree + ". \nStdout:" + stdout + "\n. Stderr: " + stderr, expectedResult, tree);
       }
     });
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
-  @StagingOn(os = TestEnv.WINDOWS) //Flaky
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
@@ -626,7 +670,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         assertEquals(runner.getFormattedTestTree(), 8, runner.getPassedTestsCount());
         assertEquals(runner.getFormattedTestTree(), 2, runner.getIgnoredTestsCount());
       }
@@ -636,8 +680,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                           PyUnitTestConfiguration.class) {
+    runPythonTest(new CreateConfigurationTestTask<>(PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
+                                                    PyUnitTestConfiguration.class) {
       @NotNull
       @Override
       protected List<PsiElement> getPsiElementsToRightClickOn() {
@@ -737,7 +781,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
@@ -757,7 +801,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
           assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
@@ -775,7 +819,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(1, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
       }
@@ -790,7 +834,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
         assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
       }
@@ -801,14 +845,16 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUnitTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(
+        PythonTestConfigurationType.getInstance().getUnitTestFactory().getName(),
+        PyUnitTestConfiguration.class));
   }
 
 
   @Test
   public void testConfigurationProducer() {
-    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
+    runPythonTest(
+      new CreateConfigurationByFileTask<>(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()).getName(), PyUnitTestConfiguration.class));
   }
 
   /**
@@ -817,14 +863,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                 PyUnitTestConfiguration.class) {
+      new CreateConfigurationByFileTask<>(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()).getName(),
+                                          PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
-        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, IOException {
+        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
-          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
+          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()));
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
           super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");
@@ -843,21 +889,33 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
 
   private abstract class PyUnitTestProcessWithConsoleTestTask extends PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
-    public PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName) {
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName) {
       super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner);
     }
 
-    public PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName,
-                                                int rerunFailedTests) {
-      super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName,
+                                         int rerunFailedTests) {
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, false, rerunFailedTests);
     }
 
-    @NotNull
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName,
+                                         boolean isToFullPath,
+                                         int rerunFailedTests) {
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, isToFullPath, rerunFailedTests);
+    }
+
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+                                         @NotNull String scriptName,
+                                         boolean isToFullPath) {
+      super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner, isToFullPath);
+    }
+
     @Override
-    public Iterable<Class<?>> getClassesToEnableDebug() {
-      return Collections.singletonList(GeneralIdBasedToSMTRunnerEventsConvertor.class);
+    public @NotNull Collection<Class<?>> getClassesToEnableDebug() {
+      return List.of(GeneralIdBasedToSMTRunnerEventsConvertor.class);
     }
   }
 

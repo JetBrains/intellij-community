@@ -1,0 +1,71 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.impl.refactorings.jsp` start
+content_module_jar(module = ":impl-refactorings-jsp")
+### auto-generated section `dev intellij.java.impl.refactorings.jsp` end
+
+### auto-generated section `build intellij.java.impl.refactorings.jsp` start
+jvm_library(
+    name = "impl-refactorings-jsp",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.impl.refactorings.jsp",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//java/java-impl-refactorings:impl-refactorings",
+        "//java/java-psi-api:psi",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/jsp-openapi:jsp",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//xml/xml-psi-api:psi",
+    ],
+)
+
+jvm_library(
+    name = "impl-refactorings-jsp_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.impl.refactorings.jsp",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl-refactorings-jsp",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//java/java-impl-refactorings:impl-refactorings_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//java/jsp-openapi:jsp_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.impl.refactorings.jsp` end
+
+### auto-generated section `iml intellij.java.impl.refactorings.jsp` start
+exports_files(
+    [
+        "intellij.java.impl.refactorings.jsp.iml",
+        "resources/intellij.java.impl.refactorings.jsp.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.impl.refactorings.jsp` end

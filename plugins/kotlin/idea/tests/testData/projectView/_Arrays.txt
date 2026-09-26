@@ -1,0 +1,32 @@
+Node: ArraysKt___ArraysKt
+User object class: KtInternalFileTreeNode
+
+Value: KtLightClassForDecompiledFacade of PsiFile:ArraysKt___ArraysKt.class
+Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
+
+Navigation item #0: KtLightClassForDecompiledFacade of PsiFile:ArraysKt___ArraysKt.class
+Navigation item file #0: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
+Navigation item #1: KtFile: ArraysKt___ArraysKt.class
+Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+...
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+...
+     -PsiDirectory: collections
+...
+      AbstractCollection
+...
+      ArraysKt
+      ArraysKt___ArraysJvmKt
+      [ArraysKt___ArraysKt]
+      ArraysKt__ArraysJVMKt
+      ArraysKt__ArraysKt
+...
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.klib

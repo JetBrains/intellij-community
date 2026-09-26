@@ -5,7 +5,7 @@ package com.intellij.testIntergration
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.util.*
+import java.util.Date
 
 class RecentTestsOrderTest : RecentTestsTestCase() {
   @Test fun `test run configuration with one suite shows only suite`() {

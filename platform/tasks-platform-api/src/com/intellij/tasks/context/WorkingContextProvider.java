@@ -1,29 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class WorkingContextProvider {
-  public static final ExtensionPointName<WorkingContextProvider> EP_NAME = ExtensionPointName.create("com.intellij.tasks.contextProvider");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<WorkingContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.contextProvider");
 
   /**
    * Short unique name.
@@ -32,25 +22,26 @@ public abstract class WorkingContextProvider {
    *
    * @return provider's name
    */
-  @NotNull
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
   /**
-   * Short description (for UI)
-   * @return
+   * Short description (for UI).
    */
-  @NotNull
-  public abstract String getDescription();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription();
 
   /**
    * Saves a component's state.
-   * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(org.jdom.Element)}
-   * @param toElement
+   * May delegate to {@link com.intellij.openapi.util.JDOMExternalizable#writeExternal(Element)}
+   *
    */
-  public abstract void saveContext(Element toElement);
+  public abstract void saveContext(@NotNull Project project, @NotNull Element toElement);
 
-  public abstract void loadContext(Element fromElement);
+  public abstract void loadContext(@NotNull Project project, @NotNull Element fromElement);
 
-  public void clearContext() {
+  public void clearContext(@NotNull Project project) {
+  }
+
+  public boolean isEnabled() {
+    return true;
   }
 }

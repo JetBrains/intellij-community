@@ -16,25 +16,14 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   @Override
@@ -45,15 +34,20 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testLongRangeBasics() { doTest(); }
 
   public void testLongRangeLoop() { doTest(); }
+  public void testCountedLoopWithOverflow() { doTest(); }
 
   public void testLongRangeAnnotation() {
-    myFixture.addClass("package javax.annotation;\n" +
-                       "\n" +
-                       "public @interface Nonnegative {}");
+    myFixture.addClass("""
+                         package javax.annotation;
+
+                         public @interface Nonnegative {}""");
     doTest();
   }
 
   public void testLongRangeKnownMethods() {
+    doTest();
+  }
+  public void testStringSubstring() {
     doTest();
   }
 
@@ -61,5 +55,49 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testLongRangeDivShift() { doTest(); }
 
   public void testLongRangePlusMinus() { doTest(); }
+  public void testLongRangeMul() { doTest(); }
   public void testFebruary31() { doTest(); }
+
+  public void testManyAdditionsDoNotCauseExponentialBlowUp() { doTest(); }
+  public void testBoxedRanges() { doTest(); }
+  public void testLongRangeDiff() { doTest(); }
+  public void testIntLongTypeConversion() { doTest(); }
+  public void testBackPropagation() { doTest(); }
+  public void testTwoArraysDiff() { doTest(); }
+  public void testModRange() { doTest(); }
+  public void testBackPropagationMod() { doTest(); }
+  public void testModPlus() { doTest(); }
+  public void testArithmeticNoOp() { doTest(); }
+  public void testStringConcat() { doTest(); }
+  public void testUnaryPlusMinus() { doTest(); }
+  public void testWidenPlusInLoop() { doTest(); }
+  public void testFloatLoop() { doTest(); }
+  public void testWidenMulInLoop() { doTest(); }
+  public void testReduceBinOpOnCast() { doTest(); }
+  public void testSuppressZeroReport() { doTest(); }
+  public void testCompareMethods() { doTest(); }
+  public void testWidenMismatch() { doTest(); }
+  public void testDontWidenPlusInLoop() { doTest(); }
+  public void testCollectionAddRemove() { doTest(); }
+
+  public void testCollectionRemoveIf() { doTest(); }
+
+  public void testRelationsOnAddition() { doTest(); }
+  public void testModSpecialCase() { doTest(); }
+  public void testArrayAccessWithCastInCountedLoop() { doTest(); }
+  public void testFloatingPointRanges() { doTest(); }
+  public void testFloatingPointCasts() { doTest(); }
+  public void testFloatingPointMaxLoop() { doTest(); }
+  public void testFloatingPointConstantMath() { doTest(); }
+  public void testStringIndexOfRelation() { doTest(); }
+  public void testIncompleteLoop() { doTest(); }
+  public void testTwoFlagsMixed() { doTest(); }
+  public void testArrayInitializersWithMethodCall() { doTest(); }
+  public void testLongMinValue() { doTest(); }
+  public void testArrayBinarySearchNoWarningAtNeedle() { doTest(); }
+
+  public void testJmhParamRange() {
+    myFixture.addClass("package org.openjdk.jmh.annotations;public @interface Param {String[] value();}");
+    doTest();
+  }
 }

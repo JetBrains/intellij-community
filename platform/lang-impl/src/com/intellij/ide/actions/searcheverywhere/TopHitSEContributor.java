@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.GotoActionAction;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -12,9 +14,11 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AbbreviationManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,48 +29,47 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
+@ApiStatus.Internal
+public final class TopHitSEContributor implements SearchEverywhereContributor<Object> {
 
-  private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
+  public static final int TOP_HIT_ELEMENT_PRIORITY = 15000;
 
   private final Project myProject;
   private final Component myContextComponent;
-  private final Consumer<String> mySearchStringSetter;
+  private final Consumer<? super String> mySearchStringSetter;
 
-  public TopHitSEContributor(Project project, Component component, Consumer<String> setter) {
+  public TopHitSEContributor(Project project, Component component, Consumer<? super String> setter) {
     myProject = project;
     myContextComponent = component;
     mySearchStringSetter = setter;
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return TopHitSEContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
-    return "Top Hit";
-  }
-
-  @Override
-  public String includeNonProjectItemsText() {
-    return null;
+  public @NotNull String getGroupName() {
+    return IdeBundle.message("search.everywhere.group.name.top.hit");
   }
 
   @Override
@@ -80,42 +83,41 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Void> filter, ProgressIndicator progressIndicator, int elementsLimit) {
-    Collection<Object> res = new LinkedHashSet<>();
-    final Function<Object, Boolean> consumer = o -> {
-      if (elementsLimit < 0 || res.size() < elementsLimit) {
-        res.add(o);
-        return true;
-      }
-      else {
-        return false;
-      }
-    };
-
-    boolean interrupted = fill(pattern, consumer);
-    return new ContributorSearchResult<>(new ArrayList<>(res), interrupted);
+  public void fetchElements(@NotNull String pattern,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Processor<? super Object> consumer) {
+    fill(pattern, consumer);
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
-    return null;
+  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    List<SearchEverywhereCommandInfo> res = new ArrayList<>();
+    final HashSet<String> found = new HashSet<>();
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      if (provider instanceof OptionsSearchTopHitProvider) {
+        final String providerId = ((OptionsSearchTopHitProvider)provider).getId();
+        if (!found.contains(providerId)) {
+          found.add(providerId);
+          res.add(new SearchEverywhereCommandInfo(providerId, "", this));
+        }
+      }
+    }
+    return res;
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String text) {
-    if (selected instanceof BooleanOptionDescription) {
-      final BooleanOptionDescription option = (BooleanOptionDescription) selected;
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
+    if (selected instanceof BooleanOptionDescription option) {
       option.setOptionState(!option.isOptionEnabled());
       return false;
     }
 
     if (selected instanceof OptionsTopHitProvider) {
-      setSearchString("#" + ((OptionsTopHitProvider) selected).getId() + " ");
+      setSearchString(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider) selected).getId() + " ");
       return false;
     }
 
     if (isActionValue(selected) || isSetting(selected)) {
-      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent);
+      GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent, modifiers, null);
       return true;
     }
 
@@ -123,65 +125,48 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
   }
 
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return TOP_HIT_ELEMENT_PRIORITY;
+  }
+
+  @Override
+  public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
     return new TopHitRenderer(myProject);
   }
 
-  private boolean fill(String pattern, Function<Object, Boolean> consumer) {
-    if (pattern.startsWith("#") && !pattern.contains(" ")) {
-      return fillOptionProviders(pattern, consumer);
-    } else {
-      if (fillActions(pattern, consumer)) {
-        return true;
-      }
-      return fillFromExtensions(pattern, consumer);
+  private void fill(@NotNull String pattern, @NotNull Processor<Object> consumer) {
+    if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
+      return;
     }
+
+    if (fillActions(pattern, consumer)) {
+      return;
+    }
+
+    fillFromExtensions(pattern, consumer);
   }
 
-  private boolean fillFromExtensions(String pattern, Function<Object, Boolean> consumer) {
-    for (SearchTopHitProvider provider : myTopHitProviders) {
-      if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(myProject)) {
-        continue;
-      }
+  private void fillFromExtensions(@NotNull String pattern, Processor<Object> consumer) {
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       boolean[] interrupted = {false};
-      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), myProject);
+      provider.consumeTopHits(pattern, o -> interrupted[0] = !consumer.process(o), myProject);
       if (interrupted[0]) {
-        return true;
+        return;
       }
     }
-
-    return false;
   }
 
-  private boolean fillActions(String pattern, Function<Object, Boolean> consumer) {
+  private boolean fillActions(String pattern, Processor<Object> consumer) {
     ActionManager actionManager = ActionManager.getInstance();
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
       AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(action)) {
+      if (action == null || !isEnabled(action)) {
         continue;
       }
 
-      if (!consumer.apply(action)) {
+      if (!consumer.process(action)) {
         return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean fillOptionProviders(String pattern, Function<Object, Boolean> consumer) {
-    String id = pattern.substring(1);
-    final HashSet<String> ids = new HashSet<>();
-    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof OptionsTopHitProvider) {
-        final String providerId = ((OptionsTopHitProvider)provider).getId();
-        if (!ids.contains(providerId) && StringUtil.startsWithIgnoreCase(providerId, id)) {
-          if (!consumer.apply(provider)) {
-            return true;
-          }
-          ids.add(providerId);
-        }
       }
     }
 
@@ -202,28 +187,12 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     mySearchStringSetter.accept(str);
   }
 
-  private static class TopHitRenderer extends ColoredListCellRenderer<Object> {
+  private static final class TopHitRenderer extends ColoredListCellRenderer<Object> {
 
     private final Project myProject;
-    private final MyAccessiblePanel myRendererPanel = new MyAccessiblePanel();
 
     private TopHitRenderer(Project project) {
       myProject = project;
-    }
-
-    private static class MyAccessiblePanel extends JPanel {
-      private Accessible myAccessible;
-      public MyAccessiblePanel() {
-        super(new BorderLayout());
-        setOpaque(false);
-      }
-      void setAccessible(Accessible comp) {
-        myAccessible = comp;
-      }
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        return accessibleContext = (myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext());
-      }
     }
 
     @Override
@@ -232,42 +201,24 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
       if (value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtil.getListBackground(selected));
-        panel.add(cmp, BorderLayout.CENTER);
-        final Component rightComponent;
+        panel.setBackground(UIUtil.getListBackground(selected, true));
 
         final OnOffButton button = new OnOffButton();
         button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
-        rightComponent = button;
 
-        panel.add(rightComponent, BorderLayout.EAST);
+        panel.add(cmp, BorderLayout.CENTER);
+        panel.add(button, BorderLayout.EAST);
         cmp = panel;
       }
 
-      Color bg = cmp.getBackground();
-      if (bg == null) {
-        cmp.setBackground(UIUtil.getListBackground(selected));
-        bg = cmp.getBackground();
-      }
-
-      myRendererPanel.removeAll();
-
-      JPanel wrapped = new JPanel(new BorderLayout());
-      wrapped.setBackground(bg);
-      wrapped.add(cmp, BorderLayout.CENTER);
-      myRendererPanel.add(wrapped, BorderLayout.CENTER);
-      if (cmp instanceof Accessible) {
-        myRendererPanel.setAccessible((Accessible)cmp);
-      }
-
-      return myRendererPanel;
+      return cmp;
     }
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list, final Object value, int index, final boolean selected, boolean hasFocus) {
       setPaintFocusBorder(false);
       setIcon(EmptyIcon.ICON_16);
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.runBlocking(() -> {
         if (isActionValue(value)) {
           final AnAction anAction = (AnAction)value;
           final Presentation templatePresentation = anAction.getTemplatePresentation();
@@ -299,7 +250,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
           append(text, attrs);
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId()); //NON-NLS
         }
         else {
           ItemPresentation presentation = null;
@@ -311,6 +262,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
           }
           if (presentation != null) {
             final String text = presentation.getPresentableText();
+            //noinspection HardCodedStringLiteral
             append(text == null ? value.toString() : text);
             Icon icon = presentation.getIcon(false);
             if (icon != null) setIcon(icon);
@@ -328,12 +280,13 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     return o instanceof OptionDescription;
   }
 
-  private static String getSettingText(OptionDescription value) {
+  @ApiStatus.Internal
+  public static @Nls String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {
       hit = value.getOption();
     }
-    hit = StringUtil.unescapeXml(hit);
+    hit = StringUtil.unescapeXmlEntities(hit);
     if (hit.length() > 60) {
       hit = hit.substring(0, 60) + "...";
     }
@@ -341,5 +294,22 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     String text = hit.trim();
     text = StringUtil.trimEnd(text, ":");
     return text;
+  }
+
+  @ApiStatus.Internal
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Consumer<? super String> setter = str -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (manager.isShown()) {
+          SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+          if (popupInstance != null) popupInstance.setSearchText(str);
+        }
+      };
+      return new TopHitSEContributor(project, contextComponent, setter);
+    }
   }
 }

@@ -1,0 +1,86 @@
+Mercurial's internal web server, hgweb, can serve either a single
+repository, or a tree of repositories. In the second case, repository
+paths and global options can be defined using a dedicated
+configuration file common to :hg:`serve`, ``hgweb.wsgi``,
+``hgweb.cgi`` and ``hgweb.fcgi``.
+
+This file uses the same syntax as other Mercurial configuration files
+but recognizes only the following sections:
+
+  - web
+  - paths
+  - collections
+
+The ``web`` options are thoroughly described in :hg:`help config`.
+
+The ``paths`` section maps URL paths to paths of repositories in the
+filesystem. hgweb will not expose the filesystem directly - only
+Mercurial repositories can be published and only according to the
+configuration.
+
+The left hand side is the path in the URL. Note that hgweb reserves
+subpaths like ``rev`` or ``file``, try using different names for
+nested repositories to avoid confusing effects.
+
+The right hand side is the path in the filesystem. If the specified
+path ends with ``*`` or ``**`` the filesystem will be searched
+recursively for repositories below that point.
+With ``*`` it will not recurse into the repositories it finds (except for
+``.hg/patches``).
+With ``**`` it will also search inside repository working directories
+and possibly find subrepositories.
+
+In this example::
+
+  [paths]
+  /projects/a = /srv/tmprepos/a
+  /projects/b = c:/repos/b
+  / = /srv/repos/*
+  /user/bob = /home/bob/repos/**
+
+- The first two entries make two repositories in different directories
+  appear under the same directory in the web interface
+- The third entry will publish every Mercurial repository found in
+  ``/srv/repos/``, for instance the repository ``/srv/repos/quux/``
+  will appear as ``http://server/quux/``
+- The fourth entry will publish both ``http://server/user/bob/quux/``
+  and ``http://server/user/bob/quux/testsubrepo/``
+
+The ``collections`` section is deprecated and has been superseded by
+``paths``.
+
+URLs and Common Arguments
+=========================
+
+URLs under each repository have the form ``/{command}[/{arguments}]``
+where ``{command}`` represents the name of a command or handler and
+``{arguments}`` represents any number of additional URL parameters
+to that command.
+
+The web server has a default style associated with it. Styles map to
+a collection of named templates. Each template is used to render a
+specific piece of data, such as a changeset or diff.
+
+The style for the current request can be overridden two ways. First,
+if ``{command}`` contains a hyphen (``-``), the text before the hyphen
+defines the style. For example, ``/atom-log`` will render the ``log``
+command handler with the ``atom`` style. The second way to set the
+style is with the ``style`` query string argument. For example,
+``/log?style=atom``. The hyphenated URL parameter is preferred.
+
+Not all templates are available for all styles. Attempting to use
+a style that doesn't have all templates defined may result in an error
+rendering the page.
+
+Many commands take a ``{revision}`` URL parameter. This defines the
+changeset to operate on. This is commonly specified as the short,
+12 digit hexadecimal abbreviation for the full 40 character unique
+revision identifier. However, any value described by
+:hg:`help revisions` typically works.
+
+Commands and URLs
+=================
+
+The following web commands and their URLs are available:
+
+  .. webcommandsmarker

@@ -1,0 +1,86 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.debugger.impl.rpc` start
+content_module_jar(module = ":rpc")
+### auto-generated section `dev intellij.platform.debugger.impl.rpc` end
+
+### auto-generated section `build intellij.platform.debugger.impl.rpc` start
+jvm_library(
+    name = "rpc",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.debugger.impl.rpc",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/kernel/rpc.lite",
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/shared:kernel",
+        "//platform/xdebugger-api:debugger",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/project/shared:project",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/rpc",
+        "//platform/core-ui",
+        "//platform/execution-impl",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//platform/core-api:core",
+        "//platform/execution",
+        "//platform/util/concurrency",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "rpc_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.debugger.impl.rpc",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rpc",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.debugger.impl.rpc` end
+
+### auto-generated section `iml intellij.platform.debugger.impl.rpc` start
+exports_files(
+    [
+        "intellij.platform.debugger.impl.rpc.iml",
+        "resources/intellij.platform.debugger.impl.rpc.content.xml",
+        "resources/intellij.platform.debugger.impl.rpc.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.debugger.impl.rpc` end

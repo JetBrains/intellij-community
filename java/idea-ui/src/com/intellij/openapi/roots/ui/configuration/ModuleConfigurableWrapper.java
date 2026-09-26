@@ -19,15 +19,12 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
-* @author nik
-*/
 class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
   private final Configurable myModuleConfigurable;
 
-  public ModuleConfigurableWrapper(Configurable moduleConfigurable) {
+  ModuleConfigurableWrapper(Configurable moduleConfigurable) {
     myModuleConfigurable = moduleConfigurable;
   }
 

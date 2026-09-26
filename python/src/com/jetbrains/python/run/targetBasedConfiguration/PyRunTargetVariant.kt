@@ -3,24 +3,26 @@
  */
 package com.jetbrains.python.run.targetBasedConfiguration
 
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extenstions.ModuleBasedContextAnchor
-import com.jetbrains.extenstions.QNameResolveContext
-import com.jetbrains.extenstions.resolveToElement
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor
+import com.jetbrains.python.extensions.QNameResolveContext
+import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PythonRunConfigurationForm
+import org.jetbrains.annotations.Nls
 
 /**
  * Types of target (symbol, path or custom) many python runners may have
  */
-enum class PyRunTargetVariant(private val customName: String? = null) {
-  PYTHON(PythonRunConfigurationForm.MODULE_NAME), PATH(PythonRunConfigurationForm.SCRIPT_PATH), CUSTOM;
+enum class PyRunTargetVariant(@Nls private val customName: String? = null) {
+  PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
-  fun getCustomName(): String = customName ?: name.toLowerCase().capitalize()
+  @Nls fun getCustomName(): String = customName ?: PythonRunConfigurationForm.getCustomNameText()
 }
 
 /**
@@ -29,16 +31,17 @@ enum class PyRunTargetVariant(private val customName: String? = null) {
 fun targetAsPsiElement(targetType: PyRunTargetVariant,
                        target: String,
                        configuration: AbstractPythonRunConfiguration<*>,
-                       workingDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(
+                       workingDirectory: VirtualFile? = StandardFileSystems.local().findFileByPath(
                          configuration.getWorkingDirectorySafe()))
   : PsiElement? {
   if (targetType == PyRunTargetVariant.PYTHON) {
-    val module = configuration.getModule() ?: return null
+    val module = configuration.module ?: return null
     val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
 
-    val name = QualifiedName.fromDottedString(target)
-    return name.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(),
-                                                     context, workingDirectory, true))
+    return runReadAction {
+      QualifiedName.fromDottedString(target)
+        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(), context, workingDirectory, true))
+    }
   }
   return null
 }
@@ -48,7 +51,7 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
  */
 fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): VirtualFile? {
   if (targetType == PyRunTargetVariant.PATH) {
-    return LocalFileSystem.getInstance().findFileByPath(target)
+    return StandardFileSystems.local().findFileByPath(target)
   }
   return null
 }

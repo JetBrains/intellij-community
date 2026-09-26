@@ -1,62 +1,24 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.intellij.CommonBundle;
-import com.intellij.reference.SoftReference;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-// A copy of Ruby's.
+public final class PyBundle {
+  public static final @NonNls String BUNDLE = "messages.PyBundle";
+  public static final DynamicBundle INSTANCE = new DynamicBundle(PyBundle.class, BUNDLE);
 
-/**
- * TODO: Copy/paste  with Django and PyBDD bundles
- * Resource bundle access.
- */
-public class PyBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  @Nullable
-  public static String messageOfNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                        @NotNull Object... params) {
-    return CommonBundle.messageOfNull(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
-  private static final String BUNDLE = "com.jetbrains.python.PyBundle";
-
-  private PyBundle() {
-  }
-
-  // Cached loading
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

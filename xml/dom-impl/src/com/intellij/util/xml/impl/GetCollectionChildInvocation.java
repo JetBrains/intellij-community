@@ -15,9 +15,6 @@
  */
 package com.intellij.util.xml.impl;
 
-/**
- * @author peter
- */
 public class GetCollectionChildInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myDescription;
 
@@ -26,7 +23,7 @@ public class GetCollectionChildInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     return handler.getCollectionChildren(myDescription);
   }
 

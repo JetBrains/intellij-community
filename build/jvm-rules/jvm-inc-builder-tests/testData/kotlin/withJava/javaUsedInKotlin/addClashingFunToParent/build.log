@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base1.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_addClashingFunToParent-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addClashingFunToParent/a/Base1.kt
+End of files
+Cleaning output files:
+  Derived.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_addClashingFunToParent-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addClashingFunToParent/a/Derived.kt
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -1,8 +1,12 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -12,18 +16,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Allows to customize the Java coverage engine for other JVM-based languages.
  *
  * @author anna
- * @since 2/14/11
  */
 public abstract class JavaCoverageEngineExtension {
   public static final ExtensionPointName<JavaCoverageEngineExtension> EP_NAME = ExtensionPointName.create("com.intellij.javaCoverageEngineExtension");
 
-  public abstract boolean isApplicableTo(@Nullable RunConfigurationBase conf);
+  public abstract boolean isApplicableTo(@Nullable RunConfigurationBase<?> conf);
 
   /**
    * Calculates the qualified names of class files generated from a source file.
@@ -46,13 +51,38 @@ public abstract class JavaCoverageEngineExtension {
    * @param suite      the coverage suite for which the information is being requested.
    * @param classFiles the set to be filled with class files produced from this source file.
    * @return true if the extension has filled the file list, false if this extension doesn't handle this file type.
+   * @deprecated Use {@link #collectOutputPaths(PsiFile, VirtualFile, VirtualFile, CoverageSuitesBundle, Set)} instead.
    */
-  public boolean collectOutputFiles(@NotNull final PsiFile srcFile,
-                                    @Nullable final VirtualFile output,
-                                    @Nullable final VirtualFile testoutput,
-                                    @NotNull final CoverageSuitesBundle suite,
-                                    @NotNull final Set<File> classFiles){
+  @SuppressWarnings({"IO_FILE_USAGE", "unused"})
+  @Deprecated
+  public boolean collectOutputFiles(final @NotNull PsiFile srcFile,
+                                    final @Nullable VirtualFile output,
+                                    final @Nullable VirtualFile testoutput,
+                                    final @NotNull CoverageSuitesBundle suite,
+                                    final @NotNull Set<File> classFiles){
     return false;
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  public boolean collectOutputPaths(final @NotNull PsiFile srcFile,
+                                    final @Nullable VirtualFile output,
+                                    final @Nullable VirtualFile testoutput,
+                                    final @NotNull CoverageSuitesBundle suite,
+                                    final @NotNull Set<Path> classFiles) {
+    final Set<File> files = new HashSet<>();
+    if (!collectOutputFiles(srcFile, output, testoutput, suite, files)) return false;
+    for (File file : files) {
+      classFiles.add(file.toPath());
+    }
+    return true;
+  }
+
+  /**
+   * Return a module that contains output for the module or null in any other case.
+   * The module may differ e.g. in Kotlin multi-platform projects
+   */
+  public @Nullable Module getModuleWithOutput(@NotNull Module module) {
+    return null;
   }
 
   /**
@@ -75,15 +105,14 @@ public abstract class JavaCoverageEngineExtension {
    * Returns true if this configuration requires the generation of a source map to match the compiled .class files to
    * corresponding sources.
    */
-  public boolean isSourceMapNeeded(RunConfigurationBase runConfiguration) {
+  public boolean isSourceMapNeeded(RunConfigurationBase<?> runConfiguration) {
     return false;
   }
 
   /**
    * Returns the summary information for the specified object (other than a class or a package) shown in the coverage view.
    */
-  @Nullable
-  public PackageAnnotator.ClassCoverageInfo getSummaryCoverageInfo(JavaCoverageAnnotator coverageAnnotator, PsiNamedElement element) {
+  public @Nullable PackageAnnotator.ClassCoverageInfo getSummaryCoverageInfo(JavaCoverageAnnotator coverageAnnotator, PsiNamedElement element) {
     return null;
   }
 
@@ -92,9 +121,17 @@ public abstract class JavaCoverageEngineExtension {
    *
    * @param bundle the coverage suites bundle being indexed.
    * @param classFile the class file.
+   * @deprecated Use {@link #ignoreCoverageForClass(CoverageSuitesBundle, Path)} instead.
    */
+  @SuppressWarnings({"IO_FILE_USAGE", "unused"})
+  @Deprecated
   public boolean ignoreCoverageForClass(CoverageSuitesBundle bundle, File classFile) {
     return false;
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  public boolean ignoreCoverageForClass(CoverageSuitesBundle bundle, Path classFile) {
+    return ignoreCoverageForClass(bundle, classFile.toFile());
   }
 
   /**
@@ -106,8 +143,16 @@ public abstract class JavaCoverageEngineExtension {
    *
    * @param bundle the coverage suites bundle being indexed.
    * @param classFile the class file.
+   * @deprecated Use {@link #keepCoverageInfoForClassWithoutSource(CoverageSuitesBundle, Path)} instead.
    */
+  @SuppressWarnings({"IO_FILE_USAGE", "unused"})
+  @Deprecated
   public boolean keepCoverageInfoForClassWithoutSource(CoverageSuitesBundle bundle, File classFile) {
     return false;
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  public boolean keepCoverageInfoForClassWithoutSource(CoverageSuitesBundle bundle, Path classFile) {
+    return keepCoverageInfoForClassWithoutSource(bundle, classFile.toFile());
   }
 }

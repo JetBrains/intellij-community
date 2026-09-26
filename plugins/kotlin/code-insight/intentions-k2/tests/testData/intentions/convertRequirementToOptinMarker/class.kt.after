@@ -1,0 +1,6 @@
+@RequiresOptIn()
+annotation class ReqOptinAnnotation
+
+
+@OptIn(ReqOptinAnnotation::class)
+class X {}

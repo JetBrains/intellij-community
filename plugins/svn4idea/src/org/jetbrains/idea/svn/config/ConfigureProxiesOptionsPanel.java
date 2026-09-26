@@ -1,50 +1,66 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.InsertPathAction;
-import org.jetbrains.idea.svn.SvnBundle;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.text.JTextComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.config.SvnIniFile.isTurned;
 
 public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
-  private JPanel myMainPanel;
-  private JTextField myServerField;
-  private JTextField myUserField;
-  private JTextField myPortField;
-  private JPasswordField myPasswordField;
-  private JTextArea myUrlPatterns;
-  private JTextArea myExceptions;
-  private JTextField myTimeoutField;
-  private JCheckBox myTrustDefaultCAsCheckBox;
-  private JPasswordField myClientCertificatePasswordField;
-  private JButton myTestConnectionButton;
-  private JTextField myPathToCertificatesField;
-  private TextFieldWithBrowseButton myClientCertificatePathField;
-  private JList myRepositoriesList;
+  private final JPanel myMainPanel;
+  private final JTextField myServerField;
+  private final JTextField myUserField;
+  private final JTextField myPortField;
+  private final JPasswordField myPasswordField;
+  private final JTextArea myUrlPatterns;
+  private final JTextArea myExceptions;
+  private final JTextField myTimeoutField;
+  private final JCheckBox myTrustDefaultCAsCheckBox;
+  private final JPasswordField myClientCertificatePasswordField;
+  private final JButton myTestConnectionButton;
+  private final JTextField myPathToCertificatesField;
+  private final TextFieldWithBrowseButton myClientCertificatePathField;
+  private final JList<String> myRepositoriesList;
   private boolean myIsDefault;
 
   private final Runnable myValidator;
@@ -57,19 +73,20 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private final TestConnectionPerformer myTestConnectionPerformer;
 
   /**
-   * called on after repositories list had been recalculated by {@link org.jetbrains.idea.svn.config.PatternsListener}
+   * called on after repositories list had been recalculated by {@link PatternsListener}
    *
-   * @see org.jetbrains.idea.svn.config.RepositoryUrlsListener#onListChanged(java.util.List)
+   * @see RepositoryUrlsListener#onListChanged(List)
    */
+  @Override
   public void onListChanged(final List<String> urls) {
-    final String value = (String) myRepositoriesList.getSelectedValue();
+    final String value = myRepositoriesList.getSelectedValue();
     myRepositoriesList.removeAll();
-    myRepositoriesList.setListData(urls.toArray());
+    myRepositoriesList.setListData(ArrayUtil.toStringArray(urls));
     // for keeping selection
     if (value != null) {
-      final ListModel model = myRepositoriesList.getModel();
+      final ListModel<String> model = myRepositoriesList.getModel();
       for (int i = 0; i < model.getSize(); i++) {
-        final String element = (String) model.getElementAt(i);
+        final String element = model.getElementAt(i);
         if (value.equals(element)) {
           myRepositoriesList.setSelectedIndex(i);
         }
@@ -80,10 +97,10 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   public List<String> getRepositories() {
-    final ListModel model = myRepositoriesList.getModel();
+    final ListModel<String> model = myRepositoriesList.getModel();
     final List<String> result = new ArrayList<>(model.getSize());
     for (int i = 0; i < model.getSize(); i++) {
-      result.add((String) model.getElementAt(i));
+      result.add(model.getElementAt(i));
     }
     return result;
   }
@@ -99,7 +116,201 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   public ConfigureProxiesOptionsPanel(final Runnable validator, final TestConnectionPerformer testConnectionPerformer) {
     myValidator = validator;
     myTestConnectionPerformer = testConnectionPerformer;
-    
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myMainPanel = new JPanel();
+      myMainPanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(5, 4, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      myMainPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+                                                                                this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                                                "dialog.edit.http.proxies.settings.panel.proxy.title"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.patterns.text"));
+      panel1.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTHEAST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                             false));
+      final JLabel label2 = new JLabel();
+      this.$$$loadLabelText$$$(label2,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.exceptions.text"));
+      panel1.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTHEAST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                             false));
+      final JLabel label3 = new JLabel();
+      this.$$$loadLabelText$$$(label3,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.server.text"));
+      panel1.add(label3,
+                 new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myServerField = new JTextField();
+      panel1.add(myServerField, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                    GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                    new Dimension(150, -1), null, 0, false));
+      final JLabel label4 = new JLabel();
+      this.$$$loadLabelText$$$(label4,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.port.text"));
+      panel1.add(label4,
+                 new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPortField = new JTextField();
+      panel1.add(myPortField, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                  new Dimension(150, -1), null, 0, false));
+      final JLabel label5 = new JLabel();
+      label5.setRequestFocusEnabled(false);
+      this.$$$loadLabelText$$$(label5,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.password.text"));
+      panel1.add(label5,
+                 new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPasswordField = new JPasswordField();
+      panel1.add(myPasswordField, new GridConstraints(3, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                      new Dimension(150, -1), null, 0, false));
+      final JLabel label6 = new JLabel();
+      this.$$$loadLabelText$$$(label6,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.user.text"));
+      panel1.add(label6,
+                 new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myUserField = new JTextField();
+      panel1.add(myUserField, new GridConstraints(2, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                  new Dimension(150, -1), null, 0, false));
+      final JLabel label7 = new JLabel();
+      this.$$$loadLabelText$$$(label7, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                       "dialog.edit.http.proxies.settings.connection.timeout.text"));
+      panel1.add(label7,
+                 new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTimeoutField = new JTextField();
+      panel1.add(myTimeoutField, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                     new Dimension(150, -1), null, 0, false));
+      final JBScrollPane jBScrollPane1 = new JBScrollPane();
+      panel1.add(jBScrollPane1, new GridConstraints(0, 1, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myUrlPatterns = new JTextArea();
+      myUrlPatterns.setRows(3);
+      jBScrollPane1.setViewportView(myUrlPatterns);
+      final JBScrollPane jBScrollPane2 = new JBScrollPane();
+      panel1.add(jBScrollPane2, new GridConstraints(1, 1, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myExceptions = new JTextArea();
+      myExceptions.setLineWrap(true);
+      myExceptions.setRows(3);
+      jBScrollPane2.setViewportView(myExceptions);
+      final JLabel label8 = new JLabel();
+      this.$$$loadLabelText$$$(label8,
+                               this.$$$getMessageFromBundle$$$("messages/SvnBundle", "dialog.edit.http.proxies.settings.seconds.text"));
+      panel1.add(label8,
+                 new GridConstraints(4, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      myMainPanel.add(spacer1, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      myMainPanel.add(panel2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      panel2.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+                                                                                this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                                                "dialog.edit.http.proxies.settings.panel.ssl.title"),
+                                                                                TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                TitledBorder.DEFAULT_POSITION, null, null));
+      final JLabel label9 = new JLabel();
+      this.$$$loadLabelText$$$(label9, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                       "dialog.edit.http.proxies.settings.paths.to.authority.certificates.text"));
+      panel2.add(label9,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label10 = new JLabel();
+      this.$$$loadLabelText$$$(label10, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                        "dialog.edit.http.proxies.settings.ssl.client.certificate.file.text"));
+      panel2.add(label10,
+                 new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label11 = new JLabel();
+      this.$$$loadLabelText$$$(label11, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                        "dialog.edit.http.proxies.settings.client.certificate.passphrase.text"));
+      panel2.add(label11,
+                 new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myClientCertificatePasswordField = new JPasswordField();
+      panel2.add(myClientCertificatePasswordField,
+                 new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1),
+                                     null, 0, false));
+      myTrustDefaultCAsCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myTrustDefaultCAsCheckBox, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                           "dialog.edit.http.proxies.settings.trust.default.cas.text"));
+      panel2.add(myTrustDefaultCAsCheckBox, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myClientCertificatePathField = new TextFieldWithBrowseButton();
+      panel2.add(myClientCertificatePathField,
+                 new GridConstraints(1, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myPathToCertificatesField = new JTextField();
+      panel2.add(myPathToCertificatesField, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                null, new Dimension(150, -1), null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      myMainPanel.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                   GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      final JPanel panel3 = new JPanel();
+      panel3.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel3.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+      myMainPanel.add(panel3, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      panel3.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+                                                                                   this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                                                   "dialog.edit.http.proxies.settings.panel.repositories.title"),
+                                                                                   TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                   TitledBorder.DEFAULT_POSITION, null, null));
+      final JBScrollPane jBScrollPane3 = new JBScrollPane();
+      panel3.add(jBScrollPane3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myRepositoriesList = new JBList();
+      jBScrollPane3.setViewportView(myRepositoriesList);
+      myTestConnectionButton = new JButton();
+      this.$$$loadButtonText$$$(myTestConnectionButton, this.$$$getMessageFromBundle$$$("messages/SvnBundle",
+                                                                                        "dialog.edit.http.proxies.settings.test.connection.button.text"));
+      panel3.add(myTestConnectionButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_VERTICAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      label1.setLabelFor(myUrlPatterns);
+      label2.setLabelFor(myExceptions);
+      label3.setLabelFor(myServerField);
+      label4.setLabelFor(myPortField);
+      label5.setLabelFor(myPasswordField);
+      label6.setLabelFor(myUserField);
+      label7.setLabelFor(myTimeoutField);
+      label9.setLabelFor(myPathToCertificatesField);
+      label11.setLabelFor(myClientCertificatePasswordField);
+    }
+
     myComponent2Key = new HashMap<>();
     myKey2Component = new HashMap<>();
     fillMappings();
@@ -110,12 +321,84 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     putPatternsListener();
 
     myTestConnectionButton.addActionListener(e -> {
-      final String value = (String)myRepositoriesList.getSelectedValue();
+      final String value = myRepositoriesList.getSelectedValue();
       if ((value != null) && (myTestConnectionPerformer.enabled())) {
         myTestConnectionPerformer.execute(value);
       }
     });
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myMainPanel; }
 
   private void putPatternsListener() {
     final UrlsSetter urlsSetter = new UrlsSetter();
@@ -125,9 +408,8 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
 
   private void initBrowseActions() {
     InsertPathAction.addTo(myPathToCertificatesField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    myClientCertificatePathField.addBrowseFolderListener(
-        SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, new FileChooserDescriptor(true, false, false, false, false, false));
+    myClientCertificatePathField.addBrowseFolderListener(null, new FileChooserDescriptor(true, false, false, false, false, false)
+      .withTitle(message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title")));
   }
 
   private void initNumericValidation() {
@@ -145,16 +427,16 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private void fillMappings() {
-    addToKeyMappings(myServerField, SvnServerFileKeys.SERVER);
-    addToKeyMappings(myUserField, SvnServerFileKeys.USER);
-    addToKeyMappings(myPortField, SvnServerFileKeys.PORT);
-    addToKeyMappings(myPasswordField, SvnServerFileKeys.PASSWORD);
-    addToKeyMappings(myExceptions, SvnServerFileKeys.EXCEPTIONS);
-    addToKeyMappings(myTimeoutField, SvnServerFileKeys.TIMEOUT);
-    addToKeyMappings(myTrustDefaultCAsCheckBox, SvnServerFileKeys.SSL_TRUST_DEFAULT_CA);
-    addToKeyMappings(myClientCertificatePasswordField, SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD);
-    addToKeyMappings(myPathToCertificatesField, SvnServerFileKeys.SSL_AUTHORITY_FILES);
-    addToKeyMappings(myClientCertificatePathField, SvnServerFileKeys.SSL_CLIENT_CERT_FILE);
+    addToKeyMappings(myServerField, ServersFileKeys.SERVER);
+    addToKeyMappings(myUserField, ServersFileKeys.USER);
+    addToKeyMappings(myPortField, ServersFileKeys.PORT);
+    addToKeyMappings(myPasswordField, ServersFileKeys.PASSWORD);
+    addToKeyMappings(myExceptions, ServersFileKeys.EXCEPTIONS);
+    addToKeyMappings(myTimeoutField, ServersFileKeys.TIMEOUT);
+    addToKeyMappings(myTrustDefaultCAsCheckBox, ServersFileKeys.SSL_TRUST_DEFAULT_CA);
+    addToKeyMappings(myClientCertificatePasswordField, ServersFileKeys.SSL_CLIENT_CERT_PASSWORD);
+    addToKeyMappings(myPathToCertificatesField, ServersFileKeys.SSL_AUTHORITY_FILES);
+    addToKeyMappings(myClientCertificatePathField, ServersFileKeys.SSL_CLIENT_CERT_FILE);
   }
 
   private void addToKeyMappings(final JComponent component, final String key) {
@@ -163,16 +445,18 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private class UrlsSetter implements FocusListener {
+    @Override
     public void focusGained(final FocusEvent e) {
     }
 
+    @Override
     public void focusLost(final FocusEvent e) {
       repositoryUrlsRecalculation();
     }
   }
 
   private void repositoryUrlsRecalculation() {
-    if (! myIsDefault) {
+    if (!myIsDefault) {
       myPatternsListener.onChange(myUrlPatterns.getText(), myExceptions.getText());
     }
   }
@@ -182,8 +466,11 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private class NumericFieldsValidator implements FocusListener {
+    @Override
     public void focusGained(final FocusEvent e) {
     }
+
+    @Override
     public void focusLost(final FocusEvent e) {
       myValidator.run();
     }
@@ -193,22 +480,27 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       final JComponent component = myKey2Component.get(entry.getKey());
       if (component != null) {
-        JTextComponent textComponent = null;
-        if (component instanceof JTextComponent) {
-          textComponent = (JTextComponent) component;
-        } else if (component instanceof TextFieldWithBrowseButton) {
-          textComponent = ((TextFieldWithBrowseButton) component).getTextField();
-        }
-        if (textComponent != null) {
-          textComponent.setText(entry.getValue());
-          textComponent.selectAll();
-        }
-        component.setToolTipText(entry.getKey());
+        setProperty(component, entry.getKey(), entry.getValue());
       }
     }
 
-    myTrustDefaultCAsCheckBox.setSelected(booleanPropertySelected(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox))));
+    myTrustDefaultCAsCheckBox.setSelected(isTurned(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox)), false));
     repositoryUrlsRecalculation();
+  }
+
+  private static void setProperty(@NotNull JComponent component, @NlsSafe String name, @NlsSafe String value) {
+    JTextComponent textComponent = null;
+    if (component instanceof JTextComponent) {
+      textComponent = (JTextComponent)component;
+    }
+    else if (component instanceof TextFieldWithBrowseButton) {
+      textComponent = ((TextFieldWithBrowseButton)component).getTextField();
+    }
+    if (textComponent != null) {
+      textComponent.setText(value);
+      textComponent.selectAll();
+    }
+    component.setToolTipText(name);
   }
 
   public void copyStringProperties(Map<String, String> map) {
@@ -216,21 +508,19 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
       final JComponent component = entry.getValue();
       String value = null;
       if (component instanceof JTextComponent) {
-        value = ((JTextComponent) component).getText();
-      } else if (component instanceof TextFieldWithBrowseButton) {
-        value = ((TextFieldWithBrowseButton) component).getTextField().getText();
-      } else if (component instanceof JCheckBox) {
-        value = ((JCheckBox) component).isSelected() ? "yes" : "no";
+        value = ((JTextComponent)component).getText();
+      }
+      else if (component instanceof TextFieldWithBrowseButton) {
+        value = ((TextFieldWithBrowseButton)component).getTextField().getText();
+      }
+      else if (component instanceof JCheckBox) {
+        value = ((JCheckBox)component).isSelected() ? "yes" : "no";
       }
 
-      if ((value != null) && ((! "".equals(value)) || (map.containsKey(entry.getKey())))) {
+      if ((value != null) && (!value.isEmpty() || map.containsKey(entry.getKey()))) {
         map.put(entry.getKey(), value);
       }
     }
-  }
-
-  private static boolean booleanPropertySelected(final String value) {
-    return value != null && SvnServerFileKeys.YES_OPTIONS.contains(value.toLowerCase());
   }
 
   public boolean isDefault() {
@@ -239,7 +529,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
 
   public void setIsDefaultGroup(final boolean value) {
     myIsDefault = value;
-    myUrlPatterns.setEditable(! myIsDefault);
+    myUrlPatterns.setEditable(!myIsDefault);
   }
 
   public String getPatterns() {

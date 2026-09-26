@@ -1,0 +1,213 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.jetbrains.python.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySliceItem;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.impl.references.PyOperatorReference;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
+
+public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
+  public PySubscriptionExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(final PyElementVisitor pyVisitor) {
+    pyVisitor.visitPySubscriptionExpression(this);
+  }
+
+  @Override
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyExpression indexExpression = getIndexExpression();
+    if (indexExpression != null) {
+      final PyType operandType = context.getType(getOperand());
+      if (indexExpression instanceof PySliceItem) {
+        if (operandType instanceof PyTupleType) {
+          if (((PyTupleType)operandType).isHomogeneous()) {
+            return operandType;
+          }
+          final PyClassType tupleType = PyBuiltinCache.getInstance(this).getTupleType();
+          return tupleType != null ? tupleType : PyAnyType.getUnknown();
+        }
+      }
+      else {
+        if (operandType instanceof PyTupleType tupleType) {
+          List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
+          List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
+            if (!tupleType.isHomogeneous() && index < 0) {
+              index += tupleType.getElementCount();
+            }
+            return tupleType.getElementType(index);
+          });
+          return PyUnionType.unionOrUnknown(possibleTypes);
+        }
+        if (operandType instanceof PyTypedDictType typedDictType) {
+          return typedDictType.isDefinition()
+                 ? parameterizeTypedDictDeclaration(typedDictType, context)
+                 : getTypedDictSubscriptionType(typedDictType, indexExpression, context);
+        }
+        if (operandType instanceof PyClassType) {
+          PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
+          if (parameterizedType instanceof PyClassType pyClassType && pyClassType.isParameterized()) {
+            return pyClassType.toClass();
+          }
+        }
+      }
+    }
+    return PyCallExpressionHelper.getCallType(this, context, key);
+  }
+
+  /**
+   * A TypedDict without type parameters cannot be parameterized, and the expression still denotes the class, so the declaration
+   * type is returned rather than the `dict` class the generic fallback would answer with.
+   */
+  private @NotNull PyType parameterizeTypedDictDeclaration(@NotNull PyTypedDictType declarationType,
+                                                           @NotNull TypeEvalContext context) {
+    final PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
+    if (parameterizedType instanceof PyTypedDictType typedDictType && typedDictType.isParameterized()) {
+      return typedDictType.toClass();
+    }
+    return declarationType;
+  }
+
+  /** The extra items type is asked for only when a key is really missing: evaluating it costs as much as an item type. */
+  private static @Nullable PyType getTypedDictSubscriptionType(@NotNull PyTypedDictType typedDictType,
+                                                               @NotNull PyExpression indexExpression,
+                                                               @NotNull TypeEvalContext context) {
+    List<String> keys = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+    if (keys.isEmpty()) {
+      if (typedDictType.isClosed() || !isStringIndex(indexExpression, context)) return PyAnyType.getUnknown();
+      PyType extraItemsType = typedDictType.extraItemsType(context);
+      if (extraItemsType == null || isUnknown(extraItemsType)) return PyAnyType.getUnknown();
+      // Non-literal `str` key: the value can be any declared item or an explicitly typed extra item.
+      List<PyType> types =
+        new ArrayList<>(ContainerUtil.map(typedDictType.fields(context).values(), PyTypedDictType.FieldTypeAndTotality::getType));
+      types.add(extraItemsType);
+      return PyUnionType.union(types);
+    }
+
+    List<PyType> types = new ArrayList<>();
+    for (String key : keys) {
+      PyTypedDictType.FieldTypeAndTotality field = typedDictType.fields(context).get(key);
+      if (field != null) {
+        types.add(field.getType());
+        continue;
+      }
+      PyType extraItemsType = typedDictType.isClosed() ? null : typedDictType.extraItemsType(context);
+      types.add(extraItemsType != null ? extraItemsType : PyAnyType.getUnknown());
+    }
+    return PyUnionType.union(types);
+  }
+
+  @ApiStatus.Internal
+  public static <T> @NotNull List<T> getIndexExpressionPossibleValues(@Nullable PyExpression indexExpression,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Class<T> indexType) {
+    if (indexExpression == null) {
+      return List.of();
+    }
+    T indexExprValue = PyEvaluator.evaluate(indexExpression, indexType);
+    if (indexExprValue != null) {
+      return List.of(indexExprValue);
+    }
+    PyType type = context.getType(indexExpression);
+    if (type == null) {
+      return List.of();
+    }
+    List<T> result = new ArrayList<>();
+    for (PyType subType : PyTypeUtil.toStream(type)) {
+      if (!(subType instanceof PyLiteralType literalType)) {
+        return List.of();
+      }
+      T val = extractValueFromLiteral(literalType, indexType);
+      if (val == null) {
+        return List.of();
+      }
+      result.add(val);
+    }
+    return result;
+  }
+
+  private static boolean isStringIndex(@Nullable PyExpression indexExpression, @NotNull TypeEvalContext context) {
+    if (indexExpression == null) {
+      return false;
+    }
+    PyType indexType = context.getType(indexExpression);
+    if (indexType == null || isUnknown(indexType)) {
+      return false;
+    }
+    PyType strType = PyBuiltinCache.getInstance(indexExpression).getStrType();
+    return strType != null && PyTypeChecker.match(strType, indexType, context);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> @Nullable T extractValueFromLiteral(@NotNull PyLiteralType literalType, @NotNull Class<T> indexType) {
+    if ((indexType == Integer.class || indexType == int.class) && literalType.getIntValue() != null) {
+      try {
+        return (T)Integer.valueOf(literalType.getIntValue().intValueExact());
+      }
+      catch (ArithmeticException e) {
+        // If BigInteger does not fit into int
+        return null;
+      }
+    }
+    if (indexType == String.class && literalType.getStringValue() != null) {
+      return (T)literalType.getStringValue();
+    }
+    if ((indexType == Boolean.class || indexType == boolean.class) && literalType.getBoolValue() != null) {
+      return (T)literalType.getBoolValue();
+    }
+    return null;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
+  }
+
+  @Override
+  public @NotNull PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+    return new PyOperatorReference(this, context);
+  }
+}

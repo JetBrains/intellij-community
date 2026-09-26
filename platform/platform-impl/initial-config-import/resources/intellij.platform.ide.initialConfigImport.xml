@@ -1,0 +1,28 @@
+<idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.serviceContainer"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="com.intellij.ide.ImportOldConfigsUsagesCollector$Trigger"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ImportOldConfigsUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.OldDirectoryCleaner$Stats"/>
+  </extensions>
+  <xi:include href="intellij.platform.ide.initialConfigImport.actions.xml"/>
+</idea-plugin>

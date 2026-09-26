@@ -1,0 +1,11 @@
+com.intellij.platform.navbar.backend.NavBarItem
+- sf:Companion:com.intellij.platform.navbar.backend.NavBarItem$Companion
+- sf:NAVBAR_ITEM_KEY:com.intellij.openapi.actionSystem.DataKey
+- a:createPointer():com.intellij.model.Pointer
+- navigateOnClick():Z
+- navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
+- a:presentation():com.intellij.platform.navbar.NavBarItemPresentation
+f:com.intellij.platform.navbar.backend.NavBarItem$Companion
+com.intellij.platform.navbar.backend.NavBarItemProvider
+- findParent(com.intellij.platform.navbar.backend.NavBarItem):com.intellij.platform.navbar.backend.NavBarItem
+- iterateChildren(com.intellij.platform.navbar.backend.NavBarItem):java.lang.Iterable

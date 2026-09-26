@@ -1,11 +1,10 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.intellij.lang.xpath.XPathFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.XPathFile;
 
 public abstract class ContextProviderExtension {
     public static final ExtensionPointName<ContextProviderExtension> EXTENSION_POINT_NAME =
@@ -13,13 +12,10 @@ public abstract class ContextProviderExtension {
 
     protected abstract boolean accepts(XPathFile file);
 
-    @NotNull
-    protected abstract ContextProvider getContextProvider(XPathFile file);
+    protected abstract @NotNull ContextProvider getContextProvider(XPathFile file);
 
-    @Nullable
-    public static ContextProvider getInstance(XPathFile file) {
-        final ContextProviderExtension[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
-        for (ContextProviderExtension extension : extensions) {
+    public static @Nullable ContextProvider getInstance(XPathFile file) {
+      for (ContextProviderExtension extension : EXTENSION_POINT_NAME.getExtensionList()) {
             if (extension.accepts(file)) {
                 return extension.getContextProvider(file);
             }

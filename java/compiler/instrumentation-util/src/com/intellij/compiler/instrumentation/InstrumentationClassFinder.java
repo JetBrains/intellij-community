@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -20,13 +6,24 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,7 +34,7 @@ public class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];
   private static final String CLASS_RESOURCE_EXTENSION = ".class";
   private static final URL[] URL_EMPTY_ARRAY = new URL[0];
-  private final Map<String, PseudoClass> myLoaded = new HashMap<String, PseudoClass>(); // className -> class object
+  private final Map<String, PseudoClass> myLoaded = new HashMap<>(); // className -> class object
   private final ClassFinderClasspath myPlatformClasspath;
   private final ClassFinderClasspath myClasspath;
   private final URL[] myPlatformUrls;
@@ -70,9 +67,9 @@ public class InstrumentationClassFinder {
     final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
     loader = new ClassLoader(cpLoader) {
 
+      @Override
       public InputStream getResourceAsStream(String name) {
-        InputStream is = null;
-        is = super.getResourceAsStream(name);
+        InputStream is = super.getResourceAsStream(name);
         if (is == null) {
           try {
             is = InstrumentationClassFinder.this.getResourceAsStream(name);
@@ -83,6 +80,7 @@ public class InstrumentationClassFinder {
         return is;
       }
 
+      @Override
       protected Class findClass(String name) throws ClassNotFoundException {
         final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
         if (is == null) {
@@ -90,7 +88,7 @@ public class InstrumentationClassFinder {
         }
         try {
           final byte[] bytes = loadBytes(is);
-          return defineClass(name, bytes, 0, bytes.length);
+          return defineClass(name.replace('/', '.'), bytes, 0, bytes.length);
         }
         finally {
           try {
@@ -107,9 +105,33 @@ public class InstrumentationClassFinder {
 
   public void releaseResources() {
     myPlatformClasspath.releaseResources();
+    releaseClasspathResources();
+  }
+
+  /**
+   * Closes the classpath roots, keeping the platform roots open, and drops the classes read so far. The finder stays
+   * usable: it reads the roots again on the next lookup.
+   * <p>
+   * For a finder that outlives a single operation, this is what keeps it from holding the jars of the classpath open -
+   * on Windows an open jar cannot be replaced by a build - and from answering with classes from before the last build.
+   * The platform roots are kept because the {@code jrt:} file system of a JDK is expensive to build and does not
+   * change while the JDK is the same.
+   */
+  public void releaseClasspathResources() {
     myClasspath.releaseResources();
     myLoaded.clear();
     myBuffer = null;
+
+    for (ClassLoader loader = myLoader; loader != null; loader = loader.getParent()) {
+      if (loader instanceof Closeable) {
+        try {
+          ((Closeable)loader).close();
+        }
+        catch (Throwable ignored) {
+        }
+      }
+    }
+
     myLoader = null;
   }
 
@@ -175,7 +197,7 @@ public class InstrumentationClassFinder {
     if (resource != null) {
       is = resource.getInputStream();
     }
-    // second look into memory and classspath
+    // second look into memory and classpath
     if (is == null) {
       is = lookupClassBeforeClasspath(internalName);
     }
@@ -228,7 +250,7 @@ public class InstrumentationClassFinder {
     return new PseudoClass(this, visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
 
-  public static class PseudoClass {
+  public static final class PseudoClass {
     static final PseudoClass NULL_OBJ = new PseudoClass(null, null, null, null, 0, null);
     private final String myName;
     private final String mySuperClass;
@@ -268,7 +290,7 @@ public class InstrumentationClassFinder {
     }
 
     public List<PseudoMethod> findMethods(String name) {
-      final List<PseudoMethod> result = new ArrayList<PseudoMethod>();
+      final List<PseudoMethod> result = new ArrayList<>();
       for (PseudoMethod method : myMethods) {
         if (method.getName().equals(name)){
           result.add(method);
@@ -341,6 +363,7 @@ public class InstrumentationClassFinder {
       return result;
     }
 
+    @Override
     public boolean equals (final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -426,17 +449,18 @@ public class InstrumentationClassFinder {
     }
   }
 
-  private static class V extends ClassVisitor {
+  private static final class V extends ClassVisitor {
     public String mySuperclassName = null;
     public String[] myInterfaces = null;
     public String myName = null;
     public int myModifiers;
-    private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
+    private final List<PseudoMethod> myMethods = new ArrayList<>();
 
     private V() {
       super(Opcodes.API_VERSION);
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PUBLIC) > 0) {
         myMethods.add(new PseudoMethod(access, name, desc));
@@ -444,6 +468,7 @@ public class InstrumentationClassFinder {
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
+    @Override
     public void visit(int version, int access, String pName, String signature, String pSuperName, String[] pInterfaces) {
       mySuperclassName = pSuperName;
       myInterfaces = pInterfaces;
@@ -456,18 +481,15 @@ public class InstrumentationClassFinder {
     InputStream getInputStream() throws IOException;
   }
 
-  static class ClassFinderClasspath {
+  public static final class ClassFinderClasspath {
+    private final URL[] myUrls;
+    /** Index into {@link #myUrls} of the next root to create a loader for; loaders are created on demand. */
+    private int myNextUrlIndex;
+    private final List<Loader> myLoaders = new ArrayList<>();
+    private final Map<URL,Loader> myLoadersMap = new HashMap<>();
 
-    private final Stack<URL> myUrls = new Stack<URL>();
-    private final List<Loader> myLoaders = new ArrayList<Loader>();
-    private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
-
-    public ClassFinderClasspath(URL[] urls) {
-      if (urls.length > 0) {
-        for (int i = urls.length - 1; i >= 0; i--) {
-          myUrls.push(urls[i]);
-        }
-      }
+    ClassFinderClasspath(URL[] urls) {
+      myUrls = urls.clone();
     }
 
     public Resource getResource(String s) {
@@ -482,23 +504,25 @@ public class InstrumentationClassFinder {
       return null;
     }
 
-    public void releaseResources() {
+    /**
+     * Closes the roots. The classpath stays usable: the loaders it needs are created again, from the same roots, the
+     * next time a resource is looked up.
+     */
+    public synchronized void releaseResources() {
       for (Loader loader : myLoaders) {
         loader.releaseResources();
       }
       myLoaders.clear();
       myLoadersMap.clear();
+      myNextUrlIndex = 0;
     }
 
     private synchronized Loader getLoader(int i) {
       while (myLoaders.size() < i + 1) {
-        URL url;
-        synchronized (myUrls) {
-          if (myUrls.empty()) {
-            return null;
-          }
-          url = myUrls.pop();
+        if (myNextUrlIndex >= myUrls.length) {
+          return null;
         }
+        URL url = myUrls[myNextUrlIndex++];
 
         if (myLoadersMap.containsKey(url)) {
           continue;
@@ -524,16 +548,16 @@ public class InstrumentationClassFinder {
 
     private static Loader getLoader(final URL url, int index) throws IOException {
       String s;
+      final String protocol = url.getProtocol();
       try {
-        s = url.toURI().getSchemeSpecificPart();
+        s = Loader.JRT_PROTOCOL.equals(protocol)? url.getFile() : url.toURI().getSchemeSpecificPart();
       }
       catch (URISyntaxException thisShouldNotHappen) {
         thisShouldNotHappen.printStackTrace();
         s = url.getFile();
       }
 
-      if (s != null && s.length() > 0) {
-        final String protocol = url.getProtocol();
+      if (s != null && !s.isEmpty()) {
         if (Loader.JRT_PROTOCOL.equals(protocol)) {
           final Loader jrtLoader = JrtClassHolder.create(url, index);
           if (jrtLoader != null) {
@@ -550,7 +574,7 @@ public class InstrumentationClassFinder {
     }
 
 
-    abstract static class Loader {
+    public abstract static class Loader {
       protected static final String JAR_PROTOCOL = "jar";
       protected static final String FILE_PROTOCOL = "file";
       protected static final String JRT_PROTOCOL = "jrt";
@@ -580,8 +604,7 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      FileLoader(URL url, int index) throws IOException {
+      FileLoader(URL url, int index) {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {
           throw new IllegalArgumentException("url");
@@ -592,9 +615,11 @@ public class InstrumentationClassFinder {
         }
       }
 
+      @Override
       public void releaseResources() {
       }
 
+      @Override
       public Resource getResource(final String name) {
         try {
           final URL url = new URL(getBaseURL(), name);
@@ -610,6 +635,7 @@ public class InstrumentationClassFinder {
                 return new BufferedInputStream(new FileInputStream(file));
               }
 
+              @Override
               public String toString() {
                 return file.getAbsolutePath();
               }
@@ -621,6 +647,7 @@ public class InstrumentationClassFinder {
         return null;
       }
 
+      @Override
       public String toString() {
         return "FileLoader [" + myRootDir + "]";
       }
@@ -635,6 +662,7 @@ public class InstrumentationClassFinder {
         myURL = url;
       }
 
+      @Override
       public void releaseResources() {
         final ZipFile zipFile = myZipFile;
         if (zipFile != null) {
@@ -660,15 +688,15 @@ public class InstrumentationClassFinder {
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
-          if (!new File(s).exists()) {
-            throw new FileNotFoundException(s);
+          if (new File(s).exists()) {
+            return new ZipFile(s);
           }
-          return new ZipFile(s);
         }
 
         return null;
       }
 
+      @Override
       public Resource getResource(String name) {
         try {
           final ZipFile file = acquireZipFile();
@@ -677,7 +705,7 @@ public class InstrumentationClassFinder {
             if (entry != null) {
               return new Resource() {
                 @Override
-                public InputStream getInputStream() throws IOException {
+                public InputStream getInputStream() {
                   try {
                     final ZipFile file = acquireZipFile();
                     if (file != null) {
@@ -693,6 +721,7 @@ public class InstrumentationClassFinder {
                   return null;
                 }
 
+                @Override
                 public String toString() {
                   return "JarLoader [" + myURL + "!/" + entry.getName() + "]";
                 }
@@ -720,7 +749,7 @@ public class InstrumentationClassFinder {
     while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        List<Integer> bytes = new ArrayList<Integer>();
+        List<Integer> bytes = new ArrayList<>();
         while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
@@ -737,12 +766,8 @@ public class InstrumentationClassFinder {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.get(j).intValue();
           }
-          try {
-            decoded.append(new String(bytesArray, "UTF-8"));
-            continue;
-          }
-          catch (UnsupportedEncodingException ignored) {
-          }
+          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
+          continue;
         }
       }
 
@@ -796,7 +821,7 @@ public class InstrumentationClassFinder {
       Class<? extends ClassFinderClasspath.Loader> aClass = null;
       Constructor<? extends ClassFinderClasspath.Loader> constructor = null;
       try {
-        aClass = (Class<? extends ClassFinderClasspath.Loader>)Class.forName("com.intellij.compiler.instrumentation.JrtLoader");
+        aClass = Class.forName("com.intellij.compiler.instrumentation.JrtLoader").asSubclass(ClassFinderClasspath.Loader.class);
         constructor = aClass.getDeclaredConstructor(URL.class, int.class);
         constructor.setAccessible(true);
       }

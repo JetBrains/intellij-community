@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 
@@ -25,37 +23,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneosly
+ * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneously
  * tries to deactivate/shutdown. It that situations, it would be very hard to decide what should be done=)
  *
  * So, synchronization here should only be used as a barrier to do not allow repeated activation etc.
  * - and "actual" methods should not be called under lock
  */
 public abstract class StartedActivated {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.StartedActivated");
+  private static final Logger LOG = Logger.getInstance(StartedActivated.class);
 
   private final MySection myStart;
   private final MySection myActivate;
   private final Object myLock;
 
-  protected StartedActivated(final Disposable parent) {
+  protected StartedActivated() {
     myStart = new MySection(() -> start(), () -> shutdown());
     myActivate = new MySection(() -> activate(), () -> deactivate());
     myStart.setDependent(myActivate);
     myActivate.setMaster(myStart);
 
     myLock = new Object();
-
-    Disposer.register(parent, new Disposable() {
-      public void dispose() {
-        try {
-          doShutdown();
-        }
-        catch (Throwable t) {
-          LOG.info(t);
-        }
-      }
-    });
   }
 
   protected abstract void start() throws VcsException;
@@ -88,7 +75,7 @@ public abstract class StartedActivated {
   public final void doActivate() throws VcsException {
     callImpl(myActivate, true);
   }
-  
+
   public final void doDeactivate() throws VcsException {
     callImpl(myActivate, false);
   }
@@ -102,7 +89,7 @@ public abstract class StartedActivated {
 
     private ThreeState myState;
 
-    public MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
+    MySection(final ThrowableRunnable<VcsException> start, final ThrowableRunnable<VcsException> stop) {
       myStart = start;
       myStop = stop;
       myState = ThreeState.UNSURE;

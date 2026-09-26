@@ -1,0 +1,2 @@
+com.intellij.testIntegration.TestFinder
+- *:navigateToTestImmediately(com.intellij.psi.PsiElement):Z

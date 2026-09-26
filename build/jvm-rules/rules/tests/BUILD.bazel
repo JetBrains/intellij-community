@@ -1,0 +1,3 @@
+load(":compiler-tool-configuration-test.bzl", "compiler_tool_configuration_test")
+
+compiler_tool_configuration_test(name = "compiler_tool_configuration_test")

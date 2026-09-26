@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessWrapper;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,12 +11,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class WinTerminalExecutor extends TerminalExecutor {
 
   // max available value is 480
@@ -45,17 +32,16 @@ public class WinTerminalExecutor extends TerminalExecutor {
     }
   }
 
-  @Nullable private File myRedirectFile;
-  @Nullable private FileInputStream myRedirectStream;
+  private @Nullable File myRedirectFile;
+  private @Nullable FileInputStream myRedirectStream;
 
   public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     super(exePath, command);
   }
 
-  @NotNull
   @Override
-  protected SvnProcessHandler createProcessHandler() {
-    return new WinTerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
+  protected @NotNull SvnProcessHandler createProcessHandler() {
+    return new WinTerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
   }
 
   @Override
@@ -96,13 +82,12 @@ public class WinTerminalExecutor extends TerminalExecutor {
     deleteTempFile(myRedirectFile);
   }
 
-  @NotNull
   @Override
-  protected Process createProcess() throws ExecutionException {
+  protected @NotNull Process createProcess() throws ExecutionException {
     checkRedirectFile();
 
     List<String> parameters = escapeArguments(buildParameters());
-    parameters.add(0, ExecUtil.getWindowsShellName());
+    parameters.add(0, CommandLineUtil.getWinShellName());
     parameters.add(1, "/c");
     parameters.add(">>");
     //noinspection ConstantConditions
@@ -135,14 +120,12 @@ public class WinTerminalExecutor extends TerminalExecutor {
   /**
    * TODO: Identify pty4j quoting requirements for Windows and implement accordingly
    */
-  @NotNull
   @Override
-  protected List<String> escapeArguments(@NotNull List<String> arguments) {
+  protected @NotNull List<String> escapeArguments(@NotNull List<String> arguments) {
     return ContainerUtil.map(arguments, argument -> needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument);
   }
 
-  @NotNull
-  private static String quote(@NotNull String argument) {
+  private static @NotNull String quote(@NotNull String argument) {
     return StringUtil.wrapWithDoubleQuote(argument);
   }
 

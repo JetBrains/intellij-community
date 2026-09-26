@@ -1,0 +1,13 @@
+LineBreakpoint created at filterSmartStepWithInlineClass.kt:27
+LineBreakpoint created at filterSmartStepWithInlineClass.kt:34
+Run Java
+Connected to the target VM
+filterSmartStepWithInlineClass.kt:27
+filterSmartStepWithInlineClass.kt:6
+filterSmartStepWithInlineClass.kt:27
+filterSmartStepWithInlineClass.kt:34
+filterSmartStepWithInlineClass.kt:15
+filterSmartStepWithInlineClass.kt:34
+Disconnected from the target VM
+
+Process finished with exit code 0

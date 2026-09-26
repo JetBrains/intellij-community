@@ -1,0 +1,43 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.python.black.common"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.sdk.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Deprecated registry key-->
+    <registryKey key="black.formatter.support.enabled" defaultValue="true" description="Enable Black formatter support"/>
+
+    <python.pytools.pyTool implementation="com.intellij.python.black.BlackPyTool"/>
+    <projectSettings service="com.intellij.python.black.configuration.BlackFormatterConfiguration"/>
+    <formattingService implementation="com.intellij.python.black.BlackFormattingService"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder"/>
+  </extensions>
+</idea-plugin>

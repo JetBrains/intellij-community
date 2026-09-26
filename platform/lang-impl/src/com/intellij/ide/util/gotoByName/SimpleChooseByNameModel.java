@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +14,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   private final Project myProject;
-  private final String myPrompt;
-  private final String myHelpId;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myPrompt;
+  private final @NonNls String myHelpId;
 
-  protected SimpleChooseByNameModel(@NotNull Project project, @NotNull String prompt, @Nullable String helpId) {
+  protected SimpleChooseByNameModel(@NotNull Project project,
+                                    @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
+                                    @Nullable @NonNls String helpId) {
     myProject = project;
     myPrompt = prompt;
     myHelpId = helpId;
@@ -50,12 +40,12 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   }
 
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return InspectionsBundle.message("nothing.found");
   }
 
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return InspectionsBundle.message("nothing.found");
   }
 
@@ -64,10 +54,6 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
     return null;
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 0;
-  }
 
   @Override
   public boolean loadInitialCheckBoxState() {
@@ -78,26 +64,23 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   public void saveInitialCheckBoxState(boolean state) {
   }
 
-  @NotNull
   @Override
-  public String[] getNames(boolean checkBoxState) {
+  public String @NotNull [] getNames(boolean checkBoxState) {
     return getNames();
   }
 
-  @NotNull
   @Override
-  public Object[] getElementsByName(String name, boolean checkBoxState, String pattern) {
+  public Object @NotNull [] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern) {
     return getElementsByName(name, pattern);
   }
 
-  @NotNull
   @Override
-  public String[] getSeparators() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public String @NotNull [] getSeparators() {
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
-  public String getFullName(Object element) {
+  public String getFullName(@NotNull Object element) {
     return getElementName(element);
   }
 

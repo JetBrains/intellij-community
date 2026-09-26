@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports calls to generated <code>componentN()</code> methods on Kotlin <code>data</code> classes from Java code.
+<p>
+    Kotlin data classes automatically generate positional <code>component1()</code>, <code>component2()</code>, and similar methods
+    for destructuring. Calling them directly from Java is fragile: the mapping between index and property is not obvious,
+    and the calls break silently if properties are reordered. Using the named property getter is clearer and refactoring-safe.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  String name = person.component1();
+  int age = person.component2();
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String name = person.getName();
+  int age = person.getAge();
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

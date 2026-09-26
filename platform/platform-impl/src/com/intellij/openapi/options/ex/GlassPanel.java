@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.options.ex;
 
@@ -20,40 +6,59 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.Kernel;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GlassPanel extends JComponent {
+@ApiStatus.Internal
+public final class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
-
+  private static final String SPOTLIGHT_BACKGROUND_COLOR_KEY = "Settings.Spotlight.backgroundColor";
+  private static final String SPOTLIGHT_BORDER_COLOR_KEY = "Settings.Spotlight.borderColor";
+  private static final JBColor FALLBACK_SPOTLIGHT_BORDER_COLOR = new JBColor(
+    JBColor.namedColor("ColorPalette.Orange6", 0xE08855),
+    JBColor.namedColor("ColorPalette.Orange4", 0xA36B4E)
+  );
 
   public GlassPanel(JComponent containingPanel) {
     myPanel = containingPanel;
     setVisible(false);
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     paintSpotlights(g);
   }
 
-  protected void paintSpotlights(Graphics g) {
+  private void paintSpotlights(Graphics g) {
     paintSpotlight(g, this);
   }
 
   public void paintSpotlight(final Graphics g, final JComponent surfaceComponent) {
     Dimension size = surfaceComponent.getSize();
-    if (myLightComponents.size() > 0) {
+    if (!myLightComponents.isEmpty()) {
       int stroke = 2;
 
       final Rectangle visibleRect = myPanel.getVisibleRect();
@@ -64,8 +69,7 @@ public class GlassPanel extends JComponent {
         final Area area = getComponentArea(surfaceComponent, lightComponent, 1);
         if (area == null) continue;
 
-        if (lightComponent instanceof JLabel) {
-          final JLabel label = (JLabel)lightComponent;
+        if (lightComponent instanceof JLabel label) {
           final Component labelFor = label.getLabelFor();
           if (labelFor instanceof JComponent) {
             final Area labelForArea = getComponentArea(surfaceComponent, (JComponent)labelFor, 1);
@@ -84,12 +88,13 @@ public class GlassPanel extends JComponent {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        Color background = surfaceComponent.getBackground();
-        g2.setColor(ColorUtil.toAlpha(background == null ? null : background.darker(), 100));
+        final Color background = getOverlayColor(surfaceComponent);
+        g2.setColor(background);
         g2.fill(mask);
 
         g2.setStroke(new BasicStroke(stroke));
-        g2.setColor(ColorUtil.toAlpha(JBColor.ORANGE, 100));
+        final Color borderColor = UIManager.getColor(SPOTLIGHT_BORDER_COLOR_KEY);
+        g2.setColor(borderColor != null ? borderColor : FALLBACK_SPOTLIGHT_BORDER_COLOR);
         g2.draw(mask);
       }
       finally {
@@ -98,8 +103,7 @@ public class GlassPanel extends JComponent {
     }
   }
 
-  @Nullable
-  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
+  private static @Nullable Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
@@ -110,7 +114,7 @@ public class GlassPanel extends JComponent {
     final boolean isWithBorder = Boolean.TRUE.equals(lightComponent.getClientProperty(SearchUtil.HIGHLIGHT_WITH_BORDER));
     final boolean isLabelFromTabbedPane = Boolean.TRUE.equals(lightComponent.getClientProperty(JBTabbedPane.LABEL_FROM_TABBED_PANE));
 
-    if ((insetsToIgnore == null || (UIUtil.isUnderAquaLookAndFeel() && lightComponent instanceof JButton)) || isWithBorder) {
+    if (insetsToIgnore == null || isWithBorder) {
       insetsToIgnore = EMPTY_INSETS;
     }
 
@@ -129,31 +133,27 @@ public class GlassPanel extends JComponent {
                                                 Math.min(height, 30), Math.min(height, 30)));
   }
 
-  protected int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
   }
 
-  protected int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
 
-  protected static Kernel getBlurKernel(int blurSize) {
-    if (blurSize <= 0) return null;
-
-    int size = blurSize * blurSize;
-    float coeff = 1.0f / size;
-    float[] kernelData = new float[size];
-
-    for (int i = 0; i < size; i ++) {
-      kernelData[i] = coeff;
-    }
-
-    return new Kernel(blurSize, blurSize, kernelData);
-  }
-
-
   public static double getArea(JComponent component) {
     return Math.PI * component.getWidth() * component.getHeight() / 4.0;
+  }
+
+  private static @NotNull Color getOverlayColor(JComponent surfaceComponent) {
+    final Color background = UIManager.getColor(SPOTLIGHT_BACKGROUND_COLOR_KEY);
+    if (background != null) return background;
+
+    final Color surfaceComponentBackground = surfaceComponent.getBackground();
+    final Color fallbackBackground =
+      ColorUtil.toAlpha(surfaceComponentBackground == null ? null : surfaceComponentBackground.darker(), 100);
+
+    return fallbackBackground;
   }
 
   public void addSpotlight(final JComponent component) {
@@ -161,7 +161,7 @@ public class GlassPanel extends JComponent {
     setVisible(true);
   }
 
-  public void removeSpotlight(final JComponent component){
+  public void removeSpotlight(final JComponent component) {
     myLightComponents.remove(component);
     if (myLightComponents.isEmpty()) {
       setVisible(false);

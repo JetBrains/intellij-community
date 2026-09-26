@@ -1,0 +1,19 @@
+<!--suppress SplitModeMixedDependencies -->
+<idea-plugin>
+  <id>intellij.bookmarks.plugin</id>
+  <name>Bookmarks</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Marks lines of code, files, folders, classes, and editor tabs for quick navigation,
+    supports anonymous and mnemonic bookmarks accessible via keyboard shortcuts,
+    and organizes them into named lists in a dedicated tool window.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.bookmarks" loading="required"/>
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.bookmarks.frontend"/>
+    <module name="intellij.platform.debugger.impl.bookmarks"/>
+    <module name="intellij.platform.vcs.log.impl.bookmarks" loading="optional"/>
+  </content>
+</idea-plugin>

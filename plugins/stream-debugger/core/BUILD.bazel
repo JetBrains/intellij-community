@@ -1,0 +1,89 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.debugger.streams.core` start
+content_module_jar(module = ":core")
+### auto-generated section `dev intellij.debugger.streams.core` end
+
+### auto-generated section `build intellij.debugger.streams.core` start
+jvm_library(
+    name = "core",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.core",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/xdebugger-api:debugger",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/xdebugger-impl/shared",
+        "//platform/xdebugger-impl/ui",
+        "//libraries/stream",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util:util-ui",
+        "//platform/core-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
+        "//platform/statistics",
+        "//platform/util/coroutines",
+        "//plugins/stream-debugger/shared",
+    ],
+)
+
+jvm_library(
+    name = "core_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.debugger.streams.core",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/xdebugger-impl:debugger-impl_test_lib",
+        "//platform/xdebugger-impl/shared:shared_test_lib",
+        "//platform/xdebugger-impl/ui:ui_test_lib",
+        "//libraries/stream:stream_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//plugins/stream-debugger/shared:shared_test_lib",
+    ],
+)
+### auto-generated section `build intellij.debugger.streams.core` end
+
+### auto-generated section `iml intellij.debugger.streams.core` start
+exports_files(
+    [
+        "intellij.debugger.streams.core.iml",
+        "resources/intellij.debugger.streams.core.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.debugger.streams.core` end

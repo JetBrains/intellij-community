@@ -16,21 +16,22 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.xpath.validation.inspections.*;
+import org.intellij.lang.xpath.validation.inspections.CheckNodeTest;
+import org.intellij.lang.xpath.validation.inspections.HardwiredNamespacePrefix;
+import org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion;
+import org.intellij.lang.xpath.validation.inspections.IndexZeroPredicate;
+import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
 
 public class XPathHighlightingTest extends TestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-      new XPathSupportLoader();
       //noinspection unchecked
-      myFixture.enableInspections(new Class[]{
-        CheckNodeTest.class,
-        ImplicitTypeConversion.class,
-        RedundantTypeConversion.class,
-        IndexZeroPredicate.class,
-        HardwiredNamespacePrefix.class,
-      });
+      myFixture.enableInspections(CheckNodeTest.class,
+                                  ImplicitTypeConversion.class,
+                                  RedundantTypeConversion.class,
+                                  IndexZeroPredicate.class,
+                                  HardwiredNamespacePrefix.class);
     }
 
     public void testPathTypeMismatch() {

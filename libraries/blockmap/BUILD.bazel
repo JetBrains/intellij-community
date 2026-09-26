@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.blockmap` start
+content_module_jar(
+    libraries = ["@lib//:libraries-blockmap-blockmap"],
+    module = ":blockmap",
+)
+### auto-generated section `dev intellij.libraries.blockmap` end
+
+### auto-generated section `build intellij.libraries.blockmap` start
+jvm_library(
+    name = "blockmap",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.blockmap",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-blockmap-blockmap"],
+    runtime_deps = ["@lib//:libraries-blockmap-blockmap"],
+)
+
+jvm_library(
+    name = "blockmap_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.blockmap",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-blockmap-blockmap"],
+    runtime_deps = [":blockmap"],
+)
+### auto-generated section `build intellij.libraries.blockmap` end
+
+### auto-generated section `iml intellij.libraries.blockmap` start
+exports_files(
+    [
+        "intellij.libraries.blockmap.iml",
+        "resources/intellij.libraries.blockmap.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.blockmap` end

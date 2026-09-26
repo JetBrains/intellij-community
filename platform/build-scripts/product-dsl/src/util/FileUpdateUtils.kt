@@ -1,0 +1,129 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration")
+
+package org.jetbrains.intellij.build.productLayout.util
+
+import org.jetbrains.intellij.build.productLayout.model.error.FileChangeType
+import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
+import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
+
+/**
+ * Strategy for file update operations.
+ * Implementations determine whether to actually write files or record diffs for validation.
+ */
+sealed interface FileUpdateStrategy {
+  /**
+   * Updates a file if content has changed, or records diff in dry run mode.
+   * @return Status indicating whether file was created, modified, or unchanged
+   */
+  fun updateIfChanged(path: Path, newContent: String): FileChangeStatus
+
+  /**
+   * Writes file if content changed, or records diff in dry run mode.
+   * @return Status indicating whether file was modified or unchanged
+   */
+  fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus
+
+  /**
+   * Deletes a file or records deletion diff in dry run mode.
+   */
+  fun delete(path: Path)
+
+  /**
+   * Returns diffs collected during operations.
+   */
+  fun getDiffs(): List<FileDiff>
+}
+
+/**
+ * No-op file updater used when XML writes must be suppressed (e.g., update-suppressions mode).
+ */
+internal object NoopFileUpdateStrategy : FileUpdateStrategy {
+  override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus = FileChangeStatus.UNCHANGED
+
+  override fun delete(path: Path) = Unit
+
+  override fun getDiffs(): List<FileDiff> = emptyList()
+}
+
+internal fun FileUpdateStrategy.withUpdateSuppressions(updateSuppressions: Boolean): FileUpdateStrategy {
+  return if (updateSuppressions) NoopFileUpdateStrategy else this
+}
+
+/**
+ * Deferred file writer. It collects the changes during generation, and it commits them only on request.
+ * Use it when you want to validate before you write.
+ *
+ * The class is public, because a generator outside this module needs it. The dev-distribution plan generator is that
+ * caller.
+ *
+ * [commit] stays off [FileUpdateStrategy], because [GeneratedArtifactWritePolicy] filters a delegate and owns no write.
+ * A `commit` there would be a second commit gate beside the one in the generation pipeline.
+ */
+class DeferredFileUpdater(private val projectRoot: Path) : FileUpdateStrategy {
+  private val _diffs = CopyOnWriteArrayList<FileDiff>()
+
+  override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus {
+    val oldContent = if (Files.exists(path)) Files.readString(path) else ""
+    return writeIfChanged(path, oldContent, newContent)
+  }
+
+  override fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
+    if (newContent == oldContent) {
+      return FileChangeStatus.UNCHANGED
+    }
+
+    val changeType = if (oldContent.isEmpty()) FileChangeType.CREATE else FileChangeType.MODIFY
+    val relativePath = projectRoot.relativize(path)
+    val context = "Generated file is out of sync: $relativePath\n$CALL_TO_ACTION"
+    _diffs.add(FileDiff(context = context, path = path, expectedContent = newContent, actualContent = oldContent, changeType = changeType))
+    return if (oldContent.isEmpty()) FileChangeStatus.CREATED else FileChangeStatus.MODIFIED
+  }
+
+  override fun delete(path: Path) {
+    val existingContent = if (Files.exists(path)) Files.readString(path) else ""
+    val relativePath = projectRoot.relativize(path)
+    val context = "File should be deleted: $relativePath\n$CALL_TO_ACTION"
+    _diffs.add(FileDiff(
+      context = context,
+      path = path,
+      expectedContent = "",
+      actualContent = existingContent,
+      changeType = FileChangeType.DELETE,
+    ))
+  }
+
+  override fun getDiffs(): List<FileDiff> = _diffs.toList()
+
+  /**
+   * Commits all collected changes to disk.
+   * Call only after validation passes.
+   */
+  fun commit() {
+    for (diff in _diffs) {
+      when (diff.changeType) {
+        FileChangeType.CREATE -> {
+          Files.createDirectories(diff.path.parent)
+          Files.writeString(diff.path, diff.expectedContent)
+        }
+        FileChangeType.MODIFY -> {
+          Files.writeString(diff.path, diff.expectedContent)
+        }
+        FileChangeType.DELETE -> {
+          Files.deleteIfExists(diff.path)
+        }
+      }
+    }
+  }
+}
+
+private const val CALL_TO_ACTION = """
+Run 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update.
+See additional details in Slack announcement https://jetbrains.slack.com/archives/C0CJS122E/p1770185043962209.
+"""
+

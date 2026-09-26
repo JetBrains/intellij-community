@@ -1,0 +1,3 @@
+value class User(val firstName: String, val lastName: String) {
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName): User = User(firstName, lastName)
+}

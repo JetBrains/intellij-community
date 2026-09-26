@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -6,11 +7,12 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
+ * 
  * Only required fields are declared.
  * Field {@code name} and {@code webUrl} may be null because only {@code id} is serialized.
- *
- * @author Mikhail Golubev
  */
+@SuppressWarnings("unused")
 @Tag("GitlabProject")
 public class GitlabProject {
   private int id;
@@ -42,13 +44,11 @@ public class GitlabProject {
     this.id = id;
   }
 
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return name;
   }
 
-  @Nullable
-  public String getWebUrl() {
+  public @Nullable String getWebUrl() {
     return webUrl;
   }
 

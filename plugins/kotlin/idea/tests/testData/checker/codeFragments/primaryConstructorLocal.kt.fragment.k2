@@ -1,0 +1,1 @@
+local + a + <error descr="[UNRESOLVED_REFERENCE]">c</error> + <error descr="[UNRESOLVED_REFERENCE]">d</error> + <error descr="[UNRESOLVED_REFERENCE]">e</error>

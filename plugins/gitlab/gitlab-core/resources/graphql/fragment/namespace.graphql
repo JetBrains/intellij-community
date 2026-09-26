@@ -1,0 +1,6 @@
+fragment namespace on Namespace {
+  id
+
+  fullName
+  fullPath
+}

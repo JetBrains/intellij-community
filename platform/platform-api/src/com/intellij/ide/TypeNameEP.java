@@ -1,48 +1,48 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.AbstractBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.BundleBase;
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ResourceBundle;
 
 /**
- * @author yole
+ * Provides type name for instances of given class.
+ * <p/>
+ * Register via {@code com.intellij.typeName} extension point.
  */
-public class TypeNameEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<TypeNameEP> EP_NAME = ExtensionPointName.create("com.intellij.typeName");
+public final class TypeNameEP implements PluginAware {
+  public static final ExtensionPointName<TypeNameEP> EP_NAME = new ExtensionPointName<>("com.intellij.typeName");
+
+  private PluginDescriptor pluginDescriptor;
 
   @Attribute("className")
+  @RequiredElement
   public String className;
 
-  @Attribute("name")
-  public String name;
+  /**
+   * Use {@link #resourceKey} for i18n.
+   */
+  @Attribute("name") public @Nls(capitalization = Nls.Capitalization.Title) String name;
 
+  /**
+   * If unspecified, plugin's {@code <resource-bundle>} will be used.
+   */
   @Attribute("resourceBundle")
   public String resourceBundle;
 
-  @Attribute("resourceKey")
-  public String resourceKey;
+  @Attribute("resourceKey") public @Nls(capitalization = Nls.Capitalization.Title) String resourceKey;
 
-  private final NullableLazyValue<String> myName = new NullableLazyValue<String>() {
+  private final NullableLazyValue<String> myName = new NullableLazyValue<>() {
     @Override
     protected String compute() {
       if (name != null) {
@@ -50,12 +50,12 @@ public class TypeNameEP extends AbstractExtensionPointBean {
       }
       if (resourceKey != null) {
         String bundleName = resourceBundle;
-        if (bundleName == null && myPluginDescriptor != null) {
-          bundleName = ((IdeaPluginDescriptor) myPluginDescriptor).getResourceBundleBaseName();
+        if (bundleName == null && pluginDescriptor != null) {
+          bundleName = pluginDescriptor.getResourceBundleBaseName();
         }
         if (bundleName != null) {
-          ResourceBundle bundle = AbstractBundle.getResourceBundle(bundleName, getLoaderForClass());
-          return bundle.getString(resourceKey);
+          ResourceBundle bundle = DynamicBundle.getResourceBundle(pluginDescriptor.getClassLoader(), bundleName);
+          return BundleBase.message(bundle, resourceKey);
         }
       }
       return null;
@@ -64,5 +64,11 @@ public class TypeNameEP extends AbstractExtensionPointBean {
 
   public NullableLazyValue<String> getTypeName() {
     return myName;
+  }
+
+  @Override
+  @Transient
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
   }
 }

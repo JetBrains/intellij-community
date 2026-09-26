@@ -15,12 +15,12 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
-/**
- * @author nik
- */
+import org.jetbrains.annotations.ApiStatus;
+
 public interface JpsDirectoryPackagingElement extends JpsCompositePackagingElement {
 
   String getDirectoryName();
 
+  @ApiStatus.Internal
   void setDirectoryName(String directoryName);
 }

@@ -1,48 +1,67 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.history.VcsCachingHistory;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog;
-import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SelectedBlockHistoryAction extends AbstractVcsAction {
+@ApiStatus.Internal
+public final class SelectedBlockHistoryAction extends DumbAwareAction {
 
-  protected boolean isEnabled(VcsContext context) {
-    Project project = context.getProject();
-    if (project == null) return false;
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
-    VcsSelection selection = VcsSelectionUtil.getSelection(context);
-    if (selection == null) return false;
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+    assert project != null;
+
+    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+    assert selection != null;
+
+    showHistoryForSelection(selection, project);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    if (editor == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+
+    presentation.setEnabled(isEnabled(project, selection));
+    if (selection != null) {
+      presentation.setText(selection.getActionName());
+    }
+  }
+
+  public static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
+    if (project == null || selection == null) return false;
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
     if (file == null) return false;
@@ -54,71 +73,31 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
     if (provider == null) return false;
 
-    BackgroundableActionLock lock = VcsCachingHistory.getHistoryLock(activeVcs, VcsBackgroundableActions.HISTORY_FOR_SELECTION, filePath);
-    if (lock.isLocked()) return false;
-
     if (!AbstractVcs.fileInVcsByFileStatus(project, filePath)) return false;
     return true;
   }
 
-  public void actionPerformed(@NotNull final VcsContext context) {
-    try {
-      final Project project = context.getProject();
-      assert project != null;
+  public static void showHistoryForSelection(VcsSelection selection, Project project) {
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
+    assert file != null;
 
-      final VcsSelection selection = VcsSelectionUtil.getSelection(context);
-      assert selection != null;
+    final AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+    assert activeVcs != null;
 
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
-      assert file != null;
+    final VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
+    assert provider != null;
 
-      final AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-      assert activeVcs != null;
+    final int selectionStart = selection.getSelectionStartLineNumber();
+    final int selectionEnd = selection.getSelectionEndLineNumber();
 
-      final VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
-      assert provider != null;
-
-      final int selectionStart = selection.getSelectionStartLineNumber();
-      final int selectionEnd = selection.getSelectionEndLineNumber();
-
-      VcsCachingHistory
-        .collectInBackground(activeVcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.HISTORY_FOR_SELECTION,
-                         session -> {
-                           if (session == null) return;
-                           final VcsSelectionHistoryDialog vcsHistoryDialog =
-                             new VcsSelectionHistoryDialog(project,
-                                                           file,
-                                                           selection.getDocument(),
-                                                           provider,
-                                                           session,
-                                                           activeVcs,
-                                                           Math.min(selectionStart, selectionEnd),
-                                                           Math.max(selectionStart, selectionEnd),
-                                                           selection.getDialogTitle());
-
-                           vcsHistoryDialog.show();
-                         });
-    }
-    catch (Exception exception) {
-      reportError(exception);
-    }
-  }
-
-  protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
-    Editor editor = context.getEditor();
-    if (editor == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-
-    presentation.setEnabled(isEnabled(context));
-    VcsSelection selection = VcsSelectionUtil.getSelection(context);
-    if (selection != null) {
-      presentation.setText(selection.getActionName());
-    }
-  }
-
-  protected static void reportError(Exception exception) {
-    Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
+    VcsSelectionHistoryDialog dialog = new VcsSelectionHistoryDialog(project,
+                                                                     file,
+                                                                     selection.getDocument(),
+                                                                     provider,
+                                                                     activeVcs,
+                                                                     Math.min(selectionStart, selectionEnd),
+                                                                     Math.max(selectionStart, selectionEnd),
+                                                                     selection.getDialogTitle());
+    dialog.show();
   }
 }

@@ -16,34 +16,38 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyStringFormatInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyAddSpecifierToFormatQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddSpecifierToFormatQuickFixTest extends PyQuickFixTestCase {
 
   public void testString() {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 
   public void testInt() {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 
   public void testFloat() {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 
   public void testDict() {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 
   public void testMissingValues() {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 
   public void testUnicodeEscapes()  {
-    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+    doQuickFixTest(PyStringFormatInspection.class, PyPsiBundle.message("QFIX.NAME.add.specifier"));
   }
 }

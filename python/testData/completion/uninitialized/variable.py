@@ -1,0 +1,3 @@
+f<caret>
+
+foo = "something"

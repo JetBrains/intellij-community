@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -14,7 +14,7 @@ public class Main {
     Child() {
       super(false);
         boolean b = false;
-        for (String s: Arrays.asList("a", "b", "c")) {
+        for (String s : Arrays.asList("a", "b", "c")) {
             if (s != null) {
                 b = true;
                 break;

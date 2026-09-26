@@ -1,0 +1,131 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.junit;
+
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.JavaTestLocator;
+import com.intellij.execution.testframework.sm.FileUrlProvider;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.junit.testFramework.JUnitProjectDescriptor;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.junit.testFramework.MavenTestLib.JUNIT5;
+import static com.intellij.pom.java.LanguageLevel.HIGHEST;
+
+public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
+  public static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(HIGHEST, JUNIT5);
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return descriptor;
+  }
+
+  public void testValidateUniqueId() {
+    PsiFile file = myFixture.addFileToProject("some.txt", "");
+    SMTestProxy proxy = new SMTestProxy("test1", false, "file://" + file.getVirtualFile().getPath());
+    proxy.setLocator(new FileUrlProvider());
+    proxy.putUserData(SMTestProxy.NODE_ID, "nodeId");
+    assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  public void testGeneratedName() {
+    PsiClass psiClass = myFixture.addClass("class MyTest {void m() {}}");
+
+    SMTestProxy parent = new SMTestProxy("MyTest", true, "java:suite://MyTest");
+    SMTestProxy proxy = new SMTestProxy("nodeId", false, "java:test://MyTest.m");
+    proxy.setLocator(JavaTestLocator.INSTANCE);
+    parent.addChild(proxy);
+    proxy.putUserData(SMTestProxy.NODE_ID, "nodeId");
+    assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(UniqueIdConfigurationProducer.class);
+    MapDataContext context = new MapDataContext();
+    context.put(CommonDataKeys.PROJECT, getProject());
+    context.put(AbstractTestProxy.DATA_KEYS, new AbstractTestProxy[]{proxy});
+    context.put(AbstractTestProxy.DATA_KEY, proxy);
+    context.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass.getMethods()[0]));
+    JUnitConfiguration oldConfiguration = new JUnitConfiguration("", getProject());
+    oldConfiguration.setModule(getModule());
+    context.put(RunConfiguration.DATA_KEY, oldConfiguration);
+
+    ConfigurationFromContext fromContext =
+      producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN));
+    assertEquals("MyTest.m.nodeId", fromContext.getConfiguration().getName());
+  }
+
+  /**
+   * A plain {@code @Test} method under one invocation of a {@code @ParameterizedClass}.
+   * The method node points at the method, and its parent invocation node points at the class.
+   * Only the invocation's own repetition of the class location distinguishes this from a plain {@code Class,method} run.
+   */
+  public void testMethodUnderParameterizedClassInvocation() {
+    myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void m() {}}");
+
+    SMTestProxy classNode = withLocator(new SMTestProxy("MyTest", true, "java:suite://MyTest"));
+    SMTestProxy invocation = withLocator(new SMTestProxy("[1] a", true, "java:suite://MyTest"));
+    SMTestProxy method = withLocator(new SMTestProxy("m()", false, "java:test://MyTest/m"));
+    classNode.addChild(invocation);
+    invocation.addChild(method);
+    String nodeId = "[engine:junit-jupiter]/[class-template:MyTest]/[class-template-invocation:#1]/[method:m()]";
+    method.putUserData(SMTestProxy.NODE_ID, nodeId);
+
+    assertEquals(nodeId, TestUniqueId.getEffectiveNodeId(method, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  /** The same method without the invocation node above it is still rerun as {@code Class,method}. */
+  public void testPlainMethodHasNoEffectiveNodeId() {
+    myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void m() {}}");
+
+    SMTestProxy classNode = withLocator(new SMTestProxy("MyTest", true, "java:suite://MyTest"));
+    SMTestProxy method = withLocator(new SMTestProxy("m()", false, "java:test://MyTest/m"));
+    classNode.addChild(method);
+    method.putUserData(SMTestProxy.NODE_ID, "[engine:junit-jupiter]/[class:MyTest]/[method:m()]");
+
+    assertNull(TestUniqueId.getEffectiveNodeId(method, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  private static SMTestProxy withLocator(SMTestProxy proxy) {
+    proxy.setLocator(JavaTestLocator.INSTANCE);
+    return proxy;
+  }
+
+  public void testCustomEngineId() {
+    PsiClass psiClass = myFixture.addClass("""
+                                             /** @noinspection ALL*/ @org.junit.platform.commons.annotation.Testable
+                                             class MyTest {
+                                               public Object testScenario = null;
+                                             }""");
+
+    SMTestProxy parent = new SMTestProxy("MyTest", true, "java:suite://MyTest");
+    SMTestProxy proxy = new SMTestProxy("nodeId", false, "file://" + psiClass.getContainingFile().getVirtualFile().getPath() + ":3");
+    proxy.setLocator(FileUrlProvider.INSTANCE);
+    parent.addChild(proxy);
+    proxy.putUserData(SMTestProxy.NODE_ID, "nodeId");
+    assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(UniqueIdConfigurationProducer.class);
+    MapDataContext context = new MapDataContext();
+    context.put(CommonDataKeys.PROJECT, getProject());
+    context.put(AbstractTestProxy.DATA_KEYS, new AbstractTestProxy[]{proxy});
+    context.put(AbstractTestProxy.DATA_KEY, proxy);
+    context.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass.getFields()[0]));
+    JUnitConfiguration oldConfiguration = new JUnitConfiguration("", getProject());
+    oldConfiguration.setModule(getModule());
+    context.put(RunConfiguration.DATA_KEY, oldConfiguration);
+
+    ConfigurationFromContext fromContext =
+      producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN));
+    assertEquals("nodeId", fromContext.getConfiguration().getName());
+  }
+}

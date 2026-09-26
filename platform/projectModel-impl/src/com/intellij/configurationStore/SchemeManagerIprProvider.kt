@@ -1,25 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.*
+import com.intellij.util.PathUtilRt
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.toByteArray
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
-import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.LinkedHashMap
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.locks.StampedLock
 
-class SchemeManagerIprProvider(private val subStateTagName: String, private val comparator: Comparator<String>? = null) : StreamProvider {
-  private val lock = ReentrantReadWriteLock()
+private val LOG = logger<SchemeManagerIprProvider>()
+
+@ApiStatus.Internal
+class SchemeManagerIprProvider(private val subStateTagName: String,
+                               private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
+  private val lock = StampedLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
+
+  override val isExclusive = false
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     lock.read {
-      nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream).let { consumer(it) }
+      consumer(nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream))
     }
     return true
   }
@@ -28,6 +37,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     lock.write {
       nameToData.remove(PathUtilRt.getFileName(fileSpec))
     }
+    incModificationCount()
     return true
   }
 
@@ -45,11 +55,12 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     return true
   }
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
     LOG.assertTrue(content.isNotEmpty())
     lock.write {
-      nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
+      nameToData.put(PathUtilRt.getFileName(fileSpec), content)
     }
+    incModificationCount()
   }
 
   fun load(state: Element?, keyGetter: ((Element) -> String)? = null) {
@@ -57,6 +68,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
       lock.write {
         nameToData.clear()
       }
+      incModificationCount()
       return
     }
 
@@ -65,7 +77,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     for (child in state.getChildren(subStateTagName)) {
       // https://youtrack.jetbrains.com/issue/RIDER-10052
       // ignore empty elements
-      if (child.isEmpty()) {
+      if (JDOMUtil.isEmpty(child)) {
         continue
       }
 
@@ -94,6 +106,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         this.nameToData.putAll(nameToData.toSortedMap(comparator))
       }
     }
+    incModificationCount()
   }
 
   fun writeState(state: Element) {
@@ -106,8 +119,42 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         names.sortWith(comparator)
       }
       for (name in names) {
-        nameToData.get(name)?.let { state.addContent(loadElement(it.inputStream())) }
+        nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it)) }
       }
     }
+  }
+
+  // copy not existent data from this provider to the specified
+  fun copyIfNotExists(provider: SchemeManagerIprProvider) {
+    lock.read {
+      provider.lock.write {
+        for (key in nameToData.keys) {
+          if (!provider.nameToData.containsKey(key)) {
+            provider.nameToData.put(key, nameToData.get(key)!!)
+            provider.incModificationCount()
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun StampedLock.read(task: () -> Unit) {
+  val stamp = readLock()
+  try {
+    task()
+  }
+  finally {
+    unlockRead(stamp)
+  }
+}
+
+private fun StampedLock.write(task: () -> Unit) {
+  val stamp = writeLock()
+  try {
+    task()
+  }
+  finally {
+    unlockWrite(stamp)
   }
 }

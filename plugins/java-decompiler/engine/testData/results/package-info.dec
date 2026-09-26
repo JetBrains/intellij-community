@@ -1,2 +1,0 @@
-@jdk.Exported
-package pkg;

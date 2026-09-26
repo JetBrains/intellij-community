@@ -1,30 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Toolkit;
 
-/**
- * @author Vladimir Kondratyev
- */
-public class HorizontalLabeledIcon implements Icon {
+@ApiStatus.Internal
+public final class HorizontalLabeledIcon implements Icon {
   private final Icon myIcon;
   private final String[] myStrings;
   private final String myMnemonic;
@@ -49,17 +40,19 @@ public class HorizontalLabeledIcon implements Icon {
     myMnemonic = mnemonic;
   }
 
+  @Override
   public int getIconHeight() {
     return Math.max(myIcon.getIconHeight(), getTextHeight());
   }
 
+  @Override
   public int getIconWidth() {
     return myIcon.getIconWidth() + getTextWidth() + 5;
   }
 
   private int getTextHeight() {
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       return fontMetrics.getHeight() * myStrings.length;
     }
@@ -71,7 +64,7 @@ public class HorizontalLabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (int i = 0; i < myStrings.length; i++) {
         String string = myStrings[i];
@@ -88,6 +81,7 @@ public class HorizontalLabeledIcon implements Icon {
     }
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     // Draw icon
     int height = getIconHeight();
@@ -101,20 +95,19 @@ public class HorizontalLabeledIcon implements Icon {
 
     // Draw text
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       g.setFont(fontMetrics.getFont());
       g.setColor(UIUtil.getLabelForeground());
 
       x += myIcon.getIconWidth() + 5;
       y += (height - getTextHeight()) / 2 + fontMetrics.getHeight() - fontMetrics.getDescent();
-      for (int i = 0; i < myStrings.length; i++) {
-        String string = myStrings[i];
+      for (String string : myStrings) {
         g.drawString(string, x, y);
         y += fontMetrics.getHeight();
       }
       if (myMnemonic != null) {
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = fontMetrics.stringWidth(myStrings[myStrings.length-1]+" ");
         y -= fontMetrics.getHeight();
         g.drawString(myMnemonic, x + offset, y);

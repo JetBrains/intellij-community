@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
@@ -32,21 +17,22 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public class LambdaMethodFilter implements BreakpointStepMethodFilter {
+  private final PsiLambdaExpression myLambda;
   private final int myLambdaOrdinal;
-  @Nullable
-  private final SourcePosition myFirstStatementPosition;
+  private final @Nullable SourcePosition myFirstStatementPosition;
   private final int myLastStatementLine;
   private final Range<Integer> myCallingExpressionLines;
 
   public LambdaMethodFilter(PsiLambdaExpression lambda, int expressionOrdinal, Range<Integer> callingExpressionLines) {
+    myLambda = lambda;
     myLambdaOrdinal = expressionOrdinal;
     myCallingExpressionLines = callingExpressionLines;
 
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
     final PsiElement body = lambda.getBody();
-    if (body instanceof PsiCodeBlock) {
-      final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+    if (body instanceof PsiCodeBlock block) {
+      final PsiStatement[] statements = block.getStatements();
       if (statements.length > 0) {
         firstStatementPosition = SourcePosition.createFromElement(statements[0]);
         if (firstStatementPosition != null) {
@@ -67,24 +53,30 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
     return myLambdaOrdinal;
   }
 
-  @Nullable
-  public SourcePosition getBreakpointPosition() {
+  @Override
+  public @Nullable SourcePosition getBreakpointPosition() {
     return myFirstStatementPosition;
   }
 
+  @Override
   public int getLastStatementLine() {
     return myLastStatementLine;
   }
 
-  public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
-    final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
-    final Method method = location.method();
-    return DebuggerUtilsEx.isLambda(method) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
+  @Override
+  public boolean locationMatches(DebugProcessImpl process, Location location) {
+    Method method = location.method();
+    if (DebuggerUtilsEx.isLambda(method) && (!location.virtualMachine().canGetSyntheticAttribute() || method.isSynthetic())) {
+      SourcePosition position = process.getPositionManager().getSourcePosition(location);
+      if (position != null) {
+        return ReadAction.compute(() -> DebuggerUtilsEx.inTheMethod(position, myLambda));
+      }
+    }
+    return false;
   }
 
-  @Nullable
   @Override
-  public Range<Integer> getCallingExpressionLines() {
+  public @Nullable Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
   }
 }

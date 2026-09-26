@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -24,7 +11,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import gnu.trove.THashSet;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -34,22 +20,27 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
-public class ModelMergerImpl implements ModelMerger {
-  private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<>();
+public final class ModelMergerImpl implements ModelMerger {
+  private final List<Pair<InvocationStrategy, Class<?>>> myInvocationStrategies = new ArrayList<>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<>();
-  private final List<Class> myMergingStrategyClasses = new ArrayList<>();
+  private final List<Class<?>> myMergingStrategyClasses = new ArrayList<>();
   private static final Class<MergedObject> MERGED_OBJECT_CLASS = MergedObject.class;
 
-  private final ConcurrentMap<Method,List<Pair<InvocationStrategy,Class>>> myAcceptsCache = ConcurrentFactoryMap.createMap(method-> {
-      List<Pair<InvocationStrategy,Class>> result = new ArrayList<>();
+  private final ConcurrentMap<Method, List<Pair<InvocationStrategy,Class<?>>>> myAcceptsCache = ConcurrentFactoryMap.createMap(method-> {
+      List<Pair<InvocationStrategy, Class<?>>> result = new ArrayList<>();
       for (int i = myInvocationStrategies.size() - 1; i >= 0; i--) {
-        final Pair<InvocationStrategy, Class> pair = myInvocationStrategies.get(i);
+        final Pair<InvocationStrategy, Class<?>> pair = myInvocationStrategies.get(i);
         if (pair.first.accepts(method)) {
           result.add(pair);
         }
@@ -59,46 +50,48 @@ public class ModelMergerImpl implements ModelMerger {
   );
 
   public ModelMergerImpl() {
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return true;
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod javaMethod, final Object proxy, final Object[] args, final List<Object> implementations)
+      public Object invokeMethod(final JavaMethod javaMethod, final Object proxy, final Object[] args, final List<?> implementations)
         throws IllegalAccessException, InvocationTargetException {
         final Method method = javaMethod.getMethod();
-        List<Object> results = getMergedImplementations(method, args, method.getReturnType(), implementations, isIntersectionMethod(javaMethod));
+        List<Object> results =
+          getMergedImplementations(method, args, method.getReturnType(), implementations, isIntersectionMethod(javaMethod));
         return results.isEmpty() ? null : results.get(0);
       }
     });
 
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return Collection.class.isAssignableFrom(method.getReturnType());
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<Object> implementations)
+      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<?> implementations)
         throws IllegalAccessException, InvocationTargetException {
 
         final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
         assert type != null : "No generic return type in method " + method;
-        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations, isIntersectionMethod(method));
+        return getMergedImplementations(method.getMethod(), args, ClassUtil.getRawType(type), implementations,
+                                        isIntersectionMethod(method));
       }
     });
 
 
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return Object.class.equals(method.getDeclaringClass());
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<Object> implementations) {
+      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<?> implementations) {
         @NonNls String methodName = method.getName();
         if ("toString".equals(methodName)) {
           return "Merger: " + implementations;
@@ -106,29 +99,28 @@ public class ModelMergerImpl implements ModelMerger {
         if ("hashCode".equals(methodName)) {
           int result = 1;
 
-          for (Object element : implementations)
+          for (Object element : implementations) {
             result = 31 * result + element.hashCode();
+          }
 
           return result;
         }
         if ("equals".equals(methodName)) {
           final Object arg = args[0];
           return arg instanceof MergedObject && implementations.equals(((MergedObject)arg).getImplementations());
-
         }
         return null;
       }
     });
 
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return "isValid".equals(method.getName());
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<Object> implementations)
-        throws IllegalAccessException, InvocationTargetException {
+      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<?> implementations) {
         for (final Object implementation : implementations) {
           if (!((Boolean)method.invoke(implementation, args))) {
             return Boolean.FALSE;
@@ -138,15 +130,14 @@ public class ModelMergerImpl implements ModelMerger {
       }
     });
 
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return void.class.equals(method.getReturnType());
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<Object> implementations)
-        throws IllegalAccessException, InvocationTargetException {
+      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<?> implementations) {
         for (final Object t : implementations) {
           method.invoke(t, args);
         }
@@ -154,44 +145,48 @@ public class ModelMergerImpl implements ModelMerger {
       }
     });
 
-    addInvocationStrategy(Object.class, new InvocationStrategy<Object>() {
+    addInvocationStrategy(Object.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return MERGED_OBJECT_CLASS.equals(method.getDeclaringClass());
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<Object> implementations)
-        throws IllegalAccessException, InvocationTargetException {
+      public Object invokeMethod(final JavaMethod method, final Object proxy, final Object[] args, final List<?> implementations) {
         assert "getImplementations".equals(method.getName());
         return implementations;
       }
     });
 
-    addInvocationStrategy(DomElement.class, new InvocationStrategy<DomElement>() {
+    addInvocationStrategy(DomElement.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return DomInvocationHandler.ACCEPT_METHOD.equals(method);
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final DomElement proxy, final Object[] args, final List<DomElement> implementations)
-        throws IllegalAccessException, InvocationTargetException {
+      public Object invokeMethod(final JavaMethod method,
+                                 final DomElement proxy,
+                                 final Object[] args,
+                                 final List<? extends DomElement> implementations) {
         final DomElementVisitor visitor = (DomElementVisitor)args[0];
-        ((DomManagerImpl)implementations.get(0).getManager()).getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, proxy);
+        ((DomManagerImpl)implementations.get(0).getManager()).getApplicationComponent().getVisitorDescription(visitor.getClass())
+          .acceptElement(visitor, proxy);
         return null;
       }
     });
 
-    addInvocationStrategy(DomElement.class, new InvocationStrategy<DomElement>() {
+    addInvocationStrategy(DomElement.class, new InvocationStrategy<>() {
       @Override
       public boolean accepts(final Method method) {
         return DomInvocationHandler.ACCEPT_CHILDREN_METHOD.equals(method);
       }
 
       @Override
-      public Object invokeMethod(final JavaMethod method, final DomElement proxy, final Object[] args, final List<DomElement> implementations)
-        throws IllegalAccessException, InvocationTargetException {
+      public Object invokeMethod(final JavaMethod method,
+                                 final DomElement proxy,
+                                 final Object[] args,
+                                 final List<? extends DomElement> implementations) {
         final DomElementVisitor visitor = (DomElementVisitor)args[0];
         for (final AbstractDomChildrenDescription description : implementations.get(0).getGenericInfo().getChildrenDescriptions()) {
           for (final DomElement value : description.getValues(proxy)) {
@@ -204,17 +199,17 @@ public class ModelMergerImpl implements ModelMerger {
 
   }
 
-  private boolean isIntersectionMethod(final JavaMethod javaMethod) {
+  private static boolean isIntersectionMethod(final JavaMethod javaMethod) {
     return javaMethod.getMethod().getAnnotation(Intersect.class) != null;
   }
 
   @Override
-  public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
+  public <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
     myInvocationStrategies.add(Pair.create(strategy, aClass));
   }
 
   @Override
-  public final <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
+  public <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
     myMergingStrategies.add(strategy);
     myMergingStrategyClasses.add(aClass);
   }
@@ -233,17 +228,17 @@ public class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), (Object[])implementations);
+    final Set<Class<?>> commonClasses = getCommonClasses(new HashSet<>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     return AdvancedProxy.createProxy(handler, null, commonClasses.toArray(ArrayUtil.EMPTY_CLASS_ARRAY));
   }
 
-  private static <T extends Collection<Class>> T getCommonClasses(final T result, final Object... implementations) {
+  private static <T extends Collection<Class<?>>> T getCommonClasses(final T result, final Object... implementations) {
     if (implementations.length > 0) {
       DomUtil.getAllInterfaces(implementations[0].getClass(), result);
       for (int i = 1; i < implementations.length; i++) {
-        final ArrayList<Class> list1 = new ArrayList<>();
+        final ArrayList<Class<?>> list1 = new ArrayList<>();
         DomUtil.getAllInterfaces(implementations[i].getClass(), list1);
         result.retainAll(list1);
       }
@@ -256,9 +251,9 @@ public class ModelMergerImpl implements ModelMerger {
 
   public class MergingInvocationHandler<T> implements InvocationHandler {
     private final Class<? super T> myClass;
-    private List<T> myImplementations;
+    private List<? extends T> myImplementations;
 
-    public MergingInvocationHandler(final Class<T> aClass, final List<T> implementations) {
+    public MergingInvocationHandler(final Class<T> aClass, final List<? extends T> implementations) {
       this(aClass);
       for (final T implementation : implementations) {
         if (implementation instanceof StableElement) {
@@ -272,9 +267,8 @@ public class ModelMergerImpl implements ModelMerger {
       myClass = aClass;
     }
 
-    @NotNull
-    private InvocationStrategy findStrategy(final Object proxy, final Method method) {
-      for (final Pair<InvocationStrategy, Class> pair : myAcceptsCache.get(method)) {
+    private @NotNull InvocationStrategy findStrategy(final Object proxy, final Method method) {
+      for (Pair<InvocationStrategy, Class<?>> pair : myAcceptsCache.get(method)) {
         if (Object.class.equals(pair.second) || pair.second.isInstance(proxy)) {
           return pair.first;
         }
@@ -303,16 +297,15 @@ public class ModelMergerImpl implements ModelMerger {
     }
   }
 
-  @Nullable
-  private static Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) {
+  private static @Nullable Object getPrimaryKey(Object implementation, final boolean singleValuedInvocation) {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method != null) {
       final Object o = DomReflectionUtil.invokeMethod(method, implementation);
-      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue<?>)o).getValue() : o;
     }
     else {
       if (implementation instanceof GenericValue) {
-        return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
+        return singleValuedInvocation? Boolean.TRUE : ((GenericValue<?>)implementation).getValue();
       }
       else {
         return null;
@@ -320,8 +313,7 @@ public class ModelMergerImpl implements ModelMerger {
     }
   }
 
-  @Nullable
-  private static Method getPrimaryKeyMethod(final Class<?> aClass) {
+  private static @Nullable Method getPrimaryKeyMethod(final Class<?> aClass) {
     Method method = ourPrimaryKeyMethods.get(aClass);
     if (method == null) {
       if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
@@ -336,16 +328,17 @@ public class ModelMergerImpl implements ModelMerger {
     return method;
   }
 
-  @Nullable
-  private static Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
-    return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? new JavaMethodSignature(method)
-      .findAnnotatedMethod(PrimaryKey.class, aClass) : null;
+  private static @Nullable Method findPrimaryKeyAnnotatedMethod(@NotNull Method sampleMethod, @NotNull Class<?> aClass) {
+    if (sampleMethod.getParameterCount() != 0 || sampleMethod.getReturnType() == void.class) {
+      return null;
+    }
+    return JavaMethodSignature.findMethod(sampleMethod, aClass, method -> method.isAnnotationPresent(PrimaryKey.class));
   }
 
   private List<Object> getMergedImplementations(final Method method,
                                                 final Object[] args,
                                                 final Class returnType,
-                                                final List<Object> implementations,
+                                                final List<?> implementations,
                                                 final boolean intersect) throws IllegalAccessException, InvocationTargetException {
 
     final List<Object> results = new ArrayList<>();
@@ -394,7 +387,7 @@ public class ModelMergerImpl implements ModelMerger {
     return results;
   }
 
-  protected final Object mergeImplementations(final Class returnType, final List<Object> implementations) {
+  private Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
       if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);
@@ -409,13 +402,13 @@ public class ModelMergerImpl implements ModelMerger {
     return mergeModels(returnType, implementations);
   }
 
-  private boolean addToMaps(final Object o,
-                            final Map<Object, int[]> counts,
-                            final Map<Object, List<Set<Object>>> map,
-                            final int index,
-                            final List<Object> results,
-                            final boolean singleValuedInvocation,
-                            final boolean intersect) {
+  private static boolean addToMaps(final Object o,
+                                   final Map<Object, int[]> counts,
+                                   final Map<Object, List<Set<Object>>> map,
+                                   final int index,
+                                   final List<Object> results,
+                                   final boolean singleValuedInvocation,
+                                   final boolean intersect) {
     final Object primaryKey = getPrimaryKey(o, singleValuedInvocation);
     if (primaryKey != null || singleValuedInvocation) {
       final List<Set<Object>> list = map.get(primaryKey);

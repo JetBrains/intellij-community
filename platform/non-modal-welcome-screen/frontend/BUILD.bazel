@@ -1,0 +1,87 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.nonModalWelcomeScreen.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.platform.ide.nonModalWelcomeScreen.frontend` end
+
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` start
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.nonModalWelcomeScreen.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/non-modal-welcome-screen",
+        "//platform/analysis-api:analysis",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/lang-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/project/shared:project",
+        "//fleet/rpc",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/projectView/shared:projectView",
+        "//platform/projectView/frontend",
+        "//platform/util/jdom",
+        "//platform/platform-impl/rpc",
+    ],
+)
+
+jvm_library(
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.nonModalWelcomeScreen.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/core-api:core_test_lib",
+        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//fleet/rpc:rpc_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/projectView/shared:projectView_test_lib",
+        "//platform/projectView/frontend:frontend_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end
+
+### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.frontend` start
+exports_files(
+    [
+        "intellij.platform.ide.nonModalWelcomeScreen.frontend.iml",
+        "resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.nonModalWelcomeScreen.frontend` end

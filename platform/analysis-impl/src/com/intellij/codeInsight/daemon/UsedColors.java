@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.util.Key;
@@ -22,25 +8,14 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-public class UsedColors {
+public final class UsedColors {
   private static final Key<Object/*UsedColor or UsedColor[]*/> USED_COLOR = Key.create("USED_COLOR");
 
-  public static final AtomicInteger counter = new AtomicInteger();
-  private static class UsedColor {
-    @NotNull final String name;
-    final int index;
-
-    UsedColor(@NotNull String name, int index) {
-      this.name = name;
-      this.index = index;
-      counter.incrementAndGet();
-    }
+  private record UsedColor(@NotNull String name, int index) {
   }
 
-  public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
-                                       @NotNull final String name,
+  public static int getOrAddColorIndex(final @NotNull UserDataHolderEx context,
+                                       final @NotNull String name,
                                        int colorsCount) {
     int colorIndex;
     while (true) {
@@ -50,8 +25,7 @@ public class UsedColors {
         colorIndex = hashColor(name, colorsCount);
         newColors = new UsedColor(name, colorIndex); // put an object instead of array to save space
       }
-      else if (data instanceof UsedColor) {
-        UsedColor usedColor = (UsedColor)data;
+      else if (data instanceof UsedColor usedColor) {
         if (usedColor.name.equals(name)) {
           colorIndex = usedColor.index;
           newColors = null; // found, no need to create new
@@ -101,7 +75,7 @@ public class UsedColors {
   }
 
   @Contract(pure = true)
-  private static int indexOfMin(@NotNull int[] values, int start, int end) {
+  private static int indexOfMin(int @NotNull [] values, int start, int end) {
     int min = Integer.MAX_VALUE;
     int minIndex = start;
     for (int i = start; i < end; i++) {

@@ -1,12 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.project;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -16,50 +21,78 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
+import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
+import static com.intellij.openapi.vfs.VFileProperty.SYMLINK;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
-import static com.intellij.ui.tree.project.ProjectFileListener.findArea;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.toList;
 
+@ApiStatus.Internal
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
-  private final Invoker invoker = new Invoker.BackgroundThread(this);
+  private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final ProjectFileNodeUpdater updater;
   private final ProjectNode root;
 
   public ProjectFileTreeModel(@NotNull Project project) {
     root = new ProjectNode(project);
-    new ProjectFileListener(project, invoker) {
+    updater = new ProjectFileNodeUpdater(project, invoker) {
       @Override
-      protected void updateFromRoot() {
-        root.valid = false; // need to reload content roots
-        pathChanged(null);
-      }
-
-      @Override
-      protected void updateFromFile(@NotNull VirtualFile file, @NotNull AreaInstance area) {
-        root.children.stream().filter(node -> node.contains(file, area, false)).forEach(node -> {
-          if (node.invalidate(file) && node.valid && root.valid) {
-            node.invalidateLater(invoker, ProjectFileTreeModel.this::pathChanged);
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
+        boolean filtered = root.filter != null;
+        SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
+        root.children.forEach(child -> child.invalidateChildren(node -> {
+          if (!updatedFiles.contains(node.file)) return true;
+          if (filtered) {
+            node.resetVisibility(); // because of moving within the same root
+            for (Node parent = node.parent; parent != null; parent = parent.parent) {
+              parent.visibility = null;
+            }
           }
-        });
+          if (nodes == null) return false;
+          Node n = node.file.isDirectory() ? node : node.parent;
+          if (n == null) return false;
+          for (Node p = n.parent; p != null; p = p.parent) {
+            if (nodes.contains(p)) return false;
+          }
+          nodes.add(n);
+          return false;
+        }));
+        if (nodes != null) {
+          nodes.forEach(node -> {
+            TreePath path = pathToCustomNode(node, child -> child.parent);
+            if (path != null) pathChanged(path);
+          });
+        }
+        else {
+          root.valid = false; // need to reload content roots
+          pathChanged(null);
+        }
       }
     };
   }
 
-  @NotNull
+  public @NotNull ProjectFileNodeUpdater getUpdater() {
+    return updater;
+  }
+
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return invoker;
   }
 
@@ -68,7 +101,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   public void onValidThread(@NotNull Runnable task) {
-    invoker.invokeLaterIfNeeded(task);
+    invoker.invoke(task);
   }
 
   @Override
@@ -87,16 +120,15 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return node == null || node.parent != parent ? -1 : super.getIndexOfChild(parent, object);
   }
 
-  @NotNull
   @Override
-  public List<ProjectFileNode> getChildren(Object object) {
+  public @NotNull List<ProjectFileNode> getChildren(Object object) {
     Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
     if (children.isEmpty()) return emptyList();
     List<ProjectFileNode> result = new SmartList<>();
     VirtualFileFilter filter = root.filter;
-    for (Object child: children) {
+    for (Object child : children) {
       if (child instanceof FileNode && isVisible((FileNode)child, filter)) {
         result.add((FileNode)child);
       }
@@ -104,33 +136,16 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return result;
   }
 
-  private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
-    if (!node.getVirtualFile().isValid()) return false;
-    if (filter == null) return true;
+  private boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
+    if (!node.file.isValid() || root.project.isDisposed()) return false;
+    if (filter == null) return !root.isExcluded(node.file);
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
-    boolean visible = filter.accept(node.file);
-    if (!visible && node.file.isDirectory()) {
-      List<FileNode> children = node.getChildren();
-      visible = !children.stream().allMatch(child -> child.visibility == ThreeState.NO) &&
-                (children.stream().anyMatch(child -> child.visibility == ThreeState.YES) ||
-                 children.stream().anyMatch(child -> isVisible(child, filter)));
-    }
+    checkCanceled(); // ProcessCanceledException if current task is interrupted
+    boolean visible = node.isVisible(filter, root);
     node.visibility = ThreeState.fromBoolean(visible);
     return visible;
-  }
-
-  @NotNull
-  private static Module[] getModules(@NotNull Project project) {
-    ModuleManager manager = ModuleManager.getInstance(project);
-    return manager == null ? Module.EMPTY_ARRAY : manager.getModules();
-  }
-
-  @NotNull
-  private static VirtualFile[] getContentRoots(@NotNull Module module) {
-    ModuleRootManager manager = module.isDisposed() ? null : ModuleRootManager.getInstance(module);
-    return manager == null ? VirtualFile.EMPTY_ARRAY : manager.getContentRoots();
   }
 
   public void setFilter(@Nullable VirtualFileFilter filter) {
@@ -142,12 +157,17 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     });
   }
 
-  public void setShowModules(boolean showModules) {
+  public void setSettings(boolean showExcludedFiles, boolean showModules) {
     onValidThread(() -> {
-      if (root.showModules == showModules) return;
-      root.showModules = showModules;
-      root.valid = false; // need to reload content roots
-      pathChanged(null);
+      if (root.showExcludedFiles != showExcludedFiles) {
+        if (root.filter != null) root.resetVisibility();
+        root.showExcludedFiles = showExcludedFiles;
+        root.valid = false; // need to reload from root
+      }
+      if (root.showModules != showModules) {
+        root.showModules = showModules;
+        root.valid = false; // need to reload from root
+      }
     });
   }
 
@@ -156,53 +176,52 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static final class Mapper<N extends FileNode> implements BiFunction<VirtualFile, Object, N> {
-    private final HashMap<VirtualFile, N> map = new HashMap<>();
-    private final BiFunction<? super VirtualFile, ? super Object, ? extends N> function;
+  private static final class Mapper implements BiFunction<VirtualFile, Object, FileNode> {
+    private final HashMap<VirtualFile, FileNode> map = new HashMap<>();
 
-    Mapper(@NotNull List<N> list, @NotNull BiFunction<? super VirtualFile, ? super Object, ? extends N> function) {
+    Mapper(@NotNull List<? extends FileNode> list) {
       list.forEach(node -> map.put(node.file, node));
-      this.function = function;
     }
 
-    @NotNull
     @Override
-    public final N apply(VirtualFile file, Object id) {
-      N node = map.isEmpty() ? null : map.remove(file);
-      return node != null && node.id.equals(id) ? node : function.apply(file, id);
+    public @NotNull FileNode apply(VirtualFile file, Object id) {
+      FileNode node = map.isEmpty() ? null : map.remove(file);
+      return node != null && node.id.equals(id) ? node : new FileNode(file, id);
     }
   }
 
 
-  private static abstract class Node<FN extends FileNode> {
+  private abstract static class Node {
     volatile Node parent;
     volatile ThreeState visibility;
-    volatile List<FN> children = emptyList();
+    volatile List<FileNode> children = emptyList();
     volatile boolean valid;
 
-    @NotNull
-    abstract List<FN> getChildren(@NotNull List<FN> oldList);
+    abstract @NotNull List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList);
 
-    final List<FN> getChildren() {
-      List<FN> oldList = children;
+    final List<FileNode> getChildren() {
+      List<FileNode> oldList = children;
       if (valid) return oldList;
-      List<FN> newList = getChildren(oldList);
+      checkCanceled(); // ProcessCanceledException if current task is interrupted
+      List<FileNode> newList = getChildren(oldList);
       oldList.forEach(node -> node.parent = null);
       newList.forEach(node -> node.parent = this);
+      // cleanup removed nodes recursively to facilitate garbage collection
+      oldList.stream().filter(node -> node.parent == null).forEach(Node::cleanup);
       children = newList;
       valid = true;
       return newList;
     }
 
+    private void cleanup() {
+      children.forEach(Node::cleanup);
+      children = emptyList();
+      parent = null;
+    }
+
     final void resetVisibility() {
       visibility = null;
       children.forEach(Node::resetVisibility);
-    }
-
-    final void resetParentVisibility() {
-      for (Node node = parent; node != null; node = node.parent) {
-        node.visibility = null;
-      }
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -215,13 +234,18 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static class ProjectNode extends Node<RootNode> {
+  private static final class ProjectNode extends Node {
     volatile VirtualFileFilter filter;
+    volatile boolean showExcludedFiles;
     volatile boolean showModules;
     final Project project;
 
     ProjectNode(@NotNull Project project) {
       this.project = project;
+    }
+
+    boolean isExcluded(@NotNull VirtualFile file) {
+      return !showExcludedFiles && (ProjectFileIndex.getInstance(project).isExcluded(file) || isProjectOrWorkspaceFile(file));
     }
 
     @Override
@@ -231,38 +255,48 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
     @NotNull
     @Override
-    List<RootNode> getChildren(@NotNull List<RootNode> oldList) {
-      List<RootNode> list = new SmartList<>();
-      Mapper<RootNode> mapper = new Mapper<>(oldList, RootNode::new);
-      TreeCollector<VirtualFile> collector = showModules ? null : TreeCollector.createFileRootsCollector();
-      VirtualFile ancestor = project.getBaseDir();
-      if (ancestor != null && project == findArea(ancestor, project)) {
-        if (collector != null) {
-          collector.add(ancestor);
-        }
-        else {
-          list.add(mapper.apply(ancestor, project));
-        }
+    List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList) {
+      List<FileNode> list = new SmartList<>();
+      Mapper mapper = new Mapper(oldList);
+      if (showModules) {
+        visitContentRoots(project, (file, area) -> list.add(mapper.apply(file, area)));
       }
-      for (Module module: getModules(project)) {
-        for (VirtualFile file: getContentRoots(module)) {
-          if (collector != null) {
-            collector.add(file);
-          }
-          else {
-            list.add(mapper.apply(file, module));
-          }
-        }
+      else {
+        TreeCollector<VirtualFile> collector = TreeCollector.VirtualFileRoots.create();
+        visitContentRoots(project, (file, area) -> collector.add(file));
+        collector.get().forEach(file -> list.add(mapper.apply(file, file)));
       }
-      if (collector != null) collector.get().forEach(file -> list.add(mapper.apply(file, file)));
-      // invalidate all changed file nodes without notifications
-      list.forEach(node -> node.invalidateNow(null));
       return list;
+    }
+
+    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<? super VirtualFile, ? super AreaInstance> consumer) {
+      Set<VirtualFile> baseDirectories = project == null ? emptySet() : BaseProjectDirectories.getBaseDirectories(project);
+      for (VirtualFile directory : baseDirectories) {
+        if (project == ProjectFileNode.findArea(directory, project)) {
+          consumer.accept(directory, project);
+        }
+      }
+      if (project != null && !project.isDisposed()) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (!module.isDisposed()) {
+            for (VirtualFile file : ModuleRootManager.getInstance(module).getContentRoots()) {
+              consumer.accept(file, module);
+            }
+          }
+        }
+      }
+      for (RootType rootType : RootType.getAllRootTypes()) {
+        if (rootType.isHidden()) continue;
+        String path = ScratchFileService.getInstance().getRootPath(rootType);
+        VirtualFile file = StandardFileSystems.local().findFileByPath(path);
+        if (file == null) continue;
+        consumer.accept(file, ApplicationManager.getApplication());
+      }
     }
   }
 
 
-  private static class FileNode extends Node<FileNode> implements ProjectFileNode {
+  private static final class FileNode extends Node implements ProjectFileNode {
     final VirtualFile file;
     final Object id;
 
@@ -271,25 +305,26 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       this.id = id;
     }
 
-    @NotNull
     @Override
-    public Object getRootID() {
+    public @NotNull Object getRootID() {
       return id;
     }
 
-    @NotNull
-    public VirtualFile getVirtualFile() {
+    @Override
+    public @NotNull VirtualFile getVirtualFile() {
       return file;
     }
 
     @Override
     public String toString() {
-      return file.getName();
+      return parent instanceof ProjectNode
+             ? file.getPath()
+             : file.getName();
     }
 
     @NotNull
     @Override
-    List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
+    List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList) {
       visibility = ThreeState.NO;
 
       VirtualFile file = getVirtualFile();
@@ -303,103 +338,35 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       VirtualFile[] children = file.getChildren();
       if (children == null || children.length == 0) return emptyList();
 
-      List<FileNode> list = new SmartList<>();
-      Mapper<FileNode> mapper = new Mapper<>(oldList, FileNode::new);
-      for (VirtualFile child: children) {
-        if (child.is(VFileProperty.SYMLINK) && VfsUtilCore.isInvalidLink(child)) {
-          continue; // ignore invalid symlink
-        }
-        Object id = getRootID();
-        AreaInstance area = findArea(child, parent.project);
-        if (area != null && (id instanceof VirtualFile || area.equals(id))) {
-          list.add(mapper.apply(child, id));
-        }
-      }
-      return list;
+      Mapper mapper = new Mapper(oldList);
+      return Arrays.stream(children)
+        .filter(child -> isValidChild(child, parent.project))
+        .map(child -> mapper.apply(child, id))
+        .collect(toList());
     }
 
-    final void invalidateChildren(Predicate<FileNode> validator) {
+    void invalidateChildren(Predicate<? super FileNode> validator) {
       if (valid || !file.isDirectory()) {
         if (validator == null || !validator.test(this)) {
           validator = null; // all children will be invalid
           valid = false;
         }
-        for (FileNode node: children) {
+        for (FileNode node : children) {
           node.invalidateChildren(validator);
         }
       }
     }
-  }
 
-
-  private static class RootNode extends FileNode {
-    final AtomicLong counter = new AtomicLong();
-    final List<VirtualFile> accumulator = new SmartList<>();
-
-    RootNode(@NotNull VirtualFile file, @NotNull Object id) {
-      super(file, id);
+    boolean isVisible(@NotNull VirtualFileFilter filter, @NotNull ProjectNode root) {
+      return !VfsUtilCore.iterateChildrenRecursively(file,
+                                                     child -> !root.isExcluded(child) && isValidChild(child, root.project),
+                                                     child -> !filter.accept(child));
     }
 
-    @Override
-    public String toString() {
-      return file.getPath();
-    }
-
-    boolean invalidate(VirtualFile file) {
-      List<VirtualFile> list = accumulator;
-      if (!list.isEmpty()) {
-        for (VirtualFile ancestor: list) {
-          if (isAncestor(ancestor, file, false)) {
-            return false; // the file or its parent is already added
-          }
-        }
-        Iterator<VirtualFile> iterator = list.iterator();
-        while (iterator.hasNext()) {
-          if (isAncestor(file, iterator.next(), false)) {
-            iterator.remove(); // remove all children of the file
-          }
-        }
-      }
-      list.add(file);
-      return true;
-    }
-
-    void invalidateLater(@NotNull Invoker invoker, @NotNull Consumer<? super TreePath> consumer) {
-      long count = counter.incrementAndGet();
-      invoker.invokeLater(() -> {
-        // is this request still actual after 10 ms?
-        if (count == counter.get()) {
-          ProjectNode parent = findParent(ProjectNode.class);
-          if (parent != null && !parent.project.isDisposed()) {
-            List<FileNode> list = new SmartList<>();
-            invalidateNow(node -> list.add(node));
-            if (parent.filter == null) {
-              for (FileNode node: list) {
-                TreePath path = pathToCustomNode((Node)node, child -> child.parent);
-                if (path != null) consumer.accept(path);
-              }
-            }
-            else if (!list.isEmpty()) {
-              list.forEach(Node::resetParentVisibility);
-              consumer.accept(null);
-            }
-          }
-        }
-      }, 10);
-    }
-
-    void invalidateNow(Consumer<? super FileNode> consumer) {
-      List<VirtualFile> list = accumulator;
-      if (!list.isEmpty()) {
-        HashMap<VirtualFile, VirtualFile> map = new HashMap<>();
-        list.forEach(file -> map.put(file, file));
-        list.clear();
-        invalidateChildren(node -> {
-          if (!map.containsKey(node.file)) return true;
-          if (consumer != null) consumer.accept(node);
-          return false;
-        });
-      }
+    private boolean isValidChild(@NotNull VirtualFile file, @NotNull Project project) {
+      if (file.is(SYMLINK) && VfsUtilCore.isInvalidLink(file)) return false; // ignore invalid symlink
+      AreaInstance area = ProjectFileNode.findArea(file, project);
+      return area != null && (id instanceof VirtualFile || id.equals(area));
     }
   }
 }

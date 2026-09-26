@@ -74,7 +74,7 @@ def cond(x, p=None):
     1.4142135623730951
     >>> LA.cond(a, -2)
     0.70710678118654746
-    >>> min(LA.svd(a, compute_uv=0))*min(LA.svd(LA.inv(a), compute_uv=0))
+    >>> min(LA.svd(a, compute_uv=0))<warning descr="'*' is not supported between 'SupportsDunderLT[Any] | SupportsDunderGT[Any]' and 'SupportsDunderLT[Any] | SupportsDunderGT[Any]'">*</warning>min(LA.svd(LA.inv(a), compute_uv=0))
     0.70710678118654746
 
     """

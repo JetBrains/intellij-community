@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
+import com.intellij.ide.util.scopeChooser.ScopeIdMapper;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -24,10 +12,16 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.SEARCH_SCOPE;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.TEXT_OCCURRENCES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.USAGES;
 
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
-  private StateRestoringCheckBox myCbIncludeOverloadedMethods;
+  protected StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
@@ -42,8 +36,12 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
 
   @Override
   protected void init() {
-    myIncludeOverloadedMethodsAvailable = myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
+    myIncludeOverloadedMethodsAvailable = isIncludeOverloadedMethodsAvailable();
     super.init();
+  }
+
+  public boolean isIncludeOverloadedMethodsAvailable() {
+    return myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
   }
 
   public void calcFindUsagesOptions(T options) {
@@ -51,6 +49,19 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
       ((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages =
         myIncludeOverloadedMethodsAvailable && isToChange(myCbIncludeOverloadedMethods) && myCbIncludeOverloadedMethods.isSelected();
     }
+  }
+
+  protected List<EventPair<?>> createFeatureUsageData(T options) {
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(USAGES.with(options.isUsages));
+    data.add(TEXT_OCCURRENCES.with(options.isSearchForTextOccurrences));
+
+    String serializedName = ScopeIdMapper.getInstance().getScopeSerializationId(options.searchScope.getDisplayName());
+    if (ScopeIdMapper.getStandardNames().contains(serializedName)) {
+      data.add(SEARCH_SCOPE.with(serializedName));
+    }
+
+    return data;
   }
 
   @Override
@@ -63,7 +74,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   protected void doOKAction() {
     if (shouldDoOkAction()) {
       if (myIncludeOverloadedMethodsAvailable) {
-        FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
+        FindUsagesSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
       }
     }
     else {
@@ -73,22 +84,24 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   }
 
   @Override
-  protected void addUsagesOptions(JPanel optionsPanel) {
-    super.addUsagesOptions(optionsPanel);
+  protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
     if (myIncludeOverloadedMethodsAvailable) {
-      myCbIncludeOverloadedMethods = addCheckboxToPanel(FindBundle.message("find.options.include.overloaded.methods.checkbox"),
-                                                        FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
+      myCbIncludeOverloadedMethods = addCheckboxToPanel(JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
+                                                        FindUsagesSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
 
     }
+    addDefaultOptions(optionsPanel);
   }
 
-  @NotNull
-  protected final PsiElement getPsiElement() {
+  protected void addDefaultOptions(@NotNull JPanel optionsPanel) {
+    super.addUsagesOptions(optionsPanel);
+  }
+
+  protected final @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
-  @NotNull
-  protected T getFindUsagesOptions() {
+  protected @NotNull T getFindUsagesOptions() {
     return (T)myFindUsagesOptions;
   }
 }

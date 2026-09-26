@@ -1,0 +1,17 @@
+// "Use 'g' as receiver" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Foo {
+    fun bar() {
+    }
+}
+
+fun Foo.test() {
+    context(f: Foo, g: Foo)
+    fun local() {
+        val ref = g::bar
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

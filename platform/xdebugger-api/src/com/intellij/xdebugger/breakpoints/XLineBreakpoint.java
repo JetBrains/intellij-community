@@ -1,43 +1,49 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represent a breakpoint which is set on some line in a file. This interface isn't supposed to be implemented by a plugin. In order to
  * support breakpoint provide {@link XLineBreakpointType} implementation
- *
- * @author nik
  */
+@ApiStatus.NonExtendable
 public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreakpoint<P> {
   XLineBreakpoint<?>[] EMPTY_ARRAY = new XLineBreakpoint[0];
 
   int getLine();
 
+  @NlsSafe
   String getFileUrl();
 
+  /**
+   * Short path describing the breakpoint's file location (e.g., just a file name).
+   * Should not be used to locate the actual file.
+   */
+  @NlsSafe
+  String getShortFilePath();
+
+  /**
+   * Some kind of path or URL to the breakpoint's file location for showing in UI.
+   * Might be shortened for better UX, should not be used to locate the actual file.
+   */
+  @NlsSafe
   String getPresentableFilePath();
 
   @Override
   @NotNull
   XLineBreakpointType<P> getType();
 
-  String getShortFilePath();
+  /**
+   * Returns the platform-managed placement of this breakpoint.
+   */
+  @ApiStatus.Internal
+  default @NotNull XLineBreakpointVerticalPlacement getPlacement() {
+    return XLineBreakpointVerticalPlacement.ON_LINE;
+  }
 
   boolean isTemporary();
 

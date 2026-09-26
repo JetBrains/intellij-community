@@ -1,0 +1,3 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file">
+  <xi:include href="module-extensions.xml"/>
+</idea-plugin>

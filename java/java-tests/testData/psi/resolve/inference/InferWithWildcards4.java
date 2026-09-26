@@ -9,7 +9,7 @@ class X {
 
     {
       Y<Long[]> y1 = null;
-      X.<ref>x(y1);
+      X.<caret>x(y1);
     }
 }
 }

@@ -15,12 +15,12 @@
  */
 package com.intellij.ui.roots;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
-/**
- * @author cdr
- */
 public class ResizingWrapper extends JComponent {
   protected final JComponent myWrappedComponent;
   public ResizingWrapper(JComponent wrappedComponent) {

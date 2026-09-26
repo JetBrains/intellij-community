@@ -15,13 +15,9 @@
  */
 package com.intellij.jsp.impl;
 
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface JspNsDescriptor extends XmlNSDescriptor {
   @NonNls String ROOT_ELEMENT_DESCRIPTOR = "root";
 }

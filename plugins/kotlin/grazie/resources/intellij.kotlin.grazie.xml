@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="tanvd.grazi"/>
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <textExtractor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinTextExtractor"/>
+    <problemFilter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinProblemFilter"/>
+    <problemFilter language="kotlin" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
+  </extensions>
+</idea-plugin>

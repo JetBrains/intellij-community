@@ -1,32 +1,12 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Comparator;
-
-/**
- * @author Denis Zhdanov
- * @since 8/12/11 12:34 PM
- */
 public interface Named {
 
-  /**
-   * please use {@link #getExternalName()} or {@link #getInternalName()} instead
-   */
-  @NotNull
-  @Deprecated
-  String getName();
-
-  /**
-   * please use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
-   */
-  @Deprecated
-  void setName(@NotNull String name);
-
-  @NotNull
-  String getExternalName();
+  @NlsSafe @NotNull String getExternalName();
   void setExternalName(@NotNull String name);
 
   @NotNull

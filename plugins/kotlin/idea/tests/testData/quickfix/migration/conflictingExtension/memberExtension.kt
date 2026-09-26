@@ -1,0 +1,9 @@
+// "Safe delete 'name'" "true"
+import java.io.File
+
+class C {
+    val File.<caret>name: String
+        get() = getName()
+}
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix

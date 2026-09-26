@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.gradle.api.file.RelativePath;
+import org.gradle.api.internal.file.pattern.PatternMatcher;
 import org.gradle.api.internal.file.pattern.PatternMatcherFactory;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
@@ -32,7 +19,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceFileFilter implements FileFilter {
   private final FilePattern myFilePattern;
@@ -45,6 +31,7 @@ public class GradleResourceFileFilter implements FileFilter {
     myFileFilterSpec = getAsSpec();
   }
 
+  @Override
   public boolean accept(@NotNull File file) {
     final String relPath = FileUtil.getRelativePath(myRoot, file);
     return relPath != null && isIncluded(relPath);
@@ -63,8 +50,8 @@ public class GradleResourceFileFilter implements FileFilter {
     Collection<String> allExcludes = new LinkedHashSet<>(myFilePattern.excludes);
     List<Spec<RelativePath>> matchers = new ArrayList<>();
     for (String exclude : allExcludes) {
-      Spec<RelativePath> patternMatcher = PatternMatcherFactory.getPatternMatcher(false, caseSensitive, exclude);
-      matchers.add(patternMatcher);
+      PatternMatcher matcher = PatternMatcherFactory.getPatternMatcher(false, caseSensitive, exclude);
+      matchers.add(new MyRelativePathSpec(matcher));
     }
     if (matchers.isEmpty()) {
       return Specs.satisfyNone();
@@ -75,9 +62,22 @@ public class GradleResourceFileFilter implements FileFilter {
   private Spec<RelativePath> getAsIncludeSpec(boolean caseSensitive) {
     List<Spec<RelativePath>> matchers = new ArrayList<>();
     for (String include : myFilePattern.includes) {
-      Spec<RelativePath> patternMatcher = PatternMatcherFactory.getPatternMatcher(true, caseSensitive, include);
-      matchers.add(patternMatcher);
+      PatternMatcher matcher = PatternMatcherFactory.getPatternMatcher(true, caseSensitive, include);
+      matchers.add(new MyRelativePathSpec(matcher));
     }
     return Specs.union(matchers);
+  }
+
+  private static class MyRelativePathSpec implements Spec<RelativePath> {
+    private final @NotNull PatternMatcher matcher;
+
+    MyRelativePathSpec(@NotNull PatternMatcher matcher) {
+      this.matcher = matcher;
+    }
+
+    @Override
+    public boolean isSatisfiedBy(RelativePath path) {
+      return matcher.test(path.getSegments(), path.isFile());
+    }
   }
 }

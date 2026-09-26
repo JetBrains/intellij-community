@@ -2,7 +2,6 @@ package org.jetbrains.plugins.gradle.remote.impl;
 
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,12 +10,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * @author Denis Zhdanov
- * @since 10/19/11 5:25 PM
- */
 public class GradleLibraryNamesMixerTest {
   
   private GradleLibraryNamesMixer myMixer;

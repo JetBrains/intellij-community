@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,87 +15,133 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.CoreAwareIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * See {@link com.intellij.openapi.progress.EmptyProgressIndicatorBase} notice regarding modality.
+ * Use {@link com.intellij.platform.util.progress.ProgressPipe} for progress reporting,
+ * and/or {@link kotlinx.coroutines.Job Job} for cancellation.
+ * </p>
+ */
+public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
+  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
-public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
-
-  private volatile String myText;
+  private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;
-  private volatile String myText2;
+  private volatile @NlsContexts.ProgressDetails String myText2;
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
-  private volatile boolean myFinished;
+  private volatile boolean myStopped;
 
-  private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
-  private volatile Object myMacActivity;
-  private volatile boolean myShouldStartActivity = true;
+  private volatile boolean myIndeterminate = Boolean.parseBoolean(System.getProperty("ide.progress.indeterminate.by.default", "true"));
+  private volatile Runnable myMacActivity;
+  // false by default - do not attempt to use such a relatively heavy code on start-up
+  private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.mac.prevent.app.nap", "true"));
 
-  private Stack<String> myTextStack;
-  private DoubleArrayList myFractionStack;
-  private Stack<String> myText2Stack;
+  @ApiStatus.Internal
+  protected static class State {
+    private final @NlsContexts.ProgressText String myText;
+    private final @NlsContexts.ProgressDetails String myText2;
+    private final double myFraction;
+    private final boolean myIndeterminate;
 
-  ProgressIndicator myModalityProgress;
-  private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
-  private volatile int myNonCancelableSectionCount;
-
-  @Override
-  public synchronized void start() {
-    LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
-    if (myFinished) {
-      if (myCanceled && !isReuseable()) {
-        if (ourReportedReuseExceptions.add(getClass())) {
-          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
-        }
-      }
-      myCanceled = false;
-      myFinished = false;
+    private State(@NlsContexts.ProgressText String text, @NlsContexts.ProgressDetails String text2, double fraction, boolean indeterminate) {
+      myText = text;
+      myText2 = text2;
+      myFraction = fraction;
+      myIndeterminate = indeterminate;
     }
-
-    myText = "";
-    myFraction = 0;
-    myText2 = "";
-    startSystemActivity();
-    myRunning = true;
+    @ApiStatus.Internal
+    protected State(@NotNull State other) {
+      this(other.myText,other.myText2, other.myFraction, other.myIndeterminate);
+    }
   }
 
-  private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private Stack<State> myStateStack; // guarded by getLock()
+
+  private volatile ProgressIndicator myModalityProgress;
+  private volatile ModalityState myModalityState = ModalityState.nonModal();
+  private volatile int myNonCancelableSectionCount;
+  private final Object lock = ObjectUtils.sentinel("APIB lock");
+
+  @Obsolete
+  public AbstractProgressIndicatorBase() {
+  }
+
+  @Override
+  public void start() {
+    synchronized (getLock()) {
+      if (isRunning()) {
+        throwInvalidState("Attempt to start ProgressIndicator which is already running");
+      }
+      if (myStopped) {
+        if (myCanceled && !isReuseable()) {
+          throwInvalidState("Attempt to start ProgressIndicator which is cancelled and already stopped");
+        }
+        myCanceled = false;
+        myStopped = false;
+      }
+
+      myText = "";
+      myFraction = 0;
+      myText2 = "";
+
+      if (myShouldStartActivity) {
+        IconManager iconManager = IconManager.getInstance();
+        if (iconManager instanceof CoreAwareIconManager) {
+          myMacActivity = ((CoreAwareIconManager)iconManager).wakeUpNeo(this);
+        }
+      }
+      else {
+        myMacActivity = null;
+      }
+      myRunning = true;
+    }
+  }
 
   protected boolean isReuseable() {
     return false;
   }
 
   @Override
-  public synchronized void stop() {
-    LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
-    myRunning = false;
-    myFinished = true;
-    stopSystemActivity();
-  }
-
-  private void startSystemActivity() {
-    myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
-  }
-
-  void stopSystemActivity() {
-    Object macActivity = myMacActivity;
-    if (macActivity != null) {
-      synchronized (macActivity) {
-        MacUtil.matrixHasYou(macActivity);
-        myMacActivity = null;
+  public void stop() {
+    synchronized (getLock()) {
+      if (myStopped) {
+        throwInvalidState("Attempt to stop ProgressIndicator which is already stopped");
       }
+      if (!myRunning) {
+        throwInvalidState("stop() should be called only if start() called before");
+      }
+      myRunning = false;
+      myStopped = true;
+      stopSystemActivity();
+    }
+  }
+
+  private void throwInvalidState(@NotNull String message) {
+    LOG.error(message + ": " + this + "," + getClass(), new IllegalStateException());
+  }
+
+  @ApiStatus.Internal
+  protected void stopSystemActivity() {
+    Runnable macActivity = myMacActivity;
+    if (macActivity != null) {
+      macActivity.run();
+      myMacActivity = null;
     }
   }
 
@@ -120,7 +154,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void cancel() {
     myCanceled = true;
     stopSystemActivity();
-    if (ApplicationManager.getApplication() != null) {
+    if (ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       ProgressManager.canceled(this);
     }
   }
@@ -133,7 +167,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void checkCanceled() {
     throwIfCanceled();
-    if (CoreProgressManager.runCheckCanceledHooks(this)) {
+    ProgressManager progressManager = ProgressManager.getInstanceOrNull();
+    if (progressManager != null && ((CoreProgressManager)progressManager).runCheckCanceledHooks(this)) {
       throwIfCanceled();
     }
   }
@@ -145,12 +180,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  @Nullable
-  protected Throwable getCancellationTrace() {
-    if (this instanceof Disposable) {
-      return ObjectUtils.tryCast(Disposer.getTree().getDisposalInfo((Disposable)this), Throwable.class);
-    }
-    return null;
+  protected @Nullable Throwable getCancellationTrace() {
+    return this instanceof Disposable ? Disposer.getDisposalTrace((Disposable)this) : null;
   }
 
   @Override
@@ -180,36 +211,50 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
-    if (isIndeterminate()) {
-      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
-      setIndeterminate(false);
+    synchronized (getLock()) {
+      if (isIndeterminate()) {
+        String message = "This progress indicator (" + this+") is indeterminate, this may lead to visual inconsistency. " +
+                         "Please call setIndeterminate(false) before you start progress. " + getClass();
+        LOG.info(message, new IllegalStateException());
+        setIndeterminate(false);
+      }
+      myFraction = fraction;
     }
-    myFraction = fraction;
   }
 
   @Override
-  public synchronized void pushState() {
-    getTextStack().push(myText);
-    getFractionStack().add(myFraction);
-    getText2Stack().push(myText2);
+  public void pushState() {
+    synchronized (getLock()) {
+      getStateStack().push(getState());
+    }
   }
 
-  @Override
-  public synchronized void popState() {
-    LOG.assertTrue(!myTextStack.isEmpty());
-    String oldText = myTextStack.pop();
-    String oldText2 = myText2Stack.pop();
-    setText(oldText);
-    setText2(oldText2);
+  @ApiStatus.Internal
+  protected @NotNull State getState() {
+    return new State(getText(), getText2(), getFraction(), isIndeterminate());
+  }
 
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+  @ApiStatus.Internal
+  protected void restoreFrom(@NotNull State state) {
+    setText(state.myText);
+    setText2(state.myText2);
+    setIndeterminate(state.myIndeterminate);
     if (!isIndeterminate()) {
-      setFraction(oldFraction);
+      setFraction(state.myFraction);
+    }
+  }
+
+  @Override
+  public void popState() {
+    synchronized (getLock()) {
+      State state = myStateStack.pop();
+      restoreFrom(state);
     }
   }
 
   @Override
   public void startNonCancelableSection() {
+    PluginException.reportDeprecatedUsage("ProgressIndicator#startNonCancelableSection", "Use `ProgressManager.executeNonCancelableSection()` instead");
     myNonCancelableSectionCount++;
   }
 
@@ -227,21 +272,34 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return myModalityProgress != null;
   }
 
+  @ApiStatus.Internal
+  public final boolean isModalEntity() {
+    return myModalityProgress == this;
+  }
+
   @Override
-  @NotNull
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return myModalityState;
   }
 
   @Override
-  public void setModalityProgress(ProgressIndicator modalityProgress) {
-    LOG.assertTrue(!isRunning());
-    myModalityProgress = modalityProgress;
-    ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
-    myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
-    if (modalityProgress != null) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(myModalityState);
+  public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) {
+    if (isRunning()) {
+      throwInvalidState("setModalityProgress() must not be called on already running indicator");
     }
+    myModalityProgress = modalityProgress;
+    setModalityState(modalityProgress);
+  }
+
+  private void setModalityState(@Nullable ProgressIndicator modalityProgress) {
+    ModalityState modalityState = ModalityState.defaultModalityState();
+
+    if (modalityProgress != null) {
+      modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
+    }
+
+    myModalityState = modalityState;
   }
 
   @Override
@@ -251,14 +309,19 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setIndeterminate(final boolean indeterminate) {
-    myIndeterminate = indeterminate;
+    // avoid race with popState()
+    synchronized (getLock()) {
+      myIndeterminate = indeterminate;
+
+      if (indeterminate && getFraction() != 0) {
+        myFraction = 0;
+      }
+    }
   }
 
-
-  @NonNls
   @Override
   public String toString() {
-    return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+    return "ProgressIndicator " + System.identityHashCode(this) + ": running=" + isRunning() + "; canceled=" + isCanceled();
   }
 
   @Override
@@ -271,48 +334,39 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return isModal();
   }
 
-  @Override
-  public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
-    myRunning = indicator.isRunning();
-    myCanceled = indicator.isCanceled();
-    myFraction = indicator.getFraction();
-    myIndeterminate = indicator.isIndeterminate();
-    myText = indicator.getText();
+  public void initStateFrom(@NotNull ProgressIndicator indicator) {
+    synchronized (getLock()) {
+      myRunning = indicator.isRunning();
+      myCanceled = indicator.isCanceled();
+      boolean indeterminate = indicator.isIndeterminate();
+      setIndeterminate(indeterminate);
+      // avoid "This progress indicator is indeterminate blah blah"
+      if (!indeterminate || indicator.getFraction() != 0) {
+        setFraction(indicator.getFraction());
+      }
+      setText(indicator.getText());
+      setText2(indicator.getText2());
 
-    myText2 = indicator.getText2();
-
-    myFraction = indicator.getFraction();
-
-    if (indicator instanceof ProgressIndicatorStacked) {
-      ProgressIndicatorStacked stacked = (ProgressIndicatorStacked)indicator;
-
-      myTextStack = new Stack<>(stacked.getTextStack());
-
-      myText2Stack = new Stack<>(stacked.getText2Stack());
-
-      myFractionStack = new DoubleArrayList(stacked.getFractionStack());
+      if (indicator instanceof AbstractProgressIndicatorBase) {
+        AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
+        myStateStack = stacked.myStateStack == null ? null : new Stack<>(stacked.getStateStack());
+      }
+      dontStartActivity();
     }
+  }
+
+  protected void dontStartActivity() {
     myShouldStartActivity = false;
   }
 
-  @Override
-  @NotNull
-  public synchronized Stack<String> getTextStack() {
-    if (myTextStack == null) myTextStack = new Stack<>(2);
-    return myTextStack;
+  private @NotNull Stack<State> getStateStack() {
+    Stack<State> stack = myStateStack;
+    if (stack == null) myStateStack = stack = new Stack<>(2);
+    return stack;
   }
 
-  @Override
-  @NotNull
-  public synchronized DoubleArrayList getFractionStack() {
-    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
-    return myFractionStack;
-  }
-
-  @Override
-  @NotNull
-  public synchronized Stack<String> getText2Stack() {
-    if (myText2Stack == null) myText2Stack = new Stack<>(2);
-    return myText2Stack;
+  @ApiStatus.Internal
+  public @NotNull Object getLock() {
+    return lock;
   }
 }

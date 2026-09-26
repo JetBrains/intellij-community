@@ -1,0 +1,8 @@
+[{foo, bar}]
+charset = utf-8
+
+[foo]
+charset<caret> = utf-9
+
+[bar]
+charset = utf-7

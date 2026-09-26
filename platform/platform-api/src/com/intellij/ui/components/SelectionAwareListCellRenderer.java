@@ -1,29 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.util.function.Function;
 
-public class SelectionAwareListCellRenderer<T> extends DefaultListCellRenderer {
-  private final NotNullFunction<T, JComponent> myFun;
+/**
+ * @deprecated Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer instead
+ */
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
+public class SelectionAwareListCellRenderer<T> implements ListCellRenderer<T> {
+  private final Function<? super T, ? extends @NotNull JComponent> myFun;
 
-  public SelectionAwareListCellRenderer(NotNullFunction<T, JComponent> fun) {myFun = fun;}
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public SelectionAwareListCellRenderer(Function<? super T, ? extends @NotNull JComponent> fun) {
+    myFun = fun;
+  }
 
-  @NotNull
+  /** @deprecated use {@link #SelectionAwareListCellRenderer(Function)} instead */
+  @Deprecated
+  @ApiStatus.Internal
+  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
+  public SelectionAwareListCellRenderer(com.intellij.util.NotNullFunction<? super T, ? extends JComponent> fun) {
+    myFun = fun;
+  }
+
   @Override
-  public Component getListCellRendererComponent(@NotNull JList list,
-                                                Object value,
-                                                int index,
-                                                boolean isSelected,
-                                                boolean cellHasFocus) {
-    @SuppressWarnings({"unchecked"})
-    final JComponent comp = myFun.fun((T)value);
+  public @NotNull Component getListCellRendererComponent(@NotNull JList list, Object v, int index, boolean selected, boolean focused) {
+    @SuppressWarnings("unchecked")
+    var comp = myFun.apply((T)v);
     comp.setOpaque(true);
-    if (isSelected) {
+    if (selected) {
       comp.setBackground(list.getSelectionBackground());
       comp.setForeground(list.getSelectionForeground());
     }
@@ -31,8 +46,8 @@ public class SelectionAwareListCellRenderer<T> extends DefaultListCellRenderer {
       comp.setBackground(list.getBackground());
       comp.setForeground(list.getForeground());
     }
-    for (JLabel label : UIUtil.findComponentsOfType(comp, JLabel.class)) {
-      label.setForeground(UIUtil.getListForeground(isSelected));
+    for (var label : UIUtil.findComponentsOfType(comp, JLabel.class)) {
+      label.setForeground(UIUtil.getListForeground(selected, focused));
     }
     return comp;
   }

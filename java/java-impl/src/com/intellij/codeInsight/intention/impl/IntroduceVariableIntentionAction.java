@@ -1,29 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
-import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.JavaRefactoringService;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,25 +41,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Danila Ponomarenko
- */
-public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
-  @NotNull
+public final class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @Override
-  public String getText() {
-    return CodeInsightBundle.message("intention.introduce.variable.text");
+  public @NotNull String getText() {
+    return JavaBundle.message("intention.introduce.variable.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof SyntheticElement){
+      return false;
+    }
+
+    if (JavaRefactoringService.getInstance() == null) {
       return false;
     }
 
@@ -60,24 +69,65 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       return false;
     }
 
+    if (getIntroduceVariableHandler() == null) {
+      return false;
+    }
+
+    if (expression.getParent() instanceof PsiExpressionStatement) {
+      if (!PsiUtil.isStatement(expression.getParent()) ||
+          expression.getParent().getLastChild() instanceof PsiErrorElement &&
+          editor.getCaretModel().getOffset() == expression.getParent().getTextRange().getEndOffset()) {
+        // Same action is available as an error quick-fix
+        return false;
+      }
+    }
+
+
     final PsiType expressionType = expression.getType();
-    return expressionType != null && !PsiType.VOID.equals(expressionType) && !(expression instanceof PsiAssignmentExpression);
+    return expressionType != null && !PsiTypes.voidType().equals(expressionType) && !(expression instanceof PsiAssignmentExpression);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = getElement(editor, psiFile);
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    PsiType type = getTypeOfUnfilledParameter(editor, element);
+    if (type != null) {
+      JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+      return refactoringService == null
+             ? IntentionPreviewInfo.EMPTY
+             : refactoringService.generateIntroduceEmptyVariablePreview(editor, element.getContainingFile(), type);
+    }
+    final PsiExpression expression = detectExpressionStatement(element);
+    if (expression == null) return IntentionPreviewInfo.EMPTY;
+    JavaIntroduceVariableHandlerBase handler = getIntroduceVariableHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
+      return previewableRefactoringActionHandler.generatePreview(project, expression);
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiType type = getTypeOfUnfilledParameter(editor, element);
     if (type != null) {
-      new IntroduceEmptyVariableHandler().invoke(editor, element.getContainingFile(), type);
+      JavaRefactoringService refactoringService = JavaRefactoringService.getInstance();
+      if (refactoringService != null) {
+        refactoringService.introduceEmptyVariable(editor, element.getContainingFile(), type);
+      }
       return;
     }
 
     final PsiExpression expression = detectExpressionStatement(element);
-    if (expression == null){
-      return;
-    }
+    if (expression == null) return;
+    JavaIntroduceVariableHandlerBase handler = getIntroduceVariableHandler();
+    assert handler != null;
+    handler.invoke(project, editor, expression);
+  }
 
-    new IntroduceVariableHandler().invoke(project, editor, expression);
+  private static @Nullable JavaIntroduceVariableHandlerBase getIntroduceVariableHandler() {
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
+    return supportProvider == null ? null : (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
   }
 
   @Override
@@ -85,9 +135,8 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @NotNull PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -116,8 +165,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     return null;
   }
 
-  @Nullable
-  private static PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
+  private static @Nullable PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
     if (element.getParent() instanceof PsiExpressionList && element.getParent().getParent() instanceof PsiMethodCallExpression) {
       PsiJavaToken leftBoundary = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaToken.class);
       PsiJavaToken rightBoundary = element instanceof PsiJavaToken ? (PsiJavaToken)element

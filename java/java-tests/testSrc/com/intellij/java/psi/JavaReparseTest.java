@@ -15,12 +15,19 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractReparseTestCase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
@@ -40,7 +47,7 @@ import java.util.List;
 public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testInsertLBrace() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     final String text2 = "}}}";
     final String text1 = "class Foo{ void method(){{";
     prepareFile(text1, text2);
@@ -48,7 +55,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testJavaDoc() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     String text2 = "void method() {}}";
     final String text1 = "class Foo { /** ";
     prepareFile(text1, text2);
@@ -56,20 +63,22 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testSCR5665() {
-    setFileType(StdFileTypes.JAVA);
-    final String text2 = " \"and then insert it again\"}\n" +
-                         "  };\n" +
-                         "}";
-    final String text1 = "class RedTest {\n" +
-                         "  String[][] test = {\n" +
-                         "    {\"remove the comma >\",";
+    setFileType(JavaFileType.INSTANCE);
+    final String text2 = """
+       "and then insert it again"}
+        };
+      }""";
+    final String text1 = """
+      class RedTest {
+        String[][] test = {
+          {"remove the comma >",""";
     prepareFile(text1, text2);
     remove(1);
     insert(",");
     PsiFile file1 = myDummyFile;
     prepareFile(text1, text2);
-    assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), false),
-                 DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), false));
+    assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), true),
+                 DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), true));
   }
 
 
@@ -82,19 +91,53 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testCodeFragment() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     prepareFile("a", "a");
     insert("xxx xxx xxx xxx xxx xxx xxx");
   }
 
   public void testReparseAfterReformatReplacesWhitespaceNodesOnly() {
     @NonNls final String text =
-      "class  RedTest   {   \n\n\n\n\n\n\n\n   " +
-      "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
-      "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
-      "                      \n\n\n\n\n\n\n\n  }  ";
+      """
+        class  RedTest   {  \s
 
-    final PsiFile file = myFixture.addFileToProject("aaa.java", text);
+
+
+
+
+
+
+           String  [  ]  [  ]   test    =    {       {\s
+
+
+
+
+         {    ""} \s
+
+
+
+
+         };   String  [  ]  [  ]   test    =    {       {\s
+
+
+
+
+         {    ""} \s
+
+
+
+
+         };                        \s
+
+
+
+
+
+
+
+          } \s""";
+
+    final PsiFile file = myFixture.addFileToProject("reparseAfterReformat.java", text);
     final int[] added = {0};
     final int[] removed = {0};
     final int[] replacedWhite = {0};
@@ -153,14 +196,15 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testInsertXMLSubTagProducesAddEvents() {
     @NonNls @Language("XML")
-    final String text = "<preface>\n" +
-                        "     <para>\n" +
-                        "         TODO\n" +
-                        "     </para>\n" +
-                        "\n" +
-                        "\n" +
-                        "</preface>\n" +
-                        "";
+    final String text = """
+      <preface>
+           <para>
+               TODO
+           </para>
+
+
+      </preface>
+      """;
 
     final PsiFile file = myFixture.addFileToProject("aaa.xml", text);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -224,7 +268,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testOverlappingCommonPrefixAndSuffix() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     String toRemove = "} {foobar";
     prepareFile("class Foo { {goo} {foobar" + toRemove, " foobar} }");
     remove(toRemove.length());
@@ -234,12 +278,12 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     String text = "/** .../ */";
     final int offset = text.indexOf("...");
     myDummyFile = createDummyFile(getName() + ".java", text);
-    String treeBefore = DebugUtil.psiTreeToString(myDummyFile, true);
+    String treeBefore = DebugUtil.psiTreeToString(myDummyFile, false);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 3, "*");
       BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 1, "...");
     });
-    String treeAfter = DebugUtil.psiTreeToString(myDummyFile, true);
+    String treeAfter = DebugUtil.psiTreeToString(myDummyFile, false);
     assertEquals(treeBefore, treeAfter);
   }
 }

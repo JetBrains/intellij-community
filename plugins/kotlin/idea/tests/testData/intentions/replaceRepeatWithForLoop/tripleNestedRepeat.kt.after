@@ -1,0 +1,10 @@
+// WITH_STDLIB
+fun foo() {
+    for (i in 0..<2) {
+        repeat(3) { j ->
+            repeat(4) { k ->
+                println("$i $j $k")
+            }
+        }
+    }
+}

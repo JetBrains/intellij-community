@@ -1,4 +1,4 @@
-// "Create class 'Abc'" "true"
+// "Create class 'abc'" "true-preview"
 public class Test {
-  private <caret>Abc foo() {}
+  private <caret>abc foo() {}
 }

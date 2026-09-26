@@ -1,0 +1,10 @@
+// NEW_NAME: p
+// RENAME: member
+
+open class A(val p: String)
+
+class B: A("") {
+    fun foo(<caret>s: String) {
+        println(p)
+    }
+}

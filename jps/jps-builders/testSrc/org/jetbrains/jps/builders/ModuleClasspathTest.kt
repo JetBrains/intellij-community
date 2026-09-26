@@ -27,9 +27,6 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.junit.Assert
 import java.io.File
 
-/**
- * @author nik
- */
 class ModuleClasspathTest : JpsBuildTestCase() {
   override fun setUp() {
     super.setUp()
@@ -70,7 +67,7 @@ class ModuleClasspathTest : JpsBuildTestCase() {
   }
 
   private fun createChunk(moduleName: String): ModuleChunk {
-    val module = myProject.modules.first { it.name == moduleName }
+    val module = myProject.findModuleByName(moduleName)!!
     return ModuleChunk(setOf(ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)))
   }
 

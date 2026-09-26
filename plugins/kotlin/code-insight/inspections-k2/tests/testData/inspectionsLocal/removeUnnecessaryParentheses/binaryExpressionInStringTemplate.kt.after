@@ -1,0 +1,7 @@
+// WITH_STDLIB
+fun main() {
+    println("${
+        1
+                + 2
+    }")
+}

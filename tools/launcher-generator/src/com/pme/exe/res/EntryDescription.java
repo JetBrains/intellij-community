@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,25 @@ package com.pme.exe.res;
 import com.pme.exe.Bin;
 
 /**
+ * @author Sergey Zhulin
  * Date: Apr 20, 2006
  * Time: 3:59:15 PM
  */
 public class EntryDescription extends Bin.Structure {
+  private final DWord myNameW;
+  private final DWord myOffsetToData;
+
   public EntryDescription() {
     super("Entry");
-    addMember(new DWord("Name"));
-    addMember(new DWord("OffsetToData"));
+    addMember(myNameW = new DWord("Name"));
+    addMember(myOffsetToData = new DWord("OffsetToData"));
+  }
+
+  public DWord getNameW() {
+    return myNameW;
+  }
+
+  public DWord getOffsetToData() {
+    return myOffsetToData;
   }
 }

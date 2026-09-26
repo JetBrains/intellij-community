@@ -20,7 +20,11 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A wrapper for the 'hg remove' command.
@@ -37,7 +41,7 @@ public class HgRemoveCommand {
    * Removes given files from their Mercurial repositories.
    * @param hgFiles files to be removed.
    */
-  public void executeInCurrentThread(@NotNull HgFile... hgFiles) {
+  public void executeInCurrentThread(HgFile @NotNull ... hgFiles) {
     executeInCurrentThread(Arrays.asList(hgFiles));
   }
 

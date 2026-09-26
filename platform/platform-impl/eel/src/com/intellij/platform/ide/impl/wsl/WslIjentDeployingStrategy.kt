@@ -1,0 +1,65 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.impl.wsl
+
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.wsl.WSLCommandLineOptions
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ijent.IjentExecFileProvider
+import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.ParentOfIjentScopes
+import com.intellij.platform.ijent.spi.IjentConnectionStrategy
+import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
+import com.intellij.platform.ijent.spi.IjentSessionProvider
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+
+@ApiStatus.Internal
+class WslIjentDeployingStrategy(
+  scope: ParentOfIjentScopes,
+  currentDispatcher: CoroutineDispatcher,
+  ijentLabel: String,
+  private val distribution: WSLDistribution,
+  private val project: Project?,
+  private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
+) : IjentDeployingOverShellProcessStrategy.JavaProcessBasedStrategy(scope, currentDispatcher, ijentLabel) {
+  override suspend fun mapPath(path: Path): String? =
+    distribution.getWslPath(path)
+
+  @OptIn(DelicateCoroutinesApi::class)
+  override suspend fun createShellProcess(): Process {
+    // IJent can start an interactive shell by itself whenever it needs.
+    // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
+    // with possible user extensions in ~/.profile
+    val wslCommandLineOptions = WSLCommandLineOptions()
+      .setExecuteCommandInInteractiveShell(false)
+      .setExecuteCommandInLoginShell(false)
+      .setExecuteCommandInShell(false)
+
+    wslCommandLineOptionsModifier(wslCommandLineOptions)
+
+    val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
+    distribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
+
+    return computeDetached { commandLine.createProcess() }
+  }
+
+  override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix {
+    return super.createIjentSession(provider) as IjentSession.Posix
+  }
+
+  override suspend fun getConnectionStrategy(): IjentConnectionStrategy {
+    return object : IjentConnectionStrategy {
+      override suspend fun canUseVirtualSockets(): Boolean {
+        return Registry.`is`("ijent.allow.hyperv.connection") && distribution.version == 2
+      }
+    }
+  }
+
+  override val ijentExecFileProvider: IjentExecFileProvider = service()
+}

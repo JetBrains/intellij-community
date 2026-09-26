@@ -1,6 +1,6 @@
 class A{
  {
-  new B().<ref>b = 0;
+  new B().<caret>b = 0;
  }
 
  class B{

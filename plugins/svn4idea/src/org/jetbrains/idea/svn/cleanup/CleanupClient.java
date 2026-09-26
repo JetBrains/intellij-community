@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.api.SvnClient;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface CleanupClient extends SvnClient {
 
   void cleanup(@NotNull File path, @Nullable ProgressTracker handler) throws VcsException;

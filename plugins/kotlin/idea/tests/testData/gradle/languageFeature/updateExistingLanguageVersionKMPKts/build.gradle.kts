@@ -1,0 +1,21 @@
+plugins {
+    kotlin("multiplatform") version "2.2.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = "com.example"
+version = "1.0-SNAPSHOT"
+
+kotlin {
+    jvm {
+        withJava()
+    }
+    sourceSets {
+        jvmMain.languageSettings {
+            languageVersion = "2.1"
+        }
+    }
+}

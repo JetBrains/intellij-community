@@ -1,51 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
-  private final String myId;
+  private final @Nullable String myId;
+  private final @NlsContexts.ListItem @Nullable String myDisplayName;
   private final boolean myShowByDefault;
 
-  protected LineAnnotationAspectAdapter() {
-    this(null, false);
+  protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
+    this(id, displayName, false);
   }
 
-  protected LineAnnotationAspectAdapter(String id) {
-    this(id, false);
-  }
-
-  public LineAnnotationAspectAdapter(String id, boolean showByDefault) {
+  public LineAnnotationAspectAdapter(@NonNls @Nullable String id,
+                                     @NlsContexts.ListItem @Nullable String displayName,
+                                     boolean showByDefault) {
     myId = id;
+    myDisplayName = displayName;
     myShowByDefault = showByDefault;
   }
 
-  public String getTooltipText(int lineNumber) {
+  @Override
+  public @NlsContexts.Tooltip String getTooltipText(int lineNumber) {
     return null;
   }
 
   @Override
-  public String getId() {
+  public @NonNls @Nullable String getId() {
     return myId;
+  }
+
+  @Override
+  public @NlsContexts.ListItem @Nullable String getDisplayName() {
+    return myDisplayName != null ? myDisplayName : myId; //NON-NLS backward compatibility
   }
 
   @Override
@@ -53,6 +48,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     return myShowByDefault;
   }
 
+  @Override
   public Cursor getCursor(final int lineNum) {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   }
@@ -63,4 +59,16 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   protected abstract void showAffectedPaths(int lineNum);
+
+  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter(null, null, false) {
+    @Override
+    protected void showAffectedPaths(int lineNum) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getValue(int line) {
+      throw new UnsupportedOperationException();
+    }
+  };
 }

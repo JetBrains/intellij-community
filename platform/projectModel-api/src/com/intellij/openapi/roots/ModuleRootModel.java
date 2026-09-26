@@ -18,8 +18,10 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
@@ -28,9 +30,8 @@ import java.util.Set;
 /**
  * Interface providing root information model for a given module.
  * It's implemented by {@link ModuleRootManager}.
- *
- * @author dsl
  */
+@ApiStatus.NonExtendable
 public interface ModuleRootModel {
   /**
    * Returns the module to which the model belongs.
@@ -44,19 +45,17 @@ public interface ModuleRootModel {
    * Use this method to obtain all content entries of a module. Entries are given in
    * lexicographical order of their paths.
    *
-   * @return list of content entries for this module
+   * @return array of content entries for this module
    * @see ContentEntry
    */
-  @NotNull
-  ContentEntry[] getContentEntries();
+  ContentEntry @NotNull [] getContentEntries();
 
   /**
    * Use this method to obtain order of roots of a module. Order of entries is important.
    *
-   * @return list of order entries for this module
+   * @return array of order entries for this module
    */
-  @NotNull
-  OrderEntry[] getOrderEntries();
+  OrderEntry @NotNull [] getOrderEntries();
 
   /**
    * Returns the SDK used by the module.
@@ -82,8 +81,7 @@ public interface ModuleRootModel {
    * @return the array of content roots.
    * @see #getContentEntries()
    */
-  @NotNull
-  VirtualFile[] getContentRoots();
+  VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns an array of content root urls from all content entries.
@@ -91,8 +89,7 @@ public interface ModuleRootModel {
    * @return the array of content root URLs.
    * @see #getContentEntries()
    */
-  @NotNull
-  String[] getContentRootUrls();
+  String @NotNull [] getContentRootUrls();
 
   /**
    * Returns an array of exclude roots from all content entries.
@@ -100,8 +97,7 @@ public interface ModuleRootModel {
    * @return the array of excluded roots.
    * @see #getContentEntries()
    */
-  @NotNull
-  VirtualFile[] getExcludeRoots();
+  VirtualFile @NotNull [] getExcludeRoots();
 
   /**
    * Returns an array of exclude root urls from all content entries.
@@ -109,29 +105,29 @@ public interface ModuleRootModel {
    * @return the array of excluded root URLs.
    * @see #getContentEntries()
    */
-  @NotNull
-  String[] getExcludeRootUrls();
+  String @NotNull [] getExcludeRootUrls();
 
   /**
-   * Returns an array of source roots from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries. 
+   * If you're interested in a specific type of source root, use {@link #getSourceRoots(JpsModuleSourceRootType)} instead.  
    *
    * @return the array of source roots.
    * @see #getContentEntries()
    * @see #getSourceRoots(boolean)
    */
-  @NotNull
-  VirtualFile[] getSourceRoots();
+  @NotNull VirtualFile @NotNull [] getSourceRoots();
 
   /**
    * Returns an array of source roots from all content entries.
+   * If {@code includingTests} is {@code true}, this is equivalent to {@link #getSourceRoots()}. 
+   * Otherwise, the returned array doesn't contain roots of types designated for tests (e.g., Java test source roots and Java test resource
+   * roots).
    *
    * @param includingTests determines whether test source roots should be included in the result
    * @return the array of source roots.
    * @see #getContentEntries()
-   * @since 10.0
    */
-  @NotNull
-  VirtualFile[] getSourceRoots(boolean includingTests);
+  VirtualFile @NotNull [] getSourceRoots(boolean includingTests);
 
   /**
    * Return a list of source roots of the specified type.
@@ -140,6 +136,7 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType);
 
   /**
@@ -149,28 +146,28 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
-  List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
+  @Unmodifiable List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries.
+   * The result includes URLs of all files returned by {@link #getSourceRoots()}, and also includes URLs of non-existing source roots.
    *
    * @return the array of source root URLs.
    * @see #getContentEntries()
    * @see #getSourceRootUrls(boolean)
    */
-  @NotNull
-  String[] getSourceRootUrls();
+  String @NotNull [] getSourceRootUrls();
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array of source root urls from all content entries, with optionally excluded test roots.
+   * The result includes URLs of all files returned by {@link #getSourceRoots(boolean)}, and also includes URLs of non-existing source 
+   * roots.
    *
    * @param includingTests determines whether test source root urls should be included in the result
    * @return the array of source root URLs.
    * @see #getContentEntries()
-   * @since 10.0
    */
-  @NotNull
-  String[] getSourceRootUrls(boolean includingTests);
+  String @NotNull [] getSourceRootUrls(boolean includingTests);
 
   /**
    * Passes all order entries in the module to the specified visitor.
@@ -180,14 +177,13 @@ public interface ModuleRootModel {
    * @return the value returned by the visitor.
    * @see OrderEntry#accept(RootPolicy, Object)
    */
-  <R> R processOrder(RootPolicy<R> policy, R initialValue);
+  <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue);
 
   /**
    * Returns {@link OrderEnumerator} instance which can be used to process order entries of the module (with or without dependencies) and
    * collect classes or source roots.
    *
    * @return {@link OrderEnumerator} instance
-   * @since 10.0
    */
   @NotNull
   OrderEnumerator orderEntries();
@@ -195,16 +191,13 @@ public interface ModuleRootModel {
   /**
    * Returns list of module names <i>this module</i> depends on.
    *
-   * @return the list of module names this module depends on.
+   * @return the array of module names this module depends on.
    */
-  @NotNull
-  String[] getDependencyModuleNames();
+  String @NotNull [] getDependencyModuleNames();
 
   <T> T getModuleExtension(@NotNull Class<T> klass);
 
-  @NotNull
-  Module[] getModuleDependencies();
+  Module @NotNull [] getModuleDependencies();
 
-  @NotNull
-  Module[] getModuleDependencies(boolean includeTests);
+  Module @NotNull [] getModuleDependencies(boolean includeTests);
 }

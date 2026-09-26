@@ -1,12 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,22 +19,26 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-public class TextBlockTransferable implements Transferable {
-  private final Collection<TextBlockTransferableData> myExtraData;
+public final class TextBlockTransferable implements Transferable, Sizeable {
+  private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;
   private final DataFlavor[] myTransferDataFlavors;
 
-  public TextBlockTransferable(@NotNull String text, @NotNull Collection<TextBlockTransferableData> extraData, @Nullable RawText rawText) {
+  public TextBlockTransferable(@NotNull String text, @NotNull Collection<? extends TextBlockTransferableData> extraData, @Nullable RawText rawText) {
     myText = cleanFromNullsIfNeeded(text);
     myExtraData = extraData;
     myRawText = rawText;
 
     List<DataFlavorWithPriority> dataFlavors = new ArrayList<>();
-    Collections.addAll(dataFlavors, 
-                       new DataFlavorWithPriority(DataFlavor.stringFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY), 
+    Collections.addAll(dataFlavors,
+                       new DataFlavorWithPriority(DataFlavor.stringFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY),
                        new DataFlavorWithPriority(DataFlavor.plainTextFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY));
     final DataFlavor flavor = RawText.getDataFlavor();
     if (myRawText != null && flavor != null) {
@@ -47,10 +54,18 @@ public class TextBlockTransferable implements Transferable {
     myTransferDataFlavors = ContainerUtil.map2Array(dataFlavors, DataFlavor.class, value -> value.flavor);
   }
 
-  @NotNull
-  private static String cleanFromNullsIfNeeded(@NotNull String text) {
+  @Override
+  public int getSize() {
+    int size = myText.length();
+    if (myRawText != null && !Strings.areSameInstance(myRawText.rawText, myText)) {
+      size += StringUtil.length(myRawText.rawText);
+    }
+    return size;
+  }
+
+  private static @NotNull String cleanFromNullsIfNeeded(@NotNull String text) {
     // Clipboard on Windows and Linux works with null-terminated strings, on Mac nulls are not treated in a special way.
-    return SystemInfo.isMac ? text : text.replace('\000', ' '); 
+    return SystemInfo.isMac ? text : text.replace('\000', ' ');
   }
 
   @Override
@@ -61,12 +76,7 @@ public class TextBlockTransferable implements Transferable {
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for (DataFlavor flavor1 : flavors) {
-      if (flavor.equals(flavor1)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(flavor, flavors);
   }
 
   @Override
@@ -93,22 +103,20 @@ public class TextBlockTransferable implements Transferable {
     throw new UnsupportedFlavorException(flavor);
   }
 
-  @NotNull
-  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
+  public static @NotNull String convertLineSeparators(@NotNull Editor editor, @NotNull String input) {
     return convertLineSeparators(editor, input, Collections.emptyList());
   }
 
-  @NotNull
-  public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
-                                             @NotNull Collection<TextBlockTransferableData> itemsToUpdate) {
+  public static @NotNull String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
+                                                      @NotNull Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     // converting line separators to spaces matches the behavior of Swing text components on paste
     return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
   }
 
   public static String convertLineSeparators(String text,
                                              String newSeparator,
-                                             Collection<TextBlockTransferableData> itemsToUpdate) {
-    if (itemsToUpdate.size() > 0){
+                                             Collection<? extends TextBlockTransferableData> itemsToUpdate) {
+    if (!itemsToUpdate.isEmpty()){
       int size = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {
         size += data.getOffsetCount();
@@ -120,7 +128,7 @@ public class TextBlockTransferable implements Transferable {
         index = data.getOffsets(offsets, index);
       }
 
-      text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
+      text = Strings.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {
@@ -134,13 +142,6 @@ public class TextBlockTransferable implements Transferable {
     }
   }
 
-  private static class DataFlavorWithPriority {
-    private final DataFlavor flavor;
-    private final int priority;
-
-    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
-      this.flavor = flavor;
-      this.priority = priority;
-    }
+  private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
   }
 }

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="JUnit5Suites" type="repository">
+        <properties maven-id="org.junit.platform:junit-platform-suite:1.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.14.4/junit-platform-suite-1.14.4.jar">
+              <sha256sum>87e70662afba9e1bf9cb443a3185cc4bf7205780e7e07cfda8becbf6ea66968e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.14.4/junit-platform-suite-api-1.14.4.jar">
+              <sha256sum>7297640fea76410a63b7fad20b349cf0f6c23c3e93ea704c4056a2beb6dfd0a4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.14.4/junit-platform-suite-engine-1.14.4.jar">
+              <sha256sum>be9d3d460d5e88b4d53f1e2e62f1b47354e23106e2a4fa4050a724c5d705b4d3</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.14.4/junit-platform-suite-commons-1.14.4.jar">
+              <sha256sum>8790c345a319a9ec5247cd38f36a1f67256d0bcd9c112af8daa235812e1876d8</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.junit.platform:junit-platform-commons" />
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+            <dependency maven-id="org.junit.platform:junit-platform-engine" />
+            <dependency maven-id="org.junit.platform:junit-platform-launcher" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.14.4/junit-platform-suite-1.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.14.4/junit-platform-suite-api-1.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.14.4/junit-platform-suite-engine-1.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.14.4/junit-platform-suite-commons-1.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.14.4/junit-platform-suite-1.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.14.4/junit-platform-suite-api-1.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.14.4/junit-platform-suite-engine-1.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.14.4/junit-platform-suite-commons-1.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="RUNTIME" />
+  </component>
+</module>

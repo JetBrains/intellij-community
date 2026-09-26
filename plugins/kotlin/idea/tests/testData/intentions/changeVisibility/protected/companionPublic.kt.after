@@ -1,0 +1,5 @@
+open class A {
+    companion object {
+        protected val myMap: Map<String, String> = mapOf("1" to "2")
+    }
+}

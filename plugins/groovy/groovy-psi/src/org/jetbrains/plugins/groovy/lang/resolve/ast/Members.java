@@ -1,69 +1,47 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
 public abstract class Members {
 
-  @NotNull
-  public abstract Collection<PsiMethod> getMethods();
+  public abstract @NotNull Collection<PsiMethod> getMethods();
 
-  @NotNull
-  public abstract Collection<GrField> getFields();
+  public abstract @NotNull Collection<GrField> getFields();
 
-  @NotNull
-  public abstract Collection<PsiClass> getClasses();
+  public abstract @NotNull Collection<PsiClass> getClasses();
 
-  @NotNull
-  public abstract Collection<PsiClassType> getImplementsTypes();
+  public abstract @NotNull Collection<PsiClassType> getImplementsTypes();
 
   public abstract void addFrom(@NotNull Members other);
 
   public static final Members EMPTY = new Members() {
 
-    @NotNull
     @Override
-    public Collection<PsiMethod> getMethods() {
+    public @NotNull Collection<PsiMethod> getMethods() {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<GrField> getFields() {
+    public @NotNull Collection<GrField> getFields() {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<PsiClass> getClasses() {
+    public @NotNull Collection<PsiClass> getClasses() {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<PsiClassType> getImplementsTypes() {
+    public @NotNull Collection<PsiClassType> getImplementsTypes() {
       return Collections.emptyList();
     }
 
@@ -73,36 +51,31 @@ public abstract class Members {
     }
   };
 
-  @NotNull
-  public static Members create() {
+  public static @NotNull Members create() {
     return new Members() {
 
-      private final Collection<PsiMethod> methods = ContainerUtil.newArrayList();
-      private final Collection<GrField> fields = ContainerUtil.newArrayList();
-      private final Collection<PsiClass> classes = ContainerUtil.newArrayList();
-      private final Collection<PsiClassType> implementsTypes = ContainerUtil.newArrayList();
+      private final Collection<PsiMethod> methods = new ArrayList<>();
+      private final Collection<GrField> fields = new ArrayList<>();
+      private final Collection<PsiClass> classes = new ArrayList<>();
+      private final Collection<PsiClassType> implementsTypes = new ArrayList<>();
 
-      @NotNull
       @Override
-      public Collection<PsiMethod> getMethods() {
+      public @NotNull Collection<PsiMethod> getMethods() {
         return methods;
       }
 
-      @NotNull
       @Override
-      public Collection<GrField> getFields() {
+      public @NotNull Collection<GrField> getFields() {
         return fields;
       }
 
-      @NotNull
       @Override
-      public Collection<PsiClass> getClasses() {
+      public @NotNull Collection<PsiClass> getClasses() {
         return classes;
       }
 
-      @NotNull
       @Override
-      public Collection<PsiClassType> getImplementsTypes() {
+      public @NotNull Collection<PsiClassType> getImplementsTypes() {
         return implementsTypes;
       }
 

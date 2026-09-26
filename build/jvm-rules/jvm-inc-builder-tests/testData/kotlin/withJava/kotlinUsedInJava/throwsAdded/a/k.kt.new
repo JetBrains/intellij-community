@@ -1,0 +1,4 @@
+class K {
+    @Throws(java.io.IOException::class)
+    fun m(): Int = 1
+}

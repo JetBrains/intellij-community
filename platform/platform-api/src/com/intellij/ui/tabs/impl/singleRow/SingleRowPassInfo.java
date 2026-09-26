@@ -1,31 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SingleRowPassInfo extends LayoutPassInfo {
+@ApiStatus.Internal
+public final class SingleRowPassInfo extends LayoutPassInfo {
+  private final JBTabsImpl tabs;
   final Dimension layoutSize;
   final int contentCount;
   int position;
@@ -33,61 +26,60 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   int toFitLength;
   public final List<TabInfo> toLayout;
   public final List<TabInfo> toDrop;
+  final int entryPointAxisSize;
   final int moreRectAxisSize;
-  public Rectangle moreRect;
 
+  public WeakReference<JComponent> hfToolbar;
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
 
-  public Rectangle firstGhost;
-  public boolean firstGhostVisible;
-
-  public Rectangle lastGhost;
-  public boolean lastGhostVisible;
-
   public Insets insets;
 
-  public WeakReference<JComponent> comp;
+  public WeakReference<JComponent> component;
   public Rectangle tabRectangle;
   final int scrollOffset;
 
-
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    JBTabsImpl tabs = layout.myTabs;
+    tabs = layout.tabs;
     layoutSize = tabs.getSize();
     contentCount = tabs.getTabCount();
     toLayout = new ArrayList<>();
     toDrop = new ArrayList<>();
+    entryPointAxisSize = layout.getStrategy().getEntryPointAxisSize();
     moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
     scrollOffset = layout.getScrollOffset();
   }
 
-  public TabInfo getPreviousFor(final TabInfo info) {
-    return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
-  public TabInfo getNextFor(final TabInfo info) {
-    return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
-  }
-
+  @Override
   public int getRowCount() {
     return 1;
   }
 
-  public int getColumnCount(final int row) {
-    return myVisibleInfos.size();
-  }
-
-  public TabInfo getTabAt(final int row, final int column) {
-    return myVisibleInfos.get(column);
-  }
-
-  public Rectangle getHeaderRectangle() {
+  @Override
+  public @NotNull Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
 
-  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
-    return true;
+  @Override
+  public int getRequiredLength() {
+    return requiredLength;
+  }
+
+  @Override
+  public int getScrollExtent() {
+    if (tabs.isHorizontalTabs()) {
+      return !moreRect.isEmpty() ? moreRect.x - tabs.getActionsInsets().left
+             : !entryPointRect.isEmpty() ? entryPointRect.x - tabs.getActionsInsets().left
+             : layoutSize.width;
+    }
+    else {
+      if (ExperimentalUI.isNewUI()) {
+        return layoutSize.height;
+      }
+      return !moreRect.isEmpty() ? moreRect.y - tabs.getActionsInsets().top
+             : !entryPointRect.isEmpty() ? entryPointRect.y - tabs.getActionsInsets().top
+             : layoutSize.height;
+    }
   }
 }

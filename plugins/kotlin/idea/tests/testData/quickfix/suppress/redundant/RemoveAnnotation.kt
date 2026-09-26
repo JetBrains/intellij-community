@@ -1,0 +1,12 @@
+// "Remove suppression" "true"
+
+@Suppress("<caret>MoveVariableDeclarationIntoWhen")
+fun function() {
+    
+}
+
+// TOOL: com.intellij.codeInspection.RedundantSuppressInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.MoveVariableDeclarationIntoWhenInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.MoveVariableDeclarationIntoWhenInspection
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.RemoveRedundantSuppression

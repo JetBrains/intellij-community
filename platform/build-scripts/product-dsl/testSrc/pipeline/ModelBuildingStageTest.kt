@@ -1,0 +1,327 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.productLayout.pipeline
+
+import com.intellij.platform.buildScripts.concurrency.SharedTaskOwner
+import com.intellij.platform.pluginGraph.TargetName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.TestFailureLogger
+import org.jetbrains.intellij.build.productLayout.dependency.createTestModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.dependency.jpsProject
+import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.productLayout.discovery.ModuleSetGenerationConfig
+import org.jetbrains.intellij.build.productLayout.discovery.PluginSource
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
+import org.jetbrains.intellij.build.productLayout.generator.PluginDependencyPlanner
+import org.jetbrains.intellij.build.productLayout.model.ErrorSink
+import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
+
+@ExtendWith(TestFailureLogger::class)
+class ModelBuildingStageTest {
+  private val owner = SharedTaskOwner("ModelBuildingStageTest")
+
+  @org.junit.jupiter.api.AfterEach
+  fun closeSharedTasks() {
+    owner.close()
+  }
+
+  @Test
+  fun `compatibility and packing seeds preserve descriptor ownership`(@TempDir tempDir: Path) {
+    assertDescriptorOwnership(updateSuppressions = false, tempDir = tempDir)
+  }
+
+  @Test
+  fun `updating suppressions preserves descriptor ownership`(@TempDir tempDir: Path) {
+    assertDescriptorOwnership(updateSuppressions = true, tempDir = tempDir)
+  }
+
+  private fun assertDescriptorOwnership(updateSuppressions: Boolean, tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val pluginNames = listOf("bundled", "test", "compatible", "known", "packing", "managed", "legacy", "outer")
+        .map { "intellij.scope.$it" }
+      val jps = jpsProject(tempDir) {
+        for (pluginName in pluginNames) {
+          module(pluginName) {
+            resourceRoot = "resources"
+          }
+        }
+      }
+      for (pluginName in pluginNames) {
+        val dependencies = when (pluginName.substringAfterLast('.')) {
+          "managed" -> """
+            <dependencies>
+              <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+              <!-- endregion -->
+            </dependencies>
+          """.trimIndent()
+          "legacy" -> """
+            <!-- editor-fold desc="Generated dependencies" -->
+            <dependencies/>
+            <!-- end editor-fold -->
+          """.trimIndent()
+          "outer" -> """
+            <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+            <dependencies/>
+            <!-- endregion -->
+          """.trimIndent()
+          else -> "<dependencies/>"
+        }
+        val descriptor = tempDir.resolve("${pluginName.replace('.', '/')}/resources/META-INF/plugin.xml")
+        Files.createDirectories(descriptor.parent)
+        Files.writeString(descriptor, "<idea-plugin><id>$pluginName</id>\n$dependencies\n</idea-plugin>")
+      }
+      val outputProvider = createTestModuleOutputProvider(jps.project)
+      val products = listOf(DiscoveredProduct(
+        name = "Demo",
+        config = ProductConfiguration(modules = emptyList(), className = "DemoProperties"),
+        properties = null,
+        spec = productModules { bundledPlugins(listOf("intellij.scope.bundled")) },
+        pluginXmlPath = null,
+      ))
+      val config = ModuleSetGenerationConfig(
+        moduleSetSources = emptyMap(),
+        discoveredProducts = products,
+        projectRoot = tempDir,
+        outputProvider = outputProvider,
+        nonBundledPlugins = mapOf("Demo" to pluginNames.filter { it.substringAfterLast('.') !in setOf("known", "packing") }
+          .mapTo(LinkedHashSet(), ::TargetName)),
+        knownPlugins = setOf(TargetName("intellij.scope.known")),
+        testPluginsByProduct = mapOf("Demo" to setOf(TargetName("intellij.scope.test"))),
+        includeTestPluginDescriptorsFromSources = true,
+        contentPluginPopulation = pluginNames.toSet(),
+      )
+      val model = ModelBuildingStage.execute(
+        discovery = DiscoveryResult(
+          moduleSetsByLabel = emptyMap(),
+          products = products,
+          testProductSpecs = emptyList(),
+          moduleSetSources = emptyMap(),
+        ),
+        config = config,
+        owner = owner,
+        updateSuppressions = updateSuppressions,
+        commitChanges = false,
+        errorSink = ErrorSink(),
+      )
+
+      model.pluginGraph.query {
+        for (pluginName in pluginNames) {
+          assertThat(plugin(pluginName)).describedAs(pluginName).isNotNull()
+        }
+      }
+      for (pluginName in pluginNames) {
+        val expectedSource = when (pluginName.substringAfterLast('.')) {
+          "bundled" -> PluginSource.BUNDLED
+          "test" -> PluginSource.TEST
+          else -> PluginSource.DISCOVERED
+        }
+        assertThat(model.pluginContentCache.getOrExtract(TargetName(pluginName))?.source)
+          .describedAs(pluginName).isEqualTo(expectedSource)
+      }
+
+      val context = ComputeContextImpl(model)
+      context.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+      PluginDependencyPlanner.execute(context.forNode(PluginDependencyPlanner.id))
+      val plans = context.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans
+      assertThat(plans.map { it.pluginContentModuleName.value }).containsExactlyInAnyOrder(
+        "intellij.scope.bundled", "intellij.scope.test", "intellij.scope.managed", "intellij.scope.legacy", "intellij.scope.outer",
+      )
+    }
+  }
+
+  @Test
+  fun `an ignored compatible plugin keeps descriptor ownership`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val pluginName = "intellij.scope.ignored"
+      val jps = jpsProject(tempDir) {
+        module(pluginName) {
+          resourceRoot = "resources"
+        }
+      }
+      val descriptor = tempDir.resolve("${pluginName.replace('.', '/')}/resources/META-INF/plugin.xml")
+      Files.createDirectories(descriptor.parent)
+      Files.writeString(
+        descriptor,
+        """
+        <idea-plugin><id>$pluginName</id>
+        <dependencies>
+          <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+          <!-- endregion -->
+        </dependencies>
+        </idea-plugin>
+        """.trimIndent(),
+      )
+      // no product bundles the plugin, and no product publishes it, so only the ignore list names it
+      val products = listOf(DiscoveredProduct(
+        name = "Demo",
+        config = ProductConfiguration(modules = emptyList(), className = "DemoProperties"),
+        properties = null,
+        spec = productModules { },
+        pluginXmlPath = null,
+      ))
+
+      fun ownedPlugins(ignored: Set<TargetName>): List<String> {
+        val model = ModelBuildingStage.execute(
+          discovery = DiscoveryResult(
+            moduleSetsByLabel = emptyMap(),
+            products = products,
+            testProductSpecs = emptyList(),
+            moduleSetSources = emptyMap(),
+          ),
+          config = ModuleSetGenerationConfig(
+            moduleSetSources = emptyMap(),
+            discoveredProducts = products,
+            projectRoot = tempDir,
+            outputProvider = createTestModuleOutputProvider(jps.project),
+            ignoredCompatiblePlugins = ignored,
+          ),
+          owner = owner,
+          updateSuppressions = false,
+          commitChanges = false,
+          errorSink = ErrorSink(),
+        )
+        val context = ComputeContextImpl(model)
+        context.initSlot(Slots.PLUGIN_DEPENDENCY_PLAN)
+        PluginDependencyPlanner.execute(context.forNode(PluginDependencyPlanner.id))
+        return context.get(Slots.PLUGIN_DEPENDENCY_PLAN).plans.map { it.pluginContentModuleName.value }
+      }
+
+      assertThat(ownedPlugins(emptySet())).isEmpty()
+      assertThat(ownedPlugins(setOf(TargetName(pluginName)))).containsExactly(pluginName)
+    }
+  }
+
+  @Test
+  fun `discoverPluginDescriptorsFromSources finds test plugin xml and the content population`(@TempDir tempDir: Path) {
+    val jps = jpsProject(tempDir) {
+      module("intellij.test.plugin")
+      module("intellij.content.plugin")
+    }
+
+    val testModuleDir = tempDir.resolve("intellij/test/plugin")
+    val testResources = testModuleDir.resolve("testResources")
+    Files.createDirectories(testResources.resolve("META-INF"))
+    val testModule = jps.project.modules.first { it.name == "intellij.test.plugin" }
+    testModule.addSourceRoot(JpsPathUtil.pathToUrl(testResources.toString()), JavaResourceRootType.TEST_RESOURCE)
+    Files.writeString(testResources.resolve("META-INF/plugin.xml"), "<idea-plugin/>")
+
+    val descriptors = ModelBuildingStage.discoverPluginDescriptorsFromSources(
+      outputProvider = createTestModuleOutputProvider(jps.project),
+      contentPluginPopulation = setOf("intellij.content.plugin", "intellij.plugin.this.project.does.not.hold"),
+    )
+
+    assertThat(descriptors.testPluginModules).containsExactly(TargetName("intellij.test.plugin"))
+    assertThat(descriptors.pluginModules).containsExactly(TargetName("intellij.content.plugin"))
+  }
+
+  @Test
+  fun `buildProductPluginXmlOverrides uses generated descriptor for discovered product module`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.product.plugin") {
+          resourceRoot = "resources"
+        }
+        module("generated.module")
+      }
+
+      val stalePluginXmlPath = tempDir.resolve("intellij/product/plugin/resources/META-INF/plugin.xml")
+      Files.createDirectories(stalePluginXmlPath.parent)
+      Files.writeString(
+        stalePluginXmlPath,
+        """
+        <idea-plugin>
+          <content namespace="jetbrains">
+            <module name="stale.module"/>
+          </content>
+        </idea-plugin>
+        """.trimIndent(),
+      )
+
+      val relativePluginXmlPath = "intellij/product/plugin/resources/META-INF/plugin.xml"
+      val overrides = ModelBuildingStage.buildProductPluginXmlOverrides(
+        products = listOf(
+          DiscoveredProduct(
+            name = "Idea",
+            config = ProductConfiguration(
+              modules = emptyList(),
+              className = "IdeaProperties",
+              pluginXmlPath = relativePluginXmlPath,
+            ),
+            properties = null,
+            spec = productModules {
+              requiredModule("generated.module")
+            },
+            pluginXmlPath = relativePluginXmlPath,
+          )
+        ),
+        outputProvider = createTestModuleOutputProvider(jps.project),
+        projectRoot = tempDir,
+        skipXIncludePaths = emptySet(),
+        xIncludePrefixFilter = { null },
+      )
+
+      assertThat(overrides.keys).containsExactly(TargetName("intellij.product.plugin"))
+      val generatedXml = overrides.getValue(TargetName("intellij.product.plugin")).pluginXmlContent
+      assertThat(generatedXml).contains("generated.module")
+      assertThat(generatedXml).doesNotContain("stale.module")
+    }
+  }
+
+  @Test
+  fun `buildProductPluginXmlOverrides skips valid source descriptor`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+      val jps = jpsProject(tempDir) {
+        module("intellij.product.plugin") {
+          resourceRoot = "resources"
+        }
+        module("generated.module")
+      }
+
+      val sourcePluginXmlPath = tempDir.resolve("intellij/product/plugin/resources/META-INF/plugin.xml")
+      Files.createDirectories(sourcePluginXmlPath.parent)
+      Files.writeString(
+        sourcePluginXmlPath,
+        """
+        <idea-plugin>
+          <content namespace="jetbrains">
+            <module name="generated.module"/>
+          </content>
+        </idea-plugin>
+        """.trimIndent(),
+      )
+
+      val relativePluginXmlPath = "intellij/product/plugin/resources/META-INF/plugin.xml"
+      val overrides = ModelBuildingStage.buildProductPluginXmlOverrides(
+        products = listOf(
+          DiscoveredProduct(
+            name = "Idea",
+            config = ProductConfiguration(
+              modules = emptyList(),
+              className = "IdeaProperties",
+              pluginXmlPath = relativePluginXmlPath,
+            ),
+            properties = null,
+            spec = productModules {
+              requiredModule("generated.module")
+            },
+            pluginXmlPath = relativePluginXmlPath,
+          )
+        ),
+        outputProvider = createTestModuleOutputProvider(jps.project),
+        projectRoot = tempDir,
+        skipXIncludePaths = emptySet(),
+        xIncludePrefixFilter = { null },
+      )
+
+      assertThat(overrides).isEmpty()
+    }
+  }
+}

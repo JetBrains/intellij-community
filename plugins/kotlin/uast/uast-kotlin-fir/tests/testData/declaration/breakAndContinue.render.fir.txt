@@ -1,0 +1,132 @@
+public final class BreakAndContinueKt {
+    public static final fun testWhileBreak() : void {
+        while (true) {
+            break
+        }
+    }
+    public static final fun testWhileContinue() : void {
+        while (true) {
+            continue
+        }
+    }
+    public static final fun testDoWhileBreak() : void {
+        do {
+            break
+        }while (true)
+
+    }
+    public static final fun testDoWhileContinue() : void {
+        do {
+            continue
+        }while (true)
+
+    }
+    public static final fun testForBreak() : void {
+        for (i : 0 .. 10) {
+            break
+        }
+    }
+    public static final fun testForContinue() : void {
+        for (i : 0 .. 10) {
+            continue
+        }
+    }
+    public static final fun testLabeledBreak() : void {
+        outer@ while (true) {
+            inner@ for (i : 0 .. 10) {
+                break@outer
+            }
+        }
+    }
+    public static final fun testLabeledContinue() : void {
+        outer@ for (i : 0 .. 10) {
+            inner@ while (true) {
+                continue@outer
+            }
+        }
+    }
+    public static final fun testNestedBreak() : void {
+        while (true) {
+            for (i : 0 .. 10) {
+                break
+            }
+        }
+    }
+    public static final fun testNestedContinue() : void {
+        for (i : 0 .. 10) {
+            while (true) {
+                continue
+            }
+        }
+    }
+    public static final fun testBreakContinueInWhen() : void {
+        outer@ while (true) {
+            mid@ for (i : 0 .. 10) {
+                switch (var x: int = 1)  {
+                    1 -> {
+                        yield break
+                    }
+
+                    2 -> {
+                        yield continue
+                    }
+
+                    3 -> {
+                        yield break@outer
+                    }
+
+                    4 -> {
+                        yield continue@outer
+                    }
+
+                    5 -> {
+                        yield break@mid
+                    }
+
+                    6 -> {
+                        yield continue@mid
+                    }
+
+                }
+
+                inner@ while (true) {
+                    switch (var x: int = 1)  {
+                        1 -> {
+                            yield break
+                        }
+
+                        2 -> {
+                            yield continue
+                        }
+
+                        3 -> {
+                            yield break@outer
+                        }
+
+                        4 -> {
+                            yield continue@outer
+                        }
+
+                        5 -> {
+                            yield break@mid
+                        }
+
+                        6 -> {
+                            yield continue@mid
+                        }
+
+                        7 -> {
+                            yield break@inner
+                        }
+
+                        8 -> {
+                            yield continue@inner
+                        }
+
+                    }
+
+                }
+            }
+        }
+    }
+}

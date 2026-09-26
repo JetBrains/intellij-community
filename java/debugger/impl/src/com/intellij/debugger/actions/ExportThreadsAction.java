@@ -1,26 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.ide.actions.ExportToTextFileAction;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.ide.util.ExportToFileUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.unscramble.ThreadState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
-  public void actionPerformed(AnActionEvent e) {
+public class ExportThreadsAction extends AnAction {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -28,20 +33,23 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
-      if (process != null) {
-        process.getManagerThread().invoke(new DebuggerCommandImpl() {
+      DebuggerManagerThreadImpl managerThread = context.getManagerThread();
+      if (process != null && managerThread != null) {
+        managerThread.schedule(new DebuggerCommandImpl() {
+          @Override
           protected void action() {
-            final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
-            ApplicationManager.getApplication().invokeLater(() -> ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
+            final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(VirtualMachineProxyImpl.getCurrent());
+            ApplicationManager.getApplication().invokeLater(() -> ExportToFileUtil.chooseFileAndExport(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.nonModal());
           }
         });
       }
     }
   }
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {
@@ -50,5 +58,10 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
     }
     DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
     presentation.setEnabled(debuggerSession != null && debuggerSession.isPaused());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

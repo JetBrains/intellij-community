@@ -1,0 +1,4 @@
+class V {
+    fun get(i: Int): Int = i
+    fun combine(o: V): V = o
+}

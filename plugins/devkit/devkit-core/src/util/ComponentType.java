@@ -1,52 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-/**
- * @author swr
- */
 public enum ComponentType {
-  APPLICATION(ApplicationComponent.class, "application-components", "new.menu.application.component.text"),
+
+  MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text"),
+  @SuppressWarnings("deprecation")
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),
-  MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text");
+  @SuppressWarnings("deprecation")
+  APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text");
 
   public final String myClassName;
-  public final String myPropertyKey;
+  public final @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String myPropertyKey;
   private final String myName;
 
   public interface Processor {
     boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf);
   }
 
-  ComponentType(Class<? extends BaseComponent> clazz, @NonNls String name,
-                @PropertyKey(resourceBundle = "org.jetbrains.idea.devkit.DevKitBundle") String propertyKey)
-  {
+  ComponentType(@SuppressWarnings("deprecation") Class<? extends BaseComponent> clazz, @NonNls String name,
+                @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String propertyKey) {
     myPropertyKey = propertyKey;
     myClassName = clazz.getName();
     myName = name;
@@ -54,7 +45,7 @@ public enum ComponentType {
 
   public void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException {
     final XmlTag rootTag = pluginXml.getDocument().getRootTag();
-    if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
+    if (rootTag != null && IdeaPlugin.TAG_NAME.equals(rootTag.getName())) {
       XmlTag components = rootTag.findFirstSubTag(myName);
       if (components == null || !components.isPhysical()) {
         components = (XmlTag)rootTag.add(rootTag.createChildTag(myName, rootTag.getNamespace(), null, false));
@@ -76,6 +67,8 @@ public enum ComponentType {
           }
         }
       }
+
+      PsiNavigateUtil.navigate(cmp);
     }
   }
 
@@ -88,9 +81,8 @@ public enum ComponentType {
         final XmlTag impl = component.findFirstSubTag("implementation-class");
         final XmlTag intf = component.findFirstSubTag("interface-class");
         if (!processor.process(this, component,
-                impl != null ? impl.getValue() : null,
-                intf != null ? intf.getValue() : null))
-        {
+                               impl != null ? impl.getValue() : null,
+                               intf != null ? intf.getValue() : null)) {
           return;
         }
       }

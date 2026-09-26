@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.Printer;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
@@ -27,13 +11,26 @@ import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
-import com.intellij.lang.ant.config.actions.*;
+import com.intellij.lang.ant.config.actions.ChangeViewAction;
+import com.intellij.lang.ant.config.actions.PauseOutputAction;
+import com.intellij.lang.ant.config.actions.RunAction;
+import com.intellij.lang.ant.config.actions.StopAction;
+import com.intellij.lang.ant.config.actions.VerboseAction;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.HelpID;
 import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -46,33 +43,49 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.MessageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.GridLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+public final class AntBuildMessageView extends JPanel
+  implements UiDataProvider, OccurenceNavigator, Disposable {
 
-public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
+  private static final Logger LOG = Logger.getInstance(AntBuildMessageView.class);
 
   public enum MessageType {
     BUILD,
@@ -83,12 +96,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static final Key<AntBuildMessageView> KEY = Key.create("BuildMessageView.KEY");
-  private static final String BUILD_CONTENT_NAME = AntBundle.message("ant.build.tab.content.title");
 
-  public static final int PRIORITY_ERR = 0;
-  public static final int PRIORITY_WARN = 1;
-  public static final int PRIORITY_BRIEF = 2;
-  public static final int PRIORITY_VERBOSE = 3;
+  public static final int PRIORITY_ERR = org.apache.tools.ant.Project.MSG_ERR;
+  public static final int PRIORITY_WARN = org.apache.tools.ant.Project.MSG_WARN;
+  public static final int PRIORITY_INFO = org.apache.tools.ant.Project.MSG_INFO;
+  public static final int PRIORITY_VERBOSE = org.apache.tools.ant.Project.MSG_VERBOSE;
+  public static final int PRIORITY_DEBUG = org.apache.tools.ant.Project.MSG_DEBUG;
 
   private OutputParser myParsingThread;
   private final Project myProject;
@@ -98,23 +111,21 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntBuildFileBase myBuildFile;
   private final List<String> myTargets;
   private final List<BuildFileProperty> myAdditionalProperties;
-  private int myPriorityThreshold = PRIORITY_BRIEF;
+  @AntMessage.Priority
+  private int myPriorityThreshold = PRIORITY_INFO;
   private volatile int myErrorCount;
   private volatile int myWarningCount;
-  private volatile boolean myIsOutputPaused = false;
+  private volatile boolean myIsOutputPaused;
 
-  @NotNull
-  private volatile AntOutputView myCurrentView;
+  private volatile @NotNull AntOutputView myCurrentView;
 
   private final PlainTextView myPlainTextView;
   private final TreeView myTreeView;
 
-  private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<LogCommand>(1024));
-  private volatile int myCommandsProcessedCount = 0;
+  private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<>(1024));
+  private volatile int myCommandsProcessedCount;
 
-  private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
-
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm();
   private final Runnable myFlushLogRunnable = () -> {
     if (myCommandsProcessedCount < myLog.size()) {
       flushWhenSmart(true);
@@ -145,7 +156,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       AntBuildMessageView.this.expandAll();
     }
   };
-  @NonNls public static final String FILE_PREFIX = "file:";
+  private static final @NonNls String FILE_PREFIX = "file:";
 
   private AntBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     super(new BorderLayout(2, 0));
@@ -172,6 +183,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     showAntView(AntBuildFileImpl.TREE_VIEW.value(buildFile.getAllOptions()));
   }
 
+  @Override
+  public void dispose() {
+    Disposer.dispose(myAlarm);
+    myBuildFile = null;
+    myPlainTextView.dispose();
+  }
+
   public void changeView() {
     showAntView(!isTreeView());
     if (myBuildFile != null) {
@@ -184,17 +202,17 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void setVerboseMode(boolean verbose) {
-    changeDetalizationLevel(verbose ? PRIORITY_VERBOSE : PRIORITY_BRIEF);
+    changeDetalizationLevel(verbose ? PRIORITY_DEBUG : PRIORITY_INFO);
     if (myBuildFile != null) {
       myBuildFile.setVerboseMode(verbose);
     }
   }
 
   public boolean isVerboseMode() {
-    return myPriorityThreshold == PRIORITY_VERBOSE;
+    return myPriorityThreshold == PRIORITY_DEBUG;
   }
 
-  private synchronized void changeDetalizationLevel(int priorityThreshold) {
+  private synchronized void changeDetalizationLevel(@AntMessage.Priority int priorityThreshold) {
     myPriorityThreshold = priorityThreshold;
 
     TreeView.TreeSelection selection = myTreeView.getSelection();
@@ -225,9 +243,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myCardLayout.show(myContentPanel, newView.getId());
 
     JComponent component = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myMessagePanel);
-    getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      getGlobalInstance().requestFocus(component, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+       IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     repaint();
   }
 
@@ -242,8 +259,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   /**
    * @return can be null if user cancelled operation
    */
-  @Nullable
-  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
+  static @Nullable AntBuildMessageView openBuildMessageView(Project project,
+                                                  AntBuildFileBase buildFile,
+                                                  List<String> targets,
+                                                  List<BuildFileProperty> additionalProperties) {
     final VirtualFile antFile = buildFile.getVirtualFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
@@ -251,7 +270,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     // check if there are running instances of the same build file
 
-    MessageView ijMessageView = MessageView.SERVICE.getInstance(project);
+    MessageView ijMessageView = MessageView.getInstance(project);
     Content[] contents = ijMessageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) {
@@ -275,32 +294,28 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
                                                   AntBundle.message("starting.ant.build.dialog.title"), Messages.getQuestionIcon());
 
       switch (result) {
-        case Messages.YES:  // yes
+        case Messages.YES -> {  // yes
           buildMessageView.stopProcess();
           ijMessageView.getContentManager().removeContent(content, true);
-          continue;
-        case Messages.NO: // no
-          continue;
-        default: // cancel
+        }
+        case Messages.NO -> { // no
+        }
+        default -> { // cancel
           return null;
+        }
       }
     }
 
     final AntBuildMessageView messageView = new AntBuildMessageView(project, buildFile, targets, additionalProperties);
     String contentName = buildFile.getPresentableName();
-    contentName = BUILD_CONTENT_NAME + " (" + contentName + ")";
+    contentName = getBuildContentName() + " (" + contentName + ")";
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(messageView.getComponent(), contentName, true);
+    final Content content = ContentFactory.getInstance().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);
-    content.setDisposer(new Disposable() {
-      @Override
-      public void dispose() {
-        Disposer.dispose(messageView.myAlarm);
-      }
-    });
-    new CloseListener(content, ijMessageView.getContentManager(), project);
+    content.setDisposer(() -> Disposer.dispose(messageView));
+    new CloseListener(content, ijMessageView.getContentManager(), project).setupListeners();
 
     if (!buildFile.isRunInBackground()) {
       final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
@@ -312,7 +327,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return messageView;
   }
 
-  public void setParsingThread(OutputParser parsingThread) {
+  void setParsingThread(OutputParser parsingThread) {
     myParsingThread = parsingThread;
     myIsAborted = false;
   }
@@ -330,12 +345,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myParsingThread == null || myParsingThread.isStopped();
   }
 
-  public boolean isStoppedOrTerminateRequested() {
+  private boolean isStoppedOrTerminateRequested() {
     return myParsingThread == null || myParsingThread.isTerminateInvoked() || isStopped();
   }
 
   private void close() {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.getComponent() == this) {
@@ -366,9 +381,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     rightActionGroup.add(myTreeView.createToggleAutoscrollAction());
 
     myLeftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, leftActionGroup, false);
+    myLeftToolbar.setTargetComponent(this);
     JPanel toolbarPanel = new JPanel(new GridLayout(1, 2, 2, 0));
     toolbarPanel.add(myLeftToolbar.getComponent());
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_MESSAGES_TOOLBAR, rightActionGroup, false);
+    myRightToolbar.setTargetComponent(this);
     toolbarPanel.add(myRightToolbar.getComponent());
 
     return toolbarPanel;
@@ -376,7 +393,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public final class CloseAction extends CloseTabToolbarAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       close();
     }
   }
@@ -390,23 +407,23 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  public void startBuild(String buildName) {
+  void startBuild(@Nls String buildName) {
     addCommand(new StartBuildCommand(buildName));
   }
 
-  public void buildFailed(String buildName) {
+  void buildFailed(@Nls String buildName) {
     addCommand(new BuildFailedCommand(buildName));
   }
 
-  public void startTarget(String targetName) {
+  void startTarget(@Nls String targetName) {
     addCommand(new StartTargetCommand(targetName));
   }
 
-  public void startTask(String taskName) {
+  void startTask(@Nls String taskName) {
     addCommand(new StartTaskCommand(taskName));
   }
 
-  public void outputMessage(final String text, final int priority) {
+  void outputMessage(final @Nls String text, @AntMessage.Priority int priority) {
     final AntMessage customizedMessage = getCustomizedMessage(text, priority);
     final AntMessage message = customizedMessage != null
                                ? customizedMessage
@@ -415,11 +432,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     addCommand(new AddMessageCommand(message));
   }
 
-  @Nullable
-  private AntMessage getCustomizedMessage(final String text, final int priority) {
+  private static @Nullable AntMessage getCustomizedMessage(final @Nls String text, @AntMessage.Priority int priority) {
     AntMessage customizedMessage = null;
 
-    for (AntMessageCustomizer customizer : myMessageCustomizers) {
+    for (AntMessageCustomizer customizer : AntMessageCustomizer.EP_NAME.getExtensionList()) {
       customizedMessage = customizer.createCustomizedMessage(text, priority);
       if (customizedMessage != null) {
         break;
@@ -429,24 +445,28 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return customizedMessage;
   }
 
-  public void outputError(String error, int priority) {
+  void outputError(@Nls String error, @AntMessage.Priority int priority) {
     updateErrorAndWarningCounters(priority);
     final AntMessage message = createErrorMessage(priority, error);
     addCommand(new AddMessageCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.queue(message.getFile());
+    VirtualFile file = message.getFile();
+    if (file != null) {
+      queueToWolf(file);
+    }
   }
 
-  public void outputException(String exception) {
+  void outputException(String exception) {
     updateErrorAndWarningCounters(PRIORITY_ERR);
     AntMessage message = createErrorMessage(PRIORITY_ERR, exception);
     addCommand(new AddExceptionCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.queue(message.getFile());
+    VirtualFile file = message.getFile();
+    if (file != null) {
+      queueToWolf(file);
+    }
   }
 
 
-  private void updateErrorAndWarningCounters(int priority) {
+  private void updateErrorAndWarningCounters(@AntMessage.Priority int priority) {
     if (priority == PRIORITY_ERR) {
       myErrorCount++;
     }
@@ -455,30 +475,22 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  public void finishTarget() {
+  void finishTarget() {
     addCommand(new FinishTargetCommand());
   }
 
-  public void finishTask() {
+  void finishTask() {
     addCommand(new FinishTaskCommand());
   }
 
   @Override
-  public Object getData(String dataId) {
-    Object data = myCurrentView.getData(dataId);
-    if (data != null) {
-      return data;
-    }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return HelpID.ANT;
-    }
-    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.ANT);
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
+    myCurrentView.uiDataSnapshot(sink);
   }
 
-  private static AntMessage createErrorMessage(int priority, String text) {
+  private static AntMessage createErrorMessage(@AntMessage.Priority int priority, @NlsSafe String text) {
     text = StringUtil.trimStart(text, FILE_PREFIX);
 
     int afterLineNumberIndex = text.indexOf(": "); // end of file_name_and_line_number sequence
@@ -486,11 +498,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       String fileAndLineNumber = text.substring(0, afterLineNumberIndex);
       int index = fileAndLineNumber.lastIndexOf(':');
       if (index != -1) {
-        String fileName = fileAndLineNumber.substring(0, index);
-        String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
         try {
+          String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
           int line = Integer.parseInt(lineNumberStr);
 
+          String fileName = fileAndLineNumber.substring(0, index);
           final File file = new File(fileName);
           final VirtualFile result = ReadAction.compute(() -> {
             String url =
@@ -511,22 +523,38 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return new AntMessage(MessageType.ERROR, priority, text, null, 0, 0);
   }
 
-  public void outputJavacMessage(MessageType type, String[] text, VirtualFile file, String url, int line, int column) {
+  void outputJavacMessage(MessageType type, String[] text, VirtualFile file, String url, int line, int column) {
     int priority = type == MessageType.ERROR ? PRIORITY_ERR : PRIORITY_VERBOSE;
     updateErrorAndWarningCounters(priority);
     final AntMessage message = new AntMessage(type, priority, text, file, line, column);
     addCommand(new AddJavacMessageCommand(message, url));
-    if (type == MessageType.ERROR) {
-      WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-      wolf.queue(file);
+    if (type == MessageType.ERROR && file != null) {
+      queueToWolf(file);
     }
+  }
+
+  private void queueToWolf(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doQueueToWolf(file));
+    }
+    else {
+      doQueueToWolf(file);
+    }
+  }
+
+  private void doQueueToWolf(@NotNull VirtualFile file) {
+    ReadAction.run(() -> {
+      if (!myProject.isDisposed()) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    });
   }
 
   private JComponent getComponent() {
     return this;
   }
 
-  public void emptyAll() {
+  void emptyAll() {
     myLog.clear();
     myCommandsProcessedCount = 0;
     myErrorCount = 0;
@@ -543,9 +571,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myTreeView.expandAll();
   }
 
-  private static final class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener {
+  private static final class CloseListener implements VetoableProjectManagerListener, ContentManagerListener {
     private Content myContent;
-    private boolean myCloseAllowed = false;
+    private boolean myCloseAllowed;
     private final ContentManager myContentManager;
     private final Project myProject;
 
@@ -553,28 +581,32 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       myContent = content;
       myContentManager = contentManager;
       myProject = project;
-      contentManager.addContentManagerListener(this);
+    }
+
+    private void setupListeners() {
+      myContentManager.addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
+
+      Disposer.register(myContent, () -> {
+        myContentManager.removeContentManagerListener(this);
+        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
+      });
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
-        myContentManager.removeContentManagerListener(this);
         AntBuildMessageView buildMessageView = myContent.getUserData(KEY);
         if (!myCloseAllowed) {
           buildMessageView.stopProcess();
         }
-        ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
-        buildMessageView.myBuildFile = null;
-        buildMessageView.myPlainTextView.dispose();
       }
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         boolean canClose = closeQuery();
         if (!canClose) {
@@ -584,7 +616,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       if (myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
@@ -636,12 +668,14 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private abstract static class LogCommand {
+    @AntMessage.Priority
     private final int myPriority;
 
-    LogCommand(int priority) {
+    LogCommand(@AntMessage.Priority int priority) {
       myPriority = priority;
     }
 
+    @AntMessage.Priority
     final int getPriority() {
       return myPriority;
     }
@@ -652,20 +686,19 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private abstract static class MessageCommand extends LogCommand {
     private final AntMessage myMessage;
 
-    protected MessageCommand(@NotNull AntMessage message) {
+    MessageCommand(@NotNull AntMessage message) {
       super(message.getPriority());
       myMessage = message;
     }
 
-    @NotNull
-    final AntMessage getMessage() {
+    final @NotNull AntMessage getMessage() {
       return myMessage;
     }
   }
 
   private static final class StartBuildCommand extends MessageCommand {
-    StartBuildCommand(String buildName) {
-      super(new AntMessage(MessageType.BUILD, 0, buildName, null, 0, 0));
+    StartBuildCommand(@Nls String buildName) {
+      super(new AntMessage(MessageType.BUILD, PRIORITY_ERR, buildName, null, 0, 0));
     }
 
     @Override
@@ -676,7 +709,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private static final class BuildFailedCommand extends MessageCommand {
     BuildFailedCommand(String buildName) {
-      super(new AntMessage(MessageType.ERROR, 0, AntBundle.message("cannot.start.build.name.error.message", buildName), null, 0, 0));
+      super(new AntMessage(MessageType.ERROR, PRIORITY_ERR, AntBundle.message("cannot.start.build.name.error.message", buildName), null, 0, 0));
     }
 
     @Override
@@ -686,10 +719,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static final class FinishBuildCommand extends LogCommand {
-    private final String myFinishStatusText;
+    private final @Nls String myFinishStatusText;
 
-    FinishBuildCommand(String finishStatusText) {
-      super(0);
+    FinishBuildCommand(@Nls String finishStatusText) {
+      super(PRIORITY_ERR);
       myFinishStatusText = finishStatusText;
     }
 
@@ -700,8 +733,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static final class StartTargetCommand extends MessageCommand {
-    StartTargetCommand(String targetName) {
-      super(new AntMessage(MessageType.TARGET, 0, targetName, null, 0, 0));
+    StartTargetCommand(@Nls String targetName) {
+      super(new AntMessage(MessageType.TARGET, PRIORITY_ERR, targetName, null, 0, 0));
     }
 
     @Override
@@ -712,7 +745,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private static final class FinishTargetCommand extends LogCommand {
     FinishTargetCommand() {
-      super(0);
+      super(PRIORITY_ERR);
     }
 
     @Override
@@ -722,8 +755,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private static final class StartTaskCommand extends MessageCommand {
-    StartTaskCommand(String taskName) {
-      super(new AntMessage(MessageType.TASK, 0, taskName, null, 0, 0));
+    StartTaskCommand(@Nls String taskName) {
+      super(new AntMessage(MessageType.TASK, PRIORITY_ERR, taskName, null, 0, 0));
     }
 
     @Override
@@ -734,7 +767,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private static final class FinishTaskCommand extends LogCommand {
     FinishTaskCommand() {
-      super(0);
+      super(PRIORITY_ERR);
     }
 
     @Override
@@ -795,61 +828,58 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myWarningCount;
   }
 
-  void buildFinished(boolean isProgressAborted, final long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
+  void buildFinished(boolean isProgressAborted, final long buildTimeInMilliseconds, final @NotNull AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
     final boolean aborted = isProgressAborted || myIsAborted;
 
-    dispatcher.processOutput(new Printable() {
-      @Override
-      public void printOn(Printer printer) {
-        if (!myProject.isDisposed()) { // if not disposed
-          final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
-          addCommand(new FinishBuildCommand(message));
-          final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-          if (statusBar != null) {
-            statusBar.setInfo(message);
-          }
-          final AntBuildFileBase buildFile = myBuildFile;
-          final boolean isBackground = buildFile != null && buildFile.isRunInBackground();
-          final boolean shouldActivate = !isBackground || getErrorCount() > 0;
-          UIUtil.invokeLaterIfNeeded(() -> {
-            final Runnable finishRunnable = () -> {
-              final int errorCount = getErrorCount();
-              try {
-                final AntBuildFileBase buildFile1 = myBuildFile;
-                if (buildFile1 != null) {
-                  if (errorCount == 0 && buildFile1.isViewClosedWhenNoErrors()) {
-                    close();
-                  }
-                  else if (errorCount > 0) {
-                    myTreeView.scrollToFirstError();
-                  }
-                  else {
-                    myTreeView.scrollToStatus();
-                  }
+    dispatcher.processOutput(_ -> {
+      if (!myProject.isDisposed()) { // if not disposed
+        final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
+        addCommand(new FinishBuildCommand(message));
+        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar != null) {
+          statusBar.setInfo(message);
+        }
+        final AntBuildFileBase buildFile = myBuildFile;
+        final boolean isBackground = buildFile != null && buildFile.isRunInBackground();
+        final boolean shouldActivate = !isBackground || getErrorCount() > 0;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          final Runnable finishRunnable = () -> {
+            final int errorCount = getErrorCount();
+            try {
+              final AntBuildFileBase buildFile1 = myBuildFile;
+              if (buildFile1 != null) {
+                if (errorCount == 0 && buildFile1.isViewClosedWhenNoErrors()) {
+                  close();
+                }
+                else if (errorCount > 0) {
+                  myTreeView.scrollToFirstError();
                 }
                 else {
-                  myTreeView.scrollToLastMessage();
+                  myTreeView.scrollToStatus();
                 }
               }
-              finally {
-                VirtualFileManager.getInstance().asyncRefresh(
-                  () -> antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount));
-              }
-            };
-            if (shouldActivate) {
-              final ToolWindow toolWindow = !myProject.isDisposed() ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW) : null;
-              if (toolWindow != null) { // can be null if project is closed
-                toolWindow.activate(finishRunnable, false);
-              }
               else {
-                finishRunnable.run();
+                myTreeView.scrollToLastMessage();
               }
+            }
+            finally {
+              VirtualFileManager.getInstance().asyncRefresh(
+                () -> antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount));
+            }
+          };
+          if (shouldActivate) {
+            final ToolWindow toolWindow = !myProject.isDisposed() ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW) : null;
+            if (toolWindow != null) { // can be null if project is closed
+              toolWindow.activate(finishRunnable, false);
             }
             else {
               finishRunnable.run();
             }
-          });
-        }
+          }
+          else {
+            finishRunnable.run();
+          }
+        });
       }
     });
     ApplicationManager.getApplication().invokeLater(() -> flushWhenSmart(false), ModalityState.any(), myProject.getDisposed());
@@ -866,7 +896,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     });
   }
 
-  private String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
+  private @Nls String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
     final String theDateAsString = DateFormatUtil.formatDateTime(Clock.getTime());
     final String formattedBuildTime = formatBuildTime(buildTimeInMilliseconds / 1000);
     if (isAborted) {
@@ -892,11 +922,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       sb.append(seconds / 3600).append("h ");
       seconds %= 3600;
     }
-    if (seconds >= 60 || sb.length() > 0) {
+    if (seconds >= 60 || !sb.isEmpty()) {
       sb.append(seconds / 60).append("m ");
       seconds %= 60;
     }
-    if (seconds > 0 || sb.length() > 0) {
+    if (seconds > 0 || !sb.isEmpty()) {
       sb.append(seconds).append("s");
     }
     return sb.toString();
@@ -927,13 +957,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       flushDelayedMessages();
     }
 
-    protected final void proceedOneCommand(LogCommand command) {
+    final void proceedOneCommand(LogCommand command) {
       if (command.getPriority() > myPriorityThreshold) {
         return;
       }
       // proceed messages in a special way
-      if (command instanceof AddMessageCommand) {
-        AddMessageCommand addMessageCommand = (AddMessageCommand)command;
+      if (command instanceof AddMessageCommand addMessageCommand) {
         myDelayedMessages.add(addMessageCommand.getMessage());
       }
       else {
@@ -945,7 +974,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
     }
 
-    protected final void flushDelayedMessages() {
+    final void flushDelayedMessages() {
       if (!myDelayedMessages.isEmpty()) {
         final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[0]);
         myDelayedMessages.clear();
@@ -956,12 +985,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myTreeView.getNextOccurenceActionName();
   }
 
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myTreeView.getPreviousOccurenceActionName();
   }
 
@@ -985,8 +1014,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return isTreeView() && myTreeView.hasPreviousOccurence();
   }
 
-  public void setBuildCommandLine(String commandLine) {
+  void setBuildCommandLine(String commandLine) {
     myPlainTextView.setBuildCommandLine(commandLine);
+  }
 
+  static @Nls String getBuildContentName() {
+    return AntBundle.message("ant.build.tab.content.title");
   }
 }

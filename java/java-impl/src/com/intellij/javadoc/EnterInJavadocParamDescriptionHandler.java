@@ -1,8 +1,9 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
@@ -20,16 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- * @since 5/30/11 2:08 PM
- */
-public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
-
-  private final JavadocHelper myHelper = JavadocHelper.getInstance();
-
+public final class EnterInJavadocParamDescriptionHandler implements EnterHandlerDelegate {
   @Override
-  public Result postProcessEnter(@NotNull final PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
+  public Result postProcessEnter(final @NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!(file instanceof PsiJavaFile)
         || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
         || !CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class).JD_ALIGN_PARAM_COMMENTS) {
@@ -42,7 +36,7 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
     }
     
     final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair
-      = myHelper.parse(file, editor, caretOffset);
+      = JavadocHelper.parse(file, editor, caretOffset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition == null) {
       return Result.Continue;
     }
@@ -67,13 +61,21 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
       });
     } 
 
-    myHelper.navigate(desiredPosition, editor, file.getProject());
+    JavadocHelper.navigate(desiredPosition, editor, file.getProject());
     return Result.Stop;
   }
   
   private static boolean isInJavaDoc(@NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     CharSequence docChars = document.getCharsSequence();
+
+    // Markdown javadoc
+    int startOffset = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n");
+    if (CharArrayUtil.shiftForwardUntil(docChars, startOffset, "///") == offset - 4) {
+      return true;
+    }
+
+    // Classic javadoc
     int i = CharArrayUtil.lastIndexOf(docChars, "/**", offset);
     if (i >= 0) {
       i = CharArrayUtil.indexOf(docChars, "*/", i);

@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -37,66 +23,50 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ChangeExtendsImplementsQuickFix implements IntentionAction {
-  @Nullable
-  private final GrExtendsClause myExtendsClause;
-  @Nullable
-  private final GrImplementsClause myImplementsClause;
-  @NotNull
-  private final GrTypeDefinition myClass;
+public class ChangeExtendsImplementsQuickFix extends PsiUpdateModCommandAction<GrTypeDefinition> {
 
   public ChangeExtendsImplementsQuickFix(@NotNull GrTypeDefinition aClass) {
-    myClass = aClass;
-    myExtendsClause = aClass.getExtendsClause();
-    myImplementsClause = aClass.getImplementsClause();
+    super(aClass);
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("change.implements.and.extends.classes");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myClass.isValid() && myClass.getManager().isInProject(file);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull GrTypeDefinition typeDef, @NotNull ModPsiUpdater updater) {
     Set<String> classes = new LinkedHashSet<>();
     Set<String> interfaces = new LinkedHashSet<>();
     Set<String> unknownClasses = new LinkedHashSet<>();
     Set<String> unknownInterfaces = new LinkedHashSet<>();
 
-    if (myExtendsClause != null) {
-      collectRefs(myExtendsClause.getReferenceElementsGroovy(), classes, interfaces, myClass.isInterface() ? unknownInterfaces : unknownClasses);
-      myExtendsClause.delete();
+    GrExtendsClause extendsClause = typeDef.getExtendsClause();
+    GrImplementsClause implementsClause = typeDef.getImplementsClause();
+    Project project = context.project();
+
+    if (extendsClause != null) {
+      collectRefs(extendsClause.getReferenceElementsGroovy(), classes, interfaces, typeDef.isInterface() ? unknownInterfaces : unknownClasses);
+      extendsClause.delete();
     }
 
-    if (myImplementsClause != null) {
-      collectRefs(myImplementsClause.getReferenceElementsGroovy(), classes, interfaces, unknownInterfaces);
-      myImplementsClause.delete();
+    if (implementsClause != null) {
+      collectRefs(implementsClause.getReferenceElementsGroovy(), classes, interfaces, unknownInterfaces);
+      implementsClause.delete();
     }
 
-    if (myClass.isInterface()) {
+    if (typeDef.isInterface()) {
       interfaces.addAll(classes);
       unknownInterfaces.addAll(unknownClasses);
-      addNewClause(interfaces, unknownInterfaces, project, true);
+      addNewClause(typeDef, interfaces, unknownInterfaces, project, true);
     }
     else {
-      addNewClause(classes, unknownClasses, project, true);
-      addNewClause(interfaces, unknownInterfaces, project, false);
+      addNewClause(typeDef, classes, unknownClasses, project, true);
+      addNewClause(typeDef, interfaces, unknownInterfaces, project, false);
     }
   }
 
-  private static void collectRefs(GrCodeReferenceElement[] refs, Collection<String> classes, Collection<String> interfaces, Collection<String> unknown) {
+  private static void collectRefs(GrCodeReferenceElement[] refs, Collection<? super String> classes, Collection<? super String> interfaces, Collection<? super String> unknown) {
     for (GrCodeReferenceElement ref : refs) {
       final PsiElement extendsElement = ref.resolve();
       String canonicalText = ref.getCanonicalText();
@@ -115,10 +85,14 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     }
   }
 
-  private void addNewClause(Collection<String> elements, Collection<String> additional, Project project, boolean isExtends) throws IncorrectOperationException {
+  private static void addNewClause(@NotNull GrTypeDefinition typeDef,
+                                   @NotNull Collection<String> elements,
+                                   @NotNull Collection<String> additional,
+                                   @NotNull Project project,
+                                   boolean isExtends) throws IncorrectOperationException {
     if (elements.isEmpty() && additional.isEmpty()) return;
 
-    StringBuilder classText = new StringBuilder();
+    @NlsSafe StringBuilder classText = new StringBuilder();
     classText.append("class A ");
     classText.append(isExtends ? "extends " : "implements ");
 
@@ -140,12 +114,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     GroovyPsiElement clause = isExtends ? definition.getExtendsClause() : definition.getImplementsClause();
     assert clause != null;
 
-    PsiElement addedClause = myClass.addBefore(clause, myClass.getBody());
+    PsiElement addedClause = typeDef.addBefore(clause, typeDef.getBody());
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedClause);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

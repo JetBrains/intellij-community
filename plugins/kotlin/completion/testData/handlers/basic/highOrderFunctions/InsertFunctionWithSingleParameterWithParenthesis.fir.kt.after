@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+fun some(f: () -> Unit) { f() }
+
+fun test() {
+    some(<caret>)
+}
+
+// ELEMENT: some
+// TAIL_TEXT: (f: () -> Unit) (<root>)
+// CHAR: (

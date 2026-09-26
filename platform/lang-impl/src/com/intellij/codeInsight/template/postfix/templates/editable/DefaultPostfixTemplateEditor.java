@@ -1,17 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ui.components.JBPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
-  @NotNull private final PostfixTemplateProvider myTemplateProvider;
-  @NotNull
-  private final PostfixTemplate myTemplateToEdit;
+@ApiStatus.Internal
+public final class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
+  private final @NotNull PostfixTemplateProvider myTemplateProvider;
+  private final @NotNull PostfixTemplate myTemplateToEdit;
 
   public DefaultPostfixTemplateEditor(@NotNull PostfixTemplateProvider templateProvider, @NotNull PostfixTemplate templateToEdit) {
     myTemplateProvider = templateProvider;
@@ -19,15 +20,13 @@ public class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
                                                                         : templateToEdit;
   }
 
-  @NotNull
   @Override
-  public PostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
+  public @NotNull PostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
     return new PostfixTemplateWrapper(templateId, templateName, "." + templateName, myTemplateToEdit, myTemplateProvider);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return new JBPanel();
   }
 

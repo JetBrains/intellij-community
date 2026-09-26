@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structureView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -48,21 +34,18 @@ public class TestTreeModel implements StructureViewModel{
   }
 
   @Override
-  @NotNull
-  public Filter[] getFilters() {
+  public Filter @NotNull [] getFilters() {
     return myFilters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public Grouper[] getGroupers() {
+  public Grouper @NotNull [] getGroupers() {
     return new Grouper[]{new TestGrouper(new String[]{"a", "b", "c"}),
                          new TestGrouper(new String[]{"d", "e", "f"})};
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     return mySorters.toArray(Sorter.EMPTY_ARRAY);
   }
 
@@ -82,9 +65,8 @@ public class TestTreeModel implements StructureViewModel{
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public StructureViewTreeElement[] getChildren() {
+    public StructureViewTreeElement @NotNull [] getChildren() {
       return myChildren.toArray(StructureViewTreeElement.EMPTY_ARRAY);
 
     }
@@ -95,6 +77,7 @@ public class TestTreeModel implements StructureViewModel{
       return new PresentationData(myValue, null, null, null);
     }
 
+    @Override
     public String toString() {
       return myValue;
     }
@@ -108,20 +91,6 @@ public class TestTreeModel implements StructureViewModel{
     @Override
     public String getValue() {
       return myValue;
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
   }
 

@@ -1,0 +1,271 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.impl.ValueHolder;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.Icon;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * The "import foo" or "import foo as bar" parts.
+ */
+public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> implements PyImportElement {
+  private volatile @Nullable ValueHolder<@Nullable QualifiedName> myImportedQName;
+  private volatile @Nullable ValueHolder<@Nullable String> myAsName;
+  private volatile @Nullable ValueHolder<@Nullable String> myVisibleName;
+
+  public PyImportElementImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  public PyImportElementImpl(PyImportElementStub stub) {
+    this(stub, PyStubElementTypes.IMPORT_ELEMENT);
+  }
+
+  public PyImportElementImpl(PyImportElementStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myImportedQName = null;
+    myAsName = null;
+    myVisibleName = null;
+  }
+
+  @Override
+  public @Nullable QualifiedName getImportedQName() {
+    ValueHolder<QualifiedName> result = myImportedQName;
+    if (result == null) {
+      myImportedQName = result = new ValueHolder<>(doGetImportedQName());
+    }
+    return result.value;
+  }
+
+  private @Nullable QualifiedName doGetImportedQName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      return stub.getImportedQName();
+    }
+    return PyImportElement.super.getImportedQName();
+  }
+
+  @Override
+  public String getAsName() {
+    ValueHolder<String> result = myAsName;
+    if (result == null) {
+      myAsName = result = new ValueHolder<>(doGetAsName());
+    }
+    return result.value;
+  }
+
+  private @Nullable String doGetAsName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      final String asName = stub.getAsName();
+      return StringUtil.isEmpty(asName) ? null : asName;
+    }
+    return PyImportElement.super.getAsName();
+  }
+
+  @Override
+  public @Nullable String getVisibleName() {
+    ValueHolder<String> result = myVisibleName;
+    if (result == null) {
+      myVisibleName = result = new ValueHolder<>(doGetVisibleName());
+    }
+    return result.value;
+  }
+
+  private @Nullable String doGetVisibleName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      final String asName = stub.getAsName();
+      if (!StringUtil.isEmpty(asName)) {
+        return asName;
+      }
+      final QualifiedName importedName = stub.getImportedQName();
+      if (importedName != null && importedName.getComponentCount() > 0) {
+        return importedName.getComponents().get(0);
+      }
+      return null; // we might have not found any names
+    }
+    else {
+      return PyImportElement.super.getVisibleName();
+    }
+  }
+
+  @Override
+  public @Nullable PyStatement getContainingImportStatement() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      PsiElement parent = stub.getParentStub().getPsi();
+      return parent instanceof PyStatement ? (PyStatement)parent : null;
+    }
+    else {
+      return PyImportElement.super.getContainingImportStatement();
+    }
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+
+      private @NotNull String getRefName(String defaultName) {
+        PyReferenceExpression ref = getImportReferenceExpression();
+        if (ref != null) {
+          String refName = ref.getName();
+          if (refName != null) return refName;
+        }
+        return defaultName;
+      }
+
+      @Override
+      public String getPresentableText() {
+        return getRefName("<none>");
+      }
+
+      @Override
+      public String getLocationString() {
+        PyElement elt = PsiTreeUtil.getParentOfType(PyImportElementImpl.this, PyImportStatement.class, PyFromImportStatement.class);
+        final StringBuilder buf = new StringBuilder();
+        if (elt != null) { // always? who knows :)
+          if (elt instanceof PyFromImportStatement) { // from ... import ...
+            buf.append("from ");
+            PyReferenceExpression impSrc = ((PyFromImportStatement)elt).getImportSource();
+            if (impSrc != null) {
+              buf.append(PyPsiUtils.toPath(impSrc));
+            }
+            else {
+              buf.append("<?>");
+            }
+            buf.append(" import ");
+          }
+          else { // "import ... "
+            buf.append("import ");
+          }
+          buf.append(getRefName("<?>"));
+        }
+        else {
+          buf.append("import?.. ");
+        }
+        // are we the name or the 'as'?
+        PyTargetExpression asPart = getAsNameElement();
+        if (asPart != null) {
+          buf.append(" as ").append(asPart.getName());
+        }
+        return buf.toString();
+      }
+
+      @Override
+      public Icon getIcon(final boolean open) {
+        return null;
+      }
+    };
+  }
+
+  @Override
+  public String getName() {
+    return PyImportElement.super.getName();
+  }
+
+  @Override
+  public @NotNull Iterable<PyElement> iterateNames() {
+    final String visibleName = getVisibleName();
+    return visibleName != null ? Collections.singletonList(this) : Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull List<RatedResolveResult> multiResolveName(final @NotNull String name) {
+    return getElementsNamed(name, true);
+  }
+
+  @Override
+  public @Nullable PsiElement getElementNamed(String name, boolean resolveImportElement) {
+    final List<RatedResolveResult> results = getElementsNamed(name, resolveImportElement);
+    return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
+  }
+
+  private @NotNull List<RatedResolveResult> getElementsNamed(@NotNull String name, boolean resolveImportElement) {
+    String asName = getAsName();
+    if (asName != null) {
+      if (!Objects.equals(name, asName)) {
+        return Collections.emptyList();
+      }
+      if (resolveImportElement) {
+        return multiResolve();
+      }
+      return ResolveResultList.to(this);
+    }
+    else {
+      final QualifiedName qName = getImportedQName();
+      if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(name)) {
+        return Collections.emptyList();
+      }
+      if (qName.getComponentCount() == 1) {
+        if (resolveImportElement) {
+          return multiResolve();
+        }
+        return ResolveResultList.to(this);
+      }
+      return ResolveResultList.to(createImportedModule(name));
+    }
+  }
+
+  @Override
+  public @Nullable PsiElement resolve() {
+    final List<RatedResolveResult> results = multiResolve();
+    return results.isEmpty() ? null : RatedResolveResult.sorted(results).get(0).getElement();
+  }
+
+  @Override
+  public @NotNull List<RatedResolveResult> multiResolve() {
+    final QualifiedName qName = getImportedQName();
+    return qName == null ? Collections.emptyList() : ResolveImportUtil.multiResolveImportElement(this, qName);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyImportElement(this);
+  }
+
+  @Override
+  public String toString() {
+    final QualifiedName qName = getImportedQName();
+    return String.format("%s:%s", super.toString(), qName != null ? qName : "null");
+  }
+
+  private @Nullable PsiElement createImportedModule(String name) {
+    final PsiFile file = getContainingFile();
+    if (file instanceof PyFile) {
+      return new PyImportedModule(this, (PyFile)file, QualifiedName.fromComponents(name));
+    }
+    return null;
+  }
+}

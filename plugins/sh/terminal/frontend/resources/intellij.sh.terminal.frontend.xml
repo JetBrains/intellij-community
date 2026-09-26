@@ -1,0 +1,29 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.sh.core"/>
+    <module name="intellij.sh.terminal"/>
+    <module name="intellij.terminal.frontend"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.sh.run.ShSelectedTerminalRunner"
+                    serviceImplementation="com.intellij.sh.terminal.frontend.ShFrontendTerminalRunner"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.sh.terminal.frontend.ShTerminalRunRequestListener"
+                                             topicId="sh.run.in.terminal"/>
+  </extensions>
+</idea-plugin>

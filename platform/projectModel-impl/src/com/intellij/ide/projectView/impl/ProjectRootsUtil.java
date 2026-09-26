@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
@@ -30,14 +19,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class ProjectRootsUtil {
+public final class ProjectRootsUtil {
   private ProjectRootsUtil() { }
 
-  public static boolean isSourceRoot(final PsiDirectory psiDirectory) {
+  public static boolean isSourceRoot(@NotNull PsiDirectory psiDirectory) {
     return isSourceRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
   }
 
-  public static boolean isSourceRoot(final VirtualFile directoryFile, final Project project) {
+  public static boolean isSourceRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return directoryFile.equals(fileIndex.getSourceRootForFile(directoryFile));
   }
@@ -61,15 +50,38 @@ public class ProjectRootsUtil {
     return projectFileIndex.isInTestSourceContent(directoryFile);
   }
 
-  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
-    return getModuleSourceRoot(virtualFile, project) != null;
+  public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, final @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    return fileIndex.isInSourceContent(virtualFile) && virtualFile.equals(fileIndex.getSourceRootForFile(virtualFile));
   }
 
-  @Nullable
-  public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
+  public static @Nullable SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!root.equals(projectFileIndex.getSourceRootForFile(root))) return null;
+    
     final Module module = projectFileIndex.getModuleForFile(root);
-    return module != null && !module.isDisposed() ? findSourceFolder(module, root) : null;
+    if (module == null || module.isDisposed()) return null;
+
+    VirtualFile contentRoot = projectFileIndex.getContentRootForFile(root);
+    if (contentRoot == null) return null;
+    
+    for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      if (contentRoot.equals(contentEntry.getFile())) {
+        /*
+         If there are several source roots pointing to the same directory, DirectoryIndex::getSourceFolder will return the last of them.
+         It appears that we have code which relies on this behavior, so we'll temporarily keep it. 
+        */
+        SourceFolder @NotNull [] folders = contentEntry.getSourceFolders();
+        for (int i = folders.length - 1; i >= 0; i--) {
+          SourceFolder folder = folders[i];
+          if (root.equals(folder.getFile())) {
+            return folder;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean isLibraryRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
@@ -85,36 +97,31 @@ public class ProjectRootsUtil {
     return isModuleContentRoot(directory.getVirtualFile(), directory.getProject());
   }
 
-  public static boolean isModuleContentRoot(@NotNull final VirtualFile directoryFile, @NotNull Project project) {
+  public static boolean isModuleContentRoot(final @NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
     return directoryFile.equals(contentRootForFile);
   }
 
-  public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
-    final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
-    if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
-      return info.getUnloadedModuleName();
+  public static @Nullable String findUnloadedModuleByContentRoot(final @NotNull VirtualFile root, @NotNull Project project) {
+    if (project.isDefault()) return null;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (fileIndex.isExcluded(root) && root.equals(fileIndex.getContentRootForFile(root, false))) {
+      return fileIndex.getUnloadedModuleNameForFile(root);
     }
     return null;
   }
 
-  public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
-    DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
-    VirtualFile contentRoot = info.getContentRoot();
-    if (info.isExcluded(file) && contentRoot != null) {
-      DirectoryInfo rootInfo = DirectoryIndex.getInstance(project).getInfoForFile(contentRoot);
-      return rootInfo.getUnloadedModuleName();
-    }
-    return null;
+  public static String findUnloadedModuleByFile(final @NotNull VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) return null;
+    return ProjectFileIndex.getInstance(project).getUnloadedModuleNameForFile(file);
   }
 
   public static boolean isProjectHome(@NotNull PsiDirectory psiDirectory) {
     return psiDirectory.getVirtualFile().equals(psiDirectory.getProject().getBaseDir());
   }
 
-  public static boolean isOutsideSourceRoot(@Nullable PsiFile psiFile) {
-    if (psiFile == null) return false;
+  public static boolean isOutsideSourceRoot(@NotNull PsiFile psiFile) {
     if (psiFile instanceof PsiCodeFragment) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return false;
@@ -122,20 +129,7 @@ public class ProjectRootsUtil {
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 
-  @Nullable
-  public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
-    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (root.equals(folder.getFile())) {
-          return folder;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
+  public static @Nullable ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       for (ExcludeFolder folder : entry.getExcludeFolders()) {
         if (root.equals(folder.getFile())) {

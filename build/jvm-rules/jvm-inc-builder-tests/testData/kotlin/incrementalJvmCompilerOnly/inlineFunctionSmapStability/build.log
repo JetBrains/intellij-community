@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_incrementalJvmCompilerOnly_inlineFunctionSmapStability-a.kotlin_module
+  inline1/BKt.class
+End of files
+Compiling files:
+  kotlin/incrementalJvmCompilerOnly/inlineFunctionSmapStability/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

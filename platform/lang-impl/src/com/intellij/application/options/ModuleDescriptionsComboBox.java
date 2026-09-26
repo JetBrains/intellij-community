@@ -1,44 +1,35 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.module.*;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.module.LoadedModuleDescription;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 
 /**
- * Combobox which may show not only regular loaded modules but also unloaded modules. Use it instead of {@link ModulesComboBox} for
- * configuration elements which may refer to unloaded modules.
+ * Combobox which may show not only regular loaded modules but also unloaded modules.
+ * Use it instead of {@link ModulesComboBox} for configuration elements which may refer to unloaded modules.
  *
- * @author nik
+ * @see ModulesComboBox
  */
-public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription> {
+public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription> implements ModulesCombo {
   private final SortedComboBoxModel<ModuleDescription> myModel;
   private boolean myAllowEmptySelection;
 
@@ -46,27 +37,19 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     myModel = new SortedComboBoxModel<>(Comparator.comparing(description -> description != null ? description.getName() : "",
                                                              String.CASE_INSENSITIVE_ORDER));
     setModel(myModel);
-    new ComboboxSpeedSearch(this){
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof ModuleDescription) {
-          return ((ModuleDescription)element).getName();
-        }
-        else {
-          return "";
-        }
-      }
-    };
+    setSwingPopup(false);
     setRenderer(new ModuleDescriptionListCellRenderer());
   }
 
-  public void allowEmptySelection(@NotNull String emptySelectionText) {
+  @Override
+  public void allowEmptySelection(@NotNull @NlsContexts.ListItem String emptySelectionText) {
     myAllowEmptySelection = true;
     myModel.add(null);
     setRenderer(new ModuleDescriptionListCellRenderer(emptySelectionText));
   }
 
-  public void setModules(@NotNull Collection<Module> modules) {
+  @Override
+  public void setModules(@NotNull Collection<? extends Module> modules) {
     myModel.clear();
     for (Module module : modules) {
       myModel.add(new LoadedModuleDescriptionImpl(module));
@@ -80,10 +63,12 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     setModules(Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
+  @Override
   public void setSelectedModule(@Nullable Module module) {
     myModel.setSelectedItem(module != null ? new LoadedModuleDescriptionImpl(module) : null);
   }
 
+  @Override
   public void setSelectedModule(@NotNull Project project, @NotNull String moduleName) {
     Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     if (module != null) {
@@ -103,8 +88,8 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     }
   }
 
-  @Nullable
-  public Module getSelectedModule() {
+  @Override
+  public @Nullable Module getSelectedModule() {
     ModuleDescription selected = myModel.getSelectedItem();
     if (selected instanceof LoadedModuleDescription) {
       return ((LoadedModuleDescription)selected).getModule();
@@ -112,39 +97,30 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     return null;
   }
 
-  @Nullable
-  public String getSelectedModuleName() {
+  @Override
+  public @Nullable String getSelectedModuleName() {
     ModuleDescription selected = myModel.getSelectedItem();
     return selected != null ? selected.getName() : null;
   }
 
-  private static class ModuleDescriptionListCellRenderer extends ListCellRendererWrapper<ModuleDescription> {
-    private final String myEmptySelectionText;
+  private static final class ModuleDescriptionListCellRenderer extends SimpleListCellRenderer<ModuleDescription> {
+    private final @NlsContexts.ListItem String myEmptySelectionText;
 
-    public ModuleDescriptionListCellRenderer() {
-      this("[none]");
+    ModuleDescriptionListCellRenderer() {
+      this(LangBundle.message("list.item.none"));
     }
 
-    public ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
+    ModuleDescriptionListCellRenderer(@NotNull @NlsContexts.ListItem String emptySelectionText) {
       myEmptySelectionText = emptySelectionText;
     }
 
     @Override
-    public void customize(JList list, ModuleDescription moduleDescription, int index, boolean selected, boolean hasFocus) {
-      if (moduleDescription == null) {
-        setText(myEmptySelectionText);
-      }
-      else {
-        if (moduleDescription instanceof LoadedModuleDescription) {
-          setIcon(ModuleType.get(((LoadedModuleDescription)moduleDescription).getModule()).getIcon());
-          setForeground(null);
-        }
-        else {
-          setIcon(AllIcons.Modules.UnloadedModule);
-          setForeground(JBColor.RED);
-        }
-        setText(moduleDescription.getName());
-      }
+    public void customize(@NotNull JList<? extends ModuleDescription> list, ModuleDescription value, int index, boolean selected, boolean hasFocus) {
+      setText(value == null ? myEmptySelectionText : value.getName());
+      setIcon(value instanceof LoadedModuleDescription
+              ? ModuleType.get(((LoadedModuleDescription)value).getModule()).getIcon()
+              : value != null
+                ? AllIcons.Modules.UnloadedModule : null);
     }
   }
 }

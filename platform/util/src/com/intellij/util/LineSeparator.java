@@ -1,22 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.nio.charset.StandardCharsets;
 
 /**
- * <p>Identifies a line separator:
- * either Unix ({@code \n}), Windows (@{code \r\n}) or (possible not actual anymore) Classic Mac ({@code \r}).</p>
- * <p/>
- * <p>The intention is to use this class everywhere, where a line separator is needed, instead of just Strings.</p>
- *
- * @author Kirill Likhodedov
+ * Identifies a line separator:
+ * either Unix ({@code \n}), Windows ({@code \r\n}) or (possible not actual anymore) Classic Mac ({@code \r}).
+ * <p>The intention is to use this class everywhere, where a line separator is needed instead of just Strings.</p>
  */
 public enum LineSeparator {
   LF("\n"),
@@ -28,11 +24,15 @@ public enum LineSeparator {
 
   LineSeparator(@NotNull String separatorString) {
     mySeparatorString = separatorString;
-    myBytes = separatorString.getBytes(CharsetToolkit.UTF8_CHARSET);
+    myBytes = separatorString.getBytes(StandardCharsets.UTF_8);
   }
 
-  @NotNull
-  public static LineSeparator fromString(@NotNull String string) {
+  @Override
+  public @NlsSafe String toString() {
+    return super.toString();
+  }
+
+  public static @NotNull LineSeparator fromString(@NotNull String string) {
     for (LineSeparator separator : values()) {
       if (separator.getSeparatorString().equals(string)) {
         return separator;
@@ -42,22 +42,15 @@ public enum LineSeparator {
     return getSystemLineSeparator();
   }
 
-  @NotNull
-  public String getSeparatorString() {
+  public @NotNull String getSeparatorString() {
     return mySeparatorString;
   }
 
-  @NotNull
-  public byte[] getSeparatorBytes() {
+  public byte @NotNull [] getSeparatorBytes() {
     return myBytes;
   }
 
-  public static boolean knownAndDifferent(@Nullable LineSeparator separator1, @Nullable LineSeparator separator2) {
-    return separator1 != null && separator2 != null && !separator1.equals(separator2);
-  }
-
-  @NotNull
-  public static LineSeparator getSystemLineSeparator() {
-    return SystemInfo.isWindows ? CRLF : LF;
+  public static @NotNull LineSeparator getSystemLineSeparator() {
+    return SystemInfoRt.isWindows ? CRLF : LF;
   }
 }

@@ -1,0 +1,7 @@
+open class Super {
+    private fun readResolve(): Any = Foo
+}
+
+object Foo : Super(), java.io.Serializable {
+    private fun readResolve(): Any = Foo
+}

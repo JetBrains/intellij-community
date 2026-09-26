@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,26 +10,22 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.QuickFixManagerImpl");
+  private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
-  public QuickFixManagerImpl(final GuiEditor editor, @NotNull final ComponentTree componentTree, final JViewport viewPort) {
+  public QuickFixManagerImpl(final GuiEditor editor, final @NotNull ComponentTree componentTree, final JViewport viewPort) {
     super(editor, componentTree, viewPort);
     myComponent.addTreeSelectionListener(new MyTreeSelectionListener());
   }
 
-  @NotNull
-  protected ErrorInfo[] getErrorInfos() {
+  @Override
+  protected ErrorInfo @NotNull [] getErrorInfos() {
     final RadComponent component = myComponent.getSelectedComponent();
     if(component == null){
       return ErrorInfo.EMPTY_ARRAY;
@@ -51,6 +33,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
     return ErrorAnalyzer.getAllErrorsForComponent(component);
   }
 
+  @Override
   public Rectangle getErrorBounds() {
     final TreePath selectionPath = myComponent.getSelectionPath();
     LOG.assertTrue(selectionPath != null);
@@ -58,6 +41,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   }
 
   private final class MyTreeSelectionListener implements TreeSelectionListener{
+    @Override
     public void valueChanged(final TreeSelectionEvent e) {
       hideIntentionHint();
       updateIntentionHintVisibility();
@@ -66,7 +50,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
 
 
       final String text;
-      if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
+      if (errorInfos.length > 0) {
         text = errorInfos [0].myDescription;
       }
       else {

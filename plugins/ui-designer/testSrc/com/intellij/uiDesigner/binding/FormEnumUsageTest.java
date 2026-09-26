@@ -3,8 +3,8 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -13,11 +13,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
-public class FormEnumUsageTest extends PsiTestCase {
+public class FormEnumUsageTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
 
   @Override
@@ -35,7 +35,7 @@ public class FormEnumUsageTest extends PsiTestCase {
   }
 
   public void testEnumUsage() throws IncorrectOperationException {
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(myJavaFacade.getProject(), LanguageLevel.JDK_1_5);
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         createFile(myModule, myTestProjectRoot, "PropEnum.java", "public enum PropEnum { valueA, valueB }");
@@ -54,9 +54,9 @@ public class FormEnumUsageTest extends PsiTestCase {
     final PsiClass componentClass = myJavaFacade.findClass("CustomComponent", ProjectScope.getAllScope(myProject));
     assertNotNull(componentClass);
 
-    assertEquals(1, ReferencesSearch.search(componentClass).findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(() -> ReferencesSearch.search(componentClass).findAll()).size());
 
-    assertEquals(1, ReferencesSearch.search(valueBField).findAll().size());
+    assertEquals(1, ReadAction.computeBlocking(()->ReferencesSearch.search(valueBField).findAll()).size());
   }
 
 }

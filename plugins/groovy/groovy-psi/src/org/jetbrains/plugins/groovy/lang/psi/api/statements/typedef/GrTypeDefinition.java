@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
@@ -34,49 +20,42 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
+/// Represents any element that defines a type in Groovy.
+/// NB: type parameter is also treated as a type definition.
 public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember, GrNamedElement, GrTopStatement {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
   ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrTypeDefinition[count];
 
-  @NotNull
   @Override
-  default PsiClassType[] getImplementsListTypes() {
+  default PsiClassType @NotNull [] getImplementsListTypes() {
     return getImplementsListTypes(true);
   }
 
-  @NotNull
   @Override
-  default PsiClassType[] getExtendsListTypes() {
+  default PsiClassType @NotNull [] getExtendsListTypes() {
     return getExtendsListTypes(true);
   }
 
-  @NotNull
   @Override
-  default PsiClass[] getSupers() {
+  default PsiClass @NotNull [] getSupers() {
     return getSupers(true);
   }
 
-  @NotNull
   @Override
-  default PsiClassType[] getSuperTypes() {
+  default PsiClassType @NotNull [] getSuperTypes() {
     return getSuperTypes(true);
   }
 
-  @NotNull
-  PsiClassType[] getImplementsListTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic);
 
-  @NotNull
-  PsiClassType[] getExtendsListTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic);
 
-  @NotNull
-  PsiClass[] getSupers(boolean includeSynthetic);
+  PsiClass @NotNull [] getSupers(boolean includeSynthetic);
 
-  @NotNull
-  PsiClassType[] getSuperTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getSuperTypes(boolean includeSynthetic);
 
-  @NotNull
-  default GrTypeDefinition[] getCodeInnerClasses() {
+  default GrTypeDefinition @NotNull [] getCodeInnerClasses() {
     return EMPTY_ARRAY;
   }
 
@@ -86,24 +65,19 @@ public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember,
   GrTypeDefinitionBody getBody();
 
   @Override
-  @NotNull
-  GrField[] getFields();
+  GrField @NotNull [] getFields();
 
-  @NotNull
-  GrField[] getCodeFields();
+  GrField @NotNull [] getCodeFields();
 
-  @NotNull
-  GrMethod[] getCodeConstructors();
+  GrMethod @NotNull [] getCodeConstructors();
 
   @Nullable
   PsiField findCodeFieldByName(String name, boolean checkBases);
 
   @Override
-  @NotNull
-  GrClassInitializer[] getInitializers();
+  GrClassInitializer @NotNull [] getInitializers();
 
-  @NotNull
-  GrMembersDeclaration[] getMemberDeclarations();
+  GrMembersDeclaration @NotNull [] getMemberDeclarations();
 
   @Override
   @Nullable
@@ -115,14 +89,15 @@ public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember,
   @Nullable
   GrImplementsClause getImplementsClause();
 
-  @NotNull
-  GrMethod[] getCodeMethods();
+  default @Nullable GrPermitsClause getPermitsClause() {
+    return null;
+  }
 
-  @NotNull
-  PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases);
+  GrMethod @NotNull [] getCodeMethods();
 
-  @NotNull
-  PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod @NotNull [] findCodeMethodsByName(@NonNls String name, boolean checkBases);
+
+  PsiMethod @NotNull [] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
 
   boolean isAnonymous();
 

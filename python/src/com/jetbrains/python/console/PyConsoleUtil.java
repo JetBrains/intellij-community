@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -31,22 +16,25 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IJSwingUtilities;
-import com.jetbrains.python.console.parsing.PythonConsoleData;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.parsing.console.PythonConsoleData;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-/**
- * @author traff
- */
-public class PyConsoleUtil {
+@ApiStatus.Internal
+public final class PyConsoleUtil {
   public static final String ORDINARY_PROMPT = ">>>";
   public static final String INPUT_PROMPT = ">?";
   public static final String INDENT_PROMPT = "...";
@@ -57,15 +45,10 @@ public class PyConsoleUtil {
 
   private static final String IPYTHON_PAGING_PROMPT = "---Return to continue, q to quit---";
 
-  static final String[] PROMPTS = new String[]{
-    ORDINARY_PROMPT,
-    INDENT_PROMPT,
-    HELP_PROMPT,
-    IPYTHON_PAGING_PROMPT
-  };
+  public static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
 
 
-  static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
+  public static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
 
   private PyConsoleUtil() {
   }
@@ -74,48 +57,17 @@ public class PyConsoleUtil {
     return prompt != null && IPYTHON_PAGING_PROMPT.equals(prompt.trim());
   }
 
-  static String processPrompts(final LanguageConsoleView languageConsole, String string) {
-    // Change prompt
-    for (String prompt : PROMPTS) {
-      if (string.startsWith(prompt)) {
-        // Process multi prompts here
-        if (prompt != HELP_PROMPT) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append(prompt).append(prompt);
-          while (string.startsWith(builder.toString())) {
-            builder.append(prompt);
-          }
-          final String multiPrompt = builder.toString().substring(prompt.length());
-          if (prompt == INDENT_PROMPT) {
-            prompt = multiPrompt;
-          }
-          string = string.substring(multiPrompt.length());
-        }
-        else {
-          string = string.substring(prompt.length());
-        }
-
-        // Change console editor prompt if required
-        final String currentPrompt = languageConsole.getPrompt();
-        final String trimmedPrompt = prompt.trim();
-        if (currentPrompt != null && !currentPrompt.equals(trimmedPrompt)) {
-          languageConsole.setPrompt(trimmedPrompt);
-          scrollDown(languageConsole.getConsoleEditor());
-        }
-        break;
-      }
-    }
-    return string;
-  }
-
 
   public static void scrollDown(final Editor currentEditor) {
     ApplicationManager.getApplication().invokeLater(
-      () -> currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength()));
+      () -> {
+        if (!currentEditor.isDisposed()) currentEditor.getCaretModel().moveToOffset(currentEditor.getDocument().getTextLength());
+      }
+    );
   }
 
 
-  public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
+  public static boolean detectIPythonImported(@NotNull String text) {
     return text.contains("PyDev console: using IPython ");
   }
 
@@ -144,8 +96,7 @@ public class PyConsoleUtil {
     consoleData.setIPythonEnabled(true);
   }
 
-  @NotNull
-  public static PythonConsoleData getOrCreateIPythonData(@NotNull VirtualFile file) {
+  public static @NotNull PythonConsoleData getOrCreateIPythonData(@NotNull VirtualFile file) {
     PythonConsoleData consoleData = file.getUserData(PYTHON_CONSOLE_DATA);
     if (consoleData == null) {
       consoleData = new PythonConsoleData();
@@ -159,51 +110,68 @@ public class PyConsoleUtil {
     consoleData.setIPythonAutomagic(detected);
   }
 
-  public static void setCurrentIndentSize(@NotNull VirtualFile file, int indentSize) {
-    PythonConsoleData consoleData = getOrCreateIPythonData(file);
-    consoleData.setIndentSize(indentSize);
+  /**
+   * Returns {@code true} if code completion must not be offered in the console input editor backed by {@code consoleFile}.
+   * <p>
+   * That is the case while the console is waiting for the input of the running program (the {@link #INPUT_PROMPT} prompt):
+   * the typed text is passed to the stdin of the process as is, so it is not Python code and completing it would replace
+   * what the user has typed.
+   */
+  public static boolean isCodeCompletionSuppressed(@Nullable PsiFile consoleFile) {
+    if (consoleFile == null) return false;
+    ConsoleCommunication communication = consoleFile.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
+    return communication != null && communication.isWaitingForInput();
   }
 
   public static AnAction createTabCompletionAction(PythonConsoleView consoleView) {
     final AnAction runCompletions = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           AnAction replace = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
-          ActionUtil.performActionDumbAware(replace, e);
+          ActionUtil.performAction(replace, e);
           return;
         }
         AnAction completionAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
         if (completionAction != null) {
-          ActionUtil.performActionDumbAware(completionAction, e);
+          ActionUtil.performAction(completionAction, e);
         }
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(false);
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           e.getPresentation().setEnabled(false);
+        }
+        if (isCodeCompletionSuppressed(consoleView.getFile())) {
+          // let the editor insert the tabulation character instead, the typed text goes to the stdin of the program
+          e.getPresentation().setEnabled(false);
+          return;
         }
         int offset = editor.getCaretModel().getOffset();
         Document document = editor.getDocument();
         int lineStart = document.getLineStartOffset(document.getLineNumber(offset));
         String textToCursor = document.getText(new TextRange(lineStart, offset));
-        e.getPresentation().setEnabled(!CharMatcher.WHITESPACE.matchesAllOf(textToCursor));
+        e.getPresentation().setEnabled(!CharMatcher.whitespace().matchesAllOf(textToCursor));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
 
-    runCompletions
-      .registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
-    runCompletions.getTemplatePresentation().setVisible(false);
+    runCompletions.registerCustomShortcutSet(KeyEvent.VK_TAB, 0, consoleView.getConsoleEditor().getComponent());
     return runCompletions;
   }
 
   public static AnAction createInterruptAction(PythonConsoleView consoleView) {
     AnAction anAction = new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         ConsoleCommunication consoleCommunication = consoleView.getExecuteActionHandler().getConsoleCommunication();
         if (consoleCommunication.isExecuting() || consoleCommunication.isWaitingForInput()) {
           consoleView.print("^C", ProcessOutputTypes.SYSTEM);
@@ -222,18 +190,36 @@ public class PyConsoleUtil {
       }
 
       @Override
-      public void update(final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(false);
+        boolean enabled = false;
         EditorEx consoleEditor = consoleView.getConsoleEditor();
-        boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
+        if (IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
+          enabled = !consoleEditor.getSelectionModel().hasSelection();
+        }
+        EditorEx historyViewer = consoleView.getHistoryViewer();
+        if (IJSwingUtilities.hasFocus(historyViewer.getComponent())) {
+          enabled = !historyViewer.getSelectionModel().hasSelection();
+        }
         e.getPresentation().setEnabled(enabled);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
 
-    anAction
-      .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, consoleView.getConsoleEditor().getComponent());
-    anAction.getTemplatePresentation().setVisible(false);
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getHistoryViewer().getComponent());
     return anAction;
   }
-}
 
+  public static boolean isCommandQueueEmpty(@NotNull Project project, @Nullable ConsoleCommunication communication) {
+    if (communication != null) {
+      return project.getService(CommandQueueForPythonConsoleService.class).isEmpty(communication);
+    }
+    return true;
+  }
+}
 

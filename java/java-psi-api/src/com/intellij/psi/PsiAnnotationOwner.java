@@ -5,24 +5,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public interface PsiAnnotationOwner {
   /**
    * Returns the list of annotations syntactically contained in the element.
    *
-   * @return the list of annotations.
+   * @return the array of annotations.
    */
-  @NotNull
-  PsiAnnotation[] getAnnotations();
+  PsiAnnotation @NotNull [] getAnnotations();
 
   /**
-   * @return the list of annotations which are applicable to this owner
+   * @return the array of annotations which are applicable to this owner
    *         (e.g. type annotations on method belong to its type element, not the method).
    */
-  @NotNull
-  PsiAnnotation[] getApplicableAnnotations();
+  PsiAnnotation @NotNull [] getApplicableAnnotations();
 
   /**
    * Searches the owner for an annotation with the specified fully qualified name
@@ -43,7 +38,6 @@ public interface PsiAnnotationOwner {
    *
    * @param qualifiedName the fully qualified name of the annotation to find
    * @return {@code true} is such annotation is found, otherwise {@code false}
-   * @since 2018.2
    */
   default boolean hasAnnotation(@NotNull @NonNls String qualifiedName) {
     //noinspection SSBasedInspection
@@ -51,11 +45,21 @@ public interface PsiAnnotationOwner {
   }
 
   /**
-   * Adds a new annotation to this owner. The annotation class name will be shortened. No attributes will be defined.
+   * Adds a new annotation to this owner. The annotation class name will be shortened if that class is already imported.
+   * No attributes will be defined.
    *
    * @param qualifiedName qualifiedName
    * @return newly added annotation
+   * @throws UnsupportedOperationException if annotation cannot be added 
+   * E.g. if element represents a compiled code or annotations are not supported in this place.
    */
   @NotNull
   PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName);
+
+  /**
+   * @return true if there is at least one annotation attached to the element.
+   */
+  default boolean hasAnnotations() {
+    return getAnnotations().length > 0;
+  }
 }

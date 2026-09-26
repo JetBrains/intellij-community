@@ -1,41 +1,86 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+/**
+ * Restricts search to matching {@code VirtualFile}s.
+ *
+ * @see LocalSearchScope
+ * @see GlobalSearchScope
+ */
 public abstract class SearchScope {
   private static int hashCodeCounter;
 
+  private transient int myHashCode;
+  // to avoid System.identityHashCode() which was allegedly slow
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private final int myHashCode = hashCodeCounter++;
+  private final int myDefaultHashCode = ++hashCodeCounter;
 
   /**
-   * Overridden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.
-   *
-   * @return hashCode value semantically identical to one from Object but not native
+   * Do not override this method because it would disable hash code caching.
+   * To provide your own hash code please override {@link #calcHashCode()} instead.
    */
+  @ApiStatus.NonExtendable
   @Override
   public int hashCode() {
-    return myHashCode;
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      // benign race
+      myHashCode = hashCode = calcHashCode();
+    }
+    return hashCode;
   }
 
-  @NotNull
-  public String getDisplayName() {
-    return PsiBundle.message("search.scope.unknown");
+  /**
+   * To provide your own hash code please override this method instead of <s>{@link #hashCode()}</s> to be able to cache the computed hash code.
+   */
+  protected int calcHashCode() {
+    return myDefaultHashCode;
   }
 
-  @Nullable
-  public Icon getDisplayIcon() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
+    return CoreBundle.message("search.scope.unknown");
+  }
+
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @NotNull public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
-  @NotNull public abstract SearchScope union(@NotNull SearchScope scope);
+  @NotNull
+  @ApiStatus.Internal
+  public String toFullString() {
+    return toString();
+  }
 
+  @Contract(pure = true)
+  public abstract @NotNull SearchScope intersectWith(@NotNull SearchScope scope2);
+
+  @Contract(pure = true)
+  public abstract @NotNull SearchScope union(@NotNull SearchScope scope);
+
+  @Contract(pure = true)
   public abstract boolean contains(@NotNull VirtualFile file);
+
+  /**
+   * Some search scopes are defined via a test against the workspace file index in contains(). It lags in NonIndexableFileSEContributor
+   * when mass-listing directories. This function is an opportunity to fix that.
+   */
+  @ApiStatus.Internal
+  public boolean containsNonIndexed(@NotNull VirtualFile file) { return contains(file); }
+
+  /**
+   * @return true if the scope is a special constant denoting an empty GlobalSearchScope or LocalSearchScope
+   */
+  public static boolean isEmptyScope(@NotNull SearchScope scope) {
+    return scope == GlobalSearchScope.EMPTY_SCOPE || scope == LocalSearchScope.EMPTY;
+  }
 }

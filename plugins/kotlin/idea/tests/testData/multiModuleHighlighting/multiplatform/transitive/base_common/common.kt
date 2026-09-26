@@ -1,0 +1,1 @@
+expect fun <error descr="[NO_ACTUAL_FOR_EXPECT]">foo</error>(): Int

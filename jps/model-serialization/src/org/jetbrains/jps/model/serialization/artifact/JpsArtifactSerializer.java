@@ -1,40 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.artifact;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.artifact.*;
-import org.jetbrains.jps.model.artifact.elements.*;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
+import org.jetbrains.jps.model.artifact.JarArtifactType;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsDirectoryCopyPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsDirectoryPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsExtractedDirectoryPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsFileCopyPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
-/**
- * @author nik
- */
-public class JpsArtifactSerializer {
+@ApiStatus.Internal
+public final class JpsArtifactSerializer {
   private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),
     new DirectoryElementSerializer(),
@@ -51,7 +50,6 @@ public class JpsArtifactSerializer {
   };
   private static final String ELEMENT_TAG = "element";
   private static final String ID_ATTRIBUTE = "id";
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
 
 
   public static void loadArtifacts(@NotNull JpsProject project, @Nullable Element componentElement) {
@@ -80,36 +78,6 @@ public class JpsArtifactSerializer {
     }
   }
 
-  public static void saveArtifact(@NotNull JpsArtifact artifact, Element componentElement) {
-    ArtifactState state = new ArtifactState();
-    state.setName(artifact.getName());
-    state.setBuildOnMake(artifact.isBuildOnMake());
-    state.setOutputPath(artifact.getOutputPath());
-    JpsArtifactPropertiesSerializer<?> serializer = getTypePropertiesSerializer(artifact.getArtifactType());
-    doSaveArtifact(artifact, componentElement, state, serializer);
-  }
-
-  private static <P extends JpsElement> void doSaveArtifact(JpsArtifact artifact, Element componentElement, ArtifactState state,
-                                                            JpsArtifactPropertiesSerializer<P> serializer) {
-    state.setArtifactType(serializer.getTypeId());
-    state.setRootElement(savePackagingElement(artifact.getRootElement()));
-    List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
-    //noinspection unchecked
-    serializer.saveProperties((P)artifact.getProperties(), propertiesList);
-    for (JpsModelSerializerExtension serializerExtension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsArtifactExtensionSerializer<?> extensionSerializer : serializerExtension.getArtifactExtensionSerializers()) {
-        JpsElement extension = artifact.getContainer().getChild(extensionSerializer.getRole());
-        if (extension != null) {
-          ArtifactPropertiesState propertiesState = new ArtifactPropertiesState();
-          propertiesState.setId(extensionSerializer.getId());
-          propertiesState.setOptions(saveExtension(extensionSerializer, extension));
-          propertiesList.add(propertiesState);
-        }
-      }
-    }
-    componentElement.addContent(XmlSerializer.serialize(state, SERIALIZATION_FILTERS));
-  }
-
   private static <E extends JpsElement> void loadExtension(JpsArtifactExtensionSerializer<E> serializer,
                                                            JpsArtifact artifact,
                                                            Element options) {
@@ -117,29 +85,7 @@ public class JpsArtifactSerializer {
     artifact.getContainer().setChild(serializer.getRole(), e);
   }
 
-  private static <E extends JpsElement> Element saveExtension(JpsArtifactExtensionSerializer<?> serializer,
-                                                              E extension) {
-    Element optionsTag = new Element("options");
-    //noinspection unchecked
-    ((JpsArtifactExtensionSerializer<E>)serializer).saveExtension(extension, optionsTag);
-    return optionsTag;
-  }
-
-  private static <P extends JpsPackagingElement> Element savePackagingElement(P element) {
-    //noinspection unchecked
-    JpsPackagingElementSerializer<P> serializer = findElementSerializer((Class<P>)element.getClass());
-    Element tag = new Element(ELEMENT_TAG).setAttribute(ID_ATTRIBUTE, serializer.getTypeId());
-    serializer.save(element, tag);
-    if (element instanceof JpsCompositePackagingElement) {
-      for (JpsPackagingElement child : ((JpsCompositePackagingElement)element).getChildren()) {
-        tag.addContent(savePackagingElement(child));
-      }
-    }
-    return tag;
-  }
-
-  @Nullable
-  private static JpsPackagingElement loadPackagingElement(Element element) {
+  private static @Nullable JpsPackagingElement loadPackagingElement(Element element) {
     JpsPackagingElement packagingElement = createPackagingElement(element);
     if (packagingElement instanceof JpsCompositePackagingElement) {
       for (Element childElement : JDOMUtil.getChildren(element, ELEMENT_TAG)) {
@@ -152,9 +98,9 @@ public class JpsArtifactSerializer {
     return packagingElement;
   }
 
-  @Nullable
-  private static JpsPackagingElement createPackagingElement(Element element) {
+  private static @Nullable JpsPackagingElement createPackagingElement(Element element) {
     String typeId = element.getAttributeValue(ID_ATTRIBUTE);
+    if (typeId == null) return null;
     JpsPackagingElementSerializer<?> serializer = findElementSerializer(typeId);
     if (serializer != null) {
       return serializer.load(element);
@@ -162,8 +108,7 @@ public class JpsArtifactSerializer {
     return null;
   }
 
-  @Nullable 
-  private static JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
+  private static @Nullable JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
     for (JpsPackagingElementSerializer<?> serializer : STANDARD_SERIALIZERS) {
       if (serializer.getTypeId().equals(typeId)) {
         return serializer;
@@ -179,27 +124,7 @@ public class JpsArtifactSerializer {
     return null;
   }
 
-  @NotNull
-  private static <E extends JpsPackagingElement> JpsPackagingElementSerializer<E> findElementSerializer(@NotNull Class<E> elementClass) {
-    for (JpsPackagingElementSerializer<?> serializer : STANDARD_SERIALIZERS) {
-      if (serializer.getElementClass().isAssignableFrom(elementClass)) {
-        //noinspection unchecked
-        return (JpsPackagingElementSerializer<E>)serializer;
-      }
-    }
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsPackagingElementSerializer<?> serializer : extension.getPackagingElementSerializers()) {
-        if (serializer.getElementClass().isAssignableFrom(elementClass)) {
-          //noinspection unchecked
-          return (JpsPackagingElementSerializer<E>)serializer;
-        }
-      }
-    }
-    throw new IllegalArgumentException("Serializer not found for " + elementClass);
-  }
-
-  @Nullable
-  private static JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
+  private static @Nullable JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsArtifactExtensionSerializer<?> serializer : extension.getArtifactExtensionSerializers()) {
         if (serializer.getId().equals(id)) {
@@ -226,24 +151,8 @@ public class JpsArtifactSerializer {
     return STANDARD_TYPE_SERIALIZERS[0];
   }
 
-  private static JpsArtifactPropertiesSerializer<?> getTypePropertiesSerializer(JpsArtifactType type) {
-    for (JpsArtifactPropertiesSerializer serializer : STANDARD_TYPE_SERIALIZERS) {
-      if (serializer.getType().equals(type)) {
-        return serializer;
-      }
-    }
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsArtifactPropertiesSerializer serializer : extension.getArtifactTypePropertiesSerializers()) {
-        if (serializer.getType().equals(type)) {
-          return serializer;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
-    public ArtifactRootElementSerializer() {
+  private static final class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
+    ArtifactRootElementSerializer() {
       super("root", JpsArtifactRootElement.class);
     }
 
@@ -251,14 +160,10 @@ public class JpsArtifactSerializer {
     public JpsArtifactRootElement load(Element element) {
       return JpsPackagingElementFactory.getInstance().createArtifactRoot();
     }
-
-    @Override
-    public void save(JpsArtifactRootElement element, Element tag) {
-    }
   }
 
-  private static class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
-    public DirectoryElementSerializer() {
+  private static final class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
+    DirectoryElementSerializer() {
       super("directory", JpsDirectoryPackagingElement.class);
     }
 
@@ -266,15 +171,10 @@ public class JpsArtifactSerializer {
     public JpsDirectoryPackagingElement load(Element element) {
       return JpsPackagingElementFactory.getInstance().createDirectory(element.getAttributeValue("name"));
     }
-
-    @Override
-    public void save(JpsDirectoryPackagingElement element, Element tag) {
-      tag.setAttribute("name", element.getDirectoryName());
-    }
   }
 
-  private static class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
-    public ArchiveElementSerializer() {
+  private static final class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
+    ArchiveElementSerializer() {
       super("archive", JpsArchivePackagingElement.class);
     }
 
@@ -282,15 +182,10 @@ public class JpsArtifactSerializer {
     public JpsArchivePackagingElement load(Element element) {
       return JpsPackagingElementFactory.getInstance().createArchive(element.getAttributeValue("name"));
     }
-
-    @Override
-    public void save(JpsArchivePackagingElement element, Element tag) {
-      tag.setAttribute("name", element.getArchiveName());
-    }
   }
 
-  private static class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
-    public FileCopyElementSerializer() {
+  private static final class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
+    FileCopyElementSerializer() {
       super("file-copy", JpsFileCopyPackagingElement.class);
     }
 
@@ -299,19 +194,10 @@ public class JpsArtifactSerializer {
       return JpsPackagingElementFactory.getInstance().createFileCopy(element.getAttributeValue("path"),
                                                                      element.getAttributeValue("output-file-name"));
     }
-
-    @Override
-    public void save(JpsFileCopyPackagingElement element, Element tag) {
-      tag.setAttribute("path", element.getFilePath());
-      String outputFileName = element.getRenamedOutputFileName();
-      if (outputFileName != null) {
-        tag.setAttribute("output-path-name", outputFileName);
-      }
-    }
   }
 
-  private static class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
-    public DirectoryCopyElementSerializer() {
+  private static final class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
+    DirectoryCopyElementSerializer() {
       super("dir-copy", JpsDirectoryCopyPackagingElement.class);
     }
 
@@ -319,16 +205,11 @@ public class JpsArtifactSerializer {
     public JpsDirectoryCopyPackagingElement load(Element element) {
       return JpsPackagingElementFactory.getInstance().createDirectoryCopy(element.getAttributeValue("path"));
     }
-
-    @Override
-    public void save(JpsDirectoryCopyPackagingElement element, Element tag) {
-      tag.setAttribute("path", element.getDirectoryPath());
-    }
   }
 
-  private static class ExtractedDirectoryElementSerializer
+  private static final class ExtractedDirectoryElementSerializer
     extends JpsPackagingElementSerializer<JpsExtractedDirectoryPackagingElement> {
-    public ExtractedDirectoryElementSerializer() {
+    ExtractedDirectoryElementSerializer() {
       super("extracted-dir", JpsExtractedDirectoryPackagingElement.class);
     }
 
@@ -337,16 +218,10 @@ public class JpsArtifactSerializer {
       return JpsPackagingElementFactory.getInstance().createExtractedDirectory(element.getAttributeValue("path"),
                                                                                element.getAttributeValue("path-in-jar"));
     }
-
-    @Override
-    public void save(JpsExtractedDirectoryPackagingElement element, Element tag) {
-      tag.setAttribute("path", element.getFilePath());
-      tag.setAttribute("path-in-jar", element.getPathInJar());
-    }
   }
 
-  private static class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
-    public LibraryFilesElementSerializer() {
+  private static final class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
+    LibraryFilesElementSerializer() {
       super("library", JpsLibraryFilesPackagingElement.class);
     }
 
@@ -365,21 +240,10 @@ public class JpsArtifactSerializer {
       return JpsPackagingElementFactory.getInstance()
         .createLibraryElement(JpsElementFactory.getInstance().createLibraryReference(libraryName, parentReference));
     }
-
-    @Override
-    public void save(JpsLibraryFilesPackagingElement element, Element tag) {
-      JpsLibraryReference reference = element.getLibraryReference();
-      JpsElementReference<? extends JpsCompositeElement> parentReference = reference.getParentReference();
-      tag.setAttribute("level", JpsLibraryTableSerializer.getLevelId(parentReference));
-      tag.setAttribute("name", reference.getLibraryName());
-      if (parentReference instanceof JpsModuleReference) {
-        tag.setAttribute("module-name", ((JpsModuleReference)parentReference).getModuleName());
-      }
-    }
   }
 
-  private static class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
-    public ArtifactOutputElementSerializer() {
+  private static final class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
+    ArtifactOutputElementSerializer() {
       super("artifact", JpsArtifactOutputPackagingElement.class);
     }
 
@@ -387,11 +251,6 @@ public class JpsArtifactSerializer {
     public JpsArtifactOutputPackagingElement load(Element element) {
       return JpsPackagingElementFactory.getInstance()
         .createArtifactOutput(JpsArtifactService.getInstance().createReference(element.getAttributeValue("artifact-name")));
-    }
-
-    @Override
-    public void save(JpsArtifactOutputPackagingElement element, Element tag) {
-      tag.setAttribute("artifact-name", element.getArtifactReference().getArtifactName());
     }
   }
 }

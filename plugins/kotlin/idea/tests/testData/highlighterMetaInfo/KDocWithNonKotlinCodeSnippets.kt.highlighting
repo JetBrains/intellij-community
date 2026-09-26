@@ -1,0 +1,37 @@
+// FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+// HIGHLIGHT_WARNINGS
+// TOOL: com.siyeh.ig.classlayout.FinalMethodInFinalClassInspection
+/**
+ * Broken block with warnings and errors:
+ * ```java
+ * private static final class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>Foo<!>() {}
+ *   private static final <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CONSTRUCTOR_DECLARATION_ATTRIBUTES'")!>bar<!>();
+ *
+ *   <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='ANNOTATION_NAME_ATTRIBUTES'")!>@<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>kotlin.<!><!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>jvm.<!>JvmOverloads<!>()
+ *   private static <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CONSTRUCTOR_DECLARATION_ATTRIBUTES'")!>bar<!>(int)
+ * }
+ * ```
+ *
+ * Valid block:
+ * ```java
+ * private static final class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='CLASS_NAME_ATTRIBUTES'")!>Foo<!> {}
+ * ```
+ *
+ * Broken block:
+ * ```xml
+ * Nothing here
+ * ```
+ *
+ * Broken block:
+ * ```python
+ * I love Kotlin
+ * ```
+ *
+ * Broken block:
+ * ```json
+ * I love kotlin
+ * ```
+ */
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(){}

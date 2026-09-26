@@ -1,0 +1,375 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.configuration
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.pyInterpreterItems
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.ui.InputValidatorEx
+import com.intellij.openapi.ui.MasterDetailsComponent
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Condition
+import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.util.IconUtil
+import com.intellij.util.ui.tree.TreeUtil
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
+import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
+import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.collectAddInterpreterActions
+import com.jetbrains.python.sdk.customizeWithSdkValue
+import com.jetbrains.python.sdk.filterAssignablePythonSdks
+import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.noInterpreterMarker
+import com.jetbrains.python.sdk.renameSdk
+import com.jetbrains.python.onFailure
+import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
+
+/**
+ * The list of Python interpreters with actions ("Add", "Remove", "Show Paths") and the details of the selected interpreter to the right of
+ * the list.
+ */
+internal class PythonInterpreterMasterDetails(private val moduleOrProject: ModuleOrProject, private val parentConfigurable: Configurable) : MasterDetailsComponent() {
+  private val project = moduleOrProject.project
+
+  // Temporary hack as lots of legacy code accept nullable module. Remove after legacy code migrated to ModuleOrProject.
+  private val module = when (moduleOrProject) {
+    is ModuleAndProject -> moduleOrProject.module
+    is ProjectOnly -> null
+  }
+
+  // The dialog owns a short-lived editable SDK model instead of sharing a cached project-level one. It is reloaded
+  // from the live SDK table in `reset()` and disposed in `disposeUIResources()` (PY-90077).
+  internal val projectSdksModel = ProjectSdksModel()
+
+  /**
+   * Indicates whether Python paths of one or more interpreters have been changed by user via Python Paths dialog.
+   *
+   * @see [ShowPathsAction]
+   */
+  private var pythonPathsModified = false
+
+  /**
+   * The field remembers the latest selected SDK in [myTree].
+   *
+   * It is used after closing "Python Interpreters" dialog with "OK" button to update Python interpreter associated with the project.
+   * [myTree] cannot be addressed directly in this case as it is disposed on closing the dialog.
+   *
+   * @see [PythonInterpreterConfigurable.openInDialog]
+   */
+  internal var storedSelectedSdk: Sdk? = null
+
+  private var hideOtherProjectVirtualenvs: Boolean = true
+
+  private val treeModel: DefaultTreeModel
+    get() = myTree.model as DefaultTreeModel
+
+  init {
+    // note that `MasterDetailsComponent` does not work without `initTree()`
+    initTree()
+    myTree.cellRenderer = PySdkListTreeRenderer()
+    myTree.addTreeSelectionListener {
+      val selectionPaths = myTree.selectionPaths
+      // do not store multi-selection
+      storedSelectedSdk = if (selectionPaths?.size == 1) selectionPaths[0].sdk else null
+    }
+  }
+
+  private class PySdkListTreeRenderer : ColoredTreeCellRenderer() {
+    override fun customizeCellRenderer(
+      tree: JTree,
+      value: Any?,
+      selected: Boolean,
+      expanded: Boolean,
+      leaf: Boolean,
+      row: Int,
+      hasFocus: Boolean,
+    ) {
+      val configurable = (value as? DefaultMutableTreeNode)?.userObject as? PythonInterpreterDetailsConfigurable
+      customizeWithSdkValue(configurable?.item, noInterpreterMarker, nullItem = null)
+    }
+  }
+
+  override fun getDisplayName(): String = PyBundle.message("sdk.details.dialog.title")
+
+  override fun isModified(): Boolean {
+    return pythonPathsModified || projectSdksModel.isModified || super.isModified()
+  }
+
+  private val allPythonSdksInEdit: List<Sdk>
+    get() = project.filterAssignablePythonSdks(projectSdksModel.sdks.toList(), module)
+
+  override fun reset() {
+    pythonPathsModified = false
+
+    // Reload the editable model from the live SDK table so interpreters added elsewhere (e.g. the "Add Interpreter"
+    // link or the status-bar widget) appear immediately; the tree is then built from these editable copies.
+    projectSdksModel.reset(project)
+
+    myRoot.removeAllChildren()
+
+    val visiblePythonSdks = when {
+      hideOtherProjectVirtualenvs -> allPythonSdksInEdit.filter { !it.isAssociatedWithAnotherModule(module) }
+      else -> allPythonSdksInEdit
+    }
+    // One progress for the whole list, because a row states whether its interpreter is usable and only the interpreter
+    // can answer that. Before PY-91967 every row probed the file system while it was being painted, under a modal
+    // progress of its own.
+    val items = interpreterItems(visiblePythonSdks)
+    visiblePythonSdks.zip(items).forEach { (sdk, item) -> addSdkNode(sdk, item) }
+
+    super.reset()
+  }
+
+  /** These SDKs as the tree holds them. Runs each interpreter, so it is done under a progress rather than on the EDT. */
+  private fun interpreterItems(sdks: List<Sdk>): List<PyInterpreterItem> =
+    runWithModalProgressBlocking(ModalTaskOwner.component(myTree), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
+      sdks.pyInterpreterItems()
+    }
+
+  /**
+   * Suits for incremental addition [sdk] to the tree: it preserves a selection and inserts the provided [sdk] to the proper place.
+   */
+  private fun addSdkNode(sdk: Sdk, item: PyInterpreterItem) {
+    addNode(MyNode(PythonInterpreterDetailsConfigurable(project, module, sdk, item, parentConfigurable)), myRoot)
+  }
+
+  private fun addSdkNodeAndSelect(sdk: Sdk) {
+    addSdkNode(sdk, interpreterItems(listOf(sdk)).single())
+    selectNodeInTree(sdk)
+  }
+
+  override fun apply() {
+    super.apply()
+
+    // Do not use `projectSdksModel.isModified` flag solely to optimize the method, because `isModified` remains `false` in case of
+    // non-structural changes (f.e. if a JDK has been changed)
+    projectSdksModel.apply(this)
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    projectSdksModel.disposeUIResources()
+  }
+
+  override fun createActions(fromPopup: Boolean): List<AnAction> =
+    if (fromPopup) {
+      listOf(RemoveAction(), RenameAction(), ShowPathsAction())
+    }
+    else {
+      // it would be nicer to insert the sdk at the proper place instead of adding it to the bottom
+      val addInterpreterActionGroup = PopupActionGroup(collectAddInterpreterActions(moduleOrProject, ::addSdkNodeAndSelect))
+      addInterpreterActionGroup.templatePresentation.icon = AllIcons.General.Add
+      addInterpreterActionGroup.templatePresentation.text = PyBundle.message("python.interpreters.add.interpreter.action.text")
+      addInterpreterActionGroup.isPopup = true
+      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
+      listOf(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
+    }
+
+  private fun getSelectedSdk(): Sdk? = selectedObject as? Sdk
+
+  private fun isEmptySdkSelection() = myTree.selectionPaths.isNullOrEmpty()
+
+  /**
+   * Note that implementing [MasterDetailsComponent.ActionGroupWithPreselection] guarantees that the group action will be handled as popup.
+   */
+  internal class PopupActionGroup(actions: List<AnAction>) : DefaultActionGroup(actions), ActionGroupWithPreselection {
+    override fun getActionGroup(): ActionGroup = this
+  }
+
+  private inner class RemoveAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.remove.interpreter.action.text"),
+                                                     IconUtil.removeIcon) {
+    init {
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      myTree.selectionPaths?.forEach { selectedPath ->
+        projectSdksModel.removeSdk(selectedPath.sdk)
+        TreeUtil.removeLastPathComponent(tree, selectedPath)
+      }
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = !isEmptySdkSelection()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+  }
+
+  private inner class RenameAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.rename.interpreter.action.text"),
+                                                     IconUtil.editIcon) {
+    init {
+      registerCustomShortcutSet(CommonShortcuts.getRename(), myTree)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val selectedSdk = getSelectedSdk() ?: return
+      val initialName = selectedSdk.name
+      // SDK names must be unique across the whole project JDK table (all SDK types), not only among the interpreters shown here.
+      val allNames: List<String> = ProjectJdkTable.getInstance().allJdks.map { it.name }
+      val name = Messages.showInputDialog(
+        myTree,
+        PyBundle.message("python.interpreters.rename.interpreter.dialog.message"),
+        PyBundle.message("python.interpreters.rename.interpreter.dialog.title"),
+        null,
+        initialName,
+        object : InputValidatorEx {
+          override fun getErrorText(inputString: String): String? =
+            when {
+              inputString.isBlank() -> PyBundle.message("rename.python.interpreter.dialog.provide.name.error.text")
+              conflictsWithOtherInterpreter(inputString) -> PyBundle.message("rename.python.interpreter.name.already.exists.error.text")
+              else -> null
+            }
+
+          override fun checkInput(inputString: String): Boolean = canClose(inputString)
+
+          override fun canClose(inputString: String): Boolean = nameCanBeApplied(inputString)
+
+          private fun nameCanBeApplied(inputString: String) = inputString.isNotBlank() && !allNames.contains(inputString)
+
+          private fun conflictsWithOtherInterpreter(inputString: String): Boolean = inputString != initialName &&
+                                                                                    allNames.contains(inputString)
+        }
+      )
+      // Skip changing the name if either the dialog is cancelled or the name is not changed
+      if (name == null || name == initialName) return
+      ApplicationManager.getApplication().runWriteAction {
+        // Rename the registered SDK in the project JDK table and re-point the project/module references to it.
+        project.renameSdk(initialName, name).onFailure {
+          // The rename dialog already rejects duplicate names, so this is only a defensive fallback.
+          thisLogger().warn("Cannot rename interpreter '$initialName' to '$name': $it")
+          return@runWriteAction
+        }
+
+        // `renameSdk` renamed the registered SDK. For an existing interpreter the tree shows a separate editable copy from
+        // `ProjectSdksModel`; rename it too so that `ProjectSdksModel.apply()` does not revert the change.
+        if (selectedSdk.name == initialName) {
+          selectedSdk.sdkModificator.let {
+            it.name = name
+            it.commitChanges()
+          }
+        }
+      }
+      (myTree.model as? DefaultTreeModel)?.nodeChanged(selectedNode)
+      myTree.revalidate()
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = !isEmptySdkSelection()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+  }
+
+  private inner class ToggleVirtualEnvFilterButton
+    : DumbAwareToggleAction(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
+                            Presentation.NULL_STRING, AllIcons.General.Filter) {
+
+    override fun isSelected(e: AnActionEvent): Boolean = hideOtherProjectVirtualenvs
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      if (hideOtherProjectVirtualenvs && !state) {
+        // reveal other virtualenvs
+        val revealed = allPythonSdksInEdit.filter { it.isAssociatedWithAnotherModule(module) }
+        revealed.zip(interpreterItems(revealed)).forEach { (sdk, item) -> addSdkNode(sdk, item) }
+      }
+      else if (!hideOtherProjectVirtualenvs && state) {
+        // hide other virtualenvs
+        val allPythonSdks = allPythonSdksInEdit
+        allPythonSdks.filter { it.isAssociatedWithAnotherModule(module) }.forEach(::incrementalRemoveSdk)
+      }
+      hideOtherProjectVirtualenvs = state
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  }
+
+  /**
+   * Removes provided sdk from the tree model and the tree itself.
+   */
+  private fun incrementalRemoveSdk(sdk: Sdk) {
+    val treeNode = TreeUtil.findNode(myRoot, Condition { sdk == it.sdk }) ?: return
+    treeModel.removeNodeFromParent(treeNode)
+  }
+
+  private inner class ShowPathsAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.show.interpreter.paths.text"),
+                                                        AllIcons.Actions.ShowAsTree) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val sdk: Sdk = getSelectedSdk() ?: return
+      val pathEditor = createPathEditor(sdk)
+      val sdkModificator = sdk.sdkModificator
+      val dialog = PythonPathDialog(project, pathEditor)
+      pathEditor.reset(sdkModificator)
+      if (dialog.showAndGet() && pathEditor.isModified) {
+        pathEditor.apply(sdkModificator)
+        ApplicationManager.getApplication().runWriteAction {
+          sdkModificator.commitChanges()
+        }
+        // now added and excluded paths are updated in `sdk` instance
+        pythonPathsModified = true
+        reloadSdk(sdk)
+      }
+    }
+
+    private fun createPathEditor(sdk: Sdk): PythonPathEditor {
+      return if (PythonSdkUtil.isRemote(sdk)) {
+        PyRemotePathEditor(project, sdk)
+      }
+      else {
+        PythonPathEditor(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
+                         FileChooserDescriptorFactory.createAllButJarContentsDescriptor())
+      }.apply { addReloadPathsActionCallback(::reloadSdk) }
+    }
+  }
+
+  private fun reloadSdk() {
+    val selectedSdk = getSelectedSdk()
+    if (selectedSdk != null) {
+      reloadSdk(selectedSdk)
+    }
+  }
+
+  private fun reloadSdk(sdk: Sdk) {
+    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+  }
+
+  companion object {
+    private val TreePath.sdk: Sdk
+      get() = (lastPathComponent as MyNode).configurable.editableObject as Sdk
+
+    private val TreeNode.sdk: Sdk?
+      get() {
+        val configurable = (this as? DefaultMutableTreeNode)?.userObject as? PythonInterpreterDetailsConfigurable
+        return configurable?.sdk
+      }
+  }
+}

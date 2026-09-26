@@ -20,9 +20,6 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ArtifactDeploymentSource extends DeploymentSource {
   @NotNull
   ArtifactPointer getArtifactPointer();

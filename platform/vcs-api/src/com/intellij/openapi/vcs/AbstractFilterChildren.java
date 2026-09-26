@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.Contract;
+
 import java.util.List;
 
 public abstract class AbstractFilterChildren<T> {
-  protected abstract void sortAscending(final List<T> list);
+  @Contract(mutates = "param1")
+  protected abstract void sortAscending(final List<? extends T> list);
   protected abstract boolean isAncestor(final T parent, final T child);
   protected void onRemove(final T t) {
   }
 
-  public void doFilter(final List<T> in) {
+  @Contract(mutates = "this,param1")
+  public void doFilter(final List<? extends T> in) {
     sortAscending(in);
 
     for (int i = 1; i < in.size(); i++) {

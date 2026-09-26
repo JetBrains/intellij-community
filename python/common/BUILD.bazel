@@ -1,0 +1,79 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.python.community.common` end
+
+### auto-generated section `build intellij.python.community.common` start
+create_kotlinc_options(
+    name = "custom_common",
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.python.community.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+    ],
+)
+
+jvm_library(
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.python.community.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.common` end
+
+### auto-generated section `iml intellij.python.community.common` start
+exports_files(
+    [
+        "intellij.python.community.common.iml",
+        "resources/intellij.python.community.common.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.common` end

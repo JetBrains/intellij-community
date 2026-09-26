@@ -1,0 +1,9 @@
+package test
+
+class TopLevel {
+    class Nested
+}
+
+fun usage() {
+    TopLevel.Nested()
+}

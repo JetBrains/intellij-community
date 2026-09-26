@@ -1,0 +1,7 @@
+fun foo(list: List<Int>) {
+    while (<selection><caret>true</selection>) {
+        list.forEach { item ->
+            println(item)
+        }
+    }
+}

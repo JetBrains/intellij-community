@@ -1,0 +1,6 @@
+class MyClass:
+    def keep_first(self):
+        return 1
+
+    def keep_last(self):
+        return 99

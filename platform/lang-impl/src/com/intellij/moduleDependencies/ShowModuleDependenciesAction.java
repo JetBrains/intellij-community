@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,27 +18,33 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import java.awt.GridLayout;
 
 /**
  * @author anna
- * @since Feb 9, 2005
  */
-public class ShowModuleDependenciesAction extends AnAction {
+public final class ShowModuleDependenciesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
-    Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(e.getDataContext());
+    Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     if (modules == null) {
-      PsiElement element = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+      PsiElement element = e.getData(CommonDataKeys.PSI_FILE);
       Module module = element != null ? ModuleUtilCore.findModuleForPsiElement(element) : null;
       if (module != null && ModuleManager.getInstance(project).getModules().length > 1) {
         MyModuleOrProjectScope dlg = new MyModuleOrProjectScope(module.getName());
@@ -54,23 +59,23 @@ public class ShowModuleDependenciesAction extends AnAction {
 
     ModulesDependenciesPanel panel = new ModulesDependenciesPanel(project, modules);
     AnalysisScope scope = modules != null ? new AnalysisScope(modules) : new AnalysisScope(project);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, scope.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, scope.getDisplayName(), false);
     content.setHelpId(ModulesDependenciesPanel.HELP_ID);
     content.setDisposer(panel);
     panel.setContent(content);
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }
 
-  private static class MyModuleOrProjectScope extends DialogWrapper {
+  private static final class MyModuleOrProjectScope extends DialogWrapper {
     private final JRadioButton myProjectScope;
     private final JRadioButton myModuleScope;
 
-    protected MyModuleOrProjectScope(String moduleName) {
+    private MyModuleOrProjectScope(String moduleName) {
       super(false);
-      setTitle(AnalysisScopeBundle.message("module.dependencies.scope.dialog.title"));
+      setTitle(CodeInsightBundle.message("module.dependencies.scope.dialog.title"));
       ButtonGroup group = new ButtonGroup();
-      myProjectScope = new JRadioButton(AnalysisScopeBundle.message("module.dependencies.scope.dialog.project.button"));
-      myModuleScope = new JRadioButton(AnalysisScopeBundle.message("module.dependencies.scope.dialog.module.button", moduleName));
+      myProjectScope = new JRadioButton(CodeInsightBundle.message("module.dependencies.scope.dialog.project.button"));
+      myModuleScope = new JRadioButton(CodeInsightBundle.message("module.dependencies.scope.dialog.module.button", moduleName));
       group.add(myProjectScope);
       group.add(myModuleScope);
       myProjectScope.setSelected(true);

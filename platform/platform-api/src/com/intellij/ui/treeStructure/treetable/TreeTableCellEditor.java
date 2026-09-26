@@ -15,10 +15,11 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.EventObject;
 
 /**
@@ -32,6 +33,7 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
     myTableCellRenderer = tableCellRenderer;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column){
     return myTableCellRenderer.getTableCellRendererComponent(table, value, isSelected, false, 0, column);
   }
@@ -54,11 +56,13 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
    * <p>By returning false we are also enforcing the policy that
    * the tree will never be editable (at least by a key sequence).
    */
+  @Override
   public boolean isCellEditable(EventObject e){
     return false;
   }
 
 
+  @Override
   public Object getCellEditorValue() {
     return "";
   }

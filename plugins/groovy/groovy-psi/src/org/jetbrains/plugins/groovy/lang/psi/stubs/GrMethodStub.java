@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.impl.PsiImplUtil;
@@ -25,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 
-/**
- * @author ilyas
- */
 public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMethod> {
   public static final byte IS_DEPRECATED_BY_DOC_TAG = 0b1;
   public static final byte HAS_BLOCK = 0b10;
@@ -42,7 +25,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
   public GrMethodStub(StubElement parent,
                       StringRef name,
                       final String[] annotations,
-                      @NotNull final String[] namedParameters,
+                      final String @NotNull [] namedParameters,
                       @NotNull GrMethodElementType elementType,
                       @Nullable String typeText,
                       byte flags) {
@@ -55,8 +38,7 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return StringRef.toString(myName);
   }
 
@@ -64,13 +46,11 @@ public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMeth
     return myAnnotations;
   }
 
-  @NotNull
-  public String[] getNamedParameters() {
+  public String @NotNull [] getNamedParameters() {
     return myNamedParameters;
   }
 
-  @Nullable
-  public String getTypeText() {
+  public @Nullable String getTypeText() {
     return myTypeText;
   }
 

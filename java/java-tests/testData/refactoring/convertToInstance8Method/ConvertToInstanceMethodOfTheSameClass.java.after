@@ -1,9 +1,9 @@
 
 class Bar {
-    void foo() {
-    }
+  void foo() {
+  }
 
-    void m(){
+  void m(){
     foo();
   }
 

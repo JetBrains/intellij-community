@@ -1,74 +1,118 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.ide.navigation.NavigateUtil;
+import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.pom.Navigatable;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
-/**
- * @author lesya
- */
+public final class EditSourceOnEnterKeyHandler {
+  private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+  private static final KeyboardShortcut ENTER_SHORTCUT = new KeyboardShortcut(ENTER, null);
 
-public class EditSourceOnEnterKeyHandler{
-  public static void install(final JTree tree){
-    tree.addKeyListener(
-      new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
-          if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-            DataContext dataContext = DataManager.getInstance().getDataContext(tree);
+  public static void install(@NotNull JTree tree) {
+    install((JComponent)tree); // backward compatibility
+  }
 
-            Project project = CommonDataKeys.PROJECT.getData(dataContext);
-            if (project == null) return;
+  public static void install(@NotNull JComponent component) {
+    install(component, null);
+  }
 
-            OpenSourceUtil.openSourcesFrom(dataContext, false);
-          }
+  public static void install(@NotNull JComponent component, @Nullable Runnable whenPerformed) {
+    onEnterKey(component, () -> {
+      if (isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE) ||
+          isOverriddenByAction(IdeActions.ACTION_VIEW_SOURCE)) {
+        return false;
+      }
+
+      var dataContext = DataManager.getInstance().getDataContext(component);
+      List<Navigatable> navigatables = getNavigatables(dataContext);
+      // nowhere to navigate
+      if (navigatables.isEmpty()) {
+        return false;
+      }
+
+      boolean requestFocus = AdvancedSettings.getBoolean("edit.source.on.enter.key.request.focus.in.editor");
+      var project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project != null && Registry.is("ide.navigation.requests")) {
+        var modalityState = ModalityState.current();
+        var options = NavigationOptions.defaultOptions().requestFocus(requestFocus);
+        var job = NavigateUtil.requestNavigate(project, navigatables, options, dataContext);
+        if (whenPerformed != null) {
+          job.invokeOnCompletion(_ -> {
+            ApplicationManager.getApplication().invokeLater(whenPerformed, modalityState, project.getDisposed());
+            return Unit.INSTANCE;
+          });
+        }
+        return true;
+      }
+      for (Navigatable navigatable : navigatables) {
+        navigatable.navigate(requestFocus);
+      }
+      if (whenPerformed != null) {
+        whenPerformed.run();
+      }
+      return true;
+    });
+  }
+
+  private static boolean isOverriddenByAction(@NotNull String actionId) {
+    KeymapManager manager = KeymapManager.getInstance();
+    return manager != null && null != ContainerUtil.find(manager.getActiveKeymap().getShortcuts(actionId), ENTER_SHORTCUT::equals);
+  }
+
+  private static @NotNull List<Navigatable> getNavigatables(@NotNull DataContext context) {
+    Navigatable[] array = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
+    if (array == null || array.length == 0) {
+      return Collections.emptyList();
+    }
+
+    List<Navigatable> list = ContainerUtil.filter(array, Navigatable::canNavigateToSource);
+    if (list.isEmpty() && Registry.is("edit.source.on.enter.key.non.source.navigation.enabled")) {
+      for (Navigatable navigatable : array) {
+        if (navigatable.canNavigate()) {
+          // only one non-source navigatable should be supported
+          // @see OpenSourceUtil#navigate(boolean, boolean, Iterable)
+          return Collections.singletonList(navigatable);
         }
       }
-    );
+    }
+    return list;
   }
 
-  public static void install(final JComponent component,
-                           @Nullable final Runnable whenPerformed) {
-    component.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(component);
-        OpenSourceUtil.openSourcesFrom(dataContext, true);
-        if (whenPerformed != null) whenPerformed.run();
+  private static void onEnterKey(@NotNull JComponent component, @NotNull BooleanSupplier action) {
+    ActionListener listener = component.getActionForKeyStroke(ENTER);
+    component.registerKeyboardAction(event -> {
+      try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        if (!action.getAsBoolean() && listener != null) {
+          // perform previous action if the specified action is failed,
+          // it is needed to expand/collapse a tree node
+          listener.actionPerformed(event);
+        }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-  }
-
-  public static void install(@Nullable final Runnable before, final JComponent component,
-                           @Nullable final Runnable whenPerformed) {
-    component.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(component);
-        if (before != null) before.run();
-        OpenSourceUtil.openSourcesFrom(dataContext, true);
-        if (whenPerformed != null) whenPerformed.run();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    }, ENTER, JComponent.WHEN_FOCUSED);
   }
 }

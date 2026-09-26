@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.DiffContentFactory;
@@ -30,17 +16,14 @@ import com.intellij.util.text.ElementPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class PsiDiffContentFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.ex.PsiDiffContentFactory");
+
+public final class PsiDiffContentFactory {
+  private static final Logger LOG = Logger.getInstance(PsiDiffContentFactory.class);
 
   private PsiDiffContentFactory() {
   }
 
-  @Nullable
-  private static DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
+  private static @Nullable DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
     DiffContentFactory factory = DiffContentFactory.getInstance();
     if (psiElement instanceof PsiFile) {
       return factory.create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
@@ -59,8 +42,7 @@ public class PsiDiffContentFactory {
     return factory.createFragment(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
   }
 
-  @Nullable
-  public static DiffRequest comparePsiElements(@NotNull PsiElement psiElement1, @NotNull PsiElement psiElement2) {
+  public static @Nullable DiffRequest comparePsiElements(@NotNull PsiElement psiElement1, @NotNull PsiElement psiElement2) {
     if (!psiElement1.isValid() || !psiElement2.isValid()) return null;
     Project project = psiElement1.getProject();
     LOG.assertTrue(project == psiElement2.getProject());

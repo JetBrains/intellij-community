@@ -1,6 +1,7 @@
-// "Replace with 'this'" "true"
+// "Replace with 'this'" "true-preview"
 class X {
   void test(Object x) {
-    System.out.println(this);
+      /*comment*/
+      System.out.println(this);
   }
 }

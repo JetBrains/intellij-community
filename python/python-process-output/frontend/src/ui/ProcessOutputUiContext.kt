@@ -1,0 +1,43 @@
+package com.intellij.python.processOutput.frontend.ui
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.python.processOutput.common.ProcessId
+import com.intellij.python.processOutput.frontend.ProcessOutputController
+import com.intellij.python.processOutput.frontend.ProcessOutputControllerService
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CoroutineScope
+import javax.swing.JPanel
+
+internal class ProcessOutputUiContext(
+  val project: Project,
+  val rootPanel: JPanel,
+  parentDisposable: Disposable,
+) {
+  val coroutineScope =
+    project
+      .service<ProcessOutputCoroutine>()
+      .coroutineScope
+      .childScope("Process Output Tool Window")
+      .apply { Disposer.register(parentDisposable, asDisposable()) }
+
+  val controller: ProcessOutputController
+    get() = project.service<ProcessOutputControllerService>().controller
+
+  var scrollOnProcessDisplayed: ScrollOnProcessDisplayed = ScrollOnProcessDisplayed.None
+  var processTree: Tree? = null
+
+  sealed interface ScrollOnProcessDisplayed {
+    data class Up(val processId: ProcessId) : ScrollOnProcessDisplayed
+    data class Down(val processId: ProcessId) : ScrollOnProcessDisplayed
+    data object None : ScrollOnProcessDisplayed
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class ProcessOutputCoroutine(val coroutineScope: CoroutineScope)

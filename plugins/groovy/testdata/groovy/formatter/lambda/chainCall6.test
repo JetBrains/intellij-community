@@ -1,0 +1,7 @@
+bar
+.foo( (a)->{ closure })
+. bar (b)->{ closure }
+-----
+bar
+    .foo((a) -> { closure })
+    .bar (b) -> { closure }

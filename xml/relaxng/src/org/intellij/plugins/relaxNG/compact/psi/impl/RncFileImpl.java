@@ -47,14 +47,12 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return RncFileType.getInstance();
   }
 
   @Override
-  @NotNull
-  public XmlDocument getDocument() {
+  public @NotNull XmlDocument getDocument() {
     // this needs to be a seperate child element because of com.intellij.util.xml.impl.ExternalChangeProcessor.visitDocumentChanged()
     final XmlDocument document = findChildByClass(XmlDocument.class);
     assert document != null;
@@ -68,26 +66,14 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
 
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    //processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, this);
-    try {
-      final ASTNode docNode = getDocument().getNode();
-      assert docNode != null;
-      final ASTNode[] nodes = docNode.getChildren(DECLS);
-      for (ASTNode node : nodes) {
-        if (!processor.execute(node.getPsi(), substitutor)) {
-          return false;
-        }
-      }
-
-      final RncGrammar grammar = getGrammar();
-      if (grammar != null) {
-        return grammar.processDeclarations(processor, substitutor, lastParent, place);
-      } else {
-        return true;
-      }
-    } finally {
-      //processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
+    ASTNode docNode = getDocument().getNode();
+    assert docNode != null;
+    ASTNode[] nodes = docNode.getChildren(DECLS);
+    for (ASTNode node : nodes) {
+      if (!processor.execute(node.getPsi(), substitutor)) return false;
     }
+    RncGrammar grammar = getGrammar();
+    return grammar == null || grammar.processDeclarations(processor, substitutor, lastParent, place);
   }
 
   @Override
@@ -110,9 +96,8 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     return false;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getFileResolveScope() {
+  public @NotNull GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }
 

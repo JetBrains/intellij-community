@@ -1,0 +1,9 @@
+================ Step #1 =================
+Cleaning output files:
+  JavaClass.class
+End of files
+Compiling files:
+  kotlin/custom/javaConstantUnchangedUsedInKotlin/a/JavaClass.java
+End of files
+------------------------------------------
+Exit code: OK

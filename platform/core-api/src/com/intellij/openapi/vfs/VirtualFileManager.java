@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -20,11 +6,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Manages virtual file systems.
@@ -32,24 +28,30 @@ import org.jetbrains.annotations.Nullable;
  * @see VirtualFileSystem
  */
 public abstract class VirtualFileManager implements ModificationTracker {
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>("NewVirtualFileSystem changes", BulkFileListener.class);
 
-  public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
+  /**
+   * Consider using {@link VirtualFileManager#VFS_CHANGES_BG} to run your listener on background.
+   */
+  @Topic.AppLevel
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
-  private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
+  @Topic.AppLevel
+  public static final Topic<BulkFileListenerBackgroundable> VFS_CHANGES_BG =
+    new Topic<>(BulkFileListenerBackgroundable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
+  public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
+
+  private static final Supplier<VirtualFileManager> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(VirtualFileManager.class);
+  });
 
   /**
    * Gets the instance of {@code VirtualFileManager}.
    *
    * @return {@code VirtualFileManager}
    */
-  @NotNull
-  public static VirtualFileManager getInstance() {
-    VirtualFileManager result = ourInstance;
-    if (result == null) {
-      ourInstance = result = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
-    }
-    return result;
+  public static @NotNull VirtualFileManager getInstance() {
+    return ourInstance.get();
   }
 
   /**
@@ -59,85 +61,170 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return {@link VirtualFileSystem}
    * @see VirtualFileSystem#getProtocol
    */
-  public abstract VirtualFileSystem getFileSystem(String protocol);
+  @Contract("null -> null")
+  public abstract VirtualFileSystem getFileSystem(@Nullable String protocol);
 
   /**
-   * <p>Refreshes the cached file systems information from the physical file systems synchronously.<p/>
-   *
-   * <p><strong>Note</strong>: this method should be only called within a write-action
-   * (see {@linkplain com.intellij.openapi.application.Application#runWriteAction})</p>
-   *
-   * @return refresh session ID.
+   * The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead.
+   * <p>
+   * Besides, the method is blocking and requires a write lock.
    */
+  @ApiStatus.Obsolete
   public abstract long syncRefresh();
 
-  /**
-   * Refreshes the cached file systems information from the physical file systems asynchronously.
-   * Launches specified action when refresh is finished.
-   *
-   * @return refresh session ID.
-   */
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
   public abstract long asyncRefresh(@Nullable Runnable postAction);
 
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VirtualFile#refresh} instead. */
+  @ApiStatus.Obsolete
+  public final long asyncRefresh() {
+    return asyncRefresh(null);
+  }
+
+  /** The method refreshes the whole VFS, which may take time and produce unrelated events. Use {@link VfsUtil#markDirtyAndRefresh} instead. */
+  @ApiStatus.Obsolete
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
-   * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all
-   * file systems.
+   * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
    *
-   * @param url the URL to find file by
+   * @param url the URL to find a file by
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
    */
-  @Nullable
-  public abstract VirtualFile findFileByUrl(@NonNls @NotNull String url);
+  public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
+    return null;
+  }
 
   /**
-   * Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.<br>
+   * Resolves url to {@link VirtualFile}, but does not cache anything.
+   * Difference with {@link #findFileByUrl(String)} is that this method finds an already cached {@link VirtualFile}, if such a
+   * file was already cached, but if there is no file cached yet for the url -- this method returns a {@link CacheAvoidingVirtualFile}
+   * instance, and does NOT cache any data about it.
+   * So this method uses already cached data, but never caches _new_ data during its execution.
    * <p/>
-   * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.<p>
+   * This method is intended to deal with file-trees outside the main project tree: regular {@link #findFileByUrl(String)}
+   * pushes data into the underlying VFS cache (both in-memory and persistent) -- to provide faster access, but also
+   * to satisfy some {@link VirtualFile}'s contract statements about equality and {@link com.intellij.openapi.util.UserDataHolder}, etc.
+   * Such caching makes sense for +/- frequently accessed files, but makes little sense for rarely accessed files -- while
+   * the cached data could grow large and expensive to maintain if there are really a lot of such files.
    * <p/>
-   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.
+   * There are tasks where we'd prefer to use the {@link VirtualFile} VFS API, but we don't want to clutter the VFS cache
+   * with the data of all the files accessed -- e.g. because this is a big, but rarely accessed file-tree. This implementation
+   * is an experimental approach to deal with such cases -- by sacrificing part of the {@link VirtualFile} contract.
+   *
+   * @see CacheAvoidingVirtualFile
+   * @see com.intellij.openapi.vfs.newvfs.TransientVirtualFileImpl
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileByUrlWithoutCaching(@NotNull String url) {
+    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) {
+      return null;
+    }
+
+    if (!(fileSystem instanceof FileSystemInterface)) {
+      //MAYBE RC: return null, as in a branch above, there fileSystem is not found at all?
+      throw new UnsupportedOperationException(
+        ".findFileByUrlWithoutCaching(" + url + ") is supported only for fileSystems implementing FileSystemInterface, " +
+        "but " + fileSystem + " doesn't"
+      );
+    }
+
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return ((FileSystemInterface)fileSystem).findFileByPathWithoutCaching(path);
+  }
+
+  /**
+   * Looks for a related {@link VirtualFile} for a given {@link Path}
+   *
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFile#getUrl
+   * @see VirtualFileSystem#findFileByPath
+   * @see #refreshAndFindFileByUrl
+   */
+  public @Nullable VirtualFile findFileByNioPath(@NotNull Path path) {
+    return null;
+  }
+
+  /**
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
+   *
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
    * @param url the URL
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
-  @Nullable
-  public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
+  public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    return null;
+  }
 
   /**
-   * Adds listener to the file system.
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL.</p>
    *
-   * @param listener the listener
-   * @see VirtualFileListener
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
+   *
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFileSystem#findFileByPath
+   * @see VirtualFileSystem#refreshAndFindFileByPath
+   **/
+  public @Nullable VirtualFile refreshAndFindFileByNioPath(@NotNull Path path) {
+    return null;
+  }
+
+  /**
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * @deprecated When possible, migrate to {@link AsyncFileListener} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES} message bus topic to avoid early initialization of {@link VirtualFileManager}.
+   */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes listener form the file system.
-   *
-   * @param listener the listener
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
+  @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
-   * file systems.
+   * The listeners registered this way will run on EDT. Consider using {@link VirtualFileManager#addAsyncFileListenerBackgroundable}
+   *
+   * Consider using extension point {@code vfs.asyncListener}.
+   */
+  public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
+
+  /**
+   * Consider using extension point {@code vfs.asyncListenerBackgroundable}.
+   * The listeners registered this way will always to run on background threads.
+   */
+  public abstract void addAsyncFileListenerBackgroundable(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
+
+  public abstract void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
+
+  /**
+   * Constructs a {@link VirtualFile#getUrl() URL} by specified protocol and path.
    *
    * @param protocol the protocol
    * @param path     the path
    * @return URL
+   * @see VirtualFile#getUrl
    */
-  @NotNull
-  public static String constructUrl(@NotNull String protocol, @NotNull String path) {
+  public static @NotNull String constructUrl(@NotNull String protocol, @NotNull String path) {
     return protocol + URLUtil.SCHEME_SEPARATOR + path;
   }
 
@@ -148,47 +235,60 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return protocol or {@code null} if there is no "://" in the URL
    * @see VirtualFileSystem#getProtocol
    */
-  @Nullable
-  public static String extractProtocol(@NotNull String url) {
+  public static @Nullable String extractProtocol(@NotNull String url) {
     int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     if (index < 0) return null;
     return url.substring(0, index);
   }
 
   /**
-   * Extracts path from the given URL. Path is a substring from "://" till the end of URL. If there is no "://" URL
-   * itself is returned.
-   *
-   * @param url the URL
-   * @return path
+   * @see URLUtil#extractPath(String)
    */
-  @NotNull
-  public static String extractPath(@NotNull String url) {
-    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    if (index < 0) return url;
-    return url.substring(index + URLUtil.SCHEME_SEPARATOR.length());
+  public static @NotNull String extractPath(@NotNull String url) {
+    return URLUtil.extractPath(url);
   }
-
-  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
+  /** @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)} */
+  @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
-  public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @NotNull String property, Object oldValue, Object newValue);
+  public abstract void notifyPropertyChanged(
+    @NotNull VirtualFile virtualFile,
+    @VirtualFile.PropName @NotNull String property,
+    Object oldValue,
+    Object newValue
+  );
 
   /**
-   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
-   * This only counts modifications done in current IDE session.
+   * @return a number that's incremented every time something changes in the VFS, i.e., file hierarchy, names, flags, attributes, contents.
+   * This only counts modifications done in the current IDE session.
    * @see #getStructureModificationCount()
    */
   @Override
   public abstract long getModificationCount();
 
   /**
-   * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
-   * This only counts modifications done in current IDE session.
+   * @return a number that's incremented every time something changes in the VFS structure, i.e., file hierarchy or names.
+   * This only counts modifications done in the current IDE session.
    * @see #getModificationCount()
    */
   public abstract long getStructureModificationCount();
+
+  @ApiStatus.Internal
+  public VirtualFile findFileById(int id) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  public int[] listAllChildIds(int id) {
+    return ArrayUtil.EMPTY_INT_ARRAY;
+  }
+
+  @ApiStatus.Internal
+  public abstract int storeName(@NotNull String name);
+
+  @ApiStatus.Internal
+  public abstract @NotNull CharSequence getVFileName(int nameId);
 }

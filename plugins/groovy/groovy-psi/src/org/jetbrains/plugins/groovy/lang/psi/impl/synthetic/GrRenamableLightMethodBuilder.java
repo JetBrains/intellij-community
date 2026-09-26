@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrRenamableLightMethodBuilder extends GrLightMethodBuilder implements GrRenameableLightElement {
 
   public GrRenamableLightMethodBuilder(PsiManager manager, String name) {

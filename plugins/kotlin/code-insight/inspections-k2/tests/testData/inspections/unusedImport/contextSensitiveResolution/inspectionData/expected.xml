@@ -1,0 +1,14 @@
+<problems>
+  <problem>
+    <file>contextSensitiveResolution.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <package>contextSensitiveResolution</package>
+    <entry_point TYPE="file" FQNAME="contextSensitiveResolution.kt"/>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused import directive</problem_class>
+    <description>Unused import directive</description>
+    <highlighted_element>import contextSensitiveResolution.Color.RED</highlighted_element>
+    <offset>0</offset>
+    <length>43</length>
+  </problem>
+</problems>

@@ -1,0 +1,88 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.ide.nonModalWelcomeScreen">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.lite"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenContentProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenCustomTabProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightCustomTabProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureUi"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureFrontend"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureFrontend" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenRightTabBannerProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenAccessProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenAccessProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectFrameCapabilitiesProvider
+      implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenProjectFrameCapabilitiesProvider"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
+
+    <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
+
+    <projectOpenProcessor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenCommandLineProjectOpenProcessor" order="first"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
+
+    <!-- The welcome tab is a persisted editor tab: the platform restores it by URL through this file system. -->
+    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
+    <projectViewPaneExtractor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelModelExtractor"/>
+
+    <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
+                     groupKey="group.advanced.settings.welcome.screen"
+                     bundle="messages.NonModalWelcomeScreenBundle"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.newProjectNotification.WelcomeScreenSingleFileOpeningCollector"/>
+
+    <internalFileTemplate name="Generic Empty File"/>
+
+    <platform.ide.welcomeScreenAccessPoint implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeAccessPoint"/>
+
+    <editorEmptyStateComponentProvider implementation="com.intellij.platform.ide.nonModalWelcomeScreen.emptyState.WelcomeScreenEmptyStateProvider" order="first"/>
+  </extensions>
+
+  <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
+    <group id="NonModalWelcomeScreen.LeftTabActions.New" icon="AllIcons.General.Add" popup="true">
+      <reference ref="NewProjectOrModuleGroup"/>
+      <separator/>
+      <reference ref="WelcomeNewEmptyFile"/>
+      <reference ref="WelcomeMarkdownNewFile"/>
+    </group>
+    <action id="NonModalWelcomeScreen.LeftTabActions.New.Action" icon="AllIcons.General.Add"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew"/>
+    <action id="welcome.screen.left.tab.new.empty.file"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.CreateEmptyFileAction"
+            icon="AllIcons.FileTypes.Text"/>
+
+    <action id="WelcomeMarkdownNewFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.MarkdownNewFileAction" icon="AllIcons.FileTypes.Markdown"/>
+    <action id="NewJavaFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewJavaFileAction" icon="AllIcons.FileTypes.Java"/>
+    <action id="NewKotlinFile" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.NewKotlinFileAction" icon="AllIcons.Language.Kotlin"/>
+  </actions>
+</idea-plugin>

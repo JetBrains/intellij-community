@@ -1,0 +1,29 @@
+// FILE: first.before.kt
+// "Import property 'MyObject.myField'" "true"
+// ERROR: Unresolved reference: myField
+package test
+
+val f = <caret>myField
+
+// FILE: javadep/JavaClassWithField.java
+package javadep;
+
+public class JavaClassWithField {
+    public int myField = 0;
+}
+
+// FILE: second.kt
+package second
+
+import javadep.JavaClassWithField
+
+object MyObject : JavaClassWithField()
+
+// FILE: first.after.kt
+// "Import property 'MyObject.myField'" "true"
+// ERROR: Unresolved reference: myField
+package test
+
+import second.MyObject.myField
+
+val f = <caret>myField

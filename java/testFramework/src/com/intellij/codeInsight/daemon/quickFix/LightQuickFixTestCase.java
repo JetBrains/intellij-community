@@ -1,35 +1,47 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
-  @NonNls protected static final String BEFORE_PREFIX = "before";
-  @NonNls protected static final String AFTER_PREFIX = "after";
+  protected static final @NonNls String BEFORE_PREFIX = "before";
+  protected static final @NonNls String AFTER_PREFIX = "after";
+  protected static final @NonNls String PREVIEW_PREFIX = "preview";
 
   private static QuickFixTestCase myWrapper;
 
@@ -49,7 +61,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final File testFile = new File(testFullPath);
     CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), () -> {
       try {
-        String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET));
+        String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, StandardCharsets.UTF_8));
         quickFixTestCase.configureFromFileText(testFile.getName(), contents);
         quickFixTestCase.bringRealEditorBack();
         final ActionHint actionHint = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);
@@ -80,24 +92,33 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   protected void beforeActionStarted(final String testName, final String contents) {
   }
 
-  public static void doAction(@NotNull ActionHint actionHint,
-                              String testFullPath,
-                              String testName,
-                              QuickFixTestCase quickFix) throws Exception {
+  public void doAction(@NotNull ActionHint actionHint,
+                       @NotNull String testFullPath,
+                       @NotNull String testName,
+                       @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
+                                                     ActionContext.from(getEditor(), getFile()),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
       String text = action.getText();
-      quickFix.invoke(action);
-      UIUtil.dispatchAllInvocationEvents();
-      UIUtil.dispatchAllInvocationEvents();
+      PsiElement element = PsiUtilBase.getElementAtCaret(getEditor());
+      if (actionHint.shouldCheckPreview()) {
+        String previewFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + PREVIEW_PREFIX + testName;
+        quickFix.checkPreviewAndInvoke(action, previewFilePath);
+      }
+      else {
+        quickFix.invoke(action);
+      }
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (!quickFix.shouldBeAvailableAfterExecution()) {
         final IntentionAction afterAction = quickFix.findActionWithText(text);
-        if (afterAction != null) {
+        if (afterAction != null && Comparing.equal(element, PsiUtilBase.getElementAtCaret(getEditor()))) {
           fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
 
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;
       quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
 
@@ -108,30 +129,35 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  private static String getTestInfo(String testFullPath, QuickFixTestCase quickFix) {
-    String infos = StreamEx.of(quickFix.doHighlighting())
-      .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
-      .map(info -> {
-        String fixes = "";
-        if (info.quickFixActionRanges != null) {
-          fixes = StreamEx.of(info.quickFixActionRanges)
-            .map(p -> p.getSecond()+" "+p.getFirst())
-            .mapLastOrElse("|- "::concat, "\\- "::concat)
-            .map(str -> "        " + str + "\n")
-            .joining();
-        }
-        return info.getSeverity() +
-               ": (" + info.getStartOffset() + "," + info.getEndOffset() + ") '" +
-               info.getText() + "': " + info.getDescription() + "\n" + fixes;
-      })
-      .joining("       ");
+  private String getTestInfo(@NotNull String testFullPath, @NotNull QuickFixTestCase quickFix) {
+    String infos = getCurrentHighlightingInfo(quickFix.doHighlighting());
     return "Test: " + testFullPath + "\n" +
            "Language level: " + PsiUtil.getLanguageLevel(quickFix.getProject()) + "\n" +
            (quickFix.getProject().equals(getProject()) ? "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" : "") +
            "Infos: " + infos;
   }
 
-  protected void doAction(@NotNull ActionHint actionHint, final String testFullPath, final String testName)
+  static String getCurrentHighlightingInfo(@NotNull List<? extends HighlightInfo> infos) {
+    return StreamEx.of(infos)
+      .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
+      .map(info -> {
+        List<String> s = new ArrayList<>();
+        info.findRegisteredQuickFix((descriptor, range) -> {
+          s.add(range + " " + descriptor);
+          return null;
+        });
+        String fixes = StreamEx.of(s)
+          .mapLastOrElse("|- "::concat, "\\- "::concat)
+          .map(str -> "        " + str + "\n")
+          .joining();
+        return info.getSeverity() +
+               ": (" + info.getStartOffset() + "," + info.getEndOffset() + ") '" +
+               info.getText() + "': " + info.getDescription() + "\n" + fixes;
+      })
+      .joining("       ");
+  }
+
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName)
     throws Exception {
     doAction(actionHint, testFullPath, testName, myWrapper);
   }
@@ -143,8 +169,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     invoke(action);
   }
 
-  protected static void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
-    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor(), action.getText());
+  protected void invoke(@NotNull IntentionAction action) throws IncorrectOperationException {
+    CodeInsightTestFixtureImpl.invokeIntention(action, getFile(), getEditor());
   }
 
   protected IntentionAction findActionAndCheck(@NotNull ActionHint hint, String testFullPath) {
@@ -155,21 +181,13 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return findActionWithText(getAvailableActions(), text);
   }
 
-  public static IntentionAction findActionWithText(@NotNull List<IntentionAction> actions, @NotNull String text) {
+  public static IntentionAction findActionWithText(@NotNull List<? extends IntentionAction> actions, @NotNull String text) {
     for (IntentionAction action : actions) {
       if (text.equals(action.getText())) {
         return action;
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated use {@link LightQuickFixParameterizedTestCase}
-   * to get separate tests for all data files in testData directory.
-   */
-  protected void doAllTests() {
-    doAllTests(createWrapper());
   }
 
   public static void doAllTests(QuickFixTestCase testCase) {
@@ -181,8 +199,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     }
   }
 
-  @NotNull
-  public static File[] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
+  public static File @NotNull [] getBeforeTestFiles(@NotNull QuickFixTestCase testCase) {
     assertNotNull("getBasePath() should not return null!", testCase.getBasePath());
 
     final String testDirPath = testCase.getTestDataPath().replace(File.separatorChar, '/') + testCase.getBasePath();
@@ -199,21 +216,19 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     doTestFor(fileSuffix, createWrapper());
   }
 
-  protected void doSingleTest(String fileSuffix, String testDataPath) {
+  protected void doSingleTest(@NotNull String fileSuffix, String testDataPath) {
     doTestFor(fileSuffix, createWrapper(testDataPath));
   }
 
-  protected ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
-    return ActionHint.parse(file, contents);
+  protected ActionHint parseActionHintImpl(@NotNull PsiFile psiFile, @NotNull String contents) {
+    return ActionHint.parse(psiFile, contents);
   }
 
-  @NotNull
-  protected QuickFixTestCase createWrapper() {
+  protected @NotNull QuickFixTestCase createWrapper() {
     return createWrapper(null);
   }
 
-  @NotNull
-  protected QuickFixTestCase createWrapper(final String testDataPath) {
+  protected @NotNull QuickFixTestCase createWrapper(final String testDataPath) {
     return new QuickFixTestCase() {
       String myTestDataPath = testDataPath;
 
@@ -222,18 +237,16 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         return LightQuickFixTestCase.this.getBasePath();
       }
 
-      @NotNull
       @Override
-      public String getTestDataPath() {
+      public @NotNull String getTestDataPath() {
         if (myTestDataPath == null) {
           myTestDataPath = LightQuickFixTestCase.this.getTestDataPath();
         }
         return myTestDataPath;
       }
 
-      @NotNull
       @Override
-      public ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
+      public @NotNull ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
         return LightQuickFixTestCase.this.parseActionHintImpl(file, contents);
       }
 
@@ -269,52 +282,74 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void invoke(@NotNull IntentionAction action) {
-        LightQuickFixTestCase.invoke(action);
+        LightQuickFixTestCase.this.invoke(action);
       }
 
-      @NotNull
       @Override
-      public List<HighlightInfo> doHighlighting() {
+      public void checkPreviewAndInvoke(@NotNull IntentionAction action, @NotNull String previewFilePath) {
+        // Run in background thread to catch accidental write-actions during preview generation
+        String previewContent;
+        try {
+          previewContent = ReadAction.nonBlocking(
+              () -> IntentionPreviewPopupUpdateProcessor.getPreviewContent(getProject(), action, getFile(), getEditor()))
+            .submit(AppExecutorUtil.getAppExecutorService()).get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+        LightQuickFixTestCase.this.invoke(action);
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+        Path path = Path.of(getTestDataPath(), previewFilePath);
+        if (Files.exists(path)) {
+          assertSameLinesWithFile(path.toString(), previewContent);
+        } else {
+          if (previewContent.isEmpty()) {
+            fail("No preview was generated for '" + action.getText() + "'");
+          }
+          assertEquals(getFile().getText(), previewContent);
+        }
+      }
+
+      @Override
+      public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
         return LightQuickFixTestCase.this.doHighlighting();
       }
 
-      @NotNull
       @Override
-      public List<IntentionAction> getAvailableActions() {
+      public @NotNull @Unmodifiable List<IntentionAction> getAvailableActions() {
         return LightQuickFixTestCase.this.getAvailableActions();
       }
 
       @Override
       public void configureFromFileText(@NotNull String name, @NotNull String contents) {
-        LightPlatformCodeInsightTestCase.configureFromFileText(name, contents, true);
+        LightQuickFixTestCase.this.configureFromFileText(name, contents, true);
       }
 
       @Override
       public PsiFile getFile() {
-        return LightPlatformCodeInsightTestCase.getFile();
+        return LightQuickFixTestCase.this.getFile();
       }
 
       @Override
       public Project getProject() {
-        return LightPlatformTestCase.getProject();
+        return LightQuickFixTestCase.this.getProject();
       }
 
       @Override
       public void bringRealEditorBack() {
-        LightPlatformCodeInsightTestCase.bringRealEditorBack();
+        LightQuickFixTestCase.this.bringRealEditorBack();
       }
     };
   }
 
-  protected List<IntentionAction> getAvailableActions() {
+  protected @Unmodifiable List<IntentionAction> getAvailableActions() {
     doHighlighting();
     return getAvailableActions(getEditor(), getFile());
   }
 
-  @NotNull
-  public static List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull @Unmodifiable List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file);
   }
 
-  @NonNls protected String getBasePath() {return null;}
+  protected @NonNls String getBasePath() {return null;}
 }

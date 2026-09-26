@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -9,35 +7,53 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
-/**
- * @author max
- */
 public interface StubElement<T extends PsiElement> extends Stub {
+  /**
+   * @deprecated Use {@link #getElementType()} or {@link #getStubSerializer()} instead
+   */
+  @Deprecated
   @Override
-  IStubElementType getStubType();
+  IStubElementType<?, ?> getStubType();
+
+  IElementType getElementType();
+
   @Override
-  StubElement getParentStub();
+  StubElement<?> getParentStub();
+
+  @Nullable PsiFileStub<?> getContainingFileStub();
+
   @Override
   @NotNull
-  List<StubElement> getChildrenStubs();
+  @Unmodifiable
+  List<StubElement<?>> getChildrenStubs();
 
+  /**
+   * @deprecated Use {@link #findChildStubByElementType} instead
+   */
+  @Deprecated
   @Nullable
   <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(@NotNull IStubElementType<S, P> elementType);
 
+  default @Nullable StubElement<? extends PsiElement> findChildStubByElementType(@NotNull IElementType elementType) {
+    if (elementType instanceof IStubElementType) {
+      return findChildStubByType((IStubElementType<StubElement<PsiElement>, PsiElement>)elementType);
+    }
+    else {
+      return null;
+    }
+  }
+
   T getPsi();
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, final E[] array);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, final E[] array);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, final E[] array);
 
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<E> f);
-  @NotNull
-  <E extends PsiElement> E[] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull IElementType elementType, @NotNull ArrayFactory<? extends E> f);
+  <E extends PsiElement> E @NotNull [] getChildrenByType(@NotNull TokenSet filter, @NotNull ArrayFactory<? extends E> f);
 
   @Nullable
   <E extends PsiElement> E getParentStubOfType(@NotNull Class<E> parentClass);

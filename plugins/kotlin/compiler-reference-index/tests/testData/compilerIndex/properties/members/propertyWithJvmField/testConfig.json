@@ -1,0 +1,11 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "Child.kt",
+        "ChildUsage.kt",
+        "Doo.kt",
+        "Foo.kt",
+        "JavaRead.java",
+        "TypeAliasUsage.kt"
+    ]
+}

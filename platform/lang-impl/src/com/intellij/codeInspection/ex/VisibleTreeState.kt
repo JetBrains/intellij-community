@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.components.BaseState
@@ -10,17 +8,16 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
-import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 @Tag("profile-state")
 internal class VisibleTreeState : BaseState() {
   @get:XCollection(elementName = "expanded", valueAttributeName = "path", propertyElementName = "expanded-state")
-  private var expandedNodes by property(TreeSet<State>())
+  var expandedNodes: MutableSet<State> by treeSet()
 
   @get:XCollection(elementName = "selected", valueAttributeName = "path", propertyElementName = "selected-state")
-  private var selectedNodes by property(TreeSet<State>())
+  var selectedNodes: MutableSet<State> by treeSet()
 
   fun expandNode(node: InspectionConfigTreeNode) {
     expandedNodes.add(getState(node))
@@ -32,7 +29,7 @@ internal class VisibleTreeState : BaseState() {
     traverseNodes(tree.model.root as DefaultMutableTreeNode, pathsToExpand, toSelect)
     TreeUtil.restoreExpandedPaths(tree, pathsToExpand)
     if (toSelect.isEmpty()) {
-      TreeUtil.selectFirstNode(tree)
+      TreeUtil.promiseSelectFirst(tree)
     }
     else {
       toSelect.forEach { TreeUtil.selectPath(tree, it) }
@@ -73,7 +70,7 @@ internal class VisibleTreeState : BaseState() {
     var node = _node
     val expandedNode: State
     if (node is InspectionConfigTreeNode.Tool) {
-      expandedNode = State(node.key.toString())
+      expandedNode = State(node.key.shortName)
     }
     else {
       val buf = StringBuilder()
@@ -99,8 +96,12 @@ internal class VisibleTreeState : BaseState() {
 
   internal class State @JvmOverloads constructor(key: String? = null): Comparable<State>, BaseState() {
     @get:Tag("id")
-    var key by string(key)
+    var key: String? by string()
 
-    override fun compareTo(other: State) = StringUtil.compare(key, other.key, false)
+    init {
+      this.key = key
+    }
+
+    override fun compareTo(other: State): Int = StringUtil.compare(key, other.key, false)
   }
 }

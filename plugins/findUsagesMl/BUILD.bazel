@@ -1,0 +1,166 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "findUsagesMl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":findUsagesMl-tests_test_lib"],
+)
+### skip generation section `test intellij.findUsagesMl.tests`
+
+### auto-generated section `dev intellij.findUsagesMl` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/findUsagesMl.jar": ["intellij.findUsagesMl"],
+    },
+    main_module = "intellij.findUsagesMl",
+)
+### auto-generated section `dev intellij.findUsagesMl` end
+
+### auto-generated section `build intellij.findUsagesMl` start
+jvm_library(
+    name = "findUsagesMl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.findUsagesMl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/commons/text",
+        "//platform/indexing-api:indexing",
+        "//platform/util",
+        "//platform/statistics",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/ml-logs",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util/jdom",
+    ],
+)
+
+jvm_library(
+    name = "findUsagesMl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.findUsagesMl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":findUsagesMl",
+        "//libraries/commons/text:text_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ml-logs:ml-logs_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "findUsagesMl_plugin",
+    descriptor_module = ":findUsagesMl",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.findUsagesMl` end
+
+### auto-generated section `iml intellij.findUsagesMl` start
+exports_files(
+    [
+        "intellij.findUsagesMl.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.findUsagesMl` end
+
+### auto-generated section `build intellij.findUsagesMl.tests` start
+jvm_library(
+    name = "findUsagesMl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.findUsagesMl.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "findUsagesMl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/findUsagesMl",
+        "//plugins/findUsagesMl:findUsagesMl_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":findUsagesMl-tests",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/commons/text",
+        "//libraries/commons/text:text_test_lib",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/ml-logs",
+        "//platform/ml-logs:ml-logs_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.findUsagesMl.tests` end
+
+### auto-generated section `iml intellij.findUsagesMl.tests` start
+exports_files(
+    [
+        "intellij.findUsagesMl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.findUsagesMl.tests` end

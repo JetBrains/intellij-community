@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -27,30 +13,29 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 import java.util.List;
 
-/**
- * @author max
- */
 public class ChangesBrowserDialog extends DialogWrapper {
   private Project myProject;
   private CommittedChangesTableModel myChanges;
   private Mode myMode;
   private CommittedChangesBrowserDialogPanel myCommittedChangesBrowser;
   private AsynchConsumer<List<CommittedChangeList>> myAppender;
-  private final Consumer<ChangesBrowserDialog> myInitRunnable;
+  private final Consumer<? super ChangesBrowserDialog> myInitRunnable;
 
   public enum Mode { Simple, Browse, Choose }
 
-  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
+  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode, Consumer<? super ChangesBrowserDialog> initRunnable) {
     super(project, true);
     myInitRunnable = initRunnable;
     initDialog(project, changes, mode);
   }
 
-  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
+  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode, Consumer<? super ChangesBrowserDialog> initRunnable) {
     super(parent, true);
     myInitRunnable = initRunnable;
     initDialog(project, changes, mode);
@@ -63,10 +48,10 @@ public class ChangesBrowserDialog extends DialogWrapper {
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     final ModalityState currentState = ModalityState.current();
-    if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(currentState))) {
+    if ((mode != Mode.Choose) && (ModalityState.nonModal().equals(currentState))) {
       setModal(false);
     }
-    myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
+    myAppender = new AsynchConsumer<>() {
 
       @Override
       public void finished() {
@@ -112,10 +97,12 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myCommittedChangesBrowser.startLoading();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "VCS.ChangesBrowserDialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myCommittedChangesBrowser = new CommittedChangesBrowserDialogPanel(myProject, myChanges);
     return myCommittedChangesBrowser;
@@ -129,9 +116,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     if (myMode == Mode.Simple) {
       return new Action[] { getCancelAction() };
     }

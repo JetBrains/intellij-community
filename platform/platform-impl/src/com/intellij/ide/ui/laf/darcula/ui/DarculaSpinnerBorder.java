@@ -2,18 +2,30 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.ui.DrawUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutlineColor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintFocusBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,9 +39,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
     JBInsets.removeFrom(r, JBUI.insets(1));
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      DrawUtil.setupRenderingHints(g2);
 
       g2.translate(r.x, r.y);
 
@@ -37,22 +47,25 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-      if (op != null) {
-        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
-      } else {
+      Outline op = getOutline((JComponent)c);
+      if (c.isEnabled() && op != null) {
+        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), op);
+      }
+      else {
         if (isFocused(c)) {
           paintFocusBorder(g2, r.width, r.height, arc, true);
         }
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        arc = arc > lw ? arc - lw : 0.0f;
         border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
         g2.setColor(getOutlineColor(c.isEnabled(), isFocused(c)));
         g2.fill(border);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -70,8 +83,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
   public static boolean isFocused(Component c) {
     if (c.hasFocus()) return true;
 
-    if (c instanceof JSpinner) {
-      JSpinner spinner = (JSpinner)c;
+    if (c instanceof JSpinner spinner) {
       if (spinner.getEditor() != null) {
         synchronized (spinner.getEditor().getTreeLock()) {
           return spinner.getEditor().getComponent(0).hasFocus();

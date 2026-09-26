@@ -1,0 +1,17 @@
+// "Create property 'foo'" "true"
+// TEST_PREVIEW: val foo: kotlin.Boolean
+// ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+// K2_ERROR: UNRESOLVED_REFERENCE
+abstract class A {
+    fun bar(b: Boolean) {}
+
+    fun test() {
+        bar(B().<caret>foo)
+    }
+}
+
+class B {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

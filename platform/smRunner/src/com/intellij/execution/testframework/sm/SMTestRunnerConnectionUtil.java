@@ -1,31 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.*;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
+import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.testframework.sm.runner.TestProxyFilterProvider;
+import com.intellij.execution.testframework.sm.runner.TestProxyPrinterProvider;
 import com.intellij.execution.testframework.sm.runner.ui.AttachToProcessListener;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +40,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class SMTestRunnerConnectionUtil {
+public final class SMTestRunnerConnectionUtil {
   private static final String TEST_RUNNER_DEBUG_MODE_PROPERTY = "idea.smrunner.debug";
 
   private SMTestRunnerConnectionUtil() { }
@@ -52,7 +59,7 @@ public class SMTestRunnerConnectionUtil {
    *   // ...
    *
    *   @Override
-   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
    *     ProcessHandler processHandler = startProcess();
    *     RunConfiguration runConfiguration = getConfiguration();
    *     ExecutionEnvironment environment = getEnvironment();
@@ -73,8 +80,7 @@ public class SMTestRunnerConnectionUtil {
    * @param consoleProperties Console properties for test console actions
    * @return Console view
    */
-  @NotNull
-  public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
+  public static @NotNull BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
                                                                   @NotNull TestConsoleProperties consoleProperties) throws ExecutionException {
     BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties);
@@ -82,21 +88,23 @@ public class SMTestRunnerConnectionUtil {
     return console;
   }
 
-  @NotNull
-  public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
-                                                         @NotNull TestConsoleProperties consoleProperties) {
+  public static @NotNull BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
+                                                                  @NotNull TestConsoleProperties consoleProperties) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
     SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName);
     return consoleView;
   }
 
-  @NotNull
-  public static String getSplitterPropertyName(@NotNull String testFrameworkName) {
+  public static @NotNull SMTRunnerConsoleView createConsole(@NotNull SMTRunnerConsoleProperties consoleProperties) {
+    return (SMTRunnerConsoleView)createConsole(consoleProperties.getTestFrameworkName(), consoleProperties);
+  }
+
+  public static @NotNull String getSplitterPropertyName(@NotNull String testFrameworkName) {
     return testFrameworkName + ".Splitter.Proportion";
   }
 
-  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView, @NotNull final String testFrameworkName) {
+  public static void initConsoleView(final @NotNull SMTRunnerConsoleView consoleView, final @NotNull String testFrameworkName) {
     consoleView.addAttachToProcessListener(new AttachToProcessListener() {
       @Override
       public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
@@ -146,7 +154,7 @@ public class SMTestRunnerConnectionUtil {
    * @return true if in debug mode, otherwise false.
    */
   public static boolean isInDebugMode() {
-    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
+    return Boolean.parseBoolean(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static void attachEventsProcessors(TestConsoleProperties consoleProperties,
@@ -194,20 +202,22 @@ public class SMTestRunnerConnectionUtil {
       outputConsumer.setProcessor(eventsProcessor);
     });
 
-    outputConsumer.startTesting();
-
-    processHandler.addProcessListener(new ProcessAdapter() {
+    outputConsumer.setupProcessor();
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
-          outputConsumer.finishTesting();
-          Disposer.dispose(outputConsumer);
-        });
+      public void startNotified(@NotNull ProcessEvent event) {
+        outputConsumer.startTesting();
       }
 
       @Override
-      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
+        outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
+        outputConsumer.finishTesting();
+        Disposer.dispose(outputConsumer);
+      }
+
+      @Override
+      public void onTextAvailable(final @NotNull ProcessEvent event, final @NotNull Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
     });
@@ -216,27 +226,25 @@ public class SMTestRunnerConnectionUtil {
   private static class CombinedTestLocator implements SMTestLocator, DumbAware {
     private final SMTestLocator myLocator;
 
-    public CombinedTestLocator(SMTestLocator locator) {
+    CombinedTestLocator(SMTestLocator locator) {
       myLocator = locator;
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return getLocation(protocol, path, null, project, scope);
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol,
-                                      @NotNull String path,
-                                      @Nullable String metainfo,
-                                      @NotNull Project project,
-                                      @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String protocol,
+                                                             @NotNull String path,
+                                                             @Nullable String metainfo,
+                                                             @NotNull Project project,
+                                                             @NotNull GlobalSearchScope scope) {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+      else if (DumbService.getInstance(project).isUsableInCurrentContext(myLocator)) {
         return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
@@ -244,24 +252,21 @@ public class SMTestRunnerConnectionUtil {
       }
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return myLocator.getLocation(stacktraceLine, project, scope);
+    }
+
+    @Override
+    public @NotNull ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+      return myLocator.getLocationCacheModificationTracker(project);
     }
   }
 
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
-  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
-                                                                          @NotNull TestConsoleProperties consoleProperties,
-                                                                          ExecutionEnvironment environment,
-                                                                          @Nullable TestLocationProvider locator) {
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
-  }
-
-  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
                                                                     ExecutionEnvironment environment,
@@ -270,17 +275,6 @@ public class SMTestRunnerConnectionUtil {
                                                                     @Nullable TestProxyFilterProvider filterProvider) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
     SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
-    initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
-    return consoleView;
-  }
-
-  /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
-  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
-                                     @NotNull final String testFrameworkName,
-                                     @Nullable final TestLocationProvider locator,
-                                     final boolean idBasedTreeConstruction,
-                                     @Nullable final TestProxyFilterProvider filterProvider) {
     consoleView.addAttachToProcessListener(new AttachToProcessListener() {
       @Override
       public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
@@ -305,24 +299,24 @@ public class SMTestRunnerConnectionUtil {
     });
     consoleView.setHelpId("reference.runToolWindow.testResultsTab");
     consoleView.initUI();
+    return consoleView;
   }
 
-  @SuppressWarnings("deprecation")
-  private static class CompositeTestLocationProvider implements SMTestLocator {
+  /**
+   * @deprecated should be removed with createConsoleWithCustomLocator()
+   */
+  @SuppressWarnings("rawtypes")
+  @Deprecated(forRemoval = true)
+  private static final class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
-    private final TestLocationProvider[] myLocators;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {
       myPrimaryLocator = primaryLocator;
-      myLocators = Extensions.getExtensions(TestLocationProvider.EP_NAME);
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-      boolean isDumbMode = DumbService.isDumb(project);
-
-      if (myPrimaryLocator != null && (!isDumbMode || DumbService.isDumbAware(myPrimaryLocator))) {
+    public @NotNull List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      if (myPrimaryLocator != null && DumbService.getInstance(project).isUsableInCurrentContext(myPrimaryLocator)) {
         List<Location> locations = myPrimaryLocator.getLocation(protocol, path, project);
         if (!locations.isEmpty()) {
           return locations;
@@ -336,8 +330,8 @@ public class SMTestRunnerConnectionUtil {
         }
       }
 
-      for (TestLocationProvider provider : myLocators) {
-        if (!isDumbMode || DumbService.isDumbAware(provider)) {
+      for (TestLocationProvider provider : TestLocationProvider.EP_NAME.getExtensionList()) {
+        if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
           List<Location> locations = provider.getLocation(protocol, path, project);
           if (!locations.isEmpty()) {
             return locations;
@@ -348,4 +342,5 @@ public class SMTestRunnerConnectionUtil {
       return Collections.emptyList();
     }
   }
+  //</editor-fold>
 }

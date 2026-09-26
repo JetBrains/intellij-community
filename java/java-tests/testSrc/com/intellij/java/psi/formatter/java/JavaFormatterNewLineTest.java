@@ -15,16 +15,13 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * Is intended to hold specific java formatting tests for {@code 'Place on New Line'} settings (
  * {@code Project Settings - Code Style - Alignment and Braces - Place on New Line}).
- *
- * @author Denis Zhdanov
- * @since Apr 28, 2010 12:12:13 PM
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
@@ -32,14 +29,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().ELSE_ON_NEW_LINE = true;
 
     doMethodTest(
-      "if (b) {\n" +
-      "} else {\n" +
-      "}",
+      """
+        if (b) {
+        } else {
+        }""",
 
-      "if (b) {\n" +
-      "}\n" +
-      "else {\n" +
-      "}"
+      """
+        if (b) {
+        }
+        else {
+        }"""
     );
   }
 
@@ -49,14 +48,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "if (b) {\n" +
-      "}\n" +
-      "else {\n" +
-      "}",
+      """
+        if (b) {
+        }
+        else {
+        }""",
 
-      "if (b) {\n" +
-      "} else {\n" +
-      "}"
+      """
+        if (b) {
+        } else {
+        }"""
     );
   }
 
@@ -64,14 +65,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().CATCH_ON_NEW_LINE = true;
 
     doMethodTest(
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "}",
+      """
+        try {
+        } catch (Exception e) {
+        }""",
 
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}"
+      """
+        try {
+        }
+        catch (Exception e) {
+        }"""
     );
   }
 
@@ -81,14 +84,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}",
+      """
+        try {
+        }
+        catch (Exception e) {
+        }""",
 
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "}"
+      """
+        try {
+        } catch (Exception e) {
+        }"""
     );
   }
 
@@ -96,14 +101,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().FINALLY_ON_NEW_LINE = true;
 
     doMethodTest(
-      "try {\n" +
-      "} finally {\n" +
-      "}",
+      """
+        try {
+        } finally {
+        }""",
 
-      "try {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}"
+      """
+        try {
+        }
+        finally {
+        }"""
     );
   }
 
@@ -113,14 +120,16 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
     // Inspired by IDEA-47809
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}",
+      """
+        try {
+        }
+        finally {
+        }""",
 
-      "try {\n" +
-      "} finally {\n" +
-      "}"
+      """
+        try {
+        } finally {
+        }"""
     );
   }
 
@@ -131,33 +140,36 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().KEEP_LINE_BREAKS = true;
 
     doMethodTest(
-      "try {\n" +
-      "}\n" +
-      "catch (Exception e) {\n" +
-      "}\n" +
-      "finally {\n" +
-      "}",
+      """
+        try {
+        }
+        catch (Exception e) {
+        }
+        finally {
+        }""",
 
-      "try {\n" +
-      "} catch (Exception e) {\n" +
-      "} finally {\n" +
-      "}"
+      """
+        try {
+        } catch (Exception e) {
+        } finally {
+        }"""
     );
   }
 
   public void testClassInitializationBlockBracesPlacement() {
     // Inspired by IDEA-54191
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
     doMethodTest(
       "new Expectations() {\n" +
       "    {foo();}};",
 
-      "new Expectations() {\n" +
-      "    {\n" +
-      "        foo();\n" +
-      "    }\n" +
-      "};"
+      """
+        new Expectations() {
+            {
+                foo();
+            }
+        };"""
     );
   }
 
@@ -172,24 +184,26 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
     doTextTest(
-               "public @interface Ann\n" +
-               "{\n" +
-               "int[] x = { 1, 2 };\n" +
-               "\n" +
-               "Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };\n" +
-               "}",
+      """
+        public @interface Ann
+        {
+        int[] x = { 1, 2 };
 
-               "public @interface Ann {\n" +
-               "    int[] x = {\n" +
-               "            1,\n" +
-               "            2\n" +
-               "    };\n" +
-               "\n" +
-               "    Mode[] modes() default {\n" +
-               "            @Mode(value = 1),\n" +
-               "            @Mode(value = 2)\n" +
-               "    };\n" +
-               "}"
+        Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };
+        }""",
+
+      """
+        public @interface Ann {
+            int[] x = {
+                    1,
+                    2
+            };
+
+            Mode[] modes() default {
+                    @Mode(value = 1),
+                    @Mode(value = 2)
+            };
+        }"""
     );
   }
 
@@ -209,5 +223,181 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     // Don't expect that simple method to be spread on multiple lines.
     doClassTest(methodWithAnnotation, methodWithAnnotation);
     doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
+  }
+
+  public void testMoveSimpleMethodBodyOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {int x = 1;}
+                     """,
+                """
+                  public void foo() {
+                      int x = 1;
+                  }
+                  """);
+  }
+
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {}
+                     """,
+                """
+                  public void foo() { }
+                  """);
+  }
+
+  public void testDoNotMoveSimpleMethodBodyOnNewLineWhenAbsentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doClassTest("""
+                     public void foo() {int x = 1;}
+                     """,
+                """
+                  public void foo() { int x = 1; }
+                  """);
+  }
+
+
+
+  public void testMoveSimpleCodeBlockOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {return;}
+                      default -> {return;}
+                   }
+                   if (x == 1) {return;}
+                   while (true) {return;}
+                   for (;;) {return;}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> {
+                           return;
+                       }
+                       default -> {
+                           return;
+                       }
+                   }
+                   if (x == 1) {
+                       return;
+                   }
+                   while (true) {
+                       return;
+                   }
+                   for (; ; ) {
+                       return;
+                   }
+                   """);
+  }
+
+  public void testDoNotMoveSimpleCodeBlockOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {}
+                      default -> {}
+                   }
+                   if (x == 1) {}
+                   while (true) {}
+                   for (;;) {}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> { }
+                       default -> { }
+                   }
+                   if (x == 1) { }
+                   while (true) { }
+                   for (; ; ) { }
+                   """);
+  }
+
+  public void testDoNotMoveSimpleCodeBlockOnNewLineWhenPresentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {return;}
+                      default -> {return;}
+                   }
+                   if (x == 1) {return;}
+                   while (true) {return;}
+                   for (;;) {return;}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> { return; }
+                       default -> { return; }
+                   }
+                   if (x == 1) { return; }
+                   while (true) { return; }
+                   for (; ; ) { return; }
+                   """);
+  }
+
+  public void testMoveSimpleLambdaOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    doMethodTest("""
+                   Runnable r = () -> { return; };
+                   """,
+                 """
+                   Runnable r = () -> {
+                       return;
+                   };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> {};
+                   """,
+                 """
+                   Runnable r = () -> { };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWhenPresentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> { return; };
+                   """,
+                 """
+                   Runnable r = () -> { return; };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWithoutCodeBlock() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> foo();
+                   """,
+                 """
+                   Runnable r = () -> foo();
+                   """);
   }
 }

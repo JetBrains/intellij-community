@@ -1,157 +1,116 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
-public class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
+public final class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private String myName;
-  @NotNull
-  private Set<File> mySrcDirs;
-  private File myOutputDir;
-  private final List<File> myGradleOutputDirs;
-  private final FilePatternSet myPatterns;
-  @NotNull
-  private List<ExternalFilter> myFilters;
+  private String name;
+  private @NotNull Set<File> srcDirs;
+  private File outputDir;
+  private @NotNull Collection<File> gradleOutputDirs;
+  private final FilePatternSetImpl patterns;
+  private @NotNull List<DefaultExternalFilter> filters;
 
-  private boolean myInheritedCompilerOutput;
+  private boolean isCompilerOutputInherited;
 
   public DefaultExternalSourceDirectorySet() {
-    mySrcDirs = new HashSet<File>();
-    myFilters = new ArrayList<ExternalFilter>();
-    myGradleOutputDirs = new ArrayList<File>();
-    myPatterns = new FilePatternSetImpl(new LinkedHashSet<String>(), new LinkedHashSet<String>());
+    srcDirs = new HashSet<>(0);
+    filters = new ArrayList<>(0);
+    gradleOutputDirs = new ArrayList<>(0);
+    patterns = new FilePatternSetImpl();
   }
 
-  public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
-    this();
-    myName = sourceDirectorySet.getName();
-    mySrcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
-    myOutputDir = sourceDirectorySet.getOutputDir();
-    myGradleOutputDirs.addAll(sourceDirectorySet.getGradleOutputDirs());
-
-    myPatterns.getIncludes().addAll(sourceDirectorySet.getPatterns().getIncludes());
-    myPatterns.getExcludes().addAll(sourceDirectorySet.getPatterns().getExcludes());
-    for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
-      myFilters.add(new DefaultExternalFilter(filter));
-    }
-    myInheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
-  }
-
-  @NotNull
   @Override
-  public String getName() {
-    return myName;
+  public @NotNull String getName() {
+    return name;
   }
 
   public void setName(@NotNull String name) {
-    myName = name;
+    this.name = name;
   }
 
-  @NotNull
   @Override
-  public Set<File> getSrcDirs() {
-    return mySrcDirs;
+  public @NotNull Set<File> getSrcDirs() {
+    return srcDirs;
   }
 
   public void setSrcDirs(@NotNull Set<File> srcDirs) {
-    mySrcDirs = srcDirs;
+    this.srcDirs = srcDirs;
   }
 
-  @NotNull
   @Override
-  public File getOutputDir() {
-    return myOutputDir;
+  public @NotNull File getOutputDir() {
+    return outputDir;
   }
 
   public void setOutputDir(@NotNull File outputDir) {
-    myOutputDir = outputDir;
+    this.outputDir = outputDir;
   }
 
-  @NotNull
   @Override
-  public File getGradleOutputDir() {
-    assert myGradleOutputDirs.size() > 0;
-    return myGradleOutputDirs.get(0);
+  public @NotNull Collection<File> getGradleOutputDirs() {
+    return gradleOutputDirs;
   }
 
-  @NotNull
-  @Override
-  public Collection<File> getGradleOutputDirs() {
-    return myGradleOutputDirs;
-  }
-
-  public void addGradleOutputDir(@NotNull File outputDir) {
-    myGradleOutputDirs.add(outputDir);
+  public void setGradleOutputDirs(@NotNull Collection<File> gradleOutputDirs) {
+    this.gradleOutputDirs = gradleOutputDirs;
   }
 
   @Override
   public boolean isCompilerOutputPathInherited() {
-    return myInheritedCompilerOutput;
+    return isCompilerOutputInherited;
   }
 
-  @NotNull
+  public void setCompilerOutputPathInherited(boolean isCompilerOutputInherited) {
+    this.isCompilerOutputInherited = isCompilerOutputInherited;
+  }
+
   @Override
-  public Set<String> getExcludes() {
-    return myPatterns.getExcludes();
+  public @NotNull Set<String> getExcludes() {
+    return patterns.getExcludes();
   }
 
   public void setExcludes(Set<String> excludes) {
-    myPatterns.getExcludes().clear();
-    myPatterns.getExcludes().addAll(excludes);
+    patterns.setExcludes(excludes);
   }
 
-  @NotNull
   @Override
-  public Set<String> getIncludes() {
-    return myPatterns.getIncludes();
+  public @NotNull Set<String> getIncludes() {
+    return patterns.getIncludes();
   }
 
   public void setIncludes(Set<String> includes) {
-    myPatterns.getIncludes().clear();
-    myPatterns.getIncludes().addAll(includes);
+    patterns.setIncludes(includes);
   }
 
-  @NotNull
   @Override
-  public FilePatternSet getPatterns() {
-    return myPatterns;
+  public @NotNull FilePatternSet getPatterns() {
+    return patterns;
   }
 
-  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    myInheritedCompilerOutput = inheritedCompilerOutput;
+  public void setPatterns(@NotNull FilePatternSet patterns) {
+    this.patterns.setIncludes(patterns.getIncludes());
+    this.patterns.setExcludes(patterns.getExcludes());
   }
 
-  @NotNull
   @Override
-  public List<ExternalFilter> getFilters() {
-    return myFilters;
+  public @NotNull List<DefaultExternalFilter> getFilters() {
+    return filters;
   }
 
-  public void setFilters(@NotNull List<ExternalFilter> filters) {
-    myFilters = filters;
+  public void setFilters(@NotNull List<DefaultExternalFilter> filters) {
+    this.filters = filters;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.util.SmartList;
@@ -26,7 +12,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author nik
+ * Implement this class and register implementations of its {@link Factory} in META-INF/services/org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler$Factory
+ * file to change how dependencies of modules are processed. The same logic must be implemented in {@link com.intellij.openapi.roots.OrderEnumerationHandler}
+ * extension on IDE side.
  */
 public abstract class JpsJavaDependenciesEnumerationHandler {
   public static List<JpsJavaDependenciesEnumerationHandler> createHandlers(Collection<JpsModule> rootModules) {
@@ -43,7 +31,7 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
     return handlers;
   }
 
-  public static boolean shouldProcessDependenciesRecursively(final List<JpsJavaDependenciesEnumerationHandler> handlers) {
+  public static boolean shouldProcessDependenciesRecursively(final List<? extends JpsJavaDependenciesEnumerationHandler> handlers) {
     if (handlers != null) {
       for (JpsJavaDependenciesEnumerationHandler handler : handlers) {
         if (!handler.shouldProcessDependenciesRecursively()) {
@@ -54,10 +42,9 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
     return true;
   }
 
-  public static abstract class Factory {
+  public abstract static class Factory {
 
-    @Nullable
-    public abstract JpsJavaDependenciesEnumerationHandler createHandler(@NotNull Collection<JpsModule> modules);
+    public abstract @Nullable JpsJavaDependenciesEnumerationHandler createHandler(@NotNull Collection<JpsModule> modules);
   }
   public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
     return false;

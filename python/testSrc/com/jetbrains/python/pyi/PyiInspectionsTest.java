@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,57 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Components;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.PyCompatibilityInspection;
+import com.jetbrains.python.inspections.PyMissingConstructorInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
+import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
+import com.jetbrains.python.inspections.PyProtectedMemberInspection;
+import com.jetbrains.python.inspections.PyStatementEffectInspection;
+import com.jetbrains.python.inspections.PyTypeCheckerInspection;
+import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
+import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
+@Subsystems.Inspections
+@Components.Stubs
+@Layers.Functional
 public class PyiInspectionsTest extends PyTestCase {
 
   private Disposable myRootsDisposable;
 
   @Override
   protected void tearDown() throws Exception {
-    if (myRootsDisposable != null) {
-      Disposer.dispose(myRootsDisposable);
-      myRootsDisposable = null;
+    try {
+      if (myRootsDisposable != null) {
+        Disposer.dispose(myRootsDisposable);
+        myRootsDisposable = null;
+      }
+
+      // clear cached extensions
+      // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
     }
-
-    // clear cached extensions
-    // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
-
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
@@ -74,6 +94,7 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
+  // PY-78185
   public void testHiddenPyiImports() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
@@ -95,7 +116,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedParameters() {
-    doPyiTest(PyUnusedLocalInspection.class);
+    doPyiTest(PyUnusedParameterInspection.class);
   }
 
   public void testPyiStatementEffect() {
@@ -117,7 +138,8 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testPyiTopLevelUnresolvedForwardReferencesInAnnotations() {
+  // PY-49004
+  public void testPyiTopLevelResolvedForwardReferencesInAnnotations() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
@@ -126,11 +148,24 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedImports() {
-    doPyiTest(PyUnresolvedReferencesInspection.class);
+    doPyiTest(PyUnusedImportsInspection.class);
   }
 
   public void testPyiRelativeImports() {
-    myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    myRootsDisposable = LegacyPyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
+
+  // PY-16868
+  public void testPropertyDefinition() {
+    doPyiTest(PyPropertyDefinitionInspection.class);
+  }
+
+  // PY-33486
+  public void testMissedSuperInitCall() {
+    doPyiTest(PyMissingConstructorInspection.class);
+  }
+
+  @TestFor(issues = "PY-16477")
+  public void testAccessProtectedProperty() { doPyTest(PyProtectedMemberInspection.class); }
 }

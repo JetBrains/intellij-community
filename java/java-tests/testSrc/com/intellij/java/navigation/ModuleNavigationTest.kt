@@ -18,10 +18,10 @@ package com.intellij.java.navigation
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class ModuleNavigationTest : LightCodeInsightFixtureTestCase() {
+class ModuleNavigationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
   fun testNavigation() {
@@ -32,7 +32,7 @@ class ModuleNavigationTest : LightCodeInsightFixtureTestCase() {
 
   fun testGoToSymbol() {
     val file = myFixture.configureByText("module-info.java", "module my.mod.name { }")
-    val items = GotoSymbolModel2(myFixture.project).getElementsByName("my.mod.name", false, "my.mod")
+    val items = GotoSymbolModel2(myFixture.project, myFixture.testRootDisposable).getElementsByName("my.mod.name", false, "my.mod")
     assertThat(items).containsExactly((file as PsiJavaFile).moduleDeclaration!!)
   }
 }

@@ -17,17 +17,21 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface ITokenTypeRemapper {
   /**
    * An external hook to see and alter token types reported by lexer.
    * A lexer might take a delegate implementing this interface.
-   * @param source type of an element as lexer understood it.
+   * @param source type of element as lexer understood it.
    * @param start start index of lexeme in text (as lexer.getTokenStart() would return).
    * @param end end index of lexeme in text (as lexer.getTokenEnd() would return).
    * @param text text being parsed.
    * @return altered (or not) element type.
   **/
-  IElementType filter(final IElementType source, final int start, final int end, final CharSequence text);
+  @NotNull IElementType filter(@NotNull IElementType source,
+                               int start,
+                               int end,
+                               @NotNull CharSequence text);
 }

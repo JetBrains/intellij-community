@@ -1,0 +1,14 @@
+// "Create member function 'A.plus'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A<T>(val n: T) {
+    operator fun unaryPlus(): A<T> = throw Exception()
+    operator fun plus(t: T): A<T> {
+        TODO("Not yet implemented")
+    }
+}
+
+fun test() {
+    val a: A<Int> = A(1) + 2
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction

@@ -1,0 +1,7 @@
+JsonFile: y_array_with_1_and_newline.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiWhiteSpace('\n')
+    PsiElement(])(']')

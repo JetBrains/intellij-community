@@ -1,0 +1,175 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.platform.workspace.storage.testEntities.entities.impl
+
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2Builder
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase(dataSource) {
+
+  override val data: String
+    get() {
+      readField("data")
+      return dataSource.data
+    }
+  override val boolData: Boolean
+    get() {
+      readField("boolData")
+      return dataSource.boolData
+    }
+  override val optionalData: String?
+    get() {
+      readField("optionalData")
+      return dataSource.optionalData
+    }
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return emptyList()
+  }
+
+  internal class Builder(result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2, SampleEntity2Data>(result),
+                                                       SampleEntity2Builder {
+    internal constructor() : this(SampleEntity2Data())
+
+    override fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isDataInitialized()) {
+        error("Field SampleEntity2#data should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return emptyList()
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SampleEntity2
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
+      if (this.optionalData != dataSource.optionalData) this.optionalData = dataSource.optionalData
+      updateChildToParentReferences(parents)
+    }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+      }
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).data = value
+        changedProperty.add("data")
+      }
+    override var boolData: Boolean
+      get() = getEntityData().boolData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).boolData = value
+        changedProperty.add("boolData")
+      }
+    override var optionalData: String?
+      get() = getEntityData().optionalData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).optionalData = value
+        changedProperty.add("optionalData")
+      }
+
+    override fun getEntityClass(): Class<SampleEntity2> = SampleEntity2::class.java
+  }
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
+  lateinit var data: String
+  var boolData: Boolean = false
+  var optionalData: String? = null
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
+  override fun newInstance(): SampleEntity2 = SampleEntity2Impl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<SampleEntity2, *> = SampleEntity2Impl.Builder(null)
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return SampleEntity2::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return SampleEntity2(data, boolData, entitySource) {
+      this.optionalData = this@SampleEntity2Data.optionalData
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as SampleEntity2Data
+    if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
+    if (this.boolData != other.boolData) return false
+    if (this.optionalData != other.optionalData) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as SampleEntity2Data
+    if (this.data != other.data) return false
+    if (this.boolData != other.boolData) return false
+    if (this.optionalData != other.optionalData) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + boolData.hashCode()
+    result = 31 * result + optionalData.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + boolData.hashCode()
+    result = 31 * result + optionalData.hashCode()
+    return result
+  }
+}

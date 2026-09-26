@@ -1,43 +1,115 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.function.Function;
+import java.util.List;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
-
-  @NonNls
-  static final String CODE_STYLES_DIR_PATH = "codestyles";
+  public static final @NonNls String CODE_STYLES_DIR_PATH = "codestyles";
 
   protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
-      @NotNull
       @Override
-      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
-                                              @NotNull String name,
-                                              @NotNull Function<String, String> attributeProvider,
-                                              boolean isBundled) {
-        return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
+      public @NotNull CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
+                                                       @NotNull String name,
+                                                       @NotNull Function1<? super String, String> attributeProvider,
+                                                       boolean isBundled) {
+        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), dataHolder);
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     mySchemeManager.loadSchemes();
     setCurrentScheme(getDefaultScheme());
+
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager.getInstance()
+          .registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager.getInstance()
+          .unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
+      }
+    }, null);
+
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
+        if (codeStyleSettingsManager != null) {
+          codeStyleSettingsManager.registerLanguageSettings(getAllSettings(), extension);
+          codeStyleSettingsManager.registerCustomSettings(getAllSettings(), extension);
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+       CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
+        if (codeStyleSettingsManager != null) {
+          codeStyleSettingsManager.unregisterLanguageSettings(getAllSettings(), extension);
+          codeStyleSettingsManager.unregisterCustomSettings(getAllSettings(), extension);
+        }
+      }
+    }, null);
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
+        if (codeStyleSettingsManager != null) {
+          codeStyleSettingsManager.registerCustomSettings(getAllSettings(), extension);
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance();
+        if (codeStyleSettingsManager != null) {
+          codeStyleSettingsManager.unregisterCustomSettings(getAllSettings(), extension);
+        }
+      }
+    }, null);
   }
 
   @Override
+  public List<CodeStyleScheme> getAllSchemes() {
+    return mySchemeManager.getAllSchemes();
+  }
+
+  private @Unmodifiable List<CodeStyleSettings> getAllSettings() {
+    return ContainerUtil.map(mySchemeManager.getAllSchemes(), scheme -> scheme.getCodeStyleSettings());
+  }
+
+  @Override
+  @Transient
   public CodeStyleScheme getCurrentScheme() {
     return mySchemeManager.getActiveScheme();
   }
@@ -47,11 +119,10 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.setCurrent(scheme);
   }
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     return new CodeStyleSchemeImpl(
-      SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> mySchemeManager.findSchemeByName(name) != null), 
+      SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> mySchemeManager.findSchemeByName(name) != null),
       false,
       parentScheme);
   }
@@ -83,9 +154,8 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     return defaultScheme;
   }
 
-  @Nullable
   @Override
-  public CodeStyleScheme findSchemeByName(@NotNull String name) {
+  public @Nullable CodeStyleScheme findSchemeByName(@NotNull String name) {
     return mySchemeManager.findSchemeByName(name);
   }
 
@@ -94,8 +164,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.addScheme(scheme);
   }
 
-  @NotNull
-  public static SchemeManager<CodeStyleScheme> getSchemeManager() {
+  public static @NotNull SchemeManager<CodeStyleScheme> getSchemeManager() {
     return ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).mySchemeManager;
   }
 }

@@ -1,0 +1,3 @@
+public class A<T extends String> {
+  void foo(T t) {}
+}

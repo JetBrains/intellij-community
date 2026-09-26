@@ -15,13 +15,10 @@
  */
 package com.intellij.util.graph;
 
-/**
- * @author dsl
- */
 class TestNode {
   private final String myMark;
 
-  public TestNode(String mark) {
+  TestNode(String mark) {
     myMark = mark;
   }
 
@@ -29,6 +26,7 @@ class TestNode {
     return myMark;
   }
 
+  @Override
   public String toString() {
     return myMark;
   }

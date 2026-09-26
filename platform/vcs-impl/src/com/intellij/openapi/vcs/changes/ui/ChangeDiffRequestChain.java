@@ -1,85 +1,114 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChainBase;
+import com.intellij.diff.chains.AsyncDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.chains.DiffRequestSelectionChain;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vcs.changes.actions.diff.GoToChangePopupController;
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
-  private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
-  @NotNull private final List<? extends Producer> myProducers;
+/**
+ * Supports typical tree-like "Go to Change" navigation popup.
+ *
+ * @see ChangeDiffRequestChain.Async
+ */
+public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
+  private final @NotNull ListSelection<? extends Producer> myProducers;
 
-  public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
-    super(index);
-    if (ContainerUtil.exists(producers, Objects::isNull)) {
-      producers = ContainerUtil.skipNulls(producers);
-      LOG.error("Producers must not be null");
-    }
+  public ChangeDiffRequestChain(@NotNull ListSelection<? extends Producer> producers) {
     myProducers = producers;
   }
 
+  public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
+    this(ListSelection.createAt(producers, index));
+  }
+
   @Override
-  @NotNull
-  public List<? extends Producer> getRequests() {
+  public @NotNull ListSelection<? extends Producer> getListSelection() {
     return myProducers;
   }
 
-  @NotNull
   @Override
-  public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-    return new ChangeGoToChangePopupAction<ChangeDiffRequestChain>(this, getIndex()) {
-      @NotNull
-      @Override
-      protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-        MultiMap<Object, TreeModelBuilder.GenericNodeData> groups = new MultiMap<>();
-        for (int i = 0; i < myProducers.size(); i++) {
-          Producer producer = myProducers.get(i);
-          FilePath filePath = producer.getFilePath();
-          FileStatus fileStatus = producer.getFileStatus();
-          Object tag = producer.getPopupTag();
-          groups.putValue(tag, new TreeModelBuilder.GenericNodeData(filePath, fileStatus, i));
-        }
-
-        TreeModelBuilder builder = new TreeModelBuilder(project, grouping);
-        for (Object tag : groups.keySet()) {
-          builder.setGenericNodes(groups.get(tag), tag);
-        }
-        return builder.build();
-      }
-
-      @Override
-      protected void onSelected(@Nullable Object object) {
-        onSelected.consume((Integer)object);
-      }
-    };
-
+  public @NotNull List<? extends Producer> getRequests() {
+    return myProducers.getList();
   }
 
-  public interface Producer extends DiffRequestProducer {
-    @NotNull
-    FilePath getFilePath();
+  @Override
+  public @NotNull AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+    return createGoToChangeAction(getRequests(), onSelected, defaultSelection);
+  }
 
-    @NotNull
-    FileStatus getFileStatus();
+  private static @NotNull AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
+                                                          @NotNull Consumer<? super Integer> onSelected,
+                                                          int defaultSelection) {
+    GoToChangePopupController<ProducerWrapper> controller = new GoToChangePopupController<>() {
+      @Override
+      public PresentableChange getPresentation(ProducerWrapper change) {
+        return change.producer;
+      }
 
-    @Nullable
-    default Object getPopupTag() {
-      return null;
+      @Override
+      public void onSelected(ProducerWrapper change) {
+        onSelected.consume(change.index);
+      }
+    };
+    return PresentableGoToChangePopupAction.create(() -> getChanges(producers, defaultSelection), controller);
+  }
+
+  private static @NotNull ListSelection<? extends ProducerWrapper> getChanges(@NotNull List<? extends Producer> producers,
+                                                                              int defaultSelection) {
+    List<ProducerWrapper> wrappers = new ArrayList<>();
+    for (int i = 0; i < producers.size(); i++) {
+      wrappers.add(new ProducerWrapper(producers.get(i), i));
+    }
+    return ListSelection.createAt(wrappers, defaultSelection);
+  }
+
+  private static class ProducerWrapper {
+    public final @NotNull Producer producer;
+    public final int index;
+
+    private ProducerWrapper(@NotNull Producer producer, int index) {
+      this.producer = producer;
+      this.index = index;
+    }
+  }
+
+  public interface Producer extends DiffRequestProducer, PresentableChange {
+    @Override
+    default @NotNull FileType getContentType() {
+      return getFilePath().getFileType();
+    }
+  }
+
+  public abstract static class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
+    @Override
+    protected abstract @NotNull ListSelection<? extends Producer> loadRequestProducers() throws DiffRequestProducerException;
+
+    @Override
+    public @Nullable AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+      List<? extends DiffRequestProducer> requests = getRequests();
+
+      // may contain other producers with intermediate MessageDiffRequest
+      List<Producer> producers = ContainerUtil.map(requests, it -> ObjectUtils.tryCast(it, Producer.class));
+      if (!ContainerUtil.all(producers, Conditions.notNull())) return null;
+
+      return ChangeDiffRequestChain.createGoToChangeAction(producers, onSelected, defaultSelection);
     }
   }
 }

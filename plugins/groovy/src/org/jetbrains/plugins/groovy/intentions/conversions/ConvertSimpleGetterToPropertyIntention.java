@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -38,19 +23,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Max Medvedev
  */
-public class ConvertSimpleGetterToPropertyIntention extends Intention {
+public final class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateIntention {
 
   private static final String[] MODIFIERS_TO_CHECK = {
     PsiModifier.STATIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED
   };
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrMethod method = (GrMethod)element.getParent();
 
     GrOpenBlock block = method.getBlock();
@@ -71,7 +57,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return;
 
-    List<String> modifiers = ContainerUtil.newArrayList();
+    List<String> modifiers = new ArrayList<>();
     for (String modifier : MODIFIERS_TO_CHECK) {
       if (method.hasModifierProperty(modifier)) modifiers.add(modifier);
     }
@@ -80,24 +66,21 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
     GrTypeElement returnTypeElement = method.getReturnTypeElementGroovy();
     PsiType returnType = returnTypeElement == null ? null : returnTypeElement.getType();
 
-    GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(
-      ArrayUtil.toStringArray(modifiers), fieldName, value, returnType
+    GrVariableDeclaration declaration = GroovyPsiElementFactory.getInstance(context.project()).createFieldDeclaration(
+      ArrayUtilRt.toStringArray(modifiers), fieldName, value, returnType
     );
 
     PsiElement replaced = method.replace(declaration);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
+    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod) || ((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
-
-        GrMethod method = (GrMethod)parent;
+        if (!(parent instanceof GrMethod method) || method.getNameIdentifierGroovy() != element) return false;
 
         GrOpenBlock block = method.getBlock();
         if (block == null) return false;
@@ -111,7 +94,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
 
         GrStatement statement = statements[0];
         if (!(statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null ||
-              statement instanceof GrExpression && !PsiType.VOID.equals(((GrExpression)statement).getType()))) {
+              statement instanceof GrExpression && !PsiTypes.voidType().equals(((GrExpression)statement).getType()))) {
           return false;
         }
         return true;

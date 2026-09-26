@@ -18,8 +18,14 @@ package com.intellij.lang.properties.xml;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
@@ -31,11 +37,16 @@ import org.jetbrains.annotations.NotNull;
 public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"),
-                                        new PsiReferenceProvider() {
-      @NotNull
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"), new PsiReferenceProvider() {
+
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PomTargetPsiElement &&
+               ((PomTargetPsiElement)target).getTarget() instanceof XmlProperty;
+      }
+
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element.getContainingFile());
         if (propertiesFile == null) return PsiReference.EMPTY_ARRAY;
         XmlProperty property = new XmlProperty(PsiTreeUtil.getParentOfType(element, XmlTag.class), (XmlPropertiesFileImpl)propertiesFile);

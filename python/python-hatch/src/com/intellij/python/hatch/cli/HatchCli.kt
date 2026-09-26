@@ -1,0 +1,205 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.hatch.cli
+
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.utils.sendWholeText
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.hatch.runtime.HatchConstants
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.pytools.backend.runtime.cliArg
+import com.intellij.python.pytools.backend.runtime.cliArgs
+import com.intellij.python.pytools.backend.runtime.executeAndHandleErrors
+import com.intellij.python.pytools.backend.runtime.executeAndMatch
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import io.github.z4kn4fein.semver.Version
+import io.github.z4kn4fein.semver.VersionFormatException
+import java.io.IOException
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+
+sealed class HatchCommand<P : PathHolder>(private val command: Array<String>, protected val runtime: PyToolRuntime) {
+  @Suppress("unused")
+  constructor(command: String, runtime: PyToolRuntime) : this(arrayOf(command), runtime)
+
+  protected suspend fun <T> executeAndHandleErrors(vararg arguments: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
+    return runtime.executeAndHandleErrors(*command, *arguments, transformer = transformer)
+  }
+
+  protected suspend fun <T> executeAndMatch(
+    vararg arguments: String,
+    expectedOutput: Regex,
+    transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+  ): PyResult<T> {
+    return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
+  }
+}
+
+class HatchCli<P : PathHolder>(internal val runtime: PyToolRuntime) {
+  /**
+   * Build a project
+   */
+  fun build(): PyResult<Unit> = TODO()
+
+  /**
+   * Remove build artifacts
+   */
+  fun clean(): PyResult<Unit> = TODO()
+
+  /**
+   * Manage the config file
+   */
+  fun config(): HatchConfig<P> = HatchConfig(runtime)
+
+  /**
+   * Manage environment dependencies
+   */
+  fun dep(): HatchDep<P> = HatchDep(runtime)
+
+  /**
+   * Manage project environments
+   */
+  fun env(): HatchEnv<P> = HatchEnv(runtime)
+
+  /**
+   * Format and lint source code
+   */
+  fun fmt(): PyResult<Unit> = TODO()
+
+  /**
+   * View project information
+   */
+  fun project(): HatchProject<P> = HatchProject(runtime)
+
+  /**
+   * Publish build artifacts
+   */
+  fun publish(): PyResult<Unit> = TODO()
+
+  /**
+   * Manage Python installations
+   */
+  fun python(): HatchPython<P> = HatchPython(runtime)
+
+  /**
+   * Run commands within project environments
+   */
+  suspend fun run(envName: String? = null, vararg command: String): PyResult<String> {
+    val envRuntime = envName?.let { runtime.withEnv(HatchConstants.AppEnvVars.ENV to it) } ?: runtime
+    return envRuntime.executeAndHandleErrors("run", *command) { output ->
+      if (output.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
+
+      val scenario = output.stderrString.trim()
+      val installDetailsContent = output.stdoutString.replace("─", "").trim()
+      val info = installDetailsContent.lines().drop(1).dropLast(2).joinToString("\n")
+
+      Result.success("$scenario\n$info")
+    }
+  }
+
+  /**
+   * Manage Hatch
+   */
+  fun self(): HatchSelf<P> = HatchSelf(runtime)
+
+  /**
+   * Enter a shell within a project's environment
+   */
+  fun shell(): PyResult<Unit> = TODO()
+
+  data class HatchStatus(val project: String, val location: Path, val config: Path)
+
+  /**
+   * Show information about the current environment
+   */
+  suspend fun status(): PyResult<HatchStatus> {
+    val expectedOutput = """^\[Project] - (.*)\n\[Location] - (.*)\n\[Config] - (.*)\n$""".toRegex()
+
+    return runtime.executeAndMatch("status", expectedOutput = expectedOutput, outputContentSupplier = { it.stderrString }) { matchResult ->
+      val (project, location, config) = matchResult.destructured
+      try {
+        Result.success(HatchStatus(project, Path.of(location), Path.of(config)))
+      }
+      catch (e: InvalidPathException) {
+        Result.failure(e.localizedMessage)
+      }
+    }
+  }
+
+  /**
+   * Run tests
+   */
+  fun test(): PyResult<Unit> = TODO()
+
+  /**
+   * View a project's version.
+   *
+   * @return Project Version
+   */
+  suspend fun getVersion(): PyResult<Version> {
+    return runtime.executeAndHandleErrors("version") { processOutput ->
+      val output = processOutput.takeIf { it.exitCode == 0 }?.stdoutString?.trim()
+                   ?: return@executeAndHandleErrors Result.failure(null)
+      try {
+        Result.success(Version.parse(output))
+      }
+      catch (e: VersionFormatException) {
+        Result.failure(e.localizedMessage)
+      }
+    }
+  }
+
+  /**
+   * Set a project's version.
+   *
+   * @return OldVersion to NewVersion as Pair
+   */
+  suspend fun setVersion(desiredVersion: String): PyResult<Pair<Version, Version>> {
+    val expectedOutput = """^(?:.*\n)*Old: (.*)\nNew: (.*)\n?$""".toRegex()
+
+    return runtime.executeAndMatch("version",
+                                   desiredVersion,
+                                   expectedOutput = expectedOutput,
+                                   outputContentSupplier = { it.stderrString }) { matchResult ->
+      val (oldVersion, newVersion) = matchResult.destructured
+      try {
+        Result.success(Version.parse(oldVersion) to Version.parse(newVersion))
+      }
+      catch (e: VersionFormatException) {
+        Result.failure(e.localizedMessage)
+      }
+    }
+  }
+}
+
+/**
+ * Create or initialize a project. This is intentionally available only for EEL-backed Hatch CLIs.
+ *
+ * @param[initExistingProject] Initialize an existing project
+ */
+suspend fun HatchCli<PathHolder.Eel>.new(
+  projectName: String,
+  location: Path? = null,
+  initExistingProject: Boolean = false,
+): PyResult<String> {
+  val arguments = cliArgs(
+    cliArg("--init".takeIf { initExistingProject }),
+    cliArg(projectName),
+    cliArg(location),
+  )
+  return runtime.executeInteractive("new", *arguments) { eelProcess, _ ->
+    if (initExistingProject) {
+      try {
+        eelProcess.sendWholeText("$projectName\n")
+      }
+      catch (error: IOException) {
+        return@executeInteractive Result.failure("Failed to write to process: ${error.localizedMessage}")
+      }
+    }
+    Result.success("Created")
+  }
+}
+

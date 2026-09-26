@@ -15,21 +15,25 @@ public final class CountingNodeIterator extends NodeIterator {
     delegate = _iterator;
   }
 
+  @Override
   public boolean hasNext() {
     return index < max && delegate.hasNext();
   }
 
+  @Override
   public PsiElement current() {
     if (index < max)
       return delegate.current();
     return null;
   }
 
+  @Override
   public void advance() {
     ++index;
     delegate.advance();
   }
 
+  @Override
   public void rewind() {
     if (index >0) {
       -- index;
@@ -37,6 +41,7 @@ public final class CountingNodeIterator extends NodeIterator {
     }
   }
 
+  @Override
   public void reset() {
     index = 0;
     delegate.reset();

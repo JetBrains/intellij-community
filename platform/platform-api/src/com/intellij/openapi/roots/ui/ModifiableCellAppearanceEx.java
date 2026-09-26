@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ModifiableCellAppearanceEx extends CellAppearanceEx {
   void setIcon(@Nullable Icon icon);

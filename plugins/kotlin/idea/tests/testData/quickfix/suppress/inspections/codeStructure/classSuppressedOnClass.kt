@@ -1,0 +1,9 @@
+// "Suppress 'RedundantEmptyInitializerBlock' for class ClassSuppressedOnClass" "true"
+
+class ClassSuppressedOnClass {
+    <caret>init {}
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantEmptyInitializerBlockInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantEmptyInitializerBlockInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

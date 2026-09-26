@@ -4,10 +4,11 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
@@ -17,45 +18,36 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
-public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
-  private final Project myProject;
+final class DeploymentConfigurationManagerImpl extends DeploymentConfigurationManager {
 
-  public DeploymentConfigurationManagerImpl(Project project) {
+  private final @NotNull Project myProject;
+
+  DeploymentConfigurationManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
-    final DeployToServerConfigurationType configurationType =
-      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+  public @NotNull List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
+      .getConfigurationType(serverType);
     return RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType);
-  }
-
-  @Override
-  @Deprecated
-  public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
-                                        @Nullable RemoteServer<?> remoteServer) {
-    createAndRunConfiguration(serverType, remoteServer, null);
   }
 
   @Override
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                         @Nullable RemoteServer<?> remoteServer,
-                                        @Nullable DeploymentSourceType sourceType) {
-    DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+                                        @Nullable DeploymentSourceType<?> sourceType) {
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
+      .getConfigurationType(serverType);
     RunManager runManager = RunManager.getInstance(myProject);
-    ConfigurationFactoryEx factory = configurationType.getFactoryForType(sourceType);
-    RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
-    factory.onNewConfigurationCreated(settings.getConfiguration());
+    ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);
+    RunnerAndConfigurationSettings settings = runManager.createConfiguration(configurationType.getDisplayName(), factory);
     DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
+    runConfiguration.onNewConfigurationCreated();
     if (remoteServer != null) {
       runConfiguration.setServerName(remoteServer.getName());
     }
-    if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
+    if (RunDialog.editConfiguration(myProject, settings, CloudBundle.message("dialog.title.create.deployment.configuration"),
                                     DefaultRunExecutor.getRunExecutorInstance())) {
       runManager.addConfiguration(settings);
       runManager.setSelectedConfiguration(settings);

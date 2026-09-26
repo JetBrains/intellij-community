@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.geb;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GebModuleMemberContributor extends GebPageMemberContributor {
+public final class GebModuleMemberContributor extends GebPageMemberContributor {
 
   @Override
   protected String getParentClassName() {

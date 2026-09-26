@@ -1,0 +1,23 @@
+// Copyright 2000-${YEAR} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.tools.projectWizard.compatibility
+
+/**
+ * NOTE THIS FILE IS AUTO-GENERATED
+ * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
+ */
+internal val DEFAULT_KOTLIN_LIBRARIES_DATA = KotlinLibrariesCompatibilityState(
+    listOf(
+        #foreach($entry in $LIBRARIES)
+        KotlinLibraryCompatibilityEntry(
+            groupId = "$entry.groupId",
+            artifactId = "$entry.artifactId",
+            versions = mapOf(
+                #foreach($version in $entry.versions.entrySet())
+                    "$version.key" to "$version.value",
+                #end
+            ),
+        ),
+        #end
+    )
+)

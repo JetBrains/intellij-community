@@ -1,63 +1,35 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Manager for intentions. All intentions must be registered here.
  *
+ * @see <a href="https://www.jetbrains.com/help/idea/intention-actions.html">IntelliJ documentation</a>
  * @see IntentionAction
  */
-public abstract class IntentionManager  {
-  public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS =
-    new ExtensionPointName<>("com.intellij.intentionAction");
-
+public abstract class IntentionManager {
   /**
    * Key to be used within {@link UserDataHolder} in order to check presence of explicit indication on if intentions sub-menu
    * should be shown.
    */
   public static final Key<Boolean> SHOW_INTENTION_OPTIONS_KEY = Key.create("SHOW_INTENTION_OPTIONS_KEY");
 
-  /**
-   * @deprecated Use {@link #getInstance()} unstead.
-   * Returns instance of {@code IntentionManager} for given project.
-   *
-   * @param project the project for which the instance is returned.
-   * @return instance of the {@code IntentionManager} assigned for given project.
-   */
-  @Deprecated
-  public static IntentionManager getInstance(Project project) {
-    return getInstance();
-  }
-
   public static IntentionManager getInstance() {
-    return ServiceManager.getService(IntentionManager.class);
+    return ApplicationManager.getApplication().getService(IntentionManager.class);
   }
 
   /**
@@ -72,51 +44,29 @@ public abstract class IntentionManager  {
    *
    * @return array of registered actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getIntentionActions();
+  public abstract @NotNull IntentionAction @NotNull [] getIntentionActions();
 
   /**
    * Returns all registered intention actions which are available now
    * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
    *
-   * @return array of actions.
+   * @return list of actions.
    */
-  @NotNull
-  public abstract IntentionAction[] getAvailableIntentionActions();
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getAvailableIntentions();
 
   /**
-   * Registers an intention action which can be enabled or disabled through the "Intention
-   * Settings" dialog. To provide the description and the example code for the intention,
-   * the directory with the name equal to {@link IntentionAction#getFamilyName()} needs to
-   * be created under the {@code intentionDescriptions} directory of the resource root.
-   * The directory needs to contain three files. {@code description.html} provides the
-   * description of the intention, {@code before.java.template} provides the sample code
-   * before the intention is invoked, and {@code after.java.template} provides the sample
-   * code after invoking the intention. The templates can contain a fragment of code surrounded
-   * with {@code <spot>} and {@code </spot>} markers. If present, that fragment
-   * will be surrounded by a blinking rectangle in the inspection preview pane.
+   * Returns all registered intention actions which are available for passed languages
+   * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
    *
-   * @param action   the intention action to register.
-   * @param category the name of the category or categories under which the intention will be shown
-   *                 in the "Intention Settings" dialog.
+   * @return list of actions.
    */
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getAvailableIntentions(@NotNull @Unmodifiable Collection<String> languages);
 
   /**
-   * @deprecated custom directory name causes problem with internationalization of intention descriptions.
-   * Register intention class via extension point {@link IntentionManager#EP_INTENTION_ACTIONS} instead.
+   * @deprecated Please use {@code <intentionAction>} extension point instead
    */
   @Deprecated
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String descriptionDirectoryName);
-
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String description,
-                                                    @NotNull String exampleFileExtension,
-                                                    @NotNull String[] exampleTextBefore,
-                                                    @NotNull String[] exampleTextAfter);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, String @NotNull ... category);
 
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 
@@ -125,33 +75,31 @@ public abstract class IntentionManager  {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.
    */
-  @NotNull
-  public abstract List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
+                                                                                           @NotNull PsiElement context);
 
   /**
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
-  @Nullable
-  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull IntentionAction action);
+  public abstract @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                                  @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file
    */
-  @NotNull
-  public abstract IntentionAction createCleanupAllIntention();
+  public abstract @NotNull IntentionAction createCleanupAllIntention();
 
   /**
    * @return options for cleanup intention {@link #createCleanupAllIntention()}
    * e.g. edit enabled cleanup inspections or starting cleanup on predefined scope
    */
-  @NotNull
-  public abstract List<IntentionAction> getCleanupIntentionOptions();
+  public abstract @NotNull @Unmodifiable List<@NotNull IntentionAction> getCleanupIntentionOptions();
 
   /**
    * Wraps given action in a LocalQuickFix object.
+   *
    * @param action action to convert.
    * @return quick fix instance.
    */
-  @NotNull
-  public abstract LocalQuickFix convertToFix(@NotNull IntentionAction action);
+  public abstract @NotNull LocalQuickFix convertToFix(@NotNull IntentionAction action);
 }

@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JDParamListOwnerComment extends JDComment {
   protected List<TagDescription> myParamsList;
 
-  public JDParamListOwnerComment(@NotNull CommentFormatter formatter) {
-    super(formatter);
+  public JDParamListOwnerComment(@NotNull CommentFormatter formatter, boolean isMarkdown) {
+    super(formatter, isMarkdown);
   }
 
   @Override
@@ -48,23 +34,21 @@ public class JDParamListOwnerComment extends JDComment {
     }
   }
 
-  @Nullable
-  public TagDescription getParameter(@Nullable String name) {
+  public @Nullable TagDescription getParameter(@Nullable String name) {
     return getNameDesc(name, myParamsList);
   }
 
   public void addParameter(@NotNull String name, @Nullable String description) {
     if (myParamsList == null) {
-      myParamsList = ContainerUtilRt.newArrayList();
+      myParamsList = new ArrayList<>();
     }
     myParamsList.add(new TagDescription(name, description));
   }
 
-  @Nullable
-  private static TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
+  private static @Nullable TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
     if (list == null) return null;
     for (TagDescription aList : list) {
-      if (aList.name.equals(name)) {
+      if (aList.name().equals(name)) {
         return aList;
       }
     }
@@ -75,9 +59,9 @@ public class JDParamListOwnerComment extends JDComment {
    * Generates parameters or exceptions
    *
    */
-  protected void generateList(@NotNull final String prefix,
+  protected void generateList(final @NotNull String prefix,
                               @NotNull StringBuilder sb,
-                              @NotNull List<TagDescription> tagBlocks,
+                              @NotNull List<? extends TagDescription> tagBlocks,
                               @NotNull String tag,
                               boolean align_comments,
                               boolean generate_empty_tags,
@@ -87,30 +71,33 @@ public class JDParamListOwnerComment extends JDComment {
 
     StringBuilder fill = new StringBuilder(prefix.length() + tag.length() + maxNameLength + 1);
     fill.append(prefix);
-    StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
+    // Since in Markdown comments, spaces have meaning, avoid continuation indent
+    if(!getIsMarkdown()) {
+      StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
+    }
 
     for (TagDescription nd : tagBlocks) {
-      if (isNull(nd.desc) && !generate_empty_tags) continue;
+      if (isNull(nd.desc()) && !generate_empty_tags) continue;
 
-      if (descriptionOnNewLine && !isNull(nd.desc)) {
-        sb.append(prefix).append(tag).append(nd.name).append("\n");
-        sb.append(formatJDTagDescription(nd.desc, prefix + continuationIndent()));
+      if (descriptionOnNewLine && !isNull(nd.desc())) {
+        sb.append(prefix).append(tag).append(nd.name()).append("\n");
+        sb.append(formatJDTagDescription(nd.desc(), prefix + continuationIndent()));
       }
       else if (align_comments) {
-        int spacesNumber = maxNameLength + 1 - nd.name.length();
+        int spacesNumber = maxNameLength + 1 - nd.name().length();
         String spaces = StringUtil.repeatSymbol(' ', Math.max(0, spacesNumber));
-        String firstLinePrefix = prefix + tag + nd.name + spaces;
-        sb.append(formatJDTagDescription(nd.desc, firstLinePrefix, fill));
+        String firstLinePrefix = prefix + tag + nd.name() + spaces;
+        sb.append(formatJDTagDescription(nd.desc(), firstLinePrefix, fill));
       }
       else {
-        String description = (nd.desc == null) ? "" : nd.desc;
-        StringBuilder tagDescription = formatJDTagDescription(tag + nd.name + " " + description, prefix, prefix + javadocContinuationIndent());
+        String description = (nd.desc() == null) ? "" : nd.desc();
+        StringBuilder tagDescription = formatJDTagDescription(tag + nd.name() + " " + description, prefix, prefix + javadocContinuationIndent());
         sb.append(tagDescription);
       }
     }
   }
 
-  private static int maxTagDescriptionNameLength(@NotNull List<TagDescription> tagBlocks,
+  private static int maxTagDescriptionNameLength(@NotNull List<? extends TagDescription> tagBlocks,
                                                  boolean align_comments,
                                                  boolean generate_empty_tags,
                                                  boolean descriptionOnNewLine)
@@ -119,8 +106,8 @@ public class JDParamListOwnerComment extends JDComment {
 
     if (align_comments && !descriptionOnNewLine) {
       for (TagDescription tagDescription: tagBlocks) {
-        int current = tagDescription.name.length();
-        if (isNull(tagDescription.desc) && !generate_empty_tags) continue;
+        int current = tagDescription.name().length();
+        if (isNull(tagDescription.desc()) && !generate_empty_tags) continue;
         if (current > max) {
           max = current;
         }
@@ -133,7 +120,7 @@ public class JDParamListOwnerComment extends JDComment {
   private StringBuilder formatJDTagDescription(@Nullable String description,
                                                @NotNull CharSequence firstLinePrefix,
                                                @NotNull CharSequence continuationPrefix) {
-    return myFormatter.getParser().formatJDTagDescription(description, firstLinePrefix, continuationPrefix);
+    return myFormatter.getParser().formatJDTagDescription(description, firstLinePrefix, continuationPrefix, getIsMarkdown());
   }
 
   private StringBuilder formatJDTagDescription(@Nullable String description, @NotNull CharSequence prefix) {

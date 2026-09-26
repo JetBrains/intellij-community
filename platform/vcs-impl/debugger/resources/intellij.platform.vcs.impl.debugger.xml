@@ -1,0 +1,13 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xdebugger.breakpointFileProhibitionPolicy implementation="com.intellij.platform.vcs.impl.debugger.VcsBreakpointFileProhibitionPolicy"/>
+  </extensions>
+</idea-plugin>

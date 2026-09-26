@@ -1,0 +1,54 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jsonSchemaValidator` start
+jvm_library(
+    name = "json-schema-validator",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsonSchemaValidator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
+    ],
+)
+
+jvm_library(
+    name = "json-schema-validator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jsonSchemaValidator",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains"],
+    runtime_deps = [
+        # do not sort,
+        ":json-schema-validator",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.jsonSchemaValidator` end
+
+### auto-generated section `iml intellij.libraries.jsonSchemaValidator` start
+exports_files(
+    [
+        "intellij.libraries.jsonSchemaValidator.iml",
+        "resources/intellij.libraries.jsonSchemaValidator.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jsonSchemaValidator` end

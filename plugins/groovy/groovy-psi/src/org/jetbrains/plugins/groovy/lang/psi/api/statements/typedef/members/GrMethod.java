@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -38,11 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 import java.util.Map;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
-                                  GrParametersOwner, GrTopStatement, GrTypeParameterListOwner, GrDocCommentOwner {
+                                  GrParameterListOwner, GrTopStatement, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   ArrayFactory<GrMethod> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrMethod[count];
 
@@ -74,9 +58,7 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   GrTypeElement setReturnType(@Nullable PsiType newReturnType);
 
   @Override
-  @NotNull
-  @NonNls
-  String getName();
+  @NlsSafe @NotNull String getName();
 
   @Override
   @NotNull
@@ -89,10 +71,8 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @NotNull
   Map<String, NamedArgumentDescriptor> getNamedParameters();
 
-  @NotNull
-  GrReflectedMethod[] getReflectedMethods();
+  GrReflectedMethod @NotNull [] getReflectedMethods();
 
-  @NotNull
   @Override
-  GrParameter[] getParameters();
+  GrParameter @NotNull [] getParameters();
 }

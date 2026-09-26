@@ -1,0 +1,15 @@
+class API:
+    def get(self):
+        return "get"
+
+    def put(self):
+        return "put"
+
+    def delete(self):
+        return "delete"
+
+    def patch(self):
+        return "patch"
+
+    def post(self):
+        return "post"

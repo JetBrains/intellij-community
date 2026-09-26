@@ -1,48 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 
-/**
- * @author yole
- */
+
 public class JavaPsiElementResult extends PsiElementResult {
   public JavaPsiElementResult(PsiElement element) {
     super(element);
   }
 
+  @Override
   public String toString() {
     PsiElement element = getElement();
-    if (element != null) {
-      if (element instanceof PsiVariable) {
-        return ((PsiVariable)element).getName();
+    return switch (element) {
+      case PsiVariable variable -> variable.getName();
+      case PsiMethod method -> method.getName() + "()";
+      case PsiClass aClass -> {
+        PsiIdentifier identifier = aClass.getNameIdentifier();
+        yield identifier == null ? "" : identifier.getText();
       }
-      else if (element instanceof PsiMethod) {
-        return ((PsiMethod)element).getName() + "()";
-      }
-      else if (element instanceof PsiClass) {
-        PsiIdentifier identifier = ((PsiClass)element).getNameIdentifier();
-        if (identifier == null) return "";
-        return identifier.getText();
-      }
-    }
-    return super.toString();
+      case null, default -> super.toString();
+    };
   }
 
   @Override

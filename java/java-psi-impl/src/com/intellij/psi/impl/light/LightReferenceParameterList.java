@@ -16,13 +16,18 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
+import java.util.StringJoiner;
+
 public class LightReferenceParameterList extends LightElement implements PsiReferenceParameterList {
   private final PsiTypeElement[] myTypeElements;
   private final String myText;
@@ -35,19 +40,14 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
 
   private String calculateText() {
     if (myTypeElements.length == 0) return "";
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("<");
-    for (int i = 0; i < myTypeElements.length; i++) {
-      PsiTypeElement type = myTypeElements[i];
-      if (i > 0) {
-        buffer.append(",");
-      }
-      buffer.append(type.getText());
+    final StringJoiner buffer = new StringJoiner(",", "<", ">");
+    for (PsiTypeElement type : myTypeElements) {
+      buffer.add(type.getText());
     }
-    buffer.append(">");
     return buffer.toString();
   }
 
+  @Override
   public String toString() {
     return "PsiReferenceParameterList";
   }
@@ -78,14 +78,12 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement[] getTypeParameterElements() {
+  public PsiTypeElement @NotNull [] getTypeParameterElements() {
     return myTypeElements;
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);
   }
 }

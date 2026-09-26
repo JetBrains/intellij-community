@@ -1,0 +1,40 @@
+{
+  "inspections": [
+    {
+      "id": "ForeignDelegate",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnusedVersionCatalogEntry",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MultipleRepositoryUrls",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "BintrayPublishingPlugin",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectPluginDslStructure",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DependencyNotationArgument",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DeprecatedConfigurations",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JCenterRepository",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ConfigurationAvoidance",
+      "codeQualityCategory": "Performance"
+    }
+  ]
+}

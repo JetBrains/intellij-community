@@ -1,2 +1,2 @@
-# noinspection PyUnresolvedReferences
-print x<caret>xx
+# noinspection unresolved-references
+print(x<caret>xx)

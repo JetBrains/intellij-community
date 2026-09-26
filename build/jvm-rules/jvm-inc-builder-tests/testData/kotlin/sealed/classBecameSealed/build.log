@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+  META-INF/kotlin_sealed_classBecameSealed-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/sealed/classBecameSealed/a/base.kt
+End of files
+Cleaning output files:
+  Base.class
+  InstKt.class
+  META-INF/kotlin_sealed_classBecameSealed-a.kotlin_module
+  Sub.class
+End of files
+Compiling files:
+  kotlin/sealed/classBecameSealed/a/base.kt
+  kotlin/sealed/classBecameSealed/a/inst.kt
+  kotlin/sealed/classBecameSealed/a/sub.kt
+End of files
+------------------------------------------
+Exit code: ERROR

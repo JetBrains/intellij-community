@@ -1,4 +1,4 @@
-// "Create method 'someMethod'" "true"
+// "Create method 'someMethod'" "true-preview"
 public class Test {
 
     public Object get() {

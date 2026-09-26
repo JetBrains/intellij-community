@@ -1,0 +1,4 @@
+version = "7.2.*"
+upstream-repository = "https://github.com/docker/docker-py"
+dependencies = ["types-requests", "urllib3>=2"]
+optional-dependencies = ["types-paramiko"]

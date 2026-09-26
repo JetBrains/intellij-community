@@ -1,42 +1,25 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.inspections.FormInspectionUtil;
-import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
+import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
 /**
  * Design-time support for a layout manager.
- *
- * @author yole
  */
 public abstract class RadLayoutManager {
   /**
@@ -45,11 +28,9 @@ public abstract class RadLayoutManager {
    *
    * @return the layout manager name.
    */
-  @Nullable
-  public abstract String getName();
+  public abstract @Nullable String getName();
 
-  @Nullable
-  public LayoutManager createLayout() {
+  public @Nullable LayoutManager createLayout() {
     return null;
   }
 
@@ -69,8 +50,7 @@ public abstract class RadLayoutManager {
   public void refresh(RadContainer container) {
   }
 
-  @NotNull
-  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
     return NoDropLocation.INSTANCE;
   }
 
@@ -94,19 +74,6 @@ public abstract class RadLayoutManager {
 
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return Property.EMPTY_ARRAY;
-  }
-
-  public void addSnapshotComponent(final JComponent parent,
-                                   final JComponent child,
-                                   final RadContainer container,
-                                   final RadComponent component) {
-    throw new UnsupportedOperationException("Layout manager " + this + " does not support adding snapshot components");
-  }
-
-  public void createSnapshotLayout(final SnapshotContext context,
-                                   final JComponent parent,
-                                   final RadContainer container,
-                                   final LayoutManager layout) {
   }
 
   public boolean isIndexed() {

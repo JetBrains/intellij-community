@@ -15,20 +15,22 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class DeselectAllAction extends AnAction {
   private final EditableArea myArea;
 
   public DeselectAllAction(EditableArea area) {
-    super("Deselect All", "Deselect All", null);
+    super(DesignerBundle.message("action.deselect.all.text"), DesignerBundle.message("action.deselect.all.description"), null);
     myArea = area;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArea.deselectAll();
   }
 }

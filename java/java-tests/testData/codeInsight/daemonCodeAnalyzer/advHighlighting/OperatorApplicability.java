@@ -24,10 +24,10 @@ public class a {
     i = <error descr="Operator '||' cannot be applied to 'double', 'long'">3.8 || 2L</error>;
     i = <error descr="Operator '||' cannot be applied to 'null', 'java.lang.Object'">null || o</error>;
 
-    <error descr="Operator '|' cannot be applied to 'int', 'null'">i |= null</error>;
+    i <error descr="Operator '|' cannot be applied to 'int', 'null'">|=</error> null;
     double d = 0;
-    <error descr="Operator '&' cannot be applied to 'double', 'int'">d &= i</error>;
-    <error descr="Operator '/' cannot be applied to 'java.lang.Object', 'int'">o /= 3</error>;
+    d <error descr="Operator '&' cannot be applied to 'double', 'int'">&=</error> i;
+    o <error descr="Operator '/' cannot be applied to 'java.lang.Object', 'int'">/=</error> 3;
 
 
     String sss2 = <error descr="Operator '+' cannot be applied to 'java.lang.String', 'void'">"" + fvoid()</error>;
@@ -50,6 +50,10 @@ public class a {
   }
 
   void fvoid() {}
+  
+  void unboxing(Byte b) {
+    byte temp = <error descr="Operator '<<' cannot be applied to 'java.lang.Byte', 'int'">b << 4</error>;
+  }
 
 }
 

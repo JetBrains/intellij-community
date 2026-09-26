@@ -1,31 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.jvm.DefaultJvmElementVisitor;
-import com.intellij.lang.jvm.JvmClass;
-import com.intellij.lang.jvm.JvmElementVisitor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,83 +25,48 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.util.Map;
 import java.util.Set;
 
-public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+@ApiStatus.Internal
+public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
+  private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
+
   public boolean CHECK_ACTIONS = true;
   public boolean IGNORE_NON_PUBLIC = true;
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection");
   private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
-    ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
-      .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)
-      .put(ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT)
-      .put(ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT)
-      .build();
+    Map.of(
+      ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT,
+      ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT,
+      ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT);
 
-  @Nullable
-  public JComponent createOptionsPanel() {
-    JPanel jPanel = new JPanel();
-    jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
-
-    final JCheckBox ignoreNonPublic = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
-      IGNORE_NON_PUBLIC);
-    ignoreNonPublic.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        IGNORE_NON_PUBLIC = ignoreNonPublic.isSelected();
-      }
-    });
-
-    final JCheckBox checkJavaActions = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
-      CHECK_ACTIONS);
-    checkJavaActions.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        boolean selected = checkJavaActions.isSelected();
-        CHECK_ACTIONS = selected;
-        ignoreNonPublic.setEnabled(selected);
-      }
-    });
-
-    jPanel.add(checkJavaActions);
-    jPanel.add(ignoreNonPublic);
-    return jPanel;
-  }
-
-  @Nullable
   @Override
-  protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<Boolean>() {
-      @Override
-      public Boolean visitClass(@NotNull JvmClass clazz) {
-        PsiElement sourceElement = clazz.getSourceElement();
-        if (!(sourceElement instanceof PsiClass)) {
-          return null;
-        }
-        checkClass(project, (PsiClass)sourceElement, sink);
-        return false;
-      }
-    };
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NON_PUBLIC", DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public")),
+      checkbox("CHECK_ACTIONS", DevKitBundle.message("inspections.component.not.registered.option.check.actions"))
+    );
   }
 
-  private void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
+  @Override
+  protected void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
     if (checkedClass.getQualifiedName() == null ||
         checkedClass.getContainingFile().getVirtualFile() == null ||
         checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
         checkedClass.isEnum() ||
+        checkedClass.isDeprecated() ||
         PsiUtil.isInnerClass(checkedClass) ||
         !shouldCheckActionClass(checkedClass)) {
       return;
@@ -125,7 +81,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
 
     if (checkedClass.isInheritor(actionClass, true)) {
       if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
-        LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+        LocalQuickFix fix = new RegisterActionFix(checkedClass);
         sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
                                             DevKitBundle.message("new.menu.action.text")), fix);
       }
@@ -133,31 +89,47 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
       return;
     }
 
-    PsiClass compClass = JavaPsiFacade.getInstance(project).findClass(BaseComponent.class.getName(), scope);
-    if (compClass == null) {
+    //noinspection deprecation
+    PsiClass baseComponentClass = JavaPsiFacade.getInstance(project).findClass(BaseComponent.class.getName(), scope);
+    if (baseComponentClass == null) {
       // stop if component class cannot be found (non-devkit module/project)
       return;
     }
-    if (!checkedClass.isInheritor(compClass, true)) {
+
+    // if directly implements BaseComponent, check that registered as some component
+    if (checkedClass.isInheritor(baseComponentClass, false)) {
+      if (findRegistrationType(checkedClass, RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS) == null && canFix(checkedClass)) {
+        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component")); //NON-NLS
+      }
+      return;
+    }
+
+    if (!checkedClass.isInheritor(baseComponentClass, true)) {
       return;
     }
 
     for (ComponentType componentType : ComponentType.values()) {
-      if (!InheritanceUtil.isInheritor(checkedClass, componentType.myClassName)) {
-        continue;
-      }
-
-      if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
+      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) &&
+          checkComponentRegistration(checkedClass, sink, componentType)) {
         return;
       }
-      if (!canFix(checkedClass)) {
-        return;
-      }
-
-      LocalQuickFix fix = new RegisterComponentFix(componentType, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
-      sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
-                                          DevKitBundle.message(componentType.myPropertyKey)), fix);
     }
+  }
+
+  private static boolean checkComponentRegistration(@NotNull PsiClass checkedClass,
+                                                    @NotNull HighlightSink sink,
+                                                    @NotNull ComponentType componentType) {
+    if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
+      return true;
+    }
+    if (!canFix(checkedClass)) {
+      return true;
+    }
+
+    LocalQuickFix fix = new RegisterComponentFix(componentType, checkedClass);
+    sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
+                                        DevKitBundle.message(componentType.myPropertyKey)), fix);
+    return false;
   }
 
   private static PsiClass findRegistrationType(@NotNull PsiClass checkedClass, @NotNull RegistrationCheckerUtil.RegistrationType type) {
@@ -179,14 +151,14 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
 
     // search code usages: 1) own CTOR calls  2) usage via "new ActionClass()"
     for (PsiMethod method : actionClass.getConstructors()) {
-      final Query<PsiReference> search = MethodReferencesSearch.search(method);
+      final Query<PsiReference> search = MethodReferencesSearch.search(method, method.getUseScope(), true);
       if (search.findFirst() != null) {
         return true;
       }
     }
 
-    final Query<PsiReference> search = ReferencesSearch.search(actionClass);
-    for (PsiReference reference : search) {
+    final Query<PsiReference> search = ReferencesSearch.search(actionClass, actionClass.getUseScope());
+    for (PsiReference reference : search.asIterable()) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
 
       final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);

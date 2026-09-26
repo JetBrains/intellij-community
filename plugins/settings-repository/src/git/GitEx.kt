@@ -1,15 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.CommitCommand
+import org.eclipse.jgit.api.LsRemoteCommand
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.internal.transport.sshd.agent.ConnectorFactoryProvider
+import org.eclipse.jgit.lib.BranchConfig
+import org.eclipse.jgit.lib.Config
+import org.eclipse.jgit.lib.ConfigConstants
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.FileMode
+import org.eclipse.jgit.lib.IndexDiff
+import org.eclipse.jgit.lib.NullProgressMonitor
+import org.eclipse.jgit.lib.ObjectReader
+import org.eclipse.jgit.lib.PersonIdent
+import org.eclipse.jgit.lib.ProgressMonitor
+import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.StoredConfig
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
@@ -18,23 +35,27 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.FetchResult
 import org.eclipse.jgit.transport.RemoteConfig
+import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.Transport
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory
+import org.eclipse.jgit.transport.sshd.agent.ConnectorFactory
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.LOG
 import java.io.InputStream
 import java.nio.file.Path
 
-fun wrapIfNeedAndReThrow(e: TransportException) {
+internal fun wrapIfNeedAndReThrow(e: TransportException) {
   if (e is org.eclipse.jgit.errors.NoRemoteRepositoryException || e.status == TransportException.Status.CANNOT_RESOLVE_REPO) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
-  val message = e.message!!
+  val message = e.message
   if (e.status == TransportException.Status.NOT_AUTHORIZED || e.status == TransportException.Status.NOT_PERMITTED ||
-      message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
+      message != null && isAuthFailedMessage(message)) {
     throw AuthenticationException(e)
   }
   else if (e.status == TransportException.Status.CANCELLED || message == "Download cancelled") {
@@ -45,7 +66,28 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
   }
 }
 
-fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: CredentialsProvider? = null, progressMonitor: ProgressMonitor? = null): FetchResult? {
+private fun isAuthFailedMessage(message: String): Boolean {
+  return message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") ||
+         message.contains(": reject HostKey:") /* JSch */
+}
+
+private fun ensureSshSessionFactory() {
+  var connectorFactoryInstance: ConnectorFactory? = ConnectorFactoryProvider.getDefaultFactory()
+  if (connectorFactoryInstance == null) {
+    connectorFactoryInstance = org.eclipse.jgit.internal.transport.sshd.agent.connector.Factory()
+    ConnectorFactoryProvider.setDefaultFactory(connectorFactoryInstance)
+  }
+  var sessionFactoryInstance = SshSessionFactory.getInstance()
+  if (sessionFactoryInstance == null) {
+    sessionFactoryInstance = SshdSessionFactory()
+    SshSessionFactory.setInstance(sessionFactoryInstance)
+  }
+}
+
+fun Repository.fetch(remoteConfig: RemoteConfig,
+                     credentialsProvider: CredentialsProvider? = null,
+                     progressMonitor: ProgressMonitor? = null): FetchResult? {
+  ensureSshSessionFactory()
   try {
     Transport.open(this, remoteConfig).use { transport ->
       transport.credentialsProvider = credentialsProvider
@@ -54,9 +96,8 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     }
   }
   catch (e: TransportException) {
-    val message = e.message!!
-    if (message.startsWith("Remote does not have ")) {
-      LOG.info(message)
+    if (e.message?.startsWith("Remote does not have ") == true) {
+      LOG.warn(e.message)
       // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
       return null
     }
@@ -73,10 +114,12 @@ fun Repository.disableAutoCrLf(): Repository {
   return this
 }
 
-fun Repository.commit(message: String? = null, reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
+fun Repository.commit(@NonNls message: String? = null,
+                      @NonNls reflogComment: String? = null,
+                      author: PersonIdent? = null,
+                      committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
-    @Suppress("UsePropertyAccessSyntax")
     commitCommand.setMessage(message)
   }
   if (reflogComment != null) {
@@ -100,9 +143,9 @@ fun Config.getRemoteBranchFullName(): String {
 }
 
 val Repository.upstream: String?
-    get() = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
+  get() = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
 
-fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER): StoredConfig {
+fun Repository.setUpstream(url: String?, remoteBranchName: String): StoredConfig {
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER
 
@@ -117,12 +160,14 @@ fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER):
     LOG.debug("Set remote $url")
     config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url)
     // http://git-scm.com/book/en/Git-Internals-The-Refspec
-    config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName)
+    config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION,
+                     '+' + Constants.R_HEADS + remoteBranchName + ':' + Constants.R_REMOTES + remoteName + '/' + remoteBranchName)
     // todo should we set it if fetch specified (kirill.likhodedov suggestion)
     //config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "push", Constants.R_HEADS + localBranchName + ':' + Constants.R_HEADS + branchName);
 
     config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_REMOTE, remoteName)
-    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName)
+    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE,
+                     Constants.R_HEADS + remoteBranchName)
   }
   config.save()
   return config
@@ -138,16 +183,24 @@ fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
-fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
+// https://stackoverflow.com/questions/18726037/what-determines-default-branch-after-git-clone
+// https://stackoverflow.com/questions/50481123/get-the-default-branch-of-a-remote-repository-with-jgit
+fun cloneBare(uri: String,
+              dir: Path,
+              credentialsStore: Lazy<IcsCredentialsStore>? = null,
+              progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
-  val config = repository.setUpstream(uri)
+  val credentialsProvider = if (credentialsStore == null) null else JGitCredentialsProvider(credentialsStore, repository)
+
+  val config = repository.setUpstream(uri, getDefaultBranch(uri, credentialsProvider) ?: Constants.MASTER)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  val result = repository.fetch(remoteConfig, if (credentialsStore == null) null else JGitCredentialsProvider(credentialsStore, repository), progressMonitor) ?: return repository
+  val result = repository.fetch(remoteConfig, credentialsProvider, progressMonitor) ?: return repository
   var head = findBranchToCheckout(result)
   if (head == null) {
     val branch = Constants.HEAD
-    head = result.getAdvertisedRef(branch) ?: result.getAdvertisedRef(Constants.R_HEADS + branch) ?: result.getAdvertisedRef(Constants.R_TAGS + branch)
+    head = result.getAdvertisedRef(branch) ?: result.getAdvertisedRef(Constants.R_HEADS + branch) ?: result.getAdvertisedRef(
+      Constants.R_TAGS + branch)
   }
 
   if (head == null || head.objectId == null) {
@@ -175,6 +228,24 @@ fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore
   return repository
 }
 
+private fun getDefaultBranch(uri: String, credentialsProvider: JGitCredentialsProvider?): String? {
+  val remoteRefs = LsRemoteCommand(null)
+    .setRemote(uri)
+    .setTags(false)
+    .setCredentialsProvider(credentialsProvider)
+    .callAsMap()
+
+  val remoteHeadRef = remoteRefs.get(Constants.HEAD)
+  if (remoteHeadRef != null) {
+    for ((refName, ref) in remoteRefs) {
+      if (ref !== remoteHeadRef && ref.objectId == remoteHeadRef.objectId && refName.startsWith(Constants.R_HEADS)) {
+        return refName.removePrefix(Constants.R_HEADS)
+      }
+    }
+  }
+  return null
+}
+
 private fun findBranchToCheckout(result: FetchResult): Ref? {
   val idHead = result.getAdvertisedRef(Constants.HEAD) ?: return null
 
@@ -186,11 +257,17 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   return result.advertisedRefs.firstOrNull { it.name.startsWith(Constants.R_HEADS) && it.objectId == idHead.objectId }
 }
 
-fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
+fun Repository.processChildren(path: String,
+                               filter: ((name: String) -> Boolean)? = null,
+                               processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.FETCH_HEAD) ?: return
-  val reader = newObjectReader()
-  reader.use {
-    val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
+  newObjectReader().use { reader ->
+    val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree)
+    if (rootTreeWalk == null) {
+      LOG.debug { "$path not found" }
+      return
+    }
+
     if (!rootTreeWalk.isSubtree) {
       // not a directory
       LOG.warn("File $path is not a directory")
@@ -268,10 +345,6 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 
   override fun mark(limit: Int) = delegate.mark(limit)
 
-  override fun skip(n: Long): Long {
-    return super.skip(n)
-  }
-
   override fun markSupported() = delegate.markSupported()
 
   override fun equals(other: Any?) = delegate == other
@@ -279,6 +352,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
   override fun available() = delegate.available()
 
   override fun close() {
+    @Suppress("ConvertTryFinallyToUseCall")
     try {
       delegate.close()
     }
@@ -288,7 +362,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
   }
 }
 
-fun Repository.getAheadCommitsCount(): Int {
+internal fun Repository.getAheadCommitCount(): Int {
   val config = config
   val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
   val trackingBranch = BranchConfig(config, shortBranchName).trackingBranch ?: return -1
@@ -318,7 +392,7 @@ fun Repository.getAheadCommitsCount(): Int {
   return walk.count()
 }
 
-inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
+internal inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
   var closed = false
   try {
     return block(this)
@@ -341,30 +415,29 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
   }
 }
 
-// FileRepositoryBuilder must be not used directly - using of system config must be disabled (no need, to avoid git exe discovering - it can cause https://youtrack.jetbrains.com/issue/IDEA-170795)
+// FileRepositoryBuilder must be not used directly - using of system config must be disabled
+// (no need, to avoid git exe discovering - it can cause https://youtrack.jetbrains.com/issue/IDEA-170795)
 fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path? = null, mustExists: Boolean = false): Repository {
-  return with(FileRepositoryBuilder().setUseSystemConfig(false)) {
-    if (bare) {
-      setBare()
-    }
-    else {
-      workTree?.let {
-        setWorkTree(it.toFile())
-      }
-    }
-    gitDir?.let {
-      setGitDir(gitDir.toFile())
-    }
-
-    isMustExist = mustExists
-
-    build()
+  val repositoryBuilder = FileRepositoryBuilder().setAutonomous(true)
+  if (bare) {
+    repositoryBuilder.setBare()
   }
+  else {
+    workTree?.let {
+      repositoryBuilder.setWorkTree(it.toFile())
+    }
+  }
+  gitDir?.let {
+    repositoryBuilder.setGitDir(gitDir.toFile())
+  }
+
+  repositoryBuilder.isMustExist = mustExists
+  return repositoryBuilder.build()
 }
 
 fun buildBareRepository(gitDir: Path): Repository = buildRepository(bare = true, gitDir = gitDir)
 
-fun createBareRepository(dir: Path): Repository {
+internal fun createBareRepository(dir: Path): Repository {
   val repository = buildRepository(bare = true, gitDir = dir)
   repository.create(true)
   return repository

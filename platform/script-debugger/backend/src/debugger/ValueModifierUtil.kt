@@ -15,15 +15,17 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.thenAsyncAccept
 import org.jetbrains.debugger.values.Value
 import org.jetbrains.io.JsonUtil
-import java.util.*
+import java.util.Collections
 import java.util.regex.Pattern
 
 private val KEY_NOTATION_PROPERTY_NAME_PATTERN = Pattern.compile("[\\p{L}_$]+[\\d\\p{L}_$]*")
 
+@ApiStatus.Internal
 object ValueModifierUtil {
   fun setValue(variable: Variable,
                newValue: String,

@@ -15,10 +15,9 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
@@ -30,11 +29,11 @@ import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFunctionalExpressionPresentationTest extends CodeInsightTestCase {
+public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_8);
   }
 
   @Override

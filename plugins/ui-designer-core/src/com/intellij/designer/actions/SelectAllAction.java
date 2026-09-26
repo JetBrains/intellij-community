@@ -15,11 +15,13 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +33,16 @@ public class SelectAllAction extends AnAction {
   protected final EditableArea myArea;
 
   public SelectAllAction(EditableArea area) {
-    super("Select All", "Select All", null);
+    super(DesignerBundle.message("action.select.all.text"), DesignerBundle.message("action.select.all.description"), null);
     myArea = area;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {
     RadComponent rootComponent = myArea.getRootComponent();
     if (rootComponent != null) {
       final List<RadComponent> components = new ArrayList<>();

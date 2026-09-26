@@ -1,0 +1,1903 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors.
+// Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+//
+// Portions of this file are derived from work covered by the Eclipse Public License v1.0:
+//   Copyright (c) 2016 NumberFour AG. All rights reserved.
+//   This program and the accompanying materials are made available under the terms of the
+//   Eclipse Public License v1.0, which accompanies this distribution and is available at
+//   http://www.eclipse.org/legal/epl-v10.html
+//
+// Contributors of the EPL-1.0-licensed portions:
+//   NumberFour AG - Initial API and implementation
+package com.jetbrains.python.psi.types
+
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.LinkedHashMultimap
+import com.google.common.collect.SetMultimap
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.StackOverflowPreventedException
+import com.intellij.psi.PsiElement
+import com.intellij.util.ProcessingContext
+import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.types.ConstraintReducer.reduce
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import com.jetbrains.python.psi.types.SubtypeJudgement.getReversibleSubstitutionData
+import com.jetbrains.python.psi.types.SubtypeJudgement.isRawSubtype
+import com.jetbrains.python.psi.types.SubtypeJudgement.isSubtype
+import com.jetbrains.python.psi.types.SubtypeJudgement.sameTypes
+import org.jetbrains.annotations.ApiStatus
+import java.util.ArrayDeque
+import java.util.Objects
+import java.util.TreeMap
+
+
+@ApiStatus.Experimental
+class CspBuilder(val context: TypeEvalContext) {
+  private val allSubstitutions = HashMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>()
+  private val initialConstraints = LinkedHashSet<TypeConstraint>()
+  private val inferenceVars = InferenceVariablePool()
+  private lateinit var cp: ConstraintProblem
+
+  fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
+    allSubstitutions[si] = substitutions
+  }
+
+  fun getAllSubstitutions() : Set<MutableMap.MutableEntry<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>> {
+    return allSubstitutions.entries
+  }
+
+  fun addConstraint(left: PyType?, right: PyType?, variance: PyVariance, priority: ConstraintPriority, isBinding: Boolean = true) {
+    if (left == right) {
+      return
+    }
+    val leftNoRecursion = removeFromCompositeTypes(left, right, context)
+    val rightNoRecursion = removeFromCompositeTypes(right, left, context)
+    val newConstraint = TypeConstraint(leftNoRecursion, rightNoRecursion, variance, priority, isBinding)
+    initialConstraints.add(newConstraint)
+  }
+
+  /**
+   * The control flow analysis sometimes computes types that are self-recursive,
+   * see test case [RecursionAndFixedPointLoops.types in loop compute fast].
+   *
+   * This results in type constraints such as `T = int | T` that would lead to `T` being `T | unknown`.
+   */
+  @ApiStatus.Internal
+  fun removeFromCompositeTypes(type: PyType?, typeToRemove: PyType?, context: TypeEvalContext): PyType? {
+    if (typeToRemove !is PyInferenceVariable) return type
+
+    var referencesInfVar = false
+    PyRecursiveTypeVisitor.traverse(type, context, object : PyTypeTraverser() {
+      override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+        if (type == typeToRemove.typeVariable) {
+          referencesInfVar = true
+          return PyRecursiveTypeVisitor.Traversal.TERMINATE
+        }
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE
+      }
+    })
+    if (!referencesInfVar) return type
+
+    return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
+      private fun rebuildCompositeType(members: Collection<PyType?>, createComposite: (List<PyType?>) -> PyType?): PyType? {
+        val remainingMembers = members
+          .map { member -> clone<PyType?>(member) }
+          .filter { member -> member != typeToRemove.typeVariable }
+
+        return when (remainingMembers.size) {
+          0 -> PyAnyType.unknown
+          1 -> remainingMembers.single()
+          else -> createComposite(remainingMembers)
+        }
+      }
+
+      override fun visitPyUnionType(unionType: PyUnionType): PyType? {
+        return rebuildCompositeType(unionType.members, PyUnionType::unionOrUnknown)
+      }
+
+      override fun visitPyUnsafeUnionType(unsafeUnionType: PyUnsafeUnionType): PyType? {
+        return rebuildCompositeType(unsafeUnionType.members, PyUnsafeUnionType::unsafeUnion)
+      }
+
+      override fun visitPyIntersectionType(intersectionType: PyIntersectionType): PyType? {
+        return rebuildCompositeType(intersectionType.members, PyIntersectionType::intersectionOrTop)
+      }
+    })
+  }
+
+  /**
+   * No support for `Type[ TypeVariable]`.
+   *
+   * Reason: The current typing model models the 'type of' relation using the [PyInstantiableType.isDefinition] flag.
+   * This results in modeling both `TypeVar` and `Type[ TypeVar]` as two `PyTypeVarType`s that share the same
+   * [PyTypeVarType.declarationElement] but only differ in their `isDefinition` flag.
+   *
+   * Possible solutions:
+   * 1) Do not support `Type[ TypeVar]` (chosen option)
+   * 2) Rectify the type model to model `Type[ TypeVar]` as `PyTypeType` using `PyTypeVarType`
+   * 3) Only within the CSP, model `Type[ TypeVar]` as `PyTypeType` using `PyTypeVarType` as the type argument, and substitute when entering/leaving the CSP
+   * 4) Within CSP, use two CSP variables to model a [PyTypeVarType] with the `isDefinition` flag and a `PyTypeType` true/false, respectively.
+   *   Also use additional constraints to make sure that both of these variables are equal except for the `isDefinition` flag.
+   *
+   * Reasoning:
+   * 3) Negative impact on performance: During the solving process, a large number of subtype checks can occur, and substitution causes traverses of all related types.
+   * 4) Introduction of new Variance: `NONVARIANT` would raise the complexity of the constraint solving procedure further.
+   */
+  fun addInferenceVariable(typeVariable: PyTypeVarType, si: SubstitutionsIdentifier) : PyInferenceVariable {
+    if (typeVariable.isDefinition) throw NotSupportedException()
+    return inferenceVars.add(typeVariable, si)
+  }
+
+  fun solve() {
+    val (bindingConstraints, unboundIVs) = discardUnboundConstraints(initialConstraints)
+    inferenceVars.setUnbound(unboundIVs)
+    val sortedConstraints = getSortedConstraints(bindingConstraints)
+    cp = ConstraintProblem(sortedConstraints, inferenceVars, context)
+
+    for (constraint in cp.constraints) {
+      reduce(constraint, cp)
+    }
+    TypeBoundIncorporator.incorporate(cp, context)
+    TypeBoundResolver.resolve(cp, context)
+  }
+
+  private fun discardUnboundConstraints(constraints: Set<TypeConstraint>) : Pair<List<TypeConstraint>, Set<PyInferenceVariable>> {
+    val resultConstraints = constraints.toMutableList()
+    val unboundIVs = HashSet<PyInferenceVariable>()
+    val ivToConstraintMap = HashMultimap.create<PyInferenceVariable, TypeConstraint>()
+    for (iv in inferenceVars.values()) {
+      for (constraint in constraints) {
+        if (constraint.left.containsType(iv, context)) {
+          ivToConstraintMap.put(iv, constraint)
+        }
+      }
+    }
+    for (iv in inferenceVars.values()) {
+      val ivConstraints = ivToConstraintMap.get(iv)
+      val boundIV = ivConstraints.any { c -> c.isBinding == true }
+      if (!boundIV) {
+        unboundIVs.add(iv)
+        resultConstraints.removeAll(ivConstraints)
+      }
+    }
+    return Pair(resultConstraints, unboundIVs)
+  }
+
+  private fun getSortedConstraints(constraints: Collection<TypeConstraint>): Collection<TypeConstraint> {
+    // Sort by priority
+    // but also sort all constraints to the end that contain unions or unsafe unions.
+    // The reason for the latter is that this will delay their reduce() calls,
+    // which will in turn increase the number of available bounds and improve the heuristics of [reduceDisjunction()].
+    // Both of the above sort criteria are stable, i.e., keep the initial order if possible.
+
+    val sortedConstraints: List<TypeConstraint> = constraints
+      .map { c ->
+        Triple(c, c.priority, containsUnionsOrUnsafeUnions(c.left, context) || containsUnionsOrUnsafeUnions(c.right, context))
+      }
+      .sortedWith(
+        compareBy<Triple<TypeConstraint, ConstraintPriority?, Boolean>> {
+          it.third // containsUnionsOrUnsafeUnions
+        }.thenBy {
+          it.second // priority
+        }
+      )
+      .map { it.first }
+
+    return sortedConstraints
+  }
+
+  private fun containsUnionsOrUnsafeUnions(root: PyType?, context: TypeEvalContext): Boolean {
+    if (root is PyUnionType || root is PyUnsafeUnionType) {
+      return true
+    }
+    var result = false
+    PyRecursiveTypeVisitor.traverse(root, context, object : PyTypeTraverser() {
+      override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+        if (type is PyUnionType || type is PyUnsafeUnionType) {
+          result = true
+          return PyRecursiveTypeVisitor.Traversal.TERMINATE
+        }
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE
+      }
+    })
+    return result
+  }
+
+  /** Post-computes the instantiation values to a usable mapping from type variables to types. */
+  fun getSolution(): PyCspSolution {
+    val instantiations = if (cp.failed) cp.instantiations else cp.solution
+    val typeVars2TypeRefs: MutableMap<SubstitutionsIdentifier, MutableMap<PyTypeParameterType, Ref<PyType?>>> = LinkedHashMap()
+    for ((iv, instantiatedType) in instantiations) {
+      val nestedCspMap = typeVars2TypeRefs.getOrPut(iv.substitutionsIdentifier) { LinkedHashMap() }
+      nestedCspMap[iv.typeVariable] = Ref(instantiatedType)
+    }
+    val complete = instantiations.keys.containsAll(cp.inferenceVars.values())
+    return PyCspSolution(cp.failed, complete, typeVars2TypeRefs)
+  }
+}
+
+enum class ConstraintPriority {
+  HIGH,
+  MEDIUM,
+  LOW
+}
+
+data class PyCspSolution(
+  val failed: Boolean,
+  val complete: Boolean,
+  val instantiations: Map<SubstitutionsIdentifier, Map<PyTypeParameterType, Ref<PyType?>>>,
+)
+
+/**
+ * A type constraint of the form `left variance right` where `left`, and `right` are arbitrary type arguments,
+ * and `variance` is one of `<:`, `:>`, or =`.
+ * <p>
+ * No restrictions apply whether inference variables appear on none, one, or both sides.
+ */
+private data class TypeConstraint(
+  val left: PyType?,
+  val right: PyType?,
+  val variance: PyVariance,
+  val priority: ConstraintPriority? = null,
+  val isBinding: Boolean? = null,
+) {
+  companion object {
+    val TRUE = TypeConstraint(null, null, PyVariance.INVARIANT)
+    val FALSE = TypeConstraint(null, null, PyVariance.INFER_VARIANCE)
+  }
+
+  override fun toString(): String {
+    val varianceStr = when (variance) {
+      PyVariance.INVARIANT -> "="
+      PyVariance.COVARIANT -> "<:"
+      PyVariance.CONTRAVARIANT -> ":>"
+      else -> "?"
+    }
+    return "$left $varianceStr $right"
+  }
+}
+
+
+/**
+ * Inference variables are meta-variables for types, i.e., they represent the unknown types searched for while solving a
+ * constraint system.
+ */
+class PyInferenceVariable(
+  val typeVariable: PyTypeVarType,
+  val substitutionsIdentifier: SubstitutionsIdentifier,
+  override val name: String
+) : PyType {
+
+  override val isBuiltin: Boolean = false
+
+
+  override fun resolveMember(
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    resolveContext: PyResolveContext,
+  ): List<RatedResolveResult> = emptyList()
+
+  override fun getCompletionVariants(
+    completionPrefix: String?, location: PsiElement, context: ProcessingContext,
+  ): Array<out Any> = emptyArray()
+
+  override fun assertValid(message: String?) {}
+
+  override fun hashCode(): Int {
+    return Objects.hash(typeVariable.scopeOwner, typeVariable.name)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null) return false
+    if (other !is PyInferenceVariable) return false
+    if (this.javaClass != other.javaClass) return false
+    if (name != other.name) return false
+    return true
+  }
+
+  override fun toString(): String {
+    return name
+  }
+}
+
+
+private class InferenceVariablePool {
+  private val nameGenerator = InferenceVariableNameGenerator()
+  private val pool = LinkedHashMap<String, PyInferenceVariable>()
+  private val unboundIVs = LinkedHashSet<PyInferenceVariable>()
+
+  fun add(typeVar: PyTypeVarType, si: SubstitutionsIdentifier): PyInferenceVariable {
+    val infVar = PyInferenceVariable(typeVar, si, nameGenerator.nextName())
+    pool[infVar.name] = infVar
+    return infVar
+  }
+
+  fun values(): Collection<PyInferenceVariable> {
+    return pool.values
+  }
+
+  fun setUnbound(infVars: Collection<PyInferenceVariable>) {
+    unboundIVs.addAll(infVars)
+  }
+
+  fun isUnbound(infVar: PyInferenceVariable) : Boolean {
+    return unboundIVs.contains(infVar)
+  }
+}
+
+private class InferenceVariableNameGenerator {
+  private val range = 'α'..'ι'
+  private val rangeSize = range.count()
+  private var index = 0
+  private var quoteCount = 0
+
+  fun nextName(): String {
+    val name = range.elementAt(index++).toString() + "'".repeat(quoteCount)
+    if (index == rangeSize) {
+      index = 0
+      quoteCount++
+    }
+    return name
+  }
+}
+
+/**
+ * Type bounds are similar to {@link PyTypeInferenceConstraint}, but are required to be of a simpler, more unified form:
+ * the LHS must always be an inference variable. The RHS, however, may be a proper or improper type.
+ */
+private data class TypeBound(
+  val left: PyInferenceVariable,
+  val right: PyType?,
+  val variance: PyVariance,
+  val referencedInfVars: Set<PyInferenceVariable>,
+) {
+  constructor(
+    left: PyInferenceVariable,
+    right: PyType?,
+    variance: PyVariance,
+    context: TypeEvalContext,
+  ) : this(left, right, variance, collectInferenceVariables(right, context))
+}
+
+
+private class ConstraintProblem(
+  pConstraints: Collection<TypeConstraint>,
+  pInferenceVars: InferenceVariablePool,
+  pContext: TypeEvalContext,
+) {
+  val recursionGuard = RecursionManager.createGuard<Pair<PyType?, PyType?>>("ConstraintProblem_ReduceStructualType")
+
+  val context = pContext
+
+  val inferenceVars = pInferenceVars
+
+  /** Initial set of constraints */
+  val constraints = pConstraints
+
+  /** True iff a constraint/bound has been added that renders this problem unsolvable. */
+  var failed = false
+
+  /** All bounds of this constraint problem */
+  val bounds = LinkedHashSet<TypeBound>()
+
+  /** Snapshot of all bounds of this constraint problem right before the resolution started */
+  val preResolutionBounds = LinkedHashSet<TypeBound>()
+
+  /** Bounds within this bound set, stored per inference variable.  */
+  val boundsPerInfVar: SetMultimap<PyInferenceVariable, TypeBound> = LinkedHashMultimap.create()
+
+  /** Reverse index: for each inf-var γ, which bounds' RHS mention γ */
+  val boundsReferencingInfVar: SetMultimap<PyInferenceVariable, TypeBound> = LinkedHashMultimap.create()
+
+  /** Instantiations among the bounds of this set, i.e., bounds of the form `α = P` with P being a proper type. */
+  val instantiations: MutableMap<PyInferenceVariable, PyType?> = LinkedHashMap()
+
+  /** Instantiations at the end of a successful resolving step. */
+  val solution: MutableMap<PyInferenceVariable, PyType?> = LinkedHashMap()
+
+  /** Used to keep track of what bounds have already been incorporated */
+  val incorporatedBounds: MutableSet<TypeBound> = LinkedHashSet()
+
+  /** Incremental worklists */
+  val pendingBounds: ArrayDeque<TypeBound> = ArrayDeque()
+  val pendingInstantiations: LinkedHashSet<PyInferenceVariable> = LinkedHashSet()
+
+  /** IDs for structurally equal bounds so we can memoize processed pairs cheaply */
+  private val boundIds = HashMap<TypeBound, Int>()
+
+  private var nextBoundId: Int = 1
+
+  /** Memoization: each pair combined at most once */
+  val seenBoundPairs: MutableSet<Long> = HashSet()
+
+  /** True iff the argument appears on the left-hand side of one or more bounds */
+  fun isBounded(infVar: PyInferenceVariable?): Boolean {
+    return boundsPerInfVar.containsKey(infVar)
+  }
+
+  /** True iff an instantiation was recorded via method [.addBound] for the given inference variable. */
+  fun isInstantiated(infVar: PyInferenceVariable?): Boolean {
+    return infVar != null && instantiations.containsKey(infVar)
+  }
+
+  /** True iff the first argument is constrained by the second (irrespective of whether that second argument is instantiated). */
+  fun dependsOnResolutionOf(infVar: PyInferenceVariable, candidate: PyInferenceVariable): Boolean {
+    for (currBound in boundsPerInfVar.get(infVar)) {
+      if (currBound.referencedInfVars.contains(candidate)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  fun idOf(bound: TypeBound): Int {
+    return boundIds.computeIfAbsent(bound) { nextBoundId++ }
+  }
+
+  /**
+   * Removes the given type bound, identified by object identity.
+   *
+   * For internal use only.
+   * Provided for performance reasons to allow removal of type bounds that do no longer have any effect, i.e., are redundant.
+   */
+  fun removeBound(bound: TypeBound) {
+    bounds.remove(bound)
+    boundsPerInfVar.remove(bound.left, bound)
+    incorporatedBounds.remove(bound)
+    for (ref in bound.referencedInfVars) {
+      boundsReferencingInfVar.remove(ref, bound)
+    }
+  }
+
+  fun addBound(left: PyInferenceVariable, right: PyType?, variance: PyVariance) {
+    if (left == right) return
+    if (right.isUnknown) return
+    val newBound = TypeBound(left, right, variance, context)
+    val boundWasAdded = bounds.add(newBound)
+    if (!boundWasAdded) return
+
+    boundsPerInfVar.put(left, newBound)
+    for (ref in newBound.referencedInfVars) {
+      boundsReferencingInfVar.put(ref, newBound)
+    }
+    pendingBounds.addLast(newBound)
+
+    if (variance == PyVariance.INVARIANT && isProper(right, context)) {
+      if (!instantiations.containsKey(left) || instantiations[left].isAnyOrUnknown) {
+        instantiations[left] = right
+      }
+      pendingInstantiations.addLast(left)
+    }
+  }
+
+  fun savePreResolutionTypeBounds() {
+    if (preResolutionBounds.isEmpty()) {
+      preResolutionBounds.addAll(bounds)
+    }
+  }
+
+  fun saveSolution() {
+    solution.putAll(instantiations)
+  }
+
+  // TODO: add reason as parameter, e.g. the current stack of constraints
+  fun fail() {
+    failed = true
+  }
+}
+
+
+/**
+ * This element is based on an EPL-1.0-licensed Java source by NumberFour AG (2016).
+ * (@link https://github.com/eclipse-n4js/n4js/blob/master/plugins/org.eclipse.n4js/src/org/eclipse/n4js/typesystem/constraints/Reducer.java).
+ * Ported to Kotlin; structure and semantics remain substantially the same.
+ */
+private object ConstraintReducer {
+
+  // TODO: add traceability e.g. by storing/stacking information about original constraints and before/after checking if the cp is failed
+  fun reduce(constraint: TypeConstraint, cp: ConstraintProblem) {
+    if (constraint == TypeConstraint.TRUE) return
+    if (constraint == TypeConstraint.FALSE) {
+      cp.fail()
+      return
+    }
+    reduce(constraint.left, constraint.right, constraint.variance, cp)
+  }
+
+  private fun reduce(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    if (variance == PyVariance.INFER_VARIANCE) {
+      cp.fail()
+      return
+    }
+
+    if (isProper(left, cp.context) && isProper(right, cp.context)) {
+      reduceProperType(left, right, variance, cp)
+      return
+    }
+
+    if (left is PyUnsafeUnionType) {
+      reduceDisjunction(right, left.members.filterNotNull(), !variance, cp)
+      return
+    }
+    if (right is PyUnsafeUnionType) {
+      reduceDisjunction(left, right.members.filterNotNull(), variance, cp)
+      return
+    }
+
+    if (left is PyInferenceVariable) {
+      cp.addBound(left, right, variance)
+      return
+    }
+    if (right is PyInferenceVariable) {
+      cp.addBound(right, left, !variance)
+      return
+    }
+
+    // check top and bottom types. Doing this up-front here simplifies the handling of other special cases
+    val isBottomType = (if (variance === PyVariance.CONTRAVARIANT) right else left).isBottomType()
+    val isTopType = (if (variance === PyVariance.CONTRAVARIANT) left else right).isTopType(cp.context)
+    if (isBottomType || isTopType) {
+      return
+    }
+
+    if (left is PyCompositeType) {
+      reduceCompositeType(right, left, !variance, cp)
+      return
+    }
+    if (right is PyCompositeType) {
+      reduceCompositeType(left, right, variance, cp)
+      return
+    }
+
+    val isLeftStructural = isStructural(left, cp.context)
+    val isRightStructural = isStructural(right, cp.context)
+    if ((isLeftStructural && (variance == PyVariance.CONTRAVARIANT || variance == PyVariance.INVARIANT))
+        || (isRightStructural && (variance == PyVariance.COVARIANT || variance == PyVariance.INVARIANT))) {
+      reduceStructuralTypeGuarded(left, right, variance, cp)
+      return
+    }
+
+
+    if (left is PyTypeFormType || right is PyTypeFormType) {
+      reduceTypeFormType(left, right, variance, cp)
+      return
+    }
+
+    if (left is PyClassLikeType && right is PyClassLikeType) {
+      reduceNominalType(left, right, variance, cp)
+      return
+    }
+
+    if (left is PyCallableType && right is PyCallableType && left.isCallable && right.isCallable) {
+      reduceCallableType(left, right, variance, cp)
+      return
+    }
+
+    reduceProperType(left, right, variance, cp)
+  }
+
+  private fun reduceStructuralTypeGuarded(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    // iterating over all members (and their types) often leads to recursive checks and reduce calls
+    try {
+      cp.recursionGuard.doPreventingRecursion(Pair(left, right), false) {
+        reduceStructuralType(left, right, variance, cp)
+      }
+    }
+    catch (_: StackOverflowPreventedException) {
+      // this is supposed to happen in recursive situations and a safe exit. No need to bother tests.
+    }
+  }
+
+  private fun reduceStructuralType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    if (left == right) return
+    if (left == null || right == null) return
+    if (variance == PyVariance.CONTRAVARIANT) return reduceStructuralType(right, left, PyVariance.COVARIANT, cp)
+    if (right !is PyClassType || !right.isProtocol(cp.context)) UNREACHABLE()
+    if (left !is PyClassType) {
+      cp.fail() // TODO
+      return
+    }
+
+    // shortcut
+    val leftSuperTypes = listOf(left) + left.getAncestorTypes(cp.context)
+    for (leftSuperType in leftSuperTypes) {
+      if (leftSuperType !is PyClassType) continue
+      if (leftSuperType.pyClass != right.pyClass) continue
+
+      val genericType = PyTypeChecker.findGenericDefinitionType(leftSuperType.pyClass, leftSuperType.isDefinition, cp.context)
+      val hasGenerics = genericType.hasGenerics(cp.context)
+      if (hasGenerics) {
+        reduceNominalType(left, right, variance, cp)
+      }
+      return
+    }
+
+    val reversibleSubstitutionData = getReversibleSubstitutionData(left, right, cp.context)
+    val matchingMembers = PyTypeChecker.getMatchingProtocolMembers(
+      reversibleSubstitutionData.rightNoIVs as PyClassType,
+      reversibleSubstitutionData.leftNoIVs as PyClassType,
+      PyTypeChecker.GenericSubstitutions(),
+      cp.context)
+
+    val leftSubstitutions = PyTypeChecker.unifyReceiver(left, cp.context).addToCopy(reversibleSubstitutionData.leftBackSubstitutions.typeVars)
+    val rightSubstitutions = PyTypeChecker.unifyReceiver(right, cp.context).addToCopy(reversibleSubstitutionData.rightBackSubstitutions.typeVars)
+
+    for ((rightMember, leftMembers) in matchingMembers) {
+      val rightMemberType = PyTypeChecker.substitute(rightMember.type, rightSubstitutions, cp.context)
+      val leftMemberTypes = mutableSetOf<PyType?>()
+      for (leftMember in leftMembers) {
+        if (variance == PyVariance.INVARIANT) {
+          val leftMemberElement = leftMember.element
+          val rightMemberElement = rightMember.element
+          val leftIsReadOnly = leftMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(leftMemberElement, cp.context)
+          val rightIsReadOnly = rightMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(rightMemberElement, cp.context)
+          if (leftIsReadOnly != rightIsReadOnly) continue
+        }
+        val leftMemberType = PyTypeChecker.substitute(leftMember.type, leftSubstitutions, cp.context)
+        leftMemberTypes += leftMemberType
+      }
+      when (leftMemberTypes.size) {
+        0 -> {
+          cp.fail()
+          return
+        }
+        1 -> {
+          val leftMemberType = leftMemberTypes.first()
+          reduce(TypeConstraint(leftMemberType, rightMemberType, variance), cp)
+        }
+        else -> {
+          val leftMemberType = PyIntersectionType.intersectionOrTop(leftMemberTypes)
+          val combinedConstraint = TypeConstraint(leftMemberType, rightMemberType, variance)
+          reduce(combinedConstraint, cp)
+        }
+      }
+
+      // FIXME: process remaining cases for INVARIANCE
+    }
+  }
+
+  private fun reduceProperType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    when (variance) {
+      PyVariance.COVARIANT -> {
+        if (!isSubtype(left, right, cp.context)) {
+          cp.fail()
+          return
+        }
+      }
+      PyVariance.CONTRAVARIANT -> {
+        if (!isSubtype(right, left, cp.context)) {
+          cp.fail()
+          return
+        }
+      }
+      PyVariance.INFER_VARIANCE,
+        // actually this should never happen. However, we fail gracefully and fall back to invariant
+      PyVariance.INVARIANT -> {
+        if (!sameTypes(left, right, cp.context)) {
+          cp.fail()
+          return
+        }
+      }
+      PyVariance.BIVARIANT -> {
+        // success
+      }
+    }
+    // success
+  }
+
+  /** Reduction for two given callable types will be applied on all their parameters and their return type in a pair-wise manner. */
+  private fun reduceCallableType(left: PyCallableType, right: PyCallableType, variance: PyVariance, cp: ConstraintProblem) {
+    // derive constraints for types of parameters
+    val lParams = left.getParameters(cp.context)
+    val rParams = right.getParameters(cp.context)
+
+    if (lParams != null && rParams != null) {
+      for ((lParam, rParam) in lParams.zip(rParams)) {
+        if (lParam.isSelf || rParam.isSelf) continue
+        val lParamType = lParam.getType(cp.context)
+        val rParamType = rParam.getType(cp.context)
+        if (lParamType != null && rParamType != null) {
+          val paramVariance = variance * PyVariance.CONTRAVARIANT
+          reduce(lParamType, rParamType, paramVariance, cp)
+        }
+      }
+    }
+
+    val lReturnType = left.getReturnType(cp.context)
+    val rReturnType = right.getReturnType(cp.context)
+    val retTypeVariance = variance * PyVariance.COVARIANT
+    reduce(lReturnType, rReturnType, retTypeVariance, cp)
+  }
+
+  /** Reduces a PEP 747 `TypeForm` constraint to a constraint between the represented types. */
+  private fun reduceTypeFormType(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem) {
+    val leftRepr = PyTypeFormType.representedTypeOf(left)
+    val rightRepr = PyTypeFormType.representedTypeOf(right)
+    if (leftRepr == null || rightRepr == null) {
+      cp.fail()
+      return
+    }
+    reduce(leftRepr, rightRepr, variance, cp)
+  }
+
+  /**
+   *  Reduction for parameterized type references according to nominal subtyping rules.
+   *
+   *  We have a situation like ⟨ G<IV> Φ G<string> ⟩ (with IV being an inference variable) which may result
+   *  from code such as:
+   *
+   *  ```
+   *  class G[T]: ...
+   *  def f[IV](p: G[IV]) : ...
+   *  gStr : G[str]
+   *  f(gStr) # "expected type :> actual type" will lead to "G[IV] :> G[str]"
+   *  ```
+   *
+   *  Resulting in the constraint "IV = string".
+   *
+   *  However, it is not always that simple. The type argument corresponding to the
+   *  inference variable ('string' corresponding to 'IV' in the above example) might
+   *  not be held by the ParameterizedTypeRef but may instead be contained somewhere
+   *  in the inheritance hierarchy of 'value'. For example:
+   *
+   *  ```
+   *  class G[T]: ...
+   *  def f[IV](p: G[IV]) : ...
+   *  class C(G[str]) : ...
+   *  c : C
+   *  f(c) # will lead to "G[IV] :> C"
+   *  ```
+   *
+   *  Of course, the inheritance hierarchy might be arbitrarily complex.
+   *
+   *  Solution:
+   *  We derive a constraint for the above situations in several steps
+   *  Start with:
+   *  ```
+   *  G[IV] :> C
+   *  ```
+   *  Now, map each type argument of 'left' to the corresponding type parameter of 'left':
+   *  IV <-> T
+   *  Then, perform type variable substitution on the current right-hand side ("T" in our example) based on the
+   *  substitutions defined by the original right-hand side ("C" in our example):
+   *  IV <-> string
+   */
+  private fun reduceNominalType(pLeft: PyType?, pRight: PyType?, pVariance: PyVariance, cp: ConstraintProblem) {
+    if ((pVariance == PyVariance.COVARIANT && !isRawSubtype(pLeft, pRight, cp.context))
+        || (pVariance == PyVariance.CONTRAVARIANT && !isRawSubtype(pRight, pLeft, cp.context))
+        || (pVariance == PyVariance.INVARIANT && !(isRawSubtype(pLeft, pRight, cp.context) || isRawSubtype(pRight, pLeft, cp.context)))) {
+      cp.fail()
+    }
+    // Illustrating example:
+    // f[T](arg: tuple[T, str]) ---> pLeft  is tuple[IV1, str]
+    // f((1, "s"))              ---> pRight is tuple[Literal[1], Literal["s"]]
+
+    val left: PyType?
+    val right: PyType?
+    if (pVariance == PyVariance.COVARIANT) {
+      // normalize ⟨ B <: A ⟩ to ⟨ A :> B ⟩ to make sure the (raw) subtype is on the right-hand side
+      left = pRight
+      right = pLeft
+    }
+    else {
+      left = pLeft
+      right = pRight
+    }
+
+    // Here we check supertypes of C, see the example in KDoc above
+    // G[IV] :> C
+    val commonSuperClass = findSmallestUpperBound(left, right, cp.context)
+    val substitutionsCommonSuperClass = PyTypeChecker.unifyReceiver(commonSuperClass, cp.context)
+    val substitutionsLeft = PyTypeChecker.unifyReceiver(left, cp.context).subtract(substitutionsCommonSuperClass)
+    val substitutionsRight = PyTypeChecker.unifyReceiver(right, cp.context).subtract(substitutionsCommonSuperClass)
+    for (leftTV in substitutionsLeft.typeVars.keys) {
+      val leftTypeArg = substitutionsLeft.typeVars[leftTV] ?: continue
+      if (substitutionsRight.typeVars.containsKey(leftTV)) {
+        val typeArgSubst = PyTypeChecker.substitute(leftTypeArg.get(), substitutionsRight, cp.context)
+        val typeVarSubst = PyTypeChecker.substitute(leftTV, substitutionsRight, cp.context)
+        val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(leftTV, cp.context)
+        val defSiteVariance = if (inferredVariance == PyVariance.BIVARIANT) PyVariance.COVARIANT else inferredVariance
+        reduce(typeVarSubst, typeArgSubst, defSiteVariance, cp)
+      }
+    }
+  }
+
+  /**
+   * Returns the first common superclass of [leftType] and [rightType].
+   *
+   * Assume [leftType] is `tuple[IV1, str]` (IV1 is an inference variable) and [rightType] is `list[str|bool]`:
+   * The superclasses of `tuple` and `list` are `Sequence`, then `Collection`, then `Iterable` (among others).
+   * Their first common superclass i.e., smallest supper bound, is `Sequence[_T_co]`.
+   */
+  private fun findSmallestUpperBound(leftType: PyType?, rightType: PyType?, context: TypeEvalContext): PyType? {
+    val leftClass = (leftType as? PyClassType)?.pyClass ?: return null
+    val rightClass = (rightType as? PyClassType)?.pyClass ?: return null
+    val leftAncestors = sequenceOf(leftClass) + leftClass.getAncestorClasses(context)
+    val rightAncestors = (sequenceOf(rightClass) + rightClass.getAncestorClasses(context)).toSet()
+    val common = leftAncestors.firstOrNull { candidate -> candidate in rightAncestors } ?: return null
+    return context.getType(common)
+  }
+
+  /**
+   * Returns a copy of this substitution map without the entries that [other] also contains.
+   * The common superclass entries stay because the caller relates the two sides through that class.
+   *
+   * Given two types `S = tuple[IV1, str]` and `T = list[str|bool]`: We get substitutions that contain all type parameters of tuple,
+   * Sequence, Collection, Iterable, etc. for `tuple`, and all type parameters of list, Sequence, Collection, Iterable, etc. for `list`.
+   * This method removes all duplicates (i.e., from Collection, Iterable, etc.) except for those that belong to the common superclass
+   * where S and T meet in the type hierarchy (i.e., from Sequence).
+   *
+   * The motivation to remove duplicates is (1) a slight performance improvement, and (2) to deal with a specific case of tuple types:
+   * `tuples` are declared as `class tuple(Sequence[_T_co]): ...` but treated in PyCharm type checker differently: In method
+   * [PyTypeChecker.expandTupleTypeParameters], we expand `_T_co` so that we end up with parameters `_T_co` and `_T_co#1`, `_T_co#2`, etc.
+   * The reason is to not lose positional information. However, `_T_co` still is available and typed as the union of all `_T_co#n`
+   * type parameters to support the upwards type hierarchy. The upwards type hierarchy is needed to support reduction of types that have
+   * `Sequence` as a common superclass, e.g., when reducing `tuple[str, str]` and `list[str]`.
+   */
+  private fun PyTypeChecker.GenericSubstitutions.subtract(other: PyTypeChecker.GenericSubstitutions): PyTypeChecker.GenericSubstitutions {
+    val commonSuperClass = (other.selfType as? PyClassType)?.pyClass
+    fun belongsToSelfClass(typeParameter: PyTypeParameterType): Boolean {
+      return commonSuperClass != null && typeParameter.scopeOwner == commonSuperClass
+    }
+    return PyTypeChecker.GenericSubstitutions(
+      typeVars = this.typeVars.filterKeys { it !in other.typeVars || belongsToSelfClass(it) },
+      typeVarTuples = this.typeVarTuples.filterKeys { it !in other.typeVarTuples || belongsToSelfClass(it) },
+      paramSpecs = this.paramSpecs.filterKeys { it !in other.paramSpecs || belongsToSelfClass(it) },
+      selfType = this.selfType,
+    )
+  }
+
+
+  private fun reduceCompositeType(
+    left: PyType?,
+    right: PyCompositeType, // COMPOSED TYPE
+    variance: PyVariance,
+    cp: ConstraintProblem,
+  ) {
+    when (variance) {
+      PyVariance.INVARIANT -> {
+        reduceCompositeType(left, right, PyVariance.COVARIANT, cp)
+        reduceCompositeType(left, right, PyVariance.CONTRAVARIANT, cp)
+      }
+      PyVariance.COVARIANT -> {
+        if (right is PyUnionType) {
+          // semantics: disjunction of right with each union member
+          reduceDisjunction(left, right.members, variance, cp)
+        }
+        if (right is PyIntersectionType) {
+          // semantics: conjunction of right with each union member
+          for (member in right.members) {
+            if (member != null) {
+              reduce(left, member, variance, cp)
+            }
+          }
+        }
+      }
+      PyVariance.CONTRAVARIANT -> {
+        if (right is PyUnionType) {
+          // semantics: conjunction of right with each intersection member
+          for (member in right.members) {
+            if (member != null) {
+              reduce(left, member, variance, cp)
+            }
+          }
+        }
+        if (right is PyIntersectionType) {
+          // semantics: disjunction of right with each intersection member
+          reduceDisjunction(left, right.members, variance, cp)
+        }
+      }
+      else -> {
+        UNREACHABLE()
+      }
+    }
+  }
+
+  /**
+   * Most tricky part. The goal is an implementation that works without back-tracking.
+   * The problem this method solves is that the left type must be a subtype (wrt. invariance)
+   * of one of the members of the right type. Depending on which right type member is used,
+   * new bounds will be added to the constraint problem. If the resulting constraint problem
+   * turns out to be unsolvable, there will be no back-tracking to try another type from
+   * the given set of member types here. To decide which type is the most promising, this
+   * method makes some assumptions taking structural properties into account.
+   */
+  private fun reduceDisjunction(left: PyType?, members: Collection<PyType?>, variance: PyVariance, cp: ConstraintProblem) {
+    if (members.isEmpty()) {
+      return
+    }
+    if (members.size == 1) {
+      reduce(left, members.first(), variance, cp)
+      return
+    }
+    // if the left side is a ComposedType that would lead to a conjunction, we have to tear it apart
+    // first to avoid incorrect results (for example, A|B <: [A, B, C] as a disjunction must be
+    // handled as A <: [A, B, C] AND B <: [A, B, C], both as a disjunction), not as A|B <: X with
+    // X being the choice of "most promising" option out of A, B, C).
+    if ((variance == PyVariance.COVARIANT && left is PyUnionType) || (variance == PyVariance.CONTRAVARIANT && left is PyIntersectionType)) {
+      val leftMembers = left.members.filterNotNull()
+      for (currLeft in leftMembers) {
+        reduceDisjunction(currLeft, members, variance, cp)
+      }
+      return
+    }
+
+    // choose the "most promising" of the disjoint constraints and continue with that
+    // (and simply ignore the other possible paths)
+    val memberList = ArrayList(members)
+    var idx = -1
+
+    if (left is PyCallableType) {
+      val bestMatchIdx = TreeMap<Int, Int>()
+      for (i in memberList.indices) {
+        val currRight: PyType? = memberList[i]
+        val subType: PyType? = if (variance == PyVariance.CONTRAVARIANT) currRight else left
+        val superType: PyType? = if (variance == PyVariance.CONTRAVARIANT) left else currRight
+        val isRawSubtype = isRawSubtype(subType, superType, cp.context)
+        if (isRawSubtype) {
+          val currMatchCnt = computeMatchCount(left, memberList[i], variance, cp)
+          bestMatchIdx[currMatchCnt] = i
+        }
+      }
+      if (!bestMatchIdx.isEmpty()) {
+        idx = bestMatchIdx.lastEntry().value
+      }
+    }
+    if (left is PyInferenceVariable) {
+      // choose the first that fits the current bounds
+      for (i in memberList.indices) {
+        if (mightSufficeExistingBounds(left, memberList[i], variance, cp)) {
+          idx = i
+          break
+        }
+      }
+    }
+    if (idx == -1) {
+      // choose the first naked inference variable (if present)
+      idx = memberList.indexOfFirst { it is PyInferenceVariable }
+    }
+    if (idx == -1 && variance == PyVariance.COVARIANT) {
+      // choose the top type 'any' or one of the pseudo-top types: Object, N4Object
+      idx = memberList.indexOfFirst { it.isTopType(cp.context) }
+    }
+    if (idx == -1 && variance == PyVariance.CONTRAVARIANT) {
+      // choose the bottom type 'undefined' or one of the pseudo-bottom types: null
+      idx = memberList.indexOfFirst { it.isBottomType() }
+    }
+    if (idx == -1) {
+      // choose the first member type (yes, we're pretty desperate at this point)
+      idx = 0
+    }
+    return reduce(left, memberList[idx], variance, cp)
+  }
+
+  private fun computeMatchCount(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem): Int {
+    var matchCount = 1000
+
+    if (left is PyClassType && right is PyClassType && left.pyClass === right.pyClass) {
+      matchCount += 1000
+
+      if (left.isParameterized && right.isParameterized) {
+        val lTArgs = left.getTypeArguments()
+        val rTArgs = right.getTypeArguments()
+        if (lTArgs.size == rTArgs.size) {
+          matchCount += 100
+          for (i in lTArgs.indices) {
+            if (mightSufficeExistingBounds(lTArgs[i], rTArgs[i], variance, cp)) {
+              matchCount += 10
+            }
+          }
+        }
+      }
+      return matchCount
+    }
+
+    val superType = if (variance == PyVariance.COVARIANT) left else right
+    val subType = if (variance == PyVariance.COVARIANT) right else left
+    if (superType is PyClassLikeType) {
+      // choose the first supertype of left
+      val lSTs = superType.getAncestorTypes(cp.context)
+      for (leftSuperType in lSTs) {
+        if (leftSuperType == subType) {
+          return matchCount
+        }
+        matchCount--
+      }
+    }
+    if (left is PyCallableType && right is PyCallableType) {
+      return 100
+    }
+    if (left is PyStructuralType && right is PyStructuralType) {
+      return 100
+    }
+    return 0
+  }
+
+  private fun mightSufficeExistingBounds(left: PyType?, right: PyType?, variance: PyVariance, cp: ConstraintProblem): Boolean {
+    var left = left
+    var right = right
+    var variance = variance
+    if (left !is PyInferenceVariable) {
+      if (right !is PyInferenceVariable) {
+        return false
+      }
+      val tmp = left
+      left = right
+      right = tmp
+      variance = !variance
+    }
+    // left is InferenceVariable
+
+    if (right is PyType) {
+      val newTypeBound = TypeBound(left, right, variance, cp.context)
+      val newConstraints: List<TypeConstraint> = TypeBoundCombiner.combineAll(newTypeBound, cp)
+      for (newConstraint in newConstraints) {
+        if (newConstraint.variance === PyVariance.CONTRAVARIANT) {
+          if (!isRawSubtype(newConstraint.right, newConstraint.left, cp.context)) {
+            return false
+          }
+        }
+        else if (newConstraint.variance === PyVariance.COVARIANT) {
+          if (!isRawSubtype(newConstraint.left, newConstraint.right, cp.context)) {
+            return false
+          }
+        }
+      }
+      return true
+    }
+    return false
+  }
+
+}
+
+/**
+ * This element is based on an EPL-1.0-licensed Java source by NumberFour AG (2016)
+ * (@link https://github.com/eclipse-n4js/n4js/blob/master/plugins/org.eclipse.n4js/src/org/eclipse/n4js/typesystem/constraints/TypeBoundCombiner.java).
+ * Ported to Kotlin; structure and semantics remain substantially the same.
+ */
+private object TypeBoundCombiner {
+
+  /**
+   * Side effect free, i.e., no bounds will be removed from this [ConstraintProblem] (as an optimization) when calling
+   * this method.
+   */
+  fun combineAll(newBound: TypeBound, cp: ConstraintProblem): List<TypeConstraint> {
+    val result = ArrayList<TypeConstraint>()
+    val bounds = cp.boundsPerInfVar.get(newBound.left)
+    for (tBound in bounds) {
+      val newConstraint = combine(newBound, tBound, null, cp.context)
+      if (newConstraint != null) {
+        result.add(newConstraint)
+      }
+    }
+    return result
+  }
+
+  /**
+   * In terms of JLS8, this method embodies the implication rules listed in Sec. 18.3.1 (the other implication rules
+   * in JLS8 take as input capture conversion constraints).
+   */
+  fun combine(boundI: TypeBound, boundJ: TypeBound, cp: ConstraintProblem?, context: TypeEvalContext): TypeConstraint? {
+    when (boundI.variance) {
+      PyVariance.INVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvInv(boundI, boundJ, cp, context)
+        PyVariance.COVARIANT, PyVariance.CONTRAVARIANT -> return combineInvVar(boundI, boundJ, cp, context)
+        else -> {
+          UNREACHABLE()
+        }
+      }
+      PyVariance.COVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
+        PyVariance.CONTRAVARIANT -> return combineContraCo(boundJ, boundI) // note: reversed arguments!
+        PyVariance.COVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
+        else -> {
+          UNREACHABLE()
+        }
+      }
+      PyVariance.CONTRAVARIANT -> when (boundJ.variance) {
+        PyVariance.INVARIANT -> return combineInvVar(boundJ, boundI, cp, context) // note: reversed arguments!
+        PyVariance.COVARIANT -> return combineContraCo(boundI, boundJ)
+        PyVariance.CONTRAVARIANT -> return combineBothCoOrBothContra(boundI, boundJ)
+        else -> {
+          UNREACHABLE()
+        }
+      }
+      else -> {
+        UNREACHABLE()
+      }
+    }
+  }
+
+  /**
+   * Case: both bounds are equalities.
+   */
+  private fun combineInvInv(boundS: TypeBound, boundT: TypeBound, cp: ConstraintProblem?, context: TypeEvalContext): TypeConstraint? {
+    if (boundS.left === boundT.left) {
+      // `α = S` and `α = T` implies `S = T`
+      return TypeConstraint(boundS.right, boundT.right, PyVariance.INVARIANT)
+    }
+    // inference variables are different
+    // -> try to substitute a proper RHS in the RHS of the other bound, to make it a proper type itself
+    var newConstraint = combineInvInvWithProperType(boundS, boundT, cp, context)
+    if (newConstraint != null) {
+      return newConstraint
+    }
+    newConstraint = combineInvInvWithProperType(boundT, boundS, cp, context)
+    if (newConstraint != null) {
+      return newConstraint
+    }
+    return null
+  }
+
+  /**
+   * Given two type bounds `α = U` and `β = T` with α ≠ β, will return a new constraint `β = T[α:=U]` if
+   *
+   *  * U is proper, and
+   *  * T mentions α.
+   *
+   * Otherwise, `null` is returned.
+   */
+  private fun combineInvInvWithProperType(
+    boundWithProperRHS: TypeBound,
+    boundOther: TypeBound,
+    cp: ConstraintProblem?,
+    context: TypeEvalContext,
+  ): TypeConstraint? {
+
+    val alpha = boundWithProperRHS.left
+    val typeU = boundWithProperRHS.right
+    val typeT = boundOther.right
+    if (isProper(typeU, context) && boundOther.referencedInfVars.contains(alpha)) {
+      val beta = boundOther.left
+      val substT = substituteInferenceVariable(typeT, alpha, typeU, context) // returns T[α:=U]
+      cp?.removeBound(boundOther)
+      return TypeConstraint(beta, substT, PyVariance.INVARIANT)
+    }
+    return null
+  }
+
+  /**
+   * Case: first bound is an equality, while the second isn't: `α = S` and `β Φ T` with Φ either `<:` or `:>`.
+   */
+  private fun combineInvVar(boundS: TypeBound, boundT: TypeBound, cp: ConstraintProblem?, context: TypeEvalContext): TypeConstraint? {
+    val alpha = boundS.left
+    val beta = boundT.left
+    val typeS = boundS.right
+    val typeT = boundT.right
+    val phi = boundT.variance
+    if (alpha === beta) {
+      // (1) `α = S` and `α Φ T` implies `S Φ T`
+      return TypeConstraint(typeS, typeT, phi)
+    }
+    // both bounds have different inference variables, i.e., α != β
+    if (alpha === typeT) {
+      // (2) `α = S` and `β Φ α` implies `β Φ S`
+      return TypeConstraint(beta, typeS, phi)
+    }
+    if (typeS is PyInferenceVariable) {
+      // the first bound is of the form `α = γ` (with γ being another inference variable)
+      val gamma = typeS
+      if (gamma === beta) {
+        // (3) `α = β` and `β Φ T` implies `α Φ T`
+        return TypeConstraint(alpha, typeT, phi)
+      }
+      if (gamma === typeT) {
+        // (4) `α = γ` and `β Φ γ` implies `β Φ α`
+        return TypeConstraint(beta, alpha, phi)
+      }
+    }
+    // so, S is not an inference variable
+    if (isProper(typeS, context) && boundT.referencedInfVars.contains(alpha)) {
+      // (5) `α = S` (where S is proper) and `β Φ T` implies `β Φ T[α:=U]`
+      val substT = substituteInferenceVariable(typeT, alpha, typeS, context) // returns T[α:=U]
+      cp?.removeBound(boundT)
+      return TypeConstraint(beta, substT, phi)
+    }
+    return null
+  }
+
+  /**
+   * Case: `α :> S` and `β <: T`.></:>
+   */
+  private fun combineContraCo(boundS: TypeBound, boundT: TypeBound): TypeConstraint? {
+    val alpha: PyInferenceVariable = boundS.left
+    val beta: PyInferenceVariable = boundT.left
+    val typeS = boundS.right
+    val typeT = boundT.right
+    if (alpha === beta) {
+      // transitivity, using LHS as bridge:
+      // α :> S and α <: T implies S <: T
+      return TypeConstraint(typeS, typeT, PyVariance.COVARIANT)
+    }
+    // so, α and β are different
+    if (typeS is PyInferenceVariable) {
+      val gamma: PyInferenceVariable = typeS
+      if (gamma === typeT) {
+        // transitivity, using RHS as bridge:
+        // α :> γ and β <: γ implies α :> β
+        return TypeConstraint(alpha, beta, PyVariance.CONTRAVARIANT)
+      }
+    }
+    return null
+  }
+
+  /**
+   * Case: inequalities of the same direction, i.e. `α <: S ^ β <: T`, or `α :> S ^ β :> T`.
+   */
+  private fun combineBothCoOrBothContra(boundS: TypeBound, boundT: TypeBound): TypeConstraint? {
+    val alpha: PyInferenceVariable = boundS.left
+    val beta: PyInferenceVariable = boundT.left
+    val typeS = boundS.right
+    val typeT = boundT.right
+    if (alpha === typeT) {
+      // α <: S and β <: α implies β <: S
+      // α :> S and β :> α implies β :> S
+      return TypeConstraint(beta, typeS, boundS.variance)
+    }
+    if (typeS === beta) {
+      // α <: β and β <: T implies α <: T
+      // α :> β and β :> T implies α :> T
+      return TypeConstraint(alpha, typeT, boundS.variance)
+    }
+    return null
+  }
+}
+
+
+private object TypeBoundIncorporator {
+
+  /**
+   * Incremental incorporation:
+   * - Apply newly discovered instantiations only to bounds that reference them
+   * - Combine only pairs that are "relevant" to newly added bounds
+   * - Never do full quadratic passes unless the problem genuinely introduces O(B^2) unique pairs
+   */
+  fun incorporate(cp: ConstraintProblem, context: TypeEvalContext) {
+    if (cp.failed) return
+
+    // Process until fixpoint: queues become empty.
+    while (!cp.failed && (cp.pendingInstantiations.isNotEmpty() || cp.pendingBounds.isNotEmpty())) {
+      // 1) Apply new instantiations to affected bounds (targeted, not global)
+      processPendingInstantiations(cp, context)
+      if (cp.failed) return
+
+      // 2) Incorporate newly added bounds (incremental pairwise combination)
+      processPendingBounds(cp, context)
+    }
+  }
+
+  /** Substitute newly instantiated inference variables into bounds that mention them. */
+  private fun processPendingInstantiations(cp: ConstraintProblem, context: TypeEvalContext) {
+    while (!cp.failed && cp.pendingInstantiations.isNotEmpty()) {
+      val instantiatedVar = cp.pendingInstantiations.removeFirst()
+      if (instantiatedVar !in cp.instantiations) continue
+
+      // Copy because we'll remove bounds while iterating.
+      val impactedBounds = ArrayList(cp.boundsReferencingInfVar.get(instantiatedVar))
+
+      for (bound in impactedBounds) {
+        if (cp.failed) return
+        // Bound might have been removed already by another substitution
+        if (!cp.bounds.contains(bound)) continue
+
+        // Substitute *all currently instantiated vars* mentioned by this bound, not just the one we popped.
+        var newRight = bound.right
+        for (ref in bound.referencedInfVars) {
+          val refInst = cp.instantiations[ref] ?: continue
+          val refInstWidened = widenOrKeepBounds(ref.typeVariable, refInst, context)
+          newRight = substituteInferenceVariable(newRight, ref, refInstWidened, context)
+        }
+
+        // If nothing changed, skip.
+        if (newRight === bound.right) continue
+
+        // Remove the old bound and re-reduce as a constraint.
+        cp.removeBound(bound)
+        reduce(TypeConstraint(bound.left, newRight, bound.variance), cp)
+      }
+    }
+  }
+
+  /**
+   * For each newly added bound b, combine it only with "relevant" bounds and reduce any implied constraints.
+   * Each unordered pair is combined at most once globally (seenBoundPairs).
+   */
+  private fun processPendingBounds(cp: ConstraintProblem, context: TypeEvalContext) {
+    while (!cp.failed && cp.pendingBounds.isNotEmpty()) {
+      val boundI = cp.pendingBounds.removeFirst()
+      if (!cp.bounds.contains(boundI)) continue // stale entry
+
+      val idI = cp.idOf(boundI)
+
+      // Build a small candidate set rather than "all bounds":
+      // - bounds with the same LHS (common case)
+      // - bounds whose LHS is referenced by RHS of I
+      // - bounds that reference I.left on their RHS (enables bridge rules)
+      val candidates = LinkedHashSet<TypeBound>()
+
+      candidates.addAll(cp.boundsPerInfVar.get(boundI.left))
+
+      for (ref in boundI.referencedInfVars) {
+        candidates.addAll(cp.boundsPerInfVar.get(ref))
+      }
+
+      candidates.addAll(cp.boundsReferencingInfVar.get(boundI.left))
+
+      // Combine boundI with each candidate boundJ exactly once.
+      for (boundJ in candidates) {
+        if (cp.failed) return
+        if (boundJ === boundI) continue
+        if (!cp.bounds.contains(boundJ)) continue
+
+        val idJ = cp.idOf(boundJ)
+
+        val pairKey = pairKey(idI, idJ)
+        if (!cp.seenBoundPairs.add(pairKey)) continue // already processed
+
+        val newConstraint = TypeBoundCombiner.combine(boundI, boundJ, cp, context)
+        if (newConstraint != null) {
+          reduce(newConstraint, cp)
+        }
+      }
+    }
+  }
+
+  /** Pack an unordered pair of 32-bit ids into a single Long key. */
+  private fun pairKey(a: Int, b: Int): Long {
+    val lo = minOf(a, b)
+    val hi = maxOf(a, b)
+    return (hi.toLong() shl 32) or (lo.toLong() and 0xFFFF_FFFFL)
+  }
+}
+
+
+/**
+ * This element is based on an EPL-1.0-licensed Java source by NumberFour AG (2016)
+ * (@link https://github.com/eclipse-n4js/n4js/blob/master/plugins/org.eclipse.n4js/src/org/eclipse/n4js/typesystem/constraints/InferenceContext.java).
+ * Ported to Kotlin; structure and semantics remain substantially the same.
+ */
+private object TypeBoundResolver {
+
+  /**
+   * Performs resolution of all inference variables of the receiving inference context. This might trigger further
+   * reduction and incorporation steps.
+   *
+   * If a solution is found, [ConstraintProblem.bounds] will contain instantiations for all inference variables,
+   * and [ConstraintProblem.solution] will contain instantiations for all inference variables. Otherwise, [ConstraintProblem.bounds]
+   * will be in an undefined state, and [ConstraintProblem.solution] will be `null`. In both cases,
+   * [ConstraintProblem.preResolutionBounds] will contain the state of [ConstraintProblem.bounds] right before resolution started.
+   */
+  fun resolve(cp: ConstraintProblem, context: TypeEvalContext) {
+    cp.savePreResolutionTypeBounds()
+    if (cp.failed) {
+      return
+    }
+    while (true) {
+      val currVariableSet = getSmallestVariableSet(cp, context) ?: break
+
+      for (currVariable in currVariableSet) {
+        val instantiation = chooseInstantiation(cp, currVariable, context)
+        instantiate(cp, currVariable, instantiation, context)
+        TypeBoundIncorporator.incorporate(cp, context)
+        if (cp.failed) {
+          return
+        }
+      }
+    }
+    cp.saveSolution()
+    return
+  }
+
+  /**
+   * Given a set `infVars` of inference variables of the receiving inference context, this method returns
+   * the smallest, non-empty set S such that:
+   *
+   *  * all α ∈ S are uninstantiated inference variables of the receiving inference context, and
+   *  * one of the elements in S is also in `infVars`: ∃ α ∈ S: α ∈ `infVars`, and
+   *  * if an α ∈ S depends on the resolution of another variable β, then either β is instantiated or β ∈ S, and
+   *  * there exists no non-empty proper subset of S with this property.
+   *
+   * Returns `null` if no such set exists, e.g., because `infVars` was empty or did not contain
+   * any uninstantiated inference variables.
+   *
+   * The returned set, if non-null, is guaranteed to be non-empty.
+   */
+  private fun getSmallestVariableSet(cp: ConstraintProblem, context: TypeEvalContext): MutableSet<PyInferenceVariable>? {
+    var result: MutableSet<PyInferenceVariable>? = null
+    val deferred = HashSet<PyInferenceVariable>()
+    var min = Int.MAX_VALUE
+    val infVars = cp.inferenceVars.values()
+    for (currentVariable in infVars) {
+      if (cp.isInstantiated(currentVariable)) {
+        continue
+      }
+      // Defer an unbounded currentVariable IFF all other iv that depend on currentVariable have
+      // proper bounds AND only proper bounds.
+      //
+      // For example,
+      // α :> β
+      // α :> A
+      // Because α depends on β, we would first instantiate β (to any) and then choose α=intersection[A, Any].
+      // With the following code, we defer processing of β until α has been instantiated to A.
+
+      if (!cp.isBounded(currentVariable)) {
+        val gotAtLeastOneDependantIV = infVars.any { iv: PyInferenceVariable -> cp.dependsOnResolutionOf(iv, currentVariable) }
+        if (gotAtLeastOneDependantIV) {
+          val defer = infVars
+            .filter { iv: PyInferenceVariable -> cp.dependsOnResolutionOf(iv, currentVariable) }
+            .all { iv: PyInferenceVariable ->
+              val bs = cp.boundsPerInfVar.get(iv).filter { b -> !(b.left === iv && b.right === currentVariable) }
+              !bs.isEmpty() && bs.all { b: TypeBound -> isProper(b.right, context) }
+            }
+          if (defer) {
+            deferred.add(currentVariable)
+            continue
+          }
+        }
+      }
+
+      val set = LinkedHashSet<PyInferenceVariable>()
+      if (addDependencies(cp, currentVariable, min, set, context)) {
+        val curr = set.size
+        if (curr == 1) {
+          return set // 'set' contains only currentVariable -> no need to remove deferred variables
+        }
+        if (curr < min) {
+          result = set
+          min = curr
+        }
+      }
+    }
+    if (result.isNullOrEmpty()) {
+      return null
+    }
+
+    // deferred variables may have been added via #addDependencies() above, so remove them
+    // note: because deferred variables can only end up in 'result' via #addDependencies(), we can safely
+    // remove all deferred variables and be sure that 'result' won't be empty afterward
+    result.removeAll(deferred)
+
+    return result
+  }
+
+  /**
+   * **IMPORTANT:** Given inference variable `infVar` must be uninstantiated; this will *not* be checked
+   * (again) by this method!
+   *
+   * For the given, uninstantiated inference variable `infVar`, this method will add to the given
+   * answer-set `addHere` the transitive closure of all uninstantiated inference variables of the receiving
+   * inference context on which `infVar` depends directly or indirectly.
+   *
+   * In addition, a `limit` for the answer-set's size is supplied, which means the collection of
+   * dependencies will be interrupted immediately when `addHere`'s size reaches the given limit.
+   *
+   * Returns `true` on success or `false` if the collection of dependencies was interrupted due to
+   * reaching the `limit`. In the latter case, the answer-set will be in an invalid state (contains a
+   * random subset of the transitive closure of dependencies) and should be discarded.
+   */
+  private fun addDependencies(
+    cp: ConstraintProblem,
+    infVar: PyInferenceVariable,
+    limit: Int,
+    addHere: MutableSet<PyInferenceVariable>,
+    context: TypeEvalContext,
+  ): Boolean {
+
+    if (addHere.size >= limit) {
+      // the candidate answer-set is already not better than the best-yet answer-set (i.e., larger or same size)
+      return false
+    }
+    // add infVar
+    if (!addHere.add(infVar)) {
+      // candidate variable was already visited for this answer-set; we assume also its dependencies have already
+      // been added -> so nothing else to be done here
+      return true
+    }
+    // for all (uninstantiated) variables on which the current one depends, recurse
+    for (bound in cp.boundsPerInfVar.get(infVar)) {
+      for (dependencyInfVar in bound.referencedInfVars) {
+        if (!(cp.isInstantiated(dependencyInfVar))) {
+          if (!addDependencies(cp, dependencyInfVar, limit, addHere, context)) {
+            // a single uninstantiated variable too many (that currentVariable depends on) causes the current
+            // answer-set to be discarded
+            return false
+          }
+        }
+      }
+    }
+    return true
+  }
+
+  /** Add bound `variable = proper` and perform reduction (which might trigger incorporation). */
+  private fun instantiate(cp: ConstraintProblem, infVar: PyInferenceVariable, proper: PyType?, context: TypeEvalContext) {
+    assert(!(cp.isInstantiated(infVar))) { "attempt to re-instantiate var " + infVar.name }
+    assert(isProper(proper, context))
+    // add bound `infVar = proper`
+    reduce(TypeConstraint(infVar, proper, PyVariance.INVARIANT), cp)
+    // check if 'proper' was accepted by BoundSet 'currentBounds' as an instantiation/solution of 'infVar'
+    if (!cp.isInstantiated(infVar)) {
+      // No! This should never happen except if 'proper' is not a proper type (and the above assertions are turned off).
+      // OR except if 'proper' is a raw type, which is invalid but may occur when dealing with corrupted data (broken AST, etc.).
+      // Since 'proper' was intended as an instantiation/solution when this method is called, not having it
+      // accepted is a problem, and we should give up on this constraint system:
+      cp.fail()
+    }
+  }
+
+  /**
+   * Returns a valid solution for the given inference variable **without** taking into account any dependencies it
+   * might have on other inference variables. I.e., this method will consider only [TypeBound]s where the LHS is
+   * the given inference variable and the RHS is a proper type.
+   *
+   * Background: this method is safe to use even for an inference variable α with a dependency on another inference
+   * variable β iff β has already been instantiated and its instantiation has been properly reduced and incorporated,
+   * because during reduction/incorporation a type bound α <: P or α >: P or α = P (with P being a proper type)
+   * will have been created that reflects the impact of the instantiation of β on α (without mentioning β).
+   */
+  private fun chooseInstantiation(cp: ConstraintProblem, infVar: PyInferenceVariable, context: TypeEvalContext): PyType? {
+    val concreteBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.INVARIANT }
+    if (concreteBounds.size == 1) {
+      return concreteBounds.single()
+    }
+    else if (concreteBounds.size > 1) {
+      cp.fail()
+    }
+
+    if (cp.inferenceVars.isUnbound(infVar)) {
+      val defaultType = infVar.typeVariable.defaultType
+      if (defaultType != null) return defaultType.get()
+      return infVar.typeVariable
+    }
+
+    val lowerBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.CONTRAVARIANT && !b.right.isUnknown }
+    val upperBounds = collectProperBounds(cp, infVar, context) { b -> b.variance == PyVariance.COVARIANT && !b.right.isTopType(context) }
+
+    @Suppress("SENSELESS_COMPARISON") // All cases are declared explicitly for systematic reasons
+    if (lowerBounds.isEmpty() && upperBounds.isEmpty()) {
+      // neither lower nor upper bounds found -> typeVar is unconstrained
+      val defaultType = infVar.typeVariable.defaultType
+      if (defaultType != null) return defaultType.get()
+      return PyAnyType.unknown
+    }
+    else if (lowerBounds.isNotEmpty() && upperBounds.isEmpty()) {
+      val lowerBoundsWidened = widenOrKeepBounds(infVar.typeVariable, lowerBounds, cp.context)
+      return PyUnionType.unionOrUnknown(lowerBoundsWidened)
+    }
+    else if (lowerBounds.isEmpty() && upperBounds.isNotEmpty()) {
+      if (upperBounds.size == 1 && infVar.typeVariable.bound == null && upperBounds[0] == infVar.typeVariable.bound) {
+        // special case: the type variable is constrained only by its bound (i.e., `[T: int]`).
+        // Therefore, we treat this type variable as unconstrained and use its bound when necessary based on `#keepUnconstrained`.
+        return infVar.typeVariable
+      }
+
+      // It is debatable whether we should just return PyIntersectionType.intersectionOrTop(*upperBounds)
+      // Note, however, that intersection types are not part of Python (as of 2026).
+      // Hence, the following logic makes it mandatory that the user declares a common subtype at some point.
+      val commonSubtype = findCommonSubtype(context, *upperBounds)
+      if (commonSubtype == null) {
+        cp.fail()
+        return PyNeverType.NEVER
+      }
+      else {
+        return commonSubtype.get()
+      }
+    }
+    else {
+      if (infVar.typeVariable.constraints.isEmpty()) {
+        val lowerBoundsWidened = widenOrKeepBounds(infVar.typeVariable, lowerBounds, cp.context)
+        val mergedBounds = lowerBoundsWidened.filter { lowerBound -> isSubtypeOfAll(context, lowerBound, *upperBounds) }
+        if (mergedBounds.isEmpty() && upperBounds.isNotEmpty()) {
+          return PyUnionType.unionOrUnknown(upperBounds.toList())
+        }
+        return PyUnionType.unionOrUnknown(mergedBounds)
+      }
+      else {
+        val validConstraintMembers = infVar.typeVariable.constraints.filter { tvConstraint ->
+          isSubtypeOfAll(context, tvConstraint, *upperBounds) && isSupertypeOfAll(context, tvConstraint, *lowerBounds)
+        }
+        if (validConstraintMembers.isEmpty()) {
+          cp.fail()
+          return PyNeverType.NEVER
+        }
+        if (infVar.typeVariable.constraints == validConstraintMembers) {
+          return infVar.typeVariable
+        }
+        if (validConstraintMembers.size > 1) {
+          // we found multiple solutions. Use bounds as indicators for the chosen member type(s).
+          val membersIndicatedByLBs = validConstraintMembers intersect lowerBounds.toSet()
+          val membersIndicatedByUBs = validConstraintMembers intersect upperBounds.toSet()
+          val membersIndicatedByABs = membersIndicatedByLBs + membersIndicatedByUBs
+          if (membersIndicatedByABs.isNotEmpty()) {
+            return PyUnionType.unionOrUnknown(membersIndicatedByABs)
+          }
+        }
+        return PyUnionType.unionOrUnknown(validConstraintMembers)
+      }
+    }
+  }
+
+  private fun collectProperBounds(
+    cp: ConstraintProblem,
+    infVar: PyInferenceVariable,
+    context: TypeEvalContext,
+    predicate: (TypeBound) -> Boolean,
+  ): Array<PyType?> {
+
+    val infVarBounds = cp.boundsPerInfVar.get(infVar)
+    val result = ArrayList<PyType?>()
+    for (bound in infVarBounds) {
+      if (!predicate(bound)) {
+        continue
+      }
+      val boundType = bound.right
+      // It may happen that inference variables depend on each other, hence create a cycle
+      // In this case it is necessary to substitute these inference variables by Any type
+      val substitutedBoundType = substituteInferenceVariablesBy(boundType, context)
+      result.add(substitutedBoundType)
+    }
+    return result.toTypedArray()
+  }
+
+  private fun isSubtypeOfAll(context: TypeEvalContext, left: PyType?, vararg rights: PyType?): Boolean {
+    for (right in rights) {
+      if (!isSubtype(left, right, context)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private fun isSupertypeOfAll(context: TypeEvalContext, left: PyType?, vararg rights: PyType?): Boolean {
+    for (right in rights) {
+      if (!isSubtype(right, left, context)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  /** Returns null iff there is no common supertype */
+  fun findCommonSubtype(context: TypeEvalContext, vararg types: PyType?): Ref<PyType?>? {
+    if (types.isEmpty()) return null
+    if (types.size == 1) return Ref.create(types.first())
+
+    val nonAnyTypes = types.filter { it !is PyAnyType }
+    val it = nonAnyTypes.iterator()
+    var candidate = it.next()
+    while (it.hasNext()) {
+      val type = it.next()
+      if (type === candidate) continue
+
+      when {
+        isSubtype(candidate, type, context) -> {
+          // the candidate is ok
+        }
+        isSubtype(type, candidate, context) -> {
+          candidate = type
+        }
+        else -> {
+          // Incomparable candidate. We might fail verification and then fall back.
+        }
+      }
+    }
+
+    // Verify that the candidate is a supertype of all inputs.
+    for (type in types) {
+      if (!isSubtype(candidate, type, context)) {
+        return null
+      }
+    }
+    return Ref.create(candidate)
+  }
+}
+
+private object SubtypeJudgement {
+
+  /** True iff left is a subtype of right. Inference variables, type variables, and alike are replaced by Any */
+  fun isRawSubtype(left: PyType?, right: PyType?, context: TypeEvalContext): Boolean {
+    // Replace [InferenceVariable]s by their type variables
+    val rawLRS = getReversibleSubstitutionData(left, right, context)
+    return PyTypeChecker.match(rawLRS.rightNoIVs, rawLRS.leftNoIVs, context, PyTypeChecker.GenericSubstitutions())
+  }
+
+  class ReversibleSubstitutionData(
+    val leftNoIVs: PyType?,
+    val rightNoIVs: PyType?,
+    val leftBackSubstitutions: PyTypeChecker.GenericSubstitutions,
+    val rightBackSubstitutions: PyTypeChecker.GenericSubstitutions)
+
+  fun getReversibleSubstitutionData(left: PyType?, right: PyType?, context: TypeEvalContext): ReversibleSubstitutionData {
+    val leftNoIVs = if (left is PyClassType) PyTypeChecker.findGenericDefinitionType(left.pyClass, left.isDefinition, context) ?: left else left
+    val rightNoIVs = if (right is PyClassType) PyTypeChecker.findGenericDefinitionType(right.pyClass, right.isDefinition, context) ?: right else right
+    val leftBackSubstitutions = HashMap<PyTypeParameterType, PyType?>()
+    val rightBackSubstitutions = HashMap<PyTypeParameterType, PyType?>()
+    if (left is PyClassType && leftNoIVs is PyClassType && left.typeArguments.size == leftNoIVs.typeArguments.size) {
+      for ((origTypeArg, typeVar) in left.typeArguments.zip(leftNoIVs.typeArguments)) {
+        if (typeVar is PyTypeParameterType) {
+          leftBackSubstitutions[typeVar] = origTypeArg
+        }
+      }
+    }
+    if (right is PyClassType && rightNoIVs is PyClassType && right.typeArguments.size == rightNoIVs.typeArguments.size) {
+      for ((origTypeArg, typeVar) in right.typeArguments.zip(rightNoIVs.typeArguments)) {
+        if (typeVar is PyTypeParameterType) {
+          rightBackSubstitutions[typeVar] = origTypeArg
+        }
+      }
+    }
+
+    return ReversibleSubstitutionData(leftNoIVs, rightNoIVs, PyTypeChecker.GenericSubstitutions(leftBackSubstitutions), PyTypeChecker.GenericSubstitutions(rightBackSubstitutions))
+  }
+
+  /**
+   * Returns true iff typeA <: typeB and typeB></:> <: typeA.></:>
+   */
+  fun sameTypes(typeA: PyType?, typeB: PyType?, context: TypeEvalContext): Boolean {
+    return isSubtype(typeA, typeB, context) && isSubtype(typeB, typeA, context)
+  }
+
+  /** True iff left is a subtype of right */
+  fun isSubtype(left: PyType?, right: PyType?, context: TypeEvalContext): Boolean {
+    return PyTypeChecker.match(right, left, context)
+  }
+
+}
+
+/**
+ * Returns a copy of `typeRef` in which `infVar` is substituted by `typeArg` or `typeRef`
+ * itself if no change has occurred.
+ *
+ * @return typeRef[infVar:=typeArg]
+ */
+private fun substituteInferenceVariable(typeRef: PyType?, infVar: PyInferenceVariable, typeArg: PyType?, context: TypeEvalContext): PyType? {
+  if (typeRef == null || typeRef == typeArg) return typeRef
+
+  // Fast path: if the type doesn't reference the inference variable, return as is
+  var referencesInfVar = false
+  PyRecursiveTypeVisitor.traverse(typeRef, context, object : PyTypeTraverser() {
+    override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+      if (type == infVar) {
+        referencesInfVar = true
+        return PyRecursiveTypeVisitor.Traversal.TERMINATE
+      }
+      return PyRecursiveTypeVisitor.Traversal.CONTINUE
+    }
+  })
+  if (!referencesInfVar) return typeRef
+
+  return PyCloningTypeVisitor.clone(typeRef, object : PyCloningTypeVisitor(context) {
+    override fun visitPyType(type: PyType): PyType? {
+      if (type == infVar) {
+        return typeArg
+      }
+      return super.visitPyType(type)
+    }
+  })
+}
+
+private fun substituteInferenceVariablesBy(typeRef: PyType?, context: TypeEvalContext): PyType? {
+  if (typeRef.isUnknown) return typeRef
+
+  // Fast path: if the type doesn't reference the inference variable, return as is
+  var referencesInfVar = false
+  PyRecursiveTypeVisitor.traverse(typeRef, context, object : PyTypeTraverser() {
+    override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+      if (type is PyInferenceVariable) {
+        referencesInfVar = true
+        return PyRecursiveTypeVisitor.Traversal.TERMINATE
+      }
+      return PyRecursiveTypeVisitor.Traversal.CONTINUE
+    }
+  })
+  if (!referencesInfVar) return typeRef
+
+  return PyCloningTypeVisitor.clone(typeRef, object : PyCloningTypeVisitor(context) {
+    override fun visitPyType(type: PyType): PyType? {
+      if (type is PyInferenceVariable) {
+        return type.typeVariable.defaultType.derefOrUnknown()
+      }
+      return super.visitPyType(type)
+    }
+  })
+}
+
+private fun isProper(type: PyType?, context: TypeEvalContext): Boolean {
+  return collectInferenceVariables(type, context).isEmpty()
+}
+
+private fun isStructural(type: PyType?, context: TypeEvalContext): Boolean {
+  return type is PyClassType && type.isProtocol(context)
+}
+
+private fun collectInferenceVariables(root: PyType?, context: TypeEvalContext): Set<PyInferenceVariable> {
+  val result = HashSet<PyInferenceVariable>()
+  if (root is PyInferenceVariable) {
+    result.add(root)
+  }
+  else {
+    PyRecursiveTypeVisitor.traverse(root, context, object : PyTypeTraverser() {
+      override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+        if (type is PyInferenceVariable) {
+          result.add(type)
+        }
+        return PyRecursiveTypeVisitor.Traversal.CONTINUE
+      }
+    })
+  }
+  return result
+}
+
+/**
+ * Keeps literal [bound] only if the variance of [typeParam] is covariant, otherwise widens to its class type.
+ *
+ * Note that for type parameters of functions, the variance is only determined by the return type. Additionally, the special case of
+ * returning a `Callable[[T], T]` with `T` being an unbound type parameter, we treat that callable as the effective scope owner of `T`
+ * (see [PyInferredVarianceJudgment.getFunctionReturnVariance]).
+ */
+internal fun widenOrKeepBounds(typeParam: PyTypeParameterType, bound: PyType?, context: TypeEvalContext): PyType? {
+  return widenOrKeepBounds(typeParam, arrayOf(bound), context).firstOrNull()
+}
+
+private fun widenOrKeepBounds(typeParam: PyTypeParameterType, bounds: Array<PyType?>, context: TypeEvalContext): List<PyType?> {
+  if (isWidenBoundsCase(typeParam, context)) {
+    // widen literal types
+    return bounds.map { lowerBound -> PyLiteralType.upcastLiteralToClassDeep(lowerBound, context) }
+  }
+  return bounds.toList() // keep literal types
+}
+
+internal fun isWidenBoundsCase(typeParam: PyTypeParameterType, context: TypeEvalContext): Boolean {
+  val tpFromFunction = typeParam.scopeOwner is PyCallable
+  val variance = if (tpFromFunction) {
+    PyInferredVarianceJudgment.getFunctionReturnVariance(typeParam, context)
+  }
+  else {
+    PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParam, context)
+  }
+  return variance != PyVariance.COVARIANT
+}
+
+private fun PyType?.containsType(t2: PyType, context: TypeEvalContext): Boolean {
+  if (this == null) return false
+  if (this == t2) return true
+  var found = false
+  PyRecursiveTypeVisitor.traverse(this, context, object : PyTypeTraverser() {
+    override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+      if (type == t2) {
+        found = true
+        return PyRecursiveTypeVisitor.Traversal.TERMINATE
+      }
+      return PyRecursiveTypeVisitor.Traversal.CONTINUE
+    }
+  })
+  return found
+}
+
+/** Returns true iff this type is Any or object */
+private fun PyType?.isTopType(context: TypeEvalContext): Boolean {
+  if (this == null) return true // Any
+
+  val cls = this as? PyClassType ?: return false
+  val objectType = PyBuiltinCache.getInstance(cls.pyClass).objectType
+  return objectType != null && sameTypes(cls, objectType, context)
+}
+
+private fun PyType?.isBottomType(): Boolean {
+  return this.isAnyOrUnknown || this is PyNeverType // Any or Never
+}
+
+/** The author thought, we never get here. */
+@Suppress("FunctionName")
+private fun UNREACHABLE(msg: String = "Unreachable"): Nothing = error(msg)

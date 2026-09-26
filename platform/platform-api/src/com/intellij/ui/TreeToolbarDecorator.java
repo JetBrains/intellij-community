@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -40,10 +27,16 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 class TreeToolbarDecorator extends ToolbarDecorator {
+  private final JComponent myComponent;
   private final JTree myTree;
-  @Nullable private final ElementProducer<?> myProducer;
+  private final @Nullable ElementProducer<?> myProducer;
 
-  TreeToolbarDecorator(JTree tree, @Nullable final ElementProducer<?> producer) {
+  TreeToolbarDecorator(JTree tree, final @Nullable ElementProducer<?> producer) {
+    this(tree, tree, producer);
+  }
+
+  TreeToolbarDecorator(@NotNull JComponent component, @NotNull JTree tree, final @Nullable ElementProducer<?> producer) {
+    myComponent = component;
     myTree = tree;
     myProducer = producer;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTree.getModel() instanceof EditableTreeModel;
@@ -77,9 +70,10 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         myTree.stopEditing();
         Object element;
         if (model instanceof DefaultTreeModel && myProducer != null) {
-           element = myProducer.createElement();
+          element = myProducer.createElement();
           if (element == null) return;
-        } else {
+        }
+        else {
           element = null;
         }
         DefaultMutableTreeNode parent = selected;
@@ -89,12 +83,10 @@ class TreeToolbarDecorator extends ToolbarDecorator {
         if (parent != null) {
          parent.insert(new DefaultMutableTreeNode(element), parent.getChildCount());
         }
-        final TreePath createdPath = model.addNode(new TreePath(parent.getPath()));
+        final TreePath createdPath = model.addNode(new CachingTreePath(parent.getPath()));
         if (path != null) {
           TreeUtil.selectPath(myTree, createdPath);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
     };
@@ -120,13 +112,8 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public ToolbarDecorator initPosition() {
-    return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
-  }
-
-  @Override
-  protected JComponent getComponent() {
-    return myTree;
+  protected @NotNull JComponent getComponent() {
+    return myComponent;
   }
 
   @Override
@@ -135,7 +122,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
     myTree.setVisibleRowCount(rowCount);
     return this;
   }

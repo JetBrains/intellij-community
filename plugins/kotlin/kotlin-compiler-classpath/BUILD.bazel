@@ -1,0 +1,89 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build kotlin.util.compiler-classpath` start
+create_kotlinc_options(
+    name = "custom_util-compiler-classpath",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "util-compiler-classpath",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util-compiler-classpath",
+    module_name = "kotlin.util.compiler-classpath",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/asm",
+        "//libraries/java-compatibility",
+        "@lib//:javax-inject",
+        "@lib//:vavr",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/lz4",
+        "//libraries/jsr305",
+        "//java/java-psi-impl:psi-impl",
+        "//platform/core-api:core",
+        "//platform/lang-impl",
+        "//platform/external-system-api:externalSystem",
+        "//platform/util/jdom",
+        "//java/java-impl:impl",
+    ],
+)
+
+jvm_library(
+    name = "util-compiler-classpath_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util-compiler-classpath",
+    module_name = "kotlin.util.compiler-classpath",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":util-compiler-classpath",
+        "//libraries/asm:asm_test_lib",
+        "//libraries/java-compatibility:java-compatibility_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/lz4:lz4_test_lib",
+        "//libraries/jsr305:jsr305_test_lib",
+        "//java/java-psi-impl:psi-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/external-system-api:externalSystem_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//java/java-impl:impl_test_lib",
+    ],
+)
+### auto-generated section `build kotlin.util.compiler-classpath` end
+
+### auto-generated section `iml kotlin.util.compiler-classpath` start
+exports_files(
+    [
+        "kotlin.util.compiler-classpath.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml kotlin.util.compiler-classpath` end

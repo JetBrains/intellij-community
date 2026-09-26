@@ -1,0 +1,6 @@
+services:
+  intellijcommunity:
+    image: intellijcommunity
+    build:
+      context: .
+      dockerfile: ./Dockerfile

@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,7 +10,9 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -38,30 +23,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class ElementCreator implements WriteActionAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ElementCreator");
+  private static final Logger LOG = Logger.getInstance(ElementCreator.class);
   private final Project myProject;
-  private final String myErrorTitle;
+  private final @NlsContexts.DialogTitle String myErrorTitle;
 
-  protected ElementCreator(Project project, String errorTitle) {
+  protected ElementCreator(Project project, @NotNull @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }
 
-  protected abstract PsiElement[] create(String newName) throws Exception;
-  protected abstract String getActionName(String newName);
+  protected abstract PsiElement @NotNull [] create(@NotNull String newName) throws Exception;
+  protected abstract @NlsContexts.Command @NotNull String getActionName(@NotNull String newName);
 
-  public PsiElement[] tryCreate(@NotNull final String inputString) {
-    if (inputString.length() == 0) {
-      Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
+  public @NotNull PsiElement @NotNull [] tryCreate(final @NotNull String inputString) {
+    if (inputString.isEmpty()) {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    Ref<List<SmartPsiElementPointer>> createdElements = Ref.create();
+    Ref<List<SmartPsiElementPointer<?>>> createdElements = Ref.create();
     Exception exception = executeCommand(getActionName(inputString), () -> {
       PsiElement[] psiElements = create(inputString);
       SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
@@ -75,15 +55,15 @@ public abstract class ElementCreator implements WriteActionAware {
     return ContainerUtil.mapNotNull(createdElements.get(), SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private Exception executeCommand(String commandName, ThrowableRunnable<Exception> invokeCreate) {
+  private @Nullable Exception executeCommand(@NotNull @NlsContexts.Command String commandName, @NotNull ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
       try {
         if (startInWriteAction()) {
           WriteAction.run(invokeCreate);
-        } else {
+        }
+        else {
           invokeCreate.run();
         }
       }
@@ -103,9 +83,9 @@ public abstract class ElementCreator implements WriteActionAware {
     Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
   }
 
-  public static String getErrorMessage(Throwable t) {
+  public static @NlsContexts.DialogMessage String getErrorMessage(Throwable t) {
     String errorMessage = CreateElementActionBase.filterMessage(t.getMessage());
-    if (errorMessage == null || errorMessage.length() == 0) {
+    if (StringUtil.isEmpty(errorMessage)) {
       errorMessage = t.toString();
     }
     return errorMessage;

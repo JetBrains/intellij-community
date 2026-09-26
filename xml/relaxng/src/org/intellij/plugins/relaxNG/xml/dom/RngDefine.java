@@ -20,7 +20,11 @@
 package org.intellij.plugins.relaxNG.xml.dom;
 
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Namespace;
+import com.intellij.util.xml.Referencing;
+import com.intellij.util.xml.Required;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.Pattern;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngReferenceConverter;

@@ -1,0 +1,9 @@
+// API_VERSION: 1.9
+// WITH_STDLIB
+enum class EnumClass
+
+fun <T> genericFunction(a: T) {}
+
+fun foo() {
+    genericFunction<Array<*>>(EnumClass.values<caret>())
+}

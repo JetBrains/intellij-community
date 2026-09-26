@@ -1,0 +1,6 @@
+#foreach($param in $RECORD_COMPONENTS)
+ $COMMENT_PREFIX @param $param
+#end
+#foreach($param in $TYPE_PARAMS)
+ $COMMENT_PREFIX @param <$param>
+#end

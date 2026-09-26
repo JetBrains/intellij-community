@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -34,11 +19,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl, AttributeStub> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
+public class AttributeChildInvocationHandler extends DomInvocationHandler {
+  private static final Logger LOG = Logger.getInstance(AttributeChildInvocationHandler.class);
 
   protected AttributeChildInvocationHandler(final EvaluatedXmlName attributeName,
                                             final AttributeChildDescriptionImpl description,
@@ -63,7 +45,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   @Override
-  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parent) {
+  protected XmlElement recomputeXmlElement(final @NotNull DomInvocationHandler parent) {
     if (!parent.isValid()) return null;
 
     final XmlTag tag = parent.getXmlTag();
@@ -72,8 +54,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return tag.getAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(parent));
   }
 
-  @Nullable
-  private String getXmlApiCompatibleNamespace(DomInvocationHandler parent) {
+  private @Nullable String getXmlApiCompatibleNamespace(DomInvocationHandler parent) {
     final XmlTag tag = parent.getXmlTag();
     if (tag == null) {
       return null;
@@ -94,7 +75,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     try {
       attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlApiCompatibleNamespace(getParentHandler()), "");
       setXmlElement(attribute);
-      getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
       final DomElement element = getProxy();
       manager.fireEvent(new DomEvent(element, true));
       return attribute;
@@ -132,8 +112,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   @Override
-  @Nullable
-  public final XmlTag getXmlTag() {
+  public final @Nullable XmlTag getXmlTag() {
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getXmlTag();
   }
@@ -146,10 +125,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   @Override
-  @Nullable
-  protected String getValue() {
+  protected @Nullable String getValue() {
     if (myStub != null) {
-      return myStub.getValue();
+      return ((AttributeStub)myStub).getValue();
     }
     final XmlAttribute attribute = (XmlAttribute)getXmlElement();
     if (attribute != null) {
@@ -162,19 +140,18 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   @Override
-  protected void setValue(@Nullable final String value) {
+  protected void setValue(final @Nullable String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
     final String namespace = getXmlApiCompatibleNamespace(getParentHandler());
-    final String oldValue = StringUtil.unescapeXml(tag.getAttributeValue(attributeName, namespace));
+    String tagValue = tag.getAttributeValue(attributeName, namespace);
+    final String oldValue = tagValue == null ? null : StringUtil.unescapeXmlEntities(tagValue);
     final String newValue = XmlStringUtil.escapeString(value);
     if (Comparing.equal(oldValue, newValue, true)) return;
 
     getManager().runChange(() -> {
       try {
-        XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
-        setXmlElement(attribute);
-        getManager().cacheHandler(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute, this);
+        setXmlElement(tag.setAttribute(attributeName, namespace, newValue));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -186,7 +163,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Override
   public void copyFrom(final DomElement other) {
-    setValue(((GenericAttributeValue) other).getStringValue());
+    setValue(((GenericAttributeValue<?>) other).getStringValue());
   }
 
 }

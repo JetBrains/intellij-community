@@ -1,0 +1,31 @@
+<html>
+<body>
+<p>
+  Reports ambiguous usage of a pandas <code>DataFrame</code> or <code>Series</code> in a boolean context,
+  such as <code>if</code>, <code>while</code>, or logical expressions.
+  This typically leads to the runtime error:
+  <code>ValueError: The truth value of a DataFrame is ambiguous</code>.
+</p>
+
+<p>
+  In pandas, expressions like <code>df</code> or <code>df == other</code> do not return a single boolean value,
+  but rather a DataFrame or Series of booleans. Using these in control flow without explicit reduction
+  (e.g., <code>.any()</code>, <code>.all()</code>, or <code>.empty</code>) is ambiguous and will raise an exception.
+</p>
+
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+if df:  # ❌ Raises ValueError: The truth value of a DataFrame is ambiguous
+    print("DataFrame exists")
+
+if not df.empty:  # ✅ Checks if DataFrame has any rows
+    print("DataFrame exists")
+</pre>
+
+<p>
+  When the quick-fix is applied, the condition is replaced with an appropriate reducer
+  like <code>.any()</code>, <code>.all()</code>, or <code>.empty</code> depending on the context.
+</p>
+
+</body>
+</html>

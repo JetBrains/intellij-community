@@ -1,38 +1,29 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class ProxyUndoRedoAction extends DumbAwareAction {
-  @NotNull private final UndoManager myUndoManager;
-  @NotNull private final TextEditor myEditor;
+@ApiStatus.Internal
+public final class ProxyUndoRedoAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
+  private final @NotNull UndoManager myUndoManager;
+  private final @NotNull TextEditor myEditor;
   private final boolean myUndo;
 
   private ProxyUndoRedoAction(@NotNull UndoManager manager, @NotNull TextEditor editor, boolean undo) {
@@ -52,12 +43,28 @@ public class ProxyUndoRedoAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  /**
+   * Forces backend only undo for diff editors.
+   * It is a hot fix for IJPL-191994.
+   * To support speculative (frontend) undo,
+   * it is necessary to find a proper fileEditorId that is not obvious in case of diff editors.
+   */
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.BackendOnly;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myUndo ? myUndoManager.isUndoAvailable(myEditor) : myUndoManager.isRedoAvailable(myEditor));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myUndo) {
       myUndoManager.undo(myEditor);
     }

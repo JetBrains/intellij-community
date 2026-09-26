@@ -1,0 +1,82 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev kotlin.scripting` start
+content_module_jar(module = ":scripting")
+### auto-generated section `dev kotlin.scripting` end
+
+### auto-generated section `build kotlin.scripting` start
+create_kotlinc_options(
+    name = "custom_scripting",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_allow_kotlin_package = True,
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "scripting",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scripting",
+    module_name = "kotlin.scripting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
+    ],
+)
+
+jvm_library(
+    name = "scripting_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scripting",
+    module_name = "kotlin.scripting",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scripting",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
+    ],
+)
+### auto-generated section `build kotlin.scripting` end
+
+### auto-generated section `iml kotlin.scripting` start
+exports_files(
+    [
+        "kotlin.scripting.iml",
+        "resources/kotlin.scripting.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml kotlin.scripting` end

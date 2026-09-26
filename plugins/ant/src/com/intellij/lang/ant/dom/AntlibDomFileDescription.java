@@ -15,25 +15,24 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
+public final class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
   private static final String ROOT_TAG_NAME = "antlib";
 
   public AntlibDomFileDescription() {
     super(AntDomAntlib.class, ROOT_TAG_NAME);
   }
 
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && isAntLibFile(file);
+  @Override
+  public boolean isMyFile(@NotNull XmlFile file) {
+    return super.isMyFile(file) && isAntLibFile(file);
   }
 
   public static boolean isAntLibFile(final XmlFile xmlFile) {

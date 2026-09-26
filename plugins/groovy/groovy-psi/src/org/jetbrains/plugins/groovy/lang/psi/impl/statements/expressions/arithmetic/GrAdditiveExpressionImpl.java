@@ -20,15 +20,13 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
-/**
- * @author ilyas
- */
 public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
 
   public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Additive expression";
   }

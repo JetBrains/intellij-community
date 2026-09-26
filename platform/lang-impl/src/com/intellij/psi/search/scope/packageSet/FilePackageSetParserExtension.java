@@ -1,35 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class FilePackageSetParserExtension implements PackageSetParserExtension {
 
   @Override
-  @Nullable
-  public String parseScope(Lexer lexer) {
+  public @Nullable String parseScope(Lexer lexer) {
     if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return null;
     String id = getTokenText(lexer);
-    if (FilePatternPackageSet.SCOPE_FILE.equals(id)) {
+    if (FilePatternPackageSet.SCOPE_FILE.equals(id) || FilePatternPackageSet.SCOPE_EXT.equals(id)) {
 
       final CharSequence buf = lexer.getBufferSequence();
       final int end = lexer.getTokenEnd();
@@ -40,21 +27,19 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
       }
 
       lexer.advance();
-      return FilePatternPackageSet.SCOPE_FILE;
+      return FilePatternPackageSet.SCOPE_FILE.equals(id) ? FilePatternPackageSet.SCOPE_FILE : FilePatternPackageSet.SCOPE_EXT;
     }
-
     return null;
   }
 
   @Override
-  @Nullable
-  public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
-    if (scope != FilePatternPackageSet.SCOPE_FILE) return null;
-    return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer));
+  public @Nullable PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
+    if (!FilePatternPackageSet.SCOPE_FILE.equals(scope) && !FilePatternPackageSet.SCOPE_EXT.equals(scope)) return null;
+    return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer), FilePatternPackageSet.SCOPE_FILE.equals(scope));
   }
 
-  private static String parseFilePattern(Lexer lexer) throws ParsingException {
-    StringBuffer pattern = new StringBuffer();
+  protected static String parseFilePattern(Lexer lexer) throws ParsingException {
+    StringBuilder pattern = new StringBuilder();
     boolean wasIdentifier = false;
     while (true) {
       if (lexer.getTokenType() == ScopeTokenTypes.DIV) {
@@ -62,7 +47,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
         pattern.append("/");
       }
       else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER || lexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
-        if (wasIdentifier) error(lexer, AnalysisScopeBundle.message("error.package.set.token.expectations", getTokenText(lexer)));
+        if (wasIdentifier) error(lexer, CodeInsightBundle.message("error.package.set.token.expectations", getTokenText(lexer)));
         wasIdentifier = lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER;
         pattern.append(getTokenText(lexer));
       }
@@ -96,8 +81,8 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
       lexer.advance();
     }
 
-    if (pattern.length() == 0) {
-      error(lexer, AnalysisScopeBundle.message("error.package.set.pattern.expectations"));
+    if (pattern.isEmpty()) {
+      error(lexer, CodeInsightBundle.message("error.package.set.pattern.expectations"));
     }
 
     return pattern.toString();
@@ -111,6 +96,6 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
 
   private static void error(Lexer lexer, String message) throws ParsingException {
     throw new ParsingException(
-      AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (lexer.getTokenStart() + 1)));
+      CodeInsightBundle.message("error.package.set.position.parsing.error", message, (lexer.getTokenStart() + 1)));
   }
 }

@@ -1,0 +1,70 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.search.ideaExtensions
+
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PackageScope
+import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.search.ScopeOptimizer
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
+import org.jetbrains.kotlin.idea.base.util.fileScope
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+
+class KotlinDeclarationScopeOptimizer : ScopeOptimizer {
+    override fun getRestrictedUseScope(element: PsiElement): SearchScope? {
+        val declaration = element.unwrapped as? KtDeclaration ?: return null
+        val isPrivateDeclaration = declaration.isPrivate() ||
+                (element as? PsiModifierListOwner)?.hasModifier(JvmModifier.PRIVATE) == true
+
+        val privateClass = declaration.parentsOfType<KtClassOrObject>(withSelf = true).find(KtClassOrObject::isPrivate)
+        // If the containing class is not private and our declaration is also not private, we cannot restrict the scope
+        // to the current file because it can be accessed elsewhere.
+        if (privateClass == null && !isPrivateDeclaration) return null
+
+        // Interfaces can be extended by non-private classes in the same file, even if the interface is private.
+        // This means declarations within such an interface might be accessible from other files.
+        if (declaration.containingClass()?.isInterface() == true) return null
+
+        val containingFile = declaration.containingKtFile
+        val fileScope = containingFile.fileScope()
+        if (declaration !is KtClassOrObject && isPrivateDeclaration || privateClass?.isTopLevel() != true) return fileScope
+
+        // it is possible to create new kotlin private class from java - so have to look up in the same module as well
+        val minimalScope = findModuleOrLibraryScope(containingFile) ?: element.useScope
+        val scopeWithoutKotlin = minimalScope.excludeKotlinSources(containingFile.project)
+
+        val packageName = KotlinPsiHeuristics.getPackageName(containingFile)?.asString()
+        val psiPackage = if (packageName != null) JavaPsiFacade.getInstance(element.project).findPackage(packageName) else null
+
+        val jvmScope = if (psiPackage != null && scopeWithoutKotlin is GlobalSearchScope)
+            PackageScope.packageScope(psiPackage, /* includeSubpackages = */ false, scopeWithoutKotlin)
+        else
+            scopeWithoutKotlin
+
+        return fileScope.union(jvmScope)
+    }
+}
+
+private fun findModuleOrLibraryScope(file: KtFile): GlobalSearchScope? {
+    val project = file.project
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val virtualFile = file.virtualFile ?: return null
+    val moduleScope = projectFileIndex.getModuleForFile(virtualFile)?.moduleScope
+    return when {
+        moduleScope != null -> moduleScope
+        projectFileIndex.isInLibrary(virtualFile) -> ProjectScope.getLibrariesScope(project)
+        else -> null
+    }
+}

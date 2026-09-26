@@ -1,0 +1,48 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.teamcity.service.messages"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.testRunner"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="255" 
+                 description="Expected/actual values max length to be printed in the console" 
+                 key="test.console.expected.actual.max.length"/>
+    <registryKey defaultValue="false"
+                 description="Print raw TeamCity service messages to the console output (verbose mode)"
+                 key="test.console.verbose"/>
+    <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
+    <projectSettings service="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
+  </extensions>
+  <actions>
+    <group id="SmRunTestGroup">
+      <separator/>
+      <group id="ImportTests" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup" icon="AllIcons.Vcs.History"/>
+      <action id="ImportTestsFromFile" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <add-to-group group-id="RunTestGroup" anchor="first" />
+    </group>
+  </actions>
+</idea-plugin>

@@ -1,41 +1,28 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console
 
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 
-/**
- * @author traff
- */
+@Internal
 class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
-
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val isStartedFromRunner = toolWindow.component.getClientProperty(PydevConsoleRunnerImpl.STARTED_BY_RUNNER)
     // we need it to distinguish Console toolwindows started by Console Runner from ones started by toolwindow activation
     if (isStartedFromRunner != "true") {
-      val runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
-      TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) })
+      // createToolWindowContent is @RequiresEdt and cannot suspend, while building the runner waits for the project
+      // model. The runner therefore comes back on the EDT, which is also the write-safe context the former
+      // TransactionGuard.submitTransaction stood for.
+      launchPythonConsoleRunnerIfInterpreterExists(project, null) { it.runSync(true) }
     }
   }
 
   companion object {
-    val ID: String = "Python Console"
+    @NonNls
+    const val ID: String = "Python Console"
   }
 }

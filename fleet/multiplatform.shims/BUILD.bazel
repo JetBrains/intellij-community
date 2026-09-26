@@ -1,0 +1,94 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_multiplatform.shims",
+    module_name = "fleet.multiplatform.shims",
+    plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
+    visibility = ["//visibility:public"],
+    exports = ["@community//fleet/util/multiplatform:wasmjs_module_lib"],
+    deps = [
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)
+
+### auto-generated section `dev fleet.multiplatform.shims` start
+content_module_jar(module = ":multiplatform.shims")
+### auto-generated section `dev fleet.multiplatform.shims` end
+
+### auto-generated section `build fleet.multiplatform.shims` start
+create_kotlinc_options(
+    name = "custom_multiplatform.shims",
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_jvm_default = "all-compatibility",
+    x_lambdas = "class",
+    x_wasm_kclass_fqn = True,
+)
+
+jvm_provided_library(
+    name = "fleet_util_multiplatform_provided",
+    lib = "//fleet/util/multiplatform",
+)
+
+jvm_library(
+    name = "multiplatform.shims",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_multiplatform.shims",
+    module_name = "fleet.multiplatform.shims",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        ":fleet_util_multiplatform_provided",
+    ],
+)
+
+jvm_library(
+    name = "multiplatform.shims_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_multiplatform.shims",
+    module_name = "fleet.multiplatform.shims",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":multiplatform.shims",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//fleet/util/multiplatform",
+        "//fleet/util/multiplatform:multiplatform_test_lib",
+    ],
+)
+### auto-generated section `build fleet.multiplatform.shims` end
+
+### auto-generated section `iml fleet.multiplatform.shims` start
+exports_files(
+    [
+        "fleet.multiplatform.shims.iml",
+        "resources/fleet.multiplatform.shims.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.multiplatform.shims` end

@@ -1,0 +1,14 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -opt-in=test.Marker
+
+package test
+
+@RequiresOptIn
+annotation class Marker
+
+@Marker
+fun experimentalApi() {}
+
+fun useExperimentalApi() {
+    experimentalApi()
+}

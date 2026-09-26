@@ -1,7 +1,7 @@
 class Test {
 
     public static void main(String[] args) {
-       <ref>method("a", "b", "c");
+       <caret>method("a", "b", "c");
     }
 
     public static <T> T method(T... a) {

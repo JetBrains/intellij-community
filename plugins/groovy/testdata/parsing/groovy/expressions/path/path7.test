@@ -15,4 +15,4 @@ Groovy script
         Reference element
           PsiElement(identifier)('S')
       PsiElement(>)('>')
-    PsiElement(string)(''preved'')
+    PsiElement(single quoted string)(''preved'')

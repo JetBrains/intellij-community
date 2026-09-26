@@ -1,0 +1,10 @@
+// "Replace with safe (?.) call" "true"
+// K2_ERROR: UNSAFE_CALL
+fun test(foo: Foo?): String {
+    return foo?.s ?: TODO()
+}
+
+class Foo {
+    val s = ""
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix

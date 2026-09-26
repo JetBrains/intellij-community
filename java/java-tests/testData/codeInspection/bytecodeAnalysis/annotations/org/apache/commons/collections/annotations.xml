@@ -36,7 +36,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.Bag synchronizedBag(org.apache.commons.collections.Bag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -46,7 +45,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.Bag transformedBag(org.apache.commons.collections.Bag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -92,7 +90,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag synchronizedSortedBag(org.apache.commons.collections.SortedBag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -102,7 +99,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag transformedSortedBag(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -134,22 +130,19 @@
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag unmodifiableSortedBag(org.apache.commons.collections.SortedBag) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.BeanMap NULL_ARGUMENTS'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.BeanMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.BeanMap java.lang.Object convertType(java.lang.Class, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.BeanMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.BeanMap java.lang.Object getBean()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.BeanMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.BeanMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -290,6 +283,16 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.BinaryHeap void clear()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.BinaryHeap void grow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.BoundedFifoBuffer BoundedFifoBuffer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -382,7 +385,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer blockingBuffer(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -392,7 +394,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer blockingBuffer(org.apache.commons.collections.Buffer, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -402,7 +403,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer boundedBuffer(org.apache.commons.collections.Buffer, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -412,7 +412,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer boundedBuffer(org.apache.commons.collections.Buffer, int, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -434,7 +433,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer synchronizedBuffer(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -444,7 +442,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer transformedBuffer(org.apache.commons.collections.Buffer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -711,7 +708,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.lang.Object find(java.util.Collection, org.apache.commons.collections.Predicate) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -730,6 +726,11 @@
     <item name='org.apache.commons.collections.CollectionUtils java.lang.Object index(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.CollectionUtils java.lang.Object index(java.util.Iterator, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.lang.Object index(java.util.Iterator, int) 0'>
@@ -874,7 +875,6 @@
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.util.Collection synchronizedCollection(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -884,7 +884,6 @@
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.util.Collection transformedCollection(java.util.Collection, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -955,6 +954,11 @@
     </item>
     <item name='org.apache.commons.collections.CollectionUtils void forAllDo(java.util.Collection, org.apache.commons.collections.Closure) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.CollectionUtils void reverseArray(java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.CollectionUtils void reverseArray(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1168,17 +1172,29 @@
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor int nextIndex()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor int previousIndex()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor void checkForComod()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.CursorableLinkedList.Cursor void invalidate()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.CursorableLinkedList.Cursor void listableChanged(org.apache.commons.collections.CursorableLinkedList.Listable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor void listableChanged(org.apache.commons.collections.CursorableLinkedList.Listable) 0'>
@@ -1200,6 +1216,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.CursorableLinkedList.Listable java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Listable java.lang.Object value()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1213,6 +1234,16 @@
     <item name='org.apache.commons.collections.CursorableLinkedList.Listable org.apache.commons.collections.CursorableLinkedList.Listable prev()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.CursorableLinkedList.Listable void setNext(org.apache.commons.collections.CursorableLinkedList.Listable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.CursorableLinkedList.Listable void setPrev(org.apache.commons.collections.CursorableLinkedList.Listable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CursorableSubList CursorableSubList(org.apache.commons.collections.CursorableLinkedList, int, int) 0'>
@@ -1372,11 +1403,21 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.DefaultMapEntry java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.DefaultMapEntry java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.DefaultMapEntry void setKey(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap DoubleOrderedMap()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1438,23 +1479,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doGet(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doGet(java.lang.Comparable, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object doRemove(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object get(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object getKeyForValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object getKeyForValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1463,7 +1492,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1471,17 +1499,10 @@
     <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object put(java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap java.lang.Object removeValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getGrandParent(org.apache.commons.collections.DoubleOrderedMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getGrandParent(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1491,7 +1512,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getLeftChild(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1501,7 +1521,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getParent(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1511,7 +1530,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node getRightChild(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1522,15 +1540,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node lookup(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node nextGreater(org.apache.commons.collections.DoubleOrderedMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap org.apache.commons.collections.DoubleOrderedMap.Node nextGreater(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1541,20 +1555,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKey(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_,null-&gt;fail;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 1'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkNonNullComparable(java.lang.Object, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1562,17 +1567,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkNonNullComparable(java.lang.Object, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkValue(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkValue(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void copyColor(org.apache.commons.collections.DoubleOrderedMap.Node, org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1586,6 +1585,11 @@
     <item name='org.apache.commons.collections.DoubleOrderedMap void doRedBlackInsert(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.DoubleOrderedMap void grow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void insertValue(org.apache.commons.collections.DoubleOrderedMap.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1595,11 +1599,21 @@
     <item name='org.apache.commons.collections.DoubleOrderedMap void makeRed(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.DoubleOrderedMap void modify()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void rotateLeft(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void rotateRight(org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.DoubleOrderedMap void shrink()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap.DoubleOrderedMapIterator DoubleOrderedMapIterator(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1715,19 +1729,12 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolate(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String interpolateHelper(java.lang.String, java.util.List) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String testBoolean(java.lang.String) 0'>
@@ -1763,9 +1770,6 @@
     <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties subset(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ExtendedProperties void combine(org.apache.commons.collections.ExtendedProperties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1776,9 +1780,6 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties void setInclude(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ExtendedProperties.PropertiesReader java.lang.String readProperty()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ExtendedProperties.PropertiesTokenizer java.lang.String nextToken()'>
@@ -1872,6 +1873,11 @@
             <val val="&quot;-&gt;new&quot;"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.FastArrayList void setFast(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.FastArrayList.ListIter ListIter(int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1904,7 +1910,6 @@
     </item>
     <item name='org.apache.commons.collections.FastArrayList.SubList java.util.List subList(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1948,24 +1953,26 @@
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.FastHashMap void setFast(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.FastHashMap.CollectionView CollectionView()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2066,24 +2073,26 @@
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.FastTreeMap void setFast(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.FastTreeMap.CollectionView CollectionView()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2530,12 +2539,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.LRUMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.LRUMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.LRUMap void processRemovedLRU(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2569,7 +2572,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List fixedSizeList(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2587,7 +2589,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List lazyList(java.util.List, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2653,7 +2654,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List synchronizedList(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2663,7 +2663,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List transformedList(java.util.List, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2759,15 +2758,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Boolean getBoolean(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Boolean getBoolean(java.util.Map, java.lang.Object, java.lang.Boolean) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object) 0'>
@@ -2776,16 +2771,10 @@
     <item name='org.apache.commons.collections.MapUtils java.lang.Byte getByte(java.util.Map, java.lang.Object, java.lang.Byte) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Double getDouble(java.util.Map, java.lang.Object, java.lang.Double) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object) 0'>
@@ -2794,16 +2783,10 @@
     <item name='org.apache.commons.collections.MapUtils java.lang.Float getFloat(java.util.Map, java.lang.Object, java.lang.Float) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Integer getInteger(java.util.Map, java.lang.Object, java.lang.Integer) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Long getLong(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Long getLong(java.util.Map, java.lang.Object) 0'>
@@ -2816,7 +2799,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Number getNumber(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2828,15 +2810,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Object getObject(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Object getObject(java.util.Map, java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.MapUtils java.lang.Short getShort(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.Short getShort(java.util.Map, java.lang.Object) 0'>
@@ -2849,7 +2827,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.lang.String getString(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2859,7 +2836,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map fixedSizeMap(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2871,7 +2847,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map getMap(java.util.Map, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2889,7 +2864,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map lazyMap(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2902,7 +2876,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map lazyMap(java.util.Map, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2924,7 +2897,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map multiValueMap(java.util.Map, java.lang.Class)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2934,7 +2906,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map multiValueMap(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2976,7 +2947,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map synchronizedMap(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2986,7 +2956,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map synchronizedSortedMap(java.util.SortedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2996,7 +2965,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map transformedMap(java.util.Map, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3047,7 +3015,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap fixedSizeSortedMap(java.util.SortedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3057,7 +3024,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap lazySortedMap(java.util.SortedMap, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3070,7 +3036,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap lazySortedMap(java.util.SortedMap, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3092,7 +3057,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap transformedSortedMap(java.util.SortedMap, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3181,13 +3145,11 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MultiHashMap java.lang.Object remove(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.MultiHashMap java.util.Collection createCollection(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3198,9 +3160,15 @@
     <item name='org.apache.commons.collections.MultiHashMap java.util.Collection createCollection(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.MultiHashMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.MultiHashMap java.util.Iterator superValuesIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;new&quot;"/>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.MultiHashMap void putAll(java.util.Map) 0'>
@@ -3432,13 +3400,7 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.ReferenceMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object get(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.ReferenceMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
@@ -3451,7 +3413,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap java.lang.Object remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -3461,11 +3422,25 @@
             <val val="&quot;_,!null,_-&gt;!null&quot;"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.ReferenceMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.ReferenceMap java.util.Set entrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.ReferenceMap java.util.Set keySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.ReferenceMap org.apache.commons.collections.ReferenceMap.Entry getEntry(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.ReferenceMap org.apache.commons.collections.ReferenceMap.Entry getEntry(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -3534,18 +3509,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object remove(int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -3554,7 +3517,6 @@
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3569,22 +3531,14 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.util.Map.Entry getFirst()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap java.util.Map.Entry getLast()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3595,9 +3549,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.SequencedHashMap org.apache.commons.collections.SequencedHashMap.Entry removeImpl(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap void insertEntry(org.apache.commons.collections.SequencedHashMap.Entry) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3635,6 +3586,11 @@
     <item name='org.apache.commons.collections.SequencedHashMap.Entry java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.SequencedHashMap.Entry java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap.Entry java.lang.String toString()'>
@@ -3690,7 +3646,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.Set synchronizedSet(java.util.Set)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3700,7 +3655,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.Set transformedSet(java.util.Set, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3746,7 +3700,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.SortedSet synchronizedSortedSet(java.util.SortedSet)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3756,7 +3709,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.SortedSet transformedSortedSet(java.util.SortedSet, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3809,32 +3761,20 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.StaticBucketMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3926,6 +3866,11 @@
     <item name='org.apache.commons.collections.StaticBucketMap.Node java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.StaticBucketMap.Node java.lang.Object setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap.ValueIterator ValueIterator()'>

@@ -1,0 +1,11 @@
+// "Add 'infix' modifier" "true"
+// K2_ERROR: INFIX_MODIFIER_REQUIRED
+class A {
+    infix fun xyzzy(i: Int) {}
+}
+
+fun foo() {
+    A() xyz<caret>zy 5
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ModifierRequiredFixFactoriesKt$createFixIfAvailable$1

@@ -21,14 +21,19 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -40,13 +45,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   private final Module myModule;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
@@ -65,7 +67,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     final String baseDirectoryForLibraries = baseDir != null ? baseDir.getPath() : "";
     myFrameworkType = frameworkType;
     myModifiableModelsProvider = modifiableModelsProvider;
-    setTitle(ProjectBundle.message("dialog.title.add.framework.0.support", frameworkType.getPresentableName()));
+    setTitle(JavaUiBundle.message("dialog.title.add.framework.0.support", frameworkType.getPresentableName()));
     myModule = module;
     myModel = new FrameworkSupportModelImpl(module.getProject(), baseDirectoryForLibraries, librariesContainer);
     myConfigurable = provider.createConfigurable(myModel);
@@ -85,6 +87,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     return new AddSupportForSingleFrameworkDialog(module, provider.getFrameworkType(), provider, container, modifiableModelsProvider);
   }
 
+  @Override
   protected void doOKAction() {
     if (addSupport()) {
       super.doOKAction();
@@ -108,8 +111,8 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       final boolean downloaded = librarySettings.downloadFiles(getRootPane());
       if (!downloaded) {
         int answer = Messages.showYesNoDialog(getRootPane(),
-                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              JavaUiBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              JavaUiBundle.message("dialog.title.libraries.are.required"), Messages.getWarningIcon());
         if (answer != Messages.YES) {
           return false;
         }
@@ -134,9 +137,10 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "reference.frameworks.support.dialog";//todo[nik]
+    return "reference.frameworks.support.dialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myComponent.getMainPanel();
   }
@@ -155,16 +159,16 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     }
 
     if (!existingEntries.isEmpty()) {
-      String message;
-      if (existingEntries.size() > 1) {
-        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace them?";
-      }
-      else {
-        final String name = existingEntries.get(0).getPresentableName();
-        message = "There is already a " + myFrameworkType.getPresentableName() + " library '" + name + "'.\n Do you want to replace it?";
-      }
-      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
-                                                        "&Replace", "&Add", "&Cancel", null);
+      final String name = existingEntries.get(0).getPresentableName();
+      final String message = JavaUiBundle.message("add.support.for.single.framework.remove.duplicates.dialog.message",
+                                            existingEntries.size(),
+                                            myFrameworkType.getPresentableName(),
+                                            name);
+      final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message,
+                                                        JavaUiBundle.message("dialog.title.library.already.exists"),
+                                                        CommonBundle.message("button.replace.r"),
+                                                        CommonBundle.message("button.add.a"),
+                                                        CommonBundle.message("button.cancel.c"), null);
       if (result == Messages.YES) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);

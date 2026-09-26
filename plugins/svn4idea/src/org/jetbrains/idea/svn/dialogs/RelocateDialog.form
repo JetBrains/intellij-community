@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="4d113"/>
-          <text value="From URL:"/>
+          <text resource-bundle="messages/SvnBundle" key="label.from.url"/>
         </properties>
       </component>
       <vspacer id="d8b0a">
@@ -28,7 +28,7 @@
         </constraints>
         <properties>
           <labelFor value="a6164"/>
-          <text value="To URL:"/>
+          <text resource-bundle="messages/SvnBundle" key="label.to.url"/>
         </properties>
       </component>
       <component id="4d113" class="javax.swing.JTextField" binding="myFromURLTextField" default-binding="true">

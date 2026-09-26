@@ -1,9 +1,6 @@
-from unittest import TestCase
+def eggs():
+    assert False
 
 
-class Spam(TestCase):
-    def eggs(self):
-        self.fail()
-
-    def eggs_and_ham(self):
-        self.fail()
+def eggs_and_ham():
+    assert False

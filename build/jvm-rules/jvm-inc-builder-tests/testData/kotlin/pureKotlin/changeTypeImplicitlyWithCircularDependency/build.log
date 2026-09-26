@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeTypeImplicitlyWithCircularDependency-a.kotlin_module
+  test/Usage1Kt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTypeImplicitlyWithCircularDependency/a/usage1.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeTypeImplicitlyWithCircularDependency-a.kotlin_module
+  test/Usage2Kt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTypeImplicitlyWithCircularDependency/a/usage2.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeTypeImplicitlyWithCircularDependency-a.kotlin_module
+  test/Usage1Kt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeTypeImplicitlyWithCircularDependency/a/usage1.kt
+End of files
+------------------------------------------
+Exit code: OK

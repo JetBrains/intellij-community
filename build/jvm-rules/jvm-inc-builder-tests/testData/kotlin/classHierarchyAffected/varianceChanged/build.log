@@ -1,0 +1,33 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_varianceChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/varianceChanged/a/A.kt
+End of files
+Cleaning output files:
+  D$Companion.class
+  D.class
+  META-INF/kotlin_classHierarchyAffected_varianceChanged-a.kotlin_module
+  UseAKt.class
+  UseDKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/varianceChanged/a/D.kt
+  kotlin/classHierarchyAffected/varianceChanged/a/useA.kt
+  kotlin/classHierarchyAffected/varianceChanged/a/useD.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_varianceChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/varianceChanged/a/D.kt
+  kotlin/classHierarchyAffected/varianceChanged/a/useA.kt
+  kotlin/classHierarchyAffected/varianceChanged/a/useD.kt
+End of files
+------------------------------------------
+Exit code: OK

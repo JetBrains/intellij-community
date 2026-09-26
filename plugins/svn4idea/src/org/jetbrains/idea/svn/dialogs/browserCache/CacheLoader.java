@@ -1,34 +1,21 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.List;
 
 public class CacheLoader extends Loader {
 
-  @NotNull private final Loader myRepositoryLoader;
+  private final @NotNull Loader myRepositoryLoader;
 
   public static Loader getInstance() {
-    return ServiceManager.getService(Loader.class);
+    return ApplicationManager.getApplication().getService(Loader.class);
   }
 
   public CacheLoader() {
@@ -36,15 +23,14 @@ public class CacheLoader extends Loader {
     myRepositoryLoader = new RepositoryLoader(myCache);
   }
 
-  public void load(@NotNull final RepositoryTreeNode node, @NotNull final Expander expander) {
+  @Override
+  public void load(final @NotNull RepositoryTreeNode node, final @NotNull Expander expander) {
     SwingUtilities.invokeLater(() -> {
-      final String nodeUrl = node.getURL().toString();
-
-      final List<DirectoryEntry> cached = myCache.getChildren(nodeUrl);
+      final List<DirectoryEntry> cached = myCache.getChildren(node.getURL());
       if (cached != null) {
         refreshNode(node, cached, expander);
       }
-      final String error = myCache.getError(nodeUrl);
+      final VcsException error = myCache.getError(node.getURL());
       if (error != null) {
         refreshNodeError(node, error);
       }
@@ -53,8 +39,8 @@ public class CacheLoader extends Loader {
     });
   }
 
-  @NotNull
-  protected NodeLoadState getNodeLoadState() {
+  @Override
+  protected @NotNull NodeLoadState getNodeLoadState() {
     return NodeLoadState.CACHED;
   }
 }

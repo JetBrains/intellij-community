@@ -1,31 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.idea.TestFor;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 //javac option to dump bounds: -XDdumpInferenceGraphsTo=
 public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
@@ -36,11 +30,11 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new JavacQuirksInspection());
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 
@@ -203,7 +197,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   } 
   public void testMethodSignatureEquality() {
     doTest();
-  }    
+  }
+  public void testTypeParameterBoundsOrder() {
+    doTest();
+  }
   public void testInnerClassRef() {
     doTest();
   }             
@@ -611,7 +608,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA55510() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA27185(){
@@ -636,7 +633,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA108287() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA77128() {
@@ -797,7 +794,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
    private void doTest(boolean warnings) {
-     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+     IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_8);
      IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
    }
@@ -1017,6 +1014,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testArrayTypeUpperBound() { doTest(); }
 
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
+  public void testIDEA53597() { doTest(); }
 
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
     doTest();
@@ -1033,8 +1031,200 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testConditionalExpressionInIncompleteCall() {
     doTest();
   }
+  
+  public void testIDEA194093 () {
+    doTest();
+  }
+
+  public void testTooltipTypesAgree() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">? extends Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + red + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td>" +
+                      "</tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipNotEnoughArguments() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">int</span></td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">String</span></td></tr>" +
+                      "</table>" +
+                      "</html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testVarargsTooltip() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">String</span></td>" +
+                      "</tr>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">int</span></td>" +
+                      "</tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testVarargsTooltip2() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
+                                                  .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+                                                  .getBackgroundColor());
+    String expected = "<html><table>" +
+                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
+                      "<tr><td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">list:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">String...</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + red + "\">int</span></td></tr>" +
+                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px;\"/><td style=\"padding-right: 28px;\"><span style=\"color: " + red + "\">int</span></td></tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipShortTypeNames() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">CharSequence</span></td>" +
+                      "</tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+red+"\">int</span></td></tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipWithCapture() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: "+toolTipForeground+"\">capture of ?</span>&gt;</td>" +
+                      "</tr>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: "+red+"\">capture of ?</span>&gt;</td></tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipComponents() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+      .getBackgroundColor());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td/>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
+                      "<tr>" +
+                      "<td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">integerList:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">List&lt;Integer&gt;</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + toolTipForeground + "\">List</span>&lt;<span style=\"color: " + red + "\">String</span>&gt;</td></tr>" +
+                      "<tr>" +
+                      "<td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">stringList:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">List&lt;String&gt;</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + toolTipForeground + "\">List</span>&lt;<span style=\"color: " + red + "\">Integer</span>&gt;</td></tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
 
   public void testBridgeMethodOverriding() { doTest(); }
+  public void testClassLiteralType() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
+  public void testCallOnRawWithExplicitTypeArguments() { doTest(); }
   public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
+  public void testLowerBoundAssignabilityCheck() { doTest(); }
+  public void testIgnoreErasureForProperTypeBound() { doTest(); }
+  public void testInferenceErrorAttribution() {doTest();}
+  public void testLocalClassParameters() {doTest();}
+  public void testRawAtFBoundAtNew() { doTest(); }
+  public void testUnboxingTrivialGeneric(){doTest();}
+  
+  @TestFor(issues = "IDEA-378878")
+  public void testWildcardAfterMethodRef() { doTest(); }
+
+  @TestFor(issues = "IDEA-385574")
+  public void testIDEA385574(){ doTest(); }
+
+  @TestFor(issues = "IDEA-386630")
+  public void testIDEA386630(){ doTest(); }
+
+  public void testWildcardContainmentWithTypeParameterBound(){ doTest(); }
+
+  public void testWildcardContainmentWithTypeVariableBound(){ doTest(); }
+
+  public void testWildcardContainmentUncheckedConversion(){ doTest(true); }
+
+  public void testMethodRefOnRawFBoundedReceiver(){ doTest(); }
 }

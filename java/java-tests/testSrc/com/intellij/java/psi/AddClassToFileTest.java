@@ -8,13 +8,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
-@PlatformTestCase.WrapInCommand
-public class AddClassToFileTest extends PsiTestCase{
+@HeavyPlatformTestCase.WrapInCommand
+public class AddClassToFileTest extends JavaPsiTestCase {
   public void test() throws Exception {
     VirtualFile root = createTestProjectStructure();
     PsiDirectory dir = myPsiManager.findDirectory(root);

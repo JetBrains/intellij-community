@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionListener;
 
@@ -31,17 +20,18 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     super(new ComboBox());
     myComboBox = (JComboBox) getComponent();
   }
-  public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener) {
+  public ComboBoxFieldPanel(String[] items, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener) {
     this(items, labelText, viewerDialogTitle, browseButtonActionListener, null);
   }
 
-  public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public ComboBoxFieldPanel(String[] items, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     super(new ComboBox(items), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
 
     myComboBox = (JComboBox) getComponent();
     createComponent();
   }
 
+  @Override
   public void createComponent() {
     super.createComponent();
     TextFieldWithBrowseButton.MyDoClickAction doClickAction = getDoClickAction();
@@ -54,7 +44,8 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     myComboBox.setEditable(true);
     final JTextField editorComponent = (JTextField)myComboBox.getEditor().getEditorComponent();
     editorComponent.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
         final String text = getText();
         if (!Comparing.equal(text, oldText, true)) {
           oldText = text;
@@ -67,11 +58,13 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     });
   }
 
+  @Override
   public String getText() {
     final Object selectedItem = myComboBox.isEditable()? myComboBox.getEditor().getItem() : myComboBox.getSelectedItem();
     return selectedItem instanceof String ? (String)selectedItem : null;
   }
 
+  @Override
   public void setText(String text) {
     myComboBox.setSelectedItem(text);
   }
@@ -87,7 +80,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     }
   }
 
-  public void addItemSetText(String text) {
+  public void addItemSetText(@NlsContexts.ListItem String text) {
     JComboBox comboBox = getComboBox();
     int n = comboBox.getItemCount();
     boolean found = false;

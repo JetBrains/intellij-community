@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_constantsUnchanged-a.kotlin_module
+  test/ConstKt.class
+  test/Klass$Companion.class
+  test/Klass.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/constantsUnchanged/a/const.kt
+End of files
+------------------------------------------
+Exit code: OK

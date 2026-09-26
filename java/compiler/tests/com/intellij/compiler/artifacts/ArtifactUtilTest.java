@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.module.Module;
@@ -6,14 +7,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.artifacts.*;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.artifacts.ParentElementProcessor;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactUtilTest extends PackagingElementsTestCase {
   public void testProcessElementsWithRelativePath() {
     final Artifact a = addArtifact(root().dir("lib").file(createFile("a.txt")));
@@ -49,20 +51,26 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     final MyParentElementProcessor processor = new MyParentElementProcessor();
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 2);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n" +
-                 "ear:ear.ear/web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   ear:ear.ear/web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 1);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 0);
     assertEquals("war:dir\n", processor.getLog());
 
     ArtifactUtil.processParents(war, getContext(), processor, 2);
-    assertEquals("war:web.war\n" +
-                 "ear:ear.ear/web.war\n", processor.getLog());
+    assertEquals("""
+                   war:web.war
+                   ear:ear.ear/web.war
+                   """, processor.getLog());
 
   }
 
@@ -87,7 +95,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     ArtifactUtil.processDirectoryChildren(rootElement, PackagingElementPath.EMPTY, relativePath, getContext(), PlainArtifactType.getInstance(), processor);
   }
 
-  private static class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
+  private static final class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
     private final StringBuilder myBuilder = new StringBuilder();
     private final boolean myAddParentPaths;
 
@@ -120,7 +128,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     private final StringBuilder myLog = new StringBuilder();
 
     @Override
-    public boolean process(@NotNull CompositePackagingElement<?> element, @NotNull List<Pair<Artifact,CompositePackagingElement<?>>> parents, @NotNull Artifact artifact) {
+    public boolean process(@NotNull CompositePackagingElement<?> element, @NotNull List<? extends Pair<Artifact, CompositePackagingElement<?>>> parents, @NotNull Artifact artifact) {
       myLog.append(artifact.getName()).append(":").append(element.getName());
       for (Pair<Artifact, CompositePackagingElement<?>> parent : parents) {
         myLog.append("/").append(parent.getSecond().getName());

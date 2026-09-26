@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
-/**
- * @author Sergey.Malenkov
- */
 public class GradientViewport extends JBViewport {
   private final Insets myInsets;
   private final boolean myAlways;
@@ -39,15 +29,14 @@ public class GradientViewport extends JBViewport {
     return null;
   }
 
-  @Nullable
-  protected Color getViewColor() {
+  protected @Nullable Color getViewColor() {
     Component view = getView();
     return view == null ? null : view.getBackground();
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
     paintGradient(g);
   }
 
@@ -63,7 +52,7 @@ public class GradientViewport extends JBViewport {
           g.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
         }
       }
-      if (g instanceof Graphics2D && background != null && !Registry.is("ui.no.bangs.and.whistles")) {
+      if (g instanceof Graphics2D && background != null && !Registry.is("ui.simplified")) {
         paintGradient((Graphics2D)g, background, 0, header == null ? 0 : header.getHeight());
       }
       if (header != null) {
@@ -73,6 +62,20 @@ public class GradientViewport extends JBViewport {
     finally {
       g.dispose();
     }
+  }
+
+  @Override
+  public void scrollRectToVisible(Rectangle bounds) {
+    Component header = getHeader();
+    if (header != null) {
+      int h = header.getPreferredSize().height;
+      if (bounds.y < h) {
+        bounds = new Rectangle(bounds);
+        bounds.y -= h;
+        bounds.height += h;
+      }
+    }
+    super.scrollRectToVisible(bounds);
   }
 
   private void paintGradient(Graphics2D g2d, Color background, int x1, int y1) {
@@ -94,8 +97,7 @@ public class GradientViewport extends JBViewport {
         y3 -= myInsets.bottom;
       }
       Component parent = myAlways ? null : getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+      if (parent instanceof JScrollPane pane) {
         JScrollBar vBar = pane.getVerticalScrollBar();
         if (vBar != null && vBar.isVisible()) {
           if (vBar.getX() < getX()) {

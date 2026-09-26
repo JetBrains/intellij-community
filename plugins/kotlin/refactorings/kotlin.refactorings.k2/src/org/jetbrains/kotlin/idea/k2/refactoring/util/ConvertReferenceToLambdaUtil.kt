@@ -1,0 +1,168 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring.util
+
+import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.receiverType
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.k2.refactoring.moveFunctionLiteralOutsideParenthesesIfPossible
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.resolution.KtResolvable
+import org.jetbrains.kotlin.resolution.KtResolvableCall
+import org.jetbrains.kotlin.types.Variance
+
+object ConvertReferenceToLambdaUtil {
+
+    context(s: KaSession)
+    fun prepareLambdaExpressionText(
+        element: KtCallableReferenceExpression,
+    ): String? {
+        val valueArgumentParent = element.parent as? KtValueArgument
+        val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
+        val resolvedCall = callGrandParent?.resolveSuccessfulCall()
+        val matchingParameterType = resolvedCall?.valueArgumentMapping?.get(element)?.returnType
+        val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
+
+        val receiverExpression = element.receiverExpression
+        val receiverType = element.receiverType
+
+        val callableSymbol = element.resolveSuccessfulSymbol()?.let { symbol ->
+            (symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: symbol
+        } ?: return null
+
+        val receiverExpressionSelector = receiverExpression?.getQualifiedElementSelector()
+        val receiverSymbol =
+            (receiverExpressionSelector as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol
+                ?: (receiverExpressionSelector as? KtResolvable)?.resolveSuccessfulSymbol()
+
+        val acceptsReceiverAsParameter =
+                !matchingParameterIsExtension &&
+                receiverSymbol is KaClassSymbol && !receiverSymbol.classKind.isObject &&
+                (callableSymbol as? KaNamedFunctionSymbol)?.isStatic != true &&
+                (callableSymbol.containingDeclaration != null || callableSymbol.isExtension)
+
+        val parameterNamesAndTypes =
+            if (callableSymbol is KaFunctionSymbol) {
+                val paramNameAndTypes = callableSymbol.valueParameters.map { it.name.asString() to it.returnType }
+                if (matchingParameterType != null) {
+                    val parameterSize = (matchingParameterType.lowerBoundIfFlexible() as KaClassType).typeArguments.size - (if (acceptsReceiverAsParameter) 2 else 1)
+                    if (parameterSize >= 0) paramNameAndTypes.take(parameterSize) else paramNameAndTypes
+                } else {
+                    paramNameAndTypes
+                }
+            } else {
+                emptyList()
+            }
+
+        val receiverNameAndType = if (receiverType != null) {
+            KotlinNameSuggester().suggestTypeNames(receiverType).map {
+                KotlinNameSuggester.suggestNameByName(it) { name ->
+                    name !in parameterNamesAndTypes.map { pair -> pair.first }
+                }
+            }.first() to receiverType
+        } else {
+            null
+        }
+
+        val psiFactory = KtPsiFactory(element.project)
+        val targetName = element.callableReference.getReferencedName()
+        val lambdaParameterNamesAndTypes = if (acceptsReceiverAsParameter)
+            listOf(receiverNameAndType!!) + parameterNamesAndTypes
+        else
+            parameterNamesAndTypes
+
+        val receiverPrefix = when {
+            acceptsReceiverAsParameter -> receiverNameAndType!!.first + "."
+            matchingParameterIsExtension -> ""
+            else -> receiverExpression?.let { it.text + "." } ?: ""
+        }
+
+        val lambdaExpression = if (valueArgumentParent != null &&
+            lambdaParameterNamesAndTypes.size == 1 &&
+            receiverExpression?.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
+        ) {
+            val body = if (acceptsReceiverAsParameter) {
+                if (callableSymbol is KaPropertySymbol) "it.$targetName"
+                else "it.$targetName()"
+            } else {
+                "$receiverPrefix$targetName(${if (matchingParameterIsExtension) "this" else "it"})"
+            }
+
+            psiFactory.createLambdaExpression(parameters = "", body = body)
+        } else {
+            val isExtension = matchingParameterIsExtension && resolvedCall.symbol.isExtension == true
+            val (params, args) = if (isExtension) {
+                val thisArgument = if (parameterNamesAndTypes.isNotEmpty()) listOf("this") else emptyList()
+                lambdaParameterNamesAndTypes.drop(1) to (thisArgument + parameterNamesAndTypes.drop(1).map { it.first })
+            } else {
+                lambdaParameterNamesAndTypes to parameterNamesAndTypes.map { it.first }
+            }
+
+            psiFactory.createLambdaExpression(
+                parameters = params.joinToString(separator = ", ") {
+                    if (valueArgumentParent != null) it.first
+                    else it.first + ": " + it.second.render(position = Variance.IN_VARIANCE)
+                },
+                body = if (callableSymbol is KaPropertySymbol) {
+                    "$receiverPrefix$targetName"
+                } else {
+                    args.joinToString(prefix = "$receiverPrefix$targetName(", separator = ", ", postfix = ")")
+                }
+            )
+        }
+
+        val needParentheses = lambdaParameterNamesAndTypes.isEmpty() && when (element.parent.elementType) {
+            KtNodeTypes.WHEN_ENTRY, KtNodeTypes.THEN, KtNodeTypes.ELSE -> true
+            else -> false
+        }
+
+        val wrappedExpression = if (needParentheses)
+            psiFactory.createExpressionByPattern("($0)", lambdaExpression)
+        else
+            lambdaExpression
+
+        return wrappedExpression.text
+    }
+
+    fun convertReferenceToLambdaExpression(
+        element: KtCallableReferenceExpression,
+        lambdaExpressionText: String
+    ): KtExpression? {
+        val valueArgumentParent = element.parent as? KtValueArgument
+        val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
+        val wrappedExpression = KtPsiFactory.contextual(element).createExpression(lambdaExpressionText)
+        val lambdaExpression = element.replaced(wrappedExpression)
+        val pointer = lambdaExpression.createSmartPointer()
+        shortenReferences(lambdaExpression)
+        if (callGrandParent == null) return pointer.element
+        val lastLambdaExpression = callGrandParent.getLastLambdaExpression()
+        lastLambdaExpression?.moveFunctionLiteralOutsideParenthesesIfPossible()
+        return callGrandParent.lambdaArguments.lastOrNull()?.getArgumentExpression() ?: lastLambdaExpression ?: pointer.element
+    }
+}

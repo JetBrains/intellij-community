@@ -1,0 +1,24 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "tasks.register("myGroovyPluginTask")"
+plugins {
+    id("<caret>my-groovy-plugin")
+}
+
+tasks.named("myGroovyPluginTask") {
+    doLast{
+        println("The task from plugin is available in the build script")
+    }
+}
+
+// FILE: settings.gradle.kts
+// include the module containing Precompiled plugin in a composite build, to make plugin available in build script
+includeBuild("module-of-composite-build")
+
+// FILE: module-of-composite-build/build.gradle.kts
+plugins {
+    // Enable language support for Precompiled script plugin in Groovy
+    `groovy-gradle-plugin`
+}
+// FILE: module-of-composite-build/src/main/groovy/my-groovy-plugin.gradle
+// To make this plugin available in a build script, its module should be included in a composite build (see settings.gradle.kts)
+tasks.register("myGroovyPluginTask")

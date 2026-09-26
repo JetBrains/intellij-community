@@ -16,9 +16,10 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 public interface EditReadOnlyListener extends EventListener {
-  void readOnlyModificationAttempt(Document document);
+  void readOnlyModificationAttempt(@NotNull Document document);
 }

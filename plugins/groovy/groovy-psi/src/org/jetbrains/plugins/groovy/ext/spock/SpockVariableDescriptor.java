@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
@@ -28,10 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
-public class SpockVariableDescriptor {
+public final class SpockVariableDescriptor {
 
   private final String myName;
 
@@ -72,51 +60,56 @@ public class SpockVariableDescriptor {
 
   public PsiVariable getVariable() {
     if (myVariable == null) {
-      final PsiManager manager = myNavigationElement.getManager();
-
-      PsiType type = RecursionManager.doPreventingRecursion(this, true, () -> {
-        PsiType res = null;
-
-        for (GrExpression expression : myExpressions) {
-          if (expression == null) continue;
-
-          res = TypesUtil.getLeastUpperBoundNullable(res, expression.getType(), manager);
-        }
-
-        if (myExpressionsOfCollection != null) {
-          for (GrExpression expression : myExpressionsOfCollection) {
-            if (expression == null) continue;
-
-            PsiType listType = expression.getType();
-            PsiType type1 = PsiUtil.extractIterableTypeParameter(listType, true);
-
-            if (type1 == null) {
-              if (listType == null) continue;
-
-              if (listType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-                type1 = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
-              }
-            }
-
-            res = TypesUtil.getLeastUpperBoundNullable(res, type1, manager);
-          }
-        }
-
-        return res;
-      });
-
-      if (type == null) {
-        type = PsiType.getJavaLangObject(manager, myNavigationElement.getResolveScope());
-      }
-
-      myVariable = new SpockVariable(manager, myName, type, myNavigationElement);
+      PsiType type = getType();
+      myVariable = new SpockVariable(myNavigationElement.getManager(), myName, type, myNavigationElement);
     }
-
     return myVariable;
   }
 
+  @VisibleForTesting
+  public @NotNull PsiType getType() {
+    PsiManager manager = myNavigationElement.getManager();
+    PsiType type = RecursionManager.doPreventingRecursion(this, true, () -> {
+      PsiType res = null;
+
+      for (GrExpression expression : myExpressions) {
+        if (expression == null) continue;
+
+        res = TypesUtil.getLeastUpperBoundNullable(res, expression.getType(), manager);
+      }
+
+      if (myExpressionsOfCollection != null) {
+        for (GrExpression expression : myExpressionsOfCollection) {
+          if (expression == null) continue;
+
+          PsiType listType = expression.getType();
+          PsiType type1 = PsiUtil.extractIterableTypeParameter(listType, true);
+
+          if (type1 == null) {
+            if (listType == null) continue;
+
+            if (listType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              type1 = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
+            }
+          }
+
+          res = TypesUtil.getLeastUpperBoundNullable(res, type1, manager);
+        }
+      }
+
+      return res;
+    });
+
+    if (type == null) {
+      return PsiType.getJavaLangObject(manager, myNavigationElement.getResolveScope());
+    }
+    else {
+      return type;
+    }
+  }
+
   private static class SpockVariable extends GrLightVariable {
-    public SpockVariable(PsiManager manager,
+    SpockVariable(PsiManager manager,
                          @NonNls String name,
                          @NotNull PsiType type,
                          @NotNull PsiElement navigationElement) {

@@ -1,56 +1,49 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
-public class MavenGotoFileContributor implements ChooseByNameContributor {
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
-    List<String> result = new ArrayList<>();
-
-    for (MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
-      result.add(each.getMavenId().getArtifactId());
-    }
-
-    return ArrayUtil.toStringArray(result);
-  }
-
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = new ArrayList<>();
-
-    for (final MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
-      if (name.equals(each.getMavenId().getArtifactId())) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(each.getFile());
-        if (psiFile != null) result.add(psiFile);
+public final class MavenGotoFileContributor implements ChooseByNameContributorEx {
+  @Override
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    Project project = Objects.requireNonNull(scope.getProject());
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (manager.isInitialized()) {
+      for (MavenProject p : manager.getProjects()) {
+        String id = p.getMavenId().getArtifactId();
+        if (id != null && !processor.process(id)) return;
       }
     }
+  }
 
-    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<? super NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    PsiManager psiManager = PsiManager.getInstance(parameters.getProject());
+    for (MavenProject each : MavenProjectsManager.getInstance(parameters.getProject()).getProjects()) {
+      if (!name.equals(each.getMavenId().getArtifactId())) continue;
+
+      VirtualFile file = each.getFile();
+      if (!parameters.getSearchScope().contains(file)) continue;
+
+      PsiFile psiFile = psiManager.findFile(file);
+      if (psiFile != null && !processor.process(psiFile)) return;
+    }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
@@ -22,7 +8,12 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +26,8 @@ import java.util.Set;
  */
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
 
-  public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
+  @Override
+  public AntDomElement fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
@@ -45,14 +37,16 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
     return null;
   }
 
-  public String toString(@Nullable AntDomElement antDomElement, ConvertContext context) {
+  @Override
+  public String toString(@Nullable AntDomElement antDomElement, @NotNull ConvertContext context) {
     return antDomElement != null? antDomElement.getId().getRawText() : null;
   }
 
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
+  @Override
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
     final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
     return new PsiReference[] {new AntDomReferenceBase(element, true) {
+      @Override
       public PsiElement resolve() {
         final AntDomElement value = genericDomValue.getValue();
         if (value == null) {
@@ -64,13 +58,14 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         }
         return PomService.convertToPsi(element.getProject(), target);
       }
-      @NotNull 
-      public Object[] getVariants() {
+      @Override
+      public Object @NotNull [] getVariants() {
         if (invocationElement == null) {
-          return ArrayUtil.EMPTY_OBJECT_ARRAY;
+          return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
         }
         final Set<String> variants = new LinkedHashSet<>();
         invocationElement.getContextAntProject().accept(new AntDomRecursiveVisitor() {
+          @Override
           public void visitAntDomElement(AntDomElement element) {
             final String variant = element.getId().getRawText();
             if (variant != null) {
@@ -79,28 +74,30 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
             super.visitAntDomElement(element);
           }
         });
-        return variants.size() > 0 ? ArrayUtil.toObjectArray(variants) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return !variants.isEmpty() ? ArrayUtil.toObjectArray(variants) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
       }
 
+      @Override
       public String getUnresolvedMessagePattern() {
         return AntBundle.message("cannot.resolve.refid", getCanonicalText());
       }
     }};
   }
 
-  @Nullable
-  private static AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
+  private static @Nullable AntDomElement findElementById(AntDomElement from, final String id, final boolean skipCustomTags) {
     if (id.equals(from.getId().getRawText())) {
       return from;
     }
     final Ref<AntDomElement> result = new Ref<>(null);
     from.accept(new AntDomRecursiveVisitor() {
+      @Override
       public void visitAntDomCustomElement(AntDomCustomElement custom) {
         if (!skipCustomTags) {
           super.visitAntDomCustomElement(custom);
         }
       }
 
+      @Override
       public void visitAntDomElement(AntDomElement element) {
         if (result.get() != null) {
           return;
@@ -112,7 +109,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         super.visitAntDomElement(element);
       }
     });
-    
+
     return result.get();
   }
 }

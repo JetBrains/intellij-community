@@ -1,0 +1,370 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.fus
+
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
+import com.intellij.util.system.OS
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.getKnownCommandValuesListWithoutPaths
+import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
+import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+
+private const val GROUP_ID = "terminal"
+
+@ApiStatus.Internal
+object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+
+  private val GROUP = EventLogGroup(GROUP_ID, 23)
+
+  private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
+  private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
+  private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
+  private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
+  private val TERMINAL_TAB_OPENING_WAY = EventFields.Enum<TerminalTabOpeningWay>("opening_way")
+  private val TABS_COUNT = EventFields.Int("tab_count", "Total number of terminal tabs including the newly added one")
+  private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
+  private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
+  private val PROCESS_EXECUTABLE = EventFields.String("process_executable", getKnownCommandValuesListWithoutPaths())
+  private val INSERTED_CONTENT_TYPE = EventFields.Enum<TerminalInsertedContentType>("content_type")
+  private val INSERTED_CONTENT_SOURCE = EventFields.Enum<TerminalInsertedContentSource>("content_source")
+  private val RATIO_OF_POPUP_COMPLETION_FIELD = EventFields.Double(
+    "ratio_of_popup_completion",
+    "Ratio of text inserted by popup completion to total inserted command text length",
+  )
+  private val RATIO_OF_INLINE_COMPLETION_FIELD = EventFields.Double(
+    "ratio_of_inline_completion",
+    "Ratio of text inserted by inline completion to total inserted command text length",
+  )
+  private val TYPING_RATIO_FIELD = EventFields.Double(
+    "typing_ratio",
+    "Ratio of typing events to total inserted command text length",
+  )
+  private val BACKSPACES_RATIO_FIELD = EventFields.Double(
+    "backspaces_ratio",
+    "Ratio of Backspace key presses to total inserted command text length",
+  )
+  private val ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD = EventFields.RoundedInt(
+    "rounded_total_command_inserted_length",
+    "Total command text length growth, including typing, shell completion, command history, and paste rounded to the next power of 2",
+  )
+  private val ROUNDED_TYPING_TIME_FIELD = EventFields.RoundedLong(
+    "rounded_typing_time",
+    "Time in milliseconds from the first insertion event to command execution rounded to the next power of 2",
+  )
+
+  // Latency measurement related fields
+  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
+  private val TOTAL_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "total_duration_ms", "Sum of all durations")
+  private val DURATION_MEDIAN_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "median_ms", "50% percentile")
+  private val DURATION_90_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_90_ms", "90% percentile")
+  private val SECOND_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "second_largest_duration_ms")
+  private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
+  private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
+
+  private val tabOpenedEvent = GROUP.registerVarargEvent(
+    "tab.opened",
+    TERMINAL_TAB_OPENING_WAY,
+    TABS_COUNT
+  )
+
+  private val focusGainedEvent = GROUP.registerEvent("focus.gained", FOCUS)
+
+  private val focusLostEvent = GROUP.registerEvent("focus.lost", FOCUS)
+
+  private val localShellStartedEvent = GROUP.registerEvent("local.exec", OS_VERSION_FIELD, SHELL_STR_FIELD)
+
+  private val commandStartedEvent = GROUP.registerVarargEvent(
+    "terminal.command.executed",
+    TerminalCommandUsageStatistics.commandExecutableField,
+    TerminalCommandUsageStatistics.subCommandField,
+    RATIO_OF_POPUP_COMPLETION_FIELD,
+    RATIO_OF_INLINE_COMPLETION_FIELD,
+    TYPING_RATIO_FIELD,
+    BACKSPACES_RATIO_FIELD,
+    ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD,
+    ROUNDED_TYPING_TIME_FIELD,
+  )
+
+  private val commandFinishedEvent = GROUP.registerVarargEvent(
+    "terminal.command.finished",
+    TerminalCommandUsageStatistics.commandExecutableField, TerminalCommandUsageStatistics.subCommandField, EXIT_CODE_FIELD, EXECUTION_TIME_FIELD
+  )
+
+  private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT)
+
+  private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
+
+  private val contentInsertedEvent = GROUP.registerVarargEvent(
+    "content.inserted",
+    INSERTED_CONTENT_TYPE,
+    INSERTED_CONTENT_SOURCE,
+    PROCESS_EXECUTABLE,
+  )
+
+  private val osVersion: String by lazy {
+    Version.parseVersion(OS.CURRENT.version())?.toCompactString() ?: "unknown"
+  }
+
+  private val typingLatencyEvent = GROUP.registerVarargEvent(
+    "typing.latency",
+    DURATION_MEDIAN_FIELD, DURATION_90_FIELD, SECOND_LARGEST_DURATION_FIELD
+  )
+
+  private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
+    "backend.output.latency",
+    TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, OS_VERSION_FIELD,
+  )
+
+  private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
+    "backend.text.buffer.collection.latency",
+    TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, TEXT_LENGTH_90_FIELD, OS_VERSION_FIELD,
+  )
+
+  private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
+    "backend.document.update.latency",
+    TOTAL_DURATION_FIELD, DURATION_90_FIELD, THIRD_LARGEST_DURATION_FIELD, TEXT_LENGTH_90_FIELD, OS_VERSION_FIELD,
+  )
+
+  private val startupCursorShowingLatency = GROUP.registerVarargEvent(
+    "startup.cursor.showing.latency",
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
+  )
+
+  private val startupShellStartingLatency = GROUP.registerVarargEvent(
+    "startup.shell.starting.latency",
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
+  )
+
+  private val startupFirstOutputLatency = GROUP.registerVarargEvent(
+    "startup.first.output.latency",
+    TERMINAL_TAB_OPENING_WAY, DURATION_FIELD,
+  )
+
+  private val tabClosingCheckLatency = GROUP.registerVarargEvent("tab.closing.check.latency", DURATION_FIELD)
+
+  private val agentWorkbenchPromoShownEvent = GROUP.registerEvent(
+    "agent.workbench.promo.shown",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoInstallClickedEvent = GROUP.registerEvent(
+    "agent.workbench.promo.install.clicked",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  private val agentWorkbenchPromoActivationSucceededEvent = GROUP.registerEvent(
+    "agent.workbench.promo.activation.succeeded",
+    AGENT_WORKBENCH_PROVIDER_FIELD,
+  )
+
+  @JvmStatic
+  fun logTabOpened(project: Project, openingWay: TerminalTabOpeningWay?, tabCount: Int) {
+    val fields = listOfNotNull(
+      if (openingWay != null) TERMINAL_TAB_OPENING_WAY with openingWay else null,
+      TABS_COUNT with tabCount,
+    )
+    tabOpenedEvent.log(project, fields)
+  }
+
+  @JvmStatic
+  fun logFocusGained(previousFocus: String) {
+    focusGainedEvent.log(previousFocus)
+  }
+
+  @JvmStatic
+  fun logFocusLost(nextFocus: String) {
+    focusLostEvent.log(nextFocus)
+  }
+
+  @JvmStatic
+  fun logLocalShellStarted(project: Project, shellCommand: String) {
+    localShellStartedEvent.log(project, osVersion, getShellNameForStat(shellCommand))
+  }
+
+  @JvmStatic
+  fun logCommandStarted(
+    project: Project,
+    userCommandLine: String,
+    totalCommandInsertedLength: Int,
+    popupCompletionLength: Int,
+    inlineCompletionLength: Int,
+    typingsCount: Int,
+    backspacesCount: Int,
+    commandTypingTimeMillis: Long,
+  ) {
+    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
+    commandStartedEvent.log(
+      project,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
+      RATIO_OF_POPUP_COMPLETION_FIELD with popupCompletionLength.ratioOf(totalCommandInsertedLength),
+      RATIO_OF_INLINE_COMPLETION_FIELD with inlineCompletionLength.ratioOf(totalCommandInsertedLength),
+      TYPING_RATIO_FIELD with typingsCount.ratioOf(totalCommandInsertedLength),
+      BACKSPACES_RATIO_FIELD with backspacesCount.ratioOf(totalCommandInsertedLength),
+      ROUNDED_TOTAL_COMMAND_INSERTED_LENGTH_FIELD with totalCommandInsertedLength,
+      ROUNDED_TYPING_TIME_FIELD with commandTypingTimeMillis,
+    )
+  }
+
+  private fun Int.ratioOf(total: Int): Double = if (total == 0) 0.0 else toDouble() / total
+
+  fun logCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
+    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
+    commandFinishedEvent.log(
+      project,
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
+      EXIT_CODE_FIELD with exitCode,
+      EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds
+    )
+  }
+
+  @JvmStatic
+  fun logSessionRestored(project: Project, tabCount: Int) {
+    sessionRestoredEvent.log(project, tabCount)
+  }
+
+  fun logTypingLatency(durationMedian: Duration, duration90: Duration, secondLargestDuration: Duration) {
+    typingLatencyEvent.log(
+      DURATION_MEDIAN_FIELD with durationMedian,
+      DURATION_90_FIELD with duration90,
+      SECOND_LARGEST_DURATION_FIELD with secondLargestDuration,
+    )
+  }
+
+  fun logBackendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {
+    backendOutputLatencyEvent.log(
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      OS_VERSION_FIELD with osVersion,
+    )
+  }
+
+  fun logBackendTextBufferCollectionLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
+    backendTextBufferCollectionLatencyEvent.log(
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      TEXT_LENGTH_90_FIELD with textLength90,
+      OS_VERSION_FIELD with osVersion,
+    )
+  }
+
+  fun logBackendDocumentUpdateLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
+    backendDocumentUpdateLatencyEvent.log(
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      TEXT_LENGTH_90_FIELD with textLength90,
+      OS_VERSION_FIELD with osVersion,
+    )
+  }
+
+  fun logHyperlinkFollowed(javaClass: Class<HyperlinkInfo>) {
+    hyperlinkFollowedEvent.log(javaClass)
+  }
+
+  fun logContentInserted(
+    project: Project,
+    contentType: TerminalInsertedContentType,
+    fileSource: TerminalInsertedContentSource,
+    processExecutable: String?,
+  ) {
+    contentInsertedEvent.log(
+      project,
+      INSERTED_CONTENT_TYPE with contentType,
+      INSERTED_CONTENT_SOURCE with fileSource,
+      PROCESS_EXECUTABLE with processExecutable,
+    )
+  }
+
+  fun logStartupCursorShowingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
+    startupCursorShowingLatency.log(
+      TERMINAL_TAB_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
+  }
+
+  fun logStartupShellStartingLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
+    startupShellStartingLatency.log(
+      TERMINAL_TAB_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
+  }
+
+  fun logStartupFirstOutputLatency(openingWay: TerminalTabOpeningWay, duration: Duration) {
+    startupFirstOutputLatency.log(
+      TERMINAL_TAB_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
+  }
+
+  fun logTabClosingCheckLatency(duration: Duration) {
+    tabClosingCheckLatency.log(DURATION_FIELD with duration)
+  }
+
+  fun logAgentWorkbenchPromoShown(project: Project, provider: String) {
+    agentWorkbenchPromoShownEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoInstallClicked(project: Project, provider: String) {
+    agentWorkbenchPromoInstallClickedEvent.log(project, provider)
+  }
+
+  fun logAgentWorkbenchPromoActivationSucceeded(project: Project, provider: String) {
+    agentWorkbenchPromoActivationSucceededEvent.log(project, provider)
+  }
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentType {
+  TEXT,
+  FILE,
+  DIRECTORY,
+  CLIPBOARD_IMAGE,
+  MULTIPLE_ITEMS,
+}
+
+@ApiStatus.Internal
+enum class TerminalInsertedContentSource {
+  IDE,
+  EXTERNAL_APP,
+  CLIPBOARD,
+}
+
+@ApiStatus.Internal
+enum class TerminalNonToolWindowFocus {
+  EDITOR,
+  OTHER_COMPONENT,
+  OTHER_APPLICATION,
+}
+
+internal class TerminalFocusRule : CustomValidationRule() {
+  private val toolWindowRule = ToolWindowCollector.ToolWindowUtilValidator()
+  private val nonToolWindowValues = TerminalNonToolWindowFocus.entries.map { it.name }
+
+  override fun getRuleId(): String = "terminal_focus"
+
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    if (data in nonToolWindowValues) {
+      return ValidationResultType.ACCEPTED
+    }
+    else {
+      return ValidationResultType.fromFusApiResultType(toolWindowRule.validate(data, context))
+    }
+  }
+}

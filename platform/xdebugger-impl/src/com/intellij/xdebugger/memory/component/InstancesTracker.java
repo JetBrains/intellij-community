@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -16,18 +19,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @State(name = "InstancesTracker", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class InstancesTracker extends AbstractProjectComponent
-  implements PersistentStateComponent<InstancesTracker.MyState> {
-  private final EventDispatcher<InstancesTrackerListener> myDispatcher =
-    EventDispatcher.create(InstancesTrackerListener.class);
+public class InstancesTracker implements PersistentStateComponent<InstancesTracker.MyState> {
+  private final EventDispatcher<InstancesTrackerListener> myDispatcher = EventDispatcher.create(InstancesTrackerListener.class);
   private MyState myState = new MyState();
 
-  public InstancesTracker(Project project) {
-    super(project);
-  }
-
   public static InstancesTracker getInstance(@NotNull Project project) {
-    return project.getComponent(InstancesTracker.class);
+    return project.getService(InstancesTracker.class);
   }
 
   public boolean isTracked(@NotNull String className) {
@@ -38,13 +35,11 @@ public class InstancesTracker extends AbstractProjectComponent
     return myState.isBackgroundTrackingEnabled;
   }
 
-  @Nullable
-  public TrackingType getTrackingType(@NotNull String className) {
+  public @Nullable TrackingType getTrackingType(@NotNull String className) {
     return myState.classes.getOrDefault(className, null);
   }
 
-  @NotNull
-  public Map<String, TrackingType> getTrackedClasses() {
+  public @NotNull Map<String, TrackingType> getTrackedClasses() {
     return new HashMap<>(myState.classes);
   }
 
@@ -84,9 +79,8 @@ public class InstancesTracker extends AbstractProjectComponent
     }
   }
 
-  @Nullable
   @Override
-  public MyState getState() {
+  public @Nullable MyState getState() {
     return new MyState(myState);
   }
 
@@ -98,7 +92,7 @@ public class InstancesTracker extends AbstractProjectComponent
   static class MyState {
     boolean isBackgroundTrackingEnabled = false;
 
-    @XCollection(elementTypes = {Map.Entry.class})
+    @XCollection(elementTypes = Map.Entry.class)
     final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
 
     MyState() {
@@ -106,9 +100,7 @@ public class InstancesTracker extends AbstractProjectComponent
 
     MyState(@NotNull MyState state) {
       isBackgroundTrackingEnabled = state.isBackgroundTrackingEnabled;
-      for (Map.Entry<String, TrackingType> classState : state.classes.entrySet()) {
-        classes.put(classState.getKey(), classState.getValue());
-      }
+      classes.putAll(state.classes);
     }
   }
 }

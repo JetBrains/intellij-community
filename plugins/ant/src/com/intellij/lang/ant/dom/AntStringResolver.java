@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +15,7 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntStringResolver extends PropertyProviderFinder{
+public final class AntStringResolver extends PropertyProviderFinder{
   private final PropertyExpander myExpander;
   private final boolean mySkipCustomTags;
   private static final Key<Map<String, String>> RESOLVED_STRINGS_MAP_KEY = Key.create("_ant_resolved_strings_cache_");
@@ -40,19 +27,19 @@ public class AntStringResolver extends PropertyProviderFinder{
   }
 
 
+  @Override
   public void visitAntDomCustomElement(AntDomCustomElement custom) {
     if (!mySkipCustomTags) {
       super.visitAntDomCustomElement(custom);
     }
   }
 
-  @NotNull
-  public static String computeString(@NotNull final DomElement context, @NotNull String valueString) {
+  public static @NotNull String computeString(final @NotNull DomElement context, @NotNull @NlsSafe String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);
     if (!expander.hasPropertiesToExpand()) {
       return valueString;
     }
-    
+
     final Map<String, String> cached = RESOLVED_STRINGS_MAP_KEY.get(context);
     if (cached != null) {
       expander.acceptProvider(new CachedPropertiesProvider(cached));
@@ -60,13 +47,14 @@ public class AntStringResolver extends PropertyProviderFinder{
         return expander.getResult();
       }
     }
-    
+
     expander.setPropertyExpansionListener(new PropertyExpander.PropertyExpansionListener() {
+      @Override
       public void onPropertyExpanded(String propName, String propValue) {
         cacheResult(context, RESOLVED_STRINGS_MAP_KEY, propName, propValue);
       }
     });
-    
+
     AntDomProject project = context.getParentOfType(AntDomProject.class, false);
     if (project == null) {
       return expander.getResult();
@@ -78,6 +66,7 @@ public class AntStringResolver extends PropertyProviderFinder{
     return expander.getResult();
   }
 
+  @Override
   protected void propertyProviderFound(PropertiesProvider propertiesProvider) {
     myExpander.acceptProvider(propertiesProvider);
     if (!myExpander.hasPropertiesToExpand()) {
@@ -89,22 +78,24 @@ public class AntStringResolver extends PropertyProviderFinder{
     Set<String> allNames;
     private final Map<String, String> myCached;
 
-    public CachedPropertiesProvider(Map<String, String> cached) {
+    CachedPropertiesProvider(Map<String, String> cached) {
       myCached = cached;
     }
 
-    @NotNull
-    public Iterator<String> getNamesIterator() {
+    @Override
+    public @NotNull Iterator<String> getNamesIterator() {
       if (allNames == null) {
         allNames = new HashSet<>(myCached.keySet());
       }
       return allNames.iterator();
     }
 
+    @Override
     public String getPropertyValue(String propertyName) {
       return myCached.get(propertyName);
     }
 
+    @Override
     public PsiElement getNavigationElement(String propertyName) {
       return null;
     }

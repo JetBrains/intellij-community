@@ -1,0 +1,32 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
+<!-- Source: org.jetbrains.intellij.build.mps.MPSProperties.getProductContentDescriptor() -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+  <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.lang.actions"/>
+  <module value="com.intellij.modules.platform"/>
+
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.platform.resources.defaults.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
+  <!-- region additional -->
+  <content namespace="jetbrains">
+    <module name="intellij.platform.whatsNew"/>
+    <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.libraries.jps.javac.extension" loading="embedded"/>
+    <module name="intellij.platform.customization.min"/>
+    <module name="intellij.idea.customization.base"/>
+    <module name="intellij.idea.community.ide.customization" loading="embedded"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.terminal"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.sqlite"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>

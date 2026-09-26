@@ -1,0 +1,8 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        VARIABLE
+          PsiElement(var)('$a')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')

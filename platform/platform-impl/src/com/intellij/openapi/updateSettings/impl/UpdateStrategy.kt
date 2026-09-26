@@ -1,77 +1,95 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
-import java.util.*
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.graph.InboundSemiGraph
+import com.intellij.util.graph.impl.ShortestPathFinder
+import org.jetbrains.annotations.ApiStatus
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
-  enum class State {
-    LOADED, CONNECTION_ERROR, NOTHING_LOADED
-  }
-
-  private val lineage = currentBuild.baselineVersion
-
-  fun checkForUpdates(): CheckForUpdateResult {
-    val product = updates[currentBuild.productCode]
+@ApiStatus.Internal
+class UpdateStrategy @JvmOverloads constructor(
+  private val currentBuild: BuildNumber,
+  private val product: Product?,
+  private val settings: UpdateSettings,
+  private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
+) {
+  fun checkForUpdates(): PlatformUpdates {
     if (product == null || product.channels.isEmpty()) {
-      return CheckForUpdateResult(State.NOTHING_LOADED, null)
+      return PlatformUpdates.Empty
     }
 
     val selectedChannel = settings.selectedChannelStatus
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
-    val result = product.channels.asSequence()
-      .filter { ch -> ch.status >= selectedChannel }                                      // filters out inapplicable channels
-      .sortedBy { ch -> ch.status }                                                       // reorders channels (EAPs first)
-      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }              // maps into a sequence of <build, channel> pairs
-      .filter { p -> isApplicable(p.first, ignoredBuilds) }                               // filters out inapplicable builds
-      .maxWith(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
-
-    return CheckForUpdateResult(result?.first, result?.second)
+    return product.channels
+      .asSequence()
+      .filter { ch -> customization.isChannelApplicableForUpdates(ch, selectedChannel) }        // filters out inapplicable channels
+      .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
+      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
+      .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
+      .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
+      ?.let { (newBuild, channel) ->
+        PlatformUpdates.Loaded(newBuild, channel, patches(newBuild, product, currentBuild))
+      } ?: PlatformUpdates.Empty
   }
 
-  private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>) =
-      candidate.number > currentBuild &&
-      candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
-      candidate.target?.inRange(currentBuild) ?: true
+  private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =
+    customization.isNewerVersion(candidate.number, currentBuild) &&
+    candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
+    candidate.target?.inRange(currentBuild) ?: true
 
-  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber) =
-      if (n1.baselineVersion == lineage && n2.baselineVersion != lineage) 1
-      else if (n2.baselineVersion == lineage && n1.baselineVersion != lineage) -1
-      else n1.compareTo(n2)
-
-  //<editor-fold desc="Deprecated stuff.">
-
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings) : this(currentBuild, updatesInfo, updateSettings) {
+  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
+    val preferSameMajorVersion = customization.haveSameMajorVersion(currentBuild, n1).compareTo(customization.haveSameMajorVersion(currentBuild, n2))
+    return if (preferSameMajorVersion != 0) preferSameMajorVersion else n1.compareTo(n2)
   }
 
+  private fun patches(newBuild: BuildInfo, product: Product, from: BuildNumber): UpdateChain? {
+    val single = newBuild.patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }
+    if (single != null) {
+      return UpdateChain(listOf(from, newBuild.number), single.size)
+    }
 
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings,
-              @Suppress("UNUSED_PARAMETER") customization: UpdateStrategyCustomization) : this(currentBuild, updatesInfo, updateSettings) {
+    val selectedChannel = settings.selectedChannelStatus
+    val upgrades = MultiMap<BuildNumber, BuildNumber>()
+    val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
+    val number = Regex("\\d+")
+
+    product.channels
+      .filter { ch -> customization.canBeUsedForIntermediatePatches(ch, selectedChannel) }
+      .forEach { channel ->
+      channel.builds.forEach { build ->
+        val toBuild = build.number.withoutProductCode()
+        build.patches.forEach { patch ->
+          if (patch.isAvailable) {
+            val fromBuild = patch.fromBuild.withoutProductCode()
+            upgrades.putValue(toBuild, fromBuild)
+            if (patch.size != null) {
+              val maxSize = number.findAll(patch.size).mapNotNull { it.value.toIntOrNull() }.maxOrNull()
+              if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
+            }
+          }
+        }
+      }
+    }
+
+    val graph = object : InboundSemiGraph<BuildNumber> {
+      override fun getNodes() = upgrades.keySet() + upgrades.values()
+      override fun getIn(n: BuildNumber) = upgrades[n].iterator()
+    }
+    val path = ShortestPathFinder(graph).findPath(from.withoutProductCode(), newBuild.number.withoutProductCode())
+    if (path == null || path.size <= 2) return null
+
+    var total = 0
+    for (i in 1 until path.size) {
+      val size = sizes[path[i - 1] to path[i]]
+      if (size == null) {
+        total = -1
+        break
+      }
+      total += size
+    }
+    return UpdateChain(path, if (total > 0) total.toString() else null)
   }
-
-  //</editor-fold>
 }

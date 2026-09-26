@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -27,21 +13,18 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 /**
  * This class is a base for implementing such properties
  * as "minimum size", "preferred size" and "maximum size".
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public abstract class AbstractDimensionProperty<T extends RadComponent> extends Property<T, Dimension> {
   private final Property[] myChildren;
   private final DimensionRenderer myRenderer;
   private final IntRegexEditor<Dimension> myEditor;
 
-  public AbstractDimensionProperty(@NonNls final String name){
+  public AbstractDimensionProperty(final @NonNls String name){
     super(null, name);
     myChildren=new Property[]{
       new IntFieldProperty(this, "width", -1, JBUI.emptySize()),
@@ -51,20 +34,22 @@ public abstract class AbstractDimensionProperty<T extends RadComponent> extends 
     myEditor = new IntRegexEditor<>(Dimension.class, myRenderer, new int[]{-1, -1});
   }
 
-  @NotNull
-  public final Property[] getChildren(final RadComponent component){
+  @Override
+  public final Property @NotNull [] getChildren(final RadComponent component){
     return myChildren;
   }
 
-  @NotNull
-  public final PropertyRenderer<Dimension> getRenderer() {
+  @Override
+  public final @NotNull PropertyRenderer<Dimension> getRenderer() {
     return myRenderer;
   }
 
+  @Override
   public final PropertyEditor<Dimension> getEditor() {
     return myEditor;
   }
 
+  @Override
   public Dimension getValue(T component) {
     return getValueImpl(component.getConstraints());
   }

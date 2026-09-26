@@ -1,15 +1,17 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
@@ -18,13 +20,11 @@ import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
-/**
- * @author traff
- */
-public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
+public final class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
 
 
   private PyAttachToProcessCommandLineState(PythonRunConfiguration runConfiguration,
@@ -32,12 +32,12 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
     super(runConfiguration, env);
   }
 
-  public static PyAttachToProcessCommandLineState create(@NotNull Project project, @NotNull String sdkPath, int port, int pid)
+  public static PyAttachToProcessCommandLineState create(@NotNull Project project, @Nullable Sdk sdk, int port, int pid)
     throws ExecutionException {
     PythonRunConfiguration conf =
       (PythonRunConfiguration)PythonConfigurationType.getInstance().getFactory().createTemplateConfiguration(project);
     conf.setScriptName(PythonHelper.ATTACH_DEBUGGER.asParamString());
-    conf.setSdkHome(sdkPath);
+    conf.setSdk(sdk);
     conf.setScriptParameters("--port " + port + " --pid " + pid);
 
     ExecutionEnvironment env =
@@ -61,7 +61,7 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
 
     public PyRemoteDebugProcessHandler(ProcessHandler handler) {
       myHandler = handler;
-      myHandler.addProcessListener(new ProcessAdapter() {
+      myHandler.addProcessListener(new ProcessListener() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           PyRemoteDebugProcessHandler.this.notifyTextAvailable(event.getText(), outputType);
@@ -99,6 +99,7 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
       return null;
     }
 
+    @Override
     public void setRemoteDebugProcess(PyRemoteDebugProcess process) {
       myProcess = process;
     }

@@ -1,0 +1,50 @@
+{header}
+<title>Help: {title}</title>
+<link rel="alternate" type="application/atom+xml"
+   href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}"/>
+<link rel="alternate" type="application/rss+xml"
+   href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}"/>
+</head>
+<body>
+
+<div class="page_header">
+<a href="{logourl}" title="Mercurial" style="float: right;">Mercurial</a>
+<a href="/">Mercurial</a> {pathdef%breadcrumb} / help
+</div>
+
+<div class="page_nav">
+<div>
+<a href="{url|urlescape}summary{sessionvars%urlparameter}">summary</a> |
+<a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a> |
+<a href="{url|urlescape}log{sessionvars%urlparameter}">changelog</a> |
+<a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a> |
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a> |
+<a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a> |
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a> |
+<a href="{url|urlescape}file{sessionvars%urlparameter}">files</a> |
+{if(subindex,
+  '<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>',
+  'help'
+)}
+</div>
+{searchform}
+</div>
+
+<div class="title">&nbsp;</div>
+<table cellspacing="0">
+<tr><td colspan="2"><h2><a name="topics" href="#topics">Topics</a></h2></td></tr>
+{topics % helpentry}
+
+{if(earlycommands, '
+<tr><td colspan="2"><h2><a name="main" href="#main">Main Commands</a></h2></td></tr>
+{earlycommands % helpentry}
+')}
+
+{if(othercommands, '
+<tr><td colspan="2"><h2><a name="other" href="#other">Other Commands</a></h2></td></tr>
+{othercommands % helpentry}
+')}
+
+</table>
+
+{footer}

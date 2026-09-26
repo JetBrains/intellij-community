@@ -1,0 +1,168 @@
+# Some default global settings for common merge tools
+
+[merge-tools]
+
+; The Araxis Merge tool is configured to work with newer versions of Araxis Merge
+; if you are using Araxis Merge 2008 or earlier, create a [merge-tools] section
+; in your mercurial.ini file, and add one of the two following "araxis.executable"
+; lines, depending on whether you have installed a 32 or a 64 bit version
+; of Araxis Merge and whether you are on a 32 or 64 bit version of windows
+;
+;araxis.executable=${ProgramFiles}/Araxis/Araxis Merge/ConsoleCompare.exe
+;araxis.executable=${ProgramFiles(x86)}/Araxis/Araxis Merge/ConsoleCompare.exe
+;
+; Please remember to remove the leading ";" to uncomment the line
+;
+araxis.args=/3 /a2 /wait /merge /title1:"Other" /title2:"Base" /title3:"Local :"$local $other $base $local $output
+araxis.binary=True
+araxis.checkconflicts=True
+araxis.diffargs=/2 /wait /title1:$plabel1 /title2:$clabel $parent $child
+araxis.gui=True
+araxis.priority=-2
+araxis.regappend=\ConsoleCompare.exe
+araxis.regkey=SOFTWARE\Classes\TypeLib\{46799e0a-7bd1-4330-911c-9660bb964ea2}\7.0\HELPDIR
+
+; Linux version of BeyondCompare 3 and 4 (dirdiff is version 4 only)
+bcompare.args=$local $other $base -mergeoutput=$output -ro -lefttitle=$labellocal -centertitle=$labelbase -righttitle=$labelother -outputtitle=merged -automerge -reviewconflicts -solo
+bcompare.diffargs=-lro -lefttitle=$plabel1 -righttitle=$clabel -solo -expandall $parent $child
+bcompare.gui=True
+bcompare.priority=-1
+
+; OS X version of Beyond Compare
+bcomposx.args=$local $other $base -mergeoutput=$output -ro -lefttitle=$labellocal -centertitle=$labelbase -righttitle=$labelother -outputtitle=merged -automerge -reviewconflicts -solo
+bcomposx.diffargs=-lro -lefttitle=$plabel1 -righttitle=$clabel -solo -expandall $parent $child
+bcomposx.executable = /Applications/Beyond Compare.app/Contents/MacOS/bcomp
+bcomposx.gui=True
+bcomposx.priority=-1
+
+; Windows version of BeyondCompare 3
+beyondcompare3.args=$local $other $base $output /ro /lefttitle=$labellocal /centertitle=$labelbase /righttitle=$labelother /automerge /reviewconflicts /solo
+beyondcompare3.diffargs=/lro /lefttitle=$plabel1 /righttitle=$clabel /solo /expandall $parent $child
+beyondcompare3.gui=True
+beyondcompare3.priority=-2
+beyondcompare3.regkey=Software\Scooter Software\Beyond Compare 3
+beyondcompare3.regkeyalt=Software\Wow6432Node\Scooter Software\Beyond Compare 3
+beyondcompare3.regname=ExePath
+
+; Windows version of BeyondCompare 4
+beyondcompare4.args=$local $other $base /mergeoutput=$output /ro /lefttitle=$labellocal /centertitle=$labelbase /righttitle=$labelother /outputtitle=merged /automerge /reviewconflicts /solo
+beyondcompare4.diffargs=/lro /lefttitle=$plabel1 /righttitle=$clabel /solo /expandall $parent $child
+beyondcompare4.gui=True
+beyondcompare4.premerge=False
+beyondcompare4.priority=-1
+beyondcompare4.regkey=Software\Scooter Software\Beyond Compare 4
+beyondcompare4.regkeyalt=Software\Wow6432Node\Scooter Software\Beyond Compare 4
+beyondcompare4.regname=ExePath
+
+diffmerge.args=-nosplash -merge -title1=$labellocal -title2=merged -title3=$labelother $local $base $other -result=$output
+diffmerge.check=changed
+diffmerge.diffargs=--nosplash --title1=$plabel1 --title2=$clabel $parent $child
+diffmerge.gui=True
+diffmerge.priority=-7
+diffmerge.regkey=Software\SourceGear\SourceGear DiffMerge\
+diffmerge.regkeyalt=Software\Wow6432Node\SourceGear\SourceGear DiffMerge\
+diffmerge.regname=Location
+
+diffuse.args=$local $base $other
+diffuse.diffargs=$parent $child
+diffuse.gui=True
+diffuse.priority=-3
+
+ecmerge.args=$base $local $other --mode=merge3 --title0=$labelbase --title1=$labellocal --title2=$labelother --to=$output
+ecmerge.diffargs=$parent $child --mode=diff2 --title1=$plabel1 --title2=$clabel
+ecmerge.gui=True
+ecmerge.regkey=Software\Elli\xc3\xa9 Computing\Merge
+ecmerge.regkeyalt=Software\Wow6432Node\Elli\xc3\xa9 Computing\Merge
+
+# editmerge is a small script shipped in contrib.
+# It needs this config otherwise it behaves the same as internal:local
+editmerge.args=$output
+editmerge.check=changed
+editmerge.premerge=keep
+
+filemerge.args=-left $other -right $local -ancestor $base -merge $output
+filemerge.executable=/Developer/Applications/Utilities/FileMerge.app/Contents/MacOS/FileMerge
+filemerge.gui=True
+
+filemergexcode.args=-left $other -right $local -ancestor $base -merge $output
+filemergexcode.executable=/Applications/Xcode.app/Contents/Applications/FileMerge.app/Contents/MacOS/FileMerge
+filemergexcode.gui=True
+
+gpyfm.gui=True
+
+gvimdiff.args=--nofork -d -g -O $local $other $base
+gvimdiff.diffargs=--nofork -d -g -O $parent $child
+gvimdiff.priority=-9
+gvimdiff.regkey=Software\Vim\GVim
+gvimdiff.regkeyalt=Software\Wow6432Node\Vim\GVim
+gvimdiff.regname=path
+
+kdiff3.args=--auto --L1 $labelbase --L2 $labellocal --L3 $labelother $base $local $other -o $output
+kdiff3.diffargs=--L1 $plabel1 --L2 $clabel $parent $child
+kdiff3.fixeol=True
+kdiff3.gui=True
+kdiff3.regappend=\kdiff3.exe
+kdiff3.regkey=Software\KDiff3
+kdiff3.regkeyalt=Software\Wow6432Node\KDiff3
+
+meld.args=--label=$labellocal $local --label='merged' $base --label=$labelother $other -o $output --auto-merge
+meld.check=changed
+meld.diffargs=--label=$plabel1 $parent --label=$clabel $child
+meld.gui=True
+
+merge.check=conflicts
+merge.priority=-100
+
+p4merge.args=$base $local $other $output
+p4merge.diffargs=$parent $child
+p4merge.gui=True
+p4merge.priority=-8
+p4merge.regappend=\p4merge.exe
+p4merge.regkey=Software\Perforce\Environment
+p4merge.regkeyalt=Software\Wow6432Node\Perforce\Environment
+p4merge.regname=P4INSTROOT
+
+p4mergeosx.args = $base $local $other $output
+p4mergeosx.diffargs=$parent $child
+p4mergeosx.executable = /Applications/p4merge.app/Contents/MacOS/p4merge
+p4mergeosx.gui = True
+p4mergeosx.priority=-8
+
+tkdiff.args=$local $other -a $base -o $output
+tkdiff.diffargs=-L $plabel1 $parent -L $clabel $child
+tkdiff.gui=True
+tkdiff.priority=-8
+
+tortoisemerge.args=/base:$base /mine:$local /theirs:$other /merged:$output
+tortoisemerge.check=changed
+tortoisemerge.diffargs=/base:$parent /mine:$child /basename:$plabel1 /minename:$clabel
+tortoisemerge.gui=True
+tortoisemerge.priority=-8
+tortoisemerge.regkey=Software\TortoiseSVN
+tortoisemerge.regkeyalt=Software\Wow6432Node\TortoiseSVN
+
+UltraCompare.args = $base $local $other -title1 base -title3 other
+UltraCompare.binary = True
+UltraCompare.check = conflicts,changed
+UltraCompare.diffargs=$child $parent -title1 $clabel -title2 $plabel1
+UltraCompare.gui = True
+UltraCompare.priority = -2
+UltraCompare.regkey=Software\Microsoft\Windows\CurrentVersion\App Paths\UC.exe
+UltraCompare.regkeyalt=Software\Wow6432Node\Microsoft\Windows\CurrentVersion\App Paths\UC.exe
+
+vimdiff.args=$local $other $base -c 'redraw | echomsg "hg merge conflict, type \":cq\" to abort vimdiff"'
+vimdiff.check=changed
+vimdiff.priority=-10
+winmerge.args=/e /x /wl /ub /dl $labelother /dr $labellocal $other $local $output
+winmerge.check=changed
+winmerge.diffargs=/r /e /x /ub /wl /dl $plabel1 /dr $clabel $parent $child
+winmerge.gui=True
+winmerge.priority=-10
+winmerge.regkey=Software\Thingamahoochie\WinMerge
+winmerge.regkeyalt=Software\Wow6432Node\Thingamahoochie\WinMerge\
+winmerge.regname=Executable
+
+xxdiff.args=--show-merged-pane --exit-with-merge-status --title1 $labellocal --title2 $labelbase --title3 $labelother --merged-filename $output --merge $local $base $other
+xxdiff.diffargs=--title1 $plabel1 $parent --title2 $clabel $child
+xxdiff.gui=True
+xxdiff.priority=-8

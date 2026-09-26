@@ -1,35 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
   private static final int DEPRECATED = 0x01;
   private static final int INTERFACE = 0x02;
@@ -41,21 +24,36 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int DEPRECATED_ANNOTATION = 0x80;
   private static final int ANONYMOUS_INNER = 0x100;
   private static final int LOCAL_CLASS_INNER = 0x200;
+  private static final int HAS_DOC_COMMENT = 0x400;
+  private static final int RECORD = 0x800;
+  private static final int IMPLICIT = 0x1000;
+  private static final int VALUE_CLASS = 0x2000;
 
+  private final @NotNull TypeInfo myTypeInfo;
   private final String myQualifiedName;
   private final String myName;
   private final String myBaseRefText;
   private final short myFlags;
   private String mySourceFileName;
 
-  public PsiClassStubImpl(final JavaClassElementType type,
-                          final StubElement parent,
-                          @Nullable final String qualifiedName,
-                          @Nullable final String name,
-                          @Nullable final String baseRefText,
-                          final short flags) {
+  public PsiClassStubImpl(@NotNull IJavaElementType type,
+                          StubElement parent,
+                          @Nullable String qualifiedName,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
+    this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
+  }
+
+  public PsiClassStubImpl(@NotNull IJavaElementType  type,
+                          StubElement parent,
+                          @NotNull TypeInfo typeInfo,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
     super(parent, type);
-    myQualifiedName = qualifiedName;
+    myTypeInfo = typeInfo;
+    myQualifiedName = typeInfo.text();
     myName = name;
     myBaseRefText = baseRefText;
     myFlags = flags;
@@ -69,7 +67,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public String getName() {
     return myName;
   }
-
+  
+  public @NotNull TypeInfo getQualifiedNameTypeInfo() {
+    return myTypeInfo;
+  }
+  
   @Override
   public String getQualifiedName() {
     return myQualifiedName;
@@ -101,12 +103,31 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
+  public boolean isRecord() {
+    return BitUtil.isSet(myFlags, RECORD);
+  }
+
+  @Override
+  public boolean isImplicit() {
+    return BitUtil.isSet(myFlags, IMPLICIT);
+  }
+
+  @Override
+  public boolean isValueClass() {
+    return BitUtil.isSet(myFlags, VALUE_CLASS);
+  }
+
+  @Override
   public boolean isEnumConstantInitializer() {
     return isEnumConstInitializer(myFlags);
   }
 
-  public static boolean isEnumConstInitializer(final short flags) {
+  public static boolean isEnumConstInitializer(short flags) {
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
+  }
+
+  public static boolean isImplicit(short flags) {
+    return BitUtil.isSet(flags, IMPLICIT);
   }
 
   @Override
@@ -114,7 +135,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return isAnonymous(myFlags);
   }
 
-  public static boolean isAnonymous(final short flags) {
+  public static boolean isAnonymous(short flags) {
     return BitUtil.isSet(flags, ANONYMOUS);
   }
 
@@ -124,15 +145,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
-  public LanguageLevel getLanguageLevel() {
-    StubElement parent = getParentStub();
-    if (parent instanceof PsiJavaFileStub) {
-      LanguageLevel level = ((PsiJavaFileStub)parent).getLanguageLevel();
-      if (level != null) {
-        return level;
-      }
-    }
-    return LanguageLevel.HIGHEST;
+  public boolean hasDocComment() {
+    return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
   }
 
   @Override
@@ -154,16 +168,46 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   public static short packFlags(boolean isDeprecated,
-                               boolean isInterface,
-                               boolean isEnum,
-                               boolean isEnumConstantInitializer,
-                               boolean isAnonymous,
-                               boolean isAnnotationType,
-                               boolean isInQualifiedNew,
-                               boolean hasDeprecatedAnnotation, 
-                               boolean anonymousInner,
-                               boolean localClassInner
-                                ) {
+                                boolean isInterface,
+                                boolean isEnum,
+                                boolean isEnumConstantInitializer,
+                                boolean isAnonymous,
+                                boolean isAnnotationType,
+                                boolean isInQualifiedNew,
+                                boolean hasDeprecatedAnnotation,
+                                boolean anonymousInner,
+                                boolean localClassInner,
+                                boolean hasDocComment) {
+    return packFlags(isDeprecated,
+                     isInterface,
+                     isEnum,
+                     isEnumConstantInitializer,
+                     isAnonymous,
+                     isAnnotationType,
+                     isInQualifiedNew,
+                     hasDeprecatedAnnotation,
+                     anonymousInner,
+                     localClassInner,
+                     hasDocComment,
+                     false,
+                     false,
+                     false);
+  }
+
+  public static short packFlags(boolean isDeprecated,
+                                boolean isInterface,
+                                boolean isEnum,
+                                boolean isEnumConstantInitializer,
+                                boolean isAnonymous,
+                                boolean isAnnotationType,
+                                boolean isInQualifiedNew,
+                                boolean hasDeprecatedAnnotation,
+                                boolean anonymousInner,
+                                boolean localClassInner,
+                                boolean hasDocComment,
+                                boolean isRecord,
+                                boolean isImplicit,
+                                boolean isValueClass) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -175,6 +219,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
     if (anonymousInner) flags |= ANONYMOUS_INNER;
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
+    if (hasDocComment) flags |= HAS_DOC_COMMENT;
+    if (isRecord) flags |= RECORD;
+    if (isImplicit) flags |= IMPLICIT;
+    if (isValueClass) flags |= VALUE_CLASS;
     return flags;
   }
 
@@ -184,7 +232,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public boolean isLocalClassInner() {
     return BitUtil.isSet(myFlags, LOCAL_CLASS_INNER);
   }
-  
+
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public String toString() {
@@ -201,6 +249,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
     if (isEnum()) {
       builder.append("enum ");
+    }
+
+    if (isRecord()) {
+      builder.append("record ");
     }
 
     if (isAnnotationType()) {

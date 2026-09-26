@@ -1,0 +1,5 @@
+try {
+    expr
+} catch (Exception e) {
+    <spot></spot>
+}

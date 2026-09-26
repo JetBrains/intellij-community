@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <plugin id="JUnit"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.junit2.configuration.JUnitTestDiscoveryProvider"
+                        serviceImplementation="com.intellij.junit.vcs.JUnitTestDiscoveryProviderImpl"/>
+  </extensions>
+</idea-plugin>

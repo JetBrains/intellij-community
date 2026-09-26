@@ -1,0 +1,9 @@
+// "Suppress 'UNUSED_EXPRESSION' for statement " "true"
+
+fun foo() {
+    val a = 1
+    @Suppress("UNUSED_EXPRESSION")
+    a
+}
+
+// IGNORE_K2

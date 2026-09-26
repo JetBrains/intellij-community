@@ -1,0 +1,9 @@
+<node text="BaseClass () [JVM (1.8)]" base="true">
+  <node text="JvmOnlyChild ()"/>
+  <node text="CommonChild2 ()"/>
+  <node text="CommonIntermediate ()">
+    <node text="JsIntermediate ()"/>
+    <node text="JvmIntermediate ()"/>
+  </node>
+  <node text="CommonChild1 ()"/>
+</node>

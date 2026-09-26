@@ -1,42 +1,44 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ForeignLeafType;
 import com.intellij.lang.TokenWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A leaf PSI element representing content that is <em>not</em> literally present in the original source text
+ * (e.g., tokens produced by C/C++ macro expansion).
+ *
+ * <p>Unlike a regular {@link LeafPsiElement}, a foreign leaf is structurally part of the PSI tree but
+ * <b>invisible to text-based operations</b>: it reports zero {@linkplain #getTextLength() text length},
+ * zero {@linkplain #getStartOffset() start offset}, and never {@linkplain #textMatches matches} any text.
+ * {@link #findLeafElementAt(int)} returns {@code null}, so offset-based lookups skip over it.</p>
+ *
+ * <p>The element wraps a {@link ForeignLeafType} (a {@link TokenWrapper} subclass)
+ * that carries the substituted text and the original delegate {@link IElementType}.
+ * The constructor dereferences through any {@code TokenWrapper} chain to find the base element type
+ * for the superclass, while keeping the {@code ForeignLeafType} accessible via {@link #getForeignType()}.</p>
+ *
+ * @author max
+ * @see ForeignLeafType
+ * @see TokenWrapper
+ */
 public class ForeignLeafPsiElement extends LeafPsiElement {
-  @NotNull private final ForeignLeafType myForeignType;
+  private final @NotNull ForeignLeafType myForeignType;
 
   public ForeignLeafPsiElement(@NotNull ForeignLeafType type, CharSequence text) {
     super(dereferenceElementType(type.getDelegate()), text);
     myForeignType = type;
   }
 
-  @NotNull
-  private static IElementType dereferenceElementType(@NotNull IElementType type) {
-    while ( type instanceof TokenWrapper)
-      type = (( TokenWrapper ) type ).getDelegate();
+  private static @NotNull IElementType dereferenceElementType(@NotNull IElementType type) {
+    while (type instanceof TokenWrapper) {
+      type = ((TokenWrapper)type).getDelegate();
+    }
 
     return type;
   }
@@ -67,17 +69,16 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    return 0;
-  }
-
-  @Override
   public int getStartOffset() {
     return 0;
   }
 
-  @NotNull
-  public ForeignLeafType getForeignType() {
+  @Override
+  public TextRange getTextRange() {
+    return new TextRange(0, 0);
+  }
+
+  public @NotNull ForeignLeafType getForeignType() {
     return myForeignType;
   }
 

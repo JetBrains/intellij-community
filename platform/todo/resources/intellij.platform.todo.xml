@@ -1,0 +1,85 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.TodoBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.todoViewChangesSupportFactory"
+                    interface="com.intellij.ide.todo.TodoViewChangesSupportFactory"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      key="todo.toolwindow.split"
+      defaultValue="false"
+      description="Enables the `TODO toolwindow` implementation, optimized to support both remote development workflows and monolithic setups."
+      restartRequired="true"/>
+
+    <highlightVisitor implementation="com.intellij.ide.todo.codeInsight.TodoHighlightVisitor"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
+
+    <!-- T.O.D.O -->
+    <applicationConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions"
+                             key="title.todo"
+                             bundle="messages.IdeBundle"/>
+
+    <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper" open="true"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager" open="true"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.EmptyTodoCacheManager"/>
+
+    <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
+                factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
+    <projectSettings service="com.intellij.ide.todo.TodoView"/>
+
+    <rdct.remoteSettingProvider implementation="com.intellij.ide.todo.settings.TodoRemoteSettingsInfoProvider"/>
+    <applicationSettings service="com.intellij.ide.todo.TodoConfiguration"/>
+  </extensions>
+
+  <actions>
+    <group id="TodoMainGroup">
+      <add-to-group group-id="Other.KeymapGroup"/>
+      <group id="TodoViewGroupByGroup" icon="AllIcons.Actions.GroupBy" popup="true">
+        <separator text="Group By"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
+      </group>
+    </group>
+  </actions>
+</idea-plugin>

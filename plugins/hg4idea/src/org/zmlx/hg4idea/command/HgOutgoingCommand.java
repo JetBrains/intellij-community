@@ -31,17 +31,16 @@ public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
     super(project, "outgoing");
   }
 
-  @Nullable
-  protected String getRepositoryUrl(VirtualFile root) {
+  @Override
+  protected @Nullable String getRepositoryUrl(VirtualFile root) {
     return HgUtil.getRepositoryDefaultPushPath(project, root);
   }
 
-  @Nullable
-  public HgCommandResult execute(@NotNull VirtualFile repo,
-                                 @NotNull String template,
-                                 @NotNull String source,
-                                 @NotNull String destination,
-                                 boolean doNotShowAuthorizationRequest) {
+  public @Nullable HgCommandResult execute(@NotNull VirtualFile repo,
+                                           @NotNull String template,
+                                           @NotNull String source,
+                                           @NotNull String destination,
+                                           boolean doNotShowAuthorizationRequest) {
 
     List<String> arguments = new LinkedList<>();
     arguments.add("-n");

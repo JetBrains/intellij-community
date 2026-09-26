@@ -37,15 +37,13 @@ public class GrSyntheticReferenceList extends LightElement implements PsiReferen
     return "Synthetic reference list";
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     return myList.getReferencedTypes();
   }
 

@@ -1,35 +1,32 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,14 +39,14 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   private static final String ELLIPSIS_SUFFIX = "...";
 
   private Pattern myCompiledPattern;
-  private String myPattern;
-  private final List<T> myItems;
-  private final String myNotInMessage;
+  private @NlsSafe String myPattern;
+  private final List<? extends T> myItems;
+  private final @NlsContexts.Label String myNotInMessage;
 
-  public ListChooseByNameModel(@NotNull final Project project,
-                               final String prompt,
-                               final String notInMessage,
-                               List<T> items) {
+  public ListChooseByNameModel(final @NotNull Project project,
+                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
+                               @NotNull @NlsContexts.Label String notInMessage,
+                               @NotNull List<? extends T> items) {
     super(project, prompt, null);
 
     myItems = items;
@@ -63,7 +60,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
       taskFullCmds.add(item.getName());
     }
 
-    return ArrayUtil.toStringArray(taskFullCmds);
+    return ArrayUtilRt.toStringArray(taskFullCmds);
   }
 
   @Override
@@ -73,22 +70,22 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         return new Object[] { item };
       }
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return myNotInMessage;
   }
 
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return myNotInMessage;
   }
 
   // from ruby plugin
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(final JList list,
@@ -99,13 +96,13 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         panel.setOpaque(true);
         panel.setBorder(JBUI.Borders.emptyRight(5));
 
-        final Color bg = isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
+        final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
         panel.setBackground(bg);
 
-        if (value instanceof ChooseByNameItem) {
-          final ChooseByNameItem item = (ChooseByNameItem) value;
+        if (value instanceof ChooseByNameItem item) {
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final Color fg;
+          fg = isSelected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
 
           final JLabel actionLabel = new JLabel(item.getName(), null, LEFT);
           actionLabel.setBackground(bg);
@@ -135,7 +132,8 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         }
         else {
           // E.g. "..." item
-          final JLabel actionLabel = new JLabel(value.toString(), null, LEFT);
+          @NlsSafe String text = value.toString();
+          final JLabel actionLabel = new JLabel(text, null, LEFT);
           actionLabel.setBackground(bg);
           actionLabel.setForeground(UIUtil.getListForeground());
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.PLAIN));
@@ -148,12 +146,12 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   }
 
   @Override
-  public String getElementName(final Object element) {
+  public String getElementName(final @NotNull Object element) {
     if (!(element instanceof ChooseByNameItem)) return null;
     return ((ChooseByNameItem)element).getName();
   }
 
-  public boolean matches(@NotNull final String name, @NotNull final String pattern) {
+  public boolean matches(final @NotNull String name, final @NotNull String pattern) {
     final Pattern compiledPattern = getTaskPattern(pattern);
     if (compiledPattern == null) {
       return false;
@@ -162,8 +160,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     return new Perl5Matcher().matches(name, compiledPattern);
   }
 
-  @Nullable
-  private Pattern getTaskPattern(String pattern) {
+  private @Nullable Pattern getTaskPattern(String pattern) {
     if (!Comparing.strEqual(pattern, myPattern)) {
       myCompiledPattern = null;
       myPattern = pattern;

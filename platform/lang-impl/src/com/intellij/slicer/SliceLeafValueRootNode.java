@@ -1,53 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
+@ApiStatus.Internal
 public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
-  final List<SliceNode> myCachedChildren;
+  public final List<SliceNode> myCachedChildren;
 
-  SliceLeafValueRootNode(@NotNull Project project,
-                         @NotNull SliceNode root,
-                         @NotNull SliceUsage sliceUsage,
-                         @NotNull List<SliceNode> children) {
+  public SliceLeafValueRootNode(@NotNull Project project,
+                                @NotNull SliceNode root,
+                                @NotNull SliceUsage sliceUsage,
+                                @NotNull List<SliceNode> children) {
     super(project, sliceUsage, root.targetEqualUsages);
     myCachedChildren = children;
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     return myCachedChildren;
   }
 
@@ -57,7 +44,11 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
+    }
   }
 
   @Override
@@ -65,6 +56,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     return getNodeText();
   }
 
+  @Override
   public String getNodeText() {
     SliceUsage value = getValue();
     String text;
@@ -73,9 +65,9 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
       text = element == null ? "" : element.getText();
     }
     else {
-      text = "Other";
+      text = LangBundle.message("node.slice.other");
     }
-    return "Value: " + text;
+    return LangBundle.message("node.slice.value.2", text);
   }
 
   @Override
@@ -88,29 +80,31 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
                                     int row,
                                     boolean hasFocus) {
     SliceUsage usage = getValue();
-    renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(LangBundle.message("node.slice.value"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage != null) {
-      PsiElement element = usage.getElement();
-      if (element == null) {
-        renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
-      }
-      else {
-        appendElementText(usage, element, renderer);
-      }
+      ReadAction.runBlocking(() -> {
+        PsiElement element = usage.getElement();
+        if (element == null) {
+          renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
+        }
+        else {
+          appendElementText(usage, element, renderer);
+        }
+      });
     }
     else {
-      renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      renderer.append(LangBundle.message("node.slice.other"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 
   private static void appendElementText(@NotNull UsageInfo2UsageAdapter usage,
-                                        @NotNull final PsiElement element,
-                                        @NotNull final SliceUsageCellRendererBase renderer) {
-    PsiFile file = element.getContainingFile();
+                                        final @NotNull PsiElement element,
+                                        final @NotNull SliceUsageCellRendererBase renderer) {
+    PsiFile psiFile = element.getContainingFile();
     List<TextChunk> result = new ArrayList<>();
-    ChunkExtractor.getExtractor(element.getContainingFile())
-      .createTextChunks(usage, file.getText(), element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset(),
+    ChunkExtractor.getExtractor(psiFile)
+      .appendTextChunks(usage, psiFile.getText(), element.getTextOffset(), element.getTextRange().getEndOffset(),
                         false, result);
 
     for (TextChunk chunk : result) {

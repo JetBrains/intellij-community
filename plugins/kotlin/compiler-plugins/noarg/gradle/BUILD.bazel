@@ -1,0 +1,81 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.compilerPlugins.noarg.gradle` start
+content_module_jar(module = ":gradle")
+### auto-generated section `dev intellij.kotlin.compilerPlugins.noarg.gradle` end
+
+### auto-generated section `build intellij.kotlin.compilerPlugins.noarg.gradle` start
+create_kotlinc_options(
+    name = "custom_gradle",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "gradle",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_gradle",
+    module_name = "intellij.kotlin.compilerPlugins.noarg.gradle",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
+        "//plugins/kotlin/gradle/gradle-java",
+        "//plugins/kotlin/base/plugin",
+    ],
+)
+
+jvm_library(
+    name = "gradle_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_gradle",
+    module_name = "intellij.kotlin.compilerPlugins.noarg.gradle",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":gradle",
+        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle:gradle_test_lib",
+        "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.noarg.gradle` end
+
+### auto-generated section `iml intellij.kotlin.compilerPlugins.noarg.gradle` start
+exports_files(
+    [
+        "intellij.kotlin.compilerPlugins.noarg.gradle.iml",
+        "resources/intellij.kotlin.compilerPlugins.noarg.gradle.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.compilerPlugins.noarg.gradle` end

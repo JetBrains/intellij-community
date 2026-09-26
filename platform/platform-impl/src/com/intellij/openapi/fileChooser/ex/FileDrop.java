@@ -1,46 +1,43 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 
-import javax.swing.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import javax.swing.TransferHandler;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileDrop {
+public final class FileDrop {
   public FileDrop(JComponent c, final Target target) {
     final DropTargetListener listener = new DropTargetListener() {
+      @Override
       public void dragEnter(final DropTargetDragEvent event) {
       }
 
+      @Override
       public void dragOver(final DropTargetDragEvent event) {
       }
 
+      @Override
       public void dropActionChanged(final DropTargetDragEvent event) {
       }
 
+      @Override
       public void dragExit(final DropTargetEvent dte) {
       }
 
+      @Override
       public void drop(final DropTargetDropEvent event) {
         event.acceptDrop(event.getDropAction());
 
@@ -48,15 +45,15 @@ public class FileDrop {
         if (fileList == null) return;
 
         final List<VirtualFile> files = new ArrayList<>();
-        final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+        final VirtualFileSystem fileSystem = StandardFileSystems.local();
         for (File file : fileList) {
-          final VirtualFile vFile = fileSystem.findFileByIoFile(file);
+          final VirtualFile vFile = fileSystem.findFileByPath(file.getAbsolutePath());
           if (vFile != null && vFile.exists() && target.getDescriptor().isFileVisible(vFile, target.isHiddenShown())) {
             files.add(vFile);
           }
         }
 
-        if (files.size() > 0) {
+        if (!files.isEmpty()) {
           target.dropFiles(files);
         }
       }
@@ -68,6 +65,6 @@ public class FileDrop {
   public interface Target {
     FileChooserDescriptor getDescriptor();
     boolean isHiddenShown();
-    void dropFiles(List<VirtualFile> files);
+    void dropFiles(List<? extends VirtualFile> files);
   }
 }

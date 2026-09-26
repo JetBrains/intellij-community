@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -23,23 +10,24 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * @author ilyas
- */
-public class GroovyValidationUtil {
+public final class GroovyValidationUtil {
 
   private GroovyValidationUtil() {
   }
 
   public static boolean validateNewParameterName(GrParameter variable, MultiMap<PsiElement,String> conflicts, @NotNull String varName) {
     GrParameterList list = PsiTreeUtil.getParentOfType(variable, GrParameterList.class);
-    GrParametersOwner owner = PsiTreeUtil.getParentOfType(variable, GrParametersOwner.class);
+    GrParameterListOwner owner = PsiTreeUtil.getParentOfType(variable, GrParameterListOwner.class);
     assert owner != null;
     for (GrParameter parameter : list.getParameters()) {
       if (parameter.equals(variable)) continue;
@@ -70,20 +58,19 @@ public class GroovyValidationUtil {
       }
       child = child.getNextSibling();
     }
-    if (parent instanceof GrParametersOwner) { //method or closure parameters
-      GrParametersOwner owner = (GrParametersOwner)parent;
+    if (parent instanceof GrParameterListOwner owner) { //method or closure parameters
       for (GrParameter parameter : owner.getParameters()) {
         if (varName.equals(parameter.getName())) {
           addConflict(varName, parameter, conflicts);
         }
       }
-    } else if (parent instanceof GrForStatement) { // For statement binding
-      GrForStatement statement = (GrForStatement)parent;
+    } else if (parent instanceof GrForStatement statement) { // For statement binding
       GrForClause clause = statement.getClause();
       if (clause != null) {
-        final GrVariable variable = clause.getDeclaredVariable();
-        if (variable != null && varName.equals(variable.getName())) {
-          addConflict(varName, variable, conflicts);
+        for (GrVariable variable : clause.getDeclaredVariables()) {
+          if (varName.equals(variable.getName())) {
+            addConflict(varName, variable, conflicts);
+          }
         }
       }
     }
@@ -104,8 +91,7 @@ public class GroovyValidationUtil {
   }
 
   private static void validateVariableOccurrencesDownImpl(final PsiElement child, final MultiMap<PsiElement, String> conflicts, final String varName) {
-    if (child instanceof PsiNamedElement) {
-      PsiNamedElement element = (PsiNamedElement)child;
+    if (child instanceof PsiNamedElement element) {
       if (varName.equals(element.getName())) {
         addConflict(varName, element, conflicts);
       } else {
@@ -118,7 +104,7 @@ public class GroovyValidationUtil {
     }
   }
 
-  private static void addConflict(final String varName, final PsiNamedElement element, final MultiMap<PsiElement, String> conflicts) {
+  private static void addConflict(@NlsSafe String varName, PsiNamedElement element, MultiMap<PsiElement, String> conflicts) {
     if (element instanceof GrParameter) {
       conflicts.putValue(element, GroovyRefactoringBundle.message("variable.conflicts.with.parameter.0", CommonRefactoringUtil.htmlEmphasize(varName)));
     } else if (element instanceof GrField) {

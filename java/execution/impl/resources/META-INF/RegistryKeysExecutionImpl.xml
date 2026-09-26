@@ -1,0 +1,17 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="editable.java.test.console" defaultValue="false"
+                 description="Enables System.in in java test consoles (JUnit &amp; TestNG)"/>
+    <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
+    <registryKey key="ide.jvm.run.marker" defaultValue="false" description="Enable JVM-lang-based run line markers"/>
+    <registryKey key="ide.jvm.command.line.clear.all.environments" defaultValue="true"
+                 description="Clear all environments when running a JVM command line application"/>
+    <registryKey key="ide.java.show.bundled.runtime" defaultValue="true"
+                 description="Enables using bundled JetBrains Runtime for execution"/>
+    <registryKey key="debugger.target.remote.client" defaultValue="true"
+                 description="If set to false, IDEA will connect to the debugger; otherwise, the debugger will connect to IDEA"/>
+    <registryKey key="debugger.target.listen.any.address" defaultValue="true"
+                 description="If set to false, the application will listen only on the address 127.0.0.1"/>
+  </extensions>
+</idea-plugin>

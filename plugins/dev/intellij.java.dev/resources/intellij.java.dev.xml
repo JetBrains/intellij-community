@@ -1,0 +1,56 @@
+<idea-plugin visibility="internal" package="com.intellij.java.dev">
+  <resource-bundle>messages.JavaDevBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.dev.codeInsight"/>
+    <module name="intellij.dev.psiViewer"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.dev">
+    <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerExpressionExtension"/>
+    <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerCodeFragmentExtension"/>
+    <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerMethodExtension"/>
+    <psiViewer.propertyNodeFactory implementation="com.intellij.java.dev.psiViewer.PsiViewerPsiTypeNode$Factory"/>
+
+    <lang.goodCodeRedVisitor language="JAVA" implementationClass="com.intellij.java.dev.codeInsight.internal.JavaGoodCodeRedVisitor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="" shortName="HighlightVisitorInternal"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" isInternal="true"
+                     level="ERROR" implementationClass="com.intellij.java.dev.codeInsight.internal.HighlightVisitorInternalInspection"
+                     key="inspections.highlight.visitor.internal.display.name"/>
+    <applicationSettings service="com.intellij.java.dev.psiViewer.debug.PsiViewerDebugSettings"/>
+  </extensions>
+
+  <actions>
+    <action class="com.intellij.java.dev.psiViewer.debug.PsiViewerDebugAction" id="Debug.PsiViewer">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
+    <action class="com.intellij.java.dev.psiViewer.debug.PsiViewerDebugSelectUIAction" id="Debug.PsiViewer.Toggle.UI"/>
+  </actions>
+</idea-plugin>

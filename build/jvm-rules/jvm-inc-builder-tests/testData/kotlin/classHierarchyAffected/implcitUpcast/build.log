@@ -1,0 +1,40 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_implcitUpcast-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/implcitUpcast/a/B.kt
+End of files
+Cleaning output files:
+  C.class
+  CallUseAWithBKt.class
+  CallUseAWithCKt.class
+  GetBKt.class
+  GetCKt.class
+  META-INF/kotlin_classHierarchyAffected_implcitUpcast-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/implcitUpcast/a/C.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/callUseAWithB.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/callUseAWithC.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/getB.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/getC.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_implcitUpcast-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/implcitUpcast/a/B.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/C.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/callUseAWithB.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/callUseAWithC.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/getB.kt
+  kotlin/classHierarchyAffected/implcitUpcast/a/getC.kt
+End of files
+------------------------------------------
+Exit code: OK

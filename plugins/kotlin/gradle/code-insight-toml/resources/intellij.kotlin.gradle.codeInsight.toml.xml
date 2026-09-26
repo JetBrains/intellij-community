@@ -1,0 +1,37 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.gradle.completion"/>
+    <module name="intellij.gradle.java"/>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler
+            implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleVersionCatalogGotoDeclarationHandler"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogReferencesSearcher"/>
+    <lang.elementManipulator
+            forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
+            implementationClass="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinDotQualifiedExpressionManipulator"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <psiReferenceProvider implementation="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleVersionCatalogPsiReferenceProviderContributor"/>
+  </extensions>
+
+</idea-plugin>

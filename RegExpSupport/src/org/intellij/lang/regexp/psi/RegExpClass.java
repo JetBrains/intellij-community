@@ -27,6 +27,5 @@ public interface RegExpClass extends RegExpAtom, RegExpClassElement {
      */
     boolean isNegated();
 
-    @NotNull
-    RegExpClassElement[] getElements();
+    RegExpClassElement @NotNull [] getElements();
 }

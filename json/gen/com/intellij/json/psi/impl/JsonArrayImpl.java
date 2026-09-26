@@ -13,14 +13,16 @@ import com.intellij.navigation.ItemPresentation;
 
 public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
 
-  public JsonArrayImpl(ASTNode node) {
+  public JsonArrayImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitArray(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
@@ -32,8 +34,8 @@ public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
   }
 
-  @Nullable
-  public ItemPresentation getPresentation() {
+  @Override
+  public @Nullable ItemPresentation getPresentation() {
     return JsonPsiImplUtils.getPresentation(this);
   }
 

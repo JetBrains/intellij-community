@@ -1,0 +1,71 @@
+{header}
+    <title>{repo|escape}: Summary</title>
+    <link rel="alternate" type="application/atom+xml" href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}"/>
+    <link rel="alternate" type="application/rss+xml" href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}"/>
+</head>
+
+<body>
+<div id="container">
+    <div class="page-header">
+        <h1 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb} / summary</h1>
+
+        {searchform}
+
+        <ul class="page-nav">
+            <li class="current">summary</li>
+            <li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a></li>
+            <li><a href="{url|urlescape}log{sessionvars%urlparameter}">changelog</a></li>
+            <li><a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a></li>
+            <li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+            <li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+            <li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+            <li><a href="{url|urlescape}file{sessionvars%urlparameter}">files</a></li>
+            {archives%archiveentry}
+            <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+        </ul>
+    </div>
+
+    <h2 class="no-link no-border">Mercurial Repository Overview</h2>
+    <dl class="overview">
+        <dt>name</dt>
+        <dd>{repo|escape}</dd>
+        <dt>description</dt>
+        <dd>{desc}</dd>
+        <dt>owner</dt>
+        <dd>{owner|obfuscate}</dd>
+        <dt>last change</dt>
+        <dd class="date age">{lastchange|rfc822date}</dd>
+    </dl>
+
+    <h2><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">Changes</a></h2>
+    <table>
+{shortlog%shortlogentry}
+        <tr class="light">
+            <td colspan="4"><a class="list" href="{url|urlescape}shortlog{sessionvars%urlparameter}">...</a></td>
+        </tr>
+    </table>
+
+    <h2><a href="{url|urlescape}tags{sessionvars%urlparameter}">Tags</a></h2>
+    <table>
+{tags%tagentry}
+        <tr class="light">
+            <td colspan="3"><a class="list" href="{url|urlescape}tags{sessionvars%urlparameter}">...</a></td>
+        </tr>
+    </table>
+
+    <h2><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">Bookmarks</a></h2>
+    <table>
+    {bookmarks%bookmarkentry}
+        <tr class="light">
+            <td colspan="3"><a class="list" href="{url|urlescape}bookmarks{sessionvars%urlparameter}">...</a></td>
+        </tr>
+    </table>
+
+    <h2><a href="{url|urlescape}branches{sessionvars%urlparameter}">Branches</a></h2>
+    <table>
+    {branches%branchentry}
+        <tr class="light">
+          <td colspan="3"><a class="list" href="{url|urlescape}branches{sessionvars%urlparameter}">...</a></td>
+        </tr>
+    </table>
+{footer}

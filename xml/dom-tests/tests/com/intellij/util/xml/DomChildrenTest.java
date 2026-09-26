@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomChildrenTest extends DomTestCase {
 
   private MyElement createElement(final String xml) throws IncorrectOperationException {
@@ -42,7 +39,7 @@ public class DomChildrenTest extends DomTestCase {
 
   public void testGetChild() {
     final MyElement element = createElement("<a>" + "<child>foo</child>" + "</a>");
-    element.toString();
+    assertNotNull(element.toString());
     assertEquals("foo", element.getMyChild().getValue());
     assertEquals("foo", element.getChild().getValue());
     assertSame(element.getChild(), element.getMyChild());
@@ -104,12 +101,12 @@ public class DomChildrenTest extends DomTestCase {
       element.addAbstractElement(MyFooConcreteElement.class);
       element.addAbstractElement(MyFooConcreteElement.class, 1);
       element.addAbstractElement(2, MyBarConcreteElement.class);
-      Class[] classes = new Class[]{MyBarConcreteElement.class, MyFooConcreteElement.class, MyBarConcreteElement.class,
+      Class[] classes = {MyBarConcreteElement.class, MyFooConcreteElement.class, MyBarConcreteElement.class,
         MyFooConcreteElement.class, MyFooConcreteElement.class};
       final List<MyAbstractElement> abstractElements = element.getAbstractElements();
       for (int i = 0; i < abstractElements.size(); i++) {
         MyAbstractElement abstractElement = abstractElements.get(i);
-        assertTrue(String.valueOf(i) + " " + abstractElement.getClass(), classes[i].isInstance(abstractElement));
+        assertTrue(i + " " + abstractElement.getClass(), classes[i].isInstance(abstractElement));
         assertEquals(String.valueOf(i), classes[i].getName(), abstractElement.getXmlTag().getAttributeValue("foo"));
       }
     }
@@ -471,7 +468,7 @@ public class DomChildrenTest extends DomTestCase {
   }
 
   private List<String> getFixedPath(final DomElement element) {
-    return ContainerUtil.map2List(DomUtil.getFixedPath(element), s -> s.getName());
+    return ContainerUtil.map(DomUtil.getFixedPath(element), s -> s.getName());
   }
 
   public void testElementsWithoutXmlGetItLater() {
@@ -582,7 +579,7 @@ public class DomChildrenTest extends DomTestCase {
 
     @Override
     public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
-      tag.setAttribute("foo", ((Class)aClass).getName());
+      tag.setAttribute("foo", ((Class<?>)aClass).getName());
     }
 
     @Override

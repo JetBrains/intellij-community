@@ -19,9 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 
-/**
- * @author ven
- */
 public interface MoveInstanceMethodRefactoring extends Refactoring {
   PsiMethod getMethod();
   PsiVariable getTargetVariable();

@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  BKt.class
+  META-INF/kotlin_pureKotlin_typealiasChainCascade-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasChainCascade/a/b.kt
+End of files
+Cleaning output files:
+  AKt.class
+  META-INF/kotlin_pureKotlin_typealiasChainCascade-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasChainCascade/a/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasChainCascade-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasChainCascade/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

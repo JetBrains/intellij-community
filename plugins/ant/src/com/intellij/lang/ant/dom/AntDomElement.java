@@ -22,7 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -32,9 +36,8 @@ import java.util.NoSuchElementException;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
-  public static enum Role {
+  public enum Role {
     TASK, DATA_TYPE
   }
   public static final Key<Role> ROLE = Key.create("element_role");
@@ -89,17 +92,20 @@ public abstract class AntDomElement implements DomElement {
 
   public final Iterator<AntDomElement> getAntChildrenIterator() {
     final List<DomElement> children = DomUtil.getDefinedChildren(this, true, false);
-    if (children.size() == 0) {
-      return Collections.<AntDomElement>emptyList().iterator();
+    if (children.isEmpty()) {
+      return Collections.emptyIterator();
     }
     final Iterator<DomElement> it = children.iterator();
-    return new Iterator<AntDomElement>() {
+    return new Iterator<>() {
       private DomElement myUnprocessedElement;
+
+      @Override
       public boolean hasNext() {
         findNextAntElement();
         return myUnprocessedElement != null;
       }
 
+      @Override
       public AntDomElement next() {
         findNextAntElement();
         if (myUnprocessedElement == null) {
@@ -122,28 +128,25 @@ public abstract class AntDomElement implements DomElement {
         }
         while (!(myUnprocessedElement instanceof AntDomElement));
       }
-      
-      public void remove() {
-        throw new UnsupportedOperationException("remove");
-      }
     };
   }
 
   public final boolean isTask() {
-    return Role.TASK.equals(getChildDescription().getUserData(ROLE));
+    return Role.TASK == getChildDescription().getUserData(ROLE);
   }
 
   public final boolean isDataType() {
-    return Role.DATA_TYPE.equals(getChildDescription().getUserData(ROLE));
+    return Role.DATA_TYPE == getChildDescription().getUserData(ROLE);
   }
-  
+
+  @Override
   public String toString() {
     final XmlTag tag = getXmlTag();
     if (tag == null) {
       return super.toString();
     }
     final String name = tag.getName();
-    if ("".equals(name)) {
+    if (name.isEmpty()) {
       return super.toString();
     }
     return name;

@@ -1,45 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
+import com.intellij.util.text.matching.MatchedFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
-class LookupPreview {
+final class LookupPreview {
   private final List<Inlay> myInlays = new ArrayList<>();
   private final LookupImpl myLookup;
 
@@ -82,39 +69,40 @@ class LookupPreview {
         return itemText;
       }
 
-      FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(prefix, itemText);
+      @Nullable List<@NotNull MatchedFragment> fragments = LookupCellRenderer.getMatchingFragmentList(prefix, itemText);
       if (fragments != null && !fragments.isEmpty()) {
-        List<TextRange> list = ContainerUtil.newArrayList(fragments);
-        return itemText.substring(list.get(list.size() - 1).getEndOffset());
+        List<MatchedFragment> list = new ArrayList<>(fragments);
+        return itemText.substring(list.getLast().getEndOffset());
       }
     }
     return "";
   }
 
   private void addInlay(String suffix, int caretOffset) {
-    Inlay inlay = myLookup.getTopLevelEditor().getInlayModel().addInlineElement(caretOffset, createGrayRenderer(suffix));
+    Inlay inlay = myLookup.getTopLevelEditor().getInlayModel().addInlineElement(caretOffset, true, createGrayRenderer(suffix));
     if (inlay != null) {
       myInlays.add(inlay);
       Disposer.register(myLookup, inlay);
     }
   }
 
-  @NotNull
-  private static EditorCustomElementRenderer createGrayRenderer(final String suffix) {
+  private static @NotNull EditorCustomElementRenderer createGrayRenderer(final String suffix) {
     return new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Editor editor) {
+      public int calcWidthInPixels(@NotNull Inlay inlay) {
+        Editor editor = inlay.getEditor();
         return editor.getContentComponent().getFontMetrics(getFont(editor)).stringWidth(suffix);
       }
 
       @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+        Editor editor = inlay.getEditor();
         g.setColor(JBColor.GRAY);
         g.setFont(getFont(editor));
-        g.drawString(suffix, r.x, r.y + ((EditorImpl)editor).getAscent());
+        g.drawString(suffix, r.x, r.y + editor.getAscent());
       }
 
-      private Font getFont(@NotNull Editor editor) {
+      private static Font getFont(@NotNull Editor editor) {
         return editor.getColorsScheme().getFont(EditorFontType.PLAIN);
       }
     };

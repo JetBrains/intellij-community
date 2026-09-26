@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.caches
 
 import com.intellij.openapi.util.Key
@@ -11,6 +11,7 @@ import com.intellij.util.containers.MostlySingularMultiMap
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 private data class ElementWithState(val element: PsiElement, val state: ResolveState)
 
@@ -38,7 +39,7 @@ class FileCacheBuilderProcessor(private val annotationResolve: Boolean) : PsiSco
 
   override fun isAnnotationResolve(): Boolean = annotationResolve
 
-  override fun shouldProcess(kind: ElementClassHint.DeclarationKind?): Boolean {
+  override fun shouldProcess(kind: ElementClassHint.DeclarationKind): Boolean {
     return !annotationResolve || kind === ElementClassHint.DeclarationKind.CLASS
   }
 }
@@ -46,10 +47,16 @@ class FileCacheBuilderProcessor(private val annotationResolve: Boolean) : PsiSco
 private class FileDeclarationsCache(private val declarations: MostlySingularMultiMap<String, ElementWithState>) : DeclarationHolder {
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+    val newState = state.put(sorryCannotKnowElementKind, true)
     val declarationProcessor = { (element, cachedState): ElementWithState ->
-      processor.execute(element, state.putAll(cachedState))
+      processor.execute(element, newState.putAll(cachedState))
     }
     val name = processor.getName(state)
-    return if (name == null) declarations.processAllValues(declarationProcessor) else declarations.processForKey(name, declarationProcessor)
+    return if (name == null) {
+      declarations.processAllValues(declarationProcessor)
+    }
+    else {
+      declarations.processForKey(name, declarationProcessor)
+    }
   }
 }

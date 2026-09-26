@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -21,7 +7,16 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -33,19 +28,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  protected final String mySignature;
-  protected final String myBody;
+public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private final String mySignature;
+  private final String myBody;
 
-  private CreateMethodQuickFix(final PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  private CreateMethodQuickFix(final PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     super(targetClass);
     mySignature = signature;
     myBody = body;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     PsiClass myTargetClass = (PsiClass)getStartElement();
     String signature = myTargetClass == null ? "" :
                        PsiFormatUtil.formatMethod(createMethod(myTargetClass), PsiSubstitutor.EMPTY,
@@ -58,22 +52,21 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiFile psiFile,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiClass myTargetClass = (PsiClass)startElement;
 
     PsiMethod method = createMethod(myTargetClass);
     List<Pair<PsiExpression, PsiType>> arguments =
-      ContainerUtil.map2List(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
+      ContainerUtil.map(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
 
     method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(myTargetClass.add(method));
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
@@ -89,8 +82,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
     return elementFactory.createMethodFromText(methodText, null);
   }
 
-  @Nullable
-  public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  public static @Nullable CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
       fix.createMethod(targetClass);

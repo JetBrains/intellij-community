@@ -1,16 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
-import com.intellij.lang.java.beans.PropertyKind.*
+import com.intellij.lang.java.beans.PropertyKind.BOOLEAN_GETTER
+import com.intellij.lang.java.beans.PropertyKind.GETTER
+import com.intellij.lang.java.beans.PropertyKind.SETTER
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.JvmValue
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
+import com.intellij.lang.jvm.actions.CreateReadOnlyPropertyActionGroup
+import com.intellij.lang.jvm.actions.JvmActionGroup
+import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getPropertyNameByAccessorName
@@ -30,8 +40,12 @@ internal class CreatePropertyAction(
 
   override fun getFamilyName(): String = message("create.property.from.usage.family")
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    return CreateFieldAction(target, PropertyRequest(), false).generatePreview(project, editor, psiFile)
+  }
+
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    if (!super.isAvailable(project, editor, psiFile)) return false
     val (propertyName, propertyKind) = getPropertyNameAndKind(request.methodName) ?: return false
 
     if (propertyKind == SETTER && readOnly) return false
@@ -51,7 +65,7 @@ internal class CreatePropertyAction(
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
         val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
-        if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
+        if (expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
         else {
@@ -72,17 +86,18 @@ internal class CreatePropertyAction(
     }
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     CreateFieldAction(target, PropertyRequest(), false).apply {
-      if (isAvailable(project, editor, file)) invoke(project, editor, file)
+      if (isAvailable(project, editor, psiFile)) invoke(project, editor, psiFile)
     }
   }
 
   override fun getActionGroup(): JvmActionGroup = if (readOnly) CreateReadOnlyPropertyActionGroup else CreatePropertyActionGroup
 
   inner class PropertyRequest : CreateFieldRequest {
-
     override fun isValid() = true
+
+    override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
     override fun getModifiers() = if (readOnly) listOf(JvmModifier.FINAL) else emptyList()
 
@@ -93,5 +108,9 @@ internal class CreatePropertyAction(
     override fun getTargetSubstitutor() = request.targetSubstitutor
 
     override fun isConstant(): Boolean = false
+
+    override fun getInitializer(): JvmValue? = null
+
+    override fun isStartTemplate(): Boolean = request.isStartTemplate
   }
 }

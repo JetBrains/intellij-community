@@ -1,32 +1,60 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.spi.json.Jackson3JsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
 @Tag("JsonResponseHandler")
 public final class JsonPathResponseHandler extends SelectorBasedResponseHandler {
+  static {
+    Configuration.setDefaults(new Configuration.Defaults() {
+      private final JsonProvider jsonProvider = new Jackson3JsonProvider();
+      private final MappingProvider mappingProvider = new Jackson3MappingProvider();
 
-  private static final Map<Class<?>, String> JSON_TYPES = ContainerUtil.newHashMap(
-    new Pair<>(Map.class, "JSON object"),
-    new Pair<>(List.class, "JSON array"),
-    new Pair<>(String.class, "JSON string"),
-    new Pair<>(Integer.class, "JSON number"),
-    new Pair<>(Double.class, "JSON number"),
-    new Pair<>(Boolean.class, "JSON boolean")
+      @Override
+      public JsonProvider jsonProvider() {
+        return jsonProvider;
+      }
+
+      @Override
+      public MappingProvider mappingProvider() {
+        return mappingProvider;
+      }
+
+      @Override
+      public Set<Option> options() {
+        return EnumSet.noneOf(Option.class);
+      }
+    });
+  }
+
+  private static final Map<Class<?>, String> JSON_TYPES = Map.of(
+    Map.class, "JSON object",
+    List.class, "JSON array",
+    String.class, "JSON string",
+    Integer.class, "JSON number",
+    Double.class, "JSON number",
+    Boolean.class, "JSON boolean"
   );
 
   private final Map<String, JsonPath> myCompiledCache = new HashMap<>();
@@ -42,8 +70,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     super(repository);
   }
 
-  @Nullable
-  private Object extractRawValue(@NotNull Selector selector, @NotNull String source) throws Exception {
+  private @Nullable Object extractRawValue(@NotNull Selector selector, @NotNull String source) throws Exception {
     if (StringUtil.isEmpty(selector.getPath())) {
       return null;
     }
@@ -61,8 +88,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return value;
   }
 
-  @Nullable
-  private <T> T extractValueAndCheckType(@NotNull Selector selector, @NotNull String source, Class<T> cls) throws Exception {
+  private @Nullable <T> T extractValueAndCheckType(@NotNull Selector selector, @NotNull String source, Class<T> cls) throws Exception {
     final Object value = extractRawValue(selector, source);
     if (value == null) {
       return null;
@@ -77,46 +103,42 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return casted;
   }
 
-  @NotNull
   @Override
-  protected List<Object> selectTasksList(@NotNull String response, int max) throws Exception {
+  protected @NotNull List<Object> selectTasksList(@NotNull String response, int max) throws Exception {
     @SuppressWarnings("unchecked")
     List<Object> list = (List<Object>)extractValueAndCheckType(getSelector(TASKS), response, List.class);
     if (list == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.map2List(list, (Function<Object, Object>)o -> o.toString()).subList(0, Math.min(list.size(), max));
+    JsonProvider jsonProvider = Configuration.defaultConfiguration().jsonProvider();
+    return ContainerUtil.getFirstItems(ContainerUtil.map(list, o -> jsonProvider.toJson(o)), max);
   }
 
-  @Nullable
   @Override
-  protected String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception {
+  protected @Nullable String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception {
     //return extractValueAndCheckType((String)context, selector, String.class);
     final Object value = extractRawValue(selector, (String)context);
     if (value == null) {
       return null;
     }
     if (value instanceof String || value instanceof Number || value instanceof Boolean) {
-      return value.toString();
+      return value.toString(); //NON-NLS
     }
     throw new Exception(String.format("JsonPath expression '%s' should match string value. Got '%s' instead",
                                       selector.getPath(), value));
   }
 
-  @Nullable
   @Override
-  protected Boolean selectBoolean(@NotNull Selector selector, @NotNull Object context) throws Exception {
+  protected @Nullable Boolean selectBoolean(@NotNull Selector selector, @NotNull Object context) throws Exception {
     return extractValueAndCheckType(selector, (String)context, Boolean.class);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  private Long selectLong(@NotNull Selector selector, @NotNull String source) throws Exception {
+  private @Nullable Long selectLong(@NotNull Selector selector, @NotNull String source) throws Exception {
     return extractValueAndCheckType(selector, source, Long.class);
   }
 
-  @NotNull
-  private JsonPath lazyCompile(@NotNull String path) throws Exception {
+  private @NotNull JsonPath lazyCompile(@NotNull String path) throws Exception {
     JsonPath jsonPath = myCompiledCache.get(path);
     if (jsonPath == null) {
       try {
@@ -130,9 +152,8 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return jsonPath;
   }
 
-  @NotNull
   @Override
-  public ResponseType getResponseType() {
+  public @NotNull ResponseType getResponseType() {
     return ResponseType.JSON;
   }
 }

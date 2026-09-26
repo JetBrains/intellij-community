@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.util.Key;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +15,6 @@ public interface FoldRegion extends RangeMarker {
   FoldRegion[] EMPTY_ARRAY = new FoldRegion[0];
 
   /**
-   * If {@code Boolean.TRUE} value is set for this key on a collapsed fold region (see {@link #putUserData(Key, Object)}), 
-   * there will not be a visual indication that region contains certain highlighters inside. By default such indication is added.
-   * 
-   * @see com.intellij.openapi.editor.markup.RangeHighlighter#VISIBLE_IF_FOLDED
-   */
-  Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
-
-  /**
    * Checks if the fold region is currently expanded.
    *
    * @return true if the fold region is expanded, false otherwise.
@@ -34,6 +26,7 @@ public interface FoldRegion extends RangeMarker {
    *
    * @param expanded true if the region should be expanded, false otherwise.
    */
+  @RequiresEdt
   void setExpanded(boolean expanded);
 
   /**
@@ -49,5 +42,44 @@ public interface FoldRegion extends RangeMarker {
   @Nullable
   FoldingGroup getGroup();
 
+  /**
+   * If {@code true}, this region is always in a collapsed state, {@link #setExpanded(boolean)} does nothing for it. No marker is displayed
+   * in gutter for such a region.
+   *
+   * @see com.intellij.openapi.editor.ex.FoldingModelEx#createFoldRegion(int, int, String, FoldingGroup, boolean)
+   */
   boolean shouldNeverExpand();
+
+  /**
+   * If inner highlighters are muted for a collapsed fold region, there will be no visual indication
+   * that region contains certain highlighters inside. By default such indication is added.
+   *
+   * @see com.intellij.openapi.editor.ex.RangeHighlighterEx#isVisibleIfFolded()
+   */
+  default void setInnerHighlightersMuted(boolean value) {}
+
+  /**
+   * @see #setInnerHighlightersMuted(boolean)
+   */
+  default boolean areInnerHighlightersMuted() { return false; }
+
+  /**
+   * By default, gutter mark (for collapsing/expanding the region using mouse) is not shown for a folding region, if it's contained within
+   * a single document line. This method allows to change this behaviour for given fold region.
+   *
+   * @see #isGutterMarkEnabledForSingleLine()
+   * @see EditorSettings#setAllowSingleLogicalLineFolding(boolean)
+   */
+  default void setGutterMarkEnabledForSingleLine(boolean value) {}
+
+  /**
+   * @see #setGutterMarkEnabledForSingleLine(boolean)
+   */
+  default boolean isGutterMarkEnabledForSingleLine() { return false; }
+
+  /**
+   * Updates region's placeholder text. Should be called inside {@link FoldingModel#runBatchFoldingOperation(Runnable)}, like any other
+   * operations with fold regions.
+   */
+  default void setPlaceholderText(@NotNull String text) {}
 }

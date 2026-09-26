@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.analysis.AnalysisScope
@@ -26,9 +12,6 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import org.intellij.lang.annotations.Language
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
@@ -42,6 +25,12 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     add("org.example.m4", "C4", ModuleDescriptor.M4, "public void bar() {}")
     add("org.example.m6", "C6", ModuleDescriptor.M6, "public C7 getC7() { return new C7(); }", "org.example.m7.C7")
     add("org.example.m7", "C7", ModuleDescriptor.M7)
+  }
+  
+  fun testTestClassAndSrc() {
+    addFile("CT.java", "class CT extends org.example.m2.C2 {}", ModuleDescriptor.M_TEST)
+    addTestFile("MyTest.java", "class MyTest {}", ModuleDescriptor.M_TEST )
+    mainModule("module m.src {requires M2; requires java.base;}", ModuleDescriptor.M_TEST)
   }
 
   fun testNoSourcesAtAll() {
@@ -88,6 +77,11 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M6; }")
   }
 
+  fun testReexportedPackageImportedTransitive() {
+    mainClass("org.example.m7.*")
+    mainModule("module MAIN { requires transitive M6; }")
+  }
+
   fun testNonexistentMethodImported() {
     mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
@@ -98,8 +92,19 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires java.base; }")
   }
 
-  private fun mainModule(@Language("JAVA") text: String) {
-    addFile("module-info.java", text, ModuleDescriptor.MAIN)
+  fun testSuppressionByComment() {
+    mainClass()
+    mainModule("module M {\n //noinspection Java9RedundantRequiresStatement\n requires M2;\n}")
+  }
+
+  fun testSuppressionByAnnotation() {
+    mainClass()
+    mainModule("@SuppressWarnings(\"Java9RedundantRequiresStatement\") module M { requires M2; }")
+  }
+
+  private fun mainModule(@Language("JAVA") text: String,
+                         moduleDescriptor: ModuleDescriptor = ModuleDescriptor.MAIN) {
+    addFile("module-info.java", text, moduleDescriptor)
 
     val mainFile = myMainFile
     if (mainFile != null) {

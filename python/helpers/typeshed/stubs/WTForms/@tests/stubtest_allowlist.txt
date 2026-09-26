@@ -1,0 +1,12 @@
+# Error: is not present at runtime
+# =============================
+# This is hack to get around Field.__new__ not being able to return
+# UnboundField
+wtforms.fields.core.Field.__get__
+# Since DefaultMeta can contain arbitrary values we added __getattr__
+# to let mypy know that arbitrary attribute access is possible
+wtforms.meta.DefaultMeta.__getattr__
+
+# Should allow setting and deleting any attribute
+wtforms.fields.core.Flags.__delattr__
+wtforms.fields.core.Flags.__setattr__

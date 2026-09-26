@@ -17,19 +17,18 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.PoolOfTestIcons;
-import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
+import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -84,7 +83,6 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     final Set<String> category = new LinkedHashSet<>();
 
-    category.clear();
     category.add("Scenarios");
     assertEquals("Running: Scenarios 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
@@ -309,7 +307,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Running tests...", myFragContainer.getTextAt(0));
+    assertEquals("Running tests…", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
@@ -534,6 +532,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(PoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
   }
 
+  public void testPresentationWithDependentNamesTestProxy() {
+    SMTestProxy suiteProxy = createSuiteProxy("A");
+    SMTestProxy testProxy = createTestProxy("A.b");
+    suiteProxy.addChild(testProxy);
+    TestsPresentationUtil.formatTestProxy(testProxy, myRenderer);
+    assertEquals("b", myFragContainer.getTextAt(0));
+  }
+
+  public void testPresentationWithDependentNamesSuite() {
+    SMTestProxy suiteProxy = createSuiteProxy("A");
+    SMTestProxy suiteProxyChild = createSuiteProxy("AB");
+    suiteProxy.addChild(suiteProxyChild);
+    TestsPresentationUtil.formatTestProxy(suiteProxyChild, myRenderer);
+    assertEquals("AB", myFragContainer.getTextAt(0));
+    myRenderer.clear();
+  }
+
   public void testFormatRootNodeWithoutChildren() {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySMRootTestProxy, myRenderer);
 
@@ -541,7 +556,6 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("No Test Results", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
-
   }
 
   public void testFormatRootNodeWithoutChildren_Started() {
@@ -551,9 +565,8 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertIsAnimatorProgressIcon(myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Instantiating tests...", myFragContainer.getTextAt(0));
+    assertEquals("Instantiating tests…", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
-
   }
 
   public void testFormatRootNodeWithoutChildren_ReporterRegistered() {
@@ -566,7 +579,6 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("No tests were found", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
-
   }
 
   public void testFormatRootNodeWithoutChildren_ReporterNotRegistered() {
@@ -576,9 +588,8 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"), myFragContainer.getTextAt(0));
+    assertEquals(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"), myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
-
   }
 
   public void testFormatRootNodeWithoutChildren_Terminated() {
@@ -591,7 +602,6 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertOneElement(myFragContainer.getFragments());
     assertEquals("Terminated", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
-
   }
 
   public void testFormatRootNodeWithoutChildren_PY_2434() {
@@ -663,7 +673,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testGetTestStatusPresentation_Progress() {
     mySimpleTest.setStarted();
-    assertEquals("Running...", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+    assertEquals("Running…", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
   }
 
   public void testGetTestStatusPresentation_Passed() {
@@ -731,11 +741,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   }
 
   private static void assertIsAnimatorProgressIcon(final Icon icon) {
-    for (Icon frame : TestsProgressAnimator.FRAMES) {
-      if (icon == frame) {
-        return;
-      }
-    }
+    if (icon == SMPoolOfTestIcons.RUNNING_ICON) return;
 
     fail("Icon isn't an Animator progress frame");
   }
@@ -743,7 +749,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
   private class MyRenderer extends TestTreeRenderer {
     private final UITestUtil.FragmentsContainer myFragmentsContainer;
 
-    public MyRenderer(final boolean isPaused,
+    MyRenderer(final boolean isPaused,
                       final UITestUtil.FragmentsContainer fragmentsContainer) {
       super(new SMTRunnerConsoleProperties(createRunConfiguration(), "SMRunnerTests", DefaultDebugExecutor.getDebugExecutorInstance()) {
         @Override

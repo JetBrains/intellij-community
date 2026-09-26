@@ -1,0 +1,139 @@
+class TestDoubleCompoundXor {
+   long instanceCount = 0L;
+   int iFld = -39966;
+
+   void mainTest() {
+      int i21 = 1;// 9
+      int i22 = 1;// 10
+
+      do {
+         this.instanceCount += (long)i21 ^ this.instanceCount;// 14
+
+         for(int var3 = i21; var3 < 68; ++var3) {// 16
+            switch (i21 % 9 * 5 + 63) {// 18
+               case 98:
+                  this.instanceCount += (long)this.iFld;// 20
+                  System.out.println("instanceCount 2:" + this.instanceCount);// 21
+                  break;
+               default:
+            }
+         }
+
+         ++i21;// 29
+      } while(i21 < 373);
+
+      System.out.println("Test.instanceCount finish = " + this.instanceCount);// 31
+   }// 33
+
+   public static void main(String[] strArr) {
+      TestDoubleCompoundXor main = new TestDoubleCompoundXor();// 37
+      main.mainTest();// 38
+   }// 40
+}
+
+class 'TestDoubleCompoundXor' {
+   method 'mainTest ()V' {
+      0      5
+      1      5
+      2      6
+      3      6
+      4      9
+      9      9
+      a      9
+      b      9
+      c      9
+      d      9
+      e      9
+      f      9
+      11      9
+      12      9
+      13      9
+      14      11
+      15      11
+      16      11
+      17      11
+      18      11
+      19      11
+      1c      12
+      1d      12
+      1e      12
+      1f      12
+      20      12
+      21      12
+      22      12
+      23      12
+      24      12
+      25      12
+      38      14
+      3d      14
+      3e      14
+      3f      14
+      40      14
+      41      14
+      43      14
+      44      14
+      45      14
+      46      15
+      47      15
+      48      15
+      49      15
+      4a      15
+      4b      15
+      4c      15
+      4d      15
+      4e      15
+      4f      15
+      50      15
+      51      15
+      52      15
+      55      11
+      5b      21
+      5c      21
+      5d      21
+      5e      22
+      5f      22
+      60      22
+      61      22
+      62      22
+      65      24
+      66      24
+      67      24
+      68      24
+      69      24
+      6a      24
+      6b      24
+      6c      24
+      6d      24
+      6e      24
+      6f      24
+      70      24
+      71      24
+      72      24
+      73      24
+      74      25
+   }
+
+   method 'main ([Ljava/lang/String;)V' {
+      7      28
+      8      29
+      9      29
+      a      29
+      b      29
+      c      30
+   }
+}
+
+Lines mapping:
+9 <-> 6
+10 <-> 7
+14 <-> 10
+16 <-> 12
+18 <-> 13
+20 <-> 15
+21 <-> 16
+29 <-> 22
+31 <-> 25
+33 <-> 26
+37 <-> 29
+38 <-> 30
+40 <-> 31

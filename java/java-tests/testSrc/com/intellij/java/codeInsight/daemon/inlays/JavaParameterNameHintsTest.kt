@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
@@ -20,16 +6,29 @@ import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
+class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_8_ANNOTATED
+  }
 
   override fun tearDown() {
-    val default = ParameterNameHintsSettings()
-    ParameterNameHintsSettings.getInstance().loadState(default.state)
-    super.tearDown()
+    try {
+      val default = ParameterNameHintsSettings()
+      ParameterNameHintsSettings.getInstance().loadState(default.state)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun check(text: String) {
@@ -88,44 +87,6 @@ class Fooo {
  public void show(String title, String message) {}
 
 }""")
-  }
-
-
-  fun `test no hints for generic builders`() {
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(10);
-    new Stream<Integer>().skip(10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(<hint text="n:"/>10);
-    new Stream<Integer>().skip(<hint text="n:"/>10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
   }
 
 
@@ -268,7 +229,7 @@ public class CharSymbol {
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, /*comment*/<hint text="xoo:"/>2);
+    main(<hint text="isActive:"/>true,<hint text="requestFocus:"/>false, <hint text="xoo:"/>2);
   }
 }
 """)
@@ -276,7 +237,7 @@ public class Test {
   }
 
   fun `test suppress for erroneous parameters`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(false)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -288,7 +249,7 @@ public class Test {
     }
 }
 """)
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -354,7 +315,7 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.cmpre(<hint text="oe1:"/>0, /** ddd */<hint text="oq2:"/>3);
+    c.cmpre(<hint text="oe1:"/>0, <hint text="oq2:"/>3);
     l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
@@ -456,7 +417,7 @@ public class VarArgTest {
 class Test {
 
   public void main() {
-    String.format("line", "eee", "www");
+    String.format(<hint text="s:"/>"line", <hint text="...objects:"/>"eee", "www");
   }
 
 }
@@ -510,83 +471,6 @@ interface DockManager {}
 interface Content {}
 """)
   }
-
-  fun `test do not inline builder pattern`() {
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int time) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(false).timeWait(100);
-  }
-
-}
-""")
-    
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int millis) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
-  }
-
-}
-""")
-  }
-
-  
-  fun `test builder method only method with one param`() {
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(<hint text="value:"/>false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-  
-  }
-  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
@@ -701,7 +585,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -715,7 +599,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -729,7 +613,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -744,7 +628,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -758,7 +642,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -905,12 +789,12 @@ class Test {
     myFixture.doHighlighting()
     
     inlays = getHints()
-    assert(inlays.size == 1 && inlays.first() == "qas:", { "Real inlays ${inlays.size}" })
+    assert(inlays.size == 1 && inlays.first() == "qas:") { "Real inlays ${inlays.size}" }
   }
 
 
   fun `test params with same type`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void test() {
@@ -952,7 +836,7 @@ public class Test {
   }
 
   fun `test one-char one-digit hints enabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(true)
     check("""
 class Test {
   void main() {
@@ -964,7 +848,7 @@ class Test {
   }
 
   fun `test ordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -984,7 +868,7 @@ class Test {
   }
 
   fun `test unordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -998,7 +882,7 @@ class Test {
   }
 
   fun `test ordered with varargs`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -1012,7 +896,7 @@ class Test {
   }
 
   fun `test one-char one-digit hints disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1024,7 +908,7 @@ class Test {
   }
 
   fun `test just some unparsable parameter name`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -1037,6 +921,193 @@ class Test {
 """)
   }
 
+  fun `test unclear expression type setting true`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(<hint text="info:"/>data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test unclear expression type setting false`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test enum parameter names`() {
+    check("""
+public enum Thingy {
+    ONE(<hint text="green:"/>false, <hint text="striped:"/>true),
+    TWO(<hint text="green:"/>false, <hint text="striped:"/>false),
+    THREE(<hint text="...x:"/>12,32,3,2,32,3,2,3,23);
+    private boolean green;
+    private boolean striped;
+
+    Thingy(final boolean green, final boolean striped) {
+        this.green = green;
+        this.striped = striped;
+    }
+
+    Thingy(int... x) {
+    }
+}""")
+  }
+
+
+  fun `test enum parameter names disabled`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForEnumConstants.set(false)
+    check("""
+public enum Thingy {
+    ONE(false, true),
+    TWO(false, false),
+    THREE(12,32,3,2,32,3,2,3,23);
+    private boolean green;
+    private boolean striped;
+
+    Thingy(final boolean green, final boolean striped) {
+        this.green = green;
+        this.striped = striped;
+    }
+
+    Thingy(int... x) {
+    }
+}""")
+  }
+
+
+  fun `test constructor call`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
+    check("""
+public class Test {
+    static class A {
+      A(boolean hardName){}
+    }
+
+    void foo() {
+      new A(<hint text="hardName:"/>true);
+    }
+}""")
+  }
+
+
+  fun `test constructor call disabled`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(false)
+    check("""
+public class Test {
+    static class A {
+      A(boolean hardName){}
+    }
+
+    void foo() {
+      new A(true);
+    }
+}""")
+  }
+
+  fun `test constructor call with other features`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
+    check("""
+public class Test {
+    static class A {
+      A(boolean a1, boolean a2){}
+    }
+
+    void foo() {
+      new A(true, false);
+    }
+}""")
+  }
+
+  fun `test parameters have comments`() {
+    check("""
+public class Test {
+    static class A {
+      A(boolean leadingComment, boolean middleWithoutComments, boolean trailingComment){}
+    }
+
+    void foo() {
+      new A(/* comment not necessarily related to name */ true, <hint text="middleWithoutComments:"/>false, true /**/);
+    }
+}""")
+  }
+
+  fun `test optional empty`() {
+    check("""
+import java.util.Optional;
+public class Test {
+    void main() {
+      foo(<hint text="s:"/>Optional.empty());
+    }
+
+    static void foo(Optional<String> s) {}
+}""")
+  }
+
+  fun `test undo after typing space`() {
+    check("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/>2); }
+}
+""")
+    EditorTestUtil.testUndoInEditor(myFixture.editor) {
+      myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(");"))
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
+      myFixture.type(' ')
+      myFixture.doHighlighting()
+      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_UNDO)
+      myFixture.doHighlighting()
+      myFixture.checkResultWithInlays("""
+class C {
+  void m(int a, int b) {}
+  void m2() { m(<hint text="a:"/>1, <hint text="b:"/><caret>2); }
+}
+""")
+    }
+  }
+
+
+  fun `test same argument and parameter names`() {
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
+    check("""
+class A {
+    static class ClassA {
+        static String getName() {
+            return "Asd";
+        }
+    }
+
+    static void testHints(ClassA entity, String name) {
+
+    }
+
+    public static void main(String[] args) {
+        ClassA entity = new ClassA();
+        testHints(entity, ClassA.getName());
+    }
+}
+""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()
@@ -1045,16 +1116,20 @@ class Test {
       .getInlineElementsInRange(0, document.textLength)
       .mapNotNull { manager.getHintText(it) }
   }
+
   
-  
-  fun assertSingleInlayWithText(expectedText: String) {
-    val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+  private fun assertSingleInlayWithText(expectedText: String) {
+    val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
+      editor,
+      0,
+      editor.document.textLength
+    )
     assertThat(inlays).hasSize(1)
     val realText = getHintText(inlays[0])
     assertThat(realText).isEqualTo(expectedText)
   }
 
-  fun getHintText(inlay: Inlay): String {
+  fun getHintText(inlay: Inlay<*>): String {
     return ParameterHintsPresentationManager.getInstance().getHintText(inlay)
   }
 

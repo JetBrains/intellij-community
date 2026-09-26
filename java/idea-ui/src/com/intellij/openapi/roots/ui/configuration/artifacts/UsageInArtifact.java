@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.libraries.Library;
@@ -5,22 +6,20 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author nik
- */
 public class UsageInArtifact extends ProjectStructureElementUsage {
   private final Artifact myOriginalArtifact;
   private final ArtifactsStructureConfigurableContext myContext;
   private final ProjectStructureElement mySourceElement;
   private final ProjectStructureElement myContainingElement;
-  private final String myParentPath;
+  private final @NlsSafe String myParentPath;
   private final PackagingElement<?> myPackagingElement;
 
   public UsageInArtifact(Artifact originalArtifact, ArtifactsStructureConfigurableContext context, ProjectStructureElement sourceElement,
@@ -81,9 +80,8 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
     return myOriginalArtifact.getArtifactType().getIcon();
   }
 
-  @Nullable
   @Override
-  public String getPresentableLocationInElement() {
+  public @Nullable String getPresentableLocationInElement() {
     return "[" + myParentPath + "]";
   }
 

@@ -1,0 +1,23 @@
+// "Surround with 'with(this@run) { ... }'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// WITH_STDLIB
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Foo {
+    fun String.bar() {
+    }
+}
+
+fun withFoo(f: context(Foo) () -> Unit) {}
+
+fun test(foo: Foo) {
+    foo.run {
+        with("inner receiver") {
+            withFoo {
+                with(this@run) { ""?.bar() }
+            }
+        }
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

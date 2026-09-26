@@ -1,0 +1,7 @@
+// "Convert too long character literal to string" "true"
+// K2_ERROR: TOO_MANY_CHARACTERS_IN_CHARACTER_LITERAL
+
+fun foo() {
+    'foo"bar'<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.TooLongCharLiteralToStringFix

@@ -1,0 +1,14 @@
+<node text="testField (A)" base="true">
+  <node text="main1(String[]) (A)">
+    <node text="superMain(String[]) (A)"/>
+  </node>
+  <node text="main2(String[]) (A)">
+    <node text="superMain(String[]) (A)"/>
+  </node>
+  <node text="main2(String[]) (A)">
+    <node text="superMain(String[]) (A)"/>
+  </node>
+  <node text="main3(String[]) (A)">
+    <node text="superMain(String[]) (A)"/>
+  </node>
+</node>

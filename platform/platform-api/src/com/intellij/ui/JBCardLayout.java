@@ -1,31 +1,29 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -37,9 +35,9 @@ public class JBCardLayout extends CardLayout {
   public enum SwipeDirection {FORWARD, BACKWARD, AUTO}
 
   private final Map<String, Component> myMap = new LinkedHashMap<>();
-  private final int mySwipeTime = 200;//default value, provide setter if need
-  private final int mySwipeSteps = 20;//default value, provide setter if need
-  private final Timer myTimer = UIUtil.createNamedTimer("CardLayoutTimer",Math.max(1, mySwipeTime / mySwipeSteps));
+  private static final int mySwipeTime = 200;//default value, provide setter if need
+  private static final int mySwipeSteps = 20;//default value, provide setter if need
+  private final Timer myTimer = TimerUtil.createNamedTimer("CardLayoutTimer", Math.max(1, mySwipeTime / mySwipeSteps));
   private Component mySwipeFrom = null;
   private Component mySwipeTo = null;
 
@@ -59,7 +57,7 @@ public class JBCardLayout extends CardLayout {
 
   @Override
   public void removeLayoutComponent(Component comp) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.removeLayoutComponent(comp);
     for (Iterator<Map.Entry<String, Component>> iterator = myMap.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Component> entry = iterator.next();
@@ -77,13 +75,13 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction) {
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction) {
     swipe(parent, name, direction, null);
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction,
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction,
                     final @Nullable Runnable onDone) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     mySwipeFrom = findVisible(parent);
     mySwipeTo = myMap.get(name);
     if (mySwipeTo == null) return;
@@ -125,7 +123,7 @@ public class JBCardLayout extends CardLayout {
           }
           return;
         }
-        linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));
+        linearProgress[0] = MathUtil.clamp((float)timePassed / mySwipeTime, 0, 1);
         double naturalProgress = (1 - Math.cos(Math.PI * linearProgress[0])) / 2;
         Rectangle bounds = new Rectangle(parent.getWidth(), parent.getHeight());
         JBInsets.removeFrom(bounds, parent.getInsets());
@@ -147,7 +145,7 @@ public class JBCardLayout extends CardLayout {
     myTimer.start();
   }
 
-  private void stopSwipeIfNeed() {
+  private void stopSwipeIfNeeded() {
     if (myTimer.isRunning()) {
       myTimer.stop();
       mySwipeFrom = null;
@@ -158,8 +156,7 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  @Nullable
-  private static Component findVisible(Container parent) {
+  private static @Nullable Component findVisible(Container parent) {
     for (int i = 0; i < parent.getComponentCount(); i++) {
       Component component = parent.getComponent(i);
       if (component.isVisible()) return component;
@@ -169,34 +166,35 @@ public class JBCardLayout extends CardLayout {
 
   @Override
   public void first(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.first(parent);
   }
 
   @Override
   public void next(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.next(parent);
   }
 
   @Override
   public void previous(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.previous(parent);
   }
 
   @Override
   public void last(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.last(parent);
   }
 
   @Override
   public void show(Container parent, String name) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.show(parent, name);
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) throws IOException {
     final JBCardLayout cardLayout = new JBCardLayout();
 

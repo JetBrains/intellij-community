@@ -1,58 +1,44 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.Predicate;
 
-public class IntersectionPackageSet extends PackageSetBase {
-  private final PackageSet myFirstSet;
-  private final PackageSet mySecondSet;
+public final class IntersectionPackageSet extends CompoundPackageSet {
+  public static @NotNull PackageSet create(PackageSet @NotNull ... sets) {
+    if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
+    return sets.length == 1 ? sets[0] : new IntersectionPackageSet(sets);
+  }
 
-  private String myText;
-
-  public IntersectionPackageSet(PackageSet firstSet, PackageSet secondSet) {
-    myFirstSet = firstSet;
-    mySecondSet = secondSet;
+  private IntersectionPackageSet(PackageSet @NotNull ... sets) {
+    super(sets);
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+    PsiFile psiFile = null;
 
-  @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-    if (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, project, holder) : myFirstSet.contains(getPsiFile(file, project), holder)) {
-      if (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, project, holder) : mySecondSet.contains(getPsiFile(file, project), holder)) {
-        return true;
+    for (PackageSet set : mySets) {
+      if (set instanceof PackageSetBase base) {
+        if (!base.contains(file, project, holder)) {
+          return false;
+        }
+      }
+      else {
+        if (psiFile == null) {
+          psiFile = getPsiFile(file, project);
+        }
+        if (!set.contains(psiFile, holder)) return false;
       }
     }
-    return false;
-  }
-
-  @Override
-  @NotNull
-  public PackageSet createCopy() {
-    return new IntersectionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
+    return true;
   }
 
   @Override
@@ -61,46 +47,18 @@ public class IntersectionPackageSet extends PackageSetBase {
   }
 
   @Override
-  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
-    PackageSet firstUpdated = transformation.apply(myFirstSet);
-    PackageSet secondUpdated = transformation.apply(mySecondSet);
-    if (firstUpdated != myFirstSet || secondUpdated != mySecondSet) {
-      return new UnionPackageSet(firstUpdated != myFirstSet ? firstUpdated : myFirstSet.createCopy(),
-                                 secondUpdated != mySecondSet ? secondUpdated : mySecondSet.createCopy());
-    }
-    return this;
+  public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
+    return create(ContainerUtil.map(mySets, s -> transformation.apply(s), new PackageSet[mySets.length]));
   }
 
   @Override
-  public boolean anyMatches(Predicate<PackageSet> predicate) {
-    return predicate.test(myFirstSet) || predicate.test(mySecondSet);
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myText == null) {
-      final StringBuilder buf = new StringBuilder();
-      boolean needParen = myFirstSet.getNodePriority() > getNodePriority();
-      if (needParen) buf.append('(');
-      buf.append(myFirstSet.getText());
-      if (needParen) buf.append(')');
-      buf.append("&&");
-      needParen = mySecondSet.getNodePriority() > getNodePriority();
-      if (needParen) buf.append('(');
-      buf.append(mySecondSet.getText());
-      if (needParen) buf.append(')');
-
-      myText = buf.toString();
+      myText = StringUtil.join(mySets, set -> {
+        boolean needParen = set.getNodePriority() > getNodePriority();
+        return (needParen ? "(" : "") + set.getText() + (needParen ? ")" : "");
+      }, "&&");
     }
     return myText;
-  }
-
-  public PackageSet getFirstSet() {
-    return myFirstSet;
-  }
-
-  public PackageSet getSecondSet() {
-    return mySecondSet;
   }
 }

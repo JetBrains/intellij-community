@@ -1,0 +1,7 @@
+<idea-plugin>
+  <application-components>
+    <component>
+      <implementation-class>MyApplicationComponentWrongClass</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

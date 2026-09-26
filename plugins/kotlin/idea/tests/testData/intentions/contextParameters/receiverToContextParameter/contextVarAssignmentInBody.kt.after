@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+class Cls {
+    var i = 1
+}
+
+fun test() {
+    context(Cls()) {
+        foo = 2
+    }
+}
+
+context(cls: Cls)
+var foo: Int
+    get() = cls.i
+    set(value) { println(cls.i + value) }

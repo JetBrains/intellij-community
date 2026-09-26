@@ -1,0 +1,10 @@
+@file:Suppress("CanBePrimaryConstructorProperty")
+// "Suppress 'CanBePrimaryConstructorProperty' for file ${file}" "true"
+
+class PropertySuppressedOnFile(name: String) {
+    val name = name
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.CanBePrimaryConstructorPropertyInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.CanBePrimaryConstructorPropertyInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

@@ -16,13 +16,18 @@
 package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,7 +36,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   protected final DimensionService dimensionService = DimensionService.getInstance();
   private Mode myMode;
 
-  public ModeSwitchableDialog(com.intellij.openapi.project.Project project, boolean canBeParent) {
+  public ModeSwitchableDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
 
     myMode = Mode.values()[StringUtilRt.parseInt(PropertiesComponent.getInstance().getValue(getPrivateDimensionServiceKey() + ".MODE", "0"), 0)];
@@ -47,8 +52,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), new AbstractAction(myMode.other().getName()) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -106,8 +110,7 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
     return dimensionService.getLocation(getPrivateDimensionKey());
   }
 
-  @NotNull
-  protected abstract String getPrivateDimensionServiceKey();
+  protected abstract @NotNull String getPrivateDimensionServiceKey();
 
   protected final String getPrivateDimensionKey() {
     return getPrivateDimensionServiceKey() + "." + myMode.toString();
@@ -116,9 +119,9 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   /**
    * @deprecated we gotta do this ourselves because this value is cached but the key for this dialog changes with mode changes
    */
+  @Deprecated
   @Override
   protected final String getDimensionServiceKey() {
-    //noinspection ConstantConditions
     return null;
   }
 }

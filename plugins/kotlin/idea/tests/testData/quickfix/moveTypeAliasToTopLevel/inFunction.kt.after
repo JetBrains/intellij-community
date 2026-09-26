@@ -1,0 +1,12 @@
+typealias Foo = String
+
+// "Move typealias to top level" "true"
+fun bar() {
+
+    fun baz(foo: Foo) {
+    }
+}
+
+fun qux() {}
+// IGNORE_K2
+// Nested type aliases are introduced by KT-45285

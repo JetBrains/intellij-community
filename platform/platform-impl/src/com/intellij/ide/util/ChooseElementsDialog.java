@@ -1,61 +1,63 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
-  private final String myDescription;
+  private final @NlsContexts.Label String myDescription;
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     this(project, items, title, description, false);
   }
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, String title, final String description, boolean sort) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description, boolean sort) {
     super(project, true);
     myDescription = description;
     initializeDialog(items, title, sort);
   }
 
-  public ChooseElementsDialog(Component parent, List<T> items, String title) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title) {
     this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<T> items, String title, @Nullable String description, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nullable @NlsContexts.Label String description, final boolean sort) {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.medium();
   }
 
   /**
@@ -67,10 +69,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return false;
   }
 
-  private void initializeDialog(final List<? extends T> items, final String title, boolean sort) {
+  private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
-    myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
-      protected String getItemText(@NotNull final T item) {
+    myChooser = new ElementsChooser<>(canElementsBeMarked()) {
+      @Override
+      protected String getItemText(final @NotNull T item) {
         return ChooseElementsDialog.this.getItemText(item);
       }
     };
@@ -78,10 +81,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     List<? extends T> elements = new ArrayList<T>(items);
     if (sort) {
-      Collections.sort(elements, (Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
+      elements.sort((Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
     }
-    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.emptyList());
+    setElements(elements, ContainerUtil.getFirstItems(elements, 1));
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
       }
@@ -89,7 +93,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         doOKAction();
         return true;
       }
@@ -98,38 +102,41 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  public List<T> showAndGetResult() {
+  public @NotNull List<T> showAndGetResult() {
     show();
     return getChosenElements();
   }
 
-  protected abstract String getItemText(T item);
+  protected abstract @NlsContexts.ListItem String getItemText(T item);
 
-  @Nullable
-  protected abstract Icon getItemIcon(T item);
+  protected abstract @Nullable Icon getItemIcon(T item);
+
+  protected @Nullable Color getItemBackgroundColor(T item) {
+    return null;
+  }
 
   /**
    * Override this method and return non-null value to specify location of {@code item}.
    * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
    */
-  protected String getItemLocation(T item) {
+  protected @Nls String getItemLocation(T item) {
     return null; // default implementation
   }
 
-  @NotNull
-  public List<T> getChosenElements() {
+  public @NotNull List<T> getChosenElements() {
     return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
   }
 
-  public void selectElements(@NotNull List<T> elements) {
+  public void selectElements(@NotNull List<? extends T> elements) {
     myChooser.selectElements(elements);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myChooser.getComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(ScrollPaneFactory.createScrollPane(myChooser.getComponent()), BorderLayout.CENTER);
@@ -167,15 +174,18 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   private ElementsChooser.ElementProperties createElementProperties(final T item) {
     return new ElementsChooser.ElementProperties() {
       @Override
-      @Nullable
-      public Icon getIcon() {
+      public @Nullable Icon getIcon() {
         return getItemIcon(item);
       }
 
       @Override
-      @Nullable
-      public String getLocation() {
+      public @Nullable @Nls String getLocation() {
         return getItemLocation(item);
+      }
+
+      @Override
+      public @Nullable Color getBackgroundColor() {
+        return getItemBackgroundColor(item);
       }
     };
   }

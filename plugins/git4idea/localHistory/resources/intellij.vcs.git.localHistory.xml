@@ -1,0 +1,20 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.lvcs.impl"/>
+    <module name="intellij.vcs.git.backend"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <actions>
+    <group id="Git.Stage.Tree.Menu.LocalHistory">
+      <reference ref="LocalHistory"/>
+      <add-to-group group-id="Git.Stage.Tree.Menu"/>
+    </group>
+
+    <group id="Vcs.ToolbarWidget.CreateRepository.LocalHistory">
+      <reference ref="LocalHistory.ShowProjectHistory"/>
+      <add-to-group group-id="Vcs.ToolbarWidget.CreateRepository"/>
+    </group>
+  </actions>
+</idea-plugin>

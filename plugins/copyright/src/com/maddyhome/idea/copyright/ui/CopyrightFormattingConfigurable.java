@@ -1,49 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
-public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
+public class CopyrightFormattingConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll, Configurable.WithEpDependencies {
   private final Project myProject;
-  private TemplateCommentPanel myPanel;
+  private @Nullable TemplateCommentPanel myPanel;
 
   CopyrightFormattingConfigurable(Project project) {
     myProject = project;
   }
 
-  @NotNull
-  public String getId() {
+  @Override
+  public @NotNull String getId() {
     return "template.copyright.formatting";
   }
 
-  @Nls
-    public String getDisplayName() {
-    return "Formatting";
+  @Override
+  public @Nls String getDisplayName() {
+    return CopyrightBundle.message("configurable.CopyrightFormattingConfigurable.display.name");
   }
 
   @Override
@@ -51,46 +43,65 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     return getId();
   }
 
+  @Override
   public JComponent createComponent() {
-    getOrCreateMainPanel();
-    return myPanel.createComponent();
+    return getOrCreateMainPanel().createComponent();
   }
 
-  private TemplateCommentPanel getOrCreateMainPanel() {
+  private @NotNull TemplateCommentPanel getOrCreateMainPanel() {
     if (myPanel == null) {
-      myPanel = new TemplateCommentPanel(null, null, null, myProject);
+      myPanel = new TemplateCommentPanel(null, null, myProject);
     }
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
-    myPanel.apply();
+    if (myPanel != null) {
+      myPanel.apply();
+    }
   }
 
+  @Override
   public void reset() {
-    myPanel.reset();
+    if (myPanel != null) {
+      myPanel.reset();
+    }
   }
 
+  @Override
   public void disposeUIResources() {
-    myPanel.disposeUIResources();
-    myPanel = null;
+    super.disposeUIResources();
+
+    if (myPanel != null) {
+      myPanel.disposeUIResources();
+      myPanel = null;
+    }
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
-  protected Configurable[] buildConfigurables() {
-    final FileType[] types = FileTypeUtil.getInstance().getSupportedTypes();
+  @Override
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
+    final FileType[] types = FileTypeUtil.getSupportedTypes().toArray(FileType.EMPTY_ARRAY);
     final Configurable[] children = new Configurable[types.length];
     Arrays.sort(types, new FileTypeUtil.SortByName());
     for (int i = 0; i < types.length; i++) {
       children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], getOrCreateMainPanel());
     }
     return children;
+  }
+
+  @Override
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
+    return Collections.singletonList(CopyrightUpdaters.EP_NAME);
   }
 }

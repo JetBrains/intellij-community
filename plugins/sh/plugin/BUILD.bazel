@@ -1,0 +1,109 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.sh.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.sh.core",
+        "intellij.sh.backend",
+        "intellij.sh.terminal",
+        "intellij.sh.terminal.frontend",
+        "intellij.sh.copyright",
+        "intellij.sh.markdown",
+        "intellij.sh.python",
+    ],
+    main_module = "intellij.sh.plugin",
+)
+### auto-generated section `dev intellij.sh.plugin` end
+
+### auto-generated section `build intellij.sh.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.sh.plugin` end
+
+### auto-generated section `iml intellij.sh.plugin` start
+exports_files(
+    [
+        "intellij.sh.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.sh.plugin` end
+
+### auto-generated section `build intellij.sh.plugin.main` start
+jvm_library(
+    name = "plugin-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.plugin.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/sh/plugin",
+        "//plugins/sh/core",
+        "//plugins/sh/backend",
+        "//plugins/sh/terminal",
+        "//plugins/sh/copyright",
+        "//plugins/sh/markdown",
+        "//plugins/sh/python",
+    ],
+)
+
+jvm_library(
+    name = "plugin-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.plugin.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin-main",
+        "//plugins/sh/plugin:plugin_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//plugins/sh/backend:backend_test_lib",
+        "//plugins/sh/terminal:terminal_test_lib",
+        "//plugins/sh/copyright:copyright_test_lib",
+        "//plugins/sh/markdown:markdown_test_lib",
+        "//plugins/sh/python:python_test_lib",
+    ],
+)
+### auto-generated section `build intellij.sh.plugin.main` end
+
+### auto-generated section `iml intellij.sh.plugin.main` start
+exports_files(
+    [
+        "intellij.sh.plugin.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.sh.plugin.main` end

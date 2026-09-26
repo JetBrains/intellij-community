@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -32,19 +18,18 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.containers.ContainerUtil;
-import groovyjarjarcommonscli.Options;
 import icons.ExternalSystemIcons;
+import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/26/2014
  */
 public class TaskCompletionProvider extends CommandLineCompletionProvider {
 
@@ -85,7 +70,7 @@ public class TaskCompletionProvider extends CommandLineCompletionProvider {
 
       if (projectData == null || projectData.getExternalProjectStructure() == null) return;
 
-      cachedElements = ContainerUtil.newArrayList(getVariants(projectData.getExternalProjectStructure(), projectPath));
+      cachedElements = new ArrayList<>(getVariants(projectData.getExternalProjectStructure(), projectPath));
 
       myCachedElements = cachedElements;
       myCachedWorkingDir = projectPath;
@@ -93,23 +78,22 @@ public class TaskCompletionProvider extends CommandLineCompletionProvider {
     result.addAllElements(cachedElements);
   }
 
-  protected List<LookupElement> getVariants(@NotNull final DataNode<ProjectData> projectDataNode, @NotNull final String modulePath) {
+  protected List<LookupElement> getVariants(final @NotNull DataNode<ProjectData> projectDataNode, final @NotNull String modulePath) {
     final DataNode<ModuleData> moduleDataNode = findModuleDataNode(projectDataNode, modulePath);
     if (moduleDataNode == null) {
       return Collections.emptyList();
     }
 
     final Collection<DataNode<TaskData>> tasks = ExternalSystemApiUtil.getChildren(moduleDataNode, ProjectKeys.TASK);
-    List<LookupElement> elements = ContainerUtil.newArrayListWithCapacity(tasks.size());
+    List<LookupElement> elements = new ArrayList<>(tasks.size());
     for (DataNode<TaskData> taskDataNode : tasks) {
       elements.add(LookupElementBuilder.create(taskDataNode.getData().getName()).withIcon(ExternalSystemIcons.Task));
     }
     return elements;
   }
 
-  @Nullable
-  public static DataNode<ModuleData> findModuleDataNode(@NotNull final DataNode<ProjectData> projectDataNode,
-                                                        @NotNull final String projectPath) {
+  public static @Nullable DataNode<ModuleData> findModuleDataNode(final @NotNull DataNode<ProjectData> projectDataNode,
+                                                                  final @NotNull String projectPath) {
     final DataNode<?> node =
       ExternalSystemApiUtil.findFirstRecursively(projectDataNode, node1 -> node1.getKey().equals(ProjectKeys.MODULE) &&
                                                                            node1.getData() instanceof ModuleData &&

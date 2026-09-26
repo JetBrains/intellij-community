@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -30,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * @param <M> method type parameter for which delegate would work
@@ -65,26 +53,25 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * Refactoring handler should choose which method to refactor based on element selected, e.g. suggest to choose super method if selected method overrides another method.
    * {@link AbstractIntroduceParameterObjectDialog} should be implemented to start the refactoring
    */
-  @Nullable
-  public abstract RefactoringActionHandler getHandler(PsiElement element);
+  public abstract @Nullable RefactoringActionHandler getHandler(PsiElement element);
 
 
   /**
    * @return {@link com.intellij.refactoring.changeSignature.MethodDescriptor#getParameters()}
    */
-  public abstract List<P> getAllMethodParameters(M sourceMethod);
+  public abstract List<P> getAllMethodParameters(@NotNull M sourceMethod);
 
   /**
-   * Resulted parameter info should implement {@link ParameterInfo#getActualValue(PsiElement)} so the call site would be updated with actual values.
+   * Resulted parameter info should implement {@link ParameterInfo#getActualValue(PsiElement, Object)} so the call site would be updated with actual values.
    * At the same time, usages in another languages should be correctly proceed. In order to do that, usage's delegate should be found and
-   * {@link IntroduceParameterObjectDelegate#createNewParameterInitializerAtCallSite(PsiElement, IntroduceParameterObjectClassDescriptor, List)}
+   * {@link IntroduceParameterObjectDelegate#createNewParameterInitializerAtCallSite(PsiElement, IntroduceParameterObjectClassDescriptor, List, Object)}
    * should be called to provide actual value
    *
    * @return parameter info which would merge arguments on the call site, with name according to parameter class
    */
   public abstract P createMergedParameterInfo(C descriptor,
                                               M method,
-                                              List<P> oldMethodParameters);
+                                              List<? extends P> oldMethodParameters);
 
   /**
    * Call site should be updated according to the selected parameters, which correspond to the parameters to merge ({@link IntroduceParameterObjectClassDescriptor#getParamsToMerge()})
@@ -100,11 +87,14 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * Pass new parameter infos to the change info constructor which corresponds to the language of this delegate
    */
   public abstract ChangeInfo createChangeSignatureInfo(M method,
-                                                       List<P> newParameterInfos,
+                                                       List<? extends P> newParameterInfos,
                                                        boolean delegate);
 
   /**
    * Collect in usages reference to the parameter inside overridingMethod.
+   * @param <M1>               method type of the original delegate
+   * @param <P1>               parameter info type of the original delegate
+   *
    * @param usages             collection to store usages
    * @param overridingMethod   method where usages would be searched.
    *                           As method could override method from another language,
@@ -114,14 +104,10 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    *                           parameterInfo#getOldIndex and overridingMethod should provide the real parameter to search
    * @param mergedParamName    name for new parameter, chosen in {@link #createMergedParameterInfo(IntroduceParameterObjectClassDescriptor, PsiNamedElement, List)}
    *
-   * @param <M1>               method type of the original delegate
-   * @param <P1>               parameter info type of the original delegate
-   *
    * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}. If write access is needed, both accessors are expected.
    */
-  @Nullable
-  public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
-  ReadWriteAccessDetector.Access collectInternalUsages(Collection<FixableUsageInfo> usages,
+  public abstract @Nullable <M1 extends PsiNamedElement, P1 extends ParameterInfo>
+  ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
                                                        M overridingMethod,
                                                        IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,
                                                        P1 parameterInfo,
@@ -134,7 +120,7 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    *
    * To detect what accessor is required, use {@code accessors[descriptor.getParamsToMerge()[paramIdx].getOldIdx()]}
    */
-  public abstract void collectUsagesToGenerateMissedFieldAccessors(Collection<FixableUsageInfo> usages,
+  public abstract void collectUsagesToGenerateMissedFieldAccessors(Collection<? super FixableUsageInfo> usages,
                                                                    M method,
                                                                    C descriptor,
                                                                    ReadWriteAccessDetector.Access[] accessors);
@@ -142,12 +128,12 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
   /**
    * Collect in {@code usages} necessary fixes to change visibility, javadocs, etc
    */
-  public abstract void collectAdditionalFixes(Collection<FixableUsageInfo> usages,
+  public abstract void collectAdditionalFixes(Collection<? super FixableUsageInfo> usages,
                                               M method,
                                               C descriptor);
 
   /**
    * Collect conflicts in {@code conflicts}
    */
-  public abstract void collectConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
+  public abstract void collectConflicts(MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo[] infos, M method, C classDescriptor);
 }

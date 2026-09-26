@@ -1,0 +1,55 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.intellij.groovy"/>
+    <module name="intellij.gradle"/>
+    <module name="intellij.gradle.codeInsight"/>
+    <module name="intellij.gradle.codeInsight.backend"/>
+    <module name="intellij.gradle.codeInsight.groovy"/>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.gradle.properties"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.properties.psi"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <inspectionDisabler filetype="Gradle"
+                        implementationClass="com.intellij.gradle.codeInsight.groovy.backend.inspections.GradleFileTypeInspectionDisabler"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <trafficLightRendererContributor
+      implementation="com.intellij.gradle.codeInsight.groovy.backend.inspections.GradleGroovyTrafficLightRendererContributor"/>
+    <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
+                     bundle="messages.GradleInspectionBundle"
+                     key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.groovy.backend.inspections.MultipleRepositoryUrlsInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="BintrayPublishingPlugin"
+                     bundle="messages.GradleInspectionBundle"
+                     key="bintray.publishing.plugin" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.groovy.backend.inspections.BintrayPublishingPluginInspection"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="JCenterRepository"
+                     bundle="messages.GradleInspectionBundle"
+                     key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.gradle.codeInsight.groovy.backend.inspections.JCenterRepositoryInspection"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <dslInspectionProvider language="Groovy"
+                           implementationClass="com.intellij.gradle.codeInsight.groovy.backend.inspections.GroovyGradleDslInspectionProvider"/>
+  </extensions>
+</idea-plugin>

@@ -2,11 +2,11 @@
 package com.intellij.xml.propertyBased;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
@@ -14,12 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 
-import java.io.File;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SkipSlowTestLocally
-public class XmlCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+public class XmlCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final boolean ENABLED = false;
 
@@ -37,21 +36,10 @@ public class XmlCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private Supplier<MadTestingAction> actionsOnXmlFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(XmlFileType.INSTANCE);
-
+  private Supplier<MadTestingAction> actionsOnXmlFiles(Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture,
-                                                PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') +
-                                                "/xml/tests/testData", // PathManager.getHomePath()
-                                                f -> {
-                                                  String name = f.getName();
-                                                  for (String extension: extensions) {
-                                                    if (name.endsWith("." + extension)) {
-                                                      System.out.println(f.getPath());
-                                                      return true;
-                                                    }
-                                                  }
-                                                  return false;
-                                                }, fileActions);
+                                                PathManager.getHomePath(),
+                                                f -> FileTypeManager.getInstance().getFileTypeByFileName(f.getName()) == XmlFileType.INSTANCE,
+                                                fileActions);
   }
 }

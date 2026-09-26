@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="Coverage"/>
+    <module name="intellij.gradle"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <javaCoverageEngineExtension implementation="com.intellij.gradle.java.coverage.GradleCoverageExtension"/>
+  </extensions>
+</idea-plugin>

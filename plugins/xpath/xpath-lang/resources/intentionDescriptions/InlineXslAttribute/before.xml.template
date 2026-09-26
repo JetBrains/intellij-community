@@ -1,0 +1,8 @@
+<person>
+  <spot><xsl:attribute name="id">
+    <xsl:text>Big</xsl:text>
+    <xsl:value-of select="test"/>
+    <xsl:text>Boss</xsl:text>
+  </xsl:attribute></spot>
+  ...
+</person> 

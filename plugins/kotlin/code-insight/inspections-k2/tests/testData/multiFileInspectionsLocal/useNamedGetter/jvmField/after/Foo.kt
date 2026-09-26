@@ -1,0 +1,1 @@
+data class Foo(@JvmField val bar: String)

@@ -1,32 +1,25 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 /**
 * @author Konstantin Bulenkov
 */
-public class RatesPanel extends JPanel {
-  public static int MAX_RATE = 5;
+@ApiStatus.Internal
+public final class RatesPanel extends JPanel {
+  public static final int MAX_RATE = 5;
 
   private static final Icon STAR = AllIcons.Ide.Rating;
 
@@ -43,7 +36,7 @@ public class RatesPanel extends JPanel {
     setOpaque(false);
     GridBagConstraints gc =
       new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBInsets.emptyInsets(), 0, 0);
     for (int i = 0, myLabelsLength = myLabels.length; i < myLabelsLength; i++) {
       myLabels[i] = new JLabel();
       myLabels[i].setOpaque(false);
@@ -52,15 +45,15 @@ public class RatesPanel extends JPanel {
   }
 
   public void setRate(String rating) {
-    Double dblRating = 0d;
+    double dblRating = 0d;
     if (rating != null) {
       try {
-        dblRating = Double.valueOf(rating);
+        dblRating = Double.parseDouble(rating);
       }
       catch (NumberFormatException ignore) { }
     }
 
-    final int intRating = dblRating.intValue();
+    final int intRating = (int)dblRating;
 
     for (int i = 0; i < intRating; i++) {
       myLabels[i].setIcon(STAR);

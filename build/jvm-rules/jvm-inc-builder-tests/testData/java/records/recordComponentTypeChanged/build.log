@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  Rec.class
+End of files
+Compiling files:
+  java/records/recordComponentTypeChanged/a/Rec.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/records/recordComponentTypeChanged/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

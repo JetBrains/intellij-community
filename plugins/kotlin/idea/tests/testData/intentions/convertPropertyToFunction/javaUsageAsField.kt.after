@@ -1,0 +1,6 @@
+// PRIORITY: LOW
+package test
+
+object O {
+    fun getFoo(): Int = 1
+}

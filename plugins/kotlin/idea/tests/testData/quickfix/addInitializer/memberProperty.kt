@@ -1,0 +1,6 @@
+// "Add initializer" "true"
+// K2_ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
+class A {
+    <caret>val n: Int
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializePropertyModCommandAction

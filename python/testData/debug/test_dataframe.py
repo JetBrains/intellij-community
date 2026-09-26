@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 df1 = pd.DataFrame({'row': [0, 1, 2],
                     'One_X': [1.1, 1.1, 1.1],
-                    'One_Y': [1.2, 1.2, 1.2],
-                    'Two_X': [1.11, 1.11, 1.11],
+                    'Year': [2018, 2019, 2020],
+                    'Winner': [True, False, True],
                     'Two_Y': [1.22, 1.22, 1.22]})
 print(df1)  ###line 8
 
@@ -13,7 +13,7 @@ df2 = pd.DataFrame({'row': [0, 1, 2],
                     'Two_X': [1.11, 1.11, 1.11],
                     'Two_Y': [1.22, 1.22, 1.22],
                     'LABELS': ['A', 'B', 'C']})
-print(df2) ##line 16
+print(df2)  ##line 16
 
 df3 = pd.DataFrame(data={'Province' : ['ON','QC','BC','AL','AL','MN','ON'],
                          'City' : ['Toronto','Montreal','Vancouver','Calgary','Edmonton','Winnipeg','Windsor'],
@@ -28,5 +28,7 @@ df4 = pd.DataFrame({'row': np.random.random(10000),
                     'Two_X': np.random.random(10000),
                     'Two_Y': np.random.random(10000),
                     'LABELS': ['A'] * 10000})
-print(df4) ##line 31
+print(df4)  ##line 31
 
+df5 = pd.DataFrame({'foo_%': np.random.random(10)})
+print(df5)  #line 34

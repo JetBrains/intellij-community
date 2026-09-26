@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="kaml" type="repository">
+        <properties maven-id="com.charleskorn.kaml:kaml-jvm:0.104.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.104.0/kaml-jvm-0.104.0.jar">
+              <sha256sum>639dd0503c24debbf0b6c3a4f98315c7109c13cf6ab2d9e1cda8f783030f0216</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/4.0.1/snakeyaml-engine-kmp-jvm-4.0.1.jar">
+              <sha256sum>0a139cd3d79b8be82a9f85a79e316d23f31fe074468d0680baf61bbef3bf8d85</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar">
+              <sha256sum>8d0fd2aeb48d19dc49c563ebc00f274947e45f716c107535c12ead63decd688d</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="com.squareup.okio:okio-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.104.0/kaml-jvm-0.104.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/4.0.1/snakeyaml-engine-kmp-jvm-4.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.104.0/kaml-jvm-0.104.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/4.0.1/snakeyaml-engine-kmp-jvm-4.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

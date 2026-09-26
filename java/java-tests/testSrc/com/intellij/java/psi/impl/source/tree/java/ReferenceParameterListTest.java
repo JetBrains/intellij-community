@@ -17,19 +17,22 @@ package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- *  @author dsl
- */
-public class ReferenceParameterListTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReferenceParameterListTest");
+public class ReferenceParameterListTest extends JavaPsiTestCase {
+  private static final Logger LOG = Logger.getInstance(ReferenceParameterListTest.class);
   public void testParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final PsiClass classFromText = factory.createClassFromText("class X extends Y<Z, W> {}", null);
     final PsiClass classX = classFromText.getInnerClasses()[0];
     final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
@@ -48,7 +51,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
   }
   public void testResolvableParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final PsiClass classFromText = factory.createClassFromText(
             "class Z {} class W{}" +
             "class Y<A, B> {} " +

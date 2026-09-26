@@ -1,40 +1,50 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 
-/**
- * @author yole
- */
+import java.io.IOException;
+
+
+@Subsystems.CodeInsight
+@Layers.Functional
 public class Py3ResolveTest extends PyResolveTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return PyTestCase.ourPy3Descriptor;
-  }
 
   @Override
   protected PsiElement doResolve() {
@@ -43,20 +53,8 @@ public class Py3ResolveTest extends PyResolveTestCase {
     return ref.resolve();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON34);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    super.tearDown();
-  }
-
   public void testObjectMethods() {  // PY-1494
-    assertResolvesTo(PyFunction.class, "__repr__");
+    assertResolvesTo(PyFunction.class, PyNames.DUNDER_REPR);
   }
 
   // PY-5499
@@ -66,7 +64,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testImplicitDunderDoc() {
@@ -84,7 +82,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClassWithClassAttr() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testImplicitDunderDocWithClassAttr() {
@@ -102,7 +100,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testImplicitDunderClassWithInheritedClassAttr() {
-    assertResolvesTo(PyClass.class, "B");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testImplicitDunderDocWithInheritedClassAttr() {
@@ -120,7 +118,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testInstanceDunderClass() {
-    assertResolvesTo(PyClass.class, "A");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testInstanceDunderDoc() {
@@ -211,7 +209,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClass() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDoc() {
@@ -230,7 +228,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithClassAttr() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithClassAttr() {
@@ -259,7 +257,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-13734
   public void testTypeDunderClassWithInheritedClassAttr() {
-    assertResolvesTo(PyClass.class, "type");
+    assertIsBuiltin(assertResolvesTo(PyFunction.class, PyNames.__CLASS__));
   }
 
   public void testTypeDunderDocWithInheritedClassAttr() {
@@ -356,240 +354,873 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
   }
-  
+
   // PY-20864
   public void testTopLevelVariableAnnotationFromTyping() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyElement.class, "List"));
+    assertResolvesTo(PyElement.class, "List");
   }
 
   // PY-20864
   public void testLocalVariableAnnotationWithInnerClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "MyType"));
+    assertResolvesTo(PyClass.class, "MyType");
   }
 
   // PY-22971
   public void testOverloadsAndNoImplementationInClass() {
     // resolve to the first overload
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiUtil
-          .getOverloads(foo, context)
-          .forEach(
-            overload -> {
-              if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
-            }
-          );
-      }
-    );
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach(
+        overload -> {
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
+        }
+      );
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
     // resolve to the implementation
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
-      }
-    );
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
   }
 
   // PY-22971
   public void testOverloadsAndImplementationsInClass() {
     // resolve to the first implementation
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
 
-        final PyClass pyClass = foo.getContainingClass();
-        assertNotNull(pyClass);
+    final PyClass pyClass = foo.getContainingClass();
+    assertNotNull(pyClass);
 
-        pyClass.visitMethods(
-          function -> {
-            assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
-            return true;
-          },
-          false,
-          context
-        );
-      }
+    pyClass.visitMethods(
+      function -> {
+        assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
+        return true;
+      },
+      false,
+      context
     );
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndNoImplementation() {
-    // resolve to the last overload
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    // resolve to the first overload
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertTrue(PyiUtil.isOverload(foo, context));
 
-        PyiUtil
-          .getOverloads(foo, context)
-          .forEach(
-            overload -> {
-              if (overload != foo) assertTrue(PyPsiUtils.isBefore(overload, foo));
-            }
-          );
-      }
-    );
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach(
+        overload -> {
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
+        }
+      );
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementation() {
     // resolve to the implementation
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
-      }
-    );
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementations() {
-    // resolve to the last overload
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertTrue(PyiUtil.isOverload(foo, context));
+    // resolve to the first overload because there is no subsequent implementation before the reference
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertTrue(PyiUtil.isOverload(foo, context));
 
-        ((PyFile)foo.getContainingFile())
-          .getTopLevelFunctions()
-          .forEach(
-            function -> assertTrue(function == foo || PyPsiUtils.isBefore(function, foo))
-          );
-      }
-    );
+    ((PyFile)foo.getContainingFile())
+      .getTopLevelFunctions()
+      .forEach(
+        function -> assertTrue(function == foo || PyPsiUtils.isBefore(foo, function))
+      );
   }
 
   // PY-22971
   public void testOverloadsAndNoImplementationInImportedClass() {
     // resolve to the first overload
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedClassDep", "OverloadsAndNoImplementationInImportedClassDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedClassDep", "OverloadsAndNoImplementationInImportedClassDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiUtil
-          .getOverloads(foo, context)
-          .forEach(
-            overload -> {
-              if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
-            }
-          );
-      }
-    );
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach(
+        overload -> {
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
+        }
+      );
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInImportedClass() {
     // resolve to the implementation
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndImplementationInImportedClassDep", "OverloadsAndImplementationInImportedClassDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
-      }
-    );
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndImplementationInImportedClassDep", "OverloadsAndImplementationInImportedClassDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
   }
 
   // PY-22971
   public void testOverloadsAndImplementationsInImportedClass() {
     // resolve to the first implementation
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndImplementationsInImportedClassDep", "OverloadsAndImplementationsInImportedClassDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndImplementationsInImportedClassDep", "OverloadsAndImplementationsInImportedClassDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
 
-        final PyClass pyClass = foo.getContainingClass();
-        assertNotNull(pyClass);
+    final PyClass pyClass = foo.getContainingClass();
+    assertNotNull(pyClass);
 
-        pyClass.visitMethods(
-          function -> {
-            assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
-            return true;
-          },
-          false,
-          context
-        );
-      }
+    pyClass.visitMethods(
+      function -> {
+        assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(foo, function));
+        return true;
+      },
+      false,
+      context
     );
   }
 
   // PY-22971
   public void testOverloadsAndNoImplementationInImportedModule() {
-    // resolve to the last overload
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedModuleDep", "OverloadsAndNoImplementationInImportedModuleDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    // resolve to the first overload
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedModuleDep", "OverloadsAndNoImplementationInImportedModuleDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
 
-        PyiUtil
-          .getOverloads(foo, context)
-          .forEach(
-            overload -> {
-              if (overload != foo) assertTrue(PyPsiUtils.isBefore(overload, foo));
-            }
-          );
-      }
-    );
+    PyiUtil
+      .getOverloads(foo, context)
+      .forEach(
+        overload -> {
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
+        }
+      );
   }
 
   // PY-22971
   public void testOverloadsAndImplementationInImportedModule() {
     // resolve to the implementation
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndImplementationInImportedModuleDep", "OverloadsAndImplementationInImportedModuleDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
-      }
-    );
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndImplementationInImportedModuleDep", "OverloadsAndImplementationInImportedModuleDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
   }
 
   // PY-22971
   public void testOverloadsAndImplementationsInImportedModule() {
     // resolve to the last implementation
-    myFixture.copyDirectoryToProject("resolve/OverloadsAndImplementationsInImportedModuleDep", "OverloadsAndImplementationsInImportedModuleDep");
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
-        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-        assertFalse(PyiUtil.isOverload(foo, context));
+    myFixture
+      .copyDirectoryToProject("resolve/OverloadsAndImplementationsInImportedModuleDep", "OverloadsAndImplementationsInImportedModuleDep");
+    final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    assertFalse(PyiUtil.isOverload(foo, context));
 
-        ((PyFile)foo.getContainingFile())
-          .getTopLevelFunctions()
-          .forEach(
-            function -> assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(function, foo))
-          );
+    ((PyFile)foo.getContainingFile())
+      .getTopLevelFunctions()
+      .forEach(
+        function -> assertTrue(PyiUtil.isOverload(function, context) || function == foo || PyPsiUtils.isBefore(function, foo))
+      );
+  }
+
+  // PY-30512
+  public void testDunderBuiltins() {
+    final PsiElement element = doResolve();
+    assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
+  }
+
+  // PY-20783
+  public void testFStringFunctionParameter() {
+    assertResolvesTo(PyParameter.class, "param");
+  }
+
+  // PY-20783
+  public void testFStringLocalVariable() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-20783
+  public void testFStringLocalVariableUnresolved() {
+    assertNull(doResolve());
+  }
+
+  // PY-20783
+  public void testFStringNestedScopes() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionTarget() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionSourcePart() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringNestedInResultComprehensionSourcePart() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionConditionPart() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringNestedComprehensionSourcePart() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-22094
+  public void testFStringInsideAssertStatement() {
+    assertResolvesTo(PyParameter.class, "name");
+  }
+
+  // PY-21493
+  public void testRegexpAndFStringCombined() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-29898
+  public void testKeywordArgumentToDataclassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-29898
+  public void testKeywordArgumentToAttrsAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-55231
+  public void testKeywordArgumentToConstructorParameter() {
+    assertResolvesTo(PyNamedParameterImpl.class, "param");
+  }
+
+  // PY-30942
+  public void testUserPyiInsteadUserPy() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    myFixture.configureByFile("main.py");
+
+    final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+    assertInstanceOf(element, PyFunction.class);
+    assertEquals("foo.pyi", element.getContainingFile().getName());
+  }
+
+  // PY-30942
+  public void testUserPyInsteadProvidedPyi() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/pkg", "pkg");
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+
+        final PsiFile file = element.getContainingFile();
+        assertEquals("foo.py", file.getName());
+        assertEquals("src", file.getParent().getParent().getName());
       }
     );
+  }
+
+  // PY-32963, PY-86147
+  public void testStubPackageInsteadProvidedPyi() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+
+        final PsiFile file = element.getContainingFile();
+        assertEquals("foo.pyi", file.getName());
+        assertEquals("pkg-stubs", file.getParent().getName());
+      }
+    );
+  }
+
+  // PY-30942
+  public void testStubPackageInsteadInlinePackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+
+        final PsiFile file = element.getContainingFile();
+        assertEquals("foo.pyi", file.getName());
+        assertEquals("pkg-stubs", file.getParent().getName());
+      }
+    );
+  }
+
+  // PY-30942
+  public void testStubPackageInsteadInlinePackageFullyQName() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+
+        final PsiFile file = element.getContainingFile();
+        assertEquals("foo.pyi", file.getName());
+        assertEquals("pkg-stubs", file.getParent().getName());
+      }
+    );
+  }
+
+  // PY-30942
+  public void testInlinePackageInsteadTypeShed() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("process.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-30942
+  public void testTypeShedInsteadPy() {
+    assertResolvesTo(PyTargetExpression.class, "MINYEAR", "datetime.pyi");
+  }
+
+  // PY-30942
+  public void testInlinePackageInsteadPartialStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-32286
+  public void testPartialStubPackageInsteadInlinePackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+        assertInstanceOf(reference, PsiPolyVariantReference.class);
+
+        final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+        assertSize(1, results);
+
+        final PsiElement element = results[0].getElement();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.pyi", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadPartialStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testNoRuntimeMembersInsteadPartialStubPackageModule() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-55589
+  public void testNoPyInsteadNonPartialStubPackageMarker() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadNamespaceStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadPartialUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("foo.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testPyInsteadPartialUserStubPackageSourceRoot() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path, "");
+    myFixture.configureByFile("main.py");
+
+    final Module module = myFixture.getModule();
+    final VirtualFile sourceRoot = myFixture.findFileInTempDir("stubs");
+    assertNotNull(sourceRoot);
+
+    PsiTestUtil.addSourceRoot(module, sourceRoot);
+    try {
+      final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertInstanceOf(element, PyFunction.class);
+      assertEquals("mymodule.py", element.getContainingFile().getName());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(module, sourceRoot);
+    }
+  }
+
+  // PY-55589
+  public void testPyInsteadNestedPartialUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path, "");
+    myFixture.configureByFile("main.py");
+
+    final Module module = myFixture.getModule();
+    final VirtualFile sourceRoot = myFixture.findFileInTempDir("stubs");
+    assertNotNull(sourceRoot);
+
+    PsiTestUtil.addSourceRoot(module, sourceRoot);
+    try {
+      final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertInstanceOf(element, PyFunction.class);
+      assertEquals("mymodule.py", element.getContainingFile().getName());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(module, sourceRoot);
+    }
+  }
+
+  // PY-55589
+  public void testEditingPyTypedInvalidatesPartialUserStubPackageResolveCache() {
+    final String path = "resolve/PyInsteadPartialUserStubPackage";
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement initial = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(initial, PyFunction.class);
+        assertEquals("foo.py", initial.getContainingFile().getName());
+
+        final VirtualFile pyTyped = myFixture.findFileInTempDir("pkg/py.typed");
+        assertNotNull(pyTyped);
+
+        WriteAction.run(() -> {
+          try {
+            VfsUtil.saveText(pyTyped, "");
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
+        PlatformTestUtil.waitForAlarm(300);
+
+        assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testEditingUnsavedPyTypedInvalidatesPartialUserStubPackageResolveCache() {
+    final String path = "resolve/PyInsteadPartialUserStubPackage";
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement initial = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(initial, PyFunction.class);
+        assertEquals("foo.py", initial.getContainingFile().getName());
+
+        final VirtualFile pyTyped = myFixture.findFileInTempDir("pkg/py.typed");
+        assertNotNull(pyTyped);
+
+        final Document pyTypedDocument = FileDocumentManager.getInstance().getDocument(pyTyped);
+        assertNotNull(pyTypedDocument);
+
+        WriteAction.run(() -> pyTypedDocument.setText(""));
+        assertTrue(FileDocumentManager.getInstance().isDocumentUnsaved(pyTypedDocument));
+        PlatformTestUtil.waitForAlarm(300);
+
+        assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve());
+      }
+    );
+  }
+
+  // PY-55589
+  public void testNoPyInsteadCompleteUserStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/project", "");
+    myFixture.configureByFile("main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-65967
+  public void testPyInsteadPartialTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-partial-typeshed");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> {
+        final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+        assertInstanceOf(element, PyFunction.class);
+        assertEquals("shortcuts.py", element.getContainingFile().getName());
+      }
+    );
+  }
+
+  // PY-65967
+  public void testNoPyInsteadCompleteTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-complete-typeshed");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-65967
+  public void testNoPyInsteadFalsePartialTypeShed() throws IOException {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enableTestDataTypeshedStubsForPackages("pycharm-test-false-partial-typeshed");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // PY-31354
+  public void testStubPackageInOtherRoot() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib1",
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          path + "/lib2",
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.pyi", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-25832
+  public void testTypeVarBoundAttribute() {
+    assertResolvesTo(PyFunction.class, "upper", "builtins.pyi");
+  }
+
+  // PY-25832
+  public void testTypeVarConstraintAttribute() {
+    assertResolvesTo(PyFunction.class, "bit_length", "builtins.pyi");
+  }
+
+  // PY-25832
+  public void testTypeVarClassObjectBoundAttribute() {
+    assertNull(doResolve());
+  }
+
+  // PY-36158
+  public void testDataclassFieldsDataclassesStarImport() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrAbove() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testNoResolveInstanceAttrBelow() {
+    assertUnresolved();
+  }
+
+  public void testNoResolveInstanceAttrSameLine() {
+    assertUnresolved();
+  }
+
+  public void testInstanceAttrOtherMethod() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrOtherMethodAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowAndOtherMethodBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("f", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowEarlierByControlFlow() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrBelowDifferentBranchesOfSameIfStatement() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrBothEarlierAndLater() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    assertEquals("self.foo = 1", target.getParent().getText());
+  }
+
+  public void testInstanceAttrBelowInInitAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInNestedFunction() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "s");
+    PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("outer1", function.getName());
+  }
+
+  // PY-82115
+  public void testNonlocalInPresenceOfGlobalInOuterScope() {
+    assertResolvesToItself();
+  }
+
+  // PY-82115
+  public void testNonlocalNotResolvedToGlobalName() {
+    assertResolvesToItself();
+  }
+
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInEnclosingScope() {
+    assertResolvesTo(PyTargetExpression.class, "T");
+  }
+
+  // PY-82699
+  public void testTypeParameterRebindToLocalVariableInSameScope() {
+    assertUnresolved();
+  }
+
+  // PY-82850, PY-83181
+  public void testNonIdempotentComputation() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+    assertNotNull(result1);
+
+    PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+    assertNotNull(result2);
+  }
+
+  // PY-83803
+  public void testNonIdempotentComputation2() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+    assertNotNull(result1);
+
+    PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+    assertNotNull(result2);
+  }
+
+
+  // PY-83181
+  public void testParameterAnnotationSelfShadow() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PyFunction function = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyFunction.class);
+    assertNotNull(function);
+    PyNamedParameter parameter = function.getParameterList().getParameters()[0].getAsNamed();
+    assertNotNull(parameter);
+
+    // Force the stub-only resolution path, the one used when evaluating an annotations without switching to AST.
+    TypeEvalContext fallbackContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyExpression annotationExpr = PyTypingTypeProvider.getAnnotationValue(parameter, fallbackContext);
+    assertNotNull("annotation fragment", annotationExpr);
+
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(annotationExpr, fallbackContext, false);
+    assertNotNull("resolved type", typeRef);
+    PyType type = typeRef.get();
+    assertInstanceOf(type, PyClassType.class);
+    assertEquals("builtins.object", ((PyClassType)type).getClassQName());
+  }
+
+  // PY-83181
+  public void testReturnAnnotationSelfShadow() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PyFunction function = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyFunction.class);
+    assertNotNull(function);
+
+    // Force the stub-only resolution path, the one used when evaluating an annotations without switching to AST.
+    TypeEvalContext fallbackContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyExpression returnAnnotationExpr = PyTypingTypeProvider.getAnnotationValue(function, fallbackContext);
+    assertNotNull("annotation fragment", returnAnnotationExpr);
+
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(returnAnnotationExpr, fallbackContext, false);
+    assertNotNull("resolved type", typeRef);
+    PyType type = typeRef.get();
+    assertInstanceOf(type, PyClassType.class);
+    assertEquals("builtins.object", ((PyClassType)type).getClassQName());
+  }
+
+  private void assertResolvesToItself() {
+    PsiElement resolved = doResolve();
+    PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+    assertEquals(reference.getElement(), resolved);
   }
 }

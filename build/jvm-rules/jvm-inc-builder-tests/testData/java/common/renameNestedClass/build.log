@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Outer$C.class
+  ppp/Outer.class
+End of files
+Compiling files:
+  java/common/renameNestedClass/a/ppp/Outer.java
+End of files
+Cleaning output files:
+  qqq/UseOld.class
+  rrr/UseNew.class
+End of files
+Compiling files:
+  java/common/renameNestedClass/a/qqq/UseOld.java
+  java/common/renameNestedClass/a/rrr/UseNew.java
+End of files
+------------------------------------------
+Exit code: ERROR

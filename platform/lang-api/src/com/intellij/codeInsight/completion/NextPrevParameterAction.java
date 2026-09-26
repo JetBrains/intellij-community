@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -22,52 +8,49 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class NextPrevParameterAction extends CodeInsightAction {
+/**
+ * @deprecated Use {@link NextPrevParameterHandler}
+ */
+@Deprecated(forRemoval = true)
+public abstract class NextPrevParameterAction extends CodeInsightAction implements DumbAware {
   private final boolean myNext;
 
   protected NextPrevParameterAction(boolean next) {
     myNext = next;
   }
 
-  @NotNull
   @Override
-  public CodeInsightActionHandler getHandler() {
+  public @NotNull CodeInsightActionHandler getHandler() {
     return new Handler();
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return hasSutablePolicy(editor, file);
+  public @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new Handler();
   }
 
-  public static boolean hasSutablePolicy(Editor editor, PsiFile file) {
-    return findSuitableTraversalPolicy(editor, file) != null;
+  @Override
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return NextPrevParameterHandler.hasSuitablePolicy(editor, psiFile);
   }
 
-  @Nullable
-  private static TemplateParameterTraversalPolicy findSuitableTraversalPolicy(Editor editor, PsiFile file) {
-    for (TemplateParameterTraversalPolicy policy : Extensions.getExtensions(TemplateParameterTraversalPolicy.EP_NAME)) {
-      if (policy.isValidForFile(editor, file)) {
-        return policy;
-      }
-    }
-    return null;
+  public static boolean hasSuitablePolicy(Editor editor, PsiFile file) {
+    return NextPrevParameterHandler.hasSuitablePolicy(editor, file);
   }
 
   private class Handler implements CodeInsightActionHandler {
     @Override
-    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      TemplateParameterTraversalPolicy policy = findSuitableTraversalPolicy(editor, file);
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      TemplateParameterTraversalPolicy policy = NextPrevParameterHandler.findSuitableTraversalPolicy(editor, psiFile);
       if (policy != null) {
-        policy.invoke(editor, file, myNext);
+        policy.invoke(editor, psiFile, myNext);
       }
     }
 

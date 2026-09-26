@@ -1,0 +1,358 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
+package org.jetbrains.intellij.build.impl.plugins
+
+import com.intellij.platform.buildScripts.concurrency.Subtask
+import com.intellij.platform.buildScripts.concurrency.taskScope
+import io.opentelemetry.api.common.AttributeKey
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.classPath.generatePluginClassPath
+import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
+import org.jetbrains.intellij.build.classPath.writePluginClassPathCount
+import org.jetbrains.intellij.build.classPath.writePluginClassPathPrefix
+import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
+import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.DistributionBuilderState
+import org.jetbrains.intellij.build.impl.PLUGINS_DIRECTORY
+import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
+import org.jetbrains.intellij.build.impl.PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
+import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
+import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.block
+import org.jetbrains.intellij.build.telemetry.use
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
+import java.nio.file.Path
+
+private const val OS_SPECIFIC_PLUGIN_BUILD_CONCURRENCY: Int = 2
+
+internal data class OsSpecificBundledPluginBuildTask(
+  @JvmField val dist: SupportedDistribution,
+  @JvmField val targetDir: Path,
+  @JvmField val plugins: List<PluginLayout>,
+)
+
+data class BundledPluginsBuildResult(
+  @JvmField val descriptors: List<PluginBuildResult>,
+  @JvmField val additionalPlugins: List<Pair<Path, List<Path>>>?,
+)
+
+internal fun collectOsSpecificBundledPluginBuildTasks(
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+  plugins: Collection<PluginLayout>,
+  context: BuildContext,
+): List<OsSpecificBundledPluginBuildTask> {
+  val result = ArrayList<OsSpecificBundledPluginBuildTask>(pluginDirs.size)
+  for ((dist, targetDir) in pluginDirs) {
+    val (os, arch) = dist
+    if (!context.shouldBuildDistributionForOS(os, arch)) {
+      continue
+    }
+
+    val osSpecificPlugins = ArrayList<PluginLayout>(plugins.size)
+    plugins.filterTo(osSpecificPlugins) {
+      satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
+    }
+    if (osSpecificPlugins.isEmpty()) {
+      continue
+    }
+
+    osSpecificPlugins.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
+    result.add(OsSpecificBundledPluginBuildTask(dist = dist, targetDir = targetDir, plugins = osSpecificPlugins))
+  }
+  return result
+}
+
+internal fun buildBundledPluginsForAllPlatforms(
+  state: DistributionBuilderState,
+  pluginLayouts: Set<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+  layoutOnly: Boolean = false,
+  includeAdditionalPlugins: Boolean = true,
+): BundledPluginsBuildResult = taskScope {
+  val additionalPluginsJob: Subtask<List<Pair<Path, List<Path>>>?>? = if (includeAdditionalPlugins) {
+    fork("build additional plugins") {
+      copyAdditionalPlugins(pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context = context)
+    }
+  }
+  else {
+    null
+  }
+
+  val pluginDirs = getPluginDirs(context, isUpdateFromSources)
+  val common = buildBundledPlugins(
+    state = state,
+    plugins = pluginLayouts,
+    isUpdateFromSources = isUpdateFromSources,
+    platformEntriesProvider = platformEntriesProvider,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    descriptorCacheContainer = descriptorCacheContainer,
+    context = context,
+    layoutOnly = layoutOnly,
+  )
+  val specific = buildOsSpecificBundledPlugins(
+    state = state,
+    plugins = pluginLayouts,
+    isUpdateFromSources = isUpdateFromSources,
+    platformEntriesProvider = platformEntriesProvider,
+    context = context,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    pluginDirs = pluginDirs,
+    descriptorCacheContainer = descriptorCacheContainer,
+    commonPlugins = common,
+    layoutOnly = layoutOnly,
+  )
+  val descriptors = common + specific.values.flatten()
+  val additionalPlugins: List<Pair<Path, List<Path>>>?
+  if (!layoutOnly) {
+    // the platform must be complete before the plugin info is written
+    platformEntriesProvider()
+    additionalPlugins = additionalPluginsJob?.await()
+    val layoutsOfPluginsToScramble = collectLayoutsOfPluginsToScramble(pluginLayouts)
+    writePluginInfo(
+      pluginDirs = pluginDirs,
+      common = common,
+      specific = specific,
+      additional = additionalPlugins,
+      platformLayout = state.platformLayout,
+      layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+      descriptorCacheContainer = descriptorCacheContainer,
+      context = context,
+    )
+  }
+  else {
+    // Force the additional plugin copy to complete; plugin-info may be written separately by the caller after scramble.
+    additionalPlugins = additionalPluginsJob?.await()
+  }
+  join { BundledPluginsBuildResult(descriptors = descriptors, additionalPlugins = additionalPlugins) }
+}
+
+/**
+ * Writes plugin-classpath info for already-laid-out + scrambled bundled plugins. Call this from
+ * the orchestrator after [scrambleAlreadyLaidOutPlugins] has updated the descriptor cache with
+ * scrambled class names.
+ */
+internal fun writeBundledPluginInfoAfterScramble(
+  state: DistributionBuilderState,
+  isUpdateFromSources: Boolean,
+  descriptors: List<PluginBuildResult>,
+  additionalPlugins: List<Pair<Path, List<Path>>>?,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+) {
+  val pluginDirs = getPluginDirs(context, isUpdateFromSources)
+  val (commonPlugins, specificPluginsList) = descriptors.partition { it.os == null && it.arch == null }
+  val specific = LinkedHashMap<SupportedDistribution, MutableList<PluginBuildResult>>()
+  for (plugin in specificPluginsList) {
+    val dist = SupportedDistribution(os = plugin.os!!, arch = plugin.arch!!, libcImpl = LibcImpl.current(plugin.os))
+    specific.getOrPut(dist) { mutableListOf() }.add(plugin)
+  }
+  writePluginInfo(
+    pluginDirs = pluginDirs,
+    common = commonPlugins,
+    specific = specific,
+    additional = additionalPlugins,
+    platformLayout = state.platformLayout,
+    layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+    descriptorCacheContainer = descriptorCacheContainer,
+    context = context,
+  )
+}
+
+private fun buildOsSpecificBundledPlugins(
+  state: DistributionBuilderState,
+  plugins: Set<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
+  context: BuildContext,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  commonPlugins: List<PluginBuildResult>,
+  layoutOnly: Boolean = false,
+): Map<SupportedDistribution, List<PluginBuildResult>> {
+  return spanBuilder("build os-specific bundled plugins")
+    .setAttribute("isUpdateFromSources", isUpdateFromSources)
+    .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
+    .use {
+      val tasks = collectOsSpecificBundledPluginBuildTasks(pluginDirs = pluginDirs, plugins = plugins, context = context)
+      if (tasks.isEmpty()) {
+        return@use emptyMap()
+      }
+
+      val results = arrayOfNulls<List<PluginBuildResult>>(tasks.size)
+      tasks.indices.toList().forEachConcurrent(concurrency = minOf(OS_SPECIFIC_PLUGIN_BUILD_CONCURRENCY, tasks.size)) { index ->
+        val task = tasks[index]
+        results[index] = spanBuilder("build bundled plugins")
+          .setAttribute("os", task.dist.os.osName)
+          .setAttribute("arch", task.dist.arch.name)
+          .setAttribute("count", task.plugins.size.toLong())
+          .setAttribute("outDir", task.targetDir.toString())
+          .use {
+            buildPlugins(
+              plugins = task.plugins,
+              os = task.dist.os,
+              arch = task.dist.arch,
+              targetDir = task.targetDir,
+              state = state,
+              platformEntriesProvider = platformEntriesProvider,
+              searchableOptionSet = searchableOptionSet,
+              descriptorCacheContainer = descriptorCacheContainer,
+              context = context,
+              additionalScrambleDescriptorsProvider = { commonPlugins },
+              layoutOnly = layoutOnly,
+            )
+          }
+      }
+
+      val orderedResults = LinkedHashMap<SupportedDistribution, List<PluginBuildResult>>(tasks.size)
+      for ((index, task) in tasks.withIndex()) {
+        orderedResults.put(task.dist, checkNotNull(results[index]))
+      }
+      orderedResults
+    }
+}
+
+internal fun buildBundledPlugins(
+  state: DistributionBuilderState,
+  plugins: Collection<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  platformEntriesProvider: () -> List<DistributionFileEntry>,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+  layoutOnly: Boolean = false,
+): List<PluginBuildResult> {
+  return spanBuilder("build bundled plugins")
+    .setAttribute("isUpdateFromSources", isUpdateFromSources)
+    .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
+    .setAttribute("count", plugins.size.toLong())
+    .block { span ->
+      val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
+      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, context = context) }
+      span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
+
+      // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
+      pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
+      val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+      val platformSpecificPluginDirs = getPluginDirs(context, isUpdateFromSources)
+      val entries = buildPlugins(
+        plugins = pluginsToBundle,
+        os = null,
+        arch = null,
+        targetDir = targetDir,
+        state = state,
+        platformEntriesProvider = platformEntriesProvider,
+        searchableOptionSet = searchableOptionSet,
+        descriptorCacheContainer = descriptorCacheContainer,
+        context = context,
+        layoutOnly = layoutOnly,
+      ) { _, layout, _ ->
+        if (layout != null && layout.hasPlatformSpecificResources) {
+          val pluginDirs = platformSpecificPluginDirs.map {
+            it.first to it.second.resolve(layout.directoryName)
+          }
+          buildPlatformSpecificPluginResources(plugin = layout, pluginDirs = pluginDirs, context = context, isDevMode = false)
+        }
+        else {
+          emptyList()
+        }
+      }
+
+      entries
+    }
+}
+
+private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
+  if (isUpdateFromSources) {
+    return listOf(
+      SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs)) to
+        context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+    )
+  }
+  else {
+    return SUPPORTED_DISTRIBUTIONS.map {
+      it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context).resolve(PLUGINS_DIRECTORY)
+    }
+  }
+}
+
+private fun writePluginInfo(
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+  common: List<PluginBuildResult>,
+  specific: Map<SupportedDistribution, List<PluginBuildResult>>,
+  additional: List<Pair<Path, List<Path>>>?,
+  platformLayout: PlatformLayout,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+) {
+  val commonClassPath = generatePluginClassPath(
+    pluginEntries = common,
+    descriptorFileProvider = descriptorCacheContainer,
+    platformLayout = platformLayout,
+    layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+    context = context,
+  )
+  val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
+
+  for ((supportedDist) in pluginDirs) {
+    val specificList = specific.get(supportedDist)
+    val specificClasspath = specificList?.let {
+      generatePluginClassPath(
+        pluginEntries = it,
+        descriptorFileProvider = descriptorCacheContainer,
+        platformLayout = platformLayout,
+        layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
+        context = context,
+      )
+    }
+
+    val byteOut = ByteArrayOutputStream()
+    DataOutputStream(byteOut).use { out ->
+      val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
+      writePluginClassPathPrefix(
+        out = out,
+        platformLayout = platformLayout,
+        descriptorCacheContainer = descriptorCacheContainer,
+        context = context,
+      )
+      writePluginClassPathCount(out = out, pluginCount = pluginCount)
+      out.write(commonClassPath)
+      additionalClassPath?.let { out.write(it) }
+      specificClasspath?.let { out.write(it) }
+    }
+
+    context.addDistFile(
+      DistFile(
+        content = InMemoryDistFileContent(byteOut.toByteArray()),
+        relativePath = PLUGIN_CLASSPATH,
+        os = supportedDist.os,
+        libcImpl = supportedDist.libcImpl,
+        arch = supportedDist.arch,
+      )
+    )
+  }
+}

@@ -1,0 +1,8 @@
+// "Create interface 'A'" "true"
+// ERROR: Unresolved reference: B
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+package p
+
+fun foo() = <caret>A.B
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

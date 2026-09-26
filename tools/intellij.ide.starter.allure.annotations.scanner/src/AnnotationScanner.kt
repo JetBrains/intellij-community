@@ -1,0 +1,349 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.starter.allure.annotations.scanner
+
+import com.google.gson.GsonBuilder
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.Instant
+import java.util.stream.Collectors
+
+private val PACKAGE_LINE = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
+private val QUALIFIED_ANNOTATION = Regex("""^@(\w+)\.(\w+)""")
+private val TAG_ANNOTATION = Regex("""^@(?:org\.junit\.jupiter\.api\.)?Tag\(\s*"([^"]+)"\s*\)""")
+private val CLASS_DECLARATION = Regex("""\bclass\s+(\w+)\b""")
+private val TEST_NAME_SUFFIX = Regex(""".*(Test|Tests|TestCase|TestSuite)$""")
+private val NON_RUNNABLE_MODIFIER = Regex("""\b(?:abstract|sealed|annotation|enum)\b""")
+
+private val ANNOTATION_QUALIFIERS = setOf(
+  "Components", "Subsystems", "Layers",
+  "Owners", "Features", "Stories",
+)
+
+private const val TAG_BUFFER_KEY = "Tags"
+
+data class Variant(
+  val name: String? = null,
+  val status: String? = null,
+  val durationMs: Long? = null,
+  val errorMessage: String? = null,
+)
+
+data class LastRun(
+  val status: String? = null,
+  val durationMs: Long? = null,
+  val errorMessage: String? = null,
+  val source: String? = null,
+  val runAt: String? = null,
+  val variants: List<Variant> = emptyList(),
+)
+
+data class TestRecord(
+  val file: String,
+  val fqn: String,
+  val subsystems: List<String>,
+  val components: List<String>,
+  val layers: List<String>,
+  val owners: List<String>,
+  val features: List<String>,
+  val stories: List<String>,
+  val tags: List<String>,
+  val lastRun: LastRun = LastRun(),
+)
+
+data class UnannotatedRecord(
+  val file: String,
+  val fqn: String,
+)
+
+data class ScanReport(
+  val tests: List<TestRecord>,
+  val unannotated: List<UnannotatedRecord>,
+)
+
+private data class Report(
+  val generatedAt: String,
+  val repoCommit: String?,
+  val tests: List<TestRecord>,
+  val unannotated: List<UnannotatedRecord>,
+)
+
+private sealed class ScanResult {
+  data class Annotated(val record: TestRecord) : ScanResult()
+  data class Unannotated(val file: String, val fqn: String) : ScanResult()
+  data object Skip : ScanResult()
+}
+
+private class Args(
+  val sourceRoots: List<Path>,
+  val output: Path,
+  val repoRoot: Path,
+)
+
+private fun parseArgs(args: Array<String>): Args {
+  val cwd = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize()
+  var sourceRoots: List<String>? = null
+  var sourceRootsFile: String? = null
+  var output = "build/annotation-report.json"
+  var repoRoot: Path = cwd
+
+  for (arg in args) {
+    when {
+      arg.startsWith("--source-roots=") -> sourceRoots = arg.substringAfter("=").split(",").map { it.trim() }.filter { it.isNotEmpty() }
+      arg.startsWith("--source-roots-file=") -> sourceRootsFile = arg.substringAfter("=")
+      arg.startsWith("--output=") -> output = arg.substringAfter("=")
+      arg.startsWith("--repo-root=") -> repoRoot = Paths.get(arg.substringAfter("=")).toAbsolutePath().normalize()
+      arg == "--help" || arg == "-h" -> {
+        printUsage()
+        kotlin.system.exitProcess(0)
+      }
+      else -> error("Unknown argument: $arg (use --help for usage)")
+    }
+  }
+
+  val roots = when {
+    sourceRoots != null && sourceRootsFile != null -> error("--source-roots and --source-roots-file are mutually exclusive (use --help for usage)")
+    sourceRoots != null -> sourceRoots
+    sourceRootsFile != null -> readSourceRoots(repoRoot.resolve(sourceRootsFile).normalize())
+    else -> error("Either --source-roots or --source-roots-file is required (use --help for usage)")
+  }
+
+  return Args(
+    sourceRoots = roots.map { repoRoot.resolve(it).normalize() },
+    output = repoRoot.resolve(output).normalize(),
+    repoRoot = repoRoot,
+  )
+}
+
+/**
+ * Reads a source-root list: one repository-relative path per line, blank lines and `#` comments ignored.
+ */
+fun readSourceRoots(file: Path): List<String> {
+  if (!Files.exists(file)) error("Source roots file does not exist: $file")
+  val roots = Files.readAllLines(file).map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
+  if (roots.isEmpty()) error("Source roots file lists no paths: $file")
+  return roots
+}
+
+private fun printUsage() {
+  println("""
+    |Usage: AnnotationScanner (--source-roots=<comma-separated paths> | --source-roots-file=<path>)
+    |                         [--output=<path>] [--repo-root=<path>]
+    |
+    |Exactly one of --source-roots / --source-roots-file is required. A source-roots file holds one
+    |repository-relative path per line; blank lines and '#' comments are ignored.
+    |
+    |Defaults (relative to repo root):
+    |  --output=build/annotation-report.json
+    |  --repo-root=<current working directory>
+    |
+    |Scans .kt and .java files for class-level annotations from
+    |com.intellij.ide.starter.extended.allure (Components, Subsystems, Layers, ...)
+    |plus JUnit 5 @Tag("...") annotations, and emits a JSON report.
+  """.trimMargin())
+}
+
+/**
+ * Runs the scan over [sourceRoots] and returns the records sorted by FQN.
+ */
+fun scanSourceRoots(sourceRoots: List<Path>, repoRoot: Path): ScanReport {
+  // A root that no longer exists means the list is stale, and skipping it would silently shrink the report.
+  val missingRoots = sourceRoots.filter { !Files.exists(it) }
+  if (missingRoots.isNotEmpty()) {
+    error(missingRoots.joinToString("\n", prefix = "Source root(s) do not exist:\n") { "  $it" })
+  }
+
+  val records = mutableListOf<TestRecord>()
+  val unannotated = mutableListOf<UnannotatedRecord>()
+  for (root in sourceRoots) {
+    val files = Files.walk(root).use { stream ->
+      stream
+        .filter {
+          if (!Files.isRegularFile(it)) return@filter false
+          val name = it.toString()
+          name.endsWith(".kt") || name.endsWith(".java")
+        }
+        .collect(Collectors.toList())
+    }
+    for (file in files) {
+      when (val r = scanFile(file, repoRoot)) {
+        is ScanResult.Annotated -> records.add(r.record)
+        is ScanResult.Unannotated -> unannotated.add(UnannotatedRecord(r.file, r.fqn))
+        ScanResult.Skip -> {}
+      }
+    }
+  }
+  return ScanReport(tests = records.sortedBy { it.fqn }, unannotated = unannotated.sortedBy { it.fqn })
+}
+
+fun main(args: Array<String>) {
+  val parsed = parseArgs(args)
+  val scan = scanSourceRoots(parsed.sourceRoots, parsed.repoRoot)
+
+  val report = Report(
+    generatedAt = Instant.now().toString(),
+    repoCommit = currentGitHead(parsed.repoRoot),
+    tests = scan.tests,
+    unannotated = scan.unannotated,
+  )
+
+  Files.createDirectories(parsed.output.parent)
+  Files.writeString(
+    parsed.output,
+    GsonBuilder().setPrettyPrinting().disableHtmlEscaping().serializeNulls().create().toJson(report),
+  )
+
+  println(
+    "Scanned ${parsed.sourceRoots.size} source root(s); " +
+    "wrote ${scan.tests.size} annotated and ${scan.unannotated.size} unannotated record(s) " +
+    "to ${parsed.output}"
+  )
+}
+
+private fun scanFile(file: Path, repoRoot: Path): ScanResult {
+  val text = Files.readString(file)
+  val pkg = PACKAGE_LINE.find(text)?.groupValues?.get(1).orEmpty()
+
+  val buffer = mutableListOf<Pair<String, String>>()
+  var className: String? = null
+  var firstClassSeen: String? = null
+
+  val lines = text.lines()
+  var i = 0
+  while (i < lines.size) {
+    val rawLine = lines[i]
+    val line = rawLine.trim()
+    i++
+
+    if (line.isEmpty()) continue
+    if (line.startsWith("//") || line.startsWith("/*") || line.startsWith("*")) continue
+
+    if (line.startsWith("@")) {
+      // Track only qualified label-style annotations we care about; ignore others
+      // (e.g. @Test, @ParameterizedClass) without clearing the buffer.
+      QUALIFIED_ANNOTATION.find(line)?.let { m ->
+        val qual = m.groupValues[1]
+        val name = m.groupValues[2]
+        if (qual in ANNOTATION_QUALIFIERS) {
+          buffer.add(qual to name)
+        }
+      }
+      TAG_ANNOTATION.find(line)?.let { m ->
+        buffer.add(TAG_BUFFER_KEY to m.groupValues[1])
+      }
+      // Skip continuation lines for multi-line annotation arguments.
+      var depth = parenBalance(line)
+      while (depth > 0 && i < lines.size) {
+        depth += parenBalance(lines[i])
+        i++
+      }
+      // Annotation may be on the same line as the class declaration.
+      val classMatch = CLASS_DECLARATION.find(line)
+      if (classMatch != null) {
+        if (!isRunnableClassDeclaration(line, classMatch)) {
+          buffer.clear()  // the annotations belonged to this non-runnable class; don't leak them onto the next one
+          continue
+        }
+        if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
+        if (buffer.isNotEmpty()) {
+          className = classMatch.groupValues[1]
+          break
+        }
+      }
+      continue
+    }
+
+    val classMatch = CLASS_DECLARATION.find(line)
+    if (classMatch != null) {
+      if (!isRunnableClassDeclaration(line, classMatch)) {
+        buffer.clear()  // the annotations belonged to this non-runnable class; don't leak them onto the next one
+        continue
+      }
+      if (firstClassSeen == null) firstClassSeen = classMatch.groupValues[1]
+      if (buffer.isNotEmpty()) {
+        className = classMatch.groupValues[1]
+        break
+      }
+      // Helper class with no preceding annotations — keep scanning.
+      continue
+    }
+
+    // Other code line (function, property, etc.) — annotations weren't on a class.
+    buffer.clear()
+  }
+
+  val relPath = repoRoot.relativize(file.toAbsolutePath()).toString().replace('\\', '/')
+
+  val resolvedClassName = className
+  if (resolvedClassName != null && buffer.isNotEmpty()) {
+    return ScanResult.Annotated(
+      TestRecord(
+        file = relPath,
+        fqn = if (pkg.isNotEmpty()) "$pkg.$resolvedClassName" else resolvedClassName,
+        subsystems = buffer.filter { it.first == "Subsystems" }.map { it.second },
+        components = buffer.filter { it.first == "Components" }.map { it.second },
+        layers = buffer.filter { it.first == "Layers" }.map { it.second },
+        owners = buffer.filter { it.first == "Owners" }.map { it.second },
+        features = buffer.filter { it.first == "Features" }.map { it.second },
+        stories = buffer.filter { it.first == "Stories" }.map { it.second },
+        tags = buffer.filter { it.first == TAG_BUFFER_KEY }.map { it.second },
+      )
+    )
+  }
+
+  // No labels attached to any class in this file. Surface the file in
+  // the unannotated list only when the first top-level class name looks
+  // test-y — otherwise it's almost certainly a helper utility and we
+  // don't want to flood the list.
+  val firstClass = firstClassSeen
+  if (firstClass != null && TEST_NAME_SUFFIX.matches(firstClass)) {
+    return ScanResult.Unannotated(
+      file = relPath,
+      fqn = if (pkg.isNotEmpty()) "$pkg.$firstClass" else firstClass,
+    )
+  }
+  return ScanResult.Skip
+}
+
+private fun isRunnableClassDeclaration(line: String, classMatch: MatchResult): Boolean =
+  !NON_RUNNABLE_MODIFIER.containsMatchIn(line.substring(0, classMatch.range.first))
+
+private fun parenBalance(line: String): Int {
+  var depth = 0
+  var inString = false
+  var prev = ' '
+  for (ch in line) {
+    if (inString) {
+      if (ch == '"' && prev != '\\') inString = false
+    }
+    else {
+      when (ch) {
+        '"' -> inString = true
+        '(' -> depth++
+        ')' -> depth--
+      }
+    }
+    prev = ch
+  }
+  return depth
+}
+
+@Suppress("IO_FILE_USAGE")
+private fun currentGitHead(repoRoot: Path): String? {
+  return try {
+    val process = ProcessBuilder("git", "rev-parse", "HEAD")
+      .directory(repoRoot.toFile())
+      .redirectErrorStream(true)
+      .start()
+    val finished = process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
+    if (!finished) {
+      process.destroyForcibly()
+      return null
+    }
+    if (process.exitValue() != 0) return null
+    process.inputStream.bufferedReader().readText().trim().takeIf { it.isNotEmpty() }
+  }
+  catch (_: Exception) {
+    null
+  }
+}

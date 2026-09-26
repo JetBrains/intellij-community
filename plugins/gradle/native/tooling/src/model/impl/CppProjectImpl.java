@@ -1,49 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppComponent;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFolder;
-
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppTestSuite;
 
 /**
  * @author Vladislav.Soroka
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
-public class CppProjectImpl implements CppProject {
-
-  private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
-  private final Set<CppBinary> binaries = new LinkedHashSet<CppBinary>();
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
+public final class CppProjectImpl implements CppProject {
+  private @Nullable CppComponent mainComponent;
+  private @Nullable CppTestSuite testComponent;
 
   public CppProjectImpl() {
   }
 
   public CppProjectImpl(CppProject cppProject) {
-    for (CppBinary binary : cppProject.getBinaries()) {
-      addBinary(new CppBinaryImpl(binary));
+    CppComponent mainComponent = cppProject.getMainComponent();
+    if (mainComponent != null) {
+      this.mainComponent = new CppComponentImpl(mainComponent);
     }
-    for (SourceFolder sourceFolder : cppProject.getSourceFolders()) {
-      addSourceFolder(new SourceFolderImpl(sourceFolder));
+    CppTestSuite testComponent = cppProject.getTestComponent();
+    if (testComponent != null) {
+      this.testComponent = new CppTestSuiteImpl(testComponent);
     }
   }
 
   @Override
-  public Set<SourceFolder> getSourceFolders() {
-    return Collections.unmodifiableSet(mySourceFolders);
+  public @Nullable CppComponent getMainComponent() {
+    return mainComponent;
   }
 
-  public void addSourceFolder(SourceFolder folder) {
-    mySourceFolders.add(folder);
+  public void setMainComponent(@Nullable CppComponent mainComponent) {
+    this.mainComponent = mainComponent;
   }
 
   @Override
-  public Set<CppBinary> getBinaries() {
-    return Collections.unmodifiableSet(binaries);
+  public @Nullable CppTestSuite getTestComponent() {
+    return testComponent;
   }
 
-  public void addBinary(CppBinary binary) {
-    binaries.add(binary);
+  public void setTestComponent(@Nullable CppTestSuite testComponent) {
+    this.testComponent = testComponent;
   }
 }

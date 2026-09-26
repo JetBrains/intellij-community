@@ -6,9 +6,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.InlineArtifactAction;
 import com.intellij.packaging.artifacts.Artifact;
 
-/**
- * @author nik
- */
 public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
   private Artifact myIncluded;
 
@@ -51,10 +48,11 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("dir/included");
     perform();
-    assertLayout("<root>\n" +
-                 " artifact:a\n" +
-                 " dir/\n" +
-                 "  module:mod");
+    assertLayout("""
+                   <root>
+                    artifact:a
+                    dir/
+                     module:mod""");
   }
 
   @Override

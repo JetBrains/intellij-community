@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationComponent;
@@ -21,6 +7,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -28,13 +15,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.util.Objects;
 
 /**
  * @author Alexander Lobas
@@ -53,7 +41,12 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     setEnabled(myTable, e, e.getPresentation());
   }
 
@@ -71,7 +64,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -90,7 +83,8 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     ActionCallback callback;
     if (javadocElement == null) {
       callback = new ActionCallback();
-      component.setText(property.getJavadocText(), null, true);
+      component.setText(Objects.requireNonNull(property.getJavadocText()), null, null);
+      component.clearHistory();
     }
     else {
       callback = documentationManager.queueFetchDocInfo(javadocElement, component);

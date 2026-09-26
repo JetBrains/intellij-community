@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -25,12 +10,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.JavaPsiStringTemplateUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +31,29 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
+import static com.intellij.psi.JavaTokenType.CHARACTER_LITERAL;
+import static com.intellij.psi.JavaTokenType.STRING_LITERAL;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_BEGIN;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_END;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_MID;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_LITERAL;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_MID;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
+  public static final @NotNull TokenSet STRING_TOKENS =
+    TokenSet.create(STRING_LITERAL, STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END);
+  public static final @NotNull TokenSet TEXT_BLOCK_TOKENS =
+    TokenSet.create(TEXT_BLOCK_LITERAL, TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
+
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
+    if (!isSupportedFile(file)) {
+      return null;
+    }
+
     // The main idea is to un-escape string/char literals content if necessary.
     // Example:
     //    Suppose we have a following text at the editor: String s = "first <selection>line \n second</selection> line"
@@ -83,8 +92,14 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
         buffer.append(fragment);
       }
       else {
-        textWasChanged = true;
-        buffer.append(unescape(fragment, element));
+        String unescaped = unescape(fragment, element);
+        if (unescaped != null) {
+          textWasChanged = true;
+          buffer.append(unescaped);
+        }
+        else {
+          buffer.append(fragment);
+        }
       }
       int blockSelectionPadding = deducedBlockSelectionWidth - (fileEndOffset - fileStartOffset);
       for (int j = 0; j < blockSelectionPadding; j++) {
@@ -110,14 +125,16 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
   }
 
-  @NotNull
-  protected String unescape(String text, PsiElement token) {
+  protected @Nullable String unescape(String text, PsiElement token) {
     return unescapeStringCharacters(text);
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+  public @NotNull String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+    if (!isSupportedFile(file)) {
+      return text;
+    }
+
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -130,7 +147,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
 
-    if (rawText != null && wasUnescaped(text, rawText.rawText)) return rawText.rawText;
+    if (rawText != null && wasUnescaped(text, rawText.rawText) && isSuitableForContext(rawText.rawText, token)) return rawText.rawText;
     
     if (isStringLiteral(token)) {
       text = escapeAndSplit(text, token);
@@ -138,7 +155,52 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     else if (isCharLiteral(token)) {
       return escapeCharCharacters(text, token);
     }
+    else if (isTextBlock(token)) {
+      final String before = document.getText(new TextRange(selectionStart - 1, selectionStart));
+      final String after = document.getText(new TextRange(selectionEnd, selectionEnd + 1));
+      int caretOffset = editor.getCaretModel().getOffset();
+      int offset = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
+      return escapeTextBlock(text, offset, "\"".equals(before), "\"".equals(after));
+    }
     return text;
+  }
+
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof PsiJavaFile;
+  }
+
+  private boolean isSuitableForContext(String text, PsiElement context) {
+    if (isStringLiteral(context)) {
+      return !containsUnescapedChars(text, '"', '\n');
+    }
+    else if (isCharLiteral(context)) {
+      return !containsUnescapedChars(text, '\'', '\n');
+    }
+    else if (isTextBlock(context)) {
+      return !text.contains("\"\"\"");
+    }
+    else {
+      return true;
+    }
+  }
+
+  private static boolean containsUnescapedChars(String text, char... cs) {
+    boolean slash = false;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '\\') {
+        slash = !slash;
+      }
+      else {
+        if (!slash) {
+          for (char c : cs) {
+            if (ch == c) return true;
+          }
+        }
+        slash = false;
+      }
+    }
+    return false;
   }
 
   public String escapeAndSplit(String text, PsiElement token) {
@@ -173,59 +235,67 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 
-  @Nullable
-  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  protected @Nullable PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
-    if (elementAtSelectionStart == null) {
+    final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
+    if (elementAtSelectionStart == null || elementAtSelectionEnd == null ||
+        elementAtSelectionEnd.getNode().getElementType() != elementAtSelectionStart.getNode().getElementType()) {
       return null;
     }
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart)) {
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock(elementAtSelectionStart)) {
       return null;
     }
-
-    if (elementAtSelectionStart.getTextRange().getEndOffset() < selectionEnd) {
-      final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
-      if (elementAtSelectionEnd == null) {
-        return null;
-      }
-      if (elementAtSelectionEnd.getNode().getElementType() == elementAtSelectionStart.getNode().getElementType() &&
-          elementAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
-        return elementAtSelectionStart;
-      }
-    }
-    
-    final TextRange textRange = elementAtSelectionStart.getTextRange();
-    if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
+    final TextRange startTextRange = getEscapedRange(elementAtSelectionStart);
+    final TextRange endTextRange = getEscapedRange(elementAtSelectionEnd);
+    if (startTextRange == null || endTextRange == null ||
+        !startTextRange.containsOffset(selectionStart) || !endTextRange.containsOffset(selectionEnd)) {
       return null;
     }
     return elementAtSelectionStart;
   }
 
   protected boolean isCharLiteral(@NotNull PsiElement token) {
-    ASTNode node = token.getNode();
-    return node != null && node.getElementType() == JavaTokenType.CHARACTER_LITERAL;
+    return PsiUtil.isJavaToken(token, CHARACTER_LITERAL);
   }
 
   protected boolean isStringLiteral(@NotNull PsiElement token) {
-    ASTNode node = token.getNode();
-    return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
+    return PsiUtil.isJavaToken(token, STRING_TOKENS);
+  }
+  
+  protected boolean isTextBlock(@NotNull PsiElement token) {
+    return PsiUtil.isJavaToken(token, TEXT_BLOCK_TOKENS);
   }
 
-  @Nullable
-  protected TextRange getEscapedRange(@NotNull PsiElement token) {
-    if (isCharLiteral(token) || isStringLiteral(token)) {
-      TextRange tokenRange = token.getTextRange();
-      return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
-    }
-    else {
-      return null;
-    }
+  protected @Nullable TextRange getEscapedRange(@NotNull PsiElement token) {
+    if (token instanceof PsiFragment fragment) return JavaPsiStringTemplateUtil.getContentRange(fragment);
+    PsiElement parent = token.getParent();
+    if (!(parent instanceof PsiLiteralExpression)) return null;
+    final TextRange valueTextRange = StringLiteralManipulator.getValueRange((PsiLiteralExpression)token.getParent());
+    return valueTextRange.shiftRight(token.getTextRange().getStartOffset());
   }
 
-  @NotNull
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected @NotNull String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "'", buffer);
+    return buffer.toString();
+  }
+
+  protected @NotNull String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
+    StringBuilder buffer = new StringBuilder(text.length());
+    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
+    String indent = " ".repeat(offset);
+    for (int i = 0; i < lines.length; i++) {
+      String content = "";
+      if (!CharArrayUtil.containsOnlyWhiteSpaces(lines[i])) {
+        content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
+        content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
+                                                           i == lines.length - 1 && escapeEndQuote, true);
+      }
+      buffer.append(content);
+      if (i < lines.length - 1) {
+        buffer.append('\n').append(indent);
+      }
+    }
     return buffer.toString();
   }
 }

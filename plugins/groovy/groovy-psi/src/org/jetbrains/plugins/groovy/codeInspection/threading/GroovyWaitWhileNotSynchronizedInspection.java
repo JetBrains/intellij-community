@@ -20,9 +20,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -33,25 +33,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
+public final class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
 
     @Override
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return "'wait()' while not synced";
+    protected @Nullable String buildErrorString(Object... args) {
+        return GroovyBundle.message("inspection.message.call.to.ref.outside.of.synchronized.context");
+
     }
 
     @Override
-    @Nullable
-    protected String buildErrorString(Object... args) {
-        return "Call to'#ref' outside of synchronized context #loc";
-
-    }
-
-    @NotNull
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
         return new Visitor();
     }
 
@@ -60,11 +51,10 @@ public class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
         public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
             super.visitMethodCallExpression(grMethodCallExpression);
             final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-            if (!(methodExpression instanceof GrReferenceExpression)) {
+            if (!(methodExpression instanceof GrReferenceExpression reference)) {
                 return;
             }
-            final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
-            final String name = reference.getReferenceName();
+          final String name = reference.getReferenceName();
             if (!"wait".equals(name)) {
                 return;
             }

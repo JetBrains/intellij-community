@@ -1,0 +1,1 @@
+s = "prefix" '\\.' "suffix"

@@ -1,0 +1,3 @@
+case IDEA-283233:
+  - name: hello<caret>
+  - name: world

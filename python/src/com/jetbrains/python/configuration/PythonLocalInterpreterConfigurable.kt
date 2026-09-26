@@ -1,0 +1,133 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.configuration
+
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.python.sdk.common.PyInterpreterItem
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.pySdkAdditionalData
+
+/**
+ * Configurable for local Python interpreter.
+ *
+ */
+internal class PythonLocalInterpreterConfigurable(
+  private val project: Project,
+  private val module: Module?,
+  private val sdk: Sdk,
+  private val item: PyInterpreterItem,
+) : BoundConfigurable(sdk.name) {
+  private val initialSdkHomePath = sdk.homePath
+
+  private val interpreterPath = AtomicProperty(sdk.homePath ?: "")
+
+  private var isSdkAssociatedWithOtherPathInitiallyAndReset: Boolean = false
+
+  private val wasSdkAssociatedWithPathInitially = sdk.associatedModulePath?.isNotBlank() == true
+
+  private var isSdkAssociatedWithPath: Boolean = wasSdkAssociatedWithPathInitially
+
+  override fun createPanel(): DialogPanel = panel {
+    row(PyBundle.message("form.edit.sdk.interpreter.path")) {
+      textFieldWithBrowseButton(
+        PythonSdkType.getInstance().homeChooserDescriptor.withTitle(PyBundle.message("sdk.edit.dialog.specify.interpreter.path")),
+        project
+      ) { it.name }
+        .bindText(interpreterPath)
+        .align(AlignX.FILL)
+        // Why the list flags this interpreter, stated where it needs no hover. Until PY-91967 the reason reached
+        // `idea.log` only, so the marker in the list was the whole of what the user was told.
+        .apply { item.problem?.reason?.let { comment(it) } }
+    }
+    val sdkFlavor = PythonSdkFlavor.getFlavor(sdk)
+    if (sdkFlavor is VirtualEnvSdkFlavor || sdkFlavor is CondaEnvSdkFlavor) {
+      // Add SDK association components only for Virtualenv and Conda interpreters
+      val sdkAssociatedModulePath = sdk.associatedModulePath
+      val projectBasePath = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
+      if (sdkAssociatedModulePath != null && sdkAssociatedModulePath != projectBasePath) {
+        lateinit var associateSdkWithProjectCheckBox: Cell<JBCheckBox>
+        row {
+          associateSdkWithProjectCheckBox = checkBox(PyBundle.message("sdk.edit.dialog.associate.virtual.env.with.path",
+                                                                      FileUtil.toSystemDependentName(sdkAssociatedModulePath)))
+            .bindSelected(::isSdkAssociatedWithPath)
+            .onIsModified { isSdkAssociatedWithOtherPathInitiallyAndReset }
+            .enabled(false)
+        }
+        // "Remove association" link is only visible when this Python interpreter is associated with **other** path than this project's base
+        row {
+          link(PyBundle.message("python.interpreter.local.configurable.remove.association")) {
+            // update property value
+            isSdkAssociatedWithPath = false
+            isSdkAssociatedWithOtherPathInitiallyAndReset = true
+            // hide the link **permanently**
+            visible(false)
+            // update "Associate ..." checkbox text and enable it
+            associateSdkWithProjectCheckBox.component.text =
+              PyBundle.message("form.edit.sdk.associate.this.virtual.environment.with.current.project")
+            associateSdkWithProjectCheckBox.component.isSelected = false
+            associateSdkWithProjectCheckBox.enabled(true)
+          }
+        }
+      }
+      else {
+        row {
+          checkBox(PyBundle.message("form.edit.sdk.associate.this.virtual.environment.with.current.project"))
+            .bindSelected(::isSdkAssociatedWithPath)
+        }
+      }
+    }
+  }
+
+  override fun apply() {
+    super.apply()
+
+    val sdkModificator = sdk.sdkModificator
+    if (interpreterPath.get() != initialSdkHomePath) {
+      sdkModificator.homePath = interpreterPath.get()
+    }
+
+    if (isSdkAssociatedWithOtherPathInitiallyAndReset || wasSdkAssociatedWithPathInitially != isSdkAssociatedWithPath) {
+      if (isSdkAssociatedWithPath) {
+        if (module != null) {
+          val basePath = module.baseDir?.path ?: throw IllegalArgumentException("Module $module has no roots and can't be associated")
+          sdk.pySdkAdditionalData.associatedModulePath = basePath
+        }
+        else {
+          val projectBasePath = project.basePath
+          if (projectBasePath != null) sdk.pySdkAdditionalData.associatedModulePath = projectBasePath
+        }
+      }
+      else {
+        sdk.pySdkAdditionalData.associatedModulePath = null
+      }
+      sdk.sdkModificator.sdkAdditionalData = sdk.sdkAdditionalData
+    }
+
+    WriteAction.run<Throwable> {
+      sdkModificator.commitChanges()
+    }
+
+    if (initialSdkHomePath != sdk.homePath) {
+      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+    }
+  }
+}

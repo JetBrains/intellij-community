@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -24,34 +10,36 @@ import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
-  private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
-  private final String myBranchName;
+  private final @NlsSafe String myBranchName;
   private final TextFieldWithCompletion myDestTargetPanel;
   private final VcsEditableTextComponent myTargetRenderedComponent;
 
-  public HgPushTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
+  public HgPushTargetPanel(@NotNull HgRepository repository, @NotNull HgPushSource source, @Nullable HgTarget defaultTarget) {
     setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
-    myBranchName = myRepository.getCurrentBranchName();
+    myBranchName = source.getBranch();
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
     String defaultText = defaultTarget != null ? defaultTarget.getPresentation() : "";
-    myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + defaultText + "</a>", null);
+    myTargetRenderedComponent = new VcsEditableTextComponent(HtmlChunk.link("", defaultText).toString(), null);
     myDestTargetPanel = new PushTargetTextField(repository.getProject(), targetVariants, defaultText);
     add(myDestTargetPanel, BorderLayout.CENTER);
   }
@@ -65,7 +53,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     }
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
-      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, myTargetRenderedComponent);
+      renderer.append(HgBundle.message("action.hg4idea.push.enter.remote"), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, myTargetRenderedComponent);
     }
     myTargetRenderedComponent.setSelected(isSelected);
     myTargetRenderedComponent.setTransparent(!isActive);
@@ -73,13 +61,11 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  @Nullable
-  public HgTarget getValue() {
+  public @Nullable HgTarget getValue() {
     return createValidPushTarget();
   }
 
-  @NotNull
-  private HgTarget createValidPushTarget() {
+  private @NotNull HgTarget createValidPushTarget() {
     return new HgTarget(myDestTargetPanel.getText(), myBranchName);
   }
 
@@ -94,8 +80,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  @Nullable
-  public ValidationInfo verify() {
+  public @Nullable ValidationInfo verify() {
     if (StringUtil.isEmptyOrSpaces(myDestTargetPanel.getText())) {
       return new ValidationInfo(VcsError.createEmptyTargetError(DvcsUtil.getShortRepositoryName(myRepository)).getText(), this);
     }
@@ -108,10 +93,10 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   }
 
   @Override
-  public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
+  public void addTargetEditorListener(final @NotNull PushTargetEditorListener listener) {
     myDestTargetPanel.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         listener.onTargetInEditModeChanged(myDestTargetPanel.getText());
       }
     });

@@ -1,45 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 
-public class ExtractEnumTest extends MultiFileTestCase {
-
-  @NotNull
+public class ExtractEnumTest extends LightMultiFileTestCase {
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/extractEnum/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/extractEnum/";
   }
-
+  
   public void testOneConstant() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
@@ -70,6 +56,13 @@ public class ExtractEnumTest extends MultiFileTestCase {
 
   public void testUsageInVariableInitializer() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
+  }
+
+  public void testNestedClass() {
+    doTest(null, true,
+           new RefactoringTestUtil.MemberDescriptor("ONE", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("TWO", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("THREE", PsiField.class, true));
   }
 
   public void testForwardReferenceConflict() {
@@ -144,15 +137,15 @@ public class ExtractEnumTest extends MultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  private void doTest(final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
+  private void doTest(RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
     doTest(null, false, memberDescriptors);
   }
 
-  private void doTest(final String conflicts,
-                      final boolean generateAccessors,
-                      final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+  private void doTest(String conflicts,
+                      boolean extractInnerClass,
+                      RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
+    doTest(() -> {
+      final PsiClass aClass = myFixture.findClass("Test");
       assertNotNull("Class Test not found", aClass);
 
       final ArrayList<PsiField> fields = new ArrayList<>();
@@ -176,16 +169,16 @@ public class ExtractEnumTest extends MultiFileTestCase {
       try {
         final ExtractClassProcessor processor =
           new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "EEnum",
-                                    null, generateAccessors, enumConstants);
+                                    null, false, enumConstants, extractInnerClass);
 
         processor.run();
-        LocalFileSystem.getInstance().refresh(false);
+        StandardFileSystems.local().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
         if (conflicts != null) {
-          TreeSet expectedConflictsSet = new TreeSet(Arrays.asList(conflicts.split("\n")));
-          TreeSet actualConflictsSet = new TreeSet(Arrays.asList(e.getMessage().split("\n")));
+          TreeSet<String> expectedConflictsSet = new TreeSet<>(Arrays.asList(conflicts.split("\n")));
+          TreeSet<String> actualConflictsSet = new TreeSet<>(Arrays.asList(e.getMessage().split("\n")));
           Assert.assertEquals(expectedConflictsSet, actualConflictsSet);
           return;
         }

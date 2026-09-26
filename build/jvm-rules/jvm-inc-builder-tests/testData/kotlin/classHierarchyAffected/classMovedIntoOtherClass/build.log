@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  B$Y.class
+  B.class
+  C$Z.class
+  C.class
+  META-INF/kotlin_classHierarchyAffected_classMovedIntoOtherClass-a.kotlin_module
+  X.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/classMovedIntoOtherClass/a/A.kt
+  kotlin/classHierarchyAffected/classMovedIntoOtherClass/a/B.kt
+  kotlin/classHierarchyAffected/classMovedIntoOtherClass/a/C.kt
+End of files
+------------------------------------------
+Exit code: OK

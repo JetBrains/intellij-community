@@ -1,0 +1,15 @@
+f:com.intellij.platform.lsp.impl.LspInitializationOptionsKt
+f:com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
+- f:logError(java.lang.CharSequence):V
+- f:logInbound(java.lang.CharSequence):V
+- f:logOutbound(java.lang.CharSequence):V
+f:com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService
+- sf:Companion:com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:connect(java.lang.String,Z):com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
+- bs:connect$default(com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService,java.lang.String,Z,I,java.lang.Object):com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
+- f:disconnect(com.intellij.platform.lsp.impl.logging.LanguageServiceLogger):V
+- f:getActiveLogPaths():java.util.List
+f:com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService$Companion
+- f:getInstance():com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService
+- f:isDebugLogEnabled():Z

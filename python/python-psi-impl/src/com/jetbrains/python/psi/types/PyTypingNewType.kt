@@ -1,0 +1,125 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.psi.types
+
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.RatedResolveResult
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+class PyTypingNewType(
+  val classType: PyClassType,
+  override val name: String,
+  override val declarationElement: PyTargetExpression,
+) : PyClassType by classType {
+
+  override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteOwner): PyType {
+    return PyTypingNewType(classType.toInstance(), name, declarationElement)
+  }
+
+  override fun toClass(): PyTypingNewType {
+    return if (isDefinition) this else PyTypingNewType(classType.toClass(), name, declarationElement)
+  }
+
+  override fun toInstance(): PyTypingNewType {
+    return if (isDefinition) PyTypingNewType(classType.toInstance(), name, declarationElement) else this
+  }
+
+  override val isBuiltin: Boolean = false
+
+  override fun isCallable(): Boolean = classType.isCallable || isDefinition
+
+  override fun toString(): String = "TypingNewType: $name"
+
+  override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
+    return if (isCallable) {
+      listOf(PyCallableParameterImpl.nonPsi(null, classType.toInstance()))
+    }
+    else {
+      null
+    }
+  }
+
+  override fun getParametersType(context: TypeEvalContext): PyCallableParameterVariadicType? {
+    return getParameters(context)?.let { PyCallableParameterListTypeImpl(it) }
+  }
+
+  override fun getSuperClassTypes(context: TypeEvalContext): List<PyClassLikeType> = listOf(classType)
+
+  override fun resolveMember(
+    name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext,
+    inherited: Boolean,
+  ): MutableList<out RatedResolveResult>? {
+    return if (name == PyNames.CLASS_GETITEM) {
+      mutableListOf()
+    }
+    else {
+      classType.resolveMember(name, location, direction, resolveContext, inherited)
+    }
+  }
+
+  override fun resolveMember(name: String, location: PyExpression?, direction: AccessDirection, resolveContext: PyResolveContext)
+    : List<RatedResolveResult>? {
+    return if (name == PyNames.CLASS_GETITEM) {
+      listOf()
+    }
+    else {
+      classType.resolveMember(name, location, direction, resolveContext)
+    }
+  }
+
+  override fun getAncestorTypes(context: TypeEvalContext): List<PyClassLikeType?> {
+    return listOf(classType) + classType.getAncestorTypes(context)
+  }
+
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PyTypingNewType
+
+    if (classType != other.classType) return false
+    if (name != other.name) return false
+    if (declarationElement != other.declarationElement) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return 31 * classType.hashCode() + name.hashCode()
+  }
+
+  override fun <T> acceptTypeVisitor(visitor: PyTypeVisitor<T>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyTypingNewType(this)
+    }
+    return visitor.visitPyClassType(this)
+  }
+}
+
+/**
+ * Represents a type of callable object returned in runtime by `typing.NewType()`.
+ * For type annotations [PyTypingNewType] is used.
+ */
+@ApiStatus.Internal
+class PyTypingNewTypeFactoryType(type: PyTypingNewType)
+  : PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi(type.classType.toInstance())), type.toInstance()) {
+  override val name: String = type.name
+
+  override fun resolveMember(
+    name: String,
+    location: PyExpression?,
+    direction: AccessDirection,
+    resolveContext: PyResolveContext,
+  ): List<RatedResolveResult>? {
+    if (name == "__or__") {
+      return listOf(RatedResolveResult(RatedResolveResult.RATE_NORMAL, null))
+    }
+    return super.resolveMember(name, location, direction, resolveContext)
+  }
+}

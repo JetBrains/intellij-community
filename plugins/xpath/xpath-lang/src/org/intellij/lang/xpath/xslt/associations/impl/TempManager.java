@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 
 import java.util.Map;
@@ -29,8 +29,8 @@ class TempManager extends TransactionalManager {
     private long myStartModCount;
     private long myImplModCount;
 
-    TempManager(FileAssociationsManagerImpl impl, Project project, VirtualFilePointerManager filePointerManager) {
-        myTmp = new FileAssociationsManagerImpl(project, filePointerManager);
+    TempManager(FileAssociationsManagerImpl impl, Project project) {
+        myTmp = new FileAssociationsManagerImpl(project);
         myTmp.markAsTempCopy();
         myTmp.copyFrom(impl);
 
@@ -39,6 +39,7 @@ class TempManager extends TransactionalManager {
         myImplModCount = myImpl.getModificationCount();
     }
 
+    @Override
     public void applyChanges() {
         assert myImplModCount == myImpl.getModificationCount();
 
@@ -47,12 +48,14 @@ class TempManager extends TransactionalManager {
         myStartModCount = myTmp.getModificationCount();
     }
 
+    @Override
     public boolean isModified() {
         assert myImplModCount == myImpl.getModificationCount();
 
         return myStartModCount != myTmp.getModificationCount();
     }
 
+    @Override
     public void reset() {
         assert myImplModCount == myImpl.getModificationCount();
 
@@ -60,34 +63,42 @@ class TempManager extends TransactionalManager {
         myStartModCount = myTmp.getModificationCount();
     }
 
+    @Override
     public void dispose() {
-        myTmp.disposeComponent();
+        Disposer.dispose(myTmp);
     }
 
+    @Override
     public void removeAssociations(PsiFile file) {
         myTmp.removeAssociations(file);
     }
 
+    @Override
     public void removeAssociation(PsiFile file, PsiFile assoc) {
         myTmp.removeAssociation(file, assoc);
     }
 
+    @Override
     public void addAssociation(PsiFile file, PsiFile assoc) {
         myTmp.addAssociation(file, assoc);
     }
 
+    @Override
     public void addAssociation(PsiFile file, VirtualFile assoc) {
         myTmp.addAssociation(file, assoc);
     }
 
+    @Override
     public Map<VirtualFile, VirtualFile[]> getAssociations() {
         return myTmp.getAssociations();
     }
 
+    @Override
     public PsiFile[] getAssociationsFor(PsiFile file) {
         return myTmp.getAssociationsFor(file);
     }
 
+    @Override
     public PsiFile[] getAssociationsFor(PsiFile file, FileType... fileTypes) {
         return myTmp.getAssociationsFor(file, fileTypes);
     }

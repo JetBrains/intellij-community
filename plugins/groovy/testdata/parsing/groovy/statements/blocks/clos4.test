@@ -29,7 +29,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Command arguments
               Literal
-                PsiElement(Gstring)('"bugaga"')
+                PsiElement(double quoted string)('"bugaga"')
           PsiWhiteSpace(' ')
           PsiElement(Integer)('3')
         PsiElement(})('}')

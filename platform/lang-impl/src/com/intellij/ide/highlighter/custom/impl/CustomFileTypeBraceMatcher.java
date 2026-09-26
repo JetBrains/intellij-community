@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.highlighter.custom.impl;
 
@@ -24,26 +10,36 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.CustomHighlighterTokenType.*;
+import static com.intellij.psi.CustomHighlighterTokenType.IDENTIFIER;
+import static com.intellij.psi.CustomHighlighterTokenType.L_ANGLE;
+import static com.intellij.psi.CustomHighlighterTokenType.L_BRACE;
+import static com.intellij.psi.CustomHighlighterTokenType.L_BRACKET;
+import static com.intellij.psi.CustomHighlighterTokenType.L_PARENTH;
+import static com.intellij.psi.CustomHighlighterTokenType.PUNCTUATION;
+import static com.intellij.psi.CustomHighlighterTokenType.R_ANGLE;
+import static com.intellij.psi.CustomHighlighterTokenType.R_BRACE;
+import static com.intellij.psi.CustomHighlighterTokenType.R_BRACKET;
+import static com.intellij.psi.CustomHighlighterTokenType.R_PARENTH;
+import static com.intellij.psi.CustomHighlighterTokenType.WHITESPACE;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
-  public static final BracePair[] PAIRS = new BracePair[]{
+public final class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
+  private static final BracePair[] PAIRS = new BracePair[]{
     new BracePair(L_BRACKET, R_BRACKET, true),
     new BracePair(L_ANGLE, R_ANGLE, true),
     new BracePair(L_PARENTH, R_PARENTH, true),
     new BracePair(L_BRACE, R_BRACE, true),
   };
 
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return PAIRS;
   }
 
-  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+  @Override
+  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType contextType) {
     return contextType == PUNCTUATION ||
            contextType == WHITESPACE ||
            isRBraceToken(contextType);
@@ -61,14 +57,11 @@ public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
     return false;
   }
 
-  @NotNull
-  public static PairedBraceMatcherAdapter createBraceMatcher() {
-    return new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
-      @Override
-      public int getBraceTokenGroupId(IElementType tokenType) {
-        int id = super.getBraceTokenGroupId(tokenType);
-        return id == -1 ? -1 : 777;
-      }
-    };
-  }
+  public static final PairedBraceMatcherAdapter INSTANCE = new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
+    @Override
+    public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
+      int id = super.getBraceTokenGroupId(tokenType);
+      return id == -1 ? -1 : 777;
+    }
+  };
 }

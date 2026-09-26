@@ -1,55 +1,46 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Map;
 
-/**
- * @author yole
- */
-public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final String ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
+
+public final class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
-  @NotNull
   @Override
-  public String getId() {
-    return ID;
+  public @NotNull String getId() {
+    return PythonDocumentationProvider.DOCUMENTATION_CONFIGURABLE_ID;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
-    return PlatformUtils.isPyCharm() ? "External Documentation" : "Python External Documentation";
+  public @Nls String getDisplayName() {
+    return PlatformUtils.isPyCharm() ? PyBundle.message("external.documentation.pycharm")
+                                     : PyBundle.message("external.documentation.python.plugin");
   }
 
   @Override
@@ -59,28 +50,38 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
   @Override
   public JComponent createComponent() {
-    return myPanel;
+    Border border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0));
+    JPanel panelWithDescription = JBUI.Panels.simplePanel(new JBLabel(PyBundle.message("external.documentation.description"))).withBorder(border);
+
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
+    myPanel.getTable().setShowGrid(false);
+
+    BorderLayoutPanel myComponent = new BorderLayoutPanel()
+      .addToTop(panelWithDescription)
+      .addToCenter(myPanel);
+
+    return myComponent;
   }
 
   @Override
   public void reset() {
     myPanel.getData().clear();
-    myPanel.getData().addAll(PythonDocumentationMap.getInstance().getEntries());
+    myPanel.getData().addAll(PythonDocumentationMap.getInstance().getEntries().entrySet());
   }
 
   @Override
   public boolean isModified() {
-    HashSet<PythonDocumentationMap.Entry> originalEntries = Sets.newHashSet(PythonDocumentationMap.getInstance().getEntries());
-    HashSet<PythonDocumentationMap.Entry> editedEntries = Sets.newHashSet(myPanel.getData());
+    Map<String, String> originalEntries = Map.copyOf(PythonDocumentationMap.getInstance().getEntries());
+    Map<String, String> editedEntries = ImmutableMap.copyOf(myPanel.getData());
     return !editedEntries.equals(originalEntries);
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    PythonDocumentationMap.getInstance().setEntries(myPanel.getData());
+    PythonDocumentationMap.getInstance().setEntries(ImmutableMap.copyOf(myPanel.getData()));
   }
 
-  private static class PythonDocumentationTableModel extends AddEditRemovePanel.TableModel<PythonDocumentationMap.Entry> {
+  private static class PythonDocumentationTableModel extends AddEditRemovePanel.TableModel<Map.Entry<String, String>> {
     @Override
     public int getColumnCount() {
       return 2;
@@ -88,23 +89,25 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
     @Override
     public String getColumnName(int columnIndex) {
-      return columnIndex == 0 ? "Module Name" : "URL/Path Pattern";
+      return columnIndex == 0
+             ? PyBundle.message("external.documentation.column.name.module")
+             : PyBundle.message("external.documentation.column.name.url.path.pattern");
     }
 
     @Override
-    public Object getField(PythonDocumentationMap.Entry o, int columnIndex) {
-      return columnIndex == 0 ? o.getPrefix() : o.getUrlPattern();
+    public Object getField(Map.Entry<String, String> o, int columnIndex) {
+      return columnIndex == 0 ? o.getKey() : o.getValue();
     }
   }
 
   private static final PythonDocumentationTableModel ourModel = new PythonDocumentationTableModel();
 
-  private static class PythonDocumentationPanel extends AddEditRemovePanel<PythonDocumentationMap.Entry> {
-    public PythonDocumentationPanel() {
+  private static class PythonDocumentationPanel extends AddEditRemovePanel<Map.Entry<String, String>> {
+    PythonDocumentationPanel() {
       super(ourModel, new ArrayList<>());
       setRenderer(1, new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           String text = value == null ? "" : (String) value;
           int pos = 0;
           while(pos < text.length()) {
@@ -124,12 +127,11 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
     }
 
     @Override
-    protected PythonDocumentationMap.Entry addItem() {
+    protected Map.Entry<String, String> addItem() {
       return showEditor(null);
     }
 
-    @Nullable
-    private PythonDocumentationMap.Entry showEditor(PythonDocumentationMap.Entry entry) {
+    private @Nullable Map.Entry<String, String> showEditor(Map.Entry<String, String> entry) {
       PythonDocumentationEntryEditor editor = new PythonDocumentationEntryEditor(this);
       if (entry != null) {
         editor.setEntry(entry);
@@ -142,14 +144,13 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
     }
 
     @Override
-    protected boolean removeItem(PythonDocumentationMap.Entry o) {
+    protected boolean removeItem(Map.Entry<String, String> o) {
       return true;
     }
 
     @Override
-    protected PythonDocumentationMap.Entry editItem(PythonDocumentationMap.Entry o) {
+    protected Map.Entry<String, String> editItem(Map.Entry<String, String> o) {
       return showEditor(o);
     }
   }
-
 }

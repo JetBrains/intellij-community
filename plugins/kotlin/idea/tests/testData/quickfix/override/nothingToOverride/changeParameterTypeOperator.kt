@@ -1,0 +1,11 @@
+// "Change function signature to 'operator fun plus(other: Int): A'" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+open class A {
+    open operator fun plus(other: Int): A = this
+}
+
+class B : A() {
+    <caret>override operator fun plus(other: String): A = this
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

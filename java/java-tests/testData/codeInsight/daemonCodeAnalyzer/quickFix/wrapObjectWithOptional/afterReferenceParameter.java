@@ -1,4 +1,4 @@
-// "Wrap using 'java.util.Optional'" "true"
+// "Wrap using 'java.util.Optional'" "true-preview"
 import java.util.Optional;
 
 public class Test {

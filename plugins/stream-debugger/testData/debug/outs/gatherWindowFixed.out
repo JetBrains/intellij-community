@@ -1,0 +1,39 @@
+LineBreakpoint created at GatherWindowFixed.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! GatherWindowFixed
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+GatherWindowFixed.java:7
+Stream.of(1, 2, 3, 4, 5, 6, 7, 8)
+.gather(Gatherers.windowFixed(3))
+.toArray()
+gather
+    before: 1,2,3,5,6,7,9,10
+    after: 4,8,11
+toArray
+    before: 4,8,11
+    after: 12,13,14
+mappings for gather
+  direct:
+    1 -> 4
+    2 -> 4
+    3 -> 4
+    5 -> 8
+    6 -> 8
+    7 -> 8
+    9 -> 11
+    10 -> 11
+  reverse:
+    1,2,3 <- 4
+    5,6,7 <- 8
+    9,10 <- 11
+mappings for toArray
+  direct:
+    4 -> 12
+    8 -> 13
+    11 -> 14
+  reverse:
+    4 <- 12
+    8 <- 13
+    11 <- 14
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

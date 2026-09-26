@@ -7,6 +7,6 @@ class Outer {
 
 class StaticImportTest {
     public static void main(String[] args) {
-        <ref>Double d;
+        <caret>Double d;
     }
 }

@@ -1,24 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import java.net.PasswordAuthentication;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProxyCallback extends AuthCallbackCase {
 
   private static final Logger LOG = Logger.getInstance(ProxyCallback.class);
 
-  private static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
-  private static final String PROXY_AUTHENTICATION_FAILED = "Proxy authentication failed";
+  private static final @NonNls String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
+  private static final @NonNls String PROXY_AUTHENTICATION_FAILED = "Proxy authentication failed";
 
   private PasswordAuthentication myProxyAuthentication;
 
@@ -72,8 +70,7 @@ public class ProxyCallback extends AuthCallbackCase {
     }
   }
 
-  @NotNull
-  private static String getHostGroup(@NotNull String proxyHostParameter) {
+  private static @NotNull String getHostGroup(@NotNull String proxyHostParameter) {
     int start = proxyHostParameter.indexOf(":");
     int finish = proxyHostParameter.indexOf(":", start + 1);
 

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.lang.Language;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,69 +10,124 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 
+import java.util.List;
+
+/**
+ * Common data keys used as parameter for {@link AnActionEvent#getData(DataKey)} in {@link AnAction#update(AnActionEvent)}/{@link AnAction#actionPerformed(AnActionEvent)} implementations.
+ *
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+ * @see com.intellij.openapi.actionSystem.LangDataKeys
+ */
 public class CommonDataKeys {
-  public static final DataKey<Project> PROJECT = DataKey.create("project");
-  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
+
+  public static final DataKey<Project> PROJECT = DataKey.create(Names.PROJECT_KEY_NAME);
+
   /**
-   * This key can be used to obtain reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
+   * Returns currently focused editor instance.
+   *
+   * @see #HOST_EDITOR
+   * @see #EDITOR_EVEN_IF_INACTIVE
+   */
+  public static final DataKey<Editor> EDITOR = DataKey.create(Names.EDITOR_KEY_NAME);
+
+  /**
+   * Returns reference to host editor instance, in case {@link #EDITOR} key is referring to an injected editor.
    */
   public static final DataKey<Editor> HOST_EDITOR = DataKey.create("host.editor");
+
   /**
-   * A key to retrieve caret instance (in host or injected editor, depending on context).
+   * Returns caret instance (in host or injected editor, depending on context).
    */
   public static final DataKey<Caret> CARET = DataKey.create("caret");
+
   /**
-   * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
+   * Returns editor even if focus currently is in find bar.
+   *
+   * @see #EDITOR
    */
   public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
 
   /**
-   * This key can be used to obtain {@link Navigatable} instance.
-   *<br>
+   * Returns {@link Navigatable} instance.
+   * <p/>
    * If {@link DataContext} has a value for {@link #PSI_ELEMENT} key which implements {@link Navigatable} it will automatically
    * return it for this key if explicit value isn't provided.
+   *
+   * @see #NAVIGATABLE_ARRAY
    */
   public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
 
   /**
-   * This key can be used to obtain several navigatables e.g. if several elements are selected in a component.
-   *<br>
+   * Returns several navigatables, e.g. if several elements are selected in a component.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #NAVIGATABLE} key it will automatically return single-element array for this
    * key if explicit value isn't provided so there is no need to perform such wrapping by hand.
+   *
+   * @see #NAVIGATABLE
    */
   public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
 
   /**
-   * This key can be used to obtain {@link VirtualFile} instance.
-   *<br>
+   * Returns {@link VirtualFile} instance.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #PSI_FILE} key it will automatically return the corresponding {@link VirtualFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
+   * <br/>
+   * If there is more than one {@link VirtualFile} in the context, the first one will be returned.
+   *
+   * @see #VIRTUAL_FILE_ARRAY
    */
   public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
 
   /**
-   * This key can be used to obtain several {@link VirtualFile} instances e.g. if several elements are selected in a component.
-   *<br>
+   * Returns several {@link VirtualFile} instances, e.g. if several elements are selected in a component.
+   * <p/>
    * Note that if {@link DataContext} doesn't have an explicit value for this key it will automatically collect {@link VirtualFile} instances
    * corresponding to values provided for {@link #VIRTUAL_FILE}, {@link #PSI_FILE}, {@link #PSI_ELEMENT} and other keys and return the array
    * containing unique instances of the found files.
+   *
+   * @see #VIRTUAL_FILE
    */
   public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
 
+  /**
+   * Returns {@link PsiElement} instance.
+   *
+   * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys#PSI_ELEMENT_ARRAY
+   */
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
 
+  public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
+
   /**
-   * This key can be used to obtain several {@link PsiFile} instance.
-   *<br>
+   * Returns currently selected {@link PsiFile} instance.
+   * <p/>
    * Note that if {@link DataContext} has a value for {@link #VIRTUAL_FILE} key it will automatically return the corresponding {@link PsiFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
    */
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
 
   /**
-   * This key can be used to check if the current context relates to a virtual space in editor.
+   * Returns whether the current location relates to a virtual space in an editor.
+   *
    * @see com.intellij.openapi.editor.EditorSettings#setVirtualSpace(boolean)
    */
   public static final DataKey<Boolean> EDITOR_VIRTUAL_SPACE = DataKey.create("editor.virtual.space");
+
+  /**
+   * Returns a list of target symbols.
+   * If there is an editor in the context, then it will return referenced or declared symbols
+   * by the current editor file and the caret offset.
+   *
+   * @see com.intellij.model.psi.impl.TargetSymbolsDataRule
+   */
+  public static final DataKey<List<Symbol>> SYMBOLS = DataKey.create("symbols");
+  @ApiStatus.Internal
+  public interface Names {
+    String PROJECT_KEY_NAME = "project";
+    String EDITOR_KEY_NAME = "editor";
+  }
 }

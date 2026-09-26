@@ -1,0 +1,7 @@
+// PROBLEM: 'protected' visibility is effectively 'private' in a final class
+// FIX: Make private
+// NO_FIX: Make class open
+@JvmInline
+value class C(val x: Int) {
+    <caret>protected fun foo() {}
+}

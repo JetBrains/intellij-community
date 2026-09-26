@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.tasks"/>
+    <module name="intellij.platform.tasks.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <tasks.contextProvider implementation="com.intellij.platform.tasks.impl.debugger.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.platform.tasks.impl.debugger.XDebuggerWatchesProvider"/>
+  </extensions>
+</idea-plugin>

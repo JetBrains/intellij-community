@@ -16,9 +16,10 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
-import java.util.*
 
+@ApiStatus.Internal
 interface BreakpointManager {
   enum class MUTE_MODE {
     ALL,
@@ -30,13 +31,6 @@ interface BreakpointManager {
 
   val regExpBreakpointSupported: Boolean
     get() = false
-
-  @Deprecated("use another overload")
-  fun setBreakpoint(target: BreakpointTarget,
-                    line: Int,
-                    condition: String? = null): Breakpoint {
-    throw UnsupportedOperationException()
-  }
 
   fun setBreakpoint(target: BreakpointTarget,
                     line: Int,
@@ -66,11 +60,10 @@ interface BreakpointManager {
 
   /**
    * Flushes the breakpoint parameter changes (set* methods) into the browser
-   * and invokes the callback once the operation has finished. This method must
+   * and returns a promise of an updated breakpoint. This method must
    * be called for the set* method invocations to take effect.
-
    */
-  fun flush(breakpoint: Breakpoint): Promise<*>
+  fun flush(breakpoint: Breakpoint): Promise<out Breakpoint>
 
   /**
    * Asynchronously enables or disables all breakpoints on remote. 'Enabled' means that
@@ -86,14 +79,5 @@ interface BreakpointManager {
 
   interface SetBreakpointResult
   data class BreakpointExist(val existingBreakpoint: Breakpoint) : SetBreakpointResult
-  data class BreakpointCreated(val breakpoint: Breakpoint, val isResolved: Promise<out Breakpoint>) : SetBreakpointResult
-}
-
-interface BreakpointListener : EventListener {
-  fun resolved(breakpoint: Breakpoint)
-
-  fun errorOccurred(breakpoint: Breakpoint, errorMessage: String?)
-
-  fun nonProvisionalBreakpointRemoved(breakpoint: Breakpoint) {
-  }
+  data class BreakpointCreated(val breakpoint: Breakpoint, val isRegistered: Promise<out Breakpoint>) : SetBreakpointResult
 }

@@ -1,0 +1,11 @@
+LineBreakpoint created at composeCompositionLocal.kt:20
+LineBreakpoint created at composeCompositionLocal.kt:30
+LineBreakpoint created at composeCompositionLocal.kt:54
+Run Java
+Connected to the target VM
+composeCompositionLocal.kt:54
+composeCompositionLocal.kt:30
+composeCompositionLocal.kt:20
+Disconnected from the target VM
+
+Process finished with exit code 0

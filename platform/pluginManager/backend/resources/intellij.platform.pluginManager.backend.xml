@@ -1,0 +1,29 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.updateChecker"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.pluginManager.shared"/>
+    <module name="intellij.platform.pluginManager.shared.base"/>
+    <module name="intellij.platform.pluginSystem.parser.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.pluginManager.backend.rpc.PluginManagerApiProvider"
+                                            apiInterfaces="com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi,
+                                                           com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi,
+                                                           com.intellij.platform.pluginManager.shared.base.rpc.PluginUpdaterApi,
+                                                           com.intellij.platform.pluginManager.shared.rpc.PluginErrorReporterApi,
+                                                           com.intellij.platform.pluginManager.shared.rpc.PluginUpdatesProviderApi"/>
+  </extensions>
+</idea-plugin>

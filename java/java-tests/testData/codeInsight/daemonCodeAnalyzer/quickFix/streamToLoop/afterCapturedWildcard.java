@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -14,11 +14,11 @@ public class Main {
   public static OptionalInt min(IndexSet<?> set) {
       boolean seen = false;
       int best = 0;
-      for (Index index: set.asList()) {
-          int asInteger = index.asInteger();
-          if (!seen || asInteger < best) {
+      for (Index index : set.asList()) {
+          int integer = index.asInteger();
+          if (!seen || integer < best) {
               seen = true;
-              best = asInteger;
+              best = integer;
           }
       }
       return seen ? OptionalInt.of(best) : OptionalInt.empty();

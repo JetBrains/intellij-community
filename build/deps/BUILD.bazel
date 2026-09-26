@@ -1,0 +1,53 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.idea.community.build.dependencies` start
+jvm_library(
+    name = "dependencies",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.community.build.dependencies",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//platform/build-scripts/downloader",
+        "//platform/build-scripts/concurrency",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "dependencies_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.idea.community.build.dependencies",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":dependencies",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/build-scripts/downloader:downloader_test_lib",
+        "//platform/build-scripts/concurrency:concurrency_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.idea.community.build.dependencies` end
+
+### auto-generated section `iml intellij.idea.community.build.dependencies` start
+exports_files(
+    [
+        "intellij.idea.community.build.dependencies.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.idea.community.build.dependencies` end

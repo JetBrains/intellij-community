@@ -1,103 +1,128 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.findUsages;
 
+import com.intellij.find.findUsages.AbstractFindUsagesDialog;
+import com.intellij.find.findUsages.CommonFindUsagesDialog;
 import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerBase;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.find.findUsages.FindUsagesHandlerUi;
+import com.intellij.find.findUsages.FindUsagesHelper;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
- * @author yole
+ * @author traff
  */
-public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
+
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    return element instanceof PyClass ||
-           (element instanceof PyFile && PyUtil.isPackage((PyFile)element)) ||
-           element instanceof PyImportedModule ||
-           element instanceof PyFunction ||
-           element instanceof PyTargetExpression;
+    return PyPsiFindUsagesHandlerFactory.super.canFindUsages(element);
   }
 
-  @Nullable
-  @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    if (element instanceof PyImportedModule) {
-      final PsiElement resolved = ((PyImportedModule)element).resolve();
-      if (resolved != null) {
-        element = resolved;
-      }
+  private static @Nullable FindUsagesHandler proxy(final @Nullable FindUsagesHandlerBase base) {
+    if (base == null) {
+      return null;
     }
-    if (element instanceof PsiFileSystemItem) {
-      return new PyModuleFindUsagesHandler((PsiFileSystemItem)element);
+    else if (base instanceof FindUsagesHandler) {
+      return (FindUsagesHandler)base;
     }
-    if (element instanceof PyFunction) {
-      if (!forHighlightUsages) {
-        TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
-        final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();
-        if (superMethods.size() > 0) {
-          final PsiElement next = superMethods.iterator().next();
-          // TODO should do this for Jython functions overriding Java methods too
-          if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
-            int rc = Messages.showYesNoDialog(element.getProject(), "Method " +
-                                                                          ((PyFunction)element).getName() +
-                                                                          " overrides method of class " +
-                                                                          ((PyFunction)next).getContainingClass().getName() +
-                                                                          ".\nDo you want to find usages of the base method?",  "Find Usages", Messages.getQuestionIcon());
-            if (rc == Messages.YES) {
-              List<PsiElement> allMethods = new ArrayList<>();
-              allMethods.add(element);
-              allMethods.addAll(superMethods);
-              return new PyFunctionFindUsagesHandler(element, allMethods);
-            }
-            else {
-              return new PyFunctionFindUsagesHandler(element);
-            }
-          }
+    else if (base instanceof PyFindUsagesHandler) {
+      // Important note: override methods that are overridden in PyFindUsagesHandler inheritors.
+
+      return new FindUsagesHandler(base.getPsiElement()) {
+        @Override
+        public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
+          return base.getFindUsagesOptions(dataContext);
         }
 
-      }
-      return new PyFunctionFindUsagesHandler(element);
+        @Override
+        protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+          return FindUsagesHelper.isSearchForTextOccurrencesAvailable(base, psiElement, isSingleFile);
+        }
+
+        @Override
+        public PsiElement @NotNull [] getPrimaryElements() {
+          return base.getPrimaryElements();
+        }
+
+        @Override
+        public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target,
+                                                                           @NotNull SearchScope searchScope) {
+          return base.findReferencesToHighlight(target, searchScope);
+        }
+
+        @Override
+        public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile,
+                                                                     boolean toShowInNewTab,
+                                                                     boolean mustOpenInNewTab) {
+
+          if (base instanceof FindUsagesHandlerUi) {
+            return ((FindUsagesHandlerUi)base).getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
+          else {
+            return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
+        }
+      };
     }
-    if (element instanceof PyClass) {
-      return new PyClassFindUsagesHandler((PyClass)element);
+    else {
+      @NonNls String msg = base + " is of unexpected type.";
+      throw new IllegalArgumentException(msg);
     }
-    if (element instanceof PyTargetExpression) {
-      return new PyTargetExpressionFindUsagesHandler(((PyTargetExpression)element));
-    }
-    return null;
   }
 
-  private static boolean isInObject(PyFunction fun) {
-    final PyClass containingClass = fun.getContainingClass();
-    if (containingClass == null) {
-      return false;
+  @Override
+  public @Nullable FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
+    return proxy(PyPsiFindUsagesHandlerFactory.super.createFindUsagesHandler(element, forHighlightUsages));
+  }
+
+  @Override
+  public @NotNull PyModuleFindUsagesHandler createModuleFindUsagesHandler(@NotNull PsiFileSystemItem element) {
+    return new PyModuleFindUsagesHandlerUi(element);
+  }
+
+  /**
+   * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
+   */
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+    PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
+      super(file);
     }
-    return PyUtil.isObjectClass(containingClass);
+
+    @Override
+    public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+      PsiFileSystemItem element = myElement;
+      return new CommonFindUsagesDialog(element,
+                                        getProject(),
+                                        getFindUsagesOptions(),
+                                        toShowInNewTab,
+                                        mustOpenInNewTab,
+                                        isSingleFile,
+                                        this) {
+        @Override
+        public void configureLabelComponent(final @NonNls @NotNull SimpleColoredComponent coloredComponent) {
+          coloredComponent.append(element instanceof PsiDirectory
+                                  ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
+                                  : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));
+          coloredComponent.append(" ");
+          coloredComponent.append(element.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
+      };
+    }
   }
 }

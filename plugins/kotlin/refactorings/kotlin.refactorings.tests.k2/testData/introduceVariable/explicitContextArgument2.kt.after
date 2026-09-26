@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+class ContextParameters {
+
+    context(x: String, y: Int)
+    fun foo2(a: String): String {
+        return x + a
+    }
+
+    fun main() {
+        val x = "Hello"
+        foo2(x = x, y = 0, a = "World")
+    }
+
+}

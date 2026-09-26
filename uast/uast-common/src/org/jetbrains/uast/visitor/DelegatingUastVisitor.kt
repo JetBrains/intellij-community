@@ -1,23 +1,45 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.visitor
 
-import org.jetbrains.uast.*
-
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UBinaryExpressionWithType
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UCatchClause
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UDoWhileExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpressionList
+import org.jetbrains.uast.UForEachExpression
+import org.jetbrains.uast.UForExpression
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UObjectLiteralExpression
+import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.UPostfixExpression
+import org.jetbrains.uast.UPrefixExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.USuperExpression
+import org.jetbrains.uast.USwitchClauseExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.UTryExpression
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UUnaryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UWhileExpression
+import org.jetbrains.uast.UYieldExpression
 
 class DelegatingUastVisitor(private val visitors: List<UastVisitor>) : UastVisitor {
   override fun visitElement(node: UElement): Boolean {
@@ -142,6 +164,10 @@ class DelegatingUastVisitor(private val visitors: List<UastVisitor>) : UastVisit
 
   override fun visitBreakExpression(node: UBreakExpression): Boolean {
     return visitors.all { it.visitBreakExpression(node) }
+  }
+
+  override fun visitYieldExpression(node: UYieldExpression): Boolean {
+    return visitors.all { it.visitYieldExpression(node) }
   }
 
   override fun visitContinueExpression(node: UContinueExpression): Boolean {

@@ -1,0 +1,73 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.gradle.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.gradle",
+        "intellij.gradle",
+        "intellij.gradle.toolingExtension",
+        "intellij.gradle.toolingExtension.impl",
+        "intellij.gradle.toolingProxy",
+        "intellij.gradle.completion",
+        "intellij.gradle.completion.kotlin",
+        "intellij.gradle.completion.toml",
+        "intellij.gradle.properties",
+        "intellij.gradle.settings",
+        "intellij.gradle.backend",
+        "intellij.gradle.codeInsight",
+        "intellij.gradle.codeInsight.backend",
+        "intellij.gradle.codeInsight.kotlin",
+        "intellij.gradle.codeInsight.kotlin.backend",
+        "intellij.gradle.codeInsight.groovy",
+        "intellij.gradle.codeInsight.groovy.backend",
+        "intellij.gradle.codeInsight.toml",
+        "intellij.gradle.codeInsight.toml.backend",
+        "intellij.gradle.codeInsight.properties",
+        "intellij.gradle.codeInsight.properties.backend",
+        "intellij.gradle.common",
+        "intellij.libraries.groovy",
+        "intellij.libraries.groovy.ant",
+    ],
+    main_module = "intellij.gradle.plugin",
+)
+### auto-generated section `dev intellij.gradle.plugin` end
+
+### auto-generated section `build intellij.gradle.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.gradle.plugin` end
+
+### auto-generated section `iml intellij.gradle.plugin` start
+exports_files(
+    [
+        "intellij.gradle.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.plugin` end

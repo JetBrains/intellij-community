@@ -1,0 +1,142 @@
+Line 1 coverage: FULL
+Fully Covered
+Line 4 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 6 coverage: FULL
+Fully Covered
+Line 7 coverage: FULL
+Fully Covered
+Line 14 coverage: FULL
+Fully Covered
+Line 17 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 23 coverage: FULL
+Fully Covered
+Line 27 coverage: FULL
+Fully Covered
+Line 30 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 40 coverage: FULL
+Fully Covered
+Line 44 coverage: FULL
+Fully Covered
+Line 47 coverage: PARTIAL
+Partially Covered
+Covered 2/3 branches
+Line 49 coverage: FULL
+Fully Covered
+Line 50 coverage: FULL
+Fully Covered
+Line 53 coverage: FULL
+Fully Covered
+Line 57 coverage: FULL
+Fully Covered
+Line 60 coverage: FULL
+Fully Covered
+Covered 3/3 branches
+Line 62 coverage: FULL
+Fully Covered
+Line 63 coverage: FULL
+Fully Covered
+Line 66 coverage: FULL
+Fully Covered
+Line 67 coverage: FULL
+Fully Covered
+Line 70 coverage: FULL
+Fully Covered
+Line 74 coverage: FULL
+Fully Covered
+Line 77 coverage: PARTIAL
+Partially Covered
+Covered 2/3 branches
+Line 79 coverage: FULL
+Fully Covered
+Line 80 coverage: FULL
+Fully Covered
+Line 83 coverage: FULL
+Fully Covered
+Line 84 coverage: FULL
+Fully Covered
+Line 91 coverage: FULL
+Fully Covered
+Line 94 coverage: PARTIAL
+Partially Covered
+Covered 1/3 branches
+Line 96 coverage: FULL
+Fully Covered
+Line 99 coverage: FULL
+Fully Covered
+Line 103 coverage: FULL
+Fully Covered
+Line 106 coverage: FULL
+Fully Covered
+Covered 3/3 branches
+Line 108 coverage: FULL
+Fully Covered
+Line 109 coverage: FULL
+Fully Covered
+Line 112 coverage: FULL
+Fully Covered
+Line 116 coverage: FULL
+Fully Covered
+Line 119 coverage: PARTIAL
+Partially Covered
+Covered 1/8 branches
+Line 129 coverage: FULL
+Fully Covered
+Line 130 coverage: FULL
+Fully Covered
+Line 149 coverage: FULL
+Fully Covered
+Line 152 coverage: FULL
+Fully Covered
+Covered 3/3 branches
+Line 154 coverage: FULL
+Fully Covered
+Line 155 coverage: FULL
+Fully Covered
+Line 158 coverage: FULL
+Fully Covered
+Line 159 coverage: FULL
+Fully Covered
+Line 162 coverage: FULL
+Fully Covered
+Line 166 coverage: FULL
+Fully Covered
+Line 169 coverage: FULL
+Fully Covered
+Covered 3/3 branches
+Line 171 coverage: FULL
+Fully Covered
+Line 172 coverage: FULL
+Fully Covered
+Line 175 coverage: FULL
+Fully Covered
+Line 176 coverage: FULL
+Fully Covered
+Line 179 coverage: FULL
+Fully Covered
+Line 183 coverage: FULL
+Fully Covered
+Line 186 coverage: PARTIAL
+Partially Covered
+Covered 4/5 branches
+Line 188 coverage: FULL
+Fully Covered
+Line 189 coverage: FULL
+Fully Covered
+Line 192 coverage: FULL
+Fully Covered
+Line 193 coverage: FULL
+Fully Covered
+Line 196 coverage: FULL
+Fully Covered
+Line 197 coverage: FULL
+Fully Covered
+Line 200 coverage: FULL
+Fully Covered
+Line 204 coverage: FULL
+Fully Covered

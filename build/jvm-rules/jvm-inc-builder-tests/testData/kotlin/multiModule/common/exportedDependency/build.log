@@ -1,0 +1,33 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_exportedDependency-module1.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/exportedDependency/module1/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_exportedDependency-module2.kotlin_module
+  foo/AChild.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/exportedDependency/module2/AChild.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_exportedDependency-module1.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/exportedDependency/module1/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_exportedDependency-module2.kotlin_module
+End of files
+Compiling files:
+  kotlin/multiModule/common/exportedDependency/module2/AChild.kt
+End of files
+------------------------------------------
+Exit code: OK

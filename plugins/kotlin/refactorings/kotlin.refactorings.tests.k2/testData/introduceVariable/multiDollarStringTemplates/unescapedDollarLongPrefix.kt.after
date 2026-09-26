@@ -1,0 +1,5 @@
+
+fun foo(): String {
+    val string = $$$$"$$$bar"
+    return $$$$"foo$$$${string}baz"
+}

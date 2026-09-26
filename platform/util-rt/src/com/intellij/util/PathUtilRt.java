@@ -1,40 +1,115 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * @author nik
- */
-public class PathUtilRt {
+public final class PathUtilRt {
+
+  private PathUtilRt() { }
+
   @NotNull
   public static String getFileName(@Nullable String path) {
-    if (path == null || path.length() == 0) {
+    if (path == null || path.isEmpty()) {
       return "";
     }
 
-    char c = path.charAt(path.length() - 1);
-    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
-    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
-    return path.substring(start, end);
+    int end = lastNonSeparatorIndex(path);
+    int start = lastSeparatorIndex(path, end);
+    if (isWindowsUNCRoot(path, start)) {
+      start = -1;
+    }
+    return path.substring(start + 1, end + 1);
+  }
+
+  @Nullable("null means no extension (e.g. 'xxx'), empty string means empty extension (e.g. 'xxx.')")
+  public static String getFileExtension(@Nullable String path) {
+    if (path == null || path.isEmpty()) {
+      return null;
+    }
+
+    int end = lastNonSeparatorIndex(path);
+    if (end == -1) {
+      return null;
+    }
+    int start = lastSeparatorIndex(path, end) + 1;
+    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end + 1);
+    return index < 0 ? null : path.substring(index + 1, end + 1);
+  }
+
+  private static int lastNonSeparatorIndex(@NotNull String path) {
+    for (int index = path.length() - 1; index >= 0; --index) {
+      char c = path.charAt(index);
+      if (!isSeparator(c)) {
+        return index;
+      }
+    }
+    return -1;
   }
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.length() == 0) return "";
-    int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-    if (end == path.length() - 1) {
-      end = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
+    int end = getParentPathEndOffset(path);
+    return end == 0 ? "" : path.substring(0, end);
+  }
+
+  @NotNull
+  public static CharSequence getParentPathSequence(@NotNull CharSequence path) {
+    int end = getParentPathEndOffset(path);
+    return end == 0 ? "" : path.subSequence(0, end);
+  }
+
+  private static int getParentPathEndOffset(@NotNull CharSequence path) {
+    if (path.length() == 0) {
+      return 0;
     }
-    return end == -1 ? "" : path.substring(0, end);
+
+    int end = lastSeparatorIndex(path, path.length() - 1);
+    if (end == path.length() - 1 && end >= 1) {
+      end = lastSeparatorIndex(path, end - 1);
+    }
+    if (end == -1 || end == 0) {
+      return 0;
+    }
+    if (isWindowsUNCRoot(path, end)) {
+      return 0;
+    }
+    // parent of '//host' is root
+    char prev = path.charAt(end - 1);
+    if (isSeparator(prev)) {
+      end--;
+    }
+    return end;
+  }
+
+  public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
+    return Platform.CURRENT == Platform.WINDOWS &&
+           startsWithSeparatorSeparator(path) && lastPathSeparatorPosition >= 1
+           && !hasFileSeparatorsOrNavigatableDots(path, 2, lastPathSeparatorPosition);
+  }
+
+  private static boolean hasFileSeparatorsOrNavigatableDots(@NotNull CharSequence path, int start, int end) {
+    for (int i = end - 1; i >= start; i--) {
+      char c = path.charAt(i);
+      if (isSeparator(c)) {
+        return true;
+      }
+      // contains '.' or '..' surrounded by slashes
+      if (c == '.' && (i == 2 || i == 3 && path.charAt(2) == '.')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -44,10 +119,33 @@ public class PathUtilRt {
 
   @NotNull
   public static String suggestFileName(@NotNull String text, boolean allowDots, boolean allowSpaces) {
+    return suggestFileName(text, allowDots, allowSpaces, FS_CHARSET);
+  }
+
+  /**
+   * Same as {@link #suggestFileName(String, boolean, boolean)}, but with an explicitly specified filesystem charset
+   * ({@link #suggestFileName(String, boolean, boolean)} uses the current {@code sun.jnu.encoding}).
+   * <p>
+   * In addition to replacing characters that are invalid in file names, this also replaces any character that cannot be
+   * encoded with {@code fsCharset}. Otherwise such a name would later blow up in {@code sun.nio.fs.UnixPath.encode}
+   * with {@code InvalidPathException: Malformed input or input contains unmappable characters} on systems whose
+   * {@code sun.jnu.encoding} is a non-Unicode charset (e.g. ASCII/POSIX, common in minimal Linux containers).
+   * A typical offender is the narrow no-break space (U+202F) that the JDK's CLDR locale data inserts before AM/PM
+   * markers in localized times; it is neither {@link Character#isWhitespace whitespace} nor an invalid file-name char,
+   * so it survives the other filters.
+   *
+   * @param fsCharset the target filesystem charset; {@code null} means no encodability restriction
+   */
+  @NotNull
+  public static String suggestFileName(@NotNull String text, boolean allowDots, boolean allowSpaces, @Nullable Charset fsCharset) {
+    CharsetEncoder fsEncoder = fsCharset != null && fsCharset.canEncode() ? fsCharset.newEncoder() : null;
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (!isValidFileNameChar(c, Platform.CURRENT, true) || (!allowDots && c == '.') || (!allowSpaces && Character.isWhitespace(c))) {
+      if (!isValidFileNameChar(c, Platform.CURRENT, true) ||
+          (!allowDots && c == '.') ||
+          (!allowSpaces && Character.isWhitespace(c)) ||
+          (fsEncoder != null && !fsEncoder.canEncode(c))) {
         result.append('_');
       }
       else {
@@ -59,10 +157,28 @@ public class PathUtilRt {
 
   /**
    * Checks whether a file with the given name can be created on a current platform.
+   *
    * @see #isValidFileName(String, Platform, boolean, Charset)
    */
   public static boolean isValidFileName(@NotNull String fileName, boolean strict) {
     return isValidFileName(fileName, Platform.CURRENT, strict, FS_CHARSET);
+  }
+
+  public static boolean startsWithSeparatorSeparator(@NotNull CharSequence path) {
+    return path.length() > 1 && isSeparator(path.charAt(0)) && path.charAt(1) == path.charAt(0);
+  }
+
+  public static boolean isSeparator(char c) {
+    return c == '/' || c == '\\';
+  }
+
+  public static int lastSeparatorIndex(@NotNull CharSequence s, int endInclusive) {
+    for (int i = endInclusive; i >= 0; i--) {
+      if (isSeparator(s.charAt(i))) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   public enum Platform {
@@ -84,7 +200,7 @@ public class PathUtilRt {
    * @param cs     prohibits names which cannot be encoded by this charset (optional).
    */
   public static boolean isValidFileName(@NotNull String name, @NotNull Platform os, boolean strict, @Nullable Charset cs) {
-    if (name.length() == 0 || name.equals(".") || name.equals("..")) {
+    if (name.isEmpty() || name.equals(".") || name.equals("..")) {
       return false;
     }
 
@@ -94,31 +210,33 @@ public class PathUtilRt {
       }
     }
 
-    if (os == Platform.WINDOWS && name.length() >= 3 && name.length() <= 4 && WINDOWS_NAMES.contains(name.toUpperCase(Locale.US))) {
+    if (os == Platform.WINDOWS && name.length() >= 3 && name.length() <= 4 &&
+        WINDOWS_RESERVED_NAMES.contains(name.toUpperCase(Locale.ENGLISH))) {
       return false;
     }
 
-    if (cs != null && !(cs.canEncode() && cs.newEncoder().canEncode(name))) {
-      return false;
-    }
-
-    return true;
+    return cs == null || cs.canEncode() && cs.newEncoder().canEncode(name);
   }
 
   private static boolean isValidFileNameChar(char c, Platform os, boolean strict) {
-    if (c == '/' || c == '\\') return false;
-    if ((strict || os == Platform.WINDOWS) && (c < 32 || WINDOWS_CHARS.indexOf(c) >= 0)) return false;
-    if (strict && c == ';') return false;
-    return true;
+    if (isSeparator(c)) {
+      return false;
+    }
+    if ((strict || os == Platform.WINDOWS) && (c < 32 || WINDOWS_INVALID_CHARS.indexOf(c) >= 0)) {
+      return false;
+    }
+    return !strict || c != ';';
   }
 
-  private static final String WINDOWS_CHARS = "<>:\"|?*";
-  private static final Set<String> WINDOWS_NAMES = ContainerUtilRt.newHashSet(
+  private static final String WINDOWS_INVALID_CHARS = "<>:\"|?*";
+  @SuppressWarnings("SSBasedInspection")
+  private static final Set<String> WINDOWS_RESERVED_NAMES = new HashSet<>(Arrays.asList(
     "CON", "PRN", "AUX", "NUL",
     "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9");
+    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));
 
   private static final Charset FS_CHARSET = fsCharset();
+
   private static Charset fsCharset() {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isMac) {
       String property = System.getProperty("sun.jnu.encoding");

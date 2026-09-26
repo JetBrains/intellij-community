@@ -1,0 +1,1 @@
+unknown 'org.springframework:spring-core:2.5'

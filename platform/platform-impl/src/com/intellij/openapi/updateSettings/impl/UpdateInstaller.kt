@@ -1,157 +1,201 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.ArrayUtil
-import com.intellij.util.Restarter
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
-import java.io.File
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.net.URL
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.util.zip.ZipException
+import java.util.zip.ZipFile
 import javax.swing.UIManager
 
+@ApiStatus.Internal
+@OptIn(LowLevelLocalMachineAccess::class)
+@Suppress("UseOptimizedEelFunctions")
 object UpdateInstaller {
-  private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
+  const val UPDATER_MAIN_CLASS: String = "com.intellij.updater.Runner"
+
+  private val LOG = logger<UpdateInstaller>()
+
+  private const val PATCH_FILE_NAME = "patch-file.zip"
+  private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchFile(patch: PatchInfo,
-                        toBuild: BuildNumber,
-                        forceHttps: Boolean,
-                        indicator: ProgressIndicator): File {
+  fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<Path> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
-    val product = ApplicationInfo.getInstance().build.productCode
-    val from = patch.fromBuild.asStringWithoutProductCode()
-    val to = toBuild.asStringWithoutProductCode()
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
-    val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
+    val files = mutableListOf<Path>()
+    val share = 1.0 / (chain.size - 1)
 
-    val baseUrl = patchesUrl
-    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else "${baseUrl}/"), patchName)
-    val patchFile = File(getTempDir(), "patch.jar")
-    HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
-    return patchFile
+    for (i in 1 until chain.size) {
+      val from = chain[i - 1]
+      val to = chain[i]
+      val patchFile = getTempDir().resolve("patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
+      val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
+                ?: error("Metadata contains information about patch '${from}' -> '${to}', but 'computePatchUrl' returns 'null'")
+      val partIndicator = @Suppress("UsagesOfObsoleteApi") object : DelegatingProgressIndicator(indicator) {
+        override fun setFraction(fraction: Double) = super.setFraction((i - 1) * share + fraction / share)
+      }
+      LOG.info("downloading ${url}")
+      HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
+      try {
+        ZipFile(@Suppress("IO_FILE_USAGE") patchFile.toFile()).use {
+          if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+            throw IOException("Corrupted patch file: ${patchFile}")
+          }
+        }
+      }
+      catch (e: ZipException) {
+        throw IOException("Corrupted patch file: ${patchFile}", e)
+      }
+      files.add(patchFile)
+    }
+
+    return files
   }
 
   @JvmStatic
-  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
+    return downloadPluginUpdates(downloaders, indicator, PluginUpdateProgressSink.NONE)
+  }
+
+  @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun downloadPluginUpdates(
+    downloaders: Collection<PluginDownloader>,
+    indicator: ProgressIndicator,
+    progressSink: PluginUpdateProgressSink,
+  ): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
-    UpdateChecker.saveDisabledToUpdatePlugins()
+    val updateChecker = UpdateCheckerFacade.getInstance()
+    updateChecker.saveDisabledToUpdatePlugins()
 
-    val disabledToUpdate = UpdateChecker.disabledToUpdatePlugins
+    val disabledToUpdate = updateChecker.disabledToUpdate
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
-          readyToInstall += downloader
+        if (downloader.id !in disabledToUpdate) {
+          progressSink.downloadProgressChanged(downloader.id, null)
+          if (downloader.prepareToInstall(indicator.withPluginUpdateProgress(downloader.id, downloader.pluginName, progressSink))) {
+            progressSink.downloadProgressChanged(downloader.id, 1.0)
+            readyToInstall += downloader
+          }
         }
         indicator.checkCanceled()
       }
-      catch (e: ProcessCanceledException) { throw e }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Exception) {
-        Logger.getInstance(UpdateChecker::class.java).info(e)
+        LOG.info(e)
       }
     }
-
-    var installed = false
-
-
-    ProgressManager.getInstance().executeNonCancelableSection {
-      for (downloader in readyToInstall) {
-        try {
-          downloader.install()
-          installed = true
-        }
-        catch (e: Exception) {
-          Logger.getInstance(UpdateChecker::class.java).info(e)
-        }
-      }
-    }
-    return installed
+    return readyToInstall
   }
 
   @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+    val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
+    if (downloadedPluginUpdates.isEmpty()) {
+      return false
+    }
+
+    ProgressManager.getInstance().executeNonCancelableSection {
+      for (downloader in downloadedPluginUpdates) {
+        try {
+          downloader.install()
+        }
+        catch (e: Exception) {
+          LOG.info(e)
+        }
+      }
+    }
+
+    return true
+  }
+
   fun cleanupPatch() {
-    val tempDir = getTempDir()
-    if (tempDir.exists()) FileUtil.delete(tempDir)
+    NioFiles.deleteRecursively(getTempDir())
   }
 
   @JvmStatic
   @Throws(IOException::class)
-  fun preparePatchCommand(patchFile: File): Array<String> {
-    val log4j = findLib("log4j.jar")
-    val jna = findLib("jna.jar")
-    val jnaUtils = findLib("jna-platform.jar")
+  fun preparePatchCommand(patchFiles: List<Path>, indicator: ProgressIndicator): Array<String> {
+    indicator.text = IdeBundle.message("update.preparing.patch.progress")
 
     val tempDir = getTempDir()
-    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.path, true)) {
-      throw IOException("Temp directory inside installation: $tempDir")
+    if (PathManager.isUnderHomeDirectory(tempDir)) {
+      throw IOException("Temp directory inside installation: ${tempDir}")
     }
-    if (!(tempDir.exists() || tempDir.mkdirs())) {
-      throw IOException("Cannot create temp directory: $tempDir")
-    }
+    Files.createDirectories(tempDir)
 
-    val log4jCopy = log4j.copyTo(File(tempDir, log4j.name), true)
-    val jnaCopy = jna.copyTo(File(tempDir, jna.name), true)
-    val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
-
-    var java = System.getProperty("java.home")
-    if (FileUtil.isAncestor(PathManager.getHomePath(), java, true)) {
-      val javaCopy = File(tempDir, "jre")
-      FileUtil.copyDir(File(java), javaCopy)
-      java = javaCopy.path
+    var jre = Path.of(System.getProperty("java.home"))
+    if (PathManager.isUnderHomeDirectory(jre)) {
+      val jreCopy = tempDir.resolve("jre")
+      NioFiles.deleteRecursively(jreCopy)
+      NioFiles.copyRecursively(jre, jreCopy)
+      jre = jreCopy
     }
 
-    val args = arrayListOf<String>()
+    val args = mutableListOf<String>()
+    val ideHome = PathManager.getHomeDir()
 
-    if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
+    if (OS.CURRENT == OS.Windows && !Files.isWritable(ideHome)) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
-      if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        args += Restarter.createTempExecutable(launcher).path
-        Restarter.createTempExecutable(elevator)
+      if (launcher != null && elevator != null) {
+        args.add(Files.copy(launcher, tempDir.resolve(launcher.fileName), StandardCopyOption.REPLACE_EXISTING).toString())
+        Files.copy(elevator, tempDir.resolve(elevator.fileName), StandardCopyOption.REPLACE_EXISTING)
       }
     }
 
-    args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += "-Xmx750m"
+    args += jre.resolve("bin").resolve(OS.CURRENT.getBinaryName("java")).toString()
+    args += "-Xmx${2000}m"
+    args += "--enable-native-access=ALL-UNNAMED"
     args += "-cp"
-    args += arrayOf(patchFile.path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
+    args += patchFiles.last().toString()
 
     args += "-Djna.nosys=true"
     args += "-Djna.boot.library.path="
     args += "-Djna.debug_load=true"
     args += "-Djna.debug_load.jna=true"
-    args += "-Djava.io.tmpdir=${tempDir.path}"
-    args += "-Didea.updater.log=${PathManager.getLogPath()}"
+    args += "-Djava.io.tmpdir=${tempDir}"
+    args += "-Didea.updater.log=${PathManager.getLogDir()}"
+    System.getProperty("sun.java2d.metal")?.let { args += "-Dsun.java2d.metal=${it}" }
+    System.getProperty("awt.toolkit.name")?.let { args += "-Dawt.toolkit.name=${it}" }
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
+    args += "-Duser.language=${DynamicBundle.getLocale().language}"
+    args += "-Duser.country=${DynamicBundle.getLocale().country}"
 
-    args += "com.intellij.updater.Runner"
-    args += "install"
-    args += PathManager.getHomePath()
+    args += UPDATER_MAIN_CLASS
+    args += if (patchFiles.size == 1) "install" else "batch-install"
+    args += ideHome.toString()
+    if (patchFiles.size > 1) {
+      args += patchFiles.joinToString(@Suppress("IO_FILE_USAGE") java.io.File.pathSeparator)
+    }
 
-    return ArrayUtil.toStringArray(args)
+    return args.toTypedArray()
   }
 
-  private fun findLib(libName: String): File {
-    val libFile = File(PathManager.getLibPath(), libName)
-    return if (libFile.exists()) libFile else throw IOException("Missing: ${libFile}")
-  }
-
-  private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+  private fun getTempDir() = PathManager.getTempDir().resolve("patch-update")
 }

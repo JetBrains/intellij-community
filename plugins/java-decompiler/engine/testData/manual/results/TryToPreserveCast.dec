@@ -1,0 +1,38 @@
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
+public class TryToPreserveCast {
+   public static void main(String[] args) {
+   }// 10
+
+   public void test(ByteBuffer buffer) {
+      ((Buffer)buffer).limit(1);// 13
+      buffer.limit(2);// 14
+   }// 15
+}
+
+class 'TryToPreserveCast' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      5
+   }
+
+   method 'test (Ljava/nio/ByteBuffer;)V' {
+      0      8
+      1      8
+      2      8
+      3      8
+      4      8
+      6      9
+      7      9
+      8      9
+      9      9
+      a      9
+      c      10
+   }
+}
+
+Lines mapping:
+10 <-> 6
+13 <-> 9
+14 <-> 10
+15 <-> 11

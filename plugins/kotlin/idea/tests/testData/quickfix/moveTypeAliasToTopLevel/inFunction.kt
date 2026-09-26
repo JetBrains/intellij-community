@@ -1,0 +1,12 @@
+// "Move typealias to top level" "true"
+// K2_ERROR: UNSUPPORTED_FEATURE
+fun bar() {
+    <caret>typealias Foo = String
+
+    fun baz(foo: Foo) {
+    }
+}
+
+fun qux() {}
+// IGNORE_K2
+// Nested type aliases are introduced by KT-45285

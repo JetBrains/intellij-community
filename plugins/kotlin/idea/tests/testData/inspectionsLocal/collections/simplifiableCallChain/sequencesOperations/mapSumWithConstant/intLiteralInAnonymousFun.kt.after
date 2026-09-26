@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun test(sequence: Sequence<Int>) {
+    sequence.sumOf(fun(it: Int): Int {
+        return 1
+    })
+}

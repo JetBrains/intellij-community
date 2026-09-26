@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -26,16 +27,15 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
   private static final Logger LOG = Logger.getInstance(PyConvertModuleToPackageAction.class);
 
   @Override
-  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(PsiElement @NotNull [] elements) {
     if (elements.length == 1) {
       return elements[0] instanceof PyFile && !PyUtil.isPackage((PyFile)elements[0]);
     }
     return false;
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new RefactoringActionHandler() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -43,14 +43,14 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
       }
 
       @Override
-      public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+      public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
         createPackageFromModule(((PyFile)elements[0]));
       }
     };
   }
 
   @VisibleForTesting
-  public void createPackageFromModule(@NotNull final PyFile file) {
+  public void createPackageFromModule(final @NotNull PyFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     final VirtualFile parentDir = vFile.getParent();
     final String newPackageName = vFile.getNameWithoutExtension();

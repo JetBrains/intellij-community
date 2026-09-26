@@ -1,58 +1,49 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.FlavorMap;
 import java.awt.datatransfer.SystemFlavorMap;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-public class FileCopyPasteUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.dnd.FileCopyPasteUtil");
+public final class FileCopyPasteUtil {
+  private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
+  private static final DataFlavor[] FLAVORS = ContainerUtil.filter(new DataFlavor[]{
+    DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
+  }, flavor -> flavor != null).toArray(new DataFlavor[0]);
 
   private FileCopyPasteUtil() { }
 
-  public static DataFlavor createDataFlavor(@NotNull final String mimeType) {
+  public static DataFlavor createDataFlavor(@NotNull String mimeType) {
     return createDataFlavor(mimeType, null, false);
   }
 
-  public static DataFlavor createDataFlavor(@NotNull final String mimeType, @Nullable final Class<?> klass) {
+  public static DataFlavor createDataFlavor(@NotNull String mimeType, @Nullable Class<?> klass) {
     return createDataFlavor(mimeType, klass, false);
   }
 
-  public static DataFlavor createDataFlavor(@NotNull final String mimeType, @Nullable final Class<?> klass, final boolean register) {
+  public static DataFlavor createDataFlavor(@NotNull String mimeType, @Nullable Class<?> klass, boolean register) {
     try {
-      final DataFlavor flavor =
+      DataFlavor flavor =
         klass != null ? new DataFlavor(mimeType + ";class=" + klass.getName(), null, klass.getClassLoader()) : new DataFlavor(mimeType);
 
       if (register) {
-        final FlavorMap map = SystemFlavorMap.getDefaultFlavorMap();
+        FlavorMap map = SystemFlavorMap.getDefaultFlavorMap();
         if (map instanceof SystemFlavorMap) {
           ((SystemFlavorMap)map).addUnencodedNativeForFlavor(flavor, mimeType);
         }
@@ -62,60 +53,53 @@ public class FileCopyPasteUtil {
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
-      //noinspection ConstantConditions
       return null;
     }
   }
 
-  public static DataFlavor createJvmDataFlavor(@NotNull final Class<?> klass) {
+  public static DataFlavor createJvmDataFlavor(@NotNull Class<?> klass) {
     return createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType, klass, false);
   }
 
   public static boolean isFileListFlavorAvailable() {
-    return CopyPasteManager.getInstance().areDataFlavorsAvailable(
-      DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
-    );
+    return CopyPasteManager.getInstance().areDataFlavorsAvailable(FLAVORS);
   }
 
   public static boolean isFileListFlavorAvailable(@NotNull DnDEvent event) {
-    return event.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
-           event.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor) ||
-           event.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
+    return ContainerUtil.or(FLAVORS, event::isDataFlavorSupported);
   }
 
-  public static boolean isFileListFlavorAvailable(@NotNull DataFlavor[] transferFlavors) {
-    for (DataFlavor flavor : transferFlavors) {
-      if (flavor != null && (flavor.equals(DataFlavor.javaFileListFlavor) ||
-                             flavor.equals(LinuxDragAndDropSupport.uriListFlavor) ||
-                             flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor))) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean isFileListFlavorAvailable(DataFlavor @NotNull [] transferFlavors) {
+    var supported = Set.of(FLAVORS);
+    return ContainerUtil.exists(transferFlavors, f -> f != null && supported.contains(f));
   }
 
-  @Nullable
-  public static List<File> getFileList(@NotNull final Transferable transferable) {
+  public static @Unmodifiable @Nullable List<File> getFileList(@NotNull Transferable transferable) {
+    var files = getFiles(transferable);
+    return files != null ? ContainerUtil.map(files, Path::toFile) : null;
+  }
+
+  public static @Unmodifiable @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        @SuppressWarnings({"unchecked"})
-        List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        return fileList == null ? null : ContainerUtil.filter(fileList, file -> !StringUtil.isEmptyOrSpaces(file.getPath()));
+        @SuppressWarnings("unchecked") var files = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return ContainerUtil.mapNotNull(files, file -> !Strings.isEmptyOrSpaces(file.getPath()) ? file.toPath() : null);
       }
       else {
         return LinuxDragAndDropSupport.getFiles(transferable);
       }
     }
-    catch (Exception ignore) { }
+    catch (Exception e) {
+      LOG.debug(e);
+    }
 
     return null;
   }
 
-  @NotNull
-  public static List<File> getFileListFromAttachedObject(Object attached) {
+  public static @NotNull List<File> getFileListFromAttachedObject(Object attached) {
     List<File> result;
-    if (attached instanceof TransferableWrapper) {
-      result = ((TransferableWrapper)attached).asFileList();
+    if (attached instanceof FileFlavorProvider) {
+      result = ((FileFlavorProvider)attached).asFileList();
     }
     else if (attached instanceof DnDNativeTarget.EventInfo) {
       result = getFileList(((DnDNativeTarget.EventInfo)attached).getTransferable());
@@ -123,26 +107,34 @@ public class FileCopyPasteUtil {
     else {
       result = null;
     }
-    return result == null ? Collections.emptyList() : result;
+    return result == null ? List.of() : result;
   }
 
-  @NotNull
-  public static List<VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
-    List<VirtualFile> result;
-    List<File> fileList = getFileListFromAttachedObject(attached);
-    if (fileList.isEmpty()) {
-      result = Collections.emptyList();
+  /**
+   * Returns the dragged files as NIO paths, or an empty list when the source reports none.
+   *
+   * @see PathFlavorProvider
+   */
+  public static @NotNull List<Path> getPathListFromAttachedObject(Object attached) {
+    List<Path> result = attached instanceof PathFlavorProvider provider ? provider.asPathList() : null;
+    return result == null ? List.of() : result;
+  }
+
+  public static @NotNull List<@NotNull VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
+    var files = getFileListFromAttachedObject(attached);
+    if (files.isEmpty()) {
+      return List.of();
     }
     else {
-      result = new ArrayList<>(fileList.size());
-      for (File file : fileList) {
-        VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
+      var result = new ArrayList<VirtualFile>(files.size());
+      for (File file : files) {
+        var virtualFile = VfsUtil.findFileByIoFile(file, true);
         if (virtualFile == null) continue;
         result.add(virtualFile);
         // detect and store file type for Finder-2-IDEA drag-n-drop
         virtualFile.getFileType();
       }
+      return result;
     }
-    return result;
   }
 }

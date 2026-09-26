@@ -15,7 +15,7 @@
  */
 package org.jetbrains.uast.values
 
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.uast.UVariable
 
 class UVariableValue private constructor(
@@ -26,9 +26,9 @@ class UVariableValue private constructor(
 
   override fun identityEquals(other: UValue): UValue =
     if (this == other) super.valueEquals(other)
-    else when (variable.psi.type) {
-      PsiType.BYTE, PsiType.FLOAT, PsiType.DOUBLE, PsiType.LONG,
-      PsiType.SHORT, PsiType.INT, PsiType.CHAR, PsiType.BOOLEAN -> super.valueEquals(other)
+    else when (variable.type) {
+      PsiTypes.byteType(), PsiTypes.floatType(), PsiTypes.doubleType(), PsiTypes.longType(),
+      PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.charType(), PsiTypes.booleanType() -> super.valueEquals(other)
 
       else -> UUndeterminedValue
     }
@@ -76,12 +76,12 @@ class UVariableValue private constructor(
       filterTo(linkedSetOf()) { it !is UVariableValue || variable != it.variable }
 
     fun create(variable: UVariable, value: UValue, dependencies: Set<UDependency> = emptySet()): UVariableValue {
-      when (variable.psi.type) {
-        PsiType.BYTE, PsiType.SHORT -> {
+      when (variable.type) {
+        PsiTypes.byteType(), PsiTypes.shortType() -> {
           val constant = value.toConstant()
           if (constant is UIntConstant && constant.type == UNumericType.INT) {
-            val castConstant = UIntConstant(constant.value, variable.psi.type)
-            return create(variable, value.coerceConstant(castConstant), dependencies)
+            val castConstant = UIntConstant(constant.value, variable.type)
+            return UVariableValue(variable, value.coerceConstant(castConstant), dependencies)
           }
         }
       }

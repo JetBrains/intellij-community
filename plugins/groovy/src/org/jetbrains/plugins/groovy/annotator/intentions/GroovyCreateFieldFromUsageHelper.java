@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -12,7 +12,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -27,7 +31,7 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 /**
  * @author Max Medvedev
  */
-public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
+public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
   @Override
   public Template setupTemplateImpl(PsiField f,
                                     Object expectedTypes,
@@ -35,12 +39,14 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
+                                    boolean isScrollToTemplate,
                                     @NotNull PsiSubstitutor substitutor) {
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
     Project project = field.getProject();
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
+    builder.setScrollToTemplate(isScrollToTemplate);
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
@@ -52,9 +58,10 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
       builder.replaceElement(typeElement, expr);
     }
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {
-      new GuessTypeParameters(project, factory, builder, substitutor).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes,
-                                                                                       context, targetClass);
+      new GuessTypeParameters(project, factory, builder, substitutor)
+        .setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass);
     }
+
     GrExpression initializer = field.getInitializerGroovy();
 
     if (createConstantField && initializer != null) {

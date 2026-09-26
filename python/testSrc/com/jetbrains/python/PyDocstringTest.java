@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Pair;
@@ -22,11 +25,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition;
+import com.jetbrains.python.documentation.doctest.PyDoctestParserDefinition;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
 
+@Subsystems.QuickDocumentation
+@Layers.Functional
 public class PyDocstringTest extends PyTestCase {
 
   @Override
@@ -44,9 +49,11 @@ public class PyDocstringTest extends PyTestCase {
   }
 
   public void testComment() {  //PY-8505
-    doTestLexer(" >>> if True:\n" +
-                " ... #comm\n"+
-                " ...   pass", "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
+    doTestLexer("""
+                   >>> if True:
+                   ... #comm
+                   ...   pass\
+                  """, "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
   }
   public void testFunctionName() {
     doCompletionTest();
@@ -94,7 +101,7 @@ public class PyDocstringTest extends PyTestCase {
 
 
   private void doTestLexer(final String text, String... expectedTokens) {
-    Lexer lexer = new PyDocstringParserDefinition().createLexer(myFixture.getProject());
+    Lexer lexer = new PyDoctestParserDefinition().createLexer(myFixture.getProject());
     lexer.start(text);
     int idx = 0;
     while (lexer.getTokenType() != null) {
@@ -106,7 +113,7 @@ public class PyDocstringTest extends PyTestCase {
           remainingTokens.append(" \"").append(lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
-        fail("Too many tokens. Following tokens: " + remainingTokens.toString());
+        fail("Too many tokens. Following tokens: " + remainingTokens);
       }
       String tokenName = lexer.getTokenType().toString();
       assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);

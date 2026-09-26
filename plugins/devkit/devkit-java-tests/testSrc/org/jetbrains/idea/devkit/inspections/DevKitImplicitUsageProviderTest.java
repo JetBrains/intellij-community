@@ -16,13 +16,14 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.inheritance.ImplicitSubclassInspection;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
-public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTestCase {
+public class DevKitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -38,6 +39,10 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
     myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}");
 
     myFixture.addClass("package com.intellij.jam; public interface JamElement {}");
+
+    myFixture.addClass("package com.intellij.mcpserver.annotations; public @interface McpTool {}");
+    myFixture.addClass("package com.intellij.mcpserver.annotations; public @interface McpDescription { String value(); }");
+    myFixture.addClass("package com.intellij.mcpserver; public interface McpToolset {}");
   }
 
   public void testImplicitUsagesDomElement() {
@@ -50,6 +55,11 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
     myFixture.testHighlighting("ImplicitUsagesDomElementVisitor.java");
   }
 
+  public void testImplicitUsagesMcpToolMethod() {
+    enableImplicitUsageInspections();
+    myFixture.testHighlighting("ImplicitUsagesMcpToolMethod.java");
+  }
+
   private void enableImplicitUsageInspections() {
     myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
@@ -60,9 +70,9 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
     myFixture.testHighlighting("ImplementedAtRuntimeDomElementImpl.java");
   }
 
-  public void testImplementedAtRuntimeJamElementImpl() {
-    enableImplementedAtRuntimeInspections();
-    myFixture.testHighlighting("ImplementedAtRuntimeJamElementImpl.java");
+  public void testManualJamElementInstantiation() {
+    myFixture.enableInspections(ImplicitSubclassInspection.class);
+    myFixture.testHighlighting("ManualJamElementInstantiation.java");
   }
 
   private void enableImplementedAtRuntimeInspections() {

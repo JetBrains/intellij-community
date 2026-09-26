@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -30,15 +31,15 @@ import java.util.Set;
 public interface DomModel<T extends DomElement> {
 
   /**
-   * Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
-   * @return
+   * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   T getMergedModel();
 
   @NotNull
   Set<XmlFile> getConfigFiles();
   
+  @Unmodifiable
   List<DomFileElement<T>> getRoots();
 }

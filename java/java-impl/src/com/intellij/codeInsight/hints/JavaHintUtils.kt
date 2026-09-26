@@ -3,26 +3,47 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaResolveResult
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEllipsisType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiPrefixExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiThisExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl
-import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
-import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
+import com.siyeh.ig.callMatcher.CallMatcher
+import java.util.Locale
 
 
-object JavaInlayHintsProvider {
-
-  fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
+internal object JavaInlayHintsProvider {
+  fun hints(callExpression: PsiCall): Set<InlayInfo> {
     if (JavaMethodCallElement.isCompletionMode(callExpression)) {
-      val argumentList = callExpression.argumentList?:return emptySet()
+      val argumentList = callExpression.argumentList ?: return emptySet()
       val text = argumentList.text
       if (text == null || !text.startsWith('(') || !text.endsWith(')')) return emptySet()
 
-      val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
+      val method = CompletionMemory.getChosenMethod(callExpression) ?: return emptySet()
 
       val params = method.parameterList.parameters
       val arguments = argumentList.expressions
@@ -32,8 +53,9 @@ object JavaInlayHintsProvider {
       val infos = ArrayList<InlayInfo>()
       var lastIndex = 0
       (if (arguments.isEmpty()) listOf(trailingOffset) else arguments.map { inlayOffset(it) }).forEachIndexed { i, offset ->
+        ProgressManager.checkCanceled()
         if (i < params.size) {
-          params[i].name?.let {
+          params[i].name.let {
             infos.add(InlayInfo(it, offset, false, params.size == 1, false))
           }
           lastIndex = i
@@ -41,15 +63,16 @@ object JavaInlayHintsProvider {
       }
       if (Registry.`is`("editor.completion.hints.virtual.comma")) {
         for (i in lastIndex + 1 until minOf(params.size, limit)) {
-          params[i].name?.let {
-            infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+          ProgressManager.checkCanceled()
+           params[i].name.let {
+            infos.add(createHintWithComma(it, trailingOffset))
           }
           lastIndex = i
         }
       }
-      if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
-        params[params.size - 1].name?.let {
-          infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+      if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || arguments.isNotEmpty() && arguments.size == params.size - 1)) {
+        params[params.size - 1].name.let {
+          infos.add(createHintWithComma(it, trailingOffset))
         }
       }
       else if (Registry.`is`("editor.completion.hints.virtual.comma") && lastIndex < (params.size - 1) ||
@@ -60,21 +83,27 @@ object JavaInlayHintsProvider {
       return infos.toSet()
     }
     
-    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
+    if (!isParameterHintsEnabledForLanguage(callExpression.language)) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
     if (hints.isNotEmpty()) return hints
     
     return when (callExpression) {
-      is PsiMethodCallExpressionImpl -> mergedHints(callExpression, callExpression.methodExpression.multiResolve(false))
-      is PsiNewExpressionImpl -> mergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
+      is PsiMethodCallExpression, is PsiNewExpression -> mergedHints(callExpression, callExpression.multiResolve(false))
       else -> emptySet()
     }
   }
 
-  private fun mergedHints(callExpression: PsiCallExpression,
-                          results: Array<out ResolveResult>): Set<InlayInfo> {
+  private fun createHintWithComma(parameterName: String, offset: Int): InlayInfo {
+    return InlayInfo(",$parameterName", offset, false, false, true,
+                     HintWidthAdjustment(", ", parameterName, 1))
+  }
+
+  private fun mergedHints(
+    callExpression: PsiCallExpression,
+    results: Array<out ResolveResult>,
+  ): Set<InlayInfo> {
     val resultSet = results
       .filter { it.element != null }
       .map { methodHints(callExpression, it) }
@@ -90,17 +119,17 @@ object JavaInlayHintsProvider {
       return hintSet(callInfo, PsiSubstitutor.EMPTY)
     }
 
-    //we can show hints for same named parameters of overloaded methods, even if don't know exact method
+    //we can show hints for same named parameters of overloaded methods, even if you don't know exact method
     return resultSet.reduce { left, right -> left.intersect(right) }
       .map { InlayInfo(it.text, it.offset, isShowOnlyIfExistedBefore = true) }
       .toSet()
   }
 
-  private fun methodHints(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
+  private fun methodHints(callExpression: PsiCall, resolveResult: ResolveResult): Set<InlayInfo> {
     val element = resolveResult.element
     val substitutor = (resolveResult as? JavaResolveResult)?.substitutor ?: PsiSubstitutor.EMPTY
     
-    if (element is PsiMethod && isMethodToShow(element, callExpression)) {
+    if (element is PsiMethod && isMethodToShow(element)) {
       val info = callInfo(callExpression, element)
       if (isCallInfoToShow(info)) {
         return hintSet(info, substitutor)
@@ -111,11 +140,8 @@ object JavaInlayHintsProvider {
   }
 
   private fun isCallInfoToShow(info: CallInfo): Boolean {
-    val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
-      return false
-    }
-    return true
+    val hintsProvider = JavaInlayParameterHintsProvider.Utils.getInstance()
+    return hintsProvider.ignoreOneCharOneDigitHints.get() || !info.allParamsSequential()
   }
 
   private fun String.decomposeOrderedParams(): Pair<String, Int>? {
@@ -133,9 +159,7 @@ object JavaInlayHintsProvider {
   }
 
   private fun CallInfo.allParamsSequential(): Boolean {
-    val paramNames = regularArgs
-      .map { it.parameter.name?.decomposeOrderedParams() }
-      .filterNotNull()
+    val paramNames = regularArgs.mapNotNull { it.parameter.name.decomposeOrderedParams() }
 
     if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
       val prefixes = paramNames.map { it.first }
@@ -168,20 +192,15 @@ object JavaInlayHintsProvider {
     return resultSet
   }
 
-  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.get()
+  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.get()
 
-  private fun isMethodToShow(method: PsiMethod, callExpression: PsiCallExpression): Boolean {
+  private fun isMethodToShow(method: PsiMethod): Boolean {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
-      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      val hintsProvider = JavaInlayParameterHintsProvider.Utils.getInstance()
       
-      if (hintsProvider.isDoNotShowForBuilderLikeMethods.get() 
-          && isBuilderLike(callExpression, method)) {
-        return false
-      }
-      
-      if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
+      if (!hintsProvider.showIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) {
         return false
       }
@@ -189,25 +208,15 @@ object JavaInlayHintsProvider {
     return true
   }
   
-  
-  private fun isBuilderLike(expression: PsiCallExpression, method: PsiMethod): Boolean {
-    if (expression is PsiNewExpression) return false
-
-    val returnType = TypeConversionUtil.erasure(method.returnType) ?: return false
-    val calledMethodClassFqn = method.containingClass?.qualifiedName ?: return false
-
-    return returnType.equalsToText(calledMethodClassFqn)
-  }
-  
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {
-    val parameterName = parameter.name ?: return false
+    val parameterName = parameter.name
     if (parameterName.length > 1) {
       return method.name.contains(parameterName, ignoreCase = true)
     }
     return false
   }
   
-  private fun callInfo(callExpression: PsiCallExpression, method: PsiMethod): CallInfo {
+  private fun callInfo(callExpression: PsiCall, method: PsiMethod): CallInfo {
     val params = method.parameterList.parameters
     val hasVarArg = params.lastOrNull()?.isVarArgs ?: false
     val regularParamsCount = if (hasVarArg) params.size - 1 else params.size
@@ -227,8 +236,8 @@ object JavaInlayHintsProvider {
 }
 
 private fun List<Int>.areSequential(): Boolean {
-  if (size == 0) throw IncorrectOperationException("List is empty")
-  val ordered = (first()..first() + size - 1).toList()
+  if (isEmpty()) throw IncorrectOperationException("List is empty")
+  val ordered = (first() until first() + size).toList()
   if (ordered.size == size) {
     return zip(ordered).all { it.first == it.second }
   }
@@ -236,21 +245,21 @@ private fun List<Int>.areSequential(): Boolean {
 }
 
 
-private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo {
   return inlayInfo(info.argument, info.parameter, showOnlyIfExistedBefore)
 }
 
 
-private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
-  val paramName = methodParam.name ?: return null
+private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo {
+  val paramName = methodParam.name
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
   val offset = inlayOffset(callArgument)
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
-fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
+public fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
 
-fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
+public fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   if (callArgument.textRange.isEmpty) {
     val next = callArgument.nextSibling as? PsiWhiteSpace
     if (next != null) return next.textRange.endOffset
@@ -258,8 +267,12 @@ fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
 }
 
-private fun isUnclearExpression(callArgument: PsiElement): Boolean {
-  val isShowHint = when (callArgument) {
+private val OPTIONAL_EMPTY: CallMatcher = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "empty")
+  .parameterCount(0)
+
+private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
+  if (JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.get()) return true
+  return when (callArgument) {
     is PsiLiteralExpression -> true
     is PsiThisExpression -> true
     is PsiBinaryExpression -> true
@@ -269,12 +282,13 @@ private fun isUnclearExpression(callArgument: PsiElement): Boolean {
       val isLiteral = callArgument.operand is PsiLiteralExpression
       isLiteral && (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType)
     }
+    is PsiMethodCallExpression -> OPTIONAL_EMPTY.matches(callArgument)
     else -> false
   }
-
-  return isShowHint
 }
 
+
+private const val MIN_REASONABLE_PARAM_NAME_SIZE = 3
 
 private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiParameter?, val varArgExpressions: List<PsiExpression>) {
   
@@ -284,8 +298,8 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     
     for (callInfo in regularArgs) {
       val inlay = when {
-        isErroneousArg(callInfo) -> null
-        isUnclearExpression(callInfo.argument) -> inlayInfo(callInfo)
+        shouldHideArgument(callInfo) -> null
+        shouldShowHintsForExpression(callInfo.argument) -> inlayInfo(callInfo)
         !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
         else -> null
       }
@@ -306,27 +320,61 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     }
 
     return regularArgs
-      .filterNot { isErroneousArg(it) }
+      .filterNot { shouldHideArgument(it) }
       .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
-      .mapNotNull { inlayInfo(it) }
+      .map { inlayInfo(it) }
   }
 
-  fun isErroneousArg(arg : CallArgumentInfo): Boolean {
+  private fun shouldHideArgument(callInfo: CallArgumentInfo) =
+    isErroneousArg(callInfo) || isArgWithComment(callInfo) || argIfNamedHasSameNameAsParameter(callInfo)
+
+  private fun isErroneousArg(arg : CallArgumentInfo): Boolean {
     return arg.argument is PsiEmptyExpressionImpl || arg.argument.prevSibling is PsiEmptyExpressionImpl
   }
-  
+
+  private fun isArgWithComment(arg : CallArgumentInfo): Boolean {
+    return hasComment(arg.argument, PsiElement::getNextSibling) || hasComment(arg.argument, PsiElement::getPrevSibling)
+  }
+
+  private fun argIfNamedHasSameNameAsParameter(arg : CallArgumentInfo): Boolean {
+    val argName = when (val argExpr = arg.argument) {
+                    is PsiReferenceExpression -> argExpr.referenceName
+                    is PsiMethodCallExpression -> argExpr.methodExpression.referenceName
+                    else -> null
+                  }?.lowercase(Locale.getDefault()) ?: return false
+    val paramName = arg.parameter.name.lowercase(Locale.getDefault())
+    if (paramName.length < MIN_REASONABLE_PARAM_NAME_SIZE || argName.length < MIN_REASONABLE_PARAM_NAME_SIZE) {
+      return false
+    }
+    return argName.contains(paramName) || paramName.contains(argName)
+  }
+
+  private fun hasComment(e: PsiElement, next: (PsiElement) -> PsiElement?) : Boolean {
+    var current = next(e)
+    while (current != null) {
+      if (current is PsiComment) {
+        return true
+      }
+      if (current !is PsiWhiteSpace) {
+        break
+      }
+      current = next(current)
+    }
+    return false
+  }
+
   fun varargsInlay(substitutor: PsiSubstitutor): InlayInfo? {
     if (varArg == null) return null
 
-    var hasUnassignable = false
+    var hasNonassignable = false
     for (expr in varArgExpressions) {
-      if (isUnclearExpression(expr)) {
+      if (shouldShowHintsForExpression(expr)) {
         return inlayInfo(varArgExpressions.first(), varArg)
       }
-      hasUnassignable = hasUnassignable || !varArg.isAssignable(expr, substitutor)
+      hasNonassignable = hasNonassignable || !varArg.isAssignable(expr, substitutor)
     }
     
-    return if (hasUnassignable) inlayInfo(varArgExpressions.first(), varArg, showOnlyIfExistedBefore = true) else null
+    return if (hasNonassignable) inlayInfo(varArgExpressions.first(), varArg, showOnlyIfExistedBefore = true) else null
   }
   
 }
@@ -340,7 +388,7 @@ private class CallArgumentInfo(val parameter: PsiParameter, val argument: PsiExp
 
 
 private fun PsiParameter.isAssignable(argument: PsiExpression, substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY): Boolean {
-  val substitutedType = substitutor.substitute(type)
+  val substitutedType = substitutor.substitute(type) ?: return false
   if (PsiPolyExpressionUtil.isPolyExpression(argument)) return true
   return argument.type?.isAssignableTo(substitutedType) ?: false
 }

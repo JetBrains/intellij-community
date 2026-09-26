@@ -1,42 +1,29 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
-class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
-  private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<MyReference<V>>();
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V>, ReferenceQueueable {
+  private final Int2ObjectMap<MyReference<V>> myMap = new Int2ObjectOpenHashMap<>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  private static class MyReference<T> extends WeakReference<T> {
+  private static final class MyReference<T> extends WeakReference<T> {
     private final int key;
-    String name;
 
     private MyReference(int key, @NotNull T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
@@ -44,68 +31,67 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     }
   }
 
-  private void processQueue() {
-    while(true){
-      MyReference ref = (MyReference)myQueue.poll();
+  @Override
+  public boolean processQueue() {
+    boolean processed = false;
+    while (true) {
+      MyReference<?> ref = (MyReference<?>)myQueue.poll();
       if (ref == null) {
-        return;
+        break;
       }
       int key = ref.key;
-      myMap.remove(key);
+      processed |= myMap.remove(key, ref);
     }
+    return processed;
   }
 
   @Override
-  public final V get(int key) {
-    MyReference<V> ref = myMap.get(key);
-    return SoftReference.dereference(ref);
+  public V get(int key) {
+    return SoftReference.dereference(myMap.get(key));
   }
 
   @Override
-  public final V put(int key, @NotNull V value) {
+  public V put(int key, @NotNull V value) {
     processQueue();
-    MyReference<V> ref = new MyReference<V>(key, value, myQueue);
-    ref.name = value.toString();
+    MyReference<V> ref = new MyReference<>(key, value, myQueue);
     MyReference<V> oldRef = myMap.put(key, ref);
     return SoftReference.dereference(oldRef);
   }
 
   @Override
-  public final V remove(int key) {
+  public V remove(int key) {
     processQueue();
     MyReference<V> ref = myMap.remove(key);
     return SoftReference.dereference(ref);
   }
 
   @Override
-  public final void clear() {
+  public void clear() {
     myMap.clear();
     processQueue();
   }
 
   @Override
-  public final int size() {
+  public int size() {
     return myMap.size();
   }
 
   @Override
-  public final boolean isEmpty() {
+  public boolean isEmpty() {
     return myMap.isEmpty();
   }
 
   @Override
-  public final boolean containsKey(int key) {
-    throw RefValueHashMap.pointlessContainsKey();
+  public boolean containsKey(int key) {
+    throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override
-  @NotNull
-  public final Collection<V> values() {
-    List<V> result = new ArrayList<V>();
-    Object[] refs = myMap.getValues();
-    for (Object o : refs) {
-      @SuppressWarnings("unchecked")
-      final V value = ((MyReference<V>)o).get();
+  public @NotNull Collection<@NotNull V> values() {
+    Collection<MyReference<V>> refs = myMap.values();
+    List<V> result = new ArrayList<>(refs.size());
+    for (MyReference<V> o : refs) {
+      V value = o.get();
       if (value != null) {
         result.add(value);
       }
@@ -113,9 +99,8 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return result;
   }
 
-  @NotNull
   @Override
-  public int[] keys() {
+  public int @NotNull [] keys() {
     throw new IncorrectOperationException("keys() makes no sense for weak/soft map because GC can clear the value any moment now");
   }
 
@@ -124,50 +109,64 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return values().contains(value);
   }
 
-  private static final Object GCED = ObjectUtils.sentinel("GCED");
-  @NotNull
   @Override
-  public Iterable<Entry<V>> entries() {
-    return new Iterable<Entry<V>>() {
-      @NotNull
+  public @NotNull Set<Entry<V>> entrySet() {
+    return new MyEntrySetView();
+  }
+
+  private final class MyEntrySetView extends AbstractSet<Entry<V>> {
+    @Override
+    public @NotNull Iterator<Entry<V>> iterator() {
+      return entriesIterator();
+    }
+
+    @Override
+    public int size() {
+      return IntKeyWeakValueHashMap.this.size();
+    }
+  }
+
+  private @NotNull Iterator<Entry<V>> entriesIterator() {
+    ObjectIterator<Int2ObjectMap.Entry<MyReference<V>>> entryIterator = myMap.int2ObjectEntrySet().iterator();
+    return new Iterator<Entry<V>>() {
+      private Entry<V> nextVEntry;
+      private int lastReturned;
+      {
+        nextAliveEntry();
+      }
       @Override
-      public Iterator<Entry<V>> iterator() {
-        final TIntObjectIterator<MyReference<V>> tIterator = myMap.iterator();
-        return ContainerUtil.filterIterator(new Iterator<Entry<V>>() {
-          @Override
-          public boolean hasNext() {
-            return tIterator.hasNext();
-          }
+      public boolean hasNext() {
+        return nextVEntry != null;
+      }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
+      @Override
+      public Entry<V> next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        Entry<V> result = nextVEntry;
+        lastReturned = result.getKey();
+        nextAliveEntry();
+        return result;
+      }
 
-          @Override
-          public Entry<V> next() {
-            tIterator.advance();
-            return new Entry<V>() {
-              @Override
-              public int getKey() {
-                return tIterator.key();
-              }
+      private void nextAliveEntry() {
+        while (entryIterator.hasNext()) {
+          Int2ObjectMap.Entry<MyReference<V>> entry = entryIterator.next();
 
-              @NotNull
-              @Override
-              public V getValue() {
-                V v = SoftReference.dereference(tIterator.value());
-                //noinspection unchecked
-                return ObjectUtils.notNull(v, (V)GCED);
-              }
-            };
+          MyReference<V> ref = entry.getValue();
+          V v = ref.get();
+          if (v == null) {
+            continue;
           }
-        }, new Condition<Entry<V>>() {
-          @Override
-          public boolean value(Entry<V> o) {
-            return o.getValue() != GCED;
-          }
-        });
+          int key = entry.getIntKey();
+          nextVEntry = new SimpleEntry<>(key, v);
+          return;
+        }
+        nextVEntry = null;
+      }
+
+      @Override
+      public void remove() {
+        myMap.remove(lastReturned);
       }
     };
   }

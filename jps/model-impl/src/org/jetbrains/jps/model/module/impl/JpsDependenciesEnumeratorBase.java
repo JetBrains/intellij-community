@@ -1,114 +1,98 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
-/**
- * @author nik
- */
 public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependenciesEnumerator> implements JpsDependenciesEnumerator {
   private boolean myWithoutSdk;
   private boolean myWithoutLibraries;
-  protected boolean myWithoutDepModules;
+  private boolean myWithoutDepModules;
   private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
-  protected final Collection<JpsModule> myRootModules;
-  private Condition<JpsDependencyElement> myCondition;
+  private final Set<JpsModule> myRootModules;
+  private Condition<? super JpsDependencyElement> myCondition;
 
   protected JpsDependenciesEnumeratorBase(Collection<JpsModule> rootModules) {
-    myRootModules = rootModules;
+    myRootModules = Collections.unmodifiableSet(
+      rootModules instanceof Set? (Set<JpsModule>)rootModules : new LinkedHashSet<>(rootModules)
+    );
   }
 
-  @NotNull
   @Override
-  public Self withoutLibraries() {
+  public @NotNull Self withoutLibraries() {
     myWithoutLibraries = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutDepModules() {
+  public @NotNull Self withoutDepModules() {
     myWithoutDepModules = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutSdk() {
+  public @NotNull Self withoutSdk() {
     myWithoutSdk = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self withoutModuleSourceEntries() {
+  public @NotNull Self withoutModuleSourceEntries() {
     myWithoutModuleSourceEntries = true;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self satisfying(@NotNull Condition<JpsDependencyElement> condition) {
+  public @NotNull Self satisfying(@NotNull Condition<? super JpsDependencyElement> condition) {
     myCondition = condition;
     return self();
   }
 
-  @NotNull
   @Override
-  public Self recursively() {
+  public @NotNull Self recursively() {
     myRecursively = true;
     return self();
   }
 
   protected abstract Self self();
 
-  @NotNull
   @Override
-  public Set<JpsModule> getModules() {
+  public @NotNull Set<JpsModule> getModules() {
     Set<JpsModule> result = new LinkedHashSet<>();
-    processModules(new CollectConsumer<>(result));
+    forEachModule(new CollectConsumer<>(result));
     return result;
   }
 
   @Override
-  public void processModules(@NotNull final Consumer<JpsModule> consumer) {
-    //noinspection unchecked
-    processModuleAndLibraries(consumer, Consumer.EMPTY_CONSUMER);
+  public void forEachModule(@NotNull Consumer<? super JpsModule> consumer) {
+    forEachModuleAndLibrary(consumer, EmptyConsumer.getInstance());
   }
 
   protected boolean shouldProcessDependenciesRecursively() {
     return true;
   }
 
-  public boolean processDependencies(Processor<JpsDependencyElement> processor) {
-    THashSet<JpsModule> processed = new THashSet<>();
+  public boolean processDependencies(Processor<? super JpsDependencyElement> processor) {
+    Set<JpsModule> processed = CollectionFactory.createSmallMemoryFootprintSet();
     for (JpsModule module : myRootModules) {
       if (!doProcessDependencies(module, processor, processed)) {
         return false;
@@ -117,7 +101,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return true;
   }
 
-  private boolean doProcessDependencies(JpsModule module, Processor<JpsDependencyElement> processor, Set<JpsModule> processed) {
+  private boolean doProcessDependencies(JpsModule module, Processor<? super JpsDependencyElement> processor, Set<? super JpsModule> processed) {
     if (!processed.add(module)) return true;
 
     for (JpsDependencyElement element : module.getDependenciesList().getDependencies()) {
@@ -140,7 +124,9 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (myRecursively && shouldProcessDependenciesRecursively()) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
-            doProcessDependencies(depModule, processor, processed);
+            if (!doProcessDependencies(depModule, processor, processed)) {
+              return false;
+            }
             continue;
           }
         }
@@ -163,41 +149,54 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return myRootModules.contains(module);
   }
 
-  @NotNull
   @Override
-  public Set<JpsLibrary> getLibraries() {
+  public @NotNull Set<JpsLibrary> getLibraries() {
     Set<JpsLibrary> libraries = new LinkedHashSet<>();
-    processLibraries(new CollectConsumer<>(libraries));
+    forEachLibrary(new CollectConsumer<>(libraries));
     return libraries;
   }
 
   @Override
-  public void processLibraries(@NotNull final Consumer<JpsLibrary> consumer) {
-    //noinspection unchecked
-    processModuleAndLibraries(Consumer.EMPTY_CONSUMER, consumer);
+  public void forEachLibrary(@NotNull Consumer<? super JpsLibrary> consumer) {
+    forEachModuleAndLibrary(EmptyConsumer.getInstance(), consumer);
   }
 
   @Override
-  public void processModuleAndLibraries(@Nullable final Consumer<JpsModule> moduleConsumer, @Nullable final Consumer<JpsLibrary> libraryConsumer) {
+  public void forEachModuleAndLibrary(@NotNull Consumer<? super JpsModule> moduleConsumer,
+                                      @NotNull Consumer<? super JpsLibrary> libraryConsumer) {
     processDependencies(dependencyElement -> {
-      if (moduleConsumer != null) {
-        if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
-          moduleConsumer.consume(dependencyElement.getContainingModule());
-        }
-        else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
-          JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
-          if (module != null) {
-            moduleConsumer.consume(module);
-          }
+      if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
+        moduleConsumer.accept(dependencyElement.getContainingModule());
+      }
+      else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
+        JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
+        if (module != null) {
+          moduleConsumer.accept(module);
         }
       }
-      if (libraryConsumer != null && dependencyElement instanceof JpsLibraryDependency) {
+      if (dependencyElement instanceof JpsLibraryDependency) {
         JpsLibrary library = ((JpsLibraryDependency)dependencyElement).getLibrary();
         if (library != null) {
-          libraryConsumer.consume(library);
+          libraryConsumer.accept(library);
         }
       }
       return true;
     });
+  }
+
+  @Override
+  public void processModules(final @NotNull com.intellij.util.Consumer<? super JpsModule> consumer) {
+    forEachModule(consumer);
+  }
+
+  @Override
+  public void processModuleAndLibraries(@NotNull com.intellij.util.Consumer<? super JpsModule> moduleConsumer,
+                                        @NotNull com.intellij.util.Consumer<? super JpsLibrary> libraryConsumer) {
+    forEachModuleAndLibrary(moduleConsumer, libraryConsumer);
+  }
+
+  @Override
+  public void processLibraries(final @NotNull com.intellij.util.Consumer<? super JpsLibrary> consumer) {
+    forEachLibrary(consumer);
   }
 }

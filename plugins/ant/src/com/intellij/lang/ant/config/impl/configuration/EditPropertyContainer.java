@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.util.config.AbstractProperty;
-import java.util.HashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class EditPropertyContainer extends AbstractProperty.AbstractPropertyContainer {
@@ -44,6 +30,7 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     this(parentEditor, new AbstractProperty.AbstractPropertyContainer[]{original});
   }
 
+  @Override
   protected Object getValueOf(AbstractProperty property) {
     if (myModifications.containsKey(property)) return myModifications.get(property);
     AbstractProperty.AbstractPropertyContainer container = findContainerOf(property);
@@ -53,10 +40,12 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     return originalValue;
   }
 
+  @Override
   public boolean hasProperty(AbstractProperty property) {
     return findContainerOf(property) != null;
   }
 
+  @Override
   protected void setValueOf(AbstractProperty property, Object value) {
     if (myParent.hasProperty(property)) delegateSet(myParent, property, value);
     else myModifications.put(property, value);
@@ -70,8 +59,7 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     myModifications.clear();
   }
 
-  @Nullable
-  private AbstractProperty.AbstractPropertyContainer findContainerOf(AbstractProperty property) {
+  private @Nullable AbstractProperty.AbstractPropertyContainer findContainerOf(AbstractProperty property) {
     if (myParent.hasProperty(property)) return myParent;
     for (AbstractProperty.AbstractPropertyContainer original : myOriginals) {
       if (original.hasProperty(property)) return original;

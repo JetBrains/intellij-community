@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -11,17 +10,20 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ModuleRepr extends ClassFileRepr{
+final class ModuleRepr extends ClassFileRepr {
   private final int myVersion;
   private final Set<ModuleRequiresRepr> myRequires; // module names
   private final Set<ModulePackageRepr> myExports; // package names
 
-  public ModuleRepr(DependencyContext context, int access, int version, int fileName, int name, Set<ModuleRequiresRepr> requires, Set<ModulePackageRepr> exports, Set<UsageRepr.Usage> usages) {
+  ModuleRepr(DependencyContext context, int access, int version, int fileName, int name, Set<ModuleRequiresRepr> requires, Set<ModulePackageRepr> exports, Set<UsageRepr.Usage> usages) {
     super(access, context.get(null), name, Collections.emptySet(), fileName, context, usages);
     myVersion = version;
     myRequires = requires;
@@ -29,12 +31,12 @@ public class ModuleRepr extends ClassFileRepr{
     updateClassUsages(context, usages);
   }
 
-  public ModuleRepr(DependencyContext context, DataInput in) {
+  ModuleRepr(DependencyContext context, DataInput in) {
     super(context, in);
     try {
       myVersion = DataInputOutputUtil.readINT(in);
-      myRequires = RW.read(ModuleRequiresRepr.externalizer(context), new THashSet<>(), in);
-      myExports = RW.read(ModulePackageRepr.externalizer(context), new THashSet<>(), in);
+      myRequires = RW.read(ModuleRequiresRepr.externalizer(context), new HashSet<>(), in);
+      myExports = RW.read(ModulePackageRepr.externalizer(context), new HashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -53,6 +55,7 @@ public class ModuleRepr extends ClassFileRepr{
     return myExports;
   }
 
+  @Override
   public void save(DataOutput out) {
     super.save(out);
     try {
@@ -65,7 +68,8 @@ public class ModuleRepr extends ClassFileRepr{
     }
   }
 
-  protected void updateClassUsages(DependencyContext context, Set<UsageRepr.Usage> s) {
+  @Override
+  protected void updateClassUsages(DependencyContext context, Set<? super UsageRepr.Usage> s) {
     for (ModuleRequiresRepr require : myRequires) {
       if (require.name != name) {
         s.add(UsageRepr.createModuleUsage(context, require.name));
@@ -73,6 +77,7 @@ public class ModuleRepr extends ClassFileRepr{
     }
   }
 
+  @Override
   public void toStream(DependencyContext context, PrintStream stream) {
     super.toStream(context, stream);
 
@@ -102,8 +107,7 @@ public class ModuleRepr extends ClassFileRepr{
     return false;
   }
 
-  public abstract static class Diff extends DifferenceImpl {
-
+  abstract static class Diff extends DifferenceImpl {
     Diff(@NotNull Difference delegate) {
       super(delegate);
     }
@@ -114,29 +118,35 @@ public class ModuleRepr extends ClassFileRepr{
 
     public abstract boolean versionChanged();
 
+    @Override
     public boolean no() {
       return base() == NONE && requires().unchanged() && exports().unchanged() && !versionChanged();
     }
   }
 
+  @Override
   public Diff difference(Proto past) {
     final Difference delegate = super.difference(past);
     final ModuleRepr pastModule = (ModuleRepr)past;
     final int base = !getUsages().equals(pastModule.getUsages())? delegate.base() | Difference.USAGES : delegate.base();
 
     return new Diff(delegate) {
+      @Override
       public Specifier<ModuleRequiresRepr, ModuleRequiresRepr.Diff> requires() {
         return Difference.make(pastModule.myRequires, myRequires);
       }
 
+      @Override
       public Specifier<ModulePackageRepr, ModulePackageRepr.Diff> exports() {
         return Difference.make(pastModule.myExports, myExports);
       }
 
+      @Override
       public boolean versionChanged() {
         return pastModule.getVersion() != myVersion;
       }
 
+      @Override
       public int base() {
         return base;
       }
@@ -144,14 +154,14 @@ public class ModuleRepr extends ClassFileRepr{
   }
 
   public static DataExternalizer<ModuleRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ModuleRepr>() {
+    return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ModuleRepr value) throws IOException {
+      public void save(final @NotNull DataOutput out, final ModuleRepr value) {
         value.save(out);
       }
 
       @Override
-      public ModuleRepr read(@NotNull final DataInput in) throws IOException {
+      public ModuleRepr read(final @NotNull DataInput in) {
         return new ModuleRepr(context, in);
       }
     };

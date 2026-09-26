@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.IdeBundle;
@@ -9,19 +9,18 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class RunAnythingAnActionProvider<V extends AnAction> extends RunAnythingProviderBase<V> {
-  @NotNull
   @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
+  public @NotNull RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
     return new RunAnythingActionItem<>(value, getCommand(value), value.getTemplatePresentation().getIcon());
   }
 
@@ -30,30 +29,24 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
     performRunAnythingAction(value, dataContext);
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull V value) {
+  public @Nullable Icon getIcon(@NotNull V value) {
     return value.getTemplatePresentation().getIcon();
   }
 
   private static void performRunAnythingAction(@NotNull AnAction action, @NotNull DataContext dataContext) {
     ApplicationManager.getApplication().invokeLater(
-      () -> IdeFocusManager.getInstance(RunAnythingUtil.fetchProject(dataContext))
-                           .doWhenFocusSettlesDown(() -> performAction(action, dataContext)));
+      () -> IdeFocusManager.getInstance(RunAnythingUtil.fetchProject(dataContext)).doWhenFocusSettlesDown(
+        () -> performAction(action, dataContext), ModalityState.current()));
   }
 
   private static void performAction(@NotNull AnAction action, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext);
-
-    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, dataContext, event);
-    ActionUtil.performActionDumbAware(action, event);
-    manager.fireAfterActionPerformed(action, dataContext, event);
+    ActionUtil.performAction(action, event);
   }
 
-  @Nullable
   @Override
-  public String getAdText() {
+  public @Nullable String getAdText() {
     return IdeBundle.message("run.anything.ad.run.action.with.default.settings", RunAnythingUtil.SHIFT_SHORTCUT_TEXT);
   }
 }

@@ -1,42 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class MockPsiManager extends PsiManagerEx {
+@ApiStatus.Internal
+public final /* not final for Android Studio tests */ class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
-  private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<>();
+  private final Map<VirtualFile,PsiDirectory> myDirectories = new HashMap<>();
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
 
@@ -49,20 +46,30 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  public PsiFile findFile(@NotNull VirtualFile file) {
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
   @Override
-  @Nullable
-  public
+  public @Nullable
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
@@ -77,7 +84,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file) {
+  public void reloadFromDisk(@NotNull PsiFile psiFile) {
   }
 
   @Override
@@ -89,12 +96,16 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
+  @ApiStatus.Experimental
+  public void addPsiTreeChangeListenerBackgroundable(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
   public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
@@ -107,6 +118,11 @@ public class MockPsiManager extends PsiManagerEx {
 
   @Override
   public void finishBatchFilesProcessingMode() {
+  }
+
+  @Override
+  public <T> T runInBatchFilesMode(@NotNull Computable<T> runnable) {
+    return null;
   }
 
   @Override
@@ -139,6 +155,23 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void cleanupForNextTest() {
+    
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator) {
+
+  }
+
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
@@ -159,21 +192,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
-  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     if (myMockFileManager == null) {
       myMockFileManager = new MockFileManager(this);
     }
@@ -181,11 +200,91 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
-  public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
+  @ApiStatus.Internal
+  public @NotNull FileManagerEx getFileManagerEx() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public void beforeChildReplacement(@NotNull final PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(final @NotNull PsiTreeChangeEventImpl event) {
+  }
+
+  @Override
+  public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void beforeChildMovement(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void beforePropertyChange(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void childRemoved(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void childReplaced(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void childMoved(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void childrenChanged(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void propertyChanged(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @ApiStatus.Internal
+  @Deprecated
+  @Override
+  public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
+
+  }
+
+  @ApiStatus.Internal
+  @Deprecated
+  @Override
+  public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
+
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
+                                                      @NotNull Disposable parentDisposable) {
   }
 
   @Override
@@ -194,6 +293,12 @@ public class MockPsiManager extends PsiManagerEx {
 
   @Override
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor, @NotNull Disposable parentDisposable) {
 
   }
 }

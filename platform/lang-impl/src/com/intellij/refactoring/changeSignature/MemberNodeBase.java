@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -28,9 +13,15 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNode {
   protected final M myMethod;
@@ -41,9 +32,9 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   protected abstract MemberNodeBase<M> createNode(M caller, HashSet<M> called);
 
-  protected abstract List<M> computeCallers();
+  protected abstract @Unmodifiable List<M> computeCallers();
 
-  protected abstract void customizeRendererText(ColoredTreeCellRenderer renderer);
+  protected abstract void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer);
 
   protected Condition<M> getFilter() {
     return Conditions.alwaysTrue();
@@ -62,7 +53,8 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
   private void buildChildren() {
     if (children == null) {
       final List<M> callers = findCallers();
-      children = new Vector(callers.size());
+      //noinspection UseOfObsoleteCollectionType
+      children = new Vector<>(callers.size());
       for (M caller : callers) {
         final HashSet<M> called = new HashSet<>(myCalled);
         called.add(getMember());
@@ -101,8 +93,13 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   private List<M> findCallers() {
     if (getMember() == null) return Collections.emptyList();
-    final Ref<List<M>> callers = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> callers.set(ContainerUtil.filter(computeCallers(), getFilter()))), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
+    Ref<List<M>> callers = new Ref<>();
+
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.runBlocking(() -> {
+        callers.set(ContainerUtil.filter(computeCallers(), getFilter()));
+      }), RefactoringBundle.message("caller.chooser.looking.for.callers"), true, myProject)) {
+
       myCancelCallback.run();
       return Collections.emptyList();
     }
@@ -110,11 +107,12 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
   }
 
   public void customizeRenderer(ColoredTreeCellRenderer renderer) {
-    if (getMember() == null) return;
-    final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-    renderer.setIcon(ReadAction.compute(() -> getMember().getIcon(flags)));
-
-    customizeRendererText(renderer);
+    M member = getMember();
+    if (member != null) {
+      final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+      renderer.setIcon(ReadAction.computeBlocking(() -> member.getIcon(flags)));
+      customizeRendererText(renderer);
+    }
   }
 
   @Override

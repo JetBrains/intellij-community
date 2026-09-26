@@ -1,0 +1,8 @@
+// PROBLEM: Nullable value 'hashCode()' can be simplified
+// FIX: Use 'hashCode()' extension on a nullable receiver
+
+// WITH_STDLIB
+
+fun hash(value: String?): Int {
+    return value?.hash<caret>Code() /* keep me */ ?: 0
+}

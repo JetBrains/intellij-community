@@ -1,44 +1,32 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.NonExtendable
 public class GroupWrapper extends CachingChildrenTreeNode<Group> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.GroupWrapper");
-  public GroupWrapper(Project project, Group value, TreeModel treeModel) {
+  private static final Logger LOG = Logger.getInstance(GroupWrapper.class);
+  public GroupWrapper(Project project, @NotNull Group value, @NotNull TreeModel treeModel) {
     super(project, value, treeModel);
     clearChildren();
   }
 
   @Override
-  public void copyFromNewInstance(@NotNull final CachingChildrenTreeNode newInstance) {
+  public void copyFromNewInstance(final @NotNull CachingChildrenTreeNode newInstance) {
     clearChildren();
     setChildren(newInstance.getChildren());
     synchronizeChildren();
   }
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.updateFrom(getValue().getPresentation());
   }
 
@@ -51,7 +39,7 @@ public class GroupWrapper extends CachingChildrenTreeNode<Group> {
       if (child == null) {
         LOG.error(group + " returned null child: " + children);
       }
-      TreeElementWrapper childNode = createChildNode(child);
+      TreeElementWrapper childNode = createChildNode(child, null);
       addSubElement(childNode);
     }
   }

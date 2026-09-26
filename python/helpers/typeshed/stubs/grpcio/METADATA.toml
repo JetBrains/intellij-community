@@ -1,0 +1,6 @@
+version = "~= 1.83.0"
+upstream-repository = "https://github.com/grpc/grpc"
+partial-stub = true
+
+[tool.stubtest]
+ignore-missing-stub = true

@@ -1,0 +1,6 @@
+// "Specify 'Unit' return type for enclosing function 'test'" "true"
+
+fun test() = run { if (true) re<caret>turn }
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

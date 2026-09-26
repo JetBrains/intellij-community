@@ -1,22 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.EditorTextField;
-import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Window;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class IJSwingUtilities extends JBSwingUtilities {
-
+public final class IJSwingUtilities {
   /**
    * @return true if javax.swing.SwingUtilities.findFocusOwner(component) != null
    */
@@ -29,8 +36,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     // verify focusOwner is a descendant of c
-    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent())
-    {
+    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent()) {
       if (temp == c) {
         return focusOwner;
       }
@@ -45,11 +51,11 @@ public class IJSwingUtilities extends JBSwingUtilities {
    */
   public static boolean hasFocus2(Component component) {
     WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-    Window activeWindow=null;
+    Window activeWindow = null;
     if (windowManager != null) {
       activeWindow = windowManager.getMostRecentFocusedWindow();
     }
-    if(activeWindow==null){
+    if (activeWindow == null) {
       return false;
     }
     Component focusedComponent = windowManager.getFocusedComponent(activeWindow);
@@ -60,59 +66,10 @@ public class IJSwingUtilities extends JBSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  /**
-   * This method is copied from {@code SwingUtilities}.
-   * Returns index of the first occurrence of {@code mnemonic}
-   * within string {@code text}. Matching algorithm is not
-   * case-sensitive.
-   *
-   * @param text The text to search through, may be null
-   * @param mnemonic The mnemonic to find the character for.
-   * @return index into the string if exists, otherwise -1
-   */
-  public static int findDisplayedMnemonicIndex(String text, int mnemonic) {
-    if (text == null || mnemonic == '\0') {
-      return -1;
-    }
-
-    char uc = Character.toUpperCase((char)mnemonic);
-    char lc = Character.toLowerCase((char)mnemonic);
-
-    int uci = text.indexOf(uc);
-    int lci = text.indexOf(lc);
-
-    if (uci == -1) {
-      return lci;
-    } else if(lci == -1) {
-      return uci;
-    } else {
-      return (lci < uci) ? lci : uci;
-    }
-  }
-
-  public static void adjustComponentsOnMac(@Nullable JComponent component) {
-    adjustComponentsOnMac(null, component);
-  }
-
-
-  public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
-    if (component == null) return;
-    if (!UIUtil.isUnderAquaLookAndFeel()) return;
-
-    if (component instanceof JComboBox) {
-      UIUtil.addInsets(component, new Insets(0,-2,0,0));
-      if (label != null) {
-        UIUtil.addInsets(label, new Insets(0,2,0,0));
-      }
-    }
-    if (component instanceof JCheckBox) {
-      UIUtil.addInsets(component, new Insets(0,-5,0,0));
-    }
-    if (component instanceof JTextField || component instanceof EditorTextField) {
-      if (label != null) {
-        UIUtil.addInsets(label, new Insets(0,3,0,0));
-      }
-    }
+  public static @NotNull Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
+    Window window = ComponentUtil.getWindow(component);
+    Component focusedComponent = window == null ? null : WindowManagerEx.getInstanceEx().getFocusedComponent(window);
+    return focusedComponent != null ? focusedComponent : component;
   }
 
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
@@ -127,12 +84,20 @@ public class IJSwingUtilities extends JBSwingUtilities {
 
   /**
    * A copy of javax.swing.SwingUtilities#updateComponentTreeUI that invokes children updateUI() first
-
+   *
    * @param c component
-   * @see javax.swing.SwingUtilities#updateComponentTreeUI
+   * @see SwingUtilities#updateComponentTreeUI
    */
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
+
+    if (c instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
+      if (rootPane != null) {
+        ComponentUtil.decorateWindowHeader(rootPane);
+      }
+    }
+
     for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {
       if (component instanceof JComponent) ((JComponent)component).updateUI();
     }
@@ -143,8 +108,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
 
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
-      UISettings settings = UISettings.getInstanceOrNull();
-      if (settings != null && settings.getMoveMouseOnDefaultButton()) {
+      if (AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.settings.move.mouse.on.default.button")) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;
@@ -157,5 +121,16 @@ public class IJSwingUtilities extends JBSwingUtilities {
         }
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public static void appendComponentClassNames(@NotNull StringBuilder sb, @Nullable Component root) {
+    UIUtil.uiTraverser(root).forEach(c -> appendComponentClassName(sb, root, c));
+  }
+
+  private static void appendComponentClassName(@NotNull StringBuilder sb, @Nullable Component root, @NotNull Component component) {
+    sb.append("\n    ");
+    for (Component p = component; root != p && p != null; p = p.getParent()) sb.append("  ");
+    sb.append(component.getClass().getName());
   }
 }

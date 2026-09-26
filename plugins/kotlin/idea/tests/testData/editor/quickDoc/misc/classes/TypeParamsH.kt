@@ -1,0 +1,2 @@
+interface <caret>TypeParamsH<X: AuxFaceA?>
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">interface</span> <span style="color:#000000;">TypeParamsH</span><span style="">&lt;</span><span style="color:#20999d;">X</span><span style=""> : </span><span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span><span style="">?</span><span style="">&gt;</span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;TypeParamsH.kt<br/></div>

@@ -115,3 +115,17 @@ class Example4 {
     }
   }
 }
+class No {
+
+  @GuardedBy("this")
+  void x() {
+    notify();
+  }
+
+  void y() {
+    <warning descr="Call to method 'x()' outside of declared guards">x</warning>(); // warn here
+  }
+  synchronized void z() {
+    x(); // don't warn here
+  }
+}

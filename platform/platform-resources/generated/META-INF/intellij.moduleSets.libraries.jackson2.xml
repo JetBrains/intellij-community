@@ -1,0 +1,17 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("libraries.jackson2") function in LibraryModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.jr.objects"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.dataformat.xml"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml"/>
+    <module name="intellij.libraries.jackson.dataformat.toml"/>
+    <module name="intellij.libraries.jackson.datatype.jdk8"/>
+    <module name="intellij.libraries.jackson.datatype.jsr310"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+  </content>
+</idea-plugin>

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -15,30 +14,28 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import static java.util.Collections.singletonList;
 
-/**
- * @author yole
- */
-public class CommittedChangesCacheTest extends PlatformTestCase {
+public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
   private MockAbstractVcs myVcs;
   private MockCommittedChangesProvider myProvider;
   private MockDiffProvider myDiffProvider;
   private CommittedChangesCache myCache;
   private ProjectLevelVcsManagerImpl myVcsManager;
-  private File myTempDir;
   private VirtualFile myContentRoot;
   private MockListener myListener;
   private MessageBusConnection myConnection;
@@ -55,23 +52,23 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myDiffProvider = new MockDiffProvider();
     myVcs.setDiffProvider(myDiffProvider);
 
+    File tempDir = createTempDirectory();
+    myContentRoot = getVirtualFile(tempDir);
+    PsiTestUtil.addContentRoot(myModule, myContentRoot);
+
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping("", myVcs.getName())));
+    myVcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myContentRoot.getPath(), myVcs.getName())));
     myVcsManager.waitForInitialized();
     assertTrue(myVcsManager.hasActiveVcss());
 
     myCache = CommittedChangesCache.getInstance(getProject());
     assertEquals(1, myCache.getCachesHolder().getAllCaches().size());
-
-    myTempDir = createTempDirectory();
-    myContentRoot = getVirtualFile(myTempDir);
-    PsiTestUtil.addContentRoot(myModule, myContentRoot);
-    myFilesToDelete.add(myCache.getCachesHolder().getCacheBasePath());
+    getTempDir().scheduleDelete(myCache.getCachesHolder().getCacheBasePath());
   }
 
   @Override
   protected void tearDown() {
-    new RunAll(
+    RunAll.runAll(
       () -> {
         if (myConnection != null) myConnection.disconnect();
       },
@@ -79,7 +76,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
       () -> myCache.clearCaches(EmptyRunnable.INSTANCE),
       () -> clearFields(this),
       () -> super.tearDown()
-    ).run();
+    );
   }
 
   public void testEmpty() throws Exception {
@@ -172,8 +169,8 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     final Change change = createChange("1.txt", 2);
     final CommittedChangeList list = myProvider.registerChangeList("test", change);
     myCache.refreshAllCaches();
-    VirtualFile baseDir = myProject.getBaseDir();
-    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, baseDir, myProvider.getLocationFor(VcsUtil.getFilePath(baseDir)));
+    RepositoryLocation location = myProvider.getLocationFor(VcsUtil.getFilePath(myContentRoot));
+    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, myContentRoot, location);
     assertEquals(list.getCommitDate(), cacheFile.getLastCachedDate());
     assertEquals(list.getCommitDate(), cacheFile.getFirstCachedDate());
     assertEquals(list.getNumber(), cacheFile.getLastCachedChangelist());
@@ -208,7 +205,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   public void testDelete() throws Exception {
-    final Change change = MockCommittedChangesProvider.createMockDeleteChange(new File(myTempDir, "1.txt").toString(), 1);
+    final Change change = MockCommittedChangesProvider.createMockDeleteChange(new File(myContentRoot.getPath(), "1.txt").toString(), 1);
     myProvider.registerChangeList("test", change);
     myCache.refreshAllCaches();
     assertEquals(1, getIncomingChangesFromCache().size());
@@ -222,7 +219,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
 
   public void testRefreshIncomingDeleted() throws Exception {
     final Change change = createChange("1.txt", 2);
-    final Change change2 = MockCommittedChangesProvider.createMockDeleteChange(new File(myTempDir, "1.txt").toString(), 2);
+    final Change change2 = MockCommittedChangesProvider.createMockDeleteChange(new File(myContentRoot.getPath(), "1.txt").toString(), 2);
     myProvider.registerChangeList("test", change);
     myProvider.registerChangeList("test 2", change2);
     myCache.refreshAllCaches();
@@ -303,17 +300,15 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   private void attachListener() {
-    myConnection = myCache.getMessageBus().connect();
+    myConnection = getProject().getMessageBus().connect();
     myListener = new MockListener();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, myListener);
   }
 
   private File createTestFile(final String fileName) throws IOException {
-    final File testFile = new File(myTempDir, fileName);
+    final File testFile = new File(myContentRoot.getPath(), fileName);
     testFile.createNewFile();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFileManager.getInstance().syncRefresh();
-    });
+    VfsTestUtil.syncRefresh();
     return testFile;
   }
 
@@ -336,20 +331,20 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   private Change createChange(final String path, final int revision) {
-    return MockCommittedChangesProvider.createMockChange(new File(myTempDir, path).toString(), revision);
+    return MockCommittedChangesProvider.createMockChange(new File(myContentRoot.getPath(), path).toString(), revision);
   }
 
-  private static class MockListener extends CommittedChangesAdapter {
+  private static class MockListener implements CommittedChangesListener {
     private final List<CommittedChangeList> myLoadedChanges = new ArrayList<>();
     private final List<List<CommittedChangeList>> myIncomingChangesUpdates = new ArrayList<>();
 
     @Override
-    public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
+    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
       myLoadedChanges.addAll(changes);
     }
 
     @Override
-    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+    public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
       myIncomingChangesUpdates.add(receivedChanges);
     }
 

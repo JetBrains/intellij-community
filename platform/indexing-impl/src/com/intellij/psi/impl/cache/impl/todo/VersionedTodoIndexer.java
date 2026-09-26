@@ -17,7 +17,9 @@ package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 
+@OverrideOnly
 public abstract class VersionedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
   public int getVersion() {
     return 1;

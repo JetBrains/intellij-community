@@ -1,4 +1,4 @@
-// "Create field 'fooMoo'" "true"
+// "Create field 'fooMoo'" "true-preview"
 class Barr {
     private final String s;
 

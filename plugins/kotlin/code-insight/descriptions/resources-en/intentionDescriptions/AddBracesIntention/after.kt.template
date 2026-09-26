@@ -1,0 +1,4 @@
+if (flag) <spot>{
+  return true
+}</spot>
+   

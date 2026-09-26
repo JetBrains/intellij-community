@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.execution.filters
 
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.ConsoleFilterProvider
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.LazyFileHyperlinkInfo
+import com.intellij.execution.filters.RegexpFilter
 import com.intellij.openapi.project.Project
 
 class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
@@ -26,6 +30,11 @@ class GrCompilationErrorsFilterProvider : ConsoleFilterProvider {
       override fun createOpenFileHyperlink(fileName: String, line: Int, column: Int): HyperlinkInfo {
         return super.createOpenFileHyperlink(fileName, line, column)
                ?: LazyFileHyperlinkInfo(project, fileName, line, column)
+      }
+
+      override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
+        if (!line.contains(": ")) return null
+        return super.applyFilter(line, entireLength)
       }
     }
   )

@@ -1,11 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -21,7 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
+public final class JsonEnterHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,
@@ -29,6 +33,10 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvanceRef,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
+    if (!JsonEditorOptions.getInstance().COMMA_ON_ENTER) {
+      return Result.Continue;
+    }
+
     Language language = EnterHandler.getLanguage(dataContext);
     if (!(language instanceof JsonLanguage)) {
       return Result.Continue;
@@ -55,7 +63,9 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static boolean handleComma(@NotNull Ref<Integer> caretOffsetRef, @NotNull PsiElement psiAtOffset, @NotNull Editor editor) {
     PsiElement nextSibling = psiAtOffset;
+    boolean hasNewlineBefore = false;
     while (nextSibling instanceof PsiWhiteSpace) {
+      hasNewlineBefore = nextSibling.getText().contains("\n");
       nextSibling = nextSibling.getNextSibling();
     }
 
@@ -70,7 +80,7 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
       if (prevSibling instanceof JsonProperty && ((JsonProperty)prevSibling).getValue() != null) {
         int offset = elementType == JsonElementTypes.COMMA ? nextSibling.getTextRange().getEndOffset() : prevSibling.getTextRange().getEndOffset();
         if (offset < editor.getDocument().getTextLength()) {
-          if (elementType == JsonElementTypes.R_CURLY) {
+          if (elementType == JsonElementTypes.R_CURLY && hasNewlineBefore) {
             editor.getDocument().insertString(offset, ",");
             offset++;
           }

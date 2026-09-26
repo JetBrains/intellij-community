@@ -27,9 +27,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 interface GroovyOutputConsumer {
   void registerCompiledClass(BuildTarget<?> target, File srcFile, File outputFile, byte[] bytes) throws IOException;
 }
@@ -37,7 +34,7 @@ interface GroovyOutputConsumer {
 class DefaultOutputConsumer implements GroovyOutputConsumer {
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
 
-  public DefaultOutputConsumer(ModuleLevelBuilder.OutputConsumer outputConsumer) {
+  DefaultOutputConsumer(ModuleLevelBuilder.OutputConsumer outputConsumer) {
     myOutputConsumer = outputConsumer;
   }
 
@@ -52,6 +49,7 @@ class DefaultOutputConsumer implements GroovyOutputConsumer {
   private static String readClassName(byte[] classBytes) throws IOException{
     final Ref<String> nameRef = Ref.create(null);
     new ClassReader(classBytes).accept(new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         nameRef.set(name.replace('/', '.'));
       }

@@ -1,182 +1,286 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
+import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JdkVersionDetector;
+import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
+import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContextImpl;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Denis Zhdanov
- * @since 3/14/13 5:09 PM
- */
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.BUILD_PROCESS_DEBUGGER_PORT_KEY;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_ADDR_KEY;
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY;
+import static org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScriptKt.DEFAULT_INIT_SCRIPT_NAME;
+import static org.jetbrains.plugins.gradle.service.task.debugger.GradleDebuggerSupport.setupDebuggerProxy;
+
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
-  private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
+  public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
+  public static final Key<Collection<VersionSpecificInitScript>> VERSION_SPECIFIC_SCRIPTS_KEY = Key.create("VERSION_SPECIFIC_SCRIPTS_KEY");
+  private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
 
-  private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
-
-  private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = ContainerUtil.newConcurrentMap();
+  private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = new ConcurrentHashMap<>();
 
   public GradleTaskManager() {
   }
 
+  /**
+   * @deprecated use {@link GradleTaskManager#executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)} instead
+   */
+  @Deprecated
   @Override
-  public void executeTasks(@NotNull final ExternalSystemTaskId id,
-                           @NotNull final List<String> taskNames,
-                           @NotNull String projectPath,
-                           @Nullable GradleExecutionSettings settings,
-                           @Nullable final String jvmAgentSetup,
-                           @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+  public void executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> taskNames,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @Nullable String jvmParametersSetup,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    ExternalSystemTaskManager.super.executeTasks(id, taskNames, projectPath, settings, jvmParametersSetup, listener);
+  }
 
-    // TODO add support for external process mode
+  @Override
+  public void executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, jvmAgentSetup, listener)) {
+      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensionList()) {
+        if (gradleTaskManagerExtension.executeTasks(projectPath, id, settings, listener)) {
           return;
         }
       }
     }
 
-    GradleExecutionSettings effectiveSettings =
-      settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+    GradleTaskExecutionContextImpl context = new GradleTaskExecutionContextImpl(projectPath, id, listener);
 
-    ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
-    if (forkedDebuggerSetup != null) {
-      String javaHome = effectiveSettings.getJavaHome();
-      JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
-        javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
-      boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
-      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
-    }
-    Function<ProjectConnection, Void> f = connection -> {
-      try {
-        appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
-
-        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener);
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
-          listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
-            id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
-        }
-
-        for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
-          effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-        }
-
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-        launcher.forTasks(ArrayUtil.toStringArray(taskNames));
-
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
-          myCancellationMap.put(id, new UnsupportedCancellationToken());
-        }
-        else {
-          final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
-          launcher.withCancellationToken(cancellationTokenSource.token());
-          myCancellationMap.put(id, cancellationTokenSource);
-        }
-        try {
-          launcher.run();
-        }
-        finally {
-          myCancellationMap.remove(id);
-        }
+    CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    CancellationToken cancellationToken = cancellationTokenSource.token();
+    myCancellationMap.put(id, cancellationTokenSource);
+    try {
+      GradleExecutionContextImpl executionContext = new GradleExecutionContextImpl(projectPath, id, settings, listener, cancellationToken);
+      if (settings.getDistributionType() == DistributionType.WRAPPED) {
+        GradleWrapperHelper.ensureInstalledWrapper(executionContext);
+      }
+      context.setExecutionContext(executionContext);
+      GradleExecutionHelper.execute(executionContext, connection -> {
+        prepareSettingsForExecution(settings, context);
+        executeTasks(connection, context);
         return null;
-      }
-      catch (RuntimeException e) {
-        LOG.debug("Gradle build launcher error", e);
-        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
-        throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
-      }
-    };
-    myHelper.execute(projectPath, effectiveSettings, f);
-  }
-
-  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
-                                              @Nullable String jvmAgentSetup,
-                                              @NotNull GradleExecutionSettings effectiveSettings) {
-    final List<String> initScripts = ContainerUtil.newArrayList();
-    final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
-    for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
-         resolverExtension != null;
-         resolverExtension = resolverExtension.getNext()) {
-      final String resolverClassName = resolverExtension.getClass().getName();
-      resolverExtension.enhanceTaskProcessing(taskNames, jvmAgentSetup, script -> {
-        if (StringUtil.isNotEmpty(script)) {
-          ContainerUtil.addAllNotNull(
-            initScripts,
-            "//-- Generated by " + resolverClassName,
-            script,
-            "//");
-        }
       });
     }
+    finally {
+      myCancellationMap.remove(id);
+    }
+  }
 
-    final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
-    if (StringUtil.isNotEmpty(initScript)) {
-      ContainerUtil.addAll(
-        initScripts,
-        "//-- Additional script",
-        initScript,
-        "//");
+  private static void prepareSettingsForExecution(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleTaskExecutionContext context
+  ) {
+    setupDebuggerProxy(context.getExecutionContext(), settings);
+    setupGradleScriptDebugging(settings);
+    setupDebuggerDispatchPort(settings);
+    setupBuiltInTestEvents(settings, context);
+
+    configureTasks(settings, context);
+
+    for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+      settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+    }
+    prepareTaskState(settings, context);
+  }
+
+  private static void executeTasks(
+    @NotNull ProjectConnection connection,
+    @NotNull GradleTaskExecutionContextImpl context
+  ) {
+    if (Registry.is("gradle.report.recently.saved.paths")) {
+      ApplicationManager.getApplication()
+        .getService(GradleFileModificationTracker.class)
+        .notifyConnectionAboutChangedPaths(connection);
     }
 
-    if (!initScripts.isEmpty()) {
-      try {
-        File tempFile =
-          GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
-        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-      }
-      catch (IOException e) {
-        throw new ExternalSystemException(e);
+    if (isApplicableTestLauncher(context)) {
+      var operation = connection.newTestLauncher();
+      GradleExecutionHelper.prepareForExecution(operation, context.getExecutionContext());
+      operation.run();
+    }
+    else {
+      var operation = connection.newBuild();
+      GradleExecutionHelper.prepareForExecution(operation, context.getExecutionContext());
+      operation.run();
+    }
+  }
+
+  private static boolean isApplicableTestLauncher(@NotNull GradleTaskExecutionContext context) {
+    if (!Registry.is("gradle.testLauncherAPI.enabled")) {
+      LOG.debug("TestLauncher isn't applicable: disabled by registry");
+      return false;
+    }
+    var executionContext = context.getExecutionContext();
+    var settings = executionContext.getSettings();
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
+      LOG.debug("TestLauncher isn't applicable: unsupported execution with remote target");
+      return false;
+    }
+    if (!settings.isTestTaskRerun()) {
+      LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
+      return false;
+    }
+    var gradleVersion = executionContext.getGradleVersion();
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.3")) {
+      LOG.debug("TestLauncher isn't applicable: unsupported Gradle version: " + gradleVersion);
+      return false;
+    }
+    var project = context.getProject();
+    var projectPath = context.getProjectPath();
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
+      LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
+      return false;
+    }
+    var commandLine = settings.getCommandLine();
+    if (!hasJvmTestTasks(commandLine, project, projectPath)) {
+      LOG.debug("TestLauncher isn't applicable: RC hasn't JVM test tasks");
+      return false;
+    }
+    if (hasNonJvmTestTasks(commandLine, project, projectPath)) {
+      LOG.debug("TestLauncher isn't applicable: RC has non-JVM test tasks");
+      return false;
+    }
+    if (hasNonTestOptions(commandLine)) {
+      LOG.debug("TestLauncher isn't applicable: RC tasks have non-test options");
+      return false;
+    }
+    if (hasUnrecognizedOptions(commandLine)) {
+      LOG.debug("TestLauncher isn't applicable: RC has unrecognized options");
+      return false;
+    }
+    LOG.debug("TestLauncher is applicable");
+    return true;
+  }
+
+  private static boolean hasJvmTestTasks(@NotNull GradleCommandLine commandLine, @NotNull Project project, @NotNull String projectPath) {
+    var indices = GradleTasksIndices.getInstance(project);
+    for (var task : commandLine.getTasks()) {
+      var taskData = indices.findTasks(projectPath, task.getName());
+      if (ContainerUtil.exists(taskData, it -> it.isJvmTest())) {
+        return true;
       }
     }
+    return false;
+  }
+
+  private static boolean hasNonJvmTestTasks(@NotNull GradleCommandLine commandLine, @NotNull Project project, @NotNull String projectPath) {
+    var indices = GradleTasksIndices.getInstance(project);
+    for (var task : commandLine.getTasks()) {
+      var taskData = indices.findTasks(projectPath, task.getName());
+      if (ContainerUtil.exists(taskData, it -> it.isTest() && !it.isJvmTest())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasProjectIncludedBuild(@NotNull Project project, @NotNull String projectPath) {
+    var projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath);
+    if (projectNode == null) return false;
+    var compositeBuildNode = ExternalSystemApiUtil.find(projectNode, CompositeBuildData.KEY);
+    if (compositeBuildNode == null) return false;
+    var compositeBuildParticipants = compositeBuildNode.getData().getCompositeParticipants();
+    return !compositeBuildParticipants.isEmpty();
+  }
+
+  private static boolean hasNonTestOptions(@NotNull GradleCommandLine commandLine) {
+    for (var task : commandLine.getTasks()) {
+      if (ContainerUtil.exists(task.getOptions(), it -> !GradleCommandLineUtil.isTestPattern(it))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasUnrecognizedOptions(@NotNull GradleCommandLine commandLine) {
+    for (var task : commandLine.getTasks()) {
+      if (task.getName().startsWith("-")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void prepareTaskState(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleTaskExecutionContext context
+  ) {
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) return; // Prepared by TargetBuildLauncher.
+
+    RunConfigurationTaskState taskState = settings.getUserData(RunConfigurationTaskState.getKEY());
+    if (taskState == null) return;
+
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
+    TargetProgressIndicator progressIndicator = TargetProgressIndicator.EMPTY;
+    try {
+      taskState.prepareTargetEnvironmentRequest(request, progressIndicator);
+      LocalTargetEnvironment environment = request.prepareEnvironment(progressIndicator);
+      String taskStateInitScript = taskState.handleCreatedTargetEnvironment(environment, progressIndicator);
+      if (taskStateInitScript != null) {
+        var initScriptPath = GradleInitScriptUtil.createInitScript("ijtgttaskstate", taskStateInitScript);
+        settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
+      }
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    context.getListener().onEnvironmentPrepared(context.getTaskId());
   }
 
   @Override
@@ -194,5 +298,71 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public static void configureTasks(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleTaskExecutionContext context
+  ) {
+    GradleTaskManagerExtension.EP_NAME.forEachExtensionSafe(it -> {
+      it.configureTasks(settings, context);
+    });
+
+    final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
+    final String initScriptPrefix = settings.getUserData(INIT_SCRIPT_PREFIX_KEY);
+    if (StringUtil.isNotEmpty(initScript)) {
+      settings.addInitScript(StringUtil.notNullize(initScriptPrefix, DEFAULT_INIT_SCRIPT_NAME), initScript);
+    }
+
+    final Collection<VersionSpecificInitScript> scripts = settings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
+    if (scripts != null) {
+      settings.addInitScript(context.getExecutionContext().getGradleVersion(), scripts);
+    }
+
+    if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
+      var targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
+      settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString());
+    }
+  }
+
+  public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
+    Integer gradleScriptDebugPort = effectiveSettings.getUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY);
+    if (effectiveSettings.isDebugServerProcess() && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
+      String debugAddress;
+      String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+      if (dispatchAddr != null) {
+        debugAddress = dispatchAddr + ":" + gradleScriptDebugPort;
+      }
+      else {
+        boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
+        debugAddress = (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
+      }
+      String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + debugAddress;
+      effectiveSettings.withVmOption(jvmOpt);
+    }
+    if (effectiveSettings.isDebugAllEnabled()) {
+      effectiveSettings.withArgument("-Didea.gradle.debug.all=true");
+    }
+  }
+
+  public static void setupDebuggerDispatchPort(@NotNull GradleExecutionSettings effectiveSettings) {
+    Integer dispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
+    if (dispatchPort != null) {
+      effectiveSettings.withArgument(String.format("-D%s=%d", DISPATCH_PORT_SYS_PROP, dispatchPort));
+    }
+    String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+    if (dispatchAddr != null) {
+      effectiveSettings.withArgument(String.format("-D%s=%s", DISPATCH_ADDR_SYS_PROP, dispatchAddr));
+    }
+  }
+
+  private static void setupBuiltInTestEvents(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull GradleTaskExecutionContext context
+  ) {
+    if (GradleVersionUtil.isGradleAtLeast(context.getExecutionContext().getGradleVersion(), "7.6")) {
+      settings.setBuiltInTestEventsUsed(true);
+    }
   }
 }

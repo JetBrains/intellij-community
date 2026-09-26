@@ -1,0 +1,74 @@
+<problems>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>6</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>14</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>18</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>22</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>26</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>30</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>34</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>38</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+    <problem>
+        <file>redundantIf.kt</file>
+        <line>46</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="redundantIf.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant 'if' statement</problem_class>
+        <description>Redundant 'if' statement</description>
+    </problem>
+</problems>

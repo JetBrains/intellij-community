@@ -20,7 +20,7 @@ Groovy script
           Arguments
             PsiElement(()('(')
             PsiElement())(')')
-          PsiWhiteSpace('\n')
+          PsiElement(new line)('\n')
           Type definition body
             PsiElement({)('{')
             PsiWhiteSpace('\n')

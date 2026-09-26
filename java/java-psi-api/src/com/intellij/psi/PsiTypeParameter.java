@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmElementVisitor;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the type parameter of a generic class, interface, method or constructor.
- *
- * @author dsl
  */
 public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeParameter {
   /**
@@ -47,10 +45,14 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
    */
   int getIndex();
 
-  @NotNull
   @Override
-  default PsiAnnotation[] getAnnotations() {
+  default PsiAnnotation @NotNull [] getAnnotations() {
     return PsiClass.super.getAnnotations();
+  }
+
+  @Override
+  default boolean hasAnnotations() {
+    return PsiClass.super.hasAnnotations();
   }
 
   @Override
@@ -58,15 +60,13 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
     return PsiClass.super.hasAnnotation(fqn);
   }
 
-  @NotNull
   @Override
-  default JvmReferenceType[] getBounds() {
+  default JvmReferenceType @NotNull [] getBounds() {
     return getExtendsList().getReferencedTypes();
   }
 
-  @Nullable
   @Override
-  default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
+  default @Nullable <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
     return JvmTypeParameter.super.accept(visitor);
   }
 }

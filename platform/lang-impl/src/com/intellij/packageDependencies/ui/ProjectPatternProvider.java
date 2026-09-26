@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,16 +24,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
-public class ProjectPatternProvider extends PatternDialectProvider {
-
-  @NonNls public static final String FILE = "file";
+@ApiStatus.Internal
+public final class ProjectPatternProvider extends PatternDialectProvider {
+  public static final @NonNls String FILE = "file";
 
   private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
@@ -55,7 +46,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
+  public TreeModel createTreeModel(final Project project, final Set<? extends PsiFile> deps, final Marker marker,
                                    final DependenciesPanel.DependencyPanelSettings settings) {
     return FileTreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
@@ -66,8 +57,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return FILE;
   }
 
@@ -80,8 +70,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @Nullable
-  public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
+  public @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
       if (!recursively) return null;
       return new FilePatternPackageSet(getGroupModulePattern((ModuleGroupNode)node), "*//*");
@@ -95,7 +84,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof DirectoryNode) {
       String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
-        if (pattern.length() > 0) {
+        if (!pattern.isEmpty()) {
           pattern += recursively ? "//*" : "/*";
         }
         else {
@@ -104,12 +93,32 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       }
       final VirtualFile vDir = ((DirectoryNode)node).getDirectory();
       final PsiElement psiElement = node.getPsiElement();
-      final Module module = psiElement != null ? ModuleUtilCore.findModuleForFile(vDir, psiElement.getProject()) : null;
-      return new FilePatternPackageSet(module != null ? module.getName() : null, pattern);
+      boolean projectFiles = true;
+      String modulePattern = null;
+      if (psiElement != null) {
+        Project project = psiElement.getProject();
+        final Module module = ModuleUtilCore.findModuleForFile(vDir, project);
+        if (module == null) {
+          projectFiles = false;
+          modulePattern = ProjectFileIndex.getInstance(project)
+            .getOrderEntriesForFile(vDir).stream()
+            .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
+            .findFirst()
+            .map(entry -> entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdkName() : entry.getPresentableName())
+            .orElse(null);
+        }
+        else {
+          modulePattern = module.getName();
+        }
+      }
+      
+      return new FilePatternPackageSet(modulePattern, pattern, projectFiles);
     }
-    else if (node instanceof FileNode) {
+    else if (node instanceof LibraryNode) {
+      return new FilePatternPackageSet(node.toString(), recursively ? "*/" : "*", false);
+    }
+    else if (node instanceof FileNode fNode) {
       if (recursively) return null;
-      FileNode fNode = (FileNode)node;
       final PsiFile file = (PsiFile)fNode.getPsiElement();
       if (file == null) return null;
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -119,6 +128,9 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       final String fqName = VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/');
       if (fqName != null) return new FilePatternPackageSet(getModulePattern(node), fqName);
     }
+    else if (node instanceof GeneralGroupNode) {//external dependencies
+      return new FilePatternPackageSet("", recursively ? "*/" : "*", false);
+    }
     return null;
   }
 
@@ -127,14 +139,9 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
-  @NotNull
-  static String getGroupModulePattern(ModuleGroupNode node) {
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
-      return node.getModuleGroup().getQualifiedName() + "*";
-    }
-    else {
-      return "group:" + node.getModuleGroup().toString();
-    }
+  @Override
+  public @Nls @NotNull String getHintMessage() {
+    return LangBundle.message("package.pattern.provider.hint.label");
   }
 
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {
@@ -147,12 +154,16 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
     @Override
-    public void setSelected(AnActionEvent event, boolean flag) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
       myUpdate.run();
     }

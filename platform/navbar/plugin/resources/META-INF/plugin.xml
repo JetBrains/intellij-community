@@ -1,0 +1,20 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.navbar.plugin</id>
+  <name>Navigation Bar</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+  The navigation bar is a quick alternative to the Project view, where you can go through the structure of your project,
+  open specific files, and jump to specific code elements in the current file.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.navbar" loading="required"/>
+    <module name="intellij.platform.navbar.backend"/>
+    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.navbar.monolith"/>
+  </content>
+</idea-plugin>

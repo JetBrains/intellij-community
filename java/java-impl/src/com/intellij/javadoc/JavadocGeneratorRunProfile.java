@@ -1,20 +1,28 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
-import com.google.common.collect.Streams;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaCommandLineStateUtil;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.impl.template.JavaTemplatePresentationSupport;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,36 +30,53 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author nik
- */
-public class JavadocGeneratorRunProfile implements ModuleRunProfile {
+public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
   private final Project myProject;
   private final AnalysisScope myGenerationScope;
   private final JavadocConfiguration myConfiguration;
@@ -67,13 +92,13 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new MyJavaCommandLineState(myConfiguration, myProject, myGenerationScope, env);
   }
 
   @Override
-  public String getName() {
-    return JavadocBundle.message("javadoc.settings.title");
+  public @NotNull String getName() {
+    return JavaBundle.message("javadoc.settings.title");
   }
 
   @Override
@@ -81,7 +106,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     return null;
   }
 
-  private static class MyJavaCommandLineState extends CommandLineState {
+  private static final class MyJavaCommandLineState extends CommandLineState {
     private static final String INDEX_HTML = "index.html";
 
     private final AnalysisScope myGenerationOptions;
@@ -89,30 +114,26 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private final JavadocConfiguration myConfiguration;
     private final ArgumentFileFilter myArgFileFilter = new ArgumentFileFilter();
 
-    public MyJavaCommandLineState(JavadocConfiguration configuration,
-                                  Project project,
-                                  AnalysisScope generationOptions,
-                                  ExecutionEnvironment env) {
+    MyJavaCommandLineState(JavadocConfiguration configuration, Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
       super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
       myConfiguration = configuration;
       addConsoleFilters(
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"),
+        new RegexpFilter(project, "$FILE_PATH$:$LINE$:"),
         myArgFileFilter);
     }
 
-    @NotNull
-    protected OSProcessHandler startProcess() throws ExecutionException {
+    @Override
+    protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
-      ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));
-      handler.addProcessListener(new ProcessAdapter() {
+      ProcessTerminatedListener.attach(handler, myProject, JavaBundle.message("javadoc.generate.exited"));
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (myConfiguration.OPEN_IN_BROWSER && event.getExitCode() == 0) {
-            File index = new File(myConfiguration.OUTPUT_DIRECTORY, INDEX_HTML);
-            if (index.exists()) {
+            var index = Path.of(myConfiguration.OUTPUT_DIRECTORY, INDEX_HTML);
+            if (Files.exists(index)) {
               BrowserUtil.browse(index);
             }
           }
@@ -132,7 +153,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setExecutable(Sdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
       String binPath = jdk != null && jdk.getSdkType() instanceof JavaSdkType ? ((JavaSdkType)jdk.getSdkType()).getBinPath(jdk) : null;
       if (binPath == null) {
-        throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
+        throw new CantRunException(JavaBundle.message("javadoc.generate.no.jdk"));
       }
 
       cmdLine.setWorkDirectory((File)null);
@@ -142,15 +163,16 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       if (!tool.exists()) {
         tool = new File(new File(binPath).getParent(), toolName);
         if (!tool.exists()) {
-          tool = new File(new File(System.getProperty("java.home")).getParent(), "bin/" + toolName);
+          File javaHomeBinPath = new File(new File(System.getProperty("java.home")).getParent(), "bin");
+          tool = new File(javaHomeBinPath, toolName);
           if (!tool.exists()) {
-            throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
+            throw new CantRunException(JavaBundle.message("javadoc.generate.no.javadoc.tool", binPath, javaHomeBinPath));
           }
         }
       }
       cmdLine.setExePath(tool.getPath());
 
-      if (myConfiguration.HEAP_SIZE != null && myConfiguration.HEAP_SIZE.trim().length() != 0) {
+      if (myConfiguration.HEAP_SIZE != null && !myConfiguration.HEAP_SIZE.trim().isEmpty()) {
         String param = JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_2) ? "-J-Xmx" : "-J-mx";
         cmdLine.getParametersList().prepend(param + myConfiguration.HEAP_SIZE + "m");
       }
@@ -160,7 +182,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setParameters(Sdk jdk, GeneralCommandLine cmdLine) throws CantRunException {
       ParametersList parameters = cmdLine.getParametersList();
 
-      if (myConfiguration.LOCALE != null && myConfiguration.LOCALE.length() > 0) {
+      if (myConfiguration.LOCALE != null && !myConfiguration.LOCALE.isEmpty()) {
         parameters.add("-locale");
         parameters.add(myConfiguration.LOCALE);
       }
@@ -217,83 +239,166 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
         parameters.add(myConfiguration.OUTPUT_DIRECTORY.replace('/', File.separatorChar));
       }
 
-      try {
-        File argsFile = FileUtil.createTempFile("javadoc_args", null);
+      Set<Module> modules = new LinkedHashSet<>();
+      Set<VirtualFile> sources = new HashSet<>();
+      Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
+      String title = JavaBundle.message("javadoc.generate.sources.progress");
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(r, title, true, myProject)) {
+        return;
+      }
+      if (sources.isEmpty()) {
+        throw new CantRunException(JavaBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
+      }
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(argsFile))) {
-          Set<Module> modules = new LinkedHashSet<>();
-          Set<VirtualFile> sources = new HashSet<>();
-          Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
-          String title = JavadocBundle.message("javadoc.generate.sources.progress");
-          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(r, title, true, myProject)) {
-            return;
-          }
-          if (sources.isEmpty()) {
-            throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
-          }
+      Set<Module> modulesWithoutDescriptor = new HashSet<>(modules);
+      Map<Module, VirtualFile> moduleDescriptors = new HashMap<>();
+      boolean hasJavaModules = false;
+      for (VirtualFile source : sources) {
+        if (!PsiJavaModule.MODULE_INFO_FILE.equals(source.getName())) {
+          continue;
+        }
+        hasJavaModules = true;
+        Module module = ModuleUtilCore.findModuleForFile(source, myProject);
+        if (module != null) {
+          moduleDescriptors.put(module, source);
+          modulesWithoutDescriptor.remove(module);
+        }
+      }
+      if (hasJavaModules && !modulesWithoutDescriptor.isEmpty()) {
+        // So far we can't generate javadoc for each module independently as we have to merge the results into common files,
+        // e.g index.html, index-all.html and so on. Moreover, the final javadoc seems obscured in the case when one module contains
+        // module-info file but another one is not.
+        throw new CantRunException(JavaBundle.message("javadoc.gen.error.modules.without.module.info", modulesWithoutDescriptor.stream()
+          .map(m -> "'" + m.getName() + "'").collect(Collectors.joining(","))));
+      }
 
-          boolean hasJavaModules = sources.stream().anyMatch(f -> PsiJavaModule.MODULE_INFO_FILE.equals(f.getName()));
-          if (hasJavaModules && modules.size() > 1) {
-            throw new CantRunException("At the moment, IDEA cannot generate Javadoc for multiple modules" +
-                                       " with module-info.java files in them. Sorry. We're working on this.");
+      if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
+        for (Module module : modules) {
+          LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          if (languageLevel.isPreview()) {
+            parameters.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+            parameters.add("--source", String.valueOf(languageLevel.feature()));
+            break;
           }
+        }
+      }
 
-          OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
-          if (!myConfiguration.OPTION_INCLUDE_LIBS) {
-            sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
-          }
-          if (!myGenerationOptions.isIncludeTestSource()) {
-            sourcePathEnumerator = sourcePathEnumerator.productionOnly();
-          }
-          List<VirtualFile> sourceRoots = sourcePathEnumerator.getSourcePathsList().getRootDirs();
+      File argsFile = createTempArgsFile();
+      List<VirtualFile> sourceRoots = findSourceRoots(modules);
+      List<VirtualFile> classRoots = findClassRoots(modules, jdk);
 
-          OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
-          if (jdk.getSdkType() instanceof JavaSdk) {
-            classPathEnumerator = classPathEnumerator.withoutSdk();
-          }
-          if (!myGenerationOptions.isIncludeTestSource()) {
-            classPathEnumerator = classPathEnumerator.productionOnly();
-          }
-          List<VirtualFile> classRoots = classPathEnumerator.getPathsList().getRootDirs();
-
-          if (sourceRoots.size() + classRoots.size() > 0) {
-            if (hasJavaModules) {
-              if (!sourceRoots.isEmpty()) {
-                String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-                writer.println("--source-path");
-                writer.println(StringUtil.wrapWithDoubleQuote(path));
+      Charset cs = CharsetToolkit.getPlatformCharset();
+      try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(argsFile), cs))) {
+        if (sourceRoots.size() + classRoots.size() > 0) {
+          if (hasJavaModules && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+            if (modules.size() > 1) {
+              writer.println("--module-source-path");
+              String moduleSourcePath = computeModuleSourcePath(moduleDescriptors);
+              if (moduleSourcePath == null) {
+                throw new CantRunException(JavaBundle.message("javadoc.gen.error.module.source.path.is.not.evaluated"));
               }
-              if (!classRoots.isEmpty()) {
-                String path = classRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-                writer.println("--module-path");
-                writer.println(StringUtil.wrapWithDoubleQuote(path));
-              }
+              writer.println(StringUtil.wrapWithDoubleQuote(moduleSourcePath));
             }
-            else {
-              // placing source roots on a classpath is perfectly legal and allows to generate correct Javadoc
-              // when a module without a module-info.java file depends on another module which has one
-              Stream<VirtualFile> roots = Streams.concat(sourceRoots.stream(), classRoots.stream());
-              String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
-              writer.println("-classpath");
+            else if (!sourceRoots.isEmpty()) {
+              String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--source-path");
+              writer.println(StringUtil.wrapWithDoubleQuote(path));
+            }
+
+            if (!classRoots.isEmpty()) {
+              String path = classRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--module-path");
               writer.println(StringUtil.wrapWithDoubleQuote(path));
             }
           }
+          else {
+            // placing source roots on a classpath is perfectly legal and allows generating correct Javadoc
+            // when a module without a module-info.java file depends on another module that has one
+            Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
+            String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+            writer.println("-classpath");
+            writer.println(StringUtil.wrapWithDoubleQuote(path));
 
-          for (VirtualFile source : sources) {
-            writer.println(StringUtil.wrapWithDoubleQuote(source.getPath()));
+            if (!sourceRoots.isEmpty() && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_18)) {
+              //is needed for javadoc snippets only
+              String sourcePath = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--source-path");
+              writer.println(StringUtil.wrapWithDoubleQuote(sourcePath));
+            }
           }
         }
 
-        myArgFileFilter.setPath(argsFile.getPath());
-        parameters.add("@" + argsFile.getPath());
-        OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
+        for (VirtualFile source : sources) {
+          writer.println(StringUtil.wrapWithDoubleQuote(source.getPath()));
+        }
       }
-      catch (IOException e) {
-        throw new CantRunException(JavadocBundle.message("javadoc.generate.temp.file.error"), e);
+      catch (FileNotFoundException e) {
+        throw new CantRunException(JavaBundle.message("javadoc.generate.temp.file.does.not.exist"), e);
       }
+      catch (CantRunException e) {
+        FileUtil.delete(argsFile);
+        throw e;
+      }
+
+      myArgFileFilter.setPath(argsFile.getPath(), cs);
+      parameters.add("@" + argsFile.getPath());
+      OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
+      cmdLine.setCharset(cs);
     }
 
-    private static String localPath(VirtualFile root) {
+    private static @NotNull File createTempArgsFile() throws CantRunException {
+      File argsFile;
+      try {
+        argsFile = FileUtil.createTempFile("javadoc_args", null);
+      }
+      catch (IOException e) {
+        throw new CantRunException(JavaBundle.message("javadoc.generate.temp.file.error"), e);
+      }
+      return argsFile;
+    }
+
+    private @Unmodifiable @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
+      OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
+      if (!myConfiguration.OPTION_INCLUDE_LIBS) {
+        sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
+      }
+      if (!myGenerationOptions.isIncludeTestSource()) {
+        sourcePathEnumerator = sourcePathEnumerator.productionOnly();
+      }
+      return sourcePathEnumerator.getSourcePathsList().getRootDirs();
+    }
+
+    private @Unmodifiable @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
+      OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        classPathEnumerator = classPathEnumerator.withoutSdk();
+      }
+      if (!myGenerationOptions.isIncludeTestSource()) {
+        classPathEnumerator = classPathEnumerator.productionOnly();
+      }
+      return classPathEnumerator.getPathsList().getRootDirs();
+    }
+
+    /**
+     * If a project contains multiple jpms modules then we have to form {@code --module-source-path}.
+     *
+     * @see <a href="https://docs.oracle.com/javase/9/tools/javadoc.htm">javadoc tool guide</a>
+     */
+    private static @Nullable String computeModuleSourcePath(@NotNull Map<Module, VirtualFile> moduleDescriptors) {
+      if (moduleDescriptors.isEmpty()) return null;
+      Set<String> moduleSourcePathParts = new SmartHashSet<>();
+      for (var entry : moduleDescriptors.entrySet()) {
+        String descriptorParentPath = PathUtil.getParentPath(entry.getValue().getPath());
+        VirtualFile modulePath = ContainerUtil.find(ModuleRootManager.getInstance(entry.getKey()).getContentRoots(),
+                                                    f -> descriptorParentPath.contains(f.getName()));
+        if (modulePath == null) return null;
+        String moduleSourcePathPart = descriptorParentPath.replace(modulePath.getName(), "*");
+        moduleSourcePathParts.add(moduleSourcePathPart);
+      }
+      return String.join(File.pathSeparator, moduleSourcePathParts);
+    }
+
+    private static @NotNull String localPath(@NotNull VirtualFile root) {
       // @argfile require forward slashes in quoted paths
       return VfsUtil.getLocalFile(root).getPath();
     }
@@ -301,19 +406,19 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
   private static class MyContentIterator extends PsiRecursiveElementWalkingVisitor {
     private final PsiManager myPsiManager;
-    private final Set<Module> myModules;
-    private final Set<VirtualFile> mySourceFiles;
+    private final Set<? super Module> myModules;
+    private final Set<? super VirtualFile> mySourceFiles;
 
-    public MyContentIterator(Project project, Set<Module> modules, Set<VirtualFile> sources) {
+    MyContentIterator(Project project, Set<? super Module> modules, Set<? super VirtualFile> sources) {
       myPsiManager = PsiManager.getInstance(project);
       myModules = modules;
       mySourceFiles = sources;
     }
 
     @Override
-    public void visitFile(PsiFile file) {
-      if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
-        VirtualFile vFile = file.getVirtualFile();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      if (psiFile instanceof PsiJavaFile && JavaTemplatePresentationSupport.isJavaSourceAllowed(psiFile)) {
+        VirtualFile vFile = psiFile.getVirtualFile();
         if (vFile != null && vFile.isInLocalFileSystem()) {
           mySourceFiles.add(vFile);
 

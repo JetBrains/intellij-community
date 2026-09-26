@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- * @since 27.07.2012
  */
 public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotationParameterListStub> implements PsiAnnotationParameterList {
   public PsiAnnotationParamListImpl(@NotNull PsiAnnotationParameterListStub stub) {
@@ -38,9 +37,8 @@ public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotation
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiNameValuePair[] getAttributes() {
+  public PsiNameValuePair @NotNull [] getAttributes() {
     return getStubOrPsiChildren(JavaStubElementTypes.NAME_VALUE_PAIR, PsiNameValuePair.ARRAY_FACTORY);
   }
 

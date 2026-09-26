@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="google.protobuf.kotlin" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-kotlin:3.25.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-kotlin/3.25.5/protobuf-kotlin-3.25.5.jar">
+              <sha256sum>3e47fdf6c1e01878274de4a6015d521a609835e2334545ca7478c6eddc88898d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-kotlin/3.25.5/protobuf-kotlin-3.25.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-kotlin/3.25.5/protobuf-kotlin-3.25.5-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

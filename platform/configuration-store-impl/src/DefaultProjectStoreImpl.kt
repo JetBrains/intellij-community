@@ -1,106 +1,139 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.StoreUtil
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import java.io.Writer
 import java.nio.file.Path
-import java.nio.file.Paths
 
-private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
+@ApiStatus.Internal
+const val PROJECT_DEFAULT_FILE_NAME: String = StoragePathMacros.PROJECT_DEFAULT_FILE
+@ApiStatus.Internal
+const val PROJECT_DEFAULT_FILE_SPEC: String = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
-private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override public fun loadLocalData(): Element? {
-    val element = super.loadLocalData() ?: return null
-    try {
-      return element.getChild("component").getChild("defaultProject")
-    }
-    catch (e: NullPointerException) {
-      LOG.warn("Cannot read default project")
-      return null
-    }
-  }
-
-  override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
-    override fun saveLocally(element: Element?) {
-      super.saveLocally(element?.let {
-        Element("application")
-          .addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))
-      })
-    }
-  }
-}
-
-// cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
   // see note about default state in project store
+  private val compoundStreamProvider = CompoundStreamProvider()
+
+  override val allowSavingWithoutModifications: Boolean
+    get() = true
+
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
-  init {
-    service<DefaultProjectExportableAndSaveTrigger>().project = project
+  private val storage by lazy {
+    val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
+    DefaultProjectStorage(file = file, fileSpec = PROJECT_DEFAULT_FILE_SPEC, pathMacroManager = PathMacroManager.getInstance(project), streamProvider = compoundStreamProvider)
   }
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  override val serviceContainer: ComponentManagerEx
+    get() = project as ComponentManagerEx
 
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
 
     override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
+      compoundStreamProvider.addStreamProvider(provider = provider, first = first)
     }
 
-    override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
-    }
-
-    override fun rename(path: String, newName: String) {
+    override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
+      compoundStreamProvider.removeStreamProvider(aClass)
     }
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization() = storage.startExternalization()?.let(::MyExternalizationSession)
+    override fun expandMacro(collapsedPath: String) = throw UnsupportedOperationException()
 
-    override fun expandMacros(path: String) = throw UnsupportedOperationException()
+    override fun collapseMacro(path: String): String = throw UnsupportedOperationException()
+
+    override val streamProvider: StreamProvider
+      get() = compoundStreamProvider
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
-  override fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = false
+  override fun isUseLoadedStateAsExisting(storage: StateStorage) = false
 
-  // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
+  // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock
+  // (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy(): Element? = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
+  override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> {
+    return listOf(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
+  }
 
-  override fun setPath(path: String) {
+  override fun setPath(path: Path) {}
+
+  override fun toString(): String = "default project"
+
+  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider) :
+    FileBasedStorage(
+      file = file,
+      fileSpec = fileSpec,
+      rootElementName = "defaultProject",
+      pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
+      roamingType = RoamingType.DISABLED,
+      provider = streamProvider,
+    ) {
+    override val controller: SettingsController?
+      get() = null
+
+    @Suppress("RedundantVisibilityModifier")
+    public override fun loadLocalData(): Element? = postProcessLoadedData { super.loadLocalData() }
+
+    override fun loadFromStreamProvider(stream: InputStream): Element? = postProcessLoadedData { super.loadFromStreamProvider(stream) }
+
+    private fun postProcessLoadedData(elementProvider: () -> Element?): Element? {
+      try {
+        return elementProvider()?.getChild("component")?.getChild("defaultProject")
+      }
+      catch (_: NullPointerException) {
+        LOG.warn("Cannot read default project")
+        return null
+      }
+    }
+
+    override fun createSaveSession(states: StateMap): FileSaveSessionProducer {
+      return object : FileSaveSessionProducer(storageData = states, storage = this) {
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
+          super.saveLocally(
+            dataWriter = object : StringDataWriter() {
+              override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
+
+              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                val lineSeparatorWithIndent = "${lineSeparator}    "
+                writer.append("<application>").append(lineSeparator)
+                writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
+                (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
+                writer.append(lineSeparator)
+                writer.append("  </component>").append(lineSeparator)
+                writer.append("</application>")
+              }
+            },
+            events = events,
+          )
+        }
+      }
+    }
   }
 }
 
-private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-  override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun createSaveSessions() = listOfNotNull(externalizationSession.createSaveSession())
-}
-
-// ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
-@State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
-internal class DefaultProjectExportableAndSaveTrigger {
-  @Volatile
-  var project: Project? = null
-
-  fun save(isForceSavingAllSettings: Boolean) {
-    // we must trigger save
-    StoreUtil.saveProject(project ?: return, isForceSavingAllSettings)
-  }
-}

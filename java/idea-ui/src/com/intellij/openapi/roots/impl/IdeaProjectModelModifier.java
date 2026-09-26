@@ -1,18 +1,27 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryAttachDialog;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.openapi.roots.JavaProjectModelModifier;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -34,9 +43,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
 public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
 
@@ -59,9 +65,9 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull final Collection<Module> modules,
-                                                    @NotNull final ExternalLibraryDescriptor descriptor,
-                                                    @NotNull final DependencyScope scope) {
+  public Promise<Void> addExternalLibraryDependency(final @NotNull Collection<? extends Module> modules,
+                                                    final @NotNull ExternalLibraryDescriptor descriptor,
+                                                    final @NotNull DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
     List<String> classesRoots;
     Module firstModule = ContainerUtil.getFirstItem(modules);
@@ -79,11 +85,12 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
         return Promises.rejectedPromise();
       }
 
-      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getCoordinateText(), true);
+      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getSelectedLibraryDescriptor());
       Collection<OrderRoot> roots =
         JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), dialog.getDirectoryPath(), null);
       if (roots.isEmpty()) {
-        Messages.showErrorDialog(myProject, descriptor.getPresentableName() + " was not loaded.", "Failed to Download Library");
+        Messages.showErrorDialog(myProject, JavaUiBundle.message("dialog.mesage.0.was.not.loaded", descriptor.getPresentableName()),
+                                 JavaUiBundle.message("dialog.title.failed.to.download.library"));
         return Promises.rejectedPromise();
       }
       classesRoots = roots.stream()
@@ -109,7 +116,6 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
           for (Module module : modules) {
             ModuleRootModificationUtil.addDependency(module, library, scope, false);
           }
-          ;
         });
       }
     }
@@ -118,7 +124,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
 
   @Override
   public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level) {
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     if (moduleLevel != null && JavaSdkUtil.isLanguageLevelAcceptable(myProject, module, level)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
@@ -126,7 +132,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
     }
     else {
       LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(level);
-      ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+      ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, RootsChangeRescanningInfo.TOTAL_RESCAN);
     }
     return Promises.resolvedPromise(null);
   }

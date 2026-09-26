@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,10 +33,11 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
 
     public EvalExpressionDialog(Project project, Config settings, HistoryElement[] history) {
         super(project, settings, history, new EvalFormPanel());
-        setTitle("Evaluate XPath Expression");
-        setOKButtonText("Evaluate");
+        setTitle(XPathBundle.message("dialog.title.evaluate.xpath.expression"));
+        setOKButtonText(XPathBundle.message("button.evaluate"));
     }
 
+    @Override
     protected void init() {
         final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
         final boolean available = findWindow != null && findWindow.isAvailable();
@@ -45,12 +47,14 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
 
         myForm.getHighlightCheckbox().setSelected(mySettings.HIGHLIGHT_RESULTS);
         myForm.getHighlightCheckbox().addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 updateOkAction();
             }
         });
         myForm.getUsageViewCheckbox().setSelected(mySettings.SHOW_USAGE_VIEW);
         myForm.getUsageViewCheckbox().addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 myForm.getNewTabCheckbox().setEnabled(available && myForm.getUsageViewCheckbox().isSelected());
                 updateOkAction();
@@ -60,12 +64,14 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
         super.init();
     }
 
+    @Override
     protected boolean isOkEnabled() {
         final EvalFormPanel form = getForm();
         final boolean b = form.getHighlightCheckbox().isSelected() || form.getUsageViewCheckbox().isSelected();
         return b & super.isOkEnabled();
     }
 
+    @Override
     protected void doOKAction() {
         final EvalFormPanel form = getForm();
         if (form.getNewTabCheckbox().isEnabled()) {
@@ -77,8 +83,8 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
         super.doOKAction();
     }
 
-    @NotNull
-    protected String getPrivateDimensionServiceKey() {
+    @Override
+    protected @NotNull String getPrivateDimensionServiceKey() {
         return "XPathView.InputDialog.DIMENSION_SERVICE_KEY";
     }
 }

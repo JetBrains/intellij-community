@@ -1,0 +1,62 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.classic.ui` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/classic-ui.jar": ["intellij.classic.ui"],
+    },
+    main_module = "intellij.classic.ui",
+)
+### auto-generated section `dev intellij.classic.ui` end
+
+### auto-generated section `build intellij.classic.ui` start
+jvm_library(
+    name = "classic-ui",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.classic.ui",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "classic-ui_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.classic.ui",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":classic-ui",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "classic-ui_plugin",
+    descriptor_module = ":classic-ui",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.classic.ui` end
+
+### auto-generated section `iml intellij.classic.ui` start
+exports_files(
+    [
+        "intellij.classic.ui.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.classic.ui` end

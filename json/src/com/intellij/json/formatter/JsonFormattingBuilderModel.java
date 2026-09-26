@@ -1,30 +1,37 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.FormattingModelProvider;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.SpacingBuilder;
 import com.intellij.json.JsonLanguage;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.json.JsonElementTypes.*;
+import static com.intellij.json.JsonElementTypes.COLON;
+import static com.intellij.json.JsonElementTypes.COMMA;
+import static com.intellij.json.JsonElementTypes.L_BRACKET;
+import static com.intellij.json.JsonElementTypes.L_CURLY;
+import static com.intellij.json.JsonElementTypes.R_BRACKET;
+import static com.intellij.json.JsonElementTypes.R_CURLY;
 
-/**
- * @author Mikhail Golubev
- */
-public class JsonFormattingBuilderModel implements FormattingModelBuilder {
-  @NotNull
+public final class JsonFormattingBuilderModel implements FormattingModelBuilder {
   @Override
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    final JsonBlock block = new JsonBlock(null, element.getNode(), settings, null, Indent.getNoneIndent(), null);
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
+    JsonCodeStyleSettings customSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
+    SpacingBuilder spacingBuilder = createSpacingBuilder(settings);
+    final JsonBlock block =
+      new JsonBlock(null, formattingContext.getNode(), customSettings, null, Indent.getSmartIndent(Indent.Type.CONTINUATION), null,
+                    spacingBuilder);
+    return FormattingModelProvider.createFormattingModelForPsiFile(formattingContext.getContainingFile(), block, settings);
   }
 
-  static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
+  static @NotNull SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
     final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
 

@@ -1,0 +1,1 @@
+deprecated: debuggerSync.svg; to be removed (Use AllIcons.Debugger.DebuggerSync instead)

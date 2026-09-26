@@ -1,12 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiVersioningService;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,17 +18,22 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrStringUtil {
+public final class GrStringUtil {
   private static final Logger LOG = Logger.getInstance(GrStringUtil.class);
 
   public static final String TRIPLE_QUOTES = "'''";
@@ -39,9 +47,9 @@ public class GrStringUtil {
   private GrStringUtil() {
   }
 
-  public static String unescapeString(String s) {
+  public static @NlsSafe String unescapeString(String s) {
     final int length = s.length();
-    StringBuilder buffer = new StringBuilder(length);
+    @NlsSafe StringBuilder buffer = new StringBuilder(length);
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -55,42 +63,18 @@ public class GrStringUtil {
       }
       else {
         switch (ch) {
-          case 'n':
-            buffer.append('\n');
-            break;
-
-          case 'r':
-            buffer.append('\r');
-            break;
-
-          case 'b':
-            buffer.append('\b');
-            break;
-
-          case 't':
-            buffer.append('\t');
-            break;
-
-          case 'f':
-            buffer.append('\f');
-            break;
-
-          case '\'':
-            buffer.append('\'');
-            break;
-
-          case '\"':
-            buffer.append('\"');
-            break;
-
-          case '\\':
-            buffer.append('\\');
-            break;
-          case '\n':
-            //do nothing
-            break;
-
-          case 'u':
+          case 'n' -> buffer.append('\n');
+          case 'r' -> buffer.append('\r');
+          case 'b' -> buffer.append('\b');
+          case 't' -> buffer.append('\t');
+          case 'f' -> buffer.append('\f');
+          case '$' -> buffer.append('$');
+          case '\'' -> buffer.append('\'');
+          case '\"' -> buffer.append('\"');
+          case '\\' -> buffer.append('\\');
+          case '\n' -> {}
+          //do nothing
+          case 'u' -> {
             if (idx + 4 < length) {
               try {
                 int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
@@ -104,12 +88,11 @@ public class GrStringUtil {
             else {
               buffer.append("\\u");
             }
-            break;
-
-          default:
+          }
+          default -> {
             buffer.append('\\');
             buffer.append(ch);
-            break;
+          }
         }
         escaped = false;
       }
@@ -126,10 +109,10 @@ public class GrStringUtil {
     return unescapeRegex(s, false);
   }
 
-  private static String unescapeRegex(String s, boolean unescapeSlash) {
+  private static @NlsSafe String unescapeRegex(String s, boolean unescapeSlash) {
     final int length = s.length();
-    StringBuilder buffer = new StringBuilder(length);
-    
+    @NlsSafe StringBuilder buffer = new StringBuilder(length);
+
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -143,13 +126,13 @@ public class GrStringUtil {
       }
       else {
         switch (ch) {
-          case '/':
+          case '/' -> {
             if (!unescapeSlash) {
               buffer.append('\\');
             }
             buffer.append('/');
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             if (idx + 4 < length) {
               try {
                 int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
@@ -163,12 +146,11 @@ public class GrStringUtil {
             else {
               buffer.append("\\u");
             }
-            break;
-
-          default:
+          }
+          default -> {
             buffer.append('\\');
             buffer.append(ch);
-            break;
+          }
         }
         escaped = false;
       }
@@ -183,22 +165,22 @@ public class GrStringUtil {
     escapeSymbolsForSlashyStrings(buffer, str);
     return buffer.toString();
   }
-  
+
   public static void escapeSymbolsForSlashyStrings(StringBuilder buffer, String str) {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          buffer.append("\\/");
-          break;
-        default:
-          if (Character.isISOControl(ch) || ch == '$') {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '\\' && idx == length - 1) {
+        buffer.append("${'\\\\'}");
+      }
+      else if (ch == '/') {
+        buffer.append("\\/");
+      }
+      else if (Character.isISOControl(ch) && ch != '\n' || ch == '$') {
+        appendUnicode(buffer, ch);
+      }
+      else {
+        buffer.append(ch);
       }
     }
   }
@@ -208,31 +190,52 @@ public class GrStringUtil {
     escapeSymbolsForDollarSlashyStrings(buffer, str);
     return buffer.toString();
   }
-  
+
   public static void escapeSymbolsForDollarSlashyStrings(StringBuilder buffer, String str) {
     final int length = str.length();
-    for (int idx = 0; idx < length; idx++) {
-      char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          if (idx + 1 < length && str.charAt(idx + 1) == '$') {
-            appendUnicode(buffer, '/');
-            appendUnicode(buffer, '$');
-            break;
+    int idx = 0;
+    while (idx < length) {
+      final char ch = str.charAt(idx);
+      if (ch == '/') {
+        if (idx + 1 < length) {
+          char nextCh = str.charAt(idx + 1);
+          if (nextCh == '$') {
+            // /$ -> $/$
+            buffer.append("$/");
+            idx++;
+            continue;
           }
-        default:
-          if (Character.isISOControl(ch)) {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+        }
       }
+      else if (ch == '$') {
+        if (idx + 1 < length) {
+          final char nextCh = str.charAt(idx + 1);
+          if (nextCh == '$' || nextCh == '/' || GroovyNamesUtil.isIdentifier(Character.toString(nextCh))) {
+            // $$ -> $$$
+            // $/ -> $$/
+            buffer.append("$$");
+            idx += 1;
+            continue;
+          }
+        }
+        else {
+          buffer.append("$$");
+          idx++;
+          continue;
+        }
+      }
+      if (Character.isISOControl(ch) && ch != '\n') {
+        appendUnicode(buffer, ch);
+      }
+      else {
+        buffer.append(ch);
+      }
+      idx++;
     }
   }
 
-  private static void appendUnicode(StringBuilder buffer, char ch) {
-    String hexCode = Integer.toHexString(ch).toUpperCase();
+  private static void appendUnicode(@NlsSafe StringBuilder buffer, char ch) {
+    String hexCode = StringUtil.toUpperCase(Integer.toHexString(ch));
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
     while (paddingCount-- > 0) {
@@ -259,7 +262,7 @@ public class GrStringUtil {
     final StringBuilder builder = new StringBuilder();
     escapeStringCharacters(s.length(), s, isSingleLine ? "'" : "", isSingleLine, true, builder);
     if (!forInjection) {
-      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
+      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", !isSingleLine);
     }
     if (!isSingleLine) escapeLastSymbols(builder, '\'');
     return builder.toString();
@@ -271,56 +274,43 @@ public class GrStringUtil {
     }
   }
 
-  @NotNull
-  public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull CharSequence str,
-                                                     @Nullable String additionalChars,
-                                                     boolean escapeLineFeeds,
-                                                     boolean escapeBackSlash,
-                                                     @NotNull @NonNls StringBuilder buffer) {
+  public static @NotNull StringBuilder escapeStringCharacters(int length,
+                                                              @NotNull CharSequence str,
+                                                              @Nullable String additionalChars,
+                                                              boolean escapeLineFeeds,
+                                                              boolean escapeBackSlash,
+                                                              @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
-        case '\b':
-          buffer.append("\\b");
-          break;
-
-        case '\t':
-          buffer.append("\\t");
-          break;
-
-        case '\f':
-          buffer.append("\\f");
-          break;
-
-        case '\\':
+        case '\b' -> buffer.append("\\b");
+        case '\t' -> buffer.append("\\t");
+        case '\f' -> buffer.append("\\f");
+        case '\\' -> {
           if (escapeBackSlash) {
             buffer.append("\\\\");
           }
           else {
             buffer.append('\\');
           }
-          break;
-
-        case '\n':
+        }
+        case '\n' -> {
           if (escapeLineFeeds) {
             buffer.append("\\n");
           }
           else {
             buffer.append('\n');
           }
-          break;
-
-        case '\r':
+        }
+        case '\r' -> {
           if (escapeLineFeeds) {
             buffer.append("\\r");
           }
           else {
             buffer.append('\r');
           }
-          break;
-
-        default:
+        }
+        default -> {
           if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
             buffer.append("\\").append(ch);
           }
@@ -330,6 +320,7 @@ public class GrStringUtil {
           else {
             buffer.append(ch);
           }
+        }
       }
     }
     return buffer;
@@ -470,7 +461,7 @@ public class GrStringUtil {
     if (literalText.contains("\n")) {
       wrapGStringInto(grString, TRIPLE_DOUBLE_QUOTES);
     }
-    
+
     final GrExpression expression = factory.createExpressionFromText("\"\"\"${}" + literalText + "\"\"\"");
 
     expression.getFirstChild().delete();//quote
@@ -511,7 +502,7 @@ public class GrStringUtil {
     final GrExpression expression = injection.getExpression();
     LOG.assertTrue(expression != null);
     final GroovyPsiElementFactory instance = GroovyPsiElementFactory.getInstance(injection.getProject());
-    final GrClosableBlock closure = instance.createClosureFromText("{foo}");
+    final GrClosableBlock closure = PsiVersioningService.createVersionedPsiElements(expression.getNode(), () -> instance.createClosureFromText("{foo}"));
     closure.getNode().replaceChild(closure.getStatements()[0].getNode(), expression.getNode());
     injection.getNode().addChild(closure.getNode());
     CodeEditUtil.setNodeGeneratedRecursively(expression.getNode(), true);
@@ -591,12 +582,11 @@ public class GrStringUtil {
     return "";
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static TextRange getStringContentRange(@Nullable PsiElement element) {
+  public static @Nullable TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
-    if (elementType != GroovyTokenTypes.mSTRING_LITERAL && elementType != GroovyTokenTypes.mGSTRING_LITERAL) return null;
+    if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;
 
     String text = element.getText();
     String startQuote = getStartQuote(text);
@@ -607,7 +597,7 @@ public class GrStringUtil {
 
   public static boolean parseRegexCharacters(@NotNull String chars,
                                              @NotNull StringBuilder outChars,
-                                             @Nullable int[] sourceOffsets,
+                                             int @Nullable [] sourceOffsets,
                                              boolean escapeSlash) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length() + 1;
     if (chars.indexOf('\\') < 0) {
@@ -638,7 +628,7 @@ public class GrStringUtil {
       }
       c = chars.charAt(index++);
       switch (c) {
-        case '/':
+        case '/' -> {
           if (escapeSlash) {
             outChars.append(c);
             if (sourceOffsets != null) {
@@ -648,15 +638,14 @@ public class GrStringUtil {
           else {
             outChars.append('\\').append('/');
           }
-
-          break;
-        case '\n':
+        }
+        case '\n' -> {
           //do nothing
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-          break;
-        case 'u':
+        }
+        case 'u' -> {
           // uuuuu1234 is valid too
           while (index != chars.length() && chars.charAt(index) == 'u') {
             index++;
@@ -680,13 +669,13 @@ public class GrStringUtil {
           else {
             return false;
           }
-          break;
-        default:
+        }
+        default -> {
           outChars.append('\\').append(c);
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-
+        }
       }
     }
     return true;
@@ -695,7 +684,7 @@ public class GrStringUtil {
   /**
    * @see com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl#parseStringCharacters(String, StringBuilder, int[])
    */
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
@@ -721,45 +710,18 @@ public class GrStringUtil {
       if (index == chars.length()) return false;
       c = chars.charAt(index++);
       switch (c) {
-        case'b':
-          outChars.append('\b');
-          break;
-        case't':
-          outChars.append('\t');
-          break;
-        case'n':
-          outChars.append('\n');
-          break;
-        case'f':
-          outChars.append('\f');
-          break;
-        case'r':
-          outChars.append('\r');
-          break;
-        case'"':
-          outChars.append('\"');
-          break;
-        case'\'':
-          outChars.append('\'');
-          break;
-        case'$':
-          outChars.append('$');
-          break;
-        case'\\':
-          outChars.append('\\');
-          break;
-        case '\n':
-          //do nothing
-          break;
-
-        case'0':
-        case'1':
-        case'2':
-        case'3':
-        case'4':
-        case'5':
-        case'6':
-        case'7':
+        case 'b' -> outChars.append('\b');
+        case 't' -> outChars.append('\t');
+        case 'n' -> outChars.append('\n');
+        case 'f' -> outChars.append('\f');
+        case 'r' -> outChars.append('\r');
+        case '"' -> outChars.append('\"');
+        case '\'' -> outChars.append('\'');
+        case '$' -> outChars.append('$');
+        case '\\' -> outChars.append('\\');
+        case '\n' -> {}
+        //do nothing
+        case '0', '1', '2', '3', '4', '5', '6', '7' -> {
           char startC = c;
           int v = (int)c - '0';
           if (index < chars.length()) {
@@ -783,9 +745,8 @@ public class GrStringUtil {
             }
           }
           outChars.append((char)v);
-          break;
-
-        case'u':
+        }
+        case 'u' -> {
           // uuuuu1234 is valid too
           while (index != chars.length() && chars.charAt(index) == 'u') {
             index++;
@@ -807,9 +768,10 @@ public class GrStringUtil {
           else {
             return false;
           }
-          break;
-        default:
+        }
+        default -> {
           return false;
+        }
       }
       if (sourceOffsets != null) {
         sourceOffsets[outChars.length()-outOffset] = index;
@@ -817,7 +779,7 @@ public class GrStringUtil {
     }
     return true;
   }
-  
+
   public static GrLiteral createStringFromRegex(@NotNull GrLiteral regex) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(regex.getProject());
 
@@ -890,19 +852,9 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isPlainStringLiteral(ASTNode node) {
-    String text = node.getText();
-    return text.length() < 3 && text.equals("''") || text.length() >= 3 && !text.startsWith("'''");
-  }
-
   public static boolean isMultilineStringLiteral(GrLiteral literal) {
     String quote = getStartQuote(literal.getText());
     return TRIPLE_QUOTES.equals(quote) || TRIPLE_DOUBLE_QUOTES.equals(quote) || SLASH.equals(quote) || DOLLAR_SLASH.equals(quote);
-  }
-
-  public static boolean isSinglelineStringLiteral(GrLiteral literal) {
-    String quote = getStartQuote(literal.getText());
-    return QUOTE.equals(quote) || DOUBLE_QUOTES.equals(quote);
   }
 
   public static StringBuilder getLiteralTextByValue(String value) {
@@ -918,14 +870,6 @@ public class GrStringUtil {
       buffer.append("'");
     }
     return buffer;
-  }
-
-  public static PsiElement findContainingLiteral(PsiElement token) {
-
-    PsiElement parent = token.getParent();
-    if (parent instanceof GrStringContent) parent = parent.getParent();
-
-    return parent;
   }
 
   /**

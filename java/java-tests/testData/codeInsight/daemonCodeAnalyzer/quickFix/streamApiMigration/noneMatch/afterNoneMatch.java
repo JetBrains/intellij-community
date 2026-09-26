@@ -1,4 +1,4 @@
-// "Replace with noneMatch()" "true"
+// "Collapse loop with stream 'noneMatch()'" "true-preview"
 
 import java.util.Arrays;
 

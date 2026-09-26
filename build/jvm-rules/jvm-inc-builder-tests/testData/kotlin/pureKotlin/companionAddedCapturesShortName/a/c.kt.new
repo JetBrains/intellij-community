@@ -1,0 +1,5 @@
+open class C {
+    companion object {
+        fun helper(): String = "s"
+    }
+}

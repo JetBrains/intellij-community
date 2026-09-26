@@ -1,9 +1,9 @@
-class Foo<T> {
+class Foo<<warning descr="Type parameter 'T' is never used">T</warning>> {
     static class Nested {};
 }
-class Bar extends Foo<<error descr="Nested is not accessible in current context">Bar.Nested</error>> {}
+class Bar extends Foo<<warning descr="Nested is not accessible in current context">Bar.Nested</warning>> {}
 
-interface FooI<T> {
+interface FooI<<warning descr="Type parameter 'T' is never used">T</warning>> {
     interface Nested {};
 }
-interface BarI extends FooI<<error descr="Nested is not accessible in current context">BarI.Nested</error>> {}
+interface BarI extends FooI<<warning descr="Nested is not accessible in current context">BarI.Nested</warning>> {}

@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_twoDependants-module1.kotlin_module
+  a/A.class
+  a/AKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/twoDependants/module1/a.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_twoDependants-module2.kotlin_module
+  b/BKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/twoDependants/module2/b.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_twoDependants-module3.kotlin_module
+  c/CKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/twoDependants/module3/c.kt
+End of files
+------------------------------------------
+Exit code: OK

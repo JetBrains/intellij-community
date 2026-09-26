@@ -1,0 +1,22 @@
+// "Let 'C' implement interface 'I'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+class C {
+    fun exampleMethod() {
+    }
+}
+
+interface I {
+    fun exampleMethod()
+}
+
+fun acceptExampleInterface(i: I) {
+    i.exampleMethod()
+}
+
+fun testCase(c: C) {
+    acceptExampleInterface(<caret>c)
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.LetImplementInterfaceFixFactories$LetImplementInterfaceFix

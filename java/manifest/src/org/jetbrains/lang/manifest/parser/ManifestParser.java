@@ -28,7 +28,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +50,11 @@ public class ManifestParser implements PsiParser {
   private final HeaderParserRepository myRepository;
 
   public ManifestParser() {
-    myRepository = ServiceManager.getService(HeaderParserRepository.class);
+    myRepository = HeaderParserRepository.getInstance();
   }
 
-  @NotNull
   @Override
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     builder.setDebugMode(ApplicationManager.getApplication().isUnitTestMode());
 
     PsiBuilder.Marker rootMarker = builder.mark();

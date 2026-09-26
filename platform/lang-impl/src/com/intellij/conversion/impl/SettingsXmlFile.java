@@ -1,62 +1,83 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
-import com.intellij.ide.impl.convert.JDomConvertingUtil;
+import com.intellij.conversion.ComponentManagerSettings;
+import com.intellij.conversion.WorkspaceSettings;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.SystemProperties;
-import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 
-/**
- * @author nik
- */
-class SettingsXmlFile {
-  private final File myFile;
-  private final Document myDocument;
-  private final Element myRootElement;
+class SettingsXmlFile implements ComponentManagerSettings, WorkspaceSettings {
+  private static final Element EMPTY_ELEMENT = new Element("root");
 
-  SettingsXmlFile(@NotNull File file) throws CannotConvertException {
-    myFile = file;
-    myDocument = JDomConvertingUtil.loadDocument(file);
-    myRootElement = myDocument.getRootElement();
+  private final Path file;
+  // Document is used because XML prolog must be written as is
+  private @Nullable Element element;
+
+  SettingsXmlFile(@NotNull Path file) throws CannotConvertException {
+    this.file = file;
   }
 
-  public File getFile() {
-    return myFile;
+  public @NotNull Path getFile() {
+    return file;
   }
 
-  public Element getRootElement() {
-    return myRootElement;
+  @Override
+  public Element getComponentElement(@NotNull @NonNls String componentName) {
+    return findComponent(componentName);
+  }
+
+  @Override
+  public @NotNull Path getPath() {
+    return file;
+  }
+
+  private @NotNull Element getElement() {
+    Element result = element;
+    if (result == null) {
+      try {
+        result = JDOMUtil.load(file);
+      }
+      catch (NoSuchFileException e) {
+        result = EMPTY_ELEMENT;
+      }
+      catch (JDOMException | IOException e) {
+        element = EMPTY_ELEMENT;
+        throw new CannotConvertException("Cannot load " + file, e);
+      }
+      element = result;
+    }
+    return result;
+  }
+
+  @Override
+  public @NotNull Element getRootElement() {
+    return getElement();
   }
 
   public void save() throws IOException {
-    JDOMUtil.writeDocument(myDocument, myFile, SystemProperties.getLineSeparator());
+    if (element == null || element == EMPTY_ELEMENT) {
+      return;
+    }
+
+    Files.createDirectories(file.getParent());
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      JDOMUtil.writeElement(getElement(), writer, System.lineSeparator());
+    }
   }
 
-  @Nullable 
-  public Element findComponent(String componentName) {
-    return JDomSerializationUtil.findComponent(myRootElement, componentName);
+  public @Nullable Element findComponent(@NotNull String componentName) {
+    return element == EMPTY_ELEMENT ? null : JDomSerializationUtil.findComponent(getElement(), componentName);
   }
 }

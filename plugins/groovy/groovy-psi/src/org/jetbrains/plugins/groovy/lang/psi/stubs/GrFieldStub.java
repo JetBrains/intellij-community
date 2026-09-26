@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 
-/**
- * @author ilyas
- */
 public class GrFieldStub extends GrVariableStubBase<GrField> {
 
   public static final byte IS_PROPERTY = 0x01;
@@ -38,8 +35,8 @@ public class GrFieldStub extends GrVariableStubBase<GrField> {
 
   public GrFieldStub(StubElement parent,
                      @Nullable StringRef name,
-                     @NotNull final String[] annotations,
-                     @NotNull String[] namedParameters,
+                     final String @NotNull [] annotations,
+                     String @NotNull [] namedParameters,
                      @NotNull IStubElementType elemType,
                      byte flags,
                      @Nullable String typeText) {
@@ -48,8 +45,7 @@ public class GrFieldStub extends GrVariableStubBase<GrField> {
     myFlags = flags;
   }
 
-  @NotNull
-  public String[] getNamedParameters() {
+  public String @NotNull [] getNamedParameters() {
     return myNamedParameters;
   }
 

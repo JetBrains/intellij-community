@@ -1,62 +1,87 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupShowOptions;
+import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder;
+import com.intellij.openapi.ui.popup.PopupShowOptionsImpl;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
+import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.popup.async.AsyncPopupImpl;
-import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.awt.AnchoredPoint;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.ui.wayland.WaylandUtilKt;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.TimerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
+  private static final Logger LOG = Logger.getInstance(WizardPopup.class);
 
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
   protected static final int STEP_X_PADDING = 2;
 
   private final WizardPopup myParent;
+  private boolean alignByParentBounds = true;
 
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
 
-  private final Timer myAutoSelectionTimer = UIUtil.createNamedTimer(
-    "Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
+  private  boolean myIsActiveRoot = true;
+
+  private final Timer myAutoSelectionTimer =
+    TimerUtil.createNamedTimer("Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
 
   private final MnemonicsSearch myMnemonicsSearch;
   private Object myParentValue;
@@ -68,31 +93,20 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
-  public WizardPopup(@NotNull PopupStep<Object> aStep) {
-    this(null, aStep);
-  }
+  private boolean myKeyPressedReceived;
 
-  public WizardPopup(@Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
+  public WizardPopup(@Nullable Project project, @Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;
     myStep = aStep;
 
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
     final JComponent content = createContent();
+    content.putClientProperty(KEY, this);
+    JComponent popupComponent = createPopupComponent(content);
 
-    JScrollPane scrollPane = createScrollPane(content);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getHorizontalScrollBar().setBorder(null);
-
-    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
-    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
-
-    scrollPane.setBorder(null);
-
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
-         isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
+    init(project, popupComponent, getPreferredFocusableComponent(), true, true, true, null,
+         isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
 
@@ -124,12 +138,40 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       }
     };
 
-
+    initActionShortcutDelegates(aStep, popupComponent);
 
   }
 
-  @NotNull
-  protected JScrollPane createScrollPane(JComponent content) {
+  private void initActionShortcutDelegates(@NotNull PopupStep<?> step, @NotNull JComponent component) {
+    var itemsSource = step.getMnemonicNavigationFilter();
+    if (itemsSource == null) {
+      return;
+    }
+    for (Object item : itemsSource.getValues()) {
+      if (item instanceof ShortcutProvider itemShortcut) {
+        var shortcut = itemShortcut.getShortcut();
+        if (shortcut != null && shortcut.hasShortcuts()) {
+          var action = new ActionShortcutDelegate(item, shortcut);
+          action.registerCustomShortcutSet(component, this);
+        }
+      }
+    }
+  }
+
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
+    JScrollPane scrollPane = createScrollPane(content);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getHorizontalScrollBar().setBorder(null);
+
+    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
+
+    scrollPane.setBorder(JBUI.Borders.empty());
+    return scrollPane;
+  }
+
+  protected @NotNull JScrollPane createScrollPane(JComponent content) {
     return ScrollPaneFactory.createScrollPane(content);
   }
 
@@ -157,9 +199,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   public void dispose() {
-    super.dispose();
-
     myAutoSelectionTimer.stop();
+
+    super.dispose();
 
     PopupDispatcher.unsetShowing(this);
     PopupDispatcher.clearRootIfNeeded(this);
@@ -180,26 +222,88 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  @ApiStatus.Internal
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
+    if (UiInterceptors.tryIntercept(this)) return;
+
     LOG.assertTrue (!isDisposed());
 
-    Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
+    PopupShowOptionsImpl options = showOptions.build();
+    PopupShowOptionsBuilder newOptions;
 
-    if (getParent() != null) {
-      final Rectangle parentBounds = getParent().getBounds();
-      parentBounds.x += STEP_X_PADDING;
-      parentBounds.width -= STEP_X_PADDING * 2;
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(
-        parentBounds.x + parentBounds.width / 2,
-        parentBounds.y + parentBounds.height / 2), null);
-      if (parentBounds.intersects(targetBounds)) {
-        targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+    if (options.getPopupAnchor() == AnchoredPoint.Anchor.TOP_LEFT) {
+      // The old logic that existed here before other anchors were added.
+      Component owner = options.getOwner();
+      var aScreenX = options.getScreenX();
+      var aScreenY = options.getScreenY();
+
+      Dimension size = getContent().getPreferredSize();
+      Dimension minimumSize = getMinimumSize();
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("START Showing a WizardPopup requested at screen(" + aScreenX + "," + aScreenY + "), " +
+                  "pref size " + size + ", min size " + minimumSize);
       }
-    } else {
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
+
+      size.width = Math.max(size.width, minimumSize.width);
+      size.height = Math.max(size.height, minimumSize.height);
+      Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The initial target bounds are " + targetBounds);
+      }
+
+      if (getParent() != null && alignByParentBounds) {
+        final Rectangle parentBounds = getParent().getBounds();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Trying to align to parent bounds " + parentBounds);
+        }
+        parentBounds.x += STEP_X_PADDING;
+        parentBounds.width -= STEP_X_PADDING * 2;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The parent bounds corrected for padding: " + parentBounds);
+        }
+        var screenRectangle = ScreenUtil.getScreenRectangle(
+          parentBounds.x + parentBounds.width / 2,
+          parentBounds.y + parentBounds.height / 2
+        );
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The parent screen rectangle: " + screenRectangle);
+        }
+        ScreenUtil.moveToFit(targetBounds, screenRectangle, null);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The target bounds fit to screen: " + targetBounds);
+        }
+        if (parentBounds.intersects(targetBounds)) {
+          targetBounds.x = getParent().getBounds().x - targetBounds.width - STEP_X_PADDING;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The target bounds aligned to the parent's X: " + targetBounds);
+          }
+          if (targetBounds.x < screenRectangle.x) { // prevent the child popup from appearing on another monitor
+            targetBounds.x = screenRectangle.x;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The target bounds fit to screen again: " + targetBounds);
+            }
+          }
+        }
+        else {
+          LOG.debug("No intersection with the parent bounds, no alignment needed");
+        }
+      }
+      else {
+        ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("END the WizardPopup part, delegating to super(), the target bounds: " + targetBounds);
+      }
+      newOptions = (PopupShowOptionsBuilder)PopupShowOptions.atScreenLocation(owner, targetBounds.x, targetBounds.y, true);
+    }
+    else {
+      // The superclass does positioning for the new anchors, so do nothing here.
+      newOptions = showOptions;
     }
 
-    if (getParent() == null) {
+    if (getParent() == null && myIsActiveRoot) {
       PopupDispatcher.setActiveRoot(this);
     }
     else {
@@ -207,7 +311,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     LOG.assertTrue (!isDisposed(), "Disposed popup, parent="+getParent());
-    super.show(owner, targetBounds.x, targetBounds.y, true);
+    super.showImpl(newOptions);
   }
 
   @Override
@@ -238,6 +342,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     myLastOwnerPoint = newOwnerPoint;
 
     final Window wnd = SwingUtilities.getWindowAncestor(getContent());
+    if (!wnd.isShowing()) return;
+
     final Point current = wnd.getLocationOnScreen();
 
     setLocation(new Point(current.x - deltaX, current.y - deltaY));
@@ -289,18 +395,17 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final PopupBorder border, final boolean isToDrawMacCorner) {
-    return new MyContainer(resizable, border, isToDrawMacCorner);
+  protected @NotNull MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
+    return new MyContainer(border);
   }
 
   protected boolean isResizable() {
     return false;
   }
 
-  private static class MyContainer extends MyContentPanel {
-    private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
-      super(resizable, border, drawMacCorner);
+  private static final class MyContainer extends MyContentPanel {
+    private MyContainer(@NotNull PopupBorder border) {
+      super(border);
       setOpaque(true);
       setFocusCycleRoot(true);
     }
@@ -311,28 +416,38 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         return super.getPreferredSize();
       }
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Point p = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        p = focusOwner.getLocationOnScreen();
-      }
-
-      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
+      return computeNotBiggerDimension(super.getPreferredSize().getSize(), focusOwner);
     }
 
-    private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
-      int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      if (locationOnScreen != null) {
-        final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = ofContent.height > r.height - (r.height / 4) ? r.height - (r.height / 4) : ofContent.height;
-      }
+    private static Dimension computeNotBiggerDimension(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      int defaultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      @Nullable Integer computedHeight = computeNotBiggerHeight(ofContent, focusOwner);
+      int resultHeight = computedHeight != null ? computedHeight : defaultHeight;
 
-      int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
-
-      if (ofContent.height > MAX_SIZE.height) {
+      int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
+      if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);
+    }
+
+    private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      @Nullable Integer screenHeight = null;
+      if (ClientSystemInfo.isWaylandToolkit()) {
+        screenHeight = WaylandUtilKt.getFakeScreenHeight(focusOwner);
+      }
+      else {
+        Point locationOnScreen = null;
+        if (focusOwner != null && focusOwner.isShowing()) {
+          locationOnScreen = focusOwner.getLocationOnScreen();
+        }
+        if (locationOnScreen != null) {
+          Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+          screenHeight = r.height;
+        }
+      }
+      return screenHeight == null ? null : Math.min(ofContent.height, screenHeight - (screenHeight / 4));
     }
   }
 
@@ -340,22 +455,30 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return myParent;
   }
 
+  public void setAlignByParentBounds(boolean alignByParentBounds) {
+    this.alignByParentBounds = alignByParentBounds;
+  }
+
+  public boolean isAlignByParentBounds() {
+    return alignByParentBounds;
+  }
+
   public PopupStep getStep() {
     return myStep;
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED &&
-        event.getID() != KeyEvent.KEY_RELEASED &&
-        event.getID() != KeyEvent.KEY_TYPED) {
-      // do not dispatch these events to Swing
-      event.consume();
-      return true;
+    if (anyModalWindowsAbovePopup()) {
+      return false; // Popups should not process key events if there's a modal dialog on top of them.
     }
-
     if (event.getID() == KeyEvent.KEY_PRESSED) {
+      myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return true;
+    }
+    else if (!myKeyPressedReceived && !(this instanceof ComboBoxPopup)) {
+      // key was pressed while this popup wasn't active, ignore the event
+      return false;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -364,18 +487,24 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     myMnemonicsSearch.processKeyEvent(event);
-    mySpeedSearch.processKeyEvent(event);
+    processKeyEvent(event);
 
     if (event.isConsumed()) return true;
     process(event);
     return event.isConsumed();
   }
 
+  protected void processKeyEvent(@NotNull KeyEvent e) {
+    mySpeedSearch.processKeyEvent(e);
+  }
+
   private boolean proceedKeyEvent(KeyEvent event, KeyStroke stroke) {
     if (myInputMap.get(stroke) != null) {
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
-        action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        WriteIntentReadAction.run(
+          (Runnable)() -> action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()))
+        );
         event.consume();
         return true;
       }
@@ -388,18 +517,16 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public Rectangle getBounds() {
-    return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
+    JComponent content = isDisposed() ? null : getContent();
+    return content == null ? null : new Rectangle(content.getLocationOnScreen(), content.getSize());
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    if (step instanceof AsyncPopupStep) {
-      return new AsyncPopupImpl(parent, (AsyncPopupStep)step, parentValue);
-    }
     if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
+      return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
     }
     else if (step instanceof TreePopupStep) {
-      return new TreePopupImpl(parent, (TreePopupStep)step, parentValue);
+      return new TreePopupImpl(getProject(), parent, (TreePopupStep)step, parentValue);
     }
     else {
       throw new IllegalArgumentException(step.getClass().toString());
@@ -437,6 +564,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
     if (filter == null) return true;
     if (!filter.canBeHidden(value)) return true;
+    if (!mySpeedSearch.isHoldingFilter()) return true;
     String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);
   }
@@ -458,15 +586,19 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
 
-  private class MyComponentAdapter extends ComponentAdapter {
+  private final class MyComponentAdapter extends ComponentAdapter {
     @Override
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();
     }
   }
 
+  public void setActiveRoot(boolean activeRoot) {
+    myIsActiveRoot = activeRoot;
+  }
+
   @Override
-  public final void setFinalRunnable(Runnable runnable) {
+  public final void setFinalRunnable(@Nullable Runnable runnable) {
     if (getParent() == null) {
       super.setFinalRunnable(runnable);
     } else {
@@ -480,6 +612,44 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       super.setOk(ok);
     } else {
       getParent().setOk(ok);
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ActionMap getOwnActionMap() {
+    return myActionMap;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull InputMap getOwnInputMap() {
+    return myInputMap;
+  }
+
+  private class ActionShortcutDelegate extends DumbAwareAction {
+
+    private final Object myItem;
+
+    ActionShortcutDelegate(@NotNull Object item, @NotNull ShortcutSet shortcut) {
+      myItem = item;
+      setShortcutSet(shortcut);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      onSelectByMnemonic(myItem);
+    }
+
+    @SuppressWarnings("HardCodedStringLiteral") // used only for debugging here
+    @Override
+    public String toString() {
+      return "ActionShortcutDelegate{" +
+             "myItem=" + myItem +
+             "} " + super.toString();
     }
   }
 }

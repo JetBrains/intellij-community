@@ -1,0 +1,12 @@
+#foreach($param in $PARAMS)
+ $COMMENT_PREFIX @param $param
+#end
+#if($RETURN_TYPE != "void")
+ $COMMENT_PREFIX @return
+#end
+#foreach($param in $TYPE_PARAMS)
+ $COMMENT_PREFIX @param <$param>
+#end
+#foreach($exception in $THROWS)
+ $COMMENT_PREFIX @throws $exception
+#end

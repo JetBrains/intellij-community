@@ -1,0 +1,8 @@
+.gradle
+.idea/*
+!.idea/icon.svg
+!.idea/inspectionProfiles/Mermaid_Default.xml
+!.idea/inspectionProfiles/profiles_settings.xml
+.qodana
+build
+kotlin-js-store

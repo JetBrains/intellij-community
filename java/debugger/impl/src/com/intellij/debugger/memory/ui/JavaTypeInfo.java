@@ -1,40 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
-  public static List<TypeInfo> wrap(List<ReferenceType> types) {
-    return types.stream().map(JavaTypeInfo::new).collect(Collectors.toList());
+  public static @Unmodifiable List<TypeInfo> wrap(List<? extends ReferenceType> types) {
+    return ContainerUtil.map(types, JavaTypeInfo::new);
   }
 
   public JavaTypeInfo(@NotNull ReferenceType referenceType) {
     this.referenceType = referenceType;
   }
 
-  @NotNull
   @Override
-  public String name() {
+  public @NotNull String name() {
     return getReferenceType().name();
   }
 
-  @NotNull
   @Override
-  public List<ReferenceInfo> getInstances(int limit) {
-    return getReferenceType().instances(limit).stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
+  public @NotNull @Unmodifiable List<ReferenceInfo> getInstances(int limit) {
+    return ContainerUtil.map(getReferenceType().instances(limit), JavaReferenceInfo::new);
   }
 
-  @NotNull
-  public ReferenceType getReferenceType() {
+  public @NotNull ReferenceType getReferenceType() {
     return referenceType;
   }
 
@@ -50,9 +48,9 @@ public class JavaTypeInfo implements TypeInfo {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof JavaTypeInfo)) {
+    if (!(obj instanceof JavaTypeInfo info)) {
       return false;
     }
-    return ((JavaTypeInfo)obj).referenceType.equals(referenceType);
+    return info.referenceType.equals(referenceType);
   }
 }

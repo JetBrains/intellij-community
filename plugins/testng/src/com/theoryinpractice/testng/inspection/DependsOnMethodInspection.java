@@ -1,19 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -24,33 +38,25 @@ import java.util.regex.Pattern;
  */
 public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)\\*]*)\"");
+  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_()*]*)\"");
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return "TestNG";
+  public @NotNull String getGroupDisplayName() {
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return "dependsOnMethods problem";
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "dependsOnMethodTestNG";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
 
     PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
     if (annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
@@ -84,7 +90,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
                 element2Highlight = initializers[idx];
               }
             }
-            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, "Duplicated method name: " + methodName,
+            problemDescriptors.add(manager.createProblemDescriptor(element2Highlight, TestngBundle.message("inspection.depends.on.method.duplicated.name.problem", methodName),
                                                                    (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                    isOnTheFly));
           }
@@ -104,11 +110,11 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
                                                 List<ProblemDescriptor> problemDescriptors,
                                                 boolean onTheFly) {
     LOGGER.debug("Found dependsOnMethods with text: " + methodName);
-    if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
+    if (!methodName.isEmpty() && methodName.charAt(methodName.length() - 1) == ')') {
 
       LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
       // TODO Add quick fix for removing brackets on annotation
-      String template = "Method '" + methodName + "' should not include () characters.";
+      String template = TestngBundle.message("inspection.depends.on.method.check", methodName);
       problemDescriptors.add(manager.createProblemDescriptor(
         value, template, (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
     }
@@ -127,7 +133,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
       if (foundMethods.length == 0) {
         LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
         problemDescriptors.add(manager.createProblemDescriptor(
-          value, "Method '" + methodName + "' unknown.", (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
+          value, TestngBundle.message("inspection.depends.on.method.unknown.method.problem", methodName), (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
       }
       else {
         boolean hasTestsOrConfigs = false;
@@ -142,8 +148,8 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
 
         if (!hasTestsOrConfigs) {
           String template = configAnnotation == null
-                            ? "Method '" + methodName + "' is not a test or configuration method."
-                            : "Method '" + methodName + "' is not annotated with @" + configAnnotation;
+                            ? TestngBundle.message("inspection.depends.on.method.is.not.test", methodName)
+                            : TestngBundle.message("inspection.depends.on.method.is.not.annotated", methodName, configAnnotation);
           problemDescriptors.add(manager.createProblemDescriptor(
             value, template, (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
         }

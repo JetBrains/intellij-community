@@ -1,0 +1,6 @@
+from argparse import ArgumentParser
+from collections.abc import Iterable
+from typing import Literal
+
+def main_parser(prog: str | None = None) -> ArgumentParser: ...
+def run_cli(args: Iterable[str] | None = None, prog: str | None = None) -> Literal[0, 1]: ...

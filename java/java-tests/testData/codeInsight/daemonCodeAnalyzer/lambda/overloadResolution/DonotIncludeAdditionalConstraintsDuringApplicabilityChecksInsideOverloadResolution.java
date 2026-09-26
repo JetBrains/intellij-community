@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 class Test {
   {
-    valueOf(processFirst(x -> <error descr="Bad return type in lambda expression: Integer cannot be converted to V">x</error>));
+    valueOf(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'char[]'">processFirst</error>(x -> x));
   }
 
   public static <V> V processFirst(Function<Integer,V> f){

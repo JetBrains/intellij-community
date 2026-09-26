@@ -1,16 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+# Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+set -euo pipefail
 
-CC_FLAGS="-O2 -Wall -Wextra -Wpedantic -std=c11 -D_DEFAULT_SOURCE"
-
-VER=$(date "+%Y%m%d.%H%M")
-sed -i.bak "s/#define VERSION .*/#define VERSION \"${VER}\"/" fsnotifier.h && rm fsnotifier.h.bak
-
-if [ -f "/usr/include/gnu/stubs-32.h" ] ; then
-  echo "compiling 32-bit version"
-  clang -m32 ${CC_FLAGS} -o fsnotifier main.c inotify.c util.c && chmod 755 fsnotifier
+VER="${1:-}"
+if [ -z "${VER:-}" ]; then
+  VER=$(date "+%Y%m%d.%H%M")
 fi
 
-if [ -f "/usr/include/gnu/stubs-64.h" ] ; then
-  echo "compiling 64-bit version"
-  clang -m64 ${CC_FLAGS} -o fsnotifier64 main.c inotify.c util.c && chmod 755 fsnotifier64
-fi
+rm -f fsnotifier
+${CC:-clang} -static -O2 -Wall -Wextra -Wpedantic -D "VERSION=\"$VER\"" -std=c11 main.c inotify.c util.c -o fsnotifier
+chmod 755 fsnotifier

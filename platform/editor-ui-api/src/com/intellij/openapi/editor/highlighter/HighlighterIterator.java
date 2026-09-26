@@ -17,16 +17,37 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 
 public interface HighlighterIterator {
   TextAttributes getTextAttributes();
+
+  @ApiStatus.Experimental
+  default TextAttributesKey @NotNull [] getTextAttributesKeys() {
+    return TextAttributesKey.EMPTY_ARRAY;
+  }
+
   int getStart();
   int getEnd();
+
+  /**
+   * @return type if the current token
+   */
   IElementType getTokenType();
+
+  /**
+   * Move iterator to the next segment
+   */
   void advance();
+
+  /**
+   * Move iterator to the previous segment
+   */
   void retreat();
   boolean atEnd();
   Document getDocument();

@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.header;
 
+import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
@@ -9,6 +11,9 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,11 +22,14 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -29,21 +37,18 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static com.intellij.util.JdomKt.loadElement;
-
-public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
-  private final static Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
+public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
+  private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
 
   private final Project myProject;
   private final BaseInspectionProfileManager myAppProfileManager;
@@ -63,25 +68,23 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       @Override
       protected void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel) {
         myConfigurable.removeProfilePanel(profilePanel);
-        final List<InspectionProfileModifiableModel> currentProfiles = getModel()
-          .getProfilePanels()
-          .stream()
-          .map(SingleInspectionProfilePanel::getProfile)
-          .collect(Collectors.toList());
+        final List<InspectionProfileModifiableModel> currentProfiles = ContainerUtil.map(getModel()
+                                                                                           .getProfilePanels(),
+                                                                                         SingleInspectionProfilePanel::getProfile);
         resetSchemes(currentProfiles);
         selectScheme(ContainerUtil.getFirstItem(currentProfiles));
       }
 
       @Override
-      protected SingleInspectionProfilePanel createPanel(InspectionProfileModifiableModel model) {
+      protected @NotNull SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model) {
         return myConfigurable.createPanel(model);
       }
     };
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public InspectionProfileSchemesModel getModel() {
+  public @NotNull InspectionProfileSchemesModel getModel() {
     return myModel;
   }
 
@@ -106,18 +109,19 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
-  protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
-    return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
-      @Nullable
+  protected @NotNull AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
+    return new DescriptionAwareSchemeActions<>(this) {
       @Override
-      public String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
-        SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel) getModel()).getProfilePanel(scheme);
-        return inspectionProfile.getProfile().getDescription();
+      public @Nullable String getDescription(@NotNull InspectionProfileModifiableModel scheme) {
+        SingleInspectionProfilePanel inspectionProfile = ((InspectionProfileSchemesModel)getModel()).getProfilePanel(scheme);
+        return inspectionProfile == null ? null : inspectionProfile.getProfile().getDescription();
       }
 
       @Override
-      protected void setDescription(@NotNull InspectionProfileModifiableModel scheme, @NotNull String newDescription) {
-        InspectionProfileModifiableModel inspectionProfile = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(scheme).getProfile();
+      protected void setDescription(@NotNull InspectionProfileModifiableModel scheme,
+                                    @NlsContexts.DetailedDescription @NotNull String newDescription) {
+        InspectionProfileModifiableModel inspectionProfile =
+          InspectionProfileSchemesPanel.this.getModel().getProfilePanel(scheme).getProfile();
         if (!Comparing.strEqual(newDescription, inspectionProfile.getDescription())) {
           inspectionProfile.setDescription(newDescription);
           inspectionProfile.setModified(true);
@@ -128,25 +132,27 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       protected void importScheme(@NotNull String importerName) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return file.getFileType().equals(StdFileTypes.XML);
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
-        descriptor.setDescription("Choose profile file");
+        descriptor.setDescription(AnalysisBundle.message("inspections.settings.profile.file.chooser.description"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
             try {
-              InspectionProfileImpl profile = importInspectionProfile(loadElement(file.getInputStream()), myAppProfileManager, myProject);
+              InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
               if (profile == null) {
-                Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
+                Messages.showErrorDialog(myProject, AnalysisBundle.message("inspections.settings.invalid.format.warning", file.getName()),
+                                         CommonBundle.getErrorTitle());
                 return;
               }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
               if (existed != null) {
-                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" + profile.getName() +
-                                                           "\' already exists. Do you want to overwrite it?",
-                                                "Overwrite Warning",
-                                                "Overwrite", "Cancel",
+                if (Messages.showOkCancelDialog(myProject, AnalysisBundle
+                                                  .message("inspections.settings.profile.already.exists.dialog.message", profile.getName()),
+                                                AnalysisBundle.message("inspections.settings.overwrite.warning.title"),
+                                                AnalysisBundle.message("inspections.settings.overwrite.action.text"),
+                                                CommonBundle.getCancelButtonText(),
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
@@ -202,11 +208,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       }
 
       @Override
-      protected Class<InspectionProfileModifiableModel> getSchemeType() {
+      protected @NotNull Class<InspectionProfileModifiableModel> getSchemeType() {
         return InspectionProfileModifiableModel.class;
       }
 
-      private void copyToAnotherLevel(InspectionProfileModifiableModel profile, boolean copyToProject) {
+      private void copyToAnotherLevel(@NotNull InspectionProfileModifiableModel profile, boolean copyToProject) {
         getSchemesPanel().editNewSchemeName(
           profile.getName(),
           copyToProject,
@@ -220,12 +226,12 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
-  protected String getSchemeTypeName() {
-    return "Profile";
+  protected @NotNull String getSchemeTypeName() {
+    return LangBundle.message("inspection.profile.scheme.type.name.panel");
   }
 
   void apply() {
-    getModel().apply(getSelectedScheme(), (p) -> {
+    getModel().apply(getSelectedScheme(), p -> {
       if (myConfigurable.setActiveProfileAsDefaultOnApply()) {
         myConfigurable.applyRootProfile(p.getName(), p.isProjectLevel());
       }
@@ -237,16 +243,16 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     getModel().updatePanel(this);
   }
 
-  @NotNull
-  private InspectionProfileModifiableModel copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
-                                                 @NotNull Project project,
-                                                 @NotNull String newName,
-                                                 boolean modifyLevel) {
+  private @NotNull InspectionProfileModifiableModel copyToNewProfile(@NotNull InspectionProfileImpl selectedProfile,
+                                                                     @NotNull Project project,
+                                                                     @NotNull String newName,
+                                                                     boolean modifyLevel) {
     final boolean isProjectLevel = selectedProfile.isProjectLevel() ^ modifyLevel;
 
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
-    InspectionProfileImpl inspectionProfile =
-      new InspectionProfileImpl(newName, InspectionToolRegistrar.getInstance(), profileManager);
+    InspectionToolsSupplier inspectionsRegistrar = isProjectLevel ? ProjectInspectionToolRegistrar.getInstance(project)
+                                                                  : InspectionToolRegistrar.getInstance();
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, inspectionsRegistrar, profileManager, selectedProfile, null);
 
     inspectionProfile.copyFrom(selectedProfile);
     inspectionProfile.setName(newName);
@@ -258,24 +264,34 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return modifiableModel;
   }
 
-  private void addProfile(InspectionProfileModifiableModel profile) {
+  private void addProfile(@NotNull InspectionProfileModifiableModel profile) {
     final InspectionProfileModifiableModel selected = getSelectedScheme();
     getModel().addProfile(profile);
     getModel().updatePanel(this);
     selectScheme(selected);
   }
 
-  @NotNull
   @Override
-  protected JComponent getConfigurableFocusComponent() {
+  protected @NotNull JComponent getConfigurableFocusComponent() {
     return myConfigurable.getPreferredFocusedComponent();
   }
 
-  @Nullable("returns null if xml has invalid format")
-  public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                              @NotNull BaseInspectionProfileManager profileManager,
-                                                              @NotNull Project project) {
-    if (Comparing.strEqual(rootElement.getName(), "component")) {
+  public void selectAnyProfile() {
+    List<SingleInspectionProfilePanel> panels = myModel.getProfilePanels();
+    if (panels.isEmpty()) {
+      LOG.error("No profiles to select.");
+      return;
+    }
+    selectScheme(panels.get(0).getProfile());
+    if (getSelectedScheme() == null) {
+      LOG.error("Selected scheme is still null.");
+    }
+  }
+
+  public static @Nullable("returns null if xml has invalid format") InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
+                                                                                                                  @NotNull BaseInspectionProfileManager profileManager,
+                                                                                                                  @NotNull Project project) {
+    if (Comparing.strEqual(rootElement.getName(), "component")) { //NON-NLS
       //import right from .idea/inspectProfiles/xxx.xml
       rootElement = rootElement.getChildren().get(0);
     }
@@ -291,17 +307,12 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         ContainerUtil.addAllNotNull(levels, s.getAttributeValue("level"));
       }
     }
-    for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
-      String level = iterator.next();
-      if (profileManager.getSeverityRegistrar().getSeverity(level) != null) {
-        iterator.remove();
-      }
-    }
+    levels.removeIf(level -> profileManager.getSeverityRegistrar().getSeverity(level) != null);
     if (!levels.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
-                                              StringUtil.join(levels, ", ") +
-                                              ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+        if (Messages.showYesNoDialog(project, AnalysisBundle
+                                       .message("inspections.settings.undefined.severities.detected.dialog.message", StringUtil.join(levels, ", ")),
+                                     CommonBundle.message("title.warning"), Messages.getWarningIcon()) ==
             Messages.YES) {
           for (String level : levels) {
             final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
@@ -324,10 +335,10 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return profile;
   }
 
-  private static String getProfileName(Element rootElement) {
+  private static String getProfileName(@NotNull Element rootElement) {
     for (Element option : rootElement.getChildren("option")) {
       String optionName = option.getAttributeValue("name");
-      if (optionName.equals("myName")) {
+      if ("myName".equals(optionName)) {
         return option.getAttributeValue("value");
       }
     }

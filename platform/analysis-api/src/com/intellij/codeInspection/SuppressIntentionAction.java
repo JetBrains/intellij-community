@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.icons.AllIcons;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,24 +14,23 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class SuppressIntentionAction implements Iconable, IntentionAction {
-  private String myText = "";
-  public static SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
+  private @IntentionName String myText = "";
+  public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.General.InspectionsOff;
+    return null;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return myText;
   }
 
-  protected void setText(@NotNull String text) {
+  protected void setText(@IntentionName @NotNull String text) {
     myText = text;
   }
 
@@ -60,8 +45,8 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   }
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = getElement(editor, file);
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement element = getElement(editor, psiFile);
     if (element != null) {
       invoke(project, editor, element);
     }
@@ -78,9 +63,9 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null || editor == null) return false;
-    PsiElement element = getElement(editor, file);
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile == null || editor == null) return false;
+    PsiElement element = getElement(editor, psiFile);
     return element != null && isAvailable(project, editor, element);
   }
 
@@ -99,10 +84,15 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
     return false;
   }
 
-  @Nullable
-  private static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    // No preview is necessary for suppress action
+    return IntentionPreviewInfo.EMPTY;
   }
 }

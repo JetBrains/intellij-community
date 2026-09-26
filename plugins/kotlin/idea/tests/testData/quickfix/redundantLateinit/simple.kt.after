@@ -1,0 +1,7 @@
+// "Remove 'lateinit' modifier" "true"
+// K2_ERROR: INAPPLICABLE_LATEINIT_MODIFIER
+
+class Test {
+    private<caret> var foo: String = ""
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

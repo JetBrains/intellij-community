@@ -1,43 +1,41 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
- * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * This class allows changing behavior of the platform and plugins in specific IDEs. But if its methods are used for something it means that third-party
+ * IDEs not listed here won't be able to get the desired behavior. Also, it's hard to correctly select IDEs where customizations should be
+ * enabled, and there is no chance that such code will be properly updated when new IDEs or their editions appear.
+ * So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * <p>
  * If you need to customize behavior of the platform somewhere, you should create a special application service for that and override it in
  * a specific IDE (look at {@link com.intellij.lang.IdeLanguageCustomization} and {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization}
  * for example).
- *
+ * </p>
+ * <p>
+ * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
+ * plugin or IDE module. See <a href="https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules">SDK Docs</a>.
+ * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
-public class PlatformUtils {
+@ApiStatus.Internal
+public final class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
   // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
+  public static final String IDEA_EDU_PREFIX = "IdeaEdu";
   public static final String APPCODE_PREFIX = "AppCode";
+  public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
@@ -48,57 +46,104 @@ public class PlatformUtils {
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
+  public static final String FLEET_PREFIX = "FleetBackend";
+  public static final String RUSTROVER_PREFIX = "RustRover";
+  public static final String MPS_PREFIX = "MPS";
+  public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
+  public static final String GATEWAY_PREFIX = "Gateway";
 
-  private static final Set<String> COMMERCIAL_EDITIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX, DBE_PREFIX,
-    RIDER_PREFIX, GOIDE_PREFIX
-  )));
+  @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
+    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
 
-  public static String getPlatformPrefix() {
+  public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
   }
 
-  public static String getPlatformPrefix(String defaultPrefix) {
+  public static String getPlatformPrefix(@Nullable String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
 
+  public static void setDefaultPrefixForCE() {
+    // IJ CE doesn't have prefix if we start IDE from the source code.
+    // The proper fix is to set the prefix in all CE run configurations but for keeping compatibility set it indirectly
+    System.setProperty(PLATFORM_PREFIX_KEY, getPlatformPrefix(IDEA_CE_PREFIX));
+  }
+
   public static boolean isJetBrainsProduct() {
-    final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     return appInfo != null && appInfo.getShortCompanyName().equals("JetBrains");
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
+   */
   public static boolean isIntelliJ() {
-    return isIdeaUltimate() || isIdeaCommunity();
+    return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
   }
 
   public static boolean isIdeaUltimate() {
     return is(IDEA_PREFIX);
   }
 
+  /**
+   * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
+   */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
+  }
+
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
+  public static boolean isIdeaEducational() {
+    return is(IDEA_EDU_PREFIX);
   }
 
   public static boolean isRubyMine() {
     return is(RUBY_PREFIX);
   }
 
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
   }
 
+  public static boolean isAqua() {
+    return is(AQUA_PREFIX);
+  }
+
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
 
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isCidr() {
     return isAppCode() || isCLion();
   }
 
-  public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational();
+  public static boolean isMPS() {
+    return is(MPS_PREFIX);
   }
 
+  public static boolean isPyCharm() {
+    return is(PYCHARM_PREFIX) || isPyCharmCommunity() || isPyCharmEducational();
+  }
+
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link PlatformUtils the class-level javadoc}
+   */
+  @Deprecated
   public static boolean isPyCharmPro() {
     return is(PYCHARM_PREFIX);
   }
@@ -131,12 +176,34 @@ public class PlatformUtils {
     return is(GOIDE_PREFIX);
   }
 
+  /**
+   * Returns {@code true} if the IDE is running in a frontend mode (JetBrains Client).
+   * This is an internal method supposed to be used only from code running during early startup phases.
+   * If the instance container is initialized (in particular, in any plugin code), its equivalent
+   * {@link com.intellij.platform.ide.productMode.IdeProductMode#isFrontend()} should be used instead.
+   */
+  public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
+
+  public static boolean isGateway() { return is(GATEWAY_PREFIX); }
+
   public static boolean isCommunityEdition() {
     return isIdeaCommunity() || isPyCharmCommunity();
   }
 
   public static boolean isCommercialEdition() {
     return COMMERCIAL_EDITIONS.contains(getPlatformPrefix());
+  }
+
+  public static boolean isFleetBackend() {
+    return is(FLEET_PREFIX);
+  }
+
+  public static boolean isRustRover() {
+    return is(RUSTROVER_PREFIX);
+  }
+
+  public static boolean isQodana() {
+    return SystemProperties.getBooleanProperty("qodana.application", false);
   }
 
   private static boolean is(String idePrefix) {

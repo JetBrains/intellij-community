@@ -1,0 +1,52 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.junit5.pioneer` start
+jvm_library(
+    name = "junit5-pioneer",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5.pioneer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-pioneer-_j_unit5_pioneer"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-junit5-pioneer-_j_unit5_pioneer",
+        "//libraries/junit5-launcher",
+        "//libraries/junit5-params",
+    ],
+)
+
+jvm_library(
+    name = "junit5-pioneer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.junit5.pioneer",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-junit5-pioneer-_j_unit5_pioneer"],
+    runtime_deps = [
+        # do not sort,
+        ":junit5-pioneer",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit5-params:junit5-params_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.junit5.pioneer` end
+
+### auto-generated section `iml intellij.libraries.junit5.pioneer` start
+exports_files(
+    [
+        "intellij.libraries.junit5.pioneer.iml",
+        "resources/intellij.libraries.junit5.pioneer.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.junit5.pioneer` end

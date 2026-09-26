@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+class Outer {
+    private val _items = mutableSetOf<Int>()
+    val items: Set<Int>
+        get() = _items
+
+    inner class Nested {
+        fun foo() {
+            val _items = emptyList<Int>()
+            print(items.size)
+        }
+    }
+}

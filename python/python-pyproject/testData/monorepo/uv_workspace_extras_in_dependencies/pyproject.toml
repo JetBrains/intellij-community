@@ -1,0 +1,16 @@
+[project]
+name = "pythonproject"
+version = "0.1.0"
+description = "Root project"
+requires-python = ">=3.12"
+dependencies = [
+    "sub-project-a[dev]",
+    "sub-project-b",
+]
+
+[tool.uv]
+workspace = { members = ["sub-projects/*"] }
+
+[tool.uv.sources]
+sub-project-a = { workspace = true }
+sub-project-b = { workspace = true }

@@ -1,2 +1,2 @@
 class C:
-    def __init__(self):
+    def __add__(self, other):

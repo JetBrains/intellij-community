@@ -15,18 +15,33 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.requirements.PyRequirementsKt;
+import com.intellij.python.requirements.parser.PyRequirementParser;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import static com.jetbrains.python.inspections.ModuleAssocToolKt.setAssociationToModuleAsync;
+
+@Subsystems.PackagingRequirements
+@Layers.Functional
 public class PyPackageUtilTest extends PyTestCase {
 
   @Override
@@ -34,31 +49,29 @@ public class PyPackageUtilTest extends PyTestCase {
     super.setUp();
 
     myFixture.copyDirectoryToProject("packaging/PyPackageUtil/" + getTestName(false), "");
+    Module module = myFixture.getModule();
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    setAssociationToModuleAsync(sdk, module);
   }
 
   public void testAbsentSetupPyReading() {
-    doTestSetupPyReading(false, false, false);
+    doTestSetupPyReading(false, false, false, false);
   }
 
   public void testAbsentSetupCallReading() {
-    doTestSetupPyReading(true, false, false);
+    doTestSetupPyReading(true, false, false, false);
   }
 
   public void testAbsentSetupPyRequiresReading() {
-    doTestSetupPyReading(true, true, false);
+    doTestSetupPyReading(true, true, false, false);
   }
 
   public void testSetupPyReading() {
-    doTestSetupPyReading(true, true, true);
+    doTestSetupPyReading(true, true, true, false);
   }
 
-  // PY-18966
-  public void testSetupPyDependencyLinksReading() {
-    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(myFixture.getModule());
-    final List<PyRequirement> expected = PyRequirementParser.fromText(
-      "sqlalchemy >=1.0.12, <1.1\ngit+https://github.com/mysql/mysql-connector-python.git@2.1.3#egg=mysql-connector-python-2.1.3");
-
-    assertEquals(expected, actual);
+  public void testSetupPyExtrasReading() {
+    doTestSetupPyReading(true, true, true, true);
   }
 
   public void testAbsentRequirementsTxtReading() {
@@ -81,12 +94,20 @@ public class PyPackageUtilTest extends PyTestCase {
     doTestUselessRequirementsTxtOrSetupPyUpdating(false);
   }
 
-  public void testDistutilsSetupPyUpdating() {
-    doTestSetupPyUpdating("requires");
+  public void testDistutilsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("requires");
   }
 
-  public void testSetuptoolsSetupPyUpdating() {
-    doTestSetupPyUpdating("install_requires");
+  public void testSetuptoolsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("install_requires");
+  }
+
+  public void testSetuptoolsSetupPyTupleRequiresAppending() {
+    doTestSetupPyRequiresAppending("('NewDjango==1.3.1',)", "('NewDjango==1.3.1', 'Markdown')");
+  }
+
+  public void testSetuptoolsSetupPyStringRequiresAppending() {
+    doTestSetupPyRequiresAppending("'NewDjango==1.3.1'", "['NewDjango==1.3.1', 'Markdown']");
   }
 
   public void testAbsentRequirementsTxtUpdating() {
@@ -104,7 +125,7 @@ public class PyPackageUtilTest extends PyTestCase {
     checkRequirements(PyPackageUtil.getRequirementsFromTxt(module));
   }
 
-  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires) {
+  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires, boolean extrasRequire) {
     final Module module = myFixture.getModule();
 
     if (hasFile) {
@@ -114,25 +135,40 @@ public class PyPackageUtilTest extends PyTestCase {
       assertNotNull(setupPy);
 
       if (hasCall) {
-        final PyCallExpression callByModule = PyPackageUtil.findSetupCall(module);
-        final PyCallExpression callByFile = PyPackageUtil.findSetupCall(setupPy);
-
-        assertNotNull(callByModule);
-        assertNotNull(callByFile);
-        assertSame(callByFile, callByModule);
+        assertNotNull(PyPackageUtil.findSetupCall(module));
 
         if (requires) {
-          checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          if (extrasRequire) {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module), 0,
+                              PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose\nr1\nr2\nr3\nr4"));
+          }
+          else {
+            checkRequirements(PyPackageUtil.findSetupPyRequires(module));
+          }
         }
         else {
           final List<PyRequirement> requirements = PyPackageUtil.findSetupPyRequires(module);
           assertNotNull(requirements);
           assertEmpty(requirements);
         }
+
+        if (extrasRequire) {
+          final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
+
+          final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1", null)),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2", null)),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3", null), PyRequirementsKt.pyRequirement("r4", null))
+          );
+
+          assertEquals(expected, extrasRequirements);
+        }
+        else {
+          assertNull(PyPackageUtil.findSetupPyExtrasRequire(module));
+        }
       }
       else {
         assertNull(PyPackageUtil.findSetupCall(module));
-        assertNull(PyPackageUtil.findSetupCall(setupPy));
         assertNull(PyPackageUtil.findSetupPyRequires(module));
       }
     }
@@ -184,10 +220,14 @@ public class PyPackageUtilTest extends PyTestCase {
 
   private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex) {
     final List<PyRequirement> expected = PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose");
-    assertEquals(expected.subList(fromIndex, expected.size()), actual);
+    checkRequirements(actual, fromIndex, expected);
   }
 
-  private void doTestSetupPyUpdating(@NotNull String keyword) {
+  private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex, List<PyRequirement> expected) {
+    assertSameElements(expected.subList(fromIndex, expected.size()), actual);
+  }
+
+  private void doTestSetupPyRequiresIntroduction(@NotNull String keyword) {
     final Module module = myFixture.getModule();
 
     checkSetupArgumentText(module, keyword, null);
@@ -209,6 +249,22 @@ public class PyPackageUtilTest extends PyTestCase {
     assertEquals(expected, actual);
   }
 
+  private void doTestSetupPyRequiresAppending(@NotNull String argumentBefore, @NotNull String argumentAfter) {
+    final Module module = myFixture.getModule();
+
+    checkSetupArgumentText(module, "install_requires", argumentBefore);
+    checkRequirements(PyPackageUtil.findSetupPyRequires(module), 1);
+
+    final Runnable appendToRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), appendToRequires);
+
+    checkSetupArgumentText(module, "install_requires", argumentAfter);
+
+    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
+    final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
+    assertSameElements(expected, actual);
+  }
+
   private static void checkSetupArgumentText(@NotNull Module module, @NotNull String keyword, @Nullable String text) {
     final PyCallExpression setupCall = PyPackageUtil.findSetupCall(module);
     assertNotNull(setupCall);
@@ -222,5 +278,21 @@ public class PyPackageUtilTest extends PyTestCase {
       assertNotNull(argument);
       assertEquals(text, argument.getText());
     }
+  }
+
+  // PY-17241
+  public void testCollectingPackageNamesIgnoresExcludedDirectoriesWithSdkRoots() {
+    addExcludedRoot("env");
+    final VirtualFile sdkRoot = myFixture.findFileInTempDir("env/site-packages");
+    runWithAdditionalClassEntryInSdkRoots(sdkRoot, () -> {
+      final List<String> collected = PyPackageUtil.getPackageNames(myFixture.getModule());
+      assertSameElements(collected, "project", "project.pkg");
+    });
+  }
+
+  // PY-17241
+  public void testCollectingPackageNamesIgnoresChildrenOfDirectoriesWithoutInitPy() {
+    final List<String> collected = PyPackageUtil.getPackageNames(myFixture.getModule());
+    assertSameElements(collected, "project", "project.pkg");
   }
 }

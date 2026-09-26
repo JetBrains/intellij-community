@@ -1,141 +1,84 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * @author mike
- * @since Sep 16, 2002
- */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
-    return (ApplicationInfoEx) getInstance();
+    return (ApplicationInfoEx)getInstance();
   }
 
-  public abstract Calendar getMajorReleaseBuildDate();
-
-  public abstract String getSplashImageUrl();
-
-  public abstract Color getSplashTextColor();
-
-  public abstract String getAboutImageUrl();
-
-  public abstract String getIconUrl();
-
-  public abstract String getSmallIconUrl();
-
-  public abstract String getBigIconUrl();
-
-  public abstract String getToolWindowIconUrl();
-
-  public abstract String getWelcomeScreenLogoUrl();
-
-  public abstract String getEditorBackgroundImageUrl();
+  public abstract @NotNull Calendar getMajorReleaseBuildDate();
 
   /**
-   * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
-   * standalone tool so different licensing scheme should be applied.
+   * Returns a path to an SVG icon of the product.
+   * The path is a relative path inside the product's JAR files.
+   * Please note that release and EAP builds may have different icons.
    */
-  @Nullable
-  public abstract String getPackageCode();
-
-  public abstract String getFullApplicationName();
-
-  public abstract boolean showLicenseeInfo();
-
-  public abstract boolean isEAP();
-
-  public abstract UpdateUrls getUpdateUrls();
-
-  public abstract String getDocumentationUrl();
-
-  public abstract String getSupportUrl();
-
-  public abstract String getEAPFeedbackUrl();
-
-  public abstract String getReleaseFeedbackUrl();
-
-  public abstract String getPluginManagerUrl();
-
-  public abstract String getPluginsListUrl();
-
-  public abstract String getChannelsListUrl();
-
-  public abstract String getPluginsDownloadUrl();
-
-  public abstract String getBuiltinPluginsUrl();
-
-  public abstract String getWebHelpUrl();
-
-  public abstract String getWhatsNewUrl();
-
-  public abstract String getWinKeymapUrl();
-
-  public abstract String getMacKeymapUrl();
-
-  public abstract Color getAboutForeground();
-
-  public interface UpdateUrls {
-    String getCheckingUrl();
-    String getPatchesUrl();
-  }
-
-  public interface PluginChooserPage {
-    @NotNull
-    String getTitle();
-    @Nullable
-    String getCategory();
-    @Nullable
-    String getDependentPlugin();
-  }
-
-  public abstract List<PluginChooserPage> getPluginChooserPages();
+  public abstract @NotNull String getApplicationSvgIconUrl();
 
   /**
-   * @return {@code true} if the specified plugin is an essential part of the IDE so it cannot be disabled and isn't shown in Settings | Plugins
+   * Returns a path to an SVG file,
+   * containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
    */
-  public abstract boolean isEssentialPlugin(String pluginId);
+  public abstract @NotNull String getSmallApplicationSvgIconUrl();
 
-  @Nullable
-  public abstract String getCustomizeIDEWizardStepsProvider();
+  public abstract String getCopyrightStart();
+
+  /**
+   * Returns {@code true} only for EAP builds of "major" releases (i.e. for {@code 2018.3}, but not for {@code 2018.3.1}).
+   */
+  public abstract boolean isMajorEAP();
+
+  @ApiStatus.Experimental
+  public abstract boolean isPreview();
+
+  /**
+   * Returns the full IDE's product code (as used in build numbers) if this application is a frontend variant (JetBrains Client) of it.
+   * Otherwise, returns {@code null}.
+   */
+  @ApiStatus.Internal
+  public abstract @Nullable String getFullIdeProductCode();
+
+  /**
+   * Returns URL to plugins repository without a trailing slash.
+   */
+  public abstract @NotNull String getPluginManagerUrl();
+
+  public abstract boolean usesJetBrainsPluginRepository();
+
+  public abstract @NotNull String getPluginsListUrl();
+
+  public abstract @NotNull String getPluginDownloadUrl();
 
   public abstract String getSubscriptionFormId();
 
-  public abstract String getSubscriptionNewsKey();
-
-  public abstract String getSubscriptionNewsValue();
-
-  public abstract String getSubscriptionTipsKey();
-
   public abstract boolean areSubscriptionTipsAvailable();
 
-  @Nullable
-  public abstract String getSubscriptionAdditionalFormData();
-
   /**
-   * @return true if the product's vendor is JetBrains
+   * @return {@code true} if the product's vendor is JetBrains
    */
   public final boolean isVendorJetBrains() {
     return "JetBrains".equals(getShortCompanyName());
   }
+
+  public abstract @NotNull BuildNumber getApiVersionAsNumber();
+
+  public abstract @NotNull List<PluginId> getEssentialPluginIds();
+
+  public abstract @Nullable String getDefaultLightLaf();
+
+  public abstract @Nullable String getDefaultClassicLightLaf();
+
+  public abstract @Nullable String getDefaultDarkLaf();
+
+  public abstract @Nullable String getDefaultClassicDarkLaf();
 }

@@ -1,118 +1,125 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.actions.DeleteAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
 
-  @NotNull private final VirtualFileList myFileList;
+public class SelectFilesDialog extends AbstractSelectFilesDialog {
+
+  private final @NotNull VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  protected SelectFilesDialog(Project project, List<VirtualFile> files, String prompt,
-                              VcsShowConfirmationOption confirmationOption,
-                              boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
-    super(project, false, confirmationOption, prompt, showDoNotAskOption);
+  protected SelectFilesDialog(Project project,
+                              @NotNull List<? extends VirtualFile> files,
+                              @Nullable @NlsContexts.Label String prompt,
+                              @Nullable VcsShowConfirmationOption confirmationOption,
+                              boolean selectableFiles,
+                              boolean deletableFiles) {
+    super(project, false, confirmationOption, prompt);
     myDeletableFiles = deletableFiles;
     myFileList = new VirtualFileList(project, selectableFiles, deletableFiles, files);
   }
 
-  @NotNull
-  public static SelectFilesDialog init(Project project, List<VirtualFile> originalFiles, String prompt,
-                                       VcsShowConfirmationOption confirmationOption,
-                                       boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
-    SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles,
-                                                     showDoNotAskOption, deletableFiles);
+  public static @NotNull SelectFilesDialog init(Project project,
+                                                @NotNull List<? extends VirtualFile> originalFiles,
+                                                @Nullable @NlsContexts.Label String prompt,
+                                                @Nullable VcsShowConfirmationOption confirmationOption,
+                                                boolean selectableFiles,
+                                                boolean deletableFiles) {
+    SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dialog.init();
     return dialog;
+  }
+
+  public static @NotNull SelectFilesDialog init(Project project,
+                                                @NotNull List<? extends VirtualFile> originalFiles,
+                                                @Nullable @NlsContexts.Label String prompt,
+                                                @Nullable VcsShowConfirmationOption confirmationOption,
+                                                boolean selectableFiles,
+                                                boolean deletableFiles,
+                                                @NotNull @NlsContexts.Button String okActionName,
+                                                @NotNull @NlsContexts.Button String cancelActionName) {
+    final SelectFilesDialog dlg = init(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
+    dlg.setOKButtonText(okActionName);
+    dlg.setCancelButtonText(cancelActionName);
+    return dlg;
   }
 
   public Collection<VirtualFile> getSelectedFiles() {
     return myFileList.getIncludedChanges();
   }
 
-  public void setSelectedFiles(@NotNull final Collection<VirtualFile> selected) {
+  public void setSelectedFiles(final @NotNull Collection<VirtualFile> selected) {
     myFileList.setIncludedChanges(selected);
     myFileList.rebuildTree();
   }
 
-  @NotNull
   @Override
-  protected ChangesTree getFileList() {
+  protected @NotNull ChangesTree getFileList() {
     return myFileList;
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createToolbarActions() {
+  protected @NotNull DefaultActionGroup createToolbarActions() {
     DefaultActionGroup defaultGroup = super.createToolbarActions();
     if (myDeletableFiles) {
-      AnAction deleteAction = new DeleteUnversionedFilesAction() {
+      AnAction deleteAction = new DeleteAction(null, null, IconUtil.getRemoveIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
-          myFileList.refresh();
+          myFileList.rebuildTree();
         }
       };
+      ActionUtil.mergeFrom(deleteAction, IdeActions.ACTION_DELETE);
+      deleteAction.registerCustomShortcutSet(getFileList(), null);
       defaultGroup.add(deleteAction);
-      deleteAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), this.getFileList());
     }
     return defaultGroup;
   }
 
-  public static class VirtualFileList extends ChangesTreeImpl.VirtualFiles {
-    @Nullable private final DeleteProvider myDeleteProvider;
+  public static class VirtualFileList extends AsyncChangesTreeImpl.VirtualFiles {
+    private final @Nullable DeleteProvider myDeleteProvider;
 
-    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<VirtualFile> files) {
+    public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);
-      myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
+      myDeleteProvider = (deletableFiles ? new VirtualFileDeleteProvider() : null);
     }
 
-    @Nullable
     @Override
-    public Object getData(String dataId) {
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && myDeleteProvider != null) {
-        return myDeleteProvider;
-      }
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class);
-      }
-
-      return super.getData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY,
+               getSelectedChanges().toArray(VirtualFile.EMPTY_ARRAY));
     }
 
-    public void refresh() {
-      setChangesToDisplay(ContainerUtil.filter(getChanges(), VirtualFile::isValid));
+    @Override
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends VirtualFile> changes) {
+      return super.buildTreeModel(grouping, ContainerUtil.filter(changes, VirtualFile::isValid));
     }
   }
 }

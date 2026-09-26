@@ -17,12 +17,7 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author Danila Ponomarenko
- */
 public class IntroduceVariableQuickFixTest extends LightIntentionActionTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;

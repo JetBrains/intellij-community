@@ -24,12 +24,12 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAssertStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAssertStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiAssertStatementImpl.class);
 
   public PsiAssertStatementImpl() {
     super(ASSERT_STATEMENT);
@@ -49,9 +49,6 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.ASSERT_KEYWORD:
         return findChildByType(ASSERT_KEYWORD);
 
@@ -62,18 +59,19 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
         return findChildByType(COLON);
 
       case ChildRole.ASSERT_DESCRIPTION:
-        {
-          ASTNode colon = findChildByRole(ChildRole.COLON);
-          if (colon == null) return null;
-          ASTNode child;
-          for(child = colon.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (EXPRESSION_BIT_SET.contains(child.getElementType())) break;
-          }
-          return child;
+        ASTNode colon = findChildByRole(ChildRole.COLON);
+        if (colon == null) return null;
+        ASTNode child;
+        for(child = colon.getTreeNext(); child != null; child = child.getTreeNext()){
+          if (EXPRESSION_BIT_SET.contains(child.getElementType())) break;
         }
+        return child;
 
       case ChildRole.CLOSING_SEMICOLON:
         return findChildByType(SEMICOLON);
+
+      default:
+        return null;
     }
   }
 
@@ -110,6 +108,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAssertStatement";
   }

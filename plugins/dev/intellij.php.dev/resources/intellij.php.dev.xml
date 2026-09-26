@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.dev.psiViewer"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.php.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.dev">
+    <psiViewer.extension implementation="com.intellij.php.dev.psiViewer.PhpJSPsiViewerExtension"/>
+    <psiViewer.extension implementation="com.intellij.php.dev.psiViewer.PhpJsonPsiViewerExtension"/>
+  </extensions>
+</idea-plugin>

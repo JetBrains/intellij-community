@@ -1,0 +1,7 @@
+// "Replace with '::class.java'" "true"
+// WITH_STDLIB
+// PRIORITY: LOW
+fun main() {
+    val name = Int.javaClass<caret>.name
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithClassJavaFix

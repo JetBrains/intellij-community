@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,6 @@ import org.jetbrains.idea.svn.update.CmdUpdateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.CmdUpgradeClient;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdClientFactory extends ClientFactory {
 
   public CmdClientFactory(@NotNull SvnVcs vcs) {
@@ -71,9 +69,8 @@ public class CmdClientFactory extends ClientFactory {
     put(InfoClient.class, CmdInfoClient.class);
   }
 
-  @NotNull
   @Override
-  public UpdateClient createUpdateClient() {
+  public @NotNull UpdateClient createUpdateClient() {
     return prepare(new CmdUpdateClient());
   }
 }

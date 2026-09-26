@@ -15,10 +15,19 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.CustomFormattingModelBuilder;
+import com.intellij.formatting.DelegatingFormattingModel;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xml.XmlFormattingModelBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,13 +39,14 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
+final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
-  public XsltFormattingModelBuilder(FormattingModelBuilder builder) {
-    myBuilder = builder;
+  XsltFormattingModelBuilder() {
+    myBuilder = new XmlFormattingModelBuilder();
   }
 
+  @Override
   public boolean isEngagedToFormat(PsiElement context) {
     final PsiFile file = context.getContainingFile();
     if (file == null) {
@@ -49,21 +59,20 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
     return false;
   }
 
-  @Nullable
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+  @Override
+  public @Nullable TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
   }
 
-  @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    FormattingModel baseModel = myBuilder.createModel(element, settings);
-    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(settings, baseModel));
+  @Override
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    FormattingModel baseModel = myBuilder.createModel(formattingContext);
+    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(formattingContext.getCodeStyleSettings(), baseModel));
   }
 
   static Block getDelegatingBlock(final CodeStyleSettings settings, FormattingModel baseModel) {
     final Block block = baseModel.getRootBlock();
-    if (block instanceof XmlBlock) {
-      final XmlBlock xmlBlock = (XmlBlock)block;
+    if (block instanceof XmlBlock xmlBlock) {
 
       final XmlPolicy xmlPolicy = new XmlPolicy(settings, baseModel.getDocumentModel()) {
         @Override

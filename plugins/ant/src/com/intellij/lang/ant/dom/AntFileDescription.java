@@ -26,6 +26,7 @@ public class AntFileDescription<T extends AntDomElement> extends DomFileDescript
     super(rootElementClass, rootTagName);
   }
 
+  @Override
   protected void initializeFileDescription() {
     registerReferenceInjector(new AntReferenceInjector());
   }

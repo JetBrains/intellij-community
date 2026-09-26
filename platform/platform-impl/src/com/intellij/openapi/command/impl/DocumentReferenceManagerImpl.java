@@ -1,36 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import com.intellij.util.io.fs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -39,117 +27,127 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
-  private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
-  private final Map<Document, DocumentReference> myDocToRef = ContainerUtil.createWeakKeyWeakValueMap();
-
+@ApiStatus.Internal
+public final class DocumentReferenceManagerImpl extends DocumentReferenceManager {
   private static final Key<Reference<DocumentReference>> FILE_TO_REF_KEY = Key.create("FILE_TO_REF_KEY");
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
-  private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
+
+  private final Map<Document, DocumentReference> docToRef = ContainerUtil.createWeakKeyWeakValueMap();
+  private final Map<FilePath, DocumentReference> deletedFilePathToRef = ContainerUtil.createWeakValueMap();
+
+  DocumentReferenceManagerImpl() {
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(new CreateDeleteFileListener(), ApplicationManager.getApplication());
+  }
 
   @Override
-  public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        VirtualFile f = event.getFile();
-        DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
-        if (ref != null) {
-          f.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
-          ((DocumentReferenceByVirtualFile)ref).update(f);
+  public @NotNull DocumentReference create(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    return (file != null && file.isValid()) ? create(file) : createFromDocument(document);
+  }
+
+  @Override
+  public @NotNull DocumentReference create(@NotNull VirtualFile file) {
+    // we treat local files differently from non-local because we can undo their deletion
+    return file.isInLocalFileSystem() ? createFromLocal(file) : createFromNonLocal(file);
+  }
+
+  private synchronized @NotNull DocumentReference createFromDocument(@NotNull Document document) {
+    DocumentReference ref = docToRef.get(document);
+    if (ref != null) {
+      return ref;
+    }
+    var newRef = new DocumentReferenceByDocument(document);
+    docToRef.put(document, newRef);
+    return newRef;
+  }
+
+  private synchronized @NotNull DocumentReference createFromLocal(@NotNull VirtualFile file) {
+    assert file.isValid() : "file is invalid: " + file;
+    DocumentReference ref = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
+    if (ref != null) {
+      return ref;
+    }
+    var newRef = new DocumentReferenceByVirtualFile(file);
+    file.putUserData(FILE_TO_REF_KEY, new WeakReference<>(newRef));
+    return newRef;
+  }
+
+  private synchronized @NotNull DocumentReference createFromNonLocal(@NotNull VirtualFile file) {
+    DocumentReference ref = file.getUserData(FILE_TO_STRONG_REF_KEY);
+    if (ref != null) {
+      return ref;
+    }
+    var newRef = new DocumentReferenceByNonlocalVirtualFile(file);
+    file.putUserData(FILE_TO_STRONG_REF_KEY, newRef);
+    return newRef;
+  }
+
+  private synchronized void fileCreated(@NotNull VFileCreateEvent event) {
+    VirtualFile file = event.getFile();
+    if (file != null) {
+      DocumentReference ref = deletedFilePathToRef.remove(filePath(file));
+      if (ref != null) {
+        file.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
+        ((DocumentReferenceByVirtualFile) ref).update(file);
+      }
+    }
+  }
+
+  private synchronized void fileDeleted(@NotNull VirtualFile file) {
+    DocumentReference ref = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
+    file.putUserData(FILE_TO_REF_KEY, null);
+    if (ref != null) {
+      deletedFilePathToRef.put(filePath(file), ref);
+    }
+  }
+
+  private final class CreateDeleteFileListener implements AsyncFileListener {
+
+    @Override
+    public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      List<VirtualFile> deletedFiles = new NotNullList<>();
+      for (VFileEvent event : events) {
+        if (event instanceof VFileDeleteEvent deleteEvent) {
+          collectDeletedFiles(deleteEvent.getFile(), deletedFiles);
         }
       }
-
-      @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        VirtualFile f = event.getFile();
-        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new NotNullList<>()));
-      }
-
-      @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        VirtualFile f = event.getFile();
-        List<VirtualFile> files = f.getUserData(DELETED_FILES);
-        f.putUserData(DELETED_FILES, null);
-
-        assert files != null : f;
-        for (VirtualFile each : files) {
-          DocumentReference ref = SoftReference.dereference(each.getUserData(FILE_TO_REF_KEY));
-          each.putUserData(FILE_TO_REF_KEY, null);
-          if (ref != null) {
-            myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
+      return new ChangeApplier() {
+        @Override
+        public void afterVfsChange() {
+          for (VirtualFile file : deletedFiles) {
+            fileDeleted(file);
+          }
+          for (VFileEvent event : events) {
+            if (event instanceof VFileCreateEvent createEvent) {
+              fileCreated(createEvent);
+            }
           }
         }
+      };
+    }
+
+    private static void collectDeletedFiles(@NotNull VirtualFile parentFile, @NotNull List<? super VirtualFile> collectedFiles) {
+      if (parentFile instanceof NewVirtualFile file) {
+        ProgressManager.checkCanceled();
+        if (parentFile.isDirectory()) {
+          for (VirtualFile childFile : file.iterInDbChildren()) {
+            collectDeletedFiles(childFile, collectedFiles);
+          }
+        } else {
+          collectedFiles.add(parentFile);
+        }
       }
-    });
+    }
   }
 
-  @NotNull
-  private static List<VirtualFile> collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
-    if (!(f instanceof NewVirtualFile)) return files;
-
-    if (!f.isDirectory()) {
-      files.add(f);
-    }
-    else {
-      for (VirtualFile each : ((NewVirtualFile)f).iterInDbChildren()) {
-        collectDeletedFiles(each, files);
-      }
-    }
-    return files;
-  }
-
-  @NotNull
-  @Override
-  public DocumentReference create(@NotNull Document document) {
-    assertInDispatchThread();
-
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null ? createFromDocument(document) : create(file);
-  }
-
-  @NotNull
-  private DocumentReference createFromDocument(@NotNull final Document document) {
-    DocumentReference result = myDocToRef.get(document);
-    if (result == null) {
-      result = new DocumentReferenceByDocument(document);
-      myDocToRef.put(document, result);
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public DocumentReference create(@NotNull VirtualFile file) {
-    assertInDispatchThread();
-
-    if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
-      DocumentReference reference = file.getUserData(FILE_TO_STRONG_REF_KEY);
-      if (reference == null) {
-        file.putUserData(FILE_TO_STRONG_REF_KEY, reference = new DocumentReferenceByNonlocalVirtualFile(file));
-      }
-      return reference;
-    }
-
-    assert file.isValid() : "file is invalid: " + file;
-
-    DocumentReference result = SoftReference.dereference(file.getUserData(FILE_TO_REF_KEY));
-    if (result == null) {
-      result = new DocumentReferenceByVirtualFile(file);
-      file.putUserData(FILE_TO_REF_KEY, new WeakReference<>(result));
-    }
-    return result;
-  }
-
-  private static void assertInDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static @NotNull FilePath filePath(@NotNull VirtualFile file) {
+    return new FilePath(file.getUrl());
   }
 
   @TestOnly
-  public void cleanupForNextTest() {
-    myDeletedFilePathToRef.clear();
-    myDocToRef.clear();
+  public synchronized void cleanupForNextTest() {
+    docToRef.clear();
+    deletedFilePathToRef.clear();
   }
-
 }

@@ -1,0 +1,276 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl
+
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.io.PosixFilePermissionsUtil
+import com.intellij.util.text.nullize
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import java.io.BufferedInputStream
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.util.function.Predicate
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+
+/** Replaces a native bin file and reports where it landed, for [OsSpecificDistributionBuilder.copyNativeBinFiles]. */
+internal fun copyNativeBinFileToDir(file: Path, binDir: Path): Path {
+  copyFileToDir(file, binDir, overwrite = true)
+  return binDir.resolve(file.fileName)
+}
+
+/** Replaces a native bin tree and reports the files it wrote, for [OsSpecificDistributionBuilder.copyNativeBinFiles]. */
+internal fun copyNativeBinDir(
+  sourceDir: Path,
+  binDir: Path,
+  dirFilter: Predicate<Path>? = null,
+  fileFilter: Predicate<Path>? = null,
+): List<Path> {
+  return copyDir(sourceDir, binDir, overwrite = true, dirFilter = dirFilter, fileFilter = fileFilter)
+}
+
+interface OsSpecificDistributionBuilder {
+  companion object {
+    @Internal
+    fun suffix(arch: JvmArchitecture): String = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
+  }
+
+  val targetOs: OsFamily
+  val targetLibcImpl: LibcImpl
+
+  fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
+
+  /**
+   * Copies into [binDir] the native files a distribution's `bin` directory needs for this OS and [arch]: the ones
+   * committed under `community/bin`. A downloaded file is a platform layout declaration instead, see
+   * [copyDeclaredOsSpecificFiles].
+   *
+   * Shared with the dev-mode assembly, which builds its own `bin` rather than going through
+   * [copyFilesForOsDistribution]: a dev IDE that lacks these silently loses everything the platform resolves
+   * through `PathManager.findBinFile`, starting with the native file watcher.
+   *
+   * Returns the files it wrote, because a caller that owns the directory's contents has to know what to keep:
+   * a dev assembly deletes whatever in `bin` it did not put there itself. A production caller ignores it and
+   * gets its permissions from [generateExecutableFilesPatterns] when the distribution is archived instead.
+   *
+   * The operation must be repeatable: [binDir] may contain files returned by an earlier invocation, and those files
+   * must be replaced with the current sources. It must not delete unrelated entries; the caller owns stale-file cleanup.
+   */
+  fun copyNativeBinFiles(binDir: Path, arch: JvmArchitecture): List<Path>
+
+  /**
+   * Copies the files the platform layout declares for this OS and [arch] with `PlatformLayout.withOsSpecificFiles` into
+   * [distributionDir], and returns the files it wrote. The same contract as [copyNativeBinFiles]: repeatable, replaces
+   * an earlier copy, deletes nothing.
+   */
+  fun copyDeclaredOsSpecificFiles(distributionDir: Path, arch: JvmArchitecture, platformLayout: PlatformLayout, context: BuildContext): List<Path> {
+    return copyDeclaredOsSpecificFiles(platformLayout = platformLayout, distributionDir = distributionDir, os = targetOs, arch = arch, context = context)
+  }
+
+  fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
+
+  fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
+
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
+
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
+    val fileSystem = FileSystems.getDefault()
+    return generateExecutableFilesPatterns(includeRuntime, arch, libc)
+      .distinct()
+      .map(FileUtilRt::toSystemIndependentName)
+      .associateBy {
+        fileSystem.getPathMatcher("glob:$it")
+      }
+  }
+
+  /** Checks the executable permissions in [distribution]: a directory, a `.tar.gz`, a `.zip`, or a `.snap`. */
+  fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
+    if (!distribution.isDirectory() && "$distribution".endsWith(".snap")) {
+      spanBuilder("Permissions check for ${distribution.name}").use {
+        val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
+        if (patterns.isEmpty()) return@use
+        reportExecutablePermissions(distribution, patterns, checkSnap(distribution, root, patterns.keys, context), context)
+      }
+    }
+    else {
+      checkFileExecutablePermissions(distribution, root, includeRuntime, arch, libc, context)
+    }
+  }
+
+  /** The plain twin of [checkExecutablePermissions] for a directory, a `.tar.gz`, or a `.zip`. A `.snap` file goes to the suspend member. */
+  fun checkFileExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
+    spanBuilder("Permissions check for ${distribution.name}").use {
+      val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
+      val matchedFiles = when {
+        patterns.isEmpty() -> return@use
+        SystemInfoRt.isWindows && distribution.isDirectory() -> return@use
+        distribution.isDirectory() -> checkDirectory(distribution.resolve(root), patterns.keys)
+        "$distribution".endsWith(".tar.gz") -> checkTar(distribution, root, patterns.keys)
+        else -> checkZip(distribution, root, patterns.keys)
+      }
+      reportExecutablePermissions(distribution, patterns, matchedFiles, context)
+    }
+  }
+
+  fun writeVmOptions(distBinDir: Path): Path
+
+  /**
+   * @return .dmg, .tag.gz, .exe or other distribution files built
+   */
+  fun distributionFilesBuilt(arch: JvmArchitecture): List<Path>
+
+  fun isRuntimeBundled(file: Path): Boolean
+
+  fun createChecksumAndGpgSignFiles(context: BuildContext, buildArtifact: () -> Path): Path {
+    val artifactFile = buildArtifact.invoke()
+
+    val checksums = Checksums.compute(artifactFile, Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)
+    for (algorithm in listOf(Checksums.Algorithm.SHA256, Checksums.Algorithm.SHA512)) {
+      val checksumFile = checksums.verifyOrWriteChecksumFile(algorithm)
+      context.notifyArtifactBuilt(checksumFile)
+      sign(context, checksumFile)
+    }
+
+    return artifactFile
+  }
+
+  private fun sign(context: BuildContext, hashFile: Path) {
+    context.executeStep(spanBuilder("sign checksums").setAttribute("file", "$hashFile"), BuildOptions.CHECKSUM_SIGN_STEP) {
+      context.proprietaryBuildTools.signTool.signFilesWithGpg(
+        listOf(hashFile), context,
+      )
+    }
+  }
+}
+
+private fun reportExecutablePermissions(distribution: Path, patterns: Map<PathMatcher, String>, matchedFiles: List<MatchedFile>, context: BuildContext) {
+  val notValid = matchedFiles.filterNot { it.isValid }
+  check(notValid.isEmpty()) {
+    "Missing executable permissions in $distribution for:\n" +
+    notValid.joinToString(separator = "\n")
+  }
+  val unmatchedPatterns = patterns.keys - matchedFiles.asSequence()
+    .flatMap { it.patterns }
+    .toSet()
+  if (unmatchedPatterns.isNotEmpty()) {
+    context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
+    unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
+      patterns.getValue(it)
+    }.let { message ->
+      if (TeamCityHelper.isUnderTeamCity) {
+        context.messages.reportBuildProblem(message)
+      }
+      else {
+        context.messages.warning(message)
+      }
+    }
+  }
+}
+
+private fun checkDirectory(distribution: Path, patterns: Collection<PathMatcher>): List<MatchedFile> {
+  return Files.walk(distribution).use { files ->
+    files.filter { !Files.isDirectory(it) }.map { file ->
+      val relativePath = distribution.relativize(file)
+      val matched = patterns.filter { it.matches(relativePath) }
+      if (matched.isEmpty()) null
+      else {
+        MatchedFile(distribution.relativize(file).toString(), OWNER_EXECUTE in Files.getPosixFilePermissions(file), matched)
+      }
+    }.toList().filterNotNull()
+  }
+}
+
+private fun checkTar(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
+  TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(Files.newInputStream(distribution)))).use { stream ->
+    val matched = mutableListOf<MatchedFile>()
+    while (true) {
+      val entry = stream.nextEntry ?: break
+      var entryPath = Path.of(entry.name)
+      if (!root.isEmpty()) {
+        entryPath = Path.of(root).relativize(entryPath)
+      }
+      if (!entry.isDirectory) {
+        val matchedPatterns = patterns.filter { it.matches(entryPath) }
+        if (matchedPatterns.isNotEmpty()) {
+          matched.add(MatchedFile(entry.name, OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(entry.mode), matchedPatterns))
+        }
+      }
+    }
+    return matched
+  }
+}
+
+private fun checkZip(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
+  return ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(distribution)).get().use { zipFile ->
+    zipFile.entries.asSequence().filter { !it.isDirectory }.mapNotNull { entry ->
+      var entryPath = Path.of(entry.name)
+      if (!root.isEmpty()) {
+        entryPath = Path.of(root).relativize(entryPath)
+      }
+      val matched = patterns.filter { it.matches(entryPath) }
+      if (matched.isEmpty()) null
+      else {
+        MatchedFile(entry.name, OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode), matched)
+      }
+    }.toList()
+  }
+}
+
+private class MatchedFile(val relativePath: String, val isValid: Boolean, val patterns: Collection<PathMatcher>) {
+  override fun toString() = relativePath
+}
+
+private fun checkSnap(distribution: Path, root: String, patterns: Collection<PathMatcher>, context: BuildContext): List<MatchedFile> {
+  val stdout = ArrayList<String>()
+  val extractionRoot = "ROOT"
+  runProcess(
+    args = listOf("unsquashfs", "-llnumeric", "-dest", extractionRoot, "$distribution"),
+    inheritOut = false,
+    stdOutConsumer = { s ->
+      s.nullize()?.trim()?.let { stdout.add(it) }
+    },
+    stdErrConsumer = context.messages::warning,
+  )
+
+  val matched = mutableListOf<MatchedFile>()
+  val extractionPrefix = "$extractionRoot/"
+
+  for (line in stdout) {
+    if (line.isEmpty()) continue
+    if (line[0] == 'd') continue // directory
+    if (line[0] == 'l') continue // symlink
+    if (line[0] != '-') continue // regular file
+    // `-rw-r--r-- 0/0                    1820 2025-03-11 15:19 ROOT/Install-Linux-tar.txt`
+    val i = line.indexOf(extractionPrefix)
+    if (i == -1) continue // preamble
+    val path = line.substring(i + extractionPrefix.length)
+    var entryPath = Path.of(path)
+    if (!root.isEmpty()) {
+      entryPath = Path.of(root).relativize(entryPath)
+    }
+    val matchedPatterns = patterns.filter { it.matches(entryPath) }
+    if (matchedPatterns.isNotEmpty()) {
+      matched.add(MatchedFile(relativePath = path, isValid = line.startsWith("-rwx"), patterns = matchedPatterns))
+    }
+  }
+
+  return matched
+}

@@ -16,19 +16,23 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class ClsAnnotationParameterListImpl extends ClsElementImpl implements PsiAnnotationParameterList {
   private final PsiAnnotation myParent;
   private final ClsNameValuePairImpl[] myAttributes;
 
-  public ClsAnnotationParameterListImpl(@NotNull PsiAnnotation parent, @NotNull PsiNameValuePair[] psiAttributes) {
+  public ClsAnnotationParameterListImpl(@NotNull PsiAnnotation parent, PsiNameValuePair @NotNull [] psiAttributes) {
     myParent = parent;
     myAttributes = new ClsNameValuePairImpl[psiAttributes.length];
     for (int i = 0; i < psiAttributes.length; i++) {
@@ -38,7 +42,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
       if (value == null) {
         String anno = parent instanceof ClsAnnotationImpl ? ((ClsAnnotationImpl)parent).getStub().getText() : parent.getText();
         Logger.getInstance(getClass()).error("name=" + name + " anno=[" + anno + "] file=" + parent.getContainingFile());
-        value = new ClsLiteralExpressionImpl(this, "null", PsiType.NULL, null);
+        value = new ClsLiteralExpressionImpl(this, "null", PsiTypes.nullType(), null);
       }
 
       if (psiAttributes.length == 1 && "value".equals(name)) {
@@ -62,14 +66,20 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  public String getText() {
+    final StringBuilder buffer = new StringBuilder();
+    appendMirrorText(0, buffer);
+    return buffer.toString();
+  }
+
+  @Override
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(myAttributes, SourceTreeToPsiMap.<PsiAnnotationParameterList>treeToPsiNotNull(element).getAttributes());
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return myAttributes;
   }
 
@@ -89,8 +99,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiNameValuePair[] getAttributes() {
+  public PsiNameValuePair @NotNull [] getAttributes() {
     return myAttributes;
   }
 }

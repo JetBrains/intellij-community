@@ -1,8 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeMapper;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.TypeAnnotationProvider;
+import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -11,13 +24,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 class TypeCorrector extends PsiTypeMapper {
-  private final Map<PsiClassType, PsiClassType> myResultMap = ContainerUtil.newIdentityHashMap();
+  private final Map<PsiClassType, PsiClassType> myResultMap = new IdentityHashMap<>();
   private final GlobalSearchScope myResolveScope;
 
   TypeCorrector(GlobalSearchScope resolveScope) {
@@ -25,7 +36,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitType(PsiType type) {
+  public PsiType visitType(@NotNull PsiType type) {
     if (LambdaUtil.notInferredType(type)) {
       return type;
     }
@@ -33,8 +44,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <T extends PsiType> T correctType(@NotNull T type) {
+  public @Nullable <T extends PsiType> T correctType(@NotNull T type) {
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType)type;
       if (classType.getParameterCount() == 0) {
@@ -51,12 +61,12 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitClassType(PsiClassType classType) {
+  public PsiType visitClassType(@NotNull PsiClassType classType) {
     if (classType instanceof PsiCorrectedClassType) {
       return myResolveScope.equals(classType.getResolveScope()) ? classType :
              visitClassType(((PsiCorrectedClassType)classType).myDelegate);
     }
-    
+
     PsiClassType alreadyComputed = myResultMap.get(classType);
     if (alreadyComputed != null) {
       return alreadyComputed;
@@ -66,6 +76,7 @@ class TypeCorrector extends PsiTypeMapper {
     final PsiClass psiClass = classResolveResult.getElement();
     final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
     if (psiClass == null) return classType;
+    if (psiClass instanceof LightClass) return classType;
 
     PsiUtilCore.ensureValid(psiClass);
 
@@ -79,8 +90,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedType;
   }
 
-  @NotNull
-  private PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
+  private @NotNull PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = mappedClass.getTypeParameters();
     PsiTypeParameter[] originalTypeParameters = originalClass.getTypeParameters();
     if (typeParameters.length != originalTypeParameters.length) {
@@ -125,7 +135,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  private class PsiCorrectedClassType extends PsiClassType.Stub {
+  private final class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
@@ -140,9 +150,8 @@ class TypeCorrector extends PsiTypeMapper {
       myResolveResult = resolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiClass resolve() {
+    public @NotNull PsiClass resolve() {
       return myResolveResult.myMappedClass;
     }
 
@@ -151,9 +160,24 @@ class TypeCorrector extends PsiTypeMapper {
       return myDelegate.getClassName();
     }
 
-    @NotNull
     @Override
-    public PsiType[] getParameters() {
+    public @Nullable PsiElement getPsiContext() {
+      return myDelegate.getPsiContext();
+    }
+
+    @Override
+    public @NotNull TypeNullability getNullability() {
+      return myDelegate.getNullability();
+    }
+
+    @Override
+    public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+      PsiClassType newDelegate = myDelegate.withNullability(nullability);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
+    }
+
+    @Override
+    public PsiType @NotNull [] getParameters() {
       return ContainerUtil.map2Array(myDelegate.getParameters(), PsiType.class, type -> {
         if (type == null) {
           LOG.error(myDelegate + " of " + myDelegate.getClass() + "; substitutor=" + myDelegate.resolveGenerics().getSubstitutor());
@@ -165,56 +189,54 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public int getParameterCount() {
-      return myDelegate.getParameters().length;
+      return myDelegate.getParameterCount();
     }
 
-    @NotNull
     @Override
-    public ClassResolveResult resolveGenerics() {
+    public @NotNull ClassResolveResult resolveGenerics() {
       return myResolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiClassType rawType() {
+    public @NotNull PsiClassType rawType() {
       PsiClass psiClass = resolve();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       return factory.createType(psiClass, factory.createRawSubstitutor(psiClass));
     }
 
-    @NotNull
     @Override
-    public GlobalSearchScope getResolveScope() {
+    public @NotNull GlobalSearchScope getResolveScope() {
       return myResolveScope;
     }
 
-    @NotNull
     @Override
-    public LanguageLevel getLanguageLevel() {
+    public @NotNull LanguageLevel getLanguageLevel() {
       return myLanguageLevel;
     }
 
-    @NotNull
     @Override
-    public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
       return new PsiCorrectedClassType(languageLevel, myDelegate, myResolveResult);
     }
 
-    @NotNull
     @Override
-    public String getPresentableText(boolean annotated) {
+    public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+      PsiClassType newDelegate = myDelegate.annotate(provider);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
+    }
+
+    @Override
+    public @NotNull String getPresentableText(boolean annotated) {
       return myDelegate.getPresentableText(annotated);
     }
 
-    @NotNull
     @Override
-    public String getCanonicalText(boolean annotated) {
+    public @NotNull String getCanonicalText(boolean annotated) {
       return myDelegate.getCanonicalText(annotated);
     }
 
-    @NotNull
     @Override
-    public String getInternalCanonicalText() {
+    public @NotNull String getInternalCanonicalText() {
       return myDelegate.getInternalCanonicalText();
     }
 
@@ -236,7 +258,7 @@ class TypeCorrector extends PsiTypeMapper {
     private final PsiClassType.ClassResolveResult myClassResolveResult;
     private volatile PsiSubstitutor myLazySubstitutor;
 
-    public CorrectedResolveResult(PsiClass psiClass,
+    CorrectedResolveResult(PsiClass psiClass,
                                   PsiClass mappedClass,
                                   PsiSubstitutor substitutor,
                                   PsiClassType.ClassResolveResult classResolveResult) {
@@ -246,9 +268,8 @@ class TypeCorrector extends PsiTypeMapper {
       myClassResolveResult = classResolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiSubstitutor getSubstitutor() {
+    public @NotNull PsiSubstitutor getSubstitutor() {
       PsiSubstitutor result = myLazySubstitutor;
       if (result == null) {
         myLazySubstitutor = result = mapSubstitutor(myPsiClass, myMappedClass, mySubstitutor);

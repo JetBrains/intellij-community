@@ -12,8 +12,5 @@ class A {
 
             });
         }
-        else {
-            return;
-        }
     }
 }

@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinTest` start
+jvm_library(
+    name = "libraries-kotlinTest",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinTest",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin_test-kotlin-test"],
+    runtime_deps = ["@lib//:libraries-kotlin_test-kotlin-test"],
+)
+
+jvm_library(
+    name = "libraries-kotlinTest_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinTest",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin_test-kotlin-test"],
+    runtime_deps = [":libraries-kotlinTest"],
+)
+### auto-generated section `build intellij.libraries.kotlinTest` end
+
+### auto-generated section `iml intellij.libraries.kotlinTest` start
+exports_files(
+    [
+        "intellij.libraries.kotlinTest.iml",
+        "resources/intellij.libraries.kotlinTest.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinTest` end

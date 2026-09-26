@@ -4,5 +4,5 @@ class A:
 
 
 class B(A):
-    def <warning descr="Call to __init__ of super class is missed">_<caret>_init__</warning>(self, a, c):
+    def <warning descr="Call to '__init__' of super class is missing">_<caret>_init__</warning>(self, a, c):
         pass

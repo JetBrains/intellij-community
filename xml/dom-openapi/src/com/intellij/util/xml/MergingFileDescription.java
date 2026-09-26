@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,22 +11,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class MergingFileDescription<T extends DomElement> extends DomFileDescription<T>{
   private ModelMerger myMerger;
 
-  protected MergingFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
+  protected MergingFileDescription(final Class<T> rootElementClass, final @NonNls String rootTagName) {
     super(rootElementClass, rootTagName);
   }
 
-  @NotNull
-  protected abstract Set<XmlFile> getFilesToMerge(DomElement element);
+  protected abstract @NotNull Set<XmlFile> getFilesToMerge(DomElement element);
 
   @Override
-  @NotNull
-  public DomElement getResolveScope(GenericDomValue<?> reference) {
+  public @NotNull DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
@@ -84,8 +65,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
   }
 
   @Override
-  @NotNull
-  public DomElement getIdentityScope(DomElement element) {
+  public @NotNull DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);
     if (annotation != null) return annotation;
 
@@ -95,7 +75,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomFileElement<T> root = DomUtil.getFileElement(element);
     Object o = getMergedRoot(root);
     for (final JavaMethod method : methods) {
-      o = method.invoke(o, ArrayUtil.EMPTY_OBJECT_ARRAY);
+      o = method.invoke(o, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
     return (DomElement)o;
   }

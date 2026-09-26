@@ -2,12 +2,19 @@
 package org.jetbrains.debugger.values
 
 import com.intellij.util.SmartList
-import org.jetbrains.concurrency.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.Obsolescent
+import org.jetbrains.concurrency.ObsolescentFunction
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
-import java.util.*
+import java.util.Collections
 
+@ApiStatus.Internal
 abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : ValueBase(type), ObjectValue {
   protected abstract val childrenManager: VariablesHost<VALUE_LOADER>
 
@@ -32,6 +39,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
     get() = childrenManager as VariablesHost<ValueManager>
 }
 
+@ApiStatus.Internal
 fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
   val properties = SmartList<Variable>()
   var getterCount = 0

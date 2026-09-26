@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
@@ -22,7 +22,10 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +33,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   private final StackFrameProxyImpl myFrameProxy;
   private final LocalVariableProxyImpl myLocalVariable;
 
-  private String myTypeName = DebuggerBundle.message("label.unknown.value");
+  private String myTypeName = JavaDebuggerBundle.message("label.unknown.value");
   private boolean myIsPrimitive;
+  private boolean myIsParameter;
 
   private boolean myIsNewLocal = true;
 
@@ -59,12 +63,14 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    boolean isVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
+    LocalVariableProxyImpl variable = getLocalVariable();
+    boolean isVisible = myFrameProxy.isLocalVariableVisible(variable);
     if (isVisible) {
-      final String typeName = getLocalVariable().typeName();
+      final String typeName = variable.typeName();
       myTypeName = typeName;
       myIsPrimitive = DebuggerUtils.isPrimitiveType(typeName);
-      return myFrameProxy.getValue(getLocalVariable());
+      myIsParameter = variable.getVariable().isArgument();
+      return myFrameProxy.getValue(variable);
     }
 
     return null;
@@ -77,8 +83,8 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
     super.displayAs(descriptor);
-    if(descriptor instanceof LocalVariableDescriptorImpl) {
-      myIsNewLocal = ((LocalVariableDescriptorImpl)descriptor).myIsNewLocal;
+    if (descriptor instanceof LocalVariableDescriptorImpl variableDescriptor) {
+      myIsNewLocal = variableDescriptor.myIsNewLocal;
     }
   }
 
@@ -87,20 +93,19 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     return myLocalVariable.name();
   }
 
-  @Nullable
   @Override
-  public String getDeclaredType() {
+  public @Nullable String getDeclaredType() {
     return myTypeName;
   }
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
   }
 
@@ -113,6 +118,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
         if (local != null) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
@@ -120,14 +126,17 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
               update(debuggerContext);
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public @NotNull Type getLType() throws EvaluateException, ClassNotLoadedException {
               return local.getType();
             }
           });
         }
       }
     };
+  }
+
+  public boolean isParameter() {
+    return myIsParameter;
   }
 }

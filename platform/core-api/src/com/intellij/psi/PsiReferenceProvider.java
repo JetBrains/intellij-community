@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to inject additional references into an element that supports reference contributors.
- * Register it via {@link PsiReferenceContributor} or {@link PsiReferenceProviderBean#EP_NAME}
- *
+ * Allows injecting additional references into an element that supports reference contributors.
+ * Register it via {@link PsiReferenceContributor} or {@link PsiReferenceProviderBean} extension points.
+ * <p>
  * Note that, if you're implementing a custom language, it won't by default support references registered through PsiReferenceContributor.
  * If you want to support that, you need to call
  * {@link com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry#getReferencesFromProviders(PsiElement)} from your implementation
@@ -31,17 +16,27 @@ import org.jetbrains.annotations.NotNull;
  * @author ik
  */
 public abstract class PsiReferenceProvider {
- public static final PsiReferenceProvider[] EMPTY_ARRAY = new PsiReferenceProvider[0];
 
-  @NotNull
-  public abstract PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context);
+  public abstract PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context);
 
-  public boolean acceptsHints(@NotNull final PsiElement element, @NotNull PsiReferenceService.Hints hints) {
+  /**
+   * Check (preferably in a lightweight way) if this reference provider may return references at all, when invoked on a given PSI element
+   * with given hints (offset, target). If {@code false} is returned, then neither the provider itself,
+   * nor the associated {@link com.intellij.patterns.ElementPattern} is invoked. This can be used to speed up usage search
+   * if, e.g. the references returned by this provider would never resolve to a specified target.
+   * Note that for the hints to be passed correctly, the {@code element} should implement {@link ContributedReferenceHost}
+   * or {@link HintedReferenceHost}.
+   * @see #acceptsTarget
+   */
+  public boolean acceptsHints(final @NotNull PsiElement element, @NotNull PsiReferenceService.Hints hints) {
     final PsiElement target = hints.target;
     return target == null || acceptsTarget(target);
   }
+
+  /**
+   * A specialization of {@link #acceptsHints} that checks for target element only.
+   */
   public boolean acceptsTarget(@NotNull PsiElement target) {
     return true;
   }
-
 }

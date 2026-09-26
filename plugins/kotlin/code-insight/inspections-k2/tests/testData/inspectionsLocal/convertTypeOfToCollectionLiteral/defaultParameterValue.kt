@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+class MyCollection<T> {
+    companion object { operator fun <T> of(vararg elements: T): MyCollection<T> = TODO() }
+}
+
+fun testCollection(x: MyCollection<Number> = MyCollectio<caret>n.of()) { }

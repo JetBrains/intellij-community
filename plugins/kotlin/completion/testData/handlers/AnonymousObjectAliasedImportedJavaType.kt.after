@@ -1,0 +1,10 @@
+import java.util.Comparator as JComp
+
+val a: JComp<Int> = object : JComp<Int> {
+    override fun compare(p0: Int?, p1: Int?): Int {
+        TODO("Not yet implemented")
+    }
+}
+
+// ELEMENT: object
+// TAIL_TEXT: " (java.util.Comparator)"

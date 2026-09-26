@@ -1,0 +1,18 @@
+Original text:
+---------------
+def foo():
+    s = """
+    hello
+    world
+    """
+    return s
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    s = <reparse>"""
+    hello
+    python
+    """</reparse>
+    return s
+---------------

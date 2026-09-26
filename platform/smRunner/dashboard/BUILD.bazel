@@ -1,0 +1,82 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.smRunner.dashboard` start
+content_module_jar(module = ":dashboard")
+### auto-generated section `dev intellij.platform.smRunner.dashboard` end
+
+### auto-generated section `build intellij.platform.smRunner.dashboard` start
+jvm_library(
+    name = "dashboard",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.smRunner.dashboard",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "//platform/smRunner",
+        "//platform/testRunner",
+        "//platform/execution.dashboard",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//platform/ide-core",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "dashboard_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.smRunner.dashboard",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":dashboard",
+        "//platform/smRunner:smRunner_test_lib",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/execution.dashboard:execution.dashboard_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.smRunner.dashboard` end
+
+### auto-generated section `iml intellij.platform.smRunner.dashboard` start
+exports_files(
+    [
+        "intellij.platform.smRunner.dashboard.iml",
+        "resources/intellij.platform.smRunner.dashboard.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.smRunner.dashboard` end

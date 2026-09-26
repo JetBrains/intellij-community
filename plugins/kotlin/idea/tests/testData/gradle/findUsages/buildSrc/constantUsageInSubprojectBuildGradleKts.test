@@ -1,0 +1,19 @@
+// FILE: buildSrc/src/main/kotlin/Versions.kt
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "app/build.gradle.kts KOTLIN"
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "buildSrc/src/main/kotlin/Versions.kt KOTLIN"
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "lib/build.gradle.kts KOTLIN"
+object Versions {
+    const val KOT<caret>LIN = "2.3.20"
+}
+
+object Libs {
+    object Kotlin {
+        const val STDLIB = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN}"
+    }
+}
+
+object Plugins {
+    object Id {
+        const val JAVA_LIBRARY = "java-library"
+    }
+}

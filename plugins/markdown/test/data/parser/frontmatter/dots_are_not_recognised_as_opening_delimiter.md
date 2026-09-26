@@ -1,0 +1,6 @@
+...
+layout: article
+title: Dots
+...
+
+You can't use dots everywhere!

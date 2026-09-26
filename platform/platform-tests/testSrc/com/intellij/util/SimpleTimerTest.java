@@ -29,7 +29,7 @@ public class SimpleTimerTest extends TestCase {
     SimpleTimer timer = SimpleTimer.newInstance("test timer");
     int N = 10000;
     StringBuffer LOG = new StringBuffer(N*5);
-    StringBuffer expected = new StringBuffer(N*5);
+    StringBuilder expected = new StringBuilder(N * 5);
     CountDownLatch executed = new CountDownLatch(N);
 
     List<SimpleTimerTask> tasks = new ArrayList<>(N);

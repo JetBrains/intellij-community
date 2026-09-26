@@ -19,9 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 
-/**
- * @author dsl
- */
 public interface ConvertToInstanceMethodRefactoring extends Refactoring {
   PsiMethod getMethod();
   PsiParameter getTargetParameter();

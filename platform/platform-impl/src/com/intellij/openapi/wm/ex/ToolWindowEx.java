@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -20,43 +6,83 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeListener;
+import javax.swing.Icon;
+import javax.swing.border.EmptyBorder;
+import java.util.List;
 
 public interface ToolWindowEx extends ToolWindow {
-  @NonNls String PROP_AVAILABLE = "available";
-  @NonNls String PROP_ICON = "icon";
-  @NonNls String PROP_TITLE = "title";
-  @NonNls String PROP_STRIPE_TITLE = "stripe-title";
-
-  /**
-   * Removes specified property change listener.
-   *
-   * @param l listener to be removed.
-   */
-  void removePropertyChangeListener(PropertyChangeListener l);
-
   /**
    * @return type of internal decoration of tool window.
-   * @throws IllegalStateException
-   *          if tool window isn't installed.
+   * @throws IllegalStateException if tool window isn't installed.
    */
-  ToolWindowType getInternalType();
+  @NotNull ToolWindowType getInternalType();
 
   void stretchWidth(int value);
 
   void stretchHeight(int value);
 
-  InternalDecorator getDecorator();
+  default boolean canCloseContents() {
+    return false;
+  }
 
-  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
+  /**
+   * Returns the top-level decorator of the tool window. This decorator doesn't change when the tool window is split or unsplit.
+   */
+  @NotNull InternalDecorator getDecorator();
 
-  void setTitleActions(AnAction... actions);
+  /**
+   * @deprecated Use {@link #setTitleActions(List)}
+   */
+  @Deprecated
+  default void setTitleActions(@NotNull AnAction @NotNull ... actions) {
+    setTitleActions(List.of(actions));
+  }
 
-  void setUseLastFocusedOnActivation(boolean focus);
+  void setTabActions(@NotNull AnAction @NotNull ... actions);
 
-  boolean isUseLastFocusedOnActivation();
+  void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
+  @ApiStatus.Internal
+  default @Nullable ToolWindowDecoration getDecoration() { return null; }
+
+  @ApiStatus.Internal
+  final class Border extends EmptyBorder {
+    public Border() {
+      this(true, true, true, true);
+    }
+
+    public Border(boolean top, boolean left, boolean right, boolean bottom) {
+      super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
+    }
+  }
+
+  @ApiStatus.Internal
+  final class ToolWindowDecoration {
+    private final ActionGroup myActionGroup;
+    private final Icon myIcon;
+
+    public ToolWindowDecoration(Icon icon, ActionGroup actionGroup) {
+      myActionGroup = actionGroup;
+      myIcon = icon;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    public ActionGroup getActionGroup() {
+      return myActionGroup;
+    }
+  }
+
+  default @Nullable StatusText getEmptyText() {
+    return null;
+  }
+
+  default void updateContentUi() {}
 }

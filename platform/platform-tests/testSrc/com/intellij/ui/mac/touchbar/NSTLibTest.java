@@ -1,37 +1,39 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.ui.mac.foundation.ID;
-import junit.framework.TestCase;
-import org.junit.Assume;
 import org.junit.Test;
 
-public class NSTLibTest extends TestCase {
+import java.lang.foreign.MemorySegment;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assume.assumeTrue;
+
+public class NSTLibTest {
   @Test
   public void testLoadingAndBasicFunctions() {
-    Assume.assumeTrue(NST.isSupportedOS());
+    assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
     NSTLibrary lib = null;
     try {
       // NOTE: for supported OS-versions library must always loads (even SystemSettingsWrapper.isTouchBarServerRunning() == false)
-      lib = NST.loadLibrary();
+      lib = NST.loadLibraryImpl();
     } catch (Throwable e) {
       fail("Failed to load nst library for touchbar: " + e.getMessage());
     }
 
-    assertNotNull("Failed to load nst library for touchbar: native loader returns null", lib);
+    assertThat(lib).as("The native Touch Bar library").isNotNull();
 
     // NOTE: it's difficult to promise correct library work in the system without running tb-server (this condition must be equals to isSettingsDomainExists())
-    Assume.assumeTrue(Utils.isTouchBarServerRunning());
+    assumeTrue("touch bar server not running", Helpers.isTouchBarServerRunning());
 
     try {
       // small check that loaded library can create native objects
-      final ID test = lib.createTouchBar("test", (uid) -> { return ID.NIL;}, null);
-      assertNotNull("Failed to create native touchbar object, result is null", test);
-      assertFalse("Failed to create native touchbar object, result is ID.NIL", test == ID.NIL);
-      if (test != ID.NIL)
-        lib.releaseTouchBar(test);
-    } catch (RuntimeException e) {
+      final MemorySegment test = lib.createTouchBar("test", (uid) -> MemorySegment.NULL, null);
+      assertThat(test.address()).as("The native Touch Bar object").isNotZero();
+      lib.releaseNativePeer(test);
+    }
+    catch (RuntimeException e) {
       fail("nst library was loaded, but native object can't be created: " + e.getMessage());
     }
 

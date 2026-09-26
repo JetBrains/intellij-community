@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,25 +6,25 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.NioJarUtilKt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-public class JarVersionDetectionUtil {
+public final class JarVersionDetectionUtil {
   private JarVersionDetectionUtil() { }
 
-  @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
+  public static @Nullable String detectJarVersion(@NotNull String detectionClass, @NotNull Module module) {
     for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (library instanceof LibraryOrderEntry) {
         VirtualFile jar = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
@@ -51,14 +37,13 @@ public class JarVersionDetectionUtil {
     return null;
   }
 
-  @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
+  public static @Nullable @NlsSafe String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
            getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
   }
 
-  private static String getMainAttribute(VirtualFile jarRoot, Attributes.Name attribute) {
+  public static @Nullable String getMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
     VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifestFile != null) {
       try (InputStream stream = manifestFile.getInputStream()) {
@@ -72,13 +57,11 @@ public class JarVersionDetectionUtil {
     return null;
   }
 
-  @Nullable
-  public static String getBundleVersion(@NotNull File jar) {
-    return JarUtil.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
+  public static @Nullable String getBundleVersion(@NotNull Path jar) {
+    return NioJarUtilKt.getJarAttribute(jar, new Attributes.Name("Bundle-Version"));
   }
 
-  @Nullable
-  public static String getImplementationVersion(@NotNull File jar) {
-    return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
+  public static @Nullable String getImplementationVersion(@NotNull Path jar) {
+    return NioJarUtilKt.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
 }

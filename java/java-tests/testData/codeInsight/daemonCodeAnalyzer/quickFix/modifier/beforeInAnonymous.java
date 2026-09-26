@@ -1,4 +1,4 @@
-// "Make 'Bar.f' protected" "true"
+// "Make 'Bar.f()' protected" "true"
 public class Foo extends Bar{
     void foo() {
         new Runnable(){

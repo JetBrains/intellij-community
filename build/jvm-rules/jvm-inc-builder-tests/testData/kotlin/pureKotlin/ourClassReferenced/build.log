@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_ourClassReferenced-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/ourClassReferenced/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_ourClassReferenced-a.kotlin_module
+  klass/Klass.class
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/ourClassReferenced/a/Klass.kt
+  kotlin/pureKotlin/ourClassReferenced/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

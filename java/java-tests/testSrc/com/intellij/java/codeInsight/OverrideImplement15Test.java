@@ -15,37 +15,37 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
-public class OverrideImplement15Test extends LightCodeInsightTestCase {
+public class OverrideImplement15Test extends OverrideImplementBaseTest {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
+
+  @Override
+  protected String getBaseDir() {
+    return BASE_DIR;
+  }
 
   @Override
   protected LanguageLevel getLanguageLevel() {
@@ -54,6 +54,30 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
 
   public void testSimple() { doTest(true); }
   public void testAnnotation() { doTest(true); }
+  public void testTransformJBAnnotations() {
+    doCustomNotNullAnnotations();
+  }
+
+  public void testDoNotTransformJBAnnotationsWhenNewNonAvailable() {
+    doCustomNotNullAnnotations();
+  }
+  
+  private void doCustomNotNullAnnotations() {
+    NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(getProject());
+    List<String> notNulls = nullableNotNullManager.getNotNulls();
+    List<String> nullables = nullableNotNullManager.getNullables();
+
+    try {
+      nullableNotNullManager.setNotNulls(ArrayUtil.prepend("p.NN",ArrayUtil.toStringArray(notNulls)));
+      nullableNotNullManager.setNullables(ArrayUtil.prepend("p.N",ArrayUtil.toStringArray(nullables)));
+      doTest(true, true);
+    }
+    finally {
+      nullableNotNullManager.setNotNulls(ArrayUtil.toStringArray(notNulls));
+      nullableNotNullManager.setNullables(ArrayUtil.toStringArray(nullables));
+    }
+  }
+
   public void testJavadocForChangedParamName() { doTest(true); }
   public void testThrowsListFromMethodHierarchy() { doTest(true); }
   public void testThrowsListUnrelatedMethods() { doTest(true); }
@@ -73,49 +97,31 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
   public void testRawInheritanceWithMethodTypeParameters() { doTest(false); }
+  public void testVoidNameSuggestion() { doTest(false); }
 
   public void testLongFinalParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      javaSettings.RIGHT_MARGIN = 80;
-      javaSettings.KEEP_LINE_BREAKS = true;
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
-      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.RIGHT_MARGIN = 80;
+    javaSettings.KEEP_LINE_BREAKS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
+    javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doTest(false);
   }
 
   public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).PARAMETER_NAME_PREFIX = "in";
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    JavaCodeStyleSettings.getInstance(getProject()).PARAMETER_NAME_PREFIX = "in";
+    doTest(false);
   }
 
   public void testLongParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    try {
-      CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
-      javaSettings.RIGHT_MARGIN = 80;
-      javaSettings.KEEP_LINE_BREAKS = false;
-      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
-      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
-      doTest(false);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.RIGHT_MARGIN = 80;
+    javaSettings.KEEP_LINE_BREAKS = false;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
+    javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    doTest(false);
   }
 
   public void testImplementedConstructorsExcluded() {
@@ -156,35 +162,5 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     final JavaOverrideMethodsHandler handler = new JavaOverrideMethodsHandler();
     assertTrue(handler.isValidFor(getEditor(), getFile()));
     assertFalse(handler.isAvailableForQuickList(getEditor(), getFile(), new MapDataContext()));
-  }
-
-  private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }
-
-  private void doTest(boolean copyJavadoc, @Nullable Boolean toImplement) {
-    String name = getTestName(false);
-    configureByFile(BASE_DIR + "before" + name + ".java");
-    int offset = getEditor().getCaretModel().getOffset();
-    PsiElement context = getFile().findElementAt(offset);
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    assert psiClass != null;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      if (toImplement == null) {
-        PsiClassType[] implement = psiClass.getImplementsListTypes();
-        final PsiClass superClass = implement.length == 0 ? psiClass.getSuperClass() : implement[0].resolve();
-        assert superClass != null;
-        PsiMethod method = superClass.getMethods()[0];
-        final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, PsiSubstitutor.EMPTY);
-        final List<PsiMethodMember> candidates = Collections.singletonList(new PsiMethodMember(method,
-                                                                                               OverrideImplementExploreUtil
-                                                                                                 .correctSubstitutor(method,
-                                                                                                                     substitutor)));
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(getEditor(), psiClass, candidates, copyJavadoc, true);
-      }
-      else {
-        OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-      }
-    });
-
-    checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }

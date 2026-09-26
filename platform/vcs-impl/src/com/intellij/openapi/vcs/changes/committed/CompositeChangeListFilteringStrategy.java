@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,26 +19,28 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     myInSetBase = false;
   }
 
+  @Override
   public JComponent getFilterUI() {
     return null;
   }
 
   @Override
-  public CommittedChangesFilterKey getKey() {
+  public @NotNull CommittedChangesFilterKey getKey() {
     throw new UnsupportedOperationException();
   }
 
-  public void setFilterBase(final List<CommittedChangeList> changeLists) {
+  @Override
+  public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     setFilterBaseImpl(changeLists, true);
   }
 
-  private List<CommittedChangeList> setFilterBaseImpl(final List<CommittedChangeList> changeLists, final boolean setFirst) {
+  private List<CommittedChangeList> setFilterBaseImpl(final List<? extends CommittedChangeList> changeLists, final boolean setFirst) {
+    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     if (myInSetBase) {
-      return changeLists;
+      return list;
     }
     myInSetBase = true;
 
-    List<CommittedChangeList> list = new ArrayList<>(changeLists);
     boolean callSetFilterBase = setFirst;
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       if (callSetFilterBase) {
@@ -65,27 +53,31 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     return list;
   }
 
-  public void addChangeListener(final ChangeListener listener) {
+  @Override
+  public void addChangeListener(@NotNull ChangeListener listener) {
     // not used
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.addChangeListener(listener);
     }
   }
 
-  public void removeChangeListener(final ChangeListener listener) {
+  @Override
+  public void removeChangeListener(@NotNull ChangeListener listener) {
     // not used
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.removeChangeListener(listener);
     }
   }
 
+  @Override
   public void resetFilterBase() {
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.resetFilterBase();
     }
   }
 
-  public void appendFilterBase(final List<CommittedChangeList> changeLists) {
+  @Override
+  public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     List<CommittedChangeList> list = new ArrayList<>(changeLists);
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.appendFilterBase(list);
@@ -93,8 +85,8 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     }
   }
 
-  @NotNull
-  public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
+  @Override
+  public @NotNull List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     return setFilterBaseImpl(changeLists, false);
   }
 

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeView;
@@ -25,18 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.ide.IdeBundle.message;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.roots.ProjectRootManager.getInstance;
 
-public class DirectoryChooserUtil {
+public final class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
   }
 
-  @Nullable
-  public static PsiDirectory getOrChooseDirectory(@NotNull IdeView view) {
+  public static @Nullable PsiDirectory getOrChooseDirectory(@NotNull IdeView view) {
     PsiDirectory[] dirs = view.getDirectories();
     if (dirs.length == 0) return null;
     if (dirs.length == 1) {
@@ -48,19 +33,17 @@ public class DirectoryChooserUtil {
     }
   }
 
-  @Nullable
-  public static PsiDirectory selectDirectory(Project project,
-                                             PsiDirectory[] packageDirectories,
-                                             PsiDirectory defaultDirectory,
-                                             String postfixToShow) {
+  public static @Nullable PsiDirectory selectDirectory(@NotNull Project project,
+                                                       PsiDirectory @NotNull [] packageDirectories,
+                                                       @Nullable PsiDirectory defaultDirectory,
+                                                       @Nullable String postfixToShow) {
     ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
-    ArrayList<PsiDirectory> possibleDirs = new ArrayList<>();
+    List<PsiDirectory> possibleDirs = new ArrayList<>();
     for (PsiDirectory dir : packageDirectories) {
-      if (!dir.isValid()) continue;
-      if (!dir.isWritable()) continue;
-      if (possibleDirs.contains(dir)) continue;
-      if (!projectFileIndex.isInContent(dir.getVirtualFile())) continue;
+      if (!dir.isValid() || !dir.isWritable() || possibleDirs.contains(dir) || !projectFileIndex.isInContent(dir.getVirtualFile())) {
+        continue;
+      }
       possibleDirs.add(dir);
     }
 
@@ -75,12 +58,10 @@ public class DirectoryChooserUtil {
     return chooser.showAndGet() ? chooser.getSelectedDirectory() : null;
   }
 
-  @Nullable
-  public static
-  PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
-                               @Nullable PsiDirectory initialDirectory,
-                               @NotNull Project project,
-                               Map<PsiDirectory, String> relativePathsToCreate) {
+  public static @Nullable PsiDirectory chooseDirectory(PsiDirectory @NotNull [] targetDirectories,
+                                                       @Nullable PsiDirectory initialDirectory,
+                                                       @NotNull Project project,
+                                                       @Nullable Map<PsiDirectory, String> relativePathsToCreate) {
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
     chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(

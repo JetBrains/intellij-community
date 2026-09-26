@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.images.copyright` start
+content_module_jar(module = ":copyright")
+### auto-generated section `dev intellij.platform.images.copyright` end
+
+### auto-generated section `build intellij.platform.images.copyright` start
+jvm_library(
+    name = "copyright",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.images.copyright",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//images",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//plugins/copyright",
+        "//platform/core-api:core",
+        "//xml/xml-psi-impl:psi-impl",
+    ],
+)
+
+jvm_library(
+    name = "copyright_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.images.copyright",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":copyright",
+        "//images:images_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/copyright:copyright_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//xml/xml-psi-impl:psi-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.images.copyright` end
+
+### auto-generated section `iml intellij.platform.images.copyright` start
+exports_files(
+    [
+        "intellij.platform.images.copyright.iml",
+        "resources/intellij.platform.images.copyright.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.images.copyright` end

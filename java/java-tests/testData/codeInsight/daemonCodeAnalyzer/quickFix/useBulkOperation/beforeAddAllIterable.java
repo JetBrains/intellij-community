@@ -1,4 +1,4 @@
-// "Replace iteration with bulk 'Collection.addAll' call" "false"
+// "Replace iteration with bulk 'Collection.addAll()' call" "false"
 import java.util.*;
 
 public class Collect {

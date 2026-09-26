@@ -16,30 +16,35 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class JavaDocAnnotator implements Annotator {
+public final class JavaDocAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (element instanceof PsiDocTag) {
       String name = ((PsiDocTag)element).getName();
       if ("param".equals(name)) {
         PsiDocTagValue tagValue = ((PsiDocTag)element).getValueElement();
         if (tagValue != null) {
-          Annotation annotation = holder.createInfoAnnotation(tagValue, null);
-          annotation.setTextAttributes(JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
+          holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(tagValue).textAttributes(JavaHighlightingColors.DOC_COMMENT_TAG_VALUE).create();
         }
       }
+    }
+
+    if (element instanceof PsiMarkdownLink) {
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(element).textAttributes(JavaHighlightingColors.DOC_COMMENT_MARKUP)
+        .create();
     }
   }
 }

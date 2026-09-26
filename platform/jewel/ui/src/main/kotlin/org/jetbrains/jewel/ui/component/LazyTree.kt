@@ -1,0 +1,90 @@
+package org.jetbrains.jewel.ui.component
+
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.takeOrElse
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
+import org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTree
+import org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewKeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
+import org.jetbrains.jewel.foundation.lazy.tree.Tree
+import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
+import org.jetbrains.jewel.foundation.lazy.tree.TreeState
+import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
+import org.jetbrains.jewel.ui.component.styling.contentFor
+import org.jetbrains.jewel.ui.theme.treeStyle
+
+/**
+ * Renders a lazily-loaded, selectable tree of [Tree.Element] nodes.
+ *
+ * @param T The type of data held by each tree element.
+ * @param tree The [Tree] data structure to display.
+ * @param modifier Modifier to apply to the tree layout.
+ * @param onElementClick Called when a tree element is clicked.
+ * @param treeState The [TreeState] controlling expansion and selection.
+ * @param onElementDoubleClick Called when a tree element is double-clicked.
+ * @param onSelectionChange Called when the set of selected elements changes.
+ * @param keyActions The [KeyActions] handling keyboard navigation.
+ * @param style The [LazyTreeStyle] controlling the visual appearance.
+ * @param interactionSource The [MutableInteractionSource] tracking user interactions with the tree.
+ * @param nodeContent The composable content rendered for each tree element.
+ */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Composable
+public fun <T> LazyTree(
+    tree: Tree<T>,
+    modifier: Modifier = Modifier,
+    onElementClick: (Tree.Element<T>) -> Unit = {},
+    treeState: TreeState = rememberTreeState(),
+    onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
+    onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
+    keyActions: KeyActions = DefaultTreeViewKeyActions(treeState),
+    style: LazyTreeStyle = JewelTheme.treeStyle,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
+) {
+    val colors = style.colors
+    val metrics = style.metrics
+
+    BasicLazyTree(
+        tree = tree,
+        elementBackgroundFocused = colors.backgroundActive,
+        elementBackgroundSelectedFocused = colors.backgroundSelectedActive,
+        elementBackgroundSelected = colors.backgroundSelected,
+        indentSize = metrics.indentSize,
+        elementBackgroundCornerSize = metrics.simpleListItemMetrics.selectionBackgroundCornerSize,
+        elementPadding = metrics.simpleListItemMetrics.outerPadding,
+        elementContentPadding = metrics.simpleListItemMetrics.innerPadding,
+        elementMinHeight = metrics.elementMinHeight,
+        chevronContentGap = metrics.chevronContentGap,
+        onElementClick = onElementClick,
+        onElementDoubleClick = onElementDoubleClick,
+        onSelectionChange = onSelectionChange,
+        modifier = modifier,
+        treeState = treeState,
+        keyActions = keyActions,
+        interactionSource = interactionSource,
+        chevronContent = { elementState ->
+            val iconKey = style.icons.chevron(elementState.isExpanded, elementState.isSelected)
+            Icon(iconKey, contentDescription = null)
+        },
+        nodeContent = {
+            val resolvedContentColor =
+                style.colors
+                    .contentFor(TreeElementState.of(focused = isActive, selected = isSelected, expanded = false))
+                    .value
+                    .takeOrElse { LocalContentColor.current }
+
+            CompositionLocalProvider(LocalContentColor provides resolvedContentColor) { nodeContent(it) }
+        },
+    )
+}

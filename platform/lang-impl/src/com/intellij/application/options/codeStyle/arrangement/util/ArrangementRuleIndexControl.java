@@ -1,31 +1,19 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
-/**
- * @author Denis Zhdanov
- * @since 10/31/12 5:04 PM
- */
-public class ArrangementRuleIndexControl extends JPanel {
+@ApiStatus.Internal
+public final class ArrangementRuleIndexControl extends JPanel {
 
   private boolean myIsError;
   private final int myDiameter;
@@ -76,9 +64,11 @@ public class ArrangementRuleIndexControl extends JPanel {
     if (myChars == null) {
       return;
     }
-    
-    g.setColor(myIsError ? JBColor.red : JBColor.border());
-    Rectangle bounds = getBounds();
+
+    final Color error = JBColor.namedColor("Label.errorForeground", JBColor.red);
+    final Color foreground = JBColor.namedColor("Label.infoForeground", JBColor.border());
+    g.setColor(myIsError ? error : foreground);
+
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
     g.drawOval(0, y, myDiameter, myDiameter);
@@ -86,7 +76,7 @@ public class ArrangementRuleIndexControl extends JPanel {
     if (UIUtil.isUnderDarcula()) {
       g.setColor(UIUtil.getLabelForeground());
     }
-    g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, myBaseLine);
+    g.drawChars(myChars, 0, myChars.length, (myDiameter - myIndexWidth) / 2, myBaseLine);
   }
 
   public void setError(boolean isError) {

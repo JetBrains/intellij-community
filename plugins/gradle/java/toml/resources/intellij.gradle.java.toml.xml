@@ -1,0 +1,40 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <elementDescriptionProvider implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogDescriptionProvider"/>
+    <useScopeEnlarger implementation="com.intellij.gradle.java.toml.service.GradleTomlUseScopeEnlarger"/>
+    <findUsagesHandlerFactory implementation="com.intellij.gradle.java.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>
+    <psi.referenceContributor language="TOML"
+                              implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogReferenceContributor"/>
+    <renameInputValidator implementation="com.intellij.gradle.java.toml.navigation.VersionCatalogRenameInputValidator"/>
+
+    <completion.contributor language="TOML"
+                            implementationClass="com.intellij.gradle.java.toml.completion.TomlVersionCatalogCompletionContributor" />
+    <completion.confidence language="TOML"
+                           id="EnableAutoPopupInTomlVersionCatalogCompletion"
+                           implementationClass="com.intellij.gradle.java.toml.completion.EnableAutoPopupInTomlVersionCatalogCompletion" />
+
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <versionCatalogPsiResolver implementation="com.intellij.gradle.java.toml.GradleVersionCatalogPsiResolverImpl"/>
+    <versionCatalogEntrySearcher implementation="com.intellij.gradle.java.toml.service.GradleTomlVersionCatalogEntrySearcher"/>
+  </extensions>
+</idea-plugin>

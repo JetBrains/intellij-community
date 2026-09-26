@@ -1,13 +1,19 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
-public class ReplacementVariableDefinition extends NamedScriptableDefinition {
+public final class ReplacementVariableDefinition extends NamedScriptableDefinition {
   public ReplacementVariableDefinition() {}
 
-  public ReplacementVariableDefinition(ReplacementVariableDefinition definition) {
+  public ReplacementVariableDefinition(@NotNull String name) {
+    setName(name);
+  }
+
+  public ReplacementVariableDefinition(@NotNull ReplacementVariableDefinition definition) {
     super(definition);
   }
 

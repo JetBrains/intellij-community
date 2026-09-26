@@ -1,0 +1,5 @@
+// "Add '@JvmInline' annotation" "true"
+// WITH_STDLIB
+// K2_ERROR: VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION
+<caret>value class VC(val i: Int)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddJvmInlineAnnotationFix

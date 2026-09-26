@@ -1,28 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.dnd.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDSource;
+import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -36,26 +33,42 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Stroke;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
-public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
+public final class GridCaptionPanel extends JPanel implements ComponentSelectionListener, UiDataProvider {
+  private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
   private final GuiEditor myEditor;
   private final boolean myIsRow;
@@ -72,6 +85,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     myIsRow = isRow;
     mySelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     mySelectionModel.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         repaint();
         myEditor.fireSelectedComponentChanged();
@@ -103,7 +117,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public static JBColor getGutterColor() {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? UIUtil.getPanelBackground() : color;
     });
@@ -227,10 +241,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return LightColors.GREEN;
   }
 
-  @Nullable private RadContainer getSelectedGridContainer() {
+  private @Nullable RadContainer getSelectedGridContainer() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
-    if (selection.size() == 1 && selection.get(0) instanceof RadContainer) {
-      RadContainer container = (RadContainer) selection.get(0);
+    if (selection.size() == 1 && selection.get(0) instanceof RadContainer container) {
       if (container.getLayoutManager().isGrid() && (container.getParent() instanceof RadRootContainer || container.getComponentCount() > 0)) {
         return container;
       }
@@ -248,7 +261,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return container;
   }
 
-  public void selectedComponentChanged(GuiEditor source) {
+  @Override
+  public void selectedComponentChanged(@NotNull GuiEditor source) {
     checkSelectionChanged();
     repaint();
   }
@@ -262,21 +276,17 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
   }
 
-  @Nullable public Object getData(String dataId) {
-    if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
-    }
-    if (CaptionSelection.DATA_KEY.is(dataId)) {
-      return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex());
-    }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
-    return myEditor.getData(dataId);
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+    sink.set(CaptionSelection.DATA_KEY, new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex()));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    DataSink.uiDataSnapshot(sink, myEditor);
   }
 
   public void attachToScrollPane(final JScrollPane scrollPane) {
     scrollPane.getViewport().addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         repaint();
       }
@@ -295,11 +305,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return myIsRow ? mySelectedContainer.getGridRowAt(pnt.y) : mySelectedContainer.getGridColumnAt(pnt.x);
   }
 
-  public int[] getSelectedCells(@Nullable final Point dragOrigin) {
+  public int[] getSelectedCells(final @Nullable Point dragOrigin) {
     ArrayList<Integer> selection = new ArrayList<>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
     int size = getCellCount();
     for(int i=0; i<size; i++) {
@@ -307,7 +317,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         selection.add(i);
       }
     }
-    if (selection.size() == 0 && dragOrigin != null) {
+    if (selection.isEmpty() && dragOrigin != null) {
       int cell = getCellAt(dragOrigin);
       if (cell >= 0) {
         return new int[] { cell };
@@ -335,9 +345,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Override public void mousePressed(MouseEvent e) {
       if (mySelectedContainer == null) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(GridCaptionPanel.this, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(GridCaptionPanel.this, true));
       Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
                                               mySelectedContainer.getDelegee());
       if (canResizeCells()) {
@@ -346,10 +354,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & MouseEvent.CTRL_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
           mySelectionModel.addSelectionInterval(cell, cell);
         }
-        else if ((e.getModifiers() & MouseEvent.SHIFT_MASK) != 0) {
+        else if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.addSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), cell);
         }
       }
@@ -369,7 +377,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (!checkShowPopupMenu(e)) {
         int cell = getCellAt(e.getPoint());
         if (cell == -1) return;
-        if ((e.getModifiers() & (MouseEvent.CTRL_MASK | MouseEvent.SHIFT_MASK)) == 0) {
+        if ((e.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK)) == 0) {
           mySelectionModel.setSelectionInterval(cell, cell);
         }
       }
@@ -384,7 +392,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         }
         ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
-          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("GridCaptionPanel", group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
           return true;
         }
@@ -410,6 +418,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       myEditor.refreshAndSave(true);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       if (!canResizeCells()) {
         return;
@@ -431,6 +440,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
       if (myResizeLine > 0) {
         Point pnt = SwingUtilities.convertPoint(GridCaptionPanel.this, e.getPoint(),
@@ -458,6 +468,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private static class LineFeedbackPainter implements FeedbackPainter {
+    @Override
     public void paintFeedback(Graphics2D g, Rectangle rc) {
       g.setColor(LightColors.YELLOW);
       if (rc.width == 1) {
@@ -470,6 +481,12 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       int[] selection = getSelectedCells(null);
       if (selection.length > 0) {
@@ -477,6 +494,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (mySelectedContainer == null || mySelectionModel.isSelectionEmpty()) {
         return false;
@@ -487,7 +505,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   private class MyDnDSource implements DnDSource {
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    @Override
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       LOG.debug("canStartDragging(): dragOrigin=" + dragOrigin);
       if (myResizeLine != -1) {
         LOG.debug("canStartDragging(): have resize line");
@@ -520,32 +539,22 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       return true;
     }
 
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    @Override
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
-    }
-
-    @Nullable
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;
-    }
-
-    public void dragDropEnd() {
-    }
-
-    public void dropActionChanged(final int gestureModifiers) {
     }
   }
 
   private class MyDnDTarget implements DnDTarget {
+    @Override
     public boolean update(DnDEvent aEvent) {
       aEvent.setDropPossible(false);
       if (mySelectedContainer == null) {
         return false;
       }
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean bean)) {
         return false;
       }
-      MyDragBean bean = (MyDragBean) aEvent.getAttachedObject();
       if (bean.isRow != myIsRow || bean.cells.length == 0) {
         return false;
       }
@@ -571,11 +580,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       return mySelectedContainer.getGridLayoutManager().getGridLineNear(mySelectedContainer, myIsRow, point, 20);
     }
 
+    @Override
     public void drop(DnDEvent aEvent) {
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean dragBean)) {
         return;
       }
-      MyDragBean dragBean = (MyDragBean) aEvent.getAttachedObject();
       int targetCell = getDropGridLine(aEvent);
       if (targetCell < 0) return;
       mySelectedContainer.getGridLayoutManager().processCellsMoved(mySelectedContainer, myIsRow, dragBean.cells, targetCell);
@@ -585,12 +594,10 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       cleanUpOnLeave();
     }
 
+    @Override
     public void cleanUpOnLeave() {
       setDropInsertLine(-1);
       myEditor.getActiveDecorationLayer().removeFeedback();
-    }
-
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 
     private void setDropInsertLine(final int i) {
@@ -605,7 +612,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public boolean isRow;
     public int[] cells;
 
-    public MyDragBean(final boolean row, final int[] cells) {
+    MyDragBean(final boolean row, final int[] cells) {
       isRow = row;
       this.cells = cells;
     }
@@ -632,7 +639,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       int leadIndex = mySelectionModel.getLeadSelectionIndex();
       int newLeadIndex = leadIndex + delta;
       if (newLeadIndex >= 0 && newLeadIndex < getCellCount()) {
-        if ((e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+        if ((e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           mySelectionModel.setSelectionInterval(mySelectionModel.getAnchorSelectionIndex(), newLeadIndex);
         }
         else {

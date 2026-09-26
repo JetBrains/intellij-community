@@ -24,13 +24,12 @@
  */
 package org.jetbrains.lang.manifest.header;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.Header;
@@ -42,41 +41,41 @@ import java.util.Set;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderParserRepository {
+@Service
+public final class HeaderParserRepository {
   public static HeaderParserRepository getInstance() {
-    return ServiceManager.getService(HeaderParserRepository.class);
+    return ApplicationManager.getApplication().getService(HeaderParserRepository.class);
   }
 
-  private final NotNullLazyValue<Map<String, HeaderParser>> myParsers = new NotNullLazyValue<Map<String, HeaderParser>>() {
-    @NotNull
+  private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<>() {
     @Override
-    protected Map<String, HeaderParser> compute() {
-      Map<String, HeaderParser> map = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      for (HeaderParserProvider provider : Extensions.getExtensions(HeaderParserProvider.EP_NAME)) {
+    protected @NotNull Map<String, HeaderParser> compute() {
+      Map<String, HeaderParser> map = CollectionFactory.createCaseInsensitiveStringMap();
+      for (HeaderParserProvider provider : HeaderParserProvider.EP_NAME.getExtensionList()) {
         map.putAll(provider.getHeaderParsers());
       }
       return map;
     }
   };
 
-  @Nullable
-  public HeaderParser getHeaderParser(@Nullable String headerName) {
+  public HeaderParserRepository() {
+    HeaderParserProvider.EP_NAME.addChangeListener(myParsers::drop, null);
+  }
+
+  public @Nullable HeaderParser getHeaderParser(@Nullable String headerName) {
     return myParsers.getValue().get(headerName);
   }
 
-  @NotNull
-  public Set<String> getAllHeaderNames() {
+  public @NotNull Set<String> getAllHeaderNames() {
     return myParsers.getValue().keySet();
   }
 
-  @Nullable
-  public Object getConvertedValue(@NotNull Header header) {
+  public @Nullable Object getConvertedValue(@NotNull Header header) {
     HeaderParser parser = getHeaderParser(header.getName());
     return parser != null ? parser.getConvertedValue(header) : null;
   }
 
-  @NotNull
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     Header header = PsiTreeUtil.getParentOfType(headerValuePart, Header.class);
     if (header != null) {
       HeaderParser parser = getHeaderParser(header.getName());

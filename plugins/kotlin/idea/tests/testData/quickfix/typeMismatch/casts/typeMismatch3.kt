@@ -1,0 +1,11 @@
+// "Cast expression 'a + a' to 'B'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+interface A {
+    operator fun plus(x: Any): A
+}
+interface B : A
+
+fun foo(a: A): B {
+    return a + a<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.CastExpressionFixFactories$CastExpressionModCommandAction

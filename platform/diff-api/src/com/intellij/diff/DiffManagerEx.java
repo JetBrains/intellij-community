@@ -1,58 +1,53 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeRequestHandler;
+import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class DiffManagerEx extends DiffManager {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static DiffManagerEx getInstance() {
-    return (DiffManagerEx)ServiceManager.getService(DiffManager.class);
+  public static @NotNull DiffManagerEx getInstance() {
+    return (DiffManagerEx)DiffManager.getInstance();
   }
 
   //
   // Usage
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request);
 
-  @NotNull
-  public abstract List<DiffTool> getDiffTools();
+  @RequiresEdt
+  public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer request, @NotNull DiffDialogHints hints);
 
-  @NotNull
-  public abstract List<MergeTool> getMergeTools();
+  public abstract @NotNull List<DiffTool> getDiffTools();
+
+  public abstract @NotNull List<MergeTool> getMergeTools();
+
+  /**
+   * Gets the handler that will be used to show the merge
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull MergeRequestHandler getHandler(@Nullable Project project, @NotNull MergeRequest request);
 }

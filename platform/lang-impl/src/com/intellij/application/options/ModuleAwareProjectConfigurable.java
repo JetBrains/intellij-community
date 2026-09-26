@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
@@ -23,44 +9,44 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.platform.ModuleAttachProcessor;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.CardLayout;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+import static com.intellij.platform.ModuleAttachProcessorKt.getSortedModules;
+
 public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable,
                                                                                                Configurable.NoScroll {
-  @NotNull
-  private final Project myProject;
-  private final String myDisplayName;
+  private static final String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
+  private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
-  private final Map<Module, T> myModuleConfigurables = new HashMap<>();
-  private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
+  private final Map<Module, AtomicNotNullLazyValue<T>> myConfigurablesProviders = new HashMap<>();
+  private final @NotNull Project myProject;
 
-  public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, String helpTopic) {
+  public ModuleAwareProjectConfigurable(@NotNull Project project, @NlsContexts.ConfigurableName String displayName, @NonNls String helpTopic) {
     myProject = project;
     myDisplayName = displayName;
     myHelpTopic = helpTopic;
   }
 
-  @Nls
   @Override
   public String getDisplayName() {
     return myDisplayName;
@@ -75,42 +61,45 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     return true;
   }
 
+  private @Nullable Splitter mySplitter;
+
+  /**
+   * Returns the splitter created by {@link #createComponent()}, or {@code null} if the component
+   * is not a splitter (e.g. single module, default project). Available after {@link #createComponent()}.
+   */
+  @ApiStatus.Internal
+  public final @Nullable Splitter getSplitter() {
+    return mySplitter;
+  }
+
   @Override
   public JComponent createComponent() {
     if (myProject.isDefault()) {
       T configurable = createDefaultProjectConfigurable();
       if (configurable != null) {
-        myModuleConfigurables.put(null, configurable);
-        return configurable.createComponent();
+        var projectConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> configurable);
+        myConfigurablesProviders.put(null, projectConfigurableProvider);
+        return projectConfigurableProvider.getValue().createComponent();
       }
     }
-    final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject),
-                                                      module -> isSuitableForModule(module));
-
-    final T projectConfigurable = createProjectConfigurable();
+    List<Module> modules = ContainerUtil.filter(getSortedModules(myProject), this::isSuitableForModule);
+    T projectConfigurable = createProjectConfigurable();
 
     if (modules.size() == 1 && projectConfigurable == null) {
       Module module = modules.get(0);
-      final T configurable = createModuleConfigurable(module);
-      myModuleConfigurables.put(module, configurable);
-      return configurable.createComponent();
+      var onlyModuleConfigurableProvider = AtomicNotNullLazyValue.createValue(() -> createModuleConfigurable(module));
+      myConfigurablesProviders.put(module, onlyModuleConfigurableProvider);
+      return onlyModuleConfigurableProvider.getValue().createComponent();
     }
     final Splitter splitter = new Splitter(false, 0.25f);
+    mySplitter = splitter;
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
-    final JBList moduleList = new JBList(listDataModel);
-    new ListSpeedSearch(moduleList, (Function<Object, String>)o -> {
-      if (o == null) {
-        return getProjectConfigurableItemName();
-      }
-      else if (o instanceof Module) {
-        return ((Module)o).getName();
-      }
-      return null;
-    });
+    final JBList<Module> moduleList = new JBList<>(listDataModel);
+    ListSpeedSearch.installOn(moduleList, o -> o == null ? getProjectConfigurableItemName() : o.getName());
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     moduleList.setCellRenderer(new ModuleListCellRenderer() {
       @Override
-      public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends Module> list, Module module, int index, boolean selected, boolean hasFocus) {
         if (module == null) {
           setText(getProjectConfigurableItemName());
           setIcon(getProjectConfigurableItemIcon());
@@ -125,38 +114,42 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final JPanel cardPanel = new JPanel(layout);
     splitter.setSecondComponent(cardPanel);
 
-
     if (projectConfigurable != null) {
-      myModuleConfigurables.put(null, projectConfigurable);
+      myConfigurablesProviders.put(null, AtomicNotNullLazyValue.createValue(() -> projectConfigurable));
       final JComponent component = projectConfigurable.createComponent();
-      cardPanel.add(component, PROJECT_ITEM_KEY);
-      listDataModel.add(0, null);
+      if (component != null) {
+        cardPanel.add(component, PROJECT_ITEM_KEY);
+        listDataModel.add(0, null);
+      }
     }
 
     for (Module module : modules) {
-      final T configurable = createModuleConfigurable(module);
-      myModuleConfigurables.put(module, configurable);
-      final JComponent component = configurable.createComponent();
-      cardPanel.add(component, module.getName());
+      myConfigurablesProviders.put(module, AtomicNotNullLazyValue.createValue(() -> {
+        final T configurable = createModuleConfigurable(module);
+        JComponent component = configurable.createComponent();
+        if (component == null) {
+          component = new JPanel();
+        }
+        cardPanel.add(component, module.getName());
+        configurable.reset();
+        return configurable;
+      }));
     }
-    moduleList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        final Module value = (Module)moduleList.getSelectedValue();
-        layout.show(cardPanel, value == null ? PROJECT_ITEM_KEY : value.getName());
-      }
-    });
+    moduleList.addListSelectionListener(_ -> showModuleConfigurable(layout, cardPanel, moduleList.getSelectedValue()));
 
     if (moduleList.getItemsCount() > 0) {
       moduleList.setSelectedIndex(0);
-      Module module = listDataModel.getElementAt(0);
-      layout.show(cardPanel, module == null ? PROJECT_ITEM_KEY : module.getName());
+      showModuleConfigurable(layout, cardPanel, listDataModel.getElementAt(0));
     }
     return splitter;
   }
 
-  @Nullable
-  protected T createDefaultProjectConfigurable() {
+  private void showModuleConfigurable(@NotNull CardLayout layout, @NotNull JPanel cardPanel, @Nullable Module selectedModule) {
+    myConfigurablesProviders.get(selectedModule).getValue();
+    layout.show(cardPanel, selectedModule == null ? PROJECT_ITEM_KEY : selectedModule.getName());
+  }
+
+  protected @Nullable T createDefaultProjectConfigurable() {
     return null;
   }
 
@@ -165,68 +158,70 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
    *
    * @return configurable or null if none
    */
-  @Nullable
-  protected T createProjectConfigurable() {
+  protected @Nullable T createProjectConfigurable() {
     return null;
   }
 
   /**
    * @return Name for project-wide settings in modules list
    */
-  @NotNull
-  protected String getProjectConfigurableItemName() {
+  protected @NotNull @NlsContexts.Label String getProjectConfigurableItemName() {
     return myProject.getName();
   }
 
   /**
    * @return Icon for project-wide sttings in modules list
    */
-  @Nullable
-  protected Icon getProjectConfigurableItemIcon() {
+  protected @Nullable Icon getProjectConfigurableItemIcon() {
     return AllIcons.Nodes.Project;
   }
 
-  @NotNull
-  protected abstract T createModuleConfigurable(Module module);
+  protected abstract @NotNull T createModuleConfigurable(Module module);
 
   @Override
   public boolean isModified() {
-    for (T configurable : myModuleConfigurables.values()) {
-      if (configurable.isModified()) return true;
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed() && configurableProvider.getValue().isModified()) {
+        return true;
+      }
     }
     return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.apply();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().apply();
+      }
     }
   }
 
   @Override
   public void reset() {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.reset();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().reset();
+      }
     }
   }
 
   @Override
   public void disposeUIResources() {
-    for (T configurable : myModuleConfigurables.values()) {
-      configurable.disposeUIResources();
+    for (AtomicNotNullLazyValue<T> configurableProvider : myConfigurablesProviders.values()) {
+      if (configurableProvider.isComputed()) {
+        configurableProvider.getValue().disposeUIResources();
+      }
     }
-    myModuleConfigurables.clear();
+    myConfigurablesProviders.clear();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getClass().getName();
   }
 
-  @NotNull
-  protected final Project getProject() {
+  protected final @NotNull Project getProject() {
     return myProject;
   }
 }

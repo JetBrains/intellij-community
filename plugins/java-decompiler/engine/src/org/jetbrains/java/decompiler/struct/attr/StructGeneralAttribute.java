@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -16,89 +14,106 @@ import java.io.IOException;
   }
 */
 public class StructGeneralAttribute {
-  public static final String ATTRIBUTE_CODE = "Code";
-  public static final String ATTRIBUTE_INNER_CLASSES = "InnerClasses";
-  public static final String ATTRIBUTE_SIGNATURE = "Signature";
-  public static final String ATTRIBUTE_ANNOTATION_DEFAULT = "AnnotationDefault";
-  public static final String ATTRIBUTE_EXCEPTIONS = "Exceptions";
-  public static final String ATTRIBUTE_ENCLOSING_METHOD = "EnclosingMethod";
-  public static final String ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS = "RuntimeVisibleAnnotations";
-  public static final String ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS = "RuntimeInvisibleAnnotations";
-  public static final String ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = "RuntimeVisibleParameterAnnotations";
-  public static final String ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = "RuntimeInvisibleParameterAnnotations";
-  public static final String ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = "RuntimeVisibleTypeAnnotations";
-  public static final String ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = "RuntimeInvisibleTypeAnnotations";
-  public static final String ATTRIBUTE_LOCAL_VARIABLE_TABLE = "LocalVariableTable";
-  public static final String ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = "LocalVariableTypeTable";
-  public static final String ATTRIBUTE_CONSTANT_VALUE = "ConstantValue";
-  public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
-  public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
-  public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
-  public static final String ATTRIBUTE_LINE_NUMBER_TABLE = "LineNumberTable";
-  public static final String ATTRIBUTE_METHOD_PARAMETERS = "MethodParameters";
+  public static final Key<StructCodeAttribute> ATTRIBUTE_CODE = new Key<>("Code");
+  public static final Key<StructInnerClassesAttribute> ATTRIBUTE_INNER_CLASSES = new Key<>("InnerClasses");
+  public static final Key<StructGenericSignatureAttribute> ATTRIBUTE_SIGNATURE = new Key<>("Signature");
+  public static final Key<StructAnnDefaultAttribute> ATTRIBUTE_ANNOTATION_DEFAULT = new Key<>("AnnotationDefault");
+  public static final Key<StructExceptionsAttribute> ATTRIBUTE_EXCEPTIONS = new Key<>("Exceptions");
+  public static final Key<StructEnclosingMethodAttribute> ATTRIBUTE_ENCLOSING_METHOD = new Key<>("EnclosingMethod");
+  public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS = new Key<>("RuntimeVisibleAnnotations");
+  public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS = new Key<>("RuntimeInvisibleAnnotations");
+  public static final Key<?>[] ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
+  public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeVisibleParameterAnnotations");
+  public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeInvisibleParameterAnnotations");
+  public static final Key<?>[] PARAMETER_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
+  public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeVisibleTypeAnnotations");
+  public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeInvisibleTypeAnnotations");
+  public static final Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
+  public static final Key<StructLocalVariableTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TABLE = new Key<>("LocalVariableTable");
+  public static final Key<StructLocalVariableTypeTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = new Key<>("LocalVariableTypeTable");
+  public static final Key<StructConstantValueAttribute> ATTRIBUTE_CONSTANT_VALUE = new Key<>("ConstantValue");
+  public static final Key<StructBootstrapMethodsAttribute> ATTRIBUTE_BOOTSTRAP_METHODS = new Key<>("BootstrapMethods");
+  public static final Key<StructGeneralAttribute> ATTRIBUTE_SYNTHETIC = new Key<>("Synthetic");
+  public static final Key<StructGeneralAttribute> ATTRIBUTE_DEPRECATED = new Key<>("Deprecated");
+  public static final Key<StructLineNumberTableAttribute> ATTRIBUTE_LINE_NUMBER_TABLE = new Key<>("LineNumberTable");
+  public static final Key<StructMethodParametersAttribute> ATTRIBUTE_METHOD_PARAMETERS = new Key<>("MethodParameters");
+  public static final Key<StructModuleAttribute> ATTRIBUTE_MODULE = new Key<>("Module");
+  public static final Key<StructRecordAttribute> ATTRIBUTE_RECORD = new Key<>("Record");
+  public static final Key<StructPermittedSubclassesAttribute> ATTRIBUTE_PERMITTED_SUBCLASSES = new Key<>("PermittedSubclasses");
 
-  private String name;
+  @SuppressWarnings("unused")
+  public static class Key<T extends StructGeneralAttribute> {
+    public final String name;
+
+    public Key(String name) {
+      this.name = name;
+    }
+  }
 
   public static StructGeneralAttribute createAttribute(String name) {
-    StructGeneralAttribute attr;
-
-    if (ATTRIBUTE_INNER_CLASSES.equals(name)) {
-      attr = new StructInnerClassesAttribute();
+    if (ATTRIBUTE_CODE.name.equals(name)) {
+      return new StructCodeAttribute();
     }
-    else if (ATTRIBUTE_CONSTANT_VALUE.equals(name)) {
-      attr = new StructConstantValueAttribute();
+    else if (ATTRIBUTE_INNER_CLASSES.name.equals(name)) {
+      return new StructInnerClassesAttribute();
     }
-    else if (ATTRIBUTE_SIGNATURE.equals(name)) {
-      attr = new StructGenericSignatureAttribute();
+    else if (ATTRIBUTE_CONSTANT_VALUE.name.equals(name)) {
+      return new StructConstantValueAttribute();
     }
-    else if (ATTRIBUTE_ANNOTATION_DEFAULT.equals(name)) {
-      attr = new StructAnnDefaultAttribute();
+    else if (ATTRIBUTE_SIGNATURE.name.equals(name)) {
+      return new StructGenericSignatureAttribute();
     }
-    else if (ATTRIBUTE_EXCEPTIONS.equals(name)) {
-      attr = new StructExceptionsAttribute();
+    else if (ATTRIBUTE_ANNOTATION_DEFAULT.name.equals(name)) {
+      return new StructAnnDefaultAttribute();
     }
-    else if (ATTRIBUTE_ENCLOSING_METHOD.equals(name)) {
-      attr = new StructEnclosingMethodAttribute();
+    else if (ATTRIBUTE_EXCEPTIONS.name.equals(name)) {
+      return new StructExceptionsAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS.equals(name)) {
-      attr = new StructAnnotationAttribute();
+    else if (ATTRIBUTE_ENCLOSING_METHOD.name.equals(name)) {
+      return new StructEnclosingMethodAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS.equals(name)) {
-      attr = new StructAnnotationParameterAttribute();
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS.name.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS.name.equals(name)) {
+      return new StructAnnotationAttribute();
     }
-    else if (ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.equals(name)) {
-      attr = new StructTypeAnnotationAttribute();
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS.name.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS.name.equals(name)) {
+      return new StructAnnotationParameterAttribute();
     }
-    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name)) {
-      attr = new StructLocalVariableTableAttribute();
+    else if (ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS.name.equals(name) || ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.name.equals(name)) {
+      return new StructTypeAnnotationAttribute();
     }
-    else if (ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name)) {
-      attr = new StructLocalVariableTypeTableAttribute();
+    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.name.equals(name)) {
+      return new StructLocalVariableTableAttribute();
     }
-    else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(name)) {
-      attr = new StructBootstrapMethodsAttribute();
+    else if (ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name.equals(name)) {
+      return new StructLocalVariableTypeTableAttribute();
     }
-    else if (ATTRIBUTE_SYNTHETIC.equals(name) || ATTRIBUTE_DEPRECATED.equals(name)) {
-      attr = new StructGeneralAttribute();
+    else if (ATTRIBUTE_BOOTSTRAP_METHODS.name.equals(name)) {
+      return new StructBootstrapMethodsAttribute();
     }
-    else if (ATTRIBUTE_LINE_NUMBER_TABLE.equals(name)) {
-      attr = new StructLineNumberTableAttribute();
+    else if (ATTRIBUTE_SYNTHETIC.name.equals(name) || ATTRIBUTE_DEPRECATED.name.equals(name)) {
+      return new StructGeneralAttribute();
     }
-    else if (ATTRIBUTE_METHOD_PARAMETERS.equals(name)) {
-      attr = new StructMethodParametersAttribute();
+    else if (ATTRIBUTE_LINE_NUMBER_TABLE.name.equals(name)) {
+      return new StructLineNumberTableAttribute();
+    }
+    else if (ATTRIBUTE_METHOD_PARAMETERS.name.equals(name)) {
+      return new StructMethodParametersAttribute();
+    }
+    else if (ATTRIBUTE_MODULE.name.equals(name)) {
+      return new StructModuleAttribute();
+    }
+    else if (ATTRIBUTE_RECORD.name.equals(name)) {
+      return new StructRecordAttribute();
+    } else if (ATTRIBUTE_PERMITTED_SUBCLASSES.name.equals(name)) {
+      return new StructPermittedSubclassesAttribute();
     }
     else {
-      // unsupported attribute
-      return null;
+      return null; // unsupported attribute
     }
-
-    attr.name = name;
-    return attr;
   }
 
   public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException { }
-
-  public String getName() {
-    return name;
-  }
 }

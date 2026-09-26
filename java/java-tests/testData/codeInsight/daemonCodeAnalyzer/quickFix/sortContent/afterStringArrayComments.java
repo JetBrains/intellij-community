@@ -1,4 +1,4 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 import java.util.*;
 
@@ -7,7 +7,7 @@ public class Main {
     new String[]{
             "aaa", // a
             "bbb", // b
-            "ccc"/* c */
+            "ccc" /* c */
     };
   }
 }

@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TraceableDisposable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -32,94 +22,97 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * @author dsl
- */
-public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
-  @NotNull private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
-  @NotNull private final ConcurrentList<VirtualFilePointer> myJarDirectories = ContainerUtil.createConcurrentList();
-  @NotNull private final ConcurrentList<VirtualFilePointer> myJarRecursiveDirectories = ContainerUtil.createConcurrentList();
-  @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;
-  @NotNull private final Disposable myParent;
+@ApiStatus.Internal
+public final class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
+  @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(VirtualFilePointerContainer.class);
+
+  public static final String URL_ATTR = "url";
+  public static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
+  public static final String RECURSIVE_ATTR = "recursive";
+
+  private static final int UNINITIALIZED = -1;
+  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
+  private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY =
+    new Trinity<>(ArrayUtilRt.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
+
+  private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
+  private final ConcurrentList<VirtualFilePointer> myJarDirectories = ContainerUtil.createConcurrentList();
+  private final ConcurrentList<VirtualFilePointer> myJarRecursiveDirectories = ContainerUtil.createConcurrentList();
+  private final VirtualFilePointerManager myVirtualFilePointerManager;
+  private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
   private volatile Trinity<String[], VirtualFile[], VirtualFile[]> myCachedThings;
-  private volatile long myTimeStampOfCachedThings = -1;
-  @NonNls public static final String URL_ATTR = "url";
+  private volatile long myTimeStampOfCachedThings = UNINITIALIZED;
   private boolean myDisposed;
-  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
-  @NonNls public static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
-  @NonNls public static final String RECURSIVE_ATTR = "recursive";
 
-  VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
-                                  @NotNull Disposable parentDisposable,
-                                  @Nullable VirtualFilePointerListener listener) {
-    super(TRACE_CREATION && !ApplicationInfoImpl.isInStressTest());
+  @ApiStatus.Internal
+  public VirtualFilePointerContainerImpl(
+    @NotNull VirtualFilePointerManager manager,
+    @NotNull Disposable parentDisposable,
+    @Nullable VirtualFilePointerListener listener
+  ) {
+    super(TRACE_CREATION && !ApplicationManagerEx.isInStressTest());
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
     myListener = listener;
   }
 
   @Override
-  public void readExternal(@NotNull final Element rootChild, @NotNull final String childName, boolean externalizeJarDirectories) throws InvalidDataException {
-    final List<Element> urls = rootChild.getChildren(childName);
-    for (Element url : urls) {
-      final String urlAttribute = url.getAttributeValue(URL_ATTR);
-      if (urlAttribute == null) throw new InvalidDataException("path element without url");
-      add(urlAttribute);
-    }
+  public void readExternal(@NotNull Element rootChild, @NotNull String childName, boolean externalizeJarDirectories) throws InvalidDataException {
+    List<Element> urls = rootChild.getChildren(childName);
+    addAll(ContainerUtil.map(urls, url -> url.getAttributeValue(URL_ATTR)));
     if (externalizeJarDirectories) {
       List<Element> jarDirs = rootChild.getChildren(JAR_DIRECTORY_ELEMENT);
       for (Element jarDir : jarDirs) {
         String url = jarDir.getAttributeValue(URL_ATTR);
         if (url == null) throw new InvalidDataException("path element without url: " + JDOMUtil.getValue(jarDir));
-        boolean recursive = Boolean.valueOf(jarDir.getAttributeValue(RECURSIVE_ATTR, "false"));
+        boolean recursive = Boolean.parseBoolean(jarDir.getAttributeValue(RECURSIVE_ATTR, "false"));
         addJarDirectory(url, recursive);
       }
     }
   }
 
   @Override
-  public void writeExternal(@NotNull final Element element, @NotNull final String childElementName, boolean externalizeJarDirectories) {
+  public void writeExternal(@NotNull Element element, @NotNull String childElementName, boolean externalizeJarDirectories) {
     for (VirtualFilePointer pointer : myList) {
       String url = pointer.getUrl();
-      final Element rootPathElement = new Element(childElementName);
+      if (url.isEmpty()) continue;  // pointer is disposed, avoid externalizing garbage
+      Element rootPathElement = new Element(childElementName);
       rootPathElement.setAttribute(URL_ATTR, url);
       element.addContent(rootPathElement);
     }
     if (externalizeJarDirectories) {
-      List<VirtualFilePointer> jarDirectories = new ArrayList<>(myJarDirectories);
-      Collections.sort(jarDirectories, Comparator.comparing(VirtualFilePointer::getUrl, String.CASE_INSENSITIVE_ORDER));
-      List<VirtualFilePointer> jarRecursiveDirectories = new ArrayList<>(myJarRecursiveDirectories);
-      Collections.sort(jarRecursiveDirectories, Comparator.comparing(VirtualFilePointer::getUrl, String.CASE_INSENSITIVE_ORDER));
-      for (VirtualFilePointer pointer : jarDirectories) {
-        String url = pointer.getUrl();
-        final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
-        jarDirElement.setAttribute(URL_ATTR, url);
-        jarDirElement.setAttribute(RECURSIVE_ATTR, Boolean.toString(false));
-        element.addContent(jarDirElement);
-      }
-      for (VirtualFilePointer pointer : jarRecursiveDirectories) {
-        String url = pointer.getUrl();
-        final Element jarDirElement = new Element(JAR_DIRECTORY_ELEMENT);
-        jarDirElement.setAttribute(URL_ATTR, url);
-        jarDirElement.setAttribute(RECURSIVE_ATTR, Boolean.toString(true));
-        element.addContent(jarDirElement);
-      }
+      writeJarDirs(myJarDirectories, element, Boolean.toString(false));
+      writeJarDirs(myJarRecursiveDirectories, element, Boolean.toString(true));
+    }
+  }
+
+  private static void writeJarDirs(List<VirtualFilePointer> jarDirectories, Element element, String recursive) {
+    List<VirtualFilePointer> copy = new ArrayList<>(jarDirectories);
+    copy.sort(Comparator.comparing(VirtualFilePointer::getUrl, String.CASE_INSENSITIVE_ORDER));
+    for (VirtualFilePointer pointer : copy) {
+      element.addContent(new Element(JAR_DIRECTORY_ELEMENT)
+        .setAttribute(URL_ATTR, pointer.getUrl())
+        .setAttribute(RECURSIVE_ATTR, recursive)
+      );
     }
   }
 
@@ -139,65 +132,67 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     ContainerUtil.swapElements(myList, index, index + 1);
   }
 
-  private int indexOf(@NotNull final String url) {
+  private int indexOf(@NotNull String url) {
     for (int i = 0; i < myList.size(); i++) {
-      final VirtualFilePointer pointer = myList.get(i);
+      VirtualFilePointer pointer = myList.get(i);
       if (url.equals(pointer.getUrl())) {
         return i;
       }
     }
-
     return -1;
   }
 
   @Override
   public void killAll() {
     myList.clear();
+    myJarDirectories.clear();
+    myJarRecursiveDirectories.clear();
   }
 
   @Override
   public void add(@NotNull VirtualFile file) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
     myList.addIfAbsent(create(file));
   }
 
   @Override
   public void add(@NotNull String url) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
     myList.addIfAbsent(create(url));
   }
 
   @Override
   public void remove(@NotNull VirtualFilePointer pointer) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
-    final boolean result = myList.remove(pointer);
+    boolean result = myList.remove(pointer);
     LOG.assertTrue(result);
   }
 
   @Override
-  @NotNull
-  public List<VirtualFilePointer> getList() {
-    assert !myDisposed;
+  public @NotNull List<VirtualFilePointer> getList() {
+    checkDisposed();
     return Collections.unmodifiableList(myList);
   }
 
   @Override
   public void addAll(@NotNull VirtualFilePointerContainer that) {
-    assert !myDisposed;
+    checkDisposed();
     dropCaches();
 
-    for (final VirtualFilePointer pointer : that.getList()) {
-      myList.addIfAbsent(duplicate(pointer));
-    }
-    for (VirtualFilePointer jarDirectory : ((VirtualFilePointerContainerImpl)that).myJarDirectories) {
-      myJarDirectories.add(duplicate(jarDirectory));
-    }
-    for (VirtualFilePointer jarRecursiveDirectory : ((VirtualFilePointerContainerImpl)that).myJarRecursiveDirectories) {
-      myJarRecursiveDirectories.add(duplicate(jarRecursiveDirectory));
-    }
+    addAll(Arrays.asList(that.getUrls()));
+
+    List<VirtualFilePointer> jarDups = ContainerUtil.map(((VirtualFilePointerContainerImpl)that).myJarDirectories, this::duplicate);
+    List<VirtualFilePointer> jarRecursiveDups = ContainerUtil.map(((VirtualFilePointerContainerImpl)that).myJarRecursiveDirectories, this::duplicate);
+    myJarDirectories.addAllAbsent(jarDups);
+    myJarRecursiveDirectories.addAllAbsent(jarRecursiveDups);
+  }
+
+  public void addAll(@NotNull Collection<String> urls) {
+    // optimization: faster than calling .add() one by one
+    myList.addAllAbsent(ContainerUtil.map(urls, url->create(url)));
   }
 
   private void dropCaches() {
@@ -206,26 +201,24 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public String[] getUrls() {
+  public String @NotNull [] getUrls() {
+    if (myTimeStampOfCachedThings == UNINITIALIZED) {
+      // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
+      return ContainerUtil.map2Array(myList, ArrayUtil.EMPTY_STRING_ARRAY, VirtualFilePointer::getUrl);
+    }
     return getOrCache().first;
   }
 
-  @NotNull
-  private Trinity<String[], VirtualFile[], VirtualFile[]> getOrCache() {
-    assert !myDisposed;
+  private @NotNull Trinity<String[], VirtualFile[], VirtualFile[]> getOrCache() {
+    checkDisposed();
     long timeStamp = myTimeStampOfCachedThings;
     Trinity<String[], VirtualFile[], VirtualFile[]> cached = myCachedThings;
     return timeStamp == myVirtualFilePointerManager.getModificationCount() ? cached : cacheThings();
   }
 
-  private static final Trinity<String[], VirtualFile[], VirtualFile[]> EMPTY =
-    Trinity.create(ArrayUtil.EMPTY_STRING_ARRAY, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
-
-  @NotNull
-  private Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
+  private @NotNull Trinity<String[], VirtualFile[], VirtualFile[]> cacheThings() {
     Trinity<String[], VirtualFile[], VirtualFile[]> result;
-    if (myList.isEmpty() && myJarDirectories.isEmpty() && myJarRecursiveDirectories.isEmpty()) {
+    if (isEmpty()) {
       result = EMPTY;
     }
     else {
@@ -251,13 +244,11 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
         VirtualFile jarDirectory = jarDirectoryPtr.getFile();
         if (jarDirectory != null) {
           // getFiles() must return files under jar directories but must not return jarDirectories themselves
-          // getUrls() must return class roots plus jar directories
-          cachedUrls.add(jarDirectory.getUrl());
           cachedDirectories.remove(jarDirectory);
 
           VirtualFile[] children = jarDirectory.getChildren();
           for (VirtualFile file : children) {
-            if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+            if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
               VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
               if (jarRoot != null) {
                 cachedFiles.add(jarRoot);
@@ -271,14 +262,12 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
         VirtualFile jarDirectory = jarDirectoryPtr.getFile();
         if (jarDirectory != null) {
           // getFiles() must return files under jar directories but must not return jarDirectories themselves
-          // getUrls() must return class roots plus jar directories
-          cachedUrls.add(jarDirectory.getUrl());
           cachedDirectories.remove(jarDirectory);
 
-          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor() {
+          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor<Void>() {
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-              if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+              if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
                 VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
                 if (jarRoot != null) {
                   cachedFiles.add(jarRoot);
@@ -291,9 +280,9 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           });
         }
       }
+      String[] urlsArray = ArrayUtilRt.toStringArray(cachedUrls);
       VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
       VirtualFile[] files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
-      String[] urlsArray = ArrayUtil.toStringArray(cachedUrls);
       result = Trinity.create(urlsArray, files, directories);
     }
     myCachedThings = result;
@@ -302,21 +291,23 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles() {
+  public boolean isEmpty() {
+    return myList.isEmpty() && myJarDirectories.isEmpty() && myJarRecursiveDirectories.isEmpty();
+  }
+
+  @Override
+  public VirtualFile @NotNull [] getFiles() {
     return getOrCache().second;
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getDirectories() {
+  public VirtualFile @NotNull [] getDirectories() {
     return getOrCache().third;
   }
 
   @Override
-  @Nullable
-  public VirtualFilePointer findByUrl(@NotNull String url) {
-    assert !myDisposed;
+  public @Nullable VirtualFilePointer findByUrl(@NotNull String url) {
+    checkDisposed();
     for (VirtualFilePointer pointer : ContainerUtil.concat(myList, myJarDirectories, myJarRecursiveDirectories)) {
       if (url.equals(pointer.getUrl())) return pointer;
     }
@@ -334,6 +325,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     return myList.size()+myJarDirectories.size()+myJarRecursiveDirectories.size();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof VirtualFilePointerContainerImpl)) return false;
@@ -345,71 +337,77 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
            myJarRecursiveDirectories.equals(impl.myJarRecursiveDirectories);
   }
 
+  @Override
   public int hashCode() {
     return myList.hashCode();
   }
 
-  @NotNull
-  protected VirtualFilePointer create(@NotNull VirtualFile file) {
+  private @NotNull VirtualFilePointer create(@NotNull VirtualFile file) {
     return myVirtualFilePointerManager.create(file, myParent, myListener);
   }
 
-  @NotNull
-  protected VirtualFilePointer create(@NotNull String url) {
+  private @NotNull VirtualFilePointer create(@NotNull String url) {
     return myVirtualFilePointerManager.create(url, myParent, myListener);
   }
 
-  @NotNull
-  protected VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
+  private @NotNull VirtualFilePointer duplicate(@NotNull VirtualFilePointer virtualFilePointer) {
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String toString() {
-    return "VFPContainer: " + myList
-           + (myJarDirectories.isEmpty() ? "" : ", jars: "+myJarDirectories)
-           + (myJarRecursiveDirectories.isEmpty() ? "" : ", jars(recursively): "+myJarRecursiveDirectories);
+  public @NotNull String toString() {
+    return (
+      "VFPContainer: " + myList +
+      (myJarDirectories.isEmpty() ? "" : ", jars: " + myJarDirectories) +
+      (myJarRecursiveDirectories.isEmpty() ? "" : ", jars(recursively): " + myJarRecursiveDirectories)
+    );
   }
 
   @Override
-  @NotNull
-  public VirtualFilePointerContainer clone(@NotNull Disposable parent) {
+  public @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent) {
     return clone(parent, null);
   }
 
   @Override
-  @NotNull
-  public VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
-    assert !myDisposed;
+  public @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+    checkDisposed();
     VirtualFilePointerContainerImpl clone = (VirtualFilePointerContainerImpl)myVirtualFilePointerManager.createContainer(parent, listener);
-    for (VirtualFilePointer pointer : myList) {
-      clone.add(pointer.getUrl());
-    }
-    for (VirtualFilePointer jarDirectoryPtr : myJarDirectories) {
-      clone.addJarDirectory(jarDirectoryPtr.getUrl(), false);
-    }
-    for (VirtualFilePointer jarDirectoryPtr : myJarRecursiveDirectories) {
-      clone.addJarDirectory(jarDirectoryPtr.getUrl(), true);
-    }
+
+    List<VirtualFilePointer> toAdd = ContainerUtil.map(myList, p -> clone.create(p.getUrl()));
+    clone.myList.addAll(toAdd);
+    clone.addAllJarDirectories(ContainerUtil.map(myJarDirectories, VirtualFilePointer::getUrl), false);
+    clone.addAllJarDirectories(ContainerUtil.map(myJarRecursiveDirectories, VirtualFilePointer::getUrl), true);
     return clone;
   }
 
   @Override
   public void dispose() {
-    assert !myDisposed;
+    checkDisposed();
     myDisposed = true;
     kill(null);
     clear();
+  }
+
+  private void checkDisposed() {
+    if (myDisposed) {
+      throwDisposalError("Already disposed:\n" + getStackTrace());
+    }
   }
 
   @Override
   public void addJarDirectory(@NotNull String directoryUrl, boolean recursively) {
     VirtualFilePointer pointer = myVirtualFilePointerManager.createDirectoryPointer(directoryUrl, recursively, myParent, myListener);
     (recursively ? myJarRecursiveDirectories : myJarDirectories).addIfAbsent(pointer);
-
     myList.addIfAbsent(pointer); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
+    dropCaches();
+  }
+
+  /** optimization: faster than calling {@link #addJarDirectory(String, boolean)} one by one */
+  public void addAllJarDirectories(@NotNull Collection<String> directoryUrls, boolean recursively) {
+    if (directoryUrls.isEmpty()) return;
+    List<VirtualFilePointer> pointers = ContainerUtil.map(directoryUrls, url -> myVirtualFilePointerManager.createDirectoryPointer(url, recursively, myParent, myListener));
+    (recursively ? myJarRecursiveDirectories : myJarDirectories).addAllAbsent(pointers);
+    myList.addAllAbsent(pointers); // hack. jar directories need to be contained in class roots too (for externalization compatibility) but be ignored in getFiles()
     dropCaches();
   }
 
@@ -423,9 +421,8 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     return removed0 || removed1 || removed2;
   }
 
-  @NotNull
   @Override
-  public List<Pair<String, Boolean>> getJarDirectories() {
+  public @Unmodifiable @NotNull List<Pair<String, Boolean>> getJarDirectories() {
     List<Pair<String, Boolean>> jars = ContainerUtil.map(myJarDirectories, ptr -> Pair.create(ptr.getUrl(), false));
     List<Pair<String, Boolean>> recJars = ContainerUtil.map(myJarRecursiveDirectories, ptr -> Pair.create(ptr.getUrl(), true));
     return ContainerUtil.concat(jars, recJars);

@@ -1,24 +1,32 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public class ShortestPathFinder<Node> {
-  private final Graph<Node> myGraph;
+@Internal
+public final class ShortestPathFinder<Node> {
+  private final InboundSemiGraph<Node> myGraph;
 
   public ShortestPathFinder(Graph<Node> graph) {
     myGraph = graph;
   }
 
+  public ShortestPathFinder(InboundSemiGraph<Node> graph) {
+    myGraph = graph;
+  }
 
-  @Nullable
-  public List<Node> findPath(Node start, Node finish) {
+  public @Nullable List<Node> findPath(Node start, Node finish) {
     Map<Node, Node> nextNodes = new HashMap<>();
     Deque<Node> queue = new ArrayDeque<>();
     queue.addLast(finish);
@@ -44,6 +52,7 @@ public class ShortestPathFinder<Node> {
     if (!found) {
       return null;
     }
+
     List<Node> path = new ArrayList<>();
     Node current = start;
     while (!current.equals(finish)) {

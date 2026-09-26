@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public interface MethodSignature {
   MethodSignature[] EMPTY_ARRAY = new MethodSignature[0];
 
@@ -35,11 +32,9 @@ public interface MethodSignature {
   /**
    * @return array of parameter types (already substituted)
    */
-  @NotNull
-  PsiType[] getParameterTypes();
+  PsiType @NotNull [] getParameterTypes();
 
-  @NotNull
-  PsiTypeParameter[] getTypeParameters();
+  PsiTypeParameter @NotNull [] getTypeParameters();
 
   boolean isRaw();
 

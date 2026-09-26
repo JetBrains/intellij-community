@@ -17,22 +17,37 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.daemon.GutterIconDescriptor;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.NavigationTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
@@ -54,19 +69,25 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     configureByFile(getBasePath() + getTestName(false) + ".java");
     final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(JavaLanguage.INSTANCE);
     handler.invoke(getProject(), getEditor(), getFile());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + getTestName(false) + ".after.java");
   }
 
   public void testLambdaMarker() {
+    GutterIconDescriptor.Option option = JavaLineMarkerProvider.LAMBDA_OPTION;
+    boolean isEnabled = LineMarkerSettings.getSettings().isEnabled(option);
+    LineMarkerSettings.getSettings().setEnabled(option, true);
+    Disposer.register(getTestRootDisposable(), () -> LineMarkerSettings.getSettings().setEnabled(option, isEnabled));
+
     configureByFile(getBasePath() + getTestName(false) + ".java");
 
     doHighlighting();
     if (CodeInsightTestFixtureImpl.processGuttersAtCaret(getEditor(), getProject(), mark -> {
       Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
       assertEquals(
-        "<html><body>Overrides method in <a href=\"#javaClass/I\">I</a><br><div style='margin-top: 5px'><font size='2'>Click or press " +
+        "<html><body><p>Overrides method in <code><a href=\"#element/I#run\"><span style=\"color:#000000;\">I</span></a></code></p><p style='margin-top:8px;'><font color='#787878'>Press " +
         KeymapUtil.getShortcutText(shortcut) +
-        " to navigate</font></div></body></html>",
+        " to navigate</font></p></body></html>",
         mark.getTooltipText());
       return false;
     })) {
@@ -89,14 +110,74 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     assertEquals("run", aRun.getName());
     doHighlighting();
     Document document = getEditor().getDocument();
-    List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
+    List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
     assertTrue(markers.size() >= 2);
-    LineMarkerInfo iMarker = findMarkerWithElement(markers, iRun.getNameIdentifier());
+    LineMarkerInfo<?> iMarker = findMarkerWithElement(markers, iRun.getNameIdentifier());
     assertSame(MarkerType.OVERRIDDEN_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 
-    LineMarkerInfo aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
+    LineMarkerInfo<?> aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
     assertSame(MarkerType.SIBLING_OVERRIDING_METHOD.getNavigationHandler(), aMarker.getNavigationHandler());
   }
+
+  public void testSiblingInheritanceGutterNavigatesToSuper() {
+    configureByFile(getBasePath() + "SiblingInheritance.java");
+    PsiJavaFile file = (PsiJavaFile)getFile();
+    PsiClass i = JavaPsiFacade.getInstance(getProject()).findClass("z.I", GlobalSearchScope.fileScope(file));
+    PsiClass a = JavaPsiFacade.getInstance(getProject()).findClass("z.A", GlobalSearchScope.fileScope(file));
+    PsiMethod iRun = i.getMethods()[0];
+    PsiMethod aRun = a.getMethods()[0];
+
+    doHighlighting();
+    List<LineMarkerInfo<?>> markers =
+      DaemonCodeAnalyzerImpl.getLineMarkers(getEditor().getDocument(), getProject());
+    LineMarkerInfo<?> aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
+    assertSame(MarkerType.SIBLING_OVERRIDING_METHOD.getNavigationHandler(), aMarker.getNavigationHandler());
+
+    @SuppressWarnings("unchecked")
+    GutterIconNavigationHandler<PsiElement> handler =
+      (GutterIconNavigationHandler<PsiElement>)aMarker.getNavigationHandler();
+    handler.navigate(fakeClickEvent(), aMarker.getElement());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
+
+    int caretOffset = getEditor().getCaretModel().getOffset();
+    assertTrue(
+      "Gutter click on A#run must navigate to I#run, but caret is at offset " + caretOffset,
+      iRun.getNameIdentifier().getTextRange().contains(caretOffset));
+  }
+
+  public void testSiblingInheritanceGutterNavigatesToSealedSuper() {
+    configureByFile(getBasePath() + "SiblingInheritanceSealed.java");
+    PsiJavaFile file = (PsiJavaFile)getFile();
+    PsiClass derivative = JavaPsiFacade.getInstance(getProject())
+      .findClass("z.Derivative", GlobalSearchScope.fileScope(file));
+    PsiClass abstractDerivative = JavaPsiFacade.getInstance(getProject())
+      .findClass("z.AbstractDerivative", GlobalSearchScope.fileScope(file));
+    PsiMethod superGet = derivative.getMethods()[0];
+    PsiMethod absGet = abstractDerivative.getMethods()[0];
+
+    doHighlighting();
+    List<LineMarkerInfo<?>> markers =
+      DaemonCodeAnalyzerImpl.getLineMarkers(getEditor().getDocument(), getProject());
+    LineMarkerInfo<?> marker = findMarkerWithElement(markers, absGet.getNameIdentifier());
+    assertSame(MarkerType.SIBLING_OVERRIDING_METHOD.getNavigationHandler(), marker.getNavigationHandler());
+
+    @SuppressWarnings("unchecked")
+    GutterIconNavigationHandler<PsiElement> handler =
+      (GutterIconNavigationHandler<PsiElement>)marker.getNavigationHandler();
+    handler.navigate(fakeClickEvent(), marker.getElement());
+    NavigationTestUtil.awaitPendingNavigation(getProject());
+
+    int caretOffset = getEditor().getCaretModel().getOffset();
+    assertTrue(
+      "Gutter click on AbstractDerivative#getExpiration must navigate to Derivative#getExpiration, caret at " + caretOffset,
+      superGet.getNameIdentifier().getTextRange().contains(caretOffset));
+  }
+
+  private MouseEvent fakeClickEvent() {
+    return new MouseEvent(getEditor().getContentComponent(), MouseEvent.MOUSE_CLICKED,
+                          System.currentTimeMillis(), 0, 0, 0, 1, false);
+  }
+
   public void testSiblingInheritanceLineMarkersEvenIfMethodIsFinal() {
     configureByFile(getBasePath() + "SiblingInheritanceFinal.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
@@ -108,17 +189,17 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     assertEquals("run", aRun.getName());
     doHighlighting();
     Document document = getEditor().getDocument();
-    List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
+    List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
     assertTrue(markers.size() >= 2);
-    LineMarkerInfo iMarker = findMarkerWithElement(markers, iRun.getNameIdentifier());
+    LineMarkerInfo<?> iMarker = findMarkerWithElement(markers, iRun.getNameIdentifier());
     assertSame(MarkerType.OVERRIDDEN_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 
-    LineMarkerInfo aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
+    LineMarkerInfo<?> aMarker = findMarkerWithElement(markers, aRun.getNameIdentifier());
     assertSame(MarkerType.SIBLING_OVERRIDING_METHOD.getNavigationHandler(), aMarker.getNavigationHandler());
   }
 
-  private static LineMarkerInfo findMarkerWithElement(List<LineMarkerInfo> markers, PsiElement psiMethod) {
-    LineMarkerInfo marker = ContainerUtil.find(markers, info -> info.getElement().equals(psiMethod));
+  private static LineMarkerInfo<?> findMarkerWithElement(List<LineMarkerInfo<?>> markers, PsiElement psiMethod) {
+    LineMarkerInfo<?> marker = ContainerUtil.find(markers, info -> info.getElement().equals(psiMethod));
     assertNotNull(markers.toString(), marker);
     return marker;
   }
@@ -130,7 +211,19 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
+  }
+
+  public void testGoToImplementations() {
+    configureByFile(getBasePath() + "GoToImplementations.java");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    action.update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
+    action.actionPerformed(event);
+    NavigationTestUtil.awaitPendingNavigation(getProject());
+    checkResultByFile(getBasePath() + "GoToImplementations.after.java");
   }
 
   public void testSiblingInheritanceAndGenerics() {
@@ -140,6 +233,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
+    NavigationTestUtil.awaitPendingNavigation(getProject());
     checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
   }
 
@@ -152,13 +246,13 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
 
     doHighlighting();
     Document document = getEditor().getDocument();
-    List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset));
-    assertTrue(inMyClass.toString(), inMyClass.size() == 2);
-    LineMarkerInfo iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
+    List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
+    List<LineMarkerInfo<?>> inMyClass = ContainerUtil.filter(markers, info -> OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset));
+    assertEquals(inMyClass.toString(), 2, inMyClass.size());
+    LineMarkerInfo<?> iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
     assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 
-    LineMarkerInfo aMarker = findMarkerWithElement(inMyClass, OCBaseLanguageFileType.getNameIdentifier());
+    LineMarkerInfo<?> aMarker = findMarkerWithElement(inMyClass, OCBaseLanguageFileType.getNameIdentifier());
     assertSame(MarkerType.SUBCLASSED_CLASS.getNavigationHandler(), aMarker.getNavigationHandler());
   }
 

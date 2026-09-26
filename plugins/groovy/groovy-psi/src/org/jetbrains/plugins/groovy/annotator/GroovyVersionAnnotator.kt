@@ -1,0 +1,67 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.annotator
+
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.Annotator
+import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY1_7
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY1_8
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_3
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY2_5
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY3_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY4_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY5_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.GROOVY6_0
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.NO_VERSION
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils.compareSdkVersions
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+
+class GroovyVersionAnnotator : Annotator {
+
+  override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (element !is GroovyPsiElement) {
+      return
+    }
+    val version = GroovyConfigUtils.getInstance().getSDKVersion(holder.currentAnnotationSession.file)
+    if (version == NO_VERSION) {
+      return
+    }
+    if (compareSdkVersions(version, GROOVY1_7) < 0) {
+      element.accept(GroovyAnnotatorPre17(holder, version))
+    }
+    if (compareSdkVersions(version, GROOVY1_8) < 0) {
+      element.accept(GroovyAnnotatorPre18(holder, version))
+    }
+    else {
+      element.accept(GroovyAnnotator18(holder))
+    }
+    if (compareSdkVersions(version, GROOVY2_3) < 0) {
+      element.accept(GroovyAnnotatorPre23(holder, version))
+    }
+    if (compareSdkVersions(version,GROOVY2_5) >= 0) {
+      element.accept(GroovyAnnotator25(holder))
+    }
+    if (compareSdkVersions(version, GROOVY3_0) < 0) {
+      element.accept(GroovyAnnotatorPre30(holder))
+    }
+    else {
+      element.accept(GroovyAnnotator30(holder))
+    }
+    if (compareSdkVersions(version, GROOVY4_0) < 0) {
+      element.accept(GroovyAnnotatorPre40(holder))
+    }
+    else {
+      element.accept(GroovyAnnotator40(holder))
+    }
+    if (compareSdkVersions(version, GROOVY5_0) < 0) {
+      element.accept(GroovyAnnotatorPre50(holder))
+    }
+    else {
+      element.accept(GroovyAnnotator50(holder))
+    }
+    if (compareSdkVersions(version, GROOVY6_0) < 0) {
+      element.accept(GroovyAnnotatorPre60(holder))
+    }
+  }
+}

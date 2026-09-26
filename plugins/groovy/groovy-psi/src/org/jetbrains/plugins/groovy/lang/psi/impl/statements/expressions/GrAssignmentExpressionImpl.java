@@ -1,16 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -18,34 +14,49 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
+import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
 
 import java.util.Objects;
+import java.util.function.Function;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getLeastUpperBoundNullable;
 
-/**
- * @author ilyas
- */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
+
+  private final SafePublicationClearableLazyValue<GroovyCallReference> myReference = new SafePublicationClearableLazyValue<>(
+    () -> isOperatorAssignment() ? new GrOperatorReference(this) : null
+  );
 
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
+  public @Nullable GroovyCallReference getReference() {
+    return myReference.getValue();
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myReference.clear();
+  }
+
+  @Override
   public String toString() {
     return "Assignment expression";
   }
 
   @Override
-  @NotNull
-  public GrExpression getLValue() {
+  public @NotNull GrExpression getLValue() {
     return Objects.requireNonNull(findExpressionChild(this));
   }
 
   @Override
-  @Nullable
-  public GrExpression getRValue() {
+  public @Nullable GrExpression getRValue() {
     GrExpression[] exprs = findChildrenByClass(GrExpression.class);
     if (exprs.length > 1) {
       return exprs[1];
@@ -53,21 +64,19 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElement getOperationToken() {
-    return findNotNullChildByType(ASSIGNMENT_OPERATORS);
+  public @NotNull PsiElement getOperationToken() {
+    return findNotNullChildByType(ASSIGNMENTS);
   }
 
-  @Nullable
   @Override
-  public IElementType getOperator() {
+  public @Nullable IElementType getOperator() {
     return TokenSets.ASSIGNMENTS_TO_OPERATORS.get(getOperationTokenType());
   }
 
   @Override
   public boolean isOperatorAssignment() {
-    return getOperationTokenType() != GroovyTokenTypes.mASSIGN;
+    return TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(getOperationTokenType());
   }
 
   @Override
@@ -76,26 +85,18 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   }
 
   @Override
-  public PsiReference getReference() {
-    return isOperatorAssignment() ? this : null;
-  }
-
-  @Nullable
-  @Override
-  public PsiType getLeftType() {
+  public @Nullable PsiType getLeftType() {
     return getLValue().getType();
   }
 
-  @Nullable
   @Override
-  public PsiType getRightType() {
+  public @Nullable PsiType getRightType() {
     GrExpression rValue = getRValue();
     return rValue == null ? null : rValue.getType();
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     IElementType type = getOperationTokenType();
     if (TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(type)) {
       return super.getType();

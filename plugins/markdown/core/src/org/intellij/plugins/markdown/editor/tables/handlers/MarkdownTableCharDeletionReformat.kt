@@ -1,0 +1,80 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.editor.tables.handlers
+
+import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import org.intellij.plugins.markdown.editor.tables.TableCharacterWidthUtils
+import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.modifyColumn
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateSeparatorAfterCharacterDeletion
+import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
+import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+
+internal fun reformatTableColumnAfterCharDeletion(char: Char, file: PsiFile, editor: Editor): Boolean {
+  if (!TableUtils.isFormattingOnTypeEnabledForTables(file)) {
+    return false
+  }
+  val caretOffset = editor.caretModel.currentCaret.offset
+  val document = editor.document
+  if (!TableUtils.isProbablyInsideTableCell(document, caretOffset)) {
+    return false
+  }
+  PsiDocumentManager.getInstance(file.project).commitDocument(document)
+  val table = TableUtils.findTable(file, caretOffset) ?: return false
+  val tableStyle = getTableStyle(file)
+  val cellIndex = TableUtils.findCellIndex(file, caretOffset) ?: return false
+  val alignment = table.separatorRow?.getCellAlignment(cellIndex) ?: return false
+
+  val hasFullWidthInColumn = table.getColumnCells(cellIndex, withHeader = true).any { cell ->
+    cell.text.any { c -> TableCharacterWidthUtils.isFullWidthCharacter(c.code) }
+  }
+  if (hasFullWidthInColumn) {
+    executeCommand(table.project) {
+      table.reformatColumnOnChange(
+        document,
+        editor.caretModel.allCarets,
+        cellIndex,
+        trimToMaxContent = true,
+        tableStyle = tableStyle,
+      )
+    }
+    return true
+  }
+
+  val width = TableUtils.findCell(file, caretOffset)?.textRange?.length ?: table.separatorRow?.getCellRange(cellIndex)?.length ?: 0
+  val text = document.charsSequence
+  executeCommand(table.project) {
+    table.modifyColumn(
+      document,
+      cellIndex,
+      tableStyle = tableStyle,
+      transformSeparator = { table.updateSeparatorAfterCharacterDeletion(document, cellIndex, width, tableStyle) },
+      transformCell = { cell ->
+        val range = cell.textRange
+        if (range.length > width && text[range.endOffset - 1] == ' ' && text[range.endOffset - 2] == ' ') {
+          document.deleteString(range.endOffset - 1, range.endOffset)
+        }
+      }
+    )
+    if (alignment != MarkdownTableSeparatorRow.CellAlignment.NONE) {
+      PsiDocumentManager.getInstance(file.project).commitDocument(document)
+      val reparsedTable = TableUtils.findTable(file, caretOffset)
+      val isBlank = TableUtils.findCell(file, caretOffset)?.textRange?.let { text.substring(it.startOffset, it.endOffset) }?.isBlank() ?: true
+      val shouldPreventExpand = isBlank && char == ' '
+      reparsedTable?.reformatColumnOnChange(
+        document,
+        editor.caretModel.allCarets,
+        cellIndex,
+        trimToMaxContent = false,
+        tableStyle = tableStyle,
+        preventExpand = shouldPreventExpand,
+      )
+    }
+  }
+  return true
+}

@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,14 +31,19 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -57,27 +51,42 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import static com.intellij.formatting.Indent.Type;
+import static com.intellij.formatting.Indent.getAbsoluteNoneIndent;
+import static com.intellij.formatting.Indent.getContinuationWithoutFirstIndent;
+import static com.intellij.formatting.Indent.getNoneIndent;
+import static com.intellij.formatting.Indent.getNormalIndent;
+import static com.intellij.formatting.Indent.getSpaceIndent;
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * Utility class to generate myBlock hierarchy
- *
- * @author ilyas
  */
 public class GroovyBlockGenerator {
 
@@ -96,7 +105,7 @@ public class GroovyBlockGenerator {
   private final AlignmentProvider myAlignmentProvider;
   private final GroovyWrappingProcessor myWrappingProcessor;
 
-  private final FormattingContext myContext;
+  private FormattingContext myContext;
 
   public GroovyBlockGenerator(GroovyBlock block) {
     myBlock = block;
@@ -135,12 +144,11 @@ public class GroovyBlockGenerator {
     }
 
     //For multiline strings
-    if ((elementType == GroovyTokenTypes.mSTRING_LITERAL || elementType == GroovyTokenTypes.mGSTRING_LITERAL) &&
-        myBlock.getTextRange().equals(myNode.getTextRange())) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(elementType) && myBlock.getTextRange().equals(myNode.getTextRange())) {
       String text = myNode.getText();
       if (text.length() > 6) {
-        if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
-            text.substring(0, 3).equals("\"\"\"") & text.substring(text.length() - 3).equals("\"\"\"")) {
+        if (text.startsWith("'''") && text.endsWith("'''") ||
+            text.startsWith("\"\"\"") && text.endsWith("\"\"\"")) {
           return generateForMultiLineString();
         }
       }
@@ -151,14 +159,14 @@ public class GroovyBlockGenerator {
         elementType == GroovyElementTypes.REGEX ||
         elementType == GroovyTokenTypes.mREGEX_LITERAL ||
         elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
-      final FormattingContext context =
-        myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
+      boolean isPlainGString = myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString();
+      final FormattingContext context = isPlainGString ? myContext.createContext(true, true) : myContext.createContext(false, true);
 
       final ArrayList<Block> subBlocks = new ArrayList<>();
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false), context));
+          subBlocks.add(context.createBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false)));
         }
       }
       return subBlocks;
@@ -189,9 +197,31 @@ public class GroovyBlockGenerator {
       }
     }
 
+    if (blockPsi instanceof GrParameterList) {
+      final List<ASTNode> children = visibleChildren(myNode);
+      if (settings.ALIGN_MULTILINE_METHOD_BRACKETS) {
+        PsiElement lParen = ((GrParameterList)blockPsi).getLParen();
+        if (lParen != null) {
+          PsiElement rParen = ((GrParameterList)blockPsi).getRParen();
+          if (rParen != null) {
+            myAlignmentProvider.addPair(lParen, rParen, false);
+          }
+        }
+      }
+      if (settings.ALIGN_MULTILINE_PARAMETERS) {
+        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(false);
+        for (ASTNode node : children) {
+          if (isKeyword(node)) continue;
+          IElementType type = node.getElementType();
+          if (type == T_LPAREN || type == T_RPAREN) continue;
+          aligner.append(node.getPsi());
+        }
+      }
+      return getGenericBlocks(children);
+    }
+
     // For Parameter lists
     if (isListLikeClause(blockPsi)) {
-      final ArrayList<Block> subBlocks = new ArrayList<>();
       List<ASTNode> astNodes = visibleChildren(myNode);
 
       if (mustAlign(blockPsi, astNodes)) {
@@ -200,13 +230,10 @@ public class GroovyBlockGenerator {
           if (!isKeyword(node)) aligner.append(node.getPsi());
         }
       }
-      for (ASTNode childNode : astNodes) {
-        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-      }
-      return subBlocks;
+      return getGenericBlocks(astNodes);
     }
 
-    if (blockPsi instanceof GrSwitchStatement) {
+    if (blockPsi instanceof GrSwitchElement) {
       final ArrayList<Block> subBlocks = new ArrayList<>();
       final ArrayList<Block> bodyBlocks = new ArrayList<>();
       List<ASTNode> astNodes = visibleChildren(myNode);
@@ -217,10 +244,10 @@ public class GroovyBlockGenerator {
         }
 
         if (switchBody) {
-          bodyBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+          bodyBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
         }
         else {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+          subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
         }
       }
       if (!bodyBlocks.isEmpty()) {
@@ -230,59 +257,58 @@ public class GroovyBlockGenerator {
     }
 
     boolean classLevel = blockPsi instanceof GrTypeDefinitionBody;
-    if (blockPsi instanceof GrClosableBlock &&
-        ((GrClosableBlock)blockPsi).getArrow() != null &&
-        ((GrClosableBlock)blockPsi).getParameters().length > 0 &&
+    if (blockPsi instanceof GrClosableBlock closableBlock &&
+        closableBlock.getArrow() != null &&
+        closableBlock.getParameters().length > 0 &&
         !getClosureBodyVisibleChildren(myNode).isEmpty()) {
-      GrClosableBlock closableBlock = (GrClosableBlock)blockPsi;
 
       ArrayList<Block> blocks = new ArrayList<>();
 
       PsiElement lbrace = closableBlock.getLBrace();
-      if (lbrace != null) {
+      {
         ASTNode node = lbrace.getNode();
-        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), myContext));
+        blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }
 
       {
-        Indent indent = Indent.getNormalIndent();
+        Indent indent = getNormalIndent();
         ASTNode parameterListNode = closableBlock.getParameterList().getNode();
-        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), myContext);
+        boolean simpleClosure = shouldHandleAsSimpleClosure(closableBlock, settings);
+        FormattingContext closureContext = myContext.createContext(simpleClosure, simpleClosure);
+        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), closureContext);
         blocks.add(bodyBlock);
       }
 
       PsiElement rbrace = closableBlock.getRBrace();
       if (rbrace != null) {
         ASTNode node = rbrace.getNode();
-        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), myContext));
+        blocks.add(myContext.createBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false)));
       }
 
       return blocks;
     }
 
-    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
-      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
-    }
-
-    if (blockPsi instanceof GrMethod) {
-
-      final ArrayList<Block> subBlocks = new ArrayList<>();
-
-      for (ASTNode childNode : getGroovyChildren(myNode)) {
-        if (childNode.getElementType() == GroovyTokenTypes.mLPAREN) continue;
-        if (childNode.getElementType() == GroovyTokenTypes.mRPAREN) continue;
-
-        if (childNode.getElementType() == GroovyElementTypes.PARAMETERS_LIST) {
-          subBlocks.add(new ParameterListBlock(((GrMethod)blockPsi), Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
-        }
-        else if (canBeCorrectBlock(childNode)) {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-        }
+    if (blockPsi instanceof GrClosableBlock) {
+      FormattingContext oldContext = myContext;
+      try {
+        boolean simpleClosure = shouldHandleAsSimpleClosure((GrClosableBlock)blockPsi, settings);
+        myContext = myContext.createContext(simpleClosure, simpleClosure);
+        return generateCodeSubBlocks(visibleChildren(myNode));
+      } finally {
+        myContext = oldContext;
       }
-      return subBlocks;
     }
 
-    else if (blockPsi instanceof GrTraditionalForClause) {
+    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile) {
+      return generateCodeSubBlocks(visibleChildren(myNode));
+    }
+    if (classLevel) {
+      List<ASTNode> children = visibleChildren(myNode);
+      calculateAlignments(children, true);
+      return generateSubBlocks(children);
+    }
+
+    if (blockPsi instanceof GrTraditionalForClause) {
       if (settings.ALIGN_MULTILINE_FOR) {
         final GrTraditionalForClause clause = (GrTraditionalForClause)blockPsi;
         final AlignmentProvider.Aligner parenthesesAligner = myAlignmentProvider.createAligner(false);
@@ -338,11 +364,11 @@ public class GroovyBlockGenerator {
     }
 
     // For other cases
-    final ArrayList<Block> subBlocks = new ArrayList<>();
-    for (ASTNode childNode : visibleChildren(myNode)) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-    }
-    return subBlocks;
+    return getGenericBlocks(visibleChildren(myNode));
+  }
+
+  private @NotNull List<Block> getGenericBlocks(@NotNull List<ASTNode> astNodes) {
+    return ContainerUtil.map(astNodes, it -> myContext.createBlock(it, getIndent(it), getChildWrap(it)));
   }
 
   private Block createSwitchBodyBlock(List<Block> bodyBlocks) {
@@ -354,9 +380,8 @@ public class GroovyBlockGenerator {
       GroovyIndentProcessor.getIndentInBlock(settings.BRACE_STYLE),
       myContext) {
 
-      @NotNull
       @Override
-      public ChildAttributes getChildAttributes(int newChildIndex) {
+      public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
         List<Block> subBlocks = getSubBlocks();
         if (newChildIndex > 0) {
           Block block = subBlocks.get(newChildIndex - 1);
@@ -371,7 +396,7 @@ public class GroovyBlockGenerator {
                 indentSize = options.INDENT_SIZE;
               }
               if (!finished) {
-                indent = Indent.getSpaceIndent((indent.getType() == Indent.Type.NORMAL ? indentSize : 0) + indentSize);
+                indent = getSpaceIndent((indent.getType() == Type.NORMAL ? indentSize : 0) + indentSize);
               }
               return new ChildAttributes(indent, null);
             }
@@ -386,59 +411,49 @@ public class GroovyBlockGenerator {
     return myWrappingProcessor.getChildWrap(childNode);
   }
 
-  @NotNull
-  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, boolean indentLabelBlocks) {
-
+  public @NotNull List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
 
-    if (indentLabelBlocks && isCodeBlock()) {
-      List<ASTNode> flattenChildren = flattenChildren(children);
-      calculateAlignments(flattenChildren, classLevel);
-      for (int i = 0; i < flattenChildren.size(); i++) {
-        ASTNode childNode = flattenChildren.get(i);
-        if (childNode.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
-          int start = i;
-          do {
-            i++;
-          }
-          while (i < flattenChildren.size() &&
-                 flattenChildren.get(i).getElementType() != GroovyElementTypes.LABELED_STATEMENT &&
-                 flattenChildren.get(i).getElementType() != GroovyTokenTypes.mRCURLY);
-          subBlocks.add(
-            new GrLabelBlock(
-              childNode,
-              flattenChildren.subList(start + 1, i),
-              classLevel, getIndent(childNode),
-              getChildWrap(childNode),
-             myContext)
-          );
-          i--;
+    List<ASTNode> flattenChildren = flattenChildren(children);
+    calculateAlignments(flattenChildren, false);
+    for (int i = 0; i < flattenChildren.size(); i++) {
+      ASTNode childNode = flattenChildren.get(i);
+      if (childNode.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
+        int start = i;
+        do {
+          i++;
         }
-        else {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-        }
+        while (i < flattenChildren.size() &&
+               flattenChildren.get(i).getElementType() != GroovyElementTypes.LABELED_STATEMENT &&
+               flattenChildren.get(i).getElementType() != GroovyTokenTypes.mRCURLY);
+        subBlocks.add(
+          new GrLabelBlock(
+            childNode,
+            flattenChildren.subList(start + 1, i),
+            getIndent(childNode),
+            getChildWrap(childNode),
+            myContext)
+        );
+        i--;
+      }
+      else {
+        subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
       }
     }
-    else {
-      calculateAlignments(children, classLevel);
 
-      for (ASTNode childNode : children) {
-        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-      }
+    return subBlocks;
+  }
+
+  List<Block> generateSubBlocks(List<ASTNode> children) {
+    final List<Block> subBlocks = new ArrayList<>();
+    for (ASTNode childNode : children) {
+      subBlocks.add(myContext.createBlock(childNode, getIndent(childNode), getChildWrap(childNode)));
     }
     return subBlocks;
   }
 
-  private boolean isCodeBlock() {
-    IElementType type = myNode.getElementType();
-    return type == GroovyElementTypes.OPEN_BLOCK ||
-           type == GroovyElementTypes.CLOSABLE_BLOCK ||
-           type == GroovyElementTypes.CONSTRUCTOR_BODY ||
-           type == GroovyParserDefinition.GROOVY_FILE;
-  }
-
-  private static List<ASTNode> flattenChildren(List<ASTNode> children) {
-    ArrayList<ASTNode> result = ContainerUtil.newArrayList();
+  public static List<ASTNode> flattenChildren(List<ASTNode> children) {
+    ArrayList<ASTNode> result = new ArrayList<>();
     for (ASTNode child : children) {
       processNodeFlattening(result, child);
     }
@@ -465,9 +480,12 @@ public class GroovyBlockGenerator {
     for (ASTNode child : children) {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
-        alignGroup(currentGroup, spock, classLevel);
-        currentGroup = ContainerUtil.newArrayList();
-        spock = true;
+        String labelText = ((GrLabeledStatement)psi).getLabel().getText();
+        if (labelText.equals("where") || labelText.equals("combined")) {
+          alignGroup(currentGroup, spock, classLevel);
+          currentGroup = new ArrayList<>();
+          spock = true;
+        }
       }
       else if (currentGroup != null && spock && isTablePart(psi)) {
         currentGroup.add((GrStatement)psi);
@@ -477,7 +495,7 @@ public class GroovyBlockGenerator {
         if (variables.length > 0) {
           if (!classLevel || currentGroup == null || fieldGroupEnded(psi) || spock) {
             alignGroup(currentGroup, spock, classLevel);
-            currentGroup = ContainerUtil.newArrayList();
+            currentGroup = new ArrayList<>();
             spock = false;
           }
           currentGroup.add((GrStatement)psi);
@@ -486,7 +504,7 @@ public class GroovyBlockGenerator {
       else {
         if (shouldSkip(classLevel, psi)) continue;
         alignGroup(currentGroup, spock, classLevel);
-        currentGroup = null;
+        currentGroup = psi instanceof GrReferenceExpression && Pattern.matches("^__+$", psi.getText()) ? new ArrayList<>() : null;
       }
     }
 
@@ -556,7 +574,7 @@ public class GroovyBlockGenerator {
 
     GrStatement first = embedded ? inner : group.get(1);
     List<AlignmentProvider.Aligner> alignments = ContainerUtil
-      .map2List(getSpockTable(first), leaf -> myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT));
+      .map(getSpockTable(first), leaf -> myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT));
 
     int second = embedded ? 1 : 2;
     for (int i = second; i < group.size(); i++) {
@@ -568,10 +586,16 @@ public class GroovyBlockGenerator {
   }
 
   private boolean fieldGroupEnded(PsiElement psi) {
-    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) return true;
+    if (!myContext.getSettings().ALIGN_GROUP_FIELD_DECLARATIONS) {
+      return true;
+    }
+    int maxBlankLines = myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+    if (maxBlankLines == 0) {
+      return false;
+    }
     PsiElement prevSibling = psi.getPrevSibling();
     return prevSibling != null &&
-           StringUtil.countChars(prevSibling.getText(), '\n') >= myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS;
+           StringUtil.countChars(prevSibling.getText(), '\n') > 1;
   }
 
   private static List<LeafPsiElement> getSpockTable(GrStatement statement) {
@@ -589,7 +613,7 @@ public class GroovyBlockGenerator {
     return result;
   }
 
-  private static boolean isTablePart(PsiElement psi) {
+  public static boolean isTablePart(PsiElement psi) {
     return psi instanceof GrBinaryExpression &&
            (GroovyTokenTypes.mBOR == ((GrBinaryExpression)psi).getOperationTokenType() ||
             GroovyTokenTypes.mLOR == ((GrBinaryExpression)psi).getOperationTokenType());
@@ -629,19 +653,21 @@ public class GroovyBlockGenerator {
       return myContext.getSettings().ALIGN_MULTILINE_ASSIGNMENT;
     }
 
-    return blockPsi instanceof GrParameterList && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS ||
-           blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
+    return blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
            blockPsi instanceof GrThrowsClause && myContext.getSettings().ALIGN_MULTILINE_THROWS_LIST ||
-           blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP;
+           blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP ||
+           blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES ||
+           blockPsi instanceof GrArrayInitializer && myContext.getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION;
   }
 
   private static boolean isListLikeClause(PsiElement blockPsi) {
-    return blockPsi instanceof GrParameterList ||
-           blockPsi instanceof GrArgumentList ||
+    return blockPsi instanceof GrArgumentList ||
            blockPsi instanceof GrAssignmentExpression ||
            blockPsi instanceof GrExtendsClause ||
            blockPsi instanceof GrThrowsClause ||
-           blockPsi instanceof GrListOrMap;
+           blockPsi instanceof GrListOrMap ||
+           blockPsi instanceof GrTryResourceList ||
+           blockPsi instanceof GrArrayInitializer;
   }
 
   private static boolean isKeyword(ASTNode node) {
@@ -649,18 +675,36 @@ public class GroovyBlockGenerator {
 
     return TokenSets.KEYWORDS.contains(node.getElementType()) ||
            TokenSets.BRACES.contains(node.getElementType()) &&
-           !PlatformPatterns.psiElement().withText(")").withParent(GrArgumentList.class).afterLeaf(",").accepts(node.getPsi());
+           !isClosingParenthesisAfterTrailingComma(node);
   }
 
+  private static boolean isClosingParenthesisAfterTrailingComma(ASTNode node) {
+    if (node.getElementType() != T_RPAREN) {
+      return false;
+    }
+    if (!(node.getTreeParent().getPsi() instanceof GrArgumentList)) {
+      return false;
+    }
+    PsiElement prev = PsiUtilKt.skipWhiteSpacesAndNewLinesBackward(node.getPsi());
+    if (prev == null) {
+      return false;
+    }
+    return prev.getNode().getElementType() == T_COMMA;
+  }
 
   private List<Block> generateForMultiLineString() {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final int start = myNode.getTextRange().getStartOffset();
     final int end = myNode.getTextRange().getEndOffset();
 
-    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getNoneIndent(), new TextRange(start, start + 3), Wrap.createWrap(WrapType.NONE, false), myContext));
-    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getAbsoluteNoneIndent(), new TextRange(start + 3, end - 3), Wrap.createWrap(WrapType.NONE, false), myContext));
-    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getAbsoluteNoneIndent(), new TextRange(end - 3, end), Wrap.createWrap(WrapType.NONE, false), myContext));
+    subBlocks.add(
+      new GroovyBlockWithRange(myNode, getNoneIndent(), new TextRange(start, start + 3), Wrap.createWrap(WrapType.NONE, false), myContext));
+    subBlocks.add(
+      new GroovyBlockWithRange(myNode, getAbsoluteNoneIndent(), new TextRange(start + 3, end - 3), Wrap.createWrap(WrapType.NONE, false),
+                               myContext));
+    subBlocks.add(
+      new GroovyBlockWithRange(myNode, getAbsoluteNoneIndent(), new TextRange(end - 3, end), Wrap.createWrap(WrapType.NONE, false),
+                               myContext));
     return subBlocks;
   }
 
@@ -668,7 +712,7 @@ public class GroovyBlockGenerator {
    * @param node Tree node
    * @return true, if the current node can be myBlock node, else otherwise
    */
-  private static boolean canBeCorrectBlock(final ASTNode node) {
+  public static boolean canBeCorrectBlock(final ASTNode node) {
     return !node.getText().trim().isEmpty();
   }
 
@@ -701,7 +745,6 @@ public class GroovyBlockGenerator {
   /**
    * Generates blocks for binary expressions
    *
-   * @return
    */
   private List<Block> generateForBinaryExpr() {
     final ArrayList<Block> subBlocks = new ArrayList<>();
@@ -710,72 +753,89 @@ public class GroovyBlockGenerator {
 
     GrBinaryExpression binary = (GrBinaryExpression)myNode.getPsi();
     LOG.assertTrue(binary != null);
-    addBinaryChildrenRecursively(binary, subBlocks, Indent.getContinuationWithoutFirstIndent(), alignment);
+    addBinaryChildrenRecursively(binary, subBlocks, getContinuationWithoutFirstIndent(), alignment);
     return subBlocks;
   }
 
   /**
    * Adds all children of specified element to given list
    *
-   * @param elem
-   * @param list
-   * @param indent
-   * @param aligner
    */
   private void addBinaryChildrenRecursively(PsiElement elem, List<Block> list, Indent indent, @Nullable AlignmentProvider.Aligner aligner) {
     if (elem == null) return;
     // For binary expressions
-    if ((elem instanceof GrBinaryExpression)) {
-      GrBinaryExpression myExpr = ((GrBinaryExpression) elem);
+    if ((elem instanceof GrBinaryExpression myExpr)) {
       if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
-        addBinaryChildrenRecursively(myExpr.getLeftOperand(), list, Indent.getContinuationWithoutFirstIndent(), aligner);
+        addBinaryChildrenRecursively(myExpr.getLeftOperand(), list, getContinuationWithoutFirstIndent(), aligner);
       }
-      PsiElement op = ((GrBinaryExpression)elem).getOperationToken();
+      PsiElement op = myExpr.getOperationToken();
       for (ASTNode childNode : visibleChildren(elem.getNode())) {
         PsiElement psi = childNode.getPsi();
         if (!(psi instanceof GrBinaryExpression)) {
           if (op != psi && aligner != null) {
             aligner.append(psi);
           }
-          list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
+          list.add(myContext.createBlock(childNode, indent, getChildWrap(childNode)));
         }
       }
       if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
-        addBinaryChildrenRecursively(myExpr.getRightOperand(), list, Indent.getContinuationWithoutFirstIndent(), aligner
+        addBinaryChildrenRecursively(myExpr.getRightOperand(), list, getContinuationWithoutFirstIndent(), aligner
         );
       }
     }
   }
 
 
-  private void addNestedChildren(final PsiElement elem,
-                                 List<Block> list,
+  private void addNestedChildren(@NotNull PsiElement elem,
+                                 @NotNull List<Block> list,
                                  @Nullable AlignmentProvider.Aligner aligner,
                                  final boolean topLevel,
-                                 Wrap wrap) {
+                                 @NotNull Wrap wrap) {
     final List<ASTNode> children = visibleChildren(elem.getNode());
-    if (elem instanceof GrMethodCallExpression) {
-      GrExpression invokedExpression = ((GrMethodCallExpression)elem).getInvokedExpression();
-      if (invokedExpression instanceof GrQualifiedReference) {
-        final PsiElement nameElement = ((GrQualifiedReference)invokedExpression).getReferenceNameElement();
-        if (nameElement != null) {
-          List<ASTNode> grandChildren = visibleChildren(invokedExpression.getNode());
-          int i = 0;
-          while (i < grandChildren.size() && nameElement != grandChildren.get(i).getPsi()) i++;
-          if (i > 0) {
-            processNestedChildrenPrefix(list, aligner, false, grandChildren, i, wrap);
-          }
-          if (i < grandChildren.size()) {
-            LOG.assertTrue(nameElement == grandChildren.get(i).getPsi());
-            list.add(new MethodCallWithoutQualifierBlock(nameElement, wrap, topLevel, children, elem, myContext));
-          }
-          return;
-        }
+    List<ASTNode> nodes = flattenQualifiedReference(elem);
+    if (nodes != null && !nodes.isEmpty()) {
+      int i = 0;
+      while (i < nodes.size()) {
+        ASTNode node = nodes.get(i);
+        if (TokenSets.DOTS.contains(node.getElementType())) break;
+        i++;
       }
+      if (i == nodes.size()) {
+        list.add(new MethodCallWithoutQualifierBlock(wrap, topLevel, nodes, myContext));
+        return;
+      }
+
+      if (i > 0) {
+        processNestedChildrenPrefix(list, aligner, false, nodes.subList(0, i), wrap);
+      }
+      Indent indent = getContinuationWithoutFirstIndent();
+
+      List<Block> childBlocks = new ArrayList<>();
+      ASTNode dotNode = nodes.get(i);
+      if (aligner != null) {
+        aligner.append(dotNode.getPsi());
+      }
+
+      Wrap noneWrap = Wrap.createWrap(WrapType.NONE, false);
+
+      boolean shouldWrapAfterDot = myContext.getGroovySettings().WRAP_CHAIN_CALLS_AFTER_DOT;
+      Wrap identifierWrap = shouldWrapAfterDot ? wrap : noneWrap;
+      Wrap dotWrap = shouldWrapAfterDot ? noneWrap : wrap;
+
+      childBlocks.add(myContext.createBlock(dotNode, getIndent(dotNode), dotWrap));
+
+      List<ASTNode> callNodes = nodes.subList(i + 1, nodes.size());
+      if (!callNodes.isEmpty()) {
+        childBlocks.add(new MethodCallWithoutQualifierBlock(identifierWrap, topLevel, callNodes, myContext));
+      }
+
+      SyntheticGroovyBlock synBlock = new SyntheticGroovyBlock(childBlocks, noneWrap, indent, indent, myContext);
+      list.add(synBlock);
+
+      return;
     }
 
-
-    processNestedChildrenPrefix(list, aligner, topLevel, children, children.size(), wrap);
+    processNestedChildrenPrefix(list, aligner, topLevel, children, wrap);
   }
 
   private static boolean isAfterMultiLineClosure(ASTNode dot) {
@@ -797,41 +857,35 @@ public class GroovyBlockGenerator {
                                            @Nullable AlignmentProvider.Aligner aligner,
                                            boolean topLevel,
                                            List<ASTNode> children,
-                                           int limit,
                                            Wrap wrap) {
+    LOG.assertTrue(!children.isEmpty());
     ASTNode fst = children.get(0);
-    LOG.assertTrue(limit > 0);
     if (NESTED.contains(fst.getElementType())) {
       addNestedChildren(fst.getPsi(), list, aligner, false, wrap);
     }
     else {
-      Indent indent = Indent.getContinuationWithoutFirstIndent();
-      list.add(new GroovyBlock(fst, indent, getChildWrap(fst), myContext));
+      Indent indent = getContinuationWithoutFirstIndent();
+      list.add(myContext.createBlock(fst, indent, getChildWrap(fst)));
     }
-    addNestedChildrenSuffix(list, aligner, topLevel, children, limit);
+    addNestedChildrenSuffix(list, topLevel, children.subList(1, children.size()));
   }
 
   void addNestedChildrenSuffix(List<Block> list,
-                               @Nullable AlignmentProvider.Aligner aligner,
                                boolean topLevel,
-                               List<ASTNode> children,
-                               int limit) {
-    for (int i = 1; i < limit; i++) {
-      ASTNode childNode = children.get(i);
+                               List<ASTNode> children) {
+    for (ASTNode childNode : children) {
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
-        Indent indent = topLevel || NESTED.contains(type) || type == GroovyTokenTypes.mIDENT || TokenSets.DOTS.contains(type) && !isAfterMultiLineClosure(
-          childNode) ?
-                        Indent.getContinuationWithoutFirstIndent() :
-                        Indent.getNoneIndent();
+        Indent indent = NESTED.contains(type)
+                        || type == GroovyTokenTypes.mIDENT
+                        || TokenSets.DOTS.contains(type) && !isAfterMultiLineClosure(childNode)
+                        || topLevel
+                        ? getContinuationWithoutFirstIndent() : getNoneIndent();
 
-
-        if (aligner != null && TokenSets.DOTS.contains(type)) {
-          aligner.append(childNode.getPsi());
-        }
-
-        list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
+        list.add(myContext.createBlock(childNode, indent, getChildWrap(childNode)));
       }
     }
   }
+
+
 }

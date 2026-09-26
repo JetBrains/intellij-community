@@ -1,0 +1,6 @@
+// "Remove constructor call" "true"
+// K2_ERROR: NO_CONSTRUCTOR
+
+interface Base
+class Derived : Base
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveNoConstructorFix

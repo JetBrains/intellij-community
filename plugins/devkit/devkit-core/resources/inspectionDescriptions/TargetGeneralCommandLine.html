@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports <code>GeneralCommandLine</code> code that selects its process environment implicitly.
+<p>
+  <code>GeneralCommandLine</code> can select a non-local process environment from its executable path or working directory.
+  A target-native executable string can make this selection depend on the working directory.
+  This behavior is fragile for projects in WSL and Dev Containers.
+</p>
+<p>
+  Convert an <code>EelPath</code> with <code>asNioPath()</code> when you must use <code>GeneralCommandLine</code>.
+  Prefer <code>EelExecApi</code> when the execution environment is already available.
+</p>
+</body>
+</html>

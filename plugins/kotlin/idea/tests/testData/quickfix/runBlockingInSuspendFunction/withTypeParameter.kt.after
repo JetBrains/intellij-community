@@ -1,0 +1,15 @@
+// "Replace 'runBlocking' with 'run'" "true"
+// WITH_COROUTINES
+
+import kotlinx.coroutines.runBlocking
+
+fun producer(): String = "x"
+
+suspend fun run() {
+    var v = run<String?> {
+        producer()
+    }
+    v = null
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.RunBlockingInSuspendFunctionInspection$createQuickFix$1

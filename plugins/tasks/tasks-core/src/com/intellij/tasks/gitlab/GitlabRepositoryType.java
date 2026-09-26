@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab;
 
 import com.intellij.openapi.project.Project;
@@ -8,35 +9,31 @@ import com.intellij.util.Consumer;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Mikhail Golubev
  */
 public class GitlabRepositoryType extends BaseRepositoryType<GitlabRepository>{
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Gitlab";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Gitlab;
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new GitlabRepository(this);
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(GitlabRepository repository,
-                                           Project project,
-                                           Consumer<GitlabRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(GitlabRepository repository,
+                                                    Project project,
+                                                    Consumer<? super GitlabRepository> changeListener) {
     return new GitlabRepositoryEditor(project, repository, changeListener);
   }
 

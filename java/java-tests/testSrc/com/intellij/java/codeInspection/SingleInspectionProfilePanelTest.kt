@@ -18,7 +18,7 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileTest
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel
@@ -30,7 +30,7 @@ import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
-  private val myInspection = JavaDocLocalInspection()
+  private val myInspection = JavadocDeclarationInspection()
 
   // see IDEA-85700
   fun testSettingsModification() {
@@ -44,13 +44,13 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
       panel.reset()
 
       val tool = getInspection(model)
-      assertEquals("", tool.myAdditionalJavadocTags)
-      tool.myAdditionalJavadocTags = "foo"
+      assertEquals("", tool.ADDITIONAL_TAGS)
+      tool.ADDITIONAL_TAGS = "foo"
       model.setModified(true)
       panel.apply()
       assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
 
-      assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("foo")
+      assertThat(getInspection(profile).ADDITIONAL_TAGS).isEqualTo("foo")
       panel.disposeUI()
     }
   }
@@ -62,7 +62,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     profile.initInspectionTools(project)
 
     val originalTool = getInspection(profile)
-    originalTool.myAdditionalJavadocTags = "foo"
+    originalTool.ADDITIONAL_TAGS = "foo"
 
     val model = profile.modifiableModel
 
@@ -73,13 +73,13 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
                           InspectionProfileTest.countInitializedTools(model))
 
     val copyTool = getInspection(model)
-    copyTool.myAdditionalJavadocTags = "bar"
+    copyTool.ADDITIONAL_TAGS = "bar"
 
     model.setModified(true)
     panel.apply()
     assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
 
-    assertEquals("bar", getInspection(profile).myAdditionalJavadocTags)
+    assertEquals("bar", getInspection(profile).ADDITIONAL_TAGS)
     panel.disposeUI()
   }
 
@@ -90,18 +90,18 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     profile.initInspectionTools(project)
 
     val originalTool = getInspection(profile)
-    assertThat(originalTool.myAdditionalJavadocTags).isEmpty()
+    assertThat(originalTool.ADDITIONAL_TAGS).isEmpty()
 
     val model = profile.modifiableModel
     val copyTool = getInspection(model)
-    copyTool.myAdditionalJavadocTags = "foo"
+    copyTool.ADDITIONAL_TAGS = "foo"
     // this change IS NOT COMMITTED
 
-    assertEquals("", getInspection(profile).myAdditionalJavadocTags)
+    assertEquals("", getInspection(profile).ADDITIONAL_TAGS)
   }
 
-  private fun getInspection(profile: InspectionProfileImpl): JavaDocLocalInspection {
-    return (profile.getInspectionTool(myInspection.shortName, getProject()) as LocalInspectionToolWrapper?)!!.tool as JavaDocLocalInspection
+  private fun getInspection(profile: InspectionProfileImpl): JavadocDeclarationInspection {
+    return (profile.getInspectionTool(myInspection.shortName, getProject()) as LocalInspectionToolWrapper?)!!.tool as JavadocDeclarationInspection
   }
 
   override fun setUp() {

@@ -1,0 +1,12 @@
+// HIGHLIGHT: WARNING
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression (may change semantics)
+
+class Test {
+    val flag: Boolean
+        get() = nextFlag()
+
+    fun nextFlag(): Boolean = true
+
+    fun test(): Int = if (flag) <caret>42 else 42
+}

@@ -1,79 +1,71 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.xml.dom.StaxFactory;
+import org.codehaus.stax2.XMLStreamReader2;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
-public class XIncludeProvider extends FileIncludeProvider {
-  @NotNull
+final class XIncludeProvider extends FileIncludeProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "XInclude";
   }
 
   @Override
-  public boolean acceptFile(VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+  public boolean acceptFile(@NotNull VirtualFile file) {
+    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE);
   }
 
   @Override
-  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
     fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
-    if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
-    final ArrayList<FileIncludeInfo> infos = new ArrayList<>();
-    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
+    if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) {
+      return FileIncludeInfo.EMPTY;
+    }
 
-      boolean isXInclude;
-      @Override
-      public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-        isXInclude = XmlUtil.XINCLUDE_URI.equals(nsURI) && "include".equals(name);
-      }
-
-      @Override
-      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-        if (isXInclude && "href".equals(key)) {
-          infos.add(new FileIncludeInfo(value));
+    List<FileIncludeInfo> infos = new ArrayList<>();
+    try {
+      XMLStreamReader2 reader = StaxFactory.createXmlStreamReader(new CharSequenceReader(contentAsText));
+      while (reader.hasNext()) {
+        int next = reader.next();
+        if (next == XMLStreamConstants.START_ELEMENT) {
+          if (XmlUtil.XINCLUDE_URI.equals(reader.getNamespaceURI()) && "include".equals(reader.getLocalName())) {
+            int attributeCount = reader.getAttributeCount();
+            if (attributeCount > 0) {
+              for (int i = 0; i < attributeCount; i++) {
+                String localName = reader.getAttributeLocalName(i);
+                if ("href".equals(localName)) {
+                  infos.add(new FileIncludeInfo(reader.getAttributeValue(i)));
+                }
+              }
+            }
+          }
         }
       }
-
-      @Override
-      public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-        isXInclude = false;
-      }
-    });
+    }
+    catch (XMLStreamException e) {
+      // ignore
+    }
     return infos.toArray(FileIncludeInfo.EMPTY);
   }
 }

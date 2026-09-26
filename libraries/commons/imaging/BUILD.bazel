@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.commons.imaging` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-imaging-commons-imaging"],
+    module = ":imaging",
+)
+### auto-generated section `dev intellij.libraries.commons.imaging` end
+
+### auto-generated section `build intellij.libraries.commons.imaging` start
+jvm_library(
+    name = "imaging",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.imaging",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
+    runtime_deps = ["@lib//:libraries-commons-imaging-commons-imaging"],
+)
+
+jvm_library(
+    name = "imaging_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.imaging",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-imaging-commons-imaging"],
+    runtime_deps = [":imaging"],
+)
+### auto-generated section `build intellij.libraries.commons.imaging` end
+
+### auto-generated section `iml intellij.libraries.commons.imaging` start
+exports_files(
+    [
+        "intellij.libraries.commons.imaging.iml",
+        "resources/intellij.libraries.commons.imaging.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.commons.imaging` end

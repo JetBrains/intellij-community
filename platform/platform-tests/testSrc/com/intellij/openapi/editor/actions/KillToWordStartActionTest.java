@@ -19,10 +19,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- * @since 4/19/11 4:21 PM
- */
 public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase {
 
   public void testAfterWordEnd() {

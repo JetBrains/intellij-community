@@ -1,0 +1,5 @@
+UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> KtLightClassForDecompiledDeclaration of PsiFile:Suppress.class: Suppress
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
+UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
+UAnnotation (fqName = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = SinceKotlin) -> KtLightClassForDecompiledDeclaration of PsiFile:SinceKotlin.class: SinceKotlin
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String

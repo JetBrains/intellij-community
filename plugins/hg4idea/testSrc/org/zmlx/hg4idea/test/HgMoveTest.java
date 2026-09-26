@@ -13,9 +13,11 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import org.junit.Test;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class HgMoveTest extends HgSingleUserTest {
 
@@ -26,20 +28,23 @@ public class HgMoveTest extends HgSingleUserTest {
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
+    myChangeListManager.ensureUpToDate();
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"));
   }
 
   @Test
   public void testMoveUnchangedFile() throws Exception {
     VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "com");
     VirtualFile file = createFileInCommand(parent1, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
+    myChangeListManager.ensureUpToDate();
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "a.txt"), HgTestOutputParser.removed("com", "a.txt"));
   }
 
   @Test
@@ -47,27 +52,32 @@ public class HgMoveTest extends HgSingleUserTest {
     VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "com");
     VirtualFile dir = createDirInCommand(parent1, "zzz");
     createFileInCommand(dir, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(dir, parent2);
+    myChangeListManager.ensureUpToDate();
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("org", "zzz", "a.txt"), HgTestOutputParser.removed("com", "zzz", "a.txt"));
+    verifyStatus(HgTestOutputParser.added("org", "zzz", "a.txt"), HgTestOutputParser.removed("com", "zzz", "a.txt"));
   }
 
   @Test
   public void testMoveUnversionedFile() throws Exception {
     VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "com");
 
-    File unversionedFile = new File(parent1.getPath(), "a.txt");
-    VirtualFile file = makeFile(unversionedFile);
+    Path unversionedFileNio = parent1.toNioPath().resolve("a.txt");
+    Files.writeString(unversionedFileNio, "unversioned file content");
+    VirtualFile unversionedFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(unversionedFileNio);
+    myChangeListManager.ensureUpToDate();
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("com", "a.txt"));
+    verifyStatus(HgTestOutputParser.unknown("com", "a.txt"));
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
-    moveFileInCommand(file, parent2);
+    moveFileInCommand(unversionedFile, parent2);
+    myChangeListManager.ensureUpToDate();
 
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("org", "a.txt"));
+    verifyStatus(HgTestOutputParser.unknown("org", "a.txt"));
   }
 
 }

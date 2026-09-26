@@ -1,37 +1,28 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class PatternConfigurationProducer extends AbstractPatternBasedConfigurationProducer<JUnitConfiguration> {
-  public PatternConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
+  @Override
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
+    return JUnitConfigurationType.getInstance().getFactory();
   }
 
   @Override
@@ -41,12 +32,18 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
+      return false;
+    }
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
+    GlobalSearchScope resolveScope = element.getResolveScope();
+    if (psiFacade.findClass(JUnitUtil.TEST_CASE_CLASS, resolveScope) == null &&
+        psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, resolveScope) == null) {
       return false;
     }
     sourceElement.set(element);
@@ -77,11 +74,19 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
-  public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull JUnitConfiguration unitConfiguration, @NotNull ConfigurationContext context) {
      if (!isApplicableTestType(unitConfiguration.getTestType(), context)) return false;
     if (differentParamSet(unitConfiguration, context.getLocation())) return false;
     final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
     if (isConfiguredFromContext(context, patterns)) return true;
     return false;
+  }
+
+  @Override
+  protected boolean isRequiredVisibility(PsiMember psiElement) {
+    if (JUnitUtil.isJUnit5(psiElement)) {
+      return true;
+    }
+    return super.isRequiredVisibility(psiElement);
   }
 }

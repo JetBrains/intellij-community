@@ -19,12 +19,12 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     configuration.setNameChangedByUser(true);
     checkSuggestedName("Other name", configuration);
 
-    configuration.setName("1234567890123456789012345 other long name");
-    checkSuggestedName("12345678901234567890...", configuration);
+    configuration.setName("12345678101234567820123456783012345678401234567850123456786012345 other long name");
+    checkSuggestedName("123456781012345678201234567830123456784012345678501234567860...", configuration);
 
-    configuration.setMainClassName("com.comp.A12345678901234567890123LongName");
+    configuration.setMainClassName("com.comp.A234567810A234567820A234567830A234567840A234567850A234567860LongName");
     configuration.setGeneratedName();
-    checkSuggestedName("A1234567890123....main()", configuration);
+    checkSuggestedName("A234567810A234567820A234567830A234567840A234567850A234....main()", configuration);
   }
 
   public void testRunTestMethodName() {
@@ -44,9 +44,9 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     configuration.setGeneratedName();
     checkSuggestedName("testSmth()", configuration);
 
-    data.METHOD_NAME = "123456789012345678900";
+    data.METHOD_NAME = "123456781012345678201234567830123456784012345678501234567860A";
     configuration.setGeneratedName();
-    checkSuggestedName("123456789012345678...()", configuration);
+    checkSuggestedName("1234567810123456782012345678301234567840123456785012345678...()", configuration);
   }
 
   private static void checkSuggestedName(String expectedName, LocatableConfiguration configuration) {

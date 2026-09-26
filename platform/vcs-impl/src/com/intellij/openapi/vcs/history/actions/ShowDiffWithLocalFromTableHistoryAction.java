@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,12 +23,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.CurrentRevision;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
@@ -50,13 +62,20 @@ public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensio
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    VcsRevisionNumber currentRevisionNumber = e.getRequiredData(VcsDataKeys.HISTORY_SESSION).getCurrentRevisionNumber();
-    VcsFileRevision selectedRevision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS)[0];
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VirtualFile virtualFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+    if (historySession == null) return;
+    VcsRevisionNumber currentRevisionNumber = historySession.getCurrentRevisionNumber();
+    VcsFileRevision[] fileRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (fileRevisions == null) return;
+    VcsFileRevision selectedRevision = fileRevisions[0];
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (virtualFile == null) return;
 
     if (currentRevisionNumber != null && selectedRevision != null) {
       DiffFromHistoryHandler diffHandler = ObjectUtils.notNull(e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER).getHistoryDiffHandler(),

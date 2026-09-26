@@ -1,0 +1,146 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.editor.tables.inspections
+
+import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.withTableStyle
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+
+@RunWith(JUnit4::class)
+class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
+  private val description
+    get() = MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.description")
+
+  @Test
+  fun `shows inspection with incorrectly formatted cell`() {
+    // language=Markdown
+    val expected = """
+    <weak-warning desc="$description">| none | none |
+    |------|------|
+    | some | some   |</weak-warning>
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `shows inspection with incorrectly formatted header cell`() {
+    // language=Markdown
+    val expected = """
+    <weak-warning desc="$description">| none   | none |
+    |-------:|------|
+    |   some | some |</weak-warning>
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `shows inspection with incorrectly formatted separator`() {
+    // language=Markdown
+    val expected = """
+    <weak-warning desc="$description">| none | none |
+    |------|---|
+    | some | some |</weak-warning>
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no inspections on table with correct formatting`() {
+    // language=Markdown
+    val expected = """
+    | none | none |
+    |------|------|
+    | some | some |
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no warnings on table with spaces in separator cells`() {
+    // language=Markdown
+    val expected = """
+    | Active  | Suggested | Audit? |
+    | ------- | --------- | ------ |
+    | `true`  | `true`    | No     |
+    | `true`  | `false`   | Yes    |
+    | `false` | `true`    | No     |
+    | `false` | `false`   | No     |
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  @Test
+  fun `no inspection on correctly formatted compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | Character | Meaning |
+        | --- | --- |
+        | Y | Yes |
+        | N | No |
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `no inspection on correctly formatted tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |Character|Meaning|
+        |---|---|
+        |Y|Yes|
+        |N|No|
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `no inspection on correctly formatted tight table with spaces in content`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |hello world|other value|
+        |---|---|
+        |value here|another value|
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `no inspection on nicely formatted table`() {
+    doTest(
+      """
+      | Syntax | Description |
+      | ----------- | ----------- |
+      | Header | Title |
+      | Paragraph | Text |
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `shows inspection when nicely formatted table has extra cell spaces in separator row`() {
+    // language=Markdown
+    val expected = """
+    <weak-warning desc="$description">| first | second |
+    | ----------- |-----------|
+    | first | second  |</weak-warning>
+    """.trimIndent()
+    doTest(expected)
+  }
+
+  private fun doTest(expected: String) {
+    myFixture.configureByText("some.md", expected)
+    myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
+    myFixture.checkHighlighting()
+  }
+
+}

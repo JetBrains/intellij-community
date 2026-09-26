@@ -1,0 +1,5 @@
+interface I {
+    companion object {
+        val p: Int = 1
+    }
+}

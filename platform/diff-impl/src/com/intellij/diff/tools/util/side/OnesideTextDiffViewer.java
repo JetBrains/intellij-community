@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.diff.actions.impl.SetEditorSettingsAction;
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -27,58 +14,68 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> {
-  @NotNull private final List<? extends EditorEx> myEditableEditors;
+public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
+  private final @NotNull List<? extends EditorEx> myEditableEditors;
 
-  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
+  protected final @NotNull SetEditorSettingsActionGroup myEditorSettingsAction;
 
   public OnesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 
-    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
+    myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 
     DiffUtil.installLineConvertor(getEditor(), getContent());
+
+    if (getProject() != null) {
+      myContentPanel.setBreadcrumbs(new SimpleDiffBreadcrumbsPanel(getEditor(), this), getTextSettings());
+    }
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     installEditorListeners();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorListeners();
     super.onDispose();
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  protected TextEditorHolder createEditorHolder(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+  protected @NotNull TextEditorHolder createEditorHolder(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
     TextEditorHolder holder = super.createEditorHolder(factory);
 
     boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
@@ -87,37 +84,42 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     return holder;
   }
 
-  @Nullable
   @Override
-  protected JComponent createTitle() {
-    List<JComponent> textTitles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(getEditor(), getEditor()));
+  protected @Nullable JComponent createTitle() {
+    List<JComponent> textTitles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(getEditor(), getEditor()));
     return getSide().select(textTitles);
   }
 
   //
   // Diff
   //
-
-  @NotNull
-  public TextDiffSettings getTextSettings() {
+  public @NotNull TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
-  @NotNull
-  protected List<AnAction> createEditorPopupActions() {
-    return TextDiffViewerUtil.createEditorPopupActions();
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    return Collections.emptyList();
+  }
+
+  protected @NotNull List<AnAction> createEditorPopupActions() {
+    List<AnAction> result = new ArrayList<>();
+    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
+    return result;
   }
 
   //
   // Listeners
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installEditorListeners() {
-    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyEditorListeners() {
   }
 
@@ -125,25 +127,21 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Getters
   //
 
-  @NotNull
-  public List<? extends EditorEx> getEditors() {
+  @Override
+  public @NotNull List<? extends EditorEx> getEditors() {
     return Collections.singletonList(getEditor());
   }
 
-  @NotNull
-  protected List<? extends EditorEx> getEditableEditors() {
+  protected @NotNull List<? extends EditorEx> getEditableEditors() {
     return myEditableEditors;
   }
 
-  @NotNull
-  public EditorEx getEditor() {
+  public @NotNull EditorEx getEditor() {
     return getEditorHolder().getEditor();
   }
 
-  @NotNull
   @Override
-  public DocumentContent getContent() {
-    //noinspection unchecked
+  public @NotNull DocumentContent getContent() {
     return (DocumentContent)super.getContent();
   }
 
@@ -151,8 +149,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Abstract
   //
 
-  @CalledInAwt
-  protected void scrollToLine(int line) {
+  @RequiresEdt
+  public void scrollToLine(int line) {
     DiffUtil.scrollEditor(getEditor(), line, false);
   }
 
@@ -160,9 +158,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Misc
   //
 
-  @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getContent().getNavigatable(LineCol.fromCaret(getEditor()));
   }
 
@@ -186,19 +183,15 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return getEditor();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, getEditor());
   }
 
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
-    @NotNull
     @Override
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return OnesideTextDiffViewer.this.getEditors();
     }
 
@@ -207,7 +200,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       if (side != getSide()) return false;

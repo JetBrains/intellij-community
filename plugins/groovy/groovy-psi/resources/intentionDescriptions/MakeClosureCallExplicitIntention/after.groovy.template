@@ -1,3 +1,2 @@
-
 def Closure myClosure
-myClosure.call(arg1, arg2)
+<spot>myClosure.call(arg1, arg2)</spot>

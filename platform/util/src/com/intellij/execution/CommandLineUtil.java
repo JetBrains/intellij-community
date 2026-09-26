@@ -1,63 +1,58 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
-
-public class CommandLineUtil {
+public final class CommandLineUtil {
   private static final char INESCAPABLE_QUOTE = '\uEFEF';  // a random char, which is unlikely to encounter in an argument
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
+
+  private static final List<Character> SHELL_UNSAFE_CHARACTERS = Arrays.asList(
+    '|', '&', ';', '<', '>', '(', ')', '$', '`', '\\', '\"', '\'', ' ', '\t', '\n', '*', '?', '[', '#', '~', '=', '%'
+  );
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
 
-  @NotNull
-  public static String specialQuote(@NotNull String parameter) {
+  public static @NotNull String specialQuote(@NotNull String parameter) {
     return quote(parameter, INESCAPABLE_QUOTE);
   }
 
-  @NotNull
-  public static List<String> toCommandLine(@NotNull List<String> command) {
+  public static @NotNull List<String> toCommandLine(@NotNull List<@NotNull String> command) {
     assert !command.isEmpty();
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  @NotNull
-  public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<@NotNull String> parameters) {
     return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  @NotNull
-  public static List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
-    List<String> commandLine = ContainerUtil.newArrayListWithCapacity(parameters.size() + 1);
+  public static @NotNull List<String> toCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull Platform platform
+  ) {
+    List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
 
@@ -65,7 +60,7 @@ public class CommandLineUtil {
       for (String parameter : parameters) {
         if (isQuoted(parameter, INESCAPABLE_QUOTE)) {
           // TODO do we need that on non-Windows? M.b. just remove these quotes? -- Eldar
-          parameter = quote(unquoteString(parameter, INESCAPABLE_QUOTE), Q);
+          parameter = quote(StringUtilRt.unquoteString(parameter, INESCAPABLE_QUOTE), Q);
         }
         commandLine.add(parameter);
       }
@@ -97,6 +92,10 @@ public class CommandLineUtil {
    *              [C:\Program Files\] ["backslash quote\"]
    *
    *                   -> ["C:\Program Files\\" "\"backslash quote\\\""]
+   *
+   *
+   *   *** A command (i.e. a name of / a path to an executable file) may not contain double quotes (OS limitation),
+   *       so no escaping is needed.
    *
    *
    *   *** Besides the rules above, double quotes escaping is also used to prevent CRT from glob-expanding the arguments
@@ -212,7 +211,11 @@ public class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<String> commandLine) {
+  private static void addToWindowsCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull List<? super @NotNull String> commandLine
+  ) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 
@@ -220,7 +223,7 @@ public class CommandLineUtil {
     for (int i = 0; i < parameters.size(); i++) {
       String parameter = parameters.get(i);
 
-      parameter = unquoteString(parameter, INESCAPABLE_QUOTE);
+      parameter = StringUtilRt.unquoteString(parameter, INESCAPABLE_QUOTE);
       boolean inescapableQuoting = !parameter.equals(parameters.get(i));
 
       if (parameter.isEmpty()) {
@@ -243,7 +246,7 @@ public class CommandLineUtil {
 
         if (parameter.equalsIgnoreCase("echo")) {
           // no further quoting, only ^-escape and wrap the whole "echo ..." into double quotes
-          String parametersJoin = join(ContainerUtil.subList(parameters, i), " ");
+          String parametersJoin = String.join(" ", parameters.subList(i, parameters.size()));
           quoteFlag.toggle();
           parameter = escapeParameter(parametersJoin, quoteFlag, cmdInvocationDepth, false);
           commandLine.add(parameter);  // prefix is already included
@@ -270,7 +273,7 @@ public class CommandLineUtil {
   }
 
   private static String escapeParameter(String s, QuoteFlag quoteFlag, int cmdInvocationDepth, boolean escapeQuotingInside) {
-    String escapingCarets = repeatSymbol('^', (1 << cmdInvocationDepth) - 1);
+    String escapingCarets = StringUtil.repeatSymbol('^', (1 << cmdInvocationDepth) - 1);
     return escapeQuotingInside ? quoteEscape(s, quoteFlag, escapingCarets) : caretEscape(s, quoteFlag, escapingCarets);
   }
 
@@ -343,7 +346,7 @@ public class CommandLineUtil {
     //
     //     [^^"foo bar"] -> [""^^"foo bar"]  # starts and ends with quotes
     //
-    if (!isQuoted(sb, Q) && indexOfAny(sb, " \t") >= 0) {
+    if (!isQuoted(sb, Q) && StringUtil.indexOfAny(sb, " \t") >= 0) {
       if (sb.charAt(0) != Q) sb.insert(0, QQ);
       if (sb.charAt(sb.length() - 1) != Q) sb.append(QQ);
     }
@@ -371,11 +374,11 @@ public class CommandLineUtil {
       sb.append(s);
     }
     else {
-      s = unquoteString(s, Q);
+      s = StringUtilRt.unquoteString(s, Q);
 
       if (WIN_BACKSLASHES_PRECEDING_QUOTE.matcher(s).matches()) {
         // those trailing backslashes left in the buffer (if any) are going to precede a quote, double them
-        repeatSymbol(sb, '\\', numTrailingBackslashes);
+        StringUtil.repeatSymbol(sb, '\\', numTrailingBackslashes);
       }
 
       sb.append(s).append(Q);
@@ -407,29 +410,28 @@ public class CommandLineUtil {
     // Strip the closing quote and halve the number of trailing backslashes (if any):
     // they no more precede a double quote, hence lose their special treatment during unescaping.
     sb.setLength(sb.length() - 1);
-    int numTrailingBackslashes = sb.length() - trimTrailing(sb, '\\').length();
-    repeatSymbol(sb, '\\', numTrailingBackslashes / 2);
+    int numTrailingBackslashes = sb.length() - StringUtil.trimTrailing(sb, '\\').length();
+    StringUtil.repeatSymbol(sb, '\\', numTrailingBackslashes / 2);
 
     if (numTrailingBackslashes % 2 == 1) {
       // retreat, it was a backslash-escaped quote, restore it
-      repeatSymbol(sb, '\\', numTrailingBackslashes / 2 + 1);
+      StringUtil.repeatSymbol(sb, '\\', numTrailingBackslashes / 2 + 1);
       sb.append(Q);
       return -1;
     }
 
     return numTrailingBackslashes / 2;
   }
-  
-  @NotNull
-  public static String getWinShellName() {
+
+  public static @NotNull String getWinShellName() {
     return "cmd.exe";
   }
 
-  private static boolean isWinShell(String command) {
+  private static boolean isWinShell(@NonNls String command) {
     return "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
   }
 
-  private static boolean isWinShellScript(String command) {
+  private static boolean isWinShellScript(@NonNls String command) {
     return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat");
   }
 
@@ -448,7 +450,7 @@ public class CommandLineUtil {
   /**
    * Counts quote parity needed to ^-escape special chars on Windows properly.
    */
-  private static class QuoteFlag {
+  private static final class QuoteFlag {
     private boolean enabled;
 
     private QuoteFlag(boolean value) {
@@ -460,14 +462,13 @@ public class CommandLineUtil {
     }
 
     public void update(CharSequence s, int start, int end) {
-      enabled ^= countChars(s, Q, start, end, false) % 2 != 0;  // count all, no matter whether backslash-escaped or not
+      enabled ^= StringUtil.countChars(s, Q, start, end, false) % 2 != 0;  // count all, no matter whether backslash-escaped or not
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static String escapeParameterOnWindows(@NotNull String parameter, boolean isWinShell) {
-    String s = convertLineSeparators(parameter, "");
+  public static @NotNull String escapeParameterOnWindows(@NotNull String parameter, boolean isWinShell) {
+    String s = StringUtil.convertLineSeparators(parameter, "");
     if (s.isEmpty()) return QQ;
     boolean hadLineBreaks = !s.equals(parameter);
     String result = isWinShell ? escapeParameter(s, new QuoteFlag(hadLineBreaks), 1, true) : backslashEscapeQuotes(s);
@@ -475,11 +476,10 @@ public class CommandLineUtil {
     return result;
   }
 
-  @NotNull
-  public static String extractPresentableName(@NotNull String commandLine) {
+  public static @NotNull String extractPresentableName(@NotNull String commandLine) {
     String executable = commandLine.trim();
 
-    List<String> words = splitHonorQuotes(executable, ' ');
+    List<String> words = StringUtil.splitHonorQuotes(executable, ' ');
     String execName;
     List<String> args;
     if (words.isEmpty()) {
@@ -492,10 +492,47 @@ public class CommandLineUtil {
     }
 
     boolean verbose = Logger.getInstance(CommandLineUtil.class).isDebugEnabled();
-    return verbose ? shortenPathWithEllipsis(execName + " " + join(args, " "), 250) : new File(unquoteString(execName)).getName();
+    return verbose ? StringUtil.shortenPathWithEllipsis(execName + " " + String.join(" ", args), 250) : new File(StringUtil.unquoteString(execName)).getName();
   }
 
   public static boolean hasWinShellSpecialChars(@NotNull String parameter) {
     return WIN_CARET_SPECIAL.matcher(parameter).find();
+  }
+
+  /**
+   * When necessary, quotes the specified argument with single quotes, according to the POSIX shell rules,
+   * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
+   * <p>
+   * For the reference see - <a href="https://pubs.opengroup.org/onlinepubs/009604499/utilities/xcu_chap02.html">specification</a>
+   */
+  public static @NotNull String posixQuote(@NotNull String argument) {
+    return posixQuote(argument, Collections.emptyList());
+  }
+
+  /**
+   * @param whiteListCharacters - list of characters that is safe to use as it is in a specific context
+   */
+  @ApiStatus.Internal
+  public static @NotNull String posixQuote(@NotNull String argument, @NotNull List<Character> whiteListCharacters) {
+    return shouldWrapWithQuotes(argument, whiteListCharacters) ?
+           "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" :
+           argument;
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull List<Character> whiteListCharacters) {
+    if (argument.length() == 0) {
+      return true;
+    }
+    for (int i = 0; i < argument.length(); i++) {
+      char c = argument.charAt(i);
+      if (whiteListCharacters.contains(c)) {
+        continue;
+      }
+
+      if (SHELL_UNSAFE_CHARACTERS.contains(c)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

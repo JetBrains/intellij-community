@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Jaba.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeSyntheticProperty2/a/Jaba.java
+End of files
+Cleaning output files:
+  AppKt.class
+  META-INF/kotlin_withJava_javaUsedInKotlin_changeSyntheticProperty2-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/changeSyntheticProperty2/a/app.kt
+End of files
+------------------------------------------
+Exit code: OK

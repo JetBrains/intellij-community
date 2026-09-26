@@ -1,0 +1,6 @@
+{
+    "inspectionClass": "org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection",
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection",
+    "problem": "none",
+    "mainFile": "test.kt"
+}

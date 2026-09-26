@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * Abstract base class for the different configuration panels that tries to simplify the use of
- * of nested forms
+ * nested forms.
  */
 public abstract class AbstractInjectionPanel<T extends BaseInjection> implements InjectionPanel<T> {
   private final List<Field> myOtherPanels = new ArrayList<>(3);
@@ -35,10 +35,9 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
   protected final Project myProject;
 
   /**
-   * The orignal item - must not be modified unless apply() is called.
+   * The original item - must not be modified unless apply() is called.
    */
-  @NotNull
-  protected final T myOrigInjection;
+  protected final @NotNull T myOrigInjection;
 
   /**
    * Represents the current UI state. Outside access should use {@link #getInjection()}
@@ -58,11 +57,13 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     }
   }
 
+  @Override
   public final T getInjection() {
     apply(myEditCopy);
     return myEditCopy;
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public final void init(@NotNull T copy) {
     myEditCopy = copy;
@@ -73,6 +74,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     }
   }
 
+  @Override
   public final boolean isModified() {
     apply(myEditCopy);
 
@@ -84,7 +86,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     return !myEditCopy.equals(myOrigInjection);
   }
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void apply() {
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
@@ -100,7 +102,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   protected abstract void apply(T other);
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public final void reset() {
     if (!myOtherPanels.isEmpty()) {
       myEditCopy.copyFrom(myOrigInjection);
@@ -108,11 +110,12 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     for (Field panel : myOtherPanels) {
       getField(panel).reset();
     }
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> resetImpl());
+    UIUtil.invokeAndWaitIfNeeded(() -> resetImpl());
   }
 
   protected abstract void resetImpl();
 
+  @Override
   public void addUpdater(Runnable updater) {
     myUpdaters.add(updater);
     for (Field panel : myOtherPanels) {
@@ -123,7 +126,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
 
   private InjectionPanel getField(Field field) {
     try {
-      return ((InjectionPanel)field.get(this));
+      return (InjectionPanel)field.get(this);
     }
     catch (IllegalAccessException e) {
       throw new Error(e);

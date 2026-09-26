@@ -15,10 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,7 +33,8 @@ public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask {
   @Attribute("suffix")
   public abstract GenericAttributeValue<String> getSuffix();
 
-  protected String calcPropertyValue(String propertyName) {
+  @Override
+  protected @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     final PsiFileSystemItem item = getFile().getValue();
     if (item != null) {
       final String name = item.getName();

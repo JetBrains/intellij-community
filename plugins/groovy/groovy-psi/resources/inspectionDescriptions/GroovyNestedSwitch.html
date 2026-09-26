@@ -1,9 +1,24 @@
 <html>
 <body>
-
-This inspection reports any <b><font color="#000080">switch</font></b> statements in Groovy script file that are nested inside other
-<b><font color="#000080">switch</font></b> statements. Such nested switch statements are confusing, and may result in unexpected behaviour.
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports <code>switch</code> statements that are nested inside other <code>switch</code> statements.
+Such nested switch statements are confusing, and may result in unexpected behaviour.
+<p><b>Example:</b></p>
+<pre>
+<code>
+switch (outer) {
+  case 1:
+    switch (inner) {
+      case 1:
+        print "inner 1"
+        break
+      default:
+        print "inner default"
+    }
+    break
+  default:
+    print "default"
+}
+</code>
+</pre>
 </body>
 </html>

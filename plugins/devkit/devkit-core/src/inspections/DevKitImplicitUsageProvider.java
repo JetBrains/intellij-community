@@ -1,52 +1,48 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author anna
- */
-public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
+import java.util.Objects;
+
+final class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
-    if (element instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)element;
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
+    if (element instanceof PsiClass psiClass) {
       return isDomElementClass(psiClass);
     }
 
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
-      return isDomElementMethod(psiMethod);
+    if (element instanceof PsiMethod psiMethod) {
+      return isDomElementMethod(psiMethod) || isMcpToolMethod(psiMethod);
+    }
+
+    if (element instanceof PsiParameter psiParameter) {
+      return isMcpDescriptionParameter(psiParameter);
     }
 
     return false;
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return false;
   }
 
@@ -78,11 +74,9 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
     }
 
     final PsiType returnType = psiMethod.getReturnType();
-    if (!(returnType instanceof PsiClassType)) {
+    if (!(returnType instanceof PsiClassType returnClassType)) {
       return false;
     }
-
-    PsiClassType returnClassType = (PsiClassType)returnType;
 
     // Dom getDom(), GenericAttributeValue<X> getAttr(), ...
     final PsiClass returnResolved = returnClassType.resolve();
@@ -102,15 +96,32 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isDomElementVisitorMethod(PsiMethod method,
                                                    PsiClass containingClass) {
-    if (!PsiType.VOID.equals(method.getReturnType()) ||
+    if (!PsiTypes.voidType().equals(method.getReturnType()) ||
         !method.getName().startsWith("visit") ||
         method.getParameterList().getParametersCount() != 1 ||
         !InheritanceUtil.isInheritor(containingClass, "com.intellij.util.xml.DomElementVisitor")) {
       return false;
     }
 
-    final PsiType psiType = method.getParameterList().getParameters()[0].getType();
+    final PsiType psiType = Objects.requireNonNull(method.getParameterList().getParameter(0)).getType();
     return isDomElementInheritor(psiType);
+  }
+
+  private static boolean isMcpToolMethod(PsiMethod psiMethod) {
+    if (!psiMethod.hasAnnotation("com.intellij.mcpserver.annotations.McpTool")) {
+      return false;
+    }
+
+    PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+
+    return InheritanceUtil.isInheritor(containingClass, "com.intellij.mcpserver.McpToolset");
+  }
+
+  private static boolean isMcpDescriptionParameter(PsiParameter psiParameter) {
+    return psiParameter.hasAnnotation("com.intellij.mcpserver.annotations.McpDescription");
   }
 
   private static boolean isDomElementInheritor(@Nullable PsiType psiType) {

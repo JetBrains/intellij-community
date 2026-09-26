@@ -15,45 +15,30 @@
  */
 package com.intellij.build.events;
 
-import com.intellij.build.process.BuildProcessHandler;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildViewSettingsProvider;
+import com.intellij.build.eventBuilders.StartBuildEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface StartBuildEvent extends StartEvent {
-  String getBuildTitle();
 
-  @NotNull
-  String getWorkingDir();
+  @NotNull BuildDescriptor getBuildDescriptor();
 
-  @Nullable
-  BuildProcessHandler getProcessHandler();
+  default @Nullable BuildViewSettingsProvider getBuildViewSettings() {
+    return null;
+  }
 
-  @Nullable
-  ExecutionEnvironment getExecutionEnvironment();
-
-  @NotNull
-  AnAction[] getRestartActions();
-
-  @NotNull
-  Filter[] getExecutionFilters();
-
-  @Nullable
-  Supplier<RunContentDescriptor> getContentDescriptorSupplier();
-
-  @Nullable
-  Consumer<ConsoleView> getAttachedConsoleConsumer();
+  @CheckReturnValue
+  static @NotNull StartBuildEventBuilder builder(
+    @NotNull @Message String message,
+    @NotNull BuildDescriptor buildDescriptor
+  ) {
+    return BuildEvents.getInstance().startBuild(message, buildDescriptor);
+  }
 }

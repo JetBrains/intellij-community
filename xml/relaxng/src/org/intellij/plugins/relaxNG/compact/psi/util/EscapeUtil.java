@@ -21,8 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class EscapeUtil {
-  @SuppressWarnings({ "SSBasedInspection" })
+public final class EscapeUtil {
   public static String unescapeText(@NotNull PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null) {
@@ -32,7 +31,6 @@ public class EscapeUtil {
     }
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
   public static String unescapeText(@NotNull ASTNode node) {
     final String text = node.getText();
 

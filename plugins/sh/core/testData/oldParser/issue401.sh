@@ -1,0 +1,1 @@
+NAME_IN_CONTENT="$(echo "${NAME_IN_CONTENT%<}")"

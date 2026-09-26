@@ -15,7 +15,6 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +30,10 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.mkdir;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgHistoryTest extends HgPlatformTest {
@@ -42,8 +44,10 @@ public class HgHistoryTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "largefiles=!\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      largefiles=!
+      """);
     mkdir(subDirName);
     cd(subDirName);
     touch(names[0], "f1");
@@ -57,6 +61,7 @@ public class HgHistoryTest extends HgPlatformTest {
       echo(names[i], "f" + i);
       hg("commit -m a ");
     }
+    changeListManager.ensureUpToDate();
   }
 
   public void testFileNameInTargetRevisionAfterRename() throws HgCommandException {
@@ -129,11 +134,13 @@ public class HgHistoryTest extends HgPlatformTest {
     String beforeName = names[namesSize - 1];
     VirtualFile before = VfsUtil.findFileByIoFile(new File(subDir.getPath(), beforeName), true);
     assert before != null;
-    FilePath filePath = VcsUtil.getFilePath(VfsUtilCore.virtualToIoFile(before));
     final String renamed = "renamed";
     hg("mv " + beforeName + " " + renamed);
     myRepository.refresh(false, true);
-    List<HgFileRevision> revisions = HgHistoryProvider.getHistory((filePath), myRepository, myProject);
+    VirtualFile renamedFile = VfsUtil.findFileByIoFile(new File(subDir.getPath(), renamed), true);
+    assert renamedFile != null;
+    changeListManager.ensureUpToDate();
+    List<HgFileRevision> revisions = HgHistoryProvider.getHistory(VcsUtil.getFilePath(renamedFile), myRepository, myProject);
     assertEquals(3, revisions.size());
   }
 }

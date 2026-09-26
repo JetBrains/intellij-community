@@ -1,0 +1,13 @@
+foo( (a)->{
+  closure
+}).
+     bar( (b)->{
+  closure
+    })
+-----
+foo((a) -> {
+  closure
+}).
+    bar((b) -> {
+      closure
+    })

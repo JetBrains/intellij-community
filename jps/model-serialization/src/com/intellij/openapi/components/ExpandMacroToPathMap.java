@@ -1,63 +1,52 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ExpandMacroToPathMap extends PathMacroMap {
-  private final Map<String, String> myPlainMap = ContainerUtilRt.newLinkedHashMap();
-  private final Map<String, String> myMacroExpands = ContainerUtil.newHashMap();
+public final class ExpandMacroToPathMap extends PathMacroMap {
+  private final Map<String, String> myPlainMap = new LinkedHashMap<>();
+  private final Map<String, String> myMacroExpands = new HashMap<>();
 
+  @ApiStatus.Internal
+  public ExpandMacroToPathMap() {
+  }
+
+  @ApiStatus.Internal
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
-    myMacroExpands.put(macroName, FileUtil.toSystemIndependentName(path));
+    myMacroExpands.put(macroName, FileUtilRt.toSystemIndependentName(path));
   }
 
   public void put(@NotNull String fromText, @NotNull String toText) {
     myPlainMap.put(fromText, toText);
   }
 
+  @ApiStatus.Internal
   public void putAll(@NotNull ExpandMacroToPathMap another) {
     myPlainMap.putAll(another.myPlainMap);
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
+  @ApiStatus.Internal
   @Override
-  public String substitute(String text, boolean caseSensitive) {
-    if (text == null) {
-      //noinspection ConstantConditions
-      return null;
-    }
-    
+  public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
     if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
       return text;
     }
 
     for (Map.Entry<String, String> entry : myPlainMap.entrySet()) {
-      // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
-      // for case-insensitive file systems there will be no unnecessary toLowerCase() transforms.
+      // when replacing macros with actual paths, the replace utility may be used as always 'case-sensitive'
+      // for case-insensitive file systems, there will be no unnecessary toLowerCase() transforms.
       text = StringUtil.replace(text, entry.getKey(), entry.getValue(), false);
     }
 
@@ -68,8 +57,7 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     return text;
   }
 
-  @NotNull
-  private static String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
+  private static @NotNull String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
     while (true) {
       int start = findMacroIndex(text, macroName);
       if (start < 0) {
@@ -101,6 +89,7 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public int hashCode() {
     return myPlainMap.hashCode() + myMacroExpands.hashCode();

@@ -1,0 +1,221 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>com.intellij.mermaid</id>
+  <name>Mermaid</name>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <description><![CDATA[
+    Provides editing support and diagram preview for
+    <a href="https://mermaid.js.org/">Mermaid</a> diagramming and charting language.
+  ]]></description>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.yaml"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains">
+    <module name="intellij.mermaid.markdown" loading="optional"/>
+    <module name="intellij.mermaid.frontend"/>
+    <module name="intellij.mermaid.json" required-if-available="intellij.platform.backend"/>
+  </content>
+  <content>
+    <module name="intellij.mermaid.spellchecker"/>
+  </content>
+
+  <extensionPoints>
+    <!-- Implemented by the JCEF content module, which is optional: with nothing registered here the
+         render-error annotator simply reports nothing. -->
+    <extensionPoint qualifiedName="com.intellij.mermaid.syntaxValidator"
+                    interface="com.intellij.mermaid.lang.validation.MermaidSyntaxValidator"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Mermaid"
+              implementationClass="com.intellij.mermaid.lang.MermaidFileType"
+              fieldName="INSTANCE"
+              language="Mermaid"
+              extensions="mermaid;mmd"/>
+
+    <lang.parserDefinition language="Mermaid"
+                           implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
+    <lang.syntaxHighlighter language="Mermaid"
+                            implementationClass="com.intellij.mermaid.lang.highlighting.MermaidHighlighter"/>
+    <completion.contributor language="Mermaid"
+                            implementationClass="com.intellij.mermaid.editor.MermaidCompletionContributor"/>
+    <lang.commenter language="Mermaid"
+                    implementationClass="com.intellij.mermaid.lang.MermaidCommenter"/>
+    <lang.braceMatcher language="Mermaid"
+                       implementationClass="com.intellij.mermaid.lang.highlighting.MermaidPairMatcher"/>
+    <quoteHandler fileType="Mermaid"
+                  className="com.intellij.mermaid.editor.MermaidQuoteHandler"/>
+
+    <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
+
+    <typedHandler implementation="com.intellij.mermaid.editor.MermaidTypedHandlerDelegate"/>
+
+    <lang.formatter
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.formatter.MermaidFormattingModelBuilder"/>
+    <langCodeStyleSettingsProvider
+      implementation="com.intellij.mermaid.lang.formatter.settings.MermaidCodeStyleSettingsProvider"/>
+
+    <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterAfterUnmatchedPairHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterBetweenPairHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterAfterSequenceBranchHandler"/>
+
+    <lineIndentProvider
+      implementation="com.intellij.mermaid.editor.MermaidLineIndentProvider"/>
+
+    <lang.foldingBuilder language="Mermaid"
+                         implementationClass="com.intellij.mermaid.lang.folding.MermaidFoldingBuilder"/>
+    <lang.foldingBuilder language="Mermaid"
+                         implementationClass="com.intellij.mermaid.lang.folding.MermaidNbspFoldingBuilder"/>
+
+    <psi.declarationProvider
+      implementation="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolDeclarationProvider"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.mermaid.lang.psi.MermaidNamedPsiElement"
+                                 hostLanguage="Mermaid"
+                                 implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolReferenceProvider"
+                                 targetClass="com.intellij.mermaid.lang.psi.symbol.identifier.UnresolvedIdentifierSymbol"/>
+    <rename.symbolRenameTargetFactory implementation="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolRenameTargetFactory"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierRenameUsageSearcher"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.ClassDiagramAnnotator"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.UnrenderableSpacesAnnotator"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.NbspAnnotator"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.TextAttributesHighlightingAnnotator"/>
+
+    <localInspection language="Mermaid" shortName="UnusedAttribute"
+                     groupKey="unused.attribute.inspection.display.name"
+                     bundle="messages.MermaidBundle"
+                     key="unused.attribute.inspection.display.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     cleanupTool="true"
+                     implementationClass="com.intellij.mermaid.lang.intention.UnusedAttributesInspection"/>
+
+    <localInspection language="Mermaid" shortName="UndeclaredGeneric"
+                     groupKey="generic.will.not.be.rendered"
+                     bundle="messages.MermaidBundle"
+                     key="generic.will.not.be.rendered"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection"/>
+
+    <localInspection language="Mermaid" shortName="ThemeInspection"
+                     groupKey="theme.inspection"
+                     bundle="messages.MermaidBundle"
+                     key="theme.inspection"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.ThemeInspection"/>
+
+    <localInspection language="Mermaid" shortName="UnsupportedDirective"
+                     groupKey="annotator.unsupported.directive"
+                     bundle="messages.MermaidBundle"
+                     key="annotator.unsupported.directive"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     cleanupTool="true"
+                     implementationClass="com.intellij.mermaid.lang.intention.UnsupportedDirectiveInspection"/>
+
+    <localInspection language="Mermaid" shortName="GitGraph"
+                     groupKey="git.graph.inspection.display.name"
+                     bundle="messages.MermaidBundle"
+                     key="git.graph.inspection.display.name"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.GitGraphInspection"/>
+
+    <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>
+    <indexPatternBuilder implementation="com.intellij.mermaid.lang.highlighting.MermaidIndexPatternBuilder"/>
+
+    <applicationConfigurable groupId="language"
+                             bundle="messages.MermaidBundle"
+                             key="mermaid.settings.name"
+                             instance="com.intellij.mermaid.settings.MermaidSettingsConfigurable"
+                             id="Settings.Mermaid"/>
+    <applicationSettings service="com.intellij.mermaid.settings.MermaidSettings"/>
+
+    <colorSettingsPage implementation="com.intellij.mermaid.lang.highlighting.MermaidColorSettingsPage"/>
+    <additionalTextAttributes scheme="Default" file="colorSchemes/MermaidDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/MermaidDarcula.xml"/>
+
+    <registryKey key="mermaid.export.diagram.action.enable"
+                 defaultValue="false"
+                 description="Controls availability of experimental Export Diagram action"/>
+
+    <languageInjectionContributor implementationClass="com.intellij.mermaid.lang.injection.MermaidInjector"
+                                  language="Mermaid"/>
+
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidMarkdownValue"
+                             implementationClass="com.intellij.mermaid.lang.psi.MarkdownElementManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidDirectiveValue"
+                             implementationClass="com.intellij.mermaid.lang.psi.DirectiveManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidFrontmatterContent"
+                             implementationClass="com.intellij.mermaid.lang.psi.FrontmatterContentManipulator"/>
+
+    <notificationGroup id="Mermaid"
+                       displayType="BALLOON"
+                       bundle="messages.MermaidBundle"
+                       key="notification.group.mermaid"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
+
+    <lang.ast.factory language="Mermaid" implementationClass="com.intellij.mermaid.lang.psi.MermaidAstFactory"/>
+  </extensions>
+</idea-plugin>

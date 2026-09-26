@@ -1,0 +1,372 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.gradle
+
+import com.intellij.codeInsight.AttachSourcesProvider
+import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
+import com.intellij.jarFinder.InternetAttachSourceProvider
+import com.intellij.java.library.MavenCoordinates
+import com.intellij.java.library.getMavenCoordinates
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.psi.PsiFile
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
+import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+import org.jetbrains.idea.devkit.run.ProductInfo
+import com.intellij.devkit.gradle.tooling.IntelliJPlatformSourceCoordinates
+import org.jetbrains.idea.devkit.run.loadProductInfo
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
+import org.jetbrains.plugins.gradle.service.project.GradleNotification
+import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
+
+internal enum class ApiSourceArchive(
+  val id: String,
+  @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val displayName: String,
+  val archiveName: String,
+) {
+  CSS("com.intellij.css", "attachSources.api.action.displayName.css", "src_css-api.zip"),
+  JAM("com.intellij.java", "attachSources.api.action.displayName.jam", "src_jam-openapi.zip"),
+  JAVAEE("com.intellij.javaee", "attachSources.api.action.displayName.javaee", "src_javaee-openapi.zip"),
+  PERSISTENCE("com.intellij.persistence", "attachSources.api.action.displayName.persistence", "src_persistence-openapi.zip"),
+  SPRING("com.intellij.spring", "attachSources.api.action.displayName.spring", "src_spring-openapi.zip"),
+  SPRING_BOOT("com.intellij.spring.boot", "attachSources.api.action.displayName.springBoot", "src_spring-boot-openapi.zip"),
+  TOMCAT("Tomcat", "attachSources.api.action.displayName.tomcat", "src_tomcat.zip"),
+  LSP("LSP", "attachSources.api.action.displayName.lsp", "src_lsp-openapi.zip"),
+}
+
+/**
+ * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
+ * Some IDEs, like IntelliJ IDEA Ultimate or PhpStorm, don't provide sources for artifacts published to IntelliJ Repository.
+ * To handle such a case, IntelliJ IDEA Community sources are attached.
+ */
+internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
+
+  override fun getLibrariesActions(
+    libraryEntities: Collection<LibraryEntity>,
+    psiFile: PsiFile
+  ): Collection<AttachSourcesAction?> {
+    val storage = WorkspaceModel.getInstance(psiFile.project).currentSnapshot
+    return libraryEntities.mapNotNull { it.findLibraryBridge(storage)?.getMavenCoordinates() }
+      .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }
+      .let { listOfNotNull(it) }
+  }
+
+  override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile) =
+    orderEntries
+      .mapNotNull { it.library?.getMavenCoordinates() }
+      .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }
+      .let { listOfNotNull(it) }
+
+  private fun createAction(coordinates: MavenCoordinates, psiFile: PsiFile): AttachSourcesAction? {
+    val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
+                  ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
+
+    return when {
+      // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`, `idea:ideaIC:aarch64:2024.3`, or `idea:ideaIC:2023.2.7`
+      product != null -> resolveIntelliJPlatformAction(psiFile, coordinates.version)
+
+      // IntelliJ Platform local installation, such as `localIde:IC:2023.2.7+445`
+      coordinates.groupId == "localIde" -> createAttachLocalPlatformSourcesAction(psiFile, coordinates)
+
+      // IntelliJ Platform bundled plugin, such as `bundledPlugin:org.intellij.groovy:IC-243.21565.193`, `bundledPlugin:Git4Idea:2023.2.7+445`
+      coordinates.groupId == "bundledPlugin" -> createAttachBundledPluginSourcesAction(psiFile, coordinates)
+
+      // IntelliJ Platform bundled module, such as `bundledModule:intellij.platform.coverage:IC-243.21565.193`
+      coordinates.groupId == "bundledModule" -> createAttachBundledModuleSourcesAction(psiFile, coordinates)
+
+      // Non-bundled JetBrains plugins, such as `com.jetbrains.plugins:PythonCore:243.21565.193`
+      coordinates.groupId == IntelliJPlatformSourceCoordinates.JETBRAINS_PLUGIN_GROUP -> createAttachJetBrainsPluginSourcesAction(psiFile, coordinates)
+
+      else -> null
+    }
+  }
+
+
+  /**
+   * Resolve and attach IntelliJ Platform sources to the currently handled dependency in a requested version.
+   *
+   * Requests PyCharm Community sources if PyCharm Community or PyCharm.
+   * Requests IntelliJ IDEA Ultimate sources if IntelliJ IDEA Ultimate 2024.2+.
+   * In all other cases, requests IntelliJ IDEA Community sources.
+   *
+   * If the LSP API class is detected while targeting IntelliJ IDEA Ultimate <2024.2, attaches bundled LSP API sources archive file.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param version The version of the product.
+   */
+  private fun resolveIntelliJPlatformAction(
+    psiFile: PsiFile,
+    version: String,
+  ): AttachSourcesAction? {
+    val productInfo = resolveProductInfo(psiFile) ?: return null
+    val product = IntelliJPlatformProduct.fromProductCode(productInfo.productCode) ?: return null
+    val buildNumber = productInfo.buildNumber
+    val majorVersion = buildNumber.substringBefore('.').toInt()
+    val rangedVersion = "[$majorVersion,$buildNumber]!!$buildNumber"
+    val productCoordinates = resolveProductCoordinates(product, majorVersion)
+
+    return when {
+      // We're handing LSP API class, but IU is lower than 242 -> attach a standalone sources file
+      isLspApiSourcesArchive(psiFile, product, majorVersion) -> createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.LSP)
+
+      // Create the actual IntelliJ Platform sources attaching action
+      else -> createAttachPlatformSourcesAction(psiFile, productCoordinates, version, rangedVersion)
+    }
+  }
+
+  /**
+   * Creates an action to attach sources of a local IntelliJ Platform.
+   *
+   * @param psiFile The PSI file representing the currently handled class.
+   * @param coordinates The Maven coordinates of the IntelliJ Platform whose sources need to be attached.
+   */
+  private fun createAttachLocalPlatformSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
+    resolveIntelliJPlatformAction(psiFile, IntelliJPlatformSourceCoordinates.extractActualVersion(coordinates.version))
+
+  /**
+   * Creates an action to attach sources of bundled plugins for the IntelliJ Platform.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the bundled plugin whose sources need to be attached.
+   */
+  private fun createAttachBundledPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
+    createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.entries.firstOrNull { it.id == coordinates.artifactId })
+    ?: resolveIntelliJPlatformAction(psiFile, IntelliJPlatformSourceCoordinates.extractActualVersion(coordinates.version))
+
+  /**
+   * Creates an action to attach sources of bundled modules for the IntelliJ Platform.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the bundled module whose sources need to be attached.
+   */
+  private fun createAttachBundledModuleSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
+    createAttachBundledPluginSourcesAction(psiFile, coordinates)
+
+  /**
+   * Creates an action to attach sources for non-bundled JetBrains plugins hosted on the JetBrains Maven repo.
+   *
+   * Currently, handles PythonCore and Pythonid. Their sources are published
+   * as PyCharm Community sources (`com.jetbrains.intellij.pycharm:pycharmPC`).
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the plugin whose sources need to be attached.
+   */
+  private fun createAttachJetBrainsPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates): AttachSourcesAction? {
+    if (coordinates.artifactId != "PythonCore" && coordinates.artifactId != "Pythonid") return null
+    val version = IntelliJPlatformSourceCoordinates.extractActualVersion(coordinates.version)
+    val majorVersion = IntelliJPlatformSourceCoordinates.extractMajorVersion(version)
+    val rangedVersion = "[$majorVersion,$version]!!$version"
+    return createAttachPlatformSourcesAction(psiFile, IntelliJPlatformSourceCoordinates.PYCHARM_COMMUNITY_SOURCES, version, rangedVersion)
+  }
+
+  /**
+   * Attach the provided sources archive.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param apiSourceArchive API sources archive metadata.
+   */
+  private fun createAttachSourcesArchiveAction(psiFile: PsiFile, apiSourceArchive: ApiSourceArchive?): AttachSourcesAction? {
+    if (apiSourceArchive == null) {
+      return null
+    }
+
+    if (apiSourceArchive == ApiSourceArchive.JAM && !isJamSourcesArchive(psiFile)) {
+      return null
+    }
+
+    return resolveSourcesArchive(psiFile, apiSourceArchive.archiveName)?.let {
+      object : AttachSourcesAction {
+
+        override fun getName() = DevKitGradleBundle.message("attachSources.api.action.name", DevKitGradleBundle.message(apiSourceArchive.displayName))
+
+        override fun getBusyText() = DevKitGradleBundle.message("attachSources.api.action.busyText", DevKitGradleBundle.message(apiSourceArchive.displayName))
+
+        override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
+          val libraries = orderEntries.mapNotNull { entry -> entry.library }
+
+          return performInternal(libraries)
+        }
+
+        override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
+          val currentSnapshot = WorkspaceModel.getInstance(project).currentSnapshot
+          val libraries = libraryEntities.mapNotNull { it.findLibraryBridge(currentSnapshot) }
+
+          return performInternal(libraries)
+        }
+
+        private fun performInternal(libraries: Collection<Library>): ActionCallback {
+          val executionResult = ActionCallback()
+
+          attachSources(it, libraries) {
+            executionResult.setDone()
+          }
+
+          return executionResult
+        }
+      }
+    }
+  }
+
+  /**
+   * Creates an action to attach IntelliJ Platform sources to a library within the project.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param productCoordinates The Maven coordinates of the IntelliJ Platform whose sources we load.
+   * @param version The version of the product.
+   * @param closeVersion The alternative version of the product used for resolving sources of a close version.
+   */
+  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String, closeVersion: String) =
+    object : AttachSourcesAction {
+      override fun getName() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name")
+
+      override fun getBusyText() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText")
+
+      override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
+        return performInternal(orderEntries.first().ownerModule, orderEntries.mapNotNull { it.library })
+      }
+
+      override fun perform(libraryEntities: Collection<LibraryEntity>, project: Project): ActionCallback {
+        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        val module = libraryEntities.flatMap { snapshot.referrers(it.symbolicId, ModuleEntity::class.java) }
+          .firstOrNull()
+          ?.findModule(snapshot)
+        if (module != null) {
+          return performInternal(module, libraryEntities.mapNotNull { it.findLibraryBridge(snapshot) })
+        }
+        return ActionCallback.REJECTED
+      }
+
+
+      private fun performInternal(module: Module, libraries: Collection<Library>): ActionCallback {
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(module)?.directoryToRunTask
+                                  ?: return ActionCallback.REJECTED
+
+        val executionResult = ActionCallback()
+        val project = psiFile.project
+
+        val primaryNotation = "$productCoordinates:$version:sources"
+        val fallbackNotation = "$productCoordinates:$closeVersion:sources"
+
+        val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
+        val nightlySnapshotNotation = "$productCoordinates:$snapshotVersion:sources" // last chance, nightly snapshot
+
+        fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
+          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, externalProjectPath,
+                                                    GradleDependencySourceDownloaderErrorHandler.Noop)
+            .whenComplete { path, error ->
+              when {
+                error == null && path != null -> attachSources(path, libraries) { executionResult.setDone() }
+                else -> onFailure()
+              }
+            }
+        }
+
+        downloadAndAttach(primaryNotation, onFailure = {
+          downloadAndAttach(fallbackNotation, onFailure = {
+            downloadAndAttach(nightlySnapshotNotation, onFailure = {
+              GradleNotification.gradleNotificationGroup
+                .createNotification(
+                  title = GradleBundle.message("gradle.notifications.sources.download.failed.title"),
+                  content = GradleBundle.message("gradle.notifications.sources.download.failed.content", primaryNotation),
+                  type = NotificationType.WARNING
+                )
+                .setDisplayId("gradle.notifications.sources.download.failed")
+                .notify(project)
+
+              executionResult.setRejected()
+            })
+          })
+        })
+
+        return executionResult
+      }
+    }
+
+  /**
+   * Attaches sources jar to the specified libraries and executes the provided block of code.
+   */
+  private fun attachSources(path: Path, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
+    return attachSources(path, orderEntries.mapNotNull { it.library }, block)
+  }
+
+  private fun attachSources(path: Path, libraries: Collection<Library>, block: () -> Unit) {
+    ApplicationManager.getApplication().invokeLater {
+      InternetAttachSourceProvider.attachSourceJar(path, libraries)
+      block()
+    }
+  }
+
+  /**
+   * Resolve the [ProductInfo] of the current IntelliJ Platform.
+   */
+  private fun resolveProductInfo(psiFile: PsiFile): ProductInfo? {
+    val jarPath = Path(psiFile.virtualFile.path.substringBefore('!'))
+    return generateSequence(jarPath) { it.parent }
+      .takeWhile { it != it.root }
+      .firstNotNullOfOrNull { loadProductInfo(it.pathString) }
+  }
+
+  /**
+   * Resolve the [ProductInfo] of the current IntelliJ Platform.
+   */
+  private fun resolveSourcesArchive(psiFile: PsiFile, archiveName: String): Path? {
+    val path = VfsUtilCore.getVirtualFileForJar(psiFile.virtualFile)?.toNioPath() ?: return null
+    return generateSequence(path) { it.parent }
+      .takeWhile { it != it.root }
+      .firstNotNullOfOrNull { it.resolve("lib/src/$archiveName").takeIf(Path::exists) }
+  }
+
+  /**
+   * When targeting IntelliJ IDEA Ultimate, it is possible to attach LSP module sources.
+   * If the compiled class belongs to `com/intellij/platform/lsp/`, suggest attaching the relevant ZIP archive with LSP sources.
+   *
+   * LSP API sources are provided only with IU.
+   */
+  private fun isLspApiSourcesArchive(psiFile: PsiFile, product: IntelliJPlatformProduct, majorVersion: Int) =
+    when {
+      majorVersion >= 242 -> false
+      product != IntelliJPlatformProduct.IDEA -> false
+      else -> {
+        val classPath = psiFile.virtualFile.path.substringAfter('!')
+        when {
+          classPath.startsWith("/com/intellij/platform/lsp/impl/") -> false
+          classPath.startsWith("/com/intellij/platform/lsp/") -> true
+          else -> false
+        }
+      }
+    }
+
+  /**
+   * Checks if [psiFile] belongs to the `/com/intellij/jam/` package
+   */
+  private fun isJamSourcesArchive(psiFile: PsiFile): Boolean {
+    val classPath = psiFile.virtualFile.path.substringAfter('!')
+    return classPath.startsWith("/com/intellij/jam/")
+  }
+
+  private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =
+    when (product) {
+      IntelliJPlatformProduct.PYCHARM, IntelliJPlatformProduct.PYCHARM_PC ->
+        IntelliJPlatformSourceCoordinates.PYCHARM_COMMUNITY_SOURCES
+      IntelliJPlatformProduct.IDEA ->
+        IntelliJPlatformSourceCoordinates.ideaUltimateSources(majorVersion)
+      else ->
+        IntelliJPlatformSourceCoordinates.defaultPlatformSources(majorVersion)
+    }
+}

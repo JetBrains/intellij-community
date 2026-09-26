@@ -1,0 +1,17 @@
+public final class WhenElseKt {
+    public static final fun foo() : java.lang.String {
+        return switch  {
+             -> {
+                yield switch  {
+                     -> {
+                        yield ""
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        
+    }
+}

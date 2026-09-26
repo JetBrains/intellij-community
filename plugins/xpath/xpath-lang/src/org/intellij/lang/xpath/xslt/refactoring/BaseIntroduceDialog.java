@@ -15,17 +15,21 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.xslt.util.NameValidator;
-
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TextFieldWithHistory;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.xslt.util.NameValidator;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.event.DocumentEvent;
 import java.text.MessageFormat;
 
@@ -37,30 +41,35 @@ public abstract class BaseIntroduceDialog extends DialogWrapper implements Refac
         myInputValidator = new NameValidator(project, validator);
     }
 
+    @Override
     public boolean isCanceled() {
         return !isOK();
     }
 
+    @Override
     protected void doOKAction() {
         if (myInputValidator.canClose(getName())) super.doOKAction();
     }
 
-    protected void init(XPathExpression expression, int numberOfExpressions, String title) {
+    protected void init(XPathExpression expression, int numberOfExpressions, @NlsContexts.DialogTitle String title) {
         setModal(true);
         setTitle(title);
 
         final JLabel jLabel = getTypeLabel();
-        jLabel.setText(expression.getType().getName());
+        final String name = expression.getType().getName();
+        jLabel.setText(name);
 
         final JCheckBox jCheckBox = getReplaceAll();
         if (numberOfExpressions > 1) {
+            //noinspection HardCodedStringLiteral
             jCheckBox.setText(MessageFormat.format(jCheckBox.getText(), String.valueOf(numberOfExpressions)));
         } else {
             jCheckBox.setVisible(false);
         }
 
         getNameField().addDocumentListener(new DocumentAdapter() {
-            protected void textChanged(DocumentEvent e) {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent e) {
                 getOKAction().setEnabled(myInputValidator.checkInput(getName()));
             }
         });
@@ -82,13 +91,15 @@ public abstract class BaseIntroduceDialog extends DialogWrapper implements Refac
         return getForm().myNameField;
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
         return getForm().myNameField;
     }
 
-    public String getName() {
+    @Override
+    public @NlsSafe String getName() {
         return getNameField().getText();
-    }                                                                             
+    }
 
     protected abstract BaseIntroduceForm getForm();
 }

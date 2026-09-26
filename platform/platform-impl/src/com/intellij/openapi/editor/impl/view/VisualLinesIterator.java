@@ -1,41 +1,79 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class VisualLinesIterator {
-  private final EditorImpl myEditor;
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
+/**
+ * If one needs to perform some actions for a continuous range of visual lines, using this class would be most surely faster than
+ * calculating various values (e.g. start/end offsets) for all visual lines in the range individually.
+ */
+public final class VisualLinesIterator {
+  private static final int UNSET = -1;
+
+  private final EditorView myView;
   private final Document myDocument;
+  private final int myLineHeight;
+
+  private final FoldingModelEx myFoldingModel;
   private final FoldRegion[] myFoldRegions;
+
+  private final InlayModel myInlayModel;
+  private final List<Inlay<?>> myInlaysAbove = new ArrayList<>();
+  private final List<Inlay<?>> myInlaysBelow = new ArrayList<>();
+  private boolean myInlaysSet;
+
+  private final SoftWrapModelEx mySoftWrapModel;
   private final List<? extends SoftWrap> mySoftWraps;
 
-  @NotNull
-  private Location myLocation;
+  private @NotNull Location myLocation;
   private Location myNextLocation;
-  
+  private int y = UNSET; // y coordinate of visual line's top
+
   public VisualLinesIterator(@NotNull EditorImpl editor, int startVisualLine) {
-    myEditor = editor;
-    SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
-    myDocument = myEditor.getDocument();
-    FoldRegion[] regions = myEditor.getFoldingModel().fetchTopLevel();
+    this(editor.getView(), startVisualLine);
+  }
+
+  @ApiStatus.Internal
+  public VisualLinesIterator(@NotNull EditorView view, int startVisualLine) {
+    myView = view;
+    myDocument = myView.getDocument();
+    myInlayModel = myView.getInlayModel();
+    myFoldingModel = myView.getFoldingModel();
+    mySoftWrapModel = myView.getSoftWrapModel();
+    FoldRegion[] regions = myFoldingModel.fetchTopLevel();
     myFoldRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
-    mySoftWraps = softWrapModel.getRegisteredSoftWraps();
+    mySoftWraps = mySoftWrapModel.getRegisteredSoftWraps();
+    myLineHeight = view.getLineHeight();
     myLocation = new Location(startVisualLine);
   }
 
   public boolean atEnd() {
     return myLocation.atEnd();
   }
-  
+
   public void advance() {
     checkEnd();
+    if (y != UNSET) {
+      y += EditorUtil.getTotalInlaysHeight(getBlockInlaysBelow());
+      y += getLineHeight();
+    }
     if (myNextLocation == null) {
       myLocation.advance();
     }
@@ -43,12 +81,9 @@ public class VisualLinesIterator {
       myLocation = myNextLocation;
       myNextLocation = null;
     }
-  }
-
-  private void setNextLocation() {
-    if (myNextLocation == null) {
-      myNextLocation = myLocation.clone();
-      myNextLocation.advance();
+    myInlaysSet = false;
+    if (y != UNSET && !atEnd()) {
+      y += EditorUtil.getTotalInlaysHeight(getBlockInlaysAbove());
     }
   }
 
@@ -70,6 +105,18 @@ public class VisualLinesIterator {
            myNextLocation.offset;
   }
 
+  public int getDisplayedLogicalLine() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion.getPlaceholderText().isEmpty() && foldRegion.getStartOffset() == myLocation.offset) {
+        return myDocument.getLineNumber(foldRegion.getEndOffset());
+      }
+    }
+    return myLocation.logicalLine - 1;
+  }
+
   public int getStartLogicalLine() {
     checkEnd();
     return myLocation.logicalLine - 1;
@@ -78,7 +125,7 @@ public class VisualLinesIterator {
   public int getEndLogicalLine() {
     checkEnd();
     setNextLocation();
-    return myNextLocation.atEnd() ? myDocument.getLineCount() - 1
+    return myNextLocation.atEnd() ? Math.max(0, myDocument.getLineCount() - 1)
                                   : myNextLocation.logicalLine - (myNextLocation.softWrap == myLocation.softWrap ? 2 : 1);
   }
 
@@ -86,7 +133,7 @@ public class VisualLinesIterator {
     checkEnd();
     return myLocation.softWrap - 1;
   }
-  
+
   public int getStartFoldingIndex() {
     checkEnd();
     return myLocation.foldRegion;
@@ -94,7 +141,10 @@ public class VisualLinesIterator {
 
   public int getY() {
     checkEnd();
-    return myLocation.y;
+    if (y == UNSET) {
+      y = myView.visualLineToY(myLocation.visualLine);
+    }
+    return y;
   }
 
   public boolean startsWithSoftWrap() {
@@ -108,34 +158,91 @@ public class VisualLinesIterator {
     return myLocation.softWrap < mySoftWraps.size() && mySoftWraps.get(myLocation.softWrap).getStart() == getVisualLineEndOffset();
   }
 
+  public List<Inlay<?>> getBlockInlaysAbove() {
+    checkEnd();
+    setInlays();
+    return myInlaysAbove;
+  }
+
+  public List<Inlay<?>> getBlockInlaysBelow() {
+    checkEnd();
+    setInlays();
+    return myInlaysBelow;
+  }
+
+  public @Nullable CustomFoldRegion getCustomFoldRegion() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion instanceof CustomFoldRegion customRegion) {
+        if (foldRegion.getStartOffset() == myLocation.offset) {
+          return customRegion;
+        }
+      }
+    }
+    return null;
+  }
+
+  public boolean isCustomFoldRegionLine() {
+    return getCustomFoldRegion() != null;
+  }
+
+  public int getLineHeight() {
+    CustomFoldRegion region = getCustomFoldRegion();
+    return region == null ? myLineHeight : region.getHeightInPixels();
+  }
+
   private void checkEnd() {
     if (atEnd()) throw new IllegalStateException("Iteration finished");
   }
 
+  private void setNextLocation() {
+    if (myNextLocation == null) {
+      myNextLocation = myLocation.clone();
+      myNextLocation.advance();
+    }
+  }
+
+  private void setInlays() {
+    if (myInlaysSet) return;
+    myInlaysSet = true;
+    myInlaysAbove.clear();
+    myInlaysBelow.clear();
+    setNextLocation();
+    List<Inlay<?>> inlays = myInlayModel.getBlockElementsInRange(
+      myLocation.offset,
+      myNextLocation.atEnd() ? myDocument.getTextLength() : myNextLocation.offset - 1
+    );
+    for (Inlay<?> inlay : inlays) {
+      int inlayOffset = inlay.getOffset() - (inlay.isRelatedToPrecedingText() ? 0 : 1);
+      int foldIndex = myLocation.foldRegion;
+      while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
+      if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset && !showWhenFolded(inlay)) continue;
+      (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE ? myInlaysAbove : myInlaysBelow).add(inlay);
+    }
+  }
+
   private final class Location implements Cloneable {
-    private final int lineHeight; // editor's line height
     private int visualLine;       // current visual line
     private int offset;           // start offset of the current visual line
     private int logicalLine = 1;  // 1 + start logical line of the current visual line
     private int foldRegion;       // index of the first folding region on current or following visual lines
     private int softWrap;         // index of the first soft wrap after the start of current visual line
-    private int y;                // y coordinate of visual line's top
-    
+
     private Location(int startVisualLine) {
-      lineHeight = myEditor.getLineHeight();
-      if (startVisualLine < 0 || startVisualLine >= myEditor.getVisibleLineCount()) {
+      if (startVisualLine < 0 || startVisualLine >= myView.getVisibleLineCount()) {
         offset = -1;
       }
       else if (startVisualLine > 0) {
         visualLine = startVisualLine;
-        offset = myEditor.visualLineStartOffset(startVisualLine);
+        offset = myView.visualLineToOffset(startVisualLine);
         logicalLine = myDocument.getLineNumber(offset) + 1;
-        softWrap = myEditor.getSoftWrapModel().getSoftWrapIndex(offset) + 1;
+        softWrap = mySoftWrapModel.getSoftWrapIndex(offset) + 1;
         if (softWrap <= 0) {
           softWrap = -softWrap;
         }
-        foldRegion = myEditor.getFoldingModel().getLastCollapsedRegionBefore(offset) + 1;
-        y = myEditor.visibleLineToY(startVisualLine);
+        foldRegion = myFoldingModel.getLastCollapsedRegionBefore(offset) + 1;
       }
     }
 
@@ -150,7 +257,6 @@ public class VisualLinesIterator {
       }
       visualLine++;
       while (foldRegion < myFoldRegions.length && myFoldRegions[foldRegion].getStartOffset() < offset) foldRegion++;
-      y += lineHeight;
     }
 
     private int getNextSoftWrapOffset() {
@@ -176,7 +282,7 @@ public class VisualLinesIterator {
       }
       return false;
     }
-    
+
     private boolean atEnd() {
       return offset == -1;
     }

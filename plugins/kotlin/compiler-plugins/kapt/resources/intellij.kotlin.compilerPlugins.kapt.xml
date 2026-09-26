@@ -1,0 +1,23 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="kotlin.gradle.gradle-java"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.kapt.gradleJava.KaptGradleProjectImportHandler"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.kotlin.idea.compilerPlugin.kapt.gradleJava.KaptProjectResolverExtension" order="last"/>
+  </extensions>
+</idea-plugin>

@@ -1,35 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypeVisitorEx;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaVarTypeUtil {
-  public static final RecursionGuard ourVarGuard = RecursionManager.createGuard("var.guard");
-
+public final class JavaVarTypeUtil {
   public static PsiType getUpwardProjection(@NotNull PsiType t) {
     return t.accept(new UpwardProjectionTypeVisitor());
   }
@@ -37,64 +39,74 @@ public class JavaVarTypeUtil {
   public static PsiType getDownwardProjection(@NotNull PsiType type) {
     return type.accept(new DownwardProjectionTypeVisitor());
   }
-  
+
   private static boolean mentionsRestrictedTypeVariables(PsiType type) {
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return false;
       }
 
       @Override
-      public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return true;
       }
     });
   }
 
   private static class UpwardProjectionTypeVisitor extends PsiTypeVisitorEx<PsiType> {
-    private static final RecursionGuard upwardGuard = RecursionManager.createGuard("upwardProjectionGuard");
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return type;
     }
 
-    @Nullable
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public @Nullable PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getUpperBound().accept(this);
     }
 
     @Override
-    public PsiType visitArrayType(PsiArrayType arrayType) {
+    public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
       PsiType componentType = arrayType.getComponentType();
       return componentType.accept(this).createArrayType();
     }
 
-    @Nullable
     @Override
-    public PsiType visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+    public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
+      return disjunctionType.getLeastUpperBound();
+    }
+
+    @Override
+    public @Nullable PsiType visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
       return lambdaExpressionType;
     }
 
     @Override
-    public PsiType visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+    public PsiType visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
       return methodReferenceType;
     }
 
     @Override
-    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+    public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       return PsiIntersectionType.createIntersection(Arrays.stream(intersectionType.getConjuncts())
                                                       .map(conjunct -> conjunct.accept(this))
                                                       .toArray(PsiType[]::new));
     }
 
     @Override
-    public PsiType visitClassType(PsiClassType classType) {
+    public PsiType visitClassType(@NotNull PsiClassType classType) {
       PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       PsiClass aClass = result.getElement();
       if (aClass != null) {
         PsiManager manager = aClass.getManager();
+        if (aClass instanceof PsiTypeParameter) {
+          PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          if (TypeConversionUtil.isFreshVariable(typeParameter)) {
+            PsiType upperBound = TypeConversionUtil.getInferredUpperBoundForSynthetic(typeParameter);
+            return ObjectUtils.notNull(PsiSubstitutor.EMPTY.put(typeParameter, PsiWildcardType.createUnbounded(manager)).substitute(upperBound), 
+                                       classType);
+          }
+        }
         PsiSubstitutor targetSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor substitutor = result.getSubstitutor();
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
@@ -104,86 +116,95 @@ public class JavaVarTypeUtil {
             if (ai instanceof PsiWildcardType) {
 
               if (((PsiWildcardType)ai).isExtends()) {
-                targetSubstitutor = targetSubstitutor.put(parameter, 
+                targetSubstitutor = targetSubstitutor.put(parameter,
                                                           PsiWildcardType.createExtends(manager, ((PsiWildcardType)ai).getExtendsBound().accept(this)));
               }
 
               if (((PsiWildcardType)ai).isSuper()) {
-                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ((PsiWildcardType)ai).getSuperBound()));
+                targetSubstitutor =
+                  targetSubstitutor.put(parameter, createDownwardProjection(manager, ((PsiWildcardType)ai).getSuperBound(), PsiWildcardType.createUnbounded(manager)));
               }
 
             }
             else {
-              PsiType U = upwardGuard.doPreventingRecursion(ai, true, () -> ai.accept(this));
+              // the projection replaces a capture of a wildcard that was written in the source, and an unbounded wildcard
+              // put in its place has to keep that place: the nullness of its implicit bound depends on the scope it was
+              // written in, see PsiWildcardType#unbounded
+              PsiWildcardType unbounded = ai instanceof PsiCapturedWildcardType
+                                          ? ((PsiCapturedWildcardType)ai).getWildcard().unbounded()
+                                          : PsiWildcardType.createUnbounded(manager);
+              PsiType U = RecursionManager.doPreventingRecursion(ai, true, () -> ai.accept(this));
               if (U == null) {
-                targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createUnbounded(manager));
+                targetSubstitutor = targetSubstitutor.put(parameter, unbounded);
               }
               else if (!U.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && tryUpperBound(aClass, parameter, U)) {
                 targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(manager, U));
               }
               else {
-                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ai));
+                targetSubstitutor = targetSubstitutor.put(parameter, createDownwardProjection(manager, ai, unbounded));
               }
             }
           }
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, targetSubstitutor);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor)
+          .withNullability(classType.getNullability());
       }
       return classType;
     }
 
-    private static PsiWildcardType createDownwardProjection(PsiManager manager, PsiType bound) {
+    private static @NotNull PsiWildcardType createDownwardProjection(PsiManager manager,
+                                                                     PsiType bound,
+                                                                     @NotNull PsiWildcardType unbounded) {
       PsiType downwardProjection = getDownwardProjection(bound);
-      return downwardProjection != PsiType.NULL ? PsiWildcardType.createSuper(manager, downwardProjection)
-                                                : PsiWildcardType.createUnbounded(manager);
+      return downwardProjection != PsiTypes.nullType() ? PsiWildcardType.createSuper(manager, downwardProjection) : unbounded;
     }
 
     private static boolean tryUpperBound(PsiClass aClass, PsiTypeParameter parameter, PsiType U) {
       PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       if (extendsListTypes.length == 0) return true;
       PsiType bi = PsiIntersectionType.createIntersection(extendsListTypes);
-      return PsiPolyExpressionUtil.mentionsTypeParameters(bi, ContainerUtil.newHashSet(aClass.getTypeParameters())) ||
+      return PsiTypesUtil.mentionsTypeParameters(bi, ContainerUtil.newHashSet(aClass.getTypeParameters())) ||
              !U.isAssignableFrom(bi);
     }
   }
 
   private static class DownwardProjectionTypeVisitor extends PsiTypeVisitor<PsiType> {
     @Override
-    public PsiType visitType(PsiType type) {
+    public PsiType visitType(@NotNull PsiType type) {
       return type;
     }
 
     @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+    public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return capturedWildcardType.getLowerBound().accept(this);
     }
 
     @Override
-    public PsiType visitArrayType(PsiArrayType arrayType) {
+    public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
       PsiType projection = arrayType.getComponentType().accept(this);
-      if (projection == PsiType.NULL) return PsiType.NULL;
+      if (projection == PsiTypes.nullType()) return PsiTypes.nullType();
       return projection.createArrayType();
     }
 
     @Override
-    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+    public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       PsiType[] conjuncts = Arrays.stream(intersectionType.getConjuncts()).map(conjunct -> conjunct.accept(this)).toArray(PsiType[]::new);
-      if (ArrayUtil.find(conjuncts, PsiType.NULL) > -1) return PsiType.NULL;
+      if (ArrayUtil.find(conjuncts, PsiTypes.nullType()) > -1) return PsiTypes.nullType();
       return PsiIntersectionType.createIntersection(conjuncts);
     }
 
     @Override
-    public PsiType visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+    public PsiType visitLambdaExpressionType(@NotNull PsiLambdaExpressionType lambdaExpressionType) {
       return lambdaExpressionType;
     }
 
     @Override
-    public PsiType visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
+    public PsiType visitMethodReferenceType(@NotNull PsiMethodReferenceType methodReferenceType) {
       return methodReferenceType;
     }
 
     @Override
-    public PsiType visitClassType(PsiClassType classType) {
+    public PsiType visitClassType(@NotNull PsiClassType classType) {
       PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       PsiClass aClass = result.getElement();
       if (aClass != null) {
@@ -191,7 +212,7 @@ public class JavaVarTypeUtil {
         PsiSubstitutor targetSubstitutor = PsiSubstitutor.EMPTY;
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
           PsiType ai = substitutor.substitute(parameter);
-          if (ai == null) return PsiType.NULL;
+          if (ai == null) return PsiTypes.nullType();
           if (!mentionsRestrictedTypeVariables(ai)) {
             targetSubstitutor = targetSubstitutor.put(parameter, ai);
           }
@@ -199,7 +220,7 @@ public class JavaVarTypeUtil {
             if (((PsiWildcardType)ai).isExtends()) {
               PsiType extendsBound = ((PsiWildcardType)ai).getExtendsBound();
               PsiType projection = extendsBound.accept(this);
-              if (projection == PsiType.NULL) return PsiType.NULL;
+              if (projection == PsiTypes.nullType()) return PsiTypes.nullType();
               targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(parameter.getManager(), projection));
             }
             else if (((PsiWildcardType)ai).isSuper()) {
@@ -207,16 +228,16 @@ public class JavaVarTypeUtil {
               targetSubstitutor = targetSubstitutor.put(parameter, getUpwardProjection(superBound));
             }
             else {
-              return PsiType.NULL;
+              return PsiTypes.nullType();
             }
           }
           else {
-            return PsiType.NULL;
+            return PsiTypes.nullType();
           }
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, targetSubstitutor);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor);
       }
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
   }
 }

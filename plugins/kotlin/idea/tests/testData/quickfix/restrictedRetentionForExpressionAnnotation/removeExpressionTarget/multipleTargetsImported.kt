@@ -1,0 +1,6 @@
+// "Remove EXPRESSION target" "true"
+// K2_ERROR: RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION_ERROR
+<caret>@Retention
+@Target(AnnotationTarget.FIELD, AnnotationTarget.EXPRESSION, AnnotationTarget.PROPERTY)
+annotation class Ann
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveExpressionTargetFix

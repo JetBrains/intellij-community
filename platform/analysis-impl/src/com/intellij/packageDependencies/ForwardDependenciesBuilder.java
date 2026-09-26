@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,8 +12,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,28 +28,39 @@ import java.util.Set;
 
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
+  private final int myTransitive;
+  private final @Nullable GlobalSearchScope myTargetScope;
+  private final Set<VirtualFile> myStarted = new HashSet<>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
     super(project, scope);
+    myTransitive = 0;
+    myTargetScope = null;
   }
 
-  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final AnalysisScope scopeOfInterest) {
-    super(project, scope, scopeOfInterest);
+  /**
+   * Creates builder which reports dependencies on files from {@code targetScope} only.
+   */
+  public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable GlobalSearchScope targetScope) {
+    super(project, scope);
+    myTargetScope = targetScope;
+    myTransitive = 0;
   }
 
-  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final int transitive) {
+  public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope, final int transitive) {
     super(project, scope);
     myTransitive = transitive;
+    myTargetScope = null;
   }
 
   @Override
   public String getRootNodeNameInUsageView(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.root.node.text");
   }
 
   @Override
   public String getInitialUsagesPosition(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.initial.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.initial.text");
   }
 
   @Override
@@ -66,28 +69,23 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   @Override
-  public void analyze() {
+  public void doAnalyze() {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
-    psiManager.startBatchFilesProcessingMode();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    try {
-      getScope().accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitFile(final PsiFile file) {
-          visit(file, fileIndex, psiManager, 0);
+    psiManager.runInBatchFilesMode(() -> {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+      getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitFile(final @NotNull PsiFile psiFile) {
+          visit(psiFile, fileIndex, psiManager);
         }
       });
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+      return null;
+    });
   }
 
-  private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, int depth) {
-
+  private void visit(@NotNull PsiFile file, @NotNull ProjectFileIndex fileIndex, @NotNull PsiManager psiManager) {
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
-
-    if (getScopeOfInterest() != null && !getScopeOfInterest().contains(file)) return;
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -95,20 +93,21 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       if (indicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
+      indicator.setText(AnalysisBundle.message("package.dependencies.progress.text"));
 
       if (virtualFile != null) {
         indicator.setText2(getRelativeToProjectPath(virtualFile));
       }
-      if ( myTotalFileCount > 0) {
+      if ( myTotalFileCount > 0 && myStarted.add(virtualFile)) {
         indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
       }
     }
 
-    final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile);
+    final boolean isInLibrary =  virtualFile == null || fileIndex.isInLibrary(virtualFile);
     final Set<PsiFile> collectedDeps = new HashSet<>();
-    final HashSet<PsiFile> processed = new HashSet<>();
     collectedDeps.add(file);
+    int depth = 0;
+    Set<PsiFile> processed = new HashSet<>();
     do {
       if (depth++ > getTransitiveBorder()) return;
       for (PsiFile psiFile : new HashSet<>(collectedDeps)) {
@@ -119,37 +118,29 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             indicator.setText2(getRelativeToProjectPath(vFile));
           }
 
-          if (!isInLibrary && (fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile))) {
+          if (!isInLibrary && fileIndex.isInLibrary(vFile)) {
             processed.add(psiFile);
           }
         }
-        final Set<PsiFile> found = new HashSet<>();
-        if (!processed.contains(psiFile)) {
-          processed.add(psiFile);
-          analyzeFileDependencies(psiFile, new DependencyProcessor() {
-            @Override
-            public void process(PsiElement place, PsiElement dependency) {
-              PsiFile dependencyFile = dependency.getContainingFile();
-              if (dependencyFile != null) {
-                if (viewProvider == dependencyFile.getViewProvider()) return;
-                if (dependencyFile.isPhysical()) {
-                  final VirtualFile virtualFile = dependencyFile.getVirtualFile();
-                  if (virtualFile != null &&
-                      (fileIndex.isInContent(virtualFile) ||
-                       fileIndex.isInLibraryClasses(virtualFile) ||
-                       fileIndex.isInLibrarySource(virtualFile))) {
-                    final PsiElement navigationElement = dependencyFile.getNavigationElement();
-                    found.add(navigationElement instanceof PsiFile ? (PsiFile)navigationElement : dependencyFile);
-                  }
+        if (processed.add(psiFile)) {
+          Set<PsiFile> found = new HashSet<>();
+          analyzeFileDependencies(psiFile, (place, dependency) -> {
+            PsiFile dependencyFile = dependency.getContainingFile();
+            if (dependencyFile != null) {
+              if (viewProvider == dependencyFile.getViewProvider()) return;
+              final VirtualFile depFile = dependencyFile.getVirtualFile();
+              if (depFile != null
+                  && (fileIndex.isInContent(depFile) || fileIndex.isInLibrary(depFile))
+                  && (myTargetScope == null || myTargetScope.contains(depFile))) {
+                final PsiElement navigationElement = dependencyFile.getNavigationElement();
+                PsiFile navigationFile = navigationElement instanceof PsiFile navPsiFile ? navPsiFile : dependencyFile;
+                if (navigationFile.isPhysical()) {
+                  found.add(navigationFile);
                 }
               }
             }
           });
-          Set<PsiFile> deps = getDependencies().get(file);
-          if (deps == null) {
-            deps = new HashSet<>();
-            getDependencies().put(file, deps);
-          }
+          Set<PsiFile> deps = getDependencies().computeIfAbsent(file, _ -> new HashSet<>());
           deps.addAll(found);
 
           getDirectDependencies().put(psiFile, new HashSet<>(found));
@@ -157,7 +148,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
           collectedDeps.addAll(found);
 
           psiManager.dropResolveCaches();
-          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(file);
+          InjectedLanguageManager.getInstance(file.getProject()).dropFileCaches(psiFile);
         }
       }
       collectedDeps.removeAll(processed);
@@ -166,8 +157,15 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   @Override
-  public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
+  public @NotNull Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return myDirectDependencies;
   }
 
+  private boolean isTransitive() {
+    return myTransitive > 0;
+  }
+
+  public int getTransitiveBorder() {
+    return myTransitive;
+  }
 }

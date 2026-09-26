@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -24,10 +10,12 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.externalSystem.view.TaskNode;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,29 +25,29 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
+@ApiStatus.Internal
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 
-  @NotNull
-  private final ExternalSystemTaskActivator.Phase myPhase;
+  private final @NotNull ExternalSystemTaskActivator.Phase myPhase;
 
   protected ToggleTaskActivationAction(@NotNull ExternalSystemTaskActivator.Phase phase) {
     myPhase = phase;
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && !getTasks(e).isEmpty();
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     return hasTask(getTaskActivator(e), getTasks(e).get(0));
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    ExternalSystemActionsCollector.trigger(getProject(e), getSystemId(e), this, e);
     List<TaskData> tasks = getTasks(e);
     if (state) {
       addTasks(getTaskActivator(e), tasks);
@@ -69,9 +57,8 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
     }
   }
 
-  @NotNull
-  private static List<TaskData> getTasks(AnActionEvent e) {
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+  private static @NotNull List<TaskData> getTasks(@NotNull AnActionEvent e) {
+    final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     if (selectedNodes == null) return Collections.emptyList();
 
     List<TaskData> tasks = new SmartList<>();
@@ -107,7 +94,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
 
-  private ExternalSystemTaskActivator getTaskActivator(AnActionEvent e) {
+  private ExternalSystemTaskActivator getTaskActivator(@NotNull AnActionEvent e) {
     return ExternalProjectsManagerImpl.getInstance(getProject(e)).getTaskActivator();
   }
 }

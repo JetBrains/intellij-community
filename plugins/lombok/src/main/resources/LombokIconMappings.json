@@ -1,0 +1,16 @@
+{
+  "icons": {
+    "expui": {
+      "nodes": {
+        "lombokClass.svg": "icons/nodes/lombokClass.svg",
+        "lombokField.svg": "icons/nodes/lombokField.svg",
+        "lombokMethod.svg": [
+          "icons/nodes/lombokMethod.svg",
+          "icons/nodes/lombokMethod@2x.svg"
+        ]
+      },
+      "config.svg": "icons/config.svg",
+      "lombok.svg": "icons/lombok.svg"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+package com.jetbrains.performancePlugin.freezes
+
+import com.intellij.diagnostic.FreezeAnalysisFacade
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Test
+
+internal class FreezeCauseDetectionTest {
+  @Test
+  fun githubCopilotReadActionIsFreezeCause() {
+    val resource = "dumps/2044695425478561792-github-copilot.txt"
+    val dump = javaClass.getResource(resource)?.readText()
+               ?: error("Missing classpath resource next to ${javaClass.name}: $resource")
+
+    val cause = FreezeAnalysisFacade.analyzeFreeze(dump)
+    assertNotNull("Freeze cause must be detected in the Copilot dump", cause)
+
+    assertEquals(
+      "com.github.copilot.lsp.LSPManager.doNotifyDidOpen",
+      cause!!.stackFrame
+    )
+  }
+
+  @Test
+  fun githubCopilotAwtOnBackgroundFreezeCause() {
+    val resource = "dumps/2033555930926551040-github-copilot.txt"
+    val dump = javaClass.getResource(resource)?.readText()
+               ?: error("Missing classpath resource next to ${javaClass.name}: $resource")
+
+    val cause = FreezeAnalysisFacade.analyzeFreeze(dump)
+    assertNotNull("Freeze cause must be detected in the Copilot dump", cause)
+
+    assertEquals(
+      "com.github.copilot.agent.message.codeblock.CodeBlock.initEditorTextField",
+      cause!!.stackFrame
+    )
+  }
+
+  @Test
+  fun azureReadActionFreezeCause() {
+    val resource = "dumps/2053394179475902464-azure.txt"
+    val dump = javaClass.getResource(resource)?.readText()
+               ?: error("Missing classpath resource next to ${javaClass.name}: $resource")
+
+    val cause = FreezeAnalysisFacade.analyzeFreeze(dump)
+    assertNotNull("Freeze cause must be detected in the Azure dump", cause)
+
+    assertEquals(
+      $$"com.microsoft.azure.toolkit.intellij.java.sdk.MavenProjectReportGenerator.lambda$execute$1",
+      cause!!.stackFrame
+    )
+  }
+}

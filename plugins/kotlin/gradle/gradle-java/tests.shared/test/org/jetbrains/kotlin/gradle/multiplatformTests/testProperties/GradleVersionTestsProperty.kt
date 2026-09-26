@@ -1,0 +1,18 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle.multiplatformTests.testProperties
+
+import org.jetbrains.kotlin.gradle.multiplatformTests.ValueFromEnvironment
+
+object GradleVersionTestsProperty : org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestsResolvableProperty<GradleVersionTestsProperty.Value> {
+    override val id: String = "gradle_version"
+
+    enum class Value(override val versionAlias: String, override val version: String) : ValueFromEnvironment {
+        ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.5.1"),
+        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "9.5.1"),
+        ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "9.6.1")
+    }
+
+    override val versionByAlias: Map<Value, String> = Value.entries.associateWith { it.version }
+
+    override val defaultValue: Value = Value.ForStableAgp
+}

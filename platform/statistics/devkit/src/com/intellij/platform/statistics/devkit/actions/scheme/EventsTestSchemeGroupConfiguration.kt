@@ -1,0 +1,425 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("HardCodedStringLiteral")
+
+package com.intellij.platform.statistics.devkit.actions.scheme
+
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.icons.AllIcons
+import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.config.SerializationHelper
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
+import com.intellij.json.JsonLanguage
+import com.intellij.json.psi.JsonArray
+import com.intellij.json.psi.JsonFile
+import com.intellij.json.psi.JsonObject
+import com.intellij.json.psi.JsonStringLiteral
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Key
+import com.intellij.platform.statistics.devkit.actions.TestParseEventsSchemeDialog
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.components.JBRadioButton
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.layout.selected
+import com.intellij.util.IncorrectOperationException
+import com.intellij.util.TextFieldCompletionProviderDumbAware
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.textCompletion.TextFieldWithCompletion
+import com.intellij.util.ui.JBDimension
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
+import tools.jackson.core.JacksonException
+import tools.jackson.databind.ObjectMapper
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+class EventsTestSchemeGroupConfiguration(private val project: Project,
+                                         productionGroups: EventGroupRemoteDescriptors,
+                                         initialGroup: GroupValidationTestRule,
+                                         generatedScheme: List<GroupDescriptor>,
+                                         groupIdChangeListener: ((GroupValidationTestRule) -> Unit)? = null) : Disposable {
+
+  val panel: JPanel
+  val groupIdTextField: TextFieldWithCompletion
+  private var currentGroup: GroupValidationTestRule = initialGroup
+  private lateinit var allowAllEventsRadioButton: JBRadioButton
+  private lateinit var customRulesRadioButton: JBRadioButton
+  private lateinit var generateSchemeButton: JComponent
+  private val validationRulesEditorComponent: JComponent
+  private val tempFile: PsiFile
+  private val validationRulesEditor: EditorEx
+  private val eventsScheme: Map<String, String> = createEventsScheme(generatedScheme)
+
+  init {
+    groupIdTextField = TextFieldWithCompletion(project, createCompletionProvider(productionGroups), initialGroup.groupId, true, true, true)
+    groupIdTextField.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        currentGroup.groupId = groupIdTextField.text
+        if (groupIdChangeListener != null) {
+          groupIdChangeListener(currentGroup)
+        }
+        updateGenerateSchemeButton()
+      }
+    })
+
+    tempFile = TestParseEventsSchemeDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
+    tempFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    tempFile.putUserData(FUS_TEST_SCHEME_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
+    validationRulesEditor = createEditor(project, tempFile)
+    validationRulesEditor.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        currentGroup.customRules = validationRulesEditor.document.text
+      }
+    })
+    validationRulesEditorComponent = validationRulesEditor.component
+
+    panel = panel {
+      row(StatisticsBundle.message("stats.group.id")) {
+        cell(groupIdTextField)
+          .applyToComponent { minimumSize = JBDimension(200, 1) }
+          .align(AlignX.FILL)
+      }
+      buttonsGroup {
+        row {
+          customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
+            .contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
+            .selected(initialGroup.useCustomRules)
+            .applyToComponent {
+              addChangeListener { updateRulesOption() }
+            }.component
+        }
+        row {
+          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .contextHelp(StatisticsBundle.message("stats.allow.all.events.help"))
+            .selected(!initialGroup.useCustomRules)
+            .applyToComponent {
+              icon(AllIcons.General.BalloonWarning12)
+              addChangeListener { updateRulesOption() }
+            }.component
+        }
+      }
+      row {
+        cell(createCustomRules()).align(Align.FILL)
+      }.resizableRow()
+        .visibleIf(customRulesRadioButton.selected)
+    }
+    updateRulesOption()
+  }
+
+  private fun createCustomRules() = panel {
+    row {
+      cell(validationRulesEditorComponent).align(Align.FILL)
+    }.resizableRow()
+    row {
+      generateSchemeButton = button("Generate Scheme") {
+        val scheme = eventsScheme[groupIdTextField.text]
+        if (scheme != null) {
+          WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
+        }
+      }.component
+    }
+    row {
+      comment(StatisticsBundle.message("stats.validation.rules.format"))
+    }
+  }.apply {
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(left = 2))
+  }
+
+  private fun updateGenerateSchemeButton() {
+    val useCustomRules = customRulesRadioButton.isSelected
+    generateSchemeButton.isEnabled = useCustomRules && eventsScheme[groupIdTextField.text] != null
+    if (!generateSchemeButton.isEnabled) {
+      generateSchemeButton.toolTipText = StatisticsBundle.message("stats.scheme.generation.available.only.for.new.api")
+    }
+    else {
+      generateSchemeButton.toolTipText = null
+    }
+  }
+
+  private fun createCompletionProvider(productionGroups: EventGroupRemoteDescriptors): TextFieldCompletionProviderDumbAware {
+    return object : TextFieldCompletionProviderDumbAware() {
+      override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
+        val generatedSchemeVariants = eventsScheme.keys.map {
+          LookupElementBuilder.create(it).withInsertHandler(InsertHandler { _, item ->
+            val scheme = eventsScheme[item.lookupString]
+            if (scheme != null) {
+              customRulesRadioButton.isSelected = true
+              WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
+            }
+          })
+        }
+        result.addAllElements(generatedSchemeVariants)
+
+        val productionGroupsVariants = productionGroups.groups.asSequence()
+          .mapNotNull { it.id }
+          .filterNot { eventsScheme.keys.contains(it) }
+          .map {
+            LookupElementBuilder.create(it).withInsertHandler(InsertHandler { _, _ ->
+              allowAllEventsRadioButton.isSelected = true
+              WriteAction.run<Throwable> { validationRulesEditor.document.setText(EMPTY_RULES) }
+            })
+          }.toList()
+        result.addAllElements(productionGroupsVariants)
+      }
+    }
+  }
+
+  private fun createEditor(project: Project, file: PsiFile): EditorEx {
+    var document = PsiDocumentManager.getInstance(project).getDocument(file)
+    if (document == null) {
+      document = EditorFactory.getInstance().createDocument(currentGroup.customRules)
+    }
+    val virtualFile = file.virtualFile
+    val editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, false) as EditorEx
+    editor.setFile(virtualFile)
+    editor.settings.isLineMarkerAreaShown = false
+    editor.settings.isFoldingOutlineShown = false
+
+    val fileType = FileTypeManager.getInstance().findFileTypeByName("JSON")
+    val lightFile = LightVirtualFile("Dummy.json", fileType, "")
+    val highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, lightFile)
+    try {
+      editor.highlighter = highlighter
+    }
+    catch (e: Throwable) {
+      LOG.warn(e)
+    }
+    return editor
+  }
+
+  fun updatePanel(newGroup: GroupValidationTestRule?) {
+    if (newGroup == null) return
+    currentGroup = newGroup
+    groupIdTextField.text = newGroup.groupId
+    groupIdTextField.requestFocusInWindow()
+    if (newGroup.useCustomRules) {
+      customRulesRadioButton.isSelected = true
+    }
+    else {
+      allowAllEventsRadioButton.isSelected = true
+    }
+    WriteAction.run<Throwable> { validationRulesEditor.document.setText(newGroup.customRules) }
+  }
+
+  private fun updateRulesOption() {
+    updateGenerateSchemeButton()
+
+    currentGroup.useCustomRules = customRulesRadioButton.isSelected
+  }
+
+  fun getFocusedComponent(): JComponent = groupIdTextField
+
+  override fun dispose() {
+    WriteCommandAction.writeCommandAction(project).run(
+      ThrowableRunnable<RuntimeException> {
+        try {
+          tempFile.delete()
+        }
+        catch (e: IncorrectOperationException) {
+          LOG.warn(e)
+        }
+      })
+
+    if (!validationRulesEditor.isDisposed) {
+      EditorFactory.getInstance().releaseEditor(validationRulesEditor)
+    }
+  }
+
+  fun validate(): List<ValidationInfo> {
+    return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
+  }
+
+  companion object {
+    private val LOG = logger<EventsTestSchemeGroupConfiguration>()
+
+    internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
+
+    fun validateTestSchemeGroup(project: Project,
+                                testSchemeGroup: GroupValidationTestRule,
+                                groupIdTextField: JComponent): List<ValidationInfo> {
+      return validateTestSchemeGroup(project, testSchemeGroup, groupIdTextField, null)
+    }
+
+    private fun validateTestSchemeGroup(project: Project,
+                                        testSchemeGroup: GroupValidationTestRule,
+                                        groupIdTextField: JComponent,
+                                        customRulesFile: PsiFile?): List<ValidationInfo> {
+      val groupId: String = testSchemeGroup.groupId
+      val validationInfo = mutableListOf<ValidationInfo>()
+      if (groupId.isEmpty()) {
+        validationInfo.add(ValidationInfo(StatisticsBundle.message("stats.specify.group.id"), groupIdTextField))
+      }
+
+      if (testSchemeGroup.useCustomRules) {
+        validationInfo.addAll(validateCustomValidationRules(project, testSchemeGroup.customRules, customRulesFile))
+      }
+      return validationInfo
+    }
+
+    internal fun validateCustomValidationRules(project: Project,
+                                               customRules: String,
+                                               customRulesFile: PsiFile?): List<ValidationInfo> {
+      if (customRules.isBlank()) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))
+      if (project === ProjectManager.getInstance().defaultProject) return emptyList()
+      val file = if (customRulesFile != null) {
+        customRulesFile
+      }
+      else {
+        val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
+        psiFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+        psiFile
+      }
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      return validateRulesStructure(project, file)
+    }
+
+    private fun validateRulesStructure(project: Project, file: PsiFile): List<ValidationInfo> {
+      val root = (file as? JsonFile)?.topLevelValue
+      if (root !is JsonObject) {
+        return listOf(createValidationInfo(project, file, root ?: file, "stats.validation.rules.expected.object"))
+      }
+
+      val validationInfo = mutableListOf<ValidationInfo>()
+      val eventId = root.findProperty("event_id")
+      if (eventId == null) {
+        validationInfo.add(createValidationInfo(project, file, root, "stats.validation.rules.missing.property", "event_id"))
+      }
+      else {
+        validationInfo.addAll(validateStringArray(project, file, eventId.value ?: eventId))
+      }
+
+      val eventData = root.findProperty("event_data")
+      if (eventData == null) {
+        validationInfo.add(createValidationInfo(project, file, root, "stats.validation.rules.missing.property", "event_data"))
+      }
+      else {
+        val eventDataObject = eventData.value as? JsonObject
+        if (eventDataObject == null) {
+          validationInfo.add(createValidationInfo(project, file, eventData.value ?: eventData,
+                                                  "stats.validation.rules.expected.object"))
+        }
+        else {
+          for (property in eventDataObject.propertyList) {
+            validationInfo.addAll(validateStringArray(project, file, property.value ?: property))
+          }
+        }
+      }
+      return validationInfo
+    }
+
+    private fun validateStringArray(project: Project, file: PsiFile, value: PsiElement): List<ValidationInfo> {
+      val array = value as? JsonArray
+      if (array == null || array.valueList.isEmpty()) {
+        return listOf(createValidationInfo(project, file, value, "stats.validation.rules.expected.non.empty.string.array"))
+      }
+      return array.valueList.filterNot { it is JsonStringLiteral }.map {
+        createValidationInfo(project, file, it, "stats.validation.rules.expected.string")
+      }
+    }
+
+    private fun createValidationInfo(
+      project: Project,
+      file: PsiFile,
+      element: PsiElement,
+      messageKey: String,
+      vararg params: Any,
+    ): ValidationInfo {
+      val document = PsiDocumentManager.getInstance(project).getDocument(file)
+      val line = document?.getLineNumber(element.textOffset)?.plus(1) ?: 1
+      val message = StatisticsBundle.message(messageKey, *params)
+      return ValidationInfo(StatisticsBundle.message("stats.validation.rules.error.at.line", line, message))
+    }
+
+    internal fun createEventsScheme(generatedScheme: List<GroupDescriptor>): HashMap<String, String> {
+      val eventsScheme = HashMap<String, String>()
+      for (group in generatedScheme) {
+        val validationRules = createValidationRules(group)
+        if (validationRules != null) {
+          eventsScheme[group.id] = SerializationHelper.serialize(validationRules)
+        }
+      }
+      return eventsScheme
+    }
+
+    /**
+     * Builds validation rules for the given group based on the current event scheme.
+     *
+     * Note: default_value and required rules are annotated with the current group version
+     * ([GroupDescriptor.version]) and event ID, as required by the FUS metadata format.
+     * However, the DevKit scheme is built from the current source code state and is not aware
+     * of the actual version ranges defined in the production metadata (e.g. a rule valid for
+     * versions `1..3` in production will appear here as version `5` if that is the current group version).
+     *
+     * When testing events that use `default_value` or `required` rules, ensure the group version
+     * and event ID in the generated scheme match what you intend to validate against.
+     */
+    private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
+      val eventIds = hashSetOf<String>()
+      val eventData = hashMapOf<String, MutableSet<String>>()
+      val version = group.version
+      val events = group.schema
+      for (event in events) {
+        eventIds.add(event.event)
+        for (dataField in event.fields) {
+          val processedRules = dataField.value.mapTo(hashSetOf()) { rule ->
+            if ((rule.startsWith("{default_value:") || rule.startsWith("{required:")) && rule.endsWith("}")) {
+              "${rule.dropLast(1)}|${event.event}|$version}"
+            }
+            else {
+              rule
+            }
+          }
+          eventData.getOrPut(dataField.path) { hashSetOf() }.addAll(processedRules)
+        }
+      }
+
+      if (eventIds.isEmpty() && eventData.isEmpty()) return null
+
+      val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
+      rules.event_id = eventIds
+      rules.event_data = eventData
+      return rules
+    }
+
+    private fun isValidJson(customRules: String): Boolean {
+      try {
+        val mapper = ObjectMapper()
+        mapper.readTree(customRules)
+        return true
+      }
+      catch (e: JacksonException) {
+        return false
+      }
+    }
+  }
+
+  internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
+    constructor(rules: EventGroupRemoteDescriptors.GroupRemoteRule?) : this(rules?.regexps?.keys ?: emptySet(),
+                                                                            rules?.enums?.keys ?: emptySet())
+  }
+
+}

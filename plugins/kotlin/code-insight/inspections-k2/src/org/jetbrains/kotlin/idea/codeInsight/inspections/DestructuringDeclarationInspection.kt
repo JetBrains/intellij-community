@@ -1,0 +1,467 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections
+
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.number
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.psi.setModifierList
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtUnaryExpression
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+
+internal class DestructuringDeclarationInspection(
+    @JvmField var reportNonParameterCases: Boolean = false,
+    @JvmField var maxUnusedComponentsInDestructuring: Int = 2
+) : KotlinApplicableInspectionBase.Simple<KtDeclaration, UsagesToRemove>() {
+    override fun createQuickFix(
+        element: KtDeclaration, context: UsagesToRemove
+    ): KotlinModCommandQuickFix<KtDeclaration> =
+        UseDestructureDeclarationFix(context)
+
+    context(session: KaSession)
+    override fun prepareContext(element: KtDeclaration): UsagesToRemove? =
+        collectUsagesToRemove(element, maxUnusedComponentsInDestructuring)
+
+    override fun getProblemDescription(
+        element: KtDeclaration, context: UsagesToRemove
+    ): @InspectionMessage String = KotlinBundle.message("use.destructuring.declaration")
+
+    override fun isApplicableByPsi(element: KtDeclaration): Boolean =
+        element.getUsageScopeElement() != null
+
+    override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType {
+        val atMostOneUsedComponent = context.introducedEntries().count { !it.isUnusedComponent() } <= 1
+        val reportAsWarning = reportNonParameterCases || element.parent is KtForExpression || context.useFullFormNameBasedDestructuring
+
+        return if (reportAsWarning && !atMostOneUsedComponent) {
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        } else {
+            ProblemHighlightType.INFORMATION
+        }
+    }
+
+    override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
+        val textRange = when (element) {
+            is KtFunctionLiteral -> element.lBrace.textRange
+            is KtNamedDeclaration -> element.nameIdentifier?.textRange
+            else -> null
+        }
+        return listOfNotNull(textRange?.shiftLeft(element.textRange.startOffset))
+    }
+
+    override fun buildVisitor(
+        holder: ProblemsHolder, isOnTheFly: Boolean
+    ): KtVisitor<*, *> = object : KtVisitorVoid() {
+        override fun visitExpression(expression: KtExpression) {
+            if (expression is KtFunctionLiteral) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+
+        override fun visitDeclaration(dcl: KtDeclaration) {
+            visitTargetElement(dcl, holder, isOnTheFly)
+        }
+
+        override fun visitParameter(parameter: KtParameter) {
+            visitTargetElement(parameter, holder, isOnTheFly)
+        }
+    }
+
+    override fun getOptionsPane() = pane(
+        checkbox(
+            "reportNonParameterCases",
+            KotlinBundle.message("report.non.parameter.cases")
+        ),
+        number("maxUnusedComponentsInDestructuring", KotlinBundle.message("max.unused.components.in.destructuring"), 0, 1024)
+    )
+}
+
+internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val context: UsagesToRemove) : KotlinModCommandQuickFix<T>() {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        if (context.useFullFormNameBasedDestructuring) {
+            KotlinBundle.message("use.full.name.based.destructuring.declaration")
+        } else {
+            KotlinBundle.message("use.positional.destructuring.declaration")
+        }
+
+    override fun applyFix(
+        project: Project, element: T, updater: ModPsiUpdater
+    ) {
+        val psiFactory = KtPsiFactory(element.project)
+        val parent = element.parent
+        val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
+        val modifiableEntries = context.introducedEntries().map { usageData ->
+            usageData.copy(
+                usagesToReplace = usageData.usagesToReplace.map { updater.getWritable(it) }.toMutableList(),
+                declarationToDrop = updater.getWritable(usageData.declarationToDrop)
+            )
+        }
+        val nameValidator = KotlinDeclarationNameValidator(
+            visibleDeclarationsContext = anchor ?: container as KtElement,
+            checkVisibleDeclarationsContext = true,
+            target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+            excludedDeclarations = modifiableEntries.flatMap {
+                (it.declarationToDrop as? KtDestructuringDeclaration)?.entries ?: listOfNotNull(it.declarationToDrop)
+            }
+        )
+        val underscoreSupported =
+            element.languageVersionSettings.supportsFeature(LanguageFeature.SingleUnderscoreForParameterName)
+        val allUnused = modifiableEntries.all { it.isUnusedComponent() }
+        val entries = ArrayList<String>()
+        modifiableEntries.forEach { usageData ->
+            val (descriptor, usagesToReplace, variableToDrop, name) = usageData
+            val isUnusedComponent = usageData.isUnusedComponent()
+            val suggestedName = if (isUnusedComponent && underscoreSupported && !allUnused && !context.useFullFormNameBasedDestructuring) {
+                "_"
+            } else {
+                KotlinNameSuggester.suggestNameByName(name ?: descriptor) { nameValidator.validate(it) }
+            }
+
+            runWriteActionIfPhysical(element) {
+                variableToDrop?.delete()
+                usagesToReplace.forEach {
+                    val replaced = it.replace(psiFactory.createExpression(suggestedName))
+                    (replaced.parent as? KtBlockStringTemplateEntry)?.dropCurlyBracketsIfPossible()
+                }
+            }
+
+            val entry = if (context.useFullFormNameBasedDestructuring) {
+                buildFullNameBasedDestructuringEntry(suggestedName, descriptor)
+            } else {
+                suggestedName
+            }
+            entries.add(entry)
+        }
+
+        val joinedNames = entries.joinToString()
+        when (element) {
+            is KtParameter -> {
+                val loopRange = (element.parent as? KtForExpression)?.loopRange
+                runWriteActionIfPhysical(element) {
+                    val type = element.typeReference?.let { ": ${it.text}" } ?: ""
+                    element.replace(psiFactory.createDestructuringParameter("($joinedNames)$type"))
+                    if (context.removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
+                        loopRange.replace(loopRange.receiverExpression)
+                    }
+                }
+            }
+
+            is KtFunctionLiteral -> {
+                val lambda = element.parent as KtLambdaExpression
+                specifyExplicitLambdaSignature(
+                    lambda, modifiableEntries.joinToString(prefix = "(", postfix = ")") { it.componentName })
+                runWriteActionIfPhysical(element) {
+                    lambda.functionLiteral.valueParameters.singleOrNull()?.replace(
+                        psiFactory.createDestructuringParameter("($joinedNames)")
+                    )
+                }
+            }
+
+            is KtVariableDeclaration -> {
+                val rangeAfterEq = PsiChildRange(element.initializer, element.lastChild)
+                val modifierList = element.modifierList?.copied<KtModifierList>()
+                val declarationPattern = if (context.useFullFormNameBasedDestructuring) {
+                    "($joinedNames) = $0"
+                } else {
+                    "val ($joinedNames) = $0"
+                }
+                runWriteActionIfPhysical(element) {
+                    val result = element.replace(
+                        psiFactory.createDestructuringDeclarationByPattern(
+                            declarationPattern, rangeAfterEq
+                        )
+                    ) as KtModifierListOwner
+
+                    if (modifierList != null && !context.useFullFormNameBasedDestructuring) {
+                        result.setModifierList(modifierList)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun buildFullNameBasedDestructuringEntry(name: String, componentName: String): String =
+        if (name == componentName) "val $name" else "val $name = $componentName"
+}
+
+internal data class UsagesToRemove(
+    val data: List<UsageData>,
+    val removeSelectorInLoopRange: Boolean,
+    val useFullFormNameBasedDestructuring: Boolean,
+) {
+    /**
+     * Returns the destructuring entries introduced by the fix.
+     * Full-form name-based destructuring excludes unused entries.
+     * The fix keeps all entries if none are used because an empty destructuring declaration is invalid.
+     */
+    fun introducedEntries(): List<UsageData> {
+        if (!useFullFormNameBasedDestructuring) return data
+        return data.filterNot(UsageData::isUnusedComponent).ifEmpty { data }
+    }
+}
+
+internal data class SingleUsageData(val callableName: String?, val usageToReplace: KtExpression?, val declarationToDrop: KtDeclaration?)
+
+internal data class UsageData(
+    val componentName: String,
+    val usagesToReplace: MutableList<KtExpression> = mutableListOf(),
+    var declarationToDrop: KtDeclaration? = null,
+    var name: String? = null
+) {
+    /** Returns true if data is successfully added, false otherwise */
+    fun add(newData: SingleUsageData, componentIndex: Int): Boolean {
+        if (newData.declarationToDrop is KtDestructuringDeclaration) {
+            val destructuringEntries = newData.declarationToDrop.entries
+            if (componentIndex < destructuringEntries.size) {
+                if (declarationToDrop != null) return false
+                name = destructuringEntries[componentIndex].name ?: return false
+                declarationToDrop = newData.declarationToDrop
+            }
+        } else {
+            name = name ?: newData.declarationToDrop?.name
+            declarationToDrop = declarationToDrop ?: newData.declarationToDrop
+        }
+        newData.usageToReplace?.let { usagesToReplace.add(it) }
+        return true
+    }
+
+    fun isUnusedComponent(): Boolean = usagesToReplace.isEmpty() && declarationToDrop == null
+}
+
+private fun KtDeclaration.getUsageScopeElement(): PsiElement? {
+    val lambdaSupported = languageVersionSettings.supportsFeature(LanguageFeature.DestructuringLambdaParameters)
+    return when (this) {
+        is KtParameter -> {
+            val parent = parent
+            when {
+                parent is KtForExpression -> parent
+                parent.parent is KtFunctionLiteral -> if (lambdaSupported) parent.parent else null
+                else -> null
+            }
+        }
+
+        is KtProperty -> parent.takeIf { isLocal }
+        is KtFunctionLiteral -> if (!hasParameterSpecification() && lambdaSupported) this else null
+        else -> null
+    }
+}
+
+context(_: KaSession)
+private fun collectUsagesToRemove(declaration: KtDeclaration, maxUnusedComponentsInDestructuring: Int): UsagesToRemove? {
+    val usageScopeElement = declaration.getUsageScopeElement() ?: return null
+
+    val variableName = when (declaration) {
+        is KtValVarKeywordOwner -> declaration.name
+        is KtFunctionLiteral -> "it"
+        else -> return null
+    }
+
+    val type = when (declaration) {
+        is KtFunctionLiteral -> (declaration.expressionType as? KaFunctionType)?.parameterTypes?.singleOrNull()
+        is KtDeclarationWithReturnType -> declaration.returnType
+        else -> return null
+    }?.lowerBoundIfFlexible() as? KaClassType ?: return null
+
+    if (type.isNullable) return null
+    val classSymbol = type.expandedSymbol
+
+    val (
+        isMapEntry: Boolean,
+        useFullFormNameBasedDestructuring: Boolean,
+        componentNames: List<String>
+    ) = if (classSymbol is KaNamedClassSymbol && classSymbol.isData) {
+        val primaryCtor = classSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary } ?: return null
+        Triple(
+            false,
+            declaration.languageVersionSettings.supportsFeature(LanguageFeature.NameBasedDestructuring),
+            primaryCtor.valueParameters.map { it.name.asString() }
+        )
+    } else {
+        val mapEntrySymbol = findClass(StandardClassIds.MapEntry) ?: return null
+        if (classSymbol?.isSubClassOf(mapEntrySymbol) == true || mapEntrySymbol == classSymbol) {
+            Triple(true, false, listOf("key", "value"))
+        } else {
+            return null
+        }
+    }
+
+    val usagesToRemove = componentNames.map { name -> UsageData(componentName = name) }.toMutableList()
+
+    if (usageScopeElement.hasBadRefences(variableName, componentNames, isMapEntry, declaration, usagesToRemove)) return null
+
+    val removeSelectorInLoopRange = isMapEntry && removeEntriesEntrySetInLoopRange(declaration)
+    val droppedLastUnused = usagesToRemove.dropLastWhile { it.usagesToReplace.isEmpty() && it.declarationToDrop == null }
+    val data = droppedLastUnused.ifEmpty { usagesToRemove }
+    if (!useFullFormNameBasedDestructuring) {
+        val allUnused = data.all { it.isUnusedComponent() }
+        val unusedComponentsToKeep = if (allUnused) 0 else data.count { it.isUnusedComponent() }
+        if (unusedComponentsToKeep > maxUnusedComponentsInDestructuring) return null
+    }
+    return UsagesToRemove(data, removeSelectorInLoopRange, useFullFormNameBasedDestructuring)
+}
+
+private fun PsiElement.hasBadRefences(
+    variableName: @NlsSafe String?,
+    componentNames: List<String>,
+    isMapEntry: Boolean,
+    declaration: KtDeclaration,
+    usagesToRemove: MutableList<UsageData>,
+): Boolean {
+    val nameToIndex = buildMap {
+        componentNames.forEachIndexed { index, name -> put(name, index) }
+        if (isMapEntry) {
+            put("getKey", 0)
+            put("getValue", 1)
+        }
+    }
+
+    return anyDescendantOfType<KtNameReferenceExpression> { ref ->
+        if (ref.getReferencedName() != variableName) return@anyDescendantOfType false
+
+        val sameDeclaration = ref.mainReference.resolve()?.let { it == declaration } ?: false
+        if (!sameDeclaration) return@anyDescendantOfType false
+
+        val applicable = getDataIfUsageIsApplicable(ref)
+        if (applicable != null) {
+            val callableName = applicable.callableName
+            if (callableName == null) {
+                for (idx in componentNames.indices) {
+                    if (!usagesToRemove[idx].add(applicable, idx)) {
+                        return@anyDescendantOfType true
+                    }
+                }
+                return@anyDescendantOfType false
+            }
+            val idx = nameToIndex[callableName]
+            if (idx != null) {
+                return@anyDescendantOfType !usagesToRemove[idx].add(applicable, idx)
+            }
+        }
+
+        true
+    }
+}
+
+private fun removeEntriesEntrySetInLoopRange(
+    declaration: KtDeclaration
+): Boolean {
+    val forLoop = declaration.parent as? KtForExpression
+    val loopRange = forLoop?.loopRange
+    val selectorExpression = (loopRange as? KtQualifiedExpression)?.selectorExpression as? KtNameReferenceExpression
+    val selectorName = selectorExpression?.getReferencedName()
+    if (selectorName == "entries" || selectorName == "entrySet") {
+        analyze(selectorExpression) {
+            val callableSymbol = selectorExpression.resolveSuccessfulSymbol() as? KaCallableSymbol
+            if (callableSymbol != null) {
+                val containingSymbol = callableSymbol.containingSymbol as? KaClassSymbol
+                val mapEntrySymbol = findClass(StandardClassIds.Map)
+                if (mapEntrySymbol != null && containingSymbol != null &&
+                    (containingSymbol == mapEntrySymbol || containingSymbol.isSubClassOf(mapEntrySymbol))) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}
+
+private fun getDataIfUsageIsApplicable(dataClassUsage: KtNameReferenceExpression): SingleUsageData? {
+    val destructuringDecl = dataClassUsage.parent as? KtDestructuringDeclaration
+    if (destructuringDecl != null && destructuringDecl.initializer == dataClassUsage) {
+        return SingleUsageData(callableName = null, usageToReplace = null, declarationToDrop = destructuringDecl)
+    }
+    val qualifiedExpression = dataClassUsage.getQualifiedExpressionForReceiver() ?: return null
+    val parent = qualifiedExpression.parent
+    when (parent) {
+        is KtBinaryExpression -> {
+            if (parent.operationToken in KtTokens.ALL_ASSIGNMENTS && parent.left == qualifiedExpression) return null
+        }
+
+        is KtUnaryExpression -> {
+            if (parent.operationToken == KtTokens.PLUSPLUS || parent.operationToken == KtTokens.MINUSMINUS) return null
+        }
+    }
+
+    val property = parent as? KtProperty
+    if (property != null && property.isVar) return null
+
+    val selector = qualifiedExpression.selectorExpression
+    val selectorName = when (selector) {
+        is KtNameReferenceExpression -> selector.getReferencedName()
+        is KtCallExpression -> {
+            if (selector.valueArguments.isNotEmpty() || selector.lambdaArguments.isNotEmpty()) return null
+            (selector.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
+        }
+
+        else -> return null
+    }
+    return SingleUsageData(callableName = selectorName, usageToReplace = qualifiedExpression, declarationToDrop = property)
+}

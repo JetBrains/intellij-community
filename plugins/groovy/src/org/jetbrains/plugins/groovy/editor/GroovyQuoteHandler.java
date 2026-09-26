@@ -10,18 +10,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
-/**
- * @author ven
- */
-public class GroovyQuoteHandler implements MultiCharQuoteHandler {
+public final class GroovyQuoteHandler implements MultiCharQuoteHandler {
 
   @Override
-  public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+  public boolean isClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == GroovyTokenTypes.mGSTRING_END) return true;
-    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(tokenType)) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
       return end - start >= 1 && offset == end - 1 ||
@@ -36,11 +34,11 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
   }
 
   @Override
-  public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+  public boolean isOpeningQuote(@NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == GroovyTokenTypes.mGSTRING_BEGIN || tokenType == GroovyTokenTypes.mREGEX_BEGIN) return true;
-    if (tokenType == GroovyTokenTypes.mGSTRING_LITERAL || tokenType == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(tokenType)) {
       int start = iterator.getStart();
       return offset == start;
     }
@@ -48,11 +46,11 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
   }
 
   @Override
-  public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+  public boolean hasNonClosedLiteral(@NotNull Editor editor, @NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
-    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_BEGIN || tokenType ==
-                                                                                                         GroovyTokenTypes.mGSTRING_LITERAL || tokenType ==
-                                                                                                                                              GroovyTokenTypes.mGSTRING_CONTENT) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(tokenType) ||
+        tokenType == GroovyTokenTypes.mGSTRING_BEGIN ||
+        tokenType == GroovyTokenTypes.mGSTRING_CONTENT) {
       final Document document = iterator.getDocument();
       if (document == null) return false;
       final String literal = document.getText().substring(iterator.getStart(), offset + 1);
@@ -61,15 +59,14 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
       }
     }
 
-    return !(tokenType == GroovyTokenTypes.mGSTRING_CONTENT || tokenType == GroovyTokenTypes.mGSTRING_LITERAL || tokenType ==
-                                                                                                                 GroovyTokenTypes.mSTRING_LITERAL || tokenType ==
-                                                                                                                                                     GroovyTokenTypes.mGSTRING_END);
+    return !(GroovyTokenSets.STRING_LITERALS.contains(tokenType) ||
+             tokenType == GroovyTokenTypes.mGSTRING_CONTENT ||
+             tokenType == GroovyTokenTypes.mGSTRING_END);
   }
 
   @Override
-  public boolean isInsideLiteral(HighlighterIterator iterator) {
-    final IElementType tokenType = iterator.getTokenType();
-    return tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL;
+  public boolean isInsideLiteral(@NotNull HighlighterIterator iterator) {
+    return GroovyTokenSets.STRING_LITERALS.contains(iterator.getTokenType());
   }
 
   @Override

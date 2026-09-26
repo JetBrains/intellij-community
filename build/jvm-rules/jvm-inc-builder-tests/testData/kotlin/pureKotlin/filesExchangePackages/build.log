@@ -1,0 +1,12 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_filesExchangePackages-a.kotlin_module
+  bar/CKt.class
+  foo/BKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/filesExchangePackages/a/b.kt
+  kotlin/pureKotlin/filesExchangePackages/a/c.kt
+End of files
+------------------------------------------
+Exit code: OK

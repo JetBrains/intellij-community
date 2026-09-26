@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  qqq/SomeClass.class
+End of files
+Cleaning output files:
+  ppp/NamedValue.class
+End of files
+Compiling files:
+  java/assignFieldFromSubclassAcrossTargets/a/ppp/NamedValue.java
+End of files
+Cleaning output files:
+  impl/DebugValueImpl.class
+End of files
+Compiling files:
+  java/assignFieldFromSubclassAcrossTargets/c/impl/DebugValueImpl.java
+End of files
+------------------------------------------
+Exit code: ERROR

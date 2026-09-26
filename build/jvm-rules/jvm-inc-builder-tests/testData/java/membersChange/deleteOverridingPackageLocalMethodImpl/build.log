@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  a/DerivedA.class
+End of files
+Compiling files:
+  java/membersChange/deleteOverridingPackageLocalMethodImpl/a/a/DerivedA.java
+End of files
+Cleaning output files:
+  a/Client.class
+End of files
+Compiling files:
+  java/membersChange/deleteOverridingPackageLocalMethodImpl/a/a/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

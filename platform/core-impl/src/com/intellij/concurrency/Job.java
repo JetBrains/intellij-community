@@ -1,53 +1,33 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
  */
 package com.intellij.concurrency;
 
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-public interface Job<T> {
-
-  String getTitle();
-
-  void addTask(@NotNull Callable<T> task);
-
-  void addTask(@NotNull Runnable task, T result);
-
-  void addTask(@NotNull Runnable task);
-
-  List<T> scheduleAndWaitForResults() throws Throwable;
-
+@ApiStatus.NonExtendable
+@ApiStatus.Internal
+public interface Job {
   void cancel();
 
   boolean isCanceled();
 
-  void schedule();
-
   boolean isDone();
 
-  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
+  /**
+   * Waits until all work is executed.
+   * Note that calling {@link #cancel()} might not lead to this method termination because the job can be in the middle of execution.
+   *
+   * @return true if completed
+   */
+  boolean waitForCompletion(int millis) throws InterruptedException;
+
+  static Job nullJob() {
+    return NULL_JOB;
+  }
 
   @NotNull
   Job NULL_JOB = new Job() {
@@ -57,8 +37,8 @@ public interface Job<T> {
     }
 
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
-
+    public boolean waitForCompletion(int millis) {
+      return true;
     }
 
     @Override
@@ -66,39 +46,8 @@ public interface Job<T> {
     }
 
     @Override
-    public String getTitle() {
-      return null;
-    }
-
-    @Override
-    public void addTask(@NotNull Callable task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task, Object result) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public List scheduleAndWaitForResults() throws Throwable {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public boolean isCanceled() {
       return true;
     }
-
-    @Override
-    public void schedule() {
-      throw new IncorrectOperationException();
-    }
   };
-
 }

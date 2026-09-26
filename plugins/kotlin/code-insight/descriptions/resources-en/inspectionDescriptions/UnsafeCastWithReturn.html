@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports an unsafe cast with <code>return</code> in variable assignments or in value arguments that can be replaced with a safe cast.
+<p>
+    The quick-fix replaces the unsafe cast with a safe cast.
+</p>
+<p><b>Example</b></p>
+<pre><code>
+    fun test(x: Any): Any? {
+        val y = x as String ?: return null
+    }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(x: Any): Any? {
+      val y = x as? String ?: return null
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

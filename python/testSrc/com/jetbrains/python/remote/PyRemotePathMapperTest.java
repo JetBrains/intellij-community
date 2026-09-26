@@ -15,17 +15,23 @@
  */
 package com.jetbrains.python.remote;
 
+import com.jetbrains.python.allure.Subsystems;
+import com.jetbrains.python.allure.Layers;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Alexander Koshevoy
  */
+@Subsystems.RemoteInterpreters
+@Layers.Functional
 public class PyRemotePathMapperTest {
   @Test
   public void testFromSettings() {

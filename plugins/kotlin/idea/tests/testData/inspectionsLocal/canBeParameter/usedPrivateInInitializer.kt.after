@@ -1,0 +1,9 @@
+// FIX: Remove 'val' from parameter
+class UsedInInitializer(x: Int) {
+    var y: String
+
+    init {
+        y = x.toString()
+    }
+}
+

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -27,8 +15,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
@@ -38,6 +27,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Objects.requireNonNull;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATED;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -48,7 +39,18 @@ public class HgInit extends DumbAwareAction {
   private Project myProject;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isProjectTrusted(project));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myProject = notNull(e.getData(CommonDataKeys.PROJECT), ProjectManager.getInstance().getDefaultProject());
 
     // provide window to select the root directory
@@ -86,8 +88,7 @@ public class HgInit extends DumbAwareAction {
 
     boolean finalNeedToCreateRepo = needToCreateRepo;
     VirtualFile finalMapRoot = mapRoot;
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
-    {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       if (!finalNeedToCreateRepo || createRepository(requireNonNull(myProject), selectedRoot)) {
         updateDirectoryMappings(finalMapRoot);
       }
@@ -102,22 +103,24 @@ public class HgInit extends DumbAwareAction {
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, HgVcs.VCS_NAME));
-      manager.updateActiveVcss();
     }
   }
 
-  public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
-    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
+  public static boolean createRepository(@NotNull Project project, final @NotNull VirtualFile selectedRoot) {
+    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.toNioPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
-      VcsNotifier.getInstance(project).notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                                                     HgVcsMessages.message("hg4idea.init.created.notification.description",
-                                                                           selectedRoot.getPresentableUrl()));
+      VcsNotifier.getInstance(project)
+        .notifySuccess(REPO_CREATED,
+                       HgBundle.message("hg4idea.init.created.notification.title"),
+                       HgBundle.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
       return true;
     }
     else {
       new HgCommandResultNotifier(project.isDefault() ? null : project)
-        .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
-                                                                                                      selectedRoot.getPresentableUrl()));
+        .notifyError(REPO_CREATION_ERROR,
+                     result,
+                     HgBundle.message("hg4idea.init.error.title"),
+                     HgBundle.message("hg4idea.init.error.description", selectedRoot.getPresentableUrl()));
       return false;
     }
   }

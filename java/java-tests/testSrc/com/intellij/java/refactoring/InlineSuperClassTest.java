@@ -1,43 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 20-Aug-2008
  */
-public class InlineSuperClassTest extends MultiFileTestCase {
-  @NotNull
+public class InlineSuperClassTest extends LightMultiFileTestCase {
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/inlineSuperClass/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineSuperClass/";
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testInlineOneClass() { doTest(false, true); }
@@ -53,13 +38,16 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testConflictMultipleConstructors() { doTest(true, false); }
   public void testMultipleConstructors() { doTest(); }
   public void testImplicitChildConstructor() { doTest(); }
+  public void testClassInitializers() { doTest(); }
   public void testStaticMembers() { doTest(); }
   public void testSuperReference() { doTest(); }
+  public void testProtectedMember() { doTest(); }
   public void testInnerClassReference() { doTest(); }
   public void testStaticImport() { doTest(); }
   public void testNewArrayInitializerExpr() { doTest(); }
   public void testNewArrayDimensionsExpr() { doTest(); }
   public void testNewArrayComplexDimensionsExpr() { doTest(); }
+  public void testChainedConstructors() { doTest(); }
   public void testSuperConstructorWithReturnInside() { doTest(true, false); }
   public void testSuperConstructorWithFieldInitialization() { doTest(); }
   public void testSuperConstructorWithParam() { doTest(); }
@@ -75,9 +63,21 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testTypeParameterBound() { doTest();}
   public void testInlineInterfaceDoNotChangeConstructor() { doTest(); }
   public void testArrayTypeElements() { doTest(); }
+  public void testReferencesOnInnerClasses() { doTest(); }
+  public void testConflictOnMemberNotAccessibleThroughInheritor() { doTest(true, false); }
   public void testOneAndKeepReferencesInAnotherInheritor() {
     doTest(false, true);
   }
+  public void testThisQualificationInsideAnonymous() { doTest(); }
+  public void testOrderOfInnerClasses() { doTest(); }
+  public void testSuperMethodWithoutBody() { doTest(); }
+  public void testSealedAbstractParentOneInheritor() { doTest(false, true); }
+  public void testSealedParentManyInheritors() { doTest(false, true); }
+  public void testSealedParentNonSealedInheritor() { doTest(false, true); }
+  public void testSealedGrandParentNonSealedInheritor() { doTest(false, true); }
+  public void testSealedParentInlineAll() { doTest(); }
+  public void testMultipleSealedParents() { doTest(false, true); }
+  public void testMultipleSuperCalls() { doTest(false, true); }
 
   private void doTest() {
     doTest(false, false);
@@ -85,15 +85,15 @@ public class InlineSuperClassTest extends MultiFileTestCase {
 
   private void doTest(boolean fail, final boolean inlineOne) {
     try {
-      doTest((rootDir, rootAfter) -> {
-        GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-        PsiClass aClass = myJavaFacade.findClass("Test", scope);
-        if (aClass == null) aClass = myJavaFacade.findClass("p.Test", scope);
+      doTest(() -> {
+        GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+        PsiClass aClass = myFixture.getJavaFacade().findClass("Test", scope);
+        if (aClass == null) aClass = myFixture.getJavaFacade().findClass("p.Test", scope);
         assertNotNull("Class Test not found", aClass);
-        PsiClass superClass = myJavaFacade.findClass("Super", scope);
-        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
+        PsiClass superClass = myFixture.getJavaFacade().findClass("Super", scope);
+        if (superClass == null) superClass = myFixture.getJavaFacade().findClass("p1.Super", scope);
         assertNotNull("Class Super not found", superClass);
-        new InlineSuperClassRefactoringProcessor(myProject, inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS).run();
+        new InlineSuperClassRefactoringProcessor(getProject(), inlineOne ? aClass : null, superClass, DocCommentPolicy.ASIS).run();
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
@@ -110,12 +110,12 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   }
 
   private void doTestMultipleSubclasses() {
-    doTest((rootDir, rootAfter) -> {
-      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-      PsiClass superClass = myJavaFacade.findClass("Super", scope);
-      if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", scope);
+    doTest(() -> {
+      GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+      PsiClass superClass = myFixture.getJavaFacade().findClass("Super", scope);
+      if (superClass == null) superClass = myFixture.getJavaFacade().findClass("p1.Super", scope);
       assertNotNull("Class Super not found", superClass);
-      new InlineSuperClassRefactoringProcessor(myProject, null, superClass, DocCommentPolicy.ASIS).run();
+      new InlineSuperClassRefactoringProcessor(getProject(), null, superClass, DocCommentPolicy.ASIS).run();
     });
   }
 }

@@ -24,7 +24,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -38,15 +37,17 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         super(node);
     }
 
-    @NotNull
-    public Language getLanguage() {
+    @Override
+    public @NotNull Language getLanguage() {
         return RegExpLanguage.INSTANCE;
     }
 
+  @Override
   public String toString() {
         return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 
+    @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
         if (visitor instanceof RegExpElementVisitor) {
             accept((RegExpElementVisitor)visitor);
@@ -55,10 +56,9 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         }
     }
 
-    public void accept(RegExpElementVisitor visitor) {
-        visitor.visitRegExpElement(this);
-    }
+    public abstract void accept(RegExpElementVisitor visitor);
 
+    @Override
     public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
         final ASTNode node = psiElement.getNode();
         assert node != null;
@@ -66,15 +66,13 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return psiElement;
     }
 
+    @Override
     public void delete() throws IncorrectOperationException {
         getNode().getTreeParent().removeChild(getNode());
     }
 
-    public final String getUnescapedText() {
-        if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
-            // do not attempt to decode text if PsiElement is part of prefix/suffix
-            return getText();
-        }
+    @Override
+    public final @NotNull String getUnescapedText() {
         return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
     }
 

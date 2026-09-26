@@ -15,7 +15,8 @@
  */
 package com.intellij.testFramework;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphJustificationInfo;
 import java.awt.font.GlyphMetrics;
@@ -125,7 +126,6 @@ public abstract class AbstractMockGlyphVector extends GlyphVector {
     throw new UnsupportedOperationException();
   }
 
-  @SuppressWarnings("CovariantEquals")
   @Override
   public boolean equals(GlyphVector set) {
     throw new UnsupportedOperationException();

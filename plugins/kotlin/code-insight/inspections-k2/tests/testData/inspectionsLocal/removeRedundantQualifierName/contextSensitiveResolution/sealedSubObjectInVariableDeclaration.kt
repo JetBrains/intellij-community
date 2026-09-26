@@ -1,0 +1,11 @@
+// PROBLEM: none
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+package test
+
+sealed class MySealedClass {
+    data object SubObject : MySealedClass()
+}
+
+fun test() {
+    val s: MySealedClass = <caret>MySealedClass.SubObject
+}

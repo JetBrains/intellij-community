@@ -1,8 +1,10 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -12,20 +14,24 @@ import org.jetbrains.io.jsonRpc.Client;
 
 import java.nio.channels.ClosedChannelException;
 
-class WebSocketClient extends Client {
+public class WebSocketClient extends Client {
   private final WebSocketServerHandshaker handshaker;
 
-  public WebSocketClient(@NotNull Channel channel, @NotNull WebSocketServerHandshaker handshaker) {
+  WebSocketClient(@NotNull Channel channel, @NotNull WebSocketServerHandshaker handshaker) {
     super(channel);
 
     this.handshaker = handshaker;
   }
 
-  @NotNull
+
   @Override
-  public ChannelFuture send(@NotNull ByteBuf message) {
+  public @NotNull ChannelFuture send(@NotNull ByteBuf message) {
+    return sendFrame(message, false);
+  }
+
+  public @NotNull ChannelFuture sendFrame(@NotNull ByteBuf message, boolean binary) {
     if (channel.isOpen()) {
-      return channel.writeAndFlush(new TextWebSocketFrame(message));
+      return channel.writeAndFlush(binary ? new BinaryWebSocketFrame(message) : new TextWebSocketFrame(message));
     }
     else {
       return channel.newFailedFuture(new ClosedChannelException());

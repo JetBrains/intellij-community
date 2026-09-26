@@ -1,0 +1,13 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: BLUE
+package test
+
+val foo = ::<caret>BLUE
+
+// FILE: second.kt
+package foo
+
+enum class ColorEnum {
+    RED, GREEN, BLUE
+}

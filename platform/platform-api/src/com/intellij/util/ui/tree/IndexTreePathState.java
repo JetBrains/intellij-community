@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
@@ -28,6 +28,7 @@ public class IndexTreePathState implements TreePathState {
     myIndicies = pathToChildIndecies(path);
   }
 
+  @Override
   public TreePath getRestoredPath() {
     int aliveIndex = findLowestAliveNodeIndex(mySelectionPath);
     if (aliveIndex == mySelectionPath.getPathCount() - 1) return mySelectionPath;

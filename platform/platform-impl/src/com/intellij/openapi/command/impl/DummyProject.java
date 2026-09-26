@@ -1,43 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.PicoContainer;
 
-/**
- * @author max
- */
-public class DummyProject extends UserDataHolderBase implements Project {
-  private static class DummyProjectHolder {
+import java.util.Map;
+
+public final class DummyProject extends UserDataHolderBase implements Project {
+  private static final class DummyProjectHolder {
     private static final DummyProject ourInstance = new DummyProject();
   }
 
-  @NotNull
-  public static Project getInstance() {
+  public static @NotNull Project getInstance() {
     return DummyProjectHolder.ourInstance;
   }
 
@@ -49,21 +36,17 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getLocationHash() {
+  public @NotNull String getLocationHash() {
     return "dummy";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -73,15 +56,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return null;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -89,37 +69,40 @@ public class DummyProject extends UserDataHolderBase implements Project {
   public void save() { }
 
   @Override
-  public BaseComponent getComponent(@NotNull String name) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+  public <T> T getService(@NotNull Class<T> serviceClass) {
     return null;
   }
 
   @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
+  public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
+    return null;
+  }
+
+  @Override
+  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
     return false;
   }
 
   @Override
-  @NotNull
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    @SuppressWarnings("unchecked") T[] components = (T[])ArrayUtil.EMPTY_OBJECT_ARRAY;
-    return components;
+  public boolean isInjectionForExtensionSupported() {
+    return false;
   }
 
   @Override
-  @NotNull
-  public PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
+  public @NotNull ExtensionsArea getExtensionArea() {
+    throw new UnsupportedOperationException("getExtensionArea is not implement in : " + getClass());
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    return null;
+  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                        @NotNull Object key,
+                                                        @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -128,8 +111,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  @NotNull
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return o -> isDisposed();
   }
 
@@ -144,22 +126,50 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public boolean isDefault() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public MessageBus getMessageBus() {
+  public @NotNull MessageBus getMessageBus() {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void dispose() { }
 
-  @NotNull
   @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    throw new UnsupportedOperationException("getExtensions()");
+  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    //noinspection unchecked
+    return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public <T> @NotNull T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    try {
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.PROJECT_EXTENSION : ActivityCategory.PROJECT_SERVICE;
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @Nullable Throwable cause,
+                                               @NotNull PluginId pluginId,
+                                               @Nullable Map<String, String> attachments) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    ExceptionUtilRt.rethrowUnchecked(error);
+    return new RuntimeException(error);
   }
 }

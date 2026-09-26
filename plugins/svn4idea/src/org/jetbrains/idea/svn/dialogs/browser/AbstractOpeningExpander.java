@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ import java.util.Enumeration;
 public abstract class AbstractOpeningExpander implements Expander {
   private final RepositoryBrowserComponent myBrowser;
   private final KeepingExpandedExpander myKeepingExpander;
-  @NotNull private final Url mySelectionPath;
+  private final @NotNull Url mySelectionPath;
 
   protected AbstractOpeningExpander(final RepositoryBrowserComponent browser, @NotNull Url selectionPath) {
     myBrowser = browser;
@@ -22,6 +22,7 @@ public abstract class AbstractOpeningExpander implements Expander {
     mySelectionPath = selectionPath;
   }
 
+  @Override
   public void onBeforeRefresh(final RepositoryTreeNode node) {
     myKeepingExpander.onBeforeRefresh(node);
   }
@@ -36,6 +37,7 @@ public abstract class AbstractOpeningExpander implements Expander {
 
   protected abstract boolean checkChild(@NotNull Url childUrl);
 
+  @Override
   public void onAfterRefresh(final RepositoryTreeNode node) {
     myKeepingExpander.onAfterRefresh(node);
 
@@ -56,8 +58,7 @@ public abstract class AbstractOpeningExpander implements Expander {
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         final TreeNode treeNode = (TreeNode)children.nextElement();
-        if (treeNode instanceof RepositoryTreeNode) {
-          final RepositoryTreeNode repositoryTreeNode = (RepositoryTreeNode)treeNode;
+        if (treeNode instanceof RepositoryTreeNode repositoryTreeNode) {
           Url childUrl = repositoryTreeNode.getURL();
           if (checkChild(childUrl)) {
             if (mySelectionPath.equals(childUrl)) {

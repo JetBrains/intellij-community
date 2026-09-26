@@ -1,0 +1,141 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.siyeh.ig.migration;
+
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
+import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.InspectionGadgetsBundle.message;
+
+public final class MethodCanBeVariableArityMethodInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreByteAndShortArrayParameters = false;
+
+  public boolean ignoreAllPrimitiveArrayParameters = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreOverridingMethods = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean onlyReportPublicMethods = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreMultipleArrayParameters = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreMultiDimensionalArrayParameters = false;
+
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    return message("method.can.be.variable.arity.method.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreByteAndShortArrayParameters", message("method.can.be.variable.arity.method.ignore.byte.short.option"),
+               checkbox("ignoreAllPrimitiveArrayParameters", message("method.can.be.variable.arity.method.ignore.all.primitive.arrays.option"))),
+      checkbox("ignoreOverridingMethods", message("ignore.methods.overriding.super.method")),
+      checkbox("onlyReportPublicMethods", message("only.report.public.methods.option")),
+      checkbox("ignoreMultipleArrayParameters", message("method.can.be.variable.arity.method.ignore.multiple.arrays.option")),
+      checkbox("ignoreMultiDimensionalArrayParameters",
+               message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option")));
+  }
+
+  @Override
+  protected LocalQuickFix buildFix(Object... infos) {
+    return new ConvertToVarargsMethodFix();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.VARARGS);
+  }
+
+  @Override
+  public @NotNull BaseInspectionVisitor buildVisitor() {
+    return new MethodCanBeVariableArityMethodVisitor();
+  }
+
+  private class MethodCanBeVariableArityMethodVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters.length == 0) {
+        return;
+      }
+      final PsiParameter lastParameter = parameters[parameters.length - 1];
+      final PsiType type = lastParameter.getType();
+      if (!(type instanceof PsiArrayType arrayType) || type instanceof PsiEllipsisType) {
+        return;
+      }
+      if (NullableNotNullManager.isNullable(lastParameter)) {
+        return;
+      }
+      final PsiType componentType = arrayType.getComponentType();
+      if (ignoreMultiDimensionalArrayParameters && componentType instanceof PsiArrayType) {
+        // don't report when it is multidimensional array
+        return;
+      }
+      if (ignoreByteAndShortArrayParameters) {
+        if (PsiTypes.byteType().equals(componentType) || PsiTypes.shortType().equals(componentType)) {
+          return;
+        }
+        if (ignoreAllPrimitiveArrayParameters && componentType instanceof PsiPrimitiveType) {
+          return;
+        }
+      }
+      if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
+      if (ignoreOverridingMethods && MethodUtils.hasSuper(method)) {
+        return;
+      }
+      if (ignoreMultipleArrayParameters) {
+        for (int i = 0, length = parameters.length - 1; i < length; i++) {
+          final PsiParameter parameter = parameters[i];
+          if (parameter.getType() instanceof PsiArrayType) {
+            return;
+          }
+        }
+      }
+      if (isVisibleHighlight(method)) {
+        registerMethodError(method);
+      }
+      else {
+        registerErrorAtRange(method.getFirstChild(), method.getParameterList());
+      }
+    }
+  }
+}

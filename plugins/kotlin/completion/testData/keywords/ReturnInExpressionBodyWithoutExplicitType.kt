@@ -1,0 +1,8 @@
+// LANGUAGE_VERSION: 2.4
+
+val s: String? = null
+fun process(s: String): String = TODO()
+
+fun f() = process(s ?: ret<caret>)
+
+// ABSENT: return

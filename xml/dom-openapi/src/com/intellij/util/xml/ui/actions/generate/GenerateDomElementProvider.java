@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
@@ -27,9 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GenerateDomElementProvider<T extends DomElement> {
-  private final String myDescription;
+  private final @ActionDescription String myDescription;
+  private final @ActionText String myText;
 
-  public GenerateDomElementProvider(String description) {
+  public GenerateDomElementProvider(@ActionText String text, @ActionDescription String description) {
+    myText = text;
     myDescription = description;
   }
 
@@ -37,8 +27,7 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
     return true;
   }
   
-  @Nullable
-  public abstract T generate(final Project project, final Editor editor, final PsiFile file);
+  public abstract @Nullable T generate(final Project project, final Editor editor, final PsiFile file);
 
   public void navigate(final DomElement element) {
     if (element != null && element.isValid()) {
@@ -65,7 +54,12 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
       .getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
   }
 
-  public String getDescription() {
+  public @ActionDescription String getDescription() {
     return myDescription == null ? "" : myDescription;
   }
+
+  public @ActionText String getText() {
+    return myText == null ? "" : myText;
+  }
 }
+

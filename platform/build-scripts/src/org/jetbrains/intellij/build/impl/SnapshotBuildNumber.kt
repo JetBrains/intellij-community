@@ -1,0 +1,66 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl
+
+import com.intellij.util.text.SemVer
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.PATH
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.SNAPSHOT_SUFFIX
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE
+import java.nio.file.Files
+import java.nio.file.Path
+
+object SnapshotBuildNumber {
+  val PATH: Path by lazy {
+    BuildPaths.COMMUNITY_ROOT.communityRoot.resolve("build.txt")
+  }
+
+  const val SNAPSHOT_SUFFIX: String = ".SNAPSHOT"
+
+  /**
+   * `${BASE}.SNAPSHOT`, specified in [PATH]
+   */
+  val VALUE: String by lazy {
+    val snapshotBuildNumber = Files.readString(PATH).trim()
+    check(snapshotBuildNumber.endsWith(SNAPSHOT_SUFFIX)) {
+      "$PATH: '$snapshotBuildNumber' is expected to have a '$SNAPSHOT_SUFFIX' suffix"
+    }
+    snapshotBuildNumber
+  }
+
+  /**
+   * [VALUE] without [SNAPSHOT_SUFFIX]
+   */
+  val BASE: String by lazy {
+    VALUE.removeSuffix(SNAPSHOT_SUFFIX)
+  }
+}
+
+/**
+ * The plugin version a build stamps: [buildNumber] with its `.SNAPSHOT` suffix replaced by a fixed number, plus `.0`
+ * when the result is a nightly.
+ *
+ * `BuildContextImpl.pluginBuildNumber` is the one Kotlin reader. The Go patcher (`internal/stamps` of
+ * `community/build/plugin-descriptor-writer`) ports this rule, and its curated cases guard the version string.
+ */
+internal fun computePluginBuildNumber(buildNumber: String): String {
+  var value = buildNumber
+  if (value.endsWith(SNAPSHOT_SUFFIX)) {
+    value = value.replace(SNAPSHOT_SUFFIX, ".$SNAPSHOT_VERSION_SEGMENT")
+  }
+  if (value.count { it == '.' } <= 1) {
+    value = "$value.0"
+  }
+  check(SemVer.parseFromText(value) != null) {
+    "The plugin build number $value is expected to match the Semantic Versioning, see https://semver.org"
+  }
+  return value
+}
+
+/**
+ * What a `.SNAPSHOT` suffix becomes, so that the version matches Semantic Versioning.
+ *
+ * A fixed number and not the build date, so that two builds of one commit state one version.
+ *
+ * Please update it together with `computePluginVersion` in community/platform/build-scripts/bazel-rules/ij-plugin-packager/src/IjPluginPackager.kt
+ */
+private const val SNAPSHOT_VERSION_SEGMENT = "99999999"

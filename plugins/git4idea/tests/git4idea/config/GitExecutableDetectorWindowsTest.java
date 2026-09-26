@@ -1,27 +1,23 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class GitExecutableDetectorWindowsTest {
   @Before
   public void setUp() throws IOException, NoSuchFieldException, IllegalAccessException {
-    Assume.assumeTrue(SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     testRoot = FileUtil.createTempDirectory("", "");
-    setWindowsRoot(new File(testRoot, "C_"));
   }
 
   @Test
@@ -30,14 +26,15 @@ public class GitExecutableDetectorWindowsTest {
     assertExecutable("C:/Program Files/Git/bin/git.exe");
   }
 
-  @Test public void Prefer_default_Git_without_version_to_versioned_ones() {
+  @Test
+  public void Prefer_default_Git_without_version_to_versioned_ones() {
     fs("C:/Program Files/Git/bin/git.exe", "C:/Program Files/Git 1.8/bin/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe");
     assertExecutable("C:/Program Files/Git/bin/git.exe");
   }
 
   @Test
   public void Prefer_the_latest_version() {
-    fs("C:/Program Files (x86)/Git 1.8/cmd/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe", "C:/Program Files/Git_1.7.5/cmd/git.cmd",
+    fs("C:/Program Files (x86)/Git 1.8/cmd/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe", "C:/Program Files/Git_1.7.5/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe");
     assertExecutable("C:/Program Files (x86)/Git 1.8/cmd/git.exe");
   }
@@ -49,22 +46,9 @@ public class GitExecutableDetectorWindowsTest {
   }
 
   @Test
-  public void Prefer_git_cmd_over_git_exe() {
-    fs("C:/Program Files (x86)/Git 1.7.4/bin/git.exe", "C:/Program Files/Git 1.7.4/cmd/git.cmd");
-    assertExecutable("C:/Program Files/Git 1.7.4/cmd/git.cmd");
-  }
-
-  @Test
   public void Prefer_cmd_over_bin_in_newer_versions_of_Git() {
     fs("C:/Program Files (x86)/Git 1.8/bin/git.exe", "C:/Program Files/Git 1.8/cmd/git.exe");
     assertExecutable("C:/Program Files/Git 1.8/cmd/git.exe");
-  }
-
-  @Test
-  public void _1_8_0_Prefer_cmd_git_cmd_over_cmd_git_exe_and_bin_git_exe() {
-    fs("C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.8/cmd/git.exe");
-    assertExecutable("C:/Program Files (x86)/Git_1.8/cmd/git.cmd");
   }
 
   @Test
@@ -81,31 +65,19 @@ public class GitExecutableDetectorWindowsTest {
 
   @Test
   public void Many_different_versions_real_case() {
-    fs("C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe", "C:/Program Files (x86)/Git_1.7.0.2/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.7.8/bin/git.exe", "C:/Program Files (x86)/Git_1.7.8/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.cmd",
+    fs("C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe", "C:/Program Files (x86)/Git_1.7.0.2/cmd/git.exe",
+       "C:/Program Files (x86)/Git_1.7.8/bin/git.exe", "C:/Program Files (x86)/Git_1.7.8/cmd/git.exe",
+       "C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.8/cmd/git.exe", "C:/Program Files (x86)/Git_1.8.0.2/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.8.0.2/bin/git.exe", "C:/cygwin/bin/git.exe");
     assertExecutable("C:/Program Files (x86)/Git_1.8.0.2/cmd/git.exe");
   }
 
   @Test
-  public void Program_not_found_try_git_exe() {
-    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe"));
-    assertExecutable("git.exe");
-  }
-
-  @Test
-  public void For_both_git_exe_and_git_cmd_prefer_git_cmd() {
-    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe", "git.cmd"));
-    assertExecutable("git.cmd");
-  }
-
-  @Test
   public void Find_Git_in_PATH() {
     PATH = "D:/Program Files (x86)/Git_distr/cmd";
-    fs("D:/Program Files (x86)/Git_distr/cmd/git.cmd");
-    assertExecutable("D:/Program Files (x86)/Git_distr/cmd/git.cmd");
+    fs("D:/Program Files (x86)/Git_distr/cmd/git.exe");
+    assertExecutable("D:/Program Files (x86)/Git_distr/cmd/git.exe");
   }
 
   @Test
@@ -133,8 +105,8 @@ public class GitExecutableDetectorWindowsTest {
   @Test
   public void Prefer_the_first_entry_from_the_PATH() {
     PATH = "C:/Ruby193/bin;D:/Git/cmd;C:/Users/John.Doe/Documents/Git_1.8.0.2/bin;";
-    fs("D:/Git/cmd/git.cmd", "C:/Users/John.Doe/Documents/Git_1.8.0.2/bin/git.exe");
-    assertExecutable("D:/Git/cmd/git.cmd");
+    fs("D:/Git/cmd/git.exe", "C:/Users/John.Doe/Documents/Git_1.8.0.2/bin/git.exe");
+    assertExecutable("D:/Git/cmd/git.exe");
   }
 
   @Test
@@ -180,7 +152,7 @@ public class GitExecutableDetectorWindowsTest {
   }
 
   public static String replaceDiskColon(String path) {
-    if (path.charAt(1) == ':') {
+    if (OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       return path.charAt(0) + "_" + path.substring(2);
     }
     return path;
@@ -195,30 +167,21 @@ public class GitExecutableDetectorWindowsTest {
 
   private String detect() {
     return new GitExecutableDetector() {
+      private final File TEST_WIN_ROOT = new File(testRoot, "C_");
+
+      @NotNull
       @Override
-      protected boolean runs(@NotNull String exec) {
-        return CAN_RUN.contains(exec);
+      protected File getWinRootInTests() {
+        return TEST_WIN_ROOT;
       }
 
       @Override
-      protected String getPath() {
+      protected String getPathEnv() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
-    }.detect();
-  }
-
-  public static void setWindowsRoot(File file) throws NoSuchFieldException, IllegalAccessException {
-    Field field = GitExecutableDetector.class.getDeclaredField("WIN_ROOT");
-    field.setAccessible(true);
-
-    Field modifiersField = Field.class.getDeclaredField("modifiers");
-    modifiersField.setAccessible(true);
-    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-    field.set(null, file);
+    }.getExecutable(null, null, true);
   }
 
   private File testRoot;
-  private ArrayList CAN_RUN = new ArrayList();
   private String PATH = "%SystemRoot%/system32;%SystemRoot%;%SystemRoot%/System32/Wbem;%SYSTEMROOT%/System32/WindowsPowerShell/v1.0/;";
 }

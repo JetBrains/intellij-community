@@ -1,0 +1,11 @@
+// "Create member function 'Outer.Inner.foo'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class Outer {
+    inner class Inner()
+    val innies = ArrayList<Inner>()
+    fun run() {
+        innies.forEach { it.fo<caret>o() }
+    }
+}

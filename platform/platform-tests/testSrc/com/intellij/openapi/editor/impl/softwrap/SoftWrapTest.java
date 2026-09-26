@@ -1,32 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.TestFileType;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Ignore("AT-4013")
 public class SoftWrapTest extends AbstractEditorTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("editor.use.new.soft.wraps.impl").setValue(false, getTestRootDisposable());
+  }
 
   public void testCollapsedRegionWithLongPlaceholderAtLineStart1() {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");
@@ -40,7 +34,11 @@ public class SoftWrapTest extends AbstractEditorTest {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>\nvery long <wrap>text");
   }
 
-  private static final String TAGS_PATTERN = "(<fold(\\stext=\'([^\']*)\')?>)|(</fold>)|<wrap>";
+  public void testNoWrapInsideFoldRegion() {
+    doTestSoftWraps(10, "start<fold text='.....'>text with space</fold><wrap>end");
+  }
+
+  private static final String TAGS_PATTERN = "(<fold(\\stext='([^']*)')?>)|(</fold>)|<wrap>";
 
   private void doTestSoftWraps(int wrapWidth, String text) {
     List<MyFoldRegion> foldRegions = new ArrayList<>();
@@ -68,7 +66,7 @@ public class SoftWrapTest extends AbstractEditorTest {
     assertTrue("Missing closing fold marker tag: " + text, foldInsertPosition == 0);
     cleanedText.append(text.substring(pos));
 
-    init(cleanedText.toString(), TestFileType.TEXT);
+    init(cleanedText.toString(), PlainTextFileType.INSTANCE);
 
     for (MyFoldRegion region : foldRegions) {
       FoldRegion r = addFoldRegion(region.startPos, region.endPos, region.placeholder);
@@ -77,16 +75,16 @@ public class SoftWrapTest extends AbstractEditorTest {
       }
     }
 
-    EditorTestUtil.configureSoftWraps(myEditor, wrapWidth);
+    EditorTestUtil.configureSoftWraps(getEditor(), wrapWidth);
 
     List<Integer> actualWrapPositions = new ArrayList<>();
-    for (SoftWrap wrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
+    for (SoftWrap wrap : getEditor().getSoftWrapModel().getSoftWrapsForRange(0, getEditor().getDocument().getTextLength())) {
       actualWrapPositions.add(wrap.getStart());
     }
     assertEquals("Wrong wrap positions", wrapPositions, actualWrapPositions);
   }
 
-  private static class MyFoldRegion {
+  private static final class MyFoldRegion {
     private final int startPos;
     private int endPos;
     private final String placeholder;

@@ -1,0 +1,332 @@
+{
+  "inspections": [
+    {
+      "id": "ComparatorResultComparison",
+      "cweIds": [
+        253
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EmptyStatementBody",
+      "cweIds": [
+        561
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MagicConstant",
+      "cweIds": [
+        489
+      ],
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NotNullFieldNotInitialized",
+      "cweIds": [
+        476
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NullableProblems",
+      "cweIds": [
+        476,
+        754
+      ],
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavadocReference",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BooleanMethodNameMustStartWithQuestion",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Anonymous2MethodRef",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CollectionsMustHaveInitialCapacity",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "MethodMayBeStatic",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CallToSimpleGetterInClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavadocBlankLines",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantExplicitVariableType",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NewClassNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticMethodOnlyUsedInOneClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ParameterNameDiffersFromOverriddenParameter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonExceptionNameEndsWithException",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CallToSimpleSetterInClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReplaceWithJavadoc",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FunctionalExpressionCanBeFolded",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "BooleanVariableAlwaysNegated",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "unused",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticPseudoFunctionalStyleMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrivialFunctionalExpressionUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UpperCaseFieldNameNotConstant",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LambdaCanBeMethodCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FieldMayBeStatic",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PackageNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ListRemoveInLoop",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ObjectInstantiationInEqualsHashCode",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "TooBroadScope",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LambdaParameterNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassNamePrefixedWithPackageName",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FeatureEnvy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryDefault",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantCompareCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavadocHtmlLint",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ExceptionNameDoesntEndWithException",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReuseOfLocalVariable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TypeMayBeWeakened",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ConfusingMainMethod",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EnhancedSwitchMigration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "BooleanMethodIsAlwaysInverted",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TailRecursion",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "NewMethodNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Convert2MethodRef",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavadocDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ParameterNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NonBooleanMethodNameMayNotStartWithQuestion",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MissingJavadoc",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnnecessaryLocalVariable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantComparatorComparing",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ProtectedMemberInFinalClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DollarSignInName",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DynamicRegexReplaceableByCompiledPattern",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "StandardVariableNames",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ClassNameSameAsAncestorName",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MisspelledMethodName",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InterfaceNeverImplemented",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavadocLinkAsPlainText",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "QuestionableName",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MethodNameSameAsClassName",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LocalVariableNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DuplicateExpressions",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "MethodNameSameAsParentName",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FieldNamingConvention",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SameParameterValue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UseBulkOperation",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "LambdaCanBeReplacedWithAnonymous",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MagicNumber",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NegativelyNamedBooleanVariable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PublicMethodNotExposedInInterface",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ToArrayCallWithZeroLengthArrayArgument",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LambdaUnfriendlyMethodOverload",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MismatchedJavadocCode",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CastCanBeRemovedNarrowingVariableType",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticImportCanBeUsed",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnreachableCatch",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

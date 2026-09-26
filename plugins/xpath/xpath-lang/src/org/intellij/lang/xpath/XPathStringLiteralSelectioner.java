@@ -30,8 +30,9 @@ public class XPathStringLiteralSelectioner extends ExtendWordSelectionHandlerBas
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     ASTNode astNode = e.getNode();
-    return astNode != null &&
-           (astNode.getElementType() == XPathTokenTypes.STRING_LITERAL);
+    return astNode != null
+           && astNode.getElementType() instanceof XPathElementType
+           && astNode.getElementType() == XPathTokenTypes.STRING_LITERAL;
   }
 
   @Override

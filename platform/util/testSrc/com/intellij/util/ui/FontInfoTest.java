@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import junit.framework.TestCase;
@@ -6,9 +7,6 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.Locale;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FontInfoTest extends TestCase {
   private static void check(String name, boolean exist) {
     if (GraphicsEnvironment.isHeadless()) return;
@@ -18,8 +16,8 @@ public final class FontInfoTest extends TestCase {
       assertEquals(info, FontInfo.get(name.toUpperCase(Locale.ENGLISH)));
       assertEquals(info, FontInfo.get(name.toLowerCase(Locale.ENGLISH)));
     }
-    exist = false; // because predefined names are not real font names
-    assertEquals(exist, null != FontInfo.get(new Font(name, Font.PLAIN, 12)));
+    // because predefined names are not real font names
+    assertNull(FontInfo.get(new Font(name, Font.PLAIN, 12)));
   }
 
   public void testDialog() {

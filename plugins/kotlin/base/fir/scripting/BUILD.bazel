@@ -1,0 +1,123 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.scripting` start
+content_module_jar(module = ":scripting")
+### auto-generated section `dev intellij.kotlin.scripting` end
+
+### auto-generated section `build intellij.kotlin.scripting` start
+create_kotlinc_options(
+    name = "custom_scripting",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "scripting",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scripting",
+    module_name = "intellij.kotlin.scripting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/workspace/storage",
+        "//platform/backend/workspace",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
+        "//plugins/kotlin/base/project-structure",
+        "//platform/projectModel-impl",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//platform/workspace/jps",
+        "//java/java-impl:impl",
+        "//java/java-psi-api:psi",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/platforms",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
+        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
+        "//plugins/kotlin/base/fir/project-structure",
+        "//plugins/kotlin/base/scripting/scripting",
+    ],
+)
+
+jvm_library(
+    name = "scripting_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_scripting",
+    module_name = "intellij.kotlin.scripting",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scripting",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
+        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/platforms:platforms_test_lib",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl_test_lib",
+        "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
+        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.scripting` end
+
+### auto-generated section `iml intellij.kotlin.scripting` start
+exports_files(
+    [
+        "intellij.kotlin.scripting.iml",
+        "resources/intellij.kotlin.scripting.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.scripting` end

@@ -1,0 +1,125 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.base.analysis.platform` start
+content_module_jar(module = ":kotlin-base-analysis-platform")
+### auto-generated section `dev intellij.kotlin.base.analysis.platform` end
+
+### auto-generated section `build intellij.kotlin.base.analysis.platform` start
+create_kotlinc_options(
+    name = "custom_kotlin-base-analysis-platform",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "kotlin-base-analysis-platform",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-base-analysis-platform",
+    module_name = "intellij.kotlin.base.analysis.platform",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
+        "//libraries/caffeine",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
+        "//platform/core-api:core",
+        "//platform/workspace/storage",
+        "//plugins/kotlin/base/analysis",
+        "//plugins/kotlin/base/util",
+        "//platform/util",
+        "//plugins/kotlin/base/indices",
+        "//platform/core-impl",
+        "//platform/indexing-api:indexing",
+        "//java/java-psi-api:psi",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//plugins/kotlin/base/project-structure",
+        "//platform/workspace/jps",
+        "//platform/backend/workspace",
+        "//plugins/kotlin/base/facet",
+        "//platform/analysis-impl",
+        "//java/java-analysis-impl:analysis-impl",
+        "//java/codeserver/core",
+        "//libraries/guava",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+    ],
+)
+
+jvm_library(
+    name = "kotlin-base-analysis-platform_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-base-analysis-platform",
+    module_name = "intellij.kotlin.base.analysis.platform",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-base-analysis-platform",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/caffeine:caffeine_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//java/java-analysis-impl:analysis-impl_test_lib",
+        "//java/codeserver/core:core_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.base.analysis.platform` end
+
+### auto-generated section `iml intellij.kotlin.base.analysis.platform` start
+exports_files(
+    [
+        "intellij.kotlin.base.analysis.platform.iml",
+        "resources/intellij.kotlin.base.analysis.platform.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.base.analysis.platform` end

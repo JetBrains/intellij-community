@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -25,28 +12,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class YourkitFilter implements Filter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.filters.YourkitFilter");
+  private static final Logger LOG = Logger.getInstance(YourkitFilter.class);
 
   private final Project myProject;
 
 
   private static final Pattern PATTERN = Pattern.compile("\\s*(\\w*)\\(\\):(-?\\d*), (\\w*\\.java)\\n");
 
-  public YourkitFilter(@NotNull final Project project) {
+  public YourkitFilter(final @NotNull Project project) {
     myProject = project;
   }
 
-  public Result applyFilter(final String line, final int entireLength) {
+  @Override
+  public Result applyFilter(final @NotNull String line, final int entireLength) {
     if (!line.endsWith(".java\n")) {
       return null;
     }
@@ -83,18 +75,19 @@ public class YourkitFilter implements Filter{
   private static class MyHyperlinkInfo implements HyperlinkInfo {
     private final PsiFile[] myPsiFiles;
 
-    public MyHyperlinkInfo(final PsiFile[] psiFiles) {
+    MyHyperlinkInfo(final PsiFile[] psiFiles) {
       myPsiFiles = psiFiles;
     }
 
-    public void navigate(final Project project) {
+    @Override
+    public void navigate(@NotNull Project project) {
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {
         final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
+          .createPopupChooserBuilder(List.of(myPsiFiles))
           .setRenderer(renderer)
-          .setTitle("Choose file")
+          .setTitle(ExecutionBundle.message("choose.file"))
           .setItemsChosenCallback((selectedElements) -> {
             for (PsiFile element : selectedElements) {
               Navigatable descriptor = EditSourceUtil.getDescriptor(element);
@@ -111,22 +104,18 @@ public class YourkitFilter implements Filter{
 
 
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
+    @Override
     public String getElementText(final PsiElement element) {
       return element.getContainingFile().getName();
     }
 
-    @Nullable
-    protected String getContainerText(final PsiElement element, final String name) {
+    @Override
+    protected @Nullable String getContainerText(final PsiElement element, final String name) {
       final PsiDirectory parent = ((PsiFile)element).getParent();
       if (parent == null) return null;
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);
       if (psiPackage == null) return null;
       return "(" + psiPackage.getQualifiedName() + ")";
-    }
-
-    @Override
-    protected int getIconFlags() {
-      return 0;
     }
   }
 }

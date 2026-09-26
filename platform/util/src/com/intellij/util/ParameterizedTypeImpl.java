@@ -1,13 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 
-/**
- * @author peter
- */
-public class ParameterizedTypeImpl implements ParameterizedType {
+public final class ParameterizedTypeImpl implements ParameterizedType {
   private final Type myRawType;
   private final Type[] myArguments;
 

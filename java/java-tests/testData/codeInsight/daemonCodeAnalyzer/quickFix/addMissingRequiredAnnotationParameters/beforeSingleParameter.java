@@ -1,4 +1,4 @@
-// "Add missing annotation parameter 'value'" "true"
+// "Add missing annotation parameter 'value'" "true-preview"
 class Test {
 
   @MyAnnotati<caret>on

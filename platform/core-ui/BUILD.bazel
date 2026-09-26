@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.core.ui` start
+content_module_jar(module = ":core-ui")
+### auto-generated section `dev intellij.platform.core.ui` end
+
+### auto-generated section `build intellij.platform.core.ui` start
+jvm_library(
+    name = "core-ui",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.core.ui",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/util:util-ui",
+        "//platform/util/multiplatform",
+        "//platform/util/base",
+        "@lib//:kotlin-stdlib",
+        "//libraries/hash4j",
+        "//platform/icons-api",
+    ],
+)
+
+jvm_library(
+    name = "core-ui_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.core.ui",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":core-ui",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//libraries/hash4j:hash4j_test_lib",
+        "//platform/icons-api:icons-api_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.core.ui` end
+
+### auto-generated section `iml intellij.platform.core.ui` start
+exports_files(
+    [
+        "intellij.platform.core.ui.iml",
+        "resources/intellij.platform.core.ui.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.core.ui` end

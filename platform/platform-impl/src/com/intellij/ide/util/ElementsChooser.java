@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +17,33 @@ import java.util.Map;
 public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   private static final BooleanMarkStateDescriptor MARK_STATE_DESCRIPTOR = new BooleanMarkStateDescriptor();
 
+  private final Collection<StatisticsCollector<T>> myStatisticsCollectors = new ArrayList<>();
+
+  public void addStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.add(collector);
+    addElementsMarkListener(collector);
+  }
+  public void removeStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.remove(collector);
+    removeElementsMarkListener(collector);
+  }
+
   public interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
   }
 
+  public interface StatisticsCollector<T> extends ElementsMarkListener<T> {
+    void selectionInverted();
+    void allSelected();
+    void noneSelected();
+  }
+
   public ElementsChooser(final boolean elementsCanBeMarked) {
-    super(elementsCanBeMarked, ElementsChooser.getMarkStateDescriptor());
+    super(elementsCanBeMarked, getMarkStateDescriptor());
   }
 
   public ElementsChooser(List<T> elements, boolean marked) {
-    super(elements, marked, ElementsChooser.getMarkStateDescriptor());
+    super(elements, marked, getMarkStateDescriptor());
   }
 
   public void addElementsMarkListener(ElementsMarkListener<T> listener) {
@@ -74,6 +78,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     setElementMarkState(element, getMarkState(marked));
   }
 
+  @ApiStatus.Internal
   public void addElement(T element, final boolean isMarked, ElementProperties elementProperties) {
     addElement(element, getMarkState(isMarked), elementProperties);
   }
@@ -86,16 +91,29 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     markElements(elements, Boolean.TRUE);
   }
 
-  @NotNull
-  public List<T> getMarkedElements() {
+  public @NotNull List<T> getMarkedElements() {
+    return getElements(true);
+  }
+
+  public @NotNull List<T> getElements(boolean isMarked) {
     Map<T, Boolean> elementMarkStates = getElementMarkStates();
     List<T> elements = new ArrayList<>();
     for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
-      if (entry.getValue()) {
+      if (entry.getValue() == isMarked) {
         elements.add(entry.getKey());
       }
     }
     return elements;
+  }
+
+  public boolean hasUnmarkedElements() {
+    Map<T, Boolean> elementMarkStates = getElementMarkStates();
+    for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
+      if (!entry.getValue()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void invertSelection() {
@@ -104,10 +122,13 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       T type = getElementAt(i);
       setElementMarked(type, !isElementMarked(type));
     }
+    myStatisticsCollectors.forEach(StatisticsCollector::selectionInverted);
   }
 
   public void setAllElementsMarked(boolean marked) {
     setAllElementsMarked(getMarkState(marked));
+    if (marked) myStatisticsCollectors.forEach(StatisticsCollector::allSelected);
+    else myStatisticsCollectors.forEach(StatisticsCollector::noneSelected);
   }
 
   private static Boolean getMarkState(boolean marked) {
@@ -119,22 +140,19 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     return MARK_STATE_DESCRIPTOR;
   }
 
-  private static class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
-    @NotNull
+  private static final class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
     @Override
-    public Boolean getDefaultState(@NotNull T element) {
+    public @NotNull Boolean getDefaultState(@NotNull T element) {
       return Boolean.FALSE;
     }
 
-    @NotNull
     @Override
-    public Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
+    public @NotNull Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
       return !state;
     }
 
-    @Nullable
     @Override
-    public Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
+    public @Nullable Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
       boolean currentlyMarked = true;
       for (Boolean state : elementsWithStates.values()) {
         currentlyMarked = state;
@@ -150,23 +168,21 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       return state;
     }
 
-    @Nullable
     @Override
-    public Boolean getMarkState(@Nullable Object value) {
+    public @Nullable Boolean getMarkState(@Nullable Object value) {
       return value instanceof Boolean ? ((Boolean)value) : null;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getMarkRenderer() {
+    public @Nullable TableCellRenderer getMarkRenderer() {
       return null;
     }
   }
 
-  private static class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
+  private static final class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
     private final ElementsMarkListener<T> myListener;
 
-    public ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {
+    ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {
       myListener = listener;
     }
 

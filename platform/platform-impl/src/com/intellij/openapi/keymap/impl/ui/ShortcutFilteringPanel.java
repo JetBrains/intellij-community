@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -25,24 +12,28 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Sergey.Malenkov
- */
 final class ShortcutFilteringPanel extends JPanel {
-  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
+  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(false, new VerticalLayout(2));
   private final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
+  private final KeyboardShortcutPanel.ModifierDoubleClickShortcutDetector myModifierDoubleClickShortcutDetector =
+    new KeyboardShortcutPanel.ModifierDoubleClickShortcutDetector();
 
   private Shortcut myShortcut;
   private JBPopup myPopup;
@@ -53,7 +44,7 @@ final class ShortcutFilteringPanel extends JPanel {
       boolean selected = myKeyboardPanel.mySecondStrokeEnable.isSelected();
       myKeyboardPanel.mySecondStroke.setVisible(selected);
       myMousePanel.setVisible(!selected);
-      if (selected && myShortcut instanceof MouseShortcut) {
+      if (selected && myShortcut != null && !(myShortcut instanceof KeyboardShortcut)) {
         setShortcut(null);
       }
     }
@@ -67,22 +58,29 @@ final class ShortcutFilteringPanel extends JPanel {
       myInternal = true;
       Object value = event.getNewValue();
       if (ShortcutFilteringPanel.this == event.getSource()) {
-        if (value instanceof KeyboardShortcut) {
-          KeyboardShortcut shortcut = (KeyboardShortcut)value;
+        if (value instanceof KeyboardShortcut shortcut) {
           myMousePanel.setShortcut(null);
           myKeyboardPanel.setShortcut(shortcut);
           if (null != shortcut.getSecondKeyStroke()) {
             myKeyboardPanel.mySecondStrokeEnable.setSelected(true);
           }
         }
+        else if (value instanceof KeyboardModifierGestureShortcut shortcut) {
+          myMousePanel.setShortcut(null);
+          myKeyboardPanel.setShortcut(null);
+          myKeyboardPanel.mySecondStroke.setText(null);
+          myKeyboardPanel.mySecondStrokeEnable.setSelected(false);
+          myKeyboardPanel.mySecondStroke.setEnabled(false);
+          myKeyboardPanel.myFirstStroke.setText(KeymapUtil.getShortcutText(shortcut));
+        }
         else {
           MouseShortcut shortcut = value instanceof MouseShortcut ? (MouseShortcut)value : null;
           String text = shortcut == null ? null : KeymapUtil.getMouseShortcutText(shortcut);
           myMousePanel.setShortcut(shortcut);
           myKeyboardPanel.setShortcut(null);
-          myKeyboardPanel.myFirstStroke.setText(text);
           myKeyboardPanel.mySecondStroke.setText(null);
           myKeyboardPanel.mySecondStroke.setEnabled(false);
+          myKeyboardPanel.myFirstStroke.setText(text);
         }
       }
       else if (value instanceof Shortcut) {
@@ -96,11 +94,17 @@ final class ShortcutFilteringPanel extends JPanel {
   };
 
   ShortcutFilteringPanel() {
-    super(new VerticalLayout(JBUI.scale(2)));
+    super(new VerticalLayout(2));
 
-    myKeyboardPanel.myFirstStroke.setColumns(13);
+    myKeyboardPanel.myFirstStroke.setColumns(20);
     myKeyboardPanel.myFirstStroke.putClientProperty("JTextField.variant", "search");
-    myKeyboardPanel.mySecondStroke.setColumns(13);
+    myKeyboardPanel.myFirstStroke.setKeyEventConsumer(event -> {
+      KeyboardModifierGestureShortcut shortcut = myModifierDoubleClickShortcutDetector.detect(event);
+      if (shortcut != null) {
+        setShortcut(shortcut);
+      }
+    });
+    myKeyboardPanel.mySecondStroke.setColumns(20);
     myKeyboardPanel.mySecondStroke.putClientProperty("JTextField.variant", "search");
     myKeyboardPanel.mySecondStroke.setVisible(false);
     myKeyboardPanel.mySecondStrokeEnable.setText(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
@@ -113,12 +117,12 @@ final class ShortcutFilteringPanel extends JPanel {
 
     JLabel label = new JLabel(KeyMapBundle.message("filter.mouse.pad.label"));
     label.setOpaque(false);
-    label.setIcon(AllIcons.General.MouseShortcut);
-    label.setForeground(MouseShortcutPanel.FOREGROUND);
+    label.setIcon(AllIcons.General.Mouse);
+    label.setForeground(UIUtil.getContextHelpForeground());
     label.setBorder(JBUI.Borders.empty(14, 4));
     myMousePanel.add(BorderLayout.CENTER, label);
     myMousePanel.addPropertyChangeListener("shortcut", myPropertyListener);
-    myMousePanel.setBorder(JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 0, 0));
+    myMousePanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
 
     add(VerticalLayout.TOP, myKeyboardPanel);
     add(VerticalLayout.TOP, myMousePanel);
@@ -138,7 +142,7 @@ final class ShortcutFilteringPanel extends JPanel {
   }
 
   void showPopup(Component component, Component emitter) {
-    if (myPopup == null || myPopup.getContent() == null) {
+    if (myPopup == null || myPopup.isDisposed()) {
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, myKeyboardPanel.myFirstStroke)
         .setRequestFocus(true)
         .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
@@ -147,10 +151,11 @@ final class ShortcutFilteringPanel extends JPanel {
         .createPopup();
       IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
         boolean isEscWasPressed;
+
         @Override
         public boolean dispatch(@NotNull AWTEvent e) {
           if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED) {
-            boolean isEsc =  ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE;
+            boolean isEsc = ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE;
             if (isEscWasPressed && isEsc) {
               myPopup.cancel();
             }

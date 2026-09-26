@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.NlsSafe;
 
 import java.util.Collection;
 
 public interface I18nizeQuickFixModel {
+  @NlsSafe
   String getValue();
 
+  @NlsSafe
   String getKey();
 
   boolean hasValidData();

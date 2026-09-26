@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * That's why that stuff is covered by the current interface, i.e. different implementations are supposed to provide
  * different 'in process' modes.
- *
- * @author Denis Zhdanov
- * @since 8/9/13 3:21 PM
  */
+@ApiStatus.Internal
 public interface ExternalSystemCommunicationManager {
 
   /**

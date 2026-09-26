@@ -1,0 +1,74 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.highlighting
+
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.runInEdtAndWait
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
+import org.jetbrains.kotlin.gradle.GRADLE_KOTLIN_FIXTURE
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
+import org.jetbrains.kotlin.idea.highlighter.CHECK_SYMBOL_NAMES
+import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
+import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.junit.jupiter.params.ParameterizedTest
+import java.io.File
+
+@TestRoot("idea/tests/testData/")
+@TestDataPath("/")
+@TestMetadata("../../../idea/tests/testData/gradle/highlighting/")
+abstract class AbstractKotlinGradleHighlightingTest : AbstractGradleCodeInsightTest() {
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("simple.test")
+    fun testSimple(gradleVersion: GradleVersion) {
+        verifyHighlighting(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("withSdkAndScriptClasses.test")
+    fun testWithSdkAndScriptClasses(gradleVersion: GradleVersion) {
+        verifyHighlighting(gradleVersion)
+    }
+
+    private val outputFileExtensions: List<String> = listOfNotNull(".highlighting.k2", ".highlighting")
+
+    private fun verifyHighlighting(gradleVersion: GradleVersion) {
+        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+            val mainFile = mainTestDataPsiFile
+
+            val ktsFileUnderTest = mainFile.virtualFile.toNioPath().toFile()
+            val path = ktsFileUnderTest.path
+            val ktsFileHighlighting = outputFileExtensions.firstNotNullOfOrNull { ext ->
+                val resolveSibling = ktsFileUnderTest.resolveSibling("$path$ext")
+                resolveSibling.takeIf(File::exists)
+            } ?: error("highlighting file does not exist for ${ktsFileUnderTest.path}")
+
+            val directives = parseDirectives(mainTestDataFile.content).also {
+                it.put(CHECK_SYMBOL_NAMES, true.toString())
+            }
+
+            runInEdtAndWait {
+                IgnoreTests.runTestIfNotDisabledByFileDirective(
+                    mainFile.virtualFile.toNioPath(),
+                    IgnoreTests.DIRECTIVES.IGNORE_K2
+                ) {
+                    checkHighlighting(
+                        mainFile,
+                        ktsFileHighlighting,
+                        directives,
+                        project,
+                        highlightWarnings = true,
+                        severityOption = SeverityRenderingOption.ALWAYS
+                    )
+                }
+            }
+        }
+    }
+
+}

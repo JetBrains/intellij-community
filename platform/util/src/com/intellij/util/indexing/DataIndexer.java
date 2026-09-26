@@ -21,9 +21,22 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
- * @author Eugene Zhuravlev
+ * Implement this interface to map input (such as a file) to a {@code Map<Key, Value>},
+ * which will be associated with this input by the {@link InvertedIndex index}.
+ *
+ * @see com.intellij.util.indexing.SingleEntryIndexer
+ * @see com.intellij.util.indexing.CompositeDataIndexer
+ * @see com.intellij.util.indexing.SingleEntryCompositeIndexer
  */
 public interface DataIndexer<Key, Value, Data> {
+  /**
+   * Maps input to its associated data.
+   * <br/>
+   * <b>BEWARE</b>: returned map must have canonical Map semantics:
+   * 1) .get() must be side-effects-free
+   * 2) .get(nonExistingKey) must return null
+   * Returning a Map implementation that violates these contracts leads to undefined index subsystem behavior.
+   */
   @NotNull
   Map<Key,Value> map(@NotNull Data inputData);
 }

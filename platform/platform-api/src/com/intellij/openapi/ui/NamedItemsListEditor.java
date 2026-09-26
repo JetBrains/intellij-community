@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -14,44 +11,51 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.*;
-import com.intellij.util.IconUtil;
+import com.intellij.openapi.util.Cloner;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiPredicate;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
-  private final Namer<T> myNamer;
-  private final Factory<T> myFactory;
+  private final Namer<? super T> myNamer;
+  private final Factory<? extends T> myFactory;
   private final Cloner<T> myCloner;
   private final List<T> myItems = new ArrayList<>();
-  private final Equality<T> myComparer;
+  private final BiPredicate<? super T, ? super T> myComparer;
   private List<T> myResultItems;
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 BiPredicate<? super T, ? super T> comparer,
                                  List<T> items) {
     this(namer, factory, cloner, comparer, items, true);
   }
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 BiPredicate<? super T, ? super T> comparer,
                                  List<T> items,
                                  boolean initInConstructor) {
     myNamer = namer;
@@ -85,17 +89,39 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     return true;
   }
 
-  protected String subjDisplayName() {
-    return "item";
+  /**
+   * Returns title for "Copy" dialog. The method must be overriden in the implementations because the default implementation isn't friendly
+   * for localization.
+   */
+  protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
+    //noinspection HardCodedStringLiteral
+    return "Copy item";
   }
 
-  @Nullable
-  public String askForProfileName(String titlePattern) {
-    String title = MessageFormat.format(titlePattern, subjDisplayName());
-    return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+  /**
+   * Returns label text for "Copy" and "Create New" dialogs. The method must be overriden in the implementations because the default
+   * implementation isn't friendly for localization.
+   */
+  protected @NlsContexts.Label String getNewLabelText() {
+    //noinspection HardCodedStringLiteral
+    return "New item name:";
+  }
+
+  /**
+   * Returns title for "Create New" dialog. The method must be overriden in the implementations because the default implementation isn't friendly
+   * for localization.
+   */
+  protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
+    //noinspection HardCodedStringLiteral
+    return "Create New item";
+  }
+
+
+  public @Nullable String askForProfileName(@NlsContexts.DialogTitle String title) {
+    return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
-        return s.length() > 0 && findByName(s) == null;
+        return !s.isEmpty() && findByName(s) == null;
       }
 
       @Override
@@ -105,20 +131,19 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     });
   }
 
-  @Nullable
-  protected T findByName(String name) {
+  protected @Nullable T findByName(@NlsSafe String name) {
     for (T item : myItems) {
-      if (Comparing.equal(name, myNamer.getName(item))) return item;
+      if (Objects.equals(name, myNamer.getName(item))) return item;
     }
 
     return null;
   }
 
   @Override
-  @Nullable
-  protected List<AnAction> createActions(boolean fromPopup) {
+  protected @Nullable List<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new AddAction());
+    //noinspection unchecked
     result.add(new MyDeleteAction(forAll(o -> canDelete((T)((MyNode)o).getConfigurable().getEditableObject()))));
     result.add(new CopyAction());
     return result;
@@ -130,6 +155,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   protected boolean canDelete(T item) {
+    return true;
+  }
+
+  protected boolean canCopy(T item) {
     return true;
   }
 
@@ -149,11 +178,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     myShowIcons = showIcons;
   }
 
-  @Nullable
-  protected UnnamedConfigurable getItemConfigurable(final T item) {
+  protected @Nullable UnnamedConfigurable getItemConfigurable(final T item) {
     final Ref<UnnamedConfigurable> result = new Ref<>();
     TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
-      final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
+      final NamedConfigurable<?> configurable = (NamedConfigurable<?>)((DefaultMutableTreeNode)node).getUserObject();
       if (configurable.getEditableObject() == item) {
         //noinspection unchecked
         result.set(((ItemConfigurable)configurable).myConfigurable);
@@ -170,7 +198,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final T myItem;
     private final UnnamedConfigurable myConfigurable;
 
-    public ItemConfigurable(T item) {
+    ItemConfigurable(T item) {
       super(myNamer.canRename(item), TREE_UPDATER);
       myItem = item;
       myConfigurable = createConfigurable(item);
@@ -240,7 +268,9 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     if (myResultItems.size() != myItems.size()) return true;
 
     for (int i = 0; i < myItems.size(); i++) {
-      if (!myComparer.equals(myItems.get(i), myResultItems.get(i))) return true;
+      if (!myComparer.test(myItems.get(i), myResultItems.get(i))) {
+        return true;
+      }
     }
 
     return super.isModified();
@@ -267,14 +297,15 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
-      super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
+    CopyAction() {
+      super(IdeBundle.messagePointer("action.NamedItemsListEditor.CopyAction.text.copy"),
+            IdeBundle.messagePointer("action.NamedItemsListEditor.CopyAction.description.copy"), MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
-      final String profileName = askForProfileName("Copy {0}");
+    public void actionPerformed(@NotNull AnActionEvent event) {
+      String profileName = askForProfileName(getCopyDialogTitle());
       if (profileName == null) return;
 
       @SuppressWarnings("unchecked") final T clone = myCloner.copyOf((T)getSelectedObject());
@@ -286,23 +317,29 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
     @Override
-    public void update(AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setEnabled(getSelectedObject() != null);
+    public void update(@NotNull AnActionEvent event) {
+      T object = (T)getSelectedObject();
+      event.getPresentation().setEnabled(object != null && canCopy(object));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
   protected void onItemCloned(T clone) {
   }
 
-  private class AddAction extends DumbAwareAction {
-    public AddAction() {
-      super("Add", "Add", IconUtil.getAddIcon());
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+  private final class AddAction extends DumbAwareAction {
+    AddAction() {
+      super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
+            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), AllIcons.General.Add);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final T newItem = createItem();
       if (newItem != null) {
         onItemCreated(newItem);
@@ -314,9 +351,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     selectNodeInTree(findByName(myNamer.getName(item)));
   }
 
-  @Nullable
-  protected T createItem() {
-    final String name = askForProfileName("Create new {0}");
+  protected @Nullable T createItem() {
+    String name = askForProfileName(getCreateNewDialogTitle());
     if (name == null) return null;
     final T newItem = myFactory.create();
     myNamer.setName(newItem, name);

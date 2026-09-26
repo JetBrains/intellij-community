@@ -1,13 +1,13 @@
 enum MyEnumTest {
   FOO;
-  MyEnumTest Foo = <error descr="It is illegal to access static member 'FOO' from enum constructor or instance initializer">FOO</error>;
+  MyEnumTest Foo = <error descr="Accessing enum constant from enum instance field initializer is not allowed">FOO</error>;
 
   {
-    MyEnumTest foo = <error descr="It is illegal to access static member 'FOO' from enum constructor or instance initializer">FOO</error>;
+    MyEnumTest foo = <error descr="Accessing enum constant from enum instance initializer is not allowed">FOO</error>;
   }
   static MyEnumTest Bar = FOO;
 
   MyEnumTest() {
-    System.out.println(<error descr="It is illegal to access static member 'Bar' from enum constructor or instance initializer">Bar</error>);
+    System.out.println(<error descr="Accessing static field from enum constructor is not allowed">Bar</error>);
   }
 }

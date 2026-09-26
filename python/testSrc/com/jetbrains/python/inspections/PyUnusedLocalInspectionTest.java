@@ -15,26 +15,39 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalVariableInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+@Subsystems.Inspections
+@Layers.Functional
 public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   public void testPy2() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreTupleUnpacking = false;
-    inspection.ignoreLambdaParameters = false;
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(inspection));
+    final PyUnusedParameterInspection parameterInspection = new PyUnusedParameterInspection();
+    parameterInspection.ignoreLambdaParameters = false;
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(inspection, parameterInspection));
   }
 
   public void testNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    doTest();
   }
 
   // PY-1235
   public void testTupleUnpacking() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
+    doTest();
   }
 
   // PY-959
@@ -44,7 +57,7 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-9778
   public void testUnusedCoroutine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMultiFileTest("b.py"));
+    doMultiFileTest("b.py");
   }
 
   // PY-19491
@@ -52,14 +65,41 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-88041
+  public void testUnusedInitParameterWithNew() {
+    doTestByText("""
+                   class A:
+                       def __new__(cls, a: str):
+                           instance = object.__new__(cls)
+                           return instance
+                   
+                       def __init__(self, a: str):
+                           pass
+                   """);
+  }
+
+  // PY-88041
+  public void testUnusedInitParameterWithInheritedNew() {
+    doTestByText("""
+                   class Base:
+                       def __new__(cls, a):
+                           instance = object.__new__(cls)
+                           return instance
+                   
+                   class Derived(Base):
+                       def __init__(self, a):
+                           pass
+                   """);
+  }
+
   // PY-20805
   public void testFStringReferences() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-22087
   public void testFStringReferencesInComprehensions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-8219
@@ -69,17 +109,17 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-23057
   public void testParameterInMethodWithEllipsis() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   public void testSingleUnderscore() {
@@ -99,26 +139,202 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   // PY-28017
   public void testModuleGetAttr() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
   }
 
   // PY-27435
   public void testVariableStartingWithUnderscore() {
-    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
     inspection.ignoreVariablesStartingWithUnderscore = false;
     doTest(inspection);
+  }
+
+  // PY-20893
+  public void testExceptionTargetStartingWithUnderscore() {
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
+    inspection.ignoreVariablesStartingWithUnderscore = true;
+    doTest(inspection);
+  }
+
+  // PY-31388
+  public void testIgnoringVariablesStartingWithUnderscore() {
+    final PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
+    inspection.ignoreVariablesStartingWithUnderscore = true;
+    inspection.ignoreLoopIterationVariables = false;
+    inspection.ignoreTupleUnpacking = false;
+    doTest(inspection);
+  }
+  
+  // PY-79910
+  public void testTryExceptInsideIfInsideFunction() {
+    doTestByText("""
+def test():
+    num = 7
+    if num < 10:
+        try:
+            next_num = input() # used
+        except ValueError:
+            next_num = None
+    else:
+        next_num = 0
+
+    return next_num
+        """
+    );
+  }
+
+  // PY-16419, PY-26417
+  public void testPotentiallySuppressedExceptions() {
+    doTestByText(
+      """
+        class C(object):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc, value, traceback):
+                return undefined
+
+        def f11():
+            with C():
+                x = 1
+                raise Exception()
+            print(x) #pass
+
+        def g2():
+            raise Exception()
+
+        def f12():
+            with C():
+                x = 2
+                return g2()
+            print(x) #pass
+
+        class A1(TestCase):
+            def f3(self):
+                with C():
+                    x = 2
+                    g2()
+                print(x) #pass
+           \s
+        import contextlib
+        from contextlib import suppress
+        from unittest import TestCase
+
+        def f21():
+            with suppress(Exception):
+                x = 1
+                raise Exception()
+            print(x) #pass
+
+        def f22():
+            with contextlib.suppress(Exception):
+                x = 2
+                return g2()
+            print(x) #pass
+
+        class A2(TestCase):
+            def f3(self):
+                with self.assertRaises(Exception):
+                    x = 2
+                    g2()
+                print(x) #pass"""
+    );
+  }
+  // PY-22204
+  public void testForwardTypeDeclaration() {
+    doTest();
+  }
+
+  // PY-22204
+  public void testTypeDeclarationFollowsTargetBeforeItsFirstUsage() {
+    doTest();
+  }
+
+  // PY-44102
+  public void testUnusedMultiAssignmentTarget() {
+    doTest();
+  }
+
+  // PY-44102
+  public void testUnusedAssignmentExpression() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testAllBindingsOfSameNameInOrPatternConsideredUsed() {
+    doTest();
+  }
+
+  // PY-48760
+  public void testUnusedCapturePatterns() {
+    doTest();
+  }
+
+  // PY-50943
+  public void testIncompleteFunctionWithoutName() {
+    doTest();
+  }
+
+  // PY-78662
+  public void testUnusedTypeAliasReferredToInOtherTypeAlias() {
+    doTest();
+  }
+
+  // PY-78663
+  public void testUnusedTypeParameterInTypeAlias() {
+    doTest();
+  }
+
+  // PY-84107
+  public void testNewStyleTypeParameterInFuncNotMarkedAsUnused() {
+    doTest();
+  }
+
+  // PY-87075
+  public void testUnusedTypeParameterInClass() {
+    doTest();
+  }
+
+  @TestFor(issues="PY-39449")
+  public void testDeletedParameterIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction(arg):
+            del arg
+        """);
+  }
+
+  @TestFor(issues="PY-39449")
+  public void testDeletedLocalVariableIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction():
+            value = 42
+            del value
+        """);
   }
 
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
-    return PyUnusedLocalInspection.class;
+    return PyUnusedLocalVariableInspection.class;
   }
 
-  private void doTest(@NotNull PyUnusedLocalInspection inspection) {
-    final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
+  // Parameter and function reporting now live in separate inspections; enable them too so the shared testData keeps matching.
+  @NotNull
+  @Override
+  protected List<Class<? extends LocalInspectionTool>> getAdditionalInspectionClasses() {
+    return List.of(PyUnusedParameterInspection.class, PyUnusedFunctionInspection.class);
+  }
+
+  private void doTest(@NotNull PyUnusedLocalVariableInspection inspection) {
+    doTest(inspection, new PyUnusedParameterInspection());
+  }
+
+  private void doTest(@NotNull PyUnusedLocalVariableInspection inspection, @NotNull PyUnusedParameterInspection parameterInspection) {
+    final String path = "inspections/PyUnusedLocalVariableInspection/" + getTestName(true) + ".py";
     myFixture.configureByFile(path);
-    myFixture.enableInspections(inspection);
+    myFixture.enableInspections(inspection, parameterInspection, new PyUnusedFunctionInspection());
     myFixture.checkHighlighting(true, false, true);
   }
 }

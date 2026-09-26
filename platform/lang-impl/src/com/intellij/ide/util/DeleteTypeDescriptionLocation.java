@@ -1,35 +1,23 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
+
+public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myPlural;
 
   private DeleteTypeDescriptionLocation(final boolean plural) {
@@ -41,9 +29,8 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
 
   private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
-  @NotNull
   @Override
-  public ElementDescriptionProvider getDefaultProvider() {
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;
   }
 
@@ -51,9 +38,9 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
     return myPlural;
   }
 
-  public static class DefaultProvider implements ElementDescriptionProvider {
+  private static final class DefaultProvider implements ElementDescriptionProvider {
     @Override
-    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+    public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();
         final int count = plural ? 2 : 1;
@@ -69,7 +56,7 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
         PsiMetaData metaData = element instanceof PsiMetaOwner ? ((PsiMetaOwner)element).getMetaData() : null;
         String typeName = metaData instanceof PsiPresentableMetaData ? ((PsiPresentableMetaData)metaData).getTypeName() : null;
         if (typeName == null) {
-          typeName = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getType(element);
+          typeName = LanguageFindUsages.getType(element);
         }
         return !plural ? typeName : StringUtil.pluralize(typeName);
       }

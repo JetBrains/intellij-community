@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:google.devtools.ksp.symbol.processing.aa.embeddable" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-aa-embeddable/2.3.6/symbol-processing-aa-embeddable-2.3.6.jar">
+          <sha256sum>7caea2d426680a6a77007bca60d40ea1c9218f3db6ae9d16c54f0ffefc4e1b5b</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-aa-embeddable/2.3.6/symbol-processing-aa-embeddable-2.3.6.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-aa-embeddable/2.3.6/symbol-processing-aa-embeddable-2.3.6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-aa-embeddable/2.3.6/symbol-processing-aa-embeddable-2.3.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,6 +1,6 @@
 class Test {
   {
-    final <error descr="Incompatible types. Found: 'java.lang.Object', required: 'MyResult'">MyResult hello = parseXML(new Parser());</error>
+    final MyResult hello = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'MyResult'">parseXML</error>(new Parser());
   }
   public <R, P extends AbstractParser & Result<R>> R parseXML(P parser) {
     R result = null;

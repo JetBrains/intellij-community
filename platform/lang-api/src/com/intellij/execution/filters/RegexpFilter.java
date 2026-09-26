@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -32,17 +21,20 @@ import java.util.regex.Pattern;
  * @version 1.0
  */
 public class RegexpFilter implements Filter, DumbAware {
-  @NonNls public static final String FILE_PATH_MACROS = "$FILE_PATH$";
-  @NonNls public static final String LINE_MACROS = "$LINE$";
-  @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
 
-  @NonNls private static final String FILE_PATH_REGEXP = "(^|[\\W])(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)";
-  @NonNls private static final String LINE_REGEXP = "(?<line>[0-9]+)";
-  @NonNls private static final String COLUMN_REGEXP = "(?<column>[0-9]+)";
+  private static final Logger LOG = Logger.getInstance(RegexpFilter.class);
 
-  @NonNls private static final String FILE_STR = "file";
-  @NonNls private static final String LINE_STR = "line";
-  @NonNls private static final String COLUMN_STR = "column";
+  public static final @NonNls String FILE_PATH_MACROS = "$FILE_PATH$";
+  public static final @NonNls String LINE_MACROS = "$LINE$";
+  public static final @NonNls String COLUMN_MACROS = "$COLUMN$";
+
+  private static final @NonNls String FILE_PATH_REGEXP = "(^|[\\W])(?<file>(?:\\p{Alpha}\\:|/)[0-9 a-z_A-Z\\-\\\\./]+)";
+  private static final @NonNls String LINE_REGEXP = "(?<line>[0-9]+)";
+  private static final @NonNls String COLUMN_REGEXP = "(?<column>[0-9]+)";
+
+  private static final @NonNls String FILE_STR = "file";
+  private static final @NonNls String LINE_STR = "line";
+  private static final @NonNls String COLUMN_STR = "column";
 
   private final boolean myHasLine;
   private final boolean myHasColumn;
@@ -119,10 +111,18 @@ public class RegexpFilter implements Filter, DumbAware {
   }
 
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     Matcher matcher = myPattern.matcher(StringUtil.newBombedCharSequence(line, 100));
-    if (!matcher.find()) {
-      return null;
+    try {
+      if (!matcher.find()) {
+        return null;
+      }
+    }
+    catch (ProcessCanceledException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Too long matching '" + line + "' by '" + myPattern + "' in " + getClass().getName());
+      }
+      return null; 
     }
 
     String filePath = matcher.group(FILE_STR);
@@ -159,8 +159,7 @@ public class RegexpFilter implements Filter, DumbAware {
     return new Result(highlightStartOffset, highlightEndOffset, info);
   }
 
-  @Nullable
-  protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
+  protected @Nullable HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
     fileName = fileName.replace(File.separatorChar, '/');
     VirtualFile file = LocalFileSystem.getInstance().findFileByPathIfCached(fileName);
     return file != null ? new OpenFileHyperlinkInfo(myProject, file, line, column) : null;

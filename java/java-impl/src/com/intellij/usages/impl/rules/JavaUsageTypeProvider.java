@@ -1,46 +1,57 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
-import gnu.trove.THashSet;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
-/**
- * @author yole
- */
-public class JavaUsageTypeProvider implements UsageTypeProviderEx {
+public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
-  public UsageType getUsageType(final PsiElement element) {
+  public UsageType getUsageType(final @NotNull PsiElement element) {
     return getUsageType(element, UsageTarget.EMPTY_ARRAY);
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
+  public UsageType getUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -54,22 +65,19 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  @Nullable
-  private static UsageType getMethodUsageType(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
+  private static @Nullable UsageType getMethodUsageType(PsiElement element) {
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containerMethod != null) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         final PsiElement p = referenceExpression.getParent();
-        if (p instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
+        if (p instanceof PsiMethodCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == containerMethod) {
             return UsageType.RECURSION;
           }
           if (qualifier != null && !(qualifier instanceof PsiThisExpression) && calledMethod != null) {
-            if (Comparing.equal(containerMethod.getName(), calledMethod.getName()) &&
+            if (Objects.equals(containerMethod.getName(), calledMethod.getName()) &&
                 haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
 
@@ -102,7 +110,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     }
 
     for (PsiParameter parameter : parameters) {
-      if (HighlightControlFlowUtil.isAssigned(parameter)) return false;
+      if (VariableAccessUtils.variableIsAssigned(parameter)) return false;
     }
 
     return true;
@@ -113,8 +121,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     supers1Q.add(m1);
     final Queue<PsiMethod> supers2Q = new ArrayDeque<>();
     supers2Q.add(m2);
-    Set<PsiMethod> supers1 = new THashSet<>();
-    Set<PsiMethod> supers2 = new THashSet<>();
+    Set<PsiMethod> supers1 = new HashSet<>();
+    Set<PsiMethod> supers2 = new HashSet<>();
     while (true) {
       PsiMethod me1;
       if ((me1 = supers1Q.poll()) != null) {
@@ -150,8 +158,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     */
   }
 
-  @Nullable
-  private static UsageType getClassUsageType(@NotNull PsiElement element, @NotNull UsageTarget[] targets) {
+  private static @Nullable UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     final PsiJavaCodeReferenceElement codeReference = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
     if(codeReference != null && isNestedClassOf(codeReference,targets)){
       return UsageType.CLASS_NESTED_CLASS_ACCESS;
@@ -162,10 +169,18 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.ANNOTATION;
     }
 
+    if (element.getParent() instanceof PsiTypeElement && element.getParent().getParent() instanceof PsiPattern) {
+      return UsageType.PATTERN;
+    }
+
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
-      if (referenceList.getParent() instanceof PsiClass) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
+      PsiElement parent = referenceList.getParent();
+      if (parent instanceof PsiClass aClass) {
+        if (aClass.getExtendsList() == referenceList || aClass.getImplementsList() == referenceList) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
+        if (aClass.getPermitsList() == referenceList) return UsageType.CLASS_PERMITS_LIST;
+      }
       if (referenceList.getParent() instanceof PsiMethod) return UsageType.CLASS_METHOD_THROWS_LIST;
     }
     if (PsiTreeUtil.getParentOfType(element, PsiTypeParameterList.class) != null ||
@@ -194,11 +209,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.CLASS_NEW_OPERATOR;
     }
 
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      if (expression.resolve() instanceof PsiClass) {
-        return UsageType.CLASS_STATIC_MEMBER_ACCESS;
-      }
+    if (element instanceof PsiReferenceExpression expression && expression.resolve() instanceof PsiClass) {
+      return UsageType.CLASS_STATIC_MEMBER_ACCESS;
     }
 
     final PsiParameter psiParameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
@@ -233,7 +245,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
           return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
         }
-        if (isNewArrayCreation(psiNewExpression)) {
+        if (psiNewExpression.isArrayCreation()) {
           return UsageType.CLASS_NEW_ARRAY;
         }
         return UsageType.CLASS_NEW_OPERATOR;
@@ -243,11 +255,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  private static boolean isNewArrayCreation(@NotNull PsiNewExpression expression){
-    return expression.getArrayDimensions().length > 0 || expression.getArrayInitializer() != null;
-  }
-
-  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {
+  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, UsageTarget @NotNull [] targets) {
     if (anonymousClass == null) {
       return false;
     }
@@ -255,7 +263,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return qualifiesToTargetClasses(anonymousClass.getBaseClassReference(), targets);
   }
 
-  private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+  private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, UsageTarget @NotNull [] targets) {
+    if (classReference instanceof PsiMethodReferenceExpression) return false;
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets) && classReference.resolve() instanceof PsiClass;
@@ -263,12 +272,12 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return false;
   }
 
-  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, @NotNull UsageTarget[] targets) {
+  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, UsageTarget @NotNull [] targets) {
     for (UsageTarget target : targets) {
       if (target instanceof PsiElementUsageTarget) {
         PsiElement element = ((PsiElementUsageTarget)target).getElement();
         if (element instanceof PsiClass) {
-          if (Comparing.equal(qualifier.getReferenceName(), target.getName())) {
+          if (Objects.equals(qualifier.getReferenceName(), target.getName())) {
             return true;
           }
         }

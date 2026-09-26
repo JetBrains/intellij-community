@@ -42,12 +42,8 @@ public class SocketServer {
       try {
         boolean _continue = true;
         while (_continue) {
-          Socket socket = myServerSocket.accept();
-          try {
+          try (Socket socket = myServerSocket.accept()) {
             _continue = myProtocol.handleConnection(socket);
-          }
-          finally {
-            socket.close();
           }
         }
       }
@@ -72,7 +68,7 @@ public class SocketServer {
     }
   }
 
-  public static abstract class Protocol {
+  public abstract static class Protocol {
 
     private static final int MAX_INPUT_LENGTH = 10 * 1000 * 1000;
     private static final Logger LOG = Logger.getInstance(Protocol.class);

@@ -14,6 +14,10 @@ public class JavaFilesSearchScope extends GlobalSearchScope {
 
   private final PsiManager myPsiManager;
 
+  /**
+   * @deprecated should not be used directly. Use {@link JavaFilesSearchScopeProvider#getScope()} instead.
+   */
+  @Deprecated
   public JavaFilesSearchScope(@NotNull Project project) {
     super(project);
     myPsiManager = PsiManager.getInstance(project);
@@ -34,6 +38,6 @@ public class JavaFilesSearchScope extends GlobalSearchScope {
     if (file.isDirectory())
       return false;
     FileViewProvider viewProvider = myPsiManager.findViewProvider(file);
-    return viewProvider != null && viewProvider.getLanguages().contains(JavaLanguage.INSTANCE);
+    return viewProvider != null && viewProvider.hasLanguage(JavaLanguage.INSTANCE);
   }
 }

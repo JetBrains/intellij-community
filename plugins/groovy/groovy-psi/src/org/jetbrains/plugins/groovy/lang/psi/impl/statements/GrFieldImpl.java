@@ -1,17 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +27,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -34,8 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
@@ -45,7 +54,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrFieldImpl(GrFieldStub stub) {
-    this(stub, GroovyElementTypes.FIELD);
+    this(stub, GroovyStubElementTypes.FIELD);
   }
 
   public GrFieldImpl(GrFieldStub stub, IStubElementType nodeType) {
@@ -57,6 +66,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     visitor.visitField(this);
   }
 
+  @Override
   public String toString() {
     return "Field";
   }
@@ -103,21 +113,25 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    PsiType type = TypeInferenceHelper.getCurrentContext().getExpressionType(this, field -> {
-      if (getDeclaredType() == null && getInitializerGroovy() == null) {
-        final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
-        if (type1 != null) {
-          return type1;
-        }
-      }
-      return null;
-    });
-
+    PsiType type = TypeInferenceHelper.inTopContext(() -> getEnhancedType());
     if (type != null) {
       return type;
     }
+    return TypeInferenceHelper.inTopContext(() -> super.getTypeGroovy());
+  }
 
-    return super.getTypeGroovy();
+  private @Nullable PsiType getEnhancedType() {
+    return CachedValuesManager.getProjectPsiDependentCache(this, GrFieldImpl::doGetEnhancedType);
+  }
+
+  private static @Nullable PsiType doGetEnhancedType(@NotNull GrFieldImpl field) {
+    if (field.getDeclaredType() == null && field.getInitializerGroovy() == null) {
+      final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
+      if (type1 != null) {
+        return type1;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -147,21 +161,18 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return PsiUtil.isProperty(this);
   }
 
-  @Nullable
   @Override
-  public GrAccessorMethod getSetter() {
+  public @Nullable GrAccessorMethod getSetter() {
     return GrClassImplUtil.findSetter(this);
   }
 
   @Override
-  @NotNull
-  public GrAccessorMethod[] getGetters() {
+  public GrAccessorMethod @NotNull [] getGetters() {
     return GrClassImplUtil.findGetters(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     if (isProperty()) {
       return ResolveScopeManager.getElementUseScope(this); //maximal scope
     }
@@ -182,25 +193,23 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return originalField != null ? originalField : this;
   }
 
-  @Nullable
   @Override
-  protected Icon getElementIcon(@IconFlags int flags) {
+  protected @Nullable Icon getElementIcon(@IconFlags int flags) {
     boolean isAbstract = hasModifierProperty(PsiModifier.ABSTRACT);
     Icon fieldIcon = isProperty()
                      ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
                      : isAbstract ? JetgroovyIcons.Groovy.AbstractField : JetgroovyIcons.Groovy.Field;
-    return ElementPresentationUtil.createLayeredIcon(fieldIcon, this, false);
+    return IconManager.getInstance().createLayeredIcon(this, fieldIcon, ElementPresentationUtil.getFlags(this, false));
   }
 
   @Override
-  @NotNull
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
       String[] namedParameters = stub.getNamedParameters();
       if (namedParameters.length == 0) return Collections.emptyMap();
 
-      Map<String, NamedArgumentDescriptor> result = ContainerUtil.newHashMap();
+      Map<String, NamedArgumentDescriptor> result = new HashMap<>();
       for (String parameter : namedParameters) {
         result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);
       }

@@ -1,0 +1,2169 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.types
+
+import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
+import com.jetbrains.python.psi.LanguageLevel
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+
+/**
+ * Type and type-checker tests for [TypedDict](https://docs.python.org/3/library/typing.html#typing.TypedDict):
+ * definition forms, subscription, required/optional/`ReadOnly` keys, `total=`, the alternative call
+ * syntax, `NotRequired`/`Required`, `extra_items`, `Unpack[...]` kwargs, and related inspections.
+ */
+@Subsystems.Typing
+@Components.TypeInference
+@Layers.Functional
+class PyTypedDictTypeTest : PyCodeInsightTestCase() {
+
+  @Nested
+  inner class InferredTypeOfATypedDictExpression {
+    @Test
+    fun `TypedDict instance type`() = test("""
+      from typing import TypedDict
+      class A(TypedDict):
+          x: int
+      a: A = {'x': 42}
+      expr = a
+      # └ TYPE A
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `TypedDict alternative syntax yields a type`() = test("""
+      from typing import TypedDict
+      A = TypedDict('A', {'x': int}, total=False)
+      expr = A
+      # └ TYPE type[A]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict usage alternative syntax`() = test("""
+      from typing import TypedDict
+      Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)
+      movie = {'name': 'Blade Runner', 'director': 'Ridley Scott'} # type: Movie
+      #                                ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'director' for TypedDict 'Movie'
+
+      BadTD = TypedDict('BadTD', unknown_param=True) # ISSUES *
+      td = {'v': 1} # type: BadTD
+      #     ^^^^^^ WARNING Extra key 'v' for TypedDict 'BadTD'
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class SubscriptionAndGet {
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `subscription with string literal key`() = test("""
+      from typing import TypedDict
+      class A(TypedDict):
+          x: int
+      a: A = {'x': 42}
+      expr = a['x']
+      #└ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `subscription with single Literal key parameter`() = test("""
+      from typing import Literal, TypedDict
+      class TD(TypedDict):
+          a: int
+          b: str
+      def foo(v: TD, k: Literal['b']):
+          expr = v[k]
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `subscription with multiple Literal key parameter`() = test("""
+      from typing import Literal, TypedDict
+      class TD(TypedDict):
+          a: int
+          b: str
+          c: bool
+      def foo(v: TD, k: Literal['c', 'b']):
+          expr = v[k]
+      #   └ TYPE bool | str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `subscription with undefined key`() = test("""
+      from typing import TypedDict
+      class A(TypedDict):
+          x: int
+      a: A = {'x': 42}
+      expr = a[x]
+      #│       └ ERROR Unresolved reference 'x'
+      #└ TYPE Unknown FIXME Any
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91533"])
+    fun `subscripting a non-generic TypedDict declaration`() = test("""
+      from typing import TypedDict
+      class Movie(TypedDict):
+          name: str
+      expr = Movie["name"]
+      # │          ^^^^^^ WARNING Class 'Movie' is not generic
+      # └ TYPE type[Movie]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-91533"])
+    fun `subscripting a generic TypedDict declaration`() = test("""
+      from typing import TypedDict
+      class Box[T](TypedDict):
+          value: T
+      expr = Box[int]
+      # └ TYPE type[Box[int]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `get of required key`() = test("""
+      from typing import TypedDict
+      class A(TypedDict):
+          x: int
+      a: A = {'x': 42}
+      expr = a.get('x')
+      #└ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `get of optional key`() = test("""
+      from typing import TypedDict
+      class A(TypedDict, total=False):
+          x: int
+      a: A = {'x': 42}
+      expr = a.get('x')
+      #└ TYPE int | None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `get with default of the same value type`() = test("""
+      from typing import TypedDict
+      class A(TypedDict, total=False):
+          x: int
+      a: A = {'x': 42}
+      expr = a.get('x', 42)
+      #└ TYPE int | Literal[42]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `get with default of a different value type`() = test("""
+      from typing import TypedDict
+      class A(TypedDict, total=False):
+          x: int
+      a: A = {'x': 42}
+      expr = a.get('x', '')
+      #└ TYPE int | Literal[""]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict key value read`() = test("""
+      from typing import TypedDict
+
+      Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)
+      class Movie2(TypedDict, total=False):
+          name: str
+          year: int
+      movie = Movie()
+      movie2 = Movie2()
+      s: str = movie['year']
+      #        ^^^^^^^^^^^^^ WARNING Expected type 'str', got 'int' instead
+      s2: str = movie2['year']
+      #         ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'int' instead
+
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class ReadOnlyRequiredAnnotatedItemTypes {
+    @Test
+    @TestFor(issues = ["PY-77796"])
+    fun `ReadOnly item type`() = test("""
+      from typing import TypedDict, ReadOnly
+      class A(TypedDict):
+          x: ReadOnly[str]
+      def f(a: A):
+          expr = a['x']
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-77796"])
+    fun `Required ReadOnly item type`() = test("""
+      from typing import TypedDict, Required, ReadOnly
+      class A(TypedDict):
+          x: Required[ReadOnly[int]]
+      def f(a: A):
+          expr = a['x']
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-77796"])
+    fun `Required Annotated ReadOnly item type`() = test("""
+      from typing import TypedDict, Required, Annotated, ReadOnly
+      class A(TypedDict):
+          x: Required[Annotated[ReadOnly[str], 1]]
+      def f(a: A):
+          expr = a['x']
+      #   └ TYPE str
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class UnpackKwargs {
+    @Test
+    @TestFor(issues = ["PY-55044"])
+    fun `kwargs typed with Unpack of TypedDict`() = test("""
+      from typing import TypedDict, Unpack
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(**x: Unpack[Movie]):
+          expr = x
+      #   └ TYPE Movie
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class RecursiveTypedDicts {
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `directly recursive item type`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          parent: "Node"
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    // The repro PY-85440 is filed with, where the reference to the TypedDict being declared needs no quotes.
+    fun `item type referring to the TypedDict being declared`() = test("""
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list[Category]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `item type referring to the TypedDict being declared under future annotations`() = test("""
+      from __future__ import annotations
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list[Category]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive item type inside a container`() = test("""
+      from typing import TypedDict
+
+      class Category(TypedDict):
+          name: str
+          sub: list["Category"]
+
+      def f(cat: Category):
+          expr = cat["sub"]
+      #   └ TYPE list[Category]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `mutually recursive item types`() = test("""
+      from typing import TypedDict
+
+      class A(TypedDict):
+          b: "B"
+
+      class B(TypedDict):
+          a: "A"
+
+      def f(a: A):
+          expr = a["b"]["a"]["b"]
+      #   └ TYPE B
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `dict literal matched against a recursive TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      n: Node = {"name": "a", "parent": {"name": "b", "parent": {"name": "c"}}}
+      #                                                         ^^^^^^^^^^^^^ WARNING TypedDict 'Node' has missing key: 'parent'
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive TypedDict constructor call`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      def f(n: Node):
+          expr = Node(name="a", parent=n)
+      #   └ TYPE Node
+          Node(name="a", parent="wrong")
+      #                  ^^^^^^^^^^^^^^ WARNING Expected type 'Node', got 'Literal["wrong"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `Unpack of a recursive TypedDict`() = test("""
+      from typing import TypedDict, Unpack
+
+      class Node(TypedDict):
+          name: str
+          parent: "Node"
+
+      def g(**kwargs: Unpack[Node]) -> None: ...
+
+      def f(n: Node):
+          g(name="a", parent=n)
+          g(name="a", parent=1)
+      #               ^^^^^^^^ WARNING Expected type 'Node', got 'Literal[1]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    // Structural matching of two recursive TypedDicts relies on the recursion guard in PyTypeChecker.match,
+    // which treats a repeated (expected, actual) pair as a match, so the assertion on recursion prevention has
+    // to be off here.
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `assignability between recursive TypedDicts`() = test("""
+      from typing import TypedDict
+
+      class Node(TypedDict):
+          v: int
+          parent: "Node"
+
+      class Same(TypedDict):
+          v: int
+          parent: "Same"
+
+      class Other(TypedDict):
+          v: str
+          parent: "Other"
+
+      def f(same: Same, other: Other):
+          ok: Node = same
+          bad: Node = other
+      #               ^^^^^ WARNING Expected type 'Node', got 'Other' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571", "PY-91630"])
+    fun `recursive generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Tree[T](TypedDict):
+          value: T
+          children: list["Tree[T]"]
+
+      def f(t: Tree[int]):
+          expr = t["children"]
+      #   └ TYPE list[Tree[int]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571", "PY-91630"])
+    fun `recursive generic TypedDict traversed several levels deep`() = test("""
+      from typing import TypedDict
+
+      class Tree[T](TypedDict):
+          value: T
+          children: list["Tree[T]"]
+
+      def f(t: Tree[str]):
+          expr = t["children"][0]["children"][0]["value"]
+      #   └ TYPE str
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive TypedDict in the functional syntax`() = test("""
+      from typing import TypedDict
+
+      Node = TypedDict("Node", {"name": str, "parent": "Node"})
+      #                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, type]', got 'dict[Literal["name", "parent"], type[str] | Literal["Node"]]' instead
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursion through a type alias`() = test("""
+      from typing import TypedDict
+
+      type NodeAlias = Node
+
+      class Node(TypedDict):
+          parent: NodeAlias
+
+      def f(n: Node):
+          expr = n["parent"]["parent"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `mutually recursive TypedDicts from another file`() = test(
+      """
+      from other import A
+
+      def f(a: A):
+          expr = a["b"]["a"]["b"]
+      #   └ TYPE B
+      """,
+      "other.py" to """
+        from typing import TypedDict
+
+        class A(TypedDict):
+            b: "B"
+
+        class B(TypedDict):
+            a: "A"
+        """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Node(TypedDict, extra_items="Node"):
+          name: str
+
+      def f(n: Node):
+          expr = n["whatever"]["whatever"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive extra_items in functional syntax`() = test("""
+      from typing_extensions import TypedDict
+
+      Node = TypedDict("Node", {"name": str}, extra_items="Node")
+      #                                       ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'type', got 'Literal["Node"]' instead
+
+      def f(n: Node):
+          expr = n["whatever"]["whatever"]
+      #   └ TYPE Node
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91571"])
+    fun `recursive inherited extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Base(TypedDict, extra_items="Child"):
+          pass
+
+      class Child(Base):
+          pass
+
+      def f(c: Child):
+          expr = c["whatever"]["whatever"]
+      #   └ TYPE Child
+      """)
+  }
+
+  @Nested
+  inner class GenericTypedDicts {
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item type substituted with the type argument`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      def f(b: Box[int]):
+          expr = b["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item type substituted in the pre-695 syntax`() = test("""
+      from typing import TypedDict, TypeVar, Generic
+
+      T = TypeVar("T")
+
+      class Box(TypedDict, Generic[T]):
+          value: T
+
+      def f(b: Box[int]):
+          expr = b["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `dict literal checked against the substituted item type`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      b: Box[int] = {"value": "wrong"}
+      #                       ^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `item qualifiers survive parameterization`() = test("""
+      from typing import TypedDict, NotRequired, ReadOnly
+
+      class Box[T](TypedDict):
+          value: NotRequired[T]
+
+      class Frozen[T](TypedDict):
+          value: ReadOnly[T]
+
+      b: Box[int] = {}
+
+      def f(frozen: Frozen[int]):
+          frozen["value"] = 1
+      #   ^^^^^^^^^^^^^^^ WARNING TypedDict key "value" is ReadOnly
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `TypeVarTuple parameters`() = test("""
+      from typing import TypedDict
+
+      class Variadic[*Ts](TypedDict):
+          values: tuple[*Ts]
+
+      def f(v: Variadic[int, str]):
+          expr = v
+      #   └ TYPE Variadic[int, str]
+          items = v["values"]
+      #   └ TYPE tuple[int, str]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `ParamSpec parameter`() = test("""
+      from typing import TypedDict, Callable
+
+      class Handler[**P](TypedDict):
+          fn: Callable[P, None]
+
+      def f(h: Handler[[int, str]]):
+          expr = h["fn"]
+      #   └ TYPE (int, str) -> None
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base`() = test("""
+      from typing import TypedDict
+
+      class Base[T](TypedDict):
+          value: T
+
+      class Child(Base[int]):
+          pass
+
+      def f(c: Child, wrong: Child[str]):
+      #                            ^^^ WARNING Class 'Child' is not generic
+          base = Base[int]
+      #   └ TYPE type[Base[int]]
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `partially specialized generic base`() = test("""
+      from typing import TypedDict
+
+      class Base[T](TypedDict):
+          value: T
+
+      class Child[S](Base[list[S]]):
+          tag: S
+
+      def f(c: Child[int]):
+          inherited = c["value"]
+      #   └ TYPE list[int]
+          own = c["tag"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-62524", "PY-91630"])
+    fun `generic base specialized with the descendant's own parameter`() = test("""
+      from typing import Generic, TypeVar, TypedDict
+
+      T = TypeVar("T")
+
+      class Base(TypedDict, Generic[T]):
+          value: T
+
+      class Child(Base[T]):
+          pass
+
+      def f(c: Child[int]):
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base in pre-695 syntax`() = test("""
+      from typing import Generic, TypeVar, TypedDict
+
+      T = TypeVar("T")
+
+      class Base(TypedDict, Generic[T]):
+          value: T
+
+      class Child(Base[int]):
+          pass
+
+      def f(c: Child):
+          expr = c["value"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base from another file`() = test(
+      """
+      from other import Child
+
+      def f(c: Child):
+          expr = c["value"]
+      #   └ TYPE int
+          extra = c["missing"]
+      #   └ TYPE int
+      """,
+      "other.py" to """
+        from typing_extensions import TypedDict
+
+        class Base[T](TypedDict, extra_items=T):
+            value: T
+
+        class Child(Base[int]):
+            pass
+        """,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `specialized generic base substitutes inherited extra_items`() = test("""
+      from typing_extensions import TypedDict
+
+      class Base[T](TypedDict, extra_items=T):
+          pass
+
+      class Child(Base[int]):
+          pass
+
+      def f(base: Base[int], c: Child):
+          direct = base["other"]
+      #   └ TYPE int
+          expr = c["other"]
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `TypedDicts parameterized differently are not assignable`() = test("""
+      from typing import TypedDict
+
+      class Box[T](TypedDict):
+          value: T
+
+      def f(b: Box[int]):
+          same: Box[int] = b
+          other: Box[str] = b
+      #                     └ WARNING Expected type 'Box[str]', got 'Box[int]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `structurally equal generic TypedDicts are assignable`() = test("""
+      from typing import TypedDict
+
+      class A[T](TypedDict):
+          value: T
+
+      class B[T](TypedDict):
+          value: T
+
+      def f(b: B[int]):
+          a: A[int] = b
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `generic TypedDicts with incompatible item types are not assignable`() = test("""
+      from typing import TypedDict
+
+      class A[T](TypedDict):
+          value: T
+
+      class B[T](TypedDict):
+          value: T
+
+      def f(b: B[str]):
+          a: A[int] = b
+      #               └ WARNING Expected type 'A[int]', got 'B[str]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `bound method of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      td: D[int]
+      td.get("f2")
+      #  ^^^ TYPE (key: str, default: Any) -> int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `get of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.get("f2")
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `values of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.values()
+      #   └ TYPE list[str | int | Unknown]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `items of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.items()
+      #   └ TYPE list[tuple[str, str | int | Unknown]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `popitem of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.popitem()
+      #   │         ^^^^^^^ WARNING This operation might break TypedDict consistency
+      #   └ TYPE tuple[str, str | int | Unknown]
+      """)
+
+  }
+
+  @Nested
+  inner class ExtraItemsInferredTypes {
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items known key type`() = test("""
+      from typing_extensions import TypedDict
+      
+      class Movie(TypedDict, extra_items=int):
+          name: str
+      
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["name"]
+      #   └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items arbitrary key type`() = test("""
+      from typing_extensions import TypedDict
+      
+      class Movie(TypedDict, extra_items=int):
+          name: str
+      
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["novel_adaptation"]
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items multiple arbitrary keys`() = test("""
+      from typing_extensions import TypedDict
+      
+      class Movie(TypedDict, extra_items=int):
+          name: str
+      
+      def movie_keys(movie: Movie) -> None:
+          expr = movie["year"]
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90620"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items non-literal str key`() = test("""
+      from typing_extensions import TypedDict
+
+      class Foo(TypedDict, extra_items=int):
+          pass
+
+      def bar(foo: Foo, key: str) -> None:
+          expr = foo[key]
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    fun `extra_items reflected in items`() = test("""
+      from typing_extensions import TypedDict
+
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+
+      def foo(movie: MovieExtraInt) -> None:
+          expr = list(movie.items())
+      #   └ TYPE list[tuple[str, str | int]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false)
+    fun `extra_items reflected in values`() = test("""
+      from typing_extensions import TypedDict
+
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+
+      def foo(movie: MovieExtraInt) -> None:
+          expr = list(movie.values())
+      #   └ TYPE list[str | int]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+    fun `extra_items reflected in popitem`() = test("""
+      from typing_extensions import TypedDict
+      
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+      
+      def foo(movie: MovieExtraInt) -> None:
+          expr = movie.popitem()
+      #   │            ^^^^^^^ WARNING This operation might break TypedDict consistency
+      #   └ TYPE tuple[str, str | int]
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class InspectionsRequiredOptionalReadonlyKeys {
+    @Test
+    @TestFor(issues = ["PY-46661"])
+    fun `missing and extra keys in return type`() = test("""
+      from typing import TypedDict, List, Optional, Union
+      
+      
+      class Point(TypedDict):
+          x: int
+          y: int
+      
+      
+      def a(x: List[int]) -> Point:
+          return [x]
+      #          ^^^ WARNING Expected type 'Point', got 'list[list[int]]' instead
+      
+      def b(x: int) -> Point:
+          return {'x': 42}
+      #          ^^^^^^^^^ WARNING TypedDict 'Point' has missing key: 'y'
+      
+      def c() -> Point:
+          return {'x': 'abc', 'y': 42}
+      #                ^^^^^ WARNING Expected type 'int', got 'str' instead
+      
+      def d() -> Point:
+          return {'x': 42, 'y': 42, 'k': 42}
+      #                             ^^^^^^^ WARNING Extra key 'k' for TypedDict 'Point'
+      
+      def e1(x: int):
+          return {'x': x}
+      
+      def e(x: int) -> Point:
+          return e1(x)
+      #          ^^^^^ WARNING Expected type 'Point', got 'dict[str, int]' instead
+      
+      def f1(x: int) -> Point:
+          pass
+      
+      def f(x: str) -> Point:
+          return f1(int(x))
+      
+      def g() -> Point:
+          x = int(input())
+          y = {'x': x}
+          if x > 0:
+              return y
+      #              └ WARNING Expected type 'Point', got 'dict[str, int]' instead
+          elif x == 0:
+              return Point(x=442, y=42)
+          else:
+              return
+      #       ^^^^^^ WARNING Expected type 'Point', got 'None' instead
+      
+      def h(x) -> Point:
+      #           ^^^^^ WARNING Expected type 'Point', got 'None' instead
+          x = 42
+      
+      def i() -> Point:
+      #          ^^^^^ WARNING Expected type 'Point', got 'None' instead
+          if True:
+              pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-53611"])
+    fun `Required and NotRequired keys`() = test("""
+      from typing import TypedDict
+      from typing_extensions import Required, NotRequired
+      class WithTotalFalse(TypedDict, total=False):
+          x: Required[int]
+      class WithTotalTrue(TypedDict, total=True):
+          x: NotRequired[int]
+      class WithoutTotal(TypedDict):
+          x: NotRequired[int]
+      class WithoutTotalWithExplicitRequired(TypedDict):
+          x: Required[int]
+          y: NotRequired[int]
+      AlternativeSyntax = TypedDict("AlternativeSyntax", {'x': NotRequired[int]})
+      with_total_false: WithTotalFalse = {}
+      #                                  ^^ WARNING TypedDict 'WithTotalFalse' has missing key: 'x'
+      with_total_true: WithTotalTrue = {}
+      without_total: WithoutTotal = {}
+      without_total_with_explicit_required: WithoutTotalWithExplicitRequired = {}
+      #                                                                        ^^ WARNING TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'
+      alternative_syntax: AlternativeSyntax = {}
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-53611"])
+    fun `Required and NotRequired equivalence`() = test("""
+      from typing_extensions import TypedDict, Required, NotRequired
+      
+      
+      class _MovieBase0(TypedDict):
+          title: str
+      
+      
+      class Movie0(_MovieBase0, total=False):
+          year: int
+      
+      
+      class Movie1(TypedDict):
+          title: Required[str]
+          year: NotRequired[int]
+      
+      
+      class Movie2(TypedDict):
+          title: NotRequired[str]
+          year: NotRequired[int]
+      
+      
+      def f(movie: Movie0):
+          ...
+      
+      
+      f(Movie1(title="Jaws"))
+      f(Movie2(title="Jaws"))
+      # ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie0', got 'Movie2' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-53611"])
+    fun `Required and NotRequired mixed with Annotated`() = test("""
+      from typing_extensions import TypedDict, Required, NotRequired, Annotated
+      class A(TypedDict):
+          x: Annotated[NotRequired[int], 'Some constraint']
+      def f(a: A):
+          pass
+      f({})
+      class B(TypedDict, total=False):
+          x: Annotated[Required[int], 'Some constraint']
+      def g(b: B):
+          pass
+      g({})
+      # ^^ WARNING TypedDict 'B' has missing key: 'x'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-53611"])
+    fun `Required type specifications across files`() = test("""
+      from required import A, AlternativeSyntax
+      
+      
+      a: A = {}
+      #      ^^ WARNING TypedDict 'A' has missing keys: 'x', 'y'
+      a1: A = {'x': 42, 'y': 42}
+      a2: AlternativeSyntax = {'y': "str"}
+      #                             ^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent(),
+      "required.py" to """
+        from typing_extensions import TypedDict, Annotated, Required, NotRequired
+        
+        
+        class A(TypedDict, total=False):
+            x: Required[int]
+            y: Annotated[Required[int], 'Some constraint']
+        
+        
+        AlternativeSyntax = TypedDict("AlternativeSyntax", {'x': NotRequired[int], 'y': Required[Annotated[int, 'Some constraint']]})
+        """.trimIndent())
+
+    @Test
+    fun `Required with ReadOnly`() = test("""
+      from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+      
+      class Movie(TypedDict):
+          name: ReadOnly[Required[str]]
+          year: NotRequired[int]
+      
+      m: Movie = {"year": 2024}
+      #          ^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
+      """.trimIndent())
+
+    @Test
+    fun `ReadOnly consistency in assignability`() = test("""
+      from typing import TypedDict, Required, NotRequired, ReadOnly
+      
+      class A1(TypedDict):
+          x: NotRequired[str]
+      
+      class B1(TypedDict):
+          x: NotRequired[ReadOnly[str]]
+      
+      class B2(TypedDict):
+          x: ReadOnly[NotRequired[str]]
+      
+      class C(TypedDict):
+          x: Required[str]
+      
+      def func1(b1: B1, b2: B2, c: C):
+          v1: A1 = b1
+      #            ^^ WARNING Expected type 'A1', got 'B1' instead
+          v2: A1 = b2
+      #            ^^ WARNING Expected type 'A1', got 'B2' instead
+          v3: B1 = c
+      
+      class A2(TypedDict):
+          x: ReadOnly[NotRequired[object]]
+      
+      class B3(TypedDict):
+          pass
+      
+      def func2(b: B3):
+          a: A2 = b
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict definition`() = test("""
+      from typing import TypedDict
+      class Employee(TypedDict):
+          name: str
+          id: int
+      class Employee2(Employee, total=False):
+          director: str
+      em = Employee2(name='John Dorian', id=1234, director='3')
+      em2 = Employee2(name='John Dorian', id=1234, director=3)
+      #                                            ^^^^^^^^^^ WARNING Expected type 'str', got 'Literal[3]' instead
+
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict definition alternative syntax`() = test("""
+      from typing import TypedDict
+      Movie = TypedDict(3, [1, 2, 3])
+      #                 │  ^^^^^^^^^ WARNING Expected dictionary literal
+      #                 │  ^^^^^^^^^ WARNING Expected type 'dict[str, type]', got 'list[Literal[1, 2, 3]]' instead
+      #                 └ WARNING Expected type 'str', got 'Literal[3]' instead
+      Movie = TypedDict('Movie', {})
+      Movie = TypedDict('Movie', {'name': str})
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `incorrect totality value`() = test("""
+      from typing import TypedDict
+      Movie = TypedDict("Movie", {}, total=2)
+      #                              │     └ WARNING Value of 'total' must be True or False
+      #                              ^^^^^^^ WARNING Expected type 'bool', got 'Literal[2]' instead
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class InspectionsDictLiteralKeysAndValues {
+    @Test
+    @TestFor(issues = ["PY-78126"])
+    fun `variable key in dict literal`() = test("""
+      from typing import TypedDict, Literal
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(key: str):
+          m: Movie = {key: "abb", "year": 1917}
+      #              ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie', got 'dict[str, str | int]' instead
+      def bar(key: Literal["name"]):
+          m: Movie = {key: "abb", "year": 1917} # OK
+      def buz(key: Literal["wrong_key"]):
+          m: Movie = {key: "abb", "year": 1917}
+      #              │^^^^^^^^^^ WARNING Extra key 'wrong_key' for TypedDict 'Movie'
+      #              ^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'name'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to optional TypedDict`() = test("""
+      from typing import TypedDict
+
+      class Address(TypedDict):
+          street: str
+
+      a: Address | None = {"street": "Pine"}
+      b: Address | None = {"color": "red"}
+      #                   ^^^^^^^^^^^^^^^^ WARNING Expected type 'Address | None', got 'dict[str, str]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88391"])
+    fun `dict literal assignable to one of several TypedDicts`() = test("""
+      from typing import TypedDict
+
+      class A(TypedDict):
+          a: str
+
+      class B(TypedDict):
+          b: int
+
+      class C(TypedDict):
+          c: int
+
+      first: A | B | C = {"a": "x"}
+      last:  A | B | C = {"c": 1}
+      none:  A | B | C = {"z": 1}
+      #                  ^^^^^^^^ WARNING Expected type 'A | B | C', got 'dict[str, int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-38873"])
+    fun `value access through list field`() = test("""
+      from typing import TypedDict, List, LiteralString
+      Movie = TypedDict('Movie', {'address': List[str]}, total=False)
+      class Movie2(TypedDict, total=False):
+          address: List[str]
+      movie = Movie()
+      movie2 = Movie2()
+      s1: LiteralString = movie['address'][0]
+      #                   ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
+      s2: LiteralString = movie2['address'][0]
+      #                   ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79733"])
+    fun `TypedDict type inferred for comprehensions`() = test("""
+      from typing import TypedDict
+
+
+      class Foo(TypedDict):
+          foo: str
+
+
+      foo: Foo = {"foo": "bar"}
+      foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
+      foo_list2: list[Foo] = [{"foo": bar, "buz": "qux"} for bar in ["bar"]]
+      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[str, str]]' instead
+      foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
+      foo_set2: set[Foo] = {{"foo": bar, "buz": "qux"} for bar in ["bar"]}
+      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[str, str]]' instead
+      foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
+      foo_dict2: dict[str, Foo] = {bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}
+      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[str, dict[str, str]]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict as argument`() = test("""
+      from typing import TypedDict
+      class Point(TypedDict):
+          x: int
+          y: int
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def record_movie(movie: Movie) -> None: ...
+      record_movie({'name': 1984, 'year': 1984})
+      #                     ^^^^ WARNING Expected type 'str', got 'int' instead
+      record_movie({})
+      #            ^^ WARNING TypedDict 'Movie' has missing keys: 'name', 'year'
+      record_movie({'name': '1984', 'year': 1984, 'director': 'Michael Radford'})
+      #                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'director' for TypedDict 'Movie'
+      record_movie(Point(x=123, y=321))
+      #            ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'Movie', got 'Point' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict subscription as argument`() = test("""
+      from typing import TypedDict
+      class Movie(TypedDict):
+          name: str
+          year: int
+      m1: Movie = dict(name='Alien', year=1979)
+      m2 = Movie(name='Garden State', year=2004)
+      def foo(p: int):
+        pass
+      foo(m2["year"])
+      foo(m2["name"])
+      #   ^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      foo(m1["name"])
+      #   ^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict assignment`() = test("""
+      from typing import TypedDict
+      class Movie(TypedDict):
+          name: str
+          year: int
+      class NotPoint(TypedDict):
+          x: int
+          y: str
+      class Point(TypedDict):
+          x: int
+          y: int
+      p1: Point = {'x': 0, 'y': 'a'}
+      #                         ^^^ WARNING Expected type 'int', got 'str' instead
+      p2: NotPoint = {'x': 'x', 'y': 42}
+      #                    │         ^^ WARNING Expected type 'str', got 'int' instead
+      #                    ^^^ WARNING Expected type 'int', got 'str' instead
+      p3: Point = p2
+      #           ^^ WARNING Expected type 'Point', got 'NotPoint' instead
+      p4: Point = {}
+      #           ^^ WARNING TypedDict 'Point' has missing keys: 'x', 'y'
+      p5: Point = {'x': 0, 'y': 0, 'z': 123, 'k': 6}
+      #                            │         ^^^^^^ WARNING Extra key 'k' for TypedDict 'Point'
+      #                            ^^^^^^^^ WARNING Extra key 'z' for TypedDict 'Point'
+      p6: Point = {'y': 123}
+      #           ^^^^^^^^^^ WARNING TypedDict 'Point' has missing key: 'x'
+      p7: Movie = dict(name='Alien', year=1979)
+      p8: Movie = dict(name='Alien', year='1979')
+      #                                   ^^^^^^ WARNING Expected type 'int', got 'Literal["1979"]' instead
+      p9: Movie = dict(name='Alien', year=1979, director='Ridley Scott')
+      #                                         ^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'director' for TypedDict 'Movie'
+      p10 = {'x': 'x', 'y': 42, 'z': 42}
+      p11: Point = p10
+      #            ^^^ WARNING Expected type 'Point', got 'dict[str, str | int]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `typed dict alternative syntax assignment`() = test("""
+      from typing import TypedDict, cast
+      Movie = TypedDict('Movie', {'name': str, 'year': int})
+      m1: Movie = dict(name='Alien', year=1979)
+      m2: Movie = dict(name='Alien', year='1979')
+      #                                   ^^^^^^ WARNING Expected type 'int', got 'Literal["1979"]' instead
+      m3: Movie = cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))
+      m4: Movie = {'name': 'Alien', 'year': '1979'}
+      #                                     ^^^^^^ WARNING Expected type 'int', got 'str' instead
+      m5 = Movie(name='Garden State', year=2004)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-36008"])
+    fun `typed dict consistency`() = test("""
+      from typing import TypedDict, Optional, Union, Mapping, Any, Protocol
+
+
+      class A(TypedDict):
+          x: Optional[int]
+      class B(TypedDict):
+          x: Optional[int]
+      def f(a: A) -> None:
+          a['x'] = None
+
+      b: B = B(x=0)
+      f(b)
+
+
+      class C(TypedDict):
+          x: Union[int, str]
+      c: C = C(x = '0')
+      f(c)
+      # └ WARNING Expected type 'A', got 'C' instead
+
+
+      class D(TypedDict):
+          x: int
+      def bar(a: A) -> None:
+          a['x'] = None
+      d: D = {'x': 0}
+      bar(d)
+      #   └ WARNING Expected type 'A', got 'D' instead
+
+
+      class E(TypedDict):
+          x: int
+      def f(d: Mapping[str, object]) -> None:
+          print(d)
+      def g(d: Mapping[str, Any]) -> None:
+          print(d)
+      def h(d: Mapping[str, int]) -> None:
+          print(d)
+      e: E = E(x=1)
+      f(e)
+      g(e)
+      h(e)
+      # └ WARNING Expected type 'Mapping[str, int]', got 'E' instead
+
+
+      class A1(TypedDict, total=False):
+          x: int
+          y: int
+      class B1(TypedDict, total=False):
+          x: int
+      class C1(TypedDict, total=False):
+          x: int
+          y: str
+      def f1(a: A1) -> None:
+          a['y'] = 1
+      def g1(b: B1) -> None:
+          f1(b)
+      #      └ WARNING Expected type 'A1', got 'B1' instead
+
+
+      class A2(TypedDict, total=False):
+          x: int
+      class B2(TypedDict):
+          x: int
+      def f2(a: A2) -> None:
+          del a['x']
+      b: B2 = {'x': 0}
+      f2(b)
+      #  └ WARNING Expected type 'A2', got 'B2' instead
+
+
+      class A3(TypedDict):
+          x: str
+      class B3(TypedDict):
+          x: str
+          y: str
+      a: A3 = B3(x = '', y = '')
+      b: B3 = A3(x = '')
+      #       ^^^^^^^^^^ WARNING Expected type 'B3', got 'A3' instead
+
+
+      class P(Protocol):
+          pass
+
+      class A4(TypedDict):
+          x: int
+      def f3(a: A4):
+          v1: dict[str, int] = a
+      #                        └ WARNING Expected type 'dict[str, int]', got 'A4' instead
+          v2: P = a
+      def f4(d: dict[str, int]):
+          v: A4 = d
+      #           └ WARNING Expected type 'A4', got 'dict[str, int]' instead
+      """.trimIndent())
+
+    @Test
+    fun `literal type in typed dict`() = test("""
+      from typing import TypedDict, Literal
+      class Foo(TypedDict):
+          foo: Literal['bar']
+      a: Foo = {'foo': 'bar'}
+      b: Foo = {'foo': 'baz'}
+      #                ^^^^^ WARNING Expected type 'Literal['bar']', got 'str' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-46661"])
+    fun `nested typed dict`() = test("""
+      from typing_extensions import TypedDict, Literal
+      class EasyDict(TypedDict):
+          a: str
+          b: str
+          c: str
+
+
+      class NotSoHardDict(TypedDict):
+          a: str
+          b: EasyDict
+
+
+      class HardDict(TypedDict):
+          a: str
+          d: NotSoHardDict
+
+
+      q: HardDict = {
+          'a': 42,
+      #        ^^ WARNING Expected type 'str', got 'int' instead
+          'd': {
+              'b': {'a': 42, 'd': 42},
+      #            │     │   ^^^^^^^ WARNING Extra key 'd' for TypedDict 'EasyDict'
+      #            │     ^^ WARNING Expected type 'str', got 'int' instead
+      #            ^^^^^^^^^^^^^^^^^^ WARNING TypedDict 'EasyDict' has missing keys: 'b', 'c'
+              'a': 'xx',
+              'c': 42
+      #       ^^^^^^^ WARNING Extra key 'c' for TypedDict 'NotSoHardDict'
+          },
+      }
+      t = {
+          'a': 'xx',
+          'd': {
+              0: 'zero',
+          }
+      }
+      s: HardDict = {'a': 'xx', 'd': t}
+      #                              └ WARNING Expected type 'NotSoHardDict', got 'dict[str, str | dict[int, str]]' instead
+      s1: HardDict = t
+      #              └ WARNING Expected type 'HardDict', got 'dict[str, str | dict[int, str]]' instead
+      t1 = {
+          'a': 'xx',
+          'd': {
+              'a': 0,
+              'd': {}
+          }
+      }
+      s2: HardDict = {'a': 'xx', 'd': t1}
+      #                               ^^ WARNING Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict[Unknown, Unknown]]]' instead
+      s3: HardDict = t1
+      #              ^^ WARNING Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict[Unknown, Unknown]]]' instead
+      s4: HardDict = {
+      #              └ WARNING TypedDict 'HardDict' has missing key: 'a'
+          'd': {
+              'a': 'a',
+              'b': {'a': 'a', 'b': 'b', 'c': 'c'}
+          }
+      }
+
+
+      class TDWithUnionField(TypedDict):
+          i: int
+          d: Literal[""] | EasyDict
+      s5: TDWithUnionField = {'i': -1, 'd': {'a': 'a'}}
+      #                                     ^^^^^^^^^^ WARNING Expected type 'Literal[""] | EasyDict', got 'dict[str, str]' instead
+      s6: TDWithUnionField = {'i': 7, 'd': {'a': 'a', 'b': 'b', 'c': 'c'}}
+
+
+      class Movie(TypedDict):
+          title: str
+          year: int
+
+      movies1: list[Movie] = [
+      #                      └ WARNING Expected type 'list[Movie]', got 'list[dict[str, str | int] | dict[str, str]]' instead
+          {"title": "Blade Runner", "year": 1982}, # OK
+          {"title": "The Matrix"},
+      ]
+      movies2: list[Movie] = [
+      #                      └ WARNING Expected type 'list[Movie]', got 'list[dict[str, str]]' instead
+          {"title": "The Matrix"},
+      ]
+
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class InspectionsExtraItems {
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    fun `extra_items in dict literal`() = test("""
+      from typing_extensions import TypedDict
+
+      class MovieNoExtra(TypedDict):
+          name: str
+
+      a: MovieNoExtra = {"name": "Blade Runner", "novel_adaptation": True}
+      #                                          ^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'novel_adaptation' for TypedDict 'MovieNoExtra'
+
+      class Movie(TypedDict, extra_items=bool):
+          name: str
+
+      b: Movie = {"name": "Blade Runner", "novel_adaptation": True}
+
+      c: Movie = {"name": "Blade Runner", "novel_adaptation": True, "is_classic": False}
+
+      d: Movie = {"name": "Blade Runner", "year": 1982}
+      #                                           ^^^^ WARNING Expected type 'bool', got 'int' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    fun `extra_items type matching in call`() = test("""
+      from typing_extensions import TypedDict
+
+      class ExtraMovie(TypedDict, extra_items=int):
+          name: str
+
+      ExtraMovie(name="No Country for Old Men")
+
+      ExtraMovie(name="No Country for Old Men", year=2007)
+
+      ExtraMovie(name="No Country for Old Men", language="English")
+      #                                         ^^^^^^^^^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["English"]' instead
+
+      ExtraMovie(name="Inception", year=2010, rating=8, budget="160M")
+      #                                                 ^^^^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["160M"]' instead
+
+      ExtraMovie(name="Dune", year=None)
+      #                       ^^^^^^^^^ WARNING Expected type 'int', got 'None' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    fun `extra_items inherited through subclassing`() = test("""
+      from typing_extensions import TypedDict
+
+      class MovieBase(TypedDict, extra_items=int | None):
+          name: str
+
+      class InheritedMovie(MovieBase):
+          year: int
+      #   ^^^^ WARNING Required key 'year' is not known to 'MovieBase'
+
+      InheritedMovie(name="Blade Runner", year=1982, budget="100M")
+      #                                              ^^^^^^^^^^^^^ WARNING Expected type 'int | None', got 'Literal["100M"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    fun `extra_items TypedDict assignable to Mapping when types match`() = test("""
+      from typing_extensions import TypedDict
+      from typing import Mapping
+
+      # > A TypedDict type is :term:`assignable` to a type of the form ``Mapping[str, VT]``
+      # > when all value types of the items in the TypedDict
+      # > are assignable to ``VT``.
+      
+      class MovieExtraInt(TypedDict, extra_items=int):
+          name: str
+      
+      class MovieExtraStr(TypedDict, extra_items=str):
+          name: str
+
+      extra_str3: MovieExtraStr = {"name": "Blade Runner", "summary": ""}
+      str_mapping: Mapping[str, str] = extra_str3  # OK
+
+      extra_int3: MovieExtraInt = {"name": "Blade Runner", "year": 1982}
+      int_mapping: Mapping[str, int] = extra_int3
+      #                                ^^^^^^^^^^ WARNING Expected type 'Mapping[str, int]', got 'MovieExtraInt' instead
+      int_str_mapping: Mapping[str, int | str] = extra_int3  # OK
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85421"])
+    fun `extra_items TypedDict assignable to dict when all keys not required`() = test("""
+      from typing import NotRequired, ReadOnly
+      from typing_extensions import TypedDict
+      
+      class IntDict(TypedDict, extra_items=int):
+          pass
+      
+      class IntDictWithNum(IntDict):
+          num: NotRequired[int]
+      
+      def clear_intdict(x: IntDict) -> None:
+          v: dict[str, int] = x  # OK
+          v.clear()  # OK
+      
+      not_required_num_dict: IntDictWithNum = {"num": 1, "bar": 2}
+      regular_dict: dict[str, int] = not_required_num_dict  # OK
+      clear_intdict(not_required_num_dict)  # OK
+      
+      # Cases when it is NOT assignable to dict[str, VT]:
+      
+      # 1. Value type is not consistent with VT
+      class IntDictWithStr(IntDict):
+          description: NotRequired[str]
+      #   ^^^^^^^^^^^ WARNING Expected type 'int', got 'str' instead
+      
+      not_consistent_dict: IntDictWithStr = {"description": "test"}
+      inconsistent: dict[str, int] = not_consistent_dict  # Error: 'str' is not consistent with 'int'
+      #                              ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictWithStr' instead
+      
+      # 2. Item is read-only
+      class IntDictReadOnly(IntDict):
+          readonly_num: NotRequired[ReadOnly[int]]
+      
+      readonly_dict: IntDictReadOnly = {"readonly_num": 42}
+      readonly_error: dict[str, int] = readonly_dict  # Error: 'readonly_num' is read-only
+      #                                ^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictReadOnly' instead
+      
+      # 3. Item is required
+      class IntDictRequired(IntDict):
+          required_num: int
+      #   ^^^^^^^^^^^^ WARNING Required key 'required_num' is not known to 'IntDict'
+      
+      required_dict: IntDictRequired = {"required_num": 10}
+      required_error: dict[str, int] = required_dict  # Error: 'required_num' is required
+      #                                ^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequired' instead
+      
+      # 4. Combination: required and read-only
+      class IntDictRequiredReadOnly(IntDict):
+          id: ReadOnly[int]
+      #   ^^ WARNING Required key 'id' is not known to 'IntDict'
+      
+      required_readonly_dict: IntDictRequiredReadOnly = {"id": 1}
+      combined_error: dict[str, int] = required_readonly_dict  # Error: 'id' is both required and read-only
+      #                                ^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, int]', got 'IntDictRequiredReadOnly' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    fun `closed and extra_items cannot be combined`() = test("""
+      from typing_extensions import TypedDict
+
+      class ClosedTrueWithExtra(TypedDict, closed=True, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      class ClosedFalseWithExtra(TypedDict, closed=False, extra_items=int):  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+          name: str
+
+      Functional = TypedDict('Functional', {'name': str}, closed=True, extra_items=int)  # WARNING Cannot use both 'closed' and 'extra_items' in the same TypedDict definition
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    @TestInspections(disableInspections = [PyTypeCheckerInspection::class])
+    fun `functional extra_items value must be a type`() = test(
+      // PyTypeCheckerInspection separately flags the `type`-typed parameter; here we only assert the dedicated check.
+      """
+      from typing_extensions import TypedDict
+
+      Movie = TypedDict('Movie', {'name': str}, extra_items=2)
+      #                                                     └ WEAK-WARNING Value must be a type
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90596"])
+    @TestCaseOptions(enablePyAnyType = false)
+    fun `closed TypedDict reports unknown key on subscription`() = test(
+      // `enablePyAnyType = false`: the closed-subscription value type is still `null` rather than `Unknown`;
+      // hardening that path is part of the `PyAnyType` migration (PY-88453).
+      """
+      from typing_extensions import TypedDict
+
+      class Movie(TypedDict, closed=True):
+          name: str
+
+      def f(m: Movie) -> None:
+          present = m['name']
+          missing = m['year']  # WARNING TypedDict "Movie" has no key 'year'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90618"])
+    @TestCaseOptions(enablePyAnyType = false)
+    fun `assigning to a read-only extra item is reported`() = test(
+      // `enablePyAnyType = false`: writing an extra key feeds a `null` expected type into the value check;
+      // making that path yield the extra-items type instead is part of the `PyAnyType` migration (PY-88453).
+      """
+      from typing_extensions import TypedDict, ReadOnly
+
+      class Foo(TypedDict, extra_items=ReadOnly[int]):
+          pass
+
+      def f(foo: Foo) -> None:
+          foo["bar"] = 43  # WARNING TypedDict key "bar" is ReadOnly
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class InspectionsUnpackKwargs {
+    @Test
+    @TestFor(issues = ["PY-55044"])
+    fun `Unpack kwargs argument type mismatch`() = test("""
+      from typing import TypedDict, Unpack
+
+      class Movie(TypedDict):
+          name: str
+
+      def foo(**x: Unpack[Movie]):
+          pass
+
+      foo(name=1)
+      #   ^^^^^^ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `dict unpack vs Unpack TypedDict parameter`() = test("""
+      from typing import TypedDict, NotRequired, Required, Unpack
+      
+      class TD1(TypedDict):
+          v1: Required[int]
+          v2: NotRequired[str]
+      
+      class TD2(TD1):
+          v3: Required[str]
+      
+      def func1(**kwargs: Unpack[TD2]) -> None: ...
+      
+      my_dict: dict[str, str] = {}
+      my_typed_dict: TD2
+      func1(**my_dict)
+      #       ^^^^^^^ WARNING Expected type 'TD2', got 'dict[str, str]' instead
+      func1(**my_typed_dict) # OK
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `dict unpack vs unpacked dict literal`() = test("""
+      from typing import TypedDict, NotRequired, Required, Unpack
+      
+      class TD1(TypedDict):
+          v1: Required[int]
+          v2: NotRequired[str]
+      
+      class TD2(TD1):
+          v3: Required[str]
+      
+      def func1(**kwargs: Unpack[TD2]) -> None: ...
+      
+      func1(**{'v1': 1, 'v2': 'test', 'v3': 'test'}) # OK
+      func1(**{'v1': 1, 'v2': 'test', 'v3': 1})
+      #                                     └ WARNING Expected type 'str', got 'int' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `unpacked TypedDict vs signature without TypedDict`() = test("""
+      from typing import Protocol, TypedDict, NotRequired, Required, Unpack
+      
+      class TD1(TypedDict):
+          v1: Required[int]
+          v2: NotRequired[str]
+      
+      class TD2(TD1):
+          v3: Required[str]
+      
+      class TDProtocol(Protocol):
+          def __call__(self, **kwargs: Unpack[TD2]) -> None:
+              ...
+      def foo(*, v1: int, v3: str, v2: str = "") -> None:
+          ...
+      def bar(*, v1: int, v3: str, v2: str = "", **kwargs) -> None:
+          ...
+      _: TDProtocol = foo
+      #               ^^^ WARNING Expected type 'TDProtocol', got '(*, v1: int, v3: str, v2: str) -> None' instead
+      _: TDProtocol = bar # OK, has **kwargs
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `kwargs with not-unpacked TypedDict accepts TypedDict`() = test("""
+      from typing import TypedDict, NotRequired, Required
+
+      class TD1(TypedDict):
+          v1: Required[int]
+          v2: NotRequired[str]
+
+      def func1(**kwargs: TD1) -> None: ...
+      td1 = TD1(v1=1, v2="abc")
+      td2 = TD1(v1=2, v2="def")
+      func1(a=td1, b=td2, c="wrong")
+      #                   ^^^^^^^^^ WARNING Expected type 'TD1', got 'Literal["wrong"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `ParamSpec substituted with Unpack TypedDict kwargs`() = test("""
+      from typing import Callable, TypedDict, Unpack
+
+      def g[**P](fn: Callable[P, None]) -> Callable[P, None]:
+          return fn
+
+      class Person(TypedDict):
+          name: str
+          age: int
+
+      def create_person(**kwargs: Unpack[Person]):
+          pass
+
+      g(create_person)(**{"name": ""})
+      #                  ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
+      g(create_person)(name="John", age="30")
+      #                             ^^^^^^^^ WARNING Expected type 'int', got 'Literal["30"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `ParamSpec substituted with Unpack TypedDict kwargs in class`() = test("""
+      from typing import Callable, TypedDict, Unpack
+
+
+      class Person(TypedDict):
+          name: str
+          age: int
+
+      class Factory[**P]:
+          fn: Callable[P, None]
+
+          def __init__(self, fn: Callable[P, None]):
+              self.fn = fn
+
+
+      def create_person(**kwargs: Unpack[Person]):
+          pass
+
+
+      Factory(create_person).fn(**{"name": ""})
+      #                           ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
+      Factory(create_person).fn(name="")
+      #                                └ WARNING Parameter 'age' unfilled
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-76847"])
+    fun `ParamSpec substituted with Unpack TypedDict kwargs in same call`() = test("""
+      from typing import Callable, TypedDict, Unpack
+      
+      
+      def g[**P](fn: Callable[P, None], *args: P.args, **kwargs: P.kwargs) -> Callable[P, None]:
+          return fn
+      
+      
+      class Person(TypedDict):
+          name: str
+          age: int
+      
+      
+      def create_person(**kwargs: Unpack[Person]):
+          pass
+      
+      
+      g(create_person, **{"name": ""})
+      #                  ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
+      g(create_person, name="")
+      #                       └ WARNING Parameter 'age' unfilled (from ParamSpec 'P')
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-88727", "PY-76847"])
+    fun `fixed tuple args combined with Unpack TypedDict kwargs`() = test("""
+      from typing import TypedDict, Unpack
+
+      class Movie(TypedDict):
+          name: str
+
+      def foo(*args: *tuple[int, str], **kwargs: Unpack[Movie]) -> None: ...
+
+      foo(1, "hello", name="test")
+      foo("wrong", "hello", name="test")
+      #   ^^^^^^^ WARNING Expected type 'int', got 'Literal["wrong"]' instead
+      foo(1, "hello", name=42)
+      #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90614"])
+    fun `dict variable mismatch with Unpack TypedDict kwargs warned once across overloads`() = test("""
+      from typing import TypedDict, Unpack, overload
+      
+      class EmptyKwargs(TypedDict):
+          pass
+      
+      @overload
+      def foo(*, a: int, **kwargs: Unpack[EmptyKwargs]) -> None: ...
+      @overload
+      def foo(*, b: str, **kwargs: Unpack[EmptyKwargs]) -> None: ...
+      def foo(**kwargs) -> None: ...
+      
+      dict_var = {}
+      foo(**dict_var)
+      #     ^^^^^^^^ WARNING Expected type 'EmptyKwargs', got 'dict[Unknown, Unknown]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90614"])
+    fun `unpacked parenthesized dict literal keys are checked`() = test("""
+      from typing import TypedDict, Unpack
+      
+      class FieldKwargs(TypedDict):
+          description: str
+      
+      def foo(**kwargs: Unpack[FieldKwargs]) -> None: ...
+      
+      foo(**((({"description": "foo"}))))
+      foo(**((({"description": "foo", "unknown": "foo"}))))
+      #                               ^^^^^^^^^^^^^^^^ WARNING Extra key 'unknown' for TypedDict 'FieldKwargs'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91511"])
+    fun `unpacked dict literal keys checked against the overload with matching parameter`() = test("""
+      from typing import TypedDict, Unpack, overload
+      
+      class EmptyKwargs(TypedDict):
+          pass
+      
+      @overload
+      def foo(*, description: str) -> None: ...
+      @overload
+      def foo(**kwargs: Unpack[EmptyKwargs]) -> None: ...
+      def foo(**kwargs) -> None: ...
+      
+      foo(**{"unknown": "foo"})
+      #      ^^^^^^^^^^^^^^^^ WARNING Extra key 'unknown' for TypedDict 'EmptyKwargs'
+      foo(**{"description": "foo"})
+      #      ^^^^^^^^^^^^^^^^^^^^ WARNING Extra key 'description' for TypedDict 'EmptyKwargs' FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90856"])
+    fun `non-total Unpack TypedDict kwargs in method and function`() = test("""
+      from typing import TypedDict, Unpack
+
+      class ReqArgs(TypedDict):
+          req_arg: int
+
+      class OptArgs(TypedDict, total=False):
+          opt_arg1: int
+          opt_arg2: str
+
+      class Foo:
+          def m_req(self, **kwargs: Unpack[ReqArgs]) -> None: ...
+          def m_opt(self, **kwargs: Unpack[OptArgs]) -> None: ...
+
+      def f_req(**kwargs: Unpack[ReqArgs]) -> None: ...
+      def f_opt(**kwargs: Unpack[OptArgs]) -> None: ...
+
+      Foo().m_req()
+      #           └ WARNING Parameter 'req_arg' unfilled
+      Foo().m_opt()
+      Foo().m_opt(opt_arg1=1)
+      f_req()
+      #     └ WARNING Parameter 'req_arg' unfilled
+      f_opt()
+      """.trimIndent())
+  }
+
+  @Test
+  @TestFor(issues = ["PY-85440"])
+  fun `subscription does not depend on unrelated items`() = test("""
+    from typing_extensions import TypedDict
+
+    class Mixed(TypedDict, extra_items=str):
+        good: int
+        broken: undefined_name
+    #           ^^^^^^^^^^^^^^ ERROR Unresolved reference 'undefined_name'
+
+    def f(m: Mixed):
+        known = m["good"]
+    #   └ TYPE int
+        extra = m["other"]
+    #   └ TYPE str
+    """)
+
+  @Test
+  @TestFor(issues = ["PY-90291"])
+  fun `TypedDict as Mapping or dict`() = test("""
+    from typing import Mapping, TypedDict, NotRequired
+    
+    
+    # A closed TypedDict has no extra items, so it is assignable to Mapping[str, VT]
+    # when the value types of all its items are subtypes of VT, but it is never
+    # assignable to a mutable dict[str, VT].
+    class Closed1(TypedDict, closed=True, total=False):
+        a: int
+    
+    
+    class Closed2(TypedDict, closed=True):
+        a: int
+    
+    
+    c1: Closed1 = {"a": 1}
+    c2: Closed2 = {"a": 1}
+    
+    m_int_1: Mapping[str, int] = c1
+    m_int_2: Mapping[str, int] = c2
+    m_obj_1: Mapping[str, object] = c1
+    m_str_1: Mapping[str, str] = c1
+    #                            ^^ WARNING Expected type 'Mapping[str, str]', got 'Closed1' instead
+    
+    d_int_1: dict[str, int] = c1
+    #                         ^^ WARNING Expected type 'dict[str, int]', got 'Closed1' instead
+    d_int_2: dict[str, int] = c2
+    #                         ^^ WARNING Expected type 'dict[str, int]', got 'Closed2' instead
+    
+    
+    # A TypedDict with mutable extra items is assignable to dict[str, VT] when every
+    # declared item is mutable, non-required and equivalent to VT.
+    class ExtraInt(TypedDict, extra_items=int):
+        pass
+    
+    
+    class ExtraIntNotRequired1(ExtraInt):
+        name: NotRequired[int]
+    
+    
+    class ExtraIntNotRequired2(TypedDict, extra_items=int, total=False):
+        name: int
+    
+    
+    class ExtraStrName(TypedDict, extra_items=int):
+        name: str
+    
+    
+    ei: ExtraInt = {}
+    einr1: ExtraIntNotRequired1 = {"name": 1}
+    einr2: ExtraIntNotRequired2 = {"name": 1}
+    esn: ExtraStrName = {"name": "s"}
+    
+    m_ei: Mapping[str, int] = ei
+    m_eir: Mapping[str, int] = einr1
+    m_esn_int: Mapping[str, int] = esn
+    #                              ^^^ WARNING Expected type 'Mapping[str, int]', got 'ExtraStrName' instead
+    m_esn_union: Mapping[str, int | str] = esn
+    
+    d_ei: dict[str, int] = ei
+    d_einr1: dict[str, int] = einr1
+    d_einr2: dict[str, int] = einr2
+    
+    
+    # A plain (open) TypedDict implicitly allows read-only extra items of type object,
+    # so it is only assignable to Mapping[str, object] and never to dict[str, VT].
+    class Open(TypedDict):
+        a: int
+    
+    
+    op: Open = {"a": 1}
+    
+    m_open_obj: Mapping[str, object] = op
+    m_open_int: Mapping[str, int] = op
+    #                               ^^ WARNING Expected type 'Mapping[str, int]', got 'Open' instead
+    d_open: dict[str, int] = op
+    #                        ^^ WARNING Expected type 'dict[str, int]', got 'Open' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-55092"])
+  fun `generic typed dict`() = test("""
+    from typing import TypeVar, TypedDict, Generic
+    T = TypeVar('T')
+    T1 = TypeVar('T1')
+    class Group(TypedDict, Generic[T]):
+        key: T
+        group: list[T]
+    class GroupWithOtherKey(Group[T], Generic[T, T1]):
+        some_other_key: T1
+    group: GroupWithOtherKey[str, int] = {"key": 1, "group": [], "some_other_key": ''}
+    #                                            │                                 ^^ WARNING Expected type 'int', got 'str' instead
+    #                                            └ WARNING Expected type 'str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-85704"])
+  fun `typed dict assignable to dict str any`() = test("""
+    from typing import TypedDict, Any, Mapping
+
+    class TD(TypedDict):
+        name: str
+        data: int
+
+    def accepts_json(data: dict[str, Any]): ...
+
+    td: TD = {"name": "name", "data": 1}
+
+    # `Any` as the value type opts out of value-type checking, so a TypedDict is assignable
+    # to `dict[str, Any]` even though its keys are required.
+    accepts_json(td)  # OK
+    accepts_json(TD(name="name", data=1))  # OK
+    json_dict: dict[str, Any] = td  # OK
+    any_mapping: Mapping[str, Any] = td  # OK
+
+    # A TypedDict is still not assignable to `dict[str, object]` or `dict[str, <concrete>]`.
+    object_dict: dict[str, object] = td
+    #                                ^^ WARNING Expected type 'dict[str, object]', got 'TD' instead
+    str_dict: dict[str, int] = td
+    #                          ^^ WARNING Expected type 'dict[str, int]', got 'TD' instead
+    """.trimIndent())
+}

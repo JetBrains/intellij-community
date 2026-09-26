@@ -15,44 +15,52 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.util.*;
-import com.intellij.psi.xml.*;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
+import javax.swing.Icon;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class XsltSupport {
-
-  public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
+public final class XsltSupport {
+  private static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
   public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
   public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
-  public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+  private static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
   public static final TextAttributesKey XSLT_DIRECTIVE =
     TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
-  private static final Map<String, String> XPATH_ATTR_MAP = new THashMap<>(10);
-  private static final Map<String, Set<String>> XPATH_AVT_MAP = new THashMap<>(10);
+  private static final Map<String, String> XPATH_ATTR_MAP = new HashMap<>(10);
+  private static final Map<String, Set<String>> XPATH_AVT_MAP = new HashMap<>(10);
 
   static {
     XPATH_ATTR_MAP.put("select", "");
@@ -66,31 +74,29 @@ public class XsltSupport {
     XPATH_ATTR_MAP.put("value", "number");
     XPATH_ATTR_MAP.put("use", "key");
 
-    XPATH_AVT_MAP.put("element", new THashSet<>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("attribute", new THashSet<>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("namespace", new THashSet<>(Arrays.asList("name")));
-    XPATH_AVT_MAP.put("processing-instruction", new THashSet<>(Arrays.asList("name")));
+    XPATH_AVT_MAP.put("element", Set.of("name", "namespace"));
+    XPATH_AVT_MAP.put("attribute", Set.of("name", "namespace"));
+    XPATH_AVT_MAP.put("namespace", Set.of("name"));
+    XPATH_AVT_MAP.put("processing-instruction", Set.of("name"));
 
-    XPATH_AVT_MAP.put("number", new THashSet<>(
-      Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal")));
-    XPATH_AVT_MAP.put("sort", new THashSet<>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
+    XPATH_AVT_MAP.put("number", Set.of("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal"));
+    XPATH_AVT_MAP.put("sort", Set.of("lang", "data-type", "order", "case-order", "collation"));
 
-    XPATH_AVT_MAP.put("message", new THashSet<>(Arrays.asList("terminate")));
-    XPATH_AVT_MAP.put("value-of", new THashSet<>(Arrays.asList("separator")));
+    XPATH_AVT_MAP.put("message", Set.of("terminate"));
+    XPATH_AVT_MAP.put("value-of", Set.of("separator"));
 
-    XPATH_AVT_MAP.put("result-document", new THashSet<>(Arrays.asList("format", "href", "method", "byte-order-mark",
-                                                                      "cdata-section-elements", "doctype-public", "doctype-system",
-                                                                      "encoding", "escape-uri-attributes", "include-content-type",
-                                                                      "indent", "media-type", "normalization-form",
-                                                                      "omit-xml-declaration", "standalone", "undeclare-prefixes",
-                                                                      "output-version")));
+    XPATH_AVT_MAP.put("result-document", Set.of("format", "href", "method", "byte-order-mark",
+                                                           "cdata-section-elements", "doctype-public", "doctype-system",
+                                                           "encoding", "escape-uri-attributes", "include-content-type",
+                                                           "indent", "media-type", "normalization-form",
+                                                           "omit-xml-declaration", "standalone", "undeclare-prefixes",
+                                                           "output-version"));
   }
 
   private XsltSupport() {
   }
 
-  @NotNull
-  public static PsiFile[] getFiles(XmlAttribute attribute) {
+  public static PsiFile @NotNull [] getFiles(XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
       final List<PsiFile> files = new SmartList<>();
@@ -126,7 +132,7 @@ public class XsltSupport {
     if (isXsltAttribute(attribute)) {
       final String tagName = attribute.getParent().getLocalName();
       final String s = XPATH_ATTR_MAP.get(name);
-      if ((s == null || s.length() > 0) && !tagName.equals(s)) {
+      if ((s == null || !s.isEmpty()) && !tagName.equals(s)) {
         if (!isAttributeValueTemplate(attribute, true)) {
           return false;
         }
@@ -234,7 +240,7 @@ public class XsltSupport {
   }
 
   public static boolean isXsltFile(@NotNull PsiFile psiFile) {
-    if (psiFile.getFileType() != StdFileTypes.XML) return false;
+    if (psiFile.getFileType() != XmlFileType.INSTANCE) return false;
 
     if (!(psiFile instanceof XmlFile)) return false;
 
@@ -292,8 +298,7 @@ public class XsltSupport {
     return "import".equals(tag.getLocalName()) && isXsltCoreTag(tag) && tag.getAttribute("href", null) != null;
   }
 
-  @Nullable
-  public static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
+  public static @Nullable PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
     final XmlAttributeValue valueElement = attribute.getValueElement();
     if (valueElement != null) {
       final PsiElement firstChild = valueElement.getFirstChild();
@@ -316,7 +321,7 @@ public class XsltSupport {
   }
 
   public static int getAVTOffset(String value, int i) {
-    do {
+    while (true) {
       i = value.indexOf('{', i);
       if (i != -1 && i == value.indexOf("{{", i)) {
         i += 2;
@@ -325,7 +330,6 @@ public class XsltSupport {
         break;
       }
     }
-    while (i != -1);
     return i;
   }
 
@@ -349,18 +353,18 @@ public class XsltSupport {
   }
 
   public static Icon createXsltIcon(Icon icon) {
-    return LayeredIcon.create(icon, XpathIcons.Xslt_filetype_overlay);
+    return XpathIcons.XsltFiletypeOverlay;
   }
 
   private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {
     public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
+    @Override
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);
       }
 
-      final XmlFile xmlFile = (XmlFile)psiFile;
       if (psiFile instanceof PsiFileEx) {
         if (((PsiFileEx)psiFile).isContentsLoaded()) {
           final XmlDocument doc = xmlFile.getDocument();
@@ -384,7 +388,8 @@ public class XsltSupport {
       }
 
       final XsltChecker xsltChecker = new XsltChecker();
-      NanoXmlUtil.parseFile(psiFile, xsltChecker);
+      CharSequenceReader reader = new CharSequenceReader(psiFile.getViewProvider().getContents());
+      NanoXmlUtil.parse(reader, xsltChecker);
       return CachedValueProvider.Result.create(xsltChecker.getLanguageLevel(), psiFile);
     }
   }

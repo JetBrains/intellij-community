@@ -1,15 +1,15 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 public class ExTest {
     public static String maybeThrow(String data) throws Ex {
         throw new Ex(data);
     }
 
     {
-        String[] a = new String[0];
+        String[] a = null;
         try {
             a = new String[]{maybeThrow("")};
-        } catch (Ex ex) {
-            ex.printStackTrace();
+        } catch (Ex e) {
+            throw new RuntimeException(e);
         }
         System.out.println(a);
     }

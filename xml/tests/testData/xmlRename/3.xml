@@ -1,0 +1,4 @@
+<!DOCTYPE tag [
+<!ELEMENT t<caret>ag (#PCDATA)>
+]>
+<tag></tag>

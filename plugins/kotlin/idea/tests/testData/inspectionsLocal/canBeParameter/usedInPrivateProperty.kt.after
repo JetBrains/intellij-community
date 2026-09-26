@@ -1,0 +1,4 @@
+// FIX: Remove 'val' from parameter
+class PrivateUsedInProperty(x: Int) {
+    val y = x
+}

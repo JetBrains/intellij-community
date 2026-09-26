@@ -23,9 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
   @Override
   protected String getBasePath() {
@@ -33,8 +30,8 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testFormatting() {
-    Project currProject = ourProject;
-    ourProject = ProjectManager.getInstance().getDefaultProject();
+    Project currProject = getProject();
+    setProject(ProjectManager.getInstance().getDefaultProject());
     try {
       doFileTest(
         "class Foo{}",
@@ -43,7 +40,7 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
         "}");
     }
     finally {
-      ourProject = currProject;
+      setProject(currProject);
     }
   }
 

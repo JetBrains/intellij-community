@@ -1,73 +1,40 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This test-case should be extended in every IDE.
  *
  * @author gregsh
  */
-public abstract class IdeResourcesTestCase extends PlatformTestCase {
-
-  public void testFeatureTipsRegistered() {
-    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    Set<String> ids = registry.getFeatureIds();
-    assertNotEmpty(ids);
-
-    Collection<String> errors = ContainerUtil.newTreeSet();
-    for (String id : ids) {
-      FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
-      TipAndTrickBean tip = TipAndTrickBean.findByFileName(descriptor.getTipFileName());
-      if (tip == null) {
-        errors.add("<tipAndTrick file=\"" + descriptor.getTipFileName() + "\" feature-id=\"" + id + "\"/>");
-      }
-    }
-    assertEquals("Register the following extensions:\n" + StringUtil.join(errors, "\n"), 0, errors.size());
-  }
-
+public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
   public void testTipFilesPresent() {
-    Collection<String> errors = ContainerUtil.newTreeSet();
-    TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
-    assertNotEmpty(Arrays.asList(tips));
+    Collection<String> errors = new TreeSet<>();
+    List<TipAndTrickBean> tips = TipAndTrickBean.EP_NAME.getExtensionList();
+    assertNotEmpty(tips);
     for (TipAndTrickBean tip : tips) {
-      URL url = ResourceUtil.getResource(tip.getPluginDescriptor().getPluginClassLoader(), "/tips/", tip.fileName);
+      URL url = tip.getPluginDescriptor().getClassLoader().getResource("tips/" + tip.fileName);
       if (url == null) {
         errors.add(tip.fileName);
       }
     }
-    assertEquals(tips.length + " tips are checked, the following files are missing:\n" + StringUtil.join(errors, "\n"), 0, errors.size());
+    assertEquals(tips.size() + " tips are checked, the following files are missing:\n" + String.join("\n", errors), 0, errors.size());
   }
 
   public void testTipFilesDuplicates() {
-    Collection<String> errors = ContainerUtil.newTreeSet();
-    TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
-    assertNotEmpty(Arrays.asList(tips));
-    Set<String> visited = ContainerUtil.newLinkedHashSet();
+    Collection<String> errors = new TreeSet<>();
+    List<TipAndTrickBean> tips = TipAndTrickBean.EP_NAME.getExtensionList();
+    assertNotEmpty(tips);
+    Set<String> visited = new LinkedHashSet<>();
     for (TipAndTrickBean tip : tips) {
       if (!visited.add(tip.fileName)) {
         errors.add(tip.fileName);

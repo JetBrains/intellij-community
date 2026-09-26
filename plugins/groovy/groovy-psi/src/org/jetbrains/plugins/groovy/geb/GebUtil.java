@@ -1,8 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.geb;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -15,18 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GebUtil {
-
-  private static final LightCacheKey<Map<String, PsiMember>> KEY = LightCacheKey.createByFileModificationCount();
+public final class GebUtil {
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
                                                     PsiElement place,
@@ -48,13 +51,9 @@ public class GebUtil {
   }
 
   public static Map<String, PsiMember> getContentElements(@NotNull PsiClass pageOrModuleClass) {
-    Map<String, PsiMember> res = KEY.getCachedValue(pageOrModuleClass);
-    if (res == null) {
-      res = calculateContentElements(pageOrModuleClass);
-      res = KEY.putCachedValue(pageOrModuleClass, res);
-    }
-
-    return res;
+    return CachedValuesManager.getCachedValue(pageOrModuleClass, () -> Result.create(
+      calculateContentElements(pageOrModuleClass), pageOrModuleClass
+    ));
   }
 
   private static Map<String, PsiMember> calculateContentElements(@NotNull PsiClass pageOrModuleClass) {
@@ -69,8 +68,7 @@ public class GebUtil {
     PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {
-      if (e instanceof GrMethodCall) {
-        GrMethodCall methodCall = (GrMethodCall)e;
+      if (e instanceof GrMethodCall methodCall) {
 
         GrExpression invokedExpression = methodCall.getInvokedExpression();
         if (!(invokedExpression instanceof GrReferenceExpression)) continue;
@@ -106,16 +104,14 @@ public class GebUtil {
     return res;
   }
 
-  @NotNull
-  private static PsiField extractFieldForContent(@NotNull PsiClass pageOrModuleClass,
-                                                 @NotNull PsiType objectType, String name,
-                                                 @NotNull GrExpression invokedExpression,
-                                                 @NotNull GrClosableBlock block) {
+  private static @NotNull PsiField extractFieldForContent(@NotNull PsiClass pageOrModuleClass,
+                                                          @NotNull PsiType objectType, String name,
+                                                          @NotNull GrExpression invokedExpression,
+                                                          @NotNull GrClosableBlock block) {
     GrLightField field = new GrLightField(pageOrModuleClass, name, objectType, invokedExpression) {
 
       @Override
-      @NotNull
-      public PsiType getType() {
+      public @NotNull PsiType getType() {
         PsiType type = block.getReturnType();
         return type != null ? type : super.getType();
       }
@@ -129,11 +125,10 @@ public class GebUtil {
     return field;
   }
 
-  @NotNull
-  private static PsiMethod extractMethodForContent(@NotNull PsiClass pageOrModuleClass,
-                                                   @NotNull String name,
-                                                   @NotNull GrExpression invokedExpression,
-                                                   @NotNull GrClosableBlock block) {
+  private static @NotNull PsiMethod extractMethodForContent(@NotNull PsiClass pageOrModuleClass,
+                                                            @NotNull String name,
+                                                            @NotNull GrExpression invokedExpression,
+                                                            @NotNull GrClosableBlock block) {
     GrLightMethodBuilder method = new GrLightMethodBuilder(pageOrModuleClass.getManager(), name) {
       @Override
       public PsiType getReturnType() {

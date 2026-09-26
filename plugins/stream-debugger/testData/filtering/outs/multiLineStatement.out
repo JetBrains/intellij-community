@@ -1,0 +1,21 @@
+LineBreakpoint created at MultiLineStatement.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MultiLineStatement
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Stopped at MultiLineStatement.java:6
+=== before sum (bytecode offset 18) ===
+  [0] traceable IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> sum
+  [2] traceable IntStream.of(7,8,9) -> sum
+=== before sum#1 (bytecode offset 42) ===
+  [0] filtered  IntStream.of(1,2,3) -> sum
+  [1] traceable IntStream.of(4,5,6) -> sum
+  [2] traceable IntStream.of(7,8,9) -> sum
+=== before sum#2 (bytecode offset 69) ===
+  [0] filtered  IntStream.of(1,2,3) -> sum
+  [1] filtered  IntStream.of(4,5,6) -> sum
+  [2] traceable IntStream.of(7,8,9) -> sum
+Resuming MultiLineStatement.java:6
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+45

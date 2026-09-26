@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -25,22 +24,31 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.CustomChildren;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.TypeChooser;
 import com.intellij.util.xml.events.DomEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class TreeIncrementalUpdateTest extends DomTestCase {
 
   public void testRenameCollectionTag() {
     final MyElement rootElement = createPhysicalElement(
-      "<?xml version='1.0' encoding='UTF-8'?>\n" + "<a>\n" + " <boy>\n" + " </boy>\n" + " <girl/>\n" + "</a>");
+      """
+        <?xml version='1.0' encoding='UTF-8'?>
+        <a>
+         <boy>
+         </boy>
+         <girl/>
+        </a>""");
     myCallRegistry.clear();
     assertEquals(1, rootElement.getBoys().size());
     assertEquals(1, rootElement.getGirls().size());
@@ -76,12 +84,13 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testRenameFixedTag() {
-    final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
-                                                         "<a>\n" +
-                                                         " <aboy>\n" +
-                                                         " </aboy>\n" +
-                                                         " <agirl/>\n" +
-                                                         "</a>");
+    final XmlFile file = (XmlFile)createFile("file.xml", """
+      <?xml version='1.0' encoding='UTF-8'?>
+      <a>
+       <aboy>
+       </aboy>
+       <agirl/>
+      </a>""");
     final DomFileElementImpl<MyElement> fileElement = getDomManager().getFileElement(file, MyElement.class, "a");
     myCallRegistry.clear();
     final MyElement rootElement = fileElement.getRootElement();
@@ -112,12 +121,13 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testDocumentChange() {
-    final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
-                                                         "<a>\n" +
-                                                         " <child>\n" +
-                                                         "  <child/>\n" +
-                                                         " </child>\n" +
-                                                         "</a>");
+    final XmlFile file = (XmlFile)createFile("file.xml", """
+      <?xml version='1.0' encoding='UTF-8'?>
+      <a>
+       <child>
+        <child/>
+       </child>
+      </a>""");
     final DomFileElementImpl<MyElement> fileElement =
       getDomManager().getFileElement(file, MyElement.class, "a");
     myCallRegistry.clear();
@@ -146,13 +156,14 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testDocumentChange2() {
-    final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
-                                                         "<!DOCTYPE ejb-jar PUBLIC \"-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n" +
-                                                         "<a>\n" +
-                                                         " <child>\n" +
-                                                         "  <child/>\n" +
-                                                         " </child>\n" +
-                                                         "</a>");
+    final XmlFile file = (XmlFile)createFile("file.xml", """
+      <?xml version='1.0' encoding='UTF-8'?>
+      <!DOCTYPE ejb-jar PUBLIC "-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN" "http://java.sun.com/dtd/ejb-jar_2_0.dtd">
+      <a>
+       <child>
+        <child/>
+       </child>
+      </a>""");
     final DomFileElementImpl<MyElement> fileElement =
       getDomManager().getFileElement(file, MyElement.class, "a");
     myCallRegistry.clear();
@@ -183,13 +194,14 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testMoveUp() {
-    final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
-                                                         "<a>\n" +
-                                                         " <child>\n" +
-                                                         "  <aboy />\n" +
-                                                         "  <agirl/>\n" +
-                                                         " </child>\n" +
-                                                         "</a>");
+    final XmlFile file = (XmlFile)createFile("file.xml", """
+      <?xml version='1.0' encoding='UTF-8'?>
+      <a>
+       <child>
+        <aboy />
+        <agirl/>
+       </child>
+      </a>""");
     final DomFileElementImpl<MyElement> fileElement = getDomManager().getFileElement(file, MyElement.class, "a");
     myCallRegistry.clear();
     final MyElement rootElement = fileElement.getRootElement();
@@ -213,11 +225,12 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   public void testRemoveAttributeParent() {
-    final XmlFile file = (XmlFile)createFile("file.xml", "<?xml version='1.0' encoding='UTF-8'?>\n" +
-                                                         "<!DOCTYPE ejb-jar PUBLIC \"-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n" +
-                                                         "<a>\n" +
-                                                         " <child-element xxx=\"239\"/>\n" +
-                                                         "</a>");
+    final XmlFile file = (XmlFile)createFile("file.xml", """
+      <?xml version='1.0' encoding='UTF-8'?>
+      <!DOCTYPE ejb-jar PUBLIC "-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN" "http://java.sun.com/dtd/ejb-jar_2_0.dtd">
+      <a>
+       <child-element xxx="239"/>
+      </a>""");
     final DomFileElementImpl<MyElement> fileElement =
       getDomManager().getFileElement(file, MyElement.class, "a");
     myCallRegistry.clear();
@@ -226,9 +239,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
     final GenericAttributeValue<String> xxx = oldLeaf.getXxx();
     final XmlTag oldLeafTag = oldLeaf.getXmlTag();
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      oldLeafTag.delete();
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> oldLeafTag.delete());
 
     assertFalse(oldLeaf.isValid());
     assertFalse(xxx.isValid());
@@ -260,7 +271,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
   }
 
   private void assertNoCache(XmlTag tag) {
-    assertNull(tag.getText(), getCachedHandler(tag));
+    assertNull(tag.getText(), getDomManager().getDomHandler(tag));
     if (tag.isValid()) {
       for (XmlTag xmlTag : tag.getSubTags()) {
         assertNoCache(xmlTag);
@@ -595,7 +606,7 @@ public class TreeIncrementalUpdateTest extends DomTestCase {
 
   */
 
-  private static TypeChooser createClassChooser() {
+  private TypeChooser createClassChooser() {
     return new TypeChooser() {
       @Override
       public Type chooseType(final XmlTag tag) {

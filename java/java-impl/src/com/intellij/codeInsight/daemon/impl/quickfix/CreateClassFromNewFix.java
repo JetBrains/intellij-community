@@ -1,87 +1,106 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
-public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
-  private final SmartPsiElementPointer myNewExpression;
+import java.util.Objects;
+
+public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements IntentionActionWithModCommandFallback {
+  private final SmartPsiElementPointer<PsiNewExpression> myNewExpression;
 
   public CreateClassFromNewFix(PsiNewExpression newExpression) {
     myNewExpression = SmartPointerManager.getInstance(newExpression.getProject()).createSmartPsiElementPointer(newExpression);
   }
 
   protected PsiNewExpression getNewExpression() {
-    return (PsiNewExpression)myNewExpression.getElement();
+    return myNewExpression.getElement();
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
-    assert ApplicationManager.getApplication().isWriteAccessAllowed();
-    final Project project = targetClass.getProject();
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiNewExpression newExpression = getNewExpression();
+    if (newExpression == null) {
+      return;
+    }
 
-    TransactionGuard.getInstance().submitTransactionLater(project, () -> {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      final PsiNewExpression newExpression = getNewExpression();
-      if (newExpression == null) {
-        return;
-      }
-
-      final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-      final PsiClass[] psiClass = new PsiClass[1];
-      CommandProcessor.getInstance().executeCommand(newExpression.getProject(), () ->
-        psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null), getText(), getText());
-
-      WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
-        setupClassFromNewExpression(psiClass[0], newExpression);
-      });
-    });
+    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
+    PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
+    if (psiClass != null) {
+      WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+    }
   }
 
-  protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
-    assert ApplicationManager.getApplication().isWriteAccessAllowed();
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiNewExpression element = myNewExpression.getElement();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
+    if (classReference == null) return IntentionPreviewInfo.EMPTY;
+    PsiClass aClass = (PsiClass)psiFile.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
+    setupClassFromNewExpression(aClass, element);
+    setupGenericParameters(aClass, classReference);
+    CodeStyleManager.getInstance(project).reformat(aClass);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
+  }
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
-    PsiClass aClass = psiClass;
-    if (aClass == null) return;
+  @NotNull
+  CreateClassKind getKind() {
+    return CreateClassKind.CLASS;
+  }
 
+  protected void setupClassFromNewExpression(final @NotNull PsiClass aClass, final @NotNull PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference != null) {
+    if (classReference != null && aClass.isPhysical()) {
       classReference.bindToElement(aClass);
     }
     setupInheritance(newExpression, aClass);
@@ -89,49 +108,87 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiExpressionList argList = newExpression.getArgumentList();
     final Project project = aClass.getProject();
     if (argList != null && !argList.isEmpty()) {
-      PsiMethod constructor = elementFactory.createConstructor();
-      constructor = (PsiMethod)aClass.add(constructor);
-
       TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
-      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
-
-      setupSuperCall(aClass, constructor, templateBuilder);
-
-      getReferenceElement(newExpression).bindToElement(aClass);
-      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
-      final Template template = templateBuilder.buildTemplate();
-      template.setToReformat(true);
-
-      final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
-      if (editor == null) return;
-      final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
-      final Runnable runnable = () -> {
-        WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
-          try {
-            editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-          }
-          finally {
-            textRange.dispose();
-          }
-        });
-        startTemplate(editor, template, project, null, getText());
-      };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();
+      PsiElement endAfter = setupConstructor(aClass, newExpression, argList, templateBuilder);
+      if (endAfter != null) {
+        templateBuilder.setEndVariableAfter(endAfter);
       }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable);
+
+      if (aClass.isPhysical()) {
+        getReferenceElement(newExpression).bindToElement(aClass);
       }
+      CreateFromUsageBaseFix.startTemplate(project, aClass, templateBuilder.buildTemplate(), getText());
     }
     else {
-      positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
+      CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
 
-  @Nullable
-  public static PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
+  /**
+   * Adds the members which the arguments of the new expression need. It adds a constructor, and it adds
+   * the template fields into the builder. It starts no template, so a
+   * {@link com.intellij.modcommand.ModCommandAction} can call it with a builder which drops every field.
+   *
+   * @param aClass        the new class
+   * @param newExpression the expression which creates an instance of the new class
+   * @param argList       the arguments of the new expression
+   * @param builder       the builder which gets one field per parameter
+   * @return the element after which the template puts the caret, or null when the template chooses the
+   * position itself
+   */
+  @Nullable PsiElement setupConstructor(@NotNull PsiClass aClass,
+                                        @NotNull PsiNewExpression newExpression,
+                                        @NotNull PsiExpressionList argList,
+                                        @NotNull TemplateBuilder builder) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
+    PsiMethod constructor = elementFactory.createConstructor();
+    constructor = (PsiMethod)aClass.add(constructor);
+
+    CreateFromUsageUtils.setupMethodParameters(constructor, builder, argList, getTargetSubstitutor(newExpression));
+
+    return createSuperCall(aClass, constructor).endAfter();
+  }
+
+  /**
+   * Adds the members which the new expression needs, and starts no template. A
+   * {@link com.intellij.modcommand.ModCommandAction} calls it, so it navigates nowhere.
+   *
+   * @param aClass        the new class
+   * @param newExpression the expression which creates an instance of the new class
+   * @param builder       the builder which gets one field per parameter
+   */
+  void setupNewClass(@NotNull PsiClass aClass, @NotNull PsiNewExpression newExpression, @NotNull TemplateBuilder builder) {
+    setupInheritance(newExpression, aClass);
+    PsiExpressionList argList = newExpression.getArgumentList();
+    if (argList != null && !argList.isEmpty()) {
+      setupConstructor(aClass, newExpression, argList, builder);
+    }
+  }
+
+  /**
+   * Adds the {@code super()} call which a new constructor needs, and leaves the caret alone. A
+   * {@link com.intellij.modcommand.ModCommandAction} builds the body of the constructor itself, so it
+   * decides the caret position on its own.
+   *
+   * @return the super constructor whose arguments the call needs, or null when the super class has a
+   * default constructor
+   */
+  public static @Nullable PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor)
     throws IncorrectOperationException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
+    return createSuperCall(targetClass, constructor).superConstructor();
+  }
+
+  /**
+   * @param superConstructor the super constructor whose arguments the new {@code super()} call needs, or null when
+   *                         the super class has a default constructor
+   * @param endAfter         the element after which the template puts the caret
+   */
+  private record SuperCall(@Nullable PsiMethod superConstructor, @NotNull PsiElement endAfter) {
+  }
+
+  private static @NotNull SuperCall createSuperCall(PsiClass targetClass, PsiMethod constructor)
+    throws IncorrectOperationException {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
@@ -157,13 +214,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
         PsiMethodCallExpression call = (PsiMethodCallExpression)statement.getExpression();
         PsiExpressionList argumentList = call.getArgumentList();
-        templateBuilder.setEndVariableAfter(argumentList.getFirstChild());
-        return supConstructor;
+        return new SuperCall(supConstructor, argumentList.getFirstChild());
       }
     }
 
-    templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
-    return supConstructor;
+    return new SuperCall(null, constructor.getBody().getLBrace());
   }
 
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
@@ -173,12 +228,11 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     for (ExpectedTypeInfo expectedType : expectedTypes) {
       PsiType type = expectedType.getType();
-      if (!(type instanceof PsiClassType)) continue;
-      final PsiClassType classType = (PsiClassType)type;
+      if (!(type instanceof PsiClassType classType)) continue;
       PsiClass aClass = classType.resolve();
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
       if (aClass.isInterface()) {
         PsiReferenceList implementsList = targetClass.getImplementsList();
@@ -199,13 +253,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
 
     PsiElement q = referenceElement.getQualifier();
-    if (q instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)q;
-      PsiElement psiElement = qualifier.resolve();
-      if (psiElement instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)psiElement;
-        return psiClass.getContainingFile();
-      }
+    if (q instanceof PsiJavaCodeReferenceElement qualifier && qualifier.resolve() instanceof PsiClass psiClass) {
+      return psiClass.getContainingFile();
     }
 
     return null;
@@ -214,7 +263,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiNewExpression expression = getNewExpression();
-    if (expression == null || !expression.getManager().isInProject(expression)) return null;
+    if (expression == null ||
+        (!expression.getManager().isInProject(expression) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(expression)))) {
+      return null;
+    }
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(expression);
     if (referenceElement == null) return null;
     if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return expression;
@@ -236,7 +288,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (expression.getQualifier() != null) {
+    if (rejectContainer(expression)) {
       return false;
     }
 
@@ -255,8 +307,24 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  protected String getText(final String varName) {
-    return QuickFixBundle.message("create.class.from.new.text", varName);
+  protected boolean rejectContainer(PsiNewExpression expression) {
+    if (expression.getQualifier() != null) {
+      return true;
+    }
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    if (classReference != null && classReference.isQualified()) {
+      PsiJavaCodeReferenceElement containerReference = ObjectUtils.tryCast(classReference.getQualifier(), PsiJavaCodeReferenceElement.class);
+      if (containerReference != null) {
+        PsiElement targetClass = containerReference.resolve();
+        return !(targetClass instanceof PsiClass) || !InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)targetClass, expression, true, true);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  protected @IntentionName String getText(final String varName) {
+    return CommonQuickFixBundle.message("fix.create.title.x", getKind().getDescriptionAccusative(), varName);
   }
 
   protected static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
@@ -269,13 +337,68 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.class.from.new.family");
   }
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
     return false;
+  }
+
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    PsiNewExpression newExpression = getNewExpression();
+    return newExpression == null ? null : new CreateClassFromNewModCommandAction(newExpression);
+  }
+
+  /**
+   * Creates the class in the directory of the current file. The fix which the user starts in the editor
+   * asks for the directory, which a {@link ModCommandAction} cannot do.
+   */
+  private final class CreateClassFromNewModCommandAction extends PsiUpdateModCommandAction<PsiNewExpression> {
+    private CreateClassFromNewModCommandAction(@NotNull PsiNewExpression newExpression) {
+      super(newExpression);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CreateClassFromNewFix.this.getFamilyName();
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression) {
+      String name = getNewClassName(newExpression);
+      if (name == null) return null;
+      String text = getAvailableText(context.project(), context.offset());
+      if (text == null) return null;
+      if (CreateFromUsageUtils.findClassDirectory(context.file(), name) == null) return null;
+      return Presentation.of(text);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression, @NotNull ModPsiUpdater updater) {
+      String name = getNewClassName(newExpression);
+      if (name == null) return;
+      PsiDirectory directory = CreateFromUsageUtils.findClassDirectory(context.file(), name);
+      if (directory == null) return;
+      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+      PsiClass aClass = CreateFromUsageUtils.createClassInDirectory(
+        getKind(), updater.getWritable(directory), name, reference, newExpression.getContainingFile(), null);
+      if (aClass == null) return;
+      setupNewClass(aClass, newExpression, DummyTemplateBuilder.INSTANCE);
+      updater.moveCaretTo(Objects.requireNonNullElse(aClass.getNameIdentifier(), aClass));
+    }
+
+    /**
+     * @param newExpression the expression which creates an instance of the new class
+     * @return the name of the new class, or null when the reference has a qualifier which decides the
+     * package or the container class
+     */
+    private @Nullable String getNewClassName(@NotNull PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+      if (reference == null || reference.getQualifier() != null) return null;
+      return reference.getReferenceName();
+    }
   }
 }

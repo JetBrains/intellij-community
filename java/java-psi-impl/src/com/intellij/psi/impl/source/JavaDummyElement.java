@@ -15,13 +15,15 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.lazyParser.IncompleteFragmentParsingException;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.impl.source.tree.JavaElementType.DUMMY_ELEMENT;
 
 /**
  * Dummy file element for using together with DummyHolder.
@@ -33,24 +35,23 @@ public class JavaDummyElement extends FileElement {
   private final boolean myConsumeAll;
   private Throwable myParserError;
 
-  public JavaDummyElement(@Nullable final CharSequence text,
-                          @NotNull final JavaParserUtil.ParserWrapper parser,
-                          @NotNull final LanguageLevel level) {
+  public JavaDummyElement(@Nullable CharSequence text,
+                          JavaParserUtil.@NotNull ParserWrapper parser,
+                          @NotNull LanguageLevel level) {
     this(text, parser, level, false);
   }
 
-  public JavaDummyElement(@Nullable final CharSequence text,
-                          @NotNull final JavaParserUtil.ParserWrapper parser,
-                          @NotNull final LanguageLevel level,
-                          final boolean consumeAll) {
-    super(JavaElementType.DUMMY_ELEMENT, text);
-    myParser = parser;
-    myLanguageLevel = level;
-    myConsumeAll = consumeAll;
+  public JavaDummyElement(@Nullable CharSequence text,
+                          JavaParserUtil.@NotNull ParserWrapper parser,
+                          @NotNull LanguageLevel level,
+                          boolean consumeAll) {
+    super(DUMMY_ELEMENT, text);
+    this.myParser = parser;
+    this.myLanguageLevel = level;
+    this.myConsumeAll = consumeAll;
   }
 
-  @NotNull
-  public JavaParserUtil.ParserWrapper getParser() {
+  public @NotNull JavaParserUtil.ParserWrapper getParser() {
     return myParser;
   }
 
@@ -58,8 +59,7 @@ public class JavaDummyElement extends FileElement {
     return myConsumeAll;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
@@ -68,7 +68,7 @@ public class JavaDummyElement extends FileElement {
     try {
       return super.getFirstChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }
@@ -79,14 +79,13 @@ public class JavaDummyElement extends FileElement {
     try {
       return super.getLastChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }
   }
 
-  @Nullable
-  public Throwable getParserError() {
+  public @Nullable Throwable getParserError() {
     return myParserError;
   }
 }

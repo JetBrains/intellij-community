@@ -1,0 +1,8 @@
+// "Add function to supertype…" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+interface A {}
+interface B {}
+class C: A, B {
+  <caret>override fun foo() {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddFunctionToSupertypeFix

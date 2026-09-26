@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JTree;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.Image;
 import java.awt.Point;
 
 public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
@@ -34,27 +23,18 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JTree source = new Tree();
+    TreeTestUtil.assertTreeUI(source);
     panel.add(source, BorderLayout.WEST);
-    final DnDManager dndManager = new DnDManagerImpl(null);
+    final DnDManager dndManager = new DnDManagerImpl();
     dndManager.registerSource(new DnDSource() {
-      public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+      @Override
+      public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
         return true;
       }
 
-      public DnDDragStartBean startDragging(DnDAction action, Point point) {
+      @Override
+      public DnDDragStartBean startDragging(DnDAction action, @NotNull Point point) {
         return new DnDDragStartBean(source.getLastSelectedPathComponent().toString());
-      }
-
-
-      @Nullable
-      public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-        return null;
-      }
-
-      public void dragDropEnd() {
-      }
-
-      public void dropActionChanged(final int gestureModifiers) {
       }
     }, source);
 
@@ -67,26 +47,24 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     final JLabel delegate2Label = new JLabel("Delegate 2");
     delegates.add(delegate2Label);
     final DnDTarget delegee1 = new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible(true, "Delegee 1");
         aEvent.setHighlighting(delegate1Label, H_ARROWS | RECTANGLE);
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         System.out.println("Delegee 1 accepted drop");
-      }
-
-      public void cleanUpOnLeave() {
-      }
-
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
     final DnDTarget delegee2 = new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible("Delegee 2", new DropActionHandler() {
+          @Override
           public void performDrop(DnDEvent aEvent) {
             System.out.println("Delegee 2 accepted drop");
           }
@@ -95,18 +73,14 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
 
-      }
-
-      public void cleanUpOnLeave() {
-      }
-
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     };
 
     dndManager.registerTarget(new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         if (aEvent.getCurrentOverComponent() == delegate1Label) {
           return aEvent.delegateUpdateTo(delegee1);
@@ -118,39 +92,27 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         if (aEvent.getCurrentOverComponent() == delegate1Label) {
           aEvent.delegateDropTo(delegee1);
         }
       }
-
-      public void cleanUpOnLeave() {
-      }
-
-
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-      }
     }, delegates);
-
-
 
     tabs.add("Delegates", delegates);
 
     final JPanel xy = new JPanel();
     dndManager.registerTarget(new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         aEvent.setDropPossible(true, "Drop to " + asXyString(aEvent));
         return false;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         System.out.println("Droppped to " + asXyString(aEvent));
-      }
-
-      public void cleanUpOnLeave() {
-      }
-
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, xy);
 

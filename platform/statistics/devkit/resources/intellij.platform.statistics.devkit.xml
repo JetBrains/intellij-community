@@ -1,0 +1,71 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.json"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.statistics.config"/>
+    <module name="intellij.platform.statistics.uploader"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <actions>
+    <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
+      <action internal="true" id="OpenStatisticsEventLogAction"
+              class="com.intellij.platform.statistics.devkit.actions.OpenStatisticsEventLogAction"/>
+      <action internal="true" id="RecordStateCollectors"
+              class="com.intellij.platform.statistics.devkit.actions.RecordStateStatisticsEventLogAction"/>
+      <action internal="true" id="AddGroupToTestSchemeAction"
+              class="com.intellij.platform.statistics.devkit.actions.scheme.AddGroupToTestSchemeAction"/>
+      <action internal="true" id="CollectFUStatisticsAction"
+              class="com.intellij.platform.statistics.devkit.actions.CollectFUStatisticsAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+    <action internal="true" id="EditTestSchemeAction" class="com.intellij.platform.statistics.devkit.actions.scheme.EditEventsTestSchemeAction"/>
+    <action internal="true" id="CleanupEventsTestSchemeAction" class="com.intellij.platform.statistics.devkit.actions.CleanupEventsTestSchemeAction"/>
+    <action internal="true" id="SendEventLogStatistics" class="com.intellij.platform.statistics.devkit.actions.SendEventLogAction"/>
+    <action internal="true" id="OpenEventsTestSchemeFileAction" class="com.intellij.platform.statistics.devkit.actions.OpenEventsTestSchemeFileAction"/>
+    <action internal="true" id="ConfigureEventsSchemeFileAction" class="com.intellij.platform.statistics.devkit.actions.ConfigureEventsSchemeFileAction"/>
+    <action internal="true" id="OpenEventsSchemeFileAction" class="com.intellij.platform.statistics.devkit.actions.OpenEventsSchemeFileAction"/>
+    <action internal="true" id="ReportSettingsToFUS" class="com.intellij.platform.statistics.devkit.actions.ReportSettingsToFUSAction"/>
+    <group internal="true" id="OpenEventLogFileAction" class="com.intellij.platform.statistics.devkit.groups.OpenEventLogFileActionGroup"/>
+    <group internal="true" id="CleanupEventLog" class="com.intellij.platform.statistics.devkit.groups.CleanupEventLogByIdActionGroup"/>
+    <group internal="true" id="UpdateEventsSchemeAction" class="com.intellij.platform.statistics.devkit.groups.UpdateEventsSchemeActionGroup"/>
+    <action internal="true" id="GenerateEventsScheme" class="com.intellij.platform.statistics.devkit.actions.GenerateEventsScheme"/>
+    <action internal="true" id="TestParseEventsSchemeAction"
+            class="com.intellij.platform.statistics.devkit.actions.TestParseEventsSchemeAction"/>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup displayType="BALLOON" id="FeatureUsageStatistics" bundle="messages.StatisticsBundle" key="stats.feature.usage.statistics"/>
+    <completion.contributor language="JSON"
+                            implementationClass="com.intellij.platform.statistics.devkit.actions.scheme.ValidationRulesCompletionContributor"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.internal.statistic.devkit.toolwindow.logGroupActionsProvider"
+                    interface="com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogGroupActionsProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

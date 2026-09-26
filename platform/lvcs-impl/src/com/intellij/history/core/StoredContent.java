@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.core;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class StoredContent extends Content {
   private static final int UNAVAILABLE = 0;
+
+  public static final StoredContent UNAVAILABLE_CONTENT = new StoredContent(UNAVAILABLE);
 
   private int myContentId;
 
@@ -47,13 +37,13 @@ public class StoredContent extends Content {
       }
 
       @Override
-      public void write(DataOutput out) throws IOException {
+      public void write(DataOutput out) {
         throw new UnsupportedOperationException();
       }
     };
   }
 
-  @TestOnly
+  @VisibleForTesting
   public StoredContent(int contentId) {
     myContentId = contentId;
   }
@@ -69,10 +59,10 @@ public class StoredContent extends Content {
 
   @Override
   public byte[] getBytes() {
-    //todo handle unavailable content 
+    //todo handle unavailable content
     //if (!isAvailable()) throw new RuntimeException("content is not available");
     try {
-      if (myContentId == UNAVAILABLE) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      if (myContentId == UNAVAILABLE) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       return getFS().contentsToByteArray(myContentId);
     }
     catch (IOException e) {
@@ -82,12 +72,11 @@ public class StoredContent extends Content {
 
   @Override
   public boolean isAvailable() {
-    //return myContentId != UNAVAILABLE;
-    return true;
+    return myContentId != UNAVAILABLE;
   }
 
   private static PersistentFS getFS() {
-    return ((PersistentFS)PersistentFS.getInstance());
+    return PersistentFS.getInstance();
   }
 
   public int getContentId() {
@@ -103,7 +92,9 @@ public class StoredContent extends Content {
 
   @Override
   public boolean equals(Object o) {
-    return myContentId == ((StoredContent)o).myContentId;
+    if (this == o) return true;
+    if (!(o instanceof StoredContent content)) return false;
+    return myContentId == content.myContentId;
   }
 
   @Override

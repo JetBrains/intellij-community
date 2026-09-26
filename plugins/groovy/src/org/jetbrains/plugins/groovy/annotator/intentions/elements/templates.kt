@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression
 import org.jetbrains.plugins.groovy.template.expressions.SuggestedParameterNameExpression
-
 
 internal fun setupParameters(method: GrMethod, parameters: ExpectedParameters): List<ChooseTypeExpression> {
   val project = method.project
@@ -27,7 +27,7 @@ internal fun setupParameters(method: GrMethod, parameters: ExpectedParameters): 
   var paramTypesExpressions = listOf<ChooseTypeExpression>()
   for (i in 0 until minOf(parameters.size, 255)) {
     val parameterInfo = parameters[i]
-    val dummyParameter = factory.createParameter("p$i", PsiType.INT)
+    val dummyParameter = factory.createParameter("p$i", PsiTypes.intType())
     postprocessReformattingAspect.postponeFormattingInside(Computable {
       parameterList.add(dummyParameter)
     }) as GrParameter

@@ -1,52 +1,53 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.HashMap;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public enum Depth {
 
-  UNKNOWN("unknown"),
-  INFINITY("infinity"),
-  IMMEDIATES("immediates"),
-  FILES("files"),
-  EMPTY("empty"),
-  EXCLUDE("exclude");
+  @XmlEnumValue("") UNKNOWN("unknown"),
+  @XmlEnumValue("infinity") INFINITY("infinity"),
+  @XmlEnumValue("immediates") IMMEDIATES("immediates"),
+  @XmlEnumValue("files") FILES("files"),
+  @XmlEnumValue("empty") EMPTY("empty"),
+  @XmlEnumValue("exclude") EXCLUDE("exclude");
 
-  @NotNull private static final Map<String, Depth> ourAllDepths = ContainerUtil.newHashMap();
+  private static final @NotNull Map<String, Depth> ourAllDepths = new HashMap<>();
 
   static {
-    for (Depth action : Depth.values()) {
+    for (Depth action : values()) {
       register(action);
     }
   }
 
-  @NotNull private final String myName;
+  private final @NonNls @NotNull String myName;
 
-  Depth(@NotNull String name) {
+  Depth(@NonNls @NotNull String name) {
     myName = name;
   }
 
-  @NotNull
-  public String getName() {
+  public @NonNls @NotNull String getName() {
     return myName;
+  }
+
+  public @Nls @NotNull String getDisplayName() {
+    return message(switch (this) {
+      case INFINITY -> "label.depth.infinity";
+      case IMMEDIATES -> "label.depth.immediates";
+      case FILES -> "label.depth.files";
+      case EMPTY -> "label.depth.empty";
+      case EXCLUDE -> "label.depth.exclude";
+      default -> "label.depth.unknown";
+    });
   }
 
   @Override
@@ -58,8 +59,7 @@ public enum Depth {
     ourAllDepths.put(depth.myName, depth);
   }
 
-  @NotNull
-  public static Depth from(@NotNull String depthName) {
+  public static @NotNull Depth from(@NonNls @NotNull String depthName) {
     Depth result = ourAllDepths.get(depthName);
 
     if (result == null) {
@@ -69,13 +69,11 @@ public enum Depth {
     return result;
   }
 
-  @NotNull
-  public static Depth allOrFiles(boolean recursive) {
+  public static @NotNull Depth allOrFiles(boolean recursive) {
     return recursive ? INFINITY : FILES;
   }
 
-  @NotNull
-  public static Depth allOrEmpty(boolean recursive) {
+  public static @NotNull Depth allOrEmpty(boolean recursive) {
     return recursive ? INFINITY : EMPTY;
   }
 

@@ -1,0 +1,19 @@
+f:com.intellij.platform.devIdeConfig.DevIdeConfig
+- sf:ADDITIONAL_MODULES_KEY:java.lang.String
+- sf:CONFIG_PATH_PROPERTY:java.lang.String
+- sf:HOME_PATH_KEY:java.lang.String
+- sf:MAIN_CLASS_NAME_KEY:java.lang.String
+- sf:PLATFORM_PREFIX_KEY:java.lang.String
+- s:declaredConfigFile():java.nio.file.Path
+- s:read(java.nio.file.Path):com.intellij.platform.devIdeConfig.DevIdeConfig$Content
+- s:resolveConfigFile(java.lang.String):java.nio.file.Path
+- s:write(java.nio.file.Path,java.nio.file.Path,java.lang.String,java.lang.String,java.util.Collection):V
+f:com.intellij.platform.devIdeConfig.DevIdeConfig$Content
+- java.lang.Record
+- <init>(java.nio.file.Path,java.lang.String,java.lang.String,java.util.List):V
+- additionalModules():java.util.List
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- homePath():java.nio.file.Path
+- mainClassName():java.lang.String
+- platformPrefix():java.lang.String

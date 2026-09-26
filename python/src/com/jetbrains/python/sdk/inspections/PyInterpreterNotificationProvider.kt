@@ -1,0 +1,91 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.inspections
+
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.module.PyModuleService
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Function
+import javax.swing.JComponent
+import javax.swing.JLabel
+
+/**
+ * Non-Python files that may still warrant the "no interpreter" notification, each with the check that decides whether
+ * this module is one where it applies.
+ *
+ * Computed per call rather than kept in a property: reading [PyProjectSdkConfigurationExtension.potentialDependencyFiles]
+ * instantiates the extensions, which honours cancellation, and the callers run inside a cancellable read action. From a
+ * static initializer that cancellation would surface as an `ExceptionInInitializerError` and leave the class unusable for
+ * the rest of the session. Recomputing also keeps the set honest when a plugin is loaded or unloaded.
+ */
+internal fun relevantNonPythonFiles(): Map<String, (Module) -> Boolean> =
+  mutableMapOf("README.md" to ::moduleContainsPythonFiles) +
+  PyProjectSdkConfigurationExtension.potentialDependencyFiles.associateWith { { true } }
+
+@ApiStatus.Internal
+class PyInterpreterNotificationProvider : EditorNotificationProvider, DumbAware {
+  private val asyncFileInspectionRunner = PyAsyncFileInspectionRunner(
+    progressTitle = PyBundle.message("python.sdk.checking.existing.environments"),
+    cacheLoader = createInterpreterCacheLoader(),
+  )
+
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    val psiFile = PsiManager.getInstance(project).findFile(file) ?: return null
+    val nonPythonRelevantCheck = relevantNonPythonFiles()[file.name]
+    if (psiFile is PyFile && isFileIgnored(psiFile)) return null
+    if (psiFile !is PyFile && nonPythonRelevantCheck == null) return null
+
+    val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
+    if (!PyModuleService.getInstance(project).isPythonModule(module)) return null
+    if (nonPythonRelevantCheck != null && !nonPythonRelevantCheck(module)) return null
+
+    val interpreterFixes = asyncFileInspectionRunner.runInspection(module)?.takeIf { it.isNotEmpty() } ?: return null
+
+    val executor: BusyGuardExecutor = project.service<InterpreterFixExecutor>()
+
+    return Function { fileEditor ->
+      object : EditorNotificationPanel(fileEditor, Status.Warning) {
+        init {
+          text = PyBundle.message("python.sdk.no.interpreter.configured.for.module", module.name)
+          if (executor.isBusy.value) {
+            val label = JLabel(PyBundle.message("python.sdk.interpreter.fix.already.in.progress"))
+            label.foreground = UIUtil.getInactiveTextColor()
+            myLinksPanel.add(label)
+            myLinksPanel.add(AsyncProcessIcon("interpreter fix"))
+          }
+          else {
+            interpreterFixes.forEach { fix ->
+              myLinksPanel.add(fix.createActionLink(module, project, psiFile, executor))
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun moduleContainsPythonFiles(module: Module): Boolean = when {
+  DumbService.isDumb(module.project) -> false
+  else -> FileTypeIndex.containsFileOfType(PythonFileType.INSTANCE, GlobalSearchScope.moduleScope(module))
+}
+
+private fun isFileIgnored(pyFile: PyFile): Boolean =
+  PyInspectionExtension.EP_NAME.extensionList.any { it.ignoreInterpreterWarnings(pyFile) }

@@ -20,15 +20,13 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
-/**
- * @author ilyas
- */
 public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
 
   public GrMultiplicativeExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Multiplicative expression";
   }

@@ -1,0 +1,40 @@
+// "Remove custom 'CREATOR' property" "true"
+// WITH_STDLIB
+// ERROR: Overriding 'writeToParcel' is not allowed. Use 'Parceler' companion object instead
+// K2_ERROR: CREATOR_DEFINITION_IS_NOT_ALLOWED
+// K2_ERROR: OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED
+// K2_AFTER_ERROR: OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED
+
+package com.myapp.activity
+
+import android.os.*
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+class Foo(val a: String) : Parcelable {
+    constructor(parcel: Parcel) : this(parcel.readString()) {
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(a)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object {
+        @JvmField
+        val <caret>CREATOR = object : Parcelable.Creator<Foo> {
+            override fun createFromParcel(parcel: Parcel): Foo {
+                return Foo(parcel)
+            }
+
+            override fun newArray(size: Int): Array<Foo?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelRemoveCustomCreatorProperty

@@ -1,137 +1,161 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.TextCompletionProvider;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
-abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> extends FilterPopupComponent<Filter> {
+@ApiStatus.Internal
+public abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
+  extends FilterPopupComponent<Filter, Model> {
 
-  private static final int MAX_FILTER_VALUE_LENGTH = 30;
+  private static final int MAX_FILTER_VALUE_LENGTH = 20;
 
-  @NotNull protected final MainVcsLogUiProperties myUiProperties;
+  protected final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NonNls @NotNull String myName;
 
-  MultipleValueFilterPopupComponent(@NotNull String filterName,
+  MultipleValueFilterPopupComponent(@NonNls @NotNull String filterName,
+                                    @NotNull Supplier<@NlsContexts.Label @NotNull String> displayName,
                                     @NotNull MainVcsLogUiProperties uiProperties,
-                                    @NotNull FilterModel<Filter> filterModel) {
-    super(filterName, filterModel);
+                                    @NotNull Model filterModel) {
+    super(displayName, filterModel);
+    myName = filterName;
     myUiProperties = uiProperties;
   }
 
-  @NotNull
-  protected abstract List<List<String>> getRecentValuesFromSettings();
+  protected @NotNull List<List<String>> getRecentValuesFromSettings() {
+    return myUiProperties.getRecentlyFilteredGroups(myName);
+  }
 
-  protected abstract void rememberValuesInSettings(@NotNull Collection<String> values);
+  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
+    myUiProperties.addRecentlyFilteredGroup(myName, parseLocalizedValues(values));
+  }
 
-  @NotNull
-  protected abstract List<String> getAllValues();
+  protected abstract @Unmodifiable @NotNull List<String> getAllValues();
 
-  @NotNull
-  protected ActionGroup createRecentItemsActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
+  protected abstract @Nullable Filter createFilter(@NotNull List<String> values);
+
+  protected abstract @NotNull List<String> getFilterValues(@NotNull Filter filter);
+
+  protected @NotNull List<AnAction> createRecentItemsActionGroup() {
+    List<AnAction> group = new ArrayList<>();
     List<List<String>> recentlyFiltered = getRecentValuesFromSettings();
     if (!recentlyFiltered.isEmpty()) {
-      group.addSeparator("Recent");
+      group.add(Separator.create(VcsLogBundle.message("vcs.log.filter.recent")));
       for (List<String> recentGroup : recentlyFiltered) {
         if (!recentGroup.isEmpty()) {
           group.add(new PredefinedValueAction(recentGroup));
         }
       }
-      group.addSeparator();
+      group.add(Separator.getInstance());
     }
     return group;
   }
 
-  @NotNull
-  static String displayableText(@NotNull Collection<String> values) {
-    if (values.size() == 1) {
-      return values.iterator().next();
-    }
-    return StringUtil.shortenTextWithEllipsis(StringUtil.join(values, "|"), MAX_FILTER_VALUE_LENGTH, 0, true);
+  @Override
+  protected @NotNull String getText(@NotNull Filter filter) {
+    return displayableText(getLocalizedValues(getFilterValues(filter)), MAX_FILTER_VALUE_LENGTH);
   }
 
-  @NotNull
-  static String tooltip(@NotNull Collection<String> values) {
-    return StringUtil.join(values, ", ");
+  @Override
+  protected @Nls String getToolTip(@NotNull Filter filter) {
+    return getTooltip(getFilterValues(filter));
   }
 
-  @NotNull
-  protected AnAction createSelectMultipleValuesAction() {
+  protected @NotNull @NlsContexts.Tooltip String getTooltip(@NotNull Collection<String> values) {
+    return StringUtil.join(getLocalizedValues(values), ", ");
+  }
+
+  protected abstract @NotNull @Unmodifiable List<String> parseLocalizedValues(@NotNull Collection<String> values);
+
+  protected abstract @NotNull @Unmodifiable List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
+
+  protected @NotNull AnAction createSelectMultipleValuesAction() {
     return new SelectMultipleValuesAction();
   }
 
   /**
-   * Return true if the filter supports "negative" values, i.e. values like "-value" which means "match anything but 'value'".
+   * By default, the completion prefix is calculated based on the item separators.
+   * If a filter popup supports some special syntax, it can redefine this method which will be provided to
+   * {@link TextCompletionProvider#getPrefix}.
    */
-  protected boolean supportsNegativeValues() {
-    return false;
+  @ApiStatus.Internal
+  protected @Nullable MultilinePopupBuilder.CompletionPrefixProvider getCompletionPrefixProvider() {
+    return null;
+  }
+
+  protected @NotNull String getActionName(@NotNull List<String> values) {
+    List<String> localizedValues = getLocalizedValues(values);
+    if (localizedValues.size() == 1) return Objects.requireNonNull(ContainerUtil.getFirstItem(localizedValues));
+    return displayableText(localizedValues, 2 * MAX_FILTER_VALUE_LENGTH);
+  }
+
+  static @NotNull @Nls String displayableText(@NotNull Collection<@Nls String> values, int maxLength) {
+    String text;
+    if (values.size() == 1) {
+      text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));
+    }
+    else {
+      text = StringUtil.join(values, "|");
+    }
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, true);
   }
 
   protected class PredefinedValueAction extends DumbAwareAction {
-    @NotNull protected final List<String> myValues;
-    private boolean myAddToRecent;
+    protected final @NotNull List<String> myValues;
 
-    public PredefinedValueAction(@NotNull String value, boolean addToRecent) {
-      this(Collections.singletonList(value));
-      myAddToRecent = addToRecent;
-    }
-
-    public PredefinedValueAction(@NotNull String value) {
-      this(value, true);
-    }
+    private final boolean myAddToRecent;
 
     public PredefinedValueAction(@NotNull List<String> values) {
-      this(displayableText(values), values);
+      this(values, null, true);
     }
 
-    public PredefinedValueAction(@NotNull String name, @NotNull List<String> values) {
-      super(null, tooltip(values), null);
-      getTemplatePresentation().setText(name, false);
+    public PredefinedValueAction(@NotNull List<String> values,
+                                 @Nullable Supplier<String> displayName,
+                                 boolean addToRecent) {
+      super(null, getTooltip(values), null);
+      getTemplatePresentation().setText(displayName != null ? displayName : () -> getActionName(values), false);
       myValues = values;
+      myAddToRecent = addToRecent;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterModel.setFilter(myFilterModel.createFilter(myValues));
+      myFilterModel.setFilter(createFilter(myValues));
       if (myAddToRecent) rememberValuesInSettings(myValues);
     }
   }
 
   private class SelectMultipleValuesAction extends DumbAwareAction {
 
-    @NotNull private final Collection<String> myVariants;
+    private final @NotNull Collection<String> myVariants;
 
     SelectMultipleValuesAction() {
-      super("Select...");
+      super(VcsLogBundle.messagePointer("vcs.log.filter.action.select"));
       myVariants = getAllValues();
     }
 
@@ -143,23 +167,21 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       }
 
       Filter filter = myFilterModel.getFilter();
-      List<String> values = filter == null
-                            ? Collections.emptyList()
-                            : myFilterModel.getFilterValues(filter);
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
-                                                                           getPopupText(values),
-                                                                           supportsNegativeValues());
+      List<String> values = filter == null ? Collections.emptyList() :
+                            getLocalizedValues(MultipleValueFilterPopupComponent.this.getFilterValues(filter));
+      MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(values),
+                                                                     getCompletionPrefixProvider());
       JBPopup popup = popupBuilder.createPopup();
-      popup.addListener(new JBPopupAdapter() {
+      popup.addListener(new JBPopupListener() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
-            List<String> selectedValues = popupBuilder.getSelectedValues();
+            List<String> selectedValues = parseLocalizedValues(popupBuilder.getSelectedValues());
             if (selectedValues.isEmpty()) {
               myFilterModel.setFilter(null);
             }
             else {
-              myFilterModel.setFilter(myFilterModel.createFilter(selectedValues));
+              myFilterModel.setFilter(createFilter(selectedValues));
               rememberValuesInSettings(selectedValues);
             }
           }
@@ -168,8 +190,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       popup.showUnderneathOf(MultipleValueFilterPopupComponent.this);
     }
 
-    @NotNull
-    private String getPopupText(@Nullable Collection<String> selectedValues) {
+    private static @NotNull String getPopupText(@Nullable Collection<String> selectedValues) {
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }

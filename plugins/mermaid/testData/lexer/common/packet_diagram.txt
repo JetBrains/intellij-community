@@ -1,0 +1,8 @@
+Generic.GENERIC_DIAGRAM ('packet-beta')
+EOL ('\n')
+WHITE_SPACE ('  ')
+Generic.GENERIC_TEXT ('0-15:')
+WHITE_SPACE (' ')
+DOUBLE_QUOTE ('"')
+STRING_VALUE ('Source Port')
+DOUBLE_QUOTE ('"')

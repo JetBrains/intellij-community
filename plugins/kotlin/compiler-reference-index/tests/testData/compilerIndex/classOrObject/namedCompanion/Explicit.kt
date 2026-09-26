@@ -1,0 +1,3 @@
+fun Explicit() {
+    MainClass.Name
+}

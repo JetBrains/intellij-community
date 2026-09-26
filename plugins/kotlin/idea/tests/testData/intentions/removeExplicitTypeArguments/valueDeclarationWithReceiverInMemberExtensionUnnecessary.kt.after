@@ -1,0 +1,12 @@
+// FIX: Remove explicit type arguments
+// AFTER-WARNING: Variable 'x' is never used
+// AFTER-WARNING: Variable 'y' is never used
+
+fun <T> T.ext(): T = this
+
+class Main {
+    fun Int.test() {
+        val x = ext()
+        val y = ext<Main>()
+    }
+}

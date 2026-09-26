@@ -3,7 +3,7 @@ package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 /**
 * @author Konstantin Bulenkov
@@ -11,6 +11,5 @@ import javax.swing.*;
 public interface OptionAction extends Action {
   String AN_ACTION = "AnAction";
 
-  @NotNull
-  Action[] getOptions();
+  Action @NotNull [] getOptions();
 }

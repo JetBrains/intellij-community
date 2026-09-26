@@ -15,35 +15,51 @@
  */
 package com.intellij.codeInspection.unusedImport;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportModuleStatement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedImportInspection extends GlobalSimpleInspectionTool {
-  @NonNls
-  public static final String SHORT_NAME = "UNUSED_IMPORT";
-  public static final String DISPLAY_NAME = InspectionsBundle.message("unused.import.display.name");
+public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
+  public static final @NonNls String SHORT_NAME = "UNUSED_IMPORT";
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (!(file instanceof PsiJavaFile) || FileTypeUtils.isInServerPageFile(file)) return;
-    PsiJavaFile javaFile = (PsiJavaFile)file;
+    if (!(psiFile instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(psiFile)) return;
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
     javaFile.accept(visitor);
+    PsiPolyVariantReference reference;
     for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {
-      if (unusedImportStatement.getImportReference() != null &&
+      if (unusedImportStatement instanceof PsiImportModuleStatement moduleStatement) {
+        PsiJavaModuleReferenceElement moduleReference = moduleStatement.getModuleReference();
+        if (moduleReference == null) continue;
+        reference = moduleReference.getReference();
+      }
+      else {
+        reference = unusedImportStatement.getImportReference();
+      }
+      if (reference != null &&
+          reference.multiResolve(false).length > 0 &&
           !(PsiTreeUtil.skipWhitespacesForward(unusedImportStatement) instanceof PsiErrorElement)) {
         problemsHolder.registerProblem(unusedImportStatement,
                                        InspectionGadgetsBundle.message("unused.import.problem.descriptor"),
@@ -52,20 +68,17 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override
   public boolean worksInBatchModeOnly() {
     return false;
+  }
+
+  public static @NotNull @Nls String getDisplayNameText() {
+    return JavaAnalysisBundle.message("unused.import.display.name");
   }
 }

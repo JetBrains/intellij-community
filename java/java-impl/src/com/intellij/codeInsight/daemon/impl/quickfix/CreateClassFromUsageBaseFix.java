@@ -1,39 +1,60 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
-public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
-  protected static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageBaseFix");
+public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction implements IntentionActionWithModCommandFallback {
+  protected static final Logger LOG = Logger.getInstance(CreateClassFromUsageBaseFix.class);
   protected CreateClassKind myKind;
   private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
 
@@ -42,9 +63,17 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
   }
 
-  protected abstract String getText(String varName);
+  @Override
+  public @Nullable ModCommandAction getFallbackModCommandAction() {
+    return null;
+  }
 
-  private boolean isAvailableInContext(@NotNull final PsiJavaCodeReferenceElement element) {
+  @Override
+  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile);
+
+  protected abstract @IntentionName String getText(String varName);
+
+  private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
     if (myKind == CreateClassKind.ANNOTATION) {
@@ -55,6 +84,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
     if (parent instanceof PsiTypeElement) {
       if (parent.getParent() instanceof PsiReferenceParameterList) return true;
+      if (parent.getParent() instanceof PsiDeconstructionPattern) return true;
 
       while (parent.getParent() instanceof PsiTypeElement){
         parent = parent.getParent();
@@ -64,23 +94,53 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
           parent.getParent() instanceof PsiVariable ||
           parent.getParent() instanceof PsiMethod ||
           parent.getParent() instanceof PsiClassObjectAccessExpression ||
-          parent.getParent() instanceof PsiTypeCastExpression ||
-          (parent.getParent() instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent.getParent()).getCheckType() == parent)) {
+          parent.getParent() instanceof PsiTypeCastExpression) {
+        return true;
+      }
+      PsiInstanceOfExpression instanceOfExpression = PsiTreeUtil.getParentOfType(parent, PsiInstanceOfExpression.class);
+      if (instanceOfExpression != null && instanceOfExpression.getCheckType() == parent) {
+        PsiType type = instanceOfExpression.getOperand().getType();
+        if (type instanceof PsiArrayType) {
+          return false;
+        }
+
+        if (type != null && (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD)) {
+          return type.accept(new PsiTypeVisitor<>() {
+            @Override
+            public Boolean visitType(@NotNull PsiType type) {
+              return false;
+            }
+
+            @Override
+            public Boolean visitClassType(@NotNull PsiClassType classType) {
+              PsiClass aClass = classType.resolve();
+              return aClass != null && aClass.isInterface();
+            }
+
+            @Override
+            public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+              PsiType bound = wildcardType.getBound();
+              return bound == null || bound.accept(this);
+            }
+          });
+        }
         return true;
       }
     }
     else if (parent instanceof PsiReferenceList) {
-      if (myKind == CreateClassKind.ENUM) return false;
-      if (parent.getParent() instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)parent.getParent();
+      if (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD) return false;
+      if (parent.getParent() instanceof PsiClass psiClass) {
+        if (psiClass.getPermitsList() == parent) {
+          if (myKind == CreateClassKind.INTERFACE && !psiClass.isInterface()) return false;
+          return true;
+        }
         if (psiClass.getExtendsList() == parent) {
           if (myKind == CreateClassKind.CLASS && !psiClass.isInterface()) return true;
           if (myKind == CreateClassKind.INTERFACE && psiClass.isInterface()) return true;
         }
         if (psiClass.getImplementsList() == parent && myKind == CreateClassKind.INTERFACE) return true;
       }
-      else if (parent.getParent() instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)parent.getParent();
+      else if (parent.getParent() instanceof PsiMethod method) {
         if (method.getThrowsList() == parent && myKind == CreateClassKind.CLASS) return true;
       }
     }
@@ -102,56 +162,68 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     final PsiJavaCodeReferenceElement element = getRefElement();
-    if (element == null ||
-        !element.getManager().isInProject(element)) {
-      return false;
+    if (element == null) return false;
+    String text = getAvailableText(element, editor.getCaretModel().getOffset());
+    if (text == null) return false;
+    setText(text);
+    return true;
+  }
+
+  /**
+   * @param element the reference which needs the new class
+   * @param offset  the offset of the caret
+   * @return the text of the fix when the fix applies at the offset, or null when it does not apply
+   */
+  protected @IntentionName @Nullable String getAvailableText(@NotNull PsiJavaCodeReferenceElement element, int offset) {
+    if (!element.getManager().isInProject(element) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element))) {
+      return null;
     }
     JavaResolveResult[] results = element.multiResolve(true);
     if (results.length > 0 && results[0].getElement() instanceof PsiClass) {
-      return false;
+      return null;
     }
     final String refName = element.getReferenceName();
-    if (refName == null || !checkClassName(refName)) return false;
+    if (refName == null ||
+        PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, PsiReferenceList.class) == null && !checkClassName(refName)) return null;
     PsiElement nameElement = element.getReferenceNameElement();
-    if (nameElement == null) return false;
+    if (nameElement == null) return null;
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
-    if (!isAvailableInContext(element)) return false;
+    if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return null;
+    if (!isAvailableInContext(element)) return null;
     final String superClassName = getSuperClassName(element);
     if (superClassName != null) {
-      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return false;
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return null;
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_RECORD) && myKind != CreateClassKind.RECORD) return null;
+      Project project = element.getProject();
       final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(superClassName, GlobalSearchScope.allScope(project));
-      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return null;
     }
-    final int offset = editor.getCaretModel().getOffset();
     if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, element)) {
-      setText(getText(nameElement.getText()));
-      return true;
+      return getText(nameElement.getText());
     }
 
-    return false;
+    return null;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.class.from.usage.family");
   }
 
-  @Nullable
-  protected PsiJavaCodeReferenceElement getRefElement() {
+  protected @Nullable PsiJavaCodeReferenceElement getRefElement() {
     return myRefElement.getElement();
   }
 
-  @Nullable
-  protected String getSuperClassName(final PsiJavaCodeReferenceElement element) {
+  protected @Nullable String getSuperClassName(final PsiJavaCodeReferenceElement element) {
     String superClassName = null;
     PsiElement parent = element.getParent();
     final PsiElement ggParent = parent.getParent();
-    if (ggParent instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)ggParent;
+    if (ggParent instanceof PsiClass && ((PsiClass)ggParent).getPermitsList() == parent) {
+      return ((PsiClass)ggParent).getQualifiedName();
+    }
+    else if (ggParent instanceof PsiMethod method) {
       if (method.getThrowsList() == parent) {
         superClassName = "java.lang.Exception";
       }
@@ -170,7 +242,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
           if (aClass != null) return aClass.getQualifiedName();
         }
       }
-    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression && myKind == CreateClassKind.ENUM) {
+    } else if (ggParent instanceof PsiExpressionList && parent instanceof PsiExpression &&
+               (myKind == CreateClassKind.ENUM || myKind == CreateClassKind.RECORD)) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, false);
       if (expectedTypes.length == 1) {
         final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());
@@ -183,5 +256,13 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     }
 
     return superClassName;
+  }
+
+  protected static @Nullable PsiDeconstructionPattern getDeconstructionPattern(@NotNull PsiJavaCodeReferenceElement reference) {
+    if (reference.getParent() instanceof PsiTypeElement typeElement &&
+        typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+      return pattern;
+    }
+    return null;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl.ui.libraries;
 
@@ -24,24 +10,22 @@ import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private final LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
@@ -57,33 +41,36 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     myDescription = description;
   }
 
+  @Override
   public void setRequiredLibraries(final LibraryInfo[] requiredLibraries) {
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
     onChange();
   }
 
+  @Override
   public boolean isLibrariesAdded() {
     return false;
   }
 
-  public void setDescription(@NotNull final FacetLibrariesValidatorDescription description) {
+  @Override
+  public void setDescription(final @NotNull FacetLibrariesValidatorDescription description) {
     myDescription = description;
     onChange();
   }
 
-  @NotNull
-  public ValidationResult check() {
+  @Override
+  public @NotNull ValidationResult check() {
     if (myRequiredLibraries == null) {
       return ValidationResult.OK;
     }
 
     List<VirtualFile> roots = collectRoots(myContext.getRootModel());
-    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots));
+    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtilCore.toVirtualFileArray(roots));
     if (info == null) {
       return ValidationResult.OK;
     }
 
-    String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
+    String missingJars = JavaUiBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     CustomLibraryDescription description = new OldCustomLibraryDescription(missingLibraries, myDescription.getDefaultLibraryName());
     return new ValidationResult(missingJars, new LibrariesQuickFix(description));
@@ -95,6 +82,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
   }
 
+  @Override
   public void onFacetInitialized(Facet facet) {
     for (Library addedLibrary : myAddedLibraries) {
       myDescription.onLibraryAdded(facet, addedLibrary);
@@ -113,11 +101,12 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
     private final CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(CustomLibraryDescription description) {
+    LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("button.fix"));
       myDescription = description;
     }
 
+    @Override
     public void run(final JComponent place) {
       AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
                                                                      myContext.getModule(), myContext.getModifiableRootModel(), null);

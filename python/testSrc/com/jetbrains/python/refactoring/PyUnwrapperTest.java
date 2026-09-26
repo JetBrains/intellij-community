@@ -5,16 +5,27 @@ import com.intellij.codeInsight.unwrap.UnwrapHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.List;
 
 /**
  * User : ktisha
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyUnwrapperTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testIfUnwrap() {doTest();}
   public void testIfUnwrapEmpty() {doNegativeTest();}
@@ -68,9 +79,9 @@ public class PyUnwrapperTest extends PyTestCase {
     myFixture.configureByFile(before);
     UnwrapHandler h = new UnwrapHandler() {
       @Override
-      protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
+      protected void selectOption(List<? extends MyUnwrapAction> options, Editor editor, PsiFile file) {
         assertTrue("No available options to unwrap", !options.isEmpty());
-        options.get(option).actionPerformed(null);
+        options.get(option).perform();
       }
     };
     h.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
@@ -84,7 +95,7 @@ public class PyUnwrapperTest extends PyTestCase {
     myFixture.configureByFile(before);
     UnwrapHandler h = new UnwrapHandler() {
       @Override
-      protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
+      protected void selectOption(List<? extends MyUnwrapAction> options, Editor editor, PsiFile file) {
         assertEmpty(options);
       }
     };
@@ -96,7 +107,7 @@ public class PyUnwrapperTest extends PyTestCase {
     myFixture.configureByFile(before);
     UnwrapHandler h = new UnwrapHandler() {
       @Override
-      protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
+      protected void selectOption(List<? extends MyUnwrapAction> options, Editor editor, PsiFile file) {
         for (AnAction option : options) {
           assertFalse("\"" + optionName  + "\" is available to unwrap ", option.toString().contains(optionName));
         }

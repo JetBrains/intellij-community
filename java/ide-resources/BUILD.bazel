@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.ide.resources` start
+content_module_jar(module = ":ide-resources")
+### auto-generated section `dev intellij.java.ide.resources` end
+
+### auto-generated section `build intellij.java.ide.resources` start
+jvm_library(
+    name = "ide-resources",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.resources",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "ide-resources_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.resources",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-resources",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.ide.resources` end
+
+### auto-generated section `iml intellij.java.ide.resources` start
+exports_files(
+    [
+        "intellij.java.ide.resources.iml",
+        "resources/JavaIdeProductivityFeatures.xml",
+        "resources/intellij.java.ide.resources.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.ide.resources` end

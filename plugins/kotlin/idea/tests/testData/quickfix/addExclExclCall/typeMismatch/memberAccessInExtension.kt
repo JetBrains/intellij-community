@@ -1,0 +1,15 @@
+// "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+class C {
+    val s: String? = null
+}
+
+// Test for KTIJ-10052
+fun C.test() {
+    other(<caret>s)
+}
+
+fun other(s: String) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

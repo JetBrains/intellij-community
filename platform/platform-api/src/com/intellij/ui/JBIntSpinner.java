@@ -1,36 +1,44 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
+/**
+ * Please avoid using spinners in new code. This component is marked as obsolete as it no longer aligns with current design guidelines.
+ * <p>
+ * The simplest replacement is a text field with validation — it is both more flexible and easier to maintain.
+ * Typical use cases (e.g., port inputs) do not benefit from increment/decrement buttons; range validation is sufficient.
+ */
+@ApiStatus.Obsolete(since = "2025.3")
 public class JBIntSpinner extends JSpinner {
   public JBIntSpinner(UINumericRange range) {
     this(range.initial, range.min, range.max);
   }
 
   public JBIntSpinner(int value, int minValue, int maxValue) {
-    setModel(new SpinnerNumberModel(value, minValue, maxValue, 1));
+    this(value, minValue, maxValue, 1);
+  }
+
+  public JBIntSpinner(int value, int minValue, int maxValue, int stepSize) {
+    setModel(new SpinnerNumberModel(value, minValue, maxValue, stepSize));
     final NumberEditor editor = new NumberEditor(this, "#");
     JFormattedTextField textField = editor.getTextField();
     textField.setColumns(Math.max(4, textField.getColumns()));
@@ -53,8 +61,7 @@ public class JBIntSpinner extends JSpinner {
     super.setEditor(editor);
   }
 
-  @NotNull
-  private JTextField getTextField() {
+  private @NotNull JTextField getTextField() {
     return ((NumberEditor)getEditor()).getTextField();
   }
 

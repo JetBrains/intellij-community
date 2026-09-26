@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.AppTopics;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,82 +16,94 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
-public class DelayedDocumentWatcher implements AutoTestWatcher {
-
+public final class DelayedDocumentWatcher implements AutoTestWatcher {
   // All instance fields should be accessed in EDT
   private final Project myProject;
   private final int myDelayMillis;
-  private final Consumer<Integer> myModificationStampConsumer;
-  private final Condition<VirtualFile> myChangedFileFilter;
+  private final IntConsumer myModificationStampConsumer;
+  private final Predicate<? super VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
+  private final AbstractAutoTestManager myAutoTestManager;
 
   private Disposable myDisposable;
   private SingleAlarm myAlarm;
-  private final Set<VirtualFile> myChangedFiles = new THashSet<>();
+  // reduce memory usage
+  private final Set<VirtualFile> myChangedFiles = CollectionFactory.createSmallMemoryFootprintSet();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
 
   public DelayedDocumentWatcher(@NotNull Project project,
-                                int delayMillis,
-                                @NotNull Consumer<Integer> modificationStampConsumer,
-                                @Nullable Condition<VirtualFile> changedFileFilter) {
+                         int delayMillis,
+                         @NotNull AbstractAutoTestManager autoTestManager,
+                         @Nullable Predicate<? super VirtualFile> changedFileFilter) {
+    this(project, delayMillis, null, autoTestManager, changedFileFilter);
+  }
+
+  private DelayedDocumentWatcher(@NotNull Project project,
+                                 int delayMillis,
+                                 @Nullable IntConsumer modificationStampConsumer,
+                                 @Nullable AbstractAutoTestManager autoTestManager,
+                                 @Nullable Predicate<? super VirtualFile> changedFileFilter) {
     myProject = project;
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
+    myAutoTestManager = autoTestManager;
     myChangedFileFilter = changedFileFilter;
     myListener = new MyDocumentAdapter();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
+  @RequiresEdt(generateAssertion = false)
+  @Override
   public void activate() {
     if (myConnection == null) {
       myDisposable = Disposer.newDisposable();
       Disposer.register(myProject, myDisposable);
       EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myDisposable);
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
-      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+      myConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
         @Override
         public void beforeAllDocumentsSaving() {
           myDocumentSavingInProgress = true;
           ApplicationManager.getApplication().invokeLater(() -> myDocumentSavingInProgress = false, ModalityState.any());
         }
       });
-      LookupManager.getInstance(myProject).addPropertyChangeListener(new PropertyChangeListener() {
+      myConnection.subscribe(LookupManagerListener.TOPIC, new LookupManagerListener() {
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName()) && evt.getNewValue() == null
-              && !myChangedFiles.isEmpty()) {
+        public void activeLookupChanged(@Nullable Lookup oldLookup, @Nullable Lookup newLookup) {
+          if (newLookup == null && !myChangedFiles.isEmpty()) {
             myAlarm.cancelAndRequest();
           }
         }
-      }, myDisposable);
+      });
 
-      myAlarm = new SingleAlarm(new MyRunnable(), myDelayMillis, Alarm.ThreadToUse.SWING_THREAD, myDisposable);
+      myAlarm = SingleAlarm.Companion.singleEdtAlarm(myDelayMillis, myDisposable, new MyRunnable());
     }
   }
 
+  @RequiresEdt(generateAssertion = false)
+  @Override
   public void deactivate() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
@@ -102,13 +115,9 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
-  public boolean isUpToDate(int modificationStamp) {
-    return myModificationStamp == modificationStamp;
-  }
-
   private class MyDocumentAdapter implements DocumentListener {
     @Override
-    public void documentChanged(DocumentEvent event) {
+    public void documentChanged(@NotNull DocumentEvent event) {
       if (myDocumentSavingInProgress) {
         /* When {@link FileDocumentManager#saveAllDocuments} is called,
            {@link com.intellij.openapi.editor.impl.TrailingSpacesStripper} can change a document.
@@ -124,7 +133,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
           return;
         }
-        if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {
+        if (myChangedFileFilter != null && !myChangedFileFilter.test(file)) {
           return;
         }
 
@@ -141,7 +150,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     public void run() {
       final int oldModificationStamp = myModificationStamp;
       asyncCheckErrors(myChangedFiles, errorsFound -> {
-        if (Disposer.isDisposed(myDisposable)) {
+        if (myDisposable == null) {
           return;
         }
         if (myModificationStamp != oldModificationStamp) {
@@ -160,15 +169,23 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           return;
         }
         myChangedFiles.clear();
-        myModificationStampConsumer.consume(myModificationStamp);
+        if (myModificationStampConsumer != null) {
+          myModificationStampConsumer.accept(myModificationStamp);
+        }
+        else {
+          int initialModificationStamp = myModificationStamp;
+          Objects.requireNonNull(myAutoTestManager).restartAllAutoTests(() -> {
+            return myModificationStamp == initialModificationStamp;
+          });
+        }
       });
     }
   }
 
-  private void asyncCheckErrors(@NotNull Collection<VirtualFile> files,
-                                @NotNull Consumer<Boolean> errorsFoundConsumer) {
+  private void asyncCheckErrors(@NotNull Collection<? extends VirtualFile> files,
+                                @NotNull Consumer<? super Boolean> errorsFoundConsumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final boolean errorsFound = ReadAction.compute(() -> {
+      final boolean errorsFound = ReadAction.computeBlocking(() -> {
         for (VirtualFile file : files) {
           if (PsiErrorElementUtil.hasErrors(myProject, file)) {
             return true;
@@ -176,7 +193,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         }
         return false;
       });
-      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.consume(errorsFound), ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.accept(errorsFound), ModalityState.any());
     });
   }
 }

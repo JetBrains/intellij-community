@@ -28,7 +28,7 @@ import java.util.regex.Matcher;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JavacOutputParserTest extends TestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JavacOutputParserTest");
+  private static final Logger LOG = Logger.getInstance(JavacOutputParserTest.class);
   private static final ResourceBundle ourBundle;
 
   static {
@@ -95,7 +95,7 @@ LIne read: #[wrote C:\temp\rmiTest\classes\mycompany\TTT.class]#
   private static class MyJavacParserAction extends JavacParserAction {
     private String myExpected;
 
-    public MyJavacParserAction(Matcher matcher) {
+    MyJavacParserAction(Matcher matcher) {
       super(matcher);
     }
 
@@ -106,7 +106,7 @@ LIne read: #[wrote C:\temp\rmiTest\classes\mycompany\TTT.class]#
 
     @Override
     protected void doExecute(final String line, final String dta, final OutputParser.Callback callback) {
-      assertTrue("Expected: #" + myExpected + "#, but was: #" + dta + "#", myExpected.equals(dta));
+      assertEquals("Expected: #" + myExpected + "#, but was: #" + dta + "#", myExpected, dta);
     }
   }
 }

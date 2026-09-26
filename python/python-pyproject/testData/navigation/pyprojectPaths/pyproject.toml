@@ -1,0 +1,16 @@
+[project]
+name = "root"
+version = "0.1.0"
+# Path-like value in a key that is not a path: must not get a file reference.
+description = "sub-projects/sub-project-a"
+
+[tool.uv.workspace]
+members = [
+    "sub-projects/sub-project-a",
+    "sub-projects/*",
+]
+exclude = ["sub-projects/sub-project-b"]
+
+[tool.uv.sources]
+sub-project-a = { workspace = true }
+vendored = { path = "vendor/vendored-lib" }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -39,14 +25,13 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
     myLanguage = language;
   }
 
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return myMatcher.getPairs();
   }
 
   @Override
-  public int getBraceTokenGroupId(IElementType tokenType) {
+  public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
       if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return myLanguage.hashCode();
@@ -54,8 +39,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
     return -1;
   }
 
-  @Nullable
-  public BracePair findPair(boolean left, HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public @Nullable BracePair findPair(boolean left, HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -65,17 +49,17 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
   }
 
   @Override
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     return findPair(true, iterator, fileText, fileType) != null;
   }
 
   @Override
-  public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     return findPair(false, iterator, fileText, fileType) != null;
   }
 
   @Override
-  public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
+  public IElementType getOppositeBraceTokenType(final @NotNull IElementType type) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
       if (type == pair.getRightBraceType()) return pair.getLeftBraceType();
@@ -86,7 +70,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
   }
 
   @Override
-  public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
+  public boolean isPairBraces(@NotNull IElementType tokenType, @NotNull IElementType tokenType2) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
       if (tokenType == pair.getLeftBraceType() && tokenType2 == pair.getRightBraceType() ||
@@ -98,7 +82,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
   }
 
   @Override
-  public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
+  public boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -113,13 +97,12 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
   }
 
   @Override
-  public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
-    return myMatcher.getCodeConstructStart(file, openingBraceOffset);
+  public int getCodeConstructStart(final @NotNull PsiFile psiFile, int openingBraceOffset) {
+    return myMatcher.getCodeConstructStart(psiFile, openingBraceOffset);
   }
 
   @Override
-  @NotNull
-  public List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type) {
+  public @NotNull List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type) {
     List<IElementType> result = null;
 
     for (BracePair pair : myMatcher.getPairs()) {

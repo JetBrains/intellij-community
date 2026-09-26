@@ -2,15 +2,31 @@
 package com.intellij.build.events;
 
 import com.intellij.build.FilePosition;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.eventBuilders.FileMessageEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface FileMessageEvent extends MessageEvent {
-  FilePosition getFilePosition();
+
+  @NotNull FilePosition getFilePosition();
 
   @Override
-  FileMessageEventResult getResult();
+  @NotNull FileMessageEventResult getResult();
+
+  /**
+   * @deprecated Use {@link MessageEvent#builder} instead.
+   */
+  @Deprecated
+  @CheckReturnValue
+  static @NotNull FileMessageEventBuilder builder(
+    @NotNull @Message String message,
+    @NotNull MessageEvent.Kind kind,
+    @NotNull FilePosition filePosition
+  ) {
+    return BuildEvents.getInstance().fileMessage(message, kind, filePosition);
+  }
 }

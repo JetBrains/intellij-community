@@ -1,35 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.JavaPsiFacade;
@@ -38,7 +35,18 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableActions;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.hover.TableHoverListener;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.Properties;
@@ -47,40 +55,85 @@ import com.intellij.uiDesigner.actions.ShowJavadocAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.propertyInspector.properties.*;
-import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.*;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ButtonGroupProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ClassToBindProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.LayoutManagerProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MarginProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadHSpacer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadVSpacer;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IndentedIcon;
+import com.intellij.util.ui.UIUtil;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.AbstractCellEditor;
+import javax.swing.ActionMap;
+import javax.swing.Icon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventObject;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class PropertyInspectorTable extends Table implements DataProvider{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
+public final class PropertyInspectorTable extends JBTable implements UiDataProvider {
+  private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
+
+  private static final int PROPERTY_INDENT = 11;
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
-  private static final Color SYNTETIC_PROPERTY_BACKGROUND = new JBColor(Gray._230, UIUtil.getPanelBackground().brighter());
-  private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new JBColor(Gray._240, UIUtil.getPanelBackground().brighter());
+  private static final Color SYNTHETIC_PROPERTY_BACKGROUND = new JBColor(Gray._230, UIUtil.getPanelBackground().brighter());
+  private static final Color SYNTHETIC_SUBPROPERTY_BACKGROUND = new JBColor(Gray._240, UIUtil.getPanelBackground().brighter());
 
   private final ComponentTree myComponentTree;
   private final ArrayList<Property> myProperties;
@@ -95,6 +148,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Updates UIs of synthetic properties
    */
+  private Disposable myLafManagerDisposable;
   private final MyLafManagerListener myLafManagerListener;
   /**
    * This is property exists in this map then it's expanded.
@@ -104,7 +158,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Component to be edited
    */
-  @NotNull private final List<RadComponent> mySelection = new ArrayList<>();
+  private final @NotNull List<RadComponent> mySelection = new ArrayList<>();
   /**
    * If true then inspector will show "expert" properties
    */
@@ -123,9 +177,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private boolean myStoppingEditing;
   private final Project myProject;
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.inspector";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.inspector";
 
-  PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
+  PropertyInspectorTable(Project project, final @NotNull ComponentTree componentTree) {
     myProject = project;
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
@@ -143,16 +197,18 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myCellRenderer = new MyCompositeTableCellRenderer();
     myCellEditor = new MyCellEditor();
 
+    TableHoverListener.DEFAULT.removeFrom(this);
+
     addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e){
         final int row = rowAtPoint(e.getPoint());
         final int column = columnAtPoint(e.getPoint());
-        if (row == -1){
+        if (row == -1 || column == -1){
           return;
         }
         final Property property = myProperties.get(row);
-        int indent = getPropertyIndentDepth(property) * getPropertyIndentWidth();
+        int indent = getPropertyIndentDepth(property) * getScaledPropertyIndent();
         final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
 
         Component rendererComponent = myCellRenderer.getTableCellRendererComponent(PropertyInspectorTable.this,
@@ -180,7 +236,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         int row = rowAtPoint(e.getPoint());
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {
@@ -201,10 +257,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     );
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP),
-      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
+      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP);
   }
 
   public void setEditor(final GuiEditor editor) {
@@ -221,8 +277,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @return currently selected {@link IntrospectedProperty} or {@code null}
    * if nothing selected or synthetic property is selected.
    */
-  @Nullable
-  public IntrospectedProperty getSelectedIntrospectedProperty(){
+  public @Nullable IntrospectedProperty getSelectedIntrospectedProperty(){
     Property property = getSelectedProperty();
     if (!(property instanceof IntrospectedProperty)) {
       return null;
@@ -231,7 +286,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return (IntrospectedProperty)property;
   }
 
-  @Nullable public Property getSelectedProperty() {
+  public @Nullable Property getSelectedProperty() {
     final int selectedRow = getSelectedRow();
     if(selectedRow < 0 || selectedRow >= getRowCount()){
       return null;
@@ -240,62 +295,44 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return myProperties.get(selectedRow);
   }
 
-  /**
-   * @return {@link PsiClass} of the component which properties are displayed inside the inspector
-   */
-  public PsiClass getComponentClass(){
-    final Module module = myEditor.getModule();
-
-    if (mySelection.size() == 0) return null;
+  public @Nullable String getSelectedRadComponentClassName() {
+    if (mySelection.isEmpty()) return null;
     String className = mySelection.get(0).getComponentClassName();
-    for(int i=1; i<mySelection.size(); i++) {
-      if (!Comparing.equal(mySelection.get(i).getComponentClassName(), className)) {
+    for (int i = 1; i < mySelection.size(); i++) {
+      if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
         return null;
       }
     }
-
-    return JavaPsiFacade.getInstance(module.getProject())
-      .findClass(className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return className;
   }
 
   @Override
-  public Object getData(final String dataId) {
-    if(getClass().getName().equals(dataId)){
-      return this;
-    }
-    else if(CommonDataKeys.PSI_ELEMENT.is(dataId)){
-      final IntrospectedProperty introspectedProperty = getSelectedIntrospectedProperty();
-      if(introspectedProperty == null){
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+    sink.set(DATA_KEY, this);
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, designer == null ? null : designer.getEditor());
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    IntrospectedProperty<?> introspectedProperty = getSelectedIntrospectedProperty();
+    String radComponentClassName = getSelectedRadComponentClassName();
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      if (introspectedProperty == null || radComponentClassName == null || myEditor == null) {
         return null;
       }
-      final PsiClass aClass = getComponentClass();
-      if(aClass == null){
+      PsiClass aClass = JavaPsiFacade.getInstance(myEditor.getProject()).findClass(
+        radComponentClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule()));
+      if (aClass == null) {
         return null;
       }
-
-      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
-      if(getter != null){
+      PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
+      if (getter != null) {
         return getter;
       }
-
       return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-    }
-    else if (CommonDataKeys.PSI_FILE.is(dataId) && myEditor != null) {
-      return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
-    }
-    else if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
-    }
-    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-      GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
-      return designer == null ? null : designer.getEditor();
-    }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-    else {
-      return null;
-    }
+    });
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      return myEditor != null ? PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile()) : null;
+    });
   }
 
   /**
@@ -314,12 +351,21 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   @Override
   public void addNotify() {
     super.addNotify();
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+    }
+    myLafManagerDisposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(myLafManagerDisposable).subscribe(LafManagerListener.TOPIC, myLafManagerListener);
   }
 
   @Override
   public void removeNotify() {
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+      myLafManagerDisposable = null;
+    }
+
     super.removeNotify();
   }
 
@@ -332,13 +378,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     super.setUI(ui);
 
     // Customize action and input maps
-    @NonNls final ActionMap actionMap=getActionMap();
-    @NonNls final InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
-    @NonNls final InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    final @NonNls ActionMap actionMap=getActionMap();
+    final @NonNls InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
+    final @NonNls InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow",new MySelectPreviousRowAction());
+    actionMap.put(TableActions.Up.ID, new MySelectPreviousRowAction());
 
-    actionMap.put("selectNextRow",new MySelectNextRowAction());
+    actionMap.put(TableActions.Down.ID, new MySelectNextRowAction());
 
     actionMap.put("startEditing",new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2,0),"startEditing");
@@ -455,7 +501,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   private void collectPropertiesForSelection() {
     myProperties.clear();
-    if (mySelection.size() > 0) {
+    if (!mySelection.isEmpty()) {
       collectProperties(mySelection.get(0), myProperties);
 
       for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
@@ -486,7 +532,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
             continue;
           }
           for(int childIndex=0; childIndex<children.length; childIndex++) {
-            if (!Comparing.equal(children [childIndex].getName(), otherChildren [childIndex].getName())) {
+            if (!Objects.equals(children[childIndex].getName(), otherChildren[childIndex].getName())) {
               myProperties.remove(propIndex);
               break;
             }
@@ -524,8 +570,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         addProperty(result, CustomCreateProperty.getInstance(myProject));
       }
 
-      if(component instanceof RadContainer){
-        RadContainer container = (RadContainer) component;
+      if(component instanceof RadContainer container){
         if (container.getLayoutManager().getName() != null) {
           addProperty(result, myLayoutManagerProperty);
         }
@@ -606,8 +651,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return 0;
   }
 
-  private static int getPropertyIndentWidth() {
-    return JBUI.scale(11);
+  private static int getScaledPropertyIndent() {
+    return JBUIScale.scale(PROPERTY_INDENT);
   }
 
   private Property[] getPropChildren(final Property property) {
@@ -635,7 +680,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    */
   @Override
   public boolean editCellAt(final int row, final int column, final EventObject e){
-    final boolean result = super.editCellAt(row, column, e);
+    final boolean result = WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
     final Rectangle cellRect = getCellRect(row, column, true);
     repaint(cellRect);
     return result;
@@ -678,22 +723,24 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       return;
     }
     myStoppingEditing = true;
-    final Property property=myProperties.get(editingRow);
-    final PropertyEditor editor=property.getEditor();
-    editor.removePropertyEditorListener(myPropertyEditorListener);
-    try {
-      if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
-        final Object value = editor.getValue();
-        setValueAt(value, editingRow, editingColumn);
+    WriteIntentReadAction.run(() -> {
+      final Property property=myProperties.get(editingRow);
+      final PropertyEditor editor=property.getEditor();
+      editor.removePropertyEditorListener(myPropertyEditorListener);
+      try {
+        if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
+          final Object value = editor.getValue();
+          setValueAt(value, editingRow, editingColumn);
+        }
       }
-    }
-    catch (final Exception exc) {
-      showInvalidInput(exc);
-    }
-    finally {
-      removeEditor();
-      myStoppingEditing = false;
-    }
+      catch (final Exception exc) {
+        showInvalidInput(exc);
+      }
+      finally {
+        removeEditor();
+        myStoppingEditing = false;
+      }
+    });
   }
 
   private static void showInvalidInput(final Exception exc) {
@@ -705,7 +752,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     else{
       message = exc.getMessage();
     }
-    if (message == null || message.length() == 0) {
+    if (message == null || message.isEmpty()) {
       message = UIDesignerBundle.message("error.no.message");
     }
     Messages.showMessageDialog(UIDesignerBundle.message("error.setting.value", message),
@@ -797,8 +844,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * @return first error for the property at the specified row. If component doesn't contain
    * any error then the method returns {@code null}.
    */
-  @Nullable
-  private String getErrorForRow(final int row){
+  private @Nullable String getErrorForRow(final int row){
     LOG.assertTrue(row < myProperties.size());
     final ErrorInfo errorInfo = getErrorInfoForRow(row);
     return errorInfo != null ? errorInfo.myDescription : null;
@@ -814,7 +860,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   private Object getSelectionValue(final Property property) {
-    if (mySelection.size() == 0) {
+    if (mySelection.isEmpty()) {
       return null;
     }
     //noinspection unchecked
@@ -870,10 +916,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
     catch (Throwable e) {
       LOG.debug(e);
-      if(e instanceof InvocationTargetException){ // special handling of warapped exceptions
-        e = ((InvocationTargetException)e).getTargetException();
-      }
-      Messages.showMessageDialog(e.getMessage(), UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
+      String message = ExceptionUtilRt.unwrapException(e, InvocationTargetException.class).getMessage();
+      Messages.showMessageDialog(message, UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
       return false;
     }
     return true;
@@ -895,7 +939,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final class MyModel extends AbstractTableModel {
     private final String[] myColumnNames;
 
-    public MyModel(){
+    MyModel(){
       myColumnNames=new String[]{
         UIDesignerBundle.message("column.property"),
         UIDesignerBundle.message("column.value")};
@@ -961,9 +1005,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
   }
 
-  private final class MyPropertyEditorListener extends PropertyEditorAdapter{
+  private final class MyPropertyEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
+    public void valueCommitted(final @NotNull PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
         final TableCellEditor tableCellEditor = cellEditor;
@@ -985,7 +1029,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     @Override
-    public void editingCanceled(final PropertyEditor source) {
+    public void editingCanceled(final @NotNull PropertyEditor source) {
       if(isEditing()){
         cellEditor.cancelCellEditing();
       }
@@ -1004,11 +1048,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     private final Icon myIndentedCollapseIcon;
     private final Icon[] myIndentIcons = new Icon[3];
 
-    public MyCompositeTableCellRenderer(){
+    MyCompositeTableCellRenderer(){
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(
-          final JTable table,
+          final @NotNull JTable table,
           final Object value,
           final boolean selected,
           final boolean hasFocus,
@@ -1023,24 +1067,24 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       myErrorRenderer = new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setPaintFocusBorder(false);
         }
       };
 
-      myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      myExpandIcon = UIDesignerIcons.ExpandNode;
+      myCollapseIcon = UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
-        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
+        myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getScaledPropertyIndent() * i, myExpandIcon.getIconHeight());
       }
-      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, getPropertyIndentWidth());
-      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, getPropertyIndentWidth());
+      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, PROPERTY_INDENT);
+      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, PROPERTY_INDENT);
     }
 
     @Override
     public Component getTableCellRendererComponent(
       final JTable table,
-      @NotNull final Object value,
+      final @NotNull Object value,
       final boolean selected,
       final boolean hasFocus,
       final int row,
@@ -1057,8 +1101,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         background = table.getBackground();
       }
       else {
-        // syntetic property
-        background = parent == null ? SYNTETIC_PROPERTY_BACKGROUND : SYNTETIC_SUBPROPERTY_BACKGROUND;
+        background = parent == null ? SYNTHETIC_PROPERTY_BACKGROUND : SYNTHETIC_SUBPROPERTY_BACKGROUND;
       }
 
       if (!selected){
@@ -1106,10 +1149,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           }
           else {
             component.setFont(table.getFont());
-          }
-
-          if (component instanceof JCheckBox) {
-            component.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
           }
 
           return component;
@@ -1189,7 +1228,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final class MyCellEditor extends AbstractCellEditor implements TableCellEditor{
     private PropertyEditor myEditor;
 
-    public void setEditor(@NotNull final PropertyEditor editor){
+    public void setEditor(final @NotNull PropertyEditor editor){
       myEditor = editor;
     }
 
@@ -1204,15 +1243,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     @Override
-    public Component getTableCellEditorComponent(final JTable table, @NotNull final Object value, final boolean isSelected, final int row, final int column){
+    public Component getTableCellEditorComponent(final JTable table, final @NotNull Object value, final boolean isSelected, final int row, final int column){
       final Property property=(Property)value;
       try {
         //noinspection unchecked
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
-          c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        } else if (c instanceof JCheckBox) {
-          c.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+          c.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
         }
 
         return c;
@@ -1324,7 +1361,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private class MyExpandCurrentAction extends AbstractAction {
     private final boolean myExpand;
 
-    public MyExpandCurrentAction(final boolean expand) {
+    MyExpandCurrentAction(final boolean expand) {
       myExpand = expand;
     }
 
@@ -1358,7 +1395,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
      * Recursively updates renderer and editor UIs of all synthetic
      * properties.
      */
-    private void updateUI(final Property property){
+    private static void updateUI(final Property property){
       final PropertyRenderer renderer = property.getRenderer();
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();
@@ -1375,7 +1412,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
 
     @Override
-    public void lookAndFeelChanged(final LafManager source) {
+    public void lookAndFeelChanged(final @NotNull LafManager source) {
       updateUI(myBorderProperty);
       updateUI(MarginProperty.getInstance(myProject));
       updateUI(HGapProperty.getInstance(myProject));

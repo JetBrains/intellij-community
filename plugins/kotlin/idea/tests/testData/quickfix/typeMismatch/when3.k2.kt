@@ -1,0 +1,9 @@
+// "Change type of 's' to 'String'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+fun test(i: Int) {
+    val s: Int =<caret> when (i) {
+        0 -> ""
+        else -> ""
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 
 abstract class KeyGestureState {
@@ -28,7 +14,7 @@ abstract class KeyGestureState {
 
   final StateContext myContext;
 
-  public KeyGestureState(final KeyboardGestureProcessor processor) {
+  KeyGestureState(final KeyboardGestureProcessor processor) {
     myProcessor = processor;
     myContext = processor.myContext;
   }
@@ -55,17 +41,17 @@ abstract class KeyGestureState {
         || event.getKeyCode() == KeyEvent.VK_META;
   }
 
-  @NotNull
-  public AnActionEvent createActionEvent() {
+  public @NotNull AnActionEvent createActionEvent() {
     throw new IllegalStateException(getClass().getName());
   }
 
-  static class WaitForStart extends KeyGestureState {
+  static final class WaitForStart extends KeyGestureState {
 
     WaitForStart(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       if (!isPureModifierEvent(KeyEvent.KEY_PRESSED)) return false;
 
@@ -78,12 +64,13 @@ abstract class KeyGestureState {
     }
   }
 
-  static class ModifierPressed extends KeyGestureState {
+  static final class ModifierPressed extends KeyGestureState {
 
     ModifierPressed(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       if (isPureModifierEvent(KeyEvent.KEY_RELEASED)) {
         myProcessor.myHoldTimer.stop();
@@ -104,12 +91,13 @@ abstract class KeyGestureState {
     }
   }
 
-  static class WaitForDblClick extends KeyGestureState {
+  static final class WaitForDblClick extends KeyGestureState {
 
     WaitForDblClick(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       myProcessor.myDblClickTimer.stop();
 
@@ -133,12 +121,13 @@ abstract class KeyGestureState {
 
   }
 
-  static class WaitForAction extends KeyGestureState {
+  static final class WaitForAction extends KeyGestureState {
 
     WaitForAction(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       if (isPureModifierEvent(KeyEvent.KEY_PRESSED)) {
         myContext.actionKey = myContext.keyToProcess;
@@ -168,11 +157,12 @@ abstract class KeyGestureState {
     }
   }
 
-  static class ProcessFinish extends KeyGestureState {
+  static final class ProcessFinish extends KeyGestureState {
     ProcessFinish(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       myProcessor.executeAction();
       myProcessor.setState(myProcessor.myWaitForStart);
@@ -185,12 +175,13 @@ abstract class KeyGestureState {
     }
   }
 
-  static class WaitForActionEnd extends KeyGestureState {
+  static final class WaitForActionEnd extends KeyGestureState {
 
     WaitForActionEnd(final KeyboardGestureProcessor processor) {
       super(processor);
     }
 
+    @Override
     boolean process() {
       if (myContext.keyToProcess.getID() == KeyEvent.KEY_RELEASED) {
         myProcessor.executeAction();

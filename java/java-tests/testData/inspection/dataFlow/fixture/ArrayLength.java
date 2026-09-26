@@ -1,6 +1,16 @@
 import java.util.Arrays;
 
 public final class ArrayLength {
+  void testArrayLengthNonZeroUnknownIndex(int[] arr, int a, int b, int c) {
+    arr[a+b+c] = 0;
+    if (<warning descr="Condition 'arr.length == 0' is always 'false'">arr.length == 0</warning>) {}
+  }
+
+  public static void diff(String[] args, String[] args2) {
+    String[] arr = new String[args2.length - args.length];
+    if (arr.length > 0) {}
+  }
+  
   void testForSimple2(int[] arr, int[][] arr2) {
     boolean b = arr2[0].length == arr.length;
     for(int i=0; i<arr.length; i++) {
@@ -52,8 +62,12 @@ public final class ArrayLength {
   }
 
   public static void testArray(int[] x, int a) {
-    x[<warning descr="Array index is out of bounds">-1</warning>] = -2;
-    x[<warning descr="Array index is out of bounds">x.length</warning>] = -1;
+    if(Math.random() > 0.5) {
+      x[<warning descr="Array index is out of bounds">-1</warning>] = -2;
+    }
+    if(Math.random() > 0.5) {
+      x[<warning descr="Array index is out of bounds">x.length</warning>] = -1;
+    }
     x[a] = 6;
     if(<warning descr="Condition 'a < 0' is always 'false'">a < 0</warning>) {
       System.out.println("never");
@@ -66,7 +80,7 @@ public final class ArrayLength {
       System.out.println("Impossible");
     }
     Arrays.fill(x, -1);
-    Arrays.<warning descr="The call to 'fill' always fails as index is out of bounds">fill</warning>(x, -1, -1, -1);
+    Arrays.<warning descr="The call to 'fill' always fails as an argument is out of bounds">fill</warning>(x, -1, -1, -1);
   }
 
   static final String[] ARR1 = {};

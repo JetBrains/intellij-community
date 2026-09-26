@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2016
  */
 public interface GradleConfiguration extends Serializable {
   @NotNull
@@ -34,4 +20,21 @@ public interface GradleConfiguration extends Serializable {
   boolean isVisible();
 
   boolean isScriptClasspathConfiguration();
+
+  @NotNull List<String> getDeclarationAlternatives();
+
+  /**
+   * @return `true` for Gradle 8.2+ if a configuration can have dependencies declared. E.g., if it's a scope or an annotation processor.
+   * For Gradle < 8.2, returns null because it's unclear whether a configuration could declare dependencies or not.
+   * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/is-can-be-declared.html">Gradle Documentation</a>
+   */
+  @Nullable
+  Boolean getCanBeDeclared();
+
+  /**
+   * @return names of the configurations this configuration directly extends from, without transitive ones.
+   * A dependency declared in an extended configuration is also present in this configuration.
+   * @see <a href="https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api.artifacts/-configuration/extends-from.html">Gradle Documentation</a>
+   */
+  @NotNull List<String> getExtendsFrom();
 }

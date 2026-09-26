@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
@@ -22,23 +8,33 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlFile;
-import java.util.HashMap;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
-  protected static <K, V> void cacheResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
+  protected static <K, V> void cacheResult(final @Nullable DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
     if (context != null) {
       Map<K, V> cachemap = cacheKind.get(context);
       if (cachemap == null) {
-        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
+        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<>()));
       }
       cachemap.put(key, value);
     }
@@ -101,6 +97,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
+  @Override
   public void visitTarget(AntDomTarget target) {
     if (myStage == Stage.TARGETS_WALKUP_STAGE) {
       final String targetEffectiveName = myCurrentTargetEffectiveName.peek();
@@ -119,27 +116,21 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
     else if (myStage == Stage.RESOLVE_MAP_BUILDING_STAGE){
       final String declaredTargetName = target.getName().getRawText();
-      String effectiveTargetName = null;
+      String effectiveTargetName;
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
-        case IMPORT:
+        case IMPORT -> {
           final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
-            myTargetsResolveMap.put(alias, target); 
+            myTargetsResolveMap.put(alias, target);
           }
           else {
             effectiveTargetName = alias;
           }
-          break;
-
-        case INCLUDE:
-          effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
-          break;
-
-        default:
-          effectiveTargetName = declaredTargetName;
-          break;
+        }
+        case INCLUDE -> effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
+        default -> effectiveTargetName = declaredTargetName;
       }
       if (effectiveTargetName != null) {
         final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
@@ -172,7 +163,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   @Override
   public void visitAntDomElement(AntDomElement element) {
     if (myStopped) {
-      return; 
+      return;
     }
     if (element.equals(myContextElement)) {
       stop();
@@ -196,13 +187,11 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     }
   }
 
-  @Nullable
-  protected AntDomTarget getTargetByName(String effectiveName) {
+  protected @Nullable AntDomTarget getTargetByName(@NonNls String effectiveName) {
     return myTargetsResolveMap.get(effectiveName);
   }
 
-  @NotNull
-  public final Map<String, AntDomTarget> getDiscoveredTargets() {
+  public final @NotNull Map<String, AntDomTarget> getDiscoveredTargets() {
     return Collections.unmodifiableMap(myTargetsResolveMap);
   }
 
@@ -215,20 +204,21 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param propertiesProvider
-   * @return true if search should be continued and false in order to stop
    */
   protected abstract void propertyProviderFound(PropertiesProvider propertiesProvider);
 
 
+  @Override
   public void visitInclude(AntDomInclude includeTag) {
     processFileInclusion(includeTag, InclusionKind.INCLUDE);
   }
 
+  @Override
   public void visitImport(AntDomImport importTag) {
     processFileInclusion(importTag, InclusionKind.IMPORT);
   }
 
+  @Override
   public void visitProject(AntDomProject project) {
     if (myVisitedProjects.add(project)) {
       try {
@@ -271,17 +261,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   /**
-   * @param target
-   * @param taregetEffectiveName
    * @param dependenciesMap Map declared dependency reference->pair[tareget object, effective reference name]
    */
   protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
   }
 
   /**
-   * @param existingTarget
-   * @param duplicatingTarget
-   * @param taregetEffectiveName
    */
   protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
   }
@@ -289,15 +274,16 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
   }
 
-  private static enum InclusionKind {
+  private enum InclusionKind {
     INCLUDE("included"), IMPORT("imported"), TOPLEVEL("toplevel");
 
     private final String myDisplayName;
 
-    private InclusionKind(String displayName) {
+    InclusionKind(String displayName) {
       myDisplayName = displayName;
     }
 
+    @Override
     public String toString() {
       return myDisplayName;
     }
@@ -311,39 +297,35 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     public String calcTargetReferenceText(String targetReferenceText) {
       if (!myPrefixes.isEmpty()) {
         final InclusionKind kind = myPrefixes.getLast().getSecond();
-        switch (kind) {
-          case IMPORT  : return targetReferenceText;
-          case INCLUDE : return getFQPrefix() + targetReferenceText;
+        if (kind == InclusionKind.INCLUDE) {
+          return getFQPrefix() + targetReferenceText;
         }
       }
       return targetReferenceText;
     }
 
-    @NotNull
-    public InclusionKind getCurrentInclusionKind() {
+    public @NotNull InclusionKind getCurrentInclusionKind() {
       if (myPrefixes.isEmpty()) {
         return InclusionKind.TOPLEVEL;
       }
       return myPrefixes.getLast().getSecond();
     }
 
-    @NotNull
-    public String getFQPrefix() {
+    public @NotNull String getFQPrefix() {
       if (myCurrentPrefix != null) {
         return myCurrentPrefix;
       }
       if (myPrefixes.isEmpty()) {
         return "";
       }
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       for (Pair<String, InclusionKind> prefix : myPrefixes) {
         buf.append(prefix.getFirst());
       }
       return myCurrentPrefix = buf.toString();
     }
 
-    @NotNull
-    public String getShortPrefix() {
+    public @NotNull String getShortPrefix() {
       return myPrefixes.isEmpty()? "" : myPrefixes.getLast().getFirst();
     }
 

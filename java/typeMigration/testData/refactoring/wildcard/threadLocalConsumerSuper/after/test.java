@@ -1,5 +1,5 @@
 class Test {
   void method(ThreadLocal<? super String> l) {
-    l.substring(0);
+    l.get().substring(0);
   }
 }

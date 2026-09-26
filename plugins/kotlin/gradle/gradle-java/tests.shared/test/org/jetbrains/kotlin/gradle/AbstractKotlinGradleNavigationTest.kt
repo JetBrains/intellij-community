@@ -1,0 +1,76 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.gradle
+
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runReadActionBlocking
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+private const val EXPECTED_NAVIGATION_DIRECTIVE = "EXPECTED-NAVIGATION-SUBSTRING"
+
+abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
+    private val actionName: String get() = IdeActions.ACTION_GOTO_DECLARATION
+
+    abstract val myFixture: GradleTestFixtureBuilder
+
+    protected fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
+        val systemSettings = GradleSystemSettings.getInstance()
+        systemSettings.isDownloadSources = true
+
+        test(gradleVersion, myFixture) {
+            val mainFileContent = mainTestDataFile
+            val mainFile = mainTestDataPsiFile
+            val expectedNavigationText =
+                InTextDirectivesUtils.findStringWithPrefixes(mainFileContent.content, "// \"$EXPECTED_NAVIGATION_DIRECTIVE\": ")
+                    ?: error("$EXPECTED_NAVIGATION_DIRECTIVE is not specified")
+
+            codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
+            assertTrue("<caret> is not present") {
+                val caretOffset = runReadActionBlocking { codeInsightFixture.caretOffset }
+                caretOffset != 0
+            }
+            codeInsightFixture.performEditorAction(actionName)
+
+            val text = document.text
+            IgnoreTests.runTestIfNotDisabledByFileDirective(
+                mainFile.virtualFile.toNioPath(),
+                IgnoreTests.DIRECTIVES.IGNORE_K2
+            ) {
+                assertTrue("Actual text:\n\n$text") {
+                    !text.contains(EXPECTED_NAVIGATION_DIRECTIVE) && text.contains(expectedNavigationText)
+                }
+            }
+        }
+    }
+
+    protected fun verifyFileShouldStayTheSame(gradleVersion: GradleVersion, fixture: GradleTestFixtureBuilder = myFixture) {
+        val systemSettings = GradleSystemSettings.getInstance()
+        systemSettings.isDownloadSources = true
+
+        test(gradleVersion, fixture) {
+            val mainFile = mainTestDataPsiFile
+
+            codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
+
+            val textBefore = document.text
+            assertTrue("<caret> is not present") {
+                val caretOffset = runReadActionBlocking { codeInsightFixture.caretOffset }
+                caretOffset != 0
+            }
+            codeInsightFixture.performEditorAction(actionName)
+
+            val textAfter = document.text
+            IgnoreTests.runTestIfNotDisabledByFileDirective(
+                mainFile.virtualFile.toNioPath(),
+                IgnoreTests.DIRECTIVES.IGNORE_K2
+            ) {
+                assertEquals(textBefore, textAfter, "Navigation should not work")
+            }
+        }
+    }
+}

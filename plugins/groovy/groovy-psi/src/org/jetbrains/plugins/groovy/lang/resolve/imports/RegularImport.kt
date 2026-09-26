@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
 import com.intellij.openapi.util.text.StringUtil
@@ -8,10 +8,15 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.checkName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.resolve
+import org.jetbrains.plugins.groovy.lang.resolve.isNonAnnotationResolve
+import org.jetbrains.plugins.groovy.lang.resolve.processClassesInFile
+import org.jetbrains.plugins.groovy.lang.resolve.processClassesInPackage
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessClasses
 
 /**
  * Represents regular import, possibly aliased.
@@ -30,7 +35,11 @@ data class RegularImport(val classFqn: String, override val name: String) : Groo
 
   constructor(classFqn: String) : this(classFqn, StringUtil.getShortName(classFqn))
 
-  override val isAliased: Boolean = getShortName(classFqn) != name
+  override val isAliased: Boolean = shortName != name
+
+  override val shortName: String get() = getShortName(classFqn)
+
+  override val fullyQualifiedName: String get() = classFqn
 
   override fun resolveImport(file: GroovyFileBase): PsiClass? = file.resolve(this) {
     if (file.packageName.isEmpty() || '.' in classFqn) {
@@ -77,5 +86,6 @@ data class RegularImport(val classFqn: String, override val name: String) : Groo
     return this in defaultRegularImportsSet || starImport in defaultStarImportsSet
   }
 
+  @NonNls
   override fun toString(): String = "import $classFqn as $name"
 }

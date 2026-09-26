@@ -7,7 +7,7 @@ import java.util.concurrent.ForkJoinPool;
 
 public class Parallel {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     StreamEx.of(1, 2, 3).parallel((ForkJoinPool) Executors.newWorkStealingPool()).forEach(x -> {});
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Author: max
@@ -20,135 +6,88 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.codeInsight.daemon.impl.ProblemsViewBridge;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.InspectionManagerBase;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class InspectionManagerEx extends InspectionManagerBase {
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<>();
-  private GlobalInspectionContextImpl myGlobalInspectionContext;
 
-  public InspectionManagerEx(final Project project) {
+  public InspectionManagerEx(Project project) {
     super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
-          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        toolWindowManager.registerToolWindow(ProblemsViewBridge.getToolWindowId(), true, ToolWindowAnchor.BOTTOM, project);
+        return ContentFactory.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
+      });
     }
     else {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
-          ContentManager contentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
-          new ContentManagerWatcher(toolWindow, contentManager);
-          contentManager.addContentManagerListener(new ContentManagerAdapter() {
-            private static final String PREFIX = "of ";
-
-            @Override
-            public void contentAdded(ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            @Override
-            public void contentRemoved(ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            private void handleContentSizeChanged() {
-              final int count = contentManager.getContentCount();
-              if (count == 1) {
-                final Content content = contentManager.getContent(0);
-                final String displayName = content.getDisplayName();
-                if (!content.getDisplayName().startsWith(PREFIX)) {
-                  content.setDisplayName(PREFIX + displayName);
-                }
-              }
-              else if (count > 1) {
-                for (Content content : contentManager.getContents()) {
-                  if (content.getDisplayName().startsWith(PREFIX)) {
-                    content.setDisplayName(content.getDisplayName().substring(PREFIX.length()));
-                  }
-                }
-              }
-            }
-          });
-          return contentManager;
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> getProblemsViewContentManager(project));
     }
   }
 
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   @NotNull final String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType,
-                                                   @Nullable final HintAction hintAction,
-                                                   boolean onTheFly,
-                                                   @Nullable LocalQuickFix... fixes) {
+  protected @NotNull ContentManager getProblemsViewContentManager(@NotNull Project project) {
+    ToolWindow toolWindow = Objects.requireNonNull(ProblemsViewBridge.getToolWindow(project));
+    ContentManager contentManager = toolWindow.getContentManager();
+    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
+    return contentManager;
+  }
+
+  public @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
+                                                            @NotNull ProblemHighlightType highlightType,
+                                                            @Nullable HintAction hintAction,
+                                                            boolean onTheFly,
+                                                            @NotNull LocalQuickFix @Nullable ... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
   @Override
-  @NotNull
-  public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
-    final GlobalInspectionContextImpl inspectionContext;
-    if (reuse) {
-      if (myGlobalInspectionContext == null) {
-        myGlobalInspectionContext = inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
-      }
-      else {
-        inspectionContext = myGlobalInspectionContext;
-      }
-    }
-    else {
-      inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
-    }
-    myRunningContexts.add(inspectionContext);
-    return inspectionContext;
+  public @NotNull GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
+    return createNewGlobalContext();
   }
 
-  public void setProfile(@NotNull String name) {
-    myCurrentProfileName = name;
+  @Override
+  public @NotNull GlobalInspectionContextImpl createNewGlobalContext() {
+    GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
+    myRunningContexts.add(inspectionContext);
+    return inspectionContext;
   }
 
   void closeRunningContext(@NotNull GlobalInspectionContextImpl globalInspectionContext){
     myRunningContexts.remove(globalInspectionContext);
   }
 
-  @NotNull
-  public Set<GlobalInspectionContextImpl> getRunningContexts() {
+  public @NotNull Set<GlobalInspectionContextImpl> getRunningContexts() {
     return myRunningContexts;
   }
 
   @TestOnly
-  @NotNull
-  public NotNullLazyValue<ContentManager> getContentManager() {
+  public @NotNull NotNullLazyValue<ContentManager> getContentManager() {
     return myContentManager;
   }
 }

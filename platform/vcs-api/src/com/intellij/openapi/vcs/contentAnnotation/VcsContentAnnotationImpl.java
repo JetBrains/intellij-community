@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,30 +17,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-public class VcsContentAnnotationImpl implements VcsContentAnnotation {
+public final class VcsContentAnnotationImpl implements VcsContentAnnotation {
   private final Project myProject;
   private final VcsContentAnnotationSettings mySettings;
   private final ContentAnnotationCache myContentAnnotationCache;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl");
+  private static final Logger LOG = Logger.getInstance(VcsContentAnnotationImpl.class);
 
   public static VcsContentAnnotation getInstance(final Project project) {
-    return ServiceManager.getService(project, VcsContentAnnotation.class);
+    return project.getService(VcsContentAnnotation.class);
   }
 
-  public VcsContentAnnotationImpl(Project project, VcsContentAnnotationSettings settings, final ContentAnnotationCache contentAnnotationCache) {
+  public VcsContentAnnotationImpl(Project project) {
     myProject = project;
-    mySettings = settings;
-    myContentAnnotationCache = contentAnnotationCache;
+    mySettings = VcsContentAnnotationSettings.getInstance(project);
+    myContentAnnotationCache = project.getService(ContentAnnotationCache.class);
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber fileRecentlyChanged(VirtualFile vf) {
+  public @Nullable VcsRevisionNumber fileRecentlyChanged(VirtualFile vf) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final AbstractVcs vcs = vcsManager.getVcsFor(vf);
     if (vcs == null) return null;
     if (vcs.getDiffProvider() instanceof DiffMixin) {
       final VcsRevisionDescription description = ((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(vf);
+      if (description == null) return null;
       final Date date = description.getRevisionDate();
       return isRecent(date) ? description.getRevisionNumber() : null;
     }

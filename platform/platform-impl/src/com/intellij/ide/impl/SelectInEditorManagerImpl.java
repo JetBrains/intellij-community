@@ -1,51 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 /**
  * @author MYakovlev
  */
-public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
+@ApiStatus.Internal
+public final class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
@@ -74,14 +60,14 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     openEditor(file, endOffset);
     final Editor editor = openEditor(file, textRange.getStartOffset());
 
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (editor != null && !editor.isDisposed()) {
         doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
       }
     });
   }
 
-  private void doSelect(final boolean toUseNormalSelection, @NotNull final Editor editor,
+  private void doSelect(final boolean toUseNormalSelection, final @NotNull Editor editor,
                         final boolean toSelectLine,
                         final TextRange textRange) {
     int startOffset = textRange.getStartOffset();
@@ -100,25 +86,25 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
       return;
     }
 
-    TextAttributes selectionAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
     releaseAll();
 
     if (toSelectLine){
       DocumentEx doc = (DocumentEx) editor.getDocument();
       int lineNumber = doc.getLineNumber(startOffset);
       if (lineNumber >= 0 && lineNumber < doc.getLineCount()){
-        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(doc.getLineStartOffset(lineNumber),
+        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                           doc.getLineStartOffset(lineNumber),
                                                                            doc.getLineEndOffset(lineNumber) + doc.getLineSeparatorLength(lineNumber),
                                                                            HighlighterLayer.LAST + 1,
-                                                                           selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                           HighlighterTargetArea.EXACT_RANGE);
       }
     }
     else{
-      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(startOffset,
+      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                         startOffset,
                                                                          endOffset,
                                                                          HighlighterLayer.LAST + 1,
-                                                                         selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                         HighlighterTargetArea.EXACT_RANGE);
     }
     myEditor = editor;
     myEditor.getContentComponent().addFocusListener(this);
@@ -135,7 +121,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
   }
 
   @Override
-  public void caretPositionChanged(CaretEvent e) {
+  public void caretPositionChanged(@NotNull CaretEvent e) {
     releaseAll();
   }
 
@@ -149,8 +135,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     }
   }
 
-  @Nullable
-  private Editor openEditor(VirtualFile file, int textOffset){
+  private @Nullable Editor openEditor(VirtualFile file, int textOffset){
     if (file == null || !file.isValid()){
       return null;
     }

@@ -20,6 +20,6 @@ class A<Z>{
  <T> T foo(T t, A<T> a){ return null; }
 
  {
-  foo(new C(), new A<D>()).<ref>b();
+  foo(new C(), new A<D>()).<caret>b();
  }
 }

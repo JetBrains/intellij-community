@@ -29,14 +29,17 @@ public class SegmentedInputStreamReader extends Reader {
     myStream = stream;
   }
 
+  @Override
   public void close() throws IOException {
     myStream.close();
   }
 
+  @Override
   public boolean ready() throws IOException {
     return myStream.available() > 0;
   }
 
+  @Override
   public int read(final char[] cbuf, final int off, final int len) throws IOException {
     int bytesRead = 0;
     while (ready() && bytesRead < len) {

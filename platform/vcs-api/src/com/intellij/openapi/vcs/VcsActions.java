@@ -17,10 +17,13 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface VcsActions {
 
   @NonNls String ACTION_COPY_REVISION_NUMBER = "Vcs.CopyRevisionNumberAction";
+  @NonNls String VCS_OPERATIONS_POPUP = "Vcs.Operations.Popup";
+  @NonNls String DIFF_BEFORE_WITH_LOCAL = "Vcs.ShowDiffWithLocal.Before";
+  @NonNls String DIFF_AFTER_WITH_LOCAL = "Vcs.ShowDiffWithLocal";
+
+  @NonNls String PRIMARY_COMMIT_EXECUTORS_GROUP = "Vcs.Commit.PrimaryCommitActions";
+  @NonNls String COMMIT_EXECUTORS_GROUP = "Vcs.CommitExecutor.Actions";
 }

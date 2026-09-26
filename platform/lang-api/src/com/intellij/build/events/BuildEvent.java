@@ -15,49 +15,64 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a single event in a build process, reported to the Build tool window.
+ *
+ * <h3>Creating New Events</h3>
+ *
+ * <p> For creating new event use the static {@code builder(...)} method on the event interface
+ * (e.g., {@link MessageEvent#builder}, {@link ProgressBuildEvent#builder}):
+ * <pre>{@code
+ * MessageEvent.builder("Compilation failed", MessageEvent.Kind.ERROR)
+ *     .withParentId(parentId)
+ *     .build();
+ * }</pre>
+ *
+ * <h3>Defining New Events</h3>
+ *
+ * <ol>
+ *   <li>Define a new interface extending {@code BuildEvent} and an immutable implementation
+ *       (preferably a Kotlin {@code data class}).
+ *   <li>Define a builder interface and implementation following the pattern of existing builders
+ *       (e.g., {@link com.intellij.build.eventBuilders.MessageEventBuilder}).
+ *   <li>Register a factory method in {@link BuildEvents} and its implementation in {@code BuildEventsImpl}.
+ *   <li>Add a static {@code builder(...)} convenience method on the new event interface that delegates to {@link BuildEvents}.
+ * </ol>
+ *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildEvent {
   /**
-   * Returns an id that uniquely identifies the event.
-   *
-   * @return The event id.
+   * Returns an ID that uniquely identifies the event.
+   * The events with equal IDs replaces each other.
    */
-  @NotNull
-  Object getId();
+  @NotNull Object getId();
 
   /**
    * Returns the parent event id, if any.
-   *
-   * @return The parent event id.
    */
-  @Nullable
-  Object getParentId();
+  @Nullable Object getParentId();
 
   /**
-   * Returns the time this event was triggered.
-   *
-   * @return The event time, in milliseconds since the epoch.
+   * Returns the time, in milliseconds since the epoch, this event was triggered.
    */
   long getEventTime();
 
   /**
    * Returns textual representation of the event.
-   *
-   * @return The event text message.
    */
-  @NotNull
-  String getMessage();
+  @Message
+  @NotNull String getMessage();
 
-  @Nullable
-  String getHint();
+  @Hint
+  @Nullable String getHint();
 
-  @Nullable
-  String getDescription();
+  @Description
+  @Nullable String getDescription();
 }

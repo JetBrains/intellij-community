@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -6,25 +6,25 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.psi.PsiElement
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.util.BitUtil
-import gnu.trove.THashMap
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import java.io.IOException
 import java.io.Writer
 
+@ApiStatus.Internal
 class HtmlStyleManager(val isInline: Boolean) {
-  private val styleMap = THashMap<TextAttributes, String>()
-  private val separatorStyleMap = THashMap<Color, String>()
+  private val styleMap = HashMap<TextAttributes, String>()
+  private val separatorStyleMap = HashMap<Color, String>()
 
   private val buffer = StringBuilder()
 
   private val scheme = EditorColorsManager.getInstance().globalScheme
 
-  fun ensureStyles(hIterator: HighlighterIterator, methodSeparators: List<LineMarkerInfo<PsiElement>>) {
+  fun ensureStyles(hIterator: HighlighterIterator, methodSeparators: List<LineMarkerInfo<*>>) {
     while (!hIterator.atEnd()) {
       val textAttributes = hIterator.textAttributes
       if (!styleMap.containsKey(textAttributes)) {
@@ -73,7 +73,7 @@ class HtmlStyleManager(val isInline: Boolean) {
   }
 
   fun isDefaultAttributes(attributes: TextAttributes): Boolean {
-    return (attributes.foregroundColor ?: scheme.defaultForeground).equals(Color.BLACK) && attributes.fontType == 0
+    return attributes.fontType == 0 && (attributes.foregroundColor ?: scheme.defaultForeground) == Color.BLACK
   }
 
   fun writeTextStyle(writer: Writer, attributes: TextAttributes) {
@@ -90,9 +90,7 @@ class HtmlStyleManager(val isInline: Boolean) {
     }
   }
 
-  fun getSeparatorClassName(color: Color): String {
-    return separatorStyleMap.get(color)!!
-  }
+  fun getSeparatorClassName(color: Color): String = separatorStyleMap.get(color)!!
 }
 
-internal fun colorToHtml(color: Color) = "#${ColorUtil.toHex(color)}"
+private fun colorToHtml(color: Color) = "#${ColorUtil.toHex(color)}"

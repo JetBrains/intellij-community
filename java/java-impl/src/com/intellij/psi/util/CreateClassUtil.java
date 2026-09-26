@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringTokenizer;
@@ -34,33 +24,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 
 /**
  * author: lesya
  */
-public class CreateClassUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.CreateClassUtil");
+public final class CreateClassUtil {
+  private static final Logger LOG = Logger.getInstance(CreateClassUtil.class);
 
-  @NonNls public static final String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
-  @NonNls private static final String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";
-  @NonNls private static final String CLASS_NAME_PROPERTY = "Class_Name";
-  @NonNls private static final String INTERFACE_NAME_PROPERTY = "Interface_Name";
+  public static final @NonNls String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
+  private static final @NonNls String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";
+  private static final @NonNls String CLASS_NAME_PROPERTY = "Class_Name";
+  private static final @NonNls String INTERFACE_NAME_PROPERTY = "Interface_Name";
 
   private CreateClassUtil() {}
 
-  @Nullable
-  private static PsiClass createClassFromTemplate(@NotNull final Properties attributes, @Nullable final String templateName,
-                                                  @NotNull final PsiDirectory directoryRoot,
-                                                  @NotNull final String className) throws IncorrectOperationException {
+  private static @Nullable PsiClass createClassFromTemplate(final @NotNull Properties attributes, final @Nullable String templateName,
+                                                            final @NotNull PsiDirectory directoryRoot,
+                                                            final @NotNull String className) throws IncorrectOperationException {
     if (templateName == null) return null;
     if (templateName.equals(DO_NOT_CREATE_CLASS_TEMPLATE)) return null;
 
     final Project project = directoryRoot.getProject();
     try {
       final PsiDirectory directory = createParentDirectories(directoryRoot, className);
-      final PsiFile psiFile = directory.findFile(className + "." + StdFileTypes.JAVA.getDefaultExtension());
+      final PsiFile psiFile = directory.findFile(className + "." + JavaFileType.INSTANCE.getDefaultExtension());
       if (psiFile != null) {
         psiFile.delete();
       }
@@ -82,7 +70,6 @@ public class CreateClassUtil {
       else {
         final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
         FileTemplate fileTemplate = fileTemplateManager.getJ2eeTemplate(templateName);
-        LOG.assertTrue(fileTemplate != null, templateName + " not found");
         final String text = fileTemplate.getText(attributes);
         aClass = JavaCreateFromTemplateHandler.createClassOrInterface(project, directory, text, true, fileTemplate.getExtension());
       }
@@ -93,8 +80,7 @@ public class CreateClassUtil {
     }
   }
 
-  @NotNull
-  private static PsiDirectory createParentDirectories(@NotNull PsiDirectory directoryRoot, @NotNull String className) throws IncorrectOperationException {
+  private static @NotNull PsiDirectory createParentDirectories(@NotNull PsiDirectory directoryRoot, @NotNull String className) throws IncorrectOperationException {
     final PsiPackage currentPackage = JavaDirectoryService.getInstance().getPackage(directoryRoot);
     final String packagePrefix = currentPackage == null? null : currentPackage.getQualifiedName() + ".";
     final String packageName = extractPackage(packagePrefix != null && className.startsWith(packagePrefix)?
@@ -130,13 +116,12 @@ public class CreateClassUtil {
     return fq;
   }
 
-  @Nullable
-  public static PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
+  public static @Nullable PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
     return createClassNamed(newClassName, FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties(), templateName, directory);
   }
 
-  @Nullable
-  public static PsiClass createClassNamed(String newClassName, Map classProperties, String templateName, @NotNull PsiDirectory directory)
+  public static @Nullable PsiClass createClassWithDefaultProperties(String newClassName, Properties classProperties, String templateName,
+                                                                    @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
     Properties defaultProperties = FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
@@ -145,11 +130,10 @@ public class CreateClassUtil {
     return createClassNamed(newClassName, properties, templateName, directory);
   }
 
-  @Nullable
-  private static PsiClass createClassNamed(@Nullable String newClassName,
-                                           @NotNull Properties properties,
-                                           String templateName,
-                                           @NotNull PsiDirectory directory) throws IncorrectOperationException {
+  private static @Nullable PsiClass createClassNamed(@Nullable String newClassName,
+                                                     @NotNull Properties properties,
+                                                     String templateName,
+                                                     @NotNull PsiDirectory directory) throws IncorrectOperationException {
     if (newClassName == null) {
       return null;
     }
@@ -160,11 +144,10 @@ public class CreateClassUtil {
     return createClassFromTemplate(properties, templateName, directory, newClassName);
   }
 
-  @Nullable
-  public static PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory, 
-                                                       @Nullable final Module module,
-                                                       final String className,
-                                                       final String templateName) {
+  public static @Nullable PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory,
+                                                                 final @Nullable Module module,
+                                                                 final String className,
+                                                                 final String templateName) {
     if (classDirectory == null && module != null) {
       try {
         classDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, "", null, false);
@@ -177,9 +160,7 @@ public class CreateClassUtil {
       return null;
     }
     try {
-      final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
-                                    new Properties() :
-                                    FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
+      final Properties properties =                                  FileTemplateManager.getInstance(classDirectory.getProject()).getDefaultProperties();
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {

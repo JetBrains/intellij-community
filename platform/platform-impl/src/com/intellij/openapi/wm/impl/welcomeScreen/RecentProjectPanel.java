@@ -1,144 +1,146 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.CommonBundle;
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.ProjectGroup;
+import com.intellij.ide.ProjectGroupActionGroup;
+import com.intellij.ide.RecentProjectListActionProvider;
+import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
+import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class RecentProjectPanel extends JPanel {
-  public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
-  protected final JBList myList;
-  protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
-  protected AnAction removeRecentProjectAction;
-  private int myHoverIndex = -1;
-  private final int closeButtonInset = JBUI.scale(7);
-  private Icon currentIcon = AllIcons.Welcome.Project.Remove;
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
-  Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
-  private final JPanel myCloseButtonForEditor = new JPanel() {
-    {
-      setPreferredSize(new Dimension(currentIcon.getIconWidth(), currentIcon.getIconHeight()));
-      setOpaque(true);
-    }
+  private static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeUICustomization
+    .getInstance()
+    .projectMessagePointer("popup.title.recent.projects");
 
-    @Override
-    protected void paintComponent(Graphics g) {
-      currentIcon.paintIcon(this, g, 0, 0);
-    }
-  };
+  protected final JBList<AnAction> myList;
+  final Set<ReopenProjectAction> projectsWithLongPaths = new HashSet<>();
+  protected final FilePathChecker myChecker;
+  private int myHoverIndex = -1;
 
-  protected FilePathChecker myChecker;
-
-
-  private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
-
-    int realCloseButtonInset = (UIUtil.isJreHiDPI(this)) ?
-                               (int)(closeButtonInset * JBUI.sysScale(this)) : closeButtonInset;
-
-    Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
-                                              myCloseButtonForEditor.getY() - realCloseButtonInset,
-                                              myCloseButtonForEditor.getWidth() + realCloseButtonInset * 2,
-                                              myCloseButtonForEditor.getHeight() + realCloseButtonInset * 2);
-
-    Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + listCellBounds.x,
-                                                              closeButtonRect.y + listCellBounds.y),
-                                                    closeButtonRect.getSize());
-    return rectInListCoordinates.contains(p);
-  }
-
-  public RecentProjectPanel(@NotNull Disposable parentDisposable) {
+  RecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
     super(new BorderLayout());
 
-    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
+    List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false, isUseGroups());
 
-    myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
-    Collection<String> pathsToCheck = ContainerUtil.newHashSet();
+    UniqueNameBuilder<ReopenProjectAction> pathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator);
+    Collection<String> pathsToCheck = new HashSet<>();
     for (AnAction action : recentProjectActions) {
-      if (action instanceof ReopenProjectAction) {
-        final ReopenProjectAction item = (ReopenProjectAction)action;
-
-        myPathShortener.addPath(item, item.getProjectPath());
+      if (action instanceof ReopenProjectAction item) {
+        pathShortener.addPath(item, item.getProjectPath());
         pathsToCheck.add(item.getProjectPath());
       }
     }
 
-    if (Registry.is("autocheck.availability.welcome.screen.projects")) {
-      myChecker = new FilePathChecker(new Runnable() {
-        @Override
-        public void run() {
-          if (myList.isShowing()) {
-            myList.revalidate();
-            myList.repaint();
-          }
-        }
-      }, pathsToCheck);
-      Disposer.register(parentDisposable, myChecker);
-    }
+    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
+    myList.setCellRenderer(createRenderer(pathShortener));
 
-    myList = createList(recentProjectActions, getPreferredScrollableViewportSize());
-    myList.setCellRenderer(createRenderer(myPathShortener));
+    myChecker = new FilePathChecker(() -> {
+      if (myList.isShowing()) {
+        myList.revalidate();
+        myList.repaint();
+      }
+    }, pathsToCheck);
+    Disposer.register(parentDisposable, myChecker);
 
     new ClickListener(){
       @Override
@@ -147,15 +149,10 @@ public class RecentProjectPanel extends JPanel {
         if (selectedIndex >= 0) {
           Rectangle cellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
           if (cellBounds.contains(event.getPoint())) {
-            Object selection = myList.getSelectedValue();
-            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
-              removeRecentProjectAction.actionPerformed(null);
-            } else if (selection != null) {
-              AnAction selectedAction = (AnAction) selection;
-              AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
-              selectedAction.actionPerformed(actionEvent);
-
-              // remove action from list if needed
+            AnAction selection = myList.getSelectedValue();
+            if (selection != null) {
+              AnAction selectedAction = performSelectedAction(event, selection);
+              // remove action from a list if needed
               if (selectedAction instanceof ReopenProjectAction) {
                 if (((ReopenProjectAction)selectedAction).isRemoved()) {
                   ListUtil.removeSelectedItems(myList);
@@ -164,48 +161,36 @@ public class RecentProjectPanel extends JPanel {
             }
           }
         }
-
         return true;
       }
     }.installOn(myList);
 
-    myList.registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final Object[] selectedValued = myList.getSelectedValues();
-        if (selectedValued != null) {
-          for (Object selection : selectedValued) {
-            AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ((AnAction)selection).actionPerformed(event);
+    myList.registerKeyboardAction(e -> {
+      List<AnAction> selectedValues = myList.getSelectedValuesList();
+      if (selectedValues != null) {
+        for (AnAction selectedAction : selectedValues) {
+          if (selectedAction != null) {
+            InputEvent event = new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), KeyEvent.VK_ENTER, '\r');
+            performSelectedAction(event, selectedAction);
           }
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-
-    removeRecentProjectAction = new AnAction() {
+    AnAction removeRecentProjectAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        Object[] selection = myList.getSelectedValues();
-
-        if (selection != null && selection.length > 0) {
-          final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + StringUtil.join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
-                                                     "' from recent projects list?",
-                                                     "Remove Recent Project",
-                                                     Messages.getQuestionIcon());
-          if (rc == Messages.OK) {
-            for (Object projectAction : selection) {
-              removeRecentProjectElement(projectAction);
-            }
-            ListUtil.removeSelectedItems(myList);
-          }
-        }
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        removeRecentProject();
       }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(true);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
@@ -214,26 +199,13 @@ public class RecentProjectPanel extends JPanel {
 
     myList.setSelectedIndex(0);
 
-    JBScrollPane scroll = new JBScrollPane(myList);
-    scroll.setBorder(null);
+    JBScrollPane scroll
+      = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scroll.setBorder(JBUI.Borders.empty());
 
-    JComponent list = recentProjectActions.length == 0
-                      ? myList
-                      : ListWithFilter.wrap(myList, scroll, o -> {
-                        if (o instanceof ReopenProjectAction) {
-                          ReopenProjectAction item = (ReopenProjectAction)o;
-                          String home = SystemProperties.getUserHome();
-                          String path = item.getProjectPath();
-                          if (FileUtil.startsWith(path, home)) {
-                            path = path.substring(home.length());
-                          }
-                          return item.getProjectName() + " " + path;
-                        } else if (o instanceof ProjectGroupActionGroup) {
-                          return ((ProjectGroupActionGroup)o).getGroup().getName();
-                        }
-                        return o.toString();
-                      });
-    add(list, BorderLayout.CENTER);
+    boolean wrapListWithFiltered = !recentProjectActions.isEmpty() && withSpeedSearch;
+    JComponent list = wrapListWithFiltered ? ListWithFilter.wrap(myList, scroll, createProjectNameFunction()) : myList;
+    add(wrapListWithFiltered ? list : scroll, BorderLayout.CENTER);
 
     JPanel title = createTitle();
 
@@ -244,20 +216,68 @@ public class RecentProjectPanel extends JPanel {
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
   }
 
-  protected boolean isPathValid(String path) {
+  private static Function<? super AnAction, String> createProjectNameFunction() {
+    return o -> {
+      if (o instanceof ReopenProjectAction) {
+        return getProjectName((ReopenProjectAction)o);
+      }
+      else if (o instanceof ProjectGroupActionGroup) {
+        return ((ProjectGroupActionGroup)o).getGroup().getName();
+      }
+      return o.toString();
+    };
+  }
+
+  private static @NotNull String getProjectName(@NotNull ReopenProjectAction projectItem) {
+    String home = SystemProperties.getUserHome();
+    String path = projectItem.getProjectPath();
+    if (FileUtil.startsWith(path, home)) {
+      path = path.substring(home.length());
+    }
+    return projectItem.getProjectNameToDisplay() + " " + path;
+  }
+
+  private @NotNull AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
+    String actionPlace = UIUtil.uiParents(myList, true).filter(FlatWelcomeFrame.class).isEmpty() ? ActionPlaces.POPUP : ActionPlaces.WELCOME_SCREEN;
+    DataContext dataContext = DataManager.getInstance().getDataContext(myList);
+    AnActionEvent actionEvent = AnActionEvent.createEvent(
+      dataContext, selection.getTemplatePresentation().clone(),
+      actionPlace, ActionUiKind.NONE, event);
+    ActionUtil.performAction(selection, actionEvent);
+    return selection;
+  }
+
+  private void removeRecentProject() {
+    List<AnAction> selection = myList.getSelectedValuesList();
+    if (selection == null || selection.isEmpty()) {
+      return;
+    }
+
+    int rc = Messages.showOkCancelDialog(
+      this,
+      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list",
+                        StringUtil.join(selection, action -> action.getTemplatePresentation().getText(), "'\n'")),
+      IdeBundle.message("dialog.title.remove.recent.project"),
+      CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+    if (rc == Messages.OK) {
+      for (AnAction projectAction : selection) {
+        removeRecentProjectElement(projectAction);
+      }
+      ListUtil.removeSelectedItems(myList);
+    }
+  }
+
+  boolean isPathValid(String path) {
     return myChecker == null || myChecker.isValid(path);
   }
 
-  protected static void removeRecentProjectElement(Object element) {
-    final RecentProjectsManager manager = RecentProjectsManager.getInstance();
+  private static void removeRecentProjectElement(@NotNull Object element) {
+    RecentProjectsManager manager = RecentProjectsManager.getInstance();
     if (element instanceof ReopenProjectAction) {
       manager.removePath(((ReopenProjectAction)element).getProjectPath());
-    } else if (element instanceof ProjectGroupActionGroup) {
-      final ProjectGroup group = ((ProjectGroupActionGroup)element).getGroup();
-      for (String path : group.getProjects()) {
-        manager.removePath(path);
-      }
-      manager.removeGroup(group);
+    }
+    else if (element instanceof ProjectGroupActionGroup) {
+      manager.removeGroup(((ProjectGroupActionGroup)element).getGroup());
     }
   }
 
@@ -270,79 +290,69 @@ public class RecentProjectPanel extends JPanel {
   }
 
   protected void addMouseMotionListener() {
-
     MouseAdapter mouseAdapter = new MouseAdapter() {
-      boolean myIsEngaged = false;
+      boolean myIsEngaged;
       @Override
       public void mouseMoved(MouseEvent e) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (focusOwner == null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
         }
         if (myList.getSelectedIndices().length > 1) {
           return;
         }
-        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
-          Point point = e.getPoint();
-          int index = myList.locationToIndex(point);
-          myList.setSelectedIndex(index);
 
-          final Rectangle cellBounds = myList.getCellBounds(index, index);
-          if (cellBounds != null && cellBounds.contains(point)) {
-            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            if (rectInListCoordinatesContains(cellBounds, point)) {
-              currentIcon = AllIcons.Welcome.Project.Remove_hover;
-            } else {
-              currentIcon = AllIcons.Welcome.Project.Remove;
-            }
-            myHoverIndex = index;
-            myList.repaint(cellBounds);
-          }
-          else {
-            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            myHoverIndex = -1;
-            myList.repaint();
-          }
+        if (!myIsEngaged || UIUtil.isSelectionButtonDown(e) || focusOwner instanceof JRootPane) {
+          myIsEngaged = true;
+          return;
+        }
+
+        Point point = e.getPoint();
+        int index = myList.locationToIndex(point);
+        myList.setSelectedIndex(index);
+
+        Rectangle cellBounds = myList.getCellBounds(index, index);
+        if (cellBounds != null && cellBounds.contains(point)) {
+          UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          myHoverIndex = index;
+          myList.repaint(cellBounds);
         }
         else {
-          myIsEngaged = true;
+          UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          myHoverIndex = -1;
+          myList.repaint();
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
         myHoverIndex = -1;
-        currentIcon = AllIcons.Welcome.Project.Remove;
         myList.repaint();
       }
     };
 
     myList.addMouseMotionListener(mouseAdapter);
     myList.addMouseListener(mouseAdapter);
-
   }
 
-  protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
+  protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
     return new MyList(size, recentProjectActions);
   }
 
-  protected ListCellRenderer createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
-    return new RecentProjectItemRenderer(pathShortener);
+  protected ListCellRenderer<AnAction> createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
+    return new RecentProjectItemRenderer();
   }
 
-  @Nullable
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getPreferredSize().width, JBUI.scale(28));
+        return new Dimension(super.getPreferredSize().width, JBUIScale.scale(28));
       }
     };
     title.setBorder(new BottomLineBorder());
 
-    JLabel titleLabel = new JLabel(RECENT_PROJECTS_LABEL);
+    JLabel titleLabel = new JLabel(RECENT_PROJECTS_LABEL.get());
     title.add(titleLabel);
     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
     titleLabel.setForeground(WelcomeScreenColors.CAPTION_FOREGROUND);
@@ -350,25 +360,28 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private class MyList extends JBList<AnAction> {
+  private final class MyList extends JBList<AnAction> {
     private final Dimension mySize;
     private Point myMousePoint;
 
-    private MyList(Dimension size, @NotNull AnAction[] listData) {
+    private MyList(Dimension size, AnAction @NotNull [] listData) {
       super(listData);
       mySize = size;
-      setEmptyText("  No Project Open Yet  ");
+      setExpandableItemsEnabled(false);
+      setEmptyText(IdeBundle.message("empty.text.no.project.open.yet"));
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-      getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
-      final MouseHandler handler = new MouseHandler();
+      getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL.get());
+      final PopupHandler handler = new MyPopupMouseHandler();
       addMouseListener(handler);
       addMouseMotionListener(handler);
     }
 
-    public Rectangle getCloseIconRect(int index) {
+    Rectangle getCloseIconRect(int index) {
       final Rectangle bounds = getCellBounds(index, index);
-      Icon icon = AllIcons.Welcome.Project.Remove;
-      return new Rectangle(bounds.width - icon.getIconWidth() - 10, bounds.y + 10, icon.getIconWidth(), icon.getIconHeight());
+      Icon icon = toSize(AllIcons.Ide.Notification.Gear);
+      return new Rectangle(bounds.width - icon.getIconWidth() - JBUIScale.scale(10),
+                           bounds.y + (bounds.height - icon.getIconHeight()) / 2,
+                           icon.getIconWidth(), icon.getIconHeight());
     }
 
     @Override
@@ -378,22 +391,38 @@ public class RecentProjectPanel extends JPanel {
         final int index = locationToIndex(myMousePoint);
         if (index != -1) {
           final Rectangle iconRect = getCloseIconRect(index);
-          Icon icon = iconRect.contains(myMousePoint) ? AllIcons.Welcome.Project.Remove_hover : AllIcons.Welcome.Project.Remove;
+          Icon actionIcon = detectActionIcon(index, iconRect.contains(myMousePoint));
+          Icon icon = toSize(actionIcon);
           icon.paintIcon(this, g, iconRect.x, iconRect.y);
         }
       }
     }
 
+    private Icon detectActionIcon(int rowIndex, boolean hovered) {
+      if (isProjectInvalid(rowIndex)) {
+        return hovered ? AllIcons.Welcome.RecentProjects.RemoveHover : AllIcons.Welcome.RecentProjects.Remove;
+      }
+      return hovered ? AllIcons.Ide.Notification.GearHover : AllIcons.Ide.Notification.Gear;
+    }
+
+    private boolean isProjectInvalid(int listIndex) {
+      AnAction action = myList.getModel().getElementAt(listIndex);
+      if (action instanceof ReopenProjectAction) {
+        return !isPathValid((((ReopenProjectAction)action).getProjectPath()));
+      }
+      return false;
+    }
+
     @Override
     public String getToolTipText(MouseEvent event) {
-      final int i = locationToIndex(event.getPoint());
+      final int i = event != null ? locationToIndex(event.getPoint()) : -1;
       if (i != -1) {
         final Object elem = getModel().getElementAt(i);
         if (elem instanceof ReopenProjectAction) {
           @SystemIndependent String path = ((ReopenProjectAction)elem).getProjectPath();
           boolean valid = isPathValid(path);
-          if (!valid || RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
-            String suffix = valid ? "" : " (unavailable)";
+          if (!valid || RecentProjectPanel.this.projectsWithLongPaths.contains(elem)) {
+            String suffix = valid ? "" : " " + IdeBundle.message("recent.project.unavailable");
             return PathUtil.toSystemDependentName(path) + suffix;
           }
         }
@@ -406,10 +435,10 @@ public class RecentProjectPanel extends JPanel {
       return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
     }
 
-    class MouseHandler extends MouseAdapter {
+    final class MyPopupMouseHandler extends PopupHandler {
       @Override
       public void mouseEntered(MouseEvent e) {
-        myMousePoint = e.getPoint();
+        myMousePoint = e != null ? e.getPoint() : null;
       }
 
       @Override
@@ -419,39 +448,48 @@ public class RecentProjectPanel extends JPanel {
 
       @Override
       public void mouseMoved(MouseEvent e) {
-        myMousePoint = e.getPoint();
+        myMousePoint = e != null ? e.getPoint() : null;
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        final Point point = e.getPoint();
-        final MyList list = MyList.this;
-        final int index = list.locationToIndex(point);
-        if (index != -1) {
-          if (getCloseIconRect(index).contains(point)) {
-            e.consume();
-            final Object element = getModel().getElementAt(index);
-            removeRecentProjectElement(element);
-            ListUtil.removeSelectedItems(MyList.this);
-          }
+        super.mouseReleased(e);
+        if (e.isConsumed()) return;
+
+        Point point = e.getPoint();
+        int index = locationToIndex(point);
+        if (index == -1 || !getCloseIconRect(index).contains(point)) return;
+        if (isProjectInvalid(index)) {
+          removeRecentProjectElement(getModel().getElementAt(index));
+          ListUtil.removeItem(getModel(), index);
+        }
+        else {
+          invokePopup(e.getComponent(), e.getX(), e.getY());
+        }
+        e.consume();
+      }
+
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final int index = locationToIndex(new Point(x, y));
+        if (index != -1 && Arrays.binarySearch(getSelectedIndices(), index) < 0) {
+          setSelectedIndex(index);
+        }
+        final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
+        if (group != null) {
+          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);
         }
       }
     }
   }
 
-  protected class RecentProjectItemRenderer extends JPanel implements ListCellRenderer {
-
+  protected class RecentProjectItemRenderer extends JPanel implements ListCellRenderer<AnAction> {
     protected final JLabel myName = new JLabel();
-    protected final JLabel myPath = new JLabel();
-    protected boolean myHovered;
-    protected JPanel myCloseThisItem = myCloseButtonForEditor;
+    protected final JLabel myPath = ComponentPanelBuilder.createNonWrappingCommentComponent("");
+    boolean myHovered;
 
-    private final UniqueNameBuilder<ReopenProjectAction> myShortener;
-
-    protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
+    RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());
-      myShortener = pathShortener;
-      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -462,30 +500,29 @@ public class RecentProjectPanel extends JPanel {
     }
 
     protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-      return UIUtil.getListBackground(isSelected);
+      return UIUtil.getListBackground(isSelected, true);
     }
 
     protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-      return UIUtil.getListForeground(isSelected);
+      return UIUtil.getListForeground(isSelected, true);
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<? extends AnAction> list, AnAction value, int index, boolean selected, boolean focused) {
       myHovered = myHoverIndex == index;
-      Color fore = getListForeground(isSelected, list.hasFocus());
-      Color back = getListBackground(isSelected, list.hasFocus());
+      Color fore = getListForeground(selected, list.hasFocus());
+      Color back = getListBackground(selected, list.hasFocus());
 
       myName.setForeground(fore);
-      myPath.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
+      myPath.setForeground(NamedColorUtil.getInactiveTextColor());
 
       setBackground(back);
 
-      if (value instanceof ReopenProjectAction) {
-        ReopenProjectAction item = (ReopenProjectAction)value;
+      if (value instanceof ReopenProjectAction item) {
         myName.setText(item.getTemplatePresentation().getText());
-        myPath.setText(getTitle2Text(item, myPath, JBUI.scale(40)));
-      } else if (value instanceof ProjectGroupActionGroup) {
-        final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
+        myPath.setText(getTitle2Text(item, myPath, JBUIScale.scale(40)));
+      }
+      else if (value instanceof ProjectGroupActionGroup group) {
         myName.setText(group.getGroup().getName());
         myPath.setText("");
       }
@@ -494,34 +531,23 @@ public class RecentProjectPanel extends JPanel {
       return this;
     }
 
-    protected String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
+    @NlsSafe String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
-      if (fullText == null || fullText.length() == 0) return " ";
+      if (fullText.isEmpty()) {
+        return " ";
+      }
 
       fullText = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(fullText), false);
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset;
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() -
+                       JBUIScale.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
-          int left = 1; int right = 1;
-          int center = fullText.length() / 2;
-          String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          while (fm.stringWidth(s) > maxWidth) {
-            if (left == right) {
-              left++;
-            } else {
-              right++;
-            }
-
-            if (center - left < 0 || center + right >= fullText.length()) {
-              return "";
-            }
-            s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          }
-          return s;
+          return truncateDescription(fullText, fm, maxWidth, isTutorial(action));
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error("Path label font: " + pathLabel.getFont());
         LOG.error("Panel width: " + RecentProjectPanel.this.getWidth());
         LOG.error(e);
@@ -530,52 +556,93 @@ public class RecentProjectPanel extends JPanel {
       return fullText;
     }
 
+    private static boolean isTutorial(ReopenProjectAction action) {
+      List<ProjectGroup> groups = RecentProjectsManager.getInstance().getGroups();
+      for (ProjectGroup group : groups) {
+        if (!group.isTutorials()) {
+          continue;
+        }
+
+        for (String project : group.getProjects()) {
+          if (project.contains(action.getProjectPath())) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    private static @NotNull String truncateDescription(String fullText, FontMetrics fm, int maxWidth, boolean isTutorial) {
+      if (isTutorial) {
+        String tutorialTruncated = fullText;
+        while (fm.stringWidth(tutorialTruncated) > maxWidth) {
+          tutorialTruncated = tutorialTruncated.substring(0, tutorialTruncated.length() - 1);
+        }
+        return tutorialTruncated + "...";
+      }
+
+      int left = 1;
+      int right = 1;
+      int center = fullText.length() / 2;
+      String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      while (fm.stringWidth(s) > maxWidth) {
+        if (left == right) {
+          left++;
+        } else {
+          right++;
+        }
+
+        if (center - left < 0 || center + right >= fullText.length()) {
+          return "";
+        }
+        s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      }
+      return s;
+    }
+
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
+      return new Dimension(Math.min(size.width, JBUIScale.scale(245)), size.height);
     }
 
-    @NotNull
     @Override
-    public Dimension getSize() {
+    public @NotNull Dimension getSize() {
       return getPreferredSize();
     }
   }
 
-  private static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
+  public static final class FilePathChecker implements Disposable, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
-    private ScheduledExecutorService myService = null;
-    private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());
+    private static final int PATH_PROBE_TIMEOUT_MILLIS = 3000;
+    private ScheduledExecutorService service;
+    private final Set<String> invalidPaths = Collections.synchronizedSet(new HashSet<>());
 
-    private final Runnable myCallback;
-    private final Collection<String> myPaths;
+    private final Runnable callback;
+    private final Collection<String> paths;
 
-    FilePathChecker(Runnable callback, Collection<String> paths) {
-      myCallback = callback;
-      myPaths = paths;
+    public FilePathChecker(Runnable callback, Collection<String> paths) {
+      this.callback = callback;
+      this.paths = paths;
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, this);
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          onAppStateChanged();
+        }
+
+        @Override
+        public void delayedApplicationDeactivated(@NotNull Window ideFrame) {
+          onAppStateChanged();
+        }
+      });
       connection.subscribe(PowerSaveMode.TOPIC, this);
       onAppStateChanged();
     }
 
-    boolean isValid(String path) {
-      return !myInvalidPaths.contains(path);
-    }
-
-    @Override
-    public void applicationActivated(IdeFrame ideFrame) {
-      onAppStateChanged();
-    }
-
-    @Override
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
-      onAppStateChanged();
-    }
-
-    @Override
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    public boolean isValid(String path) {
+      return !invalidPaths.contains(path);
     }
 
     @Override
@@ -584,70 +651,85 @@ public class RecentProjectPanel extends JPanel {
     }
 
     private void onAppStateChanged() {
-      boolean settingsAreOK = Registry.is("autocheck.availability.welcome.screen.projects") && !PowerSaveMode.isEnabled();
+      boolean settingsAreOK = !PowerSaveMode.isEnabled();
       boolean everythingIsOK = settingsAreOK && ApplicationManager.getApplication().isActive();
-      if (myService == null && everythingIsOK) {
-        myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths Service", 2);
-        for (String path : myPaths) {
-          scheduleCheck(path, 0);
+      synchronized (this) {
+        if (service == null && everythingIsOK) {
+          service = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths Service", 2);
+          for (String path : paths) {
+            scheduleCheck(path, 0);
+          }
+          ApplicationManager.getApplication().invokeLater(callback);
         }
-        ApplicationManager.getApplication().invokeLater(myCallback);
-      }
-      if (myService != null && !everythingIsOK) {
-        if (!settingsAreOK) {
-          myInvalidPaths.clear();
+        if (service != null && !everythingIsOK) {
+          if (!settingsAreOK) {
+            invalidPaths.clear();
+          }
+          shutdown(false);
+          ApplicationManager.getApplication().invokeLater(callback);
         }
-        if (!myService.isShutdown()) {
-          myService.shutdown();
-          myService = null;
-        }
-        ApplicationManager.getApplication().invokeLater(myCallback);
       }
     }
 
+    private synchronized void shutdown(boolean now) {
+      if (service != null) {
+        if (now) {
+          service.shutdownNow();
+        }
+        else {
+          service.shutdown();
+        }
+        service = null;
+      }
+    }
 
     @Override
     public void dispose() {
-      if (myService != null) {
-        myService.shutdownNow();
-      }
+      shutdown(true);
     }
 
-    private void scheduleCheck(String path, long delay) {
-      if (myService == null || myService.isShutdown()) return;
+    private synchronized void scheduleCheck(String path, long delay) {
+      if (service == null || service.isShutdown()) {
+        return;
+      }
 
-      myService.schedule(() -> {
+      service.schedule(() -> {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          pathIsValid = isFileAvailable(new File(path));
+          // remote IJent paths may deploy on probe - cap to keep checker pool free (IJPL-245202)
+          pathIsValid = ApplicationManager.getApplication().executeOnPooledThread(
+            () -> !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path)
+          ).get(PATH_PROBE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         }
         catch (Exception e) {
           pathIsValid = false;
         }
-        
-        if (myInvalidPaths.contains(path) == pathIsValid) {
+        if (invalidPaths.contains(path) == pathIsValid) {
           if (pathIsValid) {
-            myInvalidPaths.remove(path);
-          } else {
-            myInvalidPaths.add(path);
+            invalidPaths.remove(path);
           }
-          ApplicationManager.getApplication().invokeLater(myCallback);
+          else {
+            invalidPaths.add(path);
+          }
+          ApplicationManager.getApplication().invokeLater(callback);
         }
         scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
       }, delay, TimeUnit.MILLISECONDS);
     }
   }
 
-  private static boolean isFileAvailable(File file) {
-    List<File> roots = Arrays.asList(File.listRoots());
-    File tmp = file;
-    while(tmp != null) {
-      if (roots.contains(tmp)) {
-        return file.exists();
-      }
-      tmp = tmp.getParentFile();
-    }
-    return false;
+  private static boolean isPathAvailable(String pathStr) {
+    Path path = Paths.get(pathStr);
+    Path pathRoot = path.getRoot();
+    if (pathRoot == null) return false;
+    if (SystemInfo.isWindows && pathRoot.toString().startsWith("\\\\")) return true;
+    return ContainerUtil.find(pathRoot.getFileSystem().getRootDirectories(), pathRoot) != null && Files.exists(path);
+  }
+
+  private static @NotNull Icon toSize(@NotNull Icon icon) {
+    return IconUtil.toSize(icon,
+                           (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
+                           (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
   }
 }

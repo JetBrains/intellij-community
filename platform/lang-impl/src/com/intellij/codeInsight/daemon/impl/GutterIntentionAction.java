@@ -1,153 +1,120 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import javax.swing.Icon;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.POPUP_HANDLER;
 
 /**
  * @author Dmitry Avdeev
  */
-class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider {
-  private final AnAction myAction;
+@ApiStatus.Internal
+public class GutterIntentionAction extends AbstractIntentionAction
+  implements Comparable<IntentionAction>, Iconable, ShortcutProvider, PriorityAction, CustomizableIntentionAction {
+
+  private final @NotNull Supplier<? extends AnAction> myActionSupplier;
+  // do not expose myPresentation
+  private final @NotNull Presentation myPresentation = Presentation.newTemplatePresentation();
   private final int myOrder;
-  private final Icon myIcon;
-  private String myText;
+  private final boolean myHasSeparatorAbove;
 
-  private GutterIntentionAction(AnAction action, int order, Icon icon) {
-    myAction = action;
+  public GutterIntentionAction(@NotNull AnAction action, int order, boolean hasSeparatorAbove) {
+    myActionSupplier = () -> action;
     myOrder = order;
-    myIcon = icon;
+    myHasSeparatorAbove = hasSeparatorAbove;
+  }
+
+  public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order) {
+    myActionSupplier = action;
+    myOrder = order;
+    myHasSeparatorAbove = false;
+  }
+
+  public void updateFromPresentation(@NotNull Presentation presentation) {
+    myPresentation.copyFrom(presentation, null, true);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-    myAction.actionPerformed(
-      new AnActionEvent(relativePoint.toMouseEvent(), ((EditorEx)editor).getDataContext(), myText, new Presentation(),
-                        ActionManager.getInstance(), 0));
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+    AnActionEvent event = AnActionEvent.createFromInputEvent(
+      relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU,
+      myPresentation.clone(), EditorUtil.getEditorDataContext(editor));
+    AnAction action = getAction();
+    event.getPresentation().putClientProperty(
+      POPUP_HANDLER, popup -> popup.showInBestPositionFor(editor));
+    ActionUtil.performAction(action, event);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myText != null ? StringUtil.isNotEmpty(myText) : isAvailable(createActionEvent((EditorEx)editor));
-  }
-
-  @NotNull
-  private static AnActionEvent createActionEvent(EditorEx editor) {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, editor.getDataContext());
-  }
-
-  private boolean isAvailable(@NotNull AnActionEvent event) {
-    if (myText == null) {
-      event.getPresentation().setEnabledAndVisible(true); // we may share the event for several actions
-      myAction.update(event);
-      if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-        String text = event.getPresentation().getText();
-        myText = text != null ? text : StringUtil.notNullize(myAction.getTemplatePresentation().getText());
-      }
-      else {
-        myText = "";
-      }
-    }
-    return StringUtil.isNotEmpty(myText);
+  public @NotNull Priority getPriority() {
+    return getAction() instanceof PriorityAction priority ? priority.getPriority() : Priority.NORMAL;
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return StringUtil.notNullize(myText);
+  public @NotNull String getText() {
+    //noinspection DialogTitleCapitalization
+    return ObjectUtils.notNull(myPresentation.getText(), "");
   }
 
-  static void addActions(@NotNull Editor hostEditor,
-                         @NotNull ShowIntentionsPass.IntentionsInfo intentions, Project project, List<RangeHighlighterEx> result) {
-    AnActionEvent event = createActionEvent((EditorEx)hostEditor);
-    for (RangeHighlighterEx highlighter : result) {
-      addActions(project, highlighter, intentions.guttersToShow, event);
-    }
-  }
-
-  private static void addActions(@NotNull Project project,
-                                 @NotNull RangeHighlighterEx info,
-                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
-                                 @NotNull AnActionEvent event) {
-    final GutterIconRenderer r = info.getGutterIconRenderer();
-    if (r == null || DumbService.isDumb(project) && !DumbService.isDumbAware(r)) {
-      return;
-    }
-    List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
-    AtomicInteger order = new AtomicInteger();
-    for (AnAction action : new AnAction[]{r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(),
-      r.getPopupMenuActions()}) {
-      if (action != null) {
-        addActions(action, list, r, order, event);
-      }
-    }
-    descriptors.addAll(list);
-  }
-
-  private static void addActions(@NotNull AnAction action,
-                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
-                                 @NotNull GutterIconRenderer renderer,
-                                 AtomicInteger order,
-                                 @NotNull AnActionEvent event) {
-    if (action instanceof ActionGroup) {
-      for (AnAction child : ((ActionGroup)action).getChildren(null)) {
-        addActions(child, descriptors, renderer, order, event);
-      }
-    }
-    Icon icon = action.getTemplatePresentation().getIcon();
-    if (icon == null) icon = renderer.getIcon();
-    if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
-    final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order.getAndIncrement(), icon);
-    if (!gutterAction.isAvailable(event)) return;
-    descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon) {
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return gutterAction.getText();
-      }
-    });
-  }
-
-  @SuppressWarnings("unchecked")
   @Override
   public int compareTo(@NotNull IntentionAction o) {
-    if (o instanceof GutterIntentionAction) {
-      return myOrder - ((GutterIntentionAction)o).myOrder;
+    if (o instanceof GutterIntentionAction gutter) {
+      return myOrder - gutter.myOrder;
     }
     return 0;
   }
 
-  @Override
-  public Icon getIcon(@IconFlags int flags) {
-    return myIcon;
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public final @NotNull AnAction getAction() {
+    return myActionSupplier.get();
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
-    return myAction.getShortcutSet();
+  public Icon getIcon(@IconFlags int flags) {
+    return ObjectUtils.notNull(myPresentation.getIcon(), EmptyIcon.ICON_16);
+  }
+
+  @Override
+  public @Nullable ShortcutSet getShortcut() {
+    return getAction().getShortcutSet();
+  }
+
+  @Override
+  public boolean hasSeparatorAbove() {
+    return myHasSeparatorAbove;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

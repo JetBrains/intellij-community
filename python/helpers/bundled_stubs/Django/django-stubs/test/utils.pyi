@@ -1,0 +1,202 @@
+import decimal
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from contextlib import AbstractContextManager
+from decimal import Decimal
+from io import StringIO
+from logging import Logger
+from types import TracebackType
+from typing import Any, Protocol, Self, SupportsIndex, TypeAlias, type_check_only
+
+from django.apps.registry import Apps
+from django.conf import LazySettings, Settings
+from django.core.checks.registry import CheckRegistry
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.models.lookups import Lookup, Transform
+from django.db.models.query_utils import RegisterLookupMixin
+from django.test.runner import DiscoverRunner
+from django.test.testcases import SimpleTestCase
+from typing_extensions import TypeVar, override
+
+_TestClass: TypeAlias = type[SimpleTestCase]
+_DecoratedTest: TypeAlias = Callable[..., Any] | _TestClass
+_DT = TypeVar("_DT", bound=_DecoratedTest)
+
+# Django's TestContextDecorator.__call__ only checks isinstance(decorated, type)
+# or callable(decorated) with no fixed signature — decorate_callable wraps using
+# *args, **kwargs since the decorated function/method can have varying signatures.
+# See: https://github.com/django/django/blob/main/django/test/utils.py
+_C = TypeVar("_C", bound=Callable[..., Any])  # Any callable
+
+TZ_SUPPORT: bool
+
+class Approximate:
+    val: decimal.Decimal | float
+    places: int
+    def __init__(self, val: Decimal | float, places: int = ...) -> None: ...
+
+class ContextList(list[dict[str, Any]]):
+    @override
+    def __getitem__(self, key: str | SupportsIndex | slice) -> Any: ...
+    def get(self, key: str, default: Any | None = ...) -> Any: ...
+    @override
+    def __contains__(self, key: object) -> bool: ...
+    def keys(self) -> set[str]: ...
+
+class _TestState: ...
+
+def setup_test_environment(debug: bool | None = ...) -> None: ...
+def teardown_test_environment() -> None: ...
+def get_runner(settings: LazySettings, test_runner_class: str | None = ...) -> type[DiscoverRunner]: ...
+
+class TestContextDecorator:
+    attr_name: str | None
+    kwarg_name: str | None
+    def __init__(self, attr_name: str | None = ..., kwarg_name: str | None = ...) -> None: ...
+    def enable(self) -> Any: ...
+    def disable(self) -> None: ...
+    def __enter__(self) -> Apps | None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...
+    def decorate_class(self, cls: _TestClass) -> _TestClass: ...
+    def decorate_callable(self, func: _C) -> _C: ...
+    def __call__(self, decorated: _DT) -> _DT: ...
+
+class override_settings(TestContextDecorator):
+    enable_exception: Exception | None
+    options: dict[str, Any]
+    def __init__(self, **kwargs: Any) -> None: ...
+    wrapped: Settings
+    def save_options(self, test_func: _DecoratedTest) -> None: ...
+    @override
+    def decorate_class(self, cls: type) -> type: ...
+
+class modify_settings(override_settings):
+    wrapped: Settings
+    operations: list[tuple[str, dict[str, list[str] | str]]]
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @override
+    def save_options(self, test_func: _DecoratedTest) -> None: ...
+    options: dict[str, list[tuple[str, str] | str]]
+
+class override_system_checks(TestContextDecorator):
+    registry: CheckRegistry
+    new_checks: list[Callable[..., Any]]
+    deployment_checks: list[Callable[..., Any]] | None
+    def __init__(
+        self, new_checks: list[Callable[..., Any]], deployment_checks: list[Callable[..., Any]] | None = ...
+    ) -> None: ...
+    old_checks: set[Callable[..., Any]]
+    old_deployment_checks: set[Callable[..., Any]]
+
+# Private API removed, iterable-based
+class CaptureQueriesContext:
+    connection: BaseDatabaseWrapper
+    force_debug_cursor: bool
+    initial_queries: int
+    final_queries: int | None
+    def __init__(self, connection: BaseDatabaseWrapper) -> None: ...
+    def __iter__(self) -> Iterator[dict[str, str]]: ...
+    def __getitem__(self, index: int) -> dict[str, str]: ...
+    def __len__(self) -> int: ...
+    @property
+    def captured_queries(self) -> list[dict[str, str]]: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...
+
+class ignore_warnings(TestContextDecorator):
+    ignore_kwargs: dict[str, Any]
+    filter_func: Callable[..., Any]
+    def __init__(self, **kwargs: Any) -> None: ...
+    catch_warnings: AbstractContextManager[list[Any] | None]
+
+requires_tz_support: Any
+
+def isolate_lru_cache(lru_cache_object: Callable[..., Any]) -> AbstractContextManager[None]: ...
+
+class override_script_prefix(TestContextDecorator):
+    prefix: str
+    def __init__(self, prefix: str) -> None: ...
+    old_prefix: str
+
+class LoggingCaptureMixin:
+    logger: Logger
+    old_stream: Any
+    logger_output: Any
+    def setUp(self) -> None: ...
+    def tearDown(self) -> None: ...
+
+class isolate_apps(TestContextDecorator):
+    installed_apps: tuple[str, ...]
+    def __init__(self, *installed_apps: Any, **kwargs: Any) -> None: ...
+    old_apps: Apps
+
+def extend_sys_path(*paths: str) -> AbstractContextManager[None]: ...
+def captured_output(stream_name: str) -> AbstractContextManager[StringIO]: ...
+def captured_stdin() -> AbstractContextManager[StringIO]: ...
+def captured_stdout() -> AbstractContextManager[StringIO]: ...
+def captured_stderr() -> AbstractContextManager[StringIO]: ...
+def freeze_time(t: float) -> AbstractContextManager[None]: ...
+def tag(*tags: str) -> Callable[[_C], _C]: ...
+
+_Signature: TypeAlias = str
+_TestDatabase: TypeAlias = tuple[str, list[str]]
+
+@type_check_only
+class TimeKeeperProtocol(Protocol):
+    def timed(self, name: Any) -> AbstractContextManager[None]: ...
+    def print_results(self) -> None: ...
+
+def dependency_ordered(
+    test_databases: Iterable[tuple[_Signature, _TestDatabase]], dependencies: Mapping[str, list[str]]
+) -> list[tuple[_Signature, _TestDatabase]]: ...
+def get_unique_databases_and_mirrors(
+    aliases: set[str] | None = ...,
+) -> tuple[dict[_Signature, _TestDatabase], dict[str, Any]]: ...
+def setup_databases(
+    verbosity: int,
+    interactive: bool,
+    *,
+    time_keeper: TimeKeeperProtocol | None = ...,
+    keepdb: bool = ...,
+    debug_sql: bool = ...,
+    parallel: int = ...,
+    aliases: Mapping[str, Any] | None = ...,
+    serialized_aliases: Iterable[str] | None = ...,
+    **kwargs: Any,
+) -> list[tuple[BaseDatabaseWrapper, str, bool]]: ...
+def teardown_databases(
+    old_config: Iterable[tuple[Any, str, bool]], verbosity: int, parallel: int = ..., keepdb: bool = ...
+) -> None: ...
+def require_jinja2(test_func: _C) -> _C: ...
+def register_lookup(
+    field: type[RegisterLookupMixin], *lookups: type[Lookup | Transform], lookup_name: str | None = ...
+) -> AbstractContextManager[None]: ...
+def garbage_collect() -> None: ...
+
+__all__ = (
+    "Approximate",
+    "CaptureQueriesContext",
+    "ContextList",
+    "garbage_collect",
+    "get_runner",
+    "ignore_warnings",
+    "isolate_apps",
+    "isolate_lru_cache",
+    "modify_settings",
+    "override_settings",
+    "override_system_checks",
+    "requires_tz_support",
+    "setup_databases",
+    "setup_test_environment",
+    "tag",
+    "teardown_test_environment",
+)

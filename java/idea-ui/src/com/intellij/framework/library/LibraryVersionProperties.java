@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.library;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
@@ -7,9 +7,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
+import java.util.Objects;
+
 public class LibraryVersionProperties extends LibraryProperties<LibraryVersionProperties> {
   private String myVersionString;
 
@@ -22,7 +21,7 @@ public class LibraryVersionProperties extends LibraryProperties<LibraryVersionPr
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof LibraryVersionProperties && Comparing.equal(myVersionString, ((LibraryVersionProperties)obj).myVersionString);
+    return obj instanceof LibraryVersionProperties && Objects.equals(myVersionString, ((LibraryVersionProperties)obj).myVersionString);
   }
 
   @Override

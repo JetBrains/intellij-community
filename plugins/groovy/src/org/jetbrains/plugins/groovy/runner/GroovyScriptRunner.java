@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -34,13 +20,18 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public abstract class GroovyScriptRunner {
+
+  private static final ConcurrentHashMap<String, Path> EXTRACTED_CONF_CACHE = new ConcurrentHashMap<>();
 
   public abstract boolean isValidModule(@NotNull Module module);
 
@@ -53,28 +44,40 @@ public abstract class GroovyScriptRunner {
     return false;
   }
 
-  protected static String getConfPath(final String groovyHomePath) {
+  protected static @Nullable String getConfPath(final String groovyHomePath) {
     String confpath = FileUtil.toSystemDependentName(groovyHomePath + "/conf/groovy-starter.conf");
     if (new File(confpath).exists()) {
       return confpath;
     }
-
-    return getPathInConf("groovy-starter.conf");
+    return null;
   }
 
   public static String getPathInConf(String fileName) {
-    try {
-      final String jarPath = PathUtil.getJarPathForClass(GroovyLanguage.class);
-      if (new File(jarPath).isFile()) { //jar; distribution mode
-        return new File(jarPath, "../" + fileName).getCanonicalPath();
-      }
+    final Path jarPath = Path.of(PathUtil.getJarPathForClass(GroovyLanguage.class));
 
-      //else, it's directory in out, development mode
-      return new File(jarPath, "conf/" + fileName).getCanonicalPath();
+    if (Files.isRegularFile(jarPath)) { //jar; distribution or dev-run jar-cache mode
+      Path candidate = jarPath.resolveSibling(fileName).normalize().toAbsolutePath();
+      if (Files.exists(candidate)) return candidate.toString();
+      // jar-cache / Bazel dev: script is inside the JAR
+      return EXTRACTED_CONF_CACHE.computeIfAbsent(fileName, name -> {
+        URL resource = GroovyLanguage.class.getResource("/conf/" + name);
+        if (resource == null) throw new RuntimeException("Groovy resource not found: /conf/" + name);
+        try {
+          Path tempFile = Files.createTempFile("groovy_conf_", "_" + name);
+          tempFile.toFile().deleteOnExit();
+          try (InputStream in = resource.openStream()) {
+            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+          }
+          return tempFile;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }).toString();
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+
+    //else, it's directory in out, development mode
+    return jarPath.resolve("conf").resolve(fileName).normalize().toAbsolutePath().toString();
   }
 
   public static void setGroovyHome(JavaParameters params, @NotNull String groovyHome) {
@@ -97,8 +100,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  @Nullable
-  protected static VirtualFile findGroovyJar(@NotNull Module module) {
+  protected static @Nullable VirtualFile findGroovyJar(@NotNull Module module) {
     final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
       if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(root.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(root.getName())) {
@@ -124,12 +126,11 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  @Nullable
-  public static PathsList getClassPathFromRootModel(Module module,
-                                                    boolean isTests,
-                                                    JavaParameters params,
-                                                    boolean allowDuplication,
-                                                    PathsList pathList)
+  public static @Nullable PathsList getClassPathFromRootModel(Module module,
+                                                              boolean isTests,
+                                                              JavaParameters params,
+                                                              boolean allowDuplication,
+                                                              PathsList pathList)
     throws CantRunException {
     if (module == null) {
       return null;

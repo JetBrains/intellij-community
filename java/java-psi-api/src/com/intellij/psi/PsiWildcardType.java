@@ -1,35 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.lang.jvm.types.JvmWildcardType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a wildcard type, with bounds.
- *
- * @author dsl
  */
-public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
+public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   public static final String EXTENDS_PREFIX = "? extends ";
   public static final String SUPER_PREFIX = "? super ";
 
@@ -39,65 +26,107 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   private final PsiManager myManager;
   private final boolean myIsExtending;
   private final PsiType myBound;
+  private final @Nullable TypeNullability myBaseNullability;
+  private final @Nullable PsiElement myContext;
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound) {
-    super(TypeAnnotationProvider.EMPTY);
+    this(manager, isExtending, bound, TypeAnnotationProvider.EMPTY);
+  }
+
+  private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound, @NotNull TypeAnnotationProvider provider) {
+    this(manager, isExtending, bound, provider, null, null);
+  }
+
+  private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound,
+                          @NotNull TypeAnnotationProvider provider, @Nullable TypeNullability nullability,
+                          @Nullable PsiElement context) {
+    super(provider);
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;
+    myBaseNullability = nullability;
+    myContext = context;
   }
 
-  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider provider) {
-    super(provider);
-    myManager = type.myManager;
-    myIsExtending = type.myIsExtending;
-    myBound = type.myBound;
-  }
-
-  @NotNull
-  public static PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
-    PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
-    if (unboundedWildcard == null) {
-      unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, new PsiWildcardType(manager, false, null));
-    }
-    return unboundedWildcard;
-  }
-
-  @NotNull
-  public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType));
-    LOG.assertTrue(bound != PsiType.NULL);
-    return new PsiWildcardType(manager, true, bound);
-  }
-
-  @NotNull
-  public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
-    return new PsiWildcardType(manager, false, bound);
+  public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
+    return ConcurrencyUtil.computeIfAbsent(manager, UNBOUNDED_WILDCARD, () -> new PsiWildcardType(manager, false, null));
   }
 
   /**
-   * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
+   * Creates an unbounded wildcard that remembers where it was written, which is what the nullness of its implicit bound
+   * depends on: an unbounded {@code ?} written in a {@code @NullMarked} scope has a nullable implicit bound, while the
+   * same {@code ?} written in unmarked code has an unspecified one. Unlike {@code ? extends X}, an unbounded wildcard
+   * has no bound type to carry that scope, so it has to be kept here.
+   *
+   * @param context the type element the wildcard was written at, or {@code null} if unknown; to rewrite a wildcard,
+   *                call {@link #unbounded()} on it instead, because that passes on the place of the original
+   * @see #unbounded()
    */
-  public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
-    return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
+  public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager, @Nullable PsiElement context) {
+    return context == null ? createUnbounded(manager) : new PsiWildcardType(manager, false, null, TypeAnnotationProvider.EMPTY, null, context);
   }
 
-  @NotNull
-  @Override
-  public String getPresentableText(boolean annotated) {
-    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText());
+  public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
+    return new PsiWildcardType(manager, true, bound);
+  }
+
+  public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
+    return new PsiWildcardType(manager, false, bound);
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull TypeNullability getNullability() {
+    TypeNullability baseNullability = myBaseNullability;
+    if (baseNullability == null) {
+      baseNullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(getAnnotations());
+    }
+    if (!baseNullability.equals(TypeNullability.UNKNOWN)) return baseNullability;
+    if (myBound != null && myIsExtending) {
+      return myBound.getNullability().inherited();
+    }
+    return TypeNullability.UNKNOWN;
+  }
+
+  @Override
+  public @NotNull PsiWildcardType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiWildcardType(myManager, myIsExtending, myBound, getAnnotationProvider(), nullability, myContext);
+  }
+
+  @Override
+  public @NotNull PsiType annotate(@NotNull TypeAnnotationProvider provider) {
+    return new PsiWildcardType(myManager, myIsExtending, myBound, provider, null, myContext);
+  }
+
+  /**
+   * @return the element the wildcard was written at, or {@code null} when unknown: for a wildcard that was inferred,
+   * created programmatically, or rebuilt by substitution.
+   */
+  @Nullable PsiElement getPsiContext() {
+    return myContext;
+  }
+
+  /**
+   * @return an unbounded wildcard that keeps the place this wildcard was written at, see
+   * {@link #createUnbounded(PsiManager, PsiElement)}. The result drops the annotations and the nullability of this type.
+   */
+  public @NotNull PsiWildcardType unbounded() {
+    return createUnbounded(myManager, myContext);
+  }
+
+  @Override
+  public @NotNull String getPresentableText(boolean annotated) {
+    return getText(false, annotated, myBound == null ? null : myBound.getPresentableText(annotated));
+  }
+
+  @Override
+  public @NotNull String getCanonicalText(boolean annotated) {
     return getText(true, annotated, myBound == null ? null : myBound.getCanonicalText(annotated));
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getText(true, true, myBound == null ? null : myBound.getInternalCanonicalText());
   }
 
@@ -120,8 +149,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     if (myBound != null) {
       GlobalSearchScope scope = myBound.getResolveScope();
       if (scope != null) {
@@ -132,8 +160,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return new PsiType[]{getExtendsBound()};
   }
 
@@ -150,8 +177,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     }
   }
 
-  @NotNull
-  public PsiManager getManager() {
+  public @NotNull PsiManager getManager() {
     return myManager;
   }
 
@@ -179,8 +205,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code null} if unbounded, a bound otherwise.
    */
-  @Nullable
-  public PsiType getBound() {
+  public @Nullable PsiType getBound() {
     return myBound;
   }
 
@@ -232,8 +257,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing a lower bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getExtendsBound() {
+  public @NotNull PsiType getExtendsBound() {
     if (myBound == null || !myIsExtending) {
       return getJavaLangObject(myManager, getResolveScope());
     }
@@ -251,20 +275,17 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    *
    * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
-  @NotNull
-  public PsiType getSuperBound() {
-    return myBound == null || myIsExtending ? NULL : myBound;
+  public @NotNull PsiType getSuperBound() {
+    return myBound == null || myIsExtending ? (PsiPrimitiveType)PsiTypes.nullType() : myBound;
   }
 
-  @NotNull
   @Override
-  public JvmType upperBound() {
+  public @NotNull JvmType upperBound() {
     return getExtendsBound();
   }
 
-  @NotNull
   @Override
-  public JvmType lowerBound() {
+  public @NotNull JvmType lowerBound() {
     return getSuperBound();
   }
 }

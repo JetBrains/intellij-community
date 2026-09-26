@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_kotlinUsedInJava_addOptionalParameter-a.kotlin_module
+  test/FunKt.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/addOptionalParameter/a/fun.kt
+End of files
+Cleaning output files:
+  JavaUsage.class
+End of files
+Compiling files:
+  kotlin/withJava/kotlinUsedInJava/addOptionalParameter/a/JavaUsage.java
+End of files
+------------------------------------------
+Exit code: OK

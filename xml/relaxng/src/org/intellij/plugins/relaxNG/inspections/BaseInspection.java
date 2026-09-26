@@ -13,41 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.relaxNG.compact.psi.*;
-import org.jetbrains.annotations.Nls;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncElement;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
-  @Override
-  @Nls
-  @NotNull
-  public final String getGroupDisplayName() {
-    return getRngGroupDisplayName();
-  }
-
-  public static String getRngGroupDisplayName() {
-    return "RELAX NG";
-  }
-
-  @SuppressWarnings({ "SSBasedInspection" })
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
@@ -67,7 +67,6 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     }
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
   private boolean isSuppressedAt(RncElement location) {
     PsiElement prev = location.getPrevSibling();
     while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
@@ -80,9 +79,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return false;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
       return ArrayUtil.mergeArrays(new SuppressQuickFix[] {
               new SuppressAction("Define") {
@@ -108,9 +106,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
 
   private SuppressQuickFix[] getXmlOnlySuppressions(PsiElement element) {
     return ContainerUtil.map(super.getBatchSuppressActions(element), action -> new SuppressQuickFix() {
-      @NotNull
       @Override
-      public String getName() {
+      public @NotNull String getName() {
         return action.getName();
       }
 
@@ -123,13 +120,12 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element1 = descriptor.getPsiElement();
         PsiFile file = element1 == null ? null : element1.getContainingFile();
-        if (file == null || file.getFileType() != StdFileTypes.XML) return;
+        if (file == null || file.getFileType() != XmlFileType.INSTANCE) return;
         action.applyFix(project, descriptor);
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return action.getFamilyName();
       }
 
@@ -144,11 +140,10 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     suppress(file, location, "#suppress " + getID(), text -> text + ", " + getID());
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
-  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<String, String> replace) {
+  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<? super String, String> replace) {
     final Project project = file.getProject();
     final VirtualFile vfile = file.getVirtualFile();
-    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles()) {
+    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vfile)).hasReadonlyFiles()) {
       return;
     }
 
@@ -176,25 +171,22 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public abstract RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
+  public abstract @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
 
-    public SuppressAction(String location) {
+    SuppressAction(String location) {
       myLocation = location;
     }
 
-    @NotNull
     @Override
-    public String getName() {
-      return "Suppress for " + myLocation;
+    public @NotNull String getName() {
+      return RelaxngBundle.message("relaxng.suppress.action.name", myLocation);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getDisplayName();
     }
 

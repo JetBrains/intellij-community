@@ -1,34 +1,26 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
-
-  private PresentationData myTemplatePresentation;
-  private PresentationData myUpdatedPresentation;
+  private volatile @Nullable PresentationData myTemplatePresentation = null;
+  private volatile @Nullable PresentationData myUpdatedPresentation = null;
 
   protected PresentableNodeDescriptor(Project project, @Nullable NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
@@ -37,65 +29,74 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   @Override
   public final boolean update() {
     if (shouldUpdateData()) {
-      PresentationData before = getPresentation().clone();
+      PresentationData before = getPresentation();
       PresentationData updated = getUpdatedPresentation();
       return shouldApply() && apply(updated, before);
     }
     return false;
   }
 
-  protected final boolean apply(PresentationData presentation) {
+  protected final boolean apply(@NotNull PresentationData presentation) {
     return apply(presentation, null);
   }
 
   @Override
-  public void applyFrom(NodeDescriptor desc) {
+  public void applyFrom(@NotNull NodeDescriptor desc) {
     if (desc instanceof PresentableNodeDescriptor) {
-      PresentableNodeDescriptor pnd = (PresentableNodeDescriptor)desc;
-      apply(pnd.getPresentation());
+      apply(((PresentableNodeDescriptor<?>)desc).getPresentation());
     }
     else {
       super.applyFrom(desc);
     }
   }
 
-  protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
+  protected final boolean apply(@NotNull PresentationData presentation, @Nullable PresentationData before) {
     setIcon(presentation.getIcon(false));
+    // If the node has both plain and colored text, the plain one takes priority for myName because it's also supposed to be plain,
+    // and it can be used, e.g. for sorting, while the colored version may contain information not needed for sorting such as inplace comments.
     myName = presentation.getPresentableText();
+    if (myName == null) {
+      myName = getColoredTextAsPlainText(presentation);
+    }
     myColor = presentation.getForcedTextForeground();
-    boolean updated = before == null || !presentation.equals(before);
+    boolean updated = !presentation.equals(before);
 
-    if (myUpdatedPresentation == null) {
-      myUpdatedPresentation = createPresentation();
+    var updatedPresentation = myUpdatedPresentation;
+    if (updatedPresentation == null) {
+      updatedPresentation = createPresentation();
+    } else {
+      updatedPresentation = updatedPresentation.clone();
     }
 
-    myUpdatedPresentation.copyFrom(presentation);
+    updatedPresentation.copyFrom(presentation);
 
-    if (myTemplatePresentation != null) {
-      myUpdatedPresentation.applyFrom(myTemplatePresentation);
+    final var templatePresentation = myTemplatePresentation;
+    if (templatePresentation != null) {
+      updatedPresentation.applyFrom(templatePresentation);
     }
 
-    updated |= myUpdatedPresentation.isChanged();
-    myUpdatedPresentation.setChanged(false);
+    updated |= updatedPresentation.isChanged();
+    updatedPresentation.setChanged(false);
 
+    myUpdatedPresentation = updatedPresentation;
     return updated;
   }
 
-  private PresentationData getUpdatedPresentation() {
-    PresentationData presentation = myUpdatedPresentation != null ? myUpdatedPresentation : createPresentation();
-    myUpdatedPresentation = presentation;
+  private @NotNull PresentationData getUpdatedPresentation() {
+    final var presentation = getPresentation().clone();
     presentation.clear();
+    presentation.setBackground(computeBackgroundColor());
     update(presentation);
 
     if (shouldPostprocess()) {
       postprocess(presentation);
     }
 
+    myUpdatedPresentation = presentation;
     return presentation;
   }
 
-  @NotNull
-  protected PresentationData createPresentation() {
+  protected @NotNull PresentationData createPresentation() {
     return new PresentationData();
   }
 
@@ -115,42 +116,42 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return true;
   }
 
-  protected abstract void update(PresentationData presentation);
-
-  @NotNull
-  public final PresentationData getPresentation() {
-    PresentationData result;
-    if (myUpdatedPresentation == null) {
-      result = getTemplatePresentation();
-    }
-    else {
-      result = myUpdatedPresentation;
-    }
-    return result;
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  protected @Nullable Color computeBackgroundColor() {
+    return null;
   }
 
-  protected final PresentationData getTemplatePresentation() {
-    if (myTemplatePresentation == null) {
-      myTemplatePresentation = createPresentation();
-    }
+  protected abstract void update(@NotNull PresentationData presentation);
 
-    return myTemplatePresentation;
+  public final @NotNull PresentationData getPresentation() {
+    final var updatedPresentation = myUpdatedPresentation;
+    return updatedPresentation == null ? getTemplatePresentation() : updatedPresentation;
+  }
+
+  protected final @NotNull PresentationData getTemplatePresentation() {
+    var templatePresentation = myTemplatePresentation;
+    if (templatePresentation == null) {
+      templatePresentation = createPresentation();
+      myTemplatePresentation = templatePresentation;
+    }
+    return templatePresentation;
   }
 
   public boolean isContentHighlighted() {
     return false;
   }
 
-  public boolean isHighlightableContentNode(final PresentableNodeDescriptor kid) {
+  public boolean isHighlightableContentNode(@NotNull PresentableNodeDescriptor<?> kid) {
     return true;
   }
 
-  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+  public PresentableNodeDescriptor<?> getChildToHighlightAt(int index) {
     return null;
   }
 
-  public boolean isParentOf(NodeDescriptor eachNode) {
-    NodeDescriptor eachParent = eachNode.getParentDescriptor();
+  public boolean isParentOf(@NotNull NodeDescriptor<?> eachNode) {
+    NodeDescriptor<?> eachParent = eachNode.getParentDescriptor();
     while (eachParent != null) {
       if (eachParent == this) return true;
       eachParent = eachParent.getParentDescriptor();
@@ -158,8 +159,8 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  public boolean isAncestorOrSelf(NodeDescriptor selectedNode) {
-    NodeDescriptor node = selectedNode;
+  public boolean isAncestorOrSelf(NodeDescriptor<?> selectedNode) {
+    NodeDescriptor<?> node = selectedNode;
     while (node != null) {
       if (equals(node)) return true;
       node = node.getParentDescriptor();
@@ -167,69 +168,79 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  public Color getHighlightColor() {
-    return UIUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getTreeBackground(), 1.1) : UIUtil.getTreeBackground().brighter();
+  public @NotNull Color getHighlightColor() {
+    return StartupUiUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getTreeBackground(), 1.1) : UIUtil.getTreeBackground().brighter();
   }
 
-  public static class ColoredFragment {
-    private final String myText;
-    private final String myToolTip;
-    private final SimpleTextAttributes myAttributes;
+  public static final class ColoredFragment {
+    private final @NotNull @NlsSafe String text;
+    private final @NlsSafe String toolTip;
+    private final SimpleTextAttributes attributes;
 
-    public ColoredFragment(String aText, SimpleTextAttributes aAttributes) {
+    public ColoredFragment(@Nullable @NlsSafe String aText, SimpleTextAttributes aAttributes) {
       this(aText, null, aAttributes);
     }
 
-    public ColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
-      myText = aText == null? "" : aText;
-      myAttributes = aAttributes;
-      myToolTip = toolTip;
+    public ColoredFragment(@NlsSafe @Nullable String aText, @NlsSafe String toolTip, SimpleTextAttributes aAttributes) {
+      text = aText == null ? "" : aText;
+      attributes = aAttributes;
+      this.toolTip = toolTip;
     }
 
-    public String getToolTip() {
-      return myToolTip;
+    public @NlsSafe String getToolTip() {
+      return toolTip;
     }
 
-    public String getText() {
-      return myText;
+    public @NlsSafe @NotNull String getText() {
+      return text;
     }
 
     public SimpleTextAttributes getAttributes() {
-      return myAttributes;
+      return attributes;
     }
 
-
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ColoredFragment that = (ColoredFragment)o;
-
-      if (myAttributes != null ? !myAttributes.equals(that.myAttributes) : that.myAttributes != null) return false;
-      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
-      if (myToolTip != null ? !myToolTip.equals(that.myToolTip) : that.myToolTip != null) return false;
-
-      return true;
+      ColoredFragment that = (ColoredFragment)o;
+      return
+        Objects.equals(attributes, that.attributes) &&
+        Objects.equals(text, that.text) &&
+        Objects.equals(toolTip, that.toolTip);
     }
 
+    @Override
     public int hashCode() {
-      int result;
-      result = (myText != null ? myText.hashCode() : 0);
-      result = 31 * result + (myToolTip != null ? myToolTip.hashCode() : 0);
-      result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
+      int result = text.hashCode();
+      result = 31 * result + (toolTip != null ? toolTip.hashCode() : 0);
+      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
       return result;
     }
   }
 
-  public String getName() {
-    if (!getPresentation().getColoredText().isEmpty()) {
+  public @NlsSafe String getName() {
+    String result = getColoredTextAsPlainText(getPresentation());
+    return result == null ? myName : result;
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable String getColoredTextAsPlainText(PresentationData presentation) {
+    List<ColoredFragment> textFragments = presentation.getColoredText();
+    int size = textFragments.size();
+    if (size == 0) {
+      return null;
+    }
+    else if (size == 1) {
+      return textFragments.get(0).getText();
+    }
+    else {
       StringBuilder result = new StringBuilder();
-      for (ColoredFragment each : getPresentation().getColoredText()) {
+      for (ColoredFragment each : textFragments) {
         result.append(each.getText());
       }
       return result.toString();
     }
-    return myName;
   }
-
 }

@@ -14,9 +14,9 @@ class Foo {
   void foo(K k){}
 
   void bar() {
-    <error descr="Ambiguous method call: both 'Foo.foo(I)' and 'Foo.foo(K)' match">foo</error>((p) -> {
+    foo<error descr="Ambiguous method call: both 'Foo.foo(I)' and 'Foo.foo(K)' match">((p) -> {
       System.out.println<error descr="Cannot resolve method 'println(<lambda parameter>)'">(p)</error>;
-    });
+    })</error>;
 
     foo((p, k) -> {
       System.out.println(p);
@@ -26,7 +26,7 @@ class Foo {
       System.out.println(s);
     });
 
-    foo(<error descr="Incompatible parameter types in lambda expression: expected int but found String">(String p, String k)</error> -> {
+    foo((<error descr="Incompatible parameter type in lambda expression: expected int but found String">String p</error>, <error descr="Incompatible parameter type in lambda expression: expected int but found String">String k</error>) -> {
       System.out.println(p);
     });
   }
@@ -62,7 +62,7 @@ class WithTypeParams {
         System.out.println(p);
       });
   
-      foo(<error descr="Incompatible parameter types in lambda expression: expected String but found int">(int k)</error> -> {System.out.println(k);});
+      foo((<error descr="Incompatible parameter type in lambda expression: expected String but found int">int k</error>) -> {System.out.println(k);});
     }
   }
 }

@@ -1,4 +1,4 @@
-// "Replace Collection.stream().count() with Collection.size()" "true"
+// "Replace with 'Collection.size()'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,6 @@ public class Main {
     public static long test() {
         List<String> s = new ArrayList<>();
         /* unused parameter */
-        return (long) s.size();
+        return s.size();
     }
 }

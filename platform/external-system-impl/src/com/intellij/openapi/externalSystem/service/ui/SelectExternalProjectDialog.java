@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
@@ -25,36 +26,29 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog {
 
   private ProjectData myResult;
 
   public SelectExternalProjectDialog(@NotNull ProjectSystemId systemId, Project project, final ProjectData current) {
-    super(systemId, project, String.format("Select %s Project", systemId.getReadableName()), ProjectNode.class,
-          new SelectExternalSystemNodeDialog.NodeSelector() {
-            public boolean shouldSelect(SimpleNode node) {
-              if (node instanceof ProjectNode) {
-                return ((ProjectNode)node).getData() == current;
-              }
-              return false;
-            }
-          });
+    super(systemId, project, ExternalSystemBundle.message("dialog.title.select.project", systemId.getReadableName()), ProjectNode.class,
+          node -> node instanceof ProjectNode && ((ProjectNode)node).getData() == current);
     assert current == null || current.getOwner().equals(systemId);
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
-    Action selectNoneAction = new AbstractAction("&None") {
+  protected Action @NotNull [] createActions() {
+    Action selectNoneAction = new AbstractAction(ExternalSystemBundle.message("action.text.none")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doOKAction();
         myResult = null;

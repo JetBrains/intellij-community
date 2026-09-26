@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -28,34 +13,35 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GdslFileType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
 
-  public NewScriptAction() {
-    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),
-          JetgroovyIcons.Groovy.GroovyFile, false);
+  NewScriptAction() {
+    super(null);
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
-      .addKind("Groovy script", JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
-      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_DSL_SCRIPT);
+      .setTitle(GroovyBundle.message("new.script.dialog.title"))
+      .addKind(GroovyBundle.message("new.script.list.item.script"), JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
+      .addKind(GroovyBundle.message("new.script.list.item.script.dsl"), JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_DSL_SCRIPT);
   }
 
   @Override
-  protected boolean isAvailable(DataContext dataContext) {
-    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(LangDataKeys.MODULE.getData(dataContext));
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
+    return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
-    return GroovyBundle.message("newscript.menu.action.text");
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
+    return GroovyBundle.message("action.Groovy.NewScript.text");
   }
 
   @Override
@@ -64,8 +50,7 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   }
 
   @Override
-  @NotNull
-  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
+  protected @NotNull GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     String fileName = newName + "." + extractExtension(templateName);
     PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, fileName, templateName, true);
     if (file instanceof GroovyFile) return (GroovyFile)file;
@@ -75,7 +60,7 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
 
   private static String extractExtension(String templateName) {
     if (GroovyTemplates.GROOVY_DSL_SCRIPT.equals(templateName)) {
-      return "gdsl";
+      return GdslFileType.INSTANCE.getDefaultExtension();
     }
     return GroovyFileType.DEFAULT_EXTENSION;
   }

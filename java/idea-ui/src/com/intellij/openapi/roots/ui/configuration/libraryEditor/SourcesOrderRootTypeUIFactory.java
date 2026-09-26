@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -25,15 +24,15 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
-public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public SdkPathEditor createPathEditor(final Sdk sdk) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, false, true, true);
@@ -42,19 +41,19 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.SourceFolder;
+    return PlatformIcons.SOURCE_FOLDERS_ICON;
   }
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("library.sources.node");
+    return JavaUiBundle.message("library.sources.node");
   }
 
   private static class SourcesPathEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
-    public SourcesPathEditor(Sdk sdk, FileChooserDescriptor descriptor) {
-      super(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, descriptor);
+    SourcesPathEditor(Sdk sdk, FileChooserDescriptor descriptor) {
+      super(JavaUiBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, descriptor);
       mySdk = sdk;
     }
 

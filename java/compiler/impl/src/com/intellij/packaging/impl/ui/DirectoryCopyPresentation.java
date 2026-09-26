@@ -17,9 +17,10 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -27,11 +28,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class DirectoryCopyPresentation extends PackagingElementPresentation {
-  private final String mySourcePath;
+  private final @NlsSafe String mySourcePath;
   private final String mySourceFileName;
   private final VirtualFile myFile;
 
@@ -39,7 +37,7 @@ public class DirectoryCopyPresentation extends PackagingElementPresentation {
     mySourceFileName = PathUtil.getFileName(filePath);
 
     String parentPath;
-    myFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+    myFile = StandardFileSystems.local().findFileByPath(filePath);
     if (myFile != null) {
       final VirtualFile parent = myFile.getParent();
       parentPath = parent != null ? FileUtil.toSystemDependentName(parent.getPath()) : "";
@@ -51,20 +49,22 @@ public class DirectoryCopyPresentation extends PackagingElementPresentation {
     mySourcePath = parentPath;
   }
 
+  @Override
   public String getPresentableName() {
     return mySourceFileName;
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(AllIcons.Nodes.CopyOfFolder);
     if (myFile == null || !myFile.isDirectory()) {
       mainAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
-      final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
+      final VirtualFile parentFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       if (parentFile == null) {
         commentAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       }
     }
-    presentationData.addText(CompilerBundle.message("node.text.0.directory.content", mySourceFileName), mainAttributes);
+    presentationData.addText(JavaCompilerBundle.message("node.text.0.directory.content", mySourceFileName), mainAttributes);
     presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
   }
 

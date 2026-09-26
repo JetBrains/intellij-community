@@ -1,0 +1,10 @@
+/.bazel*
+/MODULE.bazel*
+/*.bazelrc
+owner 'Bazel Migration Team'
+
+/MODULE.bazel.lock
+owner 'Bazel Lockfiles'
+
+/OWNERSHIP
+owner 'IJ Build Scripts Maintainers'

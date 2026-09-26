@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -21,9 +22,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class ResolverProcessor<T extends GroovyResolveResult> extends GrScopeProcessorWithHints {
 
   protected final PsiElement myPlace;
@@ -44,8 +42,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     myCandidates.add(candidate);
   }
 
-  @NotNull
-  private static String getElementInfo(@NotNull PsiElement element) {
+  private static @NonNls @NotNull String getElementInfo(@NotNull PsiElement element) {
     String text;
     if (element instanceof LightElement) {
       final PsiElement context = element.getContext();
@@ -58,14 +55,12 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     return "invalid resolve candidate: " + element.getClass() + ", text: " + text;
   }
 
-  @NotNull
-  protected List<T> getCandidatesInternal() {
+  protected @NotNull List<T> getCandidatesInternal() {
     return myCandidates == null ? Collections.emptyList() : myCandidates;
   }
 
   protected boolean isAccessible(@NotNull PsiNamedElement namedElement) {
-    if (namedElement instanceof GrField) {
-      final GrField field = (GrField)namedElement;
+    if (namedElement instanceof GrField field) {
       if (PsiUtil.isAccessible(myPlace, field)) {
         return true;
       }
@@ -96,8 +91,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
     return true;
   }
 
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
+  public GroovyResolveResult @NotNull [] getCandidates() {
     if (myCandidates == null) return GroovyResolveResult.EMPTY_ARRAY;
     return myCandidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
@@ -107,7 +101,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "NameHint: '" +
            myName +
            "', " +

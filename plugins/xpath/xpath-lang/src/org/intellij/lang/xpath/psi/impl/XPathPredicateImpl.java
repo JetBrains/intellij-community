@@ -27,12 +27,13 @@ public class XPathPredicateImpl extends XPathElementImpl implements XPathPredica
         super(node);
     }
 
-    @Nullable
-    public XPathExpression getPredicateExpression() {
+    @Override
+    public @Nullable XPathExpression getPredicateExpression() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathPredicate(this);
   }

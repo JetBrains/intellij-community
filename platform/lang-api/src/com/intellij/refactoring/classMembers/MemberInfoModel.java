@@ -17,6 +17,7 @@
 package com.intellij.refactoring.classMembers;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -42,5 +43,5 @@ public interface MemberInfoModel<T extends PsiElement, M extends MemberInfoBase<
 
   int checkForProblems(@NotNull M member);
 
-  String getTooltipText(M member);
+  @Nls String getTooltipText(M member);
 }

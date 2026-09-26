@@ -1,0 +1,56 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.intention;
+
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * A classic intention action that has an alternative {@link ModCommand}-based implementation.
+ * It's still preferred to use this action in IntelliJ Platform-based IDEs, but it could be useful to
+ * use ModCommand in other contexts, like headless applications.
+ * <p>
+ * Before using this interface, please consider rewriting the action to {@link ModCommandAction} 
+ * completely. Use this interface only if the action cannot be rewritten for some reason.
+ * <p>
+ * Important: Unless the intention overrides
+ * {@link IntentionAction#generatePreview(Project, Editor, PsiFile)}, this interface
+ * will use a non-null fallback action from {@link #getFallbackModCommandAction()} to generate the preview.
+ * Note that this behavior also affects IntelliJ Platform-based IDEs.
+ */
+@ApiStatus.Experimental
+public interface IntentionActionWithModCommandFallback extends IntentionAction {
+  @Override
+  default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    ModCommandAction fallback = getFallbackModCommandAction();
+    if (fallback != null) {
+      return fallback.generatePreview(ActionContext.from(editor, psiFile));
+    }
+    return IntentionAction.super.generatePreview(project, editor, psiFile);
+  }
+
+  /**
+   * @return a ModCommandAction that can be used instead of this intention action.
+   * The command should provide a similar behavior, but probably miss some advanced features like complex UI,
+   * which is not possible to implement using the ModCommand API.
+   */
+  @Nullable ModCommandAction getFallbackModCommandAction();
+
+  /**
+   * @param action action to find the fallback ModCommandAction for
+   * @return the fallback {@link ModCommandAction} if available, otherwise null
+   */
+  static @Nullable ModCommandAction getFallbackModCommandActionFor(@NotNull IntentionAction action) {
+    if (IntentionActionDelegate.unwrap(action) instanceof IntentionActionWithModCommandFallback actionWithModCommandFallback) {
+      return actionWithModCommandFallback.getFallbackModCommandAction();
+    }
+    return null;
+  }
+}

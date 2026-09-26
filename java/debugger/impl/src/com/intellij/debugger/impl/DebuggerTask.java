@@ -15,9 +15,6 @@
  */
 package com.intellij.debugger.impl;
 
-/**
- * @author lex
- */
 public interface DebuggerTask extends PrioritizedTask {
   void release();
 

@@ -1,0 +1,35 @@
+NavigationItem:
+    name: testGlobal
+ItemPresentation:
+    presentableText: testGlobal
+    locationString: null
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/typeAlias.svg, Public])
+TargetElement: typealias testGlobal = Any
+QualifiedName: testGlobal
+
+NavigationItem:
+    name: testInClass
+ItemPresentation:
+    presentableText: testInClass
+    locationString: (in Some)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/typeAlias.svg, Public])
+TargetElement: typealias testInClass = Any
+QualifiedName: Some.testInClass
+
+NavigationItem:
+    name: testInClassObject
+ItemPresentation:
+    presentableText: testInClassObject
+    locationString: (in Some.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/typeAlias.svg, Public])
+TargetElement: typealias testInClassObject = Any
+QualifiedName: Some.Companion.testInClassObject
+
+NavigationItem:
+    name: testInInterface
+ItemPresentation:
+    presentableText: testInInterface
+    locationString: (in SomeInterface)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/typeAlias.svg, Public])
+TargetElement: typealias testInInterface = Any
+QualifiedName: SomeInterface.testInInterface

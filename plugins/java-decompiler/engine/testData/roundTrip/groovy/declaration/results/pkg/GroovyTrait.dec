@@ -1,0 +1,179 @@
+package pkg;
+
+import groovy.lang.GroovyObject;
+import groovy.lang.MetaClass;
+import groovy.transform.Generated;
+import groovy.transform.Internal;
+import java.beans.Transient;
+import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
+import org.codehaus.groovy.runtime.callsite.CallSite;
+
+// $FF: synthetic class
+@Generated
+public abstract class GroovyTrait$Trait$Helper implements GroovyObject {
+   @Generated
+   public GroovyTrait$Trait$Helper() {
+      CallSite[] var1 = $getCallSiteArray();
+      super();
+      MetaClass var2 = this.$getStaticMetaClass();
+      this.metaClass = var2;
+   }
+
+   public static Object myMethod(GroovyTrait $self) {
+      CallSite[] var1 = $getCallSiteArray();
+      return 42;// 6
+   }
+
+   @Generated
+   public static Object getMyField(GroovyTrait $self) {
+      CallSite[] var1 = $getCallSiteArray();
+      return var1[1].call((GroovyTrait$Trait$FieldHelper)ScriptBytecodeAdapter.castToType($self, GroovyTrait$Trait$FieldHelper.class));
+   }
+
+   @Generated
+   public static void setMyField(GroovyTrait $self, Object myField) {
+      CallSite[] var2 = $getCallSiteArray();
+      var2[2].call((GroovyTrait$Trait$FieldHelper)ScriptBytecodeAdapter.castToType($self, GroovyTrait$Trait$FieldHelper.class), myField);
+   }
+
+   @Generated
+   @Internal
+   @Transient
+   public MetaClass getMetaClass() {
+      MetaClass var10000 = this.metaClass;
+      if (var10000 != null) {
+         return var10000;
+      } else {
+         this.metaClass = this.$getStaticMetaClass();
+         return this.metaClass;
+      }
+   }
+
+   @Generated
+   @Internal
+   public void setMetaClass(MetaClass var1) {
+      this.metaClass = var1;
+   }
+}
+
+class 'pkg/GroovyTrait$Trait$Helper' {
+   method '<init> ()V' {
+      1      15
+      2      15
+      3      15
+      4      15
+      6      16
+      7      16
+      8      16
+      9      17
+      a      17
+      b      17
+      c      17
+      d      17
+      e      18
+      f      18
+      11      18
+      12      18
+      13      18
+      16      19
+   }
+
+   method 'myMethod (Lpkg/GroovyTrait;)Ljava/lang/Object;' {
+      1      22
+      2      22
+      3      22
+      4      22
+      5      23
+      6      23
+      7      23
+      8      23
+      9      23
+      a      23
+   }
+
+   method 'getMyField (Lpkg/GroovyTrait;)Ljava/lang/Object;' {
+      1      28
+      2      28
+      3      28
+      4      28
+      5      29
+      6      29
+      7      29
+      8      29
+      9      29
+      a      29
+      b      29
+      c      29
+      d      29
+      e      29
+      f      29
+      10      29
+      11      29
+      12      29
+      13      29
+      14      29
+      15      29
+      16      29
+      17      29
+   }
+
+   method 'setMyField (Lpkg/GroovyTrait;Ljava/lang/Object;)V' {
+      1      34
+      2      34
+      3      34
+      4      34
+      5      35
+      6      35
+      7      35
+      8      35
+      9      35
+      a      35
+      b      35
+      c      35
+      d      35
+      e      35
+      f      35
+      10      35
+      11      35
+      12      35
+      13      35
+      14      35
+      15      35
+      16      35
+      17      35
+      19      36
+   }
+
+   method 'getMetaClass ()Lgroovy/lang/MetaClass;' {
+      0      42
+      1      42
+      2      42
+      3      42
+      5      43
+      8      44
+      a      46
+      c      46
+      d      46
+      e      46
+      f      46
+      10      46
+      11      46
+      12      47
+      13      47
+      14      47
+      15      47
+      16      47
+   }
+
+   method 'setMetaClass (Lgroovy/lang/MetaClass;)V' {
+      0      54
+      1      54
+      2      54
+      3      54
+      4      54
+      5      55
+   }
+}
+
+Lines mapping:
+6 <-> 24

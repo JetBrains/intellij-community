@@ -1,0 +1,32 @@
+[package]
+name = "restarter"
+version = "0.3.0"
+edition = "2021"
+rust-version = "1.70"
+publish = false
+build = "build.rs"
+
+[profile.release]
+strip = "debuginfo"
+opt-level = "z"
+lto = true
+codegen-units = 1
+
+[dependencies]
+chrono = { version = "0.4.38", default-features = false, features = ["std"] }
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = "0.2.155"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58.0", features = ["Win32_Foundation", "Win32_System_Threading"] }
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winresource = "0.1.17"
+
+[package.metadata.winresource]
+CompanyName = "JetBrains s.r.o."
+FileDescription = "IDE update and restart helper"
+LegalCopyright = "Copyright 2000-2024 JetBrains s.r.o."
+OriginalFilename = "restarter.exe"
+ProductName = "IntelliJ Platform"

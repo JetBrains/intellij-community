@@ -1,0 +1,210 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "xmlbeans-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":xmlbeans-tests_test_lib"],
+)
+### skip generation section `test intellij.xml.xmlbeans.tests`
+
+### auto-generated section `dev intellij.xml.xmlbeans` start
+content_module_jar(module = ":xmlbeans")
+### auto-generated section `dev intellij.xml.xmlbeans` end
+
+### auto-generated section `build intellij.xml.xmlbeans` start
+jvm_library(
+    name = "xmlbeans",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.xmlbeans",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//xml/impl",
+        "//libraries/log4j-to-slf4j",
+        "//libraries/xmlbeans",
+        "//platform/core-impl",
+        "//platform/analysis-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "//xml/xml-parser:parser",
+        "//platform/util:util-ui",
+        "//xml/xml-psi-api:psi",
+        "//platform/lang-impl",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util/concurrency",
+    ],
+)
+
+jvm_library(
+    name = "xmlbeans_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.xmlbeans",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":xmlbeans",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//xml/impl:impl_test_lib",
+        "//libraries/log4j-to-slf4j:log4j-to-slf4j_test_lib",
+        "//libraries/xmlbeans:xmlbeans_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//xml/xml-parser:parser_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+    ],
+)
+### auto-generated section `build intellij.xml.xmlbeans` end
+
+### auto-generated section `iml intellij.xml.xmlbeans` start
+exports_files(
+    [
+        "intellij.xml.xmlbeans.iml",
+        "resources/intellij.xml.xmlbeans.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xml.xmlbeans` end
+
+### auto-generated section `build intellij.xml.xmlbeans.tests` start
+jvm_library(
+    name = "xmlbeans-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xml.xmlbeans.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//libraries/lucene.common",
+        "//xml/plugin",
+    ],
+)
+
+jvm_library(
+    name = "xmlbeans-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//xml/xmlbeans",
+        "//xml/xmlbeans:xmlbeans_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":xmlbeans-tests",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//libraries/lucene.common:lucene.common_test_lib",
+        "//xml/plugin:plugin_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//xml/impl",
+        "//xml/impl:impl_test_lib",
+        "//libraries/log4j-to-slf4j",
+        "//libraries/log4j-to-slf4j:log4j-to-slf4j_test_lib",
+        "//libraries/xmlbeans",
+        "//libraries/xmlbeans:xmlbeans_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/analysis-impl",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//xml/xml-parser:parser",
+        "//xml/xml-parser:parser_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//xml/xml-psi-api:psi",
+        "//xml/xml-psi-api:psi_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/util/concurrency",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
+        "//java/plugin",
+        "//java/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+    ],
+)
+### auto-generated section `build intellij.xml.xmlbeans.tests` end
+
+### auto-generated section `iml intellij.xml.xmlbeans.tests` start
+exports_files(
+    [
+        "intellij.xml.xmlbeans.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xml.xmlbeans.tests` end

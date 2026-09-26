@@ -1,259 +1,198 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ProjectTopics;
-import com.intellij.ide.CopyPasteUtil;
-import com.intellij.ide.bookmarks.Bookmark;
-import com.intellij.ide.bookmarks.BookmarksListener;
-import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.tree.*;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeCollector;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.project.ProjectFileNode;
+import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.SmartList;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
-import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
-
-class AsyncProjectViewSupport {
+@ApiStatus.Internal
+public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
-  private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
-  private final ProjectFileChangeListener myChangeListener;
+  private final @NotNull Project project;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
-  public AsyncProjectViewSupport(Disposable parent,
-                                 Project project,
-                                 JTree tree,
-                                 AbstractTreeStructure structure,
-                                 Comparator<NodeDescriptor> comparator) {
-    myStructureTreeModel = new StructureTreeModel(true);
-    myStructureTreeModel.setStructure(structure);
-    myStructureTreeModel.setComparator(comparator);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
-      if (myFileRoots.add(file)) {
-        myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
-      }
-    });
-    setModel(tree, myAsyncTreeModel);
-    MessageBusConnection connection = project.getMessageBus().connect(parent);
-    connection.subscribe(VFS_CHANGES, myChangeListener);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+  public AsyncProjectViewSupport(@NotNull Disposable parent,
+                          @NotNull Project project,
+                          @NotNull AbstractTreeStructure structure,
+                          @NotNull Comparator<NodeDescriptor<?>> comparator) {
+    this.project = project;
+    myStructureTreeModel = new StructureTreeModel<>(structure, comparator, parent);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
+    myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        updateAll(null);
-      }
-    });
-    connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
-      @Override
-      public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile(), false);
-      }
-
-      @Override
-      public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile(), false);
-      }
-
-      @Override
-      public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile(), false);
-      }
-    });
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
-      @Override
-      protected boolean isFlattenPackages() {
-        return structure instanceof AbstractProjectTreeStructure && ((AbstractProjectTreeStructure)structure).isFlattenPackages();
-      }
-
-      @Override
-      protected AbstractTreeUpdater getUpdater() {
-        return null;
-      }
-
-      @Override
-      protected DefaultMutableTreeNode getRootNode() {
-        return null;
-      }
-
-      @Override
-      protected void addSubtreeToUpdateByRoot() {
-        updateAll(null);
-      }
-
-      @Override
-      protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        VirtualFile file = PsiUtilCore.getVirtualFile(element);
-        if (file != null) {
-          myChangeListener.invalidate(file);
+      protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
+        if (fromRoot) {
+          getAndClearUpdateByFileCauses(); // update from root takes priority, smaller requests are no longer relevant
+          updateAll(null, getAndClearUpdateFromRootCauses());
         }
         else {
-          updateByElement(element, true);
+          long time = System.currentTimeMillis();
+          LOG.debug("found ", updatedFiles.size(), " changed files");
+          TreeCollector<VirtualFile> collector = TreeCollector.VirtualFileRoots.create();
+          for (VirtualFile file : updatedFiles) {
+            if (!file.isDirectory()) file = file.getParent();
+            if (file != null && ProjectFileNode.findArea(file, project) != null) collector.add(file);
+          }
+          List<VirtualFile> roots = collector.get();
+          LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
+          var causes = getAndClearUpdateByFileCauses();
+          roots.forEach(root -> updateByFile(root, true, causes));
         }
-        return true;
       }
-    }, parent);
-    FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
-      @Override
-      public void fileStatusesChanged() {
-        updateAllPresentations();
-      }
-
-      @Override
-      public void fileStatusChanged(@NotNull VirtualFile file) {
-        updateByFile(file, false);
-      }
-    }, parent);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
-    project.getMessageBus().connect(parent).subscribe(ProblemListener.TOPIC, new ProblemListener() {
-      @Override
-      public void problemsAppeared(@NotNull VirtualFile file) {
-        updatePresentationsFromRootTo(file);
-      }
-
-      @Override
-      public void problemsDisappeared(@NotNull VirtualFile file) {
-        updatePresentationsFromRootTo(file);
-      }
-    });
+    };
+    setupListeners(parent, project, structure);
   }
 
-  public void setComparator(Comparator<NodeDescriptor> comparator) {
+  public AsyncTreeModel getTreeModel() {
+    return myAsyncTreeModel;
+  }
+
+  @Override
+  public void setComparator(@Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     myStructureTreeModel.setComparator(comparator);
   }
 
-  public void select(JTree tree, Object object, VirtualFile file) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+  @Override
+  public @NotNull ActionCallback select(@NotNull JTree tree, @Nullable Object object, @Nullable VirtualFile file) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
+        "AsyncProjectViewSupport.select: " +
+        "object=" + object
+        + ", file=" + file
+      );
+    }
+    if (object instanceof AbstractTreeNode node) {
       object = node.getValue();
       LOG.debug("select AbstractTreeNode");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Retrieved the value from the node: " + object);
+      }
     }
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     LOG.debug("select object: ", object, " in file: ", file);
-    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
-    if (visitor != null) {
-      //noinspection CodeBlock2Expr
-      expand(tree, promise -> {
-        myAsyncTreeModel
-          .accept(visitor)
-          .onProcessed(path -> {
-            if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
-              promise.setResult(null);
+    SmartList<TreePath> pathsToSelect = new SmartList<>();
+    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file, pathsToSelect);
+    if (visitor == null) return ActionCallback.DONE;
+
+    ActionCallback callback = new ActionCallback();
+    //noinspection CodeBlock2Expr
+    LOG.debug("Updating nodes before selecting");
+    myNodeUpdater.updateImmediately(() -> TreeState.expand(tree, promise -> {
+      LOG.debug("Updated nodes");
+      promise.onSuccess(o -> callback.setDone());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Collecting paths to select");
+      }
+      acceptOnEDT(visitor, () -> {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Collected paths to the element: " + pathsToSelect);
+        }
+        boolean selected = selectPaths(tree, pathsToSelect, visitor);
+        if (selected ||
+            element == null ||
+            file == null ||
+            Registry.is("async.project.view.support.extra.select.disabled")) {
+          if (selected) {
+            LOG.debug("Selected successfully. Done");
+          }
+          else {
+            LOG.debug("Couldn't select, but there's nothing else to do. Done");
+          }
+          promise.setResult(null);
+        }
+        else {
+          LOG.debug("Couldn't select the element, falling back to selecting the file");
+          // try to search the specified file instead of element,
+          // because Kotlin files cannot represent containing functions
+          pathsToSelect.clear();
+          TreeVisitor fileVisitor = AbstractProjectViewPane.createVisitor(null, file, pathsToSelect);
+          acceptOnEDT(fileVisitor, () -> {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Collected paths to the file: " + pathsToSelect);
+            }
+            boolean selectedFile = selectPaths(tree, pathsToSelect, fileVisitor);
+            if (selectedFile) {
+              LOG.debug("Selected successfully. Done");
             }
             else {
-              // try to search the specified file instead of element,
-              // because Kotlin files cannot represent containing functions
-              myAsyncTreeModel
-                .accept(AbstractProjectViewPane.createVisitor(file))
-                .onProcessed(path2 -> {
-                  selectPath(tree, path2);
-                  promise.setResult(null);
-                });
+              LOG.debug("Couldn't select, but there's nothing else to do. Done");
             }
+            promise.setResult(null);
           });
+        }
       });
-    }
+    }));
+    return callback;
   }
 
-  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
-    if (path == null) return false;
-    tree.expandPath(path); // request to expand found path
-    TreeUtil.selectPath(tree, path); // select and scroll to center
-    return true;
+  private void acceptOnEDT(@NotNull TreeVisitor visitor, @NotNull Runnable task) {
+    myAsyncTreeModel.accept(visitor).onProcessed(path -> myAsyncTreeModel.onValidThread(task));
   }
 
-  public void updateAll(Runnable onDone) {
+  @Override
+  public void updateAll(@Nullable Runnable onDone, @NotNull Collection<ProjectViewUpdateCause> causes) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    myStructureTreeModel.invalidate(onDone == null ? null : () -> myAsyncTreeModel.onValidThread(onDone));
-  }
-
-  public void update(@NotNull TreePath path, boolean structure) {
-    myStructureTreeModel.invalidate(path, structure);
-  }
-
-  public void update(@NotNull List<TreePath> list, boolean structure) {
-    for (TreePath path : list) update(path, structure);
-  }
-
-  public void updateByFile(@NotNull VirtualFile file, boolean structure) {
-    LOG.debug(structure ? "updateChildrenByFile: " : "updatePresentationByFile: ", file);
-    update(null, file, structure);
-  }
-
-  public void updateByElement(@NotNull PsiElement element, boolean structure) {
-    LOG.debug(structure ? "updateChildrenByElement: " : "updatePresentationByElement: ", element);
-    update(element, null, structure);
-  }
-
-  private void update(PsiElement element, VirtualFile file, boolean structure) {
-    SmartList<TreePath> list = new SmartList<>();
-    acceptAndUpdate(AbstractProjectViewPane.createVisitor(element, file, path -> !list.add(path)), list, structure);
-  }
-
-  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
-    if (visitor != null) {
-      myAsyncTreeModel.accept(visitor, false)
-                      .onSuccess(path -> update(list, structure));
+    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdateAll(causes);
+    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync(request);
+    if (onDone != null) {
+      future.thenRun(() -> myAsyncTreeModel.onValidThread(onDone));
     }
   }
 
-  private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
-    SmartList<TreePath> list = new SmartList<>();
-    acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
-      @NotNull
-      @Override
-      protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
-        Action action = super.visit(path, node, element);
-        if (action != Action.SKIP_CHILDREN) list.add(path);
-        return action;
-      }
-    }, list, false);
+  @Override
+  public void update(@NotNull TreePath path, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
+    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdatePath(path, structure, causes);
+    myStructureTreeModel.invalidate(path, structure, request);
   }
 
-  private void updateAllPresentations() {
-    SmartList<TreePath> list = new SmartList<>();
-    acceptAndUpdate(new TreeVisitor() {
-      @NotNull
-      @Override
-      public Action visit(@NotNull TreePath path) {
-        list.add(path);
-        return Action.CONTINUE;
-      }
-    }, list, false);
+  @Override
+  protected void acceptAndUpdate(
+    @NotNull TreeVisitor visitor,
+    @Nullable List<? extends TreePath> presentations,
+    @Nullable List<? extends TreePath> structures,
+    @NotNull Collection<ProjectViewUpdateCause> causes) {
+    myAsyncTreeModel.accept(visitor, false).onSuccess(path -> {
+      if (presentations != null) update(presentations, false, causes);
+      if (structures != null) update(structures, true, causes);
+    });
   }
 
-  private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+  @Override
+  public void setModelTo(@NotNull JTree tree) {
     RestoreSelectionListener listener = new RestoreSelectionListener();
     tree.addTreeSelectionListener(listener);
-    tree.setModel(model);
-    Disposer.register(model, () -> {
+    tree.setModel(myAsyncTreeModel);
+    Disposer.register(myAsyncTreeModel, () -> {
       tree.setModel(null);
       tree.removeTreeSelectionListener(listener);
     });

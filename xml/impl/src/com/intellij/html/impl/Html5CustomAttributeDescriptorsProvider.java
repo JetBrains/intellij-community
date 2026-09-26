@@ -15,6 +15,7 @@
  */
 package com.intellij.html.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.html.index.Html5CustomAttributesIndex;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -34,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDescriptorsProvider {
   @Override
   public XmlAttributeDescriptor[] getAttributeDescriptors(XmlTag tag) {
@@ -60,17 +58,19 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
     });
     if (keys.isEmpty()) return XmlAttributeDescriptor.EMPTY;
 
+    boolean inCompletion = tag.getContainingFile().getVirtualFile() == null;
     final List<XmlAttributeDescriptor> result = new ArrayList<>();
     for (String key : keys) {
       boolean add = true;
-      for (String attr : currentAttrs) {
-        if (attr.startsWith(key)) {
-          add = false;
+      if (inCompletion) {
+        for (String attr : currentAttrs) {
+          if (attr.equals(key + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
+            add = false;
+            break;
+          }
         }
       }
-      if (add) {
-        result.add(new AnyXmlAttributeDescriptor(key));
-      }
+      if (add) result.add(new AnyXmlAttributeDescriptor(key));
     }
 
     return result.toArray(XmlAttributeDescriptor.EMPTY);
@@ -78,7 +78,8 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, XmlTag context) {
-    if (context != null && HtmlUtil.isCustomHtml5Attribute(attributeName) && HtmlUtil.tagHasHtml5Schema(context)) {
+    if (context != null && HtmlUtil.isCustomHtml5Attribute(attributeName) &&
+        (HtmlUtil.isHtml5Context(context) || HtmlUtil.tagHasHtml5Schema(context))) {
       return new AnyXmlAttributeDescriptor(attributeName);
     }
     return null;

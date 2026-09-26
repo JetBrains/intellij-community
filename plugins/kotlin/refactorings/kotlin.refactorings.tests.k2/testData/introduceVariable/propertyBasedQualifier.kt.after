@@ -1,0 +1,5 @@
+fun foo() {
+    val str = "42"
+    val str1 = str
+    val m = str1.substring(1)
+}

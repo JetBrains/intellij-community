@@ -1,0 +1,33 @@
+MODULES
+consumerBuild
+
+consumerBuild.consumerA
+
+consumerBuild.consumerA.androidHostTest
+    producerBuild.producerA.androidMain (TEST)
+    producerBuild.producerA.commonMain (TEST)
+
+consumerBuild.consumerA.androidMain
+    producerBuild.producerA.androidMain (COMPILE)
+    producerBuild.producerA.commonMain (COMPILE)
+
+consumerBuild.consumerA.commonMain
+    producerBuild.producerA.commonMain (COMPILE)
+
+consumerBuild.consumerA.commonTest
+    producerBuild.producerA.commonMain (TEST)
+
+consumerBuild.consumerA.jvmMain
+    producerBuild.producerA.commonMain (COMPILE)
+    producerBuild.producerA.jvmMain (COMPILE)
+
+consumerBuild.consumerA.jvmTest
+    producerBuild.producerA.commonMain (TEST)
+    producerBuild.producerA.jvmMain (TEST)
+
+
+Test configuration:
+- showing only modules matching .*consumerBuild.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- showing only dependencies matching .*producerBuild.*
+- dependencies order is not checked

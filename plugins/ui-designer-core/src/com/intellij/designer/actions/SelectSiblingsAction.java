@@ -15,11 +15,13 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +31,12 @@ public class SelectSiblingsAction extends AnAction {
   private final EditableArea myArea;
 
   public SelectSiblingsAction(EditableArea area) {
-    super("Select Siblings", "Select Siblings", null);
+    super(DesignerBundle.message("action.select.siblings.text"), DesignerBundle.message("action.select.siblings.description"), null);
     myArea = area;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RadComponent rootComponent = myArea.getRootComponent();
     if (rootComponent != null) {
       final Set<RadComponent> parents = RadComponent.getParents(myArea.getSelection());

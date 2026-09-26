@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.editorActions.smartEnter;
 
 import com.google.common.collect.ImmutableList;
@@ -31,7 +17,23 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.EnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyCommentBreakerEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyPlainEnterProcessor;
-import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.*;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.GoogleDocStringSectionFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyArgumentListFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyCaseClauseFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyClassFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyCollectionLiteralFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyConditionalStatementPartFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyExceptFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyForPartFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyFunctionFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyMatchStatementFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyMissingBracesFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyParameterListFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyParenthesizedFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyStringLiteralFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyUnconditionalStatementPartFixer;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.PyWithFixer;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
@@ -42,12 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
-public class PySmartEnterProcessor extends SmartEnterProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor");
+public final class PySmartEnterProcessor extends SmartEnterProcessor {
+  private static final Logger LOG = Logger.getInstance(PySmartEnterProcessor.class);
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
     .add(new PyStringLiteralFixer())
     .add(new GoogleDocStringSectionFixer())
@@ -62,6 +60,9 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     .add(new PyFunctionFixer())
     .add(new PyClassFixer())
     .add(new PyWithFixer())
+    .add(new PyCollectionLiteralFixer())
+    .add(new PyMatchStatementFixer())
+    .add(new PyCaseClauseFixer())
     .build();
   private static final List<EnterProcessor> ourProcessors = ImmutableList.of(new PyCommentBreakerEnterProcessor(),
                                                                              new PyPlainEnterProcessor());
@@ -69,7 +70,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
   private static class TooManyAttemptsException extends Exception {
   }
 
-  private static void collectAllElements(final PsiElement element, @NotNull final List<PsiElement> result, boolean recurse) {
+  private static void collectAllElements(final PsiElement element, final @NotNull List<PsiElement> result, boolean recurse) {
     result.add(0, element);
     if (doNotStep(element)) {
       if (!recurse) {
@@ -91,7 +92,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     return (element instanceof PyStatementList) || (element instanceof PyStatement);
   }
 
-  private static boolean isModified(@NotNull final Editor editor) {
+  private static boolean isModified(final @NotNull Editor editor) {
     final Long timestamp = editor.getUserData(SMART_ENTER_TIMESTAMP);
     return editor.getDocument().getModificationStamp() != timestamp.longValue();
   }
@@ -101,7 +102,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
   @Override
-  public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean process(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     final Document document = editor.getDocument();
     final String textForRollBack = document.getText();
     final int offset = editor.getCaretModel().getOffset();
@@ -121,7 +122,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     return true;
   }
 
-  private void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile, final int attempt)
+  private void process(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile, final int attempt)
     throws TooManyAttemptsException {
     if (attempt > MAX_ATTEMPTS) {
       throw new TooManyAttemptsException();
@@ -194,8 +195,8 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     }
   }
 
-  @Nullable
-  protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
+  @Override
+  protected @Nullable PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     PsiElement statementAtCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (statementAtCaret instanceof PsiWhiteSpace) {

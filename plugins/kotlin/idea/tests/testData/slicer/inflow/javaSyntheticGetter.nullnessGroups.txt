@@ -1,0 +1,4 @@
+[Other Values]
+4 	val s = <bold>b.value</bold> (in main(JavaClass))
+4 		<bold>val s</bold> = b.value (in main(JavaClass))
+4 			val s = <bold>b.value</bold> (in main(JavaClass))

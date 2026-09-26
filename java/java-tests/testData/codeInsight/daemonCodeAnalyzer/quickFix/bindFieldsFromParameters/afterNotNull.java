@@ -1,10 +1,9 @@
-// "Bind constructor parameters to fields" "true"
+// "Bind constructor parameters to fields" "true-preview"
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestBefore {
-
     @NotNull
     private final String myName;
     @NotNull

@@ -24,9 +24,14 @@ import com.intellij.util.ArrayUtil;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 
-public class IntStack {
+/**
+ * @deprecated Use {@link it.unimi.dsi.fastutil.ints.IntArrayList}
+ */
+@Deprecated
+public class IntStack implements Cloneable {
   private int[] data;
   private int size;
+
   public IntStack(int initialCapacity) {
     data = new int[initialCapacity];
     size = 0;
@@ -51,6 +56,13 @@ public class IntStack {
   public int pop() {
     if (size == 0) throw new EmptyStackException();
     return data[--size];
+  }
+
+  public int get(int i) {
+    if (i < 0 || i >= size) {
+      throw new IndexOutOfBoundsException("Invalid stack index " + i + " for stack of size " + size);
+    }
+    return data[i];
   }
 
   public int size() {
@@ -82,5 +94,18 @@ public class IntStack {
   @Override
   public String toString() {
     return Arrays.toString(Arrays.copyOf(data, size));
+  }
+
+  @Override
+  public IntStack clone() {
+    try {
+      IntStack v = (IntStack)super.clone();
+      v.data = data.clone();
+      return v;
+    }
+    catch (CloneNotSupportedException e) {
+      // this shouldn't happen, since we are Cloneable
+      throw new InternalError();
+    }
   }
 }

@@ -1,35 +1,35 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.diff.impl.DiffUtil;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SyntaxTraverser;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,20 +38,13 @@ import java.util.stream.Stream;
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.forceHintsUpdateOnNextPass;
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
 
-public class ParameterHintsPass extends EditorBoundHighlightingPass {
-  private final TIntObjectHashMap<List<HintData>> myHints = new TIntObjectHashMap<>();
-  private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
-  private final SyntaxTraverser<PsiElement> myTraverser;
+// TODO This pass should be rewritten with new API
+public final class ParameterHintsPass extends EditorBoundHighlightingPass {
+  private final Int2ObjectMap<List<HintData>> myHints = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<String> myShowOnlyIfExistedBeforeHints = new Int2ObjectOpenHashMap<>();
   private final PsiElement myRootElement;
   private final HintInfoFilter myHintInfoFilter;
   private final boolean myForceImmediateUpdate;
-
-  public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
-    MethodInfoBlacklistFilter filter = MethodInfoBlacklistFilter.forLanguage(element.getLanguage());
-    ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-    pass.doCollectInformation(new ProgressIndicatorBase());
-    pass.applyInformationToEditor();
-  }
 
   public ParameterHintsPass(@NotNull PsiElement element,
                             @NotNull Editor editor,
@@ -59,42 +52,84 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
                             boolean forceImmediateUpdate) {
     super(editor, element.getContainingFile(), true);
     myRootElement = element;
-    myTraverser = SyntaxTraverser.psiTraverser(element);
     myHintInfoFilter = hintsFilter;
     myForceImmediateUpdate = forceImmediateUpdate;
   }
 
+  /**
+   * Updates inlays recursively for a given element.
+   * Use {@link NonBlockingReadActionImpl#waitForAsyncTaskCompletion() } in tests to wait for the results.
+   * <p>
+   * Return promise in EDT.
+   */
+  public static @NotNull CancellablePromise<?> asyncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
+    MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
+    AsyncPromise<Object> promise = new AsyncPromise<>();
+    SmartPsiElementPointer<PsiElement> elementPtr = SmartPointerManager.getInstance(element.getProject())
+      .createSmartPsiElementPointer(element);
+    ReadAction.nonBlocking(() -> collectInlaysInPass(editor, filter, elementPtr))
+      .finishOnUiThread(ModalityState.any(), pass -> {
+        if (pass != null) {
+          try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+            pass.applyInformationToEditor();
+          }
+        }
+        promise.setResult(null);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    return promise;
+  }
+
+  private static ParameterHintsPass collectInlaysInPass(@NotNull Editor editor,
+                                                        MethodInfoExcludeListFilter filter,
+                                                        SmartPsiElementPointer<PsiElement> elementPtr) {
+    PsiElement element = elementPtr.getElement();
+    if (element == null || editor.isDisposed()) return null;
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+      ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
+      pass.setContext(CodeInsightContextUtil.getCodeInsightContext(element));
+      pass.doCollectInformation(new ProgressIndicatorBase());
+      return pass;
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
+  }
+
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    assert myDocument != null;
     myHints.clear();
 
     Language language = myFile.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled()) return;
+    if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled(language) || DiffUtil.isDiffEditor(myEditor)) return;
+    if (!HighlightingLevelManager.getInstance(myFile.getProject()).shouldHighlight(myFile)) return;
 
-    myTraverser.forEach(element -> process(element, provider));
+    provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
   }
 
-  private static boolean isEnabled() {
-    return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
+  private static boolean isEnabled(Language language) {
+    return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
   }
 
-  private void process(PsiElement element, InlayParameterHintsProvider provider) {
-    List<InlayInfo> hints = provider.getParameterHints(element);
+  private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {
+    ProgressManager.checkCanceled();
+    List<InlayInfo> hints = provider.getParameterHints(element, myFile);
     if (hints.isEmpty()) return;
-    HintInfo info = provider.getHintInfo(element);
+    HintInfo info = provider.getHintInfo(element, myFile);
 
     boolean showHints = info == null || info instanceof HintInfo.OptionInfo || myHintInfoFilter.showHint(info);
 
     Stream<InlayInfo> inlays = hints.stream();
     if (!showHints) {
-      inlays = inlays.filter((inlayInfo -> !inlayInfo.isFilterByBlacklist()));
+      inlays = inlays.filter(inlayInfo -> !inlayInfo.isFilterByExcludeList());
     }
 
-    inlays.forEach((hint) -> {
+    inlays.forEach(hint -> {
+      ProgressManager.checkCanceled();
       int offset = hint.getOffset();
       if (!canShowHintsAtOffset(offset)) return;
+      if (ParameterNameHintsSuppressor.All.isSuppressedFor(myFile, hint)) return;
 
       String presentation = provider.getInlayPresentation(hint.getText());
       if (hint.isShowOnlyIfExistedBefore()) {
@@ -103,19 +138,36 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
       else {
         List<HintData> hintList = myHints.get(offset);
         if (hintList == null) myHints.put(offset, hintList = new ArrayList<>());
-        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText()));
+        HintWidthAdjustment widthAdjustment = convertHintPresentation(hint.getWidthAdjustment(), provider);
+        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment));
       }
     });
   }
 
+  private static HintWidthAdjustment convertHintPresentation(HintWidthAdjustment widthAdjustment,
+                                                             InlayParameterHintsProvider provider) {
+    if (widthAdjustment != null) {
+      String hintText = widthAdjustment.getHintTextToMatch();
+      if (hintText != null) {
+        String adjusterHintPresentation = provider.getInlayPresentation(hintText);
+        if (!hintText.equals(adjusterHintPresentation)) {
+          widthAdjustment = new HintWidthAdjustment(widthAdjustment.getEditorTextToMatch(),
+                                                    adjusterHintPresentation,
+                                                    widthAdjustment.getAdjustmentPosition());
+        }
+      }
+    }
+    return widthAdjustment;
+  }
+
   @Override
   public void doApplyInformationToEditor() {
-    CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
-    ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-    List<Inlay> hints = hintsInRootElementArea(manager);
-    ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
-    updater.update();
-    keeper.restoreOriginalLocation(false);
+    EditorScrollingPositionKeeper.perform(myEditor, false, () -> {
+      ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
+      List<Inlay<?>> hints = hintsInRootElementArea(manager);
+      ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
+      updater.update();
+    });
 
     if (ParameterHintsUpdater.hintRemovalDelayed(myEditor)) {
       forceHintsUpdateOnNextPass(myEditor);
@@ -125,25 +177,26 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<Inlay> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
-    assert myDocument != null;
-
+  private @NotNull List<Inlay<?>> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
     TextRange range = myRootElement.getTextRange();
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();
 
-    List<Inlay> inlays = myEditor.getInlayModel()
-      .getInlineElementsInRange(elementStart + 1, elementEnd - 1);
+    // Adding hints on the borders is allowed only in case root element is a document
+    // See: canShowHintsAtOffset
+    if (myDocument.getTextLength() != range.getLength()) {
+      ++elementStart;
+      --elementEnd;
+    }
 
-    return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
+    return manager.getParameterHintsInRange(myEditor, elementStart, elementEnd);
   }
 
   /**
    * Adding hints on the borders of root element (at startOffset or endOffset)
    * is allowed only in the case when root element is a document
    *
-   * @return true iff a given offset can be used for hint rendering
+   * @return true if a given offset can be used for hint rendering
    */
   private boolean canShowHintsAtOffset(int offset) {
     TextRange rootRange = myRootElement.getTextRange();
@@ -151,16 +204,23 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (!rootRange.containsOffset(offset)) return false;
     if (offset > rootRange.getStartOffset() && offset < rootRange.getEndOffset()) return true;
 
-    return myDocument != null && myDocument.getTextLength() == rootRange.getLength();
+    return myDocument.getTextLength() == rootRange.getLength();
   }
-  
-  public static class HintData {
-    public final String presentationText;
-    public final boolean relatesToPrecedingText;
 
-    public HintData(String text, boolean relatesToPrecedingText) {
+  static final class HintData {
+    final String presentationText;
+    final boolean relatesToPrecedingText;
+    final HintWidthAdjustment widthAdjustment;
+
+    HintData(@NotNull String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
       presentationText = text;
       this.relatesToPrecedingText = relatesToPrecedingText;
+      this.widthAdjustment = widthAdjustment;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return '\'' + presentationText + '\'';
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
@@ -33,7 +33,7 @@ public abstract class VariablesProcessor implements PsiScopeProcessor, ElementCl
   protected abstract boolean check(PsiVariable var, ResolveState state);
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 
@@ -53,8 +53,9 @@ public abstract class VariablesProcessor implements PsiScopeProcessor, ElementCl
 
   @Override
   public final void handleEvent(@NotNull Event event, Object associated){
-    if(event == JavaScopeProcessorEvent.START_STATIC)
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
+    }
   }
 
   public int size(){
@@ -65,6 +66,7 @@ public abstract class VariablesProcessor implements PsiScopeProcessor, ElementCl
     return myResultList.get(i);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {

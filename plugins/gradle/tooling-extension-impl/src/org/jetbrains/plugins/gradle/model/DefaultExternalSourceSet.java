@@ -1,119 +1,127 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
-public class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 1L;
+public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
-  private String myName;
-  private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> mySources;
-  private final Collection<ExternalDependency> myDependencies;
-  private Collection<File> myArtifacts;
-  private String mySourceCompatibility;
-  private String myTargetCompatibility;
+  private static final long serialVersionUID = 3L;
+
+  private @Nullable String name;
+
+  private @Nullable File javaToolchainHome;
+  private @Nullable String sourceCompatibility;
+  private @Nullable String targetCompatibility;
+  private @Nullable List<String> compilerArguments;
+
+  private @NotNull Collection<File> artifacts;
+  private @NotNull Collection<ExternalDependency> dependencies;
+  private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
-    mySources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
-    myDependencies = new LinkedHashSet<ExternalDependency>();
-    myArtifacts = new ArrayList<File>();
-  }
-
-  public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
-    this();
-    myName = sourceSet.getName();
-    mySourceCompatibility = sourceSet.getSourceCompatibility();
-    myTargetCompatibility = sourceSet.getTargetCompatibility();
-    for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> entry : sourceSet.getSources().entrySet()) {
-      mySources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
-    }
-
-    for (ExternalDependency dependency : sourceSet.getDependencies()) {
-      myDependencies.add(ModelFactory.createCopy(dependency));
-    }
-    myArtifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>() : new ArrayList<File>(sourceSet.getArtifacts());
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
+    // Collection can be modified outside by mutation methods
+    artifacts = new ArrayList<>(0);
+    dependencies = new LinkedHashSet<>(0);
+    sources = new HashMap<>(0);
   }
 
   @Override
-  public Collection<File> getArtifacts() {
-    return myArtifacts;
+  public @NotNull String getName() {
+    return Objects.requireNonNull(name, "The source set's name property has not been initialized");
   }
 
-  public void setArtifacts(Collection<File> artifacts) {
-    myArtifacts = artifacts;
+  public void setName(@NotNull String name) {
+    this.name = name;
   }
 
-  @Nullable
   @Override
-  public String getSourceCompatibility() {
-    return mySourceCompatibility;
+  public @Nullable File getJavaToolchainHome() {
+    return javaToolchainHome;
+  }
+
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.javaToolchainHome = javaToolchainHome;
+  }
+
+  @Override
+  public @Nullable String getSourceCompatibility() {
+    return sourceCompatibility;
   }
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
-    mySourceCompatibility = sourceCompatibility;
+    this.sourceCompatibility = sourceCompatibility;
   }
 
-  @Nullable
   @Override
-  public String getTargetCompatibility() {
-    return myTargetCompatibility;
+  public @Nullable String getTargetCompatibility() {
+    return targetCompatibility;
   }
 
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
-    myTargetCompatibility = targetCompatibility;
+    this.targetCompatibility = targetCompatibility;
   }
 
   @Override
-  public Collection<ExternalDependency> getDependencies() {
-    return myDependencies;
+  public @NotNull List<String> getCompilerArguments() {
+    return Collections.unmodifiableList(
+      Objects.requireNonNull(compilerArguments, "The source set's compilerArguments property has not been initialized")
+    );
   }
 
-  public void setName(String name) {
-    myName = name;
+  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
+    this.compilerArguments = compilerArguments;
   }
 
-  @NotNull
   @Override
-  public Map<IExternalSystemSourceType, ExternalSourceDirectorySet> getSources() {
-    return mySources;
+  public @NotNull Collection<File> getArtifacts() {
+    return artifacts;
   }
 
-  public void setSources(Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources) {
-    mySources = sources;
+  public void setArtifacts(@NotNull Collection<File> artifacts) {
+    this.artifacts = artifacts;
+  }
+
+  @Override
+  public @NotNull Collection<ExternalDependency> getDependencies() {
+    return dependencies;
+  }
+
+  public void setDependencies(@NotNull Collection<ExternalDependency> dependencies) {
+    this.dependencies = dependencies;
+  }
+
+  @Override
+  public @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> getSources() {
+    return sources;
+  }
+
+  public void setSources(@NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
+    this.sources = new LinkedHashMap<>(sources);
+  }
+
+  public void addSource(@NotNull ExternalSystemSourceType sourceType, @NotNull DefaultExternalSourceDirectorySet sourceDirectorySet) {
+    this.sources.put(sourceType, sourceDirectorySet);
   }
 
   @Override
   public String toString() {
-    return "sourceSet '" + myName + '\'' ;
+    return "sourceSet '" + name + '\'' ;
   }
+
 }

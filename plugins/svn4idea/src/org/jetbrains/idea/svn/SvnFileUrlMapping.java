@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +25,12 @@ public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   List<RootUrlInfo> getAllWcInfos();
 
   @Nullable
-  RootUrlInfo getWcRootForFilePath(@NotNull File file);
+  RootUrlInfo getWcRootForFilePath(@NotNull FilePath path);
 
   @NotNull
   List<RootUrlInfo> getErrorRoots();
 
-  @NotNull
-  VirtualFile[] getNotFilteredRoots();
+  VirtualFile @NotNull [] getNotFilteredRoots();
 
   boolean isEmpty();
 }

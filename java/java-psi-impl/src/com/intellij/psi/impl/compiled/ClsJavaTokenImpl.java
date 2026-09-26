@@ -44,9 +44,8 @@ class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
     return myTokenText;
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return EMPTY_ARRAY;
   }
 
@@ -61,7 +60,7 @@ class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, getTokenType());
   }
 

@@ -1,0 +1,20 @@
+Original text:
+---------------
+class Config:
+    def get_name(self):
+        return "name"
+
+    def get_value(self):
+        return 42
+---------------
+Subtree: Language: Python
+---------------
+class Config:
+    <reparse>def get_name(self):
+        return "name"
+
+    DEFAULT = "default"
+
+    def get_value(self):
+        return 42</reparse>
+---------------

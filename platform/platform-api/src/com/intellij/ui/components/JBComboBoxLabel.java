@@ -2,11 +2,17 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.PlatformIcons;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * @author Konstantin Bulenkov
@@ -25,7 +31,7 @@ public class JBComboBoxLabel extends JPanel {
     myText.setFont(font);
   }
 
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     myText.setText(text);
   }
 
@@ -46,7 +52,7 @@ public class JBComboBoxLabel extends JPanel {
   }
 
   public void setSelectionIcon() {
-    myIcon.setIcon(AllIcons.General.Combo);
+    myIcon.setIcon(AllIcons.General.ArrowDown);
   }
 
   @Override

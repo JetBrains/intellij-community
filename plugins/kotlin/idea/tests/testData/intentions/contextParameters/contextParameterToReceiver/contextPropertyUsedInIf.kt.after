@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
+// Issue: KTIJ-34938
+
+interface Config {
+    val debug: Boolean
+}
+
+val Config.isDebugMode: Boolean
+    get() = contextOf<Config>().debug
+
+fun example(config: Config) {
+    context(config) {
+        if (contextOf<Config>().isDebugMode) {
+        }
+    }
+}

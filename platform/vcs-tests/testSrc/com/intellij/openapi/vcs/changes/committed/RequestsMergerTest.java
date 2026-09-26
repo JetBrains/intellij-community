@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.RequestsMerger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class RequestsMergerTest extends TestCase {
@@ -80,7 +68,7 @@ public class RequestsMergerTest extends TestCase {
     Assert.assertEquals(true, victim.isExecuted()); // 1st finished
     Assert.assertEquals(true, victim.isExecutionSubmitted()); // 2nd submitted
     Assert.assertTrue(victim.isChildExited());
-    victim.myThread.join();
+    victim.myThread.get();
   }
 
   public void testAfterRefreshIsCalled() throws Exception {
@@ -151,15 +139,11 @@ public class RequestsMergerTest extends TestCase {
   }
 
   private static class SimpleExecutor implements Consumer<Runnable> {
-    private final ExecutorService myExecutor;
-
-    private SimpleExecutor() {
-      myExecutor = ConcurrencyUtil.newSingleThreadExecutor("req merge test");
-    }
+    private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Req Merge Test");
 
     @Override
     public void consume(Runnable runnable) {
-      myExecutor.submit(runnable);
+      myExecutor.execute(runnable);
     }
 
     public void dispose() throws InterruptedException {
@@ -168,7 +152,7 @@ public class RequestsMergerTest extends TestCase {
     }
   }
 
-  private static class SimpleRunnable implements Runnable {
+  private static final class SimpleRunnable implements Runnable {
     private int myCnt;
     private boolean myStarted;
     private boolean myFinished;
@@ -221,10 +205,10 @@ public class RequestsMergerTest extends TestCase {
     }
   }
 
-  private static class MyDelayableTestVictim extends MyTestVictim {
+  private static final class MyDelayableTestVictim extends MyTestVictim {
     private final Semaphore mySemaphore;
     private volatile boolean myChildExited;
-    private Thread myThread;
+    private Future<?> myThread;
 
     private MyDelayableTestVictim() {
       mySemaphore = new Semaphore();
@@ -235,9 +219,7 @@ public class RequestsMergerTest extends TestCase {
       // another thread
       final Semaphore local = new Semaphore();
       local.down();
-      myThread = new Thread("req merge test") {
-        @Override
-        public void run() {
+      myThread = AppExecutorUtil.getAppExecutorService().submit(() -> {
           try {
             local.up();
             myRunnable.run();
@@ -245,9 +227,7 @@ public class RequestsMergerTest extends TestCase {
           finally {
             myChildExited = true;
           }
-        }
-      };
-      myThread.start();
+        });
       local.waitFor();
       myExecutionSubmitted = false;   // hack: to check further submissions
     }

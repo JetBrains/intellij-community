@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.eel.nioFs` start
+jvm_library(
+    name = "eel-nioFs",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.eel.nioFs",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/eel"],
+    deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//platform/eel",
+        "//platform/util-rt",
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//platform/util/base",
+        "//platform/util/base/multiplatform",
+        "//platform/util/annotations",
+    ],
+)
+
+jvm_library(
+    name = "eel-nioFs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.eel.nioFs",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":eel-nioFs",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/util-rt:util-rt_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.eel.nioFs` end
+
+### auto-generated section `iml intellij.platform.eel.nioFs` start
+exports_files(
+    [
+        "intellij.platform.eel.nioFs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.eel.nioFs` end

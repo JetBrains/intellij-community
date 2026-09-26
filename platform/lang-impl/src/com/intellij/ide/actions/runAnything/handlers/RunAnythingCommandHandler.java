@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.handlers;
 
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -17,7 +17,7 @@ public abstract class RunAnythingCommandHandler {
   public static final ExtensionPointName<RunAnythingCommandHandler> EP_NAME =
     ExtensionPointName.create("com.intellij.runAnything.commandHandler");
 
-  public abstract boolean isMatched(@NotNull String commandLine);
+  public abstract boolean isMatched(@NotNull Project project, @NotNull String commandLine);
 
   /**
    * See {@link KillableProcessHandler#shouldKillProcessSoftly()} for details.
@@ -27,12 +27,21 @@ public abstract class RunAnythingCommandHandler {
   }
 
   /**
+   * Provides custom output to be printed in console on the process terminated.
+   * E.g. command execution time could be reported on a command execution terminating.
+   *
+   * @param creationTime time of process created and started to execute
+   */
+  public @Nullable String getProcessTerminatedCustomOutput(long creationTime) {
+    return null;
+  }
+
+  /**
    * Creates console builder for matched command
    */
   public abstract TextConsoleBuilder getConsoleBuilder(@NotNull Project project);
 
-  @Nullable
-  public static RunAnythingCommandHandler getMatchedHandler(@NotNull String commandLine) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(handler -> handler.isMatched(commandLine)).findFirst().orElse(null);
+  public static @Nullable RunAnythingCommandHandler getMatchedHandler(@NotNull Project project, @NotNull String commandLine) {
+    return Arrays.stream(EP_NAME.getExtensions()).filter(handler -> handler.isMatched(project, commandLine)).findFirst().orElse(null);
   }
 }

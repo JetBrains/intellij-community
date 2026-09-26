@@ -1,26 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-public class DeprecationUtil {
-  public static final String DEPRECATION_SHORT_NAME = "Deprecation";
-  public static final String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
-  public static final String DEPRECATION_ID = "deprecation";
+import com.intellij.analysis.AnalysisBundle;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-  public static final String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
-  public static final String FOR_REMOVAL_DISPLAY_NAME = InspectionsBundle.message("inspection.marked.for.removal.display.name");
-  public static final String FOR_REMOVAL_ID = "removal";
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
+
+public final class DeprecationUtil {
+  public static final @NonNls String DEPRECATION_SHORT_NAME = "Deprecation";
+
+  public static final @NonNls String DEPRECATION_ID = "deprecation";
+
+  public static final @NonNls String FOR_REMOVAL_SHORT_NAME = "MarkedForRemoval";
+
+  public static final @NonNls String FOR_REMOVAL_ID = "removal";
+
+  @Contract(pure = true)
+  public static @Nls(capitalization = Sentence) @NotNull String getDeprecationDisplayName() {
+    return AnalysisBundle.message("inspection.deprecated.display.name");
+  }
+
+  @Contract(pure = true)
+  public static @Nls(capitalization = Sentence) @NotNull String getForRemovalDisplayName() {
+    return AnalysisBundle.message("inspection.marked.for.removal.display.name");
+  }
 }

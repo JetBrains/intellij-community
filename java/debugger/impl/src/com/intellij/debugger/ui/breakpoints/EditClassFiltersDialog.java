@@ -6,16 +6,18 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;
@@ -31,7 +33,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     super(project, true);
     myChooserFilter = filter;
     myProject = project;
-    setTitle(DebuggerBundle.message("class.filters.dialog.title"));
+    setTitle(JavaDebuggerBundle.message("class.filters.dialog.title"));
     init();
   }
 
@@ -39,21 +41,22 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return new ClassFilterEditor(project, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout());
 
-    Box mainPanel = Box.createHorizontalBox();
+    JBBox mainPanel = JBBox.createHorizontalBox();
 
     myClassFilterEditor = createClassFilterEditor(myProject);
     myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
+      JavaDebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
     mainPanel.add(myClassFilterEditor);
 
     myClassExclusionFilterEditor = createClassFilterEditor(myProject);
     myClassExclusionFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
-      DebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
+      JavaDebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
     mainPanel.add(myClassExclusionFilterEditor);
 
     contentPanel.add(mainPanel, BorderLayout.CENTER);
@@ -61,7 +64,8 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return contentPanel;
   }
 
-  public void dispose(){
+  @Override
+  public void dispose() {
     myClassFilterEditor.stopEditing();
     myClassExclusionFilterEditor.stopEditing();
     super.dispose();
@@ -72,7 +76,8 @@ public class EditClassFiltersDialog extends DialogWrapper {
     myClassExclusionFilterEditor.setFilters(inverseFilters);
   }
 
-  protected String getDimensionServiceKey(){
+  @Override
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.EditClassFiltersDialog";
   }
 
@@ -84,6 +89,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return myClassExclusionFilterEditor.getFilters();
   }
 
+  @Override
   protected String getHelpId() {
     return "reference.viewBreakpoints.classFilters";
   }

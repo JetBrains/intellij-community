@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -9,141 +9,166 @@ import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionGroupNode;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionRootNode;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.InspectionTreeTailRenderer;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
+import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.function.Consumer;
+import java.util.Objects;
 
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionTreeHtmlWriter {
+@ApiStatus.Internal
+public final class InspectionTreeHtmlWriter {
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String ERROR_COLOR = "ffabab";
   private static final String WARNING_COLOR = "f2f794";
 
   private final InspectionTree myTree;
-  private final String myOutputDir;
-  private final StringBuffer myBuilder = new StringBuffer();
+  private final Path myOutputDir;
   private final InspectionProfile myProfile;
   private final RefManager myManager;
 
-  public InspectionTreeHtmlWriter(InspectionResultsView view,
-                                  String outputDir) {
-    myTree = view.getTree();
+  public InspectionTreeHtmlWriter(@NotNull InspectionTree tree,
+                                  @NotNull InspectionProfile profile,
+                                  @NotNull RefManager refManager,
+                                  @NotNull Path outputDir) {
+    myTree = tree;
+    myProfile = profile;
+    myManager = refManager;
     myOutputDir = outputDir;
-    myProfile = view.getCurrentProfile();
-    myManager = view.getGlobalInspectionContext().getRefManager();
     serializeTreeToHtml();
   }
 
-  private void traverseInspectionTree(final InspectionTreeNode node,
-                                             final Consumer<InspectionTreeNode> preAction,
-                                             final Consumer<InspectionTreeNode> postAction) {
+  private void serializeTreeToHtml() {
+    HTMLExportUtil.writeFile(myOutputDir, "index.html", myTree.getContext().getProject(), w -> {
+      String title = myTree.getContext().getView().getViewTitle();
+      appendHeader(w, title);
+      w.append("<div id=\"inspection-tree\">\n<h4>").append(title).append("</h4>\n");
+      InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<>(myTree.getContext()) {
+        @Override
+        protected void appendText(String text, SimpleTextAttributes attributes) throws IOException {
+          w.append(escapeNonBreakingSymbols(text));
+        }
+
+        @Override
+        protected void appendText(String text) throws IOException {
+          w.append(escapeNonBreakingSymbols(text));
+        }
+      };
+      w.append("\n<ol class=\"tree\">");
+      traverseInspectionTree(myTree.getInspectionTreeModel().getRoot(), n -> {
+        int nodeId = System.identityHashCode(n);
+        w.append("\n<li><label for=\"")
+          .append(String.valueOf(nodeId))
+          .append("\">")
+          .append(convertNodeToHtml(n))
+          .append("&nbsp;<span class=\"grayout\">");
+        tailRenderer.appendTailText(n);
+        w.append("</span></label><input type=\"checkbox\"");
+        if (isChecked(n)) {
+          w.append(" checked");
+        }
+        w.append(" onclick=\"navigate(").append(String.valueOf(nodeId)).append(")\"");
+        w.append(" id=\"").append(String.valueOf(nodeId)).append("\">");
+        if (n instanceof SuppressableInspectionTreeNode) {
+          RefEntity e = ((SuppressableInspectionTreeNode)n).getElement();
+          if (e != null) {
+            w.append("\n<div id=\"d").append(String.valueOf(nodeId)).append("\" style=\"display:none\">");
+            StringBuilder buf = new StringBuilder();
+            ((SuppressableInspectionTreeNode)n).getPresentation().getComposer().compose(buf, e);
+            w.append(buf.toString());
+            w.append("</div>");
+          }
+        }
+        w.append("\n<ol class=\"tree\">");
+      }, n -> w.append("\n</ol>"));
+      w.append("""
+                 
+                 </ol>
+                 </div>
+                 <div id="description">
+                   <h4>Problem description</h4>
+                   <div id="preview">Select a problem element in tree</div>
+                 </div>
+                 </body>
+                 </html>""");
+    });
+
+    InspectionTreeHtmlExportResources.copyInspectionReportResources(myOutputDir);
+  }
+
+  private static boolean isChecked(InspectionTreeNode node) {
+    return node instanceof InspectionRootNode || node.getChildCount() == 1 && isChecked(node.getParent());
+  }
+
+  private static void traverseInspectionTree(InspectionTreeNode node,
+                                             ThrowableConsumer<? super InspectionTreeNode, ? extends IOException> preAction,
+                                             ThrowableConsumer<? super InspectionTreeNode, ? extends IOException> postAction) throws IOException {
     if (node.isExcluded()) {
       return;
     }
-    preAction.accept(node);
-    for (int i = 0; i < node.getChildCount(); i++) {
-      traverseInspectionTree((InspectionTreeNode)node.getChildAt(i), preAction, postAction);
+    preAction.consume(node);
+    for (InspectionTreeNode child : node.getChildren()) {
+      traverseInspectionTree(child, preAction, postAction);
     }
-    postAction.accept(node);
-  }
-
-  private void serializeTreeToHtml() {
-    appendHeader();
-    appendTree((builder) -> {
-      final InspectionTreeTailRenderer tailRenderer = new InspectionTreeTailRenderer(myTree.getContext()) {
-        @Override
-        protected void appendText(String text, SimpleTextAttributes attributes) {
-          builder.append(escapeNonBreakingSymbols(text));
-        }
-
-        @Override
-        protected void appendText(String text) {
-          builder.append(escapeNonBreakingSymbols(text));
-        }
-      };
-      traverseInspectionTree(myTree.getRoot(),
-                             (n) -> {
-                               final int nodeId = System.identityHashCode(n);
-                               builder
-                                 .append("<li><label for=\"")
-                                 .append(nodeId)
-                                 .append("\">")
-                                 .append(convertNodeToHtml(n))
-                                 .append("&nbsp;<span class=\"grayout\">");
-                               tailRenderer.appendTailText(n);
-                               builder.append("</span></label><input type=\"checkbox\" ");
-                               if (n instanceof InspectionRootNode) {
-                                 builder.append("checked");
-                               }
-                               builder.append(" onclick=\"navigate(").append(nodeId).append(")\" ");
-                               builder.append(" id=\"").append(nodeId).append("\" />");
-                               if (n instanceof SuppressableInspectionTreeNode) {
-                                 RefEntity e = ((SuppressableInspectionTreeNode)n).getElement();
-                                 if (e != null) {
-                                   builder
-                                     .append("<div id=\"d")
-                                     .append(nodeId)
-                                     .append("\" style=\"display:none\">");
-                                   ((SuppressableInspectionTreeNode)n).getPresentation().getComposer().compose(builder, e);
-                                   builder.append("</div>");
-                                 }
-                               }
-                               builder.append("<ol class=\"tree\">");
-                             },
-                             (n) -> builder.append("</ol></li>"));
-    });
-
-    HTMLExportUtil.writeFile(myOutputDir, "index.html", myBuilder, myTree.getContext().getProject());
-    InspectionTreeHtmlExportResources.copyInspectionReportResources(myOutputDir);
+    postAction.consume(node);
   }
 
   private String convertNodeToHtml(InspectionTreeNode node) {
     if (node instanceof InspectionRootNode) {
-      return "<b>'" + escapeNonBreakingSymbols(node) + "' project</b>";
+      return "<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof ProblemDescriptionNode) {
-      final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
+      CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
       String warningLevelName = "";
       String color = null;
       if (descriptor instanceof ProblemDescriptorBase) {
-        final InspectionToolWrapper tool = ((ProblemDescriptionNode)node).getToolWrapper();
-        final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+        InspectionToolWrapper<?, ?> tool = ((ProblemDescriptionNode)node).getToolWrapper();
+        HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
         HighlightSeverity severity = myProfile.getErrorLevel(key, ((ProblemDescriptorBase)descriptor).getStartElement()).getSeverity();
-        final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+        HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
         if (HighlightDisplayLevel.ERROR.equals(level)) {
           color = ERROR_COLOR;
         }
         else if (HighlightDisplayLevel.WARNING.equals(level)) {
           color = WARNING_COLOR;
         }
-        warningLevelName = level.getName();
+        warningLevelName = StringUtil.toUpperCase(level.getSeverity().getDisplayName());
       }
 
-      final StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.append("<span style=\"margin:1px;");
       if (color != null) {
-        sb.append("background:#");
-        sb.append(color);
+        sb.append("background:#").append(color);
       }
-      sb.append("\">");
-      sb.append(warningLevelName);
-      sb.append("</span>&nbsp;");
-      sb.append(escapeNonBreakingSymbols(node));
+      sb.append("\">").append(warningLevelName).append("</span>&nbsp;").append(escapeNonBreakingSymbols(node));
       return sb.toString();
     }
     else if (node instanceof RefElementNode) {
-      final String type = myManager.getType((RefEntity)node.getUserObject());
-      return type + "&nbsp;<b>" + node.toString() + "</b>";
+      String type = myManager.getType(Objects.requireNonNull(((RefElementNode)node).getElement()));
+      return type + "&nbsp;<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof InspectionNode) {
-      return "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;inspection";
+      return node.getClass() != InspectionNode.class
+             ? "<b>" + escapeNonBreakingSymbols(node) + "</b>"
+             : "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;inspection";
     }
     else if (node instanceof InspectionGroupNode) {
       return "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;group";
@@ -153,28 +178,24 @@ public class InspectionTreeHtmlWriter {
     }
   }
 
-  private void appendHeader() {
-    String title = ApplicationNamesInfo.getInstance().getFullProductName() + " inspection report";
-    myBuilder.append("<html><head>" +
-                     "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" +
-                     "<meta name=\"author\" content=\"JetBrains\">" +
-                     "<script type=\"text/javascript\" src=\"script.js\"></script>" +
-                     "<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\"/>" +
-                     "<title>")
+  private void appendHeader(@NotNull Writer writer, String title) throws IOException {
+    writer.append("""
+                    <html>
+                    <head>
+                      <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+                      <meta name="author" content="JetBrains">
+                      <script type="text/javascript" src="script.js"></script>
+                      <link rel="stylesheet" type="text/css" href="styles.css">
+                      <title>""")
       .append(title)
-      .append("</title></head><body><h3>")
-      .append(title)
-      .append(":</h3>");
-  }
-
-  private void appendTree(Consumer<StringBuffer> treeRenderer) {
-    myBuilder.append("<div style=\"width:100%;\"><div style=\"float:left; width:50%;\"><h4>Inspection tree:</h4>");
-    treeRenderer.accept(myBuilder);
-    myBuilder.append("</div><div style=\"float:left; width:50%;\"><h4>Problem description:</h4>" +
-                     "<div id=\"preview\">Select a problem element in tree</div></div><div></body></html>");
+      .append("""
+                  </title>
+                </head>
+                <body>
+                """);
   }
 
   private static String escapeNonBreakingSymbols(@NotNull Object source) {
-    return StringUtil.replace(StringUtil.escapeXml(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
+    return StringUtil.replace(StringUtil.escapeXmlEntities(source.toString()), Arrays.asList(" ", "-"), Arrays.asList("&nbsp;", "&#8209;"));
   }
 }

@@ -1,0 +1,70 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
+content_module_jar(module = ":module")
+### auto-generated section `dev intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end
+
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
+jvm_library(
+    name = "module",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/vcs-api:vcs",
+        "//plugins/editorconfig/backend",
+        "//plugins/jsonpath",
+        "//platform/vcs-log/impl",
+        "//libraries/jetbrains/annotations",
+        "//platform/util",
+        "//platform/util/base",
+        "//tools/launcher-generator",
+    ],
+)
+
+jvm_library(
+    name = "module_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":module",
+        "//platform/vcs-api:vcs_test_lib",
+        "//plugins/editorconfig/backend:backend_test_lib",
+        "//plugins/jsonpath:jsonpath_test_lib",
+        "//platform/vcs-log/impl:impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//tools/launcher-generator:launcher-generator_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end
+
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.iml",
+        "resources/intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.module` end

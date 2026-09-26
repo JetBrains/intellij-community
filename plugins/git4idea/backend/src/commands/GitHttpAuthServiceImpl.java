@@ -1,0 +1,28 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.commands;
+
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
+import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Path;
+import java.util.Collection;
+
+@ApiStatus.Internal
+class GitHttpAuthServiceImpl extends GitHttpAuthService {
+  GitHttpAuthServiceImpl(CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
+
+  @Override
+  public @NotNull GitHttpGuiAuthenticator createAuthenticator(@NotNull Project project,
+                                                              @NotNull Collection<String> urls,
+                                                              @NotNull Path workingDirectory,
+                                                              @NotNull AuthenticationGate authenticationGate,
+                                                              @NotNull AuthenticationMode authenticationMode) {
+    return new GitHttpGuiAuthenticator(project, urls, workingDirectory, authenticationGate, authenticationMode);
+  }
+}

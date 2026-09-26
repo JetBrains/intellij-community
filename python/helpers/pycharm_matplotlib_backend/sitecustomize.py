@@ -1,9 +1,20 @@
+import os
+import sys
+
+SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
+
+
+def debug(message):
+    if SHOW_DEBUG_INFO:
+        sys.stderr.write(message)
+        sys.stderr.write("\n")
+
+
+debug("Executing PyCharm's Matplotlib `sitecustomize`")
+modules_list = []
+
 try:
-    import sys
-
     # We want to import users sitecustomize.py file if any
-    import os
-
     sitecustomize = "sitecustomize"
     parent_dir = os.path.abspath(os.path.join(__file__, os.pardir))
     if parent_dir in sys.path:
@@ -15,6 +26,7 @@ try:
             try:
                 import sitecustomize
             except ImportError:
+                debug("User doesn't have a custom `sitecustomize`")
                 # return our module if we failed to find any other sitecustomize
                 # to prevent KeyError importing 'site.py'
                 sys.modules[sitecustomize] = pycharm_sitecustomize_module
@@ -33,13 +45,17 @@ try:
     if old_getfilesystemencoding:
         sys.getfilesystemencoding = old_getfilesystemencoding
     matplotlib.use('module://backend_interagg')
+    debug("Custom matplotlib backend was set for Plots tool window")
 
 
 except:
     # fallback in case matplotlib is not loaded correctly
-    import sys
+    if SHOW_DEBUG_INFO:
+        import traceback
+        traceback.print_exc()
 
     keys = list(sys.modules.keys())
-    for key in keys:
-        if modules_list and key not in modules_list:
-            sys.modules.pop(key)
+    if modules_list:
+        for key in keys:
+            if key not in modules_list:
+                sys.modules.pop(key)

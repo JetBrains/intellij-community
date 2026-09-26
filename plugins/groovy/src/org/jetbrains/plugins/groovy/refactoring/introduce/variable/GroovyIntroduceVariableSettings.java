@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
-/**
- * @author ilyas
- */
 public interface GroovyIntroduceVariableSettings extends GrIntroduceSettings {
   boolean isDeclareFinal();
 }

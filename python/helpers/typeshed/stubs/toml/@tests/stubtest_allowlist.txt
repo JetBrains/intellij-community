@@ -1,0 +1,4 @@
+toml.decoder.basestring
+toml.decoder.unichr
+toml.decoder.unicode
+toml.encoder.unicode

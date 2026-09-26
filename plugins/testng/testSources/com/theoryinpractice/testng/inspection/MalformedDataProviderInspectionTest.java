@@ -1,0 +1,80 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.theoryinpractice.testng.inspection;
+
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testMissedDataProvider() {
+
+    myFixture.testHighlighting(true, false, false, "MissedDataProvider.java");
+  }
+
+  public void testInstanceDataProviderFromForeignClass() {
+    myFixture.testHighlighting(true, false, false, "InstanceDataProviderFromForeignClass.java");
+  }
+
+  public void testClassLevelDataProviderClass() {
+    myFixture.testHighlighting(true, false, false, "ClassLevelDataProviderClass.java");
+  }
+
+  public void testAbstractClassProvider() {
+    myFixture.testHighlighting(true, false, false, "AbstractClassProvider.java");
+  }
+
+  public void testInheritedClassLevelDataProviderClass() {
+    myFixture.testHighlighting(true, false, false, "InheritedClassLevelDataProviderClass.java");
+  }
+
+  public void testSubclassInheritsDataProvider() {
+    myFixture.testHighlighting(true, false, false, "testSubclassInheritsDataProvider.java");
+  }
+
+  public void testSubclassInheritsDataProviderQuickFix() {
+    List<IntentionAction> fixes = myFixture.getAllQuickFixes("testSubclassInheritsDataProviderFix.java");
+    IntentionAction fix = fixes.stream().filter(f -> f.getText().startsWith("Create method")).findFirst().orElseThrow();
+    myFixture.launchAction(fix);
+    myFixture.checkResultByFile("testSubclassInheritsDataProviderFix_after.java");
+  }
+
+  @NotNull
+  @Override
+  protected String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("testng") + "/testData/inspection/dataProvider/";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.addClass("""
+                         package org.testng.annotations;
+                         public @interface DataProvider {
+                           String name() default "";
+                         }""");
+    myFixture.addClass("""
+                         package org.testng.annotations;
+                         public @interface Test {
+                           String dataProvider() default {};
+                           Class dataProviderClass() default {};
+                         }""");
+    myFixture.enableInspections(new MalformedDataProviderInspection());
+  }
+}

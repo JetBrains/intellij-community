@@ -1,0 +1,3 @@
+version = "2.1"
+upstream-repository = "https://github.com/clarkperkins/click-shell"
+dependencies = ["click>=8.0.0"]

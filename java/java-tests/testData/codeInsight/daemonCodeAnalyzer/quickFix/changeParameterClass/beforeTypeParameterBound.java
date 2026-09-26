@@ -1,4 +1,4 @@
-// "Make 'T' implement 'b'" "true"
+// "Make 'T' extend 'b'" "true-preview"
 class a<T> {
     void f(b<String> r, T t) {
         r.g(<caret>t);

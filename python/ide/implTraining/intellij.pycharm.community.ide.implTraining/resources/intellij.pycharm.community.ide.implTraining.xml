@@ -1,0 +1,19 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="training"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.featuresTrainer"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <startPagePromoter id="PyOnboardingTourPromoter"
+                       implementation="com.intellij.pycharm.community.ide.implTraining.PyOnboardingTourPromoter"/>
+    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider"
+                        serviceImplementation="com.intellij.pycharm.community.ide.implTraining.PyCharmDialogBackgroundImageProvider"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

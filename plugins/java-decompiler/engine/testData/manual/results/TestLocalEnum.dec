@@ -1,0 +1,57 @@
+package pkg;
+
+public class TestLocalEnum {
+   public String season() {
+      enum Season {
+         SPRING,
+         WINTER;
+
+         String describe() {
+            return this.name().toLowerCase();// 10
+         }
+      }
+
+      String var10000 = Season.SPRING.describe();// 14
+      return var10000 + Season.WINTER.describe();
+   }
+}
+
+class 'pkg/TestLocalEnum$1Season' {
+   method 'describe ()Ljava/lang/String;' {
+      0      9
+      1      9
+      2      9
+      3      9
+      4      9
+      5      9
+      6      9
+      7      9
+   }
+}
+
+class 'pkg/TestLocalEnum' {
+   method 'season ()Ljava/lang/String;' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+      5      13
+      6      14
+      7      14
+      8      14
+      9      14
+      a      14
+      b      14
+      c      14
+      d      14
+      e      14
+      f      14
+      10      14
+      11      14
+   }
+}
+
+Lines mapping:
+10 <-> 10
+14 <-> 14

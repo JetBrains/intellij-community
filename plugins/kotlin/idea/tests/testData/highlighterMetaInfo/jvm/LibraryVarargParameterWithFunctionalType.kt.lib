@@ -1,0 +1,9 @@
+package pack
+
+interface MyBuilder {
+    val name: String
+}
+
+fun myDsl(vararg arguments: MyBuilder.(Int) -> Unit) {
+
+}

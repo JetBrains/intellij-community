@@ -1,64 +1,59 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.dnd.AdvancedDnDSource;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.*;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.ExtractIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PackAndPutIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoDefaultLocationAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.PutSourceItemIntoParentAndLinkViaManifestAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemFindUsagesAction;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.SourceItemNavigateAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Image;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
-  private final SimpleTreeBuilder myBuilder;
+  private final StructureTreeModel<SourceItemsTreeStructure> myStructureTreeModel;
+  private final SourceItemsTreeStructure myTreeStructure;
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
-    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));
+    myTreeStructure = new SourceItemsTreeStructure(editorContext, artifactsEditor);
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, new WeightBasedComparator(true), this);
+    setModel(new AsyncTreeModel(myStructureTreeModel, this));
     setRootVisible(false);
     setShowsRootHandles(true);
-    Disposer.register(this, myBuilder);
-    PopupHandler.installPopupHandler(this, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, createPopupGroup(), "ArtifactSourceItemTreePopup");
     installDnD();
   }
 
@@ -77,7 +72,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
     group.add(Separator.getInstance());
     group.add(new SourceItemNavigateAction(this));
-    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject(), myArtifactsEditor.getContext().getParent()));
+    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getParent()));
 
     DefaultTreeExpander expander = new DefaultTreeExpander(this);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
@@ -88,11 +83,8 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   public void rebuildTree() {
-    myBuilder.updateFromRoot(true);
-  }
-
-  public void initTree() {
-    myBuilder.initRootNode();
+    myTreeStructure.clearCaches();
+    myStructureTreeModel.invalidateAsync();
   }
 
   @Override
@@ -107,12 +99,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return !getSelectedItems().isEmpty();
   }
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
     return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[0])));
   }
@@ -140,20 +132,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     final DefaultMutableTreeNode[] nodes = getSelectedTreeNodes();
     if (nodes.length == 1) {
       return DnDAwareTree.getDragImage(this, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
     }
-    return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
-  }
-
-  @Override
-  public void dragDropEnd() {
-  }
-
-  @Override
-  public void dropActionChanged(int gestureModifiers) {
+    return DnDAwareTree.getDragImage(this, JavaUiBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
   }
 
   private static class SourceItemsTreeStructure extends SimpleTreeStructure {
@@ -161,13 +145,13 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     private final ArtifactEditorImpl myArtifactsEditor;
     private SourceItemsTreeRoot myRoot;
 
-    public SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
+    SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
       myArtifactsEditor = artifactsEditor;
     }
 
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       if (myRoot == null) {
         myRoot = new SourceItemsTreeRoot(myEditorContext, myArtifactsEditor);
       }

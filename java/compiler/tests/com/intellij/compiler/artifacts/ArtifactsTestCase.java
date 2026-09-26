@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.facet.Facet;
@@ -28,9 +14,20 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.artifacts.*;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorManifestFileProvider;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorSettings;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -38,21 +35,22 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public abstract class ArtifactsTestCase extends IdeaTestCase {
+public abstract class ArtifactsTestCase extends JavaProjectTestCase {
   protected boolean mySetupModule;
 
-  protected ArtifactManager getArtifactManager() {
+  protected final ArtifactManager getArtifactManager() {
     return ArtifactManager.getInstance(myProject);
   }
 
@@ -63,49 +61,49 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }
   }
 
-  protected void deleteArtifact(final Artifact artifact) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+  protected void deleteArtifact(@NotNull Artifact artifact) {
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.removeArtifact(artifact);
     commitModel(model);
   }
 
-  protected static void commitModel(final ModifiableArtifactModel model) {
+  protected static void commitModel(@NotNull ModifiableArtifactModel model) {
     WriteAction.runAndWait(() -> model.commit());
   }
 
-  protected Artifact rename(Artifact artifact, String newName) {
+  protected final Artifact rename(Artifact artifact, String newName) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setName(newName);
     commitModel(model);
     return artifact;
   }
 
-  protected Artifact addArtifact(String name) {
+  protected final @NotNull Artifact addArtifact(String name) {
     return addArtifact(name, null);
   }
 
-  protected Artifact addArtifact(String name, final CompositePackagingElement<?> root) {
-    return addArtifact(name, PlainArtifactType.getInstance(), root);
+  protected final @NotNull Artifact addArtifact(String name, CompositePackagingElement<?> root) {
+    return getArtifactManager().addArtifact(name, PlainArtifactType.getInstance(), root);
   }
 
-  protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
+  protected final @NotNull Artifact addArtifact(String name, ArtifactType type, CompositePackagingElement<?> root) {
     return getArtifactManager().addArtifact(name, type, root);
   }
 
-  protected PackagingElementResolvingContext getContext() {
+  protected final PackagingElementResolvingContext getContext() {
     return ArtifactManager.getInstance(myProject).getResolvingContext();
   }
 
   public static void renameFile(final VirtualFile file, final String newName) {
     try {
-      WriteAction.runAndWait(() -> file.rename(IdeaTestCase.class, newName));
+      WriteAction.runAndWait(() -> file.rename(JavaProjectTestCase.class, newName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+  protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
     return WriteAction.computeAndWait(() -> {
       final Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -147,8 +145,8 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }
 
     @Override
-    public List<Module> chooseModules(List<Module> modules, String title) {
-      return modules;
+    public List<Module> chooseModules(List<? extends Module> modules, String title) {
+      return new ArrayList<>(modules);
     }
 
     @Override
@@ -157,12 +155,12 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }
   }
 
-  public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
+  public final class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
     private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<>();
     private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles =
       new HashMap<>();
-    private final ArtifactEditorManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
+    private final ManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
     @Override
     @NotNull
@@ -192,6 +190,11 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     @Override
     public ArtifactEditorSettings getDefaultSettings() {
       return new ArtifactEditorSettings();
+    }
+
+    @Override
+    public @NotNull ProjectStructureConfigurable getProjectStructureConfigurable() {
+      return ProjectStructureConfigurable.getInstance(myProject);
     }
 
     @Override

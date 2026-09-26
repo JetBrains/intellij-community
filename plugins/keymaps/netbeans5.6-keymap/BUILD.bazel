@@ -1,0 +1,63 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.keymap.netbeans` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/keymap-netbeans.jar": ["intellij.keymap.netbeans"],
+    },
+    main_module = "intellij.keymap.netbeans",
+)
+### auto-generated section `dev intellij.keymap.netbeans` end
+
+### auto-generated section `build intellij.keymap.netbeans` start
+jvm_library(
+    name = "keymap-netbeans",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.netbeans",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "keymap-netbeans_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.netbeans",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-netbeans",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "keymap-netbeans_plugin",
+    descriptor_module = ":keymap-netbeans",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.keymap.netbeans` end
+
+### auto-generated section `iml intellij.keymap.netbeans` start
+exports_files(
+    [
+        "intellij.keymap.netbeans.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/NetBeans 6.5.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.keymap.netbeans` end

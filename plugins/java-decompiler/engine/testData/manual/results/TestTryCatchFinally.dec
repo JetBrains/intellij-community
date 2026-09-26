@@ -1,0 +1,135 @@
+package pkg;
+
+public class TestTryCatchFinally {
+   public void test1(String var1) {
+      try {
+         System.out.println("sout1");// 24
+      } catch (Exception var9) {
+         try {
+            System.out.println("sout2");// 27
+         } catch (Exception var8) {// 28
+         }
+      } finally {
+         System.out.println("finally");// 34
+      }
+
+   }// 36
+
+   int foo(int var1) throws Exception {
+      if (var1 < 1) {// 39
+         throw new RuntimeException();// 40
+      } else if (var1 < 5) {// 41
+         return var1;// 42
+      } else {
+         throw new Exception();// 45
+      }
+   }
+
+   public int test(String var1) {
+      try {
+         int var2 = Integer.parseInt(var1);// 51
+         return var2;
+      } catch (Exception var6) {// 52
+         System.out.println("Error" + var6);// 53
+      } finally {
+         System.out.println("Finally");// 55
+      }
+
+      return -1;// 56 57
+   }
+}
+
+class 'pkg/TestTryCatchFinally' {
+   method 'test1 (Ljava/lang/String;)V' {
+      0      5
+      1      5
+      2      5
+      3      5
+      4      5
+      5      5
+      14      8
+      15      8
+      16      8
+      17      8
+      18      8
+      19      8
+      1f      9
+      2b      12
+      2c      12
+      2d      12
+      2e      12
+      2f      12
+      30      12
+      38      15
+   }
+
+   method 'foo (I)I' {
+      0      18
+      1      18
+      2      18
+      c      19
+      d      20
+      e      20
+      f      20
+      12      21
+      13      21
+      1b      23
+   }
+
+   method 'test (Ljava/lang/String;)I' {
+      0      29
+      1      29
+      2      29
+      3      29
+      4      29
+      d      30
+      e      30
+      f      31
+      10      32
+      11      32
+      12      32
+      1a      32
+      1b      32
+      23      32
+      24      32
+      25      32
+      26      32
+      31      37
+      32      37
+      33      37
+      34      34
+      35      34
+      36      34
+      37      34
+      38      34
+      39      37
+      3a      37
+      3b      37
+      3c      37
+      3d      37
+      3e      37
+      3f      37
+   }
+}
+
+Lines mapping:
+24 <-> 6
+27 <-> 9
+28 <-> 10
+34 <-> 13
+36 <-> 16
+39 <-> 19
+40 <-> 20
+41 <-> 21
+42 <-> 22
+45 <-> 24
+51 <-> 30
+52 <-> 32
+53 <-> 33
+55 <-> 35
+56 <-> 38
+57 <-> 38
+Not mapped:
+25
+32
+35

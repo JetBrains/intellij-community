@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
@@ -61,7 +62,8 @@ public abstract class AntDomAnt extends AntDomElement {
       super(true);
     }
 
-    protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
+    @Override
+    protected @NlsSafe String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
       final AntDomAnt antElement = context.getInvocationElement().getParentOfType(AntDomAnt.class, false);
       if (antElement != null) {
         PsiFileSystemItem dir = antElement.getAntFileDir().getValue();
@@ -80,6 +82,7 @@ public abstract class AntDomAnt extends AntDomElement {
       return super.getPathResolveRoot(context, antProject);
     }
 
+    @Override
     protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
       return DEFAULT_ANTFILE_NAME;
     }

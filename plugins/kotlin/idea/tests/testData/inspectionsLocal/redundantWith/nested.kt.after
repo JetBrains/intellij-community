@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun test() {
+    <caret>with ("a") {
+        this
+    }
+}

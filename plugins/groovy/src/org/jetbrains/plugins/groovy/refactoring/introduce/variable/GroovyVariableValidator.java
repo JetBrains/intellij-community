@@ -27,16 +27,12 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.ConflictReporter;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceValidatorEngine;
 
-/**
- * @author ilyas
- */
 public class GroovyVariableValidator extends GrIntroduceValidatorEngine implements GrIntroduceVariableHandler.Validator {
   public GroovyVariableValidator(GrIntroduceContext context) {
     super(context, new ConflictReporter() {
       @Override
       public void check(PsiElement element, MultiMap<PsiElement, String> conflicts, String varName) {
-        if (!(element instanceof GrVariable)) return;
-        final GrVariable var = (GrVariable)element;
+        if (!(element instanceof GrVariable var)) return;
 
         if (var instanceof GrField) return;
 

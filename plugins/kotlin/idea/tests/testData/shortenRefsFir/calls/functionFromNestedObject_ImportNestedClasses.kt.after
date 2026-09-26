@@ -1,0 +1,14 @@
+// IMPORT_NESTED_CLASSES: true
+package test
+
+import test.TopLevel.NestedObj
+
+class TopLevel {
+    object NestedObj {
+        fun funFromObj() {}
+    }
+}
+
+fun usage() {
+    NestedObj.funFromObj()
+}

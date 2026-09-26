@@ -17,11 +17,11 @@ package com.intellij.openapi.vcs.changes;
 
 public enum InvokeAfterUpdateMode {
   SILENT(true),
+  SILENT_CALLBACK_POOLED(false),
   BACKGROUND_CANCELLABLE(true, false),
   BACKGROUND_NOT_CANCELLABLE(false, false),
   SYNCHRONOUS_CANCELLABLE(true, true),
-  SYNCHRONOUS_NOT_CANCELLABLE(false, true),
-  SILENT_CALLBACK_POOLED(false);
+  SYNCHRONOUS_NOT_CANCELLABLE(false, true);
 
   private final boolean myCancellable;
   private final boolean mySilent;

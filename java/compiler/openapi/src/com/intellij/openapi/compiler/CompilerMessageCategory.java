@@ -19,37 +19,45 @@ package com.intellij.openapi.compiler;
  * A set of constants describing possible message categories.
  *
  * @see CompilerMessage#getCategory()
- * @see CompileContext#addMessage(CompilerMessageCategory, String, String, int, int) 
+ * @see CompileContext#addMessage(CompilerMessageCategory, String, String, int, int)
  */
 public enum CompilerMessageCategory {
   ERROR {
+    @Override
     public String toString() {
-      return CompilerBundle.message("message.category.error");
+      return JavaCompilerBundle.message("message.category.error");
     }
+    @Override
     public String getPresentableText() {
       return toString();
     }
   },
   WARNING {
+    @Override
     public String toString() {
-      return CompilerBundle.message("message.category.warning");
+      return JavaCompilerBundle.message("message.category.warning");
     }
+    @Override
     public String getPresentableText() {
       return toString();
     }
   },
   INFORMATION {
+    @Override
     public String toString() {
-      return CompilerBundle.message("message.category.information");
+      return JavaCompilerBundle.message("message.category.information");
     }
+    @Override
     public String getPresentableText() {
       return toString();
     }
   },
   STATISTICS {
+    @Override
     public String toString() {
-      return CompilerBundle.message("message.category.statistics");
+      return JavaCompilerBundle.message("message.category.statistics");
     }
+    @Override
     public String getPresentableText() {
       return toString();
     }

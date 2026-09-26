@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface FrameworkDetectionContext {
 
   @Nullable
@@ -39,5 +36,5 @@ public interface FrameworkDetectionContext {
   @NotNull
   <F extends Facet, C extends FacetConfiguration>
   List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
-                                                                               @NotNull Collection<VirtualFile> files);
+                                                                               @NotNull Collection<? extends VirtualFile> files);
 }

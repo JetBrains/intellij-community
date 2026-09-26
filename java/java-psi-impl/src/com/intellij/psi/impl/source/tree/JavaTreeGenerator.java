@@ -1,56 +1,62 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class JavaTreeGenerator implements TreeGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaTreeGenerator");
+public final class JavaTreeGenerator implements TreeGenerator {
+  private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
-  private static final JavaParserUtil.ParserWrapper MOD_LIST = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseModifierList(builder);
-    }
-  };
+  private static final JavaParserUtil.ParserWrapper MOD_LIST =
+    (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseModifierList(builder);
 
   @Override
-  @Nullable
-  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
-    if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {
+  public @Nullable TreeElement generateTreeFor(@NotNull PsiElement original, final @NotNull CharTable table, final @NotNull PsiManager manager) {
+    if (original instanceof PsiJavaToken) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
     }
@@ -153,7 +159,7 @@ public class JavaTreeGenerator implements TreeGenerator {
 
   private static TreeElement markGeneratedIfNeeded(@NotNull PsiElement original, @NotNull TreeElement copy) {
     if (CodeEditUtil.isNodeGenerated(original.getNode())) {
-      copy.acceptTree(new GeneratedMarkerVisitor());
+      copy.acceptTree(new GeneratedMarkerVisitor(copy));
     }
     return copy;
   }
@@ -161,7 +167,7 @@ public class JavaTreeGenerator implements TreeGenerator {
   private static TreeElement createReference(final Project project, final String text, boolean mark) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
     final TreeElement element = (TreeElement)parserFacade.createReferenceFromText(text, null).getNode();
-    if (mark) element.acceptTree(new GeneratedMarkerVisitor());
+    if (mark) element.acceptTree(new GeneratedMarkerVisitor(element));
     return element;
   }
 
@@ -177,7 +183,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     if (type instanceof PsiArrayType) {
       final ASTNode firstChild = typeElement.getFirstChildNode();
       LOG.assertTrue(firstChild.getElementType() == JavaElementType.TYPE);
-      encodeInfoInTypeElement(firstChild, ((PsiArrayType)type).getComponentType());
+      encodeInfoInTypeElement(firstChild, type.getDeepComponentType());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
@@ -242,6 +248,8 @@ public class JavaTreeGenerator implements TreeGenerator {
     }
   }
 
-  static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
-  static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
 }

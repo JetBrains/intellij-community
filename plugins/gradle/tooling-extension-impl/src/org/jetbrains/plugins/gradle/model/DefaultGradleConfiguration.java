@@ -1,69 +1,122 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Vladislav.Soroka
- * @since 12/7/2016
- */
-public class DefaultGradleConfiguration implements GradleConfiguration {
-  private static final long serialVersionUID = 1L;
-  private final String myName;
-  private final String myDescription;
-  private final boolean myVisible;
-  private final boolean myScriptClasspathConfiguration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
-  public DefaultGradleConfiguration(String name, String description, boolean visible) {
-    this(name, description, visible, false);
+public final class DefaultGradleConfiguration implements GradleConfiguration {
+  private static final long serialVersionUID = 4L;
+
+  private final String name;
+  private final String description;
+  private final boolean visible;
+  private final boolean scriptClasspathConfiguration;
+  private final List<String> declarationAlternatives;
+  private final Boolean canBeDeclared;
+  private final List<String> extendsFrom;
+
+
+  @PropertyMapping({"name", "description", "visible", "declarationAlternatives"})
+  public DefaultGradleConfiguration(String name, String description, boolean visible, @NotNull List<String> declarationAlternatives) {
+    this(name, description, visible, false, declarationAlternatives, null, Collections.emptyList());
   }
 
-  public DefaultGradleConfiguration(@NotNull String name, @Nullable String description, boolean visible, boolean scriptClasspathConfiguration) {
-    myName = name;
-    myDescription = description;
-    myVisible = visible;
-    myScriptClasspathConfiguration = scriptClasspathConfiguration;
+  public DefaultGradleConfiguration(
+    @NotNull String name,
+    @Nullable String description,
+    boolean visible,
+    boolean scriptClasspathConfiguration,
+    @NotNull List<String> declarationAlternatives,
+    @Nullable Boolean canBeDeclared,
+    @NotNull List<String> extendsFrom
+  ) {
+    this.name = name;
+    this.description = description;
+    this.visible = visible;
+    this.scriptClasspathConfiguration = scriptClasspathConfiguration;
+    this.declarationAlternatives = declarationAlternatives;
+    this.canBeDeclared = canBeDeclared;
+    this.extendsFrom = extendsFrom;
   }
 
   public DefaultGradleConfiguration(GradleConfiguration configuration) {
-    this(configuration.getName(), configuration.getDescription(), configuration.isVisible(),
-         configuration.isScriptClasspathConfiguration());
+    this(configuration.getName(),
+         configuration.getDescription(),
+         configuration.isVisible(),
+         configuration.isScriptClasspathConfiguration(),
+         configuration.getDeclarationAlternatives(),
+         configuration.getCanBeDeclared(),
+         configuration.getExtendsFrom()
+    );
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myName;
+  public @NotNull String getName() {
+    return name;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
-    return myDescription;
+  public @Nullable String getDescription() {
+    return description;
   }
 
   @Override
   public boolean isVisible() {
-    return myVisible;
+    return visible;
   }
 
   @Override
   public boolean isScriptClasspathConfiguration() {
-    return myScriptClasspathConfiguration;
+    return scriptClasspathConfiguration;
+  }
+
+  @Override
+  public @NotNull List<String> getDeclarationAlternatives() {
+    return declarationAlternatives;
+  }
+
+  @Override
+  public @Nullable Boolean getCanBeDeclared() {
+    return canBeDeclared;
+  }
+
+  @Override
+  public @NotNull List<String> getExtendsFrom() {
+    return extendsFrom;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DefaultGradleConfiguration that = (DefaultGradleConfiguration)o;
+
+    if (visible != that.visible) return false;
+    if (scriptClasspathConfiguration != that.scriptClasspathConfiguration) return false;
+    if (!Objects.equals(name, that.name)) return false;
+    if (!Objects.equals(description, that.description)) return false;
+    if (!declarationAlternatives.equals(that.declarationAlternatives)) return false;
+    if (!Objects.equals(canBeDeclared, that.canBeDeclared)) return false;
+    if (!extendsFrom.equals(that.extendsFrom)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (visible ? 1 : 0);
+    result = 31 * result + (scriptClasspathConfiguration ? 1 : 0);
+    result = 31 * result + (declarationAlternatives.hashCode());
+    result = 31 * result + (canBeDeclared != null ? canBeDeclared.hashCode() : 0);
+    result = 31 * result + (extendsFrom.hashCode());
+    return result;
   }
 }

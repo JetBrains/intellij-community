@@ -1,0 +1,8 @@
+// FIX: Replace with 'forEachIndexed'
+// PRIORITY: NORMAL
+
+fun test(list: List<String>) {
+    list.forEachIndexed { index, string ->
+        println("$index: $string")
+    }
+}

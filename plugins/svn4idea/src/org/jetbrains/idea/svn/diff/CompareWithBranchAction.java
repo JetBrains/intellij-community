@@ -2,23 +2,28 @@
 
 package org.jetbrains.idea.svn.diff;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CompareWithBranchAction extends DumbAwareAction {
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file == null) return;
 
     SelectBranchPopup.show(project, file, (p, configuration, url, revision) -> {
       ElementWithBranchComparer comparer = file.isDirectory()
@@ -30,14 +35,17 @@ public class CompareWithBranchAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    e.getPresentation().setEnabled(project != null && file != null && isEnabled(FileStatusManager.getInstance(project).getStatus(file)));
-  }
-
-  private static boolean isEnabled(FileStatus fileStatus) {
-    return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
+    e.getPresentation().setEnabled(project != null && file != null &&
+                                   VcsUtil.isFileForVcs(file, project, SvnVcs.getInstance(project)) &&
+                                   AbstractVcs.fileInVcsByFileStatus(project, file));
   }
 }

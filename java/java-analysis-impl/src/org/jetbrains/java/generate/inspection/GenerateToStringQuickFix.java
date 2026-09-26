@@ -17,17 +17,18 @@ package org.jetbrains.java.generate.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringActionHandler;
 
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class GenerateToStringQuickFix implements LocalQuickFix {
+public final class GenerateToStringQuickFix implements LocalQuickFix {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 
@@ -38,15 +39,13 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return "Generate toString()";
+  public @NotNull String getName() {
+    return InspectionGadgetsBundle.message("generate.to.string.quick.fix.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return "Generate";
+  public @NotNull String getFamilyName() {
+    return InspectionGadgetsBundle.message("generate.to.string.quick.fix.family.name");
   }
 
   @Override
@@ -55,12 +54,17 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
     if (clazz == null) {
       return; // no class to fix
     }
-    GenerateToStringActionHandler handler = ServiceManager.getService(GenerateToStringActionHandler.class);
+    GenerateToStringActionHandler handler = ApplicationManager.getApplication().getService(GenerateToStringActionHandler.class);
     handler.executeActionQuickFix(project, clazz);
   }
 
   @Override
   public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
     return false;
   }
 }

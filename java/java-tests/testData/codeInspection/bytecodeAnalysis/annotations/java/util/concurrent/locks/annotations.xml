@@ -10,6 +10,7 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean isHeldExclusively()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -35,16 +36,19 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryAcquire(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryRelease(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer boolean tryReleaseShared(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -53,6 +57,7 @@
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer int tryAcquireShared(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -61,12 +66,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread fullGetFirstQueuedThread()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread getFirstQueuedThread()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getExclusiveQueuedThreads()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -103,11 +102,21 @@
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void cancelAcquire(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHead(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this,param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHead(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setHeadAndPropagate(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void setState(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer void unparkSuccessor(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -163,6 +172,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.Node SHARED'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.Node boolean isShared()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -199,9 +211,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.locks.ReentrantLock java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.concurrent.locks.ReentrantLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -211,9 +220,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantLock.Sync java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -241,9 +247,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.Condition) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -282,6 +285,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock java.util.concurrent.locks.Condition newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -294,9 +298,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.lang.Thread getOwner()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>

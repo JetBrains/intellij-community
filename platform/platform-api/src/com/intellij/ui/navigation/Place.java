@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -13,34 +10,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-public class Place implements ComparableObject {
-
+public final class Place implements ComparableObject {
   private LinkedHashMap<String, Object> myPath = new LinkedHashMap<>();
 
   @Override
-  @NotNull
-  public final Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[] {myPath};
   }
 
   @Override
-  public final boolean equals(final Object obj) {
+  public boolean equals(final Object obj) {
     return ComparableObjectCheck.equals(this, obj);
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
 
-  @NotNull
-  public Place putPath(String name, Object value) {
+  public @NotNull Place putPath(String name, Object value) {
     myPath.put(name, value);
     return this;
   }
 
-  @Nullable
-  public
+  public @Nullable
   Object getPath(String name) {
     return myPath.get(name);
   }
@@ -81,9 +74,15 @@ public class Place implements ComparableObject {
     default void setHistory(History history) {
     }
 
-    ActionCallback navigateTo(@Nullable Place place, final boolean requestFocus);
+    default @Nullable ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+      return null;
+    }
 
     default void queryPlace(@NotNull Place place) {
+    }
+
+    default boolean isValid(@NotNull Place place) {
+      return true;
     }
   }
 
@@ -99,5 +98,4 @@ public class Place implements ComparableObject {
       ((Navigator)object).queryPlace(place);
     }
   }
-
 }

@@ -1,0 +1,7 @@
+// FIX: Replace with 'forEach'
+
+fun test(list: List<String>) {
+    list.forEach { string ->
+        println(string)
+    }
+}

@@ -19,9 +19,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 
-/**
- * @author peter
- */
 public class PatternFilter implements ElementFilter {
   private final ElementPattern<?> myPattern;
 
@@ -40,6 +37,7 @@ public class PatternFilter implements ElementFilter {
     //throw new UnsupportedOperationException("Method isClassAcceptable is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public String toString() {
     return myPattern.toString();
   }

@@ -1,0 +1,28 @@
+<idea-plugin package="ru.adelf.idea.dotenv.docker">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.clouds.docker.file.backend"/>
+    <plugin id="Docker"/>
+    <module name="intellij.yaml.backend"/>
+    <plugin id="ru.adelf.idea.dotenv"/>
+    <module name="intellij.clouds.docker.file"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.yaml"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerComposeYamlVariablesProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+      <psi.declarationProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileEnvKeySymbolDeclarationProvider"/>
+      <psi.declarationProvider implementation="ru.adelf.idea.dotenv.docker.DockerComposeYamlEnvKeySymbolDeclarationProvider"/>
+      <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
+      <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerComposeKeyGotoHandler"/>
+  </extensions>
+</idea-plugin>

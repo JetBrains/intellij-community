@@ -1,0 +1,432 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.remote.hosting
+
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.platform.util.progress.withProgressText
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.GitBranch
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.GitUtil
+import git4idea.workingTrees.GitCreateWorkingTreeService
+import git4idea.branch.GitBrancher
+import git4idea.branch.GitNewBranchDialog
+import git4idea.branch.GitNewBranchOptions
+import git4idea.commands.Git
+import git4idea.fetch.GitFetchSupport
+import git4idea.i18n.GitBundle
+import git4idea.push.GitSpecialRefRemoteBranch
+import git4idea.remote.hosting.GitHostingUrlUtil.getUriFromRemoteUrl
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepoInfo
+import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchCheckoutOperation
+import git4idea.ui.branch.hasTrackingConflicts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.net.URI
+import java.nio.file.Path
+
+data class HostedGitRepositoryRemote(
+  val name: String,
+  val serverUri: URI,
+  val path: String,
+  val httpUrl: String?,
+  val sshUrl: String?
+)
+
+data class HostedGitRepositoryRemoteBranch(
+  val remote: HostedGitRepositoryRemote,
+  val branchName: String
+)
+
+object GitRemoteBranchesUtil {
+
+  /**
+   * Checks if the current HEAD is tracking a branch on remote
+   */
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, remote, branchName)"))
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun isRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
+    val existingRemote = findRemote(repository, remote) ?: return false
+    return isRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
+  }
+
+  /**
+   * Checks if the current HEAD is tracking a branch on remote
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, remote: HostedGitRepositoryRemote, branchName: String): Boolean {
+    val existingRemote = findRemote(repository, remote) ?: return false
+    return testRemoteBranchCheckedOut(repository, GitStandardRemoteBranch(existingRemote, branchName))
+  }
+
+  @Deprecated("Use the suspending alternative",
+              replaceWith = ReplaceWith("testRemoteBranchCheckedOut(repository, branch)"))
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    return when (branch) {
+      is GitSpecialRefRemoteBranch -> {
+        val hash = Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+        repository.currentRevision == hash
+      }
+      else -> {
+        val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
+        repository.currentBranchName == localBranch.name
+      }
+    }
+  }
+
+  /**
+   * Checks if the current HEAD is either tracking remote [branch] or has the same hash
+   */
+  suspend fun testRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    return when (branch) {
+      is GitSpecialRefRemoteBranch -> {
+        val hash = withContext(Dispatchers.IO) {
+          coroutineToIndicator {
+            Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+          }
+        }
+        repository.currentRevision == hash
+      }
+      else -> {
+        val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
+        repository.currentBranchName == localBranch.name
+      }
+    }
+  }
+
+  private fun findLocalBranchTrackingRemote(repository: GitRepository, branch: GitRemoteBranch): GitLocalBranch? =
+    repository.branchTrackInfos.find { it.remoteBranch == branch }?.localBranch
+
+  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository,
+                                           remote: HostedGitRepositoryRemote,
+                                           remoteBranch: String,
+                                           newLocalBranchPrefix: String?) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      withContext(Dispatchers.Main) {
+        checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
+      }
+    }
+  }
+
+  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository, branch: GitRemoteBranch, newLocalBranchPrefix: String? = null) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      withContext(Dispatchers.Main) {
+        checkoutRemoteBranch(repository, branch, newLocalBranchPrefix)
+      }
+    }
+  }
+
+  /**
+   * @param parentDir directory the worktree is created under.
+   * @param worktreeName base name for the worktree directory/project.
+   * @param place FUS place identifying the invocation site.
+   * @param newLocalBranchPrefix when a new local branch needs to be created for [remoteBranch] (i.e. no local branch
+   * already tracks it), prefixes its name with this value to disambiguate it from an existing local branch of the
+   * same name (e.g. a fork PR's head branch).
+   * @param onProjectOpened invoked with the worktree project once it is opened.
+   */
+  suspend fun fetchAndCheckoutInNewWorktree(
+    repository: GitRepository,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+    parentDir: Path,
+    worktreeName: String,
+    place: String,
+    newLocalBranchPrefix: String? = null,
+    onProjectOpened: ((Project) -> Unit)? = null,
+  ) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
+      val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+
+      val fetchOk = withProgressText(GitBundle.message("progress.text.worktree.fetching.branch")) {
+        fetchBranch(repository, branch)
+      }
+      if (!fetchOk) return@withBackgroundProgress
+
+      // Reuse a local branch that already tracks the remote one, or shares the name a regular checkout would have
+      // assigned it (tracking may be missing depending on the user's `branch.autoSetupMerge` setting), so the
+      // worktree doesn't fail trying to create a branch that already exists.
+      val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+                                 ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
+                                   ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
+      val ref: GitBranch = existingLocalBranch ?: branch
+      val newBranchName = if (existingLocalBranch == null) newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" } else null
+      GitCreateWorkingTreeService.getInstance()
+        .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, newBranchName, onProjectOpened)
+    }
+  }
+
+  suspend fun fetchAndShowRemoteBranchInLog(repository: GitRepository, branch: GitRemoteBranch, targetBranch: GitRemoteBranch?) {
+    withBackgroundProgress(repository.project,
+                           CollaborationToolsBundle.message("review.details.action.branch.show.remote.branch.in.log.action.description")) {
+      val fetchOk = fetchBranch(repository, branch)
+      if (!fetchOk) return@withBackgroundProgress
+
+      showRemoteBranchInLog(repository, branch, targetBranch)
+    }
+  }
+
+  private suspend fun fetchBranch(repository: GitRepository, branch: GitRemoteBranch): Boolean {
+    val fetchResult = reportSequentialProgress { reporter ->
+      reporter.indeterminateStep {
+        reportRawProgress {
+          withContext(Dispatchers.Default) {
+            coroutineToIndicator {
+              val refspec = when (branch) {
+                is GitSpecialRefRemoteBranch -> "${branch.nameForRemoteOperations}:${branch.nameForLocalOperations}"
+                else -> branch.nameForRemoteOperations
+              }
+              GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, refspec)
+            }
+          }
+        }
+      }
+    }
+    return withContext(Dispatchers.Main) {
+      fetchResult.showNotificationIfFailed(GitBundle.message("notification.title.fetch.failure"))
+    }
+  }
+
+  fun findRemoteBranch(
+    repositoryInfo: GitRepoInfo,
+    branch: HostedGitRepositoryRemoteBranch,
+  ): GitRemoteBranch? {
+    val headRemote = findRemote(repositoryInfo, branch.remote) ?: return null
+    return GitStandardRemoteBranch(headRemote, branch.branchName)
+  }
+
+  suspend fun findOrCreateRemoteBranch(
+    repository: GitRepository,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+  ): GitRemoteBranch? {
+    val headRemote = findOrCreateRemote(repository, remote)
+    if (headRemote == null) {
+      notifyRemoteError(repository.project, remote)
+      return null
+    }
+    return GitStandardRemoteBranch(headRemote, remoteBranch)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun checkoutRemoteBranch(repository: GitRepository,
+                           branch: GitRemoteBranch,
+                           newLocalBranchPrefix: String? = null,
+                           callInAwtLater: Runnable? = null) {
+    when (branch) {
+      // For special refs, there's no backing remote branch.
+      // We check out in detached HEAD to avoid confusion from pull/push actions.
+      is GitSpecialRefRemoteBranch -> {
+        GitBrancher.getInstance(repository.project)
+          .checkout(branch.name, true, listOf(repository), callInAwtLater)
+      }
+      else -> {
+        val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+        val suggestedName = existingLocalBranch?.name
+                            ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
+                            ?: branch.nameForRemoteOperations
+
+        checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
+      }
+    }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @JvmStatic
+  fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String) {
+    val suggestedLocalName = repositories.firstNotNullOf { it.branches.findRemoteBranch(remoteBranchName)?.nameForRemoteOperations }
+    checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName, null)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?) {
+    // can have remote conflict if git-svn is used - suggested local name will be equal to selected remote
+    if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
+      askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater)
+      return
+    }
+    val conflictingLocalBranches = repositories.mapNotNull { repo ->
+      repo.branches.findLocalBranch(suggestedLocalName)?.let { repo to it }
+    }.toMap()
+    if (hasTrackingConflicts(conflictingLocalBranches, remoteBranchName)) {
+      askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater)
+    } else {
+      GitBranchCheckoutOperation(project, repositories)
+        .perform(remoteBranchName, GitNewBranchOptions(suggestedLocalName, true, true, false, repositories), callInAwtLater)
+    }
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun askNewBranchNameAndCheckout(
+    project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?,
+  ) {
+    // Do not allow name conflicts
+    val options = GitNewBranchDialog(
+      project,
+      repositories,
+      GitBundle.message("branches.checkout.s", remoteBranchName),
+      suggestedLocalName,
+      false,
+      true
+    ).showAndGetOptions() ?: return
+
+    GitBrancher.getInstance(project).checkoutNewBranchStartingFrom(options.name,
+                                                                   remoteBranchName,
+                                                                   options.reset,
+                                                                   options.repositories.toList(),
+                                                                   callInAwtLater)
+  }
+
+  private suspend fun showRemoteBranchInLog(repository: GitRepository,
+                                            branch: GitRemoteBranch,
+                                            targetBranch: GitRemoteBranch?) {
+    withContext(Dispatchers.Main) {
+      val branchFilter = if (targetBranch != null) {
+        VcsLogFilterObject.fromRange(targetBranch.nameForLocalOperations, branch.nameForLocalOperations)
+      }
+      else {
+        VcsLogFilterObject.fromBranch(branch.nameForLocalOperations)
+      }
+      val repoFilter = VcsLogFilterObject.fromRoots(listOf(repository.root))
+      val filters = VcsLogFilterObject.collection(branchFilter, repoFilter)
+      VcsProjectLog.getInstance(repository.project).openLogTab(filters)
+    }
+  }
+
+  private suspend fun notifyRemoteError(project: Project, remote: HostedGitRepositoryRemote) {
+    withContext(Dispatchers.Main) {
+      var failedMessage = CollaborationToolsBundle.message("review.details.action.branch.checkout.failed.remote")
+      val httpUrl = remote.httpUrl //NON-NLS
+      val sshUrl = remote.sshUrl //NON-NLS
+      if (httpUrl != null) {
+        failedMessage += "\n$httpUrl"
+      }
+      if (sshUrl != null) {
+        failedMessage += "\n$sshUrl"
+      }
+      VcsNotifier.getInstance(project).notifyError(
+        CollaborationToolsNotificationIdsHolder.REVIEW_BRANCH_CHECKOUT_FAILED,
+        CollaborationToolsBundle.message("review.details.action.branch.checkout.failed"),
+        failedMessage
+      )
+    }
+  }
+
+  suspend fun findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+    reportSequentialProgress { reporter ->
+      reporter.indeterminateStep {
+        reportRawProgress {
+          withContext(Dispatchers.Default) {
+            coroutineToIndicator {
+              Git.getInstance().findOrCreateRemote(repository, remote)
+            }
+          }
+        }
+      }
+    }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun Git.findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
+    val existingRemote = findRemote(repository, remote)
+    if (existingRemote != null) return existingRemote
+
+    val httpUrl = remote.httpUrl
+    val sshUrl = remote.sshUrl
+    val preferHttp = shouldAddHttpRemote(repository)
+    return if (preferHttp && httpUrl != null) {
+      createRemote(repository, remote.name, httpUrl)
+    }
+    else if (sshUrl != null) {
+      createRemote(repository, remote.name, sshUrl)
+    }
+    else {
+      null
+    }
+  }
+
+  fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+    findRemote(repository.info, remote)
+
+  private fun findRemote(repositoryInfo: GitRepoInfo, remote: HostedGitRepositoryRemote): GitRemote? {
+    val remoteUrl = remote.sshUrl ?: remote.httpUrl
+    if (remoteUrl != null) {
+      repositoryInfo.remotes.find { gitRemote ->
+        val firstUri = gitRemote.firstUrl?.let { getUriFromRemoteUrl(it) } ?: return@find false
+        val remoteUri = getUriFromRemoteUrl(remoteUrl) ?: return@find false
+        firstUri.path.equals(remoteUri.path, true) && firstUri.host.equals(remoteUri.host, true)
+      }?.let { return it }
+    }
+
+    return repositoryInfo.remotes.find {
+      val url = it.firstUrl
+      url != null &&
+      GitHostingUrlUtil.match(remote.serverUri, url) &&
+      (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(remote.path))
+    }
+  }
+
+  private fun shouldAddHttpRemote(repository: GitRepository): Boolean {
+    val preferredRemoteUrl = repository.remotes.find { it.name == "origin" }?.firstUrl
+                             ?: repository.remotes.firstNotNullOfOrNull { it.firstUrl }
+    if (preferredRemoteUrl != null) {
+      return preferredRemoteUrl.startsWith("http")
+    }
+    return true
+  }
+
+  private fun Git.createRemote(repository: GitRepository, remoteName: String, url: String): GitRemote? {
+    val actualName = findNameForRemote(repository, remoteName) ?: return null
+    return with(repository) {
+      addRemote(this, actualName, url)
+      update()
+      remotes.find { it.name == actualName }
+    }
+  }
+
+  /**
+   * Returns the [preferredName] if it is not taken or adds a numerical index to it
+   */
+  private fun findNameForRemote(repository: GitRepository, preferredName: String): String? {
+    val exitingNames = repository.remotes.mapTo(mutableSetOf(), GitRemote::name)
+    if (!exitingNames.contains(preferredName)) {
+      return preferredName
+    }
+    else {
+      return sequenceOf(1..Int.MAX_VALUE).map {
+        "${preferredName}_$it"
+      }.find {
+        exitingNames.contains(it)
+      }
+    }
+  }
+}

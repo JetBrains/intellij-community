@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -20,13 +6,20 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -44,17 +37,16 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty");
+  private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 
   public static CustomCreateProperty getInstance(Project project) {
-    return ServiceManager.getService(project, CustomCreateProperty.class);
+    return project.getService(CustomCreateProperty.class);
   }
 
   private final BooleanRenderer myRenderer = new BooleanRenderer();
@@ -79,15 +71,17 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     super(null, "Custom Create");
   }
 
+  @Override
   public Boolean getValue(final RadComponent component) {
     return component.isCustomCreate();
   }
 
-  @NotNull
-  public PropertyRenderer<Boolean> getRenderer() {
+  @Override
+  public @NotNull PropertyRenderer<Boolean> getRenderer() {
    return myRenderer;
   }
 
+  @Override
   public PropertyEditor<Boolean> getEditor() {
     return myEditor;
   }
@@ -105,6 +99,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     return true;
   }
 
+  @Override
   protected void setValueImpl(final RadComponent component, final Boolean value) throws Exception {
     if (value.booleanValue() && component.getBinding() == null) {
       String initialBinding = BindingProperty.getDefaultBinding(component);
@@ -162,7 +157,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     );
 
     if (!refMethod.isNull()) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         final PsiMethod element = (PsiMethod) refMethod.get().getElement();
         if (element != null) {
           final PsiCodeBlock body = element.getBody();

@@ -1,0 +1,16 @@
+// "Add '@IgnorableReturnValue' annotation" "true"
+// WITH_STDLIB
+// LANGUAGE_VERSION: 2.3
+// COMPILER_ARGUMENTS: -Xreturn-value-checker=full
+@file:MustUseReturnValues
+
+interface MyInterface {
+    @IgnorableReturnValue fun foo(): String
+}
+
+class MyClass : MyInterface {
+    override fun <caret>foo(): String = ""
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix

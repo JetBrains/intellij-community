@@ -1,33 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
-  @NotNull
-  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                           @NotNull VirtualFile selectedFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
+final class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
+  @Override
+  protected @NotNull DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                    @NotNull VirtualFile selectedFile,
+                                                    @NotNull Project project,
+                                                    @Nullable Editor editor) {
     return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    Presentation presentation = e.getPresentation();
+    presentation.setText(ActionsBundle.message("action.Compare.SameVersion.text"));
+
+    Project project = e.getProject();
+    if (project != null) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
+      if (vcs != null) {
+        String customDiffName = vcs.getCompareWithTheSameVersionActionName();
+        if (customDiffName != null) {
+          presentation.setText(customDiffName);
+        }
+      }
+    }
   }
 }

@@ -4,4 +4,4 @@ class C {
     C(Object[] os) {}
 }
 
-new <ref>C(new Integer(0))
+new <caret>C(new Integer(0))

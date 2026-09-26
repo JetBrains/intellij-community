@@ -1,13 +1,13 @@
-/** Half width <TYPO>Katakana</TYPO> variants (FF00 - <TYPO>FFEF</TYPO>)
+/** Half width Katakana variants (FF00 - FFEF)
  * ﾜﾀｼﾊｼﾞｬﾊﾞｶﾞｽｷﾃﾞｽ｡
  */
-/** Full width ASCII variants (FF00 - <TYPO>FFEF</TYPO>)
+/** Full width ASCII variants (FF00 - FFEF)
  * Ｉ　ＬＯＶＥ　ＪＡＶＡ
  */
-/** <TYPO>Hiragana</TYPO> (3040 - 309F)
+/** Hiragana (3040 - 309F)
  * わたしはじゃばがすきです。
  */
-/** <TYPO>Katakana</TYPO> (30A0 - 30FF)
+/** Katakana (30A0 - 30FF)
  * ワタシハジャバガスキデス。
  */
 /** CJK Unified Ideographs (4E00 - 9FBF)
@@ -16,7 +16,7 @@
 /** CJK Compatibility Ideographs (F900 - FAFF)
  * 﨎鶴﨎鶴﨎鶴
  */
-/* 私は<TYPO>Jaba</TYPO>が好きです。私は<TYPO>Jaba</TYPO>が好きです。*/
+/* 私は<TYPO descr="Typo: In word 'Jaba'">Jaba</TYPO>が好きです。私は<TYPO descr="Typo: In word 'Jaba'">Jaba</TYPO>が好きです。*/
 /**
  * プロセス毎に使われるコールスタックは一つだけ !!!
  */

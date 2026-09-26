@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+// PRIORITY: LOW
+// INTENTION_TEXT: "Add 'items =' to argument"
+// ERROR: Context parameters are not supported in K1 mode. Consider using a more recent language version and switching to K2 mode.
+// AFTER-WARNING: Parameter 'items' is never used
+// AFTER-WARNING: Redundant spread (*) operator
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+
+context(x: String)
+fun foo(vararg items: String): String = ""
+
+fun bar(array: Array<String>) {
+    foo(<caret>*array)
+}

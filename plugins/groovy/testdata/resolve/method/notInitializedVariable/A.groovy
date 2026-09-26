@@ -1,2 +1,2 @@
 def foo
-foo.hashC<ref>ode()
+foo.hashC<caret>ode()

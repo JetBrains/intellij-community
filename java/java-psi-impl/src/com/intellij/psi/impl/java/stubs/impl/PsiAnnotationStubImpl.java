@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -29,27 +14,21 @@ import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
+
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
-
-  static {
-    CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);
-    CharTableImpl.staticIntern("@NotNull");
-    CharTableImpl.staticIntern("@Nullable");
-    CharTableImpl.staticIntern("@Override");
-  }
+  private static final Logger LOG = Logger.getInstance(PsiAnnotationStubImpl.class);
 
   private final String myText;
   private SoftReference<PsiAnnotation> myParsedFromRepository;
 
-  public PsiAnnotationStubImpl(StubElement parent, String text) {
+  public PsiAnnotationStubImpl(StubElement<?> parent, @NotNull String text) {
     super(parent, JavaStubElementTypes.ANNOTATION);
     CharSequence interned = CharTableImpl.getStaticInterned(text);
     myText = interned == null ? text : interned.toString();
@@ -62,7 +41,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
 
   @Override
   public PsiAnnotation getPsiElement() {
-    PsiAnnotation annotation = SoftReference.dereference(myParsedFromRepository);
+    PsiAnnotation annotation = dereference(myParsedFromRepository);
     if (annotation != null) return annotation;
 
     String text = getText();

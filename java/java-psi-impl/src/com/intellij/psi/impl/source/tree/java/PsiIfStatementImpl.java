@@ -17,19 +17,41 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiIfStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiIfStatementImpl.class);
 
   public PsiIfStatementImpl() {
     super(IF_STATEMENT);
@@ -42,6 +64,10 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child == getThenBranch()) {
+      replaceChildInternal(child, (TreeElement)JavaPsiFacade.getElementFactory(getProject()).createStatementFromText("{}", null));
+      return;
+    }
     if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {
@@ -83,7 +109,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     PsiKeyword elseElement = getElseElement();
     if (elseElement != null) elseElement.delete();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", this);
     ifStatement.getElseBranch().replace(statement);
 
@@ -91,7 +117,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   }
   @Override
   public void setThenBranch(@NotNull PsiStatement statement) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
     LOG.assertTrue(keyword != null);
     PsiIfStatement ifStatementPattern = (PsiIfStatement)elementFactory.createStatementFromText("if (){}", this);
@@ -115,9 +141,6 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.IF_KEYWORD:
         return findChildByType(IF_KEYWORD);
 
@@ -137,14 +160,15 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         return findChildByType(ELSE_KEYWORD);
 
       case ChildRole.ELSE_BRANCH:
-        {
-          ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
-          if (elseKeyword == null) return null;
-          for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (child.getPsi() instanceof PsiStatement) return child;
-          }
-          return null;
+        ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
+        if (elseKeyword == null) return null;
+        for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+          if (child.getPsi() instanceof PsiStatement) return child;
         }
+        return null;
+
+      default:
+        return null;
     }
   }
 
@@ -172,9 +196,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         if (findChildByRoleAsPsiElement(ChildRole.THEN_BRANCH) == child) {
           return ChildRole.THEN_BRANCH;
         }
-        else {
-          return ChildRole.ELSE_BRANCH;
-        }
+        return ChildRole.ELSE_BRANCH;
       }
       else {
         return ChildRoleBase.NONE;
@@ -192,6 +214,68 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    PsiExpression condition = getCondition();
+    if (condition != null) {
+      PsiStatement thenBranch = getThenBranch();
+      PsiStatement elseBranch = getElseBranch();
+      if (lastParent == null) {
+        if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_NONE) return true;
+        PsiScopeProcessor conditionProcessor;
+        if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_BOTH) {
+          conditionProcessor = processor;
+        }
+        else {
+          conditionProcessor = (element, s) -> {
+            LOG.assertTrue(element instanceof PsiPatternVariable);
+            final NameHint hint = processor.getHint(NameHint.KEY);
+            if (hint != null && !((PsiPatternVariable)element).getName().equals(hint.getName(s))) {
+              return true;
+            }
+            ControlFlow flow;
+            try {
+              flow = ControlFlowFactory.getControlFlow(
+                this, new LocalsControlFlowPolicy(this), ControlFlowOptions.NO_CONST_EVALUATE);
+            }
+            catch (AnalysisCanceledException e) {
+              return true;
+            }
+            boolean thenCompletesNormally = canCompleteNormally(thenBranch, flow);
+            boolean elseCompletesNormally = canCompleteNormally(elseBranch, flow);
+            if (thenCompletesNormally == elseCompletesNormally ||
+                PatternResolveState.fromBoolean(thenCompletesNormally) !=
+                PatternResolveState.stateAtParent((PsiPatternVariable)element, condition)) {
+              return true;
+            }
+            return processor.execute(element, s);
+          };
+        }
+        return condition.processDeclarations(conditionProcessor, PatternResolveState.WHEN_BOTH.putInto(state), null, place);
+      }
+      if (lastParent == thenBranch) {
+        return condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+      }
+      if (lastParent == elseBranch) {
+        return condition.processDeclarations(processor, PatternResolveState.WHEN_FALSE.putInto(state), null, place);
+      }
+    }
+    return true;
+  }
+
+  private static boolean canCompleteNormally(PsiStatement branch, ControlFlow flow) {
+    if (branch == null) return true;
+    int startOffset = flow.getStartOffset(branch);
+    int endOffset = flow.getEndOffset(branch);
+    return startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(flow, startOffset, endOffset);
+  }
+
+  @Override
   public String toString() {
     return "PsiIfStatement";
   }

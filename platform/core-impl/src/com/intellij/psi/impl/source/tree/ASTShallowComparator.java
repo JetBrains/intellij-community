@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -20,28 +6,49 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.tree.CustomLanguageASTComparator;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
+import java.util.List;
+import java.util.Objects;
+
+@ApiStatus.Internal
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
   private final ProgressIndicator myIndicator;
+  private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
 
-  public ASTShallowComparator(@NotNull ProgressIndicator indicator) {
+  public ASTShallowComparator(
+    @NotNull ProgressIndicator indicator,
+    @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators
+  ) {
     myIndicator = indicator;
+    myCustomLanguageASTComparators = customLanguageASTComparators;
   }
 
-  @NotNull
   @Override
-  public ThreeState deepEqual(@NotNull final ASTNode oldNode, @NotNull final ASTNode newNode) {
+  public @NotNull ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     return textMatches(oldNode, newNode);
   }
 
   private ThreeState textMatches(ASTNode oldNode, ASTNode newNode) {
     myIndicator.checkCanceled();
+
+    boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
+    boolean newIsErrorElement = newNode instanceof PsiErrorElement;
+    if (oldIsErrorElement != newIsErrorElement) return ThreeState.NO;
+    if (oldIsErrorElement) {
+      if (!Objects.equals(((PsiErrorElement)oldNode).getErrorDescription(), ((PsiErrorElement)newNode).getErrorDescription()))
+        return ThreeState.NO;
+      else
+        return ThreeState.UNSURE;
+    }
+
+    ThreeState customCompare = customCompare(oldNode, newNode);
+    if (customCompare != ThreeState.UNSURE) return customCompare;
+
     String oldText = TreeUtil.isCollapsedChameleon(oldNode) ? oldNode.getText() : null;
     String newText = TreeUtil.isCollapsedChameleon(newNode) ? newNode.getText() : null;
     if (oldText != null && newText != null) return oldText.equals(newText) ? ThreeState.YES : ThreeState.UNSURE;
@@ -56,29 +63,23 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     if (oldNode instanceof ForeignLeafPsiElement) {
       return newNode instanceof ForeignLeafPsiElement && oldNode.getText().equals(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
-    
+
     if (newNode instanceof ForeignLeafPsiElement) return ThreeState.NO;
 
     if (oldNode instanceof LeafElement) {
-      return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+      return ((LeafElement)oldNode).textMatches(newNode.getChars()) ? ThreeState.YES : ThreeState.NO;
     }
     if (newNode instanceof LeafElement) {
-      return ((LeafElement)newNode).textMatches(oldNode.getText()) ? ThreeState.YES : ThreeState.NO;
-    }
-
-    if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = (PsiErrorElement)oldNode;
-      final PsiErrorElement e2 = (PsiErrorElement)newNode;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
+      return ((LeafElement)newNode).textMatches(oldNode.getChars()) ? ThreeState.YES : ThreeState.NO;
     }
 
     return ThreeState.UNSURE;
   }
 
   // have to perform tree walking by hand here to be able to interrupt ourselves
-  private boolean compareTreeToText(@NotNull TreeElement root, @NotNull final String text) {
-    final int[] curOffset = {0};
-    root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+  private boolean compareTreeToText(@NotNull TreeElement root, @NotNull String text) {
+    int[] curOffset = {0};
+    root.acceptTree(new RecursiveTreeElementWalkingVisitor(root) {
       @Override
       public void visitLeaf(LeafElement leaf) {
         matchText(leaf);
@@ -106,22 +107,33 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   @Override
-  public boolean typesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
-    return n1.getElementType() == n2.getElementType();
+  public boolean typesEqual(@NotNull ASTNode n1, @NotNull ASTNode n2) {
+    return Comparing.equal(n1.getElementType(), n2.getElementType());
   }
 
   @Override
-  public boolean hashCodesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
+  public boolean hashCodesEqual(@NotNull ASTNode n1, @NotNull ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;
     }
 
     if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = (PsiErrorElement)n1;
-      final PsiErrorElement e2 = (PsiErrorElement)n2;
-      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return false;
+      PsiErrorElement e1 = (PsiErrorElement)n1;
+      PsiErrorElement e2 = (PsiErrorElement)n2;
+      if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();
   }
+
+  private ThreeState customCompare(ASTNode oldNode, ASTNode newNode) {
+    for (CustomLanguageASTComparator comparator : myCustomLanguageASTComparators) {
+      ThreeState customComparatorResult = comparator.compareAST(oldNode, newNode);
+      if (customComparatorResult != ThreeState.UNSURE) {
+        return customComparatorResult;
+      }
+    }
+    return ThreeState.UNSURE;
+  }
+
 }

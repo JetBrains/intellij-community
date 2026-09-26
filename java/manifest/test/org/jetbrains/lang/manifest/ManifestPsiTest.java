@@ -17,7 +17,6 @@ package org.jetbrains.lang.manifest;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.Header;
 import org.jetbrains.lang.manifest.psi.HeaderValue;
@@ -45,8 +44,8 @@ public class ManifestPsiTest extends LightIdeaTestCase {
     assertHeaderValue(file, "Bad-Header", null);
   }
 
-  private static ManifestFile createFile(String text) {
-    PsiFile file = LightPlatformTestCase.createLightFile("MANIFEST.MF", text);
+  private ManifestFile createFile(String text) {
+    PsiFile file = createLightFile("MANIFEST.MF", text);
     assert file instanceof ManifestFile : file;
     return (ManifestFile)file;
   }

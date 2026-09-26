@@ -1,18 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.uiDesigner.Properties;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -24,19 +26,42 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
-import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroBooleanProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroCharProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroColorProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroDimensionProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroEnumProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroInsetsProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroIntProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroListModelProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroPrimitiveTypeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroRectangleProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.ListModel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -46,17 +71,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-@State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
-public final class Palette implements Disposable, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
+@Service(Service.Level.PROJECT)
+@State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
+public final class Palette implements PersistentStateComponent<Element>, Disposable {
+  private static final Logger LOG = Logger.getInstance(Palette.class);
 
-  private final MyLafManagerListener myLafManagerListener;
-  private final Map<Class, IntrospectedProperty[]> myClass2Properties;
+  private final Map<Class<?>, IntrospectedProperty<?>[]> myClass2Properties;
   private final Map<String, ComponentItem> myClassName2Item;
   /*All groups in the palette*/
   private final List<GroupItem> myGroups;
@@ -69,42 +91,41 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * Predefined item for javax.swing.JPanel
    */
   private ComponentItem myPanelItem;
-  @NonNls private static final String ATTRIBUTE_VSIZE_POLICY = "vsize-policy";
-  @NonNls private static final String ATTRIBUTE_HSIZE_POLICY = "hsize-policy";
-  @NonNls private static final String ATTRIBUTE_ANCHOR = "anchor";
-  @NonNls private static final String ATTRIBUTE_FILL = "fill";
-  @NonNls private static final String ELEMENT_MINIMUM_SIZE = "minimum-size";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
-  @NonNls private static final String ELEMENT_PREFERRED_SIZE = "preferred-size";
-  @NonNls private static final String ELEMENT_MAXIMUM_SIZE = "maximum-size";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  @NonNls private static final String ATTRIBUTE_ICON = "icon";
-  @NonNls private static final String ATTRIBUTE_TOOLTIP_TEXT = "tooltip-text";
-  @NonNls private static final String ELEMENT_DEFAULT_CONSTRAINTS = "default-constraints";
-  @NonNls private static final String ELEMENT_INITIAL_VALUES = "initial-values";
-  @NonNls private static final String ELEMENT_PROPERTY = "property";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String ATTRIBUTE_REMOVABLE = "removable";
-  @NonNls private static final String ELEMENT_ITEM = "item";
-  @NonNls private static final String ELEMENT_GROUP = "group";
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
-  @NonNls private static final String ATTRIBUTE_SINCE_VERSION = "since-version";
-  @NonNls private static final String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
-  @NonNls private static final String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
-  @NonNls private static final String ATTRIBUTE_IS_CONTAINER = "is-container";
+  private static final @NonNls String ATTRIBUTE_VSIZE_POLICY = "vsize-policy";
+  private static final @NonNls String ATTRIBUTE_HSIZE_POLICY = "hsize-policy";
+  private static final @NonNls String ATTRIBUTE_ANCHOR = "anchor";
+  private static final @NonNls String ATTRIBUTE_FILL = "fill";
+  private static final @NonNls String ELEMENT_MINIMUM_SIZE = "minimum-size";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
+  private static final @NonNls String ELEMENT_PREFERRED_SIZE = "preferred-size";
+  private static final @NonNls String ELEMENT_MAXIMUM_SIZE = "maximum-size";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ATTRIBUTE_ICON = "icon";
+  private static final @NonNls String ATTRIBUTE_TOOLTIP_TEXT = "tooltip-text";
+  private static final @NonNls String ELEMENT_DEFAULT_CONSTRAINTS = "default-constraints";
+  private static final @NonNls String ELEMENT_INITIAL_VALUES = "initial-values";
+  private static final @NonNls String ELEMENT_PROPERTY = "property";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
+  private static final @NonNls String ATTRIBUTE_REMOVABLE = "removable";
+  private static final @NonNls String ELEMENT_ITEM = "item";
+  private static final @NonNls String ELEMENT_GROUP = "group";
+  private static final @NonNls String ATTRIBUTE_VERSION = "version";
+  private static final @NonNls String ATTRIBUTE_SINCE_VERSION = "since-version";
+  private static final @NonNls String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
+  private static final @NonNls String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
+  private static final @NonNls String ATTRIBUTE_IS_CONTAINER = "is-container";
 
-  public static Palette getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, Palette.class);
+  public static Palette getInstance(@NotNull Project project) {
+    return project.getService(Palette.class);
   }
 
   /**
    * Invoked by reflection
    */
-  public Palette(Project project) {
+  public Palette(@Nullable Project project) {
     myProject = project;
-    myLafManagerListener = project == null ? null : new MyLafManagerListener();
     myClass2Properties = new HashMap<>();
     myClassName2Item = new HashMap<>();
     myGroups = new ArrayList<>();
@@ -112,11 +133,13 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     if (project != null) {
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
-    }
 
-    if (myLafManagerListener != null) {
-      LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -142,20 +165,22 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
   }
 
-  /**
-   * Adds specified listener.
-   */
-  public void addListener(@NotNull final Listener l) {
-    LOG.assertTrue(!myListeners.contains(l));
-    myListeners.add(l);
+  @Override
+  public void noStateLoaded() {
+    try {
+      loadState(Objects.requireNonNull(loadDefaultPalette()));
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   /**
-   * Removes specified listener.
+   * Adds specified listener.
    */
-  public void removeListener(@NotNull final Listener l) {
-    LOG.assertTrue(myListeners.contains(l));
-    myListeners.remove(l);
+  public void addListener(final @NotNull Listener l) {
+    LOG.assertTrue(!myListeners.contains(l));
+    myListeners.add(l);
   }
 
   void fireGroupsChanged() {
@@ -164,19 +189,11 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
   }
 
-  @Override
-  public void dispose() {
-    if (myLafManagerListener != null) {
-      LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
-    }
-  }
-
   private void upgradePalette() {
     // load new components from the predefined Palette2.xml
     try {
-      //noinspection HardCodedStringLiteral
-      Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
-      for (Element groupElement : document.getRootElement().getChildren(ELEMENT_GROUP)) {
+      Element rootElement = loadDefaultPalette();
+      for (Element groupElement : Objects.requireNonNull(rootElement).getChildren(ELEMENT_GROUP)) {
         for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
             upgradeGroup(group, groupElement);
@@ -188,6 +205,10 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  private @Nullable Element loadDefaultPalette() throws Exception {
+    return JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("Palette2.xml"));
   }
 
   private void upgradeGroup(final GroupItem group, final Element groupElement) {
@@ -211,8 +232,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * @return a predefined palette item which corresponds to the JPanel.
    */
-  @NotNull
-  public ComponentItem getPanelItem() {
+  public @NotNull ComponentItem getPanelItem() {
     return myPanelItem;
   }
 
@@ -221,8 +241,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * The method returns {@code null} if palette has no information about the specified
    * class.
    */
-  @Nullable
-  public ComponentItem getItem(@NotNull final String componentClassName) {
+  public @Nullable ComponentItem getItem(final @NotNull String componentClassName) {
     return myClassName2Item.get(componentClassName);
   }
 
@@ -246,7 +265,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * @param groups list of new groups.
    */
-  public void setGroups(@NotNull final ArrayList<GroupItem> groups) {
+  public void setGroups(final @NotNull ArrayList<GroupItem> groups) {
     myGroups.clear();
     myGroups.addAll(groups);
 
@@ -260,7 +279,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * @throws IllegalArgumentException if an item for the same class
    *                                            is already exists in the palette
    */
-  public void addItem(@NotNull final GroupItem group, @NotNull final ComponentItem item) {
+  public void addItem(final @NotNull GroupItem group, final @NotNull ComponentItem item) {
     // class -> item
     final String componentClassName = item.getClassName();
     if (getItem(componentClassName) != null) {
@@ -304,7 +323,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * Helper method.
    */
-  private static GridConstraints processDefaultConstraintsElement(@NotNull final Element element) {
+  private static GridConstraints processDefaultConstraintsElement(final @NotNull Element element) {
     final GridConstraints constraints = new GridConstraints();
 
     // grid related attributes
@@ -337,7 +356,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     return constraints;
   }
 
-  private void processItemElement(@NotNull final Element itemElement, @NotNull final GroupItem group, final boolean skipExisting) {
+  private void processItemElement(final @NotNull Element itemElement, final @NotNull GroupItem group, final boolean skipExisting) {
     // Class name. It's OK if class does not exist.
     final String className = LwXmlReader.getRequiredString(itemElement, ATTRIBUTE_CLASS);
     if (skipExisting && getItem(className) != null) {
@@ -368,8 +387,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null) {
-        for (final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
-          final Element e = (Element)o;
+        for (final Element e : initialValues.getChildren(ELEMENT_PROPERTY)) {
           final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
           final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, ATTRIBUTE_VALUE));
@@ -416,7 +434,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * Helper method
    */
-  private static void writeDefaultConstraintsElement(@NotNull final Element itemElement, @NotNull final GridConstraints c) {
+  private static void writeDefaultConstraintsElement(final @NotNull Element itemElement, final @NotNull GridConstraints c) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
     final Element element = new Element(ELEMENT_DEFAULT_CONSTRAINTS);
@@ -465,12 +483,12 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * Helper method
    */
   private static void writeInitialValuesElement(
-    @NotNull final Element itemElement,
-    @NotNull final HashMap<String, StringDescriptor> name2value
+    final @NotNull Element itemElement,
+    final @NotNull HashMap<String, StringDescriptor> name2value
   ) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
-    if (name2value.size() == 0) { // do not append 'initial-values' subtag
+    if (name2value.isEmpty()) { // do not append 'initial-values' subtag
       return;
     }
 
@@ -488,7 +506,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   /**
    * Helper method
    */
-  private static void writeComponentItem(@NotNull final Element groupElement, @NotNull final ComponentItem item) {
+  private static void writeComponentItem(final @NotNull Element groupElement, final @NotNull ComponentItem item) {
     LOG.assertTrue(ELEMENT_GROUP.equals(groupElement.getName()));
 
     final Element itemElement = new Element(ELEMENT_ITEM);
@@ -513,7 +531,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     itemElement.setAttribute(ATTRIBUTE_AUTO_CREATE_BINDING, Boolean.toString(item.isAutoCreateBinding()));
     itemElement.setAttribute(ATTRIBUTE_CAN_ATTACH_LABEL, Boolean.toString(item.isCanAttachLabel()));
     if (item.isContainer()) {
-      itemElement.setAttribute(ATTRIBUTE_IS_CONTAINER, Boolean.toString(item.isContainer()));
+      itemElement.setAttribute(ATTRIBUTE_IS_CONTAINER, Boolean.toString(true));
     }
 
     // Default constraints
@@ -552,8 +570,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       new IntEnumEditor(pairs), false);
   }
 
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final RadComponent component) {
+  public IntrospectedProperty<?> @NotNull [] getIntrospectedProperties(final @NotNull RadComponent component) {
     return getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
   }
 
@@ -562,22 +579,21 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
+  public IntrospectedProperty<?> @NotNull [] getIntrospectedProperties(@NotNull Class<?> aClass, @NotNull Class<?> delegeeClass) {
     // Try the cache first
     // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {
       return myClass2Properties.get(aClass);
     }
 
-    final ArrayList<IntrospectedProperty> result = new ArrayList<>();
+    List<IntrospectedProperty<?>> result = new ArrayList<>();
     try {
       final BeanInfo beanInfo = Introspector.getBeanInfo(aClass);
       final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
       for (final PropertyDescriptor descriptor : descriptors) {
         Method readMethod = descriptor.getReadMethod();
         Method writeMethod = descriptor.getWriteMethod();
-        Class propertyType = descriptor.getPropertyType();
+        Class<?> propertyType = descriptor.getPropertyType();
         if (writeMethod == null || readMethod == null || propertyType == null) {
           continue;
         }
@@ -591,11 +607,10 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
           storeAsClient = true;
         }
 
-        @NonNls final String name = descriptor.getName();
+        final @NonNls String name = descriptor.getName();
 
-        final IntrospectedProperty property;
-
-        final Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
+        IntrospectedProperty<?> property;
+        Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
         if (int.class.equals(propertyType)) { // int
           IntEnumEditor.Pair[] enumPairs = properties.getEnumPairs(aClass, name);
           if (enumPairs != null) {
@@ -632,19 +647,19 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
           property = new IntroBooleanProperty(name, readMethod, writeMethod, storeAsClient);
         }
         else if (double.class.equals(propertyType)) {
-          property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Double.class);
+          property = new IntroPrimitiveTypeProperty<>(name, readMethod, writeMethod, storeAsClient, Double.class);
         }
         else if (float.class.equals(propertyType)) {
-          property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Float.class);
+          property = new IntroPrimitiveTypeProperty<>(name, readMethod, writeMethod, storeAsClient, Float.class);
         }
         else if (long.class.equals(propertyType)) {
-          property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Long.class);
+          property = new IntroPrimitiveTypeProperty<>(name, readMethod, writeMethod, storeAsClient, Long.class);
         }
         else if (byte.class.equals(propertyType)) {
-          property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Byte.class);
+          property = new IntroPrimitiveTypeProperty<>(name, readMethod, writeMethod, storeAsClient, Byte.class);
         }
         else if (short.class.equals(propertyType)) {
-          property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Short.class);
+          property = new IntroPrimitiveTypeProperty<>(name, readMethod, writeMethod, storeAsClient, Short.class);
         }
         else if (char.class.equals(propertyType)) { // java.lang.String
           property = new IntroCharProperty(name, readMethod, writeMethod, storeAsClient);
@@ -711,7 +726,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       throw new RuntimeException(e);
     }
 
-    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[0]);
+    IntrospectedProperty<?>[] properties = result.toArray(new IntrospectedProperty[0]);
     myClass2Properties.put(aClass, properties);
     return properties;
   }
@@ -721,10 +736,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * specified {@code class}. The method returns {@code null} if there is no
    * property with the such name.
    */
-  @Nullable
-  public IntrospectedProperty getIntrospectedProperty(@NotNull final RadComponent component, @NotNull final String name) {
-    final IntrospectedProperty[] properties = getIntrospectedProperties(component);
-    for (final IntrospectedProperty property : properties) {
+  public @Nullable IntrospectedProperty<?> getIntrospectedProperty(final @NotNull RadComponent component, final @NotNull String name) {
+    IntrospectedProperty<?>[] properties = getIntrospectedProperties(component);
+    for (IntrospectedProperty<?> property : properties) {
       if (name.equals(property.getName())) {
         return property;
       }
@@ -737,12 +751,11 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * <b>DO NOT USE THIS METHOD DIRECTLY</b>. Use {@link RadComponent#getInplaceProperty(int, int) }
    * instead.
    */
-  @Nullable
-  public IntrospectedProperty getInplaceProperty(@NotNull final RadComponent component) {
+  public @Nullable IntrospectedProperty<?> getInplaceProperty(final @NotNull RadComponent component) {
     final String inplaceProperty = Properties.getInstance().getInplaceProperty(component.getComponentClass());
-    final IntrospectedProperty[] properties = getIntrospectedProperties(component);
+    final IntrospectedProperty<?>[] properties = getIntrospectedProperties(component);
     for (int i = properties.length - 1; i >= 0; i--) {
-      final IntrospectedProperty property = properties[i];
+      final IntrospectedProperty<?> property = properties[i];
       if (property.getName().equals(inplaceProperty)) {
         return property;
       }
@@ -750,7 +763,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     return null;
   }
 
-  public static boolean isRemovable(@NotNull final GroupItem group) {
+  public static boolean isRemovable(final @NotNull GroupItem group) {
     final ComponentItem[] items = group.getItems();
     for (int i = items.length - 1; i >= 0; i--) {
       if (!items[i].isRemovable()) {
@@ -764,22 +777,22 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    * Updates UI of editors and renderers of all introspected properties
    */
   private final class MyLafManagerListener implements LafManagerListener {
-    private void updateUI(final Property property) {
-      final PropertyRenderer renderer = property.getRenderer();
+    private static void updateUI(Property<?, ?> property) {
+      PropertyRenderer<?> renderer = property.getRenderer();
       renderer.updateUI();
-      final PropertyEditor editor = property.getEditor();
+      PropertyEditor<?> editor = property.getEditor();
       if (editor != null) {
         editor.updateUI();
       }
-      final Property[] children = property.getChildren(null);
+      Property<?, ?>[] children = property.getChildren(null);
       for (int i = children.length - 1; i >= 0; i--) {
         updateUI(children[i]);
       }
     }
 
     @Override
-    public void lookAndFeelChanged(final LafManager source) {
-      for (final IntrospectedProperty[] properties : myClass2Properties.values()) {
+    public void lookAndFeelChanged(final @NotNull LafManager source) {
+      for (final IntrospectedProperty<?>[] properties : myClass2Properties.values()) {
         LOG.assertTrue(properties != null);
         for (int j = properties.length - 1; j >= 0; j--) {
           updateUI(properties[j]);
@@ -789,6 +802,6 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   interface Listener {
-    void groupsChanged(Palette palette);
+    void groupsChanged(@NotNull Palette palette);
   }
 }

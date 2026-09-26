@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  module-info.class
+End of files
+Compiling files:
+  java/java9-features/moduleRenamed/a/module-info.java
+End of files
+Cleaning output files:
+  module-info.class
+  ppp/Util.class
+End of files
+Compiling files:
+  java/java9-features/moduleRenamed/a/module-info.java
+  java/java9-features/moduleRenamed/a/ppp/Util.java
+End of files
+Cleaning output files:
+  module-info.class
+  qqq/Client.class
+End of files
+Compiling files:
+  java/java9-features/moduleRenamed/b/module-info.java
+  java/java9-features/moduleRenamed/b/qqq/Client.java
+End of files
+------------------------------------------
+Exit code: ERROR

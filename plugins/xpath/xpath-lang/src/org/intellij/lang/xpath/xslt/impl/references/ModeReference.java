@@ -21,9 +21,19 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.completion.NamespaceLookup;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
@@ -34,17 +44,22 @@ import org.intellij.lang.xpath.xslt.psi.impl.ImplicitModeElement;
 import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class ModeReference extends SimpleAttributeReference implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private final boolean myIsDeclaration;
   private final ImplicitModeElement myImplicitModeElement;
 
-  public ModeReference(XmlAttribute attribute, boolean isDeclaration) {
+  ModeReference(XmlAttribute attribute, boolean isDeclaration) {
     super(attribute);
     if (isDeclaration) {
       myIsDeclaration = true;
@@ -63,13 +78,12 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   @Override
-  @NotNull
-  protected TextRange getTextRange() {
+  protected @NotNull TextRange getTextRange() {
     return myImplicitModeElement.getModeRange();
   }
 
-  @NotNull
-  public Object[] getVariants() {
+  @Override
+  public Object @NotNull [] getVariants() {
     final PsiFile containingFile = myAttribute.getContainingFile();
     if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
       final List<Object> l = new ArrayList<>();
@@ -84,16 +98,16 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       }
       return ArrayUtil.toObjectArray(l);
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
+  @Override
   public boolean isSoft() {
     return myIsDeclaration;
   }
 
   @Override
-  @Nullable
-  public PsiElement resolveImpl() {
+  public @Nullable PsiElement resolveImpl() {
     if (myIsDeclaration) {
       return myImplicitModeElement;
     }
@@ -103,8 +117,8 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     }
   }
 
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  @Override
+  public ResolveResult @NotNull [] multiResolve(final boolean incompleteCode) {
     final PsiFile containingFile = myAttribute.getContainingFile();
     if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile) && myImplicitModeElement.getQName() != null) {
       return PsiElementResolveResult.createResults(ResolveUtil.collect(getMatcher()));
@@ -163,22 +177,24 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   private static class MyModeMatcher extends MatchTemplateMatcher {
-    public MyModeMatcher(XmlDocument document, QName mode) {
+    MyModeMatcher(XmlDocument document, QName mode) {
       super(document, mode);
     }
 
-    public MyModeMatcher(XmlElement element, QName mode) {
+    MyModeMatcher(XmlElement element, QName mode) {
       super(XsltCodeInsightUtil.getDocument(element), mode);
     }
 
+    @Override
     protected PsiElement transform(XmlTag element) {
       return new ImplicitModeElement(element.getAttribute("mode", null));
     }
 
+    @Override
     public boolean matches(XmlTag element) {
       final String s = element.getAttributeValue("mode");
       return myMode != null &&
-             s != null && s.indexOf(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED) == -1 &&
+             s != null && !s.contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED) &&
              super.matches(element);
     }
 
@@ -187,37 +203,36 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       return new MyModeMatcher(document, myMode);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
       return new MyModeMatcher(myDocument, myMode != null ? QNameUtil.createAnyLocalName(myMode.getNamespaceURI()) : null);
     }
   }
 
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  @Override
+  public @NotNull String getUnresolvedMessagePattern() {
     final QName qName = myImplicitModeElement.getQName();
     if (qName != null && qName != QNameUtil.UNRESOLVED) {
-      return "Undefined mode '" + qName.toString() + "'";
+      return XPathBundle.message("inspection.message.undefined.mode", qName);
     }
     else {
-      return "Undefined mode ''{0}''";
+      return XPathBundle.partialMessage("inspection.message.undefined.mode", 1);
     }
   }
 
   private static class MyPrefixReference extends PrefixReference implements LocalQuickFixProvider {
-    public MyPrefixReference(XmlAttribute attribute) {
+    MyPrefixReference(XmlAttribute attribute) {
       super(attribute);
     }
 
-    @Nullable
     @Override
-    public LocalQuickFix[] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
       return LocalQuickFix.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       return getPrefixCompletions(myAttribute);
     }
   }

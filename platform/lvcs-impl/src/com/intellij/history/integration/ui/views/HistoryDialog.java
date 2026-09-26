@@ -1,59 +1,67 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.CommonBundle;
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
-import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
+import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.*;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
+import com.intellij.project.ProjectKt;
+import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
@@ -62,45 +70,60 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import java.awt.*;
-import java.io.File;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameWrapper {
   private static final int UPDATE_DIFFS = 1;
   private static final int UPDATE_REVS = UPDATE_DIFFS + 1;
 
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   protected final IdeaGateway myGateway;
   protected final VirtualFile myFile;
   private Splitter mySplitter;
-  private RevisionsList myRevisionsList;
+  protected RevisionsList myRevisionsList;
   private JBLoadingPanel myDiffView;
   private ActionToolbar myToolBar;
+  protected boolean myForceUpdateDiff;
 
-  private T myModel;
+  protected T myModel;
 
   private MergingUpdateQueue myUpdateQueue;
   private boolean isUpdating;
 
   protected HistoryDialog(@NotNull Project project, IdeaGateway gw, VirtualFile f, boolean doInit) {
     super(project);
+
     myProject = project;
     myGateway = gw;
     myFile = f;
 
-    setProject(project);
-    setDimensionKey(getPropertiesKey());
-    setImages(DiffUtil.DIFF_FRAME_ICONS);
+    setImages(DiffUtil.DIFF_FRAME_ICONS.getValue());
     closeOnEsc();
 
-    if (doInit) init();
+    if (doInit) {
+      init();
+    }
+  }
+
+  @Override
+  protected @Nullable String getDimensionKey() {
+    return getClass().getName();
   }
 
   protected void init() {
@@ -117,7 +140,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     facade.addListener(new LocalHistoryFacade.Listener() {
-      public void changeSetFinished() {
+      @Override
+      public void changeSetFinished(@NotNull ChangeSet changeSet) {
         scheduleRevisionsUpdate(null);
       }
     }, this);
@@ -125,15 +149,21 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     scheduleRevisionsUpdate(null);
   }
 
-  protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
+  protected void scheduleRevisionsUpdate(final @Nullable Consumer<? super T> configRunnable) {
     doScheduleUpdate(UPDATE_REVS, () -> {
       synchronized (myModel) {
         if (configRunnable != null) configRunnable.consume(myModel);
         myModel.clearRevisions();
-        myModel.getRevisions();// force load
+        LocalHistoryCounter.INSTANCE.logLoadItems(myProject, myModel.getKind(), () -> {
+          return myModel.getRevisions();// force load
+        });
       }
       return () -> myRevisionsList.updateData(myModel);
     });
+  }
+
+  protected List<RevisionItem> getRevisions() {
+    return myModel == null ? Collections.emptyList() : myModel.getRevisions();
   }
 
   protected abstract T createModel(LocalHistoryFacade vcs);
@@ -185,21 +215,24 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected abstract Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy);
 
-  private JComponent createRevisionsSide(Dimension prefToolBarSize) {
+  private @NotNull JComponent createRevisionsSide(Dimension prefToolBarSize) {
     ActionGroup actions = createRevisionsActions();
 
     myToolBar = createRevisionsToolbar(actions);
     myRevisionsList = new RevisionsList(new RevisionsList.SelectionListener() {
+      @Override
       public void revisionsSelected(final int first, final int last) {
         scheduleDiffUpdate(Couple.of(first, last));
       }
     });
-    addPopupMenuToComponent(myRevisionsList.getComponent(), actions);
+    myToolBar.setTargetComponent(myRevisionsList.getComponent());
+    PopupHandler.installPopupMenu(myRevisionsList.getComponent(), actions, "LvcsRevisionsListPopup");
 
 
     JPanel result = new JPanel(new BorderLayout());
     JPanel toolBarPanel = new JPanel(new BorderLayout());
-    toolBarPanel.add(myToolBar.getComponent());
+    toolBarPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
+    addExtraToolbar(toolBarPanel);
     if (prefToolBarSize != null) {
       toolBarPanel.setPreferredSize(new Dimension(1, prefToolBarSize.height));
     }
@@ -211,12 +244,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private static ActionToolbar createRevisionsToolbar(ActionGroup actions) {
+  protected void addExtraToolbar(JPanel toolBarPanel) {
+  }
+
+  private static @NotNull ActionToolbar createRevisionsToolbar(ActionGroup actions) {
     ActionManager am = ActionManager.getInstance();
     return am.createActionToolbar("HistoryDialogRevisions", actions, true);
   }
 
-  private ActionGroup createRevisionsActions() {
+  private @NotNull ActionGroup createRevisionsActions() {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new RevertAction());
     result.add(new CreatePatchAction());
@@ -225,45 +261,34 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
-    comp.addMouseListener(new PopupHandler() {
-      public void invokePopup(Component c, int x, int y) {
-        ActionPopupMenu m = createPopupMenu(ag);
-        m.getComponent().show(c, x, y);
-      }
-    });
-  }
-
-  private ActionPopupMenu createPopupMenu(ActionGroup ag) {
-    ActionManager m = ActionManager.getInstance();
-    return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
-  }
-
-  private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
+  private void scheduleDiffUpdate(final @Nullable Couple<Integer> toSelect) {
     doScheduleUpdate(UPDATE_DIFFS, () -> {
       synchronized (myModel) {
-        if (toSelect == null) {
-          myModel.resetSelection();
+        boolean changed = toSelect == null ? myModel.resetSelection() : myModel.selectRevisions(toSelect.first, toSelect.second);
+        changed |= myForceUpdateDiff;
+        myForceUpdateDiff = false;
+        if (changed) {
+          return LocalHistoryCounter.INSTANCE.logLoadDiff(myProject, myModel.getKind(), () -> {
+            return doUpdateDiffs(myModel);
+          });
         }
-        else {
-          myModel.selectRevisions(toSelect.first, toSelect.second);
-        }
-        return doUpdateDiffs(myModel);
+        return EmptyRunnable.getInstance();
       }
     });
   }
 
-  private void doScheduleUpdate(int id, final Computable<Runnable> update) {
-    myUpdateQueue.queue(new Update(HistoryDialog.this, id) {
+  private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
+    myUpdateQueue.queue(new Update(this, id) {
       @Override
-      public boolean canEat(Update update1) {
+      public boolean canEat(@NotNull Update update1) {
         return getPriority() >= update1.getPriority();
       }
 
+      @Override
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
-        invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = true;
@@ -280,7 +305,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = false;
@@ -299,20 +324,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private void invokeAndWait(Runnable runnable) {
-    try {
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        SwingUtilities.invokeAndWait(runnable);
-      }
-    }
-    catch (InterruptedException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   protected void updateActions() {
     if (showRevisionsList()) {
       myToolBar.updateActionsImmediately();
@@ -321,46 +332,27 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected abstract Runnable doUpdateDiffs(T model);
 
-  protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
-    final Ref<ContentDiffRequest> requestRef = new Ref<>();
-
-    new Task.Modal(myProject, message("message.processing.revisions"), false) {
-      public void run(@NotNull final ProgressIndicator i) {
-        i.setIndeterminate(false);
-        ApplicationManager.getApplication().runReadAction(() -> {
-          RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
-          p.processingLeftRevision();
-          DiffContent left = m.getLeftDiffContent(p);
-
-          p.processingRightRevision();
-          DiffContent right = m.getRightDiffContent(p);
-
-          requestRef.set(new SimpleDiffRequest(m.getTitle(), left, right, m.getLeftTitle(p), m.getRightTitle(p)));
-        });
+  protected ContentDiffRequest createDifference(FileDifferenceModel m) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(myProject, message("message.processing.revisions"), false) {
+      @Override
+      protected ContentDiffRequest compute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(indicator);
+        return FileDifferenceModel.createRequest(m, p);
       }
-    }.queue();
-
-    return requestRef.get();
+    });
   }
 
   private void saveSplitterProportion() {
-    SplitterProportionsData d = createSplitterData();
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
     d.saveSplitterProportions(mySplitter);
-    d.externalizeToDimensionService(getPropertiesKey());
+    d.externalizeToDimensionService(getDimensionKey());
   }
 
   private void restoreSplitterProportion() {
-    SplitterProportionsData d = createSplitterData();
-    d.externalizeFromDimensionService(getPropertiesKey());
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
+    d.externalizeFromDimensionService(getDimensionKey());
     d.restoreSplitterProportions(mySplitter);
-  }
-
-  private SplitterProportionsData createSplitterData() {
-    return new SplitterProportionsDataImpl();
-  }
-
-  protected String getPropertiesKey() {
-    return getClass().getName();
   }
 
   //todo
@@ -376,8 +368,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   protected void revert(Reverter r) {
     try {
-      if (!askForProceeding(r)) return;
-
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {
         showError(message("message.cannot.revert.because", formatErrors(errors)));
@@ -392,32 +382,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private boolean askForProceeding(Reverter r) throws IOException {
-    List<String> questions = r.askUserForProceeding();
-    if (questions.isEmpty()) return true;
-
-    return Messages.showYesNoDialog(myProject, message("message.do.you.want.to.proceed", formatQuestions(questions)),
-                                    CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.YES;
-  }
-
-  private String formatQuestions(List<String> questions) {
-    // format into something like this:
-    // 1) message one
-    // message one continued
-    // 2) message two
-    // message one continued
-    // ...
-
-    if (questions.size() == 1) return questions.get(0);
-
-    String result = "";
-    for (int i = 0; i < questions.size(); i++) {
-      result += (i + 1) + ") " + questions.get(i) + "\n";
-    }
-    return result.substring(0, result.length() - 1);
-  }
-
-  private void showNotification(final String title) {
+  private void showNotification(@NlsContexts.PopupContent String title) {
     SwingUtilities.invokeLater(() -> {
       final Balloon b =
         JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(title, null, MessageType.INFO.getPopupBackground(), null)
@@ -431,14 +396,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private String formatErrors(List<String> errors) {
+  private static String formatErrors(@NotNull List<String> errors) {
     if (errors.size() == 1) return errors.get(0);
 
-    String result = "";
+    StringBuilder result = new StringBuilder();
     for (String e : errors) {
-      result += "\n    -" + e;
+      result.append("\n    -").append(e);
     }
-    return result;
+    return result.toString();
   }
 
   private boolean isCreatePatchEnabled() {
@@ -456,18 +421,28 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setFileName(getDefaultPatchFile());
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
-      showNotification(LocalHistoryBundle.message("message.patch.created"));
-      ShowFilePathAction.openFile(new File(p.getFileName()));
+      Path base = Paths.get(p.getBaseDirName());
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), false);
+      if (p.isToClipboard()) {
+        writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
+        showNotification(message("message.patch.copied.to.clipboard"));
+      }
+      else {
+        Path file = Paths.get(p.getFileName());
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding());
+        showNotification(message("message.patch.created"));
+        RevealFileAction.openFile(file);
+      }
     }
     catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));
     }
   }
 
-  private File getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch");
+  private @NotNull Path getDefaultPatchFile() {
+    return FileUtil.findSequentNonexistentFile(ProjectKt.getStateStore(myProject).getProjectBasePath().toFile(), "local_history", "patch")
+      .toPath();
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
@@ -479,28 +454,29 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
 
-  public void showError(String s) {
+  public void showError(@NlsContexts.DialogMessage String s) {
     Messages.showErrorDialog(myProject, s, CommonBundle.getErrorTitle());
   }
 
-  protected void showHelp() {
-    HelpManager.getInstance().invokeHelp(getHelpId());
-  }
-
   protected abstract class MyAction extends AnAction {
-    protected MyAction(String text, String description, Icon icon) {
+    protected MyAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doPerform(myModel);
     }
 
     protected abstract void doPerform(T model);
 
     @Override
-    public void update(AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setEnabled(isEnabled());
     }
@@ -516,13 +492,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private class RevertAction extends MyAction {
-    public RevertAction() {
+  private final class RevertAction extends MyAction {
+    RevertAction() {
       super(message("action.revert"), null, AllIcons.Actions.Rollback);
     }
 
     @Override
     protected void doPerform(T model) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.RevertRevisions, myModel.getKind());
       revert();
     }
 
@@ -532,13 +509,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private class CreatePatchAction extends MyAction {
-    public CreatePatchAction() {
+  private final class CreatePatchAction extends MyAction {
+    CreatePatchAction() {
       super(message("action.create.patch"), null, AllIcons.Vcs.Patch);
     }
 
     @Override
     protected void doPerform(T model) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.CreatePatch, myModel.getKind());
       createPatch();
     }
 
@@ -548,52 +526,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
-    private final ProgressIndicator myIndicator;
+  private static final class MyDialogWrapper extends DialogWrapper {
+    private final @NotNull CreatePatchConfigurationPanel myPanel;
 
-    public RevisionProcessingProgressAdapter(ProgressIndicator i) {
-      myIndicator = i;
-    }
-
-    public void processingLeftRevision() {
-      myIndicator.setText(message("message.processing.left.revision"));
-    }
-
-    public void processingRightRevision() {
-      myIndicator.setText(message("message.processing.right.revision"));
-    }
-
-    public void processed(int percentage) {
-      myIndicator.setFraction(percentage / 100.0);
-    }
-  }
-
-  private static class MyDialogWrapper extends DialogWrapper {
-    @NotNull private final CreatePatchConfigurationPanel myPanel;
-
-    protected MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
+    private MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
       super(project, true);
       myPanel = centralPanel;
       init();
-      initValidation();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myPanel.getPanel());
-    }
-
-    @Nullable
-    @Override
-    protected ValidationInfo doValidate() {
-      return myPanel.validateFields();
     }
   }
 }

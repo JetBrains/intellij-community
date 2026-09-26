@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="automaton" type="repository">
+        <properties maven-id="dk.brics:automaton:1.12-4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-4/automaton-1.12-4.jar">
+              <sha256sum>3941b48f2e9281aab7234395c549cbb399b3dc80fed2e13999a80db47f94b041</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-4/automaton-1.12-4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-4/automaton-1.12-4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

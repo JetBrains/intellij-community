@@ -1,35 +1,80 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomWrapModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.impl.CaretImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener;
+import com.intellij.openapi.util.Segment;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.DocumentEventUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.List;
 
 /**
  * Holds utility methods for soft wraps-related processing.
- *
- * @author Denis Zhdanov
- * @since Aug 11, 2010 11:03:43 AM
  */
-public class SoftWrapHelper {
+@ApiStatus.Internal
+public final class SoftWrapHelper {
 
   private SoftWrapHelper() {
+  }
+
+  @FunctionalInterface
+  public interface RangeRecalculationAction {
+    void recalculate(int startOffset, int endOffset);
+  }
+
+  public static void recalculateSegments(@NotNull @Unmodifiable List<? extends Segment> ranges,
+                                         @NotNull SoftWrapNotifier softWrapNotifier,
+                                         @NotNull RangeRecalculationAction action) {
+    ranges = ContainerUtil.sorted(ranges, (o1, o2) -> {
+      int startDiff = o1.getStartOffset() - o2.getStartOffset();
+      return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
+    });
+    final int[] lastRecalculatedOffset = {0};
+    SoftWrapParsingListener listener = new SoftWrapParsingListener() {
+      @Override
+      public void onRegionReparseEnd(@NotNull IncrementalCacheUpdateEvent event) {
+        lastRecalculatedOffset[0] = event.getActualEndOffset();
+      }
+    };
+    softWrapNotifier.addSoftWrapParsingListener(listener);
+    try {
+      for (Segment range : ranges) {
+        int lastOffset = lastRecalculatedOffset[0];
+        if (range.getEndOffset() > lastOffset) {
+          action.recalculate(Math.max(range.getStartOffset(), lastOffset), range.getEndOffset());
+        }
+      }
+    }
+    finally {
+      softWrapNotifier.removeSoftWrapParsingListener(listener);
+    }
+  }
+
+  public static int getEndOffsetUpperEstimate(@NotNull Editor editor,
+                                              @NotNull Document document,
+                                              @NotNull IncrementalCacheUpdateEvent event) {
+    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(editor, event.getMandatoryEndOffset());
+    int line = document.getLineNumber(endOffsetUpperEstimate);
+    if (line < document.getLineCount() - 1) {
+      endOffsetUpperEstimate = document.getLineStartOffset(line + 1);
+    }
+    return endOffsetUpperEstimate;
   }
 
   /**
@@ -48,11 +93,11 @@ public class SoftWrapHelper {
    * @return          {@code true} if caret offset of the given editor points to visual position that belongs to
    *                  visual line where soft wrap end is located
    */
-  public static boolean isCaretAfterSoftWrap(CaretImpl caret) {
+  public static boolean isCaretAfterSoftWrap(Caret caret) {
     if (!caret.isUpToDate()) {
       return false;
     }
-    EditorImpl editor = caret.getEditor();
+    Editor editor = caret.getEditor();
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     int offset = caret.getOffset();
     SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
@@ -63,5 +108,42 @@ public class SoftWrapHelper {
     VisualPosition afterWrapPosition = editor.offsetToVisualPosition(offset, false, false);
     VisualPosition caretPosition = caret.getVisualPosition();
     return caretPosition.line == afterWrapPosition.line && caretPosition.column <= afterWrapPosition.column;
+  }
+
+  public static int coerceToValidOffset(int offset, Document document) {
+    //noinspection MathClampMigration
+    return Math.max(Math.min(offset, document.getTextLength() - 1), 0);
+  }
+
+  /**
+   * After move-insertion and before move-deletion events,
+   * custom wraps in {@link CustomWrapModel} and in {@link SoftWrapsStorage} are temporarily out-of-sync.
+   * <p>
+   * This method removes custom wraps from the moved-from portion of the text,
+   * so that other components observe consistent state between the two events of the moveText operation.
+   * <p>
+   * Must be called in {@link DocumentListener#beforeDocumentChange}
+   */
+  public static void removeCustomWrapsFromMoveInsertionSource(CustomWrapModel customWrapModel,
+                                                              SoftWrapsStorage storage,
+                                                              DocumentEvent event) {
+    if (customWrapModel.hasWraps() && DocumentEventUtil.isMoveInsertion(event)) {
+      int srcOffset = DocumentEventUtil.getMoveOffsetBeforeInsertion(event);
+      storage.removeCustomWrapsInRange(srcOffset, srcOffset + event.getNewLength() + /* end-inclusive */ 1);
+    }
+  }
+
+  /**
+   * Answers whether there are any offsets collapsed by fold regions inside {@code [startOffset; endOffset)}.
+   * <p>
+   * Since soft-wraps may be placed at either edge of a collapsed fold region,
+   * this method will not return {@code true} due to a collapsed fold region
+   * where {@code region.endOffset == startOffset} or where {@code region.startOffset == endOffset}.
+   */
+  public static boolean hasCollapsedOffsetsIn(@NotNull FoldingModelEx foldingModel, int startOffset, int endOffset) {
+    FoldRegion[] topLevel = foldingModel.fetchTopLevel();
+    if (topLevel == null) return false;
+    int idx = foldingModel.getLastCollapsedRegionBefore(startOffset) + 1;
+    return idx < topLevel.length && topLevel[idx].getStartOffset() < endOffset;
   }
 }

@@ -1,0 +1,16 @@
+MODULES
+project
+
+project.main
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in OptInAnnotation
+
+project.test
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    compilerSettings = -opt-in OptInAnnotation
+
+
+Test configuration:
+- showing only following facet fields: languageLevel, apiLevel, compilerSettings

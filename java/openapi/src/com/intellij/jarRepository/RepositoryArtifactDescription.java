@@ -29,8 +29,8 @@ public class RepositoryArtifactDescription {
   private final String myClassNames;
   private final String myRepositoryId;
 
-  public RepositoryArtifactDescription(RepositoryLibraryProperties libProperties, String packaging, String classifier) {
-    this(libProperties.getGroupId(), libProperties.getArtifactId(), libProperties.getVersion(), packaging, classifier);
+  public RepositoryArtifactDescription(RepositoryLibraryProperties libProperties, String classifier) {
+    this(libProperties.getGroupId(), libProperties.getArtifactId(), libProperties.getVersion(), libProperties.getPackaging(), classifier);
   }
 
   public RepositoryArtifactDescription(String groupId,

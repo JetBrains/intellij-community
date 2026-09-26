@@ -1,0 +1,2 @@
+Function B.foo() implements method A.foo().
+Function B.foo() implements method Z.foo().

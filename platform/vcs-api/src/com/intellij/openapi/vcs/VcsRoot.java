@@ -1,46 +1,29 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class VcsRoot {
+import java.util.Objects;
 
-  @Nullable private final AbstractVcs myVcs;
-  @Nullable private final VirtualFile myPath;
+public final class VcsRoot {
+  private final @Nullable AbstractVcs myVcs;
+  private final @NotNull VirtualFile myPath;
 
   private int hashcode;
 
-  public VcsRoot(@Nullable AbstractVcs vcs, @Nullable  VirtualFile path) {
+  public VcsRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile path) {
     myVcs = vcs;
     myPath = path;
   }
 
-  @Nullable
-  public AbstractVcs getVcs() {
+  public @Nullable AbstractVcs getVcs() {
     return myVcs;
   }
 
-  @Nullable
-  public VirtualFile getPath() {
+  public @NotNull VirtualFile getPath() {
     return myPath;
   }
 
@@ -50,23 +33,20 @@ public class VcsRoot {
     if (o == null || getClass() != o.getClass()) return false;
 
     VcsRoot root = (VcsRoot)o;
-
-    if (myPath != null ? !myPath.equals(root.myPath) : root.myPath != null) return false;
-    if (myVcs != null ? !myVcs.equals(root.myVcs) : root.myVcs != null) return false;
-
-    return true;
+    return Objects.equals(myPath, root.myPath) && Objects.equals(myVcs, root.myVcs);
   }
 
+  @Override
   public int hashCode() {
     if (hashcode == 0) {
       hashcode = myVcs != null ? myVcs.hashCode() : 0;
-      hashcode = 31 * hashcode + (myPath != null ? myPath.hashCode() : 0);
+      hashcode = 31 * hashcode + myPath.hashCode();
     }
     return hashcode;
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("VcsRoot{vcs=%s, path=%s}", myVcs, myPath);
   }
 }

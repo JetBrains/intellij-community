@@ -1,40 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
+public final class ExternalizablePropertyContainer extends AbstractProperty.AbstractPropertyContainer {
   private static final Logger LOG = Logger.getInstance(ExternalizablePropertyContainer.class);
-  private final Map<AbstractProperty, Object> myValues = new THashMap<>();
-  private final Map<AbstractProperty, Externalizer> myExternalizers = new THashMap<>();
+  private final Map<AbstractProperty, Object> myValues = new HashMap<>();
+  private final Map<AbstractProperty, Externalizer> myExternalizers = new HashMap<>();
 
   public <T> void registerProperty(AbstractProperty<T> property, Externalizer<T> externalizer) {
     String name = property.getName();
@@ -47,39 +30,16 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
     myExternalizers.put(property, null);
   }
 
-  public void registerProperty(BooleanProperty property) {
-    registerProperty(property, Externalizer.BOOLEAN);
-  }
-
-  public void registerProperty(StringProperty property) {
-    registerProperty(property, Externalizer.STRING);
-  }
-
-  public void registerProperty(IntProperty property) {
-    registerProperty(property, Externalizer.INTEGER);
-  }
-
-  public void registerProperty(StorageProperty property) {
-    registerProperty(property, Externalizer.STORAGE);
-  }
-
-  public <T> void  registerProperty(ListProperty<T> property,@NonNls String itemTagName, Externalizer<T> itemExternalizer) {
+  public <T> void registerProperty(ListProperty<T> property,@NonNls String itemTagName, Externalizer<T> itemExternalizer) {
     registerProperty(property, createListExternalizer(itemExternalizer, itemTagName));
   }
 
-  /**
-   * @deprecated
-   */
-  public <T extends JDOMExternalizable> void  registerProperty(ListProperty<T> property, @NonNls String itemTagName, Factory<T> factory) {
-    registerProperty(property, itemTagName, Externalizer.FactoryBased.create(factory));
-  }
-
-  private static <T> Externalizer<List<T>> createListExternalizer(final Externalizer<T> itemExternalizer, final String itemTagName) {
-    return new ListExternalizer(itemExternalizer, itemTagName);
+  private static <T> Externalizer<List<T>> createListExternalizer(Externalizer<T> itemExternalizer, String itemTagName) {
+    return new ListExternalizer<>(itemExternalizer, itemTagName);
   }
 
   public void readExternal(@NotNull Element element) {
-    Map<String, AbstractProperty> propertyByName = new THashMap<>();
+    Map<String, AbstractProperty> propertyByName = new HashMap<>();
     for (AbstractProperty abstractProperty : myExternalizers.keySet()) {
       propertyByName.put(abstractProperty.getName(), abstractProperty);
     }
@@ -107,7 +67,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
     }
 
     List<AbstractProperty> properties = new ArrayList<>(myExternalizers.keySet());
-    Collections.sort(properties, AbstractProperty.NAME_COMPARATOR);
+    properties.sort(AbstractProperty.NAME_COMPARATOR);
     for (AbstractProperty property : properties) {
       Externalizer externalizer = myExternalizers.get(property);
       if (externalizer == null) {
@@ -142,11 +102,11 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
   }
 
   private static class ListExternalizer<T> implements Externalizer<List<T>> {
-    @NonNls private static final String NULL_ELEMENT = "NULL_VALUE_ELEMENT";
+    private static final @NonNls String NULL_ELEMENT = "NULL_VALUE_ELEMENT";
     private final Externalizer<T> myItemExternalizer;
     private final String myItemTagName;
 
-    public ListExternalizer(Externalizer<T> itemExternalizer, String itemTagName) {
+    ListExternalizer(Externalizer<T> itemExternalizer, String itemTagName) {
       myItemExternalizer = itemExternalizer;
       myItemTagName = itemTagName;
     }
@@ -179,7 +139,9 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
         else {
           Element element = new Element(myItemTagName);
           myItemExternalizer.writeValue(element, item);
-          dataElement.addContent(element);
+          if (!(item instanceof SkippableValue) || !JDOMUtil.isEmpty(element)) {
+            dataElement.addContent(element);
+          }
         }
       }
     }

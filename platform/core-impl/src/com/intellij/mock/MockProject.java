@@ -1,63 +1,51 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.picocontainer.PicoContainer;
 
-/**
- * @author yole
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+
 public class MockProject extends MockComponentManager implements Project {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockProject");
+  private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
+  private final CoroutineScope myCoroutineScope;
 
-  public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
+  @Internal
+  public MockProject(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
-    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        Extensions.disposeArea(MockProject.this);
-      }
-    });
+
+    myCoroutineScope = CoroutineScopeKt.childScope(GlobalScope.INSTANCE, "MockProject: " + this,
+                                                   EmptyCoroutineContext.INSTANCE, true);
   }
 
   @Override
-  public boolean isDefault() {
-    return false;
+  public void dispose() {
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, new CancellationException());
+
+    super.dispose();
   }
 
-  @NotNull
   @Override
-  public Condition<?> getDisposed() {
-    return (Condition)o -> isDisposed();
+  public @NotNull Condition<?> getDisposed() {
+    return o -> isDisposed();
   }
 
   @Override
@@ -71,27 +59,27 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @Override
   public VirtualFile getProjectFile() {
     return null;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getLocationHash() {
+  public @NotNull @NonNls String getLocationHash() {
     return "mock";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -105,15 +93,12 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return myBaseDir;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -121,15 +106,24 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  public @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
+    List<T> result = new ArrayList<>();
+    getPicoContainer().getComponentAdapters().forEach(componentAdapter -> {
+      Class<?> descendant = componentAdapter.getComponentImplementation();
+      if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
+        //noinspection unchecked
+        T instance = (T)componentAdapter.getComponentInstance();
+        // may be null in the case of the "implicit" adapter representing "this"
+        if (instance != null) {
+          result.add(instance);
+        }
+      }
+    });
+    return result;
   }
 
   public void projectOpened() {
-    final ProjectComponent[] components = getComponents(ProjectComponent.class);
-    for (ProjectComponent component : components) {
+    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
       try {
         component.projectOpened();
       }
@@ -137,5 +131,10 @@ public class MockProject extends MockComponentManager implements Project {
         LOG.error(component.toString(), e);
       }
     }
+  }
+
+  @Override
+  public final @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.PROJECT_EXTENSION : ActivityCategory.PROJECT_SERVICE;
   }
 }

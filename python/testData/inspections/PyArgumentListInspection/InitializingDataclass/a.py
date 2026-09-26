@@ -34,10 +34,10 @@ class B1:
     z: float = 0.0
 
 B1()
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1)</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a")</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a", 1.0)</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a", 1.0, "b")</warning>
+B1(<warning descr="Unexpected argument">1</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>, <warning descr="Unexpected argument">1.0</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>, <warning descr="Unexpected argument">1.0</warning>, <warning descr="Unexpected argument">"b"</warning>)
 
 
 @dataclasses.dataclass(init=False)
@@ -100,3 +100,13 @@ E1(1, 2)
 E1(1, 2, 3)
 E1(1, 2, 3, 4)
 E1(1, 2, 3, 4, <warning descr="Unexpected argument">5</warning>)
+
+
+@dataclasses.dataclass
+class F1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str
+
+F1(<warning descr="Parameter 'baz' unfilled">)</warning>
+F1("1")
+F1("1", <warning descr="Unexpected argument">"2"</warning>)

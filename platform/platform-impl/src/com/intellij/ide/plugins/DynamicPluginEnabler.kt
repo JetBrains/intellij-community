@@ -1,0 +1,133 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
+
+private val LOG = logger<DynamicPluginEnabler>()
+
+fun interface PluginEnableStateChangedListener{
+  fun stateChanged(pluginDescriptors: Collection<IdeaPluginDescriptor>, enable: Boolean)
+}
+
+@ApiStatus.Internal
+class DynamicPluginEnabler : PluginEnabler {
+  companion object {
+    private val pluginEnableStateChangedListeners = CopyOnWriteArrayList<PluginEnableStateChangedListener>()
+
+    @JvmStatic
+    fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener) {
+      pluginEnableStateChangedListeners.add(listener)
+    }
+
+    @JvmStatic
+    fun removePluginStateChangedListener(listener: PluginEnableStateChangedListener) {
+      pluginEnableStateChangedListeners.remove(listener)
+    }
+  }
+
+  override fun isDisabled(pluginId: PluginId): Boolean = PluginEnabler.HEADLESS.isDisabled(pluginId)
+
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = enable(descriptors, project = null)
+
+  fun enable(descriptors: Collection<IdeaPluginDescriptor>, project: Project? = null): Boolean {
+    return enable(descriptors = descriptors, progressTitle = null, project = project)
+  }
+
+  fun enable(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    progressTitle: @Nls String?,
+    project: Project? = null,
+  ): Boolean {
+    if (descriptors.any { !PluginManagerCore.isCompatible(it) }) {
+      // mark plugins enabled and require restart
+      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+      PluginEnabler.HEADLESS.enable(descriptors)
+
+      return false
+    }
+
+    if (LoadingState.APP_STARTED.isOccurred) {
+      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+    }
+
+    val disabledStateChanged = PluginEnabler.HEADLESS.enable(descriptors)
+    val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
+
+    val pluginsLoaded: Boolean
+    if (!disabledStateChanged && installedDescriptors.all { PluginManagerCore.isLoaded(it) }) {
+      // nothing to do
+      pluginsLoaded = true
+    }
+    else {
+      // FIXME disregards custom title
+      val loaded = AtomicBoolean(false)
+      runInEdt {
+        loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
+      }
+      pluginsLoaded = loaded.get()
+    }
+
+    for (listener in pluginEnableStateChangedListeners) {
+      try {
+        listener.stateChanged(descriptors, true)
+      } catch (ex: Exception) {
+        LOG.warn("An exception occurred while processing enablePlugins in $listener", ex)
+      }
+    }
+    return pluginsLoaded
+  }
+
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = disable(descriptors, project = null)
+
+  fun disable(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    project: Project? = null,
+  ): Boolean {
+    PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = false, project)
+
+    PluginEnabler.HEADLESS.disable(descriptors)
+    val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
+    val pluginsUnloaded = DynamicPlugins.unloadPlugins(installedDescriptors, project)
+    for (listener in pluginEnableStateChangedListeners) {
+      try {
+        listener.stateChanged(descriptors, false)
+      } catch (ex: Exception) {
+        LOG.warn("An exception occurred while processing disablePlugins in $listener", ex)
+      }
+    }
+    return pluginsUnloaded
+  }
+}
+
+private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>): List<PluginMainDescriptor>? {
+  val result = descriptors.mapNotNull {
+    runCatching { findInstalledPlugin(it) }
+      .getOrLogException(LOG)
+  }
+  if (result.size != descriptors.size) {
+    return null
+  }
+  return result.distinct() // drop duplicates just in case
+}
+
+private fun findInstalledPlugin(descriptor: IdeaPluginDescriptor): PluginMainDescriptor {
+  return when (descriptor) {
+    is IdeaPluginDescriptorImpl -> descriptor.getMainDescriptor()
+    is PluginNode -> {
+      val pluginId = descriptor.pluginId
+      PluginManagerCore.getPluginSet().findInstalledPlugin(pluginId)
+      ?: throw IllegalStateException("Plugin '$pluginId' is not installed")
+    }
+    else -> throw IllegalArgumentException("Unknown descriptor kind: $descriptor")
+  }
+}

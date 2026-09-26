@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.WriteAction;
@@ -10,9 +11,6 @@ import java.io.IOException;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
-/**
- * @author nik
- */
 public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
   public void testMoveFile() throws IOException {
     VirtualFile file = createFile("res/dir1/a.txt", "hello");
@@ -35,10 +33,7 @@ public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
     makeProjectForTheFirstTime();
     assertOutput(m, fs().file("a.txt", "hello"));
 
-
-    WriteAction.run(() -> {
-      file.rename(this, "b.txt");
-    });
+    WriteAction.run(() -> file.rename(this, "b.txt"));
     make(m);
     assertOutput(m, fs().file("b.txt", "hello"));
   }
@@ -46,7 +41,7 @@ public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
   private void makeProjectForTheFirstTime() {
     buildAllModules();
 
-    //first compilation creates an output directory which causes 'rootChanged' which drops BuildManager's ProjectData cache and forces rescanning,
+    // first compilation creates an output directory which causes 'rootChanged' which drops BuildManager's ProjectData cache and forces rescanning,
     // so we need to perform an additional dummy compilation to check that ProjectData is updated correctly
     buildAllModules().assertUpToDate();
   }

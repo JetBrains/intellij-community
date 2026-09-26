@@ -8,6 +8,7 @@ class ImportHookManager(ModuleType):
         ModuleType.__init__(self, name)
         self._system_import = system_import
         self._modules_to_patch = {}
+        self.inside_activation = False
 
     def add_module_name(self, module_name, activate_function):
         self._modules_to_patch[module_name] = activate_function
@@ -19,11 +20,13 @@ class ImportHookManager(ModuleType):
 
         module = self._system_import(name, *args, **kwargs)
         try:
-            if activate_func:
+            if activate_func and not self.inside_activation:
+                self.inside_activation = True
                 succeeded = activate_func()
                 if succeeded and name in self._modules_to_patch:
                     # Remove if only it was executed correctly
                     self._modules_to_patch.pop(name)
+                self.inside_activation = False
         except:
             sys.stderr.write("Matplotlib support failed\n")
             traceback.print_exc()

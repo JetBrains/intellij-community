@@ -1,24 +1,16 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -34,12 +26,12 @@ public class PropertyExpander {
   public interface PropertyExpansionListener {
     void onPropertyExpanded(String propName, String propValue);
   }
-  
-  public PropertyExpander(final @NotNull String str) {
+
+  public PropertyExpander(final @NotNull @NlsSafe String str) {
     this(str, Collections.emptySet());
   }
 
-  private PropertyExpander(final @NotNull String str, Set<String> namesToSkip) {
+  private PropertyExpander(final @NotNull @NlsSafe String str, Set<@NlsSafe String> namesToSkip) {
     myResolver = new Resolver(str, namesToSkip);
     myNamesToSkip.addAll(namesToSkip);
   }
@@ -100,17 +92,16 @@ public class PropertyExpander {
     }
   }
 
-  @NotNull
-  public String getResult() {
+  public @NotNull String getResult() {
     return myResolver.getResult();
   }
 
 
-  private static class Resolver implements Iterator<String> {
+  private static final class Resolver implements Iterator<String> {
     private int myCurrentIndex = -1;
-    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames; 
+    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames;
     private final StringBuilder myBuilder;
-    
+
     private Resolver(final String str, Set<String> namesToSkip) {
       myBuilder = new StringBuilder(str);
       int startProp = 0;
@@ -172,20 +163,23 @@ public class PropertyExpander {
 
     String getResult() {
       final String value = myBuilder.toString();
-      if (value.indexOf("$$") >= 0) {
+      if (value.contains("$$")) {
         return $$_PATTERN.matcher(value).replaceAll("\\$");
       }
       return value;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentIndex + 1) < myPropertyNames.size();
     }
 
+    @Override
     public String next() {
       return getPropertyName(++myCurrentIndex);
     }
 
+    @Override
     public void remove() {
       replace("");
     }

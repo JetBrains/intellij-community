@@ -2,7 +2,7 @@ class Test {
 
   public void myMethod()
   {
-    foo ( <error descr="Variable expected">bar("")</error> = "");
+    foo ( <error descr="Reference to variable expected on left-hand side of assignment">bar("")</error> = "");
   }
 
   private <T> T foo(final T bar) {

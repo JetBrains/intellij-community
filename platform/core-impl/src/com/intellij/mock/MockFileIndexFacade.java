@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.module.Module;
@@ -22,16 +8,18 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class MockFileIndexFacade extends FileIndexFacade {
   private final Module myModule;
-  private final List<VirtualFile> myLibraryRoots = new ArrayList<>();
+  private final Set<VirtualFile> myLibraryRoots = new HashSet<>();
 
   public MockFileIndexFacade(final Project project) {
     super(project);
@@ -55,10 +43,10 @@ public class MockFileIndexFacade extends FileIndexFacade {
 
   @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
-    for (VirtualFile libraryRoot : myLibraryRoots) {
-      if (VfsUtilCore.isAncestor(libraryRoot, file, false)) {
-        return true;
-      }
+    VirtualFile candidate = file;
+    while (candidate != null) {
+      if (myLibraryRoots.contains(candidate)) return true;
+      candidate = candidate.getParent();
     }
     return false;
   }
@@ -78,6 +66,10 @@ public class MockFileIndexFacade extends FileIndexFacade {
     return false;
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public boolean isIndexable(@NotNull VirtualFile file) { return true; }
+
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
     return myModule;
@@ -88,16 +80,19 @@ public class MockFileIndexFacade extends FileIndexFacade {
     return VfsUtilCore.isAncestor(baseDir, child, false);
   }
 
-  @NotNull
   @Override
-  public ModificationTracker getRootModificationTracker() {
+  public @NotNull ModificationTracker getRootModificationTracker() {
     return ModificationTracker.NEVER_CHANGED;
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return Collections.emptySet();
+  }
+
+  @Override
+  public boolean isInLibrary(@NotNull VirtualFile file) {
+    return isInLibraryClasses(file) || isInLibrarySource(file);
   }
 
   public void addLibraryRoot(VirtualFile file) {

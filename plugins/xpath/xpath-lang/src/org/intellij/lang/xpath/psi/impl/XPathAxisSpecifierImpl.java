@@ -15,20 +15,20 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
-import org.intellij.lang.xpath.psi.XPathElementVisitor;
-import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
-import org.intellij.lang.xpath.psi.Axis;
-import org.intellij.lang.xpath.XPathTokenTypes;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class XPathAxisSpecifierImpl extends XPathElementImpl implements XPathAxisSpecifier {
     public XPathAxisSpecifierImpl(ASTNode node) {
         super(node);
     }
 
-    @NotNull
-    public Axis getAxis() {
+    @Override
+    public @NotNull Axis getAxis() {
         final ASTNode[] nodes = getNode().getChildren(XPathTokenTypes.AXIS);
         if (nodes.length > 0) {
           return Axis.fromName(nodes[0].getText());
@@ -39,12 +39,14 @@ public class XPathAxisSpecifierImpl extends XPathElementImpl implements XPathAxi
         }
     }
 
+    @Override
     public boolean isDefaultAxis() {
         final ASTNode node = getNode();
         final boolean b = node.getChildren(XPathTokenTypes.AXIS).length == 0;
         return b && node.findChildByType(XPathTokenTypes.AT) == null;
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathAxisSpecifier(this);
   }

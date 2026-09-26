@@ -1,0 +1,115 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.newui
+
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
+
+@ApiStatus.Internal
+interface PluginManagerCustomizer {
+
+  fun isEnabled(): Boolean
+
+  fun initCustomizer(parentComponent: JComponent)
+
+  suspend fun getInstallButonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginToInstallModel: PluginUiModel,
+    modalityState: ModalityState,
+  ): OptionsButonCustomizationModel?
+
+  suspend fun getDisableButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+    modalityState: ModalityState,
+  ): OptionsButonCustomizationModel?
+
+  suspend fun getPopupMenuActions(
+    pluginModelFacade: PluginModelFacade,
+    selection: List<PluginPopupMenuActionData>,
+    modalityState: ModalityState,
+  ): List<AnAction> = emptyList()
+
+  suspend fun getUpdateButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+    updateModel: PluginUiModel?,
+    modalityState: ModalityState,
+  ): UpdateButtonCustomizationModel?
+
+  suspend fun getUninstallButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+  ): UninstallButtonCustomizationModel?
+
+  fun updateAfterModification(updateUi: () -> Unit)
+
+  suspend fun updateAfterModificationAsync(updateUi: suspend () -> Unit)
+
+  fun getExtraPluginsActions(): List<AnAction>
+
+  fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
+
+  suspend fun isPluginCompletelyUninstalled(pluginModel: PluginUiModel): Boolean = true
+
+  @Nls
+  fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
+
+  @Nls
+  fun getUpdateSourceText(pluginModel: PluginUiModel): String?
+
+  suspend fun awaitPluginStatesLoaded()
+
+  fun updateCustomRepositories(
+    addedRepoUrls: List<String>,
+    removedRepoUrls: List<String>,
+    updateUi: () -> Unit,
+  )
+
+  fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
+
+  fun getAllPluginIds(pluginId: PluginId): Set<PluginId>
+
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<PluginManagerCustomizer> = ExtensionPointName("com.intellij.pluginManagerCustomizer")
+
+    @JvmStatic
+    fun getInstance(): PluginManagerCustomizer? {
+      if (UiPluginManager.isCombinedPluginManagerEnabled()) {
+        return EP_NAME.extensionList.firstOrNull { it.isEnabled() }
+      }
+      return null
+    }
+  }
+}
+
+@ApiStatus.Internal
+data class OptionsButonCustomizationModel(
+  val additionalActions: List<AnAction>,
+  val isVisible: Boolean = true,
+  val mainAction: (() -> Unit)? = null,
+  @param:NlsSafe val text: String? = null,
+)
+
+@ApiStatus.Internal
+data class PluginPopupMenuActionData(
+  val pluginModel: PluginUiModel,
+  val installedDescriptorForMarketplace: PluginUiModel?,
+  val descriptorForActions: PluginUiModel,
+)
+
+@ApiStatus.Internal
+data class UpdateButtonCustomizationModel(
+  val action: (PluginOperationContext?) -> Unit,
+)
+
+@ApiStatus.Internal
+data class UninstallButtonCustomizationModel(
+  val action: () -> Unit,
+)

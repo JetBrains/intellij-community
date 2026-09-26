@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.copyright"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Properties" implementationClass="com.maddyhome.idea.copyright.psi.UpdateAnyFileCopyright$Provider"/>
+  </extensions>
+</idea-plugin>

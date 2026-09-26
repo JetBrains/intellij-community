@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_internalTypealiasObject-a.kotlin_module
+  test/UseTypeAliasObjectKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/internalTypealiasObject/a/useTypeAliasObject.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,4 @@
+dependencies:
+  override:
+    - sudo apt-get install -y nodejs
+    - sudo<caret>

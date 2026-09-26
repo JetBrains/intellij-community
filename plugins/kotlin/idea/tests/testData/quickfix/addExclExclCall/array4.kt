@@ -1,0 +1,9 @@
+// "Add non-null asserted (a!!) call" "true"
+// ERROR: Type mismatch: inferred type is String? but String was expected
+// K2_AFTER_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: RETURN_TYPE_MISMATCH
+// K2_ERROR: UNSAFE_CALL
+fun foo(a: Array<String?>?): String {
+    return <caret>a[0]
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

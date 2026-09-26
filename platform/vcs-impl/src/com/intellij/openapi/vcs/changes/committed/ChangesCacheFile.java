@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.base.Stopwatch;
@@ -6,8 +6,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.DiffProviderEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -19,23 +31,56 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.*;
-import java.util.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.*;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_DOES_NOT_MATTER_ALIEN_PATH;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_DOES_NOT_MATTER_DELETED_FOUND_IN_INCOMING_LIST;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_DOES_NOT_MATTER_NON_LOCAL;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_DOES_NOT_MATTER_OUTSIDE_INCOMING;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_EXISTS_LOCALLY_AVAILABLE;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_EXISTS_NOT_LOCALLY_AVAILABLE;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_EXISTS_REVISION_NOT_LOADED;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_NOT_EXISTS_LOCALLY_AVAILABLE;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_NOT_EXISTS_MARKED_FOR_DELETION;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_NOT_EXISTS_OTHER;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.AFTER_NOT_EXISTS_SUBSEQUENTLY_DELETED;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_DOES_NOT_MATTER_OUTSIDE;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_EXISTS_BUT_SHOULD_NOT;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_NOT_EXISTS_ALREADY_DELETED;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_NOT_EXISTS_DELETED_LOCALLY;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_SAME_NAME_ADDED_AFTER_DELETION;
+import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.BEFORE_UNVERSIONED_INSTEAD_OF_VERS_DELETED;
 
-/**
- * @author yole
- */
-public class ChangesCacheFile {
+@ApiStatus.Internal
+public final class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance(ChangesCacheFile.class);
   private static final int VERSION = 7;
 
-  private final File myPath;
+  private final Path file;
   private final File myIndexPath;
   private RandomAccessFile myStream;
   private RandomAccessFile myIndexStream;
@@ -45,7 +90,7 @@ public class ChangesCacheFile {
   private final CachingCommittedChangesProvider myChangesProvider;
   private final ProjectLevelVcsManager myVcsManager;
   private final FilePath myRootPath;
-  private final RepositoryLocation myLocation;
+  private final @NotNull RepositoryLocation myLocation;
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist;
@@ -53,18 +98,18 @@ public class ChangesCacheFile {
   private int myIncomingCount;
   private boolean myHaveCompleteHistory;
   private boolean myHeaderLoaded;
-  @NonNls private static final String INDEX_EXTENSION = ".index";
+  private static final @NonNls String INDEX_EXTENSION = ".index";
   private static final int INDEX_ENTRY_SIZE = 3*8+2;
   private static final int HEADER_SIZE = 46;
 
-  public ChangesCacheFile(Project project, File path, AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
+  public ChangesCacheFile(Project project, Path path, AbstractVcs vcs, VirtualFile root, @NotNull RepositoryLocation location) {
     reset();
 
     myProject = project;
-    myPath = path;
-    myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
+    file = path;
+    myIndexPath = new File(file.toString() + INDEX_EXTENSION);
     myVcs = vcs;
-    myChangesProvider = (CachingCommittedChangesProvider) vcs.getCommittedChangesProvider();
+    myChangesProvider = (CachingCommittedChangesProvider)vcs.getCommittedChangesProvider();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRootPath = VcsUtil.getFilePath(root);
     myLocation = location;
@@ -72,7 +117,7 @@ public class ChangesCacheFile {
 
   private void reset() {
     final Calendar date = Calendar.getInstance();
-    date.set(2020, Calendar.FEBRUARY, 2);
+    date.setTime(new Date(Long.MAX_VALUE));
     myFirstCachedDate = date.getTime();
     date.set(1970, Calendar.FEBRUARY, 2);
     myLastCachedDate = date.getTime();
@@ -83,7 +128,7 @@ public class ChangesCacheFile {
     myHeaderLoaded = false;
   }
 
-  public RepositoryLocation getLocation() {
+  public @NotNull RepositoryLocation getLocation() {
     return myLocation;
   }
 
@@ -92,14 +137,15 @@ public class ChangesCacheFile {
   }
 
   public boolean isEmpty() throws IOException {
-    if (!myPath.exists()) {
+    if (!Files.exists(file)) {
       return true;
     }
+
     try {
       loadHeader();
     }
     catch(VersionMismatchException | EOFException ex) {
-      myPath.delete();
+      Files.deleteIfExists(file);
       myIndexPath.delete();
       return true;
     }
@@ -108,7 +154,13 @@ public class ChangesCacheFile {
   }
 
   public void delete() {
-    FileUtil.delete(myPath);
+    try {
+      Files.deleteIfExists(file);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
+
     FileUtil.delete(myIndexPath);
     try {
       closeStreams();
@@ -118,13 +170,14 @@ public class ChangesCacheFile {
     }
   }
 
-  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
+  @Contract(mutates = "this,param1")
+  public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
-    Collections.sort(changes, CommittedChangeListByDateComparator.ASCENDING);
+    changes.sort(CommittedChangeListByDateComparator.ASCENDING);
     return writeChanges(changes, null);
   }
 
-  public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes, @Nullable final List<Boolean> present) throws IOException {
+  public List<CommittedChangeList> writeChanges(final List<? extends CommittedChangeList> changes, final @Nullable List<Boolean> present) throws IOException {
     assert present == null || present.size() == changes.size();
 
     List<CommittedChangeList> result = new ArrayList<>(changes.size());
@@ -157,7 +210,7 @@ public class ChangesCacheFile {
         //noinspection unchecked
         myChangesProvider.writeChangeList(myStream, list);
         updateCachedRange(list);
-        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present == null ? false : iterator.next());
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present != null && iterator.next());
         myIncomingCount++;
       }
       writeHeader();
@@ -196,7 +249,7 @@ public class ChangesCacheFile {
   }
 
   private void openStreams() throws FileNotFoundException {
-    myStream = new RandomAccessFile(myPath, "rw");
+    myStream = new RandomAccessFile(file.toFile(), "rw");
     myIndexStream = new RandomAccessFile(myIndexPath, "rw");
     myStreamsOpen = true;
   }
@@ -262,7 +315,7 @@ public class ChangesCacheFile {
     if (count == 0) {
       return NO_ENTRIES;
     }
-    myIndexStream.seek(myIndexStream.length() - INDEX_ENTRY_SIZE * (count + offset));
+    myIndexStream.seek(myIndexStream.length() - INDEX_ENTRY_SIZE * ((long)count + offset));
     IndexEntry[] result = new IndexEntry[count];
     for(int i=0; i<count; i++) {
       result [i] = new IndexEntry();
@@ -300,8 +353,7 @@ public class ChangesCacheFile {
 
   private void loadHeader() throws IOException {
     if (!myHeaderLoaded) {
-      RandomAccessFile stream = new RandomAccessFile(myPath, "r");
-      try {
+      try (RandomAccessFile stream = new RandomAccessFile(file.toFile(), "r")) {
         int version = stream.readInt();
         if (version != VERSION) {
           throw new VersionMismatchException();
@@ -318,9 +370,6 @@ public class ChangesCacheFile {
         myIncomingCount = stream.readInt();
         assert stream.getFilePointer() == HEADER_SIZE;
       }
-      finally {
-        stream.close();
-      }
       myHeaderLoaded = true;
     }
   }
@@ -329,7 +378,7 @@ public class ChangesCacheFile {
     return new BackIterator(bunchSize);
   }
 
-  private List<Boolean> loadAllData(final List<CommittedChangeList> lists) throws IOException {
+  private List<Boolean> loadAllData(final List<? super CommittedChangeList> lists) throws IOException {
     List<Boolean> idx = new ArrayList<>();
     openStreams();
 
@@ -338,7 +387,7 @@ public class ChangesCacheFile {
       final long length = myIndexStream.length();
       long totalCount = length / INDEX_ENTRY_SIZE;
       for(int i=0; i<totalCount; i++) {
-        final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+        final long indexOffset = length - (i + 1L) * INDEX_ENTRY_SIZE;
         myIndexStream.seek(indexOffset);
         IndexEntry e = new IndexEntry();
         readIndexEntry(e);
@@ -367,7 +416,7 @@ public class ChangesCacheFile {
     writeChanges(lists, present);
   }
 
-  private class BackIterator implements Iterator<ChangesBunch> {
+  private final class BackIterator implements Iterator<ChangesBunch> {
     private final int bunchSize;
     private long myOffset;
 
@@ -386,12 +435,13 @@ public class ChangesCacheFile {
       }
     }
 
+    @Override
     public boolean hasNext() {
       return myOffset > 0;
     }
 
-    @Nullable
-    public ChangesBunch next() {
+    @Override
+    public @Nullable ChangesBunch next() {
       try {
         final int size;
         if (myOffset < bunchSize) {
@@ -409,6 +459,7 @@ public class ChangesCacheFile {
       }
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
@@ -434,7 +485,7 @@ public class ChangesCacheFile {
     }
   }
 
-  public List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
+  public @NotNull List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
     final List<CommittedChangeList> result = new ArrayList<>();
     final ChangeBrowserSettings.Filter filter = settings.createFilter();
     openStreams();
@@ -510,7 +561,7 @@ public class ChangesCacheFile {
         }
         if (!entries [0].completelyDownloaded) {
           IncomingChangeListData data = readIncomingChangeListData(offset, entries [0]);
-          if (data.accountedChanges.size() == 0) {
+          if (data.accountedChanges.isEmpty()) {
             result.add(data.changeList);
           }
           else {
@@ -539,7 +590,7 @@ public class ChangesCacheFile {
     return myChangesProvider.readChangeList(myLocation, myStream);
   }
 
-  public boolean processUpdatedFiles(UpdatedFiles updatedFiles, Collection<CommittedChangeList> receivedChanges) throws IOException {
+  public boolean processUpdatedFiles(UpdatedFiles updatedFiles, Collection<? super CommittedChangeList> receivedChanges) throws IOException {
     boolean haveUnaccountedUpdatedFiles = false;
     openStreams();
     loadHeader();
@@ -645,7 +696,7 @@ public class ChangesCacheFile {
     long totalCount = length / INDEX_ENTRY_SIZE;
     List<IncomingChangeListData> incomingData = new ArrayList<>();
     for(int i=0; i<totalCount; i++) {
-      final long indexOffset = length - (i + 1) * INDEX_ENTRY_SIZE;
+      final long indexOffset = length - (i + 1L) * INDEX_ENTRY_SIZE;
       myIndexStream.seek(indexOffset);
       IndexEntry e = new IndexEntry();
       readIndexEntry(e);
@@ -676,10 +727,9 @@ public class ChangesCacheFile {
       partialFile.delete();
     }
     else if (accounted > 0) {
-      RandomAccessFile file = new RandomAccessFile(partialFile, "rw");
-      try {
+      try (RandomAccessFile file = new RandomAccessFile(partialFile, "rw")) {
         file.writeInt(accounted);
-        for(Change c: data.accountedChanges) {
+        for (Change c : data.accountedChanges) {
           boolean isAfterRevision = true;
           ContentRevision revision = c.getAfterRevision();
           if (revision == null) {
@@ -691,9 +741,6 @@ public class ChangesCacheFile {
           file.writeUTF(revision.getFile().getIOFile().toString());
         }
       }
-      finally {
-        file.close();
-      }
     }
   }
 
@@ -702,8 +749,7 @@ public class ChangesCacheFile {
     try {
       File partialFile = getPartialPath(data.indexEntry.offset);
       if (partialFile.exists()) {
-        RandomAccessFile file = new RandomAccessFile(partialFile, "r");
-        try {
+        try (RandomAccessFile file = new RandomAccessFile(partialFile, "r")) {
           int count = file.readInt();
           if (count > 0) {
             final Collection<Change> changes = data.changeList.getChanges();
@@ -717,14 +763,15 @@ public class ChangesCacheFile {
                 afterPaths.put(FilePathsHelper.convertPath(change.getAfterRevision().getFile()), change);
               }
             }
-            for(int i=0; i<count; i++) {
+            for (int i = 0; i < count; i++) {
               boolean isAfterRevision = (file.readByte() != 0);
               String path = file.readUTF();
               final String converted = FilePathsHelper.convertPath(path);
               final Change change;
               if (isAfterRevision) {
                 change = afterPaths.get(converted);
-              } else {
+              }
+              else {
                 change = beforePaths.get(converted);
               }
               if (change != null) {
@@ -732,9 +779,6 @@ public class ChangesCacheFile {
               }
             }
           }
-        }
-        finally {
-          file.close();
         }
       }
     }
@@ -744,17 +788,16 @@ public class ChangesCacheFile {
     data.accountedChanges = result;
   }
 
-  @NonNls
-  private File getPartialPath(final long offset) {
-    return new File(myPath + "." + offset + ".partial");
+  private @NonNls File getPartialPath(final long offset) {
+    return new File(file + "." + offset + ".partial");
   }
 
   public boolean refreshIncomingChanges() throws IOException, VcsException {
     if (myProject.isDisposed()) return false;
-    
+
     DiffProvider diffProvider = myVcs.getDiffProvider();
     if (diffProvider == null) return false;
-    
+
     return new RefreshIncomingChangesOperation(this, myProject, diffProvider).invoke();
   }
 
@@ -766,13 +809,12 @@ public class ChangesCacheFile {
     return myRootPath;
   }
 
-  private static class RefreshIncomingChangesOperation {
+  private static final class RefreshIncomingChangesOperation {
     private final Set<FilePath> myDeletedFiles = new HashSet<>();
     private final Set<FilePath> myCreatedFiles = new HashSet<>();
     private final Set<FilePath> myReplacedFiles = new HashSet<>();
     private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<>();
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<>();
-    private final ChangeListManagerImpl myClManager;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
     private final DiffProvider myDiffProvider;
@@ -783,12 +825,11 @@ public class ChangesCacheFile {
       myChangesCacheFile = changesCacheFile;
       myProject = project;
       myDiffProvider = diffProvider;
-      myClManager = ChangeListManagerImpl.getInstanceImpl(project);
     }
 
     public boolean invoke() throws VcsException, IOException {
       myChangesCacheFile.myLocation.onBeforeBatch();
-      final Collection<FilePath> incomingFiles = myChangesCacheFile.myChangesProvider.getIncomingFiles(myChangesCacheFile.myLocation);
+      Collection<FilePath> incomingFiles = myChangesCacheFile.myChangesProvider.getIncomingFiles(myChangesCacheFile.myLocation);
 
       myAnyChanges = false;
       myChangesCacheFile.openStreams();
@@ -825,9 +866,9 @@ public class ChangesCacheFile {
     private boolean refreshIncomingInFile(Collection<FilePath> incomingFiles, List<IncomingChangeListData> list) throws IOException {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
-      
-      Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
-      Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = ContainerUtil.newHashMap();
+
+      Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = new HashMap<>();
+      Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = new HashMap<>();
 
       myIndexStreamCachedLength = myChangesCacheFile.myIndexStream.length();
       // try to process changelists in a light way, remember which files need revisions
@@ -838,7 +879,7 @@ public class ChangesCacheFile {
 
         for(Change change: data.getChangesToProcess()) {
           final ProcessingResult result = processIncomingChange(change, data, incomingFiles);
-          
+
           Pair<IncomingChangeListData, Change> key = Pair.create(data, change);
           results.put(key, result);
           if (result.revisionDependentProcessing != null) {
@@ -850,7 +891,7 @@ public class ChangesCacheFile {
 
       if (!revisionDependentFiles.isEmpty()) {
         // lots of same files could be collected - make set of unique files
-        HashSet<VirtualFile> uniqueFiles = ContainerUtil.newHashSet(revisionDependentFiles.values());
+        HashSet<VirtualFile> uniqueFiles = new HashSet<>(revisionDependentFiles.values());
         // bulk-get all needed revisions at once
         Map<VirtualFile, VcsRevisionNumber> revisions = myDiffProvider instanceof DiffProviderEx
                                                         ? ((DiffProviderEx)myDiffProvider).getCurrentRevisions(uniqueFiles)
@@ -891,9 +932,9 @@ public class ChangesCacheFile {
       }
       return myAnyChanges || !list.isEmpty();
     }
-    
-    private static class ProcessingResult {
-      final boolean changeFound; 
+
+    private static final class ProcessingResult {
+      final boolean changeFound;
       final IncomingChangeState.State state;
       final VirtualFile file;
       final Function<VcsRevisionNumber, ProcessingResult> revisionDependentProcessing;
@@ -913,9 +954,9 @@ public class ChangesCacheFile {
       }
     }
 
-    private ProcessingResult processIncomingChange(final Change change,
-                                          final IncomingChangeListData changeListData,
-                                          @Nullable final Collection<FilePath> incomingFiles) {
+    private ProcessingResult processIncomingChange(@NotNull Change change,
+                                                   @NotNull IncomingChangeListData changeListData,
+                                                   @Nullable Collection<FilePath> incomingFiles) {
       final CommittedChangeList changeList = changeListData.changeList;
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
@@ -995,7 +1036,8 @@ public class ChangesCacheFile {
         }
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
-          final boolean locallyDeleted = myClManager.isContainedInLocallyDeleted(beforeRevision.getFile());
+          final boolean locallyDeleted = ChangeListManagerImpl.getInstanceImpl(myProject)
+            .isContainedInLocallyDeleted(beforeRevision.getFile());
           debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
           return new ProcessingResult(!locallyDeleted, locallyDeleted ? BEFORE_NOT_EXISTS_DELETED_LOCALLY : BEFORE_NOT_EXISTS_ALREADY_DELETED);
         }
@@ -1019,12 +1061,11 @@ public class ChangesCacheFile {
     }
 
     private boolean fileMarkedForDeletion(final FilePath localPath) {
-      final List<LocalChangeList> changeLists =  myClManager.getChangeListsCopy();
+      final List<LocalChangeList> changeLists =  ChangeListManager.getInstance(myProject).getChangeLists();
       for (LocalChangeList list : changeLists) {
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {
-          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile() != null &&
-              change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
+          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
             if (FileStatus.DELETED.equals(change.getFileStatus()) || change.isMoved() || change.isRenamed()) {
               return true;
             }
@@ -1072,12 +1113,10 @@ public class ChangesCacheFile {
       // could take a lot of time
       boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeFile, false);
 
-      if (underBefore && isParentReplaced) {
-        debug("For " + file + "some of parents is replaced: " + beforeFile);
-        return true;
-      }
-      else if (underBefore && isMovedRenamed) {
-        debug("For " + file + "some of parents was renamed/moved: " + beforeFile);
+      if (underBefore) {
+        debug(isParentReplaced
+              ? "For " + file + "some of parents is replaced: " + beforeFile
+              : "For " + file + "some of parents was renamed/moved: " + beforeFile);
         return true;
       }
       return false;
@@ -1108,7 +1147,7 @@ public class ChangesCacheFile {
         changeList = myChangesCacheFile.loadChangeListAt(offset);
         myPreviousChangeListsCache.put(offset, changeList);
       }
-      return changeList; 
+      return changeList;
     }
 
     private static boolean isDeletedFile(final Set<FilePath> deletedFiles,
@@ -1128,19 +1167,20 @@ public class ChangesCacheFile {
     }
   }
 
-  private static class IndexEntry {
+  private static final class IndexEntry {
     long number;
     long date;
     long offset;
     boolean completelyDownloaded;
   }
 
-  private static class IncomingChangeListData {
+  private static final class IncomingChangeListData {
     public long indexOffset;
     public IndexEntry indexEntry;
     public CommittedChangeList changeList;
     public Set<Change> accountedChanges;
 
+    @Unmodifiable
     List<Change> getChangesToProcess() {
       return ContainerUtil.filter(changeList.getChanges(), change -> !accountedChanges.contains(change));
     }
@@ -1148,10 +1188,10 @@ public class ChangesCacheFile {
 
   private static final IndexEntry[] NO_ENTRIES = new IndexEntry[0];
 
-  private static class VersionMismatchException extends RuntimeException {
+  private static final class VersionMismatchException extends RuntimeException {
   }
 
-  private static class ReceivedChangeListTracker {
+  private static final class ReceivedChangeListTracker {
     private final Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<>();
 
     public void addChange(CommittedChangeList changeList, Change change) {

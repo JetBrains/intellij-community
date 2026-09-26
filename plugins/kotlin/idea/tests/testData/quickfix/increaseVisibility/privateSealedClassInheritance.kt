@@ -1,0 +1,12 @@
+// "Make 'SealedClass' public" "true"
+// PRIORITY: HIGH
+// ACTION: Create test
+// ACTION: Introduce import alias
+// ACTION: Make 'SealedClass' public
+// ACTION: Make 'Test' private
+// K2_ERROR: EXPOSED_SUPER_CLASS
+
+private sealed class SealedClass
+
+class Test : <caret>SealedClass()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

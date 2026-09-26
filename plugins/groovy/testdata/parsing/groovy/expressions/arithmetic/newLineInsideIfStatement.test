@@ -1,0 +1,28 @@
+if (a
++ b == 1) {}
+-----
+Groovy script
+  IF statement
+    PsiElement(if)('if')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Relational expression
+      Additive expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(new line)('\n')
+        PsiElement(+)('+')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('1')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

@@ -27,8 +27,6 @@ import java.io.File;
 /**
  * This class is added to workaround https://issues.apache.org/bugzilla/show_bug.cgi?id=49605
  * in Ant 1.8.0 and 1.8.1
- *
- * @author nik
  */
 public class PatchedJar extends Jar {
   private static final String MANIFEST_NAME = "META-INF/MANIFEST.MF";
@@ -42,9 +40,9 @@ public class PatchedJar extends Jar {
         // checks here defering them for the second run
         Resource[][] manifests = grabManifests(rcs);
         int count = 0;
-        for (int i = 0; i < manifests.length; i++) {
-            count += manifests[i].length;
-        }
+      for (Resource[] manifest : manifests) {
+        count += manifest.length;
+      }
         log("found a total of " + count + " manifests in "
             + manifests.length + " resource collections",
             Project.MSG_VERBOSE);
@@ -60,13 +58,11 @@ public class PatchedJar extends Jar {
   private Resource[][] grabManifests(ResourceCollection[] rcs) {
       Resource[][] manifests = new Resource[rcs.length][];
       for (int i = 0; i < rcs.length; i++) {
-          Resource[][] resources = null;
+          Resource[][] resources;
           if (rcs[i] instanceof FileSet) {
               resources = grabResources(new FileSet[] {(FileSet) rcs[i]});
           } else {
-              resources = grabNonFileSetResources(new ResourceCollection[] {
-                      rcs[i]
-                  });
+              resources = grabNonFileSetResources(new ResourceCollection[] {rcs[i]});
           }
           for (int j = 0; j < resources[0].length; j++) {
               String name = resources[0][j].getName().replace('\\', '/');

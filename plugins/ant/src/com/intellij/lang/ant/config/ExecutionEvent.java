@@ -18,13 +18,15 @@ package com.intellij.lang.ant.config;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class ExecutionEvent {
-  public abstract String getTypeId();
+  public abstract @NonNls String getTypeId();
 
-  public abstract String getPresentableName();
+  public abstract @Nls String getPresentableName();
 
-  public void readExternal(Element element, Project project) throws InvalidDataException{
+  public void readExternal(Element element, Project project) throws InvalidDataException {
   }
 
   public String writeExternal(Element element, Project project) {

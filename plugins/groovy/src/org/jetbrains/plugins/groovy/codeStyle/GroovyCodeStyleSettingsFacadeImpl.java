@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade;
 
-public class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFacade {
+public final class GroovyCodeStyleSettingsFacadeImpl extends GroovyCodeStyleSettingsFacade {
   private final Project myProject;
 
   public GroovyCodeStyleSettingsFacadeImpl(Project project) {

@@ -1,59 +1,60 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services}
  * and provides entry points for project data management.
  *
  * @author Vladislav Soroka
- * @since 4/16/13 11:38 AM
  */
 public interface ProjectDataManager {
   static ProjectDataManager getInstance() {
-    return ServiceManager.getService(ProjectDataManager.class);
+    return ApplicationManager.getApplication().getService(ProjectDataManager.class);
   }
 
-  @SuppressWarnings("unchecked")
-  void importData(@NotNull Collection<DataNode<?>> nodes,
-                  @NotNull Project project,
-                  @NotNull IdeModifiableModelsProvider modelsProvider,
-                  boolean synchronous);
+  /**
+   * @deprecated
+   * Use {@link #importData(DataNode, Project)} instead.
+   * Service implementation always performs operations synchronously.
+   */
+  @Deprecated
+  default <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project,
+                              boolean synchronous) {
+    importData(node, project);
+  }
 
-  <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous);
+  <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project);
 
   <T> void importData(@NotNull DataNode<T> node,
                       @NotNull Project project,
-                      @NotNull IdeModifiableModelsProvider modelsProvider,
-                      boolean synchronous);
+                      @NotNull IdeModifiableModelsProvider modelsProvider);
 
-  <T> void importData(@NotNull DataNode<T> node,
-                      @NotNull Project project,
-                      boolean synchronous);
+
+  @NotNull
+  List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key);
+
+  @NotNull
+  List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key);
 
   void ensureTheDataIsReadyToUse(@Nullable DataNode dataNode);
 
@@ -62,6 +63,44 @@ public interface ProjectDataManager {
                                              @NotNull ProjectSystemId projectSystemId,
                                              @NotNull String externalProjectPath);
 
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId);
+
+  /**
+   * Returns an instance which can be used to perform massive modifications of the project configurations. {@link IdeModifiableModelsProvider#commit()}
+   * must be manually called on the returned instance for these modifications to take effect.
+   */
+  @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project);
+
+  /**
+   * An extension point to help pre- and post- process the data around {@link ProjectDataService} execution.
+   * Can be useful to clean up some stale data before execution.
+   * Or restore some missing workspace model entities after execution.
+   * Internal API. Do not use.
+   */
+  @ApiStatus.Internal
+  interface ProjectDataImportExtension {
+    ExtensionPointName<ProjectDataImportExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalProjectData.extension");
+
+    /**
+     * Executed before data services processing
+     * @param projectData - project data to be imported
+     * @param modelsProvider - idea models before any modifications
+     */
+    default void prepareImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {}
+
+    /**
+     * Executed after data services processing, before committing changes.
+     * @param projectData - project data that was imported
+     * @param modelsProvider - idea models with all modifications
+     */
+    default void finalizeImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {}
+
+    /**
+     * Filters data services before they start to process.
+     * @param service - project data service processing data
+     * @param projectSystemId - project system id belonging to data which will be processed
+     */
+    default <E, I> boolean ignoreDataService(@NotNull ProjectDataService<E, I> service, @Nullable ProjectSystemId projectSystemId) { return false; }
+  }
 }

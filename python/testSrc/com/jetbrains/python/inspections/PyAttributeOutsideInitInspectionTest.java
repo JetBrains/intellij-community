@@ -15,9 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
@@ -33,12 +38,12 @@ public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
   }
 
   public void testTestClass() {
-    myFixture.configureByFile("unittest.py");
+    myFixture.configureByFile("packages/unittest/unittest.py");
     doTest();
   }
 
   public void testUnitTest() {
-    myFixture.configureByFile("unittest.py");
+    myFixture.configureByFile("packages/unittest/unittest.py");
     doTest();
   }
 
@@ -82,6 +87,41 @@ public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
 
   // PY-25263
   public void testPropertyNotSetInInit() {
+    doTest();
+  }
+
+  // PY-32585
+  public void testUpdatingInheritedProperty() {
+    doTestByText("""
+                   class Foo:
+                       def __init__(self):
+                           self._test = None
+
+                       @property
+                       def test(self):
+                           return self._test
+
+                       @test.setter
+                       def test(self, value):
+                           self._test = value
+
+                   class Bar(Foo):
+                       @property
+                       def another_test(self):
+                           return self.test
+
+                       @another_test.setter
+                       def another_test(self, value):
+                           self.test = value""");
+  }
+
+  // PY-31049
+  public void testAttributesOfProperty() {
+    doTest();
+  }
+
+  // PY-31376
+  public void testLocalVarInProperty() {
     doTest();
   }
 

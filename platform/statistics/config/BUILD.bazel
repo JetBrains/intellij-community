@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.statistics.config` start
+content_module_jar(module = ":config")
+### auto-generated section `dev intellij.platform.statistics.config` end
+
+### auto-generated section `build intellij.platform.statistics.config` start
+jvm_library(
+    name = "config",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.statistics.config",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlin/reflect",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+    ],
+)
+
+jvm_library(
+    name = "config_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.statistics.config",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":config",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jackson3/databind:databind_test_lib",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.statistics.config` end
+
+### auto-generated section `iml intellij.platform.statistics.config` start
+exports_files(
+    [
+        "intellij.platform.statistics.config.iml",
+        "resources/intellij.platform.statistics.config.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.statistics.config` end

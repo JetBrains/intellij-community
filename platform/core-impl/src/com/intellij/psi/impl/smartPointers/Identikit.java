@@ -1,106 +1,153 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
-import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.WeakInterner;
+import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
- * @author peter
+ * Captures the identity of a PSI element — its class, {@link IElementType}, and file language —
+ * so the element can be relocated after a PSI tree rebuild.
+ * <p>
+ * Two strategies exist:
+ * <ul>
+ *   <li>{@link ByType} — identifies an element by class name, element-type index, and file language ID (the common case).</li>
+ *   <li>{@link ByAnchor} — delegates to a {@link SmartPointerAnchorProvider} for more resilient
+ *       restoration during stub-to-AST switches.</li>
+ * </ul>
+ * Instances are interned via weak interners to save memory.
  */
+@ApiStatus.Internal
 public abstract class Identikit {
-  private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
-  private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
+  private static final Interner<ByType> ourPlainInterner = Interner.createWeakInterner();
+  private static final Interner<ByAnchor> ourAnchorInterner = Interner.createWeakInterner();
 
-  @Nullable
-  public abstract PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);
+  /**
+   * Restores a PSI element in the given {@code file} whose text range matches
+   * [{@code startOffset}, {@code endOffset}).
+   *
+   * @return the matching element, or {@code null} if it cannot be found
+   */
+  public abstract @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);
 
-  @NotNull
-  public abstract Language getFileLanguage();
+  /**
+   * Returns the language of the file this identikit targets,
+   * or {@code null} if the language plugin has been unloaded.
+   */
+  public abstract @Nullable Language getFileLanguage();
 
+  /** Returns {@code true} if this identikit represents a {@link PsiFile} (root) element. */
   public abstract boolean isForPsiFile();
 
-  public static ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
+  /** Creates a {@link ByType} identikit from a live PSI element and its file language. */
+  public static @NotNull ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     return fromTypes(element.getClass(), PsiUtilCore.getElementType(element), fileLanguage);
   }
 
-  @Nullable
-  static Pair<ByAnchor, PsiElement> withAnchor(@NotNull PsiElement element, @NotNull Language fileLanguage) {
+  static class AnchorWithElement {
+    private final @NotNull ByAnchor identikit;
+    private final @NotNull PsiElement anchor;
+
+    AnchorWithElement(@NotNull ByAnchor identikit, @NotNull PsiElement anchor) {
+      this.identikit = identikit;
+      this.anchor = anchor;
+    }
+
+    @NotNull ByAnchor getIdentikit() {
+      return identikit;
+    }
+
+    @NotNull PsiElement getAnchorElement() {
+      return anchor;
+    }
+  }
+
+  /**
+   * Attempts to create a {@link ByAnchor} identikit by querying registered
+   * {@link SmartPointerAnchorProvider}s for an anchor element.
+   *
+   * @return a pair of the interned {@code ByAnchor} and the anchor element,
+   * or {@code null} if no provider applies
+   */
+  static @Nullable AnchorWithElement withAnchor(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     PsiUtilCore.ensureValid(element);
     if (element.isPhysical()) {
-      for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
+      for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensionList()) {
         PsiElement anchor = provider.getAnchor(element);
         if (anchor != null && anchor.isPhysical() && provider.restoreElement(anchor) == element) {
           ByAnchor anchorKit = new ByAnchor(fromPsi(element, fileLanguage), fromPsi(anchor, fileLanguage), provider);
-          return Pair.create(ourAnchorInterner.intern(anchorKit), anchor);
+          return new AnchorWithElement(ourAnchorInterner.intern(anchorKit), anchor);
         }
       }
     }
     return null;
   }
 
-  @NotNull
-  static ByType fromTypes(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
+  /**
+   * Creates a {@link ByType} identikit from raw class, element type, and file language.
+   */
+  static @NotNull ByType fromTypes(@NotNull Class<? extends PsiElement> elementClass,
+                                   @Nullable IElementType elementType,
+                                   @NotNull Language fileLanguage) {
     return ourPlainInterner.intern(new ByType(elementClass, elementType, fileLanguage));
   }
 
-  public static class ByType extends Identikit {
-    private final Class myElementClass;
-    private final IElementType myElementType;
-    private final Language myFileLanguage;
+  /**
+   * Identifies a PSI element by its class name, {@link IElementType} index, and file language ID.
+   * This is the common identification strategy used by smart pointers.
+   */
+  public static final class ByType extends Identikit {
+    private final String myElementClassName;
+    private final short myElementTypeId;
+    private final String myFileLanguageId;
 
-    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
-      myElementClass = elementClass;
-      myElementType = elementType;
-      myFileLanguage = fileLanguage;
+    private ByType(@NotNull Class<? extends PsiElement> elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
+      myElementClassName = elementClass.getName();
+      myElementTypeId = elementType != null ? elementType.getIndex() : -1;
+      myFileLanguageId = fileLanguage.getID();
     }
 
-    @Nullable
     @Override
-    public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
-      Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
+    public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+      Language fileLanguage = Language.findLanguageByID(myFileLanguageId);
+      if (fileLanguage == null) return null;   // plugin has been unloaded
+      Language actualLanguage = fileLanguage != Language.ANY ? fileLanguage : file.getViewProvider().getBaseLanguage();
       PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
+      if (actualLanguagePsi == null) {
+        return null; // the file has changed its language or dialect, so we can't restore
+      }
       return findInside(actualLanguagePsi, startOffset, endOffset);
     }
 
+    /**
+     * Finds a matching element within the subtree rooted at {@code element}
+     * whose text range is [{@code startOffset}, {@code endOffset}).
+     */
     public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
-      PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
+      PsiElement anchor =
+        AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
       if (anchor == null && startOffset == element.getTextLength()) {
-        PsiElement lastChild = element.getLastChild();
-        if (lastChild != null) {
-          anchor = PsiTreeUtil.getDeepestLast(lastChild);
-        }
+        anchor = PsiTreeUtil.getDeepestLast(element);
       }
       if (anchor == null) return null;
 
       PsiElement result = findParent(startOffset, endOffset, anchor);
       if (endOffset == startOffset) {
-        while ((result == null || result.getTextRange().getStartOffset() != startOffset) && anchor.getTextRange().getStartOffset() == endOffset) {
+        while ((result == null || result.getTextRange().getStartOffset() != startOffset) &&
+               anchor.getTextRange().getStartOffset() == endOffset) {
           anchor = PsiTreeUtil.prevLeaf(anchor, false);
           if (anchor == null) break;
 
@@ -108,17 +155,15 @@ public abstract class Identikit {
         }
       }
       return result;
-
     }
 
-    @Nullable
-    private PsiElement findParent(int startOffset, int endOffset, PsiElement anchor) {
+    private @Nullable PsiElement findParent(int startOffset, int endOffset, @NotNull PsiElement anchor) {
       TextRange range = anchor.getTextRange();
 
       if (range.getStartOffset() != startOffset) return null;
       while (range.getEndOffset() < endOffset) {
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) {
+        if (anchor == null || anchor instanceof PsiDirectory) {
           return null;
         }
         range = anchor.getTextRange();
@@ -129,7 +174,7 @@ public abstract class Identikit {
           return anchor;
         }
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) break;
+        if (anchor == null || anchor instanceof PsiDirectory) break;
         range = anchor.getTextRange();
       }
 
@@ -139,45 +184,53 @@ public abstract class Identikit {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ByType)) return false;
-
-      ByType info = (ByType)o;
-      return myElementType == info.myElementType && myElementClass == info.myElementClass && myFileLanguage == info.myFileLanguage;
+      if (o == null || getClass() != o.getClass()) return false;
+      ByType type = (ByType)o;
+      return myElementTypeId == type.myElementTypeId &&
+             Objects.equals(myElementClassName, type.myElementClassName) &&
+             Objects.equals(myFileLanguageId, type.myFileLanguageId);
     }
 
     @Override
     public int hashCode() {
-      return (myElementType == null ? 0 : myElementType.hashCode() * 31 * 31) +
-             31 * myElementClass.getName().hashCode() +
-             myFileLanguage.hashCode();
+      return Objects.hash(myElementClassName, myElementTypeId, myFileLanguageId);
     }
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-        .add("class", myElementClass)
-        .add("elementType", myElementType)
-        .add("fileLanguage", myFileLanguage)
-        .toString();
+      return "Identikit(" +
+             "class='" + myElementClassName + '\'' +
+             ", elementType=" + (myElementTypeId == -1 ? "-1" : IElementType.find(myElementTypeId)) +
+             ", fileLanguage='" + myFileLanguageId + '\'' +
+             ')';
     }
 
     @Override
-    @NotNull
-    public Language getFileLanguage() {
-      return myFileLanguage;
+    public @Nullable Language getFileLanguage() {
+      return Language.findLanguageByID(myFileLanguageId);
     }
 
     @Override
     public boolean isForPsiFile() {
-      return myElementType instanceof IFileElementType;
+      if (myElementTypeId < 0) return false;
+      IElementType elementType = IElementType.find(myElementTypeId);
+      return elementType instanceof IFileElementType;
     }
 
+    /** Returns {@code true} if {@code element} matches the stored class name and element-type index. */
     private boolean isAcceptable(@NotNull PsiElement element) {
-      return myElementClass == element.getClass() && myElementType == PsiUtilCore.getElementType(element);
+      IElementType type = PsiUtilCore.getElementType(element);
+      return myElementClassName.equals(element.getClass().getName()) &&
+             type != null &&
+             myElementTypeId == type.getIndex();
     }
   }
 
-  static class ByAnchor extends Identikit {
+  /**
+   * Delegates element restoration to a {@link SmartPointerAnchorProvider}, providing more
+   * resilient identification during stub-to-AST switches than {@link ByType} alone.
+   */
+  static final class ByAnchor extends Identikit {
     private final ByType myElementInfo;
     private final ByType myAnchorInfo;
     private final SmartPointerAnchorProvider myAnchorProvider;
@@ -207,17 +260,15 @@ public abstract class Identikit {
       return myElementInfo.hashCode();
     }
 
-    @Nullable
     @Override
-    public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+    public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       PsiElement anchor = myAnchorInfo.findPsiElement(file, startOffset, endOffset);
       PsiElement element = anchor == null ? null : myAnchorProvider.restoreElement(anchor);
       return element != null && myElementInfo.isAcceptable(element) ? element : null;
     }
 
-    @NotNull
     @Override
-    public Language getFileLanguage() {
+    public @Nullable Language getFileLanguage() {
       return myAnchorInfo.getFileLanguage();
     }
 
@@ -225,6 +276,9 @@ public abstract class Identikit {
     public boolean isForPsiFile() {
       return myAnchorInfo.isForPsiFile();
     }
-  }
 
+    public @NotNull ByType getElementInfo() {
+      return myElementInfo;
+    }
+  }
 }

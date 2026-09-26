@@ -1,19 +1,45 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +55,7 @@ import java.util.Map;
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
   private static final Map<String, String> ANNOTATIONS_MAP;
-
-  public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
 
   static {
     ANNOTATIONS_MAP = new HashMap<>();
@@ -43,30 +66,21 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     ANNOTATIONS_MAP.put("org.junit.After", "@org.testng.annotations.AfterMethod");
   }
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return "TestNG";
+  public @NotNull String getGroupDisplayName() {
+    return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "JUnitTestNG";
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, TestngBundle.message("test.case.can.be.converted.to.testng"),
                                                                      new JUnitConverterQuickFix(),
                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       return new ProblemDescriptor[]{descriptor};
@@ -76,9 +90,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
-    @NotNull
-    public String getFamilyName() {
-      return QUICKFIX_NAME;
+    @Override
+    public @NotNull String getFamilyName() {
+      return TestngBundle.message("intention.family.name.convert.testcase.to.testng");
     }
 
     @Override
@@ -86,6 +100,15 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       return false;
     }
 
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiClass.class);
+      if (psiClass == null) return IntentionPreviewInfo.EMPTY;
+      doFix(project, psiClass);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
@@ -215,10 +238,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           PsiExpression expression = statement.getExpression();
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression methodCall) {
             if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&
@@ -237,28 +259,20 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     }
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
-      PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, new PsiElementFilter() {
-        public boolean isAccepted(PsiElement element) {
-          if (!(element instanceof PsiMethodCallExpression)) return false;
-          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-          final PsiMethod method = methodCall.resolveMethod();
-          if (method != null) {
-            final PsiClass containingClass = method.getContainingClass();
+      return SyntaxTraverser.psiTraverser(method).filter(PsiMethodCallExpression.class)
+        .filter(methodCall -> {
+          final PsiMethod method1 = methodCall.resolveMethod();
+          if (method1 != null) {
+            final PsiClass containingClass = method1.getContainingClass();
             if (containingClass != null) {
               final String qualifiedName = containingClass.getQualifiedName();
-              if ("junit.framework.Assert".equals(qualifiedName) ||
-                  "org.junit.Assert".equals(qualifiedName) ||
-                  "junit.framework.TestCase".equals(qualifiedName)) {
-                return true;
-              }
+              return "junit.framework.Assert".equals(qualifiedName) ||
+                     "org.junit.Assert".equals(qualifiedName) ||
+                     "junit.framework.TestCase".equals(qualifiedName);
             }
           }
           return false;
-        }
-      });
-      PsiMethodCallExpression[] expressions = new PsiMethodCallExpression[methodCalls.length];
-      System.arraycopy(methodCalls, 0, expressions, 0, methodCalls.length);
-      return expressions;
+        }).toArray(new PsiMethodCallExpression[0]);
     }
 
     private static void addMethodJavadoc(PsiElementFactory factory, PsiMethod method) throws IncorrectOperationException {
@@ -279,7 +293,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       PsiElement comment = method.getFirstChild();
       if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < commentLines.length; i++) {
           String commentLine = commentLines[i];
           // last line, append our new comment entry
@@ -296,19 +310,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
         newComment = factory.createCommentFromText(commentString, null);
         comment.replace(newComment);
-
       }
       else {
-        String commentString;
-
-        StringBuffer commentBuffer = new StringBuffer();
-        commentBuffer.append("/**\n");
-        commentBuffer.append(javaDocLine);
-        commentBuffer.append('\n');
-        commentBuffer.append(" */");
-
-        commentString = commentBuffer.toString();
-        newComment = factory.createCommentFromText(commentString, null);
+        newComment = factory.createCommentFromText("/**\n" + javaDocLine + "\n */", null);
 
         method.addBefore(newComment, comment);
       }

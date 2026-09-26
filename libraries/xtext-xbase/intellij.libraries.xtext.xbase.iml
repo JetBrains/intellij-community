@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="xtext-xbase" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.44.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.44.0/org.eclipse.xtext.xbase.lib-2.44.0.jar">
+              <sha256sum>c6c2b8593cd39c279e74e7055cbd146d39dc6f16011961b4928b92728d32d00d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.44.0/org.eclipse.xtext.xbase.lib-2.44.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.44.0/org.eclipse.xtext.xbase.lib-2.44.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -12,11 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPullDialog;
@@ -27,12 +29,15 @@ import java.util.Collection;
 public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  protected void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
+  protected void execute(final @NotNull Project project,
+                         @NotNull Collection<HgRepository> repos,
+                         @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
     final HgPullDialog dialog = new HgPullDialog(project, repos, selectedRepo);
     if (dialog.showAndGet()) {
       final String source = dialog.getSource();
       final HgRepository hgRepository = dialog.getRepository();
-      new Task.Backgroundable(project, "Pulling changes from " + source, false) {
+      new Task.Backgroundable(project, HgBundle.message("action.hg4idea.pull.progress", source), false) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

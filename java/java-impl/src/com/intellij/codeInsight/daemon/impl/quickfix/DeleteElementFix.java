@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private final String myText;
+public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
+  private final @Nls String myText;
 
   public DeleteElementFix(@NotNull PsiElement element) {
     super(element);
-    myText = null;
+    myText = CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.fromElement(element).object());
   }
 
   public DeleteElementFix(@NotNull PsiElement element, @NotNull @Nls String text) {
@@ -42,33 +29,52 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     myText = text;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
-    return ObjectUtils.notNull(myText, getFamilyName());
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return QuickFixBundle.message("delete.element.fix.text");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Presentation.of(myText == null ? getFamilyName() : myText).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (FileModificationService.getInstance().preparePsiElementForWrite(file)) {
-      WriteAction.run(() -> new CommentTracker().deleteAndRestoreComments(startElement));
+  public @Nls @NotNull String getFamilyName() {
+    return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.UNKNOWN.object());
+  }
+
+  @Override
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    new CommentTracker().deleteAndRestoreComments(element);
+  }
+
+  public static final class DeleteMultiFix implements ModCommandAction {
+    private final @NotNull PsiElement @NotNull [] myElements;
+    private final @NotNull @Nls String myMessage;
+
+    public DeleteMultiFix(@NotNull PsiElement @NotNull ... elements) {
+      myElements = elements;
+      myMessage = getFamilyName();
     }
-  }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    public DeleteMultiFix(PsiElement @NotNull [] elements, @NotNull @Nls String message) {
+      myElements = elements;
+      myMessage = message;
+    }
+
+    @Override
+    public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
+      return Presentation.of(myMessage);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.UNKNOWN.object());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return ModCommand.psiUpdate(context, updater -> {
+        for (PsiElement element : ContainerUtil.map(myElements, updater::getWritable)) {
+          new CommentTracker().deleteAndRestoreComments(element);
+        }
+      });
+    }
   }
 }

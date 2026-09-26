@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.MessagesContainer;
 import com.intellij.compiler.impl.ProjectCompileScope;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,8 +17,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -37,10 +30,10 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   private final Project myProject;
   private final ProjectCompileScope myScope;
   private final MessagesContainer myMessages;
-  private final EmptyProgressIndicator myIndicator;
+  private final ProgressIndicator myIndicator;
   private final boolean myAnnotationProcessingEnabled;
 
-  AutomakeCompileContext(Project project) {
+  AutomakeCompileContext(@NotNull Project project) {
     myProject = project;
     myScope = new ProjectCompileScope(project);
     myMessages = new MessagesContainer(project);
@@ -49,7 +42,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -73,30 +66,26 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return true;
   }
 
+
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum) {
-    addMessage(category, message, url, lineNum, columnNum, null);
+  public void addMessage(@NotNull CompilerMessageCategory category,
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                         @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable,
+                         Collection<String> moduleNames) {
+    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
-    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable);
-  }
-
-  @Override
-  @NotNull 
-  public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
+  public CompilerMessage @NotNull [] getMessages(@NotNull CompilerMessageCategory category) {
     return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
   @Nullable
   CompilerMessage createAndAddMessage(CompilerMessageCategory category,
-                                      String message,
-                                      @Nullable String url,
-                                      int lineNum,
-                                      int columnNum,
-                                      Navigatable navigatable) {
-    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+                                      @Nls String message,
+                                      @Nullable String url, int lineNum, int columnNum, Navigatable navigatable,
+                                      final Collection<String> moduleNames) {
+    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override
@@ -104,25 +93,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return myMessages.getMessageCount(category);
   }
 
-  @NotNull
   @Override
-  public ProgressIndicator getProgressIndicator() {
+  public @NotNull ProgressIndicator getProgressIndicator() {
     return myIndicator;
-  }
-
-  @Override
-  public void requestRebuildNextTime(String message) {
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getRebuildReason() {
-    return null;
   }
 
   @Override
@@ -131,7 +104,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
+  public VirtualFile getModuleOutputDirectory(final @NotNull Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 

@@ -1,0 +1,80 @@
+from typing import IO, Any
+from xml.sax.expatreader import ExpatParser
+
+from django.core.serializers import base
+from typing_extensions import override
+
+class Serializer(base.Serializer):
+    def indent(self, level: int) -> None: ...
+    xml: Any
+    @override
+    def start_serialization(self) -> None: ...
+    @override
+    def end_serialization(self) -> None: ...
+    @override
+    def start_object(self, obj: Any) -> None: ...
+    @override
+    def end_object(self, obj: Any) -> None: ...
+    @override
+    def handle_field(self, obj: Any, field: Any) -> None: ...
+    @override
+    def handle_fk_field(self, obj: Any, field: Any) -> None: ...
+    @override
+    def handle_m2m_field(self, obj: Any, field: Any) -> None: ...
+
+class Deserializer(base.Deserializer):
+    handle_forward_references: bool
+    event_stream: Any
+    db: str
+    ignore: bool
+    def __init__(
+        self,
+        stream_or_string: bytes | str | IO[bytes] | IO[str],
+        *,
+        using: str = ...,
+        ignorenonexistent: bool = ...,
+        **options: Any,
+    ) -> None: ...
+    @override
+    def __next__(self) -> base.DeserializedObject: ...
+
+def check_element_type(element: Any) -> bool: ...
+def getChildrenByTagName(node: Any, tag_name: str) -> list[Any]: ...
+def getInnerText(node: Any) -> str: ...
+
+class DefusedExpatParser(ExpatParser):
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    @override
+    def start_doctype_decl(self, name: Any, sysid: Any, pubid: Any, has_internal_subset: Any) -> None: ...
+    def entity_decl(
+        self, name: Any, is_parameter_entity: Any, value: Any, base: Any, sysid: Any, pubid: Any, notation_name: Any
+    ) -> None: ...
+    @override
+    def unparsed_entity_decl(self, name: Any, base: Any, sysid: Any, pubid: Any, notation_name: Any) -> None: ...
+    def external_entity_ref_handler(self, context: Any, base: Any, sysid: Any, pubid: Any) -> None: ...
+    @override
+    def reset(self) -> None: ...
+
+class DefusedXmlException(ValueError): ...
+
+class DTDForbidden(DefusedXmlException):
+    name: Any
+    sysid: Any
+    pubid: Any
+    def __init__(self, name: Any, sysid: Any, pubid: Any) -> None: ...
+
+class EntitiesForbidden(DefusedXmlException):
+    name: Any
+    value: Any
+    base: Any
+    sysid: Any
+    pubid: Any
+    notation_name: Any
+    def __init__(self, name: Any, value: Any, base: Any, sysid: Any, pubid: Any, notation_name: Any) -> None: ...
+
+class ExternalReferenceForbidden(DefusedXmlException):
+    context: Any
+    base: Any
+    sysid: Any
+    pubid: Any
+    def __init__(self, context: Any, base: Any, sysid: Any, pubid: Any) -> None: ...

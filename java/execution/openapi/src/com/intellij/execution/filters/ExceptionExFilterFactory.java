@@ -1,56 +1,59 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author gregsh
  */
-public class ExceptionExFilterFactory implements ExceptionFilterFactory {
-  @NotNull
+public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
   @Override
-  public Filter create(@NotNull GlobalSearchScope searchScope) {
-    return new MyFilter(searchScope);
+  public @NotNull Filter create(@NotNull GlobalSearchScope searchScope) {
+    return new MyFilter(Objects.requireNonNull(searchScope.getProject()), searchScope);
+  }
+
+  @Override
+  public Filter create(@NotNull Project project,
+                       @NotNull GlobalSearchScope searchScope) {
+    return new MyFilter(project, searchScope);
   }
 
   private static class MyFilter implements Filter, FilterMixin {
     private final ExceptionInfoCache myCache;
+    private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
 
-    public MyFilter(@NotNull final GlobalSearchScope scope) {
-      myCache = new ExceptionInfoCache(scope);
+    MyFilter(@NotNull Project project, final @NotNull GlobalSearchScope scope) {
+      myCache = new ExceptionInfoCache(project, scope);
     }
 
-    public Result applyFilter(final String line, final int textEndOffset) {
+    @Override
+    public Result applyFilter(final @NotNull String line, final int textEndOffset) {
       return null;
     }
 
@@ -60,14 +63,14 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
     }
 
     @Override
-    public void applyHeavyFilter(@NotNull final Document copiedFragment,
+    public void applyHeavyFilter(final @NotNull Document copiedFragment,
                                  final int startOffset,
                                  int startLineNumber,
-                                 @NotNull final Consumer<AdditionalHighlight> consumer) {
-      Map<String, ExceptionWorker.ParsedLine> visited = new THashMap<>();
+                                 final @NotNull Consumer<? super AdditionalHighlight> consumer) {
+      Map<String, ExceptionWorker.ParsedLine> visited = new HashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
-      final ExceptionWorker worker = new ExceptionWorker(myCache);
+      final ExceptionLineParser worker = myFactory.create(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
         final int lineStartOffset = copiedFragment.getLineStartOffset(i);
         final int lineEndOffset = copiedFragment.getLineEndOffset(i);
@@ -78,25 +81,24 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         if (info == emptyInfo) continue;
 
         if (info == null) {
-          info = ReadAction.compute(() -> doParse(worker, lineEndOffset, lineText));
+          info = ReadAction.compute(() -> DumbService.isDumb(worker.getProject()) ? null : doParse(worker, lineEndOffset, lineText));
           visited.put(lineText, info == null ? emptyInfo : info);
           if (info == null) {
             continue;
           }
         }
         int off = startOffset + lineStartOffset;
-        final Color color = UIUtil.getInactiveTextColor();
+        final Color color = NamedColorUtil.getInactiveTextColor();
         consumer.consume(new AdditionalHighlight(off + info.classFqnRange.getStartOffset(), off + info.methodNameRange.getEndOffset()) {
-          @NotNull
           @Override
-          public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
+          public @NotNull TextAttributes getTextAttributes(@Nullable TextAttributes source) {
             return new TextAttributes(null, null, color, EffectType.BOLD_DOTTED_LINE, Font.PLAIN);
           }
         });
       }
     }
 
-    private static ExceptionWorker.ParsedLine doParse(ExceptionWorker worker, int lineEndOffset, String lineText) {
+    private static ExceptionWorker.ParsedLine doParse(@NotNull ExceptionLineParser worker, int lineEndOffset, @NotNull String lineText) {
       Result result = worker.execute(lineText, lineEndOffset);
       if (result == null) return null;
       HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
@@ -117,10 +119,9 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       return worker.getInfo();
     }
 
-    @NotNull
     @Override
-    public String getUpdateMessage() {
-      return "Highlighting try blocks...";
+    public @NotNull String getUpdateMessage() {
+      return JavaAnalysisBundle.message("highlighting.try.blocks");
     }
   }
 }

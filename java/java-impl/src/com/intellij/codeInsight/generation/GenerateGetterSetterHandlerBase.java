@@ -1,35 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiField;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,32 +28,23 @@ import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.view.TemplatesPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
-  static {
-    GenerateAccessorProviderRegistrar.registerProvider(s -> {
-      if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
-      final List<EncapsulatableClassMember> result = new ArrayList<>();
-      for (PsiField field : s.getFields()) {
-        if (!(field instanceof PsiEnumConstant)) {
-          result.add(new PsiFieldMember(field));
-        }
-      }
-      return result;
-    });
-  }
-
-  public GenerateGetterSetterHandlerBase(String chooserTitle) {
+  protected boolean myGenerateAnnotations;
+  private @Nullable JBCheckBox myGenerateAnnotationsCheckBox;
+  private boolean supportsAnnotations;
+  public GenerateGetterSetterHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     super(chooserTitle);
   }
 
@@ -75,11 +55,14 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   @Override
   protected String getHelpId() {
-    return "Getter and Setter Templates Dialog";
+    return "Getter_and_Setter_Templates_Dialog";
   }
 
   @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+    if (aClass.getLanguage() == JavaLanguage.INSTANCE) {
+      supportsAnnotations = true;
+    }
     final ClassMember[] allMembers = getAllOriginalMembers(aClass);
     if (allMembers == null) {
       HintManager.getInstance().showErrorHint(editor, getNothingFoundMessage());
@@ -92,19 +75,45 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return chooseMembers(allMembers, false, false, project, editor);
   }
 
-  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final String templatesTitle) {
+  @Override
+  protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                   boolean allowEmptySelection,
+                                                   boolean copyJavadocCheckbox,
+                                                   Project project,
+                                                   @Nullable Editor editor) {
+    ClassMember[] chosenMembers = super.chooseMembers(members, allowEmptySelection, copyJavadocCheckbox, project, editor);
+    myGenerateAnnotations = myGenerateAnnotationsCheckBox != null && myGenerateAnnotationsCheckBox.isSelected();
+    JavaRefactoringSettings.getInstance().GENERATE_ALL_ANNOTATIONS = myGenerateAnnotations;
+    myGenerateAnnotationsCheckBox = null;
+    return chosenMembers;
+  }
+
+  @Override
+  protected JComponent @Nullable [] getOptionControls(@Nullable Project project) {
+    if (project == null) return null;
+    if (!supportsAnnotations) return null;
+    if (myGenerateAnnotationsCheckBox == null) {
+      boolean annotations = JavaRefactoringSettings.getInstance().GENERATE_ALL_ANNOTATIONS;
+      myGenerateAnnotationsCheckBox = new JBCheckBox(JavaBundle.message("generate.getter.setter.generate.all.annotations"), annotations);
+      myGenerateAnnotationsCheckBox.setToolTipText(JavaBundle.message("generate.getter.setter.generate.all.annotations.tooltip"));
+    }
+    return new JComponent[]{myGenerateAnnotationsCheckBox};
+  }
+
+  protected @NotNull GetterSetterGenerationOptions getOptions() {
+    return myGenerateAnnotations
+           ? new GetterSetterGenerationOptions(true)
+           : new GetterSetterGenerationOptions(false);
+  }
+
+  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final @Nls String templatesTitle) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel templateChooserLabel = new JLabel(templatesTitle);
     panel.add(templateChooserLabel, BorderLayout.WEST);
-    final ComboBox comboBox = new ComboBox();
+    final ComboBox<TemplateResource> comboBox = new ComboBox<>();
     templateChooserLabel.setLabelFor(comboBox);
-    comboBox.setRenderer(new ListCellRendererWrapper<TemplateResource>() {
-      @Override
-      public void customize(JList list, TemplateResource value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getName());
-      }
-    });
-    final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
+    comboBox.setRenderer(BuilderKt.textListCellRenderer("", TemplateResource::getName));
+    final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
       new ComponentWithBrowseButton<>(comboBox, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -114,13 +123,12 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
               return false;
             }
 
-            @Nls
             @Override
-            public String getDisplayName() {
+            public @Nls String getDisplayName() {
               return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
             }
           };
-          ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
+          ui.setHint(JavaBundle.message("generate.getter.setter.header.visibility.hint."));
           ui.selectNodeInTree(templatesManager.getDefaultTemplate());
           if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
             setComboboxModel(templatesManager, comboBox);
@@ -130,7 +138,8 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
     setComboboxModel(templatesManager, comboBox);
     comboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(@NotNull final ActionEvent M) {
+      @Override
+      public void actionPerformed(final @NotNull ActionEvent M) {
         templatesManager.setDefaultTemplate((TemplateResource)comboBox.getSelectedItem());
       }
     });
@@ -139,15 +148,15 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return panel;
   }
 
-  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox comboBox) {
+  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox<TemplateResource> comboBox) {
     final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-    comboBox.setModel(new DefaultComboBoxModel(templates.toArray(new TemplateResource[0])));
+    comboBox.setModel(new DefaultComboBoxModel<>(templates.toArray(new TemplateResource[0])));
     comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
   }
 
   @Override
-  protected abstract String getNothingFoundMessage();
-  protected abstract String getNothingAcceptedMessage();
+  protected abstract @NlsContexts.HintText String getNothingFoundMessage();
+  protected abstract @NlsContexts.HintText String getNothingAcceptedMessage();
 
   public boolean canBeAppliedTo(PsiClass targetClass) {
     final ClassMember[] allMembers = getAllOriginalMembers(targetClass);
@@ -155,15 +164,14 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   }
 
   @Override
-  @Nullable
-  protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
+  protected ClassMember @Nullable [] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);
     if (list.isEmpty()) {
       return null;
     }
     final List<EncapsulatableClassMember> members = ContainerUtil.findAll(list, member -> {
       try {
-        return generateMemberPrototypes(aClass, member).length > 0;
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> generateMemberPrototypes(aClass, member).length > 0);
       }
       catch (GenerateCodeException e) {
         return true;
@@ -175,6 +183,4 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     });
     return members.toArray(ClassMember.EMPTY_ARRAY);
   }
-
-
 }

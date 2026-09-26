@@ -1,44 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.DataManager;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
-public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
-
-  @NotNull
+public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   @Override
-  public String getText() {
-    return CodeInsightBundle.message("intention.encapsulate.field.text");
+  public @NotNull String getText() {
+    return JavaBundle.message("intention.encapsulate.field.text");
   }
 
-  @NotNull
   @Override
-  public final String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -53,27 +46,34 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = getElement(editor, psiFile);
     final PsiField field = getField(element);
-    if (field == null) {
-      return;
+    if (field == null) return IntentionPreviewInfo.EMPTY;
+    RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
+      return previewableRefactoringActionHandler.generatePreview(project, field);
     }
-
-    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, null);
+    return IntentionPreviewInfo.EMPTY;
   }
 
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiField field = getField(element);
+    if (field == null) return;
+    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+    JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
+  }
 
-  @Nullable
-  protected static PsiField getField(@Nullable PsiElement element) {
+  private static @Nullable PsiField getField(@Nullable PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return null;
     }
 
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) {
+    if (!(parent instanceof PsiReferenceExpression ref)) {
       return null;
     }
-    final PsiReferenceExpression ref = (PsiReferenceExpression)parent;
     final PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression) {
       return null;

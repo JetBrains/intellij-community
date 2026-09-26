@@ -16,10 +16,13 @@
 package com.intellij.dvcs.push.ui;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Event on this component should start edit mode for appropriate path in JTree
  *
- * @see com.intellij.dvcs.push.ui.PushLog
+ * @see PushLog
  */
+@ApiStatus.Internal
 public interface VcsEditableComponent {
 }

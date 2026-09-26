@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +30,7 @@ public class JavaElseRemover extends JavaElseUnwrapperBase {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return ((PsiIfStatement)e.getParent()).getElseBranch();
   }
@@ -43,7 +45,7 @@ public class JavaElseRemover extends JavaElseUnwrapperBase {
     }
   }
 
-  private void deleteSelectedElseIf(PsiIfStatement selectedBranch, Context context) throws IncorrectOperationException {
+  private static void deleteSelectedElseIf(PsiIfStatement selectedBranch, Context context) throws IncorrectOperationException {
     PsiIfStatement parentIf = (PsiIfStatement)selectedBranch.getParent();
     PsiStatement childElse = selectedBranch.getElseBranch();
 

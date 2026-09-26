@@ -1,0 +1,11 @@
+// "Wrap with '?.let { ... }' call" "true"
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+fun Int.foo(x: Int) = this + x
+
+val arg: Int? = 42
+
+val res = 24.hashCode().foo(<caret>arg) + 1
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

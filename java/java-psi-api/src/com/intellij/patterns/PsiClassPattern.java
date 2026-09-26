@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
@@ -23,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-/**
- * @author peter
- */
 public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>{
   protected PsiClassPattern() {
     super(PsiClass.class);
@@ -33,6 +18,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern inheritorOf(final boolean strict, final PsiClassPattern pattern) {
     return with(new PatternCondition<PsiClass>("inheritorOf") {
+      @Override
       public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
         return isInheritor(psiClass, pattern, context, !strict);
       }
@@ -51,6 +37,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern inheritorOf(final boolean strict, final String className) {
     return with(new PatternCondition<PsiClass>("inheritorOf") {
+      @Override
       public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
         return InheritanceUtil.isInheritor(psiClass, strict, className);
       }
@@ -59,20 +46,23 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern isInterface() {
     return with(new PatternCondition<PsiClass>("isInterface") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull PsiClass psiClass, final ProcessingContext context) {
         return psiClass.isInterface();
       }
     });}
   public PsiClassPattern isAnnotationType() {
     return with(new PatternCondition<PsiClass>("isAnnotationType") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull PsiClass psiClass, final ProcessingContext context) {
         return psiClass.isAnnotationType();
       }
     });}
 
   public PsiClassPattern withMethod(final boolean checkDeep, final ElementPattern<? extends PsiMethod> memberPattern) {
     return with(new PatternCondition<PsiClass>("withMethod") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull PsiClass psiClass, final ProcessingContext context) {
         for (PsiMethod method : (checkDeep ? psiClass.getAllMethods() : psiClass.getMethods())) {
           if (memberPattern.accepts(method, context)) {
             return true;
@@ -84,7 +74,8 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
   public PsiClassPattern withField(final boolean checkDeep, final ElementPattern<? extends PsiField> memberPattern) {
     return with(new PatternCondition<PsiClass>("withField") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull PsiClass psiClass, final ProcessingContext context) {
         for (PsiField field : (checkDeep ? psiClass.getAllFields() : psiClass.getFields())) {
           if (memberPattern.accepts(field, context)) {
             return true;
@@ -97,17 +88,18 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern nonAnnotationType() {
     return with(new PatternCondition<PsiClass>("nonAnnotationType") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull PsiClass psiClass, final ProcessingContext context) {
         return !psiClass.isAnnotationType();
       }
     });
   }
 
-  public PsiClassPattern withQualifiedName(@NonNls @NotNull final String qname) {
+  public PsiClassPattern withQualifiedName(final @NonNls @NotNull String qname) {
     return with(new PsiClassNamePatternCondition(string().equalTo(qname)));
   }
 
-  public PsiClassPattern withQualifiedName(@NonNls @NotNull final ElementPattern<String> qname) {
+  public PsiClassPattern withQualifiedName(final @NonNls @NotNull ElementPattern<String> qname) {
     return with(new PsiClassNamePatternCondition(qname));
   }
 }

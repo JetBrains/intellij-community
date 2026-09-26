@@ -1,0 +1,10 @@
+// "Change to constructor invocation" "true"
+// PRIORITY: HIGH
+// ENABLE_MULTIPLATFORM
+// DISABLE_ERRORS
+
+expect open class A()
+
+class B : A(<caret>)
+
+// IGNORE_K2

@@ -1,87 +1,123 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
+ * Base mutable implementation of {@link BuildEvent}.
+ *
+ * <p>This class is internal. New event types should not extend it.
+ * See {@link BuildEvent} for the complete guide: {@code Defining New Events}.
+ *
+ * <p>The {@code set*} mutators (e.g., {@link AbstractBuildEvent#setParentId}) exist to support legacy call sites
+ * that modify an event after construction. For new code, supply all values through the {@link BuildEvent}'s builder.
+ *
+ * <p>For complex cases requiring post-construction mutation (e.g., overriding {@link #getParentId()}),
+ * prefer passing the value through the builder. When that is not feasible, use a dynamic proxy (invocation handler)
+ * to intercept the specific getter rather than subclassing {@link AbstractBuildEvent}.
+ *
  * @author Vladislav.Soroka
  */
+@Internal
 public abstract class AbstractBuildEvent implements BuildEvent {
 
-  @NotNull
-  private final Object myEventId;
-  @Nullable
-  private final Object myParentId;
-  private final long myEventTime;
-  @NotNull
-  private final String myMessage;
-  @Nullable
-  private String myHint;
-  @Nullable
-  private String myDescription;
+  private final @NotNull Object myId;
+  private @Nullable Object myParentId;
+  private final @NotNull Long myTime;
+  private final @NotNull @Message String myMessage;
+  private @Nullable @Hint String myHint;
+  private @Nullable @Description String myDescription;
 
-  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
-    myEventId = eventId;
+  @Internal
+  protected AbstractBuildEvent(
+    @Nullable Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description
+  ) {
+    myId = notNull(id, () -> new Object());
     myParentId = parentId;
-    myEventTime = eventTime;
+    myTime = notNull(time, () -> System.currentTimeMillis());
     myMessage = message;
+    myHint = hint;
+    myDescription = description;
   }
 
-  @NotNull
-  @Override
-  public Object getId() {
-    return myEventId;
+  /**
+   * @deprecated Use instead {@link AbstractBuildEvent} constructor with hint and description parameters.
+   */
+  @Deprecated
+  public AbstractBuildEvent(
+    @NotNull Object eventId,
+    @Nullable Object parentId,
+    long time,
+    @NotNull @Message String message
+  ) {
+    this(eventId, parentId, time, message, null, null);
   }
 
-  @Nullable
   @Override
-  public Object getParentId() {
+  public @NotNull Object getId() {
+    return myId;
+  }
+
+  @Override
+  public @Nullable Object getParentId() {
     return myParentId;
+  }
+
+  public void setParentId(@Nullable Object parentId) {
+    myParentId = parentId;
   }
 
   @Override
   public long getEventTime() {
-    return myEventTime;
+    return myTime;
   }
 
-  @NotNull
   @Override
-  public String getMessage() {
+  public @NotNull @Message String getMessage() {
     return myMessage;
   }
 
-  @Nullable
-  public String getHint() {
+  @Override
+  public @Nullable String getHint() {
     return myHint;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@Nullable @Hint String hint) {
     myHint = hint;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable @Description String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @Description String description) {
     myDescription = description;
+  }
+
+  @Override
+  public @NonNls String toString() {
+    return getClass().getSimpleName() + "{" +
+           "myEventId=" + myId +
+           ", myParentId=" + myParentId +
+           ", myTime=" + myTime +
+           ", myMessage='" + myMessage + '\'' +
+           ", myHint='" + myHint + '\'' +
+           ", myDescription='" + myDescription + '\'' +
+           '}';
   }
 }

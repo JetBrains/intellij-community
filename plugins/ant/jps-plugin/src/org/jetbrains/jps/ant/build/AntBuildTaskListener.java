@@ -22,8 +22,6 @@ import java.util.List;
 
 /**
  * Register implementation of this class in META-INF/services. It will be called before starting an Ant pre/post processing task
- *
- * @author nik
  */
 public abstract class AntBuildTaskListener {
   public abstract void beforeAntBuildTaskStarted(@NotNull JpsAntArtifactExtension extension, @NotNull List<String> vmParams, @NotNull List<String> programParams);

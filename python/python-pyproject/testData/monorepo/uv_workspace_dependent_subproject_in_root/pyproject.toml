@@ -1,0 +1,14 @@
+[project]
+name = "pythonproject"
+version = "0.1.0"
+description = "Root project"
+requires-python = ">=3.12"
+dependencies = [
+    "subinroot",
+]
+
+[tool.uv]
+workspace = { members = ["./*"] }
+
+[tool.uv.sources]
+subinroot = { workspace = true, editable = true }

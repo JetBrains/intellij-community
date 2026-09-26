@@ -14,43 +14,52 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSIGNMENT_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.NEW_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POSTFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PREFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.THIS_EXPRESSION;
 
 class PurityInferenceVisitor {
   private final LighterAST tree;
   private final LighterASTNode body;
-  private final Set<String> myVolatileFieldNames;
+  private final Map<String, LighterASTNode> myFieldModifiers;
   private final List<LighterASTNode> mutatedRefs = new ArrayList<>();
-  private boolean hasReturns;
+  private final boolean constructor;
+  private boolean mutatesThis;
   private boolean hasVolatileReads;
   private final List<LighterASTNode> calls = new ArrayList<>();
 
-  PurityInferenceVisitor(LighterAST tree, LighterASTNode body, Set<String> volatileFieldNames) {
+  PurityInferenceVisitor(LighterAST tree, LighterASTNode body, Map<String, LighterASTNode> fieldModifiers, boolean isConstructor) {
     this.tree = tree;
     this.body = body;
-    myVolatileFieldNames = volatileFieldNames;
+    this.constructor = isConstructor;
+    myFieldModifiers = fieldModifiers;
   }
 
-  void visitNode(LighterASTNode element) {
+  boolean visitNode(LighterASTNode element) {
     IElementType type = element.getTokenType();
     if (type == ASSIGNMENT_EXPRESSION) {
-      mutatedRefs.add(tree.getChildren(element).get(0));
-    }
-    else if (type == RETURN_STATEMENT && JavaLightTreeUtil.findExpressionChild(tree, element) != null) {
-      hasReturns = true;
+      addMutation(tree.getChildren(element).get(0));
     }
     else if ((type == PREFIX_EXPRESSION || type == POSTFIX_EXPRESSION) && isMutatingOperation(element)) {
-      ContainerUtil.addIfNotNull(mutatedRefs, JavaLightTreeUtil.findExpressionChild(tree, element));
+      addMutation(JavaLightTreeUtil.findExpressionChild(tree, element));
     }
     else if (isCall(element, type)) {
       calls.add(element);
     }
-    else if (type == REFERENCE_EXPRESSION && !myVolatileFieldNames.isEmpty()) {
-      LighterASTNode qualifier = JavaLightTreeUtil.findExpressionChild(tree, element);
-      if (qualifier == null || qualifier.getTokenType() == THIS_EXPRESSION) {
-        if (myVolatileFieldNames.contains(JavaLightTreeUtil.getNameIdentifierText(tree, element))) {
+    else if (type == REFERENCE_EXPRESSION && !myFieldModifiers.isEmpty()) {
+      if (isEffectivelyUnqualified(element)) {
+        LighterASTNode modifiers = myFieldModifiers.get(JavaLightTreeUtil.getNameIdentifierText(tree, element));
+        boolean isVolatile = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.VOLATILE_KEYWORD) != null;
+        if (isVolatile) {
           LighterASTNode target = new FileLocalResolver(tree).resolveLocally(element).getTarget();
           if (target != null && target.getTokenType() == FIELD &&
               JavaLightTreeUtil.hasExplicitModifier(tree, target, JavaTokenType.VOLATILE_KEYWORD)) {
@@ -59,10 +68,40 @@ class PurityInferenceVisitor {
         }
       }
     }
+    return !unknownPurity();
+  }
+
+  private boolean isEffectivelyUnqualified(LighterASTNode element) {
+    LighterASTNode qualifier = JavaLightTreeUtil.findExpressionChild(tree, element);
+    return qualifier == null || qualifier.getTokenType() == THIS_EXPRESSION &&
+                                JavaLightTreeUtil.findExpressionChild(tree, qualifier) == null;
+  }
+
+  private void addMutation(LighterASTNode mutated) {
+    if (mutated == null) return;
+    if (!myFieldModifiers.isEmpty()) {
+      IElementType type = mutated.getTokenType();
+      if (type == REFERENCE_EXPRESSION && isEffectivelyUnqualified(mutated)) {
+        LighterASTNode modifiers = myFieldModifiers.get(JavaLightTreeUtil.getNameIdentifierText(tree, mutated));
+        if (modifiers != null) {
+          boolean isStatic = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.STATIC_KEYWORD) != null;
+          if (!isStatic) {
+            if (!constructor) {
+              // writes to own fields in constructor do not count as mutations
+              mutatesThis = true;
+            }
+            return;
+          }
+        }
+      }
+    }
+    mutatedRefs.add(mutated);
   }
 
   private boolean isCall(@NotNull LighterASTNode element, IElementType type) {
-    return type == NEW_EXPRESSION && LightTreeUtil.firstChildOfType(tree, element, EXPRESSION_LIST) != null ||
+    return type == NEW_EXPRESSION && 
+           (LightTreeUtil.firstChildOfType(tree, element, EXPRESSION_LIST) != null ||
+            LightTreeUtil.firstChildOfType(tree, element, ANONYMOUS_CLASS) != null) ||
            type == METHOD_CALL_EXPRESSION;
   }
 
@@ -73,10 +112,16 @@ class PurityInferenceVisitor {
 
   @Nullable
   PurityInferenceResult getResult() {
-    if (calls.size() > 1 || !hasReturns || hasVolatileReads) return null;
+    if (unknownPurity()) return null;
 
     int bodyStart = body.getStartOffset();
-    return new PurityInferenceResult(ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),
-                                     calls.isEmpty() ? null : ExpressionRange.create(calls.get(0), bodyStart));
+    return new PurityInferenceResult(
+      mutatesThis,
+      ContainerUtil.map(mutatedRefs, node -> ExpressionRange.create(node, bodyStart)),
+      calls.isEmpty() ? null : ExpressionRange.create(calls.get(0), bodyStart));
+  }
+
+  private boolean unknownPurity() {
+    return calls.size() > 1 || (!constructor && hasVolatileReads);
   }
 }

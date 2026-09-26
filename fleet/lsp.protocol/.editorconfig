@@ -1,0 +1,11 @@
+root = true
+
+[*]
+indent_size = 4
+tab_width = 4
+ij_continuation_indent_size = 8
+ij_formatter_tags_enabled = false
+
+[*.kt]
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+ij_kotlin_line_break_after_multiline_when_entry = true

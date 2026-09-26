@@ -1,30 +1,25 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,13 +31,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.lang.reflect.Method;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * @author Max Medvedev
@@ -56,30 +62,32 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   private final GrVariable myLocalVar;
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
+    super(new IntroduceFieldHandler().getRefactoringName(), choice, context);
 
     finalListener = new GrFinalListener(myEditor);
 
     myLocalVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     if (myLocalVar != null) {
       //myLocalVariable = myLocalVar;
-      ArrayList<String> result = ContainerUtil.newArrayList(myLocalVar.getName());
+      List<String> result = new SmartList<>(myLocalVar.getName());
 
       GrExpression initializer = myLocalVar.getInitializerGroovy();
       if (initializer != null) {
-        ContainerUtil.addAll(result, GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()), false));
+        ContainerUtil.addAll(result,
+                             GroovyNameSuggestionUtil.suggestVariableNames(initializer, new GroovyInplaceFieldValidator(getContext()),
+                                                                           false));
       }
-      mySuggestedNames = ArrayUtil.toStringArray(result);
+      mySuggestedNames = ArrayUtilRt.toStringArray(result);
     }
     else {
-      mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+      mySuggestedNames =
+        GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
     }
     myApplicablePlaces = getApplicableInitPlaces();
   }
 
-  @Nullable
   @Override
-  protected PsiElement checkLocalScope() {
+  protected @Nullable PsiElement checkLocalScope() {
     final GrVariable variable = getVariable();
     if (variable instanceof PsiField) {
       return ((PsiField)getVariable()).getContainingClass();
@@ -104,11 +112,10 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     });
   }
 
-  @Nullable
   @Override
-  protected GrIntroduceFieldSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
-                                                                  @NotNull final OccurrencesChooser.ReplaceChoice choice,
-                                                                  final String[] names) {
+  protected @Nullable GrIntroduceFieldSettings getInitialSettingsForInplace(final @NotNull GrIntroduceContext context,
+                                                                            final @NotNull OccurrencesChooser.ReplaceChoice choice,
+                                                                            final String[] names) {
     return new GrIntroduceFieldSettings() {
       @Override
       public boolean declareFinal() {
@@ -152,9 +159,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return myLocalVar != null;
       }
 
-      @Nullable
       @Override
-      public String getName() {
+      public @Nullable String getName() {
         return names[0];
       }
 
@@ -163,9 +169,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return context.getVar() != null || choice == OccurrencesChooser.ReplaceChoice.ALL;
       }
 
-      @Nullable
       @Override
-      public PsiType getSelectedType() {
+      public @Nullable PsiType getSelectedType() {
         GrExpression expression = context.getExpression();
         GrVariable var = context.getVar();
         StringPartInfo stringPart = context.getStringPart();
@@ -205,9 +210,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return myLocalVar != null;
       }
 
-      @Nullable
       @Override
-      public String getName() {
+      public @Nullable String getName() {
         return getInputName();
       }
 
@@ -216,9 +220,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
         return isReplaceAllOccurrences();
       }
 
-      @Nullable
       @Override
-      public PsiType getSelectedType() {
+      public @Nullable PsiType getSelectedType() {
         return GrInplaceFieldIntroducer.this.getSelectedType();
       }
     };
@@ -226,12 +229,11 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
   @Override
   protected String getActionName() {
-    return IntroduceFieldHandler.REFACTORING_NAME;
+    return new IntroduceFieldHandler().getRefactoringName();
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return mySuggestedNames;
   }
 
@@ -247,9 +249,8 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     super.restoreState(psiField);
   }
 
-  @Nullable
   @Override
-  protected JComponent getComponent() {
+  protected @Nullable JComponent getComponent() {
     myPanel = new GrInplaceIntroduceFieldPanel();
     return myPanel.getRootPane();
   }
@@ -294,13 +295,53 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   }
 
   public class GrInplaceIntroduceFieldPanel {
-    private JPanel myRootPane;
-    private JComboBox myInitCB;
-    private NonFocusableCheckBox myDeclareFinalCB;
-    private JComponent myPreview;
+    private final JPanel myRootPane;
+    private final JComboBox myInitCB;
+    private final NonFocusableCheckBox myDeclareFinalCB;
+    private final JComponent myPreview;
 
     public GrInplaceIntroduceFieldPanel() {
 
+      {
+        myPreview = getPreviewComponent();
+      }
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myRootPane = new JPanel();
+        myRootPane.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        myRootPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                   null, 0, false));
+        final JBLabel jBLabel1 = new JBLabel();
+        this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "initialize.in.label"));
+        panel1.add(jBLabel1,
+                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                       GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myInitCB = new JComboBox();
+        panel1.add(myInitCB, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                 GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                 false));
+        myDeclareFinalCB = new NonFocusableCheckBox();
+        myDeclareFinalCB.setHorizontalAlignment(10);
+        this.$$$loadButtonText$$$(myDeclareFinalCB,
+                                  this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "declare.final.checkbox"));
+        myRootPane.add(myDeclareFinalCB, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+        myRootPane.add(myPreview, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null,
+                                                      null, 0, false));
+        jBLabel1.setLabelFor(myInitCB);
+      }
       KeyboardComboSwitcher.setupActions(myInitCB, myProject);
 
       for (GrIntroduceFieldSettings.Init place : myApplicablePlaces) {
@@ -316,11 +357,82 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
             if (variable != null) {
               finalListener.perform(myDeclareFinalCB.isSelected(), variable);
             }
-            ;
           });
         }
       });
     }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
+
+    /** @noinspection ALL */
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+      ResourceBundle bundle;
+      try {
+        Class<?> thisClass = this.getClass();
+        if ($$$cachedGetBundleMethod$$$ == null) {
+          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        }
+        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+      }
+      catch (Exception e) {
+        bundle = ResourceBundle.getBundle(path);
+      }
+      return bundle.getString(key);
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadLabelText$$$(JLabel component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setDisplayedMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myRootPane; }
 
     public JPanel getRootPane() {
       return myRootPane;
@@ -332,10 +444,6 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
     public boolean isFinal() {
       return myDeclareFinalCB.isSelected();
-    }
-
-    private void createUIComponents() {
-      myPreview = getPreviewComponent();
     }
   }
 }

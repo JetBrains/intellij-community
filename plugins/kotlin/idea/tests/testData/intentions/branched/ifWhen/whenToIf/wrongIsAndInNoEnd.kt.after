@@ -1,0 +1,7 @@
+// PRIORITY: LOW
+// K2_AFTER_ERROR: SYNTAX
+fun test(n: Int): String {
+    return <caret>if (n is) "String"
+    else if (n in) "1..10"
+    else "unknown"
+}

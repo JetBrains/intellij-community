@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports usages of JUnit 5 <code>@ExtendWith</code> with extensions that are intended for local debugging only
+and must not be committed:
+<ul>
+  <li><code>com.intellij.ide.starter.junit5.RemoteDevRun</code></li>
+  <li><code>com.intellij.ide.starter.extended.engine.junit5.UseInstaller</code></li>
+</ul>
+<p>
+  These extensions change how the test boots the IDE (split mode / local installer) and are useful when reproducing
+  an issue on a developer machine, but they should be removed before pushing the change.
+</p>
+<!-- tooltip end -->
+</body>
+</html>

@@ -1,0 +1,759 @@
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
+<idea-plugin>
+  <actions>
+    <reference ref="IncrementalSearch"/>
+
+    <group id="LangCodeInsightActions">
+      <reference ref="EditorSelectWord"/>
+      <reference ref="EditorSelectWordAtCurrentCaret"/>
+      <reference ref="EditorUnSelectWord"/>
+
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
+
+    <reference ref="ClassNameCompletion"/>
+    <reference ref="SurroundWithLiveTemplate"/>
+
+    <group id="GenerateGroup">
+      <reference ref="OverrideMethods"/>
+      <reference ref="ImplementMethods"/>
+      <reference ref="DelegateMethods"/>
+      <reference ref="GenerateFromTestCreatorsGroup"/>
+    </group>
+
+    <reference ref="ShowIntentionActions"/>
+
+    <group id="ShowIntentionsGroup" compact="true">
+      <reference ref="ShowIntentionActions"/>
+      <separator/>
+      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+    </group>
+
+    <reference ref="TogglePopupHints"/>
+
+    <reference ref="CodeInspection.OnEditor"/>
+
+    <reference ref="EditorIndentLineOrSelection">
+      <add-to-group group-id="EditorActions"/>
+    </reference>
+
+    <reference ref="BraceOrQuoteOut"/>
+
+    <reference ref="ToggleRenderedDocPresentation"/>
+    <group id="DocCommentGutterIconContextMenu">
+      <reference ref="ToggleRenderedDocPresentationForAll"/>
+    </group>
+
+    <group id="CodeInsightEditorActions">
+      <reference ref="LookupActions"/>
+      <reference ref="EmacsStyleIndent"/>
+      <reference ref="EditorCodeBlockStart"/>
+      <reference ref="EditorCodeBlockEnd"/>
+      <reference ref="EditorMatchBrace">
+        <add-to-group group-id="NavigateInFileGroup" anchor="after" relative-to-action="MethodUp"/>
+      </reference>
+      <reference ref="EditorCodeBlockStartWithSelection"/>
+      <reference ref="EditorCodeBlockEndWithSelection"/>
+      <reference ref="EditorCompleteStatement"/>
+
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
+
+    <!-- File -->
+
+    <group id="NewProjectOrModuleGroup">
+    </group>
+
+    <group id="NonModalWelcomeNewProjectGroup"/>
+
+    <reference ref="SaveFileAsTemplate">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
+    </reference>
+
+
+    <reference ref="ChangeTemplateDataLanguage">
+      <add-to-group group-id="FilePropertiesGroup" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+    </reference>
+
+    <reference ref="LightEditOpenFileInProject"/>
+
+    <group id="LightEditModePopup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
+      <reference ref="LightEditOpenFileInProject"/>
+      <separator/>
+    </group>
+
+    <!-- Edit -->
+    <reference ref="EditorIndentSelection">
+      <add-to-group group-id="EditSmartGroup" anchor="before" relative-to-action="EditorUnindentSelection"/>
+    </reference>
+
+    <reference ref="CopyReference">
+      <add-to-group group-id="CopyReferencePopupGroup" anchor="after" relative-to-action="CopyExternalReferenceGroup"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="Copy.Paste.Special" anchor="first"/>
+    </reference>
+
+    <reference ref="CopyAsRichText">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </reference>
+
+    <reference ref="CopyAsPlainText">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
+    </reference>
+
+    <reference ref="ShowUsagesPinGroup"/>
+
+    <reference ref="FindUsagesMenuGroup">
+      <add-to-group group-id="EditMenu" anchor="after" relative-to-action="FindMenuGroup"/>
+    </reference>
+
+    <group id="EditSelectWordGroup">
+      <reference ref="EditorSelectWord"/>
+      <reference ref="EditorUnSelectWord"/>
+
+      <add-to-group group-id="EditSelectGroup" anchor="last"/>
+    </group>
+
+    <reference ref="GotoDeclarationOnly"/>
+
+
+    <!-- View -->
+    <group id="QuickActions">
+      <separator/>
+      <reference ref="QuickImplementations"/>
+      <reference ref="QuickTypeDefinition"/>
+      <reference ref="QuickJavaDoc"/>
+
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
+    </group>
+
+    <reference ref="Documentation.Navigation">
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </reference>
+    <reference ref="Documentation.ViewExternal"/>
+    <reference ref="Documentation.PrimaryGroup"/>
+    <reference ref="Documentation.ToggleShowInPopup"/>
+    <reference ref="Documentation.ToggleAutoShow"/>
+    <reference ref="Documentation.ToggleAutoUpdate"/>
+    <reference ref="Documentation.KeepTab">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </reference>
+
+    <group id="CodeEditorBaseGroup">
+      <group id="CodeEditorViewGroup">
+        <reference ref="ExternalJavaDoc"/>
+        <reference ref="ParameterInfo"/>
+        <reference ref="ExpressionTypeInfo"/>
+        <reference ref="EditorContextInfo"/>
+        <reference ref="ShowErrorDescription"/>
+      </group>
+      <separator/>
+
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
+    </group>
+
+    <reference ref="ShowHoverInfo"/>
+
+    <reference ref="ShowGutterIconsSettings">
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      <add-to-group group-id="DocCommentGutterIconContextMenu"/>
+    </reference>
+
+    <reference ref="FixDocComment"/>
+    <reference ref="QuickPreview"/>
+
+    <reference ref="ViewImportPopups">
+      <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
+    </reference>
+
+
+
+    <reference ref="GotoClass">
+      <add-to-group group-id="GoToTargetEx" anchor="before" relative-to-action="GotoFile"/>
+    </reference>
+    <reference ref="GotoSymbol">
+      <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoFile"/>
+    </reference>
+    <reference ref="TextSearchAction">
+      <add-to-group group-id="GoToTargetEx" anchor="after" relative-to-action="GotoSymbol"/>
+    </reference>
+
+    <group id="GoToCodeGroup">
+      <separator/>
+      <reference ref="SelectIn"/>
+      <separator/>
+      <reference ref="GotoDeclaration"/>
+      <reference ref="GotoImplementation"/>
+      <reference ref="GotoTypeDeclaration"/>
+      <reference ref="GotoSuperMethod"/>
+      <reference ref="GotoTest"/>
+      <reference ref="GotoRelated"/>
+      <separator/>
+      <reference ref="ShowFilePath">
+        <add-to-group group-id="RevealGroup" anchor="last"/>
+      </reference>
+      <reference ref="HierarchyGroup"/>
+      <separator/>
+
+      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="NavigateInFileGroup"/>
+    </group>
+
+    <!-- Each customized toolbar Floating.CodeToolbar.XXX must include this group -->
+    <group id="Floating.CodeToolbar.Extensions" searchable="false"/>
+    <!-- Reformat, Comment, common actions with code -->
+    <group id="Floating.CodeToolbar.Additional" searchable="false"/>
+
+    <group id="Floating.CodeToolbar" popup="false" searchable="false">
+      <reference ref="Floating.CodeToolbar.Extensions"/>
+      <reference ref="Floating.CodeToolbar.Extract"/>
+      <group id="Floating.CodeToolbar.Surround" popup="true"
+             searchable="false">
+        <reference ref="Floating.CodeToolbar.SurroundWithTryCatch"/>
+        <reference ref="Floating.CodeToolbar.SurroundWithTryCatchFinally"/>
+        <reference ref="Floating.CodeToolbar.SurroundWithIf"/>
+      </group>
+      <reference ref="Floating.CodeToolbar.Additional"/>
+    </group>
+
+    <reference ref="CodeFloatingToolbar.GotoNextMenu"/>
+    <reference ref="CodeFloatingToolbar.GotoPrevMenu"/>
+    <reference ref="Floating.CodeToolbar.Disable"/>
+
+    <reference ref="InlineCompletion"/>
+
+    <group id="CodeMenu" popup="true">
+      <reference ref="OverrideMethods"/>
+      <reference ref="ImplementMethods"/>
+      <reference ref="Generate"/>
+      <separator/>
+
+      <reference ref="CodeCompletionGroup"/>
+
+      <group id="InspectCodeInCodeMenuGroup">
+        <separator/>
+        <group id="InspectCodeGroup">
+          <reference ref="InspectCode"/>
+          <reference ref="CodeCleanup"/>
+        </group>
+
+        <group id="AnalyzeActionsPopup" popup="true">
+          <group id="AnalyzeActions">
+            <reference ref="SilentCodeCleanup"/>
+            <reference ref="RunInspection"/>
+            <reference ref="PopupHector"/>
+            <reference ref="ViewOfflineInspection"/>
+            <separator/>
+            <reference ref="SliceBackward"/>
+            <reference ref="SliceForward"/>
+          </group>
+        </group>
+
+        <group id="AnalyzePlatformMenu">
+          <reference ref="Unscramble"/>
+        </group>
+      </group>
+
+      <separator/>
+      <reference ref="InsertLiveTemplate"/>
+      <reference ref="SaveAsTemplate"/>
+      <separator/>
+      <reference ref="SurroundWith"/>
+      <reference ref="Unwrap"/>
+      <separator/>
+
+      <group id="FoldingGroup" popup="true">
+        <reference ref="ExpandRegion"/>
+        <reference ref="ExpandRegionRecursively"/>
+        <reference ref="ExpandAllRegions"/>
+        <separator/>
+        <reference ref="CollapseRegion"/>
+        <reference ref="CollapseRegionRecursively"/>
+        <reference ref="CollapseAllRegions"/>
+        <separator/>
+        <group id="ExpandToLevel" popup="true">
+          <reference ref="ExpandToLevel1"/>
+          <reference ref="ExpandToLevel2"/>
+          <reference ref="ExpandToLevel3"/>
+          <reference ref="ExpandToLevel4"/>
+          <reference ref="ExpandToLevel5"/>
+        </group>
+        <group id="ExpandAllToLevel" popup="true">
+          <reference ref="ExpandAllToLevel1"/>
+          <reference ref="ExpandAllToLevel2"/>
+          <reference ref="ExpandAllToLevel3"/>
+          <reference ref="ExpandAllToLevel4"/>
+          <reference ref="ExpandAllToLevel5"/>
+        </group>
+        <separator/>
+        <group id="LanguageSpecificFoldingGroup">
+          <reference ref="ExpandDocComments"/>
+          <reference ref="CollapseDocComments"/>
+        </group>
+        <separator/>
+        <reference ref="ExpandCollapseToggleAction"/>
+        <separator/>
+        <reference ref="CollapseSelection"/>
+        <reference ref="CollapseBlock"/>
+      </group>
+
+      <separator/>
+
+      <group id="CommentGroup">
+        <reference ref="CommentByLineComment">
+          <add-to-group group-id="Floating.CodeToolbar.Additional"/>
+        </reference>
+        <reference ref="CommentByBlockComment"/>
+      </group>
+
+      <group id="CodeFormatGroup">
+        <reference ref="ReformatCode">
+          <add-to-group group-id="Floating.CodeToolbar.Additional" anchor="after" relative-to-action="CommentByLineComment" />
+        </reference>
+        <reference ref="ShowReformatFileDialog"/>
+        <reference ref="AutoIndentLines"/>
+        <reference ref="OptimizeImports"/>
+        <reference ref="RearrangeCode"/>
+      </group>
+
+      <separator/>
+      <reference ref="MoveStatementDown"/>
+      <reference ref="MoveStatementUp"/>
+      <reference ref="MoveElementLeft"/>
+      <reference ref="MoveElementRight"/>
+      <reference ref="MoveLineDown"/>
+      <reference ref="MoveLineUp"/>
+      <separator/>
+
+      <separator/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+    </group>
+
+    <reference ref="ConfigureInspectionsAction"/>
+
+    <group id="ParameterNameHints">
+      <reference ref="ShowSettingsWithAddedPattern"/>
+      <reference ref="ToggleInlineHintsAction"/>
+      <reference ref="ShowParameterHintsSettings"/>
+      <separator/>
+      <reference ref="ToggleCompletionHintsAction"/>
+    </group>
+
+    <group id="InlayMenu"  popup="true" >
+      <reference ref="DisableDeclarativeInlayAction"/>
+    </group>
+
+    <reference ref="ToggleInlayHintsGloballyAction"/>
+    <reference ref="CodeVisionToggleAction"/>
+
+    <!-- Refactor -->
+    <group id="RefactoringMenu" popup="true">
+    <reference ref="Refactorings.QuickListPopupAction"/>
+      <reference ref="RenameElement"/>
+      <reference ref="ChangeSignature"/>
+      <separator/>
+      <group id="IntroduceActionsGroup" popup="true">
+        <reference ref="IntroduceVariable">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </reference>
+        <reference ref="IntroduceConstant">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </reference>
+        <reference ref="IntroduceField"/>
+        <reference ref="IntroduceParameter">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" />
+        </reference>
+        <separator/>
+        <reference ref="IntroduceParameterObject"/>
+        <separator/>
+        <reference ref="ExtractMethod">
+          <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first" />
+        </reference>
+        <separator/>
+        <reference ref="ExtractClass"/>
+        <reference ref="ExtractInclude"/>
+        <reference ref="ExtractInterface"/>
+        <reference ref="ExtractSuperclass"/>
+        <reference ref="ExtractModule"/>
+      </group>
+      <reference ref="Inline"/>
+      <separator/>
+      <reference ref="Move"/>
+      <reference ref="CopyElement"/>
+      <reference ref="SafeDelete"/>
+      <separator/>
+
+      <reference ref="MembersPullUp"/>
+      <reference ref="MemberPushDown"/>
+      <reference ref="InvertBoolean"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+    </group>
+
+    <!-- Tools -->
+    <group id="ToolsBasicGroup">
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+    <reference ref="NewScratchFile">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+    </reference>
+    <reference ref="NewScratchBuffer"/>
+    <reference ref="Scratch.ChangeLanguage">
+      <add-to-group group-id="EditorPopupMenu2"/>
+    </reference>
+    <reference ref="Scratch.ShowFilesPopup"/>
+    <reference ref="Scratch.ExportToScratch"/>
+
+    <reference ref="ExternalToolsGroup">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </reference>
+
+    <group id="NewGroup" popup="true" searchable="false">
+      <reference ref="NewFile"/>
+      <reference ref="WelcomeNewEmptyFile"/>
+      <reference ref="NewScratchFile"/>
+      <reference ref="NewDir"/>
+      <group id="FileTemplateSeparatorGroup" searchable="false"/> <!-- kept for backward compatibility -->
+      <reference ref="NewWebDevelopment"/>
+      <reference ref="NewMicroservices"/>
+      <reference ref="NewFromTemplate"/>
+    </group>
+
+    <reference ref="WeighingNewGroup"/>
+    <reference ref="AssociateWithFileType"/>
+
+    <!-- Toolbar -->
+    <group id="ToolbarFindGroup">
+      <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
+    </group>
+
+    <group id="NavBarToolBarOthers"/>
+    <group id="NavBarToolBar">
+      <reference ref="ToolbarRunGroup"/>
+      <separator/>
+      <reference ref="NavBarVcsGroup"/>
+      <separator/>
+      <reference ref="NavBarToolBarOthers"/>
+      <separator/>
+      <reference ref="SearchEverywhere"/>
+      <reference ref="SettingsEntryPoint"/>
+    </group>
+
+    <group id="NewToolbarActions">
+      <group id="LeftToolbarSideGroup">
+        <reference ref="Back"/>
+        <reference ref="Forward"/>
+        <reference ref="SegmentedVcsControlAction"/>
+        <reference ref="SearchEverywhereNewToolbarAction"/>
+      </group>
+      <group id="RightToolbarSideGroup">
+        <reference ref="RunToolbarWidgetAction"/>
+        <reference ref="SettingsEntryPoint"/>
+      </group>
+    </group>
+
+    <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">
+      <reference ref="RefactoringMenu"/>
+    </group>
+
+    <group id="ProjectViewPopupMenuModifyGroup">
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <reference ref="Scratch.ChangeLanguage"/>
+      <group id="MarkFileAs">
+        <reference ref="OverrideFileTypeAction"/>
+        <reference ref="ReverteOverrideFileTypeAction"/>
+      </group>
+    </group>
+
+    <group id="ProjectViewPopupMenuSettingsGroup">
+      <reference ref="MarkRootGroup"/>
+    </group>
+
+    <group id="ProjectViewPopupMenu">
+      <reference ref="WeighingNewGroup"/>
+      <reference ref="AssociateWithFileType"/>
+      <reference ref="RestoreDefaultExtensionScripts"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="ProjectViewEditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <separator/>
+      <reference ref="RenameElement"/>
+      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuModifyGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <reference ref="SplitRevealGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="CacheRecovery"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <separator/>
+      <reference ref="GoToLinkTarget"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+    </group>
+
+    <group id="InspectCodeActionInPopupMenus">
+      <reference ref="InspectCode"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </group>
+
+    <reference ref="RemoveBom.Group">
+      <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
+    </reference>
+    <reference ref="AddBom.Group">
+      <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom.Group"/>
+    </reference>
+
+    <reference ref="EncodingPanelActions"/>
+
+    <group id="NavbarPopupMenu">
+      <reference ref="WeighingNewGroup"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <separator/>
+      <reference ref="RenameElement"/>
+      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuModifyGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <reference ref="SplitRevealGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+    </group>
+
+    <group id="ScopeViewPopupMenu">
+      <reference ref="ProjectViewPopupMenu"/>
+    </group>
+
+    <reference ref="ProjectView.RelatedActions"/>
+
+    <reference ref="Structure.ViewOptions"/>
+    <reference ref="StructureViewToolbar"/>
+    <reference ref="StructureViewFloatingToolbar"/>
+
+    <reference ref="StructureViewPopupMenu"/>
+
+    <group id="EditorPopupMenu1.FindRefactor" compact="true">
+      <reference ref="FindUsages"/>
+      <group id="EditorPopupMenu.GoTo" popup="true">
+        <reference ref="GotoDeclaration"/>
+        <reference ref="GotoImplementation"/>
+        <reference ref="GotoTypeDeclaration"/>
+        <reference ref="GotoSuperMethod"/>
+        <reference ref="GotoRelated"/>
+        <reference ref="GotoTest"/>
+      </group>
+      <separator/>
+      <reference ref="FoldingGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu1"/>
+    </group>
+
+    <group id="EditorLangPopupMenu">
+      <separator/>
+      <reference ref="RenameElement"/>
+      <reference ref="RefactoringMenu"/>
+      <reference ref="Generate"/>
+      <separator/>
+
+      <group id="EditorPopupMenu.Run">
+        <reference ref="RunContextPopupGroup"/>
+      </group>
+      <reference ref="SplitRevealGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
+    </group>
+
+    <group id="EditorTabPopupMenuEx" searchable="false">
+      <separator/>
+      <reference ref="Scratch.ChangeLanguage"/>
+      <reference ref="AssociateWithFileType"/>
+      <reference ref="MarkFileAs"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <reference ref="SplitRevealGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </group>
+
+    <reference ref="TreeNodeExclusion"/>
+
+    <reference ref="UsageView.Popup"/>
+
+    <reference ref="NewElementSamePlace"/>
+
+    <reference ref="ChangeCodeStyleScheme">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
+    </reference>
+
+    <reference ref="ChangeInspectionProfile">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
+    </reference>
+    <reference ref="TypeHierarchyBase.BaseOnThisType"/>
+    <reference ref="MethodHierarchy.BaseOnThisMethod"/>
+    <reference ref="CallHierarchy.BaseOnThisMethod"/>
+    <reference ref="TypeHierarchy.Class"/>
+    <reference ref="TypeHierarchy.Subtypes"/>
+    <reference ref="TypeHierarchy.Supertypes"/>
+
+    <reference ref="TypeHierarchyPopupMenu"/>
+
+    <reference ref="MethodHierarchyPopupMenu"/>
+    <reference ref="CallHierarchyPopupMenu"/>
+
+    <reference ref="HierarchyPopupMenu.Common">
+      <add-to-group group-id="TypeHierarchyPopupMenu"/>
+      <add-to-group group-id="MethodHierarchyPopupMenu"/>
+      <add-to-group group-id="CallHierarchyPopupMenu"/>
+    </reference>
+
+    <group id="ConsoleView.PopupMenu">
+      <reference ref="ConsoleEditorPopupMenu"/>
+      <separator/>
+      <reference ref="ConsoleView.ClearAll"/>
+    </group>
+
+    <reference ref="DumpLookupElementWeights">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </reference>
+
+    <reference ref="JumpToColorsAndFonts"/>
+
+    <reference ref="ArrangementRulesGroup">
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </reference>
+
+    <reference ref="Arrangement.Alias.Rule.ToolBar"/>
+
+    <reference ref="Arrangement.Alias.Rule.Context.Menu"/>
+
+    <reference ref="Arrangement.Rule.Match.Control.Context.Menu"/>
+
+    <reference ref="Arrangement.Rule.Match.Control.ToolBar"/>
+
+    <reference ref="Arrangement.Rule.Group.Control.ToolBar"/>
+
+    <reference ref="SeverityEditorDialog"/>
+
+    <reference ref="CodeVision.ShowMore"/>
+
+    <group id="InspectionToolWindow.TreePopup" compact="true">
+      <reference ref="EditSource"/>
+      <reference ref="FindUsages"/>
+      <reference ref="TreeNodeExclusion"/>
+      <separator/>
+      <reference ref="QuickFixes"/>
+      <separator/>
+      <reference ref="SuppressFixes"/>
+      <separator/>
+      <reference ref="EditInspectionSettings"/>
+      <reference ref="DisableInspection"/>
+      <reference ref="RunInspectionOn"/>
+    </group>
+
+    <group id="ExtractMethodToolWindow.TreePopup" compact="true">
+      <reference ref="EditSource"/>
+      <reference ref="TreeNodeExclusion"/>
+    </group>
+    <reference ref="RenameFile">
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
+    </reference>
+    <reference ref="UpdateRunningApplication">
+      <add-to-group group-id="DebugReloadGroup" anchor="last"/>
+    </reference>
+
+    <!--region TouchBar-->
+    <group id="TouchBarEditorSearch">
+      <reference ref="EditorSearchSession.ToggleMatchCase"/>
+      <reference ref="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
+      <reference ref="EditorSearchSession.ToggleRegex"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.large"/>
+      <reference ref="EditorSearchSession.PrevOccurrence"/>
+      <reference ref="EditorSearchSession.NextOccurrenceAction"/>
+      <group id="TouchBarEditorSearch_ctrl">
+        <reference ref="EditorSearchSession.ToggleMatchCase"/>
+        <reference ref="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
+      </group>
+
+      <add-to-group group-id="TouchBar" anchor="first"/>
+    </group>
+
+    <!--endregion-->
+
+    <reference ref="IdeScriptingConsole">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </reference>
+
+    <reference ref="FileChooser.LightEditGotoOpenedFile">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
+    </reference>
+
+    <reference ref="ActivateHierarchyToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </reference>
+
+    <reference ref="SwitchFileBasedIndexStorageAction"/>
+
+    <reference ref="ClickLink"/>
+
+    <reference ref="ForceIndexRescanning"/>
+    <reference ref="ForceIndexRebuild"/>
+
+    <reference ref="ToggleFileBasedIndexes"/>
+    <reference ref="PauseScanningAndIndexing"/>
+
+    <reference ref="Internal.Dump">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </reference>
+
+    <group id="Jcef.ContextMenuGroup" popup="true"/>
+  </actions>
+  <actions resource-bundle="messages.UsageViewBundle">
+    <reference ref="UsageGrouping.ShortFilePath"/>
+
+    <reference ref="UsageGroupingActionGroup">
+      <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
+    </reference>
+    <reference ref="UsageFilteringActionGroup">
+      <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
+    </reference>
+  </actions>
+</idea-plugin>

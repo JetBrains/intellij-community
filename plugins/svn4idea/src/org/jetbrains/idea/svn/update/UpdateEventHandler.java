@@ -1,25 +1,32 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,24 +39,24 @@ public class UpdateEventHandler implements ProgressTracker {
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
   private final SvnVcs myVCS;
-  @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
+  private final @Nullable SvnUpdateContext mySequentialUpdatesContext;
   private final Map<File, Url> myUrlToCheckForSwitch;
   // pair.first - group id, pair.second - file path
   // Stack is used to correctly handle cases when updates of externals occur during ordinary update, because these inner updates could have
   // its own revisions.
   private final Stack<List<Pair<String, String>>> myFilesWaitingForRevision;
 
-  protected String myText;
-  protected String myText2;
+  protected @NlsContexts.ProgressText @Nullable String myText;
+  protected @NlsContexts.ProgressDetails @Nullable String myText2;
 
   public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator,
-                            @Nullable final SvnUpdateContext sequentialUpdatesContext) {
+                            final @Nullable SvnUpdateContext sequentialUpdatesContext) {
     myProgressIndicator = progressIndicator;
     myVCS = vcs;
     mySequentialUpdatesContext = sequentialUpdatesContext;
     myExternalsCount = 1;
     myUrlToCheckForSwitch = new HashMap<>();
-    myFilesWaitingForRevision = ContainerUtil.newStack();
+    myFilesWaitingForRevision = new Stack<>();
   }
 
   /**
@@ -69,12 +76,12 @@ public class UpdateEventHandler implements ProgressTracker {
    * TODO: UPDATE_STARTED event in some code paths.
    */
   public void startUpdate() {
-    myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
+    myFilesWaitingForRevision.push(new ArrayList<>());
   }
 
   public void finishUpdate() {
     while (!myFilesWaitingForRevision.isEmpty()) {
-      setRevisionForWaitingFiles(CommitInfo.EMPTY.getRevision());
+      setRevisionForWaitingFiles(CommitInfo.EMPTY.getRevisionNumber());
     }
   }
 
@@ -170,7 +177,7 @@ public class UpdateEventHandler implements ProgressTracker {
       if (mySequentialUpdatesContext != null) {
         mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
       }
-      myFilesWaitingForRevision.push(ContainerUtil.newArrayList());
+      myFilesWaitingForRevision.push(new ArrayList<>());
       myExternalsCount++;
       myText = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
     }
@@ -247,13 +254,14 @@ public class UpdateEventHandler implements ProgressTracker {
     }
   }
 
+  @Override
   public void checkCancelled() throws ProcessCanceledException {
     if (myProgressIndicator != null) {
       myProgressIndicator.checkCanceled();
     }
   }
 
-  private static FileGroup createFileGroup(String name, String id) {
+  private static @NotNull FileGroup createFileGroup(@Nls String name, String id) {
     return new FileGroup(name, name, false, id, true);
   }
 

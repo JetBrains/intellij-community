@@ -3,12 +3,12 @@
 package com.intellij.psi
 
 import com.intellij.patterns.ElementPattern
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ProcessingContext
 import junit.framework.TestCase
 import org.junit.Test
 
-class UastReferenceRegistrarTest : LightCodeInsightFixtureTestCase() {
+class UastReferenceRegistrarTest : LightJavaCodeInsightFixtureTestCase() {
 
   @Test
   fun testUastReferenceContributorCalledOnlyOnLiterals() {
@@ -43,7 +43,7 @@ class UastReferenceRegistrarTest : LightCodeInsightFixtureTestCase() {
 
     psiReferenceRegistrar.registerUastReferenceProvider(
       { _, _ -> invocationCount++; true },
-      uastLiteralReferenceProvider { _, _ -> PsiReference.EMPTY_ARRAY }
+      uastInjectionHostReferenceProvider { _, _ -> PsiReference.EMPTY_ARRAY }
     )
 
     myFixture.addClass("""

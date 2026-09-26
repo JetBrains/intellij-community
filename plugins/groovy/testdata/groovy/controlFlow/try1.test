@@ -20,6 +20,6 @@ print e
 12(8,10)  RETURN
 13(14) READ print
 14(15) READ e
-15(16) ARGUMENT element: Reference expression
+15(16) ARGUMENTS element: Call expression
 16(17) element: Call expression MAYBE_RETURN
 17() element: null

@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -27,24 +14,38 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
-public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
+import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
+
+public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
-    super("Edit Revision Comment", "Edit revision comment. Previous message is rewritten.", AllIcons.Actions.Edit);
+    super(
+      messagePointer("action.EditCommitMessage.text"),
+      messagePointer("action.EditCommitMessage.description"),
+      AllIcons.Actions.Edit
+    );
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    if (vcsKey == null || ! SvnVcs.getKey().equals(vcsKey)) return;
+    if (vcsKey == null || !SvnVcs.getKey().equals(vcsKey)) return;
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     if (revision == null || revisionVirtualFile == null) return;
-    final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
-    final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(e.getDataContext());
+    final SvnFileRevision svnFileRevision = (SvnFileRevision)revision;
+    final Consumer<String> listener = e.getData(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER);
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
                                                   svnFileRevision.getChangedRepositoryPath(), project,
                                                   newMessage -> {
@@ -52,22 +53,22 @@ public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
                                                     if (listener != null) {
                                                       listener.consume(newMessage);
                                                     }
-                                                    ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache()
-                                                      .editCached(VcsUtil.getFilePath(revisionVirtualFile), vcsKey, revisions -> {
-                                                        for (VcsFileRevision fileRevision : revisions) {
-                                                          if (!(fileRevision instanceof SvnFileRevision)) continue;
-                                                          if (((SvnFileRevision)fileRevision).getRevision().getNumber() ==
-                                                              svnFileRevision.getRevision().getNumber()) {
-                                                            ((SvnFileRevision)fileRevision).setCommitMessage(newMessage);
-                                                            break;
-                                                          }
-                                                        }
-                                                      });
+                                                    List<VcsFileRevision> revisions =
+                                                      ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache()
+                                                        .getRevisions(VcsUtil.getFilePath(revisionVirtualFile), vcsKey);
+                                                    for (VcsFileRevision fileRevision : revisions) {
+                                                      if (!(fileRevision instanceof SvnFileRevision)) continue;
+                                                      if (((SvnFileRevision)fileRevision).getRevision().getNumber() ==
+                                                          svnFileRevision.getRevision().getNumber()) {
+                                                        ((SvnFileRevision)fileRevision).setCommitMessage(newMessage);
+                                                        break;
+                                                      }
+                                                    }
                                                   }, true);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
     final boolean isSvn = SvnVcs.getKey().equals(vcsKey);
     e.getPresentation().setVisible(isSvn);

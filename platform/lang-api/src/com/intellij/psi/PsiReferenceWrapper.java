@@ -1,12 +1,10 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author traff
- */
 public class PsiReferenceWrapper implements PsiReference {
   private final PsiReference myOriginalPsiReference;
 
@@ -14,15 +12,13 @@ public class PsiReferenceWrapper implements PsiReference {
     myOriginalPsiReference = originalPsiReference;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myOriginalPsiReference.getElement();
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myOriginalPsiReference.getRangeInElement();
   }
 
@@ -31,14 +27,13 @@ public class PsiReferenceWrapper implements PsiReference {
     return myOriginalPsiReference.resolve();
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myOriginalPsiReference.getCanonicalText();
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myOriginalPsiReference.handleElementRename(newElementName);
   }
 
@@ -48,13 +43,12 @@ public class PsiReferenceWrapper implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myOriginalPsiReference.isReferenceTo(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     return myOriginalPsiReference.getVariants();
   }
 

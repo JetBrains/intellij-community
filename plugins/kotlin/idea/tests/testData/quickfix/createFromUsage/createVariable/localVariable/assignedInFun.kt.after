@@ -1,0 +1,7 @@
+// "Create local variable 'foo'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test(n: Int) {
+    var foo = n + 1
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateLocalVariableFromUsageBuilder$CreateLocalFromUsageAction

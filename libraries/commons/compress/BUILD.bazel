@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.commons.compress` start
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-compress-commons-compress"],
+    module = ":compress",
+)
+### auto-generated section `dev intellij.libraries.commons.compress` end
+
+### auto-generated section `build intellij.libraries.commons.compress` start
+jvm_library(
+    name = "compress",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.commons.compress",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-compress-commons-compress"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-commons-compress-commons-compress",
+        "//libraries/commons/lang3",
+        "//libraries/commons/codec",
+        "//libraries/commons/io",
+    ],
+)
+
+jvm_library(
+    name = "compress_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.commons.compress",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-commons-compress-commons-compress"],
+    runtime_deps = [
+        # do not sort,
+        ":compress",
+        "//libraries/commons/lang3:lang3_test_lib",
+        "//libraries/commons/codec:codec_test_lib",
+        "//libraries/commons/io:io_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.commons.compress` end
+
+### auto-generated section `iml intellij.libraries.commons.compress` start
+exports_files(
+    [
+        "intellij.libraries.commons.compress.iml",
+        "resources/intellij.libraries.commons.compress.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.commons.compress` end

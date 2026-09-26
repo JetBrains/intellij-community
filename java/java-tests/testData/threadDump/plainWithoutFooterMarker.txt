@@ -1,0 +1,3 @@
+"main@101" #1 prio=5 tid=0x1 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+	at example.main.run(main.java:1)

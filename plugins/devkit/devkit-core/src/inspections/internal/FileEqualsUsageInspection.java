@@ -1,52 +1,106 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public class FileEqualsUsageInspection extends DevKitInspectionBase {
-  static final String MESSAGE =
-    "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
-    "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
+import java.util.Set;
+import java.util.function.Supplier;
+
+@ApiStatus.Internal
+public final class FileEqualsUsageInspection extends DevKitUastInspectionBase {
+
+  private static final Set<String> METHOD_NAMES = Set.of("equals", "compareTo", "hashCode");
+
+  private static final Set<UastBinaryOperator> SUPPORTED_OPERATORS = Set.of(
+    UastBinaryOperator.EQUALS,
+    UastBinaryOperator.NOT_EQUALS,
+    UastBinaryOperator.GREATER,
+    UastBinaryOperator.GREATER_OR_EQUALS,
+    UastBinaryOperator.LESS,
+    UastBinaryOperator.LESS_OR_EQUALS
+  );
+
+  @SuppressWarnings("unchecked")
+  private static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class, UBinaryExpression.class};
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        PsiElement resolved = methodExpression.resolve();
-        if (!(resolved instanceof PsiMethod)) return;
-
-        PsiMethod method = (PsiMethod)resolved;
-
-        PsiClass clazz = method.getContainingClass();
-        if (clazz == null) return;
-
-        String methodName = method.getName();
-        if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName()) &&
-            ("equals".equals(methodName) || "compareTo".equals(methodName) || "hashCode".equals(methodName))) {
-          holder.registerProblem(methodExpression, MESSAGE, ProblemHighlightType.LIKE_DEPRECATED);
-        }
+      public boolean visitCallExpression(@NotNull UCallExpression node) {
+        inspectCallExpression(node, holder);
+        return true;
       }
-    };
+
+      @Override
+      public boolean visitBinaryExpression(@NotNull UBinaryExpression node) {
+        inspectBinaryExpression(node, holder);
+        return true;
+      }
+    }, HINTS);
+  }
+
+  private static void inspectCallExpression(@NotNull UCallExpression node, @NotNull ProblemsHolder holder) {
+    if (!node.isMethodNameOneOf(METHOD_NAMES)) return;
+    PsiMethod psiMethod = node.resolve();
+    if (psiMethod == null) return;
+    inspectMethodCall(psiMethod, holder, () -> {
+      UIdentifier identifier = node.getMethodIdentifier();
+      if (identifier == null) return null;
+      return identifier.getSourcePsi();
+    });
+  }
+
+  private static void inspectMethodCall(@NotNull PsiMethod psiMethod, @NotNull ProblemsHolder holder,
+                                        @NotNull Supplier<PsiElement> anchorSupplier) {
+    PsiClass containingClass = psiMethod.getContainingClass();
+    if (containingClass == null) return;
+    if (!CommonClassNames.JAVA_IO_FILE.equals(containingClass.getQualifiedName())) return;
+
+    if (!DevKitInspectionUtil.isClassAvailable(holder, FileUtil.class.getName())) return;
+
+    PsiElement anchor = anchorSupplier.get();
+    if (anchor == null) return;
+    holder.registerProblem(anchor, DevKitBundle.message("inspections.file.equals.method"));
+  }
+
+  private static void inspectBinaryExpression(@NotNull UBinaryExpression node, @NotNull ProblemsHolder holder) {
+    if (!SUPPORTED_OPERATORS.contains(node.getOperator())) return;
+    if (isNull(node.getLeftOperand()) || isNull(node.getRightOperand())) return;
+    PsiMethod psiMethod = node.resolveOperator();
+    if (psiMethod == null) return;
+    if (!METHOD_NAMES.contains(psiMethod.getName())) return;
+    inspectMethodCall(psiMethod, holder, () -> {
+      UIdentifier identifier = node.getOperatorIdentifier();
+      return identifier != null ? identifier.getSourcePsi() : null;
+    });
+  }
+
+  private static boolean isNull(UExpression expression) {
+    if (expression instanceof ULiteralExpression literalExpression) {
+      return literalExpression.isNull();
+    }
+    return false;
   }
 }

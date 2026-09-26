@@ -5,7 +5,7 @@ class F {
 
 class E extends F {
   @Override
-  <error descr="'f()' in 'E' clashes with 'f()' in 'F'; attempting to assign weaker access privileges ('protected'); was 'public'">protected</error> void f() {
+  <error descr="'f()' in 'E' clashes with 'f()' in 'F'; cannot reduce visibility from 'public' to 'protected'">protected</error> void f() {
     super.f();
   }
 }

@@ -1,0 +1,1 @@
+void foo(Integer a = 1) {}

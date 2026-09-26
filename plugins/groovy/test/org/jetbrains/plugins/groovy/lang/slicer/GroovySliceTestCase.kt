@@ -51,7 +51,7 @@ abstract class GroovySliceTestCase(private val isDataFlowToThis: Boolean) : Daem
 
     psiDocumentManager.commitAllDocuments()
 
-    val element = SliceHandler(isDataFlowToThis).getExpressionAtCaret(editor, file)!!
+    val element = SliceHandler.create(isDataFlowToThis).getExpressionAtCaret(editor, file)!!
     val tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset)
 
     val errors = highlightErrors()

@@ -18,7 +18,11 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2For;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
@@ -26,15 +30,14 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
     super(node);
   }
 
-  @NotNull
-  public XPathType getType() {
+  @Override
+  public @NotNull XPathType getType() {
     final XPathExpression value = getReturn();
     return value != null ? value.getType() : XPathType.UNKNOWN;
   }
 
-  @NotNull
   @Override
-  public XPathVariableDeclaration[] getVariables() {
+  public XPathVariableDeclaration @NotNull [] getVariables() {
     return findChildrenByClass(XPathVariableDeclaration.class);
   }
 
@@ -44,6 +47,7 @@ public class XPath2ForImpl extends XPath2ElementImpl implements XPath2For {
     return node != null ? PsiTreeUtil.findChildOfType(node.getPsi(), XPathExpression.class) : null;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2For(this);
   }

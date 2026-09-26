@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -39,52 +31,53 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class WindowWatcher implements PropertyChangeListener{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
+@ApiStatus.Internal
+public final class WindowWatcher implements PropertyChangeListener {
+  private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
-  private final Map<Window, WindowInfo> myWindow2Info = ContainerUtil.createWeakMap();
+  private final Map<@NotNull Window, WindowInfo> windowToInfo = new WeakHashMap<>();
   /**
-   * Currenly focused window (window which has focused component). Can be {@code null} if there is no focused
+   * Currently focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.
    */
   private Window myFocusedWindow;
   /**
    * Contains last focused window for each project.
    */
-  private final Set myFocusedWindows = new HashSet();
-  @NonNls private static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
+  private final Set<Window> myFocusedWindows = new HashSet<>();
+  private static final @NonNls String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher() {}
 
   /**
-   * This method should get notifications abount changes of focused window.
+   * This method should get notifications about changes of focused window.
    * Only {@code focusedWindow} property is acceptable.
+   *
    * @throws IllegalArgumentException if property name isn't {@code focusedWindow}.
    */
-  public final void propertyChange(final PropertyChangeEvent e){
-    if(LOG.isDebugEnabled()){
-      LOG.debug("enter: propertyChange("+e+")");
+  @Override
+  public void propertyChange(@NotNull PropertyChangeEvent e) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: propertyChange(" + e + ")");
     }
-    if(!FOCUSED_WINDOW_PROPERTY.equals(e.getPropertyName())){
-      throw new IllegalArgumentException("unknown property name: "+e.getPropertyName());
+    if (!FOCUSED_WINDOW_PROPERTY.equals(e.getPropertyName())) {
+      throw new IllegalArgumentException("unknown property name: " + e.getPropertyName());
     }
-    synchronized(myLock){
-      final Window window=(Window)e.getNewValue();
-      if(window==null || ApplicationManager.getApplication().isDisposed()){
+
+    synchronized (myLock) {
+      final Window window = (Window)e.getNewValue();
+      if (window == null || ApplicationManager.getApplication().isDisposed()) {
         return;
       }
-      if(!myWindow2Info.containsKey(window)){
-        myWindow2Info.put(window,new WindowInfo(window, true));
+      if (!windowToInfo.containsKey(window)) {
+        windowToInfo.put(window, new WindowInfo(window, true));
       }
-      myFocusedWindow=window;
+      myFocusedWindow = window;
       final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
-      for (Iterator i = myFocusedWindows.iterator(); i.hasNext();) {
-        final Window w = (Window)i.next();
+      for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext(); ) {
+        final Window w = i.next();
         final DataContext dataContext = DataManager.getInstance().getDataContext(w);
         if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
           i.remove();
@@ -92,63 +85,63 @@ public final class WindowWatcher implements PropertyChangeListener{
       }
       myFocusedWindows.add(myFocusedWindow);
       // Set new root frame
-      final IdeFrameImpl frame;
-      if(window instanceof IdeFrameImpl){
-        frame=(IdeFrameImpl)window;
-      }else{
-        frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
+      JFrame frame;
+      if (window instanceof JFrame) {
+        frame = (JFrame)window;
       }
-      if(frame!=null){
+      else {
+        frame = (JFrame)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, window);
+      }
+      if (frame != null) {
         JOptionPane.setRootFrame(frame);
       }
     }
-    if(LOG.isDebugEnabled()){
+    if (LOG.isDebugEnabled()) {
       LOG.debug("exit: propertyChange()");
     }
   }
 
-  final void dispatchComponentEvent(final ComponentEvent e){
-    final int id=e.getID();
-    if(WindowEvent.WINDOW_CLOSED == id ||
-       (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)){
+  void dispatchComponentEvent(final ComponentEvent e) {
+    int id = e.getID();
+    if (WindowEvent.WINDOW_CLOSED == id || (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
       dispatchHiddenOrClosed((Window)e.getSource());
     }
-    // Clear obsolete reference on root frame
-    if(WindowEvent.WINDOW_CLOSED==id){
-      final Window window=(Window)e.getSource();
-      if(JOptionPane.getRootFrame()==window){
+    // clear obsolete reference on root frame
+    if (WindowEvent.WINDOW_CLOSED == id) {
+      Window window = (Window)e.getSource();
+      if (JOptionPane.getRootFrame() == window) {
         JOptionPane.setRootFrame(null);
       }
     }
   }
 
-  private void dispatchHiddenOrClosed(final Window window){
-    if(LOG.isDebugEnabled()){
-      LOG.debug("enter: dispatchClosed("+window+")");
+  private void dispatchHiddenOrClosed(final Window window) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: dispatchClosed(" + window + ")");
     }
-    synchronized(myLock){
-      final WindowInfo info=myWindow2Info.get(window);
-      if(info!=null){
-        final FocusWatcher focusWatcher=info.myFocusWatcherRef.get();
-        if(focusWatcher!=null){
+    synchronized (myLock) {
+      WindowInfo info = window == null ? null : windowToInfo.get(window);
+      if (info != null) {
+        final FocusWatcher focusWatcher = info.myFocusWatcherRef.get();
+        if (focusWatcher != null) {
           focusWatcher.deinstall(window);
         }
-        myWindow2Info.remove(window);
+        windowToInfo.remove(window);
       }
     }
     // Now, we have to recalculate focused window if currently focused
     // window is being closed.
-    if(myFocusedWindow==window){
-      if(LOG.isDebugEnabled()){
+    if (myFocusedWindow == window) {
+      if (LOG.isDebugEnabled()) {
         LOG.debug("currently active window should be closed");
       }
-      myFocusedWindow=myFocusedWindow.getOwner();
+      myFocusedWindow = myFocusedWindow.getOwner();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("new active window is "+myFocusedWindow);
+        LOG.debug("new active window is " + myFocusedWindow);
       }
     }
-    for(Iterator i=myFocusedWindows.iterator();i.hasNext();){
-      final Window activeWindow = (Window)i.next();
+    for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext(); ) {
+      Window activeWindow = i.next();
       if (activeWindow == window) {
         final Window newActiveWindow = activeWindow.getOwner();
         i.remove();
@@ -159,9 +152,9 @@ public final class WindowWatcher implements PropertyChangeListener{
       }
     }
     // Remove invalid infos for garbage collected windows
-    for(Iterator i=myWindow2Info.values().iterator();i.hasNext();){
-      final WindowInfo info=(WindowInfo)i.next();
-      if(info.myFocusWatcherRef.get()==null){
+    for (Iterator<WindowInfo> i = windowToInfo.values().iterator(); i.hasNext(); ) {
+      final WindowInfo info = i.next();
+      if (info.myFocusWatcherRef.get() == null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("remove collected info");
         }
@@ -170,108 +163,130 @@ public final class WindowWatcher implements PropertyChangeListener{
     }
   }
 
-  public final Window getFocusedWindow(){
-    synchronized(myLock){
+  public @Nullable Window getFocusedWindow() {
+    synchronized (myLock) {
       return myFocusedWindow;
     }
   }
 
-  @Nullable
-  public final Component getFocusedComponent(@Nullable final Project project) {
-    synchronized(myLock){
-      final Window window=getFocusedWindowForProject(project);
-      if(window==null){
+  public @Nullable Component getFocusedComponent(@Nullable Project project) {
+    synchronized (myLock) {
+      Window window = getFocusedWindowForProject(project);
+      if (window == null) {
         return null;
       }
       return getFocusedComponent(window);
     }
   }
 
-
-  public final Component getFocusedComponent(@NotNull final Window window){
-    synchronized(myLock){
-      final WindowInfo info=myWindow2Info.get(window);
-      if(info==null){ // it means that we don't manage this window, so just return standard focus owner
+  public @Nullable Component getFocusedComponent(@NotNull Window window) {
+    synchronized (myLock) {
+      WindowInfo info = windowToInfo.get(window);
+      if (info == null) { // it means that we don't manage this window, so just return standard focus owner
         // return window.getFocusOwner();
         // TODO[vova,anton] usage of getMostRecentFocusOwner is experimental. But it seems suitable here.
         return window.getMostRecentFocusOwner();
       }
-      final FocusWatcher focusWatcher=info.myFocusWatcherRef.get();
-      if(focusWatcher!=null){
+
+      FocusWatcher focusWatcher = info.myFocusWatcherRef.get();
+      if (focusWatcher != null) {
         final Component focusedComponent = focusWatcher.getFocusedComponent();
-        if(focusedComponent != null && focusedComponent.isShowing()){
+        if (focusedComponent != null && focusedComponent.isShowing()) {
           return focusedComponent;
         }
-        else{
+        else {
           return window == KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() ? window : null;
         }
-      }else{
-         // info isn't valid, i.e. window was garbage collected, so we need the remove invalid info
+      }
+      else {
+        // info isn't valid, i.e. window was garbage collected, so we need the remove invalid info
         // and return null
-        myWindow2Info.remove(window);
+        windowToInfo.remove(window);
         return null;
       }
     }
   }
 
-  @Nullable
-  public FocusWatcher getFocusWatcherFor(Component c) {
+  public @Nullable FocusWatcher getFocusWatcherFor(Component c) {
     final Window window = SwingUtilities.getWindowAncestor(c);
-    final WindowInfo info = myWindow2Info.get(window);
+    final WindowInfo info = window == null ? null : windowToInfo.get(window);
     return info == null ? null : info.myFocusWatcherRef.get();
   }
 
   /**
    * @param project may be null (for example, if no projects are opened)
    */
-  @Nullable
-  public final Window suggestParentWindow(@Nullable final Project project){
-    synchronized(myLock){
-      Window window=getFocusedWindowForProject(project);
-      if(window==null){
-        if (project != null) {
-          return (Window)WindowManagerEx.getInstanceEx().findFrameFor(project);
+  public @Nullable Window suggestParentWindow(@Nullable Project project, @NotNull WindowManagerEx windowManager) {
+    synchronized (myLock) {
+      Window window = getFocusedWindowForProject(project);
+      if (window == null) {
+        if (project == null) {
+          Project[] projects = ProjectUtil.getOpenProjects();
+          if (projects.length == 1) {
+            project = projects[0];
+          }
         }
-        else{
+        if (project == null) {
           return null;
+        }
+        else {
+          IdeFrame frame = windowManager.findFrameFor(project);
+          if (frame == null) {
+            return null;
+          }
+          else if (frame instanceof Window) {
+            return (Window)frame;
+          }
+          else {
+            return ((ProjectFrameHelper)frame).getFrame();
+          }
         }
       }
 
       LOG.assertTrue(window.isDisplayable());
       LOG.assertTrue(window.isShowing());
 
-      while(window!=null){
+      while (window != null) {
         // skip not visible and disposed/not shown windows
-        if(!window.isDisplayable()||!window.isShowing()){
+        if (!window.isDisplayable() || !window.isShowing()) {
           window = window.getOwner();
           continue;
         }
         // skip windows that have not associated WindowInfo
-        final WindowInfo info=myWindow2Info.get(window);
-        if(info==null){
-          window=window.getOwner();
+        final WindowInfo info = windowToInfo.get(window);
+        if (info == null) {
+          window = window.getOwner();
           continue;
         }
-        if(info.mySuggestAsParent){
+        if (info.mySuggestAsParent) {
           return window;
-        }else{
-          window=window.getOwner();
+        }
+        else {
+          window = window.getOwner();
         }
       }
       return null;
     }
   }
 
-  public final void doNotSuggestAsParent(final Window window) {
-    if(LOG.isDebugEnabled()){
-      LOG.debug("enter: doNotSuggestAsParent("+window+")");
+  public boolean isNotSuggestAsParent(@NotNull Window window) {
+    synchronized (myLock) {
+      WindowInfo info = windowToInfo.get(window);
+      return info != null && !info.mySuggestAsParent;
     }
-    synchronized(myLock){
-      final WindowInfo info=myWindow2Info.get(window);
-      if(info==null){
-        myWindow2Info.put(window,new WindowInfo(window, false));
-      }else{
-        info.mySuggestAsParent=false;
+  }
+
+  public void doNotSuggestAsParent(@NotNull Window window) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("enter: doNotSuggestAsParent(" + window + ")");
+    }
+    synchronized (myLock) {
+      final WindowInfo info = windowToInfo.get(window);
+      if (info == null) {
+        windowToInfo.put(window, new WindowInfo(window, false));
+      }
+      else {
+        info.mySuggestAsParent = false;
       }
     }
   }
@@ -280,14 +295,13 @@ public final class WindowWatcher implements PropertyChangeListener{
    * @return active window for specified {@code project}. There is only one window
    * for project can be at any point of time.
    */
-  @Nullable
-  private Window getFocusedWindowForProject(@Nullable final Project project) {
+  private @Nullable Window getFocusedWindowForProject(final @Nullable Project project) {
     //todo[anton,vova]: it is possible that returned wnd is not contained in myFocusedWindows; investigate
-    outer: for(Iterator i=myFocusedWindows.iterator();i.hasNext();){
-      Window window=(Window)i.next();
-      while(!window.isDisplayable()||!window.isShowing()){ // if window isn't visible then gets its first visible ancestor
-        window=window.getOwner();
-        if(window==null){
+    outer:
+    for (Window window : myFocusedWindows) {
+      while (!window.isDisplayable() || !window.isShowing()) { // if window isn't visible then gets its first visible ancestor
+        window = window.getOwner();
+        if (window == null) {
           continue outer;
         }
       }
@@ -300,17 +314,14 @@ public final class WindowWatcher implements PropertyChangeListener{
   }
 
   private static final class WindowInfo {
-    public final WeakReference<FocusWatcher> myFocusWatcherRef;
-    public boolean mySuggestAsParent;
+    final WeakReference<FocusWatcher> myFocusWatcherRef;
+    boolean mySuggestAsParent;
 
-    public WindowInfo(final Window window,final boolean suggestAsParent){
-      final FocusWatcher focusWatcher=new FocusWatcher();
+    WindowInfo(final Window window, final boolean suggestAsParent) {
+      final FocusWatcher focusWatcher = new FocusWatcher();
       focusWatcher.install(window);
-      myFocusWatcherRef= new WeakReference<>(focusWatcher);
-      mySuggestAsParent=suggestAsParent;
+      myFocusWatcherRef = new WeakReference<>(focusWatcher);
+      mySuggestAsParent = suggestAsParent;
     }
-
   }
-
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -18,17 +17,18 @@ import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnMergeInfoRootPanelManual;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class MergeInfoHolder {
 
-  @NotNull private final DecoratorManager myManager;
-  @NotNull private final SvnMergeInfoCache myMergeInfoCache;
-  @NotNull private final RootsAndBranches myMainPanel;
-  @NotNull private final SvnMergeInfoRootPanelManual myPanel;
+  private final @NotNull DecoratorManager myManager;
+  private final @NotNull SvnMergeInfoCache myMergeInfoCache;
+  private final @NotNull RootsAndBranches myMainPanel;
+  private final @NotNull SvnMergeInfoRootPanelManual myPanel;
 
   // used ONLY when refresh is triggered
-  @NotNull private final Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
+  private final @NotNull Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
 
   public MergeInfoHolder(@NotNull Project project,
                          @NotNull DecoratorManager manager,
@@ -38,16 +38,14 @@ public class MergeInfoHolder {
     myMainPanel = mainPanel;
     myPanel = panel;
     myMergeInfoCache = SvnMergeInfoCache.getInstance(project);
-    myCachedMap = ContainerUtil.newHashMap();
+    myCachedMap = new HashMap<>();
   }
 
-  @NotNull
-  private Pair<WCInfo, Url> getCacheKey() {
+  private @NotNull Pair<WCInfo, Url> getCacheKey() {
     return Pair.create(myPanel.getWcInfo(), myPanel.getBranch().getUrl());
   }
 
-  @Nullable
-  private MergeInfoCached getCurrentCache() {
+  private @Nullable MergeInfoCached getCurrentCache() {
     return myCachedMap.get(getCacheKey());
   }
 
@@ -61,8 +59,7 @@ public class MergeInfoHolder {
     return isEnabledAndConfigured(ignoreEnabled) && getCurrentCache() == null;
   }
 
-  @NotNull
-  public ListMergeStatus refresh(final boolean ignoreEnabled) {
+  public @NotNull ListMergeStatus refresh(final boolean ignoreEnabled) {
     final CommittedChangeListsListener refresher = createRefresher(ignoreEnabled);
     if (refresher != null) {
       myManager.reportLoadedLists(refresher);
@@ -72,8 +69,7 @@ public class MergeInfoHolder {
     return ListMergeStatus.REFRESHING;
   }
 
-  @Nullable
-  public CommittedChangeListsListener createRefresher(boolean ignoreEnabled) {
+  public @Nullable CommittedChangeListsListener createRefresher(boolean ignoreEnabled) {
     CommittedChangeListsListener result = null;
 
     if (refreshEnabled(ignoreEnabled)) {
@@ -88,9 +84,9 @@ public class MergeInfoHolder {
     return result;
   }
 
-  private class MyRefresher implements CommittedChangeListsListener {
+  private final class MyRefresher implements CommittedChangeListsListener {
 
-    @NotNull private final WCInfoWithBranches myRefreshedRoot;
+    private final @NotNull WCInfoWithBranches myRefreshedRoot;
     private final WCInfoWithBranches.Branch myRefreshedBranch;
     private final String myBranchPath;
 
@@ -100,12 +96,14 @@ public class MergeInfoHolder {
       myBranchPath = myPanel.getLocalBranch();
     }
 
+    @Override
     public void onBeforeStartReport() {
     }
 
-    public boolean report(final CommittedChangeList list) {
+    @Override
+    public boolean report(@NotNull CommittedChangeList list) {
       if (list instanceof SvnChangeList) {
-        final SvnMergeInfoCache.MergeCheckResult checkState =
+        final MergeCheckResult checkState =
           myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
@@ -120,6 +118,7 @@ public class MergeInfoHolder {
       return true;
     }
 
+    @Override
     public void onAfterEndReport() {
       ApplicationManager.getApplication().invokeLater(() -> {
         myCachedMap.remove(getCacheKey());
@@ -128,14 +127,12 @@ public class MergeInfoHolder {
       });
     }
 
-    @NotNull
-    private Pair<WCInfo, Url> getCacheKey() {
+    private @NotNull Pair<WCInfo, Url> getCacheKey() {
       return Pair.create(myRefreshedRoot, myRefreshedBranch.getUrl());
     }
   }
 
-  @NotNull
-  public ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
+  public @NotNull ListMergeStatus check(final CommittedChangeList list, final boolean ignoreEnabled) {
     ListMergeStatus result;
 
     if (!isEnabledAndConfigured(ignoreEnabled) || !(list instanceof SvnChangeList)) {
@@ -151,9 +148,8 @@ public class MergeInfoHolder {
     return result;
   }
 
-  @NotNull
-  public ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
-    SvnMergeInfoCache.MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
+  public @NotNull ListMergeStatus check(@NotNull CommittedChangeList list, @NotNull MergeInfoCached state, boolean isCached) {
+    MergeCheckResult mergeCheckResult = state.getMap().get(list.getNumber());
     ListMergeStatus result = state.copiedAfter(list) ? ListMergeStatus.COMMON : ListMergeStatus.from(mergeCheckResult);
 
     return ObjectUtils.notNull(result, isCached ? ListMergeStatus.REFRESHING : ListMergeStatus.ALIEN);

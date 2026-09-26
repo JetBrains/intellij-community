@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// PROBLEM: Getter returns a new 'Channel' on each access
+// FIX: Convert property getter to initializer
+
+import kotlinx.coroutines.channels.Channel
+
+class Service {
+    val channel <caret>get() = Channel<Int>()
+}

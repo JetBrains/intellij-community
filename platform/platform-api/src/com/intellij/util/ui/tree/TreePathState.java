@@ -21,6 +21,7 @@ public interface TreePathState {
   TreePath getRestoredPath();
 
   TreePathState NULL = new TreePathState() {
+    @Override
     public TreePath getRestoredPath() {
       return null;
     }

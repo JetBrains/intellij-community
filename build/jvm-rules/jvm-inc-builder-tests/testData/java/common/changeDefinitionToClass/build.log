@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Server.class
+End of files
+Compiling files:
+  java/common/changeDefinitionToClass/a/Server.java
+End of files
+Cleaning output files:
+  Client$1.class
+  Client.class
+End of files
+Compiling files:
+  java/common/changeDefinitionToClass/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

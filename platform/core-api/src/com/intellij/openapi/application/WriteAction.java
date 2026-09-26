@@ -1,134 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class WriteAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+/**
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
+ *
+ * @see ReadAction
+ */
+public final class WriteAction {
+  private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)}
-   * or {@link #compute(ThrowableComputable)}
-   * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @NotNull
-  @Override
-  public RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<>(this);
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      AccessToken token = start(getClass());
-      try {
-        result.run();
-      }
-      finally {
-        token.finish();
-      }
-      return result;
-    }
-
-    if (application.isReadAccessAllowed()) {
-      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-    }
-
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(getClass());
-      try {
-        result.run();
-      }
-      finally {
-        token.finish();
-      }
-    });
-
-    if (!isSilentExecution()) {
-      result.throwException();
-    }
-
-    return result;
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @NotNull
-  public static AccessToken start() {
-    // get useful information about the write action
-    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
-  }
-
-  /**
-   * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   * @see #run(ThrowableRunnable)
-   * @see #compute(ThrowableComputable)
-   */
-  @Deprecated
-  @NotNull
-  private static AccessToken start(@NotNull Class clazz) {
-    return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
+  private WriteAction() {
   }
 
   /**
    * Executes {@code action} inside write action.
-   * Must be called from the EDT.
    */
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    AccessToken token = start();
-    try {
-      action.run();
-    }
-    finally {
-      token.finish();
-    }
+    ApplicationManager.getApplication().runWriteAction(CoroutinesKt.throwableRunnableToThrowableComputable(action));
   }
 
   /**
    * Executes {@code action} inside write action and returns the result.
-   * Must be called from the EDT.
    */
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
-    AccessToken token = start();
-    try {
-      return action.compute();
-    }
-    finally {
-      token.finish();
-    }
+    return ApplicationManager.getApplication().runWriteAction(action);
   }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @Override
-  protected abstract void run(@NotNull Result<T> result) throws Throwable;
 
   /**
    * Executes {@code action} inside write action.
@@ -138,11 +43,9 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #run(ThrowableRunnable)}.
    */
   public static <E extends Throwable> void runAndWait(@NotNull ThrowableRunnable<E> action) throws E {
-    computeAndWait(()->{
-      action.run();
-      return null;
-    });
+    computeAndWait(CoroutinesKt.throwableRunnableToThrowableComputable(action));
   }
+
   /**
    * Executes {@code action} inside write action.
    * If called from outside the EDT, transfers control to the EDT first, executes write action there and waits for the execution end.
@@ -151,34 +54,33 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #compute(ThrowableComputable)}.
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
+    return computeAndWait(action, ModalityState.defaultModalityState());
+  }
+
+  public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      AccessToken token = start(action.getClass());
-      try {
-        return action.compute();
-      }
-      finally {
-        token.finish();
-      }
+    if (application.isWriteIntentLockAcquired()) {
+      return application.runWriteAction(action);
     }
 
-    if (application.isReadAccessAllowed()) {
+    if (EDT.isCurrentThreadEdt()) {
+      return application.runWriteIntentReadAction(() -> application.runWriteAction(action));
+    }
+
+    if (application.holdsReadLock()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
-    final AtomicReference<T> result = new AtomicReference<>();
-    final AtomicReference<Throwable> exception = new AtomicReference<>();
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(action.getClass());
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> exception = new AtomicReference<>();
+    WriteThread.invokeAndWait(() -> {
       try {
-        result.set(action.compute());
+        result.set(compute(action));
       }
       catch (Throwable e) {
         exception.set(e);
       }
-      finally {
-        token.finish();
-      }
-    });
+    }, modalityState);
 
     Throwable t = exception.get();
     if (t != null) {
@@ -187,6 +89,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       //noinspection unchecked
       throw (E)t;
     }
+
     return result.get();
   }
 }

@@ -1,0 +1,10 @@
+import Foo.bar
+
+// WITH_STDLIB
+object Foo {
+    fun String.bar() {}
+}
+
+fun test() {
+    "abc".bar()
+}

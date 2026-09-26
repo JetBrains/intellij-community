@@ -1,76 +1,88 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author mike
- */
-public class AddExceptionToCatchFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
+public class AddExceptionToCatchFix implements ModCommandAction {
+  private static final Logger LOG = Logger.getInstance(AddExceptionToCatchFix.class);
+  private final boolean myUncaughtOnly;
+
+  public AddExceptionToCatchFix(boolean uncaughtOnly) {
+    myUncaughtOnly = uncaughtOnly;
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    int offset = context.offset();
 
-    PsiElement element = findElement(file, offset);
-    if (element == null) return;
+    PsiElement element = findElement(context.file(), offset);
+    if (element == null) return ModCommand.nop();
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.collectUnhandledExceptions(element, null));
-    if (unhandledExceptions.isEmpty()) return;
+    List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
+    if (unhandledExceptions.isEmpty()) return ModCommand.nop();
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
-
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
+    return ModCommand.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
+  }
+  
+  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
+    PsiFile psiFile = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 
     try {
       if (tryStatement.getFinallyBlock() == null && tryStatement.getCatchBlocks().length == 0) {
         for (PsiClassType unhandledException : unhandledExceptions) {
-          addCatchStatement(tryStatement, unhandledException, file);
+          addCatchStatement(tryStatement, unhandledException, psiFile);
         }
         catchBlockToSelect = tryStatement.getCatchBlocks()[0];
       }
       else {
         for (PsiClassType unhandledException : unhandledExceptions) {
-          PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, file);
+          PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, psiFile);
           if (catchBlockToSelect == null) catchBlockToSelect = codeBlock;
         }
       }
@@ -79,28 +91,38 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       LOG.error(e);
     }
     if (catchBlockToSelect != null) {
+      catchBlockToSelect = (PsiCodeBlock)CodeStyleManager.getInstance(psiFile.getProject()).reformat(catchBlockToSelect);
       TextRange range = SurroundWithUtil.getRangeToSelect(catchBlockToSelect);
-      editor.getCaretModel().moveToOffset(range.getStartOffset());
-
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      updater.select(range);
     }
+  }
+
+  protected @NotNull Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
+    Collection<PsiClassType> exceptions = ExceptionUtil.collectUnhandledExceptions(element, topElement);
+    if(!myUncaughtOnly && exceptions.isEmpty()) {
+      exceptions = ExceptionUtil.getThrownExceptions(element);
+      if (exceptions.isEmpty()) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+        PsiClassType exceptionType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, element.getResolveScope());
+        exceptions = Collections.singleton(exceptionType);
+      }
+    }
+    return exceptions;
   }
 
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement,
                                                 PsiClassType exceptionType,
-                                                PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(tryStatement.getProject()).getElementFactory();
+                                                PsiFile psiFile) throws IncorrectOperationException {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(tryStatement.getProject());
 
     if (tryStatement.getTryBlock() == null) {
       addTryBlock(tryStatement, factory);
     }
 
-    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(tryStatement.getProject());
-    String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exceptionType).names[0];
-    name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
+    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER)
+      .byName("e", "ex", "exception").byType(exceptionType).generate(false);
 
-    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, file);
+    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {
@@ -113,7 +135,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
     PsiTypeElement typeElement = parameters[parameters.length - 1].getTypeElement();
     if (typeElement != null) {
-      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(typeElement);
+      JavaCodeStyleManager.getInstance(psiFile.getProject()).shortenClassReferences(typeElement);
     }
 
     PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
@@ -151,44 +173,45 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    PsiFile psiFile = context.file();
+    if (!(psiFile instanceof PsiJavaFile)) return null;
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = findElement(file, offset);
-
-    if (element == null) return false;
-
-    setText(QuickFixBundle.message("add.catch.clause.text"));
-    return true;
+    PsiElement element = findElement(psiFile, context.offset());
+    if (element == null) return null;
+    
+    return Presentation.of(QuickFixBundle.message("add.catch.clause.text"));
   }
 
-  @Nullable
-  private static PsiElement findElement(final PsiFile file, final int offset) {
-    PsiElement element = file.findElementAt(offset);
-    if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
+  private @Nullable PsiElement findElement(final PsiFile psiFile, final int offset) {
+    PsiElement element = psiFile.findElementAt(offset);
+    if (element instanceof PsiWhiteSpace) element = psiFile.findElementAt(offset - 1);
     if (element == null) return null;
-    PsiElement parentStatement = RefactoringUtil.getParentStatement(element, false);
-    if (parentStatement instanceof PsiDeclarationStatement &&
-        ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
-      return null;
+    PsiElement parentStatement = CommonJavaRefactoringUtil.getParentStatement(element, false);
+    if (parentStatement instanceof PsiDeclarationStatement) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
+      if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {
+        return null;
+      }
     }
 
-    @SuppressWarnings({"unchecked"})
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class, PsiFunctionalExpression.class);
     if (parent == null || parent instanceof PsiMethod || parent instanceof PsiFunctionalExpression) return null;
     final PsiTryStatement statement = (PsiTryStatement) parent;
 
     final PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock != null && tryBlock.getTextRange().contains(offset)) {
-      if (!ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).isEmpty()) {
-        return tryBlock;
+    if (tryBlock != null) {
+      TextRange range = tryBlock.getTextRange();
+      if (range.contains(offset) || range.getEndOffset() == offset) {
+        if (!getExceptions(tryBlock, statement.getParent()).isEmpty()) {
+          return tryBlock;
+        }
       }
     }
 
     final PsiResourceList resourceList = statement.getResourceList();
     if (resourceList != null && resourceList.getTextRange().contains(offset)) {
-      if (!ExceptionUtil.collectUnhandledExceptions(resourceList, statement.getParent()).isEmpty()) {
+      if (!getExceptions(resourceList, statement.getParent()).isEmpty()) {
         return resourceList;
       }
     }
@@ -197,8 +220,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.catch.clause.family");
   }
 }

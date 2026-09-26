@@ -1,0 +1,21 @@
+f:com.intellij.ui.ColorUtil
+- *s:editorFaded(java.awt.Color,Z):java.awt.Color
+f:com.intellij.ui.ComponentUtil
+- *s:isShowing(java.awt.Component,Z):Z
+*:com.intellij.ui.icons.IconWithShape
+- javax.swing.Icon
+- a:getShape():java.awt.Shape
+com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow$DragAndDrop
+- *sf:HINT_BACKGROUND:java.awt.Color
+*f:com.intellij.util.ui.JLabelUtil
+- sf:INSTANCE:com.intellij.util.ui.JLabelUtil
+- sf:setTrimOverflow(javax.swing.JLabel,Z):V
+*f:com.intellij.util.ui.SoundsKt
+- sf:playSound(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.util.ui.UIUtil
+- *s:colorHashCode(java.awt.Color):I
+- *s:equalColors(java.awt.Color,java.awt.Color):Z
+- *s:getParent(java.awt.Component):java.awt.Component
+- *s:hasFocus(java.awt.Component):Z
+- *s:isShowing(java.awt.Component):Z
+- *s:isShowing(java.awt.Component,Z):Z

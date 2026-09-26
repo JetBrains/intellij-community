@@ -1,4 +1,4 @@
-// "Replace with 'java.util.HashSet' constructor" "true"
+// "Replace with 'java.util.HashSet' constructor" "true-preview"
 
 import java.util.HashSet;
 import java.util.List;

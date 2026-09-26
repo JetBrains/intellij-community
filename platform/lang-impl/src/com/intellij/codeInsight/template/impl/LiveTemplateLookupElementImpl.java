@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -20,6 +6,8 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class LiveTemplateLookupElementImpl extends LiveTemplateLookupElement {
   private final TemplateImpl myTemplate;
@@ -29,14 +17,12 @@ public class LiveTemplateLookupElementImpl extends LiveTemplateLookupElement {
     myTemplate = template;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myTemplate.getKey();
   }
 
-  @NotNull
-  public TemplateImpl getTemplate() {
+  public @NotNull TemplateImpl getTemplate() {
     return myTemplate;
   }
 
@@ -46,7 +32,7 @@ public class LiveTemplateLookupElementImpl extends LiveTemplateLookupElement {
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     startTemplate(context, myTemplate);
   }
 
@@ -54,5 +40,18 @@ public class LiveTemplateLookupElementImpl extends LiveTemplateLookupElement {
     context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
     context.setAddCompletionChar(false);
     TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    LiveTemplateLookupElementImpl element = (LiveTemplateLookupElementImpl)o;
+    return Objects.equals(myTemplate, element.myTemplate);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myTemplate);
   }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "IntelliJ IDEA",
+  "version": "2020.1.4",
+  "buildNumber": "201.8743.12",
+  "productCode": "IU",
+  "dataDirectoryName": "IntelliJIdea2020.1",
+  "svgIconPath": "bin/idea.svg",
+  "launch": [
+    {
+      "os": "Linux",
+      "launcherPath": "bin/idea.sh",
+      "javaExecutablePath": "jbr/bin/java",
+      "vmOptionsFilePath": "bin/idea64.vmoptions",
+      "startupWmClass": "jetbrains-idea"
+    }
+  ]
+}

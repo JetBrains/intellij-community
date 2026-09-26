@@ -1,0 +1,40 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.source.tree.mvcc
+
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+
+
+/**
+ * Garbage collector for versioned objects.
+ *
+ * A set of versions is constantly changing,
+ * and it is important to periodically clean up the objects referenced alongside unused versions
+ * to make obsolete objects eligible for JVM garbage collections.
+ */
+@ApiStatus.Internal
+interface PsiVersioningGarbageCollector {
+
+  /**
+   * Signals that [cleanables] were modified in [version].
+   * Later, when [version] will become obsolete, [PsiVersionCleanable.liveVersionChanged] will be called on each element in [cleanables]
+   */
+  fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>)
+
+  /**
+   * This method needs to be called by the Platform when it detects that the earlier live version is now different.
+   */
+  fun liveVersionsChanged(latestBarrier: Long)
+
+  /**
+   * Used by test code to await garbage collection if it is asynchronous.
+   */
+  @TestOnly
+  suspend fun awaitCleanup()
+
+  @TestOnly
+  fun cleanupNow()
+
+  @TestOnly
+  fun pendingVersionCleanableCount(): Int
+}

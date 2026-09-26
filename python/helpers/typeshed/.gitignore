@@ -7,17 +7,16 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
+/env/
+/lib/build/
+/develop-eggs/
+/dist/
+/downloads/
+/eggs/
+/lib64/
+/parts/
+/sdist/
+/var/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -39,6 +38,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+stubtest-output*
 
 # Translations
 *.mo
@@ -59,9 +59,19 @@ analyze.py
 # Editor backup files
 *~
 .*.sw?
-.vscode/
+.vscode/*
+!.vscode/settings.default.json
+!.vscode/extensions.json
 .idea/
 .venv*/
 
 # Mypy cache
 .mypy_cache/
+
+# pyenv and uv local python version
+.python-version
+# we don't use uv's lock as we're not actually a project
+uv.lock
+
+# deliberately local test configuration files
+stdlib/@tests/stubtest_allowlists/*.local

@@ -1,48 +1,45 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
-public class EditableSchemesCombo<T extends Scheme> {
-  
-  // region Message constants
-  public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
-  public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
-  public static final String EDITING_HINT = "Enter to save, Esc to cancel";
+@ApiStatus.Internal
+public final class EditableSchemesCombo<T extends Scheme> {
+
   public static final int COMBO_WIDTH = 200;
   // endregion
-  
+
   private SchemesCombo<T> myComboBox;
   private final JPanel myRootPanel;
   private final AbstractSchemesPanel<T, ?> mySchemesPanel;
@@ -50,19 +47,29 @@ public class EditableSchemesCombo<T extends Scheme> {
   private final JTextField myNameEditorField;
   private @Nullable NameEditData myNameEditData;
 
-  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
-  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private static final KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
-    myRootPanel = new JPanel(myLayout);
+    myRootPanel = new JPanel(myLayout) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), super.getPreferredSize().height);
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE);
+      }
+    };
+    myRootPanel.setOpaque(false);
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setPreferredSize(new Dimension(JBUI.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
-    myRootPanel.setMaximumSize(new Dimension(JBUI.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {
@@ -88,7 +95,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     });
     nameEditorField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateOnTyping();
       }
     });
@@ -109,7 +116,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void showHint() {
-    mySchemesPanel.showInfo(EDITING_HINT, MessageType.INFO);
+    mySchemesPanel.showInfo(IdeBundle.message("hint.scheme.editing"), MessageType.INFO);
   }
 
   private void revertSchemeName() {
@@ -137,7 +144,7 @@ public class EditableSchemesCombo<T extends Scheme> {
       cancelEdit();
     }
   }
-  
+
   public void cancelEdit() {
     mySchemesPanel.clearInfo();
     myLayout.first(myRootPanel);
@@ -147,7 +154,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void createCombo() {
-    myComboBox = new SchemesCombo<T>() {
+    myComboBox = new SchemesCombo<>() {
       @Override
       protected boolean supportsProjectSchemes() {
         return mySchemesPanel.supportsProjectSchemes();
@@ -159,19 +166,24 @@ public class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected boolean isDefaultScheme(@NotNull T scheme) {
+        SchemesModel<T> model = mySchemesPanel.getModel();
+        return model.isDefaultScheme(scheme);
+      }
+
+      @Override
       protected int getIndent(@NotNull T scheme) {
         return mySchemesPanel.getIndent(scheme);
       }
 
-      @NotNull
       @Override
-      protected SimpleTextAttributes getSchemeAttributes(T scheme) {
+      protected @NotNull SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
-               ? SimpleTextAttributes.REGULAR_ATTRIBUTES
-               : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+                                              ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                              : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
-          return baseAttributes.derive(-1, JBColor.BLUE, null, null);
+          return baseAttributes.derive(-1, MODIFIED_ITEM_FOREGROUND, null, null);
         }
         return baseAttributes;
       }
@@ -182,30 +194,36 @@ public class EditableSchemesCombo<T extends Scheme> {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
+    myComboBox.setOpaque(false);
   }
 
-  public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+  public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
     showHint();
     myNameEditData = new NameEditData(initialName, nameConsumer, isProjectScheme);
     myNameEditorField.setText(initialName);
     myLayout.last(myRootPanel);
-    final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-    focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
+    SwingUtilities.invokeLater(() -> {
+      final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+      focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
+    });
   }
 
-  public void resetSchemes(@NotNull Collection<T> schemes) {
+  public void resetSchemes(@NotNull Collection<? extends T> schemes) {
     myComboBox.resetSchemes(schemes);
   }
 
-  @Nullable
-  public T getSelectedScheme() {
+  public void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    myComboBox.resetGroupedSchemes(schemeGroups);
+  }
+
+  public @Nullable T getSelectedScheme() {
     return myComboBox.getSelectedScheme();
   }
 
   public void selectScheme(@Nullable T scheme) {
     myComboBox.selectScheme(scheme);
   }
-  
+
   public JComponent getComponent() {
     return myRootPanel;
   }
@@ -214,27 +232,35 @@ public class EditableSchemesCombo<T extends Scheme> {
     return mySchemesPanel.useBoldForNonRemovableSchemes();
   }
 
-  @Nullable
-  private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
+  private @Nullable @Nls String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
     if (isEmptyOrSpaces(name)) {
-      return EMPTY_NAME_MESSAGE;
+      return IdeBundle.message("error.empty.name");
     }
     else if (mySchemesPanel.getModel().containsScheme(name, isProjectScheme)) {
-      return NAME_ALREADY_EXISTS_MESSAGE;
+      return IdeBundle.message("error.name.already.exists");
     }
     return null;
   }
 
-  private static class NameEditData {
-    private @NotNull final String initialName;
-    private @NotNull final Consumer<String> nameConsumer;
+  private static final class NameEditData {
+    private final @NotNull String initialName;
+    private final @NotNull Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;
 
-    private NameEditData(@NotNull String name, @NotNull Consumer<String> nameConsumer, boolean isProjectScheme) {
+    private NameEditData(@NotNull String name, @NotNull Consumer<? super String> nameConsumer, boolean isProjectScheme) {
       initialName = name;
       this.nameConsumer = nameConsumer;
       this.isProjectScheme = isProjectScheme;
     }
+  }
+
+  public void setEnabled(boolean enabled) {
+    getComponent().setEnabled(enabled);
+    myComboBox.setEnabled(enabled);
+  }
+
+  public void setComboBoxAccessibleName(@NotNull @Nls String name) {
+    myComboBox.getAccessibleContext().setAccessibleName(name);
   }
 }

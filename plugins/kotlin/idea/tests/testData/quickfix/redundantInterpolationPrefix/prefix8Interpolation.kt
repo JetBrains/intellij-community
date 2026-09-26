@@ -1,0 +1,8 @@
+// "Remove redundant interpolation prefix" "false"
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test() {
+    <caret>$$$$$$$$"sample $$$$$$$${3 + 2} text"
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RemoveRedundantInterpolationQuickFix

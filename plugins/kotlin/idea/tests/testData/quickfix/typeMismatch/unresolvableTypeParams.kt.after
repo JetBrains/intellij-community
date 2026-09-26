@@ -1,0 +1,10 @@
+// "Change parameter 'n' type of function 'foo' to 'Any?'" "true"
+fun foo(n: Any?) {
+
+}
+
+fun <T> bar(t: T) {
+    foo(t)
+}
+// IGNORE_K2
+// Task for K2: KTIJ-33274

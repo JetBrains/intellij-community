@@ -1,0 +1,5 @@
+[lint]
+select = [
+  "F"/*<# Pyflakes #>*/,
+  "E101"/*<# mixed-spaces-and-tabs #>*/,
+]

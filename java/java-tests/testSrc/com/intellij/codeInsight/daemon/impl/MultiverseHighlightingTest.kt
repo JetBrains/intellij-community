@@ -1,0 +1,336 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl
+
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.ModuleContext
+import com.intellij.codeInsight.multiverse.SingleEditorContext
+import com.intellij.codeInsight.multiverse.anyContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.multiverse.LibraryContextImpl
+import com.intellij.multiverse.ModuleContextImpl
+import com.intellij.multiverse.SdkContextImpl
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.enableInspectionTools
+import com.intellij.util.Processors
+import com.intellij.util.ThrowableRunnable
+import org.intellij.lang.annotations.Language
+
+@CanChangeDocumentDuringHighlighting
+class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
+  private var context: CodeInsightContext? = null
+    set(value) {
+      field = value
+      if (value != null) {
+        if (myFile != null) {
+          myFile = psiManager.findFile(virtualFile, value)
+        }
+        else {
+          // using random context
+          myFile = psiManager.findFile(virtualFile)
+        }
+
+        if (editor != null) {
+          EditorContextManager.getInstance(project).setEditorContext(editor, SingleEditorContext(value))
+        }
+      }
+    }
+
+  private val virtualFile get() = myFile.virtualFile
+
+  override fun setUp() {
+    super.setUp()
+    context = null
+  }
+
+  override fun tearDown() {
+    try {
+      context = null
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
+    DaemonProgressIndicator.runInDebugMode<Exception> {
+      super.runTestRunnable(testRunnable)
+    }
+  }
+
+  fun testLocalInspectionInSeveralContexts() {
+    enableInspectionTools(project, testRootDisposable, FileLevelInspection(), CommentInspection())
+
+    @Language("JAVA")
+    val text = """
+      // comment
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    val root = module.rootManager.contentRoots[0]
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", root)
+
+    val contexts = getContexts()
+    assertSize(2, contexts)
+
+    assertEquals("module2", contexts[0].getModule()!!.name)
+    assertEquals("testLocalInspectionInSeveralContexts", contexts[1].getModule()!!.name)
+
+    // highlighting in "module2" context
+    this.context = contexts[0]
+    val infos2 = doHighlighting()
+    assertOrderedEquals(infos2.map { it.description },
+                        "file-level module-context module2",
+                        "Comment warning module-context module2",
+    )
+
+    val allInfosBefore = getAllDocumentHighlights()
+    assertOrderedEquals(allInfosBefore.map { it.description },
+                        "file-level module-context module2",
+                        "Comment warning module-context module2",
+    )
+
+    // highlighting in "testLocalInspectionInSeveralContexts" context
+    this.context = contexts[1]
+    val infos1 = doHighlighting()
+    assertOrderedEquals(infos1.map { it.description },
+                        "file-level module-context testLocalInspectionInSeveralContexts",
+                        "Comment warning module-context testLocalInspectionInSeveralContexts",
+    )
+
+    val allInfos = getAllDocumentHighlights()
+    assertOrderedEquals(allInfos.map { it.description },
+                        "file-level module-context module2",
+                        "file-level module-context testLocalInspectionInSeveralContexts",
+                        "Comment warning module-context module2",
+                        "Comment warning module-context testLocalInspectionInSeveralContexts",
+    )
+  }
+
+  private fun getAllDocumentHighlights(): List<HighlightInfo> {
+    val allInfos = mutableListOf<HighlightInfo>()
+    val document = editor.getDocument()
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.textLength,
+                                           Processors.cancelableCollectProcessor(allInfos))
+    allInfos.sortBy { it.description }
+    allInfos.sortBy { it.startOffset }
+    return allInfos
+  }
+
+  // Reproduces the root cause of the daemon error
+  // "PsiFile's context does not match the context of the editor.
+  //  File's context = LibraryContextImpl(...); Editor's context = DefaultContext"
+  // (TextEditorHighlightingPassRegistrarImpl.instantiatePasses, added under IJPL-240162).
+  //
+  // EditorContextManagerImpl.getEditorContexts caches its result per editor and only refreshes it on
+  // CodeInsightContextManager.contextsChanged. When the editor's document is momentarily not backed by
+  // a VirtualFile (FileDocumentManager.getFile == null, e.g. before the document<->file mapping is
+  // ready), it returns the DefaultContext fallback. If that fallback is cached, the editor stays pinned
+  // to DefaultContext even after the real (library/module) context becomes available, while the
+  // FileViewProvider for the same file is correctly inferred to its real context -> the contexts
+  // diverge and highlighting logs the error.
+  fun testDefaultContextOfFilelessDocumentIsNotCached() {
+    assertTrue("multiverse support must be enabled for this test", isSharedSourceSupportEnabled(project))
+
+    val factory = EditorFactory.getInstance()
+    val document = factory.createDocument("class C {}")
+    val fileLessEditor = factory.createEditor(document, project)
+    try {
+      assertNull("precondition: the document must not be backed by a VirtualFile",
+                 FileDocumentManager.getInstance().getFile(document))
+
+      // The editor context resolves to the default fallback because the file is unknown...
+      assertEquals(defaultContext(), EditorContextManager.getEditorContext(fileLessEditor, project))
+
+      // ...but this fallback must NOT be cached: otherwise the editor stays pinned to DefaultContext
+      // and later highlighting of a real-context file fails the editor-vs-file context check.
+      assertNull("the default fallback for a file-less document must not be cached",
+                 EditorContextManager.getCachedEditorContext(fileLessEditor, project))
+    }
+    finally {
+      factory.releaseEditor(fileLessEditor)
+    }
+  }
+
+  // IJPL-248901: ProjectModel contexts must be identified by their stable symbolic id
+  // (ModuleId / LibraryId / SdkId), NOT by the EntityPointer. An EntityPointer's id encodes the
+  // entity's slot in the current WorkspaceModel storage (arrayId in the high 32 bits), so the same
+  // module resolved against two storage generations (e.g. after a full storage replace on the
+  // remote-dev backend) yields pointers that are not equal. That made the editor's context and the
+  // file's context for the same module compare unequal and triggered
+  // "PsiFile's context does not match the context of the editor" with two ModuleContextImpl values
+  // that differed only by EntityPointer id. Keying on the symbolic id makes them generation-stable.
+  fun testProjectModelContextsAreIdentifiedBySymbolicId() {
+    val module = ModuleContextImpl(ModuleId("m"), project)
+    val sameModule = ModuleContextImpl(ModuleId("m"), project)
+    assertEquals(module, sameModule)
+    assertEquals(module.hashCode(), sameModule.hashCode())
+    assertFalse("different modules must not be equal", module == ModuleContextImpl(ModuleId("other"), project))
+
+    val tableId = LibraryTableId.ProjectLibraryTableId
+    val library = LibraryContextImpl(LibraryId("lib", tableId), project)
+    val sameLibrary = LibraryContextImpl(LibraryId("lib", tableId), project)
+    assertEquals(library, sameLibrary)
+    assertEquals(library.hashCode(), sameLibrary.hashCode())
+    assertFalse("different libraries must not be equal", library == LibraryContextImpl(LibraryId("other", tableId), project))
+
+    val sdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
+    val sameSdk = SdkContextImpl(SdkId("sdk", "JavaSDK"), project)
+    assertEquals(sdk, sameSdk)
+    assertEquals(sdk.hashCode(), sameSdk.hashCode())
+    assertFalse("different SDKs must not be equal", sdk == SdkContextImpl(SdkId("other", "JavaSDK"), project))
+  }
+
+  // A file's contexts come from the first provider, in registration order, that claims it.
+
+  fun testOwningProviderPreemptsPlatformContext() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    // Precondition: with no test provider, the file carries the platform module context.
+    assertTrue(getRawContexts().toString(), getRawContexts().any { it is ModuleContext })
+
+    val fake = FakeContext("hi")
+    registerOwningProvider(virtualFile, listOf(fake))
+
+    // The test provider owns the file, so the platform module context is fully suppressed for it.
+    assertEquals(listOf<CodeInsightContext>(fake), getRawContexts())
+  }
+
+  fun testUnclaimedProviderFallsThroughToNextOwner() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    registerOwningProvider(virtualFile, contexts = null)
+
+    val contexts = getRawContexts()
+    assertTrue("must fall through to the platform module context", contexts.any { it is ModuleContext })
+    assertFalse("no fake context is contributed for this file", contexts.any { it is FakeContext })
+  }
+
+  fun testEmptyOwnerKeepsTheFileAndShowsDefaultContext() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    registerOwningProvider(virtualFile, emptyList())
+
+    val contexts = getRawContexts()
+    assertEquals(listOf(defaultContext()), contexts)
+    assertFalse("an owned file must not fall through to the platform module context", contexts.any { it is ModuleContext })
+  }
+
+  // getPreferredContext lets the owning provider nominate its default context, honored only if it is among the file's
+  // contexts (else the platform falls back to the first).
+
+  fun testProviderPicksPreferredContextInsteadOfFirst() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val second = FakeContext("second")
+    registerOwningProvider(virtualFile, listOf(first, second), preferred = second)
+    assertEquals(second, getPreferredContext())
+  }
+
+  fun testPreferredContextDefaultsToFirstWithoutNomination() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val second = FakeContext("second")
+    registerOwningProvider(virtualFile, listOf(first, second))
+    assertEquals(first, getPreferredContext())
+  }
+
+  private fun getRawContexts(): List<CodeInsightContext> =
+    CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile)
+
+  private fun getPreferredContext(): CodeInsightContext =
+    CodeInsightContextManager.getInstance(project).getPreferredContext(virtualFile)
+
+  private fun registerOwningProvider(
+    targetFile: VirtualFile,
+    contexts: List<CodeInsightContext>?,
+    preferred: CodeInsightContext? = null,
+  ) {
+    CodeInsightContextManager.getInstance(project)
+      .registerTestOnlyCodeInsightContextProvider(OwningTestContextProvider(targetFile, contexts, preferred), testRootDisposable)
+  }
+
+  private fun getContexts(): List<ModuleContext> {
+    val contexts = CodeInsightContextManager.getInstance(project).getCodeInsightContexts(virtualFile)
+    assertTrue(contexts.toString(), contexts.all { it is ModuleContext })
+    @Suppress("UNCHECKED_CAST")
+    return (contexts as List<ModuleContext>)
+      .sortedBy { it.getModule()!!.name }
+  }
+}
+
+private class FakeContext(private val name: String) : CodeInsightContext {
+  override fun toString(): String = "FakeContext($name)"
+}
+
+// Answers [contexts] for [targetFile] and nominates [preferred], claiming no other file.
+private class OwningTestContextProvider(
+  private val targetFile: VirtualFile,
+  private val contexts: List<CodeInsightContext>?,
+  private val preferred: CodeInsightContext? = null,
+) : CodeInsightContextProvider {
+  override fun isOwnerOf(context: CodeInsightContext): Boolean = context is FakeContext
+
+  override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
+    if (file == targetFile) contexts else null
+
+  override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
+
+  override fun getPreferredContext(file: VirtualFile, project: Project, contexts: List<CodeInsightContext>): CodeInsightContext? =
+    if (file == targetFile) preferred else null
+}
+
+private class FileLevelInspection : LocalInspectionTool(), DumbAware {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    return object : PsiElementVisitor() {
+      override fun visitFile(psiFile: PsiFile) {
+        val text = getContextPresentation(psiFile)
+        holder.registerProblem(psiFile, "file-level $text")
+      }
+    }
+  }
+}
+
+private class CommentInspection : LocalInspectionTool() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    return object : PsiElementVisitor() {
+      override fun visitComment(comment: PsiComment) {
+        val text = getContextPresentation(comment.containingFile)
+        holder.registerProblem(comment, "Comment warning $text")
+      }
+    }
+  }
+}
+
+private fun getContextPresentation(psiFile: PsiFile): String {
+  return when (val context = psiFile.codeInsightContext) {
+    defaultContext() -> "default-context"
+    anyContext() -> "any-context"
+    is ModuleContext -> "module-context ${context.getModule()!!.name}"
+    else -> "unknown-context $context"
+  }
+}

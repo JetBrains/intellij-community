@@ -19,7 +19,6 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +42,7 @@ public class PsiEmptyExpressionImpl extends ExpressionPsiElement implements PsiE
     }
   }
 
+  @Override
   public String toString() {
     return "PsiExpression(empty)";
   }

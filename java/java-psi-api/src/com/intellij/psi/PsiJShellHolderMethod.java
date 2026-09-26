@@ -23,6 +23,5 @@ import org.jetbrains.annotations.NotNull;
 public interface PsiJShellHolderMethod extends PsiMethod, PsiJShellSyntheticElement{
   PsiJShellHolderMethod[] EMPTY_ARRAY = new PsiJShellHolderMethod[0];
 
-  @NotNull
-  PsiElement[] getStatements();
+  PsiElement @NotNull [] getStatements();
 }

@@ -2,13 +2,13 @@ import foo.*;
 
 class Some {
   void foo() {
-    NotNullClass.foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    NotNullClass.foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     NotNullClass.foo("a");
     
     NullableClass.foo(null);
     NullableClass.foo("a");
     
-    AnotherPackageNotNull.foo(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    AnotherPackageNotNull.foo(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
     AnotherPackageNotNull.foo("a");
   }
 

@@ -1,0 +1,14 @@
+// "Remove 'inner' modifier" "true"
+// WITH_STDLIB
+// K2_ERROR: PARCELABLE_CANT_BE_INNER_CLASS
+
+package com.myapp.activity
+
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+class Foo {
+    @Parcelize
+    <caret>inner class Bar : Parcelable
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

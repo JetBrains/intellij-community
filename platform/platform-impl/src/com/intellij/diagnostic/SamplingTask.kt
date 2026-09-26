@@ -1,0 +1,86 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic
+
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.blockingDispatcher
+import com.sun.management.OperatingSystemMXBean
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.lang.management.ManagementFactory
+import java.lang.management.ThreadInfo
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
+
+@OptIn(DelicateCoroutinesApi::class)
+internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, private val maxDurationMs: Int, coroutineScope: CoroutineScope) {
+  protected val job: Job
+  private val firstThreadDumpCompleted = CountDownLatch(1)
+
+  private val startTime: Long = System.nanoTime()
+  private var currentTime: Long = startTime
+  private val gcStartTime: Long = currentGcTime()
+  private var gcCurrentTime: Long = gcStartTime
+  val processCpuLoad: Double = (ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).processCpuLoad
+
+  val totalTime: Long
+    get() = TimeUnit.NANOSECONDS.toMillis(currentTime - startTime)
+  val gcTime: Long
+    get() = gcCurrentTime - gcStartTime
+
+  init {
+    // lazy start to avoid race with inheritor's constructors
+    job = coroutineScope.launch(CoroutineName("freeze dumper") + blockingDispatcher, start = CoroutineStart.LAZY) {
+      dumpThreadsLoop()
+    }
+  }
+
+  private suspend fun dumpThreadsLoop() {
+    val delayDuration = dumpInterval.milliseconds
+    while (true) {
+      dumpThreads()
+      firstThreadDumpCompleted.countDown()
+      if (totalTime + dumpInterval > maxDurationMs) {
+        break
+      }
+      delay(delayDuration)
+    }
+  }
+
+  private suspend fun dumpThreads() {
+    currentTime = System.nanoTime()
+    gcCurrentTime = currentGcTime()
+
+    val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
+
+    processDumpedThreads(infos)
+  }
+
+  abstract suspend fun processDumpedThreads(infos: Array<ThreadInfo>)
+
+  open fun stop() {
+    if (Registry.`is`("performance.watcher.await.first.thread.dump")) {
+      firstThreadDumpCompleted.await()
+    }
+    job.cancel()
+  }
+
+  @Suppress("BlockingMethodInNonBlockingContext")
+  open suspend fun stopAndWait() {
+    if (Registry.`is`("performance.watcher.await.first.thread.dump")) {
+      firstThreadDumpCompleted.await()
+    }
+    job.cancelAndJoin()
+  }
+}
+
+private val THREAD_MX_BEAN = ManagementFactory.getThreadMXBean()
+private val GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans()
+
+private fun currentGcTime(): Long = GC_MX_BEANS.sumOf { it.collectionTime }

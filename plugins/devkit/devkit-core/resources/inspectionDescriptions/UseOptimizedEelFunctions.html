@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports standard file operations that can require multiple RPC round trips to IJent.
+
+<p>
+  For files in WSL or a Dev Container, NIO can delegate the operation to IJent.
+  Some standard operations then require several sequential RPC calls.
+</p>
+
+<p>
+  <code>EelFiles</code> and <code>EelFileUtils</code> provide alternatives for both local files and files in other environments.
+  When IJent performs the operation, these alternatives reduce the number of RPC calls.
+</p>
+
+<p>Example:</p>
+<pre><code>
+// When IJent performs this operation, it can require multiple RPC round trips:
+byte[] data = Files.readAllBytes(path);
+
+// The optimized operation uses fewer RPC calls:
+byte[] data = EelFiles.readAllBytes(path);
+</code></pre>
+</body>
+</html>

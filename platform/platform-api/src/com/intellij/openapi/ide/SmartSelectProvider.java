@@ -33,6 +33,10 @@ public interface SmartSelectProvider<T> {
     return getSource(context) != null;
   }
 
+  boolean canIncreaseSelection(T source);
+
+  boolean canDecreaseSelection(T source);
+
   @Nullable
   T getSource(DataContext context);
 }

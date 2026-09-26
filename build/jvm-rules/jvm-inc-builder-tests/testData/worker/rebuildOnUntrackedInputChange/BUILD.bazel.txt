@@ -1,0 +1,31 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+
+jvm_library(
+    name = "mock-plugin_lib",
+    srcs = glob(["plugin/mockplugin/**/*.kt"]),
+    resources = glob(["plugin/resources/**/*"]),
+    resource_strip_prefix = "plugin/resources",
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+      "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
+    ],
+)
+
+kt_compiler_plugin(
+    name = "mock_plugin",
+    id = "tests.mock-plugin",
+    visibility = ["//visibility:public"],
+    deps = [
+      ":mock-plugin_lib",
+    ],
+)
+
+jvm_library(
+    name = "a",
+    srcs = glob(["a/*.kt"], allow_empty = True),
+    plugins = [":mock_plugin"],
+    deps = [
+      "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

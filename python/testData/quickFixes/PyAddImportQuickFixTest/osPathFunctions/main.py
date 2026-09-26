@@ -1,1 +1,1 @@
-<error descr="Unresolved reference 'join'">j<caret>oin</error>
+<error descr="Unresolved reference 'commonpath'">c<caret>ommonpath</error>

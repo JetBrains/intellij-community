@@ -1,0 +1,5 @@
+version = "1.4.3"
+upstream-repository = "https://github.com/scrapinghub/dateparser"
+
+[tool.stubtest]
+extras = ["fasttext", "langdetect"]

@@ -1,0 +1,6 @@
+// FIX: Remove 'val' from parameter
+open class Base(x: Int) {
+    val y = x
+}
+
+class Derived(y: Int) : Base(y)

@@ -1,4 +1,4 @@
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
 class Test {
   void foo(@NotNull String s) {

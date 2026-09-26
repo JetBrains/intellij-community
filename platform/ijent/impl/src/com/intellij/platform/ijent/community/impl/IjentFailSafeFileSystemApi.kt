@@ -1,0 +1,579 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ijent.community.impl
+
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelDescriptorWithInteractiveDeployment
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.fs.EelOpenedFile
+import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.EelSearchEvent
+import com.intellij.platform.eel.fs.EelSearchOptions
+import com.intellij.platform.eel.fs.EelWindowsFileInfo
+import com.intellij.platform.eel.fs.StreamingReadResult
+import com.intellij.platform.eel.fs.StreamingWriteResult
+import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentCallerContextElement
+import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.IjentWindowsApi
+import com.intellij.platform.ijent.community.impl.nio.computeCallerContext
+import com.intellij.platform.ijent.community.impl.nio.fsBlocking
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import com.intellij.platform.ijent.throwIfInsideIjentFsBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
+import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.EmptyCoroutineContext
+
+/**
+ * A wrapper for [IjentFileSystemApi] that launches a new IJent through [delegateFactory] if an operation
+ * with an already created IJent throws [IjentUnavailableException.CommunicationFailure].
+ *
+ * [delegateFactory] is NOT called if the delegated instance throws [IjentUnavailableException.ClosedByApplication].
+ *
+ * [delegateFactory] can be called at most once.
+ * If the just created new IJent throws [IjentUnavailableException.CommunicationFailure] again, the error is rethrown,
+ * but the next attempt to do something with IJent will trigger [delegateFactory] again.
+ *
+ * [coroutineScope] is used for calling [delegateFactory], but cancellation of [coroutineScope] does NOT close already created
+ * instances of [IjentApi].
+ *
+ * [deploymentMayRequireUserInteraction] must report `true` for environments whose deployment may need a round trip to EDT,
+ * e.g., an SSH authentication dialog. For them, an operation that would start or await a deployment fails fast
+ * when it is called from inside the synchronous nio bridge, instead of deadlocking (IJPL-245001).
+ * The deployment itself runs in [coroutineScope] and does not inherit the caller's coroutine context,
+ * so the check is performed here, on the awaiting side. It is skipped while [checkIsIjentInitialized] reports
+ * the environment as initialized, because awaiting an initialized environment only fetches the existing session.
+ * The answer is a function, not a constant, because a delegating descriptor reports the answer of its
+ * current target, and the target can change. The default reads [EelDescriptorWithInteractiveDeployment].
+ * See [com.intellij.platform.ijent.throwIfInsideIjentFsBlocking].
+ *
+ * TODO Currently, the implementation retries EVERY operation.
+ *  It can become a significant problem for mutating operations, i.e. a data buffer can be hypothetically written into a file
+ *  twice if a networking issue happens during the first attempt of writing.
+ *  In order to solve this problem, IjentFileSystemApi MUST guarantee idempotency of every call.
+ */
+fun ijentFailSafeFileSystemApi(
+  coroutineScope: CoroutineScope,
+  descriptor: EelDescriptor,
+  checkIsIjentInitialized: (() -> Boolean)?,
+  deploymentMayRequireUserInteraction: () -> Boolean = {
+    (descriptor as? EelDescriptorWithInteractiveDeployment)?.deploymentMayRequireUserInteraction == true
+  },
+): IjentFileSystemApi {
+  return when (descriptor.osFamily) {
+    EelOsFamily.Posix -> {
+      val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(
+        coroutineScope, descriptor, checkIsIjentInitialized, deploymentMayRequireUserInteraction)
+      IjentFailSafeFileSystemPosixApiImpl(holder, descriptor)
+    }
+    EelOsFamily.Windows -> {
+      val holder = DelegateHolder<IjentWindowsApi, IjentFileSystemWindowsApi>(
+        coroutineScope, descriptor, checkIsIjentInitialized, deploymentMayRequireUserInteraction)
+      IjentFailSafeFileSystemWindowsApiImpl(holder, descriptor)
+    }
+  }
+}
+
+private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
+  private val coroutineScope: CoroutineScope,
+  private val descriptor: EelDescriptor,
+  private val isIjentInitialized: (() -> Boolean)?,
+  private val deploymentMayRequireUserInteraction: () -> Boolean,
+) {
+  private val delegate = AtomicReference<Deferred<I>?>(null)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun getDelegate(callerContext: IjentCallerContextElement?): Deferred<I> =
+    delegate.updateAndGet { oldDelegate ->
+      if (
+        oldDelegate != null && (
+          !oldDelegate.isCompleted ||
+          oldDelegate.getCompletionExceptionOrNull() == null &&
+          oldDelegate.getCompleted().isRunning
+        )
+      )
+        oldDelegate
+      else
+        coroutineScope.async(Dispatchers.IO + (callerContext ?: EmptyCoroutineContext), start = CoroutineStart.LAZY) {
+          @Suppress("UNCHECKED_CAST")
+          descriptor.toEelApi() as I
+        }
+    }!!
+
+  suspend fun <R> withDelegateRetrying(block: suspend F.() -> R): R {
+    val callerContext = IjentCallerContext.getSavedElement()
+    if (isIjentInitialized?.invoke() == false) {
+      checkEarlyAccess(callerContext)
+    }
+
+    return try {
+      withDelegateFirstAttempt(callerContext, block)
+    }
+    catch (err: Throwable) {
+      when (val unwrapped = IjentUnavailableException.unwrapFromCancellationExceptions(err)) {
+        // TODO There must be a request ID, in order to ensure in idempotency of mutating calls.
+        is IjentUnavailableException.CommunicationFailure -> withDelegateSecondAttempt(callerContext, block)
+        is IjentUnavailableException.ClosedByApplication -> throw unwrapped
+        null -> throw err
+      }
+    }
+  }
+
+  private suspend fun awaitDelegate(callerContext: IjentCallerContextElement?): I {
+    val delegate = getDelegate(callerContext)
+    if (deploymentMayRequireUserInteraction() && !delegate.isCompleted && isIjentInitialized?.invoke() != true) {
+      // A deployment is about to start (or is in flight) in a detached scope that does not inherit
+      // the caller's coroutine context, so the awaiting side performs the check (IJPL-245001).
+      // An initialized environment is exempt: awaiting it only fetches the already-created session.
+      throwIfInsideIjentFsBlocking()
+    }
+    return delegate.await()
+  }
+
+  /** The function exists just to have a special marker in stacktraces. */
+  private suspend fun <R> withDelegateFirstAttempt(callerContext: IjentCallerContextElement?, block: suspend F.() -> R): R =
+    @Suppress("UNCHECKED_CAST") (awaitDelegate(callerContext).fs as F).block()
+
+  /** The function exists just to have a special marker in stacktraces. */
+  private suspend fun <R> withDelegateSecondAttempt(callerContext: IjentCallerContextElement?, block: suspend F.() -> R): R =
+    IjentUnavailableException.unwrapFromCancellationExceptions {
+      @Suppress("UNCHECKED_CAST") (awaitDelegate(callerContext).fs as F).block()
+    }
+}
+
+private fun checkEarlyAccess(callerContext: IjentCallerContextElement?) {
+  val application = ApplicationManagerEx.getApplicationEx()
+  if (application?.isUnitTestMode != false) {
+    return
+  }
+
+  // TODO Remove later.
+  if (ApplicationManagerEx.isInIntegrationTest()) {
+    return
+  }
+
+  if (!(callerContext?.callerContext ?: IjentCallerContext.computeCallerContext()).isDispatchThread) {
+    return
+  }
+
+  // Q: What happened?
+  // A: Some code tried to access \\wsl.localhost before the initialization of the IJent file system.
+  //    Therefore, the code will access the original filesystem of WSL brought by Microsoft,
+  //    and the code won't access our polished file system with various workarounds, optimizations, etc.
+  //    Also, the code that triggered this error is an obstacle for implementing DevContainers over Eel.
+  //
+  // Q: How to fix it?
+  // A: Call `com.intellij.platform.eel.provider.EelInitialization.runEelInitialization` in advance.
+  //    Sometimes it's easy, sometimes you have to rework the UI/UX, sorry for that.
+  //
+  // Q: Why not initialize the IJent filesystem lazily, right here, at this moment?
+  // A: It does. However, IJent initialization is much heavier than accessing some files over IJent.
+  //    This error is shown when the initialization happens in EDT, which can freeze the UI.
+  //
+  // Q: Isn't accessing the file system in EDT a bad practice in general?
+  // A: In general, yes. However, there's too much code that does it anyway.
+  //    This error highlights at least the most problematic code.
+  LOG.error("Remote file system accessed in EDT before Eel initialization. The description is in the source code.")
+}
+
+/**
+ * Unfortunately, [IjentFileSystemApi] is a sealed interface,
+ * so implementing a similar class for Windows will require a full copy-paste of this class.
+ */
+private class IjentFailSafeFileSystemPosixApiImpl(
+  private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
+  override val descriptor: EelDescriptor
+) : IjentFileSystemPosixApi {
+  // TODO Make user suspendable again?
+  override val user: EelUserPosixInfo by lazy {
+    fsBlocking {
+      holder.withDelegateRetrying { user }
+    }
+  }
+
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
+    val seen = HashSet<EelPath>()
+    holder.withDelegateRetrying {
+      walkDirectory(options).collect { entry ->
+        val path = when (entry) {
+          is WalkDirectoryEntryResult.Error -> entry.error.where
+          is WalkDirectoryEntryResult.Ok -> entry.value.path
+        }
+        if (seen.add(path)) {
+          emit(entry)
+        }
+      }
+    }
+  }
+
+  override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult =
+    holder.withDelegateRetrying {
+      streamingWrite(chunks, targetFileOpenOptions)
+    }
+  override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
+    holder.withDelegateRetrying {
+      streamingRead(path)
+    }
+
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
+
+  // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
+  // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
+  // and both consumers fall back to local enumeration on a failed stream anyway.
+  override suspend fun search(options: EelSearchOptions): Flow<EelSearchEvent> =
+    holder.withDelegateRetrying { search(options) }
+
+  override suspend fun listDirectory(
+    path: EelPath,
+  ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
+    holder.withDelegateRetrying {
+      listDirectory(path)
+    }
+
+  override suspend fun createDirectory(
+    path: EelPath,
+    attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
+  ): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
+    holder.withDelegateRetrying {
+      createDirectory(path, attributes)
+    }
+
+  override suspend fun listDirectoryWithAttrs(
+    path: EelPath,
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError> {
+    return holder.withDelegateRetrying {
+      listDirectoryWithAttrs(path, symlinkPolicy)
+    }
+  }
+
+  override suspend fun canonicalize(
+    path: EelPath,
+  ): EelResult<EelPath, EelFileSystemApi.CanonicalizeError> =
+    holder.withDelegateRetrying {
+      canonicalize(path)
+    }
+
+  override suspend fun stat(
+    path: EelPath,
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelResult<EelPosixFileInfo, EelFileSystemApi.StatError> =
+    holder.withDelegateRetrying {
+      stat(path, symlinkPolicy)
+    }
+
+  override suspend fun sameFile(
+    source: EelPath,
+    target: EelPath,
+  ): EelResult<Boolean, EelFileSystemApi.SameFileError> =
+    holder.withDelegateRetrying {
+      sameFile(source, target)
+    }
+
+  override suspend fun openForReading(
+    args: EelFileSystemApi.OpenForReadingArgs,
+  ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      openForReading(args)
+    }
+
+  override suspend fun readFile(
+    args: EelFileSystemApi.ReadFileArgs,
+  ): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      readFile(args)
+    }
+
+  override suspend fun openForWriting(
+    options: EelFileSystemApi.WriteOptions,
+  ): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
+    holder.withDelegateRetrying {
+      openForWriting(options)
+    }
+
+  override suspend fun openForReadingAndWriting(
+    options: EelFileSystemApi.WriteOptions,
+  ): EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError> =
+    holder.withDelegateRetrying {
+      openForReadingAndWriting(options)
+    }
+
+  override suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+    holder.withDelegateRetrying {
+      delete(path, recursive)
+    }
+
+  override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
+    holder.withDelegateRetrying {
+      copy(options)
+    }
+
+  override suspend fun move(
+    source: EelPath,
+    target: EelPath,
+    replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
+    followLinks: Boolean,
+  ): EelResult<Unit, EelFileSystemApi.MoveError> =
+    holder.withDelegateRetrying {
+      move(source, target, replaceExisting, followLinks)
+    }
+
+  override suspend fun changeAttributes(
+    path: EelPath,
+    options: EelFileSystemApi.ChangeAttributesOptions,
+  ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
+    holder.withDelegateRetrying {
+      changeAttributes(path, options)
+    }
+
+  override suspend fun getDiskInfo(path: EelPath): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
+    return holder.withDelegateRetrying {
+      getDiskInfo(path)
+    }
+  }
+
+  override suspend fun createSymbolicLink(
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
+    linkPath: EelPath,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
+    holder.withDelegateRetrying {
+      createSymbolicLink(target, linkPath)
+    }
+
+  override suspend fun createTemporaryDirectory(
+    options: EelFileSystemApi.CreateTemporaryEntryOptions,
+  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
+    holder.withDelegateRetrying {
+      createTemporaryDirectory(options)
+    }
+
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> = holder.withDelegateRetrying {
+    createTemporaryFile(options)
+  }
+
+  override suspend fun watchChanges(): Flow<EelFileSystemApi.PathChange> =
+    holder.withDelegateRetrying { watchChanges() }
+
+  override suspend fun addWatchRoots(watchOptions: EelFileSystemApi.WatchOptions): Boolean =
+    holder.withDelegateRetrying { addWatchRoots(watchOptions) }
+
+  override suspend fun unwatch(unwatchOptions: EelFileSystemApi.UnwatchOptions): Boolean =
+    holder.withDelegateRetrying { unwatch(unwatchOptions) }
+}
+
+/**
+ * Unfortunately, [IjentFileSystemApi] is a sealed interface,
+ * so implementing it's a full copy-paste of [ijentFailSafeFileSystemApi]
+ */
+private class IjentFailSafeFileSystemWindowsApiImpl(
+  private val holder: DelegateHolder<IjentWindowsApi, IjentFileSystemWindowsApi>,
+  override val descriptor: EelDescriptor
+) : IjentFileSystemWindowsApi {
+  // TODO Make user suspendable again?
+  override val user: EelUserWindowsInfo by lazy {
+    // A plain runBlocking would carry no IjentCalledContextElement; capture the thread state (EDT, locks)
+    // afresh so that awaitDelegate can detect a deployment awaited from a blocking call (IJPL-245001).
+    runBlocking(IjentCallerContextElement(IjentCallerContext.computeCallerContext())) {
+      holder.withDelegateRetrying { user }
+    }
+  }
+
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
+    val seen = HashSet<EelPath>()
+    holder.withDelegateRetrying {
+      walkDirectory(options).collect { entry ->
+        val path = when (entry) {
+          is WalkDirectoryEntryResult.Error -> entry.error.where
+          is WalkDirectoryEntryResult.Ok -> entry.value.path
+        }
+        if (seen.add(path)) {
+          emit(entry)
+        }
+      }
+    }
+  }
+
+  override suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: EelFileSystemApi.WriteOptions): StreamingWriteResult =
+    holder.withDelegateRetrying {
+      streamingWrite(chunks, targetFileOpenOptions)
+    }
+  override suspend fun streamingRead(path: EelPath): Flow<StreamingReadResult> =
+    holder.withDelegateRetrying {
+      streamingRead(path)
+    }
+
+  override suspend fun prefetchDirectories(roots: Collection<EelPath>): Flow<Pair<EelPath, EelFileInfo>> =
+    holder.withDelegateRetrying { prefetchDirectories(roots) }
+
+  // Obtain-only retry, deliberately without the mid-collect replay walkDirectory gets: a search
+  // that dies mid-stream cannot be replayed without re-emitting the events already delivered,
+  // and both consumers fall back to local enumeration on a failed stream anyway.
+  override suspend fun search(options: EelSearchOptions): Flow<EelSearchEvent> =
+    holder.withDelegateRetrying { search(options) }
+
+  override suspend fun listDirectory(
+    path: EelPath,
+  ): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
+    holder.withDelegateRetrying {
+      listDirectory(path)
+    }
+
+  override suspend fun createDirectory(path: EelPath): EelResult<Unit, EelFileSystemApi.CreateDirectoryError> =
+    holder.withDelegateRetrying {
+      createDirectory(path)
+    }
+
+  override suspend fun getRootDirectories(): Collection<EelPath> {
+    return holder.withDelegateRetrying {
+      getRootDirectories()
+    }
+  }
+
+  override suspend fun listDirectoryWithAttrs(
+    path: EelPath,
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError> {
+    return holder.withDelegateRetrying {
+      listDirectoryWithAttrs(path, symlinkPolicy)
+    }
+  }
+
+  override suspend fun canonicalize(
+    path: EelPath,
+  ): EelResult<EelPath, EelFileSystemApi.CanonicalizeError> =
+    holder.withDelegateRetrying {
+      canonicalize(path)
+    }
+
+  override suspend fun stat(
+    path: EelPath,
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelResult<EelWindowsFileInfo, EelFileSystemApi.StatError> =
+    holder.withDelegateRetrying {
+      stat(path, symlinkPolicy)
+    }
+
+  override suspend fun createSymbolicLink(
+    target: EelFileSystemPosixApi.SymbolicLinkTarget,
+    linkPath: EelPath,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
+    holder.withDelegateRetrying {
+      createSymbolicLink(target, linkPath)
+    }
+
+  override suspend fun sameFile(
+    source: EelPath,
+    target: EelPath,
+  ): EelResult<Boolean, EelFileSystemApi.SameFileError> =
+    holder.withDelegateRetrying {
+      sameFile(source, target)
+    }
+
+  override suspend fun openForReading(
+    args: EelFileSystemApi.OpenForReadingArgs,
+  ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      openForReading(args)
+    }
+
+  override suspend fun readFile(
+    args: EelFileSystemApi.ReadFileArgs,
+  ): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      readFile(args)
+    }
+
+  override suspend fun openForWriting(
+    options: EelFileSystemApi.WriteOptions,
+  ): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
+    holder.withDelegateRetrying {
+      openForWriting(options)
+    }
+
+  override suspend fun openForReadingAndWriting(
+    options: EelFileSystemApi.WriteOptions,
+  ): EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError> =
+    holder.withDelegateRetrying {
+      openForReadingAndWriting(options)
+    }
+
+  override suspend fun delete(path: EelPath, recursive: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+    holder.withDelegateRetrying {
+      delete(path, recursive)
+    }
+
+  override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
+    holder.withDelegateRetrying {
+      copy(options)
+    }
+
+  override suspend fun move(
+    source: EelPath,
+    target: EelPath,
+    replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
+    followLinks: Boolean,
+  ): EelResult<Unit, EelFileSystemApi.MoveError> =
+    holder.withDelegateRetrying {
+      move(source, target, replaceExisting, followLinks)
+    }
+
+  override suspend fun changeAttributes(
+    path: EelPath,
+    options: EelFileSystemApi.ChangeAttributesOptions,
+  ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
+    holder.withDelegateRetrying {
+      changeAttributes(path, options)
+    }
+
+  override suspend fun getDiskInfo(path: EelPath): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
+    return holder.withDelegateRetrying {
+      getDiskInfo(path)
+    }
+  }
+
+  override suspend fun createTemporaryDirectory(
+    options: EelFileSystemApi.CreateTemporaryEntryOptions,
+  ): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
+    holder.withDelegateRetrying {
+      createTemporaryDirectory(options)
+    }
+
+  override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> = holder.withDelegateRetrying {
+    createTemporaryFile(options)
+  }
+
+  override suspend fun watchChanges(): Flow<EelFileSystemApi.PathChange> =
+    holder.withDelegateRetrying { watchChanges() }
+
+  override suspend fun addWatchRoots(watchOptions: EelFileSystemApi.WatchOptions): Boolean =
+    holder.withDelegateRetrying { addWatchRoots(watchOptions) }
+
+  override suspend fun unwatch(unwatchOptions: EelFileSystemApi.UnwatchOptions): Boolean =
+    holder.withDelegateRetrying { unwatch(unwatchOptions) }
+}
+
+private val LOG = logger<IjentFailSafeFileSystemPosixApiImpl>()

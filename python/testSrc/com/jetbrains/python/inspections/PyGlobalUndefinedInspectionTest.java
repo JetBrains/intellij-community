@@ -15,9 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyGlobalUndefinedInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
@@ -25,6 +30,26 @@ public class PyGlobalUndefinedInspectionTest extends PyInspectionTestCase {
   }
 
   public void testTrueNegative() {
+    doTest();
+  }
+
+  // PY-37415
+  public void testReassignedAndAbsent() {
+    doTest();
+  }
+
+  // PY-37415
+  public void testReassignedAndPresent() {
+    doTest();
+  }
+
+  // PY-37623
+  public void testSeveralGlobals() {
+    doTest();
+  }
+
+  // PY-37755
+  public void testSameNameMiddleTrueNegative() {
     doTest();
   }
 

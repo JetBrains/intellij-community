@@ -1,0 +1,656 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.packaging.toolwindow.packages.tree
+
+import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.python.processOutput.common.ProcessOutputTopic
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.ui.render.RenderingHelper
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.TraceContext
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PyPackageScope
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
+import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.LoadingNode
+import com.jetbrains.python.packaging.toolwindow.model.ModuleDependencyDisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
+import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
+import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
+import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTree.Companion.LOAD_MORE_PAGE
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.TrailingIconKind
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.installedFromTooltip
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
+import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
+import com.jetbrains.python.packaging.toolwindow.ui.showChangeVersionPopup
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.isReadOnly
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.awt.AWTEvent
+import java.awt.datatransfer.StringSelection
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseEvent
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeExpansionListener
+import javax.swing.event.TreeSelectionListener
+import javax.swing.plaf.basic.BasicTreeUI
+import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreeSelectionModel
+import com.intellij.ui.treeStructure.Tree as IntelliJTree
+
+internal class PyPackagesTree(
+  val project: Project,
+  private val controller: PyPackagingToolWindowPanel,
+) : IntelliJTree(), UiDataProvider, CopyProvider {
+
+  companion object {
+    internal val TREE_KEY: Key<PyPackagesTree> = Key.create("PyPackageToolwindow.Tree")
+    private const val LOAD_MORE_PAGE: Int = 50
+  }
+
+  private val packagingService = project.service<PyPackagingToolWindowService>()
+  private var treeListener: PyPackagesTreeListener? = null
+
+  private val rootNode = DefaultMutableTreeNode()
+  private val myTreeModel = DefaultTreeModel(rootNode)
+
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var items: List<DisplayablePackage> = emptyList()
+    set(value) {
+      field = value
+      sortedAllMatches = null
+      updateTreeModel()
+      treeListener?.onTreeStructureChanged()
+    }
+
+  /**
+   * Names that should render with the Python module glyph instead of the package glyph — uv/poetry
+   * workspace members plus JPS modules that carry their own `pyproject.toml`. Populated by
+   * [PyPackagingToolWindowService.refreshInstalledPackagesImpl] alongside [items] so the renderer
+   * can flip icons per-cell without re-querying the workspace on every paint. Kept as a plain
+   * mutable set because updates happen on EDT during refresh and reads happen on EDT during paint.
+   */
+  @set:RequiresEdt
+  var moduleAliasNames: Set<String> = emptySet()
+
+  /**
+   * Service-side seeded sorted match list (cross-repo merge + global priority sort). Tree's
+   * [loadMore] paginates this list visually so the on-scroll order matches the install dialog.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun primeSortedMatches(sortedAll: List<DisplayablePackage>) {
+    sortedAllMatches = sortedAll
+  }
+
+  /** How many more packages the repository can still produce for the current query. */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var pendingMore: Int = 0
+
+  /**
+   * Full pre-sorted match list for the active query, seeded by [primeSortedMatches] from the
+   * service (which sorts cross-repo + filters installed once). [loadMore] reveals chunks of
+   * this list visually without re-fetching or re-sorting, so the displayed order is identical
+   * to what the install dialog shows.
+   *
+   * Reset whenever [items] is assigned externally (a new search starts).
+   */
+  private var sortedAllMatches: List<DisplayablePackage>? = null
+
+  internal val isReadOnly
+    get() = packagingService.currentSdk?.isReadOnly != false
+
+  /** Whether an install for [packageName] is currently running on the current SDK (shared across all surfaces). */
+  internal fun isInstalling(packageName: String): Boolean {
+    val sdk = packagingService.currentSdk ?: return false
+    return packagingService.isPackageInstalling(sdk, packageName)
+  }
+
+  /**
+   * `true` once [PyPackageTreeCellRenderer] has been installed during construction. Used to
+   * pin our renderer for the rest of the tree's lifetime — see [setCellRenderer] / [updateUI].
+   */
+  private var initialized = false
+
+  /**
+   * Intentionally ignores external `setCellRenderer` calls after construction.
+   *
+   * Several IntelliJ tree decorators (e.g. `LazyRendererTreeUI`, the LaF "TreeCellRenderer"
+   * default) call `tree.setCellRenderer(...)` during normal repainting and on LaF reload to
+   * replace the renderer with the platform default. The packaging tree relies on its custom
+   * [PyPackageTreeCellRenderer] for hover icons, inline change-version buttons and tooltip
+   * geometry, so we silently swallow late overrides instead of letting the tree fall back to a
+   * plain label renderer (which would visually break the action icons).
+   */
+  override fun setCellRenderer(renderer: TreeCellRenderer?) {
+    if (initialized) return
+    super.setCellRenderer(renderer)
+  }
+
+  /**
+   * `updateUI()` is called by Swing on LaF change to recreate the tree UI. The base implementation
+   * resets the cell renderer to the LaF default, which would wipe out [PyPackageTreeCellRenderer].
+   *
+   * The dance below:
+   *   1. Drops the `initialized` flag so the LaF default renderer set inside `super.updateUI()`
+   *      is allowed through [setCellRenderer] (otherwise the LaF would render with a stale, now-disposed renderer).
+   *   2. Restores the flag.
+   *   3. If the tree had already been initialized once, re-installs a fresh
+   *      [PyPackageTreeCellRenderer] so the user keeps seeing our custom row layout after the
+   *      theme change.
+   */
+  override fun updateUI() {
+    val wasInitialized = initialized
+    initialized = false
+    super.updateUI()
+    initialized = wasInitialized
+    if (wasInitialized) {
+      super.setCellRenderer(PyPackageTreeCellRenderer(this))
+    }
+  }
+
+  private var suppressClearOnFocusLoss: Boolean = false
+
+  init {
+    putClientProperty(TREE_KEY, this)
+    ClientProperty.put(this, RenderingHelper.SHRINK_LONG_RENDERER, false)
+    // Allow AnimatedIcon (the install spinner in PyPackageTreeCellRenderer) to animate inside the
+    // cell renderer; without this the platform paints only a single static frame (PY-91529).
+    ClientProperty.put(this, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    model = myTreeModel
+    alignmentX = LEFT_ALIGNMENT
+    alignmentY = TOP_ALIGNMENT
+    isRootVisible = false
+    showsRootHandles = true
+    selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
+    super.setCellRenderer(PyPackageTreeCellRenderer(this))
+    initialized = true
+    transferHandler = null
+    TreeHoverListener.DEFAULT.addTo(this)
+    javax.swing.ToolTipManager.sharedInstance().registerComponent(this)
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        (ui as BasicTreeUI).let { it.leftChildIndent = it.leftChildIndent }
+        repaint()
+      }
+    })
+    initializeUI()
+    // Repaint when the shared active-installations set changes (an install started/finished from
+    // any surface — this tree, the info pane, or the install dialog) so installing rows show the
+    // spinner and a greyed, non-clickable link (PY-91529).
+    packagingService.addInstallStateListener(controller) { repaint() }
+  }
+
+  override fun getToolTipText(event: MouseEvent): String? {
+    val row = getClosestRowForLocation(event.x, event.y).takeIf { it >= 0 } ?: return null
+    val rowBounds = getRowBounds(row) ?: return null
+    if (event.y < rowBounds.y || event.y >= rowBounds.y + rowBounds.height) return null
+    val pkg = packageAtRow(row) ?: return null
+    val node = getPathForRow(row).lastPathComponent as DefaultMutableTreeNode
+    val renderer = cellRenderer.getTreeCellRendererComponent(
+      this, node, isPathSelected(getPathForRow(row)), isExpanded(row), model.isLeaf(node), row, hasFocus()
+    ) as PyPackageTreeCellRenderer
+    renderer.setSize(rowBounds.width, rowBounds.height)
+    val relativeX = event.x - rowBounds.x
+
+    val installedPkg = pkg.asInstalledPackageOrNull()
+    if (installedPkg != null) {
+      val changeIconX = renderer.inlineChangeVersionIconX
+      val changeIcon = renderer.inlineChangeVersionIcon
+      if (changeIconX > 0 && changeIcon != null && relativeX in changeIconX..(changeIconX + changeIcon.iconWidth)) {
+        val next = installedPkg.nextVersion?.presentableText
+        return if (next != null && installedPkg.canBeUpdated) {
+          PyBundle.message("python.toolwindow.packages.tooltip.update.to", next)
+        }
+        else {
+          PyBundle.message("python.toolwindow.packages.tooltip.change.version")
+        }
+      }
+    }
+
+    val trailingIconX = renderer.trailingIconX
+    val trailingIcon = renderer.trailingIcon
+    val trailingIconKind = renderer.trailingIconKind
+    val overTrailingIcon = trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)
+    if (!overTrailingIcon) {
+      // The documentation popup covers the name, and it already names where a local package lives.
+      // Serving this tooltip there too puts one over the other (PY-90174).
+      if (renderer.findFragmentAt(relativeX) == NAME_FRAGMENT) return null
+      return pkg.rowTooltip()
+    }
+    return when (trailingIconKind) {
+      TrailingIconKind.PROGRESS -> installSpinnerTooltip(pkg)
+      TrailingIconKind.ACTION -> pkg.trailingIconTooltip()
+      null -> null
+    }
+  }
+
+  private val hoverHandler = PyPackagesTreeHoverHandler(this)
+  internal val linkHoveredRow: Int get() = hoverHandler.linkHoveredRow
+  internal val iconHoveredRow: Int get() = hoverHandler.iconHoveredRow
+  internal val changeIconHoveredRow: Int get() = hoverHandler.changeIconHoveredRow
+
+  override fun processMouseMotionEvent(e: MouseEvent) {
+    super.processMouseMotionEvent(e)
+    if (e.id == MouseEvent.MOUSE_MOVED) {
+      hoverHandler.handleMouseMoved(e)
+    }
+  }
+
+  override fun processMouseEvent(e: MouseEvent) {
+    if (e.id == MouseEvent.MOUSE_EXITED) {
+      hoverHandler.clearLinkHover()
+    }
+    if (e.id == MouseEvent.MOUSE_PRESSED && e.button == MouseEvent.BUTTON1 && !e.isPopupTrigger) {
+      if (handleLinkClick(e)) {
+        return
+      }
+    }
+    super.processMouseEvent(e)
+  }
+
+  private fun initializeUI() {
+    setupTreeInteractions()
+  }
+
+  private fun updateTreeModel() {
+    rootNode.removeAllChildren()
+    items.forEach { pkg -> rootNode.add(pkg.toTreeNode()) }
+    myTreeModel.reload()
+    // Match the "Workspace Structure → Dependencies" tree: expand every top-level row on refresh
+    // so the first transitive level is visible without the user having to click each chevron. The
+    // search-result flow calls `expandAll()` on top of this to reveal deeper matches, so this
+    // baseline never regresses the search UX.
+    expandTopLevelRows()
+  }
+
+  private fun expandTopLevelRows() {
+    var row = 0
+    while (row < rowCount) {
+      val path = getPathForRow(row) ?: break
+      if (path.pathCount == 2) expandPath(path)
+      row++
+    }
+  }
+
+  private fun setupTreeInteractions() {
+    setupTreeEventListeners()
+  }
+
+  private fun setupTreeEventListeners() {
+    addTreeSelectionListener(createPackageSelectionListener())
+    addTreeExpansionListener(createTreeExpansionListener())
+    addFocusListener(createFocusListener())
+    val docPreview = PyPackagesTreeDocPreviewSupport(this, project)
+    addMouseMotionListener(docPreview)
+    addMouseListener(docPreview)
+  }
+
+  internal fun packageAtRow(row: Int): DisplayablePackage? {
+    val path = getPathForRow(row) ?: return null
+    return (path.lastPathComponent as DefaultMutableTreeNode).userObject as DisplayablePackage
+  }
+
+  private fun createPackageSelectionListener() = TreeSelectionListener { event ->
+    val path = event.path ?: return@TreeSelectionListener
+    if (!hasFocus()) return@TreeSelectionListener
+    val pkg = (path.lastPathComponent as DefaultMutableTreeNode).userObject as DisplayablePackage
+    handlePackageSelection(pkg)
+  }
+
+  private fun handlePackageSelection(pkg: DisplayablePackage) {
+    when (pkg) {
+      is InstalledPackage -> controller.packageSelected(pkg)
+      is InstallablePackage -> controller.packageSelected(pkg)
+      is RequirementPackage -> controller.packageSelected(pkg)
+      is WorkspaceMember -> controller.packageSelected(pkg)
+      is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup,
+      is ModuleDependencyDisplayablePackage -> {}
+    }
+  }
+
+  private fun createTreeExpansionListener() = object : TreeExpansionListener {
+    override fun treeExpanded(event: TreeExpansionEvent) {
+      treeListener?.onTreeStructureChanged()
+    }
+
+    override fun treeCollapsed(event: TreeExpansionEvent) {
+      treeListener?.onTreeStructureChanged()
+    }
+  }
+
+  private fun createFocusListener(): FocusListener = object : FocusAdapter() {
+    override fun focusGained(e: FocusEvent) {
+      val pkg = selectedItem() ?: return
+      handlePackageSelection(pkg)
+    }
+
+    override fun focusLost(e: FocusEvent) {
+      if (suppressClearOnFocusLoss || e.isTemporary) return
+      controller.setEmpty()
+    }
+  }
+
+  private fun handleLinkClick(e: MouseEvent): Boolean {
+    val row = getClosestRowForLocation(e.x, e.y)
+    if (row == -1) return false
+
+    val pkg = packageAtRow(row) ?: return false
+
+    if (isReadOnly) return false
+
+    val renderer = cellRenderer.getTreeCellRendererComponent(
+      this, (getPathForRow(row).lastPathComponent as DefaultMutableTreeNode), true, false, true, row, false
+    ) as PyPackageTreeCellRenderer
+
+    val cellBounds = getRowBounds(row) ?: return false
+    val relativeX = e.x - cellBounds.x
+
+    if (pkg is InstalledPackage) {
+      val changeIconX = renderer.inlineChangeVersionIconX
+      val changeIcon = renderer.inlineChangeVersionIcon
+      if (changeIconX > 0 && changeIcon != null && relativeX in changeIconX..(changeIconX + changeIcon.iconWidth)) {
+        setSelectionRow(row)
+        handlePackageSelection(pkg)
+        changeVersionInline(pkg, com.intellij.ui.awt.RelativePoint(this, java.awt.Point(e.x, e.y)))
+        return true
+      }
+    }
+
+    val trailingIconX = renderer.trailingIconX
+    val trailingIcon = renderer.trailingIcon
+    val trailingIconKind = renderer.trailingIconKind
+    if (trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)) {
+      val handled = when (trailingIconKind) {
+        // A spinner is a progress indicator, not the action button whose hit-box it inherited: show the
+        // output of the install it stands for instead of re-opening the install dialog (PY-91529).
+        TrailingIconKind.PROGRESS -> {
+          setSelectionRow(row); handlePackageSelection(pkg); showInstallOutput(pkg); true
+        }
+        TrailingIconKind.ACTION -> when (pkg) {
+          is InstalledPackage -> {
+            setSelectionRow(row); handlePackageSelection(pkg); deletePackageInline(pkg); true
+          }
+          is InstallablePackage -> {
+            setSelectionRow(row); handlePackageSelection(pkg); showInstallDialog(pkg); true
+          }
+          is RequirementPackage,
+          is UndeclaredPackagesGroup,
+          is DependencyGroupNode,
+          is WorkspaceMember,
+          is ModuleDependencyDisplayablePackage,
+          is LoadingNode,
+            -> false
+        }
+        null -> false
+      }
+      if (handled) return true
+    }
+
+    val linkStartX = renderer.linkStartX
+    val linkEndX = renderer.linkEndX
+    if (linkStartX !in 1..<linkEndX) return false
+    if (relativeX !in linkStartX..linkEndX) return false
+
+    setSelectionRow(row)
+    handlePackageSelection(pkg)
+
+    return when (pkg) {
+      is InstallablePackage -> {
+        installPackage(pkg); true
+      }
+      is InstalledPackage,
+      is RequirementPackage,
+      is WorkspaceMember,
+      is ModuleDependencyDisplayablePackage,
+      is LoadingNode,
+      is DependencyGroupNode,
+      is UndeclaredPackagesGroup,
+        -> false
+    }
+  }
+
+  private fun showInstallDialog(pkg: InstallablePackage) {
+    PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.LIST_ICON)
+    PyInstallPackageDialog(project).show(initialSearchText = pkg.name)
+  }
+
+  /**
+   * Uuid of the trace the install running for [pkg] on the current SDK was started in, or `null` when
+   * nothing is installing or the install carries no trace (see [installSpinnerTooltip]).
+   */
+  private fun installTraceUuid(pkg: DisplayablePackage): String? {
+    val sdk = packagingService.currentSdk ?: return null
+    return packagingService.installTraceUuid(sdk, PyPackagingToolWindowService.packageKey(pkg.name))
+  }
+
+  /**
+   * Opens Python Process Output with the command installing [pkg] preselected. Fire-and-forget: the
+   * query waits for the process to show up — clicking the spinner right after the link can beat the
+   * actual pip / uv launch — and gives up on its own timeout, so there is nothing to await here.
+   */
+  private fun showInstallOutput(pkg: DisplayablePackage) {
+    val traceUuid = installTraceUuid(pkg) ?: return
+    PyPackageCoroutine.launch(project, Dispatchers.Default) {
+      ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(traceUuid)
+    }
+  }
+
+  /**
+   * Tooltip of the running-install spinner: offers the output when the install can be traced back to a
+   * command, otherwise just states what is going on — an install started from the package details pane
+   * has no trace to point at.
+   */
+  private fun installSpinnerTooltip(pkg: DisplayablePackage): String =
+    if (installTraceUuid(pkg) != null) PyBundle.message("python.toolwindow.packages.tooltip.show.install.output")
+    else PyBundle.message("python.packaging.installing.package", pkg.name)
+
+  private fun installPackage(pkg: InstallablePackage) {
+    val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return
+    val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
+    val sdk = packagingService.currentSdk ?: return
+    // Reject a repeated click while this package is already installing on this SDK — otherwise every
+    // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
+    val key = PyPackagingToolWindowService.packageKey(pkg.name)
+    // Own the trace rather than letting the service open a nested one: the uuid stored next to the key
+    // has to be the one the spawned pip / uv process reports, or clicking the spinner finds nothing.
+    val trace = TraceContext(PyBundle.message("python.packaging.installing.package", pkg.name), null)
+    if (!packagingService.markInstalling(sdk, key, trace.uuid.toString())) return
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      try {
+        packagingService.installPackage(installRequest, trace = trace)
+      }
+      finally {
+        packagingService.unmarkInstalling(sdk, key)
+      }
+    }
+  }
+
+  private fun deletePackageInline(pkg: InstalledPackage) {
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
+      packagingService.deletePackage(pkg)
+    }
+  }
+
+  private fun changeVersionInline(pkg: InstalledPackage, anchor: com.intellij.ui.awt.RelativePoint? = null) {
+    PyPackageCoroutine.launch(project, Dispatchers.Default) {
+      val trace = TraceContext(PyBundle.message("python.toolwindow.packages.tooltip.change.version"), null)
+      val details = withContext(trace) { packagingService.detailsForPackage(pkg) }
+      if (details == null) {
+        ProcessOutputTopic.sendOpenToolWindowByTraceUuidEvent(trace.uuid)
+        return@launch
+      }
+      withContext(Dispatchers.EDT) {
+        showChangeVersionPopup(
+          project = project,
+          details = details,
+          scope = PyPackageScope(pkg.workspaceMember, pkg.dependencyGroup),
+          anchor = anchor,
+          highlightVersion = pkg.nextVersion?.presentableText,
+          currentVersion = pkg.instance.version,
+        )
+      }
+    }
+  }
+
+  /**
+   * Reveals the next [LOAD_MORE_PAGE] entries from the pre-sorted match list seeded by
+   * [primeSortedMatches]. No network round-trip, no re-sort — items appear in the exact order
+   * the install dialog shows them.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun loadMore() {
+    if (pendingMore <= 0) return
+    val sorted = sortedAllMatches ?: return
+    val from = items.size
+    val to = minOf(from + LOAD_MORE_PAGE, sorted.size)
+    if (from >= to) return
+    val previousSelection = selectionRows?.firstOrNull()
+    setItemsKeepingCache(sorted.subList(0, to))
+    pendingMore = (sorted.size - to).coerceAtLeast(0)
+    if (previousSelection != null) {
+      val next = (previousSelection + 1).coerceAtMost(rowCount - 1)
+      if (next >= 0) {
+        setSelectionRow(next)
+        scrollRowToVisible(next)
+      }
+    }
+  }
+
+  private fun setItemsKeepingCache(value: List<DisplayablePackage>) {
+    val preserved = sortedAllMatches
+    items = value
+    sortedAllMatches = preserved
+  }
+
+  fun setTreeListener(listener: PyPackagesTreeListener) {
+    treeListener = listener
+  }
+
+  fun selectPackage(pkg: DisplayablePackage) {
+    val index = items.indexOf(pkg)
+    if (index != -1) {
+      setSelectionRow(index)
+    }
+  }
+
+  /**
+   * Expanding a row adds the rows below it, so the count has to be read again on every step. A
+   * fixed bound taken before the first expansion stops at the rows that were already visible, which
+   * leaves everything below the first few matches closed.
+   */
+  fun expandAll() = expandAllRows()
+
+  fun selectedItems(): List<DisplayablePackage> =
+    selectionRows?.toList()?.mapNotNull { row -> packageAtRow(row) } ?: emptyList()
+
+  private fun selectedItem(): DisplayablePackage? = selectedItems().firstOrNull()
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.COPY_PROVIDER] = this
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun performCopy(dataContext: DataContext) {
+    getTextForCopy()?.let { CopyPasteManager.getInstance().setContents(StringSelection(it)) }
+  }
+
+  override fun isCopyEnabled(dataContext: DataContext): Boolean = getTextForCopy() != null
+
+  override fun isCopyVisible(dataContext: DataContext): Boolean = true
+
+  private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
+    is InstalledPackage, is InstallablePackage, is RequirementPackage, is WorkspaceMember,
+    is ModuleDependencyDisplayablePackage -> pkg.name
+    is LoadingNode, is DependencyGroupNode, is UndeclaredPackagesGroup, null -> null
+  }
+}
+
+internal fun interface PyPackagesTreeListener {
+  /** Called on EDT when the visible tree row layout changes (items set, expanded, collapsed). */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun onTreeStructureChanged()
+}
+
+/**
+ * Builds the rows for a package and its dependencies.
+ *
+ * [path] holds the packages between this row and the top of the tree. A package that repeats on its
+ * own path becomes a leaf, which ends the walk where the dependency graph has a cycle. A package
+ * that merely appears again elsewhere keeps its dependencies, or a row would lose the dependencies
+ * the tool listed for it (PY-90174).
+ *
+ * The set holds packages by identity, since [DisplayablePackage] does not define equality.
+ */
+internal fun DisplayablePackage.toTreeNode(
+  path: MutableSet<DisplayablePackage> = mutableSetOf(),
+): DefaultMutableTreeNode {
+  val node = DefaultMutableTreeNode(this)
+  if (!path.add(this)) return node
+  getRequirements().forEach { requirement ->
+    node.add(requirement.toTreeNode(path))
+  }
+  path.remove(this)
+  return node
+}
+
+/**
+ * Expands every row, including the ones expanding adds.
+ *
+ * The count has to be read again on every step. A bound taken before the first expansion stops at
+ * the rows that were already visible, which leaves everything below the first few matches closed
+ * (PY-90174).
+ */
+internal fun JTree.expandAllRows() {
+  var row = 0
+  while (row < rowCount) {
+    expandRow(row)
+    row++
+  }
+}
+
+/** The renderer paints the package name first, and the documentation popup covers that fragment. */
+internal const val NAME_FRAGMENT: Int = 0
+
+/** The installed package a row stands for, or `null` for a row that stands for none. */
+internal fun DisplayablePackage.installedPackage(): PythonPackage? = when (this) {
+  is InstalledPackage -> instance
+  is RequirementPackage -> instance
+  is WorkspaceMember -> instance
+  else -> null
+}
+
+/** Where the package on this row was installed from, in the same words on every row that has one. */
+internal fun DisplayablePackage.rowTooltip(): String? = installedPackage()?.installedFromTooltip()

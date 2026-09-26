@@ -1,28 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.upgrade;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -37,7 +29,7 @@ import java.util.regex.Pattern;
 public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
-  private static final String PATH = "\\s*\'(.*?)\'\\s*";
+  private static final String PATH = "\\s*'(.*?)'\\s*";
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH);
 
   @Override
@@ -72,7 +64,9 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
   }
 
   private static class UpgradeStatusConvertor implements Convertor<Matcher, ProgressEvent> {
+    private static final @NonNls String UPGRADED_CODE = "Upgraded";
 
+    @Override
     public ProgressEvent convert(@NotNull Matcher matcher) {
       String statusMessage = matcher.group(1);
       String path = matcher.group(2);
@@ -80,11 +74,10 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
       return createEvent(new File(path), createAction(statusMessage));
     }
 
-    @Nullable
-    public static EventAction createAction(@NotNull String code) {
+    public static @Nullable EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
-      if ("Upgraded".equals(code)) {
+      if (UPGRADED_CODE.equals(code)) {
         result = EventAction.UPGRADED_PATH;
       }
 
@@ -92,10 +85,10 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     }
   }
 
-  private static class UpgradeLineCommandListener extends LineCommandAdapter {
+  private static final class UpgradeLineCommandListener extends LineCommandAdapter {
 
-    @NotNull private final FileStatusResultParser parser;
-    @NotNull private final AtomicReference<VcsException> exception;
+    private final @NotNull FileStatusResultParser parser;
+    private final @NotNull AtomicReference<VcsException> exception;
 
     private UpgradeLineCommandListener(@NotNull FileStatusResultParser parser) {
       this.parser = parser;
@@ -104,7 +97,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
-      if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+      if (ProcessOutputType.isStdout(outputType)) {
         try {
           parser.onLine(line);
         }

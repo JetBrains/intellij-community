@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.lang.html.structureView.Html5SectionsNodeProvider;
 import com.intellij.testFramework.FileStructureTestBase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 public class HtmlFileStructureTest extends FileStructureTestBase {
   private boolean myHtml5OutlineModeDefault;
@@ -37,8 +38,15 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
 
   @Override
   public void tearDown() throws Exception {
-    PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), myHtml5OutlineModeDefault);
-    super.tearDown();
+    try {
+      PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), myHtml5OutlineModeDefault);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static String getHtml5OutlineModePropertyName() {
@@ -61,8 +69,8 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   }
 
   public void setHtml5OutlineMode(boolean enabled) {
-    myPopupFixture.getPopup().setTreeActionState(Html5SectionsNodeProvider.class, enabled);
-    myPopupFixture.update();
+    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().setTreeActionState(Html5SectionsNodeProvider.ACTION_ID, enabled));
+    myPopupFixture.updateAndSelectCurrent();
   }
 
   public void testEmpty() {checkTree();}

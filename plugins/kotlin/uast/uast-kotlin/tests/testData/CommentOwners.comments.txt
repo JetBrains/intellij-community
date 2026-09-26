@@ -1,0 +1,69 @@
+KotlinUFile:CommentOwners.kt(
+    UComment(/** file */)
+    UComment(// file)
+    UComment(/* file */)
+    KotlinUClass:CommentOwnersKt(
+        KotlinUField:topLevelProperty(
+            UComment(/** topLevelProperty */)
+        )
+        KotlinUMethod:getTopLevelProperty(
+        )
+        KotlinUMethod:topLevelFun(
+            UComment(/** topLevelFun */)
+        )
+        KotlinUMethod:funPlainCall(
+            KotlinUParameter:a(
+            )
+        )
+        KotlinUMethod:funNamedArgumentsCall(
+            KotlinUParameter:a(
+            )
+        )
+        KotlinUMethod:func(
+            KotlinUParameter:a(
+                UComment(/* fun param after */)
+                UComment(/* fun param before */)
+            )
+            KotlinUAnnotatedLocalVariable:localValueDefinition(
+            )
+        )
+    )
+    KotlinUClass:TopLevelClass(
+        UComment(/** TopLevelClass */)
+        KotlinUField:classLevelProperty(
+            UComment(/** classLevelProperty */)
+        )
+        KotlinUMethod:getClassLevelProperty(
+        )
+        KotlinUMethod:classLevelMethod(
+            UComment(/** classLevelMethod */)
+        )
+        KotlinSecondaryConstructorWithInitializersUMethod:TopLevelClass(
+            UComment(/** secondaryConstructor */)
+            KotlinUParameter:t(
+            )
+        )
+        KotlinUClass:NestedClass(
+            UComment(/** NestedClass */)
+            KotlinConstructorUMethod:NestedClass(
+            )
+        )
+    )
+    KotlinUClass:MyBooleanEnum(
+        UComment(/** enum */)
+        KotlinUEnumConstant:TRUE(
+        )
+        KotlinUEnumConstant:FALSE(
+        )
+        KotlinUMethod:values(
+        )
+        KotlinUMethod:valueOf(
+            KotlinUParameter:value(
+            )
+        )
+        KotlinUMethod:getEntries(
+        )
+        KotlinConstructorUMethod:MyBooleanEnum(
+        )
+    )
+)

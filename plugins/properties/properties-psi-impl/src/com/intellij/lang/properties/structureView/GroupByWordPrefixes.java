@@ -1,41 +1,37 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
+import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-/**
- * @author cdr
- */
 public class GroupByWordPrefixes implements Grouper, Sorter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.structureView.GroupByWordPrefixes");
-  @NonNls public static final String ID = "GROUP_BY_PREFIXES";
+  private static final Logger LOG = Logger.getInstance(GroupByWordPrefixes.class);
+  public static final @NonNls String ID = "GROUP_BY_PREFIXES";
   private String mySeparator;
 
   public GroupByWordPrefixes(String separator) {
@@ -51,8 +47,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   }
 
   @Override
-  @NotNull
-  public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
+  public @NotNull @Unmodifiable Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<>();
 
     String parentPrefix;
@@ -66,20 +61,17 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       parentPrefixLength = 0;
     }
     for (TreeElement element : children) {
-      if (!(element instanceof StructureViewTreeElement)) {
-        continue;
-      }
-      Object value = ((StructureViewTreeElement)element).getValue();
-      if (!(value instanceof IProperty)) {
-        continue;
-      }
-      final String text = ((IProperty) value).getUnescapedKey();
+      final String text = getPropertyUnescapedKey(element);
       if (text == null) continue;
-      LOG.assertTrue(text.startsWith(parentPrefix) || text.startsWith(mySeparator));
+      boolean expected = text.startsWith(parentPrefix) || text.startsWith(mySeparator);
+      if (!expected) LOG.error("unexpected text: " + text + "; parentPrefix=" + parentPrefix + "; mySeparator=" + mySeparator);
       List<String> words = StringUtil.split(text, mySeparator);
       keys.add(new Key(words, element));
     }
-    Collections.sort(keys, (k1, k2) -> {
+
+    if (keys.isEmpty()) return ContainerUtil.emptyList();
+
+    keys.sort((k1, k2) -> {
       List<String> o1 = k1.words;
       List<String> o2 = k2.words;
       for (int i = 0; i < Math.max(o1.size(), o2.size()); i++) {
@@ -100,6 +92,8 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       }
       // find longest group prefix
       List<String> firstKey = groupStart == keys.size() ? Collections.emptyList() : keys.get(groupStart).words;
+      List<TreeElement> groupChildren = new SmartList<>();
+      groupChildren.add(keys.get(groupStart).node);
       int prefixLen = firstKey.size();
       for (int j = groupStart+1; j < i; j++) {
         List<String> prevKey = keys.get(j-1).words;
@@ -112,22 +106,18 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
             break;
           }
         }
+        groupChildren.add(keys.get(j).node);
       }
       String[] strings = firstKey.subList(0,prefixLen).toArray(new String[prefixLen]);
       String prefix = StringUtil.join(strings, mySeparator);
       String presentableName = prefix.substring(parentPrefix.length());
       presentableName = StringUtil.trimStart(presentableName, mySeparator);
       if (i - groupStart > 1) {
-        groups.add(new PropertiesPrefixGroup(children, prefix, presentableName, mySeparator));
+        groups.add(new PropertiesPrefixGroup(groupChildren, prefix, presentableName, mySeparator));
       }
       else if (groupStart != keys.size()) {
         TreeElement node = keys.get(groupStart).node;
-        if (node instanceof PropertiesStructureViewElement) {
-          ((PropertiesStructureViewElement)node).setPresentableName(presentableName);
-        }
-        else {
-          ((ResourceBundlePropertyStructureViewElement)node).setPresentableName(presentableName);
-        }
+        ((PropertyStructureViewElement)node).setPresentableName(presentableName);
       }
       groupStart = i;
     }
@@ -147,22 +137,20 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
                                       PropertiesBundle.message("structure.view.group.by.prefixes.action.description"),
                                       AllIcons.Actions.GroupByPrefix);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 
-  @NotNull
+  @SuppressWarnings("rawtypes")
   @Override
-  public Comparator getComparator() {
+  public @NotNull Comparator getComparator() {
     return Sorter.ALPHA_SORTER.getComparator();
   }
 
@@ -171,19 +159,17 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     return true;
   }
 
-  private static class Key {
-    final List<String> words;
-    final TreeElement node;
-
-    public Key(final List<String> words, final TreeElement node) {
-      this.words = words;
-      this.node = node;
-    }
-
-    @Override
-    public String toString() {
-      return "Key{words=" + words + ", node=" + node + '}';
-    }
+  private record Key(List<String> words, TreeElement node) {
   }
 
+  static @Nullable String getPropertyUnescapedKey(@NotNull TreeElement element) {
+    if (!(element instanceof StructureViewTreeElement)) {
+      return null;
+    }
+    Object value = ((StructureViewTreeElement)element).getValue();
+    if (!(value instanceof IProperty)) {
+      return null;
+    }
+    return ((IProperty) value).getUnescapedKey();
+  }
 }

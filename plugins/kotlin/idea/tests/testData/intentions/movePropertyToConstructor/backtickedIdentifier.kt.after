@@ -1,0 +1,2 @@
+class Test(val `foo bar`: Int = 1) {
+}

@@ -1,0 +1,15 @@
+// FILE: gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts libs.some.test.library"
+[libraries]
+some_te<caret>st-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.some.test.library)
+}

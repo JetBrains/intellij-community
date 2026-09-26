@@ -1,20 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
- * @author nik
+ * Inherit from this class and register the implementation as {@code projectStructure.sourceRootEditHandler} extension in plugin.xml to
+ * specify how source roots of a custom {@link JpsModuleSourceRootType type} should be shown in Project Structure dialog. There must be only
+ * one instance of this class for each {@link JpsModuleSourceRootType}.
  */
 public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public static final ExtensionPointName<ModuleSourceRootEditHandler> EP_NAME = ExtensionPointName.create("com.intellij.projectStructure.sourceRootEditHandler");
@@ -24,76 +29,52 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     myRootType = rootType;
   }
 
-  @Nullable
-  public static <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
-    for (ModuleSourceRootEditHandler editor : EP_NAME.getExtensions()) {
-      if (editor.getRootType().equals(type)) {
-        //noinspection unchecked
-        return editor;
-      }
-    }
-    return null;
+  public static @Nullable <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
+    //noinspection unchecked
+    return EP_NAME.getExtensionList().stream().filter(editor -> editor.getRootType().equals(type)).findFirst().orElse(null);
   }
 
   public final JpsModuleSourceRootType<P> getRootType() {
     return myRootType;
   }
 
-  @NotNull
-  public abstract String getRootTypeName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRootTypeName();
 
-  @NotNull
-  public String getFullRootTypeName() {
+  public @NotNull @Nls String getFullRootTypeName() {
     return ProjectBundle.message("module.paths.root.node", getRootTypeName());
   }
 
-  @NotNull
-  public abstract Icon getRootIcon();
+  public abstract @NotNull Icon getRootIcon();
 
-  @NotNull
-  public Icon getRootIcon(@NotNull P properties) {
+  public @NotNull Icon getRootIcon(@NotNull P properties) {
     return getRootIcon();
   }
 
-  @Nullable
-  public Icon getRootFileLayerIcon() {
+  public @Nullable Icon getRootFileLayerIcon() {
     return null;
   }
 
-  @Nullable
-  public Icon getRootFileLayerIcon(@NotNull P properties) {
-    return getRootFileLayerIcon();
-  }
+  public abstract @Nullable Icon getFolderUnderRootIcon();
 
-  @Nullable
-  public abstract Icon getFolderUnderRootIcon();
+  public abstract @Nullable CustomShortcutSet getMarkRootShortcutSet();
 
-  @Nullable
-  public abstract CustomShortcutSet getMarkRootShortcutSet();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRootsGroupTitle();
 
-  @NotNull
-  public abstract String getRootsGroupTitle();
-
-  @NotNull
-  public abstract Color getRootsGroupColor();
+  public abstract @NotNull Color getRootsGroupColor();
 
 
-  @NotNull
-  public String getMarkRootButtonText() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getMarkRootButtonText() {
     return getRootTypeName();
   }
 
-  @NotNull
-  public abstract String getUnmarkRootButtonText();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getUnmarkRootButtonText();
 
-  @Nullable
-  public String getPropertiesString(@NotNull P properties) {
+  public @Nullable @NlsSafe String getPropertiesString(@NotNull P properties) {
     return null;
   }
 
-  @Nullable
-  public JComponent createPropertiesEditor(@NotNull SourceFolder folder, @NotNull JComponent parentComponent,
-                                           @NotNull ContentRootPanel.ActionCallback callback) {
+  public @Nullable JComponent createPropertiesEditor(@NotNull SourceFolder folder, @NotNull JComponent parentComponent,
+                                                     @NotNull ContentRootPanel.ActionCallback callback) {
     return null;
   }
 }

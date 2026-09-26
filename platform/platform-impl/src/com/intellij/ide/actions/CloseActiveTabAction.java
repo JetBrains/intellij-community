@@ -1,30 +1,25 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-public class CloseActiveTabAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+@ApiStatus.Internal
+public final class CloseActiveTabAction extends AnAction implements DumbAware {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     boolean processed = false;
     if (contentManager != null && contentManager.canCloseContents()) {
@@ -36,15 +31,16 @@ public class CloseActiveTabAction extends AnAction implements DumbAware {
     }
 
     if (!processed && contentManager != null) {
-      final DataContext context = DataManager.getInstance().getDataContext(contentManager.getComponent());
-      final ToolWindow tw = PlatformDataKeys.TOOL_WINDOW.getData(context);
-      if (tw != null) {
-        tw.hide(null);
+      DataContext context = DataManager.getInstance().getDataContext(contentManager.getComponent());
+      ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
+      if (toolWindow != null) {
+        toolWindow.hide(null);
       }
     }
   }
 
-  public void update(AnActionEvent event){
+  @Override
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     ContentManager contentManager=ContentManagerUtil.getContentManagerFromContext(event.getDataContext(), true);
     presentation.setEnabled(contentManager != null && contentManager.canCloseContents());
@@ -53,5 +49,10 @@ public class CloseActiveTabAction extends AnAction implements DumbAware {
       final DataContext context = DataManager.getInstance().getDataContext(contentManager.getComponent());
       presentation.setEnabled(PlatformDataKeys.TOOL_WINDOW.getData(context) != null);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

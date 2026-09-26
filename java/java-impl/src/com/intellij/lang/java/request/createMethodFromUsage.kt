@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CreateMethodFromUsage")
 
 package com.intellij.lang.java.request
@@ -6,6 +6,8 @@ package com.intellij.lang.java.request
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.isValidMethodReference
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.isMethodSignatureExists
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
@@ -17,15 +19,15 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.parentOfType
 
-fun generateActions(call: PsiMethodCallExpression): List<IntentionAction> {
+public fun generateActions(call: PsiMethodCallExpression): List<IntentionAction> {
   if (!checkCall(call)) return emptyList()
   val methodRequests = CreateMethodRequests(call).collectRequests()
-  val extensions = EP_NAME.extensions
+  val extensions = EP_NAME.extensionList
   return methodRequests.flatMap { (clazz, request) ->
     extensions.flatMap { ext ->
       ext.createAddMethodActions(clazz, request)
     }
-  }.groupActionsByType()
+  }.groupActionsByType(JavaLanguage.INSTANCE)
 }
 
 private fun checkCall(call: PsiMethodCallExpression): Boolean {
@@ -61,17 +63,18 @@ private class CreateMethodRequests(val myCall: PsiMethodCallExpression) {
       }
     }
     else {
-      val inStaticContext = myCall.isInStaticContext()
       for (outerClass in collectOuterClasses(myCall)) {
-        processClass(outerClass, inStaticContext)
+        processClass(outerClass, null)
       }
     }
   }
 
-  private fun processClass(clazz: PsiClass, staticContext: Boolean) {
+  private fun processClass(clazz: PsiClass, inStaticContext: Boolean?) {
     if (isMethodSignatureExists(myCall, clazz)) return // TODO generic check
+    if (!BaseIntentionAction.canModify(clazz)) return
     val visibility = computeVisibility(myCall.project, myCall.parentOfType(), clazz)
     val modifiers = mutableSetOf<JvmModifier>()
+    val staticContext = inStaticContext ?: (myCall.isWithinConstructorCall() || myCall.isWithinStaticMemberOf(clazz))
     if (staticContext) modifiers += JvmModifier.STATIC
     if (visibility != null) modifiers += visibility
     myRequests[clazz] = CreateMethodFromJavaUsageRequest(myCall, modifiers)

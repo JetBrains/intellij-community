@@ -1,0 +1,15 @@
+[project]
+name = "subpoetry2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.14"
+requests = "*"
+numpy = "*"
+subuv1 = { path = "../subuv1", develop = true }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

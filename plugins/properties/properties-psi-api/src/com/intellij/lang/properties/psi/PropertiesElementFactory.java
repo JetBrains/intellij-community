@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
@@ -31,56 +17,51 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-/**
- * @author cdr
- */
-public class PropertiesElementFactory {
-  private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<PropertiesFile, Project, Void>("system.properties.file") {
+public final class PropertiesElementFactory {
+  private static final Key<PropertiesFile> SYSTEM_PROPERTIES_KEY = Key.create("system.properties.file");
 
+  private static final UserDataCache<PropertiesFile,Project,Void> PROPERTIES = new UserDataCache<>("system.properties.file") {
+    @Override
     protected PropertiesFile compute(Project project, Void p) {
       return createPropertiesFile(project, System.getProperties(), "system");
     }
   };
 
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value,
-                                         @Nullable Character delimiter) {
-    String text = getPropertyText(name, value, delimiter, project, true);
+  public static @NotNull IProperty createProperty(@NotNull Project project,
+                                                  @NonNls @NotNull String name,
+                                                  @NonNls @NotNull String value,
+                                                  @Nullable Character delimiter) {
+    return createProperty(project, name, value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
+  }
+
+  public static @NotNull IProperty createProperty(@NotNull Project project,
+                                                  @NonNls @NotNull String name,
+                                                  @NonNls @NotNull String value,
+                                                  @Nullable Character delimiter,
+                                                  @NotNull PropertyKeyValueFormat format) {
+    String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
 
-  @Deprecated
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value) {
-    return createProperty(project, name, value, null);
-  }
-
-  @NotNull
-  public static String getPropertyText(@NonNls @NotNull String name,
-                                       @NonNls @NotNull String value,
-                                       @NonNls @Nullable Character delimiter,
-                                       @Nullable Project project,
-                                       boolean escape) {
+  public static @NotNull String getPropertyText(@NonNls @NotNull String name,
+                                                @NonNls @NotNull String value,
+                                                @NonNls @Nullable Character delimiter,
+                                                @Nullable Project project,
+                                                @NotNull PropertyKeyValueFormat format) {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + String.valueOf(delimiter) + (escape ? escapeValue(value, delimiter) : value);
+    return (format != PropertyKeyValueFormat.FILE ? escape(name) : name) + delimiter + escapeValue(value, delimiter, format);
   }
 
-  @NotNull
-  public static PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
+  public static @NotNull PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
     @NonNls String filename = "dummy." + PropertiesFileType.INSTANCE.getDefaultExtension();
     return (PropertiesFile)PsiFileFactory.getInstance(project)
       .createFileFromText(filename, PropertiesFileType.INSTANCE, text);
   }
 
-  @NotNull
-  public static PropertiesFile createPropertiesFile(@NotNull Project project, Properties properties, String fileName) {
+  public static @NotNull PropertiesFile createPropertiesFile(@NotNull Project project, Properties properties, String fileName) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try {
       properties.store(stream, "");
@@ -93,25 +74,30 @@ public class PropertiesElementFactory {
       .createFileFromText(filename, PropertiesFileType.INSTANCE, stream.toString());
   }
 
-  @NotNull
-  public static PropertiesFile getSystemProperties(@NotNull Project project) {
-    return PROPERTIES.get(project, null);
+  public static synchronized @NotNull PropertiesFile getSystemProperties(@NotNull Project project) {
+    PropertiesFile systemPropertiesFile = project.getUserData(SYSTEM_PROPERTIES_KEY);
+    if (systemPropertiesFile == null) {
+      project.putUserData(SYSTEM_PROPERTIES_KEY, systemPropertiesFile = createPropertiesFile(project, System.getProperties(), "system"));
+    }
+    return systemPropertiesFile;
   }
 
-  @NotNull
-  private static String escape(@NotNull String name) {
+  private static @NotNull String escape(@NotNull String name) {
     if (StringUtil.startsWithChar(name, '#') || StringUtil.startsWithChar(name, '!')) {
       name = "\\" + name;
     }
     return StringUtil.escapeChars(name, '=', ':', ' ', '\t');
   }
 
-  @Deprecated
-  public static String escapeValue(String value) {
-    return escapeValue(value, '=');
+  /**
+   * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static String escapeValue(String value, char delimiter) {
+    return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }
 
-  public static String escapeValue(String value, char delimiter) {
-    return PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(value, delimiter);
+  public static String escapeValue(String value, char delimiter, PropertyKeyValueFormat format) {
+    return PropertiesResourceBundleUtil.convertValueToFileFormat(value, delimiter, format);
   }
 }

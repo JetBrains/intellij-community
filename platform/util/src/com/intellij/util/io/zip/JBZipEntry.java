@@ -1,30 +1,29 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.SequenceInputStream;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.ZipEntry;
@@ -34,27 +33,27 @@ import java.util.zip.ZipException;
  * Extension that adds better handling of extra fields and provides
  * access to the internal and external file attributes.
  */
-@SuppressWarnings({"OctalInteger"})
-public class JBZipEntry implements Cloneable {
+@SuppressWarnings("OctalInteger")
+public class JBZipEntry {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
   private static final int SHORT_MASK = 0xFFFF;
   private static final int SHORT_SHIFT = 16;
 
-  private long time = -1;     // modification time (in DOS time)
-  private long crc = -1;      // crc-32 of entry data
-  private long size = -1;     // uncompressed size of entry data
-  private long csize = -1;    // compressed size of entry data
-  private int method = -1;    // compression method
-  private byte[] extra = ArrayUtil.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
-  private String comment;     // optional comment string for entry
+  private volatile long time = -1;     // modification time (in DOS time)
+  private volatile long crc = -1;      // crc-32 of entry data
+  private volatile long size = -1;     // uncompressed size of entry data
+  private volatile long csize = -1;    // compressed size of entry data
+  private volatile int method = -1;    // compression method
+  private volatile List<JBZipExtraField> extra = new SmartList<>();   // optional extra field data for entry
+  private volatile String comment;     // optional comment string for entry
 
-  private int internalAttributes = 0;
-  private int platform = PLATFORM_FAT;
-  private long externalAttributes = 0;
-  private String name = null;
+  private volatile int internalAttributes = 0;
+  private volatile int platform = PLATFORM_FAT;
+  private volatile long externalAttributes = 0;
+  private volatile String name;
 
-  private long headerOffset = -1;
+  private volatile long headerOffset = -1;
   private final JBZipFile myFile;
 
 
@@ -62,18 +61,12 @@ public class JBZipEntry implements Cloneable {
    * Creates a new zip entry with the specified name.
    *
    * @param name the name of the entry
-   * @param file
-   * @since 1.1
    */
   protected JBZipEntry(String name, JBZipFile file) {
     this.name = name;
     myFile = file;
   }
 
-  /**
-   * @param file
-   * @since 1.9
-   */
   protected JBZipEntry(JBZipFile file) {
     name = "";
     myFile = file;
@@ -83,7 +76,6 @@ public class JBZipEntry implements Cloneable {
    * Retrieves the internal file attributes.
    *
    * @return the internal file attributes
-   * @since 1.1
    */
   public int getInternalAttributes() {
     return internalAttributes;
@@ -93,7 +85,6 @@ public class JBZipEntry implements Cloneable {
    * Sets the internal file attributes.
    *
    * @param value an {@code int} value
-   * @since 1.1
    */
   public void setInternalAttributes(int value) {
     internalAttributes = value;
@@ -103,7 +94,6 @@ public class JBZipEntry implements Cloneable {
    * Retrieves the external file attributes.
    *
    * @return the external file attributes
-   * @since 1.1
    */
   public long getExternalAttributes() {
     return externalAttributes;
@@ -113,7 +103,6 @@ public class JBZipEntry implements Cloneable {
    * Sets the external file attributes.
    *
    * @param value an {@code long} value
-   * @since 1.1
    */
   public void setExternalAttributes(long value) {
     externalAttributes = value;
@@ -132,10 +121,9 @@ public class JBZipEntry implements Cloneable {
    * unzip command.
    *
    * @param mode an {@code int} value
-   * @since Ant 1.5.2
    */
   public void setUnixMode(int mode) {
-    setExternalAttributes((mode << 16)
+    setExternalAttributes(((long)(mode & SHORT_MASK) << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
@@ -147,7 +135,6 @@ public class JBZipEntry implements Cloneable {
    * Unix permission.
    *
    * @return the unix permissions
-   * @since Ant 1.6
    */
   public int getUnixMode() {
     return (int)((getExternalAttributes() >> SHORT_SHIFT) & SHORT_MASK);
@@ -159,7 +146,6 @@ public class JBZipEntry implements Cloneable {
    *
    * @return 0 (MS-DOS FAT) unless {@link #setUnixMode setUnixMode}
    *         has been called, in which case 3 (Unix) will be returned.
-   * @since Ant 1.5.2
    */
   public int getPlatform() {
     return platform;
@@ -169,7 +155,6 @@ public class JBZipEntry implements Cloneable {
    * Set the platform (UNIX or FAT).
    *
    * @param platform an {@code int} value - 0 is FAT, 3 is UNIX
-   * @since 1.9
    */
   protected void setPlatform(int platform) {
     this.platform = platform;
@@ -182,22 +167,16 @@ public class JBZipEntry implements Cloneable {
    *		  extra field data is greater than 0xFFFF bytes
    * @see #getExtra()
    */
-  public void setExtra(byte[] extra) {
-      if (extra != null && extra.length > 0xFFFF) {
-          throw new IllegalArgumentException("invalid extra field length");
-      }
-      this.extra = extra;
+  void setExtra(@NotNull List<? extends JBZipExtraField> extra) {
+      this.extra = new SmartList<>(extra);
   }
 
-  /**
-   * Retrieves the extra data for the local file data.
-   *
-   * @return the extra data for local file
-   * @since 1.1
-   */
-  public byte[] getLocalFileDataExtra() {
-    byte[] e = getExtra();
-    return e != null ? e : new byte[0];
+  public void addExtra(@NotNull JBZipExtraField field) {
+    JBZipExtraField current = ContainerUtil.find(extra, f -> f.getHeaderId().equals(field.getHeaderId()));
+    if (current != null) {
+      extra.remove(current);
+    }
+    extra.add(field);
   }
 
   /**
@@ -250,7 +229,6 @@ public class JBZipEntry implements Cloneable {
    * Get the name of the entry.
    *
    * @return the entry name
-   * @since 1.9
    */
   public String getName() {
     return name;
@@ -315,7 +293,7 @@ public class JBZipEntry implements Cloneable {
    */
   public void setMethod(int method) {
     if (method != ZipEntry.STORED && method != ZipEntry.DEFLATED) {
-      throw new IllegalArgumentException("invalid compression method");
+      throw new IllegalArgumentException("invalid compression method: " + method);
     }
     this.method = method;
   }
@@ -334,7 +312,6 @@ public class JBZipEntry implements Cloneable {
    * Is this entry a directory?
    *
    * @return true if the entry is a directory
-   * @since 1.10
    */
   public boolean isDirectory() {
     return getName().endsWith("/");
@@ -354,12 +331,12 @@ public class JBZipEntry implements Cloneable {
    * This uses the name as the hashcode.
    *
    * @return a hashcode.
-   * @since Ant 1.7
    */
+  @Override
   public int hashCode() {
     // this method has severe consequences on performance. We cannot rely
     // on the super.hashCode() method since super.getName() always return
-    // the empty string in the current implemention (there's no setter)
+    // the empty string in the current implementation (there's no setter)
     // so it is basically draining the performance of a hashmap lookup
     return getName().hashCode();
   }
@@ -368,12 +345,36 @@ public class JBZipEntry implements Cloneable {
     myFile.eraseEntry(this);
   }
 
-  private InputStream getInputStream() throws IOException {
+  @ApiStatus.Internal
+  public InputStream getInputStream() throws IOException {
+    // When reading over a remote channel (EEL/IJent), every I/O call is a gRPC round-trip.
+    // The default path does 2 round-trips per entry:
+    //   1) calcDataOffset() — reads 4 bytes from Local File Header to find where data starts
+    //   2) BoundedInputStream.read() — reads the actual compressed data
+    // The combined-read path merges both into a single read: it fetches the LFH + compressed data
+    // together, then parses the data offset from the in-memory buffer.
+    // Only used for readonly archives (no ensureFlushed needed) and entries <= 10 MB (to avoid
+    // excessive memory allocation). Falls back to the default path if the buffer estimate was too small.
+    if (myFile.isRemoteIo && myFile.myIsReadonly) {
+      long compressedSize = getCompressedSize();
+      if (compressedSize >= 0 && compressedSize <= 10 * 1024 * 1024) {
+        InputStream result = getInputStreamCombinedRead(compressedSize);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return getInputStreamDefault();
+  }
+
+  // Original two-read path: calcDataOffset() + BoundedInputStream.
+  // Used for local I/O, writable archives, large entries, and as a fallback.
+  private InputStream getInputStreamDefault() throws IOException {
     myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
     long start = calcDataOffset();
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
-    if (myFile.archive.length() < start + size) {
+    if (myFile.getSize() < start + size) {
       throw new EOFException();
     }
     BoundedInputStream bis = new BoundedInputStream(start, size);
@@ -382,20 +383,183 @@ public class JBZipEntry implements Cloneable {
         return bis;
       case ZipEntry.DEFLATED:
         bis.addDummy();
-        return new InflaterInputStream(bis, new Inflater(true));
+        int bufferSize;
+        if (myFile.isRemoteIo) {
+          // Remote channel (e.g. IJent/EEL): each BoundedInputStream.read() is a network round-trip.
+          // Size the buffer to the compressed entry size so all data is fetched in fewer calls.
+          // Capped at 128 KB to limit memory; matches IJent RECOMMENDED_MAX_PACKET_SIZE.
+          bufferSize = (int)Math.min(Math.max(size, 8192L), 131072L);
+        }
+        else {
+          bufferSize = this.size <= 0 ? 8192 : (int)Math.min(this.size, 8192);
+        }
+        return new InflaterInputStream(bis, new Inflater(true), bufferSize);
       default:
         throw new ZipException("Found unsupported compression method " + getMethod());
     }
   }
 
   /**
-   * Returns the extra field data for the entry, or null if none.
+   * Reads the Local File Header and compressed data in a single I/O operation,
+   * eliminating the extra round-trip that {@link #calcDataOffset()} would cause over remote channels.
+   * <p>
+   * ZIP Local File Header layout:
+   * <pre>
+   *   [0..3]   signature
+   *   [4..25]  fixed fields (version, flags, method, time, crc, sizes)
+   *   [26..27] filename length (N)
+   *   [28..29] extra field length (M)
+   *   [30..30+N-1]     filename
+   *   [30+N..30+N+M-1] extra field
+   *   [30+N+M..]       compressed data starts here
+   * </pre>
+   * We don't know N and M before reading the LFH, so we estimate the header size generously
+   * (UTF-8 worst-case for the name + 256 bytes padding for extra field). If the estimate was
+   * too small (extra field larger than expected), we return {@code null} and the caller falls
+   * back to the two-read path.
    *
-   * @return the extra field data for the entry, or null if none
-   * @see #setExtra(byte[])
+   * @return an InputStream over the entry data, or {@code null} if the buffer was too small (caller should fall back)
    */
-  public byte[] getExtra() {
+  private InputStream getInputStreamCombinedRead(long compressedSize) throws IOException {
+    long headerOffset = getHeaderOffset();
+
+    // lfhFixedEnd = offset right after the two length fields (byte 30 in LFH).
+    // That's where the variable-length filename starts.
+    int lfhFixedEnd = (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD;
+
+    // Estimate how much to read: LFH header (fixed + variable) + compressed data.
+    // name.length() * 3: UTF-8 can expand up to 3 bytes per char.
+    // + 256: generous padding for the extra field (typically small, but LFH extra
+    //        can differ from central directory extra).
+    int nameEstimate = name.length() * 3 + 256;
+    int headerEstimate = lfhFixedEnd + nameEstimate;
+    int totalToRead = headerEstimate + (int)compressedSize;
+
+    // For entries near the end of the file, our padded estimate may overshoot.
+    // Cap to the actual available bytes to avoid EOFException from readFullyFromPosition.
+    long available = myFile.getSize() - headerOffset;
+    if (available < lfhFixedEnd) {
+      return null; // not enough data even for the fixed LFH part
+    }
+    if (totalToRead > available) {
+      totalToRead = (int)available;
+    }
+
+    // Single I/O operation: read LFH + compressed data into one buffer.
+    byte[] buf = new byte[totalToRead];
+    myFile.readFullyFromPosition(buf, headerOffset);
+
+    // Parse actual filename and extra field lengths from the buffer (not from the file again).
+    int actualNameLen = ZipShort.getValue(buf, (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
+    int actualExtraLen = ZipShort.getValue(buf, (int)JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.SHORT);
+    int dataOffset = lfhFixedEnd + actualNameLen + actualExtraLen;
+
+    // Verify that the buffer contains the full compressed data.
+    // If not (extra field was larger than our 256-byte estimate), fall back.
+    if (dataOffset + compressedSize > buf.length) {
+      return null;
+    }
+
+    // Data is already in memory — wrap in ByteArrayInputStream (no further I/O needed).
+    // Note: we can't reuse BoundedInputStream here because it reads from the file,
+    // which would defeat the purpose of the combined read.
+    ByteArrayInputStream compressedStream = new ByteArrayInputStream(buf, dataOffset, (int)compressedSize);
+    switch (getMethod()) {
+      case ZipEntry.STORED:
+        return compressedStream;
+      case ZipEntry.DEFLATED:
+        // Inflater(nowrap=true) needs an extra dummy byte after the compressed data — see Inflater javadocs.
+        // BoundedInputStream uses addDummy() for this; here we append it via SequenceInputStream.
+        InputStream withDummy = new SequenceInputStream(compressedStream, new ByteArrayInputStream(new byte[]{0}));
+        int inflaterBuf = (int)Math.min(Math.max(compressedSize, 8192L), 131072L);
+        return new InflaterInputStream(withDummy, new Inflater(true), inflaterBuf);
+      default:
+        throw new ZipException("Found unsupported compression method " + getMethod());
+    }
+  }
+
+  /**
+   * Returns the extra field data.
+   *
+   * @return the extra field data
+   * @see #addExtra(JBZipExtraField)
+   */
+  public @NotNull List<JBZipExtraField> getExtra() {
     return extra;
+  }
+
+  /**
+   * Retrieves the extra data for central directory file record.
+   *
+   * @return the extra data for central directory file record
+   */
+  byte @NotNull [] getCentralDirectoryExtraBytes() throws IOException {
+    try (BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream()) {
+      for (JBZipExtraField field : extra) {
+        stream.write(field.getHeaderId().getBytes());
+        stream.write(field.getCentralDirectoryLength().getBytes());
+        stream.write(field.getCentralDirectoryData());
+      }
+      byte[] bytes = stream.toByteArray();
+      assertValidExtraFieldSize(bytes);
+      return bytes;
+    }
+  }
+
+  /**
+   * Retrieves the extra data for the local file data.
+   *
+   * @return the extra data for local file header
+   */
+  byte @NotNull [] getLocalFileHeaderDataExtra() throws IOException {
+    try (BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream()) {
+      for (JBZipExtraField field : extra) {
+        stream.write(field.getHeaderId().getBytes());
+        stream.write(field.getLocalFileDataLength().getBytes());
+        stream.write(field.getLocalFileDataData());
+      }
+      byte[] bytes = stream.toByteArray();
+      assertValidExtraFieldSize(bytes);
+      return bytes;
+    }
+  }
+
+  private static void assertValidExtraFieldSize(byte @NotNull [] bytes) {
+    if (bytes.length > 0xFFFF) {
+      throw new IllegalArgumentException("invalid extra field length");
+    }
+  }
+
+  void readExtraFromCentralDirectoryBytes(byte @NotNull [] extraBytes) throws IOException {
+    UnsyncByteArrayInputStream stream = new UnsyncByteArrayInputStream(extraBytes);
+    while (stream.available() > 0) {
+      ZipShort headerId = new ZipShort(stream.readShortLittleEndian());
+      JBZipExtraField field;
+      if (headerId.equals(Zip64ExtraField.HEADER_ID)) {
+        field = new Zip64ExtraField();
+      }
+      else {
+        field = new UnrecognizedExtraField(headerId);
+      }
+      int length = stream.readShortLittleEndian();
+      field.parseFromCentralDirectoryData(readNBytes(stream, length), 0, length);
+      addExtra(field);
+      if (field instanceof Zip64ExtraField) {
+        Zip64ExtraField zip64ExtraField = (Zip64ExtraField)field;
+        ZipUInt64 compressedSize = zip64ExtraField.getCompressedSize();
+        if (compressedSize != null) {
+          setCompressedSize(compressedSize.getLongValue());
+        }
+        ZipUInt64 size = zip64ExtraField.getSize();
+        if (size != null) {
+          setSize(size.getLongValue());
+        }
+        ZipUInt64 offset = zip64ExtraField.getHeaderOffset();
+        if (offset != null) {
+          setHeaderOffset(offset.getLongValue());
+        }
+      }
+    }
   }
 
   /**
@@ -456,7 +620,7 @@ public class JBZipEntry implements Cloneable {
 
   public void setDataFromFile(File file) throws IOException {
     if (file.length() < FileUtilRt.LARGE_FOR_CONTENT_LOADING / 2) {
-      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
+      //for small files it's faster to load their whole content into memory so we can write it to zip sequentially
       setData(FileUtil.loadFileBytes(file));
     }
     else {
@@ -464,13 +628,28 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
+  public void setDataFromStream(@NotNull InputStream stream) throws IOException {
+    myFile.getOutputStream().putNextEntryContent(this, stream);
+  }
+
+  @SuppressWarnings("IOStreamConstructor")
   void doSetDataFromFile(File file) throws IOException {
-    InputStream input = new BufferedInputStream(new FileInputStream(file));
-    try {
-      myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
+    try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
+      myFile.getOutputStream().putNextEntryContent(this, input);
+      assert getSize() == file.length();
     }
-    finally {
-      input.close();
+  }
+
+  public void setDataFromPath(@NotNull Path file) throws IOException {
+    long size = Files.size(file);
+    if (size < FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      // for small files it's faster to load their whole content into memory, so we can write it to zip sequentially
+      myFile.getOutputStream().putNextEntryBytes(this, Files.readAllBytes(file));
+    }
+    else {
+      try (InputStream input = Files.newInputStream(file)) {
+        myFile.getOutputStream().putNextEntryContent(this, input);
+      }
     }
   }
 
@@ -482,25 +661,38 @@ public class JBZipEntry implements Cloneable {
   }
 
   public byte[] getData() throws IOException {
-    if (size == -1) throw new IOException("no data");
-
-    final InputStream stream = getInputStream();
-    try {
-      return FileUtil.loadBytes(stream, (int)size);
+    if (size == -1) {
+      throw new IOException("no data");
     }
-    finally {
-      stream.close();
+
+    try (InputStream stream = getInputStream()) {
+      return FileUtil.loadBytes(stream, (int)size);
     }
   }
 
-  private long calcDataOffset() throws IOException {
+  public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
-    myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
-    myFile.archive.readFully(b);
+    myFile.readFullyFromPosition(b, offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     int fileNameLen = ZipShort.getValue(b, 0);
     int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
     return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
+  }
+
+  private static byte[] readNBytes(@NotNull InputStream is, int length) throws IOException {
+    byte[] bytes = ArrayUtil.newByteArray(length);
+
+    int n = 0;
+    int off = 0;
+    while (n < length) {
+      int count = is.read(bytes, off + n, length - n);
+      if (count < 0) {
+        throw new EOFException();
+      }
+      n += count;
+    }
+
+    return bytes;
   }
 
   /**
@@ -519,7 +711,7 @@ public class JBZipEntry implements Cloneable {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       if (remaining <= 0) {
         if (addDummyByte) {
           addDummyByte = false;
@@ -538,9 +730,7 @@ public class JBZipEntry implements Cloneable {
       }
 
       final int ret;
-      RandomAccessFile archive = myFile.archive;
-      archive.seek(loc);
-      ret = archive.read(b, off, len);
+      ret = myFile.readFromPosition(b, off, len, loc);
 
       if (ret > 0) {
         loc += ret;
@@ -559,9 +749,9 @@ public class JBZipEntry implements Cloneable {
         return -1;
       }
 
-      RandomAccessFile archive = myFile.archive;
-      archive.seek(loc++);
-      return archive.read();
+      SeekableByteChannel archive = myFile.myArchive;
+      archive.position(loc++);
+      return myFile.readByte();
     }
 
     /**

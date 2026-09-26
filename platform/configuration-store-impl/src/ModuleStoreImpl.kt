@@ -1,104 +1,189 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.stores.ModuleStore
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.module.Module
-import com.intellij.project.isDirectoryBased
-import com.intellij.util.containers.computeIfAny
-import com.intellij.util.io.exists
-import java.nio.file.Paths
+import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.project.ProjectStoreOwner
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
+import org.jdom.Element
+import java.io.IOException
+import java.nio.file.Path
+import kotlin.concurrent.write
+import kotlin.io.path.invariantSeparatorsPathString
 
-private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
+internal class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), ModuleStore {
+  override val project: Project = module.project
 
-private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ModuleStoreBase() {
-  override val project = module.project
+  override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
+  override val collectVfsEventsDuringSave: Boolean
+    get() = true
 
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
-  // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
-    val result =  super.getStorageSpecs(component, stateSpec, operation)
-    if (!project.isDirectoryBased) {
-      return result
-    }
+  override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
-    return StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-      LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result, operation) }
-    } ?: result
-  }
-}
-
-private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
-  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
-
-  override fun setPath(path: String, isNew: Boolean) {
-    super.setPath(path, isNew)
-
-    if (!isNew && Paths.get(path).exists()) {
-      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
-    }
-  }
-
-  override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
-}
-
-// used in upsource
-abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
-  override abstract val storageManager: StateStorageManagerImpl
-
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
-    val storages = stateSpec.storages
-    return if (storages.isEmpty()) {
-      listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    }
-    else {
-      super.getStorageSpecs(component, stateSpec, operation)
-    }
+  override fun <T : Any> getStorageSpecs(
+    component: PersistentStateComponent<T>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+  ): List<Storage> {
+    return (project as ProjectStoreOwner).componentStore.storeDescriptor.getModuleStorageSpecs(
+      component = component,
+      stateSpec = stateSpec,
+      operation = operation,
+      storageManager = storageManager,
+      project = project,
+    )
   }
 
-  override final fun setPath(path: String) {
-    setPath(path, false)
+  override suspend fun reloadStates(componentNames: Set<String>) {
+    batchReloadStates(componentNames, project.messageBus)
   }
 
-  override fun setPath(path: String, isNew: Boolean) {
-    val isMacroAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
+  override fun setPath(path: Path) {
+    setPath(path = path, isNew = false)
+  }
+
+  override fun setPath(path: Path, isNew: Boolean) {
+    val isMacroAdded = storageManager.setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
-    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
-      if (this !is FileBasedStorage) {
-        // upsource
-        return@getOrCreateStorage
-      }
+    storageManager.getOrCreateStorage(
+      collapsedPath = StoragePathMacros.MODULE_FILE,
+      roamingType = RoamingType.DEFAULT,
+      storageCustomizer = {
+        if (this !is FileBasedStorage) {
+          return@getOrCreateStorage
+        }
 
-      setFile(null, if (isMacroAdded) null else Paths.get(path))
-      // ModifiableModuleModel#newModule should always create a new module from scratch
-      // https://youtrack.jetbrains.com/issue/IDEA-147530
+        setFile(virtualFile = null, ioFileIfChanged = if (isMacroAdded) null else path)
+        // ModifiableModuleModel#newModule should always create a new module from scratch
+        // https://youtrack.jetbrains.com/issue/IDEA-147530
+        if (isMacroAdded) {
+          // preload to ensure that we will get a FileNotFound error (no module file) during initialization
+          // and not later in some unexpected place (because otherwise will be loaded by demand)
+          preloadStorageData(isNew)
+        }
+        else {
+          storageManager.updatePath(spec = StoragePathMacros.MODULE_FILE, newPath = path)
+        }
+      },
+      usePathMacroManager = true,
+    )
+  }
+}
 
-      if (isMacroAdded) {
-        // preload to ensure that we will get FileNotFound error (no module file) during init, and not later in some unexpected place (because otherwise will be loaded by demand)
-        preloadStorageData(isNew)
+private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module)
+  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor, componentManager = module, controller = null),
+    RenameableStateStorageManager
+{
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.MODULE_FILE
+
+  // the only macro is supported by ModuleStateStorageManager
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath != StoragePathMacros.MODULE_FILE) {
+      throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
+    }
+    return macros[0].value
+  }
+
+  override fun rename(newName: String) {
+    storageLock.write {
+      val storage = getOrCreateStorage(collapsedPath = StoragePathMacros.MODULE_FILE, roamingType = RoamingType.DEFAULT, usePathMacroManager = true) as FileBasedStorage
+      val file = storage.getVirtualFile()
+      try {
+        if (file != null) {
+          file.rename(storage, newName)
+        }
+        else if (storage.file.fileName.toString() != newName) {
+          // the old file didn't exist or renaming failed
+          val newFile = storage.file.parent.resolve(newName)
+          storage.setFile(virtualFile = null, ioFileIfChanged = newFile)
+          pathRenamed(newPath = newFile, event = null)
+        }
       }
-      else {
-        storageManager.updatePath(StoragePathMacros.MODULE_FILE, path)
+      catch (e: IOException) {
+        LOG.debug(e)
       }
-    })
+    }
+  }
+
+  override fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
+    virtualFileTracker.remove(expandMacro(StoragePathMacros.MODULE_FILE).invariantSeparatorsPathString)
+  }
+
+  override fun pathRenamed(newPath: Path, event: VFileEvent?) {
+    try {
+      setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, newPath)))
+    }
+    finally {
+      val requestor = event?.requestor
+      if (requestor == null || requestor !is StateStorage /* not renamed as a result of explicit rename */) {
+        val module = componentManager as ModuleEx
+        module.rename(newPath.fileName.toString().removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION), false)
+      }
+    }
+  }
+
+  override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
+    val componentIterator = elements.iterator()
+    for (component in componentIterator) {
+      if (component.getAttributeValue("name") == "DeprecatedModuleOptionManager") {
+        componentIterator.remove()
+        for (option in component.getChildren("option")) {
+          rootAttributes.put(option.getAttributeValue("key"), option.getAttributeValue("value"))
+        }
+        break
+      }
+    }
+
+    // need be last for compat reasons
+    rootAttributes.put(VERSION_OPTION, "4")
+  }
+
+  override val isExternalSystemStorageEnabled: Boolean
+    get() {
+      val project = (componentManager as Module?)?.project ?: return false
+      if (project !is ProjectStoreOwner) {
+        return false
+      }
+      // isExternalStorageEnabled located in API module, where we cannot check isExternalStorageSupported directly
+      return project.componentStore.storeDescriptor.isExternalStorageSupported && project.isExternalStorageEnabled
+    }
+
+  override fun createFileBasedStorage(
+    file: Path,
+    collapsedPath: String,
+    roamingType: RoamingType,
+    usePathMacroManager: Boolean,
+    rootTagName: String?
+  ): StateStorage {
+    val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
+    return TrackedFileStorage(
+      storageManager = this,
+      file = file,
+      fileSpec = collapsedPath,
+      rootElementName = rootTagName,
+      roamingType = roamingType,
+      pathMacroManager = macroSubstitutor,
+      provider = provider,
+      listener = null,
+      controller = null,
+    )
   }
 }

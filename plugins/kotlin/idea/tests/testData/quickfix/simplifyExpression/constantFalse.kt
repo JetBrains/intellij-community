@@ -1,0 +1,13 @@
+// "Simplify expression" "true"
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
+// K2_AFTER_ERROR: INVALID_IF_AS_EXPRESSION
+// K2_ERROR: INVALID_IF_AS_EXPRESSION
+
+fun alwaysNull(i: Int) {
+    val zeroOrNull = if (i != 15) return
+    if (i < 0<caret>) {
+        println("Always false")
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix

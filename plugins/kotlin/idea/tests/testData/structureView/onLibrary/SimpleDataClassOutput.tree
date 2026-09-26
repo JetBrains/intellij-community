@@ -1,0 +1,5 @@
+-SimpleDataClass.kt
+ -SimpleDataClass
+  constructor SimpleDataClass(Int, String)
+  key: Int
+  value: String

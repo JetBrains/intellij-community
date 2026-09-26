@@ -1,0 +1,19 @@
+<!--
+  This module is not included in the core plugin.
+  If a plugin needs to use this library, it should register this module as its own content module using a 'content' tag without
+  the 'namespace' attribute. This way the module is registered in an implicit per-plugin namespace and won't clash at runtime
+  with other copies of this module registered in other plugins.
+
+  Use loading="embedded". The library resolves an optional regular expression engine and an optional dataformat by name, so
+  its classes must sit on the same classpath as the libraries the plugin adds for them. The JSON plugin selects
+  `JoniRegularExpressionFactory`, and it embeds `intellij.libraries.joni` for that reason.
+-->
+<idea-plugin visibility="private">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.dataformat.yaml"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

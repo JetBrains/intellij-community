@@ -1,0 +1,138 @@
+package com.intellij.terminal.frontend.action
+
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
+import org.jetbrains.plugins.terminal.shellDetection.DetectedShellInfo
+import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
+import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import javax.swing.Icon
+
+internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+
+    val popupPoint = e.getPreferredPopupPoint()
+    terminalProjectScope(project).launch {
+      val shells = detectShells(project)
+      val customActions = OpenPredefinedTerminalActionProvider.collectAll(project)
+
+      withContext(Dispatchers.EDT) {
+        if (project.isDisposed) return@withContext
+
+        val popup = createPopup(shells, customActions, e.dataContext)
+        if (popupPoint != null) {
+          popup.show(popupPoint)
+        }
+        else {
+          popup.showInFocusCenter()
+        }
+        val inputEvent = e.inputEvent
+        if (inputEvent?.component != null) {
+          PopupUtil.setPopupToggleComponent(popup, inputEvent.component)
+        }
+      }
+    }
+  }
+
+  private fun createPopup(
+    shells: List<AnAction>,
+    customActions: List<AnAction>,
+    dataContext: DataContext,
+  ): ListPopup {
+    val group = DefaultActionGroup()
+    group.addAll(shells)
+    group.addAll(customActions)
+    if (shells.size + customActions.size > 0) {
+      group.addSeparator()
+    }
+    val settingsAction = ActionManager.getInstance().getAction("Terminal.Settings")
+    if (settingsAction != null) { // can be null on the backend, but this action is frontend-only anyway
+      group.add(settingsAction)
+    }
+
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, true, false, null, -1, null)
+  }
+
+  private suspend fun detectShells(project: Project): List<AnAction> {
+    val detectionResult = TerminalShellsDetectionService.detectShells(project)
+    val shellEnvironments = detectionResult.environments.filter { it.shells.isNotEmpty() }
+    return when {
+      shellEnvironments.isEmpty() -> emptyList()
+      shellEnvironments.size == 1 -> {
+        createOpenShellActions(shellEnvironments[0].shells)
+      }
+      else -> {
+        shellEnvironments.flatMap {
+          val actions = createOpenShellActions(it.shells)
+          val separatorAction = Separator(it.environmentName)
+          listOf(separatorAction) + actions
+        }
+      }
+    }
+  }
+
+  private fun createOpenShellActions(shells: List<DetectedShellInfo>): List<OpenShellAction> {
+    return shells
+      .groupByTo(LinkedHashMap(), DetectedShellInfo::name)
+      .values
+      .flatMap { shellInfos ->
+        if (shellInfos.size > 1) {
+          shellInfos.map { info -> createOpenShellAction(info.path, info.options, "${info.name} (${info.path})") }
+        }
+        else {
+          val info = shellInfos[0]
+          listOf(createOpenShellAction(info.path, info.options, info.name))
+        }
+      }
+  }
+
+  private fun createOpenShellAction(
+    shellPath: String,
+    shellOptions: List<String>,
+    presentableName: @NlsSafe String,
+  ): OpenShellAction {
+    val shellCommand = listOf(shellPath) + shellOptions
+    val icon = if (shellPath.endsWith("wsl.exe")) AllIcons.RunConfigurations.Wsl else null
+    return OpenShellAction(presentableName, shellCommand, icon)
+  }
+
+  internal class OpenShellAction(
+    presentableName: @NlsActions.ActionText String,
+    private val myCommand: List<String>,
+    icon: Icon?,
+  ) : DumbAwareAction(presentableName, null, icon) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
+      val contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
+      val startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.START_NEW_PREDEFINED_SESSION)
+      createTerminalTab(
+        project,
+        shellCommand = myCommand,
+        tabName = templateText,
+        contentManager = contentManager,
+        startupFusInfo = startupFusInfo,
+      )
+    }
+  }
+}

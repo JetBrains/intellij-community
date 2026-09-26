@@ -1,0 +1,206 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.devkit` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.devkit.core",
+        "intellij.devkit.compose",
+        "intellij.devkit.experiments",
+        "intellij.devkit.gradle",
+        "intellij.devkit.gradle.toml",
+        "intellij.devkit.gradle.tooling",
+        "intellij.devkit.i18n",
+        "intellij.devkit.intelliLang",
+        "intellij.devkit.themes",
+        "intellij.devkit.uiDesigner",
+        "intellij.devkit.uiDsl",
+        "intellij.devkit.workspaceModel",
+        "intellij.devkit.workspaceModel.k2",
+        "intellij.kotlin.devkit",
+        "intellij.kotlin.devkit.k2",
+        "intellij.devkit.debugger",
+        "intellij.devkit.stacktrace",
+        "intellij.devkit.apiDump",
+        "intellij.devkit.apiDump.lang",
+        "intellij.devkit.scaffolding",
+        "intellij.devkit.modules",
+        "intellij.devkit.mcp",
+        "intellij.devkit.mcp.inspections",
+        "intellij.devkit.threading",
+        "intellij.devkit.smartupdate",
+        "intellij.platform.jewel.samples.showcase",
+        "intellij.libraries.workspace.model.codegen",
+        "intellij.devkit.jps",
+    ],
+    main_module = "intellij.devkit",
+)
+### auto-generated section `dev intellij.devkit` end
+
+### auto-generated section `build intellij.devkit` start
+jvm_library(
+    name = "devkit",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "devkit_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":devkit",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.devkit` end
+
+### auto-generated section `iml intellij.devkit` start
+exports_files(
+    [
+        "intellij.devkit.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit` end
+
+### auto-generated section `build intellij.devkit.plugin.main` start
+jvm_library(
+    name = "devkit-plugin-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.plugin.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/devkit:devkit-plugin-main-noKotlin",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "//plugins/devkit/intellij.kotlin.devkit/k2",
+        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+        "//plugins/devkit/intellij.devkit.compose:compose",
+        "//plugins/devkit/intellij.devkit.uiDsl:uiDsl",
+    ],
+)
+
+jvm_library(
+    name = "devkit-plugin-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.plugin.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":devkit-plugin-main",
+        "//plugins/devkit:devkit-plugin-main-noKotlin_test_lib",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_test_lib",
+        "//plugins/devkit/intellij.kotlin.devkit/k2:k2_test_lib",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests",
+        "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
+        "//plugins/devkit/intellij.devkit.workspaceModel/tests",
+        "//plugins/devkit/intellij.devkit.workspaceModel/tests:tests_test_lib",
+        "//plugins/devkit/intellij.devkit.compose:compose_test_lib",
+        "//plugins/devkit/intellij.devkit.uiDsl:uiDsl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.devkit.plugin.main` end
+
+### auto-generated section `iml intellij.devkit.plugin.main` start
+exports_files(
+    [
+        "intellij.devkit.plugin.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.plugin.main` end
+
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
+jvm_library(
+    name = "devkit-plugin-main-noKotlin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.plugin.main.noKotlin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/devkit",
+        "//plugins/devkit/devkit-core:core",
+        "//plugins/devkit/intellij.devkit.debugger:debugger",
+        "//plugins/devkit/intellij.devkit.experiments:experiments",
+        "//plugins/devkit/intellij.devkit.gradle:gradle",
+        "//plugins/devkit/intellij.devkit.i18n:i18n",
+        "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
+        "//plugins/devkit/intellij.devkit.themes:themes",
+        "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
+        "//plugins/devkit/jps-plugin:jps",
+        "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+        "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+        "//plugins/devkit/api-dump",
+        "//plugins/devkit/api-dump-lang:apiDump-lang",
+    ],
+)
+
+jvm_library(
+    name = "devkit-plugin-main-noKotlin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.plugin.main.noKotlin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":devkit-plugin-main-noKotlin",
+        "//plugins/devkit:devkit_test_lib",
+        "//plugins/devkit/devkit-core:core_test_lib",
+        "//plugins/devkit/intellij.devkit.debugger:debugger_test_lib",
+        "//plugins/devkit/intellij.devkit.experiments:experiments_test_lib",
+        "//plugins/devkit/intellij.devkit.gradle:gradle_test_lib",
+        "//plugins/devkit/intellij.devkit.i18n:i18n_test_lib",
+        "//plugins/devkit/intellij.devkit.intelliLang:intelliLang_test_lib",
+        "//plugins/devkit/intellij.devkit.themes:themes_test_lib",
+        "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner_test_lib",
+        "//plugins/devkit/jps-plugin:jps_test_lib",
+        "//plugins/devkit/intellij.devkit.scaffolding:scaffolding_test_lib",
+        "//plugins/devkit/devkit-java-tests:java-tests",
+        "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+        "//plugins/devkit/intellij.devkit.stacktrace:stacktrace_test_lib",
+        "//plugins/devkit/api-dump:api-dump_test_lib",
+        "//plugins/devkit/api-dump-lang:apiDump-lang_test_lib",
+    ],
+)
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end
+
+### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` start
+exports_files(
+    [
+        "intellij.devkit.plugin.main.noKotlin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.plugin.main.noKotlin` end

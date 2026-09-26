@@ -1,0 +1,115 @@
+module(
+    name = "jps_to_bazel",
+    version = "0.1",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_java", version = "9.6.1")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
+    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+)
+
+bazel_dep(name = "rules_jvm_external", version = "6.10")
+single_version_override(
+    module_name = "rules_jvm_external",
+    patches = [
+        "rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "rules-jvm-external-6.10-optional-source-jars.patch",
+        "rules-jvm-external-6.10-coursier-optional-file-field.patch",
+        "rules-jvm-external-6.10-fix-multi-repo-hash.patch",
+    ],
+    version = "6.10",
+)
+
+single_version_override(
+    module_name = "rules_android",
+    patches = [
+        "rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
+)
+
+single_version_override(
+    module_name = "bazel_worker_java",
+    patches = [
+        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
+)
+
+bazel_dep(name = "protobuf", version = "33.4")
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = [
+        "protobuf-33.4-reuse-win64-for-arm.patch",
+        "protobuf-33.4-fail-on-java-core-source-build.patch",
+    ],
+    version = "33.4",
+)
+
+# The prebuilt protobuf-java runtime for java_proto_library.
+# Do not remove: without it @protobuf//java/core compiles from source.
+register_toolchains("//:protoc_java_toolchain_toolchain")
+
+intellij_version = "253.29346.138"
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "j2b_maven",
+    # --experimental_repository_downloader_retries from community/common.bazelrc is not applicable here
+    additional_coursier_options = [
+        "--retry-count",
+        "5",
+    ],
+    artifacts = [
+        "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
+        "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
+        "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.4.10-RC2",
+        "org.jetbrains.teamcity:serviceMessages:2024.07",
+        "junit:junit:4.13.2",
+        "org.assertj:assertj-core:4.0.0-M1",
+        "net.bytebuddy:byte-buddy:1.17.1",
+    ],
+    fail_if_repin_required = True,
+    fetch_sources = True,
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/intellij-dependencies",
+        "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+        "https://cache-redirector.jetbrains.com/www.jetbrains.com/intellij-repository/releases",
+    ],
+    use_credentials_from_home_netrc_file = True,
+)
+use_repo(maven, "j2b_maven")
+
+bazel_dep(name = "rules_python", version = "1.7.0")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "protobuf-java_http",
+    downloaded_file_path = "protobuf-java-4.33.4.jar",
+    sha256 = "3ca892fd6ea8b37d01bb6917dbc0bf2637548b756753f65a28d4f1d4d982347f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.33.4/protobuf-java-4.33.4.jar",
+)
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "82203dfae9f75a268e5e0e643ce5696a7c035ce9626938601fb410ee11849b1b",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist.zip",
+)
+
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
+)

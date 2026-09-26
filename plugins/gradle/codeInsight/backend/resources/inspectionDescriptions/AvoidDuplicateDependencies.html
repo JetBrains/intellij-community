@@ -1,0 +1,37 @@
+<html>
+<body>
+<p>Detects duplicate dependency declarations in Gradle build scripts.</p>
+<p>Offers an intention to navigate to duplicates and a quick-fix to remove exact matches.</p>
+<p><b>Inspection reporting examples:</b></p>
+<pre><code lang="kotlin">
+dependencies {
+    implementation("com.google.guava:guava:32.1.2-jre") // will report this line since there is an exact duplicate below
+    implementation("com.google.guava:guava:32.1.2-jre") // will report this line since there is an exact duplicate above
+}
+</code></pre>
+<pre><code lang="kotlin">
+dependencies {
+    api("com.google.guava:guava:32.1.2-jre")
+    implementation("com.google.guava:guava:32.1.2-jre") // will report this line since there is a duplicate from the super configuration above
+}
+</code></pre>
+<p><b>Remove exact duplicates quick-fix example:</b></p>
+<pre><code lang="kotlin">
+dependencies {
+    implementation("com.google.guava:guava:32.1.2-jre") // will offer a quick fix
+    implementation("com.google.guava:guava:32.1.2-jre") // will offer a quick fix
+    api("com.google.guava:guava:32.1.2-jre") // will not offer a quick fix
+}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code lang="kotlin">
+dependencies {
+    implementation("com.google.guava:guava:32.1.2-jre")
+    api("com.google.guava:guava:32.1.2-jre")
+}
+</code></pre>
+
+<p>Best practice described <a
+  href="https://docs.gradle.org/9.7.0/userguide/best_practices_dependencies.html#avoid_duplicate_dependencies">here</a>.</p>
+</body>
+</html>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
@@ -28,18 +14,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
 public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor implements PsiWritableMetaData, XmlAttributeDescriptor {
   private XmlTag myTag;
   String myUse;
   String myReferenceName;
 
-  @NonNls
-  public static final String REQUIRED_ATTR_VALUE = "required";
-  @NonNls
-  public static final String QUALIFIED_ATTR_VALUE = "qualified";
+  public static final @NonNls String REQUIRED_ATTR_VALUE = "required";
+  public static final @NonNls String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlAttributeDescriptorImpl(XmlTag tag) {
     myTag = tag;
@@ -64,12 +45,6 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     myUse = myTag.getAttributeValue("use");
   }
 
-  @NotNull
-  @Override
-  public Object[] getDependences(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
   @Override
   public boolean isRequired() {
     return REQUIRED_ATTR_VALUE.equals(myUse);
@@ -82,7 +57,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
       if (attributeValue.endsWith(type)) {
         final String namespacePrefix = myTag.getNamespacePrefix();
 
-        if (namespacePrefix.length() > 0) {
+        if (!namespacePrefix.isEmpty()) {
           return attributeValue.equals(namespacePrefix+":"+type);
         } else {
           return attributeValue.equals(type);
@@ -93,8 +68,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return false;
   }
 
-  @Nullable
-  public String getType() {
+  public @Nullable String getType() {
     return myTag.getAttributeValue("type");
   }
 
@@ -113,9 +87,8 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     return isEnumerated(null);
   }
 
-  @Nullable
   @Override
-  public String validateValue(XmlElement context, String value) {
+  public @Nullable String validateValue(XmlElement context, String value) {
     return null;
   }
 
@@ -137,7 +110,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
         QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
         shouldBeQualified(targetNs, contextTag)) {
       final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
-      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
+      if (prefixByNamespace!= null && !prefixByNamespace.isEmpty()) {
         name = prefixByNamespace + ":" + name;
       }
     }
@@ -152,23 +125,21 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     if (!contextNs.equals(targetNs)) {
       final XmlElementDescriptor xmlElementDescriptor = contextTag.getDescriptor();
 
-      if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
-        final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
+      if (xmlElementDescriptor instanceof XmlElementDescriptorImpl elementDescriptor) {
         final TypeDescriptor type = elementDescriptor.getType();
 
-        if (type instanceof ComplexTypeDescriptor) {
-          final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
+        if (type instanceof ComplexTypeDescriptor typeDescriptor) {
           if (myReferenceName != null) {
             return myReferenceName.indexOf(':') != 0;
           }
-          XmlAttributeDescriptor[] attributes = ((ComplexTypeDescriptor)type).getAttributes(contextTag);
+          XmlAttributeDescriptor[] attributes = typeDescriptor.getAttributes(contextTag);
           if (ArrayUtil.contains(this, attributes)) {
             return false;
           }
           attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
-        if (!attributeShouldBeQualified && contextNs.length() == 0 && targetNs.length() > 0) {
+        if (!attributeShouldBeQualified && contextNs.isEmpty() && !targetNs.isEmpty()) {
           attributeShouldBeQualified = !targetNs.equals(elementDescriptor.getNamespace());
         }
       }
@@ -184,5 +155,10 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Override
+  public Object @NotNull [] getDependencies() {
+    return new Object[] { getDeclaration() };
   }
 }

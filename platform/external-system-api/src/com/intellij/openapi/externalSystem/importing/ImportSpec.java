@@ -19,13 +19,16 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/10/2017
  */
+@ApiStatus.NonExtendable
 public interface ImportSpec {
 
   @NotNull
@@ -37,22 +40,35 @@ public interface ImportSpec {
   @NotNull
   ProgressExecutionMode getProgressExecutionMode();
 
-  boolean isForceWhenUptodate();
-
-  boolean whenAutoImportEnabled();
-
   @Nullable
   ExternalProjectRefreshCallback getCallback();
 
   boolean isPreviewMode();
 
+  boolean shouldImportProjectData();
+
+  boolean shouldSelectProjectDataToImport();
+
   boolean shouldCreateDirectoriesForEmptyContentRoots();
 
-  boolean isReportRefreshError();
+  boolean isActivateBuildToolWindowOnStart();
+
+  boolean isActivateBuildToolWindowOnFailure();
+
+  @NotNull ThreeState isNavigateToError();
 
   @Nullable
   String getVmOptions();
 
   @Nullable
   String getArguments();
+
+  @Nullable
+  ProjectResolverPolicy getProjectResolverPolicy();
+
+  @Nullable
+  Runnable getRerunAction();
+
+  @Nullable
+  UserDataHolderBase getUserData();
 }

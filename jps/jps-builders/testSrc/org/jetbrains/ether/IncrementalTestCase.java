@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.builders.BuildResult;
@@ -25,6 +10,8 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.dependency.impl.GraphElementInterner;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -39,12 +26,12 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author db
- * @since 26.07.11
- */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   private static final String MODULE_DIR_PREFIX = "module";
@@ -80,10 +67,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return workDir;
   }
 
-  protected String getUrl(String pathRelativeToProjectRoot) {
-    return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
-  }
-
   @Override
   public String getAbsolutePath(final String pathRelativeToProjectRoot) {
     return FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/" + pathRelativeToProjectRoot;
@@ -92,10 +75,14 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      super.tearDown();
+      GraphElementInterner.clear();
+      FileUtil.delete(workDir);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
-      FileUtil.delete(workDir);
+      super.tearDown();
     }
   }
 
@@ -115,7 +102,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (file.getName().endsWith(newSuffix)) {
           File targetFile = getTargetFile(file, newSuffix);
           FileUtil.copyContent(file, targetFile);
-          timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
+          timestamp[0] = Math.max(timestamp[0], FSOperations.lastModified(targetFile));
         }
       }
       catch (IOException e) {
@@ -188,7 +175,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (!reuseProjectId) {
           pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
         }
-        result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
+        result = doBuild(pd, createCompileScope(idx));
       }
 
       File logFile = new File(baseDir.getAbsolutePath() + ".log");
@@ -208,6 +195,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return result;
   }
 
+  protected CompileScopeTestBuilder createCompileScope(int stage) {
+    return CompileScopeTestBuilder.make().allModules();
+  }
+
   protected JpsSdk<JpsDummyElement> getOrCreateJdk() {
     if (myJdk == null) {
       myJdk = addJdk("IDEA jdk");
@@ -216,8 +207,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected JpsLibrary addLibrary(final String jarPath) {
-    JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    library.addRoot(new File(getAbsolutePath(jarPath)), JpsOrderRootType.COMPILED);
+    return addLibrary("l", new File(getAbsolutePath(jarPath)));
+  }
+
+  protected JpsLibrary addLibrary(final String libraryName, final File jarFile) {
+    JpsLibrary library = myProject.addLibrary(libraryName, JpsJavaLibraryType.INSTANCE);
+    library.addRoot(jarFile.toPath(), JpsOrderRootType.COMPILED);
     return library;
   }
 
@@ -253,7 +248,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return Collections.emptyMap();
   }
 
-  private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
+  private static final class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
     private final StringBuilder myLog;
 

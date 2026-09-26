@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.CustomImlComponentService;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -31,30 +30,37 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
+import java.util.Objects;
 
-@State(name = "DevKit.ModuleBuildProperties")
-public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
-  private final Module myModule;
-  private final ConfigFileContainer myPluginXmlContainer;
-  private VirtualFilePointer myManifestFilePointer;
-  private boolean myUseUserManifest = false;
-  @NonNls private static final String META_INF = "META-INF";
-  @NonNls private static final String PLUGIN_XML = "plugin.xml";
+public final class PluginBuildConfiguration {
+  static final String MODULE_STATE_COMPONENT = "DevKit.ModuleBuildProperties";
 
-  private State state = new State();
+  private final Module module;
+  private final CustomImlComponentService componentService;
+  private final ConfigFileContainer pluginXmlContainer;
+  private VirtualFilePointer manifestFilePointer;
+  private boolean useUserManifest = false;
+  private static final @NonNls String META_INF = "META-INF";
+  private static final @NonNls String PLUGIN_XML = "plugin.xml";
 
   public PluginBuildConfiguration(@NotNull Module module) {
-    myModule = module;
-    myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
-    Disposer.register(module, myPluginXmlContainer);
+    this.module = module;
+    this.componentService = CustomImlComponentService.getInstance(module.getProject());
+    pluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(this.module.getProject(), PluginDescriptorConstants.META_DATA);
+    Disposer.register(module, pluginXmlContainer);
+    State persistedState = componentService.getComponentValue(module, MODULE_STATE_COMPONENT, State.class);
+    if (persistedState != null) {
+      applyState(persistedState);
+    }
   }
 
-  @Nullable
-  public static PluginBuildConfiguration getInstance(@NotNull Module module) {
-    return ModuleType.is(module, PluginModuleType.getInstance()) ? ModuleServiceManager.getService(module, PluginBuildConfiguration.class) : null;
+  public static @Nullable PluginBuildConfiguration getInstance(@NotNull Module module) {
+    return ModuleType.is(module, PluginModuleType.getInstance())
+           ? PluginBuildConfigurationFactory.getInstance(module.getProject()).getService(module)
+           : null;
   }
 
-  static class State {
+  public static final class State {
     @Attribute
     String url;
 
@@ -68,8 +74,8 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
       State state = (State)o;
 
-      if (url != null ? !url.equals(state.url) : state.url != null) return false;
-      if (manifest != null ? !manifest.equals(state.manifest) : state.manifest != null) return false;
+      if (!Objects.equals(url, state.url)) return false;
+      if (!Objects.equals(manifest, state.manifest)) return false;
 
       return true;
     }
@@ -82,107 +88,111 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     }
   }
 
-  @Nullable
-  @Override
-  public State getState() {
+  private @NotNull State getCurrentState() {
+    State state = new State();
     state.url = getPluginXmlUrl();
-    state.manifest = myManifestFilePointer == null ? null : myManifestFilePointer.getUrl();
+    state.manifest = manifestFilePointer == null ? null : manifestFilePointer.getUrl();
     return state;
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    this.state = state;
+  private void applyState(@NotNull State state) {
     if (state.url != null) {
-      myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, state.url);
+      pluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, state.url);
     }
     if (state.manifest != null) {
-      setManifestPath(VfsUtilCore.urlToPath(state.manifest));
+      updateManifestPointer(VfsUtilCore.urlToPath(state.manifest), false);
     }
   }
 
-  @Nullable
-  public ConfigFile getPluginXML() {
-    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+  private void persistState() {
+    WriteAction.run(() -> componentService.setComponentValueBlocking(module, MODULE_STATE_COMPONENT, getCurrentState()));
   }
 
   @TestOnly
   public void setPluginXmlFromVirtualFile(VirtualFile virtualFile) {
-    myPluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
+    pluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, virtualFile.getUrl());
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    pluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
   }
 
   private void createDescriptor(final String url) {
-    final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
-    myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
-    ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion(),
+    ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
+    pluginXmlContainer.getConfiguration().addConfigFile(descriptor);
+    ConfigFileFactory.getInstance().createFile(module.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion(),
                                                false);
   }
 
-  @Nullable
-  public ConfigFile getPluginXmlConfigFile() {
-    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+  public @Nullable ConfigFile getPluginXmlConfigFile() {
+    return pluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  @Nullable
-  private String getPluginXmlUrl() {
+  private @Nullable String getPluginXmlUrl() {
     ConfigFile configFile = getPluginXmlConfigFile();
     return configFile != null ? configFile.getUrl() : null;
   }
 
   private String getDefaultLocation() {
-    return new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
+    return module.getModuleNioFile().getParent().toString() + File.separator + META_INF + File.separator + PLUGIN_XML;
   }
 
-  @NotNull
-  public String getPluginXmlPath() {
+  public @NotNull @NlsSafe String getPluginXmlPath() {
     String url = getPluginXmlUrl();
     if (url == null) {
       return getDefaultLocation();
     }
-    return FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url));
+    return FileUtilRt.toSystemDependentName(VfsUtilCore.urlToPath(url));
   }
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
-    myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath))));
+    pluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
+    WriteAction.runAndWait(() -> {
+      createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath));
+      componentService.setComponentValueBlocking(module, MODULE_STATE_COMPONENT, getCurrentState());
+    });
+  }
+
+  public @Nullable @NlsSafe String getManifestPath() {
+    return manifestFilePointer != null ? FileUtilRt.toSystemDependentName(manifestFilePointer.getPresentableUrl()) : null;
   }
 
   public void setManifestPath(@Nullable String manifestPath) {
-    if (StringUtil.isEmpty(manifestPath)) {
-      myManifestFilePointer = null;
+    updateManifestPointer(manifestPath, true);
+    persistState();
+  }
+
+  private void updateManifestPointer(@Nullable String manifestPath, boolean reportMissingFile) {
+    if (Strings.isEmpty(manifestPath)) {
+      manifestFilePointer = null;
       return;
     }
 
-    VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
+    VirtualFile manifest = StandardFileSystems.local().findFileByPath(manifestPath);
+    VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
     if (manifest == null) {
-      Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
-      ReadAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-          VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
+      if (reportMissingFile) {
+        Messages.showErrorDialog(module.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
+      }
+      ReadAction.run(() -> {
+        manifestFilePointer = virtualFilePointerManager.create(VfsUtilCore.pathToUrl(manifestPath), module, null);
       });
     }
     else {
-      WriteAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
-      });
+      ReadAction.run(() -> manifestFilePointer = virtualFilePointerManager.create(manifest, module, null));
     }
   }
 
-  @Nullable
-  public String getManifestPath() {
-    return myManifestFilePointer != null ? FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl()) : null;
-  }
-
-  @Nullable
-  public VirtualFile getManifest(){
-    return myManifestFilePointer != null ? myManifestFilePointer.getFile() : null;
+  public @Nullable VirtualFile getManifest(){
+    return manifestFilePointer != null ? manifestFilePointer.getFile() : null;
   }
 
   public boolean isUseUserManifest() {
-    return myUseUserManifest;
+    return useUserManifest;
   }
 
   public void setUseUserManifest(final boolean useUserManifest) {
-    myUseUserManifest = useUserManifest;
+    this.useUserManifest = useUserManifest;
   }
 }

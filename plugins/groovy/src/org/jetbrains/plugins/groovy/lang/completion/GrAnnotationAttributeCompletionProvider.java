@@ -15,7 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -27,14 +32,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 public class GrAnnotationAttributeCompletionProvider extends CompletionProvider<CompletionParameters>{
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();
     if (parent instanceof GrAnnotationNameValuePair && position == ((GrAnnotationNameValuePair)parent).getNameIdentifierGroovy()) {
       GrAnnotation annotation = PsiImplUtil.getAnnotation((GrAnnotationNameValuePair)parent);
       if (annotation != null) {
-        new AnnotationAttributeCompletionResultProcessor(annotation).process(result, PrefixMatcher.ALWAYS_TRUE);
+        new AnnotationAttributeCompletionResultProcessor(annotation).process(result, PlainPrefixMatcher.ALWAYS_TRUE);
       }
     }
   }

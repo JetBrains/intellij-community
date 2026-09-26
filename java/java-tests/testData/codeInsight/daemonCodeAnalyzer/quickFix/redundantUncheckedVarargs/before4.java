@@ -1,4 +1,4 @@
-// "Remove 'unchecked' suppression" "true"
+// "Remove 'unchecked' suppression" "true-preview"
 import java.util.*;
 
 public class Test {
@@ -8,8 +8,11 @@ public class Test {
   }
 
   void foo() {
-    //noinspe<caret>ction unchecked
+    //noinspection unche<caret>cked //comment1
     List<ArrayList<String>> list = foo(new ArrayList<String>());
+
+    //noinspection unchecked
+    ArrayList<String> list = new ArrayList();
   }
 }
 

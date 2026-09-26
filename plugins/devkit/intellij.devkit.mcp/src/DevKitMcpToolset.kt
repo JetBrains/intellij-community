@@ -1,0 +1,346 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.mcp
+
+import com.intellij.devkit.scaffolding.createIjModuleWithoutUi
+import com.intellij.mcpserver.McpExpectedError
+import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.annotations.McpDescription
+import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.project
+import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.resolveInProject
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.Serializable
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
+import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqConsumer
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import org.jetbrains.idea.devkit.threadingModelHelper.THREAD_REQUIREMENTS
+import java.util.Collections
+import java.util.EnumSet
+import kotlin.time.Duration.Companion.milliseconds
+
+private const val DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS: Int = 5 * 60 * 1000
+
+class DevKitMcpToolset : McpToolset {
+  override fun displayName(): String = DevKitMcpBundle.message("toolset.display.name.devkit")
+
+  override fun displayDescription(toolName: String): String = DevKitMcpBundle.message("tool.description.$toolName")
+
+  @McpTool
+  @McpDescription(
+    """
+      |Creates a new IntelliJ module using the same scaffolding logic as the New IntelliJ Module action,
+      |but without showing any UI or progress indicators.
+      |For non-empty kinds, this also updates the enclosing plugin.xml when a single target plugin can be resolved.
+      |Allowed values for kindTemplateName: `empty`, `frontend`, `backend`, `shared`.
+      |Note: parentDirectoryPath must point to an existing directory inside the project.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun create_ij_module(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    parentDirectoryPath: String,
+    @McpDescription("Module name to create. For non-empty kinds the same name normalization as in the UI action is applied.")
+    moduleName: String,
+    @McpDescription("Module kind template name. Allowed values: `empty`, `frontend`, `backend`, `shared`.")
+    kindTemplateName: String,
+  ): CreateIjModuleResult {
+    val project = currentCoroutineContext().project
+    val resolvedParentDirectoryPath = project.resolveInProject(parentDirectoryPath)
+    val parentDirectory = VirtualFileManager.getInstance().findFileByNioPath(resolvedParentDirectoryPath)
+                          ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedParentDirectoryPath)
+                          ?: mcpFail("Directory not found: $parentDirectoryPath")
+    if (!parentDirectory.isDirectory) {
+      mcpFail("Not a directory: $parentDirectoryPath")
+    }
+
+    val createdModuleInfo = try {
+      createIjModuleWithoutUi(project, parentDirectory, moduleName, kindTemplateName)
+    }
+    catch (error: IllegalArgumentException) {
+      mcpFail(error.message ?: "Failed to create IntelliJ module")
+    }
+    catch (error: IllegalStateException) {
+      mcpFail(error.message ?: "Failed to create IntelliJ module")
+    }
+    return CreateIjModuleResult(
+      moduleName = createdModuleInfo.moduleName,
+      moduleRootPath = createdModuleInfo.moduleRootPath,
+      kindTemplateName = createdModuleInfo.kindTemplateName,
+      targetPluginXmlPath = createdModuleInfo.targetPluginXmlPath,
+    )
+  }
+
+  @McpTool
+  @McpDescription(
+    """
+      |Recognizes the effective Split Mode module kind for a plugin.xml or content-module descriptor
+      |using the same DevKit analysis as the remdev inspections.
+      |Returns the effective kind and the reasoning used to compute it.
+      |Possible kinds include `shared`, `frontend`, `backend`, `monolith`, and `mixed`.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun recognize_ij_module_kind(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    descriptorPath: String,
+  ): RecognizeIjModuleKindResult {
+    return recognizeSplitModeModuleKindForPath(descriptorPath)
+  }
+
+  @McpTool
+  @McpDescription(
+    """
+      |Recognizes the Split Mode API kind for a fully qualified API name using the same DevKit restriction data
+      |as the remdev inspections.
+      |Returns the target module kind when the API is listed in DevKit split-mode restrictions.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun recognize_split_mode_api_kind(
+    @McpDescription("Fully qualified code API name, for example `com.intellij.openapi.ui.DialogWrapper`.")
+    apiName: String,
+  ): RecognizeSplitModeApiKindResult {
+    return recognizeSplitModeApiKind(apiName)
+  }
+
+  @McpTool
+  @McpDescription(
+    """
+      |Collects Split Mode compatibility issues for all supported files under the given directory.
+      |Runs only the DevKit split-mode compatibility inspection whitelist and returns every found issue.
+      |Whitelisted inspections: SplitModeApiUsage, SplitModeXmlApiUsage, SplitModeMixedDependencies,
+      |SplitModeImplicitModuleKind, MissingFrontendOrBackendRuntimeDependency.
+    """
+  )
+  @Suppress("unused", "FunctionName")
+  suspend fun collect_split_mode_compatibility_issues(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    directoryPath: String,
+    @McpDescription("Analysis timeout in milliseconds.")
+    analysisTimeout: Int = DEFAULT_SPLIT_MODE_COMPATIBILITY_ANALYSIS_TIMEOUT_MILLISECONDS,
+  ): SplitModeCompatibilityIssuesResult {
+    return collectSplitModeCompatibilityIssues(directoryPath, analysisTimeout)
+  }
+
+  @McpTool
+  @McpDescription("""
+        |Analyzes the usage of the Read/Write lock for the method under the caret.
+        |Also analyzes call paths to some depth.
+        |Use this tool to identify possible usages of Read/Write lock requirements.
+        |Returns a list of lock requirements with the call path to them.
+        |Important: the information is neither complete nor reliable: this is merely a heuristic. Each returned call path may not be reachable,
+        |and there could be undetected call paths.
+        |Note: Only analyzes files within the project directory.
+        |Note: Lines and Columns are 1-based.
+    """)
+  @Suppress("unused", "FunctionName")
+  suspend fun find_lock_requirements_usages(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    filePath: String,
+    @McpDescription("Line where cursor is located")
+    line: Int,
+    @McpDescription("Column where cursor is located")
+    column: Int,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): LockRequirements {
+    val (reqs, timeout) = runSourceRequirementSearch(filePath, line, column, timeout, LOCK_REQUIREMENTS) {
+      when (it) {
+        ConstraintType.READ -> LockType.READ_ASSERTION
+        ConstraintType.WRITE -> LockType.WRITE_ASSERTION
+        ConstraintType.WRITE_INTENT -> LockType.WRITE_INTENT_ASSERTION
+        ConstraintType.NO_READ -> LockType.NO_READ_ASSERTION
+        ConstraintType.EDT, ConstraintType.BGT -> error("Should not appear")
+      }
+    }
+    return LockRequirements(reqs.map { LockRequirementUsage(it.first, it.second) }, timeout)
+  }
+
+  @McpTool
+  @McpDescription("""
+        |Analyzes the usage of threading constraints (i.e., whether the method needs to run on the UI thread or on the background thread) for the method under the caret.
+        |Also analyzes call paths to some depth.
+        |Use this tool to identify possible usages of threading requirements.
+        |Returns a list of threading requirements with the call path to them.
+        |Important: the information is neither complete nor reliable: this is merely a heuristic. Each returned call path may not be reachable,
+        |and there could be undetected call paths.
+        |Note: Only analyzes files within the project directory.
+        |Note: Lines and Columns are 1-based.
+    """)
+  @Suppress("unused", "FunctionName")
+  suspend fun find_threading_requirements_usages(
+    @McpDescription(Constants.RELATIVE_PATH_IN_PROJECT_DESCRIPTION)
+    filePath: String,
+    @McpDescription("Line where cursor is located")
+    line: Int,
+    @McpDescription("Column where cursor is located")
+    column: Int,
+    @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
+    timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
+  ): ThreadingRequirements {
+    val (reqs, timeout) = runSourceRequirementSearch(filePath, line, column, timeout, THREAD_REQUIREMENTS) {
+      when (it) {
+        ConstraintType.EDT -> ThreadType.UI_THREAD
+        ConstraintType.BGT -> ThreadType.BACKGROUND_THREAD
+        ConstraintType.READ, ConstraintType.WRITE, ConstraintType.WRITE_INTENT, ConstraintType.NO_READ -> error("should not appear")
+      }
+    }
+    return ThreadingRequirements(reqs.map { ThreadingRequirementUsage(it.first, it.second) }, timeout)
+  }
+
+  private suspend fun <T> runSourceRequirementSearch(
+    filePath: String,
+    line: Int,
+    column: Int,
+    timeout: Int,
+    requirementSet: EnumSet<ConstraintType>,
+    mapper: (ConstraintType) -> T,
+  ): Pair<List<Pair<T, List<SourceLocation>>>, Boolean> {
+    val project = currentCoroutineContext().project
+    val file = VirtualFileManager.getInstance().findFileByNioPath(project.resolveInProject(filePath))
+               ?: throw McpExpectedError("Virtual file not found")
+    val pointer = readAction {
+      val document = FileDocumentManager.getInstance().getDocument(file)
+      val psiTree = PsiManager.getInstance(project).findFile(file) ?: throw McpExpectedError("PsiFile not found")
+      val offset = document?.getLineStartOffset(line - 1)?.plus(column - 1) ?: throw McpExpectedError("Invalid line/column")
+      val method = LockReqPsiOps.forLanguage(psiTree.language).extractTargetElement(psiTree, offset)
+                   ?: throw McpExpectedError("No method found at the specified position")
+      SmartPointerManager.createPointer(method)
+    }
+
+    val list = Collections.synchronizedList(mutableListOf<Pair<T, List<SourceLocation>>>())
+
+    val result = withTimeoutOrNull(timeout.milliseconds) {
+      @Suppress("HardCodedStringLiteral")
+      withBackgroundProgress(project, "Analyzing Locking Requirements usage for AI", true) {
+        LockReqAnalyzerParallelBFS().analyzeMethodStreaming(pointer,
+                                                            AnalysisConfig.forProject(project, requirementSet),
+                                                            project,
+                                                            object : LockReqConsumer {
+                                                              override fun onPath(path: ExecutionPath) {
+                                                                val lockType = mapper(path.lockRequirement.constraintType)
+                                                                val locations = path.methodChain.map {
+                                                                  SourceLocation(it.containingClassName ?: "<null>", it.methodName)
+                                                                }
+                                                                list.add(lockType to locations)
+                                                              }
+                                                            })
+      }
+    }
+    val timeout = result == null
+    return list to timeout
+  }
+
+  enum class LockType {
+    READ_ASSERTION, WRITE_ASSERTION, WRITE_INTENT_ASSERTION, NO_READ_ASSERTION
+  }
+
+  enum class ThreadType {
+    UI_THREAD, BACKGROUND_THREAD
+  }
+
+  @Serializable
+  data class SourceLocation(val className: String, val methodName: String)
+
+  @Serializable
+  data class LockRequirementUsage(val type: LockType, val callPath: List<SourceLocation>)
+
+  @Serializable
+  data class ThreadingRequirementUsage(val type: ThreadType, val callPath: List<SourceLocation>)
+
+  @Serializable
+  data class LockRequirements(
+    val foundRequirements: List<LockRequirementUsage>,
+    val timedOut: Boolean,
+  )
+
+  @Serializable
+  data class ThreadingRequirements(
+    val foundRequirements: List<ThreadingRequirementUsage>,
+    val timedOut: Boolean,
+  )
+
+  @Serializable
+  data class CreateIjModuleResult(
+    @property:McpDescription("Created module name after the same kind-based normalization used by the UI action.")
+    val moduleName: String,
+    @property:McpDescription("Path to the created module root, relative to the project root when possible.")
+    val moduleRootPath: String,
+    @property:McpDescription("Normalized module kind template name.")
+    val kindTemplateName: String,
+    @property:McpDescription("Path to the plugin.xml selected for content-module registration, relative to the project root when available.")
+    val targetPluginXmlPath: String?,
+  )
+
+  @Serializable
+  data class RecognizeIjModuleKindResult(
+    @property:McpDescription("Resolved IntelliJ module name that owns the descriptor.")
+    val moduleName: String,
+    @property:McpDescription("Descriptor path that was analyzed, relative to the project root when provided that way.")
+    val descriptorPath: String,
+    @property:McpDescription("Effective Split Mode module kind. One of: `shared`, `frontend`, `backend`, `monolith`, `mixed`.")
+    val kindId: String,
+    @property:McpDescription("Reasoning produced by the same DevKit module-kind analysis used by the remdev inspections.")
+    val reasoning: String,
+  )
+
+  @Serializable
+  data class RecognizeSplitModeApiKindResult(
+    @property:McpDescription("Fully qualified code API name that was recognized.")
+    val apiName: String,
+    @property:McpDescription("Target Split Mode module kind for this API, or null when no restriction matches.")
+    val kindId: String?,
+    @property:McpDescription("Optional hint from the DevKit split-mode restrictions data.")
+    val hint: String?,
+  )
+
+  @Serializable
+  data class SplitModeCompatibilityIssuesResult(
+    @property:McpDescription("Directory path that was analyzed, relative to the project root when provided that way.")
+    val directoryPath: String,
+    @property:McpDescription("Split Mode inspection short names used for this analysis.")
+    val inspectionIds: List<String>,
+    @property:McpDescription("Number of supported source files inspected under the directory.")
+    val inspectedFileCount: Int,
+    @property:McpDescription("All found Split Mode compatibility issues from the whitelisted inspections.")
+    val issues: List<SplitModeCompatibilityIssue>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
+    val timedOut: Boolean,
+  )
+
+  @Serializable
+  data class SplitModeCompatibilityIssue(
+    @property:McpDescription("Inspection short name that reported the issue.")
+    val inspectionId: String,
+    @property:McpDescription("Problem highlight type reported by the inspection.")
+    val severity: String,
+    @property:McpDescription("Problem file path, relative to the project root when possible.")
+    val filePath: String,
+    @property:McpDescription("1-based start line, if available.")
+    val line: Int?,
+    @property:McpDescription("1-based start column, if available.")
+    val column: Int?,
+    @property:McpDescription("1-based end line, if available.")
+    val endLine: Int?,
+    @property:McpDescription("1-based end column, if available.")
+    val endColumn: Int?,
+    @property:McpDescription("Rendered inspection problem description.")
+    val description: String,
+    @property:McpDescription("Quick-fix family names available in batch mode.")
+    val quickFixes: List<String>,
+  )
+}

@@ -1,0 +1,3 @@
+version = "3.5.*"
+upstream-repository = "https://github.com/mpdavis/python-jose"
+dependencies = ["types-pyasn1"] # excluding pyrsa, cryptography until typing is available

@@ -15,27 +15,54 @@
  */
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class SimpleLocalLineStatusTracker(project: Project,
                                    document: Document,
-                                   virtualFile: VirtualFile,
-                                   mode: Mode
-) : LineStatusTracker<Range>(project, document, virtualFile, mode) {
+                                   virtualFile: VirtualFile
+) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun toRange(block: Block): Range = SimpleLocalRange(block.start, block.end, block.vcsStart, block.vcsEnd,
+                                                               block.ourData.innerRanges, block.ourData.clientIds)
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  override fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevisionContent(vcsContent, null)
+  }
+
+  fun hasPartialState(): Boolean {
+    return documentTracker.readLock {
+      blocks.any { it.ourData.clientIds.isNotEmpty() }
+    }
+  }
+
+  protected data class SimpleBlockData(
+    override var innerRanges: List<Range.InnerRange>? = null,
+    override var clientIds: List<ClientId> = emptyList()
+  ) : LocalBlockData
+
+  private class SimpleLocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
+                                 override val clientIds: List<ClientId>
+  ) : Range(line1, line2, vcsLine1, vcsLine2, innerRanges), LstLocalRange
+
+  override val Block.ourData: SimpleBlockData
+    get() {
+      if (data == null) data = SimpleBlockData()
+      return data as SimpleBlockData
+    }
 
   companion object {
     @JvmStatic
     fun createTracker(project: Project,
                       document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode): SimpleLocalLineStatusTracker {
-      return SimpleLocalLineStatusTracker(project, document, virtualFile, mode)
+                      virtualFile: VirtualFile): SimpleLocalLineStatusTracker {
+      return SimpleLocalLineStatusTracker(project, document, virtualFile)
     }
   }
 }

@@ -21,7 +21,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/11/2016
  */
 public interface ArtifactConfiguration {
   @NotNull

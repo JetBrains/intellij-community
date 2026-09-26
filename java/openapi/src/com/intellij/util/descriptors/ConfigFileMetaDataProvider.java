@@ -16,17 +16,13 @@
 
 package com.intellij.util.descriptors;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ConfigFileMetaDataProvider {
 
-  @NotNull
-  ConfigFileMetaData[] getMetaData();
+  ConfigFileMetaData @NotNull [] getMetaData();
 
   @Nullable
   ConfigFileMetaData findMetaData(@NonNls @NotNull String id);

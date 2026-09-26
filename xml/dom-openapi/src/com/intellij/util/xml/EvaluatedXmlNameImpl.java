@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,45 +19,44 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
-public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
+public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
 
   private final XmlName myXmlName;
   private final String myNamespaceKey;
   private final boolean myEqualToParent;
 
-  private EvaluatedXmlNameImpl(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, final boolean equalToParent) {
+  private EvaluatedXmlNameImpl(final @NotNull XmlName xmlName, final @Nullable String namespaceKey, final boolean equalToParent) {
     myXmlName = xmlName;
     myNamespaceKey = namespaceKey;
     myEqualToParent = equalToParent;
   }
 
-  @NotNull
-  public final String getLocalName() {
+  public @NotNull String getLocalName() {
     return myXmlName.getLocalName();
   }
 
   @Override
-  public final XmlName getXmlName() {
+  public XmlName getXmlName() {
     return myXmlName;
   }
 
   @Override
-  public final EvaluatedXmlName evaluateChildName(@NotNull final XmlName name) {
+  public EvaluatedXmlName evaluateChildName(final @NotNull XmlName name) {
     String namespaceKey = name.getNamespaceKey();
-    final boolean equalToParent = Comparing.equal(namespaceKey, myNamespaceKey);
+    final boolean equalToParent = Objects.equals(namespaceKey, myNamespaceKey);
     if (namespaceKey == null) {
       namespaceKey = myNamespaceKey;
     }
     return createEvaluatedXmlName(name, namespaceKey, equalToParent);
   }
 
+  @Override
   public String toString() {
     return (myNamespaceKey == null ? "" : myNamespaceKey + " : ") + myXmlName.getLocalName();
   }
@@ -77,9 +64,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof EvaluatedXmlNameImpl)) return false;
-
-    final EvaluatedXmlNameImpl that = (EvaluatedXmlNameImpl)o;
+    if (!(o instanceof EvaluatedXmlNameImpl that)) return false;
 
     if (myEqualToParent != that.myEqualToParent) return false;
     if (myNamespaceKey != null ? !myNamespaceKey.equals(that.myNamespaceKey) : that.myNamespaceKey != null) return false;
@@ -96,14 +81,13 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return result;
   }
 
-  public final boolean isNamespaceAllowed(DomFileElement element, String namespace) {
+  public boolean isNamespaceAllowed(DomFileElement element, String namespace) {
     if (myNamespaceKey == null || myEqualToParent) return true;
     final XmlFile file = element.getFile();
     return isNamespaceAllowed(namespace, getAllowedNamespaces(file));
   }
 
-  @NotNull
-  private List<String> getAllowedNamespaces(final XmlFile file) {
+  private @NotNull List<String> getAllowedNamespaces(final XmlFile file) {
     CachedValue<Map<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
     if (value == null) {
       file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
@@ -128,13 +112,12 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @Override
-  public final boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified) {
+  public boolean isNamespaceAllowed(String namespace, final XmlFile file, boolean qualified) {
     return myNamespaceKey == null || myEqualToParent && !qualified || isNamespaceAllowed(namespace, getNamespaceList(file));
   }
 
   @Override
-  @NotNull @NonNls
-  public final String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
+  public @NonNls @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
     final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null && !myEqualToParent) {
       final List<String> strings = getAllowedNamespaces(file);
@@ -169,7 +152,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return getAllowedNamespaces(file);
   }
 
-  public static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, boolean equalToParent) {
+  public static EvaluatedXmlNameImpl createEvaluatedXmlName(final @NotNull XmlName xmlName, final @Nullable String namespaceKey, boolean equalToParent) {
     final EvaluatedXmlNameImpl name = new EvaluatedXmlNameImpl(xmlName, namespaceKey, equalToParent);
     final EvaluatedXmlNameImpl interned = ourInterned.get(name);
     if (interned != null) {
@@ -179,4 +162,3 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return name;
   }
 }
-                

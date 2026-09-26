@@ -21,15 +21,13 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.function.Consumer;
 
-/**
- * @author nik
- */
 public interface ServerConnection<D extends DeploymentConfiguration> {
   @NotNull
   RemoteServer<?> getServer();
@@ -38,6 +36,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   ConnectionStatus getStatus();
 
   @NotNull
+  @Nls
   String getStatusText();
 
 
@@ -46,11 +45,11 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
 
   void disconnect();
 
-  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<String> onDeploymentStarted);
+  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<? super String> onDeploymentStarted);
 
   void computeDeployments(@NotNull Runnable onFinished);
 
-  void undeploy(@NotNull Deployment deployment, @NotNull DeploymentRuntime runtime);
+  void undeploy(@NotNull Deployment deployment, @Nullable DeploymentRuntime runtime);
 
   @NotNull
   Collection<Deployment> getDeployments();

@@ -1,0 +1,63 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding.step"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding"
+                    beanClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingBean"
+                    dynamic="true">
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding.browserPageRenderer"
+                    interface="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBrowserPageRenderer"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
+    <step key="toolWindowsNames" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowsNamesStep"/>
+    <step key="moreToolWindows" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MoreToolWindowsStep"/>
+    <step key="settingsAndCustomization" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.SettingsAndCustomizationStep"/>
+    <step key="mainMenu" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MainMenuStep"/>
+    <step key="projectWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ProjectWidgetStep"/>
+    <step key="gitWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.GitWidgetStep"/>
+    <step key="runWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep"/>
+    <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStartupActivity"/>
+    <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
+                 description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingAppListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <actions resource-bundle="messages.NewUiOnboardingBundle">
+    <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUi.StartNewUiOnboardingAction"/>
+  </actions>
+</idea-plugin>

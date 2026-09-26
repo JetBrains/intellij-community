@@ -1,0 +1,6 @@
+def foo():
+    s = """
+    hello
+    python
+    """
+    return s

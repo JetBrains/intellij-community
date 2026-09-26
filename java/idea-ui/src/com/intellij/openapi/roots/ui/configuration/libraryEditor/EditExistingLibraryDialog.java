@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -22,17 +9,14 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.util.Objects;
 
-/**
- * @author nik
- */
-public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
+public final class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private final ExistingLibraryEditor myLibraryEditor;
   private final boolean myCommitChanges;
   private final LibraryTable.ModifiableModel myTableModifiableModel;
@@ -63,7 +47,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
                                     boolean commitChanges,
                                     LibraryTablePresentation presentation, StructureConfigurableContext context) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
-    setTitle("Configure " + presentation.getDisplayName(false));
+    setTitle(JavaUiBundle.message("dialog.title.configure.library.0", presentation.getDisplayName(false)));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;
@@ -98,14 +82,13 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
     return myTableModifiableModel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "Configure_Library_Dialog";
   }
 
   @Override
   protected boolean shouldCheckName(String newName) {
-    return !Comparing.equal(newName, getLibraryRootsComponent().getLibraryEditor().getName());
+    return !Objects.equals(newName, getLibraryRootsComponent().getLibraryEditor().getName());
   }
 }

@@ -1,28 +1,19 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -32,37 +23,42 @@ import java.util.List;
  *
  * @author Dmitry Avdeev
  */
-public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype {
+public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype, Comparable<TaskRepositoryType> {
+  public static final ExtensionPointName<TaskRepositoryType<?>> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
 
-  public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
-  
-  public static TaskRepositoryType[] getRepositoryTypes() {
-    return EP_NAME.getExtensions();
+  public static @NotNull List<TaskRepositoryType<?>> getRepositoryTypes() {
+    return EP_NAME.getExtensionList();
   }
 
-  @NotNull
-  public abstract String getName();
+  public static @Unmodifiable @NotNull List<Class<?>> getRepositoryClasses() {
+    return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
+  }
 
-  @NotNull
-  public abstract Icon getIcon();
+  @ApiStatus.Internal
+  public static void addEPListChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener) {
+    EP_NAME.addChangeListener(coroutineScope, listener);
+  }
 
-  @Nullable
-  public String getAdvertiser() { return null; }
+  @Override
+  public abstract @NotNull String getName();
 
-  @NotNull
-  public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);
+  @Override
+  public abstract @NotNull Icon getIcon();
+
+  public @Nullable @Nls String getAdvertiser() { return null; }
+
+  public abstract @NotNull TaskRepositoryEditor createEditor(T repository, Project project, Consumer<? super T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
-    return Collections.singletonList((TaskRepositorySubtype)this);
+    return Collections.singletonList(this);
   }
 
-  @NotNull
-  public TaskRepository createRepository(TaskRepositorySubtype subtype) {
+  public @NotNull TaskRepository createRepository(TaskRepositorySubtype subtype) {
     return subtype.createRepository();
   }
 
-  @NotNull
-  public abstract TaskRepository createRepository();
+  @Override
+  public abstract @NotNull TaskRepository createRepository();
 
   public abstract Class<T> getRepositoryClass();
 
@@ -70,8 +66,17 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
    * @return states that can be set by {@link TaskRepository#setTaskState(Task, CustomTaskState)}
    * @deprecated Use {@link TaskRepository#getAvailableTaskStates(Task)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
+  }
+
+  public int getSortOrder() {
+    return 0;
+  }
+
+  @Override
+  public int compareTo(@NotNull TaskRepositoryType other) {
+    return other.getSortOrder() - this.getSortOrder();
   }
 }

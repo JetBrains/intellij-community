@@ -15,14 +15,18 @@
  */
 package org.jetbrains.jps.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface JpsNamedElement extends JpsElement {
   @NotNull
-  String getName();
+  @NlsSafe String getName();
 
+  /**
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by 
+   * {@link com.intellij.platform.workspace.storage.EntityStorage the workspace model}; 
+   * also, if the name of an element is changed, it won't be reflected in {@link JpsNamedElementCollection}. 
+   */
+  @Deprecated(forRemoval = true)
   void setName(@NotNull String name);
 }

@@ -1,0 +1,7 @@
+// "Change return type of enclosing function 'foo' to '() -> Any'" "true"
+// LANGUAGE_VERSION: 2.2
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun foo(x: Any): () -> Int {
+    return {x<caret>}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

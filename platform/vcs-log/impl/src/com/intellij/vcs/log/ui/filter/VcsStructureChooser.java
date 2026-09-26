@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -8,62 +9,87 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
-/**
- * @author irengrig
- */
+@ApiStatus.Internal
 public class VcsStructureChooser extends DialogWrapper {
-  private final static int MAX_FOLDERS = 100;
+  private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
-  public static final String CAN_NOT_ADD_TEXT =
-    "<html>Selected: <font color=red>(You have added " + MAX_FOLDERS + " elements. No more is allowed.)</font></html>";
-  private static final String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
+  private static final @NonNls String VCS_STRUCTURE_CHOOSER_KEY = "git4idea.history.wholeTree.VcsStructureChooser";
 
-  @NotNull private final Project myProject;
-  @NotNull private final List<VirtualFile> myRoots;
-  @NotNull private final Map<VirtualFile, String> myModulesSet;
-  @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
+  private final @NotNull Project myProject;
+  private final @NotNull List<VirtualFile> myRoots;
+  private final @NotNull Map<VirtualFile, @Nls String> myModulesSet;
+  private final @NotNull Set<VirtualFile> mySelectedFiles = new HashSet<>();
 
-  @NotNull private final SelectionManager mySelectionManager;
+  private final @NotNull SelectionManager mySelectionManager;
 
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             @NotNull String title,
+                             @NlsContexts.DialogTitle @NotNull String title,
                              @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);
@@ -80,17 +106,17 @@ public class VcsStructureChooser extends DialogWrapper {
     checkEmpty();
   }
 
-  @NotNull
-  private Map<VirtualFile, String> calculateModules(@NotNull List<VirtualFile> roots) {
-    Map<VirtualFile, String> result = ContainerUtil.newHashMap();
+  private @NotNull Map<VirtualFile, @Nls String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
+    Map<VirtualFile, @Nls String> result = new HashMap<>();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
-    Module[] modules = ReadAction.compute(() -> moduleManager.getModules());
+    Module[] modules = ReadAction.computeBlocking(() -> moduleManager.getModules());
 
     TreeSet<VirtualFile> checkSet = new TreeSet<>(FilePathComparator.getInstance());
     checkSet.addAll(roots);
     for (Module module : modules) {
+      if (ModuleType.isInternal(module)) continue;
       VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile file : files) {
         VirtualFile floor = checkSet.floor(file);
@@ -102,8 +128,7 @@ public class VcsStructureChooser extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getSelectedFiles() {
+  public @NotNull Collection<VirtualFile> getSelectedFiles() {
     return mySelectedFiles;
   }
 
@@ -112,14 +137,12 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return VCS_STRUCTURE_CHOOSER_KEY;
   }
 
   @Override
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 
@@ -131,44 +154,15 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!super.isFileVisible(file, showHiddenFiles)) return false;
-        if (myRoots.contains(file)) return false;
-        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-        return !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file);
-      }
-    };
-    descriptor.withRoots(new ArrayList<>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
-    final MyCheckboxTreeCellRenderer cellRenderer =
-      new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
-    FileSystemTreeImpl fileSystemTree =
-      new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, o -> {
-        DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
-        Object uo = lastPathComponent.getUserObject();
-        if (uo instanceof FileNodeDescriptor) {
-          VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
-          String module = myModulesSet.get(file);
-          if (module != null) return module;
-          return file == null ? "" : file.getName();
-        }
-        return o.toString();
-      });
-
-    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator((o1, o2) -> {
-      if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-        VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-        VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
-
-        boolean isDir1 = f1.isDirectory();
-        boolean isDir2 = f2.isDirectory();
-        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-        return f1.getPath().compareToIgnoreCase(f2.getPath());
-      }
-      return o1.getIndex() - o2.getIndex();
-    });
+    var changeListManager = ChangeListManager.getInstance(myProject);
+    var descriptor = new FileChooserDescriptor(true, true, true, true, false, true)
+      .withFileFilter(file -> !myRoots.contains(file) && !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file))
+      .withRoots(new ArrayList<>(myRoots))
+      .withShowHiddenFiles(true)
+      .withHideIgnored(true);
+    var cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
+    var fileSystemTree = new MyFileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, myModulesSet);
+    Disposer.register(myDisposable, fileSystemTree);
 
     new ClickListener() {
       @Override
@@ -195,6 +189,7 @@ public class VcsStructureChooser extends DialogWrapper {
     }.installOn(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] paths = myTree.getSelectionPaths();
@@ -219,7 +214,7 @@ public class VcsStructureChooser extends DialogWrapper {
     selectedLabel.setBorder(JBUI.Borders.empty(2, 0));
     panel.add(selectedLabel, BorderLayout.SOUTH);
 
-    mySelectionManager.setSelectionChangeListener(new PlusMinus<VirtualFile>() {
+    mySelectionManager.setSelectionChangeListener(new PlusMinus<>() {
       @Override
       public void plus(VirtualFile virtualFile) {
         mySelectedFiles.add(virtualFile);
@@ -232,7 +227,13 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          selectedLabel.setText(CAN_NOT_ADD_TEXT);
+          HtmlChunk.Element errorText =
+            HtmlChunk.text("(" + VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) + ")")
+              .wrapWith(HtmlChunk.tag("font").attr("color", "red"));
+          selectedLabel.setText(new HtmlBuilder()
+                                  .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText)))
+                                  .wrapWith(HtmlChunk.html())
+                                  .toString());
         }
         selectedLabel.revalidate();
       }
@@ -247,31 +248,28 @@ public class VcsStructureChooser extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  private DefaultMutableTreeNode getTreeRoot() {
+  private @NotNull DefaultMutableTreeNode getTreeRoot() {
     return (DefaultMutableTreeNode)myTree.getModel().getRoot();
   }
 
-  @Nullable
-  private static VirtualFile getFile(@NotNull Object node) {
-    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor)) return null;
-    FileNodeDescriptor descriptor = (FileNodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
+  private static @Nullable VirtualFile getFile(@NotNull Object node) {
+    if (!(((DefaultMutableTreeNode)node).getUserObject() instanceof FileNodeDescriptor descriptor)) return null;
     if (descriptor.getElement().getFile() == null) return null;
     return descriptor.getElement().getFile();
   }
 
-  private static class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    @NotNull private final WithModulesListCellRenderer myTextRenderer;
-    @NotNull public final JCheckBox myCheckbox;
-    @NotNull private final SelectionManager mySelectionManager;
-    @NotNull private final Map<VirtualFile, String> myModulesSet;
-    @NotNull private final Collection<VirtualFile> myRoots;
-    @NotNull private final ColoredTreeCellRenderer myColoredRenderer;
-    @NotNull private final JLabel myEmpty;
-    @NotNull private final JList myFictive;
+  private static final class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
+    private final @NotNull WithModulesListCellRenderer myTextRenderer;
+    public final @NotNull JCheckBox myCheckbox;
+    private final @NotNull SelectionManager mySelectionManager;
+    private final @NotNull Map<VirtualFile, @Nls String> myModulesSet;
+    private final @NotNull Collection<VirtualFile> myRoots;
+    private final @NotNull ColoredTreeCellRenderer myColoredRenderer;
+    private final @NotNull JLabel myEmpty;
+    private final @NotNull JList myFictive;
 
     private MyCheckboxTreeCellRenderer(@NotNull SelectionManager selectionManager,
-                                       @NotNull Map<VirtualFile, String> modulesSet,
+                                       @NotNull Map<VirtualFile, @Nls String> modulesSet,
                                        @NotNull Project project,
                                        @NotNull JTree tree,
                                        @NotNull Collection<VirtualFile> roots) {
@@ -279,7 +277,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
-      setBackground(tree.getBackground());
+      setBackground(RenderingUtil.getBackground(tree));
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(@NotNull JTree tree,
@@ -289,13 +287,14 @@ public class VcsStructureChooser extends DialogWrapper {
                                           boolean leaf,
                                           int row,
                                           boolean hasFocus) {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       };
       myFictive = new JBList();
-      myFictive.setBackground(tree.getBackground());
-      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground());
-      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
+      myFictive.setBackground(RenderingUtil.getBackground(tree));
+      myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
+      myFictive.setSelectionForeground(NamedColorUtil.getListSelectionForeground(true));
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
         @Override
@@ -305,10 +304,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
-      myTextRenderer.setBackground(tree.getBackground());
+      myTextRenderer.setBackground(RenderingUtil.getBackground(tree));
 
       myCheckbox = new JCheckBox();
-      myCheckbox.setBackground(tree.getBackground());
+      myCheckbox.setBackground(RenderingUtil.getBackground(tree));
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);
@@ -350,10 +349,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class MyNodeConverter implements Convertor<DefaultMutableTreeNode, VirtualFile> {
-    @NotNull private final static MyNodeConverter ourInstance = new MyNodeConverter();
+    private static final @NotNull MyNodeConverter ourInstance = new MyNodeConverter();
 
-    @NotNull
-    public static MyNodeConverter getInstance() {
+    public static @NotNull MyNodeConverter getInstance() {
       return ourInstance;
     }
 
@@ -364,9 +362,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
-    @NotNull private final Map<VirtualFile, String> myModules;
+    private final @NotNull Map<VirtualFile, @Nls String> myModules;
 
-    private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, String> modules) {
+    private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, @Nls String> modules) {
       super(project, true);
       myModules = modules;
     }
@@ -391,7 +389,7 @@ public class VcsStructureChooser extends DialogWrapper {
           setIcon(PlatformIcons.FOLDER_ICON);
         }
         else {
-          setIcon(path.getFileType().getIcon());
+          setIcon(VcsUtil.getIcon(myProject, path));
         }
       }
     }
@@ -399,6 +397,44 @@ public class VcsStructureChooser extends DialogWrapper {
     @Override
     protected void putParentPathImpl(@NotNull Object value, @NotNull String parentPath, @NotNull FilePath self) {
       append(self.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+  }
+
+  private static class MyFileSystemTreeImpl extends FileSystemTreeImpl {
+    private MyFileSystemTreeImpl(@NotNull Project project, FileChooserDescriptor descriptor, Tree tree,
+                                 MyCheckboxTreeCellRenderer cellRenderer, @NotNull Map<VirtualFile, @Nls String> modulesSet) {
+      super(project, descriptor, tree, cellRenderer, null, treePath -> {
+        return getString(treePath, modulesSet);
+      });
+    }
+
+    @Override
+    protected Comparator<? super NodeDescriptor<?>> getFileComparator() {
+      return (o1, o2) -> {
+        if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
+          VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+          VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+
+          boolean isDir1 = f1.isDirectory();
+          boolean isDir2 = f2.isDirectory();
+          if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+
+          return f1.getPath().compareToIgnoreCase(f2.getPath());
+        }
+        return o1.getIndex() - o2.getIndex();
+      };
+    }
+
+    private static @NotNull String getString(@NotNull TreePath treePath, @NotNull Map<VirtualFile, @Nls String> modulesSet) {
+      DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
+      Object uo = lastPathComponent.getUserObject();
+      if (uo instanceof FileNodeDescriptor) {
+        VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
+        String module = modulesSet.get(file);
+        if (module != null) return module;
+        return file == null ? "" : file.getName();
+      }
+      return treePath.toString();
     }
   }
 }

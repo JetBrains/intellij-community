@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.util.Couple;
@@ -15,7 +15,8 @@ import org.zmlx.hg4idea.log.HgLogProvider;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,27 +33,19 @@ public class HgReadDetailsTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     myProvider = findLogProvider(myProject);
-    cd(myProject.getBaseDir());
+    cd(getOrCreateProjectBaseDir());
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     myProvider = null;
     super.tearDown();
   }
 
-  public void testReadAllFullDetails() throws IOException, VcsException {
-    Collection<String> commits = generateCommits().values();
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-    myProvider.readAllFullDetails(projectRoot, details::add);
-    assertSameElements(ContainerUtil.map(details.subList(0, details.size() - 1), // removing initial commit
-                                         d -> d.getFullMessage() + "\n" + getChanges(d)), commits);
-  }
-
   public void testReadFullDetailsByHash() throws IOException, VcsException {
     Map<String, String> commits = generateCommits();
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-    myProvider.readFullDetails(projectRoot, ContainerUtil.newArrayList(commits.keySet()), details::add);
+    List<VcsFullCommitDetails> details = new ArrayList<>();
+    myProvider.readFullDetails(getProjectRoot(), new ArrayList<>(commits.keySet()), details::add);
     assertSameElements(ContainerUtil.map(details, d -> d.getFullMessage() + "\n" + getChanges(d)), commits.values());
   }
 
@@ -74,7 +67,7 @@ public class HgReadDetailsTest extends HgPlatformTest {
 
   @NotNull
   public Map<String, String> generateCommits() throws IOException {
-    Map<String, String> commits = ContainerUtil.newLinkedHashMap();
+    Map<String, String> commits = new LinkedHashMap<>();
     int nCommits = 10;
     for (int i = 0; i < nCommits; i++) {
       Couple<String> commit = commit(i);
@@ -106,13 +99,13 @@ public class HgReadDetailsTest extends HgPlatformTest {
       addFile(file, changedFiles);
     }
 
-    myProject.getBaseDir().refresh(false, true);
+    getOrCreateProjectBaseDir().refresh(false, true);
 
     String message = "commit " + i + " subject\n\ncommit " + i + " body";
     hg("commit -m '" + message + "'");
 
-    return Couple.of(new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset(),
-                     message + "\n" + changedFiles.toString());
+    return Couple.of(new HgWorkingCopyRevisionsCommand(myProject).tip(getOrCreateProjectBaseDir()).getChangeset(),
+                     message + "\n" + changedFiles);
   }
 
   @NotNull
@@ -146,18 +139,10 @@ public class HgReadDetailsTest extends HgPlatformTest {
                                        @Nullable String before,
                                        @Nullable String after) {
     switch (type) {
-      case MODIFICATION:
-        sb.append("M ").append(after);
-        break;
-      case NEW:
-        sb.append("A ").append(after);
-        break;
-      case DELETED:
-        sb.append("D ").append(before);
-        break;
-      case MOVED:
-        sb.append("R ").append(before).append(" -> ").append(after);
-        break;
+      case MODIFICATION -> sb.append("M ").append(after);
+      case NEW -> sb.append("A ").append(after);
+      case DELETED -> sb.append("D ").append(before);
+      case MOVED -> sb.append("R ").append(before).append(" -> ").append(after);
     }
     sb.append("\n");
   }

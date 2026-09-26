@@ -1,0 +1,25 @@
+{
+  "modules": {
+    "intellij.community.subtools.tests": {
+      "productionTargets": [
+        "@community//subtools:subtools-tests.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/subtools/subtools-tests.jar"
+      ],
+      "testTargets": [
+        "@community//subtools:subtools-tests_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/subtools/subtools-tests_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    }
+  },
+  "imlTargets": [
+    "@community//subtools:intellij.community.subtools.tests.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
+}

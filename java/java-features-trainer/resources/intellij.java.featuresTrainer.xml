@@ -1,0 +1,43 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.platform.backend"/>
+    <plugin id="training"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="JAVA" defaultProductName="IDEA,Aqua" implementationClass="com.intellij.java.ift.JavaLangSupport"/>
+    <ift.learning.course language="JAVA" implementationClass="com.intellij.java.ift.JavaLearningCourse"/>
+    <ifs.suggesterSupport language="JAVA" implementationClass="com.intellij.java.ifs.JavaSuggesterSupport"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="JAVA" implementationClass="com.intellij.java.featuresTrainer.onboarding.tips.JavaOnboardingTipsDocumentationProvider" order="first"/>
+  </extensions>
+</idea-plugin>

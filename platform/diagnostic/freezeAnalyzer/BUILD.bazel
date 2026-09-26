@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.diagnostic.freezeAnalyzer` start
+content_module_jar(
+    libraries = ["@lib//:diogen-analysis"],
+    module = ":freezeAnalyzer",
+)
+### auto-generated section `dev intellij.platform.diagnostic.freezeAnalyzer` end
+
+### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` start
+jvm_library(
+    name = "freezeAnalyzer",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.diagnostic.freezeAnalyzer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:diogen-analysis",
+        "//libraries/fastutil",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "freezeAnalyzer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.diagnostic.freezeAnalyzer",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":freezeAnalyzer",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
+
+### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer` start
+exports_files(
+    [
+        "intellij.platform.diagnostic.freezeAnalyzer.iml",
+        "resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.diagnostic.freezeAnalyzer` end

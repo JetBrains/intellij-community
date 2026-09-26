@@ -1,47 +1,71 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
+import org.jdom.filter2.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
-class ImmutableElement extends Element {
-  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(new String[0], null, Namespace.NO_NAMESPACE);
+final class ImmutableElement extends Element {
+  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
+                                                                                       Namespace.NO_NAMESPACE);
   private final Content[] myContent;
   private static final Content[] EMPTY_CONTENT = new Content[0];
   private final List<Attribute> myAttributes;
 
-  ImmutableElement(@NotNull Element origin, @NotNull final JDOMInterner interner) {
-    Disposer.clearOwnFields(this, Conditions.<Field>alwaysTrue());
+  ImmutableElement(@NotNull Element origin, @NotNull JDOMInterner interner) {
     name = interner.internString(origin.getName());
+    myAttributes = internAttributes(origin, interner);
 
-    List<Attribute> originAttributes = origin.getAttributes();
-    String[] nameValues = new String[originAttributes.size() * 2];
+    List<Content> origContent = origin.getContent();
+    if (origContent.isEmpty()) {
+      myContent = EMPTY_CONTENT;
+    }
+    else {
+      Content[] newContent = new Content[origContent.size()];
+      int index = 0;
+      for (Content o : origContent) {
+        if (o instanceof Element) {
+          Element newElement = interner.internElement((Element)o);
+          newContent[index++]= newElement;
+        }
+        else if (o instanceof Text) {
+          Text newText = interner.internText((Text)o);
+          newContent[index++]= newText;
+        }
+        else {
+          throw new RuntimeException(o.toString());
+        }
+      }
+
+      // ContentList is final, can't subclass
+      myContent = index == newContent.length ? newContent : Arrays.copyOf(newContent, index);
+    }
+
+    this.namespace = origin.getNamespace();
+    for (Namespace namespace : origin.getAdditionalNamespaces()) {
+      super.addNamespaceDeclaration(namespace);
+    }
+  }
+
+  private static @NotNull List<Attribute> internAttributes(@NotNull Element origin, @NotNull JDOMInterner interner) {
+    List<Attribute> originAttributes = origin.hasAttributes() ? origin.getAttributes() : null;
+    if (originAttributes == null || originAttributes.isEmpty()) {
+      return EMPTY_LIST;
+    }
+
     AttributeType type = null;
+    String[] nameValues = new String[originAttributes.size() * 2];
     Namespace namespace = null;
     for (int i = 0; i < originAttributes.size(); i++) {
       Attribute origAttribute = originAttributes.get(i);
@@ -51,56 +75,27 @@ class ImmutableElement extends Element {
       }
       else if (type != origAttribute.getAttributeType() || !origAttribute.getNamespace().equals(namespace)) {
         type = null;
-        break; // no single type/namespace, fallback to ImmutableAttrList
+        // no single type/namespace, fallback to ImmutableAttrList
+        break;
       }
+
       String name = interner.internString(origAttribute.getName());
       String value = interner.internString(origAttribute.getValue());
-      nameValues[i*2] = name;
-      nameValues[i*2+1] = value;
+      nameValues[i * 2] = name;
+      nameValues[i * 2 + 1] = value;
     }
-    List<Attribute> newAttributes;
-    if (originAttributes.isEmpty()) {
-      newAttributes = EMPTY_LIST;
-    }
-    else if (type == null) {
-      newAttributes = Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
-        @Override
-        public Attribute fun(Attribute attribute) {
-          return new ImmutableAttribute(interner.internString(attribute.getName()),
+
+    if (type == null) {
+      List<ImmutableAttribute> list = new ArrayList<>(originAttributes.size());
+      for (Attribute attribute : originAttributes) {
+        list.add(new ImmutableAttribute(interner.internString(attribute.getName()),
                                         interner.internString(attribute.getValue()),
-                                        attribute.getAttributeType(), attribute.getNamespace());
-        }
-      }));
+                                        attribute.getAttributeType(), attribute.getNamespace()));
+      }
+      return Collections.unmodifiableList(list);
     }
     else {
-      newAttributes = new ImmutableSameTypeAttributeList(nameValues, type, namespace);
-    }
-    myAttributes = newAttributes;
-
-    List<Content> origContent = origin.getContent();
-    List<Content> newContent = new ArrayList<Content>(origContent.size());
-    for (Content o : origContent) {
-      if (o instanceof Element) {
-        Element newElement = interner.internElement((Element)o);
-        newContent.add(newElement);
-      }
-      else if (o instanceof Text) {
-        Text newText = interner.internText((Text)o);
-        newContent.add(newText);
-      }
-      else if (o instanceof Comment) {
-        // ignore
-      }
-      else {
-        throw new RuntimeException(o.toString());
-      }
-    }
-
-    myContent = newContent.isEmpty() ? EMPTY_CONTENT : newContent.toArray(EMPTY_CONTENT); // ContentList is final, can't subclass
-
-    this.namespace = origin.getNamespace();
-    for (Namespace addns : origin.getAdditionalNamespaces()) {
-      super.addNamespaceDeclaration(addns);
+      return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
     }
   }
 
@@ -109,20 +104,21 @@ class ImmutableElement extends Element {
     return myContent.length;
   }
 
-  @NotNull
   @Override
-  public List<Content> getContent() {
+  public @NotNull List<Content> getContent() {
     return Arrays.asList(myContent);
   }
 
   @Override
-  public <T extends Content> List<T> getContent(final Filter<T> filter) {
-    return (List<T>)ContainerUtil.filter(myContent, new Condition<Content>() {
-      @Override
-      public boolean value(Content content) {
-        return filter.matches(content);
+  public <T extends Content> List<T> getContent(@NotNull Filter<T> filter) {
+    List<T> result = new ArrayList<>();
+    for (Object it : myContent) {
+      if (filter.matches(it)) {
+        //noinspection unchecked
+        result.add((T)it);
       }
-    });
+    }
+    return result;
   }
 
   @Override
@@ -136,20 +132,26 @@ class ImmutableElement extends Element {
   }
 
   @Override
-  public <T extends Content> Iterator<T> getDescendants(Filter<T> filter) {
-    throw immutableError(this);
+  public @NotNull List<Element> getChildren() {
+    List<Element> list = new ArrayList<>();
+    for (Content it : myContent) {
+      if (it instanceof Element) {
+        list.add((Element)it);
+      }
+    }
+    return list;
   }
 
-  @NotNull
   @Override
-  public List<Element> getChildren() {
-    return getContent(new ElementFilter());
-  }
-
-  @NotNull
-  @Override
-  public List<Element> getChildren(String name, Namespace ns) {
-    return getContent(new ElementFilter(name, ns));
+  public @NotNull List<Element> getChildren(String name, Namespace ns) {
+    ElementFilter predicate = new ElementFilter(name, ns);
+    List<Element> list = new ArrayList<>();
+    for (Content it : myContent) {
+      if (predicate.matches(it)) {
+        list.add((Element)it);
+      }
+    }
+    return list;
   }
 
   @Override
@@ -161,18 +163,13 @@ class ImmutableElement extends Element {
   @Override
   public String getText() {
     if (myContent.length == 0) {
-        return "";
+      return "";
     }
 
     // If we hold only a Text or CDATA, return it directly
     if (myContent.length == 1) {
-        final Object obj = myContent[0];
-        if (obj instanceof Text) {
-            return ((Text) obj).getText();
-        }
-        else {
-            return "";
-        }
+      Content obj = myContent[0];
+      return obj instanceof Text ? ((Text)obj).getText() : "";
     }
 
     // Else build String up
@@ -190,8 +187,8 @@ class ImmutableElement extends Element {
   }
 
   @Override
-  public int indexOf(final Content child) {
-      return ArrayUtil.indexOf(myContent, child);
+  public int indexOf(Content child) {
+    return ArrayUtilRt.indexOf(myContent, child, 0, myContent.length);
   }
 
   @Override
@@ -217,18 +214,13 @@ class ImmutableElement extends Element {
     return myAttributes;
   }
 
-  public int getAttributesSize() {
-    return myAttributes.size();
-  }
-
   @Override
   public Attribute getAttribute(String name, Namespace ns) {
     if (myAttributes instanceof ImmutableSameTypeAttributeList) {
       return ((ImmutableSameTypeAttributeList)myAttributes).get(name, ns);
     }
     String uri = namespace.getURI();
-    for (int i = 0; i < myAttributes.size(); i++) {
-      Attribute a = myAttributes.get(i);
+    for (Attribute a : myAttributes) {
       String oldURI = a.getNamespaceURI();
       String oldName = a.getName();
       if (oldURI.equals(uri) && oldName.equals(name)) {
@@ -238,61 +230,34 @@ class ImmutableElement extends Element {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getAttributeValue(String attname) {
-    return getAttributeValue(attname, Namespace.NO_NAMESPACE);
+  public @Nullable String getAttributeValue(String name) {
+    return getAttributeValue(name, Namespace.NO_NAMESPACE);
   }
 
   @Override
-  public String getAttributeValue(String attname, String def) {
-    return getAttributeValue(attname, Namespace.NO_NAMESPACE, def);
+  public String getAttributeValue(String name, String def) {
+    return getAttributeValue(name, Namespace.NO_NAMESPACE, def);
   }
 
   @Override
-  public String getAttributeValue(String attname, Namespace ns) {
-    return getAttributeValue(attname, ns, null);
+  public String getAttributeValue(String name, Namespace ns) {
+    return getAttributeValue(name, ns, null);
   }
 
   @Override
-  public String getAttributeValue(String name, Namespace ns, String def) {
+  public String getAttributeValue(String name, Namespace ns, String defaultValue) {
     if (myAttributes instanceof ImmutableSameTypeAttributeList) {
-      return ((ImmutableSameTypeAttributeList)myAttributes).getValue(name, ns, def);
+      return ((ImmutableSameTypeAttributeList)myAttributes).getValue(name, ns, defaultValue);
     }
     Attribute attribute = getAttribute(name, ns);
-    return attribute == null ? def : attribute.getValue();
+    return attribute == null ? defaultValue : attribute.getValue();
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Element clone() {
-    final Element element = new Element();
-
-    element.content = new ContentList(element);
-    element.attributes = new AttributeList(element);
-    element.name = getName();
-    element.namespace = getNamespace();
-
-    // Cloning attributes
-    List<Attribute> attributes = getAttributes();
-    if (attributes != null) {
-      for (final Attribute attribute : attributes) {
-        element.attributes.add(attribute.clone());
-      }
-    }
-
-    // Cloning additional namespaces
-    if (additionalNamespaces != null) {
-        element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
-    }
-
-    // Cloning content
-    List<Content> content = getContent();
-    for (Content c : content) {
-      element.content.add(c.clone());
-    }
-
-    return element;
+    return createClone(this, myContent, myAttributes);
   }
 
   @Override
@@ -300,7 +265,7 @@ class ImmutableElement extends Element {
     throw immutableError(this);
   }
 
-  public boolean attributesEqual(Element element) {
+  boolean attributesEqual(Element element) {
     List<Attribute> attrs = element.getAttributes();
     if (myAttributes instanceof ImmutableSameTypeAttributeList) {
       return myAttributes.equals(attrs);
@@ -315,24 +280,24 @@ class ImmutableElement extends Element {
     return true;
   }
 
-  public static boolean attributesEqual(Attribute a1, Attribute a2) {
+  static boolean attributesEqual(Attribute a1, Attribute a2) {
     return a1.getName().equals(a2.getName()) &&
-           Comparing.equal(a1.getValue(), a2.getValue()) &&
+           Objects.equals(a1.getValue(), a2.getValue()) &&
            a1.getAttributeType() == a2.getAttributeType() &&
            a1.getNamespace().equals(a2.getNamespace());
   }
 
-  @NotNull
-  static IncorrectOperationException immutableError(Object element) {
+  static @NotNull IncorrectOperationException immutableError(Object element) {
     return new IncorrectOperationException("Can't change immutable element: " +
                                            element.getClass() + ". To obtain mutable Element call .clone()");
   }
 
   //////////////////////////////////////////////////////////////////////
   @Override
-  public Element detach() {
+  public @NotNull Element detach() {
     throw immutableError(this);
   }
+
   @Override
   public Element setName(String name) {
     throw immutableError(this);
@@ -345,11 +310,6 @@ class ImmutableElement extends Element {
 
   @Override
   public void addNamespaceDeclaration(Namespace additionalNamespace) {
-    throw immutableError(this);
-  }
-
-  @Override
-  public void removeNamespaceDeclaration(Namespace additionalNamespace) {
     throw immutableError(this);
   }
 
@@ -393,6 +353,7 @@ class ImmutableElement extends Element {
     throw immutableError(this);
   }
 
+  @Override
   public Element addContent(Element child) {
     throw immutableError(this);
   }
@@ -432,6 +393,7 @@ class ImmutableElement extends Element {
     throw immutableError(this);
   }
 
+  @Override
   public Element setAttributes(List newAttributes) {
     throw immutableError(this);
   }

@@ -1,0 +1,5 @@
+// "Create type parameter in class 'X'" "true"
+
+class X<T>
+
+fun foo(x: <caret>X<String>) {}

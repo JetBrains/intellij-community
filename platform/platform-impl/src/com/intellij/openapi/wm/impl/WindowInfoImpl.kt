@@ -1,41 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowEP
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
+import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Rectangle
+import kotlin.math.max
+import kotlin.math.min
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<WindowInfoImpl>()
-
-private fun canActivateOnStart(id: String?): Boolean {
-  for (ep in ToolWindowEP.EP_NAME.extensions) {
-    if (id == ep.id) {
-      val factory = ep.toolWindowFactory
-      return !factory!!.isDoNotActivateOnStart
-    }
-  }
-  return true
-}
 
 @Suppress("EqualsOrHashCode")
 @Tag("window_info")
 @Property(style = Property.Style.ATTRIBUTE)
 class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
+  @ApiStatus.Internal
   companion object {
-    internal const val TAG = "window_info"
+    internal const val TAG: String = "window_info"
     const val DEFAULT_WEIGHT: Float = 0.33f
   }
 
-  @get:Transient
-  var isRegistered: Boolean = false
+  @get:Attribute("active")
+  override var isActiveOnStart: Boolean by property(false)
 
-  override var isActive: Boolean by property(false)
+  override var toolWindowPaneId: String? by string(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor: ToolWindowAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
@@ -47,12 +50,18 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  override var floatingBounds: Rectangle? by property<Rectangle?>()
+  override var floatingBounds: Rectangle? by property(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+
+  /**
+   * This attribute persists state 'maximized' for `ToolWindowType.WINDOWED` where decoration is presented by JFrame
+   */
+  @get:Attribute("maximized")
+  override var isMaximized: Boolean by property(false)
 
   /**
    * ID of the tool window
    */
-  var id: String? by string()
+  override var id: String? by string()
 
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
@@ -60,12 +69,12 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType: ToolWindowType by property(ToolWindowType.DOCKED)
+  override var internalType: ToolWindowType by enum(ToolWindowType.DOCKED)
 
-  override var type: ToolWindowType by property(ToolWindowType.DOCKED)
+  override var type: ToolWindowType by enum(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
-  var isVisible: Boolean by property(false)
+  override var isVisible: Boolean by property(false)
 
   @get:Attribute("show_stripe_button")
   override var isShowStripeButton: Boolean by property(true)
@@ -75,9 +84,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  var weight: Float by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
+  override var weight: Float by property(DEFAULT_WEIGHT) { max(0f, min(1f, it)) }
 
-  var sideWeight: Float by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
+  override var sideWeight: Float by property(0.5f) { max(0f, min(1f, it)) }
 
   @get:Attribute("side_tool")
   override var isSplit: Boolean by property(false)
@@ -88,54 +97,44 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * Defines order of tool window button inside the stripe.
    */
-  var order: Int by property(-1)
+  override var order: Int by property(-1)
 
   @get:Transient
-  var isWasRead: Boolean = false
-    private set
+  override var isFromPersistentSettings: Boolean = true
+    internal set
 
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.copyFrom(this)
+    info.isFromPersistentSettings = isFromPersistentSettings
     return info
   }
 
   override val isDocked: Boolean
     get() = type == ToolWindowType.DOCKED
 
-  override val isFloating: Boolean
-    get() = type == ToolWindowType.FLOATING
-
-  override val isWindowed: Boolean
-    get() = type == ToolWindowType.WINDOWED
-
-  override val isSliding: Boolean
-    get() = type == ToolWindowType.SLIDING
-
-  fun normalizeAfterRead() {
-    isWasRead = true
-
+  internal fun normalizeAfterRead() {
     setTypeAndCheck(type)
 
-    if (isVisible && !canActivateOnStart(id)) {
+    if (isVisible && id != null && !canActivateOnStart(id!!)) {
       isVisible = false
     }
   }
 
   internal fun setType(type: ToolWindowType) {
-    if (ToolWindowType.DOCKED == type || ToolWindowType.SLIDING == type) {
+    if (type.isInternal) {
       internalType = type
     }
     setTypeAndCheck(type)
   }
 
-  //Hardcoded to avoid single-usage-API
+  // hardcoded to avoid single-usage-API
   private fun setTypeAndCheck(value: ToolWindowType) {
     type = if (ToolWindowId.PREVIEW === id && value == ToolWindowType.DOCKED) ToolWindowType.SLIDING else value
   }
 
   override fun hashCode(): Int {
-    return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
+    return anchor.hashCode() + safeToolWindowPaneId.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
   override fun toString(): String = "id: $id, ${super.toString()}"
@@ -144,7 +143,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {
   override fun fromString(value: String): ToolWindowContentUiType = ToolWindowContentUiType.getInstance(value)
 
-  override fun toString(value: ToolWindowContentUiType): String  = value.name
+  override fun toString(value: ToolWindowContentUiType): String = value.name
 }
 
 private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
@@ -153,10 +152,23 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
       return ToolWindowAnchor.fromText(value)
     }
     catch (e: IllegalArgumentException) {
-      LOG.warn(e)
+      if (!value.equals("none", ignoreCase = true)) {
+        LOG.warn(e)
+      }
       return ToolWindowAnchor.LEFT
     }
   }
 
-  override fun toString(value: ToolWindowAnchor): String  = value.toString()
+  override fun toString(value: ToolWindowAnchor) = value.toString()
+}
+
+private fun canActivateOnStart(id: String): Boolean {
+  val ep = findEp(ToolWindowEP.EP_NAME.lazySequence(), id)
+           ?: findEp(FacetDependentToolWindow.EXTENSION_POINT_NAME.lazySequence(), id)
+           ?: findEp(LibraryDependentToolWindow.EXTENSION_POINT_NAME.lazySequence(), id)
+  return ep == null || !ep.isDoNotActivateOnStart
+}
+
+private fun findEp(list: Sequence<ToolWindowEP>, id: String): ToolWindowEP? {
+  return list.firstOrNull { id == it.id }
 }

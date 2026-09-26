@@ -1,0 +1,7 @@
+// FIX: Convert to sealed class
+sealed class Result {
+    open var value: String
+        get() = "default"
+        set(v) { println(v) }
+}
+class Success : Result()

@@ -1,6 +1,6 @@
 package com.intellij.openapi.vcs.changes;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public interface RefreshablePanel {
   void refresh();

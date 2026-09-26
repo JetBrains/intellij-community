@@ -18,21 +18,16 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
-public class GroovyStaticVariableNamingConventionInspection extends ConventionInspection {
+public final class GroovyStaticVariableNamingConventionInspection extends ConventionInspection {
 
     private static final int DEFAULT_MIN_LENGTH = 4;
     private static final int DEFAULT_MAX_LENGTH = 32;
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Static variable naming convention";
-    }
 
     @Override
     protected GroovyFix buildFix(@NotNull PsiElement location) {
@@ -45,15 +40,14 @@ public class GroovyStaticVariableNamingConventionInspection extends ConventionIn
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... args) {
+    public @NotNull String buildErrorString(Object... args) {
         final String className = (String) args[0];
         if (className.length() < getMinLength()) {
-            return "Static variable name '#ref' is too short";
+            return GroovyBundle.message("inspection.message.static.variable.name.ref.too.short");
         } else if (className.length() > getMaxLength()) {
-            return "Static variable name '#ref' is too long";
+            return GroovyBundle.message("inspection.message.static.variable.name.ref.too.long");
         }
-        return "Static variable name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+        return GroovyBundle.message("inspection.message.static.variable.name.ref.doesnt.match.regex", getRegex());
     }
 
     @Override
@@ -71,9 +65,8 @@ public class GroovyStaticVariableNamingConventionInspection extends ConventionIn
         return DEFAULT_MAX_LENGTH;
     }
 
-    @NotNull
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }
 

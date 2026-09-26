@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+fun stringValue(obj: Any, names: List<String>): String = ""
+
+fun test(obj: Any) {
+    val voiceId = stringValue(obj, names = listOf<caret>("voice", "voice_id", "voiceId"))
+}

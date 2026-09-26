@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,43 +7,49 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+import static com.intellij.vcsUtil.VcsUtil.getVcsFor;
+import static com.intellij.vcsUtil.VcsUtil.getVcsRootFor;
 
 /**
  * for vcses where it is reasonable to ask revision of each item separately
  */
-public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsNumbersCache");
-  
+@ApiStatus.Internal
+public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
+  public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
+
   // every hour (time unit to check for server commits)
   // default, actual in settings
   private static final long ourRottenPeriod = 3600 * 1000;
-  private final Map<String, Pair<VcsRoot, VcsRevisionNumber>> myData;
-  private final Map<VcsRoot, LazyRefreshingSelfQueue<String>> myRefreshingQueues;
-  private final Map<String, VcsRevisionNumber> myLatestRevisionsMap;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final LocalFileSystem myLfs;
+  private final @NotNull Map<String, Pair<VcsRoot, VcsRevisionNumber>> myData = new HashMap<>();
+  private final @NotNull Map<VcsRoot, LazyRefreshingSelfQueue<String>> myRefreshingQueues = Collections.synchronizedMap(new HashMap<>());
+  private final @NotNull Map<String, VcsRevisionNumber> myLatestRevisionsMap = new HashMap<>();
   private boolean mySomethingChanged;
 
-  private final Object myLock;
+  private final @NotNull Object myLock = new Object();
 
   public static final VcsRevisionNumber NOT_LOADED = new VcsRevisionNumber() {
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return "NOT_LOADED";
     }
 
@@ -68,7 +60,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   };
   public static final VcsRevisionNumber UNKNOWN = new VcsRevisionNumber() {
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return "UNKNOWN";
     }
 
@@ -77,18 +69,10 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       return o == this ? 0 : -1;
     }
   };
-  private final VcsConfiguration myVcsConfiguration;
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  RemoteRevisionsNumbersCache(final Project project) {
+  RemoteRevisionsNumbersCache(@NotNull Project project) {
     myProject = project;
-    myLock = new Object();
-    myData = new HashMap<>();
-    myRefreshingQueues = Collections.synchronizedMap(new HashMap<VcsRoot, LazyRefreshingSelfQueue<String>>());
-    myLatestRevisionsMap = new HashMap<>();
-    myLfs = LocalFileSystem.getInstance();
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
   @Override
@@ -129,9 +113,9 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     // collect new vcs for scheduled files
     final Map<String, Pair<VirtualFile, AbstractVcs>> vFiles = new HashMap<>();
     for (String key : keys) {
-      final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
-      final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
-      vFiles.put(key, vf == null ? Pair.create((VirtualFile) null, (AbstractVcs)null) : Pair.create(vf, newVcs));
+      final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(key).getAbsolutePath());
+      final AbstractVcs newVcs = (vf == null) ? null : getVcsFor(myProject, vf);
+      vFiles.put(key, vf == null ? Pair.create(null, null) : Pair.create(vf, newVcs));
     }
     synchronized (myLock) {
       keys = new HashSet<>(myData.keySet());
@@ -144,12 +128,13 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
         }
         final VirtualFile vf = pair.getFirst();
         final AbstractVcs newVcs = pair.getSecond();
+        final VirtualFile newRoot = newVcs != null ? getVcsRootFor(myProject, vf) : null;
 
-        if (newVcs == null) {
+        if (newRoot == null) {
           myData.remove(key);
           getQueue(storedVcsRoot).forceRemove(key);
-        } else {
-          final VirtualFile newRoot = myVcsManager.getVcsRootFor(vf);
+        }
+        else {
           final VcsRoot newVcsRoot = new VcsRoot(newVcs, newRoot);
           if (! storedVcsRoot.equals(newVcsRoot)) {
             switchVcs(storedVcsRoot, newVcsRoot, key);
@@ -170,26 +155,24 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
+    if (vcs.getDiffProvider() == null) return;
 
-    final String key = pair.getFirst();
-    final AbstractVcs newVcs = pair.getSecond();
-
-    final VirtualFile root = getRootForPath(key);
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
 
-    final VcsRoot vcsRoot = new VcsRoot(newVcs, root);
+    final VcsRoot vcsRoot = new VcsRoot(vcs, root);
 
     synchronized (myLock) {
-      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
+      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(path);
       if (value == null) {
         final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
-        myData.put(key, Pair.create(vcsRoot, NOT_LOADED));
-        queue.addRequest(key);
-      } else if (! value.getFirst().equals(vcsRoot)) {
-        switchVcs(value.getFirst(), vcsRoot, key);
+        myData.put(path, Pair.create(vcsRoot, NOT_LOADED));
+        queue.addRequest(path);
+      }
+      else if (!value.getFirst().equals(vcsRoot)) {
+        switchVcs(value.getFirst(), vcsRoot, path);
       }
     }
   }
@@ -211,37 +194,35 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   }
 
-  @Nullable
-  private VirtualFile getRootForPath(final String s) {
-    return myVcsManager.getVcsRootFor(VcsUtil.getFilePath(s, false));
-  }
-
   @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
-    final VirtualFile root = getRootForPath(pair.getFirst());
+    if (vcs.getDiffProvider() == null) return;
+    final VirtualFile root = getVcsRootFor(myProject, getFilePath(path, false));
     if (root == null) return;
 
     final LazyRefreshingSelfQueue<String> queue;
-    final String key = pair.getFirst();
     synchronized (myLock) {
-      queue = getQueue(new VcsRoot(pair.getSecond(), root));
-      myData.remove(key);
+      queue = getQueue(new VcsRoot(vcs, root));
+      myData.remove(path);
     }
-    queue.forceRemove(key);
+    queue.forceRemove(path);
   }
 
   // +-
-  @NotNull
-  private LazyRefreshingSelfQueue<String> getQueue(final VcsRoot vcsRoot) {
+  private @NotNull LazyRefreshingSelfQueue<String> getQueue(final VcsRoot vcsRoot) {
     synchronized (myLock) {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;
 
-      queue = new LazyRefreshingSelfQueue<>(() -> myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
-             ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000
-             : ourRottenPeriod, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
+      queue = new LazyRefreshingSelfQueue<>(
+        () -> {
+          int interval = VcsConfiguration.getInstance(myProject).CHANGED_ON_SERVER_INTERVAL;
+          return interval > 0 ? interval * 60000L : ourRottenPeriod;
+        },
+        new MyShouldUpdateChecker(vcsRoot),
+        new MyUpdater(vcsRoot)
+      );
       myRefreshingQueues.put(vcsRoot, queue);
       return queue;
     }
@@ -250,7 +231,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyUpdater implements Consumer<String> {
     private final VcsRoot myVcsRoot;
 
-    public MyUpdater(final VcsRoot vcsRoot) {
+    MyUpdater(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 
@@ -259,12 +240,12 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LOG.debug("update for: " + s);
       //todo check canceled - check VCS's ready for asynchronous queries
       // get last remote revision for file
-      final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(s));
+      final VirtualFile vf = StandardFileSystems.local().refreshAndFindFileByPath(new File(s).getAbsolutePath());
       final ItemLatestState state;
       final DiffProvider diffProvider = myVcsRoot.getVcs().getDiffProvider();
       if (vf == null) {
         // doesnt matter if directory or not
-        state = diffProvider.getLastRevision(VcsUtil.getFilePath(s, false));
+        state = diffProvider.getLastRevision(getFilePath(s, false));
       } else {
         state = diffProvider.getLastRevision(vf);
       }
@@ -287,12 +268,13 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyShouldUpdateChecker implements Computable<Boolean> {
     private final VcsRoot myVcsRoot;
 
-    public MyShouldUpdateChecker(final VcsRoot vcsRoot) {
+    MyShouldUpdateChecker(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 
     // Check if currently cached vcs root latest revision is less than latest vcs root revision
     // => update should be performed in this case
+    @Override
     public Boolean compute() {
       final AbstractVcs vcs = myVcsRoot.getVcs();
       // won't be called in parallel for same vcs -> just synchronized map is ok
@@ -321,7 +303,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public boolean isUpToDate(final Change change) {
+  public boolean isUpToDate(@NotNull Change change, @NotNull AbstractVcs vcs) {
     if (change.getBeforeRevision() != null && change.getAfterRevision() != null && (! change.isMoved()) && (! change.isRenamed())) {
       return getRevisionState(change.getBeforeRevision());
     }

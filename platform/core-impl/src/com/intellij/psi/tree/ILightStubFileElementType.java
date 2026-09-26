@@ -1,35 +1,35 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LightPsiParser;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.PsiParser;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-
+/**
+ * OBSOLESCENCE NOTE:
+ * Use {@link com.intellij.psi.stubs.LightLanguageStubDefinition} instead
+ */
+@ApiStatus.Obsolete
 public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileElementType<T> {
-  public ILightStubFileElementType(final Language language) {
+  public ILightStubFileElementType(Language language) {
     super(language);
   }
 
-  public ILightStubFileElementType(@NonNls final String debugName, final Language language) {
+  public ILightStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
   }
 
@@ -38,22 +38,24 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
     return new LightStubBuilder();
   }
 
-  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(final ASTNode chameleon) {
-    final PsiElement psi = chameleon.getPsi();
+  public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
+    PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
 
-    final Project project = psi.getProject();
-    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final PsiBuilder builder = factory.createBuilder(project, chameleon);
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
+    Project project = psi.getProject();
+    PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    PsiBuilder builder = factory.createBuilder(project, chameleon);
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     assert parserDefinition != null : this;
-    final PsiParser parser = parserDefinition.createParser(project);
+    PsiParser parser = parserDefinition.createParser(project);
+    long startTime = System.nanoTime();
     if (parser instanceof LightPsiParser) {
       ((LightPsiParser)parser).parseLight(this, builder);
     }
     else {
       parser.parse(this, builder);
     }
+    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
     return builder.getLightTree();
   }
 }

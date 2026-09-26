@@ -1,14 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,26 +36,46 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class ExprTypePredicate extends MatchPredicate {
-  private final RegExpPredicate delegate;
-  private final boolean withinHierarchy;
+  private final RegExpPredicate myDelegate;
+  private final boolean myWithinHierarchy;
   private final boolean needsTypeParameters;
   private final boolean needsFullyQualified;
   private final boolean needsArrayType;
+  private final boolean needsAnnotations;
   private final boolean myCaseSensitive;
   private final List<String> myTypes;
 
-  public ExprTypePredicate(String type, String baseName, boolean _withinHierarchy, boolean caseSensitiveMatch, boolean target) {
-    delegate = Registry.is("ssr.use.regexp.to.specify.type") ? new RegExpPredicate(type, caseSensitiveMatch, baseName, false, target) : null;
-    withinHierarchy = _withinHierarchy;
+  public ExprTypePredicate(@NotNull String type, String baseName, boolean withinHierarchy, boolean caseSensitiveMatch, boolean target, boolean regex) {
+    myDelegate = regex ? new RegExpPredicate(type, caseSensitiveMatch, baseName, false, target) : null;
+    myWithinHierarchy = withinHierarchy;
     needsTypeParameters = type.indexOf('<') >= 0;
     needsFullyQualified = type.indexOf('.') >= 0;
     needsArrayType = type.indexOf('[') >= 0;
+    needsAnnotations = type.indexOf('@') >= 0;
     myCaseSensitive = caseSensitiveMatch;
-    myTypes = StringUtil.split(type, "|");
+    myTypes = regex ? null : split(type);
+  }
+
+  private static List<String> split(String types) {
+    List<String> result = new ArrayList<>();
+    int pos = 0;
+    while (true) {
+      int index = types.indexOf('|', pos);
+      if (index == -1) break;
+      String token = MatchUtil.normalizeWhiteSpace(types.substring(pos, index));
+      if (!token.isEmpty()) {
+        result.add(token);
+      }
+      pos = index + 1;
+    }
+    if (pos < types.length()) {
+      result.add(MatchUtil.normalizeWhiteSpace(types.substring(pos)));
+    }
+    return result;
   }
 
   @Override
-  public boolean match(PsiElement match, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (match instanceof PsiIdentifier) {
       // since we pickup tokens
       match = match.getParent();
@@ -52,26 +91,26 @@ public class ExprTypePredicate extends MatchPredicate {
     return type != null && doMatchWithTheType(type, context, match, null);
   }
 
-  protected PsiType evalType(PsiExpression match, MatchContext context) {
-    if (match instanceof PsiReferenceExpression) {
-      final PsiElement parent = match.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        return ((PsiMethodCallExpression)parent).getType();
-      }
+  protected PsiType evalType(@NotNull PsiExpression match, @NotNull MatchContext context) {
+    if (match instanceof PsiFunctionalExpression functionalExpression) {
+      return functionalExpression.getFunctionalInterfaceType();
+    }
+    else if (match instanceof PsiReferenceExpression && match.getParent() instanceof PsiMethodCallExpression call) {
+      return call.getType();
     }
     return match.getType();
   }
 
-  private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode, Set<PsiType> visited) {
+  private boolean doMatchWithTheType(@NotNull PsiType type, @NotNull MatchContext context, @NotNull PsiElement matchedNode, @Nullable Set<? super PsiType> visited) {
     final List<String> permutations = getTextPermutations(type);
     for (String permutation : permutations) {
-      if (delegate == null ? doMatch(permutation) : delegate.doMatch(permutation, context, matchedNode)) {
+      if (myDelegate == null ? doMatch(permutation) : myDelegate.doMatch(permutation, context, matchedNode)) {
         return true;
       }
     }
-    if (withinHierarchy) {
+    if (myWithinHierarchy) {
       if (visited == null) {
-        visited = new THashSet<>();
+        visited = new HashSet<>();
         visited.add(type);
       }
       for (PsiType superType : type.getSuperTypes()) {
@@ -84,10 +123,11 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   private boolean doMatch(String text) {
-    return myTypes.stream().anyMatch(type -> myCaseSensitive ? type.equals(text) : type.equalsIgnoreCase(text));
+    return ContainerUtil.exists(myTypes, type -> myCaseSensitive ? type.equals(text) : type.equalsIgnoreCase(text));
   }
 
   private List<String> getTextPermutations(PsiType type) {
+    final String annotationString = getAnnotationString(type);
     final String dimensions;
     if (type instanceof PsiArrayType) {
       if (!needsArrayType) return Collections.emptyList();
@@ -98,8 +138,7 @@ public class ExprTypePredicate extends MatchPredicate {
       dimensions = "";
     }
     final List<String> result = new SmartList<>();
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       final StringBuilder typeText = new StringBuilder();
@@ -107,16 +146,16 @@ public class ExprTypePredicate extends MatchPredicate {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         buildText(aClass, substitutor, true, typeText);
         typeText.append(dimensions);
-        final String unqualified = typeText.toString();
+        final String typeString = annotationString + typeText;
         if (needsTypeParameters) {
-          result.add(unqualified); // unqualified with type parameters if present
+          result.add(typeString); // unqualified with type parameters if present
         }
-        addWithoutTypeParameters(unqualified, dimensions, result);
-        if (typeText.indexOf(".") >= 0) {
+        addWithoutTypeParameters(typeString, dimensions, result);
+        if (typeText.indexOf(".") >= 0) { // inner class qualified with outer class (we currently support one level)
           typeText.setLength(0);
           buildText(aClass, substitutor, false, typeText);
           typeText.append(dimensions);
-          final String outerClassQualified = typeText.toString();
+          final String outerClassQualified = annotationString + typeText;
           if (needsTypeParameters) {
             result.add(outerClassQualified); // inner class without enclosing class qualifier with type parameters if present
           }
@@ -127,7 +166,7 @@ public class ExprTypePredicate extends MatchPredicate {
         }
       }
     }
-    final String fullyQualified = type.getCanonicalText() + dimensions;
+    final String fullyQualified = annotationString + type.getCanonicalText() + dimensions;
     if (needsTypeParameters) {
       result.add(fullyQualified); // fully qualified if possible with type parameters if present
     }
@@ -135,12 +174,35 @@ public class ExprTypePredicate extends MatchPredicate {
     return result;
   }
 
-  private static void addWithoutTypeParameters(String typeText, String suffix, List<String> result) {
+  private @NotNull String getAnnotationString(PsiType type) {
+    if (!needsAnnotations) {
+      return "";
+    }
+    final PsiAnnotation[] annotations = type.getAnnotations();
+    if (annotations.length <= 0) {
+      return "";
+    }
+    StringBuilder result = new StringBuilder();
+    for (PsiAnnotation annotation : annotations) {
+      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+      if (nameReferenceElement != null) {
+        final PsiElement referenceNameElement = nameReferenceElement.getReferenceNameElement();
+        if (referenceNameElement != null) {
+          result.append('@').append(referenceNameElement.getText())
+            .append(annotation.getParameterList().getText())
+            .append(' ');
+        }
+      }
+    }
+    return result.toString();
+  }
+
+  private static void addWithoutTypeParameters(String typeText, String suffix, List<? super String> result) {
     final int lt = typeText.indexOf("<");
     if (lt >= 0) {
       result.add(typeText.substring(0, lt) + suffix);
     }
-    else if (result.isEmpty() || !result.get(result.size() - 1).equals(typeText)) {
+    else if (result.isEmpty() || !result.getLast().equals(typeText)) {
       result.add(typeText);
     }
   }
@@ -180,8 +242,7 @@ public class ExprTypePredicate extends MatchPredicate {
             return;
           }
           if (i > 0) text.append(',');
-          if (parameterType instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)parameterType;
+          if (parameterType instanceof PsiClassType classType) {
             final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
             final PsiClass aClass1 = result.getElement();
             if (aClass1 != null) {

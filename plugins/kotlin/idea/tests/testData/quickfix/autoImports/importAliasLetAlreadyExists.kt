@@ -1,0 +1,13 @@
+// "Import extension function 'let'" "true"
+// WITH_STDLIB
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+import kotlin.let as let1
+
+fun main() {
+    1.<caret>let {
+        println(it)
+    }
+}
+// IGNORE_K2

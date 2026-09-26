@@ -1,0 +1,19 @@
+# error: failed to find stub
+# ==========================
+# These modules have been migrated to external packages
+# and emit an `ImportError` if people try to use the
+# functions/classes defined within
+webtest.ext
+webtest.sel
+# Compatibility/utility modules for internal use that didn't
+# seem worth including in the stubs
+webtest.compat
+webtest.lint
+webtest.utils
+
+# error: variable differs from runtime type
+# =========================================
+# Even though this can be `None`, it never should be during
+# normal use of WebTest, so it seems more pragmatic to treat
+# it as always non-`None`
+webtest.response.TestResponse.request

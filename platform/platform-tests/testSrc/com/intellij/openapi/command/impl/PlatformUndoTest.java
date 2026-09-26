@@ -1,0 +1,228 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.command.impl;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.GlobalUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.DocumentsEditor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.ServiceContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.beans.PropertyChangeListener;
+
+public class PlatformUndoTest extends LightPlatformTestCase {
+  public void testIncorrectFileEditorDoesNotCauseHanging() {
+    LightVirtualFile file = new LightVirtualFile(getTestName(false));
+    Document d1 = EditorFactory.getInstance().createDocument("");
+    Document d2 = EditorFactory.getInstance().createDocument("");
+    FileEditor fileEditor = new IncorrectFileEditor(file, d1, d2);
+    runWithCurrentEditor(fileEditor, () -> {
+      WriteAction.run(() -> {
+        CommandProcessor.getInstance().runUndoTransparentAction(() -> d1.insertString(0, " "));
+        CommandProcessor.getInstance().runUndoTransparentAction(() -> d2.insertString(0, " "));
+      });
+      undo();
+    });
+    assertEquals("", d1.getText());
+    assertEquals("", d2.getText());
+  }
+
+  public void testDropHistoryDoesNotRequestDocumentReferenceManagerWhileClearingStacks() {
+    Document document = EditorFactory.getInstance().createDocument("");
+    DocumentReference reference = createDocumentReference(document);
+    executeUndoableAction(createUndoableAction(reference));
+    ServiceContainerUtil.replaceService(
+      ApplicationManager.getApplication(),
+      DocumentReferenceManager.class,
+      new DocumentReferenceManager() {
+        @Override
+        public @NotNull DocumentReference create(@NotNull Document document) {
+          throw new AssertionError("DocumentReferenceManager must not be requested while clearing all undo stacks");
+        }
+
+        @Override
+        public @NotNull DocumentReference create(@NotNull VirtualFile file) {
+          throw new AssertionError("DocumentReferenceManager must not be requested while clearing all undo stacks");
+        }
+      },
+      getTestRootDisposable()
+    );
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(reference, true));
+  }
+
+  public void testDropHistoryClearsFlushedDocumentStacks() {
+    DocumentReference reference = createDocumentReference(EditorFactory.getInstance().createDocument(""));
+    executeUndoableAction(createUndoableAction(reference));
+    getUndoManager().flushCurrentCommandMerger();
+    assertEquals(1, getUndoManager().getStackSize(reference, true));
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(reference, true));
+    assertEquals(0, getUndoManager().getStackSize(reference, false));
+  }
+
+  public void testDropHistoryClearsGlobalUndoAndRedoStacks() {
+    executeUndoableAction(createGlobalUndoableAction());
+    getUndoManager().flushCurrentCommandMerger();
+    assertEquals(1, getUndoManager().getStackSize(null, true));
+    getUndoManager().undo(null);
+    assertEquals(0, getUndoManager().getStackSize(null, true));
+    assertEquals(1, getUndoManager().getStackSize(null, false));
+    getUndoManager().dropHistoryInTests();
+    assertEquals(0, getUndoManager().getStackSize(null, true));
+    assertEquals(0, getUndoManager().getStackSize(null, false));
+  }
+
+  private void undo() {
+    UndoManagerImpl undoManager = getUndoManager();
+    FileEditor fileEditor = undoManager.getEditorProvider().getCurrentEditor(getProject());
+    assertTrue(undoManager.isUndoAvailable(fileEditor));
+    undoManager.undo(fileEditor);
+  }
+
+  private void runWithCurrentEditor(FileEditor currentEditor, Runnable task) {
+    UndoManagerImpl undoManager = getUndoManager();
+    try {
+      undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+        @Override
+        public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+          return currentEditor;
+        }
+      });
+      task.run();
+    }
+    finally {
+      undoManager.setOverriddenEditorProvider(null);
+    }
+  }
+
+  private UndoManagerImpl getUndoManager() {
+    return (UndoManagerImpl)UndoManager.getInstance(getProject());
+  }
+
+  private void executeUndoableAction(BasicUndoableAction action) {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> getUndoManager().undoableActionPerformed(action), "test", null,
+                                                  UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+  }
+
+  private static BasicUndoableAction createUndoableAction(DocumentReference reference) {
+    return new BasicUndoableAction(reference) {
+      @Override
+      public void undo() {}
+      @Override
+      public void redo() {}
+    };
+  }
+
+  private static GlobalUndoableAction createGlobalUndoableAction() {
+    return new GlobalUndoableAction() {
+      @Override
+      public void undo() {}
+      @Override
+      public void redo() {}
+    };
+  }
+
+  private static DocumentReference createDocumentReference(Document document) {
+    return new DocumentReference() {
+      @Override
+      public @NotNull Document getDocument() {
+        return document;
+      }
+
+      @Override
+      public @Nullable VirtualFile getFile() {
+        return null;
+      }
+    };
+  }
+
+  private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
+    private final JComponent myComponent = new JPanel();
+    private final VirtualFile myFile;
+    private final Document[] myDocuments;
+
+    private IncorrectFileEditor(VirtualFile file, @NotNull Document @NotNull ... documents) {
+      myFile = file;
+      myDocuments = documents;
+    }
+
+    @Override
+    public @NotNull VirtualFile getFile() {
+      return myFile;
+    }
+    @Override
+    public @NotNull Document @NotNull [] getDocuments() {
+      return myDocuments;
+    }
+
+    @Override
+    public @NotNull JComponent getComponent() {
+      return myComponent;
+    }
+
+    @Override
+    public @Nullable JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return "testEditor";
+    }
+
+    @Override
+    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
+      return new State();
+    }
+
+    @Override
+    public void setState(@NotNull FileEditorState state) {}
+
+    @Override
+    public boolean isModified() {
+      return false;
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
+    }
+
+    @Override
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {}
+
+    @Override
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {}
+
+    @Override
+    public void dispose() {}
+
+    private static class State implements FileEditorState {
+      @Override
+      public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
+        return false;
+      }
+    }
+  }
+}

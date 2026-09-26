@@ -1,0 +1,39 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
+                    interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
+                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
+
+  <!--from intellij.java.psi.impl.xml-->
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlReferencesModuleReachability (module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
+    <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
+                 description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
+    <!--suppress PluginXmlReferencesModuleReachability (module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
+    <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
+                 description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
+  </extensions>
+
+
+</idea-plugin>

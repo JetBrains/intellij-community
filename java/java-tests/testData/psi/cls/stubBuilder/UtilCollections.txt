@@ -1,4 +1,5 @@
 PsiJavaFileStub [java.util]
+  PsiPackageStatementStub[java.util]
   PsiClassStub[name=Collections fqn=java.util.Collections]
     PsiModifierListStub[mask=1]
     PsiTypeParameterListStub
@@ -1026,15 +1027,6 @@ PsiJavaFileStub [java.util]
           PsiTypeParameterListStub
           PsiRefListStub[EXTENDS_LIST:]
           PsiRefListStub[IMPLEMENTS_LIST:java.util.Iterator<java.util.Map.Entry<K,V>>]
-          PsiMethodStub[cons 1:void]
-            PsiModifierListStub[mask=4096]
-            PsiTypeParameterListStub
-            PsiParameterListStub
-              PsiParameterStub[p2:java.util.Iterator]
-                PsiModifierListStub[mask=0]
-              PsiParameterStub[p3:java.lang.Class]
-                PsiModifierListStub[mask=0]
-            PsiRefListStub[THROWS_LIST:]
           PsiMethodStub[hasNext:boolean]
             PsiModifierListStub[mask=1]
             PsiTypeParameterListStub
@@ -1361,13 +1353,6 @@ PsiJavaFileStub [java.util]
         PsiTypeParameterListStub
         PsiRefListStub[EXTENDS_LIST:]
         PsiRefListStub[IMPLEMENTS_LIST:java.util.ListIterator<E>]
-        PsiMethodStub[cons 1:void]
-          PsiModifierListStub[mask=4096]
-          PsiTypeParameterListStub
-          PsiParameterListStub
-            PsiParameterStub[p2:java.util.ListIterator]
-              PsiModifierListStub[mask=0]
-          PsiRefListStub[THROWS_LIST:]
         PsiMethodStub[hasNext:boolean]
           PsiModifierListStub[mask=1]
           PsiTypeParameterListStub
@@ -1618,13 +1603,6 @@ PsiJavaFileStub [java.util]
         PsiTypeParameterListStub
         PsiRefListStub[EXTENDS_LIST:]
         PsiRefListStub[IMPLEMENTS_LIST:java.util.Iterator<E>]
-        PsiMethodStub[cons 1:void]
-          PsiModifierListStub[mask=4096]
-          PsiTypeParameterListStub
-          PsiParameterListStub
-            PsiParameterStub[p2:java.util.Iterator]
-              PsiModifierListStub[mask=0]
-          PsiRefListStub[THROWS_LIST:]
         PsiMethodStub[hasNext:boolean]
           PsiModifierListStub[mask=1]
           PsiTypeParameterListStub
@@ -2493,11 +2471,6 @@ PsiJavaFileStub [java.util]
           PsiRefListStub[IMPLEMENTS_LIST:java.util.Iterator<java.util.Map.Entry<K,V>>]
           PsiFieldStub[i:java.util.Iterator<? extends java.util.Map.Entry<? extends K,? extends V>>]
             PsiModifierListStub[mask=18]
-          PsiMethodStub[cons 1:void]
-            PsiModifierListStub[mask=4096]
-            PsiTypeParameterListStub
-            PsiParameterListStub
-            PsiRefListStub[THROWS_LIST:]
           PsiMethodStub[hasNext:boolean]
             PsiModifierListStub[mask=1]
             PsiTypeParameterListStub
@@ -2714,13 +2687,6 @@ PsiJavaFileStub [java.util]
         PsiRefListStub[IMPLEMENTS_LIST:java.util.ListIterator<E>]
         PsiFieldStub[i:java.util.ListIterator<? extends E>]
           PsiModifierListStub[mask=18]
-        PsiMethodStub[cons 1:void]
-          PsiModifierListStub[mask=4096]
-          PsiTypeParameterListStub
-          PsiParameterListStub
-            PsiParameterStub[p2:int]
-              PsiModifierListStub[mask=0]
-          PsiRefListStub[THROWS_LIST:]
         PsiMethodStub[hasNext:boolean]
           PsiModifierListStub[mask=1]
           PsiTypeParameterListStub
@@ -2972,11 +2938,6 @@ PsiJavaFileStub [java.util]
         PsiRefListStub[IMPLEMENTS_LIST:java.util.Iterator<E>]
         PsiFieldStub[i:java.util.Iterator<? extends E>]
           PsiModifierListStub[mask=18]
-        PsiMethodStub[cons 1:void]
-          PsiModifierListStub[mask=4096]
-          PsiTypeParameterListStub
-          PsiParameterListStub
-          PsiRefListStub[THROWS_LIST:]
         PsiMethodStub[hasNext:boolean]
           PsiModifierListStub[mask=1]
           PsiTypeParameterListStub
@@ -3103,13 +3064,6 @@ PsiJavaFileStub [java.util]
       PsiRefListStub[IMPLEMENTS_LIST:java.util.Enumeration<T>]
       PsiFieldStub[i:java.util.Iterator<T>]
         PsiModifierListStub[mask=18]
-      PsiMethodStub[cons 2:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-          PsiParameterStub[p1:java.util.Collection]
-            PsiModifierListStub[mask=0]
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[hasMoreElements:boolean]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -3127,13 +3081,6 @@ PsiJavaFileStub [java.util]
       PsiRefListStub[IMPLEMENTS_LIST:java.util.Iterator<E>]
       PsiFieldStub[hasNext:boolean]
         PsiModifierListStub[mask=2]
-      PsiMethodStub[cons 1:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-          PsiParameterStub[p1:java.lang.Object]
-            PsiModifierListStub[mask=0]
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[hasNext:boolean]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub

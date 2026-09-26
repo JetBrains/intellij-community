@@ -1,0 +1,9 @@
+// "Remove 'const' modifier" "true"
+// K2_ERROR: TYPE_CANT_BE_USED_FOR_CONST_VAL
+
+class Foo
+
+object Test {
+    val c = Foo()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

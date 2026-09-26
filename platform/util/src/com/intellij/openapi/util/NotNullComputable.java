@@ -15,23 +15,19 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Nikolay Matveev
+ * Obsolete, use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
  */
-public interface NotNullComputable<T> extends Computable<T> {
+@ApiStatus.Obsolete
+@FunctionalInterface
+public interface NotNullComputable<T> extends Computable<@NotNull T> {
 
   @Override
   @NotNull
   T compute();
 
-  NotNullComputable<Boolean> TRUE = new NotNullComputable<Boolean>() {
-
-    @NotNull
-    @Override
-    public Boolean compute() {
-      return Boolean.TRUE;
-    }
-  };
+  NotNullComputable<Boolean> TRUE = () -> Boolean.TRUE;
 }

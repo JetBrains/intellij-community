@@ -17,13 +17,28 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiContinueStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
+@ApiStatus.Internal
 class JavaUContinueExpression(
-  override val psi: PsiContinueStatement,
+  override val sourcePsi: PsiContinueStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UContinueExpression {
+
+  private val jumpTargetPart = UastLazyPart<UElement?>()
+
   override val label: String?
-    get() = psi.labelIdentifier?.text
+    get() = sourcePsi.labelIdentifier?.text
+
+  override val jumpTarget: UElement?
+    get() = jumpTargetPart.getOrBuild {
+      sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let {
+        JavaConverter.convertStatement(it, null, UExpression::class.java)
+      }
+    }
 }

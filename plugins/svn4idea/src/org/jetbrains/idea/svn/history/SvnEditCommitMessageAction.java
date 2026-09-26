@@ -1,13 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -18,7 +19,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +30,14 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-public class SvnEditCommitMessageAction extends AnAction {
+public class SvnEditCommitMessageAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
@@ -47,7 +50,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     askAndEditRevision(svnList.getNumber(), svnList.getComment(), svnList.getLocation(), project, listener, false);
   }
 
-  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<String> listener, final boolean fromVersionControl) {
+  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<? super String> listener, final boolean fromVersionControl) {
     final SvnEditCommitMessageDialog dialog = new SvnEditCommitMessageDialog(project, number, oldComment);
     dialog.show();
     if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
@@ -58,11 +61,16 @@ public class SvnEditCommitMessageAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
-    boolean visible = enabled;
+    boolean visible;
     Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) {
       visible = VcsDataKeys.REMOTE_HISTORY_LOCATION.getData(dc) instanceof SvnRepositoryLocation;
@@ -93,7 +101,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     private final String myNewMessage;
     private final SvnRepositoryLocation myLocation;
     private final long myNumber;
-    private final Consumer<String> myListener;
+    private final Consumer<? super String> myListener;
     private final boolean myFromVersionControl;
     private VcsException myException;
     private final SvnVcs myVcs;
@@ -102,9 +110,9 @@ public class SvnEditCommitMessageAction extends AnAction {
                     final String newMessage,
                     final SvnRepositoryLocation location,
                     final long number,
-                    Consumer<String> listener,
+                    Consumer<? super String> listener,
                     boolean fromVersionControl) {
-      super(project, "Edit Revision Comment");
+      super(project, message("progress.title.edit.revision.comment"));
       myNewMessage = newMessage;
       myLocation = location;
       myNumber = number;
@@ -120,7 +128,7 @@ public class SvnEditCommitMessageAction extends AnAction {
       try {
         root = SvnUtil.getRepositoryRoot(myVcs, createUrl(url));
         if (root == null) {
-          myException = new VcsException("Can not determine repository root for URL: " + url);
+          myException = new VcsException(message("error.can.not.find.repository.root.for.url", url));
           return;
         }
         Target target = Target.on(root);
@@ -135,20 +143,21 @@ public class SvnEditCommitMessageAction extends AnAction {
     @Override
     public void onSuccess() {
       if (myException != null) {
-        AbstractVcsHelper.getInstance(myProject).showError(myException, myTitle);
+        AbstractVcsHelper.getInstance(myProject).showError(myException, message("tab.title.edit.revision.comment"));
       } else {
         if (myListener != null) {
           myListener.consume(myNewMessage);
         }
-        if (! myProject.isDefault()) {
-          CommittedChangesCache.getInstance(myProject).commitMessageChanged(myVcs, myLocation, myNumber, myNewMessage);
+        if (!myProject.isDefault()) {
+          CommittedChangesCache.getInstance(myProject).commitMessageChanged(myLocation, myNumber, myNewMessage);
         }
+
+        String message = message("notification.content.revision.commit.message.changed.to", myNumber, myNewMessage);
         if (myFromVersionControl) {
-          VcsBalloonProblemNotifier.showOverVersionControlView(myProject, "Revision #" + myNumber + " comment " +
-                                                                          "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
-        } else {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Revision #" + myNumber + " comment " +
-                                                                   "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
+          showOverVersionControlView(myProject, message, MessageType.INFO);
+        }
+        else {
+          showOverChangesView(myProject, message, MessageType.INFO);
         }
       }
     }

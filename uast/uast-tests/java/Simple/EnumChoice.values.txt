@@ -21,3 +21,6 @@ UFile (package = ) [public final enum EnumChoice {...]
                             USimpleNameReferenceExpression (identifier = SECOND) [SECOND] = SECOND (enum entry)
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Phi(FIRST (enum entry), SECOND (enum entry)))
+        UMethod (name = values) [public static fun values() : EnumChoice[] = UastEmptyExpression]
+        UMethod (name = valueOf) [public static fun valueOf(name: java.lang.String) : EnumChoice = UastEmptyExpression]
+            UParameter (name = name) [var name: java.lang.String]

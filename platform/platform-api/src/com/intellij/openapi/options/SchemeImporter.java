@@ -1,12 +1,14 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides functionality to import a scheme from another non-IntelliJ IDEA format.
+ * Provides functionality to import a scheme from another non-IntelliJ format.
  * 
  * @author Rustam Vishnyakov
  */
@@ -15,8 +17,7 @@ public interface SchemeImporter <T extends Scheme> {
   /**
    * @return An extension of a source file which can be imported, for example, "xml".
    */
-  @NotNull
-  String[] getSourceExtensions();
+  String @NotNull [] getSourceExtensions();
 
   /**
    * Import a scheme from the given virtual file
@@ -31,8 +32,8 @@ public interface SchemeImporter <T extends Scheme> {
   @Nullable
   T importScheme(@NotNull Project project,
                  @NotNull VirtualFile selectedFile,
-                 @NotNull T currentScheme, 
-                 @NotNull SchemeFactory<T> schemeFactory) throws SchemeImportException;
+                 @NotNull T currentScheme,
+                 @NotNull SchemeFactory<? extends T> schemeFactory) throws SchemeImportException;
 
   /**
    * Called after the scheme has been imported.
@@ -40,8 +41,14 @@ public interface SchemeImporter <T extends Scheme> {
    * @param scheme The imported scheme.
    * @return An information message to be displayed after import.
    */
-  @Nullable
-  default String getAdditionalImportInfo(@NotNull T scheme) {
+  default @Nullable @NlsContexts.NotificationContent String getAdditionalImportInfo(@NotNull T scheme) {
+    return null;
+  }
+
+  /**
+   * @return File to import scheme. If {@code null}, file chooser is shown.
+   */
+  default @Nullable VirtualFile getImportFile() {
     return null;
   }
 }

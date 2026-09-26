@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -35,23 +19,28 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class TagNameVariantCollector {
+public final class TagNameVariantCollector {
 
   public static List<XmlElementDescriptor> getTagDescriptors(final XmlTag element,
                                                              final Collection<String> namespaces,
-                                                             @Nullable List<String> nsInfo) {
+                                                             @Nullable List<? super String> nsInfo) {
 
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = element.getNamespacePrefix().isEmpty() ? null : element.getNamespace();
 
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<>();
-    PsiElement context = element.getParent();
-    PsiElement curElement = element.getParent();
+    XmlTag context = element.getParentTag();
+    XmlTag declarationTag = context;
 
-    while(curElement instanceof XmlTag){
-      final XmlTag declarationTag = (XmlTag)curElement;
+    while(declarationTag != null){
       final String namespace = declarationTag.getNamespace();
 
       if(!descriptorsMap.containsKey(namespace)) {
@@ -67,7 +56,7 @@ public class TagNameVariantCollector {
           }
         }
       }
-      curElement = curElement.getContext();
+      declarationTag = declarationTag.getParentTag();
     }
 
     final Set<XmlNSDescriptor> visited = new HashSet<>();
@@ -76,7 +65,7 @@ public class TagNameVariantCollector {
     for (final String namespace: namespaces) {
       final int initialSize = variants.size();
       processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
-                                 context instanceof XmlTag ? (XmlTag)context : element, extension);
+                                 context != null ? context : element, extension);
       if (nsInfo != null) {
         for (int i = initialSize; i < variants.size(); i++) {
           XmlElementDescriptor descriptor = variants.get(i);
@@ -102,11 +91,11 @@ public class TagNameVariantCollector {
 
   private static void processVariantsInNamespace(final String namespace,
                                                  final XmlTag element,
-                                                 final List<XmlElementDescriptor> variants,
+                                                 final List<? super XmlElementDescriptor> variants,
                                                  final XmlElementDescriptor elementDescriptor,
                                                  final String elementNamespace,
                                                  final Map<String, XmlElementDescriptor> descriptorsMap,
-                                                 final Set<XmlNSDescriptor> visited,
+                                                 final Set<? super XmlNSDescriptor> visited,
                                                  XmlTag parent,
                                                  final XmlExtension extension) {
     if(descriptorsMap.containsKey(namespace)){
@@ -176,7 +165,9 @@ public class TagNameVariantCollector {
     if (XmlUtil.nsFromTemplateFramework(childNamespace)) return true;
     if (parentTag == null) return true;
     if (parentDescriptor == null) return false;
-    final XmlTag childTag = parentTag.createChildTag(childDescriptor.getName(), childNamespace, null, false);
+    String name = childDescriptor.getName();
+    if (name == null) return false;
+    final XmlTag childTag = parentTag.createChildTag(name, childNamespace, null, false);
     childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
     XmlElementDescriptor descriptor = parentDescriptor.getElementDescriptor(childTag, parentTag);
     return descriptor != null && (!strict || !(descriptor instanceof AnyXmlElementDescriptor));

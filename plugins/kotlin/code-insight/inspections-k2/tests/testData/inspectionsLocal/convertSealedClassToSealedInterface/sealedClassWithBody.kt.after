@@ -1,0 +1,5 @@
+// FIX: Convert to sealed interface
+sealed interface Event {
+    class Click : Event
+    class Scroll : Event
+}

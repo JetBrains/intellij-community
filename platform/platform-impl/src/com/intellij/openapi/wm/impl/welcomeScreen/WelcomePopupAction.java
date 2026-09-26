@@ -1,43 +1,39 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+@ApiStatus.Internal
 public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract void fillActions(DefaultActionGroup group);
 
-  protected abstract String getTextForEmpty();
+  protected abstract @NlsActions.ActionText String getTextForEmpty();
 
-  protected abstract String getCaption();
+  protected abstract @NlsContexts.PopupTitle String getCaption();
 
   /**
    * When there is only one option to choose from, this method is called to determine whether
@@ -48,16 +44,17 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
    */
   protected abstract boolean isSilentlyChooseSingleOption();
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     showPopup(e);
   }
 
-  private void showPopup(final AnActionEvent e) {
+  private void showPopup(@NotNull AnActionEvent e) {
     final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(group);
 
     if (group.getChildrenCount() == 1 && isSilentlyChooseSingleOption()) {
-      final AnAction[] children = group.getChildren(null);
+      AnAction[] children = group.getChildren(e.getActionManager());
       children[0].actionPerformed(e);
       return;
     }
@@ -65,7 +62,8 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
     if (group.getChildrenCount() == 0) {
       group.add(new AnAction(getTextForEmpty()) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           group.setPopup(false);
         }
       } );
@@ -91,7 +89,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   }
 
   protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
-    Component focusedComponent = contextComponent != null ? contextComponent : PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    Component focusedComponent = contextComponent != null ? contextComponent : PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       if (popup instanceof PopupFactoryImpl.ActionGroupPopup && focusedComponent instanceof JLabel) {
         ((PopupFactoryImpl.ActionGroupPopup)popup).showUnderneathOfLabel((JLabel)focusedComponent);

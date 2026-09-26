@@ -1,65 +1,51 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 
-/**
- * @author yole
- */
-public class IssueLinkHtmlRenderer {
+public final class IssueLinkHtmlRenderer {
   private IssueLinkHtmlRenderer() {
   }
 
-  public static String formatTextIntoHtml(final Project project, final String c) {
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" +
-           formatTextWithLinks(project, c) + "</body></html>";
+  /**
+   * WARNING: hard codes current LaF into the text foreground.
+   */
+  public static @Nls @NotNull String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
+    // todo: use com.intellij.openapi.util.text.HtmlBuilder
+    return "<html><head>" + UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont(), UIUtil.getLabelForeground(), // NON-NLS
+                                                         JBUI.CurrentTheme.Link.Foreground.ENABLED, null) + "</head><body>" + // NON-NLS
+           formatTextWithLinks(project, c) + "</body></html>"; // NON-NLS
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(Project project, String str, Convertor<String, String> convertor) {
+  public static @NotNull @Nls String formatTextWithLinks(@NotNull Project project,
+                                                         @NotNull @Nls String str,
+                                                         @NotNull Convertor<@Nls ? super String, @Nls String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
-    String comment = XmlStringUtil.escapeString(str, false);
-
-    StringBuilder commentBuilder = new StringBuilder();
-    IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
-    final List<IssueNavigationConfiguration.LinkMatch> list = config.findIssueLinks(comment);
-    int pos = 0;
-    for(IssueNavigationConfiguration.LinkMatch match: list) {
-      TextRange range = match.getRange();
-      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"").append(match.getTargetUrl()).append("\">");
-      commentBuilder.append(range.substring(comment)).append("</a>");
-      pos = range.getEndOffset();
-    }
-    commentBuilder.append(convertor.convert(comment.substring(pos)));
-    comment = commentBuilder.toString();
-
-    return comment.replace("\n", "<br>");
+    @Nls StringBuilder commentBuilder = new StringBuilder();
+    String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
+    IssueNavigationConfiguration.processTextWithLinks(comment, IssueNavigationConfiguration.getInstance(project).findIssueLinks(comment),
+                                                      s -> commentBuilder.append(convertor.convert(s)),
+                                                      (text, target) -> {
+                                                        commentBuilder
+                                                          .append("<a href=\"")
+                                                          .append(target).append("\">")
+                                                          .append(text).append("</a>");
+                                                      });
+    return commentBuilder.toString().replace("\n", UIUtil.BR);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(final Project project, final String c) {
-    return formatTextWithLinks(project, c, Convertor.SELF);
+  public static @NotNull @Nls String formatTextWithLinks(@NotNull Project project, @NotNull @Nls String c) {
+    return formatTextWithLinks(project, c, Convertor.self());
   }
 }

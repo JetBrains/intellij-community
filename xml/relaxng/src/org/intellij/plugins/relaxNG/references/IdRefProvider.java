@@ -45,8 +45,7 @@ public class IdRefProvider extends PsiReferenceProvider {
   public static final HasIdTypeCondition HAS_ID_TYPE = new HasIdTypeCondition();
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
 
     if (hasIdRefType(value)) {
@@ -69,7 +68,7 @@ public class IdRefProvider extends PsiReferenceProvider {
 
     private final AttributeValueCondition myCondition;
 
-    public IdReference(XmlAttributeValue element) {
+    IdReference(XmlAttributeValue element) {
       super(element, TextRange.from(1, element.getTextLength() - 2), true);
       myCondition = new AttributeValueCondition(element.getValue());
     }
@@ -79,7 +78,7 @@ public class IdRefProvider extends PsiReferenceProvider {
       final ProcessingContext context = new ProcessingContext();
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(myCondition).save(TARGET), context) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           super.visitXmlTag(tag);
           if (shouldContinue()) {
             visitSubTags(tag);
@@ -104,14 +103,13 @@ public class IdRefProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final ProcessingContext context = new ProcessingContext();
       context.put(VARIANTS, new HashSet<>());
 
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(AddValueCondition.create(VARIANTS)), context) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           super.visitXmlTag(tag);
           visitSubTags(tag);
         }
@@ -134,7 +132,7 @@ public class IdRefProvider extends PsiReferenceProvider {
   }
 
   static class HasIdTypeCondition extends PatternCondition<XmlAttributeValue> {
-    public HasIdTypeCondition() {
+    HasIdTypeCondition() {
       super("IdType");
     }
 
@@ -145,7 +143,7 @@ public class IdRefProvider extends PsiReferenceProvider {
   }
 
   static class HasIdRefTypeCondition extends PatternCondition<XmlAttributeValue> {
-    public HasIdRefTypeCondition() {
+    HasIdRefTypeCondition() {
       super("IdRef");
     }
 

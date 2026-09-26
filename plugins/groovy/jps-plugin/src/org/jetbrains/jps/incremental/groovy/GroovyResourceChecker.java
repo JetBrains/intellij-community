@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.Key;
@@ -22,7 +8,11 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.Builder;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -31,28 +21,34 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author peter
- */
-public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
+public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
   public static final Key<Boolean> CHECKING_RESOURCES_REBUILD = Key.create("CHECKING_RESOURCES");
 
   public GroovyResourceChecker() {
     super(CheckResourcesTarget.TARGET_TYPES);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
-    return "Groovy Resource Checker";
+  public @NotNull String getPresentableName() {
+    return GroovyJpsBundle.message("builder.resource.checker");
   }
 
   @Override
-  public void build(@NotNull final CheckResourcesTarget target,
+  public long getExpectedBuildTime() {
+    return 50;
+  }
+
+  @Override
+  public void build(@NotNull CheckResourcesTarget target,
                     @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
-                    @NotNull final BuildOutputConsumer outputConsumer,
+                    @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (context.getBuilderParameter(CHECKING_RESOURCES_REBUILD.toString()) == null) {
       return;
@@ -66,23 +62,21 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     });
   }
 
-  @NotNull
-  private static ModuleChunk singleModuleChunk(final JpsModule module) {
+  private static @NotNull ModuleChunk singleModuleChunk(final JpsModule module) {
     return new ModuleChunk(Collections.singleton(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)));
   }
 
-  private static class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
-
+  private static final class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
     private final CheckResourcesTarget myTarget;
 
-    public ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
+    ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
       super(false);
       myTarget = target;
     }
 
     @Override
     protected Map<CheckResourcesTarget, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
-      return Collections.singletonMap(myTarget, myTarget.getOutputRoot(context).getPath());
+      return Map.of(myTarget, myTarget.getOutputRoot(context).toString());
     }
 
     @Override
@@ -94,7 +88,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     }
 
     @Override
-    protected boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {
+    protected boolean checkChunkRebuildNeeded(CompileContext context, GroovyCompilerResult result) {
       return false;
     }
 
@@ -107,8 +101,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
       return paths;
     }
 
-    @NotNull
-    private List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
+    private @NotNull List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
       List<File> resourceOutputs = new ArrayList<>();
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myTarget.getModule()).
         includedIn(JpsJavaClasspathKind.compile(tests)).

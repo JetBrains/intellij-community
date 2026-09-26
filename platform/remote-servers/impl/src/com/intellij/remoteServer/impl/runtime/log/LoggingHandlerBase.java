@@ -17,7 +17,7 @@ package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class LoggingHandlerBase implements Disposable {
 
@@ -33,7 +33,13 @@ public abstract class LoggingHandlerBase implements Disposable {
 
   public abstract JComponent getComponent();
 
+  public JComponent getPreferredFocusableComponent() {
+    return getComponent();
+  }
+
   public abstract boolean isClosed();
+
+  public abstract void close();
 
   @Override
   public void dispose() {

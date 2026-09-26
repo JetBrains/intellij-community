@@ -1,42 +1,69 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class StackFramePopup {
-  public static void show(@NotNull List<StackFrameItem> stack, DebugProcessImpl debugProcess) {
-    StackFrameList list = new StackFrameList(debugProcess);
-    list.setFrameItems(stack, () -> DebuggerUIUtil.invokeLater(() -> {
+public final class StackFramePopup {
+  /**
+   * @param stack can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  public static void show(@NotNull List<@Nullable StackFrameItem> stack, DebugProcessImpl debugProcess) {
+    // By default, show in the focus center and select the second element (usually it's a constructor call site).
+    show(stack, debugProcess, null, 1);
+  }
+
+  /**
+   * @param stack can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  public static void show(@NotNull List<@Nullable StackFrameItem> stack,
+                          DebugProcessImpl debugProcess,
+                          @Nullable RelativePoint point,
+                          int selectedIndex) {
+    StackFrameList list = new StackFrameList(debugProcess.getProject());
+    list.setFrameItems(stack, debugProcess,
+                       showPopupOnDone(point, selectedIndex, list));
+  }
+
+  /**
+   * @param stack can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  public static void show(@NotNull List<@Nullable XStackFrame> stack,
+                          @NotNull Project project,
+                          @Nullable RelativePoint point,
+                          int selectedIndex) {
+    StackFrameList list = new StackFrameList(project);
+    list.setFrameItems(stack,
+                       showPopupOnDone(point, selectedIndex, list));
+  }
+
+  private static @NotNull Runnable showPopupOnDone(@Nullable RelativePoint point, int selectedIndex, StackFrameList list) {
+    return () -> DebuggerUIUtil.invokeLater(() -> {
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-        .setTitle("Select stack frame")
+        .setTitle(JavaDebuggerBundle.message("select.stack.frame"))
         .setAutoSelectIfEmpty(true)
         .setResizable(false)
-        .setItemChoosenCallback(() -> list.navigateToSelectedValue(true))
+        .setItemChosenCallback(() -> list.navigateToSelectedValue(true))
         .createPopup();
 
-      list.setSelectedIndex(1);
-      popup.showInFocusCenter();
-    }));
+      list.setSelectedIndex(selectedIndex);
+      if (point != null) {
+        popup.show(point);
+      }
+      else {
+        popup.showInFocusCenter();
+      }
+    });
   }
 }

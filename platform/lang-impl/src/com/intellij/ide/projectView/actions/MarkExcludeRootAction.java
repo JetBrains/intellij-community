@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.module.Module;
@@ -23,26 +10,33 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.ide.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import java.util.stream.Stream;
+
 public class MarkExcludeRootAction extends MarkRootActionBase {
   public MarkExcludeRootAction() {
     super(null, null, AllIcons.Modules.ExcludeRoot);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files == null || files.length == 0) {
+      return;
+    }
 
     if (Registry.is("ide.hide.excluded.files")) {
-      String message = files.length == 1 ? FileUtil.toSystemDependentName(files[0].getPath()) : files.length + " selected files";
-      final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",
+      String message = files.length == 1
+                       ? FileUtil.toSystemDependentName(files[0].getPath())
+                       : LangBundle.message("dialog.message.selected.files", files.length);
+      final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT), getPromptText(message),
+                                                 LangBundle.message("dialog.title.mark.as.excluded"),
                                                  Messages.getQuestionIcon());
       if (rc != Messages.OK) {
         return;
@@ -51,18 +45,26 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
     super.actionPerformed(e);
   }
 
-  protected String getPromptText(String message) {
-    return "Are you sure you would like to exclude " + message +
-           " from the project?\nYou can restore excluded directories later using the Project Structure dialog.";
+  protected @NlsContexts.DialogMessage String getPromptText(@NlsContexts.DialogMessage String message) {
+    return LangBundle.message("dialog.message.are.you.sure.you.would.like.to.exclude", message);
   }
 
+  @Override
   protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
-    entry.addExcludeFolder(vFile);
+    if (!OptionalExclusionUtil.exclude(entry.getRootModel().getModule().getProject(), vFile)) {
+      entry.addExcludeFolder(vFile);
+    }
+  }
+
+  @Override
+  protected boolean acceptsFiles() {
+    return true;
   }
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
     ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-    return selection.mySelectedDirectories.stream().allMatch(file -> index.isInContent(file));
+    return Stream.concat(selection.mySelectedDirectories.stream(), selection.mySelectedFiles.stream())
+      .allMatch(index::isInContent);
   }
 }

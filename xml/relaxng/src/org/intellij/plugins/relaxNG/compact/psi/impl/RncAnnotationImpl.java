@@ -35,13 +35,12 @@ public class RncAnnotationImpl extends RncElementImpl implements RncAnnotation {
   }
 
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return getNode().getElementType();
   }
 
   @Override
-  @Nullable
-  public RncName getNameElement() {
+  public @Nullable RncName getNameElement() {
     return findChildByClass(RncName.class);
   }
 }

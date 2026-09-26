@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="JUnit5Launcher" type="repository">
+        <properties maven-id="org.junit.platform:junit-platform-launcher:1.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4.jar">
+              <sha256sum>768d62f1b2a523713b702db53609c230af62bbd645fc2c07a7d794df4da32228</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4.jar">
+              <sha256sum>3c7f3f84a6747aef0db6bd5fdd2a6c8fe37132e653c939bd67387377af66d91c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
+            <dependency maven-id="org.junit.platform:junit-platform-commons" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.14.4/junit-platform-launcher-1.14.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
+  </component>
+</module>

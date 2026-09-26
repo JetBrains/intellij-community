@@ -1,0 +1,6 @@
+// FIX: Convert to sealed class
+sealed class Result {
+    private fun helper() = println("private")
+    open fun process() = helper()
+}
+class Success : Result()

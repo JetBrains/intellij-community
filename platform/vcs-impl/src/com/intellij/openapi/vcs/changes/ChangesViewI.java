@@ -20,16 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public interface ChangesViewI {
   void scheduleRefresh();
   void selectFile(VirtualFile vFile);
-  void selectChanges(@NotNull List<Change> changes);
-  void refreshChangesViewNodeAsync(VirtualFile file);
-  void updateProgressText(final String text, final boolean isError);
-  void setBusy(boolean b);
+  void selectChanges(@NotNull List<? extends Change> changes);
 
   void setGrouping(@NotNull String groupingKey);
 }

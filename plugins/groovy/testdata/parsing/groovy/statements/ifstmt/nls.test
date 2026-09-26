@@ -15,10 +15,10 @@ Groovy script
     PsiElement(if)('if')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     Reference expression
       PsiElement(identifier)('condition')
-    PsiWhiteSpace('\n')
+    PsiElement(new line)('\n')
     PsiElement())(')')
     PsiElement(new line)('\n\n\n')
     Reference expression

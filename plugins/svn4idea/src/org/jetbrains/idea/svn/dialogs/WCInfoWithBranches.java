@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,8 +9,8 @@ import java.util.List;
 
 public class WCInfoWithBranches extends WCInfo {
 
-  @NotNull private final List<Branch> myBranches;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull List<Branch> myBranches;
+  private final @NotNull VirtualFile myRoot;
   private final Branch myCurrentBranch;
 
   public WCInfoWithBranches(@NotNull WCInfo info, @NotNull List<Branch> branches, @NotNull VirtualFile root, Branch currentBranch) {
@@ -28,21 +28,18 @@ public class WCInfoWithBranches extends WCInfo {
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVcsRoot() {
+  public @NotNull VirtualFile getVcsRoot() {
     return myRoot;
   }
 
   /**
    * List of all branches according to branch configuration. Does not contain {@code getCurrentBranch()} branch.
    */
-  @NotNull
-  public List<Branch> getBranches() {
+  public @NotNull List<Branch> getBranches() {
     return myBranches;
   }
 
-  @NotNull
-  public VirtualFile getRoot() {
+  public @NotNull VirtualFile getRoot() {
     return myRoot;
   }
 
@@ -54,19 +51,17 @@ public class WCInfoWithBranches extends WCInfo {
   }
 
   public static class Branch {
-    @NotNull private final Url myUrl;
+    private final @NotNull Url myUrl;
 
     public Branch(@NotNull Url url) {
       myUrl = url;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myUrl.getTail();
     }
 
-    @NotNull
-    public Url getUrl() {
+    public @NotNull Url getUrl() {
       return myUrl;
     }
 

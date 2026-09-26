@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame.presentation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,63 +26,85 @@ public abstract class XValuePresentation {
   /**
    * @return separator between name and value in a debugger tree
    */
-  @NotNull
-  public String getSeparator() {
+  public @NotNull @NlsSafe String getSeparator() {
     return DEFAULT_SEPARATOR;
+  }
+
+  /**
+   * @return false if you do not want the name of the node before the separator
+   */
+  public boolean isShowName() {
+    return true;
   }
 
   /**
    * @return optional type of the value, it is shown in gray color and surrounded by braces
    */
-  @Nullable
-  public String getType() {
+  public @Nullable @NlsSafe String getType() {
     return null;
   }
+
+  /**
+   * @return true if content retrieval is async
+   */
+  @ApiStatus.Internal
+  public boolean isAsync() { return false; }
+
+  /**
+   * A temporary presentation shows that the debugger still computes a more complete presentation.
+   * A client can show a loading state or omit a temporary presentation if it cannot update it asynchronously later.
+   * <p>
+   * {@code isTemporary=false} does not mean that the presentation is final.
+   * A later update can change this value if the debugger backend decides to update the presentation again.
+   */
+  @ApiStatus.Internal
+  public boolean isTemporary() { return false; }
 
   public interface XValueTextRenderer {
     /**
      * Appends {@code value} with to the node text. Invisible characters are shown in escaped form.
      */
-    void renderValue(@NotNull String value);
+    void renderValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string
      */
-    void renderStringValue(@NotNull String value);
+    void renderStringValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} highlighted as a number
      */
-    void renderNumericValue(@NotNull String value);
+    void renderNumericValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} highlighted as a keyword
      */
-    void renderKeywordValue(@NotNull String value);
+    void renderKeywordValue(@NotNull @NlsSafe String value);
 
-    void renderValue(@NotNull String value, @NotNull TextAttributesKey key);
+    void renderValue(@NotNull @NlsSafe String value, @NotNull TextAttributesKey key);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string
-     * @param value value to be shown
+     *
+     * @param value                             value to be shown
      * @param additionalSpecialCharsToHighlight characters which should be highlighted in a special color
-     * @param maxLength maximum number of characters to show
+     * @param maxLength                         maximum number of characters to show
      */
-    void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength);
+    void renderStringValue(@NotNull @NlsSafe String value, @Nullable @NlsSafe String additionalSpecialCharsToHighlight, int maxLength);
 
     /**
      * Appends gray colored {@code comment}
      */
-    void renderComment(@NotNull String comment);
+    void renderComment(@NotNull @NlsSafe String comment);
 
     /**
      * Appends {@code symbol} which is not part of the value
      */
-    void renderSpecialSymbol(@NotNull String symbol);
+    void renderSpecialSymbol(@NotNull @NlsSafe String symbol);
 
     /**
      * Appends red colored {@code error}
      */
-    void renderError(@NotNull String error);
+    void renderError(@NotNull @NlsSafe String error);
   }
 }

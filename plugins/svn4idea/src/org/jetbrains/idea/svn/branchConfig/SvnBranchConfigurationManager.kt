@@ -1,53 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.VcsInitObject
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.ProgressManagerQueue
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
-import java.util.*
+import java.util.TreeMap
 
 private val LOG = logger<SvnBranchConfigurationManager>()
 
+@Service(Service.Level.PROJECT)
 @State(name = "SvnBranchConfigurationManager")
-class SvnBranchConfigurationManager(private val myProject: Project,
-                                    vcsManager: ProjectLevelVcsManager,
-                                    private val myStorage: SvnLoadedBranchesStorage) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
-  private val myVcsManager = vcsManager as ProjectLevelVcsManagerImpl
-  private val myBranchesLoader = ProgressManagerQueue(myProject, "Subversion Branches Preloader")
-  val svnBranchConfigManager: NewRootBunch = NewRootBunch(myProject, myBranchesLoader)
-  private var myIsInitialized = false
+internal class SvnBranchConfigurationManager(private val project: Project) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
+  private val branchesLoader = ProgressManagerQueue(project, message("progress.title.svn.branches.preloader"))
+  val svnBranchConfigManager: NewRootBunch = NewRootBunch(project, branchesLoader)
+  private var isInitialized = false
 
-  val supportValue: Long? get() = myConfigurationBean.myVersion
-  private var myConfigurationBean = ConfigurationBean()
+  val supportValue: Long?
+    get() = configurationBean.myVersion
 
-  init {
-    // TODO: Seems that ProgressManagerQueue is not suitable here at least for some branches loading tasks. For instance,
-    // TODO: for DefaultConfigLoader it would be better to run modal cancellable task - so branches structure could be detected and
-    // TODO: shown in dialog. Currently when "Configure Branches" is invoked for the first time - no branches are shown.
-    // TODO: If "Cancel" is pressed and "Configure Branches" invoked once again - already detected (in background) branches are shown.
-    myVcsManager.addInitializationRequest(VcsInitObject.BRANCHES) {
-      getApplication().runReadAction {
-        if (!myProject.isDisposed) myBranchesLoader.start()
-      }
-    }
-  }
+  private var configurationBean = ConfigurationBean()
 
   class ConfigurationBean {
     @JvmField
@@ -64,13 +51,12 @@ class SvnBranchConfigurationManager(private val myProject: Project,
   fun setConfiguration(vcsRoot: VirtualFile, configuration: SvnBranchConfigurationNew) {
     svnBranchConfigManager.updateForRoot(vcsRoot, InfoStorage(configuration, InfoReliability.setByUser), true)
 
-    SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration)
-    syncPublisher<VcsConfigurationChangeListener.Notification>(myProject, VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(
-      myProject, vcsRoot)
+    SvnBranchMapperManager.getInstance().notifyBranchesChanged(project, vcsRoot, configuration)
+    syncPublisher(project, BRANCHES_CHANGED).execute(project, vcsRoot)
   }
 
   override fun getState(): ConfigurationBean = ConfigurationBean().apply {
-    myVersion = myConfigurationBean.myVersion
+    myVersion = configurationBean.myVersion
 
     for (root in svnBranchConfigManager.mapCopy.keys) {
       val configuration = svnBranchConfigManager.getConfig(root)
@@ -85,23 +71,23 @@ class SvnBranchConfigurationManager(private val myProject: Project,
   }
 
   override fun loadState(state: ConfigurationBean) {
-    myConfigurationBean = state
+    configurationBean = state
   }
 
   @Synchronized
   private fun initialize() {
-    if (!myIsInitialized) {
-      myIsInitialized = true
+    if (!isInitialized) {
+      isInitialized = true
 
       preloadBranches(resolveAllBranchPoints())
     }
   }
 
   private fun resolveAllBranchPoints(): Set<Pair<VirtualFile, SvnBranchConfigurationNew>> {
-    val lfs = LocalFileSystem.getInstance()
+    val lfs = StandardFileSystems.local()
     val branchPointsToLoad = mutableSetOf<Pair<VirtualFile, SvnBranchConfigurationNew>>()
 
-    for ((path, persistedConfiguration) in myConfigurationBean.myConfigurationMap) {
+    for ((path, persistedConfiguration) in configurationBean.myConfigurationMap) {
       val root = lfs.refreshAndFindFileByPath(path)
 
       if (root != null) {
@@ -119,7 +105,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
   private fun resolveConfiguration(root: VirtualFile,
                                    persistedConfiguration: SvnBranchConfiguration,
                                    branchPointsToLoad: MutableSet<Pair<VirtualFile, SvnBranchConfigurationNew>>): SvnBranchConfigurationNew {
-    val userInfo = if (persistedConfiguration.isUserinfoInUrl) SvnVcs.getInstance(myProject).svnFileUrlMapping.getUrlForFile(
+    val userInfo = if (persistedConfiguration.isUserinfoInUrl) SvnVcs.getInstance(project).svnFileUrlMapping.getUrlForFile(
       virtualToIoFile(root))?.userInfo
     else null
     val result = SvnBranchConfigurationNew().apply {
@@ -128,11 +114,11 @@ class SvnBranchConfigurationManager(private val myProject: Project,
       isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
+    val storage = SvnLoadedBranchesStorage.getInstance(project)
     for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
-      val storedBranches = myStorage[branchLocation]?.sorted() ?: mutableListOf()
-
+      val storedBranches = storage.get(branchLocation)?.sorted() ?: mutableListOf()
       result.addBranches(branchLocation,
-                         InfoStorage(storedBranches, if (!storedBranches.isEmpty()) InfoReliability.setByUser else InfoReliability.empty))
+                         InfoStorage(storedBranches, if (storedBranches.isNotEmpty()) InfoReliability.setByUser else InfoReliability.empty))
       if (storedBranches.isEmpty()) {
         branchPointsToLoad.add(root to result)
       }
@@ -142,8 +128,12 @@ class SvnBranchConfigurationManager(private val myProject: Project,
   }
 
   private fun preloadBranches(branchPoints: Collection<Pair<VirtualFile, SvnBranchConfigurationNew>>) {
-    myVcsManager.addInitializationRequest(VcsInitObject.BRANCHES) {
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       getApplication().executeOnPooledThread {
+        runReadAction {
+          if (!project.isDisposed) branchesLoader.start()
+        }
+
         for ((root, configuration) in branchPoints) {
           svnBranchConfigManager.reloadBranches(root, null, configuration)
         }
@@ -183,6 +173,6 @@ class SvnBranchConfigurationManager(private val myProject: Project,
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SvnBranchConfigurationManager =
-      ServiceManager.getService(project, SvnBranchConfigurationManager::class.java)!!.apply { initialize() }
+      project.getService(SvnBranchConfigurationManager::class.java)!!.apply { initialize() }
   }
 }

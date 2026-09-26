@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.chain.positive;
 
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCallType;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.StreamCall;
+import com.intellij.debugger.streams.core.wrapper.StreamCallType;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -92,7 +92,7 @@ public class TerminationBuilderPositiveTest extends StreamChainBuilderPositiveTe
   @Override
   protected void checkResultChains(@NotNull List<StreamChain> chains) {
     assertFalse(chains.isEmpty());
-    final StreamChain chain = chains.get(0);
+    final StreamChain chain = chains.getFirst();
     final StreamCall terminationCall = chain.getTerminationCall();
     assertNotNull(terminationCall);
 

@@ -1,0 +1,4 @@
+MainKt.class
+public fun <T> <1>genericFunc(): T { /* compiled code */ }
+ kotlin.kotlin_builtins
+public final class <2>String public constructor() : kotlin.Comparable<kotlin.String>, kotlin.CharSequence {

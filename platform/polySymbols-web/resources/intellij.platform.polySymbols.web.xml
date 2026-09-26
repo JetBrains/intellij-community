@@ -1,0 +1,68 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.commons.compress"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesDefinitionsEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.filter"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.polySymbols.patterns.PolySymbolFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolTypeSupportFactory"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolTypeSupportFactory"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolFactory"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolFactoryEP"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolFactory"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <polySymbols.webTypes.filter
+      name="match-prefix"
+      implementation="com.intellij.polySymbols.webTypes.impl.PolySymbolMatchPrefixFilter"/>
+    <polySymbols.documentationCustomizer
+      id="web-types"
+      implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
+    <polySymbols.documentationCustomizer
+      id="html"
+      implementation="com.intellij.polySymbols.html.HtmlSymbolDocumentationCustomizer"/>
+    <polySymbols.defaultIconProvider
+      implementation="com.intellij.polySymbols.web.WebPolySymbolDefaultIconProvider"
+      order="last"/>
+    <polySymbols.matchCustomizerFactory
+      implementation="com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer$Factory"/>
+  </extensions>
+</idea-plugin>

@@ -4,4 +4,4 @@ class Test {
   }
 }
 def test=new Test()
-test+<ref>=2
+test+<caret>=2

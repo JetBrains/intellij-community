@@ -1,0 +1,61 @@
+//file:noinspection GrPackage
+import java.nio.file.Path
+import java.nio.file.Paths
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final String dependencyNotation = DEPENDENCY_NOTATION
+  //noinspection GrUnresolvedAccess
+  public static final String targetPath = TARGET_PATH
+  //noinspection GrUnresolvedAccess
+  public static final String gradleTaskName = GRADLE_TASK_NAME
+  @SuppressWarnings('GroovyAssignabilityCheck')
+  public static final Path projectPath = Paths.get(GRADLE_PROJECT_PATH)
+}
+
+allprojects {
+  afterEvaluate {
+    if (it.projectDir.toPath().normalize() == Properties.projectPath) {
+      configureProject(it)
+    }
+  }
+}
+
+private static void configureProject(Project project) {
+  project
+    .tasks
+    .create(Properties.gradleTaskName) {
+      doLast {
+        def configuration
+        def repository = project.repositories.toList().find {
+          logger.lifecycle('Attempt to download artifact from ' + it.name)
+          project.repositories.clear()
+          project.repositories.add(it)
+          configuration = project.configurations.create('downloadArtifactFrom_' + UUID.randomUUID())
+          configuration.transitive = false
+          project.dependencies.add(configuration.name, Properties.dependencyNotation)
+          def files = null
+          try {
+            files = configuration.resolvedConfiguration.lenientConfiguration.getFiles()
+          }
+          catch (java.lang.Throwable ignore) {
+          }
+          return files && !files.isEmpty()
+        }
+        if (!repository) {
+          configuration = project.configurations.create('downloadArtifact_' + UUID.randomUUID())
+          configuration.transitive = false
+          project.dependencies.add(configuration.name, Properties.dependencyNotation)
+          configuration.resolve()
+        }
+        def artifactPath = configuration?.singleFile?.path
+        if (artifactPath) {
+          logger.lifecycle('Artifact was downloaded to ' + artifactPath)
+          new File(Properties.targetPath).write artifactPath
+        }
+        else {
+          throw new RuntimeException('Artifact download failed')
+        }
+      }
+    }
+}

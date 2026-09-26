@@ -1,91 +1,91 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentTreeWatcher;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.AWTKeyStroke;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 /**
  * Automatically locates &amp; characters in texts of buttons and labels on a component or dialog,
  * registers the mnemonics for those characters and removes them from the control text.
  *
  * @author lesya
- * @since 5.1
  */
-public class MnemonicHelper extends ComponentTreeWatcher {
-  private static final MnemonicContainerListener LISTENER = new MnemonicContainerListener();
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
-  private Map<Integer, String> myMnemonics = null;
+public final class MnemonicHelper extends ComponentTreeWatcher {
+  private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
-  public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      // SwingUtilities.invokeLater is needed to process this event,
-      // because the method is invoked from the setText method
-      // before Swing updates mnemonics
-      if (source instanceof AbstractButton) {
-        //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((AbstractButton)source)));
-      }
-      else if (source instanceof JLabel) {
-        //noinspection SSBasedInspection //see javax.swing.JLabel.setText
-        SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic(((JLabel)source), null));
-      }
+  public static final Key<Boolean> DISABLE_MNEMONIC_PROCESSING = Key.create("Disable mnemonic processing in the button or the label");
+  public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
+
+  private static final String TEXT_CHANGED_PROPERTY = "text";
+
+  private static final PropertyChangeListener ourTextPropertyListener = event -> {
+    Object source = event.getSource();
+    // SwingUtilities.invokeLater is needed to process this event,
+    // because the method is invoked from the setText method
+    // before Swing updates mnemonics
+    if (source instanceof AbstractButton) {
+      //noinspection SSBasedInspection //see javax.swing.AbstractButton.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((AbstractButton)source));
+    }
+    else if (source instanceof JLabel) {
+      //noinspection SSBasedInspection //see javax.swing.JLabel.setText
+      SwingUtilities.invokeLater(() -> DialogUtil.registerMnemonic((JLabel)source, null));
     }
   };
-  @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
-  /**
-   * @see #init(Component)
-   * @deprecated do not use this object as a tree watcher
-   */
-  @Deprecated
-  public MnemonicHelper() {
+  private Map<Integer, String> myMnemonics;
+
+  private MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
-  protected void processComponent(Component parentComponent) {
-    if (parentComponent instanceof AbstractButton) {
-      final AbstractButton abstractButton = ((AbstractButton)parentComponent);
-      abstractButton.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
-      DialogUtil.registerMnemonic(abstractButton);
-      checkForDuplicateMnemonics(abstractButton);
-      fixMacMnemonicKeyStroke(abstractButton, null);
+  @Override
+  protected void processComponent(Component component) {
+    if (component instanceof AbstractButton) {
+      component.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, ourTextPropertyListener);
+      DialogUtil.registerMnemonic((AbstractButton)component);
+      checkForDuplicateMnemonics((AbstractButton)component);
+      fixMacMnemonicKeyStroke((JComponent)component, null);
     }
-    else if (parentComponent instanceof JLabel) {
-      final JLabel jLabel = ((JLabel)parentComponent);
-      jLabel.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, TEXT_LISTENER);
-      DialogUtil.registerMnemonic(jLabel, null);
-      checkForDuplicateMnemonics(jLabel);
-      fixMacMnemonicKeyStroke(jLabel, "release"); // "release" only is OK for labels
+    else if (component instanceof JLabel) {
+      component.addPropertyChangeListener(TEXT_CHANGED_PROPERTY, ourTextPropertyListener);
+      DialogUtil.registerMnemonic((JLabel)component, null);
+      checkForDuplicateMnemonics((JLabel)component);
+      fixMacMnemonicKeyStroke((JComponent)component, "release"); // "release" only is OK for labels
+    }
+    else if (component instanceof ActionButtonComponent) {
+      fixMacMnemonicKeyStroke((JComponent)component, null);
     }
   }
 
@@ -120,38 +120,32 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
   }
 
+  @Override
   protected void unprocessComponent(Component component) {
   }
 
   public void checkForDuplicateMnemonics(JLabel label) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(label.getDisplayedMnemonic(), label.getText());
   }
 
   public void checkForDuplicateMnemonics(AbstractButton button) {
-    if (!Registry.is("ide.checkDuplicateMnemonics")) return;
+    if (!isCheckingDuplicateMnemonicsEnabled()) {
+      return;
+    }
     checkForDuplicateMnemonics(button.getMnemonic(), button.getText());
   }
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
     if (myMnemonics == null) myMnemonics = new HashMap<>();
-    final String other = myMnemonics.get(Integer.valueOf(mnemonic));
+    final String other = myMnemonics.get(mnemonic);
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
     }
-    myMnemonics.put(Integer.valueOf(mnemonic), text);
-  }
-
-  /**
-   * Creates shortcut for mnemonic replacing standard Alt+Letter to Ctrl+Alt+Letter on Mac with jdk version newer than 6
-   *
-   * @param ch mnemonic letter
-   * @return shortcut for mnemonic
-   */
-  public static CustomShortcutSet createShortcut(char ch) {
-    Character mnemonic = Character.valueOf(ch);
-    return CustomShortcutSet.fromString("alt " + (SystemInfo.isMac ? "released" : "pressed") + " " + mnemonic);
+    myMnemonics.put(mnemonic, text);
   }
 
   /**
@@ -160,11 +154,81 @@ public class MnemonicHelper extends ComponentTreeWatcher {
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    if (Registry.is("ide.mnemonic.helper.old") || Registry.is("ide.checkDuplicateMnemonics")) {
+    if (isCheckingDuplicateMnemonicsEnabled()) {
       new MnemonicHelper().register(component);
     }
     else {
-      LISTENER.addTo(component);
+      ourMnemonicFixer.addTo(component);
+    }
+  }
+
+  private static boolean isCheckingDuplicateMnemonicsEnabled() {
+    return Boolean.getBoolean("ide.checkDuplicateMnemonics");
+  }
+
+  public static boolean hasMnemonic(@Nullable Component component, int keyCode) {
+    if (component instanceof AbstractButton) {
+      return ((AbstractButton)component).getMnemonic() == keyCode;
+    }
+    if (component instanceof JLabel) {
+      return ((JLabel)component).getDisplayedMnemonic() == keyCode;
+    }
+    IntPredicate checker = ClientProperty.get(component, MNEMONIC_CHECKER);
+    return checker != null && checker.test(keyCode);
+  }
+
+  private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();
+
+  private static final class MnemonicFixer implements ContainerListener {
+    void addTo(Component component) {
+      for (Component c : UIUtil.uiTraverser(component)) {
+        if (c instanceof Container) {
+          ((Container)c).addContainerListener(this);
+        }
+        if (c instanceof ActionButtonComponent) {
+          assert c instanceof JComponent;
+          fixMacMnemonicKeyStroke((JComponent)c, null);
+        }
+        MnemonicWrapper.getWrapper(c);
+      }
+    }
+
+    void removeFrom(Component component) {
+      for (Container c : UIUtil.uiTraverser(component).filter(Container.class)) {
+        c.removeContainerListener(this);
+      }
+    }
+
+    @Override
+    public void componentAdded(ContainerEvent event) {
+      addTo(event.getChild());
+    }
+
+    @Override
+    public void componentRemoved(ContainerEvent event) {
+      removeFrom(event.getChild());
+    }
+  }
+
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  public static int getFocusAcceleratorKeyMask() {
+    //noinspection MagicConstant
+    return ClientSystemInfo.isMac() ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
+  }
+
+  public static void registerMnemonicAction(@NotNull JComponent component, int mnemonic) {
+    InputMap map = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    int mask = getFocusAcceleratorKeyMask();
+    if (component instanceof AbstractButton) {
+      map.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "pressed");
+      map.put(KeyStroke.getKeyStroke(mnemonic, mask, true), "released");
+      map.put(KeyStroke.getKeyStroke(mnemonic, 0, true), "released");
+    }
+    else if (component instanceof JLabel) {
+      map.put(KeyStroke.getKeyStroke(mnemonic, mask, true), "released");
+    }
+    else if (component instanceof ActionButtonComponent) {
+      map.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "doClick");
     }
   }
 }

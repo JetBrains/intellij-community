@@ -1,0 +1,13 @@
+// ERROR: [ABSTRACT_MEMBER_NOT_IMPLEMENTED]
+// ERROR: [NOTHING_TO_OVERRIDE]
+import foo.A
+import foo.B
+
+class C : A() {
+    override fun foo(x: List<String?>?, y: String?): B<String?>? {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// MEMBER_K2: "foo(x: List<String?>?, y: String?): B<String?>?"
+// MEMBER_K1: "foo(x: (Mutable)List<(raw) Any?>!, y: String!): B<(raw) Any!>!"

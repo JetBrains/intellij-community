@@ -1,0 +1,82 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.community.impl.installer` start
+content_module_jar(module = ":installer")
+### auto-generated section `dev intellij.python.community.impl.installer` end
+
+### auto-generated section `build intellij.python.community.impl.installer` start
+create_kotlinc_options(
+    name = "custom_installer",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "installer",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_installer",
+    module_name = "intellij.python.community.impl.installer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python/openapi:community",
+        "//python/python-sdk/backend",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/statistics",
+        "//libraries/guava",
+        "//platform/eel-nioFs",
+    ],
+)
+
+jvm_library(
+    name = "installer_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_installer",
+    module_name = "intellij.python.community.impl.installer",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":installer",
+        "//python/openapi:community_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.impl.installer` end
+
+### auto-generated section `iml intellij.python.community.impl.installer` start
+exports_files(
+    [
+        "intellij.python.community.impl.installer.iml",
+        "resources/intellij.python.community.impl.installer.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.impl.installer` end

@@ -1,0 +1,14 @@
+Cleaning output files:
+  repro/Api.class
+End of files
+Compiling files:
+  worker/crashRecovery/beforeBuildStart/a/Api.java
+End of files
+Cleaning output files:
+  repro/Caller1.class
+  repro/Caller2.class
+End of files
+Compiling files:
+  worker/crashRecovery/beforeBuildStart/a/Caller1.java
+  worker/crashRecovery/beforeBuildStart/a/Caller2.java
+End of files

@@ -1,0 +1,206 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "kotlin-gradle-tooling-impl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":kotlin-gradle-tooling-impl-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.gradle.tooling.impl.tests`
+
+### auto-generated section `dev intellij.kotlin.gradle.tooling.impl` start
+content_module_jar(module = ":impl")
+### auto-generated section `dev intellij.kotlin.gradle.tooling.impl` end
+
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` start
+create_kotlinc_options(
+    name = "custom_impl",
+    jvm_target = "8",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_provided_library(
+    name = "platform_extensions_provided",
+    lib = "//platform/extensions",
+)
+
+jvm_provided_library(
+    name = "libraries_jspecify_provided",
+    lib = "//libraries/jspecify",
+)
+
+jvm_library(
+    name = "impl",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_impl",
+    module_name = "intellij.kotlin.gradle.tooling.impl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
+        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+        "//plugins/kotlin/base/project-model",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//libraries/opentelemetry",
+        "//libraries/gradle",
+        ":platform_extensions_provided",
+        ":libraries_jspecify_provided",
+    ],
+)
+
+jvm_library(
+    name = "impl_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_impl",
+    module_name = "intellij.kotlin.gradle.tooling.impl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":impl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
+        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling_test_lib",
+        "//plugins/kotlin/base/project-model:project-model_test_lib",
+        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//platform/extensions",
+        "//platform/extensions:extensions_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/jspecify",
+        "//libraries/jspecify:jspecify_test_lib",
+        "//libraries/gradle:gradle_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
+
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` start
+exports_files(
+    [
+        "intellij.kotlin.gradle.tooling.impl.iml",
+        "resources/intellij.kotlin.gradle.tooling.impl.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` end
+
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` start
+jvm_library(
+    name = "kotlin-gradle-tooling-impl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.gradle.tooling.impl.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "kotlin-gradle-tooling-impl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/kotlin/gradle/gradle-tooling/impl",
+        "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":kotlin-gradle-tooling-impl-tests"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto",
+        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto_test_lib",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
+        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
+        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
+        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling_test_lib",
+        "//plugins/kotlin/base/project-model",
+        "//plugins/kotlin/base/project-model:project-model_test_lib",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//platform/extensions",
+        "//platform/extensions:extensions_test_lib",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//libraries/jspecify",
+        "//libraries/jspecify:jspecify_test_lib",
+        "//libraries/gradle",
+        "//libraries/gradle:gradle_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` end
+
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl.tests` start
+exports_files(
+    [
+        "intellij.kotlin.gradle.tooling.impl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.gradle.tooling.impl.tests` end

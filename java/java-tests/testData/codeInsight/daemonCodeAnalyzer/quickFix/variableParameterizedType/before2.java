@@ -1,4 +1,4 @@
-// "Change variable 's' type to 'O.f<java.lang.String>'" "false"
+// "Change variable 's' type to 'O.f<String>'" "false"
 
 class O {
 

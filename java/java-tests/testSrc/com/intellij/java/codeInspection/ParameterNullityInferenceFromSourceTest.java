@@ -15,15 +15,18 @@
  */
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import one.util.streamex.StreamEx;
 
-public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
+public class ParameterNullityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSimpleDereference() {
     assertNullity("+", "String test(String s) { return s.trim(); }");
   }
@@ -147,6 +150,35 @@ public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFix
                   "try(java.io.FileReader fr = new java.io.FileReader(path.trim())) {System.out.println(fr.read());}" +
                   "catch(java.io.IOException ex) {}" +
                   "}");
+  }
+
+  public void testSwitchWithPattern() {
+    assertNullity("-",
+                  """
+                    void test(String r) {
+                            switch (r) {
+                                case null:
+                                    break;
+                            }
+                        }""");
+  }
+
+  public void testSwitchExpression() {
+    assertNullity("+",
+                  "int test(String s) { return switch(s) {case \"x\"->1;default ->2;}} ");
+  }
+
+  public void testUseConfiguredNullityAnnotation() {
+    PsiClass clazz = myFixture.addClass("final class Foo { void foo(String s) { s.hashCode(); } }");
+    PsiParameter parameter = clazz.getMethods()[0].getParameterList().getParameters()[0];
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
+    String javax = "javax.annotation.Nonnull";
+    manager.setDefaultNotNull(javax);
+    try {
+      assertEquals(javax, manager.findOwnNullabilityInfo(parameter).getAnnotation().getQualifiedName());
+    } finally {
+      manager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
+    }
   }
 
   // expected: + = notnull, - = unknown/nullable for each parameter

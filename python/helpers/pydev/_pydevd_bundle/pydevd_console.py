@@ -5,12 +5,13 @@ import traceback
 from code import InteractiveConsole
 
 from _pydev_bundle import _pydev_completer
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_override import overrides
+from _pydev_bundle.pydev_stdin import BaseStdIn
 from _pydevd_bundle import pydevd_save_locals
 from _pydevd_bundle.pydevd_io import IOBuf
-from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
+from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle.pydevd_xml import make_valid_xml_value
 
 CONSOLE_OUTPUT = "output"
@@ -66,7 +67,7 @@ class ConsoleMessage:
 #=======================================================================================================================
 class DebugConsoleStdIn(BaseStdIn):
 
-    overrides(BaseStdIn.readline)
+    @overrides(BaseStdIn.readline)
     def readline(self, *args, **kwargs):
         sys.stderr.write('Warning: Reading from stdin is still not supported in this console.\n')
         return '\n'
@@ -74,12 +75,12 @@ class DebugConsoleStdIn(BaseStdIn):
 #=======================================================================================================================
 # DebugConsole
 #=======================================================================================================================
-class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
+class DebugConsole(InteractiveConsole, BaseCodeExecutor):
     """Wrapper around code.InteractiveConsole, in order to send
     errors and outputs to the debug console
     """
 
-    overrides(BaseInterpreterInterface.create_std_in)
+    @overrides(BaseCodeExecutor.create_std_in)
     def create_std_in(self, *args, **kwargs):
         try:
             if not self.__buffer_output:
@@ -90,7 +91,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
         return DebugConsoleStdIn() #If buffered, raw_input is not supported in this console.
 
 
-    overrides(InteractiveConsole.push)
+    @overrides(InteractiveConsole.push)
     def push(self, line, frame, buffer_output=True):
         """Change built-in stdout and stderr methods by the
         new custom StdMessage.
@@ -113,7 +114,7 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
                 if buffer_output:
                     out = sys.stdout = IOBuf()
                     err = sys.stderr = IOBuf()
-                more = self.add_exec(line)
+                more, _ = self.add_exec(line)
             except Exception:
                 exc = get_exception_traceback_str()
                 if buffer_output:
@@ -134,12 +135,12 @@ class DebugConsole(InteractiveConsole, BaseInterpreterInterface):
             return more, [], []
 
 
-    overrides(BaseInterpreterInterface.do_add_exec)
+    @overrides(BaseCodeExecutor.do_add_exec)
     def do_add_exec(self, line):
-        return InteractiveConsole.push(self, line)
+        return InteractiveConsole.push(self, line), False
 
 
-    overrides(InteractiveConsole.runcode)
+    @overrides(InteractiveConsole.runcode)
     def runcode(self, code):
         """Execute a code object.
 

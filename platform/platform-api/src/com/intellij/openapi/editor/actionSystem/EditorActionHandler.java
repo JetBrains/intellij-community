@@ -1,44 +1,34 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Interface for actions activated by keystrokes in the editor.
- * Implementations should override
- * {@link #execute(Editor, Caret, DataContext)}
- * .
+ * Interface for actions invoked in the editor.
+ * Implementations should override {@link #doExecute(Editor, Caret, DataContext)}.
  * <p>
- * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be
- * created using {@link EditorActionHandler#EditorActionHandler(boolean)} constructor.
+ * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret.
+ * The latter can be created by extending the {@link ForEachCaret} class.
  *
+ * @see EditorWriteActionHandler
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
 public abstract class EditorActionHandler {
+  static final String HANDLER_LOG_CATEGORY = "#com.intellij.openapi.editor.actionSystem.EditorActionHandler";
+  protected static final Logger LOG = Logger.getInstance(HANDLER_LOG_CATEGORY);
+
   private final boolean myRunForEachCaret;
   private boolean myWorksInInjected;
   private boolean inExecution;
@@ -48,6 +38,7 @@ public abstract class EditorActionHandler {
     this(false);
   }
 
+  /** Consider subclassing {@link ForEachCaret} instead. */
   protected EditorActionHandler(boolean runForEachCaret) {
     myRunForEachCaret = runForEachCaret;
   }
@@ -60,7 +51,8 @@ public abstract class EditorActionHandler {
    * {@link #isEnabled(Editor, Caret, DataContext)}
    * instead.
    */
-  public boolean isEnabled(Editor editor, final DataContext dataContext) {
+  @Deprecated
+  public boolean isEnabled(Editor editor, DataContext dataContext) {
     if (inCheck) {
       return true;
     }
@@ -74,9 +66,9 @@ public abstract class EditorActionHandler {
         hostEditor = editor;
       }
       final boolean[] result = new boolean[1];
-      final CaretTask check = (___, __) -> result[0] = true;
+      final CaretTask check = (_, _) -> result[0] = true;
       if (myRunForEachCaret) {
-        hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext, check));
+        hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext, check), reverseCaretOrder());
       }
       else {
         doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, check);
@@ -89,26 +81,30 @@ public abstract class EditorActionHandler {
   }
 
   private void doIfEnabled(@NotNull Caret hostCaret, @Nullable DataContext context, @NotNull CaretTask task) {
-    DataContext caretContext = context == null ? null : new CaretSpecificDataContext(context, hostCaret);
+    DataContext caretContext = context == null ? null : caretDataContext(context, hostCaret);
     Editor editor = hostCaret.getEditor();
     if (myWorksInInjected && caretContext != null) {
-      Project project = editor.getProject();
-      if (project != null) {
-        Document document = editor.getDocument();
-        if (InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(document, hostCaret.getOffset())) {
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
-          Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
-          if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
-            task.perform(injectedCaret, injectedCaretContext);
-            return;
-          }
-        }
+      DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
+      Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
+      if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
+        task.perform(injectedCaret, injectedCaretContext);
+        return;
       }
     }
     if (isEnabledForCaret(editor, hostCaret, caretContext)) {
       task.perform(hostCaret, caretContext);
     }
+  }
+
+  static boolean ensureInjectionUpToDate(@NotNull Caret hostCaret) {
+    Editor editor = hostCaret.getEditor();
+    Project project = editor.getProject();
+    if (project != null &&
+        InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(editor.getDocument(), hostCaret.getOffset())) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -120,7 +116,6 @@ public abstract class EditorActionHandler {
     }
     inCheck = true;
     try {
-      //noinspection deprecation
       return isEnabled(editor, dataContext);
     }
     finally {
@@ -133,7 +128,6 @@ public abstract class EditorActionHandler {
    * if {@code caret} is not {@code null}, checks whether it's enabled for specified caret.
    */
   public final boolean isEnabled(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    //noinspection deprecation
     return caret == null ? isEnabled(editor, dataContext) : isEnabledForCaret(editor, caret, dataContext);
   }
   /**
@@ -142,6 +136,7 @@ public abstract class EditorActionHandler {
    * to invoke the handler, call
    * {@link #execute(Editor, Caret, DataContext)}.
    */
+  @Deprecated
   public void execute(@NotNull Editor editor, @Nullable DataContext dataContext) {
     if (inExecution) {
       return;
@@ -169,7 +164,6 @@ public abstract class EditorActionHandler {
     }
     try {
       inExecution = true;
-      //noinspection deprecation
       execute(editor, dataContext);
     }
     finally {
@@ -185,6 +179,10 @@ public abstract class EditorActionHandler {
     return myRunForEachCaret;
   }
 
+  public boolean reverseCaretOrder() {
+    return false;
+  }
+
   /**
    * Executes the action in the context of given caret. If the caret is {@code null}, and the handler is a 'per-caret' handler,
    * it's executed for all carets.
@@ -192,24 +190,40 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public final void execute(@NotNull Editor editor, @Nullable final Caret contextCaret, final DataContext dataContext) {
+  public final void execute(@NotNull Editor editor, @Nullable Caret contextCaret, @Nullable DataContext dataContext) {
+    if (LOG.isDebugEnabled()) {
+      // The line will be logged multiple times for the same action. The last event in the chain is, typically, the 'actual event handler'.
+      LOG.debug("Invoked handler " + this + " in " + editor + " for the caret " + contextCaret,
+                LOG.isTraceEnabled() ? new Throwable() : null);
+    }
+
     Editor hostEditor = dataContext == null ? null : CommonDataKeys.HOST_EDITOR.getData(dataContext);
     if (hostEditor == null) {
       hostEditor = editor;
     }
     if (contextCaret == null && runForAllCarets()) {
-      hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext,
-                                                                      (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc)));
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        DataContext refreshed = commitAndRefreshDataContextIfNeeded(dataContext, caret);
+        doIfEnabled(caret, refreshed,
+                    (c, dc) -> doExecute(c.getEditor(), c, dc));
+      }, reverseCaretOrder());
+    }
+    else if (contextCaret == null) {
+      Caret caret = hostEditor.getCaretModel().getCurrentCaret();
+      DataContext refreshed = commitAndRefreshDataContextIfNeeded(dataContext, caret);
+      doIfEnabled(caret, refreshed,
+                  (c, dc) -> doExecute(c.getEditor(), null, dc));
     }
     else {
-      if (contextCaret == null) {
-        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext,
-                    (caret, dc) -> doExecute(caret.getEditor(), null, dc));
-      }
-      else {
-        doExecute(editor, contextCaret, dataContext);
-      }
+      doExecute(editor, contextCaret, dataContext);
     }
+  }
+
+  private @Nullable DataContext commitAndRefreshDataContextIfNeeded(@Nullable DataContext dataContext, Caret caret) {
+    // injected computed data must be refreshed after commit,
+    // forced "caret" does that by adding a new snapshot layer
+    return myWorksInInjected && ensureInjectionUpToDate(caret) && dataContext != null ?
+           freshCaretDataContext(dataContext, caret) : dataContext;
   }
 
   void setWorksInInjected(boolean worksInInjected) {
@@ -221,8 +235,36 @@ public abstract class EditorActionHandler {
     return DocCommandGroupId.noneGroupId(editor.getDocument());
   }
 
+  <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
+    return type.isInstance(this) ? type.cast(this) : null;
+  }
+
   @FunctionalInterface
   private interface CaretTask {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
+  }
+
+  public abstract static class ForEachCaret extends EditorActionHandler {
+    protected ForEachCaret() {
+      super(true);
+    }
+
+    @Override
+    protected abstract void doExecute(@NotNull Editor editor,
+                                      @SuppressWarnings("NullableProblems") @NotNull Caret caret,
+                                      DataContext dataContext);
+  }
+
+  public static @NotNull DataContext caretDataContext(@NotNull DataContext context, @NotNull Caret caret) {
+    if (CommonDataKeys.CARET.getData(context) == caret) return context;
+    return freshCaretDataContext(context, caret);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull DataContext freshCaretDataContext(@NotNull DataContext context, @NotNull Caret caret) {
+    // reset and later recompute keys like injected caret
+    return CustomizedDataContext.withSnapshot(context, sink -> {
+      sink.set(CommonDataKeys.CARET, caret);
+    });
   }
 }

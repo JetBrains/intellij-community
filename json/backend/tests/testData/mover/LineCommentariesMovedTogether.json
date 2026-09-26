@@ -1,0 +1,8 @@
+{
+  "foo": true,
+  // This line won't be moved
+
+  // Line<caret> 1
+  // Line 2
+  "bar": false
+}

@@ -1,48 +1,118 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.TableCell;
+import com.intellij.ui.hover.TableHoverListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.ui.*;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ValueScaler;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.KeyStroke;
+import javax.swing.RowSorter;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.MouseInputListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.plaf.basic.BasicTableHeaderUI;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableStringConverter;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import static com.intellij.ui.TableUtil.stopEditing;
+import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+import static com.intellij.ui.render.RenderingUtil.isHoverPaintingDisabled;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
@@ -54,10 +124,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private boolean myEnableAntialiasing;
 
+  private int myVisibleRowCount = 4;
+  private int myAdditionalRowsCount = 0;
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
-  private boolean myUiUpdating = true;
+  private boolean myUiUpdating;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -69,6 +141,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private TableCell rollOverCell;
 
+  private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
+  private boolean myShowLastHorizontalLine;
+
+  private ValueScaler myValueScaler;
+
+  private final MyCellEditorRemover myCellEditorRemover;
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -79,6 +158,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model, final TableColumnModel columnModel) {
     super(model, columnModel);
+
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     // By default, tables only allow Ctrl-TAB/Ctrl-Shift-TAB to navigate to the
     // next/previous component, while TAB/Shift-TAB is used to navigate through
     // cells. This behavior is somewhat counter-intuitive, as visually impaired
@@ -102,15 +184,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     };
 
-    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
+
+    myExpandableItemsHandler = createExpandableItemsHandler();
 
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
+    TableHoverListener.DEFAULT.addTo(this);
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
-        @Override public void mouseMoved(MouseEvent e) {
+        @Override
+        public void mouseMoved(MouseEvent e) {
           Point point = e.getPoint();
           int column = columnAtPoint(point);
           int row = rowAtPoint(point);
@@ -142,7 +228,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     final TableModelListener modelListener = new TableModelListener() {
       @Override
-      public void tableChanged(@NotNull final TableModelEvent e) {
+      public void tableChanged(final @NotNull TableModelEvent e) {
         onTableChanged(e);
       }
     };
@@ -164,12 +250,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     myUiUpdating = false;
 
-    new MyCellEditorRemover();
+    myCellEditorRemover = new MyCellEditorRemover();
+    myCellEditorRemover.setupListeners();
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
     if (!myRowHeightIsExplicitlySet) {
-      myRowHeight = -1;
+      setRowHeightWithScaler(-1);
     }
     if (e.getType() == TableModelEvent.DELETE && isEmpty() ||
         e.getType() == TableModelEvent.INSERT && !isEmpty() ||
@@ -178,16 +265,52 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
+  protected @NotNull ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
+    return ExpandableItemsHandlerFactory.install(this);
+  }
+
+  public int getVisibleRowCount() {
+    return myVisibleRowCount;
+  }
+
+  public void setVisibleRowCount(int visibleRowCount) {
+    int oldValue = myVisibleRowCount;
+    myVisibleRowCount = Math.max(0, visibleRowCount);
+    firePropertyChange("visibleRowCount", oldValue, visibleRowCount);
+  }
+
+  public int getAdditionalRowsCount() {
+    return myAdditionalRowsCount;
+  }
+
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    int oldValue = myAdditionalRowsCount;
+    myAdditionalRowsCount = additionalRowsCount;
+    firePropertyChange("additionalRowsCount", oldValue, additionalRowsCount);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (myAdditionalRowsCount == 0) return size;
+    int additionalHeight = myAdditionalRowsCount * getRowHeight();
+    JViewport viewport = ComponentUtil.getViewport(this);
+    int visibleAreaHeight = viewport == null ? 0 : viewport.getHeight();
+    if (visibleAreaHeight > 0) additionalHeight = Math.min(visibleAreaHeight - rowHeight, additionalHeight);
+    return new Dimension(size.width, size.height + additionalHeight);
+  }
+
   @Override
   public int getRowHeight() {
+    int height = super.getRowHeight();
     if (myRowHeightIsComputing) {
-      return super.getRowHeight();
+      return height;
     }
 
     if (myRowHeight < 0) {
       try {
         myRowHeightIsComputing = true;
-        myRowHeight = calculateRowHeight();
+        setRowHeightWithScaler(calculateRowHeight());
       }
       finally {
         myRowHeightIsComputing = false;
@@ -198,7 +321,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       myMinRowHeight = getFontMetrics(UIManager.getFont("Label.font")).getHeight();
     }
 
-    return Math.max(myRowHeight, myMinRowHeight);
+    return Math.max(myRowHeight, Math.max(myMinRowHeight, height));
   }
 
   protected int calculateRowHeight() {
@@ -211,8 +334,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           final Object value = getValueAt(row, column);
           final Component component = renderer.getTableCellRendererComponent(this, value, true, true, row, column);
           if (component != null) {
-            final Dimension size = component.getPreferredSize();
+            Dimension size = component.getPreferredSize();
             result = Math.max(size.height, result);
+            if (component instanceof JLabel && StringUtil.isEmpty(((JLabel)component).getText())) {
+              String oldText = ((JLabel)component).getText();
+              try {
+                //noinspection HardCodedStringLiteral
+                ((JLabel)component).setText("Jj");
+                size = component.getPreferredSize();
+                result = Math.max(size.height, result);
+              } finally {
+                ((JLabel)component).setText(oldText);
+              }
+            }
           }
         }
       }
@@ -229,12 +363,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    if (!myUiUpdating || !UIUtil.isUnderGTKLookAndFeel()) {
-      myRowHeight = rowHeight;
+    if (!myUiUpdating) {
+      setRowHeightWithScaler(rowHeight);
       myRowHeightIsExplicitlySet = true;
     }
     // call super to clean rowModel
     super.setRowHeight(rowHeight);
+  }
+
+  private void setRowHeightWithScaler(int rowHeight) {
+    myRowHeight = rowHeight;
+    if (myRowHeight < 0) myValueScaler = null;
+    else myValueScaler = new ValueScaler(myRowHeight);
   }
 
   @Override
@@ -242,23 +382,80 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myUiUpdating = true;
     try {
       super.updateUI();
+
       myMinRowHeight = null;
+      if (!myRowHeightIsExplicitlySet) setRowHeightWithScaler(-1);
+      else if (myValueScaler != null) myRowHeight = myValueScaler.get();
     }
     finally {
       myUiUpdating = false;
     }
   }
 
-  @NotNull
   @Override
-  protected JTableHeader createDefaultTableHeader() {
+  protected @NotNull JTableHeader createDefaultTableHeader() {
     return new JBTableHeader();
   }
 
   @Override
   protected void initializeLocalVars() {
     super.initializeLocalVars();
-    setPreferredScrollableViewportSize(JBUI.size(getPreferredScrollableViewportSize()));
+    setPreferredScrollableViewportSize(null);
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    Dimension base = super.getPreferredScrollableViewportSize();
+    int visibleRows = myVisibleRowCount;
+    if (visibleRows <= 0) return base;
+    if (base != null && base.height > 0) return base;
+
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+
+    TableModel model = getModel();
+    int modelRows = model == null ? 0 : model.getRowCount();
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(this, FORCE_VISIBLE_ROW_COUNT_KEY));
+    if (!forceVisibleRowCount) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
+    int fixedWidth = base != null && base.width > 0 ? base.width : getPreferredWidth(this);
+    Dimension size;
+    if (modelRows == 0) {
+      int fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Table.rowHeight");
+      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+
+      size = new Dimension(fixedWidth, fixedHeight * visibleRows);
+      if (addExtraSpace) size.height += fixedHeight / 2;
+    }
+    else {
+      Rectangle rect = getCellRect(Math.min(visibleRows, modelRows) - 1, 0, true);
+      size = new Dimension(fixedWidth, rect.y + rect.height);
+      if (modelRows < visibleRows) {
+        size.height += (visibleRows - modelRows) * rect.height;
+      }
+      else if (modelRows > visibleRows) {
+        if (addExtraSpace) size.height += rect.height / 2;
+      }
+    }
+    return size;
+  }
+
+  private static int getPreferredWidth(@NotNull JTable table) {
+    JTableHeader header = table.getTableHeader();
+    if (header != null) {
+      Dimension size = header.getPreferredSize();
+      if (size != null && size.width > 0) return size.width;
+    }
+    int width = 0;
+    TableColumnModel model = table.getColumnModel();
+    if (model != null) {
+      for (int i = 0; i < model.getColumnCount(); i++) {
+        TableColumn column = model.getColumn(i);
+        if (column != null) width += column.getPreferredWidth();
+      }
+    }
+    return width > 0 ? width : JBUI.scale(100);
   }
 
   public boolean isEmpty() {
@@ -269,8 +466,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
 
-    if (model instanceof SortableColumnModel) {
-      final SortableColumnModel sortableModel = (SortableColumnModel)model;
+    if (model instanceof SortableColumnModel sortableModel) {
       if (sortableModel.isSortable()) {
         final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
         rowSorter.setSortsOnUpdates(isSortOnUpdates());
@@ -301,6 +497,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
+    if (!showHorizontalLines && myShowLastHorizontalLine && getRowCount() > 0 && getColumnCount() > 0) {
+      Color color = g.getColor();
+      Rectangle leftCell = getCellRect(getRowCount() - 1, 0, true);
+      Rectangle rightCell = getCellRect(getRowCount() - 1, getColumnCount() - 1, true);
+      g.setColor(getGridColor());
+      SwingUtilities2.drawHLine(g, leftCell.x, rightCell.x + rightCell.width, leftCell.y + leftCell.height);
+      g.setColor(color);
+    }
     getEmptyText().paint(this, g);
   }
 
@@ -341,15 +545,47 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @NotNull
+  public void setupEasyFocusTraversing() {
+    wrapAction("TAB", table -> {
+      if (table.getRowCount() == 0 ||
+          table.getSelectionModel().getLeadSelectionIndex() == table.getRowCount() - 1 &&
+          table.getColumnModel().getSelectionModel().getLeadSelectionIndex() == table.getColumnCount() - 1) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent();
+        return true;
+      }
+      return false;
+    });
+    wrapAction("shift TAB", table -> {
+      if (table.getRowCount() == 0 ||
+          table.getSelectionModel().getLeadSelectionIndex() == 0 &&
+          table.getColumnModel().getSelectionModel().getLeadSelectionIndex() == 0) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  private void wrapAction(String shortcut, Predicate<? super JTable> predicate) {
+    Object actionKey = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(KeyStroke.getKeyStroke(shortcut));
+    Action action = getActionMap().get(actionKey);
+    getActionMap().put(actionKey, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!predicate.test(JBTable.this)) {
+          action.actionPerformed(e);
+        }
+      }
+    });
+  }
+
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
-  @NotNull
-  public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
   }
 
@@ -366,6 +602,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         remove(myBusyIcon);
         Disposer.dispose(myBusyIcon);
         myBusyIcon = null;
+      }
+      if (myCellEditorRemover != null) {
+        myCellEditorRemover.deactivate();
       }
     }
   }
@@ -396,14 +635,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, getBackground());
-    }
     super.paint(g);
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
     }
   }
+
+  @Override
+  public Color getForeground() {
+    return isEnabled() ? super.getForeground() : disabledForeground;
+  }
+
+  //@Override
+  //public Color getSelectionBackground() {
+  //  return isEnabled() ? super.getSelectionBackground() : UIUtil.getTableSelectionBackground(false);
+  //}
 
   public void setPaintBusy(boolean paintBusy) {
     if (myBusy == paintBusy) return;
@@ -441,9 +687,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @NotNull
-  protected AsyncProcessIcon createBusyIcon() {
-    return new AsyncProcessIcon(toString()).setUseMask(false);
+  protected @NotNull AsyncProcessIcon createBusyIcon() {
+    return new AsyncProcessIcon(toString());
   }
 
   public boolean isStriped() {
@@ -453,10 +698,33 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setStriped(boolean striped) {
     myStriped = striped;
     if (striped) {
-      getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
       setShowGrid(false);
     }
+  }
+
+  @Override
+  public void setShowVerticalLines(boolean showVerticalLines) {
+    if (!showVerticalLines) {
+      getColumnModel().setColumnMargin(0);
+      setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
+    }
+    super.setShowVerticalLines(showVerticalLines);
+  }
+
+  @Override
+  public void setShowHorizontalLines(boolean showHorizontalLines) {
+    if (!showHorizontalLines) {
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowHorizontalLines(showHorizontalLines);
+  }
+
+  public void setShowLastHorizontalLine(boolean showLastHorizontalLine) {
+    myShowLastHorizontalLine = showLastHorizontalLine;
+  }
+
+  public boolean getShowLastHorizontalLine() {
+    return myShowLastHorizontalLine;
   }
 
   @Override
@@ -475,7 +743,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (e instanceof KeyEvent) {
       // do not start editing in autoStartsEdit mode on Ctrl-Z and other non-typed events
-      if (!UIUtil.isReallyTypedEvent((KeyEvent)e) || ((KeyEvent)e).getKeyChar() == KeyEvent.CHAR_UNDEFINED) return false;
+      if (!UIUtil.isReallyTypedEvent((KeyEvent)e)) return false;
 
       SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
       if (supply != null && supply.isPopupActive()) {
@@ -495,11 +763,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       add(editorComp);
       editorComp.validate();
 
-      if (surrendersFocusOnKeyStroke()) {
+      if (surrendersFocusOnKeyStroke() && !(editorComp instanceof AbstractButton)) {
         // this replaces focus request in JTable.processKeyBinding
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
-        focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp, true).doWhenProcessed(() -> focusManager.setTypeaheadEnabled(true));
+        IdeFocusManager.findInstanceByComponent(this).requestFocus(editorComp, true);
       }
 
       setCellEditor(editor);
@@ -515,6 +781,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   /**
    * Always returns false.
    * If you're interested in value of JTable.surrendersFocusOnKeystroke property, call JBTable.surrendersFocusOnKeyStroke()
+   *
    * @return false
    * @see #surrendersFocusOnKeyStroke
    */
@@ -529,30 +796,32 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderNativeMacLookAndFeel()
-           || UIUtil.isUnderDarcula()
-           || UIUtil.isUnderIntelliJLaF()
-           || UIUtil.isUnderWindowsLookAndFeel();
+           || StartupUiUtil.isUnderDarcula()
+           || UIUtil.isUnderIntelliJLaF();
   }
 
-  @NotNull
   @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      UIUtil.changeBackGround(this, UIUtil.getTreeTextBackground());
-    }
-
-    if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
-      final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
-      final JComponent c = (JComponent)result;
-      final boolean cellSelected = isCellSelected(row, column);
-      if (!cellSelected) {
-        c.setOpaque(true);
-        c.setBackground(bg);
-        for (Component child : c.getComponents()) {
-          child.setBackground(bg);
+    if (result instanceof JComponent component && !isCellSelected(row, column)) {
+      if (isStriped()) {
+        if (isTableDecorationSupported()) {
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : ObjectUtils.chooseNotNull(getStripeColor(), getBackground()));
+        }
+      }
+      else {
+        Color hovered = isHoverPaintingDisabled(this) || isHoverPaintingDisabled(component) ? null : getHoveredRowBackground();
+        if (hovered != null) {
+          if (row == TableHoverListener.getHoveredRow(this)) {
+            setRendererBackground(component, hovered);
+          }
+          else {
+            forEachComponent(component, child -> {
+              // reset hovered background only if it was not cleared properly
+              if (hovered == child.getBackground()) child.setBackground(getBackground());
+            });
+          }
         }
       }
     }
@@ -561,18 +830,56 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       result = ExpandedItemRendererComponentWrapper.wrap(result);
     }
 
-    if(renderer instanceof JCheckBox) {
+    if (renderer instanceof JCheckBox) {
       ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
     }
     return result;
   }
 
-  private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
+  protected @Nullable Color getStripeColor() {
+    return UIUtil.getDecoratedRowColor();
+  }
+
+  /**
+   * This method is intended to override default hovered background.
+   *
+   * @return a background color for hovered row, or {@code null} to ignore
+   */
+  protected @Nullable Color getHoveredRowBackground() {
+    return JBUI.CurrentTheme.Table.Hover.background(true);
+  }
+
+  private static void setRendererBackground(@NotNull JComponent container, Color background) {
+    container.setOpaque(true);
+    forEachComponent(container, child -> child.setBackground(background));
+  }
+
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<? super Component> consumer) {
+    consumer.accept(container);
+    for (Component component : container.getComponents()) {
+      consumer.accept(component);
+    }
+  }
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    MouseEvent e2 = e;
+
+    if (ClientSystemInfo.isMac()) {
+      e2 = MacUIUtil.fixMacContextMenuIssue(e);
+    }
+
+    super.processMouseEvent(e2);
+
+    if (e != e2 && e2.isConsumed()) e.consume();
+  }
+
+  private final class MyCellEditorRemover implements PropertyChangeListener, Activatable {
     private boolean myIsActive = false;
 
-    public MyCellEditorRemover() {
+    private void setupListeners() {
       addPropertyChangeListener("tableCellEditor", this);
-      new UiNotifyConnector(JBTable.this, this);
+      UiNotifyConnector.installOn(JBTable.this, this);
     }
 
     public void activate() {
@@ -595,7 +902,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
-    public void propertyChange(@NotNull final PropertyChangeEvent e) {
+    public void propertyChange(final @NotNull PropertyChangeEvent e) {
       if ("tableCellEditor".equals(e.getPropertyName())) {
         tableCellEditorChanged(e.getOldValue(), e.getNewValue());
       }
@@ -631,7 +938,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         @Override
         public void run() {
           Component c = focusManager.getFocusOwner();
-          if (UIUtil.isMeaninglessFocusOwner(c)) {
+          if (ComponentUtil.isMeaninglessFocusOwner(c)) {
             // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
@@ -665,8 +972,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final class MyMouseListener extends MouseAdapter {
     @Override
-    public void mousePressed(@NotNull final MouseEvent e) {
-      if (JBSwingUtilities.isRightMouseButton(e)) {
+    public void mousePressed(final @NotNull MouseEvent e) {
+      if (SwingUtilities.isRightMouseButton(e)) {
         final int[] selectedRows = getSelectedRows();
         if (selectedRows.length < 2) {
           final int row = rowAtPoint(e.getPoint());
@@ -677,14 +984,15 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     }
 
-    @Override public void mouseExited(MouseEvent e) {
+    @Override
+    public void mouseExited(MouseEvent e) {
       if (e.getClickCount() == 0) {
         resetRollOverCell();
       }
     }
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
+  @SuppressWarnings("unchecked")
   protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
     return new DefaultColumnInfoBasedRowSorter(model);
   }
@@ -728,7 +1036,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return false;
     }
 
-    private class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
+    private final class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
       private final TableModel myModel;
 
       private TableRowSorterModelWrapper(@NotNull TableModel model) {
@@ -759,14 +1067,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         return myModel.getValueAt(row, column);
       }
 
-      @NotNull
       @Override
-      public String getStringValueAt(int row, int column) {
+      public @NotNull String getStringValueAt(int row, int column) {
         TableStringConverter converter = getStringConverter();
         if (converter != null) {
           // Use the converter
-          String value = converter.toString(
-            myModel, row, column);
+          @NlsSafe String value = converter.toString(myModel, row, column);
           if (value != null) {
             return value;
           }
@@ -778,7 +1084,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         if (o == null) {
           return "";
         }
-        String string = o.toString();
+        @NlsSafe String string = o.toString();
         if (string == null) {
           return "";
         }
@@ -792,7 +1098,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  protected class JBTableHeader extends JTableHeader {
+  protected class JBTableHeader extends JTableHeader implements ComponentWithExpandableItems<TableColumn> {
+    private final ExpandableItemsHandler<TableColumn> myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
+
     public JBTableHeader() {
       super(JBTable.this.columnModel);
       JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
@@ -803,6 +1112,41 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           }
         }
       });
+
+      DefaultTableCellRenderer renderer = (DefaultTableCellRenderer)getDefaultRenderer();
+      TableCellRenderer newRenderer = new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          if (!(delegate instanceof JLabel cmp)) return delegate;
+
+          cmp.setHorizontalAlignment(SwingConstants.LEFT);
+          Border border = cmp.getBorder();
+          JBEmptyBorder indent = JBUI.Borders.empty(0, 8);
+          border = JBUI.Borders.merge(border, indent, true);
+          cmp.setBorder(border);
+
+          Font font = cmp.getFont();
+          cmp.setFont(RelativeFont.NORMAL.fromResource("Table.Header.fontSizeOffset", 0).derive(font));
+          return cmp;
+        }
+      };
+      setDefaultRenderer(newRenderer);
+    }
+
+    @Override
+    public @NotNull ExpandableItemsHandler<TableColumn> getExpandableItemsHandler() {
+      return myExpandableItemsHandler;
+    }
+
+    @Override
+    public void setExpandableItemsEnabled(boolean enabled) {
+      myExpandableItemsHandler.setEnabled(enabled);
     }
 
     @Override
@@ -810,25 +1154,40 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
       }
-      if (!JBTable.this.isEnabled()) {
-        g = new Grayer((Graphics2D)g, getBackground());
-      }
       super.paint(g);
     }
 
     @Override
-    public String getToolTipText(@NotNull final MouseEvent event) {
-      final TableModel model = getModel();
-      if (model instanceof SortableColumnModel) {
+    public Color getForeground() {
+      return JBTable.this.isEnabled() ? super.getForeground() : disabledForeground;
+    }
+
+    @Override
+    public String getToolTipText(final @NotNull MouseEvent event) {
+      ColumnInfo[] columnInfos = getColumnInfos();
+      if (columnInfos != null) {
         final int i = columnAtPoint(event.getPoint());
         final int infoIndex = i >= 0 ? convertColumnIndexToModel(i) : -1;
-        final ColumnInfo[] columnInfos = ((SortableColumnModel)model).getColumnInfos();
         final String tooltipText = infoIndex >= 0 && infoIndex < columnInfos.length ? columnInfos[infoIndex].getTooltipText() : null;
         if (tooltipText != null) {
           return tooltipText;
         }
       }
       return super.getToolTipText(event);
+    }
+
+    private ColumnInfo @Nullable [] getColumnInfos() {
+      TableModel model = getModel();
+      if (model instanceof SortableColumnModel) {
+        return ((SortableColumnModel)model).getColumnInfos();
+      }
+      else if (getTable() instanceof TreeTable) {
+        TreeTableModel treeTableModel = ((TreeTable)getTable()).getTableModel();
+        if (treeTableModel instanceof SortableColumnModel) {
+          return ((SortableColumnModel)treeTableModel).getColumnInfos();
+        }
+      }
+      return null;
     }
 
     @Override
@@ -909,6 +1268,198 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return headerCellRenderer.getPreferredSize().width;
   }
 
+  protected class InvisibleResizableHeader extends JBTableHeader {
+    private final @NotNull MyBasicTableHeaderUI myHeaderUI;
+    private @Nullable Cursor myCursor = null;
+
+    public InvisibleResizableHeader() {
+      myHeaderUI = new MyBasicTableHeaderUI(this);
+      // need a header to resize/drag columns, so use header that is not visible
+      setDefaultRenderer(new EmptyTableCellRenderer());
+      setReorderingAllowed(true);
+    }
+
+    @Override
+    public void setTable(JTable table) {
+      JTable oldTable = getTable();
+      if (oldTable != null) {
+        oldTable.removeMouseListener(myHeaderUI);
+        oldTable.removeMouseMotionListener(myHeaderUI);
+      }
+
+      super.setTable(table);
+
+      if (table != null) {
+        table.addMouseListener(myHeaderUI);
+        table.addMouseMotionListener(myHeaderUI);
+      }
+    }
+
+    @Override
+    public void setCursor(@Nullable Cursor cursor) {
+      /* this method and the next one fixes cursor:
+         BasicTableHeaderUI.MouseInputHandler behaves like nobody else sets cursor
+         so we remember what it set last time and keep it unaffected by other cursor changes in the table
+       */
+      JTable table = getTable();
+      if (table != null) {
+        table.setCursor(UIUtil.cursorIfNotDefault(cursor));
+        myCursor = cursor;
+      }
+      else {
+        super.setCursor(cursor);
+      }
+    }
+
+    @Override
+    public Cursor getCursor() {
+      if (myCursor == null) {
+        JTable table = getTable();
+        if (table == null) return super.getCursor();
+        return table.getCursor();
+      }
+      return myCursor;
+    }
+
+    @Override
+    public @NotNull Rectangle getHeaderRect(int column) {
+      // if a header has zero height, mouse pointer can never be inside it, so we pretend it is one pixel high
+      Rectangle headerRect = super.getHeaderRect(column);
+      return new Rectangle(headerRect.x, headerRect.y, headerRect.width, 1);
+    }
+
+    protected boolean canMoveOrResizeColumn(int modelIndex) {
+      if (table.getRowCount() == 0) return false;
+      return true;
+    }
+  }
+
+  private static class EmptyTableCellRenderer extends CellRendererPanel implements TableCellRenderer {
+    @Override
+    public @NotNull Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      return this;
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return new Dimension(0, 0);
+    }
+  }
+
+  // this class redirects events from the table to BasicTableHeaderUI.MouseInputHandler
+  private static class MyBasicTableHeaderUI extends BasicTableHeaderUI implements MouseInputListener {
+    private int myStartXCoordinate = 0;
+    private int myStartYCoordinate = 0;
+
+    MyBasicTableHeaderUI(@NotNull InvisibleResizableHeader tableHeader) {
+      header = tableHeader;
+      mouseInputListener = createMouseInputListener();
+    }
+
+    private @NotNull MouseEvent convertMouseEvent(@NotNull MouseEvent e) {
+      // create a new event, almost exactly the same, but in the header
+      return new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), 0, e.getXOnScreen(), header.getY(),
+                            e.getClickCount(), e.isPopupTrigger(), e.getButton());
+    }
+
+    @Override
+    public void mouseClicked(@NotNull MouseEvent e) {
+    }
+
+    @Override
+    public void mousePressed(@NotNull MouseEvent e) {
+      if (isOnBorder(e) || !canMoveOrResizeColumn(e)) return;
+      myStartXCoordinate = e.getX();
+      myStartYCoordinate = e.getY();
+      mouseInputListener.mousePressed(convertMouseEvent(e));
+    }
+
+    @Override
+    public void mouseReleased(@NotNull MouseEvent e) {
+      mouseInputListener.mouseReleased(convertMouseEvent(e));
+      if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
+        header.setCursor(null);
+      }
+    }
+
+    @Override
+    public void mouseEntered(@NotNull MouseEvent e) {
+      mouseInputListener.mouseEntered(convertMouseEvent(e));
+    }
+
+    @Override
+    public void mouseExited(@NotNull MouseEvent e) {
+      mouseInputListener.mouseExited(convertMouseEvent(e));
+    }
+
+    @Override
+    public void mouseDragged(@NotNull MouseEvent e) {
+      if (!isDraggingEnabled(e)) {
+        return;
+      }
+
+      mouseInputListener.mouseDragged(convertMouseEvent(e));
+      // if I change cursor on mouse pressed, it will change on double-click as well
+      // and I do not want that
+      if (header.getDraggedColumn() != null) {
+        if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
+          header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        }
+        int draggedColumn = header.getTable().convertColumnIndexToView(header.getDraggedColumn().getModelIndex());
+        int targetColumn = draggedColumn + (header.getDraggedDistance() < 0 ? -1 : 1);
+        if (targetColumn < 0 || targetColumn >= header.getTable().getColumnCount()) return;
+        if (!canMoveOrResizeColumn(header.getTable().convertColumnIndexToModel(targetColumn))) {
+          mouseReleased(e); //cancel dragging unmovable column
+        }
+      }
+    }
+
+    private boolean isDraggingEnabled(@NotNull MouseEvent e) {
+      if (isOnBorder(e) || !SwingUtilities.isLeftMouseButton(e) || !canMoveOrResizeColumn(e)) return false;
+      // can not check for getDragged/Resized column here since they can be set in mousePressed method
+      // their presence does not necessarily means something is being dragged or resized
+      if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR) ||
+          header.getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)) {
+        return true;
+      }
+
+      int deltaX = Math.abs(e.getX() - myStartXCoordinate);
+      int deltaY = Math.abs(e.getY() - myStartYCoordinate);
+      Point point = new Point(MathUtil.clamp(e.getX(), 0, header.getTable().getWidth() - 1), e.getY());
+      boolean sameColumn;
+      if (header.getDraggedColumn() == null) {
+        sameColumn = true;
+      }
+      else {
+        sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(point)) ==
+                      header.getDraggedColumn());
+      }
+      // start dragging only if mouse moved horizontally
+      // or if dragging was already started earlier (it looks weird to stop mid-dragging)
+      return deltaX >= 3 * deltaY && sameColumn;
+    }
+
+    @Override
+    public void mouseMoved(@NotNull MouseEvent e) {
+      if (isOnBorder(e) || header.getTable().getRowCount() == 0) return;
+      mouseInputListener.mouseMoved(convertMouseEvent(e));
+    }
+
+    private boolean isOnBorder(@NotNull MouseEvent e) {
+      return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUIScale.scale(3);
+    }
+
+    private boolean canMoveOrResizeColumn(@NotNull MouseEvent e) {
+      JTable table = header.getTable();
+      int modelIndex = table.convertColumnIndexToModel(table.getColumnModel().getColumnIndexAtX(e.getX()));
+      return canMoveOrResizeColumn(modelIndex);
+    }
+
+    private boolean canMoveOrResizeColumn(int modelIndex) {
+      return ((InvisibleResizableHeader)header).canMoveOrResizeColumn(modelIndex);
+    }
+  }
+
   /**
    * JTable gets table data from model lazily - only for a table part to be shown.
    * JBTable loads <i>all</i> the data on initialization to calculate cell size.
@@ -934,11 +1485,27 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
    * are created in all code paths.
    */
   protected class AccessibleJBTable extends AccessibleJTable {
+
+    @Override
+    public Accessible getAccessibleAt(int r, int c) {
+      if (r >= 0 && c < 0) c = 0;
+      if (r < 0 && c >= 0) r = 0;
+      return super.getAccessibleAt(r, c);
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      if (!e.getValueIsAdjusting()) {
+        super.valueChanged(e);
+      }
+    }
+
     @Override
     public Accessible getAccessibleChild(int i) {
       if (i < 0 || i >= getAccessibleChildrenCount()) {
         return null;
-      } else {
+      }
+      else {
         int column = getAccessibleColumnAtIndex(i);
         int row = getAccessibleRowAtIndex(i);
         return new AccessibleJBTableCell(JBTable.this, row, column, getAccessibleIndexAt(row, column));
@@ -1006,10 +1573,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       @Override
       protected AccessibleContext getCurrentAccessibleContext() {
         Component c = getCurrentComponent();
-        if (c instanceof Accessible)
+        if (c instanceof Accessible) {
           return c.getAccessibleContext();
+        }
         // Note: don't call "super" as 1) we know for sure the cell is not accessible
-        // and 2) the super implementation is incorrect anyways
+        // and 2) the super implementation is incorrect anyway
         return null;
       }
     }
@@ -1032,6 +1600,60 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         ((AbstractTableModel)getModel()).fireTableCellUpdated(rollOverCell.row, rollOverCell.column);
       }
       rollOverCell = null;
+    }
+  }
+  public static boolean setupCheckboxShortcut(@NotNull JTable table, int columnIndex) {
+    if (columnIndex >=0 && columnIndex < table.getColumnCount()) {
+      return SpaceKeyListener.install(table, columnIndex);
+    }
+    return false;
+  }
+
+  private static class SpaceKeyListener extends KeyAdapter {
+    private final JTable myTable;
+    private final int myColumnIndex;
+
+    static boolean install(@NotNull JTable table, int columnIndex) {
+      for (KeyListener listener : table.getKeyListeners()) {
+        if (listener instanceof SpaceKeyListener) return false;
+      }
+      table.addKeyListener(new SpaceKeyListener(table, columnIndex));
+      return true;
+    }
+
+    private SpaceKeyListener(@NotNull JTable table, int columnIndex) {
+      myTable = table;
+      myColumnIndex = columnIndex;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      int[] rows = myTable.getSelectedRows();
+      if (rows.length == 0 || e.getKeyCode() != KeyEvent.VK_SPACE || myTable.isEditing() || e.getModifiersEx() != 0) return;
+
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myTable);
+      if (supply != null && supply.isPopupActive()) return;
+
+      for (int row : rows) {
+        if (myTable.editCellAt(row, myColumnIndex)) {
+          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor &&
+              defaultCellEditor.getComponent() instanceof JCheckBox checkBox) {
+            checkBox.setSelected(!checkBox.isSelected());
+          }
+          stopEditing(myTable);
+          e.consume();
+        }
+      }
+    }
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
     }
   }
 }

@@ -1,10 +1,26 @@
 <html>
 <body>
-
-This inspection reports empty <b><font color="#000080">catch</font></b> blocks. While occasionally intended, this
-empty <b><font color="#000080">catch</font></b> blocks can make debugging extremely difficult.
-
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports empty <code>catch</code> blocks. While occasionally intended,
+empty <code>catch</code> blocks can make debugging extremely difficult.
+<p><b>Example:</b></p>
+<pre>
+<code>
+try {
+  throw new Exception()
+}
+catch (Exception e) {
+}
+</code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre>
+<code>
+try {
+  throw new Exception()
+}
+catch (Exception ignored) {
+}
+</code>
+</pre>
 </body>
 </html>

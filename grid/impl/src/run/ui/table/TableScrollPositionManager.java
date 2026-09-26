@@ -1,0 +1,57 @@
+package com.intellij.database.run.ui.table;
+
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.run.ui.grid.GridScrollPositionManager;
+import com.intellij.ui.TableUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+
+public class TableScrollPositionManager implements GridScrollPositionManager {
+  private final TableResultView myResultView;
+  private final DataGrid myGrid;
+
+  TableScrollPositionManager(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
+    myResultView = resultView;
+    myGrid = grid;
+  }
+
+  public static void install(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
+    TableScrollPositionManager tableScrollPositionManager = new TableScrollPositionManager(resultView, grid);
+    resultView.putClientProperty(SCROLL_POSITION_MANAGER_KEY, tableScrollPositionManager);
+  }
+
+  @Override
+  public GridScrollPosition store() {
+    Rectangle visibleRect = myResultView.getVisibleRect();
+    Point p = visibleRect.getLocation();
+    p.x += 1;
+    p.y += 1;
+    // At the very edge remember the first row or column, not the one the point lands in: a pinned column has zero
+    // width here, so the point lands in the next one and unpinning would scroll the column that came back away.
+    int row = visibleRect.y == 0 ? 0 : myResultView.rowAtPoint(p);
+    int column = visibleRect.x == 0 ? 0 : myResultView.columnAtPoint(p);
+    int modelRow = myResultView.getRawIndexConverter().row2Model().applyAsInt(myResultView.isTransposed() ? column : row);
+    int modelColumn = myResultView.getRawIndexConverter().column2Model().applyAsInt(myResultView.isTransposed() ? row : column);
+    return new GridScrollPosition(ModelIndex.forRow(myGrid, modelRow), ModelIndex.forColumn(myGrid, modelColumn));
+  }
+
+  @Override
+  public void restore(@NotNull GridScrollPosition position) {
+    int viewRow = myResultView.getRawIndexConverter().row2View().applyAsInt(position.myTopRowIdx.value);
+    int viewColumn = myResultView.getRawIndexConverter().column2View().applyAsInt(position.myLeftColumnIdx.value);
+    Rectangle targetRect = myResultView.getCellRect(myResultView.isTransposed() ? viewColumn : viewRow,
+                                                    myResultView.isTransposed() ? viewRow : viewColumn, true);
+    Rectangle visibleRect = myResultView.getVisibleRect();
+    targetRect.width = visibleRect.width;
+    targetRect.height = visibleRect.height;
+    myResultView.scrollRectToVisible(targetRect);
+  }
+
+  @Override
+  public void scrollSelectionToVisible() {
+    TableUtil.scrollSelectionToVisible(myResultView);
+  }
+}

@@ -1,0 +1,1 @@
+inline fun api(): Int = helper()

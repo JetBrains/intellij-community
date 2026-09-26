@@ -1,0 +1,1 @@
+foo = len("something")

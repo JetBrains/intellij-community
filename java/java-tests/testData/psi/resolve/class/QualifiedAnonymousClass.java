@@ -2,7 +2,7 @@ import foo.Outer;
 
 class Foo {
   {
-    new Outer.<ref>Inner() { };
+    new Outer.<caret>Inner() { };
   }
 }
 

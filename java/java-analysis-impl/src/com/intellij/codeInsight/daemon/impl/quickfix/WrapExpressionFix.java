@@ -1,52 +1,61 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
-/**
- * @author ven
- */
-public class WrapExpressionFix implements IntentionAction {
+public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
+  private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
 
-  private final PsiExpression myExpression;
+  private final @Nullable String myRole;
   private final PsiClassType myExpectedType;
   private final boolean myPrimitiveExpected;
+  private final String myMethodPresentation;
 
-  public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression) {
-    myExpression = expression;
+  public WrapExpressionFix(@NotNull PsiType expectedType, @NotNull PsiExpression expression, @Nullable String role) {
+    super(expression);
+    myRole = role;
     myExpectedType = getClassType(expectedType, expression);
     myPrimitiveExpected = expectedType instanceof PsiPrimitiveType;
+    myMethodPresentation = getMethodPresentation(expression, myExpectedType, myPrimitiveExpected);
   }
 
-  @Nullable
-  private static PsiClassType getClassType(PsiType type, PsiElement place) {
+  private static @Nullable PsiClassType getClassType(PsiType type, PsiElement place) {
     if (type instanceof PsiClassType) {
       return (PsiClassType)type;
     }
@@ -56,22 +65,32 @@ public class WrapExpressionFix implements IntentionAction {
     return null;
   }
 
-  @Override
-  @NotNull
-  public String getText() {
-    PsiType type = myExpression.getType();
-    final PsiMethod wrapper = myExpression.isValid() && myExpectedType != null && type != null ? findWrapper(type, myExpectedType, myPrimitiveExpected) : null;
-    final String methodPresentation = wrapper != null ? wrapper.getContainingClass().getName() + "." + wrapper.getName() : "";
-    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
+  private static String getMethodPresentation(PsiExpression expression, PsiClassType expectedType, boolean primitiveExpected) {
+    PsiType type = expression.getType();
+    if (expectedType != null && type != null) {
+      final PsiMethod wrapper = findWrapper(type, expectedType, primitiveExpected, expression);
+      if (wrapper != null) {
+        final PsiClass containingClass = wrapper.getContainingClass();
+        if (containingClass != null) {
+          return containingClass.getName() + '.' + wrapper.getName();
+        }
+      }
+    }
+    return null;
   }
 
-  @Nullable
-  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType, boolean primitiveExpected) {
+  private static @Nullable PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
+                                                 boolean primitiveExpected, @NotNull PsiElement context) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;
       if (primitiveExpected) {
         expectedReturnType = PsiPrimitiveType.getUnboxedType(expectedType);
+      }
+      boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+      if (type instanceof PsiArrayType && isString) {
+        aClass = PsiResolveHelper.getInstance(aClass.getProject()).resolveReferencedClass(CommonClassNames.JAVA_UTIL_ARRAYS, aClass);
+        if (aClass == null) return null;
       }
       if (expectedReturnType == null) return null;
       PsiMethod[] methods = aClass.getMethods();
@@ -79,11 +98,11 @@ public class WrapExpressionFix implements IntentionAction {
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)
             && method.getParameterList().getParametersCount() == 1
-            && method.getParameterList().getParameters()[0].getType().isAssignableFrom(type)
+            && Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().isAssignableFrom(type)
             && method.getReturnType() != null
             && expectedReturnType.equals(method.getReturnType())) {
           final String methodName = method.getName();
-          if (methodName.startsWith("parse") || methodName.equals("valueOf")) {
+          if (methodName.startsWith("parse") || methodName.equals("valueOf") || (isString && methodName.equals("toString"))) {
             return method;
           }
           wrapperMethods.add(method);
@@ -96,43 +115,50 @@ public class WrapExpressionFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpression.isValid()
-           && myExpression.getManager().isInProject(myExpression)
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression myExpression) {
+    boolean available = myMethodPresentation != null
+           && PsiImplUtil.getSwitchLabel(myExpression) == null
            && myExpectedType != null
            && myExpectedType.isValid()
            && myExpression.getType() != null
-           && findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected) != null;
+           && findWrapper(myExpression.getType(), myExpectedType, myPrimitiveExpected, myExpression) != null;
+    if (!available) return null;
+    String message = myRole == null ? QuickFixBundle.message("wrap.expression.using.static.accessor.text", myMethodPresentation) :
+                     QuickFixBundle.message("wrap.expression.using.static.accessor.text.role", myMethodPresentation, myRole);
+    return Presentation.of(message);
   }
 
+
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiType type = myExpression.getType();
-    assert type != null;
-    PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);
-    assert wrapper != null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
+    PsiType type = expression.getType();
+    if (type == null) {
+      LOG.error("Expression type is null");
+      return;
+    }
+    PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected, expression);
+    if (wrapper == null) {
+      LOG.error("Wrapper not found; expectedType = " + myExpectedType.getCanonicalText() + "; primitiveExpected = " + myPrimitiveExpected);
+      return;
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
-    PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(methodCallText,
-                                                                                             null);
-    call.getArgumentList().add(myExpression);
-    ((PsiReferenceExpression)call.getMethodExpression().getQualifierExpression()).bindToElement(
-      wrapper.getContainingClass());
-    myExpression.replace(call);
+    PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(methodCallText, null);
+    call.getArgumentList().add(expression);
+    PsiReferenceExpression qualifier = (PsiReferenceExpression)Objects.requireNonNull(call.getMethodExpression().getQualifierExpression());
+    PsiClass wrapperClass = Objects.requireNonNull(wrapper.getContainingClass());
+    qualifier.bindToElement(wrapperClass);
+    expression.replace(call);
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  public static void registerWrapAction(JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
+  public static void registerWrapAction(JavaResolveResult[] candidates,
+                                        PsiExpression[] expressions,
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -148,15 +174,16 @@ public class WrapExpressionFix implements IntentionAction {
       for (int j = 0; j < expressions.length; j++) {
         PsiExpression expression = expressions[j];
         final PsiType exprType = expression.getType();
-        if (exprType != null) {
+        if (exprType != null && !PsiTypes.nullType().equals(exprType)) {
           PsiType paramType = parameters[Math.min(j, parameters.length - 1)].getType();
           if (paramType instanceof PsiEllipsisType) {
             paramType = ((PsiEllipsisType)paramType).getComponentType();
           }
-          paramType = substitutor != null ? substitutor.substitute(paramType) : paramType;
+          paramType = substitutor.substitute(paramType);
           if (paramType.isAssignableFrom(exprType)) continue;
           final PsiClassType classType = getClassType(paramType, expression);
-          if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType) != null) {
+          if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType,
+                                                                       expression) != null) {
             expectedType = paramType;
             expr = expression;
           }
@@ -170,7 +197,7 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr));
+      info.accept(new WrapExpressionFix(expectedType, expr, null));
     }
   }
 }

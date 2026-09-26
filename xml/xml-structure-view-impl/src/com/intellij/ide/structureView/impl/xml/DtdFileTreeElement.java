@@ -1,44 +1,41 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.*;
-import com.intellij.util.PlatformIcons;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.xml.impl.dtd.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
+public final class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public DtdFileTreeElement(XmlFile file) {
     super(file);
   }
 
   @Override
-  @NotNull
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     return collectElements(getElement().getDocument());
   }
 
@@ -47,7 +44,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
     XmlUtil.processXmlElements(element, new PsiElementProcessor() {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
+      public boolean execute(final @NotNull PsiElement element) {
         if (element instanceof XmlElementDecl ||
             element instanceof XmlEntityDecl) {
           elements.add(new DtdTreeElement((PsiNamedElement)element));
@@ -63,21 +60,20 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     return getElement().getName();
   }
 
-  private static class DtdTreeElement extends PsiTreeElementBase<PsiNamedElement> {
-    @NonNls private static final String IMPLIED = "implied";
-    @NonNls private static final String REQUIRED = "required";
-    @NonNls private static final String FIXED = "fixed";
-    @NonNls private static final String ID = "id";
-    @NonNls private static final String IDREF = "idref";
-    @NonNls private static final String ENUM = "enum";
+  private static final class DtdTreeElement extends PsiTreeElementBase<PsiNamedElement> {
+    private static final @NonNls String IMPLIED = "implied";
+    private static final @NonNls String REQUIRED = "required";
+    private static final @NonNls String FIXED = "fixed";
+    private static final @NonNls String ID = "id";
+    private static final @NonNls String IDREF = "idref";
+    private static final @NonNls String ENUM = "enum";
 
-    public DtdTreeElement(final PsiNamedElement element) {
+    DtdTreeElement(final PsiNamedElement element) {
       super(element);
     }
 
     @Override
-    @NotNull
-    public Collection<StructureViewTreeElement> getChildrenBase() {
+    public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
       return Collections.emptyList();
     }
 
@@ -89,7 +85,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
     @Override
     public Icon getIcon(final boolean open) {
-      return PlatformIcons.XML_TAG_ICON;
+      return IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag);
     }
 
     @Override
@@ -104,7 +100,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
         final String name = getElement().getName();
         for(XmlAttlistDecl a:attLists) {
           final String aname = a.getName();
-          if (!Comparing.equal(aname, name)) continue;
+          if (!Objects.equals(aname, name)) continue;
           if (attrMap == null) attrMap = new LinkedHashMap<>();
 
           for(XmlAttributeDecl d : a.getAttributeDecls()) {
@@ -152,10 +148,11 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
      return super.getLocationString();
     }
 
+    @Override
     public String toString() {
       final String s = getLocationString();
       final String name = getElement().getName();
-      if (s == null || s.length() == 0) return name;
+      if (s == null || s.isEmpty()) return name;
       return name + " (" + s + ")";
     }
   }

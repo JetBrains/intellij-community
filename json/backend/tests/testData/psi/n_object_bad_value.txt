@@ -1,0 +1,10 @@
+JsonFile: n_object_bad_value.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('truth')
+    PsiElement(])(']')

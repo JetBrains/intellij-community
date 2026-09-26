@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface ProjectFromSourcesBuilder {
   @NotNull
   Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector);
@@ -45,5 +42,5 @@ public interface ProjectFromSourcesBuilder {
 
   boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector);
 
-  void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<DetectedProjectRoot> roots);
+  void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<? extends DetectedProjectRoot> roots);
 }

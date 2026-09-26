@@ -1,0 +1,3 @@
+fun <U, V> Map<U, V>.foo() {}
+
+fun test() = Map<String, Int>::foo

@@ -29,11 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GrImplicitUsageProvider implements ImplicitUsageProvider {
+public final class GrImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
-    if (element instanceof GrMethod) {
-      final GrMethod method = (GrMethod)element;
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
+    if (element instanceof GrMethod method) {
 
       if (PsiUtil.OPERATOR_METHOD_NAMES.contains(method.getName())) return true;
 
@@ -41,8 +40,7 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
       if (MissingMethodAndPropertyUtil.isMethodMissing(method)) return true;
       if (isDelegateAnnotated(method)) return true;
     }
-    else if (element instanceof GrParameter) {
-      final GrParameter parameter = (GrParameter)element;
+    else if (element instanceof GrParameter parameter) {
 
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof GrMethod && (MissingMethodAndPropertyUtil.isMethodMissing((GrMethod)scope) || MissingMethodAndPropertyUtil
@@ -53,13 +51,13 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     if (element instanceof GrField && isDelegateAnnotated((GrField)element)) return true;
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return false;
   }
 

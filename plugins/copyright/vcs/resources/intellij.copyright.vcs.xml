@@ -1,0 +1,16 @@
+<idea-plugin package="com.maddyhome.idea.copyright.vcs">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.vcs.UpdateCopyrightCheckinHandlerFactory"/>
+  </extensions>
+</idea-plugin>

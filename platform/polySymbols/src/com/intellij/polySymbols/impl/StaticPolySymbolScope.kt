@@ -1,0 +1,18 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.impl
+
+import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.context.PolyContextRulesProvider
+import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.query.PolySymbolScope
+
+interface StaticPolySymbolScope : PolySymbolScope, PolyContextRulesProvider {
+
+  override val modificationTracker: ModificationTracker
+
+  override fun createPointer(): Pointer<out StaticPolySymbolScope>
+
+  fun getNameConversionRulesProvider(context: PolyContext): PolySymbolNameConversionRulesProvider?
+}

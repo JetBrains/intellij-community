@@ -16,9 +16,9 @@
 package com.intellij.debugger.memory.filtering;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XExpression;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,12 +29,12 @@ public class FilteringTask implements Runnable {
   private final ConditionChecker myChecker;
   private final FilteringTaskCallback myCallback;
 
-  private volatile boolean myIsCancelled = false;
+  private volatile boolean myIsCancelled;
 
   public FilteringTask(@NotNull String className, @NotNull DebugProcessImpl debugProcess,
                        @NotNull XExpression expression, @NotNull ValuesList values,
                        @NotNull FilteringTaskCallback callback) {
-    myChecker = StringUtil.isEmptyOrSpaces(expression.getExpression())
+    myChecker = isEmptyFilter(expression)
                 ? ConditionChecker.ALL_MATCHED_CHECKER
                 : new ConditionCheckerImpl(debugProcess, expression, className);
     myValues = values;
@@ -54,20 +54,13 @@ public class FilteringTask implements Runnable {
     myCallback.started(myValues.size());
     int proceedCount;
     for (proceedCount = 0; proceedCount < myValues.size() && !myIsCancelled; proceedCount++) {
-      Value value = myValues.get(proceedCount);
-      CheckingResult result = myChecker.check(value);
-      FilteringTaskCallback.Action action = FilteringTaskCallback.Action.CONTINUE;
-      switch (result.getResult()) {
-        case MATCH:
-          action = myCallback.matched(value);
-          break;
-        case NO_MATCH:
-          action = myCallback.notMatched(value);
-          break;
-        case ERROR:
-          action = myCallback.error(value, result.getFailureDescription());
-          break;
-      }
+      JavaReferenceInfo info = myValues.get(proceedCount);
+      CheckingResult result = myChecker.check(info.getObjectReference());
+      FilteringTaskCallback.Action action = switch (result.getResult()) {
+        case MATCH -> myCallback.matched(info);
+        case NO_MATCH -> myCallback.notMatched(info);
+        case ERROR -> myCallback.error(info, result.getFailureDescription());
+      };
 
       if (action == FilteringTaskCallback.Action.STOP) {
         break;
@@ -83,8 +76,13 @@ public class FilteringTask implements Runnable {
     myCallback.completed(reason);
   }
 
+  public static boolean isEmptyFilter(@NotNull XExpression expression) {
+    return StringUtil.isEmptyOrSpaces(expression.getExpression());
+  }
+
   public interface ValuesList {
     int size();
-    Value get(int index);
+
+    JavaReferenceInfo get(int index);
   }
 }

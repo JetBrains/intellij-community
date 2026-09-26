@@ -1,33 +1,26 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import org.jdom.Element;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.DisableOnDebug;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.List;
 
-/**
- * @author nik
- */
+@RunWith(JUnit4.class)
 public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   private XDependentBreakpointManager myDependentBreakpointManager;
 
+  @Rule
+  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
 
   @Override
   protected void setUp() throws Exception {
@@ -41,6 +34,7 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     super.tearDown();
   }
 
+  @Test
   public void testDelete() {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();
@@ -55,6 +49,44 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     assertEmpty(myDependentBreakpointManager.getAllSlaveBreakpoints());
   }
 
+  @Test
+  public void testRemovingSlaveClearsDependency() {
+    XLineBreakpoint<?> master = createMaster();
+    XLineBreakpoint<?> slave = createSlave();
+    myDependentBreakpointManager.setMasterBreakpoint(slave, master, true);
+
+    removeBreakPoint(myBreakpointManager, slave);
+
+    assertEmpty(myDependentBreakpointManager.getSlaveBreakpoints(master));
+    assertEmpty(myDependentBreakpointManager.getAllSlaveBreakpoints());
+  }
+
+  @Test
+  public void testSetMasterBreakpointUpdatesExistingDependency() {
+    XLineBreakpoint<?> firstMaster = createMaster();
+    XLineBreakpoint<?> secondMaster =
+      addLineBreakpoint(myBreakpointManager, "file://second-master", 3, new MyBreakpointProperties("second-master"));
+    XLineBreakpoint<?> slave = createSlave();
+    myDependentBreakpointManager.setMasterBreakpoint(slave, firstMaster, true);
+
+    myDependentBreakpointManager.setMasterBreakpoint(slave, firstMaster, false);
+
+    assertSame(firstMaster, myDependentBreakpointManager.getMasterBreakpoint(slave));
+    assertFalse(myDependentBreakpointManager.isLeaveEnabled(slave));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(firstMaster));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(slave));
+
+    myDependentBreakpointManager.setMasterBreakpoint(slave, secondMaster, true);
+
+    assertSame(secondMaster, myDependentBreakpointManager.getMasterBreakpoint(slave));
+    assertTrue(myDependentBreakpointManager.isLeaveEnabled(slave));
+    assertFalse(myDependentBreakpointManager.isMasterOrSlave(firstMaster));
+    assertTrue(myDependentBreakpointManager.isMasterOrSlave(secondMaster));
+    assertEmpty(myDependentBreakpointManager.getSlaveBreakpoints(firstMaster));
+    assertSame(slave, assertOneElement(myDependentBreakpointManager.getSlaveBreakpoints(secondMaster)));
+  }
+
+  @Test
   public void testSerialize() {
     XLineBreakpoint<?> master = createMaster();
     XLineBreakpoint<?> slave = createSlave();

@@ -1,0 +1,40 @@
+<html>
+<body>
+Reports a <code>MutableStateFlow</code> that holds a mutable collection.
+<p>
+  A state flow compares a new value with the current one by <code>Any.equals</code>.
+  A mutating change of the collection keeps the same instance, so the state flow emits nothing.
+  Every collector misses the change.
+</p>
+<p>
+  Use a read-only collection type instead.
+  A read-only type turns each mutation into a compilation error.
+  Assign a new collection to <code>value</code> to emit a change.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  val state = MutableStateFlow(mutableListOf&lt;Int&gt;())
+
+  fun add() {
+      state.value.add(1) // The state flow emits nothing.
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  val state = MutableStateFlow(listOf&lt;Int&gt;())
+
+  fun add() {
+      state.value.add(1) // Compilation error.
+  }
+</code></pre>
+<p>
+  The quick-fix changes the initial value only.
+  Replace each mutation with an assignment:
+</p>
+<pre><code>
+  fun add() {
+      state.value = state.value + 1 // The state flow emits a new value.
+  }
+</code></pre>
+</body>
+</html>

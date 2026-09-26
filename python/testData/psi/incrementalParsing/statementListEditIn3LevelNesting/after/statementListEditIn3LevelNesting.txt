@@ -1,0 +1,18 @@
+Original text:
+---------------
+class MyClass:
+    def method(self):
+        for i in range(10):
+            print(i)
+            print(i + 1)
+        return
+---------------
+Subtree: Language: Python
+---------------
+class MyClass:
+    def method(self):
+        for i in range(10):
+            <reparse>print(i)
+            print(i * 2)</reparse>
+        return
+---------------

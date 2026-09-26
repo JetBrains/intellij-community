@@ -1,0 +1,6 @@
+from typing import Any, TypeAlias
+
+_Image: TypeAlias = Any  # actually PIL.Image, but not worth adding a dependency
+
+def shift_hue(image: _Image, hue: float) -> _Image: ...
+def make_transparent(image: _Image) -> _Image: ...

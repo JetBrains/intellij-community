@@ -1,12 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.LocalSearchScope;
@@ -18,10 +22,17 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.impl.XmlNsDescriptorUtil;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.JspFileTypeUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,7 +41,7 @@ import java.util.List;
 public abstract class XmlExtension {
   public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<>("com.intellij.xml.xmlExtension");
 
-  public static XmlExtension getExtension(@NotNull final PsiFile file) {
+  public static XmlExtension getExtension(final @NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -40,14 +51,22 @@ public abstract class XmlExtension {
 
     @NotNull
     String getPostfix();
-    
+
     default boolean showAutoPopup() {
       return true;
+    }
+
+    /**
+     * Allows amending completion type in the attribute value.
+     * Effective only if {@link #showAutoPopup()} returns true.
+     */
+    default CompletionType getAutoPopupCompletionType() {
+      return CompletionType.BASIC;
     }
   }
 
   private static XmlExtension calcExtension(PsiFile file) {
-    for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
+    for (XmlExtension extension : EP_NAME.getExtensionList()) {
       if (extension.isAvailable(file)) {
         return extension;
       }
@@ -55,7 +74,6 @@ public abstract class XmlExtension {
     return DefaultXmlExtension.DEFAULT_EXTENSION;
   }
 
-  @SuppressWarnings("ConstantConditions")
   public static XmlExtension getExtensionByElement(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {
@@ -76,22 +94,18 @@ public abstract class XmlExtension {
       this.namespace = namespace;
     }
 
-    @Nullable
-    public PsiElement getDeclaration() {
+    public @Nullable PsiElement getDeclaration() {
       return null;
     }
   }
 
-  @NotNull
-  public abstract List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
+  public abstract @NotNull List<TagInfo> getAvailableTagNames(final @NotNull XmlFile file, final @NotNull XmlTag context);
 
-  @Nullable
-  public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
+  public @Nullable TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  @Nullable
-  public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
   }
 
@@ -107,8 +121,7 @@ public abstract class XmlExtension {
     return HighlightInfoType.ERROR;
   }
 
-  @Nullable
-  public abstract SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
+  public abstract @Nullable SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
 
   public SearchScope getNsPrefixScope(XmlAttribute declaration) {
     return new LocalSearchScope(declaration.getParent());
@@ -118,23 +131,28 @@ public abstract class XmlExtension {
     return true;
   }
 
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag, final XmlElementDescriptor parentDescriptor) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag, final XmlElementDescriptor parentDescriptor) {
     return parentDescriptor.getElementDescriptor(tag, contextTag);
   }
 
-  @Nullable
-  public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
-    return element.getNSDescriptor(namespace, strict);  
+  public @Nullable XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
+    return element.getNSDescriptor(namespace, strict);
   }
 
-  @Nullable
-  public XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
+  public @NotNull XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull String namespacePrefix, @NotNull XmlNSDescriptor descriptor) {
+    if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
+      XmlFile obj = descriptor.getDescriptorFile();
+      XmlNSDescriptor result = obj == null ? null : XmlNsDescriptorUtil.getCachedHtmlNsDescriptor(obj, namespacePrefix);
+      return result == null ? new HtmlNSDescriptorImpl(descriptor) : result;
+    }
+    return descriptor;
+  }
+
+  public @Nullable XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
     return tag.getParentTag();
   }
 
-  @Nullable
-  public XmlFile getContainingFile(PsiElement element) {
+  public @Nullable XmlFile getContainingFile(PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -158,19 +176,21 @@ public abstract class XmlExtension {
     return descriptor.isRequired();
   }
 
-  @NotNull
-  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
-                                                                  @NotNull String defaultAttributeQuote) {
+  public boolean shouldCompleteTag(XmlTag context) {
+    return true;
+  }
+
+  public @NotNull AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
+                                                                           @NotNull String attributeName,
+                                                                           @NotNull String defaultAttributeQuote) {
     return new AttributeValuePresentation() {
-      @NotNull
       @Override
-      public String getPrefix() {
+      public @NotNull String getPrefix() {
         return defaultAttributeQuote;
       }
 
-      @NotNull
       @Override
-      public String getPostfix() {
+      public @NotNull String getPostfix() {
         return defaultAttributeQuote;
       }
     };
@@ -192,7 +212,40 @@ public abstract class XmlExtension {
     return false;
   }
 
-  public boolean isSingleTagException(@NotNull String name) { return false; }
+  public boolean isValidTagNameChar(final char c) {
+    return false;
+  }
+
+  /**
+   * @return list of files containing char entity definitions to be used for completion and resolution within a specified XML file
+   */
+  public @NotNull @Unmodifiable List<@NotNull XmlFile> getCharEntitiesDTDs(@NotNull XmlFile file) {
+    XmlDocument document = file.getDocument();
+    if (HtmlUtil.isHtml5Document(document)) {
+      return ContainerUtil.packNullables(XmlUtil.findXmlFile(file, Html5SchemaProvider.getCharsDtdLocation()));
+    }
+    else if (document != null) {
+      final XmlTag rootTag = document.getRootTag();
+      if (rootTag != null) {
+        final XmlElementDescriptor descriptor = rootTag.getDescriptor();
+
+        if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
+          PsiElement element = descriptor.getDeclaration();
+          final PsiFile containingFile = element != null ? element.getContainingFile() : null;
+          if (containingFile instanceof XmlFile) {
+            return Collections.singletonList((XmlFile)containingFile);
+          }
+        }
+      }
+      final FileType ft = file.getFileType();
+      final String namespace = ft == XHtmlFileType.INSTANCE || JspFileTypeUtil.isJspX(ft) ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
+      final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
+      if (nsDescriptor != null) {
+        return ContainerUtil.packNullables(nsDescriptor.getDescriptorFile());
+      }
+    }
+    return Collections.emptyList();
+  }
 
   public static boolean shouldIgnoreSelfClosingTag(@NotNull XmlTag tag) {
     final XmlExtension extension = getExtensionByElement(tag);

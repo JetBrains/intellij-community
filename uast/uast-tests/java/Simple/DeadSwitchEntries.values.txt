@@ -46,3 +46,6 @@ UFile (package = ) [public final enum DeadSwitchEntries {...]
                                 UBreakExpression (label = null) [break] = Nothing(break)
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = 13)
+        UMethod (name = values) [public static fun values() : DeadSwitchEntries[] = UastEmptyExpression]
+        UMethod (name = valueOf) [public static fun valueOf(name: java.lang.String) : DeadSwitchEntries = UastEmptyExpression]
+            UParameter (name = name) [var name: java.lang.String]

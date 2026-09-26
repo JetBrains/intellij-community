@@ -1,0 +1,194 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.issue
+
+import com.intellij.build.FilePosition
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.issue.BuildIssue
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.util.lang.JavaVersion
+import org.gradle.internal.jvm.UnsupportedJavaRuntimeException
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.io.File
+import java.util.function.Consumer
+import kotlin.io.path.Path
+
+/**
+ * This issue checker provides quick fixes for compatibility issues with Gradle and Java.
+ *
+ * @author Vladislav.Soroka
+ */
+@ApiStatus.Internal
+class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
+
+  override fun consumeBuildOutputFailureMessage(
+    message: String,
+    failureCause: String,
+    stacktrace: String?,
+    location: FilePosition?,
+    parentEventId: Any,
+    messageConsumer: Consumer<in BuildEvent>
+  ): Boolean {
+    // JDK compatibility issues should be handled by IncompatibleGradleJdkIssueChecker.check method based on exceptions come from Gradle TAPI
+    return failureCause.startsWith(COULD_NOT_CREATE_SERVICE_OF_TYPE_PREFIX) &&
+           failureCause.contains(USING_BUILD_SCOPE_SERVICES)
+  }
+
+  override fun check(issueData: GradleIssueData): BuildIssue? {
+    val rootCause = issueData.failure.rootCause
+    val gradleVersion = getGradleVersion(issueData)
+    val javaVersion = getJavaVersion(issueData, gradleVersion)
+
+    when {
+      gradleVersion != null && javaVersion != null -> {
+        if (!GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)) {
+          return IncompatibleGradleJvmAndGradleBuildIssue(gradleVersion, javaVersion, issueData.projectPath)
+        }
+      }
+      isCouldNotDetermineJavaIssue(rootCause) -> {
+        val detectedJavaVersion = detectJavaVersionIfCouldNotDetermineJavaIssue(rootCause) ?: javaVersion
+        return IncompatibleGradleJvmAndGradleBuildIssue(gradleVersion, detectedJavaVersion, issueData.projectPath)
+      }
+      isUnsupportedClassVersionIssue(rootCause) -> {
+        return IncompatibleGradleJvmAndGradleBuildIssue(gradleVersion, javaVersion, issueData.projectPath)
+      }
+      isUnsupportedJavaRuntimeIssue(rootCause) -> {
+        return IncompatibleGradleJvmAndGradleBuildIssue(gradleVersion, javaVersion, issueData.projectPath)
+      }
+    }
+    return null
+  }
+
+  private fun getGradleVersion(issueData: GradleIssueData): GradleVersion? {
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null) {
+      return GradleVersion.version(buildEnvironment.gradle.gradleVersion)
+    }
+    return null
+  }
+
+  private fun getJavaVersion(issueData: GradleIssueData, gradleVersion: GradleVersion?): JavaVersion? {
+    val projectPath = Path(issueData.projectPath)
+    // Projects using Daemon JVM criteria with a compatible Gradle version will ignore javaHome defined on BuildEnvironment
+    // for this reason defined version in gradle/gradle-daemon-jvm.properties is used to run build instead
+    if (gradleVersion != null && GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectPath, gradleVersion)) {
+      GradleDaemonJvmPropertiesFile.getProperties(projectPath).version?.value?.let {
+        return JavaVersion.parse(it)
+      }
+    }
+    val buildEnvironment = issueData.buildEnvironment
+    if (buildEnvironment != null && gradleVersion.hasCorrectJavaEnvironment()) {
+      return ExternalSystemJdkUtil.getJavaVersion(buildEnvironment.java.javaHome.path)
+    }
+    return null
+  }
+
+  /**
+   * The modern versions of Gradle Tooling API is incompatible with the BuildEnvironment older than 2.6.
+   */
+  private fun GradleVersion?.hasCorrectJavaEnvironment(): Boolean {
+    if (this == null) {
+      return false
+    }
+    return GradleVersionUtil.isGradleAtLeast(this, "2.6")
+  }
+
+  private fun isUnsupportedClassVersionIssue(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.className == UnsupportedClassVersionError::class.java.name
+  }
+
+  private fun isUnsupportedJavaRuntimeIssue(rootCause: GradleIssueFailure): Boolean {
+    return rootCause.className == UnsupportedJavaRuntimeException::class.java.name
+  }
+
+  /**
+   * Gradle versions less than 4.7 do not support JEP-322 (Java starting with JDK 10-ea build 36),
+   * see https://github.com/gradle/gradle/issues/4503
+   */
+  private fun isCouldNotDetermineJavaIssue(rootCause: GradleIssueFailure): Boolean {
+    val rootCauseText = rootCause.text
+    if (rootCauseText.startsWith(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX)) {
+      return true
+    }
+    if (rootCause.messageOrDescription == COULD_NOT_DETERMINE_JAVA_VERSION_MESSAGE) {
+      return true
+    }
+    return false
+  }
+
+  private fun detectJavaVersionIfCouldNotDetermineJavaIssue(rootCause: GradleIssueFailure): JavaVersion? {
+    val rootCauseText = rootCause.text
+    val javaExeCandidate = rootCauseText.substringAfter(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX).trimEnd('.')
+    val javaHome = File(javaExeCandidate).parentFile?.parentFile
+    if (javaHome != null && javaHome.isDirectory) {
+      return ExternalSystemJdkUtil.getJavaVersion(javaHome.path)
+    }
+    return null
+  }
+
+  companion object {
+
+    private const val COULD_NOT_CREATE_SERVICE_OF_TYPE_PREFIX =
+      "Could not create service of type "
+
+    private const val USING_BUILD_SCOPE_SERVICES =
+      " using BuildScopeServices."
+
+    private const val COULD_NOT_DETERMINE_JAVA_VERSION_MESSAGE =
+      "Could not determine Java version."
+
+    private const val COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX =
+      "org.gradle.api.GradleException: Could not determine Java version using executable "
+  }
+}
+
+private class IncompatibleGradleJvmAndGradleBuildIssue(
+  gradleVersion: GradleVersion?,
+  javaVersion: JavaVersion?,
+  projectPath: String
+) : ConfigurableGradleBuildIssue() {
+
+  init {
+    val oldestCompatibleJavaVersion = gradleVersion?.let { GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(it) }
+    val latestCompatibleJavaVersion = gradleVersion?.let { GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(it) }
+    val oldestCompatibleGradleVersion = javaVersion?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
+    val latestCompatibleGradleVersion = javaVersion?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
+    setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.incompatible.title"))
+    when {
+      javaVersion == null -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.incompatible.unknown.java.description"))
+      }
+      gradleVersion == null -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.incompatible.unknown.gradle.description", javaVersion))
+      }
+      else -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.incompatible.description", javaVersion, gradleVersion.version))
+      }
+    }
+    when {
+      javaVersion != null && oldestCompatibleJavaVersion != null && javaVersion < oldestCompatibleJavaVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.compatible.minimum.description", oldestCompatibleJavaVersion))
+        addGradleJvmQuickFix(projectPath, oldestCompatibleJavaVersion)
+      }
+      javaVersion != null && latestCompatibleJavaVersion != null && javaVersion > latestCompatibleJavaVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.compatible.maximum.description", latestCompatibleJavaVersion))
+        addGradleJvmQuickFix(projectPath, latestCompatibleJavaVersion)
+      }
+    }
+    when {
+      gradleVersion != null && oldestCompatibleGradleVersion != null && gradleVersion < oldestCompatibleGradleVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.minimum.description", oldestCompatibleGradleVersion.version))
+        addGradleWrapperVersionQuickFix(projectPath, oldestCompatibleGradleVersion)
+      }
+      gradleVersion != null && latestCompatibleGradleVersion != null && gradleVersion > latestCompatibleGradleVersion -> {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.compatible.maximum.description", latestCompatibleGradleVersion.version))
+        addGradleWrapperVersionQuickFix(projectPath, latestCompatibleGradleVersion)
+      }
+    }
+  }
+}

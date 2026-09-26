@@ -9,9 +9,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class DirectoryElementPresentation extends PackagingElementPresentation {
   private final DirectoryPackagingElement myElement;
 
@@ -19,10 +16,12 @@ public class DirectoryElementPresentation extends PackagingElementPresentation {
     myElement = element;
   }
 
+  @Override
   public String getPresentableName() {
     return myElement.getDirectoryName();
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(PlatformIcons.FOLDER_ICON);
     presentationData.addText(myElement.getDirectoryName(), mainAttributes);

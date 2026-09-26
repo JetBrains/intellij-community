@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// PROBLEM: none
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: FUNCTION_CALL_EXPECTED
+// K2_ERROR: UNRESOLVED_REFERENCE
+val test<caret> = arrayOf<java.lang.String.valueOf(1)>

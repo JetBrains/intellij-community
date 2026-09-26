@@ -1,0 +1,115 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.ui.preview
+
+import com.intellij.openapi.components.service
+import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import java.awt.Color
+
+object PreviewLAFThemeStyles {
+  @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
+  object Variables {
+    const val FontSize: String = "--default-font-size"
+  }
+
+  val fontSizeOptions: List<Int> = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
+
+  val defaultFontSize: Int
+    get() = service<MarkdownPreviewSettings>().state.fontSize
+
+  /**
+   * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.
+   * Generated CSS will override base rules from the default.css, so the preview elements will have correct colors.
+
+   * @return String containing generated CSS rules.
+   */
+  fun createStylesheet(): String {
+    val scheme = PreviewStyleScheme.fromCurrentTheme()
+
+    val separatorColor = scheme.separatorColor.webRgba()
+    val infoForeground = scheme.infoForegroundColor.webRgba()
+
+    val backgroundColor = scheme.backgroundColor.webRgba()
+    // language=CSS
+    val baseStyles = """
+    :root {
+      ${Variables.FontSize}: ${scheme.fontSize}px;
+    }
+
+    body {
+        background-color: ${backgroundColor};
+        font-size: var(${Variables.FontSize}) !important;
+    }
+    
+    body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
+        color: ${scheme.foregroundColor.webRgba()};
+    }
+    
+    a {
+        color: ${scheme.linkActiveForegroundColor.webRgba()};
+    }
+    
+    table td, table th {
+      border: 1px solid $separatorColor;
+    }
+    
+    hr {
+      background-color: $separatorColor;
+    }
+    
+    kbd, tr {
+      border: 1px solid $separatorColor;
+    }
+    
+    h6 {
+        color: $infoForeground;
+    }
+    
+    blockquote {
+      border-left: 2px solid ${scheme.linkActiveForegroundColor.webRgba(alpha = 0.4)};
+    }
+    
+    .footnotes {
+      border-top-color: $separatorColor;
+    }
+
+    input[type="checkbox"]:checked {
+      border-color: ${scheme.linkActiveForegroundColor.webRgba()};
+      background-color: ${scheme.linkActiveForegroundColor.webRgba()};
+    }
+
+    input[type="checkbox"]:checked::after {
+      border-color: $backgroundColor;
+    }
+
+    blockquote, code, pre {
+      background-color: ${scheme.fenceBackgroundColor.webRgba(scheme.fenceBackgroundColor.alpha / 255.0)};
+    }
+
+    blockquote table th,
+    blockquote table td {
+      background-color: $backgroundColor;
+    }
+
+    """.trimIndent()
+
+    val alertStyles = scheme.alertColors.entries.joinToString(separator = "\n\n") { (type, color) ->
+      val rgba = color.webRgba()
+      // language=CSS
+      """
+      blockquote.markdown-alert-$type {
+        border-left-color: $rgba;
+      }
+
+      blockquote.markdown-alert-$type .markdown-alert-title {
+        color: $rgba;
+      }
+      """.trimIndent()
+    }
+
+    return baseStyles + "\n\n" + alertStyles
+  }
+
+  private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {
+    return "rgba($red, $green, $blue, $alpha)"
+  }
+}

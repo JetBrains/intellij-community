@@ -1,7 +1,22 @@
 <html>
 <body>
+Reports missing <code>return</code> statements at the end of methods with a non-<b>void</b> return type.
+The end of method should be reachable by the method's execution flow.
+<p><b>Example:</b></p>
+<pre>
+<code>
+String foo(int a) {
+  if (a > 0) {
+    return "more than zero"
+  }
+} // foo(-1) will return 'null'
 
-              This inspection reports on missing Groovy <b><font color="#000080">return</font></b> statement at the end of methods returning
-           <br><small>Powered by InspectorGroovy</small>
+int bar(int a) {
+  if (a > 0) {
+    return a
+  }
+} // bar(-1) will fall with runtime exception
+</code>
+</pre>
 </body>
 </html>

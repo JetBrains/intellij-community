@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -8,7 +8,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,10 +27,9 @@ import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -35,22 +39,16 @@ import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxPropertyReference;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxPropertyRenameHandler implements RenameHandler {
+public final class JavaFxPropertyRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiReference reference = getKnownReference(getReferences(dataContext));
     return reference != null;
-  }
-
-  @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
   }
 
   @Override
@@ -59,7 +57,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     performInvoke(project, null, dataContext);
   }
 
@@ -69,11 +67,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference == null) return;
     if (reference instanceof JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase &&
         ((JavaFxComponentIdReferenceProvider.JavaFxIdReferenceBase)reference).isBuiltIn()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot rename built-in property", "Cannot rename", null);
+      CommonRefactoringUtil.showErrorHint(project, editor, JavaFXBundle.message("javafx.property.rename.handler.error.message"),
+                                          JavaFXBundle.message("javafx.property.rename.handler.error.title"), null);
       return;
     }
-    if (reference instanceof JavaFxPropertyReference && reference.resolve() != null) {
-      final JavaFxPropertyReference propertyReference = (JavaFxPropertyReference)reference;
+    if (reference instanceof JavaFxPropertyReference propertyReference && reference.resolve() != null) {
       final Map<PsiElement, String> elementsToRename = getElementsToRename(propertyReference, "a");
       if (!canRename(project, editor, elementsToRename.keySet())) {
         return;
@@ -92,7 +90,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef) {
       final XmlAttributeValue fxIdValueElement =
         ((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference).getXmlAttributeValue();
-      final Set<PsiElement> elementsToRename = new THashSet<>();
+      final Set<PsiElement> elementsToRename = new HashSet<>();
       JavaFxRenameAttributeProcessor.visitReferencedElements(references, psiElement -> {
         if (psiElement != null) {
           elementsToRename.add(psiElement);
@@ -130,13 +128,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   }
 
 
-  @Nullable
-  private static PsiReference getKnownReference(PsiReference[] references) {
+  private static @Nullable PsiReference getKnownReference(PsiReference[] references) {
     return ContainerUtil.find(references, JavaFxPropertyRenameHandler::isKnown);
   }
 
-  @NotNull
-  private static PsiReference[] getReferences(DataContext dataContext) {
+  private static PsiReference @NotNull [] getReferences(DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
@@ -170,9 +166,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return false;
   }
 
-  @NotNull
-  private static Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
-    final Map<PsiElement, String> rename = new THashMap<>();
+  private static @NotNull Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
+    final Map<PsiElement, String> rename = new HashMap<>();
     putIfKeyNotNull(rename, reference.getGetter(), PropertyUtilBase.suggestGetterName(newPropertyName, reference.getType()));
     putIfKeyNotNull(rename, reference.getField(), newPropertyName);
     putIfKeyNotNull(rename, reference.getSetter(), PropertyUtilBase.suggestSetterName(newPropertyName));
@@ -198,8 +193,7 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     rename.run();
   }
 
-  @Nullable
-  private static PsiField getNestedControllerField(@NotNull XmlAttributeValue fxIdValueElement) {
+  private static @Nullable PsiField getNestedControllerField(@NotNull XmlAttributeValue fxIdValueElement) {
     final String fxId = fxIdValueElement.getValue();
     if (!StringUtil.isEmpty(fxId)) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(fxIdValueElement, XmlTag.class);
@@ -213,18 +207,19 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     return null;
   }
 
-  private static class PropertyRenameDialog extends RenameDialog {
+  private static final class PropertyRenameDialog extends RenameDialog {
 
     private final JavaFxPropertyReference myPropertyReference;
 
-    protected PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
-                                   @NotNull PsiElement psiElement,
-                                   @NotNull Project project,
-                                   Editor editor) {
+    private PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
+                                 @NotNull PsiElement psiElement,
+                                 @NotNull Project project,
+                                 Editor editor) {
       super(project, psiElement, null, editor);
       myPropertyReference = propertyReference;
     }
 
+    @Override
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();
@@ -233,8 +228,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
     }
   }
 
-  private static class RenameFxIdDialog extends RenameDialog {
-    public RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
+  private static final class RenameFxIdDialog extends RenameDialog {
+    RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
       super(fxIdValueElement.getProject(), fxIdValueElement, null, editor);
     }
 

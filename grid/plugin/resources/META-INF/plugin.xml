@@ -1,0 +1,26 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress AllContentModulesOptionalLoadingRule -->
+<idea-plugin>
+  <id>intellij.grid.plugin</id>
+  <name>Data Editor and Viewer</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <description><![CDATA[
+    Provides UI component and <b>Settings | Appearance & Behavior | Data Editor and Viewer</b>.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.grid" loading="required"/>
+    <module name="intellij.grid.core.impl" loading="required"/>
+    <module name="intellij.grid.csv.core.impl" loading="required"/>
+    <module name="intellij.grid.impl" loading="required"/>
+    <module name="intellij.grid.impl.ide"/>
+    <module name="intellij.grid.types" loading="required"/>
+    <module name="intellij.grid.json.impl"/>
+    <module name="intellij.grid.scripting.rt"/>
+    <module name="intellij.grid.scripting.impl"/>
+    <module name="intellij.grid.images.impl"/>
+    <module name="intellij.grid.charts.impl"/>
+    <module name="intellij.grid.structureview"/>
+  </content>
+</idea-plugin>

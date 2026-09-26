@@ -1,0 +1,845 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.markdown.reference
+
+import com.intellij.find.FindManager
+import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.impl.FindManagerBase
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.Processor
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
+import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+
+@RunWith(JUnit4::class)
+class BacktickReferenceTest : BasePlatformTestCase() {
+  @Test
+  fun `test unresolved reference does not yield any errors`() {
+    val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
+    assertBacktickReference(reference!!)
+    myFixture.checkHighlighting()
+  }
+
+  @Test
+  fun `test blank code span does not have reference`() {
+    val reference = configureAndGetReferenceAtCaret("There is an ` <caret>  ` backtick")
+    assertNull(reference)
+  }
+
+  @Test
+  fun `test reference resolves to original element`() {
+    val javaClass = createJavaClass()
+    val reference = configureAndGetReferenceAtCaret("There is an `Java<caret>Class` backtick")
+    assertTrue(myFixture.psiManager.areElementsEquivalent(javaClass, reference!!.resolve()))
+  }
+
+  @Test
+  fun `test short class reference is not resolved`() {
+    createJavaClass("SS")
+    assertNull(configureAndGetReferenceAtCaret("There is an `S<caret>S` backtick")?.resolve())
+  }
+
+  @Test
+  fun `test reference with extension resolves to original element`() {
+    val file = createFile("JavaClass.java", "class JavaClass {}")
+    val reference = configureAndGetReferenceAtCaret("There is an `JavaClass.ja<caret>va` backtick")
+    assertTrue(myFixture.psiManager.areElementsEquivalent(file, reference!!.resolve()))
+  }
+
+  @Test
+  fun `test backtick usage is reported as a dynamic usage`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+
+    val expectations = """
+      <root> (1)
+       Class
+        JavaClass
+       Dynamic usages in Project Files (1)
+        Value read (1)
+         light_idea_test_case (1)
+           (1)
+           some.md (1)
+            1There is an `JavaClass` backtick
+
+    """.trimIndent()
+    assertEquals(expectations, myFixture.getUsageViewTreeTextRepresentation(javaClass))
+  }
+
+  @Test
+  fun `test backtick usage is hidden when text occurrences are disabled`() {
+    val javaClass = createJavaClass()
+    createFile("Other.java", "class Other { JavaClass field; }")
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+
+    val expectations = """
+      <root> (1)
+       Class
+        JavaClass
+       Usages in Project Files (1)
+        Field declaration (1)
+         light_idea_test_case (1)
+           (1)
+           Other (1)
+            1class Other { JavaClass field; }
+
+    """.trimIndent()
+    val representation = withoutTextOccurrences(javaClass) {
+      myFixture.getUsageViewTreeTextRepresentation(javaClass)
+    }
+    assertEquals(expectations, representation)
+  }
+
+  @Test
+  fun `test backtick usage of a static method is hidden when text occurrences are disabled`() {
+    val method = createStaticMethod()
+    createFile("Caller.java", "class Caller { void call() { StaticHolder.getElementName1234567(); } }")
+    createFile("some.md", "Call `getElementName1234567` here")
+
+    val representation = withoutTextOccurrences(method) {
+      myFixture.getUsageViewTreeTextRepresentation(method)
+    }
+    assertTrue(representation, representation.contains("Caller"))
+    assertFalse(representation, representation.contains("some.md"))
+  }
+
+  @Test
+  fun `test backtick usage of a static method is reported with text occurrences`() {
+    val method = createStaticMethod()
+    createFile("some.md", "Call `getElementName1234567` here")
+
+    val representation = withTextOccurrences(method) {
+      myFixture.getUsageViewTreeTextRepresentation(method)
+    }
+    assertTrue(representation, representation.contains("some.md"))
+  }
+
+  @Test
+  fun `test find usages of file hides backtick mention without text occurrences`() {
+    val target = createFile("src/deep/file.md")
+    createFile("docs/document.md", "See `file.md` for details")
+
+    val usages = mutableListOf<UsageInfo>()
+    val handler = findUsagesHandler(target)
+    val options = handler.findUsagesOptions
+    options.isSearchForTextOccurrences = false
+    handler.processElementUsages(target, Processor { usages.add(it) }, options)
+
+    assertEmpty(usages)
+  }
+
+  @Test
+  fun `test short symbol references are not resolved`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+           public void short() {}
+        }
+      """.trimIndent()
+    )
+    val reference = configureAndGetReferenceAtCaret("some.md", "There is an `sh<caret>ort` backtick")
+    assertBacktickReference(reference!!)
+    assertNull(reference.resolve())
+
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void longLongLong() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some1.md", "There is an `longLong<caret>Long` backtick")
+  }
+
+  @Test
+  fun `test short symbol references are resolved if look like code`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+           public void boundary_test() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some.md", "There is an `boundary<caret>_test` backtick")
+
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void boundaryTest() {}
+        }
+      """.trimIndent()
+    )
+    assertResolvesToPsiMethod("some1.md", "There is an `boundary<caret>Test` backtick")
+  }
+
+  @Test
+  fun `test renaming original element updates markdown reference`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+    renameWithTextOccurrences(javaClass, "NewJavaClass")
+    myFixture.checkResult("There is an `NewJavaClass` backtick")
+  }
+
+  @Test
+  fun `test renaming original element keeps markdown reference without text occurrences`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "There is an `JavaClass` backtick")
+    myFixture.renameElement(javaClass, "NewJavaClass", false, false)
+    myFixture.checkResult("There is an `JavaClass` backtick")
+  }
+
+  @Test
+  fun `test renaming file updates relative path mention without text occurrences`() {
+    val document = createFile("docs/document.md", "See `../src/file.md`")
+    val target = createFile("src/file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "renamed.md", false, false)
+    myFixture.checkResult("See `../src/renamed.md`")
+  }
+
+  @Test
+  fun `test renaming file updates same directory mention without text occurrences`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    myFixture.renameElement(target, "renamed.md", false, false)
+    myFixture.checkResult("See `renamed.md`")
+  }
+
+  @Test
+  fun `test renaming method updates qualified mention without text occurrences`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    myFixture.configureByText("some.md", "Call `com.example.Sample#doStuff`")
+    myFixture.renameElement(method, "doOther", false, false)
+    myFixture.checkResult("Call `com.example.Sample#doOther`")
+  }
+
+  @Test
+  fun `test renaming method keeps plain mention without text occurrences`() {
+    val method = createLongNamedMethod()
+    myFixture.configureByText("some.md", "Call `longLongLong` here")
+    myFixture.renameElement(method, "renamedLongName", false, false)
+    myFixture.checkResult("Call `longLongLong` here")
+  }
+
+  @Test
+  fun `test renaming method updates plain mention with text occurrences`() {
+    val method = createLongNamedMethod()
+    myFixture.configureByText("some.md", "Call `longLongLong` here")
+    renameWithTextOccurrences(method, "renamedLongName")
+    myFixture.checkResult("Call `renamedLongName` here")
+  }
+
+  @Test
+  fun `test java reference in qualified mention stays a usage without text occurrences`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    createFile("some.md", "Call `com.example.Sample#doStuff`")
+
+    val representation = withoutTextOccurrences(method) {
+      myFixture.getUsageViewTreeTextRepresentation(method)
+    }
+    assertTrue(representation, representation.contains("some.md"))
+  }
+
+  @Test
+  fun `test renaming qualified class without member separator preserves package`() {
+    val javaClass = createSampleClass()
+    myFixture.configureByText("some.md", "Call `com.example.Sample`")
+    myFixture.renameElement(javaClass, "RenamedSample")
+    myFixture.checkResult("Call `com.example.RenamedSample`")
+  }
+
+  @Test
+  fun `test renaming class without member separator preserves code span markers`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "Call ``JavaClass``")
+    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
+    myFixture.checkResult("Call ``RenamedJavaClass``")
+  }
+
+  @Test
+  fun `test renaming file referenced from code span without backtick preserves delimiter`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    renameWithTextOccurrences(target, "renamed.md")
+    myFixture.checkResult("See `renamed.md`")
+    assertCodeSpanContentAndFileReference(target, "renamed.md", markerLength = 1)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with internal backtick`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = myFixture.addFileToProject("file.md", "")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    renameWithTextOccurrences(target, "fi`le.md")
+    myFixture.checkResult("See ``fi`le.md``")
+    assertCodeSpanContentAndFileReference(target, "fi`le.md", markerLength = 2)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with adjacent backticks`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    renameWithTextOccurrences(target, "fi``le.md")
+    myFixture.checkResult("See ```fi``le.md```")
+    assertCodeSpanContentAndFileReference(target, "fi``le.md", markerLength = 3)
+  }
+
+  @Test
+  fun `test renaming file referenced from code span to name with non-adjacent backticks`() {
+    val document = createFile("document.md", "See `file.md`")
+    val target = createFile("file.md")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    renameWithTextOccurrences(target, "fi`le`name.md")
+    myFixture.checkResult("See ``fi`le`name.md``")
+    assertCodeSpanContentAndFileReference(target, "fi`le`name.md", markerLength = 2)
+  }
+
+  @Test
+  fun `test moving file referenced from code span with internal backtick`() {
+    val document = createFile("document.md", "See ``old/`file.md``")
+    val target = myFixture.addFileToProject("old/`file.md", "")
+    myFixture.configureFromExistingVirtualFile(document.virtualFile)
+    val targetDirectory = runWriteActionAndWait {
+      myFixture.file.containingDirectory.createSubdirectory("new")
+    }
+
+    val handler = MoveFilesOrDirectoriesHandler()
+    handler.doMove(project, arrayOf<PsiElement>(target), targetDirectory, null)
+    myFixture.checkResult("See ``new/`file.md``")
+    assertCodeSpanContentAndFileReference(target, "new/`file.md", markerLength = 2)
+  }
+
+  @Test
+  fun `test qualified class name resolves to class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le` for details", sample)
+  }
+
+  @Test
+  fun `test qualified name package segment resolves to package`() {
+    createSampleClass()
+    val reference = configureAndGetReferenceAtCaret("doc.md", "See `com.exa<caret>mple.Sample`")
+    val resolved = reference!!.resolve()
+    assertInstanceOf(resolved, PsiPackage::class.java)
+    assertEquals("com.example", (resolved as PsiPackage).qualifiedName)
+  }
+
+  @Test
+  fun `test qualified name with hash resolves to method`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    assertResolvesTo("Call `com.example.Sample#doSt<caret>uff`", method)
+  }
+
+  @Test
+  fun `test qualified name with hash resolves to variable`() {
+    val field = createSampleClass().findFieldByName("varStuff", false)!!
+    assertResolvesTo("Call `com.example.Sample#varSt<caret>uff`", field)
+  }
+
+  @Test
+  fun `test qualified name with dot resolves to method`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    assertResolvesTo("Call `com.example.Sample.doSt<caret>uff`", method)
+  }
+
+  @Test
+  fun `test short class name with member separator resolves class and method`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+
+    assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
+    assertResolvesTo("Call `JavaClass#met<caret>hodName`", method)
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName`", javaClass)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me`", method)
+  }
+
+  @Test
+  fun `test short class name with unknown member does not resolve member`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void anotherMethodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+
+    assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass#met<caret>hodName`")?.resolve())
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName`", javaClass)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me`")?.resolve())
+  }
+
+  @Test
+  fun `test method reference with parentheses resolves methods`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+          public void methodName(int argument) {}
+          public void methodName(int first, int second) {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val noArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 0 }
+    val oneArgumentMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 1 }
+    val twoArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 2 }
+
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me()`", noArgumentsMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(argument)`", oneArgumentMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(foo.bar)`", oneArgumentMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(first, second)`", twoArgumentsMethod)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me(first, second, third)`")?.resolve())
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName()`", javaClass)
+  }
+
+  @Test
+  fun `test empty parentheses do not resolve parameterized-only method`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName(int argument) {}
+        }
+      """.trimIndent()
+    )
+
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me()`")?.resolve())
+  }
+
+  @Test
+  fun `test renaming member referenced by short class name updates markdown`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+    myFixture.configureByText("some.md", "Call `JavaClass#methodName`")
+
+    myFixture.renameElement(method, "renamedMethod")
+    myFixture.checkResult("Call `JavaClass#renamedMethod`")
+  }
+
+  @Test
+  fun `test renaming method with parentheses preserves parentheses`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+    myFixture.configureByText("some.md", "Call `JavaClass.methodName()`")
+
+    myFixture.renameElement(method, "renamedMethod")
+    myFixture.checkResult("Call `JavaClass.renamedMethod()`")
+  }
+
+  @Test
+  fun `test renaming class referenced by short class name updates markdown`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    myFixture.configureByText("some.md", "Call `JavaClass.methodName`")
+
+    renameWithTextOccurrences(javaClass, "RenamedJavaClass")
+    myFixture.checkResult("Call `RenamedJavaClass.methodName`")
+  }
+
+  @Test
+  fun `test qualified name class part resolves to class when member is present`() {
+    val sample = createSampleClass()
+    assertResolvesTo("Call `com.example.Samp<caret>le#doStuff`", sample)
+  }
+
+  @Test
+  fun `test qualified method reference multi resolves overloads`() {
+    createFile(
+      "com/example/Sample.java",
+      """
+        package com.example;
+        public class Sample {
+          public void doStuff() {}
+          public void doStuff(int value) {}
+        }
+      """.trimIndent()
+    )
+    val reference = configureAndGetReferenceAtCaret("doc.md", "Call `com.example.Sample#doSt<caret>uff`")
+    assertInstanceOf(reference, PsiPolyVariantReference::class.java)
+    val resolved = (reference as PsiPolyVariantReference).multiResolve(false)
+    assertEquals(2, resolved.size)
+    assertTrue(resolved.all { it.element is PsiMethod })
+  }
+
+  @Test
+  fun `test member completion after hash with prefix`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample#do<caret>`")
+    myFixture.completeBasic()
+    myFixture.checkResult("See `com.example.Sample#doStuff`")
+  }
+
+  @Test
+  fun `test member completion after bare hash suggests all members`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample#<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test member completion deduplicates overloaded methods`() {
+    createFile(
+      "com/example/Overloaded.java",
+      """
+        package com.example;
+        public class Overloaded {
+          public int value;
+          public void doStuff() {}
+          public void doStuff(int x) {}
+        }
+      """.trimIndent()
+    )
+    myFixture.configureByText("doc.md", "See `com.example.Overloaded#<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertEquals(2, items!!.size)
+  }
+
+  @Test
+  fun `test package completion`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.e<caret>`")
+    myFixture.completeBasic()
+    myFixture.checkResult("See `com.example`")
+  }
+
+  @Test
+  fun `test qualified name with trailing hash resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le#`", sample)
+  }
+
+  @Test
+  fun `test qualified name with trailing dot resolves class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le.`", sample)
+  }
+
+  @Test
+  fun `test member completion after trailing dot suggests all members`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test member completion after bare class and dot suggests members`() {
+    createFile(
+      "JavaClass1.java",
+      """
+        class JavaClass1 {
+           public void doStuff() {}
+        }
+      """.trimIndent()
+    )
+    myFixture.configureByText("doc.md", "See `JavaClass1.<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff")
+  }
+
+  @Test
+  fun `test members are not suggested without a separator`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample<caret>` docs")
+    val strings = myFixture.completeBasic()?.map { it.lookupString } ?: emptyList()
+    assertDoesntContain(strings, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test class part reference range accounts for multiple backticks`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See ``Sample.doStuff`` docs")
+    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+    val classPart = codeSpan.references.filterIsInstance<BacktickReference>().minByOrNull { it.rangeInElement.length }!!
+    assertEquals("Sample", classPart.rangeInElement.substring(codeSpan.text))
+  }
+
+  @Test
+  fun `test path reference resolves from project root`() {
+    val target = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md").parent!!
+    val generated = target.parent!!
+    val moduleSetPlugins = generated.parent!!
+    val community = moduleSetPlugins.parent!!
+
+    assertFileReferenceResolves(
+      "docs/references/project-root-community.md",
+      "Update of `communit<caret>y/module-set-plugins/generated/intellij.moduleSet.plugin.main/`",
+      community
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-module-set-plugins.md",
+      "Update of `community/module-set<caret>-plugins/generated/intellij.moduleSet.plugin.main/`",
+      moduleSetPlugins
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-generated.md",
+      "Update of `community/module-set-plugins/gene<caret>rated/intellij.moduleSet.plugin.main/`",
+      generated
+    )
+    assertFileReferenceResolves(
+      "docs/references/project-root-wrapper.md",
+      "Update of `community/module-set-plugins/generated/intellij.moduleSet.plugin.main<caret>/`",
+      target
+    )
+  }
+
+  @Test
+  fun `test top level file reference resolves from project root`() {
+    val target = createFile("README.md")
+
+    assertFileReferenceResolves(
+      "docs/references/top-level-file.md",
+      "See `READ<caret>ME.md`",
+      target
+    )
+  }
+
+  @Test
+  fun `test skill dir variable path resolves from current skill directory`() {
+    val target = createFile("docs/example-skill/scripts/nb.py")
+
+    assertFileReferenceResolves(
+      "docs/example-skill/SKILL.md",
+      "`$CLAUDE_SKILL_DIR/scripts/nb.<caret>py` is a small CLI",
+      target
+    )
+  }
+
+  @Test
+  fun `test skill dir variable segment resolves to current skill directory`() {
+    val skillDirectory = createFile("docs/example-skill/scripts/nb.py").parent!!.parent!!
+
+    assertFileReferenceResolves(
+      "docs/example-skill/SKILL.md",
+      $$"`${CLAUDE_SKILL_D<caret>IR}/scripts/nb.py`",
+      skillDirectory
+    )
+  }
+
+  @Test
+  fun `test skill dir variable path provides file variants`() {
+    createFile("docs/example-skill/scripts/nb.py")
+
+    val reference = configureAndGetReferenceAtCaret(
+      "docs/example-skill/SKILL.md",
+      "Run `$CLAUDE_SKILL_DIR/scripts/n<caret>`"
+    )
+
+    assertFileReference(reference!!)
+    myFixture.completeBasic()
+    myFixture.checkResult("Run `$CLAUDE_SKILL_DIR/scripts/nb.py`")
+  }
+
+  @Test
+  fun `test skill dir variable path does not resolve outside project root`() {
+    createFile("../SKILL.md")
+
+    val reference = configureAndGetReferenceAtCaret(
+      "docs/example.md",
+      "`$CLAUDE_SKILL_DIR/nb.<caret>py`"
+    )
+
+    assertFalse(reference is FileReference)
+    assertNull(reference?.resolve())
+  }
+
+  private fun renameWithTextOccurrences(element: PsiElement, newName: String) {
+    myFixture.renameElement(element, newName, false, true)
+  }
+
+  private fun findUsagesHandler(target: PsiElement): FindUsagesHandler {
+    val findUsagesManager = (FindManager.getInstance(project) as FindManagerBase).findUsagesManager
+    return findUsagesManager.getFindUsagesHandler(target, false)!!
+  }
+
+  /** Runs [action] with the text occurrence option off on the shared handler options for [target], then restores it. */
+  private fun <T> withoutTextOccurrences(target: PsiElement, action: () -> T): T = withTextOccurrences(target, false, action)
+
+  /** Runs [action] with the text occurrence option on the shared handler options for [target], then restores it. */
+  private fun <T> withTextOccurrences(target: PsiElement, action: () -> T): T = withTextOccurrences(target, true, action)
+
+  private fun <T> withTextOccurrences(target: PsiElement, enabled: Boolean, action: () -> T): T {
+    val options = findUsagesHandler(target).findUsagesOptions
+    val previous = options.isSearchForTextOccurrences
+    options.isSearchForTextOccurrences = enabled
+    try {
+      return action()
+    }
+    finally {
+      options.isSearchForTextOccurrences = previous
+    }
+  }
+
+  private fun createJavaClass(name: String = "JavaClass"): PsiClass {
+    val file = createFile("$name.java", "class $name {}")
+    return file.children.single { it is PsiClass } as PsiClass
+  }
+
+  private fun createSampleClass(): PsiClass {
+    val file = createFile(
+      "com/example/Sample.java",
+      """
+        package com.example;
+        public class Sample {
+          public int varStuff;
+          public void doStuff() {}
+        }
+      """.trimIndent()
+    )
+    return file.children.single { it is PsiClass } as PsiClass
+  }
+
+  private fun createStaticMethod(): PsiMethod {
+    val file = createFile(
+      "StaticHolder.java",
+      """
+        class StaticHolder {
+           public static void getElementName1234567() {}
+        }
+      """.trimIndent()
+    )
+    val javaClass = file.children.single { it is PsiClass } as PsiClass
+    return javaClass.findMethodsByName("getElementName1234567", false).single()
+  }
+
+  private fun createLongNamedMethod(): PsiMethod {
+    val file = createFile(
+      "Holder.java",
+      """
+        class Holder {
+           public void longLongLong() {}
+        }
+      """.trimIndent()
+    )
+    val javaClass = file.children.single { it is PsiClass } as PsiClass
+    return javaClass.findMethodsByName("longLongLong", false).single()
+  }
+
+  private fun createFile(path: String, text: String = ""): PsiFileSystemItem {
+    return myFixture.addFileToProject(path, text)
+  }
+
+  private fun configureAndGetReferenceAtCaret(text: String): PsiReference? {
+    return configureAndGetReferenceAtCaret("some.md", text)
+  }
+
+  private fun configureAndGetReferenceAtCaret(fileName: String, text: String): PsiReference? {
+    if (fileName.contains('/')) {
+      val existingFile = myFixture.addFileToProject(fileName, text)
+      myFixture.configureFromExistingVirtualFile(existingFile.virtualFile)
+    } else {
+      myFixture.configureByText(fileName, text)
+    }
+    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+  }
+
+  private fun assertFileReferenceResolves(fileName: String, text: String, target: PsiFileSystemItem) {
+    val reference = configureAndGetReferenceAtCaret(fileName, text)!!
+    assertFileReference(reference)
+    assertTrue(reference.isReferenceTo(target))
+    assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
+  }
+
+  private fun assertCodeSpanContentAndFileReference(
+    target: PsiFileSystemItem,
+    expectedContent: String,
+    markerLength: Int,
+  ) {
+    val codeSpan = PsiTreeUtil.findChildOfType(myFixture.file, MarkdownCodeSpan::class.java)!!
+    assertEquals(expectedContent, codeSpan.getContentRange()!!.substring(codeSpan.text))
+    assertEquals(markerLength, codeSpan.firstChild.textLength)
+    assertEquals(markerLength, codeSpan.lastChild.textLength)
+    val fileReference = codeSpan.references.filterIsInstance<FileReference>().lastOrNull()
+    assertNotNull(fileReference)
+    val resolved = fileReference!!.resolve()
+    assertNotNull(resolved)
+    assertEquals(target.virtualFile.path, resolved!!.virtualFile.path)
+  }
+
+  private fun assertResolvesToPsiMethod(fileName: String, text: String) {
+    val reference = configureAndGetReferenceAtCaret(fileName, text)
+    assertBacktickReference(reference!!)
+    assertTrue(reference.resolve() is PsiMethod)
+  }
+
+  private fun assertFileReference(reference: PsiReference) {
+    if (reference is PsiMultiReference) {
+      assertTrue(reference.references.any { it is FileReference })
+    } else {
+      assertInstanceOf(reference, FileReference::class.java)
+    }
+  }
+
+  private fun assertBacktickReference(reference: PsiReference) {
+    if (reference is PsiMultiReference) {
+      assertTrue(reference.references.any { it is BacktickReference })
+    } else {
+      assertInstanceOf(reference, BacktickReference::class.java)
+    }
+  }
+
+  private fun assertResolvesTo(text: String, expected: PsiElement) {
+    val reference = configureAndGetReferenceAtCaret("doc.md", text)
+    assertNotNull(reference)
+    assertTrue(myFixture.psiManager.areElementsEquivalent(expected, reference!!.resolve()))
+  }
+
+  companion object {
+    private const val CLAUDE_SKILL_DIR = $$"${CLAUDE_SKILL_DIR}"
+  }
+}

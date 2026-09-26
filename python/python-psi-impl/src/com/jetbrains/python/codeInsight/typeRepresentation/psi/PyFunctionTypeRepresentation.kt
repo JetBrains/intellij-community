@@ -1,0 +1,225 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.jetbrains.python.codeInsight.typeRepresentation.psi
+
+import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.ast.findChildByClass
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.PyDoubleStarExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySlashParameter
+import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyTypeParameterList
+import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyElementImpl
+import com.jetbrains.python.psi.resolve.PyResolveUtil.resolveFullyQualifiedName
+import com.jetbrains.python.psi.types.PyAnyType
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
+import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
+import com.jetbrains.python.psi.types.PyVariance
+import com.jetbrains.python.psi.types.TypeEvalContext
+
+class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
+  val functionName: QualifiedName? by lazy {
+    // Function name is the first PyExpression child that comes before the type parameter list (if present)
+    // or before the parameter list (if no type parameters)
+    val stopAt = typeParameterList ?: parameterList
+    for (child in children) {
+      if (child === stopAt) break
+      if (child is PyExpression) {
+        return@lazy QualifiedName.fromDottedString(child.text)
+      }
+    }
+    return@lazy null
+  }
+
+  val typeParameterList: PyTypeParameterList?
+    get() = findChildByClass(PyTypeParameterList::class.java)
+
+  val parameterList: PyParameterListRepresentation
+    get() = findNotNullChildByClass(PyParameterListRepresentation::class.java)
+
+  val returnType: PyExpression?
+    get() {
+      // Return type is after the -> token
+      val arrow = node.findChildByType(PyTokenTypes.RARROW) ?: return null
+      var sibling = arrow.treeNext
+      while (sibling != null) {
+        if (sibling.psi is PyExpression) {
+          return sibling.psi as PyExpression
+        }
+        sibling = sibling.treeNext
+      }
+      return null
+    }
+
+  override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
+    val returnTypeExpr = returnType ?: return null
+
+    // Create type variables from type parameter list
+    val typeVarMap = createTypeVarMap(context)
+
+    // Parse callable parameters from the signature (shared by both callable and function types)
+    val retType = resolveTypeExpression(returnTypeExpr, context, typeVarMap)
+    // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
+    val qualifiedFunctionName = functionName
+    if (qualifiedFunctionName != null) {
+      val resolvedFunction = resolveFullyQualifiedName(qualifiedFunctionName, this, context)
+
+      // If we resolved the function, create PyFunctionType with the signature from the representation
+      if (resolvedFunction is PyFunction) {
+        // Create a custom PyFunctionType that uses our return type, not the function's definition
+        val callableParams = parseCallableParameters(context, typeVarMap, resolvedFunction.parameterList)
+        return object : PyFunctionTypeImpl(resolvedFunction, callableParams) {
+          override fun getReturnType(context: TypeEvalContext): PyType? = retType
+        }
+      }
+      // Fall through to create PyCallableType if resolution failed
+    }
+
+    // Create PyCallableType from the signature (for both unresolved functions and plain callables)
+    val callableParams = parseCallableParameters(context, typeVarMap, null)
+    return PyCallableTypeImpl(callableParams, retType)
+  }
+
+  private fun createTypeVarMap(context: TypeEvalContext): Map<String, PyTypeVarType> {
+    val typeParams = typeParameterList ?: return emptyMap()
+    val result = mutableMapOf<String, PyTypeVarType>()
+
+    for (param in typeParams.typeParameters) {
+      val paramName = param.name ?: continue
+
+      // Determine bound type from the type parameter's bound expression. A type parameter without a bound
+      // has an unknown bound, the same as in PyTypingTypeProvider.
+      val boundType = param.boundExpression?.let { resolveTypeExpression(it, context, emptyMap()) } ?: PyAnyType.unknown
+
+      // Create type variable - PyTypeVarTypeImpl(name, constraints, bound, defaultType, variance)
+      val typeVar = PyTypeVarTypeImpl(
+        paramName,
+        emptyList(), // constraints
+        boundType, // bound
+        null, // defaultType (Ref<PyType>?)
+        PyVariance.INVARIANT // variance
+      )
+
+      result[paramName] = typeVar
+    }
+
+    return result
+  }
+
+  private fun parseCallableParameters(
+    context: TypeEvalContext,
+    typeVarMap: Map<String, PyTypeVarType>,
+    resolvedFunctionParameters: PyParameterList?,
+  ): List<PyCallableParameter> {
+    return parameterList.parameters.map { param ->
+      when (param) {
+        is PySlashParameter -> PyCallableParameterImpl.psi(param)
+        is PyNamedParameterTypeRepresentation -> {
+          val isSelf = resolvedFunctionParameters?.findParameterByName(param.name ?: "")?.isSelf ?: false
+          val paramType = param.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) } ?: PyAnyType.unknown
+          PyCallableParameterImpl(param.name, Ref(paramType), param.defaultValue, myIsSelf = isSelf)
+        }
+        is PyStarExpression -> {
+          // *args parameter
+          // Check if it contains a named parameter
+          val namedParam = param.findChildByClass(PyNamedParameterTypeRepresentation::class.java)
+          if (namedParam != null) {
+            // *args: type
+            val paramName = namedParam.name
+            val paramType = namedParam.typeExpression?.let { resolveTypeExpression(it, context, typeVarMap) } ?: PyAnyType.unknown
+            PyCallableParameterImpl.positionalContainerNonPsi(paramName, paramType)
+          }
+          else {
+            // Unnamed *args: *type
+            val innerExpr = param.expression
+            val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) } ?: PyAnyType.unknown
+            PyCallableParameterImpl.positionalContainerNonPsi(null, paramType)
+          }
+        }
+        is PyDoubleStarExpression -> {
+          // **kwargs parameter
+          // Check if it contains a named parameter
+          val namedParam = param.findChildByClass(PyNamedParameterTypeRepresentation::class.java)
+          if (namedParam != null) {
+            val paramName = namedParam.name
+            val paramType = namedParam.typeExpression?.let {
+              if (it is PyDoubleStarExpression) {
+                // Named kwargs unpacked: `**name: **type`
+                it.expression?.let { unpacked -> resolveTypeExpression(unpacked, context, typeVarMap) }
+              }
+              else {
+                // Named kwargs: `**name: type`, adapt to `dict`
+                val builtins = PyBuiltinCache.getInstance(it)
+                val dictType = builtins.dictType
+                dictType?.let { dict ->
+                  PyCollectionTypeImpl(
+                    dict.pyClass, false, listOf(builtins.strType, resolveTypeExpression(it, context, typeVarMap))
+                  )
+                }
+              }
+            }
+            PyCallableParameterImpl.keywordContainerNonPsi(paramName, paramType ?: PyAnyType.unknown)
+          }
+          else {
+            // Unnamed kwargs: `**type`
+            val innerExpr = param.expression
+            val paramType = innerExpr?.let { resolveTypeExpression(it, context, typeVarMap) } ?: PyAnyType.unknown
+            PyCallableParameterImpl.keywordContainerNonPsi(null, paramType)
+          }
+        }
+        is PyExpression -> {
+          val paramType = resolveTypeExpression(param, context, typeVarMap) ?: PyAnyType.unknown
+          PyCallableParameterImpl.nonPsi(paramType)
+        }
+        else -> PyCallableParameterImpl.nonPsi(PyAnyType.unknown)
+      }
+    }
+  }
+
+  private fun resolveTypeExpression(expr: PyExpression, context: TypeEvalContext, typeVarMap: Map<String, PyTypeVarType>): PyType? {
+    // Check if this is a reference to a type parameter
+    if (expr is PyReferenceExpression && expr.qualifier == null) {
+      val name = expr.name
+      if (name != null) {
+        val typeVar = typeVarMap[name]
+        if (typeVar != null) {
+          return typeVar
+        }
+      }
+    }
+
+    // Otherwise, resolve normally
+    return when (expr) {
+      is PyDoubleStarExpression -> expr.expression?.let { PyTypingTypeProvider.getType(it, context)?.get() } ?: PyAnyType.unknown
+      else -> PyTypingTypeProvider.getType(expr, context).derefOrUnknown()
+    }
+  }
+}

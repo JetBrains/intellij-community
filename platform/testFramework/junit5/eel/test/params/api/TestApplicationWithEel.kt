@@ -1,0 +1,67 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework.junit5.eel.params.api
+
+import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelInterceptor
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.extension.ExtendWith
+
+/**
+ * Mark test class:
+ * ```kotlin
+ * @EelTestApplication
+ * class MyTest {
+ *     private val projectFixture = projectFixture() // these fixtures are
+ *     private val tempDir = tempPathFixture() // are also sit on en eel, but only instance-level, not project level
+ *   @ParametrizedTest // JUnit5 Pioneer also supported
+ *   @EelSource // With Junit5Pioneer annotate parameter
+ *   fun myTest(eh:EelHolder) {
+ *   eh.eel
+ *   }
+ * }
+ *  // OR use parametrized class (No pioneer, plain JUnit5 only)
+ * @TestApplicationWithEel
+ * @ParameterizedClass
+ * class EelParametrizedClassShowCaseTest(val eelProvider: EelHolder) {
+ * // tests go here
+ * }
+ *
+ * ```
+ *
+ *
+ *
+ * Warning: You need to provide a special vm option, most likely
+ * ```
+ * -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+ * ```
+ * Run a test, and failure will report an option name.
+ *
+ * System tries to run your test against at least one remote (ijent-based) eel.
+ * You need to have providers (i.e. `intellij.platform.ijent.testFramework` in a classpath) to do that.
+ *
+ * If your particular test doesn't need remote eels for a certain OS, use [osesMayNotHaveRemoteEels].
+ *
+ * The following test will fail if no remote Eel available on any OS but Windows:
+ * ```kotlin
+ * @TestApplicationWithEel(osesMayNotHaveRemoteEels=[OS.WINDOWS])
+ * ```
+ * Do not use this option unless you are absolutely sure.
+ *
+ * Options from [com.intellij.testFramework.junit5.eel.EelFixtureFilter] has *higher* priority than [osesMayNotHaveRemoteEels].
+ * For example, if [osesMayNotHaveRemoteEels] is empty
+ * but [com.intellij.testFramework.junit5.eel.EelFixtureFilter.instance] prohibits running in WSL and Docker,
+ * then WSL and Docker will not be used.
+ *
+ * [useLegacyTargets] creates targets configuration in [EelHolder.target] (special eel wrapper is used otherwise).
+ * This option is only needed to check code that depends on a particular target classes (by means of `is`).
+ * This is an old code with leaky abstraction. If you have no such code (you shouldn't), ignore this option.
+ */
+@TestOnly
+@Target(AnnotationTarget.CLASS)
+@ExtendWith(
+  EelInterceptor::class,
+)
+@TestApplication
+@EelSource
+annotation class TestApplicationWithEel(val useLegacyTargets: Boolean = false, vararg val osesMayNotHaveRemoteEels: OS)

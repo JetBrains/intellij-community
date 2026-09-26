@@ -16,14 +16,22 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Use {@see BoundCompositeConfigurable} or {@see CompositeConfigurable} instead
+ */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class UnnamedConfigurableGroup implements UnnamedConfigurable {
   private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
+  @Override
   public JComponent createComponent() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
     for (UnnamedConfigurable configurable : myConfigurables) {
@@ -33,6 +41,7 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
     return panel;
   }
 
+  @Override
   public boolean isModified() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       if (myConfigurable.isModified()) return true;
@@ -40,18 +49,21 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.apply();
     }
   }
 
+  @Override
   public void reset() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     for (UnnamedConfigurable myConfigurable : myConfigurables) {
       myConfigurable.disposeUIResources();

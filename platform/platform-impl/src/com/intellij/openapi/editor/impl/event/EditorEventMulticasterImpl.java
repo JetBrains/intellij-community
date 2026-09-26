@@ -1,36 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditReadOnlyListener;
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.ErrorStripeListener;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
+public final class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
+  private static final ExtensionPointName<EditorMouseListener> MOUSE_EP = new ExtensionPointName<>("com.intellij.editorFactoryMouseListener");
+  private static final ExtensionPointName<EditorMouseMotionListener> MOUSE_MOTION_EP = new ExtensionPointName<>("com.intellij.editorFactoryMouseMotionListener");
+  private static final ExtensionPointName<DocumentListener> DOCUMENT_EP = new ExtensionPointName<>("com.intellij.editorFactoryDocumentListener");
+
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
+  private final EventDispatcher<PrioritizedDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
   private final EventDispatcher<EditReadOnlyListener> myEditReadOnlyMulticaster = EventDispatcher.create(EditReadOnlyListener.class);
 
   private final EventDispatcher<EditorMouseListener> myEditorMouseMulticaster = EventDispatcher.create(EditorMouseListener.class);
@@ -44,12 +56,94 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
+    document.addDocumentListener(new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.beforeDocumentChange(event));
+      }
+
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.documentChanged(event));
+      }
+
+      @Override
+      public void bulkUpdateStarting(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkUpdateStarting(document));
+      }
+
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkUpdateFinished(document));
+      }
+
+      @Override
+      public void beforeElfDocumentChange(@NotNull DocumentEvent event, @Nullable DocumentEvent revertingEvent) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.beforeElfDocumentChange(event, revertingEvent));
+      }
+
+      @Override
+      public void elfDocumentChanged(@NotNull DocumentEvent event, @Nullable DocumentEvent revertedEvent) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.elfDocumentChanged(event, revertedEvent));
+      }
+
+      @Override
+      public void bulkElfUpdateStarting(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkElfUpdateStarting(document));
+      }
+
+      @Override
+      public void bulkElfUpdateFinished(@NotNull Document document) {
+        DOCUMENT_EP.forEachExtensionSafe(it -> it.bulkElfUpdateFinished(document));
+      }
+    });
+    document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
+  @ApiStatus.Internal
   public void registerEditor(@NotNull EditorEx editor) {
     editor.addEditorMouseListener(myEditorMouseMulticaster.getMulticaster());
+    editor.addEditorMouseListener(new EditorMouseListener() {
+      @Override
+      public void mousePressed(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mousePressed(event));
+      }
+
+      @Override
+      public void mouseClicked(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseClicked(event));
+      }
+
+      @Override
+      public void mouseReleased(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseReleased(event));
+      }
+
+      @Override
+      public void mouseEntered(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseEntered(event));
+      }
+
+      @Override
+      public void mouseExited(@NotNull EditorMouseEvent event) {
+        MOUSE_EP.forEachExtensionSafe(it -> it.mouseExited(event));
+      }
+    });
+
     editor.addEditorMouseMotionListener(myEditorMouseMotionMulticaster.getMulticaster());
+    editor.addEditorMouseMotionListener(new EditorMouseMotionListener() {
+      @Override
+      public void mouseMoved(@NotNull EditorMouseEvent event) {
+        MOUSE_MOTION_EP.forEachExtensionSafe(it -> it.mouseMoved(event));
+      }
+
+      @Override
+      public void mouseDragged(@NotNull EditorMouseEvent event) {
+        MOUSE_MOTION_EP.forEachExtensionSafe(it -> it.mouseDragged(event));
+      }
+    });
+
     ((EditorMarkupModel) editor.getMarkupModel()).addErrorMarkerListener(myErrorStripeMulticaster.getMulticaster(), ((EditorImpl)editor).getDisposable());
     editor.getCaretModel().addCaretListener(myCaretMulticaster.getMulticaster());
     editor.getSelectionModel().addSelectionListener(mySelectionMulticaster.getMulticaster());
@@ -66,6 +160,17 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
     myDocumentMulticaster.addListener(listener, parentDisposable);
+  }
+
+  /**
+   * Dangerous method.
+   * When high-priority listener fires, the underlying subsystems (e.g., folding, caret, etc.) may not be ready yet.
+   * So all requests to the e.g., caret offset might generate exceptions.
+   * Use for internal purposes only.
+   * @see EditorDocumentPriorities
+   */
+  public void addPrioritizedDocumentListener(@NotNull PrioritizedDocumentListener listener, @NotNull Disposable parent) {
+    myPrioritizedDocumentMulticaster.addListener(listener, parent);
   }
 
   @Override
@@ -119,11 +224,6 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addSelectionListener(@NotNull SelectionListener listener) {
-    mySelectionMulticaster.addListener(listener);
-  }
-
-  @Override
   public void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable) {
     mySelectionMulticaster.addListener(listener, parentDisposable);
   }
@@ -144,6 +244,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
+  public void addVisibleAreaListener(@NotNull VisibleAreaListener listener, @NotNull Disposable parent) {
+    myVisibleAreaMulticaster.addListener(listener, parent);
+  }
+
+  @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     myVisibleAreaMulticaster.removeListener(listener);
   }
@@ -159,13 +264,13 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addFocusChangeListener(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
   }
 
   @TestOnly
-  public Map<Class, List> getListeners() {
-    Map<Class, List> myCopy = new LinkedHashMap<>();
+  public Map<Class<? extends EventListener>, List<? extends EventListener>> getListeners() {
+    Map<Class<? extends EventListener>, List<? extends EventListener>> myCopy = new LinkedHashMap<>();
     myCopy.put(DocumentListener.class, new ArrayList<>(myDocumentMulticaster.getListeners()));
     myCopy.put(EditReadOnlyListener.class, new ArrayList<>(myEditReadOnlyMulticaster.getListeners()));
 

@@ -1,0 +1,9 @@
+@echo off
+
+setlocal
+
+set OUTER_BAZEL_REAL=%BAZEL_REAL%
+set BAZEL_REAL=
+set BAZELISK_SKIP_WRAPPER=
+"%OUTER_BAZEL_REAL%" %*
+exit /b %ERRORLEVEL%

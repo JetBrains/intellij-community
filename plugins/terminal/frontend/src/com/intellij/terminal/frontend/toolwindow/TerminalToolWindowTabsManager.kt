@@ -1,0 +1,106 @@
+package com.intellij.terminal.frontend.toolwindow
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * Service for accessing and creating Reworked Terminal tabs in the Terminal Tool Window.
+ * Use [getInstance] to get the instance of the service.
+ */
+@ApiStatus.Experimental
+@ApiStatus.NonExtendable
+interface TerminalToolWindowTabsManager {
+  /**
+   * List of the opened Reworked Terminal tabs in the Terminal Tool Window.
+   * Order can be different from the UI.
+   */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  val tabs: List<TerminalToolWindowTab>
+
+  /**
+   * The entry point for creating a new terminal tab in the Terminal Tool Window.
+   * Use [TerminalToolWindowTabBuilder.createTab] to actually create a new tab.
+   */
+  fun createTabBuilder(): TerminalToolWindowTabBuilder
+
+  /**
+   * Close the given tab and terminate the underlying shell process.
+   *
+   * Supports both tool-window attached tabs and tabs created with `shouldAddToToolWindow(false)`.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun closeTab(tab: TerminalToolWindowTab)
+
+  /**
+   * Close the given tool window tab but leave the underlying terminal process running.
+   * So, the [TerminalToolWindowTab] can be able to be used in the other context (for example, to be opened as the editor tab).
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun detachTab(tab: TerminalToolWindowTab)
+
+  /**
+   * Create a new tool window tab with the given [TerminalToolWindowTab].
+   *
+   * @param contentManager the tool window content manager to add the tab to.
+   * Worth specifying when the terminal tool window is split to open the tab in the specific area.
+   * If it is `null`, the tab will be opened in the top-left split area (or in the main area if there are no splits).
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun attachTab(
+    tab: TerminalToolWindowTab,
+    contentManager: ContentManager? = null,
+  )
+
+  @Deprecated("Use TerminalTabsManagerListener.TOPIC instead")
+  fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener)
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): TerminalToolWindowTabsManager = project.service()
+  }
+}
+
+@ApiStatus.Experimental
+fun Content.getTerminalTab(): TerminalToolWindowTab? {
+  return getUserData(TerminalToolWindowTab.KEY)
+}
+
+@ApiStatus.Experimental
+interface TerminalTabsManagerListener {
+  /**
+   * Called only once after the terminal view is created for the tool window tab.
+   * But before the terminal tab is added to the tool window.
+   */
+  fun terminalViewCreated(view: TerminalView) {}
+
+  /**
+   * Called after the terminal tab is added to the terminal tool window.
+   *
+   * Note that this method is fired both when a new terminal tab is created ([TerminalToolWindowTabBuilder.createTab])
+   * and when the terminal tab is attached to the tool window ([TerminalToolWindowTabsManager.attachTab]).
+   * So, if you need to perform some actions with [TerminalView] only once, prefer using [terminalViewCreated]
+   */
+  fun tabAdded(tab: TerminalToolWindowTab) {}
+
+  /**
+   * Called after the terminal tab is detached from the terminal tool window.
+   * For example, when the terminal tab is moved to the editor tab.
+   */
+  fun tabDetached(tab: TerminalToolWindowTab) {}
+
+  companion object {
+    @JvmField
+    @Topic.ProjectLevel
+    val TOPIC: Topic<TerminalTabsManagerListener> = Topic.create(
+      "Terminal ToolWindow Tabs Manager",
+      TerminalTabsManagerListener::class.java,
+    )
+  }
+}

@@ -1,4 +1,4 @@
-// "Replace method call with Test.mmm1" "true"
+// "Replace method call with 'Test.mmm1()'" "true-preview"
 class Test {
   static void example() {
     Test t = new Test();

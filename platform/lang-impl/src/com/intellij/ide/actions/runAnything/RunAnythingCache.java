@@ -1,119 +1,100 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
-import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Service(Service.Level.PROJECT)
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
-  private static final Logger LOG = Logger.getInstance(RunAnythingCache.class);
+public final class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
   private final State mySettings = new State();
-  public boolean CAN_RUN_RVM = false;
-  public boolean CAN_RUN_RBENV = false;
-
-  public RunAnythingCache() {
-    try {
-      CAN_RUN_RVM = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRVM()).get();
-    }
-    catch (java.util.concurrent.ExecutionException ignored) {
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      throw new ProcessCanceledException(e);
-    }
-
-    try {
-      CAN_RUN_RBENV = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRbenv()).get();
-    }
-    catch (java.util.concurrent.ExecutionException ignored) {
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      throw new ProcessCanceledException(e);
-    }
-  }
 
   public static RunAnythingCache getInstance(Project project) {
-    return ServiceManager.getService(project, RunAnythingCache.class);
+    return project.getService(RunAnythingCache.class);
   }
 
   /**
    * @return true is group is visible; false if it's hidden
    */
-  public boolean isGroupVisible(@NotNull String key) {
-    return mySettings.myKeys.get(key);
+  @ApiStatus.Internal
+  public boolean isGroupVisible(@NotNull RunAnythingGroup group) {
+    Boolean visible = mySettings.myKeys.get(group.getTitle());
+    if (visible != null) {
+      return visible;
+    }
+    return true;
+  }
+
+
+  /**
+   * @deprecated Use {@link #saveGroupVisibilityKey(RunAnythingGroup, boolean)} instead
+   */
+  @Deprecated
+  public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
+    mySettings.myKeys.put(key, visible);
   }
 
   /**
    * Saves group visibility flag
    *
-   * @param key     to store visibility flag
+   * @param group     to store visibility flag
    * @param visible true if group should be shown
    */
-  public void saveGroupVisibilityKey(@NotNull String key, boolean visible) {
-    mySettings.myKeys.put(key, visible);
+  @ApiStatus.Internal
+  public void saveGroupVisibilityKey(@NotNull RunAnythingGroup group, boolean visible) {
+    mySettings.myKeys.put(group.getTitle(), visible);
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return mySettings;
   }
 
   @Override
   public void loadState(@NotNull State state) {
     XmlSerializerUtil.copyBean(state, mySettings);
+
+    updateNewProvidersGroupVisibility(mySettings);
   }
 
-  static boolean canRunRbenv() {
-    return canRunCommand("rbenv");
-  }
-
-  static boolean canRunRVM() {
-    return canRunCommand("rvm");
-  }
-
-  private static boolean canRunCommand(@NotNull String command) {
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(command);
-    generalCommandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    try {
-      generalCommandLine.createProcess();
+  /**
+   * Updates group visibilities store for new providers
+   */
+  private static void updateNewProvidersGroupVisibility(@NotNull State settings) {
+    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+      String title = provider.getCompletionGroupTitle();
+      if (title != null && !settings.myKeys.containsKey(title)) {
+        settings.myKeys.put(title, true);
+      }
     }
-    catch (ExecutionException e) {
-      return false;
-    }
-    return true;
   }
 
-  public static class State {
-    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
-    @NotNull private final Map<String, Boolean> myKeys =
-      StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
-              .filter(provider -> provider.getCompletionGroupTitle() != null)
-              .distinct(RunAnythingProvider::getCompletionGroupTitle)
-              .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
+  public static final class State {
+    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag") private final @NotNull Map<String, Boolean> myKeys =
+      Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+            .filter(provider -> provider.getCompletionGroupTitle() != null)
+            .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true, (first, _) -> first));
 
-    @XCollection(elementName = "command")
-    @NotNull private final List<String> myCommands = ContainerUtil.newArrayList();
+    @XCollection(elementName = "command") private final @NotNull List<String> myCommands = new ArrayList<>();
 
-    @NotNull
-    public List<String> getCommands() {
+    public @NotNull List<String> getCommands() {
       return myCommands;
     }
   }

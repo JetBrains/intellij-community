@@ -1,0 +1,12 @@
+JsonFile: n_string_leading_uescaped_thinspace.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got '\'
+      PsiElement(BAD_CHARACTER)('\')
+    PsiErrorElement:<value> or ']' expected, got 'IDENTIFIER'
+      <empty list>
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('u0020')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"asd"')
+    PsiElement(])(']')

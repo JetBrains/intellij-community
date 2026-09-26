@@ -1,4 +1,4 @@
-// "Convert '1e1' to float" "true"
+// "Convert argument to 'float'" "true-preview"
 class Test {
   void bar() {
     foo(1e<caret>1);

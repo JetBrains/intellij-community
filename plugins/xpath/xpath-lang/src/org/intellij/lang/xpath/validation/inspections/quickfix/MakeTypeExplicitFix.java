@@ -16,32 +16,32 @@
 
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
-
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
-    private final XPathType myType;
+    @SafeFieldForPreview private final XPathType myType;
 
     public MakeTypeExplicitFix(XPathExpression expression, XPathType type) {
         super(expression);
         myType = type;
     }
 
-    @NotNull
-    public String getText() {
-        return "Make Type Conversion Explicit";
+    @Override
+    public @NotNull String getText() {
+        return getFamilyName();
     }
 
-    @NotNull
-    public String getFamilyName() {
-        return "ImplicitTypeConversion";
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.make.type.conversion.explicit");
     }
 
     @Override

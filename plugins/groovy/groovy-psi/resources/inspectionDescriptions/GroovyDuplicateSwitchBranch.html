@@ -1,9 +1,20 @@
 <html>
 <body>
-
-This inspection reports duplicated <b><font color="#000080">case</font></b> expressions in Groovy <b><font color="#000080">switch</font></b>
+Reports duplicated expressions in <code>case</code> labels for <code>switch</code>
 statements.
-<br>
-<small>Powered by InspectorGroovy</small>
+<p><b>Example:</b></p>
+<pre>
+<code>
+switch (n) {
+  case 1: //duplicate
+    break
+  case 1: //duplicate
+    System.out.println("2")
+    break
+  default:
+    System.out.println("default");
+}
+</code>
+</pre>
 </body>
 </html>

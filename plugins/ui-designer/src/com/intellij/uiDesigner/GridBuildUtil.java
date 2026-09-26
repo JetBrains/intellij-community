@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,22 +10,29 @@ import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadScrollPane;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
+import com.intellij.uiDesigner.radComponents.XYLayoutManagerImpl;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * @author yole
- */
-public class GridBuildUtil {
-  private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.GridBuildUtil");
 
-  private final static int HORIZONTAL_GRID = 1;
-  private final static int VERTICAL_GRID = 2;
-  private final static int GRID = 3;
+public final class GridBuildUtil {
+  private static final Logger LOG = Logger.getInstance(GridBuildUtil.class);
+
+  private static final int HORIZONTAL_GRID = 1;
+  private static final int VERTICAL_GRID = 2;
+  private static final int GRID = 3;
   /**
    * TODO[anton,vova]: most likely should be equal to "xy grid step" when available
    */
@@ -53,10 +46,9 @@ public class GridBuildUtil {
     if (selection.size() != 1){
       return;
     }
-    if (!(selection.get(0) instanceof RadContainer)) {
+    if (!(selection.get(0) instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)selection.get(0);
     if (
       container instanceof RadScrollPane ||
       container instanceof RadSplitPane ||
@@ -121,7 +113,7 @@ public class GridBuildUtil {
     final RadComponent[] componentsToConvert;
     {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
-      if (selection.size() == 0) {
+      if (selection.isEmpty()) {
         // root container selected
         final RadRootContainer rootContainer = editor.getRootContainer();
         if (rootContainer.getComponentCount() < 2) {
@@ -318,8 +310,8 @@ public class GridBuildUtil {
 
 
     return Couple.of(
-      new Integer(Util.eliminate(y, rowSpans, null)),
-      new Integer(Util.eliminate(x, colSpans, null))
+      Integer.valueOf(Util.eliminate(y, rowSpans, null)),
+      Integer.valueOf(Util.eliminate(x, colSpans, null))
     );
   }
 

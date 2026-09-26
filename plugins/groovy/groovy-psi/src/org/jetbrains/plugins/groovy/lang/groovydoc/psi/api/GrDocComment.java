@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDocComment extends PsiDocComment, GroovyDocPsiElement {
 
   @Override
@@ -31,14 +28,12 @@ public interface GrDocComment extends PsiDocComment, GroovyDocPsiElement {
   GrDocCommentOwner getOwner();
 
   @Override
-  @NotNull
-  GrDocTag[] getTags();
+  GrDocTag @NotNull [] getTags();
 
   @Override
   @Nullable
   GrDocTag findTagByName(@NonNls String name);
 
   @Override
-  @NotNull
-  GrDocTag[] findTagsByName(@NonNls String name);
+  GrDocTag @NotNull [] findTagsByName(@NonNls String name);
 }

@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -37,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class LibrarySourceItem extends PackagingSourceItem {
   private final Library myLibrary;
 
@@ -47,34 +30,32 @@ public class LibrarySourceItem extends PackagingSourceItem {
     myLibrary = library;
   }
 
-  @NotNull
   @Override
-  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibrarySourceItemPresentation(myLibrary, context);
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof LibrarySourceItem && myLibrary.equals(((LibrarySourceItem)obj).myLibrary);
   }
 
+  @Override
   public int hashCode() {
     return myLibrary.hashCode();
   }
 
-  @NotNull 
-  public Library getLibrary() {
+  public @NotNull Library getLibrary() {
     return myLibrary;
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getKindOfProducedElements() {
+  public @NotNull PackagingElementOutputKind getKindOfProducedElements() {
     return LibraryPackagingElement.getKindForLibrary(myLibrary);
   }
 
   @Override
-  @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+  public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     return PackagingElementFactory.getInstance().createLibraryElements(myLibrary);
   }
 
@@ -82,7 +63,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
     private final Library myLibrary;
     private final ArtifactEditorContext myContext;
 
-    public LibrarySourceItemPresentation(Library library, ArtifactEditorContext context) {
+    LibrarySourceItemPresentation(Library library, ArtifactEditorContext context) {
       myLibrary = library;
       myContext = context;
     }
@@ -99,7 +80,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
 
     @Override
     public String getPresentableName() {
-      return LibraryUtil.getPresentableName(myLibrary);
+      return myLibrary.getPresentableName();
     }
 
     @Override
@@ -113,8 +94,8 @@ public class LibrarySourceItem extends PackagingSourceItem {
       }
       else {
         if (((LibraryEx)myLibrary).isDisposed()) {
-          //todo[nik] disposed library should not be shown in the tree
-          presentationData.addText("Invalid Library", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          //todo disposed library should not be shown in the tree
+          presentationData.addText(JavaUiBundle.message("library.source.item.label.invalid.library"), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return;
         }
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
@@ -124,7 +105,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
           presentationData.addText(file.getName(), mainAttributes);
         }
         else {
-          presentationData.addText("Empty Library", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          presentationData.addText(JavaUiBundle.message("library.source.item.label.empty.library"), SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
       }
     }

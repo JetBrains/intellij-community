@@ -1,0 +1,102 @@
+package org.jetbrains.jewel.ui.component
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
+import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
+
+/**
+ * A component that displays a header for a group of items, with a title and optional slots on both sides.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/group-header.html)
+ *
+ * **Usage example:**
+ * [`Borders.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Borders.kt)
+ *
+ * **Swing equivalent:**
+ * [`TitledSeparator`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/TitledSeparator.java)
+ *
+ * @param text The text to display in the header.
+ * @param modifier The modifier to apply to the header.
+ * @param startComponent The component to display on the left side of the header.
+ * @param endComponent The component to display on the right side of the header.
+ * @param style The style to apply to the header.
+ * @param textStyle The text style to apply to the header text. Defaults to [JewelTheme.defaultTextStyle].
+ * @param enabled Whether the divider is enabled.
+ * @see com.intellij.ui.TitledSeparator
+ */
+@Composable
+public fun GroupHeader(
+    @Nls text: String,
+    modifier: Modifier = Modifier,
+    startComponent: (@Composable () -> Unit)? = null,
+    endComponent: (@Composable () -> Unit)? = null,
+    style: GroupHeaderStyle = LocalGroupHeaderStyle.current,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    enabled: Boolean = true,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(style.metrics.indent),
+    ) {
+        if (startComponent != null) {
+            Box(Modifier.size(16.dp)) { startComponent() }
+        }
+        Text(text, style = textStyle)
+
+        Divider(
+            orientation = Orientation.Horizontal,
+            modifier = Modifier.weight(1f),
+            color = if (enabled) style.colors.divider else style.colors.dividerDisabled,
+            thickness = style.metrics.dividerThickness,
+            startIndent = 0.dp,
+        )
+        if (endComponent != null) {
+            Row(Modifier.height(16.dp)) { endComponent() }
+        }
+    }
+}
+
+/**
+ * A component that displays a header for a group of items, with a title and optional slots on both sides.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/group-header.html)
+ *
+ * **Usage example:**
+ * [`Borders.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Borders.kt)
+ *
+ * **Swing equivalent:**
+ * [`TitledSeparator`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/TitledSeparator.java)
+ *
+ * @param text The text to display in the header.
+ * @param modifier The modifier to apply to the header.
+ * @param startComponent The component to display on the left side of the header.
+ * @param endComponent The component to display on the right side of the header.
+ * @param style The style to apply to the header.
+ * @param textStyle The text style to apply to the header text. Defaults to [JewelTheme.defaultTextStyle].
+ * @see com.intellij.ui.TitledSeparator
+ */
+@Deprecated("Use GroupHeader with the enabled parameter.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun GroupHeader(
+    @Nls text: String,
+    modifier: Modifier = Modifier,
+    startComponent: (@Composable () -> Unit)? = null,
+    endComponent: (@Composable () -> Unit)? = null,
+    style: GroupHeaderStyle = LocalGroupHeaderStyle.current,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+) {
+    GroupHeader(text, modifier, startComponent, endComponent, style, textStyle, enabled = true)
+}

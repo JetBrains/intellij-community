@@ -1,41 +1,43 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.InjectedLanguagePlaces;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LanguageInjector;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +51,11 @@ public class MyTestInjector {
   private final PsiManager myPsiManager;
 
   @TestOnly
-  public MyTestInjector(PsiManager psiManager) {
+  public MyTestInjector(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
   }
 
-  public void injectAll(Disposable parent) {
+  public void injectAll(@NotNull Disposable parent) {
     injectVariousStuffEverywhere(parent, myPsiManager);
 
     Project project = myPsiManager.getProject();
@@ -76,11 +78,9 @@ public class MyTestInjector {
     final ConcatenationAwareInjector injector = (injectionPlacesRegistrar, operands) -> {
       PsiElement operand = operands[0];
       if (!(operand instanceof PsiLiteralExpression)) return;
-      if (!(operand.getParent() instanceof PsiExpressionList)) return;
-      PsiExpressionList expressionList = (PsiExpressionList)operand.getParent();
+      if (!(operand.getParent() instanceof PsiExpressionList expressionList)) return;
       int i = ArrayUtil.indexOf(expressionList.getExpressions(), operand);
-      if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand.getParent().getParent();
+      if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression methodCallExpression)) return;
       PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) return;
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -92,22 +92,18 @@ public class MyTestInjector {
       .addPlace(null, null, (PsiLanguageInjectionHost)operand, textRange)
       .doneInjecting();
     };
-    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,
-                                                      @NotNull final Project project,
+                                                      final @NotNull Project project,
                                                       final Language language,
-                                                      @NotNull @NonNls final String varName,
-                                                      @NonNls final String prefix,
-                                                      @NonNls final String suffix) {
+                                                      final @NotNull @NonNls String varName,
+                                                      final @NonNls String prefix,
+                                                      final @NonNls String suffix) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = (injectionPlacesRegistrar, operands) -> {
+      if (operands[0].getParent() instanceof PsiNameValuePair) return; // do not inject into @SupressWarnings
       PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
       if (variable == null) return;
       if (!varName.equals(variable.getName())) return;
@@ -136,28 +132,23 @@ public class MyTestInjector {
         injectionPlacesRegistrar.doneInjecting();
       }
     };
-    final JavaConcatenationInjectorManager injectorManager = JavaConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
-  private static void injectVariousStuffEverywhere(Disposable parent, final PsiManager psiManager) {
+  private static void injectVariousStuffEverywhere(@NotNull Disposable parent, final PsiManager psiManager) {
     final Language ql = Language.findLanguageByID("JPAQL");
-    final Language js = Language.findLanguageByID("JavaScript 1.6");
+    final Language js = Language.findLanguageByID("JavaScript");
     final Language html = Language.findLanguageByID("HTML");
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
-    final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
+    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
-        PsiElement parent = value.getParent();
-        if (parent instanceof XmlAttribute) {
-          @NonNls String attrName = ((XmlAttribute)parent).getLocalName();
+        PsiElement parent1 = value.getParent();
+        if (parent1 instanceof XmlAttribute) {
+          @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
           if ("jsInBraces".equals(attrName)) {
             registrar.startInjecting(js);
             String text = value.getText();
@@ -174,16 +165,13 @@ public class MyTestInjector {
       }
 
       @Override
-      @NotNull
-      public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+      public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return Collections.singletonList(XmlAttributeValue.class);
       }
-    };
-    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector, parent);
+    }, parent);
 
     final LanguageInjector myInjector = (host, placesToInject) -> {
-      if (host instanceof XmlAttributeValue) {
-        XmlAttributeValue value = (XmlAttributeValue)host;
+      if (host instanceof XmlAttributeValue value) {
         PsiElement parent1 = value.getParent();
         if (parent1 instanceof XmlAttribute) {
           @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
@@ -202,9 +190,8 @@ public class MyTestInjector {
           }
         }
       }
-      if (host instanceof XmlText) {
+      if (host instanceof XmlText xmlText) {
         // inject to xml tags named 'ql'
-        final XmlText xmlText = (XmlText)host;
         XmlTag tag = xmlText.getParentTag();
         if (tag == null) return;
         if ("ql".equals(tag.getLocalName())) {
@@ -269,25 +256,9 @@ public class MyTestInjector {
       }
 
       if (host instanceof PsiCommentImpl) {
-        String text = host.getText();
-        if (text.startsWith("/*--{") && text.endsWith("}--*/")) {
-          TextRange textRange = new TextRange(4, text.length()-4);
-          if (!(host.getParent()instanceof PsiMethod)) return;
-          PsiMethod method = (PsiMethod)host.getParent();
-          if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
-          String paramList = "";
-          for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            if (!paramList.isEmpty()) paramList += ",";
-            paramList += parameter.getName();
-          }
-          @NonNls String header = "function " + method.getName() + "("+paramList+") {";
-          Language gwt = Language.findLanguageByID("GWT JavaScript");
-          placesToInject.addPlace(gwt, textRange, header, "}");
-          return;
-        }
         PsiElement parent1 = host.getParent();
         if (parent1 instanceof PsiMethod && ((PsiMethod)parent1).getName().equals("xml")) {
-          placesToInject.addPlace(StdLanguages.XML, new TextRange(2,host.getTextLength()-2), null,null);
+          placesToInject.addPlace(XMLLanguage.INSTANCE, new TextRange(2, host.getTextLength() - 2), null, null);
           return;
         }
       }
@@ -301,7 +272,10 @@ public class MyTestInjector {
           placesToInject.addPlace(ql, textRangeToInject(host), null, null);
         }
         if ("xml".equals(variable.getName())) {
-          placesToInject.addPlace(StdLanguages.XML, textRangeToInject(host), null, null);
+          placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), null, null);
+        }
+        if ("xmlWithLongPrefixSuffix".equals(variable.getName())) {
+          placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), "<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa><bbbbbbbbbbbbb><cccccccccccc>", "</cccccccccccc></bbbbbbbbbbbbb></aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>");
         }
         if ("js".equals(variable.getName())) { // with prefix/suffix
           placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");
@@ -321,9 +295,9 @@ public class MyTestInjector {
       }
     };
 
-    final ExtensionPoint<LanguageInjector> extensionPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    extensionPoint.registerExtension(myInjector);
-    Disposer.register(parent, () -> extensionPoint.unregisterExtension(myInjector));
+    // cannot use maskAll here because of InjectedLanguageEditingTest (ok for all other tests)
+    //((ExtensionPointImpl<LanguageInjector>)LanguageInjector.EXTENSION_POINT_NAME.getPoint(null)).maskAll(Collections.singletonList(myInjector), parent);
+    LanguageInjector.EXTENSION_POINT_NAME.getPoint().registerExtension(myInjector, parent);
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

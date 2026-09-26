@@ -1,0 +1,50 @@
+<node text="ParentClass ()" base="true">
+  <node text="ParentClass () [JVM (1.8)]">
+    <node text="BaseClass () [JVM (1.8)]">
+      <node text="JvmOnlyChild ()"/>
+      <node text="CommonChild1 ()"/>
+      <node text="CommonIntermediate ()">
+        <node text="JsIntermediate ()"/>
+        <node text="JvmIntermediate ()"/>
+      </node>
+      <node text="CommonChild2 ()"/>
+    </node>
+  </node>
+  <node text="ParentClass () [JS]">
+    <node text="BaseClass () [JS]">
+      <node text="CommonChild1 ()"/>
+      <node text="CommonIntermediate ()">
+        <node text="JsIntermediate ()"/>
+        <node text="JvmIntermediate ()"/>
+      </node>
+      <node text="JsOnlyChild ()"/>
+      <node text="CommonChild2 ()"/>
+    </node>
+  </node>
+  <node text="BaseClass ()">
+    <node text="BaseClass () [JVM (1.8)]">
+      <node text="JvmOnlyChild ()"/>
+      <node text="CommonChild1 ()"/>
+      <node text="CommonIntermediate ()">
+        <node text="JsIntermediate ()"/>
+        <node text="JvmIntermediate ()"/>
+      </node>
+      <node text="CommonChild2 ()"/>
+    </node>
+    <node text="BaseClass () [JS]">
+      <node text="CommonChild1 ()"/>
+      <node text="CommonIntermediate ()">
+        <node text="JsIntermediate ()"/>
+        <node text="JvmIntermediate ()"/>
+      </node>
+      <node text="JsOnlyChild ()"/>
+      <node text="CommonChild2 ()"/>
+    </node>
+    <node text="CommonChild1 ()"/>
+    <node text="CommonIntermediate ()">
+      <node text="JsIntermediate ()"/>
+      <node text="JvmIntermediate ()"/>
+    </node>
+    <node text="CommonChild2 ()"/>
+  </node>
+</node>

@@ -1,0 +1,8 @@
+{
+    "mainFile": "source/Foo.kt",
+    "type": "MOVE_FILES",
+    "targetPackage": "target",
+    "searchReferences": false,
+    "enabledInK1": "false",
+    "enabledInK2": "true"
+}

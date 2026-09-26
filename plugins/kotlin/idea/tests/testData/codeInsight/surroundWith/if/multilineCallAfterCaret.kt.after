@@ -1,0 +1,7 @@
+fun foo() {
+    if (<caret>) {
+        listOf(1, 2).forEach {
+            println(it)
+        }
+    }
+}

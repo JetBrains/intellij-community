@@ -1,35 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionViewNavigationPanel extends JPanel implements InspectionTreeLoadingProgressAware {
+@ApiStatus.Internal
+public final class InspectionViewNavigationPanel extends JPanel implements InspectionTreeLoadingProgressAware {
   private final InspectionTreeNode myNode;
   private final InspectionTree myTree;
   private final JPanel myLinks;
@@ -40,7 +30,7 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     myTree = tree;
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty(18, 12, 0, 0));
-    final String titleLabelText = getTitleText(true);
+    String titleLabelText = getTitleText(true);
     add(new JBLabel(titleLabelText), BorderLayout.NORTH);
     myLinks = new JPanel();
     myLinks.setLayout(new BoxLayout(myLinks, BoxLayout.Y_AXIS));
@@ -59,22 +49,24 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
     resetChildrenAndRepaint();
   }
 
-  @NotNull
-  public static String getTitleText(boolean addColon) {
-    return "Select inspection to see problems" + (addColon ? ":" : ".");
+  public static @NotNull @Nls String getTitleText(boolean addColon) {
+    if (addColon) {
+      return InspectionsBundle.message("inspections.view.select.inspection.label");
+    }
+    return InspectionsBundle.message("inspections.view.nothing.message");
   }
 
   private void resetChildrenNavigation() {
-    final int currentChildrenCount = myNode.getChildCount();
+    int currentChildrenCount = myNode.getChildCount();
     if (myShownChildrenCount != currentChildrenCount) {
       myLinks.removeAll();
-      myLinks.add(Box.createVerticalStrut(JBUI.scale(10)));
+      myLinks.add(Box.createVerticalStrut(JBUIScale.scale(10)));
       for (int i = 0; i < currentChildrenCount; i++) {
-        final TreeNode child = myNode.getChildAt(i);
-        final LinkLabel link = new LinkLabel(child.toString(), null) {
+        InspectionTreeNode child = myNode.getChildAt(i);
+        LinkLabel link = new LinkLabel(child.getPresentableText(), null) {
           @Override
           public void doClick() {
-            TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, myTree);
+            myTree.selectNode(child);
           }
         };
         link.setBorder(JBUI.Borders.empty(1, 17, 3, 1));

@@ -1,0 +1,10 @@
+// "Suppress 'RedundantVisibilityModifier' for companion object Companion of CompanionSuppressedOnCompanion" "true"
+
+class CompanionSuppressedOnCompanion {
+    @Suppress("RedundantVisibilityModifier")
+    public companion object
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.RedundantVisibilityModifierInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

@@ -1,0 +1,64 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.keymap.qtcreator` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/keymap-qtcreator.jar": ["intellij.keymap.qtcreator"],
+    },
+    main_module = "intellij.keymap.qtcreator",
+)
+### auto-generated section `dev intellij.keymap.qtcreator` end
+
+### auto-generated section `build intellij.keymap.qtcreator` start
+jvm_library(
+    name = "keymap-qtcreator",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.qtcreator",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "keymap-qtcreator_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.qtcreator",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-qtcreator",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "keymap-qtcreator_plugin",
+    descriptor_module = ":keymap-qtcreator",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.keymap.qtcreator` end
+
+### auto-generated section `iml intellij.keymap.qtcreator` start
+exports_files(
+    [
+        "intellij.keymap.qtcreator.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/QtCreator (Mac OS X).xml",
+        "resources/keymaps/QtCreator.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.keymap.qtcreator` end

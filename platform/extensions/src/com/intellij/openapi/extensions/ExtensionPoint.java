@@ -1,53 +1,108 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+
+/**
+ * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
+ */
 public interface ExtensionPoint<T> {
-  @NotNull
-  String getName();
+  /**
+   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
+   */
+  @Deprecated
+  void registerExtension(T extension);
 
-  AreaInstance getArea();
+  @TestOnly
+  void registerExtension(T extension, @NotNull Disposable parentDisposable);
 
-  void registerExtension(@NotNull T extension);
+  @TestOnly
+  void registerExtension(T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
 
-  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
+  /**
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
+   * to register an extension as the first one or to completely replace existing extensions in tests.
+   */
+  @TestOnly
+  void registerExtension(T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
 
-  @NotNull
-  T[] getExtensions();
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
+  T @NotNull [] getExtensions();
 
-  boolean hasAnyExtensions();
+  @NotNull @Unmodifiable
+  List<T> getExtensionList();
 
-  @Nullable
-  T getExtension();
+  int size();
 
-  boolean hasExtension(@NotNull T extension);
-
-  void unregisterExtension(@NotNull T extension);
+  /**
+   * @deprecated Use another solution to unregister an inapplicable extension, because this method instantiates all extensions.
+   */
+  @Deprecated
+  void unregisterExtension(T extension);
 
   /**
    * Unregisters an extension of the specified type.
+   * <p>
+   * Please note that you can deregister service specifying empty implementation class.
+   * <p>
+   * Consider to use {@link ExtensionNotApplicableException} instead.
    */
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @NotNull Disposable parentDisposable);
+  /**
+   * Unregisters all extensions for which the specified predicate returns {@code false}.
+   * <p>
+   * Consider to use {@link ExtensionNotApplicableException} instead.
+   */
+  boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
+  /**
+   * @deprecated Use {@link #addExtensionPointListener(CoroutineScope, boolean, ExtensionPointListener)}
+   */
+  @Deprecated
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                 boolean invokeForLoadedExtensions,
+                                 @Nullable Disposable parentDisposable);
 
+  void addExtensionPointListener(@NotNull CoroutineScope coroutineScope,
+                                 boolean invokeForLoadedExtensions,
+                                 @NotNull ExtensionPointListener<T> listener);
+
+  /**
+   * Consider using {@link ExtensionPointName#addChangeListener}
+   */
+  void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
+
+  void addChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener);
+
+  @ApiStatus.Internal
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
-  void reset();
+  /**
+   * @return {@code true} if the EP allows adding/removing extensions at runtime
+   */
+  @ApiStatus.Internal
+  boolean isDynamic();
 
-  @NotNull
-  Class<T> getExtensionClass();
+  @ApiStatus.Internal
+  @NotNull PluginDescriptor getPluginDescriptor();
 
-  @NotNull
-  Kind getKind();
-
-  @NotNull
-  String getClassName();
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<T, @Nullable K> keyMapper);
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

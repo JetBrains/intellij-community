@@ -1,0 +1,75 @@
+Node: ArraysKt___ArraysKt
+User object class: KtInternalFileTreeNode
+
+Value: KtLightClassForDecompiledFacade of PsiFile:ArraysKt___ArraysKt.class
+Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
+
+Navigation item #0: KtFile: _Arrays.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays.kt
+
+
+-Project
+ +PsiDirectory: src
+ -External Libraries
+  +Library: < java 11 >
+  -Library: kotlin-stdlib
+   -PsiDirectory: kotlin-stdlib.jar
+    -PsiDirectory: kotlin
+     +PsiDirectory: annotation
+     -PsiDirectory: collections
+...
+      +AbstractCollection
+...
+      ArraysKt
+...
+      -[ArraysKt___ArraysKt]
+...
+       Array<out T>.count(): Int
+...
+       Array<out T>.last(): T
+...
+       Array<out T>.take(n: Int): List<T>
+...
+       Array<T>.reverse(): Unit
+...
+       BooleanArray.none(): Boolean
+...
+       BooleanArray.sortedBy(selector: (Boolean) -> R?): List<Boolean>
+...
+       ByteArray.sort(): Unit
+...
+       ByteArray.sum(): Int
+...
+       CharArray.sort(): Unit
+...
+       DoubleArray.sort(): Unit
+...
+       FloatArray.sum(): Float
+...
+       IntArray.sum(): Int
+...
+       IntArray.toList(): List<Int>
+...
+       LongArray.reverse(): Unit
+...
+       LongArray.sum(): Long
+...
+       ShortArray.sum(): Int
+...
+      MapsKt
+      +MapsKt___MapsJvmKt
+      +MapsKt___MapsKt
+      +MapsKt__MapsJVMKt
+      +MapsKt__MapsKt
+      +MapsKt__MapWithDefaultKt
+      SetsKt
+      +SetsKt___SetsKt
+      +SetsKt__SetsJVMKt
+      +SetsKt__SetsKt
+...
+     StandardKt
+     +StandardKt__StandardKt
+     +StandardKt__SynchronizedKt
+...
+    +PsiDirectory: META-INF
+   +PsiDirectory: kotlin-stdlib-common.klib

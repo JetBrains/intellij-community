@@ -1,0 +1,3 @@
+public class C implements IConst {
+  public static final Object NAME = "c";
+}

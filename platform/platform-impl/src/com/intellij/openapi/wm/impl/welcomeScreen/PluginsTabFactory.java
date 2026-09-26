@@ -1,0 +1,101 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.welcomeScreen;
+
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.CountComponent;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription;
+import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.wm.WelcomeScreenTab;
+import com.intellij.openapi.wm.WelcomeTabFactory;
+import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JComponent;
+import javax.swing.event.AncestorEvent;
+import java.awt.BorderLayout;
+
+@ApiStatus.Internal
+public final class PluginsTabFactory implements WelcomeTabFactory {
+  @Override
+  public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
+    return new MyDefaultWelcomeScreenTab(parentDisposable);
+  }
+
+  private static final class MyDefaultWelcomeScreenTab extends TabbedWelcomeScreen.DefaultWelcomeScreenTab {
+    private final PluginUpdateSubscription myPluginUpdateSubscription;
+    private final CountComponent myCountLabel = new CountComponent();
+    private JComponent myParent;
+    private final Disposable parentDisposable;
+
+    private MyDefaultWelcomeScreenTab(@NotNull Disposable parentDisposable) {
+      super(IdeBundle.message("welcome.screen.plugins.title"), WelcomeScreenEventCollector.TabType.TabNavPlugins);
+      this.parentDisposable = parentDisposable;
+
+      myKeyComponent.setBorder(JBUI.Borders.empty(8, 0, 8, ExperimentalUI.isNewUI() ? 20 : 8));
+      myKeyComponent.add(myCountLabel, BorderLayout.EAST);
+      myCountLabel.setVisible(false);
+
+      myPluginUpdateSubscription = PluginUpdatesService.getInstance().subscribe(results -> {
+        int countValue = results.getEnabledUpdates().size();
+        @NlsSafe String text = countValue == 0 ? null : Integer.toString(countValue);
+        myCountLabel.setText(text);
+        myCountLabel.setVisible(text != null);
+        if (myParent != null) {
+          myParent.repaint();
+        }
+      });
+    }
+
+    @Override
+    public @NotNull JComponent getKeyComponent(@NotNull JComponent parent) {
+      if (myParent == null) {
+        parent.addAncestorListener(new AncestorListenerAdapter() {
+          @Override
+          public void ancestorRemoved(AncestorEvent event) {
+            if (myPluginUpdateSubscription != null) {
+              myPluginUpdateSubscription.cancel();
+            }
+          }
+        });
+      }
+      myParent = parent;
+      return super.getKeyComponent(parent);
+    }
+
+    @Override
+    protected JComponent buildComponent() {
+      PluginManagerConfigurable configurable = PluginManagerConfigurable.createForWelcomeScreen();
+      Disposer.register(parentDisposable, configurable::disposeUIResources);
+      return createPluginsPanel(configurable);
+    }
+  }
+
+  public static @NotNull JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
+    JComponent mainPanel = configurable.createComponent();
+    JComponent topComponent = configurable.getTopComponent();
+    BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(mainPanel).addToTop(topComponent)
+      .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+    pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {
+        if (configurable.isModified()) {
+          configurable.scheduleApply();
+        }
+      }
+    });
+    if (topComponent instanceof TabbedPaneHeaderComponent tabbedPanel) {
+      tabbedPanel.setWelcomeScreen(true);
+    }
+    return pluginsPanel;
+  }
+}

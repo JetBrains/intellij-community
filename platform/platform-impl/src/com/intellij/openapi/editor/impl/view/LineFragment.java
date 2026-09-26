@@ -1,19 +1,28 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.util.function.Consumer;
 
 /**
  * A building block of text line layout, that knows how to draw itself, and convert between offset, column and x coordinate within itself.
  */
-interface LineFragment {
+@ApiStatus.Internal
+public sealed interface LineFragment
+  permits TextFragment,
+          TextFragmentWindow,
+          SpecialCharacterFragment,
+          ApproximationFragment,
+          TabFragment {
+
   // offset-based
   int getLength();
 
   int getLogicalColumnCount(int startColumn);
-  
+
   int getVisualColumnCount(float startX);
 
   // columns are visual
@@ -29,18 +38,14 @@ interface LineFragment {
   float visualColumnToX(float startX, int column);
 
   // column is visual
-  // returns array of two elements 
-  // - first one is visual column, 
-  // - second one is 1 if target location is closer to larger columns and 0 otherwise
-  int[] xToVisualColumn(float startX, float x);
+  @NotNull VisualColumn xToVisualColumn(float startX, float x);
 
   // offsets are visual
   float offsetToX(float startX, int startOffset, int offset);
 
   // offsets are visual
-  void draw(Graphics2D g, float x, float y, int startOffset, int endOffset);
+  @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset);
 
   // offsets are logical
-  @NotNull
-  LineFragment subFragment(int startOffset, int endOffset);
+  @NotNull LineFragment subFragment(int startOffset, int endOffset);
 }

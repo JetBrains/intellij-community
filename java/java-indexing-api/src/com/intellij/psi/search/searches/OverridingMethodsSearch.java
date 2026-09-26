@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,16 +11,13 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.overridingMethodsSearch");
+public final class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
+  public static final ExtensionPointName<QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.overridingMethodsSearch");
   public static final OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
 
   public static class SearchParameters {
-    @NotNull private final PsiMethod myMethod;
-    @NotNull private final SearchScope myScope;
+    private final @NotNull PsiMethod myMethod;
+    private final @NotNull SearchScope myScope;
     private final boolean myCheckDeep;
 
     public SearchParameters(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
@@ -43,8 +26,7 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
       myCheckDeep = checkDeep;
     }
 
-    @NotNull
-    public PsiMethod getMethod() {
+    public @NotNull PsiMethod getMethod() {
       return myMethod;
     }
 
@@ -52,27 +34,38 @@ public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, O
       return myCheckDeep;
     }
 
-    @NotNull
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return myScope;
     }
   }
 
   private OverridingMethodsSearch() {
+    super(EP_NAME);
   }
 
-  public static Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
+  /**
+   * @param checkDeep false means that processing would be stopped after the first found item
+   *                  Because search is done in parallel, it can happen that multiple items would be actually found
+   */
+  public static @NotNull Query<PsiMethod> search(@NotNull PsiMethod method, @NotNull SearchScope scope, final boolean checkDeep) {
     if (ReadAction.compute(() -> !PsiUtil.canBeOverridden(method))) return EmptyQuery.getEmptyQuery(); // Optimization
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
   }
 
-  @NotNull
-  public static Query<PsiMethod> search(@NotNull PsiMethod method, final boolean checkDeep) {
+  /**
+   * @param method base method
+   * @param checkDeep if true, indirect overrides will also be returned
+   * @return query containing methods that override the base method
+   */
+  public static @NotNull Query<PsiMethod> search(@NotNull PsiMethod method, final boolean checkDeep) {
     return search(method, ReadAction.compute(method::getUseScope), checkDeep);
   }
 
-  @NotNull
-  public static Query<PsiMethod> search(@NotNull PsiMethod method) {
+  /**
+   * @param method base method
+   * @return query containing methods that override the base method (directly or indirectly)
+   */
+  public static @NotNull Query<PsiMethod> search(@NotNull PsiMethod method) {
     return search(method, true);
   }
 }

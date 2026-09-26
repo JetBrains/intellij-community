@@ -1,7 +1,8 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.testUtil;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import junit.framework.TestCase;
 import org.intellij.plugins.relaxNG.HighlightingTestBase;
 import org.junit.Assert;
@@ -12,7 +13,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class ResourceUtil {
+public final class ResourceUtil {
   public static <TC extends TestCase & IdeaCodeInsightTestCase> void copyFiles(TC test) throws IOException {
     try {
       final Method method = test.getClass().getMethod(test.getName());
@@ -35,12 +36,12 @@ public class ResourceUtil {
           Assert.assertEquals(files.size(), 1);
           final File destFile = new File(temp, FileUtil.getRelativePath(root, new File(root, target)));
           FileUtil.copy(files.get(0), destFile);
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+          StandardFileSystems.local().refreshAndFindFileByPath(destFile.getAbsolutePath());
         } else {
           for (File file : files) {
             final File destFile = new File(temp, FileUtil.getRelativePath(root, file));
             FileUtil.copy(file, destFile);
-            LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+            StandardFileSystems.local().refreshAndFindFileByPath(destFile.getAbsolutePath());
           }
         }
       }

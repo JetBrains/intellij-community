@@ -1,0 +1,11 @@
+version = "0.8.*"
+upstream-repository = "https://github.com/nmslib/hnswlib"
+# Requires a version of numpy with a `py.typed` file
+dependencies = ["numpy>=1.21"]
+
+[tool.stubtest]
+# hnswlib is source-only and compiles with -march=native by default. CI
+# restores pip's wheel cache across runners with different CPUs, so a wheel
+# built on one machine can SIGILL on the next. See
+# https://github.com/python/typeshed/issues/16100
+install-environment = { HNSWLIB_NO_NATIVE = "1" }

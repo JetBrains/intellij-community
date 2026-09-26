@@ -1,18 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -25,23 +31,28 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction {
+public final class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -49,7 +60,9 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiElement element = getElement(dataContext, editor);
+    PsiElement originalElement = getOriginalElement(dataContext, editor);
+    PsiElement element = getElement(dataContext, editor, originalElement);
+
     if (element == null) {
       Messages.showMessageDialog(
         project,
@@ -59,13 +72,6 @@ public class ExternalJavaDocAction extends AnAction {
       );
       return;
     }
-
-
-    PsiFile context = CommonDataKeys.PSI_FILE.getData(dataContext);
-
-    PsiElement originalElement = getOriginalElement(context, editor);
-    DocumentationManager.storeOriginalElement(project, originalElement, element);
-
     showExternalJavadoc(element, originalElement, null, dataContext);
   }
 
@@ -75,13 +81,12 @@ public class ExternalJavaDocAction extends AnAction {
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
-    final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<String> urls;
       if (StringUtil.isEmptyOrSpaces(docUrl)) {
-        urls = ReadAction.compute(() -> provider.getUrlFor(element, originalElement));
+        urls = ReadAction.computeBlocking(() -> provider.getUrlFor(element, originalElement));
       }
       else {
         urls = Collections.singletonList(docUrl);
@@ -89,7 +94,7 @@ public class ExternalJavaDocAction extends AnAction {
       if (provider instanceof ExternalDocumentationProvider && urls != null && urls.size() > 1) {
         for (String url : urls) {
           List<String> thisUrlList = Collections.singletonList(url);
-          String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, thisUrlList);
+          String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, thisUrlList, false);
           if (doc != null) {
             urls = thisUrlList;
             break;
@@ -99,8 +104,7 @@ public class ExternalJavaDocAction extends AnAction {
       final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
         if (ContainerUtil.isEmpty(finalUrls)) {
-          if (element != null && provider instanceof ExternalDocumentationProvider) {
-            ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+          if (element != null && provider instanceof ExternalDocumentationProvider externalDocumentationProvider) {
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
               externalDocumentationProvider.promptToConfigureDocumentation(element);
             }
@@ -110,45 +114,56 @@ public class ExternalJavaDocAction extends AnAction {
           BrowserUtil.browse(finalUrls.get(0));
         }
         else {
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root",
-                                                                                     ArrayUtil.toStringArray(finalUrls)) {
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
+            LangBundle.message("popup.title.choose.external.documentation.root"),
+            ArrayUtilRt.toStringArray(finalUrls)) {
             @Override
-            public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+            public PopupStep<?> onChosen(final String selectedValue, final boolean finalChoice) {
               BrowserUtil.browse(selectedValue);
               return FINAL_CHOICE;
             }
           }).showInBestPositionFor(DataManager.getInstance().getDataContext(contextComponent));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
 
   }
 
-  @Nullable
-  private static PsiElement getOriginalElement(final PsiFile context, final Editor editor) {
-    return (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
+  private static @Nullable PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    return (file != null && editor != null) ? file.findElementAt(editor.getCaretModel().getOffset())
+                                            : null;
+  }
+
+  private static @Nullable PsiElement getElement(@NotNull DataContext dataContext,
+                                                 @Nullable Editor editor,
+                                                 @Nullable PsiElement originalElement) {
+    return editor == null || originalElement == null
+                     ? CommonDataKeys.PSI_ELEMENT.getData(dataContext)
+                     : DocumentationManager.getInstance(originalElement.getProject())
+                       .findTargetElement(editor, originalElement.getContainingFile(), originalElement);
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
+
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiElement element = getElement(dataContext, editor);
-    final PsiElement originalElement = getOriginalElement(CommonDataKeys.PSI_FILE.getData(dataContext), editor);
-    DocumentationManager.storeOriginalElement(CommonDataKeys.PROJECT.getData(dataContext), originalElement, element);
+    PsiElement originalElement = getOriginalElement(dataContext, editor);
+    PsiElement element = getElement(dataContext, editor, originalElement);
+
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
-    if (provider instanceof ExternalDocumentationProvider) {
-      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+    if (provider instanceof ExternalDocumentationProvider edProvider) {
       enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {
       final List<String> urls = provider.getUrlFor(element, originalElement);
       enabled = urls != null && !urls.isEmpty();
     }
+    presentation.setEnabled(enabled);
     if (editor != null) {
-      presentation.setEnabled(enabled);
       if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
         presentation.setVisible(true);
       }
@@ -157,19 +172,7 @@ public class ExternalJavaDocAction extends AnAction {
       }
     }
     else{
-      presentation.setEnabled(enabled);
       presentation.setVisible(true);
     }
-  }
-
-  private static PsiElement getElement(DataContext dataContext, Editor editor) {
-    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element == null && editor != null) {
-      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
-      if (reference != null) {
-        element = reference.getElement();
-      }
-    }
-    return element;
   }
 }

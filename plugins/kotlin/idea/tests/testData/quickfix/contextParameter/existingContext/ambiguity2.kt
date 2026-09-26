@@ -1,0 +1,17 @@
+// "Add 'localLogger' as 'MyLogger' to existing context" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// DISABLE_K2_ERRORS
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+interface MyLogger { fun log(msg: String) }
+class ConsoleLogger : MyLogger { override fun log(msg: String) {} }
+
+context(l: MyLogger) fun emit() { l.log("x") }
+
+fun repro(paramLogger: MyLogger) {
+    val localLogger: MyLogger = ConsoleLogger()
+    context("hello") {
+        <caret>emit()
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

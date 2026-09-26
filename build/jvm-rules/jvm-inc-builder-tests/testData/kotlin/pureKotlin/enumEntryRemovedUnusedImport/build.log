@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_enumEntryRemovedUnusedImport-a.kotlin_module
+  lib/E.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/enumEntryRemovedUnusedImport/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_enumEntryRemovedUnusedImport-a.kotlin_module
+  app/UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/enumEntryRemovedUnusedImport/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

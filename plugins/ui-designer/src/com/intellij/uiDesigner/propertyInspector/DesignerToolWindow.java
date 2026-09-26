@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.LightToolWindowContent;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -26,13 +13,13 @@ import com.intellij.ui.SideBorder;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.*;
+import java.awt.Dimension;
 
 /**
  * @author Alexander Lobas
@@ -43,7 +30,7 @@ public class DesignerToolWindow implements LightToolWindowContent {
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
 
-  public DesignerToolWindow(Project project) {
+  public DesignerToolWindow(@NotNull Project project) {
     myComponentTree = new ComponentTree(project);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
@@ -102,7 +89,7 @@ public class DesignerToolWindow implements LightToolWindowContent {
 
   public void updateComponentTree() {
     if (myComponentTreeBuilder != null) {
-      myComponentTreeBuilder.queueUpdate();
+      myComponentTreeBuilder.invalidateAsync();
     }
   }
 
@@ -123,17 +110,15 @@ public class DesignerToolWindow implements LightToolWindowContent {
     }
   }
 
-  private class MyToolWindowPanel extends Splitter implements DataProvider {
+  private class MyToolWindowPanel extends Splitter implements UiDataProvider {
     MyToolWindowPanel() {
       super(true, 0.33f);
     }
 
-    @Nullable
-    public Object getData(@NonNls String dataId) {
-      if (GuiEditor.DATA_KEY.is(dataId) && myComponentTree != null) {
-        return myComponentTree.getData(dataId);
-      }
-      return null;
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      if (myComponentTree == null) return;
+      sink.set(GuiEditor.DATA_KEY, myComponentTree.getEditor());
     }
   }
 }

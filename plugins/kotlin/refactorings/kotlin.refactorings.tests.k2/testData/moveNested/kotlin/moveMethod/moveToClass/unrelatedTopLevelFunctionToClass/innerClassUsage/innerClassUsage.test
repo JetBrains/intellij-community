@@ -1,0 +1,7 @@
+{
+  "mainFile": "a/A.kt",
+  "type": "MOVE_KOTLIN_NESTED_DECLARATION",
+  "targetClass": "a.A",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

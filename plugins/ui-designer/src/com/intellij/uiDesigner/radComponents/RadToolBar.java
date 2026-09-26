@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -24,18 +10,19 @@ import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JToolBar;
+import java.awt.FlowLayout;
+import java.awt.Point;
 
-/**
- * @author yole
- */
+
 public class RadToolBar extends RadContainer {
   public static class Factory extends RadComponentFactory {
+    @Override
     public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadToolBar(module, aClass, id);
     }
 
+    @Override
     public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
       return new RadToolBar(componentClass, id, palette);
     }
@@ -49,11 +36,12 @@ public class RadToolBar extends RadContainer {
     super(componentClass, id, palette);
   }
 
-  @Override @Nullable
-  protected RadLayoutManager createInitialLayoutManager() {
+  @Override
+  protected @Nullable RadLayoutManager createInitialLayoutManager() {
     return new RadToolBarLayoutManager();
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     writer.startElement(UIFormXmlConstants.ELEMENT_TOOLBAR);
     try {
@@ -65,12 +53,13 @@ public class RadToolBar extends RadContainer {
 
   private class RadToolBarLayoutManager extends RadAbstractIndexedLayoutManager {
 
-    @Nullable public String getName() {
+    @Override
+    public @Nullable String getName() {
       return null;
     }
 
-    @Override @NotNull
-    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    @Override
+    public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
       return new FlowDropLocation(RadToolBar.this, location, FlowLayout.LEFT, 0, 0);
     }
   }

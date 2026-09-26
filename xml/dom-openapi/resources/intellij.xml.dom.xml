@@ -1,0 +1,54 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.dom.customAnnotationChecker"
+                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dom.gotoSuper" interface="com.intellij.util.xml.DomElementNavigationProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.dom.uiControlsProvider"
+                    interface="com.intellij.util.Consumer"/>
+
+    <extensionPoint qualifiedName="com.intellij.dom.fileDescription"
+                    interface="com.intellij.util.xml.DomFileDescription"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <actions resource-bundle="messages.XmlDomBundle">
+    <group id="DomCollectionControl">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
+
+    <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
+  </extensions>
+</idea-plugin>

@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.hierarchy;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
+import java.awt.Graphics2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,22 +29,23 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf,
-                                    final int row, final boolean hasFocus) {
-    if (value instanceof DefaultMutableTreeNode) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      final Object object = node.getUserObject();
-      if (object instanceof HierarchyNodeDescriptor) {
-        final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)object;
-        descriptor.getHighlightedText().customize(this);
-        setIcon(descriptor.getIcon());
-      }
-      else if (object instanceof NodeDescriptor) {
-        append(((NodeDescriptor)object).getElement().toString());
-      }
-      else if (object != null) {
-        append(object.toString());
-      }
+  public void customizeCellRenderer(@NotNull JTree tree, Object value,
+                                    boolean selected, boolean expanded, boolean leaf,
+                                    int row, boolean hasFocus) {
+    Object userObject = TreeUtil.getUserObject(value);
+    if (userObject instanceof HierarchyNodeDescriptor descriptor) {
+      descriptor.getHighlightedText().customize(this);
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
     }
+    else {
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+  }
+
+  @Override
+  protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
+    return IconUtil.replaceInnerIcon(super.fixIconIfNeeded(icon, selected, hasFocus),
+                                     selected ? AllIcons.General.Modified : AllIcons.General.ModifiedSelected,
+                                     selected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified);
   }
 }

@@ -16,10 +16,9 @@
 package org.jetbrains.jps.builders;
 
 /**
- * Marker interface for {@link org.jetbrains.jps.builders.BuildTargetType}'s implementations. It instructs the external build process
+ * Marker interface for {@link BuildTargetType}'s implementations. It instructs the external build process
  * to skip building for targets of this type if all modules were compiled during previous build session and no source files were changed
  * after that.
- * @author nik
  */
 public interface ModuleInducedTargetType {
 }

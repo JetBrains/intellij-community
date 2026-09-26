@@ -10,28 +10,40 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 /**
- * @author Irina.Chernushina on 12/5/2017.
- *
  * Provide this custom comparator to detect whether to reparse lazy-reparseable children of the node for the language:
- * - For instance, if parsing of some IReparseableElementType depends on its parents contents, custom comparator is needed to check this.
- * - Having custom comparator as extension point helps for correct comparing also for embedded/injected fragments.
+ * - For instance, if parsing of some IReparseableElementType depends on its parent contents, a custom comparator is needed to check this.
+ * - Having a custom comparator as an extension point helps for correct comparing also for embedded/injected fragments.
  */
 public interface CustomLanguageASTComparator {
   LanguageExtension<CustomLanguageASTComparator> EXTENSION_POINT_NAME = new LanguageExtension<>("com.intellij.tree.CustomLanguageASTComparator");
 
-  static List<CustomLanguageASTComparator> getMatchingComparators(@NotNull PsiFile file) {
+  static @Unmodifiable List<CustomLanguageASTComparator> getMatchingComparators(@NotNull PsiFile file) {
     return EXTENSION_POINT_NAME.allForLanguage(file.getLanguage());
   }
 
   /**
+   * This method is used during reparse of top-level PSI trees.
+   *
    * @return {@code ThreeState#NO} for the children to be reparsed, {@code ThreeState#UNSURE} to continue comparing
    */
   @NotNull
   ThreeState compareAST(@NotNull ASTNode oldNode,
                         @NotNull LighterASTNode newNode,
                         @NotNull FlyweightCapableTreeStructure<LighterASTNode> structure);
+
+  /**
+   * This method is used when reparsing injected PSI trees.
+   *
+   * @return {@code ThreeState#NO} for the children to be reparsed, {@code ThreeState#UNSURE} to continue comparing
+   */
+  @NotNull
+  default ThreeState compareAST(@NotNull ASTNode oldNode,
+                                @NotNull ASTNode newNode) {
+    return ThreeState.UNSURE;
+  }
 }

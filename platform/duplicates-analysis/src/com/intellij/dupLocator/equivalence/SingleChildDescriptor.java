@@ -1,12 +1,11 @@
 package com.intellij.dupLocator.equivalence;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
+@ApiStatus.Internal
 public class SingleChildDescriptor {
   private final MyType myType;
   private final PsiElement myElement;
@@ -16,17 +15,15 @@ public class SingleChildDescriptor {
     myElement = element;
   }
 
-  @NotNull
-  public MyType getType() {
+  public @NotNull MyType getType() {
     return myType;
   }
 
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElement;
   }
 
-  public static enum MyType {
+  public enum MyType {
     DEFAULT,
     OPTIONALLY,
     OPTIONALLY_IN_PATTERN,

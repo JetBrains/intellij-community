@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.model.psi.PsiSymbolDeclaration;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,20 +16,25 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * The common base interface for all elements of the PSI tree.
  * <p/>
- * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
- * for high-level overview.
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-elements.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
  */
 public interface PsiElement extends UserDataHolder, Iconable {
   /**
-   * The empty array of PSI elements which can be reused to avoid unnecessary allocations.
+   * The empty array of PSI elements that can be reused to avoid unnecessary allocations.
    */
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
@@ -75,13 +69,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the array of children for the PSI element.
-   * Important: In some implementations children are only composite elements, i.e. not a leaf elements
+   * Important: In some implementations children are only composite elements, i.e., not leaf elements.
    *
    * @return the array of child elements.
    */
-  @NotNull
   @Contract(pure=true)
-  PsiElement[] getChildren();
+  @NotNull PsiElement @NotNull [] getChildren();
 
   /**
    * Returns the parent of the PSI element.
@@ -125,6 +118,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the file containing the PSI element.
+   * <p></p>
+   * Note: this method might need to traverse the whole AST up, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the file instance, or null if the PSI element is not contained in a file (for example,
    *         the element represents a package or directory).
@@ -136,11 +131,21 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the text range in the document occupied by the PSI element.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the text range.
    */
   @Contract(pure=true)
   TextRange getTextRange();
+
+  /**
+   * @return text range of this element relative to its parent
+   */
+  @Contract(pure = true)
+  default @NotNull TextRange getTextRangeInParent() {
+    return TextRange.from(getStartOffsetInParent(), getTextLength());
+  }
 
   /**
    * Returns the text offset of the PSI element relative to its parent.
@@ -151,7 +156,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   int getStartOffsetInParent();
 
   /**
-   * Returns the length of text of the PSI element.
+   * Returns the length of the text of the PSI element.
    *
    * @return the text length.
    */
@@ -159,7 +164,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   int getTextLength();
 
   /**
-   * Finds a leaf PSI element at the specified offset from the start of the text range of this node.
+   * Finds a leaf PSI element at the specified offset from the start of this element's text range.
    *
    * @param offset the relative offset for which the PSI element is requested.
    * @return the element at the offset, or null if none is found.
@@ -169,7 +174,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement findElementAt(int offset);
 
   /**
-   * Finds a reference at the specified offset from the start of the text range of this node.
+   * Finds a reference at the specified offset from the start of this element's text range.
    *
    * @param offset the relative offset for which the reference is requested.
    * @return the reference at the offset, or null if none is found.
@@ -191,11 +196,15 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the text of the PSI element.
+   * <p></p>
+   * Note: This call requires traversing the whole subtree, so it can be expensive for composite elements and should be avoided if possible.
    *
    * @return the element text.
+   * @see #textMatches
+   * @see #textContains
    */
-  @NonNls
   @Contract(pure=true)
+  @NlsSafe
   String getText();
 
   /**
@@ -203,14 +212,14 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text as a character array.
    */
-  @NotNull
   @Contract(pure=true)
-  char[] textToCharArray();
+  char @NotNull [] textToCharArray();
 
   /**
    * Returns the PSI element which should be used as a navigation target
-   * when navigation to this PSI element is requested. The method can either
-   * return {@code this} or substitute a different element if this element
+   * when navigation to this PSI element is requested.
+   * <p>
+   * The method can either return {@code this} or substitute a different element if this element
    * does not have an associated file and offset. (For example, if the source code
    * of a library is attached to a project, the navigation element for a compiled
    * library class is its source class.)
@@ -222,8 +231,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the PSI element which corresponds to this element and belongs to
-   * either the project source path or class path. The method can either return
-   * {@code this} or substitute a different element if this element does
+   * either the project source path or class path.
+   * <p>
+   * The method can either return {@code this} or substitute a different element if this element does
    * not belong to the source path or class path. (For example, the original
    * element for a library source file is the corresponding compiled class file.)
    *
@@ -246,7 +256,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Checks if the text of this PSI element is equal to the text of the specified PSI element.
    *
-   * @param element the element to compare the text with.
+   * @param element the element to compare the text width.
    * @return true if the text is equal, false otherwise.
    */
   @Contract(pure=true)
@@ -279,6 +289,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Creates a copy of the file containing the PSI element and returns the corresponding
    * element in the created copy. Resolve operations performed on elements in the copy
    * of the file will resolve to elements in the copy, not in the original file.
+   * <p>
+   * For light elements, may return {@code null}.
    *
    * @return the element in the file copy corresponding to this element.
    */
@@ -288,17 +300,17 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Adds a child to this PSI element.
    *
    * @param element the child element to add.
-   * @return the element which was actually added (either {@code element} or its copy).
+   * @return the element that was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
-   * Adds a child to this PSI element, before the specified anchor element.
+   * Adds a child to this PSI element before the specified anchor element.
    *
    * @param element the child element to add.
    * @param anchor  the anchor before which the child element is inserted (must be a child of this PSI element)
-   * @return the element which was actually added (either {@code element} or its copy).
+   * @return the element that was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addBefore(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
@@ -308,19 +320,20 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param element the child element to add.
    * @param anchor  the anchor after which the child element is inserted (must be a child of this PSI element)
-   * @return the element which was actually added (either {@code element} or its copy).
+   * @return the element that was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
 
   /**
-   * Checks if it is possible to add the specified element as a child to this element,
-   * and throws an exception if the add is not possible. Does not actually modify anything.
+   * Checks if it is possible to add the specified element as a child to this element
+   * and throws an exception if adding is not possible. Does not actually modify anything.
    *
-   * @param element the child element to check the add possibility.
+   * @param element the child element to check the addition possibility.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
    */
+  @Deprecated
   void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
@@ -328,7 +341,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param first the first child element to add.
    * @param last  the last child element to add (must have the same parent as {@code first})
-   * @return the first child element which was actually added (either {@code first} or its copy).
+   * @return the first child element that was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
@@ -339,7 +352,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param first  the first child element to add.
    * @param last   the last child element to add (must have the same parent as {@code first})
    * @param anchor the anchor before which the child element is inserted (must be a child of this PSI element)
-   * @return the first child element which was actually added (either {@code first} or its copy).
+   * @return the first child element that was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException;
@@ -350,7 +363,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param first  the first child element to add.
    * @param last   the last child element to add (must have the same parent as {@code first})
    * @param anchor the anchor after which the child element is inserted (must be a child of this PSI element)
-   * @return the first child element which was actually added (either {@code first} or its copy).
+   * @return the first child element that was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
@@ -364,12 +377,13 @@ public interface PsiElement extends UserDataHolder, Iconable {
   void delete() throws IncorrectOperationException;
 
   /**
-   * Checks if it is possible to delete the specified element from the tree,
-   * and throws an exception if the add is not possible. Does not actually modify anything.
+   * Checks if it is possible to delete the specified element from the tree
+   * and throws an exception if the addition is not possible. Does not actually modify anything.
    *
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
    */
+  @Deprecated
   void checkDelete() throws IncorrectOperationException;
 
   /**
@@ -386,7 +400,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * (along with the children).
    *
    * @param newElement the element to replace this element with.
-   * @return the element which was actually inserted in the tree (either {@code newElement} or its copy)
+   * @return the element that was actually inserted in the tree (either {@code newElement} or its copy)
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException;
@@ -394,20 +408,28 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Checks if this PSI element is valid. Valid elements and their hierarchy members
    * can be accessed for reading and writing. Valid elements can still correspond to
-   * underlying documents whose text is different, when those documents have been changed
+   * underlying documents whose text is different when those documents have been changed
    * and not yet committed ({@link PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
-   * (In this case an attempt to change PSI will result in an exception).
+   * (In this case an attempt to change PSI will result in an exception).<br><br>
    *
-   * Any access to invalid elements results in {@link PsiInvalidElementAccessException}.
-   *
+   * Most method calls on invalid PSI result in {@link PsiInvalidElementAccessException}.
    * Once invalid, elements can't become valid again.
-   *
-   * Elements become invalid in following cases:
+   * Elements become invalid in the following cases:
    * <ul>
-   *   <li>They have been deleted via PSI operation ({@link #delete()})</li>
+   *   <li>They have been deleted via PSI operation (e.g. {@link #delete()})</li>
    *   <li>They have been deleted as a result of an incremental reparse (document commit)</li>
-   *   <li>Their containing file has been changed externally, or renamed so that its PSI had to be rebuilt from scratch</li>
+   *   <li>Their containing file has been changed externally or renamed so that its PSI had to be rebuilt from scratch</li>
    * </ul>
+   *
+   * Note that calls to this method are expected to be rare and can even be considered a code smell. In general,
+   * when you're given some PSI, you should assume it's valid. If it turns out to be invalid, it's the responsibility
+   * of those who gave you this PSI, not yours, and they should be fixed, not your code.<br><br>
+   *
+   * The rare circumstances where {@code isValid} check makes sense
+   * are those where it's obvious from the surrounding code why the PSI could become invalid. For example, right after a PSI modification
+   * or at the start of a read action (because any write action could've invalidated the PSI between read actions,
+   * and you should never expect PSI to survive that). And even in these circumstances, please consider alternatives
+   * that support PSI restoration, e.g. {@link SmartPsiElementPointer}s.
    *
    * @return true if the element is valid, false otherwise.
    * @see com.intellij.psi.util.PsiUtilCore#ensureValid(PsiElement)
@@ -425,7 +447,41 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isWritable();
 
   /**
-   * Returns the reference from this PSI element to another PSI element (or elements), if one exists.
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
+   *
+   * @return collection of declarations in this element, or empty collection if there are no such declarations
+   * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
+   */
+  @OverrideOnly
+  default @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * The returned references are expected to be used by language support -
+   * for example, in Java the `foo` element in the `foo = 42` expression has a reference.
+   * This is used by Java language support to compute the expected type of the assignment.
+   * <p>
+   * On the other hand {@code "bar"} literal in {@code new File("bar")} is a string literal,
+   * and from the Java language perspective it has no references,
+   * but the framework support "knows" that this literal contains the reference to a file.
+   * These are external references.
+   * <p/>
+   * The contents of the returned collection are copied after the method returns,
+   * the platform doesn't store or modify the returned collection.
+   *
+   * @return collection of references from this element, or empty collection if there are no such references
+   * @see com.intellij.model.psi.PsiExternalReferenceHost
+   * @see com.intellij.model.psi.PsiSymbolReferenceService#getReferences(PsiElement)
+   */
+  @OverrideOnly
+  default @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Returns the reference from this PSI element to another PSI element (or elements) if one exists.
    * If the element has multiple associated references (see {@link #getReferences()}
    * for an example), returns the first associated reference.
    *
@@ -453,9 +509,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see PsiReferenceService#getReferences
    * @see com.intellij.psi.search.searches.ReferencesSearch
    */
-  @NotNull
   @Contract(pure=true)
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
   /**
    * Returns a copyable user data object attached to this element.
@@ -465,8 +520,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
-  @Contract(pure=true)
-  <T> T getCopyableUserData(Key<T> key);
+  @Contract(pure = true)
+  <T> T getCopyableUserData(@NotNull Key<T> key);
 
   /**
    * Attaches a copyable user data object to this element. Copyable user data objects are copied
@@ -476,7 +531,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param value the user data object to attach.
    * @see #getCopyableUserData(Key)
    */
-  <T> void putCopyableUserData(Key<T> key, @Nullable T value);
+  <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value);
 
   /**
    * Passes the declarations contained in this PSI element and its children
@@ -486,7 +541,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param lastParent the child of this element has been processed during the previous
    *                   step of the tree up walk (declarations under this element do not need
    *                   to be processed again)
-   * @param place      the original element from which the tree up walk was initiated.
+   * @param place      the original element from which the tree walk-up was initiated.
    * @return true if the declaration processing should continue or false if it should be stopped.
    */
   boolean processDeclarations(@NotNull PsiScopeProcessor processor,
@@ -498,7 +553,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the element which should be used as the parent of this element in a tree up
    * walk during a resolve operation. For most elements, this returns {@code getParent()},
    * but the context can be overridden for some elements like code fragments (see
-   * {@link PsiElementFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
+   * {@link JavaCodeFragmentFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
    *
    * @return the resolve context element.
    */
@@ -507,10 +562,14 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement getContext();
 
   /**
-   * Checks if an actual source or class file corresponds to the element. Non-physical elements include,
-   * for example, PSI elements created for the watch expressions in the debugger.
-   * Non-physical elements do not generate tree change events.
+   * Checks if an actual source or class file corresponds to the element.
+   * <p>
+   * If a PSI element is physical, it was produced by a {@link FileViewProvider} whose {@link FileViewProvider#supportsSendingPsiEvents()} returns true.
+   * <p>
+   * Non-physical elements include, for example, PSI elements created for the watch expressions in the debugger.
+   * Non-physical elements do not generate {@link FileViewProvider#supportsSendingPsiEvents() tree change events}.
    * Also, {@link PsiDocumentManager#getDocument(PsiFile)} returns null for non-physical elements.
+   * <p>
    * Not to be confused with {@link FileViewProvider#isPhysical()}.
    *
    * @return true if the element is physical, false otherwise.
@@ -548,15 +607,16 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * toString() should never be presented to the user.
    */
+  @Override
   @NonNls
   @Contract(pure=true)
   String toString();
 
   /**
-   * This method shouldn't be called by clients directly, because there are no guarantees of it being symmetric.
+   * This method shouldn't be called by clients directly because there are no guarantees of it being symmetric.
    * It's called by {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} internally, which clients should invoke instead.<p/>
    *
-   * Implementations of this method should return {@code true} if the parameter is resolve-equivalent to {@code this}, i.e. it represents
+   * Implementations of this method should return {@code true} if the parameter is resolve-equivalent to {@code this}, i.e., it represents
    * the same entity from the language perspective. See also {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} documentation.
    */
   @Contract(pure=true)

@@ -1,0 +1,2 @@
+// PRIORITY: NORMAL
+val s = <caret>"foo bar baz"

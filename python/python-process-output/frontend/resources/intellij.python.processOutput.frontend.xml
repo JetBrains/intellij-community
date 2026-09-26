@@ -1,0 +1,29 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community.common"/>
+    <module name="intellij.python.processOutput.common"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="PythonProcessOutput"
+                anchor="bottom"
+                secondary="false"
+                icon="com.intellij.python.processOutput.frontend.icons.PythonProcessOutputFrontendIcons.Process"
+                factoryClass="com.intellij.python.processOutput.frontend.ProcessOutputToolWindowFactory"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.processOutput.frontend.ProcessOutputUsageCollectorImpl"/>
+  </extensions>
+</idea-plugin>

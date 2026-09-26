@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -23,17 +10,19 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.dnd.DragSourceDropEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DnDSupport implements DnDTarget, DnDSource, Disposable {
+public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
   private final JComponent myComponent;
-  private final Function<DnDActionInfo, DnDDragStartBean> myBeanProvider;
-  private final Function<DnDActionInfo, DnDImage> myImageProvider;
-  private final @Nullable DnDDropHandler myHandler;
+  private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
+  private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
+  private final @Nullable DnDDropHandler.WithResult myHandler;
   private final @Nullable DnDTargetChecker myChecker;
   private final Runnable myDropEndedCallback;
   private final DnDDropActionHandler myDropActionHandler;
@@ -42,9 +31,9 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   private final boolean myAsSource;
 
   private DnDSupport(JComponent component,
-                     Function<DnDActionInfo, DnDDragStartBean> beanProvider,
-                     Function<DnDActionInfo, DnDImage> imageProvider,
-                     DnDDropHandler handler,
+                     Function<? super DnDActionInfo, ? extends DnDDragStartBean> beanProvider,
+                     Function<? super DnDActionInfo, ? extends DnDImage> imageProvider,
+                     DnDDropHandler.WithResult handler,
                      DnDTargetChecker checker,
                      Runnable dropEndedCallback,
                      Disposable parent,
@@ -75,7 +64,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return myBeanProvider != null
            && myAsSource
            && myBeanProvider.fun(new DnDActionInfo(action, dragOrigin)) != null;
@@ -83,12 +72,12 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     return  myBeanProvider.fun(new DnDActionInfo(action, dragOrigin));
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     if (myImageProvider != null) {
       final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
       if (image != null) {
@@ -100,7 +89,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   }
 
   @Override
-  public void dragDropEnd() {
+  public void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
     if (myDropEndedCallback != null) {
       myDropEndedCallback.run();
     }
@@ -123,10 +112,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   }
 
   @Override
-  public void drop(DnDEvent aEvent) {
-    if (myHandler != null) {
-      myHandler.drop(aEvent);
-    }
+  public boolean tryDrop(DnDEvent aEvent) {
+    return myHandler == null || myHandler.tryDrop(aEvent);
   }
 
   @Override
@@ -134,11 +121,6 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     if (myCleanUpCallback != null) {
       myCleanUpCallback.run();
     }
-  }
-
-  @Override
-  public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
-    //TODO[kb] Create DnDDraggedImageUpdater interface
   }
 
   @Override
@@ -151,10 +133,10 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
   }
 
-  private static class DnDNativeTargetWrapper implements DnDNativeTarget {
-    @NotNull private final DnDTarget myTarget;
+  private static final class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
+    private final @NotNull DnDSupport myTarget;
 
-    private DnDNativeTargetWrapper(@NotNull DnDTarget target) {
+    private DnDNativeTargetWrapper(@NotNull DnDSupport target) {
       myTarget = target;
     }
 
@@ -169,8 +151,8 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
 
     @Override
-    public void drop(DnDEvent event) {
-      myTarget.drop(event);
+    public boolean tryDrop(DnDEvent event) {
+      return myTarget.tryDrop(event);
     }
 
     @Override
@@ -179,16 +161,16 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
     }
   }
 
-  public static DnDSupportBuilder createBuilder(JComponent component) {
+  public static @NotNull DnDSupportBuilder createBuilder(@NotNull JComponent component) {
     final JComponent myComponent = component;
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);
     final Ref<Boolean> asNativeTarget = Ref.create(false);
-    final Ref<Function<DnDActionInfo, DnDImage>> imageProvider = Ref.create(null);
-    final Ref<Function<DnDActionInfo, DnDDragStartBean>> beanProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDImage>> imageProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDDragStartBean>> beanProvider = Ref.create(null);
     final Ref<Runnable> dropEnded = Ref.create(null);
     final Ref<Disposable> disposable = Ref.create(null);
-    final Ref<DnDDropHandler> dropHandler = Ref.create(null);
+    final Ref<DnDDropHandler.WithResult> dropHandler = Ref.create(null);
     final Ref<DnDTargetChecker> targetChecker = Ref.create(null);
     final Ref<DnDDropActionHandler> dropActionHandler = Ref.create(null);
     final Ref<Runnable> cleanUp = Ref.create(null);
@@ -213,19 +195,29 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
       }
 
       @Override
-      public DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> fun) {
+      public DnDSupportBuilder setImageProvider(Function<? super DnDActionInfo, ? extends DnDImage> fun) {
         imageProvider.set(fun);
         return this;
       }
 
       @Override
-      public DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> fun) {
+      public DnDSupportBuilder setBeanProvider(Function<? super DnDActionInfo, ? extends DnDDragStartBean> fun) {
         beanProvider.set(fun);
         return this;
       }
 
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
+        return setDropHandlerWithResult(e -> {
+          WriteIntentReadAction.run(() -> {
+            handler.drop(e);
+          });
+          return true;
+        });
+      }
+
+      @Override
+      public DnDSupportBuilder setDropHandlerWithResult(DnDDropHandler.WithResult handler) {
         dropHandler.set(handler);
         return this;
       }
@@ -262,6 +254,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
 
       @Override
       public void install() {
+        //noinspection ResultOfObjectAllocationIgnored
         new DnDSupport(myComponent,
                           beanProvider.get(),
                           imageProvider.get(),

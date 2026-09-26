@@ -16,25 +16,35 @@
 
 package org.intellij.plugins.relaxNG.validation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
@@ -49,27 +59,26 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
+public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer collectInformation(@NotNull final PsiFile file) {
-    final FileType type = file.getFileType();
-    if (type != StdFileTypes.XML && type != RncFileType.getInstance()) {
+  public @Nullable MyValidationMessageConsumer collectInformation(final @NotNull PsiFile psiFile) {
+    final FileType type = psiFile.getFileType();
+    if (type != XmlFileType.INSTANCE && type != RncFileType.getInstance()) {
       return null;
     }
-    final XmlFile xmlfile = (XmlFile)file;
+    final XmlFile xmlfile = (XmlFile)psiFile;
     final XmlDocument document = xmlfile.getDocument();
     if (document == null) {
       return null;
     }
-    if (type == StdFileTypes.XML) {
+    if (type == XmlFileType.INSTANCE) {
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) {
         return null;
       }
-      if (!ApplicationLoader.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
+      if (!RelaxNgMetaDataContributor.RNG_NAMESPACE.equals(rootTag.getNamespace())) {
         return null;
       }
     } else {
@@ -77,64 +86,63 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         return null;
       }
     }
-    final Document doc = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document doc = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
 
     final MyValidationMessageConsumer consumer = new MyValidationMessageConsumer();
     ErrorHandler eh = new DefaultHandler() {
       @Override
       public void warning(SAXParseException e) {
-        handleError(e, file, doc, consumer.warning());
+        handleError(e, psiFile, doc, consumer.warning());
       }
 
       @Override
       public void error(SAXParseException e) {
-        handleError(e, file, doc, consumer.error());
+        handleError(e, psiFile, doc, consumer.error());
       }
     };
 
-    RngParser.parsePattern(file, eh, true);
+    RngParser.parsePattern(psiFile, eh, true);
     return consumer;
   }
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
+  public @Nullable MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
     return collectedInfo;
   }
 
   @Override
-  public void apply(@NotNull PsiFile file,
+  public void apply(@NotNull PsiFile psiFile,
                     MyValidationMessageConsumer annotationResult,
                     @NotNull AnnotationHolder holder) {
     annotationResult.apply(holder);
   }
 
   static class MyValidationMessageConsumer  {
-    final List<Pair<PsiElement, String >> errors = new ArrayList<>();
-    final List<Pair<PsiElement, String >> warnings = new ArrayList<>();
+    final List<Pair<PsiElement, @InspectionMessage String >> errors = new ArrayList<>();
+    final List<Pair<PsiElement, @InspectionMessage String >> warnings = new ArrayList<>();
     ValidationMessageConsumer error() {
       return new ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           errors.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     ValidationMessageConsumer warning() {
       return new ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           warnings.add(Pair.create(context, message));
         }
-      }; 
+      };
     }
     void apply(AnnotationHolder holder) {
       MessageConsumerImpl errorc = new ErrorMessageConsumer(holder);
       MessageConsumerImpl warningc = new WarningMessageConsumer(holder);
-      for (Pair<PsiElement, String> error : errors) {
+      for (Pair<PsiElement, @InspectionMessage String> error : errors) {
         errorc.onMessage(error.first, error.second);
       }
-      for (Pair<PsiElement, String> warning : warnings) {
+      for (Pair<PsiElement, @InspectionMessage String> warning : warnings) {
         warningc.onMessage(warning.first, warning.second);
       }
     }
@@ -189,9 +197,9 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       host = PsiTreeUtil.getParentOfType(at, XmlAttribute.class, XmlTag.class);
     }
     if (at != null && host != null) {
-      consumer.onMessage(host, ex.getMessage());
+      consumer.onMessage(host, ex.getLocalizedMessage());
     } else {
-      consumer.onMessage(file, ex.getMessage());
+      consumer.onMessage(file, ex.getLocalizedMessage());
     }
   }
 
@@ -205,24 +213,26 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
   }
 
   public interface ValidationMessageConsumer {
-    void onMessage(PsiElement context, String message);
+    void onMessage(@NotNull PsiElement context, @InspectionMessage @NotNull String message);
   }
 
   private abstract static class MessageConsumerImpl implements ValidationMessageConsumer {
     protected final AnnotationHolder myHolder;
 
-    public MessageConsumerImpl(AnnotationHolder holder) {
+    MessageConsumerImpl(AnnotationHolder holder) {
       myHolder = holder;
     }
 
     @Override
-    public void onMessage(PsiElement host, String message) {
+    public void onMessage(@NotNull PsiElement host, @NotNull String message) {
       final ASTNode node = host.getNode();
       assert node != null;
 
       if (host instanceof XmlAttribute) {
         final ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);
-        createAnnotation(nameNode, message);
+        if (nameNode != null) {
+          createAnnotation(nameNode, message);
+        }
       } else if (host instanceof XmlTag) {
         final ASTNode start = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
         if (start != null) {
@@ -238,20 +248,19 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
       }
     }
 
-    protected abstract void createAnnotation(ASTNode node, String message);
+    protected abstract void createAnnotation(@NotNull ASTNode node, @NotNull @InspectionMessage String message);
   }
 
   private static class ErrorMessageConsumer extends MessageConsumerImpl {
-    @NonNls
-    private static final String MISSING_START_ELEMENT = "missing \"start\" element";
+    private static final @NonNls String MISSING_START_ELEMENT = "missing \"start\" element";
     private static final String UNDEFINED_PATTERN = "reference to undefined pattern ";
 
-    public ErrorMessageConsumer(AnnotationHolder holder) {
+    ErrorMessageConsumer(AnnotationHolder holder) {
       super(holder);
     }
 
     @Override
-    protected void createAnnotation(ASTNode node, String message) {
+    protected void createAnnotation(@NotNull ASTNode node, @NotNull String message) {
       if (MISSING_START_ELEMENT.equals(message)) {
         final PsiFile psiFile = node.getPsi().getContainingFile();
         if (psiFile instanceof XmlFile) {
@@ -259,31 +268,31 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
           RelaxIncludeIndex.processBackwardDependencies((XmlFile)psiFile, processor);
           if (processor.isFound()) {
             // files that are included from other files do not need a <start> element.
-            myHolder.createWeakWarningAnnotation(node, message);
+            myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, message).range(node).create();
             return;
           }
         }
-      } else if (message != null && message.startsWith(UNDEFINED_PATTERN)) {
+      } else if (message.startsWith(UNDEFINED_PATTERN)) {
         // we've got our own validation for that
         return;
       }
-      myHolder.createErrorAnnotation(node, message);
+      myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(node).create();
     }
   }
 
   private static class WarningMessageConsumer extends MessageConsumerImpl {
 
-    public WarningMessageConsumer(AnnotationHolder holder) {
+    WarningMessageConsumer(AnnotationHolder holder) {
       super(holder);
     }
 
     @Override
-    protected void createAnnotation(ASTNode node, String message) {
-      myHolder.createWarningAnnotation(node, message);
+    protected void createAnnotation(@NotNull ASTNode node, @NotNull String message) {
+      myHolder.newAnnotation(HighlightSeverity.WARNING, message).range(node).create();
     }
   }
 
-  private static class MyErrorFinder extends PsiRecursiveElementVisitor {
+  private static final class MyErrorFinder extends PsiRecursiveElementVisitor {
     private static final MyErrorFinder INSTANCE = new MyErrorFinder();
 
     private static final class HasError extends RuntimeException {
@@ -291,7 +300,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     private static final HasError FOUND = new HasError();
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       throw FOUND;
     }
 

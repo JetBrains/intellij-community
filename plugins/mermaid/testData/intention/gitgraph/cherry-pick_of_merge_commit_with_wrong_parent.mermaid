@@ -1,0 +1,12 @@
+gitGraph
+  commit id: "ZERO"
+  branch feature
+  branch release
+  checkout feature
+  commit id: "A"
+  commit id: "B"
+  checkout main
+  merge feature id: "M"
+  checkout release
+  commit id: "C"
+  cherry-pick id:"M" parent: "<error descr="The specified parent commit is not an immediate parent of the cherry-picked commit">A</error>"

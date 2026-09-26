@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="apache.sshd.osgi" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.19.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.19.0/sshd-osgi-2.19.0.jar">
+              <sha256sum>0b6b9371c6a97430390b84c23c58f4470927a747e74704a0ca7d19a09a66fe37</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.19.0/sshd-osgi-2.19.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.19.0/sshd-osgi-2.19.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.sshj" scope="RUNTIME" />
+  </component>
+</module>

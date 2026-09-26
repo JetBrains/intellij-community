@@ -1,0 +1,43 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.libraries.kotlinc.allopen.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.noarg.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.lombok.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.compose.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.js.plain.objects.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.assignment.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.parcelize.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.scripting.compiler.plugin"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
+                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
+                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
+            order="first"/>
+
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider"
+            order="last"/>
+
+    <firCompilerPluginConfigurationProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultParcelizeFirCompilerPluginConfigurationForIdeProvider"
+            order="last"/>
+  </extensions>
+</idea-plugin>

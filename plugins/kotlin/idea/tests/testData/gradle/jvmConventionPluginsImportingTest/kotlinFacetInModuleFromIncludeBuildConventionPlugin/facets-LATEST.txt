@@ -1,0 +1,36 @@
+MODULES
+include-plugin
+
+include-plugin.main
+    externalProjectId = 
+    languageLevel = 2.2
+    apiLevel = 2.2
+    targetPlatform = JVM (17)
+
+include-plugin.test
+    externalProjectId = 
+    languageLevel = 2.2
+    apiLevel = 2.2
+    additionalVisibleModuleNames = :include-plugin:main
+    targetPlatform = JVM (17)
+
+project
+
+project.sub-kotlin
+
+project.sub-kotlin.main
+    externalProjectId = 
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    targetPlatform = JVM (11)
+
+project.sub-kotlin.test
+    externalProjectId = 
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    additionalVisibleModuleNames = :sub-kotlin:main
+    targetPlatform = JVM (11)
+
+
+Test configuration:
+- excluding following facet fields: compilerSettings

@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import java.util.Collection;
 
-public class ComboBoxUtil {
+public final class ComboBoxUtil {
 
-  private static class Item {
+  private static final class Item {
     private final Object value;
     private final String label;
 
@@ -37,6 +24,7 @@ public class ComboBoxUtil {
       return value;
     }
 
+    @Override
     public String toString() {
       return label;
     }
@@ -46,7 +34,7 @@ public class ComboBoxUtil {
     model.addElement(new Item(value, label));
   }
 
-  public static <T> void setModel(JComboBox comboBox, DefaultComboBoxModel model, Collection<T> values, Function<T, Pair<String, ?>> func) {
+  public static <T> void setModel(JComboBox comboBox, DefaultComboBoxModel model, Collection<? extends T> values, Function<? super T, ? extends Pair<String, ?>> func) {
     model.removeAllElements();
     for (T each : values) {
       Pair<String, ?> pair = func.fun(each);
@@ -68,13 +56,7 @@ public class ComboBoxUtil {
     }
   }
 
-  @Nullable
-  public static String getSelectedString(DefaultComboBoxModel model) {
-    return String.valueOf(getSelectedValue(model));
-  }
-
-  @Nullable
-  public static Object getSelectedValue(DefaultComboBoxModel model) {
+  public static @Nullable Object getSelectedValue(DefaultComboBoxModel model) {
     final Object item = model.getSelectedItem();
     return item != null ? ((Item)item).getValue() : null;
   }

@@ -1,0 +1,8 @@
+// "Add arrayOf wrapper" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+annotation class ArrAnn(val value: Array<String>)
+
+@ArrAnn(<caret>"123") class My
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddArrayOfTypeFix

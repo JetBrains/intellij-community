@@ -1,229 +1,304 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 
-/**
- * @author peter
- */
-@SuppressWarnings({"unchecked"})
-public class SemServiceImpl extends SemService{
-  private final AtomicReference<ConcurrentMap<PsiElement, SemCacheChunk>> myCache = new AtomicReference<>();
-  private volatile  MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
+@ApiStatus.Internal
+public final class SemServiceImpl extends SemService implements Disposable {
+  private static final Key<SemData> SEM_CACHE_KEY = Key.create("SEM");
+
+  private final Object lock = ObjectUtils.sentinel(getClass().getName());
+  private volatile State keysAndProducers;
+
   private final Project myProject;
+  private final PsiModificationTracker myPsiModificationTracker;
 
-  private boolean myBulkChange = false;
-  private final AtomicInteger myCreatingSem = new AtomicInteger(0);
+  public SemServiceImpl(Project project) {
+    this.myProject = project;
+    this.myPsiModificationTracker = PsiModificationTracker.getInstance(project);
+    SemContributor.EP_NAME.addChangeListener(() -> keysAndProducers = null, project);
 
-  public SemServiceImpl(Project project, PsiManager psiManager) {
-    myProject = project;
-    final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+    MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
+    messageBusConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
-      public void modificationCountChanged() {
-        if (!isInsideAtomicChange()) {
-          clearCache();
-        }
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        keysAndProducers = null;
       }
     });
-
-    ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(() -> {
-      if (!isInsideAtomicChange()) {
-        clearCache();
+    messageBusConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void exitDumbMode() {
+        keysAndProducers = null;
       }
     });
-
-
-    LowMemoryWatcher.register(() -> {
-      if (myCreatingSem.get() == 0) {
-        clearCache();
-      }
-      //System.out.println("SemService cache flushed");
-    }, project);
   }
 
-  private MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> collectProducers() {
-    final MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> map = MultiMap.createSmart();
+  private State buildState() {
+    var map = new MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>>();
 
-    final SemRegistrar registrar = new SemRegistrar() {
+    SemRegistrar registrar = new SemRegistrar() {
+      @SuppressWarnings({"unchecked", "rawtypes"})
       @Override
-      public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
-                                                                                          final ElementPattern<? extends V> place,
-                                                                                          final NullableFunction<V, T> provider) {
-        map.putValue(key, element -> {
-          if (place.accepts(element)) {
-            return Collections.singleton(provider.fun((V)element));
-          }
-          return null;
-        });
-      }
-
-      @Override
-      public <T extends SemElement, V extends PsiElement> void registerRepeatableSemElementProvider(SemKey<T> key,
-                                                                                                    ElementPattern<? extends V> place,
-                                                                                                    NullableFunction<V, Collection<T>> provider) {
-        map.putValue(key, element -> {
-          if (place.accepts(element)) {
-            return provider.fun((V)element);
-          }
-          return null;
-        });
+      public <T extends SemElement> void registerSemProvider(
+        SemKey<T> key,
+        BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<T>> provider
+      ) {
+        map.putValue(key, (BiFunction)provider);
       }
     };
 
-    for (SemContributorEP contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
-      contributor.registerSemProviders(myProject.getPicoContainer(), registrar);
+    SemContributor.EP_NAME.processWithPluginDescriptor((contributor, pluginDescriptor) -> {
+      SemContributor semContributor;
+      try {
+        semContributor = myProject.instantiateClass(contributor.implementation, pluginDescriptor);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (ExtensionNotApplicableException e) {
+        return Unit.INSTANCE;
+      }
+      catch (Exception e) {
+        Logger.getInstance(SemServiceImpl.class).error(e);
+        return Unit.INSTANCE;
+      }
+
+      if (SemContributor.SemContributorHelper.isAvailable(semContributor, myProject)) {
+        semContributor.registerSemProviders(registrar, myProject);
+      }
+      return Unit.INSTANCE;
+    });
+
+    Map<SemKey<?>, Collection<SemKey<?>>> inheritors = new HashMap<>();
+    for (SemKey<?> key : map.keySet()) {
+      putInheritors(key, key, inheritors);
     }
 
-    return map;
+    return new State(map, inheritors);
+  }
+
+  private static void putInheritors(SemKey<?> key, SemKey<?> eachParent, Map<SemKey<?>, Collection<SemKey<?>>> inheritors) {
+    getInheritorsSet(inheritors, eachParent).add(eachParent); // always add itself as parent
+
+    for (SemKey<?> aSuper : eachParent.getSupers()) {
+      getInheritorsSet(inheritors, aSuper).add(key);
+      putInheritors(key, aSuper, inheritors);
+    }
+  }
+
+  private static @NotNull Collection<SemKey<?>> getInheritorsSet(Map<SemKey<?>, Collection<SemKey<?>>> inheritors, SemKey<?> aSuper) {
+    return inheritors.computeIfAbsent(aSuper, k -> new LinkedHashSet<>());
   }
 
   @Override
-  public void clearCache() {
-    myCache.set(null);
+  public @NotNull <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
+    var state = ensureInitialized();
+
+    IntObjectMap<List<SemElement>> chunk = getUpToDate(getCacheHolder(psi));
+    List<T> cached = findCached(state, key, chunk);
+    return cached != null ? cached : collectSemElements(state, key, psi, chunk);
   }
 
   @Override
-  public void performAtomicChange(@NotNull Runnable change) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+  public @NotNull <T extends SemElement> List<T> getSemElementsNoCache(SemKey<T> key, @NotNull PsiElement psi) {
+    var state = ensureInitialized();
 
-    final boolean oldValue = myBulkChange;
-    myBulkChange = true;
-    try {
-      change.run();
+    SemData holder = getCacheHolderIfExist(psi);
+    if (holder != null) {
+      IntObjectMap<List<SemElement>> chunk = getUpToDate(holder);
+      List<T> cached = findCached(state, key, chunk);
+      if (cached != null) return cached;
     }
-    finally {
-      myBulkChange = oldValue;
-      if (!oldValue) {
-        clearCache();
+
+    return collectSemElements(state, key, psi, null);
+  }
+
+  private static @Nullable SemServiceImpl.SemData getCacheHolderIfExist(@NotNull PsiElement psi) {
+    return psi.getUserData(SEM_CACHE_KEY);
+  }
+
+  private @NotNull SemServiceImpl.SemData getCacheHolder(@NotNull PsiElement psi) {
+    return ConcurrencyUtil.computeIfAbsent(psi, SEM_CACHE_KEY, () -> new SemData(getModCount()));
+  }
+
+  private long getModCount() {
+    return myPsiModificationTracker.getModificationCount();
+  }
+
+  private @NotNull IntObjectMap<List<SemElement>> getUpToDate(@NotNull SemServiceImpl.SemData holder) {
+    long currentModCount = getModCount();
+    long cachedModCount = holder.modificationCount;
+    if (currentModCount == cachedModCount) return holder.data;
+
+    return holder.refresh(cachedModCount, currentModCount);
+  }
+
+  private static class SemData {
+    private volatile long modificationCount;
+    private final IntObjectMap<List<SemElement>> data = createConcurrentIntObjectMap(4, 0.75f, 2); // 8 elements initially
+
+    private SemData(long count) {
+      this.modificationCount = count;
+    }
+
+    public synchronized IntObjectMap<List<SemElement>> refresh(long expectedModCount, long currentModCount) {
+      if (expectedModCount == modificationCount) {
+        data.clear();
+        this.modificationCount = currentModCount;
+      }
+      return data;
+    }
+
+    @Override
+    public String toString() {
+      return "SemData{" +
+             "count=" + data.size() +
+             '}';
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static @NotNull <T extends SemElement> List<T> collectSemElements(@NotNull State currentProducers,
+                                                                            @NotNull SemKey<T> key,
+                                                                            @NotNull PsiElement psi,
+                                                                            @Nullable IntObjectMap<List<SemElement>> chunk) {
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+
+    List<T> result;
+    Int2ObjectMap<List<SemElement>> map;
+
+    ProcessingContext processingContext = new ProcessingContext();
+    Collection<SemKey<?>> inheritors = currentProducers.inheritors.getOrDefault(key, emptyList());
+
+    if (inheritors.size() == 1) {
+      SemKey<?> singleKey = inheritors.iterator().next();
+      List<SemElement> list = createSemElements(currentProducers, singleKey, psi, processingContext);
+      map = Int2ObjectMaps.singleton(singleKey.getUniqueId(), list);
+      result = (List<T>)list;
+    }
+    else {
+      map = new Int2ObjectOpenHashMap<>(inheritors.size());
+      result = new ArrayList<>();
+
+      for (SemKey<?> each : inheritors) {
+        List<SemElement> list = createSemElements(currentProducers, each, psi, processingContext);
+        map.put(each.getUniqueId(), list);
+        if (!list.isEmpty()) {
+          result.addAll((List<T>)list);
+        }
       }
     }
-  }
 
-  @Override
-  public boolean isInsideAtomicChange() {
-    return myBulkChange;
-  }
-
-  @Override
-  @Nullable
-  public <T extends SemElement> List<T> getSemElements(final SemKey<T> key, @NotNull final PsiElement psi) {
-    List<T> cached = _getCachedSemElements(key, true, psi);
-    if (cached != null) {
-      return cached;
+    if (chunk != null && stamp.mayCacheNow()) {
+      Int2ObjectMaps.fastForEach(map, entry -> {
+        putSemElements(chunk, entry.getIntKey(), entry.getValue());
+      });
     }
 
-    ensureInitialized();
+    if (result.isEmpty()) return emptyList();
+    if (result.size() == 1) return singletonList(result.get(0));
 
-    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
+    return result.stream()
+      .distinct()
+      .toList();
+  }
 
-    LinkedHashSet<T> result = new LinkedHashSet<>();
-    final Map<SemKey, List<SemElement>> map = new THashMap<>();
-    for (final SemKey each : key.getInheritors()) {
-      List<SemElement> list = createSemElements(each, psi);
-      map.put(each, list);
-      result.addAll((List<T>)list);
+  private State ensureInitialized() {
+    var current = keysAndProducers;
+    if (current != null) {
+      return current;
     }
 
-    if (stamp.mayCacheNow()) {
-      final SemCacheChunk persistent = getOrCreateChunk(psi);
-      for (SemKey semKey : map.keySet()) {
-        persistent.putSemElements(semKey, map.get(semKey));
+    synchronized (lock) {
+      current = keysAndProducers;
+      if (current != null) {
+        return current;
       }
-    }
 
-    return new ArrayList<>(result);
-  }
-
-  private void ensureInitialized() {
-    if (myProducers == null) {
-      myProducers = collectProducers();
+      var newProducers = buildState();
+      keysAndProducers = newProducers;
+      return newProducers;
     }
   }
 
-  @NotNull
-  private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
+  private static @NotNull List<SemElement> createSemElements(
+    State keysAndProducers,
+    SemKey<?> key, PsiElement psi, ProcessingContext processingContext
+  ) {
     List<SemElement> result = null;
-    Collection<NullableFunction<PsiElement, Collection<? extends SemElement>>> functions = myProducers.get(key);
+
+    var functions = keysAndProducers.producers.get(key);
     if (!functions.isEmpty()) {
-      for (final NullableFunction<PsiElement, Collection<? extends SemElement>> producer : functions) {
-        myCreatingSem.incrementAndGet();
-        try {
-          final Collection<? extends SemElement> elements = producer.fun(psi);
-          if (elements != null) {
-            if (result == null) result = new SmartList<>();
-            ContainerUtil.addAllNotNull(result, elements);
-          }
-        }
-        finally {
-          myCreatingSem.decrementAndGet();
+      for (var producer : functions) {
+        Collection<? extends SemElement> elements = producer.apply(psi, processingContext);
+        if (elements != null && !elements.isEmpty()) {
+          if (result == null) result = new SmartList<>();
+          ContainerUtil.addAllNotNull(result, elements);
         }
       }
     }
-    return result == null ? Collections.emptyList() : Collections.unmodifiableList(result);
+    return result == null || result.isEmpty() ? emptyList() : result;
   }
 
   @Override
-  @Nullable
-  public <T extends SemElement> List<T> getCachedSemElements(SemKey<T> key, @NotNull PsiElement psi) {
-    return _getCachedSemElements(key, false, psi);
+  public void dispose() {
   }
 
-  @Nullable
-  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element) {
-    final SemCacheChunk chunk = obtainChunk(element);
-    if (chunk == null) return null;
-
+  @SuppressWarnings("unchecked")
+  private static @Nullable <T extends SemElement> List<T> findCached(@NotNull State state,
+                                                                     @NotNull SemKey<T> key,
+                                                                     @NotNull IntObjectMap<List<SemElement>> chunk) {
     List<T> singleList = null;
     LinkedHashSet<T> result = null;
-    final List<SemKey> inheritors = key.getInheritors();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < inheritors.size(); i++) {
-      List<T> cached = (List<T>)chunk.getSemElements(inheritors.get(i));
 
-      if (cached == null && paranoid) {
+    Collection<SemKey<?>> inheritors = state.inheritors.getOrDefault(key, emptyList());
+    for (var inheritor : inheritors) {
+      List<T> cached = (List<T>)getSemElements(chunk, inheritor);
+      if (cached == null) {
         return null;
       }
 
-      if (cached != null && cached != Collections.<T>emptyList()) {
+      if (cached != Collections.<T>emptyList()) {
         if (singleList == null) {
           singleList = cached;
           continue;
@@ -236,56 +311,33 @@ public class SemServiceImpl extends SemService{
       }
     }
 
-
     if (result == null) {
       if (singleList != null) {
         return singleList;
       }
 
-      return Collections.emptyList();
+      return emptyList();
     }
 
-    return new ArrayList<>(result);
+    return List.copyOf(result);
   }
 
-  @Nullable
-  private SemCacheChunk obtainChunk(@Nullable PsiElement root) {
-    ConcurrentMap<PsiElement, SemCacheChunk> map = myCache.get();
-    return map == null ? null : map.get(root);
+  private static List<SemElement> getSemElements(IntObjectMap<List<SemElement>> semCache, SemKey<?> key) {
+    return semCache.get(key.getUniqueId());
   }
 
-  @Override
-  public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
-    getOrCreateChunk(psi).putSemElements(key, ContainerUtil.createMaybeSingletonList(semElement));
+  private static void putSemElements(IntObjectMap<List<SemElement>> semCache, int keyId, @NotNull List<SemElement> elements) {
+    semCache.put(keyId, elements);
   }
 
-  private SemCacheChunk getOrCreateChunk(final PsiElement element) {
-    SemCacheChunk chunk = obtainChunk(element);
-    if (chunk == null) {
-      ConcurrentMap<PsiElement, SemCacheChunk> map = myCache.get();
-      if (map == null) {
-        map = ConcurrencyUtil.cacheOrGet(myCache, ContainerUtil.createConcurrentWeakKeySoftValueMap());
-      }
-      chunk = ConcurrencyUtil.cacheOrGet(map, element, new SemCacheChunk());
-    }
-    return chunk;
-  }
+  private static class State {
+    final MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers;
+    final Map<SemKey<?>, Collection<SemKey<?>>> inheritors;
 
-  private static class SemCacheChunk {
-    private final IntObjectMap<List<SemElement>> map = ContainerUtil.createConcurrentIntObjectMap();
-
-    public List<SemElement> getSemElements(SemKey<?> key) {
-      return map.get(key.getUniqueId());
-    }
-
-    public void putSemElements(SemKey<?> key, List<SemElement> elements) {
-      map.put(key.getUniqueId(), elements);
-    }
-
-    @Override
-    public int hashCode() {
-      return 0; // ConcurrentWeakKeySoftValueHashMap.SoftValue requires hashCode, and this is faster than identityHashCode
+    private State(MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers,
+                  Map<SemKey<?>, Collection<SemKey<?>>> inheritors) {
+      this.producers = producers;
+      this.inheritors = inheritors;
     }
   }
-
 }

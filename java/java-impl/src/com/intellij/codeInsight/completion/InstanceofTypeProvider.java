@@ -1,53 +1,40 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
-class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
-  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
+final class InstanceofTypeProvider {
+  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                final ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+  static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
     final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
-    final Set<PsiClass> parameterizedTypes = new THashSet<>();
+    final Set<PsiClass> parameterizedTypes = new HashSet<>();
     for (final PsiType type : leftTypes) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         if (!classType.isRaw()) {
           ContainerUtil.addIfNotNull(parameterizedTypes, classType.resolve());
         }
@@ -61,14 +48,13 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
         if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
 
-        //noinspection SuspiciousMethodCalls
         if (expectedClassTypes.contains(type)) return;
 
         result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));
       });
   }
 
-  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<PsiClass> toWildcardInheritors) {
+  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
     final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
     if (typeParameters.length > 0) {
       for (final PsiClass parameterizedType : toWildcardInheritors) {

@@ -1,0 +1,136 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.rpc.client
+
+import fleet.rpc.RemoteApiDescriptor
+import fleet.rpc.RpcSignature
+import fleet.rpc.client.proxy.InvocationHandlerFactory
+import fleet.rpc.client.proxy.ProxyClosure
+import fleet.rpc.client.proxy.SuspendInvocationHandler
+import fleet.rpc.core.ConnectionStatus
+import fleet.rpc.core.InstanceId
+import fleet.rpc.core.PrefetchStrategy
+import fleet.rpc.core.rpcCallFailureMessage
+import fleet.util.UID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.annotations.ApiStatus
+import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
+
+@ApiStatus.Internal
+data class Call(
+  val route: UID,
+  val service: InstanceId,
+  val signature: RpcSignature,
+  val arguments: List<Any?>
+) {
+  fun display(): String = "route=$route, $service/${signature.methodName}(${signature.parameters.joinToString(", ") { it.parameterName }})"
+}
+
+internal data class RpcStrategyContextElement(
+  val awaitConnection: Boolean = true,
+  val prefetchStrategy: PrefetchStrategy = PrefetchStrategy.Default
+) : CoroutineContext.Element {
+  companion object : CoroutineContext.Key<RpcStrategyContextElement>
+
+  override val key: CoroutineContext.Key<*> get() = RpcStrategyContextElement
+}
+
+@ApiStatus.Internal
+suspend fun <T> withoutAwaitingForReconnect(body: suspend CoroutineScope.() -> T): T {
+  val strategy = currentCoroutineContext()[RpcStrategyContextElement]?.copy(awaitConnection = false)
+                 ?: RpcStrategyContextElement(awaitConnection = false)
+  return withContext(strategy) {
+    body()
+  }
+}
+
+@ApiStatus.Internal
+suspend fun <T> withPrefetchStrategy(prefetchStrategy: PrefetchStrategy, body: suspend CoroutineScope.() -> T): T {
+  val strategy = currentCoroutineContext()[RpcStrategyContextElement]?.copy(prefetchStrategy = prefetchStrategy)
+                 ?: RpcStrategyContextElement(prefetchStrategy = prefetchStrategy)
+  return withContext(strategy) {
+    body()
+  }
+}
+
+@ApiStatus.Internal
+interface IRpcClient {
+  suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit)
+}
+
+@ApiStatus.Internal
+fun promisingRpcClient(promise: Deferred<IRpcClient>): IRpcClient {
+  return object : IRpcClient {
+    override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
+      return promise.await().call(call, publish)
+    }
+  }
+}
+
+@ApiStatus.Internal
+fun IRpcClient.asHandlerFactory(): InvocationHandlerFactory<ProxyClosure> =
+  object : InvocationHandlerFactory<ProxyClosure> {
+    override fun handler(arg: ProxyClosure): SuspendInvocationHandler {
+      return object : SuspendInvocationHandler {
+        override suspend fun call(
+          remoteApiDescriptor: RemoteApiDescriptor<*>,
+          method: String,
+          args: List<Any?>,
+          publish: (SuspendInvocationHandler.CallResult) -> Unit
+        ) {
+          call(
+            Call(
+              route = arg.route,
+              service = arg.instanceId,
+              signature = remoteApiDescriptor.getSignature(method),
+              arguments = args,
+            ),
+            publish,
+          )
+        }
+      }
+    }
+  }
+
+internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClient>>): IRpcClient {
+  return object : IRpcClient {
+    @Volatile
+    var mayHaveCalls = false
+
+    @Volatile
+    var disconnectedClient: IRpcClient? = null
+
+    override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
+      withTimeoutOrNull(RPC_TIMEOUT) {
+        mayHaveCalls = true
+        val awaitConnection = currentCoroutineContext()[RpcStrategyContextElement]?.awaitConnection ?: true
+        val client = if (awaitConnection) {
+          attempts.mapNotNull { (it as? ConnectionStatus.Connected)?.value }.first { it != disconnectedClient }
+        }
+        else {
+          (attempts.value as? ConnectionStatus.Connected)?.value
+        }
+
+        if (client == null) {
+          throw RpcClientDisconnectedException("Connection is not available. Current rpc strategy opted out waiting for reconnect.", null)
+        }
+        try {
+          client.call(call, publish)
+          disconnectedClient = null
+        }
+        catch (x: RpcClientDisconnectedException) {
+          disconnectedClient = client
+          throw x
+        }
+        Unit
+      } ?: throw RpcTimeoutException(rpcCallFailureMessage(call.display(), "client did not connect after $RPC_TIMEOUT"), null)
+    }
+  }
+}

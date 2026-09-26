@@ -1,0 +1,9 @@
+// "Change to 'var'" "true"
+// K2_ERROR: VAL_REASSIGNMENT
+class A(var a: Int) {
+    fun foo() {
+        a = 5
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix

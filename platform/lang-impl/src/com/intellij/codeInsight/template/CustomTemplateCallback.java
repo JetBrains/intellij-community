@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,43 +28,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class CustomTemplateCallback {
   private static final Logger LOGGER = Logger.getInstance(CustomTemplateCallback.class);
   private final TemplateManager myTemplateManager;
-  @NotNull private final Editor myEditor;
-  @NotNull private final PsiFile myFile;
+  private final @NotNull Editor myEditor;
+  private final @NotNull PsiFile myPsiFile;
   private final int myOffset;
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final boolean myInInjectedFragment;
   protected Set<TemplateContextType> myApplicableContextTypes;
 
-  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file) {
-    myProject = file.getProject();
+  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    myProject = psiFile.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
 
-    myOffset = getOffset(editor);
-    PsiElement element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, myOffset);
-    myFile = element != null ? element.getContainingFile() : file;
+    int parentEditorOffset = getOffset(editor);
+    PsiElement element = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, parentEditorOffset);
+    myPsiFile = element != null ? element.getContainingFile() : psiFile;
 
-    myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
-    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, myOffset) : editor;
+    myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myPsiFile);
+    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, parentEditorOffset) : editor;
+    myOffset = myInInjectedFragment ? getOffset(myEditor) : parentEditorOffset;
   }
 
   public TemplateManager getTemplateManager() {
     return myTemplateManager;
   }
 
-  @NotNull
-  public PsiFile getFile() {
-    return myFile;
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
   }
 
-  @NotNull
-  public PsiElement getContext() {
-    return getContext(myFile, getOffset(), myInInjectedFragment);
+  public @NotNull PsiElement getContext() {
+    return getContext(myPsiFile, getOffset(), myInInjectedFragment);
   }
 
   public int getOffset() {
@@ -89,13 +72,11 @@ public class CustomTemplateCallback {
     return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : Math.max(editor.getCaretModel().getOffset() - 1, 0);
   }
 
-  @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
+  public @Nullable TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
     return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
-  @NotNull
-  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
+  public @NotNull List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
@@ -107,7 +88,8 @@ public class CustomTemplateCallback {
 
   private boolean isAvailableTemplate(@NotNull TemplateImpl template) {
     if (myApplicableContextTypes == null) {
-      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);
+      myApplicableContextTypes =
+        TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.create(myPsiFile, myEditor, myOffset, myOffset, false));
     }
     return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
@@ -119,8 +101,7 @@ public class CustomTemplateCallback {
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 
-  @NotNull
-  private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
+  private static @NotNull List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
@@ -131,23 +112,23 @@ public class CustomTemplateCallback {
     return candidates;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public FileType getFileType() {
-    return myFile.getFileType();
+  public @NotNull FileType getFileType() {
+    return myPsiFile.getFileType();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   public void deleteTemplateKey(@NotNull String key) {
-    int caretAt = myEditor.getCaretModel().getOffset();
+    deleteTemplateKey(key, myEditor.getCaretModel().getOffset());
+  }
+
+  public void deleteTemplateKey(@NotNull String key, int caretAt) {
     int templateStart = caretAt - key.length();
     myEditor.getDocument().deleteString(templateStart, caretAt);
     myEditor.getCaretModel().moveToOffset(templateStart);
@@ -155,27 +136,25 @@ public class CustomTemplateCallback {
     myEditor.getSelectionModel().removeSelection();
   }
 
-  @NotNull
-  public static PsiElement getContext(@NotNull PsiFile file, int offset) {
-    return getContext(file, offset, true);
+  public static @NotNull PsiElement getContext(@NotNull PsiFile psiFile, int offset) {
+    return getContext(psiFile, offset, true);
   }
 
-  @NotNull
-  public static PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
+  public static @NotNull PsiElement getContext(@NotNull PsiFile psiFile, int offset, boolean searchInInjectedFragment) {
     PsiElement element = null;
-    if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-      Document document = documentManager.getDocument(file);
+    if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile)) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
+      Document document = documentManager.getDocument(psiFile);
       if (document != null && !documentManager.isCommitted(document)) {
         LOGGER.error("Trying to access to injected template context on uncommited document, offset = " + offset,
-                     AttachmentFactory.createAttachment(file.getVirtualFile()));
+                     CoreAttachmentFactory.createAttachment(psiFile.getVirtualFile()));
       }
       else {
-        element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);
+        element = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
       }
     }
     if (element == null) {
-      element = PsiUtilCore.getElementAtOffset(file, offset);
+      element = PsiUtilCore.getElementAtOffset(psiFile, offset);
     }
     return element;
   }

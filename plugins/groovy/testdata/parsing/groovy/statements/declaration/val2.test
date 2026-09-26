@@ -1,0 +1,72 @@
+val: while (true) {
+  if (Math.random() < .5) {
+    break val
+  }
+  else {
+    continue val
+  }
+}
+-----
+Groovy script
+  Labeled statement
+    PsiElement(val)('val')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    WHILE statement
+      PsiElement(while)('while')
+      PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      Literal
+        PsiElement(true)('true')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Block statement
+        Open block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n  ')
+          IF statement
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            PsiElement(()('(')
+            Relational expression
+              Method call
+                Reference expression
+                  Reference expression
+                    PsiElement(identifier)('Math')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('random')
+                Arguments
+                  PsiElement(()('(')
+                  PsiElement())(')')
+              PsiWhiteSpace(' ')
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              Literal
+                PsiElement(BigDecimal)('.5')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            Block statement
+              Open block
+                PsiElement({)('{')
+                PsiWhiteSpace('\n    ')
+                BREAK statement
+                  PsiElement(break)('break')
+                  PsiWhiteSpace(' ')
+                  PsiElement(val)('val')
+                PsiElement(new line)('\n  ')
+                PsiElement(})('}')
+            PsiElement(new line)('\n  ')
+            PsiElement(else)('else')
+            PsiWhiteSpace(' ')
+            Block statement
+              Open block
+                PsiElement({)('{')
+                PsiWhiteSpace('\n    ')
+                CONTINUE statement
+                  PsiElement(continue)('continue')
+                  PsiWhiteSpace(' ')
+                  PsiElement(val)('val')
+                PsiElement(new line)('\n  ')
+                PsiElement(})('}')
+          PsiElement(new line)('\n')
+          PsiElement(})('}')

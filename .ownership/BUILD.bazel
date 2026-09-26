@@ -1,0 +1,57 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.codeowners` start
+jvm_library(
+    name = "codeowners",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership",
+        "//libraries/kotlinx/serialization/core",
+        "@lib//:slf4j-api",
+        "//libraries/kaml",
+        "//libraries/okio:squareup-okio-jvm",
+        "@lib//:slf4j-jdk14",
+    ],
+)
+
+jvm_library(
+    name = "codeowners_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.codeowners",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
+    runtime_deps = [
+        # do not sort,
+        ":codeowners",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kaml:kaml_test_lib",
+        "//libraries/okio:squareup-okio-jvm_test_lib",
+    ],
+)
+### auto-generated section `build intellij.codeowners` end
+
+### auto-generated section `iml intellij.codeowners` start
+exports_files(
+    [
+        "intellij.codeowners.iml",
+        "resources/intellij.codeowners.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.codeowners` end

@@ -1,0 +1,6 @@
+// FIX: Remove 'val' from parameter
+
+class Wrapper(vararg x: Int) {
+    val y = x
+}
+

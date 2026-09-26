@@ -1,0 +1,10 @@
+MODULES
+project.Kotlin.test
+    JavaOnly.main (COMPILE)
+
+
+Test configuration:
+- showing only modules matching project\.Kotlin\.test
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- showing only dependencies matching .*JavaOnly\.main.*
+- dependencies order is not checked

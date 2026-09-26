@@ -15,9 +15,13 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.openapi.externalSystem.model.task.event.FailureResult;
+import com.intellij.openapi.externalSystem.model.task.event.OperationResult;
+import com.intellij.openapi.externalSystem.model.task.event.SkippedResult;
+import com.intellij.openapi.externalSystem.model.task.event.SuccessResult;
+
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public enum TestEventResult {
   SUCCESS("SUCCESS"),
@@ -41,5 +45,17 @@ public enum TestEventResult {
       }
     }
     return UNKNOWN_RESULT;
+  }
+
+  static TestEventResult fromOperationResult(OperationResult result) {
+    if (result instanceof SuccessResult) {
+      return SUCCESS;
+    } else if (result instanceof FailureResult) {
+      return FAILURE;
+    } else if (result instanceof SkippedResult) {
+      return SKIPPED;
+    } else {
+      return UNKNOWN_RESULT;
+    }
   }
 }

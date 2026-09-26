@@ -1,0 +1,20 @@
+// WITH_COROUTINES
+// PROBLEM: 'runCatching' suppresses 'CancellationException' and breaks coroutine cancellation
+// FIX: Check for cancellation in 'onFailure { ... }'
+package test
+
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+
+suspend fun compute(input: String): Int? {
+    return input.runCatching {
+        delay(100)
+        toInt()
+    }.onFailure {
+        if (it is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+    }.getOrNull()
+}

@@ -16,17 +16,30 @@
 package org.intellij.lang.xpath.xslt.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathNumber;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathString;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 // TODO: more detailed error descriptions
 
 @SuppressWarnings({"SimplifiableIfStatement"})
+final
 class XsltPatternValidator {
   private XsltPatternValidator() {
   }
@@ -35,16 +48,15 @@ class XsltPatternValidator {
     final XPathExpression expression = ((XPathFile)file).getExpression();
     if (expression != null) {
       if (!checkPattern(expression)) {
-        annotationHolder.createErrorAnnotation(expression, "Bad pattern");
+        annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.bad.pattern")).range(expression).create();
       }
     } else {
-      annotationHolder.createErrorAnnotation(TextRange.from(0, 1), "Missing pattern");
+      annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.missing.pattern")).range(TextRange.from(0, 1)).create();
     }
   }
 
   private static boolean checkPattern(XPathExpression element) {
-    if (element instanceof XPathBinaryExpression) {
-      final XPathBinaryExpression expression = (XPathBinaryExpression)element;
+    if (element instanceof XPathBinaryExpression expression) {
       if (expression.getOperator() == XPathTokenTypes.UNION) {
         if (checkPattern(expression.getLOperand()) && checkPattern(expression.getROperand())) {
           return true;
@@ -98,8 +110,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkIdKeyPattern(PsiElement child) {
-    if (child instanceof XPathFunctionCall) {
-      final XPathFunctionCall call = (XPathFunctionCall)child;
+    if (child instanceof XPathFunctionCall call) {
       final XPathExpression[] arguments = call.getArgumentList();
       if ("id".equals(call.getFunctionName())) {
         if (arguments.length != 1) return false;

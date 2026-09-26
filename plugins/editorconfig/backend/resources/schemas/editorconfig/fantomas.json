@@ -1,0 +1,616 @@
+[
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_parameter",
+      "documentation": "Add a space after the name of a function and before the opening parenthesis of the first parameter. This setting influences function definitions."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_lowercase_invocation",
+      "documentation": "Add a space after the name of a lowercased function and before the opening parenthesis of the first argument. This setting influences function invocation in expressions and patterns."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_uppercase_invocation",
+      "documentation": "Add a space after the name of a uppercase function and before the opening parenthesis of the first argument. This setting influences function invocation in expressions and patterns."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_class_constructor",
+      "documentation": "Add a space after a type name and before the class constructor."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_member",
+      "documentation": "Add a space after a member name and before the opening parenthesis of the first parameter."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_colon",
+      "documentation": "Add a space before \":\". Please note that not every \":\" is controlled by this setting."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_after_comma",
+      "documentation": "Adds a space after \",\" in tuples."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_before_semicolon",
+      "documentation": "Adds a space before \";\" in records, arrays, lists, etc."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_after_semicolon",
+      "documentation": "Adds a space after \";\" in records, arrays, lists, etc."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_space_around_delimiter",
+      "documentation": "Adds a space around delimiters like \"[\", \"[|\", \"{\"."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "true",
+          "documentation": "true"
+        },
+        {
+          "type": "constant",
+          "value": "false",
+          "documentation": "false"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_if_then_short_width",
+      "documentation": "Control the maximum length for which if/then expression without an else expression can be on one line. The Microsoft F# style guide recommends to never write such an expression in one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_if_then_else_short_width",
+      "documentation": "Fantomas by default follows the if/then/else conventions listed in the Microsoft F# style guide. This setting facilitates this by determining the maximum character width where the if/then/else expression stays in one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_infix_operator_expression",
+      "documentation": "Control the maximum length for which infix expression can be on one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_record_width",
+      "documentation": "Control the maximum width for which records should be in one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_record_number_of_items",
+      "documentation": "Control the maximum number of fields for which records should be in one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_record_multiline_formatter",
+      "documentation": "Split records expressions/statements into multiple lines based on the given condition. Note that in either case, record expressions/statements are still governed by max_line_length"
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "character_width",
+          "documentation": "Uses character count of the expression, controlled by \"fsharp_max_record_width\"."
+        },
+        {
+          "type": "constant",
+          "value": "number_of_items",
+          "documentation": "Uses the number of fields in the record, controlled by \"fsharp_max_record_number_of_items\"."
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_array_or_list_width",
+      "documentation": "Control the maximum width for which lists and arrays can be in one line. Requires \"fsharp_array_or_list_multiline_formatter\" to be \"character_width\" to take effect"
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_array_or_list_number_of_items",
+      "documentation": "Control the maximum number of elements for which lists and arrays can be in one line. Requires \"fsharp_array_or_list_multiline_formatter\" to be \"number_of_items\" to take effect."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_array_or_list_multiline_formatter",
+      "documentation": "Split arrays and lists into multiple lines based on the given condition. Note that in either case, list expressions are still governed \"by max_line_length\"."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "character_width",
+          "documentation": "Uses character count of the expression, controlled by \"fsharp_max_array_or_list_width\"."
+        },
+        {
+          "type": "constant",
+          "value": "number_of_items",
+          "documentation": "Uses the number of elements in the array or list, controlled by \"fsharp_max_array_or_list_number_of_items\"."
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_value_binding_width",
+      "documentation": "Control the maximum expression width for which let and member value/property bindings should be in one line. The width is that of the pattern for the binding plus the right-hand expression but not the keywords (e.g. \"let\")."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_function_binding_width",
+      "documentation": "Control the maximum width for which function and member bindings should be in one line. In contrast to \"fsharp_max_value_binding_width\", only the right-hand side expression of the binding is measured."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_max_dot_get_expression_width",
+      "documentation": "Control the maximum width for which \"expr.ident.ident\" expressions should be in one line."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_multiline_bracket_style",
+      "documentation": "Split arrays and lists into multiple lines based on the given condition. Note that in either case, list expressions are still governed by \"max_line_length\"."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "cramped",
+          "documentation": "The default way in F# to format brackets."
+        },
+        {
+          "type": "constant",
+          "value": "aligned",
+          "documentation": "Alternative way of formatting records, arrays and lists. This will align the braces at the same column level."
+        },
+        {
+          "type": "constant",
+          "value": "stroustrup",
+          "documentation": "Allow for easier reordering of members and keeping the code succinct."
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_newline_before_multiline_computation_expression",
+      "documentation": "Insert a newline before a computation expression that spans multiple lines."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_newline_between_type_definition_and_members",
+      "documentation": "Adds a new line between a type definition and its first member."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_align_function_signature_to_indentation",
+      "documentation": "When a function signature exceeds the \"max_line_length\", Fantomas will put all parameters on separate lines. This setting also places the equals sign and return type on a new line."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_alternative_long_member_definitions",
+      "documentation": "Provides an alternative way of formatting long member and constructor definitions, where the difference is mainly in the equal sign and returned type placement."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_multi_line_lambda_closing_newline",
+      "documentation": "Places the closing parenthesis of a multiline lambda argument on the next line."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_experimental_keep_indent_in_branch",
+      "documentation": "Breaks the normal indentation flow for the last branch of a pattern match or if/then/else expression. Only when the last pattern match or else branch was already at the same level of the entire match or if expression. This feature is experimental and is subject to change."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_bar_before_discriminated_union_declaration",
+      "documentation": "Always use a | before every case in the declaration of a discriminated union. If false, a | character is used only in multiple-case discriminated unions, and is omitted in short single-case DUs."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_blank_lines_around_nested_multiline_expressions",
+      "documentation": "Surround nested multi-line expressions with blank lines. Existing blank lines are always preserved (via trivia), with exception when \"fsharp_keep_max_number_of_blank_lines\" is used. Top level expressions will always follow the 2020 blank lines revision principle."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_keep_max_number_of_blank_lines",
+      "documentation": "Set maximal number of consecutive blank lines to keep from original source. It doesn't change number of new blank lines generated by Fantomas."
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "fsharp_experimental_elmish",
+      "documentation": "Applies the Stroustrup style to the final (two) array or list argument(s) in a function application. Note that this behaviour is also active when \"fsharp_multiline_bracket_style = stroustrup\"."
+    },
+    "value": {
+      "type": "union",
+      "values": [
+        {
+          "type": "constant",
+          "value": "false"
+        },
+        {
+          "type": "constant",
+          "value": "true"
+        }
+      ]
+    }
+  }
+]

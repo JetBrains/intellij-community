@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+class A
+
+context(_: A)
+<caret>private fun foo() {}

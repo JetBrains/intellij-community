@@ -22,21 +22,40 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public interface Dictionary {
-
-  default void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {}
+  default void consumeSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {}
 
   @NotNull
   String getName();
 
+  /**
+   * @deprecated This method returns null if a word is alien, which is extremely confusing and may cause issues.
+   * <p>
+   * Please implement and use {@link #lookup(String)} instead, which provides clear status indication through {@link LookupStatus}
+   */
   @Nullable
-  Boolean contains(@NotNull String word);
+  @Deprecated(forRemoval = true)
+  default Boolean contains(@NotNull String word) {
+    throw new UnsupportedOperationException(
+      "Dictionary.contains() should not be used. Call and implement lookup() instead because it provides clear indication through LookupStatus."
+    );
+  }
 
-  boolean isEmpty();
-
-  void traverse(@NotNull Consumer<String> action);
+  @NotNull
+  default LookupStatus lookup(@NotNull String word) {
+    Boolean contains = contains(word);
+    if (contains == null) { return LookupStatus.Alien; }
+    if (contains) { return LookupStatus.Present; }
+    return LookupStatus.Absent;
+  }
 
   @NotNull
   Set<String> getWords();
 
-  int size();
+  enum LookupStatus {
+    Present, Absent, Alien;
+
+    public boolean isNotPresent() {
+      return this == Absent || this == Alien;
+    }
+  }
 }

@@ -1,0 +1,28 @@
+// class version 67.0 (67)
+// access flags 0x21
+public class simple1/Main {
+
+  // compiled from: Main.java
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x9
+  public static main([Ljava/lang/String;)V
+   L0
+    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+    LDC "hello world"
+    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
+   L1
+    RETURN
+   L2
+    MAXSTACK = 2
+    MAXLOCALS = 1
+}

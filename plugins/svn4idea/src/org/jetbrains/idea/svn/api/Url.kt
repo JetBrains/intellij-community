@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api
 
 import com.google.common.net.UrlEscapers
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.net.URI
@@ -19,6 +22,7 @@ class Url private constructor(innerUri: URI) {
   val userInfo: String? = uri.userInfo
   val path: String = uri.path.orEmpty().removeSuffix("/")
 
+  @get:NlsSafe
   val tail: String get() = path.substringAfterLast('/')
 
   fun commonAncestorWith(url: Url): Url? {
@@ -50,6 +54,7 @@ class Url private constructor(innerUri: URI) {
   override fun hashCode(): Int = uri.hashCode()
 
   override fun toString(): String = fixFileUrlToString(uri.toASCIIString().removeSuffix("/"))
+  @NlsSafe
   fun toDecodedString(): String = URLUtil.unescapePercentSequences(toString())
 
   private fun fixFileUrlToString(url: String) = if (url.startsWith(FILE_URL_PREFIX) && !url.startsWith(
@@ -59,18 +64,19 @@ class Url private constructor(innerUri: URI) {
   companion object {
     @JvmField
     val EMPTY: Url = Url(URI(""))
-    @JvmField
-    val DEFAULT_PORTS: Map<String, Int> = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
+
+    @NonNls
+    private val DEFAULT_PORTS: Map<String, Int> = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
 
     @JvmStatic
     @Throws(SvnBindException::class)
     fun parse(value: String, encoded: Boolean = true): Url = wrap {
       val uri = URI(prepareUri(value, encoded)).normalize()
 
-      if (!uri.isAbsolute) throw SvnBindException("$uri is not absolute")
-      if (uri.isOpaque) throw SvnBindException("$uri is not hierarchical")
-      if (uri.query != null) throw SvnBindException("$uri could not contain query")
-      if (uri.fragment != null) throw SvnBindException("$uri could not contain fragment")
+      if (!uri.isAbsolute) throw SvnBindException(message("error.url.is.not.absolute", uri))
+      if (uri.isOpaque) throw SvnBindException(message("error.url.is.not.hierarchical", uri))
+      if (uri.query != null) throw SvnBindException(message("error.url.could.not.contain.query", uri))
+      if (uri.fragment != null) throw SvnBindException(message("error.url.could.not.contain.fragment", uri))
       uri
     }
 

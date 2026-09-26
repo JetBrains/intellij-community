@@ -1,42 +1,39 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.tasks.TaskBundle;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Mikhail Golubev
  */
-public class YouTrackFileType extends LanguageFileType {
+public final class YouTrackFileType extends LanguageFileType {
   public static final YouTrackFileType INSTANCE = new YouTrackFileType();
   public static final String DEFAULT_EXTENSION = "youtrack";
 
-  public YouTrackFileType() {
+  private YouTrackFileType() {
     super(YouTrackLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "YouTrack";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return "YouTrack query";
+  public @NotNull String getDescription() {
+    return TaskBundle.message("filetype.youtrack.query.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return TasksCoreIcons.Youtrack;

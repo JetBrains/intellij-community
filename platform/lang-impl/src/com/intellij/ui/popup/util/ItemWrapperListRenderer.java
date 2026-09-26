@@ -17,10 +17,13 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
+@ApiStatus.Internal
 public class ItemWrapperListRenderer extends ColoredListCellRenderer {
   private final JComponent myAccessory;
   private final Project myProject;
@@ -32,8 +35,7 @@ public class ItemWrapperListRenderer extends ColoredListCellRenderer {
 
   @Override
   protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-    if (value instanceof ItemWrapper) {
-      final ItemWrapper wrapper = (ItemWrapper)value;
+    if (value instanceof ItemWrapper wrapper) {
       wrapper.setupRenderer(this, myProject, selected);
       if (myAccessory != null) {
         wrapper.updateAccessoryView(myAccessory);

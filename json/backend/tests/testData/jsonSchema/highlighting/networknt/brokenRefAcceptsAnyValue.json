@@ -1,0 +1,5 @@
+{
+  <warning descr="Reference /definitions/nonExistent cannot be resolved">"name": {"garbage": true}</warning>,
+  "age": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"not a number"</warning>
+}

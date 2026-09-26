@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CastingLookupElementDecorator;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaChainLookupElement;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -26,28 +16,37 @@ import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLoo
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
-public class MethodChainLookupRangingHelper {
-  @NotNull
-  public static LookupElement toLookupElement(OperationChain chain,
-                                              ChainCompletionContext context) {
+public final class MethodChainLookupRangingHelper {
+  public static @NotNull LookupElement toLookupElement(OperationChain chain,
+                                                       ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     LookupElement chainLookupElement = null;
 
     for (ChainOperation op : chain.getPath()) {
       if (op instanceof ChainOperation.MethodCall) {
-        PsiMethod method = ObjectUtils.notNull(MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(((ChainOperation.MethodCall)op).getCandidates(),
-                                                                                                             context.getTarget().getTargetClass()));
+        PsiMethod method = Objects
+          .requireNonNull(MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(((ChainOperation.MethodCall)op).getCandidates(),
+                                                                                        context.getTarget().getTargetClass()));
         Couple<Integer> info = calculateParameterInfo(method, context);
         unreachableParametersCount += info.getFirst();
         matchedParametersInContext += info.getSecond();
@@ -73,15 +72,14 @@ public class MethodChainLookupRangingHelper {
       chainLookupElement = decorateWithIteratorAccess(chain.getFirst()[0], chainLookupElement);
     }
 
-    return new JavaRelevantChainLookupElement(ObjectUtils.notNull(chainLookupElement),
+    return new JavaRelevantChainLookupElement(Objects.requireNonNull(chainLookupElement),
                                               new ChainRelevance(chain.length(), unreachableParametersCount, matchedParametersInContext));
   }
 
-  @NotNull
-  private static LookupElementDecorator<LookupElement> decorateWithIteratorAccess(PsiMethod method, LookupElement chainLookupElement) {
-    return new LookupElementDecorator<LookupElement>(chainLookupElement) {
+  private static @NotNull LookupElementDecorator<LookupElement> decorateWithIteratorAccess(PsiMethod method, LookupElement chainLookupElement) {
+    return new LookupElementDecorator<>(chainLookupElement) {
       @Override
-      public void handleInsert(InsertionContext context) {
+      public void handleInsert(@NotNull InsertionContext context) {
         super.handleInsert(context);
         Document document = context.getDocument();
         int tail = context.getTailOffset();
@@ -89,17 +87,21 @@ public class MethodChainLookupRangingHelper {
         if (tailReturnType instanceof PsiArrayType) {
           document.insertString(tail, "[0]");
           context.getEditor().getCaretModel().moveToOffset(tail + 1);
-        } else {
-          PsiClass returnClass = ObjectUtils.notNull(PsiUtil.resolveClassInClassTypeOnly(tailReturnType));
+        }
+        else {
+          PsiClass returnClass = Objects.requireNonNull(PsiUtil.resolveClassInClassTypeOnly(tailReturnType));
           PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
           if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_LIST)) {
             document.insertString(tail, ".get(0)");
             context.getEditor().getCaretModel().moveToOffset(tail + 5);
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
             document.insertString(tail, ".iterator().next()");
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
             document.insertString(tail, ".next()");
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
             document.insertString(tail, ".findFirst().get()");
           }
         }
@@ -107,33 +109,31 @@ public class MethodChainLookupRangingHelper {
     };
   }
 
-  @NotNull
-  private static LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
-                                                            @NotNull ChainCompletionContext context) {
-    PsiNamedElement element = context.getQualifiers(qualifierClass).findFirst().orElse(null);
+  private static @NotNull LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
+                                                                     @NotNull ChainCompletionContext context) {
+    PsiClassType type = JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createType(qualifierClass);
+    PsiNamedElement element = context.getQualifierIfPresent(type);
     if (element == null) {
       return new ChainCompletionNewVariableLookupElement(qualifierClass, context);
     } else {
-      if (element instanceof PsiVariable) {
-        return new VariableLookupItem((PsiVariable)element);
+      if (element instanceof PsiVariable var) {
+        return new VariableLookupItem(var);
       }
-      else if (element instanceof PsiMethod) {
-        return createMethodLookupElement((PsiMethod)element);
+      else if (element instanceof PsiMethod method) {
+        return createMethodLookupElement(method);
       }
       throw new AssertionError("unexpected element: " + element);
     }
   }
 
-  @NotNull
-  private static Couple<Integer> calculateParameterInfo(@NotNull PsiMethod method,
-                                                        @NotNull ChainCompletionContext context) {
+  private static @NotNull Couple<Integer> calculateParameterInfo(@NotNull PsiMethod method,
+                                                                 @NotNull ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       PsiType type = parameter.getType();
       if (!ChainCompletionContext.isWidelyUsed(type)) {
-        Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
-        PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+        PsiNamedElement contextVariable = context.getQualifierIfPresent(type);
         if (contextVariable != null) {
           matchedParametersInContext++;
           continue;
@@ -147,8 +147,7 @@ public class MethodChainLookupRangingHelper {
     return Couple.of(unreachableParametersCount, matchedParametersInContext);
   }
 
-  @NotNull
-  private static LookupElement createMethodLookupElement(@NotNull PsiMethod method) {
+  private static @NotNull LookupElement createMethodLookupElement(@NotNull PsiMethod method) {
     LookupElement result;
     if (method.isConstructor()) {
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());

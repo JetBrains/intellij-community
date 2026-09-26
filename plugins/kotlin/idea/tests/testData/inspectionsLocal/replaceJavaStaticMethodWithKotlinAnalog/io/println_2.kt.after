@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test() {
+    println("foo")
+}

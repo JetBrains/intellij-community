@@ -19,7 +19,7 @@ Groovy script
         Arguments
           PsiElement(()('(')
           PsiElement())(')')
-        PsiWhiteSpace('\n')
+        PsiElement(new line)('\n')
         Type definition body
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
@@ -28,10 +28,9 @@ Groovy script
               PsiElement(def)('def')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('foo')
-            PsiElement(()('(')
             Parameter list
-              <empty list>
-            PsiElement())(')')
+              PsiElement(()('(')
+              PsiElement())(')')
             Throw clause
               <empty list>
             PsiWhiteSpace(' ')

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,69 +6,89 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
+@ApiStatus.Internal
+public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
-  @NotNull private final ShelvedChangeList myCurrentShelveChangeList;
+  private final @NotNull ShelvedChangeList myCurrentShelveChangeList;
 
-  public UnshelvePatchDefaultExecutor(@NotNull Project project,
-                                      @NotNull ShelvedChangeList changeList) {
+  public UnshelvePatchDefaultExecutor(@NotNull Project project, @NotNull ShelvedChangeList changeList) {
     super(project);
     myCurrentShelveChangeList = changeList;
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining,
-                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-    final CommitContext commitContext = new CommitContext();
-    applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    final ApplyPatchStatus patchStatus = PatchApplier.executePatchGroup(appliers, localList);
-    if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
-      removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
+    CommitContext commitContext = new CommitContext();
+    if (additionalInfo != null) {
+      applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     }
+    Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
+    new Task.Backgroundable(myProject, VcsBundle.message("unshelve.changes.progress.title")) {
+      ApplyPatchStatus myApplyPatchStatus;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        myApplyPatchStatus = PatchApplier.executePatchGroup(appliers, localList, VcsBundle.message("activity.name.unshelve"),
+                                                            VcsActivity.Unshelve);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (myApplyPatchStatus != ApplyPatchStatus.ABORT && myApplyPatchStatus != ApplyPatchStatus.FAILURE) {
+          removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
+        }
+      }
+    }.queue();
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
+  @RequiresEdt
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
                                                     @NotNull Collection<PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
-    if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
+    if (!shelveChangesManager.isRemoveFilesFromShelf()) {
+      return;
+    }
+
     try {
-      List<FilePatch> patches = ContainerUtil.newArrayList(remaining);
+      List<FilePatch> patches = new ArrayList<>(remaining);
       for (PatchApplier applier : appliers) {
         patches.addAll(applier.getRemainingPatches());
       }
-      if (patches.isEmpty()) {
-        shelveChangesManager.recycleChangeList(myCurrentShelveChangeList);
-      }
-      else {
-        shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, patches,
-                                                  ContainerUtil.mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
-                                                                                             ? ((ShelvedBinaryFilePatch)patch)
-                                                                                               .getShelvedBinaryFile()
-                                                                                             : null), commitContext);
-      }
+      List<ShelvedBinaryFile> binaries = ContainerUtil.mapNotNull(patches, patch -> {
+        return patch instanceof ShelvedBinaryFilePatch ? ((ShelvedBinaryFilePatch)patch).getShelvedBinaryFile() : null;
+      });
+      shelveChangesManager.updateListAfterUnshelve(myCurrentShelveChangeList, patches, binaries, commitContext);
     }
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);

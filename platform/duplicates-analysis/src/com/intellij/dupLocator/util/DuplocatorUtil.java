@@ -1,6 +1,12 @@
 package com.intellij.dupLocator.util;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.AbstractMatchingVisitor;
+import com.intellij.dupLocator.DefaultDuplocatorState;
+import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.DuplocatorState;
+import com.intellij.dupLocator.ExternalizableDuplocatorState;
+import com.intellij.dupLocator.MultilanguageDuplocatorSettings;
+import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
@@ -16,16 +22,14 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class DuplocatorUtil {
+public final class DuplocatorUtil {
   private DuplocatorUtil() {
   }
 
@@ -57,7 +61,7 @@ public class DuplocatorUtil {
   }
 
   public static PsiElement getOnlyChild(PsiElement element, @NotNull NodeFilter filter) {
-    FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(element.getFirstChild()), filter);
+    FilteringNodeIterator it = new FilteringNodeIterator(SiblingNodeIterator.create(element.getFirstChild()), filter);
     PsiElement child = it.current();
     if (child != null) {
       it.advance();
@@ -84,8 +88,8 @@ public class DuplocatorUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiElement skipNodeIfNeccessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
+  @Contract("null, _, _ -> null;!null, _, _ -> !null;")
+  public static @Nullable PsiElement skipNodeIfNecessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
     if (element == null) {
       return null;
     }
@@ -94,7 +98,7 @@ public class DuplocatorUtil {
       return element;
     }*/
 
-    // todo optimize! (this method is often invokated for the same node)
+    // todo optimize! (this method is often invoked for the same node)
 
     if (descriptor == null) {
       final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
@@ -110,8 +114,7 @@ public class DuplocatorUtil {
     return getOnlyChild(element, filter);
   }
 
-  @Nullable
-  private static PsiElement getOnlyChildFromDescriptor(EquivalenceDescriptor equivalenceDescriptor, NodeFilter filter) {
+  private static @Nullable PsiElement getOnlyChildFromDescriptor(EquivalenceDescriptor equivalenceDescriptor, NodeFilter filter) {
     if (!equivalenceDescriptor.getConstants().isEmpty()) {
       return null;
     }
@@ -144,7 +147,7 @@ public class DuplocatorUtil {
       final MultiChildDescriptor descriptor = multiChildren.get(0);
       final PsiElement[] children = descriptor.getElements();
 
-      if (children != null && children.length == 1 && descriptor.getType() != MultiChildDescriptor.MyType.OPTIONALLY) {
+      if (children.length == 1 && descriptor.getType() != MultiChildDescriptor.MyType.OPTIONALLY) {
         return children[0];
       }
     }
@@ -239,28 +242,13 @@ public class DuplocatorUtil {
       }
     }
 
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.match(element1, element2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(element1, element2);
-
-      case CHILDREN:
-        return g.matchSons(element1, element2);
-
-      case CHILDREN_OPTIONALLY_IN_PATTERN:
-      case CHILDREN_OPTIONALLY:
-        return g.matchSonsOptionally(element1, element2);
-
-      case CHILDREN_IN_ANY_ORDER:
-        return g.matchSonsInAnyOrder(element1, element2);
-
-      default:
-        return false;
-    }
+    return switch (childDescriptor1.getType()) {
+      case DEFAULT -> g.match(element1, element2);
+      case OPTIONALLY_IN_PATTERN, OPTIONALLY -> g.matchOptionally(element1, element2);
+      case CHILDREN -> g.matchSons(element1, element2);
+      case CHILDREN_OPTIONALLY_IN_PATTERN, CHILDREN_OPTIONALLY -> g.matchSonsOptionally(element1, element2);
+      case CHILDREN_IN_ANY_ORDER -> g.matchSonsInAnyOrder(element1, element2);
+    };
   }
 
   private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
@@ -274,25 +262,18 @@ public class DuplocatorUtil {
     final PsiElement[] elements1 = childDescriptor1.getElements();
     final PsiElement[] elements2 = childDescriptor2.getElements();
 
-    switch (childDescriptor1.getType()) {
-
-      case DEFAULT:
-        return g.matchSequentially(elements1, elements2);
-
-      case OPTIONALLY_IN_PATTERN:
-      case OPTIONALLY:
-        return g.matchOptionally(elements1, elements2);
-
-      case IN_ANY_ORDER:
-        return g.matchInAnyOrder(elements1, elements2);
-
-      default:
-        return false;
-    }
+    return switch (childDescriptor1.getType()) {
+      case DEFAULT -> g.matchSequentially(elements1, elements2);
+      case OPTIONALLY_IN_PATTERN, OPTIONALLY -> g.matchOptionally(elements1, elements2);
+      case IN_ANY_ORDER -> g.matchInAnyOrder(elements1, elements2);
+    };
   }
 
-  @Nullable
-  public static DuplocatorState getDuplocatorState(PsiFragment frag) {
+  @Contract("null -> null")
+  public static @Nullable DuplocatorState getDuplocatorState(PsiFragment frag) {
+    if (frag == null) {
+      return null;
+    }
     final Language language = frag.getLanguage();
     if (language == null) {
       return null;
@@ -304,10 +285,9 @@ public class DuplocatorUtil {
            : null;
   }
 
-  @NotNull
-  public static ExternalizableDuplocatorState registerAndGetState(@NotNull Language language) {
+  public static @NotNull ExternalizableDuplocatorState registerAndGetState(@NotNull Language language) {
     final MultilanguageDuplocatorSettings settings = MultilanguageDuplocatorSettings.getInstance();
-    ExternalizableDuplocatorState state = settings.getState(language);
+    DefaultDuplocatorState state = settings.getState(language);
     if (state == null) {
       state = new DefaultDuplocatorState();
       settings.registerState(language, state);

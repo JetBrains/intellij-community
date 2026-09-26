@@ -26,21 +26,25 @@
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getKey()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object next()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator java.lang.Object previous()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -64,6 +68,7 @@
     </item>
     <item name='org.apache.commons.collections.iterators.AbstractEmptyIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -163,7 +168,13 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ArrayIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.ArrayIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.ArrayListIterator ArrayListIterator()'>
@@ -195,6 +206,11 @@
     <item name='org.apache.commons.collections.iterators.ArrayListIterator void add(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.iterators.ArrayListIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.CollatingIterator CollatingIterator(java.util.Comparator, java.util.Collection) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -222,6 +238,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.CollatingIterator void setComparator(java.util.Comparator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.CollatingIterator void setIterator(int, java.util.Iterator) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -230,25 +251,40 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyIterator RESETTABLE_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyListIterator EmptyListIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyListIterator RESETTABLE_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.iterators.EmptyMapIterator EmptyMapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyMapIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyOrderedIterator EmptyOrderedIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyOrderedMapIterator EmptyOrderedMapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedMapIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.iterators.EntrySetMapIterator EntrySetMapIterator(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -284,6 +320,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EnumerationIterator void setEnumeration(java.util.Enumeration)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.FilterIterator FilterIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -307,6 +348,16 @@
     <item name='org.apache.commons.collections.iterators.FilterIterator org.apache.commons.collections.Predicate getPredicate()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.FilterIterator void setIterator(java.util.Iterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.FilterIterator void setPredicate(org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.FilterListIterator FilterListIterator()'>
@@ -358,8 +409,19 @@
     <item name='org.apache.commons.collections.iterators.FilterListIterator void add(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.iterators.FilterListIterator void clearNextObject()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.FilterListIterator void clearPreviousObject()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.FilterListIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -371,6 +433,16 @@
     </item>
     <item name='org.apache.commons.collections.iterators.FilterListIterator void set(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.FilterListIterator void setListIterator(java.util.ListIterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.FilterListIterator void setPredicate(org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.IteratorChain IteratorChain()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -401,6 +473,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.IteratorChain void lockChain()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.IteratorChain void setIterator(int, java.util.Iterator) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -422,6 +499,11 @@
     <item name='org.apache.commons.collections.iterators.IteratorEnumeration java.util.Iterator getIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.IteratorEnumeration void setIterator(java.util.Iterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.ListIteratorWrapper ListIteratorWrapper(java.util.Iterator)'>
@@ -463,7 +545,13 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ListIteratorWrapper void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.ListIteratorWrapper void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.ListIteratorWrapper void set(java.lang.Object)'>
@@ -478,11 +566,13 @@
     <item name='org.apache.commons.collections.iterators.LoopingIterator LoopingIterator(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.iterators.LoopingIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.LoopingListIterator LoopingListIterator(java.util.List) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.iterators.LoopingListIterator java.lang.Object previous()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.iterators.ObjectArrayIterator ObjectArrayIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -535,7 +625,18 @@
     </item>
     <item name='org.apache.commons.collections.iterators.ObjectArrayIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.ObjectArrayIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.ObjectArrayIterator void setArray(java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.ObjectArrayIterator void setArray(java.lang.Object[]) 0'>
@@ -594,6 +695,11 @@
     <item name='org.apache.commons.collections.iterators.ObjectArrayListIterator void add(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.iterators.ObjectArrayListIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.ObjectGraphIterator ObjectGraphIterator(java.lang.Object, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -619,6 +725,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.ProxyIterator void setIterator(java.util.Iterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.ProxyListIterator ProxyListIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -632,6 +743,11 @@
     <item name='org.apache.commons.collections.iterators.ProxyListIterator java.util.ListIterator getListIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.ProxyListIterator void setListIterator(java.util.ListIterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.ReverseListIterator ReverseListIterator(java.util.List) 0'>
@@ -650,6 +766,21 @@
     <item name='org.apache.commons.collections.iterators.SingletonIterator boolean hasNext()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonIterator java.lang.Object next()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonIterator void remove()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.SingletonListIterator SingletonListIterator(java.lang.Object)'>
@@ -677,6 +808,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.SingletonListIterator java.lang.Object next()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonListIterator java.lang.Object previous()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.iterators.SingletonListIterator void add(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_-&gt;fail&quot;"/>
@@ -685,6 +826,21 @@
     </item>
     <item name='org.apache.commons.collections.iterators.SingletonListIterator void add(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonListIterator void remove()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonListIterator void reset()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.SingletonListIterator void set(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.TransformIterator TransformIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -714,6 +870,16 @@
     <item name='org.apache.commons.collections.iterators.TransformIterator org.apache.commons.collections.Transformer getTransformer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.TransformIterator void setIterator(java.util.Iterator)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.TransformIterator void setTransformer(org.apache.commons.collections.Transformer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.iterators.UnmodifiableIterator UnmodifiableIterator(java.util.Iterator)'>

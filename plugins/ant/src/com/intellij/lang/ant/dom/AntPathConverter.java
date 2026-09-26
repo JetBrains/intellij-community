@@ -1,28 +1,19 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +36,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   @Override
-  public PsiFileSystemItem fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFileSystemItem fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -65,7 +56,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
       }
       file = new File(getPathResolveRoot(context, antProject), path);
     }
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
     if (vFile == null) {
       return null;
     }
@@ -82,18 +73,16 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
     return project;
   }
 
-  @Nullable
-  protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
+  protected @Nullable @NlsSafe String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
     return antProject.getProjectBasedirPath();
   }
 
-  @Nullable
-  protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
+  protected @Nullable @NlsSafe String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
     return null;
   }
 
   @Override
-  public String toString(@Nullable PsiFileSystemItem file, ConvertContext context) {
+  public String toString(@Nullable PsiFileSystemItem file, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -102,10 +91,9 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
 
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
-    if (genericDomValue instanceof GenericAttributeValue) {
-      final GenericAttributeValue attrib = (GenericAttributeValue)genericDomValue;
+  @Override
+  public PsiReference @NotNull [] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
+    if (genericDomValue instanceof GenericAttributeValue attrib) {
       if (attrib.getRawText() != null) {
         final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attrib, myShouldValidateRefs);
         return refSet.getAllReferences();

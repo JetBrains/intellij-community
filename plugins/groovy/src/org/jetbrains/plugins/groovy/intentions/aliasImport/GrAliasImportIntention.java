@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -10,24 +11,26 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
@@ -43,19 +46,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportIntention extends Intention {
+public final class GrAliasImportIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrImportStatement context;
     final PsiMember resolved;
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression ref) {
       GroovyResolveResult result = ref.advancedResolve();
       context = (GrImportStatement)result.getCurrentFileResolveContext();
       assert context != null;
@@ -126,7 +132,10 @@ public class GrAliasImportIntention extends Intention {
     assert alias != null;
     final PsiElement aliasNameElement = alias.getNameElement();
     assert aliasNameElement != null;
-    templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null));
+    MyLookupExpression lookupExpression =
+      new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null);
+    lookupExpression.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
+    templateBuilder.replaceElement(aliasNameElement, lookupExpression);
     Template built = templateBuilder.buildTemplate();
 
     final Editor newEditor = IntentionUtils.positionCursor(project, file, templateImport);
@@ -142,7 +151,7 @@ public class GrAliasImportIntention extends Intention {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, built, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         final GrImportStatement importStatement = ReadAction
           .compute(() -> PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true));
 
@@ -180,8 +189,7 @@ public class GrAliasImportIntention extends Intention {
 
         if (usageElement.getParent() instanceof GrImportStatement) return;
 
-        if (usageElement instanceof GrReferenceElement) {
-          final GrReferenceElement ref = (GrReferenceElement)usageElement;
+        if (usageElement instanceof GrReferenceElement ref) {
           final PsiElement qualifier = ref.getQualifier();
 
           if (qualifier == null) {
@@ -222,7 +230,7 @@ public class GrAliasImportIntention extends Intention {
     LocalSearchScope scope = new LocalSearchScope(file);
 
     final ArrayList<UsageInfo> infos = new ArrayList<>();
-    final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
+    final HashSet<Object> usedRefs = new HashSet<>();
 
     final Processor<PsiReference> consumer = reference -> {
       if (usedRefs.add(reference)) {
@@ -256,22 +264,13 @@ public class GrAliasImportIntention extends Intention {
   public static LinkedHashSet<String> getSuggestedNames(PsiElement psiElement, final PsiElement nameSuggestionContext) {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     result.add(UsageViewUtil.getShortName(psiElement));
-    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    for (NameSuggestionProvider provider : providers) {
-      SuggestedNameInfo info = provider.getSuggestedNames(psiElement, nameSuggestionContext, result);
-      if (info != null) {
-        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
-          break;
-        }
-      }
-    }
+    NameSuggestionProvider.suggestNames(psiElement, nameSuggestionContext, result);
     return result;
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return AliasImportIntentionPredicate.INSTANCE;
   }
 }

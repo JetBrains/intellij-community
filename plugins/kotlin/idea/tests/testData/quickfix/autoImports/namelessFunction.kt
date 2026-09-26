@@ -1,0 +1,12 @@
+// "Import" "false"
+// IGNORE_IRRELEVANT_ACTIONS
+// ERROR: Unresolved reference: TTTTT
+// ERROR: Function declaration must have a name
+// K2_AFTER_ERROR: FUNCTION_DECLARATION_WITH_NO_NAME
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: FUNCTION_DECLARATION_WITH_NO_NAME
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun () {
+    val tttt : <caret>TTTTT = null
+}

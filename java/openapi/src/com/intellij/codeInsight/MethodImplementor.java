@@ -24,14 +24,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface MethodImplementor extends MemberImplementorExplorer {
   ExtensionPointName<MethodImplementor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.methodImplementor");
 
-  @NotNull
-  PsiMethod[] createImplementationPrototypes(final PsiClass inClass, PsiMethod method) throws IncorrectOperationException;
+  PsiMethod @NotNull [] createImplementationPrototypes(final PsiClass inClass, PsiMethod method) throws IncorrectOperationException;
 
   @Nullable
   GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists);

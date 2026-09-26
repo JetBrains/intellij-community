@@ -1,19 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class EclipseUserLibrariesHelper {
+public final class EclipseUserLibrariesHelper {
   //private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
   //private static final String ORG_ECLIPSE_JDT_CORE_USER_LIBRARY = "org.eclipse.jdt.core.userLibrary.";
 
@@ -50,7 +50,7 @@ public class EclipseUserLibrariesHelper {
     }
   }
 
-  public static void appendProjectLibraries(final Project project, @Nullable final File userLibrariesFile) throws IOException {
+  public static void appendProjectLibraries(final Project project, final @Nullable File userLibrariesFile) throws IOException {
     if (userLibrariesFile == null) return;
     if (userLibrariesFile.exists() && !userLibrariesFile.isFile()) return;
     final File parentFile = userLibrariesFile.getParentFile();
@@ -59,8 +59,8 @@ public class EclipseUserLibrariesHelper {
       if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
-    final List<Library> libraries = new ArrayList<>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
-    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
+    final List<Library> libraries = new ArrayList<>(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()));
+    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project).getLibraries());
     for (Library library : libraries) {
       Element libElement = new Element("library");
       libElement.setAttribute("name", library.getName());
@@ -77,7 +77,7 @@ public class EclipseUserLibrariesHelper {
       return;
     }
 
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
     Element element = JDOMUtil.load(exportedFile.getInputStream());
     WriteAction.run(() -> {
       for (Element libElement : element.getChildren("library")) {
@@ -88,29 +88,27 @@ public class EclipseUserLibrariesHelper {
           libraryByName = model.createLibrary(libName);
           model.commit();
         }
-        if (libraryByName != null) {
-          Library.ModifiableModel model = libraryByName.getModifiableModel();
-          for (Element a : libElement.getChildren("archive")) {
-            String rootPath = a.getAttributeValue("path");
-            // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
-            LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-            VirtualFile localFile = fileSystem.findFileByPath(rootPath);
-            if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
-              // relative to workspace root
-              rootPath = project.getBasePath() + rootPath;
-              localFile = fileSystem.findFileByPath(rootPath);
-            }
-            String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
-            if (localFile != null) {
-              VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-              if (jarFile != null) {
-                url = jarFile.getUrl();
-              }
-            }
-            model.addRoot(url, OrderRootType.CLASSES);
+        Library.ModifiableModel model = libraryByName.getModifiableModel();
+        for (Element a : libElement.getChildren("archive")) {
+          String rootPath = a.getAttributeValue("path");
+          // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
+          VirtualFileSystem fileSystem = StandardFileSystems.local();
+          VirtualFile localFile = fileSystem.findFileByPath(rootPath);
+          if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
+            // relative to workspace root
+            rootPath = project.getBasePath() + rootPath;
+            localFile = fileSystem.findFileByPath(rootPath);
           }
-          model.commit();
+          String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
+          if (localFile != null) {
+            VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+            if (jarFile != null) {
+              url = jarFile.getUrl();
+            }
+          }
+          model.addRoot(url, OrderRootType.CLASSES);
         }
+        model.commit();
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
     });

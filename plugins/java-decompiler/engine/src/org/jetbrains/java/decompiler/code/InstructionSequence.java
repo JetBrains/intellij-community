@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -30,6 +30,7 @@ public abstract class InstructionSequence {
   // *****************************************************************************
 
   // to nbe overwritten
+  @Override
   public InstructionSequence clone() {
     return null;
   }
@@ -49,8 +50,9 @@ public abstract class InstructionSequence {
   }
 
   public void addSequence(InstructionSequence seq) {
+	int base = this.length() == 0 ? 0 : this.getOffset(this.length() - 1);
     for (int i = 0; i < seq.length(); i++) {
-      addInstruction(seq.getInstr(i), -1); // TODO: any sensible value possible?
+      addInstruction(seq.getInstr(i), base + seq.getOffset(i));
     }
   }
 
@@ -108,6 +110,7 @@ public abstract class InstructionSequence {
     this.pointer += diff;
   }
 
+  @Override
   public String toString() {
     return toString(0);
   }

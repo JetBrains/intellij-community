@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,20 +35,12 @@ public interface FoldingModel {
    * @param startOffset     the start offset of the region to fold.
    * @param endOffset       the end offset of the region to fold.
    * @param placeholderText the text to display instead of the region contents when the region is folded.
-   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g. if it
+   * @return the fold region, or {@code null} if folding is currently disabled or corresponding region cannot be added (e.g., if it
    * intersects with another existing region)
    */
   @Nullable
+  @RequiresEdt
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
-
-  /**
-   * Do nothing
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  default boolean addFoldRegion(@NotNull FoldRegion region) {
-    return true;
-  }
 
   /**
    * Removes the specified fold region. This method must be called
@@ -54,20 +48,20 @@ public interface FoldingModel {
    *
    * @param region the region to remove.
    */
+  @RequiresEdt
   void removeFoldRegion(@NotNull FoldRegion region);
 
   /**
    * Gets the list of all fold regions in the specified editor.
-   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e. first by start offset, then by end offset.
+   * Returned array is sorted according to {@link RangeMarker#BY_START_OFFSET} comparator, i.e., first by start offset, then by end offset.
    *
    * @return the array of fold regions, or an empty array if folding is currently disabled.
    */
-  @NotNull
-  FoldRegion[] getAllFoldRegions();
+  @NotNull FoldRegion @NotNull [] getAllFoldRegions();
 
   /**
    * Checks if the specified offset in the document belongs to a folded region. The region must contain given offset or be located right
-   * after given offset, i.e. the following condition must hold: foldStartOffset <= offset < foldEndOffset.
+   * after given offset, i.e., the following condition must hold: foldStartOffset <= offset < foldEndOffset.
    * <br>
    * This method can return incorrect data if it's invoked in the context of {@link #runBatchFoldingOperation(Runnable)} invocation.
    *
@@ -101,17 +95,41 @@ public interface FoldingModel {
    *
    * @param operation the operation to execute.
    */
-  void runBatchFoldingOperation(@NotNull Runnable operation);
+  @RequiresEdt
+  default void runBatchFoldingOperation(@NotNull Runnable operation) {
+    runBatchFoldingOperation(operation, true, true);
+  }
+
+  default void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
+    runBatchFoldingOperation(operation, false, true);
+  }
 
   /**
-   * Runs an operation which is allowed to modify fold regions in the editor by calling
-   * {@link #addFoldRegion(int, int, String)} and {@link #removeFoldRegion(FoldRegion)}.
+   * Performs folding model changes (creation/deletion/expanding/collapsing of fold regions).
    *
-   * @param operation                    the operation to execute.
-   * @param moveCaretFromCollapsedRegion flag that identifies whether caret position should be changed if it's located inside
-   *                                     collapsed fold region after the operation
+   * @param allowMovingCaret If {@code false}, requests to collapse a region containing caret won't be processed. If {@code true} -
+   *                         corresponding operation will be performed with caret automatically moved to the region's start offset
+   *                         (original caret position is remembered and is restored on region expansion).
+   * @param keepRelativeCaretPosition If {@code true}, editor scrolling position will be adjusted after the operation, so that vertical
+   *                                  caret position will remain unchanged (if caret is not visible at operation start, top left corner
+   *                                  of editor will be used as an anchor instead). If {@code false}, no scrolling adjustment will be done.
    */
-  void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
+  @RequiresEdt
+  void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition);
 
-  void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation);
+  /**
+   * Creates a fold region with custom representation (defined by the provided renderer). Created region spans whole document lines, and
+   * always remains in a collapsed state (it can be removed, but not expanded).
+   *
+   * @param startLine starting document line in a target line range to fold (inclusive)
+   * @param endLine ending document line in a target line range to fold (inclusive)
+   * @param renderer Renderer defining the representation of fold region (size and rendered content). One renderer can be re-used for
+   *                 multiple fold regions.
+   * @return resulting fold region, or {@code null} if it cannot be created (e.g., due to unsupported overlapping with already existing
+   * regions)
+   */
+  @ApiStatus.Experimental
+  default @Nullable CustomFoldRegion addCustomLinesFolding(int startLine, int endLine, @NotNull CustomFoldRegionRenderer renderer) {
+    return null;
+  }
 }

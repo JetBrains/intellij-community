@@ -1,36 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
+import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.refactoring.inline.InlineMethodHandler;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
-import com.intellij.refactoring.inline.InlineOptions;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineMethodTest extends LightRefactoringTestCase {
+public class InlineMethodTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -64,7 +60,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testSideEffect() { doTest(); }
 
+  public void testParamAsAutocloseableRef() { doTest(); }
+
   public void testInlineWithTry() { doTest(); }
+  public void testEmptyMethod() { doTest(); }
 
   public void testVoidWithReturn() { doTest(); }
   public void testVoidWithReturn1() { doTest(); }
@@ -86,16 +85,19 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testCallInFor() { doTest(); }
 
   public void testSCR20655() { doTest(); }
-
-
+  public void testGenericArrayCreation() { doTest(); }
+  public void testNoRedundantCast() { doTest(); }
   public void testFieldInitializer() { doTest(); }
+  public void testStaticInterfaceMethod() { doTest(); }
 
   public void testMethodCallInOtherAnonymousOrInner() { doTest(); }
 
   public void testStaticFieldInitializer() { doTest(); }
   public void testSCR22644() { doTest(); }
+  public void testChangeContextForThisInNestedClasses() { doTest(); }
 
   public void testCallUnderIf() { doTest(); }
+  public void testInlineEnumArgsChangeContext() { doTest(); }
 
   //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
   //public void testLocalVariableResult() throws Exception { doTest(); }
@@ -103,18 +105,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSCR31093() { doTest(); }
 
   public void testSCR37742() { doTest(); }
-  
+
   public void testChainingConstructor() { doTest(); }
 
   public void testChainingConstructor1() {
-    BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-    try {
-      doTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
+  
+  public void testChainingVarargConstructor() { doTest(); }
 
   public void testNestedCall() { doTest(); }
 
@@ -136,7 +134,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testEnumConstructor() { doTest(); }
 
   public void testEnumConstantConstructorParameter() {  // IDEADEV-26133
-    doTest(); 
+    doTest();
   }
 
   public void testEnumConstantConstructorParameterComplex() {  // IDEADEV-26133
@@ -144,6 +142,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testEnumConstantConstructorParameterComplex2() {  // IDEADEV-26133
+    doTest();
+  }
+
+  public void testEnumConstantConstructorParameterNestedLambda() {
     doTest();
   }
 
@@ -191,7 +193,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testRawSubstitution() {
     doTest();
   }
-  
+
   public void testSubstitution() {
     doTest();
   }
@@ -203,6 +205,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testParamNameConflictsWithLocalVar() {
     doTest();
   }
+  
+  public void testVariablePrefixesSuffixes() {
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.LOCAL_VARIABLE_NAME_PREFIX = "l_";
+    settings.LOCAL_VARIABLE_NAME_SUFFIX = "_v";
+    settings.PARAMETER_NAME_PREFIX = "p_";
+    settings.PARAMETER_NAME_SUFFIX = "_r";
+    doTest();
+  }
 
   public void testArrayTypeInferenceFromVarargs() {
     doTest();
@@ -211,13 +222,17 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSuperMethodInAnonymousClass() {
     doTest();
   }
-  
+
   public void testInlineAnonymousClassWithPrivateMethodInside() {
     doTest();
   }
 
   public void testChainedConstructor() {
     doTestInlineThisOnly();
+  }
+
+  public void testChainedConstructorWithSpacesInvalidation() {
+    doTest();
   }
 
   public void testChainedConstructor1() {
@@ -228,16 +243,65 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in javadoc");
   }
 
-  public void testNotAStatement() {
-    doTestConflict("Inlined result would contain parse errors");
+  public void testMethodUsedReflectively() {
+    doTestConflict("Inlined method is used reflectively");
   }
 
+  public void testInlineOnelinerToCondition() {
+    doTest();
+  }
+
+  public void testNotAStatement() {
+    doTest();
+  }
+
+  public void testNotAStatement2() {
+    doTest();
+  }
+
+  public void testNotAStatement3() {
+    doTest();
+  }
+
+  public void testNotAStatement4() {
+    doTest();
+  }
+
+  public void testForContinue() {
+    doTest();
+  }
+
+  public void testSingleReturn1() {
+    doTestAssertBadReturn();
+  }
+
+  public void testSingleReturn1NotFinal() {
+    doTestAssertBadReturn();
+  }
+
+  public void testSingleReturn2() {
+    doTestAssertBadReturn();
+  }
 
   public void testInSuperCall() {
-    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestConflict("Inline cannot be applied to multiline method in constructor call"));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, this::doTest);
   }
 
   public void testMethodReferenceInsideMethodCall() {
+    doTest();
+  }
+
+  public void testVolatilePassed() {
+    doTest();
+  }
+
+  public void testBooleanConstantArgument() {
+    doTest();
+  }
+
+  public void testBooleanConstantArgument2() {
     doTest();
   }
 
@@ -246,7 +310,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
       doTest();
       fail("Conflict was not detected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+    catch (BaseRefactoringProcessor.ConflictsInTestsException | CommonRefactoringUtil.RefactoringErrorHintException e) {
       assertEquals(conflict, e.getMessage());
     }
   }
@@ -274,7 +338,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testOneLineLambdaVoidCompatibleOneLine() {
     doTestInlineThisOnly();
   }
- 
+
   public void testOneLineLambdaValueCompatibleOneLine() {
     doTestInlineThisOnly();
   }
@@ -288,7 +352,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testNonCodeUsage() {
-    doTest(true);
+    doTestNonCode();
   }
 
   public void testMethodInsideChangeIfStatement() {
@@ -306,8 +370,24 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testStringPlusOverload() {
     doTest();
   }
-  
+
+  public void testConcatenationInConcatenation() {
+    doTest();
+  }
+
+  public void testConcatenationTurnsIntoAddition() {
+    doTest();
+  }
+
+  public void testAdditionTurnsIntoConcatenation() {
+    doTest();
+  }
+
   public void testReturnStatementWithoutBraces() {
+    doTestInlineThisOnly();
+  }
+
+  public void testIfElseIfWithSingleStatement() {
     doTestInlineThisOnly();
   }
 
@@ -332,7 +412,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testUnableToInlineCodeBlockToSuper() {
-    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21,
+                           () -> doTestConflict("Inline cannot be applied to multiline method in constructor call"));
   }
 
   public void testRedundantCastOnMethodReferenceToLambda() {
@@ -348,7 +429,9 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testInaccessibleConstructorInInlinedMethod() {
-    doTestConflict("Constructor <b><code>SomeClass.SomeClass()</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>InlineWithPrivateConstructorAccessMain.main(String...)</code></b>");
+    doTestConflict("Constructor <b><code>SomeClass.SomeClass()</code></b> will not be accessible when method " +
+                   "<b><code>SomeClass.createInstance()</code></b> is inlined into method " +
+                   "<b><code>InlineWithPrivateConstructorAccessMain.main(String...)</code></b>");
   }
 
   public void testPreserveResultedVariableIfInitializerIsNotSideEffectsFree() {
@@ -376,10 +459,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testInaccessibleFieldInSuperClass() {
-    doTestConflict("Field <b><code>A.i</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>B.bar()</code></b>");
+    doTestConflict("Field <b><code>A.i</code></b> will not be accessible when method <b><code>A.foo()</code></b> is inlined into " +
+                   "method <b><code>B.bar()</code></b>");
   }
 
   public void testPrivateFieldInSuperClassInSameFile() {
+    doTest();
+  }
+
+  public void testWidenArgument() {
     doTest();
   }
 
@@ -415,9 +503,181 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testChainedBuilderCall() {
+    doTest();
+  }
+
+  public void testMissedQualifierWithSideEffectsOnInliningEmptyMethod() {
+    doTest();
+  }
+
   public void testNotTailCallInsideIf() {
     doTestAssertBadReturn();
   }
+
+  public void testConvertToSingleReturnWithFinished() {
+    doTestAssertBadReturn();
+  }
+
+  public void testConvertToSingleReturnWithFinishedUnusedResult() {
+    doTestAssertBadReturn();
+  }
+
+  public void testUnusedResult() {
+    doTest();
+  }
+
+  public void testReuseResultVar() {
+    doTest();
+  }
+
+  public void testSpecializeClassGetName() {
+    doTest();
+  }
+
+  public void testSpecializeEnumName() {
+    doTest();
+  }
+
+  public void testSpecializeEnumValueOf() {
+    doTest();
+  }
+
+  public void testBooleanModelSimple() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelMultiReturns() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelIfElse() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelIfElse2() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelContinue() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelFinalCondition() {
+    doTestAssertBadReturn();
+  }
+
+  public void testInvertMethod() {
+    doTest();
+  }
+
+  public void testUnusedParameter() {
+    doTest();
+  }
+
+  public void testEnumStaticMethod() {
+    doTest();
+  }
+
+  public void testTypeParameterMethodRefArgument() {
+    doTest();
+  }
+
+  public void testIgnoreReturnValue() {
+    doTest();
+  }
+
+  public void testSingleReturnComplexQualifier() {
+    doTestAssertBadReturn();
+  }
+
+  public void testAnonymousCall() { doTest(); }
+  public void testInSwitchExpression() { doTest(); }
+  public void testInSwitchExpressionYield() { doTest(); }
+
+  public void testAndChain() { doTest(); }
+  public void testAndChainLambda() { doTest(); }
+  public void testAndChainLambdaSingleLine() { doTest(); }
+
+  public void testInlineDoubleCall() { doTest(); }
+  public void testInlineNestedCall() { doTest(); }
+
+  public void testTernaryBranch() { doTest(); }
+  public void testTernaryBranchCollapsible() { doTest(); }
+
+  public void testNewWithSideEffect() { doTest(); }
+
+  public void testSplitIfAndCollapseBack() { doTest(); }
+
+  public void testThisVariableName() { doTest(); }
+
+  public void testRenameLocalClass() { doTest(); }
+
+  public void testRenameLocalClassDoubleConflict() { doTest(); }
+
+  public void testBooleanResultInIfChain() { doTest(); }
+  
+  public void testLambdaIfAnd() { doTest(); }
+  
+  public void testLambdaIfAndGenericNot() { doTest(); }
+
+  public void testInlineSingleImplementation() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+
+  public void testInlineSingleImplementationGenericClass() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+
+  public void testInlineSingleImplementationGenericMethod() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testInlineSingleImplementationCastOnThis() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testInlineSingleImplementationCastOnThisUnnecessary() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testAutomaticGetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseGetterDoesDifferentThing() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseAccessibleField() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testInlineNullInForEach() {
+    doTest();
+  }
+  
+  public void testAutomaticGetterSetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+
+  public void testAutomaticGetterUsePreferRecordAccessor() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+
+  public void testThrowCallSite() { doTest(); }
+
+  public void testThrowCallSiteReturn() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {
@@ -426,12 +686,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   private void doTestInlineThisOnly() {
     @NonNls String fileName = configure();
-    performAction(new MockInlineMethodOptions(){
-      @Override
-      public boolean isInlineThisOnly() {
-        return true;
-      }
-    }, false, false);
+    performAction(true, false);
     checkResultByFile(fileName + ".after");
   }
 
@@ -439,15 +694,29 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest(false);
   }
 
-  private void doTest(final boolean nonCode) {
+  private void doTest(boolean assertBadReturn) {
+    String fileName = configure();
+    InlineActionHandler handler = ContainerUtil.find(InlineActionHandler.EP_NAME.getExtensionList(), ep -> ep instanceof InlineMethodHandler);
+    assertNotNull(handler);
+    PsiMethod method = findMethod();
+    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
+    if (assertBadReturn) {
+      assertTrue("Bad returns not found", condition);
+    } else {
+      assertFalse("Bad returns found", condition);
+    }
+    handler.inlineElement(getProject(), getEditor(), method);
+    checkResultByFile(fileName + ".after");
+  }
+
+  private void doTestNonCode() {
     @NonNls String fileName = configure();
-    performAction(nonCode);
+    performAction(false, true);
     checkResultByFile(fileName + ".after");
   }
 
   private void doTestAssertBadReturn() {
-    @NonNls String fileName = configure();
-    performAction(new MockInlineMethodOptions(), false, true);
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true));
   }
 
   @NotNull
@@ -457,32 +726,25 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     return fileName;
   }
 
-  private static void performAction(final boolean nonCode) {
-    performAction(new MockInlineMethodOptions(), nonCode, false);
+  private void performAction(final boolean inlineThisOnly, final boolean nonCode) {
+    final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression expression ? expression : null;
+    PsiMethod method = findMethod();
+    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
+    assertFalse("Bad returns found", condition);
+    final InlineMethodProcessor processor =
+      new InlineMethodProcessor(getProject(), method, refExpr, getEditor(), inlineThisOnly, nonCode, nonCode, true);
+    processor.run();
   }
 
-  private static void performAction(final InlineOptions options, final boolean nonCode, final boolean assertBadReturn) {
+  private PsiMethod findMethod() {
     PsiElement element = TargetElementUtil
-      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
-    if (ref instanceof PsiJavaCodeReferenceElement) {
-      final PsiElement parent = ((PsiJavaCodeReferenceElement)ref).getParent();
-      if (parent instanceof PsiNewExpression) {
-        element = ((PsiNewExpression)parent).resolveConstructor();
-      }
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+    if (ref instanceof PsiJavaCodeReferenceElement codeRef && codeRef.getParent() instanceof PsiNewExpression newExpression) {
+      element = newExpression.resolveConstructor();
     }
-    PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)element.getNavigationElement();
-    final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
-    if (assertBadReturn) {
-      assertTrue("Bad returns not found", condition);
-    } else {
-      assertFalse("Bad returns found", condition);
-      final InlineMethodProcessor processor =
-        new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
-                                  !options.isKeepTheDeclaration());
-      processor.run();
-    }
+    return (PsiMethod)element;
   }
 }

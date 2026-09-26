@@ -1,0 +1,85 @@
+package com.jetbrains.python.psi.types;
+
+import org.jetbrains.annotations.NotNull;
+
+public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
+  public T visitPyLiteralType(@NotNull PyLiteralType literalType) {
+    return visitPyClassType(literalType);
+  }
+
+  public T visitPyLiteralStringType(@NotNull PyLiteralStringType literalStringType) {
+    return visitPyClassType(literalStringType);
+  }
+
+  public T visitPyModuleType(@NotNull PyModuleType moduleType) {
+    return visitPyType(moduleType);
+  }
+
+  public T visitPyParamSpecType(@NotNull PyParamSpecType paramSpecType) {
+    return visitPyTypeParameterType(paramSpecType);
+  }
+
+  /**
+   * @deprecated use visitPyClassType instead
+   */
+  @Deprecated
+  public T visitPyGenericType(@NotNull PyClassType genericType) {
+    return visitPyClassType(genericType);
+  }
+
+  public T visitPyTupleType(@NotNull PyTupleType tupleType) {
+    return visitPyClassType(tupleType);
+  }
+
+  public T visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
+    return visitPyClassType(namedTupleType);
+  }
+
+  public T visitPySelfType(@NotNull PySelfType selfType) {
+    return visitPyTypeParameterType(selfType);
+  }
+
+  public T visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
+    return visitPyClassType(typedDictType);
+  }
+
+  public T visitPyUnionType(@NotNull PyUnionType unionType) {
+    return visitPyCompositeType(unionType);
+  }
+
+  public T visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+    return visitPyCompositeType(unsafeUnionType);
+  }
+
+  public T visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return visitPyCompositeType(intersectionType);
+  }
+
+  public T visitPyCompositeType(@NotNull PyCompositeType compositeType) {
+    return visitPyType(compositeType);
+  }
+
+  public T visitPyTypingNewType(@NotNull PyTypingNewType typingNewType) {
+    return visitPyClassType(typingNewType);
+  }
+
+  public T visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
+    return visitPyType(narrowedType);
+  }
+
+  public T visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    return visitPyClassType(typeFormType);
+  }
+
+  public T visitPyConcatenateType(@NotNull PyConcatenateType concatenateType) {
+    return visitPyType(concatenateType);
+  }
+
+  public T visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+    return visitPyType(overloadType);
+  }
+
+  public T visitPyUnpackedTypedDictType(@NotNull PyUnpackedTypedDictType unpackedTypedDictType) {
+    return visitPyType(unpackedTypedDictType);
+  }
+}

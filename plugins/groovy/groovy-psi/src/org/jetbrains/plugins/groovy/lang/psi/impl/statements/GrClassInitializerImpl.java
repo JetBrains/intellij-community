@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.ui.IconManager;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author ilyas
- */
 public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrClassInitializer {
 
   public GrClassInitializerImpl(@NotNull ASTNode node) {
@@ -38,13 +36,13 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     visitor.visitClassInitializer(this);
   }
 
+  @Override
   public String toString() {
     return "Class initializer";
   }
 
   @Override
-  @NotNull
-  public GrOpenBlock getBlock() {
+  public @NotNull GrOpenBlock getBlock() {
     return findNotNullChildByClass(GrOpenBlock.class);
   }
 
@@ -72,8 +70,7 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   @Override
-  @NotNull
-  public GrModifierList getModifierList() {
+  public @NotNull GrModifierList getModifierList() {
     return findNotNullChildByClass(GrModifierList.class);
   }
 
@@ -82,15 +79,14 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     return getModifierList().hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public PsiCodeBlock getBody() {
+  public @NotNull PsiCodeBlock getBody() {
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
   }
 
-  @Nullable
   @Override
-  protected Icon getElementIcon(int flags) {
-    return ElementPresentationUtil.createLayeredIcon(JetgroovyIcons.Groovy.ClassInitializer, this, false);
+  protected @Nullable Icon getElementIcon(int flags) {
+    return IconManager
+      .getInstance().createLayeredIcon(this, JetgroovyIcons.Groovy.ClassInitializer, ElementPresentationUtil.getFlags(this, false));
   }
 }

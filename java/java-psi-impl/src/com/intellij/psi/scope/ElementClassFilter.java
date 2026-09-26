@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.filters.ElementFilter;
 
-/**
- * @author max
- */
-public class ElementClassFilter implements ElementFilter {
+public final class ElementClassFilter implements ElementFilter {
   public static final ElementClassFilter PACKAGE = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
   public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclarationKind.VARIABLE);
   public static final ElementClassFilter METHOD = new ElementClassFilter(ElementClassHint.DeclarationKind.METHOD);
@@ -64,10 +53,4 @@ public class ElementClassFilter implements ElementFilter {
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
-  @Deprecated
-  public static final ElementClassFilter PACKAGE_FILTER = PACKAGE;
-  //</editor-fold>
 }

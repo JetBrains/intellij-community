@@ -1,149 +1,88 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Pair;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.PathKt;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.indexing.FileContent;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl");
-  private static final int REGISTRY_VERSION = 0;
-  private TObjectIntHashMap<String> myDetectorIds;
-  private TIntObjectHashMap<FrameworkDetector> myDetectorById;
-  private MultiMap<FileType, Integer> myDetectorsByFileType;
-  private int myDetectorsVersion;
+@ApiStatus.Internal
+public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry implements Disposable {
+  private static final Logger LOG = Logger.getInstance(FrameworkDetectorRegistryImpl.class);
 
-  public FrameworkDetectorRegistryImpl() {
-    loadDetectors();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      saveDetectors();
+  private volatile Map<String, FrameworkDetector> myDetectorsById;
+  private volatile MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> myDetectorsMap;
+  private volatile MultiMap<FileType, String> myDetectorsByFileType;
+  private volatile FileType[] myAcceptedTypes;
+  private volatile boolean myLoaded;
+
+  private final Object myInitializationLock = new Object();
+
+  public FrameworkDetectorRegistryImpl(@NotNull CoroutineScope coroutineScope) {
+    FrameworkDetector.EP_NAME.addChangeListener(coroutineScope, this::onDetectorsChanged);
+  }
+
+  private synchronized void ensureDetectorsLoaded() {
+    if (myLoaded) return;
+    synchronized (myInitializationLock) {
+      if (!myLoaded) {
+        loadDetectors();
+        myLoaded = true;
+      }
     }
   }
 
   private void loadDetectors() {
-    Map<String, FrameworkDetector> newDetectors = new HashMap<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      newDetectors.put(detector.getDetectorId(), detector);
-    }
-
-    myDetectorIds = new TObjectIntHashMap<>();
-    final Path file = getDetectorsRegistryFile();
-    int maxId = REGISTRY_VERSION;
-    if (Files.exists(file)) {
-      LOG.debug("loading framework detectors registry from " + file.toAbsolutePath());
-      List<String> unknownIds = new ArrayList<>();
-      boolean versionChanged = false;
-      try {
-        DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)));
-        try {
-          input.readInt();
-          myDetectorsVersion = input.readInt();
-          int size = input.readInt();
-          while (size-- > REGISTRY_VERSION) {
-            final String stringId = input.readUTF();
-            int intId = input.readInt();
-            maxId = Math.max(maxId, intId);
-            final int version = input.readInt();
-            final FrameworkDetector detector = newDetectors.remove(stringId);
-            if (detector != null) {
-              if (version != detector.getDetectorVersion()) {
-                LOG.info("Version of framework detector '" + stringId + "' changed: " + version + " -> " + detector.getDetectorVersion());
-                versionChanged = true;
-              }
-              myDetectorIds.put(stringId, intId);
-            }
-            else {
-              unknownIds.add(stringId);
-            }
-          }
-        }
-        finally {
-          input.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      if (!unknownIds.isEmpty()) {
-        LOG.debug("Unknown framework detectors: " + unknownIds);
-      }
-      if (versionChanged || !newDetectors.isEmpty()) {
-        if (!newDetectors.isEmpty()) {
-          LOG.info("New framework detectors: " + newDetectors.keySet());
-        }
-        myDetectorsVersion++;
-        LOG.info("Framework detection index version changed to " + myDetectorsVersion);
-      }
-    }
-    int nextId = maxId+1;
-    for (String newDetector : newDetectors.keySet()) {
-      myDetectorIds.put(newDetector, nextId++);
-    }
-    myDetectorById = new TIntObjectHashMap<>();
+    myDetectorsById = new HashMap<>();
     myDetectorsByFileType = new MultiMap<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      final int id = myDetectorIds.get(detector.getDetectorId());
-      myDetectorsByFileType.putValue(detector.getFileType(), id);
-      myDetectorById.put(id, detector);
-      LOG.debug("'" + detector.getDetectorId() + "' framework detector: id = " + id);
+    myDetectorsMap = new MultiMap<>();
+
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
+      myDetectorsById.put(detector.getDetectorId(), detector);
+      myDetectorsByFileType.putValue(detector.getFileType(), detector.getDetectorId());
+
+      myDetectorsMap.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), detector.getDetectorId()));
+
+      LOG.debug("'" + detector.getDetectorId() + "' framework detector registered");
     }
+
+    myAcceptedTypes = myDetectorsByFileType.keySet().toArray(FileType.EMPTY_ARRAY);
   }
 
-  private void saveDetectors() {
-    final Path file = getDetectorsRegistryFile();
-    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(file)))) {
-      output.writeInt(REGISTRY_VERSION);
-      output.writeInt(myDetectorsVersion);
-      final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
-      output.writeInt(detectors.length);
-      for (FrameworkDetector detector : detectors) {
-        output.writeUTF(detector.getDetectorId());
-        output.writeInt(myDetectorIds.get(detector.getDetectorId()));
-        output.writeInt(detector.getDetectorVersion());
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+  @Override
+  public @NotNull MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap() {
+    ensureDetectorsLoaded();
+    return myDetectorsMap;
   }
 
-  private static Path getDetectorsRegistryFile() {
-    return getDetectionDirPath().resolve("detectors-registry.dat");
+  @Override
+  public FileType @NotNull [] getAcceptedFileTypes() {
+    ensureDetectorsLoaded();
+    return myAcceptedTypes;
   }
 
-  @NotNull
-  public static Path getDetectionDirPath() {
-    return PathManagerEx.getAppSystemDir().resolve("frameworks").resolve("detection");
+  private void onDetectorsChanged() {
+    synchronized (myInitializationLock) {
+      myAcceptedTypes = null;
+      myDetectorsMap = null;
+      myDetectorsByFileType = null;
+      myDetectorsById = null;
+      myLoaded = false;
+    }
   }
 
   @Override
@@ -156,44 +95,34 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends FrameworkType> getFrameworkTypes() {
-    final List<FrameworkType> types = new ArrayList<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+  public @NotNull List<? extends FrameworkType> getFrameworkTypes() {
+    List<FrameworkType> types = new ArrayList<>();
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       types.add(detector.getFrameworkType());
     }
     return types;
   }
 
   @Override
-  public int getDetectorsVersion() {
-    return myDetectorsVersion;
+  public FrameworkDetector getDetectorById(@NotNull String id) {
+    ensureDetectorsLoaded();
+    return myDetectorsById.get(id);
   }
 
   @Override
-  public int getDetectorId(@NotNull FrameworkDetector detector) {
-    return myDetectorIds.get(detector.getDetectorId());
-  }
-
-  @Override
-  public FrameworkDetector getDetectorById(int id) {
-    return myDetectorById.get(id);
-  }
-
-  @NotNull
-  @Override
-  public Collection<Integer> getDetectorIds(@NotNull FileType fileType) {
+  public @NotNull Collection<String> getDetectorIds(@NotNull FileType fileType) {
+    ensureDetectorsLoaded();
     return myDetectorsByFileType.get(fileType);
   }
 
   @Override
-  public Collection<Integer> getAllDetectorIds() {
-    final int[] ids = myDetectorIds.getValues();
-    final List<Integer> result = new ArrayList<>();
-    for (int id : ids) {
-      result.add(id);
-    }
-    return result;
+  public @NotNull Collection<String> getAllDetectorIds() {
+    ensureDetectorsLoaded();
+    return myDetectorsById.keySet();
+  }
+
+  @Override
+  public void dispose() {
   }
 }

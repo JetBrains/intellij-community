@@ -1,0 +1,6 @@
+JsonFile: y_string_1_2_3_bytes_UTF_8_sequences.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u0060\u012a\u12AB"')
+    PsiElement(])(']')

@@ -22,22 +22,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CloseTaskAction extends BaseTaskAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
     LocalTask task = taskManager.getActiveTask();
     CloseTaskDialog dialog = new CloseTaskDialog(project, task);
     if (dialog.showAndGet()) {
+      ((LocalTaskImpl)task).setClosed(true);
       final CustomTaskState taskState = dialog.getCloseIssueState();
       if (taskState != null) {
         try {
@@ -47,14 +52,14 @@ public class CloseTaskAction extends BaseTaskAction {
           repository.setPreferredCloseTaskState(taskState);
         }
         catch (Exception e1) {
-          Messages.showErrorDialog(project, e1.getMessage(), "Cannot Set State For Issue");
+          Messages.showErrorDialog(project, e1.getMessage(), TaskBundle.message("dialog.title.cannot.set.state.for.issue"));
         }
       }
     }
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = getProject(event);
     boolean enabled = project != null && !TaskManager.getManager(project).getActiveTask().isDefault();

@@ -1,0 +1,29 @@
+MODULES
+project.androidOnly
+
+project.androidOnly.androidHostTest
+    jvmAndAndroidTransitive.androidMain (TEST)
+    jvmAndAndroidTransitive.commonMain (TEST)
+    jvmAndAndroidTransitive.jvmAndAndroidMain (TEST)
+
+project.androidOnly.androidMain
+    jvmAndAndroidTransitive.androidMain (COMPILE)
+    jvmAndAndroidTransitive.commonMain (COMPILE)
+    jvmAndAndroidTransitive.jvmAndAndroidMain (COMPILE)
+
+project.androidOnly.commonMain
+    jvmAndAndroidTransitive.androidMain (COMPILE)
+    jvmAndAndroidTransitive.commonMain (COMPILE)
+    jvmAndAndroidTransitive.jvmAndAndroidMain (COMPILE)
+
+project.androidOnly.commonTest
+    jvmAndAndroidTransitive.androidMain (TEST)
+    jvmAndAndroidTransitive.commonMain (TEST)
+    jvmAndAndroidTransitive.jvmAndAndroidMain (TEST)
+
+
+Test configuration:
+- showing only modules matching .*androidOnly.*
+- hiding following standard dependencies: sdk, self
+- showing only dependencies matching .*jvmAndAndroidTransitive.*
+- dependencies order is not checked

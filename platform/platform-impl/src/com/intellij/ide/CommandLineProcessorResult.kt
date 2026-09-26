@@ -1,0 +1,29 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
+data class CommandLineProcessorResult(val project: Project?, val future: Deferred<CliResult>) {
+  constructor(project: Project?, result: CliResult) : this(project, CompletableDeferred(value = result))
+  constructor(message : @NlsContexts.DialogMessage String) : this(project = null, future = CompletableDeferred(CliResult(1, message)))
+
+  val hasError: Boolean
+    get() = future.isCompleted && future.getCompleted().exitCode == 1
+
+  fun showError() {
+    Messages.showErrorDialog(getErrorMessage(), IdeBundle.message("dialog.title.cannot.execute.command"))
+  }
+
+  fun getExitCode(): Int = future.getCompleted().exitCode
+
+  fun getErrorMessage(): @Nls String? = future.getCompleted().message
+}

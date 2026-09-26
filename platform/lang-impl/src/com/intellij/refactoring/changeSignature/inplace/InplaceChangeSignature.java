@@ -1,37 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -49,7 +39,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.awt.RelativePoint;
@@ -58,12 +47,13 @@ import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Point;
 import java.util.ArrayList;
 
-public class InplaceChangeSignature implements DocumentListener {
-  public static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
+public final class InplaceChangeSignature implements DocumentListener {
+  private static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
   private ChangeInfo myCurrentInfo;
   private ChangeInfo myStableChange;
   private String myInitialSignature;
@@ -83,15 +73,18 @@ public class InplaceChangeSignature implements DocumentListener {
     myDocumentManager = PsiDocumentManager.getInstance(project);
     myProject = project;
     try {
-      myMarkAction = StartMarkAction.start(editor, project, ChangeSignatureHandler.REFACTORING_NAME);
+      myMarkAction = StartMarkAction.start(editor, project, RefactoringBundle.message("changeSignature.refactoring.name"));
     }
     catch (StartMarkAction.AlreadyStartedException e) {
-      final int exitCode = Messages.showYesNoDialog(myProject, e.getMessage(), ChangeSignatureHandler.REFACTORING_NAME, "Navigate to Started", "Cancel", Messages.getErrorIcon());
+      final int exitCode =
+        Messages.showYesNoDialog(myProject, e.getMessage(), RefactoringBundle.message("changeSignature.refactoring.name"),
+                                 RefactoringBundle.message("inplace.refactoring.navigate.to.started"),
+                                 RefactoringBundle.message("inplace.refactoring.cancel.current"), Messages.getErrorIcon());
       if (exitCode == Messages.CANCEL) return;
       PsiElement method = myStableChange.getMethod();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
       PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, method.getTextOffset())
-                          .navigate(true);
+        .navigate(true);
       return;
     }
 
@@ -104,8 +97,8 @@ public class InplaceChangeSignature implements DocumentListener {
     TextRange highlightingRange = myDetector.getHighlightingRange(myStableChange);
 
     HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
-    highlightManager.addRangeHighlight(editor, highlightingRange.getStartOffset(), highlightingRange.getEndOffset(), attributes, false, myHighlighters);
+    highlightManager.addRangeHighlight(editor, highlightingRange.getStartOffset(), highlightingRange.getEndOffset(), 
+                                       EditorColors.LIVE_TEMPLATE_ATTRIBUTES, false, myHighlighters);
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.setGreedyToRight(true);
       highlighter.setGreedyToLeft(true);
@@ -116,8 +109,7 @@ public class InplaceChangeSignature implements DocumentListener {
     showBalloon();
   }
 
-  @Nullable
-  public static InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
+  public static @Nullable InplaceChangeSignature getCurrentRefactoring(@NotNull Editor editor) {
     return editor.getUserData(INPLACE_CHANGE_SIGNATURE);
   }
 
@@ -133,8 +125,7 @@ public class InplaceChangeSignature implements DocumentListener {
     return myInitialSignature;
   }
 
-  @NotNull
-  public ChangeInfo getStableChange() {
+  public @NotNull ChangeInfo getStableChange() {
     return myStableChange;
   }
 
@@ -147,13 +138,13 @@ public class InplaceChangeSignature implements DocumentListener {
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     RangeMarker marker = event.getDocument().createRangeMarker(event.getOffset(), event.getOffset());
     myDocumentManager.performWhenAllCommitted(() -> {
       if (myDetector == null) {
         return;
       }
-      PsiFile file = myDocumentManager.getPsiFile(event.getDocument());
+      PsiFile file = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
       if (file == null) {
         return;
       }
@@ -198,40 +189,34 @@ public class InplaceChangeSignature implements DocumentListener {
     String methodSignature = myDetector.getMethodSignaturePreview(changeInfo, deleteRanges, newRanges);
 
     myPreview.getMarkupModel().removeAllHighlighters();
-    WriteCommandAction.writeCommandAction(null).run(() -> {
-      myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
-    });
-    TextAttributes deprecatedAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    WriteCommandAction.writeCommandAction(null).run(() -> myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature));
     for (TextRange range : deleteRanges) {
-      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                     deprecatedAttributes, HighlighterTargetArea.EXACT_RANGE);
+      myPreview.getMarkupModel().addRangeHighlighter(CodeInsightColors.DEPRECATED_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     HighlighterTargetArea.EXACT_RANGE);
     }
-    TextAttributes todoAttributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
     for (TextRange range : newRanges) {
-      myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                     todoAttributes, HighlighterTargetArea.EXACT_RANGE);
+      myPreview.getMarkupModel().addRangeHighlighter(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                     HighlighterTargetArea.EXACT_RANGE);
     }
   }
 
-  protected void showBalloon() {
+  private void showBalloon() {
     NonFocusableCheckBox checkBox = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     checkBox.addActionListener(e -> {
       myDelegate = checkBox.isSelected();
       updateCurrentInfo();
     });
     JPanel content = new JPanel(new BorderLayout());
-    content.add(new JBLabel("Performed signature modifications:"), BorderLayout.NORTH);
+    content.add(new JBLabel(RefactoringBundle.message("inplace.change.signature.preview.label")), BorderLayout.NORTH);
     content.add(myPreview.getComponent(), BorderLayout.CENTER);
     updateMethodSignature(myStableChange);
     content.add(checkBox, BorderLayout.SOUTH);
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(content, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
+    myBalloon.show(new PositionTracker<>(myEditor.getContentComponent()) {
       @Override
-      public RelativePoint recalculateLocation(Balloon object) {
+      public RelativePoint recalculateLocation(@NotNull Balloon object) {
         int offset = myStableChange.getMethod().getTextOffset();
         VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
         Point point = myEditor.visualPositionToXY(new VisualPosition(visualPosition.line, visualPosition.column));

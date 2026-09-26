@@ -39,8 +39,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * @return the array of expressions for the dimensions, or an empty array if the
    *         {@code new} expression is not an array creation expression.
    */
-  @NotNull
-  PsiExpression[] getArrayDimensions();
+  PsiExpression @NotNull [] getArrayDimensions();
 
   /**
    * Returns the expression specifying the initializer for the created array in
@@ -78,12 +77,19 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
   PsiJavaCodeReferenceElement getClassOrAnonymousClassReference();
 
   /**
-   * For type-annotated array creation expressions returns subtype of getType(),
+   * For type-annotated array creation expressions, returns a subtype of getType(),
    * to which an annotation belongs.
    *
-   * @param annotation annotation to find the type for.
-   * @return annotated subtype or null, if annotation is incorrectly placed.
+   * @param annotation annotation to find the type for. Must be a child of this new expression.
+   * @return annotated subtype. May return null if the new expression is incorrect, and it's not possible to derive a type from it.
    */
   @Nullable
   PsiType getOwner(@NotNull PsiAnnotation annotation);
+
+  /**
+   * @return true if it's an array creation in form of {@code new T[0]} or {@code new T[] {...}}
+   */
+  default boolean isArrayCreation() {
+     return getArrayDimensions().length != 0 || getArrayInitializer() != null;
+  }
 }

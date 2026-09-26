@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.devkit.gradle.toml` start
+content_module_jar(module = ":gradle-toml")
+### auto-generated section `dev intellij.devkit.gradle.toml` end
+
+### auto-generated section `build intellij.devkit.gradle.toml` start
+jvm_library(
+    name = "gradle-toml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.gradle.toml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/toml"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/util",
+        "//plugins/devkit/intellij.devkit.gradle:gradle",
+        "//plugins/toml/core",
+    ],
+)
+
+jvm_library(
+    name = "gradle-toml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.gradle.toml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":gradle-toml",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//plugins/devkit/intellij.devkit.gradle:gradle_test_lib",
+        "//plugins/toml/core:core_test_lib",
+        "//plugins/toml:toml_test_lib",
+    ],
+)
+### auto-generated section `build intellij.devkit.gradle.toml` end
+
+### auto-generated section `iml intellij.devkit.gradle.toml` start
+exports_files(
+    [
+        "intellij.devkit.gradle.toml.iml",
+        "resources/intellij.devkit.gradle.toml.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.gradle.toml` end

@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.VertInsertFeedbackPainter;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-/**
- * @author yole
- */
+
 public class FlowDropLocation implements ComponentDropLocation {
   private int myInsertIndex;
   private final String myInsertBeforeId;
@@ -67,14 +59,17 @@ public class FlowDropLocation implements ComponentDropLocation {
     }
   }
 
+  @Override
   public RadContainer getContainer() {
     return myContainer;
   }
 
+  @Override
   public boolean canDrop(ComponentDragObject dragObject) {
     return true;
   }
 
+  @Override
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     if (myContainer.getComponentCount() == 0) {
       Dimension initialSize = dragObject.getInitialSize(getContainer());
@@ -118,7 +113,7 @@ public class FlowDropLocation implements ComponentDropLocation {
       }
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
-    else if (myInsertIndex == myContainer.getComponentCount() && isRightAlign()) {
+    else if (myInsertIndex == myContainer.getComponentCount()) {
       Rectangle bounds = myContainer.getComponent(myInsertIndex-1).getBounds();
       Rectangle rc = new Rectangle(bounds.x+bounds.width, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());
@@ -138,6 +133,7 @@ public class FlowDropLocation implements ComponentDropLocation {
     return myAlignment == FlowLayout.RIGHT || myAlignment == FlowLayout.TRAILING;
   }
 
+  @Override
   public void processDrop(GuiEditor editor,
                           RadComponent[] components,
                           GridConstraints[] constraintsToAdjust,
@@ -157,8 +153,8 @@ public class FlowDropLocation implements ComponentDropLocation {
     }
   }
 
-  @Nullable
-  public ComponentDropLocation getAdjacentLocation(Direction direction) {
+  @Override
+  public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
     return null;
   }
 }

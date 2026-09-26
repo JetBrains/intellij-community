@@ -1,0 +1,155 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.frontend.view.impl
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.containers.DisposableWrapperList
+import fleet.rpc.client.durable
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.toOptions
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
+import java.awt.Toolkit
+import kotlin.coroutines.cancellation.CancellationException
+
+internal class TerminalSessionController(
+  private val sessionModel: TerminalSessionModel,
+  private val outputModelController: TerminalOutputModelController,
+  private val alternateBufferModelController: TerminalOutputModelController,
+  private val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions>,
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  private val coroutineScope: CoroutineScope,
+) {
+  private val eventHandlers: DisposableWrapperList<TerminalOutputEventsHandler> = DisposableWrapperList()
+  private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
+
+  private val uiContext = Dispatchers.UI + ModalityState.any().asContextElement()
+
+  fun handleEvents(session: TerminalSession) {
+    coroutineScope.launch(CoroutineName("Output flow collection")) {
+      // Get output flow again even if it was terminated.
+      // It can happen in case of RemDev if there were any connection problems and backend decided to terminate the flow.
+      while (!session.isClosed) {
+        // Wrap the flow collection into `durable` call to retry in case of connection issues.
+        durable {
+          session.getOutputFlow().collect { events ->
+            withContext(uiContext) {
+              doHandleEvents(events)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private suspend fun doHandleEvents(events: List<TerminalOutputEvent>) {
+    for (event in events) {
+      try {
+        handleEvent(event)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+      }
+    }
+  }
+
+  private suspend fun handleEvent(event: TerminalOutputEvent) {
+    invokeBaseHandler(event)
+
+    for (handler in eventHandlers) {
+      handler.handleEvent(event)
+    }
+  }
+
+  private fun invokeBaseHandler(event: TerminalOutputEvent) {
+    when (event) {
+      is TerminalInitialStateEvent -> {
+        sessionModel.updateTerminalState(event.sessionState.toTerminalState())
+        startupOptionsDeferred.complete(event.startupOptions.toOptions())
+
+        outputModelController.applyPendingUpdates()
+        alternateBufferModelController.applyPendingUpdates()
+
+        outputModelController.model.restoreFromState(event.outputModelState.toState())
+        alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
+      }
+      is TerminalContentUpdatedEvent -> {
+        val controller = getCurrentOutputModelController()
+        controller.updateContent(event)
+      }
+      is TerminalCursorPositionChangedEvent -> {
+        val controller = getCurrentOutputModelController()
+        controller.updateCursorPosition(event)
+      }
+      is TerminalStateChangedEvent -> {
+        val state = event.state.toTerminalState()
+        sessionModel.updateTerminalState(state)
+      }
+      is TerminalBeepEvent -> {
+        if (settings.audibleBell()) {
+          Toolkit.getDefaultToolkit().beep()
+        }
+      }
+      TerminalSessionTerminatedEvent -> {
+        fireSessionTerminated()
+      }
+      else -> {
+        // do nothing
+      }
+    }
+  }
+
+  private fun getCurrentOutputModelController(): TerminalOutputModelController {
+    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) {
+      alternateBufferModelController
+    }
+    else outputModelController
+  }
+
+  fun addTerminationCallback(parentDisposable: Disposable, onTerminated: Runnable) {
+    terminationListeners.add(onTerminated, parentDisposable)
+  }
+
+  private fun fireSessionTerminated() {
+    for (listener in terminationListeners) {
+      try {
+        listener.run()
+      }
+      catch (t: Throwable) {
+        LOG.error("Unhandled exception in termination listener", t)
+      }
+    }
+  }
+
+  fun addEventsHandler(handler: TerminalOutputEventsHandler, parentDisposable: Disposable? = null) {
+    if (parentDisposable != null) {
+      eventHandlers.add(handler, parentDisposable)
+    }
+    else eventHandlers.add(handler)
+  }
+}
+
+private val LOG = logger<TerminalSessionController>()

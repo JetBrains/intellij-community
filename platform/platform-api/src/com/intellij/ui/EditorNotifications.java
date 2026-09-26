@@ -1,61 +1,102 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.codeInsight.intention.IntentionActionProvider;
+import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class EditorNotifications extends AbstractProjectComponent {
-  public static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.editorNotificationProvider");
+public abstract class EditorNotifications {
+  private static final EditorNotifications NULL_IMPL = new EditorNotifications() {
+    @Override
+    public void updateNotifications(@NotNull VirtualFile file) {
+    }
+
+    @Override
+    public void updateNotifications(@NotNull EditorNotificationProvider provider) {
+    }
+
+    @Override
+    public void updateAllNotifications() {
+    }
+  };
 
   /**
-   * An extension allowing to add custom notifications to the top of file editors.
-   * 
-   * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed. 
-   * @param <T> the type of the notification UI component
+   * @return intention actions which were registered via {@link IntentionActionProvider#getIntentionAction()} in this {@link EditorNotificationPanel}
+   * @see com.intellij.ui.EditorNotificationsImpl#collectIntentionActions(FileEditor, Project)
    */
-  public abstract static class Provider<T extends JComponent> {
-    @NotNull
-    public abstract Key<T> getKey();
-
-    @Nullable
-    public abstract T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor);
+  public @NotNull List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
+    return Collections.emptyList();
   }
 
-  public static EditorNotifications getInstance(Project project) {
-    return project.getComponent(EditorNotifications.class);
+  /**
+   * @deprecated Please use {@link EditorNotificationProvider} instead.
+   */
+  @Deprecated
+  public abstract static class Provider<T extends JComponent> implements EditorNotificationProvider {
+
+    /**
+     * A unique key.
+     */
+    public abstract @NotNull Key<T> getKey();
+
+    @RequiresEdt
+    public @Nullable T createNotificationPanel(@NotNull VirtualFile file,
+                                               @NotNull FileEditor fileEditor) {
+      throw new AbstractMethodError();
+    }
+
+    @RequiresEdt
+    public @Nullable T createNotificationPanel(@NotNull VirtualFile file,
+                                               @NotNull FileEditor fileEditor,
+                                               @NotNull Project project) {
+      return createNotificationPanel(file, fileEditor);
+    }
+
+    @Override
+    public @NotNull Function<? super @NotNull FileEditor, @Nullable T> collectNotificationData(@NotNull Project project,
+                                                                                               @NotNull VirtualFile file) {
+      return fileEditor -> createNotificationPanel(file, fileEditor, project);
+    }
   }
 
-  public EditorNotifications(final Project project) {
-    super(project);
+  public static @NotNull EditorNotifications getInstance(@NotNull Project project) {
+    return project.isDefault() ? NULL_IMPL : project.getService(EditorNotifications.class);
+  }
+
+  @ApiStatus.Internal
+  public void scheduleUpdateNotifications(@NotNull TextEditor editor) {
   }
 
   public abstract void updateNotifications(@NotNull VirtualFile file);
+
+  /**
+   * This method is broken and should have been named {@link #removeNotificationsForProvider}.
+   * It DOES NOT RUN {@link EditorNotificationProvider#collectNotificationData} to check if there are any new notifications.
+   * Use {@link #updateAllNotifications} instead.
+   *
+   * @deprecated until its implementation matches expectations from its name
+   */
+  @Deprecated
+  public abstract void updateNotifications(@NotNull EditorNotificationProvider provider);
+
+  public void removeNotificationsForProvider(@NotNull EditorNotificationProvider provider) {
+    updateNotifications(provider);
+  }
 
   public abstract void updateAllNotifications();
 
@@ -63,6 +104,10 @@ public abstract class EditorNotifications extends AbstractProjectComponent {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       getInstance(project).updateAllNotifications();
+    }
+    Project lightEditProject = LightEditService.getInstance().getProject();
+    if (lightEditProject != null) {
+      getInstance(lightEditProject).updateAllNotifications();
     }
   }
 }

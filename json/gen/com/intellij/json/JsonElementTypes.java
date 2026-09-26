@@ -8,12 +8,12 @@ import com.intellij.json.psi.impl.*;
 
 public interface JsonElementTypes {
 
-  IElementType ARRAY = new JsonElementType("ARRAY");
+  IElementType ARRAY = JsonElementFactory.getType("ARRAY");
   IElementType BOOLEAN_LITERAL = new JsonElementType("BOOLEAN_LITERAL");
   IElementType LITERAL = new JsonElementType("LITERAL");
   IElementType NULL_LITERAL = new JsonElementType("NULL_LITERAL");
   IElementType NUMBER_LITERAL = new JsonElementType("NUMBER_LITERAL");
-  IElementType OBJECT = new JsonElementType("OBJECT");
+  IElementType OBJECT = JsonElementFactory.getType("OBJECT");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
   IElementType REFERENCE_EXPRESSION = new JsonElementType("REFERENCE_EXPRESSION");
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
@@ -38,7 +38,7 @@ public interface JsonElementTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == ARRAY) {
+      if (type == ARRAY) {
         return new JsonArrayImpl(node);
       }
       else if (type == BOOLEAN_LITERAL) {
@@ -61,6 +61,9 @@ public interface JsonElementTypes {
       }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);
+      }
+      else if (type == VALUE) {
+        return new JsonValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

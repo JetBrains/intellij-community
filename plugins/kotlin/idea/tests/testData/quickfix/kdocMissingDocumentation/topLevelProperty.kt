@@ -1,0 +1,5 @@
+// "Add documentation" "true"
+
+val <caret>x: Int = 1
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocMissingDocumentationInspection$createQuickFix$1

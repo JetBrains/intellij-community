@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.HyperLink;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -29,7 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class BaseTestsOutputConsoleView implements ConsoleView, ObservableConsoleView, HelpIdProvider {
   private ConsoleView myConsole;
@@ -37,7 +26,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected TestConsoleProperties myProperties;
   private TestResultsPanel myTestResultsPanel;
 
-  public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
+  public BaseTestsOutputConsoleView(@NotNull TestConsoleProperties properties, AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
 
     myConsole = myProperties.createConsole();
@@ -57,12 +46,12 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected abstract TestResultsPanel createTestResultsPanel();
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(final @NotNull ProcessHandler processHandler) {
     myConsole.attachToProcess(processHandler);
   }
 
   @Override
-  public void print(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
+  public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
     printNew(printer -> printer.print(text, contentType));
   }
 
@@ -99,22 +88,22 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void performWhenNoDeferredOutput(@NotNull final Runnable runnable) {
+  public void performWhenNoDeferredOutput(final @NotNull Runnable runnable) {
     myConsole.performWhenNoDeferredOutput(runnable);
   }
 
   @Override
-  public void setHelpId(@NotNull final String helpId) {
+  public void setHelpId(final @NotNull String helpId) {
     myConsole.setHelpId(helpId);
   }
 
   @Override
-  public void addMessageFilter(@NotNull final Filter filter) {
+  public void addMessageFilter(final @NotNull Filter filter) {
     myConsole.addMessageFilter(filter);
   }
 
   @Override
-  public void printHyperlink(@NotNull final String hyperlinkText, final HyperlinkInfo info) {
+  public void printHyperlink(final @NotNull String hyperlinkText, final HyperlinkInfo info) {
     printNew(new HyperLink(hyperlinkText, info));
   }
 
@@ -129,7 +118,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myTestResultsPanel;
   }
 
@@ -146,20 +135,18 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   @Override
-  public void addChangeListener(@NotNull final ChangeListener listener, @NotNull final Disposable parent) {
+  public void addChangeListener(final @NotNull ChangeListener listener, final @NotNull Disposable parent) {
     if (myConsole instanceof ObservableConsoleView) {
       ((ObservableConsoleView)myConsole).addChangeListener(listener, parent);
     }
   }
 
   @Override
-  @NotNull
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public ConsoleView getConsole() {
+  public @NotNull ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -177,9 +164,8 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return myProperties;
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return "reference.runToolWindow.testResultsTab";
   }
 }

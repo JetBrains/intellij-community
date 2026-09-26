@@ -1,37 +1,25 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
-/**
- * @author max
- */
-public class QuickFixBundle {
-  private static Reference<ResourceBundle> ourBundle;
+public final class QuickFixBundle {
+  public static final @NonNls String BUNDLE = "messages.QuickFixBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(QuickFixBundle.class, BUNDLE);
 
-  private static final String BUNDLE = "messages.QuickFixBundle";
+  private QuickFixBundle() {}
 
-  private QuickFixBundle() { }
-
-  @Nls
-  @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE)String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

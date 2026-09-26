@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -22,13 +23,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathToken;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FlipOperandsFix extends AbstractFix {
     private final XPathBinaryExpression myExpression;
@@ -39,16 +41,23 @@ public class FlipOperandsFix extends AbstractFix {
         myExpression = PsiTreeUtil.getParentOfType(token, XPathBinaryExpression.class);
     }
 
-    @NotNull
-    public String getText() {
-        return "Flip '" + myToken.getText() + "' to '" + myToken.getText().replace('<', '>') + "'";
+    @Override
+    public @NotNull String getText() {
+        return XPathBundle.message("intention.name.flip.binary.expression.to", myToken.getText(), myToken.getText().replace('<', '>'));
     }
 
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.flip.binary.expression");
+    }
+
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myExpression != null && myExpression.isValid() && myExpression.getType() == XPathType.BOOLEAN && myExpression.getROperand() != null;
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(myToken, XmlAttribute.class, true);
         assert attribute != null;
 
@@ -68,7 +77,13 @@ public class FlipOperandsFix extends AbstractFix {
         return operand != null ? operand.getText() : "";
     }
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new FlipOperandsFix(PsiTreeUtil.findSameElementInCopy(myToken, target));
+  }
 }

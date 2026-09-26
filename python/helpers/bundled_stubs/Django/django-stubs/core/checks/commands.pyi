@@ -1,0 +1,3 @@
+from django.core.checks.messages import CheckMessage
+
+def migrate_and_makemigrations_autodetector(**kwargs: object) -> list[CheckMessage]: ...

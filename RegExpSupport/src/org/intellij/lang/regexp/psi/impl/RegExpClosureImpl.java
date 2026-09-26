@@ -17,14 +17,12 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
-
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.regexp.RegExpElementTypes;
 import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.intellij.lang.regexp.psi.RegExpClosure;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpQuantifier;
-import org.intellij.lang.regexp.psi.RegExpClosure;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpClosureImpl extends RegExpElementImpl implements RegExpClosure {
 
@@ -32,19 +30,20 @@ public class RegExpClosureImpl extends RegExpElementImpl implements RegExpClosur
         super(astNode);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpClosure(this);
     }
 
-    @NotNull
-    public RegExpQuantifier getQuantifier() {
+    @Override
+    public @NotNull RegExpQuantifier getQuantifier() {
         final ASTNode node = getNode().findChildByType(RegExpElementTypes.QUANTIFIER);
         assert node != null;
         return (RegExpQuantifier)node.getPsi();
     }
 
-    @NotNull
-    public RegExpAtom getAtom() {
+    @Override
+    public @NotNull RegExpAtom getAtom() {
         final RegExpAtom atom = PsiTreeUtil.getChildOfType(this, RegExpAtom.class);
         assert atom != null;
         return atom;

@@ -37,9 +37,6 @@ public interface JvmMethod extends JvmTypeParametersOwner {
   @Nullable
   JvmType getReturnType();
 
-  /**
-   * @since 2018.2
-   */
   default boolean hasParameters() {
     return getParameters().length > 0;
   }
@@ -47,8 +44,7 @@ public interface JvmMethod extends JvmTypeParametersOwner {
   /**
    * @see java.lang.reflect.Executable#getParameters
    */
-  @NotNull
-  JvmParameter[] getParameters();
+  JvmParameter @NotNull [] getParameters();
 
   /**
    * @see java.lang.reflect.Executable#isVarArgs
@@ -59,8 +55,7 @@ public interface JvmMethod extends JvmTypeParametersOwner {
    * @see java.lang.reflect.Method#getGenericExceptionTypes
    * @see java.lang.reflect.Method#getAnnotatedExceptionTypes
    */
-  @NotNull
-  JvmReferenceType[] getThrowsTypes();
+  JvmReferenceType @NotNull [] getThrowsTypes();
 
   @Override
   default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {

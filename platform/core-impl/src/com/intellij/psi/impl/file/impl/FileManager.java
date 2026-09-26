@@ -1,54 +1,94 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
-public interface FileManager extends Disposable {
-  @Nullable
-  PsiFile findFile(@NotNull VirtualFile vFile);
+/**
+ * @see PsiManagerEx#getFileManager()
+ */
+public interface FileManager {
+  // todo IJPL-339 mark deprecated?
+  @RequiresReadLock
+  @Nullable PsiFile findFile(@NotNull VirtualFile vFile);
 
+  @ApiStatus.Experimental
+  @RequiresReadLock
+  @Nullable
+  PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
+
+  @RequiresReadLock
   @Nullable
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
-  void reloadFromDisk(@NotNull PsiFile file); //Q: move to PsiFile(Impl)?
+  @RequiresWriteLock
+  void reloadFromDisk(@NotNull PsiFile psiFile); //Q: move to PsiFile(Impl)?
 
+  // todo IJPL-339 mark deprecated?
+  @RequiresReadLock
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
+
+  /**
+   * @return list of cached PSI files. Note that the list can be shorter than {@link #findCachedViewProviders(VirtualFile)} because
+   * not all view providers have cached PSI files.
+   */
+  @ApiStatus.Experimental
+  @RequiresReadLock
+  @NotNull @Unmodifiable
+  List<@NotNull PsiFile> getCachedPsiFiles(@NotNull VirtualFile vFile);
+
+  @ApiStatus.Experimental
+  @Nullable
+  PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
   @TestOnly
   void cleanupForNextTest();
 
-  FileViewProvider findViewProvider(@NotNull VirtualFile file);
-  FileViewProvider findCachedViewProvider(@NotNull VirtualFile file);
-  void setViewProvider(@NotNull VirtualFile virtualFile, @Nullable FileViewProvider fileViewProvider);
+  // todo IJPL-339 mark deprecated?
+  @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
+
+  @ApiStatus.Experimental
+  FileViewProvider findViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
+
+  // todo IJPL-339 mark deprecated?
+  @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
+
+  @ApiStatus.Experimental
+  @NotNull @Unmodifiable
+  List<@NotNull FileViewProvider> findCachedViewProviders(@NotNull VirtualFile vFile);
+
+  @ApiStatus.Experimental
+  @Nullable
+  FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
+
+  /**
+   * Requires write lock for physical files, and <i>usually</i> does not require a write lock for non-physical files.
+   */
+  void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider);
 
   @NotNull
   List<PsiFile> getAllCachedFiles();
 
+  // todo IJPL-339 mark deprecated?
   @NotNull
-  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled);
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled);
+
+  @ApiStatus.Experimental
+  @NotNull
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context, boolean eventSystemEnabled);
 }

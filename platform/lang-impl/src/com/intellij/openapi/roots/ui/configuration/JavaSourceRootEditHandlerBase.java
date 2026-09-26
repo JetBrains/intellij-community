@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -7,42 +7,41 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
 
-/**
- * @author nik
- */
+@ApiStatus.Internal
 public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaSourceRootProperties> {
   public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JavaSourceRootProperties> rootType) {
     super(rootType);
   }
 
-  @NotNull
   @Override
-  public Icon getRootIcon(@NotNull JavaSourceRootProperties properties) {
+  public @NotNull Icon getRootIcon(@NotNull JavaSourceRootProperties properties) {
     return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
   }
 
-  @Nullable
   @Override
-  public Icon getRootFileLayerIcon(@NotNull JavaSourceRootProperties properties) {
+  public @Nullable Icon getRootFileLayerIcon() {
     return AllIcons.Modules.SourceRootFileLayer;
   }
 
-  @NotNull
-  protected abstract Icon getGeneratedRootIcon();
+  protected abstract @NotNull Icon getGeneratedRootIcon();
 
-  @Nullable
   @Override
-  public String getPropertiesString(@NotNull JavaSourceRootProperties properties) {
+  public @Nullable String getPropertiesString(@NotNull JavaSourceRootProperties properties) {
     StringBuilder buffer = new StringBuilder();
     if (properties.isForGeneratedSources()) {
       buffer.append(" [generated]");
@@ -51,16 +50,15 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     if (!packagePrefix.isEmpty()) {
       buffer.append(" (").append(packagePrefix).append(")");
     }
-    return buffer.length() > 0 ? buffer.toString() : null;
+    return !buffer.isEmpty() ? buffer.toString() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createPropertiesEditor(@NotNull final SourceFolder folder,
-                                           @NotNull final JComponent parentComponent,
-                                           @NotNull final ContentRootPanel.ActionCallback callback) {
-    final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
-                                                                      AllIcons.Modules.SetPackagePrefixRollover,
+  public @Nullable JComponent createPropertiesEditor(final @NotNull SourceFolder folder,
+                                                     final @NotNull JComponent parentComponent,
+                                                     final @NotNull ContentRootPanel.ActionCallback callback) {
+    final IconActionComponent iconComponent = new IconActionComponent(AllIcons.General.Inline_edit,
+                                                                      AllIcons.General.Inline_edit_hovered,
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"), () -> {
                                                                         JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
                                                                         assert properties != null;
@@ -76,20 +74,20 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return panel;
   }
 
-  private static class SourceRootPropertiesDialog extends DialogWrapper {
+  private static final class SourceRootPropertiesDialog extends DialogWrapper {
     private final JTextField myPackagePrefixField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;
-    @NotNull private final JavaSourceRootProperties myProperties;
+    private final @NotNull JavaSourceRootProperties myProperties;
 
     private SourceRootPropertiesDialog(@NotNull JComponent parentComponent, @NotNull JavaSourceRootProperties properties) {
       super(parentComponent, true);
       myProperties = properties;
       setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
       myPackagePrefixField = new JTextField();
-      myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated sources"));
+      myIsGeneratedCheckBox = new JCheckBox(ProjectBundle.message("checkbox.for.generated.sources"));
       myMainPanel = FormBuilder.createFormBuilder()
-        .addLabeledComponent("Package &prefix:", myPackagePrefixField)
+        .addLabeledComponent(ProjectBundle.message("label.package.prefix"), myPackagePrefixField)
         .addComponent(myIsGeneratedCheckBox)
         .getPanel();
       myPackagePrefixField.setText(myProperties.getPackagePrefix());
@@ -98,9 +96,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       init();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myPackagePrefixField;
     }
 
@@ -111,9 +108,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       super.doOKAction();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myMainPanel;
     }
   }

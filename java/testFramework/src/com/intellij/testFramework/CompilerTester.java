@@ -1,87 +1,142 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.CompilerTests;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.Result;
+import com.intellij.execution.wsl.WslPath;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.cmdline.LogSetup;
 import org.junit.Assert;
 
-import javax.swing.*;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
-public class CompilerTester {
+import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+@SuppressWarnings("UseOptimizedEelFunctions")
+public final class CompilerTester {
+  private static final Logger LOG = Logger.getInstance(CompilerTester.class);
+
   private final Project myProject;
-  private List<Module> myModules;
+  private List<? extends Module> myModules;
   private TempDirTestFixture myMainOutput;
 
-  public CompilerTester(Module module) throws Exception {
-    this(module.getProject(), Collections.singletonList(module));
+  public CompilerTester(@NotNull Module module) throws Exception {
+    this(module.getProject(), Collections.singletonList(module), null);
   }
 
-  public CompilerTester(Project project, List<Module> modules) throws Exception {
+  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<? extends Module> modules) throws Exception {
+    this(fixture.getProject(), modules, fixture.getTestRootDisposable());
+  }
+
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable) throws Exception {
+    this(project, modules, disposable, true);
+  }
+
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable,
+                        boolean overrideJdkAndOutput) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
     myMainOutput.setUp();
 
-    CompilerTestUtil.enableExternalCompiler();
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      //noinspection ConstantConditions
-      CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-      for (Module module : myModules) {
-        ModuleRootModificationUtil.setModuleSdk(module, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-      }
-    });
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          tearDown();
+        }
+      });
+    }
+
+    CompilerBuildTestUtil.enableExternalCompiler();
+    if (overrideJdkAndOutput) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+        Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject()))
+          .setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+        if (!myModules.isEmpty()) {
+          JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+          if ((project.getBasePath() != null) && (WslPath.getDistributionByWindowsUncPath(project.getBasePath()) == null)) {
+            for (Module module : myModules) {
+              ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+            }
+          }
+        }
+      });
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    }
   }
 
   public void tearDown() {
-    CompilerTestUtil.disableExternalCompiler(getProject());
-
     try {
-      myMainOutput.tearDown();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
+      RunAll.runAll(
+        () -> myMainOutput.tearDown(),
+        () -> CompilerBuildTestUtil.disableExternalCompiler(getProject()),
+        () -> IComponentStoreKt.getStateStore(ApplicationManager.getApplication()).clearCaches()
+      );
     }
     finally {
       myMainOutput = null;
@@ -93,27 +148,26 @@ public class CompilerTester {
     return myProject;
   }
 
-  public void deleteClassFile(final String className) throws IOException {
+  public void deleteClassFile(@NotNull String className) throws IOException {
     WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
-      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
+      touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile()
+              .getVirtualFile());
     });
   }
 
-  @Nullable
-  public VirtualFile findClassFile(String className, Module module) {
-    VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    assert path != null;
-    path.getChildren();
-    path.refresh(false, true);
-    return path.findFileByRelativePath(className.replace('.', '/') + ".class");
+  public @Nullable File findClassFile(String className, Module module) {
+    VirtualFile out = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    assertNotNull(out);
+    File cls = new File(out.getPath(), className.replace('.', '/') + ".class");
+    return cls.exists() ? cls : null;
   }
 
   public void touch(final VirtualFile file) throws IOException {
     WriteAction.runAndWait(() -> {
       file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
       File ioFile = VfsUtilCore.virtualToIoFile(file);
-      assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+      assertTrue(ioFile.setLastModified(ioFile.lastModified() - 100000));
       file.refresh(false, false);
     });
   }
@@ -121,15 +175,13 @@ public class CompilerTester {
   public void setFileText(final PsiFile file, final String text) throws IOException {
     WriteAction.runAndWait(() -> {
       final VirtualFile virtualFile = file.getVirtualFile();
-      VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
+      VfsUtil.saveText(Objects.requireNonNull(virtualFile), text);
     });
     touch(file.getVirtualFile());
   }
 
   public void setFileName(final PsiFile file, final String name) {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      file.setName(name);
-    });
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> file.setName(name));
   }
 
   public List<CompilerMessage> make() {
@@ -152,76 +204,134 @@ public class CompilerTester {
     return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
-  public List<CompilerMessage> runCompiler(final Consumer<CompileStatusNotification> runnable) {
+  public @NotNull List<CompilerMessage> runCompiler(@NotNull Consumer<? super CompileStatusNotification> runnable) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
+    PlatformTestUtil.saveProject(getProject(), false);
+    CompilerTestUtil.saveApplicationSettings();
+    CompilerTests.saveWorkspaceModelCaches(getProject());
     EdtTestUtil.runInEdtAndWait(() -> {
-      refreshVfs(getProject().getProjectFilePath());
-      for (Module module : myModules) {
-        refreshVfs(module.getModuleFilePath());
-      }
-
-      PlatformTestUtil.saveProject(getProject());
-      CompilerTestUtil.saveApplicationSettings();
-      // for now directory based project is used for external storage
+      // for now, a directory-based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
         for (Module module : myModules) {
-          Path ioFile = Paths.get(module.getModuleFilePath());
-          if (!Files.exists(ioFile)) {
-            getProject().save();
-            assert Files.exists(ioFile) : "File does not exist: " + ioFile.toString();
+          Path ioFile = module.getModuleNioFile();
+          assertTrue("File does not exist: " + ioFile, Files.exists(ioFile));
+        }
+      }
+
+      PathMacros pathMacroManager = PathMacros.getInstance();
+      Map<String, String> userMacros = pathMacroManager.getUserMacros();
+      if (!userMacros.isEmpty()) {
+        // require to be presented on disk
+        Path macroFilePath = getPersistentStateComponentStorageLocation(pathMacroManager.getClass());
+        assertNotNull(macroFilePath);
+        if (!Files.exists(macroFilePath)) {
+          String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros;
+          // todo find out who deletes this file during tests
+          LOG.warn(message);
+
+          String fakeMacroName = "__remove_me__";
+          IComponentStore appStore = IComponentStoreKt.getStateStore(ApplicationManager.getApplication());
+          pathMacroManager.setMacro(fakeMacroName, fakeMacroName);
+          appStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
+          pathMacroManager.setMacro(fakeMacroName, null);
+          appStore.saveComponent((PersistentStateComponent<?>)pathMacroManager);
+          if (!Files.exists(macroFilePath)) {
+            throw new AssertionError(message);
           }
         }
       }
+      enableDebugLogging();
       runnable.consume(callback);
     });
 
-    //tests run in awt
+    // tests run in awt
     while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         //noinspection TestOnlyProblems
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }
 
+    printBuildLog();
     callback.throwException();
 
     if (!((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES)) {
       throw new RuntimeException("External javac thread is still running. Thread dump:" + ThreadDumper.dumpThreadsToString());
     }
 
+    checkVfsNotLoadedForOutput();
+
     return callback.getMessages();
   }
 
-  private static void refreshVfs(String path) {
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    if (vFile != null) {
-      vFile.refresh(false, false);
+  private void checkVfsNotLoadedForOutput() {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension != null) {
+        for (String url : extension.getOutputRootUrls(true)) {
+          VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+          IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+          if (root != null) {
+            UsefulTestCase.assertEmpty(
+              "VFS should not be loaded for output: that increases the number of VFS events and reindexing costs",
+              ((NewVirtualFile)root).getCachedChildren());
+          }
+        }
+      }
     }
   }
 
-  private static class ErrorReportingCallback implements CompileStatusNotification {
+  public static void printBuildLog() {
+    var logDirectory = BuildManager.getBuildLogDirectory();
+    TestLoggerFactory.publishArtifactIfTestFails(logDirectory, "build-log");
+  }
+
+  public static void enableDebugLogging() {
+    var logDirectory = BuildManager.getBuildLogDirectory();
+    try {
+      NioFiles.deleteRecursively(logDirectory);
+      Files.createDirectories(logDirectory);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    Properties properties = new Properties();
+    try {
+      try (InputStream config = LogSetup.readDefaultLogConfig()) {
+        properties.load(config);
+      }
+
+      properties.setProperty(".level", "FINER");
+      Path logFile = logDirectory.resolve(LogSetup.LOG_CONFIG_FILE_NAME);
+      try (OutputStream output = new BufferedOutputStream(Files.newOutputStream(logFile))) {
+        properties.store(output, null);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static final class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();
 
-    ErrorReportingCallback(Semaphore semaphore) {
+    ErrorReportingCallback(@NotNull Semaphore semaphore) {
       mySemaphore = semaphore;
     }
 
     @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+    public void finished(boolean aborted, int errors, int warnings, final @NotNull CompileContext compileContext) {
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
-            final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION ||
-                !(text.contains("Compilation completed successfully") ||
-                  text.contains("used to compile") ||
-                  text.startsWith("Using Groovy-Eclipse"))) {
+            String text = message.getMessage();
+            if (category != CompilerMessageCategory.INFORMATION || !isSpamMessage(text)) {
               myMessages.add(message);
             }
           }
@@ -236,16 +346,24 @@ public class CompilerTester {
       }
     }
 
+    private static boolean isSpamMessage(String text) {
+      return text.contains("Build completed successfully in ") ||
+             text.contains("used to compile") ||
+             text.contains("illegal reflective") ||
+             text.contains("Picked up") ||
+             text.contains("consider reporting this to the maintainers") ||
+             text.contains("Errors occurred while compiling module") ||
+             text.startsWith("Using Groovy-Eclipse");
+    }
+
     void throwException() {
       if (myError != null) {
-        throw new RuntimeException(myError);
+        ExceptionUtil.rethrow(myError);
       }
     }
 
-    public List<CompilerMessage> getMessages() {
+    public @NotNull List<CompilerMessage> getMessages() {
       return myMessages;
     }
   }
-
-
 }

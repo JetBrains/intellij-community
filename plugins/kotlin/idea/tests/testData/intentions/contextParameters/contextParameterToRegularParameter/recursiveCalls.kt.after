@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(ctx: A) fun <A> implicit():A = ctx
+
+interface TestLogger {
+    fun log(message: String)
+}
+
+fun logRecursive(<caret>logger: TestLogger, n: Int) {
+    if (n <= 0) return
+    with(logger) {
+        implicit<TestLogger>()
+    }.log("n = $n")
+    logRecursive(logger, n - 1)
+}

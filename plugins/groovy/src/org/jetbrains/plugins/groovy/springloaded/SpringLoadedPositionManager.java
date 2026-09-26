@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.springloaded;
 
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
@@ -46,7 +34,6 @@ import java.util.regex.Pattern;
 
 /**
  * Position manager to debug classes reloaded by org.springsource.springloaded
- * @author Sergey Evdokimov
  */
 public class SpringLoadedPositionManager implements PositionManager {
 
@@ -63,16 +50,15 @@ public class SpringLoadedPositionManager implements PositionManager {
     throw NoDataException.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
+  public @NotNull List<ReferenceType> getAllClasses(final @NotNull SourcePosition classPosition) throws NoDataException {
 
     String className = ReadAction.compute(() -> findEnclosingName(classPosition));
     if (className == null) throw NoDataException.INSTANCE;
 
     int line = ReadAction.compute(() -> classPosition.getLine());
 
-    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    List<ReferenceType> referenceTypes = VirtualMachineProxy.getCurrent().classesByName(className);
     if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
     Set<ReferenceType> res = new HashSet<>();
@@ -88,14 +74,12 @@ public class SpringLoadedPositionManager implements PositionManager {
     return new ArrayList<>(res);
   }
 
-  @NotNull
   @Override
-  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     throw NoDataException.INSTANCE;
   }
 
-  @Nullable
-  private static String findEnclosingName(final SourcePosition position) {
+  private static @Nullable String findEnclosingName(final SourcePosition position) {
     PsiElement element = findElementAt(position);
     while (true) {
       element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
@@ -114,8 +98,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     return null;
   }
 
-  @Nullable
-  private static String getClassNameForJvm(final PsiClass aClass) {
+  private static @Nullable String getClassNameForJvm(final PsiClass aClass) {
     final PsiClass psiClass = aClass.getContainingClass();
     if (psiClass != null) {
       return getClassNameForJvm(psiClass) + "$" + aClass.getName();
@@ -124,8 +107,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     return aClass.getQualifiedName();
   }
 
-  @Nullable
-  private static String getOuterClassName(final SourcePosition position) {
+  private static @Nullable String getOuterClassName(final SourcePosition position) {
 
     return ReadAction.compute(()->{
       PsiElement element = findElementAt(position);
@@ -139,8 +121,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     });
   }
 
-  @Nullable
-  private static PsiElement findElementAt(SourcePosition position) {
+  private static @Nullable PsiElement findElementAt(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase) && !(file instanceof PsiJavaFile)) return null;
     return file.findElementAt(position.getOffset());
@@ -191,7 +172,7 @@ public class SpringLoadedPositionManager implements PositionManager {
 
       ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
 
-      if (!effectiveRef.locationsOfLine(lineNumber).isEmpty()) {
+      if (!DebuggerUtilsAsync.locationsOfLineSync(effectiveRef, lineNumber).isEmpty()) {
         res.add(effectiveRef);
       }
     }

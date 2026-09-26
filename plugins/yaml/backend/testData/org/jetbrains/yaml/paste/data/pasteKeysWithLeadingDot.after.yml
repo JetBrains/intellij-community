@@ -1,0 +1,4 @@
+.top:
+  key1: hello
+.leading:
+  subKey:<caret>

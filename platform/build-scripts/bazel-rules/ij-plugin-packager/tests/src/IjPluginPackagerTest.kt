@@ -1,0 +1,647 @@
+package com.intellij.tools.build.bazel.ijPluginPackager
+
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.directoryContent
+import io.opentelemetry.api.OpenTelemetry
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.bazel.jvm.WorkRequest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
+import java.io.StringWriter
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.util.zip.ZipFile
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.writeText
+
+internal class IjPluginPackagerTest {
+  @Test
+  fun packagesPlugin(@TempDir tempDirectory: Path) {
+    val pluginXml = """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <description><![CDATA[long < description > of the plugin]]></description>
+        <content>
+          <module name="embedded.module" loading="embedded"/>
+          <module name="optional.module"/>
+          <module name="module.with.package"/>
+          <module name="module.with.package.and.library"/>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    val inputDirectory = tempDirectory.resolve("input")
+    val optionalModuleXml = """
+      <idea-plugin>
+        <actions>
+          <action id="foo" class="Foo"/>
+        </actions>
+      </idea-plugin>
+    """.trimIndent()
+    val moduleWithPackageXml = """<idea-plugin package="my.plugin.content"/>"""
+    val moduleWithPackageAndLibraryXml = """<idea-plugin package="my.plugin.library"/>"""
+    directoryContent {
+      zip("descriptor.jar") {
+        file("icon-robots.txt", "")
+        dir("META-INF") {
+          file("plugin.xml", pluginXml)
+        }
+      }
+      zip("embedded-module.jar") {
+        dir("subdir") {
+          file("icon-robots.txt", "")
+        }
+        file("embedded.module.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("optional-module.jar") {
+        file("optional.module.xml", optionalModuleXml)
+      }
+      zip("module-with-package.jar") {
+        file("module.with.package.xml", moduleWithPackageXml)
+        dir("my") {
+          dir("plugin") {
+            dir("content") {
+              file("Foo.class", "module with package")
+            }
+          }
+        }
+      }
+      zip("module-with-package-and-library.jar") {
+        file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+        dir("my") {
+          dir("plugin") {
+            dir("library") {
+              file("Bar.class", "module with package and library")
+            }
+          }
+        }
+      }
+      zip("library.jar") {
+        file("Library.class", "library")
+      }
+      file("LICENSE.txt", "license")
+      dir("additional-data") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
+    }.generate(inputDirectory)
+
+    // paths are relative to the base directory of the request, like they are when the packager runs as a worker
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--packed_modules",
+        "output/packed-modules.yaml",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "embedded.module:input/embedded-module.jar",
+        "--content_module",
+        "optional.module:input/optional-module.jar",
+        "--content_module",
+        "module.with.package:input/module-with-package.jar",
+        "--content_module",
+        "module.with.package.and.library:input/module-with-package-and-library.jar,input/library.jar",
+        "--non_classpath_data",
+        "LICENSE.txt:input/LICENSE.txt",
+        "--non_classpath_data",
+        "docs:input/additional-data",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val expectedPluginXml = """
+      <idea-plugin>
+        <id>my.plugin</id>
+        <description><![CDATA[long < description > of the plugin]]></description>
+        <content>
+          <module name="embedded.module" loading="embedded"><![CDATA[<idea-plugin />]]></module>
+          <module name="optional.module"><![CDATA[<idea-plugin>
+        <actions>
+          <action id="foo" class="Foo" />
+        </actions>
+      </idea-plugin>]]></module>
+          <module name="module.with.package"><![CDATA[<idea-plugin package="my.plugin.content" />]]></module>
+          <module name="module.with.package.and.library"><![CDATA[<idea-plugin package="my.plugin.library" separate-jar="true" />]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    outputDirectory.assertMatches(directoryContent {
+      file("packed-modules.yaml", """
+        - name: lib/descriptor.jar
+          modules:
+          - name: descriptor
+          - name: module.with.package
+        - name: lib/embedded.module.jar
+          contentModules:
+          - name: embedded.module
+        - name: lib/modules/module.with.package.and.library.jar
+          contentModules:
+          - name: module.with.package.and.library
+            libraries:
+              library:
+                - name: module.with.package.and.library.jar
+        - name: lib/modules/optional.module.jar
+          contentModules:
+          - name: optional.module
+      """.trimIndent())
+      file("LICENSE.txt", "license")
+      dir("docs") {
+        file("README.md", "documentation")
+        dir("bin") {
+          file("launcher", "launcher")
+        }
+      }
+      dir("lib") {
+        zip("descriptor.jar") {
+          file("__index__")
+          dir("META-INF") {
+            file("plugin.xml", expectedPluginXml)
+          }
+          file("module.with.package.xml", moduleWithPackageXml)
+          dir("my") {
+            dir("plugin") {
+              dir("content") {
+                file("Foo.class", "module with package")
+              }
+            }
+          }
+        }
+        zip("embedded.module.jar") {
+          file("__index__")
+          file("embedded.module.xml", "<idea-plugin></idea-plugin>")
+        }
+        dir("modules") {
+          zip("module.with.package.and.library.jar") {
+            file("__index__")
+            file("module.with.package.and.library.xml", moduleWithPackageAndLibraryXml)
+            dir("my") {
+              dir("plugin") {
+                dir("library") {
+                  file("Bar.class", "module with package and library")
+                }
+              }
+            }
+            file("Library.class", "library")
+          }
+          zip("optional.module.jar") {
+            file("__index__")
+            file("optional.module.xml", optionalModuleXml)
+          }
+        }
+      }
+    })
+  }
+
+  @Test
+  fun packagesAllJarsOfContentModule(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><content><module name=\"content.module\"/></content></idea-plugin>")
+        }
+      }
+      zip("content-module.jar") {
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+        file("ContentModule.class", "content module")
+      }
+      zip("content-module-dependency.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "dependency manifest")
+        }
+        file("ContentModuleDependency.class", "content module dependency")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "content.module:input/content-module.jar,input/content-module-dependency.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("content.module.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("MANIFEST.MF", "dependency manifest")
+        }
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+        file("ContentModule.class", "content module")
+        file("ContentModuleDependency.class", "content module dependency")
+      }
+    })
+  }
+
+  @Test
+  fun dropsManifestsThatAJarToolWroteIntoModuleOutputJars(@TempDir tempDirectory: Path) {
+    // the rules_kotlin backend writes such a manifest into every module output jar; the JPS backend writes none
+    val toolManifest = "Manifest-Version: 1.0\r\nCreated-By: singlejar\r\nTarget-Label: //some:module\r\nInjecting-Rule-Kind: kt_jvm_library\r\n\r\n"
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+          file("plugin.xml", """
+            <idea-plugin>
+              <id>my.plugin</id>
+              <content>
+                <module name="module.with.package"/>
+                <module name="module.with.library"/>
+              </content>
+            </idea-plugin>
+          """.trimIndent())
+        }
+      }
+      // a content module with a package and without libraries is merged into the main jar
+      zip("module-with-package.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+        }
+        file("module.with.package.xml", """<idea-plugin package="my.plugin.content"/>""")
+      }
+      zip("module-with-library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", toolManifest)
+        }
+        file("module.with.library.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("Library.class", "library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "module.with.package:input/module-with-package.jar",
+        "--content_module",
+        "module.with.library:input/module-with-library.jar,input/library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val descriptorEntries = zipEntryNames(outputDirectory.resolve("lib/descriptor.jar"))
+    assertFalse(MANIFEST_ENTRY_NAME in descriptorEntries, descriptorEntries.toString())
+    assertTrue("module.with.package.xml" in descriptorEntries, descriptorEntries.toString())
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("module.with.library.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("module.with.library.xml", "<idea-plugin></idea-plugin>")
+        file("Library.class", "library")
+      }
+    })
+  }
+
+  @Test
+  fun keepsTheManifestAttributesOfTheModuleItself(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          // the manifest a module ships as a resource, with the attributes the rules_kotlin backend adds to it
+          file("MANIFEST.MF", "Manifest-Version: 1.0\r\nCreated-By: singlejar\r\nTarget-Label: //some:module\r\nMain-Class: org.example.Main\r\n\r\n")
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id><content><module name=\"agent.module\"/></content></idea-plugin>")
+        }
+      }
+      zip("agent-module.jar") {
+        dir("META-INF") {
+          // the manifest a module ships as a resource, as the JPS backend packs it
+          file("MANIFEST.MF", "Premain-Class: agent.Main\n")
+        }
+        file("agent.module.xml", "<idea-plugin></idea-plugin>")
+      }
+      zip("library.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+        }
+        file("Library.class", "library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "agent.module:input/agent-module.jar,input/library.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    assertEquals("Manifest-Version: 1.0\r\nMain-Class: org.example.Main\r\n\r\n", readZipEntry(outputDirectory.resolve("lib/descriptor.jar"), MANIFEST_ENTRY_NAME))
+    // the module keeps its own manifest byte for byte, and the library manifest yields to it
+    assertEquals("Premain-Class: agent.Main\n", readZipEntry(outputDirectory.resolve("lib/modules/agent.module.jar"), MANIFEST_ENTRY_NAME))
+  }
+
+  private fun zipEntryNames(jar: Path): Set<String> {
+    return ZipFile(jar.toFile()).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
+  }
+
+  private fun readZipEntry(jar: Path, name: String): String? {
+    return ZipFile(jar.toFile()).use { zip -> zip.getEntry(name)?.let { entry -> zip.getInputStream(entry).use { it.readAllBytes().decodeToString() } } }
+  }
+
+  @Test
+  fun packagesAllJarsOfDescriptorModule(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      zip("library-1.2.3.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "library manifest")
+          file("INDEX.LIST", "library index")
+        }
+        file("module-info.class", "library module descriptor")
+        file("Library.class", "library")
+      }
+      zip("other-library.jar") {
+        file("OtherLibrary.class", "other library")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar,input/library-1.2.3.jar,input/other-library.jar",
+        "--packed_modules",
+        "output/packed-modules.yaml",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.assertMatches(directoryContent {
+      dir("lib") {
+        zip("descriptor.jar") {
+          file("__index__")
+          dir("META-INF") {
+            file("plugin.xml", """
+              <idea-plugin>
+                <id>my.plugin</id>
+              </idea-plugin>
+            """.trimIndent())
+          }
+        }
+        zip("library.jar") {
+          file("__index__")
+          dir("META-INF") {
+            file("MANIFEST.MF", "library manifest")
+          }
+          file("module-info.class", "library module descriptor")
+          file("Library.class", "library")
+        }
+        zip("other-library.jar") {
+          file("__index__")
+          file("OtherLibrary.class", "other library")
+        }
+      }
+      file("packed-modules.yaml", """
+        - name: lib/descriptor.jar
+          modules:
+          - name: descriptor
+        - name: lib/library.jar
+          library: library
+          module: descriptor
+        - name: lib/other-library.jar
+          library: other-library
+          module: descriptor
+      """.trimIndent())
+    })
+  }
+
+  @Test
+  fun reportsErrorIfDescriptorModuleLibrariesHaveDuplicateJarNames(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    directoryContent {
+      zip("library-1.2.jar") {
+        file("Library.class", "first library")
+      }
+      zip("library-2.0.jar") {
+        file("Library.class", "second library")
+      }
+    }.generate(inputDirectory)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar,input/library-1.2.jar,input/library-2.0.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "Duplicate JAR name: both ${inputDirectory.resolve("library-1.2.jar")} and ${inputDirectory.resolve("library-2.0.jar")} " +
+      "are put to ${tempDirectory.resolve("output/lib/library.jar")}",
+      error.message,
+    )
+  }
+
+  @Test
+  fun doesNotGeneratePackedModulesIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    assertTrue(Files.exists(outputDirectory.resolve("lib/descriptor.jar")))
+    assertFalse(Files.exists(outputDirectory.resolve("packed-modules.yaml")))
+  }
+
+  @Test
+  fun preservesSymlinkToFileUnderDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val target = Files.writeString(dataDirectory.resolve("target.txt"), "target")
+    Files.createSymbolicLink(dataDirectory.resolve("link.txt"), target)
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--non_classpath_data",
+        "data:input/data",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val outputLink = tempDirectory.resolve("output/data/link.txt")
+    assertTrue(outputLink.isSymbolicLink())
+    assertEquals(Path.of("target.txt"), Files.readSymbolicLink(outputLink))
+    assertEquals("target", Files.readString(outputLink))
+  }
+
+  @Test
+  fun reportsErrorIfSymlinkPointsOutsideDataSource(@TempDir tempDirectory: Path) {
+    assumeTrue(OS.current() != OS.WINDOWS)
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    val dataDirectory = Files.createDirectories(inputDirectory.resolve("data"))
+    val externalTarget = Files.writeString(inputDirectory.resolve("external.txt"), "external")
+    val link = Files.createSymbolicLink(dataDirectory.resolve("link.txt"), externalTarget)
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data:input/data",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals(
+      "Cannot copy symlink $link because its target ${externalTarget.toRealPath()} is outside the source directory ${dataDirectory.toRealPath()}",
+      error.message,
+    )
+    assertFalse(Files.exists(tempDirectory.resolve("output/data/link.txt"), LinkOption.NOFOLLOW_LINKS))
+  }
+
+  @Test
+  fun reportsErrorIfNonClasspathDataOverwritesOutputFile(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    createDescriptorJar(inputDirectory)
+    Files.writeString(inputDirectory.resolve("data1.txt"), "data")
+    Files.writeString(inputDirectory.resolve("data2.txt"), "data")
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--non_classpath_data",
+          "data.txt:input/data1.txt",
+          "--non_classpath_data",
+          "data.txt:input/data2.txt",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertTrue(error.message?.contains("because the output file already exists") == true, error.message)
+  }
+
+  @Test
+  fun readsArgumentsFromParamsFile(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
+
+    tempDirectory.resolve("packager.params").writeText("""
+      output
+      --descriptor_module
+      descriptor:input/descriptor.jar
+    """.trimIndent())
+
+    val writer = StringWriter()
+    val exitCode = runBlocking {
+      IjPluginPackagerExecutor.execute(
+        request = WorkRequest(
+          arguments = arrayOf("--flagfile=packager.params"),
+          inputs = emptyArray(),
+          requestId = 0,
+          cancel = false,
+          verbosity = 0,
+          sandboxDir = null,
+        ),
+        writer = writer,
+        baseDir = tempDirectory,
+        tracer = OpenTelemetry.noop().getTracer("test"),
+      )
+    }
+
+    assertEquals(0, exitCode, writer.toString())
+    assertTrue(Files.exists(tempDirectory.resolve("output/lib/descriptor.jar")))
+  }
+
+  @Test
+  fun reportsErrorIfArgumentsAreNotPassedInParamsFile(@TempDir tempDirectory: Path) {
+    val writer = StringWriter()
+    val exitCode = runBlocking {
+      IjPluginPackagerExecutor.execute(
+        request = WorkRequest(
+          arguments = arrayOf("output", "--descriptor_module", "descriptor:input/descriptor.jar"),
+          inputs = emptyArray(),
+          requestId = 0,
+          cancel = false,
+          verbosity = 0,
+          sandboxDir = null,
+        ),
+        writer = writer,
+        baseDir = tempDirectory,
+        tracer = OpenTelemetry.noop().getTracer("test"),
+      )
+    }
+
+    assertEquals(3, exitCode)
+    assertTrue(writer.toString().contains("--flagfile="), writer.toString())
+  }
+
+  private fun createDescriptorJar(inputDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
+  }
+}

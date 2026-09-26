@@ -13,6 +13,6 @@ println blah
 7(8) WRITE blah
 8(9) READ println
 9(10) READ blah
-10(11) ARGUMENT element: Reference expression
+10(11) ARGUMENTS element: Call expression
 11(12) element: Call expression MAYBE_RETURN
 12() element: null

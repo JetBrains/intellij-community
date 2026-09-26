@@ -1,0 +1,16 @@
+// FILE: build.gradle.kts
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts myProperty"
+val myPro<caret>perty: String by project
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+tasks.register("printProp") {
+    println(myProperty)
+}
+
+//FILE: gradle.properties
+myProperty=someValue
+

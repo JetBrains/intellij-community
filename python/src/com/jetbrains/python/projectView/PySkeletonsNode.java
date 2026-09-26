@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -24,30 +10,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
-import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
-public class PySkeletonsNode extends PsiDirectoryNode {
-  private PySkeletonsNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+public final class PySkeletonsNode extends PsiDirectoryNode {
+  private PySkeletonsNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
-    data.setPresentableText("Binary Skeletons");
+  protected void updateImpl(@NotNull PresentationData data) {
+    data.setPresentableText(PyBundle.message("python.project.view.py.skeletons"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  @Nullable
-  public static PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    final VirtualFile skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk);
+  public static @Nullable PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+    final VirtualFile skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
-      return new PySkeletonsNode(project, skeletonsDirectory, settings);
+      if (skeletonsDirectory != null) {
+        return new PySkeletonsNode(project, skeletonsDirectory, settings);
+      }
     }
     return null;
   }

@@ -15,34 +15,32 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 
 import java.util.Collection;
 
-/**
- * @author Alexey
- */
-public interface I18nQuickFixHandler {
+public interface I18nQuickFixHandler<T extends UExpression> {
   void checkApplicability(final PsiFile psiFile,
                           final Editor editor) throws IncorrectOperationException;
   void performI18nization(final PsiFile psiFile,
                           final Editor editor,
-                          PsiLiteralExpression literalExpression,
+                          T literalExpression,
                           Collection<PropertiesFile> propertiesFiles,
                           String key,
                           String value,
                           String i18nizedText,
-                          PsiExpression[] parameters,
+                          UExpression[] parameters,
                           PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException;
 
+  T getEnclosingLiteral(PsiFile file, Editor editor);
+
   @Nullable
-  JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile);
+  JavaI18nizeQuickFixDialog<T> createDialog(Project project, Editor editor, PsiFile psiFile);
 }

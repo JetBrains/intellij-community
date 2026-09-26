@@ -1,0 +1,9 @@
+// "Create Label 'foo'@" "true"
+// K2_ERROR: NOT_A_LOOP_LABEL
+
+fun test() {
+    while (true) {
+        continue@<caret>foo
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLoop

@@ -1,55 +1,43 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey Kudravtsev
- */
 abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private final JTree myTree;
   private final FileTemplateNode myRoot;
 
-  protected FileTemplateTabAsTree(String title) {
+  FileTemplateTabAsTree(@NlsContexts.TabTitle String title) {
     super(title);
     myRoot = initModel();
     MyTreeModel treeModel = new MyTreeModel(myRoot);
     myTree = new Tree(treeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
-
     myTree.expandPath(TreeUtil.getPathFromRoot(myRoot));
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new MyTreeCellRenderer());
@@ -61,32 +49,31 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
         onTemplateSelected();
       }
     });
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
   }
 
   protected abstract FileTemplateNode initModel();
 
-  protected static class FileTemplateNode extends DefaultMutableTreeNode {
+  protected static final class FileTemplateNode extends DefaultMutableTreeNode {
     private final Icon myIcon;
     private final String myTemplateName;
 
     FileTemplateNode(FileTemplateDescriptor descriptor) {
       this(descriptor.getDisplayName(),
            descriptor.getIcon(),
-           descriptor instanceof FileTemplateGroupDescriptor ? ContainerUtil.map2List(((FileTemplateGroupDescriptor)descriptor).getTemplates(),
-                                                                                      s -> new FileTemplateNode(s)) : Collections.emptyList(),
+           descriptor instanceof FileTemplateGroupDescriptor ?
+             ContainerUtil.sorted(
+               ContainerUtil.map(((FileTemplateGroupDescriptor)descriptor).getTemplates(), s -> new FileTemplateNode(s)),
+               (n1, n2) -> n1.toString().compareToIgnoreCase(n2.toString())
+             ) : Collections.emptyList(),
            descriptor instanceof FileTemplateGroupDescriptor ? null : descriptor.getFileName());
     }
 
-    FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children) {
+    FileTemplateNode(String name, Icon icon, List<? extends FileTemplateNode> children) {
       this(name, icon, children, null);
     }
 
-    FileTemplateNode(Icon icon, String templateName) {
-      this(templateName, icon, Collections.emptyList(), templateName);
-    }
-
-    private FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children, String templateName) {
+    private FileTemplateNode(String name, Icon icon, List<? extends FileTemplateNode> children, String templateName) {
       super(name);
       myIcon = icon;
       myTemplateName = templateName;
@@ -105,22 +92,25 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
 
   }
 
-  private static class MyTreeModel extends DefaultTreeModel {
-    MyTreeModel(FileTemplateNode root) {
+  private static final class MyTreeModel extends DefaultTreeModel {
+    private MyTreeModel(FileTemplateNode root) {
       super(root);
     }
   }
 
-  private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+  private final class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, false);
+      setBorderSelectionColor(null);
+      setBackgroundSelectionColor(null);
+      setBackgroundNonSelectionColor(null);
+      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      setBackground(UIUtil.getTreeBackground(sel, hasFocus));
+      setForeground(UIUtil.getTreeForeground(sel, hasFocus));
 
-      if (value instanceof FileTemplateNode) {
-        final FileTemplateNode node = (FileTemplateNode)value;
+      if (value instanceof FileTemplateNode node) {
         setText((String) node.getUserObject());
         setIcon(node.getIcon());
-        setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(node.getTemplateName(), getTitle()) ? Font.BOLD : Font.PLAIN));
 
         final FileTemplate template = getTemplate(node);
         if (template != null && !template.isDefault()) {
@@ -144,7 +134,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       selectTemplate(selection);
     }
     else {
-      TreeUtil.selectFirstNode(myTree);
+      TreeUtil.promiseSelectFirst(myTree);
     }
   }
 
@@ -163,8 +153,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   }
 
   @Override
-  @Nullable
-  public FileTemplate getSelectedTemplate() {
+  public @Nullable FileTemplate getSelectedTemplate() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) {
       return null;
@@ -173,13 +162,12 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     return getTemplate(node);
   }
 
-  @Nullable
-  private FileTemplate getTemplate(final FileTemplateNode node) {
+  private @Nullable FileTemplate getTemplate(final FileTemplateNode node) {
     final String templateName = node.getTemplateName();
-    if (templateName == null || myTemplates.isEmpty()) {
+    if (templateName == null || templates.isEmpty()) {
       return null;
     }
-    for (FileTemplateBase template : myTemplates) {
+    for (FileTemplateBase template : templates) {
       if (templateName.equals(template.getQualifiedName()) || templateName.equals(template.getName())) {
         return template;
       }
@@ -198,6 +186,11 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
 
   @Override
   public void addTemplate(FileTemplate newTemplate) {
+    // not supported
+  }
+
+  @Override
+  public void insertTemplate(FileTemplate newTemplate, int index) {
     // not supported
   }
 }

@@ -1,180 +1,243 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.ModuleRootManagerEx;
+import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.VersionedEntityStorage;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModelsProvider {
-
-  private final LibraryTable.ModifiableModel myLibrariesModel;
+  public static final Logger LOG = Logger.getInstance(IdeModifiableModelsProviderImpl.class);
+  public static final Key<IdeModifiableModelsProviderImpl> MODIFIABLE_MODELS_PROVIDER_KEY = Key.create("IdeModelsProvider");
+  private LibraryTable.ModifiableModel myLibrariesModel;
+  private MutableEntityStorage diff;
 
   public IdeModifiableModelsProviderImpl(Project project) {
     super(project);
-    myLibrariesModel = ProjectLibraryTable.getInstance(myProject).getModifiableModel();
-  }
-
-  @NotNull
-  @Override
-  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
-    return myLibrariesModel;
   }
 
   @Override
-  protected ModifiableArtifactModel doGetModifiableArtifactModel() {
-    return ReadAction.compute(() -> {
-      // todo move this to external system java module
-      ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
-      return artifactManager != null ? artifactManager.createModifiableModel() : new DummyArtifactModel();
-    });
+  public @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+    if (myLibrariesModel != null) return myLibrariesModel;
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    return myLibrariesModel = ((ProjectLibraryTableBridge)libraryTable).getModifiableModel(getActualStorageBuilder());
   }
 
   @Override
   protected ModifiableModuleModel doGetModifiableModuleModel() {
-    return ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModifiableModel());
+    return ReadAction.computeBlocking(() -> {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      ModifiableModuleModel modifiableModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(getActualStorageBuilder());
+      Module[] modules = modifiableModel.getModules();
+      for (Module module : modules) {
+        setIdeModelsProviderForModule(module);
+      }
+      return modifiableModel;
+    });
   }
 
   @Override
-  @NotNull
-  protected ModifiableRootModel doGetModifiableRootModel(@NotNull final Module module) {
-    return ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
+  protected @NotNull ModifiableRootModel doGetModifiableRootModel(final @NotNull Module module) {
+    RootConfigurationAccessor rootConfigurationAccessor = new RootConfigurationAccessor() {
+      @Override
+      public @Nullable Library getLibrary(Library library, String libraryName, String libraryLevel) {
+        if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryLevel)) {
+          return getModifiableProjectLibrariesModel().getLibraryByName(libraryName);
+        }
+        return library;
+      }
+    };
+
+    return ReadAction.computeBlocking(() -> {
+      ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
+      return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), rootConfigurationAccessor);
+    });
   }
 
   @Override
   protected ModifiableFacetModel doGetModifiableFacetModel(Module module) {
-    return FacetManager.getInstance(module).createModifiableModel();
+    FacetManager facetManager = FacetManager.getInstance(module);
+    return ((FacetManagerBridge)facetManager).createModifiableModel(getActualStorageBuilder());
   }
 
   @Override
   protected Library.ModifiableModel doGetModifiableLibraryModel(Library library) {
-    return library.getModifiableModel();
+    return ((LibraryBridge)library).getModifiableModel(getActualStorageBuilder());
   }
 
-  private static class DummyArtifactModel implements ModifiableArtifactModel {
-    @NotNull
-    @Override
-    public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType) {
-      throw new UnsupportedOperationException();
-    }
+  @Override
+  public @NotNull Module newModule(@NotNull String filePath, String moduleTypeId) {
+    Module module = super.newModule(filePath, moduleTypeId);
+    setIdeModelsProviderForModule(module);
+    return module;
+  }
 
-    @NotNull
-    @Override
-    public ModifiableArtifact addArtifact(@NotNull String name,
-                                          @NotNull ArtifactType artifactType,
-                                          CompositePackagingElement<?> rootElement) {
-      throw new UnsupportedOperationException();
-    }
+  @Override
+  public @NotNull Module newModule(@NotNull ModuleData moduleData) {
+    Module module = super.newModule(moduleData);
+    setIdeModelsProviderForModule(module);
+    return module;
+  }
 
-    @NotNull
-    @Override
-    public ModifiableArtifact addArtifact(@NotNull String name,
-                                          @NotNull ArtifactType artifactType,
-                                          CompositePackagingElement<?> rootElement,
-                                          @Nullable ProjectModelExternalSource externalSource) {
-      throw new UnsupportedOperationException();
-    }
+  @Override
+  public void commit() {
+    LOG.trace("Applying commit for IdeaModifiableModelProvider");
+    workspaceModelCommit();
+  }
 
-    @Override
-    public void removeArtifact(@NotNull Artifact artifact) {
-    }
+  private void workspaceModelCommit() {
+    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+      LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
+      for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
+        Library fromLibrary = entry.getKey();
+        String libraryName = fromLibrary.getName();
+        Library.ModifiableModel modifiableModel = entry.getValue();
 
-    @NotNull
-    @Override
-    public ModifiableArtifact getOrCreateModifiableArtifact(@NotNull Artifact artifact) {
-      throw new UnsupportedOperationException();
-    }
+        // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        if (fromLibrary instanceof LibraryEx fromLibraryEx && fromLibraryEx.isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
+        // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
+        else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
+          Disposer.dispose(modifiableModel);
+        }
+        else if (isLibrarySubstituted(fromLibrary)) {
+          Disposer.dispose(modifiableModel);
+        }
+        else {
+          ((LibraryModifiableModelBridge)modifiableModel).prepareForCommit();
+        }
+      }
+      ((ProjectModifiableLibraryTableBridge)projectLibrariesModel).prepareForCommit();
 
-    @Nullable
-    @Override
-    public Artifact getModifiableCopy(Artifact artifact) {
-      return null;
-    }
+      ModifiableRootModel[] rootModels;
+      if (myModifiableModuleModel != null) {
+        Module[] modules = myModifiableModuleModel.getModules();
+        for (Module module : modules) {
+          module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
+        }
+        Set<Module> existingModules = Set.of(modules);
+        rootModels = myModifiableRootModels.entrySet().stream().filter(entry -> existingModules.contains(entry.getKey())).map(Map.Entry::getValue).toArray(ModifiableRootModel[]::new);
+        ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
+      }
+      else {
+        rootModels = myModifiableRootModels.values().toArray(new ModifiableRootModel[0]);
+      }
 
-    @Override
-    public void addListener(@NotNull ArtifactListener listener) {
-    }
+      for (ModifiableRootModel model : rootModels) {
+        assert !model.isDisposed() : "Already disposed: " + model;
+      }
 
-    @Override
-    public void removeListener(@NotNull ArtifactListener listener) {
-    }
+      for (ModifiableRootModel model : rootModels) {
+        ((ModifiableRootModelBridge)model).prepareForCommit();
+      }
 
-    @Override
-    public boolean isModified() {
-      return false;
-    }
+      for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
+        TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(entry.getKey());
+        if (testModuleProperties instanceof TestModulePropertiesBridge bridge) {
+          bridge.setProductionModuleNameToBuilder(entry.getValue(),
+                                                  myModifiableModuleModel.getActualName(entry.getKey()),
+                                                  getActualStorageBuilder());
+        } else {
+          testModuleProperties.setProductionModuleName(entry.getValue());
+        }
+      }
 
-    @Override
-    public void commit() {
-    }
+      for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
+        if (!each.getKey().isDisposed()) {
+          ((ModifiableFacetModelBridge)each.getValue()).prepareForCommit();
+        }
+      }
+      myModifiableModels.values().forEach(ModifiableModel::commit);
+      WorkspaceModel.getInstance(myProject).updateProjectModel("External system: commit model", builder -> {
+        MutableEntityStorage storageBuilder = getActualStorageBuilder();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
+        }
+        builder.applyChangesFrom(storageBuilder);
 
-    @Override
-    public void dispose() {
-    }
+        DependencySubstitutionUtil.updateDependencySubstitutions(builder);
 
-    @NotNull
-    @Override
-    public Artifact[] getArtifacts() {
-      return new Artifact[0];
-    }
+        return Unit.INSTANCE;
+      });
 
-    @Nullable
-    @Override
-    public Artifact findArtifact(@NotNull String name) {
-      return null;
-    }
+      for (ModifiableRootModel model : rootModels) {
+        ((ModifiableRootModelBridge)model).postCommit();
+      }
+    });
+    myUserData.clear();
+  }
 
-    @NotNull
-    @Override
-    public Artifact getArtifactByOriginal(@NotNull Artifact artifact) {
-      throw new UnsupportedOperationException();
+  @Override
+  public void dispose() {
+    if (myModifiableModuleModel != null) {
+      Module[] modules = myModifiableModuleModel.getModules();
+      for (Module module : modules) {
+        module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
+      }
     }
+    super.dispose();
+  }
 
-    @NotNull
-    @Override
-    public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
-      throw new UnsupportedOperationException();
-    }
+  @Override
+  public @NotNull MutableEntityStorage getActualStorageBuilder() {
+    if (diff != null) return diff;
+    VersionedEntityStorage storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(myProject)).getEntityStorage();
+    LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
+    var initialStorage = (ImmutableEntityStorage)storage.getCurrent();
+    return diff = MutableEntityStorage.from(initialStorage);
+  }
 
-    @NotNull
-    @Override
-    public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
-      throw new UnsupportedOperationException();
-    }
+  private void setIdeModelsProviderForModule(@NotNull Module module) {
+    module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
+  }
 
-    @Override
-    public List<? extends Artifact> getAllArtifactsIncludingInvalid() {
-      throw new UnsupportedOperationException();
+  @Override
+  @ApiStatus.Internal
+  public boolean isLibrarySubstituted(@NotNull Library library) {
+    if (library instanceof LibraryBridge libraryBridge) {
+      return DependencySubstitutionUtil.isLibrarySubstituted(getActualStorageBuilder(), libraryBridge.getLibraryId());
     }
+    return false;
   }
 }

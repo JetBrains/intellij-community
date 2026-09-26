@@ -1,39 +1,33 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Comparator;
 
-public abstract class NodeDescriptor<E> {
+public abstract class NodeDescriptor<E> implements ExpandOnDoubleClickSupport {
+  private static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
+  private static final int DEFAULT_WEIGHT = 30;
+
+  public static NodeDescriptor<?>[] getEmptyArray() {
+    return EMPTY_ARRAY;
+  }
+
+  public static int getDefaultWeight() {
+    return DEFAULT_WEIGHT;
+  }
+
   protected final Project myProject;
-  private final NodeDescriptor myParentDescriptor;
+  private final NodeDescriptor<?> myParentDescriptor;
 
-  protected String myName;
-  @Nullable protected Icon myClosedIcon;
+  protected @NlsSafe String myName;
+  protected @Nullable Icon myClosedIcon;
 
-  /**
-   * Unused. It's there only for API compatibility.
-   */
-  @Deprecated
-  protected Icon myOpenIcon;
   protected Color myColor;
 
   private int myIndex = -1;
@@ -43,13 +37,12 @@ public abstract class NodeDescriptor<E> {
 
   private boolean myWasDeclaredAlwaysLeaf;
 
-  public NodeDescriptor(@Nullable Project project, @Nullable NodeDescriptor parentDescriptor) {
+  public NodeDescriptor(@Nullable Project project, @Nullable NodeDescriptor<?> parentDescriptor) {
     myProject = project;
     myParentDescriptor = parentDescriptor;
   }
 
-  @Nullable
-  public NodeDescriptor getParentDescriptor() {
+  public @Nullable NodeDescriptor<?> getParentDescriptor() {
     return myParentDescriptor;
   }
 
@@ -70,30 +63,14 @@ public abstract class NodeDescriptor<E> {
 
   public abstract E getElement();
 
-  public String toString() {
+  @Override
+  public @NlsSafe String toString() {
     // NB!: this method may return null if node is not valid
     // it contradicts the specification, but the fix breaks existing behaviour
     // see com.intellij.ide.util.FileStructurePopup#getSpeedSearchText
     return myName;
   }
 
-  /**
-   Use #getIcon() instead
-   */
-  @Deprecated
-  public final Icon getOpenIcon() {
-    return getIcon();
-  }
-
-  /**
-   Use #getIcon() instead
-   */
-  @Deprecated
-  public final Icon getClosedIcon() {
-    return getIcon();
-  }
-
-  @Nullable
   public final Icon getIcon() {
     return myClosedIcon;
   }
@@ -102,11 +79,11 @@ public abstract class NodeDescriptor<E> {
     return myColor;
   }
 
-  @Nullable
   public final Project getProject() {
     return myProject;
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return true;
   }
@@ -116,9 +93,8 @@ public abstract class NodeDescriptor<E> {
     if (element instanceof WeighedItem) {
       return ((WeighedItem) element).getWeight();
     }
-    return 30;
+    return getDefaultWeight();
   }
-
 
   public final long getChildrenSortingStamp() {
     return myChildrenSortingStamp;
@@ -144,7 +120,7 @@ public abstract class NodeDescriptor<E> {
     myWasDeclaredAlwaysLeaf = leaf;
   }
 
-  public void applyFrom(NodeDescriptor desc) {
+  public void applyFrom(@NotNull NodeDescriptor<?> desc) {
     setIcon(desc.getIcon());
     myName = desc.myName;
     myColor = desc.myColor;
@@ -154,8 +130,7 @@ public abstract class NodeDescriptor<E> {
     myClosedIcon = closedIcon;
   }
 
-  public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {
-
+  public abstract static class NodeComparator<T extends NodeDescriptor<?>> implements Comparator<T> {
     private long myStamp;
 
     public final void setStamp(long stamp) {
@@ -170,15 +145,14 @@ public abstract class NodeDescriptor<E> {
       setStamp(getStamp() + 1);
     }
 
-    public static class Delegate<T extends NodeDescriptor> extends NodeComparator<T> {
+    public static final class Delegate<T extends NodeDescriptor<?>> extends NodeComparator<T> {
+      private @NotNull NodeComparator<? super T> myDelegate;
 
-      private NodeComparator<T> myDelegate;
-
-      protected Delegate(NodeComparator<T> delegate) {
+      public Delegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;
       }
 
-      public void setDelegate(NodeComparator<T> delegate) {
+      public void setDelegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;
       }
 

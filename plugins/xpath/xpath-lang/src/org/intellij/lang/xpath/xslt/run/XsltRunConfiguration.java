@@ -17,27 +17,43 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.AdditionalTabComponentManager;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -49,6 +65,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SystemProperties;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +83,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     private static final String LOG_TAG = "(?:\\[[\\w ]+\\]\\:? +)?";
 
     public enum OutputType {
-        CONSOLE, STDOUT, @Deprecated FILE
+        CONSOLE, STDOUT
     }
 
     public enum JdkChoice {
@@ -74,40 +91,39 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     private List<Pair<String, String>> myParameters = new ArrayList<>();
-    @Nullable private VirtualFilePointer myXsltFile = null;
-    @Nullable private VirtualFilePointer myXmlInputFile = null;
-    @NotNull private OutputType myOutputType = OutputType.CONSOLE;
+    private @Nullable VirtualFilePointer myXsltFile = null;
+    private @Nullable VirtualFilePointer myXmlInputFile = null;
+    private @NotNull OutputType myOutputType = OutputType.CONSOLE;
     private boolean mySaveToFile = false;
-    @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
-    @Nullable private FileType myFileType = StdFileTypes.XML;
+    private @NotNull JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
+    private @Nullable FileType myFileType = XmlFileType.INSTANCE;
 
-    public String myOutputFile; // intentionally untracked. should it be?
+    public @NlsSafe String myOutputFile; // intentionally untracked. should it be?
     public boolean myOpenOutputFile;
     public boolean myOpenInBrowser;
     public boolean mySmartErrorHandling = true;
     @Deprecated // this is only used if the dynamic selection of a port fails
     public int myRunnerPort = 34873;
     public String myVmArguments;
-    public String myWorkingDirectory;
+    public @NlsSafe String myWorkingDirectory;
     public String myModule;
     public String myJdk;
 
-    private String mySuggestedName;
+    private @Nullable @NlsActions.ActionText String mySuggestedName;
 
     public XsltRunConfiguration(Project project, ConfigurationFactory factory) {
         super(project, factory, NAME);
         mySuggestedName = null;
     }
 
-    @NotNull
     @Override
-    public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());
     }
 
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException {
-        if (myXsltFile == null) throw new ExecutionException("No XSLT file selected");
+        if (myXsltFile == null) throw new ExecutionException(XPathBundle.message("dialog.message.no.xslt.file.selected"));
         final VirtualFile baseFile = myXsltFile.getFile();
 
         final XsltCommandLineState state = new XsltCommandLineState(this, executionEnvironment);
@@ -164,7 +180,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     @Override
-    public final RunConfiguration clone() {
+    public RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<>(myParameters);
         if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);
@@ -175,46 +191,44 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
         if (myXsltFile == null) {
-            throw new RuntimeConfigurationError("No XSLT File selected");
+            throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.no.xslt.file.selected"));
         }
         if (myXsltFile.getFile() == null) {
-            throw new RuntimeConfigurationError("Selected XSLT File not found");
+            throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.selected.xslt.file.not.found"));
         }
         if (myXmlInputFile == null) {
-            throw new RuntimeConfigurationError("No XML Input File selected");
+            throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.no.xml.input.file.selected"));
         }
         if (myXmlInputFile.getFile() == null) {
-            throw new RuntimeConfigurationError("Selected XML Input File not found");
+            throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.selected.xml.input.file.not.found"));
         }
         if (mySaveToFile) {
             if (isEmpty(myOutputFile)) {
-                throw new RuntimeConfigurationError("No output file selected");
+                throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.no.output.file.selected"));
             }
             final File f = new File(myOutputFile);
             if (f.isDirectory()) {
-                throw new RuntimeConfigurationError("Selected output file points to a directory");
+                throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.selected.output.file.points.to.directory"));
             } else if (f.exists() && !f.canWrite()) {
-                throw new RuntimeConfigurationError("Selected output file is not writable");
+                throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.selected.output.file.not.writable"));
             }
         }
         if (getEffectiveJDK() == null) {
-            throw new RuntimeConfigurationError("No JDK available");
+            throw new RuntimeConfigurationError(XPathBundle.message("dialog.message.no.jdk.available"));
         }
     }
 
     static boolean isEmpty(String file) {
-        return file == null || file.length() == 0;
+        return file == null || file.isEmpty();
     }
 
     // return modules to compile before run. Null or empty list to build project
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
         return getModule() != null ? new Module[]{ getModule() } : Module.EMPTY_ARRAY;
     }
 
     @Override
-    @SuppressWarnings({ "unchecked" })
     public void readExternal(@NotNull Element element) throws InvalidDataException {
         super.readExternal(element);
         DefaultJDOMExternalizer.readExternal(this, element);
@@ -246,13 +260,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         final Element outputType = element.getChild("OutputType");
         if (outputType != null) {
             final String value = outputType.getAttributeValue("value");
-            if (OutputType.FILE.name().equals(value)) {
-                myOutputType = OutputType.STDOUT;
-                mySaveToFile = true;
-            } else {
-                myOutputType = OutputType.valueOf(value);
-                mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
-            }
+            myOutputType = OutputType.valueOf(value);
+            mySaveToFile = Boolean.parseBoolean(outputType.getAttributeValue("save-to-file"));
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {
@@ -264,17 +273,9 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         }
     }
 
-    @Nullable
-    private static FileType getFileType(String value) {
+    private static @Nullable FileType getFileType(String value) {
         if (value == null) return null;
-
-        final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-        for (FileType fileType : fileTypes) {
-            if (fileType.getName().equals(value)) {
-                return fileType;
-            }
-        }
-        return null;
+        return FileTypeManager.getInstance().findFileTypeByName(value);
     }
 
     @Override
@@ -351,28 +352,23 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myXsltFile = VirtualFilePointerManager.getInstance().create(virtualFile, getProject(), null);
     }
 
-    @Nullable
-    public String getXsltFile() {
+    public @Nullable @NlsSafe String getXsltFile() {
         return myXsltFile != null ? myXsltFile.getPresentableUrl() : null;
     }
 
-    @Nullable
-    public VirtualFile findXsltFile() {
+    public @Nullable VirtualFile findXsltFile() {
         return myXsltFile != null ? myXsltFile.getFile() : null;
     }
 
-    @Nullable
-    public VirtualFile findXmlInputFile() {
+    public @Nullable VirtualFile findXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getFile() : null;
     }
 
-    @Nullable
-    public String getXmlInputFile() {
+    public @Nullable @NlsSafe String getXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getPresentableUrl() : null;
     }
 
-    @Nullable
-    public FileType getFileType() {
+    public @Nullable FileType getFileType() {
         return myFileType;
     }
 
@@ -380,13 +376,11 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myFileType = fileType;
     }
 
-    @Nullable
-    public Module getModule() {
+    public @Nullable Module getModule() {
         return myModule != null ? ModuleManager.getInstance(getProject()).findModuleByName(myModule) : null;
     }
 
-    @Nullable
-    public Sdk getJdk() {
+    public @Nullable Sdk getJdk() {
         return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
     }
 
@@ -410,8 +404,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myJdk = projectJdk != null ? projectJdk.getName() : null;
     }
 
-    @NotNull
-    public OutputType getOutputType() {
+    public @NotNull OutputType getOutputType() {
         return myOutputType;
     }
 
@@ -427,8 +420,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         mySaveToFile = saveToFile;
     }
 
-    @NotNull
-    public JdkChoice getJdkChoice() {
+    public @NotNull JdkChoice getJdkChoice() {
         return myJdkChoice;
     }
 
@@ -440,23 +432,13 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     private static synchronized Sdk getDefaultSdk() {
         if (ourDefaultSdk == null) {
-            final String jdkHome = SystemProperties.getJavaHome();
-            final String versionName = ProjectBundle.message("sdk.java.name.template", SystemInfo.JAVA_VERSION);
-            Sdk sdk = ProjectJdkTable.getInstance().createSdk(versionName, new SimpleJavaSdkType());
-            SdkModificator modificator = sdk.getSdkModificator();
-            modificator.setHomePath(jdkHome);
-            modificator.commitChanges();
-            ourDefaultSdk = sdk;
+            ourDefaultSdk = new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome());
         }
 
         return ourDefaultSdk;
     }
 
-    @Nullable
-    public Sdk getEffectiveJDK() {
-        if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
-            return getDefaultSdk();
-        }
+    public @Nullable Sdk getEffectiveJDK() {
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }
@@ -475,8 +457,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         return jdk;
     }
 
-    @Nullable
-    public Module getEffectiveModule() {
+    public @Nullable Module getEffectiveModule() {
         //assert myJdkChoice == JdkChoice.FROM_MODULE;
 
         Module module = myJdkChoice == JdkChoice.FROM_MODULE ? getModule() : null;
@@ -498,6 +479,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public XsltRunConfiguration initFromFile(@NotNull XmlFile file) {
         assert XsltSupport.isXsltFile(file) : "Not an XSLT file: " + file.getName();
         mySuggestedName = file.getName();
+        setName(mySuggestedName);
 
         final VirtualFile virtualFile = file.getVirtualFile();
         assert virtualFile != null : "No VirtualFile for " + file.getName();
@@ -529,9 +511,9 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         for (XmlTag output : outputs) {
             final String method = output.getAttributeValue("method");
             if ("xml".equals(method)) {
-                setFileType(StdFileTypes.XML);
+                setFileType(XmlFileType.INSTANCE);
             } else if ("html".equals(method)) {
-                setFileType(StdFileTypes.HTML);
+                setFileType(HtmlFileType.INSTANCE);
             } else if ("text".equals(method)) {
                 setFileType(FileTypes.PLAIN_TEXT);
             }

@@ -1,0 +1,42 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
+
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.psi.UserDataProperty
+
+internal object PreferredSubtypeWeigher: KotlinLookupElementWeigher("kotlin.preferredSubtype"), KotlinSectionContextWeigher {
+
+    private enum class Weight {
+        PREFERRED_SUBTYPE,
+        PREFERRED_EXACT_TYPE, // In this weigher we prefer subtypes over the exact type
+        UNRELATED
+    }
+
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    override fun addWeight(lookupElement: LookupElement, symbolWithOrigin: KtSymbolWithOrigin<*>?) {
+        val symbol = symbolWithOrigin?.symbol ?: return
+        val preferredSubtype = sectionContext.weighingContext.preferredSubtype ?: return
+        val actualClassType = (symbol as? KaClassLikeSymbol)?.defaultType ?: return
+        lookupElement.hasPreferredSubtype = if (actualClassType.semanticallyEquals(preferredSubtype)) {
+            Weight.PREFERRED_EXACT_TYPE
+        } else if (actualClassType.classId != KaStandardTypeClassIds.NOTHING && actualClassType.isSubtypeOf(preferredSubtype)) {
+            Weight.PREFERRED_SUBTYPE
+        } else {
+            Weight.UNRELATED
+        }
+    }
+
+    private var LookupElement.hasPreferredSubtype: Weight? by UserDataProperty(Key("KOTLIN_HAS_PREFERRED_SUBTYPE"))
+
+    override fun weigh(element: LookupElement): Comparable<*> = element.hasPreferredSubtype ?: Weight.UNRELATED
+}

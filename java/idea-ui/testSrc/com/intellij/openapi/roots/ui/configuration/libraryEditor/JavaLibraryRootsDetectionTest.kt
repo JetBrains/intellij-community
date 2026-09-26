@@ -1,34 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor
 
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.NativeLibraryOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 
-/**
- * @author nik
- */
 class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
   fun `test JAR with classes`() {
     assertRootType(OrderRootType.CLASSES, false) {
@@ -89,16 +75,46 @@ class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
       }
     }
   }
+  
+  fun `test javadoc in JAR`() {
+    assertRootType(JavadocOrderRootType.getInstance(), false) {
+      zip("javadoc.jar") {
+        file("allclasses-frame.html")
+        file("allclasses-noframe.html")
+      }
+    }
+  }
+  
+  fun `test javadoc in JAR 2`() {
+      assertRootType(JavadocOrderRootType.getInstance(), false) {
+        zip("javadoc.jar") {
+          file("allclasses-index.html")
+          file("allpackages-index.html")
+        }
+      }
+    }
 
   private fun assertRootType(expectedType: OrderRootType, jarDirectory: Boolean, content: DirectoryContentBuilder.() -> Unit) {
     val dir = directoryContent(content).generateInVirtualTempDir()
     val detector = LibraryRootsDetectorImpl(DefaultLibraryRootsComponentDescriptor().rootDetectors)
     val root = assertOneElement(dir.children.flatMap { file ->
-      val rootFile = if (file.fileType == StdFileTypes.ARCHIVE) JarFileSystem.getInstance().getJarRootForLocalFile(file)!! else file
+      val rootFile = if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) JarFileSystem.getInstance().getJarRootForLocalFile(file)!! else file
       detector.detectRoots(rootFile, EmptyProgressIndicator())
     })
     val type = assertOneElement(root.types)
     assertEquals(expectedType, type.type)
     assertEquals(jarDirectory, type.isJarDirectory)
+  }
+
+  override fun tearDown() {
+    try {
+      JarFileSystemImpl.cleanupForNextTest()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }

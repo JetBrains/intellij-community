@@ -1,0 +1,4 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="nested.xml"/>
+  <extensions defaultExtensionNs="test"><extension value="from file"/></extensions>
+</idea-plugin>

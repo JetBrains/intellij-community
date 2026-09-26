@@ -37,47 +37,41 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.RncFileImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class RncParserDefinition implements ParserDefinition {
-  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
-  private static final TokenSet myCommentTypes = TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
+  private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new CompactSyntaxLexerAdapter();
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new RncParser();
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE_ELEMENT_TYPE;
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return TokenSet.create(TokenType.WHITE_SPACE);
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
-    return myCommentTypes;
+  public @NotNull TokenSet getCommentTokens() {
+    return TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.create(RncTokenTypes.LITERAL);
   }
 
   @Override
-  @NotNull
-  @SuppressWarnings({ "unchecked" })
-  public PsiElement createElement(ASTNode node) {
+  @SuppressWarnings({"unchecked"})
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
 
     if (type instanceof NotNullFunction) {
@@ -88,17 +82,17 @@ public class RncParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new RncFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
   private static class MyRncElement extends RncElementImpl {
-    public MyRncElement(ASTNode node) {
+    MyRncElement(ASTNode node) {
       super(node);
     }
 

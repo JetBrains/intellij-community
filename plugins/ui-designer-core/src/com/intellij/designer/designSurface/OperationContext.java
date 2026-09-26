@@ -17,9 +17,12 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.util.List;
 
@@ -61,7 +64,7 @@ public final class OperationContext {
     myType = type;
   }
 
-  public String getMessage() {
+  public @NlsSafe String getMessage() {
     return DesignerBundle.message(myType == null ? "command.tool_operation" : myType.toString());
   }
 

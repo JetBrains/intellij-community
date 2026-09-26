@@ -1,94 +1,88 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.idea.Bombed
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.MainConfigurationStateSplitter
-import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.loadElement
+import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.util.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeBytes
 
-private fun StateStorage.ExternalizationSession.save() {
-  runInEdtAndWait {
-    createSaveSession()!!.save()
-  }
-}
-
-private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  val externalizationSession = startExternalization()!!
-  externalizationSession.setState(null, componentName, if (state == null) Element("state") else loadElement(state))
-  externalizationSession.save()
-}
-
-internal class TestStateSplitter : MainConfigurationStateSplitter() {
-  override fun getComponentStateFileName() = "main"
-
-  override fun getSubStateTagName() = "sub"
-
-  override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
-}
-
-@Bombed(user = "vladimir.krivosheev", year = 2018, month = Calendar.DECEMBER, day = 10)
-internal class DirectoryBasedStorageTest {
+class DirectoryBasedStorageTest {
   companion object {
-    @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule @JvmField val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager)
-  @Rule fun getChain() = ruleChain
+  @Rule @JvmField val ruleChain = RuleChain(tempDirManager)
 
-  @Test fun save() {
-    val dir = tempDirManager.newPath(refreshVfs = true)
+  @Test
+  fun readEmptyFile() {
+    val dir = tempDirManager.newPath(refreshVfs = false)
+    dir.createDirectories().resolve("empty.xml").writeBytes(ByteArray(0))
+    DirectoryBasedStorage(dir, TestStateSplitter()).loadData()
+  }
+
+  @Test
+  fun saveNIO() = runBlocking<Unit> {
+    val dir = tempDirManager.newPath(refreshVfs = false)
     val storage = DirectoryBasedStorage(dir, TestStateSplitter())
-
     val componentName = "test"
 
-    storage.setStateAndSave(componentName,"""<component name="$componentName"><sub name="foo" /><sub name="bar" /></component>""")
-
+    setStateAndSave(storage, componentName,"""<component name="${componentName}"><sub name="foo"/><sub name="bar"/></component>""")
     assertThat(dir).hasChildren("foo.xml", "bar.xml", "main.xml")
-
     assertThat(dir.resolve("foo.xml")).hasContent(generateData("foo"))
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
+    val vDir = VirtualFileManager.getInstance().findFileByNioPath(dir)!!
+    assertThat(vDir.findChild("foo.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("foo"))
 
-    storage.setStateAndSave(componentName, """<component name="$componentName"><sub name="bar" /></component>""")
-
+    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar"/></component>""")
     assertThat(dir).hasChildren("main.xml", "bar.xml")
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
+    assertThat(vDir.findChild("foo.xml")).isNull()
+    assertThat(vDir.findChild("bar.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("bar"))
 
-    storage.setStateAndSave(componentName, null)
+    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar" extra="."/></component>""")
+    assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar", " extra=\".\""))
+    assertThat(vDir.findChild("bar.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("bar", " extra=\".\""))
+
+    setStateAndSave(storage = storage, componentName = componentName, state = null)
     assertThat(dir).doesNotExist()
+    assertThat(vDir.isValid).isFalse()
   }
 
-  private fun generateData(name: String): String {
-    return """<component name="test">
-  <${if (name == "test") "component" else "sub"} name="$name" />
-</component>"""
+  private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?) {
+    val sessionManager = SaveSessionProducerManager()
+    val sessionProducer = sessionManager.getProducer(storage)!!
+    val state = if (state == null) Element("state") else JDOMUtil.load(state)
+    sessionProducer.setState(component = null, componentName, PluginManagerCore.CORE_ID, state)
+    sessionManager.save(SaveResult(), collectVfsEvents = true)
+  }
+
+  private fun generateData(name: String, extra: String = ""): String {
+    return """
+      <component name="test">
+        <${if (name == "test") "component" else "sub"} name="${name}"${extra} />
+      </component>""".trimIndent()
+  }
+
+  private class TestStateSplitter : MainConfigurationStateSplitter() {
+    override fun getComponentStateFileName() = "main"
+
+    override fun getSubStateTagName() = "sub"
+
+    override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")!!
   }
 }

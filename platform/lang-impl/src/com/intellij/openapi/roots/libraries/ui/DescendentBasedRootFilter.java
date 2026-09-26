@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -29,13 +16,11 @@ import java.util.function.Predicate;
 /**
  * Determines whether an archive or a directory can be used as a root of given type by analyzing its descending files; if there is at least one
  * file under it satisfying the given condition, it assumes that the original archive/directory can be used as a root of the given type.
- *
- * @author nik
  */
 public class DescendentBasedRootFilter extends RootFilter {
-  private final Predicate<VirtualFile> myCondition;
+  private final Predicate<? super VirtualFile> myCondition;
 
-  public DescendentBasedRootFilter(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName, Predicate<VirtualFile> condition) {
+  public DescendentBasedRootFilter(OrderRootType rootType, boolean jarDirectory, String presentableRootTypeName, Predicate<? super VirtualFile> condition) {
     super(rootType, jarDirectory, presentableRootTypeName);
     myCondition = condition;
   }
@@ -45,17 +30,17 @@ public class DescendentBasedRootFilter extends RootFilter {
    */
   public static DescendentBasedRootFilter createFileTypeBasedFilter(OrderRootType rootType, boolean jarDirectory,
                                                                     @NotNull FileType fileType, String presentableRootTypeName) {
-    return new DescendentBasedRootFilter(rootType, jarDirectory, presentableRootTypeName, file -> fileType.equals(file.getFileType()));
+    return new DescendentBasedRootFilter(rootType, jarDirectory, presentableRootTypeName, file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
   }
 
   @Override
-  public boolean isAccepted(@NotNull VirtualFile rootCandidate, @NotNull final ProgressIndicator progressIndicator) {
+  public boolean isAccepted(@NotNull VirtualFile rootCandidate, final @NotNull ProgressIndicator progressIndicator) {
     if (isJarDirectory()) {
       if (!rootCandidate.isDirectory() || !rootCandidate.isInLocalFileSystem()) {
         return false;
       }
       for (VirtualFile child : rootCandidate.getChildren()) {
-        if (!child.isDirectory() && child.getFileType().equals(FileTypes.ARCHIVE)) {
+        if (!child.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(child, ArchiveFileType.INSTANCE)) {
           final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
           if (jarRoot != null && containsFileOfType(jarRoot, progressIndicator)) {
             return true;
@@ -73,7 +58,7 @@ public class DescendentBasedRootFilter extends RootFilter {
     return !VfsUtilCore.processFilesRecursively(rootCandidate, virtualFile -> {
       progressIndicator.checkCanceled();
       if (virtualFile.isDirectory()) {
-        progressIndicator.setText2(virtualFile.getPath());
+        progressIndicator.setText2(virtualFile.getPresentableUrl());
         return true;
       }
       return !myCondition.test(virtualFile);

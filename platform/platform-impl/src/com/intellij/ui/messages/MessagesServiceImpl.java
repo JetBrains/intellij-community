@@ -1,88 +1,101 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.messages.*;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.ExitActionType;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageMultilineInputDialog;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.MessageException;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
-import com.intellij.util.PairFunction;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChars;
+import static com.intellij.openapi.ui.Messages.InputDialog;
+import static com.intellij.openapi.ui.Messages.getCancelButton;
+import static com.intellij.openapi.ui.Messages.getOkButton;
 
 public class MessagesServiceImpl implements MessagesService {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.MessagesServiceImpl");
-
   @Override
   public int showMessageDialog(@Nullable Project project,
                                @Nullable Component parentComponent,
                                String message,
                                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @NotNull String[] options,
+                               String @NotNull [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
-                               boolean alwaysUseIdeaUI) {
-
-    try {
-      if (canShowMacSheetPanel() && !alwaysUseIdeaUI) {
-        WindowManager windowManager = WindowManager.getInstance();
-        if (windowManager != null) {
-          Window parentWindow = windowManager.suggestParentWindow(project);
-          return MacMessages.getInstance()
-            .showMessageDialog(title, message, options, false, parentWindow, defaultOptionIndex, focusedOptionIndex, doNotAskOption);
-        }
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
+                               @Nullable DoNotAskOption doNotAskOption,
+                               boolean alwaysUseIdeaUI,
+                               @Nullable String helpId,
+                               @Nullable String invocationPlace,
+                               ExitActionType @NotNull [] exitActionTypes) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestImplementation().show(message, doNotAskOption);
     }
 
-    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
+    AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
+    if (alertMessagesManager != null) {
+      return alertMessagesManager.showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
+                                                    focusedOptionIndex, icon, doNotAskOption, helpId, invocationPlace, exitActionTypes);
+    }
+
+    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex,
+                                             icon, doNotAskOption, false, helpId, invocationPlace, exitActionTypes);
     dialog.show();
     return dialog.getExitCode();
   }
 
   @Override
+  @RequiresEdt
   public int showMoreInfoMessageDialog(Project project,
                                        String message,
                                        String title,
-                                       String moreInfo,
+                                       @NlsContexts.DetailedDescription String moreInfo,
                                        String[] options,
                                        int defaultOptionIndex,
                                        int focusedOptionIndex,
                                        Icon icon) {
-    try {
-      if (canShowMacSheetPanel() && moreInfo == null) {
-        return MacMessages.getInstance()
-          .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex,
-                             focusedOptionIndex, null);
-      }
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestImplementation().show(message);
     }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
+
+    if (moreInfo == null) {
+      AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
+      if (alertMessagesManager != null) {
+        return alertMessagesManager.showMessageDialog(project, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon,
+                                                      null, null, null, new ExitActionType[]{});
+      }
     }
 
     MessageDialog dialog =
@@ -92,6 +105,7 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
   public int showTwoStepConfirmationDialog(String message,
                                            String title,
                                            String[] options,
@@ -100,7 +114,11 @@ public class MessagesServiceImpl implements MessagesService {
                                            int defaultOptionIndex,
                                            int focusedOptionIndex,
                                            Icon icon,
-                                           PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                           BiFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestImplementation().show(message);
+    }
+
     TwoStepConfirmationDialog dialog =
       new TwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon, exitFunc);
     dialog.show();
@@ -108,7 +126,12 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
   public String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
+    }
+
     final InputDialog dialog = project != null
                                ? new PasswordInputDialog(project, message, title, icon, validator)
                                : new PasswordInputDialog(message, title, icon, validator);
@@ -117,6 +140,19 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
+  public char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestInputImplementation().show(message, validator).toCharArray();
+    }
+
+    PasswordInputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
+    dialog.show();
+    return dialog.getExitCode() == 0 ? getTrimmedChars(dialog.getTextField()) : null;
+  }
+
+  @Override
+  @RequiresEdt
   public String showInputDialog(@Nullable Project project,
                                 Component parentComponent, String message,
                                 String title,
@@ -124,10 +160,16 @@ public class MessagesServiceImpl implements MessagesService {
                                 @Nullable String initialValue,
                                 @Nullable InputValidator validator,
                                 @Nullable TextRange selection,
-                                @Nullable String comment) {
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
-                                         0, comment);
+                                @Nullable @NlsContexts.DetailedDescription String comment) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
+    }
+
+    InputDialog dialog = parentComponent == null
+                         ? new InputDialog(project, message, title, icon, initialValue, validator,
+                                           new String[]{getOkButton(), getCancelButton()}, 0, comment)
+                         : new InputDialog(project, parentComponent, message, title, icon, initialValue, validator,
+                                           new String[]{getOkButton(), getCancelButton()}, 0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {
@@ -141,27 +183,37 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
   public String showMultilineInputDialog(Project project,
                                          String message,
                                          String title,
                                          String initialValue,
                                          Icon icon,
-                                         InputValidator validator) {
-    Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                           new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+                                         @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
+    }
+
+    InputDialog dialog = new MessageMultilineInputDialog(project, message, title, icon, initialValue, validator,
+                                                         new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
   }
 
   @Override
-  public Pair<String, Boolean> showInputDialogWithCheckBox(String message,
-                                                           String title,
-                                                           String checkboxText,
-                                                           boolean checked,
-                                                           boolean checkboxEnabled,
-                                                           Icon icon,
-                                                           String initialValue,
-                                                           InputValidator validator) {
+  @RequiresEdt
+  public @NotNull Pair<@Nullable String, Boolean> showInputDialogWithCheckBox(String message,
+                                                                              String title,
+                                                                              String checkboxText,
+                                                                              boolean checked,
+                                                                              boolean checkboxEnabled,
+                                                                              Icon icon,
+                                                                              String initialValue,
+                                                                              InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return new Pair<>(TestDialogManager.getTestInputImplementation().show(message), checked);
+    }
+
     InputDialogWithCheckbox dialog =
       new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
     dialog.show();
@@ -169,13 +221,18 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
   public String showEditableChooseDialog(String message,
                                          String title,
                                          Icon icon,
                                          String[] values,
-                                         String initialValue,
+                                         @NlsSafe String initialValue,
                                          InputValidator validator) {
-    ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
+    }
+
+    @SuppressWarnings("deprecation") ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
     dialog.setValidator(validator);
     dialog.getComboBox().setEditable(true);
     dialog.getComboBox().getEditor().setItem(initialValue);
@@ -185,6 +242,7 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
+  @RequiresEdt
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
                               String message,
@@ -192,19 +250,29 @@ public class MessagesServiceImpl implements MessagesService {
                               String[] values,
                               String initialValue,
                               @Nullable Icon icon) {
-    ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
+    if (isApplicationInUnitTestOrHeadless()) {
+      return TestDialogManager.getTestImplementation().show(message);
+    }
+
+    @SuppressWarnings("deprecation") ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
     dialog.show();
     return dialog.getSelectedIndex();
   }
 
   @Override
+  @RequiresEdt
   public void showTextAreaDialog(final JTextField textField,
                                  String title,
                                  String dimensionServiceKey,
-                                 Function<String, java.util.List<String>> parser,
-                                 final Function<java.util.List<String>, String> lineJoiner) {
+                                 Function<? super String, ? extends List<String>> parser,
+                                 final Function<? super List<String>, String> lineJoiner) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      TestDialogManager.getTestImplementation().show(title);
+      return;
+    }
+
     final JTextArea textArea = new JTextArea(10, 50);
-    UIUtil.addUndoRedoActions(textArea);
+    SwingUndoUtil.addUndoRedoActions(textArea);
     textArea.setWrapStyleWord(true);
     textArea.setLineWrap(true);
     List<String> lines = parser.fun(textField.getText());
@@ -226,5 +294,17 @@ public class MessagesServiceImpl implements MessagesService {
       builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     builder.show();
+  }
+
+  @Override
+  public void showErrorDialog(@Nullable Project project,
+                              @Nullable @NlsContexts.DialogMessage String message,
+                              @NotNull @NlsContexts.DialogTitle String title) {
+    Messages.showErrorDialog(project, message, title);
+  }
+
+  private static boolean isApplicationInUnitTestOrHeadless() {
+    Application app = ApplicationManager.getApplication();
+    return app != null && (app.isUnitTestMode() || app.isHeadlessEnvironment());
   }
 }

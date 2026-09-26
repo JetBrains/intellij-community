@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -28,23 +14,19 @@ import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.Set;
 
-/**
- * @author: db
- */
 abstract class ProtoMember extends Proto {
 
-  @NotNull
-  public final TypeRepr.AbstractType myType;
+  public final @NotNull TypeRepr.AbstractType myType;
   public final Object myValue;
 
-  private static abstract class DataDescriptor<T> {
+  private abstract static class DataDescriptor<T> {
     public static final DataDescriptor NONE = new DataDescriptor(0, null) {
       @Override
       public Object load(DataInput out) {
         return null;
       }
       @Override
-      public void save(DataOutput out, Object value) throws IOException {
+      public void save(DataOutput out, Object value) {
       }
     };
     public static final DataDescriptor<String> STRING = new DataDescriptor<String>(1, String.class) {
@@ -114,8 +96,7 @@ abstract class ProtoMember extends Proto {
     };
 
     private final byte myId;
-    @Nullable
-    private final Class<T> myDataType;
+    private final @Nullable Class<T> myDataType;
 
     private DataDescriptor(int id, Class<T> dataType) {
       myId = (byte)id;
@@ -126,16 +107,14 @@ abstract class ProtoMember extends Proto {
       return myId;
     }
 
-    @Nullable
-    public Class<T> getDataType() {
+    public @Nullable Class<T> getDataType() {
       return myDataType;
     }
 
     public abstract void save(DataOutput out, T value) throws IOException;
     public abstract T load(DataInput in) throws IOException;
 
-    @NotNull
-    public static DataDescriptor findById(byte tag) {
+    public static @NotNull DataDescriptor findById(byte tag) {
       if (STRING.getId() == tag) {
         return STRING;
       }
@@ -194,8 +173,7 @@ abstract class ProtoMember extends Proto {
   protected ProtoMember(final int access,
                         final int signature,
                         final int name,
-                        @NotNull
-                        final TypeRepr.AbstractType t,
+                        final @NotNull TypeRepr.AbstractType t,
                         @NotNull
                         Set<TypeRepr.ClassType> annotations,
                         final Object value) {
@@ -235,6 +213,7 @@ abstract class ProtoMember extends Proto {
     }
   }
 
+  @Override
   public void save(final DataOutput out) {
     super.save(out);
     myType.save(out);
@@ -271,6 +250,7 @@ abstract class ProtoMember extends Proto {
     }
   }
 
+  @Override
   public Difference difference(final Proto past) {
     final ProtoMember m = (ProtoMember)past;
     final Difference diff = super.difference(past);
@@ -319,6 +299,7 @@ abstract class ProtoMember extends Proto {
     };
   }
 
+  @Override
   public void toStream(final DependencyContext context, final PrintStream stream) {
     super.toStream(context, stream);
     stream.print("          Type       : ");

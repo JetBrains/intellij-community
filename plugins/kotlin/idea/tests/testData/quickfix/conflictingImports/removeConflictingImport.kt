@@ -1,0 +1,13 @@
+// "Remove conflicting import for 'java.util.ArrayList'" "true"
+// K2_ERROR: CONFLICTING_IMPORT
+// K2_ERROR: CONFLICTING_IMPORT
+// K2_ERROR: OVERLOAD_RESOLUTION_AMBIGUITY
+package test
+
+import java.util.ArrayList<caret>
+import java.util.HashMap as ArrayList
+
+fun foo(a : ArrayList<String, String>) {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix

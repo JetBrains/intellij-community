@@ -1,103 +1,81 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PatternUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * @author max
- */
-public class WildcardFileNameMatcher extends FileNameMatcherEx {
+public class WildcardFileNameMatcher implements FileNameMatcher {
   private final String myPattern;
   private final MaskMatcher myMatcher;
 
   private interface MaskMatcher {
-    boolean matches(CharSequence filename);
+    boolean matches(@NotNull CharSequence filename);
   }
 
   private static final class RegexpMatcher implements MaskMatcher {
-    private final Matcher myMatcher;
+    private final Pattern pattern;
 
-    private RegexpMatcher(String pattern) {
-      myMatcher = PatternUtil.fromMask(pattern).matcher("");
+    RegexpMatcher(@NotNull String pattern) {
+      this.pattern = PatternUtil.fromMask(pattern);
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
-      synchronized (myMatcher) {
-        myMatcher.reset(filename);
-        return myMatcher.matches();
-      }
+    public boolean matches(final @NotNull CharSequence filename) {
+      return pattern.matcher(filename).matches();
     }
   }
 
   private static final class SuffixMatcher implements MaskMatcher {
     private final String mySuffix;
 
-    private SuffixMatcher(final String suffix) {
+    SuffixMatcher(@NotNull String suffix) {
       mySuffix = suffix;
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
-      return StringUtil.endsWith(filename, mySuffix);
+    public boolean matches(final @NotNull CharSequence filename) {
+      return Strings.endsWith(filename, mySuffix);
     }
   }
 
   private static final class PrefixMatcher implements MaskMatcher {
     private final String myPrefix;
 
-    private PrefixMatcher(final String prefix) {
+    private PrefixMatcher(@NotNull String prefix) {
       myPrefix = prefix;
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
-      return StringUtil.startsWith(filename, myPrefix);
+    public boolean matches(final @NotNull CharSequence filename) {
+      return Strings.startsWith(filename, 0, myPrefix);
     }
   }
 
   private static final class InfixMatcher implements MaskMatcher {
     private final String myInfix;
 
-    private InfixMatcher(final String infix) {
+    InfixMatcher(@NotNull String infix) {
       myInfix = infix;
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
-      return StringUtil.contains(filename, myInfix);
+    public boolean matches(final @NotNull CharSequence filename) {
+      return Strings.contains(filename, myInfix);
     }
   }
 
   /**
    * Use {@link org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory#createMatcher(String)} instead of direct call to constructor
    */
-  public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
+  public WildcardFileNameMatcher(@NotNull String pattern) {
     myPattern = pattern;
     myMatcher = createMatcher(pattern);
   }
 
-  private static MaskMatcher createMatcher(final String pattern) {
+  private static @NotNull MaskMatcher createMatcher(final @NotNull String pattern) {
     int len = pattern.length();
     if (len > 1 && pattern.indexOf('?') < 0) {
       if (pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0) {
@@ -114,34 +92,37 @@ public class WildcardFileNameMatcher extends FileNameMatcherEx {
   }
 
   @Override
-  public boolean acceptsCharSequence(@NonNls @NotNull CharSequence fileName) {
+  public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
     return myMatcher.matches(fileName);
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getPresentableString() {
+  public @NotNull String getPresentableString() {
     return myPattern;
   }
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     final WildcardFileNameMatcher that = (WildcardFileNameMatcher)o;
 
-    if (!myPattern.equals(that.myPattern)) return false;
-
-    return true;
+    return myPattern.equals(that.myPattern);
   }
 
+  @Override
   public int hashCode() {
     return myPattern.hashCode();
   }
 
-  public String getPattern() {
+  public @NotNull String getPattern() {
+    return myPattern;
+  }
+
+  @Override
+  public String toString() {
     return myPattern;
   }
 }

@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Collapse loop with stream 'forEach()'" "false"
 public class Main {
   public void test(int[] arr) {
     for(float i : a<caret>rr) {

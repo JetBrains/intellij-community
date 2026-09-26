@@ -1,0 +1,79 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.pluginManager.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.platform.pluginManager.frontend` end
+
+### auto-generated section `build intellij.platform.pluginManager.frontend` start
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.pluginManager.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/kernel/shared:kernel",
+        "//platform/platform-impl:ide-impl",
+        "//platform/pluginManager/shared",
+        "//platform/core-impl",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-frontend:frontend",
+        "//platform/project/shared:project",
+        "//platform/util/coroutines",
+        "//platform/lang-impl",
+        "//platform/platform-impl/update-checker",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "frontend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.pluginManager.frontend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":frontend",
+        "//platform/core-api:core_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/pluginManager/shared:shared_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/platform-impl/update-checker:update-checker_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.pluginManager.frontend` end
+
+### auto-generated section `iml intellij.platform.pluginManager.frontend` start
+exports_files(
+    [
+        "intellij.platform.pluginManager.frontend.iml",
+        "resources/intellij.platform.pluginManager.frontend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.pluginManager.frontend` end

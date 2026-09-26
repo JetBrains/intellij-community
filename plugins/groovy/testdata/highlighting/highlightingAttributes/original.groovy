@@ -32,6 +32,23 @@ class C {
     T reassignedLocal = null
     reassignedParam = reassignedLocal
     reassignedLocal = reassignedParam
+    {
+      Object param ->
+        param = ""
+        print param
+    } (1)
+    {
+      Object param -> param
+    } (2)
+
+    if (true) {
+      def a = 1
+      print a
+    } else {
+      def a = 2
+      a++
+      print a
+    }
   }
 
   void 'method with literal name'() {}
@@ -84,6 +101,7 @@ class Outer {
 
   def getThis() {}
   def getSuper() {}
+  def getDef() {}
 
   class Inner {
     def foo() {
@@ -98,3 +116,11 @@ class Outer {
 def outer = new Outer()
 outer.this
 outer.super
+outer.def
+
+@Newify(C)
+def foo() {
+  def a = C()
+  def b = C.new(1, 2)
+}
+

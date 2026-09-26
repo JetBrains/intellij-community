@@ -1,28 +1,44 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.testFramework.LightResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-/**
- * @author max
- */
-public class ResolveInCodeFragmentTest extends ResolveTestCase {
-  public void testLocalVariable() throws Exception {
+public class ResolveInCodeFragmentTest extends LightResolveTestCase {
+  public void testLocalVariable() {
     final PsiReference iRef = configure();
 
     PsiElement context = PsiTreeUtil.getParentOfType(iRef.getElement(), PsiCodeBlock.class);
-    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject)
+    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(getProject())
       .createExpressionCodeFragment(iRef.getElement().getText(), context, null, true);
     codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
@@ -32,7 +48,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
 
     PsiExpression expr = (PsiExpression) fileContent[0];
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         assertEquals(iRef.resolve(),
                      expression.resolve());
       }
@@ -40,7 +56,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
   }
 
   public void testjavaLangClass() {
-    PsiCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
+    PsiCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment(
           "Boolean.getBoolean(\"true\")", null, null, true);
 
     PsiElement[] fileContent = codeFragment.getChildren();
@@ -52,32 +68,32 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     assertEquals("boolean", expr.getType().getCanonicalText());
   }
 
-  public void testResolveFieldVsLocalWithVisiblityChecker() throws Exception {
+  public void testResolveFieldVsLocalWithVisiblityChecker() {
     doTestResolveWithVisibilityChecker("xxx", e -> assertInstanceOf(e, PsiLocalVariable.class));
   }
 
-  public void testResolveFieldVsParamWithVisiblityChecker() throws Exception {
+  public void testResolveFieldVsParamWithVisiblityChecker() {
     doTestResolveWithVisibilityChecker("field", e -> assertInstanceOf(e, PsiParameter.class));
   }
 
-  public void testResolveFieldInStaticInnerWithVisiblityChecker() throws Exception {
+  public void testResolveFieldInStaticInnerWithVisiblityChecker() {
     doTestResolveWithVisibilityChecker("field", e -> {
       assertInstanceOf(e, PsiField.class);
       assertEquals("Inner", ((PsiField)e).getContainingClass().getName());
     });
   }
 
-  public void testResolveFieldInInnerWithVisiblityChecker() throws Exception {
+  public void testResolveFieldInInnerWithVisiblityChecker() {
     doTestResolveWithVisibilityChecker("field", e -> {
       assertInstanceOf(e, PsiField.class);
       assertEquals("Inner", ((PsiField)e).getContainingClass().getName());
     });
   }
 
-  private void doTestResolveWithVisibilityChecker(String field, Consumer<PsiElement> checker) throws Exception {
+  private void doTestResolveWithVisibilityChecker(String field, Consumer<PsiElement> checker) {
     PsiReference iRef = configure();
 
-    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
+    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment(
       field, iRef.getElement(), null, true);
     codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
@@ -91,28 +107,29 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     checker.accept(results[0].getElement());
   }
 
-  private PsiReference configure() throws Exception {
-    return configureByFile("codeFragment/" + getTestName(false) + ".java");
+  private PsiReference configure() {
+    return findReferenceAtCaret("codeFragment/" + getTestName(false) + ".java");
   }
 
-  public void testResolveScopeWithFragmentContext() throws Exception {
-    PsiElement physical = configureByFile("codeFragment/LocalVariable.java").getElement();
-    JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(myProject)
+  public void testResolveScopeWithFragmentContext() {
+    PsiElement physical = findReferenceAtCaret("codeFragment/LocalVariable.java").getElement();
+    JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject())
       .createExpressionCodeFragment("ref", physical, null, true);
     fragment.forceResolveScope(new JavaSourceFilterScope(physical.getResolveScope()));
-    assertFalse(fragment.getResolveScope().equals(physical.getResolveScope()));
+    assertNotSame(fragment.getResolveScope(), physical.getResolveScope());
 
-    PsiExpression lightExpr = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("xxx.xxx", fragment);
+    PsiExpression lightExpr = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText("xxx.xxx", fragment);
     assertEquals(lightExpr.getResolveScope(), fragment.getResolveScope());
   }
 
   public void testClassHierarchyInNonPhysicalFile() {
-    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaFileType.INSTANCE,
-                                                                            "class Parent { void foo( ); }\n" +
-                                                                            "class Child extends Parent { }\n" +
-                                                                            "class User {\n" +
-                                                                            "    void caller() { new Child().foo(); }\n" +
-                                                                            "}", 0, true);
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE,
+                                                                               """
+                                                                                 class Parent { void foo( ); }
+                                                                                 class Child extends Parent { }
+                                                                                 class User {
+                                                                                     void caller() { new Child().foo(); }
+                                                                                 }""", 0, true);
     PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo()"));
     assertNotNull(ref);
     assertTrue(ref.getElement().getResolveScope().contains(file.getViewProvider().getVirtualFile()));
@@ -128,7 +145,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
 
   public void testDropCachesOnNonPhysicalContextChange() {
     PsiElementFactoryImpl factory = (PsiElementFactoryImpl)JavaPsiFacade.getElementFactory(getProject());
-    PsiClass superClass = ((PsiJavaFile) PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaFileType.INSTANCE, "class Super { @Deprecated void foo(){} }")).getClasses()[0];
+    PsiClass superClass = ((PsiJavaFile) PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", JavaFileType.INSTANCE, "class Super { @Deprecated void foo(){} }")).getClasses()[0];
     PsiClass subClass = ((PsiNewExpression)factory.createExpressionFromText("new Super() { void foo(){} }", superClass)).getAnonymousClass();
     assertNotNull(AnnotationUtil.findAnnotationInHierarchy(subClass.getMethods()[0], Deprecated.class));
 

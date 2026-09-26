@@ -1,0 +1,666 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.uast.kotlin.internal
+
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.impl.light.LightPsiClassBuilder
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.util.runIf
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.javaInterop.containingJvmClassName
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.symbols.originalConstructorIfTypeAliased
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
+import org.jetbrains.kotlin.analysis.api.javaInterop.asFacadePsiClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
+import org.jetbrains.kotlin.analysis.api.javaInterop.javaMethodName
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.isLocal
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.originalConstructorIfTypeAliased
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
+import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.light.classes.symbol.annotations.annotateByKtType
+import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.JvmStandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.analysis.UNullability
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
+import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
+import org.jetbrains.uast.kotlin.TypeOwnerKind
+import org.jetbrains.uast.kotlin.convertUnitToVoidIfNeeded
+import org.jetbrains.uast.kotlin.getContainingLightClass
+import org.jetbrains.uast.kotlin.toAccessorLightElement
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSymbolLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.readWriteAccess
+
+val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
+    UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
+        ?: FirKotlinUastLanguagePlugin()
+}
+
+private val COMPOSABLE_CLASS_ID: ClassId = ClassId.fromString("androidx/compose/runtime/Composable")
+private val COMPOSER_TYPE = "androidx.compose.runtime.Composer"
+
+@OptIn(KaAllowAnalysisOnEdt::class)
+internal inline fun <R> analyzeForUast(
+    useSiteKtElement: KtElement,
+    action: context(KaSession) () -> R
+): R = allowAnalysisOnEdt {
+    @OptIn(KaAllowAnalysisFromWriteAction::class)
+    allowAnalysisFromWriteAction {
+        analyze(useSiteKtElement, action)
+    }
+}
+
+context(_: KaSession)
+internal fun containingKtClass(
+    ktConstructorSymbol: KaConstructorSymbol,
+): KtClass? {
+    return when (val psi = ktConstructorSymbol.psi) {
+        is KtClass -> psi
+        is KtConstructor<*> -> psi.containingClass()
+        else -> null
+    }
+}
+
+context(_: KaSession)
+internal fun toPsiClass(
+    ktType: KaType,
+    source: UElement?,
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind,
+    isBoxed: Boolean = true,
+): PsiClass? {
+    // Try the underlying symbol's PSI first, if any.
+    // For the declaration from the Library, this will give
+    // [FirKotlinUastLibraryPsiProviderService] a chance to provide a PSI.
+    (ktType as? KaClassType)?.symbol?.let { classSymbol ->
+        psiForUast(classSymbol, context) as? PsiClass
+    }?.let { return it }
+    // Next, try SLC conversion if from Kotlin
+    (context as? KtClass)?.classSymbol?.asPsiClass()?.let { return it }
+    // Then, use JavaPsiFacade if from Java
+    return PsiTypesUtil.getPsiClass(
+        toPsiType(
+            ktType,
+            source,
+            context,
+            PsiTypeConversionConfiguration(typeOwnerKind, isBoxed = isBoxed)
+        )
+    )
+}
+
+context(_: KaSession)
+private fun fakePsiMethodForReifiedInline(
+    callableSymbol: KaCallableSymbol,
+    context: KtElement,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
+): PsiMethod? {
+    // `inline` w/ `reified` type param from binary dependency,
+    // which we can't find source PSI, so fake it
+    if (callableSymbol.origin == KaSymbolOrigin.LIBRARY &&
+        callableSymbol.isInline() &&
+        callableSymbol.isReified()
+    ) {
+        callableSymbol.containingJvmClassName?.let { fqName ->
+            JavaPsiFacade.getInstance(context.project)
+                .findClass(fqName, context.resolveScope)
+                ?.let { containingClass ->
+                    val actualSymbol = if (callableSymbol is KaPropertySymbol) {
+                        if ((context as? KtExpression)?.readWriteAccess()?.isWrite == true) {
+                            callableSymbol.setter ?: callableSymbol
+                        } else {
+                            callableSymbol.getter ?: callableSymbol
+                        }
+                    } else {
+                        callableSymbol
+                    }
+
+                    val methodName = when (actualSymbol) {
+                        is KaPropertyAccessorSymbol -> actualSymbol.javaMethodName ?: run {
+                            val propertySymbol = actualSymbol.containingDeclaration as? KaPropertySymbol
+                            val propertyName = propertySymbol?.name?.asString() ?: return null
+                            if (actualSymbol is KaPropertySetterSymbol) {
+                                JvmAbi.setterName(propertyName)
+                            } else {
+                                JvmAbi.getterName(propertyName)
+                            }
+                        }
+                        is KaNamedFunctionSymbol -> actualSymbol.name.identifier
+                        else -> actualSymbol.callableId?.callableName?.identifier ?: return null
+                    }
+                    return UastFakeDeserializedSymbolLightMethod(
+                        actualSymbol.createPointer(),
+                        methodName,
+                        containingClass,
+                        context,
+                        kaCallInfo.typeArgumentsMappingOrEmptyMap()
+                    )
+                }
+        }
+    }
+    return null
+}
+
+context(_: KaSession)
+private fun KaDeclarationSymbol.isReified(): Boolean = when (this) {
+    is KaPropertyAccessorSymbol -> containingDeclaration?.isReified() == true
+    else -> typeParameters.any { it.isReified }
+}
+
+private fun KaCallableSymbol.isInline(): Boolean = when (this) {
+    is KaNamedFunctionSymbol -> isInline
+    is KaPropertySymbol -> getter?.isInline == true || setter?.isInline == true
+    is KaPropertyAccessorSymbol -> isInline
+    else -> false
+}
+
+context(session: KaSession)
+internal fun toPsiMethod(
+    functionSymbol: KaFunctionSymbol,
+    context: KtElement,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
+): PsiMethod? {
+    // Error handling for a case like KTIJ-23503: Outer.<no name provided>.Inner from broken code
+    val nameToCheck = if (functionSymbol is KaConstructorSymbol)
+        functionSymbol.containingClassId?.asSingleFqName()
+    else
+        functionSymbol.callableId?.asSingleFqName()
+    if (nameToCheck?.pathSegments()?.any { it.isSpecial } == true) {
+        return null
+    }
+
+    fakePsiMethodForReifiedInline(functionSymbol, context, kaCallInfo)?.let { return it }
+
+    return when (val psi = psiForUast(functionSymbol, context)) {
+        null -> {
+            // Lint/UAST CLI: try `fake` creation for a deserialized declaration
+            toPsiMethodForDeserialized(functionSymbol, context, psi, kaCallInfo)
+        }
+        is PsiMethod -> psi
+        is KtClassOrObject -> {
+            // For synthetic members in enum classes, `psi` points to their containing enum class.
+            if (psi is KtClass && psi.isEnum()) {
+                val lc = psi.classSymbol?.asPsiClass() ?: return null
+                lc.methods.find { it.name == (functionSymbol as? KaNamedFunctionSymbol)?.name?.identifier }?.let { return it }
+            }
+
+            // Default primary constructor
+            psi.primaryConstructor?.symbol?.asPsiMethods()?.firstOrNull()?.let { return it }
+            val lc = psi.classSymbol?.asPsiClass() ?: return null
+            lc.constructors.firstOrNull()?.let { return it }
+            if (psi.isLocal) UastFakeSourceLightPrimaryConstructor(psi, lc) else null
+        }
+        is KtFunction -> {
+            // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
+            fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
+                val module = source.kaModule
+                if (module !is KaSourceModule) return null
+                return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
+            }
+
+            when {
+                psi.isLocal ->
+                    handleLocalOrSynthetic(psi)
+                functionSymbol.fakeOverrideOriginal.origin == KaSymbolOrigin.LIBRARY ->
+                    // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
+                    // That is, this one is a deserialized declaration (in Lint/UAST IDE).
+                    toPsiMethodForDeserialized(functionSymbol, context, psi, kaCallInfo)
+                else ->
+                    /**
+                     * [psi] is not the direct PSI element for [functionSymbol].
+                     * E.g., if [functionSymbol] is a typealiased constructor,
+                     * [psi] points to the original one.
+                     * As LCs are not constructed for typealiased elements,
+                     * the adjusted PSI needs to be used
+                     */
+                    (psi.symbol as? KaFunctionSymbol)?.asPsiMethods()?.firstOrNull()
+                        ?: handleLocalOrSynthetic(psi)
+            }
+        }
+        else -> psi.getRepresentativeLightMethod()
+    }
+}
+
+context(_: KaSession)
+private fun toPsiMethodForDeserialized(
+    functionSymbol: KaFunctionSymbol,
+    context: KtElement,
+    psi: KtFunction?,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
+): PsiMethod? {
+
+    fun equalSignatures(psiMethod: PsiMethod): Boolean {
+        var methodParameters: List<PsiParameter> = psiMethod.parameterList.parameters.toList()
+        val isSuspend = (functionSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
+        if (isSuspend) {
+            // Drop the Continuation added by the compiler
+            methodParameters = methodParameters.dropLast(1)
+        }
+        val isComposable = COMPOSABLE_CLASS_ID in functionSymbol.annotations
+        if (isComposable) {
+            // Drop the synthetic parameters added by Compose compiler plugin
+            // $Composer, $changed[n], $default[n]
+            methodParameters = methodParameters.takeWhile { it.type.canonicalText != COMPOSER_TYPE }
+        }
+        val symbolParameters: List<KaParameterSymbol> =
+            if (functionSymbol.isExtension) {
+                listOfNotNull(functionSymbol.receiverParameter) + functionSymbol.valueParameters
+            } else {
+                functionSymbol.valueParameters
+            }
+        if (methodParameters.size != symbolParameters.size) {
+            return false
+        }
+
+        for (i in methodParameters.indices) {
+            val symbolParameter = symbolParameters[i]
+            val symbolParameterType = toPsiType(
+                symbolParameter.returnType,
+                psiMethod,
+                context,
+                PsiTypeConversionConfiguration(
+                    TypeOwnerKind.DECLARATION,
+                    typeMappingMode = KaTypeMappingMode.VALUE_PARAMETER,
+                )
+            )
+
+            if (methodParameters[i].type != symbolParameterType) return false
+        }
+        if (psiMethod.isConstructor) return true
+        val psiMethodReturnType = psiMethod.returnType ?: PsiTypes.voidType()
+        val symbolReturnType =
+            // The return type of compiled `suspend` function is [Object].
+            if (isSuspend) {
+                val psiFacade = JavaPsiFacade.getInstance(psiMethod.project)
+                val psiObjectClass =
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(psiFacade.project))
+                if (psiObjectClass != null) {
+                    PsiTypesUtil.getClassType(psiObjectClass)
+                } else PsiTypes.voidType()
+            } else {
+                toPsiType(
+                    functionSymbol.returnType,
+                    psiMethod,
+                    context,
+                    PsiTypeConversionConfiguration(
+                        TypeOwnerKind.DECLARATION,
+                        typeMappingMode = KaTypeMappingMode.RETURN_TYPE,
+                    )
+                )
+            }
+
+        return psiMethodReturnType == symbolReturnType
+    }
+
+    fun PsiClass.lookup(): PsiMethod? {
+        val candidates =
+            if (functionSymbol is KaConstructorSymbol)
+                constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
+            else {
+                val jvmName = functionSymbol.getJvmNameFromAnnotation()
+                val id = jvmName
+                    ?: functionSymbol.callableId?.callableName?.identifierOrNullIfSpecial
+                    ?: psi?.name
+                methods.filter { it.name == id }
+            }
+        return when (candidates.size) {
+            0 -> {
+                if (psi != null) {
+                    UastFakeDeserializedSourceLightMethod(psi, this@lookup)
+                } else if (functionSymbol is KaNamedFunctionSymbol) {
+                    UastFakeDeserializedSymbolLightMethod(
+                        functionSymbol.createPointer(),
+                        functionSymbol.name.identifier,
+                        this@lookup,
+                        context,
+                        kaCallInfo.typeArgumentsMappingOrEmptyMap()
+                    )
+                } else null
+            }
+            1 -> {
+                candidates.single()
+            }
+            else -> {
+                candidates.firstOrNull { equalSignatures(it) } ?: candidates.first()
+            }
+        }
+    }
+
+    // Deserialized member function
+    val classId = psi?.containingClass()?.getClassId()
+        ?: functionSymbol.callableId?.classId
+    if (classId != null) {
+        val containingClass = toPsiClass(
+            typeCreator.classType(classId),
+            source = null,
+            context,
+            TypeOwnerKind.DECLARATION,
+            isBoxed = false,
+        ) ?: runIf(functionSymbol is KaConstructorSymbol) {
+            LightPsiClassBuilder(context, classId.asFqNameString())
+        }
+        containingClass?.lookup()?.let { return it }
+    }
+    // Deserialized top-level function
+    psi?.containingKtFile?.symbol?.asFacadePsiClass()?.lookup()?.let { return it }
+
+    if (functionSymbol !is KaNamedFunctionSymbol) return null
+    // JVM binary lookup when facade PSI is unavailable
+    functionSymbol.containingJvmClassName?.let { fqName ->
+        JavaPsiFacade.getInstance(context.project)
+            .findClass(fqName, context.resolveScope)
+            ?.lookup()
+    }?.let { return it }
+
+    if (functionSymbol.callableId?.classId != null) return null
+    val packageName = functionSymbol.callableId?.packageName ?: return null
+    // Skip stdlib built-in types (kotlin.Any, kotlin.String, etc.) - they resolve through normal JVM mapping
+    if (packageName == StandardClassIds.BASE_KOTLIN_PACKAGE) return null
+
+    // Non-JVM fallback: no JVM facade class on classpath
+    val psiFile = psi?.containingKtFile ?: (functionSymbol.psi as? KtElement)?.containingKtFile
+    val facadeFqName = psiFile?.javaFileFacadeFqName?.asString() ?: return null
+
+    val jvmFacadeClass = JavaPsiFacade.getInstance(context.project)
+        .findClass(facadeFqName, context.resolveScope)
+    jvmFacadeClass?.lookup()?.let { return it }
+    // Return null when the JVM facade class exists, but no matching method is found
+    if (jvmFacadeClass != null) return null
+
+    return UastFakeDeserializedSymbolLightMethod(
+        functionSymbol.createPointer(),
+        functionSymbol.name.identifier,
+        LightPsiClassBuilder(context, facadeFqName),
+        context,
+        kaCallInfo.typeArgumentsMappingOrEmptyMap()
+    )
+}
+
+private fun KaSimpleCall<*, *>?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
+    this?.typeArgumentsMapping
+        ?.map { (typeParamSymbol, type) ->
+            typeParamSymbol.createPointer() to type.createPointer()
+        }?.toMap()
+        ?: emptyMap()
+
+/**
+ * Returns a `JvmName` annotation value.
+ */
+private fun KaAnnotatedSymbol.getJvmNameFromAnnotation(): String? {
+    for (annotation in annotations[JvmStandardClassIds.JVM_NAME_CLASS_ID]) {
+        val firstArgumentExpression = annotation.arguments.firstOrNull()?.expression
+        if (firstArgumentExpression is KaAnnotationValue.ConstantValue) {
+            return firstArgumentExpression.value.value as? String
+        }
+        break
+    }
+
+    return null
+}
+
+context(_: KaSession)
+internal fun toPsiType(
+    ktType: KaType,
+    source: UElement?,
+    context: KtElement,
+    config: PsiTypeConversionConfiguration,
+): PsiType =
+    toPsiType(
+        ktType,
+        source?.getParentOfType<UDeclaration>(false)?.javaPsi as? PsiModifierListOwner,
+        context,
+        config
+    )
+
+@OptIn(KaImplementationDetail::class)
+context(session: KaSession)
+internal fun toPsiType(
+    ktType: KaType,
+    containingLightDeclaration: PsiModifierListOwner?,
+    context: KtElement,
+    config: PsiTypeConversionConfiguration,
+): PsiType {
+    if (ktType is KaClassType && ktType.typeArguments.isEmpty()) {
+        fun PsiPrimitiveType.orBoxed() = if (config.isBoxed) getBoxedType(context) else this
+        val psiType = when (ktType.classId) {
+            StandardClassIds.Int -> PsiTypes.intType().orBoxed()
+            StandardClassIds.Long -> PsiTypes.longType().orBoxed()
+            StandardClassIds.Short -> PsiTypes.shortType().orBoxed()
+            StandardClassIds.Boolean -> PsiTypes.booleanType().orBoxed()
+            StandardClassIds.Byte -> PsiTypes.byteType().orBoxed()
+            StandardClassIds.Char -> PsiTypes.charType().orBoxed()
+            StandardClassIds.Double -> PsiTypes.doubleType().orBoxed()
+            StandardClassIds.Float -> PsiTypes.floatType().orBoxed()
+            StandardClassIds.Unit -> convertUnitToVoidIfNeeded(context, config.typeOwnerKind, config.isBoxed)
+            StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
+            else -> null
+        }
+        if (psiType != null) {
+            return psiType as? PsiPrimitiveType ?: annotateByKtType(psiType, ktType, context, true)
+        }
+    }
+    val psiTypeParent: PsiElement =
+        containingLightDeclaration.takeIf { !ktType.isLocal || it is KtLightElement<*, *> }
+            ?: context.parentOfType<KtDeclaration>()
+            ?: context
+    return ktType.asPsiType(
+        psiTypeParent,
+        allowErrorTypes = false,
+        config.typeMappingMode,
+        isAnnotationMethod = false,
+        allowNonJvmPlatforms = true,
+    ) ?: UastErrorType
+}
+
+context(_: KaSession)
+internal fun receiverType(
+    ktCall: KaSimpleCall<*, *>,
+    source: UElement,
+    context: KtElement,
+): PsiType? {
+    val ktType = ktCall.extensionReceiver?.type
+        ?: ktCall.dispatchReceiver?.type
+        ?: ktCall.signature.receiverType
+    if (ktType == null ||
+        ktType is KaErrorType ||
+        ktType.classId == KaStandardTypeClassIds.UNIT
+    ) {
+        return null
+    }
+    return toPsiType(
+        ktType,
+        source,
+        context,
+        PsiTypeConversionConfiguration.create(
+            context,
+            isBoxed = true,
+        )
+    )
+}
+
+context(_: KaSession)
+internal val KaType.typeForValueClass: Boolean
+    get() {
+        val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
+        return symbol.isInline
+    }
+
+context(_: KaSession)
+private val KaType.isLocal: Boolean
+    get() {
+        val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
+        return symbol.isLocal
+    }
+
+context(_: KaSession)
+internal fun isInheritedGenericType(ktType: KaType?): Boolean {
+    if (ktType == null) return false
+    return ktType is KaTypeParameterType &&
+        // explicitly nullable, e.g., T?
+        !ktType.isMarkedNullable &&
+        // non-null upper bound, e.g., T : Any
+        nullability(ktType) != UNullability.NOT_NULL
+}
+
+context(_: KaSession)
+internal fun nullability(ktType: KaType?): UNullability? {
+    if (ktType == null) return null
+    if (ktType is KaErrorType) return null
+    val expanded = ktType.fullyExpandedType
+    return when {
+        expanded.hasFlexibleNullability -> UNullability.UNKNOWN
+        expanded.isNullable -> UNullability.NULLABLE
+        else -> UNullability.NOT_NULL
+    }
+}
+
+context(_: KaSession)
+internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
+    return (ktCallableDeclaration.symbol as? KaCallableSymbol)?.returnType
+}
+
+/**
+ * Finds Java stub-based [PsiElement] for symbols that refer to declarations from [KaSymbolOrigin.LIBRARY]
+ */
+context(session: KaSession)
+internal tailrec fun psiForUast(
+    symbol: KaSymbol,
+    context: KtElement,
+): PsiElement? {
+    if (symbol.origin == KaSymbolOrigin.LIBRARY) {
+        if (symbol is KaCallableSymbol) {
+            fakePsiMethodForReifiedInline(symbol, context, null)?.let { return it }
+        }
+
+        val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
+        return with(psiProvider) { provide(symbol, context) }
+    }
+
+    if (symbol is KaConstructorSymbol) {
+        symbol.originalConstructorIfTypeAliased?.let { originalConstructorSymbol ->
+            return psiForUast(originalConstructorSymbol, context)
+        }
+    }
+
+    if (symbol is KaCallableSymbol) {
+        if (symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+            val originalSymbol = symbol.fakeOverrideOriginal
+            if (originalSymbol != symbol) {
+                return psiForUast(originalSymbol, context)
+            }
+        }
+    }
+
+    // For compiler-generated synthetic members, source PSI may point to the declaration
+    // from which this symbol originates, but that's not its real source, either.
+    // However, some resolutions still rely on that PSI info, e.g.,
+    //   default constructors, local functions/variables, implicit lambda parameter, etc.
+    // Hence, case-by-case bail-out
+    if (symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) {
+        val containingDeclaration = symbol.containingDeclaration
+        // E.g., KTIJ-33572: data class `hasCode` resolves to `KtClass`, resulting in constructor?!
+        if ((containingDeclaration as? KaNamedClassSymbol)?.isData == true) {
+            return null
+        }
+    }
+
+    return symbol.psi
+}
+
+context(_: KaSession)
+internal fun KtElement.toPsiElementAsLightElement(
+    sourcePsi: KtExpression? = null
+): PsiElement? {
+    if (this is KtProperty) {
+        toAccessorLightElement(sourcePsi)?.let { return it }
+    }
+    return toLightElements().firstOrNull()
+}

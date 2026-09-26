@@ -1,57 +1,44 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TablePassInfo extends LayoutPassInfo {
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}
+ * with {@link com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo} instead
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
+public final class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
-  public Rectangle toFitRec;
+  public final Rectangle toFitRec;
+  public final Rectangle tabRectangle = new Rectangle();
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
-
-  int requiredWidth;
-  int requiredRows;
-  int rowToFitMaxX;
-
   final JBTabsImpl myTabs;
+  public final List<TabInfo> invisible = new ArrayList<>();
+  final Map<TabInfo, Integer> lengths = new LinkedHashMap<>();
+  final Map<TabInfo, Rectangle> bounds = new HashMap<>();
+  int requiredLength = 0;
 
-  TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
+  TablePassInfo(TableLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    myTabs = tabs;
-  }
-
-  @Nullable
-  public TabInfo getPreviousFor(final TabInfo info) {
-    final TableRow row = myInfo2Row.get(info);
-    return row != null ? getPrevious(row.myColumns, row.myColumns.indexOf(info)) : null;
-  }
-
-  @Nullable
-  public TabInfo getNextFor(final TabInfo info) {
-    final TableRow row = myInfo2Row.get(info);
-    return row != null ? getNext(row.myColumns, row.myColumns.indexOf(info)) : null;
+    myTabs = layout.myTabs;
+    final Insets insets = myTabs.getLayoutInsets();
+    toFitRec =
+      new Rectangle(insets.left, insets.top, myTabs.getWidth() - insets.left - insets.right, myTabs.getHeight() - insets.top - insets.bottom);
   }
 
   public boolean isInSelectionRow(final TabInfo tabInfo) {
@@ -60,25 +47,25 @@ public class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
+  @Override
   public int getRowCount() {
     return table.size();
   }
 
-  public int getColumnCount(final int row) {
-    return table.get(row).myColumns.size();
-  }
-
-  public TabInfo getTabAt(final int row, final int column) {
-    return table.get(row).myColumns.get(column);
-  }
-
-  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
-    final TableRow row = myInfo2Row.get(tabInfo);
-    return row != null ? row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1 : false;
+  @Override
+  public @NotNull Rectangle getHeaderRectangle() {
+    return (Rectangle)tabRectangle.clone();
   }
 
   @Override
-  public Rectangle getHeaderRectangle() {
-    return (Rectangle)toFitRec.clone();
+  public int getRequiredLength() {
+    return requiredLength;
+  }
+
+  @Override
+  public int getScrollExtent() {
+    return !moreRect.isEmpty() ? moreRect.x - toFitRec.x - myTabs.getActionsInsets().left
+           : table.size() > 1 || entryPointRect.isEmpty() ? toFitRec.width
+           : entryPointRect.x - toFitRec.x - myTabs.getActionsInsets().left;
   }
 }

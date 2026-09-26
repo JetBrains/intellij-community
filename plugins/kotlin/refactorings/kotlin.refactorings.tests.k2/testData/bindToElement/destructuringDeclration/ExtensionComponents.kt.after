@@ -1,0 +1,13 @@
+// FILE: test/Destruct.kt
+// BIND_TO test.bar.component1
+package test
+
+import test.bar.component1
+import test.foo.component1
+import test.foo.component2
+import test.boo.MovingComponentExtended
+
+fun referComponentExt() {
+    val (u, v) = MovingComponentExtended()
+}
+

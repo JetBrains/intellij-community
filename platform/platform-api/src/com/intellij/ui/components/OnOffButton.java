@@ -1,58 +1,82 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OnOffButton extends JToggleButton {
-  private String myOnText = "ON";
-  private String myOffText = "OFF";
+  private @NlsContexts.Button String myOnText = IdeBundle.message("ui.button.on");
+  private @NlsContexts.Button String myOffText = IdeBundle.message("ui.button.off");
+
+  /**
+   * Internal padding
+   */
+  private @NotNull Insets myIpad = JBUI.insets(3);
 
   public OnOffButton() {
-    setBorder(null);
+    setBorder(JBUI.Borders.empty());
     setOpaque(false);
   }
 
-  public String getOnText() {
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public @NlsContexts.Button String getOnText() {
     return myOnText;
   }
 
-  @SuppressWarnings("unused")
-  public void setOnText(String onText) {
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @Deprecated(forRemoval = true)
+  public void setOnText(@NlsContexts.Button String onText) {
     myOnText = onText;
   }
 
-  public String getOffText() {
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public @NlsContexts.Button String getOffText() {
     return myOffText;
   }
 
-  @SuppressWarnings("unused")
-  public void setOffText(String offText) {
+  /**
+   * This method is no longer supported for the Islands themes
+   */
+  @Deprecated(forRemoval = true)
+  public void setOffText(@NlsContexts.Button String offText) {
     myOffText = offText;
   }
 
@@ -70,7 +94,33 @@ public class OnOffButton extends JToggleButton {
           UIManager.getUI(this));
   }
 
+  /**
+   * Sets specified internal paddings
+   *
+   * @param ipad insets
+   */
+  @ApiStatus.Internal
+  public void setIpad(@NotNull Insets ipad) {
+    myIpad = ipad;
+  }
+
+  /**
+   * @return internal paddings of the component
+   */
+  @ApiStatus.Internal
+  public @NotNull Insets getIpad() {
+    return myIpad;
+  }
+
   private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
+    private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
+    private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
+    private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.onBackground", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
+    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.onForeground", JBColor.lazy(() -> UIUtil.getListForeground(true, true)));
+
+    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.offBackground", JBColor.lazy(() -> UIUtil.getPanelBackground()));
+    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.offForeground", JBColor.lazy(() -> UIUtil.getLabelDisabledForeground()));
+
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
       c.setAlignmentY(0.5f);
@@ -79,65 +129,90 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public Dimension getPreferredSize(JComponent c) {
-      int vGap = JBUI.scale(4);
-
       OnOffButton button = (OnOffButton)c;
-      String text = button.getOffText().length() > button.getOnText().length() ? button.getOffText() : button.getOnText();
-      text = text.toUpperCase(Locale.getDefault());
-      FontMetrics fm = c.getFontMetrics(c.getFont());
-      int w = fm.stringWidth(text);
-      int h = fm.getHeight();
-      h += 2 * vGap;
-      w += 3 * h / 2;
+      Insets ipad = button.getIpad();
+      int textWidth = Math.max(getTextWidth(button, button.getOnText()), getTextWidth(button, button.getOffText()));
+      int fmHeight = c.getFontMetrics(c.getFont()).getHeight();
+      int widthCorrection = (int)(JBUIScale.scale(3) * 0.5); // A magic constant from the past
+      int w = textWidth + (int)(fmHeight * 1.25) + widthCorrection + ipad.left + ipad.right;
+      int h = fmHeight + ipad.top + ipad.bottom;
       return new Dimension(w, h);
     }
 
     @Override
-    public void paint(Graphics gr, JComponent c) {
-      if (!(c instanceof OnOffButton)) return;
+    public void paint(Graphics g, JComponent c) {
+      if (!(c instanceof OnOffButton button)) return;
 
-      int toggleArc = JBUI.scale(3);
-      int buttonArc = JBUI.scale(5);
-      int vGap = JBUI.scale(4);
-      int hGap = JBUI.scale(3);
-      int border = 1;
-
-      OnOffButton button = (OnOffButton)c;
+      int toggleArc = JBUIScale.scale(3);
+      int buttonArc = JBUIScale.scale(5);
       Dimension size = button.getSize();
-      int w = size.width - 2 * vGap;
-      int h = size.height - 2 * hGap;
+      Insets ipad = button.getIpad();
+      int w = size.width - (ipad.left + ipad.right);
+      int h = size.height - (ipad.top + ipad.bottom);
       if (h % 2 == 1) {
         h--;
       }
-      Graphics2D g = ((Graphics2D)gr);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      int xOff = (button.getWidth() - w) / 2;
-      int yOff = (button.getHeight() - h) / 2;
-      g.translate(xOff, yOff);
-      if (button.isSelected()) {
-        g.setColor(new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._80));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._200, Gray._100));
-        g.fillRoundRect(w - h, border, h, h - border, toggleArc, toggleArc);
-        g.setColor(UIUtil.getListForeground(true));
-        g.drawString(button.getOnText(), h / 2, h - vGap);
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int xOff = (button.getWidth() - w) / 2;
+        int yOff = (button.getHeight() - h) / 2;
+        g2.translate(xOff, yOff);
+
+        boolean selected = button.isSelected();
+        g2.setColor(selected ? ON_BACKGROUND : OFF_BACKGROUND);
+        g2.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
+
+        int knobWidth = w - SwingUtilities.computeStringWidth(g2.getFontMetrics(), button.getOffText()) - JBUIScale.scale(2);
+        knobWidth = Math.min(knobWidth, h);
+
+        int textAscent = g2.getFontMetrics().getAscent();
+
+        Rectangle viewRect = new Rectangle();
+        Rectangle textRect = new Rectangle();
+        Rectangle iconRect = new Rectangle();
+
+        g2.setColor(BUTTON_COLOR);
+        if (selected) {
+          g2.fillRoundRect(w - knobWidth, 0, knobWidth, h, toggleArc, toggleArc);
+
+          if (button.getOnText() != null) {
+            viewRect.setBounds(0, 0, w - knobWidth, h);
+            SwingUtilities.layoutCompoundLabel(g2.getFontMetrics(),
+                                               button.getOnText(),
+                                               null,
+                                               SwingConstants.CENTER, SwingConstants.CENTER,
+                                               SwingConstants.CENTER, SwingConstants.CENTER,
+                                               viewRect, iconRect, textRect, 0);
+
+            g2.setColor(ON_FOREGROUND);
+            g2.drawString(button.getOnText(), textRect.x, textRect.y + textAscent);
+          }
+        }
+        else {
+          g2.fillRoundRect(0, 0, knobWidth, h, toggleArc, toggleArc);
+
+          if (button.getOffText() != null) {
+            viewRect.setBounds(knobWidth, 0, w - knobWidth, h);
+            SwingUtilities.layoutCompoundLabel(g2.getFontMetrics(),
+                                               button.getOffText(),
+                                               null,
+                                               SwingConstants.CENTER, SwingConstants.CENTER,
+                                               SwingConstants.CENTER, SwingConstants.CENTER,
+                                               viewRect, iconRect, textRect, 0);
+
+            g2.setColor(OFF_FOREGROUND);
+            g2.drawString(button.getOffText(), textRect.x, textRect.y + textAscent);
+          }
+        }
+
+        g2.setColor(BORDER_COLOR);
+        g2.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
       }
-      else {
-        g.setColor(UIUtil.getPanelBackground());
-        g.fillRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(new JBColor(Gray._192, Gray._100));
-        g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
-        g.setColor(UIUtil.getLabelDisabledForeground());
-        g.drawString(button.getOffText(), h + vGap, h - vGap);
-        g.setColor(JBColor.border());
-        g.setPaint(new GradientPaint(h, 0, new JBColor(Gray._158, Gray._100), 0, h, new JBColor(Gray._210, Gray._100)));
-        g.fillRoundRect(0, 0, h, h, toggleArc, toggleArc);
-        // g.setColor(UIUtil.getBorderColor());
-        // g.drawOval(0, 0, h, h);
+      finally {
+        g2.dispose();
       }
-      g.translate(-xOff, -yOff);
     }
 
     @Override
@@ -148,6 +223,15 @@ public class OnOffButton extends JToggleButton {
     @Override
     public Dimension getMaximumSize(JComponent c) {
       return getPreferredSize(c);
+    }
+
+    private static int getTextWidth(OnOffButton button, @Nullable String text) {
+      if (text == null) {
+        return 0;
+      }
+
+      FontMetrics fm = button.getFontMetrics(button.getFont());
+      return fm.stringWidth(text.toUpperCase(Locale.getDefault()));
     }
   }
 }

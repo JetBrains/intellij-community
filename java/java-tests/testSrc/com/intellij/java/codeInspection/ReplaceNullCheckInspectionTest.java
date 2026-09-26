@@ -28,14 +28,9 @@ public class ReplaceNullCheckInspectionTest extends LightQuickFixParameterizedTe
     return IdeaTestUtil.getMockJdk9();
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ReplaceNullCheckInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

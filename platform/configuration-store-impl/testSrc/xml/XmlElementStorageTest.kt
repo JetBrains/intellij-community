@@ -1,60 +1,81 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.DataWriter
 import com.intellij.configurationStore.StateMap
 import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.settings.SettingsController
+import com.intellij.util.LineSeparator
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
 
 class XmlElementStorageTest {
-  @Test fun testGetStateSucceeded() {
+  @Test
+  fun testGetStateSucceeded() {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
-    val state = storage.getState(this, "test", Element::class.java)
-    assertThat(state).isNotNull()
+    val state = storage.getState(
+      component = this,
+      componentName = "test",
+      pluginId = PluginManagerCore.CORE_ID,
+      stateClass = Element::class.java,
+      mergeInto = null,
+      reload = false,
+    )
+    assertThat(state).isNotNull
     assertThat(state!!.name).isEqualTo("component")
-    assertThat(state.getChild("foo")).isNotNull()
+    assertThat(state.getChild("foo")).isNotNull
   }
 
-  @Test fun `get state not succeeded`() {
+  @Test
+  fun `get state not succeeded`() {
     val storage = MyXmlElementStorage(Element("root"))
-    val state = storage.getState(this, "test", Element::class.java)
+    val state = storage.getState(
+      component = this,
+      componentName = "test",
+      PluginManagerCore.CORE_ID,
+      Element::class.java,
+      mergeInto = null,
+      reload = false,
+    )
     assertThat(state).isNull()
   }
 
-  @Test fun `set state overrides old state`() {
+  @Test
+  fun `set state overrides old state`() = runBlocking {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
-    val externalizationSession = storage.startExternalization()!!
-    externalizationSession.setState(null, "test", newState)
-    externalizationSession.createSaveSession()!!.save()
-    assertThat(storage.savedElement).isNotNull()
-    assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull()
+    val externalizationSession = storage.createSaveSessionProducer()!!
+    externalizationSession.setState(component = null, componentName = "test", pluginId = PluginManagerCore.CORE_ID, state = newState)
+    externalizationSession.createSaveSession()!!.save(events = null)
+    assertThat(storage.savedElement).isNotNull
+    assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
   }
 
-  private class MyXmlElementStorage(private val myElement: Element) : XmlElementStorage("", "root") {
+  private class MyXmlElementStorage(private val element: Element)
+    : XmlElementStorage(fileSpec = "", rootElementName = "root", storageRoamingType = RoamingType.DEFAULT) {
+    override val controller: SettingsController?
+      get() = null
+
     var savedElement: Element? = null
 
-    override fun loadLocalData() = myElement
+    override fun loadLocalData() = element
 
-    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<MyXmlElementStorage>(states, this) {
-      override fun saveLocally(element: Element?) {
-        savedElement = element?.clone()
+    override fun createSaveSession(states: StateMap): XmlElementStorageSaveSessionProducer<MyXmlElementStorage> {
+      return object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
+        override fun remove(events: MutableList<VFileEvent>?) {
+          savedElement = null
+        }
+
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
+          savedElement = JDOMUtil.load(dataWriter.toBufferExposingByteArray(LineSeparator.LF).toByteArray().inputStream())
+        }
       }
     }
   }

@@ -1,0 +1,59 @@
+//file:noinspection GrPackage
+
+import java.nio.file.Path
+import java.nio.file.Paths
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final String dependencyNotation = DEPENDENCY_NOTATION
+  //noinspection GrUnresolvedAccess
+  public static final String targetPath = TARGET_PATH
+  //noinspection GrUnresolvedAccess
+  public static final String gradleTaskName = GRADLE_TASK_NAME
+  @SuppressWarnings('GroovyAssignabilityCheck')
+  public static final Path projectPath = Paths.get(GRADLE_PROJECT_PATH)
+}
+
+// Requires Gradle 5.6+
+// This version is lazy and configuration cache friendly
+abstract class IjDownloadTask extends DefaultTask {
+
+  @Input
+  abstract Property<String> getTargetPathProvider()
+
+  @InputFiles
+  abstract Property<FileCollection> getCollectionProvider()
+
+  @TaskAction
+  void downloadDependency() {
+    def pathToFile = getPathToResolvedFile(getCollectionProvider())
+    if (pathToFile == null) {
+      throw new IllegalArgumentException("Unable to download artifact for " + Properties.dependencyNotation)
+    }
+    String target = getTargetPathProvider().get()
+    File targetFile = new File(target)
+    targetFile.write pathToFile
+    logger.lifecycle('Artifact was downloaded to ' + pathToFile)
+  }
+
+  private static String getPathToResolvedFile(Property<FileCollection> collectionProvider) {
+    def fileCollection = collectionProvider.get()
+    if (fileCollection.isEmpty() || fileCollection.size() > 1) {
+      return null
+    }
+    return fileCollection.getSingleFile().path
+  }
+}
+
+afterProject {
+  if (it.projectDir.toPath().normalize() == Properties.projectPath) {
+    Configuration configuration = it.configurations.create('downloadArtifact_' + UUID.randomUUID())
+    configuration.transitive = false
+    it.dependencies.add(configuration.name, Properties.dependencyNotation)
+    def lazyArtifacts = configuration.incoming.files
+    it.tasks.register(Properties.gradleTaskName, IjDownloadTask) {
+      collectionProvider = lazyArtifacts
+      targetPathProvider = Properties.targetPath
+    }
+  }
+}

@@ -1,36 +1,33 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.JavaDebuggerMagicConstantUtils;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
+import com.sun.jdi.VoidType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class PrimitiveRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "PrimitiveRenderer";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
 
   public boolean SHOW_HEX_VALUE = false;
 
@@ -38,64 +35,82 @@ public class PrimitiveRenderer extends NodeRendererImpl {
     super("Primitive");
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public void setName(String text) {
     // prohibit name change
   }
 
+  @Override
   public final boolean isEnabled() {
     return true;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     // prohibit change
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type == null || type instanceof PrimitiveType || type instanceof VoidType;
   }
 
+  @Override
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
-    else if (value instanceof PrimitiveValue) {
-      if (value instanceof CharValue) {
+    else if (value instanceof PrimitiveValue primitiveValue) {
+      String label;
+      if (value instanceof CharValue charValue) {
         StringBuilder buf = new StringBuilder();
-        appendCharValue((CharValue)value, buf);
+        appendCharValue(charValue, buf);
         if (SHOW_HEX_VALUE) {
-          appendHexValue((CharValue)value, buf);
-        } else {
-          buf.append(' ').append(((PrimitiveValue)value).longValue());
-        }
-        return buf.toString();
-      }
-      else {
-        if (SHOW_HEX_VALUE) {
-          StringBuilder buf = new StringBuilder();
-          buf.append(value.toString());
-          appendHexValue((PrimitiveValue)value, buf);
-          return buf.toString();
+          appendHexValue(charValue, buf);
         }
         else {
-          return value.toString();
+          buf.append(' ').append(primitiveValue.longValue());
         }
+        label = buf.toString();
       }
+      else if (SHOW_HEX_VALUE) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(value);
+        appendHexValue(primitiveValue, buf);
+        label = buf.toString();
+      }
+      else {
+        label = value.toString();
+      }
+      if (isMagicConstantCandidate(value)
+          && valueDescriptor instanceof ValueDescriptorImpl descriptorImpl
+          && evaluationContext instanceof EvaluationContextImpl contextImpl) {
+        JavaDebuggerMagicConstantUtils.scheduleMagicConstantSuffix(descriptorImpl, contextImpl, label, labelListener);
+      }
+      return label;
     }
     else {
-      return DebuggerBundle.message("label.undefined");
+      return JavaDebuggerBundle.message("label.undefined");
     }
+  }
+
+  private static boolean isMagicConstantCandidate(Value value) {
+    return value instanceof IntegerValue
+           || value instanceof LongValue
+           || value instanceof ShortValue
+           || value instanceof ByteValue;
   }
 
   static void appendCharValue(CharValue value, StringBuilder buf) {
     buf.append('\'');
     String s = value.toString();
-    StringUtil.escapeStringCharacters(s.length(), s, "\'", buf);
+    StringUtil.escapeStringCharacters(s.length(), s, "'", buf);
     buf.append('\'');
   }
 
@@ -124,6 +139,9 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+
+    if (SHOW_HEX_VALUE) {
+      JDOMExternalizerUtil.writeField(element, "SHOW_HEX_VALUE", "true");
+    }
   }
 }

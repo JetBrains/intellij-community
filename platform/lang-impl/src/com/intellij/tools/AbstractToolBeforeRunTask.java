@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,21 +18,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author traff
- */
-public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends AbstractToolBeforeRunTask, T extends Tool>
+public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends AbstractToolBeforeRunTask<?, ?>, T extends Tool>
   extends BeforeRunTask<ToolBeforeRunTask> {
-  @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
+  private static final @NonNls String ACTION_ID_ATTRIBUTE = "actionId";
   private static final Logger LOG = Logger.getInstance(AbstractToolBeforeRunTask.class);
-  protected String myToolActionId;
+  private String myToolActionId;
 
   public AbstractToolBeforeRunTask(Key<ToolBeforeRunTask> providerId) {
     super(providerId);
   }
 
-  @Nullable
-  public String getToolActionId() {
+  public @Nullable String getToolActionId() {
     return myToolActionId;
   }
 
@@ -82,23 +64,28 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     if (tool != null && !tool.isEnabled()) {
       return true;
     }
-    
+    if (tool == null) {
+      return false;
+    }
+
     final Semaphore targetDone = new Semaphore();
     final Ref<Boolean> result = new Ref<>(false);
 
+    targetDone.down();
     try {
-      ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull final ProcessEvent event) {
-          targetDone.down();
-        }
+      ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessListener() {
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            result.set(event.getExitCode() == 0);
+            targetDone.up();
+          }
 
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          result.set(event.getExitCode() == 0);
-          targetDone.up();
-        }
-      }), ModalityState.NON_MODAL);
+          @Override
+          public void processNotStarted() {
+            result.set(false);
+            targetDone.up();
+          }
+        }), ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);
@@ -108,8 +95,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     return result.get();
   }
 
-  @Nullable
-  public T findCorrespondingTool() {
+  public @Nullable T findCorrespondingTool() {
     if (myToolActionId == null) {
       return null;
     }

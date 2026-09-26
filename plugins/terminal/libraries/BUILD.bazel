@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.terminal.libraries.completionDbWithExtensions` start
+jvm_library(
+    name = "libraries-completionDbWithExtensions",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.libraries.completionDbWithExtensions",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
+    runtime_deps = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
+)
+
+jvm_library(
+    name = "libraries-completionDbWithExtensions_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.libraries.completionDbWithExtensions",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
+    runtime_deps = [":libraries-completionDbWithExtensions"],
+)
+### auto-generated section `build intellij.terminal.libraries.completionDbWithExtensions` end
+
+### auto-generated section `iml intellij.terminal.libraries.completionDbWithExtensions` start
+exports_files(
+    [
+        "intellij.terminal.libraries.completionDbWithExtensions.iml",
+        "resources/intellij.terminal.libraries.completionDbWithExtensions.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.terminal.libraries.completionDbWithExtensions` end

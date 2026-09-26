@@ -1,0 +1,7 @@
+// "Add documentation" "true"
+
+enum class E {
+    <caret>A
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocMissingDocumentationInspection$createQuickFix$1

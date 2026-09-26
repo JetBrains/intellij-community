@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+  <!--<dependencies>-->
+  <!-- it doesn't depend on any backend modules because of https://youtrack.jetbrains.com/issue/IJPL-221669/Problem-with-loading-test-modules-interacting-with-both-frontend-and-backend -->
+  <!--</dependencies>-->
+</idea-plugin>

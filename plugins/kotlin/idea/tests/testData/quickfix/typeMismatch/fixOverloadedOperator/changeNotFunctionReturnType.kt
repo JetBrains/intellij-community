@@ -1,0 +1,9 @@
+// "Change return type of called function 'A.not' to 'A'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+interface A {
+    operator fun not(): String
+    operator fun times(a: A): A
+}
+
+fun foo(a: A): A = a * <caret>!(if (true) a else a)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

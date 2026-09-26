@@ -1,0 +1,101 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "java-jshell-protocol-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-jshell-protocol-tests_test_lib"],
+)
+### skip generation section `test intellij.java.jshell.protocol.tests`
+
+### auto-generated section `build intellij.java.jshell.protocol` start
+jvm_library(
+    name = "protocol",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.jshell.protocol",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "protocol_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.jshell.protocol",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":protocol",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.jshell.protocol` end
+
+### auto-generated section `iml intellij.java.jshell.protocol` start
+exports_files(
+    [
+        "intellij.java.jshell.protocol.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jshell.protocol` end
+
+### auto-generated section `build intellij.java.jshell.protocol.tests` start
+jvm_library(
+    name = "java-jshell-protocol-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.protocol.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "java-jshell-protocol-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testStrc/**/*.kt",
+            "testStrc/**/*.java",
+            "testStrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/jshell/protocol",
+        "//plugins/jshell/protocol:protocol_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":java-jshell-protocol-tests"],
+    deps = [
+        # do not sort,
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/hamcrest",
+        "//libraries/hamcrest:hamcrest_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.jshell.protocol.tests` end
+
+### auto-generated section `iml intellij.java.jshell.protocol.tests` start
+exports_files(
+    [
+        "intellij.java.jshell.protocol.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jshell.protocol.tests` end

@@ -1,0 +1,28 @@
+// FILE: build.gradle.kts
+repositories {
+    mavenCentral()
+}
+
+myHelperMethod()
+
+// FILE: app/build.gradle.kts
+plugins {
+    id(Plugins.Id.JAVA_LIBRARY)
+}
+
+version = Versions.KOTLIN
+description = Libs.Kotlin.STDLIB
+
+// FILE: settings.gradle.kts
+rootProject.name = "GradleKotlinBuildSrcFixture"
+include(":app")
+include(":lib")
+
+// FILE: buildSrc/build.gradle.kts
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}

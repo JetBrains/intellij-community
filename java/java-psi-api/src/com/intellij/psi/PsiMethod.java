@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -34,6 +35,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the method return type, or null if the method is a constructor.
    */
+  @Override
   @Nullable
   PsiType getReturnType();
 
@@ -46,7 +48,9 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiTypeElement getReturnTypeElement();
 
   /**
-   * Returns the parameter list for the method.
+   * Returns the parameter list for the method. 
+   * For Java record compact constructor, a non-physical list is returned,
+   * which contains implicitly defined parameters based on the record components.
    *
    * @return the parameter list instance.
    */
@@ -65,7 +69,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   /**
    * Returns the body of the method.
    *
-   * @return the method body, or null if the method belongs to a compiled class.
+   * @return the method body, or null if the method has no body (e.g., abstract or native),
+   * or belongs to a compiled class.
    */
   @Override
   @Nullable
@@ -73,16 +78,35 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   /**
    * Checks if the method is a constructor.
+   * In Java PSI, the method is considered to be a constructor 
+   * if it lacks the return type; even if its name differs from the 
+   * class name (in this case, a highlighting error will be displayed).
    *
    * @return true if the method is a constructor, false otherwise
    */
+  @Override
   boolean isConstructor();
 
   /**
-   * Checks if the method accepts a variable number of arguments.
-   *
-   * @return true if the method is varargs, false otherwise.
+   * Checks if the method is a default constructor. 
+   * When a class contains no explicit constructor declarations, a default constructor is implicitly declared.
+   * 
+   * @see <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.9">JLS 8.8.9 Default Constructor</a>
+   * @see #isConstructor() 
+   * @return true if the method is a default constructor, false otherwise
    */
+  default boolean isDefaultConstructor() {
+    return false;
+  }
+
+  /**
+   * Checks if the method accepts a variable number of arguments. 
+   * The method is considered to be a variable arity method only if its last
+   * parameter is declared as such (using the ellipsis type). 
+   *
+   * @return true if the method is a variable arity method, false otherwise.
+   */
+  @Override
   boolean isVarArgs();
 
   /**
@@ -113,8 +137,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods();
+  PsiMethod @NotNull [] findSuperMethods();
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -128,8 +151,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *                    is private. If true, an empty result list is returned for private methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods(boolean checkAccess);
+  PsiMethod @NotNull [] findSuperMethods(boolean checkAccess);
 
   /**
    * Searches the superclasses and base interfaces of the specified class to find
@@ -140,8 +162,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * @param parentClass the class to search for super methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods(PsiClass parentClass);
+  PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass);
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -152,7 +173,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @param checkAccess if false, the super methods are searched even if this method
    *                    is private. If true, an empty result list is returned for private methods.
-   * @return the array of matching method signatures, or an empty array if no methods are found.
+   * @return the list of matching method signatures, or an empty array if no methods are found.
    */
   @NotNull
   List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
@@ -165,19 +186,23 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *         or implement any other method.
    * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
+  @Deprecated
   @Nullable
   PsiMethod findDeepestSuperMethod();
 
-  @NotNull
-  PsiMethod[] findDeepestSuperMethods();
+  PsiMethod @NotNull [] findDeepestSuperMethods();
 
   @Override
   @NotNull
   PsiModifierList getModifierList();
 
+  /**
+   * @return the name of the method, as visible in the source code.
+   * For well-formed constructor, the name of the containing class is returned.
+   */
   @Override
   @NotNull
-  @NonNls
+  @NlsSafe
   String getName();
 
   @Override
@@ -191,15 +216,13 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
     return !getParameterList().isEmpty();
   }
 
-  @NotNull
   @Override
-  default JvmParameter[] getParameters() {
+  default JvmParameter @NotNull [] getParameters() {
     return getParameterList().getParameters();
   }
 
-  @NotNull
   @Override
-  default JvmReferenceType[] getThrowsTypes() {
+  default JvmReferenceType @NotNull [] getThrowsTypes() {
     return getThrowsList().getReferencedTypes();
   }
 }

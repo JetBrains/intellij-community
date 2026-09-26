@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
-@SomeQueue
-public class ControlledCycle {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
+@ApiStatus.Internal
+public final class ControlledCycle {
+  private static final Logger LOG = Logger.getInstance(ControlledCycle.class);
 
   private final Alarm mySimpleAlarm;
   private final int myRefreshInterval;
@@ -35,23 +21,31 @@ public class ControlledCycle {
 
   private final AtomicBoolean myActive;
 
-  public ControlledCycle(@NotNull Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
+  public ControlledCycle(@NotNull Project project,
+                         final Supplier<Boolean> callback,
+                         final @NotNull String name,
+                         final int refreshInterval) {
     myRefreshInterval = refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
+
+      @Override
       public void run() {
-        if (! myActive.get() || project.isDisposed()) return;
+        if (!myActive.get() || project.isDisposed()) return;
         try {
           shouldBeContinued = callback.get();
-        } catch (ProcessCanceledException e) {
+        }
+        catch (ProcessCanceledException e) {
           return;
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
           LOG.info(e);
         }
-        if (! shouldBeContinued) {
+        if (!shouldBeContinued) {
           myActive.set(false);
-        } else {
+        }
+        else {
           mySimpleAlarm.addRequest(myRunnable, myRefreshInterval);
         }
       }

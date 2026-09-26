@@ -1,0 +1,622 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
+package com.intellij.testFramework.junit5.fixture
+
+import com.intellij.execution.RunManager
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.pom.PomManager
+import com.intellij.project.stateStore
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.common.EditorCaretTestUtil
+import com.intellij.testFramework.common.checkEditorsReleased
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.common.runAllSuspend
+import com.intellij.testFramework.common.testWorkspaceModelLeak
+import com.intellij.testFramework.replaceService
+import com.intellij.ui.docking.DockManager
+import com.intellij.util.application
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.system.WindowsFileLocks
+import com.intellij.util.system.WindowsProcessInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.io.IOException
+import java.nio.file.FileSystemException
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectory
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.milliseconds
+
+@JvmOverloads
+@TestOnly
+fun testNameFixture(lowerCaseFirstLetter: Boolean = true): TestFixture<String> = testFixture {
+  val testName = if (lowerCaseFirstLetter) {
+    it.testName.replaceFirstChar { chr -> chr.lowercaseChar() }
+  }
+  else {
+    it.testName
+  }
+
+  initialized(testName) {}
+}
+
+@JvmOverloads
+@TestOnly
+fun tempPathFixture(root: Path? = null, prefix: String = "IJ", subdirName: String? = null): TestFixture<Path> = testFixture {
+  val prefix = (prefix + "_" + it.testName.filter { c -> c.isLetterOrDigit() }).take(50)
+  var tempDir = withContext(Dispatchers.IO) {
+    if (root == null) {
+      it.eel?.fs?.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build())?.getOrThrow()?.asNioPath()
+      ?: Files.createTempDirectory(prefix)
+    }
+    else {
+      if (!root.exists()) {
+        root.createDirectories()
+      }
+      Files.createTempDirectory(root, prefix)
+    }
+  }
+  if (subdirName != null) {
+    tempDir = tempDir.resolve(subdirName).createDirectory()
+  }
+  val realTempDir = tempDir.toRealPath()
+  val localWin = realTempDir.getEelDescriptor().run { this is LocalEelDescriptor && osFamily.isWindows }
+  initialized(realTempDir) {
+    withContext(Dispatchers.IO) {
+      //If files were loaded into VFS, there could be pending updates for them: apply them before deleting the files
+      ManagingFS.getInstanceOrNull()?.flushPendingUpdates()
+      repeat(DELETE_ATTEMPTS) { attempt ->
+        try {
+          // This method might throw DirectoryNotEmptyException due to races, hence retry
+          realTempDir.delete(recursively = true)
+          return@withContext
+        }
+        catch (e: IOException) {
+          fileLogger.warn("Can't delete $realTempDir", e)
+          // Only the last attempt reports the locks, because each report needs a kernel call per path.
+          if (localWin && e is FileSystemException && attempt == DELETE_ATTEMPTS - 1) {
+            reportWindowsLocks(e.file?.let { file -> Path(file) } ?: realTempDir)
+          }
+          Thread.sleep(100)
+        }
+      }
+      realTempDir.delete(recursively = true)
+    }
+  }
+}
+
+@TestOnly
+fun TestFixture<Project>.pathInProjectFixture(path: Path): TestFixture<Path> {
+  return testFixture {
+    val project = init()
+    val subpath = project.stateStore.projectBasePath.resolve(path)
+    initialized(subpath) {
+      // will be removed with project directory
+    }
+  }
+}
+
+@TestOnly
+fun TestFixture<Project>.fileOrDirInProjectFixture(relativePath: String): TestFixture<VirtualFile> = testFixture {
+  val filePath = pathInProjectFixture(Path(relativePath)).init()
+  val file =
+    filePath.refreshAndFindVirtualFileOrDirectory() ?: throw IllegalStateException("File not found: $relativePath, absolutePath: $filePath")
+
+  initialized(file) {}
+}
+
+/**
+ * Finds an existing [PsiFile] in the project by [relativePath].
+ * Unlike [psiFileFixture], this does not create a new file but locates one that already exists in the project.
+ */
+@TestOnly
+fun TestFixture<Project>.existingPsiFileFixture(relativePath: String): TestFixture<PsiFile> = testFixture {
+  val project = this@existingPsiFileFixture.init()
+  val virtualFile = fileOrDirInProjectFixture(relativePath).init()
+  val psiFile = readAction {
+    PsiManager.getInstance(project).findFile(virtualFile) ?: error("Cannot find PsiFile for $virtualFile")
+  }
+  initialized(psiFile) {}
+}
+
+@TestOnly
+fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Module> = testFixture {
+  val project = init()
+  val module = ModuleManager.getInstance(project).findModuleByName(name) ?: throw IllegalStateException("Module not found: $name")
+  initialized(module) {}
+}
+
+/**
+ * Creates [Project] fixture. If the fixture is stored in a static variable, the [Project] will be created
+ * only once. On the contrary, storing a fixture in the instance variable will create a new [Project] for each test.
+ * Optionally, it can copy the content of a specified resource path into the project directory before it is created or opened.
+ *
+ * <p>
+ *
+ * NOTE: the behavior of disposal is different from JUnit3, e.g., it is not possible to share [Project] instance when running
+ * different test classes.
+ * See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5ProjectFixtureTest
+ */
+@JvmOverloads
+@TestOnly
+fun projectFixture(
+  pathFixture: TestFixture<Path> = tempPathFixture(),
+  openProjectTask: OpenProjectTask = OpenProjectTask.build(),
+  openAfterCreation: Boolean = false,
+  blueprintResourcePath: Path? = null,
+): TestFixture<Project> = testFixture {
+  // Background service preloading might trigger service loading after a project gets disposed leading to a test failure.
+  val path = pathFixture.init()
+  blueprintResourcePath?.let {
+    copyBlueprintToDirectory(it, path)
+  }
+  // if project already contains .idea folder we should open it instead of creating a new project
+  val isValidIdeaProject = ProjectUtil.isValidProjectPath(path)
+  // we should respect if user explicitly set isNewProject
+  val isNewProject = !isValidIdeaProject || openProjectTask.isNewProject
+  val openProjectTask = openProjectTask.prepareForTests(isNewProject)
+
+  val projectManager = ProjectManagerEx.getInstanceEx()
+
+  val project = if (!isNewProject) {
+    projectManager.openProjectAsync(path, openProjectTask)!!
+  }
+  else {
+    val newProject = projectManager.newProjectAsync(path, openProjectTask)
+
+    if (openAfterCreation) {
+      projectManager.openProjectAsync(path, openProjectTask.withProject(newProject))
+    }
+
+    newProject
+  }
+
+  // Keep command-triggered postponed formatting deterministic while full background service preloading is disabled.
+  PomManager.getModel(project)
+
+  // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
+  RunManager.getInstanceAsync(project)
+  initialized(project) {
+    runAllSuspend(
+      { testWorkspaceModelLeak(project) },
+      { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
+      { application.checkEditorsReleased(project) },
+    )
+  }
+}
+
+@TestOnly
+@OptIn(ExperimentalPathApi::class)
+private fun copyBlueprintToDirectory(blueprintResourcePath: Path, targetDirectoryPath: Path) {
+  require(blueprintResourcePath.exists()) { "Blueprint resource path provided does not exist: $blueprintResourcePath" }
+  if (!targetDirectoryPath.exists()) {
+    targetDirectoryPath.createDirectories()
+  }
+  blueprintResourcePath.copyToRecursively(targetDirectoryPath, followLinks = false, overwrite = true)
+}
+
+@JvmOverloads
+@TestOnly
+fun TestFixture<Project>.moduleFixture(
+  name: String? = null,
+  moduleType: String? = null,
+): TestFixture<Module> = testFixture(name ?: "unnamed module") { context ->
+  val project = this@moduleFixture.init()
+  val manager = ModuleManager.getInstance(project)
+  val module = edtWriteAction {
+    manager.newNonPersistentModule(name ?: context.uniqueId, "")
+  }
+  moduleType?.let { module.setModuleType(it) }
+  initialized(module) {
+    edtWriteAction {
+      if (!module.isDisposed) {
+        manager.disposeModule(module)
+      }
+    }
+  }
+}
+
+/**
+ * Creates module on [pathFixture].
+ * If [addPathToSourceRoot], we add [pathFixture] to the module sources,
+ * which is convenient for the scripting languages where module root is also source root.
+ * See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5ModuleFixtureTest
+ */
+@JvmOverloads
+@TestOnly
+fun TestFixture<Project>.moduleFixture(
+  pathFixture: TestFixture<Path>,
+  addPathToSourceRoot: Boolean = false,
+  moduleTypeId: String = "",
+): TestFixture<Module> = testFixture { _ ->
+  val project = this@moduleFixture.init()
+  val path = pathFixture.init()
+  val manager = ModuleManager.getInstance(project)
+  val module = edtWriteAction {
+    manager.newModule(path, moduleTypeId)
+  }
+  if (addPathToSourceRoot) {
+    val pathVfs = withContext(Dispatchers.IO) {
+      requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)) {
+        "Path provided by pathFixture should exist: $path"
+      }
+    }
+
+    edtWriteAction {
+      ModuleRootManager.getInstance(module).modifiableModel.apply {
+        addContentEntry(pathVfs).addSourceFolder(pathVfs, false)
+        commit()
+      }
+    }
+  }
+  initialized(module) {
+    edtWriteAction {
+      manager.disposeModule(module)
+    }
+  }
+}
+
+/**
+ * Creates [Disposable] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5DisposableFixture
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5DisposableFixtureTest
+ */
+@TestOnly
+fun disposableFixture(): TestFixture<Disposable> = testFixture { context ->
+  val disposable = Disposer.newCheckedDisposable(context.uniqueId)
+  initialized(disposable) {
+    Disposer.dispose(disposable)
+  }
+}
+
+
+/**
+ * The fixture represents a directory within a module's content root, marked as either a source or a test source directory.
+ * Optionally, it can copy the content of a specified resource path into the created directory.
+ *
+ * @param [isTestSource] Specifies whether the directory should be marked as a test source (true)
+ *        or a source directory (false).
+ * @param [blueprintResourcePath] An optional path to a resource whose contents will be copied to the
+ *        created directory.
+ * @return A fixture providing a PsiDirectory instance representing the initialized source root.
+ */
+@JvmOverloads
+@TestOnly
+fun TestFixture<Module>.sourceRootFixture(
+  isTestSource: Boolean = false,
+  pathFixture: TestFixture<Path> = tempPathFixture(),
+  blueprintResourcePath: Path? = null,
+): TestFixture<PsiDirectory> = testFixture { _ ->
+  val module = this@sourceRootFixture.init()
+  val directoryPath: Path = pathFixture.init()
+  val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
+
+  blueprintResourcePath?.let {
+    copyBlueprintToDirectory(it, directoryPath)
+  }
+
+  ModuleRootModificationUtil.updateModel(module) { model ->
+    model.addContentEntry(directoryVfs).addSourceFolder(directoryVfs, isTestSource)
+  }
+  val directory = readAction {
+    PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
+  }
+  initialized(directory) {
+    edtWriteAction {
+      if (!module.isDisposed) {
+        ModuleRootModificationUtil.updateModel(module) { model ->
+          model.contentEntries.firstOrNull { it.file == directoryVfs }?.let(model::removeContentEntry)
+        }
+      }
+    }
+
+    val nioDir = directory.virtualFile.toNioPathOrNull()
+    if (nioDir != null) {
+      doBestDeletingDirectory(nioDir)
+    }
+    writeAction {
+      directory.delete()
+    }
+  }
+}
+
+/**
+ * [directory] might be locked on Windows. Before using `com.intellij.util.system.WindowsFileLocks` to unlock it, we try to wait a little
+ */
+private suspend fun doBestDeletingDirectory(directory: Path): Unit = withContext(Dispatchers.IO) {
+  for (i in (0..10)) {
+    try {
+      @OptIn(ExperimentalPathApi::class) directory.deleteRecursively()
+      break
+    }
+    catch (e: IOException) {
+      fileLogger.warn("Can't delete $directory try $i", e)
+      delay(500.milliseconds)
+    }
+  }
+}
+
+/**
+ * Creates [PsiFile] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5PsiFileFixtureTest
+ */
+@TestOnly
+fun TestFixture<PsiDirectory>.psiFileFixture(
+  name: String,
+  content: String,
+): TestFixture<PsiFile> = testFixture { _ ->
+  val project = this@psiFileFixture.init().project
+  val virtualFile = virtualFileFixture(name, content).init()
+  val file = PsiDocumentManager.getInstance(project).commitAndRunReadAction(Computable {
+    PsiManager.getInstance(project).findFile(virtualFile) ?: error("Fail to find file $virtualFile")
+  })
+  initialized(file) {/*nothing*/ }
+}
+
+@TestOnly
+fun TestFixture<PsiDirectory>.virtualFileFixture(
+  name: String,
+  content: String,
+): TestFixture<VirtualFile> = testFixture { _ ->
+  val dirFixture = this@virtualFileFixture
+  val dir = dirFixture.init()
+  val file = edtWriteAction {
+    dir.virtualFile.createChildData(dirFixture, name).also {
+      it.setBinaryContent(content.toByteArray())
+    }
+  }
+  initialized(file) {
+    edtWriteAction {
+      if (file.isValid) {
+        file.delete(dirFixture)
+      }
+    }
+  }
+}
+
+/**
+ * Creates [Editor] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5EditorFixtureTest
+ */
+@TestOnly
+fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ ->
+  val psiFile = this@editorFixture.init()
+  val project = psiFile.project
+  val file = psiFile.virtualFile
+  val editor = withContext(Dispatchers.UiWithModelAccess) {
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
+    edtWriteAction {
+      val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
+      requireNotNull(editor)
+
+      val caretAndSelection = EditorCaretTestUtil.extractCaretAndSelectionMarkers(editor.document)
+      if (caretAndSelection.hasExplicitCaret()) {
+        EditorCaretTestUtil.setCaretsAndSelection(editor, caretAndSelection)
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+      }
+      editor
+    }
+  }
+  initialized(editor) {
+    withContext(Dispatchers.UiWithModelAccess) {
+      val fileEditorManager = project.serviceAsync<FileEditorManager>()
+      edtWriteAction {
+        fileEditorManager.closeFile(file)
+      }
+    }
+    val editorHistoryManager = project.serviceAsync<EditorHistoryManager>()
+    readAction {
+      val virtualFile = PsiManager.getInstance(project).findFile(file)?.virtualFile
+      if (virtualFile != null) {
+        editorHistoryManager.removeFile(file)
+      }
+    }
+  }
+}
+
+/**
+ * Creates [FileEditorManagerImpl] fixture for [project][TestFixture].
+ *
+ * This is a JUnit 5 fixture alternative to `FileEditorManagerTestCase`.
+ */
+@TestOnly
+fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Boolean = false): TestFixture<FileEditorManagerImpl> =
+  testFixture {
+    val project = this@fileEditorManagerFixture.init()
+    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
+
+    val manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope("FileEditorManagerFixture"))
+    if (initDockableContentFactory) {
+      manager.initDockableContentFactory()
+    }
+
+    val disposable = Disposer.newDisposable()
+    project.replaceService(FileEditorManager::class.java, manager, disposable)
+    val providerManager = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
+    runBlocking {
+      withContext(Dispatchers.UiWithModelAccess) {
+        providerManager.clearSelectedProviders()
+        val dockContainerCount = DockManager.getInstance(project).containers.size
+        check(dockContainerCount == 1) {
+          "The previous test didn't clear the state (containers: $dockContainerCount)"
+        }
+      }
+    }
+
+    initialized(manager) {
+      runAll(
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              edtWriteAction {
+                manager.closeAllFiles()
+              }
+            }
+          }
+        },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles()
+            }
+          }
+        },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              providerManager.clearSelectedProviders()
+            }
+          }
+        },
+        { Disposer.dispose(disposable) },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              val dockContainers = project.serviceIfCreated<DockManager>()?.containers.orEmpty()
+              val dockContainerCount = dockContainers.size
+              check(dockContainerCount <= 1) {
+                "The previous test didn't clear the state (containers: $dockContainerCount)"
+              }
+            }
+          }
+        },
+      )
+    }
+  }
+
+@TestOnly
+fun <T : Any> extensionPointFixture(
+  epName: ExtensionPointName<in T>,
+  loadingOrder: LoadingOrder = LoadingOrder.ANY,
+  createExtension: suspend () -> T,
+): TestFixture<T> = testFixture {
+  val extension = createExtension()
+  val disposable = Disposer.newDisposable()
+  epName.point.registerExtension(extension, loadingOrder, disposable)
+  initialized(extension) {
+    Disposer.dispose(disposable)
+  }
+}
+
+@TestOnly
+fun registryKeyFixture(@NonNls key: String, setValue: RegistryValue.() -> Unit): TestFixture<RegistryValue> = testFixture {
+  val registryValue = Registry.get(key)
+  val previousValue = registryValue.asString()
+  setValue(registryValue)
+
+  initialized(registryValue) {
+    registryValue.setValue(previousValue)
+  }
+}
+
+@TestOnly
+fun <T : Any> Application.replacedServiceFixture(
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+): TestFixture<T> = replacedServiceFixtureInner(getComponentManager = { this@replacedServiceFixture }, serviceInterface, createService)
+
+@TestOnly
+fun <T : Any> TestFixture<Project>.replacedServiceFixture(
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+): TestFixture<T> =
+  replacedServiceFixtureInner(getComponentManager = { this@replacedServiceFixture.init() }, serviceInterface, createService)
+
+@TestOnly
+private fun <T : Any> replacedServiceFixtureInner(
+  getComponentManager: suspend TestFixtureInitializer.R<T>.() -> ComponentManager,
+  serviceInterface: Class<in T>,
+  createService: suspend () -> T,
+) = testFixture {
+  val service = createService()
+  val disposable = Disposer.newDisposable()
+  getComponentManager().replaceService(serviceInterface, service, disposable)
+  initialized(service) {
+    Disposer.dispose(disposable)
+  }
+}
+
+/** The number of times [tempPathFixture] tries to delete its directory before it gives up. */
+private const val DELETE_ATTEMPTS = 10
+
+/**
+ * Writes the processes that hold [path] open to the log. Windows only.
+ *
+ * Windows does not delete a file that a process holds open, so these processes are the reason the delete failed.
+ */
+private fun reportWindowsLocks(path: Path) {
+  WindowsFileLocks.processesUsingPath(path).fold(
+    onSuccess = { processes ->
+      for (handle in processes) {
+        // The kernel gives the command line only to a reader with enough rights, so fall back to the JVM view.
+        val info = WindowsProcessInfo.get(handle.pid()).getOrElse { handle.info() }
+        fileLogger.warn("Path $path is locked by $info")
+      }
+    },
+    onFailure = { fileLogger.warn("Can't read the locks of $path", it) },
+  )
+}
+
+private val fileLogger = fileLogger()

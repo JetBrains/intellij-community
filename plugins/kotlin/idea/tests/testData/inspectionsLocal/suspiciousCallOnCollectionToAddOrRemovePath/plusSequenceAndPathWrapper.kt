@@ -1,0 +1,14 @@
+// PROBLEM: 'plus' call iterates over the argument instead of adding it as a single element
+// FIX: Convert to 'plusElement' call (changes semantics)
+
+// WITH_STDLIB
+// RUNTIME_WITH_FULL_JDK
+import java.nio.file.Path
+
+class PathWrapper(val path: Path) : Iterable<Path> {
+    override fun iterator(): Iterator<Path> = path.iterator()
+}
+
+fun test(seq: Sequence<Path>, wrapper: PathWrapper) {
+    seq <caret>+ wrapper
+}

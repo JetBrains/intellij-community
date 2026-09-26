@@ -1,0 +1,5 @@
+JsonFile: n_structure_whitespace_formfeed.json
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace('')
+    PsiElement(])(']')

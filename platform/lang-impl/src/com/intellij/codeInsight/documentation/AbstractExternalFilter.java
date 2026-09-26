@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -8,52 +8,57 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.HttpRequests;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.util.Locale;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractExternalFilter {
   private static final Logger LOG = Logger.getInstance(AbstractExternalFilter.class);
 
-  private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
-  private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
-
-  @NonNls
   protected static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
-  protected static @NonNls final Pattern ourHtmlFileSuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
-  private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
-  private static @NonNls final String JAR_PROTOCOL = "jar:";
-  @NonNls private static final String HR = "<HR>";
-  @NonNls private static final String P = "<P>";
-  @NonNls private static final String DL = "<DL>";
-  @NonNls protected static final String H2 = "</H2>";
-  @NonNls protected static final String HTML_CLOSE = "</HTML>";
-  @NonNls protected static final String HTML = "<HTML>";
-  @NonNls private static final String BR = "<BR>";
-  @NonNls private static final String DT = "<DT>";
-  private static final Pattern CHARSET_META_PATTERN =
-    Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
+  protected static final Pattern ourHtmlFileSuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
+  protected static final String HTML = "<HTML>";
+  protected static final String HTML_CLOSE = "</HTML>";
+
+  private static final Pattern CLASS_DATA_START = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
+  private static final Pattern CLASS_DATA_END = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
+  private static final Pattern NON_CLASS_DATA_END = Pattern.compile(" (NAME|ID)=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ANNIHILATOR = Pattern.compile("/[^/^.]*/[.][.]/");
+  private static final Pattern CHARSET_META = Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
+
   private static final String FIELD_SUMMARY = "<!-- =========== FIELD SUMMARY =========== -->";
   private static final String CLASS_SUMMARY = "<div class=\"summary\">";
-  @NonNls private static final String GREATEST_END_SECTION = "<!-- ========= END OF CLASS DATA ========= -->";
+  private static final String GREATEST_END_SECTION = "<!-- ========= END OF CLASS DATA ========= -->";
+  private static final String JAR_PROTOCOL = "jar:";
+  private static final String HR = "<HR>";
+  private static final String P = "<P>";
+  private static final String DL = "<DL>";
+  private static final String H2 = "H2";
+  private static final String H2_CLOSE = "</H2>";
+  private static final String BR = "<BR>";
+  private static final String DT = "<DT>";
 
-  protected static abstract class RefConvertor {
-    @NotNull
-    private final Pattern mySelector;
+  protected abstract static class RefConvertor {
+    final Pattern mySelector;
 
     public RefConvertor(@NotNull Pattern selector) {
       mySelector = selector;
@@ -61,19 +66,18 @@ public abstract class AbstractExternalFilter {
 
     protected abstract String convertReference(String root, String href);
 
-    public CharSequence refFilter(final String root, @NotNull CharSequence read) {
-      CharSequence toMatch = StringUtilRt.toUpperCase(read);
+    public CharSequence refFilter(String root, @NotNull CharSequence read) {
       StringBuilder ready = new StringBuilder();
       int prev = 0;
-      Matcher matcher = mySelector.matcher(toMatch);
+      Matcher matcher = mySelector.matcher(read);
 
       while (matcher.find()) {
         CharSequence before = read.subSequence(prev, matcher.start(1) - 1);     // Before reference
-        final CharSequence href = read.subSequence(matcher.start(1), matcher.end(1)); // The URL
+        CharSequence href = read.subSequence(matcher.start(1), matcher.end(1)); // The URL
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
-        ready.append(ReadAction.compute(() -> convertReference(root, href.toString())));
+        ready.append(ReadAction.computeBlocking(() -> convertReference(root, href.toString())));
         ready.append("\"");
       }
 
@@ -85,44 +89,33 @@ public abstract class AbstractExternalFilter {
 
   protected static String doAnnihilate(String path) {
     int len = path.length();
-
     do {
-      path = ourAnnihilator.matcher(path).replaceAll("/");
+      path = ANNIHILATOR.matcher(path).replaceAll("/");
     }
     while (len > (len = path.length()));
-
     return path;
   }
 
   public CharSequence correctRefs(String root, CharSequence read) {
     CharSequence result = read;
-    for (RefConvertor myReferenceConvertor : getRefConverters()) {
-      result = myReferenceConvertor.refFilter(root, result);
+    for (RefConvertor converter : getRefConverters()) {
+      result = converter.refFilter(root, result);
     }
     return result;
   }
 
   protected abstract RefConvertor[] getRefConverters();
 
-  @Nullable
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String getExternalDocInfo(final String url) throws Exception {
+  public @Nullable String getExternalDocInfo(String url) throws Exception {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
-      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
-      return null;
-    }
+    // May block indefinitely: shouldn't be called from EDT or under write lock
+    app.assertIsNonDispatchThread();
 
     if (url == null || !MyJavadocFetcher.ourFree) {
       return null;
     }
 
-    MyJavadocFetcher fetcher = new MyJavadocFetcher(url, new MyDocBuilder() {
-      @Override
-      public void buildFromStream(String url, Reader input, StringBuilder result) throws IOException {
-        doBuildFromStream(url, input, result);
-      }
-    });
+    MyJavadocFetcher fetcher = new MyJavadocFetcher(url, (_url, input, result) -> doBuildFromStream(_url, input, result));
     try {
       app.executeOnPooledThread(fetcher).get();
     }
@@ -139,8 +132,7 @@ public abstract class AbstractExternalFilter {
     return correctDocText(url, fetcher.data);
   }
 
-  @NotNull
-  protected String correctDocText(@NotNull String url, @NotNull CharSequence data) {
+  protected @NotNull String correctDocText(@NotNull String url, @NotNull CharSequence data) {
     CharSequence docText = correctRefs(ourAnchorSuffix.matcher(url).replaceAll(""), data);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Filtered JavaDoc: " + docText + "\n");
@@ -148,8 +140,7 @@ public abstract class AbstractExternalFilter {
     return PlatformDocumentationUtil.fixupText(docText);
   }
 
-  @Nullable
-  public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
+  public @Nullable String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
     return getExternalDocInfo(docURL);
   }
 
@@ -157,10 +148,10 @@ public abstract class AbstractExternalFilter {
     doBuildFromStream(url, input, data, true, true);
   }
 
-  protected void doBuildFromStream(final String url, Reader input, final StringBuilder data, boolean searchForEncoding, boolean matchStart) throws IOException {
+  protected void doBuildFromStream(String url, Reader input, StringBuilder data, boolean searchForEncoding, boolean matchStart) throws IOException {
     ParseSettings settings = getParseSettings(url);
-    @NonNls Pattern startSection = settings.startPattern;
-    @NonNls Pattern endSection = settings.endPattern;
+    Pattern startSection = settings.startPattern;
+    Pattern endSection = settings.endPattern;
     boolean useDt = settings.useDt;
 
     data.append(HTML);
@@ -168,29 +159,28 @@ public abstract class AbstractExternalFilter {
     if (baseUrl != null) {
       data.append("<base href=\"").append(baseUrl).append("\">");
     }
-    data.append("<style type=\"text/css\">" +
-                "  ul.inheritance {\n" +
-                "      margin:0;\n" +
-                "      padding:0;\n" +
-                "  }\n" +
-                "  ul.inheritance li {\n" +
-                "       display:inline;\n" +
-                "       list-style-type:none;\n" +
-                "  }\n" +
-                "  ul.inheritance li ul.inheritance {\n" +
-                "    margin-left:15px;\n" +
-                "    padding-left:15px;\n" +
-                "    padding-top:1px;\n" +
-                "  }\n" +
-                "</style>");
+    data.append("""
+                  <style type="text/css">  ul.inheritance {
+                        margin:0;
+                        padding:0;
+                    }
+                    ul.inheritance li {
+                         display:inline;
+                         list-style-type:none;
+                    }
+                    ul.inheritance li ul.inheritance {
+                      margin-left:15px;
+                      padding-left:15px;
+                      padding-top:1px;
+                    }
+                  </style>""");
 
     String read;
     String contentEncoding = null;
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    BufferedReader buf = new BufferedReader(input);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") BufferedReader buf = new BufferedReader(input);
     do {
       read = buf.readLine();
-      if (read != null && searchForEncoding && read.contains("charset")) {
+      if (read != null && searchForEncoding) {
         String foundEncoding = parseContentEncoding(read);
         if (foundEncoding != null) {
           contentEncoding = foundEncoding;
@@ -199,16 +189,14 @@ public abstract class AbstractExternalFilter {
     }
     while (read != null && matchStart && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
-    if (input instanceof MyReader && contentEncoding != null && !contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) &&
-        !contentEncoding.equals(((MyReader)input).getEncoding())) {
+    if (input instanceof MyReader && contentEncoding != null &&
+        !(contentEncoding.equalsIgnoreCase(CharsetToolkit.UTF8) || contentEncoding.equals(((MyReader)input).getEncoding()))) {
       //restart page parsing with correct encoding
       try {
         data.setLength(0);
         doBuildFromStream(url, new MyReader(((MyReader)input).myInputStream, contentEncoding), data, false, true);
       }
-      catch (ProcessCanceledException e) {
-        return;
-      }
+      catch (ProcessCanceledException ignored) { }
       return;
     }
 
@@ -216,11 +204,11 @@ public abstract class AbstractExternalFilter {
       data.setLength(0);
       if (matchStart && !settings.forcePatternSearch && input instanceof MyReader) {
         try {
-          final MyReader reader = contentEncoding != null ? new MyReader(((MyReader)input).myInputStream, contentEncoding)
-                                                          : new MyReader(((MyReader)input).myInputStream, ((MyReader)input).getEncoding());
+          Reader reader = contentEncoding != null ? new MyReader(((MyReader)input).myInputStream, contentEncoding)
+                                                  : new MyReader(((MyReader)input).myInputStream, ((MyReader)input).getEncoding());
           doBuildFromStream(url, reader, data, false, false);
         }
-        catch (ProcessCanceledException ignored) {}
+        catch (ProcessCanceledException ignored) { }
       }
       return;
     }
@@ -229,8 +217,8 @@ public abstract class AbstractExternalFilter {
       boolean skip = false;
 
       do {
-        if (StringUtil.toUpperCase(read).contains(H2) && !read.toUpperCase(Locale.ENGLISH).contains("H2")) { // read=class name in <H2>
-          data.append(H2);
+        if (StringUtil.containsIgnoreCase(read, H2_CLOSE) && !StringUtil.containsIgnoreCase(read, H2)) { // read=class name in <H2>
+          data.append(H2_CLOSE);
           skip = true;
         }
         else if (endSection.matcher(read).find() || StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) != -1) {
@@ -257,7 +245,7 @@ public abstract class AbstractExternalFilter {
       while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails, endSection)) return;
         if (!skipBlockList(read)) {
-          appendLine(data, read.replaceAll(DT, DT + BR));
+          appendLine(data, StringUtil.replace(read, DT, DT + BR));
         }
       }
 
@@ -276,26 +264,31 @@ public abstract class AbstractExternalFilter {
       }
     }
 
+    if (data.toString().endsWith("<li>\n")) {
+      data.delete(data.length() - 5, data.length());
+    }
+
     data.append(HTML_CLOSE);
   }
 
   private static boolean skipBlockList(String read) {
-    return StringUtil.toUpperCase(read).contains(HR) ||
+    return StringUtil.containsIgnoreCase(read, HR) ||
            StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") ||
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
-  @NotNull
-  protected ParseSettings getParseSettings(@NotNull String url) {
-    Pattern startSection = ourClassDataStartPattern;
-    Pattern endSection = ourClassDataEndPattern;
+  @ApiStatus.Internal
+  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
+    Pattern startSection = CLASS_DATA_START;
+    Pattern endSection = CLASS_DATA_END;
     boolean anchorPresent = false;
 
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(anchorMatcher.group(1)) + "\"", Pattern.CASE_INSENSITIVE);
-      endSection = ourNonClassDataEndPattern;
+      startSection = Pattern.compile(" (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
+                                     Pattern.CASE_INSENSITIVE);
+      endSection = NON_CLASS_DATA_END;
     }
     return new ParseSettings(startSection, endSection, !anchorPresent, anchorPresent);
   }
@@ -312,17 +305,19 @@ public abstract class AbstractExternalFilter {
     return false;
   }
 
-  @Nullable
-  static String parseContentEncoding(@NotNull String htmlLine) {
-    if (!htmlLine.contains("charset")) {
-      return null;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable String parseContentEncoding(@NotNull String htmlLine) {
+    if (htmlLine.contains("charset")) {
+      Matcher matcher = CHARSET_META.matcher(htmlLine);
+      if (matcher.find()) {
+        return matcher.group(1);
+      }
     }
-
-    Matcher matcher = CHARSET_META_PATTERN.matcher(htmlLine);
-    return matcher.find() ? matcher.group(1) : null;
+    return null;
   }
 
-  private static void appendLine(StringBuilder buffer, final String read) {
+  private static void appendLine(StringBuilder buffer, String read) {
     buffer.append(read);
     buffer.append("\n");
   }
@@ -331,14 +326,14 @@ public abstract class AbstractExternalFilter {
     void buildFromStream(String url, Reader input, StringBuilder result) throws IOException;
   }
 
-  private static class MyJavadocFetcher implements Runnable {
+  private static final class MyJavadocFetcher implements Runnable {
     private static boolean ourFree = true;
     private final StringBuilder data = new StringBuilder();
     private final String url;
     private final MyDocBuilder myBuilder;
     private Exception myException;
 
-    public MyJavadocFetcher(String url, MyDocBuilder builder) {
+    MyJavadocFetcher(String url, MyDocBuilder builder) {
       this.url = url;
       myBuilder = builder;
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -362,14 +357,14 @@ public abstract class AbstractExternalFilter {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
             // gzip is disabled because in any case compressed JAR is downloaded
-            HttpRequests.request(parsedUrl.toString()).gzip(false).connect(new HttpRequests.RequestProcessor<Void>() {
-              @Override
-              public Void process(@NotNull HttpRequests.Request request) throws IOException {
-                byte[] bytes = request.readBytes(null);
-                String contentEncoding = null;
-                ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                try {
+            HttpRequests.request(parsedUrl.toString()).gzip(false).connect(request -> {
+              String contentEncoding = request.getConnection().getContentEncoding();
+
+              byte[] bytes = request.readBytes(null);
+              ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+
+              if (contentEncoding == null) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {
@@ -377,25 +372,15 @@ public abstract class AbstractExternalFilter {
                     }
                   }
                 }
-                finally {
-                  reader.close();
-                  stream.reset();
-                }
-
-                if (contentEncoding == null) {
-                  contentEncoding = request.getConnection().getContentEncoding();
-                }
-
-                //noinspection IOResourceOpenedButNotSafelyClosed
-                myBuilder.buildFromStream(url, contentEncoding != null ? new MyReader(stream, contentEncoding) : new MyReader(stream), data);
-                return null;
               }
+
+              myBuilder.buildFromStream(url, contentEncoding != null ? new MyReader(stream, contentEncoding) : new MyReader(stream), data);
+              return null;
             });
           }
         }
       }
-      catch (ProcessCanceledException ignored) {
-      }
+      catch (ProcessCanceledException ignored) { }
       catch (IOException e) {
         myException = e;
       }
@@ -406,44 +391,46 @@ public abstract class AbstractExternalFilter {
     }
   }
 
-  private static class MyReader extends InputStreamReader {
+  @ApiStatus.Internal
+  protected static final class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
     public MyReader(ByteArrayInputStream in) {
       super(in);
-
       in.reset();
       myInputStream = in;
     }
 
     public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
-
       in.reset();
       myInputStream = in;
+    }
+
+    public ByteArrayInputStream getInputStream() {
+      return myInputStream;
     }
   }
 
   /**
    * Settings used for parsing of external documentation
    */
-  protected static class ParseSettings {
+  @ApiStatus.Internal
+  protected static final class ParseSettings {
     /**
-     * Pattern defining the start of target fragment
+     * Pattern defining the start of target fragment.
      */
-    @NotNull
-    private final Pattern startPattern;
+    private final @NotNull Pattern startPattern;
     /**
-     * Pattern defining the end of target fragment
+     * Pattern defining the end of target fragment.
      */
-    @NotNull
-    private final Pattern endPattern;
+    private final @NotNull Pattern endPattern;
     /**
-     * If {@code false}, and line matching start pattern is not found, whole document will be processed
+     * If {@code false}, and line matching start pattern is not found, whole document will be processed.
      */
     private final boolean forcePatternSearch;
     /**
-     * Replace table data by &lt;dt&gt;
+     * Replace table data by {@code <dt>}.
      */
     private final boolean useDt;
 

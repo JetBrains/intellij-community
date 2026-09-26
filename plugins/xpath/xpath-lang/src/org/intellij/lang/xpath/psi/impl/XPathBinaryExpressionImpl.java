@@ -20,8 +20,15 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import org.intellij.lang.xpath.*;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.XPath2ElementTypes;
+import org.intellij.lang.xpath.XPath2TokenTypes;
+import org.intellij.lang.xpath.XPathElementType;
+import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,40 +42,38 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
         super(node);
     }
 
-    @Nullable
-    public XPathExpression getLOperand() {
+    @Override
+    public @Nullable XPathExpression getLOperand() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
-    @Nullable
-    public XPathExpression getROperand() {
+    @Override
+    public @Nullable XPathExpression getROperand() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 1 ? nodes[1].getPsi() : null);
     }
 
-    @NotNull
-    public XPathElementType getOperator() {
+    @Override
+    public @NotNull XPathElementType getOperator() {
         final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
         final XPathElementType elementType = (XPathElementType)(nodes.length > 0 ? nodes[0].getElementType() : null);
         assert elementType != null : unexpectedPsiAssertion();
         return elementType;
     }
 
-    @NotNull
     @Override
-    public String getOperationSign() {
+    public @NotNull String getOperationSign() {
       final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
       return nodes[0].getText();
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
         return CachedValuesManager.getCachedValue(this, () ->
           CachedValueProvider.Result.create(calcType(), PsiModificationTracker.MODIFICATION_COUNT));
     }
-    @NotNull
-    private XPathType calcType() {
+    private @NotNull XPathType calcType() {
         final XPathElementType operator = getOperator();
         if (operator == XPathTokenTypes.UNION || XPath2TokenTypes.INTERSECT_EXCEPT.contains(operator)) {
             return XPathType.NODESET;
@@ -92,7 +97,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             }
 
             if (is(lop, XPath2Type.DURATION)) {
-              return lop != null ? lop.getType() : XPath2Type.DURATION;
+              return lop.getType();
             } else if (is(rop, XPath2Type.DURATION)) {
               return lop != null ? rop.getType() : XPath2Type.DURATION;
             }
@@ -154,6 +159,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
     return op != null && (type instanceof XPath2Type ? type.isAssignableFrom(op.getType()) : type == op.getType());
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathBinaryExpression(this);
   }

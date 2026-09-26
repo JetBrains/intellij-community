@@ -22,10 +22,6 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterPro
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
   public PyStringLiteralFixer() {
     super(PyStringLiteralExpression.class);
@@ -41,10 +37,10 @@ public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"\"\"".substring(suffixLength));
       }
     }
-    else if (StringUtil.startsWith(text, "\'\'\'")) {
-      final int suffixLength = StringUtil.commonSuffixLength(text, "\'\'\'");
+    else if (StringUtil.startsWith(text, "'''")) {
+      final int suffixLength = StringUtil.commonSuffixLength(text, "'''");
       if (suffixLength != 3) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\'\'\'".substring(suffixLength));
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "'''".substring(suffixLength));
       }
     }
     else if (StringUtil.startsWith(text, "\"")) {
@@ -52,9 +48,9 @@ public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
         editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\"");
       }
     }
-    else if (StringUtil.startsWith(text, "\'")) {
-      if (!StringUtil.endsWith(text, "\'")) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "\'");
+    else if (StringUtil.startsWith(text, "'")) {
+      if (!StringUtil.endsWith(text, "'")) {
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "'");
       }
     }
   }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shiporder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="Example.xsd">
+    <orderperson><TYPO descr="Typo: In word 'johnn'">johnn</TYPO> Smith</orderperson>
+    <shipto>
+        <name>First sentence. <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">it</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend. Last sentence.</name>
+        <address>Some street 23</address>
+    </shipto>
+  <russian_with_newline>Не удалось авторизоваться.\nПопробуйте ещё раз. И <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять карандаша</GRAMMAR_ERROR>.</russian_with_newline>
+  <code>
+    Defined field String name = "John"
+
+    System.out.println("Hello " + name)
+    Hello John
+  </code>
+  <authors>Should typopos be detected here? It is an friend there.</authors>
+  <author>Should typopos be detected here? It is an friend there.</author>
+  <description-multiple-paragraphs><![CDATA[
+      There is a possibility of such thing.<p>So that this is possible. And this is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> mistake.
+  ]]></description-multiple-paragraphs>
+  <description-single-sentence>
+    There is a <STYLE_SUGGESTION descr="POSSIBILTY_POSSIBLE">possibility</STYLE_SUGGESTION> of such thing so that this is possible.
+  </description-single-sentence
+  >
+  <p>Hello\nworld \travel</p>
+
+  <someTag withId="<TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>"/>
+  <!-- <<TYPO descr="Typo: In word 'acucar'">acucar</TYPO>>Comment 1, <TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO></<TYPO descr="Typo: In word 'acucar'">acucar</TYPO>> -->
+  <!-- <<TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>>Comment 2</<TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>> -->
+  <!-- <<TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>/> -->
+</shiporder>

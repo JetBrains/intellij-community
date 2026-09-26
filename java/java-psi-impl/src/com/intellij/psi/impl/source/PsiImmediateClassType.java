@@ -1,55 +1,66 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- *  @author dsl
- */
 public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiClass myClass;
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
+  private final @Nullable PsiElement myPsiContext;
+  private @Nullable TypeNullability myNullability;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
+  private String myPresentableTextAnnotated;
   private String myInternalCanonicalText;
+  private String myClassName;
 
   private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
+    private ClassResolveResult myCapturedResult = null;
+
     @Override
     public PsiClass getElement() {
       return myClass;
     }
 
-    @NotNull
     @Override
-    public PsiSubstitutor getSubstitutor() {
+    public @NotNull PsiSubstitutor getSubstitutor() {
       return mySubstitutor;
+    }
+
+    @Override
+    public ClassResolveResult resolveWithCapturedTopLevelWildcards() {
+      ClassResolveResult result = myCapturedResult;
+      if (result == null) {
+        myCapturedResult = result = ClassResolveResult.super.resolveWithCapturedTopLevelWildcards();
+      }
+      return result;
     }
 
     @Override
@@ -89,23 +100,38 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
-                               @NotNull PsiAnnotation... annotations) {
-    super(level, annotations);
-    myClass = aClass;
-    myManager = aClass.getManager();
-    mySubstitutor = substitutor;
-    assert substitutor.isValid();
+                               PsiAnnotation @NotNull ... annotations) {
+    this(aClass, substitutor, level, TypeAnnotationProvider.Static.create(annotations));
   }
 
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
                                @NotNull TypeAnnotationProvider provider) {
+    this(aClass, substitutor, level, provider, null);
+  }
+
+  public PsiImmediateClassType(@NotNull PsiClass aClass,
+                               @NotNull PsiSubstitutor substitutor,
+                               @Nullable LanguageLevel level,
+                               @NotNull TypeAnnotationProvider provider,
+                               @Nullable PsiElement context) {
+    this(aClass, substitutor, level, provider, context, null);
+  }
+
+  PsiImmediateClassType(@NotNull PsiClass aClass,
+                        @NotNull PsiSubstitutor substitutor,
+                        @Nullable LanguageLevel level,
+                        @NotNull TypeAnnotationProvider provider,
+                        @Nullable PsiElement context,
+                        @Nullable TypeNullability nullability) {
     super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
-    assert substitutor.isValid();
+    myPsiContext = context;
+    myNullability = nullability;
+    substitutor.ensureValid();
   }
 
   @Override
@@ -115,52 +141,106 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public String getClassName() {
-    return myClass.getName();
+    String className = myClassName;
+    if (className == null) {
+      myClassName = className = myClass.getName();
+    }
+    return className;
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
-    final PsiTypeParameter[] parameters = myClass.getTypeParameters();
+  public @Nullable PsiElement getPsiContext() {
+    return myPsiContext;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    TypeNullability nullability = myNullability;
+    if (nullability == null) {
+      myNullability = nullability = JavaTypeNullabilityUtil.getTypeNullability(this);
+    }
+    return nullability;
+  }
+
+  @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, getAnnotationProvider(), myPsiContext, nullability);
+  }
+
+  @Override
+  public @NotNull PsiImmediateClassType annotate(@NotNull TypeAnnotationProvider provider) {
+    PsiImmediateClassType annotated = (PsiImmediateClassType)super.annotate(provider);
+    if (annotated != this) {
+      annotated.myNullability = null;
+      annotated.myInternalCanonicalText = null;
+      annotated.myPresentableTextAnnotated = null;
+      annotated.myCanonicalTextAnnotated = null;
+    }
+    return annotated;
+  }
+
+  @Override
+  public int getParameterCount() {
+    PsiTypeParameterList list = myClass.getTypeParameterList();
+    if (list == null) return 0;
+    PsiTypeParameter[] parameters = list.getTypeParameters();
+    if (mySubstitutor.hasRawSubstitution()) {
+      for (PsiTypeParameter parameter : parameters) {
+        if (mySubstitutor.substitute(parameter) == null) return 0;
+      }
+    }
+    return parameters.length;
+  }
+
+  @Override
+  public PsiType @NotNull [] getParameters() {
+    PsiTypeParameter[] parameters = myClass.getTypeParameters();
     if (parameters.length == 0) {
       return PsiType.EMPTY_ARRAY;
     }
 
-    List<PsiType> lst = new ArrayList<>();
+    PsiType[] result = new PsiType[parameters.length];
+    int pos = 0;
     for (PsiTypeParameter parameter : parameters) {
       PsiType substituted = mySubstitutor.substitute(parameter);
       if (substituted == null) {
         return PsiType.EMPTY_ARRAY;
       }
-      lst.add(substituted);
+      result[pos++] = substituted;
     }
-    return lst.toArray(createArray(lst.size()));
+    assert pos == result.length;
+    return result;
   }
 
   @Override
-  @NotNull
-  public ClassResolveResult resolveGenerics() {
+  public @NotNull ClassResolveResult resolveGenerics() {
     return myClassResolveResult;
   }
 
   @Override
-  @NotNull
-  public PsiClassType rawType() {
-    return JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createType(myClass);
+  public @NotNull PsiClassType rawType() {
+    return JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(boolean annotated) {
-    if (myPresentableText == null) {
-      myPresentableText = getText(TextType.PRESENTABLE, annotated);
+  public @NotNull String getPresentableText(boolean annotated) {
+    String presentableText;
+    if (annotated) {
+      presentableText = myPresentableTextAnnotated;
+      if (presentableText == null) {
+        return myPresentableTextAnnotated = getText(TextType.PRESENTABLE, true);
+      }
+    } else {
+      presentableText = myPresentableText;
+      if (presentableText == null) {
+        return myPresentableText = getText(TextType.PRESENTABLE, false);
+      }
     }
-    return myPresentableText;
+    return presentableText;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated) {
+  public @NotNull String getCanonicalText(boolean annotated) {
     String cached = annotated ? myCanonicalTextAnnotated : myCanonicalText;
     if (cached == null) {
       cached = getText(TextType.CANONICAL, annotated);
@@ -170,13 +250,13 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     return cached;
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
-    if (myInternalCanonicalText == null) {
-      myInternalCanonicalText = getText(TextType.INT_CANONICAL, true);
+  public @NotNull String getInternalCanonicalText() {
+    String canonicalText = myInternalCanonicalText;
+    if (canonicalText == null) {
+      myInternalCanonicalText = canonicalText = getText(TextType.INT_CANONICAL, true);
     }
-    return myInternalCanonicalText;
+    return canonicalText;
   }
 
   private enum TextType { PRESENTABLE, CANONICAL, INT_CANONICAL }
@@ -213,7 +293,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     PsiClass enclosingClass = null;
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiElement parent = aClass.getParent();
-      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass) && !(parent instanceof PsiImplicitClass)) {
         enclosingClass = (PsiClass)parent;
       }
     }
@@ -291,8 +371,8 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     if (name == null || !text.contains(name)) return false;
     if (text.equals(getCanonicalText(false))) return true;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
-    final PsiType patternType;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
+    PsiType patternType;
     try {
       patternType = factory.createTypeFromText(text, myClass);
     }
@@ -303,20 +383,17 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myClass.getResolveScope();
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel != null ? myLanguageLevel : PsiUtil.getLanguageLevel(myClass);
   }
 
-  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
-    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider());
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
+    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider(), null);
   }
 }

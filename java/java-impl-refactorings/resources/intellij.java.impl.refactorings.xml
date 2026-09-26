@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.codeserver.core"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.foldings"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <xi:include href="/META-INF/RegistryKeysRefactorings.xml"/>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.java.templateRefactoringSupport"
+                    interface="com.intellij.java.impl.refactorings.template.JavaTemplateRefactoringSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveAllClassesInFileHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveClassToInnerHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.introduceParameterMethodUsagesProcessor"
+                    interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.safeDelete.importSearcher" interface="com.intellij.refactoring.safeDelete.ImportSearcher"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.predefinedMigrationMapProvider"
+                    interface="com.intellij.refactoring.migration.PredefinedMigrationProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.conversion.rule" interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerClassUsagesHandler"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerClassUsagesHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveMembers.MoveMemberHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.refactoring.overrideMethodProcessor"
+                    interface="com.intellij.refactoring.OverrideMethodsProcessor" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableModCommandService"
+      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableModCommandServiceImpl"
+      overrides="true"/>
+
+    <!-- Entry point for intentions declared in intellij.java.impl, which cannot depend on this module -->
+    <applicationService
+      serviceInterface="com.intellij.refactoring.JavaRefactoringService"
+      serviceImplementation="com.intellij.refactoring.JavaRefactoringServiceImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService"
+      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandServiceImpl"
+      overrides="true"/>
+  </extensions>
+</idea-plugin>

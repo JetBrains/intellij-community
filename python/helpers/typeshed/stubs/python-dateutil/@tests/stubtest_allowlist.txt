@@ -1,0 +1,7 @@
+dateutil.rrule.weekday.__init__
+dateutil.tz.tz.tzoffset.instance
+dateutil.tz.tz.tzstr.instance
+
+# Metaclass differs:
+dateutil.tz.tz.tzoffset
+dateutil.tz.tz.tzutc

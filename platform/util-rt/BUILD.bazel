@@ -1,0 +1,104 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "util-rt-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":util-rt-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.util.rt.tests`
+
+### auto-generated section `build intellij.platform.util.rt` start
+jvm_library(
+    name = "util-rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.rt",
+    visibility = ["//visibility:public"],
+    deps = ["//libraries/jetbrains/annotations"],
+)
+
+jvm_library(
+    name = "util-rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.util.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":util-rt",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.rt` end
+
+### auto-generated section `iml intellij.platform.util.rt` start
+exports_files(
+    [
+        "intellij.platform.util.rt.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.rt` end
+
+### auto-generated section `build intellij.platform.util.rt.tests` start
+jvm_library(
+    name = "util-rt-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.util.rt.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "util-rt-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/util-rt",
+        "//platform/util-rt:util-rt_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":util-rt-tests"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.rt.tests` end
+
+### auto-generated section `iml intellij.platform.util.rt.tests` start
+exports_files(
+    [
+        "intellij.platform.util.rt.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.rt.tests` end

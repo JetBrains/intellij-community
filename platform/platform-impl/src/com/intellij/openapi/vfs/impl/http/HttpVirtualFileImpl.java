@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.UriUtil;
@@ -35,10 +24,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-class HttpVirtualFileImpl extends HttpVirtualFile {
+final class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
-  @Nullable private final RemoteFileInfoImpl myFileInfo;
-  private FileType myInitialFileType;
+  private final @Nullable RemoteFileInfoImpl myFileInfo;
+  private @Nullable FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
@@ -59,14 +48,19 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     if (myFileInfo != null) {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
         @Override
-        public void fileDownloaded(final VirtualFile localFile) {
+        public void fileDownloaded(final @NotNull VirtualFile localFile) {
+          boolean fileTypeChanged = myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType);
+          VirtualFile thisHttpFile = HttpVirtualFileImpl.this;
           ApplicationManager.getApplication().invokeLater(() -> {
-            HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
-            FileDocumentManager.getInstance().reloadFiles(file);
-            if (!localFile.getFileType().equals(myInitialFileType)) {
-              FileContentUtilCore.reparseFiles(file);
+            FileDocumentManager manager = FileDocumentManager.getInstance();
+            Document document = manager.getCachedDocument(thisHttpFile);
+            if (document != null) {
+              manager.reloadFromDisk(document, null);
             }
-          });
+            if (fileTypeChanged) {
+              FileContentUtilCore.reparseFiles(thisHttpFile);
+            }
+          }, ModalityState.nonModal());
         }
       });
 
@@ -89,44 +83,34 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       }
       else {
         int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-        if (prevSlash < 0) {
-          myParentPath = path.substring(0, lastSlash + 1);
-          myName = path.substring(lastSlash + 1);
-        }
-        else {
-          myParentPath = path.substring(0, lastSlash);
-          myName = path.substring(lastSlash + 1);
-        }
+        myParentPath = path.substring(0, prevSlash < 0 ? lastSlash + 1 : lastSlash);
+        myName = path.substring(lastSlash + 1);
       }
     }
   }
 
   @Override
-  @Nullable
-  public RemoteFileInfoImpl getFileInfo() {
+  public @Nullable RemoteFileInfoImpl getFileInfo() {
     return myFileInfo;
   }
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return myPath;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
   }
 
@@ -155,9 +139,8 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public VirtualFile findChild(@NotNull @NonNls String name) {
+  public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     if (!ContainerUtil.isEmpty(myChildren)) {
       for (VirtualFile child : myChildren) {
         if (StringUtil.equals(child.getNameSequence(), name)) {
@@ -169,8 +152,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     if (myFileInfo == null) {
       return super.getFileType();
     }
@@ -187,7 +169,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
       if (localFile != null) {
@@ -198,8 +180,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
       if (localFile != null) {
@@ -210,8 +191,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     if (myFileInfo == null) {
       throw new UnsupportedOperationException();
     }
@@ -220,7 +200,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     if (localFile != null) {
       return localFile.contentsToByteArray();
     }
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override
@@ -235,13 +215,20 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public long getLength() {
-    return -1;
+    return 0;
   }
 
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     if (myFileInfo != null) {
-      myFileInfo.refresh(postRunnable);
+      myFileInfo.refresh(() -> {
+        // com.intellij.openapi.vfs.VirtualFile.refresh(boolean, boolean, java.lang.Runnable) contract
+        // states that postRunnable should be run on EDT under write lock
+        if (postRunnable != null) {
+          ApplicationManager.getApplication().invokeLater(
+            () -> ApplicationManager.getApplication().runWriteAction(postRunnable));
+        }
+      });
     }
     else if (postRunnable != null) {
       postRunnable.run();

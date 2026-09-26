@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="&amp;Shelve changes"/>
+              <text resource-bundle="messages/VcsBundle" key="changes.change.list.conflict.dialog.radio.button.shelve.changes"/>
             </properties>
           </component>
           <component id="592c9" class="javax.swing.JRadioButton" binding="myMoveChangesToActiveRadioButton" default-binding="true">
@@ -38,7 +38,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Ignore"/>
+              <text resource-bundle="messages/VcsBundle" key="changes.change.list.conflict.dialog.radio.button.ignore"/>
             </properties>
           </component>
           <component id="25953" class="javax.swing.JRadioButton" binding="mySwitchToChangelistRadioButton" default-binding="true">
@@ -56,7 +56,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="list title"/>
+          <text value=""/>
         </properties>
       </component>
       <scrollpane id="6c540" class="com.intellij.ui.components.JBScrollPane">

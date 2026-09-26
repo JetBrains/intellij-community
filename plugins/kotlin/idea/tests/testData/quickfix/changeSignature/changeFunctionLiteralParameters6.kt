@@ -1,0 +1,7 @@
+// "Change the signature of lambda expression" "true"
+// DISABLE_ERRORS
+
+fun <T> test(f: (T, T) -> T) {}
+fun m() { test { s: String<caret> -> s.substring(42) } }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory$ParameterQuickFix

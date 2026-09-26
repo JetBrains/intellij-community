@@ -1,0 +1,16 @@
+<!-- The module must stay public. The Android plugin (org.jetbrains.android) and the Rider Android plugin
+     depend on it, so their Android Studio service override registers after the base service. -->
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlReferencesModuleReachability (the inspection resolves the EP to a copy in a library jar, not to intellij.platform.core) -->
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"/>
+    <productivityFeatures file="JavaIdeProductivityFeatures.xml"/>
+    <tipAndTrick file="CommandCompletion.html"/>
+  </extensions>
+</idea-plugin>

@@ -1,7 +1,8 @@
-// "Replace explicit type with 'var'" "true"
+// "Replace explicit type with 'var'" "true-preview"
 class Main {
   {
-    @Anno <caret>String[] args = new String[42];
+    @Anno <caret>String//c1
+  [] args = new String[42];
   }
 }
 @interface Anno {}

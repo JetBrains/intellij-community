@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.xml.XmlTag;
@@ -29,23 +29,21 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSmartCompletionProvider {
-
+final class XmlSmartCompletionProvider {
   public void complete(CompletionParameters parameters, final CompletionResultSet result, PsiElement element) {
     if (!XmlCompletionContributor.isXmlNameCompletion(parameters)) {
       return;
     }
     result.stopHere();
-    if (!(element.getParent() instanceof XmlTag)) {
+    if (!(element.getParent() instanceof XmlTag tag)) {
       return;
     }
 
-    final XmlTag tag = (XmlTag)element.getParent();
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) return;
     final XmlContentDFA dfa = XmlContentDFA.getContentDFA(parentTag);
     if (dfa == null) return;
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ReadAction.runBlocking(() -> {
       for (XmlTag subTag : parentTag.getSubTags()) {
         if (subTag == tag) {
           break;
@@ -53,7 +51,7 @@ public class XmlSmartCompletionProvider {
         dfa.transition(subTag);
       }
       List<XmlElementDescriptor> elements = dfa.getPossibleElements();
-      for (XmlElementDescriptor elementDescriptor: elements) {
+      for (XmlElementDescriptor elementDescriptor : elements) {
         addElementToResult(elementDescriptor, result);
       }
     });
@@ -77,5 +75,4 @@ public class XmlSmartCompletionProvider {
     }
     return builder;
   }
-
 }

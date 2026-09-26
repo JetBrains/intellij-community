@@ -1,83 +1,76 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.DialogAppender;
+import com.intellij.diagnostic.JsonLogHandler;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.xml.DOMConfigurator;
-import org.jdom.Document;
-import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.NotNull;
-import org.w3c.dom.Element;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.logging.Level;
 
-@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class LoggerFactory implements Logger.Factory {
-  private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
-  private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
-  private static final String LOG_DIR_MACRO = "$LOG_DIR$";
+public final class LoggerFactory implements Logger.Factory {
+  public static final String LOG_FILE_NAME = "idea.log";
 
-  private boolean myInitialized = false;
-
-  private LoggerFactory() { }
-
-  @NotNull
-  @Override
-  public synchronized Logger getLoggerInstance(@NotNull String name) {
-    try {
-      if (!myInitialized) {
-        init();
-      }
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
+  public static @NotNull Path getLogFilePath() {
+    return PathManager.getLogDir().resolve(LOG_FILE_NAME);
   }
 
-  private void init() {
-    try {
-      System.setProperty("log4j.defaultInitOverride", "true");
+  public LoggerFactory() {
+    JulLogger.clearHandlers();
 
-      File logXmlFile = PathManager.findBinFileWithException("log.xml");
+    var rootLogger = java.util.logging.Logger.getLogger("");
+    rootLogger.setLevel(Level.INFO);
 
-      String text = FileUtil.loadFile(logXmlFile);
-      text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
-
-      File file = new File(PathManager.getLogPath());
-      if (!file.mkdirs() && !file.exists()) {
-        System.err.println("Cannot create log directory: " + file);
-      }
-
-      Document document = JDOMUtil.loadDocument(text);
-      Element element = new DOMOutputter().output(document).getDocumentElement();
-      new DOMConfigurator().doConfigure(element, LogManager.getLoggerRepository());
-
-      myInitialized = true;
+    var consoleLogLevel = LogLevel.OFF;
+    if (Boolean.getBoolean("intellij.log.to.json.stdout")) {
+      System.setProperty("intellij.log.stdout", "false");
+      rootLogger.addHandler(new JsonLogHandler());
     }
-    catch (Exception e) {
-      e.printStackTrace();
+    else {
+      var consoleLogLevelValue = System.getProperty("intellij.console.log.level");
+      if (consoleLogLevelValue != null) {
+        try {
+          consoleLogLevel = LogLevel.valueOf(consoleLogLevelValue.toUpperCase(Locale.ROOT));
+        }
+        catch (IllegalArgumentException _) { }
+      }
+      else if (AppMode.isRunningFromDevBuild() || Boolean.getBoolean("idea.log.console")) {
+        consoleLogLevel = LogLevel.WARNING;
+      }
+    }
+
+    var append = Boolean.parseBoolean(System.getProperty("idea.log.append", "true"));
+
+    var writeAttachments = Boolean.parseBoolean(
+      System.getProperty("idea.log.persist.attachments", System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY))
+    );
+
+    JulLogger.configureStandardLoggers(
+      consoleLogLevel, true, getLogFilePath(), append, writeAttachments, IdeaLogger::dropFrequentExceptionsCaches
+    );
+
+    // A handler here gets the real cause in `LogRecord.getThrown()`. `JulLogger` drops the `UnhandledException`
+    // wrapper, and puts its mark in `IdeaLogRecord`. So a new handler needs no knowledge of that wrapper.
+    // See IJPL-254578.
+    if (!AppMode.isCommandLine() || ApplicationManagerEx.isInIntegrationTest()) {
+      rootLogger.addHandler(new DialogAppender());
+    }
+  }
+
+  @Override
+  public @NotNull Logger getLoggerInstance(@NotNull String name) {
+    return new IdeaLogger(java.util.logging.Logger.getLogger(name));
+  }
+
+  public void flushHandlers() {
+    for (var handler : java.util.logging.Logger.getLogger("").getHandlers()) {
+      handler.flush();
     }
   }
 }

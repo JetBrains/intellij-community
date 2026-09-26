@@ -1,60 +1,54 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.library;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.net.URL;
 import java.util.List;
+import java.util.function.Supplier;
 
-/**
- * @author nik
- */
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
-  protected final Icon myIcon;
-  private final String myLibraryCategoryName;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
-  public DownloadableLibraryType(@NotNull String libraryCategoryName,
-                                          @NotNull String libraryTypeId,
-                                          @NotNull String groupId,
-                                          @NotNull Icon icon,
-                                          @NotNull URL... localUrls) {
-    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
-      @NotNull
+  /**
+   * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
+   * from it.
+   *
+   * @param libraryCategoryName presentable description of the library type
+   * @param libraryTypeId       unique id of the library type, used for serialization
+   * @param groupId             name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
+   * @param localUrls           URLs of XML files containing information about the library versions (see plugins/groovy/resources/org/jetbrains/plugins/groovy/config/groovy.sdk.xml for example)
+   */
+  protected DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
+                                    @NotNull String libraryTypeId,
+                                    @NotNull String groupId,
+                                    URL @NotNull ... localUrls) {
+    super(new PersistentLibraryKind<>(libraryTypeId) {
       @Override
-      public LibraryVersionProperties createDefaultProperties() {
+      public @NotNull LibraryVersionProperties createDefaultProperties() {
         return new LibraryVersionProperties();
       }
     });
     myLibraryCategoryName = libraryCategoryName;
     myLibraryDescription = DownloadableLibraryService.getInstance().createLibraryDescription(groupId, localUrls);
-    myIcon = icon;
   }
 
-  @Nullable
-  private static LibraryVersionProperties detectVersion(List<VirtualFile> classesRoots, String detectionClass) {
+  private static @Nullable LibraryVersionProperties detectVersion(List<? extends VirtualFile> classesRoots, String detectionClass) {
     if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
       return null;
     }
@@ -74,19 +68,19 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
     return null;
   }
 
-  @NotNull
-  public DownloadableLibraryDescription getLibraryDescription() {
+  public @NotNull DownloadableLibraryDescription getLibraryDescription() {
     return myLibraryDescription;
   }
 
   public String getLibraryCategoryName() {
-    return myLibraryCategoryName;
+    return myLibraryCategoryName.get();
   }
 
   @Override
   public String getDescription(@NotNull LibraryVersionProperties properties) {
     final String versionString = properties.getVersionString();
-    return StringUtil.capitalize(myLibraryCategoryName) + " library" + (versionString != null ? " of version " + versionString : "");
+    final int versionStringPresent = versionString != null ? 0 : 1;
+    return JavaUiBundle.message("downloadable.library.type.description", getLibraryCategoryName(), versionString, versionStringPresent);
   }
 
   @Override
@@ -94,17 +88,14 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
     return DownloadableLibraryService.getInstance().createDownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
   }
 
-  @NotNull
-  public Icon getLibraryTypeIcon() {
-    return myIcon;
+  public abstract @NotNull Icon getLibraryTypeIcon();
+
+  @Override
+  public @NotNull Icon getIcon(LibraryVersionProperties properties) {
+    return getLibraryTypeIcon();
   }
 
-  @NotNull
-  public Icon getIcon(LibraryVersionProperties properties) {
-    return myIcon;
-  }
-
-  protected abstract String[] getDetectionClassNames();
+  protected abstract String @NotNull [] getDetectionClassNames();
 
   @Override
   public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {

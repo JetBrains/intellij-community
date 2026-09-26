@@ -1,0 +1,11 @@
+// "Create property 'v2' as constructor parameter" "true"
+// ERROR: No value passed for parameter 'v2'
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+
+data class DataToFix(val p1: Int)
+fun dataContext() {
+    val (v1, v2) = DataToFix(<caret>1)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

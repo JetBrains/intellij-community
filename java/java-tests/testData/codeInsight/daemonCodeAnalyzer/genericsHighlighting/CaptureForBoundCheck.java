@@ -17,4 +17,12 @@ class EnumBug {
     EnumSet<<error descr="Type parameter 'EnumBug.Option' is not within its bound; should extend 'EnumBug.Enum<EnumBug.Option>'">Option</error>> enumSetRaw = EnumSet.<Option>noneOf(Option.class);
   }
 
+  void consume(Runnable r) {}
+
+  void test() {
+    EnumSet<<error descr="Type parameter 'EnumBug.Option' is not within its bound; should extend 'EnumBug.Enum<EnumBug.Option>'">Option</error>> set = null;
+    consume(() -> {
+      EnumSet<<error descr="Type parameter 'EnumBug.Option' is not within its bound; should extend 'EnumBug.Enum<EnumBug.Option>'">Option</error>> set1 = null;
+    });
+  }
 }

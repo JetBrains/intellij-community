@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -10,14 +10,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.auth.AcceptResult;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.security.cert.X509Certificate;
 
 public class ServerSSLDialog extends DialogWrapper {
 
-  @NotNull private final String myCertificateInfo;
+  private final @NotNull String myCertificateInfo;
   private Action myTempAction;
   private AcceptResult myResult;
 
@@ -37,18 +42,20 @@ public class ServerSSLDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return false;
   }
 
-  @NotNull
-  protected Action[] createActions() {
+  @Override
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getTempAction(), getCancelAction()};
   }
 
   private Action getTempAction() {
     if (myTempAction == null) {
       myTempAction = new AbstractAction(SvnBundle.message("server.ssl.accept.temporary.action.name")) {
+        @Override
         public void actionPerformed(ActionEvent e) {
           myResult = AcceptResult.ACCEPTED_TEMPORARILY;
           close(0);
@@ -58,11 +65,13 @@ public class ServerSSLDialog extends DialogWrapper {
     return myTempAction;
   }
 
+  @Override
   protected void doOKAction() {
     myResult = AcceptResult.ACCEPTED_PERMANENTLY;
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     myResult = AcceptResult.REJECTED;
     super.doCancelAction();
@@ -72,10 +81,12 @@ public class ServerSSLDialog extends DialogWrapper {
     return myResult;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.sslDialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
     panel.add(new JLabel(SvnBundle.message("label.ssl.server.provided.certificate")), BorderLayout.NORTH);
@@ -88,8 +99,7 @@ public class ServerSSLDialog extends DialogWrapper {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "StringBufferReplaceableByString"})
-  @NotNull
-  private static String getServerCertificateInfo(@NotNull X509Certificate cert) {
+  private static @NotNull String getServerCertificateInfo(@NotNull X509Certificate cert) {
     return new StringBuilder()
       .append(" - Subject: ")
       .append(cert.getSubjectDN().getName())

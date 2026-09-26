@@ -1,15 +1,14 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.runtime.deployment;
 
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.RemoteOperationCallback;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
   public abstract void deploy(@NotNull DeploymentTask<D> task, @NotNull DeploymentLogManager logManager,
@@ -17,27 +16,22 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
   public abstract void computeDeployments(@NotNull ComputeDeploymentsCallback callback);
 
-  @NotNull
-  public String getDeploymentName(@NotNull DeploymentSource source, D configuration) {
-    return getDeploymentName(source);
-  }
-
-  /**
-   * @deprecated use {@link #getDeploymentName(com.intellij.remoteServer.configuration.deployment.DeploymentSource, D configuration)} instead
-   */
-  @NotNull
-  public String getDeploymentName(@NotNull DeploymentSource source) {
+  public @NotNull @Nls String getDeploymentName(@NotNull DeploymentSource source, @NotNull D configuration) {
     return source.getPresentableName();
   }
 
-  @NotNull
-  public String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime, @NotNull DeploymentSource source, D configuration) {
+  public @NotNull @Nls String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime,
+                                                       @NotNull DeploymentSource source, @NotNull D configuration) {
     return getDeploymentName(source, configuration);
   }
 
   public abstract void disconnect();
 
   public interface DeploymentOperationCallback extends RemoteOperationCallback {
+    default void started(@NotNull DeploymentRuntime deploymentRuntime) {
+      //
+    }
+
     Deployment succeeded(@NotNull DeploymentRuntime deploymentRuntime);
   }
 

@@ -1,27 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
+import com.intellij.util.io.impl.DirectorySpecBase
+import com.intellij.util.io.impl.JarSpec
+import com.intellij.util.io.impl.ZipSpec
+import com.intellij.util.io.impl.drop
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import java.nio.file.Path
+import java.util.jar.Attributes
+import java.util.jar.JarInputStream
+import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 import kotlin.test.fail
 
-/**
- * @author nik
- */
 class DirectoryContentSpecTest {
   @Test
   fun `files in directory`() {
@@ -37,13 +30,13 @@ class DirectoryContentSpecTest {
 
     dir.assertNotMatches(directoryContent {
       file("a.txt")
-    })
+    }, FileTextMatcher.ignoreBlankLines())
 
     dir.assertNotMatches(directoryContent {
       file("a.txt")
       file("b.txt")
       file("c.txt")
-    })
+    }, FileTextMatcher.ignoreBlankLines())
   }
 
   @Test
@@ -64,13 +57,13 @@ class DirectoryContentSpecTest {
       dir("b") {
         file("a.txt")
       }
-    })
+    }, FileTextMatcher.ignoreBlankLines())
 
     dir.assertNotMatches(directoryContent {
       dir("a") {
         file("b.txt")
       }
-    })
+    }, FileTextMatcher.ignoreBlankLines())
   }
 
   @Test
@@ -89,7 +82,49 @@ class DirectoryContentSpecTest {
 
     dir.assertNotMatches(directoryContent {
       file("a.txt", "a")
-    })
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `file content different line separators`() {
+    val dir = directoryContent {
+      file("a.txt", "first\nsecond")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.txt", "first\r\nsecond")
+    }, FileTextMatcher.ignoreLineSeparators())
+
+    try {
+      dir.assertMatches(directoryContent {
+        file("a.txt", "first\r\nsecond")
+      })
+      fail("Must not match")
+    }
+    catch (e: AssertionError) {
+      assertThat(e.message).contains("Different line separators")
+    }
+  }
+
+  @Test
+  fun `file content with ignore empty lines option`() {
+    val dir = directoryContent {
+      file("a.txt", "a\n\nb")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.txt", "a\n\nb")
+    }, FileTextMatcher.ignoreBlankLines())
+    dir.assertMatches(directoryContent {
+      file("a.txt", "a\nb")
+    }, FileTextMatcher.ignoreBlankLines())
+    dir.assertMatches(directoryContent {
+      file("a.txt", "a\nb\n")
+    }, FileTextMatcher.ignoreBlankLines())
+
+    dir.assertNotMatches(directoryContent {
+      file("a.txt", "a\nb\nc")
+    }, FileTextMatcher.ignoreBlankLines())
   }
 
   @Test
@@ -110,17 +145,34 @@ class DirectoryContentSpecTest {
       dir("a.zip") {
         file("a.txt", "text")
       }
-    })
+    }, FileTextMatcher.ignoreBlankLines())
 
     dir.assertNotMatches(directoryContent {
       zip("a.zip") {
         file("a.txt", "a")
       }
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+
+  @Test
+  fun `archive files with unspecified content`() {
+    val dir = directoryContent {
+      zip("a.zip") {
+        file("a.txt", "zip content")
+      }
+      zip("b.jar") {
+        file("b.txt", "jar content")
+      }
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.zip")
+      file("b.jar")
     })
   }
 
   @Test
-  fun `merge directory definitions`() {
+  fun `merge directory definitions inside directoryContent`() {
     val dir = directoryContent {
       dir("foo") {
         file("a.txt")
@@ -137,12 +189,205 @@ class DirectoryContentSpecTest {
       }
     })
   }
+  
+  @Test
+  fun `merge multiple directory contents`() {
+    val dir = directoryContent {
+      dir("foo") {
+        file("a.txt")
+      }
+      file("c.txt", "1")
+      file("d.txt")
+    }.mergeWith(directoryContent {
+      dir("foo") {
+        file("b.txt")
+      }
+      file("c.txt", "2")
+      file("e.txt")
+    }).generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("b.txt")
+      }
+      file("c.txt", "2")
+      file("d.txt")
+      file("e.txt")
+    })
+  }
+
+  @Test
+  fun `file path filter`() {
+    val dir = directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("b.xml")
+      }
+      file("c.txt")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("c.xml")
+      }
+      file("c.txt")
+    }, filePathFilter = { it.endsWith(".txt")})
+
+    dir.assertNotMatches(directoryContent {
+      dir("foo") {
+        file("b.xml")
+      }
+      file("c.txt")
+    }, filePathFilter = { it.endsWith(".txt")})
+  }
+
+  @Test
+  fun `zip file`() {
+    val zip = zipFile {
+      file("a.txt", "a")
+    }.generateInTempDir()
+    assertTrue(zip.isRegularFile())
+    assertThat(zip.fileName.toString()).endsWith(".zip")
+    zip.assertMatches(zipFile {
+      file("a.txt", "a")
+    })
+    zip.assertNotMatches(zipFile {
+      file("b.txt", "a")
+    }, FileTextMatcher.ignoreBlankLines())
+    zip.assertNotMatches(zipFile {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+    zip.assertNotMatches(directoryContent {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file without manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+    }.generateInTempDir()
+    assertTrue(jar.isRegularFile())
+    assertThat(jar.fileName.toString()).endsWith(".jar")
+    jar.assertMatches(jarFile {
+      file("a.txt", "a")
+    })
+    jar.assertNotMatches(jarFile {
+      file("b.txt", "a")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(jarFile {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(directoryContent {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file with manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+      dir("META-INF") {
+        file("MANIFEST.MF", """
+          |Manifest-Version: 1.0
+          |Implementation-Version: 1.0
+        """.trimMargin() + "\n")
+      }
+    }.generateInTempDir()
+    val manifest = JarInputStream(jar.inputStream()).use {
+      it.manifest
+    }
+    assertThat(manifest.mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION)).isEqualTo("1.0")
+  }
+
+  @Test
+  fun `drop removes files not matching filter`() {
+    val spec = directoryContent {
+      file("a.txt")
+      file("b.xml")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { it.endsWith(".txt") }
+    assertThat(filtered.getChildren().keys).containsExactlyInAnyOrder("a.txt")
+  }
+
+  @Test
+  fun `drop with dropEmptyDirectories=true removes empty directories`() {
+    val spec = directoryContent {
+      dir("subdir") {
+        file("a.xml")
+      }
+      file("b.txt")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = true) { it.endsWith(".txt") }
+    assertThat(filtered.getChildren().keys).containsExactlyInAnyOrder("b.txt")
+  }
+
+  @Test
+  fun `drop preserves ZipSpec type and level`() {
+    val spec = zipFile {
+      file("a.txt")
+    } as ZipSpec
+    val filtered = spec.drop(dropEmptyDirectories = false) { true } as ZipSpec
+    assertThat(filtered).isInstanceOf(ZipSpec::class.java)
+    assertThat(filtered.level).isEqualTo(spec.level)
+  }
+
+  @Test
+  fun `drop preserves JarSpec type`() {
+    val spec = jarFile {
+      file("a.txt")
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { true }
+    assertThat(filtered).isInstanceOf(JarSpec::class.java)
+  }
+
+  @Test
+  fun `drop filters nested directories recursively`() {
+    val spec = directoryContent {
+      dir("outer") {
+        dir("inner") {
+          file("a.txt")
+          file("b.xml")
+        }
+        file("c.xml")
+      }
+    } as DirectorySpecBase
+    val filtered = spec.drop(dropEmptyDirectories = false) { it.endsWith(".txt") }
+    val outer = filtered.getChildren()["outer"] as DirectorySpecBase
+    val inner = outer.getChildren()["inner"] as DirectorySpecBase
+    assertThat(inner.getChildren().keys).containsExactlyInAnyOrder("a.txt")
+    assertThat(outer.getChildren().keys).containsExactlyInAnyOrder("inner")
+  }
+
+  @Test
+  fun `ignore xml formatting`() {
+    val dir = directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", "foo")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.xml", "  <root   attr = \"value\" >  </root> ")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value2\"></root>")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", " foo ")
+    }, FileTextMatcher.ignoreXmlFormatting())
+  }
 }
 
-private fun File.assertNotMatches(spec: DirectoryContentSpec) {
+private fun Path.assertNotMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                                  filePathFilter: (String) -> Boolean = { true }) {
   try {
-    assertMatches(spec)
-    fail("File matches to spec by it must not")
+    assertMatches(spec, fileTextMatcher, filePathFilter)
+    fail("File matches to spec but it must not")
   }
   catch (ignored: AssertionError) {
   }

@@ -1,0 +1,14 @@
+// "Wrap with '?.let { ... }' call" "true"
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+val it = ""
+
+fun test(s: String?) {
+    val name = ""
+    bar(<caret>s)
+}
+
+fun bar(name: String) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

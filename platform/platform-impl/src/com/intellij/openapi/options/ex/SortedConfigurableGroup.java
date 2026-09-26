@@ -1,71 +1,59 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Sergey.Malenkov
- */
-public final class SortedConfigurableGroup
+@ApiStatus.Internal
+public class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
-  implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
+  implements Weighted, ConfigurableGroup, Configurable.NoScroll {
 
   private final String myId;
-  private final String myDisplayName;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
+  private final @NlsContexts.DetailedDescription String myDescription;
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
-  List<Configurable> myList = ContainerUtil.newArrayList();
+  List<@NotNull Configurable> myList = new ArrayList<>();
 
-  SortedConfigurableGroup(String id, String displayName, String helpTopic, int weight) {
+  public SortedConfigurableGroup(@NonNls @NotNull String id,
+                                 @NlsContexts.ConfigurableName @NotNull String displayName,
+                                 @NlsContexts.DetailedDescription @Nullable String description,
+                                 @NonNls @Nullable String helpTopic,
+                                 int weight) {
     myId = id;
     myDisplayName = displayName;
+    myDescription = description;
     myHelpTopic = helpTopic;
     myWeight = weight;
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
-    Collections.sort(myList, COMPARATOR);
-    Configurable[] result = ArrayUtil.toObjectArray(myList, Configurable.class);
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
+    myList.sort(COMPARATOR);
+    Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
     myList = null;
     return result;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NonNls @NotNull String getId() {
     return myId;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @NonNls @Nullable String getHelpTopic() {
     return myHelpTopic;
   }
 
@@ -74,14 +62,13 @@ public final class SortedConfigurableGroup
     return myWeight;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @NlsContexts.ConfigurableName String getDisplayName() {
     return myDisplayName;
   }
 
   @Override
-  public String getShortName() {
-    return getDisplayName();
+  public @NlsContexts.DetailedDescription String getDescription() {
+    return myDescription;
   }
 }

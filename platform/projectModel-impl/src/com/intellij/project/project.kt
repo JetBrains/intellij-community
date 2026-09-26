@@ -1,46 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
-import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.exists
-import java.nio.file.InvalidPathException
-import java.nio.file.Paths
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
+/**
+ * The project store of this project. Applicable only to projects that have such store; the Default project doesn't have one.
+ * @exception IllegalStateException when this project doesn't have a project store.
+ */
 val Project.stateStore: IProjectStore
-  get() = picoContainer.getComponentInstance(IComponentStore::class.java) as IProjectStore
+  @Throws(IllegalStateException::class)
+  get() =
+    if (this is ProjectStoreOwner) componentStore
+    else throw IllegalStateException("This property is applicable only for projects that are owners of an IProjectStore")
+
+@ApiStatus.Internal
+interface ProjectStoreOwner : ComponentStoreOwner {
+  override val componentStore: IProjectStore
+}
 
 val Project.isDirectoryBased: Boolean
-  get() = !isDefault && StorageScheme.DIRECTORY_BASED == stateStore.storageScheme
+  get() = !isDefault && this is ProjectStoreOwner && componentStore.storeDescriptor.dotIdea != null
 
-fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
-  return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
-}
-
-@JvmOverloads
-fun isValidProjectPath(path: String, anyRegularFileIsValid: Boolean = false): Boolean {
-  val file = try {
-    Paths.get(path)
-  }
-  catch (e: InvalidPathException) {
-    return false
-  }
-
-  val attributes = file.basicAttributesIfExists() ?: return false
-  return if (attributes.isDirectory) {
-    file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
-  }
-  else {
-    anyRegularFileIsValid || path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
-  }
-}
-
-fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath: String): Boolean {
-  return project.isDirectoryBased && filePath.equals(project.stateStore.storageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
-}
+fun isEqualToProjectFileStorePath(project: Project, filePath: Path, storePath: String): Boolean =
+  project.isDirectoryBased && filePath == project.stateStore.storageManager.expandMacro(storePath)

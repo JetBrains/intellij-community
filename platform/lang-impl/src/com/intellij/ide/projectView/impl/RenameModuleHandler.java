@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -38,12 +24,9 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 
 public class RenameModuleHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
+  private static final Logger LOG = Logger.getInstance(RenameModuleHandler.class);
 
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
@@ -52,17 +35,12 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.assertTrue(false);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
@@ -78,17 +56,17 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
     return RefactoringBundle.message("rename.module.title");
   }
 
-  private static class MyInputValidator implements InputValidator {
+  private static final class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Module myModule;
-    public MyInputValidator(Project project, Module module) {
+    MyInputValidator(Project project, Module module) {
       myProject = project;
       myModule = module;
     }
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override
@@ -100,8 +78,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       return true;
     }
 
-    @Nullable
-    private ModifiableModuleModel renameModule(String inputString) {
+    private @Nullable ModifiableModuleModel renameModule(String inputString) {
       final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
       try {
         modifiableModel.renameModule(myModule, inputString);

@@ -1,0 +1,3 @@
+Usage of property Foo.foo that is not safe to delete.
+Usage of property Foo.foo that is not safe to delete.
+Usage of property Foo.foo that is not safe to delete.

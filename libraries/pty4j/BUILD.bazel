@@ -1,0 +1,61 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.pty4j` start
+content_module_jar(
+    libraries = ["@lib//:libraries-pty4j-pty4j"],
+    module = ":pty4j",
+    native_lib = "pty4j",
+    native_lib_dir = "pty4j",
+)
+### auto-generated section `dev intellij.libraries.pty4j` end
+
+### auto-generated section `build intellij.libraries.pty4j` start
+jvm_library(
+    name = "pty4j",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.pty4j",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-pty4j-pty4j"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/jna",
+        "@lib//:libraries-pty4j-pty4j",
+    ],
+)
+
+jvm_library(
+    name = "pty4j_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.pty4j",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-pty4j-pty4j"],
+    runtime_deps = [
+        # do not sort,
+        ":pty4j",
+        "//libraries/jna:jna_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.pty4j` end
+
+### auto-generated section `iml intellij.libraries.pty4j` start
+exports_files(
+    [
+        "intellij.libraries.pty4j.iml",
+        "resources/intellij.libraries.pty4j.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.pty4j` end

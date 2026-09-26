@@ -1,0 +1,124 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("PythonPackageManagerExt")
+
+package com.jetbrains.python.packaging.management
+
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.orLogException
+import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
+import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+
+
+@ApiStatus.Internal
+internal fun PythonPackageManager.waitInitBlocking() {
+  runBlockingMaybeCancellable {
+    waitForInit()
+  }
+}
+
+@ApiStatus.Internal
+internal fun PythonPackageManager.reloadPackagesBlocking() {
+  runBlockingMaybeCancellable {
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement()) {
+      reloadPackages().orLogException(thisLogger())
+    }
+  }
+}
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.installPackages(
+  vararg packages: String,
+  dependencyGroup: PyDependencyGroup? = null,
+): PyResult<List<PythonPackage>> {
+  waitForInit()
+  val specifications = packages.map {
+    val packageName = PyPackageName.normalizePackageName(it)
+    findPackageSpecification(packageName) ?: let {
+      val repository = repositoryManager.repositories.firstOrNull()
+      repository ?: return@let null
+      PythonRepositoryPackageSpecification(repository, pyRequirement(packageName))
+    } ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
+  }
+  return installPackage(
+    PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
+    dependencyGroup = dependencyGroup,
+  )
+}
+
+
+@ApiStatus.Internal
+fun PythonPackageManager.getInstalledPackageSnapshot(packageName: String, version: String? = null): PythonPackage? {
+  val normalizedPackage = PyPackageName.normalizePackageName(packageName)
+  return listInstalledPackagesSnapshot().firstOrNull { it.name == normalizedPackage && (version == null || version == it.version) }
+}
+
+@ApiStatus.Internal
+fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, version: String? = null): Boolean =
+  getInstalledPackageSnapshot(packageName, version) != null
+
+
+@ApiStatus.Internal
+@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, version: String? = null): Boolean =
+  !hasInstalledPackageSnapshot(packageName, version) && repositoryManager.hasPackageSnapshot(packageName)
+
+
+@ApiStatus.Internal
+internal suspend fun PythonPackageManager.findPackageSpecification(
+  packageName: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PythonRepositoryPackageSpecification? {
+  return repositoryManager.findPackageSpecification(pyRequirement(packageName, versionSpec))
+}
+
+@ApiStatus.Internal
+internal suspend fun PythonPackageManager.findPackageSpecification(
+  requirement: PyRequirement,
+  repository: PyPackageRepository? = null,
+): PythonRepositoryPackageSpecification? {
+  return repositoryManager.findPackageSpecification(requirement, repository)
+}
+
+
+@ApiStatus.Internal
+internal suspend fun PythonPackageManager.findPackageSpecification(
+  packageName: String,
+  version: String? = null,
+  relation: PyRequirementRelation = PyRequirementRelation.EQ,
+): PythonRepositoryPackageSpecification? {
+  val versionSpec = version?.let { pyRequirementVersionSpec(relation, version) }
+  return findPackageSpecification(pyRequirement(packageName, versionSpec))
+}
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(pyPackage: PythonPackage): Boolean =
+  getInstalledPackage(pyPackage.name, pyPackage.version) != null
+
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.hasInstalledPackage(packageName: String, version: String? = null): Boolean =
+  getInstalledPackage(packageName, version) != null
+
+@ApiStatus.Internal
+suspend fun PythonPackageManager.getInstalledPackage(packageName: String, version: String? = null): PythonPackage? {
+  waitForInit()
+  return getInstalledPackageSnapshot(packageName, version)
+}

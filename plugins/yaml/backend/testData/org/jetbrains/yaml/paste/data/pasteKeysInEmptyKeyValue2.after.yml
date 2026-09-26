@@ -1,0 +1,6 @@
+top:
+  prev: |
+    block scalar text here
+  key:
+    next:
+      subKey:<caret>

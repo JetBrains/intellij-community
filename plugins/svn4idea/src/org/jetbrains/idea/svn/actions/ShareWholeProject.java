@@ -1,21 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
@@ -26,17 +17,25 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
-  public void update(final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
 
@@ -45,7 +44,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
 
     presentation.setVisible(checker.isVisible());
     if (checker.isEnabled()) {
-      presentation.setText(SvnBundle.message("action.share.whole.project.text"));
+      presentation.setText(SvnBundle.messagePointer("action.share.whole.project.text"));
     }
   }
 
@@ -89,7 +88,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       myEnabled = (!vcsManager.isBackgroundVcsOperationRunning());
     }
 
-    private static enum MyCheckResult {
+    private enum MyCheckResult {
       disable,
       notMapped,
       rootToSvn
@@ -102,7 +101,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       boolean svnMappedToBase = false;
       for (VcsDirectoryMapping mapping : mappings) {
         final String vcs = mapping.getVcs();
-        if (vcs != null && vcs.length() > 0) {
+        if (!vcs.isEmpty()) {
           notMapped = false;
           if (SvnVcs.VCS_NAME.equals(vcs)) {
             if (mapping.isDefaultMapping() || baseDir.getPath().equals(mapping.getDirectory())) {
@@ -135,7 +134,8 @@ public class ShareWholeProject extends AnAction implements DumbAware {
   }
 
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
     if (!checker.isEnabled()) return;
@@ -149,7 +149,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       success = ShareProjectAction.share(project, baseDir);
     }
     catch (VcsException exc) {
-      AbstractVcsHelper.getInstance(project).showError(exc, "Failed to Share Project");
+      AbstractVcsHelper.getInstance(project).showError(exc, message("tab.title.failed.to.share.project"));
       excThrown = true;
     }
     finally {
@@ -159,9 +159,9 @@ public class ShareWholeProject extends AnAction implements DumbAware {
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
           if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
             final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-            vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
+            vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(SvnVcs.VCS_NAME)));
           }
-        }, ModalityState.NON_MODAL, project.getDisposed()));
+        }, ModalityState.nonModal(), project.getDisposed()));
       }
     }
   }

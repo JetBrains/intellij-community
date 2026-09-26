@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.opentelemetry.semconv` start
+content_module_jar(
+    libraries = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+    module = ":opentelemetry-semconv",
+)
+### auto-generated section `dev intellij.libraries.opentelemetry.semconv` end
+
+### auto-generated section `build intellij.libraries.opentelemetry.semconv` start
+jvm_library(
+    name = "opentelemetry-semconv",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.opentelemetry.semconv",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+    runtime_deps = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+)
+
+jvm_library(
+    name = "opentelemetry-semconv_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.opentelemetry.semconv",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-semconv-opentelemetry-semconv"],
+    runtime_deps = [":opentelemetry-semconv"],
+)
+### auto-generated section `build intellij.libraries.opentelemetry.semconv` end
+
+### auto-generated section `iml intellij.libraries.opentelemetry.semconv` start
+exports_files(
+    [
+        "intellij.libraries.opentelemetry.semconv.iml",
+        "resources/intellij.libraries.opentelemetry.semconv.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.opentelemetry.semconv` end

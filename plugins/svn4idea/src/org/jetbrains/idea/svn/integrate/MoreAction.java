@@ -1,60 +1,46 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-/**
- * @author irengrig
- */
-public abstract class MoreAction  extends AnAction implements CustomComponentAction {
-  public static final String LOAD_MORE = "Load more";
+public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
   protected final JLabel myLabel;
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
   private final JButton myLoadMoreBtn;
 
-  protected MoreAction() {
-    this(LOAD_MORE);
-  }
-
-  protected MoreAction(final String name) {
+  protected MoreAction(@NlsContexts.Button @NotNull String name) {
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(JBUI.insets(2));
-    myLoadMoreBtn.addActionListener(e -> this.actionPerformed(null));
+    myLoadMoreBtn.addActionListener(_ -> perform());
     myPanel.add(myLoadMoreBtn);
-    myLabel = new JLabel("Loading...");
-    myLabel.setForeground(UIUtil.getInactiveTextColor());
+    myLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
+    myLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myPanel;
   }
 
@@ -65,12 +51,24 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myEnabled);
     e.getPresentation().setVisible(myVisible);
   }
 
   public void setVisible(boolean b) {
     myVisible = b;
+  }
+
+  public abstract void perform();
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
   }
 }

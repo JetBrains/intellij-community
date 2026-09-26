@@ -1,42 +1,31 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collection;
 
-/**
- * @author: db
- */
-public class RW {
+@ApiStatus.Internal
+public final class RW {
   private RW() {
 
   }
 
-  protected static String readUTF(DataInput in) throws IOException {
+  static String readUTF(DataInput in) throws IOException {
     return IOUtil.readUTF(in);
   }
 
-  protected static void writeUTF(DataOutput out, String value) throws IOException {
+  static void writeUTF(DataOutput out, String value) throws IOException {
     IOUtil.writeUTF(out, value);
   }
 
@@ -56,13 +45,12 @@ public class RW {
     }
   }
 
-  public static <X> void save(final TIntHashSet x, final DataOutput out) {
+  public static <X> void save(final IntSet x, final DataOutput out) {
     try {
       DataInputOutputUtil.writeINT(out, x.size());
       x.forEach(value -> {
         try {
           DataInputOutputUtil.writeINT(out, value);
-          return true;
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -74,7 +62,7 @@ public class RW {
     }
   }
 
-  public static <X> void save(final Collection<X> x, final DataExternalizer<X> e, final DataOutput out) {
+  public static <X> void save(final Collection<? extends X> x, final DataExternalizer<X> e, final DataOutput out) {
     try {
       DataInputOutputUtil.writeINT(out, x.size());
 
@@ -115,14 +103,12 @@ public class RW {
     }
   }
 
-  public static TIntHashSet read(final TIntHashSet acc, final DataInput in) {
+  public static IntSet read(IntSet acc, final DataInput in) {
     try {
-      final int size = DataInputOutputUtil.readINT(in);
-
+      int size = DataInputOutputUtil.readINT(in);
       for (int i = 0; i<size; i++) {
         acc.add(DataInputOutputUtil.readINT(in));
       }
-
       return acc;
     }
     catch (IOException x) {
@@ -173,8 +159,10 @@ public class RW {
   }
 
   public static ToWritable<String> fromString = new ToWritable<String>() {
+    @Override
     public Writable convert(final String s) {
       return new Writable() {
+        @Override
         public void write(BufferedWriter w) {
           writeln(w, s);
         }

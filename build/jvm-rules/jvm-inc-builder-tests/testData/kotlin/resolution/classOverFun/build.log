@@ -1,0 +1,29 @@
+================ Step #1 =================
+Cleaning output files:
+  a/A.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_resolution_classOverFun-a.kotlin_module
+  c/UsageKt.class
+End of files
+Compiling files:
+  kotlin/resolution/classOverFun/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_resolution_classOverFun-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/resolution/classOverFun/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_resolution_classOverFun-a.kotlin_module
+  c/UsageKt.class
+End of files
+Compiling files:
+  kotlin/resolution/classOverFun/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,0 +1,10 @@
+// "Change function signature to 'fun next(bits: Int): Int'" "true"
+// RUNTIME_WITH_FULL_JDK
+// K2_ERROR: NOTHING_TO_OVERRIDE
+import java.util.Random
+
+class MyRandom : Random() {
+    <caret>override fun next(): Int = 4
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

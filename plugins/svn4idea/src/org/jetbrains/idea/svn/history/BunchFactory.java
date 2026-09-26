@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -70,11 +71,11 @@ public class BunchFactory {
 
     final List<CommittedChangeList> list = fragment.getList();
 
-    final List<CommittedChangeList> subList = (myBunchSize >= list.size()) ? list : list.subList(0, myBunchSize);
+    final List<CommittedChangeList> subList = ContainerUtil.getFirstItems(list, myBunchSize);
     myResult.add(new Fragment(fragment.getOrigin(), subList, fragment.isConsistentWithOlder(), fragment.isConsistentWithYounger(),
                      fragment.getOriginBunch()));
     myBunchSize -= subList.size();
-    myBunchSize = (myBunchSize < 0) ? 0 : myBunchSize;
+    myBunchSize = Math.max(myBunchSize, 0);
     myYoungest = subList.get(subList.size() - 1).getNumber();
   }
 

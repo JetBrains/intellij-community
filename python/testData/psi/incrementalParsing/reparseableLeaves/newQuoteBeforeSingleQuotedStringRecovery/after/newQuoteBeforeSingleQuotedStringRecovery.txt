@@ -1,0 +1,20 @@
+Original text:
+---------------
+class Clazz:
+    def foo():
+        s = ''singleQuotedString'
+        print(a)
+
+    def bar():
+        ...
+---------------
+Subtree: Language: Python
+---------------
+class Clazz:
+    def foo():
+        <reparse>s = 'singleQuotedString'
+        print(a)</reparse>
+
+    def bar():
+        ...
+---------------

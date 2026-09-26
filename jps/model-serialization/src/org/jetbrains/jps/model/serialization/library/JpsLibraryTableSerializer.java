@@ -1,101 +1,75 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
-import org.jetbrains.jps.model.library.*;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
+import org.jetbrains.jps.model.library.JpsLibraryRoot;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
-import java.util.*;
-
-/**
- * @author nik
- */
-public class JpsLibraryTableSerializer {
-  private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
+@ApiStatus.Internal
+public final class JpsLibraryTableSerializer {
+  public static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),
-    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true)
+    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true),
+    new JpsLibraryRootTypeSerializer("DOCUMENTATION", JpsOrderRootType.DOCUMENTATION, false)
   };
-  private static final String NAME_ATTRIBUTE = "name";
-  private static final String TYPE_ATTRIBUTE = "type";
-  private static final String PROPERTIES_TAG = "properties";
-  private static final String JAR_DIRECTORY_TAG = "jarDirectory";
+  public static final String NAME_ATTRIBUTE = "name";
+  public static final String TYPE_ATTRIBUTE = "type";
+  public static final String PROPERTIES_TAG = "properties";
+  public static final String JAR_DIRECTORY_TAG = "jarDirectory";
   private static final String URL_ATTRIBUTE = "url";
-  private static final String ROOT_TAG = "root";
-  private static final String RECURSIVE_ATTRIBUTE = "recursive";
-  private static final String LIBRARY_TAG = "library";
-  private static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
+  public static final String ROOT_TAG = "root";
+  public static final String RECURSIVE_ATTRIBUTE = "recursive";
+  public static final String LIBRARY_TAG = "library";
+  public static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
     new JpsLibraryPropertiesSerializer<JpsDummyElement>(JpsJavaLibraryType.INSTANCE, null) {
       @Override
-      public JpsDummyElement loadProperties(@Nullable Element propertiesElement) {
+      public JpsDummyElement loadProperties(@Nullable Element propertiesElement, @NotNull JpsPathMapper pathMapper) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
-
-      @Override
-      public void saveProperties(JpsDummyElement properties, Element element) {
-      }
     };
-  private static final String MODULE_LEVEL = "module";
-  private static final String PROJECT_LEVEL = "project";
-  private static final String APPLICATION_LEVEL = "application";
+  public static final String MODULE_LEVEL = "module";
+  public static final String PROJECT_LEVEL = "project";
+  public static final String APPLICATION_LEVEL = "application";
 
-  public static void loadLibraries(@Nullable Element libraryTableElement, JpsLibraryCollection result) {
+  public static void loadLibraries(@Nullable Element libraryTableElement,
+                                   @NotNull JpsPathMapper pathMapper,
+                                   JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, LIBRARY_TAG)) {
-      result.addLibrary(loadLibrary(libraryElement));
+      result.addLibrary(loadLibrary(libraryElement, pathMapper));
     }
   }
 
-  public static void saveLibraries(JpsLibraryCollection libraryCollection, Element libraryTableElement) {
-    List<JpsLibrary> libraries = new ArrayList<>();
-    for (JpsLibrary library : libraryCollection.getLibraries()) {
-      if (!(library.getType() instanceof JpsSdkType<?>)) {
-        libraries.add(library);
-      }
-    }
-
-    libraries.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-
-    for (JpsLibrary library : libraries) {
-      Element libraryTag = new Element(LIBRARY_TAG);
-      saveLibrary(library, libraryTag, library.getName());
-      libraryTableElement.addContent(libraryTag);
-    }
+  public static JpsLibrary loadLibrary(Element libraryElement, @NotNull JpsPathMapper pathMapper) {
+    return loadLibrary(libraryElement, libraryElement.getAttributeValue(NAME_ATTRIBUTE), pathMapper);
   }
 
-  public static JpsLibrary loadLibrary(Element libraryElement) {
-    return loadLibrary(libraryElement, libraryElement.getAttributeValue(NAME_ATTRIBUTE));
-  }
-
-  public static JpsLibrary loadLibrary(Element libraryElement, String name) {
+  public static JpsLibrary loadLibrary(Element libraryElement, String name, @NotNull JpsPathMapper pathMapper) {
     String typeId = libraryElement.getAttributeValue(TYPE_ATTRIBUTE);
     final JpsLibraryPropertiesSerializer<?> loader = getLibraryPropertiesSerializer(typeId);
-    JpsLibrary library = createLibrary(name, loader, libraryElement.getChild(PROPERTIES_TAG));
+    JpsLibrary library = createLibrary(name, loader, libraryElement.getChild(PROPERTIES_TAG), pathMapper);
 
     MultiMap<JpsOrderRootType, String> jarDirectories = new MultiMap<>();
     MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<>();
     for (Element jarDirectory : JDOMUtil.getChildren(libraryElement, JAR_DIRECTORY_TAG)) {
-      String url = jarDirectory.getAttributeValue(URL_ATTRIBUTE);
+      String url = pathMapper.mapUrl(jarDirectory.getAttributeValue(URL_ATTRIBUTE));
       String rootTypeId = jarDirectory.getAttributeValue(TYPE_ATTRIBUTE);
       final JpsOrderRootType rootType = rootTypeId != null ? getRootType(rootTypeId) : JpsOrderRootType.COMPILED;
       boolean recursive = Boolean.parseBoolean(jarDirectory.getAttributeValue(RECURSIVE_ATTRIBUTE));
@@ -106,10 +80,10 @@ public class JpsLibraryTableSerializer {
     }
     for (Element rootsElement : libraryElement.getChildren()) {
       final String rootTypeId = rootsElement.getName();
-      if (!rootTypeId.equals(JAR_DIRECTORY_TAG) && !rootTypeId.equals(PROPERTIES_TAG)) {
+      if (!rootTypeId.equals(JAR_DIRECTORY_TAG) && !rootTypeId.equals(PROPERTIES_TAG) && !rootTypeId.equals("excluded")) {
         final JpsOrderRootType rootType = getRootType(rootTypeId);
         for (Element rootElement : JDOMUtil.getChildren(rootsElement, ROOT_TAG)) {
-          String url = rootElement.getAttributeValue(URL_ATTRIBUTE);
+          String url = pathMapper.mapUrl(rootElement.getAttributeValue(URL_ATTRIBUTE));
           JpsLibraryRoot.InclusionOptions options;
           if (jarDirectories.get(rootType).contains(url)) {
             final boolean recursive = recursiveJarDirectories.get(rootType).contains(url);
@@ -125,50 +99,10 @@ public class JpsLibraryTableSerializer {
     return library;
   }
 
-  public static void saveLibrary(JpsLibrary library, Element libraryElement, final String libraryName) {
-    if (libraryName != null) {
-      libraryElement.setAttribute(NAME_ATTRIBUTE, libraryName);
-    }
-    saveProperties((JpsTypedLibrary<?>)library, libraryElement);
-    List<Element> jarDirectoryElements = new ArrayList<>();
-    for (JpsLibraryRootTypeSerializer serializer : getSortedSerializers()) {
-      List<JpsLibraryRoot> roots = library.getRoots(serializer.getType());
-      if (roots.isEmpty() && !serializer.isWriteIfEmpty()) continue;
-
-      Element typeElement = new Element(serializer.getTypeId());
-      for (JpsLibraryRoot root : roots) {
-        typeElement.addContent(new Element(ROOT_TAG).setAttribute(URL_ATTRIBUTE, root.getUrl()));
-        if (root.getInclusionOptions() != JpsLibraryRoot.InclusionOptions.ROOT_ITSELF) {
-          Element jarDirectoryElement = new Element(JAR_DIRECTORY_TAG).setAttribute(URL_ATTRIBUTE, root.getUrl());
-          boolean recursive = root.getInclusionOptions() == JpsLibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY;
-          jarDirectoryElement.setAttribute(RECURSIVE_ATTRIBUTE, Boolean.toString(recursive));
-          if (!serializer.getType().equals(JpsOrderRootType.COMPILED)) {
-            jarDirectoryElement.setAttribute(TYPE_ATTRIBUTE, serializer.getTypeId());
-          }
-          jarDirectoryElements.add(jarDirectoryElement);
-        }
-      }
-      libraryElement.addContent(typeElement);
-    }
-    libraryElement.addContent(jarDirectoryElements);
-  }
-
-  private static <P extends JpsElement> void saveProperties(JpsTypedLibrary<P> library, Element libraryElement) {
-    JpsLibraryType<P> type = library.getType();
-    if (!type.equals(JpsJavaLibraryType.INSTANCE)) {
-      JpsLibraryPropertiesSerializer<P> serializer = getLibraryPropertiesSerializer(type);
-      libraryElement.setAttribute(TYPE_ATTRIBUTE, serializer.getTypeId());
-      Element element = new Element(PROPERTIES_TAG);
-      serializer.saveProperties(library.getProperties(), element);
-      if (!element.getContent().isEmpty() || !element.getAttributes().isEmpty()) {
-        libraryElement.addContent(element);
-      }
-    }
-  }
-
   private static <P extends JpsElement> JpsLibrary createLibrary(String name, JpsLibraryPropertiesSerializer<P> loader,
-                                                                           final Element propertiesElement) {
-    return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), loader.loadProperties(propertiesElement));
+                                                                 final Element propertiesElement,
+                                                                 @NotNull JpsPathMapper pathMapper) {
+    return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), loader.loadProperties(propertiesElement, pathMapper));
   }
 
   private static JpsOrderRootType getRootType(String rootTypeId) {
@@ -187,16 +121,6 @@ public class JpsLibraryTableSerializer {
     return JpsOrderRootType.COMPILED;
   }
 
-  private static Collection<JpsLibraryRootTypeSerializer> getSortedSerializers() {
-    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<>();
-    Collections.addAll(serializers, PREDEFINED_ROOT_TYPES_SERIALIZERS);
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      serializers.addAll(extension.getLibraryRootTypeSerializers());
-    }
-    Collections.sort(serializers);
-    return serializers;
-  }
-
   private static JpsLibraryPropertiesSerializer<?> getLibraryPropertiesSerializer(@Nullable String typeId) {
     if (typeId != null) {
       for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -208,18 +132,6 @@ public class JpsLibraryTableSerializer {
       }
     }
     return JAVA_LIBRARY_PROPERTIES_SERIALIZER;
-  }
-
-  private static <P extends JpsElement> JpsLibraryPropertiesSerializer<P> getLibraryPropertiesSerializer(@NotNull JpsLibraryType<P> type) {
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesSerializers()) {
-        if (loader.getType().equals(type)) {
-          //noinspection unchecked
-          return (JpsLibraryPropertiesSerializer<P>)loader;
-        }
-      }
-    }
-    throw new IllegalArgumentException("unknown type library:" + type);
   }
 
   public static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {

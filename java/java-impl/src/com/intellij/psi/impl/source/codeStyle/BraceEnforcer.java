@@ -1,38 +1,36 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.java.impl.template.JavaTemplateFormattingSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhileStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
+public class BraceEnforcer extends JavaRecursiveElementVisitor {
+  private static final Logger LOG = Logger.getInstance(BraceEnforcer.class);
 
   private final PostFormatProcessorHelper myPostProcessor;
 
@@ -40,11 +38,11 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(JavaLanguage.INSTANCE));
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitElement(expression);
   }
 
-  @Override public void visitIfStatement(PsiIfStatement statement) {
+  @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
     if (checkElementContainsRange(statement)) {
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
       super.visitIfStatement(statement);
@@ -60,41 +58,40 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     }
   }
 
-  @Override public void visitForStatement(PsiForStatement statement) {
+  @Override public void visitForStatement(@NotNull PsiForStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().FOR_BRACE_FORCE);
     }
   }
 
-  @Override public void visitForeachStatement(PsiForeachStatement statement) {
+  @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForeachStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().FOR_BRACE_FORCE);
     }
   }
 
-  @Override public void visitWhileStatement(PsiWhileStatement statement) {
+  @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitWhileStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().WHILE_BRACE_FORCE);
     }
   }
 
-  @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+  @Override public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitDoWhileStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().DOWHILE_BRACE_FORCE);
     }
   }
 
-  @Override public void visitJspFile(JspFile file) {
-    final PsiClass javaRoot = file.getJavaClass();
-    if (javaRoot != null) {
-      javaRoot.accept(this);
+  @Override public void visitFile(@NotNull PsiFile file) {
+    if (!JavaTemplateFormattingSupport.visitTemplateFile(file, this)) {
+      super.visitFile(file);
     }
   }
-  
+
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
     if (options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
@@ -111,10 +108,12 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
 
     if (!checkRangeContainsElement(blockCandidate)) return;
 
+    if (blockCandidate instanceof PsiEmptyStatement) return;
+
     final PsiManager manager = statement.getManager();
     LOG.assertTrue(manager != null);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+
     String oldText = blockCandidate.getText();
     // There is a possible case that target block to wrap ends with single-line comment. Example:
     //     if (true) i = 1; // Cool assignment

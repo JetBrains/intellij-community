@@ -1,0 +1,29 @@
+{header}
+<title>{repo|escape}: {file|escape} history</title>
+<link rel="alternate" type="application/atom+xml"
+   href="{url|urlescape}atom-log/tip/{file|urlescape}" title="Atom feed for {repo|escape}:{file}">
+<link rel="alternate" type="application/rss+xml"
+   href="{url|urlescape}rss-log/tip/{file|urlescape}" title="RSS feed for {repo|escape}:{file}">
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}file/{symrev}/{file|urlescape}{sessionvars%urlparameter}">file</a>
+<a href="{url|urlescape}annotate/{symrev}/{file|urlescape}{sessionvars%urlparameter}">annotate</a>
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+<a type="application/rss+xml" href="{url|urlescape}rss-log/tip/{file|urlescape}">rss</a>
+<a type="application/atom+xml" href="{url|urlescape}atom-log/tip/{file|urlescape}" title="Atom feed for {repo|escape}:{file}">atom</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / {file|escape} revision history</h2>
+
+<p>navigate: <small class="navigate">{nav%filenav}</small></p>
+
+{entries%filelogentry}
+
+{footer}

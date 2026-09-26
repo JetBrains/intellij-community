@@ -1,0 +1,1 @@
+from rasterio._vsiopener import FileContainer as FileContainer, MultiByteRangeResourceContainer as MultiByteRangeResourceContainer

@@ -1,61 +1,65 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnConfigurable;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.CmdVersionClient;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SvnExecutableChecker extends ExecutableValidator {
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
+@Service(Service.Level.PROJECT)
+public final class SvnExecutableChecker extends ExecutableValidator implements Disposable {
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
   public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
-  private static final String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
+  private static final @NonNls String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
   private static final Pattern INVALID_LOCALE_WARNING_PATTERN = Pattern.compile(
     "^.*cannot set .* locale.*please check that your locale name is correct$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
 
-  public SvnExecutableChecker(@NotNull SvnVcs vcs) {
-    super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
+  public SvnExecutableChecker(@NotNull Project project) {
+    super(project,
+          message("subversion.executable.notification.title"),
+          message("subversion.executable.notification.description"),
+          message("subversion.executable.notification.cant.run.in.safe.mode"));
 
-    myVcs = vcs;
-    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
+    myVcs = SvnVcs.getInstance(project);
+    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         myVcs.checkCommandLineVersion();
       }
-    }, myProject);
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -63,10 +67,9 @@ public class SvnExecutableChecker extends ExecutableValidator {
     return SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
-  @NotNull
   @Override
-  protected String getConfigurableDisplayName() {
-    return SvnConfigurable.DISPLAY_NAME;
+  protected @NotNull String getConfigurableDisplayName() {
+    return SvnConfigurable.getGroupDisplayName();
   }
 
   @Override
@@ -77,7 +80,8 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   public void expireAll() {
-    for (Notification notification : myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
+    for (Notification notification : NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
       notification.expire();
     }
   }
@@ -92,8 +96,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Override
-  @Nullable
-  protected Notification validate(@NotNull String executable) {
+  protected @Nullable Notification validate(@NotNull String executable) {
     Notification result = createDefaultNotification();
 
     // Necessary executable path will be taken from settings while command execution
@@ -114,35 +117,34 @@ public class SvnExecutableChecker extends ExecutableValidator {
     return result;
   }
 
-  @Nullable
-  private Notification validateVersion(@NotNull Version version) {
-    return !myVcs.isSupportedByCommandLine(WorkingCopyFormat.from(version)) ? new ExecutableNotValidNotification(
-      getOldExecutableMessage(version)) : null;
+  private @Nullable Notification validateVersion(@NotNull Version version) {
+    return !myVcs.isSupportedByCommandLine(WorkingCopyFormat.from(version))
+           ? new ExecutableNotValidNotification(message("subversion.executable.too.old", version))
+           : null;
   }
 
-  @Nullable
-  private Notification validateLocale() throws SvnBindException {
+  private @Nullable Notification validateLocale() throws SvnBindException {
     ProcessOutput versionOutput = getVersionClient().runCommand(false);
     Notification result = null;
 
     Matcher matcher = INVALID_LOCALE_WARNING_PATTERN.matcher(versionOutput.getStderr());
     if (matcher.find()) {
-      LOG.info(matcher.group());
+      @NlsSafe String warningText = matcher.group();
+      LOG.info(warningText);
 
-      result = new ExecutableNotValidNotification(prepareDescription(UIUtil.getHtmlBody(matcher.group()), false), NotificationType.WARNING);
+      result = new ExecutableNotValidNotification(prepareDescription(UIUtil.getHtmlBody(warningText), false), NotificationType.WARNING);
     }
     else if (!isEnglishOutput(versionOutput.getStdout())) {
       LOG.info("\"svn --version\" command contains non-English output " + versionOutput.getStdout());
 
-      result = new ExecutableNotValidNotification(prepareDescription(SvnBundle.message("non.english.locale.detected.warning"), false),
+      result = new ExecutableNotValidNotification(prepareDescription(message("non.english.locale.detected.warning"), false),
                                                   NotificationType.WARNING);
     }
 
     return result;
   }
 
-  @Nullable
-  private Version getConfiguredClientVersion() {
+  private @Nullable Version getConfiguredClientVersion() {
     Version result = null;
 
     try {
@@ -155,24 +157,11 @@ public class SvnExecutableChecker extends ExecutableValidator {
     return result;
   }
 
-  @NotNull
-  private CmdVersionClient getVersionClient() {
+  private @NotNull CmdVersionClient getVersionClient() {
     return (CmdVersionClient)myVcs.getCommandLineFactory().createVersionClient();
   }
 
   public static boolean isEnglishOutput(@NotNull String versionOutput) {
     return StringUtil.containsIgnoreCase(versionOutput, SVN_VERSION_ENGLISH_OUTPUT);
-  }
-
-  private static String getWrongPathMessage() {
-    return SvnBundle.message("subversion.executable.notification.description");
-  }
-
-  private static String getNotificationTitle() {
-    return SvnBundle.message("subversion.executable.notification.title");
-  }
-
-  private static String getOldExecutableMessage(@NotNull Version version) {
-    return SvnBundle.message("subversion.executable.too.old", version);
   }
 }

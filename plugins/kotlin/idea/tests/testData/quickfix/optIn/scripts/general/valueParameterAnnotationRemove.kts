@@ -1,0 +1,12 @@
+// "Remove annotation" "true"
+// RUNTIME_WITH_SCRIPT_RUNTIME
+// K2_ERROR: OPT_IN_MARKER_ON_WRONG_TARGET
+
+@RequiresOptIn
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class SomeOptInAnnotation
+
+class Foo(<caret>@SomeOptInAnnotation val value: Int) {
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

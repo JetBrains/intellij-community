@@ -33,16 +33,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-public class XmlInstanceValidator {
-  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.relaxNG.validation.XmlInstanceValidator");
+public final class XmlInstanceValidator {
+  private static final Logger LOG = Logger.getInstance(XmlInstanceValidator.class);
 
   private XmlInstanceValidator() {
   }
 
-  public static void doValidation(@NotNull final XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
+  public static void doValidation(final @NotNull XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
     try {
       final Schema schema = RngParser.getCachedSchema(descriptorFile);
       if (schema == null) {
@@ -70,7 +69,7 @@ public class XmlInstanceValidator {
     }
   }
 
-  private static class MyErrorHandler implements ErrorHandler {
+  private static final class MyErrorHandler implements ErrorHandler {
     private final Validator.ValidationHost myHost;
     private final Document myDocument;
     private final PsiFile myFile;
@@ -82,37 +81,36 @@ public class XmlInstanceValidator {
     }
 
     @Override
-    public void warning(SAXParseException exception) throws SAXException {
+    public void warning(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.WARNING);
         }
       });
     }
 
     @Override
-    public void error(SAXParseException exception) throws SAXException {
+    public void error(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });
     }
 
     @Override
-    public void fatalError(SAXParseException exception) throws SAXException {
+    public void fatalError(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });
     }
 
-    @Nullable
-    public static ErrorHandler create(XmlDocument doc, Validator.ValidationHost host) {
+    public static @Nullable ErrorHandler create(XmlDocument doc, Validator.ValidationHost host) {
       final XmlTag rootTag = doc.getRootTag();
       if (rootTag == null) {
         return null;

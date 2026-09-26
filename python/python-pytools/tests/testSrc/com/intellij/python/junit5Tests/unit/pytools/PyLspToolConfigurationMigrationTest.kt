@@ -1,0 +1,35 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.junit5Tests.unit.pytools
+
+import com.intellij.python.lsp.core.PyLspToolConfiguration
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
+/**
+ * Regression for the migration resurrection bug: legacy settings used to be re-read on every
+ * the tool-state lookup, so resetting a migrated tool back to its defaults would resurrect the
+ * old values on the next read.
+ *
+ * The fix makes migration one-way — [PyLspToolConfiguration.migrateToPyToolState] clears the old
+ * settings as it imports them — so re-running the migration (e.g. after the storage file was
+ * emptied on reset) imports nothing.
+ */
+internal class PyLspToolConfigurationMigrationTest {
+  private class FakeConfig : PyLspToolConfiguration<FakeConfig>()
+
+  @Suppress("DEPRECATION")
+  @Test
+  fun `migration imports legacy settings, then clears them so re-running imports nothing`() {
+    val cfg = FakeConfig().apply {
+      enabled = true
+      pathToExecutable = "/usr/local/bin/ruff"
+    }
+
+    assertEquals(true, cfg.migrateToPyToolState())
+
+    // old settings are wiped, so a second migration (the reset-then-reopen path) yields nothing to import
+    assertEquals(false, cfg.enabled)
+    assertEquals("", cfg.pathToExecutable)
+    assertEquals(false, cfg.migrateToPyToolState())
+  }
+}

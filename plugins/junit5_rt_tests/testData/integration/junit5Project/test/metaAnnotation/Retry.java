@@ -1,0 +1,15 @@
+package metaAnnotation;
+
+import org.junit.jupiter.api.*;
+import org.junit.platform.suite.api.*;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@RepeatedTest(value = 3, name = "Retry {currentRepetition}/{totalRepetitions}")
+@interface Retry {
+}

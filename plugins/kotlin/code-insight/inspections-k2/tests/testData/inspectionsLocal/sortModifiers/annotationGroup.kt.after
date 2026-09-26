@@ -1,0 +1,8 @@
+// PROBLEM: Modifiers should be placed directly before the relevant element
+annotation class Inject
+annotation class VisibleForTesting
+
+class Example {
+    @set:[Inject VisibleForTesting]
+    public var x: String = ""
+}

@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports <code>IO.println()</code> and <code>IO.print()</code> calls and suggests replacing them with <code>System.out</code> methods.
+<p>
+  This inspection helps migrate code from <code>java.lang.IO</code> class back to traditional <code>System.out</code> calls.</p>
+<p>
+  <b>Example:</b>
+</p>
+<pre><code>IO.println("Hello, World!");</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>System.out.println("Hello, World!");</code></pre>
+<!-- tooltip end -->
+<p>
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
+<p><small>New in 2025.2</small></p>
+</body>
+</html>

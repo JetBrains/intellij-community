@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,16 +21,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * This class is intended to refresh virtual files periodically.
- *
- * @author Sergey.Malenkov
  */
-public class FileRefresher implements Disposable {
+@ApiStatus.Internal
+public final class FileRefresher implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileRefresher.class);
   private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();
   private final boolean recursive;
   private final long delay;
-  private final NotNullProducer<ModalityState> producer;
-  private final ArrayList<Object> watchers = new ArrayList<>();
+  private final NotNullProducer<? extends ModalityState> producer;
+  private final ArrayList<WatchRoots.Token> watchers = new ArrayList<>();
   private final ArrayList<VirtualFile> files = new ArrayList<>();
   private final AtomicBoolean scheduled = new AtomicBoolean();
   private final AtomicBoolean launched = new AtomicBoolean();
@@ -58,7 +43,7 @@ public class FileRefresher implements Disposable {
    * @param producer  a provider for modality state that can be invoked on background thread
    * @throws IllegalArgumentException if the specified delay is not positive
    */
-  public FileRefresher(boolean recursive, long delay, @NotNull NotNullProducer<ModalityState> producer) {
+  public FileRefresher(boolean recursive, long delay, @NotNull NotNullProducer<? extends ModalityState> producer) {
     if (delay <= 0) throw new IllegalArgumentException("delay");
     this.recursive = recursive;
     this.delay = delay;
@@ -77,25 +62,13 @@ public class FileRefresher implements Disposable {
    *
    * @param file      a file to watch
    * @param recursive {@code true} if a file should be considered as root
-   * @return an object that allows to stop watching the specified file
+   * @return a token that stops watching the specified file
    */
-  protected Object watch(VirtualFile file, boolean recursive) {
-    VirtualFileSystem fs = file.getFileSystem();
-    if (fs instanceof LocalFileSystem) {
-      return LocalFileSystem.getInstance().addRootToWatch(file.getPath(), recursive);
+  private static WatchRoots.Token watch(VirtualFile file, boolean recursive) {
+    if (file.isInLocalFileSystem()) {
+      return WatchRoots.getInstance().watch(file.getPath(), recursive);
     }
     return null;
-  }
-
-  /**
-   * Stops watching file, which was added before.
-   *
-   * @param watcher an object that allows to stop watching a file
-   */
-  protected void unwatch(Object watcher) {
-    if (watcher instanceof LocalFileSystem.WatchRequest) {
-      LocalFileSystem.getInstance().removeWatchedRoot((LocalFileSystem.WatchRequest)watcher);
-    }
   }
 
   /**
@@ -103,10 +76,10 @@ public class FileRefresher implements Disposable {
    *
    * @param file a file to watch and to refresh
    */
-  public final void register(VirtualFile file) {
+  public void register(VirtualFile file) {
     if (file != null && !disposed.get()) {
       LOG.debug("add file to watch recursive=", recursive, ": ", file);
-      Object watcher = watch(file, recursive);
+      WatchRoots.Token watcher = watch(file, recursive);
       if (watcher != null) {
         synchronized (watchers) {
           watchers.add(watcher);
@@ -122,7 +95,7 @@ public class FileRefresher implements Disposable {
   /**
    * Pauses files refreshing.
    */
-  public final void pause() {
+  public void pause() {
     LOG.debug("pause");
     paused.set(true);
   }
@@ -131,7 +104,7 @@ public class FileRefresher implements Disposable {
    * Starts files refreshing immediately.
    * If files are refreshing now, it will be restarted when finished.
    */
-  public final void start() {
+  public void start() {
     LOG.debug("start");
     paused.set(false);
     launch();
@@ -183,7 +156,7 @@ public class FileRefresher implements Disposable {
     LOG.debug("dispose");
     if (!disposed.getAndSet(true)) {
       synchronized (watchers) {
-        watchers.forEach(this::unwatch);
+        watchers.forEach(WatchRoots.Token::close);
         watchers.clear();
       }
       RefreshSession session;
@@ -192,7 +165,7 @@ public class FileRefresher implements Disposable {
         session = this.session;
         this.session = null;
       }
-      if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+      if (session != null) session.cancel();
     }
   }
 }

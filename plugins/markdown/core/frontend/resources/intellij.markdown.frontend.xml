@@ -1,0 +1,96 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.markdown"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.markdown.frontend.runner.MarkdownFrontendRunnerFlowService$StartupActivity"/>
+    <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
+    <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
+    <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
+    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
+                        serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+    <registryKey key="markdown.live.preview.opening.timeout.ms"
+                 defaultValue="300"
+                 description="Time in milliseconds that an opening Markdown editor waits for live preview before it shows the source."/>
+    <registryKey key="markdown.open.link.fallback"
+                 defaultValue="false"
+                 description="Should fallback to Markdown link opening implementation before the split."/>
+
+    <codeFoldingOptionsProvider instance="com.intellij.markdown.frontend.settings.provider.MarkdownCodeFoldingOptionsProvider" id="Markdown" order="after Android,after C++,after General,after Go,after Handlebars,after JAVA,after JavaScript,after JPAQL,after JSON,after Kubernetes,after LinkerScript,after ObjectiveC"/>
+    <editorActionHandler action="EditorDeleteToWordStart"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.delete.to.word.start"/>
+    <editorActionHandler action="EditorPaste"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.paste"/>
+    <editorActionHandler action="EditorCut"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.cut"/>
+    <editorActionHandler action="EditorDuplicate"
+                         implementationClass="com.intellij.markdown.frontend.editor.tables.handlers.MarkdownTableReformatAfterActionHook"
+                         order="first" id="markdown.table.reformat.duplicate"/>
+  </extensions>
+
+  <actions resource-bundle="messages.MarkdownBundle">
+    <action id="Markdown.Preview.AdjustFontSize"
+            class="com.intellij.markdown.frontend.actions.AdjustFontSizeAction">
+      <add-to-group group-id="Markdown.PreviewGroup"/>
+    </action>
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
+    <action id="Markdown.Preview.Find"
+            class="com.intellij.markdown.frontend.actions.FindInPreviewAction"
+            icon="AllIcons.Actions.Find"
+            use-shortcut-of="Find">
+      <add-to-group group-id="Markdown.PreviewGroup"/>
+    </action>
+
+    <action id="Markdown.InsertEmptyTable"
+            class="com.intellij.markdown.frontend.actions.InsertEmptyTableAction"
+            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table">
+      <add-to-group group-id="Markdown.InsertGroup"/>
+    </action>
+
+    <action id="Markdown.Insert"
+            class="org.intellij.plugins.markdown.ui.actions.InsertAction"
+            use-shortcut-of="Generate">
+      <add-to-group group-id="Markdown.EditorContextMenuGroup"/>
+    </action>
+
+    <action id="Markdown.Layout.EditorOnly"
+            class="com.intellij.markdown.frontend.actions.MarkdownEditorOnlyLayoutAction"/>
+    <action id="Markdown.Layout.LivePreview"
+            class="com.intellij.markdown.frontend.actions.MarkdownLivePreviewLayoutAction"
+            icon="AllIcons.Actions.Edit"/>
+  </actions>
+</idea-plugin>

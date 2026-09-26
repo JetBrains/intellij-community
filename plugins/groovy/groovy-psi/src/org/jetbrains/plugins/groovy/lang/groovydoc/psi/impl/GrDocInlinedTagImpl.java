@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet
     .create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GroovyDocElementTypes.GDOC_FIELD_REF,
@@ -38,19 +35,18 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     visitor.visitDocTag(this);
   }
 
+  @Override
   public String toString() {
     return "GrDocInlinedTag";
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getNameElement().getText().substring(1);
   }
 
   @Override
-  @NotNull
-  public PsiElement getNameElement() {
+  public @NotNull PsiElement getNameElement() {
     PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
     assert element != null;
     return element;
@@ -58,7 +54,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   @Override
   public GrDocComment getContainingComment() {
-    return (GrDocComment)getParent();
+    return PsiTreeUtil.getParentOfType(this, GrDocComment.class);
   }
 
   @Override
@@ -71,9 +67,8 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return findChildByClass(GrDocTagValueToken.class);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getDataElements() {
+  public PsiElement @NotNull [] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
     return PsiUtilCore.toPsiElementArray(list);
   }

@@ -1,0 +1,32 @@
+<idea-plugin package="ru.adelf.idea.dotenv.php">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.jetbrains.php"/>
+    <plugin id="ru.adelf.idea.dotenv"/>
+    <module name="intellij.php.frontback.impl"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
+
+    <completion.contributor language="XML" implementationClass="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
+
+    <!--suppress PluginXmlValidity -->
+    <fileTypeOverrider implementation="ru.adelf.idea.dotenv.php.PhpFileTypeOverrider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpEnvironmentVariablesUsagesProvider"/>
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpunitEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

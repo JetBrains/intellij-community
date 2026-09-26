@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports static fields of a <code>Collection</code> type. While it's
+not necessarily a problem, static collections often cause memory leaks and are
+therefore prohibited by some coding standards.
+<p><b>Example:</b></p>
+<pre><code>
+  public class Example {
+    static List&lt;String&gt; list = new ArrayList&lt;&gt;();
+
+  }
+</code></pre>
+<p>
+The inspection ignores <code>final</code> fields initialized with immutable, fixed-size collections
+(e.g., <code>Map.of()</code>, <code>List.of()</code>, <code>Collections.emptyList()</code>, <code>Collections.singletonMap()</code>).
+These collections cannot grow and therefore cannot cause memory leaks.
+</p>
+<!-- tooltip end -->
+<p>
+  Configure the inspection:
+</p>
+<ul>
+  <li>Use the <b>Ignore weak static collections or maps</b> option to ignore the fields of the <code>java.util.WeakHashMap</code> type.</li>
+</ul>
+</body>
+</html>

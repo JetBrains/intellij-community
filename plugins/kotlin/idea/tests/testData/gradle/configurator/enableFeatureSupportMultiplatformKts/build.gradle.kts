@@ -1,0 +1,16 @@
+plugins {
+    kotlin("multiplatform") version "2.0.20"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = "com.example"
+version = "0.0.1"
+
+kotlin {
+    sourceSets {
+        val commonMain by getting
+    }
+}

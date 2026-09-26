@@ -1,43 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.Processor;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -45,22 +41,19 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author yole
- */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+
+@SuppressWarnings("TestOnlyProblems")
 public abstract class AbstractVcsTestCase {
   protected boolean myTraceClient;
   protected Project myProject;
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
   protected IdeaProjectTestFixture myProjectFixture;
-  protected boolean myInitChangeListManager = true;
 
   protected TestClientRunner createClientRunner() {
     return createClientRunner(null);
@@ -77,7 +70,6 @@ public abstract class AbstractVcsTestCase {
   protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     vcsManager.setDirectoryMappings(mappings);
-    vcsManager.updateActiveVcss();
     ChangeListManagerImpl.getInstanceImpl(myProject).waitUntilRefreshed();
   }
 
@@ -85,20 +77,18 @@ public abstract class AbstractVcsTestCase {
     EdtTestUtil.runInEdtAndWait(() -> myWorkingCopyDir.refresh(false, true));
   }
 
-  protected void initProject(final File clientRoot, String testName) throws Exception {
+  protected void initProject(@NotNull File clientRoot, String testName) throws Exception {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(testName);
     myProjectFixture = testFixtureBuilder.getFixture();
     testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
 
     projectCreated();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myWorkingCopyDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(clientRoot);
-      assert myWorkingCopyDir != null;
-    });
-    ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
+    myWorkingCopyDir = Objects.requireNonNull(VfsUtil.createDirectories(clientRoot.getPath()));
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).waitForInitialized();
   }
 
   protected void projectCreated() {
@@ -107,17 +97,16 @@ public abstract class AbstractVcsTestCase {
   protected void activateVCS(final String vcsName) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     vcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), vcsName);
-    vcsManager.updateActiveVcss();
 
     AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
   }
 
-  public VirtualFile createFileInCommand(final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull String name, final @Nullable String content) {
     return createFileInCommand(myWorkingCopyDir, name, content);
   }
 
-  public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
+  public VirtualFile createFileInCommand(@NotNull VirtualFile parent, @NotNull String name, final @Nullable String content) {
     return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 
@@ -125,40 +114,22 @@ public abstract class AbstractVcsTestCase {
     return VcsTestUtil.findOrCreateDir(myProject, parent, name);
   }
 
-  protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) throws Exception {
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      int numOfRuns = 5;
-      for (int i = 0; i < numOfRuns; i++) {
-        try {
-          final VirtualFile[] children = dir.getChildren();
-          for (VirtualFile child : children) {
-            if (filter != null && filter.process(child)) {
-              child.delete(AbstractVcsTestCase.this);
-            }
-          }
-          return;
-        }
-        catch (IOException e) {
-          if (i == numOfRuns - 1) {
-            // last run
-            throw e;
-          }
-          Thread.sleep(50);
-        }
-      }
-    });
-  }
-
   protected void tearDownProject() throws Exception {
-    if (myProject != null) {
-      ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
-      CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
-      myProject = null;
-    }
-    if (myProjectFixture != null) {
-      myProjectFixture.tearDown();
-      myProjectFixture = null;
-    }
+    new RunAll(
+      () -> {
+        if (myProject != null) {
+          ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
+          CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
+          myProject = null;
+        }
+      },
+      () -> {
+        if (myProjectFixture != null) {
+          myProjectFixture.tearDown();
+          myProjectFixture = null;
+        }
+      })
+      .run();
   }
 
   public void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
@@ -192,7 +163,7 @@ public abstract class AbstractVcsTestCase {
     if (sorted) {
       Arrays.sort(lines);
     }
-    Assert.assertEquals(runResult.getStdout(), stdoutLines.length, lines.length); 
+    Assert.assertEquals(runResult.getStdout(), stdoutLines.length, lines.length);
     for(int i=0; i<stdoutLines.length; i++) {
       Assert.assertEquals(stdoutLines [i], compressWhitespace(lines [i]));
     }
@@ -203,15 +174,6 @@ public abstract class AbstractVcsTestCase {
       line = line.replace("  ", " ");
     }
     return line.trim();
-  }
-
-  protected VcsDirtyScope getDirtyScopeForFile(VirtualFile file) {
-    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
-    dirtyScopeManager.fileDirty(file);
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
-    Assert.assertEquals(1, scopes.size());
-    return scopes.get(0);
   }
 
   protected void renameFileInCommand(final VirtualFile file, final String newName) {
@@ -226,8 +188,7 @@ public abstract class AbstractVcsTestCase {
     VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
-  @NotNull
-  protected VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
+  protected @NotNull VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<>();
     WriteCommandAction.writeCommandAction(myProject).run(() -> {
       try {
@@ -270,26 +231,33 @@ public abstract class AbstractVcsTestCase {
     Assert.assertTrue(beforeFullPath + "!=" + beforeRevPath,  beforeFullPath.equalsIgnoreCase(beforeRevPath));
   }
 
-  public static void sortChanges(final List<Change> changes) {
-    Collections.sort(changes, (o1, o2) -> {
-      final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
-      final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
-      return p1.compareTo(p2);
-    });
-  }
-
   public FileAnnotation createTestAnnotation(@NotNull AnnotationProvider provider, VirtualFile file) throws VcsException {
     final FileAnnotation annotation = provider.annotate(file);
     Disposer.register(myProject, annotation::dispose);
     return annotation;
   }
 
-  public void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
-    PlatformTestCase.setFileText(file, text);
+  public void setFileText(final @NotNull VirtualFile file, final @NotNull String text) throws IOException {
+    HeavyPlatformTestCase.setFileText(file, text);
   }
 
   public static void setBinaryContent(final VirtualFile file, final byte[] content) {
-    PlatformTestCase.setBinaryContent(file, content);
+    HeavyPlatformTestCase.setBinaryContent(file, content);
   }
 
+  public static <T extends Throwable> void runWithRetries(ThrowableRunnable<T> task) {
+    int attempts = 0;
+    while (true) {
+      try {
+        attempts++;
+        task.run();
+        return;
+      }
+      catch (Throwable e) {
+        if (attempts >= 3) {
+          ExceptionUtil.rethrow(e);
+        }
+      }
+    }
+  }
 }

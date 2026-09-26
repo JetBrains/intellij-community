@@ -1,0 +1,2 @@
+version = "2.3.*"
+upstream-repository = "https://github.com/simlist/pyluach"

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -21,65 +7,86 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.PsiImplUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author Max Medvedev
  */
-public class GrDeprecatedAPIUsageInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
+public final class GrDeprecatedAPIUsageInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return GroovyInspectionBundle.message("gr.deprecated.api.usage");
-  }
-
-  @NotNull
-  @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
         super.visitReferenceExpression(ref);
-        checkRef(ref);
+        PsiElement resolveResult = getResolveElement(ref);
+        checkRef(resolveResult, ref.getReferenceNameElement(), ref.getReferenceName());
       }
 
       @Override
       public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
         super.visitCodeReferenceElement(ref);
-        checkRef(ref);
+        PsiElement resolveResult = getResolveElement(ref);
+        checkRef(resolveResult, ref.getReferenceNameElement(), ref.getReferenceName());
       }
 
-      private void checkRef(GrReferenceElement ref) {
-        PsiElement resolved = ref.resolve();
+      @Override
+      public void visitArgumentLabel(@NotNull GrArgumentLabel argumentLabel) {
+        super.visitArgumentLabel(argumentLabel);
+        PsiElement resolveResult = getResolveElement(argumentLabel);
+        if (resolveResult instanceof GrAccessorMethod) {
+          resolveResult = ((GrAccessorMethod)resolveResult).getProperty();
+        }
+        checkRef(resolveResult, argumentLabel.getNameElement(), argumentLabel.getName());
+      }
+
+      @Override
+      public void visitNewExpression(@NotNull GrNewExpression ref) {
+        super.visitNewExpression(ref);
+        var resolvedCall = ref.resolveMethod();
+        if (resolvedCall == null || isDeprecated(resolvedCall.getContainingClass())) {
+          return;
+        }
+        var referenceElement = ref.getReferenceElement();
+        if (referenceElement != null) {
+          checkRef(resolvedCall, ref.getReferenceElement(), referenceElement.getReferenceName());
+        }
+        else {
+          checkRef(resolvedCall, ref, resolvedCall.getName());
+        }
+      }
+
+      private void checkRef(PsiElement resolved, PsiElement elementToHighlight, String elementName) {
         if (isDeprecated(resolved)) {
-          PsiElement toHighlight = getElementToHighlight(ref);
-          registerError(toHighlight, GroovyBundle.message("0.is.deprecated", ref.getReferenceName()), LocalQuickFix.EMPTY_ARRAY,
+          registerError(elementToHighlight, GroovyBundle.message("0.is.deprecated", elementName), LocalQuickFix.EMPTY_ARRAY,
                         ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
 
-      @NotNull
-      public PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
-        final PsiElement refNameElement = refElement.getReferenceNameElement();
-        return refNameElement != null ? refNameElement : refElement;
+      private static @Nullable PsiElement getResolveElement(GroovyReference reference) {
+        GroovyResolveResult[] results = reference.multiResolve(false);
+        for (GroovyResolveResult result : results) {
+          PsiElement element = result.getElement();
+          if (element != null) {
+            return element;
+          }
+        }
+        return null;
       }
 
-
-      private boolean isDeprecated(PsiElement resolved) {
+      private static boolean isDeprecated(PsiElement resolved) {
         if (resolved instanceof PsiDocCommentOwner) {
           return ((PsiDocCommentOwner)resolved).isDeprecated();
         }

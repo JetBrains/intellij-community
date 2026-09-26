@@ -1,0 +1,7 @@
+// "Add 'val' or 'var' to parameter 'x'" "true"
+// K2_ERROR: DATA_CLASS_NOT_PROPERTY_PARAMETER
+
+data class Foo(<caret>x: Int, val y: Int) {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddValVarToConstructorParameterFixFactory$AddValVarToConstructorParameterFix

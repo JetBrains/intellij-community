@@ -1,0 +1,3 @@
+// "Safe delete 'name'" "true"
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix

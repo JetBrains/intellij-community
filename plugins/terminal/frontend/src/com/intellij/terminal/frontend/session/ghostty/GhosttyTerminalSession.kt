@@ -1,0 +1,852 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.frontend.session.ghostty
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.emulator.CursorShape
+import com.intellij.terminal.emulator.ScreenChange
+import com.intellij.terminal.emulator.ScrollbackPullPolicy
+import com.intellij.terminal.emulator.TerminalColor
+import com.intellij.terminal.emulator.TerminalCustomCommandListener
+import com.intellij.terminal.emulator.TerminalEmulator
+import com.intellij.terminal.emulator.TerminalListener
+import com.intellij.terminal.emulator.TerminalSize
+import com.intellij.terminal.emulator.createTerminalEmulator
+import com.intellij.terminal.frontend.session.ObservableTtyConnector
+import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
+import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asDisposable
+import com.intellij.util.awaitCancellationAndInvoke
+import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TtyConnector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.original
+import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import java.awt.Color
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.beans.PropertyChangeListener
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.thread
+import kotlin.concurrent.withLock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * Experimental [TerminalSession] driven by the common [TerminalEmulator] API
+ * (Ghostty-backed) instead of JediTerm. Selected by `createTerminalSession` when the
+ * session's emulator is [TerminalEmulatorType.Ghostty].
+ *
+ * - a read loop feeds PTY output ([TtyConnector.read]) to [TerminalEmulator.write];
+ * - the emulator's grid + scrollback + modes are projected into the
+ *   [TerminalOutputEvent] model (content / cursor / state) by
+ *   [TerminalEmulatorOutputProjector] and pushed to [getOutputFlow] on a fixed cadence
+ *   ([OUTPUT_POLL_INTERVAL], like the JediTerm pipeline), so a burst of writes
+ *   coalesces into one delta;
+ * - OSC 1341 shell-integration commands are received via
+ *   [TerminalEmulator.customCommandListener], parsed by the shared
+ *   [TerminalShellIntegrationController], and turned into
+ *   `TerminalShellIntegrationEvent`s (and the shell-integration state flag).
+ *   Each command forces a projection and an emission at its own position, off the [OUTPUT_POLL_INTERVAL] cadence.
+ * - the bell ([TerminalListener.onBell]) becomes a `TerminalBeepEvent`;
+ * - emulator responses ([TerminalListener.onRespondToHost]) and input events are
+ *   written back to the PTY;
+ * - key and mouse events ([processKeyEvent] / [processMouseEvent]) are encoded into
+ *   PTY bytes by the emulator's own encoders via [TerminalEmulatorKeyEventEncoder] /
+ *   [TerminalEmulatorMouseEventEncoder], which also own the session-layer input policy
+ *   (macOS editing chords, alt-as-Escape, which mouse events stay with the IDE).
+ *
+ * ### Known gaps vs. the JediTerm pipeline (this backend is experimental)
+ * - **Partial state**: `isAutoNewLine` and `isAltSendsEscape` are absent from the
+ *   emulator API, so they keep their defaults.
+ * - **Scrollback overflow**: content updates are incremental (only the changed tail),
+ *   tracked exactly via a [com.intellij.terminal.emulator.HistoryMark] — except that a
+ *   burst fast enough to finalize more than the whole retained scrollback between two
+ *   projection ticks makes the old numbering unrecoverable, so the projector resets and reports
+ *   only the currently visible tail instead (see
+ *   [TerminalEmulatorOutputProjector.buildContentUpdate]) — already-shown history can be
+ *   dropped in that case.
+ * - **Buffer switch same-tick coalescing**: a switch that flips and flips back (or vice
+ *   versa) between projection ticks — or inside one still-open synchronized-output
+ *   block — is invisible, and whatever was drawn to the other buffer during that round
+ *   trip is not reported until the corresponding buffer is enabled again.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+class GhosttyTerminalSession internal constructor(
+  private val ttyConnector: TtyConnector,
+  initialSize: TerminalSize,
+  initialWorkingDirectory: String?,
+  private val shellIntegrationController: TerminalShellIntegrationController,
+  settings: JBTerminalSystemSettingsProviderBase,
+  override val coroutineScope: CoroutineScope,
+) : TerminalSession {
+
+  private val emulator: TerminalEmulator = createTerminalEmulator(
+    initialSize,
+    // Ghostty's scrollback is measured in bytes, not characters.
+    // Taking into account that a single cell is ~9 bytes, then, to occupy `defaultMaxOutputLength` chars,
+    // we need `9 x defaultMaxOutputLength`, in the case of very dense output.
+    // Let's use 10 as a multiplier to have a bit more.
+    // But in the case of sparse output, such bytes budget may include even fewer characters.
+    maxScrollbackBytes = 10 * TerminalUiUtils.getDefaultMaxOutputLength(),
+  )
+
+  // Projects emulator state into the output-event DTOs and owns the
+  // incremental-emission bookkeeping. Created with the emulator; closed on teardown.
+  private val projector = TerminalEmulatorOutputProjector(emulator)
+
+  // Encode AWT key/mouse events into PTY bytes through the emulator; call only under
+  // [lock].
+  private val keyEncoder = TerminalEmulatorKeyEventEncoder(emulator, settings)
+  private val mouseEncoder = TerminalEmulatorMouseEventEncoder(emulator, settings)
+
+  /**
+   * The emulator is not thread-safe: serialize the read loop and the resize/input
+   * handler.
+   */
+  private val lock = ReentrantLock()
+
+  private val inputChannel = Channel<TerminalInputEvent>(Channel.UNLIMITED)
+
+  // Buffered and gated like the JediTerm pipeline's output flow (see
+  // createTerminalOutputFlow): one element only, so an event emitted in response to a
+  // user action (Ctrl+C) reaches the UI right away instead of queueing behind buffered
+  // output.
+  //
+  // SUSPEND, not DROP_OLDEST: output events are incremental deltas, so a collector
+  // missing one would desync from every update after it. Emissions wait for room — and
+  // for a collector to exist at all (see tryEmitOutput) — while holding [lock], which
+  // stalls the read loop and pushes the backpressure into the PTY. Emitting under the
+  // lock also serializes the emitters, so a projection cannot overtake an earlier one.
+  private val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
+    replay = 1,
+    extraBufferCapacity = 0,
+    onBufferOverflow = BufferOverflow.SUSPEND,
+  )
+
+  // Diffing state (guarded by lock).
+  private var lastScrollbackRows = -1
+  private var lastCursorLine = -1L
+  private var lastCursorColumn = -1
+  private var lastState: TerminalStateDto? = null
+
+  // Whether anything projection reads (emulator content, modes, the working
+  // directory) may have changed since the last projection; guarded by lock. Lets the
+  // polling job skip idle ticks outright — otherwise every tick of an idle session
+  // pays the FFI dirty poll, state snapshot, and cursor row reads. Starts true so the
+  // first tick after a collector appears emits the initial frame.
+  private var changedSinceLastProjection = true
+
+  // Synchronized-output (DEC 2026) deferral state, guarded by lock: the watchdog
+  // bounding the currently open block (null when none is armed), and the force-paint
+  // it requests when the block overstays — consumed by the next projection. See
+  // isDeferringForSyncOutputLocked().
+  private var syncWatchdogJob: Job? = null
+  private var syncOutputForcePaint = false
+
+  // One-shot output events (shell integration, bell) collected during a write and
+  // flushed by syncLocked().
+  private val pendingEvents = ArrayList<TerminalOutputEvent>()
+
+  // Emulator replies to host queries (DSR, DA, OSC reports), collected during a write
+  // and written to the PTY by [flushResponses] *after* [lock] is released. They must
+  // not be written inline: the write-pty effect fires synchronously inside
+  // emulator.write, so a full PTY buffer would park the read thread both inside
+  // ghostty's vt_write (see terminal.h: effects "must not block for too long ... they
+  // are blocking further IO processing") and while holding [lock] — freezing resize
+  // along with it.
+  private val pendingResponses = ArrayList<ByteArray>()
+
+  // The working directory reported in the session state: starts at the requested
+  // startup directory and is kept fresh by the working-directory tracker (see
+  // createGhosttyTerminalSession). Guarded by lock; the next projection reports the
+  // new value.
+  private var currentDirectory: String? = initialWorkingDirectory
+
+  @Volatile
+  override var isClosed: Boolean = false
+    private set
+
+  /**
+   * Set once teardown starts, so the read loop stops touching the (about to be closed)
+   * emulator.
+   */
+  @Volatile
+  private var disposed: Boolean = false
+
+  private val localTtyConnector: LocalTerminalTtyConnector?
+    get() = ttyConnector.original as? LocalTerminalTtyConnector
+
+  override val eelDescriptor: EelDescriptor
+    /**
+     * Falls back to [LocalEelDescriptor] when [ttyConnector] isn't a [LocalTerminalTtyConnector].
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * The fallback is test-only, exercised by tests driving the session through a fake connector.
+     */
+    get() = localTtyConnector?.eelDescriptor ?: LocalEelDescriptor
+
+  private var missingLocalTtyConnectorLogged = false
+
+  override val processId: Long
+    /**
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * Miss can happen only in tests where a fake connector is used, so `LOG.error` to fail the test.
+     */
+    get() {
+      val connector = localTtyConnector
+      if (connector == null) {
+        if (!missingLocalTtyConnectorLogged) {
+          missingLocalTtyConnectorLogged = true
+          LOG.error("Unable to find LocalTerminalTtyConnector in $ttyConnector")
+        }
+        return -1
+      }
+      return connector.shellEelProcess.eelProcess.pid.value
+    }
+
+  /**
+   * Invoked by the working-directory tracker; the new value is reported by the next
+   * projection tick.
+   */
+  fun updateCurrentDirectory(directory: String) {
+    lock.withLock {
+      currentDirectory = directory
+      changedSinceLastProjection = true
+    }
+  }
+
+  @OptIn(AwaitCancellationAndInvoke::class)
+  fun start() {
+    emulator.listener = object : TerminalListener {
+      // Fires synchronously inside emulator.write, i.e. under [lock] on the read thread.
+      // Queue only: the actual pty write happens in flushResponses(), once the lock is
+      // released. See [pendingResponses].
+      override fun onRespondToHost(data: ByteArray) {
+        pendingResponses.add(data)
+      }
+
+      // Fires synchronously inside emulator.write, i.e. under [lock] on the read thread.
+      override fun onBell() {
+        pendingEvents.add(TerminalBeepEvent)
+      }
+    }
+
+    // OSC 1341 (JetBrains shell integration): the emulator's custom-command listener fires
+    // synchronously inside emulator.write, i.e. under [lock] on the read thread, and the controller
+    // delivers the parsed events on the same thread.
+    // Commands force a projection to ensure that the event is delivered in order with other emulator changes.
+    shellIntegrationController.addEventSink { event ->
+      pendingEvents.add(event)
+      // Bypass the synchronized-output deferral on purpose.
+      // A half-drawn frame costs less than an OSC 1341 command boundary that lands at the wrong offset.
+      flushPendingEventsLocked(bypassSyncOutputDeferral = true)
+    }
+    emulator.customCommandListener = TerminalCustomCommandListener(shellIntegrationController::processCustomCommand)
+
+    // Applies the IDE's cursor-shape/blink-caret settings as the emulator's defaults, and keeps
+    // them in sync with those settings for the rest of the session. Must run before the read loop
+    // below starts, so the emulator never shows Ghostty's own hardcoded defaults even briefly.
+    installDefaultCursorStateUpdating(coroutineScope.childScope("Default cursor state updating"))
+
+    // Applies the IDE terminal colors as the emulator's default colors, and keeps them in sync with the color scheme.
+    // Must run before the read loop below starts, so the emulator answers the first color query (OSC 10/11) of a program.
+    installColorSchemeUpdating(coroutineScope.childScope("Color scheme updating"))
+
+    // Windows host is using ConPTY that has its own buffer: it stores screen lines only,
+    // and when terminal size grows, it can't pull scrollback lines to the screen.
+    // So, we have to use "ScrollbackPullPolicy.NEVER" in the Windows case to ensure
+    // that emulator and ConPTY buffers are in sync after resize.
+    val scrollbackPullPolicy = if (eelDescriptor.osFamily == EelOsFamily.Windows) {
+      ScrollbackPullPolicy.NEVER
+    }
+    else ScrollbackPullPolicy.CURSOR_AT_BOTTOM
+    emulator.setResizeScrollbackPullPolicy(scrollbackPullPolicy)
+
+    // Read the PTY on a dedicated daemon thread rather than a coroutine in the session
+    // scope (production uses a plain executor for the same reason): the blocking read()
+    // is not a cancellation point, so keeping it off the structured scope lets teardown
+    // finish promptly once awaitCancellationAndInvoke closes the connector and thereby
+    // unblocks the read.
+    thread(name = "GhosttyTerminalSession read loop", isDaemon = true) {
+      val buffer = CharArray(4096)
+      try {
+        while (true) {
+          val count = ttyConnector.read(buffer, 0, buffer.size)
+          if (count <= 0) break // EOF
+          var responses: List<ByteArray> = emptyList()
+          lock.withLock {
+            if (disposed) break
+            val input = String(buffer, 0, count)
+            LOG.trace { "Writing to emulator: ${input.escapeControlCharactersForLog()}" }
+            emulator.write(input)
+            changedSinceLastProjection = true
+            responses = takeResponsesLocked()
+          }
+          flushResponses(responses)
+        }
+      }
+      catch (t: Throwable) {
+        if (!disposed) LOG.warn("Terminal emulator read loop failed", t)
+      }
+      finally {
+        isClosed = true
+        // The polling job may be cancelled before its next tick: project the final
+        // frame (a short-lived command's last output) before announcing termination.
+        // requireCollector = false on both emissions — with nothing collecting they
+        // must not wait, or teardown would hang; the replay slot keeps the last one
+        // on a best effort.
+        val finalEvents = runCatching {
+          lock.withLock { if (disposed) emptyList() else syncLocked(bypassSyncOutputDeferral = true) }
+        }.getOrDefault(emptyList())
+        if (finalEvents.isNotEmpty()) emitOutputBlocking(finalEvents, requireCollector = false)
+        emitOutputBlocking(listOf(TerminalSessionTerminatedEvent), requireCollector = false)
+        coroutineScope.cancel()
+      }
+    }
+
+    coroutineScope.launch {
+      for (event in inputChannel) {
+        try {
+          handleInput(event)
+        }
+        catch (e: Exception) {
+          LOG.warn("Failed to handle input event $event", e)
+        }
+      }
+    }
+
+    // Projects emulator changes into output events at a fixed cadence, the way the
+    // JediTerm pipeline does (see createTerminalOutputFlow): the emulator absorbs any
+    // amount of output into bounded state, and each tick emits one coalesced delta, so
+    // a program spamming output produces ~50 event batches per second instead of one
+    // per PTY read. Dispatchers.IO because the emission deliberately blocks under
+    // [lock] while a slow collector catches up (see projectAndEmitLocked).
+    coroutineScope.launch(Dispatchers.IO) {
+      while (true) {
+        delay(OUTPUT_POLL_INTERVAL)
+        // Nothing is collecting: leave the changes in the emulator instead of
+        // computing an event batch nobody can take (see tryEmitOutput). The read loop
+        // keeps feeding the emulator meanwhile, bounded by its history-eviction flush.
+        if (outputFlow.subscriptionCount.value == 0) continue
+        var responses: List<ByteArray> = emptyList()
+        lock.withLock {
+          if (disposed) return@launch
+          // An idle tick (nothing changed, no force paint pending) costs one lock
+          // acquisition and nothing else — no FFI reads.
+          val forcePaint = consumeSyncOutputForcePaintLocked()
+          // isHistoryReplaced is scoped only to the primary screen buffer.
+          if (changedSinceLastProjection || forcePaint ||
+              (projector.isHistoryReplaced && !emulator.usingAlternateScreen)) {
+            flushPendingEventsLocked(bypassSyncOutputDeferral = forcePaint)
+          }
+          responses = takeResponsesLocked()
+        }
+        flushResponses(responses)
+      }
+    }
+
+    coroutineScope.awaitCancellationAndInvoke {
+      disposed = true
+      runCatching { ttyConnector.close() }
+      lock.withLock {
+        runCatching { projector.close() }
+        runCatching { emulator.close() }
+      }
+    }
+  }
+
+  override fun processMouseEvent(e: MouseEvent, x: Int, y: Int): ByteArray? = lock.withLock {
+    if (disposed) null else mouseEncoder.encodeMouseEvent(e, x, y)
+  }
+
+  override fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto = lock.withLock {
+    if (disposed) KeyEventProcessingResultDto.Unhandled else keyEncoder.encodeKeyEvent(e)
+  }
+
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
+    if (isClosed) {
+      return Channel<TerminalInputEvent>(capacity = 0).also { it.close() }
+    }
+    return inputChannel
+  }
+
+  override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
+    if (isClosed) {
+      return emptyFlow()
+    }
+    return outputFlow
+  }
+
+  override suspend fun hasRunningCommands(): Boolean {
+    return !isClosed && withContext(Dispatchers.IO) {
+      TerminalUtil.hasRunningCommands(ttyConnector)
+    }
+  }
+
+  private fun handleInput(event: TerminalInputEvent) {
+    when (event) {
+      // Do not log the bytes themselves: they are the user's keystrokes.
+      is TerminalWriteBytesEvent -> runCatching { ttyConnector.write(event.bytes) }
+        .onFailure { if (!disposed) LOG.warn("Failed to write ${event.bytes.size} bytes to the PTY", it) }
+      is TerminalResizeEvent -> {
+        var responses: List<ByteArray> = emptyList()
+        lock.withLock {
+          if (disposed) return
+          emulator.resize(TerminalSize(event.newSize.columns, event.newSize.rows))
+          changedSinceLastProjection = true
+          responses = takeResponsesLocked()
+        }
+        flushResponses(responses)
+        // PTY resize must be called outside the lock: it is a blocking operation.
+        // Especially in the case of remote connection to IJent - it can be stuck indefinitely if the connection is lost.
+        runCatching { ttyConnector.resize(TermSize(event.newSize.columns, event.newSize.rows)) }
+          .onFailure { if (!disposed) LOG.warn("Failed to resize the PTY to ${event.newSize}", it) }
+        // The reflowed frame is picked up by the next projection tick.
+      }
+      is TerminalClearBufferEvent -> handleClearBuffer()
+      is TerminalCloseEvent -> runCatching { ttyConnector.close() }
+    }
+  }
+
+  private fun handleClearBuffer() {
+    var responses: List<ByteArray> = emptyList()
+    var wipedPrimaryScreen = false
+    lock.withLock {
+      if (disposed) return
+      // Emit VT sequence to clear both the screen and scrollback.
+      // But skip the alternate buffer case: neither JediTerm's nor real Ghostty's own Cmd+K touches it.
+      if (!emulator.usingAlternateScreen) {
+        emulator.write(CLEAR_BUFFER_SEQUENCE)
+        changedSinceLastProjection = true
+        wipedPrimaryScreen = true
+      }
+      responses = takeResponsesLocked()
+    }
+    flushResponses(responses)
+    if (wipedPrimaryScreen) {
+      // Send Ctrl+L to the shell, so it redraws the prompt
+      runCatching { ttyConnector.write(CTRL_L_BYTE) }
+        .onFailure { if (!disposed) LOG.warn("Failed to write Ctrl-L to the pty after Terminal.ClearBuffer", it) }
+    }
+  }
+
+  /**
+   * Must be called under [lock]: hands over the emulator replies queued by the write-pty
+   * effect since the last call, leaving [pendingResponses] empty. Allocates nothing on
+   * the common path, where no query was answered.
+   */
+  private fun takeResponsesLocked(): List<ByteArray> {
+    if (pendingResponses.isEmpty()) return emptyList()
+    val taken = ArrayList(pendingResponses)
+    pendingResponses.clear()
+    return taken
+  }
+
+  /**
+   * Must be called *after* releasing [lock]: writes [responses] back to the pty, in the
+   * order the emulator produced them. Blocking here is fine — the emulator is no longer
+   * mid-parse and no other thread is waiting on us to let go of the lock.
+   */
+  private fun flushResponses(responses: List<ByteArray>) {
+    for (response in responses) {
+      runCatching { ttyConnector.write(response) }
+        .onFailure { if (!disposed) LOG.warn("Failed to write an emulator reply (${response.size} bytes) to the PTY", it) }
+    }
+  }
+
+  /**
+   * Offers [events] to [outputFlow], reporting whether it accepted them.
+   *
+   * Fails while nothing is collecting, unless [requireCollector] is false: the single
+   * buffered element would otherwise be overwritten by the next emission, and a lost
+   * delta desyncs the collector from every update after it. Failing instead makes the
+   * caller wait, which stops the read loop and lets the backpressure reach the shell.
+   */
+  private fun tryEmitOutput(events: List<TerminalOutputEvent>, requireCollector: Boolean): Boolean {
+    val mayEmit = !requireCollector || outputFlow.subscriptionCount.value > 0
+    return mayEmit && outputFlow.tryEmit(events)
+  }
+
+  /**
+   * Emits [events] on [outputFlow], retrying with a short sleep until accepted and
+   * bailing out only once torn down. Blocking rather than suspending is deliberate:
+   * the projection sites hold [lock] — a plain lock, which a coroutine must not
+   * suspend under — and the read loop is not a coroutine to begin with. See the
+   * [outputFlow] declaration for why dropping is not an option here.
+   *
+   * [requireCollector] is false only for the teardown emissions (the final frame and
+   * [TerminalSessionTerminatedEvent]): by then there may be no collector left to wait
+   * for, and waiting would hang teardown.
+   */
+  private fun emitOutputBlocking(events: List<TerminalOutputEvent>, requireCollector: Boolean = true) {
+    while (!tryEmitOutput(events, requireCollector)) {
+      if (disposed) return
+      Thread.sleep(1)
+    }
+  }
+
+  /**
+   * Must be called under [lock]. Projects the current emulator state into output events.
+   *
+   * [bypassSyncOutputDeferral] paints the mid-block state that
+   * [isDeferringForSyncOutputLocked] would otherwise keep holding back. It is set for
+   * the watchdog's force-paint request, the read loop's history-eviction flush, and
+   * the final frame at EOF — the cases where waiting for the block to close is worse
+   * than a mid-block frame.
+   */
+  private fun syncLocked(bypassSyncOutputDeferral: Boolean = false): List<TerminalOutputEvent> {
+    if (!bypassSyncOutputDeferral && isDeferringForSyncOutputLocked()) return emptyList()
+
+    // Cleared only past the deferral gate: a deferred frame leaves the flag set, so
+    // the polling job keeps attempting (and keeps the sync-output watchdog armed)
+    // until the block closes or the watchdog paints.
+    changedSinceLastProjection = false
+
+    val events = ArrayList<TerminalOutputEvent>(2)
+
+    val previousState = lastState
+    val state = projector.buildState(shellIntegrationController.isShellIntegrationEnabled, currentDirectory)
+    val stateEvent = if (state != previousState) TerminalStateChangedEvent(state) else null
+    lastState = state
+    // The consumer routes content and cursor updates to the primary or alternate
+    // buffer model depending on what buffer is active now.
+    // So, when it changes, we need to emit the state event first, and only then new content updates.
+    // In every other case the state event stays after the content it accompanies.
+    val bufferSwitched = state.isAlternateScreenBuffer != previousState?.isAlternateScreenBuffer
+    if (stateEvent != null && bufferSwitched) {
+      events.add(stateEvent)
+    }
+
+    val change = emulator.takeChanges()
+    val scrollbackRows = emulator.scrollbackRows
+    // isHistoryReplaced: the projector replaced the history with the screen alone and restores it on the
+    // first projection that finalizes nothing, so it has to run even when nothing changed.
+    // Actual only for the primary buffer.
+    // bufferSwitched: ensure that a newly activated buffer reports its pending changes.
+    val contentChanged = change != ScreenChange.None ||
+                         scrollbackRows != lastScrollbackRows ||
+                         bufferSwitched ||
+                         (projector.isHistoryReplaced && !emulator.usingAlternateScreen)
+    lastScrollbackRows = scrollbackRows
+
+    if (contentChanged) {
+      val content = projector.buildContentUpdate()
+      events.add(content)
+      lastCursorLine = content.cursorLogicalLineIndex
+      lastCursorColumn = content.cursorColumnIndex
+    }
+    else if (emulator.cursor.visible) {
+      val (line, column) = projector.computeCursor()
+      if (line != lastCursorLine || column != lastCursorColumn) {
+        events.add(TerminalCursorPositionChangedEvent(line, column))
+        lastCursorLine = line
+        lastCursorColumn = column
+      }
+    }
+
+    if (stateEvent != null && !bufferSwitched) {
+      events.add(stateEvent)
+    }
+
+    // One-shot events queued during this write (shell integration, bell) are reported
+    // last, after the content/cursor/state updates they relate to.
+    if (pendingEvents.isNotEmpty()) {
+      events.addAll(pendingEvents)
+      pendingEvents.clear()
+    }
+
+    return events
+  }
+
+  /**
+   * Must be called under [lock]. Projects the emulator state now and emits it together with the events queued so far.
+   */
+  private fun flushPendingEventsLocked(bypassSyncOutputDeferral: Boolean) {
+    val events = syncLocked(bypassSyncOutputDeferral)
+    if (events.isNotEmpty()) {
+      emitOutputBlocking(events)
+    }
+  }
+
+  /**
+   * Must be called under [lock]. Whether this frame has to be held back because the
+   * program is inside a synchronized-output block (DEC 2026), and maintains the
+   * watchdog that bounds how long that can last.
+   *
+   * Mode 2026 is a presentation hint only: the emulator keeps applying input to its
+   * grid throughout the block, so deferring here just leaves the change set
+   * unconsumed until the block ends, and the frame the program was building is then
+   * emitted whole instead of half-drawn.
+   *
+   * The catch is that nothing forces a program to close its block — it may crash,
+   * hang, or simply be buggy mid-frame — and once that happens no further output
+   * arrives to re-check the flag, so the view would stay frozen for good. So each
+   * deferred frame keeps [syncWatchdogJob] armed; if the block is still open
+   * [SYNC_OUTPUT_TIMEOUT] after arming, the watchdog requests a force paint (performed
+   * by the next projection tick), and the next deferred frame arms it again — a
+   * wedged-but-active block repaints at that cadence instead of freezing. Ghostty's
+   * own app layer bounds a block with the same 1000 ms timer (`sync_reset_ms` in
+   * `termio/Thread.zig`), which is where the value comes from.
+   *
+   * Deliberately not a per-block state machine: two blocks whose boundary arrives
+   * inside one PTY chunk are indistinguishable from here (the mode reads as "on"
+   * before and after the write), so deferral tracks only the currently observed mode.
+   */
+  private fun isDeferringForSyncOutputLocked(): Boolean {
+    if (!emulator.synchronizedOutput) {
+      // No block open (or it just closed): the pending force-paint is obsolete, this
+      // sync paints instead.
+      cancelSyncWatchdogLocked()
+      return false
+    }
+    armSyncWatchdogLocked()
+    return true
+  }
+
+  /**
+   * Must be called under [lock]. Schedules the force-paint request that bounds an
+   * over-long synchronized-output block, unless one is already pending: the deadline
+   * is measured from the first deferred frame since the previous paint, so a program
+   * that keeps writing inside a block cannot push the deadline back indefinitely.
+   */
+  private fun armSyncWatchdogLocked() {
+    if (syncWatchdogJob != null) return
+    syncWatchdogJob = coroutineScope.launch {
+      delay(SYNC_OUTPUT_TIMEOUT)
+      lock.withLock {
+        if (disposed) return@launch
+        // Clear first, so the next deferred frame arms a fresh watchdog.
+        syncWatchdogJob = null
+        LOG.debug("Synchronized output (DEC 2026) held repaints for $SYNC_OUTPUT_TIMEOUT; painting anyway")
+        syncOutputForcePaint = true
+      }
+    }
+  }
+
+  /**
+   * Must be called under [lock]. Whether the watchdog requested a force paint;
+   * consuming resets it, so one request paints one frame and cannot leak into
+   * deferring the frames after it.
+   */
+  private fun consumeSyncOutputForcePaintLocked(): Boolean {
+    val requested = syncOutputForcePaint
+    syncOutputForcePaint = false
+    return requested
+  }
+
+  /** Must be called under [lock]. */
+  private fun cancelSyncWatchdogLocked() {
+    syncWatchdogJob?.cancel()
+    syncWatchdogJob = null
+    syncOutputForcePaint = false
+  }
+
+  /**
+   * Subscribes to the terminal's "Cursor shape" setting ([TerminalOptionsProvider]) and the
+   * editor's "Blink caret" setting ([EditorSettingsExternalizable]), and pushes their current
+   * values into [emulator] as its default cursor shape/blink.
+   */
+  private fun installDefaultCursorStateUpdating(scope: CoroutineScope) {
+    val disposable = scope.asDisposable()
+    var lastCursorShape: TerminalUiSettingsManager.CursorShape? = null
+    var lastBlinkCaret: Boolean? = null
+
+    fun TerminalUiSettingsManager.CursorShape.toEmulatorCursorShape(): CursorShape = when (this) {
+      TerminalUiSettingsManager.CursorShape.BLOCK -> CursorShape.BLOCK
+      TerminalUiSettingsManager.CursorShape.UNDERLINE -> CursorShape.UNDERLINE
+      TerminalUiSettingsManager.CursorShape.VERTICAL -> CursorShape.BAR
+    }
+
+    fun updateCursorShapeIfChangedLocked() {
+      val current = TerminalOptionsProvider.instance.cursorShape
+      if (current != lastCursorShape) {
+        lastCursorShape = current
+        emulator.setDefaultCursorShape(current.toEmulatorCursorShape())
+        changedSinceLastProjection = true
+      }
+    }
+
+    fun updateCursorBlinkIfChangedLocked() {
+      val current = EditorSettingsExternalizable.getInstance().isBlinkCaret
+      if (current != lastBlinkCaret) {
+        lastBlinkCaret = current
+        emulator.setDefaultCursorBlinking(current)
+        changedSinceLastProjection = true
+      }
+    }
+
+    TerminalOptionsProvider.instance.addListener(disposable) {
+      lock.withLock {
+        if (!disposed) updateCursorShapeIfChangedLocked()
+      }
+    }
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(PropertyChangeListener { event ->
+      if (event.propertyName == EditorSettingsExternalizable.PropNames.PROP_IS_CARET_BLINKING) {
+        lock.withLock {
+          if (!disposed) updateCursorBlinkIfChangedLocked()
+        }
+      }
+    }, disposable)
+
+    lock.withLock {
+      updateCursorShapeIfChangedLocked()
+      updateCursorBlinkIfChangedLocked()
+    }
+  }
+
+  /**
+   * Subscribes to the global editor color scheme ([EditorColorsManager.TOPIC]), and pushes the IDE terminal colors
+   * ([TerminalUi.defaultForeground] and [TerminalUi.defaultBackground]) into [emulator] as its default colors.
+   * The emulator reports them to a program that queries them (`OSC 10 ; ?` and `OSC 11 ; ?`).
+   */
+  private fun installColorSchemeUpdating(scope: CoroutineScope) {
+    var lastForeground: TerminalColor.Rgb? = null
+    var lastBackground: TerminalColor.Rgb? = null
+
+    fun Color.toEmulatorColor(): TerminalColor.Rgb = TerminalColor.Rgb(red, green, blue)
+
+    fun updateColorsIfChangedLocked() {
+      val foreground = TerminalUi.defaultForeground().toEmulatorColor()
+      if (foreground != lastForeground) {
+        lastForeground = foreground
+        emulator.setDefaultForegroundColor(foreground)
+      }
+      val background = TerminalUi.defaultBackground().toEmulatorColor()
+      if (background != lastBackground) {
+        lastBackground = background
+        emulator.setDefaultBackgroundColor(background)
+      }
+    }
+
+    ApplicationManager.getApplication().messageBus
+      .connect(scope.asDisposable())
+      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+        lock.withLock {
+          if (!disposed) updateColorsIfChangedLocked()
+        }
+      })
+
+    lock.withLock {
+      updateColorsIfChangedLocked()
+    }
+  }
+}
+
+private val LOG = logger<GhosttyTerminalSession>()
+
+/**
+ * How long a DEC 2026 synchronized-output block may hold repaints back before the
+ * session paints anyway.
+ */
+private val SYNC_OUTPUT_TIMEOUT: Duration = 1000.milliseconds
+
+/**
+ * How often emulator changes are projected into output events — the same cadence
+ * as the JediTerm pipeline's output polling (see `createTerminalOutputFlow`).
+ */
+private val OUTPUT_POLL_INTERVAL: Duration = 20.milliseconds
+
+/** The VT sequence `clear` sends (ED2 + the E3 extension) but without the cursor-home. */
+private val CLEAR_BUFFER_SEQUENCE: ByteArray = "\u001B[2J\u001B[3J".encodeToByteArray()
+
+private val CTRL_L_BYTE: ByteArray = byteArrayOf(0x0C)
+
+/** Escapes control characters (e.g. `\e` for ESC) so raw PTY output is readable in the log. */
+private fun String.escapeControlCharactersForLog(): String {
+  if (none { it.code < 0x20 || it.code == 0x7F }) return this
+  return buildString(length) {
+    for (ch in this@escapeControlCharactersForLog) {
+      when (ch) {
+        '\u001B' -> append("\\e")
+        '\n' -> append("\\n")
+        '\r' -> append("\\r")
+        '\t' -> append("\\t")
+        '\b' -> append("\\b")
+        '\u000C' -> append("\\f")
+        else -> {
+          if (ch.code < 0x20 || ch.code == 0x7F) {
+            append("\\x").append(ch.code.toString(16).padStart(2, '0'))
+          }
+          else append(ch)
+        }
+      }
+    }
+  }
+}
+
+internal fun createGhosttyTerminalSession(
+  project: Project?,
+  ttyConnector: TtyConnector,
+  options: ShellStartupOptions,
+  settings: JBTerminalSystemSettingsProviderBase,
+  coroutineScope: CoroutineScope,
+): TerminalSession {
+  val initialTermSize = options.initialTermSize ?: error("Initial term size must be set")
+  val shellIntegrationController = TerminalShellIntegrationController()
+  // The observable wrapper is what the session writes through, so the heuristic
+  // working-directory tracker below can watch for Enter presses in the written bytes.
+  val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
+  val session = GhosttyTerminalSession(
+    ttyConnector = observableTtyConnector,
+    initialSize = TerminalSize(initialTermSize.columns, initialTermSize.rows),
+    initialWorkingDirectory = options.workingDirectory,
+    shellIntegrationController = shellIntegrationController,
+    settings = settings,
+    coroutineScope = coroutineScope,
+  )
+  if (options.processType == TerminalProcessType.SHELL) {
+    val workingDirectoryTrackingScope = coroutineScope.childScope("Working directory tracking")
+    addWorkingDirectoryListener(observableTtyConnector, shellIntegrationController, workingDirectoryTrackingScope) { directory ->
+      session.updateCurrentDirectory(directory)
+    }
+  }
+  session.start()
+  return session
+}

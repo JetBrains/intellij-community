@@ -3,4 +3,4 @@ class MyClass {
 }
 
 
-def cl = new MyClass().&<ref>ttt
+def cl = new MyClass().&<caret>ttt

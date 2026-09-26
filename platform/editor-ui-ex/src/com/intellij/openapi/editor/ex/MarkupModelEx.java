@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.FilteringMarkupIterator;
+import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -23,53 +13,106 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
+
   @Nullable
-  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
+  RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
+  /**
+   * Consider using {@link #addPersistentLineHighlighter(TextAttributesKey, int, int)}
+   * unless it's really necessary.
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
+   */
+  @Nullable
+  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
-
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
-
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
+  
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
-
-  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                           int start,
-                           int end,
-                           boolean greedyToLeft,
-                           boolean greedyToRight,
-                           int layer);
 
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);
 
+  /**
+   * process all highlighters intersecting with [start, end) interval by {@code processor}.
+   * You must not do any changes to the markup model in the processor.
+   * Moreover, no meaningful work should be performed in the {@code processor} because iteration happens under the MarkupModel lock.
+   * @return true if no invocations of the {@code processor} returned false
+   */
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
+  /**
+   * makes an iterator which enumerates only error-stripe {@link RangeHighlighterEx}s,
+   * i.e. those for which {@link com.intellij.openapi.editor.impl.ErrorStripeMarkersModel#isErrorStripeHighlighter} returns true
+   */
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), h-> h.getErrorStripeMarkColor(null) != null);
+  }
+  /**
+   * makes an iterator which enumerates only {@link RangeHighlighterEx}s shown on the gutter.
+   * i.e. those for which {@link RangeHighlighterEx#isRenderedInGutter()} returns true
+   */
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+  }
+
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
-  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                            int startOffset,
                                                             int endOffset,
                                                             int layer,
-                                                            TextAttributes textAttributes,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
-                                                            Consumer<RangeHighlighterEx> changeAttributesAction);
+                                                            @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
-  // runs change attributes action and fires highlighterChanged event if there were changes
-  void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
+  /**
+   * @param isPersistent use different logic to update range boundaries on document changes.
+   *                     See {@link RangeMarkerImpl#persistentHighlighterUpdate}.
+   *
+   * @deprecated use {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
+   */
+  @Deprecated
+  default @NotNull RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                    int endOffset,
+                                                                    int layer,
+                                                                    TextAttributes textAttributes,
+                                                                    @NotNull HighlighterTargetArea targetArea,
+                                                                    boolean isPersistent,
+                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+    return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, isPersistent, ex -> {
+      if (textAttributes != null) {
+        ex.setTextAttributes(textAttributes);
+      }
+      if (changeAttributesAction != null) {
+        changeAttributesAction.consume(ex);
+      }
+    });
+  }
+
+  // run change attributes action and fire highlighterChanged event if there were changes
+  void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
 }

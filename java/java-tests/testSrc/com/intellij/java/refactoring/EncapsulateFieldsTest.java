@@ -20,19 +20,21 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.MultiFileTestCase;
-import com.intellij.refactoring.encapsulateFields.*;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDescriptor;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
+import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
+import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
+import com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import junit.framework.Assert;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.junit.Assert;
 
-public class EncapsulateFieldsTest extends MultiFileTestCase {
+public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAlreadyExist() {
     doTest("i" , null);
   }
@@ -50,7 +52,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
   }
 
   public void testHideOverriderMethod() {
-    doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated getter for a.i");
+    doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated accessor for a.i");
   }
 
   public void testJavadocRefs() {
@@ -62,11 +64,16 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
   }
 
   public void testInaccessibleSuperMethod() {
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                           int getFoo();
+                         }""");
     doTest("foo", "b.B", null);
   }
 
   public void testHideOuterclassMethod() {
-    doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
+    doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated accessor");
   }
 
   public void testCommentsInside() {
@@ -74,32 +81,20 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
   }
 
   public void testMoveJavadocToGetter() {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
-      assertNotNull("Tested class not found", aClass);
-      final PsiField field = aClass.findFieldByName("i", false);
-      assertNotNull(field);
-      doTest(aClass, null, true, true, field);
-    });
+    doTest("i", "A", null);
   }
 
   public void testFilterEnumConstants() {
-    doTest((rootDir, rootAfter) -> {
-      final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
-      assertNotNull("Tested class not found", aClass);
-      doTest(aClass, null, true, true, new JavaEncapsulateFieldHelper().getApplicableFields(aClass));
-    });
+    myFixture.configureByFile(getTestName(false) + ".java");
+    PsiClass aClass = myFixture.findClass("A");
+    assertNotNull("Tested class not found", aClass);
+    doTest(aClass, null, true, true, new JavaEncapsulateFieldHelper().getApplicableFields(aClass));
+    myFixture.checkResultByFile(getTestName(false) +"_after.java");
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/refactoring/encapsulateFields/";
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/refactoring/encapsulateFields/";
   }
 
 
@@ -108,14 +103,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
   }
 
   private void doTest(final String fieldName, final String className, final String conflicts) {
-    doTest((rootDir, rootAfter) -> {
-      PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.projectScope(myProject));
-
-      assertNotNull("Tested class not found", aClass);
-
-
-      doTest(aClass, conflicts, true, true, aClass.findFieldByName(fieldName, false));
-    });
+    myFixture.configureByFile(getTestName(false) + ".java");
+    PsiClass aClass = myFixture.findClass(className);
+    assertNotNull("Tested class not found", aClass);
+    doTest(aClass, conflicts, true, true, aClass.findFieldByName(fieldName, false));
+    myFixture.checkResultByFile(getTestName(false) +"_after.java");
   }
 
 
@@ -178,7 +170,7 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
         }
       });
       processor.run();
-      LocalFileSystem.getInstance().refresh(false);
+      StandardFileSystems.local().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {

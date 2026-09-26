@@ -19,6 +19,8 @@
   <depends optional="true">com.intellij.javaee</depends>
   <idea-version until-build="130.0" since-build="125.5"/>
 
+  <module value="myModule"/>
+
   <extensions defaultExtensionNs="plugin.id">
     <toolWindow id="someToolWindow" factoryClass="com.jetbrains.test.SomeToolWindowFactory"/>
     <projectConfigurable id="someConfigurable" instance="com.jetbrains.test.SomeConfigurable"/>
@@ -63,6 +65,6 @@
       <action class="com.jetbrains.test.SomeAction1Class" id="SomeAction1" icon="AllIcons.Actions.Back"/>
       <add-to-group group-id="MainMenu"/>
     </group>
-    <action class="com.jetbrains.test.SomeAction2Class" id="SomeAction2"/>
+    <action class="com.jetbrains.test.SomeAction2Class"/>
   </actions>
 </idea-plugin>

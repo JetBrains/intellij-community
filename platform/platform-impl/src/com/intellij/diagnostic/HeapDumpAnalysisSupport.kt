@@ -1,0 +1,143 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic
+
+import com.google.common.hash.Hashing
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
+import com.intellij.diagnostic.hprof.action.AnalysisRunnable
+import com.intellij.diagnostic.hprof.action.getHeapDumpReportText
+import com.intellij.diagnostic.report.HeapReportProperties
+import com.intellij.diagnostic.report.MemoryReportReason
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.ProblematicPluginInfo
+import com.intellij.openapi.diagnostic.UnhandledExceptionKind
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.awt.Component
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.util.Collections
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
+
+@Service
+internal class HeapDumpAnalysisSupport {
+  companion object {
+    fun getInstance(): HeapDumpAnalysisSupport = service<HeapDumpAnalysisSupport>()
+  }
+
+  fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
+
+  private val reportedHashes = Collections.synchronizedSet(mutableSetOf<String>())
+
+  @RequiresEdt(generateAssertion = false)
+  fun uploadReport(
+    reportText: String,
+    heapReportProperties: HeapReportProperties,
+    parentComponent: Component,
+    automaticReport: Boolean = false,
+  ) {
+    ThreadingAssertions.assertEventDispatchThread()
+
+    val fastReportHash = Hashing.murmur3_128().hashString(reportText, StandardCharsets.UTF_8).toString()
+    if (!reportedHashes.add(fastReportHash)) {
+      return // already reported this exact report (e.g. auto-submitted, then manually sent)
+    }
+
+    val messageText = if (automaticReport) "Heap analysis results (auto)" else "Heap analysis results"
+    val text = getHeapDumpReportText(reportText, heapReportProperties)
+    val attachment = Attachment("report.txt", text).apply { isIncluded = true }
+    val event = IdeaLoggingEvent(messageText, OutOfMemoryError(), listOf(attachment), null as ProblematicPluginInfo?, null, UnhandledExceptionKind.HANDLED)
+    ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
+
+    LifecycleUsageTriggerCollector.onMemoryReportSubmitted(automaticReport)
+  }
+
+  /**
+   * Checks if there's already a snapshot saved for analysis after restart and notifies the user if needed.
+   * Returns true if there's a pending snapshot and a new one shouldn't be saved.
+   */
+  fun checkPendingSnapshot(): Boolean = false
+
+  /**
+   * Saves the given snapshot for analysis after restart.
+   */
+  fun saveSnapshotForAnalysis(hprofPath: Path, reportProperties: HeapReportProperties) {
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
+    JsonWriter(jsonPath.bufferedWriter()).use {
+      it.beginObject()
+      it.name("path").value(hprofPath.toString())
+      it.name("reason").value(reportProperties.reason.toString())
+      it.name("liveStats").value(reportProperties.liveStats)
+      it.name("heapStats").value(reportProperties.heapStats)
+      it.endObject()
+    }
+  }
+
+  fun analysisFailed(heapProperties: HeapReportProperties) {
+    LifecycleUsageTriggerCollector.onMemoryReportFailed()
+  }
+
+  fun analysisComplete(heapProperties: HeapReportProperties) {
+    LifecycleUsageTriggerCollector.onMemoryReportPrepared()
+  }
+}
+
+internal class AnalyzePendingSnapshotActivity: ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
+    if (!jsonPath.isRegularFile()) {
+      return
+    }
+
+    var path: String? = null
+    var liveStats: String? = null
+    var heapStats: String? = null
+    var reason: MemoryReportReason? = null
+    try {
+      val reader = JsonReader(jsonPath.bufferedReader())
+      reader.use {
+        it.beginObject()
+        while (it.hasNext()) {
+          when (it.nextName()) {
+            "path" -> path = it.nextString()
+            "reason" -> reason = MemoryReportReason.valueOf(it.nextString())
+            "liveStats" -> liveStats = it.nextString()
+            "heapStats" -> heapStats = it.nextString()
+          }
+        }
+        it.endObject()
+      }
+
+      jsonPath.deleteIfExists()
+    }
+    catch (_: Exception) { }
+
+    path?.let {
+      val hprofPath = Path.of(it)
+      if (hprofPath.exists()) {
+        val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "", heapStats ?: "")
+        AnalysisRunnable(hprofPath, heapProperties, false).run()
+      }
+    }
+  }
+}

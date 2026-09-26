@@ -22,14 +22,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Output Type"/>
+        <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.settings.border-title.output-type"/>
         <children>
           <component id="ae717" class="javax.swing.JRadioButton" binding="myOutputRnc">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="RELAX NG - &amp;Compact Syntax"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.radio-button.relax-ng-compact-syntax"/>
             </properties>
           </component>
           <component id="42e64" class="javax.swing.JRadioButton" binding="myOutputXsd">
@@ -37,7 +37,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="W3C XML &amp;Schema"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.radio-button.w3c-xml-schema"/>
             </properties>
           </component>
           <component id="68cdd" class="javax.swing.JRadioButton" binding="myOutputDtd">
@@ -45,7 +45,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;DTD"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.radio-button.dtd"/>
             </properties>
           </component>
           <component id="a174f" class="javax.swing.JRadioButton" binding="myOutputRng">
@@ -53,7 +53,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;RELAX NG - XML Syntax"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.radio-button.relax-ng-xml-syntax"/>
             </properties>
           </component>
         </children>
@@ -67,7 +67,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Output Options"/>
+        <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.settings.border-title.output-options"/>
         <children>
           <component id="a450" class="javax.swing.JLabel">
             <constraints>
@@ -75,7 +75,7 @@
             </constraints>
             <properties>
               <labelFor value="2ab32"/>
-              <text value="&amp;Encoding:"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.label.encoding"/>
             </properties>
           </component>
           <vspacer id="deedc">
@@ -103,7 +103,7 @@
             </constraints>
             <properties>
               <labelFor value="b3b11"/>
-              <text value="&amp;Indent:"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.label.indent"/>
             </properties>
           </component>
           <component id="42a61" class="javax.swing.JLabel">
@@ -112,7 +112,7 @@
             </constraints>
             <properties>
               <labelFor value="9a106"/>
-              <text value="&amp;Line Length:"/>
+              <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.settings.label.line-length"/>
             </properties>
           </component>
           <component id="9a106" class="javax.swing.JTextField" binding="myLineLength">
@@ -134,7 +134,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Output Destination"/>
+        <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.settings.border-title.output-destination"/>
         <children>
           <component id="5b279" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myOutputDestination">
             <constraints>

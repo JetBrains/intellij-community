@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -29,36 +15,71 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-public class TestIntegrationUtils {
+public final class TestIntegrationUtils {
   private static final Logger LOG = Logger.getInstance(TestIntegrationUtils.class);
 
   public enum MethodKind {
     SET_UP("setUp") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getSetUpMethodFileTemplateDescriptor();
       }
     },
+    BEFORE_CLASS("beforeClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getBeforeClassMethodFileTemplateDescriptor();
+      }
+    },
     TEAR_DOWN("tearDown") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
       }
     },
+    AFTER_CLASS("afterClass") {
+      @Override
+      public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
+        return framework.getAfterClassMethodFileTemplateDescriptor();
+      }
+    },
     TEST("test") {
+      @Override
       public FileTemplateDescriptor getFileTemplateDescriptor(@NotNull TestFramework framework) {
         return framework.getTestMethodFileTemplateDescriptor();
       }
@@ -81,13 +102,13 @@ public class TestIntegrationUtils {
         return null;
       }
     };
-    private final String myDefaultName;
+    private final @NotNull String myDefaultName;
 
-    MethodKind(String defaultName) {
+    MethodKind(@NotNull String defaultName) {
       myDefaultName = defaultName;
     }
 
-    public String getDefaultName() {
+    public @NotNull String getDefaultName() {
       return myDefaultName;
     }
 
@@ -99,8 +120,7 @@ public class TestIntegrationUtils {
     return klass != null && TestFrameworks.getInstance().isTestClass(klass);
   }
 
-  @Nullable
-  public static PsiClass findOuterClass(@NotNull PsiElement element) {
+  public static @Nullable PsiClass findOuterClass(@NotNull PsiElement element) {
     PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (result == null) {
        final PsiFile containingFile = element.getContainingFile();
@@ -121,21 +141,36 @@ public class TestIntegrationUtils {
   }
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
-    List<MemberInfo> result = new ArrayList<>();
+    List<PsiClass> classes = new ArrayList<>();
+    classes.add(clazz);
+    if (includeInherited) {
+      classes.addAll(InheritanceUtil.getSuperClasses(clazz).reversed());
+    }
 
-    do {
-      MemberInfo.extractClassMembers(clazz, result, new MemberInfo.Filter<PsiMember>() {
+    List<MemberInfo> result = new ArrayList<>();
+    Map<String, List<PsiMethod>> methodsByName = new HashMap<>();
+    for (PsiClass aClass : classes) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
+      MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<>() {
+        @Override
         public boolean includeMember(PsiMember member) {
-          if (!(member instanceof PsiMethod)) return false;
-          PsiModifierList list = member.getModifierList();
-          return !list.hasModifierProperty(PsiModifier.PRIVATE);
+          if (!(member instanceof PsiMethod method)) return false;
+          if (member.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+
+          String name = method.getName();
+          List<PsiMethod> methods = methodsByName.computeIfAbsent(name, _ -> new ArrayList<>());
+          for (PsiMethod psiMethod : methods) {
+            // rely on the order of collected classes: from descendant to ancestors
+            if (PsiSuperMethodUtil.isSuperMethod(psiMethod, method)) {
+              return false;
+            }
+          }
+          methods.add(method);
+
+          return true;
         }
       }, false);
-      clazz = clazz.getSuperClass();
     }
-    while (clazz != null
-           && clazz.getSuperClass() != null // not the Object
-           && includeInherited);
 
     return result;
   }
@@ -146,7 +181,7 @@ public class TestIntegrationUtils {
                                            final PsiClass targetClass,
                                            final PsiMethod method,
                                            @Nullable String name,
-                                           boolean automatic, Set<String> existingNames) {
+                                           boolean automatic, Set<? super String> existingNames) {
     runTestMethodTemplate(methodKind, framework, editor, targetClass, null, method, name, automatic, existingNames);
   }
 
@@ -158,7 +193,7 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            @Nullable String name,
                                            boolean automatic,
-                                           Set<String> existingNames) {
+                                           Set<? super String> existingNames) {
     runTestMethodTemplate(editor, targetClass, method, automatic,
                           createTestMethodTemplate(methodKind, framework, targetClass, sourceClass, name, automatic, existingNames));
   }
@@ -167,8 +202,30 @@ public class TestIntegrationUtils {
                                            final PsiClass targetClass,
                                            final PsiMethod method,
                                            boolean automatic, final Template template) {
+    runTestMethodTemplate(editor, targetClass, method, method.getModifierList(), automatic, template);
+  }
 
-    final int startOffset = method.getModifierList().getTextRange().getStartOffset();
+  public static void runTestMethodTemplate(@NotNull MethodKind methodKind,
+                                           TestFramework framework,
+                                           final Editor editor,
+                                           final PsiElement targetClass,
+                                           @Nullable PsiClass sourceClass,
+                                           final PsiElement method,
+                                           final PsiElement methodModifierList,
+                                           @Nullable String name,
+                                           boolean automatic,
+                                           Set<? super String> existingNames) {
+    runTestMethodTemplate(editor, targetClass, method, methodModifierList, automatic,
+                          createTestMethodTemplate(methodKind, framework, targetClass, sourceClass, name, automatic, existingNames));
+  }
+
+  public static void runTestMethodTemplate(final Editor editor,
+                                           final PsiElement targetClass,
+                                           final PsiElement method,
+                                           final PsiElement methodModifierList,
+                                           boolean automatic,
+                                           final Template template) {
+    final int startOffset = methodModifierList.getTextRange().getStartOffset();
     final TextRange range = new TextRange(startOffset, method.getTextRange().getEndOffset());
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(range.getStartOffset());
@@ -180,7 +237,7 @@ public class TestIntegrationUtils {
     if (!automatic) {
       adapter = new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(() -> {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -208,7 +265,7 @@ public class TestIntegrationUtils {
                                                   @NotNull PsiClass targetClass,
                                                   @Nullable String name,
                                                   boolean automatic,
-                                                  Set<String> existingNames) {
+                                                  Set<? super String> existingNames) {
     return createTestMethodTemplate(methodKind, descriptor, targetClass, null, name, automatic, existingNames);
   }
 
@@ -218,15 +275,26 @@ public class TestIntegrationUtils {
                                                   @Nullable PsiClass sourceClass,
                                                   @Nullable String name,
                                                   boolean automatic,
-                                                  Set<String> existingNames) {
+                                                  Set<? super String> existingNames) {
+    return createTestMethodTemplate(methodKind, descriptor, (PsiElement) targetClass, sourceClass, name, automatic, existingNames);
+  }
+
+  public static Template createTestMethodTemplate(@NotNull MethodKind methodKind,
+                                                  TestFramework descriptor,
+                                                  @NotNull PsiElement targetClass,
+                                                  @Nullable PsiClass sourceClass,
+                                                  @Nullable String name,
+                                                  boolean automatic,
+                                                  Set<? super String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
-    FileTemplate fileTemplate = FileTemplateManager.getInstance(targetClass.getProject()).getCodeTemplate(templateName);
-    Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
+    Project project = targetClass.getProject();
+    FileTemplate fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(templateName);
+    Template template = TemplateManager.getInstance(project).createTemplate("", "");
 
     String templateText;
     try {
-      Properties properties = new Properties();
+      Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
       if (sourceClass != null && sourceClass.isValid()) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, sourceClass.getQualifiedName());
       }
@@ -243,7 +311,13 @@ public class TestIntegrationUtils {
     if (existingNames != null && !existingNames.add(name)) {
       int idx = 1;
       while (existingNames.contains(name)) {
-        final String newName = name + (idx++);
+        if (!name.startsWith("test")) {
+          name = "test" + StringUtil.capitalize(name);
+          if (existingNames.add(name)) {
+            break;
+          }
+        }
+        String newName = name + (idx++);
         if (existingNames.add(newName)) {
           name = newName;
           break;
@@ -288,11 +362,13 @@ public class TestIntegrationUtils {
   public static PsiMethod createDummyMethod(@NotNull PsiElement context) {
     JVMElementFactory factory = JVMElementFactories.getFactory(context.getLanguage(), context.getProject());
     if (factory == null) factory = JavaPsiFacade.getElementFactory(context.getProject());
-    return factory.createMethod("dummy", PsiType.VOID);
+    return factory.createMethod("dummy", PsiTypes.voidType());
   }
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
-    TestFramework[] frameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    List<TestFramework> frameworks = ContainerUtil.filter(TestFramework.EXTENSION_NAME.getExtensionList(), framework ->
+      TestFrameworks.isSuitableByLanguage(targetClass, framework)
+    );
     Project project = targetClass.getProject();
 
     List<TestFramework> result = new SmartList<>();

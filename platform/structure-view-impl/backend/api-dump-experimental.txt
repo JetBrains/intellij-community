@@ -1,0 +1,4 @@
+*f:com.intellij.platform.structureView.backend.completion.commands.ViewStructureCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- supportNewLineCompletion():Z

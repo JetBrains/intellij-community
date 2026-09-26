@@ -1,0 +1,27 @@
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- *sf:Companion:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- *s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- whenEventHappened(kotlin.jvm.functions.Function1):V
+*f:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:fireEvent(java.lang.Object):V
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+- com.intellij.openapi.observable.operation.core.MutableOperationTrace
+- com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+- *sf:Companion:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,Z):V
+- <init>(Z):V
+- detach(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- detachAll():V
+- getName():java.lang.String
+- traceFinish(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
+- traceSchedule(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+*:com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+- a:getName():java.lang.String

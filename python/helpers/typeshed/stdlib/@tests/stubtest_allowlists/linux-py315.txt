@@ -1,0 +1,19 @@
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.15
+# =============================================================
+
+# GitHub Actions' Python 3.15 Linux build currently lacks _decimal, so
+# decimal falls back to _pydecimal with different runtime signatures.
+_decimal
+decimal\..*
+
+# Depends on how readline was built.
+readline.get_pre_input_hook
+
+# Internal implementation details of the sampling profiler.
+profiling.sampling.live_collector
+profiling.sampling.live_collector.collector
+profiling.sampling.live_collector.constants
+profiling.sampling.live_collector.display
+profiling.sampling.live_collector.trend_tracker
+profiling.sampling.live_collector.widgets

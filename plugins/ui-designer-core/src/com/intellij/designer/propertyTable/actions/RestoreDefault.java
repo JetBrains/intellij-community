@@ -19,9 +19,11 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -40,7 +42,12 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     setEnabled(myTable, e.getPresentation());
   }
 
@@ -60,7 +67,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myTable.restoreDefaultValue();
     setEnabled(myTable, getTemplatePresentation());
   }

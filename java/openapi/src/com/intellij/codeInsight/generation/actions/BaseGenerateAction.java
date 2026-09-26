@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -24,15 +10,20 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
+public abstract class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
   private final CodeInsightActionHandler myHandler;
 
-  public BaseGenerateAction(CodeInsightActionHandler handler) {
+  protected BaseGenerateAction(CodeInsightActionHandler handler) {
     myHandler = handler;
   }
 
@@ -40,29 +31,31 @@ public class BaseGenerateAction extends CodeInsightAction implements GenerateAct
   protected void update(@NotNull Presentation presentation,
                         @NotNull Project project,
                         @NotNull Editor editor,
-                        @NotNull PsiFile file,
+                        @NotNull PsiFile psiFile,
                         @NotNull DataContext dataContext,
                         @Nullable String actionPlace) {
-    super.update(presentation, project, editor, file, dataContext, actionPlace);
+    super.update(presentation, project, editor, psiFile, dataContext, actionPlace);
     if (myHandler instanceof ContextAwareActionHandler && presentation.isEnabled()) {
-      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, file, dataContext));
+      presentation.setEnabled(((ContextAwareActionHandler)myHandler).isAvailableForQuickList(editor, psiFile, dataContext));
     }
   }
 
   @Override
-  @Nullable
-  public AnAction createEditTemplateAction(DataContext dataContext) {
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    presentation.setEnabledAndVisible(isValidForFile(project, editor, psiFile));
+  }
+
+  @Override
+  public @Nullable AnAction createEditTemplateAction(DataContext dataContext) {
     return null;
   }
 
-  @NotNull
   @Override
-  protected final CodeInsightActionHandler getHandler() {
+  protected final @NotNull CodeInsightActionHandler getHandler() {
     return myHandler;
   }
 
-  @Nullable
-  protected PsiClass getTargetClass (Editor editor, PsiFile file) {
+  protected @Nullable PsiClass getTargetClass (Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -71,11 +64,11 @@ public class BaseGenerateAction extends CodeInsightAction implements GenerateAct
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    if (file instanceof PsiCompiledElement) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) return false;
+    if (psiFile instanceof PsiCompiledElement) return false;
 
-    PsiClass targetClass = getTargetClass(editor, file);
+    PsiClass targetClass = getTargetClass(editor, psiFile);
     return targetClass != null && isValidForClass(targetClass);
   }
 

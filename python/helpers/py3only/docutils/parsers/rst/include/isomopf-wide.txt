@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |Aopf| unicode:: U+1D538 .. MATHEMATICAL DOUBLE-STRUCK CAPITAL A
 .. |Bopf| unicode:: U+1D539 .. MATHEMATICAL DOUBLE-STRUCK CAPITAL B

@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Iterator;
 
 /**
  * @author Maxim.Mossienko
@@ -33,13 +23,45 @@ public abstract class UpdateAddedFileProcessor {
 
   public abstract void update(PsiFile element, @Nullable PsiFile originalElement) throws IncorrectOperationException;
 
-  @Nullable
-  public static UpdateAddedFileProcessor forElement(@NotNull PsiFile element) {
-    for(UpdateAddedFileProcessor processor: Extensions.getExtensions(EP_NAME)) {
+  /**
+   * Tells whether the added file must keep the reference targets that it had before {@link #update}.
+   *
+   * <p>An update can change the package of the file, and that changes what a short reference resolves to. A
+   * {@code true} makes {@link #updateAddedFiles} record the target of every reference before the update and restore it
+   * afterwards, through {@link ChangeUtil#encodeInformation} and {@link ChangeUtil#decodeInformation}. That round trip
+   * resolves every reference of the file, so it is expensive.</p>
+   *
+   * <p>Answer {@code false} when the update cannot change what a reference means.</p>
+   */
+  public boolean mustKeepReferences(@NotNull PsiFile element, @Nullable PsiFile originalElement) {
+    return true;
+  }
+
+  public static @Nullable UpdateAddedFileProcessor forElement(@NotNull PsiFile element) {
+    for(UpdateAddedFileProcessor processor: EP_NAME.getExtensionList()) {
       if (processor.canProcessElement(element)) {
         return processor;
       }
     }
     return null;
+  }
+
+  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis, @NotNull Iterable<? extends PsiFile> originals) throws IncorrectOperationException {
+    Iterator<? extends PsiFile> iterator = originals.iterator();
+    for (PsiFile copyPsi : copyPsis) {
+      PsiFile original = iterator.hasNext() ? iterator.next() : null;
+      UpdateAddedFileProcessor processor = forElement(copyPsi);
+      if (processor != null) {
+        TreeElement tree =
+          processor.mustKeepReferences(copyPsi, original) ? (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi) : null;
+        if (tree != null) {
+          ChangeUtil.encodeInformation(tree);
+        }
+        processor.update(copyPsi, original);
+        if (tree != null) {
+          ChangeUtil.decodeInformation(tree);
+        }
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.WriteAction;
@@ -14,12 +14,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   protected Artifact addArtifact(TestPackagingElementBuilder builder) {
     return addArtifact("a", builder);
@@ -61,8 +59,9 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return VfsTestUtil.createDir(getOrCreateProjectBaseDir(), path);
   }
 
-  protected static VirtualFile getJDomJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
+  protected static VirtualFile getFastUtilJar() {
+    return IntelliJProjectConfiguration.getVirtualFile(
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min"));
   }
 
   protected static String getLocalJarPath(VirtualFile jarEntry) {
@@ -90,16 +89,17 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
       if (module != null) {
         ModuleRootModificationUtil.addDependency(module, library, scope, false);
       }
-      ;
       return library;
     });
   }
 
   protected static void addModuleLibrary(final Module module, final VirtualFile jar) {
     ModuleRootModificationUtil.addModuleLibrary(module, jar.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
     ModuleRootModificationUtil.addDependency(module, dependency);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 }

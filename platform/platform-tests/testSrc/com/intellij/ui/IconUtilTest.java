@@ -1,310 +1,123 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.FileIconPatcher;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.ui.icons.IconWithOverlay;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.ImageObserver;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Graphics;
+import java.awt.Shape;
 import java.io.File;
 import java.io.IOException;
-import java.text.AttributedCharacterIterator;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
-public class IconUtilTest extends PlatformTestCase {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class IconUtilTest extends HeavyPlatformTestCase {
+  @Override
+  protected boolean isIconRequired() {
+    return true;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     while (DumbService.isDumb(getProject())) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 
-  public void testIconDeferrerDoesNotDeferIconsAdInfinitum() throws IOException {
-    VirtualFile file = createTempFile("txt", null, "hkjh", CharsetToolkit.UTF8_CHARSET);
+  public void testIconDeferrerDoesNotDeferIconsAdInfinitum() {
+    VirtualFile file = getTempDir().createVirtualFile(".txt", "hkjh");
 
     Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
     assertTrue(icon instanceof DeferredIcon);
 
-    Graphics g = createMockGraphics();
-    icon.paintIcon(new JLabel(), g, 0, 0);  // force to eval
-    TimeoutUtil.sleep(1000); // give chance to evaluate
+    Graphics g = IconTestUtil.createMockGraphics();
+    // force to eval
+    icon.paintIcon(new JLabel(), g, 0, 0);
+    // give chance to evaluate
+    TimeoutUtil.sleep(1000);
 
     Icon icon2 = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
-    assertSame(icon, icon2);
+    assertThat(icon2).isNotInstanceOf(DeferredIcon.class);
+    assertThat(icon).isNotSameAs(icon2);
 
     FileContentUtilCore.reparseFiles(file);
     Icon icon3 = IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY, getProject());
-    assertNotSame(icon2, icon3);
-  }
-
-  @NotNull
-  private static Graphics createMockGraphics() {
-    return new Graphics() {
-        @Override
-        public Graphics create() {
-          return this;
-        }
-
-        @Override
-        public void translate(int x, int y) {
-
-        }
-
-        @Override
-        public Color getColor() {
-          return null;
-        }
-
-        @Override
-        public void setColor(Color c) {
-
-        }
-
-        @Override
-        public void setPaintMode() {
-
-        }
-
-        @Override
-        public void setXORMode(Color c1) {
-
-        }
-
-        @Override
-        public Font getFont() {
-          return null;
-        }
-
-        @Override
-        public void setFont(Font font) {
-
-        }
-
-        @Override
-        public FontMetrics getFontMetrics(Font f) {
-          return null;
-        }
-
-        @Override
-        public Rectangle getClipBounds() {
-          return null;
-        }
-
-        @Override
-        public void clipRect(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public void setClip(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public Shape getClip() {
-          return null;
-        }
-
-        @Override
-        public void setClip(Shape clip) {
-
-        }
-
-        @Override
-        public void copyArea(int x, int y, int width, int height, int dx, int dy) {
-
-        }
-
-        @Override
-        public void drawLine(int x1, int y1, int x2, int y2) {
-
-        }
-
-        @Override
-        public void fillRect(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public void clearRect(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-
-        }
-
-        @Override
-        public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
-
-        }
-
-        @Override
-        public void drawOval(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public void fillOval(int x, int y, int width, int height) {
-
-        }
-
-        @Override
-        public void drawArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-
-        }
-
-        @Override
-        public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
-
-        }
-
-        @Override
-        public void drawPolyline(int[] xPoints, int[] yPoints, int nPoints) {
-
-        }
-
-        @Override
-        public void drawPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-
-        }
-
-        @Override
-        public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
-
-        }
-
-        @Override
-        public void drawString(String str, int x, int y) {
-
-        }
-
-        @Override
-        public void drawString(AttributedCharacterIterator iterator, int x, int y) {
-
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, Color bgcolor, ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public boolean drawImage(Image img,
-                                 int dx1,
-                                 int dy1,
-                                 int dx2,
-                                 int dy2,
-                                 int sx1,
-                                 int sy1,
-                                 int sx2,
-                                 int sy2,
-                                 Color bgcolor,
-                                 ImageObserver observer) {
-          return false;
-        }
-
-        @Override
-        public void dispose() {
-
-        }
-      };
+    assertThat(icon2).isNotSameAs(icon3);
   }
 
   public void testLockedPatchSmallIconAppliedOnlyOnceToJavaFile() throws IOException {
     File dir = createTempDir("my");
 
-    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile sourceRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
     VirtualFile file = createChildData(sourceRoot, "X.java");
 
     assertJustOneLockedIcon(file);
   }
 
-  private void assertJustOneLockedIcon(VirtualFile file) throws IOException {
-    WriteCommandAction.runWriteCommandAction(getProject(),
-                                             (ThrowableComputable<Void,IOException>)() -> {
-                                               file.setBinaryContent("class X {}".getBytes(CharsetToolkit.UTF8_CHARSET));
-                                               file.setWritable(false);
-                                               return null;
-                                             });
-    UIUtil.dispatchAllInvocationEvents(); // write actions
-    UIUtil.dispatchAllInvocationEvents();
-    try {
-      Icon icon = IconUtil.getIcon(file, -1, getProject());
-      icon.paintIcon(new JLabel(), createMockGraphics(), 0, 0);  // force to eval
-      TimeoutUtil.sleep(1000); // give chance to evaluate
-      UIUtil.dispatchAllInvocationEvents();
-      UIUtil.dispatchAllInvocationEvents();
+  private void assertJustOneLockedIcon(@NotNull VirtualFile file) throws IOException {
+    if (!Registry.is("ide.locked.icon.enabled", false)) return;
+    LastComputedIconCache.clear(file);
 
-      List<Icon> icons = autopsyIconsFrom(icon);
-      assertOneElement(ContainerUtil.filter(icons, ic -> ic == PlatformIcons.LOCKED_ICON));
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, IOException>)() -> {
+      file.setBinaryContent("class X {}".getBytes(StandardCharsets.UTF_8));
+      file.setWritable(false);
+      return null;
+    });
+    // write actions
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    try {
+      List<Icon> icons = IconTestUtil.renderDeferredIcon(IconUtil.getIcon(file, -1, getProject()));
+      List<Icon> result = new ArrayList<>();
+      for (Icon icon : icons) {
+        if (IconTestUtil.unwrapIcon(icon) == PlatformIcons.LOCKED_ICON) {
+          result.add(icon);
+        }
+      }
+      assertThat(result).hasSize(1);
     }
     finally {
-      WriteCommandAction.runWriteCommandAction(getProject(),
-                                               (ThrowableComputable<Void,IOException>)() -> {
-                                                 file.setWritable(true);
-                                                 return null;
-                                               });
+      WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, IOException>)() -> {
+        file.setWritable(true);
+        return null;
+      });
     }
   }
 
   public void testLockedPatchSmallIconAppliedOnlyOnceToTxtFile() throws IOException {
     File dir = createTempDir("my");
 
-    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile sourceRoot = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
     VirtualFile file = createChildData(sourceRoot, "X.txt");
 
     PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
@@ -312,17 +125,43 @@ public class IconUtilTest extends PlatformTestCase {
     assertJustOneLockedIcon(file);
   }
 
-  @NotNull
-  private static List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
-    if (icon instanceof RetrievableIcon) {
-      return autopsyIconsFrom(((RetrievableIcon)icon).retrieveIcon());
-    }
-    if (icon instanceof LayeredIcon) {
-      return ContainerUtil.flatten(ContainerUtil.map(((LayeredIcon)icon).getAllLayers(), IconUtilTest::autopsyIconsFrom));
-    }
-    if (icon instanceof RowIcon) {
-      return ContainerUtil.flatten(ContainerUtil.map(((RowIcon)icon).getAllIcons(), IconUtilTest::autopsyIconsFrom));
-    }
-    return Collections.singletonList(icon);
+  public void testIconPatchersWorkForPsiItems() throws IOException {
+    FileIconPatcher.EP_NAME.getPoint().registerExtension(new FileIconPatcher() {
+      @Override
+      public @NotNull Icon patchIcon(@NotNull Icon icon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+        return new IconWithOverlay(icon, AllIcons.Actions.Scratch) {
+          @Override
+          public @Nullable Shape getOverlayShape(int x, int y) {
+            return null;
+          }
+        };
+      }
+    }, getTestRootDisposable());
+
+    File dir = createTempDir("my");
+
+    VirtualFile vDir = StandardFileSystems.local().refreshAndFindFileByPath(dir.getAbsolutePath());
+    VirtualFile vFile = createChildData(vDir, "X.txt");
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    PsiDirectory psiDir = PsiManager.getInstance(getProject()).findDirectory(vDir);
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+
+    int flags = 0;
+
+    Icon psiDirIcon = psiDir.getIcon(flags);
+    Icon psiFileIcon = psiFile.getIcon(flags);
+
+    Icon vDirIcon = IconUtil.computeFileIcon(vDir, flags, getProject());
+    Icon vFileIcon = IconUtil.computeFileIcon(vFile, flags, getProject());
+
+    IconTestUtil.renderDeferredIcon(psiDirIcon);
+    IconTestUtil.renderDeferredIcon(psiFileIcon);
+
+    assertSameElements("dir icons do not match",
+                       IconTestUtil.renderDeferredIcon(psiDirIcon),
+                       IconTestUtil.renderDeferredIcon(vDirIcon));
+    assertSameElements("file icons do not match",
+                       IconTestUtil.renderDeferredIcon(psiFileIcon),
+                       IconTestUtil.renderDeferredIcon(vFileIcon));
   }
 }

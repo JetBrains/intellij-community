@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pluginclasspath",
+    srcs = ["classpath.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/pluginclasspath",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "pluginclasspath_test",
+    srcs = ["classpath_test.go"],
+    embed = [":pluginclasspath"],
+    pure = "on",
+)

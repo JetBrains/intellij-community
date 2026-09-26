@@ -1,27 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedScopesHolder implements PersistentStateComponent<Element> {
-  private List<NamedScope> myScopes = new ArrayList<>();
-  @NonNls private static final String SCOPE_TAG = "scope";
-  @NonNls private static final String NAME_ATT = "name";
-  @NonNls private static final String PATTERN_ATT = "pattern";
+  private NamedScope[] myScopes = NamedScope.EMPTY_ARRAY;
+  private static final @NonNls String SCOPE_TAG = "scope";
+  private static final @NonNls String NAME_ATT = "name";
+  private static final @NonNls String PATTERN_ATT = "pattern";
 
   protected final Project myProject;
   private VirtualFile myProjectBaseDir;
@@ -30,7 +34,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     myProject = project;
   }
 
-  public abstract String getDisplayName();
+  public abstract @NotNull String getDisplayName();
 
   public abstract Icon getIcon();
 
@@ -48,12 +52,9 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public void addScopeListener(@NotNull ScopeListener scopeListener) {
+  public void addScopeListener(@NotNull ScopeListener scopeListener, @NotNull Disposable parentDisposable) {
     myScopeListeners.add(scopeListener);
-  }
-
-  public void removeScopeListener(@NotNull ScopeListener scopeListener) {
-    myScopeListeners.remove(scopeListener);
+    Disposer.register(parentDisposable, () -> myScopeListeners.remove(scopeListener));
   }
 
   public void fireScopeListeners() {
@@ -62,37 +63,37 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     }
   }
 
-  @NotNull
-  public NamedScope[] getScopes() {
-    List<NamedScope> scopes = new ArrayList<>();
+  public NamedScope @NotNull [] getScopes() {
     List<NamedScope> list = getPredefinedScopes();
+    List<NamedScope> scopes = new ArrayList<>(list.size() + myScopes.length);
     scopes.addAll(list);
-    scopes.addAll(myScopes);
-    return scopes.toArray(new NamedScope[0]);
+    Collections.addAll(scopes, myScopes);
+    return scopes.toArray(NamedScope.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public NamedScope[] getEditableScopes() {
-    return myScopes.toArray(new NamedScope[0]);
+  public NamedScope @NotNull [] getEditableScopes() {
+    return myScopes;
   }
 
   public void removeAllSets() {
-    myScopes.clear();
+    myScopes = NamedScope.EMPTY_ARRAY;
     fireScopeListeners();
   }
 
-  public void setScopes(NamedScope[] scopes) {
-    myScopes = new ArrayList<>(Arrays.asList(scopes));
+  public void setScopes(NamedScope @NotNull [] scopes) {
+    if (ArrayUtil.contains(null, scopes)) {
+      throw new IllegalArgumentException("Must not pass null scopes, got: " + Arrays.toString(scopes));
+    }
+    myScopes = scopes.clone();
     fireScopeListeners();
   }
 
-  public void addScope(NamedScope scope) {
-    myScopes.add(scope);
+  public void addScope(@NotNull NamedScope scope) {
+    myScopes = ArrayUtil.append(myScopes, scope);
     fireScopeListeners();
   }
 
-  @Nullable
-  public static NamedScope getScope(@NotNull Project project, String scopeName) {
+  public static @Nullable NamedScope getScope(@NotNull Project project, @NonNls String scopeName) {
     for (NamedScopesHolder holder : getAllNamedScopeHolders(project)) {
       NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
@@ -102,19 +103,18 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return null;
   }
 
-  @NotNull
-  public static NamedScopesHolder[] getAllNamedScopeHolders(@NotNull Project project) {
+  public static NamedScopesHolder @NotNull [] getAllNamedScopeHolders(@NotNull Project project) {
     return new NamedScopesHolder[]{
       NamedScopeManager.getInstance(project),
       DependencyValidationManager.getInstance(project)
     };
   }
 
-  @Nullable
-  public static NamedScopesHolder getHolder(Project project, String scopeName, NamedScopesHolder defaultHolder) {
+  @Contract("_,_,!null -> !null")
+  public static NamedScopesHolder getHolder(Project project, String scopeId, NamedScopesHolder defaultHolder) {
     NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {
-      NamedScope scope = holder.getScope(scopeName);
+      NamedScope scope = holder.getScope(scopeId);
       if (scope != null) {
         return holder;
       }
@@ -122,15 +122,15 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return defaultHolder;
   }
 
-  private static Element writeScope(NamedScope scope) {
+  private static @NotNull Element writeScope(@NotNull NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
-    setElement.setAttribute(NAME_ATT, scope.getName());
+    setElement.setAttribute(NAME_ATT, scope.getScopeId());
     PackageSet packageSet = scope.getValue();
     setElement.setAttribute(PATTERN_ATT, packageSet != null ? packageSet.getText() : "");
     return setElement;
   }
 
-  private NamedScope readScope(Element setElement) {
+  private @NotNull NamedScope readScope(@NotNull Element setElement) {
     String name = setElement.getAttributeValue(NAME_ATT);
     PackageSet set;
     String attributeValue = setElement.getAttributeValue(PATTERN_ATT);
@@ -145,17 +145,18 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(@NotNull Element state) {
-    myScopes.clear();
     List<Element> sets = state.getChildren(SCOPE_TAG);
-    for (Element set : sets) {
-      myScopes.add(readScope(set));
+    NamedScope [] scopes = new NamedScope[sets.size()];
+    for (int i = 0; i < sets.size(); i++) {
+      Element set = sets.get(i);
+      scopes[i] = readScope(set);
     }
+    myScopes = scopes;
     fireScopeListeners();
   }
 
   @Override
-  @NotNull
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("state");
     for (NamedScope myScope : myScopes) {
       element.addContent(writeScope(myScope));
@@ -163,32 +164,27 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return element;
   }
 
-  @Nullable
-  public NamedScope getScope(@Nullable String name) {
-    if (name == null) return null;
+  public @Nullable NamedScope getScope(@Nullable @NonNls String scopeId) {
+    if (scopeId == null) return null;
     for (NamedScope scope : myScopes) {
-      if (name.equals(scope.getName())) return scope;
+      if (scopeId.equals(scope.getScopeId())) return scope;
     }
-    return getPredefinedScope(name);
+    return getPredefinedScope(scopeId);
   }
 
-  @NotNull
-  public List<NamedScope> getPredefinedScopes() {
+  public @NotNull List<NamedScope> getPredefinedScopes() {
     return Collections.emptyList();
   }
 
-  @Nullable
-  public NamedScope getPredefinedScope(@NotNull String name) {
+  public @Nullable NamedScope getPredefinedScope(@NotNull String name) {
     return null;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public final NamedScope createScope(@NotNull String name, @Nullable PackageSet value) {
-    return new NamedScope(name, getIcon(), value);
+  public final @NotNull NamedScope createScope(@NotNull String name, @Nullable PackageSet value) {
+    return new NamedScope(name, () -> name, getIcon(), value,  false);
   }
 }

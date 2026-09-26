@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -25,28 +11,26 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyElementNode extends BasePsiNode<PyElement> {
-  public PyElementNode(Project project, PyElement value, ViewSettings viewSettings) {
+  public PyElementNode(Project project, @NotNull PyElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
-  protected Collection<AbstractTreeNode> getChildrenImpl() {
+  protected Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PyElement value = getValue();
     // for performance reasons, we don't show nested functions here
-    if (value instanceof PyClass) {
-      final PyClass pyClass = (PyClass)value;
-      List<AbstractTreeNode> result = new ArrayList<>();
+    if (value instanceof PyClass pyClass) {
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
       for (PyClass aClass : pyClass.getNestedClasses()) {
         result.add(new PyElementNode(myProject, aClass, getSettings()));
       }
@@ -55,11 +39,11 @@ public class PyElementNode extends BasePsiNode<PyElement> {
       }
       return result;
     }
-    return Collections.emptyList();       
+    return Collections.emptyList();
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     final PyElement value = getValue();
     final String name = value.getName();
     final ItemPresentation presentation = value.getPresentation();

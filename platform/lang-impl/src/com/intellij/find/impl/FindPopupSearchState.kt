@@ -1,0 +1,157 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.find.impl
+
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+
+/**
+ * Session-scoped paging/autoload state. One instance per [FindPopupPanel]; its lifetime
+ * is "one fresh search → the next fresh search" and all of it is reset together by
+ * [resetForFreshSearch].
+ *
+ * Threading: **this class is confined to the EDT and is intentionally not thread-safe.**
+ *
+ * Used only by [FindPopupResultsAutoloadHandler]; visible beyond it so that what it decides about paging can be tested
+ * on its own, which is otherwise reachable only by driving a whole search through the popup.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+class FindPopupSearchState {
+  /** Per-pass emission cap; grows by pageSize/2 on each `maybeLoadMore`, reset to pageSize on every fresh search.  */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var currentMaxUsages: Int = 0
+    private set
+
+  // --- Exhausted -----------------------------------------------------------
+  /** The last completed pass finished strictly below its cap → no more matches for this query.  */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var isExhausted: Boolean = false
+
+  /**
+   * The last load-more pass added no row → autoloading further ones cannot fill the visible area either, so stop
+   * chaining by ourselves. Not [isExhausted]: the query has more matches, and asking for them by scrolling still works.
+   */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var autoloadStalled: Boolean = false
+
+  /** Rows preserved at the head of the table from previous passes.  */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var frozenRowCount: Int = 0
+    private set
+
+  /** Cumulative file paths since the last fresh search — drives the "in N files" label across paging.  */
+  private val cumulativeFilePaths: MutableSet<String> = HashSet()
+
+  /** Cumulative usage count since the last fresh search — drives the "N matches" label across paging.  */
+  private var cumulativeUsageCount: Int = 0
+
+  /** Dedup keys (`path|line|navigationOffset`) for every row currently in the table.  */
+  private val currentRowKeys: MutableSet<String> = HashSet()
+
+  /**
+   * Path of the row that arrived first in the current search session. The table's row comparator
+   * pins this path at the top, so it must persist across paging passes but reset on every fresh search.
+   */
+  @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @set:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  var firstResultPath: String? = null
+
+  /**
+   * "The next `addRow` should clear the table." Set true at the start of every fresh search by
+   * [resetForFreshSearch]; consumed via [consumeNeedReset] either by the first row that arrives
+   * or by `searchStoppedProcessing` when no rows arrived at all.
+   */
+  private var needReset = true
+
+  // --- Lifecycle -----------------------------------------------------------
+  /** Reset every field for a brand-new search session (user typed a new query, scope changed, etc.).  */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun resetForFreshSearch(pageSize: Int) {
+    currentMaxUsages = pageSize
+    this.isExhausted = false
+    autoloadStalled = false
+    frozenRowCount = 0
+    cumulativeFilePaths.clear()
+    cumulativeUsageCount = 0
+    currentRowKeys.clear()
+    firstResultPath = null
+    needReset = true
+  }
+
+  /** "The next addRow should clear the table" consume. Returns true exactly once per fresh search. */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun consumeNeedReset(): Boolean {
+    if (!needReset) return false
+    needReset = false
+    return true
+  }
+
+  // --- Paging cap ----------------------------------------------------------
+  /**
+   * Mark the start of a load-more pass: pin the currently visible rows as the frozen
+   * prefix and grow the per-pass emission cap by half a page.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun beginLoadMorePass(rowCount: Int, pageSize: Int) {
+    frozenRowCount = rowCount
+    currentMaxUsages += (pageSize / 2)
+  }
+
+  /**
+   * Records what a pass that finished by itself says about whether to run another.
+   *
+   * A pass that stopped short of its cap found everything there is. A load-more pass that added no row found more
+   * matches but nothing more to show, so chaining into another cannot bring the table any closer to filling the visible
+   * area either -- and each pass rescans what the ones before it did, for a cap a half page larger. That is what one
+   * line holding every match of a file looks like: a single row, always fully visible, and passes that cost more and
+   * more to add nothing.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun recordPassFinished(loadMore: Boolean, rowCount: Int, occurrences: Int, maxUsages: Int) {
+    isExhausted = occurrences < maxUsages
+    if (loadMore && rowCount == frozenRowCount) {
+      autoloadStalled = true
+    }
+  }
+
+  // --- Frozen prefix / dedup ----------------------------------------------
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun containsRowKey(key: String): Boolean {
+    return currentRowKeys.contains(key)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun recordRowKey(key: String) {
+    currentRowKeys.add(key)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun forgetRowKey(key: String) {
+    currentRowKeys.remove(key)
+  }
+
+  // --- Cumulative file count ----------------------------------------------
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun recordFilePath(path: String) {
+    cumulativeFilePaths.add(path)
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun cumulativeFileCount(): Int {
+    return cumulativeFilePaths.size
+  }
+
+  // --- Cumulative usage count ---------------------------------------------
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun incrementUsageCount() {
+    cumulativeUsageCount++
+  }
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun cumulativeUsageCount(): Int {
+    return cumulativeUsageCount
+  }
+}

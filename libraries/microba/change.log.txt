@@ -1,0 +1,77 @@
+v.0.4.4.1
+	* Change: changed project directory structure according to Maven guidelines.
+	* Fixed: DatePicker popup did not close when clicked on already selecteed date.
+	* CalendarPane.fireCommitEvent(boolean) made public
+	* CalendarPane.fireActionEvent() made public
+v.0.4.4
+	* Added: DatePicker.dropdownFocusable property
+	* Added: MicrobaComponent.colorOverrideMap property  
+	* Added: Microba.setColorOverrideMap method         
+		These two improvements allow to override colors on per-instance	and per-L&F basis.
+		Currenty CalendarPane and DatePicker support some color overriding.
+	* Fixed: CalendarPane ignores enabled property
+
+v.0.4.3.4 (21 nov 2006)
+	* Fixed: Microba works with NetBeans Matisse GUI editor.
+		Thanks to Witold Szczerba for testing the fix.
+	* Fixed: manifest now specifies javabeans
+	* Refactored: common superclass extracted: MicrobaComponent
+	
+v.0.4.3.3
+	* Fixed: DatePicker ignores locale passed in constructor
+	
+v.0.4.3.2
+	* Fixed: DatePicker ignores showWeekNumber
+	* Fixed: DatePicker may return wrong date via getDate() in some cases
+	* Fixed: Portuguese translation corrected by Roger Araújo
+	
+v.0.4.3.1
+	* Fixed: DatePicker displays no tooltip string
+	* Fixed: DatePicker goes to infinite loop if keepTime is true, and date format has no time fields.
+		Thanks to Wolfgang Fietzke for his excellent bug report!
+
+v0.4.3
+	* Added: Birdview component for JGraph library
+	* Added: Swedish translation for DatePicker
+	* Added: CalendarPane.stripDate ( and DatePicker.stripDate ) property (optional time stripping)
+	* Added: DatePicker.keepTime property (improved time field handling)
+	* Added: DatePicker.pickerStyle property (controls visual style of the picker itself)
+	* Added: DatePicker.showButtonOnly() shortcut method
+	* Added: static CalendarPane.stripDate(...) utility method
+	* Fixed: DatePicker.setDateFormat(...) never fired a PropertyChangeEvent
+	* Changed: picker-16.png ico for DatePicker changed
+
+v.0.4.2 (31 jul 2006)
+	* Refactored: dateStyle property of DatePicker was dropped in favour of dateFormat property. However,
+		old constructors preserved.
+	* Fixed: OutOfMemory exception bug fixed. The bug prevented components to be garbage collected because
+		references were held by Timer tasks. Regression: CalendarPane will update 'today' date only 
+		on creation. 
+
+v.0.4.1 (18 jun 2006)
+	* Added: ability to show number of weeks for DatePicker and CalendarPane.
+	* Fixed: Applet refresh problem: see readme.txt, see Microba.init()
+	* Fixed: Polish translation (thanks to Gregory Kaczmarczyk)
+	
+v.0.4 (29 mar 2006)
+	* Refactored: com.michaelbaranov.microba.common package introduced
+	* Refactored: class HollidayPolicy renamed to HolidayPolicy
+	* Refactored: properties named 'hollidayPolicy' renamed to 'holidayPolicy' in all classes  
+	* Refactored: renamed recources in com.michaelbaranov.microba.calendar.resource:
+		16.png -> picker-16.png
+		l.png  -> back-16.png
+		ll.png -> back-fast-16.png
+		r.png  -> forward-16.png
+		rr.png -> forward-fast-16.png
+	* Added: MarkerBar, GradientBar, GradientEditor controls
+	* Added: multiple translations for CalendarPane UI
+	* Added: enabled/disabled state for DatePicker and CalendarPane
+	* Fixed: DatePickerCellEditor not respected focus lost behavior of the DatePicker.
+		Now it is possible to commit cell edit when cell edit stops (e.g. tab out).
+	
+		
+		
+v.0.3 (15 dec 2005)
+	* First public release
+
+		

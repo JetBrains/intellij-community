@@ -1,0 +1,1528 @@
+{
+  "properties": {
+    "title": {
+      "type": [
+        "string",
+        "any"
+      ]
+    },
+    "config": {
+      "$ref": "#/$defs/directives"
+    }
+  },
+  "$defs": {
+    "directives": {
+      "properties": {
+        "theme": {
+          "type": "string"
+        },
+        "themeVariables": {},
+        "themeCSS": {
+          "type": "string"
+        },
+        "maxTextSize": {
+          "type": "number"
+        },
+        "maxEdges": {
+          "type": "number"
+        },
+        "darkMode": {
+          "type": "boolean"
+        },
+        "htmlLabels": {
+          "type": "boolean"
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "altFontFamily": {
+          "type": "string"
+        },
+        "logLevel": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "securityLevel": {
+          "type": "string"
+        },
+        "startOnLoad": {
+          "type": "boolean"
+        },
+        "arrowMarkerAbsolute": {
+          "type": "boolean"
+        },
+        "secure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deterministicIds": {
+          "type": "boolean"
+        },
+        "deterministicIDSeed": {
+          "type": "string"
+        },
+        "flowchart": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "arrowMarkerAbsolute": {
+              "type": "boolean"
+            },
+            "diagramPadding": {
+              "type": "number"
+            },
+            "htmlLabels": {
+              "type": "boolean"
+            },
+            "nodeSpacing": {
+              "type": "number"
+            },
+            "rankSpacing": {
+              "type": "number"
+            },
+            "curve": {
+              "type": "string"
+            },
+            "padding": {
+              "type": "number"
+            },
+            "defaultRenderer": {
+              "type": "string"
+            },
+            "wrappingWidth": {
+              "type": "number"
+            }
+          }
+        },
+        "sequence": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "arrowMarkerAbsolute": {
+              "type": "boolean"
+            },
+            "hideUnusedParticipants": {
+              "type": "boolean"
+            },
+            "activationWidth": {
+              "type": "number"
+            },
+            "diagramMarginX": {
+              "type": "number"
+            },
+            "diagramMarginY": {
+              "type": "number"
+            },
+            "actorMargin": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "boxMargin": {
+              "type": "number"
+            },
+            "boxTextMargin": {
+              "type": "number"
+            },
+            "noteMargin": {
+              "type": "number"
+            },
+            "messageMargin": {
+              "type": "number"
+            },
+            "messageAlign": {
+              "type": "string"
+            },
+            "mirrorActors": {
+              "type": "boolean"
+            },
+            "forceMenus": {
+              "type": "boolean"
+            },
+            "bottomMarginAdj": {
+              "type": "number"
+            },
+            "rightAngles": {
+              "type": "boolean"
+            },
+            "showSequenceNumbers": {
+              "type": "boolean"
+            },
+            "actorFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "actorFontFamily": {
+              "type": "string"
+            },
+            "actorFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "noteFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "noteFontFamily": {
+              "type": "string"
+            },
+            "noteFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "noteAlign": {
+              "type": "string"
+            },
+            "messageFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "messageFontFamily": {
+              "type": "string"
+            },
+            "messageFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "wrap": {
+              "type": "boolean"
+            },
+            "wrapPadding": {
+              "type": "number"
+            },
+            "labelBoxWidth": {
+              "type": "number"
+            },
+            "labelBoxHeight": {
+              "type": "number"
+            },
+            "messageFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "noteFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "actorFont": {
+              "$ref": "#/definitions/fontConfig"
+            }
+          }
+        },
+        "gantt": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "barHeight": {
+              "type": "number"
+            },
+            "barGap": {
+              "type": "number"
+            },
+            "topPadding": {
+              "type": "number"
+            },
+            "rightPadding": {
+              "type": "number"
+            },
+            "leftPadding": {
+              "type": "number"
+            },
+            "gridLineStartPadding": {
+              "type": "number"
+            },
+            "fontSize": {
+              "type": "number"
+            },
+            "sectionFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "numberSectionStyles": {
+              "type": "number"
+            },
+            "axisFormat": {
+              "type": "string"
+            },
+            "tickInterval": {
+              "type": "string"
+            },
+            "topAxis": {
+              "type": "boolean"
+            },
+            "displayMode": {
+              "type": "string"
+            }
+          }
+        },
+        "journey": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "diagramMarginX": {
+              "type": "number"
+            },
+            "diagramMarginY": {
+              "type": "number"
+            },
+            "leftMargin": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "boxMargin": {
+              "type": "number"
+            },
+            "boxTextMargin": {
+              "type": "number"
+            },
+            "noteMargin": {
+              "type": "number"
+            },
+            "messageMargin": {
+              "type": "number"
+            },
+            "messageAlign": {
+              "type": "string"
+            },
+            "bottomMarginAdj": {
+              "type": "number"
+            },
+            "rightAngles": {
+              "type": "boolean"
+            },
+            "taskFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "taskFontFamily": {
+              "type": "string"
+            },
+            "taskMargin": {
+              "type": "number"
+            },
+            "activationWidth": {
+              "type": "number"
+            },
+            "textPlacement": {
+              "type": "string"
+            },
+            "actorColours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sectionFills": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sectionColours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "timeline": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "diagramMarginX": {
+              "type": "number"
+            },
+            "diagramMarginY": {
+              "type": "number"
+            },
+            "leftMargin": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "padding": {
+              "type": "number"
+            },
+            "boxMargin": {
+              "type": "number"
+            },
+            "boxTextMargin": {
+              "type": "number"
+            },
+            "noteMargin": {
+              "type": "number"
+            },
+            "messageMargin": {
+              "type": "number"
+            },
+            "messageAlign": {
+              "type": "string"
+            },
+            "bottomMarginAdj": {
+              "type": "number"
+            },
+            "rightAngles": {
+              "type": "boolean"
+            },
+            "taskFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "taskFontFamily": {
+              "type": "string"
+            },
+            "taskMargin": {
+              "type": "number"
+            },
+            "activationWidth": {
+              "type": "number"
+            },
+            "textPlacement": {
+              "type": "string"
+            },
+            "actorColours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sectionFills": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "sectionColours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "disableMulticolor": {
+              "type": "boolean"
+            }
+          }
+        },
+        "class": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "arrowMarkerAbsolute": {
+              "type": "boolean"
+            },
+            "dividerMargin": {
+              "type": "number"
+            },
+            "padding": {
+              "type": "number"
+            },
+            "textHeight": {
+              "type": "number"
+            },
+            "defaultRenderer": {
+              "type": "string"
+            },
+            "nodeSpacing": {
+              "type": "number"
+            },
+            "rankSpacing": {
+              "type": "number"
+            },
+            "diagramPadding": {
+              "type": "number"
+            },
+            "htmlLabels": {
+              "type": "boolean"
+            }
+          }
+        },
+        "state": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "arrowMarkerAbsolute": {
+              "type": "boolean"
+            },
+            "dividerMargin": {
+              "type": "number"
+            },
+            "sizeUnit": {
+              "type": "number"
+            },
+            "padding": {
+              "type": "number"
+            },
+            "textHeight": {
+              "type": "number"
+            },
+            "titleShift": {
+              "type": "number"
+            },
+            "noteMargin": {
+              "type": "number"
+            },
+            "forkWidth": {
+              "type": "number"
+            },
+            "forkHeight": {
+              "type": "number"
+            },
+            "miniPadding": {
+              "type": "number"
+            },
+            "fontSizeFactor": {
+              "type": "number"
+            },
+            "fontSize": {
+              "type": "number"
+            },
+            "labelHeight": {
+              "type": "number"
+            },
+            "edgeLengthFactor": {
+              "type": "string"
+            },
+            "compositTitleSize": {
+              "type": "number"
+            },
+            "radius": {
+              "type": "number"
+            },
+            "defaultRenderer": {
+              "type": "string"
+            }
+          }
+        },
+        "er": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "diagramPadding": {
+              "type": "number"
+            },
+            "layoutDirection": {
+              "type": "string"
+            },
+            "minEntityWidth": {
+              "type": "number"
+            },
+            "minEntityHeight": {
+              "type": "number"
+            },
+            "entityPadding": {
+              "type": "number"
+            },
+            "stroke": {
+              "type": "string"
+            },
+            "fill": {
+              "type": "string"
+            },
+            "fontSize": {
+              "type": "number"
+            }
+          }
+        },
+        "pie": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "textPosition": {
+              "type": "number"
+            }
+          }
+        },
+        "quadrantChart": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "chartWidth": {
+              "type": "number"
+            },
+            "chartHeight": {
+              "type": "number"
+            },
+            "titleFontSize": {
+              "type": "number"
+            },
+            "titlePadding": {
+              "type": "number"
+            },
+            "quadrantPadding": {
+              "type": "number"
+            },
+            "xAxisLabelPadding": {
+              "type": "number"
+            },
+            "yAxisLabelPadding": {
+              "type": "number"
+            },
+            "xAxisLabelFontSize": {
+              "type": "number"
+            },
+            "yAxisLabelFontSize": {
+              "type": "number"
+            },
+            "quadrantLabelFontSize": {
+              "type": "number"
+            },
+            "quadrantTextTopPadding": {
+              "type": "number"
+            },
+            "pointTextPadding": {
+              "type": "number"
+            },
+            "pointLabelFontSize": {
+              "type": "number"
+            },
+            "pointRadius": {
+              "type": "number"
+            },
+            "xAxisPosition": {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom"
+              ]
+            },
+            "yAxisPosition": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right"
+              ]
+            },
+            "quadrantInternalBorderStrokeWidth": {
+              "type": "number"
+            },
+            "quadrantExternalBorderStrokeWidth": {
+              "type": "number"
+            }
+          }
+        },
+        "xyChart": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "titleFontSize": {
+              "type": "number"
+            },
+            "titlePadding": {
+              "type": "number"
+            },
+            "showTitle": {
+              "type": "boolean"
+            },
+            "xAxis": {
+              "$ref": "#/definitions/XYChartAxisConfig"
+            },
+            "yAxis": {
+              "$ref": "#/definitions/XYChartAxisConfig"
+            },
+            "chartOrientation": {
+              "type": "string",
+              "enum": [
+                "vertical",
+                "horizontal"
+              ]
+            },
+            "plotReservedSpacePercent": {
+              "type": "number"
+            }
+          }
+        },
+        "requirement": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "rect_fill": {
+              "type": "string"
+            },
+            "text_color": {
+              "type": "string"
+            },
+            "rect_border_size": {
+              "type": "string"
+            },
+            "rect_border_color": {
+              "type": "string"
+            },
+            "rect_min_width": {
+              "type": "number"
+            },
+            "rect_min_height": {
+              "type": "number"
+            },
+            "fontSize": {
+              "type": "number"
+            },
+            "rect_padding": {
+              "type": "number"
+            },
+            "line_height": {
+              "type": "number"
+            }
+          }
+        },
+        "mindmap": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "padding": {
+              "type": "number"
+            },
+            "maxNodeWidth": {
+              "type": "number"
+            }
+          }
+        },
+        "gitGraph": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "titleTopMargin": {
+              "type": "number"
+            },
+            "diagramPadding": {
+              "type": "number"
+            },
+            "nodeLabel": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "mainBranchName": {
+              "type": "string"
+            },
+            "mainBranchOrder": {
+              "type": "number"
+            },
+            "showCommitLabel": {
+              "type": "boolean"
+            },
+            "showBranches": {
+              "type": "boolean"
+            },
+            "rotateCommitLabel": {
+              "type": "boolean"
+            },
+            "parallelCommits": {
+              "type": "boolean"
+            },
+            "arrowMarkerAbsolute": {
+              "type": "boolean"
+            }
+          }
+        },
+        "c4": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "diagramMarginX": {
+              "type": "number"
+            },
+            "diagramMarginY": {
+              "type": "number"
+            },
+            "c4ShapeMargin": {
+              "type": "number"
+            },
+            "c4ShapePadding": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "boxMargin": {
+              "type": "number"
+            },
+            "c4ShapeInRow": {
+              "type": "number"
+            },
+            "nextLinePaddingX": {
+              "type": "number"
+            },
+            "c4BoundaryInRow": {
+              "type": "number"
+            },
+            "personFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "personFontFamily": {
+              "type": "string"
+            },
+            "personFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_personFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_personFontFamily": {
+              "type": "string"
+            },
+            "external_personFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "systemFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "systemFontFamily": {
+              "type": "string"
+            },
+            "systemFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_systemFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_systemFontFamily": {
+              "type": "string"
+            },
+            "external_systemFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "system_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "system_dbFontFamily": {
+              "type": "string"
+            },
+            "system_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_system_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_system_dbFontFamily": {
+              "type": "string"
+            },
+            "external_system_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "system_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "system_queueFontFamily": {
+              "type": "string"
+            },
+            "system_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_system_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_system_queueFontFamily": {
+              "type": "string"
+            },
+            "external_system_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "boundaryFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "boundaryFontFamily": {
+              "type": "string"
+            },
+            "boundaryFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "messageFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "messageFontFamily": {
+              "type": "string"
+            },
+            "messageFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "containerFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "containerFontFamily": {
+              "type": "string"
+            },
+            "containerFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_containerFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_containerFontFamily": {
+              "type": "string"
+            },
+            "external_containerFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "container_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "container_dbFontFamily": {
+              "type": "string"
+            },
+            "container_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_container_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_container_dbFontFamily": {
+              "type": "string"
+            },
+            "external_container_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "container_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "container_queueFontFamily": {
+              "type": "string"
+            },
+            "container_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_container_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_container_queueFontFamily": {
+              "type": "string"
+            },
+            "external_container_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "componentFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "componentFontFamily": {
+              "type": "string"
+            },
+            "componentFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_componentFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_componentFontFamily": {
+              "type": "string"
+            },
+            "external_componentFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "component_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "component_dbFontFamily": {
+              "type": "string"
+            },
+            "component_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_component_dbFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_component_dbFontFamily": {
+              "type": "string"
+            },
+            "external_component_dbFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "component_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "component_queueFontFamily": {
+              "type": "string"
+            },
+            "component_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_component_queueFontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "external_component_queueFontFamily": {
+              "type": "string"
+            },
+            "external_component_queueFontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "wrap": {
+              "type": "boolean"
+            },
+            "wrapPadding": {
+              "type": "number"
+            },
+            "person_bg_color": {
+              "type": "string"
+            },
+            "person_border_color": {
+              "type": "string"
+            },
+            "external_person_bg_color": {
+              "type": "string"
+            },
+            "external_person_border_color": {
+              "type": "string"
+            },
+            "system_bg_color": {
+              "type": "string"
+            },
+            "system_border_color": {
+              "type": "string"
+            },
+            "system_db_bg_color": {
+              "type": "string"
+            },
+            "system_db_border_color": {
+              "type": "string"
+            },
+            "system_queue_bg_color": {
+              "type": "string"
+            },
+            "system_queue_border_color": {
+              "type": "string"
+            },
+            "external_system_bg_color": {
+              "type": "string"
+            },
+            "external_system_border_color": {
+              "type": "string"
+            },
+            "external_system_db_bg_color": {
+              "type": "string"
+            },
+            "external_system_db_border_color": {
+              "type": "string"
+            },
+            "external_system_queue_bg_color": {
+              "type": "string"
+            },
+            "external_system_queue_border_color": {
+              "type": "string"
+            },
+            "container_bg_color": {
+              "type": "string"
+            },
+            "container_border_color": {
+              "type": "string"
+            },
+            "container_db_bg_color": {
+              "type": "string"
+            },
+            "container_db_border_color": {
+              "type": "string"
+            },
+            "container_queue_bg_color": {
+              "type": "string"
+            },
+            "container_queue_border_color": {
+              "type": "string"
+            },
+            "external_container_bg_color": {
+              "type": "string"
+            },
+            "external_container_border_color": {
+              "type": "string"
+            },
+            "external_container_db_bg_color": {
+              "type": "string"
+            },
+            "external_container_db_border_color": {
+              "type": "string"
+            },
+            "external_container_queue_bg_color": {
+              "type": "string"
+            },
+            "external_container_queue_border_color": {
+              "type": "string"
+            },
+            "component_bg_color": {
+              "type": "string"
+            },
+            "component_border_color": {
+              "type": "string"
+            },
+            "component_db_bg_color": {
+              "type": "string"
+            },
+            "component_db_border_color": {
+              "type": "string"
+            },
+            "component_queue_bg_color": {
+              "type": "string"
+            },
+            "component_queue_border_color": {
+              "type": "string"
+            },
+            "external_component_bg_color": {
+              "type": "string"
+            },
+            "external_component_border_color": {
+              "type": "string"
+            },
+            "external_component_db_bg_color": {
+              "type": "string"
+            },
+            "external_component_db_border_color": {
+              "type": "string"
+            },
+            "external_component_queue_bg_color": {
+              "type": "string"
+            },
+            "external_component_queue_border_color": {
+              "type": "string"
+            },
+            "personFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_personFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "systemFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_systemFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "system_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_system_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "system_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_system_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "containerFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_containerFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "container_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_container_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "container_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_container_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "componentFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_componentFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "component_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_component_dbFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "component_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "external_component_queueFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "boundaryFont": {
+              "$ref": "#/definitions/fontConfig"
+            },
+            "messageFont": {
+              "$ref": "#/definitions/fontConfig"
+            }
+          }
+        },
+        "sankey": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "linkColor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "source",
+                    "target",
+                    "gradient"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "nodeAlignment": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "center",
+                "justify"
+              ]
+            },
+            "showValues": {
+              "type": "boolean"
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            }
+          }
+        },
+        "block": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "padding": {
+              "type": "number"
+            }
+          }
+        },
+        "wrap": {
+          "type": "boolean"
+        },
+        "fontSize": {
+          "type": "number"
+        }
+      },
+      "definitions": {
+        "fontConfig": {
+          "properties": {
+            "fontSize": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "fontFamily": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          }
+        },
+        "XYChartAxisConfig": {
+          "properties": {
+            "showLabel": {
+              "type": "boolean"
+            },
+            "labelFontSize": {
+              "type": "number"
+            },
+            "labelPadding": {
+              "type": "number"
+            },
+            "showTitle": {
+              "type": "boolean"
+            },
+            "titleFontSize": {
+              "type": "number"
+            },
+            "titlePadding": {
+              "type": "number"
+            },
+            "showTick": {
+              "type": "boolean"
+            },
+            "tickLength": {
+              "type": "number"
+            },
+            "tickWidth": {
+              "type": "number"
+            },
+            "showAxisLine": {
+              "type": "boolean"
+            },
+            "axisLineWidth": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

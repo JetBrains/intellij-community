@@ -1,0 +1,61 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.services.systemPython.impl.providers
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.isMac
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.utils.Path
+import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.PyResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+
+internal class UnixSystemPythonProvider : SystemPythonProvider {
+  private val LOGGER: Logger = Logger.getInstance(UnixSystemPythonProvider::class.java)
+
+  private val directories = arrayOf(
+    "/usr/bin",
+    "/usr/local/bin")
+
+  // Patterns to match Python executable filenames
+  private val names = listOf(
+    python3NamePattern,
+    python3XNamePattern,
+    pypyNamePattern,
+  )
+
+  override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
+    // Check if we're on a Unix system that's not Mac
+    val unixNotMac = when (eelApi.platform) {
+      is EelPlatform.Darwin, is EelPlatform.Windows -> false
+      is EelPlatform.FreeBSD, is EelPlatform.Linux, is EelPlatform.OHOS -> true
+    }
+    if (!unixNotMac) {
+      return PyResult.success(emptySet())
+    }
+
+    val pythons = withContext(Dispatchers.IO) {
+      try {
+        return@withContext collectPythonsInPaths(directories.map { Path(it, eelApi.descriptor) }, names)
+      }
+      catch (e: EelPathException) {
+        LOGGER.error("Failed to discover UNIX system pythons", e)
+      }
+
+      return@withContext emptySet()
+    }
+
+    return PyResult.success(pythons)
+  }
+
+  override val uiCustomization: PyToolUIInfo?
+    get() {
+      // TODO:
+      return null
+    }
+}

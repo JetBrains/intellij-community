@@ -15,11 +15,16 @@ int
 interface
 long
 native
+non-sealed
+record
+sealed
 short
 static
 strictfp
 synchronized
 trait
 transient
+val
+var
 void
 volatile

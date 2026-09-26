@@ -1,44 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaParameterType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class PsiConditionalExpressionImpl extends ExpressionPsiElement implements PsiConditionalExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiConditionalExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiConditionalExpressionImpl.class);
 
   public PsiConditionalExpressionImpl() {
     super(JavaElementType.CONDITIONAL_EXPRESSION);
   }
 
   @Override
-  @NotNull
-  public PsiExpression getCondition() {
+  public @NotNull PsiExpression getCondition() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
@@ -61,22 +62,30 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     PsiExpression expr2 = getElseExpression();
     PsiType type1 = expr1 == null ? null : expr1.getType();
     PsiType type2 = expr2 == null ? null : expr2.getType();
-    if (type1 == null) return type2;
-    if (type2 == null) return type1;
-
-    if (type1.equals(type2)) return type1;
+    if (Objects.equals(type1, type2)) {
+      return type1 == null ? null : type1.withNullability(type1.getNullability().join(type2.getNullability()));
+    }
 
     if (PsiUtil.isLanguageLevel8OrHigher(this) &&
-        PsiPolyExpressionUtil.isPolyExpression(this) &&
-        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
+        PsiPolyExpressionUtil.isPolyExpression(this)) {
       //15.25.3 Reference Conditional Expressions 
       // The type of a poly reference conditional expression is the same as its target type.
-      final PsiType targetType = InferenceSession.getTargetType(this);
-      if (targetType instanceof PsiClassType) {
-        return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(this));
+      PsiType targetType = InferenceSession.getTargetType(this);
+      if (MethodCandidateInfo.isOverloadCheck()) {
+        return targetType != null && 
+               type1 != null &&
+               type2 != null &&
+               targetType.isAssignableFrom(type1) && 
+               targetType.isAssignableFrom(type2) ? targetType : null;
       }
-      return targetType;
+      //for standalone conditional expression try to detect target type by type of the sides
+      if (targetType != null) {
+        return targetType;
+      }
     }
+
+    if (type1 == null) return type2;
+    if (type2 == null) return type1;
 
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);
     final int typeRank2 = TypeConversionUtil.getTypeRank(type2);
@@ -100,8 +109,12 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       }
       return TypeConversionUtil.binaryNumericPromotion(type1, type2);
     }
-    if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) return type2;
-    if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) return type1;
+    if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) {
+      return type2.withNullability(type2.getNullability().join(type1.getNullability()));
+    }
+    if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) {
+      return type1.withNullability(type2.getNullability().join(type1.getNullability()));
+    }
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
@@ -126,9 +139,6 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.CONDITION:
         return getFirstChildNode();
 
@@ -152,6 +162,9 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
         ASTNode colon = findChildByRole(ChildRole.COLON);
         if (colon == null) return null;
         return ElementType.EXPRESSION_BIT_SET.contains(getLastChildNode().getElementType()) ? getLastChildNode() : null;
+
+      default:
+        return null;
     }
   }
 
@@ -185,6 +198,25 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (lastParent == null) return true;
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    PsiExpression condition = getCondition();
+    if (lastParent == getThenExpression()) {
+      return condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    if (lastParent == getElseExpression()) {
+      return condition.processDeclarations(processor, PatternResolveState.WHEN_FALSE.putInto(state), null, place);
+    }
+    return true;
+  }
+
+  @Override
   public String toString() {
     return "PsiConditionalExpression:" + getText();
   }

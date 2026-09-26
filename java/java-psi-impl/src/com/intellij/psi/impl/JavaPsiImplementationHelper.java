@@ -1,57 +1,59 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class JavaPsiImplementationHelper {
   public static JavaPsiImplementationHelper getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JavaPsiImplementationHelper.class);
+    return project.getService(JavaPsiImplementationHelper.class);
   }
 
-  @NotNull
-  public abstract PsiClass getOriginalClass(@NotNull PsiClass psiClass);
+  public abstract @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass);
 
-  @NotNull
-  public abstract PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module);
+  public abstract @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module);
 
-  @NotNull
-  public abstract PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile);
+  public abstract @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile);
 
-  @NotNull
-  public abstract LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
+  public abstract @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
 
-  @Nullable
-  public abstract ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement);
+  public abstract @Nullable ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement);
 
-  @Nullable
-  public abstract PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
+  public abstract @Nullable PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
 
   public abstract void setupCatchBlock(@NotNull String exceptionName,
                                        @NotNull PsiType exceptionType,
                                        @Nullable PsiElement context,
                                        @NotNull PsiCatchSection element);
+
+  public abstract @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value);
+
+  /**
+   * Returns a PsiSymbolReference corresponding to the {@code @inheritDoc} token.
+   * This makes it possible to navigate to the inherited doc.
+   */
+  public abstract @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token);
+
+  /**
+   * Returns a PsiSymbolReference mapping a fragment reference ({@code ##fragment-id}) to its source ({@code <p id="fragment-id">…</p>}).
+   */
+  public abstract @Nullable PsiSymbolReference getFragmentNameSymbol(@NotNull PsiDocFragmentName token);
 }

@@ -1,0 +1,5 @@
+version = "7.47.0"
+upstream-repository = "https://github.com/pycurl/pycurl"
+
+[tool.stubtest]
+ci-platforms = ["darwin", "linux", "win32"]

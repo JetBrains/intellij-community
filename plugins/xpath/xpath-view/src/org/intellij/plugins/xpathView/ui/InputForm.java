@@ -17,7 +17,10 @@ package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.openapi.Disposable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public interface InputForm extends Disposable {
     JComponent getComponent();

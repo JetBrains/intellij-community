@@ -1,0 +1,13 @@
+// "Create parameter 'name'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+class B {
+    constructor() {
+        object : A(<caret>name) {
+
+        }
+    }
+}
+
+open class A(s: String)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: name: kotlin.String

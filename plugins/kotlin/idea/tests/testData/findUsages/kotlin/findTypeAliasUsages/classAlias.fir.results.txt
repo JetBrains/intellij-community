@@ -1,0 +1,11 @@
+Function return types 28 fun f2(par: Alias, par2: OOO) : Alias {
+Local variable declaration 30 val a: Alias
+Nested class/object 37 Alias.CONST //not found in K1, found in K2
+New instance creation 32 a = Alias()
+Parameter type 28 fun f2(par: Alias, par2: OOO) : Alias {
+Super type qualifier 20 super<Alias>.opFun()
+Supertype 17 class Child : Alias() {
+Target type of 'is' operation 43 if (par2 is Alias) {}
+Type parameter 34 val b = WithGeneric<Alias>()
+Unclassified 40 Alias(10)
+Usage in cast target type 46 val c = par2 as Alias

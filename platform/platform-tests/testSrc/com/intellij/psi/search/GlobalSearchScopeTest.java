@@ -1,16 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.ResolveScopeManager;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GlobalSearchScopeTest extends PlatformTestCase {
+public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
   public void testUniteDirectorySearchScopeDoesNotSOE() throws Exception {
     VirtualFile genRoot = getVirtualFile(createTempDir("genSrcRoot"));
     VirtualFile srcRoot = getVirtualFile(createTempDir("srcRoot"));
@@ -47,7 +55,7 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
   }
 
   public void testNotScope() {
-    VirtualFile moduleRoot = getTempDir().createTempVDir();
+    VirtualFile moduleRoot = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addContentRoot(getModule(), moduleRoot.getPath());
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
@@ -67,7 +75,7 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     assertFalse(notAllScope.contains(moduleRoot));
   }
 
-  public void testIntersectionPreservesOrderInCaseClientsWantToPutCheaperChecksFirst() throws IOException {
+  public void testIntersectionPreservesOrderInCaseClientsWantToPutCheaperChecksFirst() {
     AtomicInteger targetCalled = new AtomicInteger();
     GlobalSearchScope alwaysTrue = new DelegatingGlobalSearchScope(new EverythingGlobalScope()) {
       @Override
@@ -84,8 +92,8 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     };
     GlobalSearchScope trueIntersection = target.intersectWith(alwaysTrue);
 
-    VirtualFile file1 = getVirtualFile(createTempFile("file1", ""));
-    VirtualFile file2 = getVirtualFile(createTempFile("file2", ""));
+    VirtualFile file1 = getTempDir().createVirtualFile("file1");
+    VirtualFile file2 = getTempDir().createVirtualFile("file2");
 
     assertTrue(trueIntersection.contains(file2));
     assertEquals(1, targetCalled.get());
@@ -102,7 +110,103 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     PsiTestUtil.addContentRoot(getModule(), contentRoot);
     PsiTestUtil.addLibrary(getModule(), libRoot.getPath());
 
-    assertTrue(GlobalSearchScopes.directoryScope(myProject, libRoot, true).isSearchInLibraries());
-    assertTrue(GlobalSearchScopes.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, libRoot, true).isSearchInLibraries());
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
+  }
+
+  public void testDirScopeAlsoContainsItsRoot() throws IOException {
+    VirtualFile dir1 = getVirtualFile(createTempDir("dir1"));
+    VirtualFile dir2 = getVirtualFile(createTempDir("dir2"));
+
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(createChildData(dir1, "child1")));
+
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(dir1));
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, false).contains(dir1));
+    assertFalse(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(dir2));
+
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, dir1, dir2).contains(dir1));
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, dir1, dir2).contains(dir2));
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, false, dir1, dir2).contains(dir2));
+  }
+
+  public void testUnionWithEmptyScopeMustNotAffectCompare() {
+    VirtualFile moduleRoot = getTempDir().createVirtualDir();
+    assertNotNull(moduleRoot);
+    PsiTestUtil.addSourceRoot(getModule(), moduleRoot);
+    VirtualFile moduleRoot2 = getTempDir().createVirtualDir();
+    assertNotNull(moduleRoot2);
+    PsiTestUtil.addSourceRoot(getModule(), moduleRoot2);
+
+    GlobalSearchScope modScope = getModule().getModuleScope();
+    int compare = modScope.compare(moduleRoot, moduleRoot2);
+    assertTrue(compare != 0);
+    GlobalSearchScope union = modScope.uniteWith(GlobalSearchScope.EMPTY_SCOPE);
+    int compare2 = union.compare(moduleRoot, moduleRoot2);
+    assertEquals(compare, compare2);
+
+    assertEquals(modScope.compare(moduleRoot2, moduleRoot), union.compare(moduleRoot2, moduleRoot));
+  }
+
+  public void testIsInScopeDoesNotAcceptRandomNonPhysicalFilesByDefault() {
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(PlainTextLanguage.INSTANCE, "");
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+
+    assertFalse(GlobalSearchScope.allScope(myProject).contains(vFile));
+    assertFalse(PsiSearchScopeUtil.isInScope(GlobalSearchScope.allScope(myProject), file));
+
+    assertTrue(file.getResolveScope().contains(vFile));
+    assertTrue(PsiSearchScopeUtil.isInScope(file.getResolveScope(), file));
+  }
+
+  public void testPsiCopyResolveScopeMirrorsOriginalButIncludesTheCopy() throws IOException {
+    Module anotherModule = createModule("another");
+    VirtualFile anotherRoot = getTempDir().createVirtualDir("anotherRoot");
+    PsiTestUtil.addSourceContentToRoots(anotherModule, anotherRoot);
+
+    VirtualFile file = getTempDir().createVirtualFile("a.txt");
+    PsiTestUtil.addSourceContentToRoots(getModule(), file.getParent());
+    PsiFile psi = getPsiManager().findFile(file);
+
+    PsiFile copyPsi = (PsiFile)psi.copy();
+    VirtualFile copyFile = copyPsi.getViewProvider().getVirtualFile();
+
+    Function<GlobalSearchScope, List<Boolean>> checkContains = scope ->
+      List.of(scope.contains(file), scope.contains(anotherRoot), scope.contains(copyFile));
+
+    assertOrderedEquals(checkContains.fun(psi.getResolveScope()), true, false, false);
+    assertOrderedEquals(checkContains.fun(ResolveScopeManager.getInstance(myProject).getDefaultResolveScope(file)), true, false, false);
+
+    assertOrderedEquals(checkContains.fun(copyPsi.getResolveScope()), true, false, true);
+    assertOrderedEquals(checkContains.fun(ResolveScopeManager.getInstance(myProject).getDefaultResolveScope(copyFile)), true, false, true);
+  }
+
+  public void testUnionWithEmptyAndUnion() {
+    GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE.uniteWith(GlobalSearchScope.EMPTY_SCOPE);
+    assertEquals(GlobalSearchScope.EMPTY_SCOPE, scope);
+    GlobalSearchScope scope2 = GlobalSearchScope.union(new GlobalSearchScope[]{GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope.EMPTY_SCOPE});
+    assertEquals(GlobalSearchScope.EMPTY_SCOPE, scope2);
+    GlobalSearchScope p = GlobalSearchScope.projectScope(getProject());
+    GlobalSearchScope scope3 = GlobalSearchScope.union(new GlobalSearchScope[]{GlobalSearchScope.EMPTY_SCOPE, p, GlobalSearchScope.EMPTY_SCOPE});
+    assertEquals(p, scope3);
+
+    GlobalSearchScope m = GlobalSearchScope.moduleScope(getModule());
+    GlobalSearchScope pm = m.uniteWith(p);
+    Assert.assertNotEquals(m, pm);
+
+    GlobalSearchScope scope4 = GlobalSearchScope.union(new GlobalSearchScope[]{GlobalSearchScope.EMPTY_SCOPE, p, GlobalSearchScope.EMPTY_SCOPE, pm, m});
+    assertEquals(pm, scope4);
+  }
+
+  public void testProjectEverythingScopeDoesNotContainNonIndexableFiles() throws Exception {
+    GlobalSearchScope scope = GlobalSearchScope.everythingScope(getProject());
+
+    VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
+    PsiTestUtil.removeAllRoots(getModule(), null);
+    PsiTestUtil.addContentRoot(getModule(), contentRoot);
+
+    assertTrue(scope.contains(contentRoot));
+
+    VirtualFile fileOutsideIndexingScope = getVirtualFile(createTempDir("outsideIndexingScope"));
+    assertFalse(scope.contains(fileOutsideIndexingScope));
   }
 }

@@ -1,0 +1,10 @@
+// "Create enum constant 'C'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+enum class E {
+    A, B, <caret>C
+}
+
+fun foo() {
+    E.C
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

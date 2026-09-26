@@ -1,4 +1,4 @@
-// "Insert 'filter(Objects::nonNull)' step" "true"
+// "Insert 'filter(Objects::nonNull)' step" "true-preview"
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

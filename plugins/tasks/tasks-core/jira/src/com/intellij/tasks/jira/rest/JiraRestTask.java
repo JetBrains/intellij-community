@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.jira.rest;
 
@@ -21,9 +7,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.jira.JiraTask;
-import com.intellij.tasks.jira.rest.model.JiraComment;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +27,12 @@ public class JiraRestTask extends JiraTask {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myJiraIssue.getKey();
   }
 
   @Override
-  @NotNull
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myJiraIssue.getSummary();
   }
 
@@ -61,18 +43,20 @@ public class JiraRestTask extends JiraTask {
 
 
   @Override
-  @NotNull
-  public Comment[] getComments() {
-    return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, (Function<JiraComment, Comment>)comment -> new Comment() {
+  public Comment @NotNull [] getComments() {
+    return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, comment -> new Comment() {
 
+      @Override
       public String getText() {
         return comment.getBody();
       }
 
+      @Override
       public String getAuthor() {
         return comment.getAuthor().getDisplayName();
       }
 
+      @Override
       public Date getDate() {
         return comment.getCreated();
       }
@@ -85,15 +69,13 @@ public class JiraRestTask extends JiraTask {
   }
 
   @Override
-  @Nullable
-  protected String getIconUrl() {
+  protected @Nullable String getIconUrl() {
     // iconUrl will be null in JIRA versions prior 5.x.x
     return myJiraIssue.getIssueType().getIconUrl();
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return getTypeByName(myJiraIssue.getIssueType().getName());
   }
 
@@ -102,9 +84,8 @@ public class JiraRestTask extends JiraTask {
     return getStateById(Integer.parseInt(myJiraIssue.getStatus().getId()));
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myJiraIssue.getUpdated();
   }
 

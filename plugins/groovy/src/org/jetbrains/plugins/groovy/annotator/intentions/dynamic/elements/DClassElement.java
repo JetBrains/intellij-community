@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DClassElement implements DNamedElement {
   public String myName;
@@ -31,7 +22,7 @@ public class DClassElement implements DNamedElement {
   @SuppressWarnings("UnusedDeclaration") //used for serialization
   public DClassElement() {
   }
-  
+
   public DClassElement(Project project, String name) {
     myName = name;
     DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
@@ -55,8 +46,7 @@ public class DClassElement implements DNamedElement {
     }
   }
 
-  @Nullable
-  public DPropertyElement getPropertyByName(String propertyName) {
+  public @Nullable DPropertyElement getPropertyByName(String propertyName) {
     for (final DPropertyElement property : myProperties) {
       if (propertyName.equals(property.getName())) {
         return property;
@@ -74,12 +64,12 @@ public class DClassElement implements DNamedElement {
   }
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NlsSafe String name) {
     myName = name;
   }
 
@@ -91,6 +81,7 @@ public class DClassElement implements DNamedElement {
     return myMethods.remove(methodElement);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -102,6 +93,7 @@ public class DClassElement implements DNamedElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);
@@ -110,8 +102,7 @@ public class DClassElement implements DNamedElement {
     return result;
   }
 
-  @Nullable
-  public DMethodElement getMethod(String methodName, String[] parametersTypes) {
+  public @Nullable DMethodElement getMethod(String methodName, String[] parametersTypes) {
     for (DMethodElement method : myMethods) {
       final List<ParamInfo> myPairList = method.getPairs();
       if (method.getName().equals(methodName)

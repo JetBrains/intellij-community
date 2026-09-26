@@ -1,0 +1,9 @@
+package test
+
+import klass.*
+
+fun a(klass: Klass) {
+    b(klass)
+    println(":)")
+}
+// touch 2

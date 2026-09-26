@@ -26,7 +26,7 @@ import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
 import org.jetbrains.annotations.NotNull;
 
-public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
+public final class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
   public RncIncludeImpl(ASTNode node) {
     super(node);
   }
@@ -58,8 +58,7 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
   }
 
   @Override
-  @NotNull
-  public RncDefine[] getOverrides() {
+  public RncDefine @NotNull [] getOverrides() {
     // TODO: DIVs?
     return findChildrenByClass(RncDefine.class);
   }

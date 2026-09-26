@@ -1,0 +1,14 @@
+// WITH_STDLIB
+fun main2() {
+    listOf(1, 2, 3).forEach { i ->
+        val y = i()
+
+        println(i + y)
+    }
+}
+
+private fun i(): Int {
+    val x = 73
+    val y = x + 10
+    return y
+}

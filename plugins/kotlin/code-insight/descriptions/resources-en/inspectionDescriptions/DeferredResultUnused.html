@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports function calls with the <code>Deferred</code> result type if the return value is not used.
+<p>If the <code>Deferred</code> return value is not used, the call site would not wait to complete this function.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun calcEverythingAsync() = CompletableDeferred(42)
+
+  fun usage() {
+      calcEverythingAsync()
+  }
+</code></pre>
+
+<code>calcEverythingAsync()</code> call here is never used 
+and not awaited for with <code>await()</code>, which is suspicious.
+<!-- tooltip end -->
+</body>
+</html>

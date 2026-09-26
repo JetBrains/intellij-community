@@ -22,6 +22,7 @@ public class DeleteUnusedVariableFix extends DeleteUnusedElementBase<XsltVariabl
         super(name, variable);
     }
 
+    @Override
     public String getType() {
         return "Variable";
     }

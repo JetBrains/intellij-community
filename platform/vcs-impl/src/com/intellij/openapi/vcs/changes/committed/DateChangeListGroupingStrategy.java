@@ -1,39 +1,33 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
 
-/**
-* @author irengrig
-*/
-public class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
-  @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
+public final class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
+  private final @NonNls SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
   private long myTimeToRecalculateAfter;
   private Calendar myCurrentCalendar;
   private final Calendar myCalendar;
   private final WeekDayFormatCache myWeekDayFormatCache;
   private final MonthsCache myMonthsCache;
 
+  @Override
   public String toString() {
     return VcsBundle.message("date.group.title");
   }
 
+  @Override
   public boolean changedSinceApply() {
     return System.currentTimeMillis() > myTimeToRecalculateAfter;
   }
@@ -44,6 +38,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     myMonthsCache = new MonthsCache(myCalendar);
   }
 
+  @Override
   public void beforeStart() {
     myCurrentCalendar = Calendar.getInstance();
     myCurrentCalendar.setTimeInMillis(0);
@@ -60,7 +55,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     return getGroupName(changeList.getCommitDate());
   }
 
-  public String getGroupName(final Date date) {
+  public @Nls String getGroupName(final Date date) {
     myCalendar.setTime(date);
     if (myCurrentCalendar.get(Calendar.YEAR) == myCalendar.get(Calendar.YEAR)) {
       if (myCurrentCalendar.get(Calendar.DAY_OF_YEAR) == myCalendar.get(Calendar.DAY_OF_YEAR)) {
@@ -77,40 +72,39 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     return myMonthYearFormat.format(date);
   }
 
+  @Override
   public Comparator<CommittedChangeList> getComparator() {
     return CommittedChangeListByDateComparator.DESCENDING;
   }
 
-  private static class MonthsCache {
-    @NonNls private final SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
-    private final Map<Integer, String> myCache;
+  private static final class MonthsCache {
+    private final Int2ObjectMap<@Nls String> myCache = new Int2ObjectOpenHashMap<>(12);
 
-    private MonthsCache(final Calendar calendarForInit) {
-      myCache = new HashMap<>();
+    private MonthsCache(Calendar calendarForInit) {
+      SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
       for (int i = 0; i < 12; i++) {
         calendarForInit.set(Calendar.MONTH, i);
-        myCache.put(i, myMonthFormat.format(calendarForInit.getTime()));
+        myCache.put(i, monthFormat.format(calendarForInit.getTime()));
       }
     }
 
-    public String get(final int month) {
+    public @Nls String get(int month) {
       return myCache.get(month);
     }
   }
 
-  private static class WeekDayFormatCache {
-    @NonNls private final SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-    private final Map<Integer, String> myCache;
+  private static final class WeekDayFormatCache {
+    private final Int2ObjectMap<@Nls String> myCache = new Int2ObjectOpenHashMap<>(7);
 
     private WeekDayFormatCache(final Calendar calendarForInit) {
-      myCache = new HashMap<>();
+      SimpleDateFormat weekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
       for (int i = 1; i < 8; i++) {
         calendarForInit.set(Calendar.DAY_OF_WEEK, i);
-        myCache.put(i, myWeekdayFormat.format(calendarForInit.getTime()));
+        myCache.put(i, weekdayFormat.format(calendarForInit.getTime()));
       }
     }
 
-    public String get(final int dayOfWeek) {
+    public @Nls String get(int dayOfWeek) {
       return myCache.get(dayOfWeek);
     }
   }

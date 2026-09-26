@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete -XXLanguage:+FullValueClasses
+fun test() {
+    val (width, height) = Dimension(1, 2)
+}
+
+value class Dimension(val width: Int, val height: Int)

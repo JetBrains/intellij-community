@@ -1,0 +1,9 @@
+// FILE: before.kt
+fun <T> T.frob() {
+    thi<caret>s
+}
+
+// FILE: after.kt
+fun <<caret>T> T.frob() {
+    this
+}

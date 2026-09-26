@@ -1,75 +1,71 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.messages.ChooseDialog;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.messages.ChooseDialog;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import java.awt.Component;
 
-public class MessagesEx extends Messages {
-
+public final class MessagesEx extends Messages {
   public static MessageInfo fileIsReadOnly(Project project, String filePath) {
     return error(project, UIBundle.message("file.is.read.only.message.text", filePath));
   }
 
   public static MessageInfo filesAreReadOnly(Project project, String[] files) {
-    if (files.length == 1){
+    if (files.length == 1) {
       return fileIsReadOnly(project, files[0]);
-    } else {
-      return error(project, UIBundle.message("files.are.read.only.message.text", filePaths(files)));
     }
-  }
-
-  private static String filePaths(String[] files) {
-    return StringUtil.join(files, ",\n");
+    else {
+      return error(project, UIBundle.message("files.are.read.only.message.text", String.join(",\n", files)));
+    }
   }
 
   public static MessageInfo fileIsReadOnly(Project project, VirtualFile file) {
     return fileIsReadOnly(project, file.getPresentableUrl());
   }
 
-  public static MessageInfo error(Project project, String message) {
+  public static MessageInfo error(Project project, @DialogMessage String message) {
     return error(project, message, UIBundle.message("error.dialog.title"));
   }
 
-  @NotNull
-  public static MessageInfo error(Project project, String message, String title) {
+  public static @NotNull MessageInfo error(Project project, @DialogMessage String message, @DialogTitle String title) {
     return new MessageInfo(project, message, title);
   }
 
-  public static void showErrorDialog(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showErrorDialog(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showErrorDialog(parent, message, title);
     else showErrorDialog(message, title);
   }
 
-  public static void showWarningDialog(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showWarningDialog(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showWarningDialog(parent, message, title);
     else showWarningDialog(message, title);
   }
 
-  public static void showInfoMessage(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showInfoMessage(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showInfoMessage(parent, message, title);
     else showInfoMessage(message, title);
   }
 
-  public static int showOkCancelDialog(@Nullable Component parent, String message, String title, Icon icon) {
-    return parent != null ? Messages.showOkCancelDialog(parent, message, title, icon) : showOkCancelDialog(message, title, icon);
-  }
-
+  @ApiStatus.Internal
   public abstract static class BaseDialogInfo<ThisClass extends BaseDialogInfo> {
     private final Project myProject;
-    private String myMessage;
-    private String myTitle;
+    private @DialogMessage String myMessage;
+    private @DialogTitle String myTitle;
     private Icon myIcon;
     private String[] myOptions = {CommonBundle.getOkButtonText()};
     private int myDefaultOption = 0;
@@ -78,25 +74,23 @@ public class MessagesEx extends Messages {
       myProject = project;
     }
 
-    public BaseDialogInfo(Project project, @NotNull String message, String title, Icon icon) {
+    public BaseDialogInfo(Project project, @NotNull @DialogMessage String message, @DialogTitle String title, Icon icon) {
       this(project);
       myMessage = message;
       myTitle = title;
       myIcon = icon;
     }
 
-    @NotNull
-    public ThisClass setTitle(String title) {
+    public @NotNull ThisClass setTitle(@DialogTitle String title) {
       myTitle = title;
       return getThis();
     }
 
-    public String getMessage() {
+    public @DialogMessage String getMessage() {
       return myMessage;
     }
 
-    @NotNull
-    public ThisClass appendMessage(@NotNull String message) {
+    public @NotNull ThisClass appendMessage(@NotNull @DialogMessage String message) {
       myMessage += message;
       return getThis();
     }
@@ -106,16 +100,14 @@ public class MessagesEx extends Messages {
       myDefaultOption = defaultOption;
     }
 
-    @NotNull
-    protected abstract ThisClass getThis();
+    protected abstract @NotNull ThisClass getThis();
 
-    @NotNull
-    public ThisClass setIcon(Icon icon) {
+    public @NotNull ThisClass setIcon(Icon icon) {
       myIcon = icon;
       return getThis();
     }
 
-    public void setMessage(@NotNull String message) {
+    public void setMessage(@NotNull @DialogMessage String message) {
       myMessage = message;
     }
 
@@ -123,7 +115,7 @@ public class MessagesEx extends Messages {
       return myProject;
     }
 
-    public String getTitle() {
+    public @DialogTitle String getTitle() {
       return myTitle;
     }
 
@@ -140,8 +132,8 @@ public class MessagesEx extends Messages {
     }
   }
 
-  public static class MessageInfo extends BaseDialogInfo<MessageInfo> {
-    public MessageInfo(Project project, String message, String title) {
+  public static final class MessageInfo extends BaseDialogInfo<MessageInfo> {
+    public MessageInfo(Project project, @DialogMessage String message, @DialogTitle String title) {
       super(project, message, title, getErrorIcon());
     }
 
@@ -164,16 +156,16 @@ public class MessagesEx extends Messages {
       return showNow();
     }
 
-    @NotNull
     @Override
-    protected MessageInfo getThis() {
+    protected @NotNull MessageInfo getThis() {
       return this;
     }
   }
 
-  public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
-    private String[] myChoises = ArrayUtil.EMPTY_STRING_ARRAY;
-    private String myDefaultChoice = null;
+  @ApiStatus.Internal
+  public static final class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
+    private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
+    private @NlsSafe String myDefaultChoice = null;
 
     public ChoiceInfo(Project project) {
       super(project);
@@ -181,9 +173,8 @@ public class MessagesEx extends Messages {
       setOptions(new String[]{CommonBundle.getOkButtonText()}, 0);
     }
 
-    @NotNull
     @Override
-    public ChoiceInfo getThis() {
+    public @NotNull ChoiceInfo getThis() {
       return this;
     }
 
@@ -206,7 +197,8 @@ public class MessagesEx extends Messages {
     }
   }
 
-  public static class UserInput {
+  @ApiStatus.Internal
+  public static final class UserInput {
     private final int mySelectedOption;
     private final String myInput;
 
@@ -224,7 +216,8 @@ public class MessagesEx extends Messages {
     }
   }
 
-  public static class InputInfo extends BaseInputInfo<InputInfo> {
+  @ApiStatus.Internal
+  public static final class InputInfo extends BaseInputInfo<InputInfo> {
     private String myDefaultValue;
 
     public InputInfo(Project project) {
@@ -240,9 +233,8 @@ public class MessagesEx extends Messages {
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }
 
-    @NotNull
     @Override
-    public InputInfo getThis() {
+    public @NotNull InputInfo getThis() {
       return this;
     }
 
@@ -251,9 +243,8 @@ public class MessagesEx extends Messages {
     }
   }
 
+  @ApiStatus.Internal
   public abstract static class BaseInputInfo<ThisClass extends BaseInputInfo> extends BaseDialogInfo<ThisClass> {
-
-
     public BaseInputInfo(Project project) {
       super(project);
     }

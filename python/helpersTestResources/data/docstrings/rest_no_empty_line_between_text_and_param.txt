@@ -1,0 +1,3 @@
+Some description
+:param param1: the first parameter
+:type param1: `MyClass`

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.uiDesigner.lw.EnumDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -25,29 +12,51 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
-/**
- * @author yole
- */
-public class IntroEnumProperty extends IntrospectedProperty<Enum> {
-  private final Class myEnumClass;
-  private LabelPropertyRenderer<Enum> myRenderer;
+
+public class IntroEnumProperty extends IntrospectedProperty<Enum<?>> {
+  private final Class<?> myEnumClass;
+  private LabelPropertyRenderer<Enum<?>> myRenderer;
   private EnumEditor myEditor;
 
   public IntroEnumProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient,
-                           Class enumClass) {
+                           Class<?> enumClass) {
     super(name, readMethod, writeMethod, storeAsClient);
     myEnumClass = enumClass;
   }
 
-  @NotNull
-  public PropertyRenderer<Enum> getRenderer() {
+  /**
+   * The form file only names the constant. The enum class has to be the one the component class was loaded with,
+   * which is {@link #myEnumClass} - a class loaded by whoever read the form would be a different class, and the
+   * setter of the component would reject it.
+   */
+  @Override
+  public Enum<?> fromLwValue(final Object lwValue) {
+    if (!(lwValue instanceof EnumDescriptor descriptor)) {
+      return (Enum<?>)lwValue;
+    }
+    Object[] constants = myEnumClass.getEnumConstants();
+    if (constants != null) {
+      for (Object constant : constants) {
+        Enum<?> value = (Enum<?>)constant;
+        if (value.name().equals(descriptor.getConstantName())) {
+          return value;
+        }
+      }
+    }
+    // the constant was renamed or removed since the form was written - skip the property, as reading it did before
+    return null;
+  }
+
+  @Override
+  public @NotNull PropertyRenderer<Enum<?>> getRenderer() {
     if (myRenderer == null) {
       myRenderer = new LabelPropertyRenderer<>();
     }
     return myRenderer;
   }
 
-  public PropertyEditor<Enum> getEditor() {
+  @Override
+  public PropertyEditor<Enum<?>> getEditor() {
     if (myEditor == null) {
       myEditor = new EnumEditor(myEnumClass);
     }

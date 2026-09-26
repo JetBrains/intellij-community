@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+
+interface Context
+
+val Context.prop: Int
+    get() = 0
+
+fun test() {
+    ::prop
+}

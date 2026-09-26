@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskApiBundle;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
@@ -26,63 +14,99 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Mikhail Golubev
  */
-public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
+public final class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   private EditorTextField mySearchQueryField;
   private JBLabel mySearchLabel;
   private JBLabel myNoteLabel;
+  private JCheckBox myUseBearerTokenAuthenticationCheckBox;
 
-  public JiraRepositoryEditor(Project project, JiraRepository repository, Consumer<JiraRepository> changeListener) {
+  public JiraRepositoryEditor(Project project, JiraRepository repository, Consumer<? super JiraRepository> changeListener) {
     super(project, repository, changeListener);
   }
 
   @Override
   public void apply() {
     myRepository.setSearchQuery(mySearchQueryField.getText());
+    myRepository.setUseBearerTokenAuthentication(myUseBearerTokenAuthenticationCheckBox.isSelected());
     super.apply();
-    enableJqlSearchIfSupported();
+    adjustSettingsForServerProperties();
   }
 
   @Override
   protected void afterTestConnection(boolean connectionSuccessful) {
     super.afterTestConnection(connectionSuccessful);
     if (connectionSuccessful) {
-      enableJqlSearchIfSupported();
+      adjustSettingsForServerProperties();
     }
-    updateNote();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
-    enableJqlSearchIfSupported();
     installListener(mySearchQueryField);
-    mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
+    mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
     myNoteLabel = new JBLabel();
     myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
-    updateNote();
+    myUseBearerTokenAuthenticationCheckBox = new JCheckBox(TaskApiBundle.message("use.personal.access.token"));
+    myUseBearerTokenAuthenticationCheckBox.setSelected(myRepository.isUseBearerTokenAuthentication());
+    myUseBearerTokenAuthenticationCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        useBearerTokenChanged();
+      }
+    });
+
+    adjustSettingsForServerProperties();
     return FormBuilder.createFormBuilder()
+      .addComponentToRightColumn(myUseBearerTokenAuthenticationCheckBox)
       .addLabeledComponent(mySearchLabel, mySearchQueryField)
       .addComponentToRightColumn(myNoteLabel)
       .getPanel();
   }
 
-  private void updateNote() {
-    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
-  }
-
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     mySearchLabel.setAnchor(anchor);
   }
 
-  private void enableJqlSearchIfSupported() {
-    mySearchQueryField.setEnabled(myRepository.isJqlSupported());
+  private void adjustSettingsForServerProperties() {
+    mySearchQueryField.setEnabled(true);
+    myNoteLabel.setVisible(false);
+
+    if (myRepository.isInCloud()) {
+      myUsernameLabel.setVisible(true);
+      myUserNameText.setVisible(true);
+      myUsernameLabel.setText(TaskBundle.message("label.email"));
+      myPasswordLabel.setText(TaskBundle.message("label.api.token"));
+      myUseBearerTokenAuthenticationCheckBox.setVisible(false);
+    }
+    else if (myUseBearerTokenAuthenticationCheckBox.isSelected()) {
+      myUsernameLabel.setVisible(false);
+      myUserNameText.setVisible(false);
+      myPasswordLabel.setText(TaskBundle.message("label.api.token"));
+      myUseBearerTokenAuthenticationCheckBox.setVisible(true);
+    }
+    else {
+      myUsernameLabel.setVisible(true);
+      myUserNameText.setVisible(true);
+      myUsernameLabel.setText(TaskBundle.message("label.username"));
+      myPasswordLabel.setText(TaskBundle.message("label.password"));
+      myUseBearerTokenAuthenticationCheckBox.setVisible(true);
+    }
+  }
+
+  private void useBearerTokenChanged() {
+    myRepository.setUseBearerTokenAuthentication(myUseBearerTokenAuthenticationCheckBox.isSelected());
+    adjustSettingsForServerProperties();
   }
 }

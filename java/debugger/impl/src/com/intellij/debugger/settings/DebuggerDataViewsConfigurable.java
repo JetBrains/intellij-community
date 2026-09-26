@@ -1,36 +1,49 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTH;
+import static java.awt.GridBagConstraints.RELATIVE;
+import static java.awt.GridBagConstraints.WEST;
 
 /**
  * @author Eugene Belyaev
  */
 public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAutoscroll;
+  private JCheckBox myCbDfaAssist;
+  private JCheckBox myCbDfaAssistGrayOut;
   private JCheckBox myCbShowSyntheticFields;
   private StateRestoringCheckBox myCbShowValFieldsAsLocalVariables;
   private JCheckBox myCbHideNullArrayElements;
@@ -67,7 +80,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
   @Override
   public String getDisplayName() {
-    return OptionsBundle.message("options.java.display.name");
+    return JavaBundle.message("options.java.display.name");
   }
 
   @Override
@@ -77,17 +90,21 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     }
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myCbAutoscroll = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
-    myCbShowSyntheticFields = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
-    myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
-    myCbHideNullArrayElements = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
-    myCbShowStatic = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
-    myCbShowStaticFinalFields = new StateRestoringCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
-    myCbEnableAlternateViews = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
-    myCbShowStatic.addChangeListener(new ChangeListener(){
+    myCbAutoscroll = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.autoscroll"));
+    myCbDfaAssist = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.dfa.assist"));
+    myCbDfaAssistGrayOut = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.dfa.assist.gray.out"));
+    myCbShowSyntheticFields = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.synthetic.fields"));
+    myCbShowValFieldsAsLocalVariables = new StateRestoringCheckBox(
+      JavaDebuggerBundle.message("label.base.renderer.configurable.show.val.fields.as.locals"));
+    myCbHideNullArrayElements = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.hide.null.array.elements"));
+    myCbShowStatic = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.static.fields"));
+    myCbShowStaticFinalFields = new StateRestoringCheckBox(
+      JavaDebuggerBundle.message("label.base.renderer.configurable.show.static.final.fields"));
+    myCbEnableAlternateViews = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.alternate.view"));
+    myCbShowStatic.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        if(myCbShowStatic.isSelected()) {
+        if (myCbShowStatic.isSelected()) {
           myCbShowStaticFinalFields.makeSelectable();
         }
         else {
@@ -98,7 +115,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowSyntheticFields.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        if(myCbShowSyntheticFields.isSelected()) {
+        if (myCbShowSyntheticFields.isSelected()) {
           myCbShowValFieldsAsLocalVariables.makeSelectable();
         }
         else {
@@ -106,16 +123,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
         }
       }
     });
-    myCbShowDeclaredType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
-    myCbShowFQNames = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
-    myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
-    myCbHexValue = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
-    myCbShowStringsType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
-    myCbPopulateThrowableStack = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
+    myCbShowDeclaredType = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
+    myCbShowFQNames = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
+    myCbShowObjectId = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
+    myCbHexValue = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
+    myCbShowStringsType = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
+    myCbPopulateThrowableStack = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
 
-    myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
-    myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
-    myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
+    myCbEnableToString = new JCheckBox(JavaDebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
+    myRbAllThatOverride = new JRadioButton(JavaDebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
+    myRbFromList = new JRadioButton(JavaDebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
     ButtonGroup group = new ButtonGroup();
     group.add(myRbAllThatOverride);
     group.add(myRbFromList);
@@ -137,12 +154,14 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     });
 
     panel.add(myCbAutoscroll, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbDfaAssist, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbDfaAssistGrayOut, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
 
 
     final JPanel showPanel = new JPanel(new GridBagLayout());
-    showPanel.setBorder(IdeBorderFactory.createTitledBorder("Show", true));
+    showPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("debugger.data.views.configurable.show.title")));
 
-    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    showPanel.add(myCbShowDeclaredType, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
     showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
     showPanel.add(myCbShowStatic, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
@@ -159,7 +178,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     //arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     //arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
     //panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     panel.add(myCbHexValue, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbPopulateThrowableStack, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
@@ -180,10 +199,12 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
-    generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
+    generalSettings.AUTOSCROLL_TO_NEW_LOCALS = myCbAutoscroll.isSelected();
+    generalSettings.USE_DFA_ASSIST = myCbDfaAssist.isSelected();
+    generalSettings.USE_DFA_ASSIST_GRAY_OUT = myCbDfaAssistGrayOut.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
-    generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
-    generalSettings.POPULATE_THROWABLE_STACKTRACE  = myCbPopulateThrowableStack.isSelected();
+    generalSettings.HIDE_NULL_ARRAY_ELEMENTS = myCbHideNullArrayElements.isSelected();
+    generalSettings.POPULATE_THROWABLE_STACKTRACE = myCbPopulateThrowableStack.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
@@ -212,6 +233,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
+    myCbDfaAssist.setSelected(generalSettings.USE_DFA_ASSIST);
+    myCbDfaAssistGrayOut.setSelected(generalSettings.USE_DFA_ASSIST_GRAY_OUT);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
     myCbPopulateThrowableStack.setSelected(generalSettings.POPULATE_THROWABLE_STACKTRACE);
@@ -225,7 +248,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     }
     myCbShowStatic.setSelected(classRenderer.SHOW_STATIC);
     myCbShowStaticFinalFields.setSelected(classRenderer.SHOW_STATIC_FINAL);
-    if(!classRenderer.SHOW_STATIC) {
+    if (!classRenderer.SHOW_STATIC) {
       myCbShowStaticFinalFields.makeUnselectable(false);
     }
     myCbShowDeclaredType.setSelected(classRenderer.SHOW_DECLARED_TYPE);
@@ -256,6 +279,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
+           generalSettings.USE_DFA_ASSIST != myCbDfaAssist.isSelected() ||
+           generalSettings.USE_DFA_ASSIST_GRAY_OUT != myCbDfaAssistGrayOut.isSelected() ||
            generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
            generalSettings.POPULATE_THROWABLE_STACKTRACE != myCbPopulateThrowableStack.isSelected();
   }
@@ -268,15 +293,15 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
-    final boolean isClassRendererModified=
-    (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
-    (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
-    (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
-    (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
-    (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
-    (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
-    (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected()) ||
-    (classRenderer.SHOW_STRINGS_TYPE != myCbShowStringsType.isSelected());
+    final boolean isClassRendererModified =
+      (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
+      (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
+      (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
+      (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
+      (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
+      (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
+      (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected()) ||
+      (classRenderer.SHOW_STRINGS_TYPE != myCbShowStringsType.isSelected());
 
     if (isClassRendererModified) {
       return true;
@@ -286,7 +311,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final boolean isToStringRendererModified =
       (toStringRenderer.isOnDemand() == myCbEnableToString.isSelected()) ||
       (toStringRenderer.isUseClassFilters() != myRbFromList.isSelected()) ||
-      (!DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
+      (!DebuggerSettingsUtils.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
     if (isToStringRendererModified) {
       return true;
     }
@@ -303,16 +328,13 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return false;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "Debugger_Data_Views_Java";
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

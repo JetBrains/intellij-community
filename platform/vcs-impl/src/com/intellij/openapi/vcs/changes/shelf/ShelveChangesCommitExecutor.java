@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -22,15 +8,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 
 public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor");
+  private static final Logger LOG = Logger.getInstance(ShelveChangesCommitExecutor.class);
 
   private final Project myProject;
 
@@ -39,14 +33,12 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
   }
 
   @Override
-  @Nls
-  public String getActionText() {
+  public @NotNull @Nls String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
   @Override
-  @NotNull
-  public CommitSession createCommitSession() {
+  public @NotNull CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return new ShelveChangesCommitSession();
   }
 
@@ -60,37 +52,31 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
+  private class ShelveChangesCommitSession implements CommitSession {
     @Override
-    public void setContext(CommitContext context) {
-    }
-
-    @Override
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
-      return changes.size() > 0;
-    }
-
-    @Override
-    public void execute(Collection<Change> changes, String commitMessage) {
-      if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
+    public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
+      if (!changes.isEmpty() && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
           .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);
         return;
       }
       try {
-        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true);
+        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true, false, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
-        Change[] changesArray = changes.toArray(new Change[0]);
+        Change[] changesArray = changes.toArray(Change.EMPTY_CHANGE_ARRAY);
         LocalChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
         if (changeList != null) {
           ChangeListManager.getInstance(myProject).scheduleAutomaticEmptyChangeListDeletion(changeList, true);
         }
       }
-      catch (final Exception ex) {
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception ex) {
         LOG.info(ex);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
-          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.NON_MODAL, myProject);
+          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.nonModal(), myProject);
       }
     }
 

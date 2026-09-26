@@ -1,0 +1,16 @@
+from _typeshed import Incomplete
+
+from authlib.oauth2.rfc6750.validator import BearerTokenValidator
+
+from .claims import JWTAccessTokenClaims
+
+class JWTBearerTokenValidator(BearerTokenValidator):
+    issuer: Incomplete
+    resource_server: Incomplete
+    def __init__(self, issuer, resource_server, *args, **kwargs) -> None: ...
+    def get_jwks(self): ...
+    def validate_iss(self, claims, iss: str) -> bool: ...
+    def authenticate_token(self, token_string) -> JWTAccessTokenClaims: ...
+    def validate_token(
+        self, token: JWTAccessTokenClaims, scopes, request, groups=None, roles=None, entitlements=None
+    ) -> None: ...

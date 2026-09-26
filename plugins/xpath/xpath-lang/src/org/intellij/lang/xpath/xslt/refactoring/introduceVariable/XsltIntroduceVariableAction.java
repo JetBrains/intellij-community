@@ -29,20 +29,24 @@ import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceAction;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 import java.util.List;
 import java.util.Set;
 
 public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVariableOptions> {
 
+    @Override
     public String getRefactoringName() {
-        return "Introduce Variable";
+        return XPathBundle.message("dialog.title.introduce.variable");
     }
 
+    @Override
     protected String getCommandName() {
-        return "Introduce XSLT Variable";
+        return XPathBundle.message("command.name.introduce.xslt.variable");
     }
 
+    @Override
     protected boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, IntroduceVariableOptions dlg) {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(expression, XmlAttribute.class, true);
         assert attribute != null;
@@ -87,6 +91,7 @@ public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVa
         }
     }
 
+    @Override
     protected IntroduceVariableOptions getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions) {
         final IntroduceVariableDialog dlg = new IntroduceVariableDialog(expression, matchingExpressions.size() + 1);
         dlg.show();

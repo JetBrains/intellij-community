@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="JUnit5Vintage" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.14.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.14.4/junit-vintage-engine-5.14.4.jar">
+              <sha256sum>76317ecb621922d4c1430342285e4f7a75f0bf93e2528a8cf5004964fe5f8f8f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.14.4/junit-vintage-engine-5.14.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.14.4/junit-vintage-engine-5.14.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="RUNTIME" />
+  </component>
+</module>

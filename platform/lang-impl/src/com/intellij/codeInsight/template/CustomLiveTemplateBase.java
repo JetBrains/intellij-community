@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -26,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
+public abstract class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
-   * Implementation should returns {@code true} if it has own lookup item in completion autopopup
+   * Implementation should return {@code true} if it has its own lookup item in the completion autopopup,
    * and it is supposed that template should be expanded while completion auto-popup is active.
    */
   public boolean hasCompletionItem(@NotNull CustomTemplateCallback callback, int offset) {
@@ -36,15 +22,14 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
   }
 
   /**
-   * Return lookup elements for popup that appears on ListTemplateAction (Ctrl + J)
+   * Return lookup elements for the popup that appears on ListTemplateAction (Ctrl + J)
    */
-  @NotNull
-  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
+  public @NotNull Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     return Collections.emptyList();
   }
-  
+
   /**
-   * Populate completion result set. Used by LiveTemplateCompletionContributor
+   * Populate a completion result set. Used by LiveTemplateCompletionContributor
    */
   public void addCompletions(CompletionParameters parameters, CompletionResultSet result) {
     String prefix = computeTemplateKeyWithoutContextChecking(new CustomTemplateCallback(parameters.getEditor(), parameters.getOriginalFile()));
@@ -54,8 +39,7 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
     }
   }
 
-  @Nullable
-  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
     return computeTemplateKey(callback);
   }
 

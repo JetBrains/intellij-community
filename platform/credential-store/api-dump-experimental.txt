@@ -1,0 +1,4 @@
+*:com.intellij.util.Ephemeral
+- a:asFlow():kotlinx.coroutines.flow.Flow
+- a:derive(kotlin.jvm.functions.Function1):com.intellij.util.Ephemeral
+- a:unwrap(kotlin.coroutines.Continuation):java.lang.Object

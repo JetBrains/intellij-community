@@ -31,18 +31,18 @@ import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.compact.psi.RncFileReference;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
-  public RncFileReferenceImpl(ASTNode node) {
+@ApiStatus.Internal
+public abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
+  RncFileReferenceImpl(ASTNode node) {
     super(node);
   }
 
-  @NotNull
   @Override
-  @SuppressWarnings({ "SSBasedInspection" })
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final ASTNode literal = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (literal == null) return PsiReference.EMPTY_ARRAY;
 
@@ -68,8 +68,7 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
   }
 
   @Override
-  @Nullable
-  public String getFileReference() {
+  public @Nullable String getFileReference() {
     final ASTNode element = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (element == null) return null;
     final String s = EscapeUtil.unescapeText(element);

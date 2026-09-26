@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.groovy.compiler.rt.OutputItem;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -26,16 +15,13 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, ModuleBuildTarget> {
-  public CompilingGroovycRunner(boolean forStubs) {
+  CompilingGroovycRunner(boolean forStubs) {
     super(forStubs);
   }
 
@@ -57,7 +43,7 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
   @Override
   protected void stubsGenerated(CompileContext context,
                                 Map<ModuleBuildTarget, String> generationOutputs,
-                                MultiMap<ModuleBuildTarget, GroovycOutputParser.OutputItem> compiled) {
+                                MultiMap<ModuleBuildTarget, OutputItem> compiled) {
     addStubRootsToJavacSourcePath(context, generationOutputs);
     rememberStubSources(context, compiled);
   }
@@ -66,17 +52,17 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
     final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (ModuleBuildTarget target : generationOutputs.keySet()) {
       File root = new File(generationOutputs.get(target));
-      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.emptySet()));
+      rootsIndex.associateTempRoot(context, target, JavaSourceRootDescriptor.createJavaSourceRootDescriptor(root, target, true, true, "", Set.of(), FileFilters.EVERYTHING));
     }
   }
 
-  private static void rememberStubSources(CompileContext context, MultiMap<ModuleBuildTarget, GroovycOutputParser.OutputItem> compiled) {
+  private static void rememberStubSources(CompileContext context, MultiMap<ModuleBuildTarget, OutputItem> compiled) {
     Map<String, String> stubToSrc = GroovyBuilder.STUB_TO_SRC.get(context);
     if (stubToSrc == null) {
       GroovyBuilder.STUB_TO_SRC.set(context, stubToSrc = new HashMap<>());
     }
-    for (GroovycOutputParser.OutputItem item : compiled.values()) {
-      stubToSrc.put(FileUtil.toSystemIndependentName(item.outputPath), item.sourcePath);
+    for (OutputItem item : compiled.values()) {
+      stubToSrc.put(FileUtilRt.toSystemIndependentName(item.outputPath), item.sourcePath);
     }
   }
 
@@ -87,9 +73,9 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
     if (!myForStubs) return super.getGenerationOutputs(context, chunk, finalOutputs);
 
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<>();
-    File commonRoot = GroovyBuilder.getStubRoot(context);
+    Path commonRoot = GroovyBuilder.getStubRoot(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
+      File targetRoot = commonRoot.resolve(target.getModule().getName() + File.separator + target.getTargetType().getTypeId()).toFile();
       if (targetRoot.exists() && !FileUtil.deleteWithRenaming(targetRoot)) {
         throw new IOException("External build cannot clean " + targetRoot.getPath());
       }

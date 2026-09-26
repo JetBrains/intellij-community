@@ -26,8 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 27.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration {
   GrVariableDeclaration[] EMPTY_ARRAY = new GrVariableDeclaration[0];
@@ -36,8 +35,7 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   @Nullable
   GrTypeElement getTypeElementGroovy();
 
-  @NotNull
-  GrVariable[] getVariables();
+  GrVariable @NotNull [] getVariables();
 
   void setType(@Nullable PsiType type);
 

@@ -1,4 +1,4 @@
-// "Fix all ''compare()' method can be used to compare primitives' problems in file" "true"
+// "Fix all ''compare()' method can be used to compare numbers' problems in file" "true"
 public class Test {
   public void test(String s1, String s2) {
     System.out.println(s1.<caret>length() < s2.length() ? -1 : s1.length() == s2.length() ? 0 : 1);

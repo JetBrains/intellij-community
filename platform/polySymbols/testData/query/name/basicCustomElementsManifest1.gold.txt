@@ -1,0 +1,26 @@
+[
+ {
+  matchedName: "html/elements/my-EleMeNt",
+  origin: "basic (<none>)",
+  complete: true,
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "my-EleMeNt",
+    symbol: {
+     matchedName: "custom-elements-manifest/declarations/MyElement",
+     origin: "basic (<none>)",
+     complete: true,
+     description: "<p>The cool class",
+     priority: NORMAL,
+     segments: [
+      {
+       name-part: "MyElement",
+       symbol: <self>,
+      },
+     ],
+    },
+   },
+  ],
+ },
+]

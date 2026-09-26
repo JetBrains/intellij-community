@@ -1,35 +1,28 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFileImpl;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiTarget;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,89 +32,76 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
-  private static final Logger LOG = Logger.getInstance(PropertyReferenceBase.class);
   protected final String myKey;
   protected final PsiElement myElement;
-  protected boolean mySoft;
+  private final boolean mySoft;
   private final TextRange myTextRange;
 
-  public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element) {
+  public PropertyReferenceBase(@NotNull String key, boolean soft, @NotNull PsiElement element) {
     this(key, soft, element, ElementManipulators.getValueTextRange(element));
   }
 
-  public PropertyReferenceBase(@NotNull String key, final boolean soft, @NotNull PsiElement element, TextRange range) {
+  public PropertyReferenceBase(@NotNull String key, boolean soft, @NotNull PsiElement element, TextRange range) {
     myKey = key;
     mySoft = soft;
     myElement = element;
     myTextRange = range;
   }
 
+  @Override
   public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
+    var resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
-  @NotNull
-  protected String getKeyText() {
+  protected @NotNull String getKeyText() {
     return myKey;
   }
 
-  public boolean equals(final Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PropertyReferenceBase other = (PropertyReferenceBase)o;
-
+    var other = (PropertyReferenceBase)o;
     return getElement() == other.getElement() && getKeyText().equals(other.getKeyText());
   }
 
+  @Override
   public int hashCode() {
     return getKeyText().hashCode();
   }
 
-  @NotNull
-  public PsiElement getElement() {
+  @Override
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
-  public TextRange getRangeInElement() {
+  @Override
+  public @NotNull TextRange getRangeInElement() {
     return myTextRange;
   }
 
-  @NotNull
-  public String getCanonicalText() {
+  @Override
+  public @NotNull String getCanonicalText() {
     return myKey;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    /*PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
-
-    if (myElement instanceof PsiLiteralExpression) {
-      PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
-      return myElement.replace(newExpression);
-    }
-    else {*/
-      ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
-      if (manipulator == null) {
-        LOG.error("Cannot find manipulator for " + myElement + " of class " + myElement.getClass());
-        throw new NullPointerException();
-      }
-      return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
-    /*}*/
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+    return ElementManipulators.handleContentChange(myElement, getRangeInElement(), newElementName);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("not implemented");
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!isProperty(element)) return false;
-    for (ResolveResult result : multiResolve(false)) {
-      final PsiElement el = result.getElement();
+    for (var result : multiResolve(false)) {
+      var el = result.getElement();
       if (el != null && el.isEquivalentTo(element)) return true;
     }
     return false;
@@ -131,64 +111,60 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     variants.add(property);
   }
 
-  protected void setSoft(final boolean soft) {
-    mySoft = soft;
-  }
-
+  @Override
   public boolean isSoft() {
     return mySoft;
   }
 
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  @Override
+  public @InspectionMessage @NotNull String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }
 
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final String key = getKeyText();
+  @Override
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    var key = getKeyText();
 
     List<IProperty> properties;
-    final List<PropertiesFile> propertiesFiles = getPropertiesFiles();
+    var propertiesFiles = getPropertiesFiles();
     if (propertiesFiles == null) {
       properties = PropertiesImplUtil.findPropertiesByKey(getElement().getProject(), key);
+      properties.removeIf(p -> isFileInJdk(p.getPropertiesFile()));
     }
     else {
       properties = new ArrayList<>();
-      for (PropertiesFile propertiesFile : propertiesFiles) {
+      for (var propertiesFile : propertiesFiles) {
         properties.addAll(propertiesFile.findPropertiesByKey(key));
       }
     }
-    // put default properties file first
-    ContainerUtil.quickSort(properties, (o1, o2) -> {
-      String name1 = o1.getPropertiesFile().getName();
-      String name2 = o2.getPropertiesFile().getName();
-      return Comparing.compare(name1, name2);
-    });
-    return getResolveResults(properties);
-  }
-
-  protected static ResolveResult[] getResolveResults(List<IProperty> properties) {
     if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
-    final ResolveResult[] results = new ResolveResult[properties.size()];
-    for (int i = 0; i < properties.size(); i++) {
-      IProperty property = properties.get(i);
-      results[i] = new PsiElementResolveResult(property instanceof PsiElement ? (PsiElement)property : PomService.convertToPsi(
-                        (PsiTarget)property));
+    // put default properties file first
+    ContainerUtil.quickSort(properties, (o1, o2) -> {
+      var name1 = o1.getPropertiesFile().getName();
+      var name2 = o2.getPropertiesFile().getName();
+      return Comparing.compare(name1, name2);
+    });
+
+    var results = new ResolveResult[properties.size()];
+    for (var i = 0; i < properties.size(); i++) {
+      var property = properties.get(i);
+      results[i] = new PsiElementResolveResult(property instanceof PsiElement psi ? psi : PomService.convertToPsi((PsiTarget)property));
     }
     return results;
   }
 
-  @Nullable
-  protected abstract List<PropertiesFile> getPropertiesFiles();
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  private static boolean isFileInJdk(@Nullable PropertiesFile file) {
+    if (file == null) return false;
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return false;
+    ProjectFileIndex index = ProjectFileIndex.getInstance(file.getProject());
+    return ContainerUtil.exists(index.getOrderEntriesForFile(vFile), e -> e instanceof JdkOrderEntry);
   }
 
-  private static boolean isProperty(PsiElement element) {
+  protected abstract @Nullable List<PropertiesFile> getPropertiesFiles();
+
+  protected boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {
       return true;
     }
@@ -199,5 +175,10 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       return PropertiesImplUtil.isPropertiesFile(element.getContainingFile());
     }
     return false;
+  }
+
+  public static boolean isPropertyPsi(@NotNull PsiElement target) {
+    return target instanceof IProperty ||
+           target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget() instanceof IProperty;
   }
 }

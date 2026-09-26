@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  I.class
+End of files
+Compiling files:
+  java/membersChange/removeDefaultMethod/a/I.java
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  java/membersChange/removeDefaultMethod/a/Use.java
+End of files
+------------------------------------------
+Exit code: ERROR

@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+fun foo() {}
+
+/**
+ * Some documentation.
+ */
+fun test() {
+    foo()
+}

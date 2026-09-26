@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ToggleShowElementContentAction extends ToggleAction implements DumbAware {
   private final ComplexPackagingElementType<?> myType;
   private final ArtifactEditorImpl myEditor;
@@ -34,12 +33,17 @@ public class ToggleShowElementContentAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myEditor.getSubstitutionParameters().isShowContentForType(myType);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myEditor.getSubstitutionParameters().setShowContent(myType, state);
     myEditor.updateShowContentCheckbox();
     myEditor.getLayoutTreeComponent().rebuildTree();

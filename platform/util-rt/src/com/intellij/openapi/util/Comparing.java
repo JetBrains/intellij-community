@@ -1,31 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Null-safe {@code equal} methods.
  */
-public class Comparing {
+public final class Comparing {
   private Comparing() { }
 
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
@@ -46,62 +39,35 @@ public class Comparing {
   }
 
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
-  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
-    if (arr1 == null || arr2 == null) {
-      return arr1 == arr2;
-    }
-    return Arrays.equals(arr1, arr2);
-  }
-
-  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
-    return equal(s1, s2, true);
+    return StringUtilRt.equal(s1, s2, true);
   }
 
+  @Contract(value = "null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true", pure = true)
+  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
+    return StringUtilRt.equal(s1, s2, caseSensitive);
+  }
+
+  /**
+   * @deprecated Use {@link Objects#equals(Object, Object)}
+   */
+  @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return arg1 == null ? arg2 == null : arg1.equals(arg2);
+    return Objects.equals(arg1, arg2);
   }
 
-  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
-  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
-    if (s1 == s2) return true;
-    if (s1 == null || s2 == null) return false;
-
-    // Algorithm from String.regionMatches()
-
-    if (s1.length() != s2.length()) return false;
-    int to = 0;
-    int po = 0;
-    int len = s1.length();
-
-    while (len-- > 0) {
-      char c1 = s1.charAt(to++);
-      char c2 = s2.charAt(po++);
-      if (c1 == c2) {
-        continue;
-      }
-      if (!caseSensitive && StringUtilRt.charsEqualIgnoreCase(c1, c2)) continue;
-      return false;
-    }
-
-    return true;
-  }
-
-  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
+  @Contract(value = "null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
-    if (arg1 == null || arg2 == null) {
-      return arg1 == arg2;
-    }
-    else {
-      return caseSensitive ? arg1.equals(arg2) : arg1.equalsIgnoreCase(arg2);
-    }
+    return arg1 == null ? arg2 == null : caseSensitive ? arg1.equals(arg2) : arg1.equalsIgnoreCase(arg2);
   }
 
+  /** Unlike {@link Objects#equals(Object, Object)}, considers {@code null} and {@code ""} equal. */
   public static boolean strEqual(@Nullable String arg1, @Nullable String arg2) {
     return strEqual(arg1, arg2, true);
   }
 
+  /** Unlike {@link #equal(String, String, boolean)}, considers {@code null} and {@code ""} equal. */
   public static boolean strEqual(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
@@ -111,18 +77,15 @@ public class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(a);
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
+    Set<T> aSet = new HashSet<>(a);
+    Set<T> bSet = new HashSet<>(b);
 
-    return true;
+    return aSet.equals(bSet);
   }
 
-  public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
+  public static <T> boolean haveEqualElements(T @Nullable [] a, T @Nullable [] b) {
     if (a == null || b == null) {
+      //noinspection ArrayEquality
       return a == b;
     }
 
@@ -130,14 +93,7 @@ public class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
-
-    return true;
+    return haveEqualElements(Arrays.asList(a), Arrays.asList(b));
   }
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
@@ -149,27 +105,38 @@ public class Comparing {
     return hashcode(obj1) ^ hashcode(obj2);
   }
 
-  public static int compare(byte o1, byte o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+  /**
+   * @see AbstractSet#hashCode()
+   */
+  public static int unorderedHashcode(@NotNull Collection<?> collection) {
+    int h = 0;
+    for (Object obj : collection) {
+      if (obj != null) {
+        h += obj.hashCode();
+      }
+    }
+    return h;
   }
 
+  /**
+   * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static int compare(boolean o1, boolean o2) {
-    return o1 == o2 ? 0 : o1 ? 1 : -1;
+    return Boolean.compare(o1, o2);
   }
 
+  /**
+   * @deprecated use {@link Integer#compare(int, int)} instead
+   */
+  @Deprecated
   public static int compare(int o1, int o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+    return Integer.compare(o1, o2);
   }
 
-  public static int compare(long o1, long o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-  }
-
-  public static int compare(double o1, double o2) {
-    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-  }
-
-  public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
+  public static int compare(byte @Nullable [] o1, byte @Nullable [] o2) {
+    //noinspection ArrayEquality
     if (o1 == o2) return 0;
     if (o1 == null) return 1;
     if (o2 == null) return -1;
@@ -185,14 +152,19 @@ public class Comparing {
     return 0;
   }
 
-  public static <T extends Comparable<T>> int compare(@Nullable T o1, @Nullable T o2) {
+  public static <T extends Comparable<? super T>> int compare(@Nullable T o1, @Nullable T o2) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;
     if (o2 == null) return 1;
     return o1.compareTo(o2);
   }
 
-  public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<T> notNullComparator) {
+  /**
+   * Performs null-safe comparison delegating to {@code notNullComparator} for not-null values. 
+   * Consider using {@code Comparator.nullsFirst} instead.
+   */
+  @ApiStatus.Obsolete
+  public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;
     if (o2 == null) return 1;

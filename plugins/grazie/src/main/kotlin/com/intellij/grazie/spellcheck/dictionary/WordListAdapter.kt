@@ -1,0 +1,70 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.grazie.spellcheck.dictionary
+
+import ai.grazie.nlp.langs.alphabet.Alphabet
+import ai.grazie.nlp.similarity.Levenshtein
+import ai.grazie.spell.lists.WordList
+import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.detection.toLanguage
+import com.intellij.grazie.spellcheck.GrazieCheckers
+import com.intellij.grazie.utils.getHunspellLanguages
+import com.intellij.openapi.components.service
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
+
+internal class WordListAdapter : WordList, EditableWordListAdapter() {
+  fun isAlien(word: String): Boolean {
+    if (Alphabet.ENGLISH.matchAny(word)) {
+      return false
+    }
+
+    val state = GrazieConfig.get()
+    val matchedLanguages = state.enabledLanguages
+      .filter { it.toLanguage().alphabet.matchEntire(word) }
+    if (matchedLanguages.isEmpty()) {
+      return !aggregator.contains(word)
+    }
+
+    val enabledHunspell = getHunspellLanguages(state)
+    val hasSpeller = matchedLanguages.any { it.iso in enabledHunspell } || service<GrazieCheckers>().hasSpellerTool(matchedLanguages)
+    return !hasSpeller && !aggregator.contains(word)
+  }
+
+  override fun contains(word: String, caseSensitive: Boolean): Boolean =
+    contains(word, caseSensitive, GrazieConfig.get().dictionaries) || aggregator.contains(word, caseSensitive)
+
+  private fun contains(word: String, caseSensitive: Boolean, hunspell: List<Dictionary>): Boolean =
+    if (caseSensitive) {
+      return dictionaries.values.any { it.lookup(word) == Present } || hunspell.any { it.lookup(word) == Present }
+    } else {
+      val lowered = word.lowercase()
+      // NOTE: dictionary may not contain a lowercase form, but may contain any form in a different case
+      // current dictionary interface does not support caseSensitive
+      val isPresent: (Dictionary) -> Boolean = { it.lookup(lowered) == Present || it.lookup(word) == Present }
+      return dictionaries.values.any(isPresent) || hunspell.any(isPresent)
+    }
+
+  override fun suggest(word: String): LinkedHashSet<String> {
+    val result = LinkedHashSet<String>()
+    suggest(result, word, dictionaries.values)
+    suggest(result, word, GrazieConfig.get().dictionaries)
+
+    result.addAll(aggregator.suggest(word))
+    result.remove("")
+    return result
+  }
+
+  private fun suggest(result: LinkedHashSet<String>, word: String, dictionaries: Collection<Dictionary>) {
+    for (dictionary in dictionaries) {
+      dictionary.consumeSuggestions(word) {
+        if (it.isEmpty()) {
+          return@consumeSuggestions
+        }
+        val distance = Levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
+        if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
+          result.add(it)
+        }
+      }
+    }
+  }
+}

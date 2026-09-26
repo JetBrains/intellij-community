@@ -15,11 +15,12 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface PlaceHolder<Place> extends PlaceProvider<Place> {
-  void setPlace(@NotNull Place place);
+public interface PlaceHolder extends PlaceProvider {
+  void setPlace(@NonNls @NotNull String place);
 }

@@ -1,0 +1,48 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.swingx` start
+content_module_jar(module = ":swingx")
+### auto-generated section `dev intellij.libraries.swingx` end
+
+### auto-generated section `build intellij.libraries.swingx` start
+jvm_library(
+    name = "swingx",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.swingx",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-swingx-swingx"],
+    runtime_deps = ["@lib//:libraries-swingx-swingx"],
+)
+
+jvm_library(
+    name = "swingx_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.swingx",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-swingx-swingx"],
+    runtime_deps = [":swingx"],
+)
+### auto-generated section `build intellij.libraries.swingx` end
+
+### auto-generated section `iml intellij.libraries.swingx` start
+exports_files(
+    [
+        "intellij.libraries.swingx.iml",
+        "resources/intellij.libraries.swingx.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.swingx` end

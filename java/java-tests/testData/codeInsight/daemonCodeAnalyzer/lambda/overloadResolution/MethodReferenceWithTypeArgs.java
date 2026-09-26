@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 class Test {
 
   void foo() {
-    log(get(<error descr="Bad return type in method reference: cannot convert java.util.TreeSet<java.lang.String> to C">TreeSet<String>::new</error>));
+    log(<error descr="Incompatible types. Found: 'java.util.TreeSet<java.lang.String>', required: 'java.lang.String[]'">get</error>(TreeSet<String>::new));
   }
 
   private void log(String params[]) {

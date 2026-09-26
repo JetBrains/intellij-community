@@ -1,71 +1,109 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class VFileCopyEvent extends VFileEvent {
+public final class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final VirtualFile myNewParent;
   private final String myNewChildName;
+  private final FileAttributes myAttributes;
+  private final String mySymlinkTarget;
+  private final ChildInfo[] myChildren;
+  private final boolean myAllChildren;
 
-  public VFileCopyEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileCopyEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
+    this(requestor, file, newParent, newChildName, null, null, null, false);
+  }
+
+  @ApiStatus.Internal
+  public VFileCopyEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @NotNull VirtualFile newParent,
+    @NotNull String newChildName,
+    @Nullable("null means should read from the created file") FileAttributes attributes,
+    @Nullable String symlinkTarget,
+    ChildInfo @Nullable("null means children are unknown") [] children,
+    boolean allChildren
+  ) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myNewChildName = newChildName;
+    myAttributes = attributes;
+    mySymlinkTarget = symlinkTarget;
+    myChildren = children;
+    myAllChildren = children != null && allChildren;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public VirtualFile getNewParent() {
+  public @NotNull VirtualFile getNewParent() {
     return myNewParent;
   }
 
-  @NotNull
-  public String getNewChildName() {
+  public @NotNull String getNewChildName() {
     return myNewChildName;
   }
 
-  @Override
-  @NonNls
-  public String toString() {
-    return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]";
+  public @Nullable FileAttributes getAttributes() {
+    return myAttributes;
   }
 
-  @NotNull
+  public @Nullable String getSymlinkTarget() {
+    return mySymlinkTarget;
+  }
+
+  /**
+   * Children of the copied file if it's a directory.
+   * <br/>
+   * <code>null</code> is returned if the file is not a directory or the children are not known.
+   * If {@link #isAllChildren()} returns {@code false}, the returned array contains only some children.
+   *
+   * @return children of the copied file if it's a directory
+   */
+  @ApiStatus.Internal
+  public ChildInfo @Nullable [] getChildren() {
+    return myChildren;
+  }
+
+  @ApiStatus.Internal
+  public boolean isAllChildren() {
+    return myAllChildren;
+  }
+
+  /** @return {@code true} if the copied file is a directory that has no children. */
+  public boolean isEmptyDirectory() {
+    return myFile.isDirectory() && myAllChildren && myChildren != null && myChildren.length == 0;
+  }
+
+  public @Nullable VirtualFile findCreatedFile() {
+    return myNewParent.isValid() ? myNewParent.findChild(myNewChildName) : null;
+  }
+
   @Override
-  protected String computePath() {
+  public String toString() {
+    return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]"
+           + (myChildren == null ? "" : " with "+myChildren.length+" children");
+  }
+
+  @Override
+  protected @NotNull String computePath() {
     return myNewParent.getPath() + "/" + myNewChildName;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 

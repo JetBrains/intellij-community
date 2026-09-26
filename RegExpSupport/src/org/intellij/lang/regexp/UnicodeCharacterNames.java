@@ -1,35 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnicodeCharacterNames {
-
-  public static void iterate(Consumer<String> consumer) {
+public final class UnicodeCharacterNames {
+  public static void iterate(Consumer<? super String> consumer) {
     try {
       final Class<?> aClass = Class.forName("java.lang.CharacterName");
       final Method initNamePool = ReflectionUtil.getDeclaredMethod(aClass, "initNamePool");
@@ -43,7 +28,7 @@ public class UnicodeCharacterNames {
           if (indexes != null) {
             for (int index : indexes) {
               if (index != 0) {
-                final String name = new String(namePool, index >>> 8, index & 0xff, AsciiUtil.ASCII_CHARSET);
+                final String name = new String(namePool, index >>> 8, index & 0xff, StandardCharsets.US_ASCII);
                 consumer.accept(name);
               }
             }
@@ -60,7 +45,7 @@ public class UnicodeCharacterNames {
           final int[] lookup = (int[])field2.get(characterName);
           for (int index : lookup) {
             if (index != 0) {
-              final String name = new String(namePool, index >>> 8, index & 0xff, AsciiUtil.ASCII_CHARSET);
+              final String name = new String(namePool, index >>> 8, index & 0xff, StandardCharsets.US_ASCII);
               consumer.accept(name);
             }
           }
@@ -84,7 +69,13 @@ public class UnicodeCharacterNames {
       catch (IllegalArgumentException e) {
         return -1;
       }
-      catch (IllegalAccessException | InvocationTargetException e) {
+      catch (InvocationTargetException e) {
+        if (e.getCause() instanceof IllegalArgumentException) {
+          return -1;
+        }
+        throw new RuntimeException(e);
+      }
+      catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       }
     }
@@ -96,7 +87,7 @@ public class UnicodeCharacterNames {
         return -1; // give up
       }
       byte[] namePool = (byte[])initNamePool.invoke(null);
-      name = name.trim().toUpperCase(Locale.ROOT);
+      name = StringUtil.toUpperCase(name.trim());
       byte[] key = name.getBytes(StandardCharsets.ISO_8859_1);
       final int[][] lookup = ReflectionUtil.getField(aClass, null, int[][].class, "lookup");
       if (lookup == null) throw new RuntimeException();

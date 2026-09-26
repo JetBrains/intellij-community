@@ -20,10 +20,42 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Graphics;
 
+/**
+ * Specifies custom representation for an editor highlighter.
+ *
+ * @see RangeHighlighter#setCustomRenderer(CustomHighlighterRenderer)
+ * @see RangeHighlighter#getCustomRenderer()
+ */
 public interface CustomHighlighterRenderer {
   void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g);
+
+  /**
+   * @deprecated please use {@link #getOrder()} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  default boolean isForeground() {
+    return false;
+  }
+
+  /**
+   * Allows specifying the order of painting for this highlighter.
+   * Default is {@link CustomHighlighterOrder#AFTER_BACKGROUND} - paint highlighter over the background and before the text.
+   *
+   * @see CustomHighlighterOrder
+   */
+  @ApiStatus.Experimental
+  default @NotNull CustomHighlighterOrder getOrder() {
+    if (isForeground()) {
+      return CustomHighlighterOrder.AFTER_TEXT;
+    }
+    else {
+      return CustomHighlighterOrder.AFTER_BACKGROUND;
+    }
+  }
 }

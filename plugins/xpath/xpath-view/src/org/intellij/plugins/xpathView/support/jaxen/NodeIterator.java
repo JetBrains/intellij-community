@@ -39,6 +39,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#hasNext
      */
+    @Override
     public boolean hasNext() {
         return (node != null);
     }
@@ -47,6 +48,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#next
      */
+    @Override
     public Object next() {
         if (node == null)
             throw new NoSuchElementException();
@@ -61,6 +63,7 @@ public abstract class NodeIterator implements Iterator {
     /**
      * @see Iterator#remove
      */
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
@@ -100,10 +103,10 @@ public abstract class NodeIterator implements Iterator {
      * @return true if the node is usable, false if it should be
      * skipped.
      */
-    private boolean isXPathNode(PsiElement node) {
+    private static boolean isXPathNode(PsiElement node) {
         // null is usable, because it means end
-        if (node == null)
-            return true;
+        //if (node == null)
+        //    return true;
 
         // TODO: FIXME
         return true;

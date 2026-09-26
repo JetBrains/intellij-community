@@ -1,0 +1,4 @@
+class Ctx
+
+context(c: Ctx)
+fun f(): Int = 1

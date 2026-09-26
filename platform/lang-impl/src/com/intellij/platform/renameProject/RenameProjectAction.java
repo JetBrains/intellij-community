@@ -1,5 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.renameProject;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -10,30 +12,38 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
 
 /**
  * @author lene
  */
-public class RenameProjectAction extends DumbAwareAction {
+public final class RenameProjectAction extends DumbAwareAction {
 
   public RenameProjectAction() {
-    super(RefactoringBundle.message("rename.project.action.title"), RefactoringBundle.message("renames.project"), null);
+    super(RefactoringBundle.messagePointer("rename.project.action.title"),
+          RefactoringBundle.messagePointer("renames.project"), (Icon)null);
   }
 
   private static final Logger LOG = Logger.getInstance(RenameProjectAction.class);
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project instanceof ProjectEx);

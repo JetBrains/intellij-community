@@ -1,0 +1,3 @@
+JsonFile: n_structure_UTF8_BOM_no_data.json
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('﻿')

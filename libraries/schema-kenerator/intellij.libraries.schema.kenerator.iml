@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="io.github.smiley4.schema.kenerator.core" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-core:2.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.7.2/schema-kenerator-core-2.7.2.jar">
+              <sha256sum>35c1e0f8bb21ebad269495603f7f0cb8f92375920177ec1e039405d383945f92</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.7.2/schema-kenerator-core-2.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.7.2/schema-kenerator-core-2.7.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.github.smiley4.schema.kenerator.jsonschema" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-jsonschema:2.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.7.2/schema-kenerator-jsonschema-2.7.2.jar">
+              <sha256sum>c418659b85328e3b642c4c81f58def83188f13f8b9c8ce6f9f993b52af77ba21</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.7.2/schema-kenerator-jsonschema-2.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2.7.2/schema-kenerator-jsonschema-2.7.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.github.smiley4.schema.kenerator.serialization" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-serialization:2.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.7.2/schema-kenerator-serialization-2.7.2.jar">
+              <sha256sum>1d9d5decb2766228061a6d1acd21c8086f1e338a945f8af506e39a62ff8902b6</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.7.2/schema-kenerator-serialization-2.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.7.2/schema-kenerator-serialization-2.7.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

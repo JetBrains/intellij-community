@@ -1,38 +1,96 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class StructuralSearchUtil {
-  private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
-  private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
-  private static LanguageFileType ourDefaultFileType = null;
+public final class StructuralSearchUtil {
+  private static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
+    Comparator.comparing(Configuration::getCategory, NaturalComparator.INSTANCE)
+      .thenComparing(Configuration::getName, NaturalComparator.INSTANCE);
+  private static LanguageFileType ourDefaultFileType;
 
-  public static boolean ourUseUniversalMatchingAlgorithm = false;
-  private static StructuralSearchProfile[] ourNewStyleProfiles;
-  private static List<Configuration> ourPredefinedConfigurations = null;
+  private static boolean ourUseUniversalMatchingAlgorithm;
+  private static Map<String, LanguageFileType> ourNames2FileTypes;
+  private static final Map<String, StructuralSearchProfile> cache = new HashMap<>();
+
+  private static List<Configuration> ourPredefinedConfigurations;
+  static {
+    StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
+      clearCaches();
+    }, null);
+    final Application application = ApplicationManager.getApplication();
+    application.getMessageBus().connect(application).subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      @Override
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
+        clearCaches();
+      }
+    });
+  }
+
+  private static void clearCaches() {
+    ourPredefinedConfigurations = null;
+    ourDefaultFileType = null;
+    ourNames2FileTypes = null;
+    cache.clear();
+  }
 
   private StructuralSearchUtil() {}
 
-  @Nullable
-  public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
+  public static void setUseUniversalMatchingAlgorithm(boolean useUniversalMatchingAlgorithm) {
+    ourUseUniversalMatchingAlgorithm = useUniversalMatchingAlgorithm;
+    cache.clear();
+  }
+
+  public static @Nullable StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
     return getProfileByLanguage(element.getLanguage());
+  }
+
+  public static @Nullable StructuralSearchProfile getProfileByFileType(@Nullable LanguageFileType fileType) {
+    return (fileType == null) ? null : getProfileByLanguage(fileType.getLanguage());
+  }
+
+  public static @Nullable StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
+    final String id = language.getID();
+    if (cache.containsKey(id)) {
+      return cache.get(id);
+    }
+    for (StructuralSearchProfile profile : getProfiles()) {
+      if (profile.isMyLanguage(language)) {
+        cache.put(id, profile);
+        return profile;
+      }
+    }
+    cache.put(id, null);
+    return null;
   }
 
   @Contract("null -> false")
@@ -43,7 +101,7 @@ public class StructuralSearchUtil {
   }
 
   public static PsiElement getParentIfIdentifier(PsiElement element) {
-    return !isIdentifier(element) ? element : element.getParent();
+    return isIdentifier(element) ? element.getParent() : element;
   }
 
   @Contract("!null -> !null")
@@ -54,18 +112,14 @@ public class StructuralSearchUtil {
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
-    if (ourNewStyleProfiles == null) {
-      final List<StructuralSearchProfile> list = new ArrayList<>();
-
-      for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
-        if (profile instanceof StructuralSearchProfileBase) {
-          list.add(profile);
-        }
+    final List<StructuralSearchProfile> list = new SmartList<>();
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+      if (profile instanceof StructuralSearchProfileBase) {
+        list.add(profile);
       }
-      list.add(new XmlStructuralSearchProfile());
-      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[0]);
     }
-    return ourNewStyleProfiles;
+    list.add(new XmlStructuralSearchProfile());
+    return list.toArray(new StructuralSearchProfile[0]);
   }
 
   private static StructuralSearchProfile[] getProfiles() {
@@ -74,93 +128,43 @@ public class StructuralSearchUtil {
            : StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
-  public static FileType getDefaultFileType() {
+  public static @NotNull LanguageFileType getDefaultFileType() {
     if (ourDefaultFileType == null) {
       for (StructuralSearchProfile profile : getProfiles()) {
         ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);
       }
       if (ourDefaultFileType == null) {
-        ourDefaultFileType = StdFileTypes.XML;
+        ourDefaultFileType = XmlFileType.INSTANCE;
       }
     }
-    assert ourDefaultFileType instanceof LanguageFileType : "file type not valid for structural search: " + ourDefaultFileType.getName();
     return ourDefaultFileType;
   }
 
-  @TestOnly
-  public static void clearProfileCache(@NotNull Language language) {
-    language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, null);
+  public static Collection<LanguageFileType> getSuitableFileTypes() {
+    return Collections.unmodifiableCollection(getNames2FileTypes().values());
   }
 
-  @Nullable
-  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
-    final StructuralSearchProfile cachedProfile = language.getUserData(STRUCTURAL_SEARCH_PROFILE_KEY);
-    if (cachedProfile != null) return cachedProfile;
-    for (StructuralSearchProfile profile : getProfiles()) {
-      if (profile.isMyLanguage(language)) {
-        language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, profile);
-        return profile;
-      }
+  private static @NotNull Map<String, LanguageFileType> getNames2FileTypes() {
+    final Map<String, LanguageFileType> names2FileTypes = ourNames2FileTypes;
+    if (names2FileTypes != null) {
+      return names2FileTypes;
     }
-    return null;
-  }
 
-  public static boolean isTypedVariable(@NotNull final String name) {
-    return name.length() > 1 && name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
-  }
-
-  @Nullable
-  public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
-    if (!(fileType instanceof LanguageFileType)) {
-      return null;
-    }
-    final LanguageFileType languageFileType = (LanguageFileType)fileType;
-    return getProfileByLanguage(languageFileType.getLanguage());
-  }
-
-  @NotNull
-  public static FileType[] getSuitableFileTypes() {
-    Set<FileType> allFileTypes = new HashSet<>();
-    Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
+    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    final Map<String, LanguageFileType> cache = Arrays.stream(fileTypes)
+      .filter(fileType -> fileType instanceof LanguageFileType)
+      .collect(Collectors.toMap(FileType::getName, fileType -> (LanguageFileType)fileType));
     for (Language language : Language.getRegisteredLanguages()) {
-      FileType fileType = language.getAssociatedFileType();
+      final LanguageFileType fileType = language.getAssociatedFileType();
       if (fileType != null) {
-        allFileTypes.add(fileType);
+        cache.put(fileType.getName(), fileType);
       }
     }
-
-    List<FileType> result = new ArrayList<>();
-    for (FileType fileType : allFileTypes) {
-      if (fileType instanceof LanguageFileType) {
-        result.add(fileType);
-      }
-    }
-
-    return result.toArray(FileType.EMPTY_ARRAY);
+    return ourNames2FileTypes = cache;
   }
 
-  public static boolean containsRegExpMetaChar(String s) {
-    return s.chars().anyMatch(StructuralSearchUtil::isRegExpMetaChar);
-  }
-
-  public static boolean isRegExpMetaChar(int ch) {
-    return REG_EXP_META_CHARS.indexOf(ch) >= 0;
-  }
-
-  public static String shieldRegExpMetaChars(String word) {
-    return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
-  }
-
-  @NotNull
-  public static StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
-    for (int i = 0, length = word.length(); i < length; ++i) {
-      if (isRegExpMetaChar(word.charAt(i))) {
-        out.append("\\");
-      }
-      out.append(word.charAt(i));
-    }
-
-    return out;
+  public static LanguageFileType getSuitableFileTypeByName(String name) {
+    return getNames2FileTypes().get(name);
   }
 
   public static List<Configuration> getPredefinedTemplates() {
@@ -169,14 +173,57 @@ public class StructuralSearchUtil {
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }
-      Collections.sort(result);
+      Collections.sort(result, CONFIGURATION_COMPARATOR);
       ourPredefinedConfigurations = Collections.unmodifiableList(result);
     }
     return ourPredefinedConfigurations;
   }
 
-  public static boolean isDocCommentOwner(PsiElement match) {
+  public static boolean isDocCommentOwner(@NotNull PsiElement match) {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
+  }
+
+  public static String getMeaningfulText(PsiElement matchedNode) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
+    return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
+  }
+
+  public static String getAlternativeText(@NotNull PsiElement matchedNode, @NotNull String previousText) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
+    return profile != null ? profile.getAlternativeText(matchedNode, previousText) : null;
+  }
+
+  public static PatternContext findPatternContextByID(@Nullable String id, @NotNull Language language) {
+    return findPatternContextByID(id, getProfileByLanguage(language));
+  }
+
+  public static PatternContext findPatternContextByID(@Nullable String id, @Nullable StructuralSearchProfile profile) {
+    if (profile == null) {
+      return null;
+    }
+    final List<PatternContext> patternContexts = profile.getPatternContexts();
+    if (patternContexts.isEmpty()) {
+      return null;
+    }
+    if (id == null) {
+      return patternContexts.get(0);
+    }
+    return patternContexts.stream().filter(context -> context.getId().equals(id)).findFirst().orElse(patternContexts.get(0));
+  }
+
+  public static boolean compileForeignElement(@NotNull PsiElement element, GlobalCompilingVisitor myCompilingVisitor) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(element);
+    if (profile == null) {
+      return false;
+    }
+    profile.compile(new PsiElement[]{element}, myCompilingVisitor);
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    MatchingHandler handler = pattern.getHandler(element);
+    if (handler instanceof TopLevelMatchingHandler topLevelMatchingHandler) {
+      // unwrap
+      pattern.setHandler(element, topLevelMatchingHandler.getDelegate());
+    }
+    return true;
   }
 }

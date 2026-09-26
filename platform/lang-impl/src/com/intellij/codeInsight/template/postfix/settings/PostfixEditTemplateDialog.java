@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -9,15 +10,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-public class PostfixEditTemplateDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class PostfixEditTemplateDialog extends DialogWrapper {
   private final JBTextField myTemplateNameTextField;
   private final PostfixTemplateEditor myEditor;
 
@@ -25,47 +29,44 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
                                    @NotNull PostfixTemplateEditor editor,
                                    @NotNull String templateType,
                                    @Nullable PostfixTemplate template) {
-    super(null, parentComponent, false, IdeModalityType.IDE);
+    super(null, parentComponent, true, IdeModalityType.IDE);
     myEditor = editor;
     Disposer.register(getDisposable(), editor);
     String initialName = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
     myTemplateNameTextField = new JBTextField(initialName);
-    setTitle(template != null ? "Edit '" + initialName + "' template" : "Create new " + templateType + " template");
+    setTitle(template != null ? CodeInsightBundle.message("dialog.title.edit.template", initialName)
+                              : CodeInsightBundle.message("dialog.title.create.new.template", templateType));
     init();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTemplateNameTextField;
   }
 
-  @NotNull
   @Override
-  protected List<ValidationInfo> doValidateAll() {
+  protected @NotNull List<ValidationInfo> doValidateAll() {
     String templateName = myTemplateNameTextField.getText();
     if (!StringUtil.isJavaIdentifier(templateName)) {
-      return Collections.singletonList(new ValidationInfo("Template key must be an identifier", myTemplateNameTextField));
+      return Collections.singletonList(new ValidationInfo(CodeInsightBundle.message("message.template.key.must.be.an.identifier"), myTemplateNameTextField));
     }
     return super.doValidateAll();
   }
 
-  @NotNull
-  public String getTemplateName() {
+  public @NotNull String getTemplateName() {
     return myTemplateNameTextField.getText();
   }
 
   @Override
   protected JComponent createCenterPanel() {
     return FormBuilder.createFormBuilder()
-                      .addLabeledComponent("Key:", myTemplateNameTextField)
-                      .addComponentFillVertically(myEditor.getComponent(), 0)
-                      .getPanel();
+      .addLabeledComponent(CodeInsightBundle.message("label.template.key"), myTemplateNameTextField)
+      .addComponentFillVertically(myEditor.getComponent(), UIUtil.DEFAULT_VGAP)
+      .getPanel();
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return myEditor.getHelpId();
   }
 }

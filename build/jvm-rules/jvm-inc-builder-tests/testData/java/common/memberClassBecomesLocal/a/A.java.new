@@ -1,0 +1,7 @@
+public class A {
+  public void f() {
+    class B {
+    }
+    new B();
+  }
+}

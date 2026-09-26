@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
@@ -25,22 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GroovySillyAssignmentInspection extends BaseInspection {
+public final class GroovySillyAssignmentInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
-    return "Silly assignment #loc";
+  protected @Nullable String buildErrorString(Object... args) {
+    return GroovyBundle.message("inspection.message.silly.assignment");
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -58,11 +52,9 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      if (!(rhs instanceof GrReferenceExpression) || !(lhs instanceof GrReferenceExpression)) {
+      if (!(rhs instanceof GrReferenceExpression rhsReference) || !(lhs instanceof GrReferenceExpression lhsReference)) {
         return;
       }
-      final GrReferenceExpression rhsReference = (GrReferenceExpression) rhs;
-      final GrReferenceExpression lhsReference = (GrReferenceExpression) lhs;
       final GrExpression rhsQualifier = rhsReference.getQualifierExpression();
       final GrExpression lhsQualifier = lhsReference.getQualifierExpression();
       if (rhsQualifier != null || lhsQualifier != null) {

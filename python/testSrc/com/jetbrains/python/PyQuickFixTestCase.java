@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,7 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.setCaresAboutInjection(false);
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
   }
 
   @Override
@@ -37,6 +39,16 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
+  protected void doQuickFixTest(final String hint) {
+    String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(testName + "_after.py");
+  }
+
   protected void doInspectionTest(final Class inspectionClass) {
     final String testFileName = getTestName(true);
     myFixture.enableInspections(inspectionClass);
@@ -44,7 +56,7 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  protected void doMultifilesTest(@NotNull final Class inspectionClass, @NotNull final String hint, @NotNull final String[] files) {
+  protected void doMultifilesTest(@NotNull final Class inspectionClass, @NotNull final String hint, final String @NotNull [] files) {
     final String testFileName = getTestName(true);
     myFixture.enableInspections(inspectionClass);
     String [] filenames = Arrays.copyOf(files, files.length + 1);
@@ -55,5 +67,24 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(testFileName + ".py", testFileName + "_after.py", true);
+  }
+
+  protected void doNegativeTest(@NotNull Class inspectionClass, @NotNull String hint) {
+    final var testFileName = getTestName(true);
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile(testFileName + ".py");
+    myFixture.checkHighlighting(true, false, false);
+    assertEmpty(myFixture.filterAvailableIntentions(hint));
+  }
+
+  protected void doMultiFileTest(@NotNull Class inspectionClass, @NotNull String hint) {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(true) + "/main_after.py", true);
   }
 }

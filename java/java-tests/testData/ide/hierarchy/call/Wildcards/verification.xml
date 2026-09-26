@@ -1,0 +1,4 @@
+<node text="getCount() (p.BoardImpl)" base="true">
+  <node text="isLast1(B) (p.King)"/>
+  <node text="isLast2(List&lt;? extends Board&gt;) (p.King)"/>
+</node>

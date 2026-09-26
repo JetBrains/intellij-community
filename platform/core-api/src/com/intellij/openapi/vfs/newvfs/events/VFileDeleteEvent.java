@@ -1,59 +1,53 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class VFileDeleteEvent extends VFileEvent {
-  @NotNull private final VirtualFile myFile;
-  private int myDepth = -1;
+public final class VFileDeleteEvent extends VFileEvent {
+  private final VirtualFile myFile;
 
-  public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  /** @deprecated use {@link VFileDeleteEvent#VFileDeleteEvent(Object, VirtualFile)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
+    this(requestor, file);
+  }
+
+  @ApiStatus.Internal
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file) {
+    super(requestor);
     myFile = file;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
   @Override
-  @NonNls
   public String toString() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Object requestor = getRequestor();
+      if (requestor != null) {
+        return "VfsEvent[deleted: " + myFile.getUrl() + ", requestor: " + requestor.getClass() + "]";
+      }
+    }
     return "VfsEvent[deleted: " + myFile.getUrl() + "]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -75,19 +69,5 @@ public class VFileDeleteEvent extends VFileEvent {
   @Override
   public int hashCode() {
     return myFile.hashCode();
-  }
-
-  public int getFileDepth() {
-    if (myDepth == -1) {
-      int d = 0;
-      VirtualFile cur = myFile;
-      while (cur != null) {
-        d++;
-        cur = cur.getParent();
-      }
-      myDepth = d;
-    }
-
-    return myDepth;
   }
 }

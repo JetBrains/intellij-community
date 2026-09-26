@@ -1,0 +1,6 @@
+JsonFile: n_incomplete_null.json
+  JsonArray
+    PsiElement([)('[')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('nul')
+    PsiElement(])(']')

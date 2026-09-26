@@ -1,11 +1,9 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.coverage.view.CoverageView;
-import com.intellij.coverage.view.CoverageViewManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,40 +13,49 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   private final Project myProject;
+  private ModifiedFilesFilter myModifiedFilesFilter;
 
-  @Nullable
-  protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
+  protected abstract @Nullable Runnable createRenewRequest(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager);
 
   public BaseCoverageAnnotator(final Project project) {
     myProject = project;
   }
 
-  public void onSuiteChosen(CoverageSuitesBundle newSuite) {
+  @Override
+  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) {
+    myModifiedFilesFilter = null;
   }
 
-  public void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
+  @ApiStatus.Internal
+  @Override
+  public final void renewCoverageData(final @NotNull CoverageSuitesBundle suite, final @NotNull CoverageDataManager dataManager) {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading Coverage Data", false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
+      final Project project = myProject;
+      CoverageBackgroundProgressKt.launchCoverageDataRenewal(
+        project,
+        () -> {
+          myModifiedFilesFilter = ModifiedFilesFilter.create(project);
           request.run();
+        },
+        () -> dataManager.coverageDataCalculated(suite),
+        () -> {
+          dataManager.coverageDataCalculationFailed(suite);
+          dataManager.closeSuitesBundle(suite);
         }
-
-        @Override
-        public void onSuccess() {
-          final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getToolwindow(suite);
-          if (coverageView != null) {
-            coverageView.updateParentTitle();
-          }
-        }
-      });
+      );
     }
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+    return myModifiedFilesFilter;
   }
 
   public static class FileCoverageInfo {

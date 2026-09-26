@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_starProjectionUpperBoundChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/starProjectionUpperBoundChanged/a/A.kt
+End of files
+Cleaning output files:
+  AStarDeclaration.class
+  CallGetAStar.class
+  GetAStarKt.class
+  META-INF/kotlin_classHierarchyAffected_starProjectionUpperBoundChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/starProjectionUpperBoundChanged/a/AStarDeclaration.kt
+  kotlin/classHierarchyAffected/starProjectionUpperBoundChanged/a/CallGetAStar.kt
+  kotlin/classHierarchyAffected/starProjectionUpperBoundChanged/a/getAStar.kt
+End of files
+------------------------------------------
+Exit code: OK

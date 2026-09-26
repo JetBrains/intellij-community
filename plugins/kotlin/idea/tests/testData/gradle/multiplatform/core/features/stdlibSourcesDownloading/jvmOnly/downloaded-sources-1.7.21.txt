@@ -1,0 +1,5 @@
+org.jetbrains.kotlin:kotlin-stdlib:2.0.0 kotlin-stdlib-2.0.0-sources.jar!
+org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 kotlin-stdlib-jdk8-1.8.0-sources.jar!
+org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 kotlin-stdlib-jdk7-1.8.0-sources.jar!
+org.jetbrains:annotations:23.0.0 annotations-23.0.0-sources.jar!
+org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.9.0 kotlinx-coroutines-core-jvm-1.9.0-sources.jar!

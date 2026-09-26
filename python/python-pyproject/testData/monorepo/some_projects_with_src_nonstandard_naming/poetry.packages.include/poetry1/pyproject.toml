@@ -1,0 +1,14 @@
+[project]
+name = "poetry1"
+version = "0.1.0"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [
+  { include = "my_poetry1", from = "my_src" }
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

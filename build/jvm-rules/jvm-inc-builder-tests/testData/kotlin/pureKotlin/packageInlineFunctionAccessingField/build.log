@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageInlineFunctionAccessingField-a.kotlin_module
+  test/UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageInlineFunctionAccessingField/a/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

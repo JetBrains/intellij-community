@@ -1,36 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Objects;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
+final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final InspectionResultsView myView;
   private final Alarm myAlarm;
   private final Set<VirtualFile> myUnPresentEditedFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
 
-  private final Set<VirtualFile> myFilesToProcess = new THashSet<>(); // guarded by myFilesToProcess
+  private final Set<VirtualFile> myFilesToProcess = new HashSet<>(); // guarded by myFilesToProcess
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
   private final Alarm myUpdateQueue;
 
-  public InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
+  InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, view);
@@ -91,7 +93,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     PsiFile file = event.getFile();
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
-      if (!myUnPresentEditedFiles.contains(vFile)) {
+      if (vFile != null && !myUnPresentEditedFiles.contains(vFile)) {
         synchronized (myFilesToProcess) {
           myFilesToProcess.add(vFile);
         }
@@ -106,7 +108,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     myUpdateQueue.cancelAllRequests();
     myUpdateQueue.addRequest(() -> {
       boolean[] needUpdateUI = {false};
-      Processor<InspectionTreeNode> nodeProcessor = null;
+      Processor<? super InspectionTreeNode> nodeProcessor = null;
 
       if (myNeedReValidate.compareAndSet(true, false)) {
         nodeProcessor = (node) -> {
@@ -121,7 +123,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
               if (pointer != null) {
                 VirtualFile vFile = pointer.getVirtualFile();
                 if (vFile == null || !vFile.isValid()) {
-                  dropNodeCache((SuppressableInspectionTreeNode)node);
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }
@@ -136,10 +138,10 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
 
       Set<VirtualFile> filesToCheck;
       synchronized (myFilesToProcess) {
-        filesToCheck = new THashSet<>(myFilesToProcess);
+        filesToCheck = new HashSet<>(myFilesToProcess);
         myFilesToProcess.clear();
       }
-      Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
+      Set<VirtualFile> unPresentFiles = new HashSet<>(filesToCheck);
       if (!filesToCheck.isEmpty()) {
         Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
           if (myView.isDisposed()) {
@@ -151,10 +153,10 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
             if (element != null) {
               SmartPsiElementPointer pointer = element.getPointer();
               if (pointer != null) {
-                VirtualFile vFile = pointer.getVirtualFile();
+                VirtualFile vFile = ReadAction.computeBlocking(() -> pointer.getVirtualFile());
                 if (filesToCheck.contains(vFile)) {
                   unPresentFiles.remove(vFile);
-                  dropNodeCache((SuppressableInspectionTreeNode)node);
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }
@@ -168,9 +170,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
         nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
       }
 
-      synchronized (myView.getTreeStructureUpdateLock()) {
-        processNodesIfNeed(myView.getTree().getRoot(), Objects.requireNonNull(nodeProcessor));
-      }
+      myView.getTree().getInspectionTreeModel().traverse(myView.getTree().getInspectionTreeModel().getRoot()).processEach(nodeProcessor);
 
       if (!unPresentFiles.isEmpty()) {
         myUnPresentEditedFiles.addAll(unPresentFiles);
@@ -178,35 +178,22 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
 
       if (needUpdateUI[0] && !myAlarm.isDisposed()) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
+        //TODO replace with more accurate
+        myAlarm.addRequest(() -> myView.getTree().getInspectionTreeModel().reload(), 100, ModalityState.nonModal());
       }
     }, 200);
   }
 
-  private static void dropNodeCache(SuppressableInspectionTreeNode node) {
-    ReadAction.run(() -> node.dropCache());
-  }
-
-  private static void processNodesIfNeed(InspectionTreeNode node, Processor<InspectionTreeNode> processor) {
-    if (processor.process(node)) {
-      final int count = node.getChildCount();
-      for (int i = 0; i < count; i++) {
-        processNodesIfNeed((InspectionTreeNode)node.getChildAt(i), processor);
-      }
-    }
-  }
-
-  private static class CompositeProcessor<X> implements Processor<X> {
-    private final Processor<X> myFirstProcessor;
+  private static final class CompositeProcessor<X> implements Processor<X> {
+    private final Processor<? super X> myFirstProcessor;
     private boolean myFirstFinished;
-    private final Processor<X> mySecondProcessor;
+    private final Processor<? super X> mySecondProcessor;
     private boolean mySecondFinished;
 
-    private CompositeProcessor(@NotNull Processor<X> firstProcessor, @NotNull Processor<X> secondProcessor) {
+    private CompositeProcessor(@NotNull Processor<? super X> firstProcessor, @NotNull Processor<? super X> secondProcessor) {
       myFirstProcessor = firstProcessor;
       mySecondProcessor = secondProcessor;
     }
-
 
     @Override
     public boolean process(X x) {
@@ -219,8 +206,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
       return !myFirstFinished || !mySecondFinished;
     }
 
-    @NotNull
-    public static <X> Processor<X> combine(@NotNull Processor<X> processor1, @Nullable Processor<X> processor2) {
+    public static @NotNull <X> Processor<? super X> combine(@NotNull Processor<? super X> processor1, @Nullable Processor<? super X> processor2) {
       return processor2 == null ? processor1 : new CompositeProcessor<>(processor1, processor2);
     }
   }

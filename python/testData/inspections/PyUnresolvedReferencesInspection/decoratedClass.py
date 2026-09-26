@@ -20,4 +20,4 @@ print(c.bar, c.baz, c.quux)
 print(c.<warning descr="Unresolved attribute reference 'spam' for class 'C'">spam</warning>) #fail
 d = D()
 print(d.foo)
-print(d.eggs) #pass
+print(d.<warning descr="Unresolved attribute reference 'eggs' for class 'D'">eggs</warning>)

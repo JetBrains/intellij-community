@@ -1,35 +1,27 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package hg4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.vcs.ExecutableHelper;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.debug;
+import static com.intellij.openapi.vcs.Executor.pwd;
+import static com.intellij.openapi.vcs.Executor.splitCommandInParameters;
 
-public class HgExecutor {
+public final class HgExecutor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
 
@@ -66,19 +58,25 @@ public class HgExecutor {
   }
 
   public static String hg(@NotNull String command, boolean ignoreNonZeroExitCode) {
-    List<String> split = splitCommandInParameters(command);
-    split.add(0, HG_EXECUTABLE);
+    List<String> split = new ArrayList<>();
+    ContainerUtil.addAll(split, HG_EXECUTABLE, "--config", "ui.timeout=10");
+    split.addAll(splitCommandInParameters(command));
     debug("hg " + command);
     HgCommandResult result;
     try {
-      result = new ShellCommand(split, pwd(), null).execute(false, false);
+      int attempt = 0;
+      do {
+        result = new ShellCommand(split, pwd(), null).execute(false, false);
+      }
+      while ((HgErrorUtil.isWLockError(result) || isUsedByAnotherProcess(result)) && attempt++ < 2);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
     int exitValue = result.getExitValue();
     if (!ignoreNonZeroExitCode && exitValue != 0) {
-      throw new RuntimeException(result.getRawError());
+      debug("exit code: " + exitValue + " " + result.getRawOutput());
+      throw new HgCommandFailedException(exitValue, result.getRawOutput(), result.getRawError());
     }
     return result.getRawOutput();
   }
@@ -96,5 +94,36 @@ public class HgExecutor {
   @NotNull
   public static String getHgExecutable() {
     return HG_EXECUTABLE;
+  }
+
+  private static boolean isUsedByAnotherProcess(@Nullable HgCommandResult result) {
+    //abort: process cannot access the file because it is being used by another process
+    if (result == null) return false;
+    return HgErrorUtil.isAbort(result) && result.getRawError().contains("used by another process");
+  }
+
+  public static class HgCommandFailedException extends RuntimeException {
+    private final int myExitCode;
+    private final @NotNull String myRawOutput;
+    private final @NotNull String myRawError;
+
+    private HgCommandFailedException(int exitCode, @NotNull String rawOutput, @NotNull String rawError) {
+      super(String.format("output: \"%s\"; error: \"%s\"", rawOutput, rawError));
+      myExitCode = exitCode;
+      myRawOutput = rawOutput;
+      myRawError = rawError;
+    }
+
+    public int getExitCode() {
+      return myExitCode;
+    }
+
+    public @NotNull String getRawOutput() {
+      return myRawOutput;
+    }
+
+    public @NotNull String getRawError() {
+      return myRawError;
+    }
   }
 }

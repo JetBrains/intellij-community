@@ -18,9 +18,6 @@ package com.intellij.xdebugger.breakpoints;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class XBreakpointHandler<B extends XBreakpoint<?>> {
   public static final XBreakpointHandler<?>[] EMPTY_ARRAY = new XBreakpointHandler<?>[0];
   private final Class<? extends XBreakpointType<B, ?>> myBreakpointTypeClass;

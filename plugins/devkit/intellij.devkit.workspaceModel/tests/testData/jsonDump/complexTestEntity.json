@@ -1,0 +1,85 @@
+{
+  "fqn": "com.intellij.devkit.workspaceModel.jsonDump.BaseTestEntity",
+  "entitySource": {
+    "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+    "virtualFileUrl": null
+  },
+  "name": "base",
+  "listOfAbstract_Count": 3,
+  "listOfAbstract": [
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ImplClass1",
+      "string": "impl1",
+      "version": "1"
+    },
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ImplClass2",
+      "name": "name",
+      "string": "impl2"
+    },
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ImplClass1",
+      "string": "impl1",
+      "version": "2"
+    }
+  ],
+  "Children_ChildEntity_Count": 1,
+  "Children_ChildEntity": [
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ChildEntity",
+      "entitySource": {
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+        "virtualFileUrl": null
+      },
+      "childName": "child name"
+    }
+  ],
+  "Child_SingleChild": {
+    "fqn": "com.intellij.devkit.workspaceModel.jsonDump.SingleChild",
+    "entitySource": {
+      "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+      "virtualFileUrl": null
+    },
+    "someData": "some data"
+  },
+  "Children_ExtensionChildEntity_Count": 2,
+  "Children_ExtensionChildEntity": [
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity",
+      "entitySource": {
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+        "virtualFileUrl": null
+      },
+      "extensionChildName": "extension child name",
+      "listOfUrls_Count": 3,
+      "listOfUrls": [
+        {
+          "url": "file:///someDir/subDir/1.txt"
+        },
+        {
+          "url": "file:///someDir/subDir/2.kt"
+        },
+        {
+          "url": "file:///someDir/subDir/3.cpp"
+        }
+      ]
+    },
+    {
+      "fqn": "com.intellij.devkit.workspaceModel.jsonDump.ExtensionChildEntity",
+      "entitySource": {
+        "entitySourceFqn": "com.intellij.workspaceModel.ide.NonPersistentEntitySource",
+        "virtualFileUrl": null
+      },
+      "extensionChildName": "another extension child name",
+      "listOfUrls_Count": 2,
+      "listOfUrls": [
+        {
+          "url": "file:///someDir/subDir/2.kt"
+        },
+        {
+          "url": "file:///someDir/subDir/3.cpp"
+        }
+      ]
+    }
+  ]
+}

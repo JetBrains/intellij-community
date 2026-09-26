@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Jewel Standalone Sample" type="JetRunConfigurationType" factoryName="Kotlin">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.jewel.samples.standalone.MainKt" />
+    <option name="WORKING_DIRECTORY" value="$MODULE_WORKING_DIR$" />
+    <module name="intellij.platform.jewel.samples.standalone" />
+    <shortenClasspath name="NONE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

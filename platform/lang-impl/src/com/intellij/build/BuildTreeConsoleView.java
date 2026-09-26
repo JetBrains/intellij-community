@@ -1,231 +1,794 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.*;
+import com.intellij.build.console.BuildConsoleViewHandler;
+import com.intellij.build.console.BuildConsoleViewStrategy;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.DerivedResult;
+import com.intellij.build.events.DuplicateMessageAware;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.FileMessageEvent;
+import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.FinishEvent;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.MessageEventResult;
+import com.intellij.build.events.OutputBuildEvent;
+import com.intellij.build.events.OutputReferenceEvent;
+import com.intellij.build.events.PresentableBuildEvent;
+import com.intellij.build.events.ProgressBuildEvent;
+import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.StartEvent;
+import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.split.SplitComponentBindingKt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.Update;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.io.File;
-import java.util.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import java.awt.BorderLayout;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView {
+public final class BuildTreeConsoleView
+  implements ConsoleView, UiDataProvider, BuildProgressListener, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
+  @ApiStatus.Internal
+  public static final DataKey<BuildTreeConsoleView> COMPONENT_KEY = DataKey.create("BuildTreeConsoleView");
+  public static final DataKey<ExecutionNode> EXECUTION_NODE = DataKey.create("ExecutionNode");
 
-  @NonNls private static final String TREE = "tree";
-  private final JPanel myPanel = new JPanel();
-  private final SimpleTreeBuilder myBuilder;
-  private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
-  private final ExecutionNodeProgressAnimator myProgressAnimator;
+  @ApiStatus.Internal
+  public static final @NonNls String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
+  @ApiStatus.Internal
+  public static final float SPLITTER_DEFAULT_PROPORTION = 0.33f;
 
-  private final Project myProject;
-  private final SimpleTreeStructure myTreeStructure;
-  private final DetailsHandler myDetailsHandler;
-  private final TableColumn myTimeColumn;
-  private final String myWorkingDir;
-  private volatile int myTimeColumnWidth;
-  private final AtomicBoolean myDisposed = new AtomicBoolean();
-  private final TransferToEDTQueue<Runnable> myLaterInvocator =
-    TransferToEDTQueue.createRunnableMerger("BuildTreeConsoleView later invocator");
+  @Service(Service.Level.PROJECT)
+  private static final class ScopeHolder {
+    private final CoroutineScope scope;
 
-  public BuildTreeConsoleView(Project project, BuildDescriptor buildDescriptor) {
-    myProject = project;
-    myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    final ColumnInfo[] COLUMNS = {
-      new TreeColumnInfo("name"),
-      new ColumnInfo("time elapsed") {
-        @Nullable
-        @Override
-        public Object valueOf(Object o) {
-          if (o instanceof DefaultMutableTreeNode) {
-            final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
-            if (userObject instanceof ExecutionNode) {
-              String duration = ((ExecutionNode)userObject).getDuration();
-              updateTimeColumnWidth("___" + duration, false);
-              return duration;
-            }
-          }
-          return null;
-        }
-      }
-    };
-    final ExecutionNode rootNode = new ExecutionNode(myProject, null);
-    rootNode.setAutoExpandNode(true);
-    final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
+    private ScopeHolder(CoroutineScope scope) {
+      this.scope = scope;
+    }
 
-    DefaultTableCellRenderer timeColumnCellRenderer = new DefaultTableCellRenderer() {
-      @Override
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setHorizontalAlignment(SwingConstants.RIGHT);
-        final Color fg = isSelected ? UIUtil.getTreeSelectionForeground() : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
-        setForeground(fg);
-        return this;
-      }
-    };
-
-    TreeTable treeTable = new TreeTable(model) {
-      @Override
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        if (column == 1) {
-          return timeColumnCellRenderer;
-        }
-        return super.getCellRenderer(row, column);
-      }
-    };
-    EditSourceOnDoubleClickHandler.install(treeTable);
-    EditSourceOnEnterKeyHandler.install(treeTable, null);
-
-    TreeTableTree tree = treeTable.getTree();
-    final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
-    tree.setCellRenderer(new TreeCellRenderer() {
-      @Override
-      public Component getTreeCellRendererComponent(JTree tree,
-                                                    Object value,
-                                                    boolean selected,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
-        final Component rendererComponent =
-          treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-        if (rendererComponent instanceof SimpleColoredComponent) {
-          final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          final Color fg = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
-          if (selected) {
-            for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
-              it.next();
-              int offset = it.getOffset();
-              int endOffset = it.getEndOffset();
-              SimpleTextAttributes currentAttributes = it.getTextAttributes();
-              SimpleTextAttributes newAttributes =
-                new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
-              it.split(endOffset - offset, newAttributes);
-            }
-          }
-
-          SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
-        }
-        return rendererComponent;
-      }
-    });
-    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
-    treeTable.setTableHeader(null);
-
-    myTimeColumn = treeTable.getColumnModel().getColumn(1);
-    myTimeColumn.setResizable(false);
-    updateTimeColumnWidth("Running for " + StringUtil.formatDuration(11111L), true);
-
-    TreeUtil.installActions(tree);
-    myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
-
-    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
-    Disposer.register(this, myBuilder);
-    myBuilder.initRootNode();
-    myBuilder.updateFromRoot();
-
-    JPanel myContentPanel = new JPanel();
-    myContentPanel.setLayout(new CardLayout());
-    myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable, SideBorder.LEFT), TREE);
-
-    myPanel.setLayout(new BorderLayout());
-    ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
-      @Override
-      public void doLayout() {
-        super.doLayout();
-        JComponent detailsComponent = myDetailsHandler.getComponent();
-        if (detailsComponent != null && detailsComponent.isVisible()) {
-          int firstSize = getFirstSize();
-          int lastSize = getLastSize();
-          if (firstSize == 0 && lastSize == 0) {
-            int width = Math.round(getWidth() / 2f);
-            setFirstSize(width);
-          }
-        }
-      }
-    };
-    Disposer.register(this, myThreeComponentsSplitter);
-    myThreeComponentsSplitter.setFirstComponent(myContentPanel);
-    myDetailsHandler = new DetailsHandler(myProject, tree, myThreeComponentsSplitter);
-    myThreeComponentsSplitter.setLastComponent(myDetailsHandler.getComponent());
-    myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
-
-    myProgressAnimator = new ExecutionNodeProgressAnimator(this);
+    public static CoroutineScope getScope(Project project) {
+      return project.getService(ScopeHolder.class).scope;
+    }
   }
 
-  private ExecutionNode getRootElement() {
-    return ((ExecutionNode)myTreeStructure.getRootElement());
+  private final JPanel myPanel = new JPanel();
+  private final Map<Object, ExecutionNode> nodesMap = new ConcurrentHashMap<>();
+
+  private final @NotNull Project myProject;
+  private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
+  private final @NotNull String myWorkingDir;
+  private final @NotNull BuildConsoleViewStrategy myConsoleViewStrategy;
+  private final BuildConsoleViewHandler myConsoleViewHandler;
+  private final AtomicBoolean myFinishedBuildEventReceived = new AtomicBoolean();
+  private final AtomicBoolean myDisposed = new AtomicBoolean();
+  private final AtomicBoolean myShownFirstError = new AtomicBoolean();
+  private final AtomicBoolean myExpandedFirstMessage = new AtomicBoolean();
+  private final boolean myNavigateToTheFirstErrorLocation;
+  private final Invoker myInvoker;
+  private final CoroutineScope myScope;
+  private final BuildTreeViewModel myTreeVm;
+  private final JComponent mySplitComponent;
+  private final @NotNull ExecutionNode myRootNode;
+  private final @NotNull ExecutionNode myBuildProgressRootNode;
+  private final Set<Predicate<? super ExecutionNode>> myNodeFilters;
+  private final OccurenceNavigator myOccurrenceNavigatorSupport;
+  private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
+
+  @Deprecated
+  public BuildTreeConsoleView(@NotNull Project project,
+                              @NotNull BuildDescriptor buildDescriptor,
+                              @Nullable ExecutionConsole executionConsole
+  ) {
+    this(project, buildDescriptor, executionConsole, BuildViewSettingsProvider.EMPTY);
+  }
+
+  public BuildTreeConsoleView(@NotNull Project project,
+                              @NotNull BuildDescriptor buildDescriptor,
+                              @Nullable ExecutionConsole executionConsole,
+                              @NotNull BuildViewSettingsProvider buildViewSettingsProvider
+  ) {
+    myProject = project;
+    myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor
+                        ? (DefaultBuildDescriptor)buildDescriptor
+                        : new DefaultBuildDescriptor(buildDescriptor);
+    myNodeFilters = ConcurrentCollectionFactory.createConcurrentSet();
+    myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
+    myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
+
+    myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
+    myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
+    myRootNode.add(myBuildProgressRootNode);
+
+    myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
+
+    myScope = CoroutineScopeKt.childScope(ScopeHolder.getScope(project), "BuildTreeConsoleView", EmptyCoroutineContext.INSTANCE, true);
+    myTreeVm = new BuildTreeViewModel(this, myScope);
+    mySplitComponent = SplitComponentBindingKt.createComponent(
+      BuildTreeSplitComponentBindingKt.getBuildTreeSplitComponentBinding(),
+      myProject, myScope, myTreeVm.getId()
+    );
+
+    myOccurrenceNavigatorSupport = new SplitProblemOccurrenceNavigatorSupport(myTreeVm);
+
+    myPanel.setLayout(new BorderLayout());
+    OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, SPLITTER_DEFAULT_PROPORTION);
+    myThreeComponentsSplitter.setFirstComponent(mySplitComponent);
+    List<Filter> filters = myBuildDescriptor.getExecutionFilters();
+    myConsoleViewStrategy = BuildConsoleViewStrategy.create(buildViewSettingsProvider.isSingleBuildConsoleView());
+    myConsoleViewHandler = new BuildConsoleViewHandler(myProject, myBuildProgressRootNode, this, executionConsole, filters, myConsoleViewStrategy);
+    myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
+    myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+    BuildTreeFilters.install(this);
+  }
+
+  private static boolean isNavigateToTheFirstErrorLocation(@NotNull Project project, @NotNull BuildDescriptor buildDescriptor) {
+    ThreeState isNavigateToError =
+      buildDescriptor instanceof DefaultBuildDescriptor
+      ? ((DefaultBuildDescriptor)buildDescriptor).isNavigateToError()
+      : ThreeState.UNSURE;
+    BuildWorkspaceConfiguration workspaceConfiguration = BuildWorkspaceConfiguration.getInstance(project);
+    return isNavigateToError == ThreeState.UNSURE
+           ? workspaceConfiguration.isShowFirstErrorInEditor()
+           : isNavigateToError.toBoolean();
+  }
+
+  boolean isCorrectThread() {
+    if (myInvoker != null) {
+      return myInvoker.isValidThread();
+    }
+    return true;
+  }
+
+  @NotNull
+  private Function<@Nullable ExecutionNode, @NotNull ActionGroup> getMainContextMenuGroupSupplier() {
+    List<AnAction> actions = new ArrayList<>(myBuildDescriptor.getRestartActions());
+    if (!actions.isEmpty()) {
+      actions.add(Separator.getInstance());
+    }
+
+    EditSourceAction edit = new EditSourceAction();
+    ActionUtil.copyFrom(edit, "EditSource");
+    actions.add(edit);
+
+    return node -> {
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.addAll(actions);
+      if (node != null) {
+        List<AnAction> contextActions = myBuildDescriptor.getContextActions(node);
+        if (!contextActions.isEmpty()) {
+          group.addSeparator();
+          group.addAll(contextActions);
+        }
+      }
+      return group;
+    };
+  }
+
+  @ApiStatus.Internal
+  public ActionGroup getFilteringAndNavigationContextMenuGroup() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    Supplier<Filterable<ExecutionNode>> supplier = new WeakFilterableSupplier<>(this);
+    group.add(new WarningsToggleAction(supplier));
+    group.add(new SuccessfulStepsToggleAction(supplier));
+    group.addSeparator();
+
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    group.add(actionsManager.createPrevOccurenceAction(this));
+    group.add(actionsManager.createNextOccurenceAction(this));
+    return group;
+  }
+
+  @ApiStatus.Internal
+  public ActionGroup getMainContextMenuGroup(DataContext context) {
+    SelectedBuildTreeNode selectedNode = context.getData(BuildTreeContextKt.getBUILD_TREE_SELECTED_NODE());
+    ExecutionNode node = selectedNode == null ? null : myTreeVm.getNodeById(selectedNode.getNodeId());
+    return getMainContextMenuGroupSupplier().apply(node);
+  }
+
+  @Override
+  public void clear() {
+    myInvoker.invoke(() -> {
+      getRootElement().removeChildren();
+      nodesMap.clear();
+      myConsoleViewHandler.clear();
+      myTreeVm.clearNodes();
+    });
+  }
+
+  boolean isAlwaysVisible(@NotNull ExecutionNode node) {
+    return isBuildProgressRootNode(node) || node.isRunning() || node.isFailed();
+  }
+
+  @Override
+  public boolean isFilteringEnabled() {
+    return true;
+  }
+
+  @Override
+  public @NotNull Predicate<ExecutionNode> getFilter() {
+    return executionNode -> isAlwaysVisible(executionNode) ||
+                            ContainerUtil.exists(myNodeFilters, predicate -> predicate.test(executionNode));
+  }
+
+  @Override
+  public void addFilter(@NotNull Predicate<? super ExecutionNode> executionTreeFilter) {
+    if (executionTreeFilter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+      myTreeVm.setShowingSuccessful(true);
+    }
+    else if (executionTreeFilter == BuildTreeFilters.getWARNINGS_FILTER()) {
+      myTreeVm.setShowingWarnings(true);
+    }
+    else {
+      LOG.error("Unknown filter: " + executionTreeFilter);
+    }
+  }
+
+  @Override
+  public void removeFilter(@NotNull Predicate<? super ExecutionNode> filter) {
+    if (filter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+      myTreeVm.setShowingSuccessful(false);
+    }
+    else if (filter == BuildTreeFilters.getWARNINGS_FILTER()) {
+      myTreeVm.setShowingWarnings(false);
+    }
+    else {
+      LOG.error("Unknown filter: " + filter);
+    }
+  }
+
+  @Override
+  public boolean contains(@NotNull Predicate<? super ExecutionNode> filter) {
+    if (filter == BuildTreeFilters.getSUCCESSFUL_STEPS_FILTER()) {
+      return myTreeVm.getShowingSuccessful();
+    }
+    else if (filter == BuildTreeFilters.getWARNINGS_FILTER()) {
+      return myTreeVm.getShowingWarnings();
+    }
+    else {
+      LOG.error("Unknown filter: " + filter);
+      return false;
+    }
+  }
+
+  @NotNull ExecutionNode getRootElement() {
+    return myRootNode;
+  }
+
+  @NotNull ExecutionNode getBuildProgressRootNode() {
+    return myBuildProgressRootNode;
   }
 
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
   }
 
+  private void onEventInternal(@NotNull BuildEvent event) {
+    switch (event) {
+      case StartEvent startEvent -> onStartEvent(startEvent);
+      case FinishEvent finishEvent -> onFinishEvent(finishEvent);
+      case ProgressBuildEvent progressEvent -> onProgressEvent(progressEvent);
+      case MessageEvent messageEvent -> onMessageEvent(messageEvent);
+      case OutputBuildEvent outputEvent -> onOutputEvent(outputEvent);
+      case OutputReferenceEvent outputEvent -> onOutputReferenceEvent(outputEvent);
+      case PresentableBuildEvent presentableEvent -> onPresentableEvent(presentableEvent);
+      default -> onBuildEvent(event);
+    }
+  }
+
+  private void onStartEvent(@NotNull StartEvent event) {
+    var currentNode = findNode(event);
+    if (currentNode != null) {
+      LOG.debug("Start event id collision found:" + event.getId() + ", was also in node: " + currentNode.getTitle());
+      return;
+    }
+
+    runUpdateAction(event, _ -> {
+      if (event instanceof StartBuildEvent) {
+        var node = getBuildProgressRootNode();
+        addNode(event, node);
+        node.setTitle(myBuildDescriptor.getTitle());
+      }
+      else {
+        var parentNode = findParentNode(event);
+        var node = new ExecutionNode(myProject, parentNode, false, this::isCorrectThread);
+        addNode(event, node);
+      }
+    });
+  }
+
+  private void onFinishEvent(@NotNull FinishEvent event) {
+    var node = findNode(event);
+    if (node == null) {
+      LOG.debug("Finish event id collision found: the start event with " + event.getId() + " never handled.");
+      return;
+    }
+
+    var result = calculateFinishResult(event, node);
+    var firstFailureNode = new ExecutionNode[1];
+    runUpdateAction(event, updatedNodes -> {
+      setResult(node, result, updatedNodes);
+      setAllDescendantResults(node, new SkippedResultImpl(), updatedNodes);
+      setEndTime(node, event.getEventTime());
+
+      if (result instanceof FailureResult failureResult) {
+        for (var failure : failureResult.getFailures()) {
+          var failureNode = addChildFailureNode(node, failure, event.getMessage(), event.getEventTime(), updatedNodes);
+          if (firstFailureNode[0] == null) {
+            firstFailureNode[0] = failureNode;
+          }
+        }
+      }
+    });
+
+    if (firstFailureNode[0] != null) {
+      showErrorIfFirst(firstFailureNode[0]);
+    }
+
+    if (event instanceof FinishBuildEvent) {
+      myFinishedBuildEventReceived.set(true);
+      myDeferredEvents.forEach(buildEvent -> onEventInternal(buildEvent));
+      if (myConsoleViewHandler.getExecutionNode() == null) {
+        invokeLater(() -> myConsoleViewHandler.setExecutionNode(getBuildProgressRootNode()));
+      }
+      myConsoleViewHandler.stopProgressBar();
+    }
+  }
+
+  private void onProgressEvent(@NotNull ProgressBuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode == null) {
+      runUpdateAction(event, _ -> {
+        var parentNode = findParentNode(event);
+        var node = new ExecutionNode(myProject, parentNode, isBuildProgressRootNode(parentNode), this::isCorrectThread);
+        addNode(event, node);
+      });
+    }
+    else if (isBuildProgressRootNode(existingNode)) {
+      myConsoleViewHandler.updateProgressBar(event.getTotal(), event.getProgress());
+    }
+  }
+
+  private void onMessageEvent(@NotNull MessageEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Message event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      }
+      return;
+    }
+
+    runUpdateAction(event, updatedNodes -> {
+      if (event instanceof DuplicateMessageAware) {
+        if (!myFinishedBuildEventReceived.get()) {
+          myDeferredEvents.add(event);
+          return;
+        }
+      }
+
+      var parentNode = findParentNode(event);
+      if (event instanceof FileMessageEvent fileMessageEvent) {
+        parentNode = getOrCreateFileMessageParentNode(
+          fileMessageEvent.getEventTime(),
+          fileMessageEvent.getFilePosition(),
+          fileMessageEvent.getNavigatable(myProject),
+          parentNode
+        );
+      }
+
+      if (event instanceof DuplicateMessageAware) {
+        if (parentNode != null && parentNode.findFirstChild(node -> event.getMessage().equals(node.getName())) != null) {
+          return;
+        }
+      }
+
+      var node = new ExecutionNode(myProject, parentNode, false, this::isCorrectThread);
+      addNode(event, node);
+
+      node.setAlwaysLeaf(event instanceof FileMessageEvent);
+      node.setNavigatable(event.getNavigatable(myProject));
+      setResult(node, event.getResult(), updatedNodes);
+      setEndTime(node, event.getEventTime());
+
+      myConsoleViewStrategy.dispatchMessageEvent(myConsoleViewHandler, parentNode, node, event);
+    });
+
+    var node = findNode(event);
+    if (node != null) {
+      if (event.getKind() == MessageEvent.Kind.ERROR) {
+        showErrorIfFirst(node);
+      }
+      else {
+        expandFirstMessage(node);
+      }
+    }
+  }
+
+  private void onPresentableEvent(@NotNull PresentableBuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      LOG.debug("Presentable event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      return;
+    }
+    var parentNode = findParentNode(event);
+
+    runUpdateAction(event, _ -> {
+      var node = new ExecutionNode(myProject, parentNode, isBuildProgressRootNode(parentNode), this::isCorrectThread);
+      addNode(event, node);
+
+      var presentationData = event.getPresentationData();
+      node.applyFrom(presentationData);
+      myConsoleViewHandler.maybeAddExecutionConsole(node, presentationData);
+    });
+  }
+
+  private void onOutputEvent(@NotNull OutputBuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      LOG.debug("Output event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      return;
+    }
+    myConsoleViewStrategy.dispatchOutputEvent(myConsoleViewHandler, getParentNode(event), event);
+  }
+
+  private void onOutputReferenceEvent(@NotNull OutputReferenceEvent event) {
+    myConsoleViewStrategy.dispatchOutputReferenceEvent(myConsoleViewHandler, event);
+  }
+
+  private void onBuildEvent(@NotNull BuildEvent event) {
+    var existingNode = findNode(event);
+    if (existingNode != null) {
+      LOG.debug("Build event id collision found:" + event.getId() + ", was also in node: " + existingNode.getTitle());
+      return;
+    }
+
+    runUpdateAction(event, _ -> {});
+
+    myConsoleViewStrategy.dispatchNodeEvent(myConsoleViewHandler, getParentNode(event), event);
+  }
+
+  private static void setDefaultData(
+    @NotNull BuildEvent event,
+    @NotNull ExecutionNode node
+  ) {
+    node.setName(event.getMessage());
+    if (node.getHint() == null) {
+      node.setHint(event.getHint());
+    }
+    if (node.getStartTime() == 0) {
+      node.setStartTime(event.getEventTime());
+    }
+  }
+
+  private void setResult(
+    @NotNull ExecutionNode node,
+    @NotNull EventResult result,
+    @NotNull Set<? super ExecutionNode> updatedNodes
+  ) {
+    node.setResult(result);
+
+    var parentNode = node.getParent();
+    var eventKind = result instanceof MessageEventResult messageEventResult ? messageEventResult.getKind() :
+                    result instanceof FailureResult ? MessageEvent.Kind.ERROR :
+                    null;
+    if (eventKind != null && parentNode != null) {
+      reportMessageKind(eventKind, parentNode, updatedNodes);
+    }
+  }
+
+  private static void setEndTime(@NotNull ExecutionNode node, @NotNull Long endTime) {
+    node.setEndTime(endTime);
+  }
+
+  private void addNode(@NotNull BuildEvent event, @NotNull ExecutionNode node) {
+    addNode(event.getId(), node);
+  }
+
+  private void addNode(@NotNull Object eventId, @NotNull ExecutionNode node) {
+    node.setId(eventId);
+    nodesMap.put(eventId, node);
+  }
+
+  private @Nullable ExecutionNode findNode(@NotNull BuildEvent event) {
+    return nodesMap.get(event.getId());
+  }
+
+  private @Nullable ExecutionNode findParentNode(@NotNull BuildEvent event) {
+    return ObjectUtils.doIfNotNull(event.getParentId(), it -> nodesMap.get(it));
+  }
+
+  private @NotNull ExecutionNode getParentNode(@NotNull BuildEvent event) {
+    return ObjectUtils.notNull(findParentNode(event), getBuildProgressRootNode());
+  }
+
+  private boolean isBuildProgressRootNode(@Nullable ExecutionNode node) {
+    return node == getBuildProgressRootNode();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable ExecutionNode findNode(@Nullable Object userObject) {
+    if (userObject instanceof ExecutionNode node) {
+      return node;
+    }
+    if (userObject instanceof BuildTreeNode node) {
+      return ObjectUtils.doIfNotNull(myTreeVm, it -> it.getNodeById(node.getId()));
+    }
+    return null;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull ExecutionConsole resolveNodeConsole(@NotNull ExecutionNode node) {
+    var console = myConsoleViewStrategy.resolveNodeConsole(myProject, myConsoleViewHandler, node);
+    var originalConsole = ConsoleViewWithDelegateKt.unwrapDelegate(console);
+    if (originalConsole instanceof ConsoleViewImpl consoleImpl) {
+      consoleImpl.flushDeferredText();
+    }
+    return console;
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable ExecutionConsole getCurrentConsole() {
+    return myConsoleViewHandler.getCurrentConsole();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable Editor getCurrentConsoleEditor() {
+    return myConsoleViewHandler.getCurrentConsoleEditor();
+  }
+
+  /**
+   * @deprecated use {@link #getCurrentConsole()}
+   */
+  @TestOnly
+  @Deprecated
+  @ApiStatus.Internal
+  public @NotNull ExecutionConsole getSelectedNodeConsole() {
+    var selectedExecutionNode = myConsoleViewHandler.getExecutionNode();
+    if (selectedExecutionNode == null) {
+      var empty = new ConsoleViewImpl(myProject, GlobalSearchScope.EMPTY_SCOPE, true, false);
+      Disposer.register(this, empty); // own it so it's disposed with the handler
+      return empty;
+    }
+    var selectionExecutionConsole = resolveNodeConsole(selectedExecutionNode);
+    return ConsoleViewWithDelegateKt.unwrapDelegate(selectionExecutionConsole);
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull DefaultActionGroup getConsoleToolbarActionGroup() {
+    return myConsoleViewHandler.getConsoleToolbarActionGroup();
+  }
+
+  private static @NotNull EventResult calculateFinishResult(
+    @NotNull FinishEvent event,
+    @NotNull ExecutionNode node
+  ) {
+    var result = event.getResult();
+    if (result instanceof DerivedResult derivedResult) {
+      if (node.getResult() != null) {
+        // if another thread set result for child
+        return node.getResult();
+      }
+      if (node.isFailed()) {
+        return derivedResult.createFailureResult();
+      }
+      return derivedResult.createDefaultResult();
+    }
+    return result;
+  }
+
+  private void reportMessageKind(
+    @NotNull MessageEvent.Kind eventKind,
+    @NotNull ExecutionNode parentNode,
+    @NotNull Set<? super ExecutionNode> updatedNodes
+  ) {
+    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
+      ExecutionNode rootNode = getRootElement();
+      ExecutionNode executionNode = parentNode;
+      do {
+        executionNode.reportChildMessageKind(eventKind);
+        if (executionNode != rootNode) {
+          updatedNodes.add(executionNode);
+        }
+      }
+      while ((executionNode = executionNode.getParent()) != null);
+    }
+  }
+
+  private void expandFirstMessage(@NotNull ExecutionNode node) {
+    if (!myExpandedFirstMessage.compareAndSet(false, true)) return;
+
+    myTreeVm.makeVisible(node, false);
+  }
+
+  private void showErrorIfFirst(@NotNull ExecutionNode node) {
+    if (!myShownFirstError.compareAndSet(false, true)) return;
+    myExpandedFirstMessage.set(true);
+    myTreeVm.makeVisible(node, true);
+    if (myNavigateToTheFirstErrorLocation) {
+      var navigatable = node.getNavigatable();
+      if (navigatable != null) {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> navigatable.navigate(true), ModalityState.defaultModalityState(), myProject.getDisposed());
+      }
+    }
+  }
+
   @Override
-  public void clear() {
-    getRootElement().removeChildren();
-    nodesMap.clear();
-    myDetailsHandler.clear();
-    myBuilder.queueUpdate();
+  public boolean hasNextOccurence() {
+    return myOccurrenceNavigatorSupport.hasNextOccurence();
+  }
+
+  @Override
+  public boolean hasPreviousOccurence() {
+    return myOccurrenceNavigatorSupport.hasPreviousOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goNextOccurence() {
+    return myOccurrenceNavigatorSupport.goNextOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goPreviousOccurence() {
+    return myOccurrenceNavigatorSupport.goPreviousOccurence();
+  }
+
+  @Override
+  public @NotNull String getNextOccurenceActionName() {
+    return myOccurrenceNavigatorSupport.getNextOccurenceActionName();
+  }
+
+  @Override
+  public @NotNull String getPreviousOccurenceActionName() {
+    return myOccurrenceNavigatorSupport.getPreviousOccurenceActionName();
+  }
+
+  private @NotNull ExecutionNode addChildFailureNode(
+    @NotNull ExecutionNode parentNode,
+    @NotNull Failure failure,
+    @NotNull String defaultFailureMessage,
+    long eventTime,
+    @NotNull Set<? super ExecutionNode> updatedNodes
+  ) {
+    String message = ObjectUtils.chooseNotNull(failure.getMessage(), failure.getDescription());
+    if (message == null && failure.getError() != null) {
+      message = failure.getError().getMessage();
+    }
+    if (message == null) {
+      message = defaultFailureMessage;
+    }
+    String failureNodeName = BuildConsoleUtils.getMessageTitle(message);
+    Navigatable failureNavigatable = failure.getNavigatable();
+    FilePosition filePosition = null;
+    if (failureNavigatable instanceof FileNavigatable fileNavigatable) {
+      filePosition = fileNavigatable.getFilePosition();
+    }
+    else if (failureNavigatable instanceof OpenFileDescriptor fileDescriptor) {
+      Path path = VirtualFileUtil.toNioPathOrNull(fileDescriptor.getFile());
+      if (path != null) {
+        filePosition = new FilePosition(path, fileDescriptor.getLine(), fileDescriptor.getColumn());
+      }
+    }
+    if (filePosition != null) {
+      parentNode = getOrCreateFileMessageParentNode(eventTime, filePosition, failureNavigatable, parentNode);
+    }
+
+    ExecutionNode failureNode = parentNode.findFirstChild(executionNode -> failureNodeName.equals(executionNode.getName()));
+    if (failureNode == null) {
+      failureNode = new ExecutionNode(myProject, parentNode, true, this::isCorrectThread);
+      failureNode.setName(failureNodeName);
+      if (filePosition != null && filePosition.getStartLine() >= 0) {
+        failureNode.setHint(":" + (filePosition.getStartLine() + 1));
+      }
+    }
+    failureNode.setNavigatable(failureNavigatable);
+
+    List<Failure> failures = failureNode.getResult() instanceof FailureResult failureResult ?
+                             ContainerUtil.append(failureResult.getFailures(), failure) :
+                             Collections.singletonList(failure);
+    setResult(failureNode, new FailureResultImpl(failures), updatedNodes);
+
+    updatedNodes.add(failureNode);
+
+    Object failureNodeId = failureNode.getId();
+    myConsoleViewStrategy.dispatchFailure(myConsoleViewHandler, failureNode, failureNodeId, failure);
+    return failureNode;
+  }
+
+  private void setAllDescendantResults(
+    @NotNull ExecutionNode node, @NotNull EventResult result, @NotNull Set<? super ExecutionNode> updatedNodes
+  ) {
+    List<ExecutionNode> childList = node.getChildList();
+    if (childList.isEmpty()) return;
+    // Make a copy of the list since child.setResult may remove items from the collection.
+    for (ExecutionNode child : new ArrayList<>(childList)) {
+      if (!child.isRunning()) {
+        continue;
+      }
+      setAllDescendantResults(child, result, updatedNodes);
+      setResult(child, result, updatedNodes);
+      updatedNodes.add(child);
+    }
   }
 
   @Override
@@ -233,16 +796,16 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
-  }
-
-  @Override
-  public void setOutputPaused(boolean value) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
   }
 
   @Override
   public boolean isOutputPaused() {
     return false;
+  }
+
+  @Override
+  public void setOutputPaused(boolean value) {
   }
 
   @Override
@@ -276,9 +839,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return false;
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;
   }
 
@@ -287,18 +849,23 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return myBuilder.getTree();
+    if (mySplitComponent instanceof ComponentContainer splitComponentContainer) {
+      return splitComponentContainer.getPreferredFocusableComponent();
+    }
+
+    return mySplitComponent;
   }
 
   @Override
   public void dispose() {
     myDisposed.set(true);
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myScope, null);
   }
 
   public boolean isDisposed() {
@@ -306,405 +873,177 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
-    ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
-    ExecutionNode currentNode = nodesMap.get(event.getId());
-    if (event instanceof StartEvent || event instanceof MessageEvent) {
-      ExecutionNode rootElement = getRootElement();
-      if (currentNode == null) {
-        if (event instanceof StartBuildEvent) {
-          currentNode = rootElement;
-        }
-        else {
-          if (event instanceof MessageEvent) {
-            MessageEvent messageEvent = (MessageEvent)event;
-            parentNode = createMessageParentNodes(messageEvent, parentNode);
-          }
-          currentNode = new ExecutionNode(myProject, parentNode);
-        }
-        currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
-        nodesMap.put(event.getId(), currentNode);
-      }
-      else {
-        LOG.warn("start event id collision found");
-        return;
-      }
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+    myInvoker.invoke(() -> onEventInternal(event));
+  }
 
-      if (parentNode != null) {
-        parentNode.add(currentNode);
-      }
+  private void runUpdateAction(@NotNull BuildEvent event, @NotNull Consumer<Set<ExecutionNode>> action) {
+    var updatedNodes = new LinkedHashSet<ExecutionNode>();
 
-      if (event instanceof StartBuildEvent) {
-        String buildTitle = ((StartBuildEvent)event).getBuildTitle();
-        currentNode.setTitle(buildTitle);
-        currentNode.setAutoExpandNode(true);
-        myProgressAnimator.startMovie();
-      }
-      else if (event instanceof MessageEvent) {
-        MessageEvent messageEvent = (MessageEvent)event;
-        currentNode.setStartTime(messageEvent.getEventTime());
-        currentNode.setEndTime(messageEvent.getEventTime());
-        currentNode.setNavigatable(messageEvent.getNavigatable(myProject));
-        final MessageEventResult messageEventResult = messageEvent.getResult();
-        currentNode.setResult(messageEventResult);
-      }
-    }
-    else {
-      currentNode = nodesMap.get(event.getId());
-      if (currentNode == null && event instanceof ProgressBuildEvent) {
-        currentNode = new ExecutionNode(myProject, parentNode);
-        nodesMap.put(event.getId(), currentNode);
-        if (parentNode != null) {
-          parentNode.add(currentNode);
-        }
-      }
-    }
+    action.accept(updatedNodes);
 
-    if (currentNode == null) {
-      // TODO log error
+    var node = findNode(event);
+    if (node == null) {
       return;
     }
 
-    currentNode.setName(event.getMessage());
-    currentNode.setHint(event.getHint());
-    if (currentNode.getStartTime() == 0) {
-      currentNode.setStartTime(event.getEventTime());
-    }
+    setDefaultData(event, node);
 
-    if (event instanceof FinishEvent) {
-      currentNode.setEndTime(event.getEventTime());
-      currentNode.setResult(((FinishEvent)event).getResult());
-      int timeColumnWidth = new JLabel("__" + currentNode.getDuration(), SwingConstants.RIGHT).getPreferredSize().width;
-      if (myTimeColumnWidth < timeColumnWidth) {
-        myTimeColumnWidth = timeColumnWidth;
-      }
-    }
-    else {
-      scheduleUpdate(currentNode);
-      if (event instanceof StartEvent) {
-        myProgressAnimator.addNode(currentNode);
-      }
-    }
-
-    if (event instanceof FinishBuildEvent) {
-      String aHint = event.getHint();
-      String time = DateFormatUtil.formatDateTime(event.getEventTime());
-      aHint = aHint == null ? "  at " + time : aHint + "  at " + time;
-      currentNode.setHint(aHint);
-      updateTimeColumnWidth(myTimeColumnWidth);
-      if (myDetailsHandler.myExecutionNode == null) {
-        myDetailsHandler.setNode(getRootElement());
-      }
-
-      if (((FinishBuildEvent)event).getResult() instanceof FailureResult) {
-        JTree tree = myBuilder.getTree();
-        if (tree != null && !tree.isRootVisible()) {
-          ExecutionNode rootElement = getRootElement();
-          ExecutionNode resultNode = new ExecutionNode(myProject, rootElement);
-          resultNode.setName(StringUtil.toTitleCase(rootElement.getName()));
-          resultNode.setHint(rootElement.getHint());
-          resultNode.setEndTime(rootElement.getEndTime());
-          resultNode.setStartTime(rootElement.getStartTime());
-          resultNode.setResult(rootElement.getResult());
-          resultNode.setTooltip(rootElement.getTooltip());
-          rootElement.add(resultNode);
-
-          scheduleUpdate(resultNode);
-        }
-      }
-      myProgressAnimator.stopMovie();
-      myBuilder.updateFromRoot();
-    }
+    updatedNodes.add(node);
+    myTreeVm.createOrUpdateNodes(updatedNodes);
   }
 
-  void scheduleUpdate(ExecutionNode executionNode) {
-    SimpleNode node = executionNode.getParent() == null ? executionNode : executionNode.getParent();
-    final Update update = new Update(node) {
-      @Override
-      public void run() {
-        myBuilder.queueUpdateFrom(node, false, true);
-      }
-    };
-    myLaterInvocator.offerIfAbsent(update);
-  }
-
-  private ExecutionNode createMessageParentNodes(MessageEvent messageEvent, ExecutionNode parentNode) {
-    Object messageEventParentId = messageEvent.getParentId();
-    if (messageEventParentId == null) return null;
-
-    String group = messageEvent.getGroup();
-    String groupNodeId = group.hashCode() + messageEventParentId.toString();
-    ExecutionNode messagesGroupNode =
-      getOrCreateMessagesNode(messageEvent, groupNodeId, parentNode, null, group, true, null, null, nodesMap, myProject);
-
-    EventResult groupNodeResult = messagesGroupNode.getResult();
-    final MessageEvent.Kind eventKind = messageEvent.getKind();
-    if (!(groupNodeResult instanceof MessageEventResult) ||
-        ((MessageEventResult)groupNodeResult).getKind().compareTo(eventKind) > 0) {
-      messagesGroupNode.setResult(new MessageEventResult() {
-        @Override
-        public MessageEvent.Kind getKind() {
-          return eventKind;
-        }
-      });
+  @Contract("_, _, _, null -> null; _, _, _, !null -> !null")
+  private @Nullable ExecutionNode getOrCreateFileMessageParentNode(
+    long eventTime,
+    @NotNull FilePosition filePosition,
+    @Nullable Navigatable navigatable,
+    @Nullable ExecutionNode parentNode
+  ) {
+    var filePositionPath = filePosition.getPath();
+    if (filePositionPath == null) {
+      return parentNode;
     }
-    if (messageEvent instanceof FileMessageEvent) {
-      ExecutionNode fileParentNode = messagesGroupNode;
-      FilePosition filePosition = ((FileMessageEvent)messageEvent).getFilePosition();
-      String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
-      String parentsPath = "";
-
-      String relativePath = FileUtil.getRelativePath(myWorkingDir, filePath, '/');
-      if (relativePath != null) {
-        String nodeId = group.hashCode() + myWorkingDir;
-        ExecutionNode workingDirNode = getOrCreateMessagesNode(messageEvent, nodeId, messagesGroupNode, myWorkingDir, null, false,
-                                                               () -> AllIcons.Nodes.Module, null, nodesMap, myProject);
-        parentsPath = myWorkingDir;
-        fileParentNode = workingDirNode;
-      }
-
-      VirtualFile sourceRootForFile;
-      VirtualFile ioFile = VfsUtil.findFileByIoFile(new File(filePath), false);
-      if (ioFile != null &&
-          (sourceRootForFile = ProjectFileIndex.SERVICE.getInstance(myProject).getSourceRootForFile(ioFile)) != null) {
-        relativePath = FileUtil.getRelativePath(parentsPath, sourceRootForFile.getPath(), '/');
-        if (relativePath != null) {
-          parentsPath += ("/" + relativePath);
-          String contentRootNodeId = group.hashCode() + sourceRootForFile.getPath();
-          fileParentNode = getOrCreateMessagesNode(messageEvent, contentRootNodeId, fileParentNode, relativePath, null, false,
-                                                   () -> ProjectFileIndex.SERVICE.getInstance(myProject).isInTestSourceContent(ioFile)
-                                                         ? AllIcons.Modules.TestRoot
-                                                         : AllIcons.Modules.SourceRoot, null, nodesMap, myProject);
-        }
-      }
-
-      String fileNodeId = group.hashCode() + filePath;
-      relativePath = StringUtil.isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
-      parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, fileParentNode, relativePath, null, false,
-                                           () -> {
-                                             VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
-                                             if (file != null) {
-                                               return file.getFileType().getIcon();
-                                             }
-                                             return null;
-                                           }, messageEvent.getNavigatable(myProject), nodesMap, myProject);
+    var filePath = NioPathUtil.toCanonicalPath(filePositionPath);
+    var existingNode = nodesMap.get(filePath);
+    if (existingNode != null) {
+      return existingNode;
     }
-    else {
-      parentNode = messagesGroupNode;
-    }
-
-    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING) {
-      SimpleNode p = parentNode;
-      do {
-        ((ExecutionNode)p).reportChildMessageKind(eventKind);
-      }
-      while ((p = p.getParent()) instanceof ExecutionNode);
-    }
-    return parentNode;
-  }
-
-  @NotNull
-  private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
-                                                       String nodeId,
-                                                       ExecutionNode parentNode,
-                                                       String nodeName,
-                                                       String nodeTitle,
-                                                       boolean autoExpandNode,
-                                                       @Nullable Supplier<Icon> iconProvider,
-                                                       @Nullable Navigatable navigatable,
-                                                       Map<Object, ExecutionNode> nodesMap,
-                                                       Project project) {
-    ExecutionNode node = nodesMap.get(nodeId);
+    var node = createFileMessageParentNode(eventTime, filePositionPath, navigatable, parentNode);
     if (node == null) {
-      node = new ExecutionNode(project, parentNode);
-      node.setName(nodeName);
-      node.setTitle(nodeTitle);
-      if (autoExpandNode) {
-        node.setAutoExpandNode(true);
-      }
-      node.setStartTime(messageEvent.getEventTime());
-      node.setEndTime(messageEvent.getEventTime());
-      if (iconProvider != null) {
-        node.setIconProvider(iconProvider);
-      }
-      if (navigatable != null) {
-        node.setNavigatable(navigatable);
-      }
-      parentNode.add(node);
-      nodesMap.put(nodeId, node);
+      return parentNode;
     }
+    addNode(filePath, node);
     return node;
   }
 
+  private @Nullable ExecutionNode createFileMessageParentNode(
+    long eventTime,
+    @NotNull Path filePositionPath,
+    @Nullable Navigatable navigatable,
+    @Nullable ExecutionNode parentNode
+  ) {
+    var filePath = NioPathUtil.toCanonicalPath(filePositionPath);
 
-
-  public void hideRootNode() {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      JTree tree = myBuilder.getTree();
-      if (tree != null) {
-        tree.setRootVisible(false);
-        tree.setShowsRootHandles(true);
+    var parentsPath = "";
+    var relativePath = FileUtilRt.getRelativePath(myWorkingDir, filePath, '/');
+    if (relativePath != null) {
+      if (relativePath.equals(".")) {
+        return null;
       }
-    });
-  }
-
-  private void updateTimeColumnWidth(String text, boolean force) {
-    int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
-    if (myTimeColumnWidth > timeColumnWidth) {
-      timeColumnWidth = myTimeColumnWidth;
+      if (!relativePath.startsWith("../../")) {
+        parentsPath = myWorkingDir;
+      }
+    }
+    if (parentsPath.isEmpty()) {
+      if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
+        relativePath = FileUtil.getLocationRelativeToUserHome(filePath, false);
+      }
+      else {
+        relativePath = filePath;
+      }
+    }
+    else {
+      relativePath = getRelativePath(parentsPath, filePath);
     }
 
-    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth || myTimeColumn.getWidth() < timeColumnWidth) {
-      updateTimeColumnWidth(timeColumnWidth);
+    var path = Path.of(relativePath);
+    var node = new ExecutionNode(myProject, parentNode, false, this::isCorrectThread);
+    node.setName(path.getFileName().toString());
+    var pathParent = path.getParent();
+    if (pathParent != null) {
+      node.setHint(pathParent.toString());
     }
+    node.setStartTime(eventTime);
+    node.setEndTime(eventTime);
+    node.setIconProvider(() -> ObjectUtils.doIfNotNull(
+      VfsUtil.findFile(filePositionPath, false), it -> it.getFileType().getIcon()
+    ));
+    node.setNavigatable(navigatable);
+    return node;
   }
 
-  private void updateTimeColumnWidth(int width) {
-    myTimeColumn.setPreferredWidth(width);
-    myTimeColumn.setMinWidth(width);
-    myTimeColumn.setMaxWidth(width);
+  private static String getRelativePath(@NotNull String basePath, @NotNull String filePath) {
+    String path = ObjectUtils.notNull(FileUtil.getRelativePath(basePath, filePath, '/'), filePath);
+    if (path.startsWith("..") && FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
+      return FileUtil.getLocationRelativeToUserHome(filePath, false);
+    }
+    return path;
   }
 
-  @Nullable
   @Override
-  public Object getData(String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
-    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.build.tool.window");
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(COMPONENT_KEY, this);
   }
 
-  private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<>();
-    for (ExecutionNode each : getSelectedNodes()) {
-      List<Navigatable> navigatable = each.getNavigatables();
-      navigatables.addAll(navigatable);
-    }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
+  @ApiStatus.Internal
+  public JTree getTree() {
+    // won't work on rem dev backend
+    return UIUtil.findComponentOfType(mySplitComponent, JTree.class);
   }
 
-  private ExecutionNode[] getSelectedNodes() {
-    JTree tree = myBuilder.getTree();
-    if (tree instanceof Tree) {
-      DefaultMutableTreeNode[] selectedNodes = ((Tree)tree).getSelectedNodes(DefaultMutableTreeNode.class, null);
-      return Arrays.stream(selectedNodes)
-        .map(DefaultMutableTreeNode::getUserObject)
-        .filter(userObject -> userObject instanceof ExecutionNode)
-        .map(ExecutionNode.class::cast)
-        .distinct().toArray(ExecutionNode[]::new);
-    }
-    return new ExecutionNode[0];
+  @ApiStatus.Internal
+  public void clearTreeSelection() {
+    myTreeVm.clearSelection();
   }
 
-  private static class DetailsHandler {
-    private final ThreeComponentsSplitter mySplitter;
-    @Nullable
-    private ExecutionNode myExecutionNode;
-    private final ConsoleView myConsole;
-    private final JPanel myPanel;
+  @ApiStatus.Internal
+  public Promise<?> invokeLater(@NotNull Runnable task) {
+    return myInvoker.invokeLater(task);
+  }
 
-    public DetailsHandler(Project project,
-                          TreeTableTree tree,
-                          ThreeComponentsSplitter threeComponentsSplitter) {
-      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-      mySplitter = threeComponentsSplitter;
-      myPanel = new JPanel(new BorderLayout());
-      JComponent consoleComponent = myConsole.getComponent();
-      AnAction[] consoleActions = myConsole.createConsoleActions();
-      consoleComponent.setFocusable(true);
-      final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
-                                                    new SideBorder(editorBackground, SideBorder.LEFT)));
-      myPanel.add(consoleComponent, BorderLayout.CENTER);
-      final ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar("BuildResults", new DefaultActionGroup(consoleActions), false);
-      myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
-      myPanel.setVisible(false);
-      tree.addTreeSelectionListener(e -> {
-        TreePath path = e.getPath();
-        if (path == null || !e.isAddedPath()) {
-          return;
-        }
-        TreePath selectionPath = tree.getSelectionPath();
-        setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
-      });
+  void selectNode(@NotNull ExecutionNode node) {
+    myConsoleViewHandler.setExecutionNode(node);
+  }
 
-      Disposer.register(threeComponentsSplitter, myConsole);
+  BuildViewId getBuildViewId() {
+    return myTreeVm.getId();
+  }
+
+  @NotNull
+  JComponent getConsoleComponent() {
+    return myConsoleViewHandler.getComponent();
+  }
+
+  private static final class SplitProblemOccurrenceNavigatorSupport implements OccurenceNavigator {
+    private final BuildTreeViewModel vm;
+
+    private SplitProblemOccurrenceNavigatorSupport(BuildTreeViewModel model) {
+      vm = model;
     }
 
-    public boolean setNode(@NotNull ExecutionNode node) {
-      EventResult eventResult = node.getResult();
-      boolean hasChanged = false;
-
-      if (eventResult instanceof FailureResult) {
-        myConsole.clear();
-        List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-        if (failures.isEmpty()) return false;
-        for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
-          Failure failure = iterator.next();
-          String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-          if (text == null && failure.getError() != null) {
-            text = failure.getError().getMessage();
-          }
-          if (text == null) continue;
-          printDetails(failure, text);
-          hasChanged = true;
-          if (iterator.hasNext()) {
-            myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
-          }
-        }
-      }
-      else if (eventResult instanceof MessageEventResult) {
-        String details = ((MessageEventResult)eventResult).getDetails();
-        if (details == null) {
-          return false;
-        }
-        if (details.isEmpty()) {
-          return false;
-        }
-        myConsole.clear();
-        printDetails(null, details);
-        hasChanged = true;
-      }
-
-      if (!hasChanged) return false;
-
-      myConsole.scrollTo(0);
-      int firstSize = mySplitter.getFirstSize();
-      int lastSize = mySplitter.getLastSize();
-
-      if (firstSize == 0 && lastSize == 0) {
-        int width = Math.round(mySplitter.getWidth() / 2f);
-        mySplitter.setFirstSize(width);
-      }
-      myPanel.setVisible(true);
-      return true;
+    @Override
+    public boolean hasNextOccurence() {
+      return vm.canNavigate(true);
     }
 
-    private boolean printDetails(Failure failure, @Nullable String details) {
-      return BuildConsoleUtils.printDetails(myConsole, failure, details);
+    @Override
+    public boolean hasPreviousOccurence() {
+      return vm.canNavigate(false);
     }
 
-    public void setNode(@Nullable DefaultMutableTreeNode node) {
-      if (node == null || node.getUserObject() == myExecutionNode) return;
-      if (node.getUserObject() instanceof ExecutionNode) {
-        myExecutionNode = (ExecutionNode)node.getUserObject();
-        if (setNode((ExecutionNode)node.getUserObject())) {
-          return;
-        }
-      }
-
-      myExecutionNode = null;
-      myPanel.setVisible(false);
+    @Override
+    public OccurenceInfo goNextOccurence() {
+      vm.navigate(true);
+      return null;
     }
 
-    public JComponent getComponent() {
-      return myPanel;
+    @Override
+    public OccurenceInfo goPreviousOccurence() {
+      vm.navigate(false);
+      return null;
     }
 
-    public void clear() {
-      myPanel.setVisible(false);
-      myConsole.clear();
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return IdeBundle.message("action.next.problem");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return IdeBundle.message("action.previous.problem");
     }
   }
 }

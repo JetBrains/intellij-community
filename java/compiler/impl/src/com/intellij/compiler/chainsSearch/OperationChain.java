@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -19,22 +19,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-public class OperationChain {
+public final class OperationChain {
   private static final Logger LOG = Logger.getInstance(OperationChain.class);
 
-  @NotNull
-  private final ChainOperation[] myReverseOperations;
+  private final ChainOperation @NotNull [] myReverseOperations;
   private final RefChainOperation myHeadOperation;
   private final MethodCall myHeadMethodCall;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
-  @Nullable
-  public static OperationChain create(@NotNull RefChainOperation operation,
-                                      int weight,
-                                      @NotNull ChainCompletionContext context) {
-    if (operation instanceof MethodCall) {
-      MethodCall signature = (MethodCall) operation;
+  public static @Nullable OperationChain create(@NotNull RefChainOperation operation,
+                                                int weight,
+                                                @NotNull ChainCompletionContext context) {
+    if (operation instanceof MethodCall signature) {
       PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
       if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
         return null;
@@ -54,7 +51,7 @@ public class OperationChain {
     }
     else {
       TypeCast cast = (TypeCast)operation;
-      PsiClass operand = context.resolvePsiClass(cast.getLightRef());
+      PsiClass operand = context.resolvePsiClass(cast.getCompilerRef());
       PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
       if (operand == null || castType == null) return null;
       return new OperationChain(operand, new ChainOperation[] {new ChainOperation.TypeCast(operand, castType)}, cast, null, weight);
@@ -62,7 +59,7 @@ public class OperationChain {
   }
 
   private OperationChain(@NotNull PsiClass qualifierClass,
-                        @NotNull ChainOperation[] reverseOperations,
+                        ChainOperation @NotNull [] reverseOperations,
                         RefChainOperation signature,
                         MethodCall headMethodSign,
                         int weight) {
@@ -77,13 +74,11 @@ public class OperationChain {
     return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
   }
 
-  @Nullable
-  public MethodCall getHeadMethodCall() {
+  public @Nullable MethodCall getHeadMethodCall() {
     return myHeadMethodCall;
   }
 
-  @NotNull
-  public RefChainOperation getHead() {
+  public @NotNull RefChainOperation getHead() {
     return myHeadOperation;
   }
 
@@ -95,8 +90,7 @@ public class OperationChain {
     return myQualifierClass;
   }
 
-  @NotNull
-  public PsiMethod[] getFirst() {
+  public PsiMethod @NotNull [] getFirst() {
     return ((ChainOperation.MethodCall) myReverseOperations[0]).getCandidates();
   }
 
@@ -115,9 +109,7 @@ public class OperationChain {
     OperationChain head = create(signature, weight, context);
     if (head == null) return null;
 
-    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = head.getPath()[0];
+    ChainOperation[] newReverseOperations = ArrayUtil.append(myReverseOperations, head.getPath()[0]);
     return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead() , signature, Math.min(weight, getChainWeight()));
   }
 
@@ -126,17 +118,14 @@ public class OperationChain {
                                       @NotNull ChainCompletionContext context) {
     OperationChain head = create(cast, 0, context);
     if (head == null) return null;
-    ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = head.getPath()[0];
+    ChainOperation[] newReverseOperations = ArrayUtil.append(myReverseOperations, head.getPath()[0]);
     return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), myHeadMethodCall, getChainWeight());
   }
 
   @NotNull
   OperationChain removeHeadCast(@NotNull ChainCompletionContext context) {
     LOG.assertTrue(getHead() instanceof TypeCast);
-    ChainOperation[] newReverseOperations = new ChainOperation[length() - 1];
-    System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, length() - 1);
+    ChainOperation[] newReverseOperations = Arrays.copyOf(myReverseOperations, length() - 1);
     return new OperationChain(Objects.requireNonNull(context.resolvePsiClass(myHeadMethodCall.getQualifierDef())),
                               newReverseOperations,
                               myHeadMethodCall,
@@ -150,7 +139,6 @@ public class OperationChain {
     return Arrays.toString(path) + " on " + myQualifierClass.getName();
   }
 
-  @SuppressWarnings("ConstantConditions")
   public static CompareResult compare(@NotNull OperationChain left, @NotNull OperationChain right) {
     if (left.length() == 0 || right.length() == 0) {
       throw new IllegalStateException("chains can't be empty");

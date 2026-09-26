@@ -1,0 +1,133 @@
+{
+  "name": "astro",
+  "description": "Language support for Astro",
+  "version": "2.15.4",
+  "license": "MIT",
+  "contributes": {
+    "snippets": [
+      {
+        "language": "astro",
+        "scope": "astro",
+        "path": "./languages/astro.code-snippets"
+      }
+    ],
+    "typescriptServerPlugins": [
+      {
+        "name": "astro-ts-plugin-bundle",
+        "enableForWorkspaceTypeScriptVersions": true
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Astro configuration",
+      "properties": {
+        "astro.language-server.ls-path": {
+          "type": "string",
+          "title": "Language Server: Path",
+          "description": "Path to the language server executable. You won't need this in most cases, set this only when needing a specific version of the language server"
+        },
+        "astro.language-server.runtime": {
+          "scope": "application",
+          "type": "string",
+          "title": "Language Server: Runtime",
+          "description": "Path to the node executable used to execute the language server. You won't need this in most cases"
+        },
+        "astro.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server."
+        },
+        "astro.content-intellisense": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable experimental support for content collection intellisense inside Markdown, MDX and Markdoc. Note that this require also enabling the feature in your Astro config (experimental.contentCollectionIntellisense) (Astro 4.14+)"
+        },
+        "astro.updateImportsOnFileMove.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Controls whether the extension updates imports when a file is moved to a new location. In most cases, you'll want to keep this disabled as TypeScript and the Astro TypeScript plugin already handles this for you. Having multiple tools updating imports at the same time can lead to corrupted files."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "astro",
+        "extensions": [
+          ".astro"
+        ],
+        "aliases": [
+          "Astro"
+        ],
+        "configuration": "./languages/astro-language-configuration.json",
+        "icon": {
+          "light": "./assets/lang-icon-light.svg",
+          "dark": "./assets/lang-icon-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "astro",
+        "scopeName": "source.astro",
+        "path": "./syntaxes/astro.tmLanguage.json",
+        "embeddedLanguages": {
+          "text.html": "html",
+          "text.html.markdown": "markdown",
+          "source.css": "css",
+          "source.css.less": "less",
+          "source.css.scss": "scss",
+          "source.sass": "sass",
+          "source.stylus": "stylus",
+          "source.js": "javascript",
+          "source.ts": "typescript",
+          "source.json": "json",
+          "source.tsx": "typescriptreact",
+          "meta.tag.tsx": "jsx-tags",
+          "meta.tag.without-attributes.tsx": "jsx-tags",
+          "meta.tag.attributes.tsx": "typescriptreact",
+          "meta.embedded.expression.tsx": "typescriptreact",
+          "meta.embedded.block.astro": "css"
+        },
+        "unbalancedBracketScopes": [
+          "keyword.operator.relational",
+          "storage.type.function.arrow",
+          "keyword.operator.bitwise.shift",
+          "meta.brace.angle",
+          "punctuation.definition.tag",
+          "keyword.operator.assignment.compound.bitwise.ts"
+        ]
+      },
+      {
+        "scopeName": "text.html.markdown.astro",
+        "path": "./syntaxes/markdown.astro.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown",
+          "source.astro"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.astro": "astro",
+          "meta.embedded.block.astro.frontmatter": "typescriptreact"
+        }
+      },
+      {
+        "scopeName": "source.mdx.astro",
+        "path": "./syntaxes/mdx.astro.tmLanguage.json",
+        "injectTo": [
+          "source.mdx"
+        ],
+        "embeddedLanguages": {
+          "mdx.embedded.astro": "astro",
+          "mdx.embedded.astro.frontmatter": "typescriptreact"
+        }
+      }
+    ]
+  }
+}

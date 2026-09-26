@@ -1,0 +1,22 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/A$Inner.class
+  ppp/A.class
+  ppp/B.class
+End of files
+Compiling files:
+  java/common/moveInnerClassToTopLevel/a/ppp/A.java
+  java/common/moveInnerClassToTopLevel/a/ppp/B.java
+  java/common/moveInnerClassToTopLevel/a/ppp/Inner.java
+End of files
+Cleaning output files:
+  ppp/C.class
+End of files
+Compiling files:
+  java/common/moveInnerClassToTopLevel/a/ppp/A.java
+  java/common/moveInnerClassToTopLevel/a/ppp/B.java
+  java/common/moveInnerClassToTopLevel/a/ppp/C.java
+  java/common/moveInnerClassToTopLevel/a/ppp/Inner.java
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,7 +1,8 @@
-// "Convert to local" "true"
+// "Convert to local variables" "true-preview"
 class Test {
 
     int getFoo1() {
+        //c1
         int myFoo = 1;
     return myFoo;
   }

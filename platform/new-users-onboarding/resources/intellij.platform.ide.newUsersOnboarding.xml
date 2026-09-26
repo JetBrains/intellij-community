@@ -1,0 +1,45 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.ide.newUsersOnboarding">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.experiment"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
+    <step key="searchEverywhere" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SearchEverywhereStep"/>
+    <step key="settingsPopup" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SettingsPopupStep"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.newUsersOnboarding" defaultValue="true"
+                 description="Whether to show New Users Onboarding dialog on first IDE start and corresponding action in the Help menu"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
+    <applicationActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
+
+    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
+                       key="notification.group"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
+  </extensions>
+
+  <actions resource-bundle="messages.NewUsersOnboardingBundle">
+    <action id="StartNewUsersOnboarding" class="com.intellij.platform.ide.newUsersOnboarding.StartNewUsersOnboardingAction">
+      <add-to-group group-id="LearnGroup" relative-to-action="ShowLearnPanel" anchor="after"/>
+    </action>
+
+    <action internal="true" id="ShowNewUsersOnboardingDialog"
+            class="com.intellij.platform.ide.newUsersOnboarding.ShowNewUsersOnboardingDialogAction"/>
+  </actions>
+</idea-plugin>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.clientProperties;
 
@@ -20,8 +6,14 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.LoaderFactory;
@@ -30,7 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -38,15 +32,17 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JTree myClassTree;
   private JTable myPropertiesTable;
-  private Class mySelectedClass;
+  private Class<?> mySelectedClass;
   private List<ClientPropertiesManager.ClientProperty> mySelectedProperties = Collections.emptyList();
   private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
@@ -71,8 +67,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myClassTree = new Tree();
     myClassTree.setRootVisible(false);
     myClassTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -81,7 +76,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
         final TreePath leadSelectionPath = e.getNewLeadSelectionPath();
         if (leadSelectionPath == null) return;
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
-        mySelectedClass = (Class)node.getUserObject();
+        mySelectedClass = (Class<?>)node.getUserObject();
         updateSelectedProperties();
       }
     });
@@ -96,11 +91,9 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
                                         int row,
                                         boolean hasFocus) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        if (node.getUserObject() instanceof Class) {
-          Class cls = (Class)node.getUserObject();
-          if (cls != null) {
-            append(cls.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
+        if (node.getUserObject() instanceof Class<?> cls) {
+          @NlsSafe String name = cls.getName();
+          append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
@@ -120,8 +113,8 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             dlg.show();
             if (dlg.getExitCode() == OK_EXIT_CODE) {
               String className = dlg.getClassName();
-              if (className.length() == 0) return;
-              final Class aClass;
+              if (className.isEmpty()) return;
+              final Class<?> aClass;
               try {
                 aClass = Class.forName(className, true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
               }
@@ -192,30 +185,25 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     return mySplitter;
   }
 
-  private void fillClassTree() {
-    List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
-    Collections.sort(configuredClasses, new Comparator<Class>() {
-      @Override
-      public int compare(final Class o1, final Class o2) {
-        return getInheritanceLevel(o1) - getInheritanceLevel(o2);
-      }
+  private static int getInheritanceLevel(Class<?> aClass) {
+    int level = 0;
+    while (aClass.getSuperclass() != null) {
+      level++;
+      aClass = aClass.getSuperclass();
+    }
+    return level;
+  }
 
-      private int getInheritanceLevel(Class aClass) {
-        int level = 0;
-        while (aClass.getSuperclass() != null) {
-          level++;
-          aClass = aClass.getSuperclass();
-        }
-        return level;
-      }
-    });
+  private void fillClassTree() {
+    List<Class<?>> configuredClasses = myManager.getConfiguredClasses(myProject);
+    configuredClasses.sort(Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    Map<Class, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
-    for (Class cls : configuredClasses) {
+    Map<Class<?>, DefaultMutableTreeNode> classToNodeMap = new HashMap<>();
+    for (Class<?> cls : configuredClasses) {
       DefaultMutableTreeNode parentNode = root;
-      Class superClass = cls.getSuperclass();
+      Class<?> superClass = cls.getSuperclass();
       while (superClass != null) {
         if (classToNodeMap.containsKey(superClass)) {
           parentNode = classToNodeMap.get(superClass);
@@ -236,8 +224,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "ConfigureClientPropertiesDialog";
   }
 
@@ -254,22 +241,18 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case 0:
-          return mySelectedProperties.get(rowIndex).getName();
-        default:
-          return mySelectedProperties.get(rowIndex).getValueClass();
+      if (columnIndex == 0) {
+        return mySelectedProperties.get(rowIndex).getName();
       }
+      return mySelectedProperties.get(rowIndex).getValueClass();
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0:
-          return UIDesignerBundle.message("client.properties.name");
-        default:
-          return UIDesignerBundle.message("client.properties.class");
+      if (column == 0) {
+        return UIDesignerBundle.message("client.properties.name");
       }
+      return UIDesignerBundle.message("client.properties.class");
     }
   }
 }

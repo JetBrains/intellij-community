@@ -1,0 +1,240 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.serialization"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement"/>
+    <module name="intellij.kotlin.codeInsight.shared"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.kotlin.completion.api"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.structureView.backend"/>
+    <module name="intellij.platform.util.text.matching"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+
+    <registryKey key="kotlin.k2.dot.add.enabled"
+                 description="Allow adding '.' to completion lookup"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
+             id="kotlin.preferKotlinx"
+             order="after sameModule, before knownElement"/>
+
+    <registryKey
+            key="kotlin.disable.auto.completion.inside.expression"
+            description="Disables auto-completion inside expressions"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.prefer.vararg.to.noargs"
+            description="For functions show vararg variant before no argruments variant"
+            defaultValue="true"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.insert.constructor.parenthesis"
+            description="Insert constructor parenthesis on class autocompletion"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
+            description="Use PSI based completion when indexing"
+            defaultValue="true"
+            restartRequired="false"/>
+    <completion.contributor
+            language="kotlin"
+            id="KotlinDumbCompletionContributor"
+            order="first, after KotlinCompletionContributor"
+            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+
+    <completion.plainTextSymbol
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
+
+    <codeInsight.wordCompletionFilter language="kotlin"
+                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
+
+    <completion.confidence
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
+    <completion.confidence
+            language="kotlin"
+            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
+            id="kotlinSkipAutopopupInStrings"
+            order="after propertyKeys"/>
+
+    <completion.contributor language="kotlin"
+                            id="KotlinCompletionContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionContributor"/>
+
+    <completion.contributor language="kotlin"
+                            order="last, before default"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <completion.contributor language="JAVA"
+                            id="KotlinCompanionMemberContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinCompanionMemberContributor"/>
+
+
+    <completion.contributor language="JAVA"
+                            id="KotlinExtensionContributor"
+                            order="first"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.KotlinExtensionContributor"/>
+
+    <weigher key="completion"
+             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.DeprioritizeSuspendWeigher"
+             id="deprioritizeSuspend"
+             order="first"/>
+
+    <weigher key="completion"
+             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.java.DeprioritizeComponentWeigher"
+             id="deprioritizeComponent"
+             order="first"/>
+
+    <statistician key="completion" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionStatistician"/>
+    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.impl.k2.FirCompletionDummyIdentifierProviderService"
+                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.impl.k2.handlers.K2SmartCompletionTailOffsetProviderImpl"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandlerFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandlerFactory$Default"/>
+
+    <registryKey key="kotlin.k2.chain.completion.enabled"
+                 description="Allow chained completion items in Kotlin"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.smart.completion.enabled"
+                 description="Enable smart completion for Kotlin in K2 mode"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.parallel.completion.enabled"
+                 description="Allow Kotlin contributors to run in parallel"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.complete.top.level.packages"
+                 description="Allows completion of top level packages"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.java.completion.companion.members"
+                 description="Shows Kotlin companion members in Java files during completion"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.java.completion.extensions"
+                 description="Shows Kotlin extension members in Java files during completion"
+                 defaultValue="true"
+                 restartRequired="false"/>
+  </extensions>
+
+  <!-- Command Completion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.completion.intention.offset.provider language="kotlin"
+                                                      implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinIntentionCommandOffsetProvider"/>
+    <modCommandCopyHandler implementation="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinCommandCompletionModCommandPsiCopyHandler"/>
+    <codeInsight.completion.command.factory language="kotlin"
+                                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinRenameActionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinOptimizeImportCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGenerateCommandCompletion"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToDeclarationCommandCompletionProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToSuperMethodCommandCompletionProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToImplementationCommandCompletionProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinFormatCodeCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyFQNCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinShowUsagesActionCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinDeleteCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinChangeSignatureCompletionCommand"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCreateFromUsagesCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractParameterCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinExtractMethodCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinInlineMethodCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinInlinePropertyCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinMoveCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeHierarchyCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinTypeInfoCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinQuickDocumentationCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSurroundWithCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinSafeDeleteCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinParameterInfoCompletionCommand" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.intellij.lang.regexp.intention.ExplainRegExpCommandCompletionProvider" />
+    <!--    <codeInsight.completion.command.provider language="kotlin"-->
+    <!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
+    <!--    <codeInsight.completion.command.provider language="kotlin"-->
+    <!--                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.platform.structureView.backend.completion.commands.ViewStructureCompletionCommandProvider" order="last"/>
+  </extensions>
+</idea-plugin>

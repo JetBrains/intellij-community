@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import java.awt.*;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.awt.Component;
 import java.lang.ref.WeakReference;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class FocusRequestInfo {
   public final long timestamp;
   public final Throwable trace;

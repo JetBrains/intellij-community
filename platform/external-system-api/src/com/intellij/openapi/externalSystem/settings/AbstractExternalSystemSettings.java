@@ -1,79 +1,74 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.platform.backend.observation.TrackingUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
  * support codebase.
  * <p/>
- * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
- *  
- * @author Denis Zhdanov
- * @since 4/3/13 4:04 PM
+ * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured as necessary.
  */
 public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,
   PS extends ExternalProjectSettings,
   L extends ExternalSystemSettingsListener<PS>>
-  implements Disposable
-{
+  implements Disposable {
 
-  @NotNull private final Topic<L> myChangesTopic;
-  
-  private Project  myProject;
+  private final @NotNull NullableLazyValue<ExternalSystemManager<?, ?, ?, ?, ?>> myManager;
+  private final @NotNull Topic<L> myChangesTopic;
+  private final @NotNull Project myProject;
 
-  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
-  
-  @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettingsView
+  private final @NotNull Map<String/* project path */, PS> myLinkedProjectsSettings = new HashMap<>();
+
+  private final @NotNull Map<String/* project path */, PS> myLinkedProjectsSettingsView
     = Collections.unmodifiableMap(myLinkedProjectsSettings);
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
     myProject = project;
+    myManager = NullableLazyValue.atomicLazyNullable(this::deduceManager);
   }
 
   @Override
   public void dispose() {
-    myProject = null;
+
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
+  private @Nullable ExternalSystemManager<?, ?, ?, ?, ?> deduceManager() {
+    return ContainerUtil.find(ExternalSystemApiUtil.getAllManagers(), it -> equals(it.getSettingsProvider().fun(myProject)));
+  }
+
   public boolean showSelectiveImportDialogOnInitialImport() {
-    return SystemProperties.is("external.system.show.selective.import.dialog");
+    return Boolean.getBoolean("external.system.show.selective.import.dialog");
   }
 
   /**
@@ -87,9 +82,34 @@ public abstract class AbstractExternalSystemSettings<
    * <p/>
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
    *
-   * @param listener  target generic listener to wrap to external system-specific implementation
+   * @param listener         target generic listener to wrap to external system-specific implementation
+   * @param parentDisposable is a disposable to unsubscribe from external system settings events
    */
-  public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
+    Logger.getInstance(AbstractExternalSystemSettings.class)
+      .error("Unimplemented subscribe method for " + getClass());
+    subscribe(listener); // Api backward compatibility
+  }
+
+  /**
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
+   * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener) {
+    subscribe(listener, this);
+  }
+
+  /**
+   * Generic subscribe implementation
+   *
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
+   */
+  protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
+    MessageBus messageBus = myProject.getMessageBus();
+    MessageBusConnection connection = messageBus.connect(parentDisposable);
+    connection.subscribe(getChangesTopic(), listener);
+  }
 
   public void copyFrom(@NotNull SS settings) {
     for (PS projectSettings : settings.getLinkedProjectsSettings()) {
@@ -97,22 +117,19 @@ public abstract class AbstractExternalSystemSettings<
     }
     copyExtraSettingsFrom(settings);
   }
-  
+
   protected abstract void copyExtraSettingsFrom(@NotNull SS settings);
-  
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public Collection<PS> getLinkedProjectsSettings() {
+
+  public @NotNull Collection<PS> getLinkedProjectsSettings() {
     return myLinkedProjectsSettingsView.values();
   }
 
-  @Nullable
-  public PS getLinkedProjectSettings(@NotNull String linkedProjectPath) {
+  public @Nullable PS getLinkedProjectSettings(@NotNull String linkedProjectPath) {
     PS ps = myLinkedProjectsSettings.get(linkedProjectPath);
-    if(ps == null) {
+    if (ps == null) {
       for (PS ps1 : myLinkedProjectsSettings.values()) {
-        for (String modulePath : ps1.getModules()) {
-          if(linkedProjectPath.equals(modulePath)) return ps1;
+        if (ps1.getModules().contains(linkedProjectPath)) {
+          return ps1;
         }
       }
     }
@@ -122,43 +139,53 @@ public abstract class AbstractExternalSystemSettings<
   public void linkProject(@NotNull PS settings) throws IllegalArgumentException {
     PS existing = getLinkedProjectSettings(settings.getExternalProjectPath());
     if (existing != null) {
-      throw new IllegalArgumentException(String.format(
-        "Can't link external project '%s'. Reason: it's already registered at the current ide project",
+      throw new AlreadyImportedProjectException(String.format(
+        "Can't link project '%s'. Reason: it's already linked to the IDE project",
         settings.getExternalProjectPath()
       ));
     }
     myLinkedProjectsSettings.put(settings.getExternalProjectPath(), settings);
-    getPublisher().onProjectsLinked(Collections.singleton(settings));
+    onProjectsLinked(Collections.singleton(settings));
   }
-  
+
   /**
    * Un-links given external project from the current ide project.
-   * 
-   * @param linkedProjectPath  path of external project to be unlinked
-   * @return                   {@code true} if there was an external project with the given config path linked to the current
-   *                           ide project;
-   *                           {@code false} otherwise
+   *
+   * @param linkedProjectPath path of external project to be unlinked
+   * @return {@code true} if there was an external project with the given config path linked to the current
+   * ide project;
+   * {@code false} otherwise
    */
   public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
     PS removed = myLinkedProjectsSettings.remove(linkedProjectPath);
     if (removed == null) {
       return false;
     }
-    
-    getPublisher().onProjectsUnlinked(Collections.singleton(linkedProjectPath));
+
+    onProjectsUnlinked(Collections.singleton(linkedProjectPath));
     return true;
   }
 
-  public void setLinkedProjectsSettings(@NotNull Collection<PS> settings) {
-    setLinkedProjectsSettings(settings, null);
+  public void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings) {
+    setLinkedProjectsSettings(settings, new ExternalSystemSettingsListener<>() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection<PS> settings) {
+        AbstractExternalSystemSettings.this.onProjectsLinked(settings);
+      }
+
+      @Override
+      public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+        AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
+      }
+    });
   }
 
-  private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
+  private void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings, @NotNull ExternalSystemSettingsListener<PS> listener) {
     // do not add invalid 'null' settings
-    settings = settings.stream().filter(ps -> ps.getExternalProjectPath() != null).collect(Collectors.toList());
+    settings = ContainerUtil.filter(settings, ps -> ps.getExternalProjectPath() != null);
 
-    List<PS> added = ContainerUtilRt.newArrayList();
-    Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
+    List<PS> added = new ArrayList<>();
+    Map<String, PS> removed = new HashMap<>(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);
@@ -170,92 +197,99 @@ public abstract class AbstractExternalSystemSettings<
         added.add(current);
       }
       else {
-        if (current.isUseAutoImport() != old.isUseAutoImport()) {
-          if (listener != null) {
-            listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-          }
-          getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
-        }
-        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories() ||
-            old.isUseQualifiedModuleNames() != current.isUseQualifiedModuleNames()) {
-          ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
-        }
         checkSettings(old, current);
       }
     }
     if (!added.isEmpty()) {
-      if (listener != null) {
-        listener.onProjectsLinked(added);
-      }
-      getPublisher().onProjectsLinked(added);
+      listener.onProjectsLinked(added);
     }
     if (!removed.isEmpty()) {
-      if (listener != null) {
-        listener.onProjectsUnlinked(removed.keySet());
-      }
-      getPublisher().onProjectsUnlinked(removed.keySet());
+      listener.onProjectsUnlinked(removed.keySet());
     }
   }
 
   /**
    * Is assumed to check if given old settings external system-specific state differs from the given new one
    * and {@link #getPublisher() notify} listeners in case of the positive answer.
-   * 
-   * @param old      old settings state
-   * @param current  current settings state
+   *
+   * @param old     old settings state
+   * @param current current settings state
    */
   protected abstract void checkSettings(@NotNull PS old, @NotNull PS current);
 
-  @NotNull
-  public Topic<L> getChangesTopic() {
+  public @NotNull Topic<L> getChangesTopic() {
     return myChangesTopic;
   }
 
-  @NotNull
-  public L getPublisher() {
+  public @NotNull L getPublisher() {
     return myProject.getMessageBus().syncPublisher(myChangesTopic);
   }
 
   protected void fillState(@NotNull State<PS> state) {
-    state.setLinkedExternalProjectsSettings(ContainerUtilRt.newTreeSet(myLinkedProjectsSettings.values()));
+    state.setLinkedExternalProjectsSettings(new TreeSet<>(myLinkedProjectsSettings.values()));
   }
 
-  @SuppressWarnings("unchecked")
   protected void loadState(@NotNull State<PS> state) {
-    Set<PS> settings = state.getLinkedExternalProjectsSettings();
-    if (settings != null) {
-      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
-        @Override
-        public void onProjectsLinked(@NotNull Collection linked) {
-          if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-            return;
+    TrackingUtil.trackActivity(myProject, ExternalSystemActivityKey.INSTANCE, () -> {
+      Set<PS> settings = state.getLinkedExternalProjectsSettings();
+      if (settings != null) {
+        setLinkedProjectsSettings(settings, new ExternalSystemSettingsListener<>() {
+          @Override
+          public void onProjectsLinked(@NotNull Collection<PS> settings) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              AbstractExternalSystemSettings.this.onProjectsLinked(settings);
+              AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
+            }, myProject.getDisposed());
           }
 
-          for (Object o : linked) {
-            final ExternalProjectSettings settings = (ExternalProjectSettings)o;
-            for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
-              ProjectSystemId externalSystemId = manager.getSystemId();
-              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-                ExternalProjectsManager.getInstance(myProject).refreshProject(
-                  settings.getExternalProjectPath(),
-                  new ImportSpecBuilder(myProject, externalSystemId)
-                    .useDefaultCallback()
-                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-                    .build()
-                );
-              }
-            }
+          @Override
+          public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
+            }, myProject.getDisposed());
           }
-        }
-      });
+        });
+      }
+    });
+  }
+
+  private void onProjectsLoaded(@NotNull Collection<PS> settings) {
+    getPublisher().onProjectsLoaded(settings);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) {
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLoaded(myProject, manager, settings));
+    }
+  }
+
+  private void onProjectsLinked(@NotNull Collection<PS> settings) {
+    getPublisher().onProjectsLinked(settings);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) {
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLinked(myProject, manager, settings));
+    }
+  }
+
+  private void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+    getPublisher().onProjectsUnlinked(linkedProjectPaths);
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
+    if (manager != null) {
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsUnlinked(myProject, manager, linkedProjectPaths));
     }
   }
 
   public interface State<S> {
-    
+    @Unmodifiable
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);
+  }
+
+  public static class AlreadyImportedProjectException extends IllegalArgumentException {
+    public AlreadyImportedProjectException(String s) {
+      super(s);
+    }
   }
 }

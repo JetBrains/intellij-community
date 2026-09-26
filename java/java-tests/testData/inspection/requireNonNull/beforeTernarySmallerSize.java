@@ -1,4 +1,4 @@
-// "Replace condition with Objects.requireNonNullElseGet" "INFORMATION"
+// "Replace conditional expression with 'Objects.requireNonNullElseGet()' call" "INFORMATION"
 
 import java.util.*;
 
@@ -12,6 +12,6 @@ class Test {
   }
 
   static void test(Object context[], Object method, Object compilationResult) {
-    Object[] debugContext = context != null ? context :<caret> new Object[]{getProviders().getCodeCache(), method, compilationResult};
+    Object[] debugContext = (context != null) ? context :<caret> new Object[]{getProviders().getCodeCache(), method, compilationResult};
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiFile;
@@ -22,24 +23,25 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
+public class DetectIndentAndTypeTest extends BasePlatformTestCase {
 
   private CodeStyleSettings mySettings;
-  private final String myText = "public class T {\n" +
-                                "\tvoid run() {\n" +
-                                "\t\tint t = 1 + <caret>2;\n" +
-                                "\t}\n" +
-                                "}";
+  private static final String myText = """
+    public class T {
+    \tvoid run() {
+    \t\tint t = 1 + <caret>2;
+    \t}
+    }""";
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
-    mySettings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(CodeStyle.createTestSettings());
+    mySettings = CodeStyle.getSettings(getProject());
     mySettings.AUTODETECT_INDENTS = true;
     DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
     if (optionsProvider != null) {
@@ -49,12 +51,19 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
 
   @Override
   public void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
-    if (optionsProvider != null) {
-      optionsProvider.setEnabledInTest(false);
+    try {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
+      if (optionsProvider != null) {
+        optionsProvider.setEnabledInTest(false);
+      }
     }
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testWhenTabsDetected_SetIndentSizeToTabSize() {
@@ -67,18 +76,22 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
     indentOptions.TAB_SIZE = 2;
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "public class T {\n" +
-                              "\tvoid run() {\n" +
-                              "\t\tint a = 2;<caret>\n" +
-                              "\t}\n" +
-                              "}\n");
+                              """
+                                public class T {
+                                \tvoid run() {
+                                \t\tint a = 2;<caret>
+                                \t}
+                                }
+                                """);
     myFixture.type('\n');
-    myFixture.checkResult("public class T {\n" +
-                          "\tvoid run() {\n" +
-                          "\t\tint a = 2;\n" +
-                          "\t\t<caret>\n" +
-                          "\t}\n" +
-                          "}\n");
+    myFixture.checkResult("""
+                            public class T {
+                            \tvoid run() {
+                            \t\tint a = 2;
+                            \t\t<caret>
+                            \t}
+                            }
+                            """);
   }
 
   public void testContinuationTab_AsTabSize() {
@@ -96,12 +109,13 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
     myFixture.type('\n');
 
     myFixture.checkResult(
-      "public class T {\n" +
-      "\tvoid run() {\n"   +
-      "\t\tint t = 1 + \n" +
-      "\t\t\t2;\n"         +
-      "\t}\n"              +
-      "}");
+      """
+        public class T {
+        \tvoid run() {
+        \t\tint t = 1 +\s
+        \t\t\t2;
+        \t}
+        }""");
   }
 
   public void testContinuationTabs_AsDoubleTabSize() {
@@ -118,12 +132,13 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
     myFixture.type('\n');
 
     myFixture.checkResult(
-      "public class T {\n" +
-      "\tvoid run() {\n"   +
-      "\t\tint t = 1 + \n" +
-      "\t\t\t\t2;\n"       +
-      "\t}\n"              +
-      "}");
+      """
+        public class T {
+        \tvoid run() {
+        \t\tint t = 1 +\s
+        \t\t\t\t2;
+        \t}
+        }""");
   }
 
   public void testWhenTabsDetected_SetContinuationIndentSizeToDoubleTabSize() {
@@ -137,18 +152,22 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
 
     myFixture.configureByText(JavaFileType.INSTANCE,
-                              "public class T {\n" +
-                              "\tvoid run() {\n" +
-                              "\t\tint a = 2 <caret>+ 2;\n" +
-                              "\t}\n" +
-                              "}\n");
+                              """
+                                public class T {
+                                \tvoid run() {
+                                \t\tint a = 2 <caret>+ 2;
+                                \t}
+                                }
+                                """);
     myFixture.type('\n');
-    myFixture.checkResult("public class T {\n" +
-                          "\tvoid run() {\n" +
-                          "\t\tint a = 2 \n" +
-                          "\t\t\t\t<caret>+ 2;\n" +
-                          "\t}\n" +
-                          "}\n");
+    myFixture.checkResult("""
+                            public class T {
+                            \tvoid run() {
+                            \t\tint a = 2\s
+                            \t\t\t\t<caret>+ 2;
+                            \t}
+                            }
+                            """);
   }
   
   public void testDoNotIndentOptions_WhenTabsDetected_AndUseTabsWasSetByDefault() {

@@ -1,31 +1,37 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kRECORD
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
 /**
  * Groovy allows keywords to appear in various places such as FQNs, reference names, labels, etc.
- * Syntax highlighter highlihgts all of them since it's based on lexer, which has no clue which keyword is really a keyword.
+ * Syntax highlighter highlights all of them since it's based on lexer, which has no clue which keyword is really a keyword.
  * This knowledge becomes available only after parsing.
  *
  * This annotator clears text attributes for elements which are not really keywords.
  */
-class GroovyKeywordAnnotator : Annotator, DumbAware {
+class GroovyKeywordAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     if (shouldBeErased(element)) {
-      holder.createInfoAnnotation(element, null).enforcedTextAttributes = TextAttributes.ERASE_MARKER
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).enforcedTextAttributes(TextAttributes.ERASE_MARKER).create()
     }
   }
 }
@@ -51,6 +57,12 @@ fun shouldBeErased(element: PsiElement): Boolean {
     if (tokenType === GroovyTokenTypes.kSUPER && parent.qualifier == null) return false
     if (tokenType === GroovyTokenTypes.kTHIS && parent.qualifier == null) return false
     return true // don't highlight foo.def
+  }
+  else if (parent !is GrModifierList && (tokenType === kVAR || tokenType === kVAL)) {
+    return true
+  }
+  else if (parent !is GrRecordDefinition && tokenType === kRECORD) {
+    return true
   }
 
   return false

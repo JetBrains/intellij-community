@@ -1,0 +1,9 @@
+fun myFunction(first: String, last: String) {
+
+}
+
+fun usage() {
+    myFunction("str", "str2")
+
+    myFunction("str", "str3")
+}

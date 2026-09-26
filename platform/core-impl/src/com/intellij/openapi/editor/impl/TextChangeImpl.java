@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Default {@link TextChange} implementation with mutable state.
- *
- * @author Denis Zhdanov
- * @since Jul 7, 2010 5:24:06 PM
  */
+@ApiStatus.Internal
 public class TextChangeImpl implements TextChange {
 
   private final StringBuilder myText = new StringBuilder();
@@ -103,8 +88,7 @@ public class TextChangeImpl implements TextChange {
    * @return    text related to the change encapsulated by the current object
    */
   @Override
-  @NotNull
-  public CharSequence getText() {
+  public @NotNull CharSequence getText() {
     return myText;
   }
 
@@ -119,12 +103,12 @@ public class TextChangeImpl implements TextChange {
    * @return    stored change text as a char array
    */
   @Override
-  @NotNull
-  public char[] getChars() {
-    if (myChars == null) {
-      myChars = CharArrayUtil.fromSequence(myText);
+  public char @NotNull [] getChars() {
+    char[] chars = myChars;
+    if (chars == null) {
+      myChars = chars = CharArrayUtil.fromSequence(myText);
     }
-    return myChars;
+    return chars;
   }
 
   /**
@@ -161,27 +145,6 @@ public class TextChangeImpl implements TextChange {
     setEnd(myEnd + offset);
   }
 
-  /**
-   * Shorthand for calling {@link #isWithinBounds(int, int)} with zero start offset and given length as and end offset
-   * 
-   * @param length  target length
-   * @return        {@code true} if current change is within the target bounds; {@code false} otherwise
-   */
-  public boolean isWithinBounds(int length) {
-    return isWithinBounds(0, length);
-  }
-
-  /**
-   * Allows to check if current change is within the given bounds.
-   * 
-   * @param start  target bounds start offset (inclusive)
-   * @param end    target bounds end offset (exclusive)
-   * @return       {@code true} if current change is within the target bounds; {@code false} otherwise
-   */
-  public boolean isWithinBounds(int start, int end) {
-    return myStart >= start && myEnd <= end && myStart <= myEnd;
-  }
-  
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -193,7 +156,7 @@ public class TextChangeImpl implements TextChange {
 
   @Override
   public int hashCode() {
-    int result = StringUtil.hashCode(myText);
+    int result = StringUtil.stringHashCode(myText);
     result = 31 * result + myStart;
     return 31 * result + myEnd;
   }

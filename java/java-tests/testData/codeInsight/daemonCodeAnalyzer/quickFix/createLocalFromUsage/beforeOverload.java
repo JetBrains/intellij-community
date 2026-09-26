@@ -1,4 +1,4 @@
-// "Create local variable 'xyz'" "true"
+// "Create local variable 'xyz'" "true-preview"
 interface Other<T> {
   void add(int x, T y);
   void add(T y);

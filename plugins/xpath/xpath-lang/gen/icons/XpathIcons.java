@@ -1,6 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IconManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -8,19 +10,17 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class XpathIcons {
-  private static Icon load(String path) {
-    return IconLoader.getIcon(path, XpathIcons.class);
+public final class XpathIcons {
+  private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, XpathIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  public static final Icon Association = load("/icons/association.png"); // 16x16
-  public static final Icon Association_small = load("/icons/association_small.png"); // 11x11
-  public static final Icon Function = load("/icons/function.png"); // 18x18
-  public static final Icon Namespace = load("/icons/namespace.png"); // 21x21
-  public static final Icon Tag = load("/icons/tag.png"); // 16x16
-  public static final Icon Template = load("/icons/template.png"); // 18x18
-  public static final Icon Xml = load("/icons/xml.png"); // 16x16
-  public static final Icon Xpath = load("/icons/xpath.png"); // 12x16
-  public static final Icon Xslt_filetype_overlay = load("/icons/xslt-filetype-overlay.png"); // 11x16
-  public static final Icon Xslt = load("/icons/xslt.png"); // 16x16
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, XpathIcons.class.getClassLoader(), cacheKey, flags);
+  }
+  /** 16x16 */ public static final @NotNull Icon Association_small = load("icons/association_small.svg", -1753879133, 2);
+  /** 16x16 */ public static final @NotNull Icon Namespace = load("icons/namespace.svg", 1849515194, 1);
+  /** 16x16 */ public static final @NotNull Icon Template = load("icons/template.svg", 414204381, 0);
+  /** 16x16 */ public static final @NotNull Icon Xpath = load("icons/expui/xpath.svg", "icons/xpath.svg", -220283778, 0);
+  /** 16x16 */ public static final @NotNull Icon XsltFiletypeOverlay = load("icons/xslt-filetype-overlay.svg", -935948328, 0);
+  /** 16x16 */ public static final @NotNull Icon Xslt = load("icons/xslt.svg", 1017401713, 0);
 }

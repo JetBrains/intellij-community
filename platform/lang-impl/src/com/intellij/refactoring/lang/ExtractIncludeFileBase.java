@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.lang;
 
@@ -18,15 +18,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -34,6 +39,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +48,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ExtractIncludeFileBase<T extends PsiElement> implements RefactoringActionHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.lang.ExtractIncludeFileBase");
-  private static final String REFACTORING_NAME = RefactoringBundle.message("extract.include.file.title");
+  private static final Logger LOG = Logger.getInstance(ExtractIncludeFileBase.class);
   protected PsiFile myIncludingFile;
   public static final String HELP_ID = "refactoring.extractInclude";
 
@@ -52,7 +58,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return true;
   }
 
-  private static class IncludeDuplicate<E extends PsiElement> {
+  private static final class IncludeDuplicate<E extends PsiElement> {
     private final SmartPsiElementPointer<E> myStart;
     private final SmartPsiElementPointer<E> myEnd;
 
@@ -73,12 +79,11 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   protected abstract void doReplaceRange(final String includePath, final T first, final T last);
 
-  @NotNull
-  protected String doExtract(final PsiDirectory targetDirectory,
-                             final String targetfileName,
-                             final T first,
-                             final T last,
-                             final Language includingLanguage) throws IncorrectOperationException {
+  protected @NotNull String doExtract(final PsiDirectory targetDirectory,
+                                      final String targetfileName,
+                                      final T first,
+                                      final T last,
+                                      final Language includingLanguage) throws IncorrectOperationException {
     final PsiFile file = targetDirectory.createFile(targetfileName);
     Project project = targetDirectory.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -98,7 +103,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                                    final List<IncludeDuplicate<T>> duplicates,
                                    final Editor editor,
                                    final Project project) {
-    if (duplicates.size() > 0) {
+    if (!duplicates.isEmpty()) {
       final String message = RefactoringBundle.message("idea.has.found.fragments.that.can.be.replaced.with.include.directive",
                                                   ApplicationNamesInfo.getInstance().getProductName());
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
@@ -138,26 +143,23 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   private static void highlightInEditor(final Project project, final IncludeDuplicate pair, final Editor editor) {
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final int startOffset = pair.getStart().getTextRange().getStartOffset();
     final int endOffset = pair.getEnd().getTextRange().getEndOffset();
-    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
+    highlightManager.addRangeHighlight(editor, startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
   }
 
-  @NotNull
-  protected Language getLanguageForExtract(PsiElement firstExtracted) {
+  protected @NotNull Language getLanguageForExtract(PsiElement firstExtracted) {
     return firstExtracted.getLanguage();
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     try {
       myIncludingFile = file;
       doInvoke(project, editor, file);
@@ -239,8 +241,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     });
   }
 
-  @NotNull
-  private Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
+  private @NotNull Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Pair.create(ourTargetDirectory, ourTargetFileName);
     }
@@ -260,15 +261,12 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return new ExtractIncludeDialog(containingDirectory, extractExtension);
   }
 
-  @Nullable
-  protected abstract Pair<T, T> findPairToExtract(int start, int end);
+  protected abstract @Nullable Pair<T, T> findPairToExtract(int start, int end);
 
-  @NonNls
-  protected String getExtractExtension(final FileType extractFileType, final T first) {
+  protected @NonNls String getExtractExtension(final FileType extractFileType, final T first) {
     return extractFileType.getDefaultExtension();
   }
 
-  @Deprecated
   @TestOnly
   public boolean isValidRange(final T firstToExtract, final T lastToExtract) {
     return verifyChildRange(firstToExtract, lastToExtract);
@@ -288,10 +286,14 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   @Override
   public String getActionTitle() {
-    return "Extract Include File...";
+    return RefactoringBundle.message("extract.include.file.action.title");
   }
 
-  protected String getRefactoringName() {
-    return REFACTORING_NAME;
+  protected @NlsContexts.DialogTitle String getRefactoringName() {
+    return getRefactoringNameText();
+  }
+
+  static @NlsContexts.DialogTitle String getRefactoringNameText() {
+    return RefactoringBundle.message("extract.include.file.title");
   }
 }

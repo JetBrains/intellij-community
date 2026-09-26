@@ -1,0 +1,43 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl.caret.model
+
+import com.intellij.openapi.editor.Caret
+import java.awt.geom.Point2D
+import kotlin.math.max
+
+internal class CaretRectangle private constructor(
+  val x: Double,
+  val y: Double,
+  rawWidth: Float,
+  val caret: Caret?,
+  val isRtl: Boolean,
+) {
+  val width: Float = max(rawWidth, MIN_WIDTH)
+
+  /**
+   * Identifies the pixels this rectangle covers. Two rectangles with the same content hash paint the same, so the
+   * animation cache can reuse the content it already holds for one of them.
+   */
+  val contentHash: Int
+    get() {
+      var hash = x.hashCode()
+      hash = hash * 31 + y.hashCode()
+      hash = hash * 31 + width.hashCode()
+      return hash
+    }
+
+  override fun toString(): String = "CaretRectangle(x=$x, y=$y, width=$width, caret=$caret, isRtl=$isRtl)"
+
+  companion object {
+    @JvmField
+    val PLACEHOLDER: CaretRectangle = CaretRectangle(0.0, 0.0, 0f, null, false)
+
+    internal fun at(position: Point2D, width: Float, caret: Caret?, isRtl: Boolean): CaretRectangle =
+      CaretRectangle(position.x, position.y, width, caret, isRtl)
+
+    /**
+     * Narrower carets are hard to hit with the eye, so a thin one is padded out to this width.
+     */
+    private const val MIN_WIDTH = 2f
+  }
+}

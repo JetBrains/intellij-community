@@ -1,40 +1,28 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author: db
- */
-class DependencyContext implements NamingContext {
-  private final static String STRING_TABLE_NAME = "strings.tab";
+@ApiStatus.Internal
+public final class DependencyContext implements NamingContext {
+  private static final String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
   private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<>();
+  private final PathRelativizerService myRelativizer;
   private final int myEmptyName;
 
   UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
@@ -48,8 +36,9 @@ class DependencyContext implements NamingContext {
      return r;
    }
 
-  TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
-    final TypeRepr.AbstractType r = myTypeMap.get(t);
+  <T extends TypeRepr.AbstractType> T getType(final T t) {
+    //noinspection unchecked
+    final T r = (T)myTypeMap.get(t);
 
     if (r != null) {
       return r;
@@ -66,30 +55,33 @@ class DependencyContext implements NamingContext {
   }
 
   static File getTableFile (final File rootDir, final String name) {
-    final File file = new File(FileUtil.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + name));
-    FileUtil.createIfDoesntExist(file);
+    final File file = new File(FileUtilRt.toSystemIndependentName(rootDir.getAbsoluteFile() + File.separator + name));
+    FileUtilRt.createIfNotExists(file);
     return file;
   }
 
-  DependencyContext(final File rootDir) throws IOException {
+  DependencyContext(final File rootDir, PathRelativizerService relativizer) throws IOException {
     final File file = getTableFile(rootDir, STRING_TABLE_NAME);
-    myEnumerator = new PersistentStringEnumerator(file, true);
+    myEnumerator = new PersistentStringEnumerator(file.toPath(), true);
     myEmptyName = myEnumerator.enumerate("");
+    myRelativizer = relativizer;
   }
 
-  @Nullable
-  public String getValue(final int s) {
+  @Override
+  public @Nullable String getValue(final int s) {
     try {
-      return myEnumerator.valueOf(s);
+      String value = myEnumerator.valueOf(s);
+      return value == null ? null : myRelativizer.toFull(value);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
     }
   }
 
+  @Override
   public int get(final String s) {
     try {
-      return StringUtil.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(s);
+      return Strings.isEmpty(s) ? myEmptyName : myEnumerator.enumerate(myRelativizer.toRelative(s));
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -109,30 +101,31 @@ class DependencyContext implements NamingContext {
     myEnumerator.force();
   }
 
-  public LoggerWrapper<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
-    return new LoggerWrapper<Integer>() {
+  public LoggerWrapper<Integer> getLogger(final Logger log) {
+    return new LoggerWrapper<>() {
+      @Override
       public boolean isDebugEnabled() {
         return log.isDebugEnabled();
       }
 
       @Override
       public void debug(String comment, Integer s) {
-        if (log.isDebugEnabled()) {
+        if (isDebugEnabled()) {
           log.debug(comment + getValue(s));
         }
       }
 
       @Override
       public void debug(String comment, String t) {
-        if (log.isDebugEnabled()){
+        if (isDebugEnabled()) {
           log.debug(comment + t);
         }
       }
 
       @Override
       public void debug(String comment, boolean t) {
-        if (log.isDebugEnabled()) {
-          log.debug(comment + Boolean.toString(t));
+        if (isDebugEnabled()) {
+          log.debug(comment + t);
         }
       }
     };

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -23,10 +9,9 @@ import org.jetbrains.jps.model.impl.JpsUrlListRole;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
 
-/**
- * @author nik
- */
-public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
+import java.util.Objects;
+
+final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
   private static final JpsUrlListRole JAVADOC_ROOTS_ROLE = new JpsUrlListRole("javadoc roots");
   private static final JpsUrlListRole ANNOTATIONS_ROOTS_ROLE = new JpsUrlListRole("annotation roots");
   private String myOutputUrl;
@@ -35,7 +20,7 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
   private boolean myExcludeOutput;
   private LanguageLevel myLanguageLevel;
 
-  public JpsJavaModuleExtensionImpl() {
+  JpsJavaModuleExtensionImpl() {
     myContainer.setChild(JAVADOC_ROOTS_ROLE);
     myContainer.setChild(ANNOTATIONS_ROOTS_ROLE);
   }
@@ -47,21 +32,18 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
     myLanguageLevel = original.myLanguageLevel;
   }
 
-  @NotNull
   @Override
-  public JpsJavaModuleExtensionImpl createCopy() {
+  public @NotNull JpsJavaModuleExtensionImpl createCopy() {
     return new JpsJavaModuleExtensionImpl(this);
   }
 
-  @NotNull
   @Override
-  public JpsUrlList getAnnotationRoots() {
+  public @NotNull JpsUrlList getAnnotationRoots() {
     return myContainer.getChild(ANNOTATIONS_ROOTS_ROLE);
   }
 
-  @NotNull
   @Override
-  public JpsUrlList getJavadocRoots() {
+  public @NotNull JpsUrlList getJavadocRoots() {
     return myContainer.getChild(JAVADOC_ROOTS_ROLE);
   }
 
@@ -72,9 +54,8 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
 
   @Override
   public void setOutputUrl(String outputUrl) {
-    if (!Comparing.equal(myOutputUrl, outputUrl)) {
+    if (!Objects.equals(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
-      fireElementChanged();
     }
   }
 
@@ -85,9 +66,8 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
 
   @Override
   public void setTestOutputUrl(String testOutputUrl) {
-    if (!Comparing.equal(myTestOutputUrl, testOutputUrl)) {
+    if (!Objects.equals(myTestOutputUrl, testOutputUrl)) {
       myTestOutputUrl = testOutputUrl;
-      fireElementChanged();
     }
   }
 
@@ -100,16 +80,7 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;
-      fireElementChanged();
     }
-  }
-
-  public void applyChanges(@NotNull JpsJavaModuleExtensionImpl modified) {
-    setLanguageLevel(modified.myLanguageLevel);
-    setInheritOutput(modified.myInheritOutput);
-    setExcludeOutput(modified.myExcludeOutput);
-    setOutputUrl(modified.myOutputUrl);
-    setTestOutputUrl(modified.myTestOutputUrl);
   }
 
   @Override
@@ -121,7 +92,6 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
   public void setInheritOutput(boolean inheritOutput) {
     if (myInheritOutput != inheritOutput) {
       myInheritOutput = inheritOutput;
-      fireElementChanged();
     }
   }
 
@@ -134,7 +104,6 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
   public void setExcludeOutput(boolean excludeOutput) {
     if (myExcludeOutput != excludeOutput) {
       myExcludeOutput = excludeOutput;
-      fireElementChanged();
     }
   }
 }

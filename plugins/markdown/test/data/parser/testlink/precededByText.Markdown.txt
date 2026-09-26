@@ -1,0 +1,12 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    PsiElement(Markdown:Markdown:TEXT)('Some text')
+    PsiWhiteSpace(' ')
+    MarkdownShortReferenceLink(Markdown:Markdown:SHORT_REFERENCE_LINK)
+      MarkdownLinkLabel(Markdown:Markdown:LINK_LABEL)
+        PsiElement(Markdown:Markdown:[)('[')
+        PsiElement(Markdown:Markdown:TEXT)('@test')
+        PsiElement(Markdown:Markdown:])(']')
+    PsiWhiteSpace(' ')
+    MarkdownTestLink(Markdown:Markdown:MARKDOWN_TEST_LINK)
+      PsiElement(Markdown:Markdown:TEXT)('text')

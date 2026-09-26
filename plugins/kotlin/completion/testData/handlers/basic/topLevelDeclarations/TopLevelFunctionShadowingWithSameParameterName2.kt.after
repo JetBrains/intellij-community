@@ -1,0 +1,9 @@
+fun usage(
+    // Parameter with the same function name in another package
+    topLevelFunction: () -> Unit
+) {
+    topLevelFunction<caret>
+}
+
+// ELEMENT: topLevelFunction
+// TAIL_TEXT: ""

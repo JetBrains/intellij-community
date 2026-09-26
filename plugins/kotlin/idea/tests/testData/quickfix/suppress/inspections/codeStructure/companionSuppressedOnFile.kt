@@ -1,0 +1,9 @@
+// "Suppress 'RedundantVisibilityModifier' for file ${file}" "true"
+
+class CompanionSuppressedOnFile {
+    <caret>public companion object
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.RedundantVisibilityModifierInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

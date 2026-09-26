@@ -1,69 +1,87 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts.Label;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
- * Defines save dialog behaviour
+ * Defines save dialog behaviour.
  *
- * @author Konstantin Bulenkov
  * @see FileSaverDialog
  * @see FileChooserDescriptor
- * @since 9.0
  */
-public class FileSaverDescriptor extends FileChooserDescriptor implements Cloneable {
-  private final List<String> extensions;
-
+public class FileSaverDescriptor extends FileChooserDescriptor {
   /**
-   * Constructs save dialog properties
+   * Constructs save dialog properties.
    *
    * @param title save dialog text title (not window title)
    * @param description description
-   * @param extensions accepted file extensions: "txt", "jpg", etc. Accepts all if empty
    */
-  public FileSaverDescriptor(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                             @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description, String... extensions) {
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description) {
     super(true, true, true, true, false, false);
     setTitle(title);
     setDescription(description);
-    this.extensions = Arrays.asList(extensions);
-  }
-
-  @Override
-  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-    return extensions.isEmpty() || file.isDirectory() ?
-           super.isFileVisible(file, showHiddenFiles)
-           :
-           extensions.contains(file.getExtension());
   }
 
   /**
-   * Returns accepted file extensions
+   * Constructs save dialog properties.
    *
-   * @return accepted file extensions
+   * @param title save dialog text title (not window title)
+   * @param description description
+   * @param extension accepted file extension ("txt", "jpg", etc.)
    */
-  public String[] getFileExtensions() {
-    return ArrayUtil.toStringArray(extensions);
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description, String extension) {
+    this(title, description);
+    withExtensionFilter(extension);
+  }
+
+  /**
+   * Constructs save dialog properties.
+   *
+   * @param fileChooserDescriptor FileChooserDescriptor to be copied
+   */
+  public FileSaverDescriptor(@NotNull FileChooserDescriptor fileChooserDescriptor) {
+    super(fileChooserDescriptor);
+  }
+  /**
+   * Use {@link FileSaverDescriptorFactory}.
+   */
+  FileSaverDescriptor(
+    boolean chooseFiles,
+    boolean chooseFolders,
+    boolean chooseJarContents,
+    boolean chooseMultiple
+  ) {
+    super(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple);
+  }
+
+  @Override
+  public FileSaverDescriptor withTitle(@NlsContexts.DialogTitle String title) {
+    super.withTitle(title);
+    return this;
+  }
+
+  @Override
+  public FileSaverDescriptor withDescription(String description) {
+    super.withDescription(description);
+    return this;
+  }
+
+  /**
+   * @deprecated this constructor variant doesn't show the correct label in the Windows native dialog;
+   * use {@link #FileSaverDescriptor(String, String)} with {@link #withExtensionFilter(String, String...)} instead
+   */
+  @Deprecated
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description, String... extensions) {
+    this(title, description);
+    if (extensions.length == 1) {
+      withExtensionFilter(extensions[0]);
+    }
+    else if (extensions.length != 0) {
+      withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", extensions[0]), extensions);
+    }
   }
 }

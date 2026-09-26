@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -26,34 +12,50 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.ThreeState;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Dennis.Ushakov
@@ -61,9 +63,10 @@ import java.util.List;
 public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   public PyIntroduceFieldHandler() {
-    super(new IntroduceFieldValidator(), RefactoringBundle.message("introduce.field.title"));
+    super(new IntroduceFieldValidator(), PyBundle.message("refactoring.introduce.attribute.title"));
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final IntroduceOperation operation = new IntroduceOperation(project, editor, file, null);
     operation.addAvailableInitPlace(InitPlace.CONSTRUCTOR);
@@ -73,7 +76,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     performAction(operation);
   }
 
-  private static boolean isTestClass(PsiFile file, Editor editor) {
+  private static boolean isTestClass(@NotNull PsiFile file, Editor editor) {
     PsiElement element1 = null;
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -89,7 +92,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestClass(clazz, ThreeState.UNSURE, null)) return true;
+      if (clazz != null && PythonUnitTestDetectorsKt.isTestClass(clazz, TypeEvalContext.userInitiated(file.getProject(), file))) return true;
     }
     return false;
   }
@@ -105,7 +108,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkEnabled(IntroduceOperation operation) {
     if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
-      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(), "Cannot introduce field: not in class", myDialogTitle,
+      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(),
+                                          PyBundle.message("refactoring.introduce.field.not.in.class"), myDialogTitle,
                                           getHelpId());
       return false;
     }
@@ -121,28 +125,27 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     ResolvingVisitor visitor = new ResolvingVisitor(scope);
     initializer.accept(visitor);
     return visitor.hasLocalScopeDependencies;
-    
+
   }
-  
+
   private static class ResolvingVisitor extends PyRecursiveElementVisitor {
     private boolean hasLocalScopeDependencies = false;
     private final ScopeOwner myScope;
 
-    public ResolvingVisitor(ScopeOwner scope) {
+    ResolvingVisitor(ScopeOwner scope) {
       myScope = scope;
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
       final PsiElement result = node.getReference().resolve();
       if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
-        if (result instanceof PyParameter && myScope instanceof PyFunction) {
-          final PyFunction function = (PyFunction)myScope;
+        if (result instanceof PyParameter && myScope instanceof PyFunction function) {
           final PyParameter[] parameters = function.getParameterList().getParameters();
           if (parameters.length > 0 && result == parameters[0]) {
             final PyFunction.Modifier modifier = function.getModifier();
-            if (modifier != PyFunction.Modifier.STATICMETHOD) {
+            if (modifier != PyAstFunction.Modifier.STATICMETHOD) {
               // 'self' is not a local scope dependency
               return;
             }
@@ -153,10 +156,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
-    final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
+    final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     assert clazz != null;
     final Project project = clazz.getProject();
@@ -181,15 +183,14 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     return false;
   }
 
-  @NotNull
-  private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
-    final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false, null);
+  private static @NotNull PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
+    final PyFunction init = clazz.findMethodByName(PyNames.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
     }
-    final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(PyNames.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
-    PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
+    PyFunction setUp = builder.buildFunction();
     final PyStatementList statements = clazz.getStatementList();
     final PsiElement anchor = statements.getFirstChild();
     setUp = (PyFunction)statements.addBefore(setUp, anchor);
@@ -217,7 +218,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   protected PyExpression createExpression(Project project, String name, PsiElement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
-    return PyElementGenerator.getInstance(project).createExpressionFromText(self_name + "." + name);
+    return PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(declaration), self_name + "." + name);
   }
 
   @Override
@@ -236,9 +237,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   private static boolean isAssignedLocalVariable(PsiElement element) {
-    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement &&
+    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement stmt &&
         PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
-      PyAssignmentStatement stmt = (PyAssignmentStatement) element.getParent();
       if (stmt.getTargets().length == 1) {
         return true;
       }
@@ -254,8 +254,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected boolean checkIntroduceContext(PsiFile file, Editor editor, PsiElement element) {
     if (element != null && isInStaticMethod(element)) {
-      CommonRefactoringUtil.showErrorHint(file.getProject(), editor, "Introduce Field refactoring cannot be used in static methods",
-                                          RefactoringBundle.message("introduce.field.title"),
+      CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
+                                          PyBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
+                                          PyBundle.message("refactoring.introduce.attribute.title"),
                                           "refactoring.extractMethod");
       return false;
     }
@@ -266,7 +267,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
     if (containingMethod != null) {
       final PyFunction.Modifier modifier = containingMethod.getModifier();
-      return modifier == PyFunction.Modifier.STATICMETHOD;
+      return modifier == PyAstFunction.Modifier.STATICMETHOD;
     }
     return false;
   }
@@ -279,14 +280,15 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
            !isInStaticMethod(element);
   }
 
-  private static class AddFieldDeclaration implements Function<String, PyStatement> {
+  private static final class AddFieldDeclaration implements Function<String, PyStatement> {
     private final PsiElement myDeclaration;
 
     private AddFieldDeclaration(PsiElement declaration) {
       myDeclaration = declaration;
     }
 
-    public PyStatement fun(String self_name) {
+    @Override
+    public PyStatement apply(String self_name) {
       if (PyNames.CANONICAL_SELF.equals(self_name)) {
         return (PyStatement)myDeclaration;
       }
@@ -327,15 +329,17 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   private static class PyInplaceFieldIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyTargetExpression myTarget;
+    private final SmartPsiElementPointer<PyTargetExpression> myTargetSmartPointer;
     private final IntroduceOperation myOperation;
     private final PyIntroduceFieldPanel myPanel;
 
-    public PyInplaceFieldIntroducer(PyTargetExpression target,
+    PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.attribute.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
+      myTargetSmartPointer = SmartPointerManager.createPointer(target);
       myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {
         myPanel = new PyIntroduceFieldPanel(myProject, operation.getAvailableInitPlaces());
@@ -359,9 +363,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     protected void moveOffsetAfter(boolean success) {
       if (success && (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) || myOperation.getInplaceInitPlace() != InitPlace.SAME_METHOD) {
         WriteAction.run(() -> {
-          final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
+          final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTargetSmartPointer.getElement(), PyAssignmentStatement.class);
           assert initializer != null;
-          final Function<String, PyStatement> callback = FunctionUtil.constant(initializer);
+          final Function<String, PyStatement> callback = _ -> initializer;
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
           InitPlace initPlace = myPanel != null ? myPanel.getInitPlace() : myOperation.getInplaceInitPlace();
           if (initPlace == InitPlace.CONSTRUCTOR) {
@@ -370,7 +374,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           else if (initPlace == InitPlace.SET_UP) {
             addFieldToSetUp(pyClass, callback);
           }
-          if (myOperation.getOccurrences().size() > 0) {
+          if (!myOperation.getOccurrences().isEmpty()) {
             initializer.delete();
           }
           else {

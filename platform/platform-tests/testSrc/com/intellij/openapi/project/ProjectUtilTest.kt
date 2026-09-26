@@ -1,41 +1,54 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.useProject
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 
-class ProjectUtilTest : PlatformTestCase() {
-  fun testDoNotUseNameAsHashPrefixForIpr() {
-    val cachePath = appSystemDir.relativize(project.getProjectCachePath("foo")).toString()
-    // remove location hash suffix because it is not constant value (depends on machine)
-    assertThat(cachePath.substring(0, cachePath.lastIndexOf('.')))
-      .isEqualTo("foo${File.separatorChar}testdonotusenameashashprefixforipr")
+class ProjectUtilTest {
+  companion object {
+    @ClassRule
+    @JvmField
+    val app = ApplicationRule()
+  }
+
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
+
+  @Test
+  fun doNotUseNameAsHashPrefixForIpr() {
+    val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p.ipr"), createTestOpenProjectOptions(runPostStartUpActivities = false)) as ProjectEx
+    project.useProject {
+      project.setProjectName("do not use me")
+
+      val cachePath = getSystemDir().relativize(project.getProjectCachePath("foo")).toString()
+      // remove location hash suffix because it is not constant value (depends on machine)
+      assertThat(cachePath.substring(0, cachePath.lastIndexOf('.')))
+        .isEqualTo("foo${File.separatorChar}p")
+    }
   }
 
   // https://youtrack.jetbrains.com/issue/IDEA-176128
-  fun testVerticalBarInTheProjectName() {
-    (project as ProjectImpl).setProjectName("World of heavens | Client")
+  @Test
+  fun verticalBarInTheProjectName() {
+    val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p"), createTestOpenProjectOptions(runPostStartUpActivities = false)) as ProjectEx
+    project.useProject {
+      project.setProjectName("World of heavens | Client")
 
-    val cachePath = appSystemDir.relativize(project.getProjectCachePath("test", true)).toString()
-    // remove location hash suffix because it is not constant value (depends on machine)
-    assertThat(cachePath.substring(0, cachePath.lastIndexOf('.')))
-      .isEqualTo("test${File.separatorChar}World of heavens _ Client")
+      val cachePath = getSystemDir().relativize(project.getProjectCachePath("test", isForceNameUse = true)).toString()
+      // remove location hash suffix because it is not constant value (depends on machine)
+      assertThat(cachePath.substring(0, cachePath.lastIndexOf('.')))
+        .isEqualTo("test${File.separatorChar}World of heavens _ Client")
+    }
   }
 }

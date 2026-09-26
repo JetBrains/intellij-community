@@ -1,0 +1,107 @@
+package com.intellij.mcpserver
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.Nls
+import kotlin.coroutines.CoroutineContext
+
+/**
+ * For a comprehensive authoring guide, see the [MCP Server README](../../../../README.md).
+ *
+ * Marker interface for MCP toolset
+ *
+ * You may inherit it and define your tools as ordinary Kotlin methods.
+ *
+ * Every tool should be marked with [com.intellij.mcpserver.annotations.McpTool] annotation to be discovered and registered.
+ *
+ * Descriptions for tools, parameters, or type members may be provided with [com.intellij.mcpserver.annotations.McpDescription] annotation.
+ *
+ * Parameter should be either primitive types or serializable by `kotlinx.serialization`
+ *
+ * As a return value you can use one of the following:
+ * * null of any type - rendered as `[null]`
+ * * primitive type value (Int, Boolean, String, etc.) - rendered as is (by calling `.toString()`)
+ * * any serializable value - rendered as JSON by `.encodeToString()`
+ * * instance of [McpToolCallResult] - rendered as is
+ * * instance of [McpToolCallResultContent] - rendered as is
+ * * in the case of `Unit` return type - rendered as `[success]`
+ *
+ * Optional parameters are supported.
+ *
+ * At the moment, recursive types are not supported.
+ *
+ * You may throw [McpExpectedError] to indicate an error to the calling site and preserve the error text.
+ * Other exceptions are decorated with `MCP tool call has failed:...`
+ *
+ * [com.intellij.openapi.project.Project] instance may be obtained via [CoroutineContext.project]
+ *
+ * @see [com.intellij.mcpserver.impl.util.asTools]
+ *
+ * ``` Kotlin
+ * class MyToolset : McpToolset {
+ *     @McpTool
+ *     @McpDescription("My best tool overridden description")
+ *     fun my_best_tool(arg1: String, arg2: Int) {
+ *         // ...
+ *     }
+ *
+ *     @McpTool
+ *     @McpDescription("My best tool 2")
+ *     fun my_best_tool_2(arg1: String, arg2: Int) {
+ *          // ...
+ *     }
+ * }
+ * ```
+ */
+interface McpToolset {
+  companion object {
+    val EP: ExtensionPointName<McpToolset> = ExtensionPointName<McpToolset>("com.intellij.mcpServer.mcpToolset")
+
+    val enabledToolsets: List<McpToolset>
+      get() = EP.extensionList.filter { it.isEnabled() }
+  }
+
+  fun isEnabled(): Boolean = true
+
+  fun isExperimental(): Boolean = true
+
+  /**
+   * Whether tools from this toolset can be configured by users in MCP tool settings.
+   * Launch-managed toolsets should return `false`.
+   */
+  fun isUserConfigurable(): Boolean = true
+
+  /**
+   * Human-readable display name for this toolset group, shown in
+   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, the name is derived from the implementing class' simple name.
+   */
+  fun displayName(): @Nls String? = null
+
+  /**
+   * Human-readable description for this toolset group, shown in
+   * Settings | Tools | MCP Server | Exposed Tools and other UI surfaces.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, no group description is shown.
+   */
+  fun displayDescription(): @Nls String? = null
+
+  /**
+   * Human-readable description for a single tool, shown in the UI instead of the
+   * agent-facing `@McpDescription`. [toolName] is the resolved MCP tool name.
+   *
+   * Return a localized string (typically from your plugin's message bundle).
+   * When `null`, the agent-facing description is shown.
+   */
+  fun displayDescription(toolName: String): @Nls String? = null
+
+  /*
+   * If true, then tools from this toolset are always included in the list of directly accessible MCP tools,
+   * even in "Universal tool-router mode".
+   * It's strongly recommended to use this flag only AFTER EVALUATION of the performance of the tools in the toolset,
+   * because otherwise they would needlessly pollute the common context, decreasing the performance of all tools.
+   */
+  fun alwaysIncluded(): Boolean = false
+}

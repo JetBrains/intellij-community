@@ -1,43 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 // Author: dyoma
 
 public class MethodLocation extends Location<PsiMethod> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.info.MethodLocation");
+  private static final Logger LOG = Logger.getInstance(MethodLocation.class);
   private final Project myProject;
-  @NotNull private final PsiMethod myMethod;
-  private final Location<PsiClass> myClassLocation;
+  private final @NotNull PsiMethod myMethod;
+  private final Location<? extends PsiClass> myClassLocation;
 
-  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<PsiClass> classLocation) {
+  public MethodLocation(final @NotNull Project project, final @NotNull PsiMethod method, final @NotNull Location<? extends PsiClass> classLocation) {
     myProject = project;
     myMethod = method;
     myClassLocation = classLocation;
@@ -48,42 +35,52 @@ public class MethodLocation extends Location<PsiMethod> {
     return new MethodLocation(classLocation.getProject(), psiElement, classLocation);
   }
 
-  @NotNull
-  public PsiMethod getPsiElement() {
+  @Override
+  public @NotNull PsiMethod getPsiElement() {
     return myMethod;
   }
 
-  @NotNull
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
   @Override
-  public Module getModule() {
-    return ModuleUtil.findModuleForPsiElement(myMethod);
+  public @Nullable Module getModule() {
+    return myClassLocation.getModule();
   }
 
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     return myClassLocation.getPsiElement();
   }
 
-  @NotNull
-  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
+  public @NotNull String getContainingClassJVMClassName() {
+    if (myClassLocation instanceof NestedClassLocation) {
+      return ((NestedClassLocation)myClassLocation).getNestedInConcreteInheritor();
+    }
+    return Objects.requireNonNull(ClassUtil.getJVMClassName(myClassLocation.getPsiElement()));
+  }
+  
+  @Override
+  public @NotNull <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
-    return new Iterator<Location<T>>() {
+    return new Iterator<>() {
       private boolean myFirstStep = ancestorClass.isInstance(myMethod);
+
+      @Override
       public boolean hasNext() {
         return myFirstStep || fromClass.hasNext();
       }
 
+      @Override
       public Location<T> next() {
-        final Location<T> location = myFirstStep ? (Location<T>)(Location)MethodLocation.this : fromClass.next();
+        final Location<T> location = myFirstStep ? (Location<T>)MethodLocation.this : fromClass.next();
         myFirstStep = false;
         return location;
       }
 
+      @Override
       public void remove() {
         LOG.assertTrue(false);
       }

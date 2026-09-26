@@ -15,19 +15,20 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implements PsiArrayInitializerMemberValue {
   private final ClsElementImpl myParent;
   private final PsiAnnotationMemberValue[] myInitializers;
 
-  public ClsArrayInitializerMemberValueImpl(@NotNull ClsElementImpl parent, @NotNull PsiAnnotationMemberValue[] initializers) {
+  public ClsArrayInitializerMemberValueImpl(@NotNull ClsElementImpl parent, PsiAnnotationMemberValue @NotNull [] initializers) {
     myParent = parent;
     myInitializers = initializers;
   }
@@ -50,14 +51,13 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getInitializers(), SourceTreeToPsiMap.<PsiArrayInitializerMemberValue>treeToPsiNotNull(element).getInitializers());
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return myInitializers;
   }
 
@@ -77,8 +77,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationMemberValue[] getInitializers() {
+  public PsiAnnotationMemberValue @NotNull [] getInitializers() {
     return myInitializers;
   }
 }

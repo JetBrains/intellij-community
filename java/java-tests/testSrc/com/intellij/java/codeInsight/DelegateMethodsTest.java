@@ -17,13 +17,10 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.GenerateDelegateHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
-public class DelegateMethodsTest extends LightCodeInsightTestCase {
+public class DelegateMethodsTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/delegateMethods/";
 
   @NotNull
@@ -65,6 +62,24 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
   public void testSingleField() { doTest(); }
   public void testInsideLambdaWithNonInferredTypeParameters() { doTest(); }
   public void testTypeUseAnnotationsInReturnType() { doTest(); }
+  public void testTypeUseAnnotationsInReturnType2() { doTest(); }
+  public void testTypeUseAnnotationsInReturnType3() {
+    createAndSaveFile("pkg/Foo.java",
+                      """
+                        package pkg;
+                        import java.lang.annotation.*;
+                        @Target({ElementType.TYPE_USE})
+                        @interface Foo {}""");
+    createAndSaveFile("Abstract.java",
+                      """
+                        import java.io.Writer;
+                        import pkg.Foo;
+                        abstract class Abstract {
+                            @Foo public abstract Writer getWriter();
+                        }
+                        """);
+    doTest(); 
+  }
   public void testTypeUseAnnotationsInArrayParameter() { doTest(); }
   public void testPreserveEllipsisType() { doTest(); }
 

@@ -1,22 +1,25 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.PsiNavigateUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public abstract class ClassRefactoringHandlerBase implements RefactoringActionHandler, ElementsHandler {
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
@@ -53,7 +56,7 @@ public abstract class ClassRefactoringHandlerBase implements RefactoringActionHa
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     showDialog(project, elements[0], editor, file, dataContext);
@@ -65,7 +68,7 @@ public abstract class ClassRefactoringHandlerBase implements RefactoringActionHa
 
   protected abstract String getHelpId();
 
-  protected abstract String getTitle();
+  protected abstract @DialogTitle String getTitle();
 
-  protected abstract String getInvalidPositionMessage();
+  protected abstract @DialogMessage String getInvalidPositionMessage();
 }

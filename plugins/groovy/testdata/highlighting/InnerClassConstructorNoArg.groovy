@@ -3,13 +3,13 @@ class A {
     Inner() {}
     def foo() {
       new Inner() // correct
-      new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A, A)'">(new A())</warning> // incorrect
+      new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A)'">(new A())</warning> // incorrect
     }
   }
 
   def foo() {
     new Inner() //correct
-    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A, A)'">(new A())</warning> // incorrect
+    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A)'">(new A())</warning> // incorrect
   }
 
   static def bar() {

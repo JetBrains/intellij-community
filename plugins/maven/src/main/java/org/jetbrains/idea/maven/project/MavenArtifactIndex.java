@@ -1,6 +1,6 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,11 +12,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenArtifactIndex {
+public final class MavenArtifactIndex {
 
   private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.emptyMap());
 
@@ -30,8 +28,14 @@ public class MavenArtifactIndex {
     return myData;
   }
 
-  @NotNull
-  public List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId) {
+  public boolean hasArtifact(@Nullable String groupId, @Nullable String artifactId) {
+    Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
+    if (groupMap == null) return false;
+
+    return groupMap.containsKey(artifactId);
+  }
+
+  public @NotNull List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId) {
     Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
     if (groupMap == null) return Collections.emptyList();
 
@@ -39,15 +43,13 @@ public class MavenArtifactIndex {
     return res == null ? Collections.emptyList() : res;
   }
 
-  @NotNull
-  public List<MavenArtifact> findArtifacts(@Nullable MavenId mavenId) {
+  public @NotNull List<MavenArtifact> findArtifacts(@Nullable MavenId mavenId) {
     if (mavenId == null) return Collections.emptyList();
 
     return findArtifacts(mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion());
   }
 
-  @Nullable
-  public MavenArtifact findArtifacts(@NotNull DependencyConflictId id) {
+  public @Nullable MavenArtifact findArtifacts(@NotNull DependencyConflictId id) {
     for (MavenArtifact artifact : findArtifacts(id.getGroupId(), id.getArtifactId())) {
       if (id.equals(DependencyConflictId.create(artifact))) {
         return artifact;
@@ -57,8 +59,7 @@ public class MavenArtifactIndex {
     return null;
   }
 
-  @NotNull
-  public List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
+  public @NotNull List<MavenArtifact> findArtifacts(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
     Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
     if (groupMap == null) return Collections.emptyList();
 
@@ -67,7 +68,7 @@ public class MavenArtifactIndex {
 
     List<MavenArtifact> res = new SmartList<>();
     for (MavenArtifact artifact : artifacts) {
-      if (Comparing.equal(version, artifact.getVersion())) {
+      if (Objects.equals(version, artifact.getVersion())) {
         res.add(artifact);
       }
     }
@@ -75,9 +76,7 @@ public class MavenArtifactIndex {
     return res;
   }
 
-
-
-  public static MavenArtifactIndex build(@NotNull List<MavenArtifact> dependencies) {
+  public static MavenArtifactIndex build(@NotNull List<? extends MavenArtifact> dependencies) {
     if (dependencies.isEmpty()) return EMPTY_INDEX;
 
     Map<String, Map<String, List<MavenArtifact>>> map = new HashMap<>();

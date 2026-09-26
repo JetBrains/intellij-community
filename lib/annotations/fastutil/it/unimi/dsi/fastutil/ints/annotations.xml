@@ -1,0 +1,14 @@
+<root>
+  <item name='it.unimi.dsi.fastutil.ints.Int2ObjectFunction V get(int)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='it.unimi.dsi.fastutil.ints.Int2ObjectFunction V getOrDefault(int, V)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='it.unimi.dsi.fastutil.ints.Int2ObjectFunction V remove(int)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap V remove(int)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+</root>

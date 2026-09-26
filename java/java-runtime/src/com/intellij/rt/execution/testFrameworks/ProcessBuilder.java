@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.testFrameworks;
 
 import java.io.File;
@@ -29,7 +15,7 @@ public class ProcessBuilder {
 
   private static boolean isWindows() {
     try {
-      return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("windows");
+      return System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
     }
     catch (SecurityException e) {
       return false;
@@ -38,16 +24,16 @@ public class ProcessBuilder {
 
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
-  private final List myParameters = new ArrayList();
+  protected final List<String> myParameters = new ArrayList<>();
   private File myWorkingDir = null;
 
   public void add(final String parameter) {
     myParameters.add(parameter);
   }
 
-  public void add(final List parameters) {
-    for (int i = 0; i < parameters.size(); i++) {
-      add((String)parameters.get(i));
+  public void add(final List<String> parameters) {
+    for (String parameter : parameters) {
+      add(parameter);
     }
   }
 
@@ -67,23 +53,23 @@ public class ProcessBuilder {
   //
   // If either of these becomes an issue, please refer to [util] CommandLineUtil.addToWindowsCommandLine() for a possible implementation.
   public Process createProcess() throws IOException {
-    if (myParameters.size() < 1) {
+    if (myParameters.isEmpty()) {
       throw new IllegalArgumentException("Executable name not specified");
     }
 
-    String command = myParameters.get(0).toString();
+    String command = myParameters.get(0);
     boolean winShell = isWindows && isWinShell(command);
 
     String[] commandLine = new String[myParameters.size()];
     commandLine[0] = command;
 
     for (int i = 1; i < myParameters.size(); i++) {
-      String parameter = myParameters.get(i).toString();
+      String parameter = myParameters.get(i);
 
       if (isWindows) {
         int pos = parameter.indexOf('\"');
         if (pos >= 0) {
-          StringBuffer buffer = new StringBuffer(parameter);
+          StringBuilder buffer = new StringBuilder(parameter);
           do {
             buffer.insert(pos, '\\');
             pos += 2;
@@ -91,7 +77,7 @@ public class ProcessBuilder {
           while ((pos = parameter.indexOf('\"', pos)) >= 0);
           parameter = buffer.toString();
         }
-        else if (parameter.length() == 0) {
+        else if (parameter.isEmpty()) {
           parameter = "\"\"";
         }
 

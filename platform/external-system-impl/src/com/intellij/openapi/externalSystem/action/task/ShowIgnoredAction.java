@@ -16,14 +16,14 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/21/2015
  */
+@ApiStatus.Internal
 public class ShowIgnoredAction extends ExternalSystemViewGearAction {
   @Override
   protected boolean isSelected(@NotNull ExternalProjectsViewImpl view) {

@@ -1,47 +1,34 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.JdomKt;
-import java.util.HashMap;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-class PageSizes {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PageSizes");
-  private static ArrayList myPageSizes = null;
-  private static HashMap myNamesToPageSizes = null;
+final class PageSizes {
+  private static final Logger LOG = Logger.getInstance(PageSizes.class);
+  private static ArrayList<PageSize> myPageSizes = null;
+  private static HashMap<String, PageSize> myNamesToPageSizes = null;
   private static final double MM_TO_INCH = 1/25.4;
-  @NonNls private static final String PAGE_SIZES_RESOURCE = "/PageSizes.xml";
-  @NonNls private static final String ELEMENT_SIZE = "size";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
-  @NonNls private static final String ATTRIBUTE_UNIT = "unit";
-  @NonNls private static final String UNIT_MM = "mm";
+  private static final @NonNls String PAGE_SIZES_RESOURCE = "/PageSizes.xml";
+  private static final @NonNls String ELEMENT_SIZE = "size";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
+  private static final @NonNls String ATTRIBUTE_UNIT = "unit";
+  private static final @NonNls String UNIT_MM = "mm";
 
   public static String[] getNames() {
     init();
     String[] ret = new String[myPageSizes.size()];
     for(int i = 0; i < myPageSizes.size(); i++) {
-      PageSize pageSize = (PageSize)myPageSizes.get(i);
+      PageSize pageSize = myPageSizes.get(i);
       ret[i] = pageSize.name;
     }
     return ret;
@@ -54,7 +41,7 @@ class PageSizes {
 
   public static double getWidth(String name) {
     init();
-    PageSize pageSize = (PageSize)myNamesToPageSizes.get(name);
+    PageSize pageSize = myNamesToPageSizes.get(name);
     if(pageSize == null) {
       return 0;
     }
@@ -63,7 +50,7 @@ class PageSizes {
 
   public static double getHeight(String name) {
     init();
-    PageSize pageSize = (PageSize)myNamesToPageSizes.get(name);
+    PageSize pageSize = myNamesToPageSizes.get(name);
     if(pageSize == null) {
       return 0;
     }
@@ -72,10 +59,9 @@ class PageSizes {
 
   public static String getName(Object item) {
     init();
-    if(!(item instanceof PageSize)) {
+    if(!(item instanceof PageSize pageSize)) {
       return null;
     }
-    PageSize pageSize = (PageSize)item;
     return pageSize.name;
   }
 
@@ -93,22 +79,20 @@ class PageSizes {
     if(myPageSizes != null) {
       return;
     }
-    myPageSizes = new ArrayList();
-    myNamesToPageSizes = new HashMap();
+    myPageSizes = new ArrayList<>();
+    myNamesToPageSizes = new HashMap<>();
 
     try {
-      //noinspection ConstantConditions
-      for (Element element : JdomKt.loadElement(PageSizes.class.getResourceAsStream(PAGE_SIZES_RESOURCE)).getChildren(ELEMENT_SIZE)) {
+      for (Element element : JDOMUtil.load(PageSizes.class.getResourceAsStream(PAGE_SIZES_RESOURCE)).getChildren(ELEMENT_SIZE)) {
         String name = element.getAttributeValue(ATTRIBUTE_NAME);
         final String widthStr = element.getAttributeValue(ATTRIBUTE_WIDTH);
         final String heightStr = element.getAttributeValue(ATTRIBUTE_HEIGHT);
         String unit = element.getAttributeValue(ATTRIBUTE_UNIT);
 
         final String unitName = unit.equals(UNIT_MM)
-                                ? CodeEditorBundle.message("print.page.size.unit.mm")
-                                : CodeEditorBundle.message("print.page.size.unit.in");
-        final String dimensions = CodeEditorBundle.message("print.page.width.x.height.unit.template",
-                                                           widthStr, heightStr, unitName);
+                                ? EditorBundle.message("print.page.size.unit.mm")
+                                : EditorBundle.message("print.page.size.unit.in");
+        final String dimensions = EditorBundle.message("print.page.width.x.height.unit.template", widthStr, heightStr, unitName);
 
         double width = parsePageSize(widthStr);
         double height = parsePageSize(heightStr);
@@ -128,20 +112,21 @@ class PageSizes {
     int slashPos = sizeStr.indexOf('/');
     if (slashPos >= 0) {
       int spacePos = sizeStr.indexOf(' ');
-      int intPart = Integer.valueOf(sizeStr.substring(0, spacePos));
-      double numerator = Double.valueOf(sizeStr.substring(spacePos+1, slashPos));
-      double denominator = Double.valueOf(sizeStr.substring(slashPos+1));
+      int intPart = Integer.parseInt(sizeStr.substring(0, spacePos));
+      double numerator = Double.parseDouble(sizeStr.substring(spacePos + 1, slashPos));
+      double denominator = Double.parseDouble(sizeStr.substring(slashPos + 1));
       return intPart + numerator / denominator;
     }
-    return Integer.valueOf(sizeStr);
+    return Integer.parseInt(sizeStr);
   }
 
-  private static class PageSize {
+  private static final class PageSize {
     public double width;
     public double height;
     public String name;
     public String visualName;
 
+    @Override
     public String toString() {
       return visualName;
     }

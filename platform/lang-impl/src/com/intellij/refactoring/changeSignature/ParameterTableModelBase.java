@@ -1,37 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditorBase;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
 import com.intellij.refactoring.ui.StringTableCellEditor;
-import com.intellij.ui.*;
+import com.intellij.ui.BooleanTableCellEditor;
+import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.RowEditableTableModel;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +53,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     addRow(createRowItem(null));
   }
 
-  public void setParameterInfos(List<P> parameterInfos) {
+  public void setParameterInfos(@NotNull List<? extends P> parameterInfos) {
     List<TableItem> items = new ArrayList<>(parameterInfos.size());
     for (P parameterInfo : parameterInfos) {
       items.add(createRowItem(parameterInfo));
@@ -67,12 +65,12 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     setValueAt(aValue, rowIndex, columnIndex, false);
   }
 
-  protected static abstract class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
+  protected abstract static class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
     extends ColumnInfo<TableItem, Aspect> {
     private TableCellRenderer myRenderer;
     private TableCellEditor myEditor;
 
-    public ColumnInfoBase(String name) {
+    public ColumnInfoBase(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -127,7 +125,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.type"));
     }
 
-    public TypeColumn(Project project, FileType fileType, String title) {
+    public TypeColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;
@@ -161,7 +159,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, RefactoringBundle.message("column.name.name"));
     }
 
-    public NameColumn(Project project, String title) {
+    public NameColumn(Project project, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
     }
@@ -185,7 +183,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     public TableCellRenderer doCreateRenderer(TableItem item) {
       return new ColoredTableCellRenderer() {
         @Override
-        public void customizeCellRenderer(JTable table, Object value,
+        public void customizeCellRenderer(@NotNull JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
           append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null));
@@ -207,7 +205,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.default.value"));
     }
 
-    public DefaultValueColumn(Project project, FileType fileType, String title) {
+    public DefaultValueColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;
@@ -215,7 +213,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public boolean isCellEditable(TableItem item) {
-      return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
+      return !item.isEllipsisType() && item.parameter.isNew();
     }
 
     @Override
@@ -234,6 +232,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     }
   }
 
+  @ApiStatus.Internal
   protected static class AnyVarColumn<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ColumnInfoBase<P, TableItem, Boolean> {
 
     public AnyVarColumn() {
@@ -242,7 +241,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public boolean isCellEditable(TableItem item) {
-      return !item.isEllipsisType() && item.parameter.getOldIndex() == -1;
+      return !item.isEllipsisType() && item.parameter.isNew();
     }
 
     @Override
@@ -262,7 +261,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public TableCellEditor doCreateEditor(TableItem item) {
-      return new BooleanTableCellEditor(false);
+      return new BooleanTableCellEditor();
     }
 
     @Override

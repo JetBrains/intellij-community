@@ -1,0 +1,6 @@
+// "Convert expression to 'Byte'" "true"
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+fun test(d: Double) {
+    val x: Byte = d<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

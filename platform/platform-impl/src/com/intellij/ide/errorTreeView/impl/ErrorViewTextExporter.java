@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -8,16 +6,18 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TooManyListenersException;
 
-public class ErrorViewTextExporter implements ExporterToTextFile {
+@ApiStatus.Internal
+public final class ErrorViewTextExporter implements ExporterToTextFile {
   private final JCheckBox myCbShowDetails;
   private final ErrorViewStructure myStructure;
   private ChangeListener myChangeListener;
@@ -27,53 +27,57 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     myCbShowDetails = new JCheckBox(IdeBundle.message("checkbox.errortree.export.details"));
     myCbShowDetails.setSelected(true);
     myCbShowDetails.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myChangeListener.stateChanged(null);
       }
     });
   }
 
+  @Override
   public JComponent getSettingsEditor() {
     return myCbShowDetails;
   }
 
+  @Override
   public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
     if (myChangeListener != null) throw new TooManyListenersException();
     myChangeListener = listener;
   }
 
+  @Override
   public void removeSettingsChangedListener(ChangeListener listener) {
     myChangeListener = null;
   }
 
-  @NotNull
-  public String getReportText() {
+  @Override
+  public @NotNull String getReportText() {
     StringBuffer buffer = new StringBuffer();
     getReportText(buffer, (ErrorTreeElement)myStructure.getRootElement(), myCbShowDetails.isSelected(), 0);
     return buffer.toString();
   }
 
-  @NotNull
-  public String getDefaultFilePath() {
+  @Override
+  public @NotNull String getDefaultFilePath() {
     return "";
   }
 
+  @Override
   public boolean canExport() {
     return true;
   }
 
   private void getReportText(StringBuffer buffer, final ErrorTreeElement element, boolean withUsages, final int indent) {
-    final String newline = SystemProperties.getLineSeparator();
+    final String newline = System.lineSeparator();
     Object[] children = myStructure.getChildElements(element);
     for (final Object child : children) {
-      if (!(child instanceof ErrorTreeElement)) {
+      if (!(child instanceof ErrorTreeElement childElement)) {
         continue;
       }
       if (!withUsages && child instanceof NavigatableMessageElement) {
         continue;
       }
-      final ErrorTreeElement childElement = (ErrorTreeElement)child;
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(newline);
       }
       shift(buffer, indent);

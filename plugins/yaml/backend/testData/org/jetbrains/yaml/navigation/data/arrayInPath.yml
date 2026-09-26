@@ -1,0 +1,5 @@
+top:
+  next:
+    list:
+      - item1
+      - target<caret>Key: value

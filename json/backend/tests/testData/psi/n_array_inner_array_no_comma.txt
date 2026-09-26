@@ -1,0 +1,13 @@
+JsonFile: n_array_inner_array_no_comma.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('3')
+    PsiErrorElement:',' or ']' expected, got '['
+      <empty list>
+    JsonArray
+      PsiElement([)('[')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('4')
+      PsiElement(])(']')
+    PsiElement(])(']')

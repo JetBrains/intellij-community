@@ -1,67 +1,61 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.nodes.NodeComparator;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- ** finds correspondence between new descriptor and one created on the previous steps
- ** stores maximum  CACHED_STEPS steps
- ** call saveState function to start new step
+ * <ul>
+ * <li>finds correspondence between new descriptor and one created on the previous steps
+ * <li>stores maximum CACHED_STEPS steps
+ * <li>call saveState function to start new step
+ * </ul>
  */
-
-public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager{
-  private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
-
-  private final DebuggerTree myDebuggerTree;
+public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager {
   private String myHistoryKey = null;
   private final Map<String, DescriptorTree> myHistories = new HashMap<>();
 
-  public NodeManagerImpl(Project project, DebuggerTree tree) {
+  public NodeManagerImpl(Project project) {
     super(project);
-    myDebuggerTree = tree;
   }
 
-  public static Comparator<DebuggerTreeNode> getNodeComparator() {
-    return ourNodeComparator;
+  /**
+   * @deprecated Use {@link #NodeManagerImpl(Project)}.
+   */
+  @SuppressWarnings({"removal", "unused"})
+  @Deprecated(forRemoval = true)
+  public NodeManagerImpl(Project project, DebuggerTree tree) {
+    this(project);
   }
 
-  @NotNull
-  public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-    ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
-    return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
-  }
-
-  public DebuggerTreeNodeImpl getDefaultNode() {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new DefaultNodeDescriptor());
+  @Override
+  public @NotNull DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+    return new DebuggerTreeNodeImpl(descriptor);
   }
 
   public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
+    return new DebuggerTreeNodeImpl(descriptor);
   }
 
-  @NotNull
-  public DebuggerTreeNodeImpl createMessageNode(String message) {
-    return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
+  @Override
+  public @NotNull DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
+    return new DebuggerTreeNodeImpl(new MessageDescriptor(message));
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
@@ -77,7 +71,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     final DescriptorTree descriptorTree;
     if (historyKey != null) {
       final DescriptorTree historyTree = myHistories.get(historyKey);
-      descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
+      descriptorTree = (historyTree != null) ? historyTree : new DescriptorTree(true);
     }
     else {
       descriptorTree = new DescriptorTree(true);
@@ -88,13 +82,11 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
 
-  @Nullable
-  public String getContextKey(final StackFrameProxyImpl frame) {
+  public @Nullable String getContextKey(final StackFrameProxyImpl frame) {
     return getContextKeyForFrame(frame);
   }
 
-  @Nullable
-  public static String getContextKeyForFrame(final StackFrameProxyImpl frame) {
+  public static @Nullable String getContextKeyForFrame(final StackFrameProxyImpl frame) {
     if (frame == null) {
       return null;
     }
@@ -116,12 +108,9 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return null;
   }
 
+  @Override
   public void dispose() {
     myHistories.clear();
     super.dispose();
-  }
-
-  private DebuggerTree getTree() {
-    return myDebuggerTree;
   }
 }

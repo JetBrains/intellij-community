@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.core.plugins` start
+content_module_jar(module = ":plugins")
+### auto-generated section `dev intellij.platform.ide.core.plugins` end
+
+### auto-generated section `build intellij.platform.ide.core.plugins` start
+jvm_library(
+    name = "plugins",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.core.plugins",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/settings",
+        "//platform/ide-core",
+        "//platform/core-api:core",
+        "//platform/util",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+    ],
+)
+
+jvm_library(
+    name = "plugins_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.core.plugins",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugins",
+        "//platform/settings:settings_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.core.plugins` end
+
+### auto-generated section `iml intellij.platform.ide.core.plugins` start
+exports_files(
+    [
+        "intellij.platform.ide.core.plugins.iml",
+        "resources/intellij.platform.ide.core.plugins.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.core.plugins` end

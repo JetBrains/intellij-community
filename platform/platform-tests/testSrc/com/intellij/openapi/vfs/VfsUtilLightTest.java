@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -8,10 +6,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static com.intellij.mock.MockVirtualFile.dir;
 import static com.intellij.mock.MockVirtualFile.file;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class VfsUtilLightTest extends BareTestFixtureTestCase {
   private static VirtualFile myRoot;
@@ -52,5 +53,12 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
     VirtualFile dst = myRoot.findFileByRelativePath(dstPath);
     assertNotNull(dstPath, dst);
     assertEquals(expected, VfsUtilCore.findRelativePath(src, dst, '/'));
+  }
+
+  @Test
+  public void isBadName() {
+    for (var name : Arrays.asList(null, "", ".", "..", "/", "\\", "a/b", "c\\d")) {
+      assertTrue("name: '" + name + "'", VfsUtil.isBadName(name));
+    }
   }
 }

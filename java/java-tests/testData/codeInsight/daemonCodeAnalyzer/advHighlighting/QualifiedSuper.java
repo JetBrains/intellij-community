@@ -15,17 +15,17 @@ class Outer {
                   o.super(Outer.this);
                 }
                 public Inner2(Outer o, int par) {
-                  o.super(<error descr="Cannot reference 'this' before supertype constructor has been called">this</error>);
+                  o.super(<error descr="Cannot reference 'this' before superclass constructor is called">this</error>);
                 }
                 public Inner2(Outer o, Object par) {
-                  <error descr="Cannot reference 'this' before supertype constructor has been called">this</error>.super(o);
+                  <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.super(o);
                 }
             }
 
             class BadInner extends Inner1 {
-              <error descr="Cannot reference 'BadInner.this' before supertype constructor has been called">BadInner()</error> {}
+              <error descr="Cannot reference 'BadInner.this' before superclass constructor is called">BadInner()</error> {}
             }
-            <error descr="Cannot reference 'BadInner2.this' before supertype constructor has been called">class BadInner2 extends Inner1</error> {
+            <error descr="Cannot reference 'BadInner2.this' before superclass constructor is called">class BadInner2 extends Inner1</error> {
             }
 
             class s {
@@ -45,4 +45,18 @@ class Ext extends Outer2 {
          super();
        }
    }
+}
+class C {
+  C(int i) {
+
+  }
+
+  int x() {
+    return 1;
+  }
+}
+class D extends C {
+  D() {
+    super(<error descr="Cannot reference 'D.super' before superclass constructor is called">D.super</error>.x());
+  }
 }

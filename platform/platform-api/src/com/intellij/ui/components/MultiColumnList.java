@@ -15,10 +15,18 @@
  */
 package com.intellij.ui.components;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 
 /**
@@ -37,7 +45,6 @@ public class MultiColumnList extends JTable {
     setShowGrid(false);
     setCellSelectionEnabled(true);
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    //noinspection UndesirableClassUsage
     myList = new JList(model) {
       @Override
       public void setBorder(Border border) {
@@ -188,6 +195,7 @@ public class MultiColumnList extends JTable {
     return myPrefSize;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) {
     final JFrame frame = new JFrame("Test");
     frame.setSize(300, 300);

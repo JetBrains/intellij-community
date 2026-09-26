@@ -1,0 +1,5 @@
+{
+  <warning descr="Property 'about1' is not allowed">"about1"</warning>: "var1",
+  <warning descr="Property 'b_111' is not allowed">"b_111"</warning>: true,
+  <warning descr="Property 'ccc' is not allowed">"ccc"</warning>: 18
+}

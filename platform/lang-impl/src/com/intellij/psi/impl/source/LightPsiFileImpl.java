@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -21,49 +7,73 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFileEx {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.LightPsiFileImpl");
+  private static final Logger LOG = Logger.getInstance(LightPsiFileImpl.class);
   private PsiFile myOriginalFile = null;
   private boolean myExplicitlySetAsValid = false;
   private boolean myInvalidated = false;
   private final FileViewProvider myViewProvider;
-  private final PsiManagerImpl myManager;
+  private final PsiManager myManager;
   private final Language myLanguage;
 
   public LightPsiFileImpl(@NotNull FileViewProvider provider, @NotNull Language language) {
     myViewProvider = provider;
-    myManager = (PsiManagerImpl)provider.getManager();
+    myManager = provider.getManager();
     myLanguage = language;
   }
 
   @Override
   public VirtualFile getVirtualFile() {
-    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
+    return getViewProvider().getVirtualFile();
   }
 
   @Override
-  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean isDirectory() {
+    return false;
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    visitor.visitFile(this);
+  }
+
+  @Override
+  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 
   @Override
   public boolean isValid() {
     if (myInvalidated) return false;
-    if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
+    if (!getViewProvider().correspondsToRealFile() || myExplicitlySetAsValid) return true; // "dummy" file
     return getViewProvider().getVirtualFile().isValid();
   }
 
@@ -88,17 +98,17 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     getViewProvider().rootChanged(this);
   }
 
+  @Override
   public abstract void clearCaches();
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected LightPsiFileImpl clone() {
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());
 
     copyCopyableDataTo(clone);
 
-    if (getViewProvider().isEventSystemEnabled()) {
+    if (getViewProvider().supportsSendingPsiEvents()) {
       clone.myOriginalFile = this;
     }
     else if (myOriginalFile != null) {
@@ -108,8 +118,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
@@ -122,7 +131,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void checkSetName(String name) throws IncorrectOperationException {
-    if (!getViewProvider().isEventSystemEnabled()) return;
+    if (!getViewProvider().supportsSendingPsiEvents()) return;
     PsiFileImplUtil.checkSetName(this, name);
   }
 
@@ -138,8 +147,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     return getContainingDirectory();
   }
 
@@ -155,15 +163,14 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void checkDelete() throws IncorrectOperationException {
-    if (!getViewProvider().isEventSystemEnabled()) {
+    if (!getViewProvider().supportsSendingPsiEvents()) {
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
 
@@ -172,26 +179,28 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getPsiRoots() {
+  public PsiFile @NotNull [] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
   @Override
   public boolean isPhysical() {
-    return getViewProvider().isEventSystemEnabled();
+    return getViewProvider().supportsSendingPsiEvents();
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
+  }
+
+  @Override
+  public final @NotNull Document getFileDocument() {
+    return PsiFileEx.super.getFileDocument();
   }
 
   @Override
@@ -200,8 +209,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
@@ -229,8 +237,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public synchronized PsiReference[] getReferences() {
+  public synchronized PsiReference @NotNull [] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
@@ -250,8 +257,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 
@@ -270,8 +276,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public abstract PsiElement[] getChildren();
+  public abstract PsiElement @NotNull [] getChildren();
 
   @Override
   public PsiElement getFirstChild() {

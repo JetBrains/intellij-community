@@ -1,32 +1,28 @@
 package com.intellij.dupLocator.equivalence;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
+@ApiStatus.Internal
 public class MultiChildDescriptor {
   private final MyType myType;
   private final PsiElement[] myElements;
 
-  public MultiChildDescriptor(@NotNull MyType type, @Nullable PsiElement[] elements) {
+  public MultiChildDescriptor(@NotNull MyType type, PsiElement @NotNull [] elements) {
     myType = type;
     myElements = elements;
   }
 
-  @NotNull
-  public MyType getType() {
+  public @NotNull MyType getType() {
     return myType;
   }
 
-  @Nullable
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myElements;
   }
 
-  public static enum MyType {
+  public enum MyType {
     DEFAULT,
     OPTIONALLY,
     OPTIONALLY_IN_PATTERN,

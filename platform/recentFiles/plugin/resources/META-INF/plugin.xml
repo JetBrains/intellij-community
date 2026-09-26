@@ -1,0 +1,16 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<!--suppress AllContentModulesOptionalLoadingRule -->
+<idea-plugin>
+  <id>intellij.recentFiles.plugin</id>
+  <name>Recent Files</name>
+  <description>Provides Recent Files platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+  </content>
+</idea-plugin>

@@ -1,120 +1,90 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.JBIterableClassTraverser;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 
-/**
- * @author peter
- */
-public class JavaMethodSignature {
+public final class JavaMethodSignature {
+  private static final Set<String> OBJECT_METHOD_NAMES = ContainerUtil.map2Set(Object.class.getDeclaredMethods(), Method::getName);
   private final String myMethodName;
-  private final Class[] myMethodParameters;
+  private final Class<?>[] myMethodParameters;
 
-  public JavaMethodSignature(final String methodName, final Class... methodParameters) {
+  public JavaMethodSignature(String methodName, Class<?>... methodParameters) {
     myMethodName = methodName;
     myMethodParameters = methodParameters.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : methodParameters;
   }
 
-  public JavaMethodSignature(Method method) {
-    this(method.getName(), method.getParameterTypes());
+  public JavaMethodSignature(@NotNull Method method) {
+    myMethodName = method.getName();
+    myMethodParameters = method.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : method.getParameterTypes();
   }
 
   public String getMethodName() {
     return myMethodName;
   }
 
-  @Nullable
-  public final Method findMethod(final Class aClass) {
+  public @Nullable Method findMethod(@NotNull Class<?> aClass) {
     Method method = getDeclaredMethod(aClass);
-    if (method == null && aClass.isInterface()) {
-      method = getDeclaredMethod(Object.class);
+    if (method == null && aClass.isInterface() && OBJECT_METHOD_NAMES.contains(myMethodName)) {
+      method = ReflectionUtil.getDeclaredMethod(Object.class, myMethodName, myMethodParameters);
     }
     return method;
   }
 
-  private boolean processMethods(final Class aClass, Processor<Method> processor) {
-    return processMethodWithSupers(aClass, findMethod(aClass), processor);
-  }
-
-  @Nullable
-  private Method getDeclaredMethod(final Class aClass) {
-    final Method method = ReflectionUtil.getMethod(aClass, myMethodName, myMethodParameters);
+  private @Nullable Method getDeclaredMethod(@NotNull Class<?> aClass) {
+    Method method = ReflectionUtil.getMethod(aClass, myMethodName, myMethodParameters);
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
 
-  private boolean processMethodWithSupers(final Class aClass, final Method method, final Processor<Method> processor) {
-    if (method != null) {
-      if (!processor.process(method)) return false;
-    }
-    final Class superClass = aClass.getSuperclass();
-    if (superClass != null) {
-      if (!processMethods(superClass, processor)) return false;
-    }
-    else {
-      if (aClass.isInterface()) {
-        if (!processMethods(Object.class, processor)) return false;
+  @NotNull
+  List<Method> getAllMethods(@NotNull Class<?> startFrom) {
+    List<Method> result = new ArrayList<>();
+    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
+      for (Method method : superClass.getDeclaredMethods()) {
+        if (myMethodName.equals(method.getName()) &&
+            method.getParameterCount() == myMethodParameters.length &&
+            Arrays.equals(method.getParameterTypes(), myMethodParameters)) {
+          result.add(method);
+        }
       }
     }
-    for (final Class anInterface : aClass.getInterfaces()) {
-      if (!processMethods(anInterface, processor)) return false;
-    }
-    return true;
-  }
-
-  public final List<Method> getAllMethods(final Class startFrom) {
-    final List<Method> result = new ArrayList<>();
-    processMethods(startFrom, Processors.cancelableCollectProcessor(result));
     return result;
   }
 
-  @Nullable
-  public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
-      @Override
-      protected boolean accept(Method method) {
-        final T annotation = method.getAnnotation(annotationClass);
-        return annotation != null && ReflectionUtil.isAssignable(method.getDeclaringClass(), startFrom);
+  @ApiStatus.Internal
+  public static @Nullable Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
+    String sampleMethodName = sampleMethod.getName();
+    Class<?>[] sampleMethodParameters = sampleMethod.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : sampleMethod.getParameterTypes();
+
+    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
+      for (Method method : superClass.getDeclaredMethods()) {
+        if (sampleMethodName.equals(method.getName()) &&
+            method.getParameterCount() == sampleMethodParameters.length &&
+            Arrays.equals(method.getParameterTypes(), sampleMethodParameters)) {
+          if (checker.test(method)) {
+            return method;
+          }
+        }
       }
-    };
-    processMethods(startFrom, processor);
-    return processor.getFoundValue();
+    }
+
+    return null;
   }
 
-  @Nullable
-  public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
-      @Override
-      protected boolean accept(Method method) {
-        final T annotation = method.getAnnotation(annotationClass);
-        return annotation != null;
-      }
-    };
-    processMethods(startFrom, processor);
-    final Method foundMethod = processor.getFoundValue();
-    return foundMethod == null ? null : foundMethod.getAnnotation(annotationClass);
-  }
-
+  @Override
   public String toString() {
     return myMethodName + Arrays.asList(myMethodParameters);
   }

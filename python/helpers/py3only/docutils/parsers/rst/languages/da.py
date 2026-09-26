@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: da.py 7678 2013-07-03 09:57:36Z milde $
+# $Id: da.py 9417 2023-06-27 20:04:54Z milde $
 # Author: E D
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Danish-language mappings for language-dependent features of
@@ -30,7 +29,8 @@ directives = {
       'bemærk': 'note',
       'tips': 'tip',
       'advarsel': 'warning',
-      'formaning': 'admonition',
+      'varsel': 'admonition',
+      'formaning': 'admonition',  # sic! kept for backwards compatibiltity
       'sidebjælke': 'sidebar',
       'emne': 'topic',
       'linje-blok': 'line-block',
@@ -42,15 +42,15 @@ directives = {
       'pull-quote (translation required)': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #'questions': 'questions',
+      # 'questions': 'questions',
       'tabel': 'table',
       'csv-tabel': 'csv-table',
       'liste-tabel': 'list-table',
-      #'qa': 'questions',
-      #'faq': 'questions',
+      # 'qa': 'questions',
+      # 'faq': 'questions',
       'meta': 'meta',
       'math (translation required)': 'math',
-      #'imagemap': 'imagemap',
+      # 'imagemap': 'imagemap',
       'billede': 'image',
       'figur': 'figure',
       'inkludér': 'include',
@@ -68,8 +68,8 @@ directives = {
       'sektions-nummerering': 'sectnum',
       'sidehovede': 'header',
       'sidefod': 'footer',
-      #'footnotes': 'footnotes',
-      #'citations': 'citations',
+      # 'footnotes': 'footnotes',
+      # 'citations': 'citations',
       'target-notes (translation required)': 'target-notes',
       'restructuredtext-test-direktiv': 'restructuredtext-test-directive'}
 """Danish name to registered (in directives/__init__.py) directive name
@@ -108,6 +108,7 @@ roles = {
     'uri-reference': 'uri-reference',
     'uri': 'uri-reference',
     'url': 'uri-reference',
-    'rå': 'raw',}
+    'rå': 'raw',
+    }
 """Mapping of Danish role names to canonical role names for interpreted text.
 """

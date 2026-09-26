@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -13,27 +14,28 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
+@ApiStatus.Internal
 public class ExternalSystemShortcutsManager implements Disposable {
-
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
-  @NotNull
-  private final Project myProject;
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull Project myProject;
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
+  private final ActionManager myActionManager;
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
     myProject = project;
+    myActionManager = ActionManager.getInstance();
   }
 
   public void init() {
@@ -44,20 +46,20 @@ public class ExternalSystemShortcutsManager implements Disposable {
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
         fireShortcutsUpdated();
       }
     });
   }
 
-  public String getActionId(@Nullable String projectPath, @Nullable String taskName) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String taskName) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
       File file = new File(portablePath);
-      result.append(file.isFile() && file.getParentFile() != null ? file.getParentFile().getName() : file.getName());
+      result.append(file.getParentFile() != null ? file.getParentFile().getName() : file.getName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (taskName != null) result.append(taskName);
@@ -77,14 +79,11 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public boolean hasShortcuts(@NotNull String actionId) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    return activeKeymap.getShortcuts(actionId).length > 0;
+    return KeymapUtil.getPrimaryShortcut(actionId) != null;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
+  private Shortcut @NotNull [] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
     String actionId = getActionId(projectPath, taskName);
-    if (actionId == null) return Shortcut.EMPTY_ARRAY;
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);
   }
@@ -95,24 +94,25 @@ public class ExternalSystemShortcutsManager implements Disposable {
     }
   }
 
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
+  public void addListener(Listener listener, Disposable parent) {
+    myListeners.add(listener, parent);
   }
 
+  @FunctionalInterface
   public interface Listener {
     void shortcutsUpdated();
   }
 
-  public void scheduleKeymapUpdate(Collection<DataNode<TaskData>> taskData) {
-    ExternalSystemKeymapExtension.updateActions(myProject, taskData);
+  void scheduleKeymapUpdate(@NotNull Collection<? extends DataNode<TaskData>> taskData) {
+    ExternalSystemKeymapExtension.updateActions(myActionManager, myProject, taskData);
   }
 
-  public void scheduleRunConfigurationKeymapUpdate(@NotNull ProjectSystemId externalSystemId) {
+  void scheduleRunConfigurationKeymapUpdate(@NotNull ProjectSystemId externalSystemId) {
     ExternalSystemKeymapExtension.updateRunConfigurationActions(myProject, externalSystemId);
   }
 
   @Override
   public void dispose() {
-    ExternalSystemKeymapExtension.clearActions(myProject);
+    ExternalSystemKeymapExtension.clearActions(myActionManager, this);
   }
 }

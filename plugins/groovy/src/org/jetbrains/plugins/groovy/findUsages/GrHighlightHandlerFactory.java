@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -30,22 +31,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Max Medvedev
  */
-public class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     ASTNode node = target.getNode();
     if (node == null) return null;
 
     IElementType type = node.getElementType();
+    if (!(type instanceof GroovyElementType)) return null;
+
     if (type == GroovyTokenTypes.kIMPLEMENTS || type == GroovyTokenTypes.kEXTENDS) {
       PsiElement parent = target.getParent();
       if (!(parent instanceof GrReferenceList)) return null;
       PsiElement grand = parent.getParent();
       if (!(grand instanceof GrTypeDefinition)) return null;
-      return new GrHighlightOverridingMethodsHandler(editor, file, target, (GrTypeDefinition)grand);
+      return new GrHighlightOverridingMethodsHandler(editor, psiFile, target, (GrTypeDefinition)grand);
     }
     else if (type == GroovyTokenTypes.kRETURN || type == GroovyTokenTypes.kTHROW) {
-      return new GrHighlightExitPointHandler(editor, file, target);
+      return new GrHighlightExitPointHandler(editor, psiFile, target);
     }
     return null;
   }

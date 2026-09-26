@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ReadAction;
@@ -21,6 +20,7 @@ import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.StepRequest;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,22 +28,24 @@ public class RequestHint {
   public static final int STOP = 0;
   public static final int RESUME = -100;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
-  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
+  private static final Logger LOG = Logger.getInstance(RequestHint.class);
+  @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   private final int mySize;
-  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
+  @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
   private boolean mySteppedOut = false;
 
-  @Nullable
-  private final MethodFilter myMethodFilter;
+  private final @Nullable MethodFilter myMethodFilter;
+  private int myFilterMatchedCount = 0;
   private boolean myTargetMethodMatched = false;
 
   private boolean myIgnoreFilters = false;
   private boolean myResetIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
+
+  private final @Nullable RequestHint myParentHint;
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, methodFilter);
@@ -51,48 +53,32 @@ public class RequestHint {
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread,
                      final SuspendContextImpl suspendContext,
-                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth) {
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  protected RequestHint(final ThreadReferenceProxyImpl stepThread,
-                      final SuspendContextImpl suspendContext,
-                      @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
-                      @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
-                      @Nullable MethodFilter methodFilter) {
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
+                     final SuspendContextImpl suspendContext,
+                     @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @Nullable MethodFilter methodFilter) {
+    this(stepThread, suspendContext, stepSize, depth, methodFilter, null);
+  }
+
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
+                     final SuspendContextImpl suspendContext,
+                     @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @Nullable MethodFilter methodFilter,
+                     @Nullable RequestHint parentHint) {
     mySize = stepSize;
     myDepth = depth;
     myMethodFilter = methodFilter;
 
-    int frameCount = 0;
-    SourcePosition position = null;
-    try {
-      frameCount = stepThread.frameCount();
-
-      position = ContextUtil.getSourcePosition(new StackFrameContext() {
-        public StackFrameProxy getFrameProxy() {
-          try {
-            return stepThread.frame(0);
-          }
-          catch (EvaluateException e) {
-            LOG.debug(e);
-            return null;
-          }
-        }
-
-        @NotNull
-        public DebugProcess getDebugProcess() {
-          return suspendContext.getDebugProcess();
-        }
-      });
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-    finally {
-      myFrameCount = frameCount;
-      myPosition = position;
-    }
+    myFrameCount = DebugProcessImpl.getFrameCount(stepThread, suspendContext);
+    myPosition =
+      suspendContext.getDebugProcess().getPositionManager().getSourcePosition(DebugProcessImpl.getLocation(stepThread, suspendContext));
+    myParentHint = parentHint;
   }
 
   public void setIgnoreFilters(boolean ignoreFilters) {
@@ -119,18 +105,22 @@ public class RequestHint {
     return myIgnoreFilters;
   }
 
-  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
+  @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   public int getSize() {
     return mySize;
   }
 
-  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
+  @ApiStatus.Internal
+  public int getExplicitSuspendPolicy() {
+    return -1;
+  }
+
+  @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   public int getDepth() {
     return myDepth;
   }
 
-  @Nullable
-  public MethodFilter getMethodFilter() {
+  public @Nullable MethodFilter getMethodFilter() {
     return myMethodFilter;
   }
 
@@ -140,15 +130,11 @@ public class RequestHint {
 
   protected boolean isTheSameFrame(SuspendContextImpl context) {
     if (mySteppedOut) return false;
-    final ThreadReferenceProxyImpl contextThread = context.getThread();
+    ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
-      try {
-        int currentDepth = contextThread.frameCount();
-        if (currentDepth < myFrameCount) mySteppedOut = true;
-        return currentDepth == myFrameCount;
-      }
-      catch (EvaluateException ignored) {
-      }
+      int currentDepth = DebugProcessImpl.getFrameCount(contextThread, context);
+      if (currentDepth < myFrameCount) mySteppedOut = true;
+      return currentDepth == myFrameCount;
     }
     return false;
   }
@@ -167,9 +153,9 @@ public class RequestHint {
     return mySteppedOut;
   }
 
-  public Integer checkCurrentPosition(SuspendContextImpl context) {
+  public Integer checkCurrentPosition(SuspendContextImpl context, Location location) {
     if ((myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) && myPosition != null) {
-      SourcePosition locationPosition = ContextUtil.getSourcePosition(context);
+      SourcePosition locationPosition = context.getDebugProcess().getPositionManager().getSourcePosition(location);
       if (locationPosition != null) {
         return ReadAction.compute(() -> {
           if (myPosition.getFile().equals(locationPosition.getFile()) && isTheSameFrame(context) && !mySteppedOut) {
@@ -182,80 +168,98 @@ public class RequestHint {
     return null;
   }
 
-  public int getNextStepDepth(final SuspendContextImpl context) {
-    try {
-      final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+  static boolean isProxyMethod(Method method) {
+    return method.isBridge() ||
+           DebuggerUtilsEx.isProxyClass(method.declaringType()) ||
+           DebuggerUtilsEx.isLambdaClassName(method.declaringType().name());
+  }
 
-      // smart step feature stop check
-      if (myMethodFilter != null &&
-          frameProxy != null &&
-          !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
-          myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location(), frameProxy::thisObject) &&
-          !isTheSameFrame(context)
-        ) {
-        myTargetMethodMatched = true;
-        return myMethodFilter.onReached(context, this);
-      }
+  protected final @Nullable Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {
+    final DebuggerSettings settings = DebuggerSettings.getInstance();
 
-      Integer resultDepth = checkCurrentPosition(context);
-      if (resultDepth != null) {
-        return resultDepth.intValue();
-      }
+    if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
+        location != null && DebuggerUtils.isSynthetic(location.method())) {
+      return myDepth;
+    }
 
-      // Now check filters
+    if (!myIgnoreFilters) {
+      if (settings.SKIP_GETTERS) {
+        boolean isGetter = ReadAction.compute(() -> {
+          PsiElement contextElement = ContextUtil.getContextElement(context);
+          return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
+        }).booleanValue();
 
-      final DebuggerSettings settings = DebuggerSettings.getInstance();
-
-      if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters))&& frameProxy != null) {
-        final Location location = frameProxy.location();
-        if (location != null) {
-          if (DebuggerUtils.isSynthetic(location.method())) {
-            return myDepth;
-          }
+        if (isGetter) {
+          return StepRequest.STEP_OUT;
         }
       }
 
-      if (!myIgnoreFilters) {
-        if(settings.SKIP_GETTERS) {
-          boolean isGetter = ReadAction.compute(() -> {
-            PsiElement contextElement = ContextUtil.getContextElement(context);
-            return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
-          }).booleanValue();
-
-          if(isGetter) {
+      if (location != null) {
+        if (settings.SKIP_CONSTRUCTORS) {
+          final Method method = location.method();
+          if (method != null && method.isConstructor()) {
             return StepRequest.STEP_OUT;
           }
         }
 
-        if (frameProxy != null) {
-          if (settings.SKIP_CONSTRUCTORS) {
-            final Location location = frameProxy.location();
-            if (location != null) {
-              final Method method = location.method();
-              if (method != null && method.isConstructor()) {
-                return StepRequest.STEP_OUT;
-              }
-            }
-          }
-
-          if (settings.SKIP_CLASSLOADERS) {
-            final Location location = frameProxy.location();
-            if (location != null && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
-              return StepRequest.STEP_OUT;
-            }
-          }
-        }
-
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
-          try {
-            if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
-          }
-          catch (Exception | AssertionError e) {LOG.error(e);}
+        if (settings.SKIP_CLASSLOADERS && DebuggerUtils.instanceOf(location.declaringType(), "java.lang.ClassLoader")) {
+          return StepRequest.STEP_OUT;
         }
       }
+
+      for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
+        try {
+          if (filter.isApplicable(context)) {
+            return filter.getStepRequestDepth(context);
+          }
+        }
+        catch (Exception | AssertionError e) {
+          DebuggerUtilsImpl.logError(e);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public int getNextStepDepth(final SuspendContextImpl context) {
+    try {
+      Location location = context.getLocation();
+
+      // smart step feature stop check
+      if (myMethodFilter != null &&
+          location != null &&
+          !(myMethodFilter instanceof BreakpointStepMethodFilter) &&
+          !isTheSameFrame(context)) {
+        if (isProxyMethod(location.method())) { // step into bridge and proxy methods
+          return StepRequest.STEP_INTO;
+        }
+        boolean proxyMatch =
+          (myMethodFilter instanceof BasicStepMethodFilter filter && filter.proxyCheck(location, context, this));
+        if (proxyMatch || myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
+          if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
+            myTargetMethodMatched = true;
+            return myMethodFilter.onReached(context, this);
+          }
+        }
+      }
+
+      Integer resultDepth = checkCurrentPosition(context, location);
+      if (resultDepth != null) {
+        return resultDepth.intValue();
+      }
+
+      resultDepth = processSteppingFilters(context, location);
+      if (resultDepth != null) {
+        return resultDepth.intValue();
+      }
+
       // smart step feature
-      if (myMethodFilter != null && !mySteppedOut) {
-        return StepRequest.STEP_OUT;
+      if (myMethodFilter != null) {
+        isTheSameFrame(context); // to set mySteppedOut if needed
+        if (!mySteppedOut) {
+          return StepRequest.STEP_OUT;
+        }
       }
     }
     catch (VMDisconnectedException ignored) {
@@ -266,4 +270,11 @@ public class RequestHint {
     return STOP;
   }
 
+  protected void doStep(@NotNull DebugProcessImpl debugProcess, SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, int size, int depth, Object commandToken) {
+    debugProcess.doStep(suspendContext, stepThread, size, depth, this, commandToken, getExplicitSuspendPolicy(), null);
+  }
+
+  final @Nullable RequestHint getParentHint() {
+    return myParentHint;
+  }
 }

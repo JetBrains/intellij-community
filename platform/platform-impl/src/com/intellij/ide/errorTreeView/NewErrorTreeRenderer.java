@@ -1,41 +1,35 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.render.RenderingUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.LayoutManager;
 
-public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
+public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final MyWrapperRenderer myWrapperRenderer;
   private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;
   private final MyNotSelectedColoredTreeCellRenderer myRightCellRenderer;
@@ -74,9 +68,10 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
   }
 
-  private static class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
+  private static final class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
     private CustomizeColoredTreeCellRenderer myCurrentCallback;
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -102,8 +97,8 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       return this;
     }
 
-    @Nullable
-    public Object getTag() {
+    @Override
+    public @Nullable Object getTag() {
       return myCurrentCallback == null? null : myCurrentCallback.getTag();
     }
 
@@ -112,7 +107,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  private static class MyWrapperRenderer implements TreeCellRenderer {
+  private static final class MyWrapperRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myLeft;
     private final TreeCellRenderer myRight;
     private final MyPanel myPanel;
@@ -125,13 +120,14 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       return myRight;
     }
 
-    public MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
+    MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
       myLeft = left;
       myRight = right;
 
       myPanel = new MyPanel(new BorderLayout());
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -140,7 +136,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   int row,
                                                   boolean hasFocus) {
       myPanel.removeAll();
-      myPanel.setBackground(tree.getBackground());
+      myPanel.setBackground(RenderingUtil.getBackground(tree));
       myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.WEST);
       myPanel.add(myRight.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.EAST);
       return myPanel;
@@ -173,10 +169,10 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
      * ("Error") and the right side is a {@link JEditorPane} containing the
      * error message.
      */
-    private class MyPanel extends JPanel implements Accessible {
+    private final class MyPanel extends JPanel implements Accessible {
       private AccessibleContext myDefaultAccessibleContext;
 
-      public MyPanel(LayoutManager layout) {
+      MyPanel(LayoutManager layout) {
         super(layout);
       }
 
@@ -195,10 +191,9 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
         return myDefaultAccessibleContext;
       }
 
-      protected class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
-        @NotNull
+      protected final class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
         @Override
-        protected AccessibleContext getDelegate() {
+        protected @NotNull AccessibleContext getDelegate() {
           // Most of the accessibility properties come from the right component
           if (myPanel.getComponentCount() >= 2) {
             Component c = myPanel.getComponent(1);
@@ -229,10 +224,9 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  @NotNull
-  public static String calcPrefix(@Nullable ErrorTreeElement element) {
+  public static @NotNull @Nls String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      String prefix = element.getKind().getPresentableText();
+      String prefix = element.getPresentableText();
 
       if (element instanceof NavigatableMessageElement) {
         String rendPrefix = ((NavigatableMessageElement)element).getRendererTextPrefix();
@@ -244,9 +238,10 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     return "";
   }
 
+  @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     final ErrorTreeElement element = getElement(value);
-    if(element instanceof GroupingElement) {
+    if(element instanceof GroupingElement && ((GroupingElement)element).isRenderWithBoldFont()) {
       setFont(getFont().deriveFont(Font.BOLD));
     }
 
@@ -254,39 +249,14 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     if (element != null) {
       String[] text = element.getText();
       if (text == null) {
-        text = ArrayUtil.EMPTY_STRING_ARRAY;
+        text = ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       if(text.length > 0 && text[0] == null) {
         text[0] = "";
       }
       setText(text, prefix);
+      setIcon(element.getIcon());
     }
-
-    Icon icon = null;
-
-    if (element instanceof GroupingElement) {
-      final GroupingElement groupingElement = (GroupingElement)element;
-
-      icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : AllIcons.FileTypes.Any_type;
-    }
-    else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
-      switch (element.getKind()) {
-        case ERROR:
-          icon = AllIcons.General.Error;
-          break;
-        case WARNING:
-          icon = AllIcons.General.Warning;
-          break;
-        case NOTE:
-          icon = AllIcons.General.Note;
-          break;
-        case INFO:
-          icon = AllIcons.General.Information;
-          break;
-      }
-    }
-
-    setIcon(icon);
   }
 
   private static ErrorTreeElement getElement(Object value) {

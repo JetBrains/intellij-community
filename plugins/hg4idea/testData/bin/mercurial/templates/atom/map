@@ -1,0 +1,18 @@
+default = 'changelog'
+feedupdated = '<updated>{date|rfc3339date}</updated>'
+mimetype = 'application/atom+xml; charset={encoding}'
+header = header.tmpl
+changelog = changelog.tmpl
+changelogentry = changelogentry.tmpl
+filelog = filelog.tmpl
+tags = tags.tmpl
+tagentry = tagentry.tmpl
+bookmarks = bookmarks.tmpl
+bookmarkentry = bookmarkentry.tmpl
+branches = branches.tmpl
+branchentry = branchentry.tmpl
+error = error.tmpl
+filedifflink = '{file|escape}<br />'
+fileellipses = '{file|escape}<br />'
+filenodelink = '{file|escape}<br />'
+filenolink = '{file|escape}<br />'

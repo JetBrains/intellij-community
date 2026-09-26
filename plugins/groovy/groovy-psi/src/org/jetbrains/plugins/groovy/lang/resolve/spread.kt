@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState.SPREAD_STATE
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState.create
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 
-fun PsiType?.processSpread(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+fun PsiType?.processSpread(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, deep: Boolean = false): Boolean {
   if (this == null) return true
 
   val componentType = ClosureParameterEnhancer.findTypeForIteration(this, place)
@@ -17,7 +17,7 @@ fun PsiType?.processSpread(processor: PsiScopeProcessor, state: ResolveState, pl
 
   val componentState = create(componentType, state[SPREAD_STATE])
   val resolveState = state.put(SPREAD_STATE, componentState)
-
-  return componentType.processReceiverType(processor, resolveState, place) &&
-         componentType.processSpread(processor, resolveState, place)
+  if (!componentType.processReceiverType(processor, resolveState, place)) return false
+  if (!deep) return true
+  return componentType.processSpread(processor, resolveState, place, true)
 }

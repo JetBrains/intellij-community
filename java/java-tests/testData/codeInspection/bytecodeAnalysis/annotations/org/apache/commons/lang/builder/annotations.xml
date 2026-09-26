@@ -20,7 +20,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(boolean, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -38,7 +39,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(byte, byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -56,7 +58,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(char, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -74,7 +77,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(double, double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -92,7 +96,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(float, float)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -110,7 +115,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -152,7 +158,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(long, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -170,7 +177,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder append(short, short)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -188,7 +196,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder org.apache.commons.lang.builder.CompareToBuilder appendSuper(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -252,7 +261,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(boolean, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -270,7 +280,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(byte, byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -288,7 +299,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(char, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -330,7 +342,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -372,7 +385,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(long, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -390,7 +404,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder append(short, short)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -408,12 +423,18 @@
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder org.apache.commons.lang.builder.EqualsBuilder appendSuper(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder void reflectionAppend(java.lang.Object, java.lang.Object, java.lang.Class, org.apache.commons.lang.builder.EqualsBuilder, boolean, java.lang.String[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.EqualsBuilder void setEquals(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder HashCodeBuilder()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -471,7 +492,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -486,7 +508,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -501,7 +524,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -525,7 +549,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(float)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -540,7 +565,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -573,7 +599,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -588,7 +615,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder append(short)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -603,7 +631,8 @@
     </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder org.apache.commons.lang.builder.HashCodeBuilder appendSuper(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;this&quot;"/>
+            <val name="value" val="&quot;_-&gt;this&quot;"/>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -694,6 +723,21 @@
     </item>
     <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder void appendFieldsIn(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder void setAppendStatics(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder void setAppendTransients(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder void setUpToClass(java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle StandardToStringStyle()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -805,41 +849,146 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArrayContentDetail(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArrayEnd(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArrayEnd(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArraySeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArraySeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArrayStart(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setArrayStart(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setContentEnd(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setContentEnd(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setContentStart(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setContentStart(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setDefaultFullDetail(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldNameValueSeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldNameValueSeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldSeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldSeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldSeparatorAtEnd(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setFieldSeparatorAtStart(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setNullText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setNullText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setShortClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSizeEndText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSizeEndText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSizeStartText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSizeStartText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSummaryObjectEndText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSummaryObjectEndText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSummaryObjectStartText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle void setSummaryObjectStartText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setUseClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setUseFieldNames(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setUseIdentityHashCode(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle void setUseShortClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder ToStringBuilder(java.lang.Object, org.apache.commons.lang.builder.ToStringStyle) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1191,6 +1340,21 @@
     <item name='org.apache.commons.lang.builder.ToStringBuilder void setDefaultStyle(org.apache.commons.lang.builder.ToStringStyle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle DEFAULT_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle MULTI_LINE_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle NO_FIELD_NAMES_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle SHORT_PREFIX_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle SIMPLE_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle ToStringStyle()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1348,8 +1512,18 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendClassName(java.lang.StringBuffer, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendContentEnd(java.lang.StringBuffer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendContentEnd(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendContentStart(java.lang.StringBuffer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendContentStart(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1363,6 +1537,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendCyclicObject(java.lang.StringBuffer, java.lang.String, java.lang.Object) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1374,6 +1553,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, boolean[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, byte) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1387,6 +1571,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, byte[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, char) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1398,6 +1587,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, char[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, double) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1411,6 +1605,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, double[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, float) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1423,6 +1622,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, float[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1434,6 +1638,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, int[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1450,6 +1659,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.lang.Object[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Collection)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1459,6 +1673,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Collection) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Map)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1467,6 +1686,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, java.util.Map) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1479,6 +1703,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, long[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendDetail(java.lang.StringBuffer, java.lang.String, short) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1495,14 +1724,29 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendFieldEnd(java.lang.StringBuffer, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendFieldSeparator(java.lang.StringBuffer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendFieldSeparator(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendFieldStart(java.lang.StringBuffer, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendFieldStart(java.lang.StringBuffer, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendIdentityHashCode(java.lang.StringBuffer, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendNullText(java.lang.StringBuffer, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendNullText(java.lang.StringBuffer, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1549,6 +1793,11 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendSummary(java.lang.StringBuffer, java.lang.String, short[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void appendSummarySize(java.lang.StringBuffer, java.lang.String, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void appendSummarySize(java.lang.StringBuffer, java.lang.String, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1567,41 +1816,146 @@
     <item name='org.apache.commons.lang.builder.ToStringStyle void removeLastFieldSeparator(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setArrayContentDetail(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setArrayEnd(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setArrayEnd(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setArraySeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setArraySeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setArrayStart(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setArrayStart(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setContentEnd(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setContentEnd(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setContentStart(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setContentStart(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setDefaultFullDetail(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldNameValueSeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldNameValueSeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldSeparator(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldSeparator(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldSeparatorAtEnd(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setFieldSeparatorAtStart(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setNullText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setNullText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setShortClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setSizeEndText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setSizeEndText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setSizeStartText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setSizeStartText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setSummaryObjectEndText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setSummaryObjectEndText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setSummaryObjectStartText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setSummaryObjectStartText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setUseClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setUseFieldNames(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setUseIdentityHashCode(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle void setUseShortClassName(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle.DefaultToStringStyle DefaultToStringStyle()'>
         <annotation name='org.jetbrains.annotations.Contract'>

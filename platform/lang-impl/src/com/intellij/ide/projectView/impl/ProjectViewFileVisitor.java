@@ -15,9 +15,17 @@ import java.util.function.Predicate;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
 class ProjectViewFileVisitor extends AbstractTreeNodeVisitor<VirtualFile> {
-  public ProjectViewFileVisitor(@NotNull VirtualFile file, Predicate<TreePath> predicate) {
+  ProjectViewFileVisitor(@NotNull VirtualFile file, Predicate<? super TreePath> predicate) {
     super(() -> file, predicate);
     LOG.debug("create visitor for file: " + file);
+  }
+
+  boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends VirtualFile> matcher) {
+    return matches(node, matcher.getValue());
+  }
+
+  boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends VirtualFile> matcher) {
+    return contains(node, matcher.getValue());
   }
 
   @Override
@@ -26,6 +34,9 @@ class ProjectViewFileVisitor extends AbstractTreeNodeVisitor<VirtualFile> {
   }
 
   private static boolean contains(@NotNull ProjectViewNode node, @NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return false;
+    }
     return node.contains(file);
   }
 

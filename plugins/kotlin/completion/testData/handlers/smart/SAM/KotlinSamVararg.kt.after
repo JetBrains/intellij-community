@@ -1,0 +1,10 @@
+fun interface Sam {
+    fun combine(prefix: String, vararg values: String): String
+}
+
+var x: Sam = Sam { prefix, values -> <caret> }
+
+// ELEMENT_TEXT: Sam
+// TAIL_TEXT: " { prefix, values -> ... } (function: (String, Array<out String>) -> String) (<root>)"
+
+

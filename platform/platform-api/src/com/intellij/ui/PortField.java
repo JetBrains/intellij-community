@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
+import javax.swing.SpinnerNumberModel;
 
 public class PortField extends JBIntSpinner {
   public PortField() {
@@ -26,6 +26,7 @@ public class PortField extends JBIntSpinner {
     this(value, 0);
   }
 
+  @Override
   public void setMin(int value) {
     ((SpinnerNumberModel)getModel()).setMinimum(value);
   }

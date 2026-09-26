@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import icons.XpathIcons;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
@@ -35,16 +22,16 @@ import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 
-public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
+final class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
   private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = param -> {
     final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
     return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
   };
 
-  protected XsltFunctionImpl(XmlTag target) {
+  XsltFunctionImpl(XmlTag target) {
     super(target);
   }
 
@@ -70,7 +57,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
 
   @Override
   public Icon getIcon(boolean open) {
-    return XpathIcons.Function;
+    return AllIcons.Nodes.Function;
   }
 
   @Override
@@ -98,22 +85,19 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
     return super.setName(getQName().getPrefix() + ":" + name);
   }
 
-  @Nullable
-  public String getPresentableText() {
+  @Override
+  public @Nullable @NlsSafe String getPresentableText() {
     final Function function = getFunction();
-    return function != null ? function.buildSignature() +
-            ": " + function.getReturnType().getName() : null;
+    return function.buildSignature() + ": " + function.getReturnType().getName();
   }
 
-  @NotNull
   @Override
-  public Parameter[] getParameters() {
+  public Parameter @NotNull [] getParameters() {
     return getFunction().getParameters();
   }
 
-  @NotNull
   @Override
-  public XPathType getReturnType() {
+  public @NotNull XPathType getReturnType() {
     return getFunction().getReturnType();
   }
 
@@ -122,6 +106,7 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
     return getFunction().getMinArity();
   }
 
+  @Override
   public void accept(@NotNull XPathElementVisitor visitor) {
     visitor.visitXPathFunction(this);
   }

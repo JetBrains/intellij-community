@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -34,84 +33,88 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 
-class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
-  private final XmlAttribute myAttribute;
-  private final ExternalResourceManager myResourceManager = ExternalResourceManager.getInstance();
+final class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
+  private final XmlAttribute attribute;
+  private final ExternalResourceManager resourceManager = ExternalResourceManager.getInstance();
 
-  public ExternalResourceReference(XmlAttribute attribute) {
-    myAttribute = attribute;
+  ExternalResourceReference(XmlAttribute attribute) {
+    this.attribute = attribute;
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix[] getQuickFixes() {
-    return new LocalQuickFix[] { new DownloadResourceFix(myAttribute.getValue()) };
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    return new LocalQuickFix[] { new DownloadResourceFix(attribute.getValue()) };
   }
 
 
-  @NotNull
-  public PsiElement getElement() {
-    return myAttribute.getValueElement();
+  @Override
+  public @NotNull PsiElement getElement() {
+    return attribute.getValueElement();
   }
 
-  @NotNull
-  public TextRange getRangeInElement() {
-    final XmlAttributeValue value = myAttribute.getValueElement();
+  @Override
+  public @NotNull TextRange getRangeInElement() {
+    final XmlAttributeValue value = attribute.getValueElement();
     return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);
   }
 
-  @Nullable
-  public PsiElement resolve() {
-    final String value = myAttribute.getValue();
-    final String resourceLocation = myResourceManager.getResourceLocation(value);
+  @Override
+  public @Nullable PsiElement resolve() {
+    String value = attribute.getValue();
+    String resourceLocation = value == null ? null : resourceManager.getResourceLocation(value, attribute.getProject());
+    if (Objects.equals(resourceLocation, value)) {
+      return null;
+    }
 
-    //noinspection StringEquality
-    if (resourceLocation != value) {
-      VirtualFile file;
+    VirtualFile file;
+    try {
+      file = VfsUtil.findFileByURL(new URL(resourceLocation));
+    }
+    catch (MalformedURLException e) {
       try {
-        file = VfsUtil.findFileByURL(new URL(resourceLocation));
+        file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
       }
-      catch (MalformedURLException e) {
-        try {
-          file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
-        }
-        catch (MalformedURLException e1) {
-          file = null;
-        }
+      catch (MalformedURLException e1) {
+        file = null;
       }
-      if (file != null) {
-        return myAttribute.getManager().findFile(file);
-      }
+    }
+    if (file != null) {
+      return attribute.getManager().findFile(file);
     }
     return null;
   }
 
-  @NotNull
-  public String getCanonicalText() {
-    return myAttribute.getValue();
+  @Override
+  public @NotNull String getCanonicalText() {
+    return attribute.getValue();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    myAttribute.setValue(newElementName);
-    final XmlAttributeValue value = myAttribute.getValueElement();
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+    attribute.setValue(newElementName);
+    final XmlAttributeValue value = attribute.getValueElement();
     assert value != null;
     return value;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element == resolve();
   }
 
-  @NotNull
-  public Object[] getVariants() {
-    return myResourceManager.getResourceUrls(null, false);
+  @Override
+  public Object @NotNull [] getVariants() {
+    return resourceManager.getResourceUrls(null, false);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }

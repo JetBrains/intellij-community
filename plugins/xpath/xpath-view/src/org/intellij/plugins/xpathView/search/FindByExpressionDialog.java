@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.xpathView.search;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.intellij.plugins.xpathView.ui.Mode;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +36,11 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
 
     public FindByExpressionDialog(Project parent, Config settings, HistoryElement[] history, Module module) {
         super(parent, settings, history, new FindFormPanel(parent, module, settings.SEARCH_SCOPE));
-        setTitle("Find by XPath Expression");
-        setOKButtonText(FindBundle.message("find.button"));
+        setTitle(XPathBundle.message("dialog.title.find.by.xpath.expression"));
+        setOKButtonText(XPathBundle.message("find.button"));
     }
 
+    @Override
     protected void init() {
         final ToolWindow findWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
         final boolean available = findWindow != null && findWindow.isAvailable();
@@ -48,6 +49,7 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
         myForm.getNewTabCheckbox().setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
 
         myForm.getScopePanel().addPropertyChangeListener("scope", new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 updateOkAction();
             }
@@ -61,15 +63,18 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
     }
 
 
+    @Override
     protected void setModeImpl(Mode mode) {
         myForm.getOptionsPanel().setVisible(mode == Mode.ADVANCED);
         super.setModeImpl(mode);
     }
 
+    @Override
     protected boolean isOkEnabled() {
         return myForm.getScope().isValid() && super.isOkEnabled();
     }
 
+    @Override
     protected void doOKAction() {
         if (myForm.getNewTabCheckbox().isEnabled()) {
             FindSettings.getInstance().setShowResultsInSeparateView(myForm.getNewTabCheckbox().isSelected());
@@ -78,8 +83,8 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
         super.doOKAction();
     }
 
-    @NotNull
-    protected String getPrivateDimensionServiceKey() {
+    @Override
+    protected @NotNull String getPrivateDimensionServiceKey() {
         return "XPathView.FindDialog.DIMENSION_SERVICE_KEY";
     }
 

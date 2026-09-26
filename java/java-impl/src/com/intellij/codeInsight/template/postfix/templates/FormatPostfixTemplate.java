@@ -3,13 +3,14 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class FormatPostfixTemplate extends JavaEditablePostfixTemplate {
+public class FormatPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public FormatPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("format",
           "String.format($EXPR$, $END$)",
@@ -18,6 +19,13 @@ public class FormatPostfixTemplate extends JavaEditablePostfixTemplate {
             new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(CommonClassNames.JAVA_LANG_STRING)),
           LanguageLevel.JDK_1_3, false, provider);
   }
+
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
 
   @Override
   public boolean isBuiltin() {

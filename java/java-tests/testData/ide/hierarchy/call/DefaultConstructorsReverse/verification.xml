@@ -1,0 +1,9 @@
+<node text="main(String[]) (Bitter)" base="true">
+  <node text="Bitter() (2 usages) (Bitter)">
+    <node text="Salty() (Salty)">
+      <node text="Sour() (Sour)">
+        <node text="Sweet() (Sweet)"/>
+      </node>
+    </node>
+  </node>
+</node>

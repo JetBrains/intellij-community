@@ -1,0 +1,12 @@
+// "Create function 'foo'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_ERROR: UNRESOLVED_REFERENCE
+class A {
+    fun m() {
+        foo("a", "b", "c")
+    }
+
+    private fun foo(string: String, string2: String, string3: String) {
+        <selection>TODO("Not yet implemented")<caret></selection>
+    }
+}

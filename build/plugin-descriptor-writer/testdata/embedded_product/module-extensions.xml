@@ -1,0 +1,1 @@
+<idea-plugin><extensions defaultExtensionNs="test"><extension value="a &amp; b"/></extensions></idea-plugin>

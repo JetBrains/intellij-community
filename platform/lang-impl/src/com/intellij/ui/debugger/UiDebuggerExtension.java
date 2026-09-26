@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
 package com.intellij.ui.debugger;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface UiDebuggerExtension {
   ExtensionPointName<UiDebuggerExtension> EP_NAME = ExtensionPointName.create("com.intellij.uiDebuggerExtension");
 
   JComponent getComponent();
+
+  @NlsContexts.TabTitle
   String getName();
 
   void disposeUiResources();

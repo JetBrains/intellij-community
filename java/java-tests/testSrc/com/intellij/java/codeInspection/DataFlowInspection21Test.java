@@ -1,0 +1,417 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInspection;
+
+import com.intellij.JavaTestUtil;
+import com.intellij.idea.TestFor;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
+  }
+
+  public void testSuspiciousLabelElementsJava19() {
+    doTest();
+  }
+
+  public void testParameterNullabilityFromSwitch() {
+    doTest();
+  }
+
+  public void testDefaultLabelElementInSwitch() {
+    doTest();
+  }
+
+  public void testSuspiciousLabelElements() {
+    doTest();
+  }
+
+  public void testPredicateNot() { doTest(); }
+
+  public void testEnumNullability() {
+    doTest();
+  }
+
+  public void testBoxedTypeNullability() {
+    doTest();
+  }
+
+  public void testPatternsNullability() {
+    doTest();
+  }
+
+  public void testPatterns() {
+    doTest();
+  }
+
+  public void testDeconstructionNullability() {
+    doTest();
+  }
+
+  public void testUnnamedPatterns() {
+    doTest();
+  }
+
+  public void testUnnamedPatternsJava22() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
+  public void testPatternInStreamNotComplex() {
+    doTest();
+  }
+
+  public void testInstanceof() {
+    doTest();
+  }
+  
+  public void testTakeWhileUpdate() { doTest(); }
+
+  public void testNewStringWrongEquals() { doTest(); }
+
+  public void testSwitchWhenReturnBoolean() { doTest(); }
+
+  public void testSkipSwitchExpressionWithThrow() { doTest(); }
+
+  public void testStringTemplates() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testChronoRange() {
+    doTest();
+  }
+
+  public void testSealedClassCast() { doTest(); }
+  public void testCastToSealedInterface() { doTest(); }
+
+  public void testWhenPatterns() {
+    doTest();
+  }
+  public void testPrecalculatedTrimValue() { doTest(); }
+  public void testSwitchNullability() {
+    doTest();
+  }
+  public void testRecordPatterns() {
+    doTest();
+  }
+  public void testRecordPatternNested() {
+    doTest();
+  }
+  public void testRecordPatternAndWhen() {
+    doTest();
+  }
+  public void testNestedRecordPatterns() {
+    doTest();
+  }
+  public void testSuspiciousLabelElementsJava20() {
+    doTest();
+  }
+  public void testReadResolve() { doTest(); }
+  public void testReadResolve2() { doTest(); }
+  public void testDifferentTypesButNullable() { doTest(); }
+  public void testInstanceOfWidening() { doTest(); }
+  public void testSwitchPatternInGuard() { doTest(); }
+  public void testForEachPattern() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         public @interface Range {
+                           long from();
+                           long to();
+                         }""");
+    doTest();
+  }
+
+  public void testArrayElementWrappedInPureMethod() { doTest(); }
+  public void testArrayAddedIntoCollection() { doTest(); }
+  public void testInstanceOfUnresolvedType() { doTest(); }
+
+  public void testInstanceOfPatternAffectNullity() { doTest(); }
+
+  public void testNullabilityInEnumSwitch() { doTest(); }
+  
+  public void testSwitchBooleanWhen() { doTest(); }
+
+  public void testJetBrainsNotNullByDefault() {
+    doTest();
+  }
+  
+  public void testClassFileGetter() {
+    doTest();
+  }
+  public void testPrivateMethodDoNotFlushFinalFields() { doTest(); }
+  public void testGetterVsDirectAccess() { doTest(); }
+  public void testGetterVsDirectAccessRecordOverriddenGetter() { doTest(); }
+  public void testGetterVsDirectAccessNonFinal() { doTest(); }
+  public void testGetterVsDirectAccessObjectEquals() { doTest(); }
+  public void testSetterAndGetter() { doTest(); }
+  public void testStaticEqualsContract() { doTest(); }
+  public void testNewExpressionAnnotations() { doTest(); }
+  
+  public void testJSpecifyLocalWithGenerics() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyLocalWithGenericsWithVar() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyCallExplicitTypeParameters() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyGetOrDefault() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyReturnFromParameterized() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testJsr305NicknameAsTypeAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  
+  public void testSwitchNoUnreachableBranchesDueToUnresolvedType() {
+    doTest();
+  }
+  
+  public void testObjectUtilsNullMethods() {
+    doTest();
+  }
+
+  public void testJSpecifyReturnFromGenericFunctions() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyListOfNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyIntersectionTernary() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyIntersectionBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
+    doTest();
+  }
+  
+  public void testGuavaIterablesProblems() {
+    doTest();
+  }
+  
+  public void testGenericVarargNullability() {
+    doTest();
+  }
+
+  public void testPassthroughGenericParameter() {
+    doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+  }
+
+  public void testMutabilityJdk21() { doTest(); }
+  
+  public void testJSpecifyLambdaTernary() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+  
+  public void testJSpecifyNullUnmarkedOverNullMarked() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testJSpecifySuperBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyArrayNullability() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testMatchExceptionNestedDeconstruction() { doTest(); }
+
+  public void testMatchExceptionSealedClass() { doTest(); }
+
+  public void testMatchExceptionSealedClassOnlyNull() {
+    doTestWith((insp, _) -> insp.REPORT_UNSOUND_WARNINGS = false);
+  }
+
+  public void testNoMatchExceptionSealedClassDataFlow() { doTest(); }
+
+  public void testMatchExceptionDoubleNestedDeconstruction() { doTest(); }
+
+  public void testNoMatchExceptionMostNestedDeconstruction() { doTest(); }
+
+  public void testMatchExceptionNestedSealedClass() { doTest(); }
+
+  public void testNoMatchExceptionNestedDeconstructionWithDefault() { doTest(); }
+
+  public void testNoMatchExceptionSealedClassWithNullDefault() { doTest(); }
+
+  public void testNoMatchExceptionDoubleNestedDeconstructionWithDominated() { doTest(); }
+
+  public void testNoMatchExceptionSealedClassWithDominated() { doTest(); }
+
+  public void testOptionalInference() {
+    doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
+  
+  public void testJSpecifyNullableFieldInLambda() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest(); 
+  }
+  
+  public void testJSpecifyNullableTypeParameterInheritance() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyNullLiteralToTypeVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyNullLiteralToMethodTypeVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyPlainTypeVariableReturnOptionOff() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyPlainTypeVariableReturnOptionOn() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true);
+  }
+
+  public void testJSpecifyParametricNullableField() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyPlainTypeVariableFieldOptionOn() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_NULLNESS = true);
+  }
+
+  public void testJSpecifyUnboundedWildcardBoundFromUnmarkedScope() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  private void addNullnessUnspecified() {
+    myFixture.addClass("""
+                         package org.jspecify.annotations;
+                         import java.lang.annotation.*;
+
+                         @Target(ElementType.TYPE_USE) public @interface NullnessUnspecified { }""");
+  }
+
+  public void testFlowMethodTests() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testNullableArrayLocalVariable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  @TestFor(issues = "IDEA-389723")
+  public void testOptionalInsideLambda() {
+    doTest();
+  }
+  
+  @TestFor(issues = "IDEA-389893")
+  public void testUnboxedMethodReferenceVoidType() {
+    doTest();
+  }
+
+  public void testNullMarkedPutIfAbsent() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyNullableReturnInference() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class AbstractAssert {}""");
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class ObjectAssert<T> extends AbstractAssert {
+                           public ObjectAssert(T obj) {}
+                           public ObjectAssert<T> isNull() { return this; }
+                           public ObjectAssert<T> isNotNull() { return this; }
+                         }""");
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         public class Assertions {
+                           public static <T> ObjectAssert<T> assertThat(T actual) { return new ObjectAssert<>(actual); }
+                         }""");
+    // The stub above is source, so the suggestion would report every nullable argument of assertThat
+    doTestWith((dfi, cvi) -> {
+      dfi.SUGGEST_NULLABLE_ANNOTATIONS = false;
+      cvi.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    });
+  }
+
+  public void testJSpecifyDeconstructionTypeArgument() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+}

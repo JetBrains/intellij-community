@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public enum KeyState {
   STATE_INIT,
   STATE_WAIT_FOR_SECOND_KEYSTROKE,
   STATE_SECOND_STROKE_IN_PROGRESS,
   STATE_PROCESSED,
   STATE_KEY_GESTURE_PROCESSOR,
-  STATE_WAIT_FOR_POSSIBLE_ALT_GR;
+  STATE_WAIT_FOR_POSSIBLE_ALT_GR
 
 }

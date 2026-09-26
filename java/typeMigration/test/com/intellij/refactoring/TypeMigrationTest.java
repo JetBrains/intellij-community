@@ -1,32 +1,46 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author db
- * @since 22.07.2003
- */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;
 
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/typeMigration/";
+  }
+
   @NotNull
   @Override
-  public String getTestRoot() {
-    return "/refactoring/typeMigration/";
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
-    myFactory = myJavaFacade.getElementFactory();
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
+    myFactory = getElementFactory();
   }
 
   @Override
@@ -34,6 +48,46 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     myFactory = null;
 
     super.tearDown();
+  }
+
+  public void testStringCompoundAssignment() {
+    doTestFirstParamType("x", PsiTypes.longType());
+  }
+
+  public void testForeachProblem() {
+    doTestFirstParamType("x", PsiTypes.longType());
+  }
+
+  public void testEnumConstant() {
+    doTestFirstParamType("Test", PsiTypes.byteType());
+  }
+
+  public void testMigrateEnumType() {
+    doTestFieldType("someEnum", PsiTypes.intType());
+  }
+
+  public void testVarargsAndBoxing() {
+    doTestFieldType("x", PsiTypes.longType());
+  }
+
+  public void testArray2Vararg() {
+    doTestFirstParamType("doSomething", new PsiEllipsisType(myFactory.createTypeFromText("java.lang.CharSequence", null)));
+  }
+
+  public void testVararg2Array() {
+    doTestFirstParamType("m", myFactory.createTypeFromText("Integer[]", null));
+  }
+
+  public void testIntVararg2LongArray() {
+    doTestFirstParamType("two", myFactory.createTypeFromText("long[]", null));
+  }
+
+  public void testInt2Array() {
+    doTestReturnType("x", "int[][]");
+  }
+
+  public void testArray2Int() {
+    doTestFirstParamType("y", myFactory.createTypeFromText("int", null));
   }
 
   public void testT07() {
@@ -198,19 +252,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //co-variant/contra-variant positions for primitive types 36-39
   public void testT36() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   public void testT37() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT38() {
-    doTestFirstParamType("foo", PsiType.LONG);
+    doTestFirstParamType("foo", PsiTypes.longType());
   }
 
   public void testT39() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   //Set s = new HashSet() -> HashSet s = new HashSet();
@@ -239,22 +293,22 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //long l; int  i; l = i; -> long l; byte i; l = i;
   public void testT44() {
-    doTestFieldType("i", PsiType.BYTE);
+    doTestFieldType("i", PsiTypes.byteType());
   }
 
   //long l; int i; l = i; -> byte l; -> byte i; l = i;
   public void testT45() {
-    doTestFieldType("l", PsiType.BYTE);
+    doTestFieldType("l", PsiTypes.byteType());
   }
 
   //byte i; long j = i; -> byte i; int j = i;
   public void testT46() {
-    doTestFieldType("j", PsiType.INT);
+    doTestFieldType("j", PsiTypes.intType());
   }
 
   //o = null -? int o = null
   public void testT47() {
-    doTestFieldType("o", PsiType.INT);
+    doTestFieldType("o", PsiTypes.intType());
   }
 
   //co-variant/contra-variant assignments: leave types if possible change generics signature only  48-49
@@ -307,11 +361,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //array index should be integer 56-57
   public void testT56() {
-    doTestFirstParamType("foo", PsiType.DOUBLE);
+    doTestFirstParamType("foo", PsiTypes.doubleType());
   }
 
   public void testT57() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   //Arrays can be assignable to Object/Serializable/Cloneable 58-59; ~ 60 varargs
@@ -332,7 +386,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //change parameter type -> vararg; assignment changed to array
   public void testT61() {
-    doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT));
+    doTestFirstParamType("foo", new PsiEllipsisType(PsiTypes.intType()));
   }
 
   //change field type -> change vararg parameter type due to assignment: 62-63
@@ -342,12 +396,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT63() {
-    doTestFieldType("p", PsiType.DOUBLE.createArrayType());
+    doTestFieldType("p", PsiTypes.doubleType().createArrayType());
   }
 
   //remove vararg type: 64-66
   public void testT64() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT65() {
@@ -361,7 +415,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT66() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT67() {
@@ -370,15 +424,15 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT68() {
-    doTestFirstParamType("foo", PsiType.DOUBLE);
+    doTestFirstParamType("foo", PsiTypes.doubleType());
   }
 
   public void testT69() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   public void testT70() {
-    doTestFieldType("a", PsiType.FLOAT.createArrayType().createArrayType());
+    doTestFieldType("a", PsiTypes.floatType().createArrayType().createArrayType());
   }
 
   public void testT71() {
@@ -398,7 +452,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //prefix/postfix expression; binary expressions 74-76
   public void testT74() {
-    doTestFirstParamType("meth", PsiType.FLOAT);
+    doTestFirstParamType("meth", PsiTypes.floatType());
   }
 
   public void testT75() {
@@ -406,7 +460,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT76() {
-    doTestFirstParamType("meth", PsiType.FLOAT);
+    doTestFirstParamType("meth", PsiTypes.floatType());
   }
 
   //+= , etc 77-78
@@ -420,11 +474,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //casts 79-80,83
   public void testT79() {
-    doTestFirstParamType("meth", PsiType.BYTE);
+    doTestFirstParamType("meth", PsiTypes.byteType());
   }
 
   public void testT80() {
-    doTestFirstParamType("meth", PsiType.DOUBLE);
+    doTestFirstParamType("meth", PsiTypes.doubleType());
   }
 
   public void testT83() {
@@ -503,7 +557,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //generics signature do not support primitives: Map<Boolean, String> - Map<boolean, String>
   public void testT93() {
-    doTestFirstParamType("foo", PsiType.BOOLEAN);
+    doTestFirstParamType("foo", PsiTypes.booleanType());
   }
 
   //field initializers procession
@@ -513,7 +567,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT97() {
-    doTestFieldType("f1", PsiType.INT);
+    doTestFieldType("f1", PsiTypes.intType());
   }
 
   //list <-> array conversion in assignment statements
@@ -675,7 +729,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // Checking preserving method parameters alignment
   public void testT127() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",
@@ -741,13 +795,13 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT135() {
-    doTestFieldType("foo", "Test", PsiType.INT);
+    doTestFieldType("foo", "Test", PsiTypes.intType());
   }
 
   public void testT136() {
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     doTestFirstParamType("foo", "Test",
-                         PsiType.getJavaLangString(myPsiManager, scope));
+                         PsiType.getJavaLangString(getPsiManager(), scope));
   }
 
   public void testT137() {
@@ -799,11 +853,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testAssignableGetter() {
-    doTestFieldType("foo", "Test", PsiType.INT);
+    doTestFieldType("foo", "Test", PsiTypes.intType());
   }
 
   public void testAssignableSetter() {
-    doTestFieldType("foo", "Test", PsiType.LONG);
+    doTestFieldType("foo", "Test", PsiTypes.longType());
   }
 
   public void testMethodReturnTypeWithTypeParameter() {
@@ -811,31 +865,54 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testBooleanGetterMethodName() {
-    doTestFieldType("fooMigrateName", PsiType.INT);
+    //test getter migration `is` -> `get`:
+    doTestFieldType("fooMigrateName", PsiTypes.intType());
   }
 
   public void testBooleanGetterMethodName2() {
-    doTestFieldType("fooDontMigrateName", PsiType.INT);
+    //test _no_ getter migration `is` -> `get`
+    // (see MigrateGetterNameSetting.showChooserDialog() for how 'DontMigrateName' controls migration):
+    doTestFieldType("fooDontMigrateName", PsiTypes.intType());
   }
 
   public void testGetterToBoolean() {
-    doTestFieldType("fooMigrateName", PsiType.BOOLEAN);
+    doTestFieldType("fooMigrateName", PsiTypes.booleanType());
+  }
+  
+  public void testInt2OptionalInt() {
+    doTestFirstParamType("test", myFactory.createTypeFromText("java.util.OptionalInt", null));
+  }
+  
+  public void testString2OptionalString() {
+    doTestFirstParamType("testString", myFactory.createTypeFromText("java.util.Optional<java.lang.String>", null));
   }
 
   public void testGetterToBoolean2() {
-    doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
+    doTestFieldType("fooDontMigrateName", PsiTypes.booleanType());
   }
 
   public void testMethodMigrationToVoidWithUnusedReturns() {
-    doTestMethodType("toVoidMethod", PsiType.VOID);
+    doTestMethodType("toVoidMethod", PsiTypes.voidType());
+  }
+
+  public void testDoNotPropagateMigrationToVoid() {
+    doTestMethodType("x", PsiTypes.voidType());
+  }
+
+  public void testDoNotPropagateVoidToMethods() {
+    doTestMethodType("x", PsiTypes.voidType());
+  }
+
+  public void testTernaryMigrateToVoid() {
+    doTestMethodType("ternary", PsiTypes.voidType());
   }
 
   public void testMigrationToSuper() {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.A<java.lang.String>", null));
+    doTestFieldType("b", myFactory.createTypeFromText("Test.A<java.lang.String>", null));
   }
 
   public void testMigrationToSuper2() {
-    doTestFieldType("b", myJavaFacade.getElementFactory().createTypeFromText("Test.Base<java.lang.String>", null));
+    doTestFieldType("b", myFactory.createTypeFromText("Test.Base<java.lang.String>", null));
   }
 
   public void testMultiVarDeclaration1() {
@@ -847,34 +924,34 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testVoidMigrationInVarDecl() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInVarDeclFailed() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInAssignment() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInAssignmentFailed() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testGenericEllipsis() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
   public void testGenericEllipsis2() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
   public void testTypeParameterMigrationInInvalidCode() {
-    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+    doTestFieldType("migrationField", myFactory.createTypeFromText("Test<Short>", null));
   }
 
-  private void doTestReturnType(final String methodName, final String migrationType) {
+  private void doTestReturnType(String methodName, String migrationType) {
     start(new RulesProvider() {
       @Override
       public PsiType migrationType(PsiElement context) {

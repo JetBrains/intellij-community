@@ -1,119 +1,74 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.structuralsearch.PatternContext;
+import com.intellij.structuralsearch.SSRBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
-/**
- * @author Pavel.Dolgov
- */
-public class FileTypeInfo {
+class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
 
-  /** @see com.intellij.openapi.fileTypes.impl.FileTypeRenderer */
-  private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
-
-  private final FileType myFileType;
+  private final LanguageFileType myFileType;
   private final Language myDialect;
-  private final String myContext;
-  private final boolean myEnabled;
+  private final PatternContext myContext;
+  private final boolean myNested;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull FileType fileType,
-                      @Nullable Language dialect,
-                      @Nullable String context,
-                      boolean enabled,
-                      boolean duplicated) {
+  FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
     myFileType = fileType;
     myDialect = dialect;
     myContext = context;
-    myEnabled = enabled;
-    myDescription = getDescription(fileType, duplicated);
+    myNested = nested;
+    myDescription = fileType.getDescription();
   }
 
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return myFileType;
   }
 
-  @Nullable
-  public Language getDialect() {
+  public @Nullable Language getDialect() {
     return myDialect;
   }
 
-  @Nullable
-  public String getContext() {
+  public @Nullable PatternContext getContext() {
     return myContext;
   }
 
-  @NotNull
-  public String getText() {
-    if (myDialect != null) {
-      return myDialect.getDisplayName();
-    }
-    if (myContext != null) {
-      return myContext + " Context";
-    }
-    return myFileType.getName();
-  }
-
-  @NotNull
-  public String getSearchText() {
-    if (myDialect != null) {
-      return myDialect.getDisplayName();
-    }
-    return myFileType.getName();
-  }
-
-  @NotNull
-  public String getFullText() {
-    if (myDialect != null) {
-      return myDescription + " - " + myDialect.getDisplayName();
-    }
-    if (myContext != null) {
-      return myDescription + " - " + myContext + " Context";
+  public @NlsSafe @NotNull String getText() {
+    if (myNested) {
+      if (myDialect != null && myDialect != myFileType.getLanguage()) {
+        return myDialect.getDisplayName();
+      }
+      if (myContext != null) {
+        return SSRBundle.message("file.type.pattern.context", myDescription, myContext.getDisplayName());
+      }
     }
     return myDescription;
   }
 
   public boolean isNested() {
-    return myDialect != null || myContext != null;
+    return myNested;
   }
 
-  public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  public boolean isEqualTo(@NotNull FileType fileType, @Nullable Language dialect, @Nullable String context) {
-    return Objects.equals(myFileType, fileType) &&
-           Objects.equals(myDialect, dialect) &&
-           Objects.equals(myContext, context);
-  }
-
-  @NotNull
-  private static String getDescription(@NotNull FileType fileType, boolean duplicated) {
-    String description = fileType.getDescription();
-    String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
-    if (!duplicated) {
-      return trimmedDescription;
-    }
-    return trimmedDescription + " (" + fileType.getName() + ")";
+  public boolean isEqualTo(@NotNull LanguageFileType fileType, @Nullable Language dialect, @Nullable PatternContext context) {
+    return (myFileType == fileType)
+           && (dialect == null || myDialect == dialect)
+           && (context == null || myContext == context);
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof FileTypeInfo)) return false;
-    FileTypeInfo info = (FileTypeInfo)o;
-    return Objects.equals(myFileType, info.myFileType) &&
-           Objects.equals(myDialect, info.myDialect) &&
-           Objects.equals(myContext, info.myContext);
+    if (!(o instanceof FileTypeInfo info)) return false;
+    return myFileType == info.myFileType
+           && myDialect == info.myDialect
+           && myContext == info.myContext;
   }
 
   @Override
@@ -123,6 +78,6 @@ public class FileTypeInfo {
 
   @Override
   public String toString() {
-    return getFullText();
+    return getText();
   }
 }

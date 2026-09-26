@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.idea.svn.SvnBundle;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
   private final ProxyGroup myProxyGroup;
@@ -38,24 +26,29 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return myPanel.getRepositories();
   }
 
+  @Override
   public void setDisplayName(final String name) {
     myProxyGroup.setName(name);
   }
 
+  @Override
   public ProxyGroup getEditableObject() {
     return myProxyGroup;
   }
 
+  @Override
   public String getBannerSlogan() {
     return myProxyGroup.getName();
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return myPanel.getMainPanel();
   }
 
+  @Override
   public String getDisplayName() {
-    return myProxyGroup.getName();
+    return myProxyGroup.getDisplayName();
   }
 
   @Override
@@ -63,6 +56,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return null;
   }
 
+  @Override
   public boolean isModified() {
     // not used
     return false;
@@ -75,49 +69,49 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myIsInitialized) {
       applyImpl();
     }
-    final Ref<String> errorMessageRef = new Ref<>();
-    if (! validate(errorMessageRef)) {
-      throw new ConfigurationException(errorMessageRef.get());
-    }
+
+    String error = validate();
+    if (error != null) throw new ConfigurationException(error);
   }
 
-  public boolean validate(final Ref<String> errorMessageRef) {
-    if (! checkNumericFieldValue(myProxyGroup.getPort())) {
-      errorMessageRef.set(SvnBundle.message("dialog.edit.http.proxies.settings.port.must.be.number.error", myProxyGroup.getName()));
-      return false;
+  public @DialogMessage @Nullable String validate() {
+    if (!checkNumericFieldValue(myProxyGroup.getPort())) {
+      return message("dialog.edit.http.proxies.settings.port.must.be.number.error", myProxyGroup.getName());
     }
 
-    if (! checkNumericFieldValue(myProxyGroup.getTimeout())) {
-      errorMessageRef.set(SvnBundle.message("dialog.edit.http.proxies.settings.timeout.must.be.number.error", myProxyGroup.getName()));
-      return false;
+    if (!checkNumericFieldValue(myProxyGroup.getTimeout())) {
+      return message("dialog.edit.http.proxies.settings.timeout.must.be.number.error", myProxyGroup.getName());
     }
 
-    return true;
+    return null;
   }
 
   public void setIsValid(final boolean valid) {
     myPanel.setIsValid(valid);
   }
 
-  private boolean checkNumericFieldValue(final String value) {
+  private static boolean checkNumericFieldValue(final String value) {
     if (value == null) {
       return true;
     }
     try {
       final String portString = value.trim();
-      if (portString.length() > 0) {
+      if (!portString.isEmpty()) {
         Integer.valueOf(portString);
       }
-    } catch (NumberFormatException e) {
+    }
+    catch (NumberFormatException e) {
       return false;
     }
     return true;
   }
 
+  @Override
   public void reset() {
     try {
       myPanel.setStringProperties(myProxyGroup.getProperties());

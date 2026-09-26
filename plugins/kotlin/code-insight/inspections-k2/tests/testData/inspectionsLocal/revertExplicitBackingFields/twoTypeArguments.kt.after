@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+
+private val _cache = mutableMapOf<String, Int>()
+val cache: Map<String, Int>
+    get() = _cache

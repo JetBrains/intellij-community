@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.json.psi.JsonElementGenerator;
@@ -7,16 +8,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Mikhail Golubev
- */
-abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
-  public JsonPropertyMixin(@NotNull ASTNode node) {
+import static com.intellij.model.psi.impl.Declarations.allDeclarationsInElement;
+
+@ApiStatus.Internal
+public abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
+  JsonPropertyMixin(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -30,13 +35,23 @@ abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty
 
   @Override
   public PsiReference getReference() {
+    if (hasSymbolDeclarations()) return null;
+
     return new JsonPropertyNameReference(this);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
+    // yield to Symbol declarations provided by plugins
+    if (hasSymbolDeclarations()) return PsiReference.EMPTY_ARRAY;
+
     final PsiReference[] fromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     return ArrayUtil.prepend(new JsonPropertyNameReference(this), fromProviders);
+  }
+
+  public boolean hasSymbolDeclarations() {
+    return CachedValuesManager.getCachedValue(this, () -> {
+      return Result.create(!allDeclarationsInElement(this).isEmpty(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }

@@ -1,0 +1,64 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.keymap.vscode` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/keymap-vscode.jar": ["intellij.keymap.vscode"],
+    },
+    main_module = "intellij.keymap.vscode",
+)
+### auto-generated section `dev intellij.keymap.vscode` end
+
+### auto-generated section `build intellij.keymap.vscode` start
+jvm_library(
+    name = "keymap-vscode",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.vscode",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
+)
+
+jvm_library(
+    name = "keymap-vscode_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.keymap.vscode",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-vscode",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "keymap-vscode_plugin",
+    descriptor_module = ":keymap-vscode",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.keymap.vscode` end
+
+### auto-generated section `iml intellij.keymap.vscode` start
+exports_files(
+    [
+        "intellij.keymap.vscode.iml",
+        "resources/META-INF/plugin.xml",
+        "resources/keymaps/VSCode OSX.xml",
+        "resources/keymaps/VSCode.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.keymap.vscode` end

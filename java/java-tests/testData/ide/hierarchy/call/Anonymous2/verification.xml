@@ -1,0 +1,3 @@
+<node text="doIt() (A)" base="true">
+  <node text="run() (A.foo())"/>
+</node>

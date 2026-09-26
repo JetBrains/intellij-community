@@ -17,7 +17,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface Marker {
-  boolean isMarked(VirtualFile file);
+  boolean isMarked(@NotNull VirtualFile file);
 }

@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Max Medvedev
  */
 
-public class DelegatesToAnnotationChecker extends CustomAnnotationChecker {
+public final class DelegatesToAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (!GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO.equals(annotation.getQualifiedName())) return false;

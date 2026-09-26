@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +21,7 @@ public abstract class SignatureHintProcessor {
 
   static String[] buildOptions(PsiAnnotation anno) {
     PsiAnnotationMemberValue options = anno.findAttributeValue("options");
-    ArrayList<String> result = ContainerUtil.newArrayList();
+    ArrayList<String> result = new ArrayList<>();
     for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(options)) {
       if (initializer instanceof PsiLiteral) {
         Object value = ((PsiLiteral)initializer).getValue();
@@ -41,18 +31,16 @@ public abstract class SignatureHintProcessor {
       }
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   public abstract String getHintName();
 
-  @NotNull
-  public abstract List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                          @NotNull PsiSubstitutor substitutor,
-                                                          @NotNull String[] options);
+  public abstract @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                                   @NotNull PsiSubstitutor substitutor,
+                                                                   String @NotNull [] options);
 
-  @Nullable
-  public static SignatureHintProcessor getHintProcessor(@NotNull String hint) {
+  public static @Nullable SignatureHintProcessor getHintProcessor(@NotNull String hint) {
     for (SignatureHintProcessor processor : EP_NAME.getExtensions()) {
       if (hint.equals(processor.getHintName())) {
         return processor;

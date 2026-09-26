@@ -1,0 +1,22 @@
+f:com.intellij.execution.wsl.WslDistributionExKt
+- sf:getRootMappings(com.intellij.execution.wsl.WSLDistribution):java.util.List
+f:com.intellij.execution.wsl.target.WslTargetEnvironment
+- com.intellij.execution.target.TargetEnvironment
+- com.intellij.execution.target.ExternallySynchronized
+- getDownloadVolumes():java.util.Map
+- getRequest():com.intellij.execution.wsl.target.WslTargetEnvironmentRequest
+- getUploadVolumes():java.util.Map
+f:com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
+- com.intellij.execution.target.TargetConfigurationWithId
+- com.intellij.execution.target.PersistentTargetEnvironmentConfiguration
+- com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>(com.intellij.execution.wsl.WSLDistribution):V
+- f:getDistribution():com.intellij.execution.wsl.WSLDistribution
+f:com.intellij.execution.wsl.target.WslTargetEnvironmentRequest
+- com.intellij.execution.target.BaseTargetEnvironmentRequest
+- com.intellij.execution.target.VolumeCopyingRequest
+- <init>(com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration):V
+- getConfiguration():com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
+- f:getWslOptions():com.intellij.execution.wsl.WSLCommandLineOptions
+- setShouldCopyVolumes(Z):V

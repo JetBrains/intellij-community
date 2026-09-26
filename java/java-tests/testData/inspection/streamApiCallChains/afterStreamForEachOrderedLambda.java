@@ -1,4 +1,4 @@
-// "Replace 'stream().forEachOrdered()' with 'forEach()' (may change semantics)" "true"
+// "Replace 'stream().forEachOrdered()' with 'forEach()' (may change semantics)" "true-preview"
 
 import java.util.Arrays;
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -36,25 +38,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActionBase {
   public ExtractIntoDefaultLocationAction(SourceItemsTree sourceItemsTree, ArtifactEditorEx artifactEditor) {
     super(sourceItemsTree, artifactEditor);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     final Presentation presentation = e.getPresentation();
     if (onlyJarsSelected() && pathForClasses != null) {
-      presentation.setText("Extract Into " + getTargetLocationText(Collections.singleton(pathForClasses)));
+      presentation.setText(JavaUiBundle.message("action.text.extract.source.item.into.0", getTargetLocationText(Collections.singleton(pathForClasses))));
       presentation.setVisible(true);
     }
     else {
       presentation.setVisible(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean onlyJarsSelected() {
@@ -67,28 +71,32 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final String pathForClasses = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES);
     if (pathForClasses != null) {
       final List<PackagingElement<?>> extracted = new ArrayList<>();
       for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
         final ArtifactEditorContext context = myArtifactEditor.getContext();
         final List<? extends PackagingElement<?>> elements = item.createElements(context);
-        ArtifactUtil.processElementsWithSubstitutions(elements, context, context.getArtifactType(), PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
-          @Override
-          public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
-            if (element instanceof FileCopyPackagingElement) {
-              final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
-              if (file != null) {
-                final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-                if (jarRoot != null) {
-                  extracted.add(PackagingElementFactory.getInstance().createExtractedDirectory(jarRoot));
-                }
-              }
-            }
-            return true;
-          }
-        });
+        ArtifactUtil.processElementsWithSubstitutions(elements, context, context.getArtifactType(), PackagingElementPath.EMPTY,
+                                                      new PackagingElementProcessor<>() {
+                                                        @Override
+                                                        public boolean process(@NotNull PackagingElement<?> element,
+                                                                               @NotNull PackagingElementPath path) {
+                                                          if (element instanceof FileCopyPackagingElement) {
+                                                            final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
+                                                            if (file != null) {
+                                                              final VirtualFile jarRoot =
+                                                                JarFileSystem.getInstance().getJarRootForLocalFile(file);
+                                                              if (jarRoot != null) {
+                                                                extracted.add(
+                                                                  PackagingElementFactory.getInstance().createExtractedDirectory(jarRoot));
+                                                              }
+                                                            }
+                                                          }
+                                                          return true;
+                                                        }
+                                                      });
       }
       myArtifactEditor.getLayoutTreeComponent().putElements(pathForClasses, extracted);
     }

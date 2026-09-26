@@ -1,9 +1,18 @@
 <component name="libraryTable">
-  <library name="jimfs">
+  <library name="jimfs" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.jimfs:jimfs:1.3.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.2/jimfs-1.3.2.jar">
+          <sha256sum>30f4c0d36508d794b0107286eae7a43e9ad8ad593148002acac941196f619c59</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/jimfs-1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.2/jimfs-1.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/jimfs/jimfs/1.3.2/jimfs-1.3.2-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

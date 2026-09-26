@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="kodein-di-jvm" type="repository">
+        <properties maven-id="org.kodein.di:kodein-di-jvm:7.33.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.33.0/kodein-di-jvm-7.33.0.jar">
+              <sha256sum>e1c2445eb3b943860133eddaa462885a018778584cf1423353f97914cdcc2905</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.14.0/kaverit-jvm-2.14.0.jar">
+              <sha256sum>2bac782a20fb07834568a6ed8429ec3f5affeaac52ea919156f622ccb9df5bfb</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.33.0/kodein-di-jvm-7.33.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.14.0/kaverit-jvm-2.14.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.33.0/kodein-di-jvm-7.33.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.14.0/kaverit-jvm-2.14.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

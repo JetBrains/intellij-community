@@ -1,15 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
+import com.intellij.ide.errorTreeView.ErrorViewStructure;
+import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,40 +30,70 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
+public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project, Runnable rerunAction) {
     super(project, null, true, true, rerunAction);
   }
 
-  protected void fillRightToolbarGroup(DefaultActionGroup group) {
+  @Override
+  protected void fillRightToolbarGroup(@NotNull DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.addSeparator();
     group.add(new CompilerPropertiesAction());
   }
 
-  protected void addExtraPopupMenuActions(DefaultActionGroup group) {
+  @Override
+  protected void addExtraPopupMenuActions(@NotNull DefaultActionGroup group) {
     group.addSeparator();
-    group.add(new ExcludeFromCompileAction(myProject, this));
+    group.add(new ExcludeFromCompileAction(project) {
+      @Override
+      protected @Nullable VirtualFile getFile() {
+        return getSelectedFile();
+      }
+    });
     group.add(new SuppressJavacWarningsAction());
     group.add(new SuppressJavacWarningForClassAction());
-    ActionGroup popupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup popupGroup = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
     if (popupGroup != null) {
-      for (AnAction action : popupGroup.getChildren(null)) {
+      for (AnAction action : popupGroup.getChildren(actionManager)) {
         group.add(action);
       }
     }
   }
 
+  @Override
   protected boolean shouldShowFirstErrorInEditor() {
-    return CompilerWorkspaceConfiguration.getInstance(myProject).AUTO_SHOW_ERRORS_IN_EDITOR;
+    return CompilerWorkspaceConfiguration.getInstance(project).AUTO_SHOW_ERRORS_IN_EDITOR;
+  }
+
+  @Override
+  protected @NotNull ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
+    return new ErrorViewStructure(project, canHideWarnings) {
+      @Override
+      protected @NotNull GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
+        return new GroupingElement(groupName, data, file) {
+          @Override
+          public boolean isRenderWithBoldFont() {
+            return false;
+          }
+        };
+      }
+    };
   }
 
   private class SuppressJavacWarningsAction extends AnAction {
-    public void actionPerformed(final AnActionEvent e) {
+    @Override
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
@@ -78,23 +114,27 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       final Project project = e.getProject();
       if (project == null) {
         return;
       }
-      final ErrorTreeElement errorTreeElement = getSelectedErrorTreeElement();
-      if (errorTreeElement instanceof NavigatableMessageElement) {
-        final NavigatableMessageElement messageElement = (NavigatableMessageElement)errorTreeElement;
+      ErrorTreeElement errorTreeElement = e.getUpdateSession()
+        .compute(this, "getSelectedErrorTreeElement", ActionUpdateThread.EDT, CompilerErrorTreeView.this::getSelectedErrorTreeElement);
+
+      if (errorTreeElement instanceof NavigatableMessageElement messageElement) {
         final String[] text = messageElement.getText();
         if (text.length > 0) {
-          if (text[0].startsWith("[") && text[0].indexOf("]") != -1) {
+          if (text[0].startsWith("[") && text[0].contains("]")) {
             final Navigatable navigatable = messageElement.getNavigatable();
-            if (navigatable instanceof OpenFileDescriptor) {
-              final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
+            if (navigatable instanceof OpenFileDescriptor fileDescriptor) {
               final VirtualFile virtualFile = fileDescriptor.getFile();
               final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
               if (module == null) {
@@ -120,8 +160,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               final String id = text[0].substring(1, text[0].indexOf("]"));
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, context);
-              presentation.setEnabled(available);
-              presentation.setVisible(available);
+              presentation.setEnabledAndVisible(available);
               if (available) {
                 presentation.setText(suppressInspectionFix.getText());
               }
@@ -131,29 +170,29 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       }
     }
 
-    protected SuppressFix getSuppressAction(@NotNull final String id) {
+    protected SuppressFix getSuppressAction(final @NotNull String id) {
       return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+        public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
           if (getContainer(context) instanceof PsiClass) return false;
           return super.isAvailable(project, context);
         }
 
         @Override
-        protected boolean use15Suppressions(@NotNull final PsiJavaDocumentedElement container) {
+        protected boolean use15Suppressions(final @NotNull PsiJavaDocumentedElement container) {
           return true;
         }
       };
     }
   }
 
-  private class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
+  private final class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
     @Override
-    protected SuppressFix getSuppressAction(@NotNull final String id) {
+    protected SuppressFix getSuppressAction(final @NotNull String id) {
       return new SuppressForClassFix(id){
         @Override
-        protected boolean use15Suppressions(@NotNull final PsiJavaDocumentedElement container) {
+        protected boolean use15Suppressions(final @NotNull PsiJavaDocumentedElement container) {
           return true;
         }
       };

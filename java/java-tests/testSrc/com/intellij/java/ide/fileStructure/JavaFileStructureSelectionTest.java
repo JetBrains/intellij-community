@@ -30,4 +30,5 @@ public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
   public void testInsideClass()           {checkTree();}
   public void testAnonymous()             {checkTree();}
   public void testAnonymousInAnonymous()  {checkTree();}
+  public void testFoldRegion()  {checkTree();}
 }

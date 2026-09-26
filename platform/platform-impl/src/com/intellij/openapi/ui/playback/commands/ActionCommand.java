@@ -1,19 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -27,7 +34,8 @@ public class ActionCommand extends TypeCommand {
     super(text, line, true);
   }
 
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  @Override
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final ActionManager am = ActionManager.getInstance();
@@ -41,8 +49,7 @@ public class ActionCommand extends TypeCommand {
       final Shortcut[] sc = getActiveKeymapShortcuts(actionName).getShortcuts();
       KeyStroke stroke = null;
       for (Shortcut each : sc) {
-        if (each instanceof KeyboardShortcut) {
-          final KeyboardShortcut ks = (KeyboardShortcut)each;
+        if (each instanceof KeyboardShortcut ks) {
           final KeyStroke first = ks.getFirstKeyStroke();
           final KeyStroke second = ks.getSecondKeyStroke();
           if (second == null) {
@@ -59,32 +66,29 @@ public class ActionCommand extends TypeCommand {
             context.error(getMessage(), getLine());
           }
         };
-        context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        context.message("Invoking action via shortcut: " + stroke, getLine());
 
         final KeyStroke finalStroke = stroke;
 
         inWriteSafeContext(() -> {
-          final Ref<AnActionListener> listener = new Ref<>();
-          listener.set(new AnActionListener.Adapter() {
-
+          Disposable disposable = Disposer.newDisposable();
+          ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
             @Override
-            public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
+            public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
-                  am.removeAnActionListener(listener.get());
+                  Disposer.dispose(disposable);
                   return;
                 }
 
                 if (targetAction.equals(action)) {
                   context.message("Performed action: " + actionName, context.getCurrentLine());
-                  am.removeAnActionListener(listener.get());
+                  Disposer.dispose(disposable);
                   result.setDone();
                 }
               }, ModalityState.any());
             }
           });
-          am.addAnActionListener(listener.get());
-
           context.runPooledThread(() -> type(context.getRobot(), finalStroke));
         });
 

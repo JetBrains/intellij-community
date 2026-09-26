@@ -1,0 +1,5 @@
+// FIX: Convert to sealed class
+sealed class Result {
+    open fun process() = println("default")
+}
+class Success : Result()

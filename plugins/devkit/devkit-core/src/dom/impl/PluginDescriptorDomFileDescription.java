@@ -1,48 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindIcons;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author mike
- */
-public class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
+final class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPlugin> {
 
-  public PluginDescriptorDomFileDescription() {
-    super(IdeaPlugin.class, "idea-plugin");
+  PluginDescriptorDomFileDescription() {
+    super(IdeaPlugin.class, IdeaPlugin.TAG_NAME);
   }
 
   @Override
-  public Icon getFileIcon(@Iconable.IconFlags int flags) {
+  public @Nullable Icon getFileIcon(@NotNull XmlFile file, @Iconable.IconFlags int flags) {
+    IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(file);
+    if (ideaPlugin == null) return null;
+
+    Icon splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(file);
+    if (splitModeIcon != null) {
+      return splitModeIcon;
+    }
+
+    if (ideaPlugin.isV2Descriptor()) {
+      return DevkitCoreIcons.PluginV2;
+    }
+
     return AllIcons.Nodes.Plugin;
-  }
-
-  @Override
-  public boolean hasStubs() {
-    return true;
-  }
-
-  @Override
-  public int getStubVersion() {
-    return 8;
   }
 }

@@ -1,12 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -19,15 +30,21 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.getA
 /**
  * @author Max Medvedev
  */
-public class GrAnnotationUtil {
-  @Nullable
-  public static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+public final class GrAnnotationUtil {
+  public static @Nullable String inferStringAttribute(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
     return getString(targetValue);
   }
 
-  @Nullable
-  public static String getString(@Nullable PsiAnnotationMemberValue targetValue) {
+  public static @Nullable GrClosableBlock inferClosureAttribute(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
+    PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
+    if (targetValue instanceof GrClosableBlock) {
+      return (GrClosableBlock)targetValue;
+    }
+    return null;
+  }
+
+  public static @Nullable String getString(@Nullable PsiAnnotationMemberValue targetValue) {
     if (targetValue instanceof PsiLiteral) {
       final Object value = ((PsiLiteral)targetValue).getValue();
       if (value instanceof String) return (String)value;
@@ -35,8 +52,7 @@ public class GrAnnotationUtil {
     return null;
   }
 
-  @Nullable
-  public static Integer inferIntegerAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+  public static @Nullable Integer inferIntegerAttribute(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
     if (targetValue instanceof PsiLiteral) {
       final Object value = ((PsiLiteral)targetValue).getValue();
@@ -45,8 +61,7 @@ public class GrAnnotationUtil {
     return null;
   }
 
-  @Nullable
-  public static Boolean inferBooleanAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+  public static @Nullable Boolean inferBooleanAttribute(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
     if (targetValue instanceof PsiLiteral) {
       final Object value = ((PsiLiteral)targetValue).getValue();
@@ -55,19 +70,17 @@ public class GrAnnotationUtil {
     return null;
   }
 
-  public static boolean inferBooleanAttributeNotNull(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+  public static boolean inferBooleanAttributeNotNull(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
     Boolean result = inferBooleanAttribute(annotation, attributeName);
     return result != null && result;
   }
 
-  @Nullable
-  public static PsiClass inferClassAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+  public static @Nullable PsiClass inferClassAttribute(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
     return getPsiClass(targetValue);
   }
 
-  @Nullable
-  private static PsiClass getPsiClass(@Nullable PsiAnnotationMemberValue targetValue) {
+  public static @Nullable PsiClass getPsiClass(@Nullable PsiAnnotationMemberValue targetValue) {
     if (targetValue instanceof PsiClassObjectAccessExpression) {
       PsiType type = ((PsiClassObjectAccessExpression)targetValue).getOperand().getType();
       if (type instanceof PsiClassType) {
@@ -90,8 +103,7 @@ public class GrAnnotationUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiType extractClassTypeFromClassAttributeValue(PsiAnnotationMemberValue targetValue) {
+  public static @Nullable PsiType extractClassTypeFromClassAttributeValue(PsiAnnotationMemberValue targetValue) {
     if (targetValue instanceof PsiClassObjectAccessExpression) {
       return ((PsiClassObjectAccessExpression)targetValue).getOperand().getType();
     }
@@ -120,22 +132,21 @@ public class GrAnnotationUtil {
     return (PsiElement)owner;
   }
 
-  public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
+  public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName, boolean declared) {
     PsiAnnotationMemberValue value =
       declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
     return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(value), GrAnnotationUtil::getPsiClass);
   }
 
-  public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
+  public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NlsSafe @NotNull String attributeName, boolean declared) {
     PsiAnnotationMemberValue value = findDetachedAttributeValue(annotation, attributeName, declared);
     if (value == null) return Collections.emptyList();
     return getArrayValue(value, AnnotationUtil::getStringAttributeValue);
   }
 
-  @Nullable
-  private static PsiAnnotationMemberValue findDetachedAttributeValue(@NotNull PsiAnnotation annotation,
-                                                                     @Nullable String attributeName,
-                                                                     boolean declared) {
+  private static @Nullable PsiAnnotationMemberValue findDetachedAttributeValue(@NotNull PsiAnnotation annotation,
+                                                                               @NlsSafe @Nullable String attributeName,
+                                                                               boolean declared) {
     PsiAnnotationMemberValue declaredValue = findDeclaredDetachedValue(annotation, attributeName);
     if (declaredValue != null) return declaredValue;
     if (declared) return null;

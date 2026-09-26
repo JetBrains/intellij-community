@@ -27,12 +27,11 @@ public enum HgFileStatusEnum {
 
   private final char id;
 
-  private HgFileStatusEnum(char id) {
+  HgFileStatusEnum(char id) {
     this.id = id;
   }
 
-  @Nullable
-  public static HgFileStatusEnum parse(char c) {
+  public static @Nullable HgFileStatusEnum parse(char c) {
     for (HgFileStatusEnum status : HgFileStatusEnum.values()) {
       if (status.id == c) {
         return status;

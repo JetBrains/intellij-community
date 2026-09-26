@@ -1,4 +1,4 @@
-// "Replace implements with static import" "true"
+// "Replace implements with static import" "true-preview"
 public class X implements II {
   void bar() {
     System.out.println(FOO);

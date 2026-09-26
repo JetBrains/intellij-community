@@ -1,99 +1,131 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.BareTestFixture;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author mike
- */
-public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
-  protected final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> myFixtureBuilderProviders =
-    new HashMap<>();
+import static org.junit.Assert.assertTrue;
+
+public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
+  private final Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myFixtureBuilderProviders = new HashMap<>();
 
   public IdeaTestFixtureFactoryImpl() {
     registerFixtureBuilder(EmptyModuleFixtureBuilder.class, MyEmptyModuleFixtureBuilderImpl.class);
   }
 
   @Override
-  public final <T extends ModuleFixtureBuilder> void registerFixtureBuilder(@NotNull Class<T> aClass, @NotNull Class<? extends T> implClass) {
+  public <T extends ModuleFixtureBuilder<?>> void registerFixtureBuilder(@NotNull Class<T> aClass, @NotNull Class<? extends T> implClass) {
     myFixtureBuilderProviders.put(aClass, implClass);
   }
 
   @Override
-  public void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder> aClass, @NotNull String implClassName) {
+  public void registerFixtureBuilder(@NotNull Class<? extends ModuleFixtureBuilder<?>> aClass, @NotNull String implClassName) {
     try {
-      Class implClass = Class.forName(implClassName);
-      Assert.assertTrue(aClass.isAssignableFrom(implClass));
-      registerFixtureBuilder(aClass, implClass);
+      @SuppressWarnings("unchecked")
+      Class<? extends ModuleFixtureBuilder<?>> implClass = (Class<? extends ModuleFixtureBuilder<?>>)Class.forName(implClassName);
+      assertTrue(aClass.isAssignableFrom(implClass));
+      myFixtureBuilderProviders.put(aClass, implClass);
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException("Cannot instantiate fixture builder implementation", e);
     }
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject) {
-    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, isDirectoryBasedProject), myFixtureBuilderProviders);
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject) {
+    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, null, isDirectoryBasedProject), myFixtureBuilderProviders);
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder() {
-    return createLightFixtureBuilder(null);
+  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                         @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
+                                                                         boolean isDirectoryBasedProject) {
+    return new HeavyTestFixtureBuilderImpl(
+      new HeavyIdeaTestFixtureImpl(name, projectPathProvider, isDirectoryBasedProject),
+      myFixtureBuilderProviders
+    );
   }
 
-  @NotNull
   @Override
-  public TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor) {
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName) {
+    return createLightFixtureBuilder(null, projectName);
+  }
+
+  @Override
+  public @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                                       @NotNull String projectName) {
     if (projectDescriptor == null) {
       projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
     }
-    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor));
+    return new LightTestFixtureBuilderImpl<>(new LightIdeaTestFixtureImpl(projectDescriptor, projectName));
   }
 
-  @NotNull
   @Override
-  public CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture) {
+  public @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture) {
     return createCodeInsightFixture(projectFixture, new TempDirTestFixtureImpl());
   }
 
-  @NotNull
   @Override
-  public CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture) {
+  public @NotNull CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirFixture) {
     return new CodeInsightTestFixtureImpl(projectFixture, tempDirFixture);
   }
 
-  @NotNull
   @Override
-  public TempDirTestFixture createTempDirTestFixture() {
+  public @NotNull TempDirTestFixture createTempDirTestFixture() {
     return new TempDirTestFixtureImpl();
   }
 
-  @NotNull
   @Override
-  public BareTestFixture createBareFixture() {
+  public @NotNull BareTestFixture createBareFixture() {
     return new BareTestFixtureImpl();
   }
 
-  public static class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
-    public MyEmptyModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
+  @Override
+  public @NotNull CodeInsightTestFixture createCodeInsightFixtureForExistingProject(@NotNull Project project) {
+    IdeaProjectTestFixture projectTestFixture = new IdeaProjectTestFixture() {
+      @Override
+      public Project getProject() {
+        return project;
+      }
+
+      @Override
+      public Module getModule() {
+        return ModuleManager.getInstance(project).getModules()[0];
+      }
+
+      @Override
+      public void setUp() {}
+
+      @Override
+      public void tearDown() {}
+    };
+    return new CodeInsightTestFixtureImpl(projectTestFixture, new TempDirTestFixtureImpl());
+  }
+
+  public static final class MyEmptyModuleFixtureBuilderImpl extends EmptyModuleFixtureBuilderImpl {
+    public MyEmptyModuleFixtureBuilderImpl(@NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> testFixtureBuilder) {
       super(testFixtureBuilder);
     }
 
     @Override
-    protected ModuleFixture instantiateFixture() {
+    protected @NotNull ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);
     }
   }

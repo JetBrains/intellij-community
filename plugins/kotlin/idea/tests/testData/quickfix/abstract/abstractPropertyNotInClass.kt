@@ -1,0 +1,5 @@
+// "Make 'i' not abstract" "true"
+// K2_ERROR: WRONG_MODIFIER_TARGET
+<caret>abstract val i: Int = 1
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

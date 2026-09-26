@@ -1,0 +1,33 @@
+{
+  "fields": [
+    {
+      "code": 11, "name": "Field 11",
+      "defaultUsage": "simple",
+      "usages": [
+        {
+          "name": "simple",
+          "field": {"code": 12, "format": "FORMAT", "name": "Field 12"}
+        },
+        {
+          "name": "complex",
+          "field": {
+            "code": 12, "format": "FORMAT", "name": "Field 12",
+            "complexType": {
+              "type": "value1",
+              "dataSets": [
+                {
+                  "code": "01",
+                  "subFields": [
+                    {"tag": "72", <warning descr="Property 'name' is not allowed">"name"</warning>: "name 1"},
+                    {"tag": "82", <warning descr="Property 'name' is not allowed">"name"</warning>: "name 2"},
+                    {"tag": <warning descr="String is shorter than 2">"A"</warning>, <warning descr="Property 'name' is not allowed">"name"</warning>: "name 6"}
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

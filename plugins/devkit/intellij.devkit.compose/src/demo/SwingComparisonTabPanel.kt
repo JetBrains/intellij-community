@@ -1,0 +1,892 @@
+package com.intellij.devkit.compose.demo
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import com.intellij.devkit.compose.DevkitComposeBundle
+import com.intellij.devkit.compose.icons.DevkitComposeIcons
+import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.GotItTooltip
+import com.intellij.ui.InlineBanner
+import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.Badge
+import com.intellij.ui.components.BrowserLink
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.jewel.bridge.JewelComposePanel
+import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
+import org.jetbrains.jewel.ui.component.EditableListComboBox
+import org.jetbrains.jewel.ui.component.ExternalLink
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.InlineInformationBanner
+import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.OutlinedSplitButton
+import org.jetbrains.jewel.ui.component.PopupMenu
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextArea
+import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.disabledAppearance
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.badgeStyle
+import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.jewel.ui.typography
+import java.awt.Dimension
+import java.awt.MouseInfo
+import java.net.URI
+import javax.swing.BoxLayout
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import org.jetbrains.jewel.ui.component.Badge as JewelBadge
+
+internal class SwingComparisonTabPanel : BorderLayoutPanel() {
+  private val mainContent =
+    panel {
+      separator()
+      buttonsRow()
+      separator()
+      labelsRows()
+      separator()
+      iconsRow()
+      separator()
+      linksRow()
+      separator()
+      inlineBannersRow()
+      separator()
+      bannersRow()
+      separator()
+      textFieldsRow()
+      separator()
+      textAreasRow()
+      separator()
+      comboBoxesRow()
+      separator()
+      badgesRow()
+      separator()
+      menusRow()
+      separator()
+      gotItTooltipRow()
+      separator()
+    }
+      .apply {
+        border = JBUI.Borders.empty(0, 10)
+        isOpaque = false
+      }
+
+  private fun Panel.linksRow() {
+    val jewelReadmeLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel/#readme"
+
+    row(DevkitComposeBundle.message("jewel.swing.links")) {
+      cell(
+        component =
+          BrowserLink(
+            icon = AllIcons.Ide.External_link_arrow,
+            text = DevkitComposeBundle.message("jewel.swing.enabled.link"),
+            tooltip = null,
+            url = "",
+          )
+            .apply { enabled(true) }
+      )
+
+      compose { ExternalLink(text = "Enabled link", uri = "", enabled = true) }
+
+      cell(
+        component =
+          BrowserLink(
+            icon = IconLoader.getDisabledIcon(AllIcons.Ide.External_link_arrow),
+            text = DevkitComposeBundle.message("jewel.swing.disabled.link"),
+            tooltip = null,
+            url = jewelReadmeLink,
+          )
+            .apply { isEnabled = false }
+      )
+        .applyToComponent { autoHideOnDisable = false }
+
+      compose { ExternalLink(text = "Disabled link", uri = "", enabled = false) }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.inlineBannersRow() {
+    row(DevkitComposeBundle.message("jewel.inline.banners.label")) {
+      val inlineBanner = InlineBanner(
+        messageText = DevkitComposeBundle.message("jewel.swing.inline.banners"),
+        status = EditorNotificationPanel.Status.Info,
+      )
+      inlineBanner.setGearAction("") {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.a")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.b")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.c")) {}
+      inlineBanner.addAction(DevkitComposeBundle.message("jewel.swing.inline.banner.action.d")) {}
+
+      cell(
+        component = inlineBanner
+      )
+        .align(AlignY.CENTER)
+
+      compose {
+        Box {
+          InlineInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.inline.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.GearPlain,
+                "Close",
+                onClick = {},
+              )
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+            linkActions = {
+              action("Action A", onClick = {})
+              action("Action B", onClick = {})
+              action("Action C", onClick = {})
+              action("Action D", onClick = {})
+            }
+          )
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.bannersRow() {
+    row(DevkitComposeBundle.message("jewel.banners.label")) {
+      val defaultBanner =
+        EditorNotificationPanel(EditorNotificationPanel.Status.Info).text(DevkitComposeBundle.message("jewel.swing.banners"))
+      defaultBanner.setCloseAction { }
+      cell(
+        component = defaultBanner
+      )
+        .align(AlignY.CENTER)
+
+      compose {
+        Box {
+          DefaultInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+          )
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private val scrollingContainer =
+    JBScrollPane(
+      mainContent,
+      JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+      JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED,
+    )
+
+  init {
+    addToCenter(scrollingContainer)
+    scrollingContainer.border = JBUI.Borders.empty()
+    scrollingContainer.isOpaque = false
+    isOpaque = false
+  }
+
+  private fun Panel.buttonsRow() {
+    row(DevkitComposeBundle.message("jewel.swing.buttons")) {
+      button(DevkitComposeBundle.message("jewel.swing.button.swing.button")) {}.align(AlignY.CENTER)
+      compose { OutlinedButton({}) { Text("Compose Button") } }
+
+      button(DevkitComposeBundle.message("jewel.swing.button.default.swing.button")) {}
+        .align(AlignY.CENTER)
+        .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
+      compose { DefaultButton({}) { Text("Default Compose Button") } }
+
+      compose {
+        var showDefaultSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeDefaultSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        DefaultSplitButton(
+          onClick = {},
+          expanded = showDefaultSplitButtonPopup,
+          onExpandedChange = { showDefaultSplitButtonPopup = it },
+        ) { Text("Default Split Button w/ JBPopup") }
+
+        LaunchedEffect(showDefaultSplitButtonPopup) {
+          if (showDefaultSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showDefaultSplitButtonPopup = false
+              }
+            })
+            activeDefaultSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeDefaultSplitButtonPopup?.cancel()
+            activeDefaultSplitButtonPopup = null
+          }
+        }
+      }
+
+      compose {
+        var showOutlinedSplitButtonPopup by remember { mutableStateOf(false) }
+        var activeOutlinedSplitButtonPopup by remember { mutableStateOf<JBPopup?>(null) }
+
+        OutlinedSplitButton(
+          onClick = {},
+          expanded = showOutlinedSplitButtonPopup,
+          onExpandedChange = { showOutlinedSplitButtonPopup = it },
+        ) { Text("Outlined Split Button w/ JBPopup") }
+
+        LaunchedEffect(showOutlinedSplitButtonPopup) {
+          if (showOutlinedSplitButtonPopup) {
+            val mouseLocation = MouseInfo.getPointerInfo().location
+            val popup = JBPopupFactory.getInstance().createMessage(DevkitComposeBundle.message("jewel.compose.popup.another.example"))
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                showOutlinedSplitButtonPopup = false
+              }
+            })
+            activeOutlinedSplitButtonPopup = popup
+            popup.show(RelativePoint.fromScreen(mouseLocation))
+          } else {
+            activeOutlinedSplitButtonPopup?.cancel()
+            activeOutlinedSplitButtonPopup = null
+          }
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.labelsRows() {
+    row(DevkitComposeBundle.message("jewel.swing.labels")) {
+      label(DevkitComposeBundle.message("jewel.swing.label.swing.label")).align(AlignY.CENTER)
+      compose { Text("Compose label") }
+    }
+      .layout(RowLayout.PARENT_GRID)
+
+    row(DevkitComposeBundle.message("jewel.swing.comments")) {
+      comment(DevkitComposeBundle.message("jewel.swing.text.swing.comment")).align(AlignY.CENTER)
+      compose {
+        Text(
+          "Compose comment",
+          style = JewelTheme.typography.medium,
+          color = JewelTheme.globalColors.text.info,
+        )
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+
+    @Suppress("HardCodedStringLiteral") val longText = "WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End"
+    row(DevkitComposeBundle.message("jewel.swing.long.text.swing")) { text(longText, maxLineLength = 100) }
+    row(DevkitComposeBundle.message("jewel.swing.long.text.compose")) {
+      compose {
+        Box {
+          Text(
+            longText,
+            modifier =
+              Modifier.width(
+                with(LocalDensity.current) {
+                  // Guesstimate how wide this should be ? we can't tell it to be
+                  // "fill", as it crashes natively
+                  JewelTheme.defaultTextStyle.fontSize.toDp() * 60
+                }
+              ),
+          )
+        }
+      }
+    }
+
+    row(DevkitComposeBundle.message("jewel.swing.long.editor.text.swing")) {
+      text(longText, maxLineLength = 100).applyToComponent {
+        font = retrieveEditorColorScheme().getFont(EditorFontType.PLAIN)
+      }
+    }
+    row(DevkitComposeBundle.message("jewel.swing.long.editor.text.compose")) {
+      compose {
+        Box {
+          Text(
+            longText,
+            style = JewelTheme.editorTextStyle,
+            modifier =
+              Modifier.width(
+                with(LocalDensity.current) {
+                  // Guesstimate how wide this should be ? we can't tell it to be
+                  // "fill", as it crashes natively
+                  JewelTheme.defaultTextStyle.fontSize.toDp() * 60
+                }
+              ),
+          )
+        }
+      }
+    }
+
+    row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font =
+        JBFont.h1()
+    }
+    row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
+      compose {
+        Box {
+          val style = JewelTheme.typography.h1TextStyle
+          Text(
+            "This will wrap over a couple rows",
+            modifier =
+              Modifier.width(
+                with(LocalDensity.current) {
+                  // Guesstimate how wide this should be ? we can't tell it to be
+                  // "fill", as it crashes natively
+                  style.fontSize.toDp() * 10
+                }
+              ),
+            style = style,
+          )
+        }
+      }
+    }
+  }
+
+  private fun Panel.iconsRow() {
+    row(DevkitComposeBundle.message("jewel.swing.icons")) {
+      cell(JBLabel(DevkitComposeIcons.JewelToolWindow).apply { border = JBUI.Borders.customLine(JBColor.RED) })
+        .align(AlignY.CENTER)
+
+      compose {
+        Icon(
+          key = IdeSampleIconKeys.jewelToolWindow,
+          contentDescription = "Jewel Tool Window Icon",
+          modifier = Modifier.border(1.dp, Color.Red),
+        )
+      }
+
+      panel {
+        row {
+          label(SWING).widthGroup("swing disabled")
+          label(COMPOSE).widthGroup("compose disabled")
+          label(SWING).widthGroup("swing enabled")
+          label(COMPOSE).widthGroup("compose enabled")
+
+          label(SWING).widthGroup("swing disabled")
+          label(COMPOSE).widthGroup("compose disabled")
+          label(SWING).widthGroup("swing enabled")
+          label(COMPOSE).widthGroup("compose enabled")
+        }
+        row {
+          icon(icon = IconLoader.getDisabledIcon(AllIcons.Actions.CheckOut)).widthGroup("swing disabled")
+          compose {
+            Icon(
+              modifier = Modifier.disabledAppearance(),
+              key = AllIconsKeys.Actions.CheckOut,
+              contentDescription = null,
+            )
+          }
+            .widthGroup("compose disabled")
+          icon(icon = AllIcons.Actions.CheckOut).widthGroup("swing enabled")
+          compose {
+            Icon(
+              key = AllIconsKeys.Actions.CheckOut,
+              contentDescription = null,
+              colorFilter = null, // Not disabled
+            )
+          }
+            .widthGroup("compose enabled")
+
+          icon(icon = IconLoader.getDisabledIcon(AllIcons.Actions.Close)).widthGroup("swing disabled")
+          compose {
+            Icon(
+              modifier = Modifier.disabledAppearance(),
+              key = AllIconsKeys.Actions.Close,
+              contentDescription = null,
+            )
+          }
+            .widthGroup("compose disabled")
+          icon(icon = AllIcons.Actions.Close).widthGroup("swing enabled")
+          compose {
+            Icon(
+              key = AllIconsKeys.Actions.Close,
+              contentDescription = null,
+              colorFilter = null, // Not disabled
+            )
+          }
+            .widthGroup("compose enabled")
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.textFieldsRow() {
+    row(DevkitComposeBundle.message("jewel.swing.text.fields")) {
+      textField().align(AlignY.CENTER)
+
+      compose {
+        val state = rememberTextFieldState("")
+        TextField(state)
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.comboBoxesRow() {
+    row(DevkitComposeBundle.message("jewel.swing.combo.boxes")) {
+      label(DevkitComposeBundle.message("jewel.swing.label")).bold()
+    }
+      .layout(RowLayout.PARENT_GRID)
+
+    row("") {
+      val zoomLevels = arrayOf("100%", "125%", "150%", "175%", "200%", "300%")
+
+      JPanel()
+        .apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.not.editable")).apply { alignmentX = LEFT_ALIGNMENT })
+          add(
+            ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
+              isEditable = false
+              alignmentX = LEFT_ALIGNMENT
+            }
+          )
+        }
+        .run { cell(this).align(AlignY.TOP) }
+      JPanel()
+        .apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.not.editable.disabled")).apply { alignmentX = LEFT_ALIGNMENT })
+          add(
+            ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
+              isEditable = false
+              isEnabled = false
+              alignmentX = LEFT_ALIGNMENT
+            }
+          )
+        }
+        .run { cell(this).align(AlignY.TOP) }
+
+      val itemsComboBox = arrayOf("Cat", "Elephant", "Sun", "Book", "Laughter", "Whisper", "Ocean", "Serendipity lorem ipsum", "Umbrella")
+      JPanel()
+        .apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.editable")).apply { alignmentX = LEFT_ALIGNMENT })
+          add(
+            ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
+              isEditable = true
+              alignmentX = LEFT_ALIGNMENT
+            }
+          )
+        }
+        .run { cell(this).align(AlignY.TOP) }
+
+      JPanel()
+        .apply {
+          layout = BoxLayout(this, BoxLayout.Y_AXIS)
+          add(JLabel(DevkitComposeBundle.message("jewel.swing.editable.disabled")).apply { alignmentX = LEFT_ALIGNMENT })
+          add(
+            ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
+              isEditable = true
+              isEnabled = false
+              alignmentX = LEFT_ALIGNMENT
+            }
+          )
+        }
+        .run { cell(this).align(AlignY.TOP) }
+    }
+      .layout(RowLayout.PARENT_GRID)
+
+    row("") {
+      label(DevkitComposeBundle.message("jewel.compose.label")).bold()
+    }
+      .layout(RowLayout.PARENT_GRID)
+
+    row("") {
+      compose(modifier = Modifier.padding(horizontal = 8.dp)) {
+        val comboBoxItems = remember {
+          listOf(
+            "Cat",
+            "Elephant",
+            "Sun",
+            "Book",
+            "Laughter",
+            "Whisper",
+            "Ocean",
+            "Serendipity lorem ipsum",
+            "Umbrella",
+            "Joy",
+          )
+        }
+        val zoomLevels = remember {
+          listOf("100%", "125%", "150%", "175%", "200%", "300%")
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          Column {
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            val selectedText: String = zoomLevels[selectedIndex]
+
+            Text("Not editable")
+            Text(text = "Selected item: $selectedText")
+
+            ListComboBox(
+              items = zoomLevels,
+              selectedIndex = selectedIndex,
+              onSelectedItemChange = { selectedIndex = it },
+              modifier = Modifier.width(200.dp),
+            )
+          }
+
+          Column {
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            val selectedText: String = zoomLevels[selectedIndex]
+
+            Text("Not editable + disabled")
+            Text(text = "Selected item: $selectedText")
+
+            ListComboBox(
+              items = zoomLevels,
+              selectedIndex = selectedIndex,
+              onSelectedItemChange = { selectedIndex = it },
+              modifier = Modifier.width(200.dp),
+              enabled = false,
+            )
+          }
+
+          Column {
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            val selectedText: String = comboBoxItems[selectedIndex]
+
+            Text("Editable")
+            Text(text = "Selected item: $selectedText")
+
+            EditableListComboBox(
+              items = comboBoxItems,
+              selectedIndex = selectedIndex,
+              onSelectedItemChange = { selectedIndex = it },
+              modifier = Modifier.width(200.dp),
+              maxPopupHeight = 150.dp,
+            )
+          }
+
+          Column {
+            var selectedIndex by remember { mutableIntStateOf(0) }
+            val selectedText: String = comboBoxItems[selectedIndex]
+
+            Text("Editable + disabled")
+            Text(text = "Selected item: $selectedText")
+
+            EditableListComboBox(
+              items = comboBoxItems,
+              selectedIndex = selectedIndex,
+              onSelectedItemChange = { selectedIndex = it },
+              modifier = Modifier.width(200.dp),
+              enabled = false,
+            )
+          }
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.textAreasRow() {
+    row(DevkitComposeBundle.message("jewel.swing.text.areas")) {
+      textArea().align(AlignY.CENTER).applyToComponent { rows = 3 }
+
+      compose {
+        val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
+        val charWidth =
+          remember(metrics.widths) {
+            // Same logic as in JTextArea
+            metrics.charWidth('m')
+          }
+        val lineHeight = metrics.height
+
+        val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }
+        val height = remember(lineHeight) { (3 * lineHeight) }
+
+        val contentPadding = JewelTheme.textAreaStyle.metrics.contentPadding
+        val state = rememberTextFieldState("Hello")
+        TextArea(
+          state = state,
+          modifier =
+            Modifier.size(
+              width = width.dp + contentPadding.horizontal(LocalLayoutDirection.current),
+              height = height.dp + contentPadding.vertical(),
+            ),
+        )
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.gotItTooltipRow() {
+    row(DevkitComposeBundle.message("jewel.swing.gotit.label")) {
+      var currentBalloonPosition = 0
+      val balloonPosition = listOf(Balloon.Position.atLeft, Balloon.Position.atRight, Balloon.Position.above, Balloon.Position.below)
+      var currentGotItPosition = 0
+      val gotItPosition = listOf(GotItTooltip.LEFT_MIDDLE, GotItTooltip.RIGHT_MIDDLE, GotItTooltip.TOP_MIDDLE, GotItTooltip.BOTTOM_MIDDLE,
+                                 GotItTooltip.BOTTOM_LEFT)
+      panel {
+        row {
+          panel {
+            row {
+              text(DevkitComposeBundle.message("jewel.swing.gotit.balloon.position") + " ${balloonPosition[currentBalloonPosition % balloonPosition.size]}")
+            }
+            row {
+              button(DevkitComposeBundle.message("jewel.swing.gotit.change.balloon.position")) { currentBalloonPosition++ }
+            }
+          }
+        }
+        row {
+          panel {
+            row {
+              text(DevkitComposeBundle.message("jewel.swing.gotit.position") + " ${gotItPosition[currentGotItPosition % gotItPosition.size]}")
+            }
+            row {
+              button(DevkitComposeBundle.message("jewel.swing.gotit.change.position")) { currentGotItPosition++ }
+            }
+          }
+        }
+      }.apply {
+        minimumSize = Dimension(minimumSize.width, 500)
+      }
+      button(DevkitComposeBundle.message("jewel.swing.button.swing.button")) {}
+        .align(AlignY.CENTER)
+        .applyToComponent {
+
+          this.addActionListener {
+            val randomId = java.util.UUID.randomUUID().toString()
+            GotItTooltip(randomId, DevkitComposeBundle.message("jewel.swing.gotit.example.title"))
+              .withHeader(DevkitComposeBundle.message("jewel.swing.gotit.example.header"))
+              .withPosition(balloonPosition[currentBalloonPosition % balloonPosition.size])
+              .withShowCount(999)
+              .withLink(DevkitComposeBundle.message("jewel.swing.gotit.example.link"), {})
+              .withBrowserLink(DevkitComposeBundle.message("jewel.swing.gotit.example.browser.link"), URI.create("https://www.jetbrains.com/help/idea/getting-started.html").toURL())
+              .show(this, gotItPosition[currentGotItPosition % gotItPosition.size])
+          }
+        }
+
+
+      compose {
+        val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
+        val charWidth =
+          remember(metrics.widths) {
+            // Same logic as in JTextArea
+            metrics.charWidth('m')
+          }
+        val lineHeight = metrics.height
+
+        val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }
+        val height = remember(lineHeight) { (3 * lineHeight) }
+
+        val contentPadding = JewelTheme.textAreaStyle.metrics.contentPadding
+        val state = rememberTextFieldState("Hello")
+        TextArea(
+          state = state,
+          modifier =
+            Modifier.size(
+              width = width.dp + contentPadding.horizontal(LocalLayoutDirection.current),
+              height = height.dp + contentPadding.vertical(),
+            ),
+        )
+      }
+    }
+      .topGap(TopGap.MEDIUM)
+      .bottomGap(BottomGap.MEDIUM)
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.badgesRow() {
+    val allColorTypeBadges = listOf(
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.blue"), Badge.ColorType.BLUE),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.blue.secondary"), Badge.ColorType.BLUE_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.green"), Badge.ColorType.GREEN),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.green.secondary"), Badge.ColorType.GREEN_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.purple.secondary"), Badge.ColorType.PURPLE_SECONDARY),
+      Badge(DevkitComposeBundle.message("jewel.swing.badge.gray.secondary"), Badge.ColorType.GRAY_SECONDARY),
+    )
+
+    row(DevkitComposeBundle.message("jewel.swing.badge.title")) {
+      label(DevkitComposeBundle.message("jewel.swing.label"))
+      cell(JPanel().apply {
+        isOpaque = false
+        for (badge in allColorTypeBadges) {
+          add(JLabel(badge))
+        }
+      })
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.compose.label"))
+      compose {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+          JewelBadge(style = JewelTheme.badgeStyle.blue) { Text("Blue") }
+          JewelBadge(style = JewelTheme.badgeStyle.blueSecondary) { Text("Blue secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.green) { Text("Green") }
+          JewelBadge(style = JewelTheme.badgeStyle.greenSecondary) { Text("Green secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.purpleSecondary) { Text("Purple secondary") }
+          JewelBadge(style = JewelTheme.badgeStyle.graySecondary) { Text("Gray secondary") }
+        }
+      }
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.swing.label"))
+      cell(JPanel().apply {
+        isOpaque = false
+        for (badge in listOf(Badge.newDisabled, Badge.alphaDisabled, Badge.betaDisabled, Badge.trialDisabled)) {
+          add(JLabel(badge))
+        }
+      })
+    }.layout(RowLayout.PARENT_GRID)
+    row("") {
+      label(DevkitComposeBundle.message("jewel.compose.label"))
+      compose {
+        JewelBadge(enabled = false) { Text("Disabled") }
+      }
+    }.layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.menusRow() {
+    row(DevkitComposeBundle.message("jewel.section.menu.label")) {
+      button(DevkitComposeBundle.message("jewel.section.menu.swing.button")) {
+        val actionGroup = createIntelliJMenuActionGroup()
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, actionGroup)
+        val button = it.source as? JComponent
+        button?.let { comp ->
+          popupMenu.setTargetComponent(comp)
+          popupMenu.component.show(comp, 0, comp.height)
+        }
+      }
+        .align(AlignY.TOP)
+
+      compose {
+        var showJewelMenu by remember { mutableStateOf(false) }
+
+        Box(modifier = Modifier.size(width = 460.dp, height = 200.dp)) {
+          Box {
+            OutlinedButton(onClick = { showJewelMenu = true }) { Text("Open Jewel Menu") }
+
+            if (showJewelMenu) {
+              PopupMenu(
+                onDismissRequest = { showJewelMenu = false; true },
+                horizontalAlignment = Alignment.Start,
+              ) {
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 1") }
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 2") }
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 3") }
+                separator()
+                submenu(submenu = {
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 1") }
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 2") }
+                  selectableItem(selected = false, onClick = {}) { Text("Submenu Item 3") }
+                }) {
+                  Text("Submenu")
+                }
+                separator()
+                selectableItem(selected = false, onClick = {}) { Text("Menu Item 4") }
+              }
+            }
+          }
+        }
+      }.align(AlignY.TOP)
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun createIntelliJMenuActionGroup(): DefaultActionGroup {
+    return DefaultActionGroup().apply {
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.one")))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.two")))
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.three")))
+      addSeparator()
+
+      val submenu = DefaultActionGroup(DevkitComposeBundle.message("jewel.section.menu.swing.submenu"), true)
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.one")))
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.two")))
+      submenu.add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.submenu.item.three")))
+      add(submenu)
+
+      addSeparator()
+      add(createSimpleAction(DevkitComposeBundle.message("jewel.swing.comparison.menu.item.four")))
+    }
+  }
+
+  private fun createSimpleAction(@NlsActions.ActionText text: String): AnAction {
+    return object : AnAction(text) {
+      override fun actionPerformed(e: AnActionEvent) {
+        // No-op for demo purposes
+      }
+    }
+  }
+
+  private fun PaddingValues.vertical(): Dp = calculateTopPadding() + calculateBottomPadding()
+
+  private fun PaddingValues.horizontal(layoutDirection: LayoutDirection): Dp =
+    calculateStartPadding(layoutDirection) + calculateEndPadding(layoutDirection)
+
+  private fun Row.compose(modifier: Modifier = Modifier.padding(8.dp), content: @Composable () -> Unit) =
+    cell(JewelComposePanel { Box(modifier) { content() } }.apply { isOpaque = false })
+}

@@ -17,17 +17,10 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author Pavel.Dolgov
- */
 public class UnwrapElseBranchTest extends LightIntentionActionTestCase {
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/unwrapElseBranch/";
-  }
-
-  public void test() {
-    doAllTests();
   }
 }

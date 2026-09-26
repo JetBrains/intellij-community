@@ -1,0 +1,33 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.codeInsight.javadoc
+
+import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.navigation.CtrlMouseHandler
+import com.intellij.java.codeInsight.javadoc.JavaDocInfoGeneratorTypeTest.assertEqualsFileText
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
+import com.intellij.util.ui.UIUtil
+import org.junit.Test
+
+@RunsInEdt
+class JavaCtrlMouseTest : LightJavaCodeInsightFixtureTestCase4(
+  testDataPath = "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/ctrlMouse/"
+) {
+
+  private fun doTest() {
+    val testName = testName
+    fixture.configureByFile("$testName.java")
+    val docInfoString = timeoutRunBlocking {
+      readAction { CtrlMouseHandler.getGoToDeclarationOrUsagesText (fixture.editor)!! }
+    }
+    assertEqualsFileText("$testDataPath$testName.html", UIUtil.getHtmlBodyWithoutPreWrapper(docInfoString))
+  }
+
+  @Test
+  fun `lambda parameter`(): Unit = doTest()
+
+  @Test
+  fun `var variable`(): Unit = doTest()
+}

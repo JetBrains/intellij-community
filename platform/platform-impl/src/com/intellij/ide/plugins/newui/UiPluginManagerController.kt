@@ -1,0 +1,140 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.newui
+
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
+import com.intellij.ide.plugins.marketplace.InitSessionResult
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
+import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
+
+/*
+ A controller that executes operations on plugins. There will be several implementations. It serves the same purpose as PluginModelFacade but is stateless.
+ */
+@ApiStatus.Internal
+interface UiPluginManagerController {
+  fun isEnabled(): Boolean
+  fun getTarget(): PluginSource
+  suspend fun getPluginInventory(): PluginInventorySnapshot
+  suspend fun loadPluginInventory(): PluginInventoryLoadResult = PluginInventoryLoadResult(getPluginInventory())
+  suspend fun getPlugins(): List<PluginUiModel>
+  suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
+  suspend fun initSession(sessionId: String): InitSessionResult
+  suspend fun getInstalledPlugins(): List<PluginUiModel>
+  suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
+  suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
+  suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
+  suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
+  suspend fun closeSession(sessionId: String)
+  suspend fun getPlugin(id: PluginId): PluginUiModel?
+  suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
+  suspend fun installOrUpdatePlugin(
+    sessionId: String,
+    parentComponent: () -> JComponent?,
+    descriptor: PluginUiModel,
+    updateDescriptor: PluginUiModel?,
+    installSource: FUSEventSource?,
+    modalityState: ModalityState?,
+    pluginEnabler: PluginEnabler?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
+  ): InstallPluginResult
+
+  suspend fun continueInstallation(
+    sessionId: String,
+    pluginId: PluginId,
+    enableRequiredPlugins: Boolean,
+    allowInstallWithoutRestart: Boolean,
+    pluginEnabler: PluginEnabler?,
+    modalityState: ModalityState?,
+    parentComponent: () -> JComponent?,
+    customRepoPlugins: List<PluginUiModel>?,
+    progressSink: PluginInstallationProgressSink = PluginInstallationProgressSink.NONE,
+  ): InstallPluginResult
+
+  suspend fun apply(parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
+  suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
+  suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
+  suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean
+  suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
+  suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
+  suspend fun getCustomPluginRepositories(): List<CustomPluginRepository>
+  suspend fun loadCustomPluginRepository(repository: CustomPluginRepository): CustomPluginRepositoryLoadResult
+  suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
+  suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
+  suspend fun isPluginInstalled(pluginId: PluginId): Boolean
+  suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
+  suspend fun findPlugin(pluginId: PluginId): PluginUiModel?
+
+  suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
+  suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
+
+  suspend fun updateDescriptorsForInstalledPlugins()
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
+  suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
+  suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
+  suspend fun getCustomRepoTags(): Set<String>
+
+  fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult
+  fun markPluginsAsDisabled(pluginIds: List<PluginId>)
+  fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
+  fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
+  fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
+  fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
+  fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
+  fun getAllPluginsTags(): Set<String>
+  suspend fun getMarketplaceTagCounts(): Map<String, Int>
+  fun getAllVendors(): Set<String>
+
+  suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>
+  suspend fun isModified(): Boolean
+
+  suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): ResetPluginsStateResult
+  suspend fun isPluginEnabled(pluginId: PluginId): Boolean
+  suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel>
+  suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel?
+  suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>
+  suspend fun isRestartRequired(sessionId: String): Boolean
+
+  suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
+
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSource?
+  suspend fun getPendingPluginUpdateSources(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, PluginUpdateSource>
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?)
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSource?)
+  fun isPluginUpdateSourceVisibleInUI(): Boolean
+  fun isMissingUpdateSourceWarningEnabled(): Boolean
+  suspend fun getAllPluginUpdateSources(): List<PluginUpdateSource>
+
+  companion object {
+    val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName("com.intellij.uiPluginManagerController")
+  }
+}
+
+@ApiStatus.Internal
+fun interface PluginInstallationProgressSink {
+  fun dependenciesScheduled(dependencies: List<PluginUiModel>)
+
+  fun downloadProgressChanged(fraction: Double?) { }
+
+  companion object {
+    @JvmField
+    val NONE: PluginInstallationProgressSink = PluginInstallationProgressSink { }
+  }
+}

@@ -1,55 +1,76 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.diagnostic.InMemoryHandler;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
-import org.apache.log4j.PropertyConfigurator;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.logging.Filter;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class LogSetup {
+import static com.intellij.openapi.diagnostic.InMemoryHandler.FAILED_BUILD_LOG_FILE_NAME_PREFIX;
 
-  private static final String LOG_CONFIG_FILE_NAME = "build-log.properties";
+@ApiStatus.Internal
+public final class LogSetup {
+  public static final String LOG_CONFIG_FILE_NAME = "build-log-jul.properties";
   private static final String LOG_FILE_NAME = "build.log";
-  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.properties";
-  private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
 
   public static void initLoggers() {
-    if (!SystemProperties.getBooleanProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, true)) {
+    if (!Boolean.parseBoolean(System.getProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true"))) {
       return;
     }
 
     try {
-      final String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
-      final File configFile = logDir != null? new File(logDir, LOG_CONFIG_FILE_NAME) : new File(LOG_CONFIG_FILE_NAME);
+      var logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
+      var configFile = logDir == null ? Path.of(LOG_CONFIG_FILE_NAME) : Path.of(logDir, LOG_CONFIG_FILE_NAME);
       ensureLogConfigExists(configFile);
-      String text = FileUtil.loadFile(configFile);
-      final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
-      text = StringUtil.replace(text, LOG_FILE_MACRO, StringUtil.replace(logFile, "\\", "\\\\"));
-      PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+      var logFilePath = logDir != null ? Path.of(logDir, LOG_FILE_NAME) : Path.of(LOG_FILE_NAME);
+
+      JulLogger.clearHandlers();
+
+      if (Boolean.getBoolean((GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER))) {
+        var filter = acceptConfig(configFile);
+
+        JulLogger.configureStandardLoggers(LogLevel.WARNING, true, logFilePath, true, false, null);
+
+        var rootLogger = java.util.logging.Logger.getLogger("");
+
+        var timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss").format(LocalDateTime.now());
+        var failedBuildLogName = FAILED_BUILD_LOG_FILE_NAME_PREFIX + timestamp + ".log";
+        var failedBuildLogPath = logDir != null ? Path.of(logDir, failedBuildLogName) : Path.of(failedBuildLogName);
+        var inMemoryHandler = new InMemoryHandler(failedBuildLogPath);
+        inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
+        inMemoryHandler.setLevel(Level.FINEST);
+        rootLogger.addHandler(inMemoryHandler);
+
+        if (filter != null) {
+          for (var handler : rootLogger.getHandlers()) {
+            handler.setFilter(filter);
+          }
+        }
+      }
+      else {
+        try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
+          LogManager.getLogManager().readConfiguration(in);
+        }
+        JulLogger.configureStandardLoggers(LogLevel.WARNING, true, logFilePath, true, false, null);
+      }
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -58,27 +79,48 @@ public class LogSetup {
       e.printStackTrace(System.err);
     }
 
-    Logger.setFactory(MyLoggerFactory.class);
+    Logger.setFactory(category -> new JulLogger(java.util.logging.Logger.getLogger(category)));
   }
 
-  private static void ensureLogConfigExists(final File logConfig) throws IOException {
-    if (!logConfig.exists()) {
-      FileUtil.createIfDoesntExist(logConfig);
-      try(InputStream in = LogSetup.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG)) {
+  private static @Nullable Filter acceptConfig(Path configFile) throws IOException {
+    String filterPrefix;
+
+    var lines = Files.readAllLines(configFile);
+    var debugLoggingEnabled = lines.contains("\\#org.jetbrains.jps.level=FINER");
+    if (!debugLoggingEnabled) {
+      lines = new ArrayList<>(lines);
+      lines.add("\\#org.jetbrains.jps.level=FINER");
+      filterPrefix = "#org.jetbrains.jps";
+    }
+    else {
+      filterPrefix = null;
+    }
+
+    var configBytes = String.join("\n", lines).getBytes(StandardCharsets.UTF_8);
+    try (var updatedIn = new ByteArrayInputStream(configBytes)) {
+      LogManager.getLogManager().readConfiguration(updatedIn);
+    }
+
+    if (filterPrefix == null) {
+      return null;
+    }
+    else {
+      return rec -> rec.getLevel().intValue() > Level.FINE.intValue() || !rec.getLoggerName().startsWith(filterPrefix);
+    }
+  }
+
+  private static void ensureLogConfigExists(Path logConfig) throws IOException {
+    if (!Files.exists(logConfig)) {
+      Files.createDirectories(logConfig.getParent());
+      try (var in = readDefaultLogConfig()) {
         if (in != null) {
-          try (FileOutputStream out = new FileOutputStream(logConfig)) {
-            FileUtil.copy(in, out);
-          }
+          Files.copy(in, logConfig);
         }
       }
     }
   }
 
-  private static class MyLoggerFactory implements Logger.Factory {
-    @NotNull
-    @Override
-    public Logger getLoggerInstance(@NotNull String category) {
-      return new Log4jBasedLogger(org.apache.log4j.Logger.getLogger(category));
-    }
+  public static InputStream readDefaultLogConfig() {
+    return LogSetup.class.getResourceAsStream("/defaultLogConfig.properties");
   }
 }

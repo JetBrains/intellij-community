@@ -1,0 +1,8 @@
+// NEW_NAME: bar
+// RENAME: member
+data class Person(val name: String, val bar: Int)
+
+fun foo(p: Person) {
+    (val name, val b<caret>ar) = p
+    println("$name is $bar years old")
+}

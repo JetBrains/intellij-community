@@ -1,0 +1,9 @@
+fun myFunction(first: String, s: Int) {
+
+}
+
+fun m() {
+    myFunction("1", s = 1)
+    myFunction("1", s = 1)
+    myFunction("1", s = 1)
+}

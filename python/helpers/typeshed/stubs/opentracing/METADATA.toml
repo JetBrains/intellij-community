@@ -1,0 +1,2 @@
+version = "2.4.*"
+upstream-repository = "https://github.com/opentracing/opentracing-python"

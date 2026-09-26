@@ -19,6 +19,7 @@ public abstract class MavenProjectsProcessorBasicTask implements MavenProjectsPr
   protected final MavenProject myMavenProject;
   protected final MavenProjectsTree myTree;
 
+
   public MavenProjectsProcessorBasicTask(MavenProject mavenProject, MavenProjectsTree tree) {
     myMavenProject = mavenProject;
     myTree = tree;

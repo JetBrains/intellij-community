@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jsch-agent-proxy" type="repository">
+        <properties maven-id="com.jcraft:jsch.agentproxy.sshagent:0.0.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshagent/0.0.9/jsch.agentproxy.sshagent-0.0.9.jar">
+              <sha256sum>10a27a381f10b5efc33acd4f4200dda9fc9e70d304c8aad52e713064ee6f4655</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.core/0.0.9/jsch.agentproxy.core-0.0.9.jar">
+              <sha256sum>0ccda6cd8ec515bee1fef22d7737b52ac52d1c64c075d4d988136b60125a1eff</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshagent/0.0.9/jsch.agentproxy.sshagent-0.0.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.core/0.0.9/jsch.agentproxy.core-0.0.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshagent/0.0.9/jsch.agentproxy.sshagent-0.0.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.core/0.0.9/jsch.agentproxy.core-0.0.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

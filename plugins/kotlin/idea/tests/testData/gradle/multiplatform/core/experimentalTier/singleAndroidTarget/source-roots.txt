@@ -1,0 +1,19 @@
+MODULES
+project
+
+project.androidHostTest
+    src/androidHostTest/kotlin (Java, Test)
+
+project.androidMain
+    src/androidMain/kotlin (Java)
+    src/main/kotlin (Java)
+
+project.commonMain
+    src/commonMain/kotlin
+
+project.commonTest
+    src/commonTest/kotlin (Test)
+
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated

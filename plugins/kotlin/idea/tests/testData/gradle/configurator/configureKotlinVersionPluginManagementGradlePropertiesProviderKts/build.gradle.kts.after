@@ -1,0 +1,16 @@
+plugins {
+    id("java")
+    kotlin("jvm")
+}
+
+java {
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(kotlin("test"))
+}
+kotlin {
+    jvmToolchain(11)
+}

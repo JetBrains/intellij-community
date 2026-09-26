@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 
-/**
- * @author ilyas
- */
 public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrApplicationStatement {
   public GrApplicationStatementImpl(@NotNull ASTNode node) {
     super(node);
@@ -23,6 +20,7 @@ public class GrApplicationStatementImpl extends GrMethodCallImpl implements GrAp
     visitor.visitApplicationStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Call expression";
   }

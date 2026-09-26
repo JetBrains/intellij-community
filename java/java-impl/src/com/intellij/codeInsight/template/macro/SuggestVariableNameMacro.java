@@ -1,36 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.ExpressionUtil;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class SuggestVariableNameMacro extends Macro {
+public final class SuggestVariableNameMacro extends Macro {
 
   @Override
   public String getName() {
@@ -38,31 +32,24 @@ public class SuggestVariableNameMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return CodeInsightBundle.message("macro.suggest.variable.name");
-  }
-
-  @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
   }
 
-  @Nullable
   @Override
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;
     LookupElement[] items = new LookupElement[names.length];
@@ -73,11 +60,14 @@ public class SuggestVariableNameMacro extends Macro {
   }
 
   private static String[] getNames (final ExpressionContext context) {
-    String[] names = ExpressionUtil.getNames(context);
+    Project project = context.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    String[] names = dumbService.computeWithAlternativeResolveEnabled(() -> ExpressionUtil.getNames(context));
     if (names == null || names.length == 0) return names;
-    PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
+    if (file == null) return names;
     PsiElement e = file.findElementAt(context.getStartOffset());
-    PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(e, "");
+    PsiVariable[] vars = dumbService.computeWithAlternativeResolveEnabled(() -> MacroUtil.getVariablesVisibleAt(e, ""));
     LinkedList<String> namesList = new LinkedList<>(Arrays.asList(names));
     for (PsiVariable var : vars) {
       if (e.equals(var.getNameIdentifier())) continue;
@@ -96,7 +86,7 @@ public class SuggestVariableNameMacro extends Macro {
       }
     }
 
-    return ArrayUtil.toStringArray(namesList);
+    return ArrayUtilRt.toStringArray(namesList);
   }
 
   @Override
@@ -104,5 +94,8 @@ public class SuggestVariableNameMacro extends Macro {
     return context instanceof JavaCodeContextType;
   }
 
-
+  @Override
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.UNFOCUSED;
+  }
 }

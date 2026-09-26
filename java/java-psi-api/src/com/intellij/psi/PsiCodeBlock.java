@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java code block, usually surrounded by curly braces.
  */
-public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
+public interface PsiCodeBlock extends PsiElement {
   /**
    * The empty array of PSI code blocks which can be reused to avoid unnecessary allocations.
    */
@@ -33,8 +33,7 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
    *
    * @return the array of statements.
    */
-  @NotNull
-  PsiStatement[] getStatements();
+  PsiStatement @NotNull [] getStatements();
 
   /**
    * Returns the first PSI element contained in the block.
@@ -70,7 +69,6 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
 
   /**
    * @return number of statements this code block contains.
-   * @since 2018.1
    */
   default int getStatementCount() {
     return getStatements().length;
@@ -79,9 +77,15 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
   /**
    * @return true if this code block contains no statements. Note that if code block contains
    * empty statements or empty code blocks inside, this method will return false.
-   * @since 2018.1
    */
   default boolean isEmpty() {
     return getStatementCount() == 0;
+  }
+
+
+  @SuppressWarnings("unused") //keep for binary compatibility.
+  default boolean shouldChangeModificationCount(PsiElement place) {
+    PsiElement parent = getParent();
+    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
   }
 }

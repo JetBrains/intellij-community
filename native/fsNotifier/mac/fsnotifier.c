@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-#include <CoreServices/CoreServices.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <strings.h>
 #include <sys/mount.h>
+#include <CoreServices/CoreServices.h>
 
 #define PRIVATE_DIR "/private/"
 #define PRIVATE_LEN 9
@@ -30,7 +16,7 @@ static void reportEvent(char *event, char *path) {
     size_t len = 0;
     if (path != NULL) {
         len = strlen(path);
-        for (char* p = path; *p != '\0'; p++) {
+        for (char *p = path; *p != '\0'; p++) {
             if (*p == '\n') {
                 *p = '\0';
             }
@@ -50,30 +36,27 @@ static void reportEvent(char *event, char *path) {
     pthread_mutex_unlock(&lock);
 }
 
-static void callback(ConstFSEventStreamRef streamRef,
-                     void *clientCallBackInfo,
+static void callback(__unused ConstFSEventStreamRef streamRef,
+                     __unused void *clientCallBackInfo,
                      size_t numEvents,
                      void *eventPaths,
                      const FSEventStreamEventFlags eventFlags[],
-                     const FSEventStreamEventId eventIds[]) {
+                     __unused const FSEventStreamEventId eventIds[]) {
     char **paths = eventPaths;
 
-    for (int i = 0; i < numEvents; i++) {
-        // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
+    for (size_t i = 0; i < numEvents; i++) {
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
             reportEvent("RECDIRTY", paths[i]);
-        }
-        else if (flags != kFSEventStreamEventFlagNone) {
+        } else if (flags != kFSEventStreamEventFlagNone) {
             reportEvent("RESET", NULL);
-        }
-        else {
+        } else {
             reportEvent("DIRTY", paths[i]);
         }
     }
 }
 
-static void * EventProcessingThread(void *data) {
+static void *EventProcessingThread(void *data) {
     FSEventStreamRef stream = (FSEventStreamRef) data;
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     FSEventStreamStart(stream);
@@ -105,8 +88,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
                     if (rootLen == mountLen || root[mountLen] == '/' || strcmp(mount, "/") == 0) {
                         CFArrayAppendValue(mounts, root);
                     }
-                }
-                else if (strncmp(root, mount, rootLen) == 0) {
+                } else if (strncmp(root, mount, rootLen) == 0) {
                     // root over mount point
                     if (strcmp(root, "/") == 0 || mount[rootLen] == '/') {
                         CFArrayAppendValue(mounts, mount);
@@ -129,17 +111,30 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     CFRelease(mounts);
 }
 
-// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
-static char command[2048];
+#define INPUT_BUF_LEN 2048
+static char input_buf[INPUT_BUF_LEN];
 
-static void ParseRoots() {
+static char *read_stdin(void) {
+    char* result = fgets(input_buf, INPUT_BUF_LEN, stdin);
+    if (result == NULL || feof(stdin)) {
+        return NULL;
+    }
+    size_t length = strlen(input_buf);
+    if (length > 0 && input_buf[length - 1] == '\n') {
+        input_buf[length - 1] = '\0';
+    }
+    return input_buf;
+}
+
+static bool ParseRoots(void) {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
     bool has_private_root = false;
 
     while (TRUE) {
-        fscanf(stdin, "%s", command);
-        if (strcmp(command, "#") == 0 || feof(stdin)) break;
-        char* path = command[0] == '|' ? command + 1 : command;
+        char *command = read_stdin();
+        if (command == NULL) return false;
+        if (strcmp(command, "#") == 0) break;
+        char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
         if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
             has_private_root = true;
@@ -157,20 +152,21 @@ static void ParseRoots() {
         free(value);
     }
     CFRelease(roots);
+    return true;
 }
 
-int main(const int argc, const char* argv[]) {
+int main(void) {
     CFStringRef path = CFSTR("/");
     CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
     CFAbsoluteTime latency = 0.3;  // Latency in seconds
     FSEventStreamRef stream = FSEventStreamCreate(
-        NULL,
-        &callback,
-        NULL,
-        pathsToWatch,
-        kFSEventStreamEventIdSinceNow,
-        latency,
-        kFSEventStreamCreateFlagNoDefer
+            NULL,
+            &callback,
+            NULL,
+            pathsToWatch,
+            kFSEventStreamEventIdSinceNow,
+            latency,
+            kFSEventStreamCreateFlagNoDefer
     );
     if (stream == NULL) {
         printf("GIVEUP\n");
@@ -184,9 +180,11 @@ int main(const int argc, const char* argv[]) {
     }
 
     while (TRUE) {
-        fscanf(stdin, "%s", command);
-        if (strcmp(command, "EXIT") == 0 || feof(stdin)) break;
-        if (strcmp(command, "ROOTS") == 0) ParseRoots();
+        char *command = read_stdin();
+        if (command == NULL || strcmp(command, "EXIT") == 0) break;
+        if (strcmp(command, "ROOTS") == 0) {
+            if (!ParseRoots()) break;
+        }
     }
 
     return 0;

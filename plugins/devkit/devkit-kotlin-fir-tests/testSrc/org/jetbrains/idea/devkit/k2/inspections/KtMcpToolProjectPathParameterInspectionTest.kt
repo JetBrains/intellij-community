@@ -1,0 +1,33 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.k2.inspections
+
+import com.intellij.testFramework.TestDataPath
+import org.jetbrains.idea.devkit.inspections.mcp.McpToolInspectionTestBase
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/mcpToolProjectPathParameter")
+internal class KtMcpToolProjectPathParameterInspectionTest : McpToolInspectionTestBase() {
+
+  private val removeParameterFixName = "Remove 'projectPath' parameter"
+
+  override fun setUp() {
+    super.setUp()
+    enableMcpInspection("McpToolProjectPathParameter")
+  }
+
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/mcpToolProjectPathParameter/"
+
+  override fun getFileExtension() = "kt"
+
+  fun testProjectPathParameter() {
+    doTest()
+  }
+
+  fun testRemoveProjectPathParameter() {
+    doTest(removeParameterFixName)
+  }
+
+  fun testRemoveProjectPathWithDefaultValueAndComment() {
+    doTest(removeParameterFixName)
+  }
+}

@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.externalProcessAuthHelper.SshPrompts;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -16,12 +17,9 @@ import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ssh.SSHUtil.PASSPHRASE_PROMPT;
-import static com.intellij.ssh.SSHUtil.PASSWORD_PROMPT;
+import static com.intellij.externalProcessAuthHelper.SshPrompts.PASSPHRASE_PROMPT;
+import static com.intellij.externalProcessAuthHelper.SshPrompts.PASSWORD_PROMPT;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalSshModule extends BaseTerminalModule {
   private static final Pattern UNKNOWN_HOST_MESSAGE =
     Pattern.compile("The authenticity of host \\'((.*) \\((.*)\\))\\' can\\'t be established\\.\\s?");
@@ -44,13 +42,13 @@ public class TerminalSshModule extends BaseTerminalModule {
   private boolean checkPassphrase(@NotNull String line) {
     Matcher matcher = PASSPHRASE_PROMPT.matcher(line);
 
-    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSPHRASE, matcher.group(1));
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSPHRASE, SshPrompts.extractKeyPath(matcher));
   }
 
   private boolean checkPassword(@NotNull String line) {
     Matcher matcher = PASSWORD_PROMPT.matcher(line);
 
-    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, matcher.group(1));
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, SshPrompts.extractUsername(matcher));
   }
 
   private boolean checkUnknownHost(@NotNull String line) {
@@ -93,7 +91,7 @@ public class TerminalSshModule extends BaseTerminalModule {
     sendData(answer.get() == AcceptResult.REJECTED ? "no" : "yes");
   }
 
-  private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
+  private boolean handleAuthPrompt(final @NotNull SimpleCredentialsDialog.Mode mode, final @NotNull String key) {
     Url repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
     String auth = myRuntime.getAuthenticationService().requestSshCredentials(repositoryUrl.toDecodedString(), mode, key);
 

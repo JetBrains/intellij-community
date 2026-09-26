@@ -6,12 +6,13 @@ try {
 -----
 0(1) element: null
 1(2) element: Open block
-2(3,4) THROW. element: NEW expression
-3(4) THROW. element: THROW statement
-4(5) element: Catch clause
-5(6) WRITE e
-6(7) READ print
-7(8) READ e
-8(9) ARGUMENT element: Reference expression
-9(10) element: Call expression MAYBE_RETURN
-10() element: null
+2(3) ARGUMENTS element: NEW expression
+3(4,5) THROW. element: NEW expression
+4(5) THROW. element: THROW statement
+5(6) element: Catch clause
+6(7) WRITE e
+7(8) READ print
+8(9) READ e
+9(10) ARGUMENTS element: Call expression
+10(11) element: Call expression MAYBE_RETURN
+11() element: null

@@ -1,0 +1,5 @@
+<module version="4">
+  <!-- this iml file declares a module itself, becuase there is NewModuleRootManager -->
+  <component name="NewModuleRootManager">
+  </component>
+</module>

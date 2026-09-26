@@ -1,0 +1,28 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "stamps",
+    srcs = [
+        "stamps.go",
+        "version.go",
+    ],
+    importpath = "jetbrains.com/plugin-descriptor-writer/internal/stamps",
+    visibility = ["//visibility:public"],
+    deps = ["//build/plugin-descriptor-writer/internal/descriptorxml"],
+)
+
+# `stamps_test.go` holds the curated cases, each an output the platform's `doPatchPluginXml` produced.
+go_test(
+    name = "stamps_test",
+    srcs = [
+        "stamps_test.go",
+        "version_test.go",
+    ],
+    pure = "on",
+    deps = [
+        ":stamps",
+        "//build/plugin-descriptor-writer/internal/descriptorxml",
+    ],
+)

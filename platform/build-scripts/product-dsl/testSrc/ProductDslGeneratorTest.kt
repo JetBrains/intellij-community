@@ -1,0 +1,258 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.productLayout
+
+import com.intellij.platform.pluginGraph.PluginModuleId
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
+import org.jetbrains.intellij.build.productLayout.xml.containsOverriddenNestedSet
+import org.jetbrains.intellij.build.productLayout.xml.findOverriddenNestedSetNames
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
+
+@Suppress("unused")
+internal object ModuleSetGenerationTestSource {
+  fun regularSet(): ModuleSet = moduleSet("regular") {
+    module("intellij.regular.module")
+  }
+}
+
+/**
+ * Tests for generator.kt helper functions.
+ */
+@ExtendWith(TestFailureLogger::class)
+class ProductDslGeneratorTest {
+  // Test fixtures
+  private fun createSimpleModuleSet(name: String, vararg moduleNames: String): ModuleSet {
+    return ModuleSet(
+      name = name,
+      modules = moduleNames.map { ContentModule(PluginModuleId(it, namespace = "jetbrains")) }
+    )
+  }
+
+  private fun createNestedModuleSet(
+    name: String,
+    moduleNames: List<String>,
+    nestedSets: List<ModuleSet>,
+  ): ModuleSet {
+    return ModuleSet(
+      name = name,
+      modules = moduleNames.map { ContentModule(PluginModuleId(it, namespace = "jetbrains")) },
+      nestedSets = nestedSets
+    )
+  }
+
+  @Test
+  fun `buildModuleSetXml preserves on-demand loading`() {
+    val moduleSet = moduleSet("loading") {
+      module("intellij.optional")
+      embeddedModule("intellij.embedded")
+      requiredModule("intellij.required")
+      onDemandModule("intellij.onDemand")
+    }
+
+    val result = buildModuleSetXml(moduleSet, label = "test")
+
+    assertThat(result.xml).contains(
+      "<module name=\"intellij.optional\"/>",
+      "<module name=\"intellij.embedded\" loading=\"embedded\"/>",
+      "<module name=\"intellij.required\" loading=\"required\"/>",
+      "<module name=\"intellij.onDemand\" loading=\"on-demand\"/>",
+    )
+  }
+
+  @Test
+  fun `buildModuleSetXml preserves nested on-demand loading`() {
+    val nested = moduleSet("nested") {
+      onDemandModule("intellij.nested.onDemand")
+    }
+    val parent = moduleSet("parent") {
+      moduleSet(nested)
+    }
+    val root = moduleSet("root") {
+      moduleSet(parent)
+      onDemandModule("intellij.root.onDemand")
+    }
+
+    val result = buildModuleSetXml(root, label = "test")
+
+    assertThat(result.xml).contains(
+      "<module name=\"intellij.nested.onDemand\" loading=\"on-demand\"/>",
+      "<module name=\"intellij.root.onDemand\" loading=\"on-demand\"/>",
+    )
+  }
+
+  // Tests for containsOverriddenNestedSet()
+
+  @Test
+  fun `containsOverriddenNestedSet detects direct nested override`() {
+    val overriddenSet = createSimpleModuleSet("overridden", "mod.a")
+    val parentSet = createNestedModuleSet("parent", listOf("mod.b"), listOf(overriddenSet))
+
+    val result = containsOverriddenNestedSet(parentSet, setOf(ModuleSetName("overridden")))
+
+    assertThat(result).isTrue()
+  }
+
+  @Test
+  fun `containsOverriddenNestedSet detects deeply nested override`() {
+    val deeplyNested = createSimpleModuleSet("deep", "mod.a")
+    val middleNested = createNestedModuleSet("middle", listOf("mod.b"), listOf(deeplyNested))
+    val parentSet = createNestedModuleSet("parent", listOf("mod.c"), listOf(middleNested))
+
+    val result = containsOverriddenNestedSet(parentSet, setOf(ModuleSetName("deep")))
+
+    assertThat(result).isTrue()
+  }
+
+  @Test
+  fun `containsOverriddenNestedSet returns false when no overrides`() {
+    val nestedSet = createSimpleModuleSet("nested", "mod.a")
+    val parentSet = createNestedModuleSet("parent", listOf("mod.b"), listOf(nestedSet))
+
+    val result = containsOverriddenNestedSet(parentSet, setOf(ModuleSetName("someOtherSet")))
+
+    assertThat(result).isFalse()
+  }
+
+  @Test
+  fun `containsOverriddenNestedSet returns false for empty override set`() {
+    val nestedSet = createSimpleModuleSet("nested", "mod.a")
+    val parentSet = createNestedModuleSet("parent", listOf("mod.b"), listOf(nestedSet))
+
+    val result = containsOverriddenNestedSet(parentSet, emptySet())
+
+    assertThat(result).isFalse()
+  }
+
+  @Test
+  fun `containsOverriddenNestedSet returns false for module set with no nested sets`() {
+    val parentSet = createSimpleModuleSet("parent", "mod.a", "mod.b")
+
+    val result = containsOverriddenNestedSet(parentSet, setOf(ModuleSetName("someSet")))
+
+    assertThat(result).isFalse()
+  }
+
+  // Tests for findOverriddenNestedSetNames()
+
+  @Test
+  fun `findOverriddenNestedSetNames finds direct overridden set`() {
+    val overridden1 = createSimpleModuleSet("overridden1", "mod.a")
+    val overridden2 = createSimpleModuleSet("overridden2", "mod.b")
+    val notOverridden = createSimpleModuleSet("notOverridden", "mod.c")
+    val parentSet = createNestedModuleSet(
+      "parent",
+      listOf("mod.d"),
+      listOf(overridden1, notOverridden, overridden2)
+    )
+
+    val result = findOverriddenNestedSetNames(parentSet, setOf(ModuleSetName("overridden1"), ModuleSetName("overridden2")))
+
+    assertThat(result).containsExactlyInAnyOrder(ModuleSetName("overridden1"), ModuleSetName("overridden2"))
+  }
+
+  @Test
+  fun `findOverriddenNestedSetNames finds all overridden sets recursively`() {
+    val deepOverridden = createSimpleModuleSet("deepOverridden", "mod.a")
+    val deepNormal = createSimpleModuleSet("deepNormal", "mod.b")
+    val middleOverridden = createNestedModuleSet(
+      "middleOverridden",
+      listOf("mod.c"),
+      listOf(deepOverridden, deepNormal)
+    )
+    val middleNormal = createSimpleModuleSet("middleNormal", "mod.d")
+    val parentSet = createNestedModuleSet(
+      "parent",
+      listOf("mod.e"),
+      listOf(middleOverridden, middleNormal)
+    )
+
+    val result = findOverriddenNestedSetNames(
+      parentSet,
+      setOf(ModuleSetName("middleOverridden"), ModuleSetName("deepOverridden"))
+    )
+
+    assertThat(result).containsExactlyInAnyOrder(ModuleSetName("middleOverridden"), ModuleSetName("deepOverridden"))
+  }
+
+  @Test
+  fun `findOverriddenNestedSetNames returns empty for no overrides`() {
+    val nestedSet = createSimpleModuleSet("nested", "mod.a")
+    val parentSet = createNestedModuleSet("parent", listOf("mod.b"), listOf(nestedSet))
+
+    val result = findOverriddenNestedSetNames(parentSet, setOf(ModuleSetName("someOtherSet")))
+
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `findOverriddenNestedSetNames returns empty for empty override set`() {
+    val nestedSet = createSimpleModuleSet("nested", "mod.a")
+    val parentSet = createNestedModuleSet("parent", listOf("mod.b"), listOf(nestedSet))
+
+    val result = findOverriddenNestedSetNames(parentSet, emptySet())
+
+    assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `findOverriddenNestedSetNames preserves order of discovery`() {
+    val nested1 = createSimpleModuleSet("nested1", "mod.a")
+    val nested2 = createSimpleModuleSet("nested2", "mod.b")
+    val nested3 = createSimpleModuleSet("nested3", "mod.c")
+    val parentSet = createNestedModuleSet(
+      "parent",
+      listOf("mod.d"),
+      listOf(nested1, nested2, nested3)
+    )
+
+    val result = findOverriddenNestedSetNames(parentSet, setOf(ModuleSetName("nested1"), ModuleSetName("nested2"), ModuleSetName("nested3")))
+
+    // Should be in order of traversal
+    assertThat(result).containsExactly(ModuleSetName("nested1"), ModuleSetName("nested2"), ModuleSetName("nested3"))
+  }
+
+  @Test
+  fun `doGenerateAllModuleSetsInternal generates discovered module set xml files`(@TempDir tempDir: Path): Unit = runBlocking {
+    val strategy = DeferredFileUpdater(tempDir)
+
+    val result = doGenerateAllModuleSetsInternal(
+      obj = ModuleSetGenerationTestSource,
+      outputDir = tempDir,
+      label = "test",
+      strategy = strategy,
+    )
+
+    assertThat(result.files.map { it.fileName })
+      .containsExactly("intellij.moduleSets.regular.xml")
+    assertThat(result.trackingMap[tempDir])
+      .containsExactly("intellij.moduleSets.regular.xml")
+    assertThat(strategy.getDiffs().map { it.path.fileName.toString() })
+      .containsExactly("intellij.moduleSets.regular.xml")
+  }
+
+  @Test
+  fun `cleanupOrphanedModuleSetFiles deletes stale module set xml files`(@TempDir tempDir: Path): Unit = runBlocking {
+    val regularFile = tempDir.resolve("intellij.moduleSets.regular.xml")
+    val staleFile = tempDir.resolve("intellij.moduleSets.stale.xml")
+    Files.writeString(regularFile, "<idea-plugin/>")
+    Files.writeString(staleFile, "<idea-plugin/>")
+
+    val strategy = DeferredFileUpdater(tempDir)
+    val result = doGenerateAllModuleSetsInternal(
+      obj = ModuleSetGenerationTestSource,
+      outputDir = tempDir,
+      label = "test",
+      strategy = strategy,
+    )
+
+    val deleted = cleanupOrphanedModuleSetFiles(result.trackingMap, strategy)
+
+    assertThat(deleted.map { it.fileName })
+      .containsExactly("intellij.moduleSets.stale.xml")
+  }
+}

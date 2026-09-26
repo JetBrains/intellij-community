@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  F.class
+End of files
+Compiling files:
+  java/classModifiers/becameSealedLambdaTarget/a/F.java
+  java/classModifiers/becameSealedLambdaTarget/a/Impl.java
+End of files
+Cleaning output files:
+  User.class
+End of files
+Compiling files:
+  java/classModifiers/becameSealedLambdaTarget/a/User.java
+End of files
+------------------------------------------
+Exit code: ERROR

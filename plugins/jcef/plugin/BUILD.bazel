@@ -1,0 +1,78 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.jcef.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.jcef",
+        "intellij.platform.ui.jcef",
+        "intellij.platform.ide.impl.jcef",
+        "intellij.platform.ide.newUiOnboarding.jcef",
+        "intellij.jcef.frontend",
+        "intellij.internal.jcef",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.internal.jcef",
+        "intellij.jcef.frontend",
+        "intellij.libraries.jcef",
+        "intellij.platform.ide.impl.jcef",
+        "intellij.platform.ide.newUiOnboarding.jcef",
+        "intellij.platform.ui.jcef",
+    ],
+    main_module = "intellij.jcef.plugin",
+    variants = [
+        "darwin_aarch64",
+        "darwin_x64",
+        "linux_aarch64",
+        "linux_x64",
+        "windows_aarch64",
+        "windows_x64",
+    ],
+)
+
+exports_files(
+    ["intellij.jcef.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev intellij.jcef.plugin` end
+
+### auto-generated section `build intellij.jcef.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.jcef.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.jcef.plugin` end
+
+### auto-generated section `iml intellij.jcef.plugin` start
+exports_files(
+    [
+        "intellij.jcef.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.jcef.plugin` end

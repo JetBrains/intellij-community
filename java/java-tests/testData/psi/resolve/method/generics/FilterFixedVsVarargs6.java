@@ -14,6 +14,6 @@ class A {
     public static void main(String[] args) {
         String[] array = {"foo", "bar"};
         //resolves to varargs method
-        List<String> uhoh =   <ref>listOf(array);
+        List<String> uhoh =   <caret>listOf(array);
     }
 }

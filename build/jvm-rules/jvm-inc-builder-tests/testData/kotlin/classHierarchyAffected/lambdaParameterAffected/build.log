@@ -1,0 +1,39 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_lambdaParameterAffected-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/B.kt
+End of files
+Cleaning output files:
+  ConsumeBExtLambdaKt.class
+  ConsumeBLambdaKt.class
+  META-INF/kotlin_classHierarchyAffected_lambdaParameterAffected-a.kotlin_module
+  UseConsumeBExtLambdaKt$useConsumeBExtLambda$1.class
+  UseConsumeBExtLambdaKt.class
+  UseConsumeBLambdaKt$useConsumeBLambda$1.class
+  UseConsumeBLambdaKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/consumeBExtLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/consumeBLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/useConsumeBExtLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/useConsumeBLambda.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_lambdaParameterAffected-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/B.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/consumeBExtLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/consumeBLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/useConsumeBExtLambda.kt
+  kotlin/classHierarchyAffected/lambdaParameterAffected/a/useConsumeBLambda.kt
+End of files
+------------------------------------------
+Exit code: OK

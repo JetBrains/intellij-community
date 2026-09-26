@@ -1,88 +1,91 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.ProjectIconsAccessor;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.AddToGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.ExtensionPoints;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
+import org.jetbrains.idea.devkit.dom.KeyboardShortcut;
+import org.jetbrains.idea.devkit.dom.PluginModule;
+import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.Vendor;
+import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UastContextKt;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PluginDescriptorStructureUtil {
+public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
-  private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
-    ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
+  private static final @NonNls Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
+    Set.of("id", "name", "version", "category", "resource-bundle");
 
-  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
-    .put("psi", "PSI")
-    .put("dom", "DOM")
-    .put("sdk", "SDK")
-    .put("junit", "JUnit")
-    .put("idea", "IDEA")
-    .put("javaee", "JavaEE")
-    .put("jsf", "JSF")
-    .put("mvc", "MVC")
-    .put("el", "EL")
-    .put("id", "ID")
-    .put("jsp", "JSP")
-    .put("xml", "XML")
-    .put("ast", "AST")
-    .put("gdsl", "GDSL")
-    .put("pom", "POM")
-    .put("html", "HTML")
-    .put("php", "PHP")
-    .build();
+  private static final @NonNls Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = Map.ofEntries(
+    Map.entry("psi", "PSI"),
+    Map.entry("dom", "DOM"),
+    Map.entry("sdk", "SDK"),
+    Map.entry("junit", "JUnit"),
+    Map.entry("idea", "IDEA"),
+    Map.entry("javaee", "JavaEE"),
+    Map.entry("jsf", "JSF"),
+    Map.entry("mvc", "MVC"),
+    Map.entry("el", "EL"),
+    Map.entry("id", "ID"),
+    Map.entry("jsp", "JSP"),
+    Map.entry("xml", "XML"),
+    Map.entry("ast", "AST"),
+    Map.entry("gdsl", "GDSL"),
+    Map.entry("pom", "POM"),
+    Map.entry("html", "HTML"),
+    Map.entry("php", "PHP"));
 
   private PluginDescriptorStructureUtil() {
   }
 
-
-  @NotNull
-  public static String getTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return safeGetTagDisplayText(tag);
     }
 
-    if (element instanceof Action) {
-      String actionId = ((Action)element).getId().getStringValue();
+    if (element instanceof Action action) {
+      String actionId = action.getEffectiveId();
       if (StringUtil.isNotEmpty(actionId)) {
         return actionId;
       }
     }
-    else if (element instanceof ExtensionPoint) {
-      ExtensionPoint epElement = (ExtensionPoint)element;
+    else if (element instanceof ExtensionPoint epElement) {
       String epName = epElement.getName().getStringValue();
       if (StringUtil.isNotEmpty(epName)) {
         return epName;
@@ -93,60 +96,35 @@ public class PluginDescriptorStructureUtil {
         return toShortName(epQualifiedName);
       }
     }
+    else if (element instanceof Separator) {
+      return "----------";
+    }
 
     return toDisplayName(element.getXmlElementName()); // default
   }
 
-  @NotNull
-  public static String safeGetTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String safeGetTagDisplayText(@Nullable XmlTag tag) {
     return tag != null ? toDisplayName(tag.getLocalName()) : DevKitBundle.message("error.plugin.xml.tag.invalid");
   }
 
-  @Nullable
-  public static Icon getTagIcon(@Nullable XmlTag tag) {
+  public static @Nullable Icon getTagIcon(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return tag != null ? DEFAULT_ICON : null;
     }
 
-    if (element instanceof Action) {
-      XmlAttributeValue iconAttrValue = ((Action)element).getIcon().getXmlAttributeValue();
-      if (iconAttrValue != null) {
-        boolean referenceFound = false;
-        for (PsiReference reference : iconAttrValue.getReferences()) {
-          referenceFound = true;
-          Icon icon = getIconFromReference(reference);
-          if (icon != null) {
-            return icon;
-          }
-        }
-
-        // icon field initializer may not be available if there're no attached sources for containing class
-        if (referenceFound) {
-          String value = iconAttrValue.getValue();
-          if (value != null) {
-            Icon icon = IconLoader.findIcon(value, false);
-            if (icon != null) {
-              return icon;
-            }
-          }
-        }
-      }
-    }
-    else if (element instanceof Group) {
-      return AllIcons.Actions.GroupByPackage;
-    }
-
-    return DEFAULT_ICON;
+    return ObjectUtils.notNull(ElementPresentationManager.getIcon(element), DEFAULT_ICON);
   }
 
-  @Nullable
-  public static String getTagLocationString(@Nullable XmlTag tag) {
+  public static @Nullable String getTagLocationString(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return null;
     }
 
+    if (element instanceof PluginModule) {
+      return getPluginModuleLocation((PluginModule)element);
+    }
     if (element instanceof IdeaVersion) {
       return getIdeaVersionLocation((IdeaVersion)element);
     }
@@ -154,7 +132,7 @@ public class PluginDescriptorStructureUtil {
       return getExtensionsLocation((Extensions)element);
     }
     if (element instanceof ExtensionPoints) {
-      return getExtensionPointsLocation((ExtensionPoints)element);
+      return getExtensionPointsLocation(element);
     }
     if (element instanceof ExtensionPoint) {
       return getExtensionPointLocation((ExtensionPoint)element);
@@ -181,30 +159,31 @@ public class PluginDescriptorStructureUtil {
       return getVendorLocation((Vendor)element);
     }
     if (element.getParent() instanceof IdeaPlugin && element instanceof GenericDomValue) {
-      return getTopLevelNodeLocation((GenericDomValue)element);
+      return getTopLevelNodeLocation((GenericDomValue<?>)element);
     }
 
     return guessTagLocation(element);
   }
 
+  private static String getPluginModuleLocation(PluginModule pluginModule) {
+    return pluginModule.getValue().getStringValue();
+  }
 
-  @Nullable
-  private static String getIdeaVersionLocation(IdeaVersion element) {
+  private static @Nullable String getIdeaVersionLocation(IdeaVersion element) {
     String since = element.getSinceBuild().getStringValue();
     if (StringUtil.isNotEmpty(since)) {
-      String until = element.getUntilBuild().getStringValue();
+      String strictUntil = element.getStrictUntilBuild().getStringValue();
+      String until = strictUntil != null ? strictUntil : element.getUntilBuild().getStringValue();
       return since + " - " + (StringUtil.isNotEmpty(until) ? until : "...");
     }
     return null;
   }
 
-  @Nullable
-  private static String getExtensionsLocation(Extensions element) {
+  private static @Nullable String getExtensionsLocation(Extensions element) {
     return element.getDefaultExtensionNs().getStringValue();
   }
 
-  @Nullable
-  private static String getExtensionPointsLocation(ExtensionPoints element) {
+  private static @Nullable String getExtensionPointsLocation(DomElement element) {
     DomElement parent = element.getParent();
     if (parent instanceof IdeaPlugin) {
       return ((IdeaPlugin)parent).getPluginId();
@@ -212,8 +191,7 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getExtensionPointLocation(ExtensionPoint element) {
+  private static @Nullable String getExtensionPointLocation(ExtensionPoint element) {
     String epInterface = element.getInterface().getStringValue();
     if (StringUtil.isNotEmpty(epInterface)) {
       return toShortName(epInterface);
@@ -225,29 +203,24 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getWithLocation(With element) {
+  private static @Nullable String getWithLocation(With element) {
     return element.getAttribute().getStringValue();
   }
 
-  @Nullable
-  private static String getComponentLocation(Component element) {
+  private static @Nullable String getComponentLocation(Component element) {
     String implementationClassText = element.getImplementationClass().getRawText();
     return toShortName(implementationClassText);
   }
 
-  @Nullable
-  private static String getGroupLocation(Group element) {
-    return element.getId().getStringValue();
+  private static @Nullable String getGroupLocation(ActionOrGroup element) {
+    return element.getEffectiveId();
   }
 
-  @Nullable
-  private static String getAddToGroupLocation(AddToGroup element) {
+  private static @Nullable String getAddToGroupLocation(AddToGroup element) {
     return element.getGroupId().getStringValue();
   }
 
-  @Nullable
-  private static String getExtensionLocation(Extension element) {
+  private static @Nullable String getExtensionLocation(Extension element) {
     DomElement parent = element.getParent();
     if (parent instanceof Extensions) {
       String extensionsNamespace = ((Extensions)parent).getDefaultExtensionNs().getStringValue();
@@ -281,21 +254,17 @@ public class PluginDescriptorStructureUtil {
     return guessTagLocation(element);
   }
 
-  @Nullable
-  private static String getKeyboardShortcutLocation(KeyboardShortcut element) {
+  private static @Nullable String getKeyboardShortcutLocation(KeyboardShortcut element) {
     return element.getFirstKeystroke().getStringValue();
   }
 
-  @NotNull
-  private static String getVendorLocation(Vendor element) {
+  private static @NotNull String getVendorLocation(Vendor element) {
     return element.getValue();
   }
 
-  @Nullable
-  private static String getTopLevelNodeLocation(GenericDomValue element) {
-    if (element instanceof Dependency) {
-      Dependency dependency = (Dependency)element;
-      String result = dependency.getRawText();
+  private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
+    if (element instanceof Dependency dependency) {
+      @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();
       if (optional != null && optional) {
@@ -304,15 +273,14 @@ public class PluginDescriptorStructureUtil {
       return result;
     }
 
-    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(element.getXmlElementName().toLowerCase())) {
+    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(StringUtil.toLowerCase(element.getXmlElementName()))) {
       return element.getRawText();
     }
 
     return null;
   }
 
-  @Nullable
-  private static String guessTagLocation(DomElement element) {
+  private static @Nullable String guessTagLocation(DomElement element) {
     String location = toShortName(firstNotNullAttribute(
       element, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
 
@@ -329,9 +297,9 @@ public class PluginDescriptorStructureUtil {
     }
 
     DomGenericInfo genericInfo = element.getGenericInfo();
-    List<? extends DomAttributeChildDescription> attrDescriptions = genericInfo.getAttributeChildrenDescriptions();
+    List<? extends DomAttributeChildDescription<?>> attrDescriptions = genericInfo.getAttributeChildrenDescriptions();
     String possibleOnlyAttrValue = null;
-    for (DomAttributeChildDescription description : attrDescriptions) {
+    for (DomAttributeChildDescription<?> description : attrDescriptions) {
       String value = description.getDomAttributeValue(element).getStringValue();
       if (StringUtil.isEmpty(value)) {
         continue;
@@ -354,13 +322,10 @@ public class PluginDescriptorStructureUtil {
       return possibleOnlyAttrValue;
     }
 
-    // check if tag doesn't have attributes and subtags and use it's text content as a location in such cases
+    // check if tag doesn't have attributes and subtags and use its text content as a location in such cases
     if (attrDescriptions.isEmpty() && genericInfo.getFixedChildrenDescriptions().isEmpty()) {
       if (element instanceof GenericDomValue) {
-        return ((GenericDomValue)element).getRawText();
-      }
-      if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
+        return ((GenericDomValue<?>)element).getRawText();
       }
     }
 
@@ -368,8 +333,7 @@ public class PluginDescriptorStructureUtil {
   }
 
 
-  @Nullable
-  private static String toShortName(@Nullable String fqName) {
+  private static @Nullable @NlsSafe String toShortName(@Nullable String fqName) {
     if (fqName == null || fqName.contains(" ")) {
       return null;
     }
@@ -380,18 +344,13 @@ public class PluginDescriptorStructureUtil {
     return fqName;
   }
 
-  @NotNull
-  private static String toDisplayName(@NotNull String tagName) {
-    String result = tagName.replaceAll("-", " ").replaceAll("\\.", " | ");
+  private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
+    String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
-    String[] words = NameUtil.nameToWords(result);
-    for (int i = 0; i < words.length; i++) {
-      @NonNls String word = words[i];
-      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(word.toLowerCase());
-      if (replacement != null) {
-        words[i] = replacement;
-      }
-    }
+    List<@NotNull String> words = ContainerUtil.map(NameUtil.nameToWordList(result), word -> {
+      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
+      return replacement != null ? replacement : word;
+    });
 
     result = StringUtil.join(words, " ");
     result = StringUtil.capitalizeWords(result, true);
@@ -399,11 +358,10 @@ public class PluginDescriptorStructureUtil {
     return result;
   }
 
-  @Nullable
-  private static String firstNotNullAttribute(DomElement element, String... attributes) {
+  private static @Nullable @NonNls String firstNotNullAttribute(DomElement element, @NonNls String... attributes) {
     DomGenericInfo genericInfo = element.getGenericInfo();
     for (String attribute : attributes) {
-      DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(attribute);
+      DomAttributeChildDescription<?> description = genericInfo.getAttributeChildDescription(attribute);
       if (description == null) {
         continue;
       }
@@ -417,44 +375,23 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getSubTagText(DomElement element, @SuppressWarnings("SameParameterValue") String subTagName) {
+  private static @Nullable String getSubTagText(DomElement element, @SuppressWarnings("SameParameterValue") String subTagName) {
     DomFixedChildDescription subTagDescription = element.getGenericInfo().getFixedChildDescription(subTagName);
     if (subTagDescription == null) {
       return null;
     }
-    return subTagDescription.getValues(element).stream()
-      .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
-      .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
-      .map(ExtensionDomExtender.SimpleTagValue::getTagValue)
+    return StreamEx.of(subTagDescription.getValues(element))
+      .select(ExtensionDomExtender.SimpleTagValue.class)
+      .map(ExtensionDomExtender.SimpleTagValue::getStringValue)
       .findAny()
       .orElse(null);
   }
 
-  @Nullable
-  private static DomElement getDomElement(@Nullable XmlTag tag) {
+  private static @Nullable DomElement getDomElement(@Nullable XmlTag tag) {
     if (tag == null) {
       return null;
     }
     Project project = tag.getProject();
     return DomManager.getDomManager(project).getDomElement(tag);
-  }
-
-  @Nullable
-  private static Icon getIconFromReference(@NotNull PsiReference reference) {
-    PsiElement resolved = reference.resolve();
-    if (!(resolved instanceof PsiField)) {
-      return null;
-    }
-    UField field = UastContextKt.toUElement(resolved, UField.class);
-    assert field != null;
-    UExpression expression = field.getUastInitializer();
-    if (expression == null) {
-      return null;
-    }
-
-    ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(resolved.getProject());
-    VirtualFile iconFile = iconsAccessor.resolveIconFile(expression.getPsi());
-    return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
   }
 }

@@ -6,4 +6,4 @@ class Overloaded extends HashMap {
     def foo = {}
 }
 
-(new Overloaded() + new Overloaded()).<ref>foo()
+(new Overloaded() + new Overloaded()).<caret>foo()

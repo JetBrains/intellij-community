@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun foo() {
+    val x = 1..4
+
+    for (<caret>it in x) {
+        it.equals(1)
+    }
+}

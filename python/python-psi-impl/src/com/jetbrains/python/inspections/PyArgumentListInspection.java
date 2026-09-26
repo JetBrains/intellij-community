@@ -1,0 +1,430 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.inspections;
+
+import com.google.common.collect.Lists;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
+import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+public final class PyArgumentListInspection extends PyInspection {
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    if (context.getUsesExternalTypeEngine()) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    return new Visitor(holder, context);
+  }
+
+  private static class Visitor extends PyInspectionVisitor {
+
+    Visitor(@NotNull ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
+    }
+
+    @Override
+    protected @NotNull ProblemsHolder getHolder() {
+      //noinspection ConstantConditions, see Visitor#Visitor(ProblemsHolder, LocalInspectionToolSession)
+      return super.getHolder();
+    }
+
+    @Override
+    public void visitPyArgumentList(final @NotNull PyArgumentList node) {
+      inspectPyArgumentList(node, getHolder(), getResolveContext());
+    }
+
+    @Override
+    public void visitPyStarArgument(@NotNull PyStarArgument node) {
+      if (node.isKeyword()) return;
+      checkKnownSizeTupleSpreadInCall(node, getHolder(), getResolveContext());
+    }
+
+    @Override
+    public void visitPyDecorator(@NotNull PyDecorator deco) {
+      if (deco.hasArgumentList()) return;
+      final PyCallableType callableType =
+        ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        if (callable == null) return;
+        final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
+        if (params == null) return;
+
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, 0, null);
+        if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
+          // no parameters left to pass function implicitly, or wrong param type
+          registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
+                                                    callable.getName())); // TODO: better names for anon lambdas
+        }
+        else { // possible unfilled params
+          for (int i = 1; i < params.size(); i++) {
+            final PyCallableParameter parameter = params.get(i);
+            if (parameter.isKeywordOnlySeparator() || parameter.isPositionOnlySeparator()) {
+              continue;
+            }
+            // param tuples, non-starred or non-default won't do
+            if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
+              final String parameterName = parameter.getName();
+              registerProblem(deco, PyPsiBundle.problemMessage("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
+            }
+          }
+        }
+      }
+      // else: this case is handled by arglist visitor
+    }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // A class definition implicitly calls `__init_subclass__` of its base classes with the
+      // class-definition keyword arguments (e.g. `z="a"` in `class B(A, z="a")`).
+      if (node.getArguments(null).isEmpty()) return;
+      final PyArgumentList argumentList = node.getSuperClassExpressionList();
+      if (argumentList == null) return;
+      final List<PyCallExpression.PyArgumentsMapping> mappings = PyCallExpressionHelper.mapArguments(node, getResolveContext());
+      highlightMappingProblems(argumentList, getHolder(), mappings, myTypeEvalContext);
+    }
+  }
+
+  private static void inspectPyArgumentList(@NotNull PyArgumentList node,
+                                            @NotNull ProblemsHolder holder,
+                                            @NotNull PyResolveContext resolveContext) {
+    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list, handled in `visitPyClass`
+    final PyCallExpression call = node.getCallExpression();
+    if (call == null) return;
+
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext);
+
+    for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        if (callable instanceof PyFunction function) {
+          if (objectMethodCallViaSuper(call, function)) return;
+        }
+      }
+    }
+
+    highlightMappingProblems(node, holder, mappings, context);
+  }
+
+  /**
+   * Highlights unexpected arguments, unfilled parameters or otherwise incorrect arguments described by {@code mappings}
+   * on the given argument list {@code node} (a call's argument list or a class' base classes list).
+   */
+  private static void highlightMappingProblems(@NotNull PyArgumentList node,
+                                               @NotNull ProblemsHolder holder,
+                                               @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                               @NotNull TypeEvalContext context) {
+    if (mappings.isEmpty()) return;
+
+    if (mappings.size() == 1) {
+      // A single mapping is incomplete exactly when it has unmapped arguments or unmapped parameters,
+      // so the two checks below cover every incomplete mapping.
+      final PyCallExpression.PyArgumentsMapping mapping = mappings.getFirst();
+      if (!mapping.getUnmappedArguments().isEmpty()) {
+        highlightUnexpectedArguments(node, holder, mapping);
+      }
+      if (!mapping.getUnmappedParameters().isEmpty()) {
+        highlightUnfilledParameters(node, holder, mapping, context);
+      }
+    }
+    else {
+      if (ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
+        boolean anchorOnClosingParen = ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty()) &&
+                                       ContainerUtil.exists(mappings, mapping -> mapping.getUnmappedArguments().isEmpty());
+        if (anchorOnClosingParen) {
+          final PsiElement closingParen = findClosingParen(node);
+          // An unterminated call is still being typed, so report nothing rather than falling back to the whole list
+          if (closingParen == null) return;
+          registerCallMismatchProblem(holder, closingParen, node, mappings, context);
+        }
+        else {
+          registerCallMismatchProblem(holder, node, node, mappings, context);
+        }
+      }
+    }
+  }
+
+  private static @Nullable PsiElement findClosingParen(@NotNull PyArgumentList node) {
+    final ASTNode astNode = node.getNode();
+    if (astNode == null) return null;
+    final ASTNode rparNode = astNode.findChildByType(PyTokenTypes.RPAR);
+    if (rparNode == null) return null;
+    return rparNode.getPsi();
+  }
+
+  private static void checkKnownSizeTupleSpreadInCall(@NotNull PyStarArgument node,
+                                                      @NotNull ProblemsHolder holder,
+                                                      @NotNull PyResolveContext resolveContext) {
+    PyExpression expr = node.getExpression();
+    if (expr == null) return;
+
+    PyType type = resolveContext.getTypeEvalContext().getType(expr);
+    if (!(type instanceof PyTupleType tupleType) || tupleType.isHomogeneous()) return;
+
+    PsiElement parent = node.getParent();
+    if (!(parent instanceof PyArgumentList argList)) return;
+    if (!(argList.getParent() instanceof PyCallExpression callExpr)) return;
+
+    int nonKeywordStarCount = 0;
+    for (PyExpression arg : argList.getArguments()) {
+      if (arg instanceof PyStarArgument sa && !sa.isKeyword()) nonKeywordStarCount++;
+    }
+    if (nonKeywordStarCount != 1) return;
+
+    List<PyCallExpression.PyArgumentsMapping> mappings = callExpr.multiMapArguments(resolveContext);
+    if (mappings.size() != 1) return;
+
+    List<PyCallableParameter> variadicParams = mappings.get(0).getParametersMappedToVariadicPositionalArguments();
+    if (variadicParams.isEmpty()) return;
+
+    int positionalAfter = 0;
+    boolean seenNode = false;
+    for (PyExpression arg : argList.getArguments()) {
+      if (arg == node) {
+        seenNode = true;
+        continue;
+      }
+      if (seenNode && !(arg instanceof PyKeywordArgument) && !(arg instanceof PyStarArgument)) {
+        positionalAfter++;
+      }
+    }
+
+    int filled = tupleType.getElementCount() + positionalAfter;
+    if (filled >= variadicParams.size()) return;
+
+    ASTNode argListNode = argList.getNode();
+    if (argListNode == null) return;
+    ASTNode rparNode = argListNode.findChildByType(PyTokenTypes.RPAR);
+    if (rparNode == null) return;
+    PsiElement rpar = rparNode.getPsi();
+
+    for (int i = filled; i < variadicParams.size(); i++) {
+      PyCallableParameter param = variadicParams.get(i);
+      if (param.isPositionalContainer() || param.isKeywordContainer()) break;
+      if (!param.hasDefaultValue()) {
+        String name = param.getName();
+        if (name != null) {
+          registerProblem(holder, rpar, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name));
+        }
+      }
+    }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull @InspectionMessage String message,
+                                      @NotNull LocalQuickFix @NotNull ... fixes) {
+    holder.registerProblem(element, message, fixes);
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull PyInspectionMessages.ProblemMessage message) {
+    holder.problem(element, message.description()).tooltip(message.tooltip()).register();
+  }
+
+  private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
+    /*
+    Class could be designed to be used in cooperative multiple inheritance
+    so `super()` could be resolved to some non-object class that is able to receive passed arguments.
+
+    Example:
+
+      class Shape(object):
+        def __init__(self, shapename, **kwds):
+            self.shapename = shapename
+            # in case of ColoredShape the call below will be executed on Colored
+            # so warning should not be raised
+            super(Shape, self).__init__(**kwds)
+
+
+      class Colored(object):
+          def __init__(self, color, **kwds):
+              self.color = color
+              super(Colored, self).__init__(**kwds)
+
+
+      class ColoredShape(Shape, Colored):
+          pass
+     */
+
+    final PyClass receiverClass = function.getContainingClass();
+    if (receiverClass != null && PyUtil.isObjectClass(receiverClass)) {
+      final PyExpression receiver = call.getCallee() instanceof PyQualifiedExpression callee ? callee.getQualifier() : null;
+      if (receiver instanceof PyCallExpression && PyUtil.isSuperCall((PyCallExpression)receiver)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static Set<String> getDuplicateKeywordArguments(@NotNull PyArgumentList node) {
+    final Set<String> keywordArgumentNames = new HashSet<>();
+    final Set<String> results = new HashSet<>();
+    for (PyExpression argument : node.getArguments()) {
+      if (argument instanceof PyKeywordArgument) {
+        final String keyword = ((PyKeywordArgument)argument).getKeyword();
+        if (keywordArgumentNames.contains(keyword)) {
+          results.add(keyword);
+        }
+        keywordArgumentNames.add(keyword);
+      }
+    }
+    return results;
+  }
+
+  private static void highlightUnexpectedArguments(@NotNull PyArgumentList node,
+                                                   @NotNull ProblemsHolder holder,
+                                                   @NotNull PyCallExpression.PyArgumentsMapping mapping) {
+    final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
+
+    if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        final Project project = node.getProject();
+        if (callable instanceof PyFunction && !PyPsiIndexUtil.isNotUnderSourceRoot(project, callable.getContainingFile())) {
+          final String message = PyPsiBundle.message("INSP.unexpected.arg(s)");
+          holder.registerProblem(node, message, ProblemHighlightType.INFORMATION,
+                                 PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
+        }
+      }
+    }
+
+    for (PyExpression argument : mapping.getUnmappedArguments()) {
+      final List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyRemoveArgumentQuickFix());
+      if (argument instanceof PyKeywordArgument) {
+        if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {
+          continue;
+        }
+        quickFixes.add(new PyRenameArgumentQuickFix());
+      }
+      registerProblem(holder, argument,
+                      PyPsiBundle.message("INSP.unexpected.arg"),
+                      quickFixes.toArray(new LocalQuickFix[quickFixes.size() - 1]));
+    }
+  }
+
+  private static void highlightUnfilledParameters(@NotNull PyArgumentList node,
+                                                  @NotNull ProblemsHolder holder,
+                                                  @NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                  @NotNull TypeEvalContext context) {
+    PsiElement psi = findClosingParen(node);
+    if (psi == null) return;
+
+    if (ContainerUtil.exists(mapping.getUnmappedParameters(), parameter -> parameter.getName() == null)) {
+      registerCallMismatchProblem(holder, psi, node, List.of(mapping), context);
+    }
+    else {
+      StreamEx
+        .of(mapping.getUnmappedParameters())
+        .map(PyCallableParameter::getName)
+        .filter(Objects::nonNull)
+        .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name)));
+    }
+  }
+
+  /**
+   * Reports a call that matches none of several candidate signatures, using the same model and messaging as
+   * {@link PyTypeCheckerInspectionProblemRegistrar} via {@link PyMismatchTooltips}: a header naming the
+   * common callee, an "Argument types" row built from the provided arguments (a keyword argument shows as
+   * {@code keyword=type}; an argument that maps to no candidate stands out), and one "Expected one of" row
+   * per candidate built from its parameters (an unfilled parameter stands out).
+   *
+   * @param element the element to highlight (the argument list, or its closing parenthesis for unfilled params)
+   * @param node    the argument list whose arguments populate the "Argument types" row
+   */
+  private static void registerCallMismatchProblem(@NotNull ProblemsHolder holder,
+                                                  @NotNull PsiElement element,
+                                                  @NotNull PyArgumentList node,
+                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                  @NotNull TypeEvalContext context) {
+    final List<PyCallable> callables = ContainerUtil.map(mappings, mapping -> {
+      final PyCallableType callableType = mapping.getCallableType();
+      return callableType == null ? null : callableType.getCallable();
+    });
+
+    final List<PyMismatchTooltips.Slot> argumentSlots = new ArrayList<>();
+    for (PyExpression argument : node.getArguments()) {
+      final boolean matched = ContainerUtil.exists(mappings, mapping -> !containsIdentity(mapping.getUnmappedArguments(), argument));
+      argumentSlots.add(PyMismatchTooltips.Slot.argument(argument, context.getType(argument), context, matched));
+    }
+
+    final List<List<PyMismatchTooltips.Slot>> expectedRows = new ArrayList<>();
+    for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
+      final List<PyMismatchTooltips.Slot> row = new ArrayList<>();
+      final PyCallableType callableType = mapping.getCallableType();
+      final List<PyCallableParameter> parameters = callableType == null ? null : callableType.getParameters(context);
+      if (parameters != null) {
+        for (PyCallableParameter parameter : parameters) {
+          if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
+          // An unfilled parameter is wholly missing: highlight its name AND type, not just the type — the whole
+          // parameter is the incompatibility (mirrors the surplus/missing-parameter convention of the structural diff).
+          final boolean missing = containsIdentity(mapping.getUnmappedParameters(), parameter);
+          row.add(PyMismatchTooltips.Slot.parameter(parameter, context, !missing, missing));
+        }
+      }
+      expectedRows.add(row);
+    }
+
+    final PyInspectionMessages.ProblemMessage header = PyMismatchTooltips.header(callables);
+    final @InspectionMessage String description = PyMismatchTooltips.description(header, argumentSlots, expectedRows);
+    if (holder.isOnTheFly()) {
+      holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        .tooltip(PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)).register();
+    }
+    else {
+      holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register();
+    }
+  }
+
+  private static boolean containsIdentity(@NotNull List<?> list, @NotNull Object element) {
+    return ContainerUtil.exists(list, candidate -> candidate == element);
+  }
+}

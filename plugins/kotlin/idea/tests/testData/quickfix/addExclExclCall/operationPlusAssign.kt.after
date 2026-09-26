@@ -1,0 +1,8 @@
+// "Add non-null asserted (i!!) call" "true"
+fun test() {
+    var i: Int? = 0
+    this!!.i += 2
+}
+
+// IGNORE_K2
+

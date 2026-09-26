@@ -1,50 +1,66 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
-/**
- * This class creates a nicely formatted panel with components.  Useful for option panels.
- */
-public class OptionGroup implements PanelWithAnchor {
-  private final String myTitle;
-  private final List myOptions;
-  private final List<Boolean> myIsShifted;
-  private JComponent anchor;
+import static com.intellij.openapi.util.Pair.pair;
+import static java.awt.GridBagConstraints.EAST;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTH;
+import static java.awt.GridBagConstraints.REMAINDER;
+import static java.awt.GridBagConstraints.WEST;
 
-  public OptionGroup(@Nullable String title) {
-    myTitle = title;
-    myOptions = new ArrayList();
-    myIsShifted = new ArrayList<>();
-  }
+/**
+ * This class creates a nicely formatted panel with components. Useful for option panels.
+ * <p>
+ *   <em>Implementation note:</em> even though this class implements an interface with a "panel" in its name,
+ *   it's not a Swing component itself, and therefore can be instantiated or accessed outside of the EDT.
+ *   Implementations, therefore, should NOT instantiate Swing objects in the constructors and/or
+ *   field/property initializers. They should be instantiated in the {@link #createPanel()} method
+ *   instead. For Kotlin implementations the easiest way to achieve this is to use lazy initialization
+ *   or {@code lateinit} for component fields, for example:
+<pre>
+private val myLabel: JLabel by lazy { JLabel(message("some.message.key")) }
+</pre>
+ * </p>
+ *
+ * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
+ * OptionGroup will be removed after moving Kotlin UI DSL into platform API package
+ */
+@Deprecated(forRemoval = true)
+public class OptionGroup implements PanelWithAnchor {
+  private final @NlsContexts.BorderTitle String myTitle;
+  private final List<Object> myOptions = new ArrayList<>();
+  private final BitSet myIndented = new BitSet();
+  private JComponent myAnchor;
 
   /**
-   * Create panel without border
+   * Creates a panel without a border.
    */
   public OptionGroup() {
     this(null);
+  }
+
+  public OptionGroup(@Nullable @NlsContexts.BorderTitle String title) {
+    myTitle = title;
   }
 
   public void add(JComponent component) {
@@ -53,7 +69,7 @@ public class OptionGroup implements PanelWithAnchor {
 
   public void add(JComponent component, boolean indented) {
     myOptions.add(component);
-    myIsShifted.add(Boolean.valueOf(indented));
+    myIndented.set(myOptions.size() - 1, indented);
   }
 
   public void add(JComponent leftComponent, JComponent rightComponent) {
@@ -61,8 +77,8 @@ public class OptionGroup implements PanelWithAnchor {
   }
 
   public void add(JComponent leftComponent, JComponent rightComponent, boolean indented) {
-    myOptions.add(new Pair(leftComponent, rightComponent));
-    myIsShifted.add(Boolean.valueOf(indented));
+    myOptions.add(pair(leftComponent, rightComponent));
+    myIndented.set(myOptions.size() - 1, indented);
   }
 
   public JPanel createPanel() {
@@ -70,93 +86,53 @@ public class OptionGroup implements PanelWithAnchor {
     panel.setLayout(new GridBagLayout());
 
     for (int i = 0; i < myOptions.size(); i++) {
-      final int leftInset = Boolean.TRUE.equals(myIsShifted.get(i)) ? IdeBorderFactory.TITLED_BORDER_INDENT : 0;
-      final int topInset = i == 0 ? 0 : UIUtil.DEFAULT_VGAP;
-      final int rightInset = UIUtil.DEFAULT_HGAP;
-      final Object option = myOptions.get(i);
-      if (option instanceof JComponent) {
-        JComponent component = (JComponent)option;
-        panel.add(component,
-                  new GridBagConstraints(0, i, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, getFill(component),
-                                         new Insets(topInset, leftInset, 0, 0), 0, 0));
+      int top = i == 0 ? 0 : UIUtil.DEFAULT_VGAP;
+      int left = myIndented.get(i) ? IdeBorderFactory.TITLED_BORDER_INDENT : 0;
+
+      Object option = myOptions.get(i);
+      if (option instanceof JComponent component) {
+        panel.add(component, new GridBagConstraints(0, i, REMAINDER, 1, 1, 0, WEST, getFill(component), JBUI.insets(top, left, 0, 0), 0, 0));
       }
       else {
-        Pair pair = (Pair)option;
-        JComponent firstComponent = (JComponent)pair.first;
-        panel.add(firstComponent,
-                  new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, getFill(firstComponent),
-                                         new Insets(topInset, leftInset, 0, 0), 0, 0));
-        JComponent secondComponent = (JComponent)pair.second;
-        panel.add(secondComponent,
-                  new GridBagConstraints(1, i, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL,
-                                         new Insets(topInset, rightInset, 0, 0), 0, 0));
+        JComponent first = (JComponent)((Pair<?, ?>)option).first;
+        panel.add(first, new GridBagConstraints(0, i, 1, 1, 1, 0, WEST, getFill(first), JBUI.insets(top, left, 0, 0), 0, 0));
+        JComponent second = (JComponent)((Pair<?, ?>)option).second;
+        panel.add(second, new GridBagConstraints(1, i, 1, 1, 1, 0, EAST, HORIZONTAL, JBUI.insets(top, UIUtil.DEFAULT_HGAP, 0, 0), 0, 0));
+        if (first instanceof JLabel) {
+          ((JLabel)first).setLabelFor(second);
+        }
       }
     }
+
     JPanel p = new JPanel();
     p.setPreferredSize(new Dimension(0, 0));
-    panel.add(p,
-              new GridBagConstraints(0, myOptions.size(), GridBagConstraints.REMAINDER, 1, 0, 1,
-                                     GridBagConstraints.NORTH, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBInsets.emptyInsets(), 0, 0));
 
     if (myTitle != null) {
       IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true);
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }
-
+    UIUtil.applyDeprecatedBackground(panel);
     return panel;
+  }
+
+  private static int getFill(JComponent component) {
+    return component instanceof JCheckBox ? NONE : HORIZONTAL;
   }
 
   @Override
   public JComponent getAnchor() {
-    return anchor;
+    return myAnchor;
   }
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    this.anchor = anchor;
+    myAnchor = anchor;
     for (Object o : myOptions) {
-      if (o instanceof Pair &&
-          ((Pair)o).getFirst() instanceof AnchorableComponent) {
-        ((AnchorableComponent)((Pair)o).getFirst()).setAnchor(anchor);
+      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent) {
+        ((AnchorableComponent)((Pair<?, ?>)o).first).setAnchor(anchor);
       }
     }
-  }
-
-  private static int getFill(JComponent component) {
-    if (component instanceof JCheckBox) {
-      return GridBagConstraints.NONE;
-    }
-    return GridBagConstraints.HORIZONTAL;
-  }
-
-  public JComponent[] getComponents() {
-    ArrayList<JComponent> components = new ArrayList<>();
-    for (Object o : myOptions) {
-      if (o instanceof Pair) {
-        components.add((JComponent)((Pair)o).first);
-        components.add((JComponent)((Pair)o).second);
-      }
-      else {
-        components.add((JComponent)o);
-      }
-    }
-    return components.toArray(new JComponent[0]);
-  }
-
-  @Nullable
-  public JComponent findAnchor() {
-    double maxWidth = -1;
-    JComponent ans = null;
-    for (Object o : myOptions) {
-      if (o instanceof Pair &&
-          ((Pair)o).getFirst() instanceof AnchorableComponent &&
-          ((JComponent)((Pair)o).getFirst()).getPreferredSize().getWidth() > maxWidth) {
-        maxWidth = ((JComponent)((Pair)o).getFirst()).getPreferredSize().getWidth();
-        ans = (JComponent)((Pair)o).getFirst();
-      }
-    }
-    return ans;
   }
 }

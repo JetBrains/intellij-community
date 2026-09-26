@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyUnusedImportUtil")
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
+import com.intellij.java.syntax.parser.JavaKeywords.SUPER
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -19,7 +18,7 @@ fun unusedImports(file: GroovyFile): Set<GrImportStatement> {
 }
 
 fun usedImports(file: GroovyFile): Set<GrImportStatement> {
-  val imports = file.getImports()
+  val imports = file.imports
 
   val (referencedStatements, unresolvedReferenceNames) = run {
     val searcher = ReferencedImportsSearcher()
@@ -53,7 +52,7 @@ private class ReferencedImportsSearcher : PsiRecursiveElementWalkingVisitor() {
     if (refElement.isQualified) return
 
     val refName = refElement.referenceName
-    if (refName == null || "super" == refName) return
+    if (refName == null || SUPER == refName) return
 
     val results = refElement.multiResolve(false)
     if (results.isEmpty()) {

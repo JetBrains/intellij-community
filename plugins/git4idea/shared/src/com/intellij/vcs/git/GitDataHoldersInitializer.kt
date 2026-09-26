@@ -1,0 +1,36 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.git
+
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vcs.changes.ChangesViewModifier
+import com.intellij.util.application
+import com.intellij.vcs.git.branch.GitInOutStateHolder
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+
+internal class GitDataHoldersInitializer : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (application.isUnitTestMode || FrontendApplicationInfo.isCodeWithMe()) return
+
+    coroutineScope {
+      launch { refreshChangesViewOnceRepositoriesAreReady(project) }
+    }
+    GitInOutStateHolder.getInstance(project)
+    VcsRepositoryIconsProvider.getInstance(project)
+  }
+}
+
+/**
+ * GitRepositoryChangesGroupingPolicy and other consumers may have already read [GitRepositoriesHolder]
+ * before it finished initializing; ask the Changes view to refresh once data is available.
+ */
+@ApiStatus.Internal
+suspend fun refreshChangesViewOnceRepositoriesAreReady(project: Project) {
+  GitRepositoriesHolder.getInstance(project).awaitInitialization()
+  project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
+}

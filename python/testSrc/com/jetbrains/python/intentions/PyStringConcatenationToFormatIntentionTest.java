@@ -15,63 +15,78 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : ktisha
  */
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestCase {
 
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
+
   public void testSimple() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   public void testAugmentAssignment() {   //PY-5226
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   public void testNegative() {   //PY-6505
-    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator")));
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doNegativeTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator")));
   }
 
   public void testTwoStrings() {   //PY-6505
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   public void testUnknownType() {   //PY-7969
-    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doNegativeTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
   public void testEmptyStrings() {   //PY-7968
-    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doNegativeTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"));
   }
 
   public void testUnicodeString() { //PY-7463
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   public void testUnicodeSecondString() { //PY-7463
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   // PY-8366
   public void testEscapingPy3() {
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
 
   // PY-8588
   public void testEscaping() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 
   public void testPy3() {   //PY-4706
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
 
   public void testPy3Unicode() {
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
+  }
+
+  public void testEnclosingConcatenationWithIntermediateCall() {
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.getLatest());
   }
 }

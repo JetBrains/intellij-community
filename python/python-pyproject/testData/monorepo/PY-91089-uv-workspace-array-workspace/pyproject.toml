@@ -1,0 +1,18 @@
+[project]
+name = "orgwiki"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "orgwiki-core",
+    "orgwiki-test",
+]
+
+# PY-91089: `tool.uv.workspace` is written as an array of tables (`[[...]]`) instead of a table (`[...]`).
+# The malformed workspace declaration must not abort discovery — the members must still become modules.
+[[tool.uv.workspace]]
+members = ["orgwiki-core", "orgwiki-test"]
+
+[tool.uv.sources]
+orgwiki-core = { workspace = true }
+orgwiki-test = { workspace = true }

@@ -1,7 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -13,49 +19,43 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Iterator;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
 /**
  * @author Max Medvedev
  */
-public class GrGenericTypeConverter extends GrTypeConverter {
+public final class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    switch (position) {
-      case METHOD_PARAMETER:
-      case GENERIC_PARAMETER:
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+  public boolean isApplicableTo(@NotNull Position position) {
+    return switch (position) {
+      case METHOD_PARAMETER, GENERIC_PARAMETER, ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Override
-  @Nullable
-  public ConversionResult isConvertibleEx(@NotNull PsiType ltype,
-                                          @NotNull PsiType rtype,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo position) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType ltype,
+                                                  @NotNull PsiType rtype,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
-    if (isCompileStatic(context) ) return null;
-    PsiClass lclass = ((PsiClassType)ltype).resolve();
-    PsiClass rclass = ((PsiClassType)rtype).resolve();
+    if (isCompileStatic(context)) return null;
 
-    if (lclass == null || rclass == null) return null;
+    ClassResolveResult lResult = ((PsiClassType)ltype).resolveGenerics();
+    PsiClass lClass = lResult.getElement();
+    if (lClass == null) return null;
+    if (lClass.getTypeParameters().length == 0) return null;
 
-    if (lclass.getTypeParameters().length == 0) return null;
+    ClassResolveResult rResult = ((PsiClassType)rtype).resolveGenerics();
+    PsiClass rClass = rResult.getElement();
+    if (rClass == null) return null;
 
-    if (!InheritanceUtil.isInheritorOrSelf(rclass, lclass, true)) return null;
-
-    PsiClassType.ClassResolveResult lresult = ((PsiClassType)ltype).resolveGenerics();
-    PsiClassType.ClassResolveResult rresult = ((PsiClassType)rtype).resolveGenerics();
-
-    if (typeParametersAgree(lclass, rclass, lresult.getSubstitutor(), rresult.getSubstitutor(), context)) return ConversionResult.OK;
+    if (!InheritanceUtil.isInheritorOrSelf(rClass, lClass, true)) return null;
+    if (!((PsiClassType)ltype).hasParameters()) return ConversionResult.OK;
+    if (typeParametersAgree(lClass, rClass, lResult.getSubstitutor(), rResult.getSubstitutor(), context)) return ConversionResult.OK;
 
     return null;
   }

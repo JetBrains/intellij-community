@@ -2,6 +2,7 @@ protected static def getGeneratedFileNames() {
     def foo = 0
     while (cond) {
 <begin>        println(foo)
+        foo = 1
         foo = ""
 <end>    }
 
@@ -19,6 +20,7 @@ protected static def getGeneratedFileNames() {
 
 private static String testMethod(Serializable foo) {
     println(foo)
+    foo = 1
     foo = ""
     return foo
 }

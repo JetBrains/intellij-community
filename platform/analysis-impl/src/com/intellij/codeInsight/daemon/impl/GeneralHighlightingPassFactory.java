@@ -1,0 +1,49 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.codeHighlighting.MainHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass.EmptyPass;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+
+final class GeneralHighlightingPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
+    registrar.registerTextEditorHighlightingPass(new GeneralHighlightingPassFactory(),
+                                                 null,
+                                                 new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
+  }
+
+  @Override
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL);
+    Project project = psiFile.getProject();
+    if (textRange == null) {
+      return new EmptyPass(project, editor.getDocument());
+    }
+    ProperTextRange visibleRange = DaemonCodeAnalyzerEx.getInstanceEx(project).getHighlightSessionFromCurrentIndicator(psiFile).getVisibleRange();
+    return new GeneralHighlightingPass(psiFile, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, true,
+                                       true, true, false, HighlightInfoUpdater.getInstance(project));
+  }
+
+  @Override
+  @NotNull
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile psiFile,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    // no applying to the editor - for read-only analysis only
+    return new GeneralHighlightingPass(psiFile, document, 0, psiFile.getTextLength(),
+                                       true, new ProperTextRange(0, document.getTextLength()), null, true, true,
+                                       true, false, HighlightInfoUpdater.EMPTY);
+  }
+}

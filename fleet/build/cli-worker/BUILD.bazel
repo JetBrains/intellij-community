@@ -1,0 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+java_binary(
+    name = "haven-cli-worker",
+    main_class = "fleet.buildtool.cli.worker.MainKt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":haven-cli-worker-lib"],
+)
+
+jvm_library(
+    name = "haven-cli-worker-lib",
+    srcs = glob(
+        ["srcJvmMain/**/*.kt"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//fleet/build/cli",
+        "@lib//:kotlin-stdlib",
+        "@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
+        "@rules_jvm//:opentelemetry-api_import",
+        "@rules_jvm//worker-framework",
+    ],
+)

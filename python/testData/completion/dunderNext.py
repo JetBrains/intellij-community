@@ -1,2 +1,2 @@
 class C:
-    def __nex<caret>
+    def __next_<caret>

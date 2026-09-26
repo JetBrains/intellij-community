@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jvm.native.trusted.roots` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jvm-native-trusted-roots-jvm-native-trusted-roots"],
+    module = ":jvm-native-trusted-roots",
+)
+### auto-generated section `dev intellij.libraries.jvm.native.trusted.roots` end
+
+### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` start
+jvm_library(
+    name = "jvm-native-trusted-roots",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jvm.native.trusted.roots",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jvm-native-trusted-roots-jvm-native-trusted-roots"],
+    runtime_deps = ["@lib//:libraries-jvm-native-trusted-roots-jvm-native-trusted-roots"],
+)
+
+jvm_library(
+    name = "jvm-native-trusted-roots_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jvm.native.trusted.roots",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jvm-native-trusted-roots-jvm-native-trusted-roots"],
+    runtime_deps = [":jvm-native-trusted-roots"],
+)
+### auto-generated section `build intellij.libraries.jvm.native.trusted.roots` end
+
+### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` start
+exports_files(
+    [
+        "intellij.libraries.jvm.native.trusted.roots.iml",
+        "resources/intellij.libraries.jvm.native.trusted.roots.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jvm.native.trusted.roots` end

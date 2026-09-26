@@ -25,12 +25,12 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThrowStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThrowStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiThrowStatementImpl.class);
 
   public PsiThrowStatementImpl() {
     super(THROW_STATEMENT);
@@ -45,9 +45,6 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.THROW_KEYWORD:
         return findChildByType(THROW_KEYWORD);
 
@@ -56,6 +53,9 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);
+
+      default:
+        return null;
     }
   }
 
@@ -89,6 +89,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
+  @Override
   public String toString() {
     return "PsiThrowStatement";
   }

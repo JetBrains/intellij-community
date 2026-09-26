@@ -17,11 +17,9 @@ package com.intellij.debugger.ui.tree;
 
 import com.intellij.openapi.util.Key;
 import com.sun.jdi.Field;
-import com.sun.jdi.ObjectReference;
 
-public interface FieldDescriptor extends NodeDescriptor {
+public interface FieldDescriptor extends DescriptorWithParentObject {
   Key<Boolean> SHOW_DECLARING_TYPE = Key.create("SHOW_TYPE_IN_NAME");
 
-  Field           getField();
-  ObjectReference getObject();
+  Field getField();
 }

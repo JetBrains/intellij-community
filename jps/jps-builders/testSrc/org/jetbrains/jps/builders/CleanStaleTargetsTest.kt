@@ -6,10 +6,11 @@ import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import kotlin.io.path.pathString
 
 class CleanStaleTargetsTest : JpsBuildTestCase() {
   fun `test delete old output when module is deleted`() {
-    //todo[nik, jeka] currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
+    //todo currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
     doTestDeleteOldOutput(false) {
       myProject.removeModule(it)
     }
@@ -17,7 +18,9 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
 
   fun `test delete old output when module is renamed`() {
     doTestDeleteOldOutput {
-      it.name = "a2"
+      val oldSourceRoot = it.sourceRoots.single().path.pathString
+      myProject.removeModule(it)
+      addModule("a2", arrayOf(oldSourceRoot), null, null, jdk)
     }
   }
 
@@ -30,7 +33,7 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
   }
 
   private fun doTestDeleteOldOutput(checkMappings: Boolean = true, action: (JpsModule) -> Unit) {
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
     val aRoot = PathUtil.getParentPath(createFile("a/src/A.java", "class A {}"))
     val aModule = addModule("a", arrayOf(aRoot), null, null, jdk)
     val bRoot = PathUtil.getParentPath(createFile("b/src/B.java", "class B {}"))

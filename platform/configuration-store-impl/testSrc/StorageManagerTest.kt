@@ -1,71 +1,53 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
+import java.nio.file.Path
 import kotlin.properties.Delegates
 
-internal class StorageManagerTest {
+class StorageManagerTest {
   companion object {
-    val MACRO = "\$MACRO1$"
+    private const val MACRO = $$"$MACRO1$"
 
-    @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
 
-  @Before fun setUp() {
-    storageManager = StateStorageManagerImpl("foo")
-    storageManager.addMacro(MACRO, "/temp/m1")
+  @Before
+  fun setUp() {
+    storageManager = StateStorageManagerImpl("foo", componentManager = null, controller = null)
+    storageManager.setMacros(listOf(Macro(MACRO, Path.of("/temp/m1"))))
   }
 
-  @Test fun createFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml")).isNotNull()
+  @Test
+  fun createFileStateStorageMacroSubstituted() {
+    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml", RoamingType.DEFAULT, usePathMacroManager = true)).isNotNull()
   }
 
-  @Test fun `collapse macro`() {
-    assertThat(storageManager.collapseMacros("/temp/m1/foo")).isEqualTo("$MACRO/foo")
-    assertThat(storageManager.collapseMacros("\\temp\\m1\\foo")).isEqualTo("/temp/m1/foo")
+  @Test
+  fun `collapse macro`() {
+    assertThat(storageManager.collapseMacro("/temp/m1/foo")).isEqualTo("$MACRO/foo")
+    assertThat(storageManager.collapseMacro("\\temp\\m1\\foo")).isEqualTo("/temp/m1/foo")
   }
 
-  @Test fun `add system-dependent macro`() {
-    val key = "\$INVALID$"
-    val expansion = "\\temp"
-    assertThatThrownBy({storageManager.addMacro(key, expansion) }).hasMessage("Macro $key set to system-dependent expansion $expansion")
+  @Test
+  fun `create storage assertion thrown when unknown macro`() {
+    assertThatThrownBy { storageManager.getOrCreateStorage($$"$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT, usePathMacroManager = true) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage($$"Cannot resolve $UNKNOWN_MACRO$/test.xml in [Macro(key=$MACRO1$, value=$${FileUtil.toSystemDependentName("/temp/m1")})]")
   }
 
-  @Test fun `create storage assertion thrown when unknown macro`() {
-    try {
-      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml")
-      TestCase.fail("Exception expected")
-    }
-    catch (e: IllegalArgumentException) {
-      assertThat(e.message).isEqualTo("Unknown macro: \$UNKNOWN_MACRO$ in storage file spec: \$UNKNOWN_MACRO$/test.xml")
-    }
-  }
-
-  @Test fun `create file storage macro substituted when expansion has$`() {
-    storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
-    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
+  @Test
+  fun `create file storage macro substituted when expansion has$`() {
+    storageManager.setMacros(listOf(Macro($$"$DOLLAR_MACRO$", Path.of("/temp/d$"))))
+    assertThat(storageManager.getOrCreateStorage($$"$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT, usePathMacroManager = true)).isNotNull()
   }
 }

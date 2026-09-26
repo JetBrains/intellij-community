@@ -1,17 +1,29 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.Point;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -55,7 +67,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     leftWithSelection();
     checkCaretPositionAndSelection(0, 0, 0, 0, 0);
 
-    myEditor.getCaretModel().moveToOffset(2);
+    getEditor().getCaretModel().moveToOffset(2);
     leftWithSelection();
     checkCaretPositionAndSelection(1, 1, 2, 1, 2);
     leftWithSelection();
@@ -113,31 +125,31 @@ public class EditorInlayTest extends AbstractEditorTest {
     type(' ');
     checkResultByText("a <caret>b a <caret>b");
     assertEquals(Arrays.asList(new VisualPosition(0, 2), new VisualPosition(0, 7)),
-                 ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
+                 ContainerUtil.map(getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
     right();
     type(' ');
     checkResultByText("a  <caret>b a  <caret>b");
     assertEquals(Arrays.asList(new VisualPosition(0, 4), new VisualPosition(0, 10)),
-                 ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getVisualPosition));
+                 ContainerUtil.map(getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
   }
 
   public void testDocumentEditingWithSoftWraps() {
     initText("long line");
     configureSoftWraps(7);
-    Inlay inlay = addInlay(1);
-    assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
-    WriteCommandAction.writeCommandAction(ourProject).run(() -> myEditor.getDocument().setText(" "));
+    Inlay<?> inlay = addInlay(1);
+    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(5));
+    runWriteCommand(() -> getEditor().getDocument().setText(" "));
     assertFalse(inlay.isValid());
   }
 
   public void testInlayDoesntGetInsideSurrogatePair() {
     initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
-    Inlay inlay = addInlay(2);
+    runWriteCommand(() -> getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    Inlay<?> inlay = addInlay(2);
     assertNotNull(inlay);
     assertTrue(inlay.isValid());
-    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
-    assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
+    runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(2, 3, 1));
+    assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(getEditor().getDocument(), inlay.getOffset()));
   }
 
   public void testTwoInlaysAtSameOffset() {
@@ -164,8 +176,8 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testTypingBetweenInlaysAtSameOffset() {
     initText("ab");
-    Inlay inlay1 = addInlay(1);
-    Inlay inlay2 = addInlay(1);
+    Inlay<?> inlay1 = addInlay(1);
+    Inlay<?> inlay2 = addInlay(1);
     right();
     right();
     type(' ');
@@ -181,7 +193,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("ab");
     addInlay(1);
     addInlay(1);
-    assertTrue(myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
+    assertTrue(getEditor().getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
   }
 
   public void testBackspaceWithTwoInlaysAtSameOffset() {
@@ -233,7 +245,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     leftWithSelection();
     checkCaretPositionAndSelection(0, 0, 0, 0, 0);
 
-    myEditor.getCaretModel().moveToOffset(2);
+    getEditor().getCaretModel().moveToOffset(2);
     leftWithSelection();
     checkCaretPositionAndSelection(1, 1, 3, 1, 2);
     leftWithSelection();
@@ -258,7 +270,7 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testCaretPositionAfterInlayDisposalToTheLeft() {
     initText("ab");
-    Inlay inlay = addInlay(1);
+    Inlay<?> inlay = addInlay(1);
     addInlay(1);
     right();
     right();
@@ -269,7 +281,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testCaretPositionAfterInlayDisposalToTheRight() {
     initText("ab");
     addInlay(1);
-    Inlay inlay = addInlay(1);
+    Inlay<?> inlay = addInlay(1);
     right();
     right();
     Disposer.dispose(inlay);
@@ -280,7 +292,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("ab");
     addInlay(1);
     addInlay(1);
-    LogicalPosition lp = myEditor.visualToLogicalPosition(new VisualPosition(0, 2));
+    LogicalPosition lp = getEditor().visualToLogicalPosition(new VisualPosition(0, 2));
     assertEquals(new LogicalPosition(0, 1), lp);
     assertFalse(lp.leansForward);
   }
@@ -298,11 +310,11 @@ public class EditorInlayTest extends AbstractEditorTest {
 
   public void testBehaviourOnTextInsertion() {
     initText("abc");
-    Inlay i1 = addInlay(1, false);
-    Inlay i2 = addInlay(2, true);
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
-      myEditor.getDocument().insertString(2, " ");
-      myEditor.getDocument().insertString(1, " ");
+    Inlay<?> i1 = addInlay(1, false);
+    Inlay<?> i2 = addInlay(2, true);
+    runWriteCommand(() -> {
+      getEditor().getDocument().insertString(2, " ");
+      getEditor().getDocument().insertString(1, " ");
     });
     assertTrue(i1.isValid() && i1.getOffset() == 1);
     assertTrue(i2.isValid() && i2.getOffset() == 4);
@@ -313,37 +325,319 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(2);
     right();
     right();
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
-      myEditor.getDocument().replaceString(1, 2, "b");
-    });
+    runWriteCommand(() -> getEditor().getDocument().replaceString(1, 2, "b"));
     checkCaretPosition(2, 2, 2);
   }
 
   public void testCaretMovingToInlayOffset() {
     initText("<caret>abc");
     addInlay(2);
-    myEditor.getCaretModel().moveToOffset(2);
+    getEditor().getCaretModel().moveToOffset(2);
     checkCaretPosition(2, 2, 3);
   }
 
-  private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
-                                                     int selectionStartOffset, int selectionEndOffset) {
+  public void testInlayOrderAfterMerge() {
+    initText("ab");
+    Inlay<?> i0 = addInlay(0);
+    Inlay<?> i1 = addInlay(1);
+    Inlay<?> i2 = addInlay(2);
+    runWriteCommand(() -> {
+      getEditor().getDocument().deleteString(0, 1);
+      getEditor().getDocument().deleteString(0, 1);
+    });
+    assertEquals(Arrays.asList(i0, i1, i2), getEditor().getInlayModel().getInlineElementsInRange(0, 0));
+  }
+
+  public void testInlayOrderAfterDocumentModification() {
+    initText("abc");
+    Inlay<?> i1 = addInlay(2);
+    runWriteCommand(() -> getEditor().getDocument().deleteString(1, 2));
+    Inlay<?> i2 = addInlay(1);
+    assertEquals(Arrays.asList(i1, i2), getEditor().getInlayModel().getInlineElementsInRange(1, 1));
+  }
+
+  /**
+   * Utility function for line-height block inlays testing.
+   * <p>
+   * Converts geometric position of editor line that accounts block inlays to visual position that is applicable to text lines only.
+   * <p>
+   * Consider the following example:
+   * <p>
+   * abc <- geometric line 0, visual line 0
+   * <block inlay with height being equal to line height> <- geometric line 1, visual line NA
+   * cde <- geometric line 2, visual line 1
+   *
+   */
+  private int geometricLineToVisualLine(int geometricLine) {
+    return getEditor().yToVisualLine(geometricLineY(geometricLine));
+  }
+
+  private static int geometricLineY(int geometricLine) {
+    return (int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * geometricLine;
+  }
+
+  public void testYToVisualLineCalculationForBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1);
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testYToVisualLineCalculationForAboveBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1, true);
+    assertEquals(0, geometricLineToVisualLine(1));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
+    initText("abc\ndef\nghi");
+    addBlockInlay(1);
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+    assertEquals(2, geometricLineToVisualLine(3));
+  }
+
+  public void testInlayInStartOfCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, false);
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testInlayInStartOfCollapsedLineRelatesToPreceding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, true);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayInCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(5, true, false);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayAboveFolding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    EditorTestUtil.addBlockInlay(getEditor(), 5, true, true, true, 0, null);
+    assertEquals(geometricLineY(0), getEditor().offsetToXY(0).y);
+    assertEquals(geometricLineY(2), getEditor().offsetToXY(8).y);
+  }
+
+  public void testInlayIsAddedIntoCollapsedFoldRegion() {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
+    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), getEditor().visualLineToY(1));
+    assertNull(inlay.getBounds());
+  }
+
+  public void testInlayIsAddedIntoCollapsedFoldRegionDifferentRelatesFlag() {
+    initText("abc");
+    addCollapsedFoldRegion(0, 3, "...");
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
+    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, getEditor().visualLineToY(1));
+    assertNotNull(inlay.getBounds());
+  }
+
+  public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
+    initText("abc\nd<caret>ef\nghi");
+    addBlockInlay(0);
+    addInlay(4, TEST_CHAR_WIDTH * 2);
+    down();
+    checkResultByText("abc\ndef\nghi<caret>");
+  }
+
+  public void testInlayAtLineEndCausesSoftWrapping() {
+    initText("abcd efgh");
+    addInlay(9, TEST_CHAR_WIDTH * 3);
+    configureSoftWraps(10);
+    verifySoftWrapPositions(5);
+  }
+
+  public void testBlockInlayImpactsEditorWidth() {
+    initText("");
+    getEditor().getSettings().setAdditionalColumnsCount(0);
+    getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123; }
+    });
+    assertEquals(123, getEditor().getContentComponent().getPreferredSize().width);
+  }
+
+  public void testOrderForAboveInlaysWithSamePriority() {
+    initText("text");
+    addBlockInlay(0, true);
+    addBlockInlay(0, true);
+    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, true);
+    Collections.reverse(list2);
+    assertEquals(list1, list2);
+  }
+
+  public void testOrderForBelowInlaysWithSamePriority() {
+    initText("text");
+    addBlockInlay(0, false);
+    addBlockInlay(0, false);
+    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
+    assertEquals(list1, list2);
+  }
+
+  public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
+    initText(" \tabcd efghijklmno");
+    addInlay(1, TEST_CHAR_WIDTH);
+    configureSoftWraps(11, false);
+    verifySoftWrapPositions(7);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
+    verifySoftWrapPositions(7, 16);
+  }
+
+  public void testInlineElementAtDocumentEnd() {
+    initText("");
+    addInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testAfterLineEndElementAtDocumentEnd() {
+    initText("");
+    addAfterLineEndInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(TEST_CHAR_WIDTH + 5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testInlayForDisposedEditor() {
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+    Inlay<?> inlay = EditorTestUtil.addInlay(editor, 0);
+    assertTrue(inlay.isValid());
+    EditorFactory.getInstance().releaseEditor(editor);
+    assertFalse(inlay.isValid());
+  }
+
+  public void testInlayForDisposedEditor2() {
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+    EditorFactory.getInstance().releaseEditor(editor);
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+    // inlays can be registered after Editor disposal, as many existing calls do not handle nullable result
+    assertNotNull(inlay1);
+    assertNotNull(inlay2);
+    assertNotNull(inlay3);
+
+    assertFalse(inlay1.isValid());
+    assertFalse(inlay2.isValid());
+    assertFalse(inlay3.isValid());
+
+    Disposable disposable = Disposer.newDisposable();
+    assertFalse(Disposer.tryRegister(inlay1, disposable));
+    assertFalse(Disposer.tryRegister(inlay2, disposable));
+    assertFalse(Disposer.tryRegister(inlay3, disposable));
+
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay1, disposable);
+    });
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay2, disposable);
+    });
+    assertThrows(RuntimeException.class, () -> {
+      Disposer.register(inlay3, disposable);
+    });
+  }
+
+  public void testInlayAreDisposables1() {
+    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+    try {
+      try {
+        Disposer.register(inlay1, disposable1);
+        Disposer.register(inlay2, disposable2);
+        Disposer.register(inlay3, disposable3);
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+
+      assertTrue(disposable1.isDisposed());
+      assertTrue(disposable2.isDisposed());
+      assertTrue(disposable3.isDisposed());
+    }
+    finally {
+      Disposer.dispose(disposable1);
+      Disposer.dispose(disposable2);
+      Disposer.dispose(disposable3);
+    }
+  }
+
+  public void testInlayAreDisposables2() {
+    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl("some\nmultiline\ntext"));
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
+    try {
+      Disposer.register(inlay1, disposable1);
+      Disposer.register(inlay2, disposable2);
+      Disposer.register(inlay3, disposable3);
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        editor.getDocument().setText("qwerty");
+      });
+
+      assertFalse(inlay1.isValid());
+      assertFalse(inlay2.isValid());
+      assertFalse(inlay3.isValid());
+
+      assertTrue(disposable1.isDisposed());
+      assertTrue(disposable2.isDisposed());
+      assertTrue(disposable3.isDisposed());
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor);
+
+      Disposer.dispose(disposable1);
+      Disposer.dispose(disposable2);
+      Disposer.dispose(disposable3);
+    }
+  }
+
+  private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
+                                              int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
-    assertEquals(selectionStartOffset, myEditor.getSelectionModel().getSelectionStart());
-    assertEquals(selectionEndOffset, myEditor.getSelectionModel().getSelectionEnd());
+    assertEquals(selectionStartOffset, getEditor().getSelectionModel().getSelectionStart());
+    assertEquals(selectionEndOffset, getEditor().getSelectionModel().getSelectionEnd());
   }
 
-  private static void checkCaretPosition(int offset, int logicalColumn, int visualColumn) {
-    assertEquals(offset, myEditor.getCaretModel().getOffset());
-    assertEquals(0, myEditor.getCaretModel().getLogicalPosition().line);
-    assertEquals(logicalColumn, myEditor.getCaretModel().getLogicalPosition().column);
-    assertEquals(0, myEditor.getCaretModel().getVisualPosition().line);
-    assertEquals(visualColumn, myEditor.getCaretModel().getVisualPosition().column);
+  private void checkCaretPosition(int offset, int logicalColumn, int visualColumn) {
+    assertEquals(offset, getEditor().getCaretModel().getOffset());
+    assertEquals(0, getEditor().getCaretModel().getLogicalPosition().line);
+    assertEquals(logicalColumn, getEditor().getCaretModel().getLogicalPosition().column);
+    assertEquals(0, getEditor().getCaretModel().getVisualPosition().line);
+    assertEquals(visualColumn, getEditor().getCaretModel().getVisualPosition().column);
   }
 
-  private static void assertInlaysPositions(int... offsets) {
-    assertArrayEquals(offsets, 
-                      myEditor.getInlayModel().getInlineElementsInRange(0, myEditor.getDocument().getTextLength()).stream()
+  private void assertInlaysPositions(int... offsets) {
+    assertArrayEquals(offsets,
+                      getEditor().getInlayModel().getInlineElementsInRange(0, getEditor().getDocument().getTextLength()).stream()
                         .mapToInt(inlay -> inlay.getOffset()).toArray());
   }
 }

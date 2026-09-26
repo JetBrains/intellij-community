@@ -1,0 +1,9 @@
+// K2_AFTER_ERROR: RETURN_NOT_ALLOWED
+// K2_ERROR: NOT_A_FUNCTION_LABEL
+
+// "Remove redundant label" "true"
+fun testValLabelInReturn() {
+    L@ val fn = { return@L<caret> }
+    fn()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveReturnLabelFix

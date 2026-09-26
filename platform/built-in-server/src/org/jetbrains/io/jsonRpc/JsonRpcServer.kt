@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -11,16 +11,20 @@ import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
-import com.intellij.util.io.writeUtf8
-import gnu.trove.THashMap
-import gnu.trove.TIntArrayList
-import io.netty.buffer.*
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
@@ -31,15 +35,15 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = Logger.getInstance(JsonRpcServer::class.java)
 
 private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
-  private var typeAdapter: IntArrayListTypeAdapter<TIntArrayList>? = null
+  private var typeAdapter: IntArrayListTypeAdapter<IntArrayList>? = null
 
   override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
-    if (type.type !== TIntArrayList::class.java) {
+    if (type.type !== IntArrayList::class.java) {
       return null
     }
 
     if (typeAdapter == null) {
-      typeAdapter = IntArrayListTypeAdapter<TIntArrayList>()
+      typeAdapter = IntArrayListTypeAdapter()
     }
     @Suppress("UNCHECKED_CAST")
     return typeAdapter as TypeAdapter<T>?
@@ -54,23 +58,24 @@ private val gson by lazy {
 }
 
 class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
+
   private val messageIdCounter = AtomicInteger()
-  private val domains = THashMap<String, NotNullLazyValue<*>>()
 
-  fun registerDomain(name: String, commands: NotNullLazyValue<*>, overridable: Boolean = false, disposable: Disposable? = null) {
-    if (domains.containsKey(name)) {
-      if (overridable) {
-        return
-      }
-      else {
-        throw IllegalArgumentException("$name is already registered")
+  @TestOnly private var testDomain: Pair<String, Any>? = null
+
+  init {
+    val beans = mutableMapOf<String, JsonRpcDomainBean>()
+    for (bean in JsonRpcDomainBean.EP_NAME.extensionList) {
+      val prev = beans.put(bean.name, bean)
+      if (prev != null && !prev.overridable) {
+        throw IllegalArgumentException("${bean.name} is already registered")
       }
     }
+  }
 
-    domains.put(name, commands)
-    if (disposable != null) {
-      Disposer.register(disposable, Disposable { domains.remove(name) })
-    }
+  @TestOnly fun registerTestDomain(name: String, domain: Any, disposable: Disposable) {
+    testDomain = Pair(name, domain)
+    Disposer.register(disposable, Disposable { testDomain = null })
   }
 
   override fun messageReceived(client: Client, message: CharSequence) {
@@ -98,13 +103,11 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
       return
     }
 
-    val domainHolder = domains[domainName]
-    if (domainHolder == null) {
+    val domain = findDomain(domainName)
+    if (domain == null) {
       processClientError(client, "Cannot find domain $domainName", messageId)
       return
     }
-
-    val domain = domainHolder.value
     val command = reader.nextString()
     if (domain is JsonServiceInvocator) {
       domain.invoke(command, client, reader, messageId, message)
@@ -140,7 +143,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
             }
           }
           else {
-            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtil.EMPTY_OBJECT_ARRAY else arrayOf(result)))
+            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtilRt.EMPTY_OBJECT_ARRAY else arrayOf(result)))
           }
         }
         return
@@ -150,7 +153,13 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
     processClientError(client, "Cannot find method $domain.$command", messageId)
   }
 
-  private fun processClientError(client: Client, error: String, messageId: Int) {
+  private fun findDomain(domainName: String): Any? {
+    val testDomain = this.testDomain
+    if (testDomain != null && testDomain.first == domainName) return testDomain.second
+    return JsonRpcDomainBean.EP_NAME.getByKey(domainName, JsonRpcServer::class.java, JsonRpcDomainBean::name)?.instance
+  }
+
+  private fun processClientError(client: Client, @NonNls error: String, messageId: Int) {
     try {
       LOG.error(error)
     }
@@ -196,7 +205,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
                             domain: String? = null,
                             command: String? = null,
                             rawData: ByteBuf? = null,
-                            params: Array<*> = ArrayUtil.EMPTY_OBJECT_ARRAY): ByteBuf {
+                            params: Array<*> = ArrayUtilRt.EMPTY_OBJECT_ARRAY): ByteBuf {
     val buffer = doEncodeMessage(byteBufAllocator, messageId, domain, command, params, rawData)
     if (LOG.isDebugEnabled) {
       LOG.debug("OUT ${buffer.toString(Charsets.UTF_8)}")
@@ -260,57 +269,61 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
       }
 
       // gson - SOE if param has type class com.intellij.openapi.editor.impl.DocumentImpl$MyCharArray, so, use hack
-      if (param is CharSequence) {
-        JsonUtil.escape(param, buffer)
-      }
-      else if (param == null) {
-        buffer.writeAscii("null")
-      }
-      else if (param is Boolean) {
-        buffer.writeAscii(param.toString())
-      }
-      else if (param is Number) {
-        if (sb == null) {
-          sb = StringBuilder()
+      when (param) {
+        is CharSequence -> {
+          JsonUtil.escape(param, buffer)
         }
-        if (param is Int) {
-          sb.append(param.toInt())
+        null -> {
+          buffer.writeAscii("null")
         }
-        else if (param is Long) {
-          sb.append(param.toLong())
+        is Boolean -> {
+          buffer.writeAscii(param.toString())
         }
-        else if (param is Float) {
-          sb.append(param.toFloat())
+        is Number -> {
+          if (sb == null) {
+            sb = StringBuilder()
+          }
+          when (param) {
+            is Int -> {
+              sb.append(param.toInt())
+            }
+            is Long -> {
+              sb.append(param.toLong())
+            }
+            is Float -> {
+              sb.append(param.toFloat())
+            }
+            is Double -> {
+              sb.append(param.toDouble())
+            }
+            else -> {
+              sb.append(param.toString())
+            }
+          }
+          buffer.writeAscii(sb)
+          sb.setLength(0)
         }
-        else if (param is Double) {
-          sb.append(param.toDouble())
+        is Consumer<*> -> {
+          if (sb == null) {
+            sb = StringBuilder()
+          }
+          @Suppress("UNCHECKED_CAST")
+          (param as Consumer<StringBuilder>).consume(sb)
+          ByteBufUtil.writeUtf8(buffer, sb)
+          sb.setLength(0)
         }
-        else {
-          sb.append(param.toString())
+        else -> {
+          if (writer == null) {
+            writer = JsonWriter(ByteBufUtf8Writer(buffer))
+          }
+          (gson.getAdapter(param.javaClass) as TypeAdapter<Any>).write(writer, param)
         }
-        buffer.writeAscii(sb)
-        sb.setLength(0)
-      }
-      else if (param is Consumer<*>) {
-        if (sb == null) {
-          sb = StringBuilder()
-        }
-        @Suppress("UNCHECKED_CAST")
-        (param as Consumer<StringBuilder>).consume(sb)
-        buffer.writeUtf8(sb)
-        sb.setLength(0)
-      }
-      else {
-        if (writer == null) {
-          writer = JsonWriter(ByteBufUtf8Writer(buffer))
-        }
-        (gson.getAdapter(param.javaClass) as TypeAdapter<Any>).write(writer, param)
       }
     }
   }
 }
 
-private fun ByteBuf.writeByte(c: Char) = writeByte(c.toInt())
+private fun ByteBuf.writeByte(c: Char) = writeByte(c.code)
 
 private fun ByteBuf.writeAscii(s: CharSequence): ByteBuf {
   ByteBufUtil.writeAscii(this, s)
@@ -321,15 +334,14 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
   override fun write(out: JsonWriter, value: T) {
     var error: IOException? = null
     out.beginArray()
-    (value as TIntArrayList).forEach { intValue ->
+    val iterator = (value as IntList).iterator()
+    while (iterator.hasNext()) {
       try {
-        out.value(intValue.toLong())
+        out.value(iterator.nextInt().toLong())
       }
       catch (e: IOException) {
         error = e
       }
-
-      error == null
     }
 
     error?.let { throw it }
@@ -346,10 +358,4 @@ private fun ByteBuf.addBuffer(buffer: ByteBuf): ByteBuf {
     writerIndex(capacity())
   }
   return this
-}
-
-fun JsonRpcServer.registerFromEp() {
-  for (domainBean in JsonRpcDomainBean.EP_NAME.extensions) {
-    registerDomain(domainBean.name, domainBean.value, domainBean.overridable)
-  }
 }

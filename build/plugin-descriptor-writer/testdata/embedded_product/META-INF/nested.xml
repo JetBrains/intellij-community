@@ -1,0 +1,6 @@
+<idea-plugin>
+  <content>
+    <module name="intellij.embedded.jar" loading="required"/>
+    <module name="intellij.embedded.file"/>
+  </content>
+</idea-plugin>

@@ -18,19 +18,14 @@ package com.intellij.xdebugger.impl.settings;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 
-/**
- * @author nik
- */
 @Tag("data-views")
 public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataViewSettings {
-  static final int DEFAULT_VALUE_TOOLTIP_DELAY = 700;
-
   private boolean mySortValues;
 
   private boolean autoExpressions = true;
   private int valueLookupDelay = DEFAULT_VALUE_TOOLTIP_DELAY;
 
-  private boolean showLibraryStackFrames = true;
+  private boolean showLibraryStackFrames = false;
 
   @Tag("show-values-inline")
   private boolean showValuesInline = true;
@@ -41,6 +36,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return mySortValues;
   }
 
+  @Override
   public void setSortValues(boolean sortValues) {
     mySortValues = sortValues;
   }
@@ -50,6 +46,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return valueLookupDelay;
   }
 
+  @Override
   public void setValueLookupDelay(int value) {
     valueLookupDelay = value;
   }
@@ -59,6 +56,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return autoExpressions;
   }
 
+  @Override
   public void setAutoExpressions(boolean autoExpressions) {
     this.autoExpressions = autoExpressions;
   }
@@ -68,14 +66,17 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
     return showLibraryStackFrames;
   }
 
+  @Override
   public void setShowLibraryStackFrames(boolean value) {
     showLibraryStackFrames = value;
   }
 
+  @Override
   public boolean isShowValuesInline() {
     return showValuesInline;
   }
 
+  @Override
   public void setShowValuesInline(boolean showValuesInline) {
     this.showValuesInline = showValuesInline;
   }

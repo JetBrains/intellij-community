@@ -14,5 +14,5 @@ PyFile:YieldFromNoExpr.py
           PsiElement(Py:YIELD_KEYWORD)('yield')
           PsiWhiteSpace(' ')
           PsiElement(Py:FROM_KEYWORD)('from')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             <empty list>

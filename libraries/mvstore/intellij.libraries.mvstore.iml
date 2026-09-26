@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="mvstore" type="repository">
+        <properties maven-id="com.h2database:h2-mvstore:2.5.250">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250.jar">
+              <sha256sum>6008cc858cf37c1d006795c415b62d7db4cf7d19fd6610e6ec40f57cc3235f8f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.5.250/h2-mvstore-2.5.250-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -1,0 +1,11 @@
+<root>
+  <item name='safeDelete.Hello java.lang.String test(java.util.List&lt;java.lang.String&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='safeDelete.Hello java.lang.String test(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
+  </item>
+</root>

@@ -1,0 +1,43 @@
+================ Step #1 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_inferredTypeArgumentChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/B.kt
+End of files
+Cleaning output files:
+  C.class
+  GetListOfBKt.class
+  GetListOfCKt.class
+  META-INF/kotlin_classHierarchyAffected_inferredTypeArgumentChanged-a.kotlin_module
+  UseListOfAKt.class
+  UseListOfAWithListOfBKt.class
+  UseListOfAWithListOfCKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/C.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/getListOfB.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/getListOfC.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfA.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfAWithListOfB.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfAWithListOfC.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  B.class
+  META-INF/kotlin_classHierarchyAffected_inferredTypeArgumentChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/B.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/C.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/getListOfB.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/getListOfC.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfA.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfAWithListOfB.kt
+  kotlin/classHierarchyAffected/inferredTypeArgumentChanged/a/useListOfAWithListOfC.kt
+End of files
+------------------------------------------
+Exit code: OK

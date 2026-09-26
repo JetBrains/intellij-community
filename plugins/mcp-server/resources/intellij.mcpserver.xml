@@ -1,0 +1,127 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.network.tls"/>
+    <module name="intellij.libraries.ktor.server.cio"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rhizomedb.transactor"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.logging"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.ktor.server.content.negotiation"/>
+    <module name="intellij.libraries.ktor.server.sse"/>
+    <module name="intellij.libraries.mcp.kotlin.sdk"/>
+    <module name="intellij.libraries.night.config.toml"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.schema.kenerator"/>
+    <module name="intellij.mcpserver.stdio"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpToolFilterProvider" interface="com.intellij.mcpserver.McpToolFilterProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpProjectPathCustomizer" interface="com.intellij.mcpserver.McpProjectPathCustomizer" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpManagedSessionSupport" interface="com.intellij.mcpserver.McpManagedSessionSupport" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.elicitationProvider" interface="com.intellij.mcpserver.elicitation.McpElicitationProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.projectDependenciesProvider" interface="com.intellij.mcpserver.McpProjectDependenciesProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.statusBarWidgetProvider" interface="com.intellij.mcpserver.widget.McpServerStatusBarWidgetProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.mcpCallOwnerTelemetryProvider" interface="com.intellij.mcpserver.McpCallOwnerTelemetryProvider" dynamic="true" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService" os="windows"/>
+    <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolsetNameValidator"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
+
+    <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter" internal="true"/>
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$ProjectOpenTracker" os="windows"/>
+    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
+      notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
+
+    <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+    <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpElicitationCliProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.RegistryKeyMcpToolFilterProvider" />
+    <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.IndividualRegistryKeyMcpToolFilterProvider" />
+
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.UniversalToolset" />
+
+    <registryKey defaultValue="true"
+                 description="Whether to return output schema and structured output from tools"
+                 key="mcp.server.structured.tool.output"/>
+    <registryKey defaultValue="false"
+                 description="Support legacy MCP server name"
+                 key="mcp.server.write.legacy.key"/>
+    <registryKey defaultValue="true"
+                 description="Enable OT tracer for MCP tool calls"
+                 key="mcp.server.ot.trace"/>
+    <registryKey defaultValue=""
+                 description="Filter for MCP tools, like -*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file"
+                 key="mcp.server.tools.filter"/>
+    <registryKey defaultValue="false"
+                 description="Show advanced filter options UI in MCP tool filter settings"
+                 key="mcp.server.show.advanced.filter.options.ui"/>
+    <registryKey defaultValue="1000"
+                 description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
+                 key="mcp.server.progress.notification.interval.ms"/>
+    <registryKey defaultValue="300000"
+                 description="Idle time in milliseconds after which an abandoned MCP Streamable HTTP session is closed"
+                 key="mcp.server.streamable.session.idle.timeout.ms"/>
+    <registryKey defaultValue="5000"
+                 description="Period in milliseconds between the heartbeats of an MCP notification stream"
+                 key="mcp.server.sse.heartbeat.period.ms"/>
+    <registryKey defaultValue="true"
+                 description="Forward the IDE MCP SSE and built-in HTTP loopback ports into each WSL distro that hosts an open project. Windows only."
+                 key="ide.mcp.wsl.forward.enabled"
+                 restartRequired="true"/>
+
+    <applicationSettings service="com.intellij.mcpserver.settings.McpServerSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolDisallowListSettingsImpl"/>
+    <applicationSettings service="com.intellij.mcpserver.settings.McpToolFilterSettingsImpl"/>
+  </extensions>
+
+  <resource-bundle>messages.McpServerBundle</resource-bundle>
+</idea-plugin>

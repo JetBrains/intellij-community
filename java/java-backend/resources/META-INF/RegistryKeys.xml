@@ -1,0 +1,34 @@
+<idea-plugin>
+
+  <!--
+    NOTE: New registry keys MUST be declared in their owning module's own RegistryKeys*.xml
+    (e.g. intellij.java.compiler.impl -> /META-INF/RegistryKeysCompilerImpl.xml,
+     intellij.java.impl -> /META-INF/RegistryKeysJavaImpl.xml), NOT here.
+
+    This file is kept only for backward compatibility and hosts a small residue of
+    cross-module keys that are read from more than one production module and don't
+    yet have a natural single-module home.
+  -->
+  <extensions defaultExtensionNs="com.intellij">
+    <!--read by intellij.java.execution.impl and intellij.gradle.java-->
+    <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
+                 description="Enable live time for tests" restartRequired="true"/>
+    <!--read by intellij.java.compiler.impl and intellij.java.indexing.impl; also a JPS builder id in intellij.platform.jps.build-->
+    <registryKey key="compiler.ref.index" defaultValue="true" description="Enables Find Usages using references from compiler indices"
+                 restartRequired="true"/>
+    <!--read by intellij.java.execution.impl, intellij.java.vcs, intellij.testng, intellij.junit and intellij.devkit.core-->
+    <registryKey key="testDiscovery.enabled"
+                 defaultValue="false"
+                 description="Enable instrumentation during tests to be able to start 'tests which pass this code' later"/>
+    <!--the two keys below are read by intellij.platform.indexing.impl (PsiSearchHelperImpl) and intellij.java.impl;
+        they are platform-wide and arguably belong to the platform module-->
+    <registryKey key="ide.unused.symbol.calculation.maxFilesToSearchUsagesIn" defaultValue="10"
+                 description="Max number of scanned files to find usages of a symbol"/>
+    <registryKey key="ide.unused.symbol.calculation.maxFilesSizeToSearchUsagesIn" defaultValue="524288"
+                 description="Max files size in bytes to find usages of a symbol in case there are a few files"/>
+    <!--read by intellij.java.ui and intellij.spring.boot.run-->
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
+  </extensions>
+</idea-plugin>

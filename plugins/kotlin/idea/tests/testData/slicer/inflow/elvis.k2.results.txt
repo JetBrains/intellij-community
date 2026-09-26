@@ -1,0 +1,5 @@
+5 <bold>result</bold> (in testNullCheckConditionalAssignment())
+4 	<bold>val result</bold> = value?.length ?: 0 (in testNullCheckConditionalAssignment())
+4 		val result = <bold>value?.length ?: 0</bold> (in testNullCheckConditionalAssignment())
+4 			val result = <bold>value?.length</bold> ?: 0 (in testNullCheckConditionalAssignment())
+4 			val result = value?.length ?: <bold>0</bold> (in testNullCheckConditionalAssignment())

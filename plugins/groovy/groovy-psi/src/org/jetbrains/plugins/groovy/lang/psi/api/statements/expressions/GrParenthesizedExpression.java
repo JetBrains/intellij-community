@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrParenthesizedExpression extends GrExpression {
   @Nullable
   GrExpression getOperand();

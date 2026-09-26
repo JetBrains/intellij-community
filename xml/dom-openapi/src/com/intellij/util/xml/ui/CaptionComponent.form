@@ -17,7 +17,7 @@
         <properties>
           <font name="Tahoma" size="11" style="1"/>
           <labelFor value=""/>
-          <text value="Unknown"/>
+          <text resource-bundle="messages/XmlDomBundle" key="caption.component.label.unknown"/>
         </properties>
       </component>
       <component id="b900a" class="javax.swing.JLabel" binding="myDescriptionLabel">

@@ -1,11 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.javadoc.CustomJavadocTagProvider;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
@@ -13,14 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author mike
  * @see <a href="https://docs.oracle.com/javase/9/docs/specs/doc-comment-spec.html">Documentation Comment Specification</a>
  */
-public class JavadocManagerImpl implements JavadocManager {
+public final class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
 
   public JavadocManagerImpl(Project project) {
@@ -42,6 +47,9 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("literal", LanguageLevel.JDK_1_5, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("code", LanguageLevel.JDK_1_5, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("index", LanguageLevel.JDK_1_9, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("summary", LanguageLevel.JDK_10, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("systemProperty", LanguageLevel.JDK_12, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("snippet", JavaFeature.JAVADOC_SNIPPETS.getMinimumLevel(), true, PsiElement.class));
 
     // not a standard tag, used by IDEA for suppressing inspections
     myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, LanguageLevel.JDK_1_3, false, PsiElement.class));
@@ -58,16 +66,39 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ServiceReferenceTagInfo("uses"));
     myInfos.add(new ValueDocTagInfo());
 
-    Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
+    myInfos.addAll(JavadocTagInfo.EP_NAME.getExtensionList(project));
 
-    for (CustomJavadocTagProvider extension : Extensions.getExtensions(CustomJavadocTagProvider.EP_NAME)) {
+    for (CustomJavadocTagProvider extension : CustomJavadocTagProvider.EP_NAME.getExtensionList()) {
       myInfos.addAll(extension.getSupportedTags());
     }
+
+    JavadocTagInfo.EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<JavadocTagInfo>() {
+      @Override
+      public void extensionAdded(@NotNull JavadocTagInfo extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.add(extension);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull JavadocTagInfo extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.remove(extension);
+      }
+    }, false, project);
+
+    CustomJavadocTagProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CustomJavadocTagProvider>() {
+      @Override
+      public void extensionAdded(@NotNull CustomJavadocTagProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.addAll(extension.getSupportedTags());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull CustomJavadocTagProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myInfos.removeAll(extension.getSupportedTags());
+      }
+    }, null);
   }
 
   @Override
-  @NotNull
-  public JavadocTagInfo[] getTagInfos(PsiElement context) {
+  public JavadocTagInfo @NotNull [] getTagInfos(PsiElement context) {
     List<JavadocTagInfo> result = new ArrayList<>();
 
     for (JavadocTagInfo info : myInfos) {
@@ -80,8 +111,7 @@ public class JavadocManagerImpl implements JavadocManager {
   }
 
   @Override
-  @Nullable
-  public JavadocTagInfo getTagInfo(String name) {
+  public @Nullable JavadocTagInfo getTagInfo(String name) {
     for (JavadocTagInfo info : myInfos) {
       if (info.getName().equals(name)) {
         return info;

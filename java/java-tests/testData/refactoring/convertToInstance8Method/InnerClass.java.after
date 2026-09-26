@@ -1,0 +1,13 @@
+class X {
+
+    void print() {
+      System.out.println(this);
+    }
+
+    class Inner {
+    }
+
+  public static void main(String[] args) {
+    new X().print();
+  }
+}

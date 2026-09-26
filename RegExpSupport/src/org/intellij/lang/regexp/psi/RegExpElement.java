@@ -15,9 +15,12 @@
  */
 package org.intellij.lang.regexp.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public interface RegExpElement extends PsiElement {
 
+    @NotNull @NlsSafe
     String getUnescapedText();
 }

@@ -15,14 +15,12 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
-/**
- * @author lex
- */
 public class EvaluateRuntimeException extends RuntimeException {
   public EvaluateRuntimeException(EvaluateException e) {
     super(e);
   }
 
+  @Override
   public synchronized EvaluateException getCause() {
     return (EvaluateException)super.getCause();
   }

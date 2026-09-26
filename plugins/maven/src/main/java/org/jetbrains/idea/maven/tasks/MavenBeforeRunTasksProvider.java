@@ -1,44 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.DefaultJavaProgramRunner;
+import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.execution.ParametersListUtil;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenEditGoalDialog;
-import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -46,13 +34,13 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import javax.swing.*;
-import java.util.Collections;
+import javax.swing.Icon;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
+public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
   public static final Key<MavenBeforeRunTask> ID = Key.create("Maven.BeforeRunTask");
   private final Project myProject;
 
@@ -60,6 +48,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     myProject = project;
   }
 
+  @Override
   public Key<MavenBeforeRunTask> getId() {
     return ID;
   }
@@ -71,13 +60,12 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
-  @Nullable
   @Override
-  public Icon getTaskIcon(MavenBeforeRunTask task) {
-    return MavenIcons.MavenLogo;
+  public @Nullable Icon getTaskIcon(MavenBeforeRunTask task) {
+    return RepositoryLibraryLogo;
   }
 
   @Override
@@ -91,25 +79,27 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return TasksBundle.message("maven.tasks.before.run", desc);
   }
 
-  @Nullable
-  private MavenProject getMavenProject(MavenBeforeRunTask task) {
+  private @Nullable MavenProject getMavenProject(MavenBeforeRunTask task) {
     String pomXmlPath = task.getProjectPath();
     if (StringUtil.isEmpty(pomXmlPath)) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomXmlPath);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(pomXmlPath);
     if (file == null) return null;
 
     return MavenProjectsManager.getInstance(myProject).findProject(file);
   }
 
+  @Override
   public boolean isConfigurable() {
     return true;
   }
 
+  @Override
   public MavenBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new MavenBeforeRunTask();
   }
 
+  @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MavenBeforeRunTask task) {
     MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
@@ -119,7 +109,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
       // just created empty task.
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       List<MavenProject> rootProjects = projectsManager.getRootProjects();
-      if (rootProjects.size() > 0) {
+      if (!rootProjects.isEmpty()) {
         dialog.setSelectedMavenProject(rootProjects.get(0));
       }
       else {
@@ -161,69 +151,49 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 
-  public boolean executeTask(final DataContext context,
+  @Override
+  public boolean executeTask(final @NotNull DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
-                             @NotNull final MavenBeforeRunTask task) {
-    final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[]{true};
-    try {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        final Project project = CommonDataKeys.PROJECT.getData(context);
-        final MavenProject mavenProject = getMavenProject(task);
+                             final @NotNull MavenBeforeRunTask task) {
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
-        if (project == null || project.isDisposed() || mavenProject == null) return;
+    final Project project = CommonDataKeys.PROJECT.getData(context);
 
-        FileDocumentManager.getInstance().saveAllDocuments();
+    if (ReadAction.compute(() -> project == null || project.isDisposed())) return false;
 
-        final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
-        final MavenRunner mavenRunner = MavenRunner.getInstance(project);
-
-        targetDone.down();
-        new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              MavenRunnerParameters params = new MavenRunnerParameters(
-                true,
-                mavenProject.getDirectory(),
-                mavenProject.getFile().getName(),
-                ParametersListUtil.parse(task.getGoal()),
-                explicitProfiles.getEnabledProfiles(),
-                explicitProfiles.getDisabledProfiles());
-
-              result[0] = mavenRunner.runBatch(Collections.singletonList(params),
-                                            null,
-                                            null,
-                                            TasksBundle.message("maven.tasks.executing"),
-                                            indicator);
-            }
-            finally {
-              targetDone.up();
-            }
-          }
-
-          @Override
-          public boolean shouldStartInBackground() {
-            return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
-          }
-
-          @Override
-          public void processSentToBackground() {
-            MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
-          }
-        }.queue();
-      }, ModalityState.NON_MODAL);
-    }
-    catch (Exception e) {
-      MavenLog.LOG.error(e);
-      return false;
-    }
-    targetDone.waitFor();
-    return result[0];
+    return doRunMavenTask(project, task, env);
   }
 
-  @NotNull
-  private static Pair<String, String> splitToGoalsAndPomFileName(@Nullable String goals) {
+  private boolean doRunMavenTask(Project project, MavenBeforeRunTask task, ExecutionEnvironment env) {
+    final MavenProject mavenProject = getMavenProject(task);
+    if (mavenProject == null) return false;
+    final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
+
+    MavenRunnerParameters params = new MavenRunnerParameters(
+      true,
+      mavenProject.getDirectory(),
+      mavenProject.getFile().getName(),
+      ParametersListUtil.parse(task.getGoal()),
+      explicitProfiles.getEnabledProfiles(),
+      explicitProfiles.getDisabledProfiles());
+
+    RunnerAndConfigurationSettings configuration =
+      MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, myProject);
+    ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configuration, project);
+    environment.setExecutionId(env.getExecutionId());
+
+    if (!environment.getRunner().canRun(executor.getId(), environment.getRunProfile())) {
+      MavenLog.LOG.warn("Can't run " + task.getGoal() + " on runner=" + runner.getRunnerId() + ", executorId=" + executor.getId());
+      return false;
+    }
+
+    return RunConfigurationBeforeRunProvider.doRunTask(executor.getId(), environment, runner);
+  }
+
+  private static @NotNull Pair<String, String> splitToGoalsAndPomFileName(@Nullable String goals) {
     if (goals == null) {
       return pair(null, MavenConstants.POM_XML);
     }

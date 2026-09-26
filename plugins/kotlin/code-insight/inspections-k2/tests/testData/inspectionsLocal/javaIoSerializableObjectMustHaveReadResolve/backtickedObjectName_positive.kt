@@ -1,0 +1,1 @@
+object `<caret>6-7` : java.io.Serializable

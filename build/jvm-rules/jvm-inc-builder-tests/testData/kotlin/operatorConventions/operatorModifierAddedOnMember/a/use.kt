@@ -1,0 +1,1 @@
+fun u(v: V): V = v + v

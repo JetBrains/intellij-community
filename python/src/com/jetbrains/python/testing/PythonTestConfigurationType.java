@@ -1,144 +1,106 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.ObjectArrays;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
+import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration;
-import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration;
-import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration;
-import com.jetbrains.python.testing.PyTestLegacyInteropKt;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.util.List;
 
-/**
- * User : catherine
- * <p>
- * This type is used both with Legacy and New test runners.
- * {@link PyTestLegacyInteropKt} is used to support legacy. To drop legacy support, remove all code that depends on it.
- */
-public final class PythonTestConfigurationType implements ConfigurationType {
+public final class PythonTestConfigurationType extends ConfigurationTypeBase {
   public static final String ID = "tests";
 
-  public final PythonConfigurationFactoryBase PY_DOCTEST_FACTORY = new PythonDocTestConfigurationFactory(this);
-  public final PythonConfigurationFactoryBase LEGACY_UNITTEST_FACTORY = new PythonLegacyUnitTestConfigurationFactory(this);
-  public final PythonConfigurationFactoryBase LEGACY_NOSETEST_FACTORY = new PythonLegacyNoseTestConfigurationFactory(this);
-  public final PythonConfigurationFactoryBase LEGACY_PYTEST_FACTORY = new PythonLegacyPyTestConfigurationFactory(this);
+  private final PythonConfigurationFactoryBase myDocTestFactory = new PythonDocTestConfigurationFactory(this);
+  private final PyAutoDetectionConfigurationFactory myAutoFactory = new PyAutoDetectionConfigurationFactory(this);
+  private final PyUnitTestFactory myUnitTestFactory = new PyUnitTestFactory(this);
+  private final PyTestFactory myPyTestFactory = new PyTestFactory(this);
 
-  public static PythonTestConfigurationType getInstance() {
+  private final List<PyAbstractTestFactory<?>> myTypedFactories;
+
+  public static @NotNull PythonTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
   public PythonTestConfigurationType() {
+    super(ID, PyBundle.message("runcfg.test.display_name"), PyBundle.message("runcfg.test.description"),
+          NotNullLazyValue.createValue(() -> PythonIcons.Python.PythonTests));
+
+    myTypedFactories = List.of(
+      myAutoFactory,
+      myPyTestFactory,
+      new PyNoseTestFactory(this),
+      new PyTrialTestFactory(this),
+      myUnitTestFactory
+    );
+    for (var factory : myTypedFactories) {
+      addFactory(factory);
+    }
+    addFactory(myDocTestFactory);
+  }
+
+  public @NotNull PyTestFactory getPyTestFactory() {
+    return myPyTestFactory;
+  }
+
+  public @NotNull PythonConfigurationFactoryBase getDocTestFactory() {
+    return myDocTestFactory;
+  }
+
+  public @NotNull PyUnitTestFactory getUnitTestFactory() {
+    return myUnitTestFactory;
+  }
+
+  public @NotNull PyAutoDetectionConfigurationFactory getAutoDetectFactory() {
+    return myAutoFactory;
+  }
+
+  public @NotNull List<PyAbstractTestFactory<?>> getTypedFactories() {
+    return myTypedFactories;
   }
 
   @Override
-  public String getDisplayName() {
-    return PyBundle.message("runcfg.test.display_name");
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.tests";
   }
 
   @Override
-  public String getConfigurationTypeDescription() {
-    return PyBundle.message("runcfg.test.description");
+  public @NotNull String getTag() {
+    return "pythonTest";
   }
 
   @Override
-  public Icon getIcon() {
-    return PythonIcons.Python.PythonTests;
+  public boolean isDumbAware() {
+    return true;
   }
 
-
-  private static class PythonLegacyUnitTestConfigurationFactory extends PythonConfigurationFactoryBase {
-    protected PythonLegacyUnitTestConfigurationFactory(ConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    @NotNull
-    @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonUnitTestRunConfiguration(project, this);
-    }
-
-    @Override
-    public String getName() {
-      return PyBundle.message("runcfg.unittest.display_name");
-    }
-  }
 
   private static class PythonDocTestConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonDocTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonDocTestRunConfiguration(project, this);
     }
 
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyBundle.message("runcfg.doctest.display_name");
     }
-  }
-
-  private static class PythonLegacyPyTestConfigurationFactory extends PythonConfigurationFactoryBase {
-    protected PythonLegacyPyTestConfigurationFactory(ConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    @NotNull
-    @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PyTestRunConfiguration(project, this);
-    }
 
     @Override
-    public String getName() {
-      return PyBundle.message("runcfg.pytest.display_name");
+    public @NotNull String getId() {
+      return "Doctests";
     }
-  }
-
-  private static class PythonLegacyNoseTestConfigurationFactory extends PythonConfigurationFactoryBase {
-    protected PythonLegacyNoseTestConfigurationFactory(ConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    @NotNull
-    @Override
-    public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonNoseTestRunConfiguration(project, this);
-    }
-
-    @Override
-    public String getName() {
-      return PyBundle.message("runcfg.nosetests.display_name");
-    }
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @Override
-  public ConfigurationFactory[] getConfigurationFactories() {
-    // Use new or legacy factories depending to new config
-    final ConfigurationFactory[] factories = PyTestLegacyInteropKt.isNewTestsModeEnabled()
-                                             ? PyTestsSharedKt.getFactories()
-                                             : new ConfigurationFactory[]
-                                               {LEGACY_UNITTEST_FACTORY, LEGACY_NOSETEST_FACTORY, LEGACY_PYTEST_FACTORY};
-    return ObjectArrays.concat(factories, PY_DOCTEST_FACTORY);
   }
 }

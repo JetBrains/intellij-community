@@ -1,4 +1,4 @@
-// "Replace lambda expression with 'Function.identity()'" "true"
+// "Replace lambda expression with 'Function.identity()'" "true-preview"
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;

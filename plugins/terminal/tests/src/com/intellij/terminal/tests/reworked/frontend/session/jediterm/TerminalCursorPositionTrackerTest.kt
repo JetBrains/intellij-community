@@ -1,0 +1,79 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.terminal.tests.reworked.frontend.session.jediterm
+
+import com.intellij.terminal.frontend.session.jediterm.TerminalContentChangesTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalContentUpdate
+import com.intellij.terminal.frontend.session.jediterm.TerminalCursorPosition
+import com.intellij.terminal.frontend.session.jediterm.TerminalCursorPositionTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalDiscardedHistoryTracker
+import com.intellij.terminal.frontend.session.jediterm.TerminalDisplayImpl
+import com.intellij.terminal.tests.reworked.util.write
+import com.jediterm.terminal.model.StyleState
+import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+
+internal class TerminalCursorPositionTrackerTest {
+  @Test
+  fun `cursor position should correspond to existing line in the TextBuffer`() {
+    val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
+    val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
+    val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
+    val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
+    val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
+
+    // Prepare
+    textBuffer.write("prompt", 1, 0)
+    terminalDisplay.setCursor(6, 1)
+    contentChangesTracker.getContentUpdate()
+    cursorPositionTracker.getCursorPositionUpdate()
+
+    // Test: for example, the user pressed enter, and we move the cursor to the next line.
+    terminalDisplay.setCursor(0, 2)
+
+    val contentUpdate = contentChangesTracker.getContentUpdate() ?: error("Content update is null")
+    val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate() ?: error("Cursor update is null")
+
+    assertThat(contentUpdate).isEqualTo(
+      TerminalContentUpdate(
+        text = "",
+        styles = emptyList(),
+        startLineLogicalIndex = 1,
+        screenTopLogicalLineIndex = 0,
+        screenTopColumnIndex = 0,
+        osc8Hyperlinks = emptyList(),
+      )
+    )
+    assertThat(cursorUpdate).isEqualTo(TerminalCursorPosition(1, 0))
+  }
+
+  @Test
+  fun `cursor position correctly reported when cursor is visible`() {
+    val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
+    val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
+    val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
+    val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
+
+    textBuffer.write("hello", 1, 0)
+    terminalDisplay.setCursor(5, 1)
+
+    val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate()
+    assertThat(cursorUpdate).isEqualTo(TerminalCursorPosition(0, 5))
+  }
+
+  @Test
+  fun `cursor position correctly reported when cursor is invisible`() {
+    val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
+    val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
+    val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
+    val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
+
+    textBuffer.write("hello", 1, 0)
+    terminalDisplay.setCursorVisible(false)
+    terminalDisplay.setCursor(5, 1)
+
+    val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate()
+    assertThat(cursorUpdate).isEqualTo(TerminalCursorPosition(0, 5))
+  }
+}

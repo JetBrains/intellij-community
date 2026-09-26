@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ interface Role {}
 class FooRole {
   public Role[] getRoles(Predicate<Object> p, List<Role> roles) {
       List<Role> list = new ArrayList<>();
-      for (Role role: roles) {
+      for (Role role : roles) {
           if (p.test(role)) {
               list.add(role);
           }

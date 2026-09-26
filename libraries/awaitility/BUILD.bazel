@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.awaitility` start
+jvm_library(
+    name = "awaitility",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.awaitility",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-awaitility-awaitility"],
+    runtime_deps = ["@lib//:libraries-awaitility-awaitility"],
+)
+
+jvm_library(
+    name = "awaitility_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.awaitility",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-awaitility-awaitility"],
+    runtime_deps = [":awaitility"],
+)
+### auto-generated section `build intellij.libraries.awaitility` end
+
+### auto-generated section `iml intellij.libraries.awaitility` start
+exports_files(
+    [
+        "intellij.libraries.awaitility.iml",
+        "resources/intellij.libraries.awaitility.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.awaitility` end

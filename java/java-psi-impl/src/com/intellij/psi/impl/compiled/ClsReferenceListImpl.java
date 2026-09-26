@@ -1,69 +1,49 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
-  private static final ClsJavaCodeReferenceElementImpl[] EMPTY_REFS_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
-
-  private final NotNullLazyValue<ClsJavaCodeReferenceElementImpl[]> myRefs;
+public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
+  private final NotNullLazyValue<PsiJavaCodeReferenceElement[]> myRefs;
 
   public ClsReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
     super(stub);
-    myRefs = new AtomicNotNullLazyValue<ClsJavaCodeReferenceElementImpl[]>() {
-      @NotNull
-      @Override
-      protected ClsJavaCodeReferenceElementImpl[] compute() {
-        String[] strings = getStub().getReferencedNames();
-        if (strings.length > 0) {
-          ClsJavaCodeReferenceElementImpl[] refs = new ClsJavaCodeReferenceElementImpl[strings.length];
-          for (int i = 0; i < strings.length; i++) {
-            refs[i] = new ClsJavaCodeReferenceElementImpl(ClsReferenceListImpl.this, strings[i]);
-          }
-          return refs;
-        }
-        else {
-          return EMPTY_REFS_ARRAY;
-        }
+    myRefs = NotNullLazyValue.atomicLazy(() -> {
+      TypeInfo[] types = getStub().getTypes();
+      if (types.length <= 0) {
+        return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
       }
-    };
+      return ContainerUtil.map2Array(types, PsiJavaCodeReferenceElement.class, info ->
+        new ClsJavaCodeReferenceElementImpl(this, info.text(), info.getTypeAnnotations()));
+    });
   }
 
   @Override
-  @NotNull
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return myRefs.getValue();
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return getReferenceElements();
   }
 
   @Override
-  @NotNull
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     return getStub().getReferencedTypes();
   }
 
@@ -74,34 +54,53 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
-    String[] names = getStub().getReferencedNames();
-    if (names.length != 0) {
-      switch (getRole()) {
+    PsiClassType @NotNull [] types = getStub().getReferencedTypes();
+    if (types.length != 0) {
+      Role role = getRole();
+      switch (role) {
         case EXTENDS_BOUNDS_LIST:
+          buffer.append(' ').append(JavaKeywords.EXTENDS).append(' ');
+          break;
         case EXTENDS_LIST:
-          buffer.append(PsiKeyword.EXTENDS).append(' ');
+          buffer.append(JavaKeywords.EXTENDS).append(' ');
           break;
         case IMPLEMENTS_LIST:
-          buffer.append(PsiKeyword.IMPLEMENTS).append(' ');
+          buffer.append(JavaKeywords.IMPLEMENTS).append(' ');
+          break;
+        case PERMITS_LIST:
+          buffer.append(JavaKeywords.PERMITS).append(' ');
           break;
         case THROWS_LIST:
-          buffer.append(PsiKeyword.THROWS).append(' ');
+          buffer.append(JavaKeywords.THROWS).append(' ');
           break;
         case PROVIDES_WITH_LIST:
-          buffer.append(PsiKeyword.WITH).append(' ');
+          buffer.append(JavaKeywords.WITH).append(' ');
           break;
       }
-      for (int i = 0; i < names.length; i++) {
-        if (i > 0) buffer.append(", ");
-        buffer.append(names[i]);
+      for (int i = 0; i < types.length; i++) {
+        if (i > 0) buffer.append(role == Role.EXTENDS_BOUNDS_LIST ? " & " : ", ");
+        buffer.append(types[i].getCanonicalText(true));
       }
     }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  public String getText() {
+    StringBuilder builder = new StringBuilder();
+    appendMirrorText(0, builder);
+    return builder.toString();
+  }
+
+  @Override
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
-    setMirrors(getReferenceElements(), SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements());
+    PsiJavaCodeReferenceElement[] mirrorRefs = SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements();
+    PsiJavaCodeReferenceElement[] stubRefs = getReferenceElements();
+    if (mirrorRefs.length == 0 && stubRefs.length == 1 && CommonClassNames.JAVA_LANG_OBJECT.equals(stubRefs[0].getQualifiedName())) {
+      // annotated Object type is supported in stubs but not supported in decompiler yet
+      return;
+    }
+    setMirrors(stubRefs, mirrorRefs);
   }
 
   @Override
@@ -116,6 +115,6 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @Override
   public String toString() {
-    return "PsiReferenceList";
+    return "PsiReferenceList:" + getRole();
   }
 }

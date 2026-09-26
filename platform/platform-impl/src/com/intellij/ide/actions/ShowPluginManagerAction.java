@@ -1,38 +1,81 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author max
- */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.UIComponentFileEditor;
+import com.intellij.ide.plugins.UIComponentVirtualFile;
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.JComponent;
 
-public class ShowPluginManagerAction extends AnAction implements DumbAware {
+final class ShowPluginManagerAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    PluginManagerOpenSourceEnum openSource = PluginManagerOpenSourceEnum.fromActionPlace(e.getPlace());
+    Project project = e.getProject();
+    if (project != null && Registry.is("ide.show.plugins.in.editor")) {
+      showPluginsInEditor(project, openSource);
+      return;
+    }
+    PluginManagerConfigurable.showFromEntryPoint(ProjectUtil.currentOrDefaultProject(project), openSource);
+  }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    ShowSettingsUtil.getInstance().editConfigurable(component, new PluginManagerConfigurableProxy());
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static void showPluginsInEditor(@NotNull Project project, @NotNull PluginManagerOpenSourceEnum openSource) {
+    var file = new PluginVirtualFile(openSource);
+    FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  private static final class PluginVirtualFile extends UIComponentVirtualFile {
+    private final PluginManagerOpenSourceEnum openSource;
+
+    PluginVirtualFile(@NotNull PluginManagerOpenSourceEnum openSource) {
+      super("Plugins", AllIcons.Nodes.Plugin);
+      this.openSource = openSource;
+    }
+
+    @Override
+    public @NotNull Content createContent(@NotNull UIComponentFileEditor editor) {
+      return new ShowPluginManagerAction.Content(openSource);
+    }
+  }
+
+  private static final class Content implements UIComponentVirtualFile.Content {
+    private final PluginManagerOpenSourceEnum openSource;
+    PluginManagerConfigurable configurable;
+
+    Content(@NotNull PluginManagerOpenSourceEnum openSource) {
+      this.openSource = openSource;
+    }
+
+    @Override
+    public @NotNull JComponent createComponent() {
+      configurable = new PluginManagerConfigurable();
+      configurable.setOpenSource(openSource);
+      return PluginsTabFactory.createPluginsPanel(configurable);
+    }
+
+    @Override
+    public @Nullable JComponent getPreferredFocusedComponent(@NotNull JComponent component) {
+      return configurable.getPreferredFocusedComponent();
+    }
   }
 }

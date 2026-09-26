@@ -1,58 +1,53 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableFilter;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.JdomKt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-/**
- * @author Nikolay Matveev
- * @author Sergey.Malenkov
- */
 public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
-
   public void testSimpleTree() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "A"),
         createConfigurable("A", "B"),
         createConfigurable("A", "C"),
         createConfigurable("C", "D")
       ),
       null,
-      ContainerUtil.newArrayList(node("A",
-                                      node("B"),
-                                      node("C",
-                                           node("D")
-                                      )
-                                 )
+      List.of(node("A",
+                   node("B"),
+                   node("C",
+                        node("D")
+                   )
+              )
       )
     );
   }
 
   public void testComplexTree() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "first"),
         createConfigurable("first", "first.first"),
         createConfigurable("first.first", "first.first.first"),
@@ -76,15 +71,15 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
         createConfigurable("2nd", "2nd.3rd")
       ),
       null,
-      ContainerUtil.newArrayList(node("first",
+      List.of(node("first",
                                       node("first.first",
                                            node("first.first.first"),
+                                           node("first.first.fourth"), // default is alphabetically sorted
                                            node("first.first.second",
                                                 node("first.first.second.first"),
                                                 node("first.first.second.second")
                                            ),
-                                           node("first.first.third"),
-                                           node("first.first.fourth")
+                                           node("first.first.third")
                                       ),
                                       node("first.second",
                                            node("first.second.first",
@@ -92,9 +87,9 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                                 node("first.second.first.second"),
                                                 node("first.second.first.third")
                                            ),
+                                           node("first.second.fourth"), // default is alphabetically sorted
                                            node("first.second.second"),
-                                           node("first.second.third"),
-                                           node("first.second.fourth")
+                                           node("first.second.third")
                                       )
                                  ),
                                  node("2nd",
@@ -110,7 +105,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   public void testChildFiltering() throws Exception {
     matchStructures(
-      ContainerUtil.newArrayList(
+      List.of(
         createConfigurable(null, "parent"),
         createConfigurable("parent", "1st.child"),
         createConfigurable("1st.child", "1st.child.1"),
@@ -128,7 +123,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                  displayName.equals("2nd.child.1");
         }
       },
-      ContainerUtil.newArrayList(node("parent",
+      List.of(node("parent",
                                       node("1st.child"),
                                       node("2nd.child",
                                            node("2nd.child.1")
@@ -168,8 +163,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   @NotNull
   private static ConfigurableEP<Configurable> deserializeConfigurable(@NotNull String text) throws IOException, JDOMException {
-    Element element = JdomKt.loadElement(text);
-    ConfigurableEP<Configurable> bean = new ConfigurableEP<>();
+    Element element = JDOMUtil.load(text);
+    ConfigurableEP<Configurable> bean = new ConfigurableEP<>(new DefaultPluginDescriptor("ConfigurableExtensionTest"));
     XmlSerializer.deserializeInto(element, bean);
     return bean;
   }
@@ -177,9 +172,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   private static void matchStructures(@NotNull List<ConfigurableEP<Configurable>> configurableEPs,
                                       @Nullable ConfigurableFilter filter,
                                       @NotNull List<Node> expectedTopLevelNodes) {
-    //noinspection unchecked
-    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[0]);
-    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, filter);
+    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(configurableEPs, filter);
     assertEquals(expectedTopLevelNodes.size(), list.size());
     for (int i = 0; i < list.size(); i++) {
       matchNodesDeeply(list.get(i), expectedTopLevelNodes.get(i));
@@ -187,12 +180,10 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static void matchNodesDeeply(@NotNull Configurable configurable, @NotNull Node node) {
-    if (configurable instanceof SearchableConfigurable) {
-      SearchableConfigurable searchableConfigurable = (SearchableConfigurable) configurable;
+    if (configurable instanceof SearchableConfigurable searchableConfigurable) {
       assertEquals(node.getId(), searchableConfigurable.getId());
       List<Configurable> children = Collections.emptyList();
-      if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite) configurable;
+      if (configurable instanceof Configurable.Composite composite) {
         children = Arrays.asList(composite.getConfigurables());
       }
       assertEquals(node.getChildren().size(), children.size());
@@ -206,7 +197,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testSimple() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("A",
                              node("B"),
@@ -220,7 +211,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testSimpleSort() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("sorted",
                              node("s3"),
@@ -232,16 +223,16 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                              node("s4"),
                              node("s5"),
                              node("s6")),
-                        node("unsorted",
+                        node("unsorted", // default is alphabetically sorted
                              node("u1"),
-                             node("u9"),
                              node("u2"),
-                             node("u8"),
                              node("u3"),
-                             node("u7"),
                              node("u4"),
+                             node("u5"),
                              node("u6"),
-                             node("u5")))),
+                             node("u7"),
+                             node("u8"),
+                             node("u9")))),
                  build(
                    wrapConfigurable("sorted"),
                    wrapConfigurable("unsorted"),
@@ -266,17 +257,17 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testComplex() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("first",
                              node("first.first",
                                   node("first.first.first"),
+                                  node("first.first.fourth"), // default is alphabetically sorted
                                   node("first.first.second",
                                        node("first.first.second.first"),
                                        node("first.first.second.second")
                                   ),
-                                  node("first.first.third"),
-                                  node("first.first.fourth")
+                                  node("first.first.third")
                              ),
                              node("first.second",
                                   node("first.second.first",
@@ -284,9 +275,9 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                        node("first.second.first.second"),
                                        node("first.second.first.third")
                                   ),
+                                  node("first.second.fourth"), // default is alphabetically sorted
                                   node("first.second.second"),
-                                  node("first.second.third"),
-                                  node("first.second.fourth")
+                                  node("first.second.third")
                              )
                         ),
                         node("2nd",
@@ -321,7 +312,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testGroupWarning() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("1",
                         node("11"),
                         node("12"),
@@ -347,7 +338,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   public void testCyclicWarning() throws Exception {
-    assertEquals(ContainerUtil.newArrayList(
+    assertEquals(List.of(
                    node("other",
                         node("0"),
                         node("4",
@@ -375,8 +366,6 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
       wrapConfigurable("editor.3", "parentId:editor", "groupWeight:-1"),
       wrapConfigurable("editor.2", "parentId:editor"),
       wrapConfigurable("editor.1", "parentId:editor"),
-      wrapConfigurable("build.tools.raven", "parentId:build.tools"),
-      wrapConfigurable("build.tools.maven", "parentId:build.tools"),
       wrapConfigurable("build.center", "parentId:build"),
       wrapConfigurable("build.upper", "parentId:build", "groupWeight:1000000"),
       wrapConfigurable("build.lower", "parentId:build", "groupWeight:-1000000"),
@@ -403,9 +392,6 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                            node("editor.4")),
                       node("configurable.group.build",
                            node("build.upper"),
-                           node("configurable.group.build.tools",
-                                node("build.tools.maven"),
-                                node("build.tools.raven")),
                            node("build.center"),
                            node("build.lower")),
                       node("configurable.group.tools",
@@ -443,7 +429,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                       node("configurable.group.parent",
                            node("configurable.group.custom",
                                 node("custom.configurable"))),
-                      node("configurable.group.other",
+                      node("configurable.group.tools",
                            node("missed.configurable"))),
                  getRootCustom(false));
   }
@@ -483,8 +469,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   private static List<Node> build(Configurable... configurables) {
     Map<String, List<Configurable>> map = ConfigurableExtensionPointUtil.groupConfigurables(Arrays.asList(configurables));
-    List<Node> children = ContainerUtil.newArrayList();
-    for (Map.Entry<String, List<Configurable>> entry : ContainerUtil.newTreeMap(map).entrySet()) {
+    List<Node> children = new ArrayList<>();
+    for (Map.Entry<String, List<Configurable>> entry : new TreeMap<>(map).entrySet()) {
       children.add(node(entry.getKey(), entry.getValue()));
     }
     return children;
@@ -496,10 +482,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(Configurable configurable) {
-    @SuppressWarnings("unchecked")
     SearchableConfigurable sc = (SearchableConfigurable)configurable;
-    if (configurable instanceof Configurable.Composite) {
-      Configurable.Composite composite = (Configurable.Composite)configurable;
+    if (configurable instanceof Configurable.Composite composite) {
       return node(sc.getId(), Arrays.asList(composite.getConfigurables()));
     }
     return node(sc.getId());
@@ -511,14 +495,14 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(String id, List<Configurable> configurables) {
-    List<Node> children = ContainerUtil.newArrayList();
+    List<Node> children = new ArrayList<>();
     for (Configurable configurable : configurables) {
       children.add(node(configurable));
     }
     return new Node(id, children);
   }
 
-  private static class Node {
+  private static final class Node {
     private final String myId;
     private final List<Node> myChildren;
 
@@ -538,8 +522,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
     @Override
     public boolean equals(Object object) {
-      if (object instanceof Node) {
-        Node node = (Node)object;
+      if (object instanceof Node node) {
         if (node.myId == null ? myId == null : node.myId.equals(myId)) {
           return node.myChildren.equals(myChildren);
         }

@@ -1,9 +1,10 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,7 +21,12 @@ import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.NettyUtil;
-import org.jetbrains.io.jsonRpc.*;
+import org.jetbrains.io.jsonRpc.Client;
+import org.jetbrains.io.jsonRpc.ClientListener;
+import org.jetbrains.io.jsonRpc.ClientManager;
+import org.jetbrains.io.jsonRpc.ClientManagerKt;
+import org.jetbrains.io.jsonRpc.ExceptionHandler;
+import org.jetbrains.io.jsonRpc.MessageServer;
 
 import java.util.List;
 import java.util.Map;
@@ -28,18 +34,14 @@ import java.util.Map;
 public abstract class WebSocketHandshakeHandler extends HttpRequestHandler implements ClientListener, ExceptionHandler {
   private static final Logger LOG = Logger.getInstance(WebSocketHandshakeHandler.class);
 
-  private final AtomicNotNullLazyValue<ClientManager> clientManager = new AtomicNotNullLazyValue<ClientManager>() {
-    @NotNull
-    @Override
-    protected ClientManager compute() {
-      ClientManager result = new ClientManager(WebSocketHandshakeHandler.this, WebSocketHandshakeHandler.this, null);
-      Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
-      assert serverDisposable != null;
-      Disposer.register(serverDisposable, result);
-      serverCreated(result);
-      return result;
-    }
-  };
+  private final NotNullLazyValue<ClientManager> clientManager = NotNullLazyValue.atomicLazy(() -> {
+    ClientManager result = new ClientManager(this, this, null);
+    Disposable serverDisposable = BuiltInServerManager.getInstance().getServerDisposable();
+    assert serverDisposable != null;
+    Disposer.register(serverDisposable, result);
+    serverCreated(result);
+    return result;
+  });
 
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
@@ -62,8 +64,8 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     return true;
   }
 
-  private void handleWebSocketRequest(@NotNull final ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull final QueryStringDecoder uriDecoder) {
-    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + request.headers().getAsString(HttpHeaderNames.HOST) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH);
+  private void handleWebSocketRequest(final @NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, final @NotNull QueryStringDecoder uriDecoder) {
+    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + request.headers().getAsString(HttpHeaderNames.HOST) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH); //NON-NLS
     WebSocketServerHandshaker handshaker = factory.newHandshaker(request);
     if (handshaker == null) {
       WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(context.channel());
@@ -78,12 +80,12 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     context.channel().attr(ClientManagerKt.getCLIENT()).set(client);
     handshaker.handshake(context.channel(), request).addListener(new ChannelFutureListener() {
       @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
+      public void operationComplete(ChannelFuture future) {
         if (future.isSuccess()) {
           ClientManager clientManager = WebSocketHandshakeHandler.this.clientManager.getValue();
           clientManager.addClient(client);
           MessageChannelHandler messageChannelHandler = new MessageChannelHandler(clientManager, getMessageServer());
-          BuiltInServer.replaceDefaultHandler(context, messageChannelHandler);
+          BuiltInServer.Companion.replaceDefaultHandler(context, messageChannelHandler);
           ChannelHandlerContext messageChannelHandlerContext = context.pipeline().context(messageChannelHandler);
           context.pipeline().addBefore(messageChannelHandlerContext.name(), "webSocketFrameAggregator", new WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH));
           messageChannelHandlerContext.channel().attr(ClientManagerKt.getCLIENT()).set(client);
@@ -93,8 +95,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     });
   }
 
-  @NotNull
-  protected abstract MessageServer getMessageServer();
+  protected abstract @NotNull MessageServer getMessageServer();
 
   @Override
   public void connected(@NotNull Client client, @Nullable Map<String, List<String>> parameters) {

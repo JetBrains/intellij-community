@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.compiler;
 
 import java.text.MessageFormat;
@@ -23,7 +9,7 @@ import java.util.ResourceBundle;
   * MUST BE COMPILED WITH JDK 1.1 IN ORDER TO SUPPORT JAVAC LAUNCHING FOR ALL JDKs
   * @author Eugene Zhuravlev
   */
-public class JavacResourcesReader {
+public final class JavacResourcesReader {
   public static final String MSG_PATTERNS_START = "__patterns_start";
   public static final String MSG_PATTERNS_END = "__patterns_end";
   public static final String MSG_PARSING_STARTED = "MSG_PARSING_STARTED";
@@ -91,15 +77,14 @@ public class JavacResourcesReader {
     }
   }
   */
-  
+
   public static boolean dumpPatterns() {
     final ResourceBundle messagesBundle = getMessagesBundle();
     if (messagesBundle == null) {
       return false;
     }
     System.err.println(MSG_PATTERNS_START);
-    for (int idx = 0; idx < MSG_NAME_KEY_PAIRS.length; idx++) {
-      BundleKey bundleKey = MSG_NAME_KEY_PAIRS[idx];
+    for (BundleKey bundleKey : MSG_NAME_KEY_PAIRS) {
       try {
         System.err.println(bundleKey.category + CATEGORY_VALUE_DIVIDER + bundleKey.getCategoryValue(messagesBundle));
       }
@@ -111,9 +96,9 @@ public class JavacResourcesReader {
   }
 
   private static ResourceBundle getMessagesBundle() {
-    for (int i = 0; i < BUNDLE_NAMES.length; i++) {
+    for (String name : BUNDLE_NAMES) {
       try {
-        return ResourceBundle.getBundle(BUNDLE_NAMES[i]);
+        return ResourceBundle.getBundle(name);
       }
       catch (MissingResourceException ignored) {
       }
@@ -125,11 +110,11 @@ public class JavacResourcesReader {
     public final String category;
     public final String[] keys;
 
-    public BundleKey(final String category, final String key) {
+    BundleKey(final String category, final String key) {
       this(category, new String[] {key});
     }
 
-    public BundleKey(final String category, final String[] composite) {
+    BundleKey(final String category, final String[] composite) {
       this.category = category;
       this.keys = composite;
     }
@@ -138,21 +123,22 @@ public class JavacResourcesReader {
       if (keys.length == 1) {
         return messagesBundle.getString(keys[0]);
       }
-      final StringBuffer buf = new StringBuffer();
-      for (int idx = 0; idx < keys.length; idx++) {
-        buf.append(messagesBundle.getString(keys[idx]));
+      final StringBuilder buf = new StringBuilder();
+      for (String key : keys) {
+        buf.append(messagesBundle.getString(key));
       }
       return buf.toString();
     }
   }
 
   private static class IgnoredWarningBundleKey extends BundleKey {
-    public IgnoredWarningBundleKey(final String messageKey) {
+    IgnoredWarningBundleKey(final String messageKey) {
       super(MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
     }
 
+    @Override
     public String getCategoryValue(ResourceBundle messagesBundle) {
-      return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), new Object[] {""});
+      return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), "");
     }
   }
 }

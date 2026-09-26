@@ -1,33 +1,64 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Consumer;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
+import sun.awt.image.SunVolatileImage;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.geom.GeneralPath;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Toolkit;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -35,14 +66,18 @@ import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * @author Pavel Fatin
  */
-class ImmediatePainter {
+@ApiStatus.Internal
+public final class ImmediatePainter {
+  private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
-  static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
+  public static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
+  public static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
   private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
   private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
 
@@ -51,12 +86,14 @@ class ImmediatePainter {
 
   ImmediatePainter(EditorImpl editor) {
     myEditor = editor;
-
-    Disposer.register(editor.getDisposable(), () -> {
-      if (myImage != null) {
-        myImage.flush();
+    EditorUtil.disposeWithEditor(
+      editor,
+      () -> {
+        if (myImage != null) {
+          myImage.flush();
+        }
       }
-    });
+    );
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
@@ -66,13 +103,18 @@ class ImmediatePainter {
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
       if (replacements.size() != 1) return false;
 
-      final EditorActionPlan.Replacement replacement = replacements.get(0);
+      final EditorActionPlan.Replacement replacement = replacements.getFirst();
       if (replacement.getText().length() != 1) return false;
 
       final int caretOffset = replacement.getBegin();
       final char c = replacement.getText().charAt(0);
-      paintImmediately(g, caretOffset, c);
-      return true;
+      try {
+        paintImmediately((Graphics2D)g, caretOffset, c);
+        return true;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return false;
   }
@@ -91,7 +133,8 @@ class ImmediatePainter {
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
-           !caret.isAtBidiRunBoundary();
+           !caret.isAtBidiRunBoundary() &&
+           noBorderEffectPainted(editor, caret);
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
@@ -102,21 +145,41 @@ class ImmediatePainter {
     return offset < document.getTextLength() && document.getCharsSequence().charAt(offset) != '\n';
   }
 
-  private void paintImmediately(final Graphics g, final int offset, final char c2) {
-    final EditorImpl editor = myEditor;
-    final Document document = editor.getDocument();
-    final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
+  private static boolean noBorderEffectPainted(EditorEx editor, Caret caret) {
+    int offset = caret.getOffset();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    return editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, h -> {
+      TextAttributes attrs = h.getTextAttributes(colorsScheme);
+      return attrs == null || !attrs.hasEffects() ||
+             TextAttributesEffectsBuilder.create(attrs).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT) == null;
+    });
+  }
 
-    final EditorSettings settings = editor.getSettings();
-    final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
-    final int lineHeight = editor.getLineHeight();
-    final int ascent = editor.getAscent();
-    final int topOverhang = editor.myView.getTopOverhang();
-    final int bottomOverhang = editor.myView.getBottomOverhang();
+  /// @noinspection GraphicsSetClipInspection
+  private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
+    EditorImpl editor = myEditor;
+    Document document = editor.getElfDocument();
+    LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
+    EditorSettings settings = editor.getSettings();
+    boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
+    boolean isSmoothCaretMovement = editor.getSettings().isSmoothCaretMovement();
+    int lineHeight = editor.getLineHeight();
+    int ascent = editor.getAscent();
+    CaretRepaintMetrics metrics = editor.myView.getCaretRepaintMetrics();
+    int caretHeight = metrics.caretHeight;
+    int topOverhang = metrics.caretTopOverhang;
 
-    final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
+    char c1 = offset == 0 ? ' ' : document.getImmutableCharSequence().charAt(offset - 1);
 
-    final List<TextAttributes> attributes = highlighter.getAttributesForPreviousAndTypedChars(document, offset, c2);
+    List<TextAttributes> attributes;
+    try {
+      attributes = highlighter.getAttributesForPreviousAndTypedChars(document, offset, c2);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Error calculating attributes, highlighter: " + highlighter + ", offset: " + offset + ", document length" +
+                                 document.getTextLength() + ", highlighter's last offset:" + highlighter.getSegments().getLastValidOffset(),
+                                 e);
+    }
     updateAttributes(editor, offset, attributes);
 
     final TextAttributes attributes1 = attributes.get(0);
@@ -136,42 +199,60 @@ class ImmediatePainter {
     final Point2D p2 = editor.offsetToPoint2D(offset);
     float p2x = (float)p2.getX();
     int p2y = (int)p2.getY();
-    int width1i = (int)(p2x) - (int)(p2x - width1);
-    int width2i = (int)(p2x + width2) - (int)p2x;
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
-    final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
-                                         : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
-    final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUI.sysScale((Graphics2D)g);
-    final Rectangle2D caretRectangle = new Rectangle2D.Float((int)(p2x + width2) - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
+    final float caretWidth = isBlockCursor ? editor.getCaretLocations(false).getFirst().getWidth()
+                                         : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
+    final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
+    final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
+                                                             caretWidth, caretHeight);
 
-    final Rectangle rectangle1 = new Rectangle((int)(p2x - width1), p2y, width1i, lineHeight);
-    final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, (int)(width2i + caretWidth - caretShift), lineHeight);
+    final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
+    final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);
+    final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
+    final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
 
-    final Consumer<Graphics> painter = graphics -> {
+    final Consumer<Graphics2D> paintCaret = graphics -> {
+      if (isBlockCursor) {
+        fillRect(graphics, caretRectangle, getCaretColor(editor));
+      } else {
+        paintCaretBar(graphics, caretRectangle, getCaretColor(editor));
+      }
+    };
+
+    final Consumer<Graphics2D> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
-      ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, editor.myFractionalMetricsHintValue);
+      graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
 
-      fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      fillRect(graphics, caretRectangle, getCaretColor(editor));
+      if (!isSmoothCaretMovement) paintCaret.accept(graphics);
 
-      fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
     };
 
     final Shape originalClip = g.getClip();
 
-    g.setClip(new Rectangle2D.Float((int)p2x - caretShift, p2y, width2i + caretWidth, lineHeight));
+    float clipStartX = (float)PaintUtil.alignToInt(p2x > editor.getContentComponent().getInsets().left ? p2x - caretShift : p2x,
+                                                   g, PaintUtil.RoundingMode.FLOOR);
+    float clipEndX = (float)PaintUtil.alignToInt(p2x + width2 - caretShift + caretWidth,
+                                                 g, PaintUtil.RoundingMode.CEIL);
+    if (clipEndX > editor.getContentComponent().getWidth()) {
+      // we cannot paint beyond component bounds (this will go beyond dev clip in graphics anyway)
+      return;
+    }
 
-    if (DOUBLE_BUFFERING.asBoolean()) {
+    g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
+    // at the moment, lines in editor are not aligned to dev pixel grid along Y axis, when fractional scale is used,
+    // so double buffering is disabled (as it might not produce the same result as direct painting, and will case text jitter)
+    if (DOUBLE_BUFFERING.asBoolean() && !PaintUtil.isFractionalScale(g.getTransform())) {
       paintWithDoubleBuffering(g, painter);
     }
     else {
-      painter.consume(g);
+      painter.accept(g);
     }
 
     g.setClip(originalClip);
@@ -189,31 +270,32 @@ class ImmediatePainter {
     return attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null;
   }
 
-  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<Graphics> painter) {
+  private void paintWithDoubleBuffering(final Graphics2D graphics, final Consumer<? super Graphics2D> painter) {
     final Rectangle bounds = graphics.getClipBounds();
 
-    createOrUpdateImageBuffer(myEditor.getComponent(), bounds.getSize());
+    createOrUpdateImageBuffer(myEditor.getComponent(), graphics, bounds.getSize());
 
-    final Graphics imageGraphics = myImage.getGraphics();
-    imageGraphics.translate(-bounds.x, -bounds.y);
-    painter.consume(imageGraphics);
-    imageGraphics.dispose();
+    useSafely(myImage.getGraphics(), imageGraphics -> {
+      imageGraphics.translate(-bounds.x, -bounds.y);
+      painter.accept(imageGraphics);
+    });
 
-    graphics.drawImage(myImage, bounds.x, bounds.y, null);
+    StartupUiUtil.drawImage(graphics, myImage, bounds.x, bounds.y, null);
   }
 
-  private void createOrUpdateImageBuffer(final JComponent component, final Dimension size) {
+  private void createOrUpdateImageBuffer(final JComponent component, final Graphics2D graphics, final Dimension size) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myImage == null || !isLargeEnough(myImage, size)) {
-        myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+        int width = (int) Math.ceil(PaintUtil.alignToInt(size.width, graphics, PaintUtil.RoundingMode.CEIL));
+        int height = (int) Math.ceil(PaintUtil.alignToInt(size.height, graphics, PaintUtil.RoundingMode.CEIL));
+        myImage = ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
       }
     }
     else {
       if (myImage == null) {
         myImage = component.createVolatileImage(size.width, size.height);
       }
-      else if (!isLargeEnough(myImage, size) ||
-               ((VolatileImage)myImage).validate(component.getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE) {
+      else if (!isLargeEnough(myImage, size) || !isImageValid((VolatileImage)myImage, component)) {
         myImage.flush();
         myImage = component.createVolatileImage(size.width, size.height);
       }
@@ -229,18 +311,55 @@ class ImmediatePainter {
     return width >= size.width && height >= size.height;
   }
 
-  private static void fillRect(final Graphics g, final Rectangle2D r, final Color color) {
-    g.setColor(color);
-    ((Graphics2D)g).fill(r);
+  private static boolean isImageValid(VolatileImage image, Component component) {
+    GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
+    if (SystemInfo.isWindows && image instanceof SunVolatileImage volatileImage) { // JBR-1540
+      GraphicsConfiguration imageConfig = volatileImage.getGraphicsConfig();
+      if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
+    }
+    return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 
-  private static void drawChar(final Graphics g,
+  private static void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
+    double w = r.getWidth(), h = r.getHeight();
+    double x = r.getX(), y = r.getY();
+
+    var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setColor(color);
+
+    var caretShape = new GeneralPath();
+    float radius = IslandsState.Companion.isEnabled() ? (float)(r.getWidth() / 2) : 0.0f;
+
+    caretShape.moveTo(r.getX(), r.getY() + radius);
+    caretShape.quadTo(x, y, x + radius, y);
+    caretShape.lineTo(x + w - radius, y);
+    caretShape.quadTo(x + w, y, x + w, y + radius);
+    caretShape.lineTo(x + w, y + h - radius);
+    caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
+    caretShape.lineTo(x + radius, y + h);
+    caretShape.quadTo(x, y + h, x, y + h - radius);
+
+    caretShape.closePath();
+    g.fill(caretShape);
+
+    if (old != null) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    }
+  }
+
+  private static void fillRect(final Graphics2D g, final Rectangle2D r, final Color color) {
+    g.setColor(color);
+    g.fill(r);
+  }
+
+  private static void drawChar(final Graphics2D g,
                                final char c,
                                final float x, final float y,
                                final Font font, final Color color) {
     g.setFont(font);
     g.setColor(color);
-    ((Graphics2D)g).drawString(String.valueOf(c), x, y);
+    g.drawString(String.valueOf(c), x, y);
   }
 
   private static Color getCaretColor(final Editor editor) {
@@ -250,7 +369,7 @@ class ImmediatePainter {
     return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
   }
 
-  private static void updateAttributes(final EditorImpl editor, final int offset, final List<TextAttributes> attributes) {
+  private static void updateAttributes(final EditorImpl editor, final int offset, final List<? extends TextAttributes> attributes) {
     final List<RangeHighlighterEx> list1 = new ArrayList<>();
     final List<RangeHighlighterEx> list2 = new ArrayList<>();
 
@@ -281,9 +400,9 @@ class ImmediatePainter {
   // TODO Unify with com.intellij.openapi.editor.impl.view.IterationState.setAttributes
   private static void updateAttributes(final EditorImpl editor,
                                        final TextAttributes attributes,
-                                       final List<RangeHighlighterEx> highlighters) {
+                                       final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
-      ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(highlighters, IterationState.createByLayerThenByAttributesComparator(editor.getColorsScheme()));
     }
 
     TextAttributes syntax = attributes;
@@ -291,17 +410,15 @@ class ImmediatePainter {
 
     final int size = highlighters.size();
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
-      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+      if (highlighter.getTextAttributes(editor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
         syntax = null;
       }
     }
 
     final List<TextAttributes> cachedAttributes = new ArrayList<>();
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
 
@@ -315,7 +432,7 @@ class ImmediatePainter {
         syntax = null;
       }
 
-      TextAttributes textAttributes = highlighter.getTextAttributes();
+      TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
         cachedAttributes.add(textAttributes);
       }
@@ -330,7 +447,6 @@ class ImmediatePainter {
     EffectType effectType = null;
     int fontType = 0;
 
-    //noinspection ForLoopReplaceableByForEach, Duplicates
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
 
@@ -358,7 +474,7 @@ class ImmediatePainter {
     TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
     if (fontType == Font.PLAIN) fontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
-    attributes.setAttributes(foreground, background, effect, null, effectType, fontType);
+    Objects.requireNonNull(attributes).setAttributes(foreground, background, effect, null, effectType, fontType);
   }
 
   private static void pause() {

@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -29,10 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class SplitLineAction extends EditorAction {
+public final class SplitLineAction extends EditorAction {
   public static Key<Boolean> SPLIT_LINE_KEY = Key.create("com.intellij.openapi.editor.actions.SplitLineAction");
 
   public SplitLineAction() {
@@ -40,11 +27,7 @@ public class SplitLineAction extends EditorAction {
     setEnabledInModalContext(false);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    public Handler() {
-      super(true);
-    }
-
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, caret, dataContext) &&
@@ -52,7 +35,7 @@ public class SplitLineAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =
@@ -66,9 +49,7 @@ public class SplitLineAction extends EditorAction {
 
       if (CharArrayUtil.containsOnlyWhiteSpaces(beforeCaret)) {
         String strToInsert = "";
-        if (beforeCaret != null) {
-          strToInsert +=  beforeCaret.toString();
-        }
+        strToInsert += beforeCaret.toString();
         strToInsert += "\n";
         document.insertString(lineStart, strToInsert);
         editor.getCaretModel().moveToOffset(offset);

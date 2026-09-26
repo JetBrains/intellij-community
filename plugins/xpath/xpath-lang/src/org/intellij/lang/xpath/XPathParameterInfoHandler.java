@@ -16,14 +16,16 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
@@ -31,18 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunctionCall, XPathFunction> {
-    public boolean couldShowInLookup() {
-        return false;
-    }
 
-    public Object[] getParametersForLookup(LookupElement lookupElement, ParameterInfoContext parameterInfoContext) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    public Object[] getParametersForDocumentation(XPathFunction xPathFunction, ParameterInfoContext parameterInfoContext) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
+  @Override
     public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {
@@ -54,8 +46,7 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return call;
     }
 
-    @Nullable
-    private static XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
+    private static @Nullable XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
         PsiElement e = psiFile.findElementAt(offset);
         while (e != null) {
             final XPathFunctionCall call = PsiTreeUtil.getParentOfType(e, XPathFunctionCall.class);
@@ -72,27 +63,23 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return null;
     }
 
+    @Override
     public void showParameterInfo(@NotNull XPathFunctionCall call, @NotNull CreateParameterInfoContext context) {
         context.showHint(call, call.getTextOffset() + 1, this);
     }
 
+    @Override
     public XPathFunctionCall findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
         return findFunctionCall(context.getFile(), context.getOffset());
     }
 
+    @Override
     public void updateParameterInfo(@NotNull XPathFunctionCall call, @NotNull UpdateParameterInfoContext context) {
         int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(call.getNode(), context.getOffset(), XPathTokenTypes.COMMA);
         context.setCurrentParameter(currentParameterIndex);
     }
 
-    public String getParameterCloseChars() {
-        return "(,)";
-    }
-
-    public boolean tracksParameterIndex() {
-        return true;
-    }
-
+    @Override
     public void updateUI(XPathFunction function, @NotNull ParameterInfoUIContext context) {
         final Function declaration = function.getDeclaration();
         if (declaration != null) {
@@ -126,7 +113,6 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         }
     }
 
-    @SuppressWarnings({ "UnresolvedPropertyKey" })
     private static String noParamsMessage() {
         return CodeInsightBundle.message("parameter.info.no.parameters");
     }

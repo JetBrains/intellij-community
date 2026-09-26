@@ -44,3 +44,6 @@ UFile (package = )
                                 UBreakExpression (label = null)
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = result)
+        UMethod (name = values)
+        UMethod (name = valueOf)
+            UParameter (name = name)

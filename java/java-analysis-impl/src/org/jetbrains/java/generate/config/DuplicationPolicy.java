@@ -19,19 +19,24 @@
  */
 package org.jetbrains.java.generate.config;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import org.jetbrains.annotations.Nls;
+
+import java.util.function.Supplier;
+
 public enum DuplicationPolicy {
-    ASK("Ask"),
-    REPLACE("Replace existing"),
-    DUPLICATE("Generate duplicating method");
+    ASK(JavaAnalysisBundle.messagePointer("duplication.policy.ask")),
+    REPLACE(JavaAnalysisBundle.messagePointer("duplication.policy.replace")),
+    DUPLICATE(JavaAnalysisBundle.messagePointer("duplication.policy.generate.duplicate"));
 
-    private final String displayName;
+    private final Supplier<@Nls String> displayName;
 
-    DuplicationPolicy(String displayName) {
+    DuplicationPolicy(Supplier<@Nls String> displayName) {
         this.displayName = displayName;
     }
 
     @Override
-    public String toString() {
-        return displayName;
+    public @Nls String toString() {
+        return displayName.get();
     }
 }

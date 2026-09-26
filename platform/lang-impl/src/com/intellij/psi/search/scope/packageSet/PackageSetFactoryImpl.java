@@ -1,32 +1,68 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PackageSetFactoryImpl extends PackageSetFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl");
+import java.util.ArrayList;
+import java.util.List;
+
+final class PackageSetFactoryImpl extends PackageSetFactory {
+  private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
+
+  PackageSetFactoryImpl(@NotNull CoroutineScope coroutineScope) {
+    PackageSetParserExtension.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        for (Project project : ProjectUtil.getOpenProjects()) {
+          for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+            IComponentStoreKt.scheduleReloadState(IComponentStoreKt.getStateStore(project),
+                                                  holder.getClass(),
+                                                  holder::fireScopeListeners,
+                                                  coroutineScope);
+          }
+        }
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+            boolean changed = false;
+            NamedScope[] scopes = holder.getScopes();
+            for (int i = 0; i < scopes.length; i++) {
+              NamedScope scope = scopes[i];
+              PackageSet value = scope.getValue();
+              if (value != null && value.getClass().getClassLoader() == pluginClassLoader) {
+                String presentableName = scope.getPresentableName();
+                scopes[i] = new NamedScope(scope.getScopeId(), () -> presentableName, AllIcons.Ide.LocalScope,
+                                           new InvalidPackageSet(value.getText()), scope.isPredefined());
+                changed = true;
+              }
+            }
+            if (changed) {
+              holder.setScopes(scopes);
+            }
+          }
+        }
+      }
+    });
+  }
 
   @Override
   public PackageSet compile(String text) throws ParsingException {
@@ -35,37 +71,39 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     return new Parser(lexer).parse();
   }
 
-  private static class Parser {
+  private static final class Parser {
     private final Lexer myLexer;
 
-    public Parser(Lexer lexer) {
+    Parser(Lexer lexer) {
       myLexer = lexer;
     }
 
     public PackageSet parse() throws ParsingException {
       PackageSet set = parseUnion();
-      if (myLexer.getTokenType() != null) error(AnalysisScopeBundle.message("error.package.set.token.expectations", getTokenText()));
+      if (myLexer.getTokenType() != null) error(CodeInsightBundle.message("error.package.set.token.expectations", getTokenText()));
       return set;
     }
 
     private PackageSet parseUnion() throws ParsingException {
-      PackageSet result = parseIntersection();
-      while (true) {
-        if (myLexer.getTokenType() != ScopeTokenTypes.OROR) break;
+      List<PackageSet> sets = new ArrayList<>();
+      PackageSet set = parseIntersection();
+      sets.add(set);
+      while (myLexer.getTokenType() == ScopeTokenTypes.OROR) {
         myLexer.advance();
-        result = new UnionPackageSet(result, parseIntersection());
+        sets.add(parseIntersection());
       }
-      return result;
+      return UnionPackageSet.create(sets.toArray(new PackageSet[0]));
     }
 
     private PackageSet parseIntersection() throws ParsingException {
-      PackageSet result = parseTerm();
-      while (true) {
-        if (myLexer.getTokenType() != ScopeTokenTypes.ANDAND) break;
+      PackageSet set = parseTerm();
+      List<PackageSet> sets = new ArrayList<>();
+      sets.add(set);
+      while (myLexer.getTokenType() == ScopeTokenTypes.ANDAND) {
         myLexer.advance();
-        result = new IntersectionPackageSet(result, parseTerm());
+        sets.add(parseTerm());
       }
-      return result;
+      return IntersectionPackageSet.create(sets.toArray(new PackageSet[0]));
     }
 
     private PackageSet parseTerm() throws ParsingException {
@@ -85,9 +123,13 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
     private PackageSet parsePattern() throws ParsingException {
       String scope = null;
-      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
+      PackageSetParserExtension usedExtension = null;
+      for (PackageSetParserExtension extension : PackageSetParserExtension.EP_NAME.getExtensionList()) {
         scope = extension.parseScope(myLexer);
-        if (scope != null) break;
+        if (scope != null) {
+          usedExtension = extension;
+          break;
+        }
       }
       if (scope == null) error("Unknown scope type");
       String modulePattern = parseModulePattern();
@@ -95,10 +137,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
         myLexer.advance();
       }
-      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
-        final PackageSet packageSet = extension.parsePackageSet(myLexer, scope, modulePattern);
-        if (packageSet != null) return packageSet;
-      }
+      final PackageSet packageSet = usedExtension.parsePackageSet(myLexer, scope, modulePattern);
+      if (packageSet != null) return packageSet;
       error("Unknown scope type");
       return null; //not reachable
     }
@@ -109,40 +149,46 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       return myLexer.getBufferSequence().subSequence(start, end).toString();
     }
 
-    @Nullable
-    private String parseModulePattern() throws ParsingException {
+    private @Nullable String parseModulePattern() throws ParsingException {
       if (myLexer.getTokenType() != ScopeTokenTypes.LBRACKET) return null;
       myLexer.advance();
-      StringBuffer pattern = new StringBuffer();
+      StringBuilder pattern = new StringBuilder();
       while (true) {
         if (myLexer.getTokenType() == ScopeTokenTypes.RBRACKET ||
             myLexer.getTokenType() == null) {
           myLexer.advance();
           break;
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
           pattern.append("*");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.IDENTIFIER ||
-                   myLexer.getTokenType() == TokenType.WHITE_SPACE ||
-                   myLexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL ) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.IDENTIFIER ||
+                 myLexer.getTokenType() == TokenType.WHITE_SPACE ||
+                 myLexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
           pattern.append(getTokenText());
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.DOT) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.DOT) {
           pattern.append(".");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.MINUS) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.MINUS) {
           pattern.append("-");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.TILDE) {
           pattern.append("~");
-        } else if (myLexer.getTokenType() == ScopeTokenTypes.SHARP) {
+        }
+        else if (myLexer.getTokenType() == ScopeTokenTypes.SHARP) {
           pattern.append("#");
         }
         else if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
           pattern.append(":");
-        } else {
+        }
+        else {
           pattern.append(getTokenText());
         }
         myLexer.advance();
       }
-      if (pattern.length() == 0) {
-        error(AnalysisScopeBundle.message("error.package.set.pattern.expectations"));
+      if (pattern.isEmpty()) {
+        error(CodeInsightBundle.message("error.package.set.pattern.expectations"));
       }
       return pattern.toString();
     }
@@ -152,15 +198,15 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       myLexer.advance();
 
       PackageSet result = parseUnion();
-      if (myLexer.getTokenType() != ScopeTokenTypes.RPARENTH) error(AnalysisScopeBundle.message("error.package.set.rparen.expected"));
+      if (myLexer.getTokenType() != ScopeTokenTypes.RPARENTH) error(CodeInsightBundle.message("error.package.set.rparen.expected"));
       myLexer.advance();
 
       return result;
     }
 
-    private void error(String message) throws ParsingException {
+    private void error(@NotNull String message) throws ParsingException {
       throw new ParsingException(
-        AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
+        CodeInsightBundle.message("error.package.set.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
     }
   }
 }

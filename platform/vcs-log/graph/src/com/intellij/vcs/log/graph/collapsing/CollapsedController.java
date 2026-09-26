@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -24,28 +9,27 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
+import com.intellij.vcs.log.graph.utils.GraphUtilKt;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class CollapsedController extends CascadeController {
-  @NotNull private CollapsedGraph myCollapsedGraph;
+  private @NotNull CollapsedGraph myCollapsedGraph;
 
   public CollapsedController(@NotNull LinearGraphController delegateLinearGraphController,
-                             @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                             final @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                              @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
-    UnsignedBitSet initVisibility =
-      ReachableNodes.getReachableNodes(permanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
+    UnsignedBitSet initVisibility = GraphUtilKt.getReachableNodes(permanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
     myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
-  @NotNull
   @Override
-  protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
+  protected @NotNull LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
     if (delegateAnswer.getGraphChanges() != null) {
       LinearGraph delegateGraph = getDelegateController().getCompiledGraph();
       myCollapsedGraph = CollapsedGraph.updateInstance(myCollapsedGraph, delegateGraph);
@@ -57,7 +41,7 @@ public class CollapsedController extends CascadeController {
   }
 
   private void applyDelegateChanges(LinearGraph graph, GraphChanges<Integer> changes) {
-    Set<Integer> nodesToShow = ContainerUtil.newHashSet();
+    Set<Integer> nodesToShow = new HashSet<>();
 
     for (GraphChanges.Edge<Integer> e : changes.getChangedEdges()) {
       if (!e.removed()) {
@@ -90,31 +74,26 @@ public class CollapsedController extends CascadeController {
     CollapsedActionManager.expandNodes(myCollapsedGraph, nodesToShow);
   }
 
-  @Nullable
   @Override
-  protected LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
+  protected @Nullable LinearGraphAnswer performAction(@NotNull LinearGraphAction action) {
     return CollapsedActionManager.performAction(this, action);
   }
 
-  @NotNull
   @Override
-  public LinearGraph getCompiledGraph() {
+  public @NotNull LinearGraph getCompiledGraph() {
     return myCollapsedGraph.getCompiledGraph();
   }
 
-  @NotNull
-  protected CollapsedGraph getCollapsedGraph() {
+  protected @NotNull CollapsedGraph getCollapsedGraph() {
     return myCollapsedGraph;
   }
 
-  @Nullable
   @Override
-  protected GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
+  protected @Nullable GraphElement convertToDelegate(@NotNull GraphElement graphElement) {
     return convertToDelegate(graphElement, myCollapsedGraph);
   }
 
-  @Nullable
-  public static GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
+  public static @Nullable GraphElement convertToDelegate(@NotNull GraphElement graphElement, CollapsedGraph collapsedGraph) {
     if (graphElement instanceof GraphEdge) {
       Integer upIndex = ((GraphEdge)graphElement).getUpNodeIndex();
       Integer downIndex = ((GraphEdge)graphElement).getDownNodeIndex();

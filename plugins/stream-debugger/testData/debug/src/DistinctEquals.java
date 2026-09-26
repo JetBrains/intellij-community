@@ -18,7 +18,7 @@ public class DistinctEquals {
   }
 
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long res = Stream.of(Id.create(), Id.create(), Id.create()).distinct().count();
   }
 }

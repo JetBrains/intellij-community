@@ -1,0 +1,7 @@
+4 A(<bold>1</bold>), (in ABC.A)
+3 	enum class ABC(<bold>x: Int</bold>) { (in ABC(Int))
+4 		A(<bold>1</bold>), (in ABC.A)
+
+6 constructor(s: String): this(<bold>s.length</bold>) (in constructor ABC(String))
+3 	enum class ABC(<bold>x: Int</bold>) { (in ABC(Int))
+6 		constructor(s: String): this(<bold>s.length</bold>) (in constructor ABC(String))

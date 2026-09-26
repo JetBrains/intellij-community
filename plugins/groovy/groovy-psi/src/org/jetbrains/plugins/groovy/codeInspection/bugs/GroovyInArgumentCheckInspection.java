@@ -1,40 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyInArgumentCheckInspection extends BaseInspection {
-  @NotNull
+public final class GroovyInArgumentCheckInspection extends BaseInspection {
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
   }
 
@@ -42,24 +31,13 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
   protected String buildErrorString(Object... args) {
     PsiType ltype = (PsiType)args[0];
     PsiType rtype = (PsiType)args[1];
-    return GroovyInspectionBundle.message("rtype.cannot.contain.ltype", ltype.getPresentableText(), rtype.getPresentableText());
-
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Incompatible 'in' argument types";
+    return GroovyBundle.message("rtype.cannot.contain.ltype", ltype.getPresentableText(), rtype.getPresentableText());
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
+
     @Override
-    public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-
-      if (expression.getOperationTokenType() != GroovyTokenTypes.kIN) return;
-
+    public void visitInExpression(@NotNull GrInExpression expression) {
       GrExpression leftOperand = expression.getLeftOperand();
       GrExpression rightOperand = expression.getRightOperand();
       if (rightOperand == null) return;
@@ -82,8 +60,13 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
       }
 
       if (component == null) return;
-      
-      if (TypesUtil.isAssignableWithoutConversions(component, ltype, expression)) return;
+
+      if (TypesUtil.isAssignableWithoutConversions(component, ltype)) return;
+
+      if (InheritanceUtil.isInheritor(rtype, GroovyCommonClassNames.GROOVY_LANG_RANGE) &&
+          TypesUtil.isNumericType(component) && TypesUtil.isNumericType(ltype)) {
+        return;
+      }
 
       registerError(expression, ltype, rtype);
     }
@@ -105,10 +88,5 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       registerError(expression, ltype, rtype);
     }
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 }

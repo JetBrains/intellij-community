@@ -1,0 +1,8 @@
+// "Change to constructor invocation" "true"
+// PRIORITY: HIGH
+// K2_ERROR: SUPERTYPE_NOT_INITIALIZED
+fun bar() {
+    abstract class Foo {}
+    val foo: Foo = object : Foo() {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParenthesisFix

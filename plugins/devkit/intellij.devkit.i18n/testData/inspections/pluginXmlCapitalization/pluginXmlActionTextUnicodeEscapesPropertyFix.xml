@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextUnicodeEscapesFixBundle</resource-bundle>
+
+  <actions>
+  <<warning descr="String 'copy path/reference…' is not properly capitalized. It should have title capitalization">action<caret></warning> id="BundleActionUnicodeEscapes"/>
+  </actions>
+
+</idea-plugin>

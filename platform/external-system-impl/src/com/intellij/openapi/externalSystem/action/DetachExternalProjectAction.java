@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
@@ -24,29 +10,36 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- * @since 6/13/13 5:42 PM
- */
+import static com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt.toVirtualFileUrl;
+import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.unregisterProjectRootBlocking;
+
+@ApiStatus.Internal
 public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> {
 
   public DetachExternalProjectAction() {
     super(ProjectData.class);
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.detach.external.project.text", "External"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.messagePointer("action.detach.external.project.description"));
     getTemplatePresentation().setIcon(AllIcons.General.Remove);
   }
 
@@ -56,51 +49,91 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     if(this.getClass() != DetachExternalProjectAction.class) return;
 
     ProjectSystemId systemId = getSystemId(e);
-    final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
+    final String systemIdName = systemId != null ? systemId.getReadableName() : "External";
     Presentation presentation = e.getPresentation();
-    presentation.setText(ExternalSystemBundle.message("action.detach.external.project.text", systemIdName));
+    presentation.setText(ExternalSystemBundle.messagePointer("action.detach.external.project.text", systemIdName));
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
-    return ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext()) != null;
+    return e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE) != null;
   }
 
   @Override
-  public void perform(@NotNull final Project project,
+  public void perform(final @NotNull Project project,
                       @NotNull ProjectSystemId projectSystemId,
                       @NotNull ProjectData projectData,
                       @NotNull AnActionEvent e) {
 
     e.getPresentation().setText(
-      ExternalSystemBundle.message("action.detach.external.project.text", projectSystemId.getReadableName())
+      ExternalSystemBundle.messagePointer("action.detach.external.project.text", projectSystemId.getReadableName())
     );
 
-    final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
+    final ProjectNode projectNode = e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE);
     assert projectNode != null;
+    detachProject(project, projectSystemId, projectData, projectNode);
+  }
 
-    ExternalSystemApiUtil.getLocalSettings(project, projectSystemId).
-      forgetExternalProjects(Collections.singleton(projectData.getLinkedExternalProjectPath()));
-    ExternalSystemApiUtil.getSettings(project, projectSystemId).unlinkExternalProject(projectData.getLinkedExternalProjectPath());
+  public static void detachProject(
+    @NotNull Project project,
+    @NotNull ProjectSystemId projectSystemId,
+    @NotNull ProjectData projectData,
+    @Nullable ProjectNode projectNode
+  ) {
+    String externalProjectPath = projectData.getLinkedExternalProjectPath();
 
-    ExternalProjectsManagerImpl.getInstance(project).forgetExternalProjectData(projectSystemId, projectData.getLinkedExternalProjectPath());
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from local settings", _ -> {
+      AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectSystemId);
+      localSettings.forgetExternalProjects(Collections.singleton(externalProjectPath));
+    });
 
-    // Process orphan modules.
-    List<Module> orphanModules = ContainerUtilRt.newArrayList();
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from system settings", _ -> {
+      AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(project, projectSystemId);
+      settings.unlinkExternalProject(externalProjectPath);
+    });
+
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from data storage", _ -> {
+      ExternalProjectsManagerImpl externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project);
+      externalProjectsManager.forgetExternalProjectData(projectSystemId, externalProjectPath);
+    });
+
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from tool window", _ -> {
+      if (projectNode != null) {
+        ExternalSystemNode<?> group = projectNode.getGroup();
+        if (group != null) {
+          group.remove(projectNode);
+        }
+      }
+    });
+
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from workspace model", _ -> {
+      List<Module> orphanModules = collectExternalSystemModules(project, projectSystemId, externalProjectPath);
+      if (!orphanModules.isEmpty()) {
+        ProjectDataManagerImpl projectDataManager = ProjectDataManagerImpl.getInstance();
+        projectDataManager.removeData(ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
+      }
+
+      var vfuManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
+      var externalProjectVfu = toVirtualFileUrl(Path.of(externalProjectPath), vfuManager);
+      unregisterProjectRootBlocking(project, externalProjectVfu);
+    });
+  }
+
+  private static @NotNull List<Module> collectExternalSystemModules(
+    @NotNull Project project,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull String externalProjectPath
+  ) {
+    List<Module> result = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module)) continue;
-
-      String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-      if (projectData.getLinkedExternalProjectPath().equals(path)) {
-        orphanModules.add(module);
+      if (ExternalSystemApiUtil.isExternalSystemAwareModule(externalSystemId, module)) {
+        String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+        if (externalProjectPath.equals(path)) {
+          result.add(module);
+        }
       }
     }
-
-    if (!orphanModules.isEmpty()) {
-      projectNode.getGroup().remove(projectNode);
-      ProjectDataManagerImpl.getInstance().removeData(
-        ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
-    }
+    return result;
   }
 }

@@ -1,9 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
@@ -14,10 +26,8 @@ import java.util.function.Predicate;
 
 /**
  * Utility methods which are helpful to generate new lambda expressions in quick-fixes
- *
- * @author Tagir Valeev
  */
-public class LambdaGenerationUtil {
+public final class LambdaGenerationUtil {
   /**
    * Tests the element (expression or statement) whether it could be converted to the body
    * of lambda expression mapped to functional interface which SAM does not declare any
@@ -51,7 +61,7 @@ public class LambdaGenerationUtil {
    * @return true if this expression or statement can be converted to lambda
    */
   @Contract("null, _ -> false")
-  public static boolean canBeUncheckedLambda(@Nullable PsiElement lambdaCandidate, @NotNull Predicate<PsiVariable> variableAllowedPredicate) {
+  public static boolean canBeUncheckedLambda(@Nullable PsiElement lambdaCandidate, @NotNull Predicate<? super PsiVariable> variableAllowedPredicate) {
     if(!(lambdaCandidate instanceof PsiExpression) && !(lambdaCandidate instanceof PsiStatement)) return false;
     if(!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return false;
     CanBeLambdaBodyVisitor visitor = new CanBeLambdaBodyVisitor(lambdaCandidate, variableAllowedPredicate);
@@ -63,31 +73,31 @@ public class LambdaGenerationUtil {
     // Throws is not handled here: it's usually not a problem to move "throws <UncheckedException>" inside lambda.
     private boolean myCanBeLambdaBody = true;
     private final PsiElement myRoot;
-    private final Predicate<PsiVariable> myVariableAllowedPredicate;
+    private final Predicate<? super PsiVariable> myVariableAllowedPredicate;
 
-    CanBeLambdaBodyVisitor(PsiElement root, Predicate<PsiVariable> variableAllowedPredicate) {
+    CanBeLambdaBodyVisitor(PsiElement root, Predicate<? super PsiVariable> variableAllowedPredicate) {
       myRoot = root;
       myVariableAllowedPredicate = variableAllowedPredicate;
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if(!myCanBeLambdaBody) return;
       super.visitElement(element);
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // do not go down the local/anonymous classes
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       // do not go down the nested lambda expressions
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if(!myCanBeLambdaBody) return;
       super.visitReferenceExpression(expression);
       PsiElement element = expression.resolve();
@@ -102,11 +112,11 @@ public class LambdaGenerationUtil {
       if (variable instanceof PsiField) {
         return !variable.hasModifierProperty(PsiModifier.FINAL) || !PsiUtil.isAccessedForWriting(expression);
       }
-      return !PsiUtil.isAccessedForWriting(expression) && HighlightControlFlowUtil.isEffectivelyFinal(variable, myRoot, null);
+      return !PsiUtil.isAccessedForWriting(expression) && ControlFlowUtil.isEffectivelyFinal(variable, myRoot);
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiStatement exitedStatement = statement.findExitedStatement();
       if(exitedStatement == null || !PsiTreeUtil.isAncestor(myRoot, exitedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -115,7 +125,7 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiStatement continuedStatement = statement.findContinuedStatement();
       if(continuedStatement == null || !PsiTreeUtil.isAncestor(myRoot, continuedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -124,7 +134,7 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       myCanBeLambdaBody = false;
     }
 

@@ -1,96 +1,79 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>1</version>
-  <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
 
   <description><![CDATA[
-      This plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
-      Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
-      calculated based on your completion usage patterns. If you don't want to send anything just disable this plugin.
+      <p>The plugin collects anonymous statistics about code completion usage.
+      It allows us to improve code completion feature using machine learning.</p>
+      <br>
+      <p>Notice: the plugin does not collect or send any data in stable (release) builds. But in the EAP builds
+      the plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
+      Note, the plugin doesn't send any of your personal data or code. All it sends is just numbers
+      calculated based on your completion usage patterns. The plugin does not send more than 15MB of data per day. </p>
     ]]></description>
 
-  <change-notes><![CDATA[
-    ]]>
-  </change-notes>
-
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains"/>
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
+
+  <extensionPoints>
+    <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.stats.completion.CompletionStatsPolicy"/>
+    </extensionPoint>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.CompletionLoggerProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.CompletionFileLoggerProvider"/>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
-                        serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
-    </applicationService>
+    <applicationService serviceInterface="com.intellij.stats.completion.storage.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.completion.storage.PluginDirectoryFilePathProvider"
+                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider"/>
 
-    <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
-                        serviceImplementation="com.intellij.stats.storage.PluginDirectoryFilePathProvider"
-                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
-    </applicationService>
+    <applicationService serviceInterface="com.intellij.stats.completion.sender.StatisticSender"
+                        serviceImplementation="com.intellij.stats.completion.sender.StatisticSenderImpl"
+                        testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
+    <applicationService serviceInterface="com.intellij.stats.completion.network.service.RequestService"
+                        serviceImplementation="com.intellij.stats.completion.network.service.SimpleRequestService"
+                        testServiceImplementation="com.intellij.mocks.TestRequestService"/>
 
-    <applicationService serviceInterface="com.intellij.stats.sender.StatisticSender"
-                        serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
-                        testServiceImplementation="com.intellij.mocks.TestStatisticSender">
-    </applicationService>
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.InstallationIdProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.PermanentInstallationIdProvider"/>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.WebServiceStatus"
-                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider">
-    </applicationService>
+    <registryKey key="completion.stats.analytics.platform.send" defaultValue="true" restartRequired="true"
+                 description="Send completion logs to Analytics Platform"/>
 
-    <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
-                        serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
-                        testServiceImplementation="com.intellij.mocks.TestRequestService">
-    </applicationService>
+    <registryKey key="completion.stats.analytics.platform.url" defaultValue="default" restartRequired="true"
+                 description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
-    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
-                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
-    </applicationService>
-
-    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
-                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
-    </applicationService>
-
-    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
-
-    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
-                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
-
-    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
+    <applicationActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
   </extensions>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.stats.sender.SenderComponent</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>
-        com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
-      </implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
-      <interface-class>com.jetbrains.completion.feature.FeatureManager</interface-class>
-    </component>
-  </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.stats.personalization.impl.ProjectUserFactorStorage</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.stats.personalization.UserFactorsManager</interface-class>
-      <implementation-class>com.intellij.stats.personalization.impl.UserFactorsManagerImpl</implementation-class>
-    </component>
-  </project-components>
-
+  <projectListeners>
+    <listener class="com.intellij.stats.completion.tracker.CompletionLoggerInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

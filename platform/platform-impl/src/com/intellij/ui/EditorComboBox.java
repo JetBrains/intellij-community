@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,26 +13,33 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.KeyStroke;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
-// TODO[pegov]: should extend ComboBox not JComboBox!
-public class EditorComboBox extends JComboBox implements DocumentListener {
-  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
+public class EditorComboBox extends ComboBox implements DocumentListener {
+  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<>() {
     @Override
     public String getText(EditorComboBox component) {
       return component.getText();
@@ -119,24 +112,17 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.beforeDocumentChange(event);
     }
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-
-    MacUIUtil.drawComboboxFocusRing(this, g);
   }
 
   public Project getProject() {
@@ -226,7 +212,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
   }
 
-  private class MyEditor implements ComboBoxEditor {
+  private final class MyEditor implements ComboBoxEditor {
     @Override
     public void addActionListener(ActionListener l) {
     }
@@ -288,7 +274,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     myEditorField = createEditorTextField(myDocument, myProject, myFileType, myIsViewer);
     final ComboBoxEditor editor = new MyEditor();
     setEditor(editor);
-    setRenderer(new EditorComboBoxRenderer(editor));
+    setRenderer(BuilderKt.comboBoxEditorRenderer(editor));
   }
 
   protected ComboboxEditorTextField createEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
@@ -338,7 +324,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
 
   @Override
   public Dimension getPreferredSize() {
-    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula()) {
       return super.getPreferredSize();
     }
     if (myEditorField != null) {
@@ -347,8 +333,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       return preferredSize;
     }
 
-    //final int cbHeight = new JComboBox().getPreferredSize().height; // should be used actually
-    return new Dimension(100, UIUtil.fixComboBoxHeight(20));
+    return new Dimension(100, 20);
   }
 
   @Override

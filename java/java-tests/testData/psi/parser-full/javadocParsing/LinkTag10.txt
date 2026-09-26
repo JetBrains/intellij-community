@@ -1,0 +1,56 @@
+PsiJavaFile:LinkTag10.java
+  PsiImportList
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:java.lang.String
+        PsiJavaCodeReferenceElement:java.lang
+          PsiJavaCodeReferenceElement:java
+            PsiIdentifier:java('java')
+            PsiReferenceParameterList
+              <empty list>
+          PsiJavaToken:DOT('.')
+          PsiIdentifier:lang('lang')
+          PsiReferenceParameterList
+            <empty list>
+        PsiJavaToken:DOT('.')
+        PsiIdentifier:String('String')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiInlineDocTag:@link
+        PsiDocToken:DOC_INLINE_TAG_START('{')
+        PsiDocToken:DOC_TAG_NAME('@link')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_FRAGMENT_REF)
+          PsiDocToken:DOC_TAG_VALUE_DOUBLE_SHARP_TOKEN('##')
+          PsiElement(DOC_FRAGMENT_NAME)
+            PsiDocToken:DOC_TAG_VALUE_TOKEN('fragment-name')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('text for the link')
+        PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

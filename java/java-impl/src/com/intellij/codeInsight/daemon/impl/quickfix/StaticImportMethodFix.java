@@ -1,118 +1,114 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 
-public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
-  protected final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
-
-  public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
-    myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
+public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiMethodCallExpression> {
+  public StaticImportMethodFix(@NotNull PsiFile psiFile, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(psiFile, methodCallExpression);
   }
 
-  @NotNull
   @Override
-  protected String getBaseText() {
+  protected @NotNull String getBaseText() {
     return QuickFixBundle.message("static.import.method.text");
   }
 
-  @NotNull
   @Override
-  protected String getMemberPresentableText(PsiMethod method) {
+  protected @NotNull String getMemberPresentableText(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                                     PsiFormatUtilBase.SHOW_FQ_NAME, 0);
   }
 
-  @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    final Project project = myMethodCall.getProject();
-    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    final PsiMethodCallExpression element = myMethodCall.getElement();
-    PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
-    String name = reference == null ? null : reference.getReferenceName();
-    if (name == null) return Collections.emptyList();
-    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
-    cache.processMethodsWithName(name, element.getResolveScope(), processor);
-    return processor.getMembersToImport(applicableOnly);
+  protected @NotNull String getMemberKindPresentableText() {
+    return QuickFixBundle.message("static.import.method.kind.text");
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  StaticMembersProcessor.@NotNull MembersToImport<PsiMethod> getMembersToImport(int maxResults) {
+    Project project = myReferencePointer.getProject();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+    PsiMethodCallExpression element = myReferencePointer.getElement();
+    PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
+    String name = reference == null ? null : reference.getReferenceName();
+    if (name == null) return new StaticMembersProcessor.MembersToImport<>(Collections.emptyList(), Collections.emptyList());
+    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), maxResults);
+    cache.processMethodsWithName(name, element.getResolveScope(), processor);
+    return processor.getMembersToImport();
+  }
+
+  @Override
+  boolean hasCompatibleSignature(@NotNull PsiMethod method) {
+    ProgressManager.checkCanceled();
+    PsiMethodCallExpression call = myReferencePointer.getElement();
+    if (call == null) return false;
+    return MethodCallSignature.canMatchCall(method, call.getArgumentList());
+  }
+
+  @Override
+  boolean toAddStaticImports() {
     return true;
   }
 
-  @NotNull
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myMethodCall);
+  @Override
+  protected @Nls @NotNull String getSelectorTitle() {
+    return QuickFixBundle.message("method.to.import.chooser.title");
   }
 
-  @Nullable
   @Override
-  protected PsiElement getElement() {
-    return myMethodCall.getElement();
-  }
-
-  @Nullable
-  @Override
-  protected PsiElement getQualifierExpression() {
-    final PsiMethodCallExpression element = myMethodCall.getElement();
+  protected @Nullable PsiElement getQualifierExpression() {
+    PsiMethodCallExpression element = myReferencePointer.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement resolveRef() {
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)getElement();
+  protected @Nullable PsiElement resolveRef() {
+    PsiMethodCallExpression methodCallExpression = getElement();
     return methodCallExpression != null ? methodCallExpression.resolveMethod() : null;
   }
 
-  private static class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
+  @Override
+  protected @Nullable String getReferenceName() {
+    PsiMethodCallExpression element = myReferencePointer.getElement();
+    return element != null ? element.getMethodExpression().getReferenceName() : null;
+  }
 
-    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, @NotNull SearchMode mode) {
-      super(place, showMembersFromDefaultPackage, mode);
+  private static final class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
+    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, int maxResults) {
+      super(place, showMembersFromDefaultPackage, maxResults);
     }
 
     @Override
-    protected boolean isApplicable(PsiMethod method, PsiElement place) {
-      final PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
-      final MethodCandidateInfo candidateInfo =
-        new MethodCandidateInfo(method, PsiSubstitutor.EMPTY, false, false, argumentList, null, argumentList.getExpressionTypes(), null);
-      PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
+    protected ApplicableType isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
+      ProgressManager.checkCanceled();
+      PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
+      PsiSubstitutor substitutorForMethod = MethodCallSignature.inferSubstitutor(method, argumentList);
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-        final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-        if (returnType == null) return true;
+        PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
+        if (returnType == null) return ApplicableType.APPLICABLE;
         return isApplicableFor(returnType);
       }
-      return false;
+      return ApplicableType.NONE;
     }
   }
 }

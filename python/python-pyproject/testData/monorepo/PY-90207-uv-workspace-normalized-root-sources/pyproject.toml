@@ -1,0 +1,22 @@
+[project]
+name = "pycharm-uv-workspace-repro"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+example-failure = { workspace = true }
+example-parent = { workspace = true }
+"example.success" = { workspace = true }
+EXAMPLE_EXTRA = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+  "packages/example/failure",
+  "packages/example/parent",
+  "packages/example/success",
+  "packages/example/extra",
+]

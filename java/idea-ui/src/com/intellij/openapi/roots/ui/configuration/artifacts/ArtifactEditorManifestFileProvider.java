@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 public class ArtifactEditorManifestFileProvider implements ManifestFileProvider {
   private final ArtifactsStructureConfigurableContext myArtifactsStructurContext;
 

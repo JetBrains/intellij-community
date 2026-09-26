@@ -45,21 +45,21 @@ public class PsiFilter<T extends PsiElement> {
     return e1.isEquivalentTo(e2);
   }
 
-  public Visitor<T> createVisitor(List<T> elements) {
+  public Visitor<T> createVisitor(List<? super T> elements) {
     return new Visitor<>(this, elements);
   }
 
   public static class Visitor<T extends PsiElement> extends PsiRecursiveElementVisitor {
-    private final PsiFilter<T> filter;
-    private final List<T> elements;
+    private final PsiFilter<? super T> filter;
+    private final List<? super T> elements;
 
-    protected Visitor(final PsiFilter<T> filter, final List<T> elements) {
+    protected Visitor(final PsiFilter<? super T> filter, final List<? super T> elements) {
       this.filter = filter;
       this.elements = elements;
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (filter.getParentClass().isAssignableFrom(element.getClass())) {
         final T e = (T)element;
         if (filter.accept(e)) {

@@ -15,8 +15,10 @@
  */
 package com.intellij.build.events.impl;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.Failure;
 import com.intellij.build.events.FailureResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -29,19 +31,29 @@ public class FailureResultImpl implements FailureResult {
 
   private final List<Failure> myFailures;
 
+  public FailureResultImpl() {
+    this(null, null);
+  }
+
   public FailureResultImpl(@Nullable Throwable error) {
     this(null, error);
   }
 
-  public FailureResultImpl(@Nullable String message, @Nullable Throwable error) {
-    myFailures = new ArrayList<>();
-    myFailures.add(new FailureImpl(message, error));
+  public FailureResultImpl(@Nullable @BuildEventsNls.Message String message) {
+    this(message, null);
   }
 
-  public FailureResultImpl(List<Failure> failures) {
+  public FailureResultImpl(@Nullable @BuildEventsNls.Message  String message, @Nullable Throwable error) {
+    myFailures = new ArrayList<>();
+    if (message != null || error != null) {
+      myFailures.add(new FailureImpl(message, error));
+    }
+  }
+
+  public FailureResultImpl(@NotNull List<Failure> failures) {
     myFailures = failures;
   }
-
+  
   @Override
   public List<? extends Failure> getFailures() {
     return myFailures;

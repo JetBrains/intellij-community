@@ -1,25 +1,30 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiUsesStatement;
 
-/**
- * @author max
- */
 public abstract class StubPsiFactory {
   public abstract PsiClass createClass(PsiClassStub stub);
 
@@ -36,6 +41,10 @@ public abstract class StubPsiFactory {
   public abstract PsiImportStatementBase createImportStatement(PsiImportStatementStub stub);
 
   public abstract PsiMethod createMethod(PsiMethodStub stub);
+  
+  public PsiPackageStatement createPackageStatement(PsiPackageStatementStub stub) {
+    return null;
+  }
 
   public abstract PsiModifierList createModifierList(PsiModifierListStub stub);
 
@@ -68,6 +77,14 @@ public abstract class StubPsiFactory {
   }
 
   public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return null;
+  }
+
+  public PsiRecordComponent createRecordComponent(PsiRecordComponentStub stub) {
+    return null;
+  }
+
+  public PsiRecordHeader createRecordHeader(PsiRecordHeaderStub stub) {
     return null;
   }
 }

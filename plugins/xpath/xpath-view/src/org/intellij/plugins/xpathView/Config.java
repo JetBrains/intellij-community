@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2002-2005 Sascha Weinreuter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,14 @@ package org.intellij.plugins.xpathView;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.plugins.xpathView.search.SearchScope;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * Class that holds the plugin's configuration. All customizable settings are accessible via property getters/setters.
  * The configuration itself can be acquired with {@code getConfig()} in {@link XPathAppComponent}.
  */
 public class Config {
-  public boolean SHOW_IN_TOOLBAR = true;
-  public boolean SHOW_IN_MAIN_MENU = true;
   public boolean OPEN_NEW_TAB = false;
   public boolean HIGHLIGHT_RESULTS = true;
   public boolean SHOW_USAGE_VIEW = false;
@@ -34,8 +33,8 @@ public class Config {
   public SearchScope SEARCH_SCOPE = new SearchScope();
   public boolean MATCH_RECURSIVELY = false;
 
-  public TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, Font.PLAIN);
-  public TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, Font.PLAIN);
+  private final TextAttributes attributes = new TextAttributes(null, new Color(255, 213, 120), null, null, Font.PLAIN);
+  private final TextAttributes contextAttributes = new TextAttributes(null, new Color(194, 255, 212), null, null, Font.PLAIN);
   public boolean scrollToFirst = true;
   public boolean bUseContextAtCursor = true;
   public boolean bHighlightStartTagOnly = true;
@@ -49,46 +48,24 @@ public class Config {
     return attributes;
   }
 
-  public void setHighlightBackground(Color bg) {
-    attributes.setBackgroundColor(bg);
-  }
-
   public TextAttributes getContextAttributes() {
     return contextAttributes;
-  }
-
-  public void setContextBackground(Color bg) {
-    contextAttributes.setBackgroundColor(bg);
-  }
-
-  public void setScrollToFirst(boolean b) {
-    scrollToFirst = b;
   }
 
   public boolean isUseContextAtCursor() {
     return bUseContextAtCursor;
   }
 
-  public void setUseContextAtCursor(boolean b) {
-    bUseContextAtCursor = b;
-  }
-
   public boolean isHighlightStartTagOnly() {
     return bHighlightStartTagOnly;
-  }
-
-  public void setHighlightStartTagOnly(boolean b) {
-    bHighlightStartTagOnly = b;
   }
 
   public boolean isAddErrorStripe() {
     return bAddErrorStripe;
   }
 
-  public void setAddErrorStripe(boolean b) {
-    bAddErrorStripe = b;
-  }
-
+  // May be not used now
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -97,8 +74,6 @@ public class Config {
 
     if (HIGHLIGHT_RESULTS != config.HIGHLIGHT_RESULTS) return false;
     if (OPEN_NEW_TAB != config.OPEN_NEW_TAB) return false;
-    if (SHOW_IN_MAIN_MENU != config.SHOW_IN_MAIN_MENU) return false;
-    if (SHOW_IN_TOOLBAR != config.SHOW_IN_TOOLBAR) return false;
     if (SHOW_USAGE_VIEW != config.SHOW_USAGE_VIEW) return false;
     if (bAddErrorStripe != config.bAddErrorStripe) return false;
     if (bHighlightStartTagOnly != config.bHighlightStartTagOnly) return false;
@@ -108,10 +83,10 @@ public class Config {
     return contextAttributes.equals(config.contextAttributes);
   }
 
+  // May be not used now
+  @Override
   public int hashCode() {
-    int result = (SHOW_IN_TOOLBAR ? 1 : 0);
-    result = 29 * result + (SHOW_IN_MAIN_MENU ? 1 : 0);
-    result = 29 * result + (OPEN_NEW_TAB ? 1 : 0);
+    int result = (OPEN_NEW_TAB ? 1 : 0);
     result = 29 * result + (HIGHLIGHT_RESULTS ? 1 : 0);
     result = 29 * result + (SHOW_USAGE_VIEW ? 1 : 0);
     result = 29 * result + attributes.hashCode();

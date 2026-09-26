@@ -1,0 +1,40 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.formatter"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="kotlin" implementationClass="org.jetbrains.kotlin.training.ift.KotlinLangSupport"/>
+    <ift.learning.course language="kotlin" implementationClass="org.jetbrains.kotlin.training.ift.KotlinLearningCourse"/>
+    <ifs.suggesterSupport language="kotlin" implementationClass="org.jetbrains.kotlin.training.ifs.KotlinSuggesterSupport"/>
+  </extensions>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="kotlin" implementationClass="org.jetbrains.kotlin.training.KotlinOnboardingTipsDocumentationProvider" order="first"/>
+  </extensions>
+</idea-plugin>

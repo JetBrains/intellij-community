@@ -1,8 +1,12 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.image.ImageFilter;
 
-final class SimulationFilter extends WeightFilter {
+@ApiStatus.Internal
+public final class SimulationFilter extends WeightFilter {
   public static ImageFilter get(ColorBlindness blindness) {
     if (blindness == ColorBlindness.protanopia) return protanopia;
     if (blindness == ColorBlindness.deuteranopia) return deuteranopia;
@@ -80,14 +84,14 @@ final class SimulationFilter extends WeightFilter {
     double diffX = neutral_X - X;
     double diffZ = neutral_Z - Z;
     // XYZ->RGB (sRGB:D65)
-    double diffR = +3.2407100 * diffX - 0.4985710 * diffZ;
+    double diffR = 3.2407100 * diffX - 0.4985710 * diffZ;
     double diffG = -0.9692580 * diffX + 0.0415557 * diffZ;
-    double diffB = +0.0556352 * diffX + 1.0570700 * diffZ;
+    double diffB = 0.0556352 * diffX + 1.0570700 * diffZ;
     // Convert to RGB color space
     // XYZ->RGB (sRGB:D65)
-    double dstR = +3.2407100 * X - 1.537260 * Y - 0.4985710 * Z;
+    double dstR = 3.2407100 * X - 1.537260 * Y - 0.4985710 * Z;
     double dstG = -0.9692580 * X + 1.875990 * Y + 0.0415557 * Z;
-    double dstB = +0.0556352 * X - 0.203996 * Y + 1.0570700 * Z;
+    double dstB = 0.0556352 * X - 0.203996 * Y + 1.0570700 * Z;
     // Compensate simulated color towards a neutral fit in RGB space
     double fitR = ((dstR < 0 ? 0 : 1) - dstR) / diffR;
     double fitG = ((dstG < 0 ? 0 : 1) - dstG) / diffG;

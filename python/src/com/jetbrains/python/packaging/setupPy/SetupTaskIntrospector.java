@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,46 +13,38 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author yole
- */
-public class SetupTaskIntrospector {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector");
+
+public final class SetupTaskIntrospector {
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<>();
 
-  public static boolean usesSetuptools(@NotNull PyFile file) {
-    final List<PyFromImportStatement> imports = file.getFromImports();
-    for (PyFromImportStatement anImport : imports) {
-      final QualifiedName qName = anImport.getImportSourceQName();
-      if (qName != null && qName.matches("setuptools")) {
-        return true;
-      }
-    }
-
-    final List<PyImportElement> importElements = file.getImportTargets();
-    for (PyImportElement element : importElements) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null && qName.matches("setuptools")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Nullable
-  public static List<SetupTask.Option> getSetupTaskOptions(Module module, String taskName) {
+  public static @Nullable List<SetupTask.Option> getSetupTaskOptions(Module module, String taskName) {
     for (SetupTask task : getTaskList(module)) {
       if (task.getName().equals(taskName)) {
         return task.getOptions();
@@ -74,13 +53,12 @@ public class SetupTaskIntrospector {
     return null;
   }
 
-  public static List<SetupTask> getTaskList(Module module) {
+  public static @NotNull List<SetupTask> getTaskList(Module module) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    return getTaskList(module, setupPy != null && usesSetuptools(setupPy));
+    return getTaskList(module, setupPy != null && PyPsiUtils.containsImport(setupPy, "setuptools"));
   }
 
-  @NotNull
-  private static List<SetupTask> getTaskList(@NotNull Module module, boolean setuptools) {
+  private static @NotNull List<SetupTask> getTaskList(@NotNull Module module, boolean setuptools) {
     final QualifiedName name = QualifiedName.fromDottedString((setuptools ? "setuptools" : "distutils") + ".command.install.install");
     final PsiElement install = PyResolveImportUtil.resolveTopLevelMember(name, PyResolveImportUtil.fromModule(module));
 
@@ -104,12 +82,11 @@ public class SetupTaskIntrospector {
 
   private static final Set<String> SKIP_NAMES = ImmutableSet.of(PyNames.INIT_DOT_PY, "alias.py", "setopt.py", "savecfg.py");
 
-  @NotNull
-  private static List<SetupTask> collectTasks(@NotNull Module module, @NotNull PsiDirectory commandDir, boolean setuptools) {
+  private static @NotNull List<SetupTask> collectTasks(@NotNull Module module, @NotNull PsiDirectory commandDir, boolean setuptools) {
     final List<SetupTask> result = new ArrayList<>();
     for (PsiFile commandFile : commandDir.getFiles()) {
       if (commandFile instanceof PyFile && !SKIP_NAMES.contains(commandFile.getName())) {
-        final String taskName = FileUtil.getNameWithoutExtension(commandFile.getName());
+        final String taskName = FileUtilRt.getNameWithoutExtension(commandFile.getName());
         result.add(createTaskFromFile((PyFile)commandFile, taskName, setuptools));
       }
     }
@@ -129,11 +106,11 @@ public class SetupTaskIntrospector {
     return result;
   }
 
-  private static SetupTask createTaskFromFile(PyFile file, String name, boolean setuptools) {
+  private static SetupTask createTaskFromFile(@NotNull PyFile file, @NotNull @NlsSafe String name, boolean setuptools) {
     SetupTask task = new SetupTask(name);
     // setuptools wraps the build_ext command class in a way that we cannot understand; use the distutils class which it delegates to
     final PyClass taskClass = (name.equals("build_ext") && setuptools)
-                              ? PyClassNameIndex.findClass("distutils.command.build_ext.build_ext", file.getProject())
+                              ? PyPsiFacade.getInstance(file.getProject()).createClassByQName("distutils.command.build_ext.build_ext", file)
                               : file.findTopLevelClass(name);
     if (taskClass != null) {
       final PyTargetExpression description = taskClass.findClassAttribute("description", true, null);
@@ -180,15 +157,15 @@ public class SetupTaskIntrospector {
     if (value instanceof PySequenceExpression) {
       Collections.addAll(result, ((PySequenceExpression)value).getElements());
     }
-    else if (value instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+    else if (value instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.isOperator("+")) {
         collectSequenceElements(binaryExpression.getLeftExpression(), result);
         collectSequenceElements(binaryExpression.getRightExpression(), result);
       }
     }
     else if (value instanceof PyReferenceExpression) {
-      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.noImplicits()).resolve();
+      final var context = TypeEvalContext.codeInsightFallback(value.getProject());
+      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext(context)).resolve();
       collectSequenceElements(resolveResult, result);
     }
     else if (value instanceof PyTargetExpression) {
@@ -212,8 +189,7 @@ public class SetupTaskIntrospector {
     return result;
   }
 
-  @Nullable
-  private static SetupTask.Option createOptionFromTuple(PyExpression tuple, List<String> booleanOptions, Map<String, String> negativeOptMap) {
+  private static @Nullable SetupTask.Option createOptionFromTuple(PyExpression tuple, List<String> booleanOptions, Map<String, String> negativeOptMap) {
     tuple = PyPsiUtils.flattenParens(tuple);
     if (tuple instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PyTupleExpression)tuple).getElements();

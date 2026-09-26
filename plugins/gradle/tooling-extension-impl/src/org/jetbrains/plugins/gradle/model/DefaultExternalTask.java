@@ -1,102 +1,117 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+public final class DefaultExternalTask implements ExternalTask {
+  private @NotNull String name;
+  private @NotNull String qName;
+  private @Nullable String description;
+  private @Nullable String group;
+  private @Nullable String type;
 
-/**
- * @author Vladislav.Soroka
- * @since 7/14/2014
- */
-public class DefaultExternalTask implements ExternalTask {
-  private static final long serialVersionUID = 1L;
+  private boolean isJvm;
 
-  @NotNull
-  private String myName;
-  @NotNull
-  private String myQName;
-  @Nullable
-  private String myDescription;
-  @Nullable
-  private String myGroup;
-  @Nullable
-  private String myType;
+  private boolean isTest;
+
+  private boolean isJvmTest;
+
+  private boolean isInherited;
 
   public DefaultExternalTask() {
   }
 
-  public DefaultExternalTask(ExternalTask externalTask) {
-    myName = externalTask.getName();
-    myQName = externalTask.getQName();
-    myDescription = externalTask.getDescription();
-    myGroup = externalTask.getGroup();
-    myType = externalTask.getType();
+  public DefaultExternalTask(@NotNull ExternalTask externalTask) {
+    name = externalTask.getName();
+    qName = externalTask.getQName();
+    description = externalTask.getDescription();
+    group = externalTask.getGroup();
+    type = externalTask.getType();
+    isJvm = externalTask.isJvm();
+    isTest = externalTask.isTest();
+    isJvmTest = externalTask.isJvmTest();
+    isInherited = externalTask.isInherited();
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myName;
+  public @NotNull String getName() {
+    return name;
   }
 
   public void setName(@NotNull String name) {
-    myName = name;
+    this.name = name;
   }
 
-  @NotNull
   @Override
-  public String getQName() {
-    return myQName;
+  public @NotNull String getQName() {
+    return qName;
   }
 
   public void setQName(@NotNull String QName) {
-    myQName = QName;
+    qName = QName;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
-    return myDescription;
+  public @Nullable String getDescription() {
+    return description;
   }
 
   public void setDescription(@Nullable String description) {
-    myDescription = description;
+    this.description = description;
   }
 
-  @Nullable
   @Override
-  public String getGroup() {
-    return myGroup;
+  public @Nullable String getGroup() {
+    return group;
   }
 
   public void setGroup(@Nullable String group) {
-    myGroup = group;
+    this.group = group;
   }
 
-  @Nullable
   @Override
-  public String getType() {
-    return myType;
+  public @Nullable String getType() {
+    return type;
   }
 
   public void setType(@Nullable String type) {
-    myType = type;
+    this.type = type;
+  }
+
+  @Override
+  public boolean isJvm() {
+    return isJvm;
+  }
+
+  public void setJvm(boolean isJvm) {
+    this.isJvm = isJvm;
+  }
+
+  @Override
+  public boolean isTest() {
+    return isTest;
+  }
+
+  public void setTest(boolean test) {
+    isTest = test;
+  }
+
+  @Override
+  public boolean isJvmTest() {
+    return isJvmTest;
+  }
+
+  public void setJvmTest(boolean test) {
+    isJvmTest = test;
+  }
+
+  @Override
+  public boolean isInherited() {
+    return isInherited;
+  }
+
+  public void setInherited(boolean inherited) {
+    isInherited = inherited;
   }
 }

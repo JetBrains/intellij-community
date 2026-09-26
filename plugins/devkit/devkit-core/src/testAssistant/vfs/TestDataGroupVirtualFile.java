@@ -1,37 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.TestDataUtil;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author yole
- */
 @Presentation(icon = "AllIcons.Nodes.TestSourceFolder")
-public class TestDataGroupVirtualFile extends VirtualFile {
+public final class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
 
@@ -40,31 +22,26 @@ public class TestDataGroupVirtualFile extends VirtualFile {
     myAfterFile = afterFile;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return TestDataUtil.getGroupDisplayName(myBeforeFile.getName(), myAfterFile.getName());
   }
 
-  @NotNull
-  public VirtualFile getBeforeFile() {
+  public @NotNull VirtualFile getBeforeFile() {
     return myBeforeFile;
   }
 
-  @NotNull
-  public VirtualFile getAfterFile() {
+  public @NotNull VirtualFile getAfterFile() {
     return myAfterFile;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return TestDataGroupFileSystem.getTestDataGroupFileSystem();
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return TestDataGroupFileSystem.getPath(myBeforeFile, myAfterFile);
   }
 
@@ -92,16 +69,15 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
-  @NotNull
+
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+  public byte @NotNull [] contentsToByteArray() {
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override
@@ -124,13 +100,12 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myBeforeFile.getFileType();
   }
 

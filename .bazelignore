@@ -1,0 +1,18 @@
+lib
+# a separate bazel project
+build/jvm-rules
+# a separate bazel project
+platform/build-scripts/bazel
+# test data
+android/apkanalyzer/gradle/integration-tests/projects
+# currently not required
+android/android/native/diagnostics/heap
+android/aswb
+build/dependencies/build/android-sdk/
+build/dependencies/build/macos-sdk/
+out/
+platform/sqlite/target
+
+# specifically ignore .community.root.marker marker file,
+# so Bazel execroot won't be detected as a community root
+.community.root.marker

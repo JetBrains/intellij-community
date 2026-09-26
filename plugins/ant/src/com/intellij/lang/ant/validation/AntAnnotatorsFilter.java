@@ -19,17 +19,18 @@ import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.lang.xml.XMLExternalAnnotator;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author Dmitry Avdeev
  */
-public class AntAnnotatorsFilter implements ExternalAnnotatorsFilter {
+public final class AntAnnotatorsFilter implements ExternalAnnotatorsFilter {
   @Override
   public boolean isProhibited(ExternalAnnotator annotator, PsiFile file) {
     return annotator instanceof XMLExternalAnnotator &&
            file instanceof XmlFile &&
-           AntDomFileDescription.isAntFile((XmlFile)file);
+           ReadAction.compute(() -> AntDomFileDescription.isAntFile((XmlFile)file));
   }
 }

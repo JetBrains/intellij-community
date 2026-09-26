@@ -1,0 +1,68 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.impl.hotswap
+
+import com.intellij.debugger.impl.DebuggerSession
+import com.intellij.debugger.ui.HotSwapUI
+import com.intellij.lang.Language
+import com.intellij.lang.jvm.JvmMetaLanguage
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.hotswap.HotSwapProvider
+import com.intellij.xdebugger.hotswap.HotSwapSession
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
+import com.intellij.xdebugger.impl.hotswap.HotSwapDebugSessionManager
+import com.intellij.xdebugger.impl.hotswap.SourceFileChangeFilter
+import com.intellij.xdebugger.impl.hotswap.SourceFileChangesCollectorImpl
+import kotlinx.coroutines.CoroutineScope
+
+internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) : HotSwapProvider<VirtualFile> {
+  override fun createChangesCollector(
+    session: HotSwapSession<VirtualFile>,
+    coroutineScope: CoroutineScope,
+    listener: SourceFileChangesListener,
+  ): SourceFileChangesCollector<VirtualFile> {
+    val jvmExtensions = listJvmFileExtensions()
+    val filtersFromProviders = HotSwapSourceFileFilterProvider.findSourceFiltersForSession(debuggerSession)
+    val compatibilityCheckers = HotSwapSourceChangeCompatibilityCheckerProvider.findCompatibilityCheckersForSession(debuggerSession)
+    return SourceFileChangesCollectorImpl(
+      session.project,
+      coroutineScope,
+      listener,
+      filters = listOf(FileExtensionFilter(jvmExtensions), InProjectFilter(session.project)) + filtersFromProviders,
+      compatibilityCheckers = compatibilityCheckers,
+    )
+  }
+
+  override fun performHotSwap(session: HotSwapSession<VirtualFile>) {
+    HotSwapUI.getInstance(session.project).compileAndReload(debuggerSession, session.source, *session.getChanges().toTypedArray())
+  }
+
+  override fun restart() {
+    val process = debuggerSession.process.xdebugProcess ?: return
+    HotSwapDebugSessionManager.getInstance(debuggerSession.project).restart(process)
+  }
+}
+
+private fun listJvmFileExtensions(): List<@NlsSafe String> {
+  val typeManager = FileTypeManager.getInstance()
+  return Language.findInstance(JvmMetaLanguage::class.java).getMatchingLanguages().flatMap { language ->
+    val fileType = language.associatedFileType ?: return@flatMap emptyList()
+    val associatedExtensions = typeManager.getAssociations(fileType).mapNotNull { (it as? ExtensionFileNameMatcher)?.extension }
+    (associatedExtensions + fileType.defaultExtension).distinct()
+  }
+}
+
+private class InProjectFilter(private val project: Project) : SourceFileChangeFilter<VirtualFile> {
+  override suspend fun isApplicable(change: VirtualFile): Boolean =
+    readAction { ProjectFileIndex.getInstance(project).isInSource(change) }
+}
+
+private class FileExtensionFilter(private val extensions: List<String>) : SourceFileChangeFilter<VirtualFile> {
+  override suspend fun isApplicable(change: VirtualFile): Boolean = extensions.contains(change.extension)
+}

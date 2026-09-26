@@ -1,0 +1,179 @@
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
+<idea-plugin>
+  <actions>
+    <reference ref="TerminalIncreaseFontSize"/>
+    <reference ref="TerminalDecreaseFontSize"/>
+    <reference ref="TerminalResetFontSize"/>
+
+    <reference ref="RunToolbarWidgetAction"/>
+
+    <reference ref="ExecutionTargets"/>
+
+    <reference ref="RunConfigurationTemplatesForNewProjects">
+      <add-to-group group-id="FileOtherSettingsGroup" anchor="before" relative-to-action="FileSettingsGroup"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.Import"/>
+    </reference>
+
+    <reference ref="ExecutionTargets.Additional"/>
+
+    <reference ref="RunToolbarSlotContextMenuGroup"/>
+
+    <group id="RunToolbarActionsGroup" popup="false">
+      <reference ref="RunToolbarProcessStartedAction"/>
+      <reference ref="RunToolbarRunConfigurationsAction"/>
+      <reference ref="RunToolbarRerunAction"/>
+      <group id="RunToolbarAdditionalProcessActions"/>
+      <group id="RunToolbarProcessActionGroup"/>
+      <reference ref="RunToolbarStopAction"/>
+      <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true">
+        <reference ref="RunToolbarSlotContextMenuGroup"/>
+      </group>
+    </group>
+
+    <group id="RunToolbarMainActionsGroup" popup="false">
+      <reference ref="RunToolbarMainSlotActive"/>
+      <reference ref="RunToolbarShowHidePopupAction"/>
+      <reference ref="RunToolbarMainSlotInfoAction"/>
+      <reference ref="RunToolbarMainRunConfigurationsAction"/>
+      <reference ref="RunToolbarRerunAction"/>
+      <reference ref="RunToolbarAdditionalProcessActions"/>
+      <group id="RunToolbarProcessMainActionGroup"/>
+      <reference ref="RunToolbarStopAction"/>
+      <reference ref="RunToolbarMainMultipleStopAction"/>
+      <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true">
+        <reference ref="RunToolbarSlotContextMenuGroup"/>
+      </group>
+    </group>
+
+    <reference ref="RunToolbarRollbackToPrevious"/>
+
+    <reference ref="RunTab.TopToolbar.Old"/>
+    <reference ref="RunTab.TopToolbar"/>
+
+    <reference ref="AdditionalRunningOptionsGroup"/>
+    <reference ref="AdditionalRunningOptionsGroupMain"/>
+
+    <reference ref="RunConfiguration"/>
+    <reference ref="ChooseRunConfiguration"/>
+    <reference ref="ChooseDebugConfiguration"/>
+    <reference ref="CreateRunConfiguration"/>
+
+    <reference ref="RunConfiguration.Group"/>
+
+    <group id="RunContextGroup" popup="false">
+      <group id="RunContextGroupInner">
+        <!-- A dynamic group filled with executor actions -->
+        <group id="RunContextExecutorsGroup"/>
+        <group id="RunContextGroupMore">
+          <reference ref="CreateRunConfiguration"/>
+          <separator/>
+          <reference ref="CreateNewRunConfiguration"/>
+        </group>
+      </group>
+      <separator/>
+    </group>
+
+    <reference ref="RunContextPopupGroup"/>
+
+    <reference ref="ProjectViewPopupMenuRunGroup"/>
+
+    <reference ref="RunLineMarkerExtraActions"/>
+
+    <reference ref="Rerun">
+      <add-to-group group-id="RunTab.TopToolbar"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old"/>
+    </reference>
+    <reference ref="RerunTests"/>
+
+    <group id="RunMenu" popup="true">
+      <group id="RunnerActions"/>
+      <separator/>
+      <reference ref="ChooseRunConfiguration"/>
+      <reference ref="ChooseDebugConfiguration"/>
+      <reference ref="editRunConfigurations"/>
+      <reference ref="ManageTargets"/>
+      <separator/>
+      <reference ref="Stop">
+        <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>
+        <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>
+      </reference>
+      <reference ref="StopBackgroundProcesses"/>
+      <reference ref="ShowLiveRunConfigurations"/>
+
+      <group id="DebugActionsInRunGroup"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+    </group>
+    <!--endregion-->
+
+    <group id="DebugReloadGroup"/>
+
+    <!--region Build Main Menu-->
+    <group id="BuildMenu" popup="true">
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
+    <!--endregion-->
+
+    <reference ref="NewUiRunWidget">
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
+    </reference>
+
+    <group id="RunToolbarMainActionGroup">
+      <reference ref="RedesignedRunConfigurationSelector"/>
+      <group id="compositeResumeGroup" searchable="false" popup="false"/>
+      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="Stop"/>
+      <reference ref="MoreRunToolbarActions"/>
+      <reference ref="InactiveStopActionPlaceholder"/>
+    </group>
+
+    <reference ref="AllRunConfigurationsToggle"/>
+    <reference ref="RunConfigurationsActionGroup"/>
+
+    <reference ref="ExecutionTargetsToolbarGroup">
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
+    </reference>
+
+    <reference ref="ToolbarRunGroup">
+      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
+    </reference>
+    <!--endregion-->
+
+    <reference ref="RunnerLayoutActions"/>
+
+    <reference ref="SendEOF"/>
+
+    <reference ref="RunTestGroup">
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugActionsInRunGroup"/>
+    </reference>
+
+    <reference ref="ActivateRunToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </reference>
+
+    <!--region TouchBar -->
+    <group id="TouchBarDebug">
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+
+      <add-to-group group-id="TouchBar" anchor="last"/>
+    </group>
+
+    <group id="TouchBarDefaultExecution">
+      <reference ref="RunConfiguration"/>
+      <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+      <reference ref="Stop"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.small"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.large"/>
+
+      <add-to-group group-id="TouchBarDefault" anchor="first"/>
+    </group>
+
+    <group id="TouchBarDefault_cmd.Debug">
+      <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
+    </group>
+    <!--endregion-->
+  </actions>
+</idea-plugin>

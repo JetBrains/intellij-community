@@ -1,0 +1,9 @@
+// "Change getter type to HashSet<Int>" "true"
+// K2_ERROR: WRONG_GETTER_RETURN_TYPE
+
+class A() {
+    val i: java.util.HashSet<Int>
+        get(): <caret>Any = java.util.LinkedHashSet<Int>()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

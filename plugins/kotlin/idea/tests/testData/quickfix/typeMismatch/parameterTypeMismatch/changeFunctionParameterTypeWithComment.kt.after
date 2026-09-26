@@ -1,0 +1,10 @@
+// "Change parameter 'f' type of function 'foo' to '() -> Int'" "true"
+fun foo(f: () -> Int) {}
+
+fun test() {
+    foo {
+        1 // comment
+    }
+}
+// IGNORE_K2
+// For K2, see KTIJ-33125

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -38,37 +23,38 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class DesignerToolWindowManager extends AbstractToolWindowManager implements Disposable {
-  private final DesignerToolWindow myToolWindowPanel;
+  private DesignerToolWindow myToolWindowPanel;
 
-  public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    super(project, fileEditorManager);
-    myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new DesignerToolWindow(project);
-    if (myToolWindowPanel != null) {
-      Disposer.register(this, () -> myToolWindowPanel.dispose());
-    }
+  public DesignerToolWindowManager(@NotNull Project project) {
+    super(project);
   }
 
-  public static DesignerToolWindow getInstance(GuiEditor designer) {
+  public static DesignerToolWindow getInstance(@NotNull GuiEditor designer) {
     DesignerToolWindowManager manager = getInstance(designer.getProject());
     if (manager.isEditorMode()) {
       return (DesignerToolWindow)manager.getContent(designer);
     }
+    if (manager.myToolWindowPanel == null) {
+      manager.initToolWindow();
+    }
     return manager.myToolWindowPanel;
   }
 
-  public static DesignerToolWindowManager getInstance(Project project) {
-    return project.getComponent(DesignerToolWindowManager.class);
+  public static DesignerToolWindowManager getInstance(@NotNull Project project) {
+    return project.getService(DesignerToolWindowManager.class);
   }
 
-  @Nullable
-  public GuiEditor getActiveFormEditor() {
+  public @Nullable GuiEditor getActiveFormEditor() {
     return (GuiEditor)getActiveDesigner();
   }
 
   @Override
   protected void initToolWindow() {
+    myToolWindowPanel = new DesignerToolWindow(myProject);
+    Disposer.register(this, () -> myToolWindowPanel.dispose());
+
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer.name"),
-                                                                               false, getAnchor(), myProject, true);
+                                                                               false, getAnchor(), this, true);
     myToolWindow.setIcon(UIDesignerIcons.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -78,14 +64,13 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
-    Content content =
-      contentManager.getFactory()
-        .createContent(myToolWindowPanel.getToolWindowPanel(), UIDesignerBundle.message("toolwindow.ui.designer.title"), false);
+    Content content = contentManager.getFactory()
+      .createContent(myToolWindowPanel.getToolWindowPanel(), UIDesignerBundle.message("toolwindow.ui.designer.title"), false);
     content.setCloseable(false);
     content.setPreferredFocusableComponent(myToolWindowPanel.getComponentTree());
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
-    myToolWindow.setAvailable(false, null);
+    myToolWindow.setAvailable(false);
   }
 
   @Override
@@ -93,10 +78,10 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     myToolWindowPanel.update((GuiEditor)designer);
 
     if (designer == null) {
-      myToolWindow.setAvailable(false, null);
+      myToolWindow.setAvailable(false);
     }
     else {
-      myToolWindow.setAvailable(true, null);
+      myToolWindow.setAvailable(true);
       myToolWindow.show(null);
     }
   }
@@ -121,9 +106,8 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
                          null);
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "UIDesignerToolWindowManager";
   }
 }

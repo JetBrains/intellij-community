@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -23,20 +23,18 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.ArrayList;
 
-/**
- * @author ilyas
- */
 public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocComment {
   public GrDocCommentImpl(CharSequence text) {
     super(GroovyDocElementTypes.GROOVY_DOC_COMMENT, text);
   }
 
+  @Override
   public String toString() {
     return "GrDocComment";
   }
 
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return getElementType();
   }
 
@@ -63,15 +61,13 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public GrDocTag[] getTags() {
+  public GrDocTag @NotNull [] getTags() {
     final GrDocTag[] tags = PsiTreeUtil.getChildrenOfType(this, GrDocTag.class);
     return tags == null ? GrDocTag.EMPTY_ARRAY : tags;
   }
 
   @Override
-  @Nullable
-  public GrDocTag findTagByName(@NonNls String name) {
+  public @Nullable GrDocTag findTagByName(@NonNls String name) {
     if (!getText().contains(name)) return null;
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrDocTag && ((GrDocTag)e).getName().equals(name)) {
@@ -82,8 +78,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public GrDocTag[] findTagsByName(@NonNls String name) {
+  public GrDocTag @NotNull [] findTagsByName(@NonNls String name) {
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
     ArrayList<GrDocTag> list = new ArrayList<>();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
@@ -95,8 +90,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getDescriptionElements() {
+  public PsiElement @NotNull [] getDescriptionElements() {
     ArrayList<PsiElement> array = new ArrayList<>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       final ASTNode node = child.getNode();
@@ -110,9 +104,8 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     return PsiUtilCore.toPsiElementArray(array);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

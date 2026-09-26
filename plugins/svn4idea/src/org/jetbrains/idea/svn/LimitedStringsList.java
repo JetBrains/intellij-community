@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +26,7 @@ public class LimitedStringsList {
   private final List<String> myList;
 
   public LimitedStringsList(final List<String> list) {
-    myList = new ArrayList<>((list.size() > ourMaxTypedUrls ? list.subList(0, ourMaxTypedUrls) : list));
+    myList = new ArrayList<>(ContainerUtil.getFirstItems(list, ourMaxTypedUrls));
   }
 
   public void add(final String value) {
@@ -33,9 +35,7 @@ public class LimitedStringsList {
     if (myList.size() >= ourMaxTypedUrls) {
       // leave space for 1 to be added
       final int numToRemove = myList.size() - ourMaxTypedUrls + 1;
-      for (int i = 0; i < numToRemove; i++) {
-        myList.remove(0);
-      }
+      myList.subList(0, numToRemove).clear();
     }
 
     // more recent first

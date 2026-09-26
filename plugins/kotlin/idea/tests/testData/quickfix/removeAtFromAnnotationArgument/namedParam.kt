@@ -1,0 +1,11 @@
+// "Remove @ from annotation argument" "true"
+// K2_ERROR: ANNOTATION_USED_AS_ANNOTATION_ARGUMENT
+
+annotation class Y()
+annotation class X(val value: Y, val y: Y)
+
+@X(Y(), y = @Y()<caret>)
+fun foo() {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveAtFromAnnotationArgument

@@ -1,0 +1,76 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.bookmarks.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.bookmarks",
+        "intellij.platform.bookmarks.backend",
+        "intellij.platform.bookmarks.frontend",
+        "intellij.platform.debugger.impl.bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.platform.bookmarks",
+        "intellij.platform.bookmarks.backend",
+        "intellij.platform.bookmarks.frontend",
+        "intellij.platform.debugger.impl.bookmarks",
+        "intellij.platform.vcs.log.impl.bookmarks",
+    ],
+    jars = {
+        "lib/platform-bookmarks-plugin.jar": [
+            "intellij.platform.bookmarks.plugin",
+            "intellij.platform.bookmarks.backend",
+            "intellij.platform.bookmarks.frontend",
+            "intellij.platform.debugger.impl.bookmarks",
+        ],
+    },
+    main_module = "intellij.platform.bookmarks.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.platform.bookmarks.backend",
+            "intellij.platform.vcs.log.impl.bookmarks",
+        ],
+    },
+)
+### auto-generated section `dev intellij.platform.bookmarks.plugin` end
+
+### auto-generated section `build intellij.platform.bookmarks.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.bookmarks.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.bookmarks.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.platform.bookmarks.plugin` end
+
+### auto-generated section `iml intellij.platform.bookmarks.plugin` start
+exports_files(
+    [
+        "intellij.platform.bookmarks.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.bookmarks.plugin` end

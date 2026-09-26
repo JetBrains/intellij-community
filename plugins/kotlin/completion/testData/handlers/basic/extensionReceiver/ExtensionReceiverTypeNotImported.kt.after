@@ -1,0 +1,8 @@
+import dependency.Receiver
+
+fun Receiver<caret>.test() {}
+
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
+// ELEMENT: Receiver

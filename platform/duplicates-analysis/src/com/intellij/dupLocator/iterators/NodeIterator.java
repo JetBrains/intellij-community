@@ -24,6 +24,7 @@ public abstract class NodeIterator implements Cloneable {
     }
   }
 
+  @Override
   public NodeIterator clone() {
     try {
       return (NodeIterator) super.clone();

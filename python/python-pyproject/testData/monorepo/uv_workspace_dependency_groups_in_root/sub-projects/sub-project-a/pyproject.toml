@@ -1,0 +1,14 @@
+[project]
+name = "sub-project-a"
+version = "0.1.0"
+description = "Sub-project A"
+dependencies = [
+    "sub-project-b",
+]
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.uv.sources]
+sub-project-b = { workspace = true }

@@ -1,0 +1,77 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.session.impl
+
+import com.intellij.platform.eel.EelDescriptor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+
+@ApiStatus.Internal
+interface TerminalSession {
+  /**
+   * Scope in which all session-related activities are executed.
+   * The lifecycle of the session is bound to it.
+   * If it cancels, then the shell process will be terminated.
+   * And if the process is terminated on its own, then the scope will be canceled as well.
+   */
+  val coroutineScope: CoroutineScope
+
+  /**
+   * Environment where the terminal process is running.
+   */
+  val eelDescriptor: EelDescriptor
+
+  val processId: Long
+
+  /**
+   * Use this channel to send the input events to the Terminal session.
+   *
+   * The channel is used here to mimic the behavior of the simple output stream:
+   * 1. Send operation returns immediately without waiting for response from the receiver.
+   * 2. It is guaranteed that events will be received in the same order they are sent.
+   */
+  suspend fun getInputChannel(): SendChannel<TerminalInputEvent>
+
+  /**
+   * Use this flow to handle the output events of the Terminal session.
+   *
+   * Underlying logic should continue reading the PTYs output stream only if there is some collector of this flow.
+   * If the flow collector is too slow (can't handle event in 3 seconds), the flow can be terminated, and
+   * you need to request a new flow and receive a state snapshot.
+   */
+  suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>>
+
+  /**
+   * Checks if there are commands running in the session.
+   * 
+   * The actual check is performed on the backend by checking if there are child processes
+   * running, including background ones.
+   */
+  suspend fun hasRunningCommands(): Boolean
+
+  /**
+   * Returns true of this session was terminated.
+   * ([TerminalSessionTerminatedEvent] was received from the output flow)
+   *
+   * Can be accessed from any thread.
+   */
+  val isClosed: Boolean
+
+  /**
+   * Encodes the given mouse event into bytes that can be sent to the terminal process.
+   *
+   * [x] and [y] are terminal grid coordinates of the event, zero-based relative to the terminal screen start.
+   * Returns encoded bytes, or `null` when the event should not be forwarded to the terminal.
+   */
+  fun processMouseEvent(
+    e: MouseEvent,
+    x: Int,
+    y: Int,
+  ): ByteArray?
+
+  fun processKeyEvent(e: KeyEvent): KeyEventProcessingResultDto
+}

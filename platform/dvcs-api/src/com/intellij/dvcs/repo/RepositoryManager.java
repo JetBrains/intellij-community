@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -40,6 +29,7 @@ public interface RepositoryManager<T extends Repository> {
    * via {@link #addExternalRepository(VirtualFile, Repository)}.
    */
   @Nullable
+  @RequiresBackgroundThread
   T getRepositoryForRoot(@Nullable VirtualFile root);
 
   boolean isExternal(@NotNull T repository);
@@ -48,18 +38,33 @@ public interface RepositoryManager<T extends Repository> {
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
    */
   @Nullable
+  @RequiresBackgroundThread
   T getRepositoryForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git ot Hg repository.
    */
   @Nullable
+  @RequiresBackgroundThread
   T getRepositoryForFile(@NotNull FilePath file);
+
+  @Nullable
+  @CalledInAny
+  T getRepositoryForFileQuick(@NotNull FilePath file);
+
+  @Nullable
+  @CalledInAny
+  T getRepositoryForRootQuick(@Nullable VirtualFile root);
+
+  @Nullable
+  @CalledInAny
+  T getRepositoryForRootQuick(@Nullable FilePath rootPath);
 
   /**
    * @return all repositories tracked by the manager.
    */
   @NotNull
+  @Unmodifiable
   List<T> getRepositories();
 
   /**
@@ -85,6 +90,12 @@ public interface RepositoryManager<T extends Repository> {
 
   /**
    * Returns true if repositories under this repository manager are controlled synchronously.
+   * <p/>
+   * <b>Note:</b>
+   * <p/>
+   * Implementation may return a state different from the actual value stored in "DvcsSyncSettings"
+   * To get only sync settings enabled,
+   * use "com.intellij.dvcs.MultiRootBranches#isSyncOptionEnabled(com.intellij.dvcs.branch.DvcsSyncSettings)"
    */
   boolean isSyncEnabled();
 

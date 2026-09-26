@@ -1,32 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author peter
- */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class DslPointcut<T,V> {
   public static final DslPointcut UNKNOWN = new DslPointcut() {
@@ -43,14 +37,13 @@ public abstract class DslPointcut<T,V> {
   };
   public static Key<Map<String, List>> BOUND = Key.create("gdsl.bound");
 
-  @Nullable
-  abstract List<V> matches(T src, ProcessingContext context);
+  abstract @Nullable List<V> matches(T src, ProcessingContext context);
 
   abstract boolean operatesOn(Class c);
 
   public DslPointcut<T, V> and(final DslPointcut<T, V> next) {
     final DslPointcut<T, V> first = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         final List<V> vs1 = first.matches(src, context);
@@ -73,7 +66,7 @@ public abstract class DslPointcut<T,V> {
 
   public DslPointcut<T, V> or(final DslPointcut<T, V> next) {
     final DslPointcut<T, V> first = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         final List<V> vs1 = first.matches(src, context);
@@ -99,7 +92,7 @@ public abstract class DslPointcut<T,V> {
   }
   public DslPointcut<T, V> bitwiseNegate() {
     final DslPointcut<T, V> base = this;
-    return new DslPointcut<T, V>() {
+    return new DslPointcut<>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
         return base.matches(src, context) == null ? Collections.emptyList() : null;
@@ -114,7 +107,7 @@ public abstract class DslPointcut<T,V> {
 
 
   public static DslPointcut<GdslType, GdslType> subType(final Object arg) {
-    return new DslPointcut<GdslType, GdslType>() {
+    return new DslPointcut<>() {
 
       @Override
       List<GdslType> matches(GdslType src, ProcessingContext context) {
@@ -142,13 +135,13 @@ public abstract class DslPointcut<T,V> {
       assert inner.operatesOn(GdslType.class) : "The argument to currentType should be a pointcut working with types, e.g. subType";
     }
 
-    return new DslPointcut<GroovyClassDescriptor, GdslType>() {
+    return new DslPointcut<>() {
 
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
         final GdslType currentType = new GdslType(src.getPsiType());
         if (inner.matches(currentType, context) != null) {
-          return Arrays.asList(currentType);
+          return Collections.singletonList(currentType);
         }
         return null;
       }
@@ -161,7 +154,7 @@ public abstract class DslPointcut<T,V> {
   }
 
   public static DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
-    return new DslPointcut<GroovyClassDescriptor, GdslType>() {
+    return new DslPointcut<>() {
       @Override
       List<GdslType> matches(GroovyClassDescriptor src, ProcessingContext context) {
         List<GdslType> result = new ArrayList<>();
@@ -187,14 +180,14 @@ public abstract class DslPointcut<T,V> {
   }
 
   public static DslPointcut<Object, String> name(final Object arg) {
-    return new DslPointcut<Object, String>() {
+    return new DslPointcut<>() {
       @Override
       List<String> matches(Object src, ProcessingContext context) {
         if (src instanceof GdslType) {
-          return arg.equals(((GdslType)src).getName()) ? Arrays.asList((String)arg) : null;
+          return arg.equals(((GdslType)src).getName()) ? Collections.singletonList((String)arg) : null;
         }
         if (src instanceof GdslMethod) {
-          return arg.equals(((GdslMethod)src).getName()) ? Arrays.asList((String)arg) : null;
+          return arg.equals(((GdslMethod)src).getName()) ? Collections.singletonList((String)arg) : null;
         }
         return Collections.emptyList();
       }
@@ -216,7 +209,7 @@ public abstract class DslPointcut<T,V> {
       assert inner.operatesOn(GdslMethod.class) : "The argument to enclosingMethod should be a pointcut working with methods, e.g. name";
     }
 
-    return new DslPointcut<GroovyClassDescriptor, GdslMethod>() {
+    return new DslPointcut<>() {
       @Override
       List<GdslMethod> matches(GroovyClassDescriptor src, ProcessingContext context) {
         List<GdslMethod> result = new ArrayList<>();
@@ -244,7 +237,7 @@ public abstract class DslPointcut<T,V> {
 
   public static DslPointcut bind(final Object arg) {
     assert arg instanceof Map;
-    assert ((Map)arg).size() == 1;
+    assert ((Map<?, ?>)arg).size() == 1;
     final String name = (String)((Map)arg).keySet().iterator().next();
     final DslPointcut pct = (DslPointcut)((Map)arg).values().iterator().next();
 

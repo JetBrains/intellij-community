@@ -1,59 +1,66 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 /**
- * @author peter
+ * A JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link JavaCodeInsightTestFixture}.
+ * <p>
+ * This class is similar to {@link LightJavaCodeInsightFixtureTestCase}, but with some differences:
+ * <ul>
+ *   <li>Uses a full project fixture setup with {@link IdeaProjectTestFixture}</li>
+ *   <li>Creates a real module structure using {@link JavaModuleFixtureBuilder}</li>
+ *   <li>Requires more setup time but provides a more complete environment</li>
+ * </ul>
+ * It can be considered a "heavy test", even though it doesn't inherit from {@link com.intellij.testFramework.HeavyPlatformTestCase}.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html">Light and Heavy Tests (IntelliJ Platform Docs)</a>
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
+@TestDataPath("$CONTENT_ROOT/testData")
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected JavaCodeInsightTestFixture myFixture;
-  protected Module myModule;
+  private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
+
+  @Override
+  public @NotNull Disposable getTestRootDisposable() {
+    return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
+    TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, getIndexingMode());
+    JavaModuleFixtureBuilder<?> moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     if (toAddSourceRoot()) {
       moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-    } else {
+    }
+    else {
       moduleFixtureBuilder.addContentRoot(myFixture.getTempDirPath());
     }
-    tuneFixture(moduleFixtureBuilder);    
+    tuneFixture(moduleFixtureBuilder);
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
-    myModule = moduleFixtureBuilder.getFixture().getModule();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    myFixture.setUp();
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
   protected boolean toAddSourceRoot() {
@@ -62,14 +69,14 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @Override
   protected void tearDown() throws Exception {
-    myModule = null;
-
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-
       super.tearDown();
     }
   }
@@ -80,8 +87,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
    *
    * @return relative path to the test data.
    */
-  @NonNls
-  protected String getBasePath() {
+  protected @NonNls String getBasePath() {
     return "";
   }
 
@@ -90,13 +96,11 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
    *
    * @return absolute path to the test data.
    */
-  @NonNls
-  protected String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
-
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception { }
 
   protected Project getProject() {
     return myFixture.getProject();
@@ -107,6 +111,20 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
+  }
+
+  protected Module getModule() {
+    return myFixture.getModule();
+  }
+
+  @Override
+  public void setIndexingMode(@NotNull IndexingMode mode) {
+    myIndexingMode = mode;
+  }
+
+  @Override
+  public @NotNull IndexingMode getIndexingMode() {
+    return myIndexingMode;
   }
 }

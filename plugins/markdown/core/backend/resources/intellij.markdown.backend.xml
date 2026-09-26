@@ -1,0 +1,204 @@
+<idea-plugin visibility="internal">
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <dependencies>
+      <module name="intellij.markdown"/>
+      <module name="fleet.rhizomedb"/>
+      <module name="intellij.libraries.kotlinx.coroutines.core"/>
+      <module name="intellij.libraries.markdown"/>
+      <module name="intellij.platform.analysis"/>
+      <module name="intellij.platform.backend"/>
+      <module name="intellij.platform.builtInServer.impl"/>
+      <module name="intellij.platform.core"/>
+      <module name="intellij.platform.core.impl"/>
+      <module name="intellij.platform.core.ui"/>
+      <module name="intellij.platform.editor.ui"/>
+      <module name="intellij.platform.execution"/>
+      <module name="intellij.platform.execution.impl"/>
+      <module name="intellij.platform.ide.core"/>
+      <module name="intellij.platform.ide.core.impl"/>
+      <module name="intellij.platform.ide.impl"/>
+      <module name="intellij.platform.ide.progress"/>
+      <module name="intellij.platform.ide.rpc"/>
+      <module name="intellij.platform.indexing"/>
+      <module name="intellij.platform.kernel.backend"/>
+      <module name="intellij.platform.lang"/>
+      <module name="intellij.platform.lang.impl"/>
+      <module name="intellij.platform.project"/>
+      <module name="intellij.platform.projectModel"/>
+      <module name="intellij.platform.refactoring"/>
+      <module name="intellij.platform.rpc.backend"/>
+      <module name="intellij.platform.statistics"/>
+      <module name="intellij.platform.util.coroutines"/>
+      <module name="intellij.platform.util.ex"/>
+      <module name="intellij.platform.util.ui"/>
+    </dependencies>
+    <!-- endregion -->
+    <actions resource-bundle="messages.ActionsBundle">
+      <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
+    </actions>
+    <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
+      <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
+      <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.fence.CodeFenceBackgroundHighlightingPassFactory"/>
+      <externalAnnotator language="Markdown"
+                         implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi"/>
+      <completion.contributor
+        language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.VirtualFileAccessor"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.providers.MarkdownCommandRunnerApiProvider"
+        apiInterfaces="org.intellij.plugins.markdown.service.MarkdownCommandRunnerRemoteApi"/>
+      <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
+
+      <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>
+
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ReformatTableIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.FixCellAlignmentIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.OmitHeadingFromTocIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ConvertToReferenceLinkIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ConvertToInlineLinkIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownIncorrectTableFormatting"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.incorrect.table.formatting.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="false"
+                       level="WEAK WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownNoTableBorders"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.no.table.borders.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownTablePipeInCodeSpan"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.table.pipe.in.code.span.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownTablePipeInCodeSpanInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownUnresolvedFileReference"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.unresolved.file.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       editorAttributes="INFO_ATTRIBUTES"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownUnresolvedFileReferenceInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownIncorrectlyNumberedListItem"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.incorrectly.numbered.list.item.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownOutdatedTableOfContents"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.outdated.table.of.contents.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.OutdatedTableOfContentsInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownLinkDestinationWithSpaces"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.link.destination.with.spaces.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownSkillFrontMatter"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.skill.front.matter.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownSkillFrontMatterInspection"/>
+
+      <localInspection language="Markdown"
+                       shortName="MarkdownNonExistentInternetResource"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.unresolved.web.link.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="false"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourceInspection"/>
+
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.github.GithubWikiLocalReferenceContributor"/>
+      <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.test.TestPsiReferenceContributor"/>
+
+      <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
+      <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
+
+      <qualifiedNameProvider implementation="com.intellij.markdown.backend.reference.headers.MarkdownHeaderQualifiedNameProvider"/>
+
+      <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
+      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.headers.HeaderAnchorPathReferenceProvider"/>
+
+      <renameHandler implementation="com.intellij.markdown.backend.rename.MarkdownFileRenameHandler"/>
+      <automaticRenamerFactory implementation="com.intellij.markdown.backend.rename.MarkdownRenamerFactory"/>
+
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MermaidLineMarkerAdvertisementProvider"/>
+      <codeInsight.lineMarkerProvider
+        language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+
+      <annotator language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.MarkdownHighlightingAnnotator"/>
+
+      <runLineMarkerContributor language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownRunLineMarkersProvider"/>
+
+      <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
+    </extensions>
+</idea-plugin>

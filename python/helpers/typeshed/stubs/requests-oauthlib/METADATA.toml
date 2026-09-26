@@ -1,0 +1,3 @@
+version = "2.0.*"
+upstream-repository = "https://github.com/requests/requests-oauthlib"
+dependencies = ["requests >= 2.34.0", "types-oauthlib"]

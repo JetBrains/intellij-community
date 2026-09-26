@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,25 +13,28 @@ import java.util.List;
  *
  * @author gregsh
  */
-public abstract class ExpressionTypeProvider<T extends PsiElement> {
+public abstract class ExpressionTypeProvider<T extends PsiElement> implements PossiblyDumbAware {
   /**
    * Returns HTML string for type info hint.
-   * @see com.intellij.openapi.util.text.StringUtil#escapeXml(String)
+   * <p>
+   * This method is executed from non-UI thread in read action.
+   * @see com.intellij.openapi.util.text.StringUtil#escapeXmlEntities(String)
    */
-  @NotNull
-  public abstract String getInformationHint(@NotNull T element);
+  public abstract @NotNull @HintText String getInformationHint(@NotNull T element);
 
   /**
    * Returns HTML string if no target found at position.
+   * <p>
+   * This method can be executed from UI thread.
    */
-  @NotNull
-  public abstract String getErrorHint();
+  public abstract @NotNull @HintText String getErrorHint();
 
   /**
    * Returns the list of all possible targets at specified position.
+   * <p>
+   * This method can be executed from UI thread.
    */
-  @NotNull
-  public abstract List<T> getExpressionsAt(@NotNull PsiElement elementAt);
+  public abstract @NotNull List<T> getExpressionsAt(@NotNull PsiElement elementAt);
 
   /**
    * @return true if this type provider can provide more useful information (e.g. value range, nullability, etc.)
@@ -62,8 +53,7 @@ public abstract class ExpressionTypeProvider<T extends PsiElement> {
    * @throws UnsupportedOperationException if this provider does not provide any advanced information
    *                                       (in this case {@link #hasAdvancedInformation()} method must return false).
    */
-  @NotNull
-  public String getAdvancedInformationHint(@NotNull T element) {
+  public @NotNull @HintText String getAdvancedInformationHint(@NotNull T element) {
     throw new UnsupportedOperationException();
   }
 }

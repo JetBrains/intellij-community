@@ -1,0 +1,5 @@
+public class Foo {
+    void m(Object o) {
+        lombok.var foo = String.valueOf(123);
+    }
+}

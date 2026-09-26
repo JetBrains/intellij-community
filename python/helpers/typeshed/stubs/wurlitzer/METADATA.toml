@@ -1,0 +1,2 @@
+version = "3.1.*"
+upstream-repository = "https://github.com/minrk/wurlitzer"

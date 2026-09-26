@@ -1,0 +1,7 @@
+// "Add non-null asserted (a!!) call" "true"
+// K2_ERROR: UNSAFE_CALL
+
+fun foo(a: Array<String>?): String {
+    return <caret>a[0]
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

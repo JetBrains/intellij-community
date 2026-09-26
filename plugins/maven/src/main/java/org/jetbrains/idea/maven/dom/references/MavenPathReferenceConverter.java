@@ -1,30 +1,25 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -36,10 +31,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   private final Condition<PsiFileSystemItem> myCondition;
@@ -54,18 +47,17 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
 
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
-                                                @NotNull final Condition<PsiFileSystemItem> fileFilter) {
+                                                final @NotNull Condition<PsiFileSystemItem> fileFilter) {
     return createReferences(genericDomValue, element, fileFilter, false);
   }
 
   public static PsiReference[] createReferences(final DomElement genericDomValue,
                                                 PsiElement element,
-                                                @NotNull final Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
-    ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    TextRange range = manipulator.getRangeInElement(element);
+                                                final @NotNull Condition<PsiFileSystemItem> fileFilter, boolean isAbsolutePath) {
+    TextRange range = ElementManipulators.getValueTextRange(element);
     String text = range.substring(element.getText());
 
-    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, false) {
+    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, element.getContainingFile().getViewProvider().getVirtualFile().isCaseSensitive(), false) {
 
       private MavenDomProjectModel model;
 
@@ -85,7 +77,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
           @Override
           protected void innerResolveInContext(@NotNull String text,
                                                @NotNull PsiFileSystemItem context,
-                                               Collection<ResolveResult> result,
+                                               @NotNull Collection<? super ResolveResult> result,
                                                boolean caseSensitive) {
             if (model == null) {
               DomElement rootElement = DomUtil.getFileElement(genericDomValue).getRootElement();
@@ -97,9 +89,9 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
             String resolvedText = model == null ? text : MavenPropertyResolver.resolve(text, model);
 
             if (resolvedText.equals(text)) {
-              if (getIndex() == 0 && resolvedText.length() == 2 && resolvedText.charAt(1) == ':') {
+              if (getIndex() == 0 && resolvedText.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(resolvedText)) {
                 // it's root on windows, e.g. "C:"
-                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resolvedText + '/');
+                VirtualFile file = StandardFileSystems.local().findFileByPath(resolvedText + '/');
                 if (file != null) {
                   PsiDirectory psiDirectory = context.getManager().findDirectory(file);
                   if (psiDirectory != null) {
@@ -107,8 +99,36 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                   }
                 }
               }
+              else if (getIndex() == getAllReferences().length - 1 &&
+                       Objects.equals("relativePath", genericDomValue.getXmlElementName()) &&
+                       context.getVirtualFile() != null) {
+                // it is a last context and should be resolved to pom.xml
+
+                VirtualFile parentFile = context.getVirtualFile().findChild(text);
+                if (parentFile != null) {
+                  VirtualFile parentPom = parentFile.isDirectory() ? parentFile.findChild("pom.xml") : parentFile;
+                  if (parentPom != null) {
+                    PsiFile psiFile = context.getManager().findFile(parentPom);
+                    if (psiFile != null) {
+                      result.add(new PsiElementResolveResult(psiFile));
+                    }
+                  }
+                }
+              }
+              else if ("..".equals(resolvedText)) {
+                PsiFileSystemItem resolved = context.getParent();
+                if (resolved != null) {
+                  if (context instanceof XmlFileImpl) {
+                    resolved = resolved.getParent();  // calculated regarding parent directory, not the pom itself
+                  }
+                  if (resolved != null) {
+                  result.add(new PsiElementResolveResult(resolved));
+                  }
+                }
+              }
               else {
-                super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+                var systemIndependentResolvedText = FileUtil.toSystemIndependentName(resolvedText);
+                super.innerResolveInContext(systemIndependentResolvedText, context, result, caseSensitive);
               }
             }
             else {
@@ -118,11 +138,11 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
               VirtualFile file = null;
 
               if (getIndex() == 0) {
-                file = LocalFileSystem.getInstance().findFileByPath(resolvedText);
+                file = StandardFileSystems.local().findFileByPath(resolvedText);
               }
 
               if (file == null) {
-                file = LocalFileSystem.getInstance().findFileByPath(contextFile.getPath() + '/' + resolvedText);
+                file = StandardFileSystems.local().findFileByPath(contextFile.getPath() + '/' + resolvedText);
               }
 
               if (file != null) {
@@ -160,15 +180,13 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     return set.getAllReferences();
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     return createReferences(genericDomValue, element, myCondition);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, boolean soft) {
     throw new UnsupportedOperationException();
   }
 }

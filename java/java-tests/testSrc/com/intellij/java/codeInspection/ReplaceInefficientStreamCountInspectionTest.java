@@ -22,14 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceInefficientStreamCountInspectionTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ReplaceInefficientStreamCountInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

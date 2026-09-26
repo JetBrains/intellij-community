@@ -1,0 +1,1 @@
+data class Point(val `some invalid name`: Int, val y: Int)

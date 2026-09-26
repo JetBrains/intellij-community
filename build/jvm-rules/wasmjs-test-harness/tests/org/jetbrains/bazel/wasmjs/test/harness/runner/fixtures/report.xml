@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="3" failures="1" errors="0" skipped="1" time="0.019">
+  <testsuite name="sample.CalculatorTest" tests="3" failures="1" errors="0" skipped="1" time="0.019">
+    <testcase classname="sample.CalculatorTest" name="addition" time="0.012">
+      <system-out>hello</system-out>
+    </testcase>
+    <testcase classname="sample.CalculatorTest" name="division" time="0.007">
+      <failure message="expected 2">stack
+trace</failure>
+    </testcase>
+    <testcase classname="sample.CalculatorTest" name="modulo" time="0.000">
+      <skipped message="not implemented"></skipped>
+    </testcase>
+  </testsuite>
+</testsuites>

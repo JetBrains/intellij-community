@@ -1,0 +1,15 @@
+// "Implement members" "true"
+// WITH_STDLIB
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
+abstract class C {
+    abstract val p: String?
+    abstract val q: Int
+    abstract fun test()
+}
+
+<caret>class MyImpl3(
+    override val p: String? = null
+) : C() {
+    override val q: Int = 0
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersQuickfix

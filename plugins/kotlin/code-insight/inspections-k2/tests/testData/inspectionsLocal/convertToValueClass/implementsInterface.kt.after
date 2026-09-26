@@ -1,0 +1,12 @@
+// PROBLEM: Data class can be converted to value class
+// FIX: Convert to value class
+// CHOSEN_OPTION: Generate 'copy' function
+// COMPILER_ARGUMENTS: -XXLanguage:+FullValueClasses
+
+interface Named {
+    val firstName: String
+}
+
+value class User(override val firstName: String, val lastName: String) : Named {
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName): User = User(firstName, lastName)
+}

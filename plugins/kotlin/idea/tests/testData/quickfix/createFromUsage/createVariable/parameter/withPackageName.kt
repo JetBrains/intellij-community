@@ -1,0 +1,11 @@
+// "Create parameter 'foo'" "true"
+// K2_ERROR: EXPRESSION_EXPECTED_PACKAGE_FOUND
+// K2_ERROR: INITIALIZER_TYPE_MISMATCH
+
+package foo
+
+fun test(n: Int) {
+    val t: Int = <caret>foo
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: foo: kotlin.Int

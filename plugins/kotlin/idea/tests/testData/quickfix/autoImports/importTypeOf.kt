@@ -1,0 +1,9 @@
+// "Import function 'typeOf'" "true"
+// WITH_STDLIB
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+fun test() {
+    <caret>typeOf<Int>()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

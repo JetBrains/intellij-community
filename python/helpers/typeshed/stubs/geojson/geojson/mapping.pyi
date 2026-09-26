@@ -1,0 +1,6 @@
+from typing import Any, Literal
+
+GEO_INTERFACE_MARKER: Literal["__geo_interface__"]
+
+def is_mapping(obj) -> bool: ...
+def to_mapping(obj) -> dict[str, Any]: ...

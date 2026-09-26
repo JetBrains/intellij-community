@@ -1,0 +1,18 @@
+// "Propagate 'SubclassOptInRequired(UnstableApiB::class)' opt-in requirement to 'SomeImplementation'" "true"
+// WITH_STDLIB
+// K2_ERROR: OPT_IN_TO_INHERITANCE_ERROR
+@file:OptIn(ExperimentalSubclassOptIn::class)
+
+@RequiresOptIn
+annotation class UnstableApiA
+
+@RequiresOptIn
+annotation class UnstableApiB
+
+@SubclassOptInRequired(UnstableApiA::class, UnstableApiB::class)
+interface CoreLibraryApi
+
+
+@OptIn(UnstableApiA::class)
+interface SomeImplementation : CoreLibraryApi<caret>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

@@ -21,7 +21,7 @@ public class Packet extends PacketWriter {
   public static final int CODE_LENGTH = 2;
 
   public static String encode(String packet) {
-    StringBuffer buffer = new StringBuffer(packet.length());
+    StringBuilder buffer = new StringBuilder(packet.length());
     for (int i = 0; i < packet.length(); i++) {
       char chr = packet.charAt(i);
       if (chr == ourSpecialSymbol) {
@@ -30,8 +30,8 @@ public class Packet extends PacketWriter {
         continue;
       }
       boolean appendChar = true;
-      for (int j = 0; j < ourSymbolsToEncode.length; j++) {
-        if (ourSymbolsToEncode[j] == chr) {
+      for (char c : ourSymbolsToEncode) {
+        if (c == chr) {
           buffer.append(ourSpecialSymbol);
           final String code = String.valueOf((int)chr);
           for (int count = CODE_LENGTH - code.length(); count > 0; count--) {

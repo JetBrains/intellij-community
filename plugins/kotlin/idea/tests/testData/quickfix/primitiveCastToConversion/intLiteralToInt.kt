@@ -1,0 +1,8 @@
+
+// Ignore reason: K1 suggest just removing the `as` casing but it's not always correct and depends on context, see KT-85162
+// "Replace cast with call to 'toInt()'" "true"
+
+fun foo() {
+    val a = 1 as<caret> Int
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplacePrimitiveCastWithNumberConversionFix

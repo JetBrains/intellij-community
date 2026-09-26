@@ -21,11 +21,25 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface PsiClassReferenceListStub extends StubElement<PsiReferenceList> {
-  @NotNull PsiClassType[] getReferencedTypes();
-  @NotNull String[] getReferencedNames();
+  /**
+   * @return types
+   */
+  PsiClassType @NotNull [] getReferencedTypes();
+
+  /**
+   * @return type names
+   */
+  String @NotNull [] getReferencedNames();
+
+  /**
+   * @return array of TypeInfo objects
+   */
+  @NotNull TypeInfo @NotNull [] getTypes();
+  
   @NotNull PsiReferenceList.Role getRole();
 }

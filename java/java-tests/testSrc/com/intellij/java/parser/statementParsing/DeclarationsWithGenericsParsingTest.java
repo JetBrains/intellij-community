@@ -15,13 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class DeclarationsWithGenericsParsingTest extends JavaParsingTestCase {
+public class DeclarationsWithGenericsParsingTest extends AbstractBasicDeclarationsWithGenericsParsingTest {
   public DeclarationsWithGenericsParsingTest() {
-    super("parser-full/statementParsing/genericsParsing");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testLocalVar() { doTest(true); }
-  public void testFor() { doTest(true); }
 }

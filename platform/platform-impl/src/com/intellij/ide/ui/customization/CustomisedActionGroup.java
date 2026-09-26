@@ -1,87 +1,82 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupWrapper;
+import com.intellij.openapi.actionSystem.ActionUpdaterInterceptor;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.DynamicActionGroup;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CustomisedActionGroup extends ActionGroup {
-  private final ActionGroup myGroup;
+import java.util.Objects;
+
+public final class CustomisedActionGroup extends ActionGroupWrapper {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
   private final String myRootGroupName;
 
   private int mySchemeModificationStamp = -1;
+  private int myGroupModificationStamp = -1;
 
-  public CustomisedActionGroup(String shortName,
-                               final ActionGroup group,
+  public CustomisedActionGroup(@NlsActions.ActionText String shortName,
+                               @NotNull ActionGroup group,
                                CustomActionsSchema schema,
-                               String defaultGroupName, 
+                               String defaultGroupName,
                                String name) {
-    copyFrom(group);
+    super((group));
     getTemplatePresentation().setText(shortName);
-    setPopup(group.isPopup());
 
-    myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
     myRootGroupName = name;
   }
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-    int currentStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    if (mySchemeModificationStamp < currentStamp || myChildren == null || !(myGroup instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
-      mySchemeModificationStamp = currentStamp;
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    ActionGroup delegate = getDelegate();
+    int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
+    int currentGroupStamp = !ActionUpdaterInterceptor.Companion.treatDefaultActionGroupAsDynamic() &&
+                            delegate instanceof DefaultActionGroup group ? group.getModificationStamp() : -1;
+    if (mySchemeModificationStamp < currentSchemaStamp ||
+        myGroupModificationStamp < currentGroupStamp ||
+        currentGroupStamp < 0 ||
+        ArrayUtil.isEmpty(myChildren) ||
+        delegate instanceof DynamicActionGroup) {
+      AnAction[] originalChildren = super.getChildren(e);
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, originalChildren, mySchema, myDefaultGroupName, myRootGroupName);
+      mySchemeModificationStamp = currentSchemaStamp;
+      myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
 
-  @Override
-  public boolean isPopup() {
-    return myGroup.isPopup();
+  @ApiStatus.Internal
+  public AnAction @NotNull [] getDefaultChildrenOrStubs() {
+    ActionGroup delegate = getDelegate();
+    if (!(delegate instanceof DefaultActionGroup g)) return EMPTY_ARRAY;
+    return CustomizationUtil.getReordableChildren(
+      delegate, g.getChildActionsOrStubs(), mySchema, myDefaultGroupName, myRootGroupName);
   }
 
-  public void update(AnActionEvent e) {
-    myGroup.update(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myGroup.isDumbAware();
-  }
-
-  @Override
-  public boolean canBePerformed(DataContext context) {
-    return myGroup.canBePerformed(context);
+  public void resetChildren() {
+    myChildren = null;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    myGroup.actionPerformed(e);
+  public boolean equals(Object obj) {
+    return obj instanceof CustomisedActionGroup && Objects.equals(((CustomisedActionGroup)obj).getDelegate(), getDelegate());
   }
 
-  @Nullable
-  public AnAction getFirstAction() {
-    final AnAction[] children = getChildren(null);
-    return children.length > 0 ? children[0] : null;
+  @Override
+  public int hashCode() {
+    return Objects.hash(getDelegate());
   }
-
-  public ActionGroup getOrigin() { return myGroup; }
 }

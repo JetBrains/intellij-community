@@ -1,24 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
-import com.intellij.openapi.util.Condition
-
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.util.function.Predicate
 
+@ApiStatus.NonExtendable
 abstract class SchemeManager<T> {
-  companion object {
-    const val EDITABLE_COPY_PREFIX: String = "_@user_"
-
-    @JvmStatic
-    fun getDisplayName(scheme: Scheme): String {
-      val schemeName = scheme.name
-      return if (schemeName.startsWith(EDITABLE_COPY_PREFIX))
-        schemeName.substring(EDITABLE_COPY_PREFIX.length)
-      else
-        schemeName
-    }
-  }
-
   abstract val allSchemes: List<T>
 
   open val isEmpty: Boolean
@@ -26,11 +17,9 @@ abstract class SchemeManager<T> {
 
   abstract val activeScheme: T?
 
-  @Deprecated(replaceWith = ReplaceWith("activeScheme"), message = "Use activeScheme")
-  open fun getCurrentScheme(): Scheme = activeScheme as Scheme
-
   /**
-   * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
+   * If schemes are lazily loaded, you can use this method to delay scheme selection.
+   * The scheme will then be located by its name upon the first use.
    */
   abstract var currentSchemeName: String?
 
@@ -40,15 +29,11 @@ abstract class SchemeManager<T> {
 
   abstract fun loadSchemes(): Collection<T>
 
-  open fun reload() {}
+  abstract fun reload()
 
-  @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
-  fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
-    @Suppress("UNCHECKED_CAST")
-    addScheme(scheme as T, replaceExisting)
+  fun addScheme(scheme: T) {
+    addScheme(scheme, replaceExisting = true)
   }
-
-  fun addScheme(scheme: T): Unit = addScheme(scheme, true)
 
   abstract fun addScheme(scheme: T, replaceExisting: Boolean)
 
@@ -57,37 +42,42 @@ abstract class SchemeManager<T> {
   abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)
 
   @JvmOverloads
-  open fun setCurrent(scheme: T?, notify: Boolean = true) {
-  }
+  open fun setCurrent(scheme: T?, notify: Boolean = true, processChangeSynchronously: Boolean = false) { }
 
   abstract fun removeScheme(scheme: T): Boolean
 
-  open fun removeScheme(name: String): T? {
-    val scheme = findSchemeByName(name)
-    if (scheme != null) {
-      removeScheme(scheme)
-      return scheme
-    }
-    return null
-  }
+  abstract fun removeScheme(name: String): T?
 
   /**
-   * Must be called before [.loadSchemes].
-   *
-   * Scheme manager processor must be LazySchemeProcessor
+   * Must be called before [loadSchemes].
+   * Scheme manager processor must be [com.intellij.configurationStore.LazySchemeProcessor].
    */
-  open fun loadBundledScheme(resourceName: String, requestor: Any) {}
+  @ApiStatus.Internal
+  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
+
+  @ApiStatus.Internal
+  interface LoadBundleSchemeRequest<T> {
+    val pluginId: PluginId
+    val schemeKey: String
+    fun loadBytes(): ByteArray
+    fun createScheme(): T
+  }
+
+  @ApiStatus.Internal
+  abstract fun loadBundledSchemes(providers: Sequence<LoadBundleSchemeRequest<T>>)
 
   @JvmOverloads
-  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Condition<T>? = null) {
-  }
+  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) { }
 
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  open fun isMetadataEditable(scheme: T): Boolean {
-    return true
-  }
+  abstract fun isMetadataEditable(scheme: T): Boolean
 
-  open fun save(errors: MutableList<Throwable>) {}
+  abstract fun save()
+
+  /**
+   * Returns the category which settings of this scheme belong to.
+   */
+  abstract fun getSettingsCategory(): SettingsCategory
 }

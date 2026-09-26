@@ -1,0 +1,1 @@
+Text: (@MyAnnotation @NotNull String bar), Disabled: true, Strikeout: false, Green: false

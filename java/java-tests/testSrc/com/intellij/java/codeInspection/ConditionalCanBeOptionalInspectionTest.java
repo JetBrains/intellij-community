@@ -7,14 +7,9 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionalCanBeOptionalInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ConditionalCanBeOptionalInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

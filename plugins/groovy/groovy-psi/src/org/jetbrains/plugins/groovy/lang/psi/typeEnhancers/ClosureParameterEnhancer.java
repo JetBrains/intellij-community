@@ -1,33 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,20 +32,27 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_IO_FILE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ITERATOR;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP_ENTRY;
 
-/**
- * @author peter
- */
-public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private static final Map<String, String> simpleTypes = new HashMap<>();
-  private static final Set<String> iterations = new HashSet<>();
+public final class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
+  private static final Map<@NlsSafe String, @NlsSafe String> simpleTypes = new HashMap<>();
+  private static final Set<@NlsSafe String> iterations = new HashSet<>();
 
   static {
     simpleTypes.put("times", JAVA_LANG_INTEGER);
@@ -110,20 +112,18 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Override
-  @Nullable
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic(closure)) {
+  protected @Nullable PsiType getClosureParameterType(@NotNull GrFunctionalExpression closure, int index) {
+    if (CompileStaticUtil.isCompileStatic(closure)) {
       return null;
     }
 
     return inferType(closure, index);
   }
 
-  @Nullable
-  public static PsiType inferType(@NotNull GrClosableBlock closure, int index) {
-    PsiElement parent = closure.getParent();
+  public static @Nullable PsiType inferType(@NotNull GrFunctionalExpression expression, int index) {
+    PsiElement parent = expression.getParent();
     if (parent instanceof GrStringInjection && index == 0) {
-      return TypesUtil.createTypeByFQClassName("java.io.StringWriter", closure);
+      return TypesUtil.createTypeByFQClassName("java.io.StringWriter", expression);
     }
 
     if (parent instanceof GrArgumentList) parent = parent.getParent();
@@ -133,10 +133,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
     String methodName = findMethodName((GrMethodCall)parent);
 
-    GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return null;
+    GrExpression invokedExpression = ((GrMethodCall)parent).getInvokedExpression();
+    if (!(invokedExpression instanceof GrReferenceExpression)) return null;
 
-    GrExpression qualifier = ((GrReferenceExpression)expression).getQualifierExpression();
+    GrExpression qualifier = ((GrReferenceExpression)invokedExpression).getQualifierExpression();
     if (qualifier == null) return null;
     PsiType type = qualifier.getType();
 
@@ -144,22 +144,22 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return null;
     }
 
-    final PsiParameter[] params = closure.getAllParameters();
+    final PsiParameter[] params = expression.getAllParameters();
 
     if (params.length == 1 && simpleTypes.containsKey(methodName)) {
 
       final String typeText = simpleTypes.get(methodName);
       if (typeText.indexOf('<') < 0) {
-        return TypesUtil.createTypeByFQClassName(typeText, closure);
+        return TypesUtil.createTypeByFQClassName(typeText, expression);
       }
       else {
-        return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(typeText, closure);
+        return JavaPsiFacade.getElementFactory(expression.getProject()).createTypeFromText(typeText, expression);
       }
     }
 
     if (iterations.contains(methodName)) {
       if (params.length == 1) {
-        return findTypeForIteration(qualifier, closure);
+        return findTypeForIteration(qualifier, expression);
       }
       if (params.length == 2 && InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
         if (index == 0) {
@@ -172,19 +172,19 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return type;
     }
     else if (GdkMethodUtil.EACH_WITH_INDEX.equals(methodName)) {
-      PsiType res = findTypeForIteration(qualifier, closure);
+      PsiType res = findTypeForIteration(qualifier, expression);
       if (params.length == 2 && res != null) {
         if (index == 0) {
           return res;
         }
-        return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
+        return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, expression);
       }
       if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
         if (params.length == 2) {
           if (index == 0) {
-            return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
+            return getEntryForMap(type, expression.getProject(), expression.getResolveScope());
           }
-          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, expression);
         }
         if (params.length == 3) {
           if (index == 0) {
@@ -193,30 +193,30 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
           if (index == 1) {
             return PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 1, true);
           }
-          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(JAVA_LANG_INTEGER, expression);
         }
       }
     }
     else if (GdkMethodUtil.INJECT.equals(methodName) && params.length == 2) {
       if (index == 0) {
-        return TypesUtil.createTypeByFQClassName(JAVA_LANG_OBJECT, closure);
+        return TypesUtil.createTypeByFQClassName(JAVA_LANG_OBJECT, expression);
       }
 
-      PsiType res = findTypeForIteration(qualifier, closure);
+      PsiType res = findTypeForIteration(qualifier, expression);
       if (res != null) {
         return res;
       }
       if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
-        return getEntryForMap(type, closure.getProject(), closure.getResolveScope());
+        return getEntryForMap(type, expression.getProject(), expression.getResolveScope());
       }
     }
     else if (GdkMethodUtil.EACH_PERMUTATION.equals(methodName) && params.length == 1) {
-      final PsiType itemType = findTypeForIteration(qualifier, closure);
+      final PsiType itemType = findTypeForIteration(qualifier, expression);
       if (itemType != null) {
-        return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(
-          JAVA_UTIL_ARRAY_LIST + "<" + itemType.getCanonicalText() + ">", closure);
+        return JavaPsiFacade.getElementFactory(expression.getProject()).createTypeFromText(
+          JAVA_UTIL_ARRAY_LIST + "<" + itemType.getCanonicalText() + ">", expression);
       }
-      return TypesUtil.createTypeByFQClassName(JAVA_UTIL_ARRAY_LIST, closure);
+      return TypesUtil.createTypeByFQClassName(JAVA_UTIL_ARRAY_LIST, expression);
     }
     else if (GdkMethodUtil.WITH_DEFAULT.equals(methodName)) {
       if (params.length == 1 && InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
@@ -225,7 +225,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     else if (GdkMethodUtil.SORT.equals(methodName)) {
       if (params.length < 3) {
-        return findTypeForIteration(qualifier, closure);
+        return findTypeForIteration(qualifier, expression);
       }
     }
     else if (GdkMethodUtil.WITH_STREAM.equals(methodName)) {
@@ -242,28 +242,27 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     else if (GdkMethodUtil.WITH_STREAMS.equals(methodName)) {
       if (index == 0) {
-        return TypesUtil.createTypeByFQClassName("java.io.InputStream", closure);
+        return TypesUtil.createTypeByFQClassName("java.io.InputStream", expression);
       }
-      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.OutputStream", closure);
+      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.OutputStream", expression);
     }
     else if (GdkMethodUtil.WITH_OBJECT_STREAMS.equals(methodName)) {
       if (index == 0) {
-        return TypesUtil.createTypeByFQClassName("java.io.ObjectInputStream", closure);
+        return TypesUtil.createTypeByFQClassName("java.io.ObjectInputStream", expression);
       }
-      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.ObjectOutputStream", closure);
+      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.ObjectOutputStream", expression);
     }
     return null;
   }
 
-  @Nullable
-  private static PsiType getEntryForMap(@Nullable PsiType map, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+  public static @NotNull PsiType getEntryForMap(@Nullable PsiType map, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     PsiType key = PsiUtil.substituteTypeParameter(map, JAVA_UTIL_MAP, 0, true);
     PsiType value = PsiUtil.substituteTypeParameter(map, JAVA_UTIL_MAP, 1, true);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(JAVA_UTIL_MAP_ENTRY, scope);
     if (entryClass == null) {
-      if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
+      if (key != null && key != PsiTypes.nullType() && value != null && value != PsiTypes.nullType()) {
         final String text = String.format("%s<%s,%s>", JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
         return factory.createTypeFromText(text, null);
       }
@@ -276,8 +275,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
   }
 
-  @Nullable
-  public static PsiType findTypeForIteration(@NotNull GrExpression qualifier, @NotNull PsiElement context) {
+  public static @Nullable PsiType findTypeForIteration(@NotNull GrExpression qualifier, @NotNull PsiElement context) {
     PsiType iterType = qualifier.getType();
     if (iterType == null) return null;
 
@@ -288,8 +286,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Contract("null,_ -> null")
-  @Nullable
-  public static PsiType findTypeForIteration(@Nullable PsiType type, @NotNull PsiElement context) {
+  public static @Nullable PsiType findTypeForIteration(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiManager manager = context.getManager();
     final GlobalSearchScope resolveScope = context.getResolveScope();
 
@@ -315,7 +312,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return extracted;
     }
 
-    if (TypesUtil.isClassType(type, JAVA_LANG_STRING) || TypesUtil.isClassType(type, JAVA_IO_FILE)) {
+    if (TypesUtil.isClassType(type, JAVA_LANG_STRING, JAVA_IO_FILE)) {
       return PsiType.getJavaLangString(manager, resolveScope);
     }
 
@@ -325,8 +322,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     return type;
   }
 
-  @Nullable
-  private static PsiType findTypeFromIteratorMethod(@Nullable PsiType type, PsiElement context) {
+  private static @Nullable PsiType findTypeFromIteratorMethod(@Nullable PsiType type, PsiElement context) {
     if (!(type instanceof PsiClassType)) return null;
 
     final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, "iterator", context, PsiType.EMPTY_ARRAY);
@@ -340,8 +336,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     return PsiUtil.substituteTypeParameter(iteratorType, JAVA_UTIL_ITERATOR, 0, false);
   }
 
-  @Nullable
-  private static String findMethodName(@NotNull GrMethodCall methodCall) {
+  private static @Nullable String findMethodName(@NotNull GrMethodCall methodCall) {
     GrExpression expression = methodCall.getInvokedExpression();
     if (expression instanceof GrReferenceExpression) {
       return ((GrReferenceExpression)expression).getReferenceName();

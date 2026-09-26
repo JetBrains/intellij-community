@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -19,11 +19,15 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
+public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl {
   private final DecompiledLocalVariable myVariable;
 
   public ArgumentValueDescriptorImpl(Project project, DecompiledLocalVariable variable, Value value) {
@@ -37,10 +41,12 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return LocalVariablesUtil.canSetValues();
   }
 
+  @Override
   public boolean isPrimitive() {
     return getValue() instanceof PrimitiveValue;
   }
 
+  @Override
   public Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getValue();
   }
@@ -49,6 +55,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable;
   }
 
+  @Override
   public String getName() {
     return myVariable.getDisplayName();
   }
@@ -57,13 +64,14 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable.isParam();
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
   }
 
@@ -76,16 +84,16 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
         if (local != null) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
-              LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local.getSlot(), newValue);
+              LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local, newValue);
               update(debuggerContext);
             }
 
-            @Nullable
             @Override
-            public Type getLType() {
+            public @Nullable Type getLType() {
               return null;
             }
           });

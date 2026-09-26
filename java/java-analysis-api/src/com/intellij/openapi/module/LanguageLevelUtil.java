@@ -1,22 +1,36 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-/**
- * @author yole
- */
-public class LanguageLevelUtil extends EffectiveLanguageLevelUtil {
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class LanguageLevelUtil {
+  private LanguageLevelUtil() { }
+
+  /**
+   * @param module to get the language level for.
+   * @return explicitly specified language level for a {@link Module}, or {@code null} if the module uses 'Project default' language level.
+   * May return an {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   */
+  public static @Nullable LanguageLevel getCustomLanguageLevel(@NotNull Module module) {
+    LanguageLevelModuleExtension moduleExtension =
+      ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
+    return moduleExtension != null ? moduleExtension.getLanguageLevel() : null;
+  }
+
+  /**
+   * @param module to get the language level for.
+   * @return the effective language level for a {@link Module}, which is either the overridden language level for the module or the project
+   * language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   */
+  public static @NotNull LanguageLevel getEffectiveLanguageLevel(@NotNull Module module) {
+    LanguageLevel level = getCustomLanguageLevel(module);
+    if (level != null) return level;
+    return LanguageLevelProjectExtension.getInstance(module.getProject()).getLanguageLevel();
+  }
 }

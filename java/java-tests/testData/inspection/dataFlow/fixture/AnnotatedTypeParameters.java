@@ -8,7 +8,7 @@ class Test {
     if (<warning descr="Condition 'list.get(0) == null' is always 'false'">list.get(0) == null</warning>) {
       return;
     }
-    list.add(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    list.add(<warning descr="Passing 'null' argument to parameter annotated as non-null">null</warning>);
   }
   private static void test2(List<@Nullable Object> list) {
     if (list.get(0) == null) {
@@ -21,7 +21,7 @@ class Test {
     if (<warning descr="Condition 'ref.value == null' is always 'false'">ref.value == null</warning>) {
       return;
     }
-    ref.value = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>;
+    ref.value = <warning descr="'null' is assigned to a non-null variable">null</warning>;
   }
 
 

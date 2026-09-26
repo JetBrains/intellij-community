@@ -20,9 +20,6 @@ import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class PsiTypeCastExpressionPattern extends PsiExpressionPattern<PsiTypeCastExpression, PsiTypeCastExpressionPattern> {
   PsiTypeCastExpressionPattern() {
     super(PsiTypeCastExpression.class);

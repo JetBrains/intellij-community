@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.runConfigurations;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -26,13 +12,12 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
-public class JpsRunConfigurationSerializer {
+@ApiStatus.Internal
+public final class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 
   public static void loadRunConfigurations(@NotNull JpsProject project, @Nullable Element runManagerTag) {
@@ -58,6 +43,9 @@ public class JpsRunConfigurationSerializer {
       String name = configurationTag.getAttributeValue("name");
       if (serializer != null) {
         loadRunConfiguration(name, configurationTag, serializer, project);
+      }
+      else if (name == null) {
+        LOG.info("Run configuration '" + JDOMUtil.write(configurationTag) + "' wasn't loaded because 'name' attribute is missing");
       }
       else if (typeId != null) {
         project.addRunConfiguration(name, new JpsUnknownRunConfigurationType(typeId), JpsElementFactory.getInstance().createDummyElement());

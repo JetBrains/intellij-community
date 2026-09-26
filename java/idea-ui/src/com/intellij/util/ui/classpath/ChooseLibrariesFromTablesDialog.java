@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.application.Application;
@@ -21,29 +7,27 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
-  private @Nullable final Project myProject;
+  private final @Nullable Project myProject;
   private final boolean myShowCustomLibraryTables;
 
-  protected ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
+  protected ChooseLibrariesFromTablesDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Project project, final boolean showCustomLibraryTables) {
     super(project, title);
     myShowCustomLibraryTables = showCustomLibraryTables;
     myProject = project;
   }
 
   protected ChooseLibrariesFromTablesDialog(@NotNull JComponent parentComponent,
-                                            @NotNull String title,
+                                            @NotNull @NlsContexts.DialogTitle String title,
                                             @Nullable Project project,
                                             final boolean showCustomLibraryTables) {
     super(parentComponent, title);
@@ -51,7 +35,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     myProject = project;
   }
 
-  public static ChooseLibrariesFromTablesDialog createDialog(@NotNull String title,
+  public static ChooseLibrariesFromTablesDialog createDialog(@NotNull @NlsContexts.DialogTitle String title,
                                                              @NotNull Project project,
                                                              final boolean showCustomLibraryTables) {
     final ChooseLibrariesFromTablesDialog dialog = new ChooseLibrariesFromTablesDialog(title, project, showCustomLibraryTables);
@@ -59,9 +43,8 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     return dialog;
   }
 
-  @NotNull
   @Override
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     if (myProject != null) {
       return myProject;
     }
@@ -95,9 +78,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     }
     tables.add(registrar.getLibraryTable());
     if (showCustomLibraryTables) {
-      for (LibraryTable table : registrar.getCustomLibraryTables()) {
-        tables.add(table);
-      }
+      tables.addAll(registrar.getCustomLibraryTables());
     }
     return tables;
   }
@@ -134,8 +115,7 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
     return isApplicationLibraryTable(libraryTable) || isProjectLibraryTable(libraryTable);
   }
 
-  @NotNull
-  protected Library[] getLibraries(@NotNull LibraryTable table) {
+  protected Library @NotNull [] getLibraries(@NotNull LibraryTable table) {
     return table.getLibraries();
   }
 }

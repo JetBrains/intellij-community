@@ -1,10 +1,12 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -15,20 +17,17 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class FoldLinesLikeThis extends DumbAwareAction {
+final class FoldLinesLikeThis extends DumbAwareAction {
 
-  @Nullable
-  private static String getSingleLineSelection(@NotNull Editor editor) {
+  private static @Nullable String getSingleLineSelection(@NotNull Editor editor) {
     final SelectionModel model = editor.getSelectionModel();
     final Document document = editor.getDocument();
     if (!model.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
       if (offset <= document.getTextLength()) {
         final int lineNumber = document.getLineNumber(offset);
-        final String line = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)).trim();
+        final String line =
+          document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)).trim();
         if (StringUtil.isNotEmpty(line)) {
           return line;
         }
@@ -48,16 +47,20 @@ public class FoldLinesLikeThis extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-
-    final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null &&  editor != null && getSingleLineSelection(editor) != null;
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+    final boolean enabled = e.getData(ExecutionDataKeys.CONSOLE_VIEW) != null && editor != null && getSingleLineSelection(editor) != null;
+    e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     final String selection = getSingleLineSelection(editor);
@@ -74,7 +77,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
         UIUtil.invokeLaterIfNeeded(() -> addRule(selection));
       }
     });
-    final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+    final ConsoleView consoleView = e.getData(ExecutionDataKeys.CONSOLE_VIEW);
     if (consoleView instanceof ConsoleViewImpl) {
       ((ConsoleViewImpl)consoleView).foldImmediately();
     }

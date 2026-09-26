@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 public abstract class InterruptibleProcess extends InterruptibleActivity {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.process.InterruptibleProcess");
+  private static final Logger LOG = Logger.getInstance(InterruptibleProcess.class);
   private final Process myProcess;
   private final InputStream myInputStream;
   private final InputStream myErrorStream;
@@ -53,6 +53,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
     return myExitCode;
   }
 
+  @Override
   protected void interrupt() {
     closeProcess();
   }
@@ -67,6 +68,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
     close(myProcess);
   }
 
+  @Override
   protected void start() {
     try {
       myExitCode = myProcess.waitFor();
@@ -79,22 +81,25 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   private class InputStreamWrapper extends InputStream {
     private final InputStream myDelegate;
 
-    public InputStreamWrapper(final InputStream delegate) {
+    InputStreamWrapper(final InputStream delegate) {
       myDelegate = delegate;
     }
 
+    @Override
     public int read() throws IOException {
       int r = myDelegate.read();
       touch();
       return r;
     }
 
+    @Override
     public int read(final byte[] b) throws IOException {
       final int r = myDelegate.read(b);
       touch();
       return r;
     }
 
+    @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
       final int r = myDelegate.read(b, off, len);
       touch();

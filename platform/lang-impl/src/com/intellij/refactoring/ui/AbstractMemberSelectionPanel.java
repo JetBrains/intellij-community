@@ -18,7 +18,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 /**
  * Nikolay.Tropin

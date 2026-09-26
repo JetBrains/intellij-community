@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
@@ -35,9 +21,9 @@ public class PyExpressionCodeFragment extends PyFileImpl implements PsiCodeFragm
 
   private GlobalSearchScope myResolveScope;
 
-  public PyExpressionCodeFragment(@NotNull final Project project,
-                                  @NonNls final String name,
-                                  @NotNull final CharSequence text) {
+  public PyExpressionCodeFragment(final @NotNull Project project,
+                                  final @NonNls String name,
+                                  final @NotNull CharSequence text) {
     super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
       new LightVirtualFile(name, PythonFileType.INSTANCE, text), true));
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
@@ -62,6 +48,7 @@ public class PyExpressionCodeFragment extends PyFileImpl implements PsiCodeFragm
   public void accept(@NotNull PsiElementVisitor visitor) {
   }
 
+  @Override
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     return false;
   }

@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -24,25 +12,28 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicWhitespaceInspection extends LocalInspectionTool {
+public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
-  private static class ShowWhitespaceFix implements LocalQuickFix {
+  private static final class ShowWhitespaceFix implements LocalQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return InspectionsBundle.message("problematic.whitespace.show.whitespaces.quickfix");
+    public @NotNull String getFamilyName() {
+      return LangBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
     @Override
@@ -52,67 +43,92 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-      final Editor editor = editorManager.getSelectedTextEditor();
+      FileEditorManager editorManager = FileEditorManager.getInstance(project);
+      Editor editor = editorManager.getSelectedTextEditor();
       if (editor == null) {
         return;
       }
-      final EditorSettings settings = editor.getSettings();
+      EditorSettings settings = editor.getSettings();
+      settings.setLeadingWhitespaceShown(true);
       settings.setWhitespacesShown(!settings.isWhitespacesShown());
       editor.getComponent().repaint();
     }
   }
 
-  @NotNull
+  private static final class ReformatFileFix implements LocalQuickFix {
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return LangBundle.message("problematic.whitespace.reformat.quickfix");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement file = descriptor.getPsiElement();
+      if (!(file instanceof PsiFile)) {
+        return;
+      }
+      CodeStyleManager.getInstance(project).reformat(file, true);
+    }
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ProblematicWhitespaceVisitor(holder, isOnTheFly);
   }
 
-  private class ProblematicWhitespaceVisitor extends PsiElementVisitor {
+  private final class ProblematicWhitespaceVisitor extends PsiElementVisitor {
 
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    public ProblematicWhitespaceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    ProblematicWhitespaceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
     }
 
     @Override
-    public void visitFile(PsiFile file) {
-      super.visitFile(file);
-      final FileType fileType = file.getFileType();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      FileType fileType = psiFile.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
-      final CodeStyleSettings settings = CodeStyle.getSettings(file);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
-      final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
-      final boolean smartTabs = indentOptions.SMART_TABS;
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (psiFile.getViewProvider().getBaseLanguage() != psiFile.getLanguage()) {
+        // don't warn multiple times on files which have multiple views like PHP and JSP
+        return;
+      }
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+      if (injectedLanguageManager.isInjectedFragment(psiFile)) {
+        return;
+      }
+      CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
+      CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(psiFile);
+      boolean useTabs = indentOptions.USE_TAB_CHARACTER;
+      boolean smartTabs = indentOptions.SMART_TABS;
+      Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
-      final int lineCount = document.getLineCount();
+      int lineCount = document.getLineCount();
       int previousLineIndent = 0;
       for (int i = 0; i < lineCount; i++) {
-        final int startOffset = document.getLineStartOffset(i);
-        final int endOffset = document.getLineEndOffset(i);
-        final String line = document.getText(new TextRange(startOffset, endOffset));
+        int startOffset = document.getLineStartOffset(i);
+        int endOffset = document.getLineEndOffset(i);
+        String line = document.getText(new TextRange(startOffset, endOffset));
         boolean spaceSeen = false;
         for (int j = 0, length = line.length(); j < length; j++) {
-          final char c = line.charAt(j);
+          char c = line.charAt(j);
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
-                if (registerError(file, startOffset, true)) {
+                if (registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
             }
             else {
-              if (registerError(file, startOffset, false)) {
+              if (registerError(psiFile, startOffset, false)) {
                 return;
               }
             }
@@ -120,25 +136,24 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (registerError(file, startOffset, true)) {
+                if (!isSpaceAllowed(psiFile, j, line, startOffset) && registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
               else if (!spaceSeen) {
-                final int currentIndent = Math.max(0, j);
-                if (currentIndent < previousLineIndent) {
-                  if (registerError(file, startOffset, true)) {
+                if (j < previousLineIndent) {
+                  if (registerError(psiFile, startOffset, true)) {
                     return;
                   }
                 }
-                previousLineIndent = currentIndent;
+                previousLineIndent = j;
               }
             }
             spaceSeen = true;
           }
           else {
             if (!spaceSeen) {
-              previousLineIndent = Math.max(0, j);
+              previousLineIndent = j;
             }
             break;
           }
@@ -146,19 +161,27 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       }
     }
 
+    private static boolean isSpaceAllowed(@NotNull PsiFile file, int index, String line, int lineOffsetInFile) {
+      PsiElement element = file.findElementAt(lineOffsetInFile + index);
+      if (!(element instanceof PsiWhiteSpace)) return true; // e.g. multiline string literal
+      return index + 1 < line.length() && line.charAt(index + 1) == '*'
+             && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null; // doc comment in java, c++, php...
+    }
+
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {
-      final PsiElement element = file.findElementAt(startOffset);
+      PsiElement element = file.findElementAt(startOffset);
       if (element != null && isSuppressedFor(element)) {
         return false;
       }
-      final String description = tab
-                                 ? InspectionsBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
-                                 : InspectionsBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
+      String description = tab
+                                 ? LangBundle.message("problematic.whitespace.spaces.problem.descriptor", file.getName())
+                                 : LangBundle.message("problematic.whitespace.tabs.problem.descriptor", file.getName());
       if (myIsOnTheFly) {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ShowWhitespaceFix());
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new ReformatFileFix(), new ShowWhitespaceFix());
       }
       else {
-        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        myHolder.registerProblem(file, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReformatFileFix());
       }
       return true;
     }

@@ -1,76 +1,58 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class FxmlConstants {
-  @NonNls public static final String FX_CONTROLLER = "fx:controller";
-  @NonNls public static final String FX_ID = "fx:id";
-  @NonNls public static final String VALUE = "value";
-  @NonNls public static final String FX_VALUE = "fx:value";
-  @NonNls public static final String FX_FACTORY = "fx:factory";
-  @NonNls public static final String FX_CONSTANT = "fx:constant";
-  
-  @NonNls public static final String FX_REFERENCE = "fx:reference";
-  @NonNls public static final String FX_COPY = "fx:copy";
-  @NonNls public static final String FX_DEFINE = "fx:define";
-  @NonNls public static final String FX_SCRIPT = "fx:script";
-  @NonNls public static final String FX_INCLUDE = "fx:include";
-  @NonNls public static final String FX_ROOT = "fx:root";
-  @NonNls public static final String TYPE = "type";
-  @NonNls public static final String RESOURCES = "resources";
-  @NonNls public static final String CHARSET = "charset";
-  @NonNls public static final String CONTROLLER = "controller";
-  @NonNls public static final String CONTROLLER_SUFFIX = "Controller";
+public final class FxmlConstants {
+  public static final @NonNls String FX_CONTROLLER = "fx:controller";
+  public static final @NonNls String FX_ID = "fx:id";
+  public static final @NonNls String VALUE = "value";
+  public static final @NonNls String FX_VALUE = "fx:value";
+  public static final @NonNls String FX_FACTORY = "fx:factory";
+  public static final @NonNls String FX_CONSTANT = "fx:constant";
 
-  @NonNls public static final String STYLE_CLASS = "styleClass";
-  @NonNls public static final String STYLESHEETS = "stylesheets";
-  @NonNls public static final String URL_ATTR = "url";
-  @NonNls public static final String URL_TAG = "URL";
+  public static final @NonNls String FX_REFERENCE = "fx:reference";
+  public static final @NonNls String FX_COPY = "fx:copy";
+  public static final @NonNls String FX_DEFINE = "fx:define";
+  public static final @NonNls String FX_SCRIPT = "fx:script";
+  public static final @NonNls String FX_INCLUDE = "fx:include";
+  public static final @NonNls String FX_ROOT = "fx:root";
+  public static final @NonNls String TYPE = "type";
+  public static final @NonNls String RESOURCES = "resources";
+  public static final @NonNls String CHARSET = "charset";
+  public static final @NonNls String CONTROLLER = "controller";
+  public static final @NonNls String CONTROLLER_SUFFIX = "Controller";
 
-  @NonNls public static final String SOURCE = "source";
+  public static final @NonNls String STYLE_CLASS = "styleClass";
+  public static final @NonNls String STYLESHEETS = "stylesheets";
+  public static final @NonNls String URL_ATTR = "url";
+  public static final @NonNls String URL_TAG = "URL";
 
-  @NonNls public static final String NULL_EXPRESSION = "${null}";
-  @NonNls private static final String NULL_VALUE = "$null";
+  public static final @NonNls String SOURCE = "source";
 
-  public static final Set<String> FX_BUILT_IN_ATTRIBUTES =
-    ContainerUtil.immutableSet(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
+  public static final @NonNls String NULL_EXPRESSION = "${null}";
+  private static final @NonNls String NULL_VALUE = "$null";
 
-  public static final Set<String> FX_BUILT_IN_TAGS = ContainerUtil.immutableSet(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final Set<String> FX_BUILT_IN_ATTRIBUTES = Set.of(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
+
+  public static final Set<String> FX_BUILT_IN_TAGS = Set.of(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
 
   public static final Map<String, List<String>> FX_BUILT_IN_TAG_SUPPORTED_ATTRIBUTES =
-    ContainerUtil.<String, List<String>>immutableMapBuilder()
-      .put(FX_INCLUDE, ContainerUtil.immutableList(SOURCE, FX_ID, RESOURCES, CHARSET))
-      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
-      .put(FX_COPY, Collections.singletonList(SOURCE))
-      .put(FX_SCRIPT, Collections.singletonList(SOURCE))
-      .build();
+    Map.of(FX_INCLUDE, List.of(SOURCE, FX_ID, RESOURCES, CHARSET),
+           FX_REFERENCE, List.of(SOURCE),
+           FX_COPY, List.of(SOURCE),
+           FX_SCRIPT, List.of(SOURCE));
 
   public static final Map<String, List<String>> FX_BUILT_IN_TAG_REQUIRED_ATTRIBUTES =
-    ContainerUtil.<String, List<String>>immutableMapBuilder()
-      .put(FX_INCLUDE, Collections.singletonList(SOURCE))
-      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
-      .put(FX_COPY, Collections.singletonList(SOURCE))
-      .build();
+    Map.of(FX_INCLUDE, List.of(SOURCE),
+           FX_REFERENCE, List.of(SOURCE),
+           FX_COPY, List.of(SOURCE));
 
   public static boolean isNullValue(@NotNull String value) {
     return NULL_VALUE.equals(StringUtil.trimTrailing(value));

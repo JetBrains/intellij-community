@@ -1,4 +1,4 @@
-// "Remove useless null-check" "true"
+// "Remove redundant null-check" "true"
 import java.util.*;
 
 public class Test {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.macro.MacroManager;
@@ -6,11 +6,13 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -18,28 +20,34 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.config.*;
+import com.intellij.util.config.AbstractProperty;
+import com.intellij.util.config.ExternalizablePropertyContainer;
+import com.intellij.util.config.Externalizer;
+import com.intellij.util.config.ListProperty;
+import com.intellij.util.config.StorageProperty;
+import com.intellij.util.config.ValueProperty;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
-@State(name = "GlobalAntConfiguration", storages = @Storage("other.xml"))
-public class GlobalAntConfiguration implements PersistentStateComponent<Element> {
+@State(name = "GlobalAntConfiguration", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+public final class GlobalAntConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(GlobalAntConfiguration.class);
 
   public static final StorageProperty FILTERS_TABLE_LAYOUT = new StorageProperty("filtersTableLayout");
   public static final StorageProperty PROPERTIES_TABLE_LAYOUT = new StorageProperty("propertiesTableLayout");
-  static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
+  private static final ListProperty<AntInstallation> ANTS = ListProperty.create("registeredAnts");
   private final ExternalizablePropertyContainer myProperties = new ExternalizablePropertyContainer();
   private final AntInstallation myBundledAnt;
-  public static final String BUNDLED_ANT_NAME = AntBundle.message("ant.reference.bundled.ant.name");
-  public final Condition<AntInstallation> IS_USER_ANT = new Condition<AntInstallation>() {
+  public final Condition<AntInstallation> IS_USER_ANT = new Condition<>() {
     @Override
     public boolean value(AntInstallation antInstallation) {
       return antInstallation != myBundledAnt;
@@ -48,13 +56,13 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
 
   public static final AbstractProperty<GlobalAntConfiguration> INSTANCE = new ValueProperty<>(
     "$GlobalAntConfiguration.INSTANCE", null);
-  @NonNls public static final String ANT_FILE = "ant";
-  @NonNls public static final String LIB_DIR = "lib";
-  @NonNls public static final String ANT_JAR_FILE_NAME = "ant.jar";
+  public static final @NonNls String ANT_FILE = "ant";
+  public static final @NonNls String LIB_DIR = "lib";
+  private static final @NonNls String ANT_JAR_FILE_NAME = "ant.jar";
 
   public GlobalAntConfiguration() {
-    myProperties.registerProperty(FILTERS_TABLE_LAYOUT);
-    myProperties.registerProperty(PROPERTIES_TABLE_LAYOUT);
+    myProperties.registerProperty(FILTERS_TABLE_LAYOUT, Externalizer.STORAGE);
+    myProperties.registerProperty(PROPERTIES_TABLE_LAYOUT, Externalizer.STORAGE);
     myProperties.registerProperty(ANTS, ANT_FILE, AntInstallation.EXTERNALIZER);
     INSTANCE.set(myProperties, this);
     myProperties.rememberKey(INSTANCE);
@@ -69,19 +77,47 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
         return AntReference.BUNDLED_ANT;
       }
     };
-    AntInstallation.NAME.set(bundledAnt.getProperties(), BUNDLED_ANT_NAME);
-    final File antHome = PathManager.findFileInLibDirectory(ANT_FILE);
+    AntInstallation.NAME.set(bundledAnt.getProperties(), getBundledAntName());
+
+    File antHome = getBundledAntHome();
+
     AntInstallation.HOME_DIR.set(bundledAnt.getProperties(), antHome.getAbsolutePath());
     ArrayList<AntClasspathEntry> classpath = AntInstallation.CLASS_PATH.getModifiableList(bundledAnt.getProperties());
     File antLibDir = new File(antHome, LIB_DIR);
-    classpath.add(new AllJarsUnderDirEntry(antLibDir));
-    bundledAnt.updateVersion(new File(antLibDir, ANT_JAR_FILE_NAME));
+
+    File compiledJar = new File(antHome, ANT_JAR_FILE_NAME);
+    if (compiledJar.exists()) {
+      classpath.add(new SinglePathEntry(compiledJar));
+      bundledAnt.updateVersion(compiledJar);
+    }
+    else {
+      classpath.add(new AllJarsUnderDirEntry(antLibDir));
+      bundledAnt.updateVersion(new File(antLibDir, ANT_JAR_FILE_NAME));
+    }
+
     return bundledAnt;
   }
 
-  @Nullable
+  public static @NotNull File getBundledAntHome() {
+    File distDir = PluginPathManager.getPluginResource(AntInstallation.class, "dist");
+    if (distDir != null && distDir.exists()) {
+      return distDir;
+    }
+
+    // probably running from source
+    File antFile = new File(PathManager.getLibPath(), ANT_FILE);
+    if (!antFile.exists()) {
+      antFile = new File(PathManager.getHomePath() + "/community/lib", ANT_FILE);
+    }
+    if (antFile.exists()) {
+      return antFile;
+    }
+
+    throw new IllegalStateException("Unable to find bundled Ant");
+  }
+
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("state");
     myProperties.writeExternal(element);
     return element;
@@ -93,12 +129,12 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
   }
 
   public static GlobalAntConfiguration getInstance() {
-    return ServiceManager.getService(GlobalAntConfiguration.class);
+    return ApplicationManager.getApplication().getService(GlobalAntConfiguration.class);
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {
-    Map<AntReference, AntInstallation> map = ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
-                                                                            AntInstallation.REFERENCE_TO_ANT);
+    Map<AntReference, AntInstallation> map = new HashMap<>(ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
+                                                                                          AntInstallation.REFERENCE_TO_ANT));
     map.put(AntReference.BUNDLED_ANT, myBundledAnt);
     return map;
   }
@@ -107,7 +143,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return myBundledAnt;
   }
 
-  public AbstractProperty.AbstractPropertyContainer getProperties() {
+  public AbstractProperty.AbstractPropertyContainer<?> getProperties() {
     return myProperties;
   }
 
@@ -130,7 +166,7 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
     return MacroManager.getInstance();
   }
 
-  public AntBuildTarget findTarget(Project project, String fileUrl, String targetName) {
+  public AntBuildTarget findTarget(@Nullable Project project, String fileUrl, String targetName) {
     if (fileUrl == null || targetName == null || project == null) {
       return null;
     }
@@ -154,5 +190,9 @@ public class GlobalAntConfiguration implements PersistentStateComponent<Element>
       }
     }
     return null;
+  }
+
+  public static @Nls String getBundledAntName() {
+    return AntBundle.message("ant.reference.bundled.ant.name");
   }
 }

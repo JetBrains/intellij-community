@@ -1,12 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.configurations.ConfigurationInfoProvider;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.LogFileOptions;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.PredefinedLogFile;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -15,11 +21,13 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.DumbService;
@@ -29,37 +37,41 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
+import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
-/**
- * @author anna
- * @since 24-Dec-2008
- */
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+public abstract class AbstractRerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<TestFrameworkRunningModel> myModelProvider;
+  private Supplier<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    ActionUtil.copyFrom(this, "RerunFailedTests");
     registerCustomShortcutSet(getShortcutSet(), componentContainer.getComponent());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public void init(TestConsoleProperties consoleProperties) {
@@ -70,7 +82,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myModel = model;
   }
 
-  public void setModelProvider(Getter<TestFrameworkRunningModel> modelProvider) {
+  public void setModelProvider(Getter<? extends TestFrameworkRunningModel> modelProvider) {
     myModelProvider = modelProvider;
   }
 
@@ -79,7 +91,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     e.getPresentation().setEnabled(isActive(e));
   }
 
-  private boolean isActive(AnActionEvent e) {
+  public boolean isActive(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;
@@ -90,12 +102,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return false;
     }
 
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
-    if (environment == null) {
-      return false;
-    }
-    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(project)) {
+    RunProfile profile = model.getProperties().getConfiguration();
+    if (profile instanceof RunConfiguration && !((RunConfiguration)profile).getType().isDumbAware() && DumbService.isDumb(project)) {
       return false;
     }
 
@@ -109,16 +117,14 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return false;
   }
 
-  @NotNull
-  protected List<AbstractTestProxy> getFailedTests(@NotNull Project project) {
+  protected @NotNull List<AbstractTestProxy> getFailedTests(@NotNull Project project) {
     TestFrameworkRunningModel model = getModel();
     if (model == null) return Collections.emptyList();
     //noinspection unchecked
     return getFilter(project, model.getProperties().getScope()).select(model.getRoot().getAllTests());
   }
 
-  @NotNull
-  protected Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+  protected @NotNull Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     return getFailuresFilter();
   }
 
@@ -136,7 +142,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       return;
     }
@@ -159,8 +165,14 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
     final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<>();
-    for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(ex.getId(), profile);
+    List<Executor> executors = new ArrayList<>();
+    executors.add(DefaultRunExecutor.getRunExecutorInstance());
+    Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    if (debugExecutor != null) {
+      executors.add(debugExecutor);
+    }
+    for (Executor ex : executors) {
+      final ProgramRunner runner = ProgramRunner.getRunner(ex.getId(), profile.getPeer());
       if (runner != null) {
         availableRunners.put(ex, runner);
       }
@@ -170,39 +182,34 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       LOG.error(environment.getExecutor().getActionName() + " is not available now");
     }
     else if (availableRunners.size() == 1) {
-      //noinspection ConstantConditions
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
-      ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
-      //noinspection ConstantConditions
+      ArrayList<Executor> model = new ArrayList<>(availableRunners.keySet());
       JBPopupFactory.getInstance().createPopupChooserBuilder(model)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)
         .setRenderer(new DefaultListCellRenderer() {
-          @NotNull
           @Override
-          public Component getListCellRendererComponent(@NotNull JList list,
-                                                        Object value,
-                                                        int index,
-                                                        boolean isSelected,
-                                                        boolean cellHasFocus) {
+          public @NotNull Component getListCellRendererComponent(@NotNull JList list,
+                                                                 Object value,
+                                                                 int index,
+                                                                 boolean isSelected,
+                                                                 boolean cellHasFocus) {
             final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof Executor) {
-              setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
+              setText(((Executor)value).getActionName());
               setIcon(((Executor)value).getIcon());
             }
             return component;
           }
         })
-        .setTitle("Restart Failed Tests")
+        .setTitle(TestRunnerBundle.message("popup.title.restart.failed.tests"))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((value) -> {
-          //noinspection ConstantConditions
-          performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value));
-        }).createPopup().showUnderneathOf(event.getComponent());
+        .setItemChosenCallback(value -> performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value)))
+        .createPopup().showUnderneathOf(event.getComponent());
     }
   }
 
@@ -219,19 +226,17 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
   }
 
-  @Deprecated
-  public MyRunProfile getRunProfile() {
+  protected @Nullable MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
     return null;
   }
 
-  @Nullable
-  protected MyRunProfile getRunProfile(@NotNull ExecutionEnvironment environment) {
-    //noinspection deprecation
-    return getRunProfile();
+  @TestOnly
+  @ApiStatus.Internal
+  public @Nullable RunConfiguration getRunProfileTestAccessor(@NotNull ExecutionEnvironment environment) {
+    return getRunProfile(environment);
   }
 
-  @Nullable
-  public TestFrameworkRunningModel getModel() {
+  public @Nullable TestFrameworkRunningModel getModel() {
     if (myModel != null) {
       return myModel;
     }
@@ -241,21 +246,18 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile,
-                                                                                       WrappingRunConfiguration<RunConfigurationBase> {
-    @Deprecated
-    public RunConfigurationBase getConfiguration() {
-      return getPeer();
-    }
+  protected abstract static class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
+                                                                                                WrappingRunConfiguration<RunConfigurationBase<?>>,
+                                                                                                ConsolePropertiesProvider {
 
     @Override
-    public RunConfigurationBase getPeer() {
+    public @NotNull RunConfigurationBase<?> getPeer() {
       return myConfiguration;
     }
 
-    private final RunConfigurationBase myConfiguration;
+    private final RunConfigurationBase<?> myConfiguration;
 
-    public MyRunProfile(RunConfigurationBase configuration) {
+    public MyRunProfile(@NotNull RunConfigurationBase<?> configuration) {
       super(configuration.getProject(), configuration.getFactory(), ActionsBundle.message("action.RerunFailedTests.text"));
       myConfiguration = configuration;
     }
@@ -263,20 +265,25 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     public void clear() {
     }
 
-    ///////////////////////////////////Delegates
     @Override
-    public void readExternal(@NotNull final Element element) throws InvalidDataException {
+    public @Nullable TestConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
+      return myConfiguration instanceof ConsolePropertiesProvider ?
+             ((ConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor) : null;
+    }
+
+    /// ////////////////////////////////Delegates
+    @Override
+    public void readExternal(final @NotNull Element element) throws InvalidDataException {
       myConfiguration.readExternal(element);
     }
 
     @Override
-    public void writeExternal(@NotNull final Element element) throws WriteExternalException {
+    public void writeExternal(final @NotNull Element element) throws WriteExternalException {
       myConfiguration.writeExternal(element);
     }
 
     @Override
-    @NotNull
-    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }
 
@@ -295,7 +302,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.clone();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public int getUniqueID() {
       return myConfiguration.getUniqueID();
@@ -306,21 +312,18 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getOptionsForPredefinedLogFile(predefinedLogFile);
     }
 
-    @NotNull
     @Override
-    public List<PredefinedLogFile> getPredefinedLogFiles() {
+    public @NotNull List<PredefinedLogFile> getPredefinedLogFiles() {
       return myConfiguration.getPredefinedLogFiles();
     }
 
-    @NotNull
     @Override
-    public ArrayList<LogFileOptions> getAllLogFiles() {
+    public @NotNull ArrayList<LogFileOptions> getAllLogFiles() {
       return myConfiguration.getAllLogFiles();
     }
 
-    @NotNull
     @Override
-    public List<LogFileOptions> getLogFiles() {
+    public @NotNull List<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
   }

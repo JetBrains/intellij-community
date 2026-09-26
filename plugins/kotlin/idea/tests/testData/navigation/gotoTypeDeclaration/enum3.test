@@ -1,0 +1,19 @@
+// FILE: before.kt
+enum class Foo {
+  BAR
+}
+
+fun usage() {
+  val x = Foo.BAR
+  println(x<caret>)
+}
+
+// FILE: after.kt
+enum class <caret>Foo {
+  BAR
+}
+
+fun usage() {
+  val x = Foo.BAR
+  println(x)
+}

@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 
@@ -30,25 +29,25 @@ import java.util.List;
 public class NSDeclTracker implements ModificationTracker {
     private static final Key<Long> MOD_COUNT = Key.create("MOD_COUNT");
 
-    private final XmlTagImpl myRootTag;
+    private final XmlTag myRootTag;
     private final PsiFile myFile;
     private final List<XmlAttribute> myNSDecls;
     private long myRootCount;
     private int myCount;
 
     public NSDeclTracker(XmlTag rootTag) {
-        myRootTag = (XmlTagImpl)rootTag;
+        myRootTag = rootTag;
         myFile = rootTag.getContainingFile();
         myNSDecls = getNSDecls(false);
         myRootCount = myFile.getModificationStamp();
         myCount = 0;
     }
 
+    @Override
     public long getModificationCount() {
         return myFile.getModificationStamp() == myRootCount ? myCount : queryCount();
     }
 
-    @SuppressWarnings({ "AutoUnboxing" })
     private synchronized long queryCount() {
         for (XmlAttribute decl : myNSDecls) {
             if (!decl.isValid()) {
@@ -80,9 +79,9 @@ public class NSDeclTracker implements ModificationTracker {
         final Iterator<XmlAttribute> it = list.iterator();
         while (it.hasNext()) {
             final XmlAttribute attribute = it.next();
-            if (!attribute.isNamespaceDeclaration()) it.remove();
+            if (!attribute.isNamespaceDeclaration() || !attribute.isValid()) it.remove();
             if (updateModCount) {
-                attribute.putUserData(MOD_COUNT, attribute.getContainingFile().getModificationStamp());
+                attribute.putUserData(MOD_COUNT, myFile.getModificationStamp());
             }
         }
         return list;

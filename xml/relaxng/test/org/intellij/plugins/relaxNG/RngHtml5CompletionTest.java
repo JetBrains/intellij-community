@@ -15,10 +15,6 @@
  */
 package org.intellij.plugins.relaxNG;
 
-/**
- * @author Eugene.Kudelevsky
- */
-@SuppressWarnings({"JUnitTestClassNamingConvention"})
 public class RngHtml5CompletionTest extends HighlightingTestBase {
 
   @Override

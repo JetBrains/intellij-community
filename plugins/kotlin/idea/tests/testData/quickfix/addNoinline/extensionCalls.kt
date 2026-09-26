@@ -1,0 +1,9 @@
+// "Add 'noinline' to parameter 'lambda'" "true"
+// WITH_STDLIB
+// K2_ERROR: USAGE_IS_NOT_INLINABLE
+
+inline fun inlineFun(lambda: () -> Unit) {
+    <caret>lambda.let { }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddInlineModifierFixFactories$AddInlineModifierFix

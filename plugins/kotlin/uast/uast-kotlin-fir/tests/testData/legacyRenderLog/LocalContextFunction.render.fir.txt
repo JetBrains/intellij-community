@@ -1,0 +1,19 @@
+public final class LocalContextFunctionKt {
+    public static final fun outer() : void {
+        var local: kotlin.jvm.functions.Function3<? super C1,? super C2,? super C3,? extends kotlin.Unit> = fun (@org.jetbrains.annotations.NotNull var c3: C3) {
+
+        }
+    }
+}
+
+public final class C1 {
+    public fun C1() = UastEmptyExpression
+}
+
+public final class C2 {
+    public fun C2() = UastEmptyExpression
+}
+
+public final class C3 {
+    public fun C3() = UastEmptyExpression
+}

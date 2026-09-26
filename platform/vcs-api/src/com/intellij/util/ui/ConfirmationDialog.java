@@ -1,81 +1,80 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Checkbox;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
+/**
+ * @deprecated Please use {@link com.intellij.openapi.ui.MessageDialogBuilder} or {@link com.intellij.openapi.ui.Messages}
+ */
+@Deprecated(forRemoval = true)
 public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;
-  private String myDoNotShowAgainMessage;
-  private final String myOkActionName;
-  private final String myCancelActionName;
+  private @Checkbox String myDoNotShowAgainMessage;
+  private final @ActionText String myOkActionName;
+  private final @ActionText String myCancelActionName;
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
-                                               @NotNull String message,
-                                               @NotNull String title,
+                                               @NotNull @DialogMessage String message,
+                                               @NotNull @DialogTitle String title,
                                                @Nullable Icon icon) {
     return requestForConfirmation(option, project, message, title, icon, null, null);
   }
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
-                                               @NotNull String message,
-                                               @NotNull String title,
+                                               @NotNull @DialogMessage String message,
+                                               @NotNull @DialogTitle String title,
                                                @Nullable Icon icon,
-                                               @Nullable String okActionName,
-                                               @Nullable String cancelActionName) {
+                                               @Nullable @ActionText String okActionName,
+                                               @Nullable @ActionText String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
-    if (!option.isPersistent()) {
-      dialog.setDoNotAskOption(null);
-    }
-    else {
-      dialog.setDoNotShowAgainMessage(CommonBundle.message("dialog.options.do.not.ask"));
-    }
+    dialog.setDoNotShowAgainMessage(IdeCoreBundle.message("dialog.options.do.not.ask"));
     return dialog.showAndGet();
   }
 
-  public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option) {
+  public ConfirmationDialog(Project project,
+                            @DialogMessage String message,
+                            @DialogTitle String title,
+                            Icon icon,
+                            VcsShowConfirmationOption option) {
     this(project, message, title, icon, option, null, null);
   }
 
-  public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option,
-                            @Nullable String okActionName, @Nullable String cancelActionName) {
+  public ConfirmationDialog(Project project,
+                            @DialogMessage String message,
+                            @DialogTitle String title,
+                            Icon icon,
+                            VcsShowConfirmationOption option,
+                            @Nullable @NlsContexts.Button String okActionName,
+                            @Nullable @NlsContexts.Button String cancelActionName) {
     super(project, message, title, icon);
     myOption = option;
     myOkActionName = okActionName != null ? okActionName : CommonBundle.getYesButtonText();
     myCancelActionName = cancelActionName != null ? cancelActionName : CommonBundle.getNoButtonText();
     init();
   }
-  
-  public void setDoNotShowAgainMessage(final String doNotShowAgainMessage) {
+
+  public void setDoNotShowAgainMessage(@Checkbox String doNotShowAgainMessage) {
     myDoNotShowAgainMessage = doNotShowAgainMessage;
     myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
   }
 
-  @NotNull
   @Override
-  protected String getDoNotShowMessage() {
+  protected @NotNull String getDoNotShowMessage() {
     return myDoNotShowAgainMessage == null ? super.getDoNotShowMessage() : myDoNotShowAgainMessage;
   }
 
@@ -95,15 +94,22 @@ public class ConfirmationDialog extends OptionsMessageDialog {
   }
 
   @Override
+  protected boolean canBeHidden() {
+    return myOption.isPersistent();
+  }
+
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     final VcsShowConfirmationOption.Value optionValue;
 
     if (value) {
       optionValue = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-    } else {
+    }
+    else {
       if (onOk) {
         optionValue = VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
-      } else {
+      }
+      else {
         optionValue = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
       }
     }

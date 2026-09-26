@@ -1,0 +1,148 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(KtIdeApi::class)
+
+package org.jetbrains.kotlin.idea.stubindex
+
+import com.intellij.psi.stubs.IndexSink
+import com.intellij.psi.stubs.NamedStub
+import com.intellij.psi.stubs.StubElement
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDynamicType
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtIdeApi
+import org.jetbrains.kotlin.psi.KtIntersectionType
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub
+import org.jetbrains.kotlin.psi.stubs.KotlinCallableStubBase
+import org.jetbrains.kotlin.psi.stubs.KotlinFileStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPropertyAccessorStub
+import org.jetbrains.kotlin.psi.stubs.KotlinPropertyStub
+import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
+
+internal fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
+    KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
+}
+
+internal fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
+    KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
+}
+
+private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeStubIndexHelper.indexExtension(
+    stub: KotlinCallableStubBase<TDeclaration>,
+    sink: IndexSink
+) {
+    if (!stub.isExtension) return
+
+    val declaration = stub.psi
+    val callableName = declaration.name ?: return
+    val containingTypeReference = declaration.receiverTypeReference!!
+    containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
+        val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(typeName, callableName)
+        sink.occurrence(indexKey, key.key)
+    }
+}
+
+internal fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
+    val declaration = stub.psi
+    val typeReference = declaration.getTypeReference() ?: return
+    val typeElement = typeReference.typeElement ?: return
+    typeElement.index(declaration, typeReference) { typeName ->
+        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.indexKey, typeName)
+    }
+}
+
+private fun KtTypeElement.index(
+    declaration: KtTypeParameterListOwner,
+    containingTypeReference: KtTypeReference,
+    occurrence: (String) -> Unit
+) {
+    fun KtTypeElement.indexWithVisited(
+        declaration: KtTypeParameterListOwner,
+        containingTypeReference: KtTypeReference,
+        visited: MutableSet<KtTypeElement>,
+        occurrence: (String) -> Unit
+    ) {
+        if (this in visited) return
+
+        visited.add(this)
+
+        when (this) {
+            is KtUserType -> {
+                val referenceName = referencedName ?: return
+
+                val typeParameter = declaration.typeParameters.firstOrNull { it.name == referenceName }
+                if (typeParameter != null) {
+                    val bound = typeParameter.extendsBound
+                    if (bound != null) {
+                        bound.typeElement?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
+                    } else {
+                        occurrence("Any")
+                    }
+                    return
+                }
+
+                occurrence(referenceName)
+
+                KotlinPsiHeuristics.unwrapImportAlias(this, referenceName).forEach { occurrence(it) }
+            }
+
+            is KtNullableType -> innerType?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
+
+            is KtFunctionType -> {
+                val arity = parameters.size + (if (receiverTypeReference != null) 1 else 0)
+                val suspendPrefix =
+                    if (containingTypeReference.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true)
+                        "Suspend"
+                    else
+                        ""
+                occurrence("${suspendPrefix}Function$arity")
+            }
+
+            is KtDynamicType -> occurrence("Any")
+
+            // Currently, the only possible intersection type is "T & Any". "Any" is allowed to be only on RHS
+            is KtIntersectionType ->
+                getLeftTypeRef()?.typeElement?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
+
+            else -> error("Unsupported type: $this")
+        }
+    }
+
+    indexWithVisited(declaration, containingTypeReference, mutableSetOf(), occurrence)
+}
+
+internal fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
+    if (stub.shortName != JvmFileClassUtil.JVM_NAME_SHORT) return
+    val jvmName = JvmFileClassUtil.getLiteralStringFromAnnotation(stub.psi) ?: return
+    val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
+
+    if (annotatedElementName != jvmName) {
+        sink.occurrence(KotlinJvmNameAnnotationIndex.indexKey, jvmName)
+    }
+}
+
+private val StubElement<*>.annotatedJvmNameElementName: String?
+    get() = when (this) {
+        is KotlinFileStub -> psi.name
+        is NamedStub -> name ?: ""
+        is KotlinPropertyAccessorStub -> (parentStub as? KotlinPropertyStub)?.name ?: ""
+        is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
+        else -> null
+    }
+
+internal fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
+    if (isTopLevel) return false
+    val containingDeclaration = parentStub?.parentStub?.psi
+
+    return containingDeclaration is KtObjectDeclaration && !containingDeclaration.isObjectLiteral()
+}

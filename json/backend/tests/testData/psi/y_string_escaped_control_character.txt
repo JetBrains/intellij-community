@@ -1,0 +1,6 @@
+JsonFile: y_string_escaped_control_character.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u0012"')
+    PsiElement(])(']')

@@ -13,6 +13,6 @@ class Test{
     class C extends A<Integer>{}
 
     {
-        new C().new B<Boolean>().getT().<ref>byteValue();
+        new C().new B<Boolean>().getT().<caret>byteValue();
     }
 }

@@ -1,0 +1,13 @@
+// AFTER-WARNING: Parameter 'a' is never used
+fun println(a: Any) {}
+
+class InsertThis {
+    val v1 = 1
+    fun use() { f(this) }
+
+    companion object {
+        fun f(insertThis: InsertThis) {
+            println(insertThis.v1)
+        }
+    }
+}

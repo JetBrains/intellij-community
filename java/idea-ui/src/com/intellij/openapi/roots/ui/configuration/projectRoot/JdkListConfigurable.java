@@ -1,45 +1,54 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
-  @NotNull
-  private final ProjectSdksModel myJdksTreeModel;
+  private final @NotNull ProjectSdksModel myJdksTreeModel;
+  private boolean hasListenerRegistered = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkAdded(@NotNull Sdk sdk) {
+      addJdkNode(sdk, true);
+    }
+
+    @Override
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateName();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       updateName();
     }
 
@@ -54,10 +63,9 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
   };
 
-  public JdkListConfigurable(final Project project, ProjectStructureConfigurable root) {
-    super(project);
-    myJdksTreeModel = root.getProjectJdksModel();
-    myJdksTreeModel.addListener(myListener);
+  public JdkListConfigurable(ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable);
+    myJdksTreeModel = projectStructureConfigurable.getProjectJdksModel();
   }
 
   @Override
@@ -66,22 +74,17 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
-    return "SDKs";
+  public @Nls String getDisplayName() {
+    return JavaUiBundle.message("configurable.JdkListConfigurable.display.name");
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return myCurrentConfigurable != null ? myCurrentConfigurable.getHelpTopic() : "reference.settingsdialog.project.structure.jdk";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "jdk.list";
   }
 
@@ -89,15 +92,14 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   protected void loadTree() {
     final Map<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory,
+      final JdkConfigurable configurable = new JdkConfigurable(sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory,
                                                                myProject);
       addNode(new MyNode(configurable), myRoot);
     }
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> result = new ArrayList<>();
     for (Sdk sdk : myJdksTreeModel.getProjectSdks().values()) {
       result.add(new SdkProjectStructureElement(myContext, sdk));
@@ -105,32 +107,34 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return result;
   }
 
-  public boolean addJdkNode(final Sdk jdk, final boolean selectInTree) {
+  public void addJdkNode(final Sdk jdk, final boolean selectInTree) {
     if (!myUiDisposed) {
       myContext.getDaemonAnalyzer().queueUpdate(new SdkProjectStructureElement(myContext, jdk));
-      addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory, myProject)), myRoot);
+      addNode(new MyNode(new JdkConfigurable(jdk, myJdksTreeModel, TREE_UPDATER, myHistory, myProject)), myRoot);
       if (selectInTree) {
         selectNodeInTree(MasterDetailsComponent.findNodeByObject(myRoot, jdk));
       }
-      return true;
     }
-    return false;
   }
 
   @Override
   public void dispose() {
     myJdksTreeModel.removeListener(myListener);
+    hasListenerRegistered = false;
     myJdksTreeModel.disposeUIResources();
   }
 
-  @NotNull
-  public ProjectSdksModel getJdksTreeModel() {
+  public @NotNull ProjectSdksModel getJdksTreeModel() {
     return myJdksTreeModel;
   }
 
   @Override
   public void reset() {
     super.reset();
+    if (!hasListenerRegistered) {
+      hasListenerRegistered = true;
+      myJdksTreeModel.addListener(myListener);
+    }
     myTree.setRootVisible(false);
   }
 
@@ -154,21 +158,19 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return super.isModified() || myJdksTreeModel.isModified();
   }
 
-  public static JdkListConfigurable getInstance(Project project) {
-    return ServiceManager.getService(project, JdkListConfigurable.class);
+  @Override
+  protected @NotNull ArrayList<AnAction> createActions(boolean fromPopup) {
+    ArrayList<AnAction> defaultActions = super.createActions(fromPopup);
+
+    AnAction addNewAction = new AddSdkAction();
+
+    defaultActions.add(0, addNewAction);
+    return defaultActions;
   }
 
   @Override
-  public AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true), notSimpleJavaSdkType());
-        return group.getChildren(null);
-      }
-    };
+  public AbstractAddGroup createAddAction(boolean fromPopup) {
+    return null;
   }
 
   @Override
@@ -180,21 +182,58 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   protected
   @Nullable
   String getEmptySelectionString() {
-    return "Select an SDK to view or edit its details here";
+    return JavaUiBundle.message("project.jdks.configurable.empty.selection.string");
   }
 
   private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {
-    public SdkRemoveHandler() {
+    SdkRemoveHandler() {
       super(JdkConfigurable.class);
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Sdk> sdks) {
+    public boolean remove(@NotNull Collection<? extends Sdk> sdks) {
       for (Sdk sdk : sdks) {
         myJdksTreeModel.removeSdk(sdk);
         myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));
       }
       return true;
+    }
+  }
+
+  private class AddSdkAction extends AnAction implements DumbAware {
+    AddSdkAction() {
+      super(JavaUiBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
+
+      AbstractAddGroup replacedAction = new AbstractAddGroup(JavaUiBundle.message("action.name.text")) {
+        @Override
+        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+          return AnAction.EMPTY_ARRAY;
+        }
+      };
+      this.setShortcutSet(replacedAction.getShortcutSet());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Predicate<SdkTypeId> predicate = notSimpleJavaSdkType();
+      SdkPopupFactory
+        .newBuilder()
+        .withProject(myProject)
+        .withProjectSdksModel(getJdksTreeModel())
+        .withSdkTypeFilter(predicate::test)
+        .withSdkFilter(sdk -> false)
+        .buildPopup()
+        .showPopup(e);
     }
   }
 }

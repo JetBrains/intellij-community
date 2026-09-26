@@ -1,99 +1,77 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Pattern;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import java.util.HashSet;
+import java.util.Set;
 
-public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
+public class FileTypeRenderer extends SimpleListCellRenderer<FileType> {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-  private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
-  public interface FileTypeListProvider {
-    Iterable<FileType> getCurrentFileTypeList();
-  }
-
-  private final FileTypeListProvider myFileTypeListProvider;
+  private final @Nullable ListModel<? extends FileType> myModel;
+  private @Nullable Set<String> myDuplicateDescriptions = null;
 
   public FileTypeRenderer() {
-    this(new DefaultFileTypeListProvider());
+    myModel = null;
+    myDuplicateDescriptions = new HashSet<>();
+    Set<String> filter = new HashSet<>();
+    for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      String s = type.getDescription();
+      if (!filter.add(s)) myDuplicateDescriptions.add(s);
+    }
   }
 
-  public FileTypeRenderer(@NotNull FileTypeListProvider fileTypeListProvider) {
-    super();
-    myFileTypeListProvider = fileTypeListProvider;
+  public FileTypeRenderer(@NotNull ListModel<? extends FileType> model) {
+    myModel = model;
+    myModel.addListDataListener(new ListDataListener() {
+      @Override public void intervalAdded(ListDataEvent e) { myDuplicateDescriptions = null; }
+      @Override public void intervalRemoved(ListDataEvent e) { myDuplicateDescriptions = null; }
+      @Override public void contentsChanged(ListDataEvent e) { myDuplicateDescriptions = null; }
+    });
   }
 
   @Override
-  public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
+  public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    final Icon icon = type.getIcon();
+    Icon icon = value.getIcon();
     if (icon != null) {
-      layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+      layeredIcon.setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
     }
-
     setIcon(layeredIcon);
 
-    String description = type.getDescription();
-    String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
+    String description = value.getDescription();
     if (isDuplicated(description)) {
-      setText(trimmedDescription + " (" + type.getName() + ")");
-
+      setText(description + " (" + value.getName() + ")");  // NON-NLS (in this case, the name is acceptable)
     }
     else {
-      setText(trimmedDescription);
+      setText(description);
     }
   }
 
-  private boolean isDuplicated(final String description) {
-    boolean found = false;
-
-    for (FileType type : myFileTypeListProvider.getCurrentFileTypeList()) {
-      if (description.equals(type.getDescription())) {
-        if (!found) {
-          found = true;
-        }
-        else {
-          return true;
-        }
+  private boolean isDuplicated(String description) {
+    if (myDuplicateDescriptions == null) {
+      assert myModel != null;
+      myDuplicateDescriptions = new HashSet<>();
+      Set<String> filter = new HashSet<>();
+      for (int i = 0; i < myModel.getSize(); i++) {
+        String s = myModel.getElementAt(i).getDescription();
+        if (!filter.add(s)) myDuplicateDescriptions.add(s);
       }
     }
-    return false;
-  }
 
-  private static class DefaultFileTypeListProvider implements FileTypeListProvider {
-    private final List<FileType> myFileTypes;
-
-    public DefaultFileTypeListProvider() {
-      myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
-    }
-
-    public Iterable<FileType> getCurrentFileTypeList() {
-      return myFileTypes;
-    }
+    return myDuplicateDescriptions.contains(description);
   }
 }

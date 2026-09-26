@@ -1,0 +1,14 @@
+[project]
+name = "app-a"
+version = "0.1.0"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "core",
+]
+
+[tool.uv.sources]
+core = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"

@@ -1,50 +1,66 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.TemporaryDirectoryExtension;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.FixturesKt;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class UsageViewManagerTest extends PlatformTestCase {
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
-  public void testScopeCreatedForFindInDirectory() {
-    VirtualFile dir = getProject().getBaseDir();
+@TestApplication
+public class UsageViewManagerTest {
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(null, "IJ"), OpenProjectTask.build(), false);
+  private static final TestFixture<com.intellij.openapi.module.Module> moduleFixture = FixturesKt.moduleFixture(projectFixture, "shared", null);
+
+  @RegisterExtension
+  public final TemporaryDirectoryExtension temporaryDirectory = new TemporaryDirectoryExtension();
+
+  @Test
+  public void scopeCreatedForFindInDirectory() {
+    VirtualFile dir = temporaryDirectory.createVirtualDir();
     FindModel findModel = new FindModel();
     findModel.setDirectoryName(dir.getPath());
     findModel.setWithSubdirectories(true);
     findModel.setProjectScope(false);
-    UsageTarget target = new FindInProjectUtil.StringUsageTarget(getProject(), findModel);
-    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(getProject());
-    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
-    assertEquals(scope, GlobalSearchScopesCore.directoryScope(getProject(), dir, true));
+    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectFixture.get(), findModel);
+    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectFixture.get());
+    ApplicationManager.getApplication().runReadAction(() -> {
+      SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
+      GlobalSearchScope expectedScope = GlobalSearchScopesCore.directoryScope(
+        projectFixture.get(),
+        FindInProjectUtil.getDirectory(findModel),
+        true
+      );
+      assertThat(scope).isEqualTo(expectedScope);
+    });
   }
 
-  public void testScopeCreatedForFindInModuleContent() {
+  @Test
+  public void scopeCreatedForFindInModuleContent() {
+    com.intellij.openapi.module.Module module = moduleFixture.get();
+
     FindModel findModel = new FindModel();
-    findModel.setModuleName(getModule().getName());
+    findModel.setModuleName(module.getName());
     findModel.setProjectScope(false);
-    UsageTarget target = new FindInProjectUtil.StringUsageTarget(getProject(), findModel);
-    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(getProject());
-    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
-    assertEquals(scope, getModule().getModuleContentScope());
+    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectFixture.get(), findModel);
+    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectFixture.get());
+    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
+    assertThat(module.getModuleContentScope()).isEqualTo(scope);
   }
 }

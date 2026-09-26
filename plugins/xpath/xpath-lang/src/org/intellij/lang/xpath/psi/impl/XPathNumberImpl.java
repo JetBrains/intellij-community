@@ -28,8 +28,8 @@ public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
     super(node);
   }
 
-  @NotNull
-  public XPathType getType() {
+  @Override
+  public @NotNull XPathType getType() {
     if (getXPathVersion() == XPathVersion.V1) {
       return XPathType.NUMBER;
     } else {
@@ -46,10 +46,12 @@ public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
     return textContains('e') || textContains('E');
   }
 
+  @Override
   public double getValue() {
     return Double.parseDouble(getText());
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathNumber(this);
   }

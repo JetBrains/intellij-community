@@ -1,20 +1,7 @@
-/*
- * Copyright 2007-2016 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +17,7 @@ public class ListWrappingTableModel extends AbstractTableModel implements ItemRe
   private final List<String> columnNames = new ArrayList<>();
 
   public ListWrappingTableModel(@NotNull List<List<String>> list,
-                                @NotNull String... columnNames) {
+                                String @NotNull @ColumnName ... columnNames) {
     this.list = list;
     ContainerUtil.addAll(this.columnNames, columnNames);
   }
@@ -41,7 +28,7 @@ public class ListWrappingTableModel extends AbstractTableModel implements ItemRe
    * @param list       the rows of the table
    * @param columnName the name in the column header
    */
-  public ListWrappingTableModel(@NotNull List<String> list, @NotNull String columnName) {
+  public ListWrappingTableModel(@NotNull List<String> list, @NotNull @ColumnName String columnName) {
     this.list = new ArrayList<>();
     this.list.add(list);
     columnNames.add(columnName);

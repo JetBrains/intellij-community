@@ -10,20 +10,29 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyAugAssignmentStatement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyGlobalStatement
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyNonlocalStatement
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyRainbowVisitor : RainbowVisitor() {
 
-  companion object {
-    private val IGNORED_NAMES = setOf(PyNames.NONE, PyNames.TRUE, PyNames.FALSE)
-    private val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
+  object Holder {
+    val IGNORED_NAMES = setOf(PyNames.NONE, PyNames.TRUE, PyNames.FALSE)
+    val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
 
     @JvmStatic
     val HIGHLIGHTING_KEYS: Set<TextAttributesKey> = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
   }
 
-  override fun suitableForFile(file: PsiFile): Boolean = file is PyFile
+  override fun suitableForFile(psiFile: PsiFile): Boolean = psiFile is PyFile
 
   override fun visit(element: PsiElement) {
     when (element) {
@@ -59,10 +68,9 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun getReferenceContext(referenceExpression: PyReferenceExpression,
                                   visitedReferenceExpressions: MutableSet<PyReferenceExpression>): PsiElement? {
-    if (referenceExpression.isQualified || referenceExpression.name in IGNORED_NAMES) return null
+    if (referenceExpression.isQualified || referenceExpression.name in Holder.IGNORED_NAMES) return null
 
-    val resolved = referenceExpression.reference.resolve()
-    return when (resolved) {
+    return when (val resolved = referenceExpression.reference.resolve()) {
       is PyTargetExpression -> getTargetContext(resolved)
       is PyNamedParameter -> getNamedParameterContext(resolved)
       is PyReferenceExpression -> {
@@ -74,16 +82,17 @@ class PyRainbowVisitor : RainbowVisitor() {
   }
 
   private fun getTargetContext(targetExpression: PyTargetExpression): PsiElement? {
-    if (targetExpression.isQualified || targetExpression.name in IGNORED_NAMES) return null
+    if (targetExpression.isQualified || targetExpression.name in Holder.IGNORED_NAMES) return null
 
     val parent = targetExpression.parent
     if (parent is PyGlobalStatement) return targetExpression.containingFile
     if (parent is PyNonlocalStatement) {
       val outerResolved = targetExpression.reference.resolve()
-      return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
+      return if (outerResolved is PyTargetExpression && outerResolved != targetExpression) getTargetContext(outerResolved) else null
     }
 
-    val resolveResults = targetExpression.getReference(PyResolveContext.noImplicits()).multiResolve(false)
+    val context = TypeEvalContext.codeInsightFallback(targetExpression.project)
+    val resolveResults = targetExpression.getReference(PyResolveContext.defaultContext(context)).multiResolve(false)
 
     val resolvesToGlobal = resolveResults
       .asSequence()
@@ -111,7 +120,7 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun updateNameIfGlobal(context: PsiElement, name: String?) = if (context is PyFile && name != null) "global_$name" else name
 
-  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = DEFAULT_HIGHLIGHTING_KEY) {
+  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = Holder.DEFAULT_HIGHLIGHTING_KEY) {
     addInfo(getInfo(context, rainbowElement, name, key))
   }
 

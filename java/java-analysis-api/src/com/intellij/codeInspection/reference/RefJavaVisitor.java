@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see RefEntity#accept
  * @see RefManager#iterate
- * @since 6.0
  */
 public class RefJavaVisitor extends RefVisitor {
   public void visitField(@NotNull RefField field) {
@@ -39,6 +38,10 @@ public class RefJavaVisitor extends RefVisitor {
 
   public void visitClass(@NotNull RefClass aClass) {
     visitElement(aClass);
+  }
+
+  public void visitFunctionalExpression(@NotNull RefFunctionalExpression functionalExpression) {
+    visitElement(functionalExpression);
   }
 
   public void visitPackage(@NotNull RefPackage aPackage) {

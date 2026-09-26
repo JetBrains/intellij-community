@@ -1,100 +1,170 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectConfigurator;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.IntentionalUnstubbing;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
-import java.util.*;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Consumer;
 
-/**
- * @author yole
- */
+
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.4";
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPy2Descriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+      factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+
+    // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
+    Registry.get(PyAnyType.REGISTRY_KEY).setValue(!isPyAnyTypeDisabledForCurrentTest());
+  }
+
+  private boolean isPyAnyTypeDisabledForCurrentTest() {
+    for (Class<?> c = getClass(); c != null && PyTestCase.class.isAssignableFrom(c); c = c.getSuperclass()) {
+      if (c.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+        return true;
+      }
+    }
+    String name = getName();
+    if (name != null) {
+      try {
+        Method testMethod = getClass().getMethod(name);
+        if (testMethod.isAnnotationPresent(PyAnyTypeDisabled.class)) {
+          return true;
+        }
+      }
+      catch (NoSuchMethodException ignored) {
+      }
+    }
+    return false;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (myFixture != null) {
+        if (myFixture.getModule() != null) {
+          PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        }
+        setLanguageLevel(null);
+
+        myFixture.tearDown();
+        myFixture = null;
+      }
+
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+      IntentionalUnstubbing.resetForciblyUnstubbedFileSet();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault();
+      super.tearDown();
+    }
+  }
 
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
     assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
@@ -105,7 +175,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
-    final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
+    final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
+    if (testSdk == null) {
+      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
+      return;
+    }
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -122,7 +196,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
-    final VirtualFile path = LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
+    final VirtualFile path = StandardFileSystems.local().findFileByPath(fileName.replace(File.separatorChar, '/'));
     if (path != null) {
       refreshRecursively(path);
       return path;
@@ -143,20 +217,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    createTempDirFixture());
-    myFixture.setUp();
-
-    myFixture.setTestDataPath(getTestDataPath());
-    PythonDialectsTokenSetProvider.reset();
-  }
-
   /**
    * @return fixture to be used as temporary dir.
    */
@@ -165,27 +225,170 @@ public abstract class PyTestCase extends UsefulTestCase {
     return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
   }
 
+  protected void runWithAdditionalFileInLibDir(@NotNull String relativePath,
+                                               @NotNull String text,
+                                               @NotNull Consumer<VirtualFile> fileConsumer) {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
+    if (libDir != null) {
+      runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
+    }
+    else {
+      createAdditionalRootAndRunWithIt(
+        sdk,
+        "Lib",
+        OrderRootType.CLASSES,
+        root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
+      );
+    }
+  }
+
+  protected void runWithAdditionalFileInSkeletonDir(@NotNull String relativePath,
+                                                    @NotNull String text,
+                                                    @NotNull Consumer<VirtualFile> fileConsumer) {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    final VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    if (skeletonsDir != null) {
+      runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
+    }
+    else {
+      createAdditionalRootAndRunWithIt(
+        sdk,
+        PythonSdkUtil.SKELETON_DIR_NAME,
+        PythonSdkUtil.BUILTIN_ROOT_TYPE,
+        root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
+      );
+    }
+  }
+
+  private static void runWithAdditionalFileIn(@NotNull String relativePath,
+                                              @NotNull String text,
+                                              @NotNull VirtualFile dir,
+                                              @NotNull Consumer<VirtualFile> fileConsumer) {
+    final VirtualFile file = VfsTestUtil.createFile(dir, relativePath, text);
+    try {
+      fileConsumer.accept(file);
+    }
+    finally {
+      VfsTestUtil.deleteFile(file);
+    }
+  }
+
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (_) -> runnable.run());
+  }
+
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull String relativeTestDataPath, @NotNull Runnable runnable) {
+    final String absPath = getTestDataPath() + "/" + relativeTestDataPath;
+    final VirtualFile testDataDir = StandardFileSystems.local().findFileByPath(absPath);
+    assertNotNull("Additional class entry directory '" + absPath + "' not found", testDataDir);
+    runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
+  }
+
+  private static void createAdditionalRootAndRunWithIt(@NotNull Sdk sdk,
+                                                       @NotNull String rootRelativePath,
+                                                       @NotNull OrderRootType rootType,
+                                                       @NotNull Consumer<VirtualFile> rootConsumer) {
+    final VirtualFile tempRoot = VfsTestUtil.createDir(sdk.getHomeDirectory().getParent().getParent(), rootRelativePath);
+    try {
+      runWithAdditionalRoot(sdk, tempRoot, rootType, rootConsumer);
+    }
+    finally {
+      VfsTestUtil.deleteFile(tempRoot);
+    }
+  }
+
+  private static void runWithAdditionalRoot(@NotNull Sdk sdk,
+                                            @NotNull VirtualFile root,
+                                            @NotNull OrderRootType rootType,
+                                            @NotNull Consumer<VirtualFile> rootConsumer) {
+    addSdkRoots(sdk, List.of(root), rootType);
+    try {
+      rootConsumer.accept(root);
+    }
+    finally {
+      removeSdkRoots(sdk, List.of(root), rootType);
+    }
+  }
+
+  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.removeRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.addRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enableTestDataTypeshedStubsForPackages(String @NotNull ... packageNames) throws IOException {
+    final String absPath = getTestDataPath() + "/resolve/typeshed/stubs";
+    final VirtualFile sourceThirdPartyStubRoot = StandardFileSystems.local().refreshAndFindFileByPath(absPath);
+    assertNotNull("Third-party typeshed root '" + absPath + "' not found", sourceThirdPartyStubRoot);
+
+    final VirtualFile targetThirdPartyStubRoot = PyTypeShed.INSTANCE.getThirdPartyStubRoot();
+    assertNotNull("Bundled third-party typeshed root not found", targetThirdPartyStubRoot);
+
+    final List<VirtualFile> copiedStubRoots = new ArrayList<>();
+    WriteAction.run(() -> {
+      for (String packageName : packageNames) {
+        final VirtualFile sourceStubRoot = sourceThirdPartyStubRoot.findChild(packageName);
+        assertNotNull("Stub package root for " + packageName + " not found under " + absPath, sourceStubRoot);
+
+        final VirtualFile existingStubRoot = targetThirdPartyStubRoot.findChild(packageName);
+        if (existingStubRoot != null) {
+          VfsTestUtil.deleteFile(existingStubRoot);
+        }
+
+        final VirtualFile targetStubRoot = VfsTestUtil.createDir(targetThirdPartyStubRoot, packageName);
+        VfsUtil.copyDirectory(this, sourceStubRoot, targetStubRoot, null);
+        copiedStubRoots.add(targetStubRoot);
+      }
+    });
+
+    Disposer.register(getTestRootDisposable(), () -> WriteAction.run(() -> copiedStubRoots.forEach(VfsTestUtil::deleteFile)));
+    enablePyiStubsForPackages(packageNames);
+  }
+
+  protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    List<VirtualFile> stubPackageRoots = new ArrayList<>();
+    for (String packageName : packageNames) {
+      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
+      if (stubPackageRoot == null) {
+        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
+      }
+      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
+      stubPackageRoots.add(stubPackageRoot);
+    }
+    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
+    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+  }
+
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      setLanguageLevel(null);
-      myFixture.tearDown();
-      myFixture = null;
-      Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class).flushLanguageLevelCache();
-    }
-    finally {
-      super.tearDown();
-      clearFields(this);
-    }
-  }
-
   @Nullable
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPyDescriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Nullable
@@ -204,7 +407,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    Project project = myFixture.getProject();
+    if (project != null) {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    }
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
@@ -234,19 +441,30 @@ public abstract class PyTestCase extends UsefulTestCase {
     sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
     try {
       runnable.run();
-    } finally {
+    }
+    finally {
       sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
 
   protected static void assertNotParsed(PsiFile file) {
+    if (IntentionalUnstubbing.getForciblyUnstubbedFiles().contains(file)) {
+      return;
+    }
     assertInstanceOf(file, PyFileImpl.class);
-    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+    VirtualFile virtualFile = file.getVirtualFile();
+    String path = virtualFile.getPath();
+    String name = virtualFile.getName();
+    String errorMessage = "Operations should have been performed on stubs but caused file to be parsed: " + path;
+    String tip =
+      "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" +
+      name +
+      "\")`.\nThen the stacktrace can be investigated to find the root cause.";
+    assertNull(errorMessage + "\n" + tip,
                ((PyFileImpl)file).getTreeElement());
   }
 
   /**
-   * @param name
    * @return class by its name from file
    */
   @NotNull
@@ -293,7 +511,7 @@ public abstract class PyTestCase extends UsefulTestCase {
         result.add(((PsiElementUsage)usage).getElement());
       }
     }
-    for (final PsiReference reference : ReferencesSearch.search(element).findAll()) {
+    for (final PsiReference reference : ReadAction.computeBlocking(()->ReferencesSearch.search(element).findAll())) {
       result.add(reference.getElement());
     }
 
@@ -355,50 +573,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   /**
-   * Configures project by some path. It is here to emulate {@link com.intellij.platform.PlatformProjectOpenProcessor}
-   *
-   * @param path         path to open
-   * @param configurator configurator to use
-   */
-  protected void configureProjectByProjectConfigurators(@NotNull final String path,
-                                                        @NotNull final DirectoryProjectConfigurator configurator) {
-    final VirtualFile newPath =
-      myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
-    final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
-    configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
-  }
-
-  public static String getHelpersPath() {
-    return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
-  }
-
-  /**
-   * Creates run configuration from right click menu
-   *
-   * @param fixture       test fixture
-   * @param expectedClass expected class of run configuration
-   * @param <C>           expected class of run configuration
-   * @return configuration (if created) or null (otherwise)
-   */
-  @Nullable
-  public static <C extends RunConfiguration> C createRunConfigurationFromContext(
-    @NotNull final CodeInsightTestFixture fixture,
-    @NotNull final Class<C> expectedClass) {
-    final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
-    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensions()) {
-      final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
-      if (fromContext == null) {
-        continue;
-      }
-      final C result = PyUtil.as(fromContext.getConfiguration(), expectedClass);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Compares sets with string sorting them and displaying one-per-line to make comparision easier
    *
    * @param message  message to display in case of error
@@ -429,30 +603,23 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   @NotNull
-  protected PyCodeStyleSettings getPythonCodeStyleSettings() {
-    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
-  }
-
-  @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    return CodeStyle.getSettings(myFixture.getProject());
   }
 
   @NotNull
   protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    //noinspection ConstantConditions
     return getCommonCodeStyleSettings().getIndentOptions();
   }
 
   /**
    * When you have more than one completion variant, you may use this method providing variant to choose.
-   * It only works for one caret (multiple carets not supported) and since it puts tab after completion, be sure to limit
-   * line somehow (i.e. with comment).
+   * Since it puts tab after completion, be sure to limit line somehow (i.e. with comment).
    * <br/>
    * Example: "user.n[caret]." There are "name" and "nose" fields.
    * By calling this function with "nose" you will end with "user.nose  ".
    */
-  protected final void completeCaretWithMultipleVariants(@NotNull final String... desiredVariants) {
+  protected final void completeCaretWithMultipleVariants(final String @NotNull ... desiredVariants) {
     final LookupElement[] lookupElements = myFixture.completeBasic();
     final LookupEx lookup = myFixture.getLookup();
     if (lookupElements != null && lookupElements.length > 1) {
@@ -466,6 +633,29 @@ public abstract class PyTestCase extends UsefulTestCase {
           return;
         }
       }
+    }
+  }
+
+  /**
+   * The same as completeCaretWithMultipleVariants but for multiple carets in the file
+   */
+  protected final void completeAllCaretsWithMultipleVariants(final String @NotNull ... desiredVariants) {
+    CaretModel caretModel = myFixture.getEditor().getCaretModel();
+    List<Caret> carets = caretModel.getAllCarets();
+
+    List<Integer> originalOffsets = new ArrayList<>(carets.size());
+
+    for (Caret caret : carets) {
+      originalOffsets.add(caret.getOffset());
+    }
+    caretModel.removeSecondaryCarets();
+
+    // We do it in reverse order because completions would affect offsets
+    // i.e.: when you complete "spa" to "spam", the next caret offset increased by 1
+    for (int i = originalOffsets.size() - 1; i >= 0; i--) {
+      int originalOffset = originalOffsets.get(i);
+      caretModel.moveToOffset(originalOffset);
+      completeCaretWithMultipleVariants(desiredVariants);
     }
   }
 
@@ -496,6 +686,67 @@ public abstract class PyTestCase extends UsefulTestCase {
     PsiTestUtil.addExcludedRoot(module, dir);
     Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
-  
-}
 
+  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<? extends T> actual, final T @Nullable ... expected) {
+    final List<T> actualList = Lists.newArrayList(actual);
+    if (expected.length > 0) {
+      T prev = expected[0];
+      int prevIndex = actualList.indexOf(prev);
+      assertTrue(prev + " is not found in " + actualList, prevIndex >= 0);
+      for (int i = 1; i < expected.length; i++) {
+        final T next = expected[i];
+        final int nextIndex = actualList.indexOf(next);
+        assertTrue(next + " is not found in " + actualList, nextIndex >= 0);
+        assertTrue(prev + " should precede " + next + " in " + actualList, prevIndex < nextIndex);
+        prev = next;
+        prevIndex = nextIndex;
+      }
+    }
+  }
+
+  public static void fixme(@NotNull String comment,
+                           @NotNull Class<? extends Throwable> expectedErrorClass,
+                           @NotNull String anticipatedMessage,
+                           @NotNull Runnable test) {
+    try {
+      test.run();
+    }
+    catch (Throwable failedError) {
+      if (
+        expectedErrorClass.isInstance(failedError)
+        || failedError instanceof TestLoggerFactory.TestLoggerAssertionError testLoggerError
+           && expectedErrorClass.isInstance(testLoggerError.getCause())
+      ) {
+        if (failedError.getMessage().contains(anticipatedMessage)) {
+          // fix-me tests are supposed to fail
+          return;
+        }
+        throw new AssertionError(
+          "Test " +
+          comment +
+          " expected the incorrect error message '" +
+          anticipatedMessage +
+          "' was not found in actual message '" +
+          failedError.getMessage() +
+          "'",
+          failedError
+        );
+      }
+      throw failedError;
+    }
+    // the fix-me test passed -> the bug/feature was fixed!
+    fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
+  }
+
+  protected static void withNewAnyTypeEnabled(@NotNull Runnable test) {
+    var key = Registry.get(PyAnyType.REGISTRY_KEY);
+    var previousValue = key.asBoolean();
+    try {
+      key.setValue(true);
+      test.run();
+    }
+    finally {
+      key.setValue(previousValue);
+    }
+  }
+}

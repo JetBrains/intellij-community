@@ -19,33 +19,31 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
- * @author nik
- */
 public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> implements Configurable {
-  private final FacetType<?, C> myFacetType;
+  private final FacetType<?, ? super C> myFacetType;
   private final Project myProject;
   private final DefaultFacetSettingsEditor myDelegate;
   private final C myConfiguration;
 
-  public DefaultFacetSettingsConfigurable(final @NotNull FacetType<?, C> facetType, final @NotNull Project project, final @NotNull DefaultFacetSettingsEditor delegate,
-                                    @NotNull C configuration) {
+  public DefaultFacetSettingsConfigurable(final @NotNull FacetType<?, ? super C> facetType, final @NotNull Project project, final @NotNull DefaultFacetSettingsEditor delegate,
+                                          @NotNull C configuration) {
     myFacetType = facetType;
     myProject = project;
     myDelegate = delegate;
     myConfiguration = configuration;
   }
 
+  @Override
   public String getDisplayName() {
-    return ProjectBundle.message("facet.defaults.display.name");
+    return JavaUiBundle.message("facet.defaults.display.name");
   }
 
   @Override
@@ -53,14 +51,17 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     return myDelegate.getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myDelegate.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myDelegate.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myDelegate.isModified()) {
       myDelegate.apply();
@@ -68,10 +69,12 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
     }
   }
 
+  @Override
   public void reset() {
     myDelegate.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myDelegate.disposeUIResources();
   }

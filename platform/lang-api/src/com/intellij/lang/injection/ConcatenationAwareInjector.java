@@ -20,5 +20,5 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface ConcatenationAwareInjector {
-  void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands);
+  void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, PsiElement @NotNull ... operands);
 }

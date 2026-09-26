@@ -1,45 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides access to the base compiler output setting for a project ('Project compiler output' field in File | Project Structure | Project).
  */
 public abstract class CompilerProjectExtension {
-
-  public static @Nullable CompilerProjectExtension getInstance(Project project) {
-    return ServiceManager.getService(project, CompilerProjectExtension.class);
+  public static @Nullable CompilerProjectExtension getInstance(@NotNull Project project) {
+    return project.getService(CompilerProjectExtension.class);
   }
 
-  @Nullable
-  public abstract VirtualFile getCompilerOutput();
+  public abstract @Nullable VirtualFile getCompilerOutput();
 
-  @Nullable
-  public abstract String getCompilerOutputUrl();
+  public abstract @Nullable String getCompilerOutputUrl();
 
-  public abstract VirtualFilePointer getCompilerOutputPointer();
+  /**
+   * @deprecated Consider using {@link CompilerProjectExtension#getCompilerOutputUrl()} or {@link CompilerProjectExtension#getCompilerOutput()}
+   */
+  @Deprecated
+  public abstract @Nullable VirtualFilePointer getCompilerOutputPointer();
 
-  public abstract void setCompilerOutputPointer(VirtualFilePointer pointer);
+  /**
+   * @deprecated Consider using {@link CompilerProjectExtension#setCompilerOutputUrl(String)}
+   */
+  @Deprecated(forRemoval = true)
+  @RequiresWriteLock
+  public abstract void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer);
 
-  public abstract void setCompilerOutputUrl(String compilerOutputUrl);
+  @RequiresWriteLock
+  public abstract void setCompilerOutputUrl(@Nullable String compilerOutputUrl);
 }

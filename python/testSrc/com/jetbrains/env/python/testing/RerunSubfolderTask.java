@@ -40,7 +40,7 @@ abstract class RerunSubfolderTask<T extends PyScriptTestProcessRunner<?>>
   protected void checkTestResults(@NotNull T runner,
                                   @NotNull String stdout,
                                   @NotNull String stderr,
-                                  @NotNull String all) {
+                                  @NotNull String all, int exitCode) {
     assertEquals(stderr, myExpectedFailedTests, runner.getFailedTestsCount());
     assertEquals(stderr, myExpectedFailedTests, runner.getAllTestsCount());
   }

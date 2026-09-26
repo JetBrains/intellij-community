@@ -1,0 +1,12 @@
+// "Apply all 'Add star projections' fixes in file" "true"
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
+
+class A {
+    inner class B<T>
+
+    fun test(x: Any) = x is B<caret>
+    fun other(y: Any) = y is B
+}
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

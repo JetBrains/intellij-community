@@ -1,84 +1,124 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.client.ClientKind;
+import com.intellij.openapi.components.ComponentManagerEx;
+import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.MessageBusOwner;
+import com.intellij.util.messages.impl.MessageBusFactoryImpl;
+import com.intellij.util.messages.impl.PluginListenerDescriptor;
 import com.intellij.util.pico.DefaultPicoContainer;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
+import kotlin.jvm.functions.Function3;
+import kotlin.sequences.Sequence;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
-  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
-  private final MutablePicoContainer myPicoContainer;
+public class MockComponentManager extends UserDataHolderBase implements ComponentManagerEx, MessageBusOwner {
+  private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
+  private final DefaultPicoContainer picoContainer;
+  private final ExtensionsAreaImpl myExtensionArea;
 
-  private final Map<Class, Object> myComponents = new HashMap<>();
-  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
+  private final Map<Class<?>, Object> myComponents = new HashMap<>();
+  private final Set<Object> myDisposableComponents = ConcurrentHashMap.newKeySet();
   private boolean myDisposed;
 
+  @Internal
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
-    myPicoContainer = new DefaultPicoContainer(parent) {
+    picoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
       @Override
-      @Nullable
-      public Object getComponentInstance(final Object componentKey) {
+      public @Nullable Object getComponentInstance(@NotNull Object componentKey) {
         if (myDisposed) {
           throw new IllegalStateException("Cannot get " + componentKey + " from already disposed " + this);
         }
-        final Object o = super.getComponentInstance(componentKey);
+
+        Object o = super.getComponentInstance(componentKey);
         registerComponentInDisposer(o);
         return o;
       }
     };
 
-    myPicoContainer.registerComponentInstance(this);
+    picoContainer.registerComponentInstance(getClass(), this);
+    myExtensionArea = new ExtensionsAreaImpl(this);
     Disposer.register(parentDisposable, this);
   }
 
-  private void registerComponentInDisposer(@Nullable Object o) {
-    if (o instanceof Disposable && o != this && !(o instanceof MessageBus)) {
-      if (myDisposableComponents.add(o))
-        Disposer.register(this, (Disposable)o);
-    }
+  public DefaultPicoContainer getPicoContainer() {
+    return picoContainer;
   }
 
   @Override
-  public BaseComponent getComponent(@NotNull String name) {
-    return null;
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+    return ReflectionUtil.newInstance(aClass, false);
+  }
+
+  @Override
+  public @NotNull ExtensionsAreaImpl getExtensionArea() {
+    return myExtensionArea;
+  }
+
+  @Override
+  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                        @NotNull Object key,
+                                                        @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    ExceptionUtilRt.rethrowUnchecked(error);
+    return new RuntimeException(error);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+    return new RuntimeException(message);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @Nullable Throwable error,
+                                               @NotNull PluginId pluginId,
+                                               @Nullable Map<String, String> attachments) {
+    return new RuntimeException(message);
+  }
+
+  protected void registerComponentInDisposer(@Nullable Object o) {
+    if (o instanceof Disposable && o != this && !(o instanceof MessageBus) && myDisposableComponents.add(o)) {
+      Disposer.register(this, (Disposable)o);
+    }
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
-    myPicoContainer.unregisterComponent(serviceInterface.getName());
-    myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
+    picoContainer.unregisterComponent(serviceInterface.getName());
+    picoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
   public <T> void registerService(@NotNull Class<T> serviceImplementation) {
@@ -86,8 +126,14 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
-    myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
+    picoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
     registerComponentInDisposer(serviceImplementation);
+  }
+
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation, @NotNull Disposable parentDisposable) {
+    String key = serviceInterface.getName();
+    registerService(serviceInterface, serviceImplementation);
+    Disposer.register(parentDisposable, () -> picoContainer.unregisterComponent(key));
   }
 
   public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
@@ -95,41 +141,36 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(instance);
   }
 
-  @Nullable
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    final Object o = myPicoContainer.getComponentInstance(interfaceClass);
+  public @Nullable <T> T getComponent(@NotNull Class<T> interfaceClass) {
+    final Object o = picoContainer.getComponentInstance(interfaceClass);
     //noinspection unchecked
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    return getComponent(interfaceClass);
+  public <T> T getService(@NotNull Class<T> serviceClass) {
+    T result = picoContainer.getService(serviceClass);
+    registerComponentInDisposer(result);
+    return result;
+  }
+
+  public final ComponentAdapter getComponentAdapter(@NotNull Object componentKey) {
+    return picoContainer.getComponentAdapter(componentKey);
   }
 
   @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
+  public final boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return getComponentAdapter(interfaceClass) != null;
+  }
+
+  @Override
+  public boolean isInjectionForExtensionSupported() {
     return false;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  @NotNull
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    final List<T> list = myPicoContainer.getComponentInstancesOfType(baseClass);
-    return list.toArray((T[])Array.newInstance(baseClass, 0));
-  }
-
-  @Override
-  @NotNull
-  public MutablePicoContainer getPicoContainer() {
-    return myPicoContainer;
-  }
-
-  @NotNull
-  @Override
-  public MessageBus getMessageBus() {
+  public @NotNull MessageBus getMessageBus() {
     return myMessageBus;
   }
 
@@ -144,15 +185,150 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     myDisposed = true;
   }
 
-  @NotNull
   @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    throw new UnsupportedOperationException("getExtensions()");
+  public @NotNull Condition<?> getDisposed() {
+    return Conditions.alwaysFalse();
   }
 
-  @NotNull
+  @Internal
   @Override
-  public Condition<?> getDisposed() {
-    return Conditions.alwaysFalse();
+  public @NotNull Object createListener(@NotNull PluginListenerDescriptor descriptor) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    //noinspection unchecked
+    return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.APP_EXTENSION : ActivityCategory.APP_SERVICE;
+  }
+
+  @Override
+  public final @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+    try {
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Internal
+  @Override
+  public @NotNull CoroutineScope instanceCoroutineScope(@NotNull Class<?> pluginClass) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @Nullable ComponentAdapter unregisterComponent(@NotNull Class<?> componentKey) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull Sequence<@NotNull Object> instances(boolean createIfNeeded,
+                                                      @Nullable Function1<? super @NotNull Class<?>, @NotNull Boolean> filter) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void processAllImplementationClasses(@NotNull Function2<? super @NotNull Class<?>, ? super @Nullable PluginDescriptor, @NotNull Unit> processor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void registerService(@NotNull Class<?> serviceInterface,
+                              @NotNull Class<?> implementation,
+                              @NotNull PluginDescriptor pluginDescriptor,
+                              boolean override,
+                              @Nullable ClientKind clientKind) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void unloadServices(@NotNull IdeaPluginDescriptor module, @NotNull List<@NotNull ServiceDescriptor> services) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void processAllHolders(@NotNull Function3<? super @NotNull String, ? super @NotNull Class<?>, ? super @Nullable PluginDescriptor, @NotNull Unit> processor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull CoroutineScope pluginCoroutineScope(@NotNull ClassLoader pluginClassloader) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void stopServicePreloading() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull <T> List<@NotNull T> collectInitializedComponents(@NotNull Class<@NotNull T> aClass) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull String debugString() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public boolean isServiceSuitable(@NotNull ServiceDescriptor descriptor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void registerServiceInstance(@NotNull Class<@NotNull T> serviceInterface,
+                                          @NotNull T instance,
+                                          @NotNull PluginDescriptor pluginDescriptor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @Nullable Class<?> getServiceImplementation(@NotNull Class<?> key) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void replaceRegularServiceInstance(@NotNull Class<@NotNull T> serviceInterface, @NotNull T instance) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @ApiStatus.Obsolete
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Override
+  public void unregisterService(@NotNull Class<?> serviceInterface) {
+    throw new UnsupportedOperationException("unsupported");
   }
 }

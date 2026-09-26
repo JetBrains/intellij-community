@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection
 
@@ -23,9 +9,9 @@ import com.intellij.codeInspection.DeprecationUtil
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class MarkedForRemovalInspectionTest : LightCodeInsightFixtureTestCase() {
+class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/forRemoval"
 
@@ -46,9 +32,15 @@ class MarkedForRemovalInspectionTest : LightCodeInsightFixtureTestCase() {
 
   fun testOverride() = doTest()
 
+  fun testOverridesNonDeprecatedInterface() = doTest()
+
   fun testDefaultConstructorInSuper() = doTest()
+  
+  fun testWithSince() = doTest()
 
   fun testSameOutermostClass() = doTest()
+
+  fun testAnnotationProperty() = doTest()
 
   fun testSameOutermostClassOff() {
     val oldIgnore = inspection.IGNORE_IN_SAME_OUTERMOST_CLASS
@@ -68,7 +60,7 @@ class MarkedForRemovalInspectionTest : LightCodeInsightFixtureTestCase() {
   fun testWeakWarningSeverity() = doSeverityTest(HighlightDisplayLevel.WEAK_WARNING)
 
   private fun doSeverityTest(severityLevel: HighlightDisplayLevel) {
-    val forRemovalKey = HighlightDisplayKey.find(DeprecationUtil.FOR_REMOVAL_SHORT_NAME)
+    val forRemovalKey: HighlightDisplayKey = HighlightDisplayKey.find(DeprecationUtil.FOR_REMOVAL_SHORT_NAME)!!
     val profile = InspectionProjectProfileManager.getInstance(myFixture.project).currentProfile
     val oldLevel = profile.getErrorLevel(forRemovalKey, myFixture.file)
     profile.setErrorLevel(forRemovalKey, severityLevel, myFixture.project)

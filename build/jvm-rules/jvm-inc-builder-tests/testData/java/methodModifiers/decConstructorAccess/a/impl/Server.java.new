@@ -1,0 +1,5 @@
+package impl;
+public class Server {
+  Server() {
+  }
+}

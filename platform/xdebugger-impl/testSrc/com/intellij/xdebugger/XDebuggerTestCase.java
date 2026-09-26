@@ -1,26 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
-public abstract class XDebuggerTestCase extends PlatformTestCase {
+public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
   public static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
   @NotNull
   static XBreakpoint<MyBreakpointProperties> addBreakpoint(XBreakpointManagerImpl breakpointManager, MyBreakpointProperties abc) {
-    return WriteAction.compute(() -> breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc));
+    return breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc);
   }
 
   @NotNull
@@ -28,34 +27,20 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
                                                                    String url,
                                                                    int line,
                                                                    MyBreakpointProperties properties) {
-    return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties));
+    return breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties);
   }
 
   static void removeBreakPoint(XBreakpointManagerImpl breakpointManager, XBreakpoint<?> breakpoint) {
-    WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
+    breakpointManager.removeBreakpoint(breakpoint);
   }
 
   @Override
   protected void initApplication() throws Exception {
     super.initApplication();
-    final ExtensionPoint<XBreakpointType> point = getBreakpointTypes();
-    point.registerExtension(MY_LINE_BREAKPOINT_TYPE);
-    point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE);
-  }
 
-  private static ExtensionPoint<XBreakpointType> getBreakpointTypes() {
-    return Extensions.getRootArea().getExtensionPoint(XBreakpointType.EXTENSION_POINT_NAME);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      getBreakpointTypes().unregisterExtension(MY_LINE_BREAKPOINT_TYPE);
-      getBreakpointTypes().unregisterExtension(MY_SIMPLE_BREAKPOINT_TYPE);
-    }
-    finally {
-      super.tearDown();
-    }
+    final ExtensionPoint<XBreakpointType> point = XBreakpointType.EXTENSION_POINT_NAME.getPoint();
+    point.registerExtension(MY_LINE_BREAKPOINT_TYPE, getTestRootDisposable());
+    point.registerExtension(MY_SIMPLE_BREAKPOINT_TYPE, getTestRootDisposable());
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
@@ -71,6 +56,11 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
     @Override
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
+    }
+
+    @Override
+    public boolean supportsInterLinePlacement() {
+      return true;
     }
   }
 

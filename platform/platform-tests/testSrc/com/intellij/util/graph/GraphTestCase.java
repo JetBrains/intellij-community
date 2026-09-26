@@ -16,12 +16,15 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class GraphTestCase {
   protected static GraphAlgorithms getAlgorithmsInstance() {
     return new GraphAlgorithmsImpl();
@@ -42,17 +45,20 @@ public abstract class GraphTestCase {
         in.get(to).add(from);
       }
     }
-    return new Graph<String>() {
+    return new Graph<>() {
+      @NotNull
       @Override
       public Collection<String> getNodes() {
         return graph.keySet();
       }
 
+      @NotNull
       @Override
       public Iterator<String> getIn(final String n) {
         return in.get(n).iterator();
       }
 
+      @NotNull
       @Override
       public Iterator<String> getOut(String n) {
         return out.get(n).iterator();

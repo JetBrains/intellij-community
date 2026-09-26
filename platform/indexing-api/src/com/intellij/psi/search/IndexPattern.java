@@ -1,39 +1,30 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * A single pattern the occurrences of which in comments are indexed by IDEA.
+ * A single pattern, the occurrences of which in comments are indexed by the IDE.
  *
- * @author yole
- * @since 5.1
  * @see IndexPatternProvider#getIndexPatterns()
  */
-public class IndexPattern {
-  @NotNull private String myPatternString;
+public final class IndexPattern {
+  public static final IndexPattern[] EMPTY_ARRAY = new IndexPattern[0];
+
+  private @NotNull String myPatternString;
   private Pattern myOptimizedIndexingPattern;
   private boolean myCaseSensitive;
   private Pattern myPattern;
+  private @NotNull List<String> myStringsToFindFirst = Collections.emptyList();
 
   /**
    * Creates an instance of an index pattern.
@@ -41,14 +32,13 @@ public class IndexPattern {
    * @param patternString the text of the Java regular expression to match.
    * @param caseSensitive whether the regular expression should be case-sensitive.
    */
-  public IndexPattern(@NotNull String patternString, final boolean caseSensitive) {
+  public IndexPattern(@NotNull String patternString, boolean caseSensitive) {
     myPatternString = patternString;
     myCaseSensitive = caseSensitive;
     compilePattern();
   }
 
-  @NotNull
-  public String getPatternString() {
+  public @NotNull @NlsSafe String getPatternString() {
     return myPatternString;
   }
 
@@ -60,16 +50,29 @@ public class IndexPattern {
     return myOptimizedIndexingPattern;
   }
 
+  public @NotNull List<String> getWordsToFindFirst() {
+    return myStringsToFindFirst;
+  }
+
+  /**
+   * @return the word to add link to for every _todo_ item in the file
+   */
+  @ApiStatus.Experimental
+  public @Nullable String getWordToHighlight() {
+    List<String> words = getWordsToFindFirst();
+    return words.isEmpty() ? null : words.get(0);
+  }
+
   public boolean isCaseSensitive() {
     return myCaseSensitive;
   }
 
-  public void setPatternString(@NotNull final String patternString) {
+  public void setPatternString(@NotNull String patternString) {
     myPatternString = patternString;
     compilePattern();
   }
 
-  public void setCaseSensitive(final boolean caseSensitive) {
+  public void setCaseSensitive(boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
     compilePattern();
   }
@@ -79,35 +82,30 @@ public class IndexPattern {
       int flags = 0;
       if (!myCaseSensitive) {
         flags = Pattern.CASE_INSENSITIVE;
+        if (StringUtil.findFirst(myPatternString, c -> c >= 0x80) >= 0) {
+          flags |= Pattern.UNICODE_CASE;
+        }
       }
       myPattern = Pattern.compile(myPatternString, flags);
-      String optimizedPattern = myPatternString;
+      var optimizedPattern = myPatternString;
       optimizedPattern = StringUtil.trimStart(optimizedPattern, ".*");
       myOptimizedIndexingPattern = Pattern.compile(optimizedPattern, flags);
+      myStringsToFindFirst = IndexPatternOptimizer.getInstance().extractStringsToFind(myPatternString);
     }
     catch(PatternSyntaxException e){
       myPattern = null;
       myOptimizedIndexingPattern = null;
+      myStringsToFindFirst = Collections.emptyList();
     }
   }
 
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final IndexPattern that = (IndexPattern)o;
-
-    if (myCaseSensitive != that.myCaseSensitive) return false;
-    if (!myPatternString.equals(that.myPatternString)) return false;
-
-    return true;
+  public boolean equals(Object o) {
+    return this == o || o instanceof IndexPattern ip && myCaseSensitive == ip.myCaseSensitive && myPatternString.equals(ip.myPatternString);
   }
 
   @Override
   public int hashCode() {
-    int result = myPatternString.hashCode();
-    result = 29 * result + (myCaseSensitive ? 1 : 0);
-    return result;
+    return 29 * myPatternString.hashCode() + (myCaseSensitive ? 1 : 0);
   }
 }

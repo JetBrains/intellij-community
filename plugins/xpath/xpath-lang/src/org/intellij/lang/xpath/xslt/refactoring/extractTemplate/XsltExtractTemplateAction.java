@@ -24,12 +24,22 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Query;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
@@ -39,6 +49,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +57,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
+    @Override
     public String getRefactoringName() {
-        return "Extract Template";
+        return XPathBundle.message("dialog.title.extract.template");
     }
 
     @Override
@@ -156,13 +167,12 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
 
         PsiElement e = start;
         while (e != null) {
-            if (e instanceof XmlTag) {
-                final XmlTag tag = (XmlTag)e;
-                if (XsltSupport.isVariable(tag)) {
+            if (e instanceof XmlTag tag) {
+              if (XsltSupport.isVariable(tag)) {
                     final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
                     final LocalSearchScope searchScope = new LocalSearchScope(parentScope);
                     final Query<PsiReference> query = ReferencesSearch.search(variable, searchScope);
-                    for (PsiReference reference : query) {
+                    for (PsiReference reference : query.asIterable()) {
                         final XmlElement context = PsiTreeUtil.getContextOfType(reference.getElement(), XmlElement.class, true);
                         if (context == null || context.getTextRange().getStartOffset() > endOffset) {
                             return false;
@@ -197,7 +207,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         sb.append("\n");
 
         final String s = newName == null ?
-                Messages.showInputDialog(start.getProject(), "Template Name: ", getRefactoringName(), Messages.getQuestionIcon()) :
+                Messages.showInputDialog(start.getProject(), XPathBundle.message("dialog.message.template.name"), getRefactoringName(), Messages.getQuestionIcon()) :
                 newName;
 
         if (s != null) {
@@ -246,15 +256,15 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         return true;
     }
 
+    @Override
     protected boolean actionPerformedImpl(PsiFile file, Editor editor, XmlAttribute context, int offset) {
         return false;
     }
 
     @Override
-    @Nullable
-    public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    public @Nullable String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (!editor.getSelectionModel().hasSelection()) {
-            return "Please select the code that should be extracted.";
+            return XPathBundle.message("notification.content.please.select.code.that.should.be.extracted");
         }
         return null;
     }

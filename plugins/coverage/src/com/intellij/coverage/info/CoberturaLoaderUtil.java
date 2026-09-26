@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.info;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class CoberturaLoaderUtil {
+public final class CoberturaLoaderUtil {
   private static final Logger LOG = Logger.getInstance(CoberturaLoaderUtil.class);
 
   private CoberturaLoaderUtil() {
@@ -37,7 +38,7 @@ public class CoberturaLoaderUtil {
           int falseHits = 0;
           int totalHits = 0;
           for (int j = 0; j < jumpsNumber; j++) {
-            dataFile.read(); //jump number
+            dataFile.skipNBytes(1); //jump number
             totalHits++;
             if (dataFile.readLong() > 0) trueHits++;
             totalHits++;
@@ -47,8 +48,7 @@ public class CoberturaLoaderUtil {
           int branchHitNumber = 0;
           final int switchNumber = dataFile.read();
           for (int s = 0; s < switchNumber; s++) {
-            dataFile.read(); //switch number
-            dataFile.read(); //number of keys
+            dataFile.skipNBytes(2); //switch number, number of keys
             long defaultHits = dataFile.readLong();
             if (defaultHits > 0) defaultHitsNumber++;
             int coveredSwitchBranches = 0;

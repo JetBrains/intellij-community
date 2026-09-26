@@ -15,69 +15,38 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
-abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWithPriority, LookupValueWithUIHint, Lookup {
+@ApiStatus.Internal
+public abstract class AbstractLookup extends LookupElement {
     protected final String myName;
     protected final String myPresentation;
 
-    public AbstractLookup(String name, String presentation) {
+    AbstractLookup(String name, String presentation) {
         this.myName = name;
         this.myPresentation = presentation;
     }
 
-    public int getPriority() {
-        return HIGHER; // stay above all word-completion stuff in XSLT
-    }
-
-    public boolean handleUserSelection(LookupItem lookupItem, Project project) {
-        lookupItem.setLookupString(myName);
-        return true;
+    @Override
+    public void handleInsert(@NotNull InsertionContext context) {
+        context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), myName);
+        context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
+        XPathInsertHandler.handleInsert(context, this);
     }
 
     public String getName() {
         return myName;
     }
 
-    public String getPresentation() {
+    @Override
+    public @NotNull String getLookupString() {
         return myPresentation;
     }
 
-    @SuppressWarnings({"ConstantConditions"})
-    public Color getColorHint() {
-        return null;
-    }
-
-    public String getTypeHint() {
-        return "";
-    }
-
-    public boolean isFunction() {
-        return false;
-    }
-
-    public boolean hasParameters() {
-        return false;
-    }
-
-    public boolean isKeyword() {
-        return false;
-    }
-
-    public boolean isBold() {
-        return isKeyword();
-    }
-
-    public String toString() {
-        return myPresentation;
-    }
-
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -87,6 +56,7 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
         return myName.equals(that.myName);
     }
 
+    @Override
     public int hashCode() {
         return myName.hashCode();
     }

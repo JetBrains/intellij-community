@@ -1,57 +1,42 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spi.parsing;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.spi.SPILanguage;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import com.intellij.spi.psi.SPIClassProvidersElementList;
-import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import com.intellij.spi.psi.SPIFile;
-import com.intellij.lang.spi.SPILanguage;
+import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-public class SPIParserDefinition implements ParserDefinition {
+public final class SPIParserDefinition implements ParserDefinition {
+
   public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 
-  private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  private static final Logger LOG = Logger.getInstance(SPIParserDefinition.class);
-
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new SPILexer();
   }
 
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new PsiParser() {
-      @NotNull
       @Override
-      public ASTNode parse(IElementType root, PsiBuilder builder) {
+      public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
         final PsiBuilder.Marker rootMarker = builder.mark();
         final PsiBuilder.Marker propertiesList = builder.mark();
         while (!builder.eof()) {
@@ -65,31 +50,22 @@ public class SPIParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return SPI_FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return WHITE_SPACES;
-  }
-
-  @NotNull
-  @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.create(JavaTokenType.END_OF_LINE_COMMENT);
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType elementType = node.getElementType();
     if (elementType == SPIElementTypes.PROVIDERS_LIST) {
       return new SPIClassProvidersElementList(node);
@@ -104,12 +80,12 @@ public class SPIParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new SPIFile(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 
@@ -122,11 +98,11 @@ public class SPIParserDefinition implements ParserDefinition {
     }
     else {
       builder.advanceLexer();
-      builder.error("Unexpected token");
+      builder.error(JavaPsiBundle.message("unexpected.token"));
     }
   }
 
-  private static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
+  public static void parseProviderChar(final PsiBuilder builder, PsiBuilder.Marker pack) {
     builder.advanceLexer();
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT || tokenType == SPITokenType.DOLLAR) {

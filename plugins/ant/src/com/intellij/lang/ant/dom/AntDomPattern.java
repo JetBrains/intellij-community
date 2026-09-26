@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
@@ -66,9 +53,10 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   }
 
   public boolean hasIncludePatterns() {
-    return myIncludePatterns.size() > 0;
+    return !myIncludePatterns.isEmpty();
   }
 
+  @Override
   public void visitAntDomElement(AntDomElement element) {
     // todo: add support to includefile and excludefile
     if ("include".equals(element.getXmlElementName()) && !(element instanceof AntDomInclude)) {
@@ -105,8 +93,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     super.visitAntDomElement(element);
   }
 
-  @Nullable
-  private static String getAttributeValue(AntDomElement element, final String attributeName) {
+  private static @Nullable @NlsSafe String getAttributeValue(AntDomElement element, final @NonNls String attributeName) {
     final DomAttributeChildDescription description = element.getGenericInfo().getAttributeChildDescription(attributeName);
     if (description == null) {
       return null;
@@ -137,7 +124,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
 
   public boolean acceptPath(final String relativePath) {
     final String path = relativePath.replace('\\', '/');
-    boolean accepted = myIncludePatterns.size() == 0;
+    boolean accepted = myIncludePatterns.isEmpty();
     for (Pattern includePattern : myIncludePatterns) {
       if (includePattern.matcher(path).matches()) {
         accepted = true;
@@ -157,11 +144,11 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
 
   private static boolean isEnabled(AntDomElement element) {
     final String ifProperty = getAttributeValue(element, "if");
-    if (ifProperty != null && PropertyResolver.resolve(element.getContextAntProject(), ifProperty, element).getFirst() == null) {
+    if (ifProperty != null && PropertyResolver.resolve(element.getContextAntProject(), ifProperty, element).element() == null) {
       return false;
     }
     final String unlessProperty = getAttributeValue(element, "unless");
-    if (unlessProperty != null && PropertyResolver.resolve(element.getContextAntProject(), unlessProperty, element).getFirst() != null) {
+    if (unlessProperty != null && PropertyResolver.resolve(element.getContextAntProject(), unlessProperty, element).element() != null) {
       return false;
     }
     return true;
@@ -171,7 +158,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     final StringTokenizer tokenizer = new StringTokenizer(patternString, ", \t", false);
     while (tokenizer.hasMoreTokens()) {
       final String pattern = tokenizer.nextToken();
-      if (pattern.length() > 0) {
+      if (!pattern.isEmpty()) {
         if (addToIncludes) {
           addIncludePattern(pattern);
         }
@@ -182,7 +169,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     }
   }
 
-  private static Pattern convertToRegexPattern(@NonNls final String antPattern, final boolean caseSensitive) {
+  private static Pattern convertToRegexPattern(final @NonNls String antPattern, final boolean caseSensitive) {
     return Pattern.compile(FileUtil.convertAntToRegexp(antPattern), caseSensitive? 0 : Pattern.CASE_INSENSITIVE);
   }
 
@@ -220,12 +207,12 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     if (strIdxStart > strIdxEnd) {
       // String is exhausted
       return true;
-    } 
+    }
 
     if (patIdxStart > patIdxEnd) {
       // String not exhausted, but pattern is. Failure.
       return false;
-    } 
+    }
 
     // pattern now holds ** while string is not exhausted
     // this will generate false positives but we can live with that.
@@ -233,16 +220,16 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   }
 
   public boolean couldBeIncluded(String relativePath) {
-    if (myIncludePatterns.size() == 0) {
+    if (myIncludePatterns.isEmpty()) {
       return true;
     }
     return myCouldBeIncludedPatterns.stream().anyMatch(couldBeIncludedPattern -> matchPatternStart(couldBeIncludedPattern, relativePath));
   }
-  
+
   private class PrefixItem {
     private final String myStrPattern;
     private Pattern myCompiledPattern;
-    public PrefixItem(String strPattern) {
+    PrefixItem(String strPattern) {
       myStrPattern = strPattern;
     }
 

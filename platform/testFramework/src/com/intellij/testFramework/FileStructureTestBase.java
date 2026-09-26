@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +29,13 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      Disposer.dispose(myPopupFixture);
-      myPopupFixture = null;
+      if (myPopupFixture != null) {
+        Disposer.dispose(myPopupFixture);
+        myPopupFixture = null;
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -57,7 +47,10 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected void checkTree() {
-    checkTree(null, true);
+    EdtTestUtilKt.runInEdtAndWait(true, () -> {
+      checkTree(null, true);
+      return null;
+    });
   }
 
   protected void checkTree(boolean expandAll) {
@@ -66,7 +59,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   
   protected void checkTree(@Nullable String filter, boolean expandAll) {
     configureDefault();
-    myPopupFixture.update();
+    myPopupFixture.updateAndSelectCurrent();
     if (filter != null) {
       setSearchFilter(filter);
     }
@@ -78,12 +71,13 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
 
   protected void setSearchFilter(@NotNull String filter) {
     myPopupFixture.getPopup().setSearchFilterForTests(filter);
-    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().rebuildAndUpdate());
+    myPopupFixture.update();
     myPopupFixture.getSpeedSearch().findAndSelectElement(filter);
   }
 
   protected void checkResult() {
     String expectedFileName = getTestDataPath() + "/" + PathUtil.makeFileName(getTestName(false), "tree");
+    PlatformTestUtil.waitWhileBusy(myPopupFixture.getTree());
     assertSameLinesWithFile(expectedFileName, PlatformTestUtil.print(myPopupFixture.getTree(), true).trim());
   }
 }

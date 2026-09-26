@@ -1,21 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiVariable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -25,7 +18,14 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
+
+  @Suppress("DEPRECATION")
+  private val javaPsiInternal
+    get() = (this as? UVariableEx)?.javaPsi ?: psi
 
   /**
    * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
@@ -51,33 +51,33 @@ interface UVariable : UDeclaration, PsiVariable {
     visitor.visitVariable(this, data)
 
   @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
-  override fun getInitializer(): PsiExpression? = psi.initializer
+  override fun getInitializer(): PsiExpression? = javaPsiInternal.initializer
 
   override fun asLogString(): String = log("name = $name")
 
   override fun asRenderString(): String = buildString {
-    if (annotations.isNotEmpty()) {
-      annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
+    if (uAnnotations.isNotEmpty()) {
+      uAnnotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
     }
-    append(psi.renderModifiers())
-    append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
+    append(javaPsiInternal.renderModifiers())
+    append("var ").append(javaPsiInternal.name).append(": ").append(javaPsiInternal.type.getCanonicalText(false))
     uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
   }
 }
 
-/**
- * @since 2018.2
- */
 interface UVariableEx : UVariable, UDeclarationEx {
   override val javaPsi: PsiVariable
 }
 
 private fun UVariable.visitContents(visitor: UastVisitor) {
-  annotations.acceptList(visitor)
+  uAnnotations.acceptList(visitor)
   uastInitializer?.accept(visitor)
 }
 
 interface UParameter : UVariable, PsiParameter {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiParameter
 
   override fun asLogString(): String = log("name = $name")
@@ -91,15 +91,32 @@ interface UParameter : UVariable, PsiParameter {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitParameter(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface UParameterEx : UParameter, UDeclarationEx {
   override val javaPsi: PsiParameter
 }
 
 interface UField : UVariable, PsiField {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
+
+  /**
+   * Returns all annotations as defined on the [sourcePsi], in some cases this can differ with [uAnnotations] where only annotations that
+   * are strictly applied to the field are returned. Consider the following example:
+   * ```Java
+   * public @interface Foo { }
+   * ```
+   * ```Kotlin
+   * @Foo
+   * val foo = 0
+   * ```
+   * According to the [Kotlin docs](https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets), if no `@Target` is specified,
+   * the first applicable target will be taken from the following order: param, property, field. Therefore `Foo` will only be applied to the
+   * property and won't be returned in [uAnnotations], to get annotations that are applied to the property, use [sourceAnnotations].
+   */
+  val sourceAnnotations: List<UAnnotation>
+    @ApiStatus.Experimental get() = uAnnotations
 
   override fun asLogString(): String = log("name = $name")
 
@@ -113,13 +130,31 @@ interface UField : UVariable, PsiField {
 }
 
 /**
- * @since 2018.2
+ * Returns all annotations as defined on the [UElement.sourcePsi].
+ * @see UField.sourceAnnotations
  */
+@ApiStatus.Experimental
+fun UAnnotated.sourceAnnotations(): List<UAnnotation> {
+  return if (this is UField) sourceAnnotations else uAnnotations
+}
+
+/**
+ * Returns the first source annotation matching [fqName].
+ * @see sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.findSourceAnnotation(fqName: String): UAnnotation? {
+  return sourceAnnotations().firstOrNull { it.qualifiedName == fqName }
+}
+
 interface UFieldEx : UField, UDeclarationEx {
   override val javaPsi: PsiField
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
 
   override fun asLogString(): String = log("name = $name")
@@ -133,14 +168,14 @@ interface ULocalVariable : UVariable, PsiLocalVariable {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLocalVariable(this, data)
 }
 
-/**
- * @since 2018.2
- */
 interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
   override val javaPsi: PsiLocalVariable
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiEnumConstant
 
   val initializingClass: UClass?
@@ -149,7 +184,7 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitEnumConstant(this)) return
-    annotations.acceptList(visitor)
+    uAnnotations.acceptList(visitor)
     methodIdentifier?.accept(visitor)
     classReference?.accept(visitor)
     valueArguments.acceptList(visitor)
@@ -161,26 +196,23 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
     visitor.visitEnumConstantExpression(this, data)
 
   override fun asRenderString(): String = buildString {
-    if (annotations.isNotEmpty()) {
-      annotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
+    if (uAnnotations.isNotEmpty()) {
+      uAnnotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
     }
     append(name)
     if (valueArguments.isNotEmpty()) {
       valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
     }
     initializingClass?.let {
-      appendln(" {")
+      appendLine(" {")
       it.uastDeclarations.forEach { declaration ->
-        appendln(declaration.asRenderString().withMargin)
+        appendLine(declaration.asRenderString().withMargin)
       }
       append("}")
     }
   }
 }
 
-/**
- * @since 2018.2
- */
 interface UEnumConstantEx : UEnumConstant, UDeclarationEx {
   override val javaPsi: PsiEnumConstant
 }

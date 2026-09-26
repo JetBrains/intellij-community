@@ -1,0 +1,92 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jediterm.core"/>
+    <module name="intellij.libraries.jediterm.ui"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.nioFs.impl"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ijent"/>
+    <module name="intellij.platform.ijent.community.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.IjentImplBundle">
+    <group id="com.intellij.platform.ijent.impl.VerificationActions"
+           internal="true">
+      <action
+        id="com.intellij.platform.ijent.impl.IjentLocalVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.IjentLocalVerificationAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.impl.IjentDockerVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.IjentDockerVerificationAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.impl.MultiRoutingFileSystemVerificationAction"
+        class="com.intellij.platform.ijent.community.ui.actions.MultiRoutingFileSystemVerificationAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.community.ui.actions.dashboard.ShowIjentDashboardAction"
+        class="com.intellij.platform.ijent.community.ui.actions.dashboard.ShowIjentDashboardAction"
+        internal="true"/>
+      <action
+        id="com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction"
+        class="com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction"
+        internal="true"/>
+    </group>
+  </actions>
+  <extensionPoints>
+    <extensionPoint name="ijent.dashboard.tab" interface="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTab" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabStat"/>
+    <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabInfo"/>
+    <ijent.dashboard.tab implementation="com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabEnvVars"/>
+    <project.root.unavailable implementation="com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler"/>
+    <notificationGroup
+      id="IJent.EnvironmentVariables"
+      displayType="BALLOON"
+      bundle="messages.IjentImplBundle"
+      key="notification.group.ijent.env.vars"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.eel.EnvironmentVariablesAwaitReporter"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.LoginShellEnvVarModeProvider"
+      serviceImplementation="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl"/>
+    <advancedSetting
+      id="container.environments.env.var.shell.mode"
+      enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
+      default="LOGIN_INTERACTIVE"
+      bundle="messages.IjentImplBundle"
+      visible="false"
+      groupKey="advanced.settings.container.environments"
+    />
+    <projectConfigurable
+      groupId="build"
+      id="ijent.dashboard"
+      key="configurable.ijent.dashboard.display.name"
+      bundle="messages.IjentImplBundle"
+      provider="com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurableProvider"/>
+  </extensions>
+</idea-plugin>

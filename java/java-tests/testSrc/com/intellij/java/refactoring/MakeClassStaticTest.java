@@ -19,17 +19,18 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.VariableData;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class MakeClassStaticTest extends LightRefactoringTestCase {
+public class MakeClassStaticTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
 
   @NotNull
@@ -58,26 +59,29 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
   public void testNonDefaultConstructorAnonymousClass() {perform();}
   public void testDefaultConstructorAnonymousClass() {perform();}
   public void testFieldInitializerSplit() {perform();}
+  public void testWarnAboutClassInitializer() {
+    try {
+      perform();
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Field 'anObject' won't be initialized inside class initializer", e.getMessage());
+    }
+  }
 
   public void testRegReference() {
     perform();
   }
 
   public void testFieldWithMyPrefix() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    String oldPrefix = settings.FIELD_NAME_PREFIX;
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.FIELD_NAME_PREFIX = "my";
-    try {
-      performWithFields();
-    }
-    finally {
-      settings.FIELD_NAME_PREFIX = oldPrefix;
-    }
+    performWithFields();
   }
 
   private void perform() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
 
@@ -92,7 +96,7 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
 
   private void performWithFields() {
     configureByFile(TEST_ROOT + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
     final ArrayList<VariableData> parametersForFields = new ArrayList<>();

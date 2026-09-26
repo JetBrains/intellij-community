@@ -1,0 +1,10 @@
+import org.jetbrains.annotations.Nullable;
+
+class A {
+
+  <spot>@Nullable</spot>
+  Object getObject() {
+    //do smth
+    return null;
+  }
+}

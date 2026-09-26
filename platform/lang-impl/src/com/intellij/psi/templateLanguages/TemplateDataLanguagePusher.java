@@ -1,62 +1,36 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.FilePropertyPusherBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.VfsDependentEnum;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.psi.FilePropertyKey;
+import com.intellij.psi.FilePropertyKeyImpl;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 /**
  * @author Konstantin.Ulitin
  */
-public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> {
-
-  public static final Key<Language> KEY = Key.create("TEMPLATE_DATA_LANGUAGE");
-
-  private static final VfsDependentEnum<String> ourLanguagesEnumerator = new VfsDependentEnum<>(
-    "languages",
-    EnumeratorStringDescriptor.INSTANCE,
-    1
-  );
+@ApiStatus.Internal
+public final class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
+  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 4, true);
+  public static final FilePropertyKey<Language> KEY =
+    FilePropertyKeyImpl.createPersistentStringKey("TEMPLATE_DATA_LANGUAGE", PERSISTENCE,
+                                                  TemplateDataLanguagePusher::asString, TemplateDataLanguagePusher::fromString);
 
   @Override
-  public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-
-  }
-
-  @NotNull
-  @Override
-  public Key<Language> getFileDataKey() {
+  public @NotNull FilePropertyKey<Language> getFilePropertyKey() {
     return KEY;
   }
 
@@ -65,28 +39,29 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     return false;
   }
 
-  @NotNull
   @Override
-  public Language getDefaultValue() {
+  public @NotNull Language getDefaultValue() {
     return Language.ANY;
   }
 
-  @Nullable
   @Override
-  public Language getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
+  public @Nullable Language getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
     return TemplateDataLanguageMappings.getInstance(project).getImmediateMapping(file);
   }
 
-  @Nullable
   @Override
-  public Language getImmediateValue(@NotNull Module module) {
+  public @Nullable Language getImmediateValue(@NotNull Module module) {
     return null;
   }
 
   @Override
-  public boolean acceptsFile(@NotNull VirtualFile file) {
-    FileType type = file.getFileType();
-    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof TemplateLanguage;
+  public boolean acceptsFile(@NotNull VirtualFile file, @NotNull Project project) {
+    FileType type = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
+    if (type != UnknownFileType.INSTANCE) {
+      return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof TemplateLanguage;
+    }
+    // might be cheaper than file type detection
+    return TemplateDataLanguageMappings.getInstance(project).getImmediateMapping(file) != null;
   }
 
   @Override
@@ -94,32 +69,17 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     return true;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 2, true);
+  private static String asString(@NotNull Language property) {
+    return property.getID();
+  }
 
-  @Override
-  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull Language value) throws IOException {
-    final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
-    if (iStream != null) {
-      try {
-        final int oldLanguage = DataInputOutputUtil.readINT(iStream);
-        String oldLanguageId = ourLanguagesEnumerator.getById(oldLanguage);
-        if (value.getID().equals(oldLanguageId)) return;
-      }
-      finally {
-        //noinspection ThrowFromFinallyBlock
-        iStream.close();
-      }
-    }
-
-    if (value != Language.ANY || iStream != null) {
-      try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
-        DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
-      }
-      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, this::acceptsFile);
-    }
+  private static @NotNull Language fromString(@NotNull String id) {
+    Language lang = Language.findLanguageByID(id);
+    return ObjectUtils.notNull(lang, Language.ANY);
   }
 
   @Override
-  public void afterRootsChanged(@NotNull Project project) {
+  public void propertyChanged(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull Language actualProperty) {
+    PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, file -> acceptsFile(file, project));
   }
 }

@@ -1,0 +1,29 @@
+<component name="libraryTable">
+  <library name="google-baksmali" type="repository">
+    <properties maven-id="com.android.tools.smali:smali-baksmali:3.0.10">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-baksmali/3.0.10/smali-baksmali-3.0.10.jar">
+          <sha256sum>7d6578dfe5c44f1984b64268e91834432b0942d49e08186a501039dd92b58213</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-util/3.0.10/smali-util-3.0.10.jar">
+          <sha256sum>cc2ef8349765644e4b15371f2c9f77d69b5412a094a38fe5fd992a124b7322fe</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="com.android.tools.smali:smali-dexlib2" />
+        <dependency maven-id="com.google.code.findbugs:jsr305" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="org.jcommander:jcommander" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-baksmali/3.0.10/smali-baksmali-3.0.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-util/3.0.10/smali-util-3.0.10.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-baksmali/3.0.10/smali-baksmali-3.0.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-util/3.0.10/smali-util-3.0.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -17,22 +17,28 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiForStatementImpl extends CompositePsiElement implements PsiForStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForStatementImpl");
+public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForStatement, Constants {
+  private static final Logger LOG = Logger.getInstance(PsiForStatementImpl.class);
 
   public PsiForStatementImpl() {
     super(FOR_STATEMENT);
@@ -72,9 +78,6 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.FOR_KEYWORD:
         return findChildByType(FOR_KEYWORD);
 
@@ -98,7 +101,6 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
         return findChildByType(SEMICOLON);
 
       case ChildRole.FOR_UPDATE:
-      {
         ASTNode semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
         for(ASTNode child = semicolon; child != null; child = child.getTreeNext()){
           if (child.getPsi() instanceof PsiStatement) {
@@ -107,13 +109,11 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
           if (child.getElementType() == RPARENTH) break;
         }
         return null;
-      }
 
       case ChildRole.RPARENTH:
         return findChildByType(RPARENTH);
 
       case ChildRole.LOOP_BODY:
-      {
         ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
         for(ASTNode child = rparenth; child != null; child = child.getTreeNext()){
           if (child.getPsi() instanceof PsiStatement) {
@@ -121,7 +121,9 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
           }
         }
         return null;
-      }
+
+      default:
+        return null;
     }
   }
 
@@ -168,22 +170,15 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
+  @Override
   public String toString(){
     return "PsiForStatement";
   }
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    final boolean isForInitialization = getChildRole(child) == ChildRole.FOR_INITIALIZATION;
-
-    if (isForInitialization) {
-      try {
-        final PsiStatement emptyStatement = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(";", null);
-        super.replaceChildInternal(child, (TreeElement)SourceTreeToPsiMap.psiElementToTree(emptyStatement));
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+    if (getChildRole(child) == ChildRole.FOR_INITIALIZATION) {
+      replaceChildInternal(child, (TreeElement)JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(";", null));
     }
     else {
       super.deleteChildInternal(child);
@@ -193,10 +188,24 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null || lastParent.getParent() != this)
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    if (lastParent == null) {
+      // Only patterns may introduce variables visible after loop
+      return PsiWhileStatementImpl.processDeclarationsInLoopCondition(processor, state, place, this);
+    }
+    else if (lastParent.getParent() != this) {
       // Parent element should not see our vars
       return true;
-
-    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+    }
+    PsiStatement initialization = getInitialization();
+    if (initialization != null && lastParent != initialization) {
+      if (!initialization.processDeclarations(processor, state, null, place)) return false;
+    }
+    PsiExpression condition = getCondition();
+    if (condition != null && (lastParent == getBody() || lastParent == getUpdate())) {
+      return condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    return true;
   }
 }

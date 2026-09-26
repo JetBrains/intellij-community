@@ -18,9 +18,6 @@ package com.intellij.refactoring.rename.naming;
 
 import junit.framework.TestCase;
 
-/**
- * @author dsl
- */
 public class NameSuggesterTest extends TestCase {
   public void testChanges1() {
     doChangesTest("NameSuggesterTest", "NameUnifierTest", "[<Suggester,Unifier>]");
@@ -44,6 +41,14 @@ public class NameSuggesterTest extends TestCase {
 
   public void testChanges6() {
     doChangesTest("IBase", "IMain", "[<Base,Main>]");
+  }
+
+  public void testChanges7() {
+    doChangesTest("FooBarBazAbaCaba", "FooAbaBazBarCaba", "[<BarBaz,>, <,BazBar>]");
+  }
+
+  public void testChanges8() {
+    doChangesTest("FooBar", "BarFoo", "[<Foo,>, <,Foo>]");
   }
 
   public void testSuggestions1() {
@@ -128,20 +133,93 @@ public class NameSuggesterTest extends TestCase {
     doSuggestionTest("Foo", "TaskFoo", "fooImpl", "taskFooImpl");
   }
 
-   public void testSuggestions21() {
+  public void testSuggestions21() {
     doSuggestionTest("Foo", "TaskFoo", "implFoo", "implTaskFoo");
   }
 
-  private void doChangesTest(final String oldClassName, final String newClassName, final String changes) {
+  public void testSuggestions22() {
+    doSuggestionTest("Foo", "FooBar", "someFooAwesome", "someFooBarAwesome");
+  }
+
+  public void testSuggestions23() {
+    doSuggestionTest("Foo", "FooBarBaz", "someFooAwesome", "someFooBarBazAwesome");
+  }
+
+  public void testSuggestions24() {
+    doSuggestionTest("FooBar", "FooBarBaz", "someFooBarAwesome", "someFooBarBazAwesome");
+  }
+
+  public void testSuggestions25() {
+    doSuggestionTest("FooBar", "Foo", "someFooBarAwesome", "someFooAwesome");
+  }
+
+  public void testSuggestions26() {
+    doSuggestionTest("FooBarBaz", "FooBar", "someFooBarBazAwesome", "someFooBarAwesome");
+  }
+
+  public void testSuggestions27() {
+    doSuggestionTest("FooBarBaz", "AbaBarCaba", "someFooBarBazAwesome", "someAbaBarCabaAwesome");
+  }
+
+  public void testSuggestions28() {
+    doSuggestionTest("FooBarBaz", "Baz", "someFooBarBazAwesome", "someBazAwesome");
+  }
+
+  public void testSuggestions29() {
+    doSuggestionTest("FooBarBaz", "Bar", "someFooBarBazAwesome", "someBarAwesome");
+  }
+
+  public void testSuggestions30() {
+    doSuggestionTest("FooBarBaz", "FooAbaBaz", "someFooBarBazAwesome", "someFooAbaBazAwesome");
+  }
+
+  public void testSuggestions31() {
+    doSuggestionTest("Foo", "BarFoo", "someFooAwesome", "someBarFooAwesome");
+  }
+
+  public void testSuggestions32() {
+    doSuggestionTest("FooBar", "BazFooBar", "someFooBarAwesome", "someBazFooBarAwesome");
+  }
+
+  public void testSuggestions33() {
+    doSuggestionTest("FooBar", "BarFoo", "someFooBarAwesome", "someBarFooAwesome");
+  }
+
+  public void testSuggestions34() {
+    doSuggestionTest("FooBarBazAbaCaba", "FooAbaBazBarCaba", "someFooBarBazAbaCabaAwesome", "someFooAbaBazBarCabaAwesome");
+  }
+
+  public void testSuggestions35() {
+    doSuggestionTest("Foo", "Bar", "someFooAwesome", "someBarAwesome");
+  }
+
+  public void testSuggestions36() {
+    doSuggestionTest("FooBar", "FooBarBaz", "someBarAwesome", "someBarBazAwesome");
+  }
+
+  public void testSuggestions37() {
+    doSuggestionTest("BarBaz", "FooBarBaz", "someBarAwesome", "someFooBarAwesome");
+  }
+
+  public void testSuggestions38() {
+    doSuggestionTest("Bar", "FooBarBaz", "someBarAwesome", "someFooBarBazAwesome");
+  }
+
+  public void testSingleLetterPrefix() {
+    doSuggestionTest("ClassA", "QClassA", "classA","qClassA");
+  }
+  
+  public void testMultiLetterPrefix() {
+    doSuggestionTest("Encoder", "URLEncoder", "encoder", "urlEncoder");
+  }
+
+  private static void doChangesTest(String oldClassName, String newClassName, String changes) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);
-    assertEquals(
-      changes,
-      suggester.getChanges().toString()
+    assertEquals(changes, suggester.getChanges().toString()
     );
   }
 
-  private void doSuggestionTest(final String oldClassName, final String newClassName, final String variableName,
-                                final String expectedSuggestion) {
+  private static void doSuggestionTest(String oldClassName, String newClassName, String variableName, String expectedSuggestion) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);
     assertEquals(expectedSuggestion, suggester.suggestName(variableName));
   }

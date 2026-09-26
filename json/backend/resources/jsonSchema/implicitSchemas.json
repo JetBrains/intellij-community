@@ -1,0 +1,279 @@
+{
+  "$schema": "https://schemastore.org/api/json/catalog.json",
+  "version": 1,
+  "schemas": [
+    {
+      "name": "PyProject",
+      "description": "JSON schema for Python project metadata and configuration",
+      "fileMatch": ["pyproject.toml"],
+      "url": "https://json.schemastore.org/pyproject.json"
+    },
+    {
+      "name": "PDM",
+      "description": "JSON schema for PDM, a modern Python package manager.",
+      "fileMatch": ["pdm.toml"],
+      "url": "https://www.schemastore.org/pdm.json"
+    },
+    {
+      "name": "Hatch",
+      "description": "JSON schema for Hatch, the extensible, standards compliant build tool.",
+      "fileMatch": ["hatch.toml"],
+      "url": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/hatch.json"
+    },
+    {
+      "name": "uv",
+      "description": "JSON schema for uv, an extremely fast Python package installer and resolver.",
+      "fileMatch": ["uv.toml"],
+      "url": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/uv.json"
+    },
+    {
+      "name": "cibuildwheel",
+      "description": "JSON schema for cibuildwheel configuration.",
+      "fileMatch": ["cibuildwheel.toml", ".cibuildwheel.toml"],
+      "url": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/cibuildwheel.json"
+    },
+    {
+      "name": "maturin",
+      "description": "JSON schema for maturin configuration.",
+      "fileMatch": ["maturin.toml"],
+      "url": "https://www.schemastore.org/maturin.json"
+    },
+    {
+      "name": "Nuitka",
+      "description": "JSON schema for Nuitka package configuration.",
+      "fileMatch": ["*.nuitka-package.config.yml", "*.nuitka-package.config.yaml"],
+      "url": "https://raw.githubusercontent.com/Nuitka/Nuitka/develop/nuitka/package_config/nuitka-package-config-schema.json"
+    },
+    {
+      "name": "Ruff",
+      "description": "JSON schema for Ruff configuration.",
+      "fileMatch": ["ruff.toml", ".ruff.toml"],
+      "url": "https://www.schemastore.org/ruff.json"
+    },
+    {
+      "name": "Pyright",
+      "description": "JSON schema for Pyright configuration.",
+      "fileMatch": ["pyrightconfig.json"],
+      "url": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json"
+    },
+    {
+      "name": "basedpyright",
+      "description": "JSON schema for basedpyright configuration.",
+      "fileMatch": ["basedpyrightconfig.json"],
+      "url": "https://raw.githubusercontent.com/DetachHead/basedpyright/refs/heads/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json"
+    },
+    {
+      "name": "ty",
+      "description": "JSON schema for ty configuration.",
+      "fileMatch": ["ty.toml"],
+      "url": "https://www.schemastore.org/ty.json"
+    },
+    {
+      "name": "tox",
+      "description": "JSON schema for tox configuration.",
+      "fileMatch": ["tox.toml"],
+      "url": "https://raw.githubusercontent.com/tox-dev/tox/main/src/tox/tox.schema.json"
+    },
+    {
+      "name": "conda-forge",
+      "description": "JSON schema for conda-forge configuration.",
+      "fileMatch": ["conda-forge.yml"],
+      "url": "https://raw.githubusercontent.com/conda-forge/conda-smithy/main/conda_smithy/data/conda-forge.json"
+    },
+    {
+      "name": "Read the Docs",
+      "description": "Read the Docs configuration file",
+      "fileMatch": ["readthedocs.yml", "readthedocs.yaml", ".readthedocs.yml", ".readthedocs.yaml"],
+      "url": "https://raw.githubusercontent.com/readthedocs/readthedocs.org/master/readthedocs/rtd_tests/fixtures/spec/v2/schema.json"
+    },
+    {
+      "name": "pre-commit config",
+      "description": "JSON schema for pre-commit configuration.",
+      "fileMatch": [".pre-commit-config.yml", ".pre-commit-config.yaml"],
+      "url": "https://www.schemastore.org/pre-commit-config.json"
+    },
+    {
+      "name": "pre-commit hooks",
+      "description": "JSON schema for pre-commit hooks.",
+      "fileMatch": [".pre-commit-hooks.yml", ".pre-commit-hooks.yaml"],
+      "url": "https://www.schemastore.org/pre-commit-hooks.json"
+    },
+    {
+      "name": "G2P Mapping",
+      "description": "JSON schema for G2P mapping configuration.",
+      "fileMatch": ["config-g2p.yaml", "config-g2p.json"],
+      "url": "https://raw.githubusercontent.com/roedoejet/g2p/main/g2p/mappings/.schema/g2p-config-schema-2.3.json"
+    },
+    {
+      "name": "Infrahub (python-sdk)",
+      "description": "JSON schema for Infrahub Python SDK repository configuration.",
+      "fileMatch": [".infrahub.yml", ".infrahub.yaml"],
+      "url": "https://schema.infrahub.app/python-sdk/repository-config/latest.json"
+    },
+    {
+      "name": "instant_python config",
+      "description": "JSON schema for instant_python configuration.",
+      "fileMatch": ["ipy.yml"],
+      "url": "https://raw.githubusercontent.com/instant-python/instant-python/main/schemas/ipy-schemas.json"
+    },
+    {
+      "name": "instant_python custom project",
+      "description": "JSON schema for instant_python custom project structure.",
+      "fileMatch": ["main_structure.yml"],
+      "url": "https://raw.githubusercontent.com/instant-python/instant-python/main/schemas/main-structure-schema.json"
+    },
+    {
+      "name": "PyGTA / pyglotaran",
+      "description": "JSON schema for PyGTA configuration.",
+      "fileMatch": ["pygta_config.yaml", "pygta_config.yml"],
+      "url": "https://pyglotaran-extras.readthedocs.io/en/latest/_static/pygta_config.schema.json"
+    },
+    {
+      "name": "Ray autocluster",
+      "description": "JSON schema for Ray cluster configuration.",
+      "fileMatch": ["ray-*-cluster.yaml"],
+      "url": "https://raw.githubusercontent.com/ray-project/ray/master/python/ray/autoscaler/ray-schema.json"
+    },
+    {
+      "name": "tm_devices",
+      "description": "JSON schema for tm_devices configuration.",
+      "fileMatch": ["tm_devices.yml", "tm_devices.yaml", "tm_devices.toml"],
+      "url": "https://raw.githubusercontent.com/tektronix/tm_devices/main/src/tm_devices/tm_devices_config_schema.json"
+    },
+    {
+      "name": "Airbyte python-cdk manifest",
+      "description": "JSON schema for Airbyte Python CDK manifests.",
+      "fileMatch": ["source-*-manifest.yaml", "destination-*-manifest.yaml", "**/source-*/manifest.yaml", "**/destination-*/manifest.yaml"],
+      "url": "https://raw.githubusercontent.com/airbytehq/airbyte-python-cdk/49c5a482de7bdfbaa3a68373a940b90c0690a56f/airbyte_cdk/sources/declarative/generated/declarative_component_schema.json"
+    },
+    {
+      "name": "appsscript.json",
+      "description": "Google Apps Script manifest file",
+      "fileMatch": ["appsscript.json"],
+      "url": "https://www.schemastore.org/appsscript.json"
+    },
+    {
+      "name": "Biome Formatter Config",
+      "description": "Configuration file for the Biome formatter",
+      "fileMatch": ["biome.json", "biome.jsonc"],
+      "url": "https://biomejs.dev/schemas/latest/schema.json"
+    },
+    {
+      "name": "buf.yaml",
+      "description": "buf.yaml is used to define a module. It's the primary configuration file, and is responsible for the module's name, dependencies, and lint and breaking configuration",
+      "fileMatch": ["buf.yaml"],
+      "url": "https://www.schemastore.org/buf.json"
+    },
+    {
+      "name": "buf.gen.yaml",
+      "description": "buf.gen.yaml is a configuration file used by the buf generate command to generate integration code for the languages of your choice",
+      "fileMatch": ["buf.gen.yaml"],
+      "url": "https://www.schemastore.org/buf.gen.json"
+    },
+    {
+      "name": "buf.lock",
+      "description": "buf.lock is a dependency lock file generated by buf via 'buf dep update'. It represents a single, reproducible build of the workspace's external dependencies and should never be hand-edited",
+      "fileMatch": ["buf.lock"],
+      "url": "https://www.schemastore.org/buf.lock.json"
+    },
+    {
+      "name": "buf.plugin.yaml",
+      "description": "A `buf.plugin.yaml` file captures metadata about the plugin. It includes mandatory and optional fields that are displayed on the individual plugin page and the BSR plugin. Documentation: https://buf.build/plugins",
+      "fileMatch": ["buf.plugin.yaml"],
+      "url": "https://www.schemastore.org/buf.plugin.json"
+    },
+    {
+      "name": "buf.policy.yaml",
+      "description": "buf.policy.yaml defines a policy containing lint, breaking change detection, and plugin configuration that can be shared across BSR modules",
+      "fileMatch": ["buf.policy.yaml"],
+      "url": "https://www.schemastore.org/buf.policy.json"
+    },
+    {
+      "name": "buf.work.yaml",
+      "description": "buf.work.yaml is used to define a workspace, which is an advanced local development feature. Workspaces make it possible to consolidate one or more modules into a single buildable unit. They also allow users to run buf operations across multiple modules with a single execution (such as buf lint)",
+      "fileMatch": ["buf.work.yaml"],
+      "url": "https://www.schemastore.org/buf.work.json"
+    },
+    {
+      "name": "bunfig.toml",
+      "description": "bunfig.toml file",
+      "fileMatch": ["bunfig.toml"],
+      "url": "https://www.schemastore.org/bunfig.json"
+    },
+    {
+      "name": "CMake Presets",
+      "description": "CMake Presets",
+      "fileMatch": ["CMakePresets.json", "CMakeUserPresets.json"],
+      "url": "https://raw.githubusercontent.com/Kitware/CMake/master/Help/manual/presets/schema.json"
+    },
+    {
+      "name": "Devbox Config",
+      "description": "Configuration for a Devbox shell environment",
+      "fileMatch": ["devbox.json"],
+      "url": "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox.schema.json"
+    },
+    {
+      "name": "dprint.json",
+      "description": "dprint configuration file",
+      "fileMatch": ["dprint.json", "dprint.jsonc", ".dprint.json", ".dprint.jsonc"],
+      "url": "https://dprint.dev/schemas/v0.json"
+    },
+    {
+      "name": "JSR Package Config (jsr.json)",
+      "description": "JSR package configuration file",
+      "fileMatch": ["jsr.json", "jsr.jsonc"],
+      "url": "https://jsr.io/schema/config-file.v1.json"
+    },
+    {
+      "name": "Lefthook",
+      "description": "Fast and powerful Git hooks manager",
+      "fileMatch": [
+        ".lefthook.json",
+        ".lefthook.jsonc",
+        ".lefthook.toml",
+        ".lefthook.yaml",
+        ".lefthook.yml",
+        ".lefthook-local.json",
+        ".lefthook-local.jsonc",
+        ".lefthook-local.toml",
+        ".lefthook-local.yaml",
+        ".lefthook-local.yml",
+        "lefthook.json",
+        "lefthook.jsonc",
+        "lefthook.toml",
+        "lefthook.yaml",
+        "lefthook.yml",
+        "lefthook-local.json",
+        "lefthook-local.jsonc",
+        "lefthook-local.toml",
+        "lefthook-local.yaml",
+        "lefthook-local.yml"
+      ],
+      "url": "https://raw.githubusercontent.com/evilmartians/lefthook/master/schema.json"
+    },
+    {
+      "name": "mkdocs.yml",
+      "description": "MkDocs configuration file",
+      "fileMatch": ["mkdocs.yml"],
+      "url": "https://www.schemastore.org/mkdocs-1.6.json"
+    },
+    {
+      "name": "commitlint (.commitlintrc)",
+      "description": "commitlint configuration files",
+      "fileMatch": [".commitlintrc", ".commitlintrc.json", ".commitlintrc.yaml", ".commitlintrc.yml"],
+      "url": "https://www.schemastore.org/commitlintrc.json"
+    },
+    {
+      "name": "pnpm Workspace (pnpm-workspace.yaml)",
+      "description": "Workspace file for pnpm",
+      "fileMatch": ["pnpm-workspace.yaml"],
+      "url": "https://www.schemastore.org/pnpm-workspace.json"
+    },
+    {
+      "name": "Taplo",
+      "description": "Taplo configuration file",
+      "fileMatch": [".taplo.toml", "taplo.toml"],
+      "url": "https://www.schemastore.org/taplo.json"
+    }
+  ]
+}

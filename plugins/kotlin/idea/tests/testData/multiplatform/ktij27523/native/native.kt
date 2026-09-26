@@ -1,0 +1,3 @@
+val foo = object {
+
+}

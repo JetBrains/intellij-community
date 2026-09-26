@@ -1,0 +1,9 @@
+// "Suppress 'RedundantUnitReturnType' for file ${file}" "true"
+
+fun foo(): Unit<caret> {
+
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.RedundantUnitReturnTypeInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RedundantUnitReturnTypeInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

@@ -1,0 +1,55 @@
+<idea-plugin  visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.artifactPropertiesProvider"
+                    interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemProvider"
+                    interface="com.intellij.packaging.ui.PackagingSourceItemsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compilableFileTypesProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.compiler.CompilableFileTypesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
+                    interface="com.intellij.openapi.compiler.util.InspectionValidator"
+                    area="IDEA_PROJECT" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+      serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
+      serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration$JavaBuildWorkspaceConfiguration"
+      overrides="true"/>
+    <projectSettings service="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
+  </extensions>
+</idea-plugin>

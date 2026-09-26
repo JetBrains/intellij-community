@@ -1,0 +1,112 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.pytools.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.python.pytools.backend` end
+
+### auto-generated section `build intellij.python.pytools.backend` start
+create_kotlinc_options(
+    name = "custom_backend",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+    warn = "error",
+)
+
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.pytools.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//python/python-pytools/common"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//python/python-pytools/common",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/observable",
+        "//platform/ide-core",
+        "//platform/statistics",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-impl:ide-impl",
+        "//platform/execution",
+        "//python/openapi:community",
+        "//python/python-exec-service:community-execService",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//libraries/caffeine",
+        "//platform/project/shared:project",
+        "//python/python-requirements/backend",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_backend",
+    module_name = "intellij.python.pytools.backend",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//python/python-pytools/common",
+        "//python/python-pytools/common:common_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/util:util_test_lib",
+        "//python/python-pytools/common:common_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/observable:observable_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//libraries/caffeine:caffeine_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//python/python-requirements/backend:backend_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.pytools.backend` end
+
+### auto-generated section `iml intellij.python.pytools.backend` start
+exports_files(
+    [
+        "intellij.python.pytools.backend.iml",
+        "resources/intellij.python.pytools.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.pytools.backend` end

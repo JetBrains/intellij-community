@@ -1,34 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,24 +25,23 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
-public class SuppressionUtil extends SuppressionUtilCore {
+
+public final class SuppressionUtil extends SuppressionUtilCore {
+
+  public static final @NonNls String FILE_PREFIX = "file:";
+
   /**
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
    */
-  @NonNls
-  public static final String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME +
+  public static final @NonNls String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME +
                                                       "\\s+(" + LocalInspectionTool.VALID_ID_PATTERN +
                                                       "(\\s*,\\s*" + LocalInspectionTool.VALID_ID_PATTERN + ")*)\\s*\\w*";
 
-  @NonNls
-  public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final @NonNls Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final Pattern SUPPRESS_IN_FILE_LINE_COMMENT_PATTERN = Pattern.compile("//" + FILE_PREFIX + COMMON_SUPPRESS_REGEXP + ".*");
 
-  @NonNls
-  public static final String ALL = "ALL";
+  public static final @NonNls String ALL = "ALL";
 
   private SuppressionUtil() {
   }
@@ -68,18 +56,16 @@ public class SuppressionUtil extends SuppressionUtilCore {
     return false;
   }
 
-  @Nullable
-  public static PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
-                                                        @NotNull String toolId,
-                                                        @NotNull Class<? extends PsiElement> statementClass) {
+  public static @Nullable PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
+                                                                  @NotNull String toolId,
+                                                                  @NotNull Class<? extends PsiElement> statementClass) {
     return getStatementToolSuppressedIn(place, toolId, statementClass, SUPPRESS_IN_LINE_COMMENT_PATTERN);
   }
 
-  @Nullable
-  public static PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
-                                                        @NotNull String toolId,
-                                                        @NotNull Class<? extends PsiElement> statementClass,
-                                                        @NotNull Pattern suppressInLineCommentPattern) {
+  public static @Nullable PsiElement getStatementToolSuppressedIn(@NotNull PsiElement place,
+                                                                  @NotNull String toolId,
+                                                                  @NotNull Class<? extends PsiElement> statementClass,
+                                                                  @NotNull Pattern suppressInLineCommentPattern) {
     PsiElement statement = PsiTreeUtil.getNonStrictParentOfType(place, statementClass);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(statement);
@@ -94,22 +80,20 @@ public class SuppressionUtil extends SuppressionUtilCore {
     return null;
   }
 
-  public static boolean isSuppressedInStatement(@NotNull final PsiElement place,
-                                                @NotNull final String toolId,
-                                                @NotNull final Class<? extends PsiElement> statementClass) {
-    return ReadAction.compute(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
+  public static boolean isSuppressedInStatement(final @NotNull PsiElement place,
+                                                final @NotNull String toolId,
+                                                final @NotNull Class<? extends PsiElement> statementClass) {
+    return ReadAction.computeBlocking(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
   }
 
-  @NotNull
-  public static PsiComment createComment(@NotNull Project project,
-                                         @NotNull String commentText,
-                                         @NotNull Language language) {
-    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+  public static @NotNull PsiComment createComment(@NotNull Project project,
+                                                  @NotNull String commentText,
+                                                  @NotNull Language language) {
+    final PsiParserFacade parserFacade = PsiParserFacade.getInstance(project);
     return parserFacade.createLineOrBlockCommentFromText(language, commentText);
   }
 
-  @Nullable
-  public static Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
+  private static @Nullable Couple<String> getBlockPrefixSuffixPair(@NotNull PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     if (commenter != null) {
       final String prefix = commenter.getBlockCommentPrefix();
@@ -121,8 +105,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
     return null;
   }
 
-  @Nullable
-  public static String getLineCommentPrefix(@NotNull final PsiElement comment) {
+  public static @Nullable String getLineCommentPrefix(final @NotNull PsiElement comment) {
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
     return commenter == null ? null : commenter.getLineCommentPrefix();
   }
@@ -131,18 +114,31 @@ public class SuppressionUtil extends SuppressionUtilCore {
     final String prefix = getLineCommentPrefix(comment);
     final String commentText = comment.getText();
     if (prefix != null) {
-      return commentText.startsWith(prefix + SUPPRESS_INSPECTIONS_TAG_NAME);
+      return startsWithSuppressionTag(commentText, prefix);
     }
     final Couple<String> prefixSuffixPair = getBlockPrefixSuffixPair(comment);
     return prefixSuffixPair != null
-           && commentText.startsWith(prefixSuffixPair.first + SUPPRESS_INSPECTIONS_TAG_NAME)
+           && startsWithSuppressionTag(commentText, prefixSuffixPair.first)
            && commentText.endsWith(prefixSuffixPair.second);
+  }
+
+  private static boolean startsWithSuppressionTag(@NotNull String commentText, @NotNull String prefix) {
+    if (!commentText.startsWith(prefix)) {
+      return false;
+    }
+    int index = CharArrayUtil.shiftForward(commentText, prefix.length(), " ");
+    return index < commentText.length() && commentText.startsWith(SUPPRESS_INSPECTIONS_TAG_NAME, index);
   }
 
   public static void replaceSuppressionComment(@NotNull PsiElement comment, @NotNull String id,
                                                boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
+    if (!replaceOtherSuppressionIds &&
+        oldSuppressionCommentText.contains(id) &&
+        StringUtil.getWordsIn(oldSuppressionCommentText).contains(id)) {
+      return;
+    }
     Couple<String> blockPrefixSuffix = null;
     if (lineCommentPrefix == null) {
       blockPrefixSuffix = getBlockPrefixSuffixPair(comment);
@@ -172,13 +168,18 @@ public class SuppressionUtil extends SuppressionUtilCore {
                                        @NotNull PsiElement container,
                                        @NotNull String id,
                                        @NotNull Language commentLanguage) {
-    final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+    PsiFile file = container.getContainingFile();
+    Language language = container.getLanguage();
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file).getCommonSettings(language);
+    String indent = codeStyleSettings.LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION ? " " : "";
+    final String text = indent + SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+
     PsiComment comment = createComment(project, text, commentLanguage);
     container.getParent().addBefore(comment, container);
   }
 
   public static boolean isSuppressed(@NotNull PsiElement psiElement, @NotNull String id) {
-    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
+    for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
       if (!factory.isToCheckMember(psiElement, id)) {
         return true;
       }

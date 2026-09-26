@@ -10,4 +10,4 @@ def abc(Date d){}
 def abc(int i) {}
 
 def x = unknown2
-abc<warning descr="Method call is ambiguous">(x)</warning>
+abc<weak_warning descr="Cannot infer argument types">(x)</weak_warning>

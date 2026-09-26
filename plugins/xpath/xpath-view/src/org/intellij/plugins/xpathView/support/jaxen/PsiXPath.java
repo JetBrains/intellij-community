@@ -15,9 +15,9 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen;
 
+import com.intellij.psi.xml.XmlFile;
 import org.jaxen.BaseXPath;
 import org.jaxen.JaxenException;
-import com.intellij.psi.xml.XmlFile;
 
 public class PsiXPath extends BaseXPath {
     public PsiXPath(XmlFile file, String xpathExpr) throws JaxenException {

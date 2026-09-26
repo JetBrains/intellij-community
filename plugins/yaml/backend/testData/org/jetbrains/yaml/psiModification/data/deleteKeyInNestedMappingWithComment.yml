@@ -1,0 +1,4 @@
+root:
+  with:
+    nesting:
+      <caret>key: value # Hello

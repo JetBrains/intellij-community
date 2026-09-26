@@ -1,27 +1,19 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -33,15 +25,13 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.FacetBasedPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ModulePackagingElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactProjectStructureElement extends ProjectStructureElement {
   private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final Artifact myOriginalArtifact;
@@ -62,7 +52,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
       if (artifactEditor != null && (artifactEditor.isModified() || isArtifactModified(artifact))) {
         ProjectModelExternalSource externalSource = artifact.getExternalSource();
         if (externalSource != null) {
-          String message = ModificationOfImportedModelWarningComponent.getWarningText("Artifact '" + artifact.getName() + "'", externalSource);
+          String message = ModificationOfImportedModelWarningComponent.getWarningText(
+            JavaUiBundle.message("banner.slogan.artifact.0", artifact.getName()), externalSource);
           artifactProblemsHolder.registerWarning(message, "modification-of-imported-element", null);
         }
       }
@@ -84,7 +75,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
-    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
+    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         ProjectStructureElement element = getProjectStructureElementFor(packagingElement, ArtifactProjectStructureElement.this.myContext,
@@ -98,10 +89,9 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     return usages;
   }
 
-  @Nullable
-  public static ProjectStructureElement getProjectStructureElementFor(PackagingElement<?> packagingElement,
-                                                                       final StructureConfigurableContext context,
-                                                                       final ArtifactsStructureConfigurableContext artifactsStructureContext) {
+  public static @Nullable ProjectStructureElement getProjectStructureElementFor(PackagingElement<?> packagingElement,
+                                                                                final StructureConfigurableContext context,
+                                                                                final ArtifactsStructureConfigurableContext artifactsStructureContext) {
     if (packagingElement instanceof ModulePackagingElement) {
       final Module module = ((ModulePackagingElement)packagingElement).findModule(artifactsStructureContext);
       if (module != null) {
@@ -153,8 +143,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String getTypeName() {
-    return "Artifact";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return JavaUiBundle.message("configurable.artifact.prefix");
   }
 
   @Override
@@ -162,7 +152,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     return "artifact:" + getActualArtifactName();
   }
 
-  private String getActualArtifactName() {
+  private @Nls(capitalization = Nls.Capitalization.Sentence) String getActualArtifactName() {
     return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact).getName();
   }
 }

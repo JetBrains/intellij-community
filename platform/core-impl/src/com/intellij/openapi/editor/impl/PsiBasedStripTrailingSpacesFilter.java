@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.Language;
@@ -33,15 +19,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.BitSet;
 
 public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailingSpacesFilter {
-  @NotNull private final BitSet myDisabledLinesBitSet;
-  @NotNull private final Document myDocument;
+  private final @NotNull BitSet myDisabledLinesBitSet;
+  private final @NotNull Document myDocument;
 
   private static final Logger LOG = Logger.getInstance(PsiBasedStripTrailingSpacesFilter.class);
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
-    @NotNull
     @Override
-    public final StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
+    public final @NotNull StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
       Language language = getDocumentLanguage(document);
       if (language != null && isApplicableTo(language)) {
         PsiFile psiFile = getPsiFile(project, document);
@@ -55,8 +40,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
       return ALL_LINES;
     }
 
-    @NotNull
-    protected abstract PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document);
+    protected abstract @NotNull PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document);
     
     protected abstract boolean isApplicableTo(@NotNull Language language);
   }
@@ -74,8 +58,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
   
   protected abstract void process(@NotNull PsiFile psiFile);
 
-  @Nullable
-  public static Language getDocumentLanguage(@NotNull Document document) {
+  public static @Nullable Language getDocumentLanguage(@NotNull Document document) {
     FileDocumentManager manager = FileDocumentManager.getInstance();
     VirtualFile file = manager.getFile(document);
     if (file != null && file.isValid()) {
@@ -84,8 +67,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
     return null;
   }
   
-  @Nullable
-  private static PsiFile getPsiFile(@Nullable Project project, @NotNull Document document) {
+  private static @Nullable PsiFile getPsiFile(@Nullable Project project, @NotNull Document document) {
     if (project != null) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       if (documentManager.isCommitted(document)) {

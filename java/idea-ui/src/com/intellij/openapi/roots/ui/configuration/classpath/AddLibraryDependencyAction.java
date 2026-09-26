@@ -1,48 +1,35 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.roots.LibraryDependencyScopeSuggester;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
-* @author nik
-*/
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
-  public AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
-                                    final StructureConfigurableContext context) {
+  AddLibraryDependencyAction(ClasspathPanel classpathPanel,
+                             final int index,
+                             final @Nls(capitalization = Nls.Capitalization.Title) String title,
+                             final StructureConfigurableContext context) {
     super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;
   }
@@ -74,7 +61,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       final LibrariesModifiableModel model = myContext.myLevel2Providers.get(table.getTableLevel());
       if (model != null) {
         for (Library library : model.getLibraries()) {
-          if (condition.apply(library)) {
+          if (condition.test(library)) {
             return true;
           }
         }
@@ -89,22 +76,20 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   }
 
   @Override
-  @Nullable
-  protected ClasspathTableItem<?> createTableItem(final Library item) {
+  protected @Nullable ClasspathTableItem<?> createTableItem(final Library item) {
     // clear invalid order entry corresponding to added library if any
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (item.equals(libraryOrderEntry.getLibrary())) {
           return ClasspathTableItem.createLibItem(libraryOrderEntry, myContext);
         }
         String name = item.getName();
         if (name != null && name.equals(libraryOrderEntry.getLibraryName())) {
           if (orderEntry.isValid()) {
-            Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added", item.getName()),
-                                     ProjectBundle.message("classpath.title.adding.dependency"));
+            Messages.showErrorDialog(JavaUiBundle.message("classpath.message.library.already.added", item.getName()),
+                                     JavaUiBundle.message("classpath.title.adding.dependency"));
             return null;
           }
           else {
@@ -125,8 +110,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
 
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
     @Override
-    @NotNull
-    public List<Library> chooseElements() {
+    public @NotNull List<Library> chooseElements() {
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
                                                                                                getNotAddedSuitableLibrariesCondition());
       dialog.show();

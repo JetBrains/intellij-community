@@ -76,11 +76,9 @@ public class GrMemberInfoStorage extends AbstractMemberInfoStorage<GrMember, Psi
   }
 
   private void buildSubClassesMapForList(final PsiClassType[] classesList, GrTypeDefinition aClass) {
-    for (int i = 0; i < classesList.length; i++) {
-      PsiClassType element = classesList[i];
+    for (PsiClassType element : classesList) {
       PsiClass resolved = element.resolve();
-      if (resolved instanceof GrTypeDefinition) {
-        GrTypeDefinition superClass = (GrTypeDefinition)resolved;
+      if (resolved instanceof GrTypeDefinition superClass) {
         getSubclasses(superClass).add(aClass);
         buildSubClassesMap(superClass);
       }

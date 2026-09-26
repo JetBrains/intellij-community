@@ -1,0 +1,16 @@
+Original text:
+---------------
+def foo():
+    first = 1
+    second = 2
+    third = 3
+    return first + second + third
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>first = 100
+    second = 2
+    third = 3
+    return first + second + third</reparse>
+---------------

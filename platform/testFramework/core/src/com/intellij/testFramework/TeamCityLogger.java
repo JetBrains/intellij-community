@@ -1,36 +1,27 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
 
-public class TeamCityLogger {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.TeamCityLogger");
+public final class TeamCityLogger {
+  private static final Logger LOG = Logger.getInstance(TeamCityLogger.class);
 
-  private static final boolean isUnderTC = System.getProperty("bootstrap.testcases") != null;
+  public static final boolean isUnderTC = System.getenv("TEAMCITY_VERSION") != null;
+
+  @Nullable
+  public static final String currentBuildUrl = System.getenv("BUILD_URL");
 
   private TeamCityLogger() {}
 
@@ -38,7 +29,7 @@ public class TeamCityLogger {
     return new File(PathManager.getHomePath() + "/reports/report.txt");
   }
 
-  public static void info(String message) {
+  public static void info(@NotNull String message) {
     if (isUnderTC) {
       tcLog(message, null);
     }
@@ -47,10 +38,10 @@ public class TeamCityLogger {
     }
   }
 
-  public static void warning(String message) {
+  public static void warning(@NotNull String message) {
     warning(message, new Throwable());
   }
-  public static void warning(String message, @Nullable Throwable throwable) {
+  public static void warning(@NotNull String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "WARNING");
     } else {
@@ -58,10 +49,10 @@ public class TeamCityLogger {
     }
   }
 
-  public static void error(String message) {
+  public static void error(@NotNull String message) {
     error(message, new Throwable());
   }
-  public static void error(String message, @Nullable Throwable throwable) {
+  public static void error(@NotNull String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "ERROR");
     } else {
@@ -69,13 +60,54 @@ public class TeamCityLogger {
     }
   }
 
-  private static void tcLog(String message, String level) {
+  private static void tcLog(@NotNull String message, String level) {
+    if (message.isEmpty()) return;
     try {
+      while (message.charAt(0) == '\n') message = message.substring(1);
       if (level != null) message = level + ": " + message;
-      FileUtil.appendToFile(reportFile(), message + "\n");
+      if (!message.endsWith("\n")) message += "\n";
+      FileUtil.appendToFile(reportFile(), message);
     }
     catch (IOException e) {
       LOG.error(e);
     }
   }
+
+  public static <T extends Throwable> void block(@NotNull String caption, @NotNull ThrowableRunnable<T> runnable) throws T {
+    if (isUnderTC) {
+      block(caption, () -> {
+        runnable.run();
+        return null;
+      });
+    }
+    else {
+      runnable.run();
+    }
+  }
+
+  public static void publishArtifact(@NotNull Path artifactPath, @Nullable String artifactName) {
+    TeamCityReporter.INSTANCE.reportPublishArtifacts(artifactPath, artifactName);
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static <R, T extends Throwable> R block(@NotNull String caption, @NotNull ThrowableComputable<R, T> computable) throws T {
+    if (!isUnderTC) {
+      return computable.compute();
+    }
+
+    // Printing in several small statements to avoid service messages tearing, causing the fold to expand.
+    // Using .out instead of .err by the advice from Nikita Skvortsov.
+    System.out.flush();
+    System.out.println(TeamCityReporter.INSTANCE.serviceMessage("blockOpened", Map.of("name", caption)));
+    System.out.flush();
+    try {
+      return computable.compute();
+    }
+    finally {
+      System.out.flush();
+      System.out.println(TeamCityReporter.INSTANCE.serviceMessage("blockClosed", Map.of("name", caption)));
+      System.out.flush();
+    }
+  }
+
 }

@@ -1,0 +1,22 @@
+
+enum class E {
+    A, B, C, D
+}
+
+fun main() {
+    val k = E.A
+    myFun(k)
+
+}
+
+fun myFun(kind: E) {
+    // comment0
+    when (kind) {
+        E.A -> return // also comment
+        // comment
+        E.B -> return // also comment
+        // comment2
+        E.C -> return
+        else -> println("else")
+    }
+}

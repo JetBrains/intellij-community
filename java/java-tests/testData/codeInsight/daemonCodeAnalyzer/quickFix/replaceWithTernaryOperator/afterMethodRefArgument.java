@@ -1,4 +1,4 @@
-// "Replace with null-checking lambda" "true"
+// "Replace with null-checking lambda" "true-preview"
 
 import java.util.Arrays;
 

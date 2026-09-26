@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2007 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.coverage;
 
@@ -21,118 +7,159 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 
-/**
- * @author ven
- */
-public abstract class CoverageDataManager implements ProjectComponent, JDOMExternalizable {
+public abstract class CoverageDataManager {
+  private static final Key<CoverageAnnotator> SUPPRESSED_PRESENTATION_ANNOTATOR_KEY = Key.create("coverage.suppressed.presentation.annotator");
 
-  public static CoverageDataManager getInstance(Project project) {
-    return project.getComponent(CoverageDataManager.class);
+  @ApiStatus.Internal
+  public static void setSuppressedPresentation(@NotNull RunConfigurationBase<?> configuration, @NotNull CoverageAnnotator annotator) {
+    configuration.putUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY, annotator);
+  }
+
+  static @Nullable CoverageAnnotator takeSuppressedPresentationAnnotator(@NotNull RunConfigurationBase<?> configuration) {
+    CoverageAnnotator annotator = configuration.getUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY);
+    configuration.putUserData(SUPPRESSED_PRESENTATION_ANNOTATOR_KEY, null);
+    return annotator;
+  }
+
+  CoverageDataManager() { }
+
+  public static CoverageDataManager getInstance(@NotNull Project project) {
+    return project.getService(CoverageDataManagerImpl.class);
   }
 
   /**
    * TeamCity compatibility
-   * 
+   * <p>
    * List coverage suite for presentation from IDEA
    *
    * @param name                  presentable name of a suite
-   * @param fileProvider
    * @param filters               configured filters for this suite
    * @param lastCoverageTimeStamp when this coverage data was gathered
    * @param suiteToMergeWith      null remove coverage pack from prev run and get from new
-   * @param coverageRunner
-   * @param collectLineInfo
-   * @param tracingEnabled
    */
+  @SuppressWarnings("unused")
   public abstract CoverageSuite addCoverageSuite(String name,
-                                                 CoverageFileProvider fileProvider,
+                                                 @NotNull CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
-                                                 @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean collectLineInfo, final boolean tracingEnabled);
+                                                 @Nullable String suiteToMergeWith,
+                                                 @NotNull CoverageRunner coverageRunner,
+                                                 boolean coverageByTestEnabled, boolean branchCoverage);
 
-  public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
-                                                         long timeStamp,
-                                                         CoverageRunner coverageRunner, CoverageFileProvider fileProvider);
+  public abstract CoverageSuite addExternalCoverageSuite(@NotNull Path file, @NotNull CoverageRunner coverageRunner);
 
-
-  public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
   /**
-   * TeamCity 3.1.1 compatibility
+   * @deprecated Use {@link #addExternalCoverageSuite(Path, CoverageRunner)} instead.
    */
+  @SuppressWarnings({"IO_FILE_USAGE"})
   @Deprecated
-  public CoverageSuite addCoverageSuite(String name,
-                                        CoverageFileProvider fileProvider,
-                                        String[] filters,
-                                        long lastCoverageTimeStamp,
-                                        boolean suiteToMergeWith) {
-    return addCoverageSuite(name, fileProvider, filters, lastCoverageTimeStamp, null, null, false, false);
+  public CoverageSuite addExternalCoverageSuite(@NotNull File file, @NotNull CoverageRunner coverageRunner) {
+    return addExternalCoverageSuite(file.toPath(), coverageRunner);
   }
 
 
-  /**
-   * @return registered suites
-   */
-  @NotNull
-  public abstract CoverageSuite[] getSuites();
+  public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
+
 
   /**
-   * @return currently active suite
+   * Suites that are tracked by the coverage manager.
+   *
+   * @return registered suites
+   * @see com.intellij.coverage.actions.CoverageSuiteChooserDialog
+   */
+  public abstract CoverageSuite @NotNull [] getSuites();
+
+  /**
+   * @return Currently opened suites.
+   */
+  public abstract Collection<CoverageSuitesBundle> activeSuites();
+
+  /**
+   * Currently visible or one of the opened suites if view is not enabled.
    */
   public abstract CoverageSuitesBundle getCurrentSuitesBundle();
 
   /**
    * Choose active suite. Calling this method triggers updating the presentations in project view, editors etc.
-   * @param suite coverage suite to choose. <b>null</b> means no coverage information should be presented
+   *
+   * @param suite coverage suite to choose. Must not be <code>null</code>. Use <code>closeSuitesBundle</code> to close a suite
    */
-  public abstract void chooseSuitesBundle(@Nullable CoverageSuitesBundle suite);
+  public abstract void chooseSuitesBundle(@NotNull CoverageSuitesBundle suite);
+
+  public abstract void closeSuitesBundle(@NotNull CoverageSuitesBundle suite);
 
   public abstract void coverageGathered(@NotNull CoverageSuite suite);
 
   /**
+   * Called each time after a coverage suite is completely processed: data is loaded and accumulated
+   */
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
+
+  /**
+   * Called when coverage data loading or accumulation fails.
+   */
+  public void coverageDataCalculationFailed(@NotNull CoverageSuitesBundle suite) {}
+
+  /**
    * Remove suite
+   *
    * @param suite coverage suite to remove
    */
   public abstract void removeCoverageSuite(CoverageSuite suite);
 
   /**
+   * Remove suite from the list of tracked suites.
+   * <p>
+   * In contrast to <code>removeCoverageSuite</code>, this method keeps file on disk.
+   *
+   * @param suite suite to unregister
+   */
+  public abstract void unregisterCoverageSuite(CoverageSuite suite);
+
+  /**
    * runs computation in read action, blocking project close till action has been run,
    * and doing nothing in case projectClosing() event has been already broadcasted.
-   *  Note that actions must not be long running not to cause significant pauses on project close.  
-   * @param computation {@link com.intellij.openapi.util.Computable to be run}
+   * Note that actions must not be long-running not to cause significant pauses on project close.
+   *
+   * @param computation {@link Computable to be run}
    * @return result of the computation or null if the project is already closing.
    */
-  @Nullable
-  public abstract <T> T doInReadActionIfProjectOpen(Computable<T> computation);
+  public abstract @Nullable <T> T doInReadActionIfProjectOpen(Computable<T> computation);
 
-  public abstract boolean isSubCoverageActive();
+  @ApiStatus.Internal
+  public boolean isSubCoverageActive() {
+    return false;
+  }
 
-  public abstract void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> methodNames);
+  @ApiStatus.Internal
+  public void selectSubCoverage(final @NotNull CoverageSuitesBundle suite, final List<String> methodNames) {
+  }
 
-  public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
+  @ApiStatus.Internal
+  public void restoreMergedCoverage(final @NotNull CoverageSuitesBundle suite) {
+  }
 
-  public abstract void addSuiteListener(CoverageSuiteListener listener, Disposable parentDisposable);
+  public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void triggerPresentationUpdate();
 
   /**
    * This method attach process listener to process handler. Listener will load coverage information after process termination
-   * @param handler
-   * @param configuration
-   * @param runnerSettings
    */
-  public abstract void attachToProcess(@NotNull final ProcessHandler handler,
-                                       @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);
+  public abstract void attachToProcess(final @NotNull ProcessHandler handler,
+                                       final @NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
-  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase configuration, RunnerSettings runnerSettings);
-
+  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 }

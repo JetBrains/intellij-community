@@ -1,0 +1,67 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.fir.highlighter
+
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.load.java.ReportLevel
+import org.jetbrains.kotlin.test.TestMetadata
+import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.runner.RunWith
+import kotlin.io.path.exists
+
+@TestRoot("idea/tests")
+@TestMetadata("testData/highlighterJsr305/project")
+@RunWith(JUnit38ClassRunner::class)
+class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        val foreignAnnotationsJar = TestKotlinArtifacts.jsr305
+        check(foreignAnnotationsJar.exists()) { "$foreignAnnotationsJar does not exist" }
+        val libraryJar = KotlinCompilerStandalone(
+            listOf(IDEA_TEST_DATA_DIR.resolve("highlighterJsr305/library")),
+            classpath = listOf(foreignAnnotationsJar.toFile())
+        ).compile().toPath()
+
+        return object : KotlinJdkAndLibraryProjectDescriptor(listOf(TestKotlinArtifacts.kotlinStdlib, foreignAnnotationsJar, libraryJar)) {
+            override fun setUpProject(
+                project: Project,
+                handler: SetupHandler
+            ) {
+                super.setUpProject(project, handler)
+
+                val jsrStateByTestName = ReportLevel.findByDescription(getTestName(true)) ?: return
+                KotlinCompilerSettings.getInstance(project).update {
+                    additionalArguments += " -Xjsr305=${jsrStateByTestName.description}"
+                }
+            }
+        }
+    }
+
+    fun testIgnore() {
+        doTest()
+    }
+
+    fun testWarn() {
+        doTest()
+    }
+
+    fun testStrict() {
+        doTest()
+    }
+
+    fun testDefault() {
+        doTest()
+    }
+
+    private fun doTest() {
+        myFixture.configureByFile("${getTestName(false)}.kt")
+        myFixture.checkHighlighting()
+    }
+}

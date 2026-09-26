@@ -1,60 +1,57 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
-/**
- *  @author dsl
- */
-public class PathMacroTable extends Table {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.pathMacros.PathMacroTable");
+public final class PathMacroTable extends JBTable {
+  private static final Logger LOG = Logger.getInstance(PathMacroTable.class);
   private final PathMacros myPathMacros = PathMacros.getInstance();
   private final MyTableModel myTableModel = new MyTableModel();
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
 
   private final List<Couple<String>> myMacros = new ArrayList<>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = Comparator.comparing(pair -> pair.getFirst());
+  private static final Comparator<Pair<String, String>> MACRO_COMPARATOR = Pair.comparingByFirst();
 
+  @Nullable private final Project myProject;
   private final Collection<String> myUndefinedMacroNames;
 
-  public PathMacroTable() {
-    this(null);
+  public PathMacroTable(@Nullable Project project) {
+    this(project, null);
   }
 
-  public PathMacroTable(final Collection<String> undefinedMacroNames) {
+  public PathMacroTable(@Nullable Project project, Collection<String> undefinedMacroNames) {
+    myProject = project;
     myUndefinedMacroNames = undefinedMacroNames;
+    setShowGrid(false);
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
     column.setCellRenderer(new DefaultTableCellRenderer() {
@@ -62,7 +59,7 @@ public class PathMacroTable extends Table {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
-        component.setForeground(macroValue.length() == 0
+        component.setForeground(macroValue.isEmpty()
                                 ? JBColor.RED
                                 : isSelected ? table.getSelectionForeground() : table.getForeground());
         return component;
@@ -80,11 +77,11 @@ public class PathMacroTable extends Table {
 
   public void addMacro() {
     final String title = ApplicationBundle.message("title.add.variable");
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, "", "", new AddValidator(title));
+    final PathMacroEditor macroEditor = new PathMacroEditor(myProject, title, "", "", new AddValidator(title));
     if (macroEditor.showAndGet()) {
       final String name = macroEditor.getName();
       myMacros.add(Couple.of(name, macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       final int index = indexOfMacroWithName(name);
       LOG.assertTrue(index >= 0);
       myTableModel.fireTableDataChanged();
@@ -120,9 +117,8 @@ public class PathMacroTable extends Table {
     myPathMacros.removeAllMacros();
     for (Couple<String> pair : myMacros) {
       final String value = pair.getSecond();
-      if (value != null && value.trim().length() > 0) {
-        String path = value.replace(File.separatorChar, '/');
-        path = StringUtil.trimEnd(path, "/");
+      if (!StringUtil.isEmptyOrSpaces(value)) {
+        String path = StringUtil.trimEnd(value.replace(File.separatorChar, '/'), "/");
         myPathMacros.setMacro(pair.getFirst(), path);
       }
     }
@@ -160,11 +156,11 @@ public class PathMacroTable extends Table {
     myTableModel.fireTableDataChanged();
   }
 
-  private void obtainMacroPairs(final List<Couple<String>> macros) {
+  private void obtainMacroPairs(@NotNull List<Couple<String>> macros) {
     macros.clear();
-    final Set<String> macroNames = myPathMacros.getUserMacroNames();
-    for (String name : macroNames) {
-      macros.add(Couple.of(name, myPathMacros.getValue(name).replace('/', File.separatorChar)));
+    final Map<String, String> macroNames = myPathMacros.getUserMacros();
+    for (String name : macroNames.keySet()) {
+      macros.add(Couple.of(name, FileUtilRt.toSystemDependentName(macroNames.get(name))));
     }
 
     if (myUndefinedMacroNames != null) {
@@ -172,7 +168,7 @@ public class PathMacroTable extends Table {
         macros.add(Couple.of(undefinedMacroName, ""));
       }
     }
-    Collections.sort(macros, MACRO_COMPARATOR);
+    macros.sort(MACRO_COMPARATOR);
   }
 
   public void editMacro() {
@@ -183,11 +179,11 @@ public class PathMacroTable extends Table {
     final Couple<String> pair = myMacros.get(selectedRow);
     final String title = ApplicationBundle.message("title.edit.variable");
     final String macroName = pair.getFirst();
-    final PathMacroEditor macroEditor = new PathMacroEditor(title, macroName, pair.getSecond(), new EditValidator());
+    final PathMacroEditor macroEditor = new PathMacroEditor(myProject, title, macroName, pair.getSecond(), new EditValidator());
     if (macroEditor.showAndGet()) {
       myMacros.remove(selectedRow);
       myMacros.add(Couple.of(macroEditor.getName(), macroEditor.getValue()));
-      Collections.sort(myMacros, MACRO_COMPARATOR);
+      myMacros.sort(MACRO_COMPARATOR);
       myTableModel.fireTableDataChanged();
     }
   }
@@ -198,7 +194,7 @@ public class PathMacroTable extends Table {
     return !macros.equals(myMacros);
   }
 
-  private class MyTableModel extends AbstractTableModel{
+  private final class MyTableModel extends AbstractTableModel{
     @Override
     public int getColumnCount() {
       return 2;
@@ -210,56 +206,49 @@ public class PathMacroTable extends Table {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return String.class;
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Couple<String> pair = myMacros.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_COLUMN: return pair.getFirst();
-        case VALUE_COLUMN: return pair.getSecond();
-      }
-      LOG.error("Wrong indices");
-      return null;
-    }
-
-    @Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_COLUMN -> pair.getFirst();
+        case VALUE_COLUMN -> pair.getSecond();
+        default -> {
+          LOG.error("Wrong indices");
+          yield null;
+        }
+      };
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_COLUMN: return ApplicationBundle.message("column.name");
-        case VALUE_COLUMN: return ApplicationBundle.message("column.value");
-      }
-      return null;
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return false;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> ApplicationBundle.message("column.name");
+        case VALUE_COLUMN -> ApplicationBundle.message("column.value");
+        default -> null;
+      };
     }
   }
 
-  private class AddValidator implements PathMacroEditor.Validator {
-    private final String myTitle;
+  private final class AddValidator implements PathMacroEditor.Validator {
+    private final @NlsContexts.DialogTitle String myTitle;
 
-    public AddValidator(String title) {
+    AddValidator(@NlsContexts.DialogTitle String title) {
       myTitle = title;
     }
 
     @Override
     public boolean checkName(String name) {
-      if (name.length() == 0) return false;
+      if (name.isEmpty()) return false;
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
     @Override
     public boolean isOK(String name, String value) {
-      if(name.length() == 0) return false;
+      if(name.isEmpty()) return false;
       if (hasMacroWithName(name)) {
         Messages.showErrorDialog(PathMacroTable.this,
                                  ApplicationBundle.message("error.variable.already.exists", name), myTitle);
@@ -269,7 +258,7 @@ public class PathMacroTable extends Table {
     }
   }
 
-  private static class EditValidator implements PathMacroEditor.Validator {
+  private static final class EditValidator implements PathMacroEditor.Validator {
     @Override
     public boolean checkName(String name) {
       if (name.isEmpty() || PathMacros.getInstance().getSystemMacroNames().contains(name)) {

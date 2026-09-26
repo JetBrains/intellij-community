@@ -1,19 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.JvmModifiersOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiJvmConversionHelper.*;
+import static com.intellij.psi.PsiJvmConversionHelper.hasListModifier;
 
 /**
  * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
  * and annotations.
  */
-public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
+public interface PsiModifierListOwner extends PsiElement {
+
   /**
    * Returns the list of modifiers for the element.
    *
@@ -32,31 +32,27 @@ public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
    */
   boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name);
 
-  @NotNull
-  @Override
-  default PsiAnnotation[] getAnnotations() {
-    return getListAnnotations(this);
+  default PsiAnnotation @NotNull [] getAnnotations() {
+    return PsiJvmConversionHelper.getListAnnotations(this);
   }
 
-  @Nullable
-  @Override
-  default PsiAnnotation getAnnotation(@NotNull @NonNls String fqn) {
-    return getListAnnotation(this, fqn);
+  /**
+   * @return true if the element has annotations, false otherwise.
+   */
+  default boolean hasAnnotations() {
+    PsiModifierList list = getModifierList();
+    return list != null && list.hasAnnotations();
   }
 
-  @Override
-  default boolean hasAnnotation(@NotNull @NonNls String fqn) {
-    return hasListAnnotation(this, fqn);
+  default @Nullable PsiAnnotation getAnnotation(@NotNull String fqn) {
+    return PsiJvmConversionHelper.getListAnnotation(this, fqn);
   }
 
-  @Override
+  default boolean hasAnnotation(@NotNull String fqn) {
+    return PsiJvmConversionHelper.hasListAnnotation(this, fqn);
+  }
+
   default boolean hasModifier(@NotNull JvmModifier modifier) {
     return hasListModifier(this, modifier);
-  }
-
-  @Nullable
-  @Override
-  default PsiElement getSourceElement() {
-    return this;
   }
 }

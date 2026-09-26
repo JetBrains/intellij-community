@@ -1,0 +1,6 @@
+// "Change return type of called function 'bar' to 'HashSet<Int>'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+
+fun bar(): Any = java.util.LinkedHashSet<Int>()
+fun foo(): java.util.HashSet<Int> = bar(<caret>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

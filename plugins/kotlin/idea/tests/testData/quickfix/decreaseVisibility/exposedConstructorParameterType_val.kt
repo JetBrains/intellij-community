@@ -1,0 +1,17 @@
+// "Make 'arg' private" "true"
+// PRIORITY: HIGH
+// ACTION: Convert to secondary constructor
+// ACTION: Create test
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Make 'PrivateType' public
+// ACTION: Move to class body
+// ERROR: 'public' function exposes its 'private-in-file' parameter type PrivateType
+// K2_AFTER_ERROR: EXPOSED_PARAMETER_TYPE
+// K2_ERROR: EXPOSED_PARAMETER_TYPE
+
+
+private class PrivateType
+
+class Foo(val <caret>arg: PrivateType) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction

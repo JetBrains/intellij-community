@@ -1,61 +1,55 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.actions.AddDomElementAction;
 import com.intellij.util.xml.ui.actions.DefaultAddAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import java.awt.Container;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
-/**
- * @author peter
- */
-public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, TypeSafeDataProvider {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, DataProvider {
   private static final DataKey<DomCollectionControl> DOM_COLLECTION_CONTROL = DataKey.create("DomCollectionControl");
 
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
@@ -66,9 +60,6 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private List<T> myCollectionElements = new ArrayList<>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
-  public static final Icon ADD_ICON = IconUtil.getAddIcon();
-  public static final Icon EDIT_ICON = IconUtil.getEditIcon();
-  public static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
 
   public DomCollectionControl(@NotNull DomElement parentElement,
                               @NotNull DomCollectionChildDescription description,
@@ -84,7 +75,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
                               @NonNls String subTagName,
                               final boolean editable,
                               ColumnInfo<T, ?>... columnInfos) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull DomCollectionChildDescription description) {
@@ -93,7 +84,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull @NonNls String subTagName) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
   }
 
   public boolean isEditable() {
@@ -120,7 +111,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public boolean canNavigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
@@ -129,7 +120,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   @Override
   public void navigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)ClassUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
     int index = myCollectionElements.indexOf(domElement);
@@ -139,19 +130,18 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
-    if (DOM_COLLECTION_CONTROL.equals(key)) {
-      sink.put(DOM_COLLECTION_CONTROL, this);
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DOM_COLLECTION_CONTROL.is(dataId)) {
+      return this;
     }
-  }
-
-  @Nullable @NonNls
-  protected String getHelpId() {
     return null;
   }
 
-  @Nullable
-  protected String getEmptyPaneText() {
+  protected @Nullable @NonNls String getHelpId() {
+    return null;
+  }
+
+  protected @Nullable @Nls String getEmptyPaneText() {
     return null;
   }
 
@@ -201,7 +191,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
   }
 
-  protected void doRemove(final List<T> toDelete) {
+  protected void doRemove(final List<? extends T> toDelete) {
     Set<PsiFile> files = new HashSet<>();
     for (final T t : toDelete) {
       final XmlElement element = t.getXmlElement();
@@ -252,14 +242,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     DomElement domElement = getDomElement();
     final List<DomElementProblemDescriptor> list =
       DomElementAnnotationsManager.getInstance(getProject()).getCachedProblemHolder(domElement).getProblems(domElement);
-    final List<String> messages = new ArrayList<>();
+    final List<@InspectionMessage String> messages = new ArrayList<>();
     for (final DomElementProblemDescriptor descriptor : list) {
       if (descriptor instanceof DomCollectionProblemDescriptor
           && myChildDescription.equals(((DomCollectionProblemDescriptor)descriptor).getChildDescription())) {
         messages.add(descriptor.getDescriptionTemplate());
       }
     }
-    myCollectionPanel.setErrorMessages(ArrayUtil.toStringArray(messages));
+    myCollectionPanel.setErrorMessages(ArrayUtilRt.toStringArray(messages));
     myCollectionPanel.repaint();
   }
 
@@ -301,12 +291,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return (List<T>)myChildDescription.getValues(myParentDomElement);
   }
 
-  @Nullable
-  protected AnAction[] createAdditionActions() {
+  protected AnAction @Nullable [] createAdditionActions() {
     return null;
   }
 
-  protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Type type) {
+  protected DefaultAddAction createDefaultAction(final @ActionText String name, final Icon icon, final Type type) {
     return new ControlAddAction(name, name, icon) {
       @Override
       protected Type getElementType() {
@@ -315,8 +304,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     };
   }
 
-  @Nullable
-  private static DomEditorManager getDomEditorManager(DomUIControl control) {
+  private static @Nullable DomEditorManager getDomEditorManager(DomUIControl control) {
     JComponent component = control.getComponent();
     while (component != null && !(component instanceof DomEditorManager)) {
       final Container parent = component.getParent();
@@ -341,11 +329,12 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     public ControlAddAction() {
     }
 
-    public ControlAddAction(final String text) {
+    public ControlAddAction(final @ActionText String text) {
       super(text);
     }
 
-    public ControlAddAction(final String text, final String description, final Icon icon) {
+    public ControlAddAction(final @ActionText String text, final @NlsActions.ActionDescription String description,
+                            final Icon icon) {
       super(text, description, icon);
     }
 
@@ -375,7 +364,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    protected final void afterAddition(@NotNull final T newElement) {
+    protected final void afterAddition(final @NotNull T newElement) {
       reset();
       afterAddition(myCollectionPanel.getTable(), myCollectionElements.size() - 1);
     }
@@ -401,8 +390,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
+    protected DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[]{getDomCollectionControl(e).getChildDescription()};
     }
 
@@ -417,8 +405,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    public AnAction[] getChildren(final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(final AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       AnAction[] actions = control.createAdditionActions();
       return actions == null ? super.getChildren(e) : actions;
@@ -426,7 +413,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
     @Override
     protected DefaultAddAction createAddingAction(final AnActionEvent e,
-                                                  final String name,
+                                                  final @ActionText String name,
                                                   final Icon icon,
                                                   final Type type,
                                                   final DomCollectionChildDescription description) {
@@ -437,41 +424,46 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   public static class EditAction extends AnAction {
 
     public EditAction() {
-      super(ApplicationBundle.message("action.edit"), null, EDIT_ICON);
+      super(XmlDomBundle.message("dom.action.edit"), null, IconUtil.getEditIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       control.doEdit();
       control.reset();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       final boolean visible = control != null && control.isEditable();
       e.getPresentation().setVisible(visible);
       e.getPresentation().setEnabled(visible && control.getComponent().getTable().getSelectedRowCount() == 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static class RemoveAction extends AnAction {
     public RemoveAction() {
-      super(ApplicationBundle.message("action.remove"), null, REMOVE_ICON);
+      super(XmlDomBundle.message("dom.action.remove"), null, IconUtil.getRemoveIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       control.doRemove();
       control.reset();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final boolean enabled;
       final DomCollectionControl control = getDomCollectionControl(e);
       if (control != null) {
@@ -482,6 +474,11 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         enabled = false;
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+context(s: String)
+fun test() {
+    println(s)
+}

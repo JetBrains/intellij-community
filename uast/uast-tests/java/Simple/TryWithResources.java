@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 public class TryWithResources {
     public void foo() {
-        try (BufferedReader br =
-                     new BufferedReader(new FileReader(path))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             return br.readLine();
         }
+    }
+
+    public void foo(BufferedReader br) {
+      try (br) {
+        return br.readLine();
+      }
     }
 }

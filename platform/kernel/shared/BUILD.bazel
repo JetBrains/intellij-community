@@ -1,0 +1,77 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.kernel` start
+content_module_jar(module = ":kernel")
+### auto-generated section `dev intellij.platform.kernel` end
+
+### auto-generated section `build intellij.platform.kernel` start
+jvm_library(
+    name = "kernel",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//fleet/kernel"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//fleet/kernel",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//platform/kernel/pasta",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "kernel_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.kernel",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/kernel",
+        "//fleet/kernel:kernel_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":kernel",
+        "//fleet/kernel:kernel_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/kernel/pasta:pasta_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.kernel` end
+
+### auto-generated section `iml intellij.platform.kernel` start
+exports_files(
+    [
+        "intellij.platform.kernel.iml",
+        "resources/intellij.platform.kernel.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.kernel` end

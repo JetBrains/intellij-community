@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,9 +13,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -27,16 +27,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Maxim.Medvedev
  */
-public class MoveClassToNewFileIntention extends Intention {
+public final class MoveClassToNewFileIntention extends Intention {
 
   @Override
   public boolean startInWriteAction() {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -52,7 +51,7 @@ public class MoveClassToNewFileIntention extends Intention {
     if (dir != null) {
       if (dir.findFile(newFileName) != null) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final String message = GroovyIntentionsBundle.message("file.exists", newFileName, dir.getName());
+          final String message = GroovyBundle.message("file.exists", newFileName, dir.getName());
           CommonRefactoringUtil.showErrorHint(project, editor, message, getFamilyName(), null);
         }
         return;
@@ -83,9 +82,8 @@ public class MoveClassToNewFileIntention extends Intention {
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new ClassNameDiffersFromFileNamePredicate(true);
   }
 }

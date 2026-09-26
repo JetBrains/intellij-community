@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -25,7 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
@@ -33,18 +34,16 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public abstract class ContentEntryEditingAction extends ToggleAction implements DumbAware {
   protected final JTree myTree;
 
   protected ContentEntryEditingAction(JTree tree) {
     myTree = tree;
-    getTemplatePresentation().setEnabled(true);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);
@@ -61,8 +60,12 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     }
   }
 
-  @NotNull
-  protected final VirtualFile[] getSelectedFiles() {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  protected final VirtualFile @NotNull [] getSelectedFiles() {
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
       return VirtualFile.EMPTY_ARRAY;

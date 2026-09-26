@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- * @since 19.12.2012
- */
 public interface RichTextHandler {
   String getMarker();
   void handle(@NotNull Info info, @NotNull Map<String, String> attributes, int start, int end);

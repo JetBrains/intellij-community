@@ -25,13 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * {@link LineWrapPositionStrategy} implementation that uses
  * {@link LanguageLineWrapPositionStrategy#getDefaultImplementation() default line wrap strategy} but restricts its scope
  * by {@link #PsiAwareDefaultLineWrapPositionStrategy(boolean, IElementType...) target tokens/elements}.
- * 
- * @author Denis Zhdanov
- * @since 5/12/11 12:50 PM
  */
 public class PsiAwareDefaultLineWrapPositionStrategy extends PsiAwareLineWrapPositionStrategy {
 
-  public PsiAwareDefaultLineWrapPositionStrategy(boolean nonVirtualOnly, @NotNull IElementType ... enabledTypes) {
+  public PsiAwareDefaultLineWrapPositionStrategy(boolean nonVirtualOnly, IElementType @NotNull ... enabledTypes) {
     super(nonVirtualOnly, enabledTypes);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -8,45 +8,51 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.util.ContentsUtil.addContent;
-import static com.intellij.util.containers.UtilKt.stream;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
-public class IntersectingLocalChangesPanel {
+public final class IntersectingLocalChangesPanel {
+  private final @NotNull BorderLayoutPanel myPanel;
+  private final @NotNull List<? extends FilePath> myFiles;
+  private final @NotNull Project myProject;
 
-  @NotNull private final BorderLayoutPanel myPanel;
-  @NotNull private final List<FilePath> myFiles;
-  @NotNull private final Project myProject;
-
-  public IntersectingLocalChangesPanel(@NotNull Project project, @NotNull List<FilePath> files, @NotNull String text) {
+  public IntersectingLocalChangesPanel(@NotNull Project project, @NotNull List<? extends FilePath> files) {
     myProject = project;
     myFiles = files;
-    myPanel = createPanel(createLabel(text), createTree());
+    myPanel = createPanel(createLabel(), createTree());
   }
 
-  @NotNull
-  private BorderLayoutPanel createPanel(@NotNull JLabel label, @NotNull JTree tree) {
+  private @NotNull BorderLayoutPanel createPanel(@NotNull JLabel label, @NotNull JTree tree) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     panel.setBackground(UIUtil.getTextFieldBackground());
@@ -55,13 +61,14 @@ public class IntersectingLocalChangesPanel {
 
     DataManager.registerDataProvider(panel, dataId -> {
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return getNavigatableArray(myProject, stream(tree.getSelectionPaths())
+        JBIterable<VirtualFile> files = JBIterable.of(tree.getSelectionPaths())
           .map(TreePath::getLastPathComponent)
           .map(node -> (ChangesBrowserNode<?>)node)
-          .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
+          .flatMap(ChangesBrowserNode::iterateFilePathsUnder)
           .map(FilePath::getVirtualFile)
           .filter(Objects::nonNull)
-          .distinct());
+          .unique();
+        return getNavigatableArray(myProject, files);
       }
 
       return null;
@@ -70,8 +77,7 @@ public class IntersectingLocalChangesPanel {
     return panel;
   }
 
-  @NotNull
-  private SimpleTree createTree() {
+  private @NotNull SimpleTree createTree() {
     SimpleTree tree = new SimpleTree(TreeModelBuilder.buildFromFilePaths(myProject, NoneChangesGroupingFactory.INSTANCE, myFiles)) {
       @Override
       protected void configureUiHelper(@NotNull TreeUIHelper helper) {
@@ -87,9 +93,8 @@ public class IntersectingLocalChangesPanel {
     return tree;
   }
 
-  @NotNull
-  private static JBLabel createLabel(@NotNull String text) {
-    JBLabel label = new JBLabel(text) {
+  private static @NotNull JBLabel createLabel() {
+    JBLabel label = new JBLabel(message("label.merge.local.changes.intersection")) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
@@ -103,14 +108,12 @@ public class IntersectingLocalChangesPanel {
     return label;
   }
 
-  @SuppressWarnings("SameParameterValue")
   public static void showInVersionControlToolWindow(@NotNull Project project,
-                                                    @NotNull String title,
-                                                    @NotNull List<FilePath> files,
-                                                    @NotNull String prompt) {
-    IntersectingLocalChangesPanel intersectingPanel = new IntersectingLocalChangesPanel(project, files, prompt);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(intersectingPanel.myPanel, title, true);
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+                                                    @TabTitle @NotNull String title,
+                                                    @NotNull List<? extends FilePath> files) {
+    IntersectingLocalChangesPanel intersectingPanel = new IntersectingLocalChangesPanel(project, files);
+    Content content = ContentFactory.getInstance().createContent(intersectingPanel.myPanel, title, true);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
 
     addContent(toolWindow.getContentManager(), content, true);
     toolWindow.activate(null);

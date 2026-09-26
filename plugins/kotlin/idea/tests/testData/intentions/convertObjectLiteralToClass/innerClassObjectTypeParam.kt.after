@@ -1,0 +1,10 @@
+// WITH_STDLIB
+class Foo<T> {
+    inner class B {
+        val iter = TIterable<T>()
+    }
+}
+
+class TIterable<T> : Iterable<T> {
+    override fun iterator(): Iterator<T> = TODO()
+}

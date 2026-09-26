@@ -1,29 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,22 +32,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class GenerateComponentExternalizationAction extends AnAction {
+public class GenerateComponentExternalizationAction extends AnAction implements PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(GenerateComponentExternalizationAction.class);
 
-  @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
-  @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
-  @NonNls private final static String STATE = "com.intellij.openapi.components.State";
-  @NonNls private final static String STORAGE = "com.intellij.openapi.components.Storage";
+  private static final @NonNls String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
+  private static final @NonNls String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
+  private static final @NonNls String STATE = "com.intellij.openapi.components.State";
+  private static final @NonNls String STORAGE = "com.intellij.openapi.components.Storage";
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
     assert target != null;
 
@@ -100,8 +98,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
                                                   DevKitBundle.message("command.implement.externalizable"), null);
   }
 
-  @Nullable
-  private static PsiClass getComponentInContext(DataContext context) {
+  private static @Nullable PsiClass getComponentInContext(DataContext context) {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;
@@ -125,8 +122,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
+  public void update(@NotNull AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
 
     final Presentation presentation = e.getPresentation();

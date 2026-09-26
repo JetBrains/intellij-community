@@ -1,39 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.projectWizard.WizardInputField;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.JdomKt;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -42,77 +34,88 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class LocalArchivedTemplate extends ArchivedProjectTemplate {
-  public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
-  static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
-  static final String TEMPLATE_META_XML = "template-meta.xml";
+@ApiStatus.Internal
+public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
+  private static final Logger LOG = Logger.getInstance(LocalArchivedTemplate.class);
+  public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
+  static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
+  static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
   static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
-  public static final String UNENCODED_ATTRIBUTE = "unencoded";
-  static final String ROOT_FILE_NAME = "root";
+  public static final @NonNls String UNENCODED_ATTRIBUTE = "unencoded";
+  static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
-  private final ModuleType myModuleType;
-  @Nullable private final List<RootDescription> myModuleDescriptions;
+  private final NullableLazyValue<ModuleType<?>> myModuleType;
+  private final NullableLazyValue<List<RootDescription>> myModuleDescriptions;
   private boolean myEscaped = true;
-  private Icon myIcon;
+  private final NullableLazyValue<Icon> myIcon;
 
-  public LocalArchivedTemplate(@NotNull URL archivePath,
-                               @NotNull ClassLoader classLoader) {
+  public LocalArchivedTemplate(@NotNull URL archivePath, @NotNull ClassLoader classLoader) {
     super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
-    myModuleType = computeModuleType(this);
-    String s = readEntry(TEMPLATE_DESCRIPTOR);
-    if (s != null) {
-      try {
-        Element templateElement = JdomKt.loadElement(s);
-        populateFromElement(templateElement);
-        String iconPath = templateElement.getChildText("icon-path");
-        if (iconPath != null) {
-          myIcon = IconLoader.findIcon(iconPath, classLoader);
+    myModuleType = NullableLazyValue.lazyNullable(() -> computeModuleType(this));
+    myIcon = NullableLazyValue.lazyNullable(() -> {
+      String s = readEntry(TEMPLATE_DESCRIPTOR);
+      if (s != null) {
+        try {
+          Element templateElement = JDOMUtil.load(s);
+          populateFromElement(templateElement);
+          String iconPath = templateElement.getChildText("icon-path");
+          if (iconPath != null) {
+            return IconLoader.findIcon(iconPath, classLoader);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
+      return null;
+    });
 
-    String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
-    if (meta != null) {
-      try {
-        Element templateElement = JdomKt.loadElement(meta);
-        String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
-        if (unencoded != null) {
-          myEscaped = !Boolean.valueOf(unencoded);
+    myModuleDescriptions = NullableLazyValue.lazyNullable(() -> {
+      String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
+      if (meta != null) {
+        try {
+          Element templateElement = JDOMUtil.load(meta);
+          String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
+          if (unencoded != null) {
+            myEscaped = !Boolean.parseBoolean(unencoded);
+          }
+
+          return RootDescription.readRoots(templateElement);
         }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      return null;
+    });
+  }
 
-        myModuleDescriptions = RootDescription.readRoots(templateElement);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      myModuleDescriptions = null;
-    }
+  @Override
+  public @NotNull List<WizardInputField<?>> getInputFields() {
+    myIcon.getValue();
+    return super.getInputFields();
   }
 
   public ValidationResult validate(@NotNull String baseDirPath) {
-    if (myModuleDescriptions != null && !myModuleDescriptions.isEmpty()) {
+    List<RootDescription> descriptions = myModuleDescriptions.getValue();
+    if (descriptions != null && !descriptions.isEmpty()) {
       File baseDirFile = new File(baseDirPath);
-      for (RootDescription description : myModuleDescriptions) {
+      for (RootDescription description : descriptions) {
         File rootFile = new File(baseDirFile + "/" + description.myRelativePath);
         try {
           rootFile = rootFile.getCanonicalFile();
           if (rootFile.exists()) {
             String[] list = rootFile.list();
             if (list == null) {
-              return new ValidationResult("<html>File '" + rootFile.getAbsolutePath() + "' already exists," +
-                                          " so project root can't be created</html>");
+              return new ValidationResult(
+                LangBundle.message("dialog.message.already.exists.so.project.root.can.t.be.created.html", rootFile.getAbsolutePath()));
             }
             if (list.length > 0) {
-              return new ValidationResult("<html>Directory '" + rootFile.getAbsolutePath() + "' already exists and is not empty, " +
-                                          "so project root can't be created</html>");
+              return new ValidationResult(
+                LangBundle.message("dialog.message.directory.already.exists.and.is.not.empty", rootFile.getAbsolutePath()));
             }
           }
         }
@@ -124,7 +127,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return null;
   }
 
-  private static String getTemplateName(URL url) {
+  private static @NlsSafe String getTemplateName(URL url) {
     String fileName = new File(url.getPath()).getName();
     return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
@@ -136,23 +139,23 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public Icon getIcon() {
-    return myIcon == null ? super.getIcon() : myIcon;
+    return myIcon.getValue() == null ? super.getIcon() : myIcon.getValue();
   }
 
-  public boolean isEscaped(){
+  boolean isEscaped() {
+    myModuleDescriptions.getValue();
     return myEscaped;
   }
 
-  @Nullable
-  String readEntry(@NotNull final String endsWith) {
+  private @Nullable @NlsSafe String readEntry(final @NotNull String endsWith) {
     try {
-      return processStream(new StreamProcessor<String>() {
+      return processStream(new StreamProcessor<>() {
         @Override
         public String consume(@NotNull ZipInputStream stream) throws IOException {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
+              return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
             }
           }
           return null;
@@ -164,12 +167,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     }
   }
 
-  @NotNull
-  private static ModuleType computeModuleType(LocalArchivedTemplate template) {
+  private static @NotNull ModuleType<?> computeModuleType(LocalArchivedTemplate template) {
     String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
-      String type = JdomKt.loadElement(iml).getAttributeValue(Module.ELEMENT_TYPE);
+      String type = JDOMUtil.load(iml).getAttributeValue(Module.ELEMENT_TYPE);
       return ModuleTypeManager.getInstance().findByID(type);
     }
     catch (Exception e) {
@@ -178,13 +180,15 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  protected ModuleType getModuleType() {
-    return myModuleType;
+  protected ModuleType<?> getModuleType() {
+    return myModuleType.getValue();
   }
 
   @Override
   public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
-    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
+    try (ZipInputStream zip = new ZipInputStream(myArchivePath.openStream())) {
+      return consumer.consume(zip);
+    }
   }
 
   public URL getArchivePath() {
@@ -192,14 +196,15 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  public void handleUnzippedDirectories(File dir, List<File> filesToRefresh) throws IOException {
-    if (myModuleDescriptions == null) {
+  public void handleUnzippedDirectories(@NotNull File dir, @NotNull List<? super File> filesToRefresh) throws IOException {
+    if (myModuleDescriptions.getValue() == null) {
       filesToRefresh.add(dir);
       return;
     }
 
-    for (RootDescription description : myModuleDescriptions) {
+    for (RootDescription description : myModuleDescriptions.getValue()) {
       File root = new File(dir, ROOT_FILE_NAME + description.myIndex);
+      if (root.listFiles() == null) continue;
       File target = new File(dir.getAbsolutePath() + "/" + description.myRelativePath);
       //noinspection ResultOfMethodCallIgnored
       target.mkdirs();
@@ -209,16 +214,16 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     }
   }
 
-  static class RootDescription {
-    private static final String ROOTS_ELEMENT = "roots";
-    private static final String ROOT_ELEMENT = "root";
-    private static final String INDEX_ATTRIBUTE = "index";
-    private static final String PATH_ATTRIBUTE = "path";
+  static final class RootDescription {
+    private static final @NonNls String ROOTS_ELEMENT = "roots";
+    private static final @NonNls String ROOT_ELEMENT = "root";
+    private static final @NonNls String INDEX_ATTRIBUTE = "index";
+    private static final @NonNls String PATH_ATTRIBUTE = "path";
     final VirtualFile myFile;
     final String myRelativePath;
     final int myIndex;
 
-    public RootDescription(VirtualFile file, String path, int index) {
+    RootDescription(VirtualFile file, String path, int index) {
       myFile = file;
       myRelativePath = path;
       myIndex = index;
@@ -242,7 +247,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       return result;
     }
 
-    static void writeRoots(Element element, List<RootDescription> rootDescriptions) {
+    static void writeRoots(Element element, List<? extends RootDescription> rootDescriptions) {
       Element rootsElement = new Element(ROOTS_ELEMENT);
       for (LocalArchivedTemplate.RootDescription description : rootDescriptions) {
         description.write(rootsElement);
@@ -250,8 +255,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       element.addContent(rootsElement);
     }
 
-    @Nullable
-    static List<RootDescription> readRoots(Element element) {
+    static @Nullable List<RootDescription> readRoots(Element element) {
       Element modulesElement = element.getChild(ROOTS_ELEMENT);
       if (modulesElement != null) {
         return read(modulesElement);

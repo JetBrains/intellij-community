@@ -50,6 +50,7 @@ public class MavenCompilerTask implements Comparable {
     return myProjectPath + ":" + myGoal;
   }
 
+  @Override
   public int compareTo(Object o) {
     return toString().compareTo(o.toString());
   }

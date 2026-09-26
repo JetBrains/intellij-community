@@ -2,13 +2,14 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class UnusedMessageFormatParameterInspectionTest extends InspectionTestCase {
+public class UnusedMessageFormatParameterInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
   private void doTest() {
-    doTest("unusedParameter/" + getTestName(true), new UnusedMessageFormatParameterInspection());
+    myFixture.enableInspections(new UnusedMessageFormatParameterInspection());
+    myFixture.testHighlighting(getTestName(false) + ".properties");
   }
-
   public void testSimpleString() {
     doTest();
   }
@@ -27,6 +28,6 @@ public class UnusedMessageFormatParameterInspectionTest extends InspectionTestCa
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections";
+    return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections/unusedParameter";
   }
 }

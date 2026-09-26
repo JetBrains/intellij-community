@@ -24,8 +24,10 @@ import java.util.List;
 /**
  * @deprecated Use {@link StateSplitterEx}
  */
+@Deprecated(forRemoval = true)
 public interface StateSplitter {
-  List<Pair<Element, String>> splitState(@NotNull  Element e);
+  @NotNull
+  List<Pair<Element, String>> splitState(@NotNull Element e);
 
-  void mergeStatesInto(Element target, Element[] elements);
+  void mergeStatesInto(@NotNull Element target, Element @NotNull [] elements);
 }

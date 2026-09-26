@@ -22,24 +22,27 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.lvcs.impl.diff.DiffUtilsKt;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangeRevision extends Revision {
+public final class ChangeRevision extends Revision {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
-  @NotNull private final String myEntryPath;
+  private final @NotNull String myEntryPath;
   private final long myTimestamp;
   private final Change myChangeToRevert;
 
   private final boolean myBefore;
 
   private final long myId;
-  private final String myName;
-  private final String myLabel;
+  private final @NlsContexts.Label String myName;
+  private final @NlsContexts.Label String myLabel;
   private final int myLabelColor;
   private final Pair<List<String>, Integer> myAffectedFiles;
 
@@ -59,7 +62,7 @@ public class ChangeRevision extends Revision {
 
     List<String> allAffectedFiles = changeSet.getAffectedPaths();
     List<String> someAffectedFiles = new SmartList<>();
-    for (String each : allAffectedFiles.subList(0, Math.min(3, allAffectedFiles.size()))) {
+    for (String each : ContainerUtil.getFirstItems(allAffectedFiles, 3)) {
       someAffectedFiles.add(Paths.getNameOf(each));
     }
     myAffectedFiles = Pair.create(someAffectedFiles, allAffectedFiles.size());
@@ -72,12 +75,12 @@ public class ChangeRevision extends Revision {
 
   @Override
   public Entry findEntry() {
-    RootEntry rootCopy = myRoot.copy();
+    return DiffUtilsKt.findEntry(myFacade, myRoot, myChangeToRevert.getId(), myEntryPath, myBefore);
+  }
 
-    boolean revertThis = myBefore;
-    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis, true);
-
-    return rootCopy.findEntry(path);
+  @Override
+  public RootEntry getRoot() {
+    return myRoot;
   }
 
   @Override
@@ -105,11 +108,8 @@ public class ChangeRevision extends Revision {
     return myAffectedFiles;
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + myChangeToRevert;
-  }
-
-  public boolean containsChangeWithId(long id) {
-    return myChangeToRevert.getId() == id;
   }
 }

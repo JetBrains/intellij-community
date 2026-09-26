@@ -1,55 +1,56 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressModel;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.List;
 
 public interface StatusBarEx extends StatusBar {
-  void startRefreshIndication(String tooltipText);
+  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody);
 
-  void stopRefreshIndication();
+  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
 
-  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody);
-
-  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
-
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * </p>
+   */
+  @ApiStatus.Obsolete
   void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info);
 
-  List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses();
+  /**
+   * @deprecated Progresses in the StatusBar now use the {@link ProgressModel} API instead of {@link ProgressIndicator}.
+   * See {@link ProgressIndicator} notice.
+   * <p>
+   * Please use {@link #getBackgroundProcessModels()} instead.
+   * </p>
+   */
+  @Deprecated(since = "2025.2", forRemoval = true)
+  default @Unmodifiable List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+    return ContainerUtil.map(getBackgroundProcessModels(), pair -> new Pair<>(pair.getFirst(), pair.getSecond().getProgressIndicator()));
+  }
 
-  void updateWidgets();
+  List<kotlin.Pair<TaskInfo, ProgressModel>> getBackgroundProcessModels();
 
   boolean isProcessWindowOpen();
 
   void setProcessWindowOpen(boolean open);
-
-  @Deprecated
-  void removeCustomIndicationComponents();
 
   Dimension getSize();
 

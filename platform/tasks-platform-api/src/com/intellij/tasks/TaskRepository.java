@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.CancellableRunnable;
 import com.intellij.util.Function;
@@ -27,18 +14,20 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 /**
- * This class describes bug-tracking server.
+ * Describes bug-tracking server.
  * Do not forget to mark your implementation with {@link Tag} annotation to make it persistent.
  *
  * @author Dmitry Avdeev
  * @see TaskRepositoryType
- * @see BaseRepository
+ * @see com.intellij.tasks.impl.BaseRepository
  */
 @Tag("server")
 public abstract class TaskRepository {
@@ -59,11 +48,12 @@ public abstract class TaskRepository {
    */
   public static final int NATIVE_SEARCH = 0x0010;
 
+  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)h ([0-9]+)m");
+
   /**
    * URL of the server to be used in requests. For more human-readable name of repository (e.g. some imaginary URL containing name of
    * selected project), that will be used in settings, use {@link #getPresentableName()}.
    *
-   * @return URL of the server
    * @see #getPresentableName()
    */
   @Attribute("url")
@@ -75,14 +65,19 @@ public abstract class TaskRepository {
     myUrl = trimTrailingSlashes(url);
   }
 
+  /**
+   * Check if this repository is ready to be used for retrieving issues in "Open Task...".
+   * <p>
+   * Note that if you rely on the presence of some secret exposed through {@link com.intellij.tasks.impl.BaseRepository#getPassword()}
+   * you should access the corresponding field through {@code getPassword()}, not directly via the underlying field.
+   * Otherwise, it might not be loaded from the system password-safe by the moment of the check.
+   */
   public boolean isConfigured() {
     return StringUtil.isNotEmpty(getUrl());
   }
 
   /**
    * Shared repositories will be visible in visible in other projects, but only their URL will be initialized there.
-   *
-   * @return whether repository is shared
    */
   @Attribute("shared")
   public boolean isShared() {
@@ -96,8 +91,8 @@ public abstract class TaskRepository {
   /**
    * @return name of this repository, that will be shown in settings
    */
-  public String getPresentableName() {
-    return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
+  public @NlsContexts.Label String getPresentableName() {
+    return StringUtil.isEmpty(getUrl()) ? TaskApiBundle.message("label.undefined") : getUrl(); //NON-NLS
   }
 
   public Icon getIcon() {
@@ -105,9 +100,9 @@ public abstract class TaskRepository {
   }
 
   /**
-   * @see #createCancellableConnection()
-   * @deprecated
+   * @deprecated use #createCancellableConnection()
    */
+  @Deprecated(forRemoval = true)
   public void testConnection() throws Exception {
   }
 
@@ -115,10 +110,9 @@ public abstract class TaskRepository {
    * Returns an object that can test connection.
    * {@link CancellableRunnable#cancel()} should cancel the process.
    *
-   * @return null if not supported
+   * @return {@code null} if not supported
    */
-  @Nullable
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return null;
   }
 
@@ -130,10 +124,9 @@ public abstract class TaskRepository {
    * @param max   maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
-   * @throws Exception
    * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     throw new UnsupportedOperationException("Deprecated: should not be called");
   }
@@ -149,7 +142,6 @@ public abstract class TaskRepository {
    * @param limit      maximum number of issues returned by server in this request (or number of issues per page in some interpretations)
    * @param withClosed whether to include closed (e.g. fixed/resolved) issues to response
    * @return found tasks
-   * @throws Exception
    */
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     return getIssues(query, offset + limit, 0);
@@ -163,10 +155,8 @@ public abstract class TaskRepository {
   /**
    * Retrieve states available for task from server. One of these states will be passed later to {@link #setTaskState(Task, TaskState)}.
    * @param task task to update
-   * @return set of available states
    */
-  @NotNull
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull @Unmodifiable Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
     return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(),
                                  (Function<TaskState, CustomTaskState>)state -> CustomTaskState.fromPredefined(state));
@@ -174,41 +164,33 @@ public abstract class TaskRepository {
 
   /**
    * Remember state used when opening task most recently.
-   * @param state preferred task state
    */
   public abstract void setPreferredOpenTaskState(@Nullable CustomTaskState state);
 
   /**
    * Task state that was used last time when opening task.
-   * @return preferred task state
    */
-  @Nullable
-  public abstract CustomTaskState getPreferredOpenTaskState();
+  public abstract @Nullable CustomTaskState getPreferredOpenTaskState();
 
   /**
    * Remember state used when closing task most recently.
-   * @param state preferred task state
    */
   public abstract void setPreferredCloseTaskState(@Nullable CustomTaskState state);
 
   /**
    * Task state that was used last time when closing task.
-   * @return preferred task state
    */
-  @Nullable
-  public abstract CustomTaskState getPreferredCloseTaskState();
+  public abstract @Nullable CustomTaskState getPreferredCloseTaskState();
 
   /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
    * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
    * information about failure in other cases.
-   * @throws Exception
    */
-  @Nullable
-  public abstract Task findTask(@NotNull String id) throws Exception;
+  public abstract @Nullable Task findTask(@NotNull String id) throws Exception;
 
-  @NotNull
-  public abstract TaskRepository clone();
+  @Override
+  public abstract @NotNull TaskRepository clone();
 
   /**
    * Attempts to extract server ID of the issue from the ID of local task (probably restored from project settings).
@@ -221,16 +203,15 @@ public abstract class TaskRepository {
    * and so it's a subject of change in future.
    *
    * @param taskName ID of the task to check
-   * @return extracted ID of the issue or {@code null} if it doesn't look as issue ID of this tracker
+   * @return extracted ID of the issue or {@code null} if it doesn't look like issue ID of this tracker
    */
-  @Nullable
-  public abstract String extractId(@NotNull String taskName);
+  public abstract @Nullable String extractId(@NotNull String taskName);
 
 
   /**
    * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }
@@ -253,6 +234,10 @@ public abstract class TaskRepository {
     }
   }
 
+  /**
+   * This is invoked right after setting state.
+   */
+  public void initializeRepository() {}
 
   // for serialization
   public TaskRepository() {
@@ -278,9 +263,8 @@ public abstract class TaskRepository {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TaskRepository)) return false;
+    if (!(o instanceof TaskRepository that)) return false;
 
-    TaskRepository that = (TaskRepository)o;
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;
@@ -336,8 +320,7 @@ public abstract class TaskRepository {
     return "";
   }
 
-  @Nullable
-  public String getTaskComment(@NotNull Task task) {
+  public @Nullable String getTaskComment(@NotNull Task task) {
     return isShouldFormatCommitMessage()
            ? myCommitMessageFormat.replace("{id}", task.getPresentableId()).replace("{summary}", task.getSummary())
            : null;
@@ -347,15 +330,17 @@ public abstract class TaskRepository {
     return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
+  /**
+   * @param timeSpent time in {@link #TIME_SPENT_PATTERN} format
+   */
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   public abstract static class CancellableConnection implements Callable<Exception> {
 
-    @Nullable
     @Override
-    public final Exception call() {
+    public final @Nullable Exception call() {
       try {
         doTest();
         return null;

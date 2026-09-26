@@ -1,0 +1,271 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.tabInEditor
+
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.InternalDecorator
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropHintHighlightComponent
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.docking.DockContainer
+import com.intellij.ui.docking.DockManager
+import com.intellij.ui.docking.DockableContent
+import com.intellij.ui.docking.impl.DockDragSessionListener
+import com.intellij.ui.docking.impl.DockManagerImpl
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.awaitCancellation
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
+
+/**
+ * A dock container that allows dragging a [ToolWindowEditorTabFile] from the editor
+ * back into its original tool window.
+ */
+internal class ToolWindowEditorTabDockContainer private constructor(
+  private val project: Project,
+  private val toolWindowId: String,
+  private val component: JComponent,
+) : DockContainer, DockDragSessionListener {
+
+  private val dropTargetHighlightComponent = createDropTargetHighlightComponent()
+  private val dropHintHighlightComponent = createDropHintHighlightComponent()
+
+  private var targetHighlightGlassPane: JComponent? = null
+  private var hintHighlightGlassPane: JComponent? = null
+
+  private var currentDragImage: Image? = null
+
+  private var canShowDropHint: Boolean = false
+
+  override fun getAcceptArea(): RelativeRectangle = RelativeRectangle(component)
+
+  override fun getContentResponse(content: DockableContent<*>, point: RelativePoint?): DockContainer.ContentResponse {
+    return if (canMoveToToolWindow(content)) DockContainer.ContentResponse.ACCEPT_MOVE else DockContainer.ContentResponse.DENY
+  }
+
+  private fun canMoveToToolWindow(content: DockableContent<*>): Boolean {
+    val file = content.getToolWindowTabFile() ?: return false
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return false
+    return ToolWindowEditorTabTransferController.getInstance(project).canMoveContentToToolWindow(toolWindow, file)
+  }
+
+  override fun getContainerComponent(): JComponent = component
+
+  override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
+    if (dropTarget == null) return
+
+    val file = content.getToolWindowTabFile() ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return
+    val targetDecorator = findTargetDecorator(dropTarget)
+
+    recordMoveToToolWindowByDrag(file, toolWindow.id)
+    ToolWindowEditorTabTransferController.getInstance(project).moveContentToToolWindow(toolWindow, file, targetDecorator)
+  }
+
+  override fun isEmpty(): Boolean = false
+
+  override fun isDisposeWhenEmpty(): Boolean = false
+
+  override fun processDropOver(content: DockableContent<*>, point: RelativePoint?): Image? {
+    if (point == null) return null
+
+    val targetDecorator = findTargetDecorator(point) ?: return null
+    showTargetDropAreaHighlight(targetDecorator)
+    hideHintDropAreaHighlight()
+    return currentDragImage ?: createDragImage(content).also { currentDragImage = it }
+  }
+
+  override fun resetDropOver(content: DockableContent<*>) {
+    clearTargetDropAreaHighlight()
+    currentDragImage = null
+    if (canShowDropHint) {
+      showHintDropAreaHighlight()
+    }
+  }
+
+  override fun sessionStarted(content: DockableContent<*>) {
+    if (!canMoveToToolWindow(content)) {
+      return
+    }
+
+    canShowDropHint = true
+    showHintDropAreaHighlight()
+  }
+
+  override fun sessionFinished(content: DockableContent<*>) {
+    canShowDropHint = false
+    currentDragImage = null
+    clearAllHighlighting()
+  }
+
+  private fun findTargetDecorator(point: RelativePoint): InternalDecoratorImpl? {
+    val dropPoint = point.getPoint(component)
+    val deepestComponent = UIUtil.getDeepestComponentAt(component, dropPoint.x, dropPoint.y)
+    return InternalDecoratorImpl.findNearestDecorator(deepestComponent) ?: component as? InternalDecoratorImpl
+  }
+
+  private fun showTargetDropAreaHighlight(targetDecorator: InternalDecoratorImpl) {
+    val glassPane = targetDecorator.rootPane?.glassPane as? JComponent ?: return
+    if (targetHighlightGlassPane !== glassPane) {
+      clearTargetDropAreaHighlight()
+      glassPane.add(dropTargetHighlightComponent)
+      targetHighlightGlassPane = glassPane
+    }
+
+    val dropArea = SwingUtilities.convertRectangle(targetDecorator.parent, targetDecorator.bounds, glassPane)
+    dropTargetHighlightComponent.bounds = dropArea
+    dropTargetHighlightComponent.isVisible = true
+    glassPane.revalidate()
+    glassPane.repaint(dropArea)
+  }
+
+  private fun clearTargetDropAreaHighlight() {
+    val parent = targetHighlightGlassPane
+    if (parent != null) {
+      val bounds = Rectangle(dropTargetHighlightComponent.bounds)
+      parent.remove(dropTargetHighlightComponent)
+      parent.revalidate()
+      if (!bounds.isEmpty) {
+        parent.repaint(bounds)
+      }
+      targetHighlightGlassPane = null
+    }
+    dropTargetHighlightComponent.bounds = Rectangle()
+  }
+
+  private fun showHintDropAreaHighlight() {
+    val glassPane = component.rootPane?.glassPane as? JComponent ?: return
+    if (hintHighlightGlassPane !== glassPane) {
+      clearHintDropAreaHighlight()
+      glassPane.add(dropHintHighlightComponent)
+      hintHighlightGlassPane = glassPane
+    }
+
+    val hintArea = SwingUtilities.convertRectangle(component, Rectangle(component.size), glassPane)
+    dropHintHighlightComponent.bounds = hintArea
+    dropHintHighlightComponent.isVisible = true
+    glassPane.revalidate()
+    glassPane.repaint(hintArea)
+  }
+
+  private fun hideHintDropAreaHighlight() {
+    val parent = hintHighlightGlassPane ?: return
+    if (!dropHintHighlightComponent.isVisible) {
+      return
+    }
+
+    val bounds = Rectangle(dropHintHighlightComponent.bounds)
+    dropHintHighlightComponent.isVisible = false
+    if (!bounds.isEmpty) {
+      parent.repaint(bounds)
+    }
+  }
+
+  private fun clearHintDropAreaHighlight() {
+    val parent = hintHighlightGlassPane
+    if (parent != null) {
+      val bounds = Rectangle(dropHintHighlightComponent.bounds)
+      parent.remove(dropHintHighlightComponent)
+      parent.revalidate()
+      if (!bounds.isEmpty) {
+        parent.repaint(bounds)
+      }
+      hintHighlightGlassPane = null
+    }
+    dropHintHighlightComponent.bounds = Rectangle()
+  }
+
+  private fun clearAllHighlighting() {
+    clearTargetDropAreaHighlight()
+    clearHintDropAreaHighlight()
+  }
+
+  private fun createDragImage(content: DockableContent<*>): Image {
+    val presentation = content.presentation
+    val label = JLabel(presentation.text, presentation.icon, SwingConstants.LEADING).apply {
+      border = JBUI.Borders.empty(4, 8)
+      size = preferredSize
+    }
+    return createThumbnailDragImage(label, -1)
+  }
+
+  private fun DockableContent<*>.getToolWindowTabFile(): ToolWindowEditorTabFile? =
+    getKey() as? ToolWindowEditorTabFile
+
+  private fun recordMoveToToolWindowByDrag(file: ToolWindowEditorTabFile, targetToolWindowId: String) {
+    val action = ActionManager.getInstance().getAction("MoveToolWindowTabFromEditorToToolWindowAction") ?: return
+    val targetToolWindow = ToolWindowManager.getInstance(project).getToolWindow(targetToolWindowId) ?: return
+    val dataContext = SimpleDataContext.builder()
+      .setParent(DataContext.EMPTY_CONTEXT)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .add(PlatformDataKeys.TOOL_WINDOW, targetToolWindow)
+      .build()
+    val event = AnActionEvent.createEvent(
+      action,
+      dataContext,
+      null,
+      ActionPlaces.EDITOR_TAB,
+      ActionUiKind.NONE,
+      MouseEvent(component, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false, MouseEvent.BUTTON1),
+    )
+    recordActionInvoked(project, action, event) { }
+  }
+
+  companion object {
+    private const val INSTALLED_PROPERTY = "ToolWindowDockContainer.installed"
+
+    /*
+     * Registers the editor dock container for the given tool window.
+     */
+    @JvmStatic
+    @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+    fun install(project: Project, toolWindowId: String, decorator: InternalDecorator) {
+        if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return
+        decorator.putClientProperty(INSTALLED_PROPERTY, true)
+
+        decorator.launchOnShow("ToolWindowDockContainer") {
+          val container = ToolWindowEditorTabDockContainer(project, toolWindowId, decorator)
+          val disposable = Disposer.newDisposable("ToolWindowDockContainer")
+          val dockManager = DockManager.getInstance(project)
+          dockManager.register(container, disposable)
+          if (dockManager is DockManagerImpl) {
+            dockManager.addDragSessionListener(container, disposable)
+          }
+          else {
+            logger<ToolWindowEditorTabDockContainer>().error("Unexpected DockManager: ${dockManager.javaClass.name}")
+          }
+          Disposer.register(disposable) { container.clearAllHighlighting() }
+
+          try {
+            awaitCancellation()
+          }
+          finally {
+            // Dispose on EDT as well because registering/unregistering the dock container is not thread-safe.
+            Disposer.dispose(disposable)
+          }
+        }
+    }
+  }
+}

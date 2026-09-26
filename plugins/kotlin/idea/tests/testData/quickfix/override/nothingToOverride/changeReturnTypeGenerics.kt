@@ -1,0 +1,14 @@
+// "Change function signature to 'fun f(t: Int): Int'" "true"
+// ERROR: A 'return' expression required in a function with a block body ('{...}')
+// K2_AFTER_ERROR: NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
+abstract class A<T> {
+    abstract fun f(t: T): T
+}
+
+class B : A<Int>() {
+    <caret>override fun f() {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

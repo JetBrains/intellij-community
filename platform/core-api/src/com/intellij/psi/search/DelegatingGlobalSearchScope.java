@@ -1,84 +1,99 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.Icon;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-/**
- * @author peter
- */
-public class DelegatingGlobalSearchScope extends GlobalSearchScope {
+public class DelegatingGlobalSearchScope extends GlobalSearchScope implements CodeInsightContextAwareSearchScope {
   protected final GlobalSearchScope myBaseScope;
   private final Object myEquality;
 
   public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
-    this(baseScope, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    this(baseScope, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
-  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, @NotNull Object... equality) {
+  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope, Object @NotNull ... equality) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
-    myEquality = Arrays.asList(equality);
+    myEquality = equality.length == 0 ? Collections.emptyList() : Arrays.asList(equality);
+  }
+
+  public DelegatingGlobalSearchScope(@NotNull Project project, @NotNull GlobalSearchScope baseScope) {
+    super(project);
+    myBaseScope = baseScope;
+    myEquality = Collections.emptyList();
+  }
+
+  protected DelegatingGlobalSearchScope(@NotNull Project project) {
+    super(project);
+    myBaseScope = null;
+    myEquality = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    GlobalSearchScope delegate = getDelegate();
+    return delegate instanceof CodeInsightContextAwareSearchScope
+           ? ((CodeInsightContextAwareSearchScope)delegate).getCodeInsightContextInfo()
+           : CodeInsightContextAwareSearchScopes.NoContextInformation();
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myBaseScope.contains(file);
+    return getDelegate().contains(file);
   }
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return myBaseScope.compare(file1, file2);
+    return getDelegate().compare(file1, file2);
   }
 
   @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
-    return myBaseScope.isSearchInModuleContent(aModule);
+    return getDelegate().isSearchInModuleContent(aModule);
   }
 
   @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
-    return myBaseScope.isSearchInModuleContent(aModule, testSources);
+    return getDelegate().isSearchInModuleContent(aModule, testSources);
   }
 
   @Override
   public boolean isSearchInLibraries() {
-    return myBaseScope.isSearchInLibraries();
+    return getDelegate().isSearchInLibraries();
   }
 
   @Override
-  public boolean isSearchOutsideRootModel() {
-    return myBaseScope.isSearchOutsideRootModel();
+  public @Unmodifiable @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    return getDelegate().getUnloadedModulesBelongingToScope();
   }
 
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-    return myBaseScope.getUnloadedModulesBelongingToScope();
+  public @NotNull String getDisplayName() {
+    return getDelegate().getDisplayName();
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return myBaseScope.getDisplayName();
-  }
-
-  @Nullable
-  @Override
-  public Icon getDisplayIcon() {
-    return myBaseScope.getDisplayIcon();
+  public @Nullable Icon getIcon() {
+    return getDelegate().getIcon();
   }
 
   @Override
   public String toString() {
-    return getClass().getName() + "[" + myBaseScope + "]";
+    return getClass().getName() + "[" + getDelegate() + "]";
   }
 
   @Override
@@ -88,16 +103,25 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
 
     DelegatingGlobalSearchScope that = (DelegatingGlobalSearchScope)o;
 
-    if (!myBaseScope.equals(that.myBaseScope)) return false;
+    if (!getDelegate().equals(that.getDelegate())) return false;
     if (!myEquality.equals(that.myEquality)) return false;
 
     return true;
   }
 
   @Override
-  public int hashCode() {
-    int result = myBaseScope.hashCode();
+  public int calcHashCode() {
+    int result = getDelegate().calcHashCode();
     result = 31 * result + myEquality.hashCode();
     return result;
+  }
+
+  public @NotNull GlobalSearchScope getDelegate() {
+    return myBaseScope;
+  }
+
+  public @NotNull GlobalSearchScope unwrap() {
+    GlobalSearchScope delegate = getDelegate();
+    return delegate instanceof DelegatingGlobalSearchScope ? ((DelegatingGlobalSearchScope)delegate).unwrap() : delegate;
   }
 }

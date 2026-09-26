@@ -1,36 +1,35 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * User : catherine
  */
-public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
+public final class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   /**
    * Keywords that start multiline block statements
@@ -53,18 +52,18 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                                                     "with",
                                                                     "if", "elif", "else",
                                                                     "while", "for",
-                                                                    "try", "except", "finally");
+                                                                    "try", "except", "finally",
+                                                                    "match", "case");
 
-  @Nullable
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return null;
     }
     // Expand copied text if it can cause indentation ambiguity
-    
-    // Text was selected with a single caret and might begin with a block statement 
-    if (startOffsets.length == 1 && endOffsets.length == 1 && fragmentBeginsWithBlockStatement(text)) {
+
+    // Text was selected with a single caret and might begin with a block statement or a comment
+    if (startOffsets.length == 1 && endOffsets.length == 1) {
       final int start = startOffsets[0];
       final int end = endOffsets[0];
 
@@ -73,32 +72,45 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         final int startLine = document.getLineNumber(start);
         final int startLineOffset = getLineStartSafeOffset(document, startLine);
         if (start != startLineOffset && startLine != document.getLineNumber(end)) {
-          final PsiElement keyword = file.findElementAt(start);
-          if (keyword != null && START_KEYWORDS.contains(keyword.getText())) {
-            final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
-            // Statement body is in selection
-            if (block != null && end > block.getStatementList().getTextOffset()) {
-              final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
-              if (StringUtil.isEmptyOrSpaces(linePrefix)) {
-                return linePrefix + text;
-              }
-            }
+          final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
+          if (StringUtil.isEmptyOrSpaces(linePrefix) &&
+              (selectionBeginsWithComment(file, start) || selectionBeginsWithBlockStatementAndItsBody(file, start, end, text))) {
+            return linePrefix + text;
           }
         }
       }
     }
-    
+
     return null;
   }
 
-  @NotNull
+  /**
+   * The first line of the copied text loses its indent. The lines after a comment keep their indent,
+   * so the paste cannot find the common indent without the indent of the comment.
+   */
+  private static boolean selectionBeginsWithComment(@NotNull PsiFile file, int start) {
+    return file.findElementAt(start) instanceof PsiComment comment && comment.getTextOffset() == start;
+  }
+
+  private static boolean selectionBeginsWithBlockStatementAndItsBody(@NotNull PsiFile file, int start, int end, @NotNull String text) {
+    if (!fragmentBeginsWithBlockStatement(text)) {
+      return false;
+    }
+    final PsiElement keyword = file.findElementAt(start);
+    if (keyword == null || !START_KEYWORDS.contains(keyword.getText())) {
+      return false;
+    }
+    final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
+    return block != null && end > block.getStatementList().getTextOffset();
+  }
+
   @Override
-  public String preprocessOnPaste(Project project,
-                                  PsiFile file,
-                                  Editor editor,
-                                  String text,
-                                  RawText rawText) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+  public @NotNull String preprocessOnPaste(Project project,
+                                           PsiFile file,
+                                           Editor editor,
+                                           String text,
+                                           RawText rawText) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || !isSupportedFile(file)) {
       return text;
     }
 
@@ -111,48 +123,48 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
 
+    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
+    
     final String linePrefix = document.getText(TextRange.create(lineStartOffset, caretOffset));
     if (!StringUtil.isEmptyOrSpaces(linePrefix)) return text;
 
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
-    text = addLeadingSpacesToNormalizeSelection(project, text);
+    text = addLeadingSpacesToNormalizeSelection(file, text);
     final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
     final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
+    String newText = PyIndentUtil.changeIndent(text, false, newIndent);
 
-    final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
-    if (StringUtil.isEmptyOrSpaces(newIndent) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
+    if (!selectionModel.hasSelection() && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
-      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
-
       if (StringUtil.isEmptyOrSpaces(line)) {
         ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(lineStartOffset, lineEndOffset));
       }
     }
-
-    String newText;
-    if (StringUtil.isEmptyOrSpaces(newIndent)) {
-      newText = PyIndentUtil.changeIndent(text, false, newIndent);
-    }
     else {
-      newText = text;
+      // Don't duplicate the existing whitespace prefix of the line
+      newText = StringUtil.trimStart(newText, linePrefix);
     }
 
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(project);
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
+    // TODO Combine shouldPasteOnPreviousLine() check with addLineBreak() as they really complement each other
     if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
     }
     return newText;
   }
 
-  @NotNull
-  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull String text) {
+  private static boolean isSupportedFile(PsiFile file) {
+    return file instanceof PyFile;
+  }
+
+  private static @NotNull String addLeadingSpacesToNormalizeSelection(@NotNull PsiFile file, @NotNull String text) {
     if (!fragmentBeginsWithBlockStatement(text)) {
       return text;
     }
 
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", text, false);
+    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(file.getProject(), "dummy.py", text, false);
     //fragment.setContext(file);
     final PyStatementListContainer statement = as(fragment.getFirstChild(), PyStatementListContainer.class);
     if (statement == null) {
@@ -164,7 +176,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
     
-    final String indentStep = PyIndentUtil.getIndentFromSettings(project);
+    final String indentStep = PyIndentUtil.getIndentFromSettings(file);
     final String bodyIndent = PyIndentUtil.getElementIndent(statement.getStatementList());
     final String expectedBodyIndent = statementIndent + indentStep;
     if (bodyIndent.startsWith(expectedBodyIndent)) {
@@ -177,12 +189,11 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return ContainerUtil.exists(START_KEYWORDS, keyword -> text.startsWith(keyword + " ") || text.startsWith(keyword + ":"));
   }
 
-  @NotNull
-  private static String inferBestIndent(@NotNull PsiFile file,
-                                        @NotNull Document document,
-                                        int caretOffset,
-                                        int lineNumber,
-                                        @NotNull String fragmentIndent) {
+  private static @NotNull String inferBestIndent(@NotNull PsiFile file,
+                                                 @NotNull Document document,
+                                                 int caretOffset,
+                                                 int lineNumber,
+                                                 @NotNull String fragmentIndent) {
 
     PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
@@ -229,8 +240,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return userIndent;
   }
 
-  @Nullable
-  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiFile file, int offset) {
+  private static @Nullable PyStatementList findEmptyStatementListNearby(@NotNull PsiFile file, int offset) {
     final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
     if (whitespace == null) {
       return null;
@@ -247,13 +257,11 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return statementList != null && statementList.getStatements().length == 0 ? statementList : null;
   }
 
-  @Nullable
-  private static PsiWhiteSpace findWhitespaceAtCaret(@NotNull PsiFile file, int offset) {
+  private static @Nullable PsiWhiteSpace findWhitespaceAtCaret(@NotNull PsiFile file, int offset) {
     return as(file.findElementAt(offset == file.getTextLength() && offset > 0 ? offset - 1 : offset), PsiWhiteSpace.class);
   }
 
-  @Nullable
-  private static PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiFile file, int offset) {
+  private static @Nullable PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiFile file, int offset) {
     final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
     if (whitespace == null) {
       return null;
@@ -262,8 +270,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return PsiTreeUtil.getParentOfType(prevLeaf, PyStatementListContainer.class);
   }
 
-  private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file.getProject());
+  private static boolean shouldPasteOnPreviousLine(final @NotNull PsiFile file, @NotNull String text, int caretOffset) {
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n")) {
       return true;
@@ -274,8 +282,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return false;
   }
 
-  @Nullable
-  private static PsiElement getPrevNonCommentLeaf(@NotNull PsiElement element) {
+  private static @Nullable PsiElement getPrevNonCommentLeaf(@NotNull PsiElement element) {
     PsiElement anchor = PsiTreeUtil.prevLeaf(element);
     while (anchor instanceof PsiComment || anchor instanceof PsiWhiteSpace) {
       anchor = PsiTreeUtil.prevLeaf(anchor, false);
@@ -283,7 +290,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return anchor;
   }
 
-  private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
+  private static boolean inStatementList(final @NotNull PsiFile file, int caretOffset) {
     final PsiElement element = file.findElementAt(caretOffset);
     return PsiTreeUtil.getParentOfType(element, PyStatementListContainer.class) != null;
   }

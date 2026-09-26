@@ -1,0 +1,8 @@
+// "Make 'j' not abstract" "true"
+// K2_ERROR: ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS
+class B {
+    abstract<caret> var j: Int = 0
+        set(v: Int) {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

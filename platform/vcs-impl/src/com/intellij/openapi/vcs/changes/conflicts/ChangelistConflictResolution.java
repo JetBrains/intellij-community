@@ -17,14 +17,14 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,15 +37,15 @@ public enum ChangelistConflictResolution {
 
   SHELVE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
-      return CommitChangeListDialog.commitChanges(project, changes, changeList, new ShelveChangesCommitExecutor(project), null);
+      return CommitChangeListDialog.commitWithExecutor(project, changes, changeList, new ShelveChangesCommitExecutor(project), null, true, null);
     }},
 
   MOVE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
-      ChangeListManagerImpl manager = getManager(project);
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
+      ChangeListManager manager = getManager(project);
       Set<ChangeList> changeLists = new HashSet<>();
       for (Change change : changes) {
         LocalChangeList list = manager.getChangeList(change);
@@ -54,12 +54,13 @@ public enum ChangelistConflictResolution {
         }
       }
       if (changeLists.isEmpty()) {
-        Messages.showInfoMessage(project, "The conflict seems to be resolved", "No Conflict Found");
+        Messages.showInfoMessage(project, VcsBundle.message("dialog.message.conflict.seems.to.be.resolved"),
+                                 VcsBundle.message("dialog.title.no.conflict.found"));
         return true;
       }
       MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, selected);
       if (dialog.showAndGet()) {
-        manager.moveChangesTo(manager.getDefaultChangeList(), ArrayUtil.toObjectArray(dialog.getIncludedChanges(), Change.class));
+        manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(Change.EMPTY_CHANGE_ARRAY));
         return true;
       }
       return false;
@@ -67,7 +68,7 @@ public enum ChangelistConflictResolution {
 
   SWITCH {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());
       assert changeList != null;
       getManager(project).setDefaultChangeList(changeList);
@@ -76,20 +77,20 @@ public enum ChangelistConflictResolution {
 
   IGNORE {
     @Override
-    public boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected) {
-      ChangeListManagerImpl manager = getManager(project);
+    public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
+      ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(project);
       for (Change change : changes) {
         VirtualFile file = change.getVirtualFile();
         if (file != null) {
-          manager.getConflictTracker().ignoreConflict(file, true);
+          conflictTracker.ignoreConflict(file, true);
         }
       }
       return true;
     }};
 
-  public abstract boolean resolveConflict(Project project, Collection<Change> changes, VirtualFile selected);
+  public abstract boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected);
 
-  private static ChangeListManagerImpl getManager(Project project) {
-    return ChangeListManagerImpl.getInstanceImpl(project);
+  private static ChangeListManager getManager(Project project) {
+    return ChangeListManager.getInstance(project);
   }
 }

@@ -1,4 +1,4 @@
-// "Extract variable 'lc' to 'thenApply' operation" "true"
+// "Extract variable 'lc' to 'thenApply' operation" "true-preview"
 import java.util.concurrent.CompletableFuture;
 
 public class Test {

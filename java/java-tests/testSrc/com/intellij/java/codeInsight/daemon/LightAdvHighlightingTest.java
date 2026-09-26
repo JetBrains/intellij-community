@@ -1,71 +1,72 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.ToolExtensionPoints;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ReassignedVariableInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
+ * This class is for "lightweight" tests only, i.e., those which can run inside default light project.
+ * For "heavyweight" tests use {@link AdvHighlightingTest}
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
-  static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+  public static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
 
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
   private void doTest(boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(checkWarnings, false);
+  }
+
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
   @Override
@@ -74,6 +75,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new AccessStaticViaInstance());
+    enableInspectionTool(new ReassignedVariableInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -81,9 +84,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     return getTestName(false).contains("UnusedInspection");
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new SillyAssignmentInspection(),
       new AccessStaticViaInstance(),
@@ -97,6 +99,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInheritFinal() { doTest(false); }
   public void testBreakOutside() { doTest(false); }
   public void testLoop() { doTest(false); }
+  public void testForInitWithMultipleExpressions() { doTest(false); }
   public void testIllegalModifiersCombination() { doTest(false); }
   public void testModifierAllowed() { doTest(false); }
   public void testAbstractMethods() { doTest(false); }
@@ -104,6 +107,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDuplicateClassMethod() { doTest(false); }
   public void testStringLiterals() { doTest(false); }
   public void testStaticInInner() { doTest(false); }
+  public void testStaticInInnerJava16() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
+  public void testStaticAccessViaInstanceForImplicitClasses() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
   public void testInvalidExpressions() { doTest(false); }
   public void testIllegalVoidType() { doTest(false); }
   public void testIllegalType() { doTest(false); }
@@ -112,15 +117,18 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCtrCallIsFirst() { doTest(false); }
   public void testAccessLevelClash() { doTest(false); }
   public void testCasts() { doTest(false); }
-  public void testOverrideConflicts() { doTest(false); }
+  public void testOverrideConflicts() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.HIGHEST, () -> doTest(false)); }
   public void testOverriddenMethodIsFinal() { doTest(false); }
   public void testMissingReturn() { doTest(false); }
   public void testUnreachable() { doTest(false); }
+  public void testUnreachableMultiFinally() { doTest(false); }
   public void testFinalFieldInit() { doTest(false); }
-  public void testLocalVariableInitialization() { doTest(false); }
+  public void testLocalVariableInitialization() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest(false)); }
   public void testVarDoubleInitialization() { doTest(false); }
   public void testFieldDoubleInitialization() { doTest(false); }
   public void testFinalFieldInitialization() { doTest(false); }
+  public void testFinalFieldInitializationInAnonymousClass() { doTest(false); }
+  public void testFinalFieldUsedInAnonymousArgumentListInsideInner() { doTest(false); }
   public void testAssignToFinal() { doTest(false); }
   public void testUnhandledExceptionsInSuperclass() { doTest(false); }
   public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false); }
@@ -139,13 +147,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticOverride() { doTest(false); }
   public void testCyclicInheritance() { doTest(false); }
   public void testReferenceMemberBeforeCtrCalled() { doTest(false); }
+  public void testQualifiedThisBeforeCtrCalled() { doTest(false); }
   public void testLabels() { doTest(false); }
   public void testUnclosedBlockComment() { doTest(false); }
   public void testUnclosedComment() { doTest(false); }
+  public void testBadUnicodeEscapeInComment() { doTest(false); }
   public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(true);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_7);
+    doTest(true, true);
   }
   public void testTernary() { doTest(false); }
   public void testDuplicateClass() { doTest(false); }
@@ -154,11 +164,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnhandledMessingWithFinally() { doTest(false); }
   public void testSerializableStuff() {  doTest(true); }
   public void testDeprecated() { doTest(true); }
-  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
-  public void testExpressionsInSwitch () { doTest(false); }
+  public void testJavadoc() { enableInspectionTool(new JavadocDeclarationInspection()); doTest(true); }
+  public void testExpressionsInSwitch () { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(false)); }
   public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
-                                     "" +
                                      "package x;\n" +
                                      "public class BeanContextServicesSupport {" +
                                      "  protected class BCSSChild {" +
@@ -169,7 +178,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
                                      "  }" +
                                      "}");
     Editor e2 = createSaveAndOpenFile("x/Component.java",
-                                      "" +
                                       "package x;\n" +
                                       "public class Component {" +
                                       "  protected class FlipBufferStrategy {" +
@@ -178,16 +186,16 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
                                       "  }" +
                                       "}");
     try {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       doTest(false);
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
+      VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
+      VirtualFile file2 = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }
@@ -201,11 +209,16 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testSynchronizedExpression() { doTest(false); }
   public void testExtendMultipleClasses() { doTest(false); }
-  public void testRecursiveConstructorInvocation() { doTest(false); }
+
+  public void testRecursiveConstructorInvocation() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // mutual recursion is prevented in contract inference
+    doTest(false);
+  }
+
   public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     doTest(false);
   }
@@ -231,7 +244,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMustBeFinal() { doTest(false); }
 
   public void testXXX() { doTest(false); }
-  public void testUnused() { doTest(true); }
+  public void testUnused() { doTest(true, true); }
   public void testQualifierBeforeClassName() { doTest(false); }
   public void testQualifiedSuper() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
@@ -239,6 +252,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false); }
+  public void testStatementsBeforeSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false)); }
+
+  public void testFlexibleConstructorBodies() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, () -> doTest(false));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> doTest(false));
+  }
 
   public void testCastFromVoid() { doTest(false); }
   public void testCatchUnknownMethod() { doTest(false); }
@@ -253,7 +272,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassesShadowing() { doTest(false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() {
-    UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
+    UnusedSymbolLocalInspection tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
     assertNotNull(tool);
     String oldVal = tool.getParameterVisibility();
     try {
@@ -270,7 +289,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedNonPrivateMembers2() {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
+    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint();
     EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override
@@ -285,7 +304,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
       @Override
       public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-        return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getName().equals("myTestMethod");
+        return psiElement instanceof PsiMethod m && m.getName().equals("myTestMethod");
       }
 
       @Override
@@ -303,14 +322,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       public void writeExternal(Element element) { }
     };
 
-    point.registerExtension(extension);
-
+    point.registerExtension(extension, getTestRootDisposable());
     try {
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase(true);
       doTest(true);
     }
     finally {
-      point.unregisterExtension(extension);
       myUnusedDeclarationInspection = new UnusedDeclarationInspectionBase();
     }
   }
@@ -318,8 +335,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnusedInspectionNonPrivateMembersReferencedFromText() {
     doTest(true);
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      PsiDirectory directory = myFile.getParent();
-      assertNotNull(myFile.toString(), directory);
+      PsiDirectory directory = getFile().getParent();
+      assertNotNull(getFile().toString(), directory);
       PsiFile txt = directory.createFile("x.txt");
       VirtualFile vFile = txt.getVirtualFile();
       assertNotNull(txt.toString(), vFile);
@@ -336,7 +353,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testNamesHighlighting() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_5);
+    doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
+  }
+
+  public void testAnnotationHighlighting() {
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_5);
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
@@ -344,48 +366,33 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  public void testInjectedAnnotator() {
-    Annotator annotator = new MyAnnotator();
-    Language xml = StdFileTypes.XML.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(xml, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-      assertTrue(list.toString(), list.contains(annotator));
-      doTest(BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(xml, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-    assertFalse(list.toString(), list.contains(annotator));
-  }
-
   public void testSOEForTypeOfHugeBinaryExpression() {
-    configureFromFileText("a.java", "class A { String s = \"\"; }");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A { String s = \"\"; }";
+    configureFromFileText("a.java", text);
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    final StringBuilder sb = new StringBuilder("\"-\"");
-    for (int i = 0; i < 10000; i++) sb.append("+\"b\"");
-    final String hugeExpr = sb.toString();
-    final int pos = getEditor().getDocument().getText().indexOf("\"\"");
+    String hugeExpr = "\"-\"" + "+\"b\"".repeat(10000);
+    int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
 
-    final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
-    final PsiExpression expression = field.getInitializer();
+    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    PsiExpression expression = field.getInitializer();
     assert expression != null;
-    final PsiType type = expression.getType();
+    PsiType type = expression.getType();
     assert type != null;
     assertEquals("PsiType:String", type.toString());
   }
 
   public void testSOEForCyclicInheritance() {
-    configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
+    @org.intellij.lang.annotations.Language("JAVA")
+    String text = "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ";
+    configureFromFileText("a.java", text);
     doHighlighting();
   }
 
@@ -394,8 +401,13 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnsupportedFeatures() { doTest(false); }
   public void testThisBeforeSuper() { doTest(false); }
   public void testExplicitConstructorInvocation() { doTest(false); }
+  public void testExtendFinalClass() { doTest(false); }
+  public void testPrivateMethodCalledFromSuper() { doTest(false); }
+  public void testQualifiedThisCalledFromSuper() { doTest(false); }
+  public void testReferenceToClassFromSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testThisInInterface() { doTest(false); }
   public void testInnerClassConstantReference() { doTest(false); }
+  public void testConstantReferencedViaInstance() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testIDEA60875() { doTest(false); }
   public void testIDEA71645() { doTest(false); }
   public void testIDEA18343() { doTest(false); }
@@ -405,6 +417,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() { doTest(false); }
   public void testIDEA168768() { doTest(false); }
   public void testStatementWithExpression() { doTest(false); }
+  public void testReturnFromConstructor() { doTest(false); }
+  public void testInheritFromFinalLocalClass() { doTest(false); }
+  public void testLocalClassInstantiation() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> doTest(false)); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
@@ -418,79 +433,60 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testUnreachableArrayElementAssignment() { doTest(false); }
+  
+  public void testNotWellFormedExpressionStatementWithoutSemicolon() {
+    doTest(false);
+  }
+
+  public void testTooManyArrayDimensions() { doTest(false);}
+
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
-    assertTrue(!infos.isEmpty());
-  }
-
-  public void testAnnotatorWorksWithFileLevel() {
-    Annotator annotator = new MyTopFileAnnotator();
-    Language java = StdFileTypes.JAVA.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-      assertTrue(list.toString(), list.contains(annotator));
-      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      doHighlighting();
-      List<HighlightInfo> fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      HighlightInfo info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
-
-      type("\n\n");
-      doHighlighting();
-      fileLevel =
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
-
-      type("//xxx"); //disable top level annotation
-      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
-      assertEmpty(warnings);
-      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
-      assertEmpty(fileLevel);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-    assertFalse(list.toString(), list.contains(annotator));
+    assertFalse(infos.isEmpty());
   }
 
   public void testIllegalWhitespaces() { doTest(false); }
 
-  // must stay public for PicoContainer to work
-  public static class MyAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-      psiElement.accept(new XmlElementVisitor() {
-        @Override public void visitXmlTag(XmlTag tag) {
-          XmlAttribute attribute = tag.getAttribute("aaa", "");
-          if (attribute != null) {
-            holder.createWarningAnnotation(attribute, "MyAnnotator");
-          }
-        }
+  public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest(true);
+  }
 
-        @Override public void visitXmlToken(XmlToken token) {
-          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-            holder.createWarningAnnotation(token, "ENTITY");
-          }
-        }
-      });
+  public void testNavigateByReassignVariables() {
+    doTest(true, true);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    boolean old = settings.isNextErrorActionGoesToErrorsFirst();
+    settings.setNextErrorActionGoesToErrorsFirst(true);
+    try {
+      int offset = getEditor().getCaretModel().getOffset();
+      new GotoNextErrorHandler(true).invoke(getProject(), getEditor(), getFile());
+
+      assertEquals(offset, getEditor().getCaretModel().getOffset());
+    }
+    finally {
+      settings.setNextErrorActionGoesToErrorsFirst(old);
     }
   }
 
-  // must stay public for PicoContainer to work
-  public static class MyTopFileAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
-        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
-        annotation.setFileLevelAnnotation(true);
-      }
-    }
+  public void testUninitializedVarComplexTernary() {
+    doTest(false);
   }
+
+  public void testArrayInitBeforeSuper() {
+    doTest(false);
+  }
+
+  public void testThisReferencedInnerClass() {
+    doTest(false);
+  }
+
+  public void testReferenceToImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false));
+  }
+  
+  public void testUninitializedFields() { doTest(false); }
+  
+  public void testUninitializedFieldsBeforeSuper() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> doTest(false)); }
 }

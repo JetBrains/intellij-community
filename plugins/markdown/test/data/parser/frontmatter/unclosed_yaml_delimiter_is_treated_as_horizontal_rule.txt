@@ -1,0 +1,10 @@
+MarkdownFile
+  PsiElement(Markdown:Markdown:HORIZONTAL_RULE)('---')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  Markdown:Markdown:ATX_1
+    PsiElement(Markdown:Markdown:ATX_HEADER)('#')
+    MarkdownHeaderContent(Markdown:ATX_CONTENT)
+      PsiWhiteSpace(' ')
+      PsiElement(Markdown:Markdown:TEXT)('Documentation')
+  PsiWhiteSpace('\n')

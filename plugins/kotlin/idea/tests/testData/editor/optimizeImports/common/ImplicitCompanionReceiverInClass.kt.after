@@ -1,0 +1,27 @@
+package test
+
+import test.Base.Companion.FromCompanionSecond
+
+open class Base {
+    companion object {
+        class FromCompanionFirst
+        class FromCompanionSecond
+
+        fun companionFunFirst() {}
+        fun companionFunSecond() {}
+    }
+
+    fun usageBase() {
+        FromCompanionFirst()
+
+        companionFunFirst()
+    }
+}
+
+class Child : Base() {
+    fun usageChild() {
+        FromCompanionSecond()
+
+        companionFunSecond()
+    }
+}

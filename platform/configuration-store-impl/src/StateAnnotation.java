@@ -1,5 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -7,10 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-public class StateAnnotation implements State {
+class StateAnnotation implements State {
   private final String name;
-  @NotNull
-  private final Storage[] storages;
+  private final Storage @NotNull [] storages;
 
   public StateAnnotation(@NotNull String name, @NotNull Storage storage) {
     this.name = name;
@@ -18,12 +19,12 @@ public class StateAnnotation implements State {
   }
 
   @Override
-  public String name() {
+  public @NotNull String name() {
     return name;
   }
 
   @Override
-  public Storage[] storages() {
+  public Storage @NotNull [] storages() {
     return storages;
   }
 
@@ -38,8 +39,14 @@ public class StateAnnotation implements State {
   }
 
   @Override
+  public @NotNull String additionalExportDirectory() {
+    return "";
+  }
+
+  @Deprecated
+  @Override
   public String additionalExportFile() {
-    return null;
+    return "";
   }
 
   @Override
@@ -49,6 +56,41 @@ public class StateAnnotation implements State {
 
   @Override
   public boolean externalStorageOnly() {
+    return false;
+  }
+
+  @Override
+  public boolean reportStatistic() {
+    return false;
+  }
+
+  @Override
+  public boolean allowLoadInTests() {
+    return false;
+  }
+
+  @Override
+  public boolean useLoadedStateAsExisting() {
+    return true;
+  }
+
+  @Override
+  public boolean getStateRequiresEdt() {
+    return false;
+  }
+
+  @Override
+  public SettingsCategory category() {
+    return SettingsCategory.OTHER;
+  }
+
+  @Override
+  public boolean exportable() {
+    return false;
+  }
+
+  @Override
+  public boolean perClient() {
     return false;
   }
 

@@ -1,59 +1,134 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactMap;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfFloatingPointType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ExpressionTypeProvider;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiUnaryExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author gregsh
  */
-public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
-  @NotNull
+public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   @Override
-  public String getInformationHint(@NotNull PsiExpression element) {
-    PsiType type = element.getType();
-    String text = type == null ? "<unknown>" : type.getPresentableText();
-    return StringUtil.escapeXml(text);
+  public @NotNull String getInformationHint(@NotNull PsiElement element) {
+    return StringUtil.escapeXmlEntities(getTypePresentation(element));
   }
 
-  @NotNull
-  @Override
-  public String getErrorHint() {
-    return "No expression found";
+  private static @NotNull @NlsSafe String getTypePresentation(@NotNull PsiElement element) {
+    PsiType type = null;
+    PsiLocalVariable psiVariable = getPossibleLocaleVariable(element);
+    if (psiVariable != null) {
+      type = psiVariable.getType();
+    }
+    if (element instanceof PsiParameter parameter) {
+      type = parameter.getType();
+    }
+    else if (element instanceof PsiExpression psiExpression) {
+      type = psiExpression.getType();
+    }
+    if (type instanceof PsiLambdaExpressionType) {
+      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
+    }
+    else if (type instanceof PsiMethodReferenceType) {
+      type = ((PsiMethodReferenceType)type).getExpression().getFunctionalInterfaceType();
+    }
+    return type == null ? "<unknown>" : type.getPresentableText();
   }
 
-  @NotNull
   @Override
-  public List<PsiExpression> getExpressionsAt(@NotNull PsiElement elementAt) {
-    return SyntaxTraverser.psiApi().parents(elementAt)
-      .filter(PsiExpression.class)
-      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
-      .toList();
+  public @NotNull String getErrorHint() {
+    return JavaBundle.message("error.hint.no.expression.found");
+  }
+
+  private static @Nullable PsiLocalVariable getPossibleLocaleVariable(@NotNull PsiElement elementAt) {
+    if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiLocalVariable psiVariable &&
+        psiVariable.getTypeElement().isInferredType()) {
+      return psiVariable;
+    }
+    if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
+        keyword.getParent() != null && keyword.getParent().getParent() instanceof PsiLocalVariable psiVariable) {
+      return psiVariable;
+    }
+    return null;
+  }
+
+  private static @Nullable PsiParameter getPossibleParameter(@NotNull PsiElement elementAt) {
+    if (elementAt instanceof PsiIdentifier identifier &&
+        identifier.getParent() instanceof PsiParameter parameter &&
+        (parameter.getTypeElement() == null || parameter.getTypeElement().isInferredType())) {
+      return parameter;
+    }
+    if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
+        keyword.getParent() != null && keyword.getParent().getParent() instanceof PsiParameter parameter) {
+      return parameter;
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull List<PsiElement> getExpressionsAt(@NotNull PsiElement elementAt) {
+    PsiVariable psiVariable = getPossibleLocaleVariable(elementAt);
+    if (psiVariable != null) {
+      PsiTypeElement element = psiVariable.getTypeElement();
+      if (element.isInferredType() && psiVariable.getInitializer() != null && psiVariable.getNameIdentifier() != null) {
+        return Collections.singletonList(elementAt);
+      }
+    }
+    ArrayList<PsiElement> elements = new ArrayList<>();
+    PsiParameter parameter = getPossibleParameter(elementAt);
+    if (parameter != null) {
+      elements.add(parameter);
+    }
+    elements.addAll(SyntaxTraverser.psiApi().parents(elementAt)
+                      .filter(PsiExpression.class)
+                      .filter(JavaTypeProvider::isLargestNonTrivialExpression)
+                      .map(t -> (PsiElement)t)
+                      .toList());
+    return elements;
   }
 
   private static boolean isLargestNonTrivialExpression(@NotNull PsiExpression e) {
@@ -70,35 +145,82 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getAdvancedInformationHint(@NotNull PsiExpression expression) {
+  public @NotNull @Nls String getAdvancedInformationHint(@NotNull PsiElement element) {
+    PsiExpression expression = null;
+    PsiVariable psiVariable = getPossibleLocaleVariable(element);
+    if (psiVariable != null) {
+      expression = psiVariable.getInitializer();
+    }
+    else if (element instanceof PsiExpression psiExpression) {
+      expression = psiExpression;
+    }
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression == null) return "<unknown>";
+    if (expression == null) return getInformationHint(element);
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    DfaFactMap map = result == null ? null : result.getAllFacts(expression);
-    String basicTypeEscaped = getInformationHint(expression);
-    PsiType type = expression.getType();
-    String advancedTypeInfo = map == null ? "" : map.facts(new DfaFactMap.FactMapper<String>() {
-      @Override
-      public <T> String apply(DfaFactType<T> factType, T value) {
-        return formatFact(factType, value, type);
+    List<Pair<@Nls String, @Nls String>> infoLines = new ArrayList<>();
+    String basicType = getTypePresentation(expression);
+    if (result != null) {
+      DfType dfType = result.getDfType(expression);
+      PsiType type = expression.getType();
+      Set<Object> values = result.getExpressionValues(expression);
+      if (!values.isEmpty()) {
+        infoLines.add(Pair.create(
+          JavaBundle.message("type.information.value"),
+          StreamEx.of(values).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningOr())));
       }
-    }).joining();
-    return advancedTypeInfo.isEmpty()
-           ? basicTypeEscaped
-           : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";
+      else {
+        if (dfType instanceof DfAntiConstantType) {
+          List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
+          nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info
+          if (!nonValues.isEmpty()) {
+            infoLines.add(Pair.create(
+              JavaBundle.message("type.information.not.equal.to"),
+              StreamEx.of(nonValues).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
+          }
+        }
+        if (dfType instanceof DfIntegralType) {
+          String rangeText = JvmPsiRangeSetUtil.getPresentationText(((DfIntegralType)dfType).getRange(), type);
+          if (!rangeText.equals(InspectionsBundle.message("long.range.set.presentation.any"))) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.range"), rangeText));
+          }
+        }
+        else if (dfType instanceof DfFloatingPointType && !(dfType instanceof DfConstantType)) {
+          String presentation = dfType.toString().replaceFirst("^(double|float) ?", ""); //NON-NLS
+          if (!presentation.isEmpty()) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.range"), presentation));
+          }
+        }
+        else if (dfType instanceof DfReferenceType refType) {
+          infoLines.add(Pair.create(JavaBundle.message("type.information.nullability"), refType.getNullability().getPresentationName()));
+          infoLines.add(Pair.create(JavaBundle.message("type.information.constraints"), refType.getConstraint().getPresentationText(type)));
+          if (refType.getMutability() != Mutability.UNKNOWN) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.mutability"), refType.getMutability().getPresentationName()));
+          }
+          infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
+                                    refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
+          SpecialField field = refType.getSpecialField();
+          // ENUM_ORDINAL is not precise enough yet, and could be confusing for users
+          if (field != null && field != SpecialField.ENUM_ORDINAL) {
+            infoLines.add(Pair.create(field.getPresentationName(), field.getPresentationText(refType.getSpecialFieldType(), type)));
+          }
+        }
+      }
+    }
+    infoLines.removeIf(pair -> pair.getSecond().isEmpty());
+    if (!infoLines.isEmpty()) {
+      infoLines.addFirst(Pair.create(JavaBundle.message("type.information.type"), basicType));
+      HtmlChunk[] rows = ContainerUtil.map2Array(infoLines, HtmlChunk.class, pair -> makeHtmlRow(pair.getFirst(), pair.getSecond()));
+      return HtmlChunk.tag("table").children(rows).toString();
+    }
+    return HtmlChunk.text(basicType).toString();
   }
 
-  private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
-    String presentationText = factType.getPresentationText(value, type);
-    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXml(presentationText));
-  }
-
-  private static String makeHtmlRow(String titleText, String contentHtml) {
-    String titleCell = "<td align='left' valign='top' style='color:" +
-                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXml(titleText) + ":</td>";
-    String contentCell = "<td>" + contentHtml + "</td>";
-    return "<tr>" + titleCell + contentCell + "</tr>";
+  private static HtmlChunk makeHtmlRow(@NotNull @Nls String titleText, @Nls String contentText) {
+    HtmlChunk titleCell = HtmlChunk.tag("td").attr("align", "left").attr("valign", "top")
+      .style("color:" + ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR))
+      .addText(titleText + ":");
+    HtmlChunk contentCell = HtmlChunk.tag("td").addText(contentText);
+    return HtmlChunk.tag("tr").children(titleCell, contentCell);
   }
 }

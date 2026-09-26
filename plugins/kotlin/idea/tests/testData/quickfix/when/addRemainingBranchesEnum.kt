@@ -1,0 +1,10 @@
+// "Add remaining branches" "true"
+// ERROR: Unresolved reference: TODO
+// ERROR: Unresolved reference: TODO
+// K2_ERROR: NO_ELSE_IN_WHEN
+enum class Color { R, G, B }
+fun test(c: Color) = wh<caret>en(c) {
+    Color.B -> 0xff
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddWhenRemainingBranchFixFactories$AddRemainingWhenBranchesQuickFix

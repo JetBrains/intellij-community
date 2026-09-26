@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldBreakpoint
@@ -6,13 +6,13 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -25,13 +25,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.AccessWatchpointEvent;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.ModificationWatchpointEvent;
@@ -40,15 +50,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.FieldBreakpoint");
-  private boolean myIsStatic;
+public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpointProperties> {
+  private static final Logger LOG = Logger.getInstance(FieldBreakpoint.class);
 
-  @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
+  public static final @NonNls Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
-  protected FieldBreakpoint(Project project, XBreakpoint breakpoint) {
+  FieldBreakpoint(Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
   }
 
@@ -57,11 +66,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     setFieldName(fieldName);
   }
 
-  public boolean isStatic() {
-    return myIsStatic;
-  }
-
-  public String getFieldName() {
+  public @NlsSafe String getFieldName() {
     return getProperties().myFieldName;
   }
 
@@ -74,19 +79,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   }
 
   @Override
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_invalid_breakpoint;
-  }
-
-  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return null; //isMuted? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint;
+    return isSuspend() ? AllIcons.Debugger.Db_verified_field_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_field_breakpoint;
   }
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
-                           AllIcons.General.WarningDecorator);
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override
@@ -99,15 +99,18 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     try {
       PsiField field = ReadAction.compute(() -> {
         PsiClass psiClass = getPsiClassAt(sourcePosition);
-        return psiClass != null ? psiClass.findFieldByName(getFieldName(), true) : null;
+        return psiClass != null ? psiClass.findFieldByName(getFieldName(), false) : null;
       });
       if (field != null) {
         return field;
       }
-    } catch (IndexNotReadyException ignored) {}
+    }
+    catch (IndexNotReadyException ignored) {
+    }
     return PositionUtil.getPsiElementAt(myProject, PsiField.class, sourcePosition);
   }
 
+  @RequiresBackgroundThread
   @Override
   public void reload() {
     super.reload();
@@ -118,10 +121,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       if (psiClass != null) {
         getProperties().myClassName = psiClass.getQualifiedName();
       }
-      myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    }
-    if (myIsStatic) {
-      setInstanceFiltersEnabled(false);
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        setInstanceFiltersEnabled(false);
+      }
     }
   }
 
@@ -133,14 +135,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if (event instanceof ModificationWatchpointEvent) {
-      ObjectReference reference = ((ModificationWatchpointEvent)event).object();
+    if (event instanceof ModificationWatchpointEvent modificationWatchpointEvent) {
+      ObjectReference reference = modificationWatchpointEvent.object();
       if (reference != null) {  // non-static
         return reference;
       }
     }
-    else if (event instanceof AccessWatchpointEvent) {
-      ObjectReference reference = ((AccessWatchpointEvent)event).object();
+    else if (event instanceof AccessWatchpointEvent watchpointEvent) {
+      ObjectReference reference = watchpointEvent.object();
       if (reference != null) { // non-static
         return reference;
       }
@@ -151,24 +153,23 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   public void createRequestForPreparedClass(DebugProcessImpl debugProcess,
-                                            ReferenceType refType) {
-    VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
+                                            @NotNull ReferenceType refType) {
     try {
       RequestManagerImpl manager = debugProcess.getRequestsManager();
-      Field field = refType.fieldByName(getFieldName());
+      Field field = DebuggerUtils.findField(refType, getFieldName());
       if (field == null) {
-        manager.setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
-                                                        getFieldName(), refType.name()));
+        manager.setInvalid(this, JavaDebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
+                                                            getFieldName(), refType.name()));
         return;
       }
-      if (isWatchModification() && vm.canWatchFieldModification()) {
+      if (isWatchModification() && refType.virtualMachine().canWatchFieldModification()) {
         manager.enableRequest(manager.createModificationWatchpointRequest(this, field));
         LOG.debug("Modification request added");
       }
-      if (isWatchAccess() && vm.canWatchFieldAccess()) {
+      if (isWatchAccess() && refType.virtualMachine().canWatchFieldAccess()) {
         manager.enableRequest(manager.createAccessWatchpointRequest(this, field));
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Access request added field = "+field.name() + "; refType = "+refType.name());
+          LOG.debug("Access request added field = " + field.name() + "; refType = " + refType.name());
         }
       }
     }
@@ -184,12 +185,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> getFileName());
     final int locationLine = location.lineNumber();
 
-    if (event instanceof ModificationWatchpointEvent) {
-      final ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
+    if (event instanceof ModificationWatchpointEvent modificationEvent) {
       final ObjectReference object = modificationEvent.object();
       final Field field = modificationEvent.field();
       if (object != null) {
-        return DebuggerBundle.message(
+        return JavaDebuggerBundle.message(
           "status.field.watchpoint.reached.modification",
           field.declaringType().name(),
           field.name(),
@@ -201,7 +201,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
           object.uniqueID()
         );
       }
-      return DebuggerBundle.message(
+      return JavaDebuggerBundle.message(
         "status.static.field.watchpoint.reached.modification",
         field.declaringType().name(),
         field.name(),
@@ -212,12 +212,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
         locationLine
       );
     }
-    if (event instanceof AccessWatchpointEvent) {
-      AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
+    if (event instanceof AccessWatchpointEvent accessEvent) {
       final ObjectReference object = accessEvent.object();
       final Field field = accessEvent.field();
       if (object != null) {
-        return DebuggerBundle.message(
+        return JavaDebuggerBundle.message(
           "status.field.watchpoint.reached.access",
           field.declaringType().name(),
           field.name(),
@@ -227,7 +226,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
           object.uniqueID()
         );
       }
-      return DebuggerBundle.message(
+      return JavaDebuggerBundle.message(
         "status.static.field.watchpoint.reached.access",
         field.declaringType().name(),
         field.name(),
@@ -241,8 +240,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   public String getDisplayName() {
-    if(!isValid()) {
-      return DebuggerBundle.message("status.breakpoint.invalid");
+    if (!isValid()) {
+      return JavaDebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
     return className != null && !className.isEmpty() ? className + "." + getFieldName() : getFieldName();
@@ -275,14 +274,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   //  Document document = null;
   //  try {
   //    List locations = field.declaringType().allLineLocations();
-  //    if(!locations.isEmpty()) {
+  //    if (!locations.isEmpty()) {
   //      Location location = (Location)locations.get(0);
   //      line = location.lineNumber();
   //      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(location.sourcePath());
-  //      if(file != null) {
+  //      if (file != null) {
   //        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-  //        if(psiFile != null) {
-  //          document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+  //        if (psiFile != null) {
+  //          document = psiFile.getViewProvider().getDocument();
   //        }
   //      }
   //    }
@@ -294,7 +293,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   //    LOG.debug(e);
   //  }
   //
-  //  if(document == null) return null;
+  //  if (document == null) return null;
   //
   //  FieldBreakpoint fieldBreakpoint = new FieldBreakpoint(project, createHighlighter(project, document, line), fieldName, xBreakpoint);
   //  if (!fieldBreakpoint.isStatic()) {
@@ -305,17 +304,17 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   public static PsiField findField(Project project, Document document, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if(file == null) return null;
+    if (file == null) return null;
     offset = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
     PsiElement element = file.findElementAt(offset);
-    if(element == null) return null;
+    if (element == null) return null;
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     int line = document.getLineNumber(offset);
-    if(field == null) {
+    if (field == null) {
       final PsiField[] fld = {null};
       XDebuggerUtil.getInstance().iterateLine(project, document, line, element1 -> {
         PsiField field1 = PsiTreeUtil.getParentOfType(element1, PsiField.class, false);
-        if(field1 != null) {
+        if (field1 != null) {
           fld[0] = field1;
           return false;
         }
@@ -330,18 +329,19 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   @Override
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
-    //noinspection HardCodedStringLiteral
     setFieldName(breakpointNode.getAttributeValue("field_name"));
-    if(getFieldName() == null) {
+    if (getFieldName() == null) {
       throw new InvalidDataException("No field name for field breakpoint");
     }
     try {
-      getProperties().WATCH_MODIFICATION = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_MODIFICATION = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
+    }
+    catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_ACCESS = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_ACCESS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
+    }
+    catch (Exception ignored) {
     }
   }
   //

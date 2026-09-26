@@ -1,5 +1,14 @@
 <html>
 <body>
-      This inspection reports assignments with incompatible types
+Reports assignments with incompatible types.
+<p>Such assignments might result in various runtime exceptions.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class A {}
+  class B {}
+
+  // incompatible assignment
+  A a = new B()
+</code></pre>
 </body>
 </html>

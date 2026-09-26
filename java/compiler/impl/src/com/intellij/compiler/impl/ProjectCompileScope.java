@@ -15,7 +15,7 @@
  */
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler.impl;
 
@@ -36,11 +36,13 @@ public class ProjectCompileScope extends FileIndexCompileScope {
     myProject = project;
   }
 
+  @Override
   protected FileIndex[] getFileIndices() {
     return new FileIndex[] {ProjectRootManager.getInstance(myProject).getFileIndex()};
   }
 
-  public boolean belongs(String url) {
+  @Override
+  public boolean belongs(@NotNull String url) {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file != null) {
       for (FileIndex index : getFileIndices()) {
@@ -62,8 +64,8 @@ public class ProjectCompileScope extends FileIndexCompileScope {
     //return !FileUtil.startsWith(url, myTempDirUrl);
   }
 
-  @NotNull
-  public Module[] getAffectedModules() {
+  @Override
+  public Module @NotNull [] getAffectedModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
 }

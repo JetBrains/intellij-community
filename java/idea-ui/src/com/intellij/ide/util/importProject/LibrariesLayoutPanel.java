@@ -1,52 +1,50 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
+
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
+class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
-  public LibrariesLayoutPanel(final ModuleInsight insight) {
+  LibrariesLayoutPanel(final ModuleInsight insight) {
     super(insight);
   }
 
+  @Override
   protected String getElementName(final LibraryDescriptor entry) {
     return entry.getName();
   }
 
+  @Override
   protected void setElementName(final LibraryDescriptor entry, final String name) {
     entry.setName(name);
   }
 
-  protected List<LibraryDescriptor> getEntries() {
+  @Override
+  protected @Unmodifiable List<LibraryDescriptor> getEntries() {
     final List<LibraryDescriptor> libs = getInsight().getSuggestedLibraries();
     return libs != null? libs : Collections.emptyList();
   }
 
-  protected Collection getDependencies(final LibraryDescriptor entry) {
-    return entry.getJars();
+  @Override
+  protected @Unmodifiable Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
+    return ContainerUtil.map(entry.getJars(), FileDescriptor::new);
   }
 
-  protected LibraryDescriptor merge(final List<LibraryDescriptor> entries) {
+  @Override
+  protected LibraryDescriptor merge(final List<? extends LibraryDescriptor> entries) {
     final ModuleInsight insight = getInsight();
     LibraryDescriptor mainLib = null;
     for (LibraryDescriptor entry : entries) {
@@ -61,37 +59,53 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return mainLib;
   }
 
-  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
+  @Override
+  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Collection<? extends File> extractedData) {
     return getInsight().splitLibrary(entry, newEntryName, extractedData);
   }
 
+  @Override
   protected Collection<File> getContent(final LibraryDescriptor entry) {
     return entry.getJars();
   }
 
+  @Override
   protected String getEntriesChooserTitle() {
-    return "Libraries";
-  }
-
-  protected String getDependenciesTitle() {
-    return "Library contents";
+    return JavaUiBundle.message("title.libraries");
   }
 
   @Override
-  protected String getElementTypeName() {
-    return "library";
+  protected @NlsContexts.BorderTitle String getDependenciesTitle() {
+    return JavaUiBundle.message("title.library.contents");
   }
 
+  @Override
+  protected @NotNull Set<String> getExistingNames() {
+    return getInsight().getExistingProjectLibraryNames();
+  }
+
+  @Override
+  protected String getElementTypeNamePlural() {
+    return JavaUiBundle.message("title.libraries");
+  }
+
+  @Override
+  protected ElementType getElementType() {
+    return ElementType.LIBRARY;
+  }
+
+  @Override
   protected String getSplitDialogChooseFilesPrompt() {
-    return "&Select jars to extract to the new library:";
+    return JavaUiBundle.message("label.select.jars.to.extract.to.new.library");
   }
 
+  @Override
   protected String getNameAlreadyUsedMessage(final String name) {
-    return "library with name " + name + " already exists";
+    return JavaUiBundle.message("error.library.with.name.already.exists", name);
   }
 
+  @Override
   protected String getStepDescriptionText() {
-    return "Please review libraries found. At this stage you can set library names that will be used in the project,\n" +
-           "exclude particular libraries from the project, or move individual files between the libraries.";
+    return JavaUiBundle.message("libraries.layout.step.description");
   }
 }

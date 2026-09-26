@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,22 +12,22 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings("ConstantConditions")
-public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
+public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private String myOldDoctype;
 
@@ -59,8 +45,15 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
-    super.tearDown();
+    try {
+      ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(myOldDoctype, getProject());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -72,12 +65,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     final ExternalResourceManager manager = ExternalResourceManager.getInstance();
     final String old = manager.getResourceLocation(url, (String)null);
     if (old != null &&
-        old != url //strange hack: ERM returns url as location sometimes
+        !old.equals(url) //strange hack: ERM returns url as location sometimes
       ) {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myFixture.getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() {
@@ -177,7 +170,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAttributesTemplateFinishWithSpace() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
 
     configureByFile(getTestName(false) + ".xml");
     type('b');
@@ -194,7 +187,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNoAttributesTemplateFinishWithSpace() {
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
 
     configureByFile(getTestName(false) + ".xml");
     type('d');
@@ -664,6 +657,11 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     basicDoTest("");
   }
 
+  public void testUnqualifiedElement() {
+    myFixture.copyFileToProject("UnqualifiedElement.xsd");
+    myFixture.testCompletionVariants("UnqualifiedElement.xml", "code");
+  }
+
   public void testDoNotSuggestExistingAttributes() {
     myFixture.configureByFile("DoNotSuggestExistingAttributes.xml");
     myFixture.completeBasic();
@@ -681,7 +679,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
                        "xml:id",
                        "xml:lang",
                        "xml:space",
-                       "xsi:nill",
+                       "xsi:nil",
                        "xsi:noNamespaceSchemaLocation",
                        "xsi:type");
   }
@@ -697,9 +695,10 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDoNotProcessAnyInRestrictions() {
-    myFixture.configureByText("foo.xsd", "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
-                                         "    <<caret>\n" +
-                                         "</xs:schema>");
+    myFixture.configureByText("foo.xsd", """
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <<caret>
+      </xs:schema>""");
     myFixture.completeBasic();
     assertSameElements(myFixture.getLookupElementStrings(), "xs:annotation",
                                                             "xs:attribute",
@@ -756,6 +755,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
   }
 
+  public void testCustomNamespaceCompletion() {
+    myFixture.configureByFiles("main.xsd", "sub.xsd");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertTrue(Arrays.stream(elements).anyMatch(element -> "http://www.test.com/sub".equals(element.getLookupString())));
+  }
+
   public void testRootTagCompletion() {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
@@ -779,9 +784,10 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAttributeValueToken() {
-    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
-                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
-                                         "</schema>");
+    myFixture.configureByText("foo.xml", """
+      <schema xmlns="http://www.w3.org/2001/XMLSchema">
+          <element name="a" abstract=<caret>""/>
+      </schema>""");
     LookupElement[] elements = myFixture.completeBasic();
     assertEquals(0, elements.length);
   }
@@ -792,10 +798,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertSameElements(variants, "int", "integer", "invisibleType");
   }
 
+  public void testEnumeratedTypeUnion() {
+    List<String> variants = myFixture.getCompletionVariants("enumerations.xml", "enumerations.xsd");
+    assertSameElements(variants, "A", "B");
+  }
+
   private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyle.getSettings(myFixture.getProject())
                     .getCustomSettings(HtmlCodeStyleSettings.class);
   }
-
 }
 

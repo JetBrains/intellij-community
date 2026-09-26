@@ -1,0 +1,47 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("PyExternalIndexedFileEntityModifications")
+
+package com.intellij.python.externalIndex.workspace
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.python.externalIndex.workspace.impl.PyExternalIndexedFileEntityImpl
+
+@GeneratedCodeApiVersion(3)
+internal interface PyExternalIndexedFileEntityBuilder : WorkspaceEntityBuilder<PyExternalIndexedFileEntity> {
+  override var entitySource: EntitySource
+  var file: VirtualFileUrl
+}
+
+internal object PyExternalIndexedFileEntityType : EntityType<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = PyExternalIndexedFileEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = PyExternalIndexedFileEntityImpl.Builder::class.java
+  operator fun invoke(
+    file: VirtualFileUrl,
+    entitySource: EntitySource,
+    init: (PyExternalIndexedFileEntityBuilder.() -> Unit)? = null,
+  ): PyExternalIndexedFileEntityBuilder {
+    val builder = builder()
+    builder.file = file
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+internal fun MutableEntityStorage.modifyPyExternalIndexedFileEntity(
+  entity: PyExternalIndexedFileEntity,
+  modification: PyExternalIndexedFileEntityBuilder.() -> Unit,
+): PyExternalIndexedFileEntity = modifyEntity(PyExternalIndexedFileEntityBuilder::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createPyExternalIndexedFileEntity")
+internal fun PyExternalIndexedFileEntity(
+  file: VirtualFileUrl,
+  entitySource: EntitySource,
+  init: (PyExternalIndexedFileEntityBuilder.() -> Unit)? = null,
+): PyExternalIndexedFileEntityBuilder = PyExternalIndexedFileEntityType(file, entitySource, init)

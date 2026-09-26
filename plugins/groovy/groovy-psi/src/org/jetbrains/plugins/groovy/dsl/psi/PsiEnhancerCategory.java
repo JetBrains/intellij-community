@@ -20,8 +20,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Category class to add new methods int IntelliJ PSI classes
- *
- * @author ilyas
  */
 public interface PsiEnhancerCategory {
   ExtensionPointName<PsiEnhancerCategory> EP_NAME = ExtensionPointName.create("org.intellij.groovy.psiEnhancerCategory");

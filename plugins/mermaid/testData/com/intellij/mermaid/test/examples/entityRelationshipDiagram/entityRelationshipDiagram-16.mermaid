@@ -1,0 +1,16 @@
+erDiagram
+    subgraph title1
+        A1 ||--|| A2 : links
+    end
+
+    subgraph title2
+        B1 ||--|| B2 : links
+    end
+
+    subgraph title3
+        C1 ||--|| C2 : links
+    end
+
+    title1 ||--|| title2 : links
+    title2 ||--|| title3 : links
+    title2 ||--|| C2 : links

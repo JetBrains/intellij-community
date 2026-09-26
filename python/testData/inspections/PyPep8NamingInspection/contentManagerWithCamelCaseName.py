@@ -9,7 +9,7 @@ class MyContextManager:
         pass
 
 
-class <weak_warning descr="Class names should use CamelCase convention">MY_CONTEXT_MANAGER</weak_warning>:
+class <weak_warning descr="Class names should use CapWords convention">MY_CONTEXT_MANAGER</weak_warning>:
     def __init__(self):
         pass
 

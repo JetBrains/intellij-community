@@ -1,0 +1,391 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import type {IncomingHttpHeaders, IncomingMessage} from 'node:http'
+import {request as httpRequest} from 'node:http'
+import {request as httpsRequest} from 'node:https'
+import {Readable} from 'node:stream'
+import pRetry from 'p-retry'
+import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+
+type TransportMessage = unknown
+type TransportSendOptions = Record<string, unknown> | undefined
+type FetchLike = (url: string | URL, init?: RequestInit) => Promise<Response>
+
+const SESSION_NOT_FOUND_RE = /session not found/i
+
+export interface StreamTransportOptions {
+  /** Full stream endpoint, e.g. `http://127.0.0.1:64342/stream`. Port discovery is `discovery.ts`' job. */
+  url: string
+  requestHeaders?: HeadersInit
+  queueLimit: number
+  queueWaitTimeoutMs: number
+  retryAttempts: number
+  retryBaseDelayMs: number
+  note?: (message: string) => void
+  warn?: (message: string) => void
+}
+
+export interface McpStreamTransport {
+  sessionId: string | undefined
+  onmessage?: (message: TransportMessage, extra?: unknown) => void
+  onerror?: (error: Error) => void
+  onclose?: () => void
+  start: () => Promise<void>
+  send: (message: TransportMessage, options?: TransportSendOptions) => Promise<void>
+  close: () => Promise<void>
+  setProtocolVersion: (version: string) => void
+  resetTransport: (reason: unknown) => Promise<void>
+}
+
+interface QueueEntry {
+  message: TransportMessage
+  options: TransportSendOptions
+  resolve: () => void
+  reject: (error: unknown) => void
+  timeout: NodeJS.Timeout | null
+}
+
+function isSessionNotFoundError(error: unknown): boolean {
+  if (!error) return false
+  const message = error instanceof Error ? error.message : String(error)
+  if (!SESSION_NOT_FOUND_RE.test(message)) return false
+  const code = (error as {code?: unknown}).code
+  if (typeof code === 'number') {
+    return code === -32000 || code === 400 || code === 404 || code === 410
+  }
+  return true
+}
+
+// Convert Fetch API headers into the plain object shape accepted by node:http.
+function headersToObject(headers: HeadersInit | undefined): Record<string, string> {
+  const result: Record<string, string> = {}
+  new Headers(headers).forEach((value, key) => {
+    result[key] = value
+  })
+  return result
+}
+
+// Preserve repeated response headers when adapting node:http responses back to Fetch API Response.
+function headersFromIncoming(headers: IncomingHttpHeaders): Headers {
+  const result = new Headers()
+  for (const [key, value] of Object.entries(headers)) {
+    if (Array.isArray(value)) {
+      for (const item of value) result.append(key, item)
+    } else if (value !== undefined) {
+      result.set(key, String(value))
+    }
+  }
+  return result
+}
+
+// The MCP SDK sends JSON bodies, but support the common Fetch body shapes used by RequestInit.
+function bodyToNodeBody(body: BodyInit | null | undefined): string | Buffer | undefined {
+  if (body == null) return undefined
+  if (typeof body === 'string') return body
+  if (body instanceof URLSearchParams) return body.toString()
+  if (body instanceof ArrayBuffer) return Buffer.from(body)
+  if (ArrayBuffer.isView(body)) return Buffer.from(body.buffer, body.byteOffset, body.byteLength)
+  throw new Error(`Unsupported MCP upstream fetch body type: ${Object.prototype.toString.call(body)}`)
+}
+
+// Fetch rejects with the signal's abort reason; mirror that behavior for the node:http adapter.
+function signalReasonToError(signal: AbortSignal | null | undefined): Error {
+  const reason = signal?.reason
+  if (reason instanceof Error) return reason
+  return new Error(reason === undefined ? 'Request aborted' : String(reason))
+}
+
+// Fetch-compatible adapter over node:http/node:https.
+// Bun's standard fetch path times out long-running silent MCP POST responses after a few minutes,
+// before the SDK/tool-call timeout can fire. Supplying this adapter to StreamableHTTPClientTransport
+// bypasses that runtime limit while still giving the MCP SDK a standard Response object and
+// RequestInit.signal cancellation.
+export function createNodeHttpFetch(): FetchLike {
+  return async (url, init) => {
+    const target = url instanceof URL ? url : new URL(url)
+    const request = target.protocol === 'https:' ? httpsRequest : httpRequest
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+      throw new Error(`Unsupported MCP upstream fetch protocol: ${target.protocol}`)
+    }
+
+    const body = bodyToNodeBody(init?.body)
+    const signal = init?.signal
+
+    return await new Promise<Response>((resolve, reject) => {
+      let response: IncomingMessage | undefined
+      const req = request(target, {
+        method: init?.method ?? 'GET',
+        headers: headersToObject(init?.headers)
+      }, (res) => {
+        response = res
+        res.on('close', cleanup)
+        resolve(new Response(Readable.toWeb(res) as ReadableStream<Uint8Array>, {
+          status: res.statusCode ?? 500,
+          statusText: res.statusMessage,
+          headers: headersFromIncoming(res.headers)
+        }))
+      })
+
+      function cleanup(): void {
+        signal?.removeEventListener('abort', abort)
+      }
+
+      function abort(): void {
+        const error = signalReasonToError(signal)
+        cleanup()
+        req.destroy(error)
+        response?.destroy(error)
+        reject(error)
+      }
+
+      req.on('error', (error) => {
+        cleanup()
+        reject(error)
+      })
+
+      if (signal?.aborted) {
+        abort()
+        return
+      }
+      signal?.addEventListener('abort', abort, {once: true})
+
+      if (body !== undefined) req.write(body)
+      req.end()
+    })
+  }
+}
+
+class StreamTransportImpl implements McpStreamTransport {
+  _options: StreamTransportOptions
+  _queue: QueueEntry[]
+  _connectPromise: Promise<void> | null
+  _transport: StreamableHTTPClientTransport | null
+  _protocolVersion: string | null
+  _closed: boolean
+  _closeNotified: boolean
+  sessionId: string | undefined
+  onmessage?: (message: TransportMessage, extra?: unknown) => void
+  onerror?: (error: Error) => void
+  onclose?: () => void
+
+  constructor(options: StreamTransportOptions) {
+    this._options = options
+    this._queue = []
+    this._connectPromise = null
+    this._transport = null
+    this._protocolVersion = null
+    this._closed = false
+    this._closeNotified = false
+    this.sessionId = undefined
+  }
+
+  async start(): Promise<void> {
+    await this._ensureConnected()
+  }
+
+  async send(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
+    if (this._closed) {
+      throw new Error('Transport is closed')
+    }
+
+    if (this._transport) {
+      await this._sendDirect(message, options)
+      return
+    }
+
+    await this._enqueue(message, options)
+  }
+
+  async close(): Promise<void> {
+    if (this._closed) return
+    this._closed = true
+
+    if (this._transport) {
+      await this._transport.close()
+      this._transport = null
+    }
+
+    this._rejectQueue(new Error('Transport closed'))
+    this._emitClose()
+  }
+
+  setProtocolVersion(version: string): void {
+    this._protocolVersion = version
+    if (this._transport?.setProtocolVersion) {
+      this._transport.setProtocolVersion(version)
+    }
+  }
+
+  async resetTransport(reason: unknown): Promise<void> {
+    const warn = this._options.warn
+    const message = reason instanceof Error ? reason.message : String(reason)
+    if (warn) warn(`MCP stream session invalid; reconnecting. ${message}`)
+    const transport = this._transport
+    this._transport = null
+    this.sessionId = undefined
+    if (transport) {
+      try {
+        await transport.close()
+      } catch (error) {
+        const closeMessage = error instanceof Error ? error.message : String(error)
+        if (warn) warn(`Failed to close stale MCP transport: ${closeMessage}`)
+      }
+    }
+  }
+
+  async _sendDirect(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
+    let retried = false
+    while (true) {
+      try {
+        if (!this._transport) {
+          await this._ensureConnected()
+        }
+        await this._transport!.send(message, options)
+        this.sessionId = this._transport!.sessionId
+        return
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error))
+        if (!retried && isSessionNotFoundError(err)) {
+          retried = true
+          await this.resetTransport(err)
+          continue
+        }
+        if (this.onerror) this.onerror(err)
+        throw err
+      }
+    }
+  }
+
+  async _enqueue(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
+    const limit = this._options.queueLimit
+    if (limit > 0 && this._queue.length >= limit) {
+      throw new Error(`MCP proxy queue limit (${limit}) reached before stream connection`)
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const entry: QueueEntry = {
+        message,
+        options,
+        resolve,
+        reject,
+        timeout: null
+      }
+
+      if (this._options.queueWaitTimeoutMs > 0) {
+        entry.timeout = setTimeout(() => {
+          this._removeQueueEntry(entry)
+          reject(new Error(`Upstream tool call timed out before it was sent after ${this._options.queueWaitTimeoutMs}ms`))
+        }, this._options.queueWaitTimeoutMs)
+      }
+
+      this._queue.push(entry)
+      void this._ensureConnected().catch((error) => {
+        this._removeQueueEntry(entry)
+        reject(error)
+      })
+    })
+  }
+
+  async _ensureConnected(): Promise<void> {
+    if (this._closed) throw new Error('Transport is closed')
+    if (this._transport) return
+    if (this._connectPromise) return this._connectPromise
+
+    this._connectPromise = pRetry(
+      async () => {
+        const {url: targetUrl, note} = this._options
+
+        if (note) note(`Connecting to MCP stream ${targetUrl}`)
+        const transport = new StreamableHTTPClientTransport(targetUrl, {
+          fetch: createNodeHttpFetch(),
+          requestInit: {headers: this._options.requestHeaders}
+        })
+        transport.onmessage = (message, extra) => {
+          if (this.onmessage) this.onmessage(message, extra)
+        }
+        transport.onerror = (error) => {
+          if (this.onerror) this.onerror(error)
+        }
+        transport.onclose = () => {
+          this._transport = null
+          this.sessionId = undefined
+          this._emitClose()
+        }
+        if (this._protocolVersion && transport.setProtocolVersion) {
+          transport.setProtocolVersion(this._protocolVersion)
+        }
+
+        await transport.start()
+        this._transport = transport
+        this.sessionId = transport.sessionId
+        this._closeNotified = false
+        await this._flushQueue()
+      },
+      {
+        retries: Math.max(this._options.retryAttempts - 1, 0),
+        minTimeout: this._options.retryBaseDelayMs,
+        onFailedAttempt: (error) => {
+          if (this._options.warn) {
+            this._options.warn(`MCP stream connection attempt failed (${error.attemptNumber}/${error.retriesLeft + error.attemptNumber}): ${error.message}`)
+          }
+        }
+      }
+    ).finally(() => {
+      this._connectPromise = null
+    })
+
+    return this._connectPromise
+  }
+
+  async _flushQueue(): Promise<void> {
+    if (!this._transport || this._queue.length === 0) return
+    const queued = this._queue.slice()
+    this._queue.length = 0
+
+    for (const entry of queued) {
+      if (entry.timeout) {
+        clearTimeout(entry.timeout)
+        entry.timeout = null
+      }
+      try {
+        await this._sendDirect(entry.message, entry.options)
+        entry.resolve()
+      } catch (error) {
+        entry.reject(error)
+      }
+    }
+  }
+
+  _removeQueueEntry(entry: QueueEntry): void {
+    const index = this._queue.indexOf(entry)
+    if (index >= 0) {
+      this._queue.splice(index, 1)
+    }
+    if (entry.timeout) {
+      clearTimeout(entry.timeout)
+      entry.timeout = null
+    }
+  }
+
+  _rejectQueue(error: unknown): void {
+    const queued = this._queue.slice()
+    this._queue.length = 0
+    for (const entry of queued) {
+      if (entry.timeout) {
+        clearTimeout(entry.timeout)
+        entry.timeout = null
+      }
+      entry.reject(error)
+    }
+  }
+
+  _emitClose(): void {
+    if (this._closeNotified) return
+    this._closeNotified = true
+    if (this.onclose) this.onclose()
+  }
+}
+
+export function createStreamTransport(options: StreamTransportOptions): McpStreamTransport {
+  return new StreamTransportImpl(options)
+}

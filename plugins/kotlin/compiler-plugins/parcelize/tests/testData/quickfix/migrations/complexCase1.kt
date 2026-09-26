@@ -1,0 +1,35 @@
+// "Migrate to 'Parceler' companion object" "true"
+// WITH_STDLIB
+// K2_ERROR: CREATOR_DEFINITION_IS_NOT_ALLOWED
+// K2_ERROR: OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED
+
+package com.myapp.activity
+
+import android.os.*
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+class Foo(val firstName: String, val age: Int) : Parcelable {
+    constructor(parcel: Parcel) : this(parcel.readString(), parcel.readInt())
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(firstName)
+        parcel.writeInt(age)
+    }
+
+    companion object {
+        @JvmField
+        val <caret>CREATOR: Parcelable.Creator<Foo> = object : Creator() {}
+    }
+
+    private abstract class Creator : Parcelable.Creator<Foo> {
+        override fun createFromParcel(parcel: Parcel): Foo {
+            return Foo(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Foo?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.K2ParcelMigrateToParcelizeQuickFix

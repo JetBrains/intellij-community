@@ -1,0 +1,98 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.impl.smartPointers;
+
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.FrozenDocument;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+/**
+ * All implementers of {@link SmartPointerManager} should extend this class.
+ * One should not downcast {@link SmartPointerManager} to  {@link SmartPointerManagerImpl}.
+ * Even though these methods are solely used by smart pointer implementations,
+ * this abstract class is necessary for Analyzer to be able to redirect them to the right SmartPointerManagerImpl.
+ * The lifetimes of smart pointers and the actual SmartPointerManagerImpl may differ.
+ */
+@ApiStatus.Internal
+public abstract class SmartPointerManagerEx extends SmartPointerManager implements Disposable {
+
+  /**
+   * This method is called when the PSI tree of the given file is going to be modified.
+   *
+   * @param file the target file
+   */
+  public abstract void fastenBelts(@NotNull VirtualFile file);
+
+  /**
+   * Creates a smart pointer to a PSI element.
+   *
+   * @param element        the target element
+   * @param containingFile the containing file
+   * @param forInjected    whether the range is for injected content
+   * @param <E>            type of target element
+   * @return a smart pointer to the specified PSI element
+   */
+  public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
+                                                                                                         @Nullable PsiFile containingFile,
+                                                                                                         boolean forInjected);
+
+  /**
+   * Creates a smart pointer to a range within a file.
+   *
+   * @param file        the file containing the range
+   * @param range       the range to be pointed to
+   * @param forInjected whether the range is for injected content
+   * @return a smart pointer to the specified range
+   */
+  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
+                                                                            @NotNull TextRange range,
+                                                                            boolean forInjected);
+
+  public abstract @Nullable SmartPointerTracker getTracker(@NotNull VirtualFile file);
+
+  public abstract @NotNull SmartPointerTracker getOrCreateTracker(@NotNull VirtualFile file);
+
+  public abstract void updatePointers(@NotNull Document document,
+                                      @NotNull FrozenDocument frozen,
+                                      @NotNull List<? extends DocumentEvent> events);
+
+  public abstract void updatePointerTargetsAfterReparse(@NotNull VirtualFile file);
+
+  public abstract @NotNull Project getProject();
+
+  public abstract @NotNull PsiDocumentManagerEx getPsiDocumentManager();
+
+  /**
+   * A modification tracker corresponding to possible invalidation of live smart pointers in the project.
+   * It's allowed to increment the counter only in write action.
+   * <p>
+   * Increment it under write lock when something globally changes the meaning of pointer targets without
+   * necessarily destroying the referenced PSI (typically a module-roots change). Existing trackers
+   * stay attached to their files; they are lazily revalidated on the next pointer access by comparing
+   * the tracker's stored generation against the current one.
+   * <p>
+   * A smart pointer is considered possibly invalidated when the generation stored in its tracker is
+   * strictly less than this value; resolving the pointer triggers a revalidation that brings the
+   * tracker's stored generation up to date.
+   */
+  public abstract @NotNull SimpleModificationTracker getPossiblyInvalidationModCounter();
+
+  public static @NotNull SmartPointerManagerEx getInstanceEx(@NotNull Project project) {
+    return (SmartPointerManagerEx)getInstance(project);
+  }
+}

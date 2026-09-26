@@ -1,35 +1,32 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.actions.CreateFileFromTemplateAction;
+import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.EditFileTemplatesAction;
 import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,31 +35,20 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
-
+@ApiStatus.Internal
+public final class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   @Override
-  public void update(AnActionEvent e){
-    super.update(e);
-    Presentation presentation = e.getPresentation();
-    Project project = e.getProject();
-    if (project != null && !project.isDisposed()) {
-      FileTemplate[] allTemplates = FileTemplateManager.getInstance(project).getAllTemplates();
-      for (FileTemplate template : allTemplates) {
-        if (canCreateFromTemplate(e, template)) {
-          presentation.setEnabled(true);
-          return;
-        }
-      }
-    }
-    presentation.setEnabled(false);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e){
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
+
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return EMPTY_ARRAY;
+
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate[] templates = manager.getAllTemplates();
 
@@ -98,7 +84,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     List<AnAction> result = new ArrayList<>();
 
     for (FileTemplate template : templates) {
-      if (canCreateFromTemplate(e, template)) {
+      if (!FileTemplateBase.isChild(template) && canCreateFromTemplate(e, template)) {
         AnAction action = replaceAction(template);
         if (action == null) {
           action = new CreateFromTemplateAction(template);
@@ -116,13 +102,11 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       result.add(new EditFileTemplatesAction(IdeBundle.message("action.edit.file.templates")));
     }
 
-    return result.toArray(AnAction.EMPTY_ARRAY);
-}
+    return result.toArray(EMPTY_ARRAY);
+  }
 
-  private static AnAction replaceAction(final FileTemplate template) {
-    final CreateFromTemplateActionReplacer[] actionFactories =
-      ApplicationManager.getApplication().getExtensions(CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER);
-    for (CreateFromTemplateActionReplacer actionFactory : actionFactories) {
+  private static AnAction replaceAction(FileTemplate template) {
+    for (CreateFromTemplateActionReplacer actionFactory : CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER.getExtensionList()) {
       AnAction action = actionFactory.replaceCreateFromFileTemplateAction(template);
       if (action != null) {
         return action;
@@ -131,7 +115,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     return null;
   }
 
-  static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
+  static boolean canCreateFromTemplate(AnActionEvent e, @NotNull FileTemplate template) {
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -143,23 +127,60 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
+  private static final class CreateFromTemplatesAction extends CreateFromTemplateActionBase {
 
-    public CreateFromTemplatesAction(String title){
-      super(title,null,null);
+    CreateFromTemplatesAction(@NlsActions.ActionText String title) {
+      super(title, null, null);
     }
 
     @Override
-    protected AnAction getReplacedAction(final FileTemplate template) {
+    protected AnAction getReplacedAction(FileTemplate template) {
       return replaceAction(template);
     }
 
     @Override
-    protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
+    protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
       SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
       dialog.show();
       return dialog.getSelectedTemplate();
     }
   }
+}
 
+final class CreateFromSimpleTemplateAction extends CreateFileFromTemplateAction implements DumbAware, CreateFromBundledTemplateAction {
+  @NotNull private final FileTemplate myTemplate;
+
+  CreateFromSimpleTemplateAction(@NotNull FileTemplate template) {
+    super(template.getName(), null, FileTemplateUtil.getIcon(template));
+    myTemplate = template;
+  }
+
+  @Override
+  protected void buildDialog(@NotNull Project project,
+                             @NotNull PsiDirectory directory,
+                             CreateFileFromTemplateDialog.@NotNull Builder builder) {
+    builder
+      .setTitle(myTemplate.getName())
+      .addKind(myTemplate.getName(),
+               FileTemplateUtil.getIcon(myTemplate),
+               myTemplate.getName());
+  }
+
+  @Override
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
+    return myTemplate.getName();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
+    boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate);
+    presentation.setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull FileTemplate getTemplate() {
+    return myTemplate;
+  }
 }

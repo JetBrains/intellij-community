@@ -1,0 +1,452 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.bootstrap;
+
+import com.intellij.diagnostic.ITNProxy;
+import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginConflictException;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.KeyboardAwareFocusOwner;
+import com.intellij.ide.logsUploader.LogUploader;
+import com.intellij.ide.plugins.EssentialPluginMissingException;
+import com.intellij.ide.plugins.PluginConflictReporter;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.idea.AppExitCodes;
+import com.intellij.idea.AppMode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ConfigBackup;
+import com.intellij.openapi.application.CustomConfigMigrationOption;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.ExceptionsKt;
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.UIManager;
+import java.awt.AWTError;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
+import static com.intellij.ide.BootstrapBundle.message;
+import static java.util.Objects.requireNonNullElse;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
+@ApiStatus.Internal
+@NullMarked
+public final class StartupErrorReporter {
+  private static final String SUPPORT_URL_PROPERTY = "ij.startup.error.support.url";
+  private static final String HANDLER_CLASS_PROPERTY = "ij.startup.error.handler.class";
+
+  private static boolean hasGraphics = !ApplicationManagerEx.isInIntegrationTest();
+
+  private static final StartupErrorHandler DEFAULT_HANDLER = (error, logs) -> {
+    var comment = "Startup error";
+    if (logs != null) {
+      var uploadId = LogUploader.uploadFile(logs);
+      comment += "\n\nLogs upload ID: " + uploadId;
+    }
+    var id = ITNProxy.sendError(new IdeaLoggingEvent(comment, error));
+    return String.valueOf(id);
+  };
+
+  public static void pluginInstallationProblem(Throwable t) {
+    showWarning(
+      "Plugin Installation Problem",
+      "The IDE failed to install or update some plugins.\n" +
+      "Please try again, and if the problem persists, report it to the support.\n\n" +
+      "The cause: " + t
+    );
+  }
+
+  /// **Note:** warnings should be hardcoded because it's too early to try loading localization plugins.
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  public static void showWarning(@NonNls String title, @NonNls String message) {
+    System.out.println();
+    System.out.println("**" + title + "**");
+    System.out.println();
+    System.out.println(message);
+
+    try {
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.WARNING_MESSAGE);
+    }
+    catch (Throwable t) {
+      System.err.println("\n-----");
+      t.printStackTrace(System.err);
+    }
+  }
+
+  public static void showError(@Nls(capitalization = Title) String title, Throwable t) {
+    var message = new StringWriter();
+
+    var awtError = findCause(t, AWTError.class);
+    if (awtError != null) {
+      message.append(message("bootstrap.error.prefix.graphics"));
+      hasGraphics = false;
+      t = awtError;
+    }
+    else {
+      message.append(message("bootstrap.error.prefix.other"));
+    }
+
+    message.append("\n\n");
+    t.printStackTrace(new PrintWriter(message));
+
+    message.append("\n-----\n").append(message("bootstrap.error.appendix.jre", jreDetails()));
+
+    showError(title, message.toString(), t); //NON-NLS
+  }
+
+  private static @NlsSafe String jreDetails() {
+    var sp = System.getProperties();
+    var jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    var vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    var arch = sp.getProperty("os.arch", "(unknown arch)");
+    var home = sp.getProperty("java.home", "(unknown java.home)");
+    return jre + ' ' + arch + " (" + vendor + ")\n" + home;
+  }
+
+  public static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message) {
+    showError(title, message, null);
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UseHtmlChunkToolTip"})
+  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, @Nullable Throwable error) {
+    System.err.println();
+    System.err.println("**" + title + "**");
+    System.err.println();
+    System.err.println(message);
+
+    if (!hasGraphics || AppMode.isCommandLine() || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
+      return;
+    }
+
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+    catch (Throwable ignore) { }
+
+    try {
+      SplashManagerKt.hideSplash();
+    }
+    catch (Throwable ignore) { }
+
+    try {
+      var messageObj = prepareMessage(message);
+      var close = message("bootstrap.error.option.close");
+      var iconUrl = StartupErrorReporter.class.getResource("/images/questionSign.png");
+      var learnMore = iconUrl != null ? new JLabel(new ImageIcon(iconUrl)) : new JLabel("?");
+      learnMore.setToolTipText(message("bootstrap.error.option.support"));
+      learnMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      learnMore.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          supportCenter();
+        }
+      });
+      if (error != null) {
+        var options = new Object[]{close, message("bootstrap.error.option.reset"), message("bootstrap.error.option.report"), learnMore};
+        var choice = JOptionPane.showOptionDialog(
+          JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
+        );
+        switch (choice) {
+          case 1 -> cleanStart();
+          case 2 -> reportProblem(error);
+        }
+      }
+      else {
+        var options = new Object[]{close, learnMore};
+        JOptionPane.showOptionDialog(
+          JOptionPane.getRootFrame(), messageObj, title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]
+        );
+      }
+    }
+    catch (Throwable t) {
+      System.err.println("\n-----");
+      System.err.println(message("bootstrap.error.appendix.graphics"));
+      t.printStackTrace(System.err);
+    }
+  }
+
+  private static void supportCenter() {
+    try {
+      var url = System.getProperty(SUPPORT_URL_PROPERTY, "https://jb.gg/ide/critical-startup-errors");
+      Desktop.getDesktop().browse(new URI(url));
+    }
+    catch (Throwable t) {
+      showBrowserError(t);
+    }
+  }
+
+  private static void reportProblem(Throwable error) {
+    if (error instanceof ExceptionWithAttachments) {
+      var message = prepareMessage(message("bootstrap.error.message.confirm"));
+      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+      if (ok != JOptionPane.OK_OPTION) return;
+    }
+
+    var progressBar = new JProgressBar();
+    progressBar.setIndeterminate(true);
+    var label = new JLabel(message("bootstrap.error.message.submitting"));
+    var panel = new JPanel(new BorderLayout(5, 5));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(progressBar, BorderLayout.CENTER);
+    var progressDialog = new JDialog(JOptionPane.getRootFrame(), message("bootstrap.error.title.submitting"), true);
+    progressDialog.add(panel);
+    progressDialog.setSize(300, 100);
+    progressDialog.setLocationRelativeTo(null);
+
+    @SuppressWarnings({"SSBasedInspection", "UnnecessaryFullyQualifiedName"})
+    var worker = new javax.swing.SwingWorker<String, Void>() {
+      @Override
+      protected String doInBackground() throws Exception {
+        var handler = DEFAULT_HANDLER;
+
+        var customHandlerName = System.getProperty(HANDLER_CLASS_PROPERTY);
+        if (customHandlerName != null) {
+          handler = (StartupErrorHandler)Class.forName(customHandlerName).getDeclaredConstructor().newInstance();
+        }
+
+        var logs = error instanceof ExceptionWithAttachments ewa ? collectLogs(ewa) : null;
+        try {
+          return handler.uploadLogs(error, logs);
+        }
+        finally {
+          NioFiles.deleteQuietly(logs);
+        }
+      }
+
+      @Override
+      protected void done() {
+        progressDialog.setVisible(false);
+        progressDialog.dispose();
+      }
+    };
+
+    worker.execute();
+    progressDialog.setVisible(true);
+
+    try {
+      var reportId = worker.get();
+      var message = prepareMessage(message("bootstrap.error.message.submitted", reportId));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.submitted"), JOptionPane.INFORMATION_MESSAGE);
+    }
+    catch (Throwable t) {
+      var buf = new StringWriter();
+      t.printStackTrace(new PrintWriter(buf));
+      var message = prepareMessage(message("bootstrap.error.message.no.report", buf));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.no.report"), JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  private static Path collectLogs(ExceptionWithAttachments error) throws IOException {
+    var ts = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now());
+    var logs = Files.createTempFile("startup-err-logs-" + ts + '-', ".zip");
+
+    try (var zip = new Compressor.Zip(logs)) {
+      var log = PathManager.getLogDir().resolve("idea.log");
+      if (Files.exists(log)) {
+        zip.addFile(log.getFileName().toString(), log);
+      }
+
+      var productData = PathManager.getHomeDir().resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME);
+      if (!Files.exists(productData)) {
+        productData = PathManager.getHomeDir().resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC);
+      }
+      if (Files.exists(productData)) {
+        zip.addFile(productData.getFileName().toString(), productData);
+      }
+
+      for (var attachment : error.getAttachments()) {
+        zip.addFile(attachment.getName(), attachment.getBytes());
+      }
+    }
+
+    return logs;
+  }
+
+  private static void cleanStart() {
+    try {
+      var backupPath = ConfigBackup.Companion.getNextBackupPath(PathManager.getConfigDir());
+      CustomConfigMigrationOption.StartWithCleanConfig.INSTANCE.writeConfigMarkerFile();
+      var message = prepareMessage(message("bootstrap.error.message.reset", backupPath));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.INFORMATION_MESSAGE);
+    }
+    catch (Throwable t) {
+      var message = prepareMessage(message("bootstrap.error.message.reset.failed", t));
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  private static void showBrowserError(Throwable t) {
+    var message = prepareMessage(message("bootstrap.error.message.browser", t));
+    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, message("bootstrap.error.title.browser"), JOptionPane.ERROR_MESSAGE);
+  }
+
+  @SuppressWarnings({"UndesirableClassUsage", "HardCodedStringLiteral"})
+  private static JComponent prepareMessage(String message) {
+    var textPane = new SafeActionTextPane();
+    textPane.setEditable(false);
+    textPane.setText(message.replace("\t", "    "));
+    textPane.setBackground(UIManager.getColor("Panel.background"));
+    textPane.setCaretPosition(0);
+    if (Strings.countChars(message, '\n') <= 5) {
+      return textPane;
+    }
+
+    var scrollPane = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+    var maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
+    var maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+    var paneSize = scrollPane.getPreferredSize();
+    if (paneSize.height > maxHeight || paneSize.width > maxWidth) {
+      scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, paneSize.width), Math.min(maxHeight, paneSize.height)));
+    }
+    return scrollPane;
+  }
+
+  public static void processException(Throwable t) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
+      if (!(t instanceof ControlFlowException)) {
+        // `processUnhandledException` writes the log itself. A second write of the same exception is muted,
+        // and then the message pool never gets the `UnhandledException`. See IJPL-254578.
+        ExceptionsKt.processUnhandledException(t, null);
+      }
+      return;
+    }
+
+    var essentialPluginMissingException = findCause(t, EssentialPluginMissingException.class);
+    if (essentialPluginMissingException != null) {
+      var pluginIds = essentialPluginMissingException.getPluginIds();
+      showError(
+        message("bootstrap.error.title.corrupted"),
+        message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n")
+      );
+      System.exit(AppExitCodes.INSTALLATION_CORRUPTED);
+    }
+
+    if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
+      try {
+        PluginManagerCore.getLogger().error(t);
+      }
+      catch (Throwable ignore) { }
+      // workaround for SOE on parsing a PAC file (JRE-247)
+      if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
+        return;
+      }
+    }
+
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+      var conflictException = findCause(t, ImplementationConflictException.class);
+      if (conflictException != null) {
+        var pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);
+        pluginConflictReporter.reportConflict(conflictException.getConflictingPluginIds(), conflictException.isConflictWithPlatform());
+      }
+    }
+
+    var pluginException = findCause(t, PluginException.class);
+    var pluginId = findNonEssentialPlugin(pluginException);
+    if (pluginId != null) {
+      PluginManagerCore.disablePlugin(pluginId);
+
+      var message = new StringWriter();
+      message.append(message("bootstrap.error.message.plugin.failed", pluginId.getIdString()));
+      message.append("\n\n");
+      requireNonNullElse(pluginException.getCause(), pluginException).printStackTrace(new PrintWriter(message));
+
+      showError(message("bootstrap.error.title.plugin.init"), message.toString()); //NON-NLS
+      System.exit(AppExitCodes.PLUGIN_ERROR);
+    }
+    else {
+      showError(message("bootstrap.error.title.start.failed"), t);
+      System.exit(AppExitCodes.STARTUP_EXCEPTION);
+    }
+  }
+
+  private static @Nullable PluginId findNonEssentialPlugin(@Nullable PluginException pluginException) {
+    if (pluginException == null) return null;
+
+    var affectedPlugins = new ArrayList<PluginId>();
+    if (pluginException instanceof PluginConflictException conflictException) {
+      affectedPlugins.add(conflictException.conflictingPluginId);
+    }
+    var pluginId = pluginException.getPluginId();
+    if (pluginId != null) {
+      affectedPlugins.add(pluginId);
+    }
+
+    if (!affectedPlugins.isEmpty()) {
+      var appInfo = ApplicationInfoImpl.getShadowInstance();
+      for (var id : affectedPlugins) {
+        if (!appInfo.isEssentialPlugin(id)) return id;
+      }
+    }
+
+    return null;
+  }
+
+  private static <T extends Throwable> @Nullable T findCause(Throwable t, Class<T> clazz) {
+    while (t != null) {
+      if (clazz.isInstance(t)) {
+        return clazz.cast(t);
+      }
+      t = t.getCause();
+    }
+    return null;
+  }
+
+  private static class SafeActionTextPane extends JTextPane implements KeyboardAwareFocusOwner {
+    @Override
+    public boolean skipKeyEventDispatcher(KeyEvent event) {
+      // The error message is shown when something is badly broken.
+      // Trying to execute actions in this state might throw errors, and most actions are either useless or even dangerous.
+      // And they can steal shortcuts (IJPL-34968), breaking important functionality such as the ability to copy the error text.
+      return true;
+    }
+  }
+}

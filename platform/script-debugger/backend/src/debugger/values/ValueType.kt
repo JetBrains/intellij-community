@@ -15,7 +15,9 @@
  */
 package org.jetbrains.debugger.values
 
-private val VALUE_TYPES = ValueType.values()
+import org.jetbrains.annotations.ApiStatus
+
+private val VALUE_TYPES = ValueType.entries
 
 /**
  * Don't forget to update NashornDebuggerSupport.ValueType and DebuggerSupport.ts respectively also
@@ -26,6 +28,7 @@ enum class ValueType {
   STRING,
   FUNCTION,
   BOOLEAN,
+  BIGINT,
 
   ARRAY,
   NODE,
@@ -43,6 +46,7 @@ enum class ValueType {
     get() = this == OBJECT || this == ARRAY || this == FUNCTION || this == NODE
 
   companion object {
-    fun fromIndex(index: Int): ValueType = VALUE_TYPES.get(index)
+    @ApiStatus.Internal
+    fun fromIndex(index: Int): ValueType = VALUE_TYPES[index]
   }
 }

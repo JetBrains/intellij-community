@@ -1,0 +1,537 @@
+# Dependency Generation
+
+This document describes how IntelliJ's build system generates module dependencies in XML descriptor files.
+
+## TL;DR - The Core Mental Model
+
+**Question**: Which JPS (`.iml`) dependencies become `<module>` entries in XML?
+
+**Answer**: Only those with **PRODUCTION_RUNTIME** scope.
+
+| JPS Scope | In PRODUCTION_RUNTIME? | → XML? | Why                                |
+|-----------|------------------------|--------|------------------------------------|
+| COMPILE   | ✓ Yes                  | ✓ Yes  | Code needed at compile AND runtime |
+| RUNTIME   | ✓ Yes                  | ✓ Yes  | Runtime-only dependencies          |
+| PROVIDED  | ✗ No                   | ✗ No   | Provided by runtime environment    |
+| TEST      | ✗ No                   | ✗ No   | Test code only                     |
+
+**Data Flow**:
+```
+.iml files → Graph (all edges + scope) → Filter (PRODUCTION_RUNTIME) → XML output
+```
+
+## Graph Is the Source of Truth
+
+All dependency generation and validation must use **PluginGraph** as the single source of truth. Avoid re-parsing plugin.xml or reading module/product descriptors from disk to determine dependencies or "pseudo-core" plugins; product DSL and module sets already populate the graph.
+
+- Use graph edges created from JPS dependencies and DSL content.
+- A JPS **library** dependency adds no edge. A library reaches a module only through its wrapper module (`intellij.libraries.*`), and that is a module dependency.
+- The graph already encodes product/module-set aliases and pseudo-core plugins; do not build parallel maps.
+- Keep generator and validator in sync: if validation expects a dependency to be present, generator must be able to emit it (or mark it implicit/suppressed) so a second run is clean.
+- Suppression config is a contract: if a JPS-derived dep is suppressed, it is intentionally omitted from XML and must not produce validation errors. Existing XML-only deps are removed unless explicitly suppressed or graph semantics require preserving them (for example, manual alias-backed plugin deps). Validation should only consider deps represented in the graph after filtering/suppression.
+
+### Graph Completeness During DSL Test Plugin Expansion
+
+The graph is still *incomplete* when `computePluginContentFromDslSpec` runs:
+- It already contains products, module sets, and plugin.xml content from extracted plugins.
+- It does **not** yet contain JPS-only dependencies discovered during the DSL test plugin auto-add BFS.
+
+To keep auto-add decisions graph-driven, model building pre-marks all JPS targets that have
+`{moduleName}.xml` descriptors on disk. This descriptor-presence flag is stored on content module nodes
+and used by DSL test plugin expansion to decide which JPS deps are eligible for auto-add, without
+additional disk I/O during generation. These modules are registered in the graph later when the DSL test
+plugin content is added via `addPluginWithContent`.
+
+**Invariant:** `markDescriptorModules()` must run after the last graph mutation before
+`computePluginContentFromDslSpec` executes. The graph snapshot carries a `descriptorFlagsComplete` flag,
+and DSL test plugin expansion fails fast if the flag is not set.
+
+Validation behavior is specified in [docs/validators/README.md](validators/README.md).
+
+**Key Functions**:
+- `PluginGraphBuilder.addJpsDependencies()` - stores ALL deps with scope as graph edges
+- `ContentModuleDependencyPlanner.computeJpsDeps()` - filters to production scopes
+- `collectPluginGraphDeps()` + `filterPluginDependencies()` (PluginDependencyPlanner) - plugin.xml filtering based on graph
+
+### Why Exclude PROVIDED?
+
+PROVIDED means "provided by the runtime environment":
+- Platform APIs (already loaded by IDE core)
+- JDK classes (always available)
+- Servlet APIs (provided by web container)
+
+These are needed at compile time for type checking, but the classes come from
+the environment at runtime, not from the dependency module.
+
+### Why Exclude TEST?
+
+TEST scope dependencies are only for test code execution. Production runtime
+doesn't need them. A test-only module, whose descriptor lies under a test source root, is the exception; see
+[Test-only content modules](#test-only-content-modules).
+
+**Source**: `JpsJavaDependencyScope.java:23-26` defines which scopes include `PRODUCTION_RUNTIME`.
+
+---
+
+## How to Run
+
+See [quick-start.md](quick-start.md#run-commands) for running the generator.
+
+---
+
+## Architecture Overview
+
+The dependency generation system uses a **5-stage pipeline architecture** with slot-based `ComputeNode` execution. For the complete architecture diagram and system context, see [architecture-overview.md](architecture-overview.md).
+
+**Key optimizations:**
+- Plugin content extraction is shared via `PluginContentCache` (pre-warmed in Stage 2)
+- Generators run in parallel at each "level" (computed via topological sort of dependencies)
+- `DeferredFileUpdater` batches all writes for atomic commit
+
+## Plugin Validation Architecture
+
+Validation behavior is specified in [docs/validators/README.md](validators/README.md). This section provides generation-facing context only.
+
+Plugin dependency validation queries **PluginGraph** directly; no parallel resolution map is built.
+
+### Data Flow
+
+```
+PluginGraph
+   │
+   ▼
+createResolutionQuery() (PluginDependencyResolution.kt)
+   │
+   ▼
+PluginContentStructureValidator (PluginContentStructureValidator.kt):
+  └── Structural validation (loading-mode constraints within a plugin)
+
+PluginContentDependencyValidator (PluginContentDependencyValidator.kt):
+  ├── Availability validation (deps in bundling products)
+  ├── Global existence (ON_DEMAND deps exist somewhere)
+  └── Filtered dependency validation (implicit deps not in XML)
+```
+
+### Validation Scopes by Plugin Type
+
+| Plugin Type | Bundling Source | REQUIRED Deps Scope | ON_DEMAND Deps |
+|-------------|-----------------|---------------------|----------------|
+| Production bundled | Graph `EDGE_BUNDLES` | product + bundled plugin modules | Global existence |
+| Test bundled | Graph `EDGE_BUNDLES_TEST` | product + bundled plugin modules | Global existence |
+| Non-bundled | (none) | N/A | Global existence |
+
+**Key insight**: Test plugins rely on graph flags and bundling edges, so validation doesn't need a separate product map.
+
+### Source Files
+
+| Component | File |
+|-----------|------|
+| Plugin validation model building | `src/validator/rule/PluginDependencyResolution.kt` |
+| Plugin validation logic | `src/validator/PluginContentDependencyValidator.kt` |
+| Plugin structural validation | `src/validator/PluginContentStructureValidator.kt` |
+| Content module plugin dep validation | `src/validator/ContentModulePluginDependencyValidator.kt` |
+| Plugin dependency planning + XML writing | `src/generator/ContentModuleDependencyGenerator.kt`, `src/generator/ContentModuleXmlWriter.kt`, `src/generator/PluginXmlDependencyGenerator.kt`, `src/generator/PluginXmlWriter.kt` |
+| Data models | `src/validation/ValidationModels.kt` |
+
+### Content Module Plugin Dependency Validation
+
+A specialized validation rule ensures content modules properly declare plugin dependencies.
+
+**Problem**: When `intellij.foo` (content module) has IML dependency on `intellij.python.community.plugin` (plugin main module), it needs `<plugin id="PythonCore"/>` in its XML. Without this, runtime fails with `NoClassDefFoundError`.
+
+**Solution**: `ContentModulePluginDependencyValidator` validates:
+1. Resolve containing plugins via `contentProductionSources` in the graph
+2. Check if plugin ID exists in written XML deps
+3. Report missing, with suppression config option
+
+This handles many-to-many content module → plugin relationships directly from the graph.
+
+**Suppressing Known Issues**:
+- DSL-defined test plugin modules: use `allowedMissingPluginIds` in test plugin DSL.
+- Non-DSL content modules: use `suppressions.json` (`contentModules.<module>.suppressPlugins`).
+
+```kotlin
+testPlugin(
+  pluginId = "intellij.some.tests.plugin",
+  name = "Some Tests Plugin",
+  pluginXmlPath = "path/to/testResources/META-INF/plugin.xml",
+) {
+  module("intellij.some.tests.module", allowedMissingPluginIds = listOf("com.intellij.css"))
+}
+```
+
+```json
+{
+  "contentModules": {
+    "intellij.react.ultimate.backend": {
+      "suppressPlugins": ["com.intellij.css"]
+    }
+  }
+}
+```
+
+See [docs/validators/plugin-content-dependency.md](validators/plugin-content-dependency.md) for details.
+
+## Key Components
+
+### ModuleDescriptorDependencyGenerator.kt
+Generates dependencies for **product modules** (modules declared in module sets like `essential()`, `ideCommon()`).
+
+**Responsibilities:**
+- Collects the library modules (`intellij.libraries.*`) and the settings modules of every module set
+- Validates both direct AND transitive dependencies
+- Performs two-tier validation:
+  - **Tier 1:** Self-contained module sets validated in isolation
+  - **Tier 2:** Product-level dependencies validated in context
+
+**Files updated:** `{moduleName}.xml` in `META-INF/`
+
+### ContentModuleDependencyPlanner + ContentModuleXmlWriter
+Generates dependencies for **plugin content modules** (modules declared in plugin.xml `<content>` sections).
+
+**Responsibilities:**
+- Plans dependencies for production and test-only content modules
+- Writes `{moduleName}.xml` descriptors
+- Includes TEST-scope dependencies when the descriptor lies under a test source root
+
+**Files updated:** content module XMLs
+
+### PluginDependencyPlanner + PluginXmlWriter
+Generates dependencies for **plugin.xml** of plugin main modules.
+
+**Responsibilities:**
+- Processes `plugin.xml` - main plugin descriptor
+- Writes plugin-level dependency entries derived from graph/JPS deps
+
+**Files updated:** `plugin.xml`
+
+### ModuleDescriptorCache.kt
+Thread-safe caching layer for module descriptor information.
+
+**Features:**
+- Single-flight pattern: the first caller analyzes the module, and a second caller waits for the same result
+- Caches: descriptor path, dependencies list, XML content
+- Filters dependencies to include only those that have descriptors
+
+### ProductGeneration.kt
+Orchestrates all generation via `generateAllModuleSetsWithProducts()`.
+
+**Configuration via `ModuleSetGenerationConfig`:**
+```kotlin
+data class ModuleSetGenerationConfig(
+  val moduleSetSources: Map<String, Pair<Any, Path>>,  // label → (source object, output dir)
+  val discoveredProducts: List<DiscoveredProduct>,
+  val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
+  val projectRoot: Path,
+  val outputProvider: ModuleOutputProvider,
+  val nonBundledPlugins: Map<String, Set<TargetName>> = emptyMap(),
+  val knownPlugins: Set<TargetName> = emptySet(),
+  val testPluginsByProduct: Map<String, Set<TargetName>> = emptyMap(),
+  val includeTestPluginDescriptorsFromSources: Boolean = false,
+  val skipXIncludePaths: Set<String> = emptySet(),
+  val xIncludePrefixFilter: (moduleName: String) -> String? = { null },
+  val testFrameworkContentModules: Set<ContentModuleName> = emptySet(),  // Modules indicating test plugins
+  val testingLibraries: Set<String> = emptySet(),
+  val testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
+  val pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
+  val suppressionConfigPath: Path? = null,
+  val validationFilter: Set<String>? = null,
+  val dslTestPluginAutoAddLoadingMode: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+)
+```
+
+**`testFrameworkContentModules`** - Modules that indicate a plugin is a test plugin when declared as `<content>`. Plugins declaring any of these modules are excluded from production validation because they won't be present at runtime. See [validation-rules.md](validation-rules.md) for details.
+
+## JPS Scopes vs Plugin Model
+
+The plugin model has **no concept of TEST/COMPILE/RUNTIME scopes** - it only knows about runtime dependencies. JPS `.iml` files DO have scopes, which affects dependency generation. See [TL;DR](#tldr---the-core-mental-model) for the scope filtering rules.
+
+### Dual Edge Types for Production vs Test
+
+The generator computes **both** production and test dependencies for each content module:
+
+| Edge Type | JPS Scopes Included | Written to XML | Use Case |
+|-----------|---------------------|----------------|----------|
+| `EDGE_CONTENT_MODULE_DEPENDS_ON` | COMPILE, RUNTIME (and TEST for test-runtime-only modules) | Yes | Production validation |
+| `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST` | COMPILE, RUNTIME, TEST | No | Test plugin validation |
+
+For written XML, TEST scope (together with PROVIDED, which JPS puts in test runtime) is included in exactly two cases:
+
+1. the module is **test support** (`*.testFramework`, IDE starter, a `testFramework` descriptor path, …) and has no production content source;
+2. the **descriptor file itself lies under a JPS test source root** — e.g. `tests/testResources/intellij.foo.tests.xml` in a module whose `.iml` declares that root as `java-test-resource`.
+
+Case 2 is what makes test-only content modules work. It is decided by descriptor *location*, never by the module name: a module named `*.tests` whose descriptor sits in a production `resources` root is generated as production code, and a test-resource descriptor without a `.tests` suffix still gets TEST scope. For these test-runtime-only modules, `libraryModuleFilter` is bypassed for both written and test dependency sets, so required test libraries are preserved.
+
+**A descriptor generated with test scope never gains a *new* `<plugin>` dependency.** In these two cases the generator writes `<module>` entries only: its required plugin dependency set is limited to JPS dependencies already present in the XML before suppression handling and [missing plugin dependency validation](validators/plugin-content-dependency.md). Nothing has to be declared for the remaining JPS plugin dependencies, so they are not suppressions.
+
+Rationale: a `<plugin id>` entry is a **hard gate**. If the plugin is not in the layout, the content module is silently excluded together with everything that depends on it, and the failure surfaces far away as `module ... not found in product layout`. TEST/PROVIDED scope order entries routinely point at plugins that the layout the tests run in does not contain, so writing them breaks test entry points - this is exactly how IJPL-248736 broke the Rider TestNG suites. Plugin entries already in the XML are kept, the same grandfathering as `isTestOnlyContentModule` in [test-plugins.md](test-plugins.md).
+
+**Key insight**: Content modules are production code with intrinsic dependencies. Scope filtering is based on where the module is sourced (production vs test-only), not on ad-hoc XML state.
+
+### Example
+
+```
+intellij.platform.lang.iml has:
+  - intellij.platform.core (COMPILE scope)
+  - intellij.libraries.hamcrest (TEST scope)
+
+Graph edges created:
+  EDGE_CONTENT_MODULE_DEPENDS_ON: lang -> core
+  EDGE_CONTENT_MODULE_DEPENDS_ON_TEST: lang -> core, lang -> hamcrest
+
+Production validation: Only checks EDGE_CONTENT_MODULE_DEPENDS_ON
+  → Won't report hamcrest as missing
+
+Test plugin validation: Checks EDGE_CONTENT_MODULE_DEPENDS_ON_TEST
+  → Will validate hamcrest is available
+```
+
+## Module Descriptor vs Plugin Dependencies
+
+| Aspect | Module Descriptor Dependencies | Plugin Dependencies |
+|--------|-------------------------------|---------------------|
+| **Source** | Modules in module sets | Modules in plugin.xml `<content>` |
+| **Generator** | `ModuleDescriptorDependencyGenerator` | `PluginDependencyPlanner` + `PluginXmlWriter` |
+| **Files updated** | `{moduleName}.xml` | `plugin.xml`, content module XMLs |
+| **Validation** | Full transitive validation | JPS dependencies with filtering |
+| **Configuration** | Library and settings modules of a module set | Automatic for all content modules |
+| **Filtering** | None (use `@skip-dependency-generation` to skip) | Suppressions only |
+
+### Plugin.xml Generation Scope
+
+Plugin XML dependencies are generated only for plugins that have a main target in the graph
+(real plugin modules extracted from disk or discovered via dependencies). Placeholder plugin-id
+nodes created only to model `<depends>` edges are skipped.
+
+DSL-defined plugins (`testPlugin {}`) are generated from Kotlin specs; `PluginXmlWriter`
+does not update their plugin.xml files (handled by `TestPluginXmlGenerator`).
+
+Dependencies are computed from the graph's JPS edges (production-runtime scopes only); plugin.xml
+content is read only to preserve manual entries and xi:include content.
+
+## Filtering and Implicit Dependencies
+
+Dependencies are generated from production-scope JPS edges. Every such dependency is written to XML unless it is explicitly suppressed via `suppressions.json` (or allowlists).
+
+Product-layout topology does not affect generation: a dependency stays explicit even when the target is embedded in every product that loads the source module. Explicit declarations keep module descriptors self-describing, so a product can be assembled from an arbitrary subset of modules without relying on what some other product happens to embed.
+
+**Implicit dependencies** are JPS production deps missing from XML (`JPS deps - XML deps`). Validators treat these as auto-inferred JPS deps and still validate them unless they are suppressed or allowlisted.
+
+See [errors.md](errors.md) for error handling details.
+
+### DSL Test Plugin Explicit Module Dependencies
+
+For DSL test plugin main targets, an explicit `RUNTIME`-scoped dependency keeps a valid target as a generated module dependency. This is used when the test plugin needs a specific content module in its plugin classloader even though the module is already supplied by a bundled plugin, product content, or module set. It does not bypass plugin-owner availability checks: plugin-owned content whose owner is not resolvable still reports the normal DSL test plugin dependency error unless another graph source makes the same module resolvable in the DSL test plugin scope.
+
+## Skipping Dependency Generation for Module Set Modules
+
+For module set modules (including library modules like `intellij.libraries.*`),
+all JPS dependencies with descriptors are included automatically.
+
+If a module requires **manual dependency management** (e.g., for specific ordering requirements),
+add the `@skip-dependency-generation` comment to the module descriptor XML file:
+
+```xml
+<idea-plugin visibility="internal">
+  <!-- @skip-dependency-generation - reason for manual management -->
+  <dependencies>
+    <!-- manually managed dependencies -->
+  </dependencies>
+</idea-plugin>
+```
+
+**Use cases:**
+- Dependencies requiring specific topological sort ordering (e.g., `intellij.libraries.junit5.jupiter`)
+- Modules with complex dependency requirements not expressible via JPS
+
+When this marker is present, the module is completely skipped by `ModuleDescriptorDependencyGenerator`,
+preserving all manually specified dependencies.
+
+## Test Plugins
+
+Test plugins are special plugins that provide test framework modules for running tests.
+Unlike regular products, test plugins have plugin.xml in test resources (`testResources/META-INF/`).
+
+### Test Plugin Detection
+
+Plugins extracted from plugin.xml are detected as **test plugins** based on their content modules. DSL-defined test plugins (`testPlugin {}`) are always treated as test plugins even if they don't declare test framework modules. A plugin is a test plugin if it declares any test framework module in its `<content>` block:
+
+```kotlin
+testFrameworkContentModules = setOf(
+  "intellij.libraries.junit4",
+  "intellij.libraries.junit5",
+  "intellij.libraries.junit5.jupiter",
+  "intellij.platform.testFramework",
+  "intellij.platform.testFramework.core",
+  "intellij.tools.testsBootstrap",
+)
+```
+
+**Key implications**:
+- Test plugins' content modules do NOT satisfy production plugin dependencies
+- Test plugins use graph bundling edges (`EDGE_BUNDLES_TEST`) instead of a separate product map
+- Discovered test plugins use `forTestPlugin` (module sets + all bundled plugins); DSL test plugins use `forDslTestPlugin` (module sets + bundled production plugins + self)
+
+### DSL-Defined vs Discovered Test Plugins
+
+| Type | Definition | Auto-fix behavior |
+|------|------------|-------------------|
+| **DSL-defined** | Created via `testPlugin {}` in `getProductContentDescriptor()` | Skipped - fix in Kotlin |
+| **Discovered** | Manually created with handwritten plugin.xml | Auto-fixes can be applied |
+
+### Auto-Add Behavior for DSL Test Plugins
+
+For DSL-defined test plugins, the generator can **automatically add** JPS module dependencies (production runtime, test runtime, and PROVIDED scopes) that have module descriptors but weren't explicitly declared.
+
+**Key Principle**: Only add **unresolvable** modules - those not available in the same product (module sets + bundled production plugins; other test plugins excluded).
+
+```
+JPS Dependencies (.iml)
+        │
+        ▼
+Check: Has module descriptor?
+        │
+        ├── NO  → Skip (not a content module)
+        │
+        └── YES → Check: Is module resolvable?
+                        │
+                        ├── YES (in product module set/bundled production plugin content) → Skip
+                        │
+                        └── NO (unresolvable) → Auto-add to test plugin content
+```
+
+Auto-add uses the **graph** to check resolvable modules, but traverses **JPS dependencies** of the
+explicit content modules. A JPS library dependency adds nothing to the closure: a library reaches a module only
+through its wrapper module, which is a module dependency. Auto-added modules are written into the
+generated test plugin content (the `<!-- region additional -->` block), so repeat runs are clean.
+
+This fallback is scoped to **DSL test plugin auto-add** and does not change global content-module dependency generation/classification.
+
+**Why this design**: Module sets are just convenience for avoiding duplication - they're NOT special. The auto-add logic respects them naturally without special handling.
+
+### Key Differences from Products
+
+| Aspect | Products | Test Plugins |
+|--------|----------|--------------|
+| plugin.xml location | `resources/META-INF/` | `testResources/META-INF/` |
+| Module set handling | xi:include or inline | Always inlined |
+| Dependency resolution | `forProductionPlugin` predicate | `forTestPlugin` predicate |
+| Content modules | Satisfy other plugin deps | Don't satisfy production deps |
+
+For DSL reference, see [dsl-api-reference.md](dsl-api-reference.md#testplugin----define-test-plugin).
+
+## Test-only content modules
+
+A test-only module has test source roots and no production source roots (`IdeaUltimateProjectStructureTest` forbids
+new modules with both kinds of roots). Such a module, for example `intellij.rdct.tests.distributed`, has exactly one descriptor,
+`intellij.rdct.tests.distributed.xml`, kept in one of its test resource roots. The generator recognizes the descriptor
+by its location under a test source root and writes TEST-scope JPS dependencies into it (case 2 above). A test plugin
+declares such a module under its JPS module name, and the packager packs it from its test output
+(`isTestOnlyPluginModule`).
+
+### `*.tests.xml` is an ordinary descriptor
+
+Test-only content modules such as `intellij.clion.profiling.tests` (descriptor
+`CIDR/clion-profiling/tests/testResources/intellij.clion.profiling.tests.xml`) are **ordinary content modules**. They
+are generated through the same path as any other content module; the only thing that distinguishes them is that their
+descriptor lives in a test source root, so TEST-scope JPS deps are included in the written XML (case 2 above), and that
+no *new* `<plugin>` dependency is written for them. The `.tests` name suffix has no meaning to descriptor generation.
+
+There is exactly one supported way to freeze a descriptor's generated `<dependencies>`: put the
+`@skip-dependency-generation` marker in it. Suffix-based freezing is not supported — it silently disabled regeneration
+for the whole class of test-resource descriptors (IJPL-248736).
+
+## XML Generation Format
+
+Dependencies are written within region markers:
+```xml
+<dependencies>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <module name="intellij.libraries.grpc"/>
+  <module name="intellij.platform.kernel"/>
+  <!-- endregion -->
+</dependencies>
+```
+
+**Region types:**
+- `WRAPS_ENTIRE_SECTION` - module descriptors (region wraps whole `<dependencies>`)
+- `INSIDE_SECTION` - real `META-INF/plugin.xml` descriptors only (region inside, preserves manual entries)
+- `NONE` - legacy files without markers
+
+If a non-plugin descriptor has region markers inside `<dependencies>`, generation normalizes it to `WRAPS_ENTIRE_SECTION`
+behavior (manual entries outside the generated region are not implicitly preserved unless covered by suppression rules).
+
+## Validation
+
+Validation is implemented by pipeline validators under `src/validator/`. See [docs/validators/README.md](validators/README.md) for the authoritative specs. This document focuses on dependency generation only.
+
+## Suppression Config System
+
+The suppression config system provides a **JSON-based single source of truth** for dependency suppressions.
+
+**Location:** `platform/buildScripts/suppressions.json`
+
+**Purpose:** When JPS dependencies shouldn't be written to XML descriptors (e.g., legacy deps that were manually managed), the suppression config tracks these exclusions. This is an explicit contract for incremental cleanup: suppressed deps are intentionally omitted from XML and must not trigger validation errors.
+
+Validation is graph-based: only dependencies represented after filtering/suppression are validated; suppressed JPS deps are excluded by design.
+
+For detailed implementation documentation, see `SuppressionConfigGenerator.kt`.
+
+### Config Structure
+
+```json
+{
+  "contentModules": {
+    "intellij.foo": {
+      "suppressModules": ["intellij.bar"],
+      "suppressPlugins": ["com.intellij.java"]
+    }
+  },
+  "plugins": {
+    "intellij.cidr.clangd": {
+      "suppressModules": ["intellij.platform.core"],
+      "suppressPluginModules": []
+    }
+  }
+}
+```
+
+| Field | Purpose |
+|-------|---------|
+| `contentModules[].suppressModules` | Module deps to suppress from content module XMLs |
+| `contentModules[].suppressPlugins` | Plugin deps to suppress from content module `<depends>` |
+| `plugins[].suppressModules` | Module deps to suppress from plugin.xml `<dependencies>` |
+| `plugins[].suppressPluginModules` | Plugin module deps to suppress from plugin.xml |
+
+### Running the Generator
+
+```bash
+# Normal generation: updates XML only
+bazel run //platform/buildScripts:plugin-model-tool
+
+# Update suppressions without touching XML (captures current XML state)
+bazel run //platform/buildScripts:plugin-model-tool -- --update-suppressions
+
+# Review and commit suppressions changes
+git diff platform/buildScripts/suppressions.json
+```
+
+`--update-suppressions` reports non-DSL cases as warnings and updates their suppression entries in `suppressions.json`.
+DSL test plugin allowlists (`allowedMissingPluginIds`) remain in code and are not serialized into `suppressions.json`.
+
+**Key principle:** The generator should produce ZERO changes when run twice.
+
+See [errors.md](errors.md#suppressible-errors) for details on direct error suppression.
+
+## Source locations
+
+- Pipeline and slots: `src/pipeline/`
+- Generators: `src/pipeline/generators/`
+- Validators: `src/validator/`
+- Validator rules and models: `src/validator/rule/`, `src/model/`
+- Discovery and graph building: `src/discovery/`
+- Traversal helpers: `src/traversal/`
+- Tooling (MCP server): `src/tooling/`
+- Entry points: `platform/buildScripts/src/productLayout/` and `src/` (CommunityModuleSets)
+
+All paths in `src/` are relative to `community/platform/build-scripts/product-dsl/`.

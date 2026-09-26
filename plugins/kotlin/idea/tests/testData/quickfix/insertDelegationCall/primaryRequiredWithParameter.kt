@@ -1,0 +1,11 @@
+// "Insert 'this()' call" "true"
+// ERROR: None of the following functions can be called with the arguments supplied: <br>public constructor A(x: Int) defined in A<br>public constructor A(x: String) defined in A
+// K2_AFTER_ERROR: NONE_APPLICABLE
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
+
+class A(val x: Int) {
+    constructor(x: String)<caret>
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InsertDelegationCallFixFactory$InsertDelegationCallFix

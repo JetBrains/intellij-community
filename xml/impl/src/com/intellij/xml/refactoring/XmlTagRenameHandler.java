@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.refactoring;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,24 +19,24 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameHandler.class);
 
 
   @Override
-  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(final @NotNull DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlTag)) {
+    if (!(parent instanceof XmlTag tag)) {
       return false;
     }
-    XmlTag tag = (XmlTag)parent;
     String prefix = tag.getNamespacePrefix();
     if (StringUtil.isNotEmpty(prefix)) {
       Editor editor = getEditor(dataContext);
@@ -61,25 +46,19 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
         return false;
       }
     }
-    //noinspection ConstantConditions
     return isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 
   @Override
-  public boolean isRenaming(@NotNull final DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
-  }
-
-  @Override
   public String getActionTitle() {
-    return "Rename XML tag";
+    return XmlBundle.message("rename.xml.tag");
   }
 
   private static boolean isInplaceRenameAvailable(final Editor editor) {
     return editor.getSettings().isVariableInplaceRenameEnabled();
   }
 
-  private static boolean isDeclarationOutOfProjectOrAbsent(@NotNull final Project project, final DataContext context) {
+  private static boolean isDeclarationOutOfProjectOrAbsent(final @NotNull Project project, final DataContext context) {
     final PsiElement[] elements = BaseRefactoringAction.getPsiElementArray(context);
     return elements.length == 0 || elements.length == 1 && shouldBeRenamedInplace(project, elements);
   }
@@ -93,13 +72,11 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     return !inProject;
   }
 
-  @Nullable
-  private static Editor getEditor(@Nullable DataContext context) {
+  private static @Nullable Editor getEditor(@Nullable DataContext context) {
     return CommonDataKeys.EDITOR.getData(context);
   }
 
-  @Nullable
-  private static PsiElement getElement(@Nullable final DataContext context) {
+  private static @Nullable PsiElement getElement(final @Nullable DataContext context) {
     if (context != null) {
       final Editor editor = getEditor(context);
       if (editor != null) {
@@ -123,12 +100,10 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     return null;
   }
 
-  private void invoke(@Nullable final Editor editor, @NotNull final PsiElement element, @Nullable final DataContext context) {
+  private void invoke(final @Nullable Editor editor, final @NotNull PsiElement element, final @Nullable DataContext context) {
     if (!isRenaming(context)) {
       return;
     }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
     if (isInplaceRenameAvailable(editor)) {
       XmlTagInplaceRenamer.rename(editor, (XmlTag)element.getParent());
@@ -139,7 +114,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
     if (!isRenaming(dataContext)) {
       return;
     }
@@ -151,7 +126,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final @Nullable DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) {
       element = getElement(dataContext);

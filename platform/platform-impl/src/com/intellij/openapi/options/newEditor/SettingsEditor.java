@@ -1,173 +1,309 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ide.actions.BackAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.actions.ForwardAction;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.BackedByPersistentState;
+import com.intellij.openapi.options.NoAutomaticReset;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.Alarm;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xmlb.XmlSerializer;
+import kotlin.Unit;
+import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Sergey.Malenkov
- */
-final class SettingsEditor extends AbstractEditor implements DataProvider {
-  private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
+
+@ApiStatus.Internal
+public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
+  private static final Logger LOG = Logger.getInstance(SettingsEditor.class);
+  static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
 
-  private final PropertiesComponent myProperties;
-  private final Settings mySettings;
-  private final SettingsSearch mySearch;
-  private final JPanel mySearchPanel;
-  private final SettingsFilter myFilter;
-  private final SettingsTreeView myTreeView;
-  private final ConfigurableEditor myEditor;
+  private final PropertiesComponent properties;
+  private final Settings settings;
+  private final SettingsSearch search;
+  private final SettingsFilter filter;
+  private final SettingsTreeView treeView;
+  public final ConfigurableEditor editor;
   private final OnePixelSplitter mySplitter;
-  private final SpotlightPainter mySpotlightPainter;
-  private final LoadingDecorator myLoadingDecorator;
-  private final Banner myBanner;
+  private final SpotlightPainter spotlightPainter;
+  private final LoadingDecorator loadingDecorator;
+  private final @NotNull ConfigurableEditorBanner myBanner;
+  private final @NotNull Project myProject;
+  private final History myHistory = new History(this);
+  /** Whether to auto-reset unmodified configurables when navigating back to them (non-modal windows). */
+  private final boolean myUseLeaveState;
+  private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
+  private final @Nullable AnAction myExtraHeaderAction;
+  private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
+  private ConfigurableController lastController;
 
-  private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
-  private ConfigurableController myLastController;
+  /**
+   * Snapshots of backing {@link PersistentStateComponent} states, captured when the window loses focus
+   * for configurables that were modified at that time. Used to detect external changes on focus regain.
+   * Key: configurable, Value: map from PersistentStateComponent to its serialized XML state.
+   */
+  private final Map<Configurable, Map<PersistentStateComponent<?>, Element>> myStateSnapshots = new HashMap<>();
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter, final ISettingsTreeViewFactory factory) {
+  private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
+    protected int getFontStyle(Crumb crumb) {
+      return Font.BOLD;
+    }
+  };
+
+
+  private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      reset();
+    }
+  };
+
+
+  SettingsEditor(@NotNull Disposable parent,
+                 @NotNull Project project,
+                 @NotNull List<? extends ConfigurableGroup> groups,
+                 @Nullable Configurable configurable,
+                 @Nullable String filter,
+                 boolean useLeaveState,
+                 @NotNull ISettingsTreeViewFactory factory,
+                 @NotNull SpotlightPainterFactory spotlightPainterFactory,
+                 @Nullable AnAction extraHeaderAction) {
     super(parent);
-
-    myProperties = PropertiesComponent.getInstance(project);
-    mySettings = new Settings(groups) {
+    myProject = project;
+    myUseLeaveState = useLeaveState;
+    myExtraHeaderAction = extraHeaderAction;
+    properties = PropertiesComponent.getInstance(project);
+    settings = new Settings(groups) {
       @Override
-      protected ActionCallback selectImpl(Configurable configurable) {
-        myFilter.update(null, false, true);
-        return myTreeView.select(configurable);
+      protected @NotNull Promise<? super Object> selectImpl(Configurable configurable) {
+        SettingsEditor.this.filter.update(null);
+        treeView.refilterAndSelect(configurable);
+        return Promises.resolvedPromise();
+      }
+
+      @Override
+      protected @Nullable Configurable getConfigurableWithInitializedUiComponentImpl(@Nullable Configurable configurable,
+                                                                                     boolean initializeUiComponentIfNotYet) {
+        JComponent content = editor.getContent(configurable);
+        if (!initializeUiComponentIfNotYet || content != null) {
+          return content == null ? null : configurable;
+        }
+
+        // calls Configurable.createComponent() and Configurable.reset()
+        editor.readContent(configurable);
+        return configurable;
+      }
+
+      @Override
+      protected void checkModifiedImpl(@NotNull Configurable configurable) {
+        SettingsEditor.this.checkModified(configurable);
+      }
+
+      @Override
+      protected void setSearchText(String search) {
+        SettingsEditor.this.filter.update(search);
       }
 
       @Override
       public void revalidate() {
-        myEditor.requestUpdate();
+        editor.requestUpdate();
       }
     };
-    mySearch = new SettingsSearch() {
+    search = new SettingsSearch() {
       @Override
       void onTextKeyEvent(KeyEvent event) {
-        myTreeView.myTree.processKeyEvent(event);
+        treeView.getTree().processKeyEvent(event);
       }
     };
-    mySearchPanel = new JPanel(new VerticalLayout(0));
-    mySearchPanel.add(VerticalLayout.CENTER, mySearch);
-    myFilter = new SettingsFilter(project, groups, mySearch) {
+
+    JPanel searchPanel = new JPanel(new VerticalLayout(0));
+    searchPanel.add(VerticalLayout.CENTER, search);
+    this.filter = new SettingsFilter(project, groups, search, coroutineScope) {
       @Override
-      Configurable getConfigurable(SimpleNode node) {
+      protected Configurable getConfigurable(SimpleNode node) {
         return SettingsTreeView.getConfigurable(node);
       }
 
       @Override
-      SimpleNode findNode(Configurable configurable) {
-        return myTreeView.findNode(configurable);
+      protected SimpleNode findNode(Configurable configurable) {
+        return treeView.findNode(configurable);
       }
 
       @Override
-      void updateSpotlight(boolean now) {
-        if (!myDisposed && mySpotlightPainter != null) {
+      protected void updateSpotlight(boolean now) {
+        if (!isDisposed && spotlightPainter != null) {
           if (!now) {
-            mySpotlightPainter.updateLater();
+            spotlightPainter.updateLater();
           }
           else {
-            mySpotlightPainter.updateNow();
+            spotlightPainter.updateNow();
           }
         }
       }
     };
-    myFilter.myContext.addColleague(new OptionsEditorColleague() {
+    this.filter.context.addColleague(new OptionsEditorColleague() {
       @Override
-      public ActionCallback onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+      public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
-          myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.ByID.getID(configurable));
-          myLoadingDecorator.startLoading(false);
+          properties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
+          myHistory.pushQueryPlace();
+          loadingDecorator.startLoading(false);
         }
-        checkModified(oldConfigurable);
-        ActionCallback result = myEditor.select(configurable);
-        result.doWhenDone(() -> {
+        if (oldConfigurable != null) {
+          checkModified(oldConfigurable);
+          if (myUseLeaveState) {
+            Boolean modified = isModifiedSafely(oldConfigurable);
+            if (modified != null) myLeaveState.put(oldConfigurable, modified);
+          }
+        }
+        SettingsDialogPerformanceTracker.startPageLoading();
+        Promise<? super Object> result = editor.select(configurable);
+        result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
-          myLoadingDecorator.stopLoading();
+          loadingDecorator.stopLoading();
+          SettingsDialogPerformanceTracker.finishPageReady();
         });
         return result;
       }
 
       @Override
-      public ActionCallback onModifiedAdded(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedAdded(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
       @Override
-      public ActionCallback onModifiedRemoved(Configurable configurable) {
+      public @NotNull Promise<? super Object> onModifiedRemoved(Configurable configurable) {
         return updateIfCurrent(configurable);
       }
 
       @Override
-      public ActionCallback onErrorsChanged() {
-        return updateIfCurrent(myFilter.myContext.getCurrentConfigurable());
+      public @NotNull Promise<? super Object> onErrorsChanged() {
+        return updateIfCurrent(SettingsEditor.this.filter.context.getCurrentConfigurable());
       }
 
-      private ActionCallback updateIfCurrent(Configurable configurable) {
-        if (configurable != null && configurable == myFilter.myContext.getCurrentConfigurable()) {
+      private @NotNull Promise<? super Object> updateIfCurrent(@Nullable Configurable configurable) {
+        if (configurable != null && configurable == SettingsEditor.this.filter.context.getCurrentConfigurable()) {
           updateStatus(configurable);
-          return ActionCallback.DONE;
+          return Promises.resolvedPromise();
         }
         else {
-          return ActionCallback.REJECTED;
+          return Promises.cancelledPromise();
         }
       }
     });
-    myTreeView = factory.createTreeView(myFilter, groups);
-    myTreeView.myTree.addKeyListener(mySearch);
-    myEditor = new ConfigurableEditor(this, null) {
+    treeView = factory.createTreeView(this.filter, groups);
+    treeView.getTree().addKeyListener(search);
+    editor = new ConfigurableEditor(this, null) {
       @Override
-      boolean apply() {
-        checkModified(myFilter.myContext.getCurrentConfigurable());
-        if (myFilter.myContext.getModified().isEmpty()) {
+      protected boolean apply() {
+        checkModified(SettingsEditor.this.filter.context.getCurrentConfigurable());
+        if (SettingsEditor.this.filter.context.getModified().isEmpty()) {
           return true;
         }
+        Set<String> modifiedIds = new HashSet<>() ;
         Map<Configurable, ConfigurationException> map = new LinkedHashMap<>();
-        for (Configurable configurable : myFilter.myContext.getModified()) {
+        for (Configurable configurable : SettingsEditor.this.filter.context.getModified()) {
+          if (myLeaveState.get(configurable) == Boolean.FALSE) {
+            // User did not explicitly modify this configurable; skip applying its stale component
+            // values to avoid overwriting external or background changes.
+            // Cascade: the user-modified configurable (e.g., Color Scheme Font) handles shared
+            // state through its own apply(); its sibling (Console Font) must not clobber it.
+            LOG.warn("apply: skipping '" + configurable.getDisplayName() + "' (leave-state=false)");
+            continue;
+          }
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
           if (exception != null) {
             map.put(configurable, exception);
           }
           else if (!configurable.isModified()) {
-            myFilter.myContext.fireModifiedRemoved(configurable, null);
+            SettingsEditor.this.filter.context.fireModifiedRemoved(configurable, null);
+            modifiedIds.add(ConfigurableVisitor.getId(configurable));
           }
         }
-        mySearch.updateToolTipText();
-        myFilter.myContext.fireErrorsChanged(map, null);
+        search.updateToolTipText();
+        SettingsEditor.this.filter.context.fireErrorsChanged(map, null);
         if (!map.isEmpty()) {
           Configurable targetConfigurable = map.keySet().iterator().next();
           ConfigurationException exception = map.get(targetConfigurable);
@@ -175,70 +311,177 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
           if (originator != null) {
             targetConfigurable = originator;
           }
-          myTreeView.select(targetConfigurable);
+          treeView.select(targetConfigurable);
           return false;
         }
-        updateStatus(myFilter.myContext.getCurrentConfigurable());
+        updateStatus(SettingsEditor.this.filter.context.getCurrentConfigurable());
+        ApplicationManager.getApplication().getMessageBus()
+          .syncPublisher(SettingsDialogListener.TOPIC)
+          .afterApply(SettingsEditor.this, modifiedIds);
         return true;
       }
 
       @Override
       void updateCurrent(Configurable configurable, boolean reset) {
         if (reset && configurable != null) {
-          myFilter.myContext.fireReset(configurable);
+          SettingsEditor.this.filter.context.fireReset(configurable);
         }
         checkModified(configurable);
       }
 
       @Override
-      void openLink(Configurable configurable) {
-        mySettings.select(configurable);
-      }
-    };
-    myEditor.setPreferredSize(JBUI.size(800, 600));
-    myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
-    myBanner = new Banner(myEditor.getResetAction());
-    mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
-    mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    JComponent left = new JPanel(new BorderLayout());
-    left.add(BorderLayout.NORTH, mySearchPanel);
-    left.add(BorderLayout.CENTER, myTreeView);
-    JComponent right = new JPanel(new BorderLayout());
-    right.add(BorderLayout.NORTH, myBanner);
-    right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
-    mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setFirstComponent(left);
-    mySplitter.setSecondComponent(right);
-    mySpotlightPainter = new SpotlightPainter(myEditor, this) {
-      @Override
-      void updateNow() {
-        Configurable configurable = myFilter.myContext.getCurrentConfigurable();
-        if (myTreeView.myTree.hasFocus() || mySearch.getTextEditor().hasFocus()) {
-          update(myFilter, configurable, myEditor.getContent(configurable));
+      void postUpdateCurrent(Configurable configurable) {
+        if (myUseLeaveState && configurable != null) {
+          Boolean leaveState = myLeaveState.remove(configurable);
+          LOG.debug("postUpdateCurrent: configurable=" + configurable.getDisplayName() + ", leaveState=" + leaveState);
+          if (leaveState == Boolean.FALSE && Boolean.TRUE.equals(isModifiedSafely(configurable))) {
+            LOG.warn("postUpdateCurrent: resetting " + configurable.getDisplayName());
+            configurable.reset();
+            SettingsEditor.this.filter.context.fireReset(configurable);
+          }
         }
       }
+
+      @Override
+      void openLink(Configurable configurable) {
+        settings.select(configurable);
+      }
     };
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(SettingsDialogListener.TOPIC, new SettingsDialogListener() {
+        @Override
+        public void afterApply(@NotNull SettingsEditor settingsEditor, @NotNull Set<@NotNull String> modifiedConfigurableIds) {
+          if (settingsEditor == SettingsEditor.this)
+            return;
+          for (String id : modifiedConfigurableIds) {
+            Configurable conf = ConfigurableVisitor.findById(id, groups);
+            if (conf != null)
+              checkModified(conf);
+          }
+          for (Configurable modifiedConfigurable : SettingsEditor.this.filter.context.getModified()) {
+            String confId = ConfigurableVisitor.getId(modifiedConfigurable);
+            if (!confId.equals(getSelectedConfigurableId()) && modifiedConfigurableIds.contains(confId)) {
+              modifiedConfigurable.reset();
+              SettingsEditor.this.filter.context.fireModifiedRemoved(modifiedConfigurable, null);
+            }
+          }
+        }
+      });
+
+
+    loadingDecorator = new LoadingDecorator(editor, this, 10, true);
+    loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
+    myBanner = new ConfigurableEditorBanner(editor.getResetAction(), myBreadcrumbs);
+    searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
+    search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    JComponent left = new JPanel(new BorderLayout());
+    left.add(BorderLayout.CENTER, treeView);
+    JPanel right = new JPanel(new BorderLayout());
+    right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
+    mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
+    mySplitter.setHonorComponentsMinimumSize(true);
+    mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
+    mySplitter.setFirstComponent(left);
+
+    mySplitter.setSecondComponent(right);
+    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
+    left.add(BorderLayout.NORTH, searchPanel);
+    editor.setPreferredSize(JBUI.size(800, 600));
     add(BorderLayout.CENTER, mySplitter);
 
+    spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
+      Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
+      if (treeView.getTree().hasFocus() || search.getTextEditor().hasFocus()) {
+        painter.update(this.filter, currentConfigurable, editor.getContent(currentConfigurable));
+      }
+      return Unit.INSTANCE;
+    });
+
     if (configurable == null) {
-      String id = myProperties.getValue(SELECTED_CONFIGURABLE);
-      configurable = new ConfigurableVisitor.ByID(id != null ? id : "preferences.lookFeel").find(groups);
+      String id = properties.getValue(SELECTED_CONFIGURABLE);
+      configurable = ConfigurableVisitor.findById(id != null ? id : "preferences.lookFeel", groups);
       if (configurable == null) {
-        configurable = ConfigurableVisitor.ALL.find(groups);
+        configurable = ConfigurableVisitor.find(ConfigurableVisitor.ALL, groups);
       }
     }
-    myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
-    Disposer.register(this, myTreeView);
+
+    treeView.select(configurable).onProcessed(it -> this.filter.update(filter));
+
+    Disposer.register(this, treeView);
     installSpotlightRemover();
-    mySearch.getTextEditor().addActionListener(
-      event -> myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(this::requestFocusToEditor));
+    //noinspection CodeBlock2Expr
+    search.getTextEditor().addActionListener(event -> {
+      treeView.select(this.filter.context.getCurrentConfigurable()).onProcessed(o -> requestFocusToEditor());
+    });
+
+    for (ConfigurableGroup group : groups) {
+      if (group instanceof MutableConfigurableGroup mutable) {
+        Disposer.register(this, mutable);
+        mutable.addListener(createReloadListener(groups));
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void select(Configurable configurable) {
+    treeView.select(configurable);
+    editor.select(configurable);
+  }
+
+  boolean isSidebarVisible() {
+    return mySplitter.getFirstComponent().isVisible();
+  }
+
+  void setSidebarVisible(boolean visible) {
+    mySplitter.getFirstComponent().setVisible(visible);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull SettingsTreeView getTreeView() {
+    return treeView;
+  }
+
+  SettingsSearch getSearch() {
+    return search;
+  }
+
+  void setFilter(@Nullable String text) {
+    filter.update(text);
+  }
+
+  void selectWithFilter(@NotNull Configurable configurable, @Nullable String filterText) {
+    filter.update(filterText);
+    treeView.refilterAndSelect(configurable);
+  }
+
+  private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
+    return new MutableConfigurableGroup.Listener() {
+      @Override
+      public void handleUpdate() {
+        Configurable selected = editor.getConfigurable();
+        String id = selected instanceof SearchableConfigurable ? ((SearchableConfigurable)selected).getId() : null;
+        editor.reload();
+        filter.reload();
+        controllers.clear();
+        lastController = null;
+
+        Configurable candidate = id == null ? null :ConfigurableVisitor.findById(id, groups);
+        if (candidate == null) {
+          candidate = ConfigurableVisitor.findById(PluginManagerConfigurable.ID, groups);
+        }
+        editor.init(candidate, false);
+        treeView.reloadWithSelection(candidate);
+        settings.reload();
+        invalidate();
+        repaint();
+      }
+    };
   }
 
   private void requestFocusToEditor() {
-    JComponent component = myEditor.getPreferredFocusedComponent();
+    JComponent component = editor.getPreferredFocusedComponent();
     if (component != null) {
       IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
     }
@@ -249,119 +492,340 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       @Override
       public void focusLost(FocusEvent e) {
         final Component comp = e.getOppositeComponent();
-        if (comp == mySearch.getTextEditor() || comp == myTreeView.myTree) {
+        if (comp == search.getTextEditor() || comp == treeView.getTree()) {
           return;
         }
-        mySpotlightPainter.update(null, null, null);
+        spotlightPainter.update(null, null, null);
       }
 
       @Override
       public void focusGained(FocusEvent e) {
-        if (!StringUtil.isEmpty(mySearch.getText())) {
-          mySpotlightPainter.updateNow();
+        if (!StringUtil.isEmpty(search.getText())) {
+          spotlightPainter.updateNow();
         }
       }
     };
-    myTreeView.myTree.addFocusListener(spotlightRemover);
-    mySearch.getTextEditor().addFocusListener(spotlightRemover);
+    treeView.getTree().addFocusListener(spotlightRemover);
+    search.getTextEditor().addFocusListener(spotlightRemover);
+  }
+
+  private JComponent withHistoryToolbar(SimpleBanner component) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
+    group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
+    if (myExtraHeaderAction != null) {
+      group.add(myExtraHeaderAction);
+    }
+    JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
+    toolbar.setOpaque(false);
+    return createHeaderPanel(component, toolbar);
+  }
+
+  static @NotNull JComponent createHeaderPanel(@NotNull SimpleBanner banner, @NotNull JComponent toolbar) {
+    boolean useCenteredLayout = banner.usesCenteredLayout();
+    banner.setBorder(useCenteredLayout ? JBUI.Borders.empty(5, 6, 6, 10) : JBUI.Borders.empty(11, 6, 0, 10));
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setOpaque(false);
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.anchor = useCenteredLayout ? GridBagConstraints.CENTER : GridBagConstraints.NORTH;
+    gbc.gridx = 1;
+    gbc.weightx = 1;
+    panel.add(banner, gbc);
+    gbc.gridx = 2;
+    gbc.weightx = 0;
+    gbc.insets = useCenteredLayout ? JBUI.insetsLeft(2) : JBUI.insets(8, 2, 0, 0);
+    panel.add(toolbar, gbc);
+    return panel;
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
-    return Settings.KEY.is(dataId) ? mySettings : SearchTextField.KEY.is(dataId) ? mySearch : null;
+  public void queryPlace(@NotNull Place place) {
+    place.putPath(SELECTED_CONFIGURABLE, properties.getValue(SELECTED_CONFIGURABLE));
   }
 
   @Override
-  void disposeOnce() {
-    myProperties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
+  public @NotNull ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+    Object path = place == null ? null : place.getPath(SELECTED_CONFIGURABLE);
+    String id = path instanceof String ? (String)path : null;
+    return settings.select(id == null ? null : settings.find(id));
   }
 
   @Override
-  Action getApplyAction() {
-    return myEditor.getApplyAction();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(History.KEY, myHistory);
+    sink.set(Settings.KEY, settings);
+    sink.set(SearchTextField.KEY, search);
   }
 
   @Override
-  Action getResetAction() {
-    return null;
+  protected void disposeOnce() {
+    if (properties == null || mySplitter == null) return; // if constructor failed
+    properties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
   }
 
   @Override
-  String getHelpTopic() {
-    Configurable configurable = myFilter.myContext.getCurrentConfigurable();
+  protected Action getApplyAction() {
+    return editor.getApplyAction();
+  }
+
+  @Override
+  protected Action getResetAction() {
+    return myResetAllAction;
+  }
+
+  private void reset() {
+    checkModified(filter.context.getCurrentConfigurable());
+    for (Configurable configurable : filter.context.getModified()) {
+      filter.context.fireReset(configurable);
+      configurable.reset();
+    }
+  }
+
+  @Override
+  protected String getHelpTopic() {
+    Configurable configurable = filter.context.getCurrentConfigurable();
     while (configurable != null) {
       String topic = configurable.getHelpTopic();
       if (topic != null) {
         return topic;
       }
-      configurable = myFilter.myContext.getParentConfigurable(configurable);
+      configurable = filter.context.getParentConfigurable(configurable);
     }
     return "preferences";
   }
 
   @Override
-  boolean apply() {
-    return myEditor.apply();
+  protected boolean apply() {
+    return editor.apply();
   }
 
   @Override
-  boolean cancel() {
-    if (myFilter.myContext.isHoldingFilter()) {
-      mySearch.setText("");
+  protected boolean cancel(AWTEvent source) {
+    if (source instanceof KeyEvent && filter.context.isHoldingFilter) {
+      search.setText("");
       return false;
     }
-    return super.cancel();
+    for (Configurable configurable : filter.context.getModified()) {
+      configurable.cancel();
+      filter.context.fireReset(configurable);
+    }
+    return super.cancel(source);
   }
 
   @Override
-  JComponent getPreferredFocusedComponent() {
-    return myTreeView != null ? myTreeView.myTree : myEditor;
+  protected JComponent getPreferredFocusedComponent() {
+    return treeView != null ? treeView.getTree() : editor;
+  }
+
+  void setHelpTooltip(@NotNull JButton helpButton) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
+      new HelpTooltip().setDescription(HtmlChunk.text(ActionsBundle.actionDescription("HelpTopics"))).installOn(helpButton);
+    }
+  }
+
+  @Nullable
+  Collection<@NlsContexts.ConfigurableName String> getPathNames() {
+    return treeView == null ? null : treeView.getPathNames(filter.context.getCurrentConfigurable());
   }
 
   public void addOptionsListener(OptionsEditorColleague colleague) {
-    myFilter.myContext.addColleague(colleague);
+    filter.context.addColleague(colleague);
   }
 
   void updateStatus(Configurable configurable) {
-    myFilter.updateSpotlight(configurable == null);
-    if (myBanner != null) {
-      myBanner.setProject(myTreeView.findConfigurableProject(configurable));
-      myBanner.setText(myTreeView.getPathNames(configurable));
-    }
-    if (myEditor != null) {
-      ConfigurationException exception = myFilter.myContext.getErrors().get(configurable);
-      myEditor.getApplyAction().setEnabled(!myFilter.myContext.getModified().isEmpty());
-      myEditor.getResetAction().setEnabled(myFilter.myContext.isModified(configurable) || exception != null);
-      myEditor.setError(exception);
-      myEditor.revalidate();
+    filter.updateSpotlight(configurable == null);
+    if (editor != null) {
+      ConfigurationException exception = filter.context.getErrors().get(configurable);
+      boolean isModified = isModified();
+      editor.getApplyAction().setEnabled(isModified);
+      myResetAllAction.setEnabled(isModified);
+      editor.getResetAction().setEnabled(
+        isResetActionEnabled(lastController, filter.context.isModified(configurable), exception != null)
+      );
+      editor.setError(exception);
+      editor.revalidate();
     }
     if (configurable != null) {
-      new Alarm().addRequest(() -> {
-        if (!myDisposed && mySpotlightPainter != null) {
-          mySpotlightPainter.updateNow();
+      EdtScheduler.getInstance().schedule(300, () -> {
+        if (!isDisposed && spotlightPainter != null) {
+          spotlightPainter.updateNow();
         }
-      }, 300);
+      });
     }
   }
 
-  void updateController(Configurable configurable) {
-    if (myLastController != null) {
-      myLastController.setBanner(null);
-      myLastController = null;
+  public boolean isModified() {
+    return !filter.context.getModified().isEmpty();
+  }
+
+  public @NotNull Set<Configurable> getModifiedConfigurables() {
+    return filter.context.getModified();
+  }
+
+  static boolean isResetActionEnabled(@Nullable ConfigurableController controller, boolean modified, boolean hasError) {
+    return (controller == null || controller.isResetActionVisible()) && (modified || hasError);
+  }
+
+  /**
+   * Calls {@link Configurable#isModified()} on {@code configurable} and returns the result,
+   * or {@code null} if {@link Configurable#createComponent()} has not been called yet
+   * (i.e. the configurable was never displayed) or if the call throws (with a warning logged).
+   */
+  private @Nullable Boolean isModifiedSafely(@NotNull Configurable configurable) {
+    if (editor.getContent(configurable) == null) {
+      LOG.debug("Configurable " + configurable.getDisplayName() + " was never displayed");
+      return null;
+    }
+    try {
+      return configurable.isModified();
+    }
+    catch (Throwable e) {
+      LOG.warn("isModified() failed for " + configurable.getDisplayName(), e);
+      return null;
+    }
+  }
+
+  /**
+   * Records the current configurable's modified state at window deactivation time.
+   * Call this when the settings window loses focus so the result can be used on reactivation.
+   * Also, snapshots the backing {@link PersistentStateComponent} states for all modified
+   * configurables that implement {@link BackedByPersistentState}, so that external changes
+   * can be detected on focus regain
+   */
+  public void recordWindowLeaveState() {
+    Configurable current = filter.context.getCurrentConfigurable();
+    if (current != null) {
+      Boolean modified = isModifiedSafely(current);
+      if (modified != null) myLeaveState.put(current, modified);
+    }
+    snapshotModifiedConfigurablesState();
+  }
+
+  /**
+   * Resets the current configurable if it had no user edits when the window lost focus
+   * (myLeaveState=false) but is now isModified=true (external/background change).
+   * Call this when the settings window regains focus so external changes become visible.
+   * The leave-state entry is consumed (removed) regardless, so any subsequent user edits
+   * are not blocked by a stale entry in the apply loop.
+   * Non-current configurables are handled lazily: reset on navigation via postUpdateCurrent,
+   * and protected at apply time by the myLeaveState skip in the apply loop.
+   * Also detects external changes to backing state for modified configurables.
+   */
+  public void resetUnmodifiedOnWindowFocus() {
+    Configurable current = filter.context.getCurrentConfigurable();
+    if (current == null) return;
+    Boolean leaveState = myLeaveState.remove(current);
+    Boolean isModified = isModifiedSafely(current);
+    if (isModified == null) return;
+    LOG.debug("resetUnmodifiedOnWindowFocus: current=" + current.getDisplayName() + ", leaveState=" + leaveState + ", isModified=" + isModified);
+    if (leaveState == Boolean.FALSE && isModified) {
+      if (ConfigurableWrapper.cast(NoAutomaticReset.class, current) != null) {
+        LOG.debug("resetUnmodifiedOnWindowFocus: skipping reset for " + current.getDisplayName() + " (NoAutomaticReset)");
+      }
+      else {
+        LOG.warn("resetUnmodifiedOnWindowFocus: resetting " + current.getDisplayName());
+        current.reset();
+        filter.context.fireReset(current);
+      }
+    }
+    detectExternalChangesOnFocusGain();
+  }
+
+  private void snapshotModifiedConfigurablesState() {
+    myStateSnapshots.clear();
+    for (Configurable c : filter.context.getModified()) {
+      BackedByPersistentState backed = ConfigurableWrapper.cast(BackedByPersistentState.class, c);
+      if (backed == null) continue;
+      Map<PersistentStateComponent<?>, Element> snapshots = new LinkedHashMap<>();
+      for (PersistentStateComponent<?> psc : backed.getBackingComponents()) {
+        Element snapshot = snapshotOf(psc);
+        if (snapshot != null) {
+          snapshots.put(psc, snapshot);
+        }
+      }
+      if (!snapshots.isEmpty()) {
+        myStateSnapshots.put(c, snapshots);
+      }
+    }
+  }
+
+  private void detectExternalChangesOnFocusGain() {
+    for (Map.Entry<Configurable, Map<PersistentStateComponent<?>, Element>> entry : myStateSnapshots.entrySet()) {
+      Configurable c = entry.getKey();
+      for (Map.Entry<PersistentStateComponent<?>, Element> pscEntry : entry.getValue().entrySet()) {
+        PersistentStateComponent<?> psc = pscEntry.getKey();
+        Element oldSnapshot = pscEntry.getValue();
+        Element currentSnapshot = snapshotOf(psc);
+        if (currentSnapshot != null && !JDOMUtil.areElementsEqual(oldSnapshot, currentSnapshot)) {
+          String message = UIBundle.message("settings.external.change.conflict.notification",
+                                             c.getDisplayName(), psc.getClass().getName());
+          LOG.warn(message);
+          if (Registry.is("ide.settings.external.change.conflict.show.notification")) {
+            NotificationGroupManager.getInstance()
+              .getNotificationGroup("Settings External Change Conflict")
+              .createNotification(message, NotificationType.WARNING)
+              .notify(myProject);
+          }
+          SettingsCounterUsagesCollector.EXTERNAL_CHANGE_WHILE_MODIFIED.log(
+            (c instanceof ConfigurableWrapper w ? w.getConfigurable() : c).getClass());
+        }
+      }
+    }
+    myStateSnapshots.clear();
+  }
+
+  private static @Nullable Element snapshotOf(@NotNull PersistentStateComponent<?> psc) {
+    try {
+      Object state = psc.getState();
+      if (state == null) return null;
+      return XmlSerializer.serialize(state);
+    }
+    catch (Exception e) {
+      LOG.debug("Failed to snapshot state of " + psc.getClass().getName(), e);
+      return null;
+    }
+  }
+
+  public String getSelectedConfigurableId() {
+    Configurable configurable = editor.getConfigurable();
+    if (configurable == null) {
+      return null;
+    }
+    return ConfigurableVisitor.getId(configurable);
+  }
+
+  private void updateController(@Nullable Configurable configurable) {
+    Project project = treeView.findConfigurableProject(configurable);
+    myBanner.setProjectText(project != null ? getProjectText(project) : null);
+    Collection<@NlsContexts.ConfigurableName String> pathNames = treeView.getPathNames(configurable);
+    List<Crumb> crumbs = new ArrayList<>();
+    if (!pathNames.isEmpty()) {
+      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> pathNames);
+      for (@NlsContexts.ConfigurableName String name : pathNames) {
+        crumbs.add(new Crumb.Impl(null, name, null, actions));
+      }
+    }
+    myBreadcrumbs.setCrumbs(crumbs);
+
+    if (lastController != null) {
+      lastController.setBanner(null);
+      lastController = null;
     }
 
-    ConfigurableController controller = ConfigurableController.getOrCreate(configurable, myControllers);
+    ConfigurableController controller = ConfigurableController.getOrCreate(configurable, controllers);
     if (controller != null) {
-      myLastController = controller;
+      lastController = controller;
       controller.setBanner(myBanner);
     }
+    updateStatus(configurable);
   }
 
   void checkModified(Configurable configurable) {
-    Configurable parent = myFilter.myContext.getParentConfigurable(configurable);
-    if (ConfigurableWrapper.hasOwnContent(parent)) {
+    Configurable parent = filter.context.getParentConfigurable(configurable);
+    if (parent != null && ConfigurableWrapper.hasOwnContent(parent)) {
       checkModifiedForItem(parent);
-      for (Configurable child : myFilter.myContext.getChildren(parent)) {
+      for (Configurable child : filter.context.getChildren(parent)) {
         checkModifiedForItem(child);
       }
     }
@@ -371,24 +835,29 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     updateStatus(configurable);
   }
 
-  private void checkModifiedForItem(final Configurable configurable) {
-    if (configurable != null) {
-      JComponent component = myEditor.getContent(configurable);
-      if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
-        component = myEditor.readContent(configurable);
-      }
-      if (component != null) {
-        checkModifiedInternal(configurable);
-      }
+  private void checkModifiedForItem(@NotNull Configurable configurable) {
+    JComponent component = editor.getContent(configurable);
+    if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
+      component = editor.readContent(configurable);
+    }
+    if (component != null) {
+      checkModifiedInternal(configurable);
     }
   }
 
   private void checkModifiedInternal(Configurable configurable) {
     if (configurable.isModified()) {
-      myFilter.myContext.fireModifiedAdded(configurable, null);
+      filter.context.fireModifiedAdded(configurable, null);
     }
-    else if (!myFilter.myContext.getErrors().containsKey(configurable)) {
-      myFilter.myContext.fireModifiedRemoved(configurable, null);
+    else if (!filter.context.getErrors().containsKey(configurable)) {
+      filter.context.fireModifiedRemoved(configurable, null);
     }
+  }
+
+  private static @NotNull @Nls String getProjectText(@NotNull Project project) {
+    IdeUICustomization customization = IdeUICustomization.getInstance();
+    return project.isDefault() ?
+           customization.projectMessage("configurable.default.project.tooltip") :
+           customization.projectMessage("configurable.current.project.tooltip");
   }
 }

@@ -1,0 +1,102 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.maven"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="kotlin.cri.bta.support.enabled"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Enable Kotlin Compiler Reference Index support for BTA-based builds (Gradle/Maven)"/>
+
+    <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
+
+    <projectService
+            serviceImplementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService"
+            preload="notHeadless"/>
+
+    <advancedSetting
+            id="kotlin.compiler.ref.index"
+            default="true"
+            groupKey="group.advanced.settings.kotlin"
+            bundle="messages.KotlinReferenceIndexBundle"/>
+
+    <languageCompilerRefAdapter
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerRefHelper"/>
+
+    <compiler.isUpToDateCheckConsumer
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$KCRIIsUpToDateConsumer"/>
+
+    <languageCompilerRefAdapter.directInheritorProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenStartupActivity"
+                         order="after org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenImportListener"
+              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaKotlinCompilerReferenceIndexStorageProvider"
+            id="BtaKotlinCompilerReferenceIndexStorageProvider"
+            order="before JpsKotlinCompilerReferenceIndexStorageProvider"/>
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
+            id="JpsKotlinCompilerReferenceIndexStorageProvider"
+            order="last"/>
+  </extensions>
+
+  <actions>
+    <action
+            class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexVerifierAction"
+            id="KotlinCompilerReferenceIndexVerifierAction"
+            internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+    <action id="KotlinCriDiagnostics"
+            class="org.jetbrains.kotlin.idea.search.refIndex.CriDiagnosticAction"
+            internal="true">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </action>
+  </actions>
+
+  <resource-bundle>messages.KotlinReferenceIndexBundle</resource-bundle>
+</idea-plugin>

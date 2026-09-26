@@ -1,0 +1,14 @@
+version = "26.2.0"
+upstream-repository = "https://github.com/benoitc/gunicorn"
+optional-dependencies = ["types-gevent"]
+
+[tool.stubtest]
+supported-platforms = ["linux", "darwin"]
+ci-platforms = ["linux", "darwin"]
+stubtest-dependencies = [
+    "gevent>=1.4.0",
+    "tornado>=0.2",
+    "setproctitle",
+    "PasteDeploy",
+    "inotify",
+]

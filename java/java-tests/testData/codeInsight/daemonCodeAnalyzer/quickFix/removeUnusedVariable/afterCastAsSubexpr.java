@@ -1,4 +1,4 @@
-// "Remove variable 'c'" "true"
+// "Remove local variable 'c'" "true-preview"
 class C {
   String s;
 

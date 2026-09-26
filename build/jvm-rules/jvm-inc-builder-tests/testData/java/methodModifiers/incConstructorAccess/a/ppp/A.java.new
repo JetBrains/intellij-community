@@ -1,0 +1,5 @@
+package ppp;
+public class A {
+  public A(Object o) { }
+  public A(String s) { }
+}

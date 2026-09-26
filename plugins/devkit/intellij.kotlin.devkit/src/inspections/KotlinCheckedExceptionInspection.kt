@@ -1,0 +1,504 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.kotlin.inspections
+
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.findParentOfType
+import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.types.receiverType
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
+import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCatchClause
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.utils.addIfNotNull
+
+class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
+  private class UncheckedExceptionsCachedValueProvider(private val element: KtCallExpression) : CachedValueProvider<Collection<AnnotationAndException>> {
+    @OptIn(KaExperimentalApi::class)
+    override fun compute(): CachedValueProvider.Result<Collection<AnnotationAndException>>? {
+      // Resolves the function designated by `element` and collects contents of `@ThrowsChecked` and `@Throws` annotations.
+      val exceptionsToCheck: MutableCollection<AnnotationAndException> = analyze(element) {
+        val call = element.resolveSuccessfulCall() ?: return@analyze hashSetOf()
+        val annotatedSymbol = call.symbol as? KaAnnotatedSymbol ?: return@analyze hashSetOf()
+        exceptionsToCheck(annotatedSymbol.annotations.mapNotNull { it.psi as? KtAnnotationEntry }).toHashSet()
+      }
+
+      // If the callable is a variable with a function type, collects `@ThrowsChecked` and `@Throws` from the variable type.
+      run {
+        val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return@run
+        analyze(calleeExpression) {
+          for (call in (calleeExpression.resolveSuccessfulCall() ?: return@analyze).calls) {
+            val annotations = call.signature.returnType.annotations
+            exceptionsToCheck.addAll(exceptionsToCheck(annotations.mapNotNull { it.psi as? KtAnnotationEntry }))
+          }
+        }
+      }
+
+      if (exceptionsToCheck.isEmpty()) {
+        return null
+      }
+
+      // Simplifies checking of cases like `catch (BaseException)`, when the checked exception is an instance of `BaseException`.
+      val exceptionsToCheckWithSuperclasses: MutableMap<AnnotationAndException, Set<FqName>> =
+        exceptionsToCheck.associateWithTo(mutableMapOf()) { (_, exceptionFqName, expandedFqName) ->
+          buildSet {
+            addAll(allSuperClasses(element, exceptionFqName))
+            if (expandedFqName != null) {
+              addAll(allSuperClasses(element, expandedFqName))
+            }
+          }
+        }
+
+      val cacheDependencies = mutableListOf<PsiElement>()
+      var currentNode: PsiElement? = element
+      while (true) {
+        when (currentNode) {
+          null, is PsiFile -> break
+
+          is KtLambdaExpression -> {
+            when (val checkResult = currentNode.executedInPlaceByCallable()) {
+              LambdaCheckResult.RethrowsInPlace -> {
+                // It's known that there are no try-catch blocks in the lambda.
+                // Skip it.
+              }
+
+              is LambdaCheckResult.HandlesExceptions ->
+                exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
+                  checkResult.exceptions.any { it.exceptionName in superClasses }
+                }
+
+              LambdaCheckResult.Unknown ->
+                break
+            }
+          }
+
+          is KtDeclarationWithBody -> {
+            if (currentNode.parent !is KtLambdaExpression) {
+              // It's likely a function or a class constructor.
+              val throws = exceptionsToCheck(currentNode.annotationEntries).map { it.exceptionName }
+              if (throws.isNotEmpty()) {
+                exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
+                  superClasses.any { superClass -> superClass in throws }
+                }
+              }
+              break
+            }
+          }
+
+          is KtTryExpression -> {
+            // Forgets about checked exceptions that are handled in a `catch`-block.
+            // Notice that the inspection doesn't check if a `catch`-block rethrows the checked exception, there is no warning.
+            // It's intentional.
+            // The goal of the inspection is to remind about the necessity of handling exceptions
+            // but not prevent any unexpected exception in compile time.
+            loop@ for (catchClause in currentNode.catchClauses) {
+              analyze(catchClause) {
+                val typeRef = catchClause.catchParameter?.typeReference?.resolveSuccessfulSymbol()
+                val typeSymbol = if (typeRef is KaTypeAliasSymbol) typeRef.expandedType.expandedSymbol else typeRef
+                val cls = typeSymbol?.getFqNameIfPackageOrNonLocal()?.maybeToKotlinFqName()
+                exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
+                  cls in superClasses
+                }
+              }
+            }
+          }
+        }
+
+        cacheDependencies.add(currentNode)
+        currentNode = currentNode.parent
+      }
+
+      return CachedValueProvider.Result.create(exceptionsToCheckWithSuperclasses.keys, *cacheDependencies.toTypedArray())
+    }
+  }
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
+    override fun visitElement(element: PsiElement) {
+      if (element !is KtCallExpression) return
+
+      val uncheckedExceptions =
+        CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          ?.filter { isAnnotationSupported(it.annotationName) }
+
+      if (!uncheckedExceptions.isNullOrEmpty()) {
+        val quickFixes = mutableListOf<LocalQuickFix>()
+
+        val closestAnnotated = element.findParentOfType<KtDeclarationWithBody>(strict = false)
+
+        if (closestAnnotated != null) {
+          quickFixes += AddTryCatchQuickFix()
+        }
+
+        quickFixes += AddAnnotationQuickFix()
+
+        holder.registerProblem(
+          element,
+          DevKitKotlinBundle.message("inspection.checked.exceptions.message", uncheckedExceptions.map { it.exceptionName.toString() }.sorted().joinToString()),
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+          *quickFixes.toTypedArray(),
+        )
+      }
+    }
+  }
+
+  private class AddAnnotationQuickFix() : PsiUpdateModCommandQuickFix() {
+    override fun getFamilyName(): @IntentionFamilyName String = DevKitKotlinBundle.message("intention.checked.exceptions.add.annotation")
+
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      // TODO Use the power of ModPsiUpdater.
+
+      if (element !is KtCallExpression) {
+        return
+      }
+      val whereAddAnnotationTo = run {
+        var candidate: PsiElement? = element.parent
+        while (candidate != null) {
+          when (candidate) {
+            is KtNamedFunction -> {
+              // It's something like `fun foobar()`, the annotation must be added before `fun`.
+              return@run candidate
+            }
+
+            is KtFunctionLiteral -> {
+              val lambdaExpression = candidate.parent as? KtLambdaExpression
+              val property = lambdaExpression?.parent as? KtProperty
+              if (property != null) {
+                if (property.typeReference == null) {
+                  val typeInfo = analyze(property) {
+                    CallableReturnTypeUpdaterUtils.getTypeInfo(property)
+                  }
+
+                  CallableReturnTypeUpdaterUtils.updateType(
+                    declaration = property,
+                    typeInfo = typeInfo,
+                    project = project,
+                    editor = null,
+                  )
+                }
+                // It's something like `val myLambda: () -> Foobar = { ... }`, the annotation must be added to the type.
+                return@run property.typeReference ?: return
+              }
+            }
+          }
+          candidate = candidate.parent
+        }
+        return
+      }
+      val uncheckedExceptions =
+        CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          .filter { isAnnotationSupported(it.annotationName) }
+
+      for ((annotationFqName, exceptionFqName) in uncheckedExceptions) {
+        val annotationClassId = ClassId.fromString(if (annotationFqName.isKotlinThrows()) annotationFqName.shortName().asString()
+                                                   else annotationFqName.asString())
+        val annotationText = "${exceptionFqName}::class"
+        whereAddAnnotationTo.addAnnotation(
+          annotationClassId = annotationClassId,
+          annotationInnerText = annotationText,
+          searchForExistingEntry = true,
+          addToExistingAnnotation = { addArgumentToAnnotation(it, annotationText) }
+        )
+      }
+    }
+
+    private fun addArgumentToAnnotation(entry: KtAnnotationEntry, argument: String): Boolean {
+      // add new arguments to an existing entry
+      val args = entry.valueArgumentList
+      val psiFactory = KtPsiFactory(entry.project)
+      val newArgList = psiFactory.createCallArguments("($argument)")
+      when {
+        args == null -> // new argument list
+          entry.addAfter(newArgList, entry.lastChild)
+        args.arguments.isEmpty() -> // replace '()' with a new argument list
+          args.replace(newArgList)
+        args.arguments.none { it.textMatches(argument) } ->
+          args.appendValueArgument(newArgList.arguments[0])
+      }
+
+      return true
+    }
+  }
+
+  private class AddTryCatchQuickFix() : PsiUpdateModCommandQuickFix() {
+    override fun getFamilyName(): @IntentionFamilyName String = DevKitKotlinBundle.message("intention.checked.exceptions.surround.with.try.catch")
+
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      // TODO Use the power of ModPsiUpdater.
+      if (element !is KtCallExpression) return
+      val uncheckedExceptions =
+        CachedValuesManager.getManager(element.project).getCachedValue(element, UncheckedExceptionsCachedValueProvider(element))
+          ?.filter { isAnnotationSupported(it.annotationName) }
+      if (uncheckedExceptions.isNullOrEmpty()) return
+
+      val expressionToSurround: KtElement = run {
+        var expressionToSurround: KtElement? = element
+        while (true) {
+          when (expressionToSurround) {
+            null ->
+              return
+
+            is KtBlockExpression ->
+              break
+
+            else -> {
+              expressionToSurround = expressionToSurround.parent as? KtElement
+            }
+          }
+        }
+        expressionToSurround
+      }
+
+      var tryCatchElement: KtTryExpression = KtPsiFactory.contextual(element).createExpression(buildString {
+        append("try {\n}")
+        for ((_, exceptionFqName) in uncheckedExceptions) {
+          append("catch (err: ${exceptionFqName.asString()}) {\nTODO(\"Unhandled exception \$err\")\n}")
+        }
+      }) as KtTryExpression
+      val codeStyleManager = CodeStyleManager.getInstance(project)
+      codeStyleManager.reformat(tryCatchElement)
+
+      val cutFrom: PsiElement? =
+        generateSequence(expressionToSurround.firstChild) { it.nextSibling }
+          .find { e -> e !is PsiWhiteSpace && e !is LeafPsiElement }
+
+      val cutUntilInclusive: PsiElement? =
+        generateSequence(expressionToSurround.lastChild) { it.prevSibling }
+          .takeWhile { it != cutFrom }
+          .find { it !is PsiWhiteSpace && it !is LeafPsiElement }
+
+      tryCatchElement =
+        when {
+          cutFrom?.prevSibling != null -> expressionToSurround.addAfter(tryCatchElement, cutFrom.prevSibling)
+          expressionToSurround.firstChild != null -> expressionToSurround.addBefore(tryCatchElement, expressionToSurround.firstChild)
+          else -> expressionToSurround.add(tryCatchElement)
+        } as KtTryExpression
+
+      val elementsToMoveIntoTryBlock: List<PsiElement> =
+        if (cutFrom != null && cutUntilInclusive != null) {
+          val elements = generateSequence(cutFrom) { it.nextSibling }
+            .takeWhile { it.prevSibling != cutUntilInclusive }
+            .map { it.copy() }
+            .toList()
+          expressionToSurround.deleteChildRange(cutFrom, cutUntilInclusive)
+          elements
+        }
+        else {
+          listOf()
+        }
+
+      for (child in tryCatchElement.children) {
+        when (child) {
+          is KtCatchClause -> {
+            ShortenReferencesFacility.getInstance().shorten(child)
+          }
+          is KtBlockExpression -> {
+            for (element in elementsToMoveIntoTryBlock) {
+              child.addBefore(element, child.lastChild.prevSibling)
+            }
+            updater.moveCaretTo(child)
+          }
+        }
+      }
+      codeStyleManager.reformat(tryCatchElement, true)
+    }
+  }
+}
+
+/** Converts things like [java.lang.Integer] to [kotlin.Int]. */
+private fun FqName.maybeToKotlinFqName(): FqName =
+  JavaToKotlinClassMap.mapJavaToKotlin(this)?.asSingleFqName()
+  ?: this
+
+private data class AnnotationAndException(val annotationName: FqName, val exceptionName: FqName, val expandedExceptionName: FqName?)
+
+/** Parses a list of annotations, extracts all classes from all `@ThrowChecked`, return fully qualified names of the extracted classes. */
+@OptIn(KaExperimentalApi::class)
+private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Collection<AnnotationAndException> {
+  val result = mutableListOf<AnnotationAndException>()
+  for (annotation in annotations) {
+    analyze(annotation) annotationAnalyze@{
+      val call = annotation.resolveSuccessfulCall() ?: return@annotationAnalyze
+      val annotationFqName = call.symbol.containingClassId?.asSingleFqName()
+      if (annotationFqName?.isEelThrowsChecked() == true || annotationFqName?.isKotlinThrows() == true) {
+        for (valueArgument in annotation.valueArguments) {
+          val cle =
+            valueArgument.getArgumentExpression() as? KtClassLiteralExpression
+            ?: continue
+          val (fqName, expandedFqName) = analyze(cle) {
+            (cle.receiverType as? KaClassType)?.classId?.asSingleFqName() to (cle.receiverType?.fullyExpandedType as? KaClassType)?.classId?.asSingleFqName()
+          }
+          if (fqName != null) {
+            result.add(AnnotationAndException(annotationFqName, fqName, expandedFqName))
+          }
+        }
+      }
+    }
+  }
+  return result
+}
+
+private fun allSuperClasses(elementForScope: PsiElement, exceptionFqName: FqName): Set<FqName> {
+  val superClassSet = mutableSetOf(exceptionFqName)
+  var psiClass =
+    JavaPsiFacade.getInstance(elementForScope.project)
+      .findClass(exceptionFqName.asString(), elementForScope.resolveScope)
+      ?.superClass
+  while (psiClass != null) {
+    superClassSet.addIfNotNull(psiClass.qualifiedName?.let(::FqName)?.maybeToKotlinFqName())
+    psiClass = psiClass.superClass
+  }
+  return superClassSet
+}
+
+private sealed interface LambdaCheckResult {
+  object RethrowsInPlace : LambdaCheckResult
+  class HandlesExceptions(val exceptions: Collection<AnnotationAndException>) : LambdaCheckResult
+  object Unknown : LambdaCheckResult
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
+  val callExpression = when (val parent = parent) {
+    is KtLambdaArgument -> {
+      // Something like `run { ... }`
+      parent.parent
+    }
+
+    is KtValueArgument -> {
+      // Something like `run(body = { ... })`
+      parent.parent?.parent
+    }
+
+    else -> null
+  }
+
+  if (callExpression !is KtCallExpression) {
+    return LambdaCheckResult.Unknown
+  }
+
+  analyze(callExpression) {
+    val call = callExpression.resolveSuccessfulCall() ?: return@analyze
+    val fqName = call.symbol.callableId?.asSingleFqName() ?: return@analyze
+
+    // TODO Optimize
+    if (
+      fqName in StandardKotlinNames.Collections.transformations ||
+      fqName in StandardKotlinNames.Collections.terminations
+    ) {
+      return LambdaCheckResult.RethrowsInPlace
+    }
+  }
+
+  val callerAnnotations: Collection<KtAnnotationEntry> = analyze(callExpression) {
+    val call = callExpression.resolveSuccessfulCall() ?: return@analyze emptyList()
+    val callerAnnotations = call.symbol.annotations.mapNotNull { it.psi as? KtAnnotationEntry }
+
+    val functionSymbol = call.symbol as? KaNamedFunctionSymbol
+    val callEffect = functionSymbol?.contractEffects
+      ?.filterIsInstance<KaContractCallsInPlaceContractEffectDeclaration>()
+      ?.singleOrNull()
+
+    when (callEffect?.invocationKind) {
+      KaContractInvocationKind.AT_MOST_ONCE,
+      KaContractInvocationKind.EXACTLY_ONCE,
+      KaContractInvocationKind.AT_LEAST_ONCE,
+      KaContractInvocationKind.MORE_THAN_ONCE,
+        -> {
+        // TODO Check what exceptions the decorator handles.
+        return LambdaCheckResult.RethrowsInPlace
+      }
+
+      KaContractInvocationKind.ZERO,
+      KaContractInvocationKind.UNKNOWN,
+      null,
+        -> Unit
+    }
+
+    callerAnnotations
+  }
+
+  val parameterAnnotations: Collection<KtAnnotationEntry> = when (val calleeExpression = callExpression.calleeExpression) {
+    is KtNameReferenceExpression -> analyze(calleeExpression) {
+      val signature = calleeExpression.resolveSuccessfulCall()?.function?.valueArgumentMapping[this@executedInPlaceByCallable]
+      if (signature != null) {
+        val symbol = signature.symbol
+        symbol.returnType.annotations.mapNotNull { it.psi as? KtAnnotationEntry }
+      }
+      else emptyList()
+    }
+    else -> emptyList()
+  }
+
+  run {
+    val exceptionsToCheck =
+      exceptionsToCheck(parameterAnnotations)
+        .plus(exceptionsToCheck(callerAnnotations))
+        .toSet()
+    if (exceptionsToCheck.isNotEmpty()) {
+      return LambdaCheckResult.HandlesExceptions(exceptionsToCheck)
+    }
+  }
+
+  return LambdaCheckResult.Unknown
+}
+
+private fun FqName.isEelThrowsChecked(): Boolean = this == FqName(ThrowsChecked::class.qualifiedName!!)
+private fun FqName.isKotlinThrows(): Boolean = this == FqName(Throws::class.qualifiedName!!)
+
+private fun isAnnotationSupported(annotationFqName: FqName): Boolean {
+  if (annotationFqName.isEelThrowsChecked()) return true
+  return Registry.`is`("devkit.inspections.checked.exception.for.kotlin.throws") && annotationFqName.isKotlinThrows()
+}

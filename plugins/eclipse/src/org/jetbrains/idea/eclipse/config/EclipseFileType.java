@@ -1,56 +1,47 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.EclipseIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class EclipseFileType implements FileType {
   public static final FileType INSTANCE = new EclipseFileType();
 
-  @NotNull
-  @NonNls
-  public String getName() {
-    return "Eclipse";
-  }
-
-  @NotNull
-  public String getDescription() {
-    return EclipseBundle.message("eclipse.file.type.descr");
+  private EclipseFileType() {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getName() {
+    return "Eclipse";
+  }
+
+  @Override
+  public @NotNull String getDescription() {
+    return EclipseBundle.message("filetype.eclipse.description");
+  }
+
+  @Override
+  public @Nls @NotNull String getDisplayName() {
+    return EclipseBundle.message("filetype.eclipse.display.name");
+  }
+
+  @Override
+  public @NotNull @NonNls String getDefaultExtension() {
     return EclipseXml.CLASSPATH_EXT;
   }
 
-  @Nullable
+  @Override
   public Icon getIcon() {
-    return EclipseIcons.Eclipse;
+    return AllIcons.Providers.Eclipse;
   }
 
   @Override
@@ -59,12 +50,7 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Override
-  public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

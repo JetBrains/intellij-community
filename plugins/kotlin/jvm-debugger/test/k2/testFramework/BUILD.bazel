@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### skip generation section `test intellij.kotlin.jvm.debugger.test.testFramework`
+
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` start
+jvm_library(
+    name = "testFramework",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.test.testFramework",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.jvm.debugger.test.testFramework",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":testFramework"],
+    deps = [
+        # do not sort,
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//java/testFramework",
+        "//java/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/tests-common:common-tests",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/test-framework",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/jvm-debugger/testFramework",
+        "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.testFramework` start
+exports_files(
+    [
+        "intellij.kotlin.jvm.debugger.test.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.jvm.debugger.test.testFramework` end

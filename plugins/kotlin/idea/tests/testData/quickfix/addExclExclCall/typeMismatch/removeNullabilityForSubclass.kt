@@ -1,0 +1,16 @@
+// "Add non-null asserted (s!!) call" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+
+interface A<out T>
+class B<out T>: A<T>
+
+open class C
+open class D: C()
+
+fun test() {
+    val s: B<D>? = B()
+    other(<caret>s)
+}
+
+fun other(s: A<C>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

@@ -1,0 +1,50 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.add.v2.pipenv
+
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.impl.pipenv.PipEnvPyTool
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.platform.util.progress.withProgressText
+import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
+import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
+import com.jetbrains.python.statistics.InterpreterType
+import java.nio.file.Path
+
+internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, errorSink: ErrorSink) : CustomNewEnvironmentCreator<P>(model, errorSink) {
+  override val interpreterType: InterpreterType = InterpreterType.PIPENV
+  override val pyTool: PyTool = PipEnvPyTool.getInstance()
+  override val pyToolPresentableName: String = "Pipenv"
+  override val toolValidator: ToolValidator<P> = model.pipenvViewModel.toolValidator
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.pipenvViewModel.pipenvExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    model.fileSystem.persistCustomToolPath(pathHolder, pyTool)
+  }
+
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val basePythonBinaryPath = model.getOrInstallBasePython()
+                               ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
+    val pipenvExecutable = model.pipenvViewModel.pipenvExecutable.get()?.pathHolder
+                           ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
+
+    return withProgressText(message("python.sdk.progress.pipenv.creating")) {
+      setupPipEnvSdkWithProgressReport(
+        moduleBasePath = moduleBasePath,
+        basePythonBinaryPath = basePythonBinaryPath,
+        fileSystem = model.fileSystem,
+        pipenvExecutable = pipenvExecutable,
+        installPackages = false,
+        targetPanelExtension = model.state.targetPanelExtension.get(),
+      )
+    }
+  }
+}

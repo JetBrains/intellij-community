@@ -1,0 +1,11 @@
+pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.multiplatform' version '2.2.20'
+    }
+    repositories {
+        maven {
+            url 'https://cache-redirector.jetbrains.com/plugins.gradle.org/m2'
+        }
+    }
+}
+rootProject.name = 'project'

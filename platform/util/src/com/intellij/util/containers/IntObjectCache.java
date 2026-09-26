@@ -1,31 +1,51 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Iterator;
 
-/**
- * @author lvo
- */
-public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
-
-  public static final int DEFAULT_SIZE = 8192;
+@ApiStatus.Internal
+public final class IntObjectCache<T> implements Iterable<T> {
+  private static final int DEFAULT_SIZE = 8192;
   public static final int MIN_SIZE = 4;
+  private static final int[] HASHTABLE_SIZES = {
+      5, 11, 23, 47, 97, 197, 397, 797, 1597, 3203, 6421, 12853, 25717, 51437, 102877, 205759,
+      411527, 823117, 1646237, 3292489, 6584983, 13169977, 26339969, 52679969, 105359939,
+      210719881, 421439783, 842879579, 1685759167,
+      433, 877, 1759, 3527, 7057, 14143, 28289, 56591, 113189, 226379, 452759, 905551, 1811107,
+      3622219, 7244441, 14488931, 28977863, 57955739, 115911563, 231823147, 463646329, 927292699,
+      1854585413,
+      953, 1907, 3821, 7643, 15287, 30577, 61169, 122347, 244703, 489407, 978821, 1957651, 3915341,
+      7830701, 15661423, 31322867, 62645741, 125291483, 250582987, 501165979, 1002331963,
+      2004663929,
+      1039, 2081, 4177, 8363, 16729, 33461, 66923, 133853, 267713, 535481, 1070981, 2141977, 4283963,
+      8567929, 17135863, 34271747, 68543509, 137087021, 274174111, 548348231, 1096696463,
+      31, 67, 137, 277, 557, 1117, 2237, 4481, 8963, 17929, 35863, 71741, 143483, 286973, 573953,
+      1147921, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013,
+      587742049, 1175484103,
+      599, 1201, 2411, 4831, 9677, 19373, 38747, 77509, 155027, 310081, 620171, 1240361, 2480729,
+      4961459, 9922933, 19845871, 39691759, 79383533, 158767069, 317534141, 635068283, 1270136683,
+      311, 631, 1277, 2557, 5119, 10243, 20507, 41017, 82037, 164089, 328213, 656429, 1312867,
+      2625761, 5251529, 10503061, 21006137, 42012281, 84024581, 168049163, 336098327, 672196673,
+      1344393353,
+      3, 7, 17, 37, 79, 163, 331, 673, 1361, 2729, 5471, 10949, 21911, 43853, 87719, 175447, 350899,
+      701819, 1403641, 2807303, 5614657, 11229331, 22458671, 44917381, 89834777, 179669557,
+      359339171, 718678369, 1437356741,
+      43, 89, 179, 359, 719, 1439, 2879, 5779, 11579, 23159, 46327, 92657, 185323, 370661, 741337,
+      1482707, 2965421, 5930887, 11861791, 23723597, 47447201, 94894427, 189788857, 379577741,
+      759155483, 1518310967,
+      379, 761, 1523, 3049, 6101, 12203, 24407, 48817, 97649, 195311, 390647, 781301, 1562611,
+      3125257, 6250537, 12501169, 25002389, 50004791, 100009607, 200019221, 400038451, 800076929,
+      1600153859
+  };
+
+  static {
+    Arrays.sort(HASHTABLE_SIZES);
+  }
 
   private int myTop;
   private int myBack;
@@ -38,7 +58,13 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
   private int myAttempts;
   private int myHits;
 
-  protected static class CacheEntry<T> {
+  private static int getAdjustedTableSize(int candidate) {
+    int index = Arrays.binarySearch(HASHTABLE_SIZES, candidate);
+    if (index >= 0) return candidate;
+    return HASHTABLE_SIZES[-index];
+  }
+
+  protected static final class CacheEntry<T> {
     public int key;
     public T value;
     public int prev;
@@ -57,7 +83,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
-      myCache[i] = new CacheEntry<T>();
+      myCache[i] = new CacheEntry<>();
     }
     myHashTableSize = getAdjustedTableSize(cacheSize);
     myHashTable = new int[myHashTableSize];
@@ -103,12 +129,12 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
 
       myCache[index].value = null;
 
-      fireListenersAboutDeletion(deletedKey, deletedValue);
+      fireListenersAboutDeletion(deletedKey, (T)deletedValue);
     }
   }
 
   public void removeAll() {
-    final IntArrayList keys = new IntArrayList(count());
+    final IntList keys = new it.unimi.dsi.fastutil.ints.IntArrayList(count());
     int current = myTop;
     while (current > 0) {
       if (myCache[current].value != null) {
@@ -117,13 +143,13 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
       current = myCache[current].next;
     }
     for (int i = 0; i < keys.size(); ++ i) {
-      remove(keys.get(i));
+      remove(keys.getInt(i));
     }
   }
 
   // Some AbstractMap functions finished
 
-  public final void cacheObject(int key, T x) {
+  public void cacheObject(int key, T x) {
     int deletedKey = 0;
     Object deletedValue = null;
 
@@ -154,13 +180,13 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     myCache[index].value = x;
     addEntry2HashTable(index);
     add2Top(index);
-    
+
     if (deletedValue != null) {
-      fireListenersAboutDeletion(deletedKey, deletedValue);
+      fireListenersAboutDeletion(deletedKey, (T)deletedValue);
     }
   }
 
-  public final T tryKey(int key) {
+  public T tryKey(int key) {
     ++myAttempts;
     final int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -187,7 +213,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     return cacheEntry.value;
   }
 
-  public final boolean isCached(int key) {
+  public boolean isCached(int key) {
     return searchForCacheEntry(key) != 0;
   }
 
@@ -200,7 +226,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
   }
 
   public void resize(int newSize) {
-    final IntObjectCache<T> newCache = new IntObjectCache<T>(newSize);
+    final IntObjectCache<T> newCache = new IntObjectCache<>(newSize);
     final CacheEntry<T>[] cache = myCache;
     int back = myBack;
     while (back != 0) {
@@ -291,7 +317,7 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     return new IntObjectCacheIterator(this);
   }
 
-  protected class IntObjectCacheIterator implements Iterator<T> {
+  protected final class IntObjectCacheIterator implements Iterator<T> {
     private int myCurrentEntry;
 
     public IntObjectCacheIterator(IntObjectCache cache) {
@@ -319,31 +345,30 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
 
   // start of listening features
 
-  public interface DeletedPairsListener extends EventListener {
-    void objectRemoved(int key, Object value);
+  @FunctionalInterface
+  public interface DeletedPairsListener<T> extends EventListener {
+    void objectRemoved(int key, T value);
   }
 
-  public void addDeletedPairsListener(DeletedPairsListener listener) {
+  public void addDeletedPairsListener(DeletedPairsListener<T> listener) {
     if (myListeners == null) {
       myListeners = new DeletedPairsListener[1];
     }
     else {
-      DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length + 1];
-      System.arraycopy(myListeners, 0, newListeners, 0, myListeners.length);
-      myListeners = newListeners;
+      myListeners = Arrays.copyOf(myListeners, myListeners.length + 1);
     }
     myListeners[myListeners.length - 1] = listener;
   }
 
-  public void removeDeletedPairsListener(DeletedPairsListener listener) {
+  public void removeDeletedPairsListener(DeletedPairsListener<T> listener) {
     if (myListeners != null) {
       if (myListeners.length == 1) {
         myListeners = null;
       }
       else {
-        DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length - 1];
+        DeletedPairsListener<?>[] newListeners = new DeletedPairsListener[myListeners.length - 1];
         int i = 0;
-        for (DeletedPairsListener myListener : myListeners) {
+        for (DeletedPairsListener<?> myListener : myListeners) {
           if (myListener != listener) {
             newListeners[i++] = myListener;
           }
@@ -353,10 +378,10 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
     }
   }
 
-  private void fireListenersAboutDeletion(final int key, final Object value) {
+  private void fireListenersAboutDeletion(int key, T value) {
     if (myListeners != null) {
-      for (DeletedPairsListener myListener : myListeners) {
-        myListener.objectRemoved(key, value);
+      for (DeletedPairsListener<?> myListener : myListeners) {
+        ((DeletedPairsListener<T>)myListener).objectRemoved(key, value);
       }
     }
   }

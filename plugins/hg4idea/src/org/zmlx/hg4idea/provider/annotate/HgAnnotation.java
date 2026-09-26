@@ -1,34 +1,28 @@
-/*
- * Copyright 2008-2010 Victor Iacoban
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-*/
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
+import com.intellij.openapi.vcs.annotate.DefaultLineModificationDetailsProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -46,14 +40,14 @@ public class HgAnnotation extends FileAnnotation {
   private final HgLineAnnotationAspect userAnnotationAspect = new HgLineAnnotationAspect(FIELD.USER);
   private final HgLineAnnotationAspect revisionAnnotationAspect = new HgLineAnnotationAspect(FIELD.REVISION);
 
-  @NotNull private final Project myProject;
-  @NotNull private final List<HgAnnotationLine> myLines;
-  @NotNull private final List<HgFileRevision> myFileRevisions;
-  @NotNull private final HgFile myFile;
+  private final @NotNull Project myProject;
+  private final @NotNull List<? extends HgAnnotationLine> myLines;
+  private final @NotNull List<? extends HgFileRevision> myFileRevisions;
+  private final @NotNull HgFile myFile;
   private final VcsRevisionNumber myCurrentRevision;
 
-  public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<HgAnnotationLine> lines,
-                      @NotNull List<HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
+  public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<? extends HgAnnotationLine> lines,
+                      @NotNull List<? extends HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
     super(project);
     myProject = project;
     myLines = lines;
@@ -68,12 +62,8 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   public LineAnnotationAspect[] getAspects() {
-    return new LineAnnotationAspect[] {
+    return new LineAnnotationAspect[]{
       revisionAnnotationAspect,
       dateAnnotationAspect,
       userAnnotationAspect
@@ -81,9 +71,17 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public String getToolTip(int lineNumber) {
-    if ( myLines.size() <= lineNumber || lineNumber < 0 ) {
+  public @Nullable String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Override
+  public @Nullable String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  private @Nls @Nullable String getToolTip(int lineNumber, boolean asHtml) {
+    if (myLines.size() <= lineNumber || lineNumber < 0) {
       return null;
     }
     HgAnnotationLine info = myLines.get(lineNumber);
@@ -91,21 +89,25 @@ public class HgAnnotation extends FileAnnotation {
       return null;
     }
 
-    for (HgFileRevision revision : myFileRevisions) {
-      if (revision.getRevisionNumber().equals(info.getVcsRevisionNumber())) {
-        return HgVcsMessages.message("hg4idea.annotation.tool.tip", revision.getRevisionNumber().asString(),
-                                      revision.getAuthor(), revision.getRevisionDate(), revision.getCommitMessage());
-      }
-    }
+    HgFileRevision revision = ContainerUtil.find(myFileRevisions, it -> it.getRevisionNumber().equals(info.getVcsRevisionNumber()));
+    if (revision == null) return null;
 
-    return null;
+    AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
+    atb.appendRevisionLine(revision.getRevisionNumber(), null);
+    atb.appendLine(HgBundle.message("hg4idea.annotation.author", revision.getAuthor()));
+    atb.appendLine(HgBundle.message("hg4idea.annotation.date", revision.getRevisionDate()));
+    String message = revision.getCommitMessage();
+    if (message != null) atb.appendCommitMessageBlock(message);
+    return atb.toString();
   }
 
   @Override
   public String getAnnotatedContent() {
     if (myContentBuffer == null) {
       myContentBuffer = new StringBuilder();
-      for (HgAnnotationLine line : myLines) {
+      for (int i = 0; i < myLines.size(); i++) {
+        HgAnnotationLine line = myLines.get(i);
+        if (i > 0) myContentBuffer.append("\n");
         myContentBuffer.append(line.get(FIELD.CONTENT));
       }
     }
@@ -113,8 +115,7 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber getLineRevisionNumber(int lineNumber) {
+  public @Nullable VcsRevisionNumber getLineRevisionNumber(int lineNumber) {
     if (lineNumber >= myLines.size() || lineNumber < 0) {
       return null;
     }
@@ -123,32 +124,38 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  @Nullable
-  public Date getLineDate(int lineNumber) {
-    if (lineNumber >= myLines.size() || lineNumber < 0) {
-      return null;
-    }
+  public @Nullable Date getLineDate(int lineNumber) {
+    //if (lineNumber >= myLines.size() || lineNumber < 0) {
+    //  return null;
+    //}
     //lines.get(lineNumber).get(HgAnnotation.FIELD.DATE)
     // todo : parse date
     return null;
   }
 
   @Override
-  @Nullable
-  public List<VcsFileRevision> getRevisions() {
+  public @Nullable List<VcsFileRevision> getRevisions() {
     List<VcsFileRevision> result = new LinkedList<>();
     result.addAll(myFileRevisions);
     return result;
   }
 
-  @Nullable
-  private static String id(FIELD field) {
-    switch (field) {
-      case USER: return LineAnnotationAspect.AUTHOR;
-      case REVISION: return LineAnnotationAspect.REVISION;
-      case DATE: return LineAnnotationAspect.DATE;
-      default: return null;
-    }
+  private static @Nullable String id(FIELD field) {
+    return switch (field) {
+      case USER -> LineAnnotationAspect.AUTHOR;
+      case REVISION -> LineAnnotationAspect.REVISION;
+      case DATE -> LineAnnotationAspect.DATE;
+      default -> null;
+    };
+  }
+
+  private static @NlsContexts.ListItem @Nullable String displayName(FIELD field) {
+    return switch (field) {
+      case USER -> VcsBundle.message("line.annotation.aspect.author");
+      case REVISION -> VcsBundle.message("line.annotation.aspect.revision");
+      case DATE -> VcsBundle.message("line.annotation.aspect.date");
+      default -> null;
+    };
   }
 
   private static boolean isShowByDefault(FIELD aspectType) {
@@ -159,8 +166,8 @@ public class HgAnnotation extends FileAnnotation {
     private final FIELD myAspectType;
 
     HgLineAnnotationAspect(FIELD aspectType) {
-      super(id(aspectType), HgAnnotation.isShowByDefault(aspectType));
-      this.myAspectType = aspectType;
+      super(id(aspectType), HgAnnotation.displayName(aspectType), HgAnnotation.isShowByDefault(aspectType));
+      myAspectType = aspectType;
     }
 
     @Override
@@ -170,8 +177,8 @@ public class HgAnnotation extends FileAnnotation {
       }
       HgAnnotationLine annotationLine = myLines.get(lineNumber);
       return myAspectType == FIELD.REVISION
-        ? annotationLine.getVcsRevisionNumber().asString()
-        : annotationLine.get(myAspectType).toString();
+             ? annotationLine.getVcsRevisionNumber().asString()
+             : annotationLine.get(myAspectType).toString();
     }
 
     @Override
@@ -186,9 +193,8 @@ public class HgAnnotation extends FileAnnotation {
     }
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber getCurrentRevision() {
+  public @Nullable VcsRevisionNumber getCurrentRevision() {
     return myCurrentRevision;
   }
 
@@ -199,6 +205,11 @@ public class HgAnnotation extends FileAnnotation {
 
   @Override
   public VirtualFile getFile() {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile.getFile());
+    return StandardFileSystems.local().refreshAndFindFileByPath(myFile.getFile().getAbsolutePath());
+  }
+
+  @Override
+  public @Nullable LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return DefaultLineModificationDetailsProvider.create(this);
   }
 }

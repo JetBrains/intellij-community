@@ -1,0 +1,5 @@
+// "Change return type of called function 'bar' to 'String'" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH
+fun bar(): Any = ""
+fun foo(): String = bar(<caret>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

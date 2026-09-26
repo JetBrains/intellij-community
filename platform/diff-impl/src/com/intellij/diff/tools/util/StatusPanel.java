@@ -1,29 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class StatusPanel extends JPanel {
   private final JLabel myTextLabel;
@@ -35,17 +29,22 @@ public class StatusPanel extends JPanel {
     myTextLabel.setVisible(false);
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
+    myBusySpinner.setToolTipText(DiffBundle.message("diff.progress.spinner.tooltip.text"));
 
-    GridBag bag = new GridBag().setDefaultInsets(JBUI.insets(0, 2)).setDefaultFill(GridBagConstraints.BOTH);
+    GridBag bag = new GridBag().setDefaultInsets(JBInsets.create(0, 2)).setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultWeightY(1.0);
     add(myBusySpinner, bag.next());
-    add(myTextLabel, bag.next());
+    add(myTextLabel, bag.next().weightx(1.0));
     setBorder(JBUI.Borders.empty(0, 2));
+    setOpaque(false);
   }
 
   public void update() {
     String message = getMessage();
     myTextLabel.setVisible(message != null);
-    myTextLabel.setText(StringUtil.notNullize(message));
+    myTextLabel.setText(message);
+    myTextLabel.setIcon(getStatusIcon());
+    myTextLabel.setForeground(getStatusForeground());
   }
 
   public void setBusy(boolean busy) {
@@ -59,8 +58,13 @@ public class StatusPanel extends JPanel {
     }
   }
 
-  @Nullable
-  protected String getMessage() {
+  protected @NlsContexts.Label @Nullable String getMessage() {
     return null;
+  }
+
+  protected @Nullable Icon getStatusIcon() { return null; }
+
+  protected @NotNull Color getStatusForeground() {
+    return UIUtil.getLabelForeground();
   }
 }

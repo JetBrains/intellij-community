@@ -1,0 +1,9 @@
+// "Wrap with '?.let { ... }' call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_CALL
+fun foo(s: String) {}
+
+fun bar(s: String?) {
+    foo(s<caret>.substring(1))
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

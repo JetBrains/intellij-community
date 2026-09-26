@@ -15,18 +15,27 @@
  */
 package org.jetbrains.jps.model.artifact.elements.ex;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 
-/**
- * @author nik
- */
 public abstract class JpsComplexPackagingElementBase<Self extends JpsComplexPackagingElementBase<Self>> extends JpsCompositeElementBase<Self> implements
                                                                                                                                               JpsComplexPackagingElement {
   protected JpsComplexPackagingElementBase() {
   }
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   protected JpsComplexPackagingElementBase(JpsComplexPackagingElementBase<Self> original) {
     super(original);
+  }
+
+  @Override
+  public @NotNull Self createCopy() {
+    //noinspection unchecked
+    return (Self)createElementCopy();
   }
 }

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.beanProperties;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -26,18 +11,15 @@ import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author peter
-*/
 public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
   private final PsiMethod myMethod;
   private final String myName;
@@ -47,19 +29,16 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
     myName = name;
   }
 
-  @Nullable
-  public PsiType getPropertyType() {
+  public @Nullable PsiType getPropertyType() {
     return PropertyUtilBase.getPropertyType(myMethod);
   }
 
-  @NotNull
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return myMethod;
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return myMethod;
   }
 
@@ -74,14 +53,12 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   }
 
   @Override
-  @NonNls
-  public String getName(PsiElement context) {
+  public @NonNls String getName(PsiElement context) {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -90,16 +67,9 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
 
   }
 
-  @NotNull
   @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon(boolean flags) {
-    return AllIcons.Nodes.Property;
+  public @Nullable Icon getIcon(boolean flags) {
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
   }
 
   @Override
@@ -108,19 +78,17 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return this;
   }
 
   @Override
   public String getTypeName() {
-    return IdeBundle.message("bean.property");
+    return JavaBundle.message("bean.property");
   }
 
   @Override
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getIcon(0);
   }
 

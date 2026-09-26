@@ -1,3 +1,4 @@
+import java.util.*;
 class Test {
   public static void foo(Object[] objectArray, boolean check) {
     String kv = (String)(check ? "N" : objectArray[0]) ;
@@ -14,4 +15,11 @@ class PolyConditional {
     public void usage1(Object obj) {
         callee1((String) (obj != null ? obj : null));
     }
+}
+class WithExpectedType {
+  List<String> list;
+
+  List<CharSequence> getList() {
+    return list == null ? Collections.emptyList() : (List)list;
+  }
 }

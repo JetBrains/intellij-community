@@ -1,0 +1,180 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.add.v2
+
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.pytools.backend.Version
+import com.intellij.python.pytools.backend.performToolInstallation
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import java.nio.file.Path
+
+internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
+  model: PythonMutableTargetAddInterpreterModel<P>,
+  protected val errorSink: ErrorSink,
+) : PythonNewEnvironmentCreator<P>(model) {
+  protected abstract val pyToolPresentableName: String
+
+  internal lateinit var basePythonComboBox: PythonInterpreterComboBox<P>
+  internal lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
+
+  // Persist the tool path only when the user explicitly browsed/typed it, never an autodetected fill.
+  override val persistToolExecutableOnSetup: Boolean
+    get() = this::executablePath.isInitialized && executablePath.isUserEdited
+
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    with(panel) {
+      basePythonComboBox = pythonInterpreterComboBox(
+        model.fileSystem,
+        title = message("sdk.create.custom.base.python"),
+        selectedSdkProperty = model.state.baseInterpreter,
+        validationRequestor = validationRequestor,
+        onPathSelected = model::addManuallyAddedSystemPython,
+      )
+
+      val missingExecutableText = if (model.fileSystem.toolPathCanBePersisted) {
+        message("sdk.create.custom.venv.missing.text", pyToolPresentableName)
+      }
+      else {
+        message("sdk.create.custom.tool.not.detected", pyToolPresentableName)
+      }
+      executablePath = validatablePathField(
+        fileSystem = model.fileSystem,
+        pathValidator = toolValidator,
+        validationRequestor = validationRequestor,
+        labelText = message("sdk.create.custom.venv.executable.path", pyToolPresentableName),
+        missingExecutableText = missingExecutableText,
+        installAction = createInstallFix(errorSink),
+        canBeEdited = model.fileSystem.toolPathCanBePersisted,
+      )
+
+      row("") {
+        venvExistenceValidationAlert(validationRequestor) {
+          onVenvSelectExisting()
+        }
+      }
+    }
+  }
+
+  override fun onShown(scope: CoroutineScope) {
+    executablePath.initialize(scope)
+    basePythonComboBox.initialize(scope, model.baseInterpreters)
+  }
+
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    val module = when (moduleOrProject) {
+      is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
+      is ModuleOrProject.ProjectOnly -> null
+    }
+    val moduleBasePath = module?.baseDir?.path?.let { Path.of(it) }
+                         ?: model.projectPathFlows.projectPath.first()
+                         ?: error("module base path can't be recognized, both module and project are nulls")
+
+    val newSdk = setupEnvSdk(moduleBasePath).getOr { return it }
+
+    if (module != null) {
+      newSdk.setAssociationToModule(module)
+      module.baseDir?.refresh(true, false)
+    }
+
+
+    return Result.success(newSdk)
+  }
+
+  /** Whether the created env inherits the base interpreter's site-packages; only tools that offer the choice override it. */
+  protected open val globalSitePackage: Boolean
+    get() = false
+
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =
+    InterpreterStatisticsInfo(
+      type = interpreterType,
+      target = target.toStatisticsField(),
+      globalSitePackage = globalSitePackage,
+      makeAvailableToAllProjects = false,
+      previouslyConfigured = false,
+      isWSLContext = false, // todo fix for wsl
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
+
+  /**
+   * Creates an installation fix for an executable (poetry, pipenv, uv, hatch).
+   *
+   * 1. Checks if the installation of the fix requires an undownloaded env.
+   * 2. If it doesn't, downloads the env and selects it.
+   * 3. Checks if `pythonExecutable` has pip.
+   * 4. If it doesn't, checks if pip is installed globally.
+   * 5. If it isn't, downloads and installs pip from "https://bootstrap.pypa.io/get-pip.py".
+   * 6. Runs `(pythonExecutable -m) pip install <package_name> --user`.
+   * 7. Reruns `detectExecutable`.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
+    return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
+      PythonSdkFlavor.clearExecutablesCache()
+      installExecutable(errorSink)
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
+        toolValidator.autodetectExecutable()
+      }
+    }
+  }
+
+  /**
+   * Installs the [pyTool] executable behind a single modal progress via its `performToolInstallation`
+   * extension (prefers `uv tool install`, falls back to a pip install into a system Python). On
+   * success the resolved launcher is persisted.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun installExecutable(errorSink: ErrorSink) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
+      val eel = model.projectPathFlows.projectPath.first()?.getEelDescriptor()?.toEelApi() ?: localEel
+      // performToolInstallation drops the detection cache on success, so the next lookup finds the new binary.
+      (pyTool.performToolInstallation(eel) as? Result.Failure)?.let { errorSink.emit(it.error) }
+    }
+  }
+
+  internal abstract val interpreterType: InterpreterType
+
+  /** The tool this creator installs; drives [installExecutable] via [performToolInstallation]. */
+  internal abstract val pyTool: PyTool
+
+  internal abstract val toolValidator: ToolValidator<P>
+
+  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk>
+
+  internal open fun onVenvSelectExisting() {}
+}
+
+internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.getOrInstallBasePython(): P? {
+  val interpreter = requireNotNull(state.baseInterpreter.get()) { "wrong state: base interpreter is not selected" }
+
+  // todo use target config
+  val path = when (interpreter) {
+    is InstallableSelectableInterpreter<P> -> {
+      installBaseSdk(interpreter.installableSdk)?.let { fileSystem.wrapSdk(it) }?.homePath
+    }
+    is DetectedSelectableInterpreter, is ExistingSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> interpreter.homePath
+  }
+
+  return path
+}

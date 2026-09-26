@@ -15,16 +15,21 @@
  */
 package com.jetbrains.env.python.testing;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.jetbrains.extensions.TargetWithVariantExtKt;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.python.extensions.TargetWithVariantExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -74,7 +79,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
     // otherwise we need to set "foo" as working dir and run spam.Bar.
 
 
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final VirtualFileSystem fileSystem = StandardFileSystems.local();
     final ConfigurationTarget target = configuration.getTarget();
     final VirtualFile workingDirectory = fileSystem.refreshAndFindFileByPath(configuration.getWorkingDirectorySafe());
     Assert.assertNotNull("Working directory hasn't been set", workingDirectory);

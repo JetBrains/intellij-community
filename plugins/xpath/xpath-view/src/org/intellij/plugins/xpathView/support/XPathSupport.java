@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.xpathView.support;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -40,6 +40,6 @@ public abstract class XPathSupport {
     public abstract String getUniquePath(XmlElement element, XmlTag context);
 
     public static XPathSupport getInstance() {
-        return ServiceManager.getService(XPathSupport.class);
+      return ApplicationManager.getApplication().getService(XPathSupport.class);
     }
 }

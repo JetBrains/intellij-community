@@ -1,26 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileHolder {
+  /**
+   * Notify that CLM refresh has started, everything is dirty
+   */
   void cleanAll();
 
-  void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope);
+  /**
+   * Notify that CLM refresh has started for particular scope
+   */
+  void cleanUnderScope(@NotNull VcsDirtyScope scope);
+
   FileHolder copy();
-  HolderType getType();
 
-  void notifyVcsStarted(AbstractVcs scope);
-
-  enum HolderType {
-    DELETED,
-    UNVERSIONED,
-    SWITCHED,
-    MODIFIED_WITHOUT_EDITING,
-    IGNORED,
-    LOCKED,
-    LOGICALLY_LOCKED,
-    ROOT_SWITCH
+  default void notifyVcsStarted(@NotNull AbstractVcs vcs) {
   }
 }

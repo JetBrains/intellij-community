@@ -20,7 +20,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathStep;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,19 +34,20 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         super(node);
     }
 
-    @NotNull
-    public XPathStep getStep() {
+    @Override
+    public @NotNull XPathStep getStep() {
         final XPathStep step = PsiTreeUtil.getParentOfType(this, XPathStep.class);
         assert step != null : unexpectedPsiAssertion();
         return step;
     }
 
+    @Override
     public boolean isNameTest() {
         return getNode().findChildByType(XPathTokenTypes.NCNAME) != null || getNode().findChildByType(XPathTokenTypes.STAR) != null;
     }
 
-    @Nullable
-    public PrefixedName getQName() {
+    @Override
+    public @Nullable PrefixedName getQName() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathTokenTypes.NCNAME));
         if (nodes.length == 0) {
             final ASTNode node = getNode().findChildByType(XPathTokenTypes.STAR);
@@ -62,6 +68,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         return null;
     }
 
+    @Override
     public int getTextOffset() {
         final PrefixedNameImpl qName = ((PrefixedNameImpl)getQName());
         if (qName != null) {
@@ -71,8 +78,8 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
     }
 
-    @NotNull
-    public PrincipalType getPrincipalType() {
+    @Override
+    public @NotNull PrincipalType getPrincipalType() {
         final XPathStep step = getStep();
 
         final XPathAxisSpecifier axisSpecifier = step.getAxisSpecifier();
@@ -88,8 +95,8 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         }
     }
 
-    @Nullable
-    public PsiReference getReference() {
+    @Override
+    public @Nullable PsiReference getReference() {
         final ASTNode name = getNode().findChildByType(XPathTokenTypes.NCNAME);
         if (name != null) {
             return new Reference(this, name);
@@ -97,8 +104,8 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
         return null;
     }
 
-    @NotNull
-    public PsiReference[] getReferences() {
+    @Override
+    public PsiReference @NotNull [] getReferences() {
         final PrefixedName prefixedName = getQName();
         if (prefixedName != null && prefixedName.getPrefix() != null && getReference() != null) {
             return new PsiReference[]{ getReference(), new PrefixReferenceImpl(this, ((PrefixedNameImpl)prefixedName).getPrefixNode() )};
@@ -107,17 +114,18 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     static class Reference extends ReferenceBase {
-        public Reference(XPathNodeTest element, ASTNode nameNode) {
+        Reference(XPathNodeTest element, ASTNode nameNode) {
             super(element, nameNode);
         }
 
-        @NotNull
-        public Object[] getVariants() {
+        @Override
+        public Object @NotNull [] getVariants() {
             // handled in XPathCompletionData
             return EMPTY_ARRAY;
         }
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathNodeTest(this);
   }

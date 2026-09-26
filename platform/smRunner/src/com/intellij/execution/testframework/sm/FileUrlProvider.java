@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,16 +26,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Roman Chernyatchik
- */
 public class FileUrlProvider implements SMTestLocator, DumbAware {
 
   public static final FileUrlProvider INSTANCE = new FileUrlProvider();
 
-  @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @NotNull List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     if (!URLUtil.FILE_PROTOCOL.equals(protocol)) {
       return Collections.emptyList();
     }
@@ -87,8 +75,7 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     return locations;
   }
 
-  @Nullable
-  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
+  public static @Nullable Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
     return createLocationFor(project, virtualFile, lineNum, -1);
   }
 
@@ -101,8 +88,7 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
    *                    a non-positive column number doesn't change text caret position inside the file
    * @return Location instance, or null if not found
    */
-  @Nullable
-  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
+  public static @Nullable Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
@@ -127,11 +113,37 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     PsiElement elementAtLine = null;
     while (offset <= endOffset) {
       elementAtLine = psiFile.findElementAt(offset);
-      if (!(elementAtLine instanceof PsiWhiteSpace)) break;
+      if (elementAtLine == null || isNonBlankLeafPsiElement(elementAtLine)) break;
       int length = elementAtLine.getTextLength();
       offset += length > 1 ? length - 1 : 1;
     }
+    
+    if (elementAtLine instanceof PsiPlainText && offset > 0) {
+      int offsetInPlainTextFile = offset;
+      return new PsiLocation<>(project, (PsiPlainText)elementAtLine) {
+        @Override
+        public @Nullable OpenFileDescriptor getOpenFileDescriptor() {
+          VirtualFile file = getVirtualFile();
+          return file != null ? new OpenFileDescriptor(getProject(), file, offsetInPlainTextFile) : null;
+        }
+      };
+    }
 
     return PsiLocation.fromPsiElement(project, elementAtLine != null ? elementAtLine : psiFile);
+  }
+
+  private static boolean isNonBlankLeafPsiElement(final @NotNull PsiElement element) {
+    if (element instanceof PsiWhiteSpace) {
+      return false;
+    }
+
+    final CharSequence chars = element.getNode().getChars();
+    for (int i = 0; i < chars.length(); i++) {
+      if (!Character.isWhitespace(chars.charAt(i))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

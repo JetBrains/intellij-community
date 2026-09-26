@@ -1,0 +1,12 @@
+// "Fix all ''runBlocking' inside suspend function' problems in file" "true"
+// WITH_COROUTINES
+
+import kotlinx.coroutines.runBlocking
+
+suspend fun main() {
+    run<caret>Blocking {
+        coroutineContext
+    }
+}
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

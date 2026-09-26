@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
@@ -24,17 +10,37 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
-import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.ChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
+import com.intellij.debugger.ui.tree.render.EnumerationChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.ExpressionChildrenRenderer;
+import com.intellij.debugger.ui.tree.render.LabelRenderer;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -42,19 +48,34 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 class CompoundRendererConfigurable extends JPanel {
-  private CompoundTypeRenderer myRenderer;
-  private CompoundTypeRenderer myOriginalRenderer;
-  private Project myProject;
+  private CompoundReferenceRenderer myRenderer;
+  private CompoundReferenceRenderer myOriginalRenderer;
+  private final Project myProject;
   private final ClassNameEditorWithBrowseButton myClassNameField;
   private final JRadioButton myRbDefaultLabel;
   private final JRadioButton myRbExpressionLabel;
@@ -70,31 +91,29 @@ class CompoundRendererConfigurable extends JPanel {
   private final JLabel myExpandedLabel;
   private JBTable myTable;
   private final JBCheckBox myAppendDefaultChildren;
-  @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
-  @NonNls private static final String DATA_PANEL_ID = "DATA";
+  private static final @NonNls String EMPTY_PANEL_ID = "EMPTY";
+  private static final @NonNls String DATA_PANEL_ID = "DATA";
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
   private static final int ONDEMAND_TABLE_COLUMN = 2;
 
-  public CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
+  CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
-    if (myProject == null) {
-      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    }
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
 
-    myRbDefaultLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
-    myRbExpressionLabel = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
+    myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
     final ButtonGroup labelButtonsGroup = new ButtonGroup();
     labelButtonsGroup.add(myRbDefaultLabel);
     labelButtonsGroup.add(myRbExpressionLabel);
 
-    myShowTypeCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.show.type"));
-    myOnDemandCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.ondemand"));
+    myShowTypeCheckBox = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.show.type"));
+    myOnDemandCheckBox = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.ondemand"));
 
-    myRbDefaultChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
-    myRbExpressionChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
-    myRbListChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression.list"));
+    myRbDefaultChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
+    myRbExpressionChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
+    myRbListChildrenRenderer = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression.list"));
     final ButtonGroup childrenButtonGroup = new ButtonGroup();
     childrenButtonGroup.add(myRbDefaultChildrenRenderer);
     childrenButtonGroup.add(myRbExpressionChildrenRenderer);
@@ -121,31 +140,45 @@ class CompoundRendererConfigurable extends JPanel {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         PsiClass psiClass = DebuggerUtils.getInstance()
-          .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
+          .chooseClassDialog(JavaDebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
-          String qName = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          String qName = JVMNameUtil.getClassVMName(psiClass);
           myClassNameField.setText(qName);
           updateContext(qName);
         }
       }
     }, myProject);
-    myClassNameField.getEditorTextField().addFocusListener(new FocusAdapter() {
+    EditorTextField editorTextField = myClassNameField.getEditorTextField();
+    editorTextField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(@NotNull FocusEvent e) {
         updateContext(myClassNameField.getText());
       }
     });
+    ComponentValidator validator = new ComponentValidator(JavaPluginDisposable.getInstance(myProject)).withValidator(() -> {
+      String text = myClassNameField.getText();
+      if (StringUtil.containsAnyChar(text, "<>")) {
+        return new ValidationInfo(JavaDebuggerBundle.message("error.compound.renderer.configurable.fqn.generic"), editorTextField);
+      }
+      return null;
+    }).installOn(editorTextField);
+    myClassNameField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        validator.revalidate();
+      }
+    });
 
-    myAppendDefaultChildren = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.append.default.children"));
+    myAppendDefaultChildren = new JBCheckBox(JavaDebuggerBundle.message("label.compound.renderer.configurable.append.default.children"));
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     JBUI.emptyInsets(), 0, 0));
+                                     JBInsets.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                        GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insetsTop(20), 0, 0));
     panel.add(myShowTypeCheckBox,
@@ -162,7 +195,7 @@ class CompoundRendererConfigurable extends JPanel {
     panel.add(myOnDemandCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
+    panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insetsTop(20), 0, 0));
     panel.add(myRbDefaultChildrenRenderer,
@@ -173,7 +206,7 @@ class CompoundRendererConfigurable extends JPanel {
                                      JBUI.insetsLeft(10), 0, 0));
     panel.add(myChildrenEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                       GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
-    myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
+    myExpandedLabel = new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
     panel.add(myExpandedLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insets(4, 30, 0, 0), 0, 0));
@@ -192,9 +225,9 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   public void setRenderer(NodeRenderer renderer) {
-    if (renderer instanceof CompoundTypeRenderer) {
-      myRenderer = (CompoundTypeRenderer)renderer;
-      myOriginalRenderer = (CompoundTypeRenderer)renderer.clone();
+    if (renderer instanceof CompoundReferenceRenderer referenceRenderer) {
+      myRenderer = referenceRenderer;
+      myOriginalRenderer = (CompoundReferenceRenderer)renderer.clone();
     }
     else {
       myRenderer = myOriginalRenderer = null;
@@ -202,24 +235,26 @@ class CompoundRendererConfigurable extends JPanel {
     reset();
   }
 
-  public CompoundTypeRenderer getRenderer() {
+  public CompoundReferenceRenderer getRenderer() {
     return myRenderer;
   }
 
   private void updateContext(final String qName) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      Project project = myProject;
-      if (project != null) {
-        Pair<PsiElement, PsiType>pair = DebuggerUtilsImpl.getPsiClassAndType(qName, project);
-        PsiElement context = pair.first;
-        if (context != null) {
-          myLabelEditor.setContext(context);
-          myChildrenEditor.setContext(context);
-          myChildrenExpandedEditor.setContext(context);
-          myListChildrenEditor.setContext(context);
-        }
-      }
-    });
+    if (myProject != null) {
+      ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(qName, myProject).first)
+        .inSmartMode(myProject)
+        .coalesceBy(this)
+        // the containing dialog may be not visible yet
+        .finishOnUiThread(ModalityState.any(), context -> {
+          if (context != null) {
+            myLabelEditor.setContext(context);
+            myChildrenEditor.setContext(context);
+            myChildrenExpandedEditor.setContext(context);
+            myListChildrenEditor.setContext(context);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   private void updateEnabledState() {
@@ -240,6 +275,7 @@ class CompoundRendererConfigurable extends JPanel {
   private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
+    myTable.setShowGrid(false);
     myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, false);
     JComponent editorComponent = myListChildrenEditor.getComponent();
 
@@ -256,21 +292,20 @@ class CompoundRendererConfigurable extends JPanel {
       }
     };
     editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
-      @NotNull
       @Override
-      public Component getTableCellRendererComponent(@NotNull JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
+      public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                              Object value,
+                                                              boolean isSelected,
+                                                              boolean hasFocus,
+                                                              int row,
+                                                              int column) {
         final TextWithImports textWithImports = (TextWithImports)value;
         final String text = (textWithImports != null) ? textWithImports.getText() : "";
         return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
@@ -308,7 +343,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRenderer == null) {
       return false;
     }
-    final CompoundTypeRenderer cloned = (CompoundTypeRenderer)myRenderer.clone();
+    final CompoundReferenceRenderer cloned = myRenderer.clone();
     flushDataTo(cloned);
     return !DebuggerUtilsEx.externalizableEqual(cloned, myOriginalRenderer);
   }
@@ -319,10 +354,10 @@ class CompoundRendererConfigurable extends JPanel {
     }
     flushDataTo(myRenderer);
     // update the renderer to compare with in order to find out whether we've been modified since last apply
-    myOriginalRenderer = (CompoundTypeRenderer)myRenderer.clone();
+    myOriginalRenderer = myRenderer.clone();
   }
 
-  private void flushDataTo(final CompoundTypeRenderer renderer) { // label
+  private void flushDataTo(final CompoundReferenceRenderer renderer) { // label
     LabelRenderer labelRenderer = null;
     renderer.setShowType(myShowTypeCheckBox.isSelected());
     if (myRbExpressionLabel.isSelected()) {
@@ -384,9 +419,8 @@ class CompoundRendererConfigurable extends JPanel {
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
     }
-    else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+    else if (childrenRenderer instanceof ExpressionChildrenRenderer exprRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
-      final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
     }
@@ -394,8 +428,7 @@ class CompoundRendererConfigurable extends JPanel {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationRenderer) {
         getTableModel().init(enumerationRenderer.getChildren());
         myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }
@@ -411,10 +444,10 @@ class CompoundRendererConfigurable extends JPanel {
   private static final class MyTableModel extends AbstractTableModel {
     private final List<EnumerationChildrenRenderer.ChildInfo> myData = new ArrayList<>();
 
-    public MyTableModel() {
+    MyTableModel() {
     }
 
-    public void init(List<EnumerationChildrenRenderer.ChildInfo> data) {
+    public void init(List<? extends EnumerationChildrenRenderer.ChildInfo> data) {
       myData.clear();
       for (EnumerationChildrenRenderer.ChildInfo childInfo : data) {
         myData.add(new EnumerationChildrenRenderer.ChildInfo(childInfo.myName, childInfo.myExpression, childInfo.myOnDemand));
@@ -437,19 +470,14 @@ class CompoundRendererConfigurable extends JPanel {
       return true;
     }
 
-    @NotNull
     @Override
-    public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return String.class;
-        case EXPRESSION_TABLE_COLUMN:
-          return TextWithImports.class;
-        case ONDEMAND_TABLE_COLUMN:
-          return Boolean.class;
-        default:
-          return super.getColumnClass(columnIndex);
-      }
+    public @NotNull Class<?> getColumnClass(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> String.class;
+        case EXPRESSION_TABLE_COLUMN -> TextWithImports.class;
+        case ONDEMAND_TABLE_COLUMN -> Boolean.class;
+        default -> super.getColumnClass(columnIndex);
+      };
     }
 
     @Override
@@ -458,16 +486,12 @@ class CompoundRendererConfigurable extends JPanel {
         return null;
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return row.myName;
-        case EXPRESSION_TABLE_COLUMN:
-          return row.myExpression;
-        case ONDEMAND_TABLE_COLUMN:
-          return row.myOnDemand;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> row.myName;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand;
+        default -> null;
+      };
     }
 
     @Override
@@ -477,31 +501,20 @@ class CompoundRendererConfigurable extends JPanel {
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          row.myName = (String)aValue;
-          break;
-        case EXPRESSION_TABLE_COLUMN:
-          row.myExpression = (TextWithImports)aValue;
-          break;
-        case ONDEMAND_TABLE_COLUMN:
-          row.myOnDemand = (Boolean)aValue;
-          break;
+        case NAME_TABLE_COLUMN -> row.myName = (String)aValue;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression = (TextWithImports)aValue;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand = (Boolean)aValue;
       }
     }
 
-    @NotNull
     @Override
-    public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
-        case EXPRESSION_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
-        case ONDEMAND_TABLE_COLUMN:
-          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
-        default:
-          return "";
-      }
+    public @NotNull String getColumnName(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+        case EXPRESSION_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        case ONDEMAND_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
+        default -> "";
+      };
     }
 
     public void addRow(final String name, final TextWithImports expressionWithImports) {
@@ -525,19 +538,9 @@ class CompoundRendererConfigurable extends JPanel {
     public List<EnumerationChildrenRenderer.ChildInfo> getExpressions() {
       return myData;
     }
-
-    private static final class Row {
-      public String name;
-      public TextWithImports value;
-
-      public Row(final String name, final TextWithImports value) {
-        this.name = name;
-        this.value = value;
-      }
-    }
   }
-  
-  private static class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
+
+  private static final class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
             s -> {
@@ -548,7 +551,7 @@ class CompoundRendererConfigurable extends JPanel {
                 }
               };
               fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-              return PsiDocumentManager.getInstance(project).getDocument(fragment);
+              return fragment.getViewProvider().getDocument();
             }, "");
     }
   }

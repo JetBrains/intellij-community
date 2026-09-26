@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -6,22 +6,24 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
-class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
-  private PopupChooserBuilder myBuilder;
+
+final class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
+  private final PopupChooserBuilder myBuilder;
   private final JTree myTree;
 
-  public PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
+  PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
     myBuilder = builder;
     myTree = tree;
   }
@@ -32,8 +34,8 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
+    myBuilder.setItemChosenCallback(() -> {
       TreePath path = myTree.getSelectionModel().getLeadSelectionPath();
       T component = (T)path.getLastPathComponent();
       if (component != null) {
@@ -43,8 +45,8 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
+    myBuilder.setItemChosenCallback(() -> {
       final Set<T> selection = new HashSet<>();
       for (TreePath path : myTree.getSelectionModel().getSelectionPaths()) {
         Object component = path.getLastPathComponent();
@@ -81,6 +83,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       myTree.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           if (myIsEngaged) {
             final Point p = e.getPoint();

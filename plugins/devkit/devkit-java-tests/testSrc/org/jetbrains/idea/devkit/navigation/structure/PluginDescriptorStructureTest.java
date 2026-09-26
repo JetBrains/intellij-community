@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -29,20 +28,22 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
-    moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Attribute.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable.class));
   }
 
 
   public void testPluginDescriptorStructure() {
-    myFixture.addClass("package a.b;" +
-                       "" +
-                       "import com.intellij.util.xmlb.annotations.Attribute; " +
-                       "" +
-                       "public class MockServiceDescriptor { " +
-                       "  @Attribute(\"serviceImplementation\")" +
-                       "  public String serviceImplementation; " +
-                       "}");
+    myFixture.addClass("""
+                         package a.b;
+
+                         import com.intellij.util.xmlb.annotations.Attribute;
+
+                         public class MockServiceDescriptor {
+                           @Attribute("serviceImplementation")
+                           public String serviceImplementation;
+                         }""");
 
     VirtualFile file = myFixture.copyFileToProject("plugin.xml");
     myFixture.openFileInEditor(file);
@@ -50,56 +51,56 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
     myFixture.testStructureView(component -> {
       TreeElementWrapper root = (TreeElementWrapper)TreeUtil.getUserObject(component.getTree().getModel().getRoot());
       TreeElement[] topLevelNodes = root.getValue().getChildren();
-      assertSize(13, topLevelNodes);
+      assertSize(14, topLevelNodes);
 
-      String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes",
-        "Depends", "Depends", "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
+      String[] expectedTopLevelNames = new String[]{"ID", "Name", "Version", "Vendor", "Description", "Change Notes",
+        "Depends", "Depends", "IDEA Version", "Module", "Extensions", "Extension Points", "Application Components", "Actions"};
       String[] actualTopLevelNames = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelNames, actualTopLevelNames);
 
-      String[] expectedTopLevelLocations = new String[] {"plugin.id", "MyPlugin", "1.0", "YourCompany", null, null,
-        "com.intellij.java-i18n", "com.intellij.javaee [optional]", "125.5 - 130.0", "plugin.id", "plugin.id", null, null};
+      String[] expectedTopLevelLocations = new String[]{"plugin.id", "MyPlugin", "1.0", "YourCompany", null, null,
+        "com.intellij.java-i18n", "com.intellij.javaee [optional]", "125.5 - 130.0", "myModule", "plugin.id", "plugin.id", null, null};
       String[] actualTopLevelLocations = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelLocations, actualTopLevelLocations);
 
-      TreeElement[] extensionNodes = topLevelNodes[9].getChildren();
+      TreeElement[] extensionNodes = topLevelNodes[10].getChildren();
       assertSize(5, extensionNodes);
-      String[] expectedExtensionNames = new String[] {"Tool Window", "Project Configurable", "File Editor Provider",
+      String[] expectedExtensionNames = new String[]{"Tool Window", "Project Configurable", "File Editor Provider",
         "Mock Application Service", "DOM | Extender"};
       String[] actualExtensionNames = Stream.of(extensionNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionNames, actualExtensionNames);
 
-      String[] expectedExtensionLocations = new String[] {"someToolWindow", "SomeConfigurable", "SomeFileEditorProvider",
+      String[] expectedExtensionLocations = new String[]{"someToolWindow", "SomeConfigurable", "SomeFileEditorProvider",
         "SomeApplicationService", "DomExtenderId"};
       String[] actualExtensionLocations = Stream.of(extensionNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionLocations, actualExtensionLocations);
 
-      TreeElement[] epNodes = topLevelNodes[10].getChildren();
+      TreeElement[] epNodes = topLevelNodes[11].getChildren();
       assertSize(6, epNodes);
 
-      String[] expectedEpNames = new String[] {"someExtensionPoint", "toolWindow", "projectConfigurable", "fileEditorProvider",
+      String[] expectedEpNames = new String[]{"someExtensionPoint", "toolWindow", "projectConfigurable", "fileEditorProvider",
         "mockApplicationService", "dom.extender"};
       String[] actualEpNames = Stream.of(epNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedEpNames, actualEpNames);
 
-      String[] expectedEpLocations = new String[] {"MyExtensionPointClass", "ToolWindowEP", "ConfigurableEP",
+      String[] expectedEpLocations = new String[]{"MyExtensionPointClass", "ToolWindowEP", "ConfigurableEP",
         "FileEditorProvider", "MockServiceDescriptor", "DomExtenderEP"};
       String[] actualEpLocations = Stream.of(epNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedEpLocations, actualEpLocations);
 
-      TreeElement applicationComponentNode = assertOneElement(topLevelNodes[11].getChildren());
+      TreeElement applicationComponentNode = assertOneElement(topLevelNodes[12].getChildren());
       assertEquals("Component", applicationComponentNode.getPresentation().getPresentableText());
       assertEquals("SomeApplicationComponentImplementation", applicationComponentNode.getPresentation().getLocationString());
 
@@ -111,12 +112,12 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
       assertEquals("Implementation Class", implementationClass.getPresentation().getPresentableText());
       assertEquals("com.jetbrains.test.SomeApplicationComponentImplementation", implementationClass.getPresentation().getLocationString());
 
-      TreeElement[] actionNodes = topLevelNodes[12].getChildren();
+      TreeElement[] actionNodes = topLevelNodes[13].getChildren();
       assertSize(2, actionNodes);
       TreeElement groupNode = actionNodes[0];
       assertEquals("Group", groupNode.getPresentation().getPresentableText());
       assertEquals("MyPlugin.MyGroup", groupNode.getPresentation().getLocationString());
-      assertEquals("SomeAction2", actionNodes[1].getPresentation().getPresentableText());
+      assertEquals("SomeAction2Class", actionNodes[1].getPresentation().getPresentableText());
       assertEquals("SomeAction2Class", actionNodes[1].getPresentation().getLocationString());
 
       TreeElement[] inGroupNodes = groupNode.getChildren();

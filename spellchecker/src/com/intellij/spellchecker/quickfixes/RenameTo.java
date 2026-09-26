@@ -1,106 +1,191 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.actions.RenameElementAction;
-import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNamedElementWithCustomPresentation;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
+import com.intellij.spellchecker.statistics.SpellcheckerRateTracker;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import java.util.HashMap;
+import icons.SpellcheckerIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.List;
 
-  public static final String FIX_NAME =  SpellCheckerBundle.message("rename.to");
+public class RenameTo extends IntentionAndQuickFixAction implements Iconable, EventTrackingIntentionAction {
 
-  public RenameTo(String wordWithTypo) {
-    super(wordWithTypo);
+  private final String typo;
+  private final SmartPsiFileRange rangeRelativeToFile;
+  private final SmartPsiElementPointer<PsiElement> pointer;
+  private final SpellcheckerRateTracker tracker;
+  private volatile List<String> suggestions;
+  private SmartPsiElementPointer<PsiElement> namedPointer;
+
+  public RenameTo(String typo, TextRange range, PsiElement psi, SpellcheckerRateTracker tracker) {
+    PsiFile file = psi.getContainingFile();
+    this.rangeRelativeToFile = SmartPointerManager.getInstance(psi.getProject())
+      .createSmartPsiFileRangePointer(file, range.shiftRight(psi.getTextRange().getStartOffset()));
+    this.typo = typo;
+    this.pointer = SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi, file);
+    this.tracker = tracker;
   }
 
-  @NotNull
-  public String getFamilyName() {
-    return FIX_NAME;
+  @Override
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
+    PsiElement element = pointer.getElement();
+    if (element == null) return false;
+    var presentationName = getPresentationName(element);
+    if (presentationName == null) return false;
+    generateSuggestions(presentationName.getFirst(), presentationName.getSecond());
+    this.namedPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(presentationName.getFirst());
+    return true;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull String getName() {
+    return getFixName(suggestions);
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return getFixName(suggestions);
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
+    PsiElement element = namedPointer.getElement() == null ? null : namedPointer.getElement();
+    if (element == null) return;
+
+    if (suggestions.size() == 1) {
+      runRenamer(element, suggestions.getFirst());
+    }
+    else {
+      var context = DataManager.getInstance().getDataContext(editor.getContentComponent());
+      DataContext contextWithSuggestions = dataId -> {
+        if (PsiElementRenameHandler.NAME_SUGGESTIONS.is(dataId)) return new ArrayList<>(suggestions);
+        if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return new PsiElement[]{element};
+        return context.getData(dataId);
+      };
+      RefactoringActionHandler handler = getRenameHandler(contextWithSuggestions);
+      handler.invoke(project, editor, psiFile, contextWithSuggestions);
+    }
+
+    if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+      SpellcheckerActionStatistics.renameToPerformed(tracker, suggestions.size());
+    }
+  }
+
+  @Override
+  public void suggestionShown(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (tracker.markShown()) {
+      SpellcheckerActionStatistics.suggestionShown(tracker);
+    }
+  }
+
+  public static @Nls String getFixName(List<String> suggestions) {
+    return (suggestions != null && suggestions.size() == 1) ?
+           SpellCheckerBundle.message("rename.to.0", suggestions.getFirst()) :
+           SpellCheckerBundle.message("rename.to");
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return SpellcheckerIcons.Spellcheck;
   }
 
   @Nullable
-  private static DictionarySuggestionProvider findProvider() {
-    Object[] extensions = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-
-    for (Object extension : extensions) {
-      if (extension instanceof DictionarySuggestionProvider) {
-        return (DictionarySuggestionProvider)extension;
-      }
-    }
-    return null;
+  private static Pair<PsiNamedElement, String> getPresentationName(PsiElement element) {
+    PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class);
+    if (namedElement == null) return null;
+    String name =
+      namedElement instanceof PsiNamedElementWithCustomPresentation custom ? custom.getPresentationName() : namedElement.getName();
+    if (name == null) return null;
+    return new Pair<>(namedElement, name);
   }
 
-
-  @NotNull
-  public Anchor getPopupActionAnchor() {
-    return Anchor.FIRST;
+  private static RefactoringActionHandler getRenameHandler(DataContext dataContext) {
+    RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+    if (handler == null) return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
+    return handler;
   }
 
-  @SuppressWarnings({"SSBasedInspection"})
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    DictionarySuggestionProvider provider = findProvider();
-    if (provider != null) {
-      provider.setActive(true);
-    }
-
-    HashMap<String, Object> map = new HashMap<>();
-    PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return;
-    final Editor editor = getEditor(psiElement, project);
-    if (editor == null) return;
-
-    if (editor instanceof EditorWindow) {
-      map.put(CommonDataKeys.EDITOR.getName(), editor);
-      map.put(CommonDataKeys.PSI_ELEMENT.getName(), psiElement);
-    } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
-      map.put(
-        CommonDataKeys.PSI_ELEMENT.getName(),
-        new TextEditorPsiDataProvider().getData(CommonDataKeys.PSI_ELEMENT.getName(), editor, editor.getCaretModel().getCurrentCaret())
-      );
-    }
-
-    final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
-    try {
-      editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
-      DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
-      AnAction action = new RenameElementAction();
-      AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
-      action.actionPerformed(event);
-      if (provider != null) {
-        provider.setActive(false);
+  private void generateSuggestions(PsiNamedElement namedElement, String name) {
+    if (suggestions == null) {
+      TextRange range = getNameRelativeRange(namedElement, name);
+      if (range == null) {
+        this.suggestions = new ArrayList<>();
+        return;
       }
+      this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
+        .stream()
+        .map(suggestion -> range.replace(name, suggestion))
+        .filter(suggestion -> RenameUtil.isValidName(namedElement.getProject(), namedElement, suggestion))
+        .distinct()
+        .toList();
     }
-    finally {
-      editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
-    }
+  }
+
+  private @Nullable TextRange getNameRelativeRange(PsiNamedElement namedElement, String name) {
+    Segment rangeRelativeToFile = this.rangeRelativeToFile.getRange();
+    if (rangeRelativeToFile == null) return null;
+
+    PsiElement element = namedElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : pointer.getElement();
+    if (element == null) return null;
+
+    TextRange range = getNameRelativeTypoRange(element, rangeRelativeToFile);
+    if (range == null || range.getEndOffset() > name.length()) return null;
+    return range.substring(name).equals(typo) ? range : null;
+  }
+
+  private static @Nullable TextRange getNameRelativeTypoRange(PsiElement element, Segment rangeRelativeToFile) {
+    SpellcheckingStrategy strategy = SpellcheckingStrategy.getSpellcheckingStrategy(element);
+    if (strategy == null) return TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset());
+    TextRange range = strategy.getRenameIdentifierRange(element);
+
+    // This range can be incorrect in the case of programming language syntax errors.
+    // For example, if someone types something before the `import` statement in Java.
+    if (rangeRelativeToFile.getStartOffset() < element.getTextRange().getStartOffset()) return null;
+    return range == null ? TextRange.create(rangeRelativeToFile).shiftLeft(element.getTextRange().getStartOffset())
+                         : TextRange.create(rangeRelativeToFile).shiftLeft(range.getStartOffset());
+  }
+
+  private void runRenamer(PsiElement element, String suggestion) {
+    new RenameProcessor(pointer.getProject(), element, suggestion, true, true).run();
   }
 }

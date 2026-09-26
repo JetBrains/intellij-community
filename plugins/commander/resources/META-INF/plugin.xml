@@ -1,0 +1,65 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>com.intellij.commander</id>
+  <name>Commander</name>
+  <description>Provides a two-panel view for navigating and working with the project structure</description>
+  <vendor>JetBrains</vendor>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains"/>
+  <resource-bundle>messages.CommanderBundle</resource-bundle>
+
+  <depends>com.intellij.java</depends>
+  <depends>com.intellij.platform.images</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>
+    <toolWindow id="Commander" anchor="right" icon="AllIcons.Toolwindows.ToolWindowCommander"
+                factoryClass="com.intellij.ide.commander.CommanderToolWindowFactory"/>
+    <projectService serviceImplementation="com.intellij.ide.commander.Commander"/>
+    <customizableActionGroupProvider implementation="com.intellij.ide.commander.actions.CommanderCustomizableActionGroupProvider"/>
+    <projectSettings service="com.intellij.ide.commander.Commander"/>
+  </extensions>
+
+  <actions>
+    <action id="CommanderSyncViews" class="com.intellij.ide.commander.actions.SyncViewsAction" icon="AllIcons.Actions.SyncPanels">
+      <add-to-group group-id="PairFileActions" anchor="first"/>
+      <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
+    </action>
+    <action id="CommanderSwapPanels" class="com.intellij.ide.commander.actions.SwapPanelsAction" icon="AllIcons.Actions.SwapPanels">
+      <add-to-group group-id="PairFileActions" anchor="first"/>
+      <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+    </action>
+
+    <group id="ImagesCommanderActions1">
+      <reference ref="Images.EditExternally"/>
+      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
+    </group>
+
+    <group id="ImagesCommanderActions2">
+      <add-to-group anchor="last" group-id="CommanderPopupMenu"/>
+    </group>
+  </actions>
+</idea-plugin>
+

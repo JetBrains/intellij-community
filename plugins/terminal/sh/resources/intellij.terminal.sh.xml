@@ -1,0 +1,18 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.sh.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <shellOccurrencesHighlightingSuppressor implementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalPromptHighlightingSuppressor"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService"
+                        serviceImplementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalShLangServiceImpl"/>
+  </extensions>
+</idea-plugin>

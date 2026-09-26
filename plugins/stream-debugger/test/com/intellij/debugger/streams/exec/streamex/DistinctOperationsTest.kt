@@ -4,7 +4,7 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class DistinctOperationsTest : StreamExTestCase() {
+open class DistinctOperationsTest : StreamExTestCase() {
   override val packageName: String = "distinct"
 
   fun testDistinctAtLeast() = doStreamExWithResultTest()

@@ -1,5 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.consts;
+
+import org.jetbrains.java.decompiler.code.CodeConstants;
 
 public class PrimitiveConstant extends PooledConstant {
   public int index;
@@ -19,9 +21,10 @@ public class PrimitiveConstant extends PooledConstant {
   }
 
   private void initConstant() {
-    if (type == CONSTANT_Class) {
+    if (type == CodeConstants.CONSTANT_Class) {
       String className = getString();
-      isArray = (className.length() > 0 && className.charAt(0) == '['); // empty string for a class name seems to be possible in some android files
+      isArray =
+        (!className.isEmpty() && className.charAt(0) == '['); // empty string for a class name seems to be possible in some android files
     }
   }
 
@@ -31,7 +34,8 @@ public class PrimitiveConstant extends PooledConstant {
 
   @Override
   public void resolveConstant(ConstantPool pool) {
-    if (type == CONSTANT_Class || type == CONSTANT_String || type == CONSTANT_MethodType) {
+    if (type == CodeConstants.CONSTANT_Class || type == CodeConstants.CONSTANT_String || type == CodeConstants.CONSTANT_MethodType ||
+        type == CodeConstants.CONSTANT_Module || type == CodeConstants.CONSTANT_Package) {
       value = pool.getPrimitiveConstant(index).getString();
       initConstant();
     }
@@ -40,11 +44,15 @@ public class PrimitiveConstant extends PooledConstant {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof PrimitiveConstant)) return false;
+    if (!(o instanceof PrimitiveConstant cn)) return false;
 
-    PrimitiveConstant cn = (PrimitiveConstant)o;
     return this.type == cn.type &&
            this.isArray == cn.isArray &&
            this.value.equals(cn.value);
+  }
+
+  @Override
+  public String toString() {
+    return value.toString();
   }
 }

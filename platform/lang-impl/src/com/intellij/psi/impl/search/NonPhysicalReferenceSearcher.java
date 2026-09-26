@@ -1,18 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,14 +27,18 @@ import org.jetbrains.annotations.NotNull;
  * This searcher does the job for various console and fragment editors and other non-physical files.
  * We need this because ScopeEnlarger functionality will not work for nonphysical files.
  */
-public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+@ApiStatus.Internal
+public final class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+
+  public static final Key<Boolean> ENABLE_IN_TESTS = Key.create("enable.NonPhysicalReferenceSearcher.in.tests");
 
   public NonPhysicalReferenceSearcher() {
     super(true);
   }
 
+  @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(ENABLE_IN_TESTS)) {
       return;
     }
     final SearchScope scope = queryParameters.getScopeDeterminedByUser();
@@ -67,7 +78,7 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
     if (file == null) {
       return false;
     }
-    return (!file.getViewProvider().isPhysical() && !(file instanceof PsiCodeFragment)) ||
-           ScratchFileService.getInstance().getRootType(file.getVirtualFile()) != null;
+    return (!file.getViewProvider().correspondsToRealFile() && !(file instanceof PsiCodeFragment)) ||
+           ScratchUtil.isScratch(file.getVirtualFile());
   }
 }

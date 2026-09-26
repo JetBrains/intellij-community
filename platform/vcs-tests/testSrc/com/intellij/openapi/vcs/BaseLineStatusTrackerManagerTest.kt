@@ -1,41 +1,47 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.DocumentReferenceManager
-import com.intellij.openapi.command.undo.DocumentReferenceProvider
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
-import org.mockito.Mockito
+import com.intellij.testFramework.common.runAll
+import com.intellij.util.ui.UIUtil
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
+  protected lateinit var shelveManager: ShelveChangesManager
   protected lateinit var lstm: LineStatusTrackerManager
   protected lateinit var undoManager: UndoManagerImpl
 
   override fun setUp() {
     super.setUp()
 
-    lstm = LineStatusTrackerManager.getInstanceImpl(getProject())
-    undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
+    DiffIterableUtil.setVerifyEnabled(true)
+    lstm = LineStatusTrackerManager.getInstanceImpl(project)
+    undoManager = UndoManager.getInstance(project) as UndoManagerImpl
+    shelveManager = ShelveChangesManager.getInstance(project)
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { lstm.releaseAllTrackers() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    runAll(
+      { clm.waitUntilRefreshed() },
+      { UIUtil.dispatchAllInvocationEvents() },
+      { lstm.resetExcludedFromCommitMarkers() },
+      { lstm.releaseAllTrackers() },
+      { DiffIterableUtil.setVerifyEnabled(false) },
+      { super.tearDown() }
+    )
   }
 
   override fun resetSettings() {
@@ -65,7 +71,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
 
   protected open fun runCommand(groupId: String? = null, task: () -> Unit) {
-    CommandProcessor.getInstance().executeCommand(getProject(), {
+    CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction(task)
     }, "", groupId)
   }
@@ -80,27 +86,31 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
     undoManager.redo(editor)
   }
 
-  private fun createMockFileEditor(document: Document): FileEditor {
-    val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
-    val references = listOf(DocumentReferenceManager.getInstance().create(document))
-    Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references);
-    return editor
-  }
-
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
-    assertSameElements(this.affectedChangeListsIds.asListIdsToNames(), *expectedNames)
-  }
-
-  protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
-    assertEquals(parseInput(expected), document.text)
-  }
-
-  protected fun LineStatusTracker<*>.assertBaseTextContentIs(expected: String) {
-    assertEquals(parseInput(expected), vcsDocument.text)
+    assertSameElements(this.getAffectedChangeListsIds().asListIdsToNames(), *expectedNames)
   }
 
   protected fun Range.assertChangeList(listName: String) {
-    val localRange = this as PartialLocalLineStatusTracker.LocalRange
+    val localRange = this as LocalRange
     assertEquals(listName, localRange.changelistId.asListIdToName())
+  }
+
+  protected fun VirtualFile.assertNullTracker() {
+    val tracker = this.tracker
+    if (tracker != null) {
+      var message = "$tracker" +
+                    ": operational - ${tracker.isOperational()}" +
+                    ", valid - ${tracker.isValid()}, " +
+                    ", file - ${tracker.virtualFile}"
+      if (tracker is PartialLocalLineStatusTracker) {
+        message += ", hasPartialChanges - ${tracker.hasPartialChangesToCommit()}" +
+          ", lists - ${tracker.getAffectedChangeListsIds().asListIdsToNames()}"
+      }
+      assertNull(message, tracker)
+    }
+  }
+
+  protected fun PartialLocalLineStatusTracker.assertExcludedState(expected: ExclusionState, listName: String) {
+    assertEquals(expected, getExcludedFromCommitState(listName.asListNameToId()))
   }
 }

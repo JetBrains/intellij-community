@@ -1,0 +1,33 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.find"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindInFilesApiProvider"
+                                            apiInterfaces="com.intellij.platform.find.FindInFilesApi"/>
+
+    <registryKey key="find.in.files.split.actions"
+                 defaultValue="true"
+                 description="Enables the 'Find in Files' implementation, optimized to support both remote development workflows and monolithic setups."
+                 restartRequired="true"/>
+  </extensions>
+</idea-plugin>

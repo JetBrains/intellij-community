@@ -1,0 +1,58 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("LibraryFilesPackagingElementEntityModifications")
+
+package com.intellij.java.workspace.entities
+
+import com.intellij.java.workspace.entities.impl.LibraryFilesPackagingElementEntityImpl
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+
+@GeneratedCodeApiVersion(3)
+interface LibraryFilesPackagingElementEntityBuilder : WorkspaceEntityBuilder<LibraryFilesPackagingElementEntity>,
+                                                      PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
+  override var entitySource: EntitySource
+  override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+  var library: LibraryId?
+}
+
+internal object LibraryFilesPackagingElementEntityType :
+  EntityType<LibraryFilesPackagingElementEntity, LibraryFilesPackagingElementEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = LibraryFilesPackagingElementEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = LibraryFilesPackagingElementEntityImpl.Builder::class.java
+  operator fun invoke(
+    entitySource: EntitySource,
+    init: (LibraryFilesPackagingElementEntityBuilder.() -> Unit)? = null,
+  ): LibraryFilesPackagingElementEntityBuilder {
+    val builder = builder()
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+
+  @Deprecated(message = "Use new API instead")
+  fun compatibilityInvoke(
+    entitySource: EntitySource,
+    init: (LibraryFilesPackagingElementEntity.Builder.() -> Unit)? = null,
+  ): LibraryFilesPackagingElementEntity.Builder {
+    val builder = builder() as LibraryFilesPackagingElementEntity.Builder
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifyLibraryFilesPackagingElementEntity(
+  entity: LibraryFilesPackagingElementEntity,
+  modification: LibraryFilesPackagingElementEntityBuilder.() -> Unit,
+): LibraryFilesPackagingElementEntity = modifyEntity(LibraryFilesPackagingElementEntityBuilder::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createLibraryFilesPackagingElementEntity")
+fun LibraryFilesPackagingElementEntity(
+  entitySource: EntitySource,
+  init: (LibraryFilesPackagingElementEntityBuilder.() -> Unit)? = null,
+): LibraryFilesPackagingElementEntityBuilder = LibraryFilesPackagingElementEntityType(entitySource, init)

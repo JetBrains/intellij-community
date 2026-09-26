@@ -1,51 +1,41 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
+import com.intellij.framework.library.DownloadableLibraryType;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryPresentationProvider;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
-* @author nik
-*/
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private static final String GROOVY_FRAMEWORK_NAME = "Groovy";
   private final String myEnvVariable;
   private final Set<? extends LibraryKind> myLibraryKinds;
   private final String myFrameworkName;
+  private final DownloadableLibraryType myLibraryType;
 
   public GroovyLibraryDescription() {
     this("GROOVY_HOME", getAllGroovyKinds(), GROOVY_FRAMEWORK_NAME);
@@ -65,14 +55,14 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     this(envVariable, Collections.singleton(libraryKind), frameworkName);
   }
 
-  private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind> libraryKinds, String frameworkName) {
+  private GroovyLibraryDescription(@NotNull String envVariable, final @NotNull Set<? extends LibraryKind> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
     myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
+    myLibraryType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType.class);
   }
 
-  @Nullable
-  public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
+  public static @Nullable GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
     final String name = dir.getName();
 
     final List<GroovyLibraryPresentationProviderBase> providers = ContainerUtil.findAll(LibraryPresentationProvider.EP_NAME.getExtensions(), GroovyLibraryPresentationProviderBase.class);
@@ -90,44 +80,69 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return null;
   }
 
-  @NotNull
   @Override
-  public Set<? extends LibraryKind> getSuitableLibraryKinds() {
+  public @NotNull Set<? extends LibraryKind> getSuitableLibraryKinds() {
     return myLibraryKinds;
   }
 
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
-    VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
-      initial = findFile("/usr/share/groovy");
+    VirtualFile initial = findPathToGroovyHome();
+    if (initial == null) {
+      initial = contextDirectory;
     }
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    final FileChooserDescriptor descriptor = createFileChooserDescriptor().withEnvironmentRestricted(true);
+    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, project, initial);
+    if (dir == null) {
+      return null;
+    }
+    return createLibraryConfiguration(parentComponent, dir);
+  }
+
+  public @Nullable VirtualFile findPathToGroovyHome() {
+    VirtualFile initial = findFile(System.getenv(myEnvVariable));
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
+      if (SystemInfo.isLinux) {
+        return findFile("/usr/share/groovy");
+      }
+      else if (SystemInfo.isMac) {
+        return findFile("/usr/local/opt/groovy/libexec"); // homebrew
+      }
+    }
+    return initial;
+  }
+
+  public @NotNull FileChooserDescriptor createFileChooserDescriptor() {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (!super.isFileSelectable(file)) {
           return false;
         }
         return findManager(file) != null;
       }
     };
-    descriptor.setTitle(myFrameworkName + " SDK");
-    descriptor.setDescription("Choose a directory containing " + myFrameworkName + " distribution");
-    final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
-    if (dir == null) return null;
+    descriptor.setTitle(GroovyBundle.message("framework.0.sdk.chooser.title", myFrameworkName));
+    descriptor.setDescription(GroovyBundle.message("framework.0.sdk.chooser.description", myFrameworkName));
+    return descriptor;
+  }
 
-    final GroovyLibraryPresentationProviderBase provider = findManager(dir);
+  public @Nullable NewLibraryConfiguration createLibraryConfiguration(@Nullable Component parentComponent, @NotNull VirtualFile pathToLibrary) {
+    final GroovyLibraryPresentationProviderBase provider = findManager(pathToLibrary);
     if (provider == null) {
       return null;
     }
 
-    final String path = dir.getPath();
+    final String path = pathToLibrary.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
-    if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
-      Messages.showErrorDialog(parentComponent,
-                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determine version.",
-                               "Failed to Create Library");
+    if (sdkVersion == null) {
+      Messages.showErrorDialog(
+        parentComponent,
+        GroovyBundle.message("framework.0.sdk.chooser.error.message", myFrameworkName),
+        GroovyBundle.message("framework.0.sdk.chooser.error.title")
+      );
       return null;
     }
 
@@ -139,17 +154,15 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     };
   }
 
-  @Nullable
-  private static VirtualFile findFile(String path) {
+  private static @Nullable VirtualFile findFile(String path) {
     if (path != null && !path.isEmpty()) {
-      return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+      return StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(path));
     }
     return null;
   }
 
-  @NotNull
   @Override
-  public LibrariesContainer.LibraryLevel getDefaultLevel() {
-    return LibrariesContainer.LibraryLevel.GLOBAL;
+  public @Nullable DownloadableLibraryType getDownloadableLibraryType() {
+    return myLibraryType;
   }
 }

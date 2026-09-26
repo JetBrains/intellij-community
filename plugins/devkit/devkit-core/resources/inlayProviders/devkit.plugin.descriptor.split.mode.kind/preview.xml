@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.example.backend.plugin</id>
+  <vendor>JetBrains</vendor>
+  <!--/*<# Backend XML descriptor #>*/-->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+</idea-plugin>

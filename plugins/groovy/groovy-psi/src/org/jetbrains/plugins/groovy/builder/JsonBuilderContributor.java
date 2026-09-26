@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -20,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -28,16 +15,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.builder.JsonDelegateContributor.DELEGATE_FQN;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
-public class JsonBuilderContributor extends BuilderMethodsContributor {
+public final class JsonBuilderContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.json.JsonBuilder";
-  static final String ORIGIN_INFO = "via JsonBuilder";
+  static final @NonNls String ORIGIN_INFO = "via JsonBuilder";
 
-  @Nullable
   @Override
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return FQN;
   }
 
@@ -46,7 +32,7 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<PsiElement> processor) {
+                                @NotNull Processor<? super PsiElement> processor) {
     GrLightMethodBuilder method;
 
     // ()
@@ -55,30 +41,30 @@ public class JsonBuilderContributor extends BuilderMethodsContributor {
 
     // (Closure)
     method = createMethod(name, clazz, place);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Map)
     method = createMethod(name, clazz, place);
-    method.addParameter("map", JAVA_UTIL_MAP, false);
+    method.addParameter("map", JAVA_UTIL_MAP);
     if (!processor.process(method)) return false;
 
     // (Map, Closure)
     method = createMethod(name, clazz, place);
-    method.addParameter("map", JAVA_UTIL_MAP, false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addParameter("map", JAVA_UTIL_MAP);
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Iterable, Closure)
     method = createMethod(name, clazz, place);
-    method.addParameter("value", TypesUtil.createIterableType(place, null), false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addParameter("value", TypesUtil.createIterableType(place, null));
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, DELEGATE_FQN);
     if (!processor.process(method)) return false;
 
     // (Object[], Closure)
     method = createMethod(name, clazz, place);
-    method.addParameter("value", TypesUtil.getJavaLangObject(place).createArrayType(), false);
-    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE, false).putUserData(DELEGATES_TO_KEY, DELEGATE_FQN);
+    method.addParameter("value", TypesUtil.getJavaLangObject(place).createArrayType());
+    method.addAndGetParameter("c", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, DELEGATE_FQN);
     return processor.process(method);
   }
 

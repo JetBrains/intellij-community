@@ -28,6 +28,8 @@ class SPITest1 {
     /*
     <TYPO descr="Typo: In word 'werty'">werty</TYPO> within method
    */
+    // print(f'hello world')
+    // print(f'<TYPO descr="Typo: In word 'typpoo'">typpoo</TYPO> world')
     // single line <TYPO descr="Typo: In word 'newss'">newss</TYPO> within method
   }
 }

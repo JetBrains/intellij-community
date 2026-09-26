@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -28,47 +14,40 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
 import org.intellij.lang.xpath.xslt.quickfix.RenameVariableFix;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableShadowingInspection extends XsltInspection {
 
-  @NotNull
-  public String getDisplayName() {
-    return "Variable Shadowing";
-  }
-
-  @NotNull
-  public String getShortName() {
+  @Override
+  public @NotNull String getShortName() {
     return "XsltVariableShadowing";
   }
 
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(final XmlTag tag) {
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         final XmlAttribute nameAttr = tag.getAttribute("name", null);
         if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
 
         if (XsltSupport.isVariableOrParam(tag)) {
           final XmlTag shadowedVariable = DeclarationChecker.getInstance((XmlFile)tag.getContainingFile()).getShadowedVariable(tag);
           if (shadowedVariable != null) {
-            final String innerKind = XsltSupport.isParam(tag) ? "Parameter" : "Variable";
-            final String outerKind = XsltSupport.isParam(shadowedVariable) ? "parameter" : "variable";
 
-            final LocalQuickFix fix1 = new RenameVariableFix(tag, "local").createQuickFix(isOnTheFly);
-            final LocalQuickFix fix2 = new RenameVariableFix(shadowedVariable, "outer").createQuickFix(isOnTheFly);
+            final LocalQuickFix fix1 = new RenameVariableFix(tag, XPathBundle.message("variable.place.local")).createQuickFix(isOnTheFly);
+            final LocalQuickFix fix2 = new RenameVariableFix(shadowedVariable, XPathBundle.message("variable.place.outer")).createQuickFix(isOnTheFly);
 
-            final XmlAttribute name = tag.getAttribute("name");
-            assert name != null;
-
-            final PsiElement token = XsltSupport.getAttValueToken(name);
-            assert token != null;
-
-            holder.registerProblem(token,
-                    innerKind + " '" + name.getValue() + "' shadows " + outerKind,
-                    AbstractFix.createFixes(fix1, fix2));
+            final PsiElement token = XsltSupport.getAttValueToken(nameAttr);
+            if (token == null) return;
+            final String message = XPathBundle.message("inspection.message.variable.shadows.variable",
+                                                       XsltSupport.isParam(tag) ? 0 : 1,
+                                                       nameAttr.getValue(),
+                                                       XsltSupport.isParam(shadowedVariable) ? 0 : 1);
+            //noinspection DialogTitleCapitalization
+            holder.registerProblem(token, message, AbstractFix.createFixes(fix1, fix2));
           }
         }
       }

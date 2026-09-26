@@ -1,112 +1,84 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiVariable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Max Medvedev
  */
-public class VariableInitializationChecker {
-  private static final LightCacheKey<Map<GroovyPsiElement, Boolean>> KEY = LightCacheKey.createByFileModificationCount();
+public final class VariableInitializationChecker {
 
-  public static boolean isVariableDefinitelyInitialized(@NotNull String varName, @NotNull Instruction[] controlFlow) {
-    DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(varName), new MySemilattice());
-    final List<Data> result = engine.performDFAWithTimeout();
+  private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, GroovyControlFlow controlFlow) {
+    DFAEngine<Boolean> engine = new DFAEngine<>(controlFlow.getFlow(), new MyDfaInstance(controlFlow.getIndex(VariableDescriptorFactory.createDescriptor(var))), new MySemilattice());
+    final List<Boolean> result = engine.performDFAWithTimeout();
     if (result == null) return false;
-
-    return result.get(controlFlow.length - 1).get();
+    Boolean last = result.get(controlFlow.getFlow().length - 1);
+    return last == null ? false : last;
   }
 
-  public static boolean isVariableDefinitelyInitializedCached(@NotNull PsiVariable var,
+  public static boolean isVariableDefinitelyInitializedCached(@NotNull GrVariable var,
                                                               @NotNull GroovyPsiElement context,
-                                                              @NotNull Instruction[] controlFlow) {
-    Map<GroovyPsiElement, Boolean> map = KEY.getCachedValue(var);
-    if (map == null) {
-      map = ContainerUtil.newHashMap();
-      KEY.putCachedValue(var, map);
-    }
+                                                              @NotNull GroovyControlFlow controlFlow) {
+    Map<GroovyPsiElement, Boolean> map = CachedValuesManager.getCachedValue(var, () -> Result.create(new HashMap<>(), var));
 
     final Boolean cached = map.get(context);
     if (cached != null) return cached.booleanValue();
 
-    final boolean result = isVariableDefinitelyInitialized(var.getName(), controlFlow);
+    final boolean result = isVariableDefinitelyInitialized(var, controlFlow);
     map.put(context, result);
 
     return result;
   }
 
-  private static class MyDfaInstance implements DfaInstance<Data> {
-    public MyDfaInstance(String var) {
+  private static class MyDfaInstance implements DfaInstance<Boolean> {
+    MyDfaInstance(int var) {
       myVar = var;
     }
 
     @Override
-    public void fun(@NotNull Data e, @NotNull Instruction instruction) {
+    public Boolean fun(@NotNull Boolean e, @NotNull Instruction instruction) {
       if (instruction instanceof ReadWriteVariableInstruction &&
-          ((ReadWriteVariableInstruction)instruction).getVariableName().equals(myVar)) {
-        e.set(true);
+          ((ReadWriteVariableInstruction)instruction).getDescriptor() == myVar) {
+        return true;
       }
+      return e;
     }
 
-    @NotNull
-    @Override
-    public Data initial() {
-      return new Data(false);
-    }
-
-    private final String myVar;
+    private final int myVar;
   }
 
-  private static class MySemilattice implements Semilattice<Data> {
-    @NotNull
-    @Override
-    public Data join(@NotNull List<Data> ins) {
-      if (ins.isEmpty()) return new Data(false);
+  private static class MySemilattice implements Semilattice<Boolean> {
 
+    @Override
+    public @NotNull Boolean join(@NotNull List<? extends Boolean> ins) {
+      if (ins.isEmpty()) {
+        return false;
+      }
       boolean b = true;
-      for (Data data : ins) {
-        b &= data.get().booleanValue();
+      for (boolean candidate : ins) {
+        b &= candidate;
       }
-
-      return new Data(b);
+      return b;
     }
 
     @Override
-    public boolean eq(@NotNull Data e1, @NotNull Data e2) {
-      return e1.get().booleanValue() == e2.get().booleanValue();
-    }
-  }
-
-  private static class Data extends Ref<Boolean> {
-    public Data(Boolean value) {
-      super(value);
+    public boolean eq(@NotNull Boolean e1, @NotNull Boolean e2) {
+      return e1.equals(e2);
     }
   }
 }

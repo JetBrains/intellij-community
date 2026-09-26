@@ -1,0 +1,709 @@
+package com.intellij.mcpserver.impl
+
+import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpSessionInvocationMode
+import com.intellij.mcpserver.McpTool
+import com.intellij.mcpserver.McpToolFilter
+import com.intellij.mcpserver.McpToolFilterProvider
+import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.elicitation.McpElicitationKind
+import com.intellij.mcpserver.elicitation.McpElicitationKind.CLI
+import com.intellij.mcpserver.elicitation.McpElicitationKind.IDE
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.impl.util.network.findFirstFreePort
+import com.intellij.mcpserver.impl.util.network.installHostValidation
+import com.intellij.mcpserver.impl.util.network.installHttpRequestPropagation
+import com.intellij.mcpserver.impl.util.network.isPortAvailable
+import com.intellij.mcpserver.impl.util.network.mcpPatched
+import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.settings.McpToolFilterSettings
+import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
+import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
+import com.intellij.mcpserver.toolwindow.TransportType
+import com.intellij.mcpserver.util.enableIfNotExplicitlyDisabled
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.ui.Messages
+import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.call
+import io.ktor.server.cio.CIO
+import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.response.respond
+import io.modelcontextprotocol.kotlin.sdk.server.Server
+import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
+
+private val logger = logger<McpServerService>()
+internal val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
+internal const val IJ_MCP_CLIENT_TAGS: String = "IJ_MCP_CLIENT_TAGS"
+
+internal fun parseMcpClientTags(value: String?): Set<String> {
+  return value
+           ?.splitToSequence(',')
+           ?.map { it.trim() }
+           ?.filter { it.isNotEmpty() }
+           ?.toCollection(linkedSetOf())
+         ?: emptySet()
+}
+
+open class McpServerService(val cs: CoroutineScope) {
+  enum class AskCommandExecutionMode {
+    ASK,
+    DONT_ASK,
+
+    /**
+     * Respects brave mode flag
+     */
+    RESPECT_GLOBAL_SETTINGS,
+  }
+
+  class McpSessionOptions(
+    val commandExecutionMode: AskCommandExecutionMode,
+    val toolFilter: McpToolFilter? = null,
+    val localAgentId: String? = null,
+    val invocationMode: McpSessionInvocationMode? = null,
+  ) {
+    /**
+     * Names the chat this session serves, for `McpCallOwnerTelemetryProvider` to resolve into analytics ids.
+     *
+     * Deliberately not [localAgentId]: that one already means three things, and the two surfaces disagree on which.
+     * AIR puts a thread id there and AI Assistant an agent type, so it identifies a chat on one surface only.
+     */
+    var ownerKey: String? = null
+      private set
+
+    var clientTags: Set<String> = emptySet()
+      private set
+
+    var elicitationKind: McpElicitationKind? = null
+      private set
+
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter?,
+      localAgentId: String?,
+      invocationMode: McpSessionInvocationMode?,
+      elicitationKind: McpElicitationKind?,
+    ) : this(commandExecutionMode, toolFilter, localAgentId, invocationMode) {
+      this.elicitationKind = elicitationKind
+    }
+
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter?,
+      localAgentId: String?,
+      invocationMode: McpSessionInvocationMode?,
+      elicitationKind: McpElicitationKind?,
+      clientTags: Set<String>,
+    ) : this(commandExecutionMode, toolFilter, localAgentId, invocationMode, elicitationKind) {
+      this.clientTags = clientTags.toSet()
+    }
+
+    /** Returns a copy naming the chat this session serves. A blank key is no key. */
+    fun withOwnerKey(ownerKey: String?): McpSessionOptions =
+      copy().also { it.ownerKey = ownerKey?.takeIf(String::isNotBlank) }
+
+    internal fun withToolFilter(toolFilter: McpToolFilter): McpSessionOptions =
+      copy(toolFilter = toolFilter)
+
+    private fun copy(toolFilter: McpToolFilter? = this.toolFilter): McpSessionOptions {
+      return McpSessionOptions(
+        commandExecutionMode = commandExecutionMode,
+        toolFilter = toolFilter,
+        localAgentId = localAgentId,
+        invocationMode = invocationMode,
+        elicitationKind = elicitationKind,
+        clientTags = clientTags,
+      ).also { it.ownerKey = ownerKey }
+    }
+
+    @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
+    constructor(
+      commandExecutionMode: AskCommandExecutionMode,
+      toolFilter: McpToolFilter = McpToolFilter.AllowAll,
+    ) : this(commandExecutionMode, toolFilter, null)
+  }
+
+  companion object {
+    fun getInstance(): McpServerService {
+      return service()
+    }
+
+    fun getInstanceIfCreated(): McpServerService? = serviceOrNull()
+
+    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
+
+    internal val callId = AtomicInteger(0)
+
+    @ApiStatus.Internal
+    fun useRouterByDefault() {
+      McpToolFilterSettings.getInstance().invocationMode = McpSessionInvocationMode.VIA_ROUTER
+    }
+  }
+
+  private val toolsStateProviderLock = Any()
+
+  @Volatile
+  private var toolsStateProviderOrNull: McpToolsListProvider? = null
+
+  /**
+   * Synchronous fallback for the non-suspend API. Converting the tools is slow, so this must not be called on the EDT;
+   * prefer [toolsStateProviderAsync], which also converts them concurrently.
+   */
+  @get:RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  internal val toolsStateProvider: McpToolsListProvider
+    get() = toolsStateProviderOrNull ?: publishToolsStateProvider(McpToolsListProvider.computeAllMcpTools())
+
+  internal suspend fun toolsStateProviderAsync(): McpToolsListProvider {
+    return toolsStateProviderOrNull ?: publishToolsStateProvider(McpToolsListProvider.computeAllMcpToolsAsync())
+  }
+
+  /**
+   * The tools are converted before the lock is taken, so a caller that loses the race merely discards its own list and
+   * the extension point listeners are registered exactly once.
+   */
+  private fun publishToolsStateProvider(initialTools: McpToolsListProvider.ProviderTools): McpToolsListProvider {
+    return synchronized(toolsStateProviderLock) {
+      toolsStateProviderOrNull ?: McpToolsListProvider(cs, initialTools).also { toolsStateProviderOrNull = it }
+    }
+  }
+
+  @TestOnly
+  internal fun isToolsStateProviderInitialized(): Boolean = toolsStateProviderOrNull != null
+
+  private val server = MutableStateFlow(startGlobalServerIfEnabled())
+
+  private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
+
+  private val privateServer: ServerAndCount = ServerAndCount(null, 0)
+  private val privateServerMutex = Mutex()
+
+  private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
+
+  val isRunning: Boolean
+    get() = server.value != null
+
+  /**
+   * Observable state for the global MCP SSE server: the resolved loopback port when the server is running,
+   * or `null` when it is stopped. Preferred over polling [isRunning] / [port] by lifecycle-aware components
+   * (see `McpWslForwarderService`).
+   */
+  @get:ApiStatus.Internal
+  val serverPortFlow: StateFlow<Int?> by lazy {
+    server.map { it?.engineConfig?.connectors?.firstOrNull()?.port }
+      .stateIn(cs, SharingStarted.Eagerly, server.value?.engineConfig?.connectors?.firstOrNull()?.port)
+  }
+
+  // For tests
+  val theOnlySession: McpSessionOptions?
+    @ApiStatus.Internal
+    get() = if (activeAuthorizedSessions.size == 1) activeAuthorizedSessions.values.firstOrNull() else null
+
+  private val connectionAddressProvider: McpServerConnectionAddressProvider
+    get() = service()
+
+  val serverSseUrl: String
+    get() = connectionAddressProvider.serverSseUrl
+
+  val serverStreamUrl: String
+    get() = connectionAddressProvider.serverStreamUrl
+
+  fun start() {
+    McpServerSettings.getInstance().enableMcpServer = true
+    settingsChanged(true)
+  }
+
+  fun stop() {
+    McpServerSettings.getInstance().enableMcpServer = false
+    settingsChanged(false)
+  }
+
+  // probably we have to add an ability to configure server before start (like tools list, features, etc.)
+  /**
+   * Starts an isolated MCP on a separate port that doesn't interfere with the main MCP server,
+   * thus it can be used even if the main MCP server is enabled by a user.
+   * This isolated server runs only for the method execution period.
+   * The server is secured by a temporary token IJ_MCP_AUTH_TOKEN that is generated for each session.
+   * The calling site should pass the token value in http headers.
+   * @param block suspend function that runs in the isolated MCP server context
+   */
+  suspend fun authorizedSession(
+    mcpSessionOptions: McpSessionOptions,
+    block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit,
+  ) {
+    // open server here on random port
+    val uuid = UUID.randomUUID().toString()
+
+    val server = privateServerMutex.withLock {
+      if (privateServer.server == null) {
+        logger.trace { "No active private server. Starting private MCP server..." }
+        privateServer.server =
+          startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true, elicitationKind = IDE)
+      }
+      privateServer.userCount++
+      logger.trace { "Current private server user count before session $uuid: ${privateServer.userCount}" }
+      return@withLock privateServer.server ?: error("Server must not be null")
+    }
+    try {
+      val occupiedPort = server.engine.resolvedConnectors().first().port
+      logger.trace { "Authorized MCP session started on port $occupiedPort" }
+      activeAuthorizedSessions[uuid] = mcpSessionOptions
+      coroutineScope {
+        block(occupiedPort, IJ_MCP_AUTH_TOKEN, uuid)
+      }
+    }
+    finally {
+      activeAuthorizedSessions.remove(uuid)
+      privateServerMutex.withLock {
+        privateServer.userCount--
+        logger.trace { "Current private server user count after session $uuid: ${privateServer.userCount}" }
+        if (privateServer.userCount == 0) {
+          logger.trace { "No active private server users. Stopping private MCP server..." }
+          try {
+            // if to call `stopSuspend` without NonCancellable in the case of the current coroutine cancellation the stopSuspend won't run
+            // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
+            withContext(NonCancellable) {
+              withContext(Dispatchers.IO) {
+                // timeout exception will be reported in the catch below
+                withTimeout(2000.milliseconds) {
+                  server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
+                }
+              }
+            }
+          }
+          catch (t: Throwable) {
+            rethrowControlFlowException(t)
+            logger.error("Failed to gracefully shutdown authorized MCP server", t)
+          }
+          finally {
+            privateServer.server = null
+            logger.trace { "Private MCP server stopped" }
+          }
+        }
+      }
+      logger.trace { "Authorized MCP session stopped" }
+    }
+  }
+
+  private fun isKnownToken(token: String): Boolean {
+    return activeAuthorizedSessions.containsKey(token)
+  }
+
+  private fun getSessionOptions(token: String?): McpSessionOptions {
+    return token?.let { activeAuthorizedSessions[token] }
+           ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
+  }
+
+  open val port: Int
+    get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
+
+  internal fun resolvedConnectorHost(): String? {
+    val currentServer = server.value ?: return null
+    return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
+  }
+
+  /**
+   * Handles changes to the MCP server settings, updating the server state and configuration accordingly.
+   *
+   * If the server is effectively disabled, this method stops the current server instance, if any.
+   * If the server is enabled and the port is either unspecified or matches the currently used one, existing server instance is reused.
+   * Otherwise, a new server with the updated configuration is started.
+   *
+   * @param enabled Indicates whether the MCP server is enabled.
+   * @param port The optional port number to configure for the server. If null, the existing server port is reused.
+   */
+//todo: I think that should be a subscription to McpServerSettings
+  @RequiresBackgroundThread(generateAssertion = false)
+  fun settingsChanged(enabled: Boolean, port: Int? = null) {
+    ThreadingAssertions.softAssertBackgroundThread()
+
+    server.update { currentServer ->
+      val effectivelyEnabled = enabled || isMcpServerForceEnabled()
+      if (!effectivelyEnabled) {
+        // stop old
+        currentServer?.stop()
+        return@update null
+      }
+      else {
+        // reuse old or start new
+        enableIfNotExplicitlyDisabled()
+        if (currentServer != null) {
+          if (port == null || currentServer.engineConfig.connectors.firstOrNull()?.port == port) {
+            // if there is a running server and the port did not change, reuse it.
+            return@update currentServer
+          }
+          else {
+            // port changed, stop old
+            currentServer.stop()
+          }
+        }
+        return@update startGlobalServer()
+      }
+    }
+  }
+
+  internal class MyProjectListener : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      val service = withContext(Dispatchers.IO) { serviceAsync<McpServerService>() } // start server if enabled
+      service.showForceEnabledNotificationIfNeeded(project)
+    }
+  }
+
+  private fun startGlobalServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
+    if (!isMcpServerEffectivelyEnabled(McpServerSettings.getInstance().enableMcpServer)) return null
+    return startGlobalServer()
+  }
+
+  private fun startGlobalServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
+    val settings = McpServerSettings.getInstance()
+    val forcePortState = getForcedMcpServerPortState()
+    val desiredPort = when (forcePortState) {
+      ForcedPortState.Absent -> settings.mcpServerPort
+      is ForcedPortState.Valid -> forcePortState.port
+      is ForcedPortState.Invalid -> {
+        logger.error("Invalid MCP server port '${forcePortState.rawValue}' from system property '$IJ_MCP_FORCE_PORT_PROPERTY'")
+        return null
+      }
+    }
+    val requireExactPort = forcePortState is ForcedPortState.Valid
+    val server = try {
+      startServer(desiredPort = desiredPort, authCheck = false, elicitationKind = CLI, requireExactPort = requireExactPort)
+    }
+    catch (t: Throwable) {
+      if (!hasMcpServerRuntimeOverrides()) throw t
+
+      val message = if (requireExactPort) {
+        "Failed to start MCP server on forced port $desiredPort from system property '$IJ_MCP_FORCE_PORT_PROPERTY'"
+      }
+      else {
+        "Failed to start MCP server with runtime overrides"
+      }
+      logger.error(message, t)
+      return null
+    }
+    if (!hasMcpServerRuntimeOverrides()) {
+      cs.launch {
+        // save to settings can be done asynchronously
+        val selectedPort = server.engine.resolvedConnectors().first().port
+        settings.mcpServerPort = selectedPort
+        if (selectedPort != desiredPort) {
+          withContext(Dispatchers.EDT) {
+            // We want to warn the user that the used port is different from what was used last, or directly requested by the user.
+            Messages.showWarningDialog(null,
+                                       McpServerBundle.message("mcp.server.port.changed.warning.message",
+                                                               desiredPort.toString(),
+                                                               selectedPort.toString()),
+                                       McpServerBundle.message("mcp.server.port.changed.warning.title"))
+          }
+        }
+      }
+    }
+    // Warm the tool list up here rather than lazily on first use: this is where the latency matters, and it keeps the
+    // reflection-heavy conversion in a coroutine, so neither an incoming session nor the settings UI has to block on it.
+    cs.launch {
+      toolsStateProviderAsync()
+    }
+    return server
+  }
+
+  private fun showForceEnabledNotificationIfNeeded(project: Project) {
+    if (!isRunning || !isMcpServerForceEnabled()) return
+
+    val message = getForcedMcpServerPortOrNull()?.let { forcedPort ->
+      McpServerBundle.message(
+        "mcp.server.force.enabled.notification.message.with.port",
+        IJ_MCP_FORCE_ENABLE_PROPERTY,
+        IJ_MCP_FORCE_PORT_PROPERTY,
+        forcedPort.toString(),
+      )
+    } ?: McpServerBundle.message("mcp.server.force.enabled.notification.message", IJ_MCP_FORCE_ENABLE_PROPERTY)
+
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup("MCP Server")
+      .createNotification(
+        McpServerBundle.message("mcp.server.force.enabled.notification.title"),
+        message,
+        NotificationType.INFORMATION,
+      )
+      .notify(project)
+  }
+
+  private fun startServer(
+    desiredPort: Int,
+    authCheck: Boolean,
+    elicitationKind: McpElicitationKind,
+    requireExactPort: Boolean = false,
+  ): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
+    val resolvedPort = if (requireExactPort) {
+      if (!isPortAvailable(desiredPort)) {
+        throw IllegalStateException("Port $desiredPort is not available")
+      }
+      desiredPort
+    }
+    else {
+      findFirstFreePort(desiredPort)
+    }
+
+    return cs.embeddedServer(CIO, host = "127.0.0.1", port = resolvedPort) {
+      logger.trace { "Starting embedded MCP server on port $resolvedPort, authCheck=$authCheck" }
+      installHostValidation()
+      installHttpRequestPropagation()
+
+      mcpPatched(prePhase = {
+        if (authCheck) {
+          val authToken = call.request.headers[IJ_MCP_AUTH_TOKEN]
+          if (authToken == null || !isKnownToken(authToken)) {
+            call.respond(HttpStatusCode.Unauthorized, "MCP server is running in restricted mode. Please, provide valid authorization token")
+            finish()
+          }
+        }
+      }) { applicationCall, transport ->
+        logger.trace { "Starting session" }
+
+        // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
+        val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
+        val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
+        val clientTagsHeader = applicationCall.request.headers[IJ_MCP_CLIENT_TAGS]
+
+        // Check for tool filter from header (for stdio/CLI usage)
+        val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS]
+        val headerFilter = allowedToolsFromHeader?.let { toolsStr ->
+          val tools = toolsStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+          if (tools.isNotEmpty()) McpToolFilter.AllowList(tools) else McpToolFilter.AllowAll
+        }
+
+        // Merge filters: auth-based session options take precedence over header
+        val baseSessionOptions = getSessionOptions(authToken)
+        val clientTags = clientTagsHeader?.let(::parseMcpClientTags) ?: baseSessionOptions.clientTags
+        val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
+        // if no header provided, use the existing filter from sessionOptions
+        val sessionOptions = if (headerFilter != null || clientTagsHeader != null) {
+          McpSessionOptions(
+            commandExecutionMode = baseSessionOptions.commandExecutionMode,
+            toolFilter = baseSessionOptions.toolFilter,
+            localAgentId = baseSessionOptions.localAgentId,
+            invocationMode = baseSessionOptions.invocationMode,
+            elicitationKind = baseSessionOptions.elicitationKind,
+            clientTags = clientTags,
+          ).withOwnerKey(baseSessionOptions.ownerKey)
+            .let { options -> headerFilter?.let(options::withToolFilter) ?: options }
+        }
+        else {
+          baseSessionOptions
+        }
+        val mcpServer = Server(
+          Implementation(
+            name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
+            version = ApplicationInfo.getInstance().fullVersion
+          ),
+          ServerOptions(
+            capabilities = ServerCapabilities(
+              //prompts = ServerCapabilities.Prompts(listChanged = true),
+              //resources = ServerCapabilities.Resources(subscribe = true, listChanged = true),
+              tools = ServerCapabilities.Tools(listChanged = true),
+              logging = null,
+              experimental = null,
+              prompts = null,
+              resources = null,
+            ),
+            // The SDK runs a handler in its own scope, not in the HTTP call; the tools expect the context of this service.
+            handlerCoroutineContext = cs.coroutineContext,
+          )
+        )
+
+        val transportType = when {
+          applicationCall.request.local.uri.startsWith("/sse") -> TransportType.SSE
+          else -> TransportType.STREAMABLE_HTTP
+        }
+
+        // Create session-specific MCP tools manager
+        val sessionToolsManager = McpSessionHandler(
+          parentScope = cs,
+          sessionOptions = sessionOptions,
+          mcpServerService = this@McpServerService,
+          mcpServer = mcpServer,
+          transportType = transportType,
+          projectPathFromInitialRequest = projectPath,
+          elicitationKind = sessionOptions.elicitationKind ?: elicitationKind,
+          useFiltersFromEP = useFiltersFromEP,
+        )
+        // Process initial tools immediately to fix race condition
+        sessionToolsManager.updateTools()
+        FileDocumentManager.getInstance().overrideConflictResolution(
+          ConflictResolution.MERGE,
+          sessionToolsManager.sessionScope.asDisposable(),
+        )
+
+        val session = sessionToolsManager.createAndInitializeSession(transport)
+
+        return@mcpPatched session
+      }
+    }.start(wait = false)
+  }
+
+  fun getMcpTools(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    return getMcpToolsFiltered(filter,
+                               useFiltersFromEP,
+                               excludeProviders = emptySet(),
+                               clientInfo = clientInfo,
+                               sessionOptions = sessionOptions,
+                               invocationMode = invocationMode)
+  }
+
+  /**
+   * Same as [getMcpTools], but never blocks the calling thread on the initial tool conversion.
+   */
+  suspend fun getMcpToolsAsync(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    return getMcpToolsFilteredAsync(filter,
+                                    useFiltersFromEP,
+                                    excludeProviders = emptySet(),
+                                    clientInfo = clientInfo,
+                                    sessionOptions = sessionOptions,
+                                    invocationMode = invocationMode)
+  }
+
+  /**
+   * The very first call converts all tools and therefore must not happen on the EDT; afterwards this is a plain
+   * state flow read. Use [getAllMcpToolsAsync] wherever the caller cannot know whether the tools are warm.
+   */
+  internal fun getAllMcpTools(): List<McpTool> {
+    return toolsStateProvider.allTools.value
+  }
+
+  internal suspend fun getAllMcpToolsAsync(): List<McpTool> {
+    return toolsStateProviderAsync().allTools.value
+  }
+
+  /**
+   * Checks if there are any active MCP tools available after applying the filter.
+   *
+   * @param filter The filter to apply to the tools
+   * @return true if at least one MCP tool is available after filtering, false otherwise
+   */
+  fun hasActiveMcpTools(filter: McpToolFilter?, invocationMode: McpSessionInvocationMode?): Boolean {
+    return getMcpTools(filter = filter, invocationMode = when (invocationMode ?: McpToolFilterSettings.getInstance().invocationMode) {
+      McpSessionInvocationMode.DIRECT -> McpToolInvocationMode.DIRECT
+      McpSessionInvocationMode.VIA_ROUTER -> McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
+    }).isNotEmpty()
+  }
+
+  /**
+   * Same as [getMcpToolsFiltered], but never blocks the calling thread on the initial tool conversion.
+   */
+  suspend fun getMcpToolsFilteredAsync(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    excludeProviders: Set<Class<out McpToolFilterProvider>>,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    toolsStateProviderAsync()
+    return withContext(Dispatchers.Default) {
+      getMcpToolsFiltered(filter, useFiltersFromEP, excludeProviders, clientInfo, sessionOptions, invocationMode)
+    }
+  }
+
+  /**
+   * Returns MCP tools filtered by all filter providers except those specified in [excludeProviders].
+   * This is useful for UI that needs to show tools filtered by some providers but not others
+   * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
+   */
+  fun getMcpToolsFiltered(
+    filter: McpToolFilter? = null,
+    useFiltersFromEP: Boolean = true,
+    excludeProviders: Set<Class<out McpToolFilterProvider>>,
+    clientInfo: Implementation? = null,
+    sessionOptions: McpSessionOptions? = null,
+    invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
+  ): List<McpTool> {
+    val allTools = getAllMcpTools()
+    val filterAdjusted = filter ?: McpToolFilter.AllowAll
+
+    val routerToolName = ROUTER_TOOL_NAME
+    if (!useFiltersFromEP) {
+      return allTools.filter { tool ->
+        val isRouterTool = tool.descriptor.name == routerToolName
+
+        isRouterTool || filterAdjusted.shouldInclude(tool)
+      }
+    }
+    val filterProviders = McpToolFilterProvider.EP.extensionList
+      .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
+    val context = McpToolFilterProvider.McpToolFilterContext(allTools)
+    context.updateState(enabled = true) { it.descriptor.name == routerToolName }
+
+    // Apply filter providers
+    for (filterProvider in filterProviders) {
+      filterProvider.applyFilters(context, clientInfo, sessionOptions, invocationMode)
+    }
+
+    val filteredTools = linkedSetOf<McpTool>()
+    filteredTools += when (invocationMode) {
+      McpToolInvocationMode.DIRECT -> context.onTools + context.routerOnlyTools
+      McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> context.onTools
+      McpToolInvocationMode.VIA_ROUTER -> context.routerOnlyTools
+    }.filter { filterAdjusted.shouldInclude(it) }
+    allTools.firstOrNull { it.descriptor.name == routerToolName }?.let { filteredTools += it }
+    return filteredTools.toList()
+  }
+
+  fun scheduleResetToSettings() {
+    cs.launch {
+      settingsChanged(McpServerSettings.getInstance().enableMcpServer)
+    }
+  }
+}

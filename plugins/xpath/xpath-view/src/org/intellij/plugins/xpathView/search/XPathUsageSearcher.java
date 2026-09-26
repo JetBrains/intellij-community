@@ -16,7 +16,7 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.find.FindBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,6 +36,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageSearcher;
 import com.intellij.util.Processor;
 import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.CachedVariableContext;
 import org.jaxen.Context;
@@ -58,7 +59,7 @@ class XPathUsageSearcher implements UsageSearcher {
     private final boolean myMatchRecursively;
     private final XPathSupport mySupport;
 
-    public XPathUsageSearcher(Project project, HistoryElement expression, SearchScope scope, boolean matchRecursively) {
+    XPathUsageSearcher(Project project, HistoryElement expression, SearchScope scope, boolean matchRecursively) {
         myExpression = expression;
         myProject = project;
         myScope = scope;
@@ -69,39 +70,39 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<Usage> processor) {
-        Runnable runnable = () -> {
-            myIndicator.setIndeterminate(true);
-            myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", 0));
-            final CountProcessor counter = new CountProcessor();
-            myScope.iterateContent(myProject, counter);
+    public void generate(final @NotNull Processor<? super Usage> processor) {
+      ReadAction.runBlocking(() -> {
+        myIndicator.setIndeterminate(true);
+        myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", 0));
+        final CountProcessor counter = new CountProcessor();
+        myScope.iterateContent(myProject, counter);
 
-            myIndicator.setIndeterminate(false);
-            myIndicator.setFraction(0);
-            myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
-        };
-        ApplicationManager.getApplication().runReadAction(runnable);
+        myIndicator.setIndeterminate(false);
+        myIndicator.setFraction(0);
+        myScope.iterateContent(myProject, new MyProcessor(processor, counter.getFileCount()));
+      });
     }
 
     private class MyProcessor extends BaseProcessor {
-        private final Processor<Usage> myProcessor;
+        private final Processor<? super Usage> myProcessor;
         private final int myTotalFileCount;
 
         private int myFileCount;
         private int myMatchCount;
 
-        public MyProcessor(Processor<Usage> processor, int fileCount) {
+        MyProcessor(Processor<? super Usage> processor, int fileCount) {
             myProcessor = processor;
             myTotalFileCount = fileCount;
         }
 
+        @Override
         protected void processXmlFile(VirtualFile t) {
-            myIndicator.setText(findBundleMessage("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
+            myIndicator.setText(
+              FindBundle.message("find.searching.for.string.in.file.progress", myExpression.expression, t.getPresentableUrl()));
 
             final PsiFile psiFile = myManager.findFile(t);
-            if (psiFile instanceof XmlFile) {
-                final XmlFile t1 = (XmlFile)psiFile;
-                final XmlDocument document;
+            if (psiFile instanceof XmlFile t1) {
+              final XmlDocument document;
                 FileViewProvider fileViewProvider = t1.getViewProvider();
 
                 if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
@@ -171,30 +172,30 @@ class XPathUsageSearcher implements UsageSearcher {
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }
                 } else if (o instanceof String) {
-                    if (((String)o).length() > 0) {
+                    if (!((String)o).isEmpty()) {
                         matchFound();
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }
                 }
             } catch (JaxenException e) {
-                Messages.showErrorDialog(myProject, "Error while evaluating XPath:\n" + e.getMessage(), "XPath Error");
+                Messages.showErrorDialog(myProject, XPathBundle.message("dialog.message.error.while.evaluating.xpath", e.getMessage()),
+                                         XPathBundle.message("dialog.title.xpath.error"));
             } catch (SAXPathException e) {
                 Logger.getInstance(getClass().getName()).error(e);
             }
         }
 
         private void matchFound() {
-            myIndicator.setText2(findBundleMessage("find.searching.for.string.in.file.occurrences.progress", ++myMatchCount));
+            Object[] args = new Object[]{++myMatchCount};
+            //noinspection DialogTitleCapitalization
+            myIndicator.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", args));
         }
-    }
-
-    private static String findBundleMessage(String s, Object... args) {
-        return FindBundle.message(s, args);
     }
 
     static class CountProcessor extends BaseProcessor {
         private int myFileCount;
 
+        @Override
         protected void processXmlFile(VirtualFile t) {
             myFileCount++;
         }

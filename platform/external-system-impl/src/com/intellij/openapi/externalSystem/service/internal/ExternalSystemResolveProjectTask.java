@@ -1,152 +1,215 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpec;
+import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Set;
+import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.externalSystemTaskStarted;
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskId.ResolveProject;
 
 /**
  * Thread-safe.
- *
- * @author Denis Zhdanov
- * @since 1/24/12 7:21 AM
  */
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 
   private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<>();
-
-  @NotNull private final String myProjectPath;
   private final boolean myIsPreviewMode;
-  @Nullable private final String myVmOptions;
-  @Nullable private final String myArguments;
+  private final @Nullable String myVmOptions;
+  private final @Nullable String myArguments;
+  private final @Nullable ProjectResolverPolicy myResolverPolicy;
 
-  public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
-                                          @NotNull Project project,
-                                          @NotNull String projectPath,
-                                          boolean isPreviewMode) {
-    this(externalSystemId, project, projectPath, null, null, isPreviewMode);
+  public ExternalSystemResolveProjectTask(
+    @NotNull Project project,
+    @NotNull String projectPath,
+    @NotNull ImportSpec importSpec
+  ) {
+    super(importSpec.getExternalSystemId(), ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
+    myIsPreviewMode = importSpec.isPreviewMode();
+    myVmOptions = importSpec.getVmOptions();
+    myArguments = importSpec.getArguments();
+    myResolverPolicy = importSpec instanceof ImportSpecImpl ? importSpec.getProjectResolverPolicy() : null;
+    UserDataHolderBase userData = importSpec.getUserData();
+    if (userData != null) {
+      userData.copyUserDataTo(this);
+    }
   }
 
-  public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
-                                          @NotNull Project project,
-                                          @NotNull String projectPath,
-                                          @Nullable String vmOptions,
-                                          @Nullable String arguments,
-                                          boolean isPreviewMode) {
-    super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
-    myProjectPath = projectPath;
-    myIsPreviewMode = isPreviewMode;
-    myVmOptions = vmOptions;
-    myArguments = arguments;
-  }
-
-  @SuppressWarnings("unchecked")
+  @Override
   protected void doExecute() throws Exception {
-    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
-    ExternalSystemTaskId id = getId();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
 
-    Project ideProject;
-    RemoteExternalSystemProjectResolver resolver;
-    ExternalSystemExecutionSettings settings;
-    try {
-      progressNotificationManager.onStart(id, myProjectPath);
+    var progressNotificationManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
+    var progressNotificationListener = wrapWithListener(progressNotificationManager);
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      executionAware.prepareExecution(this, projectPath, myIsPreviewMode, progressNotificationListener, project);
+    }
 
-      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-      ideProject = getIdeProject();
-      resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
-      settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
-      if (StringUtil.isNotEmpty(myVmOptions)) {
-        settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
-      }
-      if (StringUtil.isNotEmpty(myArguments)) {
-        settings.withArguments(ParametersListUtil.parse(myArguments));
+    var settings = ExternalSystemApiUtil.getExecutionSettings(project, projectPath, projectSystemId);
+    if (StringUtil.isNotEmpty(myVmOptions)) {
+      settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
+    }
+    if (StringUtil.isNotEmpty(myArguments)) {
+      settings.withArguments(ParametersListUtil.parse(myArguments));
+    }
+
+    putUserDataTo(settings);
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
+    for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
+      if (environmentConfigurationProvider == null) {
+        environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(projectPath, myIsPreviewMode, project);
       }
     }
-    catch (Exception e) {
-      progressNotificationManager.onFailure(id, e);
-      progressNotificationManager.onEnd(id);
+    ExternalSystemExecutionAware.setEnvironmentConfigurationProvider(settings, environmentConfigurationProvider);
+
+    resolveProjectInfo(settings);
+  }
+
+  private void resolveProjectInfo(@NotNull ExternalSystemExecutionSettings settings) {
+    var id = getId();
+    var project = getIdeProject();
+    var projectSystemId = getExternalSystemId();
+    var projectPath = getExternalProjectPath();
+
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(settings);
+    var activity = externalSystemTaskStarted(project, projectSystemId, ResolveProject, environmentConfigurationProvider);
+    try {
+      DataNode<ProjectData> projectNode = suspendScanningAndIndexingThenRun(() -> {
+        try {
+          var manager = ExternalSystemFacadeManager.getInstance();
+          var facade = manager.getFacade(project, projectPath, projectSystemId);
+          var resolver = facade.getResolver();
+          //noinspection unchecked
+          return (DataNode<ProjectData>)resolver.resolveProjectInfo(id, projectPath, myIsPreviewMode, settings, myResolverPolicy);
+        }
+        catch (RemoteException e) {
+          throw new RuntimeException(e);
+        }
+      });
+
+      myExternalProject.set(projectNode);
+    }
+    catch (ExternalSystemPartialResolutionException e) {
+      myExternalProject.set(e.getPartialProjectData());
       throw e;
     }
-
-    try {
-      DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings);
-      if (project != null) {
-        myExternalProject.set(project);
-
-        ExternalSystemManager<?, ?, ?, ?, ?> systemManager = ExternalSystemApiUtil.getManager(getExternalSystemId());
-        assert systemManager != null;
-
-        Set<String> externalModulePaths = ContainerUtil.newHashSet();
-        Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(project, ProjectKeys.MODULE);
-        for (DataNode<ModuleData> node : moduleNodes) {
-          externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
-        }
-        String projectPath = project.getData().getLinkedExternalProjectPath();
-        ExternalProjectSettings linkedProjectSettings =
-          systemManager.getSettingsProvider().fun(ideProject).getLinkedProjectSettings(projectPath);
-        if (linkedProjectSettings != null) {
-          linkedProjectSettings.setModules(externalModulePaths);
-        }
-      }
-      progressNotificationManager.onSuccess(id);
-    }
     finally {
-      progressNotificationManager.onEnd(id);
+      activity.finished();
     }
   }
 
-  protected boolean doCancel() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    Project ideProject = getIdeProject();
-    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
+  private <R> R suspendScanningAndIndexingThenRun(@NotNull Supplier<R> computable) {
+    if (!Registry.is("external.system.pause.indexing.during.sync")) {
+      return computable.get();
+    }
 
+    Ref<R> result = new Ref<>();
+
+    String title = ExternalSystemBundle.message("progress.refresh.text", getProjectName(), getExternalSystemId().getReadableName());
+    UnindexedFilesScannerExecutor.getInstance(getIdeProject()).suspendScanningAndIndexingThenRun(title, () -> {
+      result.set(computable.get());
+    });
+
+    return result.get();
+  }
+
+  @Override
+  protected boolean doCancel() throws Exception {
+    var manager = ExternalSystemFacadeManager.getInstance();
+    var facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
+    var resolver = facade.getResolver();
     return resolver.cancelTask(getId());
   }
 
   @Override
-  @NotNull
-  protected String wrapProgressText(@NotNull String text) {
+  protected @NotNull String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
+  }
+
+  public boolean isPreviewMode() {
+    return myIsPreviewMode;
+  }
+
+  public @Nullable ProjectResolverPolicy getResolverPolicy() {
+    return myResolverPolicy;
+  }
+
+  public @NotNull @Nls String getProjectName() {
+    return getExternalProjectId().getProjectName();
   }
 
   @Override
   protected void setState(@NotNull ExternalSystemTaskState state) {
     super.setState(state);
-    if (state.isStopped()) {
-      InternalExternalProjectInfo projectInfo =
-        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), myExternalProject.getAndSet(null));
-      final long currentTimeMillis = System.currentTimeMillis();
-      projectInfo.setLastImportTimestamp(currentTimeMillis);
-      projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
-      ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+    if (!state.isStopped()) return;
+    // merging existing cache data with the new partial data is not supported yet
+    if (myResolverPolicy != null && myResolverPolicy.isPartialDataResolveAllowed()) return;
+
+    var projectNode = myExternalProject.getAndSet(null);
+
+    setExternalProjectInfo(state, projectNode);
+    if (projectNode != null) {
+      setExternalModulePaths(projectNode);
+    }
+  }
+
+  private void setExternalProjectInfo(@NotNull ExternalSystemTaskState state, @Nullable DataNode<ProjectData> projectNode) {
+    var projectInfo = new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), projectNode);
+    var currentTimeMillis = System.currentTimeMillis();
+    projectInfo.setLastImportTimestamp(currentTimeMillis);
+    projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);
+    ProjectDataManagerImpl.getInstance().updateExternalProjectData(getIdeProject(), projectInfo);
+  }
+
+  private void setExternalModulePaths(@NotNull DataNode<ProjectData> projectNode) {
+    var projectSystemId = getExternalSystemId();
+    var project = getIdeProject();
+    var externalSystemManager = ExternalSystemApiUtil.getManager(projectSystemId);
+    assert externalSystemManager != null;
+
+    var externalModulePaths = new HashSet<String>();
+    var moduleNodes = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE);
+    for (DataNode<ModuleData> node : moduleNodes) {
+      externalModulePaths.add(node.getData().getLinkedExternalProjectPath());
+    }
+    var externalProjectPath = projectNode.getData().getLinkedExternalProjectPath();
+    var externalSystemSettings = externalSystemManager.getSettingsProvider().fun(project);
+    var externalProjectSettings = externalSystemSettings.getLinkedProjectSettings(externalProjectPath);
+    if (externalProjectSettings != null && !externalModulePaths.isEmpty()) {
+      externalProjectSettings.setModules(externalModulePaths);
     }
   }
 }

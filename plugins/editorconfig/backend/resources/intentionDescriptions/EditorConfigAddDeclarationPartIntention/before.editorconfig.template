@@ -1,0 +1,2 @@
+[{*.kt, *.kts}]
+dotnet_naming_rule.<spot>my_rule</spot>.severity = warning

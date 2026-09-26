@@ -1,0 +1,30 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress AllContentModulesOptionalLoadingRule -->
+<idea-plugin>
+  <id>intellij.execution.serviceView.plugin</id>
+  <name>Services View</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Provides the Services tool window. The tool window shows the services of the project in one tree.
+    It includes the run and debug configurations, the remote server connections, and the deployments.
+    <br/>
+    Start, debug, or stop a service from the tree, then follow its status and its console output.
+    Group the tree by type, by status, or by folder, and filter it to the services that you need.
+    Open a service in a new tab, or move it to a separate tool window.
+    <br/>
+    Other plugins add their own services to the same tree such as Database, Docker, MCP Server and Kubernetes.
+  ]]></description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.clouds"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.dashboard.backend"/>
+    <module name="intellij.platform.execution.dashboard.frontend"/>
+    <module name="intellij.platform.execution.dashboard.debugger"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
+    <module name="intellij.platform.execution.serviceView.frontend"/>
+  </content>
+</idea-plugin>

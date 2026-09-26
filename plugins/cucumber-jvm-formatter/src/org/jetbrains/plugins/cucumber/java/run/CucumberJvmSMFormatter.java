@@ -1,8 +1,16 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.cucumber.java.run;
 
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import gherkin.formatter.model.Background;
+import gherkin.formatter.model.Examples;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Match;
+import gherkin.formatter.model.Result;
+import gherkin.formatter.model.Scenario;
+import gherkin.formatter.model.ScenarioOutline;
+import gherkin.formatter.model.Step;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +19,21 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_ENTER_THE_MATRIX;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_COUNTING_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_SCENARIO_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FAILED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_PENDING;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_FINISHED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.TEMPLATE_TEST_SUITE_STARTED;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escapeCommand;
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.getCurrentTime;
 
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public static final int MILLION = 1000000;
@@ -46,11 +68,11 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
-    this.appendable = System.err;
-    queue = new ArrayDeque<String>();
-    currentSteps = new ArrayDeque<Step>();
-    outCommand(String.format(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime()));
-    outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_STARTED, 0, getCurrentTime()));
+    this.appendable = System.out;
+    queue = new ArrayDeque<>();
+    currentSteps = new ArrayDeque<>();
+    outCommand(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime());
+    outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }
 
   @Override
@@ -59,17 +81,17 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       done();
     }
     currentFeatureName = "Feature: " + getName(feature);
-    outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + feature.getLine(), currentFeatureName));
+    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + feature.getLine(), currentFeatureName);
   }
 
-  private static boolean isRealScenario(final Scenario scenario) {
+  private static boolean isRealScenario(Scenario scenario) {
     return scenario.getKeyword().equals("Scenario");
   }
 
   @Override
   public void scenario(Scenario scenario) {
     closeScenario();
-    outCommand(String.format(TEMPLATE_SCENARIO_STARTED, getCurrentTime()));
+    outCommand(TEMPLATE_SCENARIO_STARTED, getCurrentTime());
     if (isRealScenario(scenario)) {
       scenarioCount++;
       closeScenarioOutline();
@@ -77,11 +99,10 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     }
     currentScenario = scenario;
     beforeExampleSection = false;
-    outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario)));
+    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario));
 
-    while (queue.size() > 0) {
-      String smMessage = queue.poll();
-      outCommand(smMessage);
+    while (!queue.isEmpty()) {
+      printLine(queue.poll());
     }
   }
 
@@ -95,14 +116,13 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     currentScenarioOutline = outline;
     currentScenario = null;
     beforeExampleSection = true;
-    outCommand(
-      String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + outline.getLine(), getName(currentScenarioOutline)));
+    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + outline.getLine(), getName(currentScenarioOutline));
   }
 
   @Override
   public void examples(Examples examples) {
     beforeExampleSection = false;
-    outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + examples.getLine(), "Examples:"));
+    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + examples.getLine(), "Examples:");
   }
 
   @Override
@@ -126,7 +146,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void result(Result result) {
     stepCount++;
     Step currentStep = currentSteps.poll();
-    outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), uri + ":" + currentStep.getLine(), getName(currentStep)), true);
+    outCommand(TEMPLATE_TEST_STARTED, true, getCurrentTime(), uri + ":" + currentStep.getLine(), getName(currentStep));
     String stepFullName = getName(currentStep);
     if (result.getStatus().equals(Result.FAILED)) {
       failedStepCount++;
@@ -144,24 +164,24 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
         details = "";
       }
 
-      outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), escape(details), escape(message), stepFullName, ""), true);
+      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "");
     }
     else if (result.getStatus().equals(RESULT_STATUS_PENDING)) {
       pendingStepCount++;
       scenarioPassed = false;
-      outCommand(String.format(TEMPLATE_TEST_PENDING, stepFullName, getCurrentTime()), true);
+      outCommand(TEMPLATE_TEST_PENDING, true, stepFullName, getCurrentTime());
     }
     else if (result.equals(Result.UNDEFINED)) {
       undefinedStepCount++;
       scenarioPassed = false;
       String message = "Undefined step: " + getName(currentStep);
       String details = "";
-      outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), escape(details), escape(message), stepFullName, "error = 'true'"), true);
+      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "");
     }
     else if (result.equals(Result.SKIPPED)) {
       skippedStepCount++;
       scenarioPassed = false;
-      outCommand(String.format(TEMPLATE_TEST_PENDING, stepFullName, getCurrentTime()), true);
+      outCommand(TEMPLATE_TEST_PENDING, true, stepFullName, getCurrentTime());
     }
     else {
       passedStepCount++;
@@ -169,7 +189,8 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
     final String currentTime = getCurrentTime();
     final Long duration = result.getDuration();
-    outCommand(String.format(TEMPLATE_TEST_FINISHED, currentTime, (duration == null ? 0 : duration.longValue()) / MILLION, stepFullName), true);
+    long durationInSeconds = (duration == null ? 0 : duration.longValue()) / MILLION;
+    outCommand(TEMPLATE_TEST_FINISHED, true, currentTime, String.valueOf(durationInSeconds), stepFullName);
   }
 
   private void closeScenario() {
@@ -181,10 +202,10 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       }
 
       if (!scenarioPassed) {
-        outCommand(String.format(TEMPLATE_SCENARIO_FAILED, getCurrentTime()), true);
+        outCommand(TEMPLATE_SCENARIO_FAILED, true, getCurrentTime());
       }
-      outCommand(String.format(TEMPLATE_SCENARIO_FINISHED, getCurrentTime()), true);
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getName(currentScenario)));
+      outCommand(TEMPLATE_SCENARIO_FINISHED, true, getCurrentTime());
+      outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getName(currentScenario));
     }
     scenarioPassed = true;
     currentScenario = null;
@@ -196,9 +217,9 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
         passedScenarioCount++;
       }
       if (!beforeExampleSection) {
-        outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), "Examples:"));
+        outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), "Examples:");
       }
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getName(currentScenarioOutline)));
+      outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getName(currentScenarioOutline));
     }
     currentScenarioOutline = null;
   }
@@ -217,17 +238,17 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @Override
   public void done() {
     closePreviousScenarios();
-    outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), currentFeatureName));
+    outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), currentFeatureName);
   }
 
   @Override
   public void uri(String s) {
     String currentDir = System.getProperty("org.jetbrains.run.directory");
     if (currentDir != null) {
-      uri = currentDir + File.separator + s;
+      uri = FILE_RESOURCE_PREFIX + currentDir + File.separator + s;
     }
     else {
-      uri = s;
+      uri = FILE_RESOURCE_PREFIX + s;
     }
   }
 
@@ -248,6 +269,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void match(Match match) {
   }
 
+  @Override
   @SuppressWarnings("UnusedDeclaration")
   public void embedding(String mimeType, byte[] data) {
     outCommand("embedding\n");
@@ -265,32 +287,37 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void close() {
-    outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_FINISHED, getCurrentTime()));
+    outCommand(TEMPLATE_SCENARIO_COUNTING_FINISHED, getCurrentTime());
   }
 
   @Override
   public void before(Match match, Result result) {
   }
 
-  private void outCommand(String s) {
-    outCommand(s, false);
+  private void outCommand(String command, String... parameters) {
+    outCommand(command, false, parameters);
   }
 
-  private void outCommand(String s, boolean waitForScenario) {
+  private void outCommand(String command, boolean waitForScenario, String... parameters) {
+    String line = escapeCommand(command, parameters);
     if (currentScenario == null && waitForScenario) {
-      queue.add(s);
+      queue.add(line);
     }
     else {
-      try {
-        if (!endedByNewLine) {
-          appendable.append("\n");
-        }
-        appendable.append(s);
+      printLine(line);
+    }
+  }
+
+  private void printLine(String line) {
+    try {
+      if (!endedByNewLine) {
         appendable.append("\n");
-        endedByNewLine = true;
       }
-      catch (IOException ignored) {
-      }
+      appendable.append(line);
+      appendable.append("\n");
+      endedByNewLine = true;
+    }
+    catch (IOException ignored) {
     }
   }
 
@@ -305,22 +332,22 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   private static String getName(Scenario scenario) {
     if (scenario.getKeyword().equals("Scenario Outline")) {
-      return escape("Scenario: Line: " + scenario.getLine());
+      return "Scenario: Line: " + scenario.getLine();
     }
     else {
-      return escape("Scenario: " + scenario.getName());
+      return "Scenario: " + scenario.getName();
     }
   }
 
   private static String getName(ScenarioOutline outline) {
-    return escape("Scenario Outline: " + outline.getName());
+    return "Scenario Outline: " + outline.getName();
   }
 
   private static String getName(Step step) {
-    return escape(step.getKeyword() + " " + step.getName());
+    return step.getKeyword() + step.getName();
   }
 
   private static String getName(Feature feature) {
-    return escape(feature.getName());
+    return feature.getName();
   }
 }

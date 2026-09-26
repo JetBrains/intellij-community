@@ -1,0 +1,55 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.checkinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vcsCheckinHandlerFactory"
+                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.checkoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vcsAwareCheckoutListener"
+                    interface="com.intellij.openapi.vcs.checkout.VcsAwareCheckoutListener"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.checkoutCompletedListener"
+                    interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.changeListManagerStatusProvider"
+                    interface="com.intellij.openapi.vcs.changes.ChangeListManagerStatusProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.envCustomizer"
+                    interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectSettings service="com.intellij.openapi.vcs.VcsSharedProjectSettings"/>
+  </extensions>
+</idea-plugin>

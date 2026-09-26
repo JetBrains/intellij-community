@@ -1,4 +1,4 @@
-// "Replace with 'clone()'" "true"
+// "Replace with 'clone()'" "true-preview"
 import java.util.Arrays;
 
 class Test {

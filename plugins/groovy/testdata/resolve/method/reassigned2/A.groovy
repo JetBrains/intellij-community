@@ -7,5 +7,5 @@ def ttt(){
   t = ""
   r(t)
   t = 0
-  <ref>r(t)
+  <caret>r(t)
 }

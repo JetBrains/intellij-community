@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.debugger.engine.evaluation;
+
 public enum CodeFragmentKind {
   EXPRESSION, CODE_BLOCK
 }

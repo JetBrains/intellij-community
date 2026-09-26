@@ -1,111 +1,115 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.jsp.JspLanguage;
+import com.intellij.psi.jsp.JspxLanguage;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertyFoldingBuilder extends FoldingBuilderEx {
+public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
-  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
+  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY_TYPE);
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
-    if (!(element instanceof PsiFile) || quick || !isFoldingsOn()) {
-      return FoldingDescriptor.EMPTY;
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
+    if (!(element instanceof PsiFile file) || quick || !isFoldingsOn()) {
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
-    final PsiFile file = (PsiFile)element;
     final List<FoldingDescriptor> result = new ArrayList<>();
-    boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
+    boolean hasJsp = ContainerUtil.exists(file.getViewProvider().getLanguages(), (l) -> l instanceof JspLanguage || l instanceof JspxLanguage);
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
     file.accept(hasJsp ? new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
-        ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expression, ULiteralExpression.class);
-        if (uLiteralExpression != null) {
-          checkLiteral(uLiteralExpression, result);
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        ProgressManager.checkCanceled();
+        UInjectionHost injectionHost = UastContextKt.toUElement(expression, UInjectionHost.class);
+        if (injectionHost != null) {
+          checkLiteral(document, injectionHost, result);
         }
       }
     } : new PsiRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitElement(PsiElement element) {
-        ULiteralExpression uLiteralExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
-        if (uLiteralExpression != null) {
-          checkLiteral(uLiteralExpression, result);
+      public void visitElement(@NotNull PsiElement element) {
+        ProgressManager.checkCanceled();
+        UInjectionHost injectionHost = UastContextKt.toUElement(element, UInjectionHost.class);
+        if (injectionHost != null) {
+          checkLiteral(document, injectionHost, result);
         }
         super.visitElement(element);
       }
     });
 
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean isFoldingsOn() {
     return JavaCodeFoldingSettings.getInstance().isCollapseI18nMessages();
   }
 
-  private static void checkLiteral(ULiteralExpression expression, List<FoldingDescriptor> result) {
-    PsiElement sourcePsi = expression.getSourcePsi();
+  private static void checkLiteral(Document document,
+                                   UInjectionHost injectionHost,
+                                   List<? super FoldingDescriptor> result) {
+    PsiElement sourcePsi = injectionHost.getSourcePsi();
     if (sourcePsi == null) return;
-    if (!isI18nProperty(expression)) return;
-    final IProperty property = getI18nProperty(expression);
+    if (!isI18nProperty(injectionHost)) return;
+    final IProperty property = getI18nProperty(injectionHost);
     final HashSet<Object> set = new HashSet<>();
-    set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-    final String msg = formatI18nProperty(expression, property);
+    set.add(property != null ? property : PsiModificationTracker.MODIFICATION_COUNT);
+    final String msg = formatI18nProperty(injectionHost, property);
 
-    final UElement parent = expression.getUastParent();
-    if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(expression)) &&
-        parent instanceof UCallExpression &&
-        ((UCallExpression)parent).getValueArguments().get(0).getSourcePsi() == expression.getSourcePsi()) {
-      final UCallExpression expressions = (UCallExpression)parent;
+    final UElement parent = injectionHost.getUastParent();
+    if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(injectionHost)) &&
+        parent instanceof UCallExpression expressions &&
+        expressions.getValueArguments().getFirst().getSourcePsi() == injectionHost.getSourcePsi()) {
       PsiElement callSourcePsi = expressions.getSourcePsi();
       if (callSourcePsi == null) return;
-      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
+      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(injectionHost);
       final List<UExpression> args = expressions.getValueArguments();
       if (args.size() == 1 + count) {
         boolean ok = true;
@@ -129,14 +133,23 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
             elementToFold = callSourcePsi;
           }
           result.add(
-            new NamedFoldingDescriptor(ObjectUtils.assertNotNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
-                                       formatMethodCallExpression(expressions), isFoldingsOn(), set));
+            new FoldingDescriptor(Objects.requireNonNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
+                                  formatMethodCallExpression(expressions), isFoldingsOn(), set));
+          if (property != null) {
+            EditPropertyValueAction.registerFoldedElement(elementToFold, document);
+          }
           return;
         }
       }
+      else {
+        return;
+      }
     }
-    result.add(new NamedFoldingDescriptor(ObjectUtils.assertNotNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
-                                          getI18nMessage(expression), isFoldingsOn(), set));
+    result.add(new FoldingDescriptor(Objects.requireNonNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
+                                     getI18nMessage(injectionHost), isFoldingsOn(), set));
+    if (property != null) {
+      EditPropertyValueAction.registerFoldedElement(sourcePsi, document);
+    }
   }
 
 
@@ -145,16 +158,24 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return null;
   }
 
-  @NotNull
-  private static String formatMethodCallExpression(@NotNull UCallExpression methodCallExpression) {
+  private static @NotNull String formatMethodCallExpression(@NotNull UCallExpression methodCallExpression) {
+    return format(methodCallExpression).first;
+  }
+
+  /**
+   * A list of offset pairs returned along with the formatted string allows to map positions in the resulting string to the positions
+   * in the original property value. First offset in each couple is the offset in the original string, and the second one - corresponding
+   * offset in the formatted string. For each placeholder value substituted in the property value, two couples of offsets are returned -
+   * one for the start of the placeholder, and one for the end.
+   */
+  public static @NotNull Pair<String, List<Couple<Integer>>> format(@NotNull UCallExpression methodCallExpression) {
     final List<UExpression> args = methodCallExpression.getValueArguments();
     PsiElement callSourcePsi = methodCallExpression.getSourcePsi();
-    if (args.size() > 0
-        && args.get(0) instanceof ULiteralExpression
-        && isI18nProperty((ULiteralExpression)args.get(0))) {
-      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.get(0));
+    if (!args.isEmpty() && args.getFirst() instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
+      final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.getFirst());
       if (args.size() == 1 + count) {
-        String text = getI18nMessage((ULiteralExpression)args.get(0));
+        String text = getI18nMessage((UInjectionHost)args.getFirst());
+        List<Couple<Integer>> replacementPositions = new ArrayList<>();
         for (int i = 1; i < count + 1; i++) {
           Object value = args.get(i).evaluate();
           if (value == null) {
@@ -167,39 +188,68 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
               break;
             }
           }
-          text = text.replace("{" + (i - 1) + "}", value.toString());
+          text = replacePlaceholder(text, "{" + (i - 1) + "}", value.toString(), replacementPositions);
         }
         if (text != null) {
-          return text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "...\"" : text;
+          return Pair.create(text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "...\"" : text,
+                             replacementPositions);
         }
       }
     }
 
-    return callSourcePsi != null ? callSourcePsi.getText() : "<error>";
+    return Pair.create(callSourcePsi != null ? callSourcePsi.getText() : "<error>", null);
   }
 
-  @NotNull
-  private static String getI18nMessage(@NotNull ULiteralExpression literal) {
-    final IProperty property = getI18nProperty(literal);
-    return property == null ? UastLiteralUtils.getValueIfStringLiteral(literal) : formatI18nProperty(literal, property);
+  private static String replacePlaceholder(String text, String placeholder, String replacement,
+                                           List<Couple<Integer>> replacementPositions) {
+    int curPos = 0;
+    do {
+      int placeholderPos = text.indexOf(placeholder, curPos);
+      if (placeholderPos < 0) break;
+      text = text.substring(0, placeholderPos) + replacement + text.substring(placeholderPos + placeholder.length());
+
+      ListIterator<Couple<Integer>> it = replacementPositions.listIterator();
+      int diff = 0;
+      while (it.hasNext()) {
+        Couple<Integer> next = it.next();
+        if (next.second > placeholderPos) {
+          it.previous();
+          break;
+        }
+        diff = next.second - next.first;
+      }
+      it.add(Couple.of(placeholderPos - diff, placeholderPos));
+      it.add(Couple.of(placeholderPos - diff + placeholder.length(), placeholderPos + replacement.length()));
+      while (it.hasNext()) {
+        Couple<Integer> next = it.next();
+        it.set(Couple.of(next.first, next.second + replacement.length() - placeholder.length()));
+      }
+
+      curPos = placeholderPos + replacement.length();
+    }
+    while (true);
+    return text;
   }
 
-  @Nullable
-  public static IProperty getI18nProperty(@NotNull ULiteralExpression literal) {
-    PsiElement sourcePsi = literal.getSourcePsi();
+  private static @NotNull String getI18nMessage(@NotNull UInjectionHost injectionHost) {
+    final IProperty property = getI18nProperty(injectionHost);
+    return property == null ? injectionHost.evaluateToString() : formatI18nProperty(injectionHost, property);
+  }
+
+  static @Nullable IProperty getI18nProperty(@NotNull UInjectionHost injectionHost) {
+    PsiElement sourcePsi = injectionHost.getSourcePsi();
     if (sourcePsi == null) return null;
     final Property property = (Property)sourcePsi.getUserData(CACHE);
     if (property == NULL) return null;
-    if (property != null && isValid(property, literal)) return property;
-    if (isI18nProperty(literal)) {
-      final Iterable<PsiReference> references = UastLiteralUtils.getInjectedReferences(literal);
+    if (property != null && isValid(property, injectionHost)) return property;
+    if (isI18nProperty(injectionHost)) {
+      final Iterable<PsiReference> references = UastLiteralUtils.getInjectedReferences(injectionHost);
       for (PsiReference reference : references) {
         if (reference instanceof PsiPolyVariantReference) {
           final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
           for (ResolveResult result : results) {
             final PsiElement element = result.getElement();
-            if (element instanceof IProperty) {
-              IProperty p = (IProperty)element;
+            if (element instanceof IProperty p) {
               sourcePsi.putUserData(CACHE, p);
               return p;
             }
@@ -207,8 +257,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
         }
         else {
           final PsiElement element = reference.resolve();
-          if (element instanceof IProperty) {
-            IProperty p = (IProperty)element;
+          if (element instanceof IProperty p) {
             sourcePsi.putUserData(CACHE, p);
             return p;
           }
@@ -218,16 +267,15 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return null;
   }
 
-  private static boolean isValid(Property property, ULiteralExpression literal) {
-    if (literal == null || property == null || !property.isValid()) return false;
-    Object result = literal.evaluate();
+  private static boolean isValid(Property property, UInjectionHost injectionHost) {
+    if (injectionHost == null || property == null || !property.isValid()) return false;
+    Object result = injectionHost.evaluate();
     if (!(result instanceof String)) return false;
     return StringUtil.unquoteString(((String)result)).equals(property.getKey());
   }
 
-  @NotNull
-  private static String formatI18nProperty(@NotNull ULiteralExpression literal, IProperty property) {
-    Object evaluated = literal.evaluate();
+  private static @NotNull String formatI18nProperty(@NotNull UInjectionHost injectionHost, IProperty property) {
+    Object evaluated = injectionHost.evaluate();
     return property == null ?
            evaluated != null ? evaluated.toString() : "null" : "\"" + property.getValue() + "\"";
   }
@@ -237,13 +285,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     return isFoldingsOn();
   }
 
-  public static boolean isI18nProperty(@NotNull PsiLiteralExpression expr) {
-    ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expr, ULiteralExpression.class);
-    if (uLiteralExpression == null) return false;
-    return isI18nProperty(uLiteralExpression);
-  }
-
-  public static boolean isI18nProperty(@NotNull ULiteralExpression expr) {
+  static boolean isI18nProperty(@NotNull UInjectionHost expr) {
     if (!expr.isString()) return false;
     PsiElement sourcePsi = expr.getSourcePsi();
     if (sourcePsi == null) return false;
@@ -251,7 +293,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, null);
     if (!isI18n) {
       sourcePsi.putUserData(CACHE, NULL);
     }

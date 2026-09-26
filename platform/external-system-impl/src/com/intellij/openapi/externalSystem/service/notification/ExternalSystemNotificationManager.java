@@ -1,31 +1,27 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
+import com.intellij.build.issue.BuildIssue;
+import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.rmi.RemoteUtil;
-import com.intellij.ide.errorTreeView.*;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.ErrorViewStructure;
+import com.intellij.ide.errorTreeView.GroupingElement;
+import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import com.intellij.ide.errorTreeView.NewEditableErrorTreeViewPanel;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemPartialResolutionException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -38,6 +34,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,17 +43,19 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
-import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,91 +64,98 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
- * This class is responsible for ide user by external system integration-specific events.
+ * {@link ExternalSystemNotificationManager} provides creation and managements of user-friendly notifications for external system integration-specific events.
  * <p/>
  * One example use-case is a situation when an error occurs during external project refresh. We need to
  * show corresponding message to the end-user.
  * <p/>
  * Thread-safe.
  *
- * @author Denis Zhdanov, Vladislav Soroka
- * @since 3/21/12 4:04 PM
+ * @author Vladislav Soroka
  */
-public class ExternalSystemNotificationManager implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class ExternalSystemNotificationManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ExternalSystemNotificationManager.class);
 
-  @NotNull private static final Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
-  @SuppressWarnings("StatefulEp") @Nullable private volatile Project myProject;
-  @NotNull private final Set<Notification> myNotifications;
-  @NotNull private final Map<Key, Notification> myUniqueNotifications;
-  @NotNull private final Set<ProjectSystemId> initializedExternalSystem;
-  @NotNull private final MessageCounter myMessageCounter;
+  private static final @NotNull Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
 
-  public ExternalSystemNotificationManager(@NotNull final Project project) {
+  private sealed interface NotificationTask permits ShowNotificationTask, ClearNotificationsTask {
+  }
+
+  private record ShowNotificationTask(@NotNull ProjectSystemId externalSystemId,
+                                       @NotNull NotificationData notificationData,
+                                       @Nullable Key<String> notificationKey) implements NotificationTask {
+  }
+
+  private record ClearNotificationsTask(@Nullable String groupName,
+                                        @NotNull NotificationSource notificationSource,
+                                        @NotNull ProjectSystemId externalSystemId) implements NotificationTask {
+  }
+
+  private final @NotNull UpdateQueue<NotificationTask> myNotificationQueue;
+  private volatile @Nullable Project myProject;
+  private final @NotNull Set<Notification> myNotifications;
+  private final @NotNull Map<Key, Notification> myUniqueNotifications;
+  private final @NotNull Set<ProjectSystemId> initializedExternalSystem;
+  private final @NotNull MessageCounter myMessageCounter;
+
+  public ExternalSystemNotificationManager(final @NotNull Project project, @NotNull CoroutineScope scope) {
     myProject = project;
-    myNotifications = ContainerUtil.newConcurrentSet();
-    myUniqueNotifications = ContainerUtil.newConcurrentMap();
-    initializedExternalSystem = ContainerUtil.newConcurrentSet();
+    myNotifications = ConcurrentCollectionFactory.createConcurrentSet();
+    myUniqueNotifications = new ConcurrentHashMap<>();
+    initializedExternalSystem = ConcurrentCollectionFactory.createConcurrentSet();
     myMessageCounter = new MessageCounter();
-    myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
+    
+    myNotificationQueue = DebouncedUpdates.<NotificationTask>forScope(scope, "ExternalSystem notifications", 500)
+      .runBatched(this::processNotifications);
   }
 
-  @NotNull
-  public static ExternalSystemNotificationManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalSystemNotificationManager.class);
-  }
-
-  /**
-   * @deprecated build tool window should be used to display 'sync' errors
-   */
-  public void processExternalProjectRefreshError(@NotNull Throwable error,
-                                                 @NotNull String externalProjectName,
-                                                 @NotNull ProjectSystemId externalSystemId) {
-    if (isDisposedOrNotOpen()) {
-      return;
-    }
-    Project project = myProject;
-    assert project != null;
-
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-    if (!(manager instanceof ExternalSystemConfigurableAware)) {
-      return;
-    }
-    NotificationData notificationData = createNotification(error, externalProjectName, externalSystemId, project);
-    EditorNotifications.getInstance(project).updateAllNotifications();
-    showNotification(externalSystemId, notificationData);
+  public static @NotNull ExternalSystemNotificationManager getInstance(@NotNull Project project) {
+    return project.getService(ExternalSystemNotificationManager.class);
   }
 
   /**
-   * @deprecated to be removed in 2018.2
+   * Create {@link NotificationData} for error happened during the external system invocation which can be shown to the end user.
+   *
+   * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  @NotNull
-  public NotificationData createNotification(@NotNull Throwable error,
-                                             @NotNull String externalProjectName,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project) {
-    String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
-                                                externalSystemId.getReadableName(), externalProjectName);
-    return createNotification(title, error, externalSystemId, project);
+  public static @Nullable NotificationData createNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull String externalProjectPath,
+    @NotNull DataContext dataContext
+  ) {
+    return doCreateNotification(title, error, externalSystemId, project, dataContext, (extension, notificationData) ->
+      extension.customize(notificationData, project, externalProjectPath, error)
+    );
   }
 
-  @NotNull
-  public NotificationData createNotification(@NotNull String title,
-                                             @NotNull Throwable error,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project) {
+  private static @Nullable NotificationData doCreateNotification(
+    @NotNull @NotificationTitle String title,
+    @NotNull Throwable error,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Project project,
+    @NotNull DataContext dataContext,
+    @NotNull BiConsumer<ExternalSystemNotificationExtension, NotificationData> customise
+  ) {
+    if (isInternalError(error, externalSystemId)) {
+      return null;
+    }
+
     String message = ExternalSystemApiUtil.buildErrorMessage(error);
     NotificationCategory notificationCategory = NotificationCategory.ERROR;
     String filePath = null;
     Integer line = null;
     Integer column = null;
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
-    if (unwrapped instanceof LocationAwareExternalSystemException) {
-      LocationAwareExternalSystemException locationAwareExternalSystemException = (LocationAwareExternalSystemException)unwrapped;
+    if (unwrapped instanceof LocationAwareExternalSystemException locationAwareExternalSystemException) {
       filePath = locationAwareExternalSystemException.getFilePath();
       line = locationAwareExternalSystemException.getLine();
       column = locationAwareExternalSystemException.getColumn();
@@ -160,14 +166,34 @@ public class ExternalSystemNotificationManager implements Disposable {
         title, message, notificationCategory, NotificationSource.PROJECT_SYNC,
         filePath, ObjectUtils.notNull(line, -1), ObjectUtils.notNull(column, -1), false);
 
+    if (unwrapped instanceof BuildIssueException buildIssueException) {
+      for (BuildIssue buildIssue : buildIssueException.getBuildIssues()) {
+        for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
+          notificationData.setListener(quickFix.getId(), (_, _) -> {
+            quickFix.runQuickFix(project, dataContext);
+          });
+        }
+      }
+      notificationData.setNavigatable(buildIssueException.getBuildIssue().getNavigatable(project));
+      return notificationData;
+    }
+
     for (ExternalSystemNotificationExtension extension : ExternalSystemNotificationExtension.EP_NAME.getExtensions()) {
       final ProjectSystemId targetExternalSystemId = extension.getTargetExternalSystemId();
       if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
-      extension.customize(notificationData, project, error);
+      customise.accept(extension, notificationData);
     }
     return notificationData;
+  }
+
+  private static boolean isInternalError(@NotNull Throwable error,
+                                         @NotNull ProjectSystemId externalSystemId) {
+    if (RemoteUtil.unwrap(error) instanceof BuildIssueException) return false;
+    if (RemoteUtil.unwrap(error) instanceof ExternalSystemPartialResolutionException) return true;
+    return ContainerUtil.exists(ExternalSystemNotificationExtension.EP_NAME.getExtensionList(), it ->
+      externalSystemId.equals(it.getTargetExternalSystemId()) && it.isInternalError(error));
   }
 
   public boolean isNotificationActive(@NotNull Key<String> notificationKey) {
@@ -175,14 +201,22 @@ public class ExternalSystemNotificationManager implements Disposable {
     return notification != null && !notification.isExpired();
   }
 
-  public void showNotification(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationData notificationData) {
+  public void showNotification(final @NotNull ProjectSystemId externalSystemId, final @NotNull NotificationData notificationData) {
     showNotification(externalSystemId, notificationData, null);
   }
 
-  public void showNotification(@NotNull final ProjectSystemId externalSystemId,
-                               @NotNull final NotificationData notificationData,
+  public void showNotification(final @NotNull ProjectSystemId externalSystemId,
+                               final @NotNull NotificationData notificationData,
                                @Nullable Key<String> notificationKey) {
     Disposer.register(this, notificationData);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (notificationData.getNotificationCategory() == NotificationCategory.INFO) {
+        LOG.debug(notificationData.getMessage());
+      } else {
+        LOG.warn(notificationData.getMessage());
+      }
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       @SuppressWarnings("UseOfSystemOutOrSystemErr")
       PrintStream out = notificationData.getNotificationCategory() == NotificationCategory.INFO ? System.out : System.err;
@@ -191,143 +225,123 @@ public class ExternalSystemNotificationManager implements Disposable {
     }
 
     if (notificationKey != null && isNotificationActive(notificationKey)) return;
-    myUpdateQueue.queue(new Update(new Object()) {
-
-      @Override
-      public void run() {
-        if (isDisposedOrNotOpen()) return;
-        assert myProject != null;
-        Project project = myProject;
-
-        final Application app = ApplicationManager.getApplication();
-        Runnable action = () -> {
-          if (!initializedExternalSystem.contains(externalSystemId)) {
-            app.runWriteAction(() -> {
-              if (isDisposedOrNotOpen()) return;
-              ExternalSystemUtil.ensureToolWindowContentInitialized(project, externalSystemId);
-              initializedExternalSystem.add(externalSystemId);
-            });
-          }
-          if (isDisposedOrNotOpen()) return;
-          NotificationGroup group;
-          if (notificationData.getBalloonGroup() == null) {
-            ExternalProjectsView externalProjectsView =
-              ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(externalSystemId);
-            group = externalProjectsView instanceof ExternalProjectsViewImpl ?
-                    ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
-          }
-          else {
-            final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-            group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
-          }
-          if (group == null) return;
-
-          final Notification notification = group.createNotification(
-            notificationData.getTitle(), notificationData.getMessage(),
-            notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
-
-          if (notificationKey == null) {
-            myNotifications.add(notification);
-          }
-          else {
-            Notification oldNotification = myUniqueNotifications.put(notificationKey, notification);
-            if (oldNotification != null) {
-              oldNotification.expire();
-            }
-          }
-
-          if (notificationData.isBalloonNotification()) {
-            applyNotification(notification);
-          }
-          else {
-            addMessage(notification, externalSystemId, notificationData);
-          }
-        };
-        app.invokeLater(action, ModalityState.defaultModalityState(), project.getDisposed());
-      }
-    });
+    myNotificationQueue.queue(new ShowNotificationTask(externalSystemId, notificationData, notificationKey));
   }
 
-  public void openMessageView(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationSource notificationSource) {
-    UIUtil.invokeLaterIfNeeded(() -> prepareMessagesView(externalSystemId, notificationSource, true));
-  }
+  private void processNotifications(List<NotificationTask> tasks) {
+    if (isDisposedOrNotOpen()) return;
+    Project project = myProject;
+    assert project != null;
 
-  public void clearNotifications(@NotNull final NotificationSource notificationSource,
-                                 @NotNull final ProjectSystemId externalSystemId) {
-    clearNotifications(null, notificationSource, externalSystemId);
-  }
-
-  public void clearNotifications(@Nullable final String groupName,
-                                 @NotNull final NotificationSource notificationSource,
-                                 @NotNull final ProjectSystemId externalSystemId) {
-    myMessageCounter.remove(groupName, notificationSource, externalSystemId);
-    if(ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
-    myUpdateQueue.queue(new Update(new Object()) {
-      @Override
-      public void run() {
-        if (isDisposedOrNotOpen()) return;
-        assert myProject != null;
-        Project project = myProject;
-
-        for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
-          Notification notification = iterator.next();
-          if (groupName == null || groupName.equals(notification.getGroupId())) {
-            notification.expire();
-            iterator.remove();
-          }
+    final Application app = ApplicationManager.getApplication();
+    Runnable action = () -> {
+      for (NotificationTask task : tasks) {
+        if (task instanceof ShowNotificationTask showTask) {
+          processShowNotification(app, project, showTask);
+        } else if (task instanceof ClearNotificationsTask clearTask) {
+          processClearNotification(project, clearTask);
         }
+      }
+    };
+    app.invokeLater(action, ModalityState.defaultModalityState(), project.getDisposed());
+  }
 
-        List<Key> toRemove = new SmartList<>();
-        myUniqueNotifications.forEach((key, notification) -> {
-          if (groupName == null || groupName.equals(notification.getGroupId())) {
-            notification.expire();
-            toRemove.add(key);
-          }
-        });
-        toRemove.forEach(myUniqueNotifications::remove);
+  private void processShowNotification(Application app, Project project, ShowNotificationTask task) {
+    if (!initializedExternalSystem.contains(task.externalSystemId)) {
+      app.runWriteAction(() -> {
+        if (isDisposedOrNotOpen()) return;
+        ExternalSystemUtil.ensureToolWindowContentInitialized(project, task.externalSystemId);
+        initializedExternalSystem.add(task.externalSystemId);
+      });
+    }
+    if (isDisposedOrNotOpen()) return;
+    NotificationGroup group;
+    if (task.notificationData.getBalloonGroup() == null) {
+      ExternalProjectsView externalProjectsView =
+        ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(task.externalSystemId);
+      group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+              ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+    }
+    else {
+      group = task.notificationData.getBalloonGroup();
+    }
+    if (group == null) return;
 
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (toolWindow == null) return;
+    final Notification notification = group
+      .createNotification(task.notificationData.getTitle(), task.notificationData.getMessage(), task.notificationData.getNotificationCategory().getNotificationType())
+      .setListener(task.notificationData.getListener());
 
-        final MessageView messageView = ServiceManager.getService(project, MessageView.class);
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (project.isDisposed()) return;
-          for (Content content : messageView.getContentManager().getContents()) {
-            if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
-              if (groupName == null) {
-                messageView.getContentManager().removeContent(content, true);
-              }
-              else {
-                assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
-                NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
-                ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
-                errorViewStructure.removeGroup(groupName);
-              }
-            }
-          }
-        });
+    if (task.notificationKey == null) {
+      myNotifications.add(notification);
+    }
+    else {
+      Notification oldNotification = myUniqueNotifications.put(task.notificationKey, notification);
+      if (oldNotification != null) {
+        oldNotification.expire();
+      }
+    }
+
+    if (task.notificationData.isBalloonNotification()) {
+      applyNotification(notification);
+    }
+    else {
+      addMessage(notification, task.externalSystemId, task.notificationData);
+    }
+  }
+
+  @Deprecated
+  public void clearNotifications(final @Nullable String groupName,
+                                 final @NotNull NotificationSource notificationSource,
+                                 final @NotNull ProjectSystemId externalSystemId) {
+    myMessageCounter.remove(groupName, notificationSource, externalSystemId);
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    myNotificationQueue.queue(new ClearNotificationsTask(groupName, notificationSource, externalSystemId));
+  }
+
+  private void processClearNotification(Project project, ClearNotificationsTask task) {
+    final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(task.notificationSource, task.externalSystemId);
+
+    for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {
+      Notification notification = iterator.next();
+      if (task.groupName == null || task.groupName.equals(notification.getGroupId())) {
+        notification.expire();
+        iterator.remove();
+      }
+    }
+
+    List<Key> toRemove = new SmartList<>();
+    myUniqueNotifications.forEach((key, notification) -> {
+      if (task.groupName == null || task.groupName.equals(notification.getGroupId())) {
+        notification.expire();
+        toRemove.add(key);
       }
     });
+    toRemove.forEach(myUniqueNotifications::remove);
+
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+    if (toolWindow == null) return;
+
+    final MessageView messageView = MessageView.getInstance(project);
+    if (project.isDisposed()) return;
+    for (Content content: messageView.getContentManager().getContents()) {
+      if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
+        if (task.groupName == null) {
+          messageView.getContentManager().removeContent(content, true);
+        }
+        else {
+          assert content.getComponent() instanceof NewEditableErrorTreeViewPanel;
+          NewEditableErrorTreeViewPanel errorTreeView = (NewEditableErrorTreeViewPanel)content.getComponent();
+          ErrorViewStructure errorViewStructure = errorTreeView.getErrorViewStructure();
+          errorViewStructure.removeGroup(task.groupName);
+        }
+      }
+    }
   }
 
-  public int getMessageCount(@NotNull final NotificationSource notificationSource,
-                             @Nullable final NotificationCategory notificationCategory,
-                             @NotNull final ProjectSystemId externalSystemId) {
-    return getMessageCount(null, notificationSource, notificationCategory, externalSystemId);
-  }
-
-  public int getMessageCount(@Nullable final String groupName,
-                             @NotNull final NotificationSource notificationSource,
-                             @Nullable final NotificationCategory notificationCategory,
-                             @NotNull final ProjectSystemId externalSystemId) {
-    return myMessageCounter.getCount(groupName, notificationSource, notificationCategory, externalSystemId);
-  }
-
-  private void addMessage(@NotNull final Notification notification,
-                          @NotNull final ProjectSystemId externalSystemId,
-                          @NotNull final NotificationData notificationData) {
+  private void addMessage(final @NotNull Notification notification,
+                          final @NotNull ProjectSystemId externalSystemId,
+                          final @NotNull NotificationData notificationData) {
     final VirtualFile virtualFile =
       notificationData.getFilePath() != null ? ExternalSystemUtil.findLocalFileByPath(notificationData.getFilePath()) : null;
     final String groupName = virtualFile != null ? virtualFile.getPresentableUrl() : notificationData.getTitle();
@@ -393,17 +407,17 @@ public class ExternalSystemNotificationManager implements Disposable {
     });
   }
 
-  private void applyNotification(@NotNull final Notification notification) {
+  private void applyNotification(final @NotNull Notification notification) {
     if (!isDisposedOrNotOpen()) {
       notification.notify(myProject);
     }
   }
 
-  @NotNull
-  public NewErrorTreeViewPanel prepareMessagesView(@NotNull final ProjectSystemId externalSystemId,
-                                                    @NotNull final NotificationSource notificationSource,
-                                                    boolean activateView) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  @Deprecated(forRemoval = true)
+  public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
+                                                            final @NotNull NotificationSource notificationSource,
+                                                            boolean activateView) {
+    ThreadingAssertions.assertEventDispatchThread();
 
     final NewErrorTreeViewPanel errorTreeView;
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);
@@ -411,10 +425,10 @@ public class ExternalSystemNotificationManager implements Disposable {
     Content targetContent = findContent(contentIdPair, contentDisplayName);
 
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+    final MessageView messageView = MessageView.getInstance(myProject);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
-      targetContent = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, contentDisplayName, true);
+      targetContent = ContentFactory.getInstance().createContent(errorTreeView, contentDisplayName, true);
       targetContent.putUserData(CONTENT_ID_KEY, contentIdPair);
 
       messageView.getContentManager().addContent(targetContent);
@@ -433,12 +447,11 @@ public class ExternalSystemNotificationManager implements Disposable {
     return errorTreeView;
   }
 
-  @Nullable
-  private Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
+  private @Nullable Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
     Content targetContent = null;
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-    for (Content content : messageView.getContentManager().getContents()) {
+    final MessageView messageView = MessageView.getInstance(myProject);
+    for (Content content: messageView.getContentManager().getContents()) {
       if (contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))
           && StringUtil.equals(content.getDisplayName(), contentDisplayName) && !content.isPinned()) {
         targetContent = content;
@@ -447,23 +460,14 @@ public class ExternalSystemNotificationManager implements Disposable {
     return targetContent;
   }
 
-  @NotNull
-  public static String getContentDisplayName(@NotNull final NotificationSource notificationSource,
-                                             @NotNull final ProjectSystemId externalSystemId) {
-    final String contentDisplayName;
-    switch (notificationSource) {
-      case PROJECT_SYNC:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.project.sync.tab.name", externalSystemId.getReadableName());
-        break;
-      case TASK_EXECUTION:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.task.execution.tab.name", externalSystemId.getReadableName());
-        break;
-      default:
-        throw new AssertionError("unsupported notification source found: " + notificationSource);
-    }
-    return contentDisplayName;
+  private static @NotNull @Nls String getContentDisplayName(
+    final @NotNull NotificationSource notificationSource,
+    final @NotNull ProjectSystemId externalSystemId
+  ) {
+    return ExternalSystemBundle.message(switch (notificationSource) {
+      case PROJECT_SYNC -> "notification.messages.project.sync.tab.name";
+      case TASK_EXECUTION -> "notification.messages.task.execution.tab.name";
+    }, externalSystemId.getReadableName());
   }
 
   @Override

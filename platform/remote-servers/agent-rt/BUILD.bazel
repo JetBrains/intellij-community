@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.remoteServers.agent.rt` start
+content_module_jar(module = ":remoteServers-agent-rt")
+### auto-generated section `dev intellij.platform.remoteServers.agent.rt` end
+
+### auto-generated section `build intellij.platform.remoteServers.agent.rt` start
+jvm_library(
+    name = "remoteServers-agent-rt",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.remoteServers.agent.rt",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "remoteServers-agent-rt_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.platform.remoteServers.agent.rt",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":remoteServers-agent-rt"],
+)
+### auto-generated section `build intellij.platform.remoteServers.agent.rt` end
+
+### auto-generated section `iml intellij.platform.remoteServers.agent.rt` start
+exports_files(
+    [
+        "intellij.platform.remoteServers.agent.rt.iml",
+        "resources/intellij.platform.remoteServers.agent.rt.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.remoteServers.agent.rt` end

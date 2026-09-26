@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -23,16 +9,21 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
@@ -42,77 +33,72 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
+import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
 import com.jgoodies.forms.layout.CellConstraints;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class PreviewFormAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+public final class PreviewFormAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
    * The problem is that this class is in a default package so it's not
    * import this class to refer
    */
-  private static final String CLASS_TO_BIND_NAME = "FormPreviewFrame";
-  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
-  @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
+  private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
+  private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
+  private static final @NonNls String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
+  public static final @NonNls String PREVIEW_BINDING_FIELD = "myComponent";
 
-  @NotNull
-  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
-    final ArrayList<URL> urls = new ArrayList<>();
-    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
-      final String s = tokenizer.nextToken();
-      try {
-        urls.add(new File(s).toURI().toURL());
-      }
-      catch (Exception exc) {
-        throw new RuntimeException(exc);
-      }
-    }
-    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
-  }
-
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
     }
   }
 
-  public void update(final AnActionEvent e) {
-    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       e.getPresentation().setVisible(false);
       return;
     }
@@ -120,12 +106,17 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM
+      FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE)
     );
   }
 
-  private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
-                                       @Nullable final Locale stringDescriptorLocale) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT ;
+  }
+
+  private static void showPreviewFrame(final @NotNull Module module, final @NotNull VirtualFile formFile,
+                                       final @Nullable Locale stringDescriptorLocale) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");
@@ -146,13 +137,13 @@ public final class PreviewFormAction extends AnAction{
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = createClassFinder(classPath);
+    final InstrumentationClassFinder finder = LoaderFactory.createClassFinder(LoaderFactory.getPlatformUrls(module), classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = Utils.getRootContainer(doc.getText(), new AsmClassPropertiesProvider(finder));
       }
       catch (Exception e) {
         Messages.showErrorDialog(
@@ -178,18 +169,18 @@ public final class PreviewFormAction extends AnAction{
       try {
         PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, finder);
 
-        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
+        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME, true);
         //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyExitAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MyPackAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_RESOURCE_NAME + "$MySetLafAction", true);
 
         Locale locale = Locale.getDefault();
-        if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
+        if (!locale.getCountry().isEmpty() && !locale.getLanguage().isEmpty()) {
           CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
                                                      "_" + locale.getCountry() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
         }
-        if (locale.getLanguage().length() > 0) {
+        if (!locale.getLanguage().isEmpty()) {
           CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
         }
         CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
@@ -226,7 +217,8 @@ public final class PreviewFormAction extends AnAction{
       final HashSet<String> bundleSet = new HashSet<>();
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
-        new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+        new FormEditingUtil.StringDescriptorVisitor<>() {
+          @Override
           public boolean visit(final IComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {
               bundleSet.add(descriptor.getDottedBundleName());
@@ -235,7 +227,7 @@ public final class PreviewFormAction extends AnAction{
           }
         });
 
-      if (bundleSet.size() > 0) {
+      if (!bundleSet.isEmpty()) {
         HashSet<VirtualFile> virtualFiles = new HashSet<>();
         HashSet<Module> modules = new HashSet<>();
         PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
@@ -251,7 +243,8 @@ public final class PreviewFormAction extends AnAction{
         FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(Module.EMPTY_ARRAY));
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
-          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+          @Override
+          public void finished(boolean aborted, int errors, int warnings, final @NotNull CompileContext compileContext) {
             if (!aborted && errors == 0) {
               runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
             }
@@ -273,6 +266,7 @@ public final class PreviewFormAction extends AnAction{
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<LwComponent>() {
+        @Override
         public boolean visit(final LwComponent iComponent) {
           iComponent.setBinding(null);
           return true;
@@ -280,13 +274,12 @@ public final class PreviewFormAction extends AnAction{
       }
     );
     if (rootContainer.getComponentCount() == 1) {
-      //noinspection HardCodedStringLiteral
       ((LwComponent)rootContainer.getComponent(0)).setBinding(PREVIEW_BINDING_FIELD);
     }
   }
 
   private static void runPreviewProcess(final String tempPath, final PathsList sources, final Module module, final VirtualFile formFile,
-                                        @Nullable final Locale stringDescriptorLocale) {
+                                        final @Nullable Locale stringDescriptorLocale) {
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
@@ -306,9 +299,9 @@ public final class PreviewFormAction extends AnAction{
       );
       return;
     }
-    parameters.setMainClass("FormPreviewFrame");
+    parameters.setMainClass(CLASS_TO_BIND_NAME);
     parameters.setWorkingDirectory(tempPath);
-    if (stringDescriptorLocale != null && stringDescriptorLocale.getDisplayName().length() > 0) {
+    if (stringDescriptorLocale != null && !stringDescriptorLocale.getDisplayName().isEmpty()) {
       parameters.getVMParametersList().add("-Duser.language=" + stringDescriptorLocale.getLanguage());
     }
 
@@ -330,33 +323,47 @@ public final class PreviewFormAction extends AnAction{
     private final Module myModule;
     private final JavaParameters myParams;
     private final String myTempPath;
-    private final String myStatusbarMessage;
+    private final @Nls String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final @Nls String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;
       myStatusbarMessage = statusbarMessage;
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    @Override
+    public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
       return new JavaCommandLineState(env) {
+        @Override
         protected JavaParameters createJavaParameters() {
           return myParams;
         }
 
-        @NotNull
-        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+        @Override
+        public @NotNull ExecutionResult execute(final @NotNull Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
-            executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
+            executionResult.getProcessHandler().addProcessListener(new ProcessListener() {
               @Override
               public void processTerminated(@NotNull ProcessEvent event) {
-                FileUtil.asyncDelete(new File(myTempPath));
+                try {
+                  //noinspection UseOptimizedEelFunctions
+                  NioFiles.deleteRecursively(Path.of(myTempPath));
+                }
+                catch (IOException e) {
+                  LOG.warn(e);
+                  Messages.showErrorDialog(
+                    myModule.getProject(),
+                    UIDesignerBundle.message("error.cannot.delete.temp.dir", myTempPath, e.getMessage()),
+                    CommonBundle.getErrorTitle()
+                  );
+                }
               }
             });
             return executionResult;
@@ -369,12 +376,13 @@ public final class PreviewFormAction extends AnAction{
       };
     }
 
-    public String getName() {
+    @Override
+    public @NotNull String getName() {
       return UIDesignerBundle.message("title.form.preview");
     }
 
-    @NotNull
-    public Module[] getModules() {
+    @Override
+    public Module @NotNull [] getModules() {
       return new Module[] {myModule};
     }
   }

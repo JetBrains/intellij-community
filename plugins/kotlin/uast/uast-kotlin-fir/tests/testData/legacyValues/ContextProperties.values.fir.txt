@@ -1,0 +1,74 @@
+UFile (package = ) [public final class ContextPropertiesKt {...]
+    UClass (name = ContextPropertiesKt) [public final class ContextPropertiesKt {...}]
+        UMethod (name = getTopLevelProp) [public static final fun getTopLevelProp(@org.jetbrains.annotations.NotNull c2: C2) : C1 {...}]
+            UParameter (name = c2) [@org.jetbrains.annotations.NotNull var c2: C2]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return C1()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [C1()] = external C1()()
+                        UIdentifier (Identifier (C1)) [UIdentifier (Identifier (C1))]
+                        USimpleNameReferenceExpression (identifier = C1, resolvesTo = PsiClass: C1) [C1] = external C1()
+        UMethod (name = getTopLevelMutableProp) [public static final fun getTopLevelMutableProp(@org.jetbrains.annotations.NotNull c2: C2) : C1 {...}]
+            UParameter (name = c2) [@org.jetbrains.annotations.NotNull var c2: C2]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return C1()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [C1()] = external C1()()
+                        UIdentifier (Identifier (C1)) [UIdentifier (Identifier (C1))]
+                        USimpleNameReferenceExpression (identifier = C1, resolvesTo = PsiClass: C1) [C1] = external C1()
+        UMethod (name = setTopLevelMutableProp) [public static final fun setTopLevelMutableProp(@org.jetbrains.annotations.NotNull c2: C2, @org.jetbrains.annotations.NotNull value: C1) : void {...}]
+            UParameter (name = c2) [@org.jetbrains.annotations.NotNull var c2: C2]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: C1]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Undetermined
+        UMethod (name = getTopLevelMutablePropUnnamedContexts) [public static final fun getTopLevelMutablePropUnnamedContexts(@org.jetbrains.annotations.NotNull <unused var>: C1, @org.jetbrains.annotations.NotNull <unused var>: C2) : C1 {...}]
+            UParameter (name = <unused var>) [@org.jetbrains.annotations.NotNull var <unused var>: C1]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = <unused var>) [@org.jetbrains.annotations.NotNull var <unused var>: C2]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return C1()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [C1()] = external C1()()
+                        UIdentifier (Identifier (C1)) [UIdentifier (Identifier (C1))]
+                        USimpleNameReferenceExpression (identifier = C1, resolvesTo = PsiClass: C1) [C1] = external C1()
+        UMethod (name = setTopLevelMutablePropUnnamedContexts) [public static final fun setTopLevelMutablePropUnnamedContexts(@org.jetbrains.annotations.NotNull <unused var>: C1, @org.jetbrains.annotations.NotNull <unused var>: C2, @org.jetbrains.annotations.NotNull value: C1) : void {...}]
+            UParameter (name = <unused var>) [@org.jetbrains.annotations.NotNull var <unused var>: C1]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = <unused var>) [@org.jetbrains.annotations.NotNull var <unused var>: C2]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: C1]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Undetermined
+    UClass (name = C1) [public final class C1 {...}]
+        UMethod (name = C1) [public fun C1() = UastEmptyExpression]
+    UClass (name = C2) [public final class C2 {...}]
+        UMethod (name = C2) [public fun C2() = UastEmptyExpression]
+    UClass (name = C3) [public final class C3 {...}]
+        UMethod (name = C3) [public fun C3() = UastEmptyExpression]
+    UClass (name = C4) [public final class C4 {...}]
+        UMethod (name = C4) [public fun C4() = UastEmptyExpression]
+    UClass (name = Cls) [public final class Cls {...}]
+        UMethod (name = getMemberProp) [public final fun getMemberProp(@org.jetbrains.annotations.NotNull c3: C3) : C4 {...}]
+            UParameter (name = c3) [@org.jetbrains.annotations.NotNull var c3: C3]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return C4()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [C4()] = external C4()()
+                        UIdentifier (Identifier (C4)) [UIdentifier (Identifier (C4))]
+                        USimpleNameReferenceExpression (identifier = C4, resolvesTo = PsiClass: C4) [C4] = external C4()
+        UMethod (name = getMutableMemberProp) [public final fun getMutableMemberProp(@org.jetbrains.annotations.NotNull c3: C3) : C4 {...}]
+            UParameter (name = c3) [@org.jetbrains.annotations.NotNull var c3: C3]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return C4()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [C4()] = external C4()()
+                        UIdentifier (Identifier (C4)) [UIdentifier (Identifier (C4))]
+                        USimpleNameReferenceExpression (identifier = C4, resolvesTo = PsiClass: C4) [C4] = external C4()
+        UMethod (name = setMutableMemberProp) [public final fun setMutableMemberProp(@org.jetbrains.annotations.NotNull c3: C3, @org.jetbrains.annotations.NotNull value: C4) : void {...}]
+            UParameter (name = c3) [@org.jetbrains.annotations.NotNull var c3: C3]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: C4]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] = Undetermined
+        UMethod (name = Cls) [public fun Cls() = UastEmptyExpression]

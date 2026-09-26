@@ -16,35 +16,33 @@
 package com.intellij.refactoring;
 
 import com.intellij.refactoring.typeMigration.rules.LongAdderConversionRule;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
 public class TypeMigrationByLongAdderTest extends TypeMigrationTestBase {
-  @NotNull
   @Override
-  protected String getTestRoot() {
-    return "/refactoring/typeMigrationByLongAdder/";
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/refactoring/typeMigrationByLongAdder/";
   }
 
   public void testDirectCallsWithoutAssignment() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
+                    getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testIncrementDecrement() {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
+                    getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testToPrimitivesAndString() {
     doTestFieldType("i",
-                    myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
+                    getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 
   public void testUnconvertable() {
     doTestFieldType("i",
-                    myJavaFacade.getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
+                    getElementFactory().createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, null));
   }
 }

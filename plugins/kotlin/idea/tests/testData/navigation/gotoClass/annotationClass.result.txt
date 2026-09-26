@@ -1,0 +1,8 @@
+NavigationItem:
+    name: AnnotationClass
+ItemPresentation:
+    presentableText: AnnotationClass
+    locationString: null
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/annotationKotlin.svg, Public])
+TargetElement: annotation class AnnotationClass {
+QualifiedName: AnnotationClass

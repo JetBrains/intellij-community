@@ -1,125 +1,108 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.AnalyzerExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.InterpreterExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzerExt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.NullableMethodAnalysisData.*;
+final class LabeledNull extends BasicValue {
+  private static final Type NullType = Type.getObjectType("null");
 
-interface NullableMethodAnalysisData {
-  Type NullType = Type.getObjectType("null");
-  Type ThisType = Type.getObjectType("this");
-  Type CallType = Type.getObjectType("/Call");
+  final int origins;
 
-  final class LabeledNull extends BasicValue {
-    final int origins;
-
-    public LabeledNull(int origins) {
-      super(NullType);
-      this.origins = origins;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      LabeledNull that = (LabeledNull)o;
-      return origins == that.origins;
-    }
-
-    @Override
-    public int hashCode() {
-      return origins;
-    }
+  LabeledNull(int origins) {
+    super(NullType);
+    this.origins = origins;
   }
 
-  final class Calls extends BasicValue {
-    final int mergedLabels;
-
-    public Calls(int mergedLabels) {
-      super(CallType);
-      this.mergedLabels = mergedLabels;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
-      Calls calls = (Calls)o;
-      return mergedLabels == calls.mergedLabels;
-    }
-
-    @Override
-    public int hashCode() {
-      return mergedLabels;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    LabeledNull that = (LabeledNull)o;
+    return origins == that.origins;
   }
 
-  final class Constraint {
-    final static Constraint EMPTY = new Constraint(0, 0);
-
-    final int calls;
-    final int nulls;
-
-    public Constraint(int calls, int nulls) {
-      this.calls = calls;
-      this.nulls = nulls;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Constraint that = (Constraint)o;
-
-      if (calls != that.calls) return false;
-      if (nulls != that.nulls) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = calls;
-      result = 31 * result + nulls;
-      return result;
-    }
+  @Override
+  public int hashCode() {
+    return origins;
   }
-
-  BasicValue ThisValue = new BasicValue(ThisType);
 }
 
-class NullableMethodAnalysis {
+final class Calls extends BasicValue {
+  private static final Type CallType = Type.getObjectType("/Call");
 
-  static final BasicValue lNull = new LabeledNull(0);
+  final int mergedLabels;
+
+  Calls(int mergedLabels) {
+    super(CallType);
+    this.mergedLabels = mergedLabels;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    Calls calls = (Calls)o;
+    return mergedLabels == calls.mergedLabels;
+  }
+
+  @Override
+  public int hashCode() {
+    return mergedLabels;
+  }
+}
+
+final class Constraint {
+  static final Constraint EMPTY = new Constraint(0, 0);
+
+  final int calls;
+  final int nulls;
+
+  Constraint(int calls, int nulls) {
+    this.calls = calls;
+    this.nulls = nulls;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Constraint that = (Constraint)o;
+
+    if (calls != that.calls) return false;
+    if (nulls != that.nulls) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = calls;
+    result = 31 * result + nulls;
+    return result;
+  }
+}
+
+final class NullableMethodAnalysis {
+  private static final BasicValue lNull = new LabeledNull(0);
 
   static Result analyze(MethodNode methodNode, boolean[] origins, boolean jsr) throws AnalyzerException {
     InsnList insns = methodNode.instructions;
@@ -143,8 +126,7 @@ class NullableMethodAnalysis {
     if (result instanceof LabeledNull) {
       return Value.Null;
     }
-    if (result instanceof Calls) {
-      Calls calls = ((Calls)result);
+    if (result instanceof Calls calls) {
       int mergedMappedLabels = calls.mergedLabels;
       if (mergedMappedLabels != 0) {
         Set<Component> sum = new HashSet<>();
@@ -153,7 +135,7 @@ class NullableMethodAnalysis {
           int mappedOrigin = originsMapping[origin];
           EKey createdKey = createdKeys[origin];
           if (createdKey != null && (mergedMappedLabels & (1 << mappedOrigin)) != 0) {
-            sum.add(new Component(Value.Null, Collections.singleton(createdKey)));
+            sum.add(new Component(Value.Null, createdKey));
           }
         }
         if (!sum.isEmpty()) {
@@ -164,8 +146,7 @@ class NullableMethodAnalysis {
     return Value.Bot;
   }
 
-  @NotNull
-  private static int[] mapOrigins(boolean[] origins) {
+  private static int @NotNull [] mapOrigins(boolean[] origins) {
     int[] originsMapping = new int[origins.length];
     int mapped = 0;
     for (int i = 0; i < origins.length; i++) {
@@ -184,10 +165,8 @@ class NullableMethodAnalysis {
       int intersect = v2Origins & constraintOrigins;
       return intersect == v2Origins ? v1 : lNull;
     }
-    else if (v1 instanceof Calls) {
-      if (v2 instanceof Calls) {
-        Calls calls1 = (Calls)v1;
-        Calls calls2 = (Calls)v2;
+    else if (v1 instanceof Calls calls1) {
+      if (v2 instanceof Calls calls2) {
         int labels2 = calls2.mergedLabels;
         int aliveLabels2 = labels2 - (labels2 & constraint.calls);
         return new Calls(calls1.mergedLabels | aliveLabels2);
@@ -195,8 +174,7 @@ class NullableMethodAnalysis {
         return v1;
       }
     }
-    else if (v2 instanceof Calls) {
-      Calls calls2 = (Calls)v2;
+    else if (v2 instanceof Calls calls2) {
       int labels2 = calls2.mergedLabels;
       int aliveLabels2 = labels2 - (labels2 & constraint.calls);
       return new Calls(aliveLabels2);
@@ -206,8 +184,8 @@ class NullableMethodAnalysis {
 }
 
 class NullableMethodInterpreter extends BasicInterpreter implements InterpreterExt<Constraint> {
-  final InsnList insns;
-  final boolean[] origins;
+  private final InsnList insns;
+  private final boolean[] origins;
   private final int[] originsMapping;
   final EKey[] keys;
 
@@ -219,6 +197,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   int notNullNull;
 
   NullableMethodInterpreter(InsnList insns, boolean[] origins, int[] originsMapping) {
+    super(Opcodes.API_VERSION);
     this.insns = insns;
     this.origins = origins;
     this.originsMapping = originsMapping;
@@ -227,7 +206,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
 
   @Override
   public BasicValue newValue(Type type) {
-    return ThisType.equals(type) ? ThisValue : super.newValue(type);
+    return ASMUtils.isThisType(type) ? ASMUtils.THIS_VALUE : super.newValue(type);
   }
 
   @Override
@@ -244,14 +223,12 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   @Override
   public BasicValue unaryOperation(AbstractInsnNode insn, BasicValue value) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case GETFIELD:
-      case ARRAYLENGTH:
-      case MONITORENTER:
+      case GETFIELD, ARRAYLENGTH, MONITORENTER -> {
         if (value instanceof Calls) {
           delta = ((Calls)value).mergedLabels;
         }
-        break;
-      case IFNULL:
+      }
+      case IFNULL -> {
         if (value instanceof Calls) {
           notNullInsn = insns.indexOf(insn) + 1;
           notNullCall = ((Calls)value).mergedLabels;
@@ -260,8 +237,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           notNullInsn = insns.indexOf(insn) + 1;
           notNullNull = ((LabeledNull)value).origins;
         }
-        break;
-      case IFNONNULL:
+      }
+      case IFNONNULL -> {
         if (value instanceof Calls) {
           notNullInsn = insns.indexOf(((JumpInsnNode)insn).label);
           notNullCall = ((Calls)value).mergedLabels;
@@ -270,9 +247,9 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           notNullInsn = insns.indexOf(((JumpInsnNode)insn).label);
           notNullNull = ((LabeledNull)value).origins;
         }
-        break;
-      default:
-
+      }
+      default -> {
+      }
     }
     return super.unaryOperation(insn, value);
   }
@@ -280,23 +257,15 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   @Override
   public BasicValue binaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2) throws AnalyzerException {
     switch (insn.getOpcode()) {
-      case PUTFIELD:
-      case IALOAD:
-      case LALOAD:
-      case FALOAD:
-      case DALOAD:
-      case AALOAD:
-      case BALOAD:
-      case CALOAD:
-      case SALOAD:
+      case PUTFIELD, IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD -> {
         if (value1 instanceof Calls) {
           delta = ((Calls)value1).mergedLabels;
         }
-        if (value1 instanceof LabeledNull){
+        if (value1 instanceof LabeledNull) {
           nullsDelta = ((LabeledNull)value1).origins;
         }
-        break;
-      default:
+      }
+      default -> { }
     }
     return super.binaryOperation(insn, value1, value2);
   }
@@ -316,24 +285,20 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     int opCode = insn.getOpcode();
     switch (opCode) {
-      case INVOKESPECIAL:
-      case INVOKEINTERFACE:
-      case INVOKEVIRTUAL:
+      case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
         BasicValue receiver = values.get(0);
-        if (receiver instanceof Calls) {
-          delta = ((Calls)receiver).mergedLabels;
+        if (receiver instanceof Calls calls) {
+          delta = calls.mergedLabels;
         }
-        if (receiver instanceof LabeledNull){
-          nullsDelta = ((LabeledNull)receiver).origins;
+        if (receiver instanceof LabeledNull labeledNull) {
+          nullsDelta = labeledNull.origins;
         }
-        break;
-      default:
+      }
+      default -> { }
     }
 
     switch (opCode) {
-      case INVOKESTATIC:
-      case INVOKESPECIAL:
-      case INVOKEVIRTUAL:
+      case INVOKESTATIC, INVOKESPECIAL, INVOKEVIRTUAL -> {
         int insnIndex = insns.indexOf(insn);
         if (origins[insnIndex]) {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
@@ -345,8 +310,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
           }
           return new Calls(label);
         }
-        break;
-      default:
+      }
+      default -> { }
     }
     return super.naryOperation(insn, values);
   }
@@ -364,10 +329,8 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
     else if (v2 instanceof LabeledNull) {
       return v2;
     }
-    else if (v1 instanceof Calls) {
-      if (v2 instanceof Calls) {
-        Calls calls1 = (Calls)v1;
-        Calls calls2 = (Calls)v2;
+    else if (v1 instanceof Calls calls1) {
+      if (v2 instanceof Calls calls2) {
         return new Calls(calls1.mergedLabels | calls2.mergedLabels);
       }
       else {
@@ -411,10 +374,6 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
 
   @Override
   public Constraint merge(Constraint data1, Constraint data2) {
-    if (data1.equals(data2)) {
-      return data1;
-    } else {
-      return new Constraint(data1.calls | data2.calls, data1.nulls | data2.nulls);
-    }
+    return data1.equals(data2) ? data1 : new Constraint(data1.calls | data2.calls, data1.nulls | data2.nulls);
   }
 }

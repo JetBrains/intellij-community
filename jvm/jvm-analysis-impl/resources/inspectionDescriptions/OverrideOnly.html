@@ -1,0 +1,42 @@
+<html>
+<body>
+Reports calls to API methods marked with <code>@ApiStatus.OverrideOnly</code>.
+
+<p>
+  The <code>@ApiStatus.OverrideOnly</code> annotation indicates that the annotated method is supposed to be implemented or overridden by
+  client code, but not called by it directly.
+  This pattern commonly appears in extension mechanisms where your implementation must conform to some interface, but it's not your
+  responsibility to call it.
+  One example of such an extension mechanism is the Service Provider Interface.
+  Marking a class or interface with this annotation is the same as marking every method with it.
+</p>
+
+<p>
+  The <code>@ApiStatus.OverrideOnly</code> annotation indicates that the method is part of SPI (Service Provider Interface).
+  Clients of the declaring library should implement or override such methods, not call them directly.
+  Marking a class or interface with this annotation is the same as marking every method with it.
+</p>
+
+<p><b>Example:</b></p>
+<pre><code lang="java">
+  // In upstream library code
+  @ApiStatus.OverrideOnly
+  public class MyService {
+    public void perform();
+  }
+
+  // In downstream client code
+  public class Foo {
+    public void bar(myService: MyService) {
+      myService.perform();
+    }
+  }
+</code></pre>
+
+This inspection also detects the following problems related to applying the annotation incorrectly:
+<ul>
+  <li>Annotating classes/methods that cannot be extended/overridden</li>
+  <li>Redundantly annotating methods from a class already annotated with <code>@ApiStatus.OverrideOnly</code></li>
+</ul>
+</body>
+</html>

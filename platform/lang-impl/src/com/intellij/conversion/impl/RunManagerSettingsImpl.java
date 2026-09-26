@@ -1,94 +1,73 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.RunManagerSettings;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class RunManagerSettingsImpl implements RunManagerSettings {
-  @NonNls public static final String RUN_MANAGER_COMPONENT_NAME = "RunManager";
-  @NonNls private static final String PROJECT_RUN_MANAGER = "ProjectRunConfigurationManager";
-  @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
-  private SettingsXmlFile myWorkspaceFile;
-  private SettingsXmlFile myProjectFile;
-  private final List<SettingsXmlFile> mySharedConfigurationFiles;
+final class RunManagerSettingsImpl implements RunManagerSettings {
+  private static final String RUN_MANAGER_COMPONENT_NAME = "RunManager";
+  private static final String CONFIGURATION_ELEMENT = "configuration";
 
-  public RunManagerSettingsImpl(@NotNull File workspaceFile, @Nullable File projectFile, @Nullable File[] sharedConfigurationFiles,
-                                ConversionContextImpl context) throws CannotConvertException {
-    if (workspaceFile.exists()) {
-      myWorkspaceFile = context.getOrCreateFile(workspaceFile);
-    }
+  private final SettingsXmlFile myWorkspaceFile;
+  private final @Nullable SettingsXmlFile myProjectFile;
+  private final Path dir;
+  private final ConversionContextImpl context;
+  private @Nullable List<Path> sharedConfigurationFiles;
 
-    if (projectFile != null && projectFile.exists()) {
-      myProjectFile = context.getOrCreateFile(projectFile);
-    }
+  RunManagerSettingsImpl(@NotNull SettingsXmlFile workspaceFile,
+                         @Nullable SettingsXmlFile projectFile,
+                         @Nullable Path dir,
+                         @NotNull ConversionContextImpl context) throws CannotConvertException {
+    myWorkspaceFile = workspaceFile;
+    myProjectFile = projectFile;
+    this.dir = dir;
+    this.context = context;
+  }
 
-    mySharedConfigurationFiles = new ArrayList<>();
-    if (sharedConfigurationFiles != null) {
-      for (File file : sharedConfigurationFiles) {
-        mySharedConfigurationFiles.add(context.getOrCreateFile(file));
+  private @NotNull List<Path> getSharedConfigurationFiles() {
+    if (sharedConfigurationFiles == null) {
+      if (dir == null) {
+        sharedConfigurationFiles = Collections.emptyList();
+      }
+      else {
+        sharedConfigurationFiles = MultiFilesSettings.getSettingsXmlFiles(dir);
       }
     }
+    return sharedConfigurationFiles;
   }
 
   @Override
-  @NotNull
-  public Collection<? extends Element> getRunConfigurations() {
-    final List<Element> result = new ArrayList<>();
-    if (myWorkspaceFile != null) {
-      result.addAll(JDOMUtil.getChildren(myWorkspaceFile.findComponent(RUN_MANAGER_COMPONENT_NAME), CONFIGURATION_ELEMENT));
-    }
-
+  public @NotNull Collection<Element> getRunConfigurations() {
+    List<Element> result = new ArrayList<>();
+    //noinspection CollectionAddAllCanBeReplacedWithConstructor
+    result.addAll(JDOMUtil.getChildren(myWorkspaceFile.findComponent(RUN_MANAGER_COMPONENT_NAME), CONFIGURATION_ELEMENT));
     if (myProjectFile != null) {
-      result.addAll(JDOMUtil.getChildren(myProjectFile.findComponent(PROJECT_RUN_MANAGER), CONFIGURATION_ELEMENT));
+      result.addAll(JDOMUtil.getChildren(myProjectFile.findComponent(RunManagerImplKt.PROJECT_RUN_MANAGER_COMPONENT_NAME), CONFIGURATION_ELEMENT));
     }
 
-    for (SettingsXmlFile file : mySharedConfigurationFiles) {
-      result.addAll(JDOMUtil.getChildren(file.getRootElement(), CONFIGURATION_ELEMENT));
+    for (Path file : getSharedConfigurationFiles()) {
+      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile$intellij_platform_lang_impl(file).getRootElement(), CONFIGURATION_ELEMENT));
     }
 
     return result;
   }
 
-  public Collection<File> getAffectedFiles() {
-    final List<File> files = new ArrayList<>();
-    if (myWorkspaceFile != null) {
-      files.add(myWorkspaceFile.getFile());
-    }
+  public void collectAffectedFiles(@NotNull Collection<? super Path> files) {
+    files.add(myWorkspaceFile.getFile());
     if (myProjectFile != null) {
       files.add(myProjectFile.getFile());
     }
-    for (SettingsXmlFile file : mySharedConfigurationFiles) {
-      files.add(file.getFile());
-    }
-    return files;
+    files.addAll(getSharedConfigurationFiles());
   }
-
 }

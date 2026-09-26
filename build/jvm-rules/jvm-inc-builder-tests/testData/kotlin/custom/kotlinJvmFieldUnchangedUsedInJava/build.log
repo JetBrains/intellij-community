@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_custom_kotlinJvmFieldUnchangedUsedInJava-a.kotlin_module
+  test/Klass$Companion.class
+  test/Klass.class
+End of files
+Compiling files:
+  kotlin/custom/kotlinJvmFieldUnchangedUsedInJava/a/const.kt
+End of files
+------------------------------------------
+Exit code: OK

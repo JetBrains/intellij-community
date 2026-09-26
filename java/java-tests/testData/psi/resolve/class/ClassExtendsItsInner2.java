@@ -1,3 +1,3 @@
-public class TTT implements <ref>Bar{
+public class TTT implements <caret>Bar{
   static interface Bar{}
 }

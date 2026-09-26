@@ -1,0 +1,24 @@
+// "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
+// PRIORITY: HIGH
+// K2_ERROR: OPT_IN_USAGE_ERROR
+// K2_ERROR: OPT_IN_USAGE_ERROR
+
+package a.b
+
+@RequiresOptIn
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class MyExperimentalAPI
+
+@MyExperimentalAPI
+class Some {
+    @MyExperimentalAPI
+    fun foo() {}
+}
+
+class Bar {
+    fun bar() {
+        Some().foo<caret>()
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

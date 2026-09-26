@@ -1,0 +1,972 @@
+package com.jetbrains.python.documentation;
+
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyLanguageFacadeKt;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.ast.PyAstTypeParameter;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.highlighting.PyHighlighter;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyTypeParameterListOwner;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.types.PyAnyType;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListType;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment;
+import com.jetbrains.python.psi.types.PyIntersectionType;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyNamedTupleType;
+import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyTypeFormType;
+import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyOverloadType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
+import com.jetbrains.python.psi.types.PySelfType;
+import com.jetbrains.python.psi.types.PyTopType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParameterType;
+import com.jetbrains.python.psi.types.PyTypeRendererFeature;
+import com.jetbrains.python.psi.types.PyTypeVarTupleType;
+import com.jetbrains.python.psi.types.PyTypeVarType;
+import com.jetbrains.python.psi.types.PyTypeVisitorExt;
+import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.PyTypingNewType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnpackedTupleType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.PyVariance;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import kotlin.jvm.functions.Function4;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+
+import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.highlightExpressionText;
+import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
+import static com.jetbrains.python.psi.types.PyInferredVarianceJudgment.isEffectivelyInvariant;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
+
+// TODO visitPyConcatenateType
+public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk> {
+  private static final int MAX_DEPTH = 6;
+
+  protected int myDepth = 0;
+  protected final @NotNull TypeEvalContext myTypeEvalContext;
+  protected final EnumSet<PyTypeRendererFeature> myRenderingFeatures;
+
+  protected final boolean isRenderingFqn() {
+    return myRenderingFeatures.contains(PyTypeRendererFeature.USE_FQN);
+  }
+
+  protected final boolean isRenderingTypeVarBounds() {
+    return myRenderingFeatures.contains(PyTypeRendererFeature.TYPE_VAR_BOUNDS);
+  }
+
+  protected final boolean isRenderingBareLiteral() {
+    return myRenderingFeatures.contains(PyTypeRendererFeature.BARE_LITERAL);
+  }
+
+
+  private PyTypeRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
+    myTypeEvalContext = typeEvalContext;
+    myRenderingFeatures = features;
+  }
+
+  static abstract class HtmlRenderer extends PyTypeRenderer {
+    private final @NotNull PsiElement myAnchor;
+
+    private HtmlRenderer(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<PyTypeRendererFeature> features) {
+      super(typeEvalContext, features);
+      myAnchor = anchor;
+    }
+
+    protected final @NotNull PsiElement getAnchor() {
+      return myAnchor;
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
+      return styledSpan(text, style);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styled(@NotNull HtmlChunk chunk, @NotNull TextAttributesKey style) {
+      return styledSpan(chunk, style);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk escaped(@Nls String text) {
+      return HtmlChunk.text(text);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
+      return PyDocumentationLink.toPossibleClass(name, myAnchor, myTypeEvalContext);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk styledExpression(@NotNull PyExpression expression) {
+      return highlightExpressionText(expression.getText(), expression);
+    }
+  }
+
+  static final class RichDocumentation extends HtmlRenderer {
+    RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
+      super(typeEvalContext, anchor, EnumSet.noneOf(PyTypeRendererFeature.class));
+    }
+  }
+
+  /**
+   * Renders types as HTML the same way as {@link RichDocumentation}, but emits class links in the
+   * {@code #element/<fqn>} format navigable from editor tooltips (see
+   * {@code com.intellij.codeInsight.hint.ElementLinkHandler}) instead of the {@code psi_element://}
+   * protocol used by Quick Documentation. Intended for rich inspection tooltips.
+   */
+  static final class TooltipDocumentation extends HtmlRenderer {
+    TooltipDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<PyTypeRendererFeature> features) {
+      super(typeEvalContext, anchor, features);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
+      return PyDocumentationLink.toPossibleClassTooltipLink(name, getAnchor(), myTypeEvalContext);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk classLink(@NotNull PyClassLikeType type, @Nls String name) {
+      return PyDocumentationLink.toPossibleClassTooltipLink(type, name, getAnchor(), myTypeEvalContext);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk qualifiedNameLink(@Nls String displayText, @NonNls String qualifiedName) {
+      return PyDocumentationLink.toQualifiedNameTooltipLink(qualifiedName, displayText);
+    }
+  }
+
+  static final class Documentation extends PyTypeRenderer {
+    Documentation(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
+      super(typeEvalContext, features);
+    }
+  }
+
+  public static final class TypeHint extends PyTypeRenderer {
+    private static final EnumSet<PyTypeRendererFeature> SUPPORTED_FEATURES = EnumSet.of(PyTypeRendererFeature.USE_FQN);
+
+    public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<PyTypeRendererFeature> features) {
+      super(typeEvalContext, validateFeatures(features));
+    }
+
+    private static @NotNull EnumSet<PyTypeRendererFeature> validateFeatures(@NotNull EnumSet<PyTypeRendererFeature> features) {
+      EnumSet<PyTypeRendererFeature> unsupported = EnumSet.copyOf(features);
+      unsupported.removeAll(SUPPORTED_FEATURES);
+      if (!unsupported.isEmpty()) {
+        throw new IllegalArgumentException("Unsupported features for type hint rendering " + unsupported);
+      }
+      return features;
+    }
+
+    @Override
+    protected boolean maxDepthExceeded() {
+      return false;
+    }
+
+    @Override
+    public HtmlChunk visitPyCallableType(@NotNull PyCallableType callableType) {
+      HtmlBuilder result = new HtmlBuilder();
+      result.append(HtmlChunk.raw(isRenderingFqn() ? "typing.Callable" : "Callable")); //NON-NLS
+      result.append(styled("[", PyHighlighter.PY_BRACKETS));
+      List<PyCallableParameter> parameters = getParameters(callableType);
+      if (parameters != null) {
+        result.append(styled("[", PyHighlighter.PY_BRACKETS));
+        result.append(renderList(ContainerUtil.map(parameters, this::visitPyCallableParameter)));
+        result.append(styled("]", PyHighlighter.PY_BRACKETS));
+      }
+      else {
+        result.append(styled("...", PyHighlighter.PY_DOT));
+      }
+      result.append(HtmlChunk.raw(", "));
+      result.append(render(callableType.getReturnType(myTypeEvalContext)));
+      result.append(styled("]", PyHighlighter.PY_BRACKETS));
+      return result.toFragment();
+    }
+
+    // Returns `callableType`'s parameter list (excluding terminating '/') if it can be expressed using typing.Callable, `null` otherwise.
+    // Parameters specified using typing.Callable are assumed to be positional-only (a parameter list must be terminated with '/'). There
+    // is no way to specify keyword-only or variadic parameters.
+    private @Nullable List<PyCallableParameter> getParameters(@NotNull PyCallableType callableType) {
+      List<PyCallableParameter> parameters = callableType.getParameters(myTypeEvalContext);
+      if (parameters == null) return null;
+      if (parameters.isEmpty()) return List.of();
+
+      for (int i = 0; i < parameters.size(); i++) {
+        PyCallableParameter parameter = parameters.get(i);
+        if (parameter.isPositionalContainer()) {
+          return null;
+        }
+        if (parameter.isKeywordOnlySeparator()) {
+          return null;
+        }
+        if (parameter.isPositionOnlySeparator()) {
+          if (i == parameters.size() - 1) {
+            return parameters.subList(0, i);
+          }
+          return null;
+        }
+      }
+
+      // TODO If CallableType is inferred from a 'Callable[]' type hint, there is no terminating '/' parameter.
+      // Check whether all parameters have no name then.
+      if (ContainerUtil.all(parameters, parameter -> parameter.getName() == null)) {
+        return parameters;
+      }
+      return null;
+    }
+
+    @Override
+    protected @NotNull HtmlChunk visitPyCallableParameter(@NotNull PyCallableParameter param) {
+      return render(param.getType(myTypeEvalContext));
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+      // There is no way to represent weak unions through type hints
+      return visitUnknownType();
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+      // There is no way to represent intersections through the standard type hints at the moment
+      return visitUnknownType();
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitUnknownType() {
+      // `Unknown` is not denotable Python: render it as `Any` in generated annotations
+      return visitAnyType();
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
+      HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
+      return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+      return escaped("Callable[..., object]"); //NON-NLS
+    }
+  }
+
+  protected boolean maxDepthExceeded() {
+    return myDepth > MAX_DEPTH;
+  }
+
+  protected @NotNull HtmlChunk render(@Nullable PyType type) {
+    if (maxDepthExceeded()) {
+      return styled("...", PyHighlighter.PY_DOT);
+    }
+    myDepth++;
+    try {
+      return visit(type, this);
+    }
+    finally {
+      myDepth--;
+    }
+  }
+
+  protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
+    return HtmlChunk.raw(StringUtil.notNullize(text));
+  }
+
+  protected @NotNull HtmlChunk styled(@NotNull HtmlChunk chunk, @NotNull TextAttributesKey style) {
+    return chunk;
+  }
+
+  protected @NotNull HtmlChunk escaped(@Nls String text) {
+    return HtmlChunk.raw(StringUtil.notNullize(text));
+  }
+
+  protected @NotNull HtmlChunk className(@Nls String name) {
+    return escaped(name);
+  }
+
+  protected @NotNull HtmlChunk classLink(@NotNull PyClassLikeType type, @Nls String name) {
+    return className(name);
+  }
+
+  /**
+   * Renders a name that is shown as [displayText] and, in HTML tooltips, linked to the symbol with the given
+   * [qualifiedName]. The default renders plain text without a link. Used for things that carry a known FQN but
+   * are not [PyClass]es: {@code typing} special forms ({@code Any}, {@code Literal}) and modules.
+   */
+  protected @NotNull HtmlChunk qualifiedNameLink(@Nls String displayText, @NonNls String qualifiedName) {
+    return HtmlChunk.raw(displayText);
+  }
+
+  protected @NotNull HtmlChunk styledExpression(@NotNull PyExpression expression) {
+    return HtmlChunk.raw(expression.getText());
+  }
+
+  protected final boolean isBitwiseOrUnionAvailable() {
+    return PyTypingTypeProvider.isBitwiseOrUnionAvailable(myTypeEvalContext);
+  }
+
+  protected final boolean isGenericBuiltinsAvailable() {
+    PsiFile origin = myTypeEvalContext.getOrigin();
+    return origin == null || PyLanguageFacadeKt.getEffectiveLanguageLevel(origin).isAtLeast(LanguageLevel.PYTHON39);
+  }
+
+  @Override
+  public HtmlChunk visitPyClassType(@NotNull PyClassType classType) {
+    if (!classType.isParameterized()) {
+      return visitPyClassLikeType(classType);
+    }
+    HtmlChunk genericTypeRender = renderGenericType(classType);
+    return classType.isDefinition() ? wrapInTypingType(genericTypeRender) : genericTypeRender;
+  }
+
+  @Override
+  public HtmlChunk visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
+    List<PyType> typeArguments = typedDictType.getTypeArguments();
+    if (typeArguments.isEmpty()) {
+      return visitPyClassLikeType(typedDictType);
+    }
+
+    HtmlChunk parameterizedRender = new HtmlBuilder()
+      .append(classLink(typedDictType, getTypeName(typedDictType)))
+      .append(styled("[", PyHighlighter.PY_BRACKETS))
+      .append(renderList(ContainerUtil.map(typeArguments, this::render)))
+      .append(styled("]", PyHighlighter.PY_BRACKETS))
+      .toFragment();
+    return typedDictType.isDefinition() ? wrapInTypingType(parameterizedRender) : parameterizedRender;
+  }
+
+  @Override
+  public HtmlChunk visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
+    // A named tuple is rendered by its class name, not by its field types (which are exposed as type arguments
+    // since it is a subtype of tuple[...]). Before PY-79063 it reached the non-parameterized visitPyClassType branch.
+    return visitPyClassLikeType(namedTupleType);
+  }
+
+  @Override
+  public HtmlChunk visitPyTypingNewType(@NotNull PyTypingNewType newType) {
+    // A NewType is rendered by its own name, not by the type arguments of the type it wraps (which it exposes
+    // through delegation). Before PY-79063 it reached the non-parameterized visitPyClassType branch.
+    return visitPyClassLikeType(newType);
+  }
+
+  private @NotNull HtmlChunk renderGenericType(@NotNull PyClassType genericType) {
+    HtmlBuilder result = new HtmlBuilder();
+    boolean renderTypeArgumentList = genericType.isParameterized();
+    String className = genericType.getName();
+    if (renderTypeArgumentList &&
+        !isGenericBuiltinsAvailable() &&
+        PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.containsKey(className)) {
+      className = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(className);
+      if (isRenderingFqn()) {
+        className = PyTypingTypeProvider.TYPING + "." + className;
+      }
+      result.append(className(className));
+    }
+    else {
+      result.append(classLink(genericType, isRenderingFqn() ? genericType.getClassQName() : className));
+    }
+    if (renderTypeArgumentList) {
+      result.append(styled("[", PyHighlighter.PY_BRACKETS));
+      result.append(renderList(ContainerUtil.map(genericType.getTypeArguments(), this::render)));
+      result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    }
+    return result.toFragment();
+  }
+
+  protected @NotNull HtmlChunk wrapInTypingType(@NotNull HtmlChunk instanceTypeRender) {
+    return new HtmlBuilder()
+      .append(isGenericBuiltinsAvailable() ? styled(isRenderingFqn() ? PyNames.FQN.TYPE : PyNames.TYPE, PyHighlighter.PY_BUILTIN_NAME) : //NON-NLS
+              escaped(isRenderingFqn() ? "typing.Type" : "Type")) //NON-NLS
+      .append(styled("[", PyHighlighter.PY_BRACKETS))
+      .append(instanceTypeRender)
+      .append(styled("]", PyHighlighter.PY_BRACKETS))
+      .toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyClassLikeType(@NotNull PyClassLikeType classLikeType) {
+    HtmlChunk classTypeRender = classLink(classLikeType, getTypeName(classLikeType));
+    return classLikeType.isDefinition() ? wrapInTypingType(classTypeRender) : classTypeRender;
+  }
+
+  @Override
+  public HtmlChunk visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
+    HtmlBuilder result = new HtmlBuilder();
+    if (narrowedType.getTypeIs()) {
+      result.append(styled(isRenderingFqn() ? "typing.TypeIs" : "TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
+    }
+    else {
+      result.append(styled(isRenderingFqn() ? "typing.TypeGuard" : "TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
+    }
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    result.append(render(narrowedType.getNarrowedType()));
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @Override
+  public HtmlChunk visitPyTypeFormType(@NotNull PyTypeFormType typeFormType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(styled(isRenderingFqn() ? "typing.TypeForm" : "TypeForm", PyHighlighter.PY_CLASS_DEFINITION));
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    result.append(render(typeFormType.getRepresentedType()));
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyNeverType(@NotNull PyNeverType neverType) {
+    return className(neverType.getName());
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyTopType(@NotNull PyTopType topType) {
+    return className(isRenderingFqn() ? PyNames.FQN.OBJECT : topType.getName());
+  }
+
+  @Override
+  public HtmlChunk visitPyUnionType(@NotNull PyUnionType unionType) {
+    if (isOptional(unionType)) {
+      return renderOptional(unionType);
+    }
+    // In bare mode literals aren't grouped under a single `Literal[...]`; each renders as its bare value and joins
+    // the union with the normal separator (`1 | 2` rather than `Literal[1, 2]`).
+    Pair<List<PyLiteralType>, List<PyType>> literalsAndOthers = isRenderingBareLiteral() ? null : extractLiterals(unionType);
+    if (literalsAndOthers != null) {
+      if (literalsAndOthers.second.isEmpty()) {
+        return renderUnionOfLiterals(literalsAndOthers.first);
+      }
+      return renderUnion(ContainerUtil.prepend(
+        ContainerUtil.map(literalsAndOthers.second, this::renderUnionMember),
+        renderUnionOfLiterals(literalsAndOthers.first)
+      ));
+    }
+    if (ContainerUtil.all(unionType.getMembers(), t -> t instanceof PyClassType ct && ct.isDefinition())) {
+      return wrapInTypingType(render(unionType.map(type -> type != null ? ((PyClassType)type).toInstance() : null)));
+    }
+    if (unionType.getMembers().stream().anyMatch(it -> isUnknown(it))) {
+      // Always put Unknown at the end of the union
+      return renderUnion(List.of(render(PyUnionType.unionOrUnknown(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)))), visitUnknownType()));
+    }
+    return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
+  }
+
+  private @NotNull HtmlChunk renderUnionMember(@Nullable PyType member) {
+    HtmlChunk rendered = render(member);
+    // Add parentheses around intersections in unions when using | & syntax for clarity: (A & B) | C instead of A & B | C
+    // Not needed for Union[...] syntax
+    if (member instanceof PyIntersectionType && isBitwiseOrUnionAvailable()) {
+      return new HtmlBuilder()
+        .append(styled("(", PyHighlighter.PY_PARENTHS))
+        .append(rendered)
+        .append(styled(")", PyHighlighter.PY_PARENTHS))
+        .toFragment();
+    }
+    return rendered;
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(escaped("UnsafeUnion")); //NON-NLS
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    result.append(renderList(ContainerUtil.map(unsafeUnionType.getMembers(), this::render)));
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  private @NotNull HtmlChunk renderUnionOfLiterals(@NotNull List<PyLiteralType> literals) {
+    return new HtmlBuilder()
+      .append(qualifiedNameLink(isRenderingFqn() ? PyTypingTypeProvider.LITERAL : "Literal", PyTypingTypeProvider.LITERAL)) //NON-NLS
+      .append(styled("[", PyHighlighter.PY_BRACKETS))
+      .append(StreamEx
+                .of(literals)
+                .map(PyLiteralType::getExpressionText)
+                .map(HtmlChunk::raw)
+                .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
+      .append(styled("]", PyHighlighter.PY_BRACKETS))
+      .toFragment();
+  }
+
+  private @NotNull HtmlChunk renderUnion(@NotNull List<HtmlChunk> renderedUnionMembers) {
+    HtmlBuilder result = new HtmlBuilder();
+    if (isBitwiseOrUnionAvailable()) {
+      result.append(renderList(renderedUnionMembers, " | "));
+    }
+    else {
+      result.append(escaped(isRenderingFqn() ? "typing.Union" : "Union")); //NON-NLS
+      result.append(styled("[", PyHighlighter.PY_BRACKETS));
+      result.append(renderList(renderedUnionMembers));
+      result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    }
+    return result.toFragment();
+  }
+
+  // TODO get rid of dedicated rendering for Optional
+  private @NotNull HtmlChunk renderOptional(@NotNull PyUnionType type) {
+    HtmlBuilder result = new HtmlBuilder();
+    if (isBitwiseOrUnionAvailable()) {
+      result.append(render(ContainerUtil.find(type.getMembers(), t -> !isNoneType(t))));
+      result.append(styled(" | ", PyHighlighter.PY_OPERATION_SIGN));
+      result.append(render(ContainerUtil.find(type.getMembers(), t -> isNoneType(t)))); //NON-NLS
+    }
+    else {
+      result.append(escaped(isRenderingFqn() ? "typing.Optional" : "Optional")); //NON-NLS
+      result.append(styled("[", PyHighlighter.PY_BRACKETS));
+      result.append(render(ContainerUtil.find(type.getMembers(), t -> !isNoneType(t))));
+      result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    }
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return renderList(ContainerUtil.map(intersectionType.getMembers(), member -> {
+      HtmlChunk rendered = render(member);
+      // Add parentheses around unions in intersections when using | & syntax for clarity: (A | B) & C instead of A | B & C
+
+      if (member instanceof PyUnionType && isBitwiseOrUnionAvailable()) {
+        return new HtmlBuilder()
+          .append(styled("(", PyHighlighter.PY_PARENTHS))
+          .append(rendered)
+          .append(styled(")", PyHighlighter.PY_PARENTHS))
+          .toFragment();
+      }
+      return rendered;
+    }), " & ");
+  }
+
+  private static @Nullable Pair<@NotNull List<PyLiteralType>, @NotNull List<PyType>> extractLiterals(@NotNull PyUnionType type) {
+    final Collection<PyType> members = type.getMembers();
+
+    final List<PyLiteralType> literalTypes = ContainerUtil.filterIsInstance(members, PyLiteralType.class);
+    if (literalTypes.size() < 2) return null;
+
+    final List<PyType> otherTypes = ContainerUtil.filter(members, m -> !(m instanceof PyLiteralType));
+
+    return Pair.create(literalTypes, otherTypes);
+  }
+
+  private static boolean isOptional(@NotNull PyUnionType type) {
+    return type.getMembers().size() == 2 && ContainerUtil.find(type.getMembers(), m -> isNoneType(m)) != null;
+  }
+
+  @Override
+  public HtmlChunk visitPyTupleType(@NotNull PyTupleType tupleType) {
+    HtmlBuilder result = new HtmlBuilder();
+    if (isGenericBuiltinsAvailable()) {
+      result.append(styled(isRenderingFqn() ? PyNames.FQN.TUPLE : PyNames.TUPLE, PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+    }
+    else {
+      result.append(escaped(isRenderingFqn() ? "typing.Tuple" : "Tuple")); //NON-NLS
+    }
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    if (!tupleType.getElementTypes().isEmpty()) {
+      result.append(renderList(ContainerUtil.map(tupleType.getElementTypes(), this::render)));
+      if (tupleType.isHomogeneous()) {
+        result.append(styled(", ", PyHighlighter.PY_COMMA));
+        result.append(styled("...", PyHighlighter.PY_DOT));
+      }
+    }
+    else {
+      result.append(styled("()", PyHighlighter.PY_PARENTHS));
+    }
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitAnyType() {
+    return qualifiedNameLink(isRenderingFqn() ? PyTypingTypeProvider.ANY : PyNames.ANY_TYPE, PyTypingTypeProvider.ANY);
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitUnknownType() {
+    if (PyAnyType.isEnabled()) {
+      return HtmlChunk.raw(PyNames.UNKNOWN_TYPE);
+    }
+    return visitAnyType();
+  }
+
+  @Override
+  public HtmlChunk visitPyType(@NotNull PyType type) {
+    return escaped(type.getName());
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyModuleType(@NotNull PyModuleType moduleType) {
+    // A module's name is its own (importable) qualified name, so it doubles as a navigable link target.
+    // Don't go through getTypeName(): under FQN rendering that resolves to the module's declaration element,
+    // which is the `types.ModuleType` class rather than the module itself.
+    String name = moduleType.getName();
+    return StringUtil.isEmpty(name) ? escaped(name) : qualifiedNameLink(name, name);
+  }
+
+  @NotNull HtmlChunk describeTypeParameterList(
+    @NotNull PyTypeParameterListOwner typeParameterListOwner,
+    boolean showVariance,
+    Function4<PyType, PyTypedElement, PsiElement, TypeEvalContext, HtmlChunk> renderer,
+    @NotNull TypeEvalContext context
+  ) {
+    var typeParameterList = typeParameterListOwner.getTypeParameterList();
+    if (typeParameterList == null) return HtmlChunk.empty();
+    var typeParameters = typeParameterList.getTypeParameters();
+    if (typeParameters.isEmpty()) return HtmlChunk.empty();
+
+    var result = new HtmlBuilder();
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    boolean firstTypeParam = true;
+    for (PyTypeParameter typeParam : typeParameters) {
+      if (!firstTypeParam) {
+        result.append(styled(", ", PyHighlighter.PY_COMMA));
+      }
+      result.append(describeTypeParameter(typeParam, typeParam, showVariance, false, renderer, context));
+      firstTypeParam = false;
+    }
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @NotNull HtmlChunk describeTypeParameterList(@NotNull List<? extends PyTypeParameterType> typeParameters) {
+    if (typeParameters.isEmpty()) return HtmlChunk.empty();
+
+    var result = new HtmlBuilder();
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    boolean first = true;
+    for (PyTypeParameterType typeParam : typeParameters) {
+      if (!first) {
+        result.append(styled(", ", PyHighlighter.PY_COMMA));
+      }
+      result.append(describeTypeParameter(typeParam));
+      first = false;
+    }
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  static @Nullable PyTypedElement findReferenceOrTypeParameter(@Nullable PsiElement originalElement) {
+    if (originalElement == null) return null;
+    if (originalElement instanceof PyTypeParameter typeParam) return typeParam;
+    if (originalElement instanceof PyReferenceExpression refExpr) return refExpr;
+    if (originalElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
+    if (originalElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
+    PsiElement prevElement = PsiTreeUtil.prevLeaf(originalElement, true);
+    if (prevElement == null) return null;
+    if (prevElement.getParent() instanceof PyTypeParameter typeParam) return typeParam;
+    if (prevElement instanceof PyReferenceExpression refExpr) return refExpr;
+    if (prevElement.getParent() instanceof PyReferenceExpression refExpr) return refExpr;
+    return null;
+  }
+
+  @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
+                                           @Nullable PsiElement originalElement,
+                                           boolean showVariance,
+                                           boolean showKind,
+                                           Function4<PyType, PyTypedElement, PsiElement, TypeEvalContext, HtmlChunk> renderer,
+                                           @NotNull TypeEvalContext context) {
+    PyVariance variance = null;
+    if (showVariance) {
+      PyTypedElement refExpr = findReferenceOrTypeParameter(originalElement);
+      boolean effectivelyInvariant = isEffectivelyInvariant(refExpr, context);
+      variance = effectivelyInvariant
+                 ? PyVariance.INVARIANT
+                 : PyInferredVarianceJudgment.getDeclaredOrInferredVariance(refExpr, context);
+    }
+    PyExpression boundExpression = typeParameter.getBoundExpression();
+    Ref<PyType> boundExprTR = boundExpression == null ? null : PyTypingTypeProvider.getType(boundExpression, context);
+    HtmlChunk bound = boundExprTR != null && boundExprTR.get() != null
+                      ? renderer.invoke(boundExprTR.get(), boundExpression, boundExpression, context)
+                      : null;
+    PyExpression defaultExpr = typeParameter.getDefaultExpression();
+    Ref<PyType> defaultExprTR = defaultExpr == null ? null : PyTypingTypeProvider.getType(defaultExpr, context);
+    HtmlChunk defaultValue = defaultExprTR != null && defaultExprTR.get() != null
+                             ? renderer.invoke(defaultExprTR.get(), defaultExpr, defaultExpr, context)
+                             : null;
+    return describeTypeParameter(variance, StringUtil.notNullize(typeParameter.getName()), bound, defaultValue, typeParameter.getKind(),
+                                 showKind);
+  }
+
+  @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameterType typeParameter) {
+    var bound = typeParameter instanceof PyTypeVarType typeVar ? typeVar.getBound() : PyAnyType.getUnknown();
+    var defaultTypeRef = typeParameter.getDefaultType();
+    var defaultType = defaultTypeRef != null ? defaultTypeRef.get() : null;
+    // PyTypeParameterTypes have the stars in the name but PyTypeParameters don't
+    String name = typeParameter.getName().replaceFirst("\\*+", "");
+    HtmlChunk renderedBound = !isAnyOrUnknown(bound) ? render(bound) : null;
+    HtmlChunk renderedType = defaultType != null ? render(defaultType) : null;
+    PyAstTypeParameter.Kind parameterKind = switch (typeParameter) {
+      case PyTypeVarType ignored -> PyTypeParameter.Kind.TypeVar;
+      case PyTypeVarTupleType ignored -> PyTypeParameter.Kind.TypeVarTuple;
+      case PyParamSpecType ignored -> PyTypeParameter.Kind.ParamSpec;
+      default -> null;
+    };
+    return describeTypeParameter(null, name, renderedBound, renderedType, parameterKind, false);
+  }
+
+  private @NotNull HtmlChunk describeTypeParameter(
+    @Nullable PyVariance variance,
+    @Nls @NotNull String name,
+    @Nullable HtmlChunk bound,
+    @Nullable HtmlChunk defaultValue,
+    @Nullable PyTypeParameter.Kind kind,
+    boolean showKind
+  ) {
+    var result = new HtmlBuilder();
+    if (variance != null) {
+      String varianceStr = switch (variance) {
+        case INFER_VARIANCE -> null;
+        case COVARIANT -> "out "; //NON-NLS
+        case CONTRAVARIANT -> "in "; //NON-NLS
+        case INVARIANT -> "invariant "; //NON-NLS
+        case BIVARIANT -> "bivariant "; //NON-NLS
+      };
+      if (varianceStr != null) {
+        result.append(styled(varianceStr, PyHighlighter.PY_KEYWORD));
+      }
+    }
+    var prefix = switch (kind) {
+      case null -> null;
+      case TypeVar -> null;
+      case TypeVarTuple -> "*";
+      case ParamSpec -> "**";
+    };
+    if (prefix != null) {
+      result.append(prefix);
+    }
+    result.append(styled(name, PyHighlighter.PY_TYPE_PARAMETER));
+    if (bound != null) {
+      result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+      result.append(styled(bound, PyHighlighter.PY_ANNOTATION));
+    }
+    if (defaultValue != null) {
+      result.append(styled(" = ", PyHighlighter.PY_OPERATION_SIGN));
+      result.append(styled(defaultValue, PyHighlighter.PY_ANNOTATION));
+    }
+    if (showKind && kind != null) {
+      result
+        .append(", ")
+        .append(PyPsiBundle.message("QDOC.type.parameter.kind"))
+        .append(" ")
+        .append(styled(kind.name(), PyHighlighter.PY_ANNOTATION)); //NON-NLS
+    }
+    return result.toFragment();
+  }
+
+  @Override
+  public HtmlChunk visitPyCallableType(@NotNull PyCallableType callableType) {
+    HtmlBuilder result = new HtmlBuilder();
+    var typeParameters = callableType.getTypeParameters(myTypeEvalContext);
+    if (typeParameters != null) {
+      result.append(describeTypeParameterList(typeParameters));
+    }
+    result.append(styled("(", PyHighlighter.PY_PARENTHS));
+    List<PyCallableParameter> parameters = callableType.getParameters(myTypeEvalContext);
+    if (parameters != null) {
+      result.append(renderList(ContainerUtil.map(parameters, this::visitPyCallableParameter)));
+    }
+    else {
+      result.append(styled("...", PyHighlighter.PY_DOT));
+    }
+    result.append(styled(")", PyHighlighter.PY_PARENTHS));
+    result.append(escaped(" -> "));
+    result.append(render(callableType.getReturnType(myTypeEvalContext)));
+    return result.toFragment();
+  }
+
+  @NotNull
+  protected HtmlChunk visitPyCallableParameter(@NotNull PyCallableParameter param) {
+    HtmlBuilder result = new HtmlBuilder();
+    if (param.isPositionOnlySeparator()) {
+      result.append(escaped(PyAstSlashParameter.TEXT));
+    }
+    else if (param.isKeywordOnlySeparator()) {
+      result.append(escaped(PyAstSingleStarParameter.TEXT));
+    }
+    else if (param.isPositionalContainer() || param.isKeywordContainer()) {
+      PyType type = param.getArgumentType(myTypeEvalContext);
+      if (param.getName() != null) {
+        result.append(escaped(param.isPositionalContainer() ? "*" : "**"));
+        result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
+        if (!isAnyOrUnknown(type)) {
+          result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+          result.append(render(type));
+        }
+      }
+      else {
+        result.append(render(type));
+      }
+    }
+    else {
+      PyType type = param.getType(myTypeEvalContext);
+      // TODO remove that
+      if (!(type instanceof PyParamSpecType) && !(type instanceof PyConcatenateType)) {
+        if (param.getName() != null) {
+          result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
+          result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+        }
+      }
+      result.append(render(type));
+    }
+    return result.toFragment();
+  }
+
+  protected @NotNull HtmlChunk renderList(@NotNull Collection<HtmlChunk> list) {
+    return renderList(list, ", ");
+  }
+
+  protected @NotNull HtmlChunk renderList(@NotNull Collection<HtmlChunk> list, @NotNull @Nls String separator) {
+    return StreamEx.of(list).collect(HtmlChunk.toFragment(switch (separator) {
+      case ", " -> {
+        yield styled(separator, PyHighlighter.PY_COMMA);
+      }
+      case " | ", " & " -> {
+        yield styled(separator, PyHighlighter.PY_OPERATION_SIGN);
+      }
+      default -> {
+        yield escaped(separator);
+      }
+    }));
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(escaped(getTypeName(typeParameterType)));
+    if (isRenderingTypeVarBounds()) {
+      var effectiveBound = typeParameterType.getEffectiveBound();
+      if (!isUnknown(effectiveBound)) {
+        result.append(escaped(" ≤: "));
+        result.append(render(effectiveBound));
+      }
+    }
+    if (typeParameterType instanceof PyTypeVarType typeVarType && typeVarType.isDefinition()) {
+      return wrapInTypingType(result.toFragment());
+    }
+    return result.toFragment();
+  }
+
+  @Override
+  public HtmlChunk visitPyUnpackedTupleType(@NotNull PyUnpackedTupleType unpackedTupleType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append("*");
+    result.append(styled(isRenderingFqn() ? "builtins.tuple" : "tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+    result.append(styled("[", PyHighlighter.PY_BRACKETS));
+    if (unpackedTupleType.isUnbound()) {
+      result.append(render(unpackedTupleType.getElementTypes().getFirst()));
+      result.append(styled(", ", PyHighlighter.PY_COMMA));
+      result.append(styled("...", PyHighlighter.PY_DOT));
+    }
+    else {
+      result.append(renderList(ContainerUtil.map(unpackedTupleType.getElementTypes(), this::render)));
+    }
+    result.append(styled("]", PyHighlighter.PY_BRACKETS));
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
+    // Don't render Self as a type parameter
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(className(isRenderingFqn() ? "typing.Self" : "Self")); //NON-NLS
+    builder.append("@");
+    builder.append(render(selfType.getScopeClassType().toInstance()));
+    return selfType.isDefinition() ? wrapInTypingType(builder.toFragment()) : builder.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyCallableParameterListType(@NotNull PyCallableParameterListType callableParameterListType) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append("[");
+    result.append(renderList(ContainerUtil.map(callableParameterListType.getParameters(), this::visitPyCallableParameter)));
+    result.append("]");
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyLiteralType(@NotNull PyLiteralType literalType) {
+    HtmlBuilder result = new HtmlBuilder();
+    // Bare mode drops the redundant `Literal[...]` wrapper and shows just the value (`1`, `'a'`, `Color.RED`).
+    boolean bare = isRenderingBareLiteral();
+    if (!bare) {
+      result.append(qualifiedNameLink(isRenderingFqn() ? PyTypingTypeProvider.LITERAL : "Literal", PyTypingTypeProvider.LITERAL)); //NON-NLS
+      result.append("[");
+    }
+    @Nullable String classQName = literalType.getClassQName();
+    if (isRenderingFqn() && classQName != null && literalType.getEnumMemberName() != null) {
+      result.append(classQName);
+      result.append(".");
+      result.append(literalType.getEnumMemberName());
+    }
+    else {
+      result.appendRaw(literalType.getExpressionText()); // append raw since the literal can include quotes: Literal["foo"]
+    }
+    if (!bare) {
+      result.append("]");
+    }
+    return literalType.isDefinition() ? wrapInTypingType(result.toFragment()) : result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+    var result = new HtmlBuilder();
+    result.append(overloadType.getName());
+    result.append("[");
+    result.append(renderList(ContainerUtil.map(overloadType.getItems(), this::render)));
+    result.append("]");
+    return result.toFragment();
+  }
+
+  protected final @Nullable @NlsSafe String getTypeName(@NotNull PyType type) {
+    if (isNoneType(type)) {
+      return PyNames.NONE;
+    }
+    if (isRenderingFqn()) {
+      PyQualifiedNameOwner declarationElement = type.getDeclarationElement();
+      if (declarationElement != null) {
+        return declarationElement.getQualifiedName();
+      }
+      if (type instanceof PyClassLikeType classLikeType) {
+        return classLikeType.getClassQName();
+      }
+      return null;
+    }
+    return type.getName();
+  }
+}

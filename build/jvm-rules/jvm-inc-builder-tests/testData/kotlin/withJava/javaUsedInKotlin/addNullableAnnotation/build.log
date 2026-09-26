@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addNullableAnnotation/a/Base.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_addNullableAnnotation-a.kotlin_module
+  Usage.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/addNullableAnnotation/a/Usage.kt
+End of files
+------------------------------------------
+Exit code: ERROR

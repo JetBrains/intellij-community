@@ -1,0 +1,244 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.jetbrains.kotlin</id>
+  <name>Kotlin</name>
+  <category>Languages</category>
+  <description><![CDATA[
+    Provides language support for Kotlin, a modern programming language designed to make developers happier.
+    <br><br>
+    <a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started</a><br>
+    <a href="https://slack.kotlinlang.org/">Public Slack</a><br>
+    <a href="https://youtrack.jetbrains.com/issues/KTIJ">Issue tracker</a><br>
+  ]]></description>
+  <!--suppress PluginXmlValidity -->
+  <version>@snapshot@</version>
+
+  <!--suppress PluginXmlValidity -->
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+
+  <module value="com.intellij.modules.kotlin"/>
+  <dependencies>
+    <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.kotlin.highlighting.minimal" loading="required"/>
+    <module name="intellij.kotlin.formatter.minimal" loading="required"/>
+    <module name="intellij.kotlin.base.codeInsight.minimal" loading="required"/>
+    <module name="intellij.kotlin.base.resources" loading="required"/>
+
+    <module name="intellij.kotlin.frontend.split" required-if-available="intellij.platform.frontend.split.base"/>
+    <module name="intellij.kotlin.frontend.client.split" required-if-available="intellij.platform.frontend.split"/>
+
+    <module name="intellij.kotlin.formatter" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.projectModel" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.analysis.platform" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.externalSystem" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.analysis.platform" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.projectStructure" required-if-available="intellij.platform.backend"/>
+    <!--
+      Contains the VCS-backed diff browser for automatic project-configuration changes.
+      Keep it out of the Language Server plugin content: LS needs the configurator, not the VCS Changes UI implementation.
+    -->
+    <module name="intellij.kotlin.projectConfiguration.vcs" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.scripting" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.copyright"/>
+    <module name="intellij.kotlin.coverage"/>
+    <module name="intellij.kotlin.i18n"/>
+    <module name="intellij.kotlin.git"/>
+    <module name="intellij.kotlin.grazie"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.lombok"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.completion.ml"/>
+    <module name="intellij.kotlin.runConfigurations.junit"/>
+    <module name="intellij.kotlin.runConfigurations.testng"/>
+    <module name="intellij.kotlin.runConfigurations.jvm" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.codeInsight.groovy"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="intellij.kotlin.gradle.java"/>
+    <module name="intellij.kotlin.gradle.scripting"/>
+
+    <module name="intellij.kotlin.onboarding" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.onboarding.maven"/>
+
+    <module name="intellij.kotlin.projectWizard.cli"/>
+    <module name="intellij.kotlin.projectWizard.core"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="intellij.kotlin.projectWizard.gradle"/>
+    <module name="intellij.kotlin.projectWizard.maven"/>
+    <module name="intellij.kotlin.projectWizard.compose"/>
+
+    <module name="intellij.kotlin.featuresTrainer"/>
+
+    <module name="intellij.kotlin.jvm.decompiler"/>
+
+    <module name="kotlin.jvm.shared" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.base.scripting" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.scripting.main.kts" loading="optional"/>
+    <module name="intellij.kotlin.base.scripting.scratch.definition" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.scripting.scratch"/>
+
+    <module name="intellij.kotlin.codeInsight.fixes" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.intentions" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.inspections" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.liveTemplates" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.postfixTemplates" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.structuralSearch"/>
+
+    <module name="intellij.kotlin.completion.impl" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.jvm.debugger.evaluation" required-if-available="intellij.platform.backend"/>
+    <module name="kotlin.jvm-debugger.evaluation" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.searching" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.refactorings" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.refactorings.rename" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.navigation" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.lineMarkers" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.highlighting" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
+
+    <module name="intellij.kotlin.compilerPlugins.assignment.fixes"/>
+    <module name="intellij.kotlin.compilerPlugins.scripting"/>
+    <module name="intellij.kotlin.compilerPlugins.support.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.kapt"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.powerAssert.gradle"/>
+
+    <module name="intellij.kotlin.injection" required-if-available="intellij.platform.backend"/>
+    <module name="kotlin.base.injection" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.j2k" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.j2k.mcp"/>
+    <module name="intellij.kotlin.internal" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.performanceExtendedPlugin"/>
+    <module name="intellij.kotlin.base.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.analysis.utils" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.codeInsight" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.kotlin.codeInsight.api" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.descriptions" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.utils" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.shared" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.completion.api" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.compilerPlugins.support.bundled" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.compilerPlugins.support" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.overrideImplement" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.projectConfiguration" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.compilerPlugins.parcelize" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.spellchecker" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.uast.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.uast.idea.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.uast" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.uast.idea" required-if-available="intellij.platform.backend"/>
+    <module name="kotlin.fir" required-if-available="intellij.platform.backend"/>
+    <module name="kotlin.fir.frontend-independent" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.searching.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.refactorings.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.jvm.debugger.base.util" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.jvm.debugger.coroutines"/>
+    <module name="intellij.kotlin.jvm.debugger.core" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.jvm.debugger.eval4j" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.plugin.updater" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.preferences" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.references" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.util" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.compilerConfiguration" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.plugin" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.compilerConfiguration.ui" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.native" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.platforms" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.jps" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.kdoc" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.indices" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.psi" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.projectStructure" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.facet" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.base.serialization" required-if-available="intellij.platform.backend"/>
+    <module name="kotlin.scripting" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.ide" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.migration"/>
+    <module name="intellij.kotlin.base.statistics" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.kotlin.codeInsight.vcs"/>
+    <module name="intellij.libraries.kotlinc.analysis.api" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.impl.base" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.k2" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.analysis.api.platform.interface" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.scripting.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.assignment.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.allopen.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.noarg.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.sam.with.receiver.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.lombok.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.compose.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.js.plain.objects.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.parcelize.compiler.plugin" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.low.level.api.fir" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.dependencies" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.jps.common" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fe10" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.ir" loading="embedded"/>
+    <!-- The Kotlin Scripting Support plugin declares the same public module. That plugin is incompatible with this one,
+         so only one of the two copies can load. Any plugin can then depend on this module id, with or without Kotlin. -->
+    <module name="intellij.kotlin.buildToolsRuntime" loading="embedded"/>
+    <module name="intellij.libraries.kotlin.tooling.core" loading="embedded"/>
+
+    <!-- ultimate part -->
+    <module name="intellij.kotlin.ultimate.common.native" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.native.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.javascript.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.javascript.nodeJs" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.wasm.debugger" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.native" loading="optional"/>
+    <module name="intellij.kotlin.ultimate.profiler" loading="optional"/>
+    <module name="intellij.kotlin.duplicate.scope" loading="optional"/>
+
+    <module name="intellij.debugger.jvm.advanced.kotlin" loading="optional"/>
+    <module name="intellij.debugger.logpoints.kotlin" loading="optional"/>
+  </content>
+  <content>
+    <module name="intellij.platform.commercial.verifier" loading="optional"/>
+    <module name="intellij.libraries.completion.ranking.kotlin" required-if-available="intellij.platform.backend"/>
+    <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
+    <module name="intellij.kotlin.jsr223" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
+  </content>
+  <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
+</idea-plugin>

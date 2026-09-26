@@ -1,4 +1,4 @@
-<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation"><info descr="null" textAttributesKey="Annotation">Annotation</info></info>(<info descr="null" textAttributesKey="Anotation attribute name">parameter</info> = 'value')
+<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation">Annotation</info>(<info descr="null" textAttributesKey="Anotation attribute name">parameter</info> = 'value')
 class <info descr="null" textAttributesKey="Class">C</info> {
   <info descr="null" textAttributesKey="Groovy constructor declaration">C</info>() {
     this(1, 2)
@@ -32,6 +32,23 @@ class <info descr="null" textAttributesKey="Class">C</info> {
     def <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info> = null
     <info descr="null" textAttributesKey="Groovy reassigned parameter">reassignedParam</info> = <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info>
     <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info> = <info descr="null" textAttributesKey="Groovy reassigned parameter">reassignedParam</info>
+    <info descr="null" textAttributesKey="Closure braces">{</info>
+      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info> <info descr="null" textAttributesKey="Closure braces">-></info>
+      <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info> = ""
+      <info descr="null" textAttributesKey="Method call">print</info> <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info>
+    <info descr="null" textAttributesKey="Closure braces">}</info> (1)
+    <info descr="null" textAttributesKey="Closure braces">{</info>
+      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy parameter">param</info> <info descr="null" textAttributesKey="Closure braces">-></info> <info descr="null" textAttributesKey="Groovy parameter">param</info>
+    <info descr="null" textAttributesKey="Closure braces">}</info> (2)
+
+    if (true) {
+      def <info descr="null" textAttributesKey="Groovy var">a</info> = 1
+      <info descr="null" textAttributesKey="Method call">print</info> <info descr="null" textAttributesKey="Groovy var">a</info>
+    } else {
+      def <info descr="null" textAttributesKey="Groovy reassigned var">a</info> = 2
+      <info descr="null" textAttributesKey="Groovy reassigned var">a</info>++
+      <info descr="null" textAttributesKey="Method call">print</info> <info descr="null" textAttributesKey="Groovy reassigned var">a</info>
+    }
   }
 
   void 'method with literal name'() {}
@@ -83,6 +100,7 @@ def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr
 class <info descr="null" textAttributesKey="Class">Outer</info> {
   def <info descr="null" textAttributesKey="Groovy method declaration">getThis</info>() {}
   def <info descr="null" textAttributesKey="Groovy method declaration">getSuper</info>() {}
+  def <info descr="null" textAttributesKey="Groovy method declaration">getDef</info>() {}
 
   class <info descr="null" textAttributesKey="Class">Inner</info> {
     def <info descr="null" textAttributesKey="Groovy method declaration">foo</info>() {
@@ -97,3 +115,10 @@ class <info descr="null" textAttributesKey="Class">Outer</info> {
 def <info descr="null" textAttributesKey="Groovy var">outer</info> = new <info descr="null" textAttributesKey="Class">Outer</info>()
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">this</info>
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">super</info>
+<info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">def</info>
+
+<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation">Newify</info>(<info descr="null" textAttributesKey="Class">C</info>)
+      def <info descr="null" textAttributesKey="Groovy method declaration">foo</info>() {
+  def <info descr="null" textAttributesKey="Groovy var">a</info> = <info descr="null" textAttributesKey="Groovy constructor call">C</info>()
+  def <info descr="null" textAttributesKey="Groovy var">b</info> = <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Groovy constructor call">new</info>(1, 2)
+}

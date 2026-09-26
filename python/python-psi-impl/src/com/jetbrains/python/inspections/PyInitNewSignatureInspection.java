@@ -1,0 +1,100 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.inspections;
+
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+/**
+ * Detect and report incompatibilities between __new__ and __init__ signatures.
+ */
+public final class PyInitNewSignatureInspection extends PyInspection {
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
+  }
+
+  public static class Visitor extends PyInspectionVisitor {
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
+    }
+
+    @Override
+    public void visitPyFunction(@NotNull PyFunction node) {
+      final PyClass cls = PyUtil.turnConstructorIntoClass(node);
+      if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
+
+      final List<PyFunction> complementaryMethods = PyConstructorSignatureUtil.findComplementaryConstructors(node, myTypeEvalContext);
+
+      for (PyFunction complementaryMethod : complementaryMethods) {
+        if (matchSignatures(node, complementaryMethod) || matchSignatures(complementaryMethod, node)) {
+          return;
+        }
+      }
+
+      if (complementaryMethods.size() == 1) {
+        registerIncompatibilityProblem(node, complementaryMethods.getFirst(),
+                                       PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(node, complementaryMethods.getFirst()));
+      }
+      else if (!complementaryMethods.isEmpty()) {
+        // More than one complementary signature (overloads): there is no single signature to diff against, so report
+        // the incompatibility without the structural diff rather than comparing to an arbitrary one.
+        registerIncompatibilityProblem(node, null, null);
+      }
+    }
+
+    private boolean matchSignatures(@NotNull PyFunction current, @NotNull PyFunction other) {
+      List<PyCallableParameter> currentParameters = current.getParameters(myTypeEvalContext);
+      List<PyCallableParameter> otherParameters = other.getParameters(myTypeEvalContext);
+
+      var currentInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(currentParameters));
+      var otherInputSignature = new PyCallableParameterListTypeImpl(ParamHelper.dropSelf(otherParameters));
+
+      return PyTypeChecker.match(currentInputSignature, otherInputSignature, myTypeEvalContext);
+    }
+
+
+    private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable PyFunction other, @Nullable LocalQuickFix quickFix) {
+      final PyParameterList parameterList = function.getParameterList();
+      final String description = PyPsiBundle.message(PyUtil.isNewMethod(function) ? "INSP.new.incompatible.to.init"
+                                                                                  : "INSP.init.incompatible.to.new");
+      // No single complementary signature to compare against: keep the plain message (no aligned diff or breakdown).
+      if (other == null) {
+        if (quickFix != null) registerProblem(parameterList, description, quickFix);
+        else registerProblem(parameterList, description);
+        return;
+      }
+      final List<PyCallableParameter> functionParams = ParamHelper.dropSelf(function.getParameters(myTypeEvalContext));
+      final List<PyCallableParameter> otherParams = ParamHelper.dropSelf(other.getParameters(myTypeEvalContext));
+      // The aligned parameter diff with the assignability breakdown appended below it on-the-fly.
+      final String diff = PyTypeDiff.paramsDiffTooltip(otherParams, functionParams, HtmlChunk.text(description), myTypeEvalContext);
+      final ProblemMessage message = new ProblemMessage(description, diff);
+      final PyCallableParameterListTypeImpl otherSignature = new PyCallableParameterListTypeImpl(otherParams);
+      final PyCallableParameterListTypeImpl functionSignature = new PyCallableParameterListTypeImpl(functionParams);
+      final LocalQuickFix[] fixes = quickFix != null ? new LocalQuickFix[]{quickFix} : LocalQuickFix.EMPTY_ARRAY;
+      registerProblemWithTooltip(parameterList, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes,
+                                 () -> PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, otherSignature, functionSignature, myTypeEvalContext, parameterList));
+    }
+  }
+}

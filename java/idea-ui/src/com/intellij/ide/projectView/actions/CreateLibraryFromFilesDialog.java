@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -37,39 +24,38 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;
   private final Project myProject;
-  private final List<OrderRoot> myRoots;
+  private final List<? extends OrderRoot> myRoots;
   private final JPanel myPanel;
   private final String myDefaultName;
 
-  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
+  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
-    setTitle("Create Library");
+    setTitle(JavaUiBundle.message("dialog.title.create.library"));
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
     myDefaultName =
       LibrariesContainerFactory.createContainer(project).suggestUniqueLibraryName(LibraryTypeServiceImpl.suggestLibraryName(roots));
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()),
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, new ArrayList<>(Arrays.asList(LibrariesContainer.LibraryLevel.values())),
                                                        LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
     myModulesComboBox = new ModulesComboBox();
     myModulesComboBox.fillModules(myProject);
     myModulesComboBox.setSelectedModule(findModule(roots));
-    builder.addLabeledComponent("&Add to module:", myModulesComboBox);
+    builder.addLabeledComponent(JavaUiBundle.message("label.add.to.module"), myModulesComboBox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
     myNameAndLevelPanel.getLevelComboBox().addActionListener(new ActionListener() {
@@ -80,7 +66,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     });
     myNameAndLevelPanel.getLibraryNameField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateOkAction();
       }
     });
@@ -105,16 +91,15 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     updateOkAction();
   }
 
-  @Nullable
-  private Module findModule(List<OrderRoot> roots) {
+  private @Nullable Module findModule(List<? extends OrderRoot> roots) {
     for (OrderRoot root : roots) {
       Module module = null;
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());
       if (local != null) {
-        module = ModuleUtil.findModuleForFile(local, myProject);
+        module = ModuleUtilCore.findModuleForFile(local, myProject);
       }
       if (module == null) {
-        module = ModuleUtil.findModuleForFile(root.getFile(), myProject);
+        module = ModuleUtilCore.findModuleForFile(root.getFile(), myProject);
       }
       if (module != null) {
         return module;

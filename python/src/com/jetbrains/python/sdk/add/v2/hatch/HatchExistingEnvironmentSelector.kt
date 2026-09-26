@@ -1,0 +1,100 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.add.v2.hatch
+
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.platform.util.progress.withProgressText
+import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.hatch.resolveHatchWorkingDirectory
+import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.hatch.sdk.createSdk
+import com.jetbrains.python.isSuccess
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.onSuccess
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
+import com.jetbrains.python.sdk.add.v2.toStatisticsField
+import com.jetbrains.python.sdk.destructured
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+internal class HatchExistingEnvironmentSelector<P : PathHolder>(
+  override val model: PythonMutableTargetAddInterpreterModel<P>,
+) : PythonExistingEnvironmentConfigurator<P>(model) {
+  val interpreterType: InterpreterType = InterpreterType.HATCH
+
+  private lateinit var hatchFormFields: HatchFormFields<P>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    model.fileSystem.persistCustomToolPath(pathHolder, HatchPyTool.getInstance())
+  }
+
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    hatchFormFields = panel.buildHatchFormFields(
+      model = model,
+      validationRequestor = validationRequestor,
+      isGenerateNewMode = false,
+    )
+  }
+
+  override fun onShown(scope: CoroutineScope) {
+    hatchFormFields.onShown(scope, model, isFilterOnlyExisting = true)
+  }
+
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    val environment = model.hatchViewModel.selectedEnvFromExisting.get()
+    val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing<P>
+                            ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
+
+    val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
+      model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)
+        ?.takeIf { model.fileSystem.validateExecutable(it).isSuccess }
+        ?.toString()
+    } ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
+
+    val existingSdk = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }
+    val result = when {
+      existingSdk != null -> Result.success(existingSdk)
+      else -> {
+        val (project, module) = moduleOrProject.destructured
+        val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
+        withProgressText(message("python.sdk.progress.hatch.configuring")) {
+          environment.createSdk(
+            workingDirectoryPath = workingDirectory,
+            fileSystem = model.fileSystem,
+            targetPanelExtension = model.state.targetPanelExtension.get(),
+          )
+        }
+      }
+    }
+
+    return result
+  }
+
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = target.toStatisticsField()
+    return InterpreterStatisticsInfo(
+      type = InterpreterType.HATCH,
+      target = statisticsTarget,
+      globalSitePackage = false,
+      makeAvailableToAllProjects = false,
+      previouslyConfigured = true,
+      isWSLContext = false,
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
+  }
+}

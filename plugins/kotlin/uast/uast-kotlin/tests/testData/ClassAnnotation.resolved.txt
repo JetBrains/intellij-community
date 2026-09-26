@@ -1,0 +1,6 @@
+UAnnotation (fqName = null) -> USimpleNameReferenceExpression (identifier = Test) -> null: null
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightClassForAnnotationClass: MyAnnotation
+UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightClassForAnnotationClass: MyAnnotation
+UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightClassForAnnotationClass: MyAnnotation
+UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> SymbolLightClassForAnnotationClass: MyAnnotation

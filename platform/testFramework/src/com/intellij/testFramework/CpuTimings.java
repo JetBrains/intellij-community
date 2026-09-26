@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.MathUtil;
+import com.intellij.util.TimeoutUtil;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -23,12 +11,11 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
-import java.util.stream.LongStream;
 
-/**
- * @author peter
- */
-class CpuTimings {
+final class CpuTimings {
+  private static final Logger LOG = Logger.getInstance(CpuTimings.class);
+
+  private static final Mandelbrot MANDELBROT = new Mandelbrot(765);
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static long calcStableCpuTiming() {
@@ -37,26 +24,68 @@ class CpuTimings {
     long minTime = Integer.MAX_VALUE;
     long minIteration = -1;
 
-    StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
-      long time = calcCpuTiming(CpuTimings::addBigIntegers);
+      long time = TimeoutUtil.measureExecutionTime(MANDELBROT::compute);
       if (time < minTime) {
-        //noinspection StringConcatenationInsideStringBufferAppend
-        //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
         minIteration = i;
       }
       else if (i - minIteration > 100) {
-        System.out.println(log + "CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
+        LOG.debug("CPU timing rating: " + minTime + " (calculated in " + (System.currentTimeMillis() - start) + "ms)");
         return minTime;
       }
     }
   }
 
-  private static long calcCpuTiming(Runnable oneIteration)  {
-    long start = System.currentTimeMillis();
-    oneIteration.run();
-    return System.currentTimeMillis() - start;
+  private static class Mandelbrot {
+    private static final double LIMIT_SQUARED = 4.0;
+    private static final int ITERATIONS = 50;
+
+    Mandelbrot(int size) {
+      this.size = size;
+      fac = 2.0 / size;
+
+      int offset = size % 8;
+      shift = offset == 0 ? 0 : (8 - offset);
+    }
+
+    final int size;
+    final double fac;
+    final int shift;
+
+    void compute() {
+      int t = 0;
+      for (int y = 0; y < size; y++) {
+        t += computeRow(y);
+      }
+      if (t == 0) {
+        throw new AssertionError();
+      }
+    }
+
+    private int computeRow(int y) {
+      int count = 0;
+
+      for (int x = 0; x < size; x++) {
+        double Zr = 0.0;
+        double Zi = 0.0;
+        double Cr = (x * fac - 1.5);
+        double Ci = (y * fac - 1.0);
+
+        int i = ITERATIONS;
+        double ZrN = 0;
+        double ZiN = 0;
+        do {
+          Zi = 2.0 * Zr * Zi + Ci;
+          Zr = ZrN - ZiN + Cr;
+          ZiN = Zi * Zi;
+          ZrN = Zr * Zr;
+        } while (!(ZiN + ZrN > LIMIT_SQUARED) && --i > 0);
+
+        if (i == 0) count++;
+      }
+      return count;
+    }
   }
 
   private static void addBigIntegers() {
@@ -87,7 +116,7 @@ class CpuTimings {
     }
     int k = 241;
     for (int i = 0; i < 5_750_000; i++) {
-      k *= array[Math.abs(k) % array.length];
+      k *= array[MathUtil.nonNegativeAbs(k) % array.length];
     }
     ensureOdd(k);
   }
@@ -133,7 +162,6 @@ class CpuTimings {
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     for (int i = 0; i < 20; i++) {
       // each line can be uncommented alone, to check the results of different benchmarks

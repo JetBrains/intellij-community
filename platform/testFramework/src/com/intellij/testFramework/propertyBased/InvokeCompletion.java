@@ -18,23 +18,34 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -45,23 +56,29 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author peter
- */
 public class InvokeCompletion extends ActionOnFile {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
+  private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
   private final CompletionPolicy myPolicy;
 
-  public InvokeCompletion(PsiFile file, CompletionPolicy policy) {
+  public InvokeCompletion(@NotNull PsiFile file, @NotNull CompletionPolicy policy) {
     super(file);
     myPolicy = policy;
   }
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Invoke basic completion at " + MadTestingUtil.getPositionDescription(offset, getDocument()));
+
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, env);
@@ -110,9 +127,9 @@ public class InvokeCompletion extends ActionOnFile {
     PsiElement leaf = file.findElementAt(TargetElementUtil.adjustOffset(file, getDocument(), caretOffset));
     PsiReference ref = TargetElementUtil.findReference(editor);
 
-    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
+    String expectedVariant = leaf == null || leaf instanceof PsiPlainText ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
-    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, leaf);
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, file.findElementAt(caretOffset));
     long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
@@ -127,13 +144,21 @@ public class InvokeCompletion extends ActionOnFile {
         return;
       }
       env.logMessage("No lookup");
-      if (expectedVariant == null || prefixEqualsExpected) return;
+      if (expectedVariant == null || prefixEqualsExpected || !checkHighlightingErrorsAtCaret(editor, env, expectedVariant)) {
+        return;
+      }
+
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
-      LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
+      LookupElement sameItem = ContainerUtil.find(items, e ->
+        e.getAllLookupStrings().stream().anyMatch(
+          s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
+      if (sameItem == null && !checkHighlightingErrorsAtCaret(editor, env, expectedVariant)) {
+        return;
+      }
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
@@ -144,11 +169,26 @@ public class InvokeCompletion extends ActionOnFile {
     LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
     env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
 
+    lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {
-      EditorActionManager.getInstance().getTypedAction().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
+      EditorActionManager.getInstance();
+      TypedAction.getInstance().actionPerformed(editor, completionChar, EditorUtil.getEditorDataContext(lookup.getTopLevelEditor()));
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+  }
+
+  private boolean checkHighlightingErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
+    int caretOffset = hostEditor.getCaretModel().getOffset();
+    boolean hasErrors = ContainerUtil.exists(infos, i -> i.containsInclusive(caretOffset));
+    if (hasErrors) {
+      env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
+      return false;
+    }
+    return true;
   }
 
   private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {
@@ -160,8 +200,8 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private static void checkNoDuplicates(List<LookupElement> items) {
-    Set<List<?>> presentations = new HashSet<>();
+  private void checkNoDuplicates(List<? extends LookupElement> items) {
+    Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
@@ -173,8 +213,12 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.getTailFragments(),
                                         p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
-      if (!presentations.add(info)) {
-        TestCase.fail("Duplicate suggestions: " + p);
+      var prev = presentations.put(info, item);
+      if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
+        Function<LookupElement, String> itemInfoFn = it ->
+          it + ";" + Stream.iterate(it, Objects::nonNull, i -> i instanceof LookupElementDecorator<?> dec ? dec.getDelegate() : null)
+            .map(i -> i.getClass().getName()).collect(Collectors.joining("->"));
+        TestCase.fail("Duplicate suggestions: " + p + "(item1: " + itemInfoFn.apply(prev) + "; item2:" + itemInfoFn.apply(item) + ")");
       }
     }
   }

@@ -1,20 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.WavePainter2D;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.RenderingHints;
 import java.awt.font.LineMetrics;
-import java.awt.geom.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author Sergey.Malenkov
  * @author tav
  */
 public enum EffectPainter2D implements RegionPainter2D<Font> {
@@ -33,7 +46,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
         LinePainter2D.paint(g, x, y + 1, x + width, y + 1);
       }
@@ -57,9 +70,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
-        int h = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
+        int h = JBUIScale.scale(Registry.intValue("editor.bold.underline.height", 2));
         RectanglePainter2D.FILL.paint(g, x, y, width, h);
       }
       else {
@@ -82,7 +95,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       paintUnderline(g, x, y, width, height, font, 2, this);
     }
   },
@@ -101,7 +114,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
         WavePainter2D.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
@@ -128,7 +141,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
      * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Font font) {
       if (width > 0 && height > 0) {
         if (!Registry.is("ide.text.effect.new.metrics")) {
           drawLineCentered(g, x, y - height, width, height, 1, this);
@@ -136,8 +149,12 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         else {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-          double offset = 0.5 - metrics.getStrikethroughOffset();
-          double thickness = Math.max(1, 0.5 + metrics.getStrikethroughThickness());
+          double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
+          float strikeThroughThickness = metrics.getStrikethroughThickness();
+          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(strikeThroughThickness, font), g, RoundingMode.FLOOR);
+          if (strikeThroughThickness > 0 && thickness <= 0) {
+            thickness = PaintUtil.devPixel(g);
+          }
           drawLine(g, x, y - offset, width, thickness, this);
         }
       }
@@ -152,12 +169,26 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
+        RoundingMode roundingMode = !JreHiDpiUtil.isJreHiDPIEnabled() || painter != WAVE_UNDERSCORE || font.getSize2D() / UISettings.getDefFontSize() > 1 ?
+                                    RoundingMode.FLOOR : RoundingMode.CEIL;
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-        thickness = Math.max(thickness, 0.5 + thickness * metrics.getUnderlineThickness());
-        double offset = Math.min(height - thickness, Math.max(1, 0.5 + metrics.getUnderlineOffset()));
-        if (offset < 1) {
-          offset = height > 3 ? 1 : 0;
-          thickness = height - offset;
+        double devPixel = PaintUtil.devPixel(g);
+        double underlineThickness = maybeScaleFontMetricsThickness(metrics.getUnderlineThickness(), font);
+        double underlineOffset = Math.max(devPixel, metrics.getUnderlineOffset());
+
+        boolean positive = thickness * underlineThickness > 0;
+        thickness = PaintUtil.alignToInt(thickness * underlineThickness, g, roundingMode);
+        if (positive && thickness <= 0) {
+          thickness = devPixel;
+        }
+        double offset = Math.min(height - thickness, underlineOffset);
+
+        if (offset < devPixel) {
+          offset = height > 3 * devPixel ? devPixel : 0;
+          thickness = PaintUtil.alignToInt(Math.min(thickness, height - offset), g, roundingMode);
+        }
+        else {
+          offset = PaintUtil.alignToInt(offset, g, roundingMode);
         }
         drawLine(g, x, y + offset, width, thickness, painter);
       }
@@ -167,7 +198,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           y += height - max;
           height = max;
           if (thickness > 1 && height > 3) {
-            thickness = JBUI.scale((float)thickness);
+            thickness = JBUIScale.scale((float)thickness);
           }
         }
         drawLineCentered(g, x, y, width, height, thickness, painter);
@@ -175,10 +206,27 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
   }
 
+  @TestOnly
+  public static double maybeScaleFontMetricsThickness_TestOnly(double fontMetricsThickness, @NotNull Font font) {
+    return maybeScaleFontMetricsThickness(fontMetricsThickness, font);
+  }
+
+  private static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Font font) {
+    float fontScale = JBUIScale.getFontScale(font.getSize2D());
+    float normalizedFontScale = font.getSize2D() / UISettings.getDefFontSize();
+    if (normalizedFontScale > 1) {
+      // k==1.0 with normalizedFontScale==1.0, k->0.5 fast enough with normalizedFontScale increasing
+      double k = 1 / (Math.pow(normalizedFontScale, 2) + 1) + 0.5;
+      fontScale *= k;
+    }
+    if (!JreHiDpiUtil.isJreHiDPIEnabled()) fontScale = Math.max(1, Math.round(fontScale));
+    return Math.max(fontMetricsThickness, fontScale);
+  }
+
   private static void drawLineCentered(Graphics2D g, double x, double y, double width, double height, double thickness, EffectPainter2D painter) {
     double offset = height - thickness;
     if (offset > 0) {
-      y += offset - (offset / 2);
+      y += offset / 2;
       height = thickness;
     }
     drawLine(g, x, y, width, height, painter);
@@ -208,14 +256,14 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
-        Double round = period <= 2 && !UIUtil.isJreHiDPI(g) ? null : period;
-        for (int dx = 0; dx < width; dx += period + period) {
+        Double round = period <= 2 && !JreHiDpiUtil.isJreHiDPI(g) ? null : period;
+        for (int dx = 0; dx < width; dx += period * 2) {
           RectanglePainter2D.FILL.paint(g, dx, 0, period, period, round, LinePainter2D.StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
         }
       }
     },
     WAVE_UNDERSCORE {
-      private final BasicStroke THIN_STROKE = new BasicStroke(.7f);
+      private static final BasicStroke THIN_STROKE = new BasicStroke(.7f);
 
       @Override
       double getPeriod(double height) {
@@ -224,7 +272,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
-        double dx = 0;
         double lower = height - 1;
         double upper = lower - period;
         if (Registry.is("ide.text.effect.new.metrics")) {
@@ -244,6 +291,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           }
         }
         Path2D path = new Path2D.Double();
+        double dx = 0;
         path.moveTo(dx, lower);
         if (height < 6) {
           g.setStroke(THIN_STROKE);
@@ -269,9 +317,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     };
 
-    // we should not recalculate caches when IDEA is on Retina and non-Retina
-    private final ConcurrentHashMap<Long, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Long, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
+    // we should not recalculate caches when IDE is on Retina and non-Retina
+    private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 
     abstract double getPeriod(double height);
 
@@ -287,27 +335,31 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     }
 
-    BufferedImage getImage(Graphics2D g, Color color, double height) {
-      Long key = color.getRGB() ^ ((long)height << 32);
-      ConcurrentHashMap<Long, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
-      return cache.computeIfAbsent(key, k -> createImage(g, color, height));
+    @Nullable
+    BufferedImage getImage(@NotNull Graphics2D g, Color color, double height) {
+      ConcurrentHashMap<Integer, BufferedImage> cache = JreHiDpiUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
+      int key = Objects.hash(color.getRGB(), JBUIScale.sysScale(g), height);
+      BufferedImage image = cache.get(key);
+      if (image == null) {
+        image = createImage(g, color, height);
+        if (image != null) cache.putIfAbsent(key, image);
+      }
+      return image;
     }
 
-    BufferedImage createImage(Graphics2D g, Paint paint, double height) {
+    @Nullable
+    BufferedImage createImage(@NotNull Graphics2D g, Paint paint, double height) {
       double period = getPeriod(height);
       int width = (int)period << (paint instanceof Color ? 8 : 1);
-      BufferedImage image;
-      if (UIUtil.isJreHiDPI(g)) {
-        image = new JBHiDPIScaledImage(g, width, height, BufferedImage.TYPE_INT_ARGB);
-      } else {
-        image = UIUtil.createImage(g, width, (int)height, BufferedImage.TYPE_INT_ARGB);
-      }
+      if (width <= 0 || height <= 0) return null;
+
+      BufferedImage image = ImageUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
       paintImage(image.createGraphics(), paint, width, height, period);
       return image;
     }
 
     @Override
-    public void paint(Graphics2D g, double x, double y, double width, double height, Paint paint) {
+    public void paint(@NotNull Graphics2D g, double x, double y, double width, double height, Paint paint) {
       if (paint == null) paint = g.getPaint();
       g = (Graphics2D)g.create();
       g.translate(x, y);
@@ -315,12 +367,13 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       g.setComposite(AlphaComposite.SrcOver);
       BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
-      int period = image.getWidth(null);
-      if (image instanceof JBHiDPIScaledImage) period /= 2;
+      if (image == null) return;
+
+      double period = ImageUtil.getRealWidth(image) / ImageUtil.getImageScale(image);
       double offset = (x % period + period) % period; // normalize
       g.translate(-offset, 0);
       for (double dx = -offset; dx < width; dx += period) {
-        UIUtil.drawImage(g, image, 0, 0, null);
+        StartupUiUtil.drawImage(g, image, 0, 0, null);
         g.translate(period, 0);
       }
       g.dispose();

@@ -1,0 +1,6 @@
+from typing import Any
+
+UserModel: Any
+
+def check_password(environ: dict[Any, Any], username: str, password: str) -> bool | None: ...
+def groups_for_user(environ: dict[Any, Any], username: str) -> list[bytes]: ...

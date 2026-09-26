@@ -1,126 +1,272 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.FutureTask;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.NOTHING_CHANGED_NOTIFICATION;
 import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
-  private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
-  private final List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
+  private final List<NotificationInfo> myOptimizerNotifications = new SmartList<>();
 
-  public OptimizeImportsProcessor(Project project) {
-    super(project, COMMAND_NAME, PROGRESS_TEXT, false);
+  public OptimizeImportsProcessor(@NotNull Project project) {
+    super(project, getCommandName(), getProgressText(), false);
   }
 
-  public OptimizeImportsProcessor(Project project, Module module) {
-    super(project, module, COMMAND_NAME, PROGRESS_TEXT, false);
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull Module module) {
+    super(project, module, getCommandName(), getProgressText(), false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  @NotNull PsiDirectory directory,
+                                  boolean includeSubdirs,
+                                  boolean processOnlyVcsChangedFiles) {
+    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
-    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processOnlyVcsChangedFiles);
+  public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiFile file) {
+    super(project, file, getProgressText(), getCommandName(), false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile file) {
-    super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @Nullable Runnable postRunnable) {
+    this(project, files, getCommandName(), postRunnable);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
-    this(project, files, COMMAND_NAME, postRunnable);
+  public OptimizeImportsProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @NotNull @NlsContexts.Command String commandName,
+                                  @Nullable Runnable postRunnable) {
+    super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
-  }
-
-  public OptimizeImportsProcessor(AbstractLayoutCodeProcessor processor) {
-    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+  public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
+    super(previousProcessor, getCommandName(), getProgressText());
   }
 
   @Override
-  @NotNull
-  protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
-    if (DumbService.isDumb(file.getProject())) {
-      return new FutureTask<>(EmptyRunnable.INSTANCE, true);
+  protected boolean needsReadActionToPrepareTask() {
+    return false;
+  }
+
+  /**
+   * Honours {@link ImportOptimizer#getActionMode} for the file:
+   * <ul>
+   *   <li>if every applicable {@link ImportOptimizer} returns the default
+   *   {@link ImportOptimizer.ActionMode#WRITE_COMMAND_ACTION}, the call delegates to
+   *   {@link #runUnderDefaultWriteCommandAction} — behaviour identical to the base
+   *   {@link AbstractLayoutCodeProcessor};</li>
+   *   <li>if any optimizer requests {@link ImportOptimizer.ActionMode#EDT}, the platform
+   *   opens only the undo command (no write action). The {@code modifyTask} (i.e. the {@code Runnable} produced by
+   *   {@link ImportOptimizer#processFile}) is then expected to enter a write action itself, e.g. via
+   *   {@link com.intellij.openapi.application.ex.ApplicationEx#runWriteActionWithCancellableProgressInDispatchThread},
+   *   so a long unambiguous auto-import resolve can be cancelled instead of freezing EDT (IDEA-388816).</li>
+   * </ul>
+   */
+  @ApiStatus.Experimental
+  @Override
+  protected void runTask(@NotNull VirtualFile virtualFile,
+                         @NotNull @NlsContexts.Command String commandName,
+                         @NotNull String groupId,
+                         boolean processAllFilesAsSingleUndoStep,
+                         @NotNull Runnable modifyTask) {
+    if (anyOptimizerRequiresDefaultWriteAction(virtualFile, myProject)) {
+      runUnderDefaultWriteCommandAction(myProject, commandName, groupId, processAllFilesAsSingleUndoStep, modifyTask);
+      return;
     }
-    
-    final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    final List<Runnable> runnables = new ArrayList<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(
+        myProject, modifyTask, commandName, groupId,
+        UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION,
+        processAllFilesAsSingleUndoStep);
+    });
+  }
+
+  /**
+   * Decides whether the platform must open a {@link com.intellij.openapi.command.WriteCommandAction} around
+   * the {@code Runnable} produced by {@link ImportOptimizer#processFile} (the default {@code AbstractLayoutCodeProcessor}
+   * behaviour), or whether it must only open an undo command and let the {@code Runnable} enter its own write action
+   * on EDT (the {@link ImportOptimizer.ActionMode#EDT} path).
+   * @return {@code true} if at least one applicable optimizer/importer requests
+   * {@link ImportOptimizer.ActionMode#WRITE_COMMAND_ACTION}, or the file is not resolvable.
+   */
+  private static boolean anyOptimizerRequiresDefaultWriteAction(@NotNull VirtualFile virtualFile,
+                                                                @NotNull Project project) {
+    return ReadAction.nonBlocking(() -> {
+      PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
+      if (file == null) return true;
+      FormattingService service = FormattingServiceUtil.findImportsOptimizingService(file);
+      for (ImportOptimizer optimizer : service.getImportOptimizers(file)) {
+        for (PsiFile psi : file.getViewProvider().getAllFiles()) {
+          if (optimizer.supports(psi) && optimizer.getActionMode() == ImportOptimizer.ActionMode.WRITE_COMMAND_ACTION) {
+            return true;
+          }
+        }
+      }
+      for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
+        if (importer.isAddUnambiguousImportsOnTheFlyEnabled(file) &&
+            importer.getActionMode() == ImportOptimizer.ActionMode.WRITE_COMMAND_ACTION) {
+          return true;
+        }
+      }
+      return false;
+    }).executeSynchronously();
+  }
+
+  @Override
+  protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile psiFile, boolean processChangedTextOnly) {
+    awaitFileCodeStyleSettings(psiFile);
+
+    if (DumbService.isDumb(psiFile.getProject())) {
+      return emptyTask();
+    }
+
+    final List<Runnable> runnablesSuspendOptimizers = OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile);
+
+    return ReadAction.nonBlocking(() -> {
+      if (DumbService.isDumb(psiFile.getProject()) || !psiFile.isValid()) {
+        return emptyTask();
+      }
+
+      List<Runnable> runnables = new SmartList<>();
+      runnables.addAll(collectOptimizers(psiFile));
+      runnables.addAll(runnablesSuspendOptimizers);
+      if (runnables.isEmpty()) {
+        return emptyTask();
+      }
+
+      List<BooleanSupplier> hints = ApplicationManager.getApplication().isDispatchThread()
+                                    ? Collections.emptyList()
+                                    : collectAutoImports(psiFile);
+
+      return new FutureTask<>(() -> {
+        ThreadingAssertions.assertEventDispatchThread();
+        CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
+        try {
+          for (Runnable runnable : runnables) {
+            runnable.run();
+            myOptimizerNotifications.add(getNotificationInfo(runnable));
+          }
+          putNotificationInfoIntoCollector();
+          fixAllImportsSilently(psiFile, hints);
+        }
+        finally {
+          CoreCodeStyleUtil.setSequentialProcessingAllowed(true);
+        }
+      }, true);
+    }).executeSynchronously();
+  }
+
+  /**
+   * walk PSI and for each unresolved reference ask {@link ReferenceImporter} how to import it
+   */
+  private static @NotNull List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return List.of();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return List.of();
+    Editor editor = new ImaginaryEditor(file.getProject(), document);
+    List<ReferenceImporter> referenceImporters = ContainerUtil.filter(
+      ReferenceImporter.EP_NAME.getExtensionList(),
+      importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(file));
+    if (referenceImporters.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<BooleanSupplier> result = new ArrayList<>();
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (!(element instanceof PsiLanguageInjectionHost)) { // ignore contributed references from languages and plugins
+          for (PsiReference reference : element.getReferences()) {
+            if (reference.resolve() == null) {
+              for (ReferenceImporter importer : referenceImporters) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+                if (action != null) {
+                  result.add(action);
+                }
+              }
+            }
+          }
+        }
+
+        super.visitElement(element);
+      }
+    });
+
+    return result;
+  }
+
+  private static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends BooleanSupplier> actions) {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (actions.isEmpty()) return;
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null) return;
+    for (BooleanSupplier action : actions) {
+      action.getAsBoolean();
+    }
+  }
+
+  static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {
+    FormattingService service = FormattingServiceUtil.findImportsOptimizingService(file);
+    List<Runnable> runnables = new SmartList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
-    for (ImportOptimizer optimizer : optimizers) {
+    for (ImportOptimizer optimizer : service.getImportOptimizers(file)) {
       for (PsiFile psiFile : files) {
         if (optimizer.supports(psiFile)) {
           runnables.add(optimizer.processFile(psiFile));
         }
       }
     }
-
-    Runnable runnable = !runnables.isEmpty() ? () -> {
-      CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
-      try {
-        for (Runnable runnable1 : runnables) {
-          runnable1.run();
-          retrieveAndStoreNotificationInfo(runnable1);
-        }
-        putNotificationInfoIntoCollector();
-      }
-      finally {
-        CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
-      }
-    } : EmptyRunnable.getInstance();
-      
-    return new FutureTask<>(runnable, true);
+    return runnables;
   }
 
-  private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
-    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
-      String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
-      myOptimizerNotifications.add(optimizerMessage != null ? new NotificationInfo(optimizerMessage) : NOTHING_CHANGED_NOTIFICATION);
+  private static @NotNull NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
+    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable infoRunnable) {
+      String optimizerMessage = infoRunnable.getUserNotificationInfo();
+      return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
     }
-    else if (runnable == EmptyRunnable.getInstance()) {
-      myOptimizerNotifications.add(NOTHING_CHANGED_NOTIFICATION);
+    if (runnable == EmptyRunnable.getInstance()) {
+      return NOTHING_CHANGED_NOTIFICATION;
     }
-    else {
-      myOptimizerNotifications.add(SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION);
-    }
+    return SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION;
   }
 
   private void putNotificationInfoIntoCollector() {
@@ -138,17 +284,18 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    collector.setOptimizeImportsNotification(atLeastOneOptimizerChangedSomething ? "imports optimized" : null);
+    String hint = atLeastOneOptimizerChangedSomething ? CodeInsightBundle.message("hint.text.imports.optimized") : null;
+    collector.setOptimizeImportsNotification(hint);
   }
 
-  static class NotificationInfo {
-    public static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
-    public static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
+  static final class NotificationInfo {
+    static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
+    static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 
     private final boolean mySomethingChanged;
-    private final String myMessage;
+    private final @HintText String myMessage;
 
-    NotificationInfo(@NotNull String message) {
+    NotificationInfo(@NotNull @HintText String message) {
       this(true, message);
     }
 
@@ -156,13 +303,21 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return mySomethingChanged;
     }
 
-    public String getMessage() {
+    public @HintText String getMessage() {
       return myMessage;
     }
 
-    private NotificationInfo(boolean isSomethingChanged, @Nullable String message) {
+    private NotificationInfo(boolean isSomethingChanged, @Nullable @HintText String message) {
       mySomethingChanged = isSomethingChanged;
       myMessage = message;
     }
+  }
+
+  private static @NotNull @NlsContexts.ProgressText String getProgressText() {
+    return CodeInsightBundle.message("progress.text.optimizing.imports");
+  }
+
+  public static @NotNull @NlsContexts.Command String getCommandName() {
+    return CodeInsightBundle.message("process.optimize.imports");
   }
 }

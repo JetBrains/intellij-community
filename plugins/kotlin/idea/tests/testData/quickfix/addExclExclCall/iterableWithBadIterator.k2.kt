@@ -1,0 +1,14 @@
+// "Add non-null asserted (test!!) call" "true"
+// K2_AFTER_ERROR: OPERATOR_MODIFIER_REQUIRED
+// K2_ERROR: ITERATOR_ON_NULLABLE
+
+class Some {
+    fun iterator(): Iterator<Int> = null!!
+}
+
+fun foo() {
+    val test: Some? = Some()
+    for (i in <caret>test) { }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

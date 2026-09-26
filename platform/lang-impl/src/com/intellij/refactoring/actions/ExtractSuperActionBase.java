@@ -16,16 +16,49 @@
 
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.lang.ElementsHandler;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ExtractSuperActionBase extends BasePlatformRefactoringAction {
 
+  private static final String[] PREFIXES = {"Extract", "Introduce"};
+
   @Override
   public boolean isAvailableInEditorOnly() {
+    return false;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    removeFirstWordInMainMenu(this, e);
+  }
+
+  public static void removeFirstWordInMainMenu(@NotNull AnAction action, @NotNull AnActionEvent e) {
+    if (e.getPlace().equals(ActionPlaces.MAIN_MENU) || isInToolbarActionGroupWithKnownPrefix(e)) {
+      String templateText = action.getTemplatePresentation().getText();
+      if (startsWithKnownPrefix(templateText)) {
+        e.getPresentation().setText(templateText.substring(templateText.indexOf(' ') + 1));
+      }
+    }
+  }
+
+  private static boolean isInToolbarActionGroupWithKnownPrefix(@NotNull AnActionEvent e) {
+    if (!e.getPlace().contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR) && !e.isFromContextMenu()) return false;
+    ActionGroup actionGroup = e.getData(ActionGroup.CONTEXT_ACTION_GROUP_KEY);
+    return actionGroup != null && startsWithKnownPrefix(actionGroup.getTemplatePresentation().getText());
+  }
+
+  private static boolean startsWithKnownPrefix(@Nullable String text) {
+    if (text == null) return false;
+    for (String prefix : PREFIXES) {
+      if (StringUtil.startsWith(text, prefix)) return true;
+    }
     return false;
   }
 }

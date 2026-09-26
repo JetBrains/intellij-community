@@ -1,74 +1,65 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.hierarchy.treestructures.PySubTypesHierarchyTreeStructure;
 import com.jetbrains.python.hierarchy.treestructures.PySuperTypesHierarchyTreeStructure;
 import com.jetbrains.python.hierarchy.treestructures.PyTypeHierarchyTreeStructure;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import java.util.Comparator;
 import java.util.Map;
 
 public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.TypeHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(PyTypeHierarchyBrowser.class);
 
   protected PyTypeHierarchyBrowser(@NotNull PyClass pyClass) {
     super(pyClass.getProject(), pyClass);
   }
 
-  @Nullable
-  protected PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
+  @Override
+  protected @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor) {
     if (!(descriptor instanceof PyHierarchyNodeDescriptor)) {
       return null;
     }
-    return ((PyHierarchyNodeDescriptor)descriptor).getPsiElement();
+    return descriptor.getPsiElement();
   }
 
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
-    createTreeAndSetupCommonActions(trees, "PyTypeHierarchyPopupMenu");
+  @Override
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
+    createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
-  @Nullable
-  protected JPanel createLegendPanel() {
+  @Override
+  protected @Nullable JPanel createLegendPanel() {
     return null;
   }
 
+  @Override
   protected boolean isApplicableElement(@NotNull PsiElement element) {
     return (element instanceof PyClass);
   }
 
-  @Nullable
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
-    if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
+  @Override
+  protected @Nullable HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
+    if (getSupertypesHierarchyType().equals(typeName)) {
       return new PySuperTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getSubtypesHierarchyType().equals(typeName)) {
       return new PySubTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getTypeHierarchyType().equals(typeName)) {
       return new PyTypeHierarchyTreeStructure((PyClass)psiElement);
     }
     else {
@@ -77,23 +68,25 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     }
   }
 
-  @Nullable
-  protected Comparator<NodeDescriptor> getComparator() {
+  @Override
+  protected @Nullable Comparator<NodeDescriptor<?>> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
   }
 
+  @Override
   protected boolean isInterface(@NotNull PsiElement psiElement) {
     return false;
   }
 
+  @Override
   protected boolean canBeDeleted(PsiElement psiElement) {
     return (psiElement instanceof PyClass);
   }
 
-  @NotNull
-  protected String getQualifiedName(PsiElement psiElement) {
+  @Override
+  protected @NotNull String getQualifiedName(PsiElement psiElement) {
     if (psiElement instanceof PyClass) {
-      final String name = ((PyClass)psiElement).getName();
+      String name = ((PyClass)psiElement).getName();
       if (name != null) {
         return name;
       }

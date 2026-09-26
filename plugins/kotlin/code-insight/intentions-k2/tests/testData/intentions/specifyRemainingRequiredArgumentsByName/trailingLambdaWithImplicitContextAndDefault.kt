@@ -1,0 +1,17 @@
+// SKIP_ERRORS_BEFORE
+// SKIP_WARNINGS_AFTER
+// SKIP_ERRORS_AFTER
+// LANGUAGE_VERSION: 2.3
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// COMPILER_ARGUMENTS: -Xexplicit-context-arguments
+
+class Ctx
+class Ctx2
+
+context(ctx: Ctx, ctx2: Ctx2)
+fun f1(v: Int, d: Int = 42, block: () -> Unit) {}
+
+context(ctx: Ctx)
+fun f1Test() {
+    f1(ctx2 = Ctx2()<caret>) {}
+}

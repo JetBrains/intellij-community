@@ -1,0 +1,47 @@
+---
+name: code-style
+description: Apply IntelliJ Kotlin and Java code style when writing or reviewing.
+---
+
+# Code Style
+
+Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
+
+## Language
+
+- Use Kotlin for new files unless the user explicitly requests Java.
+- Keep existing Java files in Java unless the task requires a language conversion.
+- Before writing or reviewing Java, read [Modern Java](references/modern-java.md).
+- Use idiomatic Kotlin: extension functions, data classes, null safety
+- Mark experimental APIs with `@ApiStatus.Experimental`
+- **Build scripts Kotlin style**: Follow `community/platform/build-scripts/kotlin-style-recommendations.md` for build-scripts code:
+  - Use `@JvmField` for internal data class fields
+  - Use `.put()`/`.get()` instead of `[]` operator
+  - Use explicit `HashMap`/`HashSet`/`LinkedHashMap` instead of `mutableMapOf()`/`mutableSetOf()`
+
+## Formatting
+
+- Read every applicable `.editorconfig` before you review or change formatting.
+- Use the effective `.editorconfig` value for each setting. If no file defines a setting, use these defaults:
+  - Indentation: 2 spaces (4 for Go files)
+  - Line length: 140 characters max
+  - Braces: `else`, `catch`, and `finally` on new lines
+- Only in `/rustrover` directory you must always use standard Kotlin formatting rules with 4 spaces indentation.
+
+## Error handling
+
+- In a `catch` block for `Throwable` or `Exception`, call `com.intellij.diagnostic.rethrowControlFlowException(e)` first.
+  It rethrows a control flow exception, such as `CancellationException`. A control flow exception must never reach the log.
+- Do not catch or rethrow `CancellationException` explicitly, and do not test the exception type by hand.
+- In Java, static-import `com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException`.
+- Do not use the deprecated `com.intellij.openapi.diagnostic.rethrowControlFlowException`.
+
+```kotlin
+try {
+  doWork()
+}
+catch (e: Throwable) {
+  rethrowControlFlowException(e)
+  LOG.error(e)
+}
+```

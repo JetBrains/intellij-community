@@ -1,49 +1,34 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Method comment
- *
- * @author Dmitry Skavish
  */
-public class JDMethodComment extends JDParamListOwnerComment {
-  private String myReturnTag;
+class JDMethodComment extends JDParamListOwnerComment {
+  private final List<String> myReturnTags = new ArrayList<>(); // In erroneous cases multiple return tags are possible (see IDEA-186041)
   private List<TagDescription> myThrowsList;
 
-  public JDMethodComment(@NotNull CommentFormatter formatter) {
-    super(formatter);
+  JDMethodComment(@NotNull CommentFormatter formatter,boolean isMarkdown) {
+    super(formatter, isMarkdown);
   }
 
   @Override
   protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
     super.generateSpecial(prefix, sb);
 
-    if (myReturnTag != null) {
-      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !myReturnTag.trim().isEmpty()) {
+    for (String returnTag : myReturnTags) {
+      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !returnTag.trim().isEmpty()) {
         JDTag tag = JDTag.RETURN;
-        sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag,
+        sb.append(myFormatter.getParser().formatJDTagDescription(returnTag,
                                                                  prefix + tag.getWithEndWhitespace(),
-                                                                 prefix + javadocContinuationIndent()));
+                                                                 prefix + javadocContinuationIndent(),
+                                                                 getIsMarkdown()));
 
         if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_RETURN) {
           sb.append(prefix);
@@ -62,13 +47,13 @@ public class JDMethodComment extends JDParamListOwnerComment {
     }
   }
 
-  public void setReturnTag(@NotNull String returnTag) {
-    this.myReturnTag = returnTag;
+  public void addReturnTag(@NotNull String returnTag) {
+    myReturnTags.add(returnTag);
   }
 
   public void addThrow(@NotNull String className, @Nullable String description) {
     if (myThrowsList == null) {
-      myThrowsList = ContainerUtilRt.newArrayList();
+      myThrowsList = new ArrayList<>();
     }
     myThrowsList.add(new TagDescription(className, description));
   }

@@ -1,0 +1,57 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.java.aetherDependencyResolver",
+        "intellij.libraries.maven.resolver.provider",
+        "intellij.libraries.maven.resolver.transport",
+        "intellij.libraries.plexus.utils",
+        "intellij.repository.search.common",
+        "intellij.repository.search.completion",
+        "intellij.libraries.kotlinx.document.store.mvstore",
+        "intellij.libraries.package.search.api.client",
+    ],
+    main_module = "intellij.java.aetherDependencyResolver.plugin",
+)
+### auto-generated section `dev intellij.java.aetherDependencyResolver.plugin` end
+
+### auto-generated section `build intellij.java.aetherDependencyResolver.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.aetherDependencyResolver.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.aetherDependencyResolver.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.java.aetherDependencyResolver.plugin` end
+
+### auto-generated section `iml intellij.java.aetherDependencyResolver.plugin` start
+exports_files(
+    [
+        "intellij.java.aetherDependencyResolver.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.aetherDependencyResolver.plugin` end

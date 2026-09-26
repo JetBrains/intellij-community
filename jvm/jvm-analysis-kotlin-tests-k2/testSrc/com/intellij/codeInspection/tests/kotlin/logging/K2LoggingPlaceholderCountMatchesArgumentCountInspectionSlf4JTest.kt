@@ -1,0 +1,4 @@
+package com.intellij.codeInspection.tests.kotlin.logging
+
+class K2LoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest() {
+}

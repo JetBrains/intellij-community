@@ -16,14 +16,15 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2014
  */
+@ApiStatus.Internal
 public class UndefinedJavaHomeException extends ExternalSystemJdkException {
 
   public UndefinedJavaHomeException() {
-    super(ExternalSystemBundle.message("external.system.java.home.undefined"), null, null);
+    super(ExternalSystemBundle.message("external.system.java.home.undefined"), null);
   }
 }

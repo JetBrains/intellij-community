@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -11,13 +12,14 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-public abstract class AbstractTreeWalker<N> {
+@ApiStatus.Internal
+public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
   private enum State {STARTED, REQUESTED, PAUSED, FINISHED, FAILED}
 
   private final AtomicReference<State> state = new AtomicReference<>();
   private final AsyncPromise<TreePath> promise = new AsyncPromise<>();
   private final ArrayDeque<ArrayDeque<N>> stack = new ArrayDeque<>();
-  private final Function<N, Object> converter;
+  private final Function<? super N, Object> converter;
   private final TreeVisitor visitor;
   private volatile TreePath current;
 
@@ -37,57 +39,31 @@ public abstract class AbstractTreeWalker<N> {
    * @param visitor   an object that controls visiting a tree structure
    * @param converter a node converter for the path components
    */
-  public AbstractTreeWalker(@NotNull TreeVisitor visitor, Function<N, Object> converter) {
+  public AbstractTreeWalker(@NotNull TreeVisitor visitor, Function<? super N, Object> converter) {
     this.converter = converter;
     this.visitor = visitor;
   }
 
-  /**
-   * Returns a list of child nodes for the specified node.
-   * This method is called by the walker only if the visitor
-   * returned the {@link TreeVisitor.Action#CONTINUE CONTINUE} action.
-   * The walker will be paused if it returns {@code null}.
-   * To continue user should call the {@link #setChildren} method.
-   *
-   * @param node a node in a tree structure
-   * @return children for the specified node or {@code null} if children will be set later
-   */
-  protected abstract Collection<N> getChildren(@NotNull N node);
-
-  /**
-   * Sets the children, awaited by the walker, and continues to traverse a tree structure.
-   *
-   * @param children a list of child nodes for the node specified in the {@link #getChildren} method
-   * @throws IllegalStateException if it is called in unexpected state
-   */
-  public void setChildren(Collection<N> children) {
+  @Override
+  public void setChildren(@NotNull Collection<? extends N> children) {
     boolean paused = state.compareAndSet(State.PAUSED, State.STARTED);
     if (!paused && !state.compareAndSet(State.REQUESTED, State.STARTED)) throw new IllegalStateException();
-    stack.push(children == null ? new ArrayDeque<>() : new ArrayDeque<>(children));
+    stack.push(new ArrayDeque<>(children));
     if (paused) processNextPath();
   }
 
-  /**
-   * @return a promise that will be resolved when visiting is finished
-   */
-  @NotNull
-  public Promise<TreePath> promise() {
+  @Override
+  public @NotNull Promise<TreePath> promise() {
     return promise;
   }
 
-  /**
-   * Stops visiting a tree structure by specifying a cause.
-   */
+  @Override
   public void setError(@NotNull Throwable error) {
     state.set(State.FAILED);
     promise.setError(error);
   }
 
-  /**
-   * Starts visiting a tree structure from the specified root node.
-   *
-   * @param node a tree root or {@code null} if nothing to traverse
-   */
+  @Override
   public void start(N node) {
     start(null, node);
   }
@@ -104,21 +80,19 @@ public abstract class AbstractTreeWalker<N> {
       try {
         TreePath path = TreePathUtil.createTreePath(parent, converter.apply(node));
         switch (visitor.visit(path)) {
-          case CONTINUE:
+          case CONTINUE -> {
             update(null, State.REQUESTED);
             if (processChildren(path, node)) processNextPath();
             return;
-          case INTERRUPT:
-            result = path;
-            break;
-          case SKIP_CHILDREN:
-            break;
-          case SKIP_SIBLINGS:
-            break;
+          }
+          case INTERRUPT -> result = path;
+          case SKIP_CHILDREN, SKIP_SIBLINGS -> {
+          }
         }
       }
       catch (Exception error) {
         setError(error);
+        return;
       }
     }
     update(null, State.FINISHED);
@@ -159,21 +133,20 @@ public abstract class AbstractTreeWalker<N> {
         else {
           TreePath path = TreePathUtil.createTreePath(current, converter.apply(node));
           switch (visitor.visit(path)) {
-            case CONTINUE:
+            case CONTINUE -> {
               update(State.STARTED, State.REQUESTED);
               if (processChildren(path, node)) break;
               return; // stop processing and wait for setChildren
-            case INTERRUPT:
+            }
+            case INTERRUPT -> {
               update(State.STARTED, State.FINISHED);
               current = null;
               stack.clear();
               promise.setResult(path);
               return; // path is found
-            case SKIP_SIBLINGS:
-              siblings.clear();
-              break;
-            case SKIP_CHILDREN:
-              break;
+            }
+            case SKIP_SIBLINGS -> siblings.clear();
+            case SKIP_CHILDREN -> {}
           }
         }
       }
@@ -183,7 +156,7 @@ public abstract class AbstractTreeWalker<N> {
     }
   }
 
-  private void update(State expected, State replacement) {
+  private void update(State expected, @NotNull State replacement) {
     if (!state.compareAndSet(expected, replacement)) throw new IllegalStateException();
   }
 }

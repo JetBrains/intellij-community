@@ -16,8 +16,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,40 +27,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
-public class ExcludingActionGroup extends ActionGroup {
-  private final ActionGroup myDelegate;
+@ApiStatus.Internal
+public class ExcludingActionGroup extends ActionGroupWrapper {
   private final Set<AnAction> myExcludes;
 
-  public ExcludingActionGroup(ActionGroup delegate, Set<AnAction> excludes) {
-    super(delegate.getTemplatePresentation().getText(), delegate.isPopup());
-    myDelegate = delegate;
+  public ExcludingActionGroup(@NotNull ActionGroup delegate, @NotNull Set<AnAction> excludes) {
+    super(delegate);
     myExcludes = excludes;
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    myDelegate.update(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myDelegate.isDumbAware();
-  }
-
-  @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> result = new ArrayList<>();
-    for (AnAction action : myDelegate.getChildren(e)) {
+    for (AnAction action : super.getChildren(e)) {
       if (myExcludes.contains(action)) {
         continue;
       }
       if (action instanceof ActionGroup) {
-        result.add(new ExcludingActionGroup((ActionGroup) action, myExcludes));
-      } else {
+        result.add(new ExcludingActionGroup((ActionGroup)action, myExcludes));
+      }
+      else {
         result.add(action);
       }
     }

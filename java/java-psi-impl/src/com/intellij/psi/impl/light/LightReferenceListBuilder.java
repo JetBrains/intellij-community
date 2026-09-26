@@ -17,8 +17,15 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,8 +36,7 @@ import java.util.List;
  */
 public class LightReferenceListBuilder extends LightElement implements PsiReferenceList {
   private final List<PsiJavaCodeReferenceElement> myRefs = new ArrayList<>();
-  private PsiJavaCodeReferenceElement[] myCachedRefs;
-  private PsiClassType[] myCachedTypes;
+  private volatile PsiClassType[] myCachedTypes;
   private final Role myRole;
   private final PsiElementFactory myFactory;
 
@@ -45,6 +51,15 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public String toString() {
     return "light reference list";
   }
@@ -54,49 +69,31 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   }
 
   public void addReference(String qualifiedName) {
-    final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByFQClassName(qualifiedName, getResolveScope());
-    myRefs.add(ref);
+    myRefs.add(myFactory.createReferenceElementByFQClassName(qualifiedName, getResolveScope()));
   }
 
   public void addReference(PsiClassType type) {
-    final PsiClass resolved = type.resolve();
-    if (resolved == null) return;
-
-    final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByType(type);
-    myRefs.add(ref);
+    myRefs.add(myFactory.createReferenceElementByType(type));
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    if (myCachedRefs == null) {
-      if (myRefs.isEmpty()) {
-        myCachedRefs = PsiJavaCodeReferenceElement.EMPTY_ARRAY;
-      }
-      else {
-        myCachedRefs = ContainerUtil.toArray(myRefs, new PsiJavaCodeReferenceElement[myRefs.size()]);
-      }
-    }
-    return myCachedRefs;
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
+    return myRefs.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getReferencedTypes() {
-    if (myCachedTypes == null) {
-      if (myRefs.isEmpty()) {
-        myCachedTypes = PsiClassType.EMPTY_ARRAY;
+  public PsiClassType @NotNull [] getReferencedTypes() {
+    PsiClassType[] types = myCachedTypes;
+    if (types == null) {
+      int size = myRefs.size();
+      types = size == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[size];
+      for (int i = 0; i < size; i++) {
+        types[i] = myFactory.createType(myRefs.get(i));
       }
-      else {
-        final int size = myRefs.size();
-        myCachedTypes = new PsiClassType[size];
-        for (int i = 0; i < size; i++) {
-          myCachedTypes[i] = myFactory.createType(myRefs.get(i));
-        }
-      }
+      myCachedTypes = types;
     }
 
-    return myCachedTypes;
+    return types;
   }
 
   @Override

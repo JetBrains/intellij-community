@@ -32,6 +32,7 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
     myStoredEvaluationContext = evaluationContext;
   }
 
+  @Override
   public String getName() {
     return getEvaluationText().getText();
   }
@@ -49,10 +50,12 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
     setValueLabel("");
   }
 
+  @Override
   protected EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext) {
     return evaluationContext;
   }
 
+  @Override
   protected PsiCodeFragment getEvaluationCode(StackFrameContext context) {
     return createCodeFragment(PositionUtil.getContextElement(context));
   }

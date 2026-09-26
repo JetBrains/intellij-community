@@ -1,87 +1,109 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-import static com.intellij.util.keyFMap.ArrayBackedFMap.getKeysByIndices;
+@ApiStatus.Internal
+public class MapBackedFMap implements KeyFMap {
+  /**
+   * Maps a key index ({@link Key#hashCode()}) to its value. Never mutated after the constructor has finished.
+   */
+  protected final @NotNull Int2ObjectOpenHashMap<Object> map;
 
-final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
-  private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int exclude) {
-    super(oldMap.size());
-    oldMap.forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object val) {
-        if (key != exclude) put(key, val);
-        assert key >= 0 : key;
-        return true;
+  protected MapBackedFMap(@NotNull MapBackedFMap oldMap, final int keyToExclude) {
+    map = new Int2ObjectOpenHashMap<>(oldMap.map.size());
+
+    ObjectIterator<Int2ObjectMap.Entry<Object>> iterator = oldMap.map.int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Int2ObjectMap.Entry<Object> entry = iterator.next();
+      int key = entry.getIntKey();
+      if (key != keyToExclude) {
+        map.put(key, entry.getValue());
       }
-    });
-    assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
-  }
-
-  MapBackedFMap(@NotNull int[] keys, int newKey, @NotNull Object[] values, @NotNull Object newValue) {
-    super(keys.length + 1);
-    for (int i = 0; i < keys.length; i++) {
-      int key = keys[i];
-      Object value = values[i];
-      put(key, value);
       assert key >= 0 : key;
     }
-    put(newKey, newValue);
-    assert newKey >= 0 : newKey;
-    assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
+    assert map.size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
 
-  @NotNull
+  protected MapBackedFMap(@NotNull MapBackedFMap oldMap, int newKey, @NotNull Object newValue) {
+    map = new Int2ObjectOpenHashMap<>(oldMap.map.size() + 1);
+
+    map.putAll(oldMap.map);
+    map.put(newKey, newValue);
+    assert map.size() > ArrayBackedFMap.ARRAY_THRESHOLD;
+  }
+
+  protected MapBackedFMap(int @NotNull [] keys, int newKey, @NotNull Object @NotNull [] values, @NotNull Object newValue) {
+    map = new Int2ObjectOpenHashMap<>(keys.length + 1);
+
+    for (int i = 0; i < keys.length; i++) {
+      int key = keys[i];
+      map.put(key, values[i]);
+      assert key >= 0 : key;
+    }
+    map.put(newKey, newValue);
+    assert newKey >= 0 : newKey;
+    assert map.size() > ArrayBackedFMap.ARRAY_THRESHOLD;
+  }
+
+  /**
+   * Builds a map out of the parallel {@code keys}/{@code values} arrays, where every key is a key index
+   * ({@link Key#hashCode()}).
+   */
+  protected MapBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
+    map = new Int2ObjectOpenHashMap<>(keys.length);
+
+    for (int i = 0; i < keys.length; i++) {
+      int key = keys[i];
+      assert key >= 0 : key;
+      map.put(key, values[i]);
+    }
+    assert map.size() > ArrayBackedFMap.ARRAY_THRESHOLD;
+  }
+
+  /**
+   * Returns the value stored for the given key index ({@link Key#hashCode()}), or {@code null} if there is none.
+   */
+  protected final @Nullable Object valueAt(int keyIndex) {
+    return map.get(keyIndex);
+  }
+
   @Override
-  public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
+  public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     int keyCode = key.hashCode();
     assert keyCode >= 0 : key;
-    @SuppressWarnings("unchecked")
-    V oldValue = (V)get(keyCode);
-    if (value == oldValue) return this;
-    MapBackedFMap newMap = new MapBackedFMap(this, -1);
-    newMap.put(keyCode, value);
-    return newMap;
+    //noinspection unchecked
+    V oldValue = (V)map.get(keyCode);
+    return value == oldValue ? this : new MapBackedFMap(this, keyCode, value);
   }
 
-  @NotNull
   @Override
-  public KeyFMap minus(@NotNull Key<?> key) {
-    int oldSize = size();
+  public @NotNull KeyFMap minus(@NotNull Key<?> key) {
+    int oldSize = map.size();
     int keyCode = key.hashCode();
-    if (!containsKey(keyCode)) {
+    if (!map.containsKey(keyCode)) {
       return this;
     }
     if (oldSize == ArrayBackedFMap.ARRAY_THRESHOLD + 1) {
-      int[] keys = keys();
-      keys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
-      Arrays.sort(keys);
-      Object[] values = new Object[keys.length];
-      for (int i = 0; i < keys.length; i++) {
-        values[i] = get(keys[i]);
+      int[] keys = map.keySet().toIntArray();
+      int[] newKeys = ArrayUtil.remove(keys, ArrayUtil.indexOf(keys, keyCode));
+      Arrays.sort(newKeys);
+      Object[] newValues = new Object[newKeys.length];
+      for (int i = 0; i < newKeys.length; i++) {
+        Object value = map.get(newKeys[i]);
+        assert value != null;
+        newValues[i] = value;
       }
-      return new ArrayBackedFMap(keys, values);
+      return new ArrayBackedFMap(newKeys, newValues);
     }
     return new MapBackedFMap(this, keyCode);
   }
@@ -89,51 +111,79 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   @Override
   public <V> V get(@NotNull Key<V> key) {
     //noinspection unchecked
-    return (V)get(key.hashCode());
+    return (V)map.get(key.hashCode());
   }
 
-  @NotNull
   @Override
-  public Key[] getKeys() {
-    return getKeysByIndices(keys());
+  public int size() {
+    return map.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return false;
+  }
+
+  @Override
+  public Key<?> @NotNull [] getKeys() {
+    return ArrayBackedFMap.getKeysByIndices(map.keySet().toIntArray());
   }
 
   @Override
   public int getValueIdentityHashCode() {
-    final int[] hash = {0};
-    forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
-        return true;
-      }
-    });
-    return hash[0];
+    int hash = 0;
+    ObjectIterator<Int2ObjectMap.Entry<Object>> iterator = map.int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Int2ObjectMap.Entry<Object> entry = iterator.next();
+      int key = entry.getIntKey();
+      hash = (hash * 31 + key) * 31 + System.identityHashCode(entry.getValue());
+    }
+    return hash;
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap other) {
-    if(other == this) return true;
-    if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
-    final MapBackedFMap map = (MapBackedFMap)other;
-    return forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        return map.get(key) == value;
+  public boolean equalsByReference(@NotNull KeyFMap other) {
+    if (other == this) {
+      return true;
+    }
+    if (other.getClass() != MapBackedFMap.class) {
+      return false;
+    }
+
+    MapBackedFMap otherMap = (MapBackedFMap)other;
+    if (otherMap.map.size() != map.size()) {
+      return false;
+    }
+    ObjectIterator<Int2ObjectMap.Entry<Object>> iterator = map.int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Int2ObjectMap.Entry<Object> next = iterator.next();
+      if (otherMap.map.get(next.getIntKey()) != next.getValue()) {
+        return false;
       }
-    });
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    // the same as java.util.Map: a sum of (key.hashCode() ^ value.hashCode()), where the key index is the key hash code
+    return map.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || o.getClass() != MapBackedFMap.class) return false;
+
+    return map.equals(((MapBackedFMap)o).map);
   }
 
   @Override
   public String toString() {
-    final StringBuilder s = new StringBuilder();
-    forEachEntry(new TIntObjectProcedure<Object>() {
-      @Override
-      public boolean execute(int key, Object value) {
-        s.append(s.length() == 0 ? "" : ", ").append(Key.getKeyByIndex(key)).append(" -> ").append(value);
-        return true;
-      }
+    StringBuilder s = new StringBuilder();
+    map.int2ObjectEntrySet().fastForEach(entry -> {
+      s.append(s.length() == 0 ? "" : ", ").append(Key.getKeyByIndex(entry.getIntKey())).append(" -> ").append(entry.getValue());
     });
-    return "[" + s.toString() + "]";
+    return "[" + s + "]";
   }
 }

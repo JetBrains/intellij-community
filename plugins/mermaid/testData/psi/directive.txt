@@ -1,0 +1,8 @@
+FILE(0,49)
+  MermaidDirectiveImpl(DIRECTIVE)(0,43)
+    PsiElement(Directives.OPEN_DIRECTIVE)('%%')(0,2)
+    PsiElement(DIRECTIVE_VALUE)('{\n  init: {\n    "theme": "forest"\n  }\n}')(2,41)
+    PsiElement(Directives.CLOSE_DIRECTIVE)('%%')(41,43)
+  PsiElement(EOL)('\n')(43,44)
+  MermaidFlowchartHeaderImpl(FLOWCHART_HEADER)(44,49)
+    PsiElement(Flowchart.FLOWCHART)('graph')(44,49)

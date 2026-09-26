@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="clikt" type="repository">
+        <properties maven-id="com.github.ajalt.clikt:clikt-jvm:5.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0.jar">
+              <sha256sum>75c330967db15a5c591fba69fc3b18ffb68271d54f90f21c1c9c52e86faeb9d6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0.jar">
+              <sha256sum>7f78049fa8159bac05ce09ddef4313248d4cad0014a744214c1150d14e3661e7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2.jar">
+              <sha256sum>9ed3b976fcccc78da746d49866fa8ebb8f10530a93c544ea0420259a607dd95e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2.jar">
+              <sha256sum>651c3bd74ff4e98db4d58e3dcf4b14e8099ee0d220e672f571f8cfeee4493905</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3.6.0/colormath-jvm-3.6.0.jar">
+              <sha256sum>59f741adfe62053066782d8b1a45afd06685a4bc64b33277e54876b993ed885c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="com.github.ajalt.mordant:mordant-jvm-jna-jvm" />
+            <dependency maven-id="com.github.ajalt.mordant:mordant-jvm-ffm-jvm" />
+            <dependency maven-id="com.github.ajalt.mordant:mordant-jvm-graal-ffi-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3.6.0/colormath-jvm-3.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3.6.0/colormath-jvm-3.6.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3.6.0/colormath-jvm-3.6.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

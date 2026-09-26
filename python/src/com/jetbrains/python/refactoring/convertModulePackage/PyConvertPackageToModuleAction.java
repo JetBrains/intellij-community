@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -19,6 +20,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
   private static final String ID = "py.refactoring.convert.package.to.module";
 
   @Override
-  protected boolean isEnabledOnElementsOutsideEditor(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElementsOutsideEditor(PsiElement @NotNull [] elements) {
     if (elements.length == 1) {
       final PsiDirectory pyPackage = getPackageDir(elements[0]);
       return pyPackage != null && !isSpecialDirectory(pyPackage);
@@ -43,8 +45,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
     return false;
   }
 
-  @Nullable
-  private static PsiDirectory getPackageDir(@NotNull PsiElement elem) {
+  private static @Nullable PsiDirectory getPackageDir(@NotNull PsiElement elem) {
     if (elem instanceof PsiDirectory && PyUtil.isPackage(((PsiDirectory)elem), null)) {
       return (PsiDirectory)elem;
     }
@@ -59,9 +60,8 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
     return module == null || (PyUtil.getSourceRoots(module).contains(element.getVirtualFile()));
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new RefactoringActionHandler() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -72,7 +72,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
       }
 
       @Override
-      public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+      public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
         if (elements.length == 1) {
           final PsiDirectory pyPackage = getPackageDir(elements[0]);
           if (pyPackage != null) {
@@ -84,7 +84,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
   }
 
   @VisibleForTesting
-  public void createModuleFromPackage(@NotNull final PsiDirectory pyPackage) {
+  public void createModuleFromPackage(final @NotNull PsiDirectory pyPackage) {
     if (pyPackage.getParent() == null) {
       return;
     }
@@ -112,7 +112,7 @@ public class PyConvertPackageToModuleAction extends PyBaseConvertModulePackageAc
           initPyVFile.move(this, parentDirVFile);
         }
         else {
-          PyUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject());
+          PyClassRefactoringUtil.getOrCreateFile(parentDirVFile.getPath() + "/" + moduleName, pyPackage.getProject(), false);
         }
         pyPackage.getVirtualFile().delete(this);
       }

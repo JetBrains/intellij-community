@@ -19,13 +19,18 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesHelperTest extends LightCodeInsightFixtureTestCase {
+public class JavaAnonymousClassesHelperTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -37,6 +42,20 @@ public class JavaAnonymousClassesHelperTest extends LightCodeInsightFixtureTestC
   public void testInsideAnonymousMethod() {doTest(1);}
   public void testAnonymousParameterInAnonymousConstructor() {doTest(1);}
   public void testAnonymousParameterInAnonymousConstructor2() {doTest(2);}
+
+  public void testNestedConstructorArguments() {
+    assertBinaryNames("NestedConstructorArguments$3", "NestedConstructorArguments$2",
+                      "NestedConstructorArguments$1", "NestedConstructorArguments$3$1");
+  }
+
+  public void testAnonymousArgumentScopes() {
+    assertBinaryNames("AnonymousArgumentScopes$1", "AnonymousArgumentScopes$1Local$1", "AnonymousArgumentScopes$2");
+  }
+
+  private void assertBinaryNames(String... expectedNames) {
+    var classes = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiAnonymousClass.class);
+    assertEquals(List.of(expectedNames), ContainerUtil.map(classes, ClassUtil::getBinaryClassName));
+  }
 
   @SuppressWarnings("ConstantConditions")
   private void doTest(int num) {

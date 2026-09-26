@@ -1,58 +1,33 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 
 import java.util.Comparator;
 
-/**
-* @author yole
-*/
-public class PreferredSdkComparator implements Comparator<Sdk> {
-  public static PreferredSdkComparator INSTANCE = new PreferredSdkComparator();
+import static com.jetbrains.python.SdkUiUtilKt.isCondaVirtualEnv;
+import static com.jetbrains.python.SdkUiUtilKt.isNonToolVirtualEnv;
+
+public final class PreferredSdkComparator implements Comparator<Sdk> {
+  public static final PreferredSdkComparator INSTANCE = new PreferredSdkComparator();
 
   @Override
   public int compare(Sdk o1, Sdk o2) {
-    for (PySdkComparator comparator : Extensions.getExtensions(PySdkComparator.EP_NAME)) {
-      int result = comparator.compare(o1, o2);
-      if(result != 0) {
-        return result;
-      }
-    }
 
-    final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
-    final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
-    int remote1Weight = PySdkUtil.isRemote(o1) ? 0 : 1;
-    int remote2Weight = PySdkUtil.isRemote(o2) ? 0 : 1;
+    final PythonSdkFlavor<?> flavor1 = PythonSdkFlavor.getFlavor(o1);
+    final PythonSdkFlavor<?> flavor2 = PythonSdkFlavor.getFlavor(o2);
+    int remote1Weight = PythonSdkUtil.isRemote(o1) ? 0 : 1;
+    int remote2Weight = PythonSdkUtil.isRemote(o2) ? 0 : 1;
     if (remote1Weight != remote2Weight) {
       return remote2Weight - remote1Weight;
     }
-    int detectedWeight1 = o1 instanceof PyDetectedSdk ? 0 : 1;
-    int detectedWeight2 = o2 instanceof PyDetectedSdk ? 0 : 1;
-    if (detectedWeight1 != detectedWeight2) {
-      return detectedWeight2 - detectedWeight1;
-    }
 
-    int venv1weight = PythonSdkType.isVirtualEnv(o1) ? 0 : 1;
-    int venv2weight = PythonSdkType.isVirtualEnv(o2) ? 0 : 1;
+    int venv1weight = isNonToolVirtualEnv(o1) || isCondaVirtualEnv(o1) ? 0 : 1;
+    int venv2weight = isNonToolVirtualEnv(o2) || isCondaVirtualEnv(o2) ? 0 : 1;
     if (venv1weight != venv2weight) {
       return venv2weight - venv1weight;
     }
@@ -61,6 +36,13 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
     int flavor2weight = flavor2 instanceof CPythonSdkFlavor ? 1 : 0;
     if (flavor1weight != flavor2weight) {
       return flavor2weight - flavor1weight;
+    }
+
+    if (flavor1 != null && flavor2 != null) {
+      int languageLevelDifference = flavor1.getLanguageLevel(o1).compareTo(flavor2.getLanguageLevel(o2));
+      if (languageLevelDifference != 0) {
+        return -languageLevelDifference;
+      }
     }
 
     return -Comparing.compare(o1.getVersionString(), o2.getVersionString());

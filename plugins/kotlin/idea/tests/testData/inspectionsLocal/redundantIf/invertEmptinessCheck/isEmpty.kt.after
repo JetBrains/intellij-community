@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun foo(list: List<String>): Boolean {
+    return list.isNotEmpty()
+}

@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.impl.DiffEditorTitleDetails;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -38,68 +27,68 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
-  @Nullable private final Project myProject;
-  @NotNull private final VirtualFile myFile;
+public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
+  private final @Nullable Project myProject;
+  private final @NotNull FilePath myPath;
+  private final @NotNull ChangesBrowserNode.Tag myTag;
 
-  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull VirtualFile file) {
+  private UnversionedDiffRequestProducer(@Nullable Project project, @NotNull FilePath path,
+                                         @NotNull ChangesBrowserNode.Tag tag) {
     myProject = project;
-    myFile = file;
+    myPath = path;
+    myTag = tag;
   }
 
-  @NotNull
-  public VirtualFile getFile() {
-    return myFile;
-  }
-
-  @NotNull
   @Override
-  public FilePath getFilePath() {
-    return VcsUtil.getFilePath(myFile);
+  public @NotNull FilePath getFilePath() {
+    return myPath;
   }
 
-  @NotNull
   @Override
-  public FileStatus getFileStatus() {
+  public @NotNull FileStatus getFileStatus() {
     return FileStatus.UNKNOWN;
   }
 
-  @Nullable
   @Override
-  public Object getPopupTag() {
-    return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+  public @NotNull ChangesBrowserNode.Tag getTag() {
+    return myTag;
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myFile.getPresentableUrl();
+  public @NotNull String getName() {
+    return myPath.getPresentableUrl();
   }
 
-  @NotNull
   @Override
-  public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+  public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
-    if (!myFile.isValid()) throw new DiffRequestProducerException("Can't show diff - file not found");
-    return createRequest(myProject, myFile);
+    VirtualFile file = myPath.getVirtualFile();
+    if (file == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.file.not.found"));
+    return createRequest(myProject, file);
   }
 
 
-  @NotNull
-  public static UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull VirtualFile file) {
-    return new UnversionedDiffRequestProducer(project, file);
+  public static @NotNull UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull FilePath path) {
+    return create(project, path, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
   }
 
-  @NotNull
-  private static DiffRequest createRequest(@Nullable Project project, @NotNull VirtualFile file) {
+  public static @NotNull UnversionedDiffRequestProducer create(@Nullable Project project, @NotNull FilePath path,
+                                                               @NotNull ChangesBrowserNode.Tag tag) {
+    return new UnversionedDiffRequestProducer(project, path, tag);
+  }
+
+  private static @NotNull DiffRequest createRequest(@Nullable Project project, @NotNull VirtualFile file) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffContent content1 = contentFactory.createEmpty();
     DiffContent content2 = contentFactory.create(project, file);
 
-    SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2,
-                                                      null, ChangeDiffRequestProducer.YOUR_VERSION);
+    String title2 = DiffBundle.message("merge.version.title.current");
+    SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2, null, title2);
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
+    DiffUtil.addTitleCustomizers(request,
+                                 DiffEditorTitleCustomizer.EMPTY,
+                                 DiffEditorTitleDetails.create(project, VcsUtil.getFilePath(file), title2).getCustomizer());
     return request;
   }
 
@@ -109,11 +98,11 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
     if (o == null || getClass() != o.getClass()) return false;
 
     UnversionedDiffRequestProducer producer = (UnversionedDiffRequestProducer)o;
-    return Objects.equals(myFile, producer.myFile);
+    return Objects.equals(myPath, producer.myPath);
   }
 
   @Override
   public int hashCode() {
-    return myFile.hashCode();
+    return myPath.hashCode();
   }
 }

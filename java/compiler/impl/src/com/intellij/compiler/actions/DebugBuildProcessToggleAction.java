@@ -16,20 +16,25 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
-public class DebugBuildProcessToggleAction extends ToggleAction {
+final class DebugBuildProcessToggleAction extends DumbAwareToggleAction {
+
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return BuildManager.getInstance().isBuildProcessDebuggingEnabled();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     BuildManager.getInstance().setBuildProcessDebuggingEnabled(state);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -3,11 +3,16 @@
  */
 package com.intellij.html.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
+import com.intellij.xml.XmlElementsGroup;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +85,7 @@ public class DelegatingRelaxedHtmlElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(StringUtil.toLowerCase(attributeName), context);
     if (descriptor != null) return descriptor;
 
     return RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
@@ -106,10 +111,9 @@ public class DelegatingRelaxedHtmlElementDescriptor implements XmlElementDescrip
     myDelegate.init(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getDependences() {
-    return myDelegate.getDependences();
+  public Object @NotNull [] getDependencies() {
+    return myDelegate.getDependencies();
   }
 
   @Override

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,9 +14,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -37,16 +26,17 @@ import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
+@ApiStatus.Internal
+public abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
   protected final SmartPsiElementPointer<PsiClass> myPointer;
   protected static final Logger LOG = Logger.getInstance(AbstractRegisterFix.class);
 
-  protected AbstractRegisterFix(@NotNull SmartPsiElementPointer<PsiClass> klass) {
-    myPointer = klass;
+  protected AbstractRegisterFix(@NotNull PsiClass psiClass) {
+    myPointer = SmartPointerManager.createPointer(psiClass);
   }
 
-  @NotNull
-  public String getFamilyName() {
+  @Override
+  public @NotNull String getFamilyName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
@@ -55,8 +45,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     return false;
   }
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.name", getType());
   }
 
@@ -70,7 +60,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     return message;
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  @Override
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiFile psiFile = myPointer.getContainingFile();
     final PsiClass element = myPointer.getElement();
@@ -101,5 +92,10 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     };
 
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.trello.model;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +17,7 @@ import java.util.Set;
 import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
 @SuppressWarnings("UnusedDeclaration")
 public class TrelloCard extends TrelloModel {
@@ -39,8 +26,7 @@ public class TrelloCard extends TrelloModel {
 
   private String idBoard, idList, idShort;
   private List<String> idMembers;
-  @NotNull
-  private String name = "";
+  private @NotNull String name = "";
   @SerializedName("desc")
   private String description;
   private String url;
@@ -51,7 +37,7 @@ public class TrelloCard extends TrelloModel {
   private final List<TrelloCommentAction> comments = ContainerUtil.emptyList();
   /**
    * This field is not part of card representation downloaded from server
-   * and set explicitly in {@code com.intellij.tasks.trello.TrelloRepository}
+   * and set explicitly in {@link com.intellij.tasks.trello.TrelloRepository}
    */
   private boolean isVisible = true;
 
@@ -67,30 +53,25 @@ public class TrelloCard extends TrelloModel {
     return String.format("TrelloCard(id='%s', name='%s')", getId(), name);
   }
 
-  @NotNull
-  public String getIdBoard() {
+  public @NotNull String getIdBoard() {
     return idBoard;
   }
 
-  @NotNull
-  public String getIdList() {
+  public @NotNull String getIdList() {
     return idList;
   }
 
-  @NotNull
-  public String getIdShort() {
+  public @NotNull String getIdShort() {
     return idShort;
   }
 
-  @NotNull
-  public List<String> getIdMembers() {
+  public @NotNull List<String> getIdMembers() {
     return idMembers;
   }
 
-  @NotNull
   @Attribute("name")
   @Override
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return name;
   }
 
@@ -99,13 +80,11 @@ public class TrelloCard extends TrelloModel {
     this.name = name;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     return description;
   }
 
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return url;
   }
 
@@ -113,21 +92,18 @@ public class TrelloCard extends TrelloModel {
     return closed;
   }
 
-  @NotNull
-  public List<TrelloLabel> getLabels() {
+  public @NotNull List<TrelloLabel> getLabels() {
     return labels;
   }
 
-  @NotNull
-  public List<TrelloCommentAction> getComments() {
+  public @NotNull List<TrelloCommentAction> getComments() {
     return comments;
   }
 
   /**
    * @return colors of labels with special {@link LabelColor#NO_COLOR} value excluded
    */
-  @NotNull
-  public Set<LabelColor> getColors() {
+  public @NotNull Set<LabelColor> getColors() {
     if (labels == null || labels.isEmpty()) {
       return EnumSet.noneOf(LabelColor.class);
     }
@@ -146,8 +122,7 @@ public class TrelloCard extends TrelloModel {
     isVisible = visible;
   }
 
-  @Nullable
-  public Date getDateLastActivity() {
+  public @Nullable Date getDateLastActivity() {
     return dateLastActivity;
   }
 }

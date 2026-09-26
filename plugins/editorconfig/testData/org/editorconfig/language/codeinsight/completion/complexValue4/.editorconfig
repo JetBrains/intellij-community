@@ -1,0 +1,2 @@
+[foo]
+dotnet_style_qualification_for_field = false:<caret>

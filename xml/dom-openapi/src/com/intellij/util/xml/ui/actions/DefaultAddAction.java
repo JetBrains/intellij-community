@@ -1,48 +1,39 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Type;
 
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   public DefaultAddAction() {
-    super(ApplicationBundle.message("action.add"));
+    super(XmlDomBundle.messagePointer("dom.action.add"));
   }
 
-  public DefaultAddAction(String text) {
+  public DefaultAddAction(@NlsActions.ActionText String text) {
     super(text);
   }
 
-  public DefaultAddAction(String text, String description, Icon icon) {
+  public DefaultAddAction(@NlsActions.ActionText String text,
+                          @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -62,15 +53,14 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     final T result = performElementAddition();
     if (result != null) {
       afterAddition(result);
     }
   }
 
-  @Nullable
-  protected T performElementAddition() {
+  protected @Nullable T performElementAddition() {
     final DomElement parent = getParentDomElement();
     final DomManager domManager = parent.getManager();
     final TypeChooser[] oldChoosers = new TypeChooser[]{null};
@@ -102,7 +92,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
           return oldChoosers[0].getChooserTypes();
         }
       });
-      return (StableElement<T>)t.createStableCopy();
+      return t.createStableCopy();
     });
     if (result != null) {
       domManager.getTypeChooserManager().registerTypeChooser(aClass[0], oldChoosers[0]);

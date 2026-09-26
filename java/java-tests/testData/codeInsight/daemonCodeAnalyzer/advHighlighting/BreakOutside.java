@@ -2,7 +2,7 @@
 public class a {
 
   void f() {
-    <error descr="Break outside switch or loop">break;</error>
+    <error descr="'break' outside of switch or loop">break;</error>
     while (true) {
       break;
     }
@@ -17,7 +17,7 @@ public class a {
     for (;;) {
       new ff() {
         void f() { 
-          <error descr="Break outside switch or loop">break;</error>
+          <error descr="'break' outside of switch or loop">break;</error>
         }
       };
       break;
@@ -27,7 +27,7 @@ public class a {
     while (true) {
       class s {
        {
-         <error descr="Break outside switch or loop">break;</error>
+         <error descr="'break' outside of switch or loop">break;</error>
        }
       }
       break;
@@ -36,7 +36,7 @@ public class a {
     do {
       class s {
        {
-         <error descr="Break outside switch or loop">break;</error>
+         <error descr="'break' outside of switch or loop">break;</error>
        }
       }
       break;

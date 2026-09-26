@@ -1,81 +1,72 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class GroovyOverrideImplementExploreUtil {
+public final class GroovyOverrideImplementExploreUtil {
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {
     if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false, true).keySet();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull GrTypeDefinition aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull GrTypeDefinition aClass) {
     return getMapToOverrideImplement(aClass, true, true).keySet();
   }
 
-  @NotNull
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean toImplement) {
+  public static @NotNull Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement, true).values();
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, boolean toImplement, boolean skipImplemented) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, boolean toImplement, boolean skipImplemented) {
     Collection<HierarchicalMethodSignature> allMethodSignatures = aClass.getVisibleSignatures();
     return getMapToOverrideImplement(aClass, allMethodSignatures, toImplement, skipImplemented);
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, Collection<HierarchicalMethodSignature> allMethodSignatures, boolean toImplement, boolean skipImplemented) {
-    Map<MethodSignature, PsiMethod> abstracts = ContainerUtil.newLinkedHashMap();
-    Map<MethodSignature, PsiMethod> finals = ContainerUtil.newLinkedHashMap();
-    Map<MethodSignature, PsiMethod> concretes = ContainerUtil.newLinkedHashMap();
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
+                                                                                       Collection<? extends HierarchicalMethodSignature> allMethodSignatures,
+                                                                                       boolean toImplement,
+                                                                                       boolean skipImplemented) {
+    Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
 
     PsiUtilCore.ensureValid(aClass);
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSignatures) {
       PsiMethod method = signature.getMethod();
       if (method instanceof GrTraitMethod) {
         for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
-          processMethod(aClass, skipImplemented, abstracts, finals, concretes, resolveHelper, superSignature, superSignature.getMethod());
+          processMethod(aClass, skipImplemented, abstracts, finals, concretes, superSignature, superSignature.getMethod());
         }
       }
       else {
-        processMethod(aClass, skipImplemented, abstracts, finals, concretes, resolveHelper, signature, method);
+        processMethod(aClass, skipImplemented, abstracts, finals, concretes, signature, method);
       }
     }
 
@@ -102,15 +93,15 @@ public class GroovyOverrideImplementExploreUtil {
     return result;
   }
 
-  public static void processMethod(GrTypeDefinition aClass,
-                                    boolean skipImplemented,
-                                    Map<MethodSignature, PsiMethod> abstracts,
-                                    Map<MethodSignature, PsiMethod> finals,
-                                    Map<MethodSignature, PsiMethod> concretes,
-                                    PsiResolveHelper resolveHelper, HierarchicalMethodSignature signature, PsiMethod method) {
+  public static void processMethod(PsiClass aClass,
+                                   boolean skipImplemented,
+                                   Map<MethodSignature, PsiMethod> abstracts,
+                                   Map<MethodSignature, PsiMethod> finals,
+                                   Map<MethodSignature, PsiMethod> concretes,
+                                   HierarchicalMethodSignature signature, PsiMethod method) {
     PsiUtilCore.ensureValid(method);
 
-    if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) return;
+    if (GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC) || GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.FINAL) || GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.PRIVATE)) return;
     PsiClass hisClass = method.getContainingClass();
     if (hisClass == null) return;
     // filter non-immediate super constructors

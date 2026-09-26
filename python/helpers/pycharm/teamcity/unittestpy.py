@@ -1,6 +1,6 @@
 # coding=utf-8
 import sys
-from unittest import TestResult, TextTestRunner
+from unittest import TextTestResult, TextTestRunner
 import datetime
 import re
 
@@ -15,12 +15,11 @@ _real_stderr = sys.stderr
 _ERROR_HOLDERS_FQN = ("unittest.suite._ErrorHolder", "unittest2.suite._ErrorHolder")
 
 
-class TeamcityTestResult(TestResult):
+class TeamcityTestResult(TextTestResult):
     separator2 = "\n"
 
-    # noinspection PyUnusedLocal
-    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=None):
-        super(TeamcityTestResult, self).__init__()
+    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=0):
+        super(TeamcityTestResult, self).__init__(stream, descriptions, verbosity)
 
         # Some code may ask for self.failfast, see unittest2.case.TestCase.subTest
         self.failfast = getattr(self, "failfast", False)
@@ -32,7 +31,7 @@ class TeamcityTestResult(TestResult):
         self.current_test_id = None
 
     @staticmethod
-    def get_test_id(test):
+    def get_test_id_with_description(test):
         if is_string(test):
             return test
 
@@ -61,13 +60,13 @@ class TeamcityTestResult(TestResult):
             _super.addExpectedFailure(test, err)
 
         err = convert_error_to_string(err)
-        test_id = self.get_test_id(test)
+        test_id = self.get_test_id_with_description(test)
 
         self.messages.testIgnored(test_id, message="Expected failure: " + err, flowId=test_id)
 
     def get_subtest_block_id(self, test, subtest):
-        test_id = self.get_test_id(test)
-        subtest_id = self.get_test_id(subtest)
+        test_id = self.get_test_id_with_description(test)
+        subtest_id = self.get_test_id_with_description(subtest)
 
         if subtest_id.startswith(test_id):
             block_id = subtest_id[len(test_id):].strip()
@@ -92,7 +91,7 @@ class TeamcityTestResult(TestResult):
         test_class_name = get_class_fullname(test)
         if test_class_name == "unittest.case._SubTest" or test_class_name == "unittest2.case._SubTest":
             parent_test = test.test_case
-            parent_test_id = self.get_test_id(parent_test)
+            parent_test_id = self.get_test_id_with_description(parent_test)
             subtest = test
 
             block_id = self.get_subtest_block_id(parent_test, subtest)
@@ -101,7 +100,7 @@ class TeamcityTestResult(TestResult):
             self.messages.testStdOut(parent_test_id, out="SubTest skipped" + reason_str + "\n", flowId=parent_test_id)
             self.messages.blockClosed(block_id, flowId=parent_test_id)
         else:
-            test_id = self.get_test_id(test)
+            test_id = self.get_test_id_with_description(test)
 
             if test_id not in self.test_started_datetime_map:
                 # Test ignored without startTest. Handle start and finish events ourselves
@@ -116,7 +115,7 @@ class TeamcityTestResult(TestResult):
         if hasattr(_super, "addUnexpectedSuccess"):
             _super.addUnexpectedSuccess(test)
 
-        test_id = self.get_test_id(test)
+        test_id = self.get_test_id_with_description(test)
         self.messages.testFailed(test_id, message='Failure',
                                  details="Test should not succeed since it's marked with @unittest.expectedFailure",
                                  flowId=test_id)
@@ -127,7 +126,7 @@ class TeamcityTestResult(TestResult):
         test_class = get_class_fullname(test)
         if test_class in _ERROR_HOLDERS_FQN:
             # This is a standalone error
-            test_id = self.get_test_id(test)
+            test_id = self.get_test_id_with_description(test)
 
             self.messages.testStarted(test_id, flowId=test_id)
             self.report_fail(test, 'Failure', err)
@@ -152,8 +151,10 @@ class TeamcityTestResult(TestResult):
         if hasattr(_super, "addSubTest"):
             _super.addSubTest(test, subtest, err)
 
-        test_id = self.get_test_id(test)
-        subtest_id = self.get_test_id(subtest)
+        # test_id_with_desc may contain description which breaks process of fetching id from subtest
+        test_id_with_desc = self.get_test_id_with_description(test)
+        test_id = test.id()
+        subtest_id = subtest.id()
 
         if subtest_id.startswith(test_id):
             # Replace "." -> "_" since '.' is a test hierarchy separator
@@ -165,19 +166,19 @@ class TeamcityTestResult(TestResult):
             block_id = subtest_id
 
         if err is not None:
-            self.add_subtest_failure(test_id, block_id)
+            self.add_subtest_failure(test_id_with_desc, block_id)
 
             if issubclass(err[0], test.failureException):
-                self.messages.subTestBlockOpened(block_id, subTestResult="Failure", flowId=test_id)
-                self.messages.testStdErr(test_id, out="SubTest failure: %s\n" % convert_error_to_string(err), flowId=test_id)
-                self.messages.blockClosed(block_id, flowId=test_id)
+                self.messages.subTestBlockOpened(block_id, subTestResult="Failure", flowId=test_id_with_desc)
+                self.messages.testStdErr(test_id_with_desc, out="SubTest failure: %s\n" % convert_error_to_string(err), flowId=test_id_with_desc)
+                self.messages.blockClosed(block_id, flowId=test_id_with_desc)
             else:
-                self.messages.subTestBlockOpened(block_id, subTestResult="Error", flowId=test_id)
-                self.messages.testStdErr(test_id, out="SubTest error: %s\n" % convert_error_to_string(err), flowId=test_id)
-                self.messages.blockClosed(block_id, flowId=test_id)
+                self.messages.subTestBlockOpened(block_id, subTestResult="Error", flowId=test_id_with_desc)
+                self.messages.testStdErr(test_id_with_desc, out="SubTest error: %s\n" % convert_error_to_string(err), flowId=test_id_with_desc)
+                self.messages.blockClosed(block_id, flowId=test_id_with_desc)
         else:
-            self.messages.subTestBlockOpened(block_id, subTestResult="Success", flowId=test_id)
-            self.messages.blockClosed(block_id, flowId=test_id)
+            self.messages.subTestBlockOpened(block_id, subTestResult="Success", flowId=test_id_with_desc)
+            self.messages.blockClosed(block_id, flowId=test_id_with_desc)
 
     def add_subtest_failure(self, test_id, subtest_block_id):
         fail_array = self.subtest_failures.get(test_id, [])
@@ -189,11 +190,12 @@ class TeamcityTestResult(TestResult):
         return ", ".join(fail_array)
 
     def report_fail(self, test, fail_type, err):
-        test_id = self.get_test_id(test)
+        test_id = self.get_test_id_with_description(test)
 
         diff_failed = None
         try:
-            error = err[1]
+            from .jb_local_exc_store import get_exception
+            error = get_exception()
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
         except Exception:
@@ -201,11 +203,11 @@ class TeamcityTestResult(TestResult):
 
         if is_string(err):
             details = err
-        elif get_class_fullname(err) == "twisted.python.failure.Failure":
-            details = err.getTraceback()
         else:
-            frames_to_skip_from_tail = 2 if diff_failed else 0
-            details = convert_error_to_string(err, frames_to_skip_from_tail)
+            try:
+                details = err.getTraceback()
+            except AttributeError:
+                details = convert_error_to_string(err, ["diff_tools", "case.py"])
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:
@@ -223,7 +225,7 @@ class TeamcityTestResult(TestResult):
         self.failed_tests.add(test_id)
 
     def startTest(self, test):
-        test_id = self.get_test_id(test)
+        test_id = self.get_test_id_with_description(test)
         self.current_test_id = test_id
 
         super(TeamcityTestResult, self).startTest(test)
@@ -251,7 +253,7 @@ class TeamcityTestResult(TestResult):
             sys.stderr = self._stderr_buffer
 
     def stopTest(self, test):
-        test_id = self.get_test_id(test)
+        test_id = self.get_test_id_with_description(test)
 
         if getattr(self, 'buffer', None):
             # Do not allow super() method to print output by itself
@@ -274,7 +276,14 @@ class TeamcityTestResult(TestResult):
             if subtest_failures:
                 self.report_fail(test, "One or more subtests failed", "")
 
-        time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
+        if sys.exc_info()[0] is not None:
+            # test was interrupted (e.g., SIGINT)
+            self.messages.testStopped(test_id, flowId=test_id)
+
+        try:
+            time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
+        except KeyError:
+            time_diff = None
         self.messages.testFinished(test_id, testDuration=time_diff, flowId=test_id)
 
     def printErrors(self):

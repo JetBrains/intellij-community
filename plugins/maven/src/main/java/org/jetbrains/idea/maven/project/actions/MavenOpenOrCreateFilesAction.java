@@ -20,23 +20,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Presentation p = e.getPresentation();
@@ -53,14 +53,14 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     boolean enabled = true;
 
     if (files.size() == 1 && virtualFiles.isEmpty()) {
-      text = "Create ''{0}''";
+      p.setText(MavenProjectBundle.message("action.Maven.create.file", files.get(0).getName()));
     }
     else {
       enabled = virtualFiles.size() == files.size();
-      text = "Open ''{0}''";
+      p.setText(MavenProjectBundle.message("action.Maven.open.file", files.get(0).getName()));
     }
 
-    p.setText(MessageFormat.format(text, files.get(0).getName()));
+
     p.setEnabled(enabled);
   }
 
@@ -83,7 +83,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
           }
         }
         catch (IOException ex) {
-          MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+          MavenUtil.showError(project, MavenProjectBundle.message("notification.title.cannot.create", file.getName()), ex);
         }
       });
       return;
@@ -97,7 +97,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   private static List<VirtualFile> collectVirtualFiles(List<File> files) {
     List<VirtualFile> result = new ArrayList<>();
     for (File each : files) {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(each);
+      VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(each.getAbsolutePath());
       if (virtualFile != null) result.add(virtualFile);
     }
     return result;

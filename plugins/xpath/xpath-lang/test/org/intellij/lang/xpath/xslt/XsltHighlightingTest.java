@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
@@ -6,8 +6,10 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.TimeoutUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
@@ -119,6 +121,7 @@ public class XsltHighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  @PerformanceUnitTest
   public void xtestPerformance() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
     final long l = runHighlighting();
@@ -129,11 +132,8 @@ public class XsltHighlightingTest extends TestBase {
     final Project project = myFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return ReadAction.compute(() -> {
-      final long l = System.currentTimeMillis();
-      CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
-      return System.currentTimeMillis() - l;
-    });
+    return TimeoutUtil.measureExecutionTime(() -> ReadAction.run(
+      () -> CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false)));
   }
 
   private void doXsltHighlighting() {

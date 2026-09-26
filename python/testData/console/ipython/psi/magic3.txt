@@ -1,0 +1,3 @@
+PyFile:magic3.py
+  PyEmptyExpression
+    PsiElement(Py:MAGIC_COMMAND_LINE)('%config Class.trait=value')

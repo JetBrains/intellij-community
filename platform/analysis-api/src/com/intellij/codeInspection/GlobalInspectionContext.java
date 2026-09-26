@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.StdJobDescriptors;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -25,15 +26,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 /**
  * The context for a global inspection run. Provides access to the reference graph
  * and allows to enqueue external usage processing.
  *
  * @author anna
- * @see GlobalInspectionTool#runInspection
- * @see GlobalInspectionTool#queryExternalUsagesRequests
- * @since 6.0
+ * @see GlobalInspectionTool#runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
+ * @see GlobalInspectionTool#queryExternalUsagesRequests(InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
  */
 public interface GlobalInspectionContext extends UserDataHolder {
   /**
@@ -43,17 +44,6 @@ public interface GlobalInspectionContext extends UserDataHolder {
    */
   @NotNull
   RefManager getRefManager();
-
-  /**
-   * Checks if the inspection with the specified ID is suppressed for the
-   * specified reference graph node. Should not be called manually in normal case.
-   * You need to check suppressions only when you use {@link GlobalInspectionTool#runInspection}
-   * @param entity           the reference graph node to check.
-   * @param inspectionToolId the ID of the inspection to check.
-   * @return true if the inspection is suppressed, false otherwise.
-   * @deprecated use #shouldCheck instead
-   */
-  boolean isSuppressed(@NotNull RefEntity entity, @NotNull String inspectionToolId);
 
   /**
    * Checks if the inspection is suppressed for the specified reference graph node. Should not be called manually in normal case.
@@ -77,7 +67,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
   @NotNull
   Project getProject();
 
-  <T> T getExtension(@NotNull Key<T> key);
+  <T> @UnknownNullability T getExtension(@NotNull Key<T> key);
 
   void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull String message);
 

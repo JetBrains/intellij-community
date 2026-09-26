@@ -1,17 +1,13 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   public void doSomething( String value) {
-      //comment1
-      //comment3
-      //comment4
-      //comment5
       //comment6
       //comment7
-      //comment8
-      if ("case1".equals(value)) {//comment2
-
-      } else if ("case2".equals(value)) {
-      } else {
-      }
+      if (value.equals("case1")) {//comment1
+          //comment2
+          //comment3
+      } else if (value.equals("case2")) {//comment4
+          //comment5
+      }//comment8
   }
 }

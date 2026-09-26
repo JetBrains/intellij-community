@@ -4,7 +4,7 @@ class A:
 
 
 class B(A):
-    def <warning descr="Call to __init__ of super class is missed">__in<caret>it__</warning>(self):
+    def <warning descr="Call to '__init__' of super class is missing">__in<caret>it__</warning>(self):
         # comment #1
         pass
         # comment #2

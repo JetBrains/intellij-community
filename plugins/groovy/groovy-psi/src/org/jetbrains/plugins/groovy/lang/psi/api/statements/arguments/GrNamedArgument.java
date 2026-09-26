@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public interface GrNamedArgument extends GroovyPsiElement {
   GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
 

@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_changeWithRemovingUsage-a.kotlin_module
+  test/BarKt.class
+  test/FooKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/changeWithRemovingUsage/a/foo.kt
+End of files
+------------------------------------------
+Exit code: OK

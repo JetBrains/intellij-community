@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.FrameworkDetector;
@@ -20,22 +6,40 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.indexing.*;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.indexing.CompositeDataIndexer;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.ScalarIndexExtension;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.externalizer.StringCollectionExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * @author nik
- */
-public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.FrameworkDetectionIndex");
-  public static final ID<Integer,Void> NAME = ID.create("FrameworkDetectionIndex");
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
+@ApiStatus.Internal
+public final class FrameworkDetectionIndex extends ScalarIndexExtension<String> {
+  private static final Logger LOG = Logger.getInstance(FrameworkDetectionIndex.class);
+  public static final ID<String, Void> NAME = ID.create("FrameworkDetectionIndex");
 
   private final EventDispatcher<FrameworkDetectionIndexListener> myDispatcher = EventDispatcher.create(FrameworkDetectionIndexListener.class);
 
@@ -43,9 +47,8 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     return EXTENSION_POINT_NAME.findExtension(FrameworkDetectionIndex.class);
   }
 
-  @NotNull
   @Override
-  public ID<Integer, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
@@ -53,33 +56,50 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Integer, Void, FileContent> getIndexer() {
-    final MultiMap<FileType, Pair<ElementPattern<FileContent>, Integer>> detectors = new MultiMap<>();
-    FrameworkDetectorRegistry registry = FrameworkDetectorRegistry.getInstance();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      detectors.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), registry.getDetectorId(detector)));
-    }
-    return new DataIndexer<Integer, Void, FileContent>() {
-      @NotNull
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
+    return new CompositeDataIndexer<String, Void, Collection<Pair<ElementPattern<FileContent>, String>>, List<String>> () {
       @Override
-      public Map<Integer, Void> map(@NotNull FileContent inputData) {
-        final FileType fileType = inputData.getFileType();
-        if (!detectors.containsKey(fileType)) {
-          return Collections.emptyMap();
-        }
-        Map<Integer, Void> result = null;
-        for (Pair<ElementPattern<FileContent>, Integer> pair : detectors.get(fileType)) {
-          if (pair.getFirst().accepts(inputData)) {
+      public @Nullable Collection<Pair<ElementPattern<FileContent>, String>> calculateSubIndexer(@NotNull IndexedFile file) {
+        MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> map = FrameworkDetectorRegistry.getInstance().getDetectorsMap();
+        Collection<Pair<ElementPattern<FileContent>, String>> indexerCandidates = map.get(file.getFileType());
+        return indexerCandidates.isEmpty() ? null : indexerCandidates;
+      }
+
+      @Override
+      public @NotNull List<String> getSubIndexerVersion(@NotNull Collection<Pair<ElementPattern<FileContent>, String>> pairs) {
+        return pairs.stream().map(p -> p.getSecond()).sorted().collect(Collectors.toList());
+      }
+
+      @Override
+      public @NotNull KeyDescriptor<List<String>> getSubIndexerVersionDescriptor() {
+        return new StringCollectionExternalizer<>(ArrayList::new);
+      }
+
+      @Override
+      public @NotNull Map<String, Void> map(@NotNull FileContent inputData,
+                                            @NotNull Collection<Pair<ElementPattern<FileContent>, String>> pairs) {
+        Map<String, Void> result = null;
+        for (Pair<ElementPattern<FileContent>, String> pair : pairs) {
+          ElementPattern<FileContent> pattern = pair.getFirst();
+          String detectorId = pair.getSecond();
+          boolean accepts;
+          try {
+            accepts = pattern.accepts(inputData);
+          } catch (Exception e) {
+            rethrowControlFlowException(e);
+            FrameworkDetector frameworkDetector = FrameworkDetectorRegistry.getInstance().getDetectorById(detectorId);
+            throw new MapReduceIndexMappingException(e, frameworkDetector != null ? frameworkDetector.getClass() : null);
+          }
+          if (accepts) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug(inputData.getFile() + " accepted by detector " + pair.getSecond());
+              LOG.debug(inputData.getFile() + " accepted by detector " + detectorId);
             }
             if (result == null) {
               result = new HashMap<>();
             }
-            myDispatcher.getMulticaster().fileUpdated(inputData.getFile(), pair.getSecond());
-            result.put(pair.getSecond(), null);
+            myDispatcher.getMulticaster().fileUpdated(inputData.getFile(), detectorId);
+            result.put(detectorId, null);
           }
         }
         return result != null ? result : Collections.emptyMap();
@@ -87,20 +107,19 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
-    return EnumeratorIntegerDescriptor.INSTANCE;
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    final Set<FileType> acceptedTypes = new HashSet<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      acceptedTypes.add(detector.getFileType());
-    }
-    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(FileType.EMPTY_ARRAY));
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(FrameworkDetectorRegistry.getInstance().getAcceptedFileTypes()) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.isInLocalFileSystem();
+      }
+    };
   }
 
   @Override
@@ -110,6 +129,6 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
 
   @Override
   public int getVersion() {
-    return FrameworkDetectorRegistry.getInstance().getDetectorsVersion();
+    return 65536;
   }
 }

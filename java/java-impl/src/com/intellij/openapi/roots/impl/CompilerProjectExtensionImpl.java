@@ -1,158 +1,164 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.java.workspace.entities.JavaProjectSettingsEntity;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WatchRoots;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import java.util.HashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
-public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
-  @NonNls private static final String OUTPUT_TAG = "output";
-  @NonNls private static final String URL = "url";
+final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
+  private static final Logger LOG = Logger.getInstance(CompilerProjectExtensionImpl.class);
 
-  private VirtualFilePointer myCompilerOutput;
-  private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
-  private final Project myProject;
 
-  public CompilerProjectExtensionImpl(final Project project) {
-    myProject = project;
+  private WatchRoots.Token myCompilerOutputWatchRequest;
+  private final Project project;
+
+  CompilerProjectExtensionImpl(@NotNull Project project) {
+    this.project = project;
   }
 
-  private void readExternal(final Element element) {
-    final Element outputPathChild = element.getChild(OUTPUT_TAG);
-    if (outputPathChild != null) {
-      String outputPath = outputPathChild.getAttributeValue(URL);
-      myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, myProject, null);
-    }
+
+  @Override
+  public void dispose() {
   }
 
-  private void writeExternal(final Element element) {
-    if (myCompilerOutput != null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(URL, myCompilerOutput.getUrl());
-      element.addContent(pathElement);
-    }
+  private @Nullable VirtualFileUrl getCompilerOutputWSM() {
+    JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(project).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
+    return entity != null ? entity.getCompilerOutput() : null;
+  }
+
+  @RequiresWriteLock
+  private void setCompilerOutputWSM(@Nullable String fileUrl) {
+    ThreadingAssertions.assertWriteAccess();
+
+    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
+    VirtualFileUrlManager vfum = workspaceModel.getVirtualFileUrlManager();
+    workspaceModel.updateProjectModel("setCompilerOutputWSM: " + fileUrl, mutableStorage -> {
+      JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(project, mutableStorage, entity -> {
+        VirtualFileUrl vfu = fileUrl != null ? vfum.storeAndGet(fileUrl) : null;
+        entity.setCompilerOutput(vfu);
+      });
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
-  @Nullable
   public VirtualFile getCompilerOutput() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getFile();
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    return fileUrl != null ? VirtualFileUrls.getVirtualFile(fileUrl) : null;
   }
 
   @Override
-  @Nullable
   public String getCompilerOutputUrl() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getUrl();
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    return fileUrl != null ? fileUrl.getUrl() : null;
   }
 
   @Override
-  public VirtualFilePointer getCompilerOutputPointer() {
-    return myCompilerOutput;
+  public @Nullable VirtualFilePointer getCompilerOutputPointer() {
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    if (fileUrl == null) {
+      return null;
+    }
+    else if (fileUrl instanceof VirtualFilePointer virtualFilePointer) {
+      return virtualFilePointer;
+    }
+    else {
+      return new LightFilePointer(fileUrl.getUrl());
+    }
   }
 
   @Override
-  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
-    myCompilerOutput = pointer;
+  @RequiresWriteLock(generateAssertion = false)
+  public void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "This method is deprecated. Please consider using `setCompilerOutputUrl` instead.");
+
+    setCompilerOutputWSM(pointer != null ? pointer.getUrl() : null);
   }
 
   @Override
-  public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
-    setCompilerOutputPointer(pointer);
-    String path = VfsUtilCore.urlToPath(compilerOutputUrl);
-    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+  @RequiresWriteLock(generateAssertion = false)
+  public void setCompilerOutputUrl(@Nullable String compilerOutputUrl) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "Please acquire write action before invoking setCompilerOutputUrl.");
+
+    if (compilerOutputUrl == null) {
+      setCompilerOutputPointer(null);
+    }
+    else {
+      // TODO ANK (Maybe): maybe we should remove old compilerOutputUrl from watched roots? (keep in mind that there might be
+      //  some other code which has added exactly the same root to the watch roots)
+      setCompilerOutputWSM(compilerOutputUrl);
+      String path = VfsUtilCore.urlToPath(compilerOutputUrl);
+      WatchRoots watchRoots = WatchRoots.getInstance();
+      watchRoots.batch(() -> {
+        WatchRoots.Token previous = myCompilerOutputWatchRequest;
+        myCompilerOutputWatchRequest = watchRoots.watch(path, true);
+        if (previous != null) previous.close();
+      });
+    }
   }
 
-  @NotNull
-  private Set<String> getRootsToWatch() {
-    final Set<String> rootsToWatch = new HashSet<>();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrl());
-      if (compilerOutputPath.length() > 0) {
-        rootsToWatch.add(compilerOutputPath);
+  private static Set<String> getRootsToWatch(Project project) {
+    Set<String> rootsToWatch = new HashSet<>();
+
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension != null && !extension.isCompilerOutputPathInherited()) {
+        String outputUrl = extension.getCompilerOutputUrl();
+        if (outputUrl != null && outputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(outputUrl));
+        }
+        String testOutputUrl = extension.getCompilerOutputUrlForTests();
+        if (testOutputUrl!= null && testOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(testOutputUrl));
+        }
       }
-      final String compilerOutputPathForTests =
-        ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests());
-      if (compilerOutputPathForTests.length() > 0) {
-        rootsToWatch.add(compilerOutputPathForTests);
+      // otherwise, the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
+    }
+
+    CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension != null) {
+      String compilerOutputUrl = extension.getCompilerOutputUrl();
+      if (compilerOutputUrl != null && compilerOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+        rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(compilerOutputUrl));
       }
     }
 
-    if (myCompilerOutput != null) {
-      final String url = myCompilerOutput.getUrl();
-      rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(url));
-    }
     return rootsToWatch;
   }
 
-  private static CompilerProjectExtensionImpl getImpl(final Project project) {
-    return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
-  }
-
-  public static class MyProjectExtension extends ProjectExtension {
-    private final Project myProject;
-
-    public MyProjectExtension(final Project project) {
-
-      myProject = project;
-    }
-
+  static final class MyWatchedRootsProvider implements WatchedRootsProvider {
     @Override
-    public void readExternal(@NotNull Element element) {
-      getImpl(myProject).readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(@NotNull Element element) {
-      getImpl(myProject).writeExternal(element);
-    }
-  }
-
-  public static class MyWatchedRootsProvider implements WatchedRootsProvider {
-    private final Project myProject;
-
-    public MyWatchedRootsProvider(final Project project) {
-      myProject = project;
-    }
-
-    @Override
-    @NotNull
-    public Set<String> getRootsToWatch() {
-      return getImpl(myProject).getRootsToWatch();
+    public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
+      return CompilerProjectExtensionImpl.getRootsToWatch(project);
     }
   }
 }

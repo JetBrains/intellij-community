@@ -1,139 +1,118 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
+import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CacheOneStepIterator;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
-class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
+public final class ShowDiffFromAnnotation extends DumbAwareAction {
+  private final @NotNull Project myProject;
   private final FileAnnotation myFileAnnotation;
-  private final AbstractVcs myVcs;
-  private final VirtualFile myFile;
-  private int currentLine;
-  private final boolean myEnabled;
+  private final RevisionChangesProvider myChangesProvider;
 
-  ShowDiffFromAnnotation(final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
+  ShowDiffFromAnnotation(@NotNull Project project,
+                         @NotNull FileAnnotation fileAnnotation) {
     ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    setShortcutSet(CustomShortcutSet.EMPTY);
+    myProject = project;
     myFileAnnotation = fileAnnotation;
-    myVcs = vcs;
-    myFile = file;
-    currentLine = -1;
-    myEnabled = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsFor(myFile) != null;
+    myChangesProvider = fileAnnotation.getRevisionsChangesProvider();
   }
 
   @Override
-  public void consume(Integer integer) {
-    currentLine = integer;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    final int number = currentLine;
-    e.getPresentation().setVisible(myEnabled);
-    e.getPresentation().setEnabled(myEnabled && number >= 0 && number < myFileAnnotation.getLineCount());
+  public void update(@NotNull AnActionEvent e) {
+    final int number = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
+    e.getPresentation().setVisible(myChangesProvider != null);
+    e.getPresentation().setEnabled(myChangesProvider != null && number >= 0 && number < myFileAnnotation.getLineCount());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final int actualNumber = currentLine;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    assert myChangesProvider != null;
+    final int actualNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (actualNumber < 0) return;
 
-    final VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);
-    if (revisionNumber != null) {
-      final VcsException[] exc = new VcsException[1];
-      final List<Change> changes = new LinkedList<>();
-      final FilePath[] targetPath = new FilePath[1];
-      ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
-                                                                "Loading revision " + revisionNumber.asString() + " contents", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
-          try {
-            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(myFile, revisionNumber);
-            if (pair == null || pair.getFirst() == null) {
-              VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
-              return;
-            }
-            targetPath[0] = pair.getSecond() == null ? VcsUtil.getFilePath(myFile) : pair.getSecond();
-            final CommittedChangeList cl = pair.getFirst();
-            changes.addAll(cl.getChanges());
-            Collections.sort(changes, ChangesComparator.getInstance(true));
-          }
-          catch (VcsException e1) {
-            exc[0] = e1;
-          }
-        }
+    VcsRevisionNumber revisionNumber = myFileAnnotation.getLineRevisionNumber(actualNumber);
+    if (revisionNumber == null) return;
 
-        @Override
-        public void onSuccess() {
-          if (exc[0] != null) {
-            VcsBalloonProblemNotifier
-              .showOverChangesView(myVcs.getProject(), "Can not show diff: " + exc[0].getMessage(), MessageType.ERROR);
-          }
-          else if (!changes.isEmpty()) {
-            int idx = findSelfInList(changes, targetPath[0]);
-            final ShowDiffContext context = new ShowDiffContext(DiffDialogHints.FRAME);
-            if (idx != -1) {
-              context.putChangeContext(changes.get(idx), DiffUserDataKeysEx.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
-            }
-            if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-            ShowDiffAction.showDiffForChange(myVcs.getProject(), changes, idx, context);
-          }
-        }
-      });
+    DiffRequestChain requestChain = new ChangeDiffRequestChain.Async() {
+      @Override
+      protected @NotNull ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
+        return loadRequests(myFileAnnotation, myChangesProvider, actualNumber);
+      }
+    };
+    DiffManager.getInstance().showDiff(myProject, requestChain, DiffDialogHints.FRAME);
+  }
+
+  private static @NotNull ListSelection<ChangeDiffRequestProducer> loadRequests(@NotNull FileAnnotation fileAnnotation,
+                                                                                @NotNull RevisionChangesProvider changesProvider,
+                                                                                int actualNumber) throws DiffRequestProducerException {
+    try {
+      Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getChangesIn(actualNumber);
+      if (pair.getFirst() == null || pair.getSecond() == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("show.diff.from.annotation.action.error.can.not.load.data.to.show.diff"));
+      }
+
+      FilePath targetPath = pair.getSecond();
+      List<Change> changes = ContainerUtil.sorted(pair.getFirst().getChanges(), ChangesComparator.getInstance(true));
+
+      Map<Change, Map<Key<?>, Object>> context = new HashMap<>();
+      int idx = findSelfInList(changes, targetPath);
+      if (idx != -1) {
+        DiffNavigationContext navigationContext = createDiffNavigationContext(fileAnnotation, actualNumber);
+        context.put(changes.get(idx), Collections.singletonMap(DiffUserDataKeysEx.NAVIGATION_CONTEXT, navigationContext));
+      }
+
+      ListSelection<Change> changeSelection = ListSelection.createAt(changes, idx);
+      return changeSelection.map(change -> ChangeDiffRequestProducer.create(fileAnnotation.getProject(), change, context.get(change)));
+    }
+    catch (VcsException e) {
+      throw new DiffRequestProducerException(e);
     }
   }
 
-  private static int findSelfInList(@NotNull List<Change> changes, @NotNull FilePath filePath) {
+  private static int findSelfInList(@NotNull List<? extends Change> changes, @NotNull FilePath filePath) {
     int idx = -1;
     for (int i = 0; i < changes.size(); i++) {
       final Change change = changes.get(i);
@@ -160,40 +139,40 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   /*
    * Locate line in annotated content, using lines that are known to be modified in this revision
    */
-  @Nullable
-  private DiffNavigationContext createDiffNavigationContext(int actualLine) {
-    String annotatedContent = myFileAnnotation.getAnnotatedContent();
+  private static @Nullable DiffNavigationContext createDiffNavigationContext(@NotNull FileAnnotation fileAnnotation, int actualLine) {
+    String annotatedContent = fileAnnotation.getAnnotatedContent();
     if (StringUtil.isEmptyOrSpaces(annotatedContent)) return null;
 
     String[] contentsLines = LineTokenizer.tokenize(annotatedContent, false, false);
     if (contentsLines.length <= actualLine) return null;
 
-    final int correctedLine = correctActualLineIfTextEmpty(contentsLines, actualLine);
-    return new DiffNavigationContext(new Iterable<String>() {
+    final int correctedLine = correctActualLineIfTextEmpty(fileAnnotation, contentsLines, actualLine);
+    return new DiffNavigationContext(new Iterable<>() {
       @Override
       public Iterator<String> iterator() {
-        return new CacheOneStepIterator<>(new ContextLineIterator(contentsLines, myFileAnnotation, correctedLine));
+        return new CacheOneStepIterator<>(new ContextLineIterator(contentsLines, fileAnnotation, correctedLine));
       }
     }, contentsLines[correctedLine]);
   }
 
-  private final static int ourVicinity = 5;
+  private static final int ourVicinity = 5;
 
-  private int correctActualLineIfTextEmpty(@NotNull String[] contentsLines, final int actualLine) {
-    final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
+  private static int correctActualLineIfTextEmpty(@NotNull FileAnnotation fileAnnotation, String @NotNull [] contentsLines,
+                                                  final int actualLine) {
+    final VcsRevisionNumber revision = fileAnnotation.getLineRevisionNumber(actualLine);
     if (revision == null) return actualLine;
     if (!StringUtil.isEmptyOrSpaces(contentsLines[actualLine])) return actualLine;
 
     int upperBound = Math.min(actualLine + ourVicinity, contentsLines.length);
     for (int i = actualLine + 1; i < upperBound; i++) {
-      if (revision.equals(myFileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
+      if (revision.equals(fileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
         return i;
       }
     }
 
     int lowerBound = Math.max(actualLine - ourVicinity, 0);
     for (int i = actualLine - 1; i >= lowerBound; --i) {
-      if (revision.equals(myFileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
+      if (revision.equals(fileAnnotation.getLineRevisionNumber(i)) && !StringUtil.isEmptyOrSpaces(contentsLines[i])) {
         return i;
       }
     }
@@ -204,16 +183,16 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   /**
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
-  private static class ContextLineIterator implements Iterator<String> {
-    @NotNull private final String[] myContentsLines;
+  private static final class ContextLineIterator implements Iterator<String> {
+    private final String @NotNull [] myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
-    @NotNull private final FileAnnotation myAnnotation;
+    private final @NotNull FileAnnotation myAnnotation;
     private final int myStopAtLine;
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from
 
-    private ContextLineIterator(@NotNull String[] contentLines, @NotNull FileAnnotation annotation, int stopAtLine) {
+    private ContextLineIterator(String @NotNull [] contentLines, @NotNull FileAnnotation annotation, int stopAtLine) {
       myAnnotation = annotation;
       myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
       myStopAtLine = stopAtLine;

@@ -1,0 +1,587 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.lexer;
+
+import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.FlexLexer;
+import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.Stack;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class PythonIndentingProcessor extends MergingLexerAdapter {
+  @SuppressWarnings("SSBasedInspection")
+  protected final IntArrayList myIndentStack = new IntArrayList();
+  protected int myBraceLevel;
+  protected boolean myLineHasSignificantTokens;
+  protected IElementType myLastSignificantTokenType;
+  /**
+   * Indent of the first comment line of a new suite, or {@code -1}.
+   * A deeper line that holds code replaces it with the body indent.
+   * Otherwise, the suite holds only comments and opens at this indent.
+   */
+  protected int myDeferredSuiteIndent = -1;
+  /** The line break before the first comment line of the deferred suite. */
+  private @Nullable PendingToken myDeferredSuiteLineBreak;
+
+  protected int myLastNewLineIndent = -1;
+  protected int myCurrentNewLineIndent = 0;
+
+  protected List<PendingToken> myTokenQueue = new ArrayList<>();
+  private int myLineBreakBeforeFirstCommentIndex = -1;
+  protected boolean myProcessSpecialTokensPending = false;
+
+  private final Stack<FString> myFStringStack = new Stack<>();
+
+  public static final int TAB_WIDTH = 8;
+
+  private static final boolean DUMP_TOKENS = false;
+  private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.getInstance().getUnbalancedBracesRecoveryTokens();
+
+  public PythonIndentingProcessor(FlexLexer lexer, TokenSet tokens) {
+    super(new FlexAdapter(lexer), tokens);
+  }
+
+  protected static class PendingToken {
+    private IElementType _type;
+    private final int _start;
+    private final int _end;
+
+    public PendingToken(IElementType type, int start, int end) {
+      _type = type;
+      _start = start;
+      _end = end;
+    }
+
+    public IElementType getType() {
+      return _type;
+    }
+
+    public int getStart() {
+      return _start;
+    }
+
+    public int getEnd() {
+      return _end;
+    }
+
+    public void setType(IElementType type) {
+      _type = type;
+    }
+
+    @Override
+    public String toString() {
+      return _type + ":" + _start + "-" + _end;
+    }
+  }
+
+  private static class PendingCommentToken extends PendingToken {
+    private final int myIndent;
+
+    PendingCommentToken(IElementType type, int start, int end, int indent) {
+      super(type, start, end);
+      myIndent = indent;
+    }
+
+    public int getIndent() {
+      return myIndent;
+    }
+  }
+
+  protected @Nullable IElementType getBaseTokenType() {
+    return super.getTokenType();
+  }
+
+  protected int getBaseTokenStart() {
+    return super.getTokenStart();
+  }
+
+  protected int getBaseTokenEnd() {
+    return super.getTokenEnd();
+  }
+
+  protected @NotNull String getBaseTokenText() {
+    return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
+  }
+
+  private boolean isBaseAt(IElementType tokenType) {
+    return getBaseTokenType() == tokenType;
+  }
+
+  @Override
+  public IElementType getTokenType() {
+    if (!myTokenQueue.isEmpty()) {
+      return myTokenQueue.get(0).getType();
+    }
+    return super.getTokenType();
+  }
+
+  @Override
+  public int getTokenStart() {
+    if (!myTokenQueue.isEmpty()) {
+      return myTokenQueue.get(0).getStart();
+    }
+    return super.getTokenStart();
+  }
+
+  @Override
+  public int getTokenEnd() {
+    if (!myTokenQueue.isEmpty()) {
+      return myTokenQueue.get(0).getEnd();
+    }
+    return super.getTokenEnd();
+  }
+
+  @Override
+  public void advance() {
+    if (getTokenType() == PyTokenTypes.LINE_BREAK) {
+      myCurrentNewLineIndent = getIndentWidth(getTokenText());
+    }
+    else if (getTokenType() == PyTokenTypes.TAB) {
+      myCurrentNewLineIndent += TAB_WIDTH;
+    }
+    if (!myTokenQueue.isEmpty()) {
+      myTokenQueue.remove(0);
+      if (myProcessSpecialTokensPending) {
+        myProcessSpecialTokensPending = false;
+        processSpecialTokens();
+      }
+    }
+    else {
+      advanceBase();
+      processSpecialTokens();
+    }
+    adjustBraceLevel();
+    if (DUMP_TOKENS) {
+      if (getTokenType() != null) {
+        System.out.print(getTokenStart() + "-" + getTokenEnd() + ":" + getTokenType());
+        if (getTokenType() == PyTokenTypes.LINE_BREAK) {
+          System.out.println("{" + myBraceLevel + "}");
+        }
+        else {
+          System.out.print(" ");
+        }
+      }
+    }
+  }
+
+  protected void advanceBase() {
+    super.advance();
+    checkSignificantTokens();
+    checkFString();
+  }
+
+  private void checkFString() {
+    final String tokenText = getBaseTokenText();
+    if (isBaseAt(PyTokenTypes.FSTRING_START)) {
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(tokenText);
+      final String openingQuotes = tokenText.substring(prefixLength);
+      assert !openingQuotes.isEmpty();
+      myFStringStack.push(new FString(openingQuotes, new Stack<>()));
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_END)) {
+      while (!myFStringStack.isEmpty()) {
+        final FString lastFString = myFStringStack.pop();
+        if (lastFString.quotes.equals(tokenText)) {
+          break;
+        }
+      }
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_START)) {
+      assert !myFStringStack.isEmpty();
+      myFStringStack.peek().fragments.push(FStringFragmentPart.EXPRESSION);
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_END)) {
+      assert !myFStringStack.isEmpty();
+      FString topmostFString = myFStringStack.peek();
+      assert !topmostFString.fragments.isEmpty();
+      topmostFString.fragments.pop();
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START) || isBaseAt(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION)) {
+      assert !myFStringStack.isEmpty();
+      FString topmostFString = myFStringStack.peek();
+      assert !topmostFString.fragments.isEmpty();
+      topmostFString.fragments.pop();
+      topmostFString.fragments.push(FStringFragmentPart.TYPE_CONVERSION_OR_FORMAT);
+    }
+  }
+
+  protected void pushToken(IElementType type, int start, int end) {
+    myTokenQueue.add(new PendingToken(type, start, end));
+  }
+
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    checkStartState(startOffset, initialState);
+    super.start(buffer, startOffset, endOffset, initialState);
+    setStartState();
+  }
+
+  protected void checkStartState(int startOffset, int initialState) {
+    if (DUMP_TOKENS) {
+      System.out.println("\n--- LEXER START---");
+    }
+  }
+
+  private void setStartState() {
+    myIndentStack.clear();
+    myIndentStack.push(0);
+    myBraceLevel = 0;
+    adjustBraceLevel();
+    myLineHasSignificantTokens = false;
+    myLastSignificantTokenType = null;
+    myDeferredSuiteIndent = -1;
+    myDeferredSuiteLineBreak = null;
+    checkSignificantTokens();
+    checkFString();
+    if (isBaseAt(PyTokenTypes.SPACE)) {
+      processIndent(0, PyTokenTypes.SPACE);
+    }
+  }
+
+  private void adjustBraceLevel() {
+    boolean insideFStringFragment = !myFStringStack.isEmpty() && !myFStringStack.peek().fragments.isEmpty();
+    final IElementType tokenType = getTokenType();
+    if (PyTokenTypes.OPEN_BRACES.contains(tokenType)) {
+      myBraceLevel++;
+    }
+    else if (PyTokenTypes.CLOSE_BRACES.contains(tokenType)) {
+      myBraceLevel--;
+    }
+    else if ((myBraceLevel != 0 || insideFStringFragment) && RECOVERY_TOKENS.contains(tokenType)) {
+      myBraceLevel = 0;
+      if (insideFStringFragment) {
+        myFStringStack.clear();
+      }
+      final int pos = getTokenStart();
+      pushToken(PyTokenTypes.STATEMENT_BREAK, pos, pos);
+      final int indents = myIndentStack.size();
+      for (int i = 0; i < indents - 1; i++) {
+        final int indent = myIndentStack.topInt();
+        if (myCurrentNewLineIndent >= indent) {
+          break;
+        }
+        if (myIndentStack.size() > 1) {
+          myIndentStack.pop();
+          pushToken(PyTokenTypes.DEDENT, pos, pos);
+        }
+      }
+      pushToken(PyTokenTypes.LINE_BREAK, pos, pos);
+    }
+  }
+
+  protected void checkSignificantTokens() {
+    IElementType tokenType = getBaseTokenType();
+    if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType()) {
+      myLineHasSignificantTokens = true;
+      myLastSignificantTokenType = tokenType;
+    }
+  }
+
+  protected void processSpecialTokens() {
+    int tokenStart = getBaseTokenStart();
+    if (isBaseAt(PyTokenTypes.LINE_BREAK)) {
+      processLineBreak(tokenStart);
+      processCommentsAtLineStart();
+    }
+    else if (isBaseAt(PyTokenTypes.BACKSLASH)) {
+      processBackslash(tokenStart);
+    }
+    else if (isBaseAt(PyTokenTypes.SPACE)) {
+      processSpace();
+    }
+  }
+
+  private void processCommentsAtLineStart() {
+    if (!isBaseAt(getCommentTokenType())) {
+      return;
+    }
+    myLineBreakBeforeFirstCommentIndex = myTokenQueue.size() - 1;
+    while (isBaseAt(getCommentTokenType())) {
+      // comment at start of line; maybe we need to generate dedent before the comments
+      final int commentEnd = getBaseTokenEnd();
+      myTokenQueue.add(new PendingCommentToken(getBaseTokenType(), getBaseTokenStart(), commentEnd, myLastNewLineIndent));
+      advanceBase();
+      if (isBaseAt(PyTokenTypes.LINE_BREAK)) {
+        processLineBreak(getBaseTokenStart());
+      }
+      // Treat EOF as an indent of size 0
+      else if (getBaseTokenType() == null) {
+        openDeferredCommentOnlySuite();
+        closeDanglingSuitesWithComments(0, commentEnd);
+      }
+      else {
+        break;
+      }
+    }
+    myLineBreakBeforeFirstCommentIndex = -1;
+  }
+
+  private void processSpace() {
+    int start = getBaseTokenStart();
+    int end = getBaseTokenEnd();
+    while (getBaseTokenType() == PyTokenTypes.SPACE) {
+      end = getBaseTokenEnd();
+      advanceBase();
+    }
+    if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+      processLineBreak(start);
+      processCommentsAtLineStart();
+    }
+    else if (getBaseTokenType() == PyTokenTypes.BACKSLASH) {
+      processBackslash(start);
+    }
+    else {
+      myTokenQueue.add(new PendingToken(PyTokenTypes.SPACE, start, end));
+    }
+  }
+
+  private void processBackslash(int tokenStart) {
+    PendingToken backslashToken = new PendingToken(getBaseTokenType(), tokenStart, getBaseTokenEnd());
+    myTokenQueue.add(backslashToken);
+    advanceBase();
+    while (PyTokenTypes.WHITESPACE.contains(getBaseTokenType())) {
+      pushCurrentToken();
+      advanceBase();
+    }
+    if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+      backslashToken.setType(PyTokenTypes.SPACE);
+      processInsignificantLineBreak(getBaseTokenStart(), true);
+    }
+    myProcessSpecialTokensPending = true;
+  }
+
+  protected void processLineBreak(int startPos) {
+    if (myBraceLevel == 0 && isOutsideFStringOrInsideItsLineBreakSensitiveTextPart()) {
+      if (myLineHasSignificantTokens) {
+        pushToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos);
+      }
+      myLineHasSignificantTokens = false;
+      advanceBase();
+      processIndent(startPos, PyTokenTypes.LINE_BREAK);
+    }
+    else {
+      processInsignificantLineBreak(startPos, false);
+    }
+  }
+
+  private boolean isOutsideFStringOrInsideItsLineBreakSensitiveTextPart() {
+    if (myFStringStack.isEmpty()) return true;
+    FString topmostFString = myFStringStack.peek();
+    // In triple-quoted f-strings one can put line breaks in any plain-text part
+    if (topmostFString.quotes.length() != 1) return false;
+    return topmostFString.fragments.isEmpty() || topmostFString.fragments.peek() == FStringFragmentPart.TYPE_CONVERSION_OR_FORMAT;
+  }
+
+  protected void processInsignificantLineBreak(int startPos,
+                                               boolean breakStatementOnLineBreak) {
+    // merge whitespace following the line break character into the
+    // line break token
+    int end = getBaseTokenEnd();
+    advanceBase();
+    while (getBaseTokenType() == PyTokenTypes.SPACE || getBaseTokenType() == PyTokenTypes.TAB ||
+           (!breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK)) {
+      end = getBaseTokenEnd();
+      advanceBase();
+    }
+    myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, startPos, end));
+    myProcessSpecialTokensPending = true;
+  }
+
+  protected void processIndent(int whiteSpaceStart, IElementType whitespaceTokenType) {
+    int lastIndent = myIndentStack.topInt();
+    int indent = getNextLineIndent();
+    myLastNewLineIndent = indent;
+    int whiteSpaceEnd = (getBaseTokenType() == null) ? super.getBufferEnd() : getBaseTokenStart();
+
+    if (getBaseTokenType() == getCommentTokenType()) {
+      // This is the first comment line of a new suite. The compound clause before it ends with a colon.
+      // Defer the INDENT. The next line that holds code sets the body indent.
+      // An over-indented comment must not set it.
+      if (myLastSignificantTokenType == PyTokenTypes.COLON && myDeferredSuiteIndent < 0 && indent > lastIndent) {
+        myDeferredSuiteIndent = indent;
+        myDeferredSuiteLineBreak = new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd);
+        myTokenQueue.add(myDeferredSuiteLineBreak);
+        return;
+      }
+      // For every other comment, generate no INDENT and no DEDENT.
+      indent = lastIndent;
+    }
+    else if (myDeferredSuiteIndent >= 0) {
+      if (indent > lastIndent) {
+        // The line that holds code sets the body indent.
+        myDeferredSuiteIndent = -1;
+        myDeferredSuiteLineBreak = null;
+        openSuite(indent, whiteSpaceStart, whiteSpaceEnd, whitespaceTokenType);
+        return;
+      }
+      // The suite has only comments. The line that holds code or the end of the file closes it.
+      openDeferredCommentOnlySuite();
+      lastIndent = myIndentStack.topInt();
+    }
+
+    if (indent > lastIndent) {
+      openSuite(indent, whiteSpaceStart, whiteSpaceEnd, whitespaceTokenType);
+    }
+    else if (indent < lastIndent) {
+      closeDanglingSuitesWithComments(indent, whiteSpaceStart);
+      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
+    }
+    else {
+      myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
+    }
+  }
+
+  /** Opens a suite at {@code indent}. The INDENT goes before the comments that already have that indent. */
+  private void openSuite(int indent, int whiteSpaceStart, int whiteSpaceEnd, IElementType whitespaceTokenType) {
+    myIndentStack.push(indent);
+    myTokenQueue.add(new PendingToken(whitespaceTokenType, whiteSpaceStart, whiteSpaceEnd));
+    int insertIndex = skipPrecedingCommentsWithIndent(indent, myTokenQueue.size() - 1);
+    int indentOffset = insertIndex == myTokenQueue.size() ? whiteSpaceEnd : myTokenQueue.get(insertIndex).getStart();
+    myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
+  }
+
+  /**
+   * Opens the suite of a deferred comment indent, if one exists. The INDENT goes before the first comment of the suite.
+   * The caller must close the suite, so that the comments stay inside the statement list.
+   */
+  private void openDeferredCommentOnlySuite() {
+    if (myDeferredSuiteIndent < 0) {
+      return;
+    }
+    int lineBreakIndex = myTokenQueue.indexOf(myDeferredSuiteLineBreak);
+    int indent = myDeferredSuiteIndent;
+    myDeferredSuiteIndent = -1;
+    myDeferredSuiteLineBreak = null;
+    // The lexer already returned the comments. They stay outside the suite.
+    if (lineBreakIndex < 0 || lineBreakIndex + 1 >= myTokenQueue.size()) {
+      return;
+    }
+    myIndentStack.push(indent);
+    int indentOffset = myTokenQueue.get(lineBreakIndex + 1).getStart();
+    myTokenQueue.add(lineBreakIndex + 1, new PendingToken(PyTokenTypes.INDENT, indentOffset, indentOffset));
+  }
+
+  private void closeDanglingSuitesWithComments(int indent, int whiteSpaceStart) {
+    int lastIndent = myIndentStack.topInt();
+
+    int insertIndex = myLineBreakBeforeFirstCommentIndex == -1 ? myTokenQueue.size() : myLineBreakBeforeFirstCommentIndex;
+    int lastSuiteIndent;
+    while (indent < lastIndent) {
+      lastSuiteIndent = myIndentStack.popInt();
+      lastIndent = myIndentStack.topInt();
+      int dedentOffset = whiteSpaceStart;
+      if (indent > lastIndent) {
+        myTokenQueue.add(new PendingToken(PyTokenTypes.INCONSISTENT_DEDENT, whiteSpaceStart, whiteSpaceStart));
+        insertIndex = myTokenQueue.size();
+      }
+      else {
+        insertIndex = skipPrecedingCommentsWithSameIndentOnSuiteClose(lastSuiteIndent, insertIndex);
+      }
+      if (insertIndex != myTokenQueue.size()) {
+        dedentOffset = myTokenQueue.get(insertIndex).getStart();
+      }
+      myTokenQueue.add(insertIndex, new PendingToken(PyTokenTypes.DEDENT, dedentOffset, dedentOffset));
+      insertIndex++;
+    }
+  }
+
+  protected int skipPrecedingCommentsWithIndent(int indent, int index) {
+    // insert the DEDENT before previous comments that have the same indent as the current token indent
+    boolean foundComment = false;
+    while(index > 0 && myTokenQueue.get(index - 1) instanceof PendingCommentToken commentToken) {
+      if (commentToken.getIndent() != indent) {
+        break;
+      }
+      foundComment = true;
+      index--;
+      if (index > 1 &&
+          myTokenQueue.get(index - 1).getType() == PyTokenTypes.LINE_BREAK &&
+          myTokenQueue.get(index - 2) instanceof PendingCommentToken) {
+        index--;
+      }
+    }
+    return foundComment ? index : myTokenQueue.size();
+  }
+
+  protected int skipPrecedingCommentsWithSameIndentOnSuiteClose(int indent, int anchorIndex) {
+    int result = anchorIndex;
+    for (int i = anchorIndex; i < myTokenQueue.size(); i++) {
+      final PendingToken token = myTokenQueue.get(i);
+      if (token instanceof PendingCommentToken) {
+        if (((PendingCommentToken)token).getIndent() < indent) {
+          break;
+        }
+        result = i + 1;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Width in columns of the whitespace in {@code text}, counting a tab as {@link #TAB_WIDTH} columns.
+   * Characters other than a space or a tab (a line break, for instance) contribute nothing.
+   * <p>
+   * Callers that seed a lexer's indent stack must measure an indent with this method: the number of
+   * indent <em>characters</em> is not the number of columns the lexer sees once tabs are involved.
+   */
+  public static int getIndentWidth(@NotNull CharSequence text) {
+    int width = 0;
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ') {
+        width++;
+      }
+      else if (c == '\t') {
+        width += TAB_WIDTH;
+      }
+    }
+    return width;
+  }
+
+  protected int getNextLineIndent() {
+    int indent = 0;
+    while (getBaseTokenType() != null && PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(getBaseTokenType())) {
+      if (getBaseTokenType() == PyTokenTypes.TAB) {
+        indent = ((indent / 8) + 1) * 8;
+      }
+      else if (getBaseTokenType() == PyTokenTypes.SPACE) {
+        indent++;
+      }
+      else if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+        indent = 0;
+      }
+      advanceBase();
+    }
+    if (getBaseTokenType() == null) {
+      return 0;
+    }
+    return indent;
+  }
+
+  private void pushCurrentToken() {
+    myTokenQueue.add(new PendingToken(getBaseTokenType(), getBaseTokenStart(), getBaseTokenEnd()));
+  }
+
+
+  protected IElementType getCommentTokenType() {
+    return PyTokenTypes.END_OF_LINE_COMMENT;
+  }
+
+  private record FString(@NotNull String quotes, @NotNull Stack<FStringFragmentPart> fragments) {
+  }
+
+  private enum FStringFragmentPart {
+    EXPRESSION,
+    TYPE_CONVERSION_OR_FORMAT,
+  }
+
+}

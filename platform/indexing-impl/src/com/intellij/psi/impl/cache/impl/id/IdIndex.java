@@ -1,63 +1,53 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.CompositeDataIndexer;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileTypeSpecificSubIndexer;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 /**
- * @author Eugene Zhuravlev
+ * An implementation of identifier index where the key is an identifier hash,
+ * and the value is an occurrence mask ({@link UsageSearchContext}).
+ *<p>
+ * Consider usage of {@link com.intellij.psi.search.PsiSearchHelper} or {@link com.intellij.psi.impl.cache.CacheManager} instead of direct index access.
  */
+@ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
-  @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
-  
-  private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
+  private static final Logger LOG = Logger.getInstance(IdIndex.class);
+  private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, MINUTES.toMillis(1));
 
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+  public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
-  private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
-    @Override
-    public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
-      out.write(value.intValue() & UsageSearchContext.ANY);
-    }
+  private static final FileBasedIndex.InputFilter INPUT_FILES_FILTER = new IdIndexFilter();
 
-    @Override
-    public Integer read(@NotNull final DataInput in) throws IOException {
-      return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
-    }
-  };
-  
-  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
+  private static final KeyDescriptor<IdIndexEntry> KEY_DESCRIPTOR = new InlineKeyDescriptor<>() {
     @Override
     public IdIndexEntry fromInt(int n) {
       return new IdIndexEntry(n);
@@ -68,23 +58,27 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
       return idIndexEntry.getWordHashCode();
     }
   };
-  
-  private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
-    @Override
-    @NotNull
-    public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      final IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
-      if (indexer != null) {
-        return indexer.map(inputData);
-      }
 
-      return Collections.emptyMap();
+  private static final DataExternalizer<Integer> VALUE_EXTERNALIZER = new DataExternalizer<>() {
+    @Override
+    public void save(@NotNull DataOutput out, Integer value) throws IOException {
+      out.write(value.intValue() & UsageSearchContext.ANY);
+    }
+
+    @Override
+    public Integer read(@NotNull DataInput in) throws IOException {
+      return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
     }
   };
 
   @Override
   public int getVersion() {
-    return 16 + (ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 21 + IdIndexEntry.getUsedHashAlgorithmVersion();
+  }
+
+  @Override
+  public @NotNull ID<IdIndexEntry,Integer> getName() {
+    return NAME;
   }
 
   @Override
@@ -92,45 +86,88 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     return true;
   }
 
-  @NotNull
   @Override
-  public ID<IdIndexEntry,Integer> getName() {
-    return NAME;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return INPUT_FILES_FILTER;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
-    return myIndexer;
+  public @NotNull DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
+    return new CompositeDataIndexer<IdIndexEntry, Integer, FileTypeSpecificSubIndexer<IdIndexer>, String>() {
+      @Override
+      public @Nullable FileTypeSpecificSubIndexer<IdIndexer> calculateSubIndexer(@NotNull IndexedFile file) {
+        FileType type = file.getFileType();
+        IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(type);
+        return indexer == null ? null : new FileTypeSpecificSubIndexer<>(indexer, file.getFileType());
+      }
+
+      @Override
+      public @NotNull String getSubIndexerVersion(@NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
+        return indexer.getSubIndexerType().getClass().getName() + ":" +
+               indexer.getSubIndexerType().getVersion() + ":" +
+               indexer.getFileType().getName();
+      }
+
+      @Override
+      public @NotNull KeyDescriptor<String> getSubIndexerVersionDescriptor() {
+        return EnumeratorStringDescriptor.INSTANCE;
+      }
+
+      @Override
+      public @NotNull Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData,
+                                                     @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
+        IdIndexer subIndexerType = indexer.getSubIndexerType();
+        try {
+          Map<IdIndexEntry, Integer> idsMap = subIndexerType.map(inputData);
+          if (!(idsMap instanceof IdEntryToScopeMapImpl) && !idsMap.isEmpty() ) {
+            //RC: it is strongly recommended for all the IdIndexer implementations to use IdDataConsumer helper to
+            //    collect IDs and occurrence masks. Such a helper class returns IdEntryToScopeMapImpl instance,
+            //    which is  optimized for memory consumption and serialization. All the implementations in intellij
+            //    follow that rule.
+            //    But if there are some implementations outside our control that doesn't follow, we 'correct' it by
+            //    wrapping the map into IdEntryToScopeMapImpl -- with the associated costs -- and log a warning so
+            //    devs could fix it later:
+            THROTTLED_LOGGER.warn( () ->
+              subIndexerType.getClass() + " for [" + inputData.getFile().getPath() + "] returned non-IdEntryToScopeMapImpl " +
+              "map (" + idsMap.getClass() +")." +
+              "This is not incorrect, but ineffective -- it is strongly recommended to use " +
+              "com.intellij.psi.impl.cache.impl.id.IdDataConsumer helper class to collect IDs " +
+              "and occurrence masks (instead of plain Map impl) in your IdIndexer implementation "
+            );
+            return new IdEntryToScopeMapImpl(idsMap);
+          }
+          return idsMap;
+        }
+        catch (Exception e) {
+          rethrowControlFlowException(e);
+          throw new MapReduceIndexMappingException(e, subIndexerType.getClass());
+        }
+      }
+    };
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
-    return myValueExternalizer;
+  public @NotNull KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
+    return KEY_DESCRIPTOR;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
-    return myKeyDescriptor;
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+    return VALUE_EXTERNALIZER;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
-  }
-  
-  public static boolean isIndexable(FileType fileType) {
-    return fileType instanceof LanguageFileType ||
-           fileType instanceof CustomSyntaxTableFileType ||
-           IdTableBuilding.isIdIndexerRegistered(fileType) ||
-           CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
   }
 }

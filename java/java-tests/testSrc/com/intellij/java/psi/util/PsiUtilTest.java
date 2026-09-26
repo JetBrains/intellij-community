@@ -6,17 +6,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
-/**
- *  @author dsl
- */
-public class PsiUtilTest extends LightCodeInsightFixtureTestCase {
+import static com.intellij.psi.util.PsiUtil.hasDefaultConstructor;
+
+public class PsiUtilTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");
     Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA);
@@ -42,22 +43,39 @@ public class PsiUtilTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testTopLevelClass() {
-    PsiClass outer = ((PsiJavaFile)myFixture.configureByText("a.java", "class Outer { class Inner {} }")).getClasses()[0];
+    PsiClass outer = createTopLevelClass("class Outer { class Inner {} }");
     assertSame(outer, PsiUtil.getTopLevelClass(outer));
     PsiClass inner = outer.getInnerClasses()[0];
     assertSame(outer, PsiUtil.getTopLevelClass(inner));
   }
 
   public void testPackageName() {
-    PsiClass outer = ((PsiJavaFile)myFixture.configureByText("a.java", "package pkg;\nclass Outer { class Inner {} }")).getClasses()[0];
+    PsiClass outer = createTopLevelClass("package pkg;\nclass Outer { class Inner {} }");
     assertEquals("pkg", PsiUtil.getPackageName(outer));
     PsiClass inner = outer.getInnerClasses()[0];
     assertEquals("pkg", PsiUtil.getPackageName(inner));
   }
 
+  public void testHasDefaultConstructor() {
+    assertTrue(hasDefaultConstructor(createTopLevelClass("public class A {}")));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("public class A { public A() {}}")));
+    assertFalse(hasDefaultConstructor(createTopLevelClass("public class A { public A(int i) {}}")));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("public class A extends B { } class B {}")));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("public class A extends B { } class B { B(int i) {}}")));
 
-  private PsiClass createClass(String text) throws IncorrectOperationException {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createClassFromText(text, null).getInnerClasses()[0];
+    assertFalse(hasDefaultConstructor(createTopLevelClass("class A { A() {}}")));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), false, true));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, true));
+    assertFalse(hasDefaultConstructor(createTopLevelClass("class A { A() {}}"), true, false));
+    assertTrue(hasDefaultConstructor(createTopLevelClass("class A { protected A() {}}"), true, false));
+  }
+
+  private PsiClass createTopLevelClass(String text) {
+    return ((PsiJavaFile)myFixture.configureByText("A.java", text)).getClasses()[0];
+  }
+
+  private PsiClass createClass(@NotNull @Language("JAVA") String text) throws IncorrectOperationException {
+    return JavaPsiFacade.getElementFactory(getProject()).createClassFromText(text, null).getInnerClasses()[0];
   }
 
   private static void compareIterator(Iterator<PsiTypeParameter> it, String... expected) {

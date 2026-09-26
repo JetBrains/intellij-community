@@ -1,41 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.evaluation
 
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.values.UDependency
 import org.jetbrains.uast.values.UValue
 
 // Role: at the current state, evaluate expression(s)
 interface UEvaluator {
-
-  val context: UastContext
+  val context: UastLanguagePlugin
 
   val languageExtensions: List<UEvaluatorExtension>
-    get() {
-      val rootArea = Extensions.getRootArea()
-      if (!rootArea.hasExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME.name)) return listOf()
-      return rootArea.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).extensions.toList()
-    }
+    get() = UEvaluatorExtension.EXTENSION_POINT_NAME.extensionsIfPointIsRegistered
 
   fun PsiElement.languageExtension(): UEvaluatorExtension? = languageExtensions.firstOrNull { it.language == language }
 
-  fun UElement.languageExtension(): UEvaluatorExtension? = psi?.languageExtension()
+  fun UElement.languageExtension(): UEvaluatorExtension? = sourcePsi?.languageExtension()
 
   fun analyze(method: UMethod, state: UEvaluationState = method.createEmptyState())
 
@@ -43,8 +28,10 @@ interface UEvaluator {
 
   fun evaluate(expression: UExpression, state: UEvaluationState? = null): UValue
 
+  fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState? = null): UValue
+
   fun getDependents(dependency: UDependency): Set<UValue>
 }
 
-fun createEvaluator(context: UastContext, extensions: List<UEvaluatorExtension>): UEvaluator =
+fun createEvaluator(context: UastLanguagePlugin, extensions: List<UEvaluatorExtension>): UEvaluator =
   TreeBasedEvaluator(context, extensions)

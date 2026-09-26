@@ -1,0 +1,12 @@
+// "Make 'Foo' data class" "true"
+// WITH_STDLIB
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+class Foo(val bar: String, var baz: Int)
+
+fun test() {
+    val list = listOf(Foo("A", 1))
+    list.forEach { (foo<caret>, bar) ->
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddDataModifierFixFactory$AddDataModifierFix

@@ -21,13 +21,18 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier.AppliedSom
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-public class GenericApplyPatchTest extends PlatformTestCase {
+public class GenericApplyPatchTest extends TestCase {
   public void testSeveralSteps() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
@@ -179,8 +184,23 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
-                                                            "\naaa\n2\n-1\n-2\n-3", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -1
+                                                                    -2
+                                                                    -3""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
@@ -273,7 +293,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
   public void testInsertionsIntoTransformationsCoinsidence() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append(i + 1).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("5", "6", "7");
@@ -287,7 +307,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
   public void testInsertionsIntoTransformationsInsert() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append(i + 1).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("5", "6", "ins", "7");
@@ -301,15 +321,15 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 5 && key.getEndOffset() == 5);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 2);
-    Assert.assertTrue("6".equals(list.get(0)));
-    Assert.assertTrue("ins".equals(list.get(1)));
+    Assert.assertEquals(2, list.size());
+    Assert.assertEquals("6", list.get(0));
+    Assert.assertEquals("ins", list.get(1));
   }
 
   public void testInsertionsIntoTransformationsInsert0() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append(i + 1).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("ins", "5", "6", "7");
@@ -323,15 +343,15 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 4 && key.getEndOffset() == 4);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 2);
-    Assert.assertTrue("ins".equals(list.get(0)));
-    Assert.assertTrue("5".equals(list.get(1)));
+    Assert.assertEquals(2, list.size());
+    Assert.assertEquals("ins", list.get(0));
+    Assert.assertEquals("5", list.get(1));
   }
 
   public void testInsertionsIntoTransformationsInsert1() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append(i + 1).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("5", "6", "7", "ins");
@@ -345,15 +365,15 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 6 && key.getEndOffset() == 6);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 2);
-    Assert.assertTrue("7".equals(list.get(0)));
-    Assert.assertTrue("ins".equals(list.get(1)));
+    Assert.assertEquals(2, list.size());
+    Assert.assertEquals("7", list.get(0));
+    Assert.assertEquals("ins", list.get(1));
   }
 
   public void testInsertionsIntoTransformationsDeletion() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append(i + 1).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("5", "7");
@@ -367,13 +387,13 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 5 && key.getEndOffset() == 5);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 0);
+    Assert.assertEquals(0, list.size());
   }
 
   public void testInsertionsIntoTransformationsDeletion1() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append((i + 1)).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("5", "6");
@@ -387,13 +407,13 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 6 && key.getEndOffset() == 7);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 0);
+    Assert.assertEquals(0, list.size());
   }
 
   public void testInsertionsIntoTransformationsDeletion0() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
-      sb.append(String.valueOf(i + 1)).append('\n');
+      sb.append((i + 1)).append('\n');
     }
     final GenericPatchApplier gap = new GenericPatchApplier(sb.toString(), Collections.emptyList());
     final List<String> strings = Arrays.asList("6", "7");
@@ -407,7 +427,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     final TextRange key = entry.getKey();
     Assert.assertTrue(key.getStartOffset() == 3 && key.getEndOffset() == 4);
     final List<String> list = entry.getValue().getList();
-    Assert.assertTrue(list.size() == 0);
+    Assert.assertEquals(0, list.size());
   }
 
   public void testBetterContextMatch() {
@@ -489,8 +509,22 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
-                                                                  "\naaa\n2\n-2\n-3", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -2
+                                                                    -3""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
@@ -521,8 +555,24 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11" +
-                                                                  "\naaa\n2\n-2\n-3\n-4", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    -1*
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -2
+                                                                    -3
+                                                                    -4""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11\naaa\n2\n-1a\n-1a*\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
@@ -733,13 +783,13 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     GenericPatchApplier gap = new GenericPatchApplier("1\n2\n5\n6\n7\n9\n11\n12\n13\n13\n14\n", Collections.singletonList(patchHunk));
     assertTrue(gap.execute());
     List<AppliedTextPatch.AppliedSplitPatchHunk> appliedInfo = gap.getAppliedInfo();
-     ContainerUtil.sort(appliedInfo, (o1, o2) -> Integer.compare(o1.getAppliedTo().start, o2.getAppliedTo().start));
+     ContainerUtil.sort(appliedInfo, Comparator.comparingInt(o -> o.getAppliedTo().start));
     checkAppliedPositions(beforeAppliedExpected, endAppliedExpected, HunkStatus.ALREADY_APPLIED, appliedInfo);
 
     gap = new GenericPatchApplier("f\nd\n1768678\n2\n5\n6\n7\n9\n11\n12\n13\n13\n14\n", Collections.singletonList(patchHunk));
     assertTrue(gap.execute());
     appliedInfo = gap.getAppliedInfo();
-    ContainerUtil.sort(appliedInfo, (o1, o2) -> Integer.compare(o1.getAppliedTo().start, o2.getAppliedTo().start));
+    ContainerUtil.sort(appliedInfo, Comparator.comparingInt(o -> o.getAppliedTo().start));
     int[] beforeAppliedExpected2 = {4, 7, 8, 10};
     int[] endAppliedExpected2 = {6, 7, 9, 12};
     checkAppliedPositions(beforeAppliedExpected2, endAppliedExpected2, HunkStatus.ALREADY_APPLIED, appliedInfo);

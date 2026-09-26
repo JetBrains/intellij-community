@@ -1,0 +1,13 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.plugin.java.facet;
+
+import com.jetbrains.python.PythonModuleTypeBase;
+import org.jetbrains.annotations.NotNull;
+
+
+final class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBase> {
+  @Override
+  public @NotNull PythonModuleBuilder createModuleBuilder() {
+    return new PythonModuleBuilder();
+  }
+}

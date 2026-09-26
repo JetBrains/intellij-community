@@ -16,14 +16,13 @@
 
 package com.intellij.util.descriptors;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+import java.util.List;
+
 public interface ConfigFileContainer extends Disposable, ModificationTracker {
   Project getProject();
 
@@ -33,7 +32,7 @@ public interface ConfigFileContainer extends Disposable, ModificationTracker {
 
   void removeListener(ConfigFileListener listener);
 
-  ConfigFile[] getConfigFiles();
+  List<ConfigFile> getConfigFiles();
 
   ConfigFileInfoSet getConfiguration();
 

@@ -1,0 +1,40 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.jvm.analysis"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.uast"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.DevKitMcpInspectionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="UAST" shortName="McpToolMissingDescription"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     groupBundle="messages.DevKitBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.devkit.mcp.inspections.McpToolMissingDescriptionInspection"
+                     key="inspection.mcp.tool.missing.description.display.name"/>
+    <localInspection language="UAST" shortName="McpToolParameterMissingDescription"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     groupBundle="messages.DevKitBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.devkit.mcp.inspections.McpToolParameterMissingDescriptionInspection"
+                     key="inspection.mcp.tool.parameter.missing.description.display.name"/>
+    <localInspection language="UAST" shortName="McpToolProjectPathParameter"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     groupBundle="messages.DevKitBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.devkit.mcp.inspections.McpToolProjectPathParameterInspection"
+                     key="inspection.mcp.tool.project.path.parameter.display.name"/>
+  </extensions>
+</idea-plugin>

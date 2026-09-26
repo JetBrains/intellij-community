@@ -1,0 +1,44 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.xml.parser"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
+                    beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xml.namedReferenceProvider"
+                    dynamic="true"
+                    beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">
+      <with attribute="hostElementClass" implements="com.intellij.psi.xml.XmlNamedReferenceHost"/>
+      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.xml.autoPopupEnabler"
+                    interface="com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <metaLanguageProvider implementation="com.intellij.lang.html.HtmlCompatibleMetaLanguage$Provider"/>
+    <html.compatibleLanguage language="HTML"/>
+
+    <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
+    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
+
+    <polySymbols.enableInLanguage language="HtmlCompatible"/>
+  </extensions>
+</idea-plugin>

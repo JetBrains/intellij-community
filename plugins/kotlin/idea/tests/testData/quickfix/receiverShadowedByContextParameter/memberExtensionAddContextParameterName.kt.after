@@ -1,0 +1,19 @@
+// "Surround with 'with(f) { ... }'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: RECEIVER_SHADOWED_BY_CONTEXT_PARAMETER
+
+class Foo {
+    fun String.bar() {
+    }
+}
+
+fun withFoo(f: context(Foo) () -> Unit) {}
+
+fun Foo.test() {
+    context(f: Foo)
+    fun local() {
+        with(f<caret>) { "".bar() }
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitReceiverFix

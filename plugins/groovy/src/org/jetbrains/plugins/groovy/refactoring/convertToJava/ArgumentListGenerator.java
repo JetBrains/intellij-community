@@ -1,29 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -38,21 +28,21 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 class ArgumentListGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
+  private static final Logger LOG = Logger.getInstance(ArgumentListGenerator.class);
 
   private final StringBuilder myBuilder;
   private final ExpressionGenerator myExpressionGenerator;
 
 
-  public ArgumentListGenerator(StringBuilder builder, ExpressionContext context) {
+  ArgumentListGenerator(StringBuilder builder, ExpressionContext context) {
     myBuilder = builder;
     myExpressionGenerator = new ExpressionGenerator(builder, context);
   }
 
-  public void generate(@Nullable GrClosureSignature signature,
-                       @NotNull GrExpression[] exprs,
-                       @NotNull GrNamedArgument[] namedArgs,
-                       @NotNull GrClosableBlock[] clArgs,
+  public void generate(@Nullable GrSignature signature,
+                       GrExpression @NotNull [] exprs,
+                       GrNamedArgument @NotNull [] namedArgs,
+                       GrClosableBlock @NotNull [] clArgs,
                        @NotNull GroovyPsiElement context) {
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
       signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, false, false);
@@ -98,7 +88,7 @@ class ArgumentListGenerator {
       LOG.assertTrue(actual instanceof GrExpression);
       final PsiType type = param.getType();
       final PsiType declaredType = GenerationUtil.getDeclaredType((GrExpression)actual, myExpressionGenerator.getContext());
-      if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType,(GrExpression)actual
+      if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType, actual
       )) {
         myBuilder.append('(');
         TypeWriter.writeType(myBuilder, type, actual);

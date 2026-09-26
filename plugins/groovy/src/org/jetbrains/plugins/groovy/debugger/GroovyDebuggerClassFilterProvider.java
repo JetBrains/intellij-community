@@ -22,10 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
-public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
+public final class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
   private static final List<ClassFilter> FILTERS = Arrays.asList(new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*"));
 
   @Override

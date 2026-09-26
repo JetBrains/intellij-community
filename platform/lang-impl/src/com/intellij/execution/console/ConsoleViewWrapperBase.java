@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.filters.Filter;
@@ -14,19 +14,24 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
-  @NotNull
-  private final ConsoleView myDelegate;
+  public static final String CONSOLE_VIEW_WRAPPER_VIEW_ID_PREFIX = "ConsoleViewWrapper";
+
+  private final @NotNull ConsoleView myDelegate;
 
   public ConsoleViewWrapperBase(@NotNull ConsoleView delegate) {
     myDelegate = delegate;
   }
 
-  @NotNull
-  public ConsoleView getDelegate() {
+  public @NotNull ConsoleView getDelegate() {
     return myDelegate;
+  }
+
+  @Override
+  public void requestScrollingToEnd() {
+    myDelegate.requestScrollingToEnd();
   }
 
   @Override
@@ -45,7 +50,7 @@ public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     myDelegate.attachToProcess(processHandler);
   }
 
@@ -94,9 +99,8 @@ public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
     return myDelegate.canPause();
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return myDelegate.createConsoleActions();
   }
 
@@ -115,16 +119,15 @@ public class ConsoleViewWrapperBase implements ConsoleView, ExecutionConsoleEx {
     }
   }
 
-  @Nullable
   @Override
-  public String getExecutionConsoleId() {
+  public @Nullable String getExecutionConsoleId() {
     return myDelegate instanceof ExecutionConsoleEx
            ? ((ExecutionConsoleEx)myDelegate).getExecutionConsoleId()
            : null;
   }
 
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myDelegate.getComponent();
   }
 

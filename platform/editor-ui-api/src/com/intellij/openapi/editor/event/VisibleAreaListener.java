@@ -15,13 +15,16 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 /**
  * Allows to receive notifications about editor scrolling and resize.
  *
  * @see com.intellij.openapi.editor.ScrollingModel#addVisibleAreaListener(VisibleAreaListener)
- * @see EditorEventMulticaster#addVisibleAreaListener(VisibleAreaListener)
+ * @see EditorEventMulticaster#addVisibleAreaListener(VisibleAreaListener, Disposable)
  */
 public interface VisibleAreaListener extends EventListener {
   /**
@@ -29,5 +32,5 @@ public interface VisibleAreaListener extends EventListener {
    *
    * @param e the event containing information about changes in the visible area of the editor.
    */
-  void visibleAreaChanged(VisibleAreaEvent e);
+  void visibleAreaChanged(@NotNull VisibleAreaEvent e);
 }

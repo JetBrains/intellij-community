@@ -1,0 +1,9 @@
+// "Add 1st parameter to function 'foo'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: TOO_MANY_ARGUMENTS
+fun foo(f: () -> Unit) {}
+
+fun test() {
+    foo(""<caret>) {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory$ParameterQuickFix

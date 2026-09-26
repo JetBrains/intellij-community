@@ -1,0 +1,2 @@
+BAZELISK_WRAPPER_DIRECTORY=./build/bazel-wrapper
+BAZELISK_BASE_URL=https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel/releases/download

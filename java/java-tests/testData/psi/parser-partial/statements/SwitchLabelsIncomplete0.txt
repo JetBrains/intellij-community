@@ -1,3 +1,8 @@
 PsiJavaFile:SwitchLabelsIncomplete0.java
-  PsiErrorElement:Unexpected token
+  PsiSwitchLabelStatement
     PsiKeyword:case('case')
+    PsiCaseLabelElementList
+      PsiErrorElement:Expression, pattern, 'default' or 'null' expected
+        <empty list>
+    PsiErrorElement:':' or '->' expected
+      <empty list>

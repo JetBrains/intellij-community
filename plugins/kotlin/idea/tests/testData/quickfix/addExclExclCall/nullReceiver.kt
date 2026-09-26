@@ -1,0 +1,8 @@
+// "Add non-null asserted (arg!!) call" "true"
+// DISABLE_ERRORS
+
+fun foo(arg: String?) {
+    if (arg == null) {
+        arg<caret>.length
+    }
+}

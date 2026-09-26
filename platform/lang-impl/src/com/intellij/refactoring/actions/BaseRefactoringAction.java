@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -20,43 +6,75 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringUsageCollector;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class BaseRefactoringAction extends AnAction {
-  private final Condition<Language> myLanguageCondition = this::isAvailableForLanguage;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract boolean isAvailableInEditorOnly();
 
-  protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
+  protected abstract boolean isEnabledOnElements(PsiElement @NotNull [] elements);
 
-  @Override
-  public boolean startInTransaction() {
-    return true;
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
+                                                        @NotNull Editor editor,
+                                                        @NotNull PsiFile file,
+                                                        @NotNull DataContext context,
+                                                        @NotNull String place) {
+    if (ActionPlaces.isPopupPlace(place) || place.contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR)) {
+      final RefactoringActionHandler handler = getHandler(context);
+      if (handler == null) return false;
+      if (handler instanceof ContextAwareActionHandler contextAwareActionHandler) {
+        if (!contextAwareActionHandler.isAvailableForQuickList(editor, file, context)) {
+          return false;
+        }
+      }
+    }
+
+    return isAvailableOnElementInEditorAndFile(element, editor, file, context);
   }
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
@@ -81,18 +99,18 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  @Nullable
-  protected abstract RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
+  protected abstract @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     if (project == null) return;
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    final PsiElement[] elements = getPsiElementArray(dataContext);
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) return;
     int eventCount = IdeEventQueue.getInstance().getEventCount();
+    if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
+      return;
+    }
 
     RefactoringActionHandler handler;
     try {
@@ -101,31 +119,61 @@ public abstract class BaseRefactoringAction extends AnAction {
     catch (ProcessCanceledException ignored) {
       return;
     }
+    IdeEventQueue.getInstance().setEventCount(eventCount);
+    performRefactoringAction(project, dataContext, handler);
+  }
+
+  @ApiStatus.Internal
+  public static void performRefactoringAction(@NotNull Project project,
+                                              @NotNull DataContext dataContext,
+                                              @Nullable RefactoringActionHandler handler) {
+    final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+
     if (handler == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
 
+    final PsiElement[] elements = getPsiElementArray(dataContext);
     InplaceRefactoring activeInplaceRenamer = InplaceRefactoring.getActiveInplaceRenamer(editor);
-    if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements) && activeInplaceRenamer != null) {
+    if (activeInplaceRenamer != null && !InplaceRefactoring.canStartAnotherRefactoring(editor, handler, elements)) {
       InplaceRefactoring.unableToStartWarning(project, editor);
       return;
     }
 
-    if (activeInplaceRenamer == null) {
+    if (activeInplaceRenamer == null &&
+        !(editor != null &&
+          //prevent infinite recursion for refactoring called from
+          //injected fragments
+          InjectedLanguageEditorUtil.getTopLevelEditor(editor).getCaretModel() instanceof CaretModelImpl caretModel &&
+          caretModel.isIteratingOverCarets())) {
       final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup instanceof LookupImpl) {
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance()
+          .executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group,
+                          UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
-    IdeEventQueue.getInstance().setEventCount(eventCount);
+    final PsiFile file = editor != null ? EditorContextManager.getPsiFileForEditor(editor, project) : null;
+    final Language language = file != null
+                              ? file.getLanguage()
+                              : (elements.length > 0 ? elements[0].getLanguage() : null);
+    ArrayList<EventPair<?>> data = new ArrayList<>();
+    data.add(RefactoringUsageCollector.HANDLER.with(handler.getClass()));
+    data.add(EventFields.Language.with(language));
+    if (elements.length > 0) {
+      data.add(RefactoringUsageCollector.ELEMENT.with(elements[0].getClass()));
+    }
+
+    RefactoringUsageCollector.HANDLER_INVOKED.log(project, data);
+
     if (editor != null) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file);
       handler.invoke(project, editor, file, dataContext);
@@ -135,18 +183,21 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    presentation.setEnabledAndVisible(true);
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || isHidden()) {
+      hideAction(e);
+      return;
+    }
+    if (!RefactoringSafeMode.isRefactoringAllowed(dataContext)) {
       hideAction(e);
       return;
     }
@@ -154,7 +205,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
-      if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
+      if (file instanceof PsiCompiledElement && disableOnCompiledElement() || !isAvailableForFile(file)) {
         hideAction(e);
         return;
       }
@@ -166,32 +217,29 @@ public abstract class BaseRefactoringAction extends AnAction {
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
-      if (!isEnabled) {
-        disableAction(e);
-      }
-    }
-    else {
-      PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
-      Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
-      if (element == null || !isAvailableForLanguage(element.getLanguage())) {
-        if (file == null) {
-          hideAction(e);
-          return;
-        }
-        element = getElementAtCaret(editor, file);
-      }
-
-      if (element == null || element instanceof SyntheticElement || languages == null) {
+      boolean availableForLanguage = ContainerUtil.exists(elements, element -> isAvailableForLanguage(element.getLanguage()));
+      if (!availableForLanguage) {
         hideAction(e);
         return;
       }
-
-      boolean isVisible = ContainerUtil.find(languages, myLanguageCondition) != null;
-      if (isVisible) {
-        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext);
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || isEnabledOnElements(elements);
+      if (!isEnabled) {
+        disableAction(e);
+      }
+      else {
+        updateActionText(e);
+      }
+    }
+    else {
+      boolean availableForAnyLanguage = file != null && isAvailableForAnyLanguage(file);
+      PsiElement element = findRefactoringTargetInEditor(dataContext, language -> availableForAnyLanguage || isAvailableForLanguage(language));
+      if (element != null) {
+        boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext, e.getPlace());
         if (!isEnabled) {
           disableAction(e);
+        }
+        else {
+          updateActionText(e);
         }
       }
       else {
@@ -200,7 +248,46 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  private static void hideAction(AnActionEvent e) {
+  @ApiStatus.Internal
+  public static PsiElement findRefactoringTargetInEditor(@NotNull DataContext dataContext,
+                                                         @NotNull Predicate<? super Language> elementLanguagePredicate) {
+    PsiElement element = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
+    if (element == null || !elementLanguagePredicate.test(element.getLanguage())) {
+      Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+      PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
+      if (file == null || editor == null) {
+        return null;
+      }
+      element = getElementAtCaret(editor, file);
+    }
+
+    Language[] languages = dataContext.getData(LangDataKeys.CONTEXT_LANGUAGES);
+    if (element == null || languages == null) {
+      return null;
+    }
+
+    if (ContainerUtil.find(languages, elementLanguagePredicate::test) == null) {
+      return null;
+    }
+    return element;
+  }
+
+  private void updateActionText(AnActionEvent e) {
+    String actionText = getActionName(e.getDataContext());
+    if (actionText != null) {
+      e.getPresentation().setText(actionText);
+    }
+  }
+
+  protected @NlsActions.ActionText @Nullable String getActionName(@NotNull DataContext dataContext) {
+    return null;
+  }
+
+  protected boolean disableOnCompiledElement() {
+    return true;
+  }
+
+  private static void hideAction(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
     disableAction(e);
   }
@@ -209,61 +296,31 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  public static PsiElement getElementAtCaret(final Editor editor, final PsiFile file) {
-    final int offset = fixCaretOffset(editor);
-    PsiElement element = file.findElementAt(offset);
-    if (element == null && offset == file.getTextLength()) {
-      element = file.findElementAt(offset - 1);
-    }
-
-    if (element instanceof PsiWhiteSpace) {
-      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
-    }
-    return element;
+  public static PsiElement getElementAtCaret(final @NotNull Editor editor, final PsiFile file) {
+    return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 
-  private static int fixCaretOffset(final Editor editor) {
-    final int caret = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection()) {
-      if (caret == editor.getSelectionModel().getSelectionEnd()) {
-        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
-      }
-    }
-
-    return caret;
-  }
-
-  private static void disableAction(AnActionEvent e) {
+  private static void disableAction(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.isKindOf(StdFileTypes.JAVA.getLanguage());
+    return true;
+  }
+
+  /**
+   * Whether a language-agnostic refactoring support, registered for {@link Language#ANY} (e.g. an LSP server), is available in the file.
+   * Such support cannot be decided by language, so it is checked per file and shows the action in the editor only.
+   */
+  protected boolean isAvailableForAnyLanguage(@NotNull PsiFile file) {
+    return false;
   }
 
   protected boolean isAvailableForFile(PsiFile file) {
     return true;
   }
 
-  @NotNull
-  public static PsiElement[] getPsiElementArray(DataContext dataContext) {
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        psiElements = new PsiElement[]{element};
-      }
-    }
-
-    if (psiElements == null) return PsiElement.EMPTY_ARRAY;
-
-    List<PsiElement> filtered = null;
-    for (PsiElement element : psiElements) {
-      if (element instanceof SyntheticElement) {
-        if (filtered == null) filtered = new ArrayList<>(Collections.singletonList(element));
-        filtered.remove(element);
-      }
-    }
-    return filtered == null ? psiElements : PsiUtilCore.toPsiElementArray(filtered);
+  public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
+    return CommonRefactoringUtil.getPsiElementArray(dataContext);
   }
 }

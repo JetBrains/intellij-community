@@ -1,0 +1,200 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.idea;
+
+import com.google.gson.GsonBuilder;
+import one.profiler.AsyncProfiler;
+
+import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.stream.IntStream;
+
+public class TestMain {
+  public static void main(String[] args) throws Throwable {
+    if (args.length > 0 && "serverMode".equals(args[0])) {
+      System.out.println("Started in server mode");
+      System.out.println("managed.marker=" + System.getProperty("managed.marker"));
+      args = Arrays.copyOfRange(args, 1, args.length);
+    }
+
+    if (args.length > 0) {
+      switch (args[0]) {
+        case "dump-launch-parameters" -> dumpLaunchParameters(args);
+        case "print-env-var" -> printEnvironmentVariable(args);
+        case "print-cwd" -> printCwd();
+        case "async-profiler" -> asyncProfiler();
+        case "exit-code" -> exitCode(args);
+        case "exception" -> exception();
+        case "sigsegv" -> segmentationViolation();
+        case "main-class" -> mainClassName();
+        case "remoteDevStatus" -> checkStatus();
+        case "remoteDevHost" -> printManagedMarker();
+        case "stdout-redirect" -> stdoutRedirect(args);
+        default -> {
+          System.err.println(
+            "unexpected command: " + Arrays.toString(args) + '\n' +
+            "usage: " + TestMain.class.getName() + " [command [options ...]]\n" +
+            "commands:\n" +
+            "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
+            "  print-env-var [test-args ...] ENV_VAR_NAME\n" +
+            "  print-cwd\n" +
+            "  async-profiler\n" +
+            "  exit-code <number>\n" +
+            "  exception\n" +
+            "  sigsegv\n" +
+            "  main-class\n" +
+            "  remoteDevStatus\n" +
+            "  stdout-redirect"
+          );
+          System.exit(1);
+        }
+      }
+    }
+  }
+
+  private static void printEnvironmentVariable(String[] args) {
+    String varName = args[args.length - 1];
+    System.out.println(varName + "=" + System.getenv(varName));
+  }
+
+  private static void dumpLaunchParameters(String[] args) throws IOException {
+    var optionIdx = IntStream.range(0, args.length).filter(i -> "--output".equals(args[i])).findFirst().orElse(-1);
+    if (optionIdx < 0 || optionIdx > args.length - 2) {
+      throw new IllegalArgumentException("Invalid parameters: " + Arrays.toString(args));
+    }
+    var outputFile = Path.of(args[optionIdx + 1]);
+    Files.createDirectories(outputFile.getParent());
+
+    record DumpedLaunchParameters(
+      List<String> cmdArguments,
+      List<String> vmOptions,
+      Map<String, String> environmentVariables,
+      Map<?, ?> systemProperties
+    ) { }
+
+    var vmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    var properties = new HashMap<>(System.getProperties());
+    properties.put("__MAX_HEAP", String.valueOf(Runtime.getRuntime().maxMemory() >> 20));
+    properties.put("__GC", ManagementFactory.getGarbageCollectorMXBeans().stream()
+      .map(bean -> bean.getName().split(" ", 2)[0])
+      .findFirst().orElse("-"));
+    var dump = new DumpedLaunchParameters(List.of(args), vmOptions, System.getenv(), properties);
+
+    var gson = new GsonBuilder().setPrettyPrinting().create();
+    var jsonText = gson.toJson(dump);
+    Files.writeString(outputFile, jsonText);
+    System.out.println("Dumped to " + outputFile.getFileName());
+  }
+
+  private static void printCwd() throws InterruptedException {
+    Thread.sleep(500);  // macOS `open -W` command needs time to attach `kevent`
+    System.out.println("CWD=" + Path.of(".").toAbsolutePath());
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static void asyncProfiler() throws IOException {
+    var tempFile = Files.createTempFile("async-profiler-", ".lib");
+    try {
+      var os = System.getProperty("os.name").toLowerCase();
+      var arch = System.getProperty("os.arch").toLowerCase();
+      var location = os.startsWith("mac") ? "macos" : "aarch64".equals(arch) ? "linux-aarch64" : "linux";
+      try (var stream = AsyncProfiler.class.getResourceAsStream("/binaries/" + location + "/libasyncProfiler.so")) {
+        Files.copy(Objects.requireNonNull(stream), tempFile, StandardCopyOption.REPLACE_EXISTING);
+      }
+      var profiler = AsyncProfiler.getInstance(tempFile.toString());
+      System.out.println("version=" + profiler.getVersion());
+    }
+    finally {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  private static void exitCode(String[] args) {
+    if (args.length != 2) throw new IllegalArgumentException("Invalid parameters: " + Arrays.toString(args));
+    System.exit(Integer.parseInt(args[1]));
+  }
+
+  private static void exception() {
+    try {
+      nestedException();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void nestedException() {
+    throw new UnsupportedOperationException("aw, snap");
+  }
+
+  @SuppressWarnings({"removal", "RedundantSuppression"})
+  private static void segmentationViolation() throws NoSuchFieldException, IllegalAccessException {
+    var f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+    f.setAccessible(true);
+    var unsafe = (sun.misc.Unsafe) f.get(null);
+    unsafe.putAddress(0, 0);
+  }
+
+  private static void mainClassName() {
+    var stdout = System.out;
+    try {
+      var buffer = new ByteArrayOutputStream();
+      System.setOut(new PrintStream(buffer));
+      sun.tools.jps.Jps.main(new String[]{"-l"});
+      var pid = String.valueOf(ProcessHandle.current().pid());
+      var name = buffer.toString().lines()
+        .filter(l -> l.startsWith(pid))
+        .map(l -> l.substring(pid.length()).trim())
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("No " + pid + " in: <<<\n" + buffer.toString().trim() + "\n>>>"));
+      stdout.println("main.class=" + name);
+    }
+    finally {
+      System.setOut(stdout);
+    }
+  }
+
+  private static void checkStatus() {
+    var vmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    var debugOption = vmOptions.stream().filter(o -> o.startsWith("-agentlib:jdwp=")).findFirst();
+    if (debugOption.isPresent()) {
+      System.err.println("VM options contain the debug option: " + debugOption.get());
+      System.exit(1);
+    }
+  }
+
+  private static void printManagedMarker() {
+    System.out.println("managed.marker=" + System.getProperty("managed.marker"));
+  }
+
+  private static void stdoutRedirect(String[] args) throws Throwable {
+    if (List.of(args).contains("--stdio")) {
+      var fdObj = getFileDescriptor();
+      var stdOut = new PrintStream(new FileOutputStream(fdObj));
+      stdOut.println("<<redirected stdout>>");
+      stdOut.flush();
+    }
+    System.out.println("<<original stdout>>");
+  }
+
+  private static FileDescriptor getFileDescriptor() throws Throwable {
+    var fdNum = Long.getLong("jb.launcher.stdout.fd", -1);
+    if (fdNum < 0) throw new IllegalArgumentException("'jb.launcher.stdout.fd' not set");
+    if (System.getProperty("os.name", "").startsWith("Windows")) {
+      var fdObj = new FileDescriptor();
+      MethodHandles.privateLookupIn(FileDescriptor.class, MethodHandles.lookup())
+        .findVirtual(FileDescriptor.class, "setHandle", MethodType.methodType(void.class, long.class))
+        .invoke(fdObj, fdNum);
+      return fdObj;
+    } else {
+      return (FileDescriptor)MethodHandles.privateLookupIn(FileDescriptor.class, MethodHandles.lookup())
+        .findConstructor(FileDescriptor.class, MethodType.methodType(void.class, int.class))
+        .invoke(fdNum.intValue());
+    }
+  }
+}

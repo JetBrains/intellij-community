@@ -1,0 +1,15 @@
+// "Replace 'if' expression with elvis expression" "true"
+// WITH_STDLIB
+// K2_ERROR: SMARTCAST_IMPOSSIBLE
+class Test {
+    var x: String? = ""
+
+    fun test() {
+        val i = if (x != null) foo(<caret>x) else bar()
+    }
+
+    fun foo(s: String) = 1
+
+    fun bar() = 0
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.IfThenToElviFix$asModCommandAction$1

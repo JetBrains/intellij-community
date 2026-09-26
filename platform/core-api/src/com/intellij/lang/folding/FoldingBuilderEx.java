@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.folding;
 
@@ -28,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * by the plugin.
  *
  * @author max
- * @see com.intellij.lang.folding.LanguageFolding#forLanguage(com.intellij.lang.Language)
+ * @see LanguageFolding#forLanguage(com.intellij.lang.Language)
  */
 
 public abstract class FoldingBuilderEx implements FoldingBuilder {
@@ -43,11 +29,10 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    *                 If true, one should perform no reference resolving and avoid complex checks if possible.
    * @return the array of folding descriptors.
    */
-  @NotNull
-  public abstract FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick);
+  public abstract FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick);
 
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+  @Override
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     return buildFoldRegions(node.getPsi(), document, false);
   }
 
@@ -60,8 +45,7 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    * @param range text range within whole file to fold
    * @return the placeholder text.
    */
-  @Nullable
-  public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range){
+  public @Nullable String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range){
     return getPlaceholderText(node);
   }
 
@@ -71,5 +55,6 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    * @param node the node for which the collapsed state is requested.
    * @return true if the region is collapsed by default, false otherwise.
    */
+  @Override
   public abstract boolean isCollapsedByDefault(@NotNull ASTNode node);
 }

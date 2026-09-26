@@ -1,13 +1,17 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.smartEnter;
 
+import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonReferenceExpression;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -30,7 +34,7 @@ import static com.intellij.json.JsonElementTypes.COMMA;
  *
  * @author Mikhail Golubev
  */
-public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
+public final class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public static final Logger LOG = Logger.getInstance(JsonSmartEnterProcessor.class);
 
   private boolean myShouldAddNewline = false;
@@ -67,12 +71,11 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     return nextLeaf != null && nextLeaf.getNode().getElementType() == type;
   }
 
-  private static class JsonArrayElementFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
+  private static final class JsonArrayElementFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
     @Override
     public void apply(@NotNull Editor editor, @NotNull JsonSmartEnterProcessor processor, @NotNull PsiElement element)
       throws IncorrectOperationException {
-      if (element instanceof JsonValue && element.getParent() instanceof JsonArray) {
-        final JsonValue arrayElement = (JsonValue)element;
+      if (element instanceof JsonValue arrayElement && element.getParent() instanceof JsonArray) {
         if (terminatedOnCurrentLine(editor, arrayElement) && !isFollowedByTerminal(element, COMMA)) {
           editor.getDocument().insertString(arrayElement.getTextRange().getEndOffset(), ",");
           processor.myShouldAddNewline = true;
@@ -81,7 +84,7 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     }
   }
 
-  private class JsonObjectPropertyFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
+  private static final class JsonObjectPropertyFixer extends SmartEnterProcessorWithFixers.Fixer<JsonSmartEnterProcessor> {
     @Override
     public void apply(@NotNull Editor editor, @NotNull JsonSmartEnterProcessor processor, @NotNull PsiElement element)
       throws IncorrectOperationException {
@@ -95,9 +98,18 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
         }
         else {
           final JsonValue propertyKey = ((JsonProperty)element).getNameElement();
-          final int keyEndOffset = propertyKey.getTextRange().getEndOffset();
+          TextRange keyRange = propertyKey.getTextRange();
+          final int keyStartOffset = keyRange.getStartOffset();
+          int keyEndOffset = keyRange.getEndOffset();
           //processor.myFirstErrorOffset = keyEndOffset;
           if (terminatedOnCurrentLine(editor, propertyKey) && !isFollowedByTerminal(propertyKey, COLON)) {
+            boolean shouldQuoteKey = propertyKey instanceof JsonReferenceExpression && JsonDialectUtil.isStandardJson(propertyKey);
+            if (shouldQuoteKey) {
+              editor.getDocument().insertString(keyStartOffset, "\"");
+              keyEndOffset++;
+              editor.getDocument().insertString(keyEndOffset, "\"");
+              keyEndOffset++;
+            }
             processor.myFirstErrorOffset = keyEndOffset + 2;
             editor.getDocument().insertString(keyEndOffset, ": ");
           }
@@ -106,7 +118,7 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     }
   }
 
-  private class JsonEnterProcessor extends SmartEnterProcessorWithFixers.FixEnterProcessor {
+  private final class JsonEnterProcessor extends SmartEnterProcessorWithFixers.FixEnterProcessor {
     @Override
     public boolean doEnter(PsiElement atCaret, PsiFile file, @NotNull Editor editor, boolean modified) {
       if (myShouldAddNewline) {

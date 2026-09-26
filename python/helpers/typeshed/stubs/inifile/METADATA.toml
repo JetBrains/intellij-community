@@ -1,0 +1,2 @@
+version = "0.4.*"
+upstream-repository = "https://github.com/mitsuhiko/python-inifile"

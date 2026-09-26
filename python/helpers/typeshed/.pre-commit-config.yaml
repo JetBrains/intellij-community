@@ -1,0 +1,64 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-case-conflict
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8 # frozen: 0.38.0
+    hooks:
+      - id: check-github-workflows
+      - id: check-renovate
+        additional_dependencies: ["json5==0.15.0"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # The Ruff version must match requirements-tests.txt.
+    rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56 # frozen: v0.15.20
+    hooks:
+      - id: ruff
+        name: Run ruff on stubs, tests and scripts
+        args: ["--exit-non-zero-on-fix"]
+      - id: ruff
+        # Very few rules are useful to run on our test cases;
+        # we explicitly enumerate them here:
+        name: Run ruff on the test cases
+        args:
+          - "--exit-non-zero-on-fix"
+          - "--select=FA,I,ICN001,RUF100"
+          - "--no-force-exclude"
+          - "--unsafe-fixes"
+        files: '.*test_cases/.+\.py$'
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 4160603246a6b365d4a2af661c6d71b0a0f50478 # frozen: 26.5.1
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/flake8
+    rev: c48217e1fc006c2dddd14df54e83b67da15de5cd # frozen: 7.3.0
+    hooks:
+      - id: flake8
+        language: python
+        additional_dependencies:
+          - "flake8-pyi==26.5.0"
+        types: [file]
+        types_or: [python, pyi]
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+  # zizmor detects security vulnerabilities in GitHub Actions workflows.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa # frozen: v1.29.0
+    hooks:
+      - id: zizmor
+        args: [--no-progress, --fix]
+
+ci:
+  autofix_commit_msg: "[pre-commit.ci] auto fixes from pre-commit.com hooks"
+  autofix_prs: true
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
+  autoupdate_schedule: quarterly
+  submodules: false

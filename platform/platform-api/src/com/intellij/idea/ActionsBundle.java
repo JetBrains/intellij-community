@@ -1,62 +1,47 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 /**
- * @author Eugene Zhuravlev
+ * Internal. Plugins may not reuse messages of the platform as they are not considered API.
  */
-public class ActionsBundle {
+@ApiStatus.Internal
+public final class ActionsBundle {
+  public static final @NonNls String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+  private static final DynamicBundle ourInstance = new DynamicBundle(ActionsBundle.class, IDEA_ACTIONS_BUNDLE);
+
+  private ActionsBundle() {
   }
 
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.containsKey(key) ? ourInstance.getMessage(key, params) : ActionsDeprecatedMessagesBundle.message(key, params);
+  }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
-  public static String actionText(@NonNls String actionId) {
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.containsKey(key) ? ourInstance.getLazyMessage(key, params) : ActionsDeprecatedMessagesBundle.messagePointer(key, params);
+  }
+
+  public static @NlsActions.ActionText String actionText(@NonNls String actionId) {
     return message("action." + actionId + ".text");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
-  public static String groupText(@NonNls String actionId) {
+  public static @NlsActions.ActionText String groupText(@NonNls String actionId) {
     return message("group." + actionId + ".text");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
-  public static String actionDescription(@NonNls String actionId) {
+  public static @NlsActions.ActionDescription String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(IDEA_ACTIONS_BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }

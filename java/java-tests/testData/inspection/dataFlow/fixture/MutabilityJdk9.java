@@ -7,6 +7,9 @@ public class MutabilityJdk9 {
     if(<warning descr="Condition 'list.size() > 5' is always 'false'">list.size() > 5</warning>) {
       System.out.println("impossible");
     }
+    if(Math.random() > 0.5) {
+      list.<warning descr="Immutable object is modified">clear</warning>();
+    }
     list.<warning descr="Immutable object is modified">sort</warning>(null);
   }
 
@@ -24,6 +27,10 @@ public class MutabilityJdk9 {
       System.out.println("never");
     }
     map.<warning descr="Immutable object is modified">put</warning>("foo", 6);
+  }
+
+  void testMapClear() {
+    Map.of("a", 1).<warning descr="Immutable object is modified">clear</warning>();
   }
 
   void testMapOfEntries() {
@@ -46,5 +53,30 @@ public class MutabilityJdk9 {
     if(str.length > 2) {
       list.<warning descr="Immutable object is modified">add</warning>("foo");
     }
+  }
+
+  void testMapOfEntriesMerge() {
+    Map<String, Integer> map = Map.ofEntries(Map.entry("x", 1), Map.entry("y", 2));
+    map.<warning descr="Immutable object is modified">merge</warning>("a", 1, (x, y)->y);
+  }
+
+  void testMapCompute() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">compute</warning>("a", (x, y)->y);
+  }
+
+  void testMapComputeIfPresent() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">computeIfPresent</warning>("a", (x, y)->y);
+  }
+
+  void testMapComputeIfAbsent() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">computeIfAbsent</warning>("a", x->1);
+  }
+
+  void testMapMerge() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">merge</warning>("a", 1, (x, y)->y);
   }
 }

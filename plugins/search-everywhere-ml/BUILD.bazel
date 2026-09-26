@@ -1,0 +1,204 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "searchEverywhereMl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":searchEverywhereMl-tests_test_lib"],
+)
+### skip generation section `test intellij.searchEverywhereMl.tests`
+
+### auto-generated section `dev intellij.searchEverywhereMl` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.ml.logs",
+        "intellij.searchEverywhereMl.typos",
+        "intellij.searchEverywhereMl.ranking.ext",
+        "intellij.searchEverywhereMl.ranking.core",
+        "intellij.searchEverywhereMl.ranking.java",
+        "intellij.searchEverywhereMl.ranking.yaml",
+        "intellij.searchEverywhereMl.ranking.vcs",
+        "intellij.libraries.mlapi.core",
+        "intellij.libraries.search.everywhere.find.all.model",
+        "intellij.libraries.search.everywhere.find.ec.model",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.mlapi.core",
+        "intellij.libraries.search.everywhere.find.all.model",
+        "intellij.libraries.search.everywhere.find.ec.model",
+        "intellij.platform.ml.logs",
+        "intellij.searchEverywhereMl.ranking.core",
+        "intellij.searchEverywhereMl.ranking.ext",
+        "intellij.searchEverywhereMl.ranking.java",
+        "intellij.searchEverywhereMl.ranking.vcs",
+        "intellij.searchEverywhereMl.ranking.yaml",
+        "intellij.searchEverywhereMl.typos",
+    ],
+    jars = {
+        "lib/searchEverywhereMl.jar": [
+            "intellij.searchEverywhereMl",
+            "intellij.platform.ml.logs",
+        ],
+        "lib/modules/intellij.libraries.mlapi.core.jar": [
+            "intellij.libraries.mlapi.core",
+            "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
+        ],
+        "lib/ai.grazie.emb.jar": ["@lib//:search_everywhere_ml-ai-grazie-emb"],
+        "lib/ai.grazie.model.swagger.annotations.jvm.jar": ["@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm"],
+    },
+    main_module = "intellij.searchEverywhereMl",
+)
+### auto-generated section `dev intellij.searchEverywhereMl` end
+
+### auto-generated section `build intellij.searchEverywhereMl` start
+jvm_library(
+    name = "search-everywhere-ml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/statistics",
+        "@lib//:search_everywhere_ml-ai-grazie-emb",
+        "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
+        "//platform/projectModel-api:projectModel",
+    ],
+)
+
+jvm_library(
+    name = "search-everywhere-ml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
+    runtime_deps = [
+        # do not sort,
+        ":search-everywhere-ml",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+    ],
+)
+### auto-generated section `build intellij.searchEverywhereMl` end
+
+### auto-generated section `iml intellij.searchEverywhereMl` start
+exports_files(
+    [
+        "intellij.searchEverywhereMl.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.searchEverywhereMl` end
+
+### auto-generated section `build intellij.searchEverywhereMl.tests` start
+jvm_library(
+    name = "searchEverywhereMl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.tests",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:search_everywhere_ml-tests-ai-grazie-emb"],
+)
+
+jvm_library(
+    name = "searchEverywhereMl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/search-everywhere-ml",
+        "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:search_everywhere_ml-tests-ai-grazie-emb"],
+    runtime_deps = [":searchEverywhereMl-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "@lib//:search_everywhere_ml-tests-ai-grazie-emb",
+        "@lib//:search_everywhere_ml-tests-ai-grazie-model-swagger-annotations-jvm",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//json/backend",
+        "//json/backend:backend_test_lib",
+        "//platform/ml-logs",
+        "//platform/ml-logs:ml-logs_test_lib",
+        "//plugins/search-everywhere-ml/typos",
+        "//plugins/search-everywhere-ml/typos:typos_test_lib",
+        "//plugins/search-everywhere-ml/ranking/ext",
+        "//plugins/search-everywhere-ml/ranking/ext:ext_test_lib",
+        "//plugins/search-everywhere-ml/ranking/core",
+        "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
+        "//plugins/search-everywhere-ml/ranking/java",
+        "//plugins/search-everywhere-ml/ranking/java:java_test_lib",
+        "//plugins/search-everywhere-ml/ranking/yaml",
+        "//plugins/search-everywhere-ml/ranking/yaml:yaml_test_lib",
+        "//plugins/search-everywhere-ml/ranking/vcs",
+        "//plugins/search-everywhere-ml/ranking/vcs:vcs_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
+    ],
+)
+### auto-generated section `build intellij.searchEverywhereMl.tests` end
+
+### auto-generated section `iml intellij.searchEverywhereMl.tests` start
+exports_files(
+    [
+        "intellij.searchEverywhereMl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.searchEverywhereMl.tests` end

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file;
 
@@ -22,12 +8,26 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,35 +37,38 @@ import java.io.IOException;
 import java.util.Map;
 
 public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, PsiFileEx, Cloneable, Queryable {
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
   private final AbstractFileViewProvider myViewProvider;
   private volatile boolean myPossiblyInvalidated;
 
-  public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+  public PsiBinaryFileImpl(@NotNull PsiManagerEx manager, @NotNull FileViewProvider viewProvider) {
+    myViewProvider = (AbstractFileViewProvider)viewProvider;
+    myManager = manager;
+  }
+
+  public PsiBinaryFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider) {
     myViewProvider = (AbstractFileViewProvider)viewProvider;
     myManager = manager;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
   }
 
   @Override
-  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     return true;
   }
 
-  public byte[] getStoredContents() {
+  byte[] getStoredContents() {
     return myContents;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return !isCopy() ? getVirtualFile().getName() : myName;
   }
 
@@ -99,8 +102,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     return getContainingDirectory();
   }
 
@@ -110,8 +112,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -121,8 +122,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -167,9 +167,8 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
-    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO[max] throw new UnsupportedOperationException()
+  public char @NotNull [] textToCharArray() {
+    return ArrayUtilRt.EMPTY_CHAR_ARRAY; // TODO[max] throw new UnsupportedOperationException()
   }
 
   @Override
@@ -191,10 +190,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   public PsiElement copy() {
     PsiBinaryFileImpl clone = (PsiBinaryFileImpl)clone();
     clone.myName = getName();
-    try{
+    try {
       clone.myContents = !isCopy() ? getVirtualFile().contentsToByteArray() : myContents;
     }
-    catch(IOException e){
+    catch (IOException ignored) {
     }
     return clone;
   }
@@ -251,7 +250,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     if (!myPossiblyInvalidated) return true;
 
     // synchronized by read-write action
-    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+    if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
       PsiInvalidElementAccessException.setInvalidationTrace(this, null);
       return true;
@@ -270,31 +269,27 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return this;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "PsiBinaryFile:" + getName();
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myViewProvider.getFileType();
   }
 
   @Override
-  @NotNull
-  public PsiFile[] getPsiRoots() {
+  public PsiFile @NotNull [] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 
@@ -313,7 +308,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("fileName", getName());
     info.put("fileType", getFileType().getName());
   }

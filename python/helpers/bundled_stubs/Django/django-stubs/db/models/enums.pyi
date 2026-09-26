@@ -1,0 +1,82 @@
+import enum
+import sys
+from enum import EnumType, IntEnum, StrEnum
+from enum import property as enum_property
+from typing import Any, Literal, overload, type_check_only
+
+from _typeshed import ConvertibleToInt
+from _typeshed import Self as MetaclassSelf  # noqa: TID251
+from django.utils.functional import _StrOrPromise
+from typing_extensions import override
+
+class ChoicesType(EnumType):
+    __empty__: _StrOrPromise
+    def __new__(
+        metacls: type[MetaclassSelf], classname: str, bases: tuple[type, ...], classdict: enum._EnumDict, **kwds: Any
+    ) -> MetaclassSelf: ...
+    @property
+    def names(self) -> list[str]: ...
+    @property
+    def choices(self) -> list[tuple[Any, _StrOrPromise]]: ...
+    @property
+    def labels(self) -> list[_StrOrPromise]: ...
+    @property
+    def values(self) -> list[Any]: ...
+    if sys.version_info < (3, 12):
+        @override
+        def __contains__(self, member: Any) -> bool: ...
+
+class Choices(enum.Enum, metaclass=ChoicesType):  # type: ignore[misc]
+    _label_: _StrOrPromise
+    do_not_call_in_templates: Literal[True]
+
+    @enum_property
+    def label(self) -> _StrOrPromise: ...
+    @enum_property
+    @override
+    def value(self) -> Any: ...
+
+# fake, to keep simulate class properties
+@type_check_only
+class _IntegerChoicesType(ChoicesType):
+    @property
+    @override
+    def choices(self) -> list[tuple[int, _StrOrPromise]]: ...
+    @property
+    @override
+    def values(self) -> list[int]: ...
+
+# In reality, the `__init__` overloads provided below should also support
+# all the arguments of `int.__new__`/`str.__new__` (e.g. `base`, `encoding`).
+# They are omitted on purpose to avoid having convoluted stubs for these enums:
+class IntegerChoices(Choices, IntEnum, metaclass=_IntegerChoicesType):  # type: ignore[misc]
+    _value_: int
+    @overload
+    def __init__(self, x: ConvertibleToInt) -> None: ...
+    @overload
+    def __init__(self, x: ConvertibleToInt, label: _StrOrPromise) -> None: ...
+    @enum_property
+    @override
+    def value(self) -> int: ...
+
+# fake, to keep simulate class properties
+@type_check_only
+class _TextChoicesType(ChoicesType):
+    @property
+    @override
+    def choices(self) -> list[tuple[str, _StrOrPromise]]: ...
+    @property
+    @override
+    def values(self) -> list[str]: ...
+
+class TextChoices(Choices, StrEnum, metaclass=_TextChoicesType):  # type: ignore[misc]
+    _value_: str
+    @overload
+    def __init__(self, object: str) -> None: ...
+    @overload
+    def __init__(self, object: str, label: _StrOrPromise) -> None: ...
+    @enum_property
+    @override
+    def value(self) -> str: ...
+
+__all__ = ["Choices", "IntegerChoices", "TextChoices"]

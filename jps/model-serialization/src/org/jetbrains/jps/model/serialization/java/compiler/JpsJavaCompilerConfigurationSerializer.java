@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -24,19 +10,16 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
+import org.jetbrains.jps.model.serialization.JpsProjectExtensionWithExternalDataSerializer;
 
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
+public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionWithExternalDataSerializer {
   public static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";
   public static final String ANNOTATION_PROCESSING = "annotationProcessing";
   public static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
+  public static final String FS_COMPILER_REFERENCE_TYPE = "fsCompilerReferenceType";
   public static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   public static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
   public static final String ENTRY = "entry";
@@ -46,15 +29,17 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
   public static final String TARGET_ATTRIBUTE = "target";
 
   public static final List<String> DEFAULT_WILDCARD_PATTERNS =
-    Arrays.asList("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
+    List.of("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   public JpsJavaCompilerConfigurationSerializer() {
-    super("compiler.xml", "CompilerConfiguration");
+    super("compiler.xml", "CompilerConfiguration",
+          "project/compiler.xml",
+          "ExternalCompilerConfiguration");
   }
 
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     Element addNotNullTag = componentTag.getChild(ADD_NOTNULL_ASSERTIONS);
     if (addNotNullTag != null) {
       configuration.setAddNotNullAssertions(Boolean.parseBoolean(addNotNullTag.getAttributeValue(ENABLED, "true")));
@@ -114,8 +99,14 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
   }
 
   @Override
+  public void mergeExternalData(@NotNull Element internalComponent, @NotNull Element externalComponent) {
+    JDOMUtil.deepMerge(internalComponent, externalComponent);
+    JDOMUtil.reduceChildren(BYTECODE_TARGET_LEVEL, internalComponent);
+  }
+
+  @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     for (String pattern : DEFAULT_WILDCARD_PATTERNS) {
       configuration.addResourcePattern(pattern);
     }
@@ -131,9 +122,5 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
         excludes.addExcludedDirectory(directoryTag.getAttributeValue("url"), recursively);
       }
     }
-  }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
   }
 }

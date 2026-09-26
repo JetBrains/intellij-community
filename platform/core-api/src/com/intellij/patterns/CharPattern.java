@@ -1,35 +1,31 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Provides patterns for {@link Character} and contains conditions for digits, letters, whitespace and Java identifier parts.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
+ * @see StandardPatterns#character()
  */
 public class CharPattern extends ObjectPattern<Character, CharPattern> {
+  private static final CharPattern ourJavaIdentifierStartCharacter = StandardPatterns.character().javaIdentifierStart();
+  private static final CharPattern ourJavaIdentifierPartCharacter = StandardPatterns.character().javaIdentifierPart();
+  private static final CharPattern ourWhitespaceCharacter = StandardPatterns.character().whitespace();
+  private static final CharPattern ourLetterOrDigitCharacter = StandardPatterns.character().letterOrDigit();
+
   protected CharPattern() {
     super(Character.class);
-    
   }
 
   public CharPattern javaIdentifierPart() {
     return with(new PatternCondition<Character>("javaIdentifierPart") {
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierPart(character.charValue());
       }
     });
@@ -37,7 +33,8 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern javaIdentifierStart() {
     return with(new PatternCondition<Character>("javaIdentifierStart") {
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierStart(character.charValue());
       }
     });
@@ -45,7 +42,8 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern whitespace() {
     return with(new PatternCondition<Character>("whitespace") {
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isWhitespace(character.charValue());
       }
     });
@@ -53,10 +51,26 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern letterOrDigit() {
     return with(new PatternCondition<Character>("letterOrDigit") {
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      @Override
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isLetterOrDigit(character.charValue());
       }
     });
   }
 
+  public static CharPattern javaIdentifierStartCharacter() {
+    return ourJavaIdentifierStartCharacter;
+  }
+
+  public static CharPattern javaIdentifierPartCharacter() {
+    return ourJavaIdentifierPartCharacter;
+  }
+
+  public static CharPattern letterOrDigitCharacter() {
+    return ourLetterOrDigitCharacter;
+  }
+
+  public static CharPattern whitespaceCharacter() {
+    return ourWhitespaceCharacter;
+  }
 }

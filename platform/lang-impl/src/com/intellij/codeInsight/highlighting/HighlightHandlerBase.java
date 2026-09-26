@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -20,13 +6,17 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author msk
  */
+@ApiStatus.Internal
 public abstract class HighlightHandlerBase {
-  static void setupFindModel(final Project project) {
+  public static void setupFindModel(@NotNull Project project) {
     final FindManager findManager = FindManager.getInstance(project);
     FindModel model = findManager.getFindNextModel();
     if (model == null) {
@@ -37,7 +27,7 @@ public abstract class HighlightHandlerBase {
     findManager.setFindNextModel(model);
   }
 
-  public static String getLineTextErrorStripeTooltip(Document document, int offset, boolean escape) {
+  public static @NotNull @NlsContexts.Tooltip String getLineTextErrorStripeTooltip(@NotNull Document document, int offset, boolean escape) {
     final int lineNumber = document.getLineNumber(offset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);
@@ -46,6 +36,6 @@ public abstract class HighlightHandlerBase {
     if (lineFragmentEndOffset != lineEndOffset) {
       lineText = lineText.trim() + "...";
     }
-    return "  " + (escape ? StringUtil.escapeXml(lineText.trim()) : lineText.trim()) + "  ";
+    return "  " + (escape ? StringUtil.escapeXmlEntities(lineText.trim()) : lineText.trim()) + "  ";
   }
 }

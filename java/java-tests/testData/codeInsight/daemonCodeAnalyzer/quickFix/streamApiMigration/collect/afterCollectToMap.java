@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Collapse loop with stream 'collect()'" "true-preview"
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   private Map<String, Integer> test(String... list) {
-    Map<String, Integer> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.toMap(s -> s, s -> 1, (a, b) -> a + b));
+    Map<String, Integer> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.toMap(s -> s, s -> 1, Integer::sum));
       return map;
   }
 

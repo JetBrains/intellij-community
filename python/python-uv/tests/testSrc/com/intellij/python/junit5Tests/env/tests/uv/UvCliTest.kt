@@ -1,0 +1,324 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.junit5Tests.env.tests.uv
+
+import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
+import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.uv.backend.cli.uv.UvInitKind
+import com.intellij.python.uv.backend.cli.uv.UvInitVcs
+import com.intellij.python.uv.backend.cli.uv.UvSelfUpdateResult
+import com.intellij.python.uv.backend.runtime.uvCli
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.getOrThrow
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
+
+@PyEnvTestCase
+class UvCliTest {
+  private lateinit var myRuntime: PyToolRuntime
+  private lateinit var projectRootPath: Path
+  private lateinit var projectName: String
+
+  companion object {
+    private lateinit var uvContext: UvContext
+
+    @BeforeAll
+    @JvmStatic
+    fun configureUvRuntime(@PythonBinaryPath pythonPath: PythonBinary, @TempDir tempDir: Path) {
+      uvContext = UvContext.create(pythonPath, tempDir)
+    }
+
+    private data class PinnedPackage(val name: String, val version: String) {
+      /** PEP 508 spec passed to `uv tool install`. */
+      fun spec(): String = "$name==$version"
+    }
+
+    /**
+     * Tiny pure-Python CLI on PyPI (a couple of kilobytes) with a stable release history.
+     * Keeps install fast and avoids transitive-dependency churn that could flake the
+     * outdated check. cowsay 5.0 was released in 2022; 6.x has been out since 2023, so this
+     * is reliably "outdated" in the eyes of `uv tool list --outdated`. Bump only if cowsay
+     * yanks 5.0.
+     */
+    private val CYCLE_TEST_PACKAGE: PinnedPackage = PinnedPackage(name = "cowsay", version = "5.0")
+
+    /**
+     * A language level far enough below anything uv would default to that `init` naming it is unambiguous evidence the
+     * request was honoured. Never resolved to an interpreter — `uv init --python` records the constraint only.
+     */
+    private const val REQUESTED_LANGUAGE_LEVEL: String = "3.9"
+
+    /** The file `uv init` pins the project's interpreter in, alongside `requires-python`. */
+    private const val PYTHON_VERSION_FILE: String = ".python-version"
+
+    /** The repository directory whose presence the new-project wizard's checkbox is about. */
+    private const val GIT_DIR: String = ".git"
+
+    /** uv writes its own Python ignore file, but only for a repository it initialized itself. */
+    private const val GIT_IGNORE_FILE: String = ".gitignore"
+  }
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo, @TempDir tempDir: Path) {
+    val realTempDir = tempDir.toRealPath()
+    this.projectName = testInfo.projectName()
+    this.projectRootPath = realTempDir.resolve(this.projectName)
+
+    val tempDirUvCli = uvContext.globalRuntime.withWorkingDirectory(realTempDir).uvCli()
+    timeoutRunBlocking { tempDirUvCli.init(projectName) }.getOrThrow()
+
+    this.myRuntime = uvContext.globalRuntime.withWorkingDirectory(projectRootPath)
+    assertTrue(projectRootPath.exists())
+    assertTrue(projectRootPath.resolve(PY_PROJECT_TOML).exists())
+  }
+
+  @Test
+  fun testHelp() = timeoutRunBlocking {
+    val output = myRuntime.uvCli().help("version").getOrThrow()
+    assertTrue(output.isNotBlank())
+  }
+
+  @Test
+  fun testGetVersion() = timeoutRunBlocking {
+    val version = myRuntime.uvCli().getVersion().getOrThrow()
+    assertTrue(version.isNotBlank())
+  }
+
+  /**
+   * Covers PY-91393: `init(kind = PACKAGE)` must scaffold a `src/`-layout package (mirroring
+   * Hatch's `src` layout) rather than the default flat `main.py`. This is the path
+   * `EnvironmentCreatorUv.createPythonModuleStructure` relies on so that the welcome `main.py`
+   * later created by the new-project wizard lands in `src/` instead of the project root.
+   */
+  @Test
+  fun testInitPackagedCreatesSrcLayout(@TempDir packagedTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    // GIVEN a fresh, empty project directory
+    val packagedProjectPath = packagedTempDir.toRealPath().resolve("packaged_project")
+    Files.createDirectories(packagedProjectPath)
+
+    // WHEN initializing with --package
+    uvContext.globalRuntime.withWorkingDirectory(packagedProjectPath).uvCli().init(kind = UvInitKind.PACKAGE).getOrThrow()
+
+    // THEN uv creates a src/ package layout and no flat root main.py
+    assertSrcPackageLayout(packagedProjectPath)
+  }
+
+  /**
+   * Covers PY-92387: `init(python = …)` must record the named version in both files uv derives a project's Python from.
+   * The new-project wizard's `uv init` is the one that writes them — the later one in `setupNewUvSdkAndEnv` is skipped
+   * because `pyproject.toml` already exists — so a version dropped here is a project pinned to something the user did
+   * not pick.
+   *
+   * [REQUESTED_LANGUAGE_LEVEL] is asserted to differ from what uv defaults to, because a request that happens to equal
+   * the default would be recorded by the broken code too, and the test would prove nothing.
+   */
+  @Test
+  fun testInitRecordsRequestedPythonVersion(@TempDir requestedVersionTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    // GIVEN a fresh, empty project directory
+    val projectPath = requestedVersionTempDir.toRealPath().resolve("requested_version_project")
+    Files.createDirectories(projectPath)
+    val uvCli = uvContext.globalRuntime.withWorkingDirectory(projectPath).uvCli()
+
+    val defaultVersion = uvCli.python().find(showVersion = true, system = true).getOrThrow()
+    assertFalse(defaultVersion.startsWith("$REQUESTED_LANGUAGE_LEVEL.")) {
+      "uv defaults to $defaultVersion, so requesting $REQUESTED_LANGUAGE_LEVEL no longer discriminates; pick another level"
+    }
+
+    // WHEN initializing with an explicit version. uv only records the request here — it resolves no interpreter and
+    // downloads nothing — so this holds whether or not the machine has that version.
+    uvCli.init(python = REQUESTED_LANGUAGE_LEVEL).getOrThrow()
+
+    // THEN both files uv writes name the requested version rather than uv's default
+    val pyProjectToml = projectPath.resolve(PY_PROJECT_TOML).readText()
+    val requiresPython = pyProjectToml.lineSequence().firstOrNull { it.startsWith("requires-python") }
+    assertEquals("""requires-python = ">=$REQUESTED_LANGUAGE_LEVEL"""", requiresPython) {
+      "requires-python should name the requested version, got:\n$pyProjectToml"
+    }
+    assertEquals(REQUESTED_LANGUAGE_LEVEL, projectPath.resolve(PYTHON_VERSION_FILE).readText().trim())
+  }
+
+  /**
+   * Covers PY-92436: `init(vcs = …)` must decide whether the new project gets a repository, in both directions.
+   *
+   * Both cases are asserted together because the defect was not that uv refused an instruction — it was never given
+   * one. uv's own default is `--vcs git`, so a run that omits the flag produces the same repository as [UvInitVcs.GIT]
+   * would, and a one-sided test would pass against exactly the code that created a repository the user unchecked.
+   */
+  @Test
+  fun testInitHonoursTheRequestedVcs(@TempDir vcsTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    val realVcsTempDir = vcsTempDir.toRealPath()
+
+    // GIVEN two fresh, empty project directories
+    val withGit = realVcsTempDir.resolve("with_git").also { Files.createDirectories(it) }
+    val withoutGit = realVcsTempDir.resolve("without_git").also { Files.createDirectories(it) }
+
+    // WHEN initializing each with the opposite request
+    uvContext.globalRuntime.withWorkingDirectory(withGit).uvCli().init(vcs = UvInitVcs.GIT).getOrThrow()
+    uvContext.globalRuntime.withWorkingDirectory(withoutGit).uvCli().init(vcs = UvInitVcs.NONE).getOrThrow()
+
+    // THEN only the one that asked for a repository has one. `.git` is what the new-project wizard's checkbox is
+    // about, and what the reporter saw appear against an unchecked box.
+    assertTrue(withGit.resolve(GIT_DIR).isDirectory()) { "init(vcs = GIT) should have created a repository" }
+    assertFalse(withoutGit.resolve(GIT_DIR).exists()) { "init(vcs = NONE) must not create a repository" }
+
+    // AND uv writes its Python `.gitignore` only alongside a repository it created, so the flag decides that too.
+    assertTrue(withGit.resolve(GIT_IGNORE_FILE).exists()) { "init(vcs = GIT) should have written uv's .gitignore" }
+    assertFalse(withoutGit.resolve(GIT_IGNORE_FILE).exists()) { "init(vcs = NONE) must not write a .gitignore" }
+
+    // AND the request changes nothing else: both are real uv projects.
+    assertTrue(withGit.resolve(PY_PROJECT_TOML).exists())
+    assertTrue(withoutGit.resolve(PY_PROJECT_TOML).exists())
+  }
+
+  private fun assertSrcPackageLayout(projectPath: Path) {
+    val srcDir = projectPath.resolve("src")
+    assertTrue(srcDir.isDirectory()) { "expected a src/ directory after init(kind = PACKAGE)" }
+    assertFalse(projectPath.resolve("main.py").exists()) { "packaged layout must not create a root main.py" }
+    val hasPackageInit = Files.walk(srcDir).use { paths -> paths.anyMatch { it.name == "__init__.py" } }
+    assertTrue(hasPackageInit) { "expected a package __init__.py under src/" }
+  }
+
+  @Test
+  fun testSync() = timeoutRunBlocking(60.seconds) {
+    myRuntime.uvCli().sync().getOrThrow()
+    assertTrue(projectRootPath.resolve(".venv").exists())
+  }
+
+  @Test
+  fun testAuth() = timeoutRunBlocking {
+    val dir = myRuntime.uvCli().auth().dir().getOrThrow()
+    assertTrue(dir.isNotBlank())
+  }
+
+  @Test
+  fun testCache() = timeoutRunBlocking {
+    val cache = myRuntime.uvCli().cache()
+    assertTrue(cache.dir().getOrThrow().isNotBlank())
+    assertTrue(cache.size().getOrThrow().isNotBlank())
+  }
+
+  @Test
+  fun testPython(): Unit = timeoutRunBlocking(60.seconds) {
+    val python = myRuntime.uvCli().python()
+    assertTrue(python.dir().getOrThrow().isNotBlank())
+    python.list(onlyInstalled = true).getOrThrow()
+  }
+
+  @Test
+  fun testSelf() = timeoutRunBlocking {
+    val version = myRuntime.uvCli().self().version(short = true).getOrThrow()
+    assertTrue(version.isNotBlank())
+  }
+
+  /**
+   * `uv self update --dry-run`, which is what tells the Package Managers page whether uv has a release to move to.
+   * Asserts the flag really is a preview: uv must still report the version it started on.
+   *
+   * The outcome is not asserted: uv in this environment may be current, and a uv installed by a package manager
+   * cannot self-update at all, which uv answers with a failure. What must hold either way is that a version uv does
+   * offer is a real upgrade — never the version already installed, which would put a no-op upgrade on the page.
+   */
+  @Test
+  fun testSelfUpdateDryRun(): Unit = timeoutRunBlocking(60.seconds) {
+    val self = myRuntime.uvCli().self()
+    val before = self.version(short = true).getOrThrow().trim()
+    val update = self.update(dryRun = true).getOrNull()
+    assertEquals(before, self.version(short = true).getOrThrow().trim())
+    when (update) {
+      is UvSelfUpdateResult.VersionChange -> {
+        assertEquals(before, update.fromVersion)
+        assertNotEquals(before, update.targetVersion)
+      }
+      // uv here may be current, and one installed by a package manager cannot self-update at all (a failure).
+      UvSelfUpdateResult.NoVersionChange, null -> Unit
+    }
+  }
+
+  @Test
+  fun testTool(): Unit = timeoutRunBlocking(60.seconds) {
+    val tool = myRuntime.uvCli().tool()
+    assertTrue(tool.dir().getOrThrow().isAbsolute)
+    tool.list().getOrThrow()
+  }
+
+  /**
+   * Full install→list→upgrade cycle against PyPI. Uses [TOOL_FOR_CYCLE_TEST] pinned to
+   * [PINNED_OLD_VERSION], which is intentionally older than the latest release so that
+   * `uv tool list --outdated` has something to report. After upgrade the same query must
+   * no longer mention the tool. Network-dependent — runs in the env test suite next to
+   * the other live-uv tests.
+   */
+  @Test
+  fun testToolInstallListUpgradeCycle(): Unit = timeoutRunBlocking(180.seconds) {
+    val tool = myRuntime.uvCli().tool()
+    val pkg = CYCLE_TEST_PACKAGE
+
+    // 1. Install a pinned older version.
+    tool.install(pkg.spec()).getOrThrow()
+
+    // Sanity-check that [UvContext]'s class-scoped `UV_TOOL_DIR` redirection actually steers
+    // `uv` away from its default user-wide location: the freshly installed tool must live
+    // under [UvContext.uvToolDirPath]. Without this assertion a misconfigured env would
+    // silently pollute the developer's machine and other tests could see the leaked tool.
+    val expectedToolEnv = uvContext.uvToolDirPath.resolve(pkg.name)
+    assertTrue(expectedToolEnv.exists()) {
+      "expected ${pkg.name} install under the class-scoped UV_TOOL_DIR ${uvContext.uvToolDirPath}, missing: $expectedToolEnv"
+    }
+
+    // 2. list(showPaths) should surface the freshly installed tool at the pinned version.
+    val installed = tool.list(showPaths = true).getOrThrow()
+    val installedEntry = installed.firstOrNull { it.name == pkg.name }
+    assertNotNull(installedEntry) { "expected ${pkg.name} in list(), got $installed" }
+    assertEquals(pkg.version, installedEntry!!.version) {
+      "expected ${pkg.spec()} right after install, got ${installedEntry.version}"
+    }
+
+    // 3. list(outdated) should report it with a newer latestVersion (we pinned to an older release).
+    val outdatedBefore = tool.list(outdated = true, showPaths = true).getOrThrow()
+    val outdatedEntry = outdatedBefore.firstOrNull { it.name == pkg.name }
+    assertNotNull(outdatedEntry) {
+      "expected ${pkg.name} in list(outdated = true) before upgrade, got $outdatedBefore"
+    }
+    assertEquals(pkg.version, outdatedEntry!!.version)
+    assertNotEquals(pkg.version, outdatedEntry.latestVersion) {
+      "latestVersion must differ from the pinned ${pkg.version} for the outdated signal to mean anything"
+    }
+
+    // 4. `uv tool upgrade` is bounded by the original install constraints — pinning to
+    //    ==${pkg.version} makes the upgrade a no-op even though a newer release exists.
+    //    The call must still succeed, and the outdated state must be unchanged afterwards.
+    //    This is exactly the production path that surfaces "{tool} is already up to date" in
+    //    the External Tools settings balloon.
+    tool.upgrade(pkg.name).getOrThrow()
+    val outdatedAfterUpgrade = tool.list(outdated = true, showPaths = true).getOrThrow()
+    assertTrue(outdatedAfterUpgrade.any { it.name == pkg.name }) {
+      "uv tool upgrade respects the original pin; ${pkg.name} should still be outdated, got $outdatedAfterUpgrade"
+    }
+
+    // 5. `install(name, reinstall = true)` (uv's `--reinstall`) drops the prior pin and
+    //    installs the latest release. After that the outdated list must no longer mention it.
+    tool.install(pkg.name, reinstall = true).getOrThrow()
+    val outdatedAfterReinstall = tool.list(outdated = true, showPaths = true).getOrThrow()
+    assertTrue(outdatedAfterReinstall.none { it.name == pkg.name }) {
+      "after install(reinstall=true) ${pkg.name} should drop off list(outdated = true), got $outdatedAfterReinstall"
+    }
+  }
+}

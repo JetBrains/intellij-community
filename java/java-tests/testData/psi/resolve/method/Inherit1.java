@@ -12,6 +12,6 @@ class B extends A{
 
 class Super1 extends B{
  {
-  super.<ref>askdh();
+  super.<caret>askdh();
  }
 }

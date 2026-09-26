@@ -1,24 +1,37 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowPolicy;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -29,19 +42,19 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Map;
+import javax.swing.Icon;
 
-public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
+public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
   implements PsiLambdaExpression {
 
   private static final ControlFlowPolicy ourPolicy = new ControlFlowPolicy() {
-    @Nullable
     @Override
-    public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+    public @Nullable PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
       return null;
     }
 
@@ -64,9 +77,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiParameterList getParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiParameterList.class);
   }
 
@@ -77,9 +89,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
 
-  @Nullable
   @Override
-  public PsiType getFunctionalInterfaceType() {
+  public @Nullable PsiType getFunctionalInterfaceType() {
     return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
@@ -108,7 +119,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {
-        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, ourPolicy, false, false);
+        ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
         int startOffset = controlFlow.getStartOffset(body);
         int endOffset = controlFlow.getEndOffset(body);
         if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
@@ -133,7 +144,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitLambdaExpression(this);
     }
@@ -143,10 +154,10 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state,
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state,
                                      final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
+                                     final @NotNull PsiElement place) {
     return PsiImplUtil.processDeclarationsInLambda(this, processor, state, lastParent, place);
   }
 
@@ -167,7 +178,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean isAcceptable(PsiType leftType) {
+  public boolean isAcceptable(PsiType leftType, @Nullable PsiMethod method) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
         if (isAcceptable(conjunctType)) return true;
@@ -176,17 +187,13 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null) {
-        final PsiMethod method = candidateProperties.getMethod();
-        if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
-          return true;
-        }
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && method != null) {
+      if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
+        return true;
+      }
 
-        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
-          return true;
-        }
+      if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+        return true;
       }
     }
 
@@ -195,7 +202,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
       return false;
     }
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && !hasFormalParameterTypes()) {
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && !hasFormalParameterTypes()) {
       return true;
     }
 
@@ -224,17 +231,9 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
-    if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
-      Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-      try {
-        if (map.put(this, leftType) != null) {
-          return false;
-        }
-        return LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
-      }
-      finally {
-        map.remove(this);
-      }
+    if (methodReturnType != null && !PsiTypes.voidType().equals(methodReturnType)) {
+      return LambdaUtil.performWithTargetType(this, leftType, () ->
+               LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);
     }
     return true;
   }
@@ -249,7 +248,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiType methodReturnType = interfaceMethod.getReturnType();
     final PsiElement body = getBody();
-    if (PsiType.VOID.equals(methodReturnType)) {
+    if (PsiTypes.voidType().equals(methodReturnType)) {
       if (body instanceof PsiCodeBlock) {
         return isVoidCompatible();
       } else {
@@ -261,22 +260,20 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
   }
 
-  @Nullable
   @Override
-  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+  public @Nullable PsiType getGroundTargetType(PsiType functionalInterfaceType) {
     return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, this);
   }
 
-  private static PsiType toArray(PsiType paramType) {
+  private static @NotNull PsiType toArray(@NotNull PsiType paramType) {
     if (paramType instanceof PsiEllipsisType) {
       return ((PsiEllipsisType)paramType).toArrayType();
     }
     return paramType;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Function;
+  public @NotNull Icon getIcon(int flags) {
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Lambda);
   }
 }

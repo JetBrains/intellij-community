@@ -1,0 +1,6 @@
+// WITH_STDLIB
+
+val foo: String
+    get() {
+        throw UnsupportedOperationException()
+    }

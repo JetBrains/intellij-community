@@ -1,0 +1,9 @@
+Example function.
+
+.. code-block:: python
+
+   def hello():
+       x = 1
+       print(x)
+
+Back to normal text.

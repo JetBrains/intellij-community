@@ -36,8 +36,7 @@ public interface XPathQuickFixFactory {
 
   Fix<XPathNodeTest>[] createUnknownNodeTestFixes(XPathNodeTest test);
 
-  @NotNull
-  SuppressIntentionAction[] getSuppressActions(XPathInspection inspection);
+  SuppressIntentionAction @NotNull [] getSuppressActions(XPathInspection inspection);
 
   boolean isSuppressedFor(PsiElement element, XPathInspection inspection);
 
@@ -48,10 +47,10 @@ public interface XPathQuickFixFactory {
 
     @Override
     public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+                       @NotNull PsiFile psiFile,
                        Editor editor, @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      invokeImpl(project, file);
+      invokeImpl(project, psiFile);
     }
 
 

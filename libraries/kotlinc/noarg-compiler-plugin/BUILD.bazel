@@ -1,0 +1,54 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.noarg.compiler.plugin` start
+jvm_library(
+    name = "libraries-kotlinc-noarg-compiler-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.noarg.compiler.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-noarg-compiler-plugin-kotlinc-noarg-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-noarg-compiler-plugin-kotlinc-noarg-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir",
+    ],
+)
+
+jvm_library(
+    name = "libraries-kotlinc-noarg-compiler-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.noarg.compiler.plugin",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-noarg-compiler-plugin-kotlinc-noarg-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-noarg-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.noarg.compiler.plugin` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.noarg.compiler.plugin` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.noarg.compiler.plugin.iml",
+        "resources/intellij.libraries.kotlinc.noarg.compiler.plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.noarg.compiler.plugin` end

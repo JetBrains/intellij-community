@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -24,7 +9,6 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatus;
@@ -32,33 +16,36 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class FormNode extends ProjectViewNode<Form>{
+public final class FormNode extends ProjectViewNode<Form>{
   private final Collection<BasePsiNode<? extends PsiElement>> myChildren;
 
-  public FormNode(Project project, Object value, ViewSettings viewSettings) {
+  public FormNode(Project project, @NotNull Object value, ViewSettings viewSettings) {
     this(project, (Form)value, viewSettings, getChildren(project, (Form) value, viewSettings));
   }
 
-  public FormNode(Project project, Form value, ViewSettings viewSettings, Collection<BasePsiNode<? extends PsiElement>> children) {
+  public FormNode(Project project, @NotNull Form value, ViewSettings viewSettings, Collection<BasePsiNode<? extends PsiElement>> children) {
     super(project, value, viewSettings);
     myChildren = children;
   }
 
-  @NotNull
-  public Collection<BasePsiNode<? extends PsiElement>> getChildren() {
+  @Override
+  public @NotNull Collection<BasePsiNode<? extends PsiElement>> getChildren() {
     return myChildren;
   }
 
+  @Override
   public String getTestPresentation() {
     return "Form:" + getValue().getName();
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     for (final AbstractTreeNode aMyChildren : myChildren) {
       ProjectViewNode treeNode = (ProjectViewNode)aMyChildren;
@@ -67,12 +54,13 @@ public class FormNode extends ProjectViewNode<Form>{
     return false;
   }
 
-  public void update(PresentationData presentation) {
+  @Override
+  public void update(@NotNull PresentationData presentation) {
     if (getValue() == null || !getValue().isValid()) {
       setValue(null);
     } else {
       presentation.setPresentableText(getValue().getName());
-      presentation.setIcon(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
+      presentation.setIcon(GuiFormFileType.INSTANCE.getIcon());
     }
   }
 
@@ -86,22 +74,21 @@ public class FormNode extends ProjectViewNode<Form>{
     return contains(file);
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     getValue().navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     final Form value = getValue();
     return value != null && value.canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     final Form value = getValue();
     return value != null && value.canNavigateToSource();
-  }
-
-  public String getToolTip() {
-    return IdeBundle.message("tooltip.ui.designer.form");
   }
 
   @Override
@@ -118,7 +105,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   @Override
-  public boolean canHaveChildrenMatching(final Condition<PsiFile> condition) {
+  public boolean canHaveChildrenMatching(final Condition<? super PsiFile> condition) {
     for(BasePsiNode<? extends PsiElement> child: myChildren) {
       if (condition.value(child.getValue().getContainingFile())) {
         return true;

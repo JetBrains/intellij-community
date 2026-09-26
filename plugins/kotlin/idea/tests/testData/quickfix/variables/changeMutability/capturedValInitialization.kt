@@ -1,0 +1,12 @@
+// "Change to 'var'" "true"
+// K2_ERROR: CAPTURED_VAL_INITIALIZATION
+fun exec(f: () -> Unit) = f()
+
+fun foo() {
+    val x: Int
+    exec {
+        <caret>x = 42
+    }
+}
+
+// IGNORE_K2

@@ -1,7 +1,7 @@
 class Foo {
     {
-      foo("someTestAttachment", "".getByt<caret>)
+      foo("someTestAttachment", "".star<caret>)
     }
 
-  void foo(String s, byte[] z) {}
+  void foo(String s, boolean z) {}
 }

@@ -1,0 +1,8 @@
+// "Create property 'foo' as constructor parameter" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class A {
+    val test: Int get() = <caret>foo
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: val foo: kotlin.Int

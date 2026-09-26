@@ -1,0 +1,7 @@
+fun foo() {
+    do {
+        val x = 1
+        println(x)
+        x + 1
+    } while (<selection><caret>true</selection>)
+}

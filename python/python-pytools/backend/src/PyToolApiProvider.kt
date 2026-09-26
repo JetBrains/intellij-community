@@ -1,0 +1,184 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.pytools.backend
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.project.findProject
+import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.python.pytools.common.PyToolApi
+import com.intellij.python.pytools.common.PyToolEventKind
+import com.intellij.python.pytools.common.FusId
+import com.intellij.python.pytools.common.PyToolLogEventRequest
+import com.intellij.python.pytools.common.PyToolOperationResultDto
+import com.intellij.python.pytools.common.PyToolPathDto
+import com.intellij.python.pytools.common.PyToolPathKind
+import com.intellij.python.pytools.common.PyToolPathStateDto
+import com.intellij.python.pytools.common.PyToolPathRequest
+import com.intellij.python.pytools.common.PyToolRequest
+import com.intellij.python.pytools.common.PyToolSdkInstallRequest
+import com.intellij.python.pytools.common.PyToolSdkOperationResultDto
+import com.intellij.python.pytools.common.PyToolSdkRequest
+import com.intellij.python.pytools.common.PyToolSdkStateDto
+import com.intellij.python.pytools.common.PyToolSetPathRequest
+import com.intellij.python.pytools.common.PyToolStateDto
+import com.intellij.python.pytools.common.PyToolValidationDto
+import com.intellij.python.pytools.common.PyToolsRequest
+import com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
+import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import java.nio.file.Path
+
+internal class PyToolApiProvider : RemoteApiProvider {
+  override fun RemoteApiProvider.Sink.remoteApis() {
+    remoteApi(remoteApiDescriptor<PyToolApi>()) { PyToolApiImpl }
+  }
+}
+
+private object PyToolApiImpl : PyToolApi {
+  override suspend fun getStates(request: PyToolsRequest): List<PyToolStateDto> {
+    val project = request.projectId.findProject()
+    val eel = project.getEelDescriptor().toEelApi()
+    val installed = PyToolProbeCache.getInstance().listing(eel)
+    val executables = request.fusIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
+    // One coroutine per tool: a state resolves a path and, for a path the manager does not know, runs
+    // `<path> --version`. In a sequence every tool waits for the ones before it, so the pages showed no
+    // version until the slowest tool had answered.
+    return coroutineScope {
+      executables.map { executable ->
+        async { buildToolState(project, executable, installed = (executable as? PyTool)?.let { installed[it] }) }
+      }.awaitAll()
+    }
+  }
+
+  override suspend fun getPaths(request: PyToolsRequest): List<PyToolPathStateDto> {
+    val project = request.projectId.findProject()
+    val descriptor = project.getEelDescriptor()
+    val executables = request.fusIds.mapNotNull { id -> PyTool.findExecutable(id.value) }
+    // One coroutine per tool: a cache hit returns at once, and a cold cache detects every tool in parallel.
+    return coroutineScope {
+      executables.map { executable ->
+        async {
+          val custom = executable.getCustomExecutablePath(descriptor)
+          val path = custom ?: PyExecutableCache.getInstance().get(descriptor, executable)
+          PyToolPathStateDto(
+            fusId = FusId(executable.fusId),
+            path = when {
+              custom != null -> PyToolPathDto(custom.toString(), PyToolPathKind.CUSTOM)
+              path != null -> PyToolPathDto(path.toString(), PyToolPathKind.DETECTED)
+              else -> null
+            },
+          )
+        }
+      }.awaitAll()
+    }
+  }
+
+  override suspend fun getVersion(request: PyToolRequest): String? {
+    val project = request.projectId.findProject()
+    val descriptor = project.getEelDescriptor()
+    val executable = PyTool.findExecutable(request.fusId.value) ?: return null
+    val path = executable.getCustomExecutablePath(descriptor)
+               ?: PyExecutableCache.getInstance().get(descriptor, executable)
+               ?: return null
+    return resolveVersion(project, executable, path)
+  }
+
+  /**
+   * The version of [executable] at [path]: free from the manager listing when it covers that exact file, and a
+   * cached `<path> --version` run otherwise.
+   */
+  private suspend fun resolveVersion(project: Project, executable: PyExecutable, path: Path): String? {
+    val tool = executable as? PyTool ?: return null
+    val descriptor = project.getEelDescriptor()
+    val managed = PyToolProbeCache.getInstance().listing(descriptor.toEelApi())[tool]
+      ?.takeIf { it.path.normalize() == path.normalize() }
+    return managed?.installedVersion ?: PyToolProbeCache.getInstance().version(descriptor, tool, path)?.value
+  }
+
+  override suspend fun validatePath(request: PyToolPathRequest): PyToolValidationDto {
+    val project = request.tool.projectId.findProject()
+    val path = EelPath.parse(request.path, project.getEelDescriptor()).asNioPath()
+    return when (val result = requireTool(request.tool).validateCustomPath(path)) {
+      is Result.Success -> PyToolValidationDto.Valid(result.result.value)
+      is Result.Failure -> PyToolValidationDto.Invalid(result.error.toString())
+    }
+  }
+
+  override suspend fun setPath(request: PyToolSetPathRequest): PyToolStateDto {
+    val project = request.tool.projectId.findProject()
+    val tool = requireTool(request.tool)
+    val descriptor = project.getEelDescriptor()
+    val path = request.path?.let { EelPath.parse(it, descriptor).asNioPath() }
+    tool.setCustomExecutablePath(descriptor, path)
+    tool.notifyExecutableChanged(descriptor)
+    return buildToolState(project, tool)
+  }
+
+  override suspend fun install(request: PyToolRequest): PyToolOperationResultDto =
+    operate(request) { project, tool ->
+      // `uv tool install` is not a PythonPackageManager operation, so nothing else tells the tool
+      // that its binary just appeared. A server that it runs, and anything that it caches from the
+      // binary, stay out of date until it is told. It installs machine-wide, so every project here
+      // is affected.
+      tool.performToolInstallation(project.getEelDescriptor().toEelApi())
+        .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+    }
+
+  override suspend fun upgrade(request: PyToolRequest): PyToolOperationResultDto =
+    operate(request) { project, tool ->
+      // As for an install: an upgrade in place leaves a running server on the old binary.
+      tool.performToolUpgrade(project.getEelDescriptor().toEelApi())
+        .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+    }
+
+  override suspend fun getSdkStates(request: PyToolRequest): List<PyToolSdkStateDto> {
+    val project = request.projectId.findProject()
+    return PyToolSdkBackendService.getInstance().getStates(project, requireTool(request))
+  }
+
+  override suspend fun getDependencyGroups(request: PyToolSdkRequest) =
+    PyToolSdkBackendService.getInstance().getDependencyGroups(request.tool.projectId.findProject(), request)
+
+  override suspend fun installIntoSdk(request: PyToolSdkInstallRequest): PyToolSdkOperationResultDto {
+    val project = request.target.tool.projectId.findProject()
+    return PyToolSdkBackendService.getInstance().install(project, requireTool(request.target.tool), request)
+  }
+
+  override suspend fun logEvent(request: PyToolLogEventRequest) {
+    val project = request.tool.projectId.findProject()
+    val tool = requireTool(request.tool)
+    when (request.event) {
+      PyToolEventKind.CONFIGURATION_CHANGED ->
+        (tool as? ProjectLevelPyTool<*>)?.let { PyToolUsagesCollector.Helper.logConfigurationChanged(project, it, request.source) }
+      PyToolEventKind.INSTALLED -> PyToolUsagesCollector.Helper.logToolInstalled(project, tool, request.source)
+      PyToolEventKind.UPDATED -> PyToolUsagesCollector.Helper.logToolUpdated(project, tool, request.source)
+    }
+  }
+
+  private suspend fun operate(
+    request: PyToolRequest,
+    operation: suspend (Project, PyTool) -> PyResult<Path>,
+  ): PyToolOperationResultDto {
+    val project = request.projectId.findProject()
+    val tool = requireTool(request)
+    return when (val result = operation(project, tool)) {
+      is Result.Success -> {
+        val path = result.result
+        val dto = buildToolState(project, tool, knownPath = path)
+        // The user just asked for this install or upgrade, so resolving the new version here is worth a process.
+        PyToolOperationResultDto.Success(dto.takeIf { it.version != null } ?: dto.copy(version = resolveVersion(project, tool, path)))
+      }
+      is Result.Failure -> PyToolOperationResultDto.Failure(result.error.toString())
+    }
+  }
+
+  private fun requireTool(request: PyToolRequest): PyTool =
+    PyTool.findByPackageName(request.fusId.value) ?: error("Unknown Python tool: " + request.fusId.value)
+}

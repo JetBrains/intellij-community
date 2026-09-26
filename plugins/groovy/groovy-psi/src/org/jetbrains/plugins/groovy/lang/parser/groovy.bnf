@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
   generate = [
     psi = 'no'
     exact-types = 'elements'
+    java = '8'
   ]
 
   parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser'
@@ -45,7 +46,10 @@
     T_NID = '!=='
     T_LAND = '&&'
     T_LOR = '||'
+    T_IMPL = '==>'
     T_NOT = '!'
+    T_NOT_IN = '!in'
+    T_NOT_INSTANCEOF = '!instanceof'
     T_BNOT = '~'
     T_COMPARE = '<=>'
     T_REGEX_FIND = '=~'
@@ -55,9 +59,12 @@
     T_LE = '<='
     T_GE = '>='
     T_RANGE = '..'
-    T_RANGE_EX = '..<'
+    T_RANGE_RIGHT_OPEN = '..<'
+    T_RANGE_LEFT_OPEN = '<..'
+    T_RANGE_BOTH_OPEN = '<..<'
     T_DOT = '.'
     T_SAFE_DOT = '?.'
+    T_SAFE_CHAIN_DOT = '??.'
     T_SPREAD_DOT = '*.'
     T_METHOD_CLOSURE = '.&'
     T_METHOD_REFERENCE = '::'
@@ -108,6 +115,8 @@
     KW_CLASS = 'class'
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
+    KW_VAR = 'var'
+    KW_VAL = 'val'
     KW_DEFAULT = 'default'
     KW_DO = 'do'
     KW_ELSE = 'else'
@@ -126,11 +135,15 @@
     KW_NATIVE = 'native'
     KW_NULL = 'null'
     KW_NEW = 'new'
+    KW_NON_SEALED = 'non-sealed'
     KW_PACKAGE = 'package'
+    KW_PERMITS = 'permits'
     KW_PRIVATE = 'private'
     KW_PROTECTED = 'protected'
     KW_PUBLIC = 'public'
     KW_RETURN = 'return'
+    KW_RECORD = 'record'
+    KW_SEALED = 'sealed'
     KW_STATIC = 'static'
     KW_STRICTFP = 'strictfp'
     KW_SUPER = 'super'
@@ -145,6 +158,7 @@
     KW_TRY = 'try'
     KW_VOLATILE = 'volatile'
     KW_WHILE = 'while'
+    KW_YIELD = 'yield'
 
     NUM_INT = 'Integer'
     NUM_LONG = 'Long'
@@ -153,8 +167,10 @@
     NUM_FLOAT = 'Float'
     NUM_DOUBLE = 'Double'
 
-    STR_SQ = 'string'
-    STR_DQ = 'Gstring'
+    STRING_SQ = 'single quoted string'
+    STRING_TSQ = 'triple single quoted string'
+    STRING_DQ = 'double quoted string'
+    STRING_TDQ = 'triple double quoted string'
 
     GSTRING_BEGIN = 'Gstring begin'
     GSTRING_CONTENT = 'Gstring content'
@@ -202,7 +218,7 @@ import ::= modifier_list mb_nl ('import') 'static'? qualified_name import_star? 
   consumeTokenMethod = 'consumeTokenFast'
 }
 private import_star ::= '.' '*'
-import_alias ::= 'as' mb_nl IDENTIFIER
+import_alias ::= 'as' (weak_keyword | IDENTIFIER)
 {
   pin = 1
 }
@@ -216,7 +232,8 @@ modifier_list ::= non_empty_modifier_list | empty_modifier_list
 }
 empty_modifier_list ::=
 non_empty_modifier_list ::= <<a_b_a (modifier | annotation) mb_nl>>
-annotation_modifier_list ::= <<a_b_a annotation mb_nl>>?
+annotation_modifier_list ::= non_empty_annotation_list?
+private non_empty_annotation_list ::= <<a_b_a annotation mb_nl>>
 private modifier ::= 'abstract'
                    | 'default'
                    | 'final'
@@ -229,7 +246,10 @@ private modifier ::= 'abstract'
                    | 'synchronized' !'('
                    | 'transient'
                    | 'volatile'
+                   | 'sealed' !(mb_nl ('(' | ';' | '='))
+                   | 'non-sealed'
                    | def_modifier
+                   | var_modifier
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -237,14 +257,23 @@ private modifier ::= 'abstract'
  * 'def' is a part of a reference if followed by a dot
  */
 private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
+
+/*
+ * 'var', 'val' and 'sealed' can be modifier or identifier
+ */
+private var_modifier ::= ('var' | 'val' | 'sealed') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
+private weak_keyword_identifiers ::= 'as' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
+
+private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
 // region Annotations
 annotation ::= '@' annotation_reference after_annotation_reference
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
   consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
 private annotation_reference ::= simple_reference { name = 'annotation reference' }
 private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
@@ -258,16 +287,17 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   name = 'annotation attribute'
   pin('.*') = 2
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
+  extraRoot = true
 }
-private annotation_key ::= IDENTIFIER | 'as' | 'def' | 'in'
+private annotation_key ::= weak_keyword | IDENTIFIER | 'as' | 'def' | 'in'
 private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
 }
-annotation_array_value ::= '[' <<comma_list annotation_value>>? ']'
-{
-  pin = 1
-}
+annotation_array_value ::= '[' annotation_array_item* (mb_nl ']') { pin = 1 }
+private annotation_array_item ::= mb_nl <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+private annotation_array_item_end ::= mb_nl (',' | &']' | end_of_file)
+private annotation_array_item_start ::= '@' | expression_start
 // endregion
 
 
@@ -278,11 +308,13 @@ private type_definition_tail ::= class_type_definition
                                | trait_type_definition
                                | enum_type_definition
                                | annotation_type_definition
-private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements
-private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements?
-private trait_definition_header ::= IDENTIFIER type_parameter_list? nl_extends nl_implements
+                               | record_type_definition
+private class_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_implements nl_permits
+private interface_definition_header ::= <<classIdentifier>> type_parameter_list? nl_extends nl_non_empty_implements? nl_permits
+private trait_definition_header ::= (weak_keyword | IDENTIFIER) type_parameter_list? nl_extends nl_implements nl_permits
 private enum_definition_header ::= <<classIdentifier>> nl_non_empty_extends? nl_implements
-private annotation_definition_header ::= IDENTIFIER
+private annotation_definition_header ::= weak_keyword | IDENTIFIER
+private record_definition_header ::= <<classIdentifier>> type_parameter_list? method_parameter_list nl_implements
 
 left class_type_definition ::= 'class' class_definition_header mb_nl class_body <<popClassIdentifier>>
 {
@@ -309,19 +341,29 @@ left annotation_type_definition ::= '@' ('interface') annotation_definition_head
   pin = annotation_definition_header
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType'
 }
+left record_type_definition ::= 'record' record_definition_header mb_nl record_body
+{
+  pin = record_definition_header
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrRecordDefinitionElementType'
+}
 
-class_body ::= '{' class_body_inner '}'
+class_body ::= '{' <<disableCompactConstructors class_body_inner>> '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType'
 }
 class_body_inner ::= mb_separators class_members { elementType = '' name = '' }
-enum_body ::= '{' mb_nl enum_members '}'
+enum_body ::= '{' mb_nl <<disableCompactConstructors enum_members>> '}'
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrEnumDefinitionBodyElementType'
 }
-annotation_body ::= '{' mb_nl annotation_members '}'
+annotation_body ::= '{' mb_nl <<disableCompactConstructors annotation_members>> '}'
+{
+  pin = 1
+  elementType = class_body
+}
+record_body ::= '{' <<enableCompactConstructors class_body_inner>> '}'
 {
   pin = 1
   elementType = class_body
@@ -351,14 +393,23 @@ private annotation_level ::= type_definition | parse_annotation_declaration
 
 
 // region Declarations
+private meta declaration ::= <<choice
+                                 <<d_modifiers <<after_modifiers>>>>
+                                 <<d_no_modifiers <<after_no_modifiers>>>>
+                             >>
+private meta d_modifiers ::= non_empty_modifier_list mark_left <<mb_nl_group <<after_modifiers>>>> { pin = 1 }
+private meta d_no_modifiers ::= empty_modifier_list mark_left <<after_no_modifiers>>
+
 private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
 private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
-private definitely_type_element ::= <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+private definitely_type_element ::= <<definitelyTypeElement type_element declaration_lookahead>>
 
-private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
-private method_lookahead ::= method_identifier '('
+private declaration_lookahead ::= method_lookahead | (<<isCompactConstructorAllowed>> compact_constructor_lookahead) | variable_lookahead
+private variable_lookahead ::= &(weak_keyword | IDENTIFIER)
+private method_lookahead ::= &(method_identifier '(')
+private compact_constructor_lookahead ::= &(<<constructorIdentifier>>)
 // endregion
 
 
@@ -367,15 +418,17 @@ private parse_class_declaration ::= <<parseTailLeftFlat class_declaration_start 
                                   | <<parseTailLeftFlat naked_method_declaration_start methods_tail>>
 private class_declaration_start ::= declaration_start_modifiers | class_declaration_start_no_modifiers
 
-private class_declaration_start_no_modifiers ::= empty_modifier_list class_declaration_start_after_no_modifiers
+private class_declaration_start_no_modifiers ::= empty_modifier_list mb_type_parameter_list class_declaration_start_after_no_modifiers
 private class_declaration_start_after_no_modifiers ::= class_declaration_start_after_no_modifiers1
                                                      | class_declaration_start_after_no_modifiers2
-private class_declaration_start_after_no_modifiers1 ::= capital_type_element !'('
+private class_declaration_start_after_no_modifiers1 ::= capital_type_element !('(' | '{')
 private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
-private naked_method_declaration_start ::= empty_modifier_list &method_lookahead
+private naked_method_declaration_start ::= empty_modifier_list mb_type_parameter_list (method_lookahead | compact_constructor_lookahead)
 
 private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
-private methods_tail ::= constructor | method
+private methods_tail ::= constructor
+                       | method
+                       | <<isCompactConstructorAllowed>> compact_constructor
 
 private parse_annotation_declaration ::= <<parseTailLeftFlat class_declaration_start annotation_tails>>
                                        | <<parseTailLeftFlat naked_method_declaration_start annotation_method>>
@@ -405,7 +458,7 @@ enum_constants ::= enum_constant ((mb_nl ',') mb_nl enum_constant)* [mb_nl ',']
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantListElementType'
 }
-enum_constant ::= annotation_modifier_list mb_nl IDENTIFIER call_argument_list? enum_constant_initializer?
+enum_constant ::= annotation_modifier_list mb_nl (weak_keyword | IDENTIFIER) call_argument_list? enum_constant_initializer?
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrEnumConstantElementType'
@@ -418,24 +471,29 @@ enum_constant_initializer ::= class_body
 
 
 // region Methods
-method ::= method_identifier parse_parameter_list nl_throws [mb_nl lazy_block]
+method ::= method_identifier method_parameter_list nl_throws [mb_nl lazy_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-constructor ::= constructor_identifier parse_parameter_list nl_throws [mb_nl lazy_constructor_block]
+constructor ::= constructor_identifier method_parameter_list nl_throws [mb_nl lazy_constructor_block]
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrConstructorElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
-annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_method_default] nl_throws
+compact_constructor ::= constructor_identifier empty_parameter_list empty_throws_clause [mb_nl lazy_constructor_block]
+{
+  elementType = constructor
+  pin = 2
+}
+annotation_method ::= method_identifier method_parameter_list [mb_nl annotation_method_default] nl_throws
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodElementType'
-  pin = parse_parameter_list
+  pin = 2
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
-private method_identifier ::= IDENTIFIER | STR_SQ | STR_DQ { consumeTokenMethod = 'consumeTokenFast' }
+private method_identifier ::= weak_keyword | IDENTIFIER | string_literal_tokens { consumeTokenMethod = 'consumeTokenFast' }
 private constructor_identifier ::= <<constructorIdentifier>>
 // endregion
 
@@ -443,21 +501,17 @@ private constructor_identifier ::= <<constructorIdentifier>>
 // region Parameters
 fake parameter_list ::= { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterListElementType' }
 
-private parse_parameter_list ::= parse_empty_parameter_list | parse_non_empty_parameter_list
-private parse_empty_parameter_list ::= '(' empty_parameter_list ')'
-private parse_non_empty_parameter_list ::= '(' method_parameter_list ')' { pin = 1 }
-
-method_parameter_list ::= <<paren_list_inner parse_parameter>> { elementType = parameter_list }
+method_parameter_list ::= <<paren_list parse_parameter>> { elementType = parameter_list }
 private parse_parameter ::= <<parseTailLeftFlat parameter_start parameter>>
 private parameter_start ::= parameter_start_modifiers | parameter_start_no_modifiers
-private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
+private parameter_start_modifiers ::= non_empty_modifier_list mb_nl parameter_start_after_modifiers { pin = 1 }
 private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
 private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
-private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | variable_lookahead
 private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
 private parameter_type_element ::= primitive_type_element array_type_elements
                                  | qualified_class_type_element array_type_elements
-                                 | unqualified_class_type_element &(IDENTIFIER | ellipsis)
+                                 | unqualified_class_type_element &(weak_keyword | IDENTIFIER | ellipsis)
                                  | unqualified_class_type_element array_type_element array_type_elements
 private ellipsis ::= '...' { consumeTokenMethod = 'consumeTokenFast' }
 parameter ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType' }
@@ -467,18 +521,22 @@ parameter ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.st
 // region Reference lists
 fake extends_clause ::=     { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrExtendsClauseElementType' }
 fake implements_clause ::=  { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImplementsClauseElementType' }
+fake permits_clause ::=     { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPermitsClauseElementType' }
 fake throws_clause ::=      { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrThrowsClauseElementType' }
 
 private nl_extends ::= nl_non_empty_extends | empty_extends_clause
 private nl_implements ::= nl_non_empty_implements | empty_implements_clause
+private nl_permits ::= nl_non_empty_permits | empty_permits_clause
 private nl_throws ::= [nl &('throws' | '{')] (non_empty_throws_clause | empty_throws_clause)
 
 empty_extends_clause ::= empty { elementType = extends_clause }
 empty_implements_clause ::= empty { elementType = implements_clause }
+empty_permits_clause ::= empty { elementType = permits_clause }
 empty_throws_clause ::= empty { elementType = throws_clause }
 
 private nl_non_empty_extends ::= mb_nl non_empty_extends_clause { consumeTokenMethod = 'consumeTokenFast' }
 private nl_non_empty_implements ::= mb_nl non_empty_implements_clause { consumeTokenMethod = 'consumeTokenFast' }
+private nl_non_empty_permits ::= mb_nl non_empty_permits_clause { consumeTokenMethod = 'consumeTokenFast' }
 
 non_empty_extends_clause ::= 'extends' <<comma_list_p extends_list_item>>
 {
@@ -490,6 +548,12 @@ non_empty_implements_clause ::= 'implements' <<comma_list_p implements_list_item
 {
   pin = 1
   elementType = implements_clause
+  consumeTokenMethod = 'consumeTokenFast'
+}
+non_empty_permits_clause ::= 'permits' <<comma_list_p permits_list_item>>
+{
+  pin = 1
+  elementType = permits_clause
   consumeTokenMethod = 'consumeTokenFast'
 }
 non_empty_throws_clause ::= 'throws' <<comma_list_p throws_list_item>>
@@ -505,33 +569,36 @@ private extends_recovery ::= !(',' | 'implements' | '{')
 private implements_list_item ::= mb_nl type_code_reference | implement_list_item_recovered
 private implement_list_item_recovered ::= empty fail { pin = 1 recoverWhile = implements_recovery }
 private implements_recovery ::= !(',' | '{')
+private permits_list_item ::= mb_nl type_code_reference | permits_list_recovered
+private permits_list_recovered ::= empty fail { pin = 1 recoverWhile = permits_recovery }
+private permits_recovery ::= !(',' | '{')
 private throws_list_item ::= mb_nl type_code_reference
 // endregion
 
 
 // region Generics
-type_parameter_list ::= '<' type_parameters '>'
+type_parameter_list ::= '<' mb_nl type_parameters <<mb_nl_group '>'>>
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterListElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
 private type_parameters ::= type_parameter type_parameters_tail*
-private type_parameters_tail ::= ',' type_parameter { pin = 1 }
+private type_parameters_tail ::= ',' mb_nl type_parameter { pin = 1 }
 
-type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
+type_parameter ::= (non_empty_annotation_list mb_nl)? IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'
 }
-type_parameter_bounds_list ::= 'extends' type_parameter_bounds
+type_parameter_bounds_list ::= 'extends' mb_nl type_parameter_bounds
 {
   pin = 1
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterBoundsElementType'
 }
 empty_type_parameter_bounds_list ::= { elementType = type_parameter_bounds_list }
 private type_parameter_bounds ::= type_code_reference type_parameter_bounds_tail*
-private type_parameter_bounds_tail ::= '&' type_code_reference { pin = 1 }
+private type_parameter_bounds_tail ::= '&' mb_nl type_code_reference { pin = 1 }
 
 type_argument_list ::= diamond_type_argument_list | non_empty_type_argument_list
 private diamond_type_argument_list ::=  <<isDiamondAllowed>> fast_l_angle '>'
@@ -540,7 +607,7 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-private type_argument_list_item ::= mb_nl type_argument
+private type_argument_list_item ::= mb_nl <<annotated type_argument>>
 private type_argument_list_end ::= <<mb_nl_group '>'>>
 private type_argument ::= any_type_element | wildcard_type_element
 {
@@ -562,13 +629,21 @@ constructor_block ::= '{' mb_separators [constructor_call_expression block_level
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrConstructorBlockElementType'
   pin = 1
+  extraRoot = true
 }
 lazy_block ::= <<parseBlockLazy open_block 'OPEN_BLOCK'>> { elementType = '' }
-open_block ::= '{' mb_separators block_levels '}'
+open_block ::= open_block_impl
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
-  pin = 1
+  extraRoot = true
 }
+open_block_switch_aware ::= <<insideSwitchExpression open_block_impl>>
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareBlockElementType'
+  extraRoot = true
+}
+private open_block_impl ::= '{' mb_separators block_levels '}' { pin = 1 }
 // endregion
 
 
@@ -607,9 +682,10 @@ fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy
 
 private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
 private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
-private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
-private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
+private block_declaration_start_no_modifiers ::= empty_modifier_list mb_type_parameter_list block_declaration_type_element
+private block_declaration_type_element ::= (capital_type_element | lowercase_type_element | clear_variants_and_fail) declaration_lookahead
 private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
+private local_variable_declaration ::= <<parseTailLeftFlat block_declaration_start variable_declaration_tail>>
 
 variable_declaration_tail ::= variable (',' mb_nl variable)*
 {
@@ -618,25 +694,24 @@ variable_declaration_tail ::= variable (',' mb_nl variable)*
 }
 variable ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrVariableElementType' }
 
-tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
+tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple mb_nl tuple_initializer
 {
   elementType = variable_declaration
   pin = tuple_var_declaration_tuple
 }
-private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
+private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (mb_nl ',' tuple_var_declaration_item)* mb_nl ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
+  pin = 2
+  pin('tuple_var_declaration_tuple_2_0') = 2
 }
 
-private tuple_var_declaration_item ::= type_element tuple_variable | tuple_variable
+private tuple_var_declaration_item ::= mb_nl (type_element tuple_variable | tuple_variable)
+tuple_variable ::= weak_keyword | IDENTIFIER
 {
   elementType = variable
 }
-tuple_variable ::= IDENTIFIER
-{
-  elementType = variable
-}
-private tuple_initializer ::= '=' mb_nl expression
+private tuple_initializer ::= '=' mb_nl expression_or_application
 {
   pin = 1
 }
@@ -671,96 +746,97 @@ statement ::= if_statement
             | synchronized_statement
             | return_statement
             | break_statement
+            | yield_statement
             | continue_statement
             | assert_statement
             | throw_statement
             | labeled_statement
             | type_definition | <<withProtectedLastVariantPos tuple_var_declaration>> | parse_block_declaration
-            | expression_or_application
+            | expression_statement
+            | block_statement
 {
   elementType = ''
 }
 
-private branch ::= <<extendedStatement>> | block_or_statement
-private block_or_statement ::= block_statement | statement
+private branch ::= <<extendedStatement>> | statement
 
-block_statement ::= lazy_block
+block_statement ::= !<<isParameterizedClosure>> lazy_block
+{
+  extraRoot = true
+}
+
+private expression_statement ::= expression_or_application_except_zero_params_closure
 
 if_statement ::= 'if' after_if_keyword { pin = 1 }
 private after_if_keyword ::= if_header mb_nl branch [mb_separators else_branch] { pin = 1 }
-private if_header ::= '(' mb_nl expression_or_application mb_nl ')' { pin = 1 }
+private if_header ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
 private else_branch ::= 'else' mb_nl branch { pin = 1 }
 
-switch_statement ::= 'switch' '(' expression ')' (mb_nl switch_body)
+switch_statement ::= 'switch' '(' <<insideParentheses expression>> ')' (mb_nl switch_body)
 {
   pin = 1
 }
-private switch_body ::= '{' mb_nl case_sections* '}' { pin = 1 }
-private case_sections ::= !'}' (case_section | default_case_section) { pin = 1 recoverWhile = case_section_recovery }
-private case_section_recovery ::= !('}' | 'case' | 'default')
+private switch_body ::= '{' mb_nl general_switch_section* '}' { pin = 1 }
 
-case_section ::= case_label (mb_nl case_label)* (mb_nl case_level_item*)
-{
-  pin = 1
-}
-default_case_section ::= default_label mb_nl case_level_item+
-{
-  elementType = case_section
-  pin = 1
-}
-case_label ::= 'case' expression ':' { pin = 1 }
-default_label ::= 'default' ':' { elementType = case_label pin = 1 }
+try_statement ::= 'try' try_resource_list? mb_nl lazy_block (mb_nl catch_clause)* [mb_nl finally_clause] { pin = 1 }
 
-try_statement ::= 'try' lazy_block (mb_nl catch_clause)* [mb_nl finally_clause]
-{
-  pin = 1
-}
-catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block
-{
-  pin = 1
-}
+try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
+private try_resource_list_item ::= mb_nl local_variable_declaration try_resource_list_separator { pin = 2 }
+private try_resource_list_separator ::= &')' | separators
+
+catch_clause ::= 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block) { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
-catch_parameter ::= IDENTIFIER { elementType = parameter }
-finally_clause ::= 'finally' lazy_block
+catch_parameter ::= weak_keyword | IDENTIFIER { elementType = parameter }
+finally_clause ::= 'finally' (mb_nl lazy_block)
 {
   pin = 1
 }
 
-while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
-{
-  pin('.*') = 1
-}
+while_statement ::= 'while' after_while { pin = 1 }
+private after_while ::= while_header mb_nl while_body { pin = 1 }
+private while_header ::= '(' mb_nl <<insideParentheses expression>> mb_nl ')' { pin = 1 }
+private while_body ::= followed_by_semi | branch
 
-do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
+do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' <<insideParentheses expression>> (mb_nl ')') { pin = 1 }
 
-private type_element_followed_by_identifier ::= type_element &IDENTIFIER
+private type_element_followed_by_identifier ::= type_element variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
 for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
-private for_header ::= '(' mb_nl for_clause mb_nl ')' { pin = 1 }
+private for_header ::= '(' mb_nl <<insideParentheses for_clause>> mb_nl ')' { pin = 1 }
 private for_clause ::= for_in_clause | traditional_for_clause
 
-for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
-for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
+for_in_clause ::= (two_for_in_parameters | single_for_in_parameter) (':' | 'in') mb_nl expression { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+private two_for_in_parameters ::= for_in_parameter ',' mb_nl for_in_parameter
+private single_for_in_parameter ::= for_in_parameter !(',')
+for_in_parameter ::= (modifier_list mb_nl mb_type_element) (weak_keyword | IDENTIFIER) mb_nl !('=' | ';') | clear_variants_and_fail { elementType = parameter }
 
-traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl expression? { pin = 1 }
-private for_clause_initialization ::= traditional_for_parameter | expression | clear_variants_and_fail
-traditional_for_parameter ::= traditional_for_parameter_inner mb_initializer { elementType = parameter }
-private traditional_for_parameter_inner ::= non_empty_modifier_list mb_type_element IDENTIFIER
-                                          | empty_modifier_list type_element IDENTIFIER
+traditional_for_clause ::= empty for_clause_initialization? mb_nl ';' mb_nl expression? mb_nl ';' mb_nl for_clause_update? { pin = 1 }
+private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail
+private for_clause_update ::= expression_list
+
+private for_variable_declaration ::= <<declaration fvd_after_modifiers fvd_after_no_modifiers>>
+private fvd_after_modifiers ::= fvd_tuple_tail | fvd_modifiers_type | fvd_tail
+left fvd_tuple_tail ::= tuple_var_declaration_tuple tuple_initializer { pin = 1 elementType = variable_declaration }
+private fvd_modifiers_type ::= <<definitelyTypeElement type_element variable_lookahead>> fvd_tail { pin = 1 }
+private fvd_after_no_modifiers ::= (capital_type_element variable_lookahead) fvd_tail { pin = 1 }
+private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
+
+expression_list ::= expression mb_nl (',' mb_nl expression)*
+
 // FIXME get rid of this weird logic
-private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
+private for_body ::= &<<extendedStatement>> | followed_by_semi | statement { name = 'loop body' }
 
-synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
+synchronized_statement ::= 'synchronized' '(' <<insideParentheses expression>> mb_nl ')' (mb_nl lazy_block)
 {
   pin = 2
 }
 
-labeled_statement ::= IDENTIFIER after_label
-private after_label ::= ':' mb_nl block_or_statement
+labeled_statement ::= (weak_keyword | IDENTIFIER) after_label
+private after_label ::= ':' mb_nl statement
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
@@ -768,8 +844,9 @@ private after_label ::= ':' mb_nl block_or_statement
 
 return_statement ::= 'return' expression?
 
-break_statement ::= 'break' IDENTIFIER?
-continue_statement ::= 'continue' IDENTIFIER?
+break_statement ::= 'break' [weak_keyword | IDENTIFIER]
+continue_statement ::= 'continue' [weak_keyword | IDENTIFIER]
+yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
 
 throw_statement ::= 'throw' expression
 {
@@ -789,13 +866,13 @@ private assert_message_separator ::= ':' | ','
 
 
 // region Expressions
-private expression_start ::= IDENTIFIER
+private expression_start ::= weak_keyword
+                           | IDENTIFIER
                            | '!' | '(' | '+' | '++' | '-' | '--' | '[' | '~'
                            | 'this' | 'super'
                            | DOLLAR_SLASHY_BEGIN
                            | GSTRING_BEGIN
                            | SLASHY_BEGIN
-                           | STR_DQ | STR_SQ
                            | 'new'
                            | primitive_type
                            | simple_literal_tokens
@@ -804,6 +881,7 @@ private expression_start ::= IDENTIFIER
 }
 expression ::= priority15
              | conditionals               // 14
+             | impl_expression            // 13.5
              | lor_expression             // 13
              | land_expression            // 12
              | bor_expression             // 11
@@ -831,11 +909,11 @@ private priority0 ::= unqualified_reference_expression
                     | gstring
                     | regex
                     | parenthesized_expression
-unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
+unqualified_reference_expression ::= (weak_keyword | IDENTIFIER) soft_type_argument_list?
                                    | 'this'
                                    | 'super'
                                    | code_reference_identifiers_soft &(reference_dot | '.&')
-                                   | (STR_SQ | STR_DQ) &string_literal_as_reference
+                                   | (string_literal_tokens | regex_literal) &string_literal_as_reference
 {
   elementType = reference_expression
 }
@@ -846,8 +924,10 @@ private string_literal_as_reference ::= '('                                     
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
-private application_argument_start ::= IDENTIFIER
+private application_argument_start ::= weak_keyword
+                                     | IDENTIFIER
                                      | simple_literal_tokens
+                                     | GSTRING_BEGIN
                                      | primitive_type
                                      | '~' | '!'
                                      | 'this' | 'super'
@@ -864,8 +944,7 @@ private simple_literal_tokens ::= NUM_INT
                                 | NUM_BIG_DECIMAL
                                 | NUM_FLOAT
                                 | NUM_DOUBLE
-                                | STR_SQ
-                                | STR_DQ
+                                | string_literal_tokens
                                 | 'true'
                                 | 'false'
                                 | 'null'
@@ -896,45 +975,113 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
+private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
-new_expression ::= 'new' type_argument_list? new_expression_tail { pin = 1 }
-private new_expression_tail ::= new_expression_type (call_argument_list_start call_argument_list | array_declaration) { pin = 1 }
-private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
-
-new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
-{
-  elementType = new_expression
-}
-anonymous_type_definition ::= code_reference call_argument_list class_body
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
+anonymous_type_definition ::= <<annotated code_reference>> call_argument_list mb_nl_inside_parentheses class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
-array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
-private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
-private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
-private priority1_2 ::= method_call_expression | lazy_closure | list_or_map
+new_expression ::= 'new' type_argument_list? mb_nl new_expression_creator { pin = 1 }
+private new_expression_creator ::= <<annotated new_expression_type>> (l_paren_variant | new_expression_tail) { pin = 1 }
+private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
+private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
+private new_expression_tail ::= array_initializer_tail | array_declaration | (mb_nl call_argument_list)
+
+private array_initializer_tail ::= array_initializer_declaration mb_nl array_initializer
+array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
+private array_dimensions ::= non_empty_annotation_list? '[' mb_nl (']') { consumeTokenMethod = 'consumeTokenFast' }
+array_initializer ::= '{' mb_nl '}' | array_initializer_pin
+nested_array_initializer ::= '{' mb_nl '}' | array_initializer_no_pin { elementType = array_initializer }
+private array_initializer_no_pin ::= '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
+private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
+private array_initializer_item ::= mb_nl (array_initializer_closable_item | nested_array_initializer | expression)
+array_initializer_closable_item ::= non_empty_closure | (non_empty_lamda) { elementType = closure }
+private array_initializer_separator ::= mb_nl ','
+
+array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
+private mandatory_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private optional_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl? ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private expression_with_mb_nl ::= mb_nl expression mb_nl
+private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
-method_call_expression ::= expression call_tail
-private call_tail ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list <<closureArgumentSeparator lazy_closure+>>
+method_call_expression ::= expression <<callTail call_tail_with_nl_before_closure call_tail>>
+private call_tail ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+
+private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
+
+//region Lambda expression
+lambda_expression ::= !<<isClosureParameter>> lambda_expression_base | clear_variants_and_fail
+{
+  extraRoot = true
+}
+private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
+private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
+lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')' { elementType = parameter_list }
+private lambda_body ::=  (!<<isParameterizedClosure>> lazy_block_lambda_body) | expression_lambda_body
+
+expression_lambda_body ::= expression_or_application
+
+single_parameter_lambda_expression::= !<<isClosureParameter>> <<isLambdaExpressionAllowed>> single_parameter_lambda_expression_base | clear_variants_and_fail { elementType = lambda_expression }
+private single_parameter_lambda_expression_base ::= single_parameter_lambda_expression_head mb_nl single_parameter_lambda_body { pin = 1 }
+private single_parameter_lambda_expression_head ::= single_parameter_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
+
+single_parameter_lambda_parameter_list ::= !<<isApplicationArguments>> single_parameter_lambda_parameter { elementType = parameter_list }
+single_parameter_lambda_parameter ::= modifier_list (weak_keyword | IDENTIFIER) {
+  elementType = parameter
+}
+private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
+expression_single_parameter_lambda_body ::= expression_or_application_except_zero_params_closure
+{
+  elementType = expression_lambda_body
+}
+
+lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY'>> {
+  elementType = block_lambda_body
+}
+
+block_lambda_body ::= block_lambda_body_impl {
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
+  consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
+}
+block_lambda_body_switch_aware ::= <<insideSwitchExpression block_lambda_body_impl>> {
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareLambdaBlockElementType'
+  extraRoot = true
+}
+private block_lambda_body_impl ::= '{' mb_nl block_levels '}'
+// endregion
 
 lazy_closure ::= <<parseBlockLazy closure 'CLOSURE'>>
 {
   extends = expression
   elementType = closure
 }
-closure ::= '{' mb_nl closure_header mb_separators block_levels '}'
+closure ::= closure_impl
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
-  pin = 1
-  consumeTokenMethod = 'consumeTokenFast'
+  extraRoot = true
 }
-private closure_header ::= empty_parameter_list closure_arrow | closure_parameter_list mb_nl closure_arrow | empty_parameter_list
+
+closure_switch_aware ::= <<insideSwitchExpression closure_impl>>
+{
+  elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType'
+  elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareClosureBlockElementType'
+  extraRoot = true
+}
+private closure_impl ::= '{' mb_nl closure_header mb_separators block_levels '}' { pin = 1   consumeTokenMethod = 'consumeTokenFast'
+ }
+
+private non_empty_closure ::= '{' mb_nl closure_header_with_arrow mb_separators block_levels '}' { consumeTokenMethod = 'consumeTokenFast'}
+private non_empty_lamda ::= '{' empty_parameter_list mb_nl lambda_expression mb_nl '}' {consumeTokenMethod = 'consumeTokenFast' }
+private closure_header ::= closure_header_with_arrow | empty_parameter_list
+private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
 private closure_arrow ::= '->'
-closure_parameter_list ::= <<comma_list (mb_nl parse_parameter)>> { elementType = parameter_list }
+closure_parameter_list ::= <<comma_list (mb_nl closure_parameter)>> { elementType = parameter_list }
+private closure_parameter ::= <<closureParameter parse_parameter>>
 empty_parameter_list ::= { elementType = parameter_list }
 
 list_or_map ::= empty_list | empty_map | non_empty_list_or_map
@@ -944,36 +1091,28 @@ list_or_map ::= empty_list | empty_map | non_empty_list_or_map
 
 private empty_map ::= '[' mb_nl fast_colon mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
 private empty_list ::= '[' mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
-private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner ']'
+private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner (mb_nl ']')
 {
   pin = 2
 }
 
-private qualified_expressions ::= method_reference_expression | qualified_reference_expression | property_expression
+private qualified_expressions ::= method_reference_expression | attribute_expression | qualified_reference_expression | property_expression
 method_reference_expression ::= expression (mb_nl method_reference_dot) (mb_nl qualified_reference_expression_identifiers)
-qualified_reference_expression ::= expression (mb_nl reference_dot) <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
-{
-  elementType = reference_expression
-}
+qualified_reference_expression ::= expression (mb_nl reference_dot) after_dot { elementType = reference_expression }
+attribute_expression ::= expression (mb_nl attribute_dot) after_dot
 property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argument_list? property_expression_identifiers)>>
+
 private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
-private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { consumeTokenMethod = 'consumeTokenFast' }
-private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
-private property_dot ::= reference_dot | method_reference_dot
-private qualified_reference_expression_identifiers ::= IDENTIFIER
-                                                     | STR_SQ | STR_DQ
+private reference_dot ::= '.' | '?.' | '??.' | '*.' { consumeTokenMethod = 'fast' }
+private attribute_dot ::= reference_dot mb_nl ('@') { consumeTokenMethod = 'fast' }
+private property_dot ::= attribute_dot | method_reference_dot | reference_dot
+
+private after_dot ::= <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
+private qualified_reference_expression_identifiers ::= weak_keyword | IDENTIFIER
+                                                     | string_literal_tokens
                                                      | regex_literal
-                                                     | 'true'
-                                                     | 'false'
-                                                     | 'null'
-                                                     | 'new'
-                                                     | 'class' | 'interface' | 'trait' | 'enum'
-                                                     | 'this' | 'super'
-                                                     | 'case'
-                                                     | 'as' | 'in'
-                                                     | 'else'
                                                      | modifier
-                                                     | statement_keywords
+                                                     | keyword
                                                      | primitive_type
 {
   name = 'property selector'
@@ -984,14 +1123,15 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 }
 
 private priority1_4 ::= not_expression | cast_expression
-not_expression ::= ('~' | '!') expression { elementType = unary_expression }
-cast_expression ::= &cast_expression_start ('(' type_element ')' priority1_4)
-private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
+not_expression ::= ('~' | '!') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }
+cast_expression ::= &cast_expression_start '(' <<annotated type_element>> ')' cast_operand
+private cast_expression_start ::= '(' non_empty_annotation_list? (weak_keyword | IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
+private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
 safe_index_expression ::= expression fast_question index_expression_argument_list not_colon { elementType = index_expression }
-index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner ']'
+index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner (mb_nl ']')
 {
   pin = 2
   elementType = argument_list
@@ -1003,71 +1143,87 @@ postfix_unary_expression ::= expression ('++' | '--')
   elementType = unary_expression
 }
 
-power_expression ::= expression '**' mb_nl expression
+power_expression ::= expression '**' mb_nl <<disableNlBeforeClosure>> expression
 
-prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl expression
+prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClosure>> expression
 {
   elementType = unary_expression
 }
 
-multiplicative_expression ::= expression ('*' | '/' | '%') mb_nl expression
+multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl <<disableNlBeforeClosure>> expression
 
-additive_expression ::= expression ('+' | '-') mb_nl expression
+additive_expression ::= expression mb_nl_inside_parentheses ('+' | '-') mb_nl <<disableNlBeforeClosure>> expression
 
 private shift_or_range ::= shift_expression | range_expression
-shift_expression ::= expression shift_sign expression
+shift_expression ::= expression mb_nl shift_sign mb_nl <<disableNlBeforeClosure>> expression
 private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression ('..' | '..<') expression
+range_expression ::= expression mb_nl ('<..' | '<..<' | '..' | '..<') mb_nl <<disableNlBeforeClosure>> expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
-relational_expression ::= expression relational_operator mb_nl expression
+relational_expression ::= expression mb_nl relational_operator mb_nl <<disableNlBeforeClosure>> expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_not ('in') expression
-instanceof_expression ::= expression instanceof_expression_tail
-private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
-as_expression ::= expression 'as' type_element
+in_expression ::= expression mb_nl ('in' | '!in') mb_nl <<disableNlBeforeClosure>> expression
+instanceof_expression ::= expression mb_nl instanceof_expression_tail
+private instanceof_expression_tail ::= ('instanceof' | '!instanceof') mb_nl (pattern_test | expect_type) { pin = 1 }
+private pattern_test ::= (type_element (mb_nl_inside_parentheses pattern_variable)?)
+pattern_variable ::= (IDENTIFIER | weak_keyword_identifiers) !(T_DOT | T_SAFE_DOT | T_LPAREN | reserved_keyword)
+as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression <<equalityOperator>> expression
-compare_expression ::= expression '<=>' mb_nl expression
+equality_expression ::= expression mb_nl <<equalityOperator>> mb_nl <<disableNlBeforeClosure>> expression
+compare_expression ::= expression mb_nl ('<=>') mb_nl <<disableNlBeforeClosure>> expression
 {
   elementType = relational_expression
 }
-regex_find_expression ::= expression '=~' expression
-regex_match_expression ::= expression '==~' expression
+regex_find_expression ::= expression mb_nl ('=~') mb_nl <<disableNlBeforeClosure>> expression
+regex_match_expression ::= expression mb_nl ('==~') mb_nl <<disableNlBeforeClosure>> expression
 
-band_expression ::= expression '&' expression
-xor_expression ::= expression '^' expression
-bor_expression ::= expression '|' expression
-land_expression ::= expression '&&' mb_nl expression
-lor_expression ::= expression '||' mb_nl expression
+band_expression ::= expression mb_nl ('&') mb_nl <<disableNlBeforeClosure>> expression
+xor_expression ::= expression mb_nl ('^') mb_nl <<disableNlBeforeClosure>> expression
+bor_expression ::= expression mb_nl ('|') mb_nl <<disableNlBeforeClosure>> expression
+land_expression ::= expression mb_nl ('&&') mb_nl <<disableNlBeforeClosure>> expression
+lor_expression ::= expression mb_nl ('||') mb_nl <<disableNlBeforeClosure>> expression
+impl_expression ::= expression mb_nl ('==>') mb_nl <<disableNlBeforeClosure>> expression { rightAssociative = true }
 
-private conditionals ::= ternary_expression | elvis_expression
-ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
+
+private conditionals ::= ternary_expression | elvis_expression | switch_expression
+ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression '?:' mb_nl expression
+elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> expression
 {
   rightAssociative = true
 }
+
+// region Switch expression
+switch_expression ::= 'switch' '(' mb_nl <<insideParentheses expression>> mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}') { pin = 1 }
+private general_switch_section ::= !'}' (case_section | default_section) { pin = 1 recoverWhile = case_section_recovery }
+private case_section_recovery ::= !('}' | 'case' | 'default')
+
+case_section ::= 'case' <<forbidLambdaExpressions switch_expression_list>> switch_expr_remainder { pin = 1 }
+switch_expression_list ::= expression (',' mb_nl expression)* { elementType = expression_list }
+default_section ::= 'default' switch_expr_remainder { elementType = case_section pin = 1 }
+private switch_expr_remainder ::= case_arrow_remainder | case_colon_remainder
+// we need to enable yield here because groovy does not have such entity as switch statement with arrows, so technically yield is allowed there
+private case_arrow_remainder ::= '->' mb_nl <<insideSwitchExpression case_level_item>> mb_separators { pin = 1 }
+private case_colon_remainder ::= ':' mb_nl case_level_item* { pin = 1 }
+// endregion
+
 
 private priority15 ::= assignment_expression | tuple_assignment_expression
-assignment_expression ::= expression (<<assignmentOperator>> mb_nl) expression application*
-{
-  rightAssociative = true
-}
+assignment_expression ::= expression mb_nl assignment_expression_rvalue { rightAssociative = true }
+private assignment_expression_rvalue ::= (<<assignmentOperator>> mb_nl) expression_or_application { pin = 1 }
 
 tuple_assignment_expression ::= single_tuple_assignment | multi_tuple_assignment
-private single_tuple_assignment ::= single_tuple tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
-private multi_tuple_assignment ::= tuple tuple_initializer
-{
-  pin = tuple
+private single_tuple_assignment ::= single_tuple mb_nl tuple_initializer // don't pin because "(foo)" may be a parenthesized expression
+private multi_tuple_assignment ::= tuple  mb_nl !'->' tuple_initializer { // pin only if it's not a part of "(foo, bar) -> baz"
+  pin = 3
 }
-single_tuple ::= '(' unqualified_reference_expression ')' { elementType = tuple }
-tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expression)+ ')'
+single_tuple ::= '(' mb_nl unqualified_reference_expression mb_nl ')' { elementType = tuple }
+tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -1076,19 +1232,24 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
-private expression_or_application_inner ::= expression application*
+private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> (application mb_nl_inside_parentheses)*
 private application ::= <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
 }
-left application_ref ::= IDENTIFIER | simple_literal_tokens
+left application_ref ::= weak_keyword | IDENTIFIER | simple_literal_tokens
 {
   elementType = reference_expression
   consumeTokenMethod = 'consumeTokenFast'
 }
 left application_expression ::= application_argument_list | clear_variants_and_fail
-left application_call ::= call_argument_list lazy_closure* | empty_argument_list lazy_closure+ { elementType = method_call_expression }
+left application_call ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+ { elementType = method_call_expression }
 left application_index ::= mb_question index_expression_argument_list
+
+private expression_or_application_except_zero_params_closure ::= <<isParameterizedClosure>> expression_or_application
+                                                                | !double_block_statement expression_or_application !<<isAfterClosure>>
+
+private double_block_statement::= block_statement nls block_statement
 // endregion
 
 
@@ -1097,11 +1258,13 @@ fake argument_list ::=
 
 empty_argument_list ::= { elementType = argument_list }
 
-private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
-call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
+call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argument_list)
 {
   elementType = argument_list
-  pin('call_argument_list_1') = 1
+}
+
+private non_empty_argument_list::= '(' <<insideParentheses <<notApplicationArguments paren_argument_list_inner>>>> (mb_nl ')') {
+  pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
 
@@ -1113,31 +1276,46 @@ private bracket_argument_list_item ::= <<argument_list_item ']'>>
 
 private meta argument_list_item ::= <<argument_list_item_head <<brace>>>> <<argument_list_item_end <<brace>>>> { pin = 1 }
 private meta argument_list_item_head ::= <<argument_list_item_head0 <<brace>> <<argument_list_item_recovery <<brace>>>>>>
-private meta argument_list_item_head0 ::= !(end_of_file | <<brace>>) parse_argument { pin = 1 recoverWhile = '<<recovery>>' }
-private meta argument_list_item_end ::= ',' | &<<brace>>
-private meta argument_list_item_recovery ::= !(<<brace>> | ',' | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
+private meta argument_list_item_head0 ::= mb_nl !(end_of_file | <<brace>> | '}') parse_argument { pin = 2 recoverWhile = '<<recovery>>' }
+private meta argument_list_item_end ::= <<mb_nl_group (',' | &<<brace>>)>>
+private meta argument_list_item_recovery ::= !(nl | ',' | <<brace>> | '}' | qualified_reference_expression_identifiers | expression_start | argument_label)
 
 application_argument_list ::= <<applicationArguments application_arguments>>
 private application_arguments ::= argument (',' mb_nl argument)*
 
 private parse_argument ::= <<parseArgument argument>>
-private argument ::= spread_list_argument | named_argument | <<parseExpressionOrMapArgument expression>>
+private argument ::= spread_list_argument
+                   | named_argument
+                   | !<<isApplicationArguments>> expression_or_application (map_argument_label map_argument)?
+                   | expression (map_argument_label map_argument)?
+
+left map_argument_label ::= &':'
+{
+ elementType = argument_label
+ consumeTokenMethod = 'consumeTokenFast'
+}
+left map_argument ::= ':' mb_nl expression
+{
+ pin = 1
+ consumeTokenMethod = 'consumeTokenFast'
+ elementType = named_argument
+}
 spread_list_argument ::= !<<isApplicationArguments>> '*' expression { consumeTokenMethod = 'consumeTokenFast' }
 named_argument ::= argument_label named_argument_tail
-private named_argument_tail ::= ':' expression
+private named_argument_tail ::= ':' mb_nl expression
 {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+argument_label ::= weak_keyword | IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
 // region Type elements
 type_element ::= (primitive_type_element | class_type_element) array_type_elements
+{
+  extraRoot = true
+}
 
 primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
 external primitive_type ::= parsePrimitiveType
@@ -1148,6 +1326,7 @@ external primitive_type ::= parsePrimitiveType
 // Example 3: com.foo.bar.baz       will not match
 // Example 4: com.foo.bar.baz<Baz>  will not match
 capital_type_element ::= (primitive_type_element | capital_class_type_element) array_type_elements { elementType = type_element }
+lowercase_type_element ::= code_reference &((weak_keyword | IDENTIFIER) '=') { elementType = type_element }
 
 class_type_element ::= code_reference
 qualified_class_type_element ::= qualified_code_reference
@@ -1155,10 +1334,10 @@ unqualified_class_type_element ::= short_code_reference
 private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
 
 private array_type_elements ::= array_type_element*
-left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
+left array_type_element ::= non_empty_annotation_list? '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
 
 wildcard_type_element ::= '?' wildcard_bound?
-private wildcard_bound ::= ('extends' | 'super') any_type_element { pin = 1 }
+private wildcard_bound ::= ('extends' | 'super') <<annotated any_type_element>> { pin = 1 }
 left disjunction_type_element ::= disjunction_type_element_part+
 private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
@@ -1168,10 +1347,14 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 
 // region Code references
-code_reference ::= short_code_reference code_reference_tail*
+code_reference ::= code_reference_base
+{
+  extraRoot = true
+}
+private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
-left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
+left code_reference_tail ::= code_reference_dot <<mb_nl_group code_reference_part>> <<setRefWasQualified>>
 {
   pin = 1
   elementType = code_reference
@@ -1179,43 +1362,46 @@ left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQ
 }
 simple_reference ::= short_simple_reference simple_reference_tail* { elementType = code_reference }
 short_simple_reference ::= code_reference_identifier { elementType = code_reference }
-left simple_reference_tail ::= code_reference_dot code_reference_identifier { elementType = code_reference } // don't pin on dot
+left simple_reference_tail ::= code_reference_dot <<mb_nl_group code_reference_identifier>> { elementType = code_reference } // don't pin on dot
 
-private code_reference_dot ::= '.' !'*' mb_nl
+private code_reference_dot ::= '.' !'*'
 private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
-private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
-private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
+private code_reference_identifiers ::= IDENTIFIER | weak_keyword_identifiers | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
+private code_reference_identifiers_soft ::= 'def' | 'in' { consumeTokenMethod = 'consumeTokenFast' }
 
 // for the sake of showing 'type expected' message
-type_code_reference ::= code_reference { elementType = '' name = 'type' }
+type_code_reference ::= <<annotated code_reference_base>> { elementType = '' name = 'type' }
 
 private qualified_name ::= <<qualifiedName code_reference>>
+
+//noinspection BnfUnusedRule
+doc_reference ::= short_code_reference doc_reference_tail* { elementType = code_reference }
+left doc_reference_tail ::= '.' code_reference_part { elementType = code_reference }
 // endregion
 
 
 // region Variables
-private var ::= IDENTIFIER mb_initializer
+private var ::= (weak_keyword | IDENTIFIER) mb_initializer
+private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 {
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private mb_initializer ::= ['=' mb_nl expression_or_application]
-{
-  pin('.*') = 1
+  pin('.*') = 2
   consumeTokenMethod = 'consumeTokenFast'
 }
 // endregion
 
 
 // region Other
-private mb_nl ::= nl?
+private mb_nl_inside_parentheses ::= [<<insideParentheses>> mb_nl]
+private mb_nl ::= nl*
+private nls ::= nl+
 private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 // FIXME this rule allows error reporting in position before the new line
-private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
+private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nls <<something>>)>>
 private empty ::= ()
+private empty_parens ::= '(' mb_nl (')') { consumeTokenMethod = 'consumeTokenFast' }
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
-private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
 
 private not_colon ::= !fast_colon
 
@@ -1223,6 +1409,10 @@ private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
+
+private followed_by_semi ::= &';' { consumeTokenMethod = 'fast' }
+
+private string_literal_tokens ::= STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 
@@ -1232,13 +1422,15 @@ private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
 private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
 private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
 
-private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
+private meta paren_list ::= empty_parens | '(' <<paren_list_inner <<item>>>> (mb_nl ')') { pin('paren_list_1') = 1 }
 private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail <<item>>>>*
-private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
-private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
-private paren_list_item_recovery ::= !(',' | ')' | '}')
+private meta paren_list_item ::= mb_nl empty <<item>> { pin = 2 recoverWhile = paren_list_item_recovery }
+private meta paren_list_tail ::= mb_nl ',' <<paren_list_item <<item>>>> { pin = 2 }
+private paren_list_item_recovery ::= !(',' | ')' | '}' | nl)
 // endregion
 
+//annotation nodes will be added to the root node of <<item>>
+private meta annotated ::= (non_empty_annotation_list <<forceWrapLeft <<item>>>>) | <<item>>
 
 // region Recovery
 
@@ -1256,10 +1448,13 @@ private meta separated_recovery ::= !(<<item_end>> | <<element_start>>)
 // endregion
 
 
-// region Generated parser utils
+// region Generated parser util
+private external keyword ::= parseKeyword
+private external reserved_keyword ::= parseReservedKeyword
 private clear_variants_and_fail ::= clear_variants fail
 private external clear_variants ::= clearVariants
 private external clear_error ::= clearError
 private external fail ::= noMatch
 private external end_of_file ::= eof
+private external mark_left ::= markLeft
 // endregion

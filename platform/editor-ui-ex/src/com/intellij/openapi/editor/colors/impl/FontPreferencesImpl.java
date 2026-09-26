@@ -1,30 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
-import com.intellij.util.containers.ContainerUtilRt;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ExceptionUtil;
+import it.unimi.dsi.fastutil.objects.Object2FloatMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Utility class which holds collection of font families and theirs sizes.
@@ -32,33 +33,33 @@ import java.util.List;
  * The basic idea is to allow end-user to configure not a single font but fonts list instead - every time particular font is unable
  * to display particular char, next font is tried. This is an improvement over an old approach when it was possible to configure
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
- *
- * @author Denis Zhdanov
- * @since 12/20/12 9:37 PM
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
+  private final @NotNull Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
+  private final @NotNull List<String> myEffectiveFontFamilies = new ArrayList<>();
+  private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
+  private @Nullable String myRegularSubFamily;
+  private @Nullable String myBoldSubFamily;
+  private final @NotNull HashSet<@NotNull String> myCharacterVariants = new HashSet<>();
 
-  @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
-  @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
-  @NotNull private final List<String> myRealFontFamilies = ContainerUtilRt.newArrayList();
-  
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
 
-  @Nullable private Runnable myChangeListener;
+  private final @NotNull EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
    */
-  private int myTemplateFontSize = DEFAULT_FONT_SIZE;
+  private float myTemplateFontSize = DEFAULT_FONT_SIZE;
 
-  public void setChangeListener(@Nullable Runnable changeListener) {
-    myChangeListener = changeListener;
+  private static final Logger LOG = Logger.getInstance(FontPreferencesImpl.class);
+
+  public void addChangeListener(@NotNull ChangeListener changeListener) {
+    myEventDispatcher.addListener(changeListener);
   }
 
-  @Nullable
-  public Runnable getChangeListener() {
-    return myChangeListener;
+  public void addChangeListener(@NotNull ChangeListener changeListener, @NotNull Disposable parentDisposable) {
+    myEventDispatcher.addListener(changeListener, parentDisposable);
   }
 
   @Override
@@ -72,9 +73,14 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
     myUseLigatures = false;
-    if (myChangeListener != null) {
-      myChangeListener.run();
-    }
+    myRegularSubFamily = null;
+    myBoldSubFamily = null;
+    myCharacterVariants.clear();
+    notifyStateChanged();
+  }
+
+  private void notifyStateChanged() {
+    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 
   @Override
@@ -92,57 +98,62 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
   }
 
+  @Override
   public int getSize(@NotNull String fontFamily) {
-    int result = myFontSizes.get(fontFamily);
+    return (int)(getSize2D(fontFamily) + 0.5);
+  }
+
+  @Override
+  public float getSize2D(@NotNull String fontFamily) {
+    float result = myFontSizes.getFloat(fontFamily);
     if (result <= 0) {
       result = myTemplateFontSize;
     }
     return result > 0 ? result : DEFAULT_FONT_SIZE;
   }
-  
+
   public void setSize(@NotNull String fontFamily, int size) {
-    myFontSizes.put(fontFamily, size);
-    myTemplateFontSize = size;
-    if (myChangeListener != null) {
-      myChangeListener.run();
-    }
+    setSize(fontFamily, (float)size);
   }
 
-  /**
-   * This method might return results different from {@link #getRealFontFamilies()} when
-   * {@link #getFallbackName(String, int, EditorColorsScheme) a font family unavailable at current environment}
-   * has been {@link #register(String, int) registered} at the current font preferences object.
-   * <p/>
-   * Effective fonts will hold fallback values for such font families then (exposed by the current method), 'real fonts' will
-   * be available via {@link #getRealFontFamilies()}.
-   *
-   * @return    effective font families to use
-   */
+  public void setSize(@NotNull String fontFamily, float size) {
+    logSizeChangeIfNeeded(size);
+    myFontSizes.put(fontFamily, size);
+    myTemplateFontSize = size;
+    notifyStateChanged();
+  }
+
+  private void logSizeChangeIfNeeded(float size) {
+    if (!LOG.isDebugEnabled()) return;
+    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+    if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) return;
+
+    LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
+    LOG.debug(ExceptionUtil.currentStackTrace());
+  }
+
   @Override
-  @NotNull
-  public List<String> getEffectiveFontFamilies() {
+  public @NotNull List<@NlsSafe String> getEffectiveFontFamilies() {
     return myEffectiveFontFamilies;
   }
 
-  /**
-   * @return    'real' font families
-   * @see #getEffectiveFontFamilies()
-   */
   @Override
-  @NotNull
-  public List<String> getRealFontFamilies() {
+  public @NotNull List<@NlsSafe String> getRealFontFamilies() {
     return myRealFontFamilies;
   }
 
   @Override
-  public void register(@NotNull String fontFamily, int size) {
-    String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, size, null);
+  public void register(@NotNull @NonNls String fontFamily, int size) {
+    register(fontFamily, (float)size);
+  }
+
+  @Override
+  public void register(@NotNull @NonNls String fontFamily, float size) {
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
-    String effectiveFontFamily = fallbackFontFamily == null ? fontFamily : fallbackFontFamily;
-    if (!myEffectiveFontFamilies.contains(effectiveFontFamily)) {
-      myEffectiveFontFamilies.add(effectiveFontFamily);
+    if (!myEffectiveFontFamilies.contains(fontFamily)) {
+      myEffectiveFontFamilies.add(fontFamily);
     }
     setSize(fontFamily, size);
   }
@@ -152,41 +163,38 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    *         {@link #DEFAULT_FONT_NAME} otherwise
    */
   @Override
-  @NotNull
-  public String getFontFamily() {
+  public @NotNull @NlsSafe String getFontFamily() {
     return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.get(0);
   }
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, DEFAULT_FONT_SIZE, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);
     }
-    String effectiveFontFamily = fallbackFontFamily == null ? fontFamily : fallbackFontFamily;
-    if (!myEffectiveFontFamilies.contains(effectiveFontFamily)) {
-      myEffectiveFontFamilies.add(effectiveFontFamily);
+    if (!myEffectiveFontFamilies.contains(fontFamily)) {
+      myEffectiveFontFamilies.add(fontFamily);
     }
-    if (myChangeListener != null) {
-      myChangeListener.run();
-    }
+    notifyStateChanged();
   }
 
   @Override
-  public void copyTo(@NotNull final FontPreferences preferences) {
-    if (preferences instanceof ModifiableFontPreferences) {
-      ModifiableFontPreferences modifiablePreferences = (ModifiableFontPreferences)preferences;
+  public void copyTo(final @NotNull FontPreferences preferences) {
+    if (preferences instanceof ModifiableFontPreferences modifiablePreferences) {
       modifiablePreferences.setEffectiveFontFamilies(myEffectiveFontFamilies);
       modifiablePreferences.setRealFontFamilies(myRealFontFamilies);
       modifiablePreferences.setTemplateFontSize(myTemplateFontSize);
       modifiablePreferences.resetFontSizes();
       for (String fontFamily : myRealFontFamilies) {
         if (myFontSizes.containsKey(fontFamily)) {
-          modifiablePreferences.setFontSize(fontFamily, myFontSizes.get(fontFamily));
+          modifiablePreferences.setFontSize(fontFamily, myFontSizes.getFloat(fontFamily));
         }
       }
       modifiablePreferences.setUseLigatures(myUseLigatures);
       modifiablePreferences.setLineSpacing(myLineSpacing);
+      modifiablePreferences.setRegularSubFamily(myRegularSubFamily);
+      modifiablePreferences.setBoldSubFamily(myBoldSubFamily);
+      modifiablePreferences.setCharacterVariants(myCharacterVariants);
     }
   }
 
@@ -197,11 +205,21 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void setFontSize(@NotNull String fontFamily, int size) {
+    setFontSize(fontFamily, (float)size);
+  }
+
+  @Override
+  public void setFontSize(@NotNull String fontFamily, float size) {
     myFontSizes.put(fontFamily, size);
   }
 
   @Override
   public void setTemplateFontSize(int size) {
+    setTemplateFontSize((float)size);
+  }
+
+  @Override
+  public void setTemplateFontSize(float size) {
     myTemplateFontSize = size;
   }
 
@@ -231,13 +249,16 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
     if (!myRealFontFamilies.equals(that.myRealFontFamilies)) return false;
     for (String fontFamily : myRealFontFamilies) {
-      if (myFontSizes.get(fontFamily) != that.myFontSizes.get(fontFamily)) {
+      if (myFontSizes.getFloat(fontFamily) != that.myFontSizes.getFloat(fontFamily)) {
         return false;
       }
     }
-    
+
     if (myUseLigatures != that.myUseLigatures) return false;
     if (myLineSpacing != that.myLineSpacing) return false;
+    if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
+    if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
+    if (!Objects.equals(myCharacterVariants, that.myCharacterVariants)) return false;
 
     return true;
   }
@@ -251,14 +272,60 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   public void setUseLigatures(boolean useLigatures) {
     if (useLigatures != myUseLigatures) {
       myUseLigatures = useLigatures;
-      if (myChangeListener != null) {
-        myChangeListener.run();
-      }
+      notifyStateChanged();
     }
   }
 
   @Override
-  public String toString() {
+  public @Nullable String getRegularSubFamily() {
+    return myRegularSubFamily;
+  }
+
+  @Override
+  public @Nullable String getBoldSubFamily() {
+    return myBoldSubFamily;
+  }
+
+  @Override
+  public void setRegularSubFamily(String subFamily) {
+    if (!Objects.equals(myRegularSubFamily, subFamily)) {
+      myRegularSubFamily = subFamily;
+      notifyStateChanged();
+    }
+  }
+
+  @Override
+  public void setBoldSubFamily(String subFamily) {
+    if (!Objects.equals(myBoldSubFamily, subFamily)) {
+      myBoldSubFamily = subFamily;
+      notifyStateChanged();
+    }
+  }
+
+  @Override
+  public @NonNls String toString() {
     return "Effective font families: " + myEffectiveFontFamilies;
+  }
+
+  @Override
+  public @NotNull Set<@NotNull String> getCharacterVariants() {
+    return myCharacterVariants;
+  }
+
+  @Override
+  public void setCharacterVariants(@Unmodifiable @NotNull Set<@NotNull String> variants) {
+    myCharacterVariants.clear();
+    myCharacterVariants.addAll(variants);
+    notifyStateChanged();
+  }
+
+  @Override
+  public void setCharacterVariant(@NotNull String variant, boolean enabled) {
+    if (enabled) {
+      myCharacterVariants.add(variant);
+    } else {
+      myCharacterVariants.remove(variant);
+    }
+    notifyStateChanged();
   }
 }

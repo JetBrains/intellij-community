@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.TreeBasedMap;
-import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.Interner;
 import junit.framework.TestCase;
 
 import java.util.HashMap;
@@ -19,7 +16,7 @@ import java.util.Set;
 public class TreeBasedMapTest extends TestCase {
 
   public void testMapSize() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
     map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
@@ -29,14 +26,14 @@ public class TreeBasedMapTest extends TestCase {
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
 
     map.put("aaa/bbb/ddd", "AnotherValue");
-    
+
     assertEquals(2, map.size());
     assertEquals("AnotherValue", map.get("aaa/bbb/ddd"));
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
   }
 
   public void testMapAdd() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
     map.put("", "ValueEmpty");
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
@@ -57,11 +54,11 @@ public class TreeBasedMapTest extends TestCase {
 
     map.put("/a/b/c/", "ABC");
     assertEquals("ABC", map.get("/a/b/c/"));
-    assertEquals(null, map.get("/a/b/c"));
+    assertNull(map.get("/a/b/c"));
   }
 
   public void testMapRemove() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
     map.put("", "ValueEmpty");
 
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
@@ -75,7 +72,7 @@ public class TreeBasedMapTest extends TestCase {
 
     map.remove("");
     assertEquals(6, map.size());
-    assertEquals(null, map.get(""));
+    assertNull(map.get(""));
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
     assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
     assertEquals("ValueAAABBB", map.get("aaa/bbb"));
@@ -85,17 +82,17 @@ public class TreeBasedMapTest extends TestCase {
 
     map.remove("aaa/bbb");
     assertEquals(5, map.size());
-    assertEquals(null, map.get(""));
+    assertNull(map.get(""));
     assertEquals("ValueAAABBBCCC", map.get("aaa/bbb/ccc"));
     assertEquals("ValueAAABBBDDD", map.get("aaa/bbb/ddd"));
-    assertEquals(null, map.get("aaa/bbb"));
+    assertNull(map.get("aaa/bbb"));
     assertEquals("ValueAAABBCC", map.get("aaa/bb/cc"));
     assertEquals("ValueAAABBDD", map.get("aaa/bb/dd"));
     assertEquals("ValueAAABC", map.get("aaa/b/c"));
   }
 
   public void testMapIterate() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
     map.put("", "ValueEmpty");
     map.put("aaa/bbb/ccc", "ValueAAABBBCCC");
     map.put("aaa/bbb/ddd", "ValueAAABBBDDD");
@@ -135,7 +132,7 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapIterate1() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
     map.put("/a/b/c", "ABC");
     map.put("/a/b/c/", "ABC1");
 
@@ -157,7 +154,7 @@ public class TreeBasedMapTest extends TestCase {
   }
 
   public void testMapIterateAfterRemoved() {
-    final TreeBasedMap<String> map = new TreeBasedMap<>(new StringInterner(), '/');
+    final TreeBasedMap<String> map = new TreeBasedMap<>(Interner.createStringInterner(), '/');
     map.put("/a/b/c", "ABC");
     map.put("/a/b/c/", "ABC1");
 
@@ -177,6 +174,6 @@ public class TreeBasedMapTest extends TestCase {
     assertTrue(checkMapKeys.contains("/a/b/c"));
     assertFalse(checkMapKeys.contains("/a/b/c/"));
     assertEquals("ABC", checkMap.get("/a/b/c"));
-    assertEquals(null, checkMap.get("/a/b/c/"));
+    assertNull(checkMap.get("/a/b/c/"));
   }
 }

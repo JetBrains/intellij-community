@@ -1,27 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.assertions
 
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.io.readText
-import com.intellij.util.io.size
+import com.intellij.util.io.readChars
 import junit.framework.ComparisonFailure
-import org.assertj.core.api.AbstractCharSequenceAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
 import org.assertj.core.internal.Iterables
+import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.util.*
+import kotlin.io.path.fileSize
+import kotlin.io.path.readText
 
 class PathAssertEx(actual: Path?) : PathAssert(actual) {
   override fun doesNotExist(): PathAssert {
     isNotNull
 
     if (Files.exists(actual, LinkOption.NOFOLLOW_LINKS)) {
-      var error = "Expecting path:\n\t${actual}\nnot to exist"
-      if (actual.size() < 16 * 1024) {
-        error += ", content:\n\n${actual.readText()}\n"
+      var error = "Expecting path:\n\t$actual\nnot to exist"
+      if (actual.fileSize() < 16 * 1024) {
+        try {
+          error += " but it does, with content:\n\n${actual.readText()}\n"
+        }
+        catch (e: MalformedInputException) {
+        }
       }
       failWithMessage(error)
     }
@@ -29,16 +33,16 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
     return this
   }
 
-  override fun hasContent(expected: String) = isEqualTo(expected)
+  override fun hasContent(expected: String): PathAssertEx = isEqualTo(expected)
 
   fun isEqualTo(expected: String): PathAssertEx {
     isNotNull
     isRegularFile
 
     val expectedContent = expected.trimIndent()
-    val actualContent = StringUtilRt.convertLineSeparators(actual.readText())
-    if (actualContent != expectedContent) {
-      throw ComparisonFailure(null, expectedContent, actualContent)
+    val actualContent = getNormalizedActualContent(actual.readChars())
+    if (!StringUtilRt.equal(expectedContent, actualContent, true)) {
+      throw ComparisonFailure(null, expectedContent, actualContent.toString())
     }
 
     return this
@@ -62,19 +66,5 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
       }
     }))
       .assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
-  }
-}
-
-class StringAssertEx(actual: String?) : AbstractCharSequenceAssert<StringAssertEx, String>(actual, StringAssertEx::class.java) {
-  fun isEqualTo(expected: Path) {
-    isNotNull
-
-    compareFileContent(actual, expected)
-  }
-
-  fun toMatchSnapshot(snapshotFile: Path) {
-    isNotNull
-
-    compareFileContent(actual, snapshotFile)
   }
 }

@@ -27,10 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author Konstantin Bulenkov
  */
 public abstract class NavigatableAdapter implements Navigatable {
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return true;
   }

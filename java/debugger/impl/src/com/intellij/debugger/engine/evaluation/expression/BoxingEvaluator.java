@@ -1,13 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.sun.jdi.*;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Value;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,38 +18,40 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class BoxingEvaluator implements Evaluator{
+public class BoxingEvaluator implements Evaluator {
   private final Evaluator myOperand;
 
   public BoxingEvaluator(Evaluator operand) {
     myOperand = DisableGC.create(operand);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    final Object result = myOperand.evaluate(context);
-    if (result == null || result instanceof ObjectReference) {
-      return result;
-    }
-
-    if (result instanceof PrimitiveValue) {
-      PrimitiveValue primitiveValue = (PrimitiveValue)result;
-      PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
-      if (primitiveType != null) {
-        return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());
-      }
-    }
-    throw new EvaluateException("Cannot perform boxing conversion for a value of type " + ((Value)result).type().name());
+    return box(myOperand.evaluate(context), context);
   }
 
-  private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws
-                                                                                                                            EvaluateException {
-    final DebugProcessImpl process = context.getDebugProcess();
-    final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
-    final String methodSignature = "(" + JVMNameUtil.getPrimitiveSignature(value.type().name()) + ")L" + wrapperTypeName.replace('.', '/') + ";";
+  public static Object box(Object value, EvaluationContextImpl context) throws EvaluateException {
+    if (value instanceof PrimitiveValue primitiveValue) {
+      JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByName(primitiveValue.type().name());
+      if (primitiveType != null && primitiveType != JvmPrimitiveTypeKind.VOID) {
+        return convertToWrapper(context, primitiveValue, primitiveType);
+      }
+    }
+    return value;
+  }
 
-    Method method = wrapperClass.concreteMethodByName("valueOf", methodSignature);
+  private static Value convertToWrapper(EvaluationContextImpl context,
+                                        PrimitiveValue value,
+                                        JvmPrimitiveTypeKind primitiveType) throws EvaluateException {
+    final DebugProcessImpl process = context.getDebugProcess();
+    String wrapperTypeName = primitiveType.getBoxedFqn();
+    final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
+    String parameterSignature = "(" + primitiveType.getBinaryName() + ")";
+    String methodSignature = parameterSignature + "L" + wrapperTypeName.replace('.', '/') + ";";
+
+    Method method = DebuggerUtils.findMethod(wrapperClass, "valueOf", methodSignature);
     if (method == null) { // older JDK version
-      method = wrapperClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
+      method = DebuggerUtils.findMethod(wrapperClass, JVMNameUtil.CONSTRUCTOR_NAME, parameterSignature + "V");
     }
     if (method == null) {
       throw new EvaluateException("Cannot construct wrapper object for value of type " + value.type() + ": Unable to find either valueOf() or constructor method");
@@ -54,6 +59,6 @@ public class BoxingEvaluator implements Evaluator{
 
     Method finalMethod = method;
     List<PrimitiveValue> args = Collections.singletonList(value);
-    return context.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args));
+    return context.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args, true));
   }
 }

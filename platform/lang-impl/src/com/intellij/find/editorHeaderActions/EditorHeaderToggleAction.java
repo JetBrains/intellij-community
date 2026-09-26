@@ -1,17 +1,33 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
+import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
-public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware {
-  protected EditorHeaderToggleAction(@NotNull String text) {
+public abstract class EditorHeaderToggleAction extends CheckboxAction
+  implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+
+  protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text) {
+    this(text, null, null, null);
+  }
+
+  protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text, @Nullable Icon icon, @Nullable Icon hoveredIcon, @Nullable Icon selectedIcon) {
     super(text);
+    getTemplatePresentation().setIcon(icon);
+    getTemplatePresentation().setHoveredIcon(hoveredIcon);
+    getTemplatePresentation().setSelectedIcon(selectedIcon);
   }
 
   @Override
@@ -20,21 +36,34 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
   }
 
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    final JComponent customComponent = super.createCustomComponent(presentation);
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    JComponent customComponent = super.createCustomComponent(presentation, place);
     customComponent.setFocusable(false);
     customComponent.setOpaque(false);
     return customComponent;
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (e.getData(SearchSession.KEY) == null) {
+      e.getPresentation().setEnabled(false);
+    }
+  }
+
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
     return search != null && isSelected(search);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     SearchSession search = e.getData(SearchSession.KEY);
     if (search != null) {
       setSelected(search, selected);

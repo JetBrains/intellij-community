@@ -1,0 +1,15 @@
+// "Explicitly ignore return value" "true"
+// LANGUAGE_VERSION: 2.3
+// COMPILER_ARGUMENTS: -Xreturn-value-checker=full
+fun returnsInt(): Int = 42
+fun returnsString(): String = "hello"
+fun returnsNullable(): String? = null
+
+fun mixedTest() {
+    when (returnsInt()) {
+        1 -> <caret>returnsString()
+        else -> returnsNullable()
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.NoReturnValueFactory$UnderscoreValueFix

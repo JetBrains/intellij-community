@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,18 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.i18n.inconsistentResourceBundle.*;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.DuplicatedPropertiesInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentPropertiesEndsInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.MissingTranslationsInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.PropertiesKeysConsistencyInspectionProvider;
+import com.intellij.codeInspection.i18n.inconsistentResourceBundle.PropertiesPlaceholdersInspectionProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-@SuppressWarnings("unchecked")
 public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFixtureTestCase {
   private InconsistentResourceBundleInspection myInspection = new InconsistentResourceBundleInspection();
 
@@ -40,9 +44,16 @@ public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFix
 
   @Override
   protected void tearDown() throws Exception {
-    myInspection.clearSettings();
-    myInspection = null;
-    super.tearDown();
+    try {
+      myInspection.clearSettings();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myInspection = null;
+      super.tearDown();
+    }
   }
 
   public void testInconsistentPlaceholders() {

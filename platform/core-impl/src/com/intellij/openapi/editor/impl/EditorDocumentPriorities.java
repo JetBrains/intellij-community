@@ -1,45 +1,36 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Holds values to use for common {@link PrioritizedDocumentListener prioritized document listeners} used within standard IntelliJ
- * editor.
- *
- * @author Denis Zhdanov
- * @since Sep 13, 2010 2:30:48 PM
+ * Document listeners are sorted according {@link PrioritizedDocumentListener#getPriority()}.
+ * (the smaller the priority value the sooner the listener will be called)
+ * Some standard priorities are listed here.
  */
-public class EditorDocumentPriorities {
+@ApiStatus.Internal
+public final class EditorDocumentPriorities {
+  /**
+   * Logical position cache should be updated before range markers because caret position markers perform
+   * {@code 'logical position -> offset'} mapping during document change processing.
+   */
+  public static final int LOGICAL_POSITION_CACHE = 30;
 
   /**
-   * Assuming that range marker listeners work only with document offsets and don't perform document dimension mappings like
-   * {@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc.
+   * Range marker listeners may use logical position mappings backed by {@link #LOGICAL_POSITION_CACHE}, but shouldn't use
+   * mappings depending on later editor caches, e.g. {@code 'logical position -> visual position'}.
    */
   public static final int RANGE_MARKER = 40;
 
   public static final int FOLD_MODEL = 60;
-  public static final int LOGICAL_POSITION_CACHE = 65;
   public static final int EDITOR_TEXT_LAYOUT_CACHE = 70;
   public static final int LEXER_EDITOR = 80;
   public static final int SOFT_WRAP_MODEL = 100;
   public static final int EDITOR_TEXT_WIDTH_CACHE = 110;
   public static final int CARET_MODEL = 120;
   public static final int INLAY_MODEL = 150;
+  public static final int CUSTOM_WRAP_MODEL = 155;
   public static final int EDITOR_DOCUMENT_ADAPTER = 160;
 
   private EditorDocumentPriorities() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -21,43 +7,38 @@ import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
+import static com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleTypeUtils.WEB_MODULE_ENTITY_TYPE_ID_NAME;
+
+
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> implements ModuleTypeWithWebFeatures {
-  @NonNls public static final String WEB_MODULE = ModuleTypeId.WEB_MODULE;
+  public static final @NonNls String WEB_MODULE = WEB_MODULE_ENTITY_TYPE_ID_NAME;
 
   public WebModuleTypeBase() {
     super(WEB_MODULE);
   }
 
-  @NotNull
+  public static @NotNull WebModuleTypeBase<?> getInstance() {
+    return (WebModuleTypeBase<?>)ModuleTypeManager.getInstance().findByID(WEB_MODULE);
+  }
+
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ProjectBundle.message("module.web.title");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return ProjectBundle.message("module.web.description");
   }
 
   @Override
-  public Icon getNodeIcon(final boolean isOpened) {
+  public @NotNull Icon getNodeIcon(final boolean isOpened) {
     return AllIcons.Nodes.Module;
   }
 
-  /**
-   * @deprecated Use {@link ModuleTypeWithWebFeatures#isAvailable}
-   */
-  @Deprecated
-  public static boolean isWebModule(@NotNull Module module) {
-    return ModuleTypeWithWebFeatures.isAvailable(module);
-  }
-
+  @Override
   public boolean hasWebFeatures(@NotNull Module module) {
     return WEB_MODULE.equals(ModuleType.get(module).getId());
   }

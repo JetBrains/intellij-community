@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.NodeOptions;
@@ -11,7 +11,8 @@ public interface ViewSettings extends NodeOptions {
   /**
    * The default view settings for the project view.
    */
-  ViewSettings DEFAULT = Immutable.DEFAULT;
+  ViewSettings DEFAULT = new ViewSettings() {
+  };
 
   /**
    * @return {@code true} if directories (folders or packages) should be separated from files, {@code false} otherwise.
@@ -25,21 +26,34 @@ public interface ViewSettings extends NodeOptions {
    *
    * @return true if class members are displayed, false otherwise.
    */
-  boolean isShowMembers();
+  default boolean isShowMembers() {
+    return false;
+  }
 
   /**
    * Checks if the project view displays the structure view pane.
    *
    * @return true if the structure view is displayed, false otherwise.
    */
-  boolean isStructureView();
+  default boolean isStructureView() {
+    return false;
+  }
 
   /**
    * Checks if modules are shown on the "Packages" tab of the project view.
    *
    * @return true if the modules are shown, false otherwise.
    */
-  boolean isShowModules();
+  default boolean isShowModules() {
+    return true;
+  }
+
+  /**
+   * @return {@code true} if scratches and consoles node should be shown as a root node in this pane
+   */
+  default boolean isShowScratchesAndConsoles() {
+    return true;
+  }
 
   /**
    * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names
@@ -66,6 +80,7 @@ public interface ViewSettings extends NodeOptions {
     private final boolean myShowModules;
     private final boolean myFlattenModules;
     private final boolean myShowURL;
+    private final boolean myShowScratchesAndConsoles;
 
     public Immutable(ViewSettings settings) {
       super(settings);
@@ -75,6 +90,7 @@ public interface ViewSettings extends NodeOptions {
       myShowModules = settings == null || settings.isShowModules();
       myFlattenModules = settings != null && settings.isFlattenModules();
       myShowURL = settings == null || settings.isShowURL();
+      myShowScratchesAndConsoles = settings == null || settings.isShowScratchesAndConsoles();
     }
 
     @Override
@@ -108,25 +124,35 @@ public interface ViewSettings extends NodeOptions {
     }
 
     @Override
+    public boolean isShowScratchesAndConsoles() {
+      return myShowScratchesAndConsoles;
+    }
+
+    @Override
     public boolean equals(Object object) {
       if (object == this) return true;
       if (!super.equals(object)) return false;
       ViewSettings settings = (ViewSettings)object;
-      return settings.isShowMembers() == isShowMembers() &&
+      return
+             settings.isFoldersAlwaysOnTop() == isFoldersAlwaysOnTop() &&
+             settings.isShowMembers() == isShowMembers() &&
              settings.isStructureView() == isStructureView() &&
              settings.isShowModules() == isShowModules() &&
              settings.isFlattenModules() == isFlattenModules() &&
-             settings.isShowURL() == isShowURL();
+             settings.isShowURL() == isShowURL() &&
+             settings.isShowScratchesAndConsoles() == isShowScratchesAndConsoles();
     }
 
     @Override
     public int hashCode() {
       int result = super.hashCode();
+      result = 31 * result + Boolean.hashCode(isFoldersAlwaysOnTop());
       result = 31 * result + Boolean.hashCode(isShowMembers());
       result = 31 * result + Boolean.hashCode(isStructureView());
       result = 31 * result + Boolean.hashCode(isShowModules());
       result = 31 * result + Boolean.hashCode(isFlattenModules());
       result = 31 * result + Boolean.hashCode(isShowURL());
+      result = 31 * result + Boolean.hashCode(isShowScratchesAndConsoles());
       return result;
     }
   }

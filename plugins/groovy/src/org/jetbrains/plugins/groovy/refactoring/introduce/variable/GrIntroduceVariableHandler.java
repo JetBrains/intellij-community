@@ -1,34 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -45,26 +34,28 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
+import java.util.function.Consumer;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
   public static final String DUMMY_NAME = "________________xxx_________________";
-  protected static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private RangeMarker myPosition = null;
 
-  @NotNull
   @Override
-  protected GrControlFlowOwner[] findPossibleScopes(GrExpression selectedExpr,
-                                                    GrVariable variable,
-                                                    StringPartInfo stringPartInfo,
-                                                    Editor editor) {
+  protected GrControlFlowOwner @NotNull [] findPossibleScopes(GrExpression selectedExpr,
+                                                              GrVariable variable,
+                                                              StringPartInfo stringPartInfo,
+                                                              Editor editor) {
     // Get container element
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
     if (scope == null) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringNameText()));
     }
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(scope)) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringNameText()));
     }
     return new GrControlFlowOwner[]{scope};
   }
@@ -98,7 +89,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
+  protected void checkOccurrences(PsiElement @NotNull [] occurrences) {
     //nothing to do
   }
 
@@ -107,11 +98,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     if (parent instanceof GrClosableBlock) {
       return false;
     }
-    if (parent instanceof GrField && expr == ((GrField)parent).getInitializerGroovy()) {
+    else if (parent instanceof GrField field && expr == field.getInitializerGroovy()) {
       return true;
     }
-    if (parent instanceof GrExpression) {
-      return checkInFieldInitializer(((GrExpression)parent));
+    else if (parent instanceof GrExpression expression) {
+      return checkInFieldInitializer(expression);
     }
     return false;
   }
@@ -120,7 +111,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
    * Inserts new variable declarations and replaces occurrences
    */
   @Override
-  public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
+  public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
     GrVariable insertedVar = processExpression(context, settings);
@@ -174,65 +165,73 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     GrStatement declaration = ((GrStatementOwner)parent).addStatementBefore(generated, anchor);
     declaration = (GrStatement)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(declaration);
 
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
+
     return ((GrVariableDeclaration)declaration).getVariables()[0];
   }
 
   @Override
-  protected void showScopeChooser(GrControlFlowOwner[] scopes, Pass<GrControlFlowOwner> callback, Editor editor) {
+  protected void showScopeChooser(GrControlFlowOwner[] scopes, Consumer<? super GrControlFlowOwner> callback, Editor editor) {
     //todo do nothing right now
   }
 
-  @NotNull
-  private static GrVariableDeclaration generateDeclaration(@NotNull GrIntroduceContext context,
-                                                           @NotNull GroovyIntroduceVariableSettings settings) {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
-    final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
+  private static @NotNull GrVariableDeclaration generateDeclaration(@NotNull GrIntroduceContext context,
+                                                                    @NotNull GroovyIntroduceVariableSettings settings) {
+    PsiType type = settings.getSelectedType();
+    final String[] modifiers;
+    if (type != null) {
+      String text = type.getCanonicalText();
+      modifiers = !text.equals(GrModifier.VAL) && !text.equals(PsiModifier.FINAL) && settings.isDeclareFinal()
+                  ? new String[]{PsiModifier.FINAL}
+                  : null;
+    }
+    else if (settings.isDeclareFinal()) {
+      modifiers = new String[]{PsiModifier.FINAL};
+    }
+    else {
+      modifiers = null;
+    }
 
     final GrVariableDeclaration declaration =
-      factory.createVariableDeclaration(modifiers, "foo", settings.getSelectedType(), settings.getName());
+      GroovyPsiElementFactory.getInstance(context.getProject()).createVariableDeclaration(modifiers, "foo", type, settings.getName());
 
-    generateInitializer(context, declaration.getVariables()[0]);
+    @NotNull GrVariable variable = declaration.getVariables()[0];
+    final GrExpression initializer = context.getStringPart() != null
+                                     ? context.getStringPart().createLiteralFromSelected()
+                                     : context.getExpression();
+    assert initializer != null;
+    final GrExpression dummyInitializer = variable.getInitializerGroovy();
+    assert dummyInitializer != null;
+    dummyInitializer.replaceWithExpression(initializer, true);
     return declaration;
   }
 
-  @NotNull
-  private GrVariable processExpression(@NotNull GrIntroduceContext context,
-                                       @NotNull GroovyIntroduceVariableSettings settings) {
+  private @NotNull GrVariable processExpression(@NotNull GrIntroduceContext context,
+                                                @NotNull GroovyIntroduceVariableSettings settings) {
     GrVariableDeclaration varDecl = generateDeclaration(context, settings);
 
     if (context.getStringPart() != null) {
       final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(DUMMY_NAME);
-      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, true);
+      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref);
     }
     else {
       final GrExpression expression = context.getExpression();
       assert expression != null;
-      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression, true);
+      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression);
     }
   }
 
-  private GrVariable doProcessExpression(@NotNull final GrIntroduceContext context,
+  private GrVariable doProcessExpression(@NotNull GrIntroduceContext context,
                                          @NotNull GroovyIntroduceVariableSettings settings,
                                          @NotNull GrVariableDeclaration varDecl,
-                                         @NotNull PsiElement[] elements,
-                                         @NotNull GrExpression expression, boolean processUsages) {
-    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, processUsages) {
+                                         PsiElement @NotNull [] elements,
+                                         @NotNull GrExpression expression) {
+    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, true) {
       @Override
       protected void refreshPositionMarker(PsiElement e) {
         GrIntroduceVariableHandler.this.refreshPositionMarker(context.getEditor().getDocument().createRangeMarker(e.getTextRange()));
       }
     }.processExpression(varDecl);
-  }
-
-  @NotNull
-  private static GrExpression generateInitializer(@NotNull GrIntroduceContext context,
-                                                  @NotNull GrVariable variable) {
-    final GrExpression initializer = context.getStringPart() != null
-                                     ? context.getStringPart().createLiteralFromSelected()
-                                     : context.getExpression();
-    final GrExpression dummyInitializer = variable.getInitializerGroovy();
-    assert dummyInitializer != null;
-    return dummyInitializer.replaceWithExpression(initializer, true);
   }
 
   void refreshPositionMarker(RangeMarker marker) {
@@ -243,22 +242,23 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return myPosition;
   }
 
-  @NotNull
   @Override
-  protected String getRefactoringName() {
-    return REFACTORING_NAME;
+  protected @Nls(capitalization = Title) @NotNull String getRefactoringName() {
+    return getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String getHelpID() {
+  protected @NotNull String getHelpID() {
     return HelpID.INTRODUCE_VARIABLE;
   }
 
   @Override
-  @NotNull
-  protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
+  protected @NotNull GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
     return new GroovyIntroduceVariableDialog(context, validator);
+  }
+
+  protected static @Nls(capitalization = Title) String getRefactoringNameText() {
+    return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

@@ -1,0 +1,48 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin implementation-detail="true">
+
+  <name>PyCharm Community and Prof Customization Shared Parts</name>
+  <id>intellij.pycharm.community.customization.shared</id>
+  <vendor>JetBrains</vendor>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains">
+    <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.pycharm.community.customization.frontend"/>
+    <module name="intellij.pycharm.community.ide.implTraining"/>
+    <module name="intellij.platform.whatsNew"/>
+    <module name="intellij.python.common.frontend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
+    <module name="intellij.pycharm.community.newUiOnboarding"/>
+    <!-- Do not add intellij.platform.vcs.plugin as a dependency of this shared wrapper.
+         This plugin is present in JetBrains Client layouts too, while the VCS action implementation
+         is backend-only. The backend content module below registers the product-specific VCS action
+         only when intellij.platform.backend is available. -->
+    <module name="intellij.pycharm.community.customization.backend" required-if-available="intellij.platform.backend"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- This group redefined in 3 places
+      In [plugins\jupyter\core\resources\intellij.jupyter.core.xml] to place it in 'tools' group for all IDEs
+      In [community\python\ide\customization.shared\resources\META-INF\plugin.xml] and
+      [python\pycharm\frontend\split\customization\resources\META-INF\plugin.xml] to place it on top level in setting, below Python group for PyCharm.
+    -->
+    <groupConfigurable id="Jupyter Settings"
+                       parentId="root"
+                       weight="900"
+                       bundle="messages.PycharmIdeCustomizationBundle"
+                       helpTopic="jupyter.settings.page"
+                       displayNameKey="settings.jupyter.configurable.display.name"
+                       descriptionKey="settings.jupyter.configurable.description"/>
+  </extensions>
+</idea-plugin>
+
+
+
+

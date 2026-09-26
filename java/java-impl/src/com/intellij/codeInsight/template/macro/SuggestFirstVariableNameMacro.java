@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.psi.PsiElement;
@@ -28,15 +27,10 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
+public final class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
   @Override
   public String getName() {
     return "suggestFirstVariableName";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return CodeInsightBundle.message("macro.suggest.first.variable.name");
   }
 
   @Override

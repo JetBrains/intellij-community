@@ -25,7 +25,7 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
 /**
  * Inserts the method last in the javafile.
  */
-public class InsertLastStrategy implements InsertNewMethodStrategy {
+public final class InsertLastStrategy implements InsertNewMethodStrategy {
 
     private static final InsertLastStrategy instance = new InsertLastStrategy();
 
@@ -35,6 +35,7 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
         return instance;
     }
 
+    @Override
     public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
 
         // if main method exists and is the last then add toString just before main method
@@ -52,6 +53,7 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
         return (PsiMethod) clazz.addBefore(newMethod, last);
     }
 
+    @Override
     public String toString() {
         return "Last";
     }

@@ -69,9 +69,8 @@ public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
     myDcl = (XmlTag)element;
   }
 
-  @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object @NotNull [] getDependencies() {
     return new Object[] { myDcl };
   }
 

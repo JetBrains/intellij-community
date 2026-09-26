@@ -1,10 +1,16 @@
 <html>
 <body>
-
-This inspection reports any instances of empty <b><font color="#000080">try</font></b> blocks in Groovy code. Empty <b><font
-    color="#000080">try</font></b> blocks
-usually indicate coding errors.
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports empty <code>try</code> blocks.
+Empty <code>try</code> blocks usually indicate coding errors.
+<p><b>Example:</b></p>
+<pre>
+<code>
+try {
+}
+finally {
+  close()
+}
+</code>
+</pre>
 </body>
 </html>

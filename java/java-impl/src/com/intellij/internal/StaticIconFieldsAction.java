@@ -1,51 +1,55 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticIconFieldsAction extends AnAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+import java.util.Objects;
 
+final class StaticIconFieldsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = Objects.requireNonNull(e.getProject());
 
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabName("Statics");
-    presentation.setTabText("Statitcs");
-    final UsageView view = UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
+    presentation.setTabText("Statics");
 
+    final UsageView view = UsageViewManager.getInstance(project)
+      .showUsages(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching icons usages") {
       @Override
@@ -53,8 +57,13 @@ public class StaticIconFieldsAction extends AnAction {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final GlobalSearchScope all = GlobalSearchScope.allScope(project);
         PsiClass allIcons = ReadAction.compute(() -> facade.findClass("com.intellij.icons.AllIcons", all));
-        searchFields(allIcons, view, indicator);
-        PsiClass[] classes = ReadAction.compute(() -> facade.findPackage("icons").getClasses(all));
+        if (allIcons != null) {
+          searchFields(allIcons, view, indicator);
+        }
+        PsiClass[] classes = ReadAction.compute(() -> {
+          PsiPackage aPackage = facade.findPackage("icons");
+          return aPackage != null ? aPackage.getClasses(all) : PsiClass.EMPTY_ARRAY;
+        });
         for (PsiClass iconsClass : classes) {
           searchFields(iconsClass, view, indicator);
         }
@@ -63,7 +72,7 @@ public class StaticIconFieldsAction extends AnAction {
   }
 
   private static void searchFields(final PsiClass allIcons, final UsageView view, final ProgressIndicator indicator) {
-    ApplicationManager.getApplication().runReadAction(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
+    ReadAction.runBlocking(() -> indicator.setText("Searching for: " + allIcons.getQualifiedName()));
 
     ReferencesSearch.search(allIcons).forEach(reference -> {
       PsiElement elt = reference.getElement();

@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.application.Application;
-
 /**
- * Component or service which implements this interfaces will be asked to save ({@link #save}) custom settings (in their own custom way)
- *  when {@link Application#saveSettings()} (for Application level components) or {@link com.intellij.openapi.project.Project#save()}
- * (for Project level components) is invoked.
+ * @deprecated Use {@link com.intellij.configurationStore.SettingsSavingComponent}.
  */
+@Deprecated(forRemoval = true)
 public interface SettingsSavingComponent {
   void save();
 }

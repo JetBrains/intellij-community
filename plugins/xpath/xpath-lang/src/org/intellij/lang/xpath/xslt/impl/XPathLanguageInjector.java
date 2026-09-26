@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.SmartList;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -33,18 +34,16 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class XPathLanguageInjector implements MultiHostInjector {
+final class XPathLanguageInjector implements MultiHostInjector {
     private static final Key<Pair<String, TextRange[]>> CACHED_FILES = Key.create("CACHED_FILES");
-    private static final TextRange[] EMPTY_ARRAY = new TextRange[0];
 
     public XPathLanguageInjector() {
     }
 
-    @Nullable
-    private static TextRange[] getCachedRanges(XmlAttribute attribute) {
+    private static TextRange @Nullable [] getCachedRanges(XmlAttribute attribute) {
         Pair<String, TextRange[]> pair;
         if ((pair = attribute.getUserData(CACHED_FILES)) != null) {
             if (!attribute.getValue().equals(pair.getFirst())) {
@@ -70,15 +69,14 @@ public class XPathLanguageInjector implements MultiHostInjector {
         }
     }
 
-    @NotNull
-    private synchronized TextRange[] getInjectionRanges(final XmlAttribute attribute, XsltChecker.LanguageLevel languageLevel) {
+    private synchronized TextRange @NotNull [] getInjectionRanges(final XmlAttribute attribute, XsltChecker.LanguageLevel languageLevel) {
       final TextRange[] cachedFiles = getCachedRanges(attribute);
       if (cachedFiles != null) {
         return cachedFiles;
       }
 
       final String value = attribute.getDisplayValue();
-      if (value == null) return EMPTY_ARRAY;
+      if (value == null) return TextRange.EMPTY_ARRAY;
 
       final TextRange[] ranges;
       if (XsltSupport.mayBeAVT(attribute)) {
@@ -106,19 +104,17 @@ public class XPathLanguageInjector implements MultiHostInjector {
 
           if (j != -1) {
             avtRanges.add(AVTRange.create(attribute, i, j + 1, j > i + 1));
-          } else {
+          }
+          else {
             // missing '}' error will be flagged by xpath parser
             avtRanges.add(AVTRange.create(attribute, i, value.length(), false));
             break;
           }
         }
 
-        if (avtRanges.size() > 0) {
-          ranges = avtRanges.toArray(new TextRange[0]);
-        } else {
-          ranges = EMPTY_ARRAY;
-        }
-      } else {
+        ranges = avtRanges.isEmpty() ? TextRange.EMPTY_ARRAY : avtRanges.toArray(TextRange.EMPTY_ARRAY);
+      }
+      else {
         ranges = new TextRange[]{ attribute.getValueTextRange() };
       }
 
@@ -128,18 +124,17 @@ public class XPathLanguageInjector implements MultiHostInjector {
     }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(XmlAttribute.class);
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+    return Collections.singletonList(XmlAttributeValue.class);
   }
 
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-    final XmlAttribute attribute = (XmlAttribute)context;
+    XmlAttributeValueImpl value = (XmlAttributeValueImpl)context;
+    PsiElement parent = value.getParent();
+    if (!(parent instanceof XmlAttribute attribute)) return;
     if (!XsltSupport.isXPathAttribute(attribute)) return;
 
-    XmlAttributeValueImpl value = (XmlAttributeValueImpl)attribute.getValueElement();
-    if (value == null) return;
     ASTNode type = value.findChildByType(XmlElementType.XML_ENTITY_REF);
     if (type != null) return; // workaround for inability to inject into text with entity refs (e.g. IDEA-72972) TODO: fix it
 

@@ -1,0 +1,50 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.testFramework
+
+import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.SoftAssertions
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.impl.readBuiltinModulesFile
+import org.junit.jupiter.api.TestInfo
+import java.nio.file.Path
+
+/**
+ * Checks that frontend distribution (ex JetBrains Client) described by [frontendProperties] can be built successfully.
+ */
+fun runTestBuildForFrontend(
+  homePath: Path,
+  frontendProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools,
+  testInfo: TestInfo,
+  softly: SoftAssertions,
+) {
+  runTestBuild(
+    homeDir = homePath,
+    productProperties = frontendProperties,
+    buildTools = buildTools,
+    testInfo = testInfo,
+    onSuccess = { context ->
+      verifyBuiltInModules(context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json"))
+      assertThat(context.useModularLoader)
+        .withFailMessage { "Frontend distribution must use the modular loader, but $frontendProperties doesn't use it" }
+        .isTrue()
+      val rootModule = frontendProperties.rootModuleForModularLoader
+      assertThat(rootModule)
+        .withFailMessage { "Root module for the modular loader is not specified in $frontendProperties" }
+        .isNotNull()
+      RuntimeModuleRepositoryChecker.checkProductModules(rootModule!!, context, softly)
+      RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(rootModule, context, isEmbeddedVariant = false, softly)
+    }
+  )
+}
+
+private fun verifyBuiltInModules(file: Path) {
+  val data = readBuiltinModulesFile(file)
+  assertThat(data.fileExtensions).isEmpty()
+  val modules = data.layout.asSequence().filter { it.kind == ProductInfoLayoutItemKind.pluginAlias }.map { it.name }.toHashSet()
+  assertThat(modules)
+    .contains("com.intellij.jetbrains.client", "com.intellij.modules.platform")
+    .doesNotContain("com.intellij.modules.remoteServers")
+}

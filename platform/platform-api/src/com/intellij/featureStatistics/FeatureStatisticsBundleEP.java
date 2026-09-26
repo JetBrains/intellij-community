@@ -15,16 +15,33 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.serviceContainer.LazyExtensionInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class FeatureStatisticsBundleEP extends AbstractExtensionPointBean {
+public class FeatureStatisticsBundleEP extends LazyExtensionInstance<FeatureStatisticsBundleEP> implements PluginAware {
   public static final ExtensionPointName<FeatureStatisticsBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.featureStatisticsBundle");
 
   @Attribute("qualifiedName")
   public String qualifiedName;
+
+  private PluginDescriptor myPluginDescriptor;
+
+  @Override
+  protected @Nullable String getImplementationClassName() {
+    return qualifiedName;
+  }
+
+  public PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
 }

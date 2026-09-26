@@ -1,0 +1,14 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.maven"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.compilerPlugins.support"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

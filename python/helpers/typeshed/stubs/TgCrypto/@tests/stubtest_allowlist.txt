@@ -1,0 +1,7 @@
+# stubtest doesn't recognize these function as taking only positional-only arguments.
+tgcrypto.cbc256_decrypt
+tgcrypto.cbc256_encrypt
+tgcrypto.ctr256_decrypt
+tgcrypto.ctr256_encrypt
+tgcrypto.ige256_decrypt
+tgcrypto.ige256_encrypt

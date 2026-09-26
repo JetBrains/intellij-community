@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -24,7 +10,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
@@ -43,38 +29,36 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
     super(element, range, true);
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("unknown.macro.attribute", getCanonicalText());
   }
 
+  @Override
   public PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
-  @NotNull 
-  public Object[] getVariants() {
+  @Override
+  public Object @NotNull [] getVariants() {
     final AntDomMacroDef parentMacrodef = getParentMacrodef();
     if (parentMacrodef != null) {
-      final List variants = new ArrayList();
+      final List<Object> variants = new ArrayList<>();
       for (AntDomMacrodefAttribute attribute : parentMacrodef.getMacroAttributes()) {
         final String attribName = attribute.getName().getStringValue();
-        if (attribName != null && attribName.length() > 0) {
+        if (attribName != null && !attribName.isEmpty()) {
           final LookupElementBuilder builder = LookupElementBuilder.create(attribName);
           final LookupElement element = AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder);
           variants.add(element);
         }
       }
-      return ContainerUtil.toArray(variants, new Object[variants.size()]);
+      return ArrayUtil.toObjectArray(variants);
     }
     return EMPTY_ARRAY;
   }
 
-  @Nullable 
-  private AntDomMacroDef getParentMacrodef() {
+  private @Nullable AntDomMacroDef getParentMacrodef() {
     final PsiElement element = getElement();
-    if (element == null) {
-      return null;
-    }
     final DomElement domElement = DomUtil.getDomElement(element);
     if (domElement == null) {
       return null;
@@ -83,14 +67,12 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
-    
+
     static final MyResolver INSTANCE = new MyResolver();
-    
+
+    @Override
     public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final PsiElement element = psiReference.getElement();
-      if (element == null) {
-        return null;
-      }
       final DomElement domElement = DomUtil.getDomElement(element);
       if (domElement == null) {
         return null;

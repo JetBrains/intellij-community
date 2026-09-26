@@ -1,36 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.AbstractClosureParameterEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
-/**
- * @author peter
- */
-public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
+public final class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    final PsiElement parent = closure.getParent();
+  protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
+    final PsiElement parent = expression.getParent();
     if (parent instanceof GrNamedArgument) {
       final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod((GrNamedArgument)parent);
       if (pair != null) {
@@ -42,50 +44,14 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       }
     }
 
-    if (parent instanceof GrListOrMap) {
-      final GrListOrMap list = (GrListOrMap)parent;
-      if (!list.isMap()) {
-        final PsiType listType = list.getType();
-        final int argIndex = Arrays.asList(list.getInitializers()).indexOf(closure);
-        assert argIndex >= 0;
-        if (listType instanceof GrTupleType) {
-          for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
-            if (!(type instanceof PsiClassType)) continue;
-
-            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypes(),closure);
-            for (GroovyResolveResult resolveResult : candidates) {
-              final PsiElement method = resolveResult.getElement();
-              if (!(method instanceof PsiMethod) || !((PsiMethod)method).isConstructor()) continue;
-
-              final PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();
-              if (parameters.length <= argIndex) continue;
-
-              final PsiType toCastTo = resolveResult.getSubstitutor().substitute(parameters[argIndex].getType());
-              final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, closure);
-              if (suggestion != null) return suggestion;
-            }
-          }
-        }
-        return null;
-      }
-    }
-
-    for (PsiType constraint : GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure)) {
-      final PsiType suggestion = getSingleMethodParameterType(constraint, index, closure);
-      if (suggestion != null) {
-        return suggestion;
-      }
-    }
     return null;
   }
 
-  @Nullable
-  public static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
+  public static @Nullable Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
     return ContainerUtil.getFirstItem(getOverriddenMethodVariants(namedArgument), null);
   }
 
-  @NotNull
-  public static List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
+  public static @NotNull @Unmodifiable List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
 
     final GrArgumentLabel label = namedArgument.getLabel();
     if (label == null) {
@@ -110,32 +76,11 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
     return Collections.emptyList();
   }
 
-  @Nullable
-  public static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, GrClosableBlock closure) {
-    final PsiType[] signature = findSingleAbstractMethodSignature(type);
-    if (signature != null && GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.createSignature(closure), signature, closure)) {
-      return signature.length > index ?  signature[index] : PsiType.NULL;
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiType[] findSingleAbstractMethodSignature(@Nullable PsiType type) {
-    if (type instanceof PsiClassType && !(TypesUtil.isClassType(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
-      List<Pair<PsiMethod, PsiSubstitutor>> result = getMethodsToOverrideImplementInInheritor((PsiClassType)type, true);
-      if (result.size() == 1) {
-        return getParameterTypes(result.get(0));
-      }
-    }
-    return null;
-  }
-
   public static PsiType[] getParameterTypes(final Pair<PsiMethod, PsiSubstitutor> pair) {
     return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, psiParameter -> pair.second.substitute(psiParameter.getType()));
   }
 
-  @NotNull
-  public static List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
+  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
     final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) {

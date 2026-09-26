@@ -1,0 +1,19 @@
+<html>
+<body>
+Reports data classes that can be replaced by a full value class.
+<p><b>Example:</b></p>
+<pre><code>
+data class User(val firstName: String, val lastName: String)
+</code></pre>
+<p>After the quick fix is applied, with both functions selected:</p>
+<pre><code>
+value class User(val firstName: String, val lastName: String) {
+    fun copy(firstName: String = this.firstName, lastName: String = this.lastName) = User(firstName, lastName)
+
+    operator fun component1(): String = firstName
+    operator fun component2(): String = lastName
+}
+</code></pre>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="build scripts" pattern="file[intellij.idea.community.build*]:src//*" />
+</component>

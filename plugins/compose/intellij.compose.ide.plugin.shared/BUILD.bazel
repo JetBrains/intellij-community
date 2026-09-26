@@ -1,0 +1,112 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.compose.ide.plugin.shared` start
+content_module_jar(module = ":ide-plugin-shared")
+### auto-generated section `dev intellij.compose.ide.plugin.shared` end
+
+### auto-generated section `build intellij.compose.ide.plugin.shared` start
+create_kotlinc_options(
+    name = "custom_ide-plugin-shared",
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "ide-plugin-shared",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-plugin-shared",
+    module_name = "intellij.compose.ide.plugin.shared",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//plugins/compose:compose-ide-plugin",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/indexing-api:indexing",
+        "//platform/lang-api:lang",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//uast/uast-common:uast",
+        "//platform/util",
+        "//platform/util:util-ui",
+        "//plugins/kotlin/base/indices",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/code-insight/api",
+        "//platform/lang-impl",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/util",
+    ],
+)
+
+jvm_library(
+    name = "ide-plugin-shared_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-plugin-shared",
+    module_name = "intellij.compose.ide.plugin.shared",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-plugin-shared",
+        "//plugins/compose:compose-ide-plugin_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//uast/uast-common:uast_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
+        "//plugins/kotlin/references:references_test_lib",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.compose.ide.plugin.shared` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.shared` start
+exports_files(
+    [
+        "intellij.compose.ide.plugin.shared.iml",
+        "resources/intellij.compose.ide.plugin.shared.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.compose.ide.plugin.shared` end

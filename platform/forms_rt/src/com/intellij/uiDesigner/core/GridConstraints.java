@@ -15,12 +15,9 @@
  */
 package com.intellij.uiDesigner.core;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GridConstraints implements Cloneable {
   public static final GridConstraints[] EMPTY_ARRAY = new GridConstraints[0];
   public static final int FILL_NONE = 0;
@@ -208,6 +205,7 @@ public final class GridConstraints implements Cloneable {
   /**
    * @return deep copy of the {@link GridConstraints}
    */
+  @Override
   public Object clone() {
     return new GridConstraints(
       myRow, myColumn, myRowSpan, myColSpan, myAnchor, myFill, myHSizePolicy, myVSizePolicy,
@@ -362,6 +360,7 @@ public final class GridConstraints implements Cloneable {
     myMaximumSize.setSize(constraints.myMaximumSize);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof GridConstraints)) return false;
@@ -376,15 +375,16 @@ public final class GridConstraints implements Cloneable {
     if (myRow != gridConstraints.myRow) return false;
     if (myRowSpan != gridConstraints.myRowSpan) return false;
     if (myVSizePolicy != gridConstraints.myVSizePolicy) return false;
-    if (myMaximumSize != null ? !myMaximumSize.equals(gridConstraints.myMaximumSize) : gridConstraints.myMaximumSize != null) return false;
-    if (myMinimumSize != null ? !myMinimumSize.equals(gridConstraints.myMinimumSize) : gridConstraints.myMinimumSize != null) return false;
-    if (myPreferredSize != null ? !myPreferredSize.equals(gridConstraints.myPreferredSize) : gridConstraints.myPreferredSize != null) return false;
+    if (!Objects.equals(myMaximumSize, gridConstraints.myMaximumSize)) return false;
+    if (!Objects.equals(myMinimumSize, gridConstraints.myMinimumSize)) return false;
+    if (!Objects.equals(myPreferredSize, gridConstraints.myPreferredSize)) return false;
     if (myIndent != gridConstraints.myIndent) return false;
     if (myUseParentLayout != gridConstraints.myUseParentLayout) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myRow;
@@ -436,6 +436,7 @@ public final class GridConstraints implements Cloneable {
     return cell >= myColumn && cell < myColumn + myColSpan;
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "GridConstraints (row=" + myRow + ", col=" + myColumn + ", rowspan=" + myRowSpan + ", colspan=" + myColSpan + ")";

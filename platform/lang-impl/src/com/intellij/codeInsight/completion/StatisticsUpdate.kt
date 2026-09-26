@@ -1,30 +1,41 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.featureStatistics.FeatureStatisticsUpdateListener
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
+import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
+import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
-/**
- * @author peter
- */
-class StatisticsUpdate
-    private constructor(private val myInfo: StatisticsInfo) : Disposable {
+@ApiStatus.Internal
+class StatisticsUpdate private constructor(
+  private val myInfo: StatisticsInfo
+) : Disposable {
+
   private var mySpared: Int = 0
 
   override fun dispose() {}
 
+  /** reports how many chars the user was able NOT to type manually because of the completion */
   fun addSparedChars(lookup: Lookup, item: LookupElement, context: InsertionContext) {
     val textInserted: String
     if (context.offsetMap.containsOffset(CompletionInitializationContext.START_OFFSET) &&
@@ -43,6 +54,7 @@ class StatisticsUpdate
     }
     if (spared > 0) {
       mySpared += spared
+      application.messageBus.syncPublisher(FeatureStatisticsUpdateListener.TOPIC).completionStatUpdated(spared)
     }
   }
 
@@ -65,35 +77,64 @@ class StatisticsUpdate
     }
 
     val marker = document.createRangeMarker(startOffset, tailOffset)
-    val listener = object : DocumentListener {
-      override fun beforeDocumentChange(e: DocumentEvent) {
-        if (!marker.isValid || e.offset > marker.startOffset && e.offset < marker.endOffset) {
-          cancelLastCompletionStatisticsUpdate()
-        }
-      }
-    }
+    val listener = DocumentChangeListener(document, marker)
+    document.addDocumentListener(listener)
+    // Avoid hard-ref from Disposer to the document through the listener.
+    // The document could be some text field with the project scope life-time,
+    // don't make it leak past closing of the project.
+    Disposer.register(this, WeakReferenceDisposableWrapper(listener))
 
     ourStatsAlarm.addRequest({
                                if (ourPendingUpdate === this) {
-                                 applyLastCompletionStatisticsUpdate()
+                                 //readaction is not enough
+                                 WriteIntentReadAction.run {
+                                   applyLastCompletionStatisticsUpdate()
+                                 }
                                }
                              }, 20 * 1000)
 
-    document.addDocumentListener(listener)
     Disposer.register(this, Disposable {
-      document.removeDocumentListener(listener)
-      marker.dispose()
       ourStatsAlarm.cancelAllRequests()
     })
   }
 
-  companion object {
-    private val ourStatsAlarm = Alarm(ApplicationManager.getApplication())
-    private var ourPendingUpdate: StatisticsUpdate? = null
-
-    init {
-      Disposer.register(ApplicationManager.getApplication(), Disposable { cancelLastCompletionStatisticsUpdate() })
+  private class DocumentChangeListener(val document: Document,
+                                       val marker: RangeMarker) : DocumentListener, Disposable {
+    override fun beforeDocumentChange(e: DocumentEvent) {
+      if (!marker.isValid || e.offset > marker.startOffset && e.offset < marker.endOffset) {
+        cancelLastCompletionStatisticsUpdate()
+      }
     }
+
+    override fun dispose() {
+      document.removeDocumentListener(this)
+      marker.dispose()
+    }
+  }
+
+  @Service(Service.Level.APP)
+  private class StatisticsUpdateState : Disposable {
+    val ourStatsAlarm: Alarm = Alarm(ApplicationManager.getApplication())
+    var ourPendingUpdate: StatisticsUpdate? = null
+
+    override fun dispose() {
+      cancelLastCompletionStatisticsUpdate()
+    }
+
+    companion object {
+      fun getInstance(): StatisticsUpdateState = service<StatisticsUpdateState>()
+    }
+  }
+
+  companion object {
+    private val ourStatsAlarm: Alarm
+      get() = StatisticsUpdateState.getInstance().ourStatsAlarm
+
+    private var ourPendingUpdate: StatisticsUpdate?
+      get() = StatisticsUpdateState.getInstance().ourPendingUpdate
+      set(value) {
+        StatisticsUpdateState.getInstance().ourPendingUpdate = value
+      }
 
     @VisibleForTesting
     @JvmStatic
@@ -121,7 +162,7 @@ class StatisticsUpdate
     @JvmStatic
     fun applyLastCompletionStatisticsUpdate() {
       ourPendingUpdate?.let {
-        it.myInfo.incUseCount()
+        StatisticsManager.getInstance().incUseCount(it.myInfo)
         (FeatureUsageTracker.getInstance() as FeatureUsageTrackerImpl).completionStatistics.registerInvocation(it.mySpared)
       }
       cancelLastCompletionStatisticsUpdate()

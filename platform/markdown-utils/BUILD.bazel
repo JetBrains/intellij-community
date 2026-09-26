@@ -1,0 +1,133 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "markdown-utils-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":markdown-utils-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.markdown.utils.tests`
+
+### auto-generated section `dev intellij.platform.markdown.utils` start
+content_module_jar(module = ":markdown-utils")
+### auto-generated section `dev intellij.platform.markdown.utils` end
+
+### auto-generated section `build intellij.platform.markdown.utils` start
+jvm_library(
+    name = "markdown-utils",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.markdown.utils",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util:util-ui",
+        "@lib//:kotlin-stdlib",
+        "//libraries/markdown",
+        "//platform/lang-impl",
+    ],
+)
+
+jvm_library(
+    name = "markdown-utils_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.markdown.utils",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":markdown-utils",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/markdown:markdown_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.markdown.utils` end
+
+### auto-generated section `iml intellij.platform.markdown.utils` start
+exports_files(
+    [
+        "intellij.platform.markdown.utils.iml",
+        "resources/intellij.platform.markdown.utils.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.markdown.utils` end
+
+### auto-generated section `build intellij.platform.markdown.utils.tests` start
+jvm_library(
+    name = "markdown-utils-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.markdown.utils.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "markdown-utils-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/markdown-utils",
+        "//platform/markdown-utils:markdown-utils_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":markdown-utils-tests"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/markdown",
+        "//libraries/markdown:markdown_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.markdown.utils.tests` end
+
+### auto-generated section `iml intellij.platform.markdown.utils.tests` start
+exports_files(
+    [
+        "intellij.platform.markdown.utils.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.markdown.utils.tests` end

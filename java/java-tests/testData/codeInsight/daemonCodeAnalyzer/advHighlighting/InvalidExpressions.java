@@ -39,22 +39,29 @@ public class a12 {
 
 
   //////////////////////////
-  void f() {
+  void f(<error descr="Cannot resolve symbol 'Unknown'">Unknown</error> ufo) {
     a12 a[] = new a12[4];
     int[] ai = null;
 
-    <error descr="Variable expected">5</error> = 5;
-    <error descr="Variable expected">5</error>++;
-    ++<error descr="Variable expected">5</error>;
-    <error descr="Variable expected">5</error> += 5;
+    <error descr="Reference to variable expected on left-hand side of assignment">5</error> = 5;
+    <error descr="Reference to variable expected as target of unary operation">5</error>++;
+    ++<error descr="Reference to variable expected as target of unary operation">5</error>;
+    <error descr="Reference to variable expected on left-hand side of assignment">5</error> += 5;
 
-    <error descr="Cannot resolve method 'foo123Unresolved(?)'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
-    <error descr="Cannot resolve method 'foo123Unresolved(?)'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
+    <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
+    <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
+    int i = 0;
+    System.out.println(i.<error descr="Cannot access fields on 'int' type">x</error>);
+    System.out.println(true.<error descr="Cannot call methods on 'boolean' type">toString</error>());
+    System.out.println().<error descr="Cannot access fields on 'void' type">field</error>;
+    System.out.println().<error descr="Cannot call methods on 'void' type">method</error>();
+    System.out.println(ufo.<error descr="Cannot resolve symbol 'lights'">lights</error>);
+    System.out.println(ufo.<error descr="Cannot resolve method 'hover()'">hover</error>());
 
-    <error descr="Cannot resolve method 'xxxxxx(?)'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
+    <error descr="Cannot resolve method 'xxxxxx' in 'a12'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
 
     // incomplete code should not cause 'expr expected'
-    Object<error descr="';' expected"> </error>
+    <error descr="Not a statement">Object</error> 
 
 
     <error descr="Array type expected; found: 'int'">4</error>[1] = 5;
@@ -96,12 +103,12 @@ public class a12 {
 
   int[] arr() { return new int[0]; }
 
-  public <error descr="Invalid method declaration; return type required">foo</error>() {
+  public <error descr="Method return type missing or constructor name does not match class name">foo</error>() {
   }
 
   {
     new Object() {
-      <error descr="Invalid method declaration; return type required">Object</error>() {}
+      <error descr="Method return type missing">Object</error>() {}
     };
   }
 

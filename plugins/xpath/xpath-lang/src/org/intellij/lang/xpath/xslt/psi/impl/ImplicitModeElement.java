@@ -1,7 +1,9 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -21,7 +23,7 @@ import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -37,19 +39,17 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         myAttribute = attribute;
     }
 
-    @Nullable
-    public QName getQName() {
+    public @Nullable QName getQName() {
         final String prefix = getPrefix();
-        if (prefix != null && prefix.length() > 0) {
+        if (prefix != null && !prefix.isEmpty()) {
             final String uri = XsltNamespaceContext.getNamespaceUriStatic(prefix, myAttribute);
-            return uri != null && uri.length() > 0 ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
+            return uri != null && !uri.isEmpty() ? new QName(uri, getName(), prefix) : QNameUtil.UNRESOLVED;
         } else {
             return new QName(getName());
         }
     }
 
-    @Nullable
-    private String getPrefix() {
+    private @Nullable String getPrefix() {
         return hasPrefix() ? PrefixReference.getPrefixRange(myAttribute).substring(myAttribute.getValue()) : null;
     }
 
@@ -58,10 +58,12 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return XpathIcons.Template;
     }
 
+    @Override
     public String getName() {
         return getModeRange().substring(myAttribute.getValue());
     }
 
+    @Override
     public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         // name is calculated dynamically from attached attribute. actual renaming is done by each reference
         return this;
@@ -72,11 +74,12 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return "Mode: " + getName();
     }
 
+  @Override
   public PsiElement copy() {
         return this;
     }
 
-    @SuppressWarnings({"ConstantConditions"})
+    @Override
     public String getText() {
         return getName();
     }
@@ -107,6 +110,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return myAttribute.isWritable();
     }
 
+    @Override
     public boolean isValid() {
         return myAttribute.isValid();
     }
@@ -128,45 +132,42 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return this;
     }
 
-    @Nullable
-    public Icon getIcon(boolean open) {
+    @Override
+    public @Nullable Icon getIcon(boolean open) {
         return getIcon(0);
     }
 
-    @Nullable
-    public String getLocationString() {
-        return null;
-    }
-
-    @Nullable
-    public String getPresentableText() {
-        final QName qName = getQName();
-        return qName != null ? qName.toString() : hasPrefix() ? getPrefix() + ":" + getName() : getName();
-    }
-
-    @NotNull
     @Override
-    @SuppressWarnings({ "RawUseOfParameterizedType" })
-    public PsiElement getNavigationElement() {
+    public @Nullable @NlsSafe String getPresentableText() {
+      final QName qName = getQName();
+      if (qName != null) {
+        return qName.toString();
+      }
+      return hasPrefix() ? getPrefix() + ":" + getName() : getName();
+    }
+
+    @Override
+    @SuppressWarnings({"RawUseOfParameterizedType"})
+    public @NotNull PsiElement getNavigationElement() {
         if (myNavigationElement == null && myAttribute.isValid()) {
             final XmlTag tag = myAttribute.getParent();
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(tag.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
-                @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
+                @Override
+                @SuppressWarnings({"AutoBoxing", "AutoUnboxing"})
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
                         final ImplicitModeElement nameElement = ImplicitModeElement.this;
 
-                        if (method.getName() == "navigate") {
-                            nameElement.navigate((Boolean)args[0]);
-                            //noinspection ConstantConditions
-                            return null;
-                        } else if (method.getName() == "canNavigate") {
-                            return nameElement.canNavigate();
-                        } else if (method.getName() == "getTextOffset") {
-                            return nameElement.getTextOffset();
-                        }
-                        return method.invoke(tag, args);
+                        return switch (method.getName()) {
+                            case "navigate" -> {
+                              nameElement.navigate((Boolean)args[0]);
+                              yield null;
+                            }
+                            case "canNavigate" -> nameElement.canNavigate();
+                            case "getTextOffset" -> nameElement.getTextOffset();
+                            default -> method.invoke(tag, args);
+                        };
                     } catch (InvocationTargetException e1) {
                         throw e1.getTargetException();
                     }
@@ -177,6 +178,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
 
+    @Override
     public boolean canNavigate() {
         return isValid() && myAttribute.getValueElement() != null;
     }
@@ -195,8 +197,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
     }
 
     @Override
-    @NotNull
-    public SearchScope getUseScope() {
+    public @NotNull SearchScope getUseScope() {
         return myAttribute.getUseScope();
     }
 

@@ -1,54 +1,74 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class OverrideImplementExploreUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementExploreUtil");
-
-  @NotNull
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(PsiClass aClass, boolean toImplement) {
+  public static @NotNull Collection<CandidateInfo> getMethodsToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement).values();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
     return getMapToOverrideImplement(aClass, true).keySet();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
     if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false).keySet();
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement, true);
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass, boolean toImplement, boolean skipImplemented) {
-    Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
-    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
-    Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
-
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement, boolean skipImplemented) {
     if (aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) return Collections.emptyMap();
 
     PsiUtilCore.ensureValid(aClass);
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
+    allMethodSigs = deleteShadowed(allMethodSigs);
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
+    Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
+    Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
     for (HierarchicalMethodSignature signature : allMethodSigs) {
       PsiMethod method = signature.getMethod();
       PsiUtilCore.ensureValid(method);
@@ -67,7 +87,9 @@ public class OverrideImplementExploreUtil {
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
       // filter non-immediate super constructors
-      if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
+      if (method.isConstructor() &&
+          (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass ||
+           aClass.isEnum() || aClass instanceof  PsiImplicitClass)) {
         continue;
       }
       // filter already implemented
@@ -82,7 +104,7 @@ public class OverrideImplementExploreUtil {
 
       Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
       fillMap(signature, method, map);
-      if (isDefaultMethod(aClass, method)) {
+      if (shouldAppearInOverrideList(aClass, method)) {
         fillMap(signature, method, concretes);
       }
     }
@@ -110,34 +132,64 @@ public class OverrideImplementExploreUtil {
     return result;
   }
 
-  private static boolean isDefaultMethod(PsiClass aClass, PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8);
+  /**
+   * {@link PsiClass#getVisibleSignatures()} can return shadowed methods to highlight them (if there is a compilation error),
+   * but it is necessary to get rid of them, because otherwise some methods can be missed to implement.
+   */
+  private static @NotNull Collection<HierarchicalMethodSignature> deleteShadowed(@NotNull Collection<HierarchicalMethodSignature> sigs) {
+    ArrayList<HierarchicalMethodSignature> signatures = new ArrayList<>();
+    HashMap<String, List<HierarchicalMethodSignature>> nameToSignature = new HashMap<>();
+    for (HierarchicalMethodSignature signature : sigs) {
+      String name = signature.getMethod().getName();
+      List<HierarchicalMethodSignature> previousSignatures = nameToSignature.computeIfAbsent(name, n -> new ArrayList<>());
+      boolean addToList = true;
+      for (HierarchicalMethodSignature previousSignature : previousSignatures) {
+        if (!MethodSignatureUtil.areSignaturesErasureEqual(signature, previousSignature)) continue;
+        PsiClass containingClass = signature.getMethod().getContainingClass();
+        PsiClass previousContainingClass = previousSignature.getMethod().getContainingClass();
+        if (containingClass == null || previousContainingClass == null ||
+            containingClass.getManager().areElementsEquivalent(containingClass, previousContainingClass)) {
+          continue;
+        }
+        if (containingClass.isInheritor(previousContainingClass, true)) {
+          signatures.remove(previousSignature);
+        }
+        else if (previousContainingClass.isInheritor(containingClass, true)) {
+          addToList = false;
+          break;
+        }
+      }
+      previousSignatures.add(signature);
+      if (addToList) signatures.add(signature);
+    }
+    return signatures;
   }
 
-  private static void fillMap(HierarchicalMethodSignature signature, PsiMethod method, Map<MethodSignature, PsiMethod> map) {
+  private static boolean isDefaultMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.DEFAULT) && PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass);
+  }
+
+  private static void fillMap(@NotNull HierarchicalMethodSignature signature, @NotNull PsiMethod method, @NotNull Map<MethodSignature, PsiMethod> map) {
     final PsiMethod other = map.get(signature);
     if (other == null || preferLeftForImplement(method, other)) {
       map.put(signature, method);
     }
   }
 
+  @FunctionalInterface
   public interface MemberImplementorExplorersProvider {
-    MemberImplementorExplorer[] getExplorers();
+    @NotNull
+    List<? extends MemberImplementorExplorer> getExplorers();
   }
 
-  private static final NullableLazyValue<MemberImplementorExplorersProvider> ourExplorersProvider = new VolatileNullableLazyValue<MemberImplementorExplorersProvider>() {
-    @Override
-    protected MemberImplementorExplorersProvider compute() {
-      return ServiceManager.getService(MemberImplementorExplorersProvider.class);
-    }
-  };
+  private static final NullableLazyValue<MemberImplementorExplorersProvider> ourExplorerProvider =
+    volatileLazyNullable(() -> ApplicationManager.getApplication().getService(MemberImplementorExplorersProvider.class));
 
-  public static void collectMethodsToImplement(PsiClass aClass,
-                                               Map<MethodSignature, PsiMethod> abstracts,
-                                               Map<MethodSignature, PsiMethod> finals,
-                                               Map<MethodSignature, PsiMethod> concretes,
-                                               Map<MethodSignature, CandidateInfo> result) {
+  private static void collectMethodsToImplement(@NotNull PsiClass aClass,
+                                                @NotNull Map<MethodSignature, PsiMethod> abstracts,
+                                                @NotNull Map<MethodSignature, PsiMethod> finals,
+                                                @NotNull Map<MethodSignature, PsiMethod> concretes,
+                                                @NotNull Map<MethodSignature, CandidateInfo> result) {
     for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
       MethodSignature signature = entry.getKey();
       PsiMethod abstractOne = entry.getValue();
@@ -145,7 +197,7 @@ public class OverrideImplementExploreUtil {
       if (concrete == null
           || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
           || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)
-          || isDefaultMethod(aClass, abstractOne)) {
+          || shouldAppearInOverrideList(aClass, abstractOne)) {
         if (finals.get(signature) == null) {
           PsiSubstitutor subst = correctSubstitutor(abstractOne, signature.getSubstitutor());
           CandidateInfo info = new CandidateInfo(abstractOne, subst);
@@ -154,13 +206,11 @@ public class OverrideImplementExploreUtil {
       }
     }
 
-    MemberImplementorExplorersProvider explorersProvider = ourExplorersProvider.getValue();
+    MemberImplementorExplorersProvider explorersProvider = ourExplorerProvider.getValue();
     if (explorersProvider != null) {
       for (final MemberImplementorExplorer implementor : explorersProvider.getExplorers()) {
         for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
-          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
-                                                                                method.getTypeParameterList(), PsiSubstitutor.EMPTY,
-                                                                                method.isConstructor());
+          MethodSignature signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
           CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
           result.put(signature, info);
         }
@@ -168,7 +218,19 @@ public class OverrideImplementExploreUtil {
     }
   }
 
-  private static boolean preferLeftForImplement(PsiMethod left, PsiMethod right) {
+  private static boolean shouldAppearInOverrideList(@NotNull PsiClass aClass, PsiMethod abstractOne) {
+    return isDefaultMethod(aClass, abstractOne) ||
+           // abstract methods from java.lang.Record (equals/hashCode/toString) are implicitly implemented in subclasses
+           // so it could be reasonable to expect them in 'override' method dialog
+           belongsToRecord(abstractOne);
+  }
+
+  @ApiStatus.Internal
+  public static boolean belongsToRecord(@NotNull PsiMethod method) {
+    return CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(method.getContainingClass()).getQualifiedName());
+  }
+
+  private static boolean preferLeftForImplement(@NotNull PsiMethod left, @NotNull PsiMethod right) {
     if (PsiUtil.getAccessLevel(left.getModifierList()) > PsiUtil.getAccessLevel(right.getModifierList())) return true;
     if (!left.getContainingClass().isInterface()) return true;
     if (!right.getContainingClass().isInterface()) return false;
@@ -204,12 +266,12 @@ public class OverrideImplementExploreUtil {
     }
   }
 
-  public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
+  public static @NotNull PsiSubstitutor correctSubstitutor(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     PsiClass hisClass = method.getContainingClass();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
+        substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, typeParameters);
       }
     }
     return substitutor;

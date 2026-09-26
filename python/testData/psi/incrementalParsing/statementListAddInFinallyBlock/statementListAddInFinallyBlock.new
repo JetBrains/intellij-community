@@ -1,0 +1,5 @@
+try:
+    print("try")
+finally:
+    print("finally")
+    print("cleanup")

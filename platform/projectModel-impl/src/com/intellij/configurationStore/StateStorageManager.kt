@@ -1,13 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.*
-import com.intellij.util.messages.Topic
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.util.xmlb.SettingsInternalApi
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
 
-val STORAGE_TOPIC: Topic<StorageManagerListener> = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
-
+@ApiStatus.NonExtendable
+@Internal
 interface StateStorageManager {
-  val macroSubstitutor: TrackingPathMacroSubstitutor?
+  val macroSubstitutor: PathMacroSubstitutor?
     get() = null
 
   val componentManager: ComponentManager?
@@ -16,36 +25,56 @@ interface StateStorageManager {
 
   fun addStreamProvider(provider: StreamProvider, first: Boolean = false)
 
-  fun removeStreamProvider(clazz: Class<out StreamProvider>)
+  fun removeStreamProvider(aClass: Class<out StreamProvider>)
 
   /**
-   * Rename file
-   * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
-   * *
-   * @param newName Only new file name (foo.iml)
+   * Adds a listener for changes in configuration files
+   *
+   * @param listener the listener
    */
-  fun rename(path: String, newName: String)
-
-  fun startExternalization(): ExternalizationSession?
+  fun addOperationListener(listener: OperationListener) {}
 
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
-  fun expandMacros(path: String): String
+  fun expandMacro(collapsedPath: String): Path
 
-  interface ExternalizationSession {
-    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
+  fun collapseMacro(path: String): String
 
-    fun setStateInOldStorage(component: Any, componentName: String, state: Any)
+  val streamProvider: StreamProvider
 
-    /**
-     * return empty list if nothing to save
-     */
-    fun createSaveSessions(): List<StateStorage.SaveSession>
+  @SettingsInternalApi
+  fun clearStorages() {
   }
+
+  @SettingsInternalApi
+  fun release() {
+  }
+
+  val isExternalSystemStorageEnabled: Boolean
+    get() = false
 }
 
+@Internal
+interface RenameableStateStorageManager {
+  /**
+   * @param newName Only new file name (foo.iml)
+   */
+  fun rename(newName: String)
+
+  fun pathRenamed(newPath: Path, event: VFileEvent?)
+}
+
+@Internal
 interface StorageCreator {
   val key: String
 
   fun create(storageManager: StateStorageManager): StateStorage
+}
+
+// no need to fire events for known requestors - all current subscribers are not interested in internal changes,
+// better to reduce message bus usage
+@Internal
+fun isFireStorageFileChangedEvent(event: VFileEvent): Boolean {
+  // ignore VFilePropertyChangeEvent because doesn't affect content
+  return event !is VFilePropertyChangeEvent && event.requestor !is StorageManagerFileWriteRequestor
 }

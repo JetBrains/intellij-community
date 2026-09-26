@@ -4,11 +4,11 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.EndlessStreamInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class EndlessStreamInspectionTest extends LightCodeInsightFixtureTestCase {
+public class EndlessStreamInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testCollect() {doTest();}
   public void testSorted() {doTest();}
   public void testLimited() {doTest();}

@@ -1,0 +1,7 @@
+fun foo(){
+    val l: java.lang.Thread = Thread.currentThread()<caret>
+}
+
+// ELEMENT_TEXT: Thread.currentThread
+
+// IGNORE_K2

@@ -17,6 +17,7 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,9 +31,8 @@ public class JavaSpellcheckerSuppressionTest extends LightQuickFixTestCase {
   public void testClassName() { doTest(); }
   public void testStringLiteral() { doTest(); }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return SpellcheckerInspectionTestCase.getInspectionTools();
   }
 

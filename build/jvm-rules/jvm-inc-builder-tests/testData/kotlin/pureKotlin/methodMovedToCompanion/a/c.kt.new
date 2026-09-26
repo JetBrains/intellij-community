@@ -1,0 +1,5 @@
+class C {
+    companion object {
+        fun m(): Int = 1
+    }
+}

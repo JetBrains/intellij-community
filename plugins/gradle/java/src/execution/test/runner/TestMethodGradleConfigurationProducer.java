@@ -1,182 +1,116 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Ref;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
+import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
-/**
- * @author Vladislav.Soroka
- * @since 2/14/14
- */
-public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
+public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiMethod, PsiClass> {
 
-  public TestMethodGradleConfigurationProducer() {
-    super(GradleExternalTaskConfigurationType.getInstance());
+  @Override
+  public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return !other.isProducedBy(PatternGradleConfigurationProducer.class) &&
+           (other.isProducedBy(TestClassGradleConfigurationProducer.class) ||
+            super.isPreferredConfiguration(self, other));
   }
 
   @Override
-  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                    ConfigurationContext context,
-                                                    Ref<PsiElement> sourceElement) {
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
-      return false;
-    }
-    final Location contextLocation = context.getLocation();
-    assert contextLocation != null;
-    PsiMethod psiMethod = getPsiMethodForLocation(contextLocation);
-    if (psiMethod == null) return false;
-    sourceElement.set(psiMethod);
-
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null) return false;
-
-    if (context.getModule() == null) return false;
-
-    if (!applyTestMethodConfiguration(configuration, context, psiMethod, containingClass)) return false;
-
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
-    return true;
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return !other.isProducedBy(PatternGradleConfigurationProducer.class) &&
+           (other.isProducedBy(TestClassGradleConfigurationProducer.class) ||
+            super.shouldReplace(self, other));
   }
 
-  @Nullable
-  protected PsiMethod getPsiMethodForLocation(Location contextLocation) {
+  protected @Nullable PsiMethod getPsiMethodForLocation(@NotNull Location<?> contextLocation) {
     Location<PsiMethod> location = getMethodLocation(contextLocation);
     return location != null ? location.getPsiElement() : null;
   }
 
   @Override
-  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
-      return false;
-    }
-
-    final Location contextLocation = context.getLocation();
-    assert contextLocation != null;
-
-    PsiMethod psiMethod = getPsiMethodForLocation(contextLocation);
-    if (psiMethod == null) return false;
-
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null) return false;
-
-    final Module module = context.getModule();
-    if (module == null) return false;
-
-    final String projectPath = resolveProjectPath(module);
-    if (projectPath == null) return false;
-
-    if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
-      return false;
-    }
-    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
-
-    final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = createTestFilter(containingClass, psiMethod);
-    return testFilter != null && scriptParameters.contains(testFilter);
+  protected @Nullable PsiMethod getElement(@NotNull ConfigurationContext context) {
+    Location<?> location = context.getLocation();
+    if (location == null) return null;
+    PsiMethod psiMethod = getPsiMethodForLocation(location);
+    if (psiMethod == null) return null;
+    PsiClass psiClass = getContainingClass(location, psiMethod);
+    if (psiClass == null || psiClass.getName() == null || psiClass.getQualifiedName() == null) return null;
+    PsiFile psiFile = psiMethod.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile source = psiFile.getVirtualFile();
+    if (source == null) return null;
+    return psiMethod;
   }
 
   @Override
-  public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
-    final PsiMethod psiMethod = (PsiMethod)fromContext.getSourceElement();
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    final InheritorChooser inheritorChooser = new InheritorChooser() {
-      @Override
-      protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        if (!StringUtil.equals(
-          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-          GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestMethodConfiguration(configuration, context, psiMethod, ArrayUtil.toObjectArray(classes, PsiClass.class))) return;
-        super.runForClasses(classes, method, context, performRunnable);
-      }
-
-      @Override
-      protected void runForClass(PsiClass aClass,
-                                 PsiMethod psiMethod,
-                                 ConfigurationContext context,
-                                 Runnable performRunnable) {
-        if (!StringUtil.equals(
-          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
-          GradleConstants.SYSTEM_ID.toString())) {
-          return;
-        }
-
-        ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-        if (!applyTestMethodConfiguration(configuration, context, psiMethod, aClass)) return;
-        super.runForClass(aClass, psiMethod, context, performRunnable);
-      }
-    };
-    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
-    super.onFirstRun(fromContext, context, performRunnable);
+  protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiMethod element) {
+    return element.getName();
   }
 
-  private boolean applyTestMethodConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
-                                               @NotNull ConfigurationContext context,
-                                               @NotNull PsiMethod psiMethod,
-                                               @NotNull PsiClass... containingClasses) {
-    final Module module = context.getModule();
-    if (module == null) return false;
+  @Override
+  protected @NotNull String suggestConfigurationName(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiMethod element,
+    @NotNull List<? extends PsiClass> chosenElements
+  ) {
+    PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(psiClass) : chosenElements;
+    return StringUtil.join(elements, aClass -> aClass.getName() + "." + element.getName(), "|");
+  }
 
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
+  @Override
+  protected void chooseSourceElements(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiMethod element,
+    @NotNull Consumer<List<PsiClass>> onElementsChosen
+  ) {
+    PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
+    InheritorChooser.chooseAbstractClassInheritors(context, psiClass, onElementsChosen);
+  }
 
-    final String projectPath = resolveProjectPath(module);
-    if (projectPath == null) return false;
-
-    List<String> tasksToRun = getTasksToRun(module);
-    if (tasksToRun.isEmpty()) return false;
-
-    configuration.getSettings().setExternalProjectPath(projectPath);
-    configuration.getSettings().setTaskNames(tasksToRun);
-
-    StringBuilder buf = new StringBuilder();
-    for (PsiClass aClass : containingClasses) {
-      final String filter = createTestFilter(aClass, psiMethod);
-      if(filter != null) {
-        buf.append(filter);
-      }
+  @Override
+  protected @NotNull List<TestTasksToRun> getAllTestsTaskToRun(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiMethod element,
+    @NotNull List<? extends PsiClass> chosenElements
+  ) {
+    Project project = Objects.requireNonNull(context.getProject());
+    Location<?> location = Objects.requireNonNull(context.getLocation());
+    VirtualFile source = Objects.requireNonNull(element.getContainingFile().getVirtualFile());
+    PsiClass aClass = Objects.requireNonNull(getContainingClass(location, element));
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(aClass) : chosenElements;
+    List<TestTasksToRun> testsTasksToRun = new ArrayList<>();
+    for (PsiClass psiClass : elements) {
+      String testFilter = createTestFilterFrom(location, psiClass, element);
+      testsTasksToRun.addAll(ContainerUtil.map(findAllTestsTaskToRun(source, project), it -> new TestTasksToRun(it, testFilter)));
     }
-
-    configuration.getSettings().setScriptParameters(buf.toString().trim());
-    configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
-    return true;
+    return testsTasksToRun;
   }
 
-  @Nullable
-  private static String createTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass), psiMethod.getName());
-  }
-
-  @Nullable
-  public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    if (aClass == null) return null;
-    String testFilterPattern = aClass + (method == null ? "" : '.' + method);
-    return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
+  private static @Nullable PsiClass getContainingClass(@Nullable Location<?> location, @NotNull PsiMethod element) {
+    if (location instanceof PsiMemberParameterizedLocation memberParameterizedLocation) {
+      return memberParameterizedLocation.getContainingClass();
+    }
+    else {
+      return element.getContainingClass();
+    }
   }
 }

@@ -43,4 +43,6 @@ class Test {
     }
     f2(pattern);
   }
+
+  String sc1 = f1("with.nested.choice", 2, 3, 4);
 }

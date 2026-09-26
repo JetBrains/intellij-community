@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.skiko" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="org.jetbrains.compose.ui.ui.test.junit4.desktop" type="repository">
+        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.12.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1.jar">
+              <sha256sum>4a198be74dcf9097de7366065b34c1ac821e2aefc5687fc726e0df93dfd6c578</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1.jar">
+              <sha256sum>660fa942dca3fad63d2436841eba124a8908b686961a912f4a0dcddd29469e52</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="androidx.annotation:annotation-jvm" />
+            <dependency maven-id="androidx.collection:collection-jvm" />
+            <dependency maven-id="androidx.lifecycle:lifecycle-common-jvm" />
+            <dependency maven-id="androidx.lifecycle:lifecycle-viewmodel-savedstate-desktop" />
+            <dependency maven-id="androidx.lifecycle:lifecycle-viewmodel-desktop" />
+            <dependency maven-id="androidx.navigationevent:navigationevent-desktop" />
+            <dependency maven-id="com.google.truth:truth" />
+            <dependency maven-id="junit:junit" />
+            <dependency maven-id="org.jspecify:jspecify" />
+            <dependency maven-id="org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose-desktop" />
+            <dependency maven-id="org.jetbrains.compose.runtime:runtime-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-text-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-unit-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-util-desktop" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:atomicfu-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.hamcrest" exported="" scope="TEST" />
+  </component>
+</module>

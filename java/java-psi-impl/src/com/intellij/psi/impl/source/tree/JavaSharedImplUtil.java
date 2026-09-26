@@ -1,41 +1,67 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiConditionalLoopStatement;
+import com.intellij.psi.PsiDeconstructionList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForeachStatementBase;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.java.AnnotationElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
-public class JavaSharedImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
+public final class JavaSharedImplUtil {
+  private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
 
   private static final TokenSet BRACKETS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
 
@@ -47,34 +73,63 @@ public class JavaSharedImplUtil {
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     PsiType type = typeElement.getType();
+    boolean ellipsisType = type instanceof PsiEllipsisType;
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
-    for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
+    for (int i = 0, size = allAnnotations.size(); i < size; i++) {
+      type = ((ellipsisType && i == size - 1) ?
+              new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(typeElement) ) :
+              type.createArrayType().withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(typeElement)))
+        .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 
     return type;
   }
 
-  // collects annotations bound to C-style arrays
-  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor, PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
+  /**
+   * Computes the type of a pattern variable.
+   * <p>
+   * A nullability written on a pattern type is ignored, because the JSpecify spec calls "any component in a pattern" an
+   * unrecognized type-use location. The nullability comes from the context instead. A component of a deconstruction
+   * pattern takes it from the record component that the component binds. Any other pattern variable takes it from the
+   * type of the expression that the pattern is matched against.
+   *
+   * @param variable pattern variable to compute the type for
+   * @return the written type of the variable with the nullability of its context
+   */
+  public static @NotNull PsiType getPatternVariableType(@NotNull PsiPatternVariable variable) {
+    PsiType type = getType(variable.getTypeElement(), variable.getNameIdentifier());
+    PsiPattern pattern = variable.getPattern();
+    PsiType source = JavaPsiPatternUtil.getDeconstructedImplicitPatternType(pattern);
+    if (source == null) {
+      source = JavaPsiPatternUtil.getEffectivePatternType(pattern);
+    }
+    return source == null ? type : JavaTypeNullabilityUtil.withNullabilityFrom(type, source);
+  }
+
+  /**
+   * Collects annotations bound to C-style arrays.
+   */
+  private static @Nullable List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
+    List<PsiAnnotation[]> annotations = Collections.emptyList();
 
     List<PsiAnnotation> current = null;
-    boolean found = (stopAt == null), stop = false;
+    boolean found = stopAt == null;
+    boolean stop = false;
     for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
       if (child instanceof PsiAnnotation) {
-        if (current == null) current = ContainerUtil.newSmartList();
+        if (current == null) current = new SmartList<>();
         current.add((PsiAnnotation)child);
         if (child == stopAt) found = stop = true;
         continue;
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        annotations.add(ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        if (annotations == Collections.EMPTY_LIST) annotations = new SmartList<>();
+        annotations.add(0, current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
       }
@@ -87,42 +142,31 @@ public class JavaSharedImplUtil {
     return !found || stop ? null : annotations;
   }
 
-  @NotNull
-  public static PsiType applyAnnotations(@NotNull PsiType type, @Nullable PsiModifierList modifierList) {
-    if (modifierList != null) {
-      PsiAnnotation[] annotations = modifierList.getAnnotations();
-      if (annotations.length > 0) {
-        TypeAnnotationProvider original =
-          modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
-        TypeAnnotationProvider provider = new FilteringTypeAnnotationProvider(annotations, original);
-        if (type instanceof PsiArrayType) {
-          Stack<PsiArrayType> types = new Stack<>();
-          do {
-            types.push((PsiArrayType)type);
-            type = ((PsiArrayType)type).getComponentType();
-          }
-          while (type instanceof PsiArrayType);
-          type = type.annotate(provider);
-          while (!types.isEmpty()) {
-            PsiArrayType t = types.pop();
-            type = t instanceof PsiEllipsisType ? new PsiEllipsisType(type, t.getAnnotations()) : new PsiArrayType(type, t.getAnnotations());
-          }
-          return type;
-        }
-        else if (type instanceof PsiDisjunctionType) {
-          List<PsiType> components = ContainerUtil.newArrayList(((PsiDisjunctionType)type).getDisjunctions());
-          components.set(0, components.get(0).annotate(provider));
-          return ((PsiDisjunctionType)type).newDisjunctionType(components);
-        }
-        else {
-          return type.annotate(provider);
-        }
-      }
-    }
-
-    return type;
+  public static @NotNull PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
+    String typeText = typeInfo.annotatedText();
+    return JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeElementFromText(typeText, owner).getType();
   }
 
+  public static @NotNull PsiType annotate(@NotNull PsiType type,
+                                          @NotNull PsiModifierList modifierList,
+                                          @NotNull TypeAnnotationProvider annotations) {
+    TypeAnnotationProvider original =
+      modifierList.getParent() instanceof PsiMethod ? type.getAnnotationProvider() : TypeAnnotationProvider.EMPTY;
+    TypeAnnotationProvider provider = filteringTypeAnnotationProvider(annotations, original);
+    return type.annotate(provider);
+  }
+
+  /**
+   * Normalizes brackets, i.e. any brackets after the identifier of the variable are moved to the correct
+   * position in the type element of the variable.
+   * For example <br>
+   * {@code String @One [] array @Two [] = null;}<br>
+   * becomes<br>
+   * {@code String @Two [] @One [] array = null;}.<br>
+   * See <a href ="https://docs.oracle.com/javase/specs/jls/se20/html/jls-10.html#jls-10.2">JLS 10.2</a>
+   *
+   * @param variable  an array variable.
+   */
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
     CompositeElement variableElement = (CompositeElement)variable.getNode();
 
@@ -137,8 +181,13 @@ public class JavaSharedImplUtil {
     ASTNode lastBracket = null;
     int arrayCount = 0;
     ASTNode element = name;
+    MultiMap<Integer, AnnotationElement> annotationElementsToMove = new MultiMap<>();
     while (element != null) {
       element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
+      if (element instanceof AnnotationElement) {
+        annotationElementsToMove.putValue(arrayCount, (AnnotationElement)element);
+        continue;
+      }
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
@@ -150,30 +199,95 @@ public class JavaSharedImplUtil {
     }
 
     if (firstBracket != null) {
-      element = firstBracket;
-      while (true) {
-        ASTNode next = element.getTreeNext();
-        variableElement.removeChild(element);
+      element = PsiImplUtil.skipWhitespaceAndComments(name.getTreeNext());
+      while (element != null) {
+        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
+        CodeEditUtil.removeChild(variableElement, element);
         if (element == lastBracket) break;
         element = next;
       }
 
       CompositeElement newType = (CompositeElement)type.clone();
-      for (int i = 0; i < arrayCount; i++) {
+      if (!(typeElement.getType() instanceof PsiArrayType)) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
-
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
         newType = newType1;
-        newType.acceptTree(new GeneratedMarkerVisitor());
       }
+      for (int i = arrayCount - 1; i >= 0; i--) {
+        // add in reverse so the anchor can remain the same
+        TreeElement anchor = newType.getFirstChildNode();
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        List<AnnotationElement> annotations = (List<AnnotationElement>)annotationElementsToMove.get(i);
+        for (int j = annotations.size() - 1; j >= 0; j--) {
+          anchor.rawInsertAfterMe(annotations.get(j));
+        }
+      }
+      newType.acceptTree(new GeneratedMarkerVisitor(newType));
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
-      variableElement.replaceChild(type, newType);
+      CodeEditUtil.replaceChild(variableElement, type, newType);
     }
   }
 
-  public static void setInitializer(PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
+  public static @NotNull PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
+    PsiElement parent = variable.getPattern().getParent();
+    if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)
+        && !(parent instanceof PsiDeconstructionList)) {
+      return parent;
+    }
+    return getInstanceOfPartDeclarationScope(parent);
+  }
+
+  public static @Nullable PsiElement getPatternVariableDeclarationScope(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+    return getInstanceOfPartDeclarationScope(instanceOfExpression);
+  }
+
+  private static PsiElement getInstanceOfPartDeclarationScope(@NotNull PsiElement parent) {
+    boolean negated = false;
+    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
+      if (nextParent instanceof PsiParenthesizedExpression) continue;
+      if (nextParent instanceof PsiForeachStatementBase ||
+        nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
+        return nextParent;
+      }
+      if (nextParent instanceof PsiPrefixExpression &&
+          ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+        negated = !negated;
+        continue;
+      }
+      if (nextParent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) && !negated || tokenType.equals(JavaTokenType.OROR) && negated) continue;
+      }
+      if (nextParent instanceof PsiIfStatement) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiConditionalLoopStatement) {
+        if (!negated) return nextParent;
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiSwitchLabelStatementBase) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
+        continue;
+      }
+      return parent;
+    }
+  }
+
+  public static void setInitializer(@NotNull PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
     PsiExpression oldInitializer = variable.getInitializer();
     if (oldInitializer != null) {
       oldInitializer.delete();
@@ -196,23 +310,36 @@ public class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
-  private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
-    private final PsiAnnotation[] myCandidates;
+  public static @NotNull TypeAnnotationProvider filteringTypeAnnotationProvider(@NotNull TypeAnnotationProvider candidatesProvider,
+                                                                                @NotNull TypeAnnotationProvider originalProvider) {
+    if (candidatesProvider == TypeAnnotationProvider.EMPTY) return originalProvider;
+    return new FilteringTypeAnnotationProvider(candidatesProvider, originalProvider);
+  }
+
+  private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
+    private final @NotNull TypeAnnotationProvider myCandidatesProvider;
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates, TypeAnnotationProvider originalProvider) {
-      myCandidates = candidates;
+    private FilteringTypeAnnotationProvider(@NotNull TypeAnnotationProvider candidatesProvider, @NotNull TypeAnnotationProvider originalProvider) {
+      myCandidatesProvider = candidatesProvider;
       myOriginalProvider = originalProvider;
     }
 
-    @NotNull
     @Override
-    public PsiAnnotation[] getAnnotations() {
+    public boolean isValid() {
+      return myCandidatesProvider.isValid() && myOriginalProvider.isValid();
+    }
+
+    @Override
+    public PsiAnnotation @NotNull [] getAnnotations() {
       PsiAnnotation[] result = myCache;
       if (result == null) {
-        List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
-          .filter(annotation -> AnnotationTargetUtil.isTypeAnnotation(annotation))
+        List<PsiAnnotation> filtered = JBIterable.of(myCandidatesProvider.getAnnotations())
+          .filter(annotation ->
+                    !annotation.isValid() || // avoid exceptions in the next line, enable isValid checks at more specific call sites
+                    ExternalAnnotationsManager.isNonCodeTypeAnnotation(annotation) ||
+                    AnnotationTargetUtil.isTypeAnnotation(annotation))
           .append(myOriginalProvider.getAnnotations())
           .toList();
         myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(PsiAnnotation.EMPTY_ARRAY);

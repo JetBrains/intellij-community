@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
  * Same as {@link PsiPolyVariantReference} but returns {@link GroovyResolveResult}.
@@ -16,24 +18,26 @@ public interface GroovyReference extends PsiPolyVariantReference {
 
   GroovyReference[] EMPTY_ARRAY = new GroovyReference[0];
 
-  @Nullable
   @Override
-  default PsiElement resolve() {
+  default @Nullable PsiElement resolve() {
     return advancedResolve().getElement();
   }
 
-  @NotNull
-  default GroovyResolveResult advancedResolve() {
-    GroovyResolveResult[] results = multiResolve(false);
-    return results.length == 1 ? results[0] : EmptyGroovyResolveResult.INSTANCE;
+  default @NotNull GroovyResolveResult advancedResolve() {
+    Collection<? extends GroovyResolveResult> results = resolve(false);
+    if (results.size() == 1) {
+      return getFirstItem(results);
+    }
+    else {
+      return EmptyGroovyResolveResult.INSTANCE;
+    }
   }
 
   /**
    * Either this or {@link #resolve(boolean)} must be implemented.
    */
-  @NotNull
   @Override
-  default GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  default GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return resolve(incompleteCode).toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
@@ -44,8 +48,7 @@ public interface GroovyReference extends PsiPolyVariantReference {
    *                   and the method may return additional invalid results.
    * @return read-only collection of results
    */
-  @NotNull
-  default Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
-    return Arrays.asList(multiResolve(incomplete));
+  default @NotNull Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    return new SmartList<>(multiResolve(incomplete));
   }
 }

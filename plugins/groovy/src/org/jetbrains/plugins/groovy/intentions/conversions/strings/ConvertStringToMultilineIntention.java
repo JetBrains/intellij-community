@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
@@ -47,19 +32,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Max Medvedev
  */
-public class ConvertStringToMultilineIntention extends Intention {
+public final class ConvertStringToMultilineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertStringToMultilineIntention.class);
 
-  public static final String hint = GroovyIntentionsBundle.message("convert.string.to.multiline.intention.name");
-
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, final Editor editor) throws IncorrectOperationException {
     final List<GrExpression> expressions;
     if (editor.getSelectionModel().hasSelection()) {
       expressions = Collections.singletonList(((GrExpression)element));
@@ -75,7 +59,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       invokeImpl(expressions.get(expressions.size() - 1), project, editor);
     }
     else {
-      final Pass<GrExpression> callback = new Pass<GrExpression>() {
+      final Pass<GrExpression> callback = new Pass<>() {
         @Override
         public void pass(final GrExpression selectedValue) {
           invokeImpl(selectedValue, project, editor);
@@ -86,13 +70,11 @@ public class ConvertStringToMultilineIntention extends Intention {
     }
   }
 
-  @NotNull
-  private static List<GrExpression> collectExpressions(@NotNull PsiElement element) {
+  private static @NotNull List<GrExpression> collectExpressions(@NotNull PsiElement element) {
     assert element instanceof GrExpression;
-    List<GrExpression> result = ContainerUtil.newArrayList();
+    List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
-    while (element.getParent() instanceof GrBinaryExpression) {
-      final GrBinaryExpression binary = (GrBinaryExpression)element.getParent();
+    while (element.getParent() instanceof GrBinaryExpression binary) {
       if (!isAppropriateBinary(binary, element)) break;
 
       result.add(binary);
@@ -133,8 +115,7 @@ public class ConvertStringToMultilineIntention extends Intention {
     return false;
   }
 
-  @NotNull
-  private static List<GrLiteral> collectOperands(@Nullable PsiElement element, @NotNull List<GrLiteral> initial) {
+  private static @NotNull List<GrLiteral> collectOperands(@Nullable PsiElement element, @NotNull List<GrLiteral> initial) {
     if (element instanceof GrLiteral) {
       initial.add((GrLiteral)element);
     }
@@ -145,8 +126,8 @@ public class ConvertStringToMultilineIntention extends Intention {
     return initial;
   }
 
-  private void invokeImpl(@NotNull final GrExpression element, @NotNull final Project project, @NotNull final Editor editor) {
-    final List<GrLiteral> literals = collectOperands(element, ContainerUtil.newArrayList());
+  private void invokeImpl(final @NotNull GrExpression element, final @NotNull Project project, final @NotNull Editor editor) {
+    final List<GrLiteral> literals = collectOperands(element, new ArrayList<>());
     if (literals.isEmpty()) return;
 
     final StringBuilder buffer = prepareNewLiteralText(literals);
@@ -233,27 +214,29 @@ public class ConvertStringToMultilineIntention extends Intention {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrLiteral && ("\"".equals(GrStringUtil.getStartQuote(element.getText())) ||
-                                                "\'".equals(GrStringUtil.getStartQuote(element.getText())))
+                                                "'".equals(GrStringUtil.getStartQuote(element.getText())))
                || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
       }
     };
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
   }
 
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static String getHint() {
+    return GroovyIntentionsBundle.message("convert.string.to.multiline.intention.name");
   }
 }

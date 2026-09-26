@@ -1,35 +1,25 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 class AnnotationInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AnnotationInsertHandler");
+  private static final Logger LOG = Logger.getInstance(AnnotationInsertHandler.class);
   static final AnnotationInsertHandler INSTANCE = new AnnotationInsertHandler();
 
   @Override
-  public void handleInsert(InsertionContext context, JavaPsiClassReferenceElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull JavaPsiClassReferenceElement item) {
     JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
 
     PsiFile file = context.getFile();
@@ -52,7 +42,7 @@ class AnnotationInsertHandler implements InsertHandler<JavaPsiClassReferenceElem
   }
 
   private static boolean isAtTokenNeeded(InsertionContext myContext) {
-    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
+    HighlighterIterator iterator = myContext.getEditor().getHighlighter().createIterator(myContext.getStartOffset());
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
     if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -27,28 +13,36 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JLabel;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-/**
- * @author yole
- */
-public class StringPropertyCodeGenerator extends PropertyCodeGenerator implements Opcodes {
-  private static final Type myResourceBundleType = Type.getType(ResourceBundle.class);
-  private final Method myGetBundleMethod = Method.getMethod("java.util.ResourceBundle getBundle(java.lang.String)");
-  private final Method myGetStringMethod = Method.getMethod("java.lang.String getString(java.lang.String)");
+public final class StringPropertyCodeGenerator extends PropertyCodeGenerator implements Opcodes {
+  private static final Type bundleType = Type.getType(ResourceBundle.class);
+  private static final Type stringType = Type.getType(String.class);
+
+  private static final Method getBundleMethod = new Method("getBundle", bundleType,
+                                                           new Type[]{stringType});
+
+  private static final Method getDynamicBundleMethod = new Method("getBundle", bundleType,
+                                                                  new Type[]{stringType, Type.getType(Class.class)});
+
+  private static final Method myGetStringMethod = new Method("getString", stringType, new Type[]{stringType});
+
   private static final Method myLoadLabelTextMethod = new Method(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, Type.VOID_TYPE,
-                                                                 new Type[] { Type.getType(JLabel.class), Type.getType(String.class) } );
+                                                                 new Type[]{Type.getType(JLabel.class), stringType});
   private static final Method myLoadButtonTextMethod = new Method(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, Type.VOID_TYPE,
-                                                                 new Type[] { Type.getType(AbstractButton.class), Type.getType(String.class) } );
+                                                                  new Type[]{Type.getType(AbstractButton.class), stringType});
 
-  private final Set myClassesRequiringLoadLabelText = new HashSet();
-  private final Set myClassesRequiringLoadButtonText = new HashSet();
-  private boolean myHaveSetDisplayedMnemonicIndex = false;
+  private final Set<String> myClassesRequiringLoadLabelText = new HashSet<>();
+  private final Set<String> myClassesRequiringLoadButtonText = new HashSet<>();
+  private boolean myHaveSetDisplayedMnemonicIndex;
+  private Type dynamicBundleType;
 
+  @Override
   public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final InstrumentationClassFinder classFinder) {
     myClassesRequiringLoadLabelText.remove(name);
     myClassesRequiringLoadButtonText.remove(name);
@@ -58,11 +52,18 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
         myHaveSetDisplayedMnemonicIndex = true;
       }
     }
-    catch (Exception e) {
-      // ignore
+    catch (Exception ignored) {}
+
+    if (visitor.useDynamicBundles) {
+      try {
+        classFinder.loadClass("com.intellij.DynamicBundle");
+        dynamicBundleType = Type.getType("Lcom/intellij/DynamicBundle;");
+      }
+      catch (Exception ignored) {}
     }
   }
 
+  @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
@@ -70,84 +71,109 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
                                         GetFontMethodProvider fontMethodProvider,
                                         final int componentLocal,
                                         final String formClassName) throws IOException, ClassNotFoundException {
-    final InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());
-    final InstrumentationClassFinder.PseudoClass jLabelClass = componentClass.getFinder().loadClass(JLabel.class.getName());
-    if ("text".equals(property.getName()) &&
-        (abstractButtonClass.isAssignableFrom(componentClass) || jLabelClass.isAssignableFrom(componentClass))) {
-      final StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
-      if (propertyValue.getValue() != null) {
-        final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(propertyValue.getValue());
-        if (textWithMnemonic.myMnemonicIndex >= 0) {
-          generator.loadLocal(componentLocal);
-          generator.push(textWithMnemonic.myText);
-          generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
-                                  new Method(property.getWriteMethodName(),
-                                             Type.VOID_TYPE, new Type[] { Type.getType(String.class) } ));
+    StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
+    String key = propertyValue.getKey();
 
-          String setMnemonicMethodName;
-          if (abstractButtonClass.isAssignableFrom(componentClass)) {
-            setMnemonicMethodName = "setMnemonic";
-          }
-          else {
-            setMnemonicMethodName = "setDisplayedMnemonic";
-          }
+    if (key != null) {
+      propertyValue.setFormClass(formClassName);
+    }
 
-          generator.loadLocal(componentLocal);
-          generator.push(textWithMnemonic.getMnemonicChar());
-          generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
-                                  new Method(setMnemonicMethodName,
-                                             Type.VOID_TYPE, new Type[] { Type.CHAR_TYPE } ));
+    if (!"text".equals(property.getName())) {
+      return false;
+    }
 
-          if (myHaveSetDisplayedMnemonicIndex) {
-            generator.loadLocal(componentLocal);
-            generator.push(textWithMnemonic.myMnemonicIndex);
-            generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
-                                    new Method("setDisplayedMnemonicIndex",
-                                               Type.VOID_TYPE, new Type[] { Type.INT_TYPE } ));
-          }
-          return true;
-        }
+    InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());
+    InstrumentationClassFinder.PseudoClass jLabelClass = componentClass.getFinder().loadClass(JLabel.class.getName());
+    if (!(abstractButtonClass.isAssignableFrom(componentClass) || jLabelClass.isAssignableFrom(componentClass))) {
+      return false;
+    }
+
+    if (key == null) {
+      String value = propertyValue.getValue();
+      SupportCode.TextWithMnemonic textWithMnemonic = value == null ? null : SupportCode.parseText(value);
+      if (textWithMnemonic == null || textWithMnemonic.myMnemonicIndex < 0) {
+        return false;
+      }
+
+      generator.loadLocal(componentLocal);
+      generator.push(textWithMnemonic.myText);
+      generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
+                              new Method(property.getWriteMethodName(), Type.VOID_TYPE, new Type[]{stringType}));
+
+      String setMnemonicMethodName;
+      if (abstractButtonClass.isAssignableFrom(componentClass)) {
+        setMnemonicMethodName = "setMnemonic";
       }
       else {
-        Method method;
-        if (abstractButtonClass.isAssignableFrom(componentClass)) {
-          myClassesRequiringLoadButtonText.add(formClassName);
-          method = myLoadButtonTextMethod;
-        }
-        else {
-          myClassesRequiringLoadLabelText.add(formClassName);
-          method = myLoadLabelTextMethod;
-        }
+        setMnemonicMethodName = "setDisplayedMnemonic";
+      }
 
-        generator.loadThis();
+      generator.loadLocal(componentLocal);
+      generator.push(textWithMnemonic.getMnemonicChar());
+      generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
+                              new Method(setMnemonicMethodName, Type.VOID_TYPE, new Type[]{Type.CHAR_TYPE}));
+
+      if (myHaveSetDisplayedMnemonicIndex) {
         generator.loadLocal(componentLocal);
-        generator.push(propertyValue.getBundleName());
-        generator.invokeStatic(myResourceBundleType, myGetBundleMethod);
-        generator.push(propertyValue.getKey());
-        generator.invokeVirtual(myResourceBundleType, myGetStringMethod);
-        generator.invokeVirtual(Type.getType("L" + formClassName + ";"), method);
-        return true;
+        generator.push(textWithMnemonic.myMnemonicIndex);
+        generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
+                                new Method("setDisplayedMnemonicIndex", Type.VOID_TYPE, new Type[]{Type.INT_TYPE}));
       }
     }
-    return false;
+    else {
+      Type formClass = Type.getType("L" + formClassName + ";");
+
+      generator.loadThis();
+      generator.loadLocal(componentLocal);
+
+      generateGetBundleString(propertyValue, generator);
+
+      Method method;
+      if (abstractButtonClass.isAssignableFrom(componentClass)) {
+        myClassesRequiringLoadButtonText.add(formClassName);
+        method = myLoadButtonTextMethod;
+      }
+      else {
+        myClassesRequiringLoadLabelText.add(formClassName);
+        method = myLoadLabelTextMethod;
+      }
+      generator.invokeVirtual(formClass, method);
+    }
+    return true;
   }
 
-  public void generatePushValue(final GeneratorAdapter generator, final Object value) {
-    StringDescriptor descriptor = (StringDescriptor) value;
+  private void generateGetBundleString(StringDescriptor descriptor, GeneratorAdapter generator) {
+    generator.push(descriptor.getBundleName());
+
+    String formClass = descriptor.getFormClass();
+    if (dynamicBundleType != null && formClass != null) {
+      Type type = Type.getType("L" + formClass + ";");
+      generator.push(type);
+      generator.invokeStatic(dynamicBundleType, getDynamicBundleMethod);
+    }
+    else {
+      generator.invokeStatic(bundleType, getBundleMethod);
+    }
+
+    generator.push(descriptor.getKey());
+    generator.invokeVirtual(bundleType, myGetStringMethod);
+  }
+
+  @Override
+  public void generatePushValue(GeneratorAdapter generator, Object value) {
+    StringDescriptor descriptor = (StringDescriptor)value;
     if (descriptor == null) {
       generator.push((String)null);
     }
-    else if (descriptor.getValue() !=null) {
+    else if (descriptor.getValue() != null) {
       generator.push(descriptor.getValue());
     }
     else {
-      generator.push(descriptor.getBundleName());
-      generator.invokeStatic(myResourceBundleType, myGetBundleMethod);
-      generator.push(descriptor.getKey());
-      generator.invokeVirtual(myResourceBundleType, myGetStringMethod);
+      generateGetBundleString(descriptor, generator);
     }
   }
 
+  @Override
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {
     if (myClassesRequiringLoadLabelText.contains(visitor.getClassName())) {
       generateLoadTextMethod(visitor, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, "javax/swing/JLabel", "setDisplayedMnemonic");

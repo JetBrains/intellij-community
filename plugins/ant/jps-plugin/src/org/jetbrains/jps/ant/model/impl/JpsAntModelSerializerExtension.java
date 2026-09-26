@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.model.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -39,32 +23,31 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactExtensionSerial
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author nik
- */
-public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
-  @NotNull
+public final class JpsAntModelSerializerExtension extends JpsModelSerializerExtension {
   @Override
-  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.singletonList(new JpsGlobalAntConfigurationSerializer());
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Arrays.asList(new JpsProjectAntConfigurationSerializer(), new JpsWorkspaceAntConfigurationSerializer());
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
+  public @NotNull List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Arrays.asList(new JpsAntArtifactExtensionSerializer("ant-postprocessing", JpsAntArtifactExtensionImpl.POSTPROCESSING_ROLE),
                          new JpsAntArtifactExtensionSerializer("ant-preprocessing", JpsAntArtifactExtensionImpl.PREPROCESSING_ROLE));
   }
 
-  private static class JpsAntArtifactExtensionSerializer extends JpsArtifactExtensionSerializer<JpsAntArtifactExtension> {
+  private static final class JpsAntArtifactExtensionSerializer extends JpsArtifactExtensionSerializer<JpsAntArtifactExtension> {
     private JpsAntArtifactExtensionSerializer(final String id, final JpsElementChildRole<JpsAntArtifactExtension> role) {
       super(id, role);
     }
@@ -74,16 +57,9 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
       return new JpsAntArtifactExtensionImpl(
         optionsTag != null ? XmlSerializer.deserialize(optionsTag, AntArtifactExtensionProperties.class) : null);
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsAntArtifactExtension extension, @NotNull Element optionsTag) {
-      AntArtifactExtensionProperties properties = ((JpsAntArtifactExtensionImpl)extension).getProperties();
-      XmlSerializer.serializeInto(properties, optionsTag, new SkipDefaultValuesSerializationFilters());
-    }
   }
 
-  @Nullable
-  private static String getValueAttribute(Element buildFileTag, final String childName) {
+  private static @Nullable String getValueAttribute(Element buildFileTag, final String childName) {
     Element child = buildFileTag.getChild(childName);
     return child != null ? child.getAttributeValue("value") : null;
   }
@@ -116,12 +92,8 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
         }
       }
     }
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-    }
-
   }
-  private static class JpsProjectAntConfigurationSerializer extends JpsProjectExtensionSerializer {
+  private static final class JpsProjectAntConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsProjectAntConfigurationSerializer() {
       super("ant.xml", "AntConfiguration");
     }
@@ -169,13 +141,9 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
       }
       project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, new JpsAntConfigurationImpl(optionsMap, projectDefaultAntName));
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    }
   }
 
-  private static class JpsWorkspaceAntConfigurationSerializer extends JpsProjectExtensionSerializer {
+  private static final class JpsWorkspaceAntConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsWorkspaceAntConfigurationSerializer() {
       super(WORKSPACE_FILE, "antWorkspaceConfiguration");
     }
@@ -192,10 +160,6 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
           }
         }
       }
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     }
   }
 }

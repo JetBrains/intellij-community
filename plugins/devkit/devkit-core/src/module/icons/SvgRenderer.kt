@@ -1,0 +1,115 @@
+package org.jetbrains.idea.devkit.module.icons
+
+import kotlin.math.abs
+
+private const val CANVAS_SIZE = 48
+private const val CELL_SIZE = CANVAS_SIZE / GRID_SIZE // 6
+
+/**
+ * Renders an [IconData] grid into an SVG string.
+ *
+ * Canvas: 48×48 pixels, 8×8 grid → each cell is 6×6 px.
+ * Uses a linear gradient for visual depth.
+ */
+internal object SvgRenderer {
+    /**
+     * Shifts hue of a hex color by rotating it in HSL space.
+     * Returns a new hex color string.
+     */
+    private fun shiftHue(hexColor: String, hueDelta: Int): String {
+        val hex = hexColor.removePrefix("#")
+        val r = hex.substring(0, 2).toInt(16) / 255.0
+        val g = hex.substring(2, 4).toInt(16) / 255.0
+        val b = hex.substring(4, 6).toInt(16) / 255.0
+
+        // RGB to HSL
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val delta = max - min
+
+        var h = when {
+            delta == 0.0 -> 0.0
+            max == r -> 60 * (((g - b) / delta) % 6)
+            max == g -> 60 * (((b - r) / delta) + 2)
+            else -> 60 * (((r - g) / delta) + 4)
+        }
+        if (h < 0) h += 360
+
+        val l = (max + min) / 2.0
+        val s = if (delta == 0.0) 0.0 else delta / (1 - abs(2 * l - 1))
+
+        // Shift hue
+        h = (h + hueDelta) % 360
+        if (h < 0) h += 360
+
+        // HSL to RGB
+        val c = (1 - abs(2 * l - 1)) * s
+        val x = c * (1 - abs((h / 60) % 2 - 1))
+        val m = l - c / 2
+
+        val (rPrime, gPrime, bPrime) = when {
+            h < 60 -> Triple(c, x, 0.0)
+            h < 120 -> Triple(x, c, 0.0)
+            h < 180 -> Triple(0.0, c, x)
+            h < 240 -> Triple(0.0, x, c)
+            h < 300 -> Triple(x, 0.0, c)
+            else -> Triple(c, 0.0, x)
+        }
+
+        val rOut = ((rPrime + m) * 255).toInt().coerceIn(0, 255)
+        val gOut = ((gPrime + m) * 255).toInt().coerceIn(0, 255)
+        val bOut = ((bPrime + m) * 255).toInt().coerceIn(0, 255)
+
+        return "#%02x%02x%02x".format(rOut, gOut, bOut)
+    }
+
+    fun render(icon: IconData): String {
+        val sb = StringBuilder()
+
+        sb.appendLine("""<?xml version="1.0" encoding="UTF-8"?>""")
+        sb.appendLine(GENERATED_MARKER)
+        sb.appendLine(
+            """<svg xmlns="http://www.w3.org/2000/svg""""
+                + """ width="$CANVAS_SIZE" height="$CANVAS_SIZE""""
+                + """ viewBox="0 0 $CANVAS_SIZE $CANVAS_SIZE">"""
+        )
+
+        // Compute gradient colors by shifting hue
+        val startColor = icon.foregroundColor
+        val endColor = shiftHue(icon.foregroundColor, 60) // Shift by 60 degrees
+
+        // Define gradient spanning entire canvas
+        sb.appendLine("""  <defs>""")
+        sb.appendLine("""    <linearGradient id="iconGradient" x1="0" y1="0" x2="$CANVAS_SIZE" y2="$CANVAS_SIZE" gradientUnits="userSpaceOnUse">""")
+        sb.appendLine("""      <stop offset="0%" style="stop-color:$startColor;stop-opacity:1" />""")
+        sb.appendLine("""      <stop offset="100%" style="stop-color:$endColor;stop-opacity:1" />""")
+        sb.appendLine("""    </linearGradient>""")
+        sb.appendLine("""  </defs>""")
+
+        // Background
+        if (icon.backgroundColor != null) {
+            sb.appendLine(
+                """  <rect width="$CANVAS_SIZE" height="$CANVAS_SIZE" """
+                    + """fill="${icon.backgroundColor}"/>"""
+            )
+        }
+
+        // Grid quads - gradient applied across entire canvas
+        for (row in 0 until GRID_SIZE) {
+            for (col in 0 until GRID_SIZE) {
+                if (icon.grid[row][col]) {
+                    val x = col * CELL_SIZE
+                    val y = row * CELL_SIZE
+                    sb.appendLine(
+                        """  <rect x="$x" y="$y" """
+                            + """width="$CELL_SIZE" height="$CELL_SIZE" """
+                            + """fill="url(#iconGradient)"/>"""
+                    )
+                }
+            }
+        }
+
+        sb.appendLine("</svg>")
+        return sb.toString()
+    }
+}

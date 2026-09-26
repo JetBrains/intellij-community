@@ -1,0 +1,2 @@
+# The bytes subclass object layout differs by platform/Python build.
+kafka.protocol.message.PartialMessage

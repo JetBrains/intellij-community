@@ -1,0 +1,8 @@
+test.java.file
+  TRY_STATEMENT
+    TRY_KEYWORD
+    CODE_BLOCK
+      LBRACE
+      RBRACE
+    ERROR_ELEMENT
+      <empty list>

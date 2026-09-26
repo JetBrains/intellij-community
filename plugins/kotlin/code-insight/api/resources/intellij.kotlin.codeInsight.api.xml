@@ -1,0 +1,45 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.codeInsight.utils"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService"/>
+  </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kaDanglingFileResolutionModeProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider"
+                    dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.kotlin.autoImportCallableWeigher"
+      interface="org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.kotlin.equalsHashCodeGeneratorExtension"
+      interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension"
+      dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.registrar"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.forwardDeclarationPolicyProvider"
+                    interface="org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.ForwardDeclarationPolicyProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

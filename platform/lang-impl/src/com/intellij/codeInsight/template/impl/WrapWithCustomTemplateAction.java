@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
@@ -26,39 +14,67 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
-public class WrapWithCustomTemplateAction extends AnAction {
+@ApiStatus.Internal
+public final class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;
-  private final PsiFile myFile;
+  private final @Nullable Runnable myAfterExecutionCallback;
+  private final PsiFile myPsiFile;
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
-                                      final PsiFile file,
-                                      final Set<Character> usedMnemonicsSet) {
+                                      final PsiFile psiFile,
+                                      final Set<? super Character> usedMnemonicsSet) {
+    this(template, editor, psiFile, usedMnemonicsSet, null);
+  }
+
+  public WrapWithCustomTemplateAction(CustomLiveTemplate template,
+                                      final Editor editor,
+                                      final PsiFile psiFile,
+                                      final Set<? super Character> usedMnemonicsSet,
+                                      @Nullable Runnable afterExecutionCallback) {
     super(InvokeTemplateAction.extractMnemonic(template.getTitle(), usedMnemonicsSet));
     myTemplate = template;
-    myFile = file;
+    myPsiFile = psiFile;
     myEditor = editor;
+    myAfterExecutionCallback = afterExecutionCallback;
   }
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      ReadonlyStatusHandler.getInstance(myFile.getProject()).ensureFilesWritable(file);
+      ReadonlyStatusHandler.getInstance(myPsiFile.getProject()).ensureFilesWritable(Collections.singletonList(file));
     }
 
     String selection = myEditor.getSelectionModel().getSelectedText(true);
 
     if (selection != null) {
       selection = selection.trim();
-      PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
+      PsiDocumentManager.getInstance(myPsiFile.getProject()).commitAllDocuments();
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myPsiFile) {
+        @Override
+        public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
+          super.startTemplate(template, predefinedValues, listener);
+          if (myAfterExecutionCallback != null) {
+            myAfterExecutionCallback.run();
+          }
+        }
+      });
     }
   }
 }

@@ -1,0 +1,167 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.platform.workspace.storage.testEntities.entities.impl
+
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.instrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoChildWithNullableParentEntityBuilder
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntityBuilder
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class OoParentEntityImpl(private val dataSource: OoParentEntityData) : OoParentEntity, WorkspaceEntityBase(dataSource) {
+  private companion object {
+    internal val CHILD_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(OoParentEntity::class.java, OoChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val ANOTHERCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java,
+                                                                                OoChildWithNullableParentEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(CHILD_CONNECTION_ID, ANOTHERCHILD_CONNECTION_ID)
+  }
+
+  override val parentProperty: String
+    get() {
+      readField("parentProperty")
+      return dataSource.parentProperty
+    }
+  override val child: OoChildEntity?
+    get() = snapshot.instrumentation.getOneChild(CHILD_CONNECTION_ID, this) as? OoChildEntity
+  override val anotherChild: OoChildWithNullableParentEntity?
+    get() = snapshot.instrumentation.getOneChild(ANOTHERCHILD_CONNECTION_ID, this) as? OoChildWithNullableParentEntity
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  internal class Builder(result: OoParentEntityData?) : ModifiableWorkspaceEntityBase<OoParentEntity, OoParentEntityData>(result),
+                                                        OoParentEntityBuilder {
+    internal constructor() : this(OoParentEntityData())
+
+    override fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isParentPropertyInitialized()) {
+        error("Field OoParentEntity#parentProperty should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as OoParentEntity
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentProperty != dataSource.parentProperty) this.parentProperty = dataSource.parentProperty
+      updateChildToParentReferences(parents)
+    }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+      }
+    override var parentProperty: String
+      get() = getEntityData().parentProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).parentProperty = value
+        changedProperty.add("parentProperty")
+      }
+    override var child: OoChildEntityBuilder?
+      get() = getChild(CHILD_CONNECTION_ID) as? OoChildEntityBuilder?
+      set(value) {
+        changeChild(value, CHILD_CONNECTION_ID)
+        changedProperty.add("child")
+      }
+    override var anotherChild: OoChildWithNullableParentEntityBuilder?
+      get() = getChild(ANOTHERCHILD_CONNECTION_ID) as? OoChildWithNullableParentEntityBuilder?
+      set(value) {
+        changeChild(value, ANOTHERCHILD_CONNECTION_ID)
+        changedProperty.add("anotherChild")
+      }
+
+    override fun getEntityClass(): Class<OoParentEntity> = OoParentEntity::class.java
+  }
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
+  lateinit var parentProperty: String
+  internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
+  override fun newInstance(): OoParentEntity = OoParentEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<OoParentEntity, *> = OoParentEntityImpl.Builder(null)
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.OoParentEntity") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return OoParentEntity::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return OoParentEntity(parentProperty, entitySource)
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as OoParentEntityData
+    if (this.entitySource != other.entitySource) return false
+    if (this.parentProperty != other.parentProperty) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as OoParentEntityData
+    if (this.parentProperty != other.parentProperty) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + parentProperty.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + parentProperty.hashCode()
+    return result
+  }
+}

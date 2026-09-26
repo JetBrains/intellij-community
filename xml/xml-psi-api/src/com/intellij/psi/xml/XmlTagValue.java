@@ -15,29 +15,34 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 public interface XmlTagValue {
 
-  @NotNull
-  XmlTagChild[] getChildren();
+  XmlTagChild @NotNull [] getChildren();
 
-  @NotNull
-  XmlText[] getTextElements();
+  XmlText @NotNull [] getTextElements();
 
-  @NotNull
-  String getText();
+  /**
+   * @return raw tag value text
+   * @see #getTrimmedText()
+   */
+  @NotNull @NlsSafe String getText();
   
   @NotNull
   TextRange getTextRange();
 
-  @NotNull
-  String getTrimmedText();
+  /**
+   * @return concatenated child XmlTexts values.
+   * @see XmlText#getValue()
+   */
+  @NotNull @NlsSafe String getTrimmedText();
 
-  void setText(String value);
+  void setText(@NlsSafe String value);
 
-  void setEscapedText(String value);
+  void setEscapedText(@NlsSafe String value);
 
   boolean hasCDATA();
 }

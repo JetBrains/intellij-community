@@ -1,103 +1,112 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionSuppressor;
+import com.intellij.codeInspection.LanguageInspectionSuppressors;
 import com.intellij.codeInspection.RedundantSuppressInspection;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
-import com.intellij.testFramework.InspectionTestCase;
-import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
-import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
+import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-public class RedundantSuppressTest extends InspectionTestCase {
+import java.util.ArrayList;
+import java.util.List;
+
+public class RedundantSuppressTest extends JavaInspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
-  private InspectionToolWrapper[] myInspectionToolWrappers;
+  private final List<InspectionToolWrapper<?, ?>> myWrappers = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myInspectionToolWrappers = new InspectionToolWrapper[]{
-      new LocalInspectionToolWrapper(new JavaDocReferenceInspection()),
-      new LocalInspectionToolWrapper(new I18nInspection()),
-      new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
-      new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
-      new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
-      new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
-      @NotNull
       @Override
-      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
-        return myInspectionToolWrappers;
+      protected @NotNull @Unmodifiable List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
+        return myWrappers;
       }
     });
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
   }
 
   @Override
   protected void tearDown() throws Exception {
     myWrapper = null;
-    myInspectionToolWrappers = null;
     super.tearDown();
   }
 
   public void testModuleInfo() {
-    doTest();
+    myWrappers.add(new LocalInspectionToolWrapper(new JavaDocReferenceInspection()));
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
   public void testDefaultFile() {
+    myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
     doTest();
   }
 
-  public void testAlternativeIds() {
-    doTest();
+  public void testAlternativeIds() { doTest(); }
+
+  public void testAnnotator() {
+    myWrappers.add(new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)));
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, false);
   }
 
-  public void testIgnoreUnused() {
-    doTest();
-  }
-
+  public void testIgnoreUnused() { doTest(); }
   public void testIgnoreWithAnnotation() { doTest(); }
 
+  public void testSameSuppressIds() {
+    myWrappers.add(new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection()));
+    doTest(); 
+  }
+
   public void testSuppressAll() {
-    try {
-      ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
-      doTest();
-    }
-    finally {
-      ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = false;
-    }
+    ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
+    doTest();
   }
 
   public void testInjections() {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
-    
+    testInjector.injectAll(myFixture.getTestRootDisposable());
+
+    doTest();
+  }
+
+  public void testAdditionalEmptySuppressor() {
+    LanguageInspectionSuppressors.INSTANCE.addExplicitExtension(Language.findLanguageByID("UAST"), new InspectionSuppressor() {
+      @Override
+      public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId) {
+        return false;
+      }
+
+      @Override
+      public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+        return SuppressQuickFix.EMPTY_ARRAY;
+      }
+    }, getTestRootDisposable());
+    myWrappers.add(new LocalInspectionToolWrapper(new I18nInspection()));
     doTest();
   }
 
   private void doTest() {
-    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",true);
+    doTest("redundantSuppress/" + getTestName(true), myWrapper, true);
   }
 }

@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,11 +12,16 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.function.IntUnaryOperator;
+
 public abstract class CodeInsightUtilCore extends FileModificationService {
+
+  private static final Logger LOG = Logger.getInstance(CodeInsightUtilCore.class);
+
   public static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
                                                             int startOffset,
                                                             int endOffset,
@@ -39,12 +30,12 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return findElementInRange(file, startOffset, endOffset, klass, language, null);
   }
 
-  private static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
-                                                             int startOffset,
-                                                             int endOffset,
-                                                             @NotNull Class<T> klass,
-                                                             @NotNull Language language,
-                                                             @Nullable PsiElement initialElement) {
+  private static @Nullable <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
+                                                                       int startOffset,
+                                                                       int endOffset,
+                                                                       @NotNull Class<T> klass,
+                                                                       @NotNull Language language,
+                                                                       @Nullable PsiElement initialElement) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
     if (element1 instanceof PsiWhiteSpace) {
@@ -71,12 +62,11 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return element;
   }
 
-  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element) {
+  public static @Nullable <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element) {
     return forcePsiPostprocessAndRestoreElement(element, false);
   }
 
-  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element,
-                                                                              boolean useFileLanguage) {
+  public static @Nullable <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element, boolean useFileLanguage) {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     //if (document == null) return element;
@@ -93,200 +83,215 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return elementInRange;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
-    return parseStringCharacters(chars, outChars, sourceOffsets, true, true, '"', '\'');
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder out, int @Nullable [] sourceOffsets) {
+    return parseStringCharacters(chars, out, sourceOffsets, true);
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, boolean slashMustBeEscaped, boolean exitOnEscapingWrongSymbol, @NotNull char... endChars) {
-    assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
-    if (chars.indexOf('\\') < 0) {
-      outChars.append(chars);
-      if (sourceOffsets != null) {
-        for (int i = 0; i < sourceOffsets.length; i++) {
-          sourceOffsets[i] = i;
-        }
-      }
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder out, int @Nullable [] sourceOffsets,
+                                              boolean textBlock) {
+    LOG.assertTrue(sourceOffsets == null || sourceOffsets.length == chars.length() + 1);
+    if (noEscape(chars, sourceOffsets)) {
+      out.append(chars);
       return true;
     }
+    return parseStringCharactersWithEscape(chars, textBlock, out, sourceOffsets);
+  }
+
+  /**
+   * Parse Java String literal and get the result, if literal is valid
+   * @param chars         String literal source
+   * @param sourceOffsets optional output parameter:
+   *                      sourceOffsets[i in returnValue.indices] represents
+   *                      the index of returnValue[i] character in the source literal
+   * @return String literal value, or null, if the literal is invalid
+   */
+  public static @Nullable CharSequence parseStringCharacters(@NotNull String chars, int @Nullable [] sourceOffsets) {
+    LOG.assertTrue(sourceOffsets == null || sourceOffsets.length == chars.length() + 1);
+    if (noEscape(chars, sourceOffsets)) {
+      return chars;
+    }
+    StringBuilder out = new StringBuilder(chars.length());
+    return parseStringCharactersWithEscape(chars, true, out, sourceOffsets) ? out : null;
+  }
+
+  private static boolean noEscape(@NotNull String chars, int @Nullable [] sourceOffsets) {
+    if (chars.indexOf('\\') >= 0) return false;
+    if (sourceOffsets != null) Arrays.setAll(sourceOffsets, IntUnaryOperator.identity());
+    return true;
+  }
+
+  static boolean parseStringCharactersWithEscape(@NotNull String chars,
+                                                 boolean textBlock,
+                                                 @NotNull StringBuilder out,
+                                                 int @Nullable [] sourceOffsets) {
     int index = 0;
-    final int outOffset = outChars.length();
+    final int outOffset = out.length();
     while (index < chars.length()) {
       char c = chars.charAt(index++);
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length()-outOffset] = index - 1;
-        sourceOffsets[outChars.length() + 1 -outOffset] = index;
+        sourceOffsets[out.length() - outOffset] = index - 1;
+        sourceOffsets[out.length() + 1 - outOffset] = index;
       }
       if (c != '\\') {
-        outChars.append(c);
+        out.append(c);
         continue;
       }
-      if (index == chars.length()) return false;
-      c = chars.charAt(index++);
-      switch (c) {
-        case'b':
-          outChars.append('\b');
-          break;
-
-        case't':
-          outChars.append('\t');
-          break;
-
-        case'n':
-          outChars.append('\n');
-          break;
-
-        case'f':
-          outChars.append('\f');
-          break;
-
-        case'r':
-          outChars.append('\r');
-          break;
-
-        case'\\':
-          outChars.append('\\');
-          break;
-
-        case'0':
-        case'1':
-        case'2':
-        case'3':
-        case'4':
-        case'5':
-        case'6':
-        case'7':
-          char startC = c;
-          int v = (int)c - '0';
-          if (index < chars.length()) {
-            c = chars.charAt(index++);
-            if ('0' <= c && c <= '7') {
-              v <<= 3;
-              v += c - '0';
-              if (startC <= '3' && index < chars.length()) {
-                c = chars.charAt(index++);
-                if ('0' <= c && c <= '7') {
-                  v <<= 3;
-                  v += c - '0';
-                }
-                else {
-                  index--;
-                }
-              }
-            }
-            else {
-              index--;
-            }
-          }
-          outChars.append((char)v);
-          break;
-
-        case'u':
-          // uuuuu1234 is valid too
-          while (index != chars.length() && chars.charAt(index) == 'u') {
-            index++;
-          }
-          if (index + 4 <= chars.length()) {
-            try {
-              int code = Integer.parseInt(chars.substring(index, index + 4), 16);
-              //line separators are invalid here
-              if (code == 0x000a || code == 0x000d) return false;
-              c = chars.charAt(index);
-              if (c == '+' || c == '-') return false;
-              outChars.append((char)code);
-              index += 4;
-            }
-            catch (Exception e) {
-              return false;
-            }
-          }
-          else {
-            return false;
-          }
-          break;
-
-        default:
-          if (CharArrayUtil.indexOf(endChars, c, 0, endChars.length) != -1) {
-            outChars.append(c);
-          }
-          else if (!exitOnEscapingWrongSymbol) {
-            if (!slashMustBeEscaped) {
-              outChars.append('\\');
-              if (sourceOffsets != null) {
-                sourceOffsets[outChars.length() - outOffset] = index - 1;
-              }
-            }
-            outChars.append(c);
-          }
-          else {
-            return false;
-          }
-      }
+      index = parseEscapedSymbol(false, chars, index, textBlock, out);
+      if (index == -1) return false;
       if (sourceOffsets != null) {
-        sourceOffsets[outChars.length() - outOffset] = index;
+        sourceOffsets[out.length() - outOffset] = index;
       }
     }
     return true;
   }
 
-  /**
-   * Maps the substring range inside Java String literal value back into the source code range.
-   *
-   * @param text string literal as present in source code (including quotes)
-   * @param from start offset inside the represented string
-   * @param to end offset inside the represented string
-   * @return the range which represents the corresponding substring inside source representation,
-   * or null if from/to values are out of bounds.
-   */
-  @Nullable
-  public static TextRange mapBackStringRange(@NotNull String text, int from, int to) {
-    if (from > to || to < 0) return null;
-    if (text.startsWith("`")) {
-      // raw string
-      return new TextRange(from + 1, to + 1);
+  private static int parseEscapedSymbol(boolean isAfterEscapedBackslash, @NotNull String chars, int index,
+                                        boolean textBlock,
+                                        @NotNull StringBuilder out) {
+    if (index == chars.length()) return -1;
+    char c = chars.charAt(index++);
+    if (parseEscapedChar(c, textBlock, out)) {
+      return index;
     }
-    if (!text.startsWith("\"")) {
-      return null;
-    }
-    if (text.indexOf('\\') == -1) {
-      return new TextRange(from + 1, to + 1);
-    }
-    int curOffset = 0;
-    int mappedFrom = -1, mappedTo = -1;
-    int end = text.length() - 1;
-    int i = 1;
-    while (i <= end) {
-      if (curOffset == from) {
-        mappedFrom = i;
-      }
-      if (curOffset == to) {
-        mappedTo = i;
+    switch (c) {
+      case '\\':
+        boolean isUnicodeSequenceStart = isAfterEscapedBackslash && index < chars.length() && chars.charAt(index) == 'u';
+        if (isUnicodeSequenceStart) {
+          index = parseUnicodeEscape(true, chars, index, textBlock, out);
+        }
+        else {
+          out.append('\\');
+        }
         break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+        index = parseOctalEscape(c, chars, index, out);
+        break;
+
+      case 'u':
+        if (isAfterEscapedBackslash) return -1;
+        index = parseUnicodeEscape(false, chars, index - 1, textBlock, out);
+        break;
+
+      default:
+        return -1;
+    }
+    return index;
+  }
+
+  private static int parseUnicodeEscape(boolean isAfterEscapedBackslash, @NotNull String s, int index,
+                                        boolean textBlock,
+                                        @NotNull StringBuilder out) {
+    int len = s.length();
+    // uuuuu1234 is valid too
+    do {
+      index++;
+    }
+    while (index < len && s.charAt(index) == 'u');
+    if (index + 4 > len) return -1;
+    try {
+      char c = s.charAt(index);
+      if (c == '+' || c == '-') return -1;
+      int code = Integer.parseInt(s.substring(index, index + 4), 16);
+      // unicode escaped line separators are invalid here when not a text block
+      if (!textBlock && (code == 0x000a || code == 0x000d)) return -1;
+      char escapedChar = (char)code;
+      if (escapedChar == '\\') {
+        if (isAfterEscapedBackslash) {
+          // \u005c\u005c
+          out.append('\\');
+          return index + 4;
+        }
+        else {
+          // u005cxyz
+          return parseEscapedSymbol(true, s, index + 4, textBlock, out);
+        }
       }
-      if (i == end) break;
-      char c = text.charAt(i++);
-      if (c == '\\') {
-        if (i == end) return null;
-        // like \u0020
-        char c1 = text.charAt(i++);
-        if (c1 == 'u') {
-          while (i < end && text.charAt(i) == 'u') i++;
-          i += 4;
-        } else if (c1 >= '0' && c1 <= '7') { // octal escape
-          char c2 = i < end ? text.charAt(i) : 0;
-          if (c2 >= '0' && c2 <= '7') {
-            i++;
-            char c3 = i < end ? text.charAt(i) : 0;
-            if (c3 >= '0' && c3 <= '7' && c1 <= '3') {
-              i++;
-            }
+      if (isAfterEscapedBackslash) {
+        // e.g. \u005c\u006e is converted to newline
+        if (parseEscapedChar(escapedChar, textBlock, out)) return index + 4;
+        return -1;
+      }
+      // just single unicode escape sequence
+      out.append(escapedChar);
+      return index + 4;
+    }
+    catch (NumberFormatException ignored) {
+      return -1;
+    }
+  }
+
+  private static boolean parseEscapedChar(char c, boolean textBlock, @NotNull StringBuilder out) {
+    switch (c) {
+      case 'b':
+        out.append('\b');
+        return true;
+
+      case 't':
+        out.append('\t');
+        return true;
+
+      case 'n':
+        out.append('\n');
+        return true;
+
+      case 'f':
+        out.append('\f');
+        return true;
+
+      case 'r':
+        out.append('\r');
+        return true;
+
+      case 's':
+        out.append(' ');
+        return true;
+
+      case '\'':
+        out.append('\'');
+        return true;
+
+      case '\"':
+        out.append('"');
+        return true;
+
+      case '\n':
+        return textBlock; // escaped newline only valid inside text block
+    }
+    return false;
+  }
+
+  private static int parseOctalEscape(char c, @NotNull String s, int index, @NotNull StringBuilder out) {
+    char startC = c;
+    int v = c - '0';
+    if (index < s.length()) {
+      c = s.charAt(index++);
+      if ('0' <= c && c <= '7') {
+        v <<= 3;
+        v += c - '0';
+        if (startC <= '3' && index < s.length()) {
+          c = s.charAt(index++);
+          if ('0' <= c && c <= '7') {
+            v <<= 3;
+            v += c - '0';
+          }
+          else {
+            index--;
           }
         }
       }
-      curOffset++;
+      else {
+        index--;
+      }
     }
-    if (mappedFrom >= 0 && mappedTo >= 0) {
-      return new TextRange(mappedFrom, mappedTo);
-    }
-    return null;
+    out.append((char)v);
+    return index;
   }
 }

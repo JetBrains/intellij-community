@@ -1,0 +1,43 @@
+package fleet.buildtool.s3.upload
+
+import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.s3.putObject
+import aws.smithy.kotlin.runtime.content.asByteStream
+import aws.smithy.kotlin.runtime.content.writeToFile
+import fleet.buildtool.s3.objectExists
+import java.nio.file.Path
+import kotlin.io.path.createTempFile
+import aws.sdk.kotlin.services.s3.S3Client as AwsClient
+
+// Real adapter that delegates to AWS SDK S3Client
+class AwsFleetS3Client internal constructor(private val client: AwsClient) : FleetS3Client {
+  constructor(region: String) : this(AwsClient { this.region = region })
+
+  override suspend fun objectExists(bucket: String, key: String): Boolean = client.objectExists {
+    this.bucket = bucket
+    this.key = key
+  }
+
+  override suspend fun putObject(bucket: String, key: String, file: Path) {
+    client.putObject {
+      this.bucket = bucket
+      this.key = key
+      body = file.asByteStream()
+    }
+  }
+
+  override suspend fun getObject(bucket: String, key: String, temporaryDir: Path): Path {
+    val file = createTempFile(temporaryDir, "s3-download-", "")
+    client.getObject(input = GetObjectRequest {
+      this.bucket = bucket
+      this.key = key
+    }) { response ->
+      requireNotNull(response.body).writeToFile(file)
+    }
+    return file
+  }
+
+  override fun close() {
+    client.close()
+  }
+}

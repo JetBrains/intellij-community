@@ -1,0 +1,92 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.product.serialization.impl;
+
+import com.intellij.platform.runtime.product.serialization.RawIncludedFromData;
+import com.intellij.platform.runtime.product.serialization.RawProductModules;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import org.jetbrains.annotations.NotNull;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+public final class ProductModulesXmlSerializer {
+  public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {
+    XMLStreamReader reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream);
+    int level = 0;
+    String moduleName = null;
+    List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>();
+    List<RawIncludedFromData> includedFrom = new ArrayList<>();
+    RuntimeModuleId includedFromModule = null;
+    Set<RuntimeModuleId> withoutModules = new LinkedHashSet<>();
+    String secondLevelTag = null;
+    String thirdLevelTag = null;
+    while (reader.hasNext()) {
+      int event = reader.next();
+      if (event == XMLStreamConstants.START_ELEMENT) {
+        level++;
+        String tagName = reader.getLocalName();
+        if (level == 2) {
+          secondLevelTag = tagName;
+        }
+        else if (level == 3) {
+          thirdLevelTag = tagName;
+        }
+      }
+      else if (event == XMLStreamConstants.CHARACTERS) {
+        if (level == 3) {
+          moduleName = reader.getText().trim();
+        }
+      }
+      else if (event == XMLStreamConstants.END_ELEMENT) {
+        level--;
+        if (level == 2) {
+          if (moduleName == null || moduleName.isEmpty()) {
+            throw new XMLStreamException("Module name is not specified");
+          }
+          RuntimeModuleId moduleId = RuntimeModuleId.legacyJpsModule(moduleName);
+          if ("main-root-modules".equals(secondLevelTag)) {
+            //todo remove later: this is temporarily kept to avoid exceptions if the tag is still present for some reasons
+          }
+          else if ("bundled-plugins".equals(secondLevelTag)) {
+            bundledPluginMainModules.add(moduleId);
+          }
+          else if ("include".equals(secondLevelTag)) {
+            if ("from-module".equals(thirdLevelTag)) {
+              includedFromModule = moduleId;
+            }
+            else if ("without-module".equals(thirdLevelTag)) {
+              withoutModules.add(moduleId);
+            }
+            else {
+              throw new XMLStreamException("Unexpected sub tag in 'include': " + secondLevelTag);
+            }
+          }
+          else {
+            throw new XMLStreamException("Unexpected second-level tag " + secondLevelTag);
+          }
+          moduleName = null;
+        }
+        else if (level == 1 && "include".equals(secondLevelTag)) {
+          if (includedFromModule == null) {
+            throw new XMLStreamException("'from-module' tag for 'include' is not specified");
+          }
+          includedFrom.add(new RawIncludedFromData(includedFromModule, withoutModules));
+          includedFromModule = null;
+          withoutModules = new LinkedHashSet<>();
+        }
+        if (level == 0) {
+          break;
+        }
+      }
+    }
+    reader.close();
+    return new RawProductModules(bundledPluginMainModules, includedFrom);
+  }
+}

@@ -1,7 +1,4 @@
-/*
- * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.statistics;
 
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -10,9 +7,6 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class StatisticsManagerTest extends LightPlatformTestCase {
   @NonNls private static final String TEST_CONTEXT = "testContext";
 
@@ -59,17 +53,26 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
 
   public void testRecency() {
     int limit = StatisticsManager.RECENCY_OBLIVION_THRESHOLD;
+    StatisticsManager m = StatisticsManager.getInstance();
     for (int i = limit + 1; i >= 0; i--) {
-      new StatisticsInfo("context", "value" + i).incUseCount();
+      m.incUseCount(new StatisticsInfo("context", "value" + i));
     }
     for (int i = 0; i < limit; i++) {
-      assertEquals(i, new StatisticsInfo("context", "value" + i).getLastUseRecency());
+      assertEquals(i, m.getLastUseRecency(new StatisticsInfo("context", "value" + i)));
     }
-    assertEquals(Integer.MAX_VALUE, new StatisticsInfo("context", "value" + limit).getLastUseRecency());
-    assertEquals(Integer.MAX_VALUE, new StatisticsInfo("anotherContext", "value0").getLastUseRecency());
+    assertEquals(Integer.MAX_VALUE, m.getLastUseRecency(new StatisticsInfo("context", "value" + limit)));
+    assertEquals(Integer.MAX_VALUE, m.getLastUseRecency(new StatisticsInfo("anotherContext", "value0")));
   }
 
   public void testBadHashValue() {
     StatisticsManager.getInstance().getUseCount(new StatisticsInfo("MVFOFVB", ""));
+  }
+
+  public void testClearStatistics() {
+    incUseCount("b", 5);
+    assertEquals(5, getUseCount("b"));
+
+    StatisticsManager.getInstance().clearStatistics();
+    assertEquals(0, getUseCount("b"));
   }
 }

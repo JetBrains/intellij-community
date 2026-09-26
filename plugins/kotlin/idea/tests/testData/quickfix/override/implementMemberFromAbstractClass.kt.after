@@ -1,0 +1,14 @@
+// "Implement members" "true"
+// WITH_STDLIB
+// K2_ERROR: ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED
+abstract class A {
+    abstract fun foo()
+}
+
+class B : A() {
+    override fun foo() {
+        TODO("Not yet implemented")
+    }
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersQuickfix

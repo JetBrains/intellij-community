@@ -1,0 +1,12 @@
+<component>
+  <group id="testXmlGroup">
+    <feature id="testXmlFeature"
+             tip-id="TestTip"
+             first-show="1"
+             successive-show="1"
+             min-usage-count="1"
+             utility-score="1">
+      <track-action id="TestXmlFeatureAction"/>
+    </feature>
+  </group>
+</component>

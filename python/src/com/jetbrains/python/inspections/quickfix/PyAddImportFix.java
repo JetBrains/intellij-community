@@ -1,31 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,32 +18,24 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-public class PyAddImportFix implements LocalQuickFix {
-  @NotNull
-  private final String myImportToAdd;
-  @NotNull
-  private final SmartPsiElementPointer<PyFile> myFile;
-
+public class PyAddImportFix extends PsiUpdateModCommandQuickFix {
+  private final @NotNull String myImportToAdd;
   /**
    * @param importToAdd string representing what to add (i.e. "from foo import bar")
-   * @param file where to add
    */
-  public PyAddImportFix(@NotNull final String importToAdd, @NotNull final PyFile file) {
+  public PyAddImportFix(@NotNull String importToAdd) {
     myImportToAdd = importToAdd;
-    myFile = SmartPointerManager.createPointer(file);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyBundle.message("QFIX.add.import.add.import", myImportToAdd);
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyFile file = myFile.getElement();
-    if (file == null) return;
+    PsiFile file = element.getContainingFile();
     final PyImportStatementBase statement =
       generator.createFromText(LanguageLevel.forElement(file), PyImportStatementBase.class, myImportToAdd);
     final PsiElement recommendedPosition = AddImportHelper.getFileInsertPosition(file);

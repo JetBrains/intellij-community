@@ -1,22 +1,20 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
   private int myRootsChangedCount;
 
@@ -65,9 +63,9 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
 
   private void subscribeToRootChanges() {
     PlatformTestUtil.saveProject(getProject());
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         myRootsChangedCount++;
       }
     });
@@ -77,9 +75,9 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
     assertEquals(1, myRootsChangedCount);
     for (Module module : modules) {
       File dir = getOutputDir(module, false);
-      VirtualFile outputDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+      VirtualFile outputDir = StandardFileSystems.local().findFileByPath(dir.getAbsolutePath());
       assertNotNull("output directory wasn't refreshed: " + dir.getAbsolutePath(), outputDir);
     }
-    System.out.println("myRootsChangedCount = " + myRootsChangedCount);
+    LOG.debug("myRootsChangedCount = " + myRootsChangedCount);
   }
 }

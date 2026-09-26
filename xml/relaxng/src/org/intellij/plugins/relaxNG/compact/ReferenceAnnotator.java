@@ -16,21 +16,32 @@
 
 package org.intellij.plugins.relaxNG.compact;
 
+import com.intellij.BundleBase;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInspection.*;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncExternalRef;
+import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
+import org.intellij.plugins.relaxNG.compact.psi.RncName;
+import org.intellij.plugins.relaxNG.compact.psi.RncParentRef;
+import org.intellij.plugins.relaxNG.compact.psi.RncRef;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
-
-public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
+public class ReferenceAnnotator extends RncElementVisitor implements Annotator, DumbAware {
   private AnnotationHolder myHolder;
 
   @Override
@@ -72,8 +83,7 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     for (PsiReference reference : references) {
       if (!reference.isSoft()) {
         if (reference.resolve() == null) {
-          if (reference instanceof PsiPolyVariantReference) {
-            final PsiPolyVariantReference pvr = (PsiPolyVariantReference)reference;
+          if (reference instanceof PsiPolyVariantReference pvr) {
             if (pvr.multiResolve(false).length == 0) {
               addError(reference);
             }
@@ -90,26 +100,38 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     final TextRange range = TextRange.from(reference.getElement().getTextRange().getStartOffset()
             + rangeInElement.getStartOffset(), rangeInElement.getLength());
 
-    final Annotation annotation;
+    String message;
     if (reference instanceof EmptyResolveMessageProvider) {
-      final String s = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-      annotation = myHolder.createErrorAnnotation(range, MessageFormat.format(s, reference.getCanonicalText()));
+      message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
     }
     else {
-      annotation = myHolder.createErrorAnnotation(range, "Cannot resolve symbol");
+      //noinspection UnresolvedPropertyKey
+      message = AnalysisBundle.message("cannot.resolve.symbol");
     }
-    annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+
+    String description;
+    try {
+      description = BundleBase.format(message, reference.getCanonicalText()); // avoid double formatting NON-NLS
+    }
+    catch (IllegalArgumentException ex) {
+      // unresolvedMessage provided by third-party reference contains wrong format string (e.g. {}), tolerate it
+      description = message;
+    }
+
+    AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, description).range(range)
+      .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
     if (reference instanceof LocalQuickFixProvider) {
       LocalQuickFix[] fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
       if (fixes != null) {
         InspectionManager inspectionManager = InspectionManager.getInstance(reference.getElement().getProject());
         for (LocalQuickFix fix : fixes) {
-          ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(reference.getElement(), annotation.getMessage(), fix,
+          ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(reference.getElement(), message, fix,
                                                                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, true);
-          annotation.registerFix(fix, null, null, descriptor);
+          builder = builder.newLocalQuickFix(fix, descriptor).registerFix();
         }
       }
     }
+    builder.create();
   }
 }

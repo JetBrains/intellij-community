@@ -1,0 +1,73 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.eclipse.lsp4j"/>
+    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lsp"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.community.core.impl"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pyrefly"/>
+    <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.ty"/>
+    <module name="intellij.python.typeEngine.common"/>
+    <module name="intellij.xml.parser"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <projectListeners>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.intellij.python.lsp.core.listener.PyLspListener"/>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.jetbrains.python.sdk.PySdkListener"/>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.typeEngine.PyTypeEngineApiProvider"
+                                            apiInterfaces="com.intellij.python.typeEngine.common.PyTypeEngineApi"/>
+
+    <registryKey key="pycharm.type.engine" defaultValue="true"
+                 description="Enable PyCharm type engine configuration"/>
+
+    <notificationGroup id="Python Type Engine"
+                       displayType="TOOL_WINDOW"
+                       toolWindowId="Python Console"
+                       isLogByDefault="true"
+                       bundle="messages.TypeEngineBundle"
+                       key="notification.group.python.type.engine"/>
+
+  </extensions>
+</idea-plugin>

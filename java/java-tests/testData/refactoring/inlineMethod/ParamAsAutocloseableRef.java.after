@@ -1,0 +1,13 @@
+class X {
+    void use() {
+        AutoCloseable r = () -> {};
+        AutoCloseable ref = r;
+        try(ref) {
+            System.out.println(ref);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+}

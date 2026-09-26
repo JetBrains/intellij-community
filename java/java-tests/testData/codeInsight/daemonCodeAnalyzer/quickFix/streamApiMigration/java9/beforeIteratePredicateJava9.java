@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Collapse loop with stream 'forEach()'" "true-preview"
 
 public class Main {
   static class A {

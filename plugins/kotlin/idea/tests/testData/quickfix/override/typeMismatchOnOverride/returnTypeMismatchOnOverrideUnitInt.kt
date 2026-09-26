@@ -1,0 +1,8 @@
+// "Remove explicitly specified return type" "true"
+// K2_ERROR: RETURN_TYPE_MISMATCH_ON_OVERRIDE
+abstract class A : java.util.Iterator<Int> {
+    public abstract override fun remove() : Int<caret>;
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

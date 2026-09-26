@@ -1,0 +1,19 @@
+(a instanceof b
+ c)
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    Instanceof expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(instanceof)('instanceof')
+      PsiWhiteSpace(' ')
+      Type element
+        Reference element
+          PsiElement(identifier)('b')
+      PsiElement(new line)('\n ')
+      GrPatternVariableImpl(PATTERN_VARIABLE)
+        PsiElement(identifier)('c')
+    PsiElement())(')')

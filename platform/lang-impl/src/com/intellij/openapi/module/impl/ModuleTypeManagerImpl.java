@@ -1,52 +1,57 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeEP;
+import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.UnknownModuleType;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ModuleTypeManagerImpl extends ModuleTypeManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ModuleTypeManagerImpl.class);
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ModuleTypeEP> EP_NAME = new ExtensionPointName<>("com.intellij.moduleType");
 
-  private final LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<>();
+  private final LinkedHashMap<ModuleType<?>, Boolean> myModuleTypes = new LinkedHashMap<>();
 
   public ModuleTypeManagerImpl() {
     registerModuleType(getDefaultModuleType(), true);
-    for (ModuleTypeEP ep : ModuleTypeEP.EP_NAME.getExtensions()) {
+    EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
       if (ep.id == null) {
-        LOG.error("'id' attribute isn't specified for <moduleType implementationClass='" + ep.implementationClass + "'> extension");
+        LOG.error(new PluginException("'id' attribute isn't specified for <moduleType implementationClass='" + ep.implementationClass + "'> extension", pluginDescriptor.getPluginId()));
       }
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
-  public void registerModuleType(ModuleType type) {
+  public void registerModuleType(@NotNull ModuleType type) {
     registerModuleType(type, false);
   }
 
   @Override
-  public void registerModuleType(ModuleType type, boolean classpathProvider) {
-    for (ModuleType oldType : myModuleTypes.keySet()) {
+  public void unregisterModuleType(@NotNull ModuleType<?> type) {
+    myModuleTypes.remove(type);
+  }
+
+  @Override
+  public void registerModuleType(@NotNull ModuleType type, boolean classpathProvider) {
+    for (ModuleType<?> oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
-        LOG.error("Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type);
+        PluginException.logPluginError(LOG, "Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass());
         return;
       }
     }
@@ -55,46 +60,50 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType[] getRegisteredTypes() {
-    List<ModuleType> result = new ArrayList<>(myModuleTypes.keySet());
-    for (ModuleTypeEP moduleTypeEP : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
-      result.add(moduleTypeEP.getModuleType());
-    }
-
-    return result.toArray(new ModuleType[0]);
+  public @NotNull @Unmodifiable List<ModuleType<?>> getRegisteredTypes() {
+    List<ModuleType<?>> result = new ArrayList<>(myModuleTypes.keySet());
+    EP_NAME.forEachExtensionSafe(ep -> {
+      ModuleType<?> moduleType = ep.getModuleType();
+      if (!myModuleTypes.containsKey(moduleType)) {
+        result.add(moduleType);
+      }
+    });
+    return result;
   }
 
   @Override
-  public ModuleType findByID(String moduleTypeID) {
-    if (moduleTypeID == null) return getDefaultModuleType();
-    for (ModuleType type : myModuleTypes.keySet()) {
-      if (type.getId().equals(moduleTypeID)) {
+  public @NotNull ModuleType<?> findByID(@Nullable String moduleTypeId) {
+    if (moduleTypeId == null) {
+      return getDefaultModuleType();
+    }
+
+    for (ModuleType<?> type : myModuleTypes.keySet()) {
+      if (type.getId().equals(moduleTypeId)) {
         return type;
       }
     }
-    for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
-      if (moduleTypeID.equals(ep.id)) {
-        return ep.getModuleType();
-      }
-    }
 
-    return new UnknownModuleType(moduleTypeID, getDefaultModuleType());
+    ModuleTypeEP result = EP_NAME.getByKey(moduleTypeId, ModuleTypeManagerImpl.class, it -> it.id);
+    if (result != null) {
+      return result.getModuleType();
+    }
+    return new UnknownModuleType(moduleTypeId, getDefaultModuleType());
   }
 
   @Override
-  public boolean isClasspathProvider(final ModuleType moduleType) {
-    for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+  public boolean isClasspathProvider(@NotNull ModuleType moduleType) {
+    for (ModuleTypeEP ep : EP_NAME.getExtensionList()) {
       if (moduleType.getId().equals(ep.id)) {
         return ep.classpathProvider;
       }
     }
 
-    final Boolean provider = myModuleTypes.get(moduleType);
-    return provider != null && provider.booleanValue();
+    Boolean provider = myModuleTypes.get(moduleType);
+    return provider != null && provider;
   }
 
   @Override
-  public ModuleType getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return EmptyModuleType.getInstance();
   }
 }

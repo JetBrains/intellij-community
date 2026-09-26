@@ -1,12 +1,14 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Implementation of a {@link PaletteItem} which delegates to another {@linkplain PaletteItem}
@@ -14,7 +16,7 @@ import javax.swing.*;
  */
 public class VariationPaletteItem implements PaletteItem {
   private final PaletteItem myDefaultItem;
-  private final String myTitle;
+  private final @NotNull String myTitle;
   private final String myIconPath;
   private final String myTooltip;
   private final String myCreation;
@@ -53,7 +55,7 @@ public class VariationPaletteItem implements PaletteItem {
   }
 
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
@@ -96,15 +98,13 @@ public class VariationPaletteItem implements PaletteItem {
     myModel = metaModel;
   }
 
-  @Nullable
   @Override
-  public String getDeprecatedIn() {
+  public @Nullable String getDeprecatedIn() {
     return myDefaultItem.getDeprecatedIn();
   }
 
-  @Nullable
   @Override
-  public String getDeprecatedHint() {
+  public @Nullable String getDeprecatedHint() {
     return myDefaultItem.getDeprecatedHint();
   }
 }

@@ -1,0 +1,22 @@
+<!--
+This file represents the extensions that are registered both in the Java plugin and Analyzer to avoid duplicating registration.
+Consider adding a new extension to the corresponding intellij.java.analysis.impl.xml if it is intended to be used only in Java.
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/RegistryKeysAnalysisImpl.xml"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
+
+    <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
+    <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
+    <workspaceModel.moduleExtensionBridgeFactory
+      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.LanguageLevelModuleExtensionBridge$Factory"/>
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaResolveScopeProvider"/>
+  </extensions>
+</idea-plugin>

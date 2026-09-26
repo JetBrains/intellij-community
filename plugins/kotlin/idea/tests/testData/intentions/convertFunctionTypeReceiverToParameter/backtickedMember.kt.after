@@ -1,0 +1,5 @@
+class Box(val `bar baz`: Int)
+
+fun foo(): (Box) -> Int = { box ->
+    box.`bar baz`
+}

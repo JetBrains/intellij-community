@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 
   public GroovyPsiElementImpl(@NotNull ASTNode node) {
@@ -47,8 +44,7 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     acceptGroovyChildren(this, visitor);
   }
 
-  @Nullable
-  public static GrExpression findExpressionChild(final PsiElement element) {
+  public static @Nullable GrExpression findExpressionChild(final PsiElement element) {
     for (PsiElement cur = element.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) return (GrExpression)cur;
     }

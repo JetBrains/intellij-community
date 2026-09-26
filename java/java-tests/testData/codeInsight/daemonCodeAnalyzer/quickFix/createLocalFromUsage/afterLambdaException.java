@@ -1,4 +1,4 @@
-// "Create local variable 'v'" "true"
+// "Create local variable 'v'" "true-preview"
 public class A {
   void foo() {
     L l = () -> {

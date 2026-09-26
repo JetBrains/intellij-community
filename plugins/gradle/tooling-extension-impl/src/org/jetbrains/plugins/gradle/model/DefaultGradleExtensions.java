@@ -1,93 +1,136 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;
-  private File myParentProjectDir;
-  @NotNull
-  private final List<GradleExtension> myExtensions = new ArrayList<GradleExtension>();
-  @NotNull
-  private final List<GradleProperty> myGradleProperties = new ArrayList<GradleProperty>();
-  @NotNull
-  private final List<ExternalTask> myTasks = new ArrayList<ExternalTask>();
 
-  private final List<GradleConfiguration> myConfigurations = new ArrayList<GradleConfiguration>();
+  private final List<DefaultGradleExtension> extensions;
+  private final List<DefaultGradleConvention> conventions;
+  private final List<DefaultGradleProperty> gradleProperties;
+  private final ArrayList<DefaultExternalTask> tasks;
+  private final List<DefaultGradleConfiguration> configurations;
+  private String parentProjectPath;
 
   public DefaultGradleExtensions() {
+    extensions = new ArrayList<>(0);
+    conventions = new ArrayList<>(0);
+    gradleProperties = new ArrayList<>(0);
+    tasks = new ArrayList<>(0);
+    configurations = new ArrayList<>(0);
   }
 
-  public DefaultGradleExtensions(GradleExtensions extensions) {
-    myParentProjectDir = extensions.getParentProjectDir();
+  public DefaultGradleExtensions(@NotNull GradleExtensions extensions) {
+    parentProjectPath = extensions.getParentProjectPath();
+
+    this.extensions = new ArrayList<>(extensions.getExtensions().size());
     for (GradleExtension extension : extensions.getExtensions()) {
-      myExtensions.add(new DefaultGradleExtension(extension));
+      this.extensions.add(new DefaultGradleExtension(extension));
     }
+
+    conventions = new ArrayList<>(extensions.getConventions().size());
+    for (GradleConvention convention : extensions.getConventions()) {
+      conventions.add(new DefaultGradleConvention(convention));
+    }
+
+    gradleProperties = new ArrayList<>(extensions.getGradleProperties().size());
     for (GradleProperty property : extensions.getGradleProperties()) {
-      myGradleProperties.add(new DefaultGradleProperty(property));
-   }
+      gradleProperties.add(new DefaultGradleProperty(property));
+    }
+
+    tasks = new ArrayList<>(extensions.getTasks().size());
     for (ExternalTask entry : extensions.getTasks()) {
-      myTasks.add(new DefaultExternalTask(entry));
+      tasks.add(new DefaultExternalTask(entry));
     }
+
+    configurations = new ArrayList<>(extensions.getConfigurations().size());
     for (GradleConfiguration entry : extensions.getConfigurations()) {
-      myConfigurations.add(new DefaultGradleConfiguration(entry));
+      configurations.add(new DefaultGradleConfiguration(entry));
     }
   }
 
-  @Nullable
   @Override
-  public File getParentProjectDir() {
-    return myParentProjectDir;
+  public @Nullable String getParentProjectPath() {
+    return parentProjectPath;
   }
 
-  public void setParentProjectDir(File parentProjectDir) {
-    myParentProjectDir = parentProjectDir;
+  public void setParentProjectPath(String parentProjectPath) {
+    this.parentProjectPath = parentProjectPath;
   }
 
-  @NotNull
   @Override
-  public List<GradleExtension> getExtensions() {
-    return myExtensions;
+  public @NotNull List<DefaultGradleExtension> getExtensions() {
+    return extensions == null ? Collections.emptyList() : extensions;
   }
 
-  @NotNull
   @Override
-  public List<GradleProperty> getGradleProperties() {
-    return myGradleProperties;
+  public @NotNull List<DefaultGradleConvention> getConventions() {
+    return conventions == null ? Collections.emptyList() : conventions;
   }
 
-  @NotNull
   @Override
-  public List<ExternalTask> getTasks() {
-    return myTasks;
+  public @NotNull List<DefaultGradleProperty> getGradleProperties() {
+    return gradleProperties == null ? Collections.emptyList() : gradleProperties;
   }
 
-  @NotNull
   @Override
-  public List<GradleConfiguration> getConfigurations() {
-    return myConfigurations;
+  public @NotNull List<DefaultExternalTask> getTasks() {
+    return tasks;
+  }
+
+  public void addTasks(@NotNull Collection<? extends ExternalTask> values) {
+    tasks.ensureCapacity(tasks.size() + values.size());
+    for (ExternalTask value : values) {
+      if (value instanceof DefaultExternalTask) {
+        tasks.add((DefaultExternalTask)value);
+      }
+      else {
+        tasks.add(new DefaultExternalTask(value));
+      }
+    }
+  }
+
+  @Override
+  public @NotNull List<DefaultGradleConfiguration> getConfigurations() {
+    return configurations == null ? Collections.emptyList() : configurations;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DefaultGradleExtensions that = (DefaultGradleExtensions)o;
+
+    if (!Objects.equals(extensions, that.extensions)) return false;
+    if (!Objects.equals(conventions, that.conventions)) return false;
+    if (!Objects.equals(gradleProperties, that.gradleProperties)) return false;
+    if (!Objects.equals(tasks, that.tasks)) return false;
+    if (!Objects.equals(configurations, that.configurations)) return false;
+    if (!Objects.equals(parentProjectPath, that.parentProjectPath)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = extensions != null ? extensions.hashCode() : 0;
+    result = 31 * result + (conventions != null ? conventions.hashCode() : 0);
+    result = 31 * result + (gradleProperties != null ? gradleProperties.hashCode() : 0);
+    result = 31 * result + (tasks != null ? tasks.hashCode() : 0);
+    result = 31 * result + (configurations != null ? configurations.hashCode() : 0);
+    result = 31 * result + (parentProjectPath != null ? parentProjectPath.hashCode() : 0);
+    return result;
   }
 }

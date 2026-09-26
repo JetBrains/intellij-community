@@ -1,0 +1,321 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring.inline;
+
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inline.InlineObjectProcessorUtil.InlineObjectContext;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.function.Supplier;
+
+public final class InlineMethodHandler extends JavaInlineActionHandler {
+
+  private InlineMethodHandler() {}
+
+  @Override
+  public boolean canInlineElement(PsiElement element) {
+    return element instanceof PsiMethod && element.getNavigationElement() instanceof PsiMethod && 
+           element.getLanguage() == JavaLanguage.INSTANCE;
+  }
+
+  @Override
+  public void inlineElement(Project project, Editor editor, PsiElement element) {
+    performInline(project, editor, (PsiMethod)element.getNavigationElement(), false);
+  }
+
+  /**
+   * Try to inline method, displaying UI or error message if necessary
+   * @param project project where method is declared
+   * @param editor active editor where cursor might point to the call site
+   * @param method method to be inlined
+   * @param allowInlineThisOnly if true, only call-site at cursor will be suggested
+   *                            (in this case caller must check that cursor points to the valid reference)
+   */
+  public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+
+    ContextOrError contextOrError = createInlineContext(method, reference, allowInlineThisOnly);
+
+    switch (contextOrError) {
+      case ContextOrError.InlineAbstractMethod context -> {
+        inlineAbstractMethod(project, editor, context);
+      }
+      case ContextOrError.InlineObject context -> {
+        inlineObject(context);
+      }
+      case ContextOrError.InlineRegularMethod context -> {
+        inlineRegularMethod(project, editor, context);
+      }
+      case ContextOrError.Error error -> {
+        CommonRefactoringUtil.showErrorHint(project, editor, error.message(), getRefactoringName(), HelpID.INLINE_METHOD);
+      }
+    }
+  }
+
+
+  private static void inlineAbstractMethod(@NotNull Project project,
+                                           @NotNull Editor editor,
+                                           @NotNull ContextOrError.InlineAbstractMethod context) {
+    PsiMethod realMethod = context.method();
+    PsiReference reference = context.reference();
+    String message = JavaRefactoringBundle.message("dialog.message.confirmation.to.process.only.implementation",
+                                                   formatMethod(realMethod));
+    int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
+    if (answer == Messages.NO) return;
+    InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
+    // Without this line, conflicts view is not shown
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+    processor.run();
+  }
+
+  /**
+   * Formats method in a way it will be displayed in the dialogs related to inline method refactoring.
+   * @param method candidate method to be formatted.
+   */
+  public static @NotNull String formatMethod(@NotNull PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                      PsiFormatUtilBase.SHOW_NAME |
+                                      PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0);
+  }
+
+  private static void inlineObject(ContextOrError.InlineObject inlineObject) {
+    InlineObjectProcessor processor = InlineObjectProcessor.create(InlineObjectContext.create(inlineObject.method(), inlineObject.reference()));
+    if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
+                                    JavaRefactoringBundle.message("inline.method.object.action.name"),
+                                    JavaRefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
+                                    Messages.getQuestionIcon()) == Messages.OK) {
+      processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+      });
+      processor.run();
+    }
+  }
+
+  private static void inlineRegularMethod(Project project, Editor editor, ContextOrError.InlineRegularMethod context) {
+    InlineMethodDialog dialog = new InlineMethodDialog(project, context.method(), context.reference(), editor, context.allowInsideThisOnly());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        dialog.doAction();
+      } finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      }
+    }
+    else {
+      dialog.show();
+    }
+  }
+
+  public static boolean checkRecursive(PsiMethod method) {
+    PsiCodeBlock body = method.getBody();
+    return body != null && checkCalls(body, method);
+  }
+
+  private static boolean checkCalls(PsiElement scope, PsiMethod method) {
+    if (scope instanceof PsiMethodCallExpression call) {
+      if (method.equals(call.getMethodExpression().resolve())) return true;
+    }
+
+    if (scope instanceof PsiMethodReferenceExpression ref) {
+      if (method.equals(ref.resolve())) return true;
+    }
+
+    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (checkCalls(child, method)) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Computes the initial context that should be used to perform inline method refactoring.
+   * @param method - Method to be inlined.
+   * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+   * @param allowInlineThisOnly - whether to allow inlining of "this" only.
+   *
+   * @see ContextOrError
+   */
+  public static @NotNull ContextOrError createInlineContext(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInlineThisOnly) {
+    Project project = method.getProject();
+    if (reference != null && reference.isReferenceTo(method) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      PsiMethod realMethod = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.nonBlocking(() -> {
+          Collection<PsiMethod> methods =
+            OverridingMethodsSearch.search(method).filtering(m -> !m.hasModifierProperty(PsiModifier.ABSTRACT))
+              .findAll();
+          return ContainerUtil.getOnlyItem(methods);
+        }).executeSynchronously(),
+        JavaRefactoringBundle.message("dialog.title.resolving.method.implementation"), true, project);
+      if (realMethod != null && realMethod.getBody() != null) {
+        return new ContextOrError.InlineAbstractMethod(realMethod, reference);
+      }
+    }
+
+    PsiCodeBlock methodBody = method.getBody();
+    Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
+    if (specialization != null) {
+      allowInlineThisOnly = true;
+      methodBody = specialization.get();
+    }
+
+    if (methodBody == null) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName()));
+      }
+      else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName()));
+      }
+      else {
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName()));
+      }
+    }
+
+
+    if (reference == null && checkRecursive(method)) {
+      return new ContextOrError.Error(RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", getRefactoringName()));
+    }
+
+    if (reference != null) {
+      final String errorMessage = InlineMethodProcessorUtil.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
+      if (errorMessage != null) {
+        return new ContextOrError.Error(errorMessage);
+      }
+    }
+    if (method.isConstructor()) {
+      if (!InlineUtil.isChainingConstructor(method)) {
+        if (InlineObjectProcessorUtil.canInlineConstructorAndChainCall(reference, method)) {
+          return new ContextOrError.InlineObject(method, reference);
+        }
+        if (!isThisReference(reference)) {
+          return new ContextOrError.Error(
+            JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", getRefactoringName()));
+        }
+        allowInlineThisOnly = true;
+      }
+      if (reference != null) {
+        final PsiElement refElement = reference.getElement();
+        PsiCall constructorCall =
+          refElement instanceof PsiJavaCodeReferenceElement ref ? RefactoringUtil.getEnclosingConstructorCall(ref) : null;
+        if (constructorCall == null || !method.equals(constructorCall.resolveMethod())) reference = null;
+      }
+    }
+    else {
+      if (reference != null && !method.getManager().areElementsEquivalent(method, reference.resolve())) {
+        reference = null;
+      }
+    }
+
+    if (reference != null && PsiTreeUtil.getParentOfType(reference.getElement(), PsiImportStaticStatement.class) != null) {
+      reference = null;
+    }
+
+    final boolean invokedOnReference = reference != null;
+    if (!invokedOnReference) {
+      final VirtualFile vFile = method.getContainingFile().getVirtualFile();
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vFile));
+    }
+
+    if (reference != null) {
+      final PsiElement referenceElement = reference.getElement();
+      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE && !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
+        reference = null;
+      }
+    }
+
+    return new ContextOrError.InlineRegularMethod(method, reference, allowInlineThisOnly);
+  }
+
+  public static boolean isThisReference(PsiReference reference) {
+    return reference != null &&
+           reference.getElement() instanceof PsiJavaCodeReferenceElement codeRef &&
+           codeRef.getParent() instanceof PsiMethodCallExpression &&
+           "this".equals(codeRef.getReferenceName());
+  }
+
+  @Override
+  public @NotNull String getActionName(PsiElement element) {
+    return RefactoringBundle.message("inline.method.action.name");
+  }
+
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
+    return RefactoringBundle.message("inline.method.title");
+  }
+
+  /**
+   * Represents the result of preliminary analysis of the context of the method to be inlined.
+   */
+  public sealed interface ContextOrError
+    permits ContextOrError.Error, ContextOrError.InlineAbstractMethod, ContextOrError.InlineObject,
+            ContextOrError.InlineRegularMethod {
+
+    /**
+     * Result in which the refactoring was invoked on the abstract method, but it has single implementation.
+     * @param method - Method to be inlined.
+     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     */
+    record InlineAbstractMethod(@NotNull PsiMethod method, @NotNull PsiReference reference) implements ContextOrError {
+    }
+
+    /**
+     * Result in which the refactoring can inline the object creation together with the chained call.
+     * For example, {@code new Point(12, 34).getX()}.
+     * @param method - Constructor of the object to be inlined.
+     * @param reference - Reference to the constructor call on which inline refactoring was invoked.
+     */
+    record InlineObject(@NotNull PsiMethod method, @NotNull PsiReference reference) implements ContextOrError {
+    }
+
+    /**
+     * Result in which the regular method could be inlined.
+     * @param method - Method to be inlined.
+     * @param reference - Reference to the method call on which inline refactoring was invoked. It is null when refactoring is invoked on method declaration.
+     * @param allowInsideThisOnly - Whether the only single reference should be inlined.
+     */
+    record InlineRegularMethod(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInsideThisOnly)
+      implements ContextOrError {
+    }
+
+    /**
+     * Represents an error that occurred during the initial analysis of the context of the method to be inlined.
+     *
+     * @param message the error message
+     */
+    record Error(@Nls String message) implements ContextOrError {
+    }
+  }
+}

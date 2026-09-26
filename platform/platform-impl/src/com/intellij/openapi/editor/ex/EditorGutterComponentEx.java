@@ -1,29 +1,69 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LineNumberConverter;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.impl.EditorGutterListener;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import gnu.trove.TIntFunction;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
-  @Nullable
-  public abstract FoldRegion findFoldingAnchorAt(int x, int y);
+  /**
+   * The key to retrieve the logical editor line position of the latest actionable click inside the gutter.
+   * Available to gutter popup actions,
+   * see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()},
+   * {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)}.
+   */
+  public static final DataKey<Integer> LOGICAL_LINE_AT_CURSOR = DataKey.create("EditorGutter.LOGICAL_LINE_AT_CURSOR");
+
+  /**
+   * The key to retrieve the editor gutter icon's center position of the latest actionable click inside the gutter.
+   * Available to gutter popup actions,
+   * see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()},
+   * {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)}.
+   */
+  public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
+
+  public abstract @NotNull EditorEx getEditor();
+
+  public abstract @Nullable FoldRegion findFoldingAnchorAt(int x, int y);
+
+  public abstract @NotNull List<GutterMark> getGutterRenderers(int line);
+
+  public abstract @NotNull List<Pair<GutterMark, Rectangle>> getGutterRenderersAndRectangles(int visualLine);
+
+  public abstract void addEditorGutterListener(@NotNull EditorGutterListener listener, @NotNull Disposable parentDisposable);
+
+  public abstract @Nullable EditorGutterAction getAction(@NotNull TextAnnotationGutterProvider provider);
 
   public abstract int getWhitespaceSeparatorOffset();
 
   public abstract void revalidateMarkup();
 
   public abstract int getLineMarkerAreaOffset();
-  
+
   public abstract int getIconAreaOffset();
-  
+
   public abstract int getLineMarkerFreePaintersAreaOffset();
 
   public abstract int getIconsAreaWidth();
@@ -32,27 +72,97 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getAnnotationsAreaWidth();
 
-  @Nullable
-  public abstract Point getCenterPoint(GutterIconRenderer renderer);
+  public abstract int getFoldingAreaOffset();
 
-  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor);
-
-  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
+  public abstract @Nullable Point getCenterPoint(@NotNull GutterIconRenderer renderer);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 
+  /** When set to false, makes {@link #closeAllAnnotations()} a no-op and hides the corresponding context menu action. */
+  public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
+
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
-  
+
+  @ApiStatus.Experimental
+  public abstract @NotNull List<AnAction> getTextAnnotationPopupActions(int logicalLine);
+
+  public abstract boolean isPaintBackground();
+
   public abstract void setPaintBackground(boolean value);
 
-  public abstract void setForceShowLeftFreePaintersArea(boolean value);
+  /**
+   * Force left free painters area to always be visible or hidden
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setLeftFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
 
-  public abstract void setForceShowRightFreePaintersArea(boolean value);
+  /**
+   * Force right free painters area to always be visible or hidden
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setRightFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
+
+  /**
+   * Request an area in the left area to be reserved
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveLeftFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
+
+  /**
+   * Request an area in the right area to be reserved
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveRightFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
 
   public abstract void setInitialIconAreaWidth(int width);
 
-  @Nullable
-  public GutterMark getGutterRenderer(final Point p) {
+  public abstract @Nullable GutterMark getGutterRenderer(Point p);
+
+  public abstract @Nullable Runnable setLoadingIconForCurrentGutterMark();
+
+  @ApiStatus.Internal
+  public abstract int getExtraLineMarkerFreePaintersAreaOffset();
+
+  @ApiStatus.Internal
+  public abstract boolean isInsideMarkerArea(@NotNull MouseEvent e);
+
+  @ApiStatus.Internal
+  public int getHoveredFreeMarkersLine() {
+    return -1;
+  }
+
+  /**
+   * @return y coordinate of the last mouse cursor point on the gutter's free markers area or -1 if the point is not on the area.
+   */
+  @ApiStatus.Internal
+  public int getHoveredFreeMarkersY() {
+    return -1;
+  }
+
+  @ApiStatus.Internal
+  public int getLineNumberAreaOffset() {
+    return 0;
+  }
+
+  @ApiStatus.Internal
+  public int getLineNumberAreaWidth() {
+    return 0;
+  }
+
+  public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+    return LineNumberConverter.DEFAULT;
+  }
+
+  public @Nullable LineNumberConverter getAdditionalLineNumberConverter() {
     return null;
   }
+
+  // Needed when multiple editors are displayed on top of one another in a flowing layout
+  // If you do something like that, consider using this API
+  @ApiStatus.Internal
+  public void pinLayoutsTogetherOnMaximalWidth(List<EditorGutterComponentEx> gutters) { }
 }

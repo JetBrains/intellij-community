@@ -1,4 +1,4 @@
-// "Copy 'o' to final temp variable" "true"
+// "Copy 'o' to final temp variable" "true-preview"
 class Test1 {
     void foo(){}
     {

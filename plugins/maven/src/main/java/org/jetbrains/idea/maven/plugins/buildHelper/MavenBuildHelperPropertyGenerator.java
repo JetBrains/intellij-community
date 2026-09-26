@@ -9,9 +9,6 @@ import org.jetbrains.idea.maven.plugins.api.MavenPropertiesGenerator;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenBuildHelperPropertyGenerator extends MavenPropertiesGenerator {
   @Override
   public void generate(@NotNull Properties modelProperties,

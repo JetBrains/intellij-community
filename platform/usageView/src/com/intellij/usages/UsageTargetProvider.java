@@ -1,34 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface UsageTargetProvider {
-  @Nullable
-  UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file);
+/**
+ * Implement this interface and register the implementation as {@code com.intellij.usageTargetProvider} extension in plugin.xml
+ * to provide usage targets.
+ *
+ * @see com.intellij.find.usages.symbol.SymbolSearchTargetFactory
+ */
+public interface UsageTargetProvider extends PossiblyDumbAware {
 
-  @Nullable
-  UsageTarget[] getTargets(@NotNull PsiElement psiElement);
+  /**
+   * @param editor currently opened editor
+   * @param file   currently opened file in the {@code editor}
+   * @return array of usage targets at the current editor offset in the file,
+   * or {@code null} or an empty array if there are no usage targets at the current editor offset in the file
+   */
+  default UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
+    return null;
+  }
+
+  /**
+   * @param psiElement target element, for which usage target is requested
+   * @return array of usage targets, which represent given target {@code psiElement}
+   * or {@code null} or an empty array if the {@code psiElement} cannot be represented as a usage target by this provider
+   */
+  default UsageTarget @Nullable [] getTargets(@NotNull PsiElement psiElement) {
+    return null;
+  }
 }

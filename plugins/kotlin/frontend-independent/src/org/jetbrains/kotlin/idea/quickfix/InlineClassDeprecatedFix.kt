@@ -1,0 +1,49 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.quickfix
+
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.platform.has
+import org.jetbrains.kotlin.platform.jvm.JvmPlatform
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+
+class InlineClassDeprecatedFix(
+    element: KtModifierListOwner,
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtModifierListOwner>(element) {
+
+    @IntentionName
+    private val text = KotlinBundle.message(
+        "replace.with.0",
+        (if (element.containingKtFile.hasJvmTarget()) "@JvmInline " else "") + "value"
+    )
+
+    override fun getActionPresentation(context: ActionContext, element: KtModifierListOwner): Presentation = Presentation.of(text)
+
+    override fun getFamilyName(): String = KotlinBundle.message("replace.modifier")
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtModifierListOwner,
+        updater: ModPsiUpdater,
+    ) {
+        element.removeModifierKeyword(KtTokens.INLINE_KEYWORD)
+        element.addModifierKeyword(KtTokens.VALUE_KEYWORD)
+        if (element.containingKtFile.hasJvmTarget()) {
+            element.addAnnotation(ClassId.topLevel(StandardKotlinNames.Jvm.JvmInline))
+        }
+    }
+}
+
+private fun KtFile.hasJvmTarget(): Boolean = platform.has<JvmPlatform>()

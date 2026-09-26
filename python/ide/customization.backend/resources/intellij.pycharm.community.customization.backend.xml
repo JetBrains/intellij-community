@@ -1,0 +1,19 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <!-- The reference to Vcs.VcsClone resolves only where the platform VCS module registers the
+         action. Keep this dependency in the backend customization content module: the shared
+         customization plugin is also included in JetBrains Client layouts where backend-only VCS
+         modules are unavailable. -->
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+
+  <actions>
+    <!-- The product places the platform Vcs.VcsClone action (see VcsActions.xml).
+         Only the placement is product-specific. -->
+    <reference ref="Vcs.VcsClone">
+      <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
+      <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
+    </reference>
+  </actions>
+</idea-plugin>

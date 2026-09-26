@@ -1,0 +1,23 @@
+================ Step #1 =================
+Cleaning output files:
+  Client.class
+  Const1.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain2/a/Client.java
+  java/fieldProperties/constantChain2/a/Const1.java
+End of files
+Cleaning output files:
+  Const2.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain2/a/Const2.java
+End of files
+Cleaning output files:
+  Client.class
+End of files
+Compiling files:
+  java/fieldProperties/constantChain2/a/Client.java
+End of files
+------------------------------------------
+Exit code: OK

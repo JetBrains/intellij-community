@@ -1,23 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -36,15 +29,15 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   private boolean myStaticScopeFlag;
   private boolean myIsConstructor;
   protected PsiElement myCurrentFileContext;
-  protected PsiClass myAccessClass;
+  PsiClass myAccessClass;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
   private final LanguageLevel myLanguageLevel;
 
-  public MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
-                          @NotNull List<CandidateInfo> container,
-                          @NotNull PsiElement place,
-                          @NotNull PsiFile placeFile) {
+  MethodsProcessor(PsiConflictResolver @NotNull [] resolvers,
+                   @NotNull List<CandidateInfo> container,
+                   @NotNull PsiElement place,
+                   @NotNull PsiFile placeFile) {
     super(null, ourFilter, resolvers, container, place, placeFile);
     myLanguageLevel = PsiUtil.getLanguageLevel(placeFile);
   }
@@ -57,8 +50,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     myArgumentList = argList;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
@@ -69,7 +61,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     }
   }
 
-  protected void setTypeArguments(PsiType[] typeParameters) {
+  private void setTypeArguments(PsiType[] typeParameters) {
     myTypeArguments = typeParameters;
   }
 
@@ -77,13 +69,13 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myTypeArguments;
   }
 
-  public boolean isInStaticScope() {
+  boolean isInStaticScope() {
     return myStaticScopeFlag;
   }
 
   @Override
   public void handleEvent(@NotNull Event event, Object associated) {
-    if (event == JavaScopeProcessorEvent.START_STATIC) {
+    if (JavaScopeProcessorEvent.isEnteringStaticScope(event, associated)) {
       myStaticScopeFlag = true;
     }
     else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {
@@ -92,11 +84,15 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   }
 
   public void setAccessClass(PsiClass accessClass) {
-      myAccessClass = accessClass;
+    myAccessClass = accessClass;
   }
 
   public boolean isConstructor() {
     return myIsConstructor;
+  }
+
+  public PsiElement getCurrentFileContext() {
+    return myCurrentFileContext;
   }
 
   public void setIsConstructor(boolean myIsConstructor) {
@@ -107,6 +103,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     add(new CandidateInfo(method, PsiSubstitutor.EMPTY, false, false, myCurrentFileContext));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
@@ -117,7 +114,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     return kind == DeclarationKind.METHOD;
   }
 }

@@ -17,18 +17,19 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 public final class AndPredicate extends MatchPredicate {
   private final MatchPredicate first;
   private final MatchPredicate second;
 
-  public AndPredicate(MatchPredicate first, MatchPredicate second) {
+  public AndPredicate(@NotNull MatchPredicate first, @NotNull MatchPredicate second) {
     this.first = first;
     this.second = second;
   }
 
   @Override
-  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context) {
     return first.match(matchedNode, start, end, context) && second.match(matchedNode, start, end, context);
   }
 

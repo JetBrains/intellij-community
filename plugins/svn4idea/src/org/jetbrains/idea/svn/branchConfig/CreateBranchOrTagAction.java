@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package org.jetbrains.idea.svn.branchConfig;
@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
@@ -30,17 +29,19 @@ import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 
 import java.io.File;
+import java.util.Objects;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.ObjectUtils.notNull;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagAction extends BasicAction {
-  @NotNull
   @Override
-  protected String getActionName() {
-    return SvnBundle.message("action.Subversion.Copy.text");
+  protected @NotNull String getActionName() {
+    return message("action.Subversion.Copy.text");
   }
 
   @Override
@@ -52,17 +53,20 @@ public class CreateBranchOrTagAction extends BasicAction {
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs, virtualToIoFile(file));
     if (dialog.showAndGet()) {
-      Target source = notNull(dialog.getSource());
+      Target source = Objects.requireNonNull(dialog.getSource());
       File sourceFile = dialog.getSourceFile();
-      Url destination = notNull(dialog.getDestination());
+      Url destination = Objects.requireNonNull(dialog.getDestination());
       Revision revision = dialog.getRevision();
       String comment = dialog.getComment();
       Url parentUrl = removePathTail(destination);
 
       if (!dirExists(vcs, parentUrl)) {
-        int rc =
-          Messages.showYesNoDialog(vcs.getProject(), "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
-                                          "Branch or Tag", Messages.getQuestionIcon());
+        int rc = showYesNoDialog(
+          vcs.getProject(),
+          message("dialog.message.repository.path.does.not.exist", parentUrl),
+          message("copy.dialog.title"),
+          getQuestionIcon()
+        );
         if (rc == Messages.NO) {
           return;
         }
@@ -74,7 +78,7 @@ public class CreateBranchOrTagAction extends BasicAction {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           CommitEventHandler handler = null;
           if (progress != null) {
-            progress.setText(SvnBundle.message("progress.text.copy.to", destination.toDecodedString()));
+            progress.setText(message("progress.text.copy.to", destination.toDecodedString()));
             handler = new IdeaCommitHandler(progress);
           }
 
@@ -88,15 +92,15 @@ public class CreateBranchOrTagAction extends BasicAction {
         }
       };
       ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, vcs.getProject());
+        .runProcessWithProgressSynchronously(copyCommand, message("progress.title.copy"), false, vcs.getProject());
       if (!exception.isNull()) {
         throw new VcsException(exception.get());
       }
 
-      if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
+      if (dialog.isSwitchOnCreate()) {
         SingleRootSwitcher switcher =
           new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(sourceFile, sourceFile.isDirectory()), destination);
-        AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
+        AutoSvnUpdater.run(switcher, message("action.name.switch"));
       }
     }
   }
@@ -106,7 +110,7 @@ public class CreateBranchOrTagAction extends BasicAction {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
 
       if (statusBar != null) {
-        statusBar.setInfo(SvnBundle.message("status.text.comitted.revision", revision));
+        statusBar.setInfo(message("status.text.committed.revision", revision));
       }
     }
   }
@@ -129,7 +133,12 @@ public class CreateBranchOrTagAction extends BasicAction {
     };
 
     if (getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(taskImpl, "Checking target folder", true, vcs.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        taskImpl,
+        message("progress.title.checking.target.folder"),
+        true,
+        vcs.getProject()
+      );
     }
     else {
       taskImpl.run();
@@ -139,9 +148,10 @@ public class CreateBranchOrTagAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

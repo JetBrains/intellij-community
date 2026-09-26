@@ -1,22 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
+@ApiStatus.Internal
 public class IntentionsUIImpl extends IntentionsUI {
+  @ApiStatus.Internal
+  public static final Key<Integer> SHOW_INTENTION_BULB_ON_ANOTHER_LINE = Key.create("IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE");
 
   private volatile IntentionHintComponent myLastIntentionHint;
 
-  public IntentionsUIImpl(Project project) {
+  public IntentionsUIImpl(@NotNull Project project) {
     super(project);
   }
 
@@ -25,41 +35,92 @@ public class IntentionsUIImpl extends IntentionsUI {
   }
 
   @Override
+  @RequiresEdt
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
-    if (editor == null) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
-    if (!actionsChanged) return;
-
-    //IntentionHintComponent hint = myLastIntentionHint;
-    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
-    //  hint.recreate();
-    //  return;
-    //}
+    if (editor == null || editor instanceof ImaginaryEditor) {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("editor="+editor+"; editor instanceof ImaginaryEditor="+(editor != null));
+      }
+      return;
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+        DaemonCodeAnalyzerImpl.LOG.debug("editor.getContentComponent().hasFocus()="+editor.getContentComponent().hasFocus());
+      }
+      return;
+    }
+    if (!actionsChanged) {
+      DaemonCodeAnalyzerImpl.LOG.debug("actionsChanged=false");
+      return;
+    }
 
     Project project = cachedIntentions.getProject();
+
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point xy = editor.logicalPositionToXY(caretPos);
 
     hide();
-    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false) &&
-        visibleArea.contains(xy) &&
-        editor.getSettings().isShowIntentionBulb() &&
-        editor.getCaretModel().getCaretCount() == 1 &&
-        cachedIntentions.showBulb()) {
-      myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
+    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)
+        && visibleArea.contains(xy)
+        && !editor.isViewer()
+        && editor.getSettings().isShowIntentionBulb()
+        && editor.getCaretModel().getCaretCount() == 1
+        && cachedIntentions.showBulb()
+        // do not show bulb when the user explicitly ESCaped it away
+        && !DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed()) {
+      IntentionHintComponent hint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
+      // drop the reference as soon as the hint is disposed through any path (e.g., popup cancel or editor release),
+      // otherwise a stale hint would retain the released editor (IJPL-251590)
+      Disposable dropHintReference = () -> {
+        if (myLastIntentionHint == hint) {
+          myLastIntentionHint = null;
+        }
+      };
+      // registration fails if the hint is already disposed - do not store it then
+      boolean alive = Disposer.tryRegister(hint, dropHintReference);
+      if (alive) {
+        myLastIntentionHint = hint;
+      }
+    }
+    else {
+      if (DaemonCodeAnalyzerImpl.LOG.isDebugEnabled()) {
+      DaemonCodeAnalyzerImpl.LOG.debug("IntentionsUIImpl.update() didn't show intention hint. " +
+        "HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)="+HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)+
+      "; visibleArea="+visibleArea+".contains(xy)="+visibleArea.contains(xy)+
+      "; editor.isViewer()="+editor.isViewer()+
+      "; editor.getSettings().isShowIntentionBulb()="+editor.getSettings().isShowIntentionBulb()+
+      "; editor.getCaretModel().getCaretCount()="+editor.getCaretModel().getCaretCount()+
+      "; cachedIntentions.showBulb()="+cachedIntentions.showBulb()+
+      "; cachedIntentions="+cachedIntentions+
+      "; isEscapeJustPressed()="+DaemonCodeAnalyzerEx.getInstanceEx(project).isEscapeJustPressed());
+      }
     }
   }
 
   @Override
+  @RequiresEdt
   public void hide() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionHintComponent hint = myLastIntentionHint;
-    if (hint != null && hint.isVisible()) {
+    if (hint != null && !hint.isDisposed() && hint.isVisible()) {
       hint.hide();
-      myLastIntentionHint = null;
+    }
+    myLastIntentionHint = null;
+  }
+
+  @Override
+  @RequiresEdt
+  public void hideForEditor(@NotNull Editor editor) {
+    IntentionHintComponent hint = myLastIntentionHint;
+    if (hint == null || !hint.isForEditor(editor)) {
+      return;
+    }
+    // drop the reference even when the hint cannot be hidden (already disposed or never shown),
+    // otherwise it would retain the released editor (IJPL-251590)
+    myLastIntentionHint = null;
+    if (!hint.isDisposed()) {
+      hint.hide();
     }
   }
 }

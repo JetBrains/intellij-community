@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
@@ -18,6 +19,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   /**
    * @deprecated use {@link #StringBasedPostfixTemplate(String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
+  @Deprecated
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
                                     @NotNull PostfixTemplateExpressionSelector selector) {
@@ -60,6 +62,12 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
     manager.startTemplate(editor, template);
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull PostfixModExpander createModExpander() {
+    return createModExpander(new StringBasedModExpandAction(this));
+  }
+
   public Template createTemplate(TemplateManager manager, String templateString) {
     Template template = manager.createTemplate("", "", templateString);
     template.setToReformat(shouldReformat());
@@ -69,8 +77,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
   }
 
-  @Nullable
-  public abstract String getTemplateString(@NotNull PsiElement element);
+  public abstract @Nullable String getTemplateString(@NotNull PsiElement element);
 
   protected boolean shouldReformat() {
     return true;

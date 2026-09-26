@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -28,7 +15,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
@@ -38,7 +32,13 @@ import com.intellij.uiDesigner.designSurface.DraggedComponentList;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.editor.UIFormEditor;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.IButtonGroup;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IContainer;
+import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.lw.ITabbedPane;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
@@ -50,20 +50,26 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormEditingUtil {
   private FormEditingUtil() {
   }
@@ -90,7 +96,7 @@ public final class FormEditingUtil {
   }
 
   public static void deleteComponents(final Collection<? extends RadComponent> selection, boolean deleteEmptyCells) {
-    if (selection.size() == 0) {
+    if (selection.isEmpty()) {
       return;
     }
     final RadRootContainer rootContainer = (RadRootContainer)getRoot(selection.iterator().next());
@@ -108,6 +114,7 @@ public final class FormEditingUtil {
       }
 
       iterate(component, new ComponentVisitor() {
+        @Override
         public boolean visit(final IComponent c) {
           RadComponent rc = (RadComponent)c;
           BindingProperty.checkRemoveUnusedField(rootContainer, rc.getBinding(), null);
@@ -150,11 +157,11 @@ public final class FormEditingUtil {
     }
 
     iterate(rootContainer, new ComponentVisitor() {
+      @Override
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent)component;
         for (IProperty p : component.getModifiedProperties()) {
-          if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty)p;
+          if (p instanceof IntroComponentProperty icp) {
             final String value = icp.getValue(rc);
             if (deletedComponentIds.contains(value)) {
               try {
@@ -265,12 +272,12 @@ public final class FormEditingUtil {
    * @return component which has dragger. There is only one component with the dargger
    *         at a time.
    */
-  @Nullable
-  public static RadComponent getDraggerHost(@NotNull final GuiEditor editor) {
+  public static @Nullable RadComponent getDraggerHost(final @NotNull GuiEditor editor) {
     final Ref<RadComponent> result = new Ref<>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
+        @Override
         public boolean visit(final RadComponent component) {
           if (component.hasDragger()) {
             result.set(component);
@@ -318,14 +325,13 @@ public final class FormEditingUtil {
    *         selected container contains some selected children then only this container
    *         will be added to the returned array.
    */
-  @NotNull
-  public static ArrayList<RadComponent> getSelectedComponents(@NotNull final GuiEditor editor) {
+  public static @NotNull ArrayList<RadComponent> getSelectedComponents(final @NotNull GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<>();
     calcSelectedComponentsImpl(result, editor.getRootContainer());
     return result;
   }
 
-  private static void calcSelectedComponentsImpl(final ArrayList<RadComponent> result, final RadContainer container) {
+  private static void calcSelectedComponentsImpl(final ArrayList<? super RadComponent> result, final RadContainer container) {
     if (container.isSelected()) {
       if (container.getParent() != null) { // ignore RadRootContainer
         result.add(container);
@@ -349,12 +355,12 @@ public final class FormEditingUtil {
   /**
    * @return all selected component inside the {@code editor}
    */
-  @NotNull
-  public static ArrayList<RadComponent> getAllSelectedComponents(@NotNull final GuiEditor editor) {
+  public static @NotNull ArrayList<RadComponent> getAllSelectedComponents(final @NotNull GuiEditor editor) {
     final ArrayList<RadComponent> result = new ArrayList<>();
     iterate(
       editor.getRootContainer(),
       new ComponentVisitor<RadComponent>() {
+        @Override
         public boolean visit(final RadComponent component) {
           if (component.isSelected()) {
             result.add(component);
@@ -398,12 +404,13 @@ public final class FormEditingUtil {
 
   public static IComponent findComponentWithBinding(IComponent component,
                                                     final String binding,
-                                                    @Nullable final IComponent exceptComponent) {
+                                                    final @Nullable IComponent exceptComponent) {
     // Check that binding is unique
     final Ref<IComponent> boundComponent = new Ref<>();
     iterate(
       component,
       new ComponentVisitor() {
+        @Override
         public boolean visit(final IComponent component) {
           if (component != exceptComponent && binding.equals(component.getBinding())) {
             boundComponent.set(component);
@@ -417,9 +424,8 @@ public final class FormEditingUtil {
     return boundComponent.get();
   }
 
-  @Nullable
-  public static RadContainer getRadContainerAt(final RadRootContainer rootContainer, final int x, final int y,
-                                               int epsilon) {
+  public static @Nullable RadContainer getRadContainerAt(final RadRootContainer rootContainer, final int x, final int y,
+                                                         int epsilon) {
     RadComponent component = getRadComponentAt(rootContainer, x, y);
     if (isNullOrRoot(component) && epsilon > 0) {
       // try to find component near specified location
@@ -479,11 +485,9 @@ public final class FormEditingUtil {
       return false;
     }
 
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer container)) {
       return true;
     }
-
-    final IContainer container = (IContainer)component;
 
     for (int i = 0; i < container.getComponentCount(); i++) {
       final IComponent c = container.getComponent(i);
@@ -497,9 +501,10 @@ public final class FormEditingUtil {
 
   public static Set<String> collectUsedBundleNames(final IRootContainer rootContainer) {
     final Set<String> bundleNames = new HashSet<>();
-    iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<IComponent>() {
+    iterateStringDescriptors(rootContainer, new StringDescriptorVisitor<>() {
+      @Override
       public boolean visit(final IComponent component, final StringDescriptor descriptor) {
-        if (descriptor.getBundleName() != null && !bundleNames.contains(descriptor.getBundleName())) {
+        if (descriptor.getBundleName() != null) {
           bundleNames.add(descriptor.getBundleName());
         }
         return true;
@@ -541,7 +546,7 @@ public final class FormEditingUtil {
           }
         }
 
-        if (componentsInColumn.size() > 0) {
+        if (!componentsInColumn.isEmpty()) {
           String message = isRow
                            ? UIDesignerBundle.message("delete.row.nonempty", componentsInColumn.size(), cells.length)
                            : UIDesignerBundle.message("delete.column.nonempty", componentsInColumn.size(), cells.length);
@@ -568,7 +573,6 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @param rootContainer
    * @return id
    */
   public static String generateId(final RadRootContainer rootContainer) {
@@ -583,9 +587,8 @@ public final class FormEditingUtil {
   /**
    * @return {@link GuiEditor} from the context. Can be {@code null}.
    */
-  @Nullable
-  public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
+  public static @Nullable GuiEditor getEditorFromContext(final @NotNull DataContext context) {
+    final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof UIFormEditor) {
       return ((UIFormEditor)editor).getEditor();
     }
@@ -594,22 +597,12 @@ public final class FormEditingUtil {
     }
   }
 
-  @Nullable
-  public static GuiEditor getActiveEditor(final DataContext context) {
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null) {
-      return null;
-    }
-    final DesignerToolWindowManager toolWindowManager = DesignerToolWindowManager.getInstance(project);
-    if (toolWindowManager == null) {
-      return null;
-    }
-    return toolWindowManager.getActiveFormEditor();
+  public static @Nullable GuiEditor getActiveEditor(@NotNull DataContext context) {
+    FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(context);
+    return fileEditor instanceof UIFormEditor ? ((UIFormEditor)fileEditor).getEditor() : null;
   }
 
   /**
-   * @param componentToAssignBinding
-   * @param binding
    * @param component                topmost container where to find duplicate binding. In most cases
    *                                 it should be {@link GuiEditor#getRootContainer()}
    */
@@ -621,13 +614,12 @@ public final class FormEditingUtil {
     return findComponentWithBinding(component, binding, componentToAssignBinding) == null;
   }
 
-  @Nullable
-  public static String buildResourceName(final PsiFile file) {
+  public static @Nullable String buildResourceName(final PsiFile file) {
     PsiDirectory directory = file.getContainingDirectory();
     if (directory != null) {
       PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
       String packageName = pkg != null ? pkg.getQualifiedName() : "";
-      if (packageName.length() == 0) {
+      if (packageName.isEmpty()) {
         return file.getName();
       }
       return packageName.replace('.', '/') + '/' + file.getName();
@@ -635,8 +627,7 @@ public final class FormEditingUtil {
     return null;
   }
 
-  @Nullable
-  public static RadContainer getSelectionParent(final List<RadComponent> selection) {
+  public static @Nullable RadContainer getSelectionParent(final List<? extends RadComponent> selection) {
     RadContainer parent = null;
     for (RadComponent c : selection) {
       if (parent == null) {
@@ -650,7 +641,7 @@ public final class FormEditingUtil {
     return parent;
   }
 
-  public static Rectangle getSelectionBounds(List<RadComponent> selection) {
+  public static Rectangle getSelectionBounds(List<? extends RadComponent> selection) {
     int minRow = Integer.MAX_VALUE;
     int minCol = Integer.MAX_VALUE;
     int maxRow = 0;
@@ -679,10 +670,9 @@ public final class FormEditingUtil {
    * Selects the component and ensures that the tabbed panes containing the component are
    * switched to the correct tab.
    *
-   * @param editor
    * @param component the component to select. @return true if the component is enclosed in at least one tabbed pane, false otherwise.
    */
-  public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {
+  public static boolean selectComponent(final GuiEditor editor, final @NotNull RadComponent component) {
     boolean hasTab = false;
     RadComponent parent = component;
     while (parent.getParent() != null) {
@@ -719,8 +709,8 @@ public final class FormEditingUtil {
     }
   }
 
-  public static void selectComponents(final GuiEditor editor, List<RadComponent> components) {
-    if (components.size() > 0) {
+  public static void selectComponents(final GuiEditor editor, List<? extends RadComponent> components) {
+    if (!components.isEmpty()) {
       RadComponent component = components.get(0);
       ComponentTreeBuilder builder = DesignerToolWindowManager.getInstance(editor).getComponentTreeBuilder();
       if (builder == null) {
@@ -805,25 +795,24 @@ public final class FormEditingUtil {
     return adjustForGap(container, col + 1, false, 1);
   }
 
-  @Nullable
-  public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
+  public static @Nullable IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, final @NotNull IComponent component) {
     for (IButtonGroup group : radRootContainer.getButtonGroups()) {
-      for (String id : group.getComponentIds()) {
-        if (component.getId().equals(id)) {
+      if (ArrayUtil.contains(component.getId(), group.getComponentIds())) {
           return group;
-        }
       }
     }
     return null;
   }
 
-  public static void remapToActionTargets(final List<RadComponent> selection) {
+  public static List<RadComponent> remapToActionTargets(final List<? extends RadComponent> selection) {
+    ArrayList<RadComponent> result = new ArrayList<>(selection.size());
     for (int i = 0; i < selection.size(); i++) {
       final RadComponent c = selection.get(i);
       if (c.getParent() != null) {
-        selection.set(i, c.getParent().getActionTargetComponent(c));
+        result.add(c.getParent().getActionTargetComponent(c));
       }
     }
+    return result;
   }
 
   public static void showPopupUnderComponent(final JBPopup popup, final RadComponent selectedComponent) {
@@ -839,9 +828,10 @@ public final class FormEditingUtil {
 
 
   public static void iterateStringDescriptors(final IComponent component,
-                                              final StringDescriptorVisitor<IComponent> visitor) {
-    iterate(component, new ComponentVisitor<IComponent>() {
+                                              final StringDescriptorVisitor<? super IComponent> visitor) {
+    iterate(component, new ComponentVisitor<>() {
 
+      @Override
       public boolean visit(final IComponent component) {
         for (IProperty prop : component.getModifiedProperties()) {
           Object value = prop.getPropertyValue(component);
@@ -874,7 +864,7 @@ public final class FormEditingUtil {
     });
   }
 
-  public static void clearSelection(@NotNull final RadContainer container) {
+  public static void clearSelection(final @NotNull RadContainer container) {
     container.setSelected(false);
 
     for (int i = 0; i < container.getComponentCount(); i++) {
@@ -896,16 +886,14 @@ public final class FormEditingUtil {
    *
    * @return the found component.
    */
-  @Nullable
-  public static IComponent findComponent(@NotNull final IComponent component, @NotNull final String id) {
+  public static @Nullable IComponent findComponent(final @NotNull IComponent component, final @NotNull String id) {
     if (id.equals(component.getId())) {
       return component;
     }
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer uiContainer)) {
       return null;
     }
 
-    final IContainer uiContainer = (IContainer)component;
     for (int i = 0; i < uiContainer.getComponentCount(); i++) {
       final IComponent found = findComponent(uiContainer.getComponent(i), id);
       if (found != null) {
@@ -915,10 +903,11 @@ public final class FormEditingUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
-    return JavaPsiFacade.getInstance(module.getProject())
-      .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
+  public static @Nullable PsiClass findClassToBind(final @NotNull Module module, final @NotNull String classToBindName) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-266779")) {
+      return JavaPsiFacade.getInstance(module.getProject())
+        .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
+    }
   }
 
   public interface ComponentVisitor<Type extends IComponent> {

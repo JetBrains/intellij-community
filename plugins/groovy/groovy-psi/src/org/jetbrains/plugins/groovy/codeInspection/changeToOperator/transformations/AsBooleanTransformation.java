@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
@@ -43,8 +29,7 @@ class AsBooleanTransformation extends Transformation {
   public static final String NEGATION = mLNOT.toString();
   public static final String DOUBLE_NEGATION = NEGATION + NEGATION;
 
-  @Nullable
-  protected String getPrefix(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+  protected @Nullable String getPrefix(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     if (isImplicitlyBoolean(methodCall)) {
       return "";
     }
@@ -79,8 +64,8 @@ class AsBooleanTransformation extends Transformation {
     PsiElement parent = methodCall.getParent();
     if (parent instanceof GrIfStatement || parent instanceof GrWhileStatement) return true;
     if (parent instanceof GrConditionalExpression && ((GrConditionalExpression)parent).getCondition().equals(methodCall)) return true;
-    if (parent instanceof GrUnaryExpression && PsiType.BOOLEAN.equals(((GrUnaryExpression)parent).getType())) return true;
-    if (parent instanceof GrBinaryExpression && PsiType.BOOLEAN.equals(((GrBinaryExpression)parent).getType())) return true;
+    if (parent instanceof GrUnaryExpression && PsiTypes.booleanType().equals(((GrUnaryExpression)parent).getType())) return true;
+    if (parent instanceof GrBinaryExpression && PsiTypes.booleanType().equals(((GrBinaryExpression)parent).getType())) return true;
     return false;
   }
 }

@@ -2,4 +2,4 @@
   int a
   int b
 }</spot>
-def foo = <spot>new MyClass(a:2, b:3)</spot>
+def foo = <spot>new MyClass(a: 2, b: 3)</spot>

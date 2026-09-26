@@ -1,53 +1,56 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
-@State(name = "UsageViewSettings", storages = [(Storage("usageView.xml")), (Storage(value = "other.xml", deprecated = true))])
+@Suppress("PropertyName")
+@State(name = "UsageViewSettings", storages = [Storage("usageView.xml")], reportStatistic = true, category = SettingsCategory.UI)
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
   isGroupByModule: Boolean = true,
   isGroupByPackage: Boolean = true,
   isGroupByUsageType: Boolean = true,
-  isGroupByScope: Boolean = false
+  isGroupByScope: Boolean = false,
+  isGroupByDirectoryStructure: Boolean = false
 ) : BaseState(), PersistentStateComponent<UsageViewSettings> {
   companion object {
     @JvmStatic
     val instance: UsageViewSettings
-      get() = ServiceManager.getService(UsageViewSettings::class.java)
+      get() = ApplicationManager.getApplication().getService(UsageViewSettings::class.java)
   }
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByModule")
   var GROUP_BY_MODULE: Boolean = isGroupByModule
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByUsageType")
   var GROUP_BY_USAGE_TYPE: Boolean = isGroupByUsageType
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByFileStructure")
   var GROUP_BY_FILE_STRUCTURE: Boolean = isGroupByFileStructure
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByScope")
   var GROUP_BY_SCOPE: Boolean = isGroupByScope
 
-  @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByPackage")
@@ -55,7 +58,7 @@ open class UsageViewSettings(
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:OptionTag("EXPORT_FILE_NAME")
-  internal var EXPORT_FILE_NAME by property("report.txt")
+  internal var EXPORT_FILE_NAME: String? by string("report.txt")
 
   @get:OptionTag("IS_EXPANDED")
   var isExpanded: Boolean by property(false)
@@ -70,7 +73,7 @@ open class UsageViewSettings(
   var isShowModules: Boolean by property(false)
 
   @get:OptionTag("IS_PREVIEW_USAGES")
-  var isPreviewUsages: Boolean by property(false)
+  var isPreviewUsages: Boolean by property(true)
 
   @get:OptionTag("IS_REPLACE_PREVIEW_USAGES")
   var isReplacePreviewUsages: Boolean by property(true)
@@ -82,22 +85,37 @@ open class UsageViewSettings(
   var previewUsagesSplitterProportion: Float by property(0.5f)
 
   @get:OptionTag("GROUP_BY_USAGE_TYPE")
-  var isGroupByUsageType: Boolean by property(isGroupByUsageType)
+  open var isGroupByUsageType: Boolean by property(isGroupByUsageType)
 
   @get:OptionTag("GROUP_BY_MODULE")
-  var isGroupByModule: Boolean by property(isGroupByModule)
+  open var isGroupByModule: Boolean by property(isGroupByModule)
 
   @get:OptionTag("FLATTEN_MODULES")
   var isFlattenModules: Boolean by property(true)
 
   @get:OptionTag("GROUP_BY_PACKAGE")
-  var isGroupByPackage: Boolean by property(isGroupByPackage)
+  open var isGroupByPackage: Boolean by property(isGroupByPackage)
 
   @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
   var isGroupByFileStructure: Boolean by property(isGroupByFileStructure)
 
+  @get:OptionTag("GROUP_BY_DIRECTORY_STRUCTURE")
+  open var isGroupByDirectoryStructure: Boolean by property(isGroupByDirectoryStructure)
+
+  /**
+   * Compact middle directories option for directories usage grouping
+   */
+  @get:OptionTag("COMPACT_MIDDLE_DIRECTORIES")
+  var isCompactMiddleDirectories: Boolean by property(false)
+
   @get:OptionTag("GROUP_BY_SCOPE")
-  var isGroupByScope: Boolean by property(isGroupByScope)
+  open var isGroupByScope: Boolean by property(isGroupByScope)
+
+  @get:OptionTag("SHORT_FILE_PATH")
+  open var showShortFilePath: Boolean by property(true)
+
+  @ApiStatus.Internal
+  open fun isShortFilePathEnabled(): Boolean = showShortFilePath && !isGroupByDirectoryStructure && !isGroupByPackage
 
   var exportFileName: String?
     @Transient

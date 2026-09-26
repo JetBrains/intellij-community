@@ -1,0 +1,10 @@
+import java.util.*;
+
+public class Orchard {
+    <spot>private static final Set<String> FRUITS =
+        Set.of("Apple", "Pear", "Banana"))</spot>;
+
+    boolean check(String fruit) {
+        return <spot>FRUITS.contains(fruit)</spot>;
+    }
+}

@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -33,19 +22,17 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- * @since Oct 8, 2003
- */
-@SuppressWarnings("UnusedDeclaration")
+@ApiStatus.Internal
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
@@ -54,6 +41,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   private final String myContentEntryUrl;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
 
+  @ApiStatus.Internal
   public interface ContentEntryEditorListener extends EventListener{
 
     void editingStarted(@NotNull ContentEntryEditor editor);
@@ -105,12 +93,11 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     update();
   }
 
-  @Nullable
-  protected ContentEntry getContentEntry() {
-    final ModifiableRootModel model = getModel();
+  protected @Nullable ContentEntry getContentEntry() {
+    var model = getModel();
     if (model != null) {
-      final ContentEntry[] entries = model.getContentEntries();
-      for (ContentEntry entry : entries) {
+      var entries = model.getContentEntries();
+      for (var entry : entries) {
         if (entry.getUrl().equals(myContentEntryUrl)) return entry;
       }
     }
@@ -122,35 +109,35 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   @Override
   public void deleteContentEntry() {
-    final String path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(myContentEntryUrl));
-    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt", path),
-                                                ProjectBundle.message("module.paths.remove.content.title"), Messages.getQuestionIcon());
-    if (answer != Messages.YES) { // no
+    var path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(myContentEntryUrl));
+    if (!MessageDialogBuilder
+      .yesNo(ProjectBundle.message("module.paths.remove.content.title"), ProjectBundle.message("module.paths.remove.content.prompt", path))
+      .ask(getModel().getProject())) {
       return;
     }
     myEventDispatcher.getMulticaster().beforeEntryDeleted(this);
-    final ContentEntry entry = getContentEntry();
+    var entry = getContentEntry();
     if (entry != null) {
       getModel().removeContentEntry(entry);
     }
   }
 
   @Override
-  public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
-    if (folder instanceof SourceFolder) {
-      removeSourceFolder((SourceFolder)folder);
+  public void deleteContentFolder(ContentEntry contentEntry, ContentFolderRef folderRef) {
+    var folder = folderRef.getContentFolder();
+    if (folder instanceof SourceFolder sf) {
+      removeSourceFolder(sf);
       update();
     }
     else if (folder instanceof ExcludeFolder) {
       removeExcludeFolder(folder.getUrl());
       update();
     }
-
   }
 
   @Override
-  public void navigateFolder(ContentEntry contentEntry, ContentFolder contentFolder) {
-    final VirtualFile file = contentFolder.getFile();
+  public void navigateFolder(ContentEntry contentEntry, ContentFolderRef contentFolderRef) {
+    var file = contentFolderRef.getFile();
     if (file != null) { // file can be deleted externally
       myEventDispatcher.getMulticaster().navigationRequested(this, file);
     }
@@ -207,18 +194,16 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     };
   }
 
-  @Nullable
-  public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource, String packagePrefix) {
-    return addSourceFolder(file, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE,
-                           JpsJavaExtensionService.getInstance().createSourceRootProperties(packagePrefix));
+  public @Nullable SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, String packagePrefix) {
+    var rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    var properties = JpsJavaExtensionService.getInstance().createSourceRootProperties(packagePrefix);
+    return addSourceFolder(file, rootType, properties);
   }
 
-  @Nullable
-  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull final VirtualFile file, final JpsModuleSourceRootType<P> rootType,
-                                                             final P properties) {
-    final ContentEntry contentEntry = getContentEntry();
+  public @Nullable <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, JpsModuleSourceRootType<P> rootType, P properties) {
+    var contentEntry = getContentEntry();
     if (contentEntry != null) {
-      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, rootType, properties);
+      var sourceFolder = contentEntry.addSourceFolder(file, rootType, properties);
       myEventDispatcher.getMulticaster().sourceFolderAdded(this, sourceFolder);
       update();
       return sourceFolder;
@@ -227,13 +212,12 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return null;
   }
 
-  @Nullable
-  protected SourceFolder doAddSourceFolder(@NotNull final VirtualFile file, final boolean isTestSource) {
-    final ContentEntry contentEntry = getContentEntry();
+  protected @Nullable SourceFolder doAddSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
+    var contentEntry = getContentEntry();
     return contentEntry != null ? contentEntry.addSourceFolder(file, isTestSource) : null;
   }
 
-  public void removeSourceFolder(@NotNull final SourceFolder sourceFolder) {
+  public void removeSourceFolder(@NotNull SourceFolder sourceFolder) {
     try {
       doRemoveSourceFolder(sourceFolder);
     }
@@ -243,13 +227,12 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  protected void doRemoveSourceFolder(@NotNull final SourceFolder sourceFolder) {
-    final ContentEntry contentEntry = getContentEntry();
+  protected void doRemoveSourceFolder(@NotNull SourceFolder sourceFolder) {
+    var contentEntry = getContentEntry();
     if (contentEntry != null) contentEntry.removeSourceFolder(sourceFolder);
   }
 
-  @Nullable
-  public ExcludeFolder addExcludeFolder(@NotNull final VirtualFile file) {
+  public @Nullable ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     try {
       return doAddExcludeFolder(file);
     }
@@ -259,13 +242,12 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  @Nullable
-  protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
-    final ContentEntry contentEntry = getContentEntry();
+  protected @Nullable ExcludeFolder doAddExcludeFolder(@NotNull VirtualFile file) {
+    var contentEntry = getContentEntry();
     return contentEntry != null ? contentEntry.addExcludeFolder(file) : null;
   }
 
-  public void removeExcludeFolder(@NotNull final String excludeRootUrl) {
+  public void removeExcludeFolder(@NotNull String excludeRootUrl) {
     try {
       doRemoveExcludeFolder(excludeRootUrl);
     }
@@ -275,59 +257,71 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  protected void doRemoveExcludeFolder(@NotNull final String excludeRootUrl) {
-    final ContentEntry contentEntry = getContentEntry();
+  protected void doRemoveExcludeFolder(@NotNull String excludeRootUrl) {
+    var contentEntry = getContentEntry();
     if (contentEntry != null) {
       contentEntry.removeExcludeFolder(excludeRootUrl);
     }
   }
 
-  @Nullable
-  public JpsModuleSourceRootType<?> getRootType(@NotNull VirtualFile file) {
-    SourceFolder folder = getSourceFolder(file);
+  public @Nullable JpsModuleSourceRootType<?> getRootType(@NotNull VirtualFile file) {
+    var folder = getSourceFolder(file);
     return folder != null ? folder.getRootType() : null;
   }
 
   public boolean isExcludedOrUnderExcludedDirectory(@NotNull VirtualFile file) {
-    ModifiableRootModel model = getModel();
+    var model = getModel();
     if (model == null) {
       throw new AssertionError(getClass() + ".getModel() returned null unexpectedly");
     }
-    Project project = model.getProject();
-    ContentEntry contentEntry = getContentEntry();
+    var project = model.getProject();
+    var contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
     return isExcludedOrUnderExcludedDirectory(project, contentEntry, file);
   }
 
-  public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
-                                                           @NotNull ContentEntry entry,
-                                                           @NotNull VirtualFile file) {
-    Set<VirtualFile> excludedFiles = ContainerUtil.newHashSet(entry.getExcludeFolderFiles());
-    if (project != null) {
-      for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
-        ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
-      }
-    }
-    Set<VirtualFile> sourceRoots = ContainerUtil.set(entry.getSourceFolderFiles());
-    VirtualFile parent = file;
+  public static boolean isExcludedOrUnderExcludedDirectory(
+    @Nullable Project project,
+    @NotNull ContentEntry entry,
+    @NotNull VirtualFile file
+  ) {
+    return isExcludedOrUnderExcludedDirectory(entry, getEntryExcludedUrls(project, entry), file);
+  }
+
+  public static boolean isExcludedOrUnderExcludedDirectory(
+    @NotNull ContentEntry entry,
+    @NotNull Set<String> excludedUrls,
+    @NotNull VirtualFile file
+  ) {
+    var sourceRoots = ContainerUtil.newHashSet(entry.getSourceFolderFiles());
+    var parent = file;
     while (parent != null) {
-      if (excludedFiles.contains(parent)) return true;
+      if (excludedUrls.contains(parent.getUrl())) return true;
       if (sourceRoots.contains(parent)) return false;
       parent = parent.getParent();
     }
     return false;
   }
 
-  @Nullable
-  public SourceFolder getSourceFolder(@NotNull final VirtualFile file) {
-    final ContentEntry contentEntry = getContentEntry();
+  public static @NotNull Set<String> getEntryExcludedUrls(@Nullable Project project, @NotNull ContentEntry entry) {
+    var excludedUrls = new HashSet<>(entry.getExcludeFolderUrls());
+    if (project != null) {
+      for (var policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
+        ContainerUtil.addAll(excludedUrls, policy.getExcludeUrlsForProject());
+      }
+    }
+    return excludedUrls;
+  }
+
+  public @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile file) {
+    var contentEntry = getContentEntry();
     if (contentEntry == null) {
       return null;
     }
-    for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-      final VirtualFile f = sourceFolder.getFile();
+    for (var sourceFolder : contentEntry.getSourceFolders()) {
+      var f = sourceFolder.getFile();
       if (f != null && f.equals(file)) {
         return sourceFolder;
       }

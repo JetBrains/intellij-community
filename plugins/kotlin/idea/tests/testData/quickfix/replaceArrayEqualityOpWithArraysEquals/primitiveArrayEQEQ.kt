@@ -1,0 +1,10 @@
+// "Replace '==' with 'contentEquals'" "true"
+fun foo() {
+    val a = charArrayOf('a', 'b', 'c')
+    val b = charArrayOf('a', 'b', 'c')
+    if (a <caret>== b) {
+    }
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceArrayEqualityOpWithContentEqualsFixFactory$ReplaceWithContentEqualsFix

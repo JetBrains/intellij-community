@@ -18,14 +18,18 @@ package com.intellij.framework;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class FrameworkAvailabilityCondition {
   public static final FrameworkAvailabilityCondition ALWAYS_TRUE = new FrameworkAvailabilityCondition() {
     @Override
     public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
       return true;
+    }
+  };
+
+  public static final FrameworkAvailabilityCondition ALWAYS_FALSE = new FrameworkAvailabilityCondition() {
+    @Override
+    public boolean isAvailableFor(@NotNull FrameworkSupportModel model) {
+      return false;
     }
   };
 

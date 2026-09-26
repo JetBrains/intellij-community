@@ -1,31 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.FilePosition;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
+import org.jetbrains.plugins.gradle.issue.GradleIssueData;
+import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
-import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
 import java.io.FileNotFoundException;
@@ -33,38 +28,61 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
+@Internal
 public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
 
   private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
 
-  @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
-                                                      @NotNull String projectPath,
-                                                      @Nullable String buildFilePath) {
-    GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
+  public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                               @NotNull Throwable error,
+                                                               @NotNull String projectPath,
+                                                               @Nullable String buildFilePath) {
+    GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error);
+    ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
+    if (!exception.isCauseInitialized()) {
+      exception.initCause(notNull(executionErrorHandler.getRootCause(), error));
+    }
+    return exception;
+  }
+
+  ExternalSystemException checkErrorsWithoutQuickFixes(@Nullable BuildEnvironment buildEnvironment,
+                                                       @NotNull Throwable error,
+                                                       @NotNull String projectPath,
+                                                       @Nullable String buildFilePath,
+                                                       @NotNull ExternalSystemException e) {
+    if (e.getQuickFixes().length > 0 || e instanceof BuildIssueException) return e;
+    return getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
+  }
+
+  private ExternalSystemException doGetUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                         @NotNull Throwable error,
+                                                         @NotNull String projectPath,
+                                                         @Nullable String buildFilePath,
+                                                         @NotNull GradleExecutionErrorHandler executionErrorHandler) {
     ExternalSystemException friendlyError = executionErrorHandler.getUserFriendlyError();
     if (friendlyError != null) {
       return friendlyError;
     }
 
-    LOG.info(String.format("Failed to import Gradle project at '%1$s'", projectPath), error);
+    LOG.debug(String.format("Failed to run Gradle project at '%1$s'", projectPath), error);
 
-    if(error instanceof ProcessCanceledException) {
-      return new ExternalSystemException("Project build was cancelled");
+    String location = getErrorLocation(executionErrorHandler, buildFilePath);
+    List<BuildIssue> buildIssues = getBuildIssues(buildEnvironment, error, projectPath, location);
+    if (!buildIssues.isEmpty()) {
+      return new BuildIssueException(buildIssues);
     }
 
     Throwable rootCause = executionErrorHandler.getRootCause();
-    String location = executionErrorHandler.getLocation();
-    if (location == null && !StringUtil.isEmpty(buildFilePath)) {
-      location = String.format("Build file: '%1$s'", buildFilePath);
-    }
-
     if (rootCause instanceof UnsupportedVersionException) {
       String msg = "You are using unsupported version of Gradle.";
       msg += ('\n' + FIX_GRADLE_VERSION);
@@ -83,41 +101,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       }
     }
 
-    final String rootCauseText = rootCause.toString();
-    if (StringUtil.startsWith(rootCauseText, "org.gradle.api.internal.MissingMethodException")) {
-      String method = parseMissingMethod(rootCauseText);
-      String msg = "Build script error, unsupported Gradle DSL method found: '" + method + "'!";
-      msg += (EMPTY_LINE + "Possible causes could be:  ");
-      msg += String.format(
-        "%s  - you are using Gradle version where the method is absent (<a href=\"%s\">Fix Gradle settings</a>)",
-        '\n', OpenGradleSettingsCallback.ID);
-      //msg += String.format(
-      //  "%s  - you didn't apply Gradle plugin which provides the method (<a href=\"%s\">Apply Gradle plugin</a>)",
-      //  '\n', ApplyGradlePluginCallback.ID);
-      msg += String.format(
-        "%s  - or there is a mistake in a build script (<a href=\"%s\">Goto source</a>)",
-        '\n', GotoSourceNotificationCallback.ID);
-      return createUserFriendlyError(
-        msg, location, OpenGradleSettingsCallback.ID, /*ApplyGradlePluginCallback.ID,*/ GotoSourceNotificationCallback.ID);
-    }
-
-    if (rootCause instanceof OutOfMemoryError) {
-      // The OutOfMemoryError happens in the Gradle daemon process.
-      String msg = "Out of memory";
-      if (rootCauseMessage != null && !rootCauseMessage.isEmpty()) {
-        msg = msg + ": " + rootCauseMessage;
-      }
-      if (msg.endsWith("Java heap space")) {
-        msg += ". Configure Gradle memory settings using '-Xmx' JVM option (e.g. '-Xmx2048m'.)";
-      }
-      else if (!msg.endsWith(".")) {
-        msg += ".";
-      }
-      msg += EMPTY_LINE + OPEN_GRADLE_SETTINGS;
-      // Location of build.gradle is useless for this error. Omitting it.
-      return createUserFriendlyError(msg, null);
-    }
-
     if (rootCause instanceof ClassNotFoundException) {
       String msg = String.format("Unable to load class '%1$s'.", rootCauseMessage) + EMPTY_LINE +
                    UNEXPECTED_ERROR_FILE_BUG;
@@ -134,11 +117,22 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ConnectException) {
-      String msg = rootCauseMessage;
-      if (msg != null && msg.contains("timed out")) {
-        msg += msg.endsWith(".") ? " " : ". ";
-        msg += SET_UP_HTTP_PROXY;
-        return createUserFriendlyError(msg, null);
+      if (rootCauseMessage != null) {
+        if (rootCauseMessage.contains("timed out")) {
+          String msg = rootCauseMessage;
+          msg += msg.endsWith(".") ? " " : ". ";
+          msg += SET_UP_HTTP_PROXY;
+          return createUserFriendlyError(msg, null);
+        }
+        if (rootCauseMessage.toLowerCase(Locale.ROOT).contains("connection refused")) {
+          String errorMessage = error.getMessage();
+          if (errorMessage != null && errorMessage.startsWith("Could not install Gradle distribution")) {
+            String msg = errorMessage;
+            msg += msg.endsWith(".") ? " " : ". ";
+            msg += rootCauseMessage + EMPTY_LINE + "Please ensure the host name is correct. " + SET_UP_HTTP_PROXY;
+            return createUserFriendlyError(msg, null);
+          }
+        }
       }
     }
 
@@ -176,5 +170,60 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       errMessage = rootCauseMessage;
     }
     return createUserFriendlyError(errMessage, location);
+  }
+
+  private static @NotNull List<BuildIssue> getBuildIssues(
+    @Nullable BuildEnvironment buildEnvironment,
+    @NotNull Throwable error,
+    @NotNull String projectPath,
+    @Nullable String location
+  ) {
+    FilePosition filePosition = getErrorFilePosition(location);
+    GradleIssueFailure issueFailure = GradleIssueFailure.createIssueFailure(error);
+    GradleIssueData issueData = GradleIssueData.createIssueData(Path.of(projectPath), issueFailure, buildEnvironment, filePosition);
+    return ContainerUtil.mapNotNull(GradleIssueChecker.getKnownIssuesCheckList(), it -> {
+      try {
+        return it.check(issueData);
+      } catch (Exception e) {
+        LOG.error("Unable to apply issue checker: " + it.getClass().getCanonicalName(), e);
+        return null;
+      }
+    });
+  }
+
+  public static @Nullable FilePosition getErrorFilePosition(
+    @NotNull GradleIssueFailure failure,
+    @NotNull Path projectPath
+  ) {
+    FilePosition filePosition = failure.getFilePosition();
+    Path path = ObjectUtils.doIfNotNull(filePosition, it -> it.getPath());
+    if (path != null && !path.isAbsolute()) {
+      return new FilePosition(
+        projectPath.resolve(path).normalize(),
+        filePosition.getStartLine(),
+        filePosition.getStartColumn(),
+        filePosition.getEndLine(),
+        filePosition.getEndColumn()
+      );
+    }
+    return filePosition;
+  }
+
+  private static @Nullable String getErrorLocation(
+    @NotNull GradleExecutionErrorHandler executionErrorHandler,
+    @Nullable String buildFilePath
+  ) {
+    String location = executionErrorHandler.getLocation();
+    if (location != null) return location;
+    if (StringUtil.isEmpty(buildFilePath)) return location;
+    return String.format("Build file: '%1$s'", buildFilePath);
+  }
+
+  private static @Nullable FilePosition getErrorFilePosition(@Nullable String location) {
+    if (location == null) return null;
+    Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
+    if (errorLocation == null) return null;
+    int line = errorLocation.second;
+    return new FilePosition(Path.of(errorLocation.first), line < 0 ? line : line - 1, 0);
   }
 }

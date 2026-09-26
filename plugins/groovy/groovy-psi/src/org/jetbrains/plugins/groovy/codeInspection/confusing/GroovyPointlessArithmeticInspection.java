@@ -1,59 +1,36 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyPointlessArithmeticInspection extends BaseInspection {
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
+
+public final class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Pointless arithmetic expression";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessArithmeticVisitor();
   }
 
   @Override
   public String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
+    return GroovyBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
   }
 
   private static String calculateReplacementExpression(GrExpression expression) {
@@ -95,22 +72,21 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new PointlessArithmeticFix();
   }
 
-  private static class PointlessArithmeticFix extends GroovyFix {
+  private static class PointlessArithmeticFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return "Simplify";
+    public @NotNull String getFamilyName() {
+      return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final GrExpression expression = (GrExpression) descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrExpression expression = (GrExpression) element;
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
   }
 
@@ -122,6 +98,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
+      if (isFake(expression)) return;
       final GrExpression rhs = expression.getRightOperand();
       if (rhs == null) return;
 
@@ -173,13 +150,12 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   /**
-   * @noinspection FloatingPointEquality
    */
   private static boolean isZero(GrExpression expression) {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);
     if (inner == null) return false;
 
-    @NonNls final String text = inner.getText();
+    final @NonNls String text = inner.getText();
     return "0".equals(text) ||
            "0x0".equals(text) ||
            "0X0".equals(text) ||
@@ -191,13 +167,12 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   /**
-   * @noinspection FloatingPointEquality
    */
   private static boolean isOne(GrExpression expression) {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);
     if (inner == null) return false;
 
-    @NonNls final String text = inner.getText();
+    final @NonNls String text = inner.getText();
     return "1".equals(text) ||
            "0x1".equals(text) ||
            "0X1".equals(text) ||

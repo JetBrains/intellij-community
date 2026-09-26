@@ -1,0 +1,8 @@
+// "Remove getter and initializer from property" "true"
+// K2_ERROR: ABSTRACT_PROPERTY_WITH_GETTER
+// K2_ERROR: ABSTRACT_PROPERTY_WITH_INITIALIZER
+abstract class B {
+    abstract val i = <caret>0
+        get() = field
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemovePartsFromPropertyFixFactory$RemovePartsFromPropertyFix

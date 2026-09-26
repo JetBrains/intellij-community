@@ -1,37 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JCiPUtil {
-  static boolean isJCiPAnnotation(String ref) {
-    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
-  }
+@ApiStatus.Internal
+public final class JCiPUtil {
 
-  private JCiPUtil() {
+  private JCiPUtil() {}
+
+  public static boolean isJCiPAnnotation(String ref) {
+    return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }
 
   public static boolean isImmutable(@NotNull PsiClass aClass) {
@@ -43,28 +43,37 @@ public class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    if (checkDocComment) {
+    if (checkDocComment && containsImmutableWord(aClass.getContainingFile())) {
       final PsiDocComment comment = aClass.getDocComment();
       return comment != null && comment.findTagByName("@Immutable") != null;
     }
     return false;
   }
 
-  @Nullable
-  public static String findGuardForMember(@NotNull PsiMember member) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
+  private static boolean containsImmutableWord(PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "Immutable"), file));
+  }
+
+  public static @Nullable String findGuardForMember(@NotNull PsiMember member) {
+    List<String> annotations = ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations();
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, annotations);
     if (annotation != null) {
       return getGuardValue(annotation);
     }
-    if (member instanceof PsiCompiledElement) {
-      member = (PsiMember)member.getNavigationElement();
-      if (member == null || member instanceof PsiCompiledElement) {
-        return null; // can't analyze compiled code
+    if (member instanceof PsiDocCommentOwner commentOwner) {
+      PsiDocComment comment = commentOwner.getDocComment();
+      if (comment != null) {
+        PsiDocTag[] tags = comment.getTags();
+        for (int i = tags.length - 1; i >= 0; i--) {
+          String value = getGuardValue(tags[i]);
+          if (value != null) {
+            return value;
+          }
+        }
       }
     }
-    final GuardedTagVisitor visitor = new GuardedTagVisitor();
-    member.accept(visitor);
-    return visitor.getGuardString();
+    return null;
   }
 
   static boolean isGuardedBy(@NotNull PsiMember member, @NotNull String guard) {
@@ -73,56 +82,49 @@ public class JCiPUtil {
     return annotation != null && guard.equals(getGuardValue(annotation));
   }
 
-  public static boolean isGuardedBy(PsiMember member, PsiField field) {
-    return isGuardedBy(member, field.getName());
-  }
-
   static boolean isGuardedByAnnotation(@NotNull PsiAnnotation annotation) {
     return ConcurrencyAnnotationsManager.getInstance(annotation.getProject()).getGuardedByAnnotations().contains(annotation.getQualifiedName());
   }
 
   static boolean isGuardedByTag(PsiDocTag tag) {
-    final String text = tag.getText();
-
-    return text.startsWith("@GuardedBy") && text.contains("(") && text.contains(")");
+    return tag.getText().startsWith("@GuardedBy");
   }
 
-  @Nullable
-  static String getGuardValue(PsiAnnotation annotation) {
+  static @Nullable String getGuardValue(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
-    if (psiAnnotationMemberValue != null) {
-      final String value = psiAnnotationMemberValue.getText();
-      final String trim = value.substring(1, value.length() - 1).trim();
-      if (trim.equals("itself")) {
-        final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
-        if (member != null) return member.getName();
+    if (psiAnnotationMemberValue instanceof PsiLiteralExpression) {
+      final Object value = ((PsiLiteralExpression)psiAnnotationMemberValue).getValue();
+      if (value instanceof String) {
+        return resolveItself((String)value, annotation);
       }
-      return trim;
     }
     return null;
   }
 
-  @NotNull
-  static String getGuardValue(PsiDocTag tag) {
-    final String text = tag.getText();
-    return text.substring(text.indexOf((int)'(') + 1, text.indexOf((int)')')).trim();
+  static @Nullable String getGuardValue(PsiDocTag tag) {
+    if ("GuardedBy".equals(tag.getName())) {
+      final PsiDocTagValue value = tag.getValueElement();
+      if (value == null) return "";
+      return resolveItself(value.getText(), tag);
+    }
+    else {
+      final String text = tag.getText();
+      if (!text.startsWith("@GuardedBy")) return null;
+      int start = text.indexOf('(');
+      int end = text.indexOf(')');
+      if (start >= end || start < 0) return "";
+      return resolveItself(text.substring(start + 1, end), tag);
+    }
   }
 
-  private static class GuardedTagVisitor extends JavaRecursiveElementWalkingVisitor {
-    private String guardString;
-
-    @Override
-    public void visitDocTag(PsiDocTag tag) {
-      super.visitDocTag(tag);
-      final String text = tag.getText();
-      if (text.startsWith("@GuardedBy") && text.contains("(") && text.contains(")")) {
-        guardString = text.substring(text.indexOf((int)'(') + 1, text.indexOf((int)')'));
+  private static String resolveItself(String value, PsiElement context) {
+    if ("itself".equals(value)) {
+      final PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
+      if (!(member instanceof PsiField)) {
+        return "itself";
       }
+      return member.getName();
     }
-
-    @Nullable
-    private String getGuardString() {
-      return guardString;
-    }
+    return value;
   }
 }

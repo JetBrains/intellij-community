@@ -1,11 +1,11 @@
-# $Id: af.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: af.py 9417 2023-06-27 20:04:54Z milde $
 # Author: Jannie Hofmeyr <jhsh@sun.ac.za>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Afrikaans-language mappings for language-dependent features of
@@ -24,9 +24,10 @@ directives = {
       'wenk': 'hint',
       'belangrik': 'important',
       'nota': 'note',
-      'tip': 'tip', # hint and tip both have the same translation: wenk
+      'tip': 'tip',  # hint and tip both have the same translation: wenk
       'waarskuwing': 'warning',
-      'vermaning': 'admonition',
+      'advies': 'admonition',
+      'vermaning': 'admonition',  # sic! kept for backwards compatibiltity
       'kantstreep': 'sidebar',
       'onderwerp': 'topic',
       'lynblok': 'line-block',
@@ -38,20 +39,20 @@ directives = {
       'pull-quote (translation required)': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #'vrae': 'questions',
-      #'qa': 'questions',
-      #'faq': 'questions',
+      # 'vrae': 'questions',
+      # 'qa': 'questions',
+      # 'faq': 'questions',
       'table (translation required)': 'table',
       'csv-table (translation required)': 'csv-table',
       'list-table (translation required)': 'list-table',
       'meta': 'meta',
-      #'beeldkaart': 'imagemap',
+      # 'beeldkaart': 'imagemap',
       'beeld': 'image',
       'figuur': 'figure',
       'insluiting': 'include',
       'rou': 'raw',
       'vervang': 'replace',
-      'unicode': 'unicode', # should this be translated? unikode
+      'unicode': 'unicode',  # should this be translated? unikode
       'datum': 'date',
       'klas': 'class',
       'role (translation required)': 'role',
@@ -62,8 +63,8 @@ directives = {
       'section-numbering': 'sectnum',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      #'voetnote': 'footnotes',
-      #'aanhalings': 'citations',
+      # 'voetnote': 'footnotes',
+      # 'aanhalings': 'citations',
       'teikennotas': 'target-notes',
       'restructuredtext-test-directive': 'restructuredtext-test-directive'}
 """Afrikaans name to registered (in directives/__init__.py) directive name
@@ -101,6 +102,7 @@ roles = {
     'uri-verwysing': 'uri-reference',
     'uri': 'uri-reference',
     'url': 'uri-reference',
-    'rou': 'raw',}
-"""Mapping of Afrikaans role names to canonical role names for interpreted text.
+    'rou': 'raw',
+    }
+"""Mapping of Afrikaans role names to canonical names for interpreted text.
 """

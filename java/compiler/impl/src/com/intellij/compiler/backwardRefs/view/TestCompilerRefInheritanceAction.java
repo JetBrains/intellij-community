@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestCompilerRefInheritanceAction extends TestCompilerHierarchyBaseAction {
   public TestCompilerRefInheritanceAction() {
-    super("Compiler Reference Direct Inheritor Search");
+    super(JavaCompilerBundle.message("action.compiler.reference.direct.inheritor.search.text"));
   }
 
   @Override
@@ -20,11 +21,10 @@ public class TestCompilerRefInheritanceAction extends TestCompilerHierarchyBaseA
     return element instanceof PsiClass;
   }
 
-  @Nullable
   @Override
-  protected CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
-                                                            @NotNull CompilerReferenceServiceImpl refService,
-                                                            @NotNull GlobalSearchScope scope) {
-    return refService.getTestHierarchy((PsiNamedElement)element, scope, StdFileTypes.JAVA);
+  protected @Nullable CompilerReferenceHierarchyTestInfo getHierarchy(@NotNull PsiElement element,
+                                                                      @NotNull CompilerReferenceServiceImpl refService,
+                                                                      @NotNull GlobalSearchScope scope) {
+    return refService.getTestHierarchy((PsiNamedElement)element, scope, JavaFileType.INSTANCE);
   }
 }

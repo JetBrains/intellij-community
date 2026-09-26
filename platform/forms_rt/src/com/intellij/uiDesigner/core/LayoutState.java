@@ -15,11 +15,11 @@
  */
 package com.intellij.uiDesigner.core;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 
 /**
- * @noinspection unchecked
  */
 public final class LayoutState {
   private final Component[] myComponents;

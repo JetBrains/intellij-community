@@ -1,8 +1,8 @@
-// "Insert '(String)o' declaration" "true"
+// "Insert '(String)o' declaration" "true-preview"
 class C {
     void f(Object o) {
         if (o instanceof String) {
-            String o1 = (String) o;
+            String s = (String) o;
             <caret>
             o = "";
         }

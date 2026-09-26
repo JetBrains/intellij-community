@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_dslMarkerAdded-a.kotlin_module
+  Tag.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/dslMarkerAdded/a/marker.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_dslMarkerAdded-a.kotlin_module
+  UseKt$u$1$1.class
+  UseKt$u$1.class
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/dslMarkerAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

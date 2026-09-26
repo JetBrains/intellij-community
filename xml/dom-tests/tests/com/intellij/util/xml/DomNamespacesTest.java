@@ -15,20 +15,15 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomNamespacesTest extends DomTestCase {
 
   public void testUseExistingNamespace() {
@@ -160,7 +155,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testNonemptyRootTagPrefix() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyFooElement>(MyFooElement.class, "a", "foons") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyFooElement.class, "a", "foons") {
 
       @Override
       protected void initializeFileDescription() {
@@ -179,7 +174,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testSpringAopLike() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyBeans>(MyBeans.class, "beans", "beans", "aop") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyBeans.class, "beans", "beans", "aop") {
 
       @Override
       protected void initializeFileDescription() {
@@ -203,7 +198,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testSpringUtilLike() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyBeans>(MyBeans.class, "beans", "beans", "util") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyBeans.class, "beans", "beans", "util") {
 
       @Override
       protected void initializeFileDescription() {
@@ -264,9 +259,7 @@ public class DomNamespacesTest extends DomTestCase {
                                              "<sys:aaa/>" +
                                              "</f:a>", MyElement.class);
     registerNamespacePolicies(element2, "foo1", "bar1");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      element.copyFrom(element2);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> element.copyFrom(element2));
 
     assertEquals("<a xmlns=\"foo\" xmlns:bar=\"bar\">" +
                  "<bar:bar-child/>" +

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -25,23 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-public class GroovyBusyWaitInspection extends BaseInspection {
+public final class GroovyBusyWaitInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Busy wait";
+  protected @NotNull String buildErrorString(Object... infos) {
+    return GroovyBundle.message("inspection.message.call.to.thread.ref.in.a.loop");
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return "Call to <code>Thread.#ref()</code> in a loop, probably busy-waiting #loc";
-  }
-
-  @NotNull
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BusyWaitVisitor();
   }
 
@@ -52,10 +45,9 @@ public class GroovyBusyWaitInspection extends BaseInspection {
       super.visitMethodCallExpression(grMethodCallExpression);
 
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression reference)) {
         return;
       }
-      final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
       final String name = reference.getReferenceName();
       if (!"sleep".equals(name)) {
         return;

@@ -1,4 +1,4 @@
-// "Replace with 'List.of' call" "false"
+// "Replace with 'List.of()' call" "false"
 import java.util.*;
 
 public class Test {

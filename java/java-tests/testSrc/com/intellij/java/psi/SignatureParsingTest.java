@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
+import com.intellij.idea.TestFor;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
@@ -24,9 +12,6 @@ import java.text.StringCharacterIterator;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author max
- */
 public class SignatureParsingTest {
   @Test
   public void testVarianceAmbiguity() throws ClsFormatException {
@@ -47,12 +32,30 @@ public class SignatureParsingTest {
                  parseTypeString("Lautovalue/shaded/com/google$/common/collect/$ImmutableSet<Ljava/lang/String;>;"));
   }
 
+  @Test
+  public void testAnonymousClassName() {
+    //check regressions after fixing IDEA-386511
+    assertEquals("pkg.Outer.Inner",   StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/Outer$Inner"));
+    assertEquals("pkg.A$.Lambda", StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/A$$Lambda"));
+  }
+
+  @TestFor(issues = "IDEA-386511")
+  @Test
+  public void testAnonymousClassNameWithDigits() {
+    assertEquals("pkg.Outer$1",       StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/Outer$1"));
+    assertEquals("pkg.Outer$1Helper", StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/Outer$1Helper"));
+    assertEquals("pkg.Outer.Inner$1", StubBuildingVisitor.GUESSING_MAPPER.fun("pkg/Outer$Inner$1"));
+  }
+
   @Test(expected = ClsFormatException.class)
   public void testIllegal() throws ClsFormatException {
     parseTypeString("T");
   }
 
   private static String parseTypeString(String signature) throws ClsFormatException {
-    return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    String oldStyle = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    TypeInfo newStyle = SignatureParsing.parseTypeStringToTypeInfo(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_PROVIDER);
+    assertEquals(oldStyle, newStyle.text());
+    return oldStyle;
   }
 }

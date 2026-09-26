@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <resource-bundle>ActionTextXmlEntityFixBundle</resource-bundle>
+
+  <actions>
+  <action<caret> id="BundleActionXmlEntity"/>
+  </actions>
+
+</idea-plugin>

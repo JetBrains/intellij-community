@@ -1,26 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaCommandLine;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteState;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.openapi.util.KeyWithDefaultValue;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Comparator;
+import org.jetbrains.annotations.TestOnly;
 
 public class DefaultDebugEnvironment implements DebugEnvironment {
   private final GlobalSearchScope mySearchScope;
@@ -29,6 +30,9 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   private final ExecutionEnvironment environment;
   private final RunProfileState state;
   private final boolean myNeedParametersSet;
+
+  @TestOnly
+  public static final KeyWithDefaultValue<Integer> DEBUGGER_TRACE_MODE = KeyWithDefaultValue.create("DEBUGGER_TRACE_MODE", 0);
 
   public DefaultDebugEnvironment(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) {
     this(environment, state, remoteConnection, pollConnection ? LOCAL_START_TIMEOUT : 0);
@@ -44,45 +48,27 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     myPollTimeout = pollTimeout;
 
     mySearchScope = createSearchScope(environment.getProject(), environment.getRunProfile());
-    myNeedParametersSet = remoteConnection.isServerMode() && remoteConnection.isUseSockets() && "0".equals(remoteConnection.getAddress());
+    myNeedParametersSet = remoteConnection.isServerMode() && remoteConnection.isUseSockets() && "0".equals(remoteConnection.getApplicationAddress());
   }
 
   private static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
-    GlobalSearchScope scope = SearchScopeProvider.createSearchScope(project, runProfile);
-    if (scope.equals(GlobalSearchScope.allScope(project))) {
-      // prefer sources over class files
-      return new DelegatingGlobalSearchScope(scope) {
-        final ProjectFileIndex myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        final Comparator<VirtualFile> myScopeComparator =
-          Comparator.comparing(myProjectFileIndex::isInSourceContent)
-            .thenComparing(myProjectFileIndex::isInLibrarySource)
-            .thenComparing(super::compare);
-
-        @Override
-        public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-          return myScopeComparator.compare(file1, file2);
-        }
-      };
-    }
-    return scope;
+    GlobalSearchScope scope = ExecutionSearchScopes.executionScope(project, runProfile);
+    // prefer sources over class files
+    return new DebuggerGlobalSearchScope(scope, project);
   }
 
   @Override
   public ExecutionResult createExecutionResult() throws ExecutionException {
     // debug port may have changed, reinit parameters just in case
-    if (myNeedParametersSet && state instanceof JavaCommandLine) {
-      DebuggerManagerImpl.createDebugParameters(((JavaCommandLine)state).getJavaParameters(),
-                                                true,
-                                                DebuggerSettings.SOCKET_TRANSPORT,
-                                                myRemoteConnection.getAddress(),
-                                                false);
+    if (myNeedParametersSet && state instanceof JavaCommandLine line) {
+      new RemoteConnectionBuilder(true, DebuggerSettings.SOCKET_TRANSPORT, myRemoteConnection.getApplicationAddress())
+        .create(line.getJavaParameters());
     }
     return state.execute(environment.getExecutor(), environment.getRunner());
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getSearchScope() {
+  public @NotNull GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -106,22 +92,43 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     return environment.getRunProfile().getName();
   }
 
-  @Nullable
+  @ApiStatus.Internal
+  public boolean hasVmParameter(@NotNull String parameter) {
+    if (state instanceof JavaCommandLine commandLine) {
+      try {
+        return commandLine.getJavaParameters().getVMParametersList().getParameters().contains(parameter);
+      }
+      catch (ExecutionException ignore) {
+      }
+    }
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public static boolean hasEnhancedClassRedefinitionEnabled(@NotNull DebugEnvironment environment) {
+    return environment instanceof DefaultDebugEnvironment debugEnvironment &&
+           debugEnvironment.hasVmParameter("-XX:+AllowEnhancedClassRedefinition");
+  }
+
   @Override
-  public Sdk getAlternativeJre() {
+  public @Nullable Sdk getAlternativeJre() {
     return AlternativeJreClassFinder.getAlternativeJre(environment.getRunProfile());
   }
 
-  @Nullable
   @Override
-  public Sdk getRunJre() {
-    if (state instanceof JavaCommandLine) {
+  public @Nullable Sdk getRunJre() {
+    if (state instanceof JavaCommandLine line) {
       try {
-        return ((JavaCommandLine)state).getJavaParameters().getJdk();
+        return line.getJavaParameters().getJdk();
       }
       catch (ExecutionException ignore) {
       }
     }
     return ProjectRootManager.getInstance(environment.getProject()).getProjectSdk();
+  }
+
+  public int getTraceMode() {
+    //noinspection ConstantConditions, TestOnlyProblems
+    return environment.getUserData(DEBUGGER_TRACE_MODE);
   }
 }

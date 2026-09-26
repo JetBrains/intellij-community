@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
-import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
   private final StringBuffer myBuffer;
 
@@ -30,7 +13,8 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
     myBuffer=new StringBuffer();
   }
 
-  protected void customize(@NotNull final Integer value) {
+  @Override
+  protected void customize(final @NotNull Integer value) {
     final int policy=value.intValue();
     myBuffer.setLength(0);
 
@@ -38,13 +22,13 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
       myBuffer.append(UIDesignerBundle.message("property.can.shrink"));
     }
     if((policy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0){
-      if(myBuffer.length()>0){
+      if(!myBuffer.isEmpty()){
         myBuffer.append(", ");
       }
       myBuffer.append(UIDesignerBundle.message("property.can.grow"));
     }
     if((policy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0){
-      if(myBuffer.length()>0){
+      if(!myBuffer.isEmpty()){
         myBuffer.append(", ");
       }
       myBuffer.append(UIDesignerBundle.message("property.want.grow"));
@@ -54,6 +38,7 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
       myBuffer.append(UIDesignerBundle.message("property.fixed"));
     }
 
-    setText(myBuffer.substring(0, myBuffer.length())); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    @NlsSafe String text = myBuffer.substring(0, myBuffer.length()); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    setText(text);
   }
 }

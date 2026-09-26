@@ -1,0 +1,42 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectView"/>
+    <module name="intellij.platform.projectView.backend"/>
+    <module name="intellij.platform.todo"/>
+    <module name="intellij.platform.todo.backend"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.PsiComment"
+                                 implementationClass="com.intellij.java.todo.TodoSymbolReferenceProvider"
+                                 targetClass="com.intellij.java.todo.TodoSymbol"
+                                 hostLanguage="JAVA"/>
+    <lang.symbolSearchTarget implementationClass="com.intellij.java.todo.TodoSymbolSearchTargetFactory"
+                             forClass="com.intellij.java.todo.TodoSymbol"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.java.todo.TodoSearcher"/>
+    <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
+                    serviceImplementation="com.intellij.java.todo.TodoJavaTreeHelper"
+                    overrides="true"/>
+  </extensions>
+</idea-plugin>

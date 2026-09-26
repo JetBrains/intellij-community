@@ -1,0 +1,9 @@
+LineBreakpoint created at composeCompositionLocal.kt:20
+Run Java
+Connected to the target VM
+composeCompositionLocal.kt:20
+Compile bytecode for stringValue
+Compile bytecode for intValue
+Disconnected from the target VM
+
+Process finished with exit code 0

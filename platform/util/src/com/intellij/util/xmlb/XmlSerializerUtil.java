@@ -1,33 +1,25 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class XmlSerializerUtil {
+public final class XmlSerializerUtil {
   private XmlSerializerUtil() {
   }
 
   public static <T> void copyBean(@NotNull T from, @NotNull T to) {
     assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
                                                              from.getClass() + " to " + to.getClass();
-    for (MutableAccessor accessor : BeanBinding.getAccessors(from.getClass())) {
+    for (MutableAccessor accessor : BeanBindingKt.getBeanAccessors(from.getClass())) {
       accessor.set(to, accessor.read(from));
     }
   }
@@ -44,8 +36,26 @@ public class XmlSerializerUtil {
     }
   }
 
-  @NotNull
-  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
-    return BeanBinding.getAccessors(aClass);
+  public static @NotNull List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+    return BeanBindingKt.getBeanAccessors(aClass);
+  }
+
+  static @Nullable SerializationFilter getPropertyFilter(@NotNull Property property) {
+    Class<? extends SerializationFilter> filter = property.filter();
+    return filter == SerializationFilter.class ? null : ReflectionUtil.newInstance(filter);
+  }
+
+  @SuppressWarnings("rawtypes")
+  static Class<? extends Converter> getConverter(@NotNull OptionTag optionTag) {
+    Class<? extends Converter> converter = optionTag.converter();
+    return converter == Converter.class ? null : converter;
+  }
+
+  static Class<?>[] getElementTypes(@NotNull XCollection annotation) {
+    return annotation.elementTypes();
+  }
+
+  static Class<?>[] getElementTypes(@SuppressWarnings("deprecation") @NotNull AbstractCollection annotation) {
+    return annotation.elementTypes();
   }
 }

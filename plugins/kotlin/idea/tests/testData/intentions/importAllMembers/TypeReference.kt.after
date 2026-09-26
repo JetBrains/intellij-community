@@ -1,0 +1,17 @@
+// PRIORITY: HIGH
+// INTENTION_TEXT: "Import members from 'com.test.States'"
+import com.test.States
+import com.test.States.*
+
+fun foo(s: States) {
+    when (s) {
+        is Loading -> {
+        }
+        is Error -> {
+        }
+        is Content -> {
+        }
+    }
+}
+
+fun bar(): Loading = Loading

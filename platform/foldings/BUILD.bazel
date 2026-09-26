@@ -1,0 +1,77 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.foldings` start
+content_module_jar(module = ":foldings")
+### auto-generated section `dev intellij.platform.foldings` end
+
+### auto-generated section `build intellij.platform.foldings` start
+jvm_library(
+    name = "foldings",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.foldings",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/code-style-impl:codeStyle-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util/jdom",
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-api:lang",
+        "//platform/analysis-impl",
+        "//platform/core-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+)
+
+jvm_library(
+    name = "foldings_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.foldings",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":foldings",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/code-style-impl:codeStyle-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.foldings` end
+
+### auto-generated section `iml intellij.platform.foldings` start
+exports_files(
+    [
+        "intellij.platform.foldings.iml",
+        "resources/intellij.platform.foldings.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.foldings` end

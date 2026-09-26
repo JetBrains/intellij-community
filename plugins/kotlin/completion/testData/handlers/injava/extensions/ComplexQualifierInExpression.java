@@ -1,0 +1,13 @@
+package a;
+public class Testing {
+    static String process(String s) { return s; }
+    public static void test() {
+        String result = process(new Builder().build().<caret>);
+    }
+}
+
+// ELEMENT: display
+// AUTOCOMPLETE_SETTING: true
+// FIR_IDENTICAL
+// FIR_COMPARISON
+

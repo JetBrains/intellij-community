@@ -1,0 +1,121 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.codeInsight.structuralSearch` start
+content_module_jar(module = ":kotlin-codeInsight-structuralSearch")
+### auto-generated section `dev intellij.kotlin.codeInsight.structuralSearch` end
+
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` start
+create_kotlinc_options(
+    name = "custom_kotlin-codeInsight-structuralSearch",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "kotlin-codeInsight-structuralSearch",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-codeInsight-structuralSearch",
+    module_name = "intellij.kotlin.codeInsight.structuralSearch",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/guava",
+        "//platform/duplicates-analysis",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/execution",
+        "//platform/core-impl",
+        "//platform/ide-core",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/editor-ui-api:editor-ui",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/base/analysis",
+        "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/resources:kotlin-base-resources",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
+        "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
+        "//plugins/kotlin/base/code-insight",
+    ],
+)
+
+jvm_library(
+    name = "kotlin-codeInsight-structuralSearch_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_kotlin-codeInsight-structuralSearch",
+    module_name = "intellij.kotlin.codeInsight.structuralSearch",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":kotlin-codeInsight-structuralSearch",
+        "//plugins/kotlin/references:references_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/duplicates-analysis:duplicates-analysis_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/structuralsearch:structuralSearch_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
+        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
+        "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` end
+
+### auto-generated section `iml intellij.kotlin.codeInsight.structuralSearch` start
+exports_files(
+    [
+        "intellij.kotlin.codeInsight.structuralSearch.iml",
+        "resources/intellij.kotlin.codeInsight.structuralSearch.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.codeInsight.structuralSearch` end

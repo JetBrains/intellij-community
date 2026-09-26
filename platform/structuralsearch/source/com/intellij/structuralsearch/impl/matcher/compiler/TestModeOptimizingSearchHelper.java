@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +14,7 @@ import java.util.Set;
  */
 class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final StringBuilder builder = new StringBuilder();
-  private String plan;
-  private boolean myTransactionStarted = false;
+  private boolean myTransactionStarted;
 
   private final List<String> myWords = new SmartList<>();
 
@@ -24,14 +23,7 @@ class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return true;
   }
 
-  @Override
-  public void clear() {
-    assert !myTransactionStarted;
-    plan = builder.toString();
-    builder.setLength(0);
-  }
-
-  private void append(final String word, final String prefix) {
+  private void append(@NotNull String word, @NotNull String prefix) {
     myWords.add(prefix + word);
     myTransactionStarted = true;
   }
@@ -78,15 +70,16 @@ class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
     return false;
   }
 
-  @NotNull
   @Override
-  public Set<PsiFile> getFilesSetToScan() {
+  public @NotNull Set<VirtualFile> getFilesSetToScan() {
     assert !myTransactionStarted;
     return Collections.emptySet();
   }
 
-  public String getSearchPlan() {
+  public @NotNull String getSearchPlan() {
     assert !myTransactionStarted;
+    final String plan = builder.toString();
+    builder.setLength(0);
     return plan;
   }
 }

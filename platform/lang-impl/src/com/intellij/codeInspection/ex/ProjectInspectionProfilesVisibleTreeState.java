@@ -1,19 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "ProjectInspectionProfilesVisibleTreeState", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {
-  private final VisibleTreeStateComponent myComponent = new VisibleTreeStateComponent();
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
+@State(name = "ProjectInspectionProfilesVisibleTreeState", storages = @Storage(StoragePathMacros.CACHE_FILE))
+public final class ProjectInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {
+  private VisibleTreeStateComponent myComponent = new VisibleTreeStateComponent();
 
   public static ProjectInspectionProfilesVisibleTreeState getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectInspectionProfilesVisibleTreeState.class);
+    return project.getService(ProjectInspectionProfilesVisibleTreeState.class);
   }
 
   @Override
@@ -23,10 +28,10 @@ public class ProjectInspectionProfilesVisibleTreeState implements PersistentStat
 
   @Override
   public void loadState(@NotNull VisibleTreeStateComponent state) {
-    myComponent.copyFrom(state);
+    myComponent = state;
   }
 
-  public VisibleTreeState getVisibleTreeState(InspectionProfile profile) {
+  public VisibleTreeState getVisibleTreeState(@NotNull InspectionProfile profile) {
     return myComponent.getVisibleTreeState(profile);
   }
 }

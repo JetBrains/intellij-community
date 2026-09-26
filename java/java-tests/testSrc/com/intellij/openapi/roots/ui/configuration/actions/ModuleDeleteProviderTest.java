@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -9,23 +9,19 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ModuleDeleteProviderTest extends PlatformTestCase {
+public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    Messages.setTestDialog(TestDialog.OK);
+    TestDialogManager.setTestDialog(TestDialog.OK);
   }
 
   public void testSimple() {
@@ -59,7 +55,7 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
 
   public void testUnloaded() {
     createModule("a");
-    getModuleManager().setUnloadedModules(Arrays.asList("a"));
+    getModuleManager().setUnloadedModulesSync(List.of("a"));
     assertNotNull(getModuleManager().getUnloadedModuleDescription("a"));
     deleteModules("a");
     assertNull(getModuleManager().getUnloadedModuleDescription("a"));
@@ -69,7 +65,7 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
     Module a = createModule("a");
     Module b = createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
-    getModuleManager().setUnloadedModules(Arrays.asList("b"));
+    getModuleManager().setUnloadedModulesSync(List.of("b"));
     assertSameElements(ModuleRootManager.getInstance(a).getDependencyModuleNames(), "b");
     deleteModules("b");
     assertEmpty(ModuleRootManager.getInstance(a).getDependencyModuleNames());
@@ -81,7 +77,7 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(myModule, a);
     ModuleRootModificationUtil.addDependency(myModule, b);
-    getModuleManager().setUnloadedModules(Arrays.asList("a"));
+    getModuleManager().setUnloadedModulesSync(List.of("a"));
     assertSameElements(ModuleRootManager.getInstance(myModule).getDependencyModuleNames(), "a", "b");
     deleteModules("a", "b");
     assertNull(getModuleManager().findModuleByName("a"));
@@ -95,7 +91,6 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
   }
 
   private void deleteModules(String... names) {
-    ModuleDeleteProvider provider = new ModuleDeleteProvider();
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, myProject);
     List<Module> modules = new ArrayList<>();
@@ -117,13 +112,21 @@ public class ModuleDeleteProviderTest extends PlatformTestCase {
     if (!unloaded.isEmpty()) {
       dataContext.put(ProjectView.UNLOADED_MODULES_CONTEXT_KEY, unloaded);
     }
+    ModuleDeleteProvider provider = ModuleDeleteProvider.getInstance();
     assertTrue(provider.canDeleteElement(dataContext));
     provider.deleteElement(dataContext);
   }
 
   @Override
   public void tearDown() throws Exception {
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    super.tearDown();
+    try {
+      TestDialogManager.setTestDialog(TestDialog.DEFAULT);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

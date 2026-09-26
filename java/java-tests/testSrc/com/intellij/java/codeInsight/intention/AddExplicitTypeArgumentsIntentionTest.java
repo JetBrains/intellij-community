@@ -15,83 +15,138 @@
  */
 package com.intellij.java.codeInsight.intention;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtureTestCase {
 
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    super.tuneFixture(moduleBuilder);
+    moduleBuilder.addJdkVersion(LanguageLevel.JDK_1_8);
+  }
+
   public void testNoStaticQualifier() {
-    doTest("class Test {\n" +
-           "    static {\n" +
-           "        String s = fo<caret>o(\"\");\n" +
-           "    }\n" +
-           "    static <T> T foo(T t) {\n" +
-           "        return t;\n" +
-           "    }\n" +
-           "}",
-           "class Test {\n" +
-           "    static {\n" +
-           "        String s = Test.<String>foo(\"\");\n" +
-           "    }\n" +
-           "    static <T> T foo(T t) {\n" +
-           "        return t;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Test {
+                 static {
+                     String s = fo<caret>o("");
+                 }
+                 static <T> T foo(T t) {
+                     return t;
+                 }
+             }""",
+           """
+             class Test {
+                 static {
+                     String s = Test.<String>foo("");
+                 }
+                 static <T> T foo(T t) {
+                     return t;
+                 }
+             }""");
   }
   
   public void testNoThisQualifier() {
-    doTest("class Test {\n" +
-           "    {\n" +
-           "        String s = fo<caret>o(\"\");\n" +
-           "    }\n" +
-           "    <T> T foo(T t) {\n" +
-           "        return t;\n" +
-           "    }\n" +
-           "}",
-           "class Test {\n" +
-           "    {\n" +
-           "        String s = this.<String>foo(\"\");\n" +
-           "    }\n" +
-           "    <T> T foo(T t) {\n" +
-           "        return t;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Test {
+                 {
+                     String s = fo<caret>o("");
+                 }
+                 <T> T foo(T t) {
+                     return t;
+                 }
+             }""",
+           """
+             class Test {
+                 {
+                     String s = this.<String>foo("");
+                 }
+                 <T> T foo(T t) {
+                     return t;
+                 }
+             }""");
+  }
+
+  public void testContextClass() {
+    doTest("""
+             import java.util.Comparator;abstract class UserSession {
+                 private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator
+                         .comp<caret>aring(new java.util.function.Function<UserSession, String>() {
+                                            @Override
+                                            public String apply(UserSession userSession) {
+                                               return userSession.toString();
+                                            }});
+             }""",
+           """
+             import java.util.Comparator;
+             import java.util.function.Function;
+
+             abstract class UserSession {
+                 private static final Comparator<UserSession> USER_SESSION_COMPARATOR = Comparator
+                         .<UserSession, String>comparing(new Function<UserSession, String>() {
+                             @Override
+                             public String apply(UserSession userSession) {
+                                 return userSession.toString();
+                             }
+                         });
+             }""");
   }
 
   public void testInferredCapturedWildcard() {
-    doTest("class Test {\n" +
-           "    static void m(java.util.List<? extends String> l) {\n" +
-           "        fo<caret>o(l.get(0));\n" +
-           "    }\n" +
-           "    static <T> void foo(T t) {\n" +
-           "    }\n" +
-           "}",
-           "class Test {\n" +
-           "    static void m(java.util.List<? extends String> l) {\n" +
-           "        Test.<String>foo(l.get(0));\n" +
-           "    }\n" +
-           "    static <T> void foo(T t) {\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Test {
+                 static void m(java.util.List<? extends String> l) {
+                     fo<caret>o(l.get(0));
+                 }
+                 static <T> void foo(T t) {
+                 }
+             }""",
+           """
+             class Test {
+                 static void m(java.util.List<? extends String> l) {
+                     Test.<String>foo(l.get(0));
+                 }
+                 static <T> void foo(T t) {
+                 }
+             }""");
   }
 
   public void testNotAvailableWhenRawTypeInferred() {
-    myFixture.configureByText("a.java", "import java.util.List;\n" +
-                                        "class Foo {\n" +
-                                        "    <T> List<T> getList() {return null;}\n" +
-                                        "    {\n" +
-                                        "        List l;\n" +
-                                        "        l = get<caret>List();\n" +
-                                        "    }\n" +
-                                        "}");
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      class Foo {
+          <T> List<T> getList() {return null;}
+          {
+              List l;
+              l = get<caret>List();
+          }
+      }""");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
+    assertNull(intentionAction);
+  }
+
+  public void testNotAvailableWhenWildcardInferred() {
+    myFixture.configureByText("a.java", """
+      import java.util.stream.*;
+
+      public class JDbQueryElement {
+
+          void m(final Stream<String> stringStream) {
+              stringStream.c<caret>ollect(Collectors.joining(", "));
+          }
+
+      }""");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNull(intentionAction);
   }
 
   private void doTest(String beforeText, String afterText) {
     myFixture.configureByText("a.java", beforeText);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention(JavaBundle.message("intention.add.explicit.type.arguments.family"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResult(afterText);

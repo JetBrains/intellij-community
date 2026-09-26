@@ -1,36 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
@@ -38,13 +19,10 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyDslScript {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslScript");
+  private static final Logger LOG = Logger.getInstance(GroovyDslScript.class);
   private final Project project;
-  @Nullable private final VirtualFile file;
+  private final @Nullable VirtualFile file;
   private final GroovyDslExecutor executor;
   private final String myPath;
   private final FactorTree myFactorTree;
@@ -57,32 +35,25 @@ public class GroovyDslScript {
     myFactorTree = new FactorTree(project, executor);
   }
 
-
-  public boolean processExecutor(PsiScopeProcessor processor,
-                                 final PsiType psiType,
-                                 final PsiElement place,
-                                 final PsiFile placeFile,
-                                 ResolveState state, NotNullLazyValue<String> typeText) {
-    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, typeText);
-    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
+  public @NotNull CustomMembersHolder processExecutor(@NotNull GroovyClassDescriptor descriptor) {
+    CustomMembersHolder holder = myFactorTree.retrieve(descriptor);
     try {
       if (holder == null) {
-        holder = addGdslMembers(descriptor, psiType);
+        holder = addGdslMembers(descriptor);
         myFactorTree.cache(descriptor, holder);
       }
-
-      return holder.processMembers(descriptor, processor, state);
+      return holder;
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       handleDslError(e);
-      return true;
+      return CustomMembersHolder.EMPTY;
     }
   }
 
-  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, final PsiType psiType) {
+  private CustomMembersHolder addGdslMembers(@NotNull GroovyClassDescriptor descriptor) {
     final ProcessingContext ctx = new ProcessingContext();
     ctx.put(GdslUtil.INITIAL_CONTEXT, descriptor);
     try {
@@ -90,7 +61,7 @@ public class GroovyDslScript {
         return CustomMembersHolder.EMPTY;
       }
 
-      return executor.processVariants(descriptor, ctx, psiType);
+      return executor.processVariants(descriptor, ctx);
     }
     catch (InvokerInvocationException e) {
       Throwable cause = e.getCause();
@@ -125,9 +96,9 @@ public class GroovyDslScript {
     return false;
   }
 
-  public boolean handleDslError(Throwable e) {
+  public void handleDslError(Throwable e) {
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
+      throw new RuntimeException(e);
     }
     if (file != null) {
       DslErrorReporter.getInstance().invokeDslErrorPopup(e, project, file);
@@ -136,16 +107,18 @@ public class GroovyDslScript {
       LOG.info("Error when executing internal GDSL " + myPath, e);
       GdslUtil.stopGdsl();
     }
-    return false;
+  }
+
+  public @Nullable VirtualFile getFile() {
+    return file;
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "GroovyDslScript: " + myPath;
   }
 
-  @NotNull
-  public MultiMap getStaticInfo() {
+  public @NotNull MultiMap getStaticInfo() {
     return executor.getStaticInfo();
   }
 }

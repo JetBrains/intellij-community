@@ -1,0 +1,236 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.kernel
+
+import com.jetbrains.rhizomedb.DB
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.asOf
+import fleet.kernel.rete.CancellationReason
+import fleet.kernel.rete.ContextMatches
+import fleet.kernel.rete.ReteEntity
+import fleet.kernel.rete.UnsatisfiedMatchException
+import fleet.kernel.rete.impl.ObservableMatch
+import kotlinx.coroutines.ThreadContextElement
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.yield
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+
+interface DbSource {
+  val flow: Flow<DB>
+  val latest: DB
+  val debugName: String
+
+  /**
+   * Binds this coroutine's [dbSource] view to whatever thread it resumes on.
+   *
+   * [ambient] decides what happens when that thread has already claimed what it reads. An element a
+   * caller installed deliberately — `withContext(KernelContextElement(t))` — always binds, because
+   * being ignored there is indistinguishable from the call not being written, and against another
+   * transactor it would silently read the wrong database. An element that merely rode in on an
+   * inherited scope must not take the thread out of a region that claimed it.
+   *
+   * A claim is a context with **no** [DbContext.dbSource]. The three places that claim a thread —
+   * a frame's read scope, an explicit [com.jetbrains.rhizomedb.asOf], and the read-tracking pass in
+   * `RhizomeDbDataSource.observe` — all bind one, and nothing else does. That is the same
+   * discriminator [restoreThreadContext] already uses to decide what it may re-bump, so the two
+   * directions now agree instead of keying off different things.
+   */
+  class ContextElement(
+    val dbSource: DbSource,
+    val ambient: Boolean = false,
+  ) : ThreadContextElement<DbContext<*>?> {
+    override val key: CoroutineContext.Key<*> = ContextElement
+
+    companion object : CoroutineContext.Key<ContextElement>
+
+    override fun updateThreadContext(context: CoroutineContext): DbContext<*>? {
+      // resuming
+      val oldState = DbContext.threadBoundOrNull
+      // A source-derived context is refreshed even here: it belongs to a source rather than to a
+      // region, and leaving it would serve a stale db — or another source's db entirely.
+      if (ambient && oldState != null && oldState.dbSource == null) return oldState
+      runCatching { dbSource.latest }
+        .onSuccess { latest ->
+          val ctx = DbContext<DB>(latest, dbSource)
+          DbContext.threadLocal.set(ctx)
+          context[ContextMatches]?.matches?.firstOrNull { m -> m.wasInvalidated }?.let { cancelledMatch ->
+            ctx.setUnsatisfiedMatchPoison(cancelledMatch)
+          }
+        }.onFailure { ex ->
+          val ctx = DbContext<DB>(RuntimeException("Failed to obtain latest db snapshot", ex), dbSource)
+          DbContext.threadLocal.set(ctx)
+        }
+      return oldState
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: DbContext<*>?) {
+      /*
+        the code:
+        // withContext starts an undispatched coroutine (will start execution on this very thread).
+        // the DbSource.updateThreadContext will be invoked (even though it was no required, see [withContext] impl), binding a new DbContext on thread local
+        val e = withContext(CoroutineName("Hello")) {
+          // change will bump the DbContext and if it does not really suspend
+          change {
+            new(TestEntity::class) {
+              vector = BifurcanVector()
+            }
+          }
+        }
+        // withContext will restore the old DbContext
+        // then we continue here without invoking updateThreadContext again, leaving us with the old db.
+        assertTrue(e.exists())
+      */
+      /*
+       When leaving thread, we should bump the threadBound DbContext with the db from original DbSource, not the one leaving the thread.
+      */
+      oldState?.let {
+        (oldState.dbSource as DbSource?)?.let { dbSource ->
+          runCatching { dbSource.latest }
+            .onSuccess { latest ->
+              when (val cancelledMatch = context[ContextMatches]?.matches?.firstOrNull { m -> m.wasInvalidated }) {
+                null -> oldState.set(latest)
+                else -> oldState.setUnsatisfiedMatchPoison(cancelledMatch)
+              }
+            }
+            .onFailure { ex -> oldState.setPoison(RuntimeException("Failed to obtain latest db snapshot", ex)) }
+        }
+      }
+      DbContext.threadLocal.set(oldState)
+    }
+
+    override fun toString(): String = "DbSourceContextElement(${dbSource.debugName})"
+  }
+}
+
+private fun DbContext<*>.setUnsatisfiedMatchPoison(cancelledMatch: ObservableMatch<*>) {
+  setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
+}
+
+class ConstantDBSource(private val db: DB) : DbSource {
+  override val flow: Flow<DB>
+    get() = error("This DBSource is constant, the only database it can possibly return is the [latest] one, there is no point in waiting")
+
+  override val latest: DB
+    get() = db
+
+  override val debugName: String
+    get() = "ConstantDbSource($db)"
+}
+
+class MutableDbSource(override val debugName: String, initial: DB) : DbSource {
+  private sealed interface State {
+    data class NotTerminated(val db: DB) : State
+    data class Terminated(val cause: Throwable) : State
+  }
+
+  private val state = MutableStateFlow<State>(State.NotTerminated(initial))
+
+  override val flow: Flow<DB>
+    get() = state.map {
+      when (it) {
+        is State.NotTerminated -> it.db
+        is State.Terminated -> throw it.cause
+      }
+    }
+
+  override val latest: DB
+    get() = when (val s = state.value) {
+      is State.NotTerminated -> s.db
+      is State.Terminated -> throw s.cause
+    }
+
+  fun set(db: DB) {
+    state.update {
+      check(it is State.NotTerminated) { "db source is already terminated" }
+      State.NotTerminated(db)
+    }
+  }
+
+  fun close(ex: Throwable? = null) {
+    state.update {
+      when (it) {
+        is State.Terminated -> it
+        else -> State.Terminated(ex ?: RuntimeException("DbSource is terminated"))
+      }
+    }
+  }
+
+  fun readOnly(): DbSource {
+    val source = this
+    return object : DbSource {
+      override val latest: DB get() = source.latest
+      override val flow: Flow<DB> get() = source.flow
+      override val debugName: String get() = source.debugName
+    }
+  }
+}
+
+inline fun <T> MutableDbSource.use(body: () -> T): T {
+  var cause: Throwable? = null
+  return try {
+    body()
+  }
+  catch (ex: Throwable) {
+    cause = ex
+    throw ex
+  }
+  finally {
+    close(cause)
+  }
+}
+
+class FlowDbSource(
+  internal val stateFlow: StateFlow<DB>,
+  override val debugName: String,
+) : DbSource {
+  override val flow: Flow<DB>
+    get() = stateFlow
+
+  override val latest: DB
+    get() = stateFlow.value
+
+  override fun toString(): String =
+    "FlowDbSource@${hashCode().toString(16)}(${debugName})"
+}
+
+
+fun KernelContextElement(
+  transactor: Transactor,
+  dbSource: DbSource = transactor.dbSource
+): CoroutineContext =
+  transactor + DbSource.ContextElement(dbSource) + (asOf(transactor.dbSource.latest) { ReteEntity.forKernel(transactor) }
+                                                    ?: EmptyCoroutineContext)
+
+fun ConstantDbContext(db: DB): CoroutineContext =
+  DbSource.ContextElement(ConstantDBSource(db))
+
+/**
+ * [Transactor] on which the [saga] is started
+ * */
+val CoroutineContext.transactor: Transactor
+  get() = requireNotNull(this[Transactor]) { "no kernel on coroutineContext" }
+
+val CoroutineContext.dbSource: DbSource
+  get() = requireNotNull(this[DbSource.ContextElement]) { "no DbSource on coroutineContext" }.dbSource
+
+
+suspend fun DbSource.catchUp(targetTimestamp: Long) {
+  let { dbSource ->
+    if (DbContext.threadBound.poison == null) {
+      if (DbContext.threadBound.impl.timestamp < targetTimestamp || dbSource.latest.timestamp < targetTimestamp) {
+        val dbAfterTimestamp = dbSource.flow.first { db ->
+          db.timestamp >= targetTimestamp
+        }
+        yield()
+        if (DbContext.threadBound.poison == null) {
+          DbContext.threadBound.set(dbAfterTimestamp)
+        }
+      }
+    }
+  }
+}

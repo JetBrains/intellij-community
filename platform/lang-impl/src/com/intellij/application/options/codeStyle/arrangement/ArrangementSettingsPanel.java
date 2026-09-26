@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -23,47 +9,58 @@ import com.intellij.application.options.codeStyle.arrangement.group.ArrangementG
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
-import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementExtendableSettings;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 
-/**
- * @author Denis Zhdanov
- * @since 10/30/12 5:17 PM
- */
-public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
+public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
-  @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
+  private final @NotNull JPanel myContent = new JPanel(new GridBagLayout());
 
-  @NotNull private final Language                         myLanguage;
-  @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
-  @NotNull private final ArrangementGroupingRulesPanel    myGroupingRulesPanel;
-  @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
-  @Nullable private final ForceArrangementPanel myForceArrangementPanel;
+  private final @NotNull Language                         myLanguage;
+  private final @NotNull ArrangementStandardSettingsAware mySettingsAware;
+  private final @NotNull ArrangementGroupingRulesPanel    myGroupingRulesPanel;
+  private final @NotNull ArrangementMatchingRulesPanel    myMatchingRulesPanel;
+  private final @Nullable ForceArrangementPanel myForceArrangementPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
     myLanguage = language;
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
 
-    assert rearranger instanceof ArrangementStandardSettingsAware;
+    if (!(rearranger instanceof ArrangementStandardSettingsAware)) {
+      throw new IllegalArgumentException("Incorrect rearranger for " + language.getID() + " language: " + rearranger);
+    }
     mySettingsAware = (ArrangementStandardSettingsAware)rearranger;
 
     final ArrangementColorsProvider colorsProvider;
@@ -83,11 +80,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1).coverLine());
 
-
-
     if (settings.getCommonSettings(myLanguage).isForceArrangeMenuAvailable()) {
       myForceArrangementPanel = new ForceArrangementPanel();
-      myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
+      myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
       myContent.add(myForceArrangementPanel.getPanel(), new GridBag().anchor(GridBagConstraints.WEST).coverLine().fillCellHorizontally());
     }
     else {
@@ -98,21 +93,17 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myContent;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
+  private @Nullable StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
     if (result == null) {
       result = mySettingsAware.getDefaultSettings();
@@ -121,11 +112,11 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {
-      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getRearrangeMode();
+      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getForceRearrangeMode();
     }
   }
 
@@ -133,7 +124,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     final StdArrangementSettings s = createSettings();
     return !Comparing.equal(getSettings(settings), s)
-           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getRearrangeMode();
+           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getForceRearrangeMode();
   }
 
   private StdArrangementSettings createSettings() {
@@ -147,7 +138,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings s = getSettings(settings);
     if (s == null) {
       myGroupingRulesPanel.setRules(null);
@@ -155,29 +146,45 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
     else {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
-      myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
+      myGroupingRulesPanel.setRules(new ArrayList<>(groupings));
       myMatchingRulesPanel.setSections(copy(s.getSections()));
       if (s instanceof StdArrangementExtendableSettings) {
         myMatchingRulesPanel.setRulesAliases(((StdArrangementExtendableSettings)s).getRuleAliases());
       }
 
       if (myForceArrangementPanel != null) {
-        myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
+        myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
       }
     }
   }
 
-  @NotNull
-  private static List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
+  @Override
+  protected @Nullable String getPreviewText() {
+    return null;
+  }
+
+  @Override
+  protected @TabTitle @NotNull String getTabTitle() {
+    return ApplicationBundle.message("arrangement.title.settings.tab");
+  }
+
+  @Override
+  protected @NotNull FileType getFileType() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
+  }
+
+  @Override
+  protected int getRightMargin() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return 0;
+  }
+
+  private static @NotNull List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
     List<ArrangementSectionRule> result = new ArrayList<>();
     for (ArrangementSectionRule rule : rules) {
       result.add(rule.clone());
     }
     return result;
-  }
-
-  @Override
-  protected String getTabTitle() {
-    return ApplicationBundle.message("arrangement.title.settings.tab");
   }
 }

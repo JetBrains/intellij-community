@@ -1,0 +1,22 @@
+public class Outer {
+  Inner inner = new Inner();
+  Other other = new Other();
+
+  String param = "value";
+
+  public class Inner {
+    void doInner() {
+      inner.doOuter(Outer.this);
+    }
+
+      void doOuter(Outer outer) {
+        outer.other.doOther(outer.param);
+      }
+  }
+
+}
+
+class Other {
+  void doOther(String param) {
+  }
+}

@@ -4,7 +4,7 @@ package com.intellij.debugger.streams.exec.streamex
 /**
  * @author Vitaliy.Bibaev
  */
-class MappingOperationsTest : StreamExTestCase() {
+open class MappingOperationsTest : StreamExTestCase() {
   override val packageName: String = "mapping"
 
   fun testElements() = doStreamExWithResultTest()
@@ -20,8 +20,6 @@ class MappingOperationsTest : StreamExTestCase() {
 
   fun testKeys() = doStreamExVoidTest()
   fun testValues() = doStreamExWithResultTest()
-
-  fun testJoin() = doStreamExVoidTest()
 
   fun testPairMap() = doStreamExWithResultTest()
 

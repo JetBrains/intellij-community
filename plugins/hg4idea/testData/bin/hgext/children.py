@@ -14,12 +14,42 @@ This extension is deprecated. You should use :hg:`log -r
 "children(REV)"` instead.
 '''
 
-from mercurial import cmdutil, commands
-from mercurial.commands import templateopts
+
 from mercurial.i18n import _
+from mercurial import (
+    cmdutil,
+    logcmdutil,
+    pycompat,
+    registrar,
+)
 
-testedwith = 'internal'
+templateopts = cmdutil.templateopts
 
+cmdtable = {}
+command = registrar.command(cmdtable)
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
+
+
+@command(
+    b'children',
+    [
+        (
+            b'r',
+            b'rev',
+            b'.',
+            _(b'show children of the specified revision'),
+            _(b'REV'),
+        ),
+    ]
+    + templateopts,
+    _(b'hg children [-r REV] [FILE]'),
+    helpcategory=command.CATEGORY_CHANGE_NAVIGATION,
+    inferrepo=True,
+)
 def children(ui, repo, file_=None, **opts):
     """show the children of the given or working directory revision
 
@@ -28,25 +58,26 @@ def children(ui, repo, file_=None, **opts):
     be printed. If a file argument is given, revision in which the
     file was last changed (after the working directory revision or the
     argument to --rev if given) is printed.
+
+    Please use :hg:`log` instead::
+
+        hg children => hg log -r "children(.)"
+        hg children -r REV => hg log -r "children(REV)"
+
+    See :hg:`help log` and :hg:`help revsets.children`.
+
     """
     rev = opts.get('rev')
+    ctx = logcmdutil.revsingle(repo, rev)
     if file_:
-        ctx = repo.filectx(file_, changeid=rev)
+        fctx = repo.filectx(file_, changeid=ctx.rev())
+        childctxs = [fcctx.changectx() for fcctx in fctx.children()]
     else:
-        ctx = repo[rev]
+        childctxs = ctx.children()
 
-    displayer = cmdutil.show_changeset(ui, repo, opts)
-    for cctx in ctx.children():
+    displayer = logcmdutil.changesetdisplayer(
+        ui, repo, pycompat.byteskwargs(opts)
+    )
+    for cctx in childctxs:
         displayer.show(cctx)
     displayer.close()
-
-cmdtable = {
-    "children":
-        (children,
-         [('r', 'rev', '',
-           _('show children of the specified revision'), _('REV')),
-         ] + templateopts,
-         _('hg children [-r REV] [FILE]')),
-}
-
-commands.inferrepo += " children"

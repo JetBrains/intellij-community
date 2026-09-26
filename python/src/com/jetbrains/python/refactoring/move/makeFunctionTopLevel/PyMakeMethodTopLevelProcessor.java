@@ -1,38 +1,39 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -49,14 +50,13 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     super(targetFunction, destination);
   }
 
-  @NotNull
   @Override
-  protected String getRefactoringName() {
+  protected @NotNull String getRefactoringName() {
     return PyBundle.message("refactoring.make.method.top.level.dialog.title");
   }
 
   @Override
-  protected void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages) {
     // Field usages
     for (String attrName : myAttributeReferences.keySet()) {
       final Collection<PyReferenceExpression> reads = myAttributeReferences.get(attrName);
@@ -87,7 +87,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
         if (qualifier != null && callExpr != null && callExpr.getArgumentList() != null) {
           PyExpression instanceExpr = qualifier;
           final PyArgumentList argumentList = callExpr.getArgumentList();
-          
+
           // Class.method(instance) -> method(instance.attr)
           if (resolvesToClass(qualifier)) {
             final PyExpression[] arguments = argumentList.getArguments();
@@ -133,7 +133,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             }
           }
         }
-        
+
         // Will replace/invalidate entire expression
         removeQualifier((PyReferenceExpression)usageElem);
       }
@@ -157,8 +157,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return qualifier == null || isPureReferenceExpression(qualifier);
   }
 
-  @NotNull
-  private PyReferenceExpression removeQualifier(@NotNull PyReferenceExpression expr) {
+  private @NotNull PyReferenceExpression removeQualifier(@NotNull PyReferenceExpression expr) {
     if (!expr.isQualified()) {
       return expr;
     }
@@ -166,9 +165,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return (PyReferenceExpression)expr.replace(newExpression);
   }
 
-  @NotNull
   @Override
-  protected PyFunction createNewFunction(@NotNull Collection<String> newParams) {
+  protected @NotNull PyFunction createNewFunction(@NotNull Collection<String> newParams) {
     final PyFunction copied = (PyFunction)myFunction.copy();
     final PyParameter[] params = copied.getParameterList().getParameters();
     if (params.length > 0) {
@@ -178,9 +176,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return copied;
   }
 
-  @NotNull
   @Override
-  protected List<String> collectNewParameterNames() {
+  protected @NotNull List<String> collectNewParameterNames() {
     final Set<String> attributeNames = new LinkedHashSet<>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result =  analyseScope(owner);
@@ -208,7 +205,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.private.attributes"));
           }
           if (parentReference.getParent() instanceof PyCallExpression) {
-            if (!(Comparing.equal(myFunction.getName(), parentReference.getName()))) {
+            if (!(Objects.equals(myFunction.getName(), parentReference.getName()))) {
               throw new IncorrectOperationException(PyBundle.message("refactoring.make.function.top.level.error.method.calls"));
             }
             else {
@@ -229,7 +226,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       final PsiElement anchor = ContainerUtil.getFirstItem(reads);
       //noinspection ConstantConditions
       if (!PyRefactoringUtil.isValidNewName(name, anchor)) {
-        final String indexedName = PyRefactoringUtil.appendNumberUntilValid(name, anchor);
+        final String indexedName = PyRefactoringUtil.appendNumberUntilValid(name, anchor, PyRefactoringUtil::isValidNewName);
         myAttributeToParameterName.put(name, indexedName);
       }
       else {
@@ -237,5 +234,10 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       }
     }
     return Lists.newArrayList(myAttributeToParameterName.values());
+  }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.make.method.top.level";
   }
 }

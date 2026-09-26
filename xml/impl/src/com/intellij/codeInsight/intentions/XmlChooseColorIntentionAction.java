@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,32 +14,32 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction {
   public XmlChooseColorIntentionAction() {
-    setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
+    setText(XmlBundle.message("intention.color.chooser.dialog"));
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final @NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     return parent instanceof XmlAttributeValue && ColorUtil.fromHex(((XmlAttributeValue)parent).getValue(), null) != null;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -70,7 +54,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
   }
 
   public static void chooseColor(JComponent editorComponent, PsiElement element) {
-    String caption = CodeInsightBundle.message("intention.color.chooser.dialog");
+    String caption = XmlBundle.message("intention.color.chooser.dialog");
     final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class, false);
     if (literal == null) return;
     final String text = StringUtil.unquoteString(literal.getValue());
@@ -82,7 +66,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     catch (NumberFormatException e) {
       oldColor = JBColor.GRAY;
     }
-    Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
+    Color color = ColorChooserService.getInstance().showDialog(element.getProject(), editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
@@ -94,9 +78,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
         assert valueElement != null;
         literal.replace(valueElement);
       };
-      WriteCommandAction.writeCommandAction(element.getProject()).withName(caption).run(() -> {
-        replaceRunnable.run();
-      });
+      WriteCommandAction.writeCommandAction(element.getProject()).withName(caption).run(() -> replaceRunnable.run());
     }
   }
 }

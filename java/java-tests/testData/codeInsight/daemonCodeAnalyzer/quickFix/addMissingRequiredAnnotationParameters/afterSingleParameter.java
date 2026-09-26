@@ -1,7 +1,7 @@
-// "Add missing annotation parameter 'value'" "true"
+// "Add missing annotation parameter 'value'" "true-preview"
 class Test {
 
-  @MyAnnotation()
+  @MyAnnotation("")
   void m() {
 
   }

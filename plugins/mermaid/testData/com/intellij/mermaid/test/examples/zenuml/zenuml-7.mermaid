@@ -1,0 +1,15 @@
+zenuml
+    // 1. assign a variable from a sync message.
+    a = A.SyncMessage()
+
+    // 1.1. optionally give the variable a type
+    SomeType a = A.SyncMessage()
+
+    // 2. use return keyword
+    A.SyncMessage() {
+    return result
+    }
+
+    // 3. use @return or @reply annotator on an async message
+    @return
+    A->B: result

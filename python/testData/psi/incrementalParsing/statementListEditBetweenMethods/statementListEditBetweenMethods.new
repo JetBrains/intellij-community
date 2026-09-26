@@ -1,0 +1,8 @@
+class Config:
+    def get_name(self):
+        return "name"
+
+    DEFAULT = "default"
+
+    def get_value(self):
+        return 42

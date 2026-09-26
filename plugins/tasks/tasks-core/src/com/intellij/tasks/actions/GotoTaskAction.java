@@ -1,9 +1,19 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.util.gotoByName.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -14,16 +24,20 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import java.awt.event.ActionEvent;
 
 /**
@@ -36,12 +50,12 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static final int PAGE_SIZE = 20;
 
   public GotoTaskAction() {
-    getTemplatePresentation().setText("Open Task...");
+    getTemplatePresentation().setText(TaskBundle.messagePointer("open.task.action.menu.text"));
     getTemplatePresentation().setIcon(IconUtil.getAddIcon());
   }
 
   @Override
-  protected void gotoActionPerformed(final AnActionEvent e) {
+  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     perform(project);
@@ -55,16 +69,16 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setAlwaysHasMore(true);
-    popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
-                    "Pressing " +
-                    KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) +
-                    " would show task description and comments</html>");
+    popup.setAdText(
+      TaskBundle.message("popup.advertisement.html.press.shift.to.merge.with.current.context.br.pressing.would.show.task.description.comments.html", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC))));
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
       }
@@ -77,20 +91,20 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GoToTask", group, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    actionToolbar.updateActionsImmediately();
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     actionToolbar.getComponent().setFocusable(false);
     actionToolbar.getComponent().setBorder(null);
     popup.setToolArea(actionToolbar.getComponent());
     popup.setMaximumListSizeLimit(PAGE_SIZE);
     popup.setListSizeIncreasing(PAGE_SIZE);
 
-    showNavigationPopup(new GotoActionCallback<Object>() {
+    showNavigationPopup(new GotoActionCallback<>() {
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);
-        if (element instanceof TaskPsiElement) {
-          Task task = ((TaskPsiElement)element).getTask();
+        if (element instanceof TaskSymbol) {
+          Task task = ((TaskSymbol)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
             taskManager.activateTask(localTask, !shiftPressed.get());
@@ -118,29 +132,29 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
 
     protected GotoTaskPopupModel(@NotNull Project project) {
-      super(project, "Enter task name:", null);
-      myListCellRenderer = new TaskCellRenderer(project);
+      super(project, TaskBundle.message("enter.task.name"), null);
+      myListCellRenderer = TaskUiUtil.getTaskCellRenderer(project);
     }
 
     @Override
     public String[] getNames() {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Override
     protected Object[] getElementsByName(String name, String pattern) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     @Override
-    public ListCellRenderer getListCellRenderer() {
+    public @NotNull ListCellRenderer getListCellRenderer() {
       return myListCellRenderer;
     }
 
     @Override
-    public String getElementName(Object element) {
-      if (element instanceof TaskPsiElement) {
-        return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
+    public String getElementName(@NotNull Object element) {
+      if (element instanceof TaskSymbol) {
+        return TaskUtil.getTrimmedSummary(((TaskSymbol)element).getTask());
       }
       else if (element == CREATE_NEW_TASK_ACTION) {
         return CREATE_NEW_TASK_ACTION.getActionText();
@@ -150,7 +164,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     @Override
     public String getCheckBoxName() {
-      return "Include closed tasks";
+      return TaskBundle.message("label.include.closed.tasks");
     }
 
     @Override
@@ -168,7 +182,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
    * {@link ChooseByNameBase} and {@link ChooseByNamePopup} are not disposable (why?). So to correctly dispose alarm used in
    * {@link TaskItemProvider} and don't touch existing UI classes We have to extend popup and override {@link ChooseByNamePopup#close(boolean)}.
    */
-  private static class MyChooseByNamePopup extends ChooseByNamePopup {
+  private static final class MyChooseByNamePopup extends ChooseByNamePopup {
     private MyChooseByNamePopup(@Nullable Project project,
                                 @NotNull ChooseByNameModel model,
                                 @NotNull ChooseByNameItemProvider provider,
@@ -204,8 +218,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static class CreateNewTaskAction {
     private String taskName;
 
-    public String getActionText() {
-      return "Create New Task \'" + taskName + "\'";
+    public @Nls String getActionText() {
+      return TaskBundle.message("create.new.task.0", taskName);
     }
 
     public void setTaskName(final String taskName) {

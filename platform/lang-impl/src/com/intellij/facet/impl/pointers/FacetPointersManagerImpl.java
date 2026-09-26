@@ -1,41 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.pointers;
 
-import com.intellij.ProjectTopics;
 import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointerListener;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,16 +18,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
-public class FacetPointersManagerImpl extends FacetPointersManager implements ProjectComponent {
+public final class FacetPointersManagerImpl extends FacetPointersManager {
   private final Map<String, FacetPointerImpl> myPointers = new HashMap<>();
-  private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers =
-    new HashMap<>();
+  private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers = new HashMap<>();
+  private final @NotNull Project myProject;
 
-  public FacetPointersManagerImpl(final Project project) {
-    super(project);
+  public FacetPointersManagerImpl(@NotNull Project project) {
+    myProject = project;
   }
 
   @Override
@@ -85,55 +57,8 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     myPointers.remove(pointer.getId());
   }
 
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "FacetPointersManager";
-  }
-
-  @Override
-  public void initComponent() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        refreshPointers(module);
-      }
-
-      @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
-        for (Module module : modules) {
-          refreshPointers(module);
-        }
-      }
-    });
-    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
-      @Override
-      public void facetAdded(@NotNull Facet facet) {
-        refreshPointers(facet.getModule());
-      }
-
-      @Override
-      public void beforeFacetRenamed(@NotNull Facet facet) {
-        final FacetPointerImpl pointer = myPointers.get(constructId(facet));
-        if (pointer != null) {
-          pointer.refresh();
-        }
-      }
-
-      @Override
-      public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
-        refreshPointers(facet.getModule());
-      }
-    });
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      refreshPointers(module);
-    }
-  }
-
-  private void refreshPointers(@NotNull final Module module) {
-    //todo[nik] refresh only pointers related to renamed module/facet?
+  void refreshPointers() {
+    //todo refresh only pointers related to renamed module/facet?
     List<Pair<FacetPointerImpl, String>> changed = new ArrayList<>();
 
     for (FacetPointerImpl pointer : myPointers.values()) {
@@ -161,6 +86,10 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   public boolean isRegistered(FacetPointer<?> pointer) {
     return myPointers.containsKey(pointer.getId());
+  }
+
+  FacetPointerImpl get(String id) {
+    return myPointers.get(id);
   }
 
   @Override
@@ -207,7 +136,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     }
   }
 
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

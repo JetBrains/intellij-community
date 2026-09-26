@@ -1,0 +1,13 @@
+filegroup(
+    name = "wasm-opt",
+    srcs = glob(
+        [
+            "bin/wasm-opt",
+            "bin/wasm-opt.exe",
+            # macOS binaries are dynamically linked against libbinaryen.dylib next to them
+            "bin/libbinaryen.dylib",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)

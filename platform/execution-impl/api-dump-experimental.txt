@@ -1,0 +1,45 @@
+f:com.intellij.execution.TerminateRemoteProcessDialog
+- *s:show(com.intellij.openapi.project.Project,java.util.List,java.util.List):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+*:com.intellij.execution.portsWatcher.ListeningPort
+- a:getPid():java.lang.Long
+- a:getPort():I
+*:com.intellij.execution.portsWatcher.ListeningPortHandler
+- onPortListeningEnded(com.intellij.execution.portsWatcher.ListeningPort):V
+- a:onPortListeningStarted(com.intellij.execution.portsWatcher.ListeningPort):V
+*e:com.intellij.execution.portsWatcher.PortListeningOptions
+- java.lang.Enum
+- sf:INCLUDE_CHILDREN:com.intellij.execution.portsWatcher.PortListeningOptions
+- sf:INCLUDE_SELF:com.intellij.execution.portsWatcher.PortListeningOptions
+- sf:INCLUDE_SELF_AND_CHILDREN:com.intellij.execution.portsWatcher.PortListeningOptions
+- s:getEntries():kotlin.enums.EnumEntries
+- f:includesChildren():Z
+- f:includesSelf():Z
+- s:valueOf(java.lang.String):com.intellij.execution.portsWatcher.PortListeningOptions
+- s:values():com.intellij.execution.portsWatcher.PortListeningOptions[]
+*:com.intellij.execution.portsWatcher.ProcessPortsWatcher
+- *sf:Companion:com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion
+- a:resetDelay():V
+*f:com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion
+- f:startWatching(com.intellij.platform.eel.EelDescriptor,J,com.intellij.execution.portsWatcher.ListeningPortHandler,kotlinx.coroutines.CoroutineScope,com.intellij.execution.portsWatcher.PortListeningOptions):com.intellij.execution.portsWatcher.ProcessPortsWatcher
+- bs:startWatching$default(com.intellij.execution.portsWatcher.ProcessPortsWatcher$Companion,com.intellij.platform.eel.EelDescriptor,J,com.intellij.execution.portsWatcher.ListeningPortHandler,kotlinx.coroutines.CoroutineScope,com.intellij.execution.portsWatcher.PortListeningOptions,I,java.lang.Object):com.intellij.execution.portsWatcher.ProcessPortsWatcher
+f:com.intellij.execution.runners.RunContentBuilder
+- com.intellij.execution.runners.RunTab
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP:java.lang.String
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP:java.lang.String
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP:java.lang.String
+a:com.intellij.execution.runners.RunTab
+- com.intellij.openapi.Disposable
+- *sf:KEY:com.intellij.openapi.actionSystem.DataKey
+- *sf:PREFERRED_PLACE:com.intellij.openapi.util.Key
+f:com.intellij.execution.util.EnvFilesUtilKt
+- *sf:configureEnvsFromFiles(com.intellij.execution.EnvFilesOptions,Z):java.util.Map
+- *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map
+f:com.intellij.terminal.TerminalTitle
+- *f:buildFullTitle(Z):java.lang.String
+- *f:buildTitle(Z):java.lang.String
+com.intellij.terminal.ui.TerminalWidget
+- com.intellij.openapi.ui.ComponentContainer
+- *:getCurrentDirectory():java.lang.String
+- *a:getTerminalSizeInitializedFuture():java.util.concurrent.CompletableFuture
+- *:getText():java.lang.CharSequence
+- *:isCommandRunning():Z

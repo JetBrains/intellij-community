@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.treestructures;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -34,18 +20,17 @@ public class PySubTypesHierarchyTreeStructure extends HierarchyTreeStructure {
     super(project, baseDescriptor);
   }
 
-  public PySubTypesHierarchyTreeStructure(@NotNull final PyClass cl) {
+  public PySubTypesHierarchyTreeStructure(final @NotNull PyClass cl) {
     super(cl.getProject(), new PyHierarchyNodeDescriptor(null, cl, true));
   }
 
-  @NotNull
-  protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+  @Override
+  protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> res = new ArrayList<>();
-    final PsiElement element = ((PyHierarchyNodeDescriptor)descriptor).getPsiElement();
-    if (element instanceof PyClass) {
-      final PyClass cls = (PyClass)element;
+    final PsiElement element = descriptor.getPsiElement();
+    if (element instanceof PyClass cls) {
       Query<PyClass> subClasses = PyClassInheritorsSearch.search(cls, false);
-      for (PyClass subClass : subClasses) {
+      for (PyClass subClass : subClasses.asIterable()) {
         res.add(new PyHierarchyNodeDescriptor(descriptor, subClass, false));
       }
 

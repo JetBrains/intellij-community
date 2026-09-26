@@ -1,101 +1,103 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
-/**
- * @author egor
- */
-public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
+public class ForeachStatementEvaluator implements Evaluator {
   private final Evaluator myIterationParameterEvaluator;
   private final Evaluator myIterableEvaluator;
-
-  private Evaluator myConditionEvaluator;
-  private Evaluator myNextEvaluator;
-
-  private int myArrayLength = -1;
-  private int myCurrentIndex = 0;
-
-  private Modifier myModifier;
+  private final Evaluator myBodyEvaluator;
+  private final String myLabelName;
 
   public ForeachStatementEvaluator(Evaluator iterationParameterEvaluator,
-                               Evaluator iterableEvaluator,
-                               Evaluator bodyEvaluator,
-                               String labelName) {
-    super(labelName, bodyEvaluator);
+                                   Evaluator iterableEvaluator,
+                                   Evaluator bodyEvaluator,
+                                   String labelName) {
     myIterationParameterEvaluator = iterationParameterEvaluator;
     myIterableEvaluator = DisableGC.create(iterableEvaluator);
-  }
-
-  public Modifier getModifier() {
-    return myModifier;
+    myBodyEvaluator = bodyEvaluator;
+    myLabelName = labelName;
   }
 
   @Override
-  protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
+  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     final Object iterable = myIterableEvaluator.evaluate(context);
     if (!(iterable instanceof ObjectReference)) {
       throw new EvaluateException("Unable to do foreach for" + iterable);
     }
-    IdentityEvaluator iterableEvaluator = new IdentityEvaluator((Value)iterable);
-    if (iterable instanceof ArrayReference) {
-      myCurrentIndex = 0;
-      myArrayLength = ((ArrayReference)iterable).length();
-      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
-                                                new Evaluator() {
-                                                  @Override
-                                                  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-                                                    return ((ArrayReference)iterable).getValue(myCurrentIndex++);
-                                                  }
-                                                });
+
+    if (iterable instanceof ArrayReference reference) {
+      return new ForStatementEvaluatorBase(myLabelName, myBodyEvaluator) {
+        private int myCurrentIndex = 0;
+        private int myArrayLength = -1;
+        private Evaluator myNextEvaluator;
+
+        @Override
+        protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
+          myArrayLength = reference.length();
+          myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
+                                                    new Evaluator() {
+                                                      @Override
+                                                      public Object evaluate(EvaluationContextImpl context) {
+                                                        return reference.getValue(myCurrentIndex++);
+                                                      }
+                                                    });
+          return value;
+        }
+
+        @Override
+        protected Object evaluateCondition(EvaluationContextImpl context) {
+          return myCurrentIndex < myArrayLength;
+        }
+
+        @Override
+        protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
+          myNextEvaluator.evaluate(context);
+          super.evaluateBody(context);
+        }
+      }.evaluate(context);
     }
     else {
-      Object iterator = new MethodEvaluator(iterableEvaluator, null, "iterator", null, new Evaluator[0]).evaluate(context);
-      IdentityEvaluator iteratorEvaluator = new IdentityEvaluator((Value)iterator);
-      myConditionEvaluator = new MethodEvaluator(iteratorEvaluator, null, "hasNext", null, new Evaluator[0]);
-      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
-                                                new MethodEvaluator(iteratorEvaluator, null, "next", null, new Evaluator[0]));
-    }
-    return value;
-  }
+      return new ForStatementEvaluatorBase(myLabelName, myBodyEvaluator) {
+        private MethodEvaluator myConditionEvaluator;
+        private AssignmentEvaluator myNextEvaluator;
 
-  private boolean isArray() {
-    return myArrayLength > -1;
-  }
+        @Override
+        protected Object evaluateInitialization(EvaluationContextImpl context, Object value) throws EvaluateException {
+          Object iterator = new MethodEvaluator(new IdentityEvaluator((Value)iterable),
+                                                JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_LANG_ITERABLE),
+                                                "iterator", null,
+                                                new Evaluator[0]).evaluate(context);
+          IdentityEvaluator iteratorEvaluator = new IdentityEvaluator((Value)iterator);
+          myConditionEvaluator = new MethodEvaluator(iteratorEvaluator,
+                                                     JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_UTIL_ITERATOR),
+                                                     "hasNext", null,
+                                                     new Evaluator[0]);
+          myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
+                                                    new MethodEvaluator(iteratorEvaluator,
+                                                                        JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_UTIL_ITERATOR),
+                                                                        "next", null,
+                                                                        new Evaluator[0]));
+          return value;
+        }
 
-  @Override
-  protected Object evaluateCondition(EvaluationContextImpl context) throws EvaluateException {
-    if (isArray()) {
-      return myCurrentIndex < myArrayLength;
-    }
-    else {
-      Object res = myConditionEvaluator.evaluate(context);
-      myModifier = myConditionEvaluator.getModifier();
-      return res;
-    }
-  }
+        @Override
+        protected Object evaluateCondition(EvaluationContextImpl context) throws EvaluateException {
+          return myConditionEvaluator.evaluate(context);
+        }
 
-  @Override
-  protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
-    myNextEvaluator.evaluate(context);
-    super.evaluateBody(context);
+        @Override
+        protected void evaluateBody(EvaluationContextImpl context) throws EvaluateException {
+          myNextEvaluator.evaluate(context);
+          super.evaluateBody(context);
+        }
+      }.evaluate(context);
+    }
   }
 }

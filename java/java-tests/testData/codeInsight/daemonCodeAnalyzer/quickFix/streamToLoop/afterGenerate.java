@@ -27,8 +27,8 @@ public class Main {
       Integer acc = 0;
       SplittableRandom splittableRandom = new SplittableRandom(1);
       for (long count = 100; count > 0; count--) {
-          Integer integer = 500;
-          acc = splittableRandom.nextInt(acc, integer);
+          Integer i = 500;
+          acc = splittableRandom.nextInt(acc, i);
       }
       int n1 = acc;
     System.out.println(n1);

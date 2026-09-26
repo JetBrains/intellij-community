@@ -1,49 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_8_ANNOTATED;
   }
 
   @Override
@@ -57,13 +27,20 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testUnboxingBoxingInLambdaReturn() { doTest(); }
   public void testUnboxingInMethodReferences() { doTest(); }
   public void testMethodReferenceOnNullable() { doTest(); }
+  public void testObjectsNonNullWithUnknownNullable() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+  }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
+  public void testLambdaAutoCloseable() { doTest(); }
 
   public void testOptionalOfNullable() { doTest(); }
+  public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
+  public void testOptionalIntSwitch() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
@@ -78,26 +55,31 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   private void addGuava() {
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Supplier<T> { T get();}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Function<F, T> { T apply(F input);}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public abstract class Optional<T> {\n" +
-                       "  public static <T> Optional<T> absent() {}\n" +
-                       "  public static <T> Optional<T> of(T ref) {}\n" +
-                       "  public static <T> Optional<T> fromNullable(T ref) {}\n" +
-                       "  public abstract T get();\n" +
-                       "  public abstract boolean isPresent();\n" +
-                       "  public abstract T orNull();\n" +
-                       "  public abstract T or(Supplier<? extends T> supplier);\n" +
-                       "  public abstract <V> Optional<V> transform(Function<? super T, V> fn);\n" +
-                       "  public abstract T or(T val);\n" +
-                       "  public abstract java.util.Optional<T> toJavaUtil();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Supplier<T> { T get();}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Function<F, T> { T apply(F input);}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public abstract class Optional<T> {
+                           public static <T> Optional<T> absent() {}
+                           public static <T> Optional<T> of(T ref) {}
+                           public static <T> Optional<T> fromNullable(T ref) {}
+                           public abstract T get();
+                           public abstract boolean isPresent();
+                           public abstract T orNull();
+                           public abstract T or(Supplier<? extends T> supplier);
+                           public abstract <V> Optional<V> transform(Function<? super T, V> fn);
+                           public abstract T or(T val);
+                           public abstract java.util.Optional<T> toJavaUtil();
+                         }""");
   }
 
   public void testPrimitiveInVoidLambda() { doTest(); }
@@ -124,7 +106,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
-    myFixture.enableInspections(inspection);
+    ConstantValueInspection cvInspection = new ConstantValueInspection();
+    cvInspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection, cvInspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
@@ -136,6 +120,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testLambdaParametersWithDefaultNullability() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
+  public void testNonNullWhenUnknown() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
@@ -154,39 +144,27 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
   }
 
-  static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
-    setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
-  }
-
-  private static void setupCustomAnnotations(String pkg, String target, JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface Nullable { }");
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface NotNull { }");
-    setCustomAnnotations(fixture.getProject(), fixture.getTestRootDisposable(), pkg + ".NotNull", pkg + ".Nullable");
-  }
-
-  static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(project);
-    nnnManager.setNotNulls(notNull);
-    nnnManager.setNullables(nullable);
-    Disposer.register(parentDisposable, () -> {
-      nnnManager.setNotNulls();
-      nnnManager.setNullables();
-    });
-  }
-
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
+  public void testTypeUseLambdaReturn() {
+    setupTypeUseAnnotations("ambiguous", myFixture);
+    doTest();
+  }
+  public void testTypeUseInferenceInsideRequireNotNull() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
   }
 
-  static void setupAmbiguousAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
-    setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
+  public void testTypeUseAmbiguousArrayReturn() {
+    setupAmbiguousAnnotations("ambiguous", myFixture);
+    doTest();
   }
-
   public void testLambdaInlining() { doTest(); }
 
   public void testOptionalInlining() {
@@ -194,11 +172,32 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamInlining() { doTest(); }
+  public void testStreamCollectInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest();
+  }
   public void testStreamCollectorInlining() { doTest(); }
+  public void testStreamToMapInlining() { doTest(); }
+  public void testStreamToMapInlining2() { doTest(); }
+  public void testStreamToCollectionInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
-  
-  public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
+  public void testStreamTypeAnnoInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest();
+  }
+  public void testStreamFindFirstExpectNotNull() { doTest(); }
+  public void testStreamAnyMatchIsNull() { doTest(); }
+  public void testStreamCustomSumMethod() { doTest(); }
+  public void testStreamReduceLogicalAnd() { doTest(); }
+  public void testStreamSingleElementReduce() { doTest(); }
+  public void testStreamGroupingBy() { doTest(); }
+  public void testStreamNestedIncomplete() { doTest(); }
+  public void testRequireNonNullMethodRef() {
+    doTestWith((dfa, _) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+  }
+
+  public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
@@ -214,24 +213,170 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testMutabilityJdk() { doTest(); }
-  public void testMutabilityInferred() { doTest(); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
+  public void testHashMapImplementation() { doTest(); }
 
   public void testOptionalTooComplex() { doTest(); }
 
   public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
   public void testEscapeAnalysis() { doTest(); }
+  public void testEscapeAnalysisLambdaInConstructor() { doTest(); }
   public void testThisAsVariable() { doTest(); }
   public void testQueuePeek() { doTest(); }
   public void testForeachCollectionElement() { doTest(); }
   public void testContractReturnValues() { doTest(); }
   public void testTryFinallySimple() { doTest(); }
-  
-  public void testConflictsInInferredTypes() { 
+  public void testAssertAll() {
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+
+                         import org.junit.jupiter.api.function.Executable;
+
+                         public class Assertions {
+                           public static void assertAll(String s, Executable... e) {}
+                           public static void assertAll(Executable... e) {}
+                           public static void assertNotNull(Object o) {}
+                           public static void assertTrue(boolean b) {}
+                         }""");
+    myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
+    doTest();
+  }
+
+  public void testConflictsInInferredTypes() {
     setupAmbiguousAnnotations("foo", myFixture);
+    doTest();
+  }
+  public void testObjectsEquals() { doTest(); }
+  public void testManyObjectEquals() { doTest(); }
+  public void testManyObjectEquals2() { doTest(); }
+  public void testLambdaAfterNullCheck() { doTest(); }
+  public void testFlatMapSideEffect() { doTest(); }
+  public void testOptionalValueTracking() { doTest(); }
+  public void testOptionalAsQualifier() { doTest(); }
+  public void testDelegateClassTypeParameter() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testClearZeroesSize() { doTest(); }
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
+
+  public void testReturningNonNullFromMethodWithNullableArrayInReturnType() {
+    setupAmbiguousAnnotations("mixed", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager.getInstance(getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
+    doTest();
+  }
+
+  public void testLambdaWritesArrayInTry() { doTest(); }
+  public void testManyNestedOptionals() { doTest(); }
+  public void testGetClass() { doTest(); }
+  public void testParamContract() { doTest(); }
+  public void testParamContractBoolean() { doTest(); }
+  public void testTypeUseVarArg() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testLambdaReturnFromTypeUse() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testInlineLambdaFromLocal() { doTest(); }
+  public void testAllowRequireNonNullInCtor() { doTest(); }
+  public void testNullableNotNullAssignmentInReturn() { doTest(); }
+  public void testTransformMethod() { doTest(); }
+  public void testTernaryExpressionNumericType() { doTest(); }
+  public void testEclipseDefaultTypeUse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    doTest();
+  }
+  public void testEclipseDefaultOptionalOrElse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    myFixture.addClass("package org.eclipse.jdt.annotation;import java.lang.annotation.*;" +
+                       "@Target({ElementType.TYPE_USE}) public @interface Nullable {}");
+    doTest();
+  }
+  public void testClassInsideLambda() { doTest(); }
+  public void testMultiDimensionalArrays() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testImplicitUnboxingInMethodReference() {
+    doTest();
+  }
+  public void testArrayTypeParameterInference() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testArrayTypeParameterInferenceAmbiguous() {
+    setupAmbiguousAnnotations("ambiguous", myFixture);
+    doTest();
+  }
+  public void testGuavaFunction() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  public void testMethodReferenceNullableToNotNull() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testModifyListInLambda() {
+    doTest();
+  }
+  public void testConstantInClosure() { doTest(); }
+  public void testUnknownNullability() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.*;
+                         @Target(ElementType.TYPE_USE)
+                         public @interface UnknownNullability { }""");
+    doTestWith((insp, _) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
+  public void testReturnOrElseNull() { doTestWith((insp, _) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
+  public void testArrayIntersectionType() { doTest(); }
+  public void testFunctionType() { doTest(); }
+  public void testIteratorHasNextModifiesPrivateField() { doTest(); }
+  public void testJsr305TypeUseNoLocal() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  public void testDefaultAnnotationForLoopParameter() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  public void testCheckerDefaultQualifier() {
+    addCheckerAnnotations(myFixture);
+    doTest();
+  }
+  public void testSpotBugsDefaultAnnotation() {
+    doTest();
+  }
+  public void testConstructorMethodReferenceNullability() { doTest(); }
+  public void testCustomStreamImplementation() { doTest(); }
+  public void testEmptyCollection() { doTest(); }
+  public void testConsumedStream() { doTest(); }
+  public void testConsumedStreamDifferentMethods() { doTest(); }
+  public void testConsumedStreamWithoutInline()  { doTest(); }
+  public void testLocalityAndConditionalExpression() { doTest(); }
+  public void testParallelStreamThreadId() { doTest(); }
+  public void testCompletableFutureWhenComplete() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testFieldWriteInLambda() { doTest(); }
+  public void testNewMethodReferenceMustBeNonNull() {
+    doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+  }
+  public void testExternalTypeParameterAnnotations() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 }

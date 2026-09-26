@@ -1,0 +1,1 @@
+// Intentionally empty: keeps ':submodule' materialized in copied test projects for Gradle 9.6+

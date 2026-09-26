@@ -1,31 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.StubBasedPsiElement;
@@ -35,16 +15,16 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.JavaStubPsiElement");
+  private static final Logger LOG = Logger.getInstance(JavaStubPsiElement.class);
 
-  public JavaStubPsiElement(@NotNull T stub, @NotNull IStubElementType nodeType) {
+  public JavaStubPsiElement(@NotNull T stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -53,8 +33,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -65,6 +44,11 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   protected CompositeElement calcTreeElement() {
     return (CompositeElement)getNode();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override
@@ -129,19 +113,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  public void navigate(boolean requestFocus) {
-    final Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(this);
-    if (navigatable != null) {
-      navigatable.navigate(requestFocus);
-    }
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return canNavigate();
-  }
-
-  @Override
   public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     SharedImplUtil.acceptChildren(visitor, calcTreeElement());
   }
@@ -150,7 +121,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   protected Object clone() {
     CompositeElement treeElement = calcTreeElement();
     CompositeElement treeElementClone
-      = (CompositeElement)(treeElement.getTreeParent() != null ? treeElement.copyElement() : (ASTNode)treeElement.clone());
+      = (CompositeElement)(treeElement.getTreeParent() != null ? treeElement.copyElement() : treeElement.clone());
     /*
     if (treeElementClone.getPsiElement() != null) {
       return treeElementClone.getPsiElement();
@@ -167,17 +138,9 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  public void subtreeChanged() {
-    final CompositeElement compositeElement = calcTreeElement();
-    if (compositeElement != null) compositeElement.clearCaches();
-    super.subtreeChanged();
-  }
-
-  @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return EMPTY_ARRAY;
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
     int count = 0;
     while (psiChild != null) {
@@ -194,5 +157,5 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     }
 
     return answer;
-  }  
+  }
 }

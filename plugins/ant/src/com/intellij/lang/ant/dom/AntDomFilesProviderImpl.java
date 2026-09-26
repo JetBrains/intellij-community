@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntFilesProvider;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
@@ -41,8 +27,8 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
   public abstract GenericAttributeValue<String> getCaseSensitive();
 
 
-  @NotNull
-  public final List<File> getFiles(Set<AntFilesProvider> processed) {
+  @Override
+  public final @NotNull List<File> getFiles(Set<AntFilesProvider> processed) {
     if (processed.contains(this)) {
       return Collections.emptyList();
     }
@@ -67,29 +53,26 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
     }
   }
 
-  @Nullable
-  protected AntDomPattern getAntPattern() {
+  protected @Nullable AntDomPattern getAntPattern() {
     return AntDomPattern.create(this, shouldHonorDefaultExcludes(), matchPatternsCaseSensitive());
   }
 
-  @NotNull
-  protected List<File> getFiles(@Nullable AntDomPattern pattern, final Set<AntFilesProvider> processed) {
+  protected @NotNull List<File> getFiles(@Nullable AntDomPattern pattern, final Set<AntFilesProvider> processed) {
     return Collections.emptyList();
   }
 
 
   private boolean shouldHonorDefaultExcludes() {
-    @NonNls final String value = getDefaultExcludes().getRawText();
+    final @NonNls String value = getDefaultExcludes().getRawText();
     return value == null || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("true");
   }
 
   private boolean matchPatternsCaseSensitive() {
-    @NonNls final String value = getCaseSensitive().getRawText();
+    final @NonNls String value = getCaseSensitive().getRawText();
     return value == null || value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("true");
   }
 
-  @Nullable
-  protected File getCanonicalFile(final String path) {
+  protected @Nullable File getCanonicalFile(final String path) {
     if (path == null) {
       return null;
     }
@@ -102,7 +85,7 @@ public abstract class AntDomFilesProviderImpl extends AntDomElement implements A
       if (baseDir == null) {
         return null;
       }
-      return new File(PathUtil.getCanonicalPath(new File(baseDir, path).getPath()));
+      return new File(FileUtil.toCanonicalPath(new File(baseDir, path).getPath()));
     }
     catch (IOException e) {
       return null;

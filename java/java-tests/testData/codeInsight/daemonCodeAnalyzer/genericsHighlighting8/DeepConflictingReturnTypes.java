@@ -15,7 +15,7 @@ interface IQ {
 }
 
 
-<error descr="'f()' in 'WW' clashes with 'f()' in 'IQ'; attempting to use incompatible return type">class WWW extends WW implements IQ</error> {
+<error descr="'f()' in 'WW' clashes with 'f()' in 'IQ'; incompatible return type">class WWW extends WW implements IQ</error> {
 
 }
 

@@ -1,0 +1,205 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.j2k
+
+import com.intellij.openapi.components.service
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.psi.KtFile
+import java.io.File
+import java.util.regex.Pattern
+
+private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
+
+private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
+private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
+private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
+private const val JUNIT_ANNOTATIONS_DIRECTIVE = "ADD_JUNIT_TEST_ANNOTATIONS"
+private const val LOMBOK_ANNOTATIONS_DIRECTIVE = "ADD_LOMBOK_ANNOTATIONS"
+private const val PREPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_PREPROCESSOR_EXTENSIONS"
+private const val POSTPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS"
+
+abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
+    protected data class InMemoryConversionSnapshot(
+        val javaTextAfterConversion: String,
+        val kotlinText: String,
+        val externalCodeProcessing: ExternalCodeProcessing?,
+    )
+
+    override fun setUp() {
+        super.setUp()
+        JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = true
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = false },
+            ThrowableRunnable { super.tearDown() }
+        )
+    }
+
+    open fun doTest(javaPath: String) {
+        val javaFile = File(javaPath)
+        val fileContents = javaFile.getFileTextWithoutDirectives()
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            withCustomCompilerOptions(fileContents, project, module) {
+                doTest(javaFile, fileContents)
+            }
+        }
+    }
+
+    private fun doTest(javaFile: File, fileContents: String) {
+        val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
+        val directives = KotlinTestUtils.parseDirectives(javaCode)
+
+        addExternalFiles(javaFile)
+        addDependencies(directives)
+
+        val settings = configureSettings(directives)
+
+        if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            J2kPreprocessorExtension.EP_NAME.point.registerExtension(
+                J2kTestPreprocessorExtension,
+                testRootDisposable
+            )
+        }
+
+        if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            J2kPostprocessorExtension.EP_NAME.point.registerExtension(
+                J2kTestPostprocessorExtension,
+                testRootDisposable
+            )
+        }
+
+        val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+        val expectedFile = getExpectedFile(javaFile, isCopyPaste = false)
+
+        val actualText = if (prefix == "file") {
+            dumpTextWithErrors(createKotlinFile(convertedText))
+        } else {
+            convertedText
+        }
+
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+    }
+
+    abstract fun dumpTextWithErrors(createKotlinFile: KtFile): String
+
+    private fun addDependencies(directives: Directives) {
+        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaAnnotations()
+        if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
+        if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
+        if (directives.contains(JUNIT_ANNOTATIONS_DIRECTIVE)) addJunitTestAnnotations()
+        if (directives.contains(LOMBOK_ANNOTATIONS_DIRECTIVE)) addLombokAnnotations()
+    }
+
+    private fun addExternalFiles(javaFile: File) {
+        val externalFileName = "${javaFile.nameWithoutExtension}.external"
+        val externalFiles = javaFile.parentFile.listFiles { _, name ->
+            name == "$externalFileName.kt" || name == "$externalFileName.java"
+        }!!.filterNotNull()
+
+        for (externalFile in externalFiles) {
+            addFile(externalFile)
+        }
+    }
+
+    private fun getPrefixAndJavaCode(fileContents: String): Pair<String, String> {
+        val matcher = testHeaderPattern.matcher(fileContents)
+        return if (matcher.find()) {
+            Pair(matcher.group().trim().substring(2), matcher.replaceFirst(""))
+        } else {
+            Pair("file", fileContents)
+        }
+    }
+
+    private fun configureSettings(directives: Directives): ConverterSettings =
+        ConverterSettings.defaultSettings.copy().apply {
+            directives["FORCE_NOT_NULL_TYPES"]?.let {
+                forceNotNullTypes = it.toBoolean()
+            }
+            directives["SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT"]?.let {
+                specifyLocalVariableTypeByDefault = it.toBoolean()
+            }
+            directives["SPECIFY_FIELD_TYPE_BY_DEFAULT"]?.let {
+                specifyFieldTypeByDefault = it.toBoolean()
+            }
+            directives["OPEN_BY_DEFAULT"]?.let {
+                openByDefault = it.toBoolean()
+            }
+            directives["PUBLIC_BY_DEFAULT"]?.let {
+                publicByDefault = it.toBoolean()
+            }
+            directives["BASIC_MODE"]?.let {
+                basicMode = it.toBoolean()
+            }
+        }
+
+    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String {
+        return when (prefix) {
+            "expression" -> expressionToKotlin(javaCode, settings)
+            "statement" -> statementToKotlin(javaCode, settings)
+            "method" -> methodToKotlin(javaCode, settings)
+            "file" -> fileToKotlin(
+                javaCode,
+                settings,
+            )
+
+            else -> error("Specify what it is: method, statement or expression using the first line of test data file")
+        }
+    }
+
+    open fun fileToKotlin(
+        text: String,
+        settings: ConverterSettings,
+    ): String {
+        val file = createJavaFile(text)
+
+        runWithModalProgressBlocking(project, "") {
+            project.service<JavaToKotlinService>().convert(listOf(file), module, settings)
+        }
+        return (file.containingDirectory.findFile(file.name.replace(".java", ".kt")) as KtFile).text
+    }
+
+    private fun methodToKotlin(text: String, settings: ConverterSettings): String {
+        val result = fileToKotlin("final class C {$text}", settings)
+        return result
+            .substringBeforeLast("}")
+            .replace("internal class C {", "\n")
+            .replace("internal object C {", "\n")
+            .trimIndent().trim()
+    }
+
+    private fun statementToKotlin(text: String, settings: ConverterSettings): String {
+        val funBody = text.lines().joinToString(separator = "\n", transform = { "  $it" })
+        val result = methodToKotlin("public void main() {\n$funBody\n}", settings)
+
+        return result
+            .substringBeforeLast("}")
+            .replaceFirst("fun main() {", "\n")
+            .trimIndent().trim()
+    }
+
+    private fun expressionToKotlin(code: String, settings: ConverterSettings): String {
+        val result = statementToKotlin("final Object o =$code}", settings)
+        return result
+            .replaceFirst("val o: Any? = ", "")
+            .replaceFirst("val o: Any = ", "")
+            .replaceFirst("val o = ", "")
+            .trim()
+    }
+
+    protected fun createJavaFile(text: String): PsiJavaFile =
+        myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
+
+    private fun createKotlinFile(text: String): KtFile =
+        myFixture.configureByText("converterTestFile.kt", text) as KtFile
+}

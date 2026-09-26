@@ -1,0 +1,229 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
+
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
+import java.io.IOException
+import java.nio.file.Path
+import java.util.function.Consumer
+import java.util.function.Predicate
+import javax.swing.JComponent
+
+private val LOG = logger<JdkDownload>()
+
+@Internal
+val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
+
+@Internal
+interface JdkDownloaderDialogHostExtension {
+  fun getEel(): EelApi = LocalEelDescriptor.toEelApiBlocking()
+
+  fun createEelPredicate(eel: EelApi): JdkPredicate? = null
+
+  fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean = true
+}
+
+@Internal
+data class JdkInstallRequestInfo(
+  override val item: JdkItem,
+  override val installDir: Path,
+) : JdkInstallRequest {
+  override val javaHome: Path
+    get() = item.resolveJavaHome(installDir)
+}
+
+internal class JdkDownload : SdkDownload {
+  override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
+    if (!Registry.`is`("jdk.downloader")) return false
+    if (ApplicationManager.getApplication().isUnitTestMode) return false
+    return notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
+  }
+
+  override fun showDownloadUI(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent?,
+    project: Project?,
+    selectedSdk: Sdk?,
+    sdkFilter: Predicate<JdkItem>?,
+    sdkCreatedCallback: Consumer<in SdkDownloadTask>,
+  ) {
+    if (project?.isDisposed == true) return
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.download.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, null, sdkFilter, selectJdkButtonText) ?: return
+    val jdkTask = prepareDownloadTask(project, jdkItem, jdkHome) ?: return
+    sdkCreatedCallback.accept(jdkTask)
+  }
+
+  override fun pickSdk(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent,
+    selectedSdk: Sdk?,
+    sdkFilter: Predicate<JdkItem>?,
+  ): SdkDownloadTask? {
+    val dataContext = DataManager.getInstance().getDataContext(parentComponent)
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
+    if (project?.isDisposed == true) return null
+    val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.select.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, sdkFilter, selectJdkButtonText) ?: return null
+    return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
+  }
+
+  override fun showDownloadUI(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent,
+    selectedSdk: Sdk?,
+    sdkCreatedCallback: Consumer<in SdkDownloadTask>,
+  ) {
+    val dataContext = DataManager.getInstance().getDataContext(parentComponent)
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
+    if (project?.isDisposed == true) return
+    val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.download.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, null, selectJdkButtonText) ?: return
+    val jdkTask = prepareDownloadTask(project, jdkItem, jdkHome) ?: return
+    sdkCreatedCallback.accept(jdkTask)
+  }
+
+  private fun selectJdkAndPath(
+    project: Project?,
+    sdkTypeId: SdkTypeId,
+    parentComponent: JComponent?,
+    extension: JdkDownloaderDialogHostExtension?,
+    sdkFilter: Predicate<JdkItem>?,
+    okActionText: @NlsContexts.Button String,
+  ): Pair<JdkItem, Path>? {
+    val eelModelPair = try {
+      val extension = extension ?: object : JdkDownloaderDialogHostExtension {
+        override fun getEel(): EelApi = (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApiBlocking()
+      }
+      computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
+        val eelApi = extension.getEel()
+
+        val jdkDownloaderModel = JdkListDownloader.getInstance()
+                                   .downloadForUI(predicate = extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi),
+                                                  progress = it)
+                                   .filter { extension.shouldIncludeItem(sdkTypeId, it) }
+                                   .takeIf { it.isNotEmpty() }
+                                   ?.let { buildJdkDownloaderModel(it, extension.getEel(), { sdkFilter?.test(it) != false }) }
+                                 ?: return@computeInBackground null
+
+        eelApi to jdkDownloaderModel
+      }
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to download the list of installable JDKs. ${e.message}", e)
+      null
+    }
+
+    if (project?.isDisposed == true) return null
+
+    if (eelModelPair == null) {
+      Messages.showErrorDialog(project,
+                               ProjectBundle.message("error.message.no.jdk.for.download"),
+                               ProjectBundle.message("error.message.title.download.jdk")
+      )
+      return null
+    }
+
+    return JdkDownloadDialog(project, parentComponent, sdkTypeId, eelModelPair.first, eelModelPair.second, okActionText).selectJdkAndPath()
+  }
+
+  @Throws(IOException::class)
+  private fun prepareDownloadTask(
+    project: Project?,
+    jdkItem: JdkItem,
+    jdkHome: Path,
+  ): JdkDownloadTask? {
+    /// prepare the JDK to be installed (e.g. create home dir, write marker file)
+    val request = try {
+      computeInBackground(project, ProjectBundle.message("progress.title.preparing.jdk")) {
+        JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, jdkHome)
+      }
+    }
+    catch (e: IOException) {
+      LOG.warn("Failed to prepare JDK installation to $jdkHome", e)
+      Messages.showErrorDialog(project,
+                               ProjectBundle.message("error.message.text.jdk.install.failed", jdkHome, e),
+                               ProjectBundle.message("error.message.title.download.jdk")
+      )
+      return null
+    }
+
+    return JdkDownloadTask(jdkItem, request, project)
+  }
+
+  private inline fun <T : Any?> computeInBackground(
+    project: Project?,
+    @NlsContexts.DialogTitle title: String,
+    crossinline action: (ProgressIndicator) -> T,
+  ): T =
+    ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
+      override fun compute(indicator: ProgressIndicator) = action(indicator)
+    })
+}
+
+internal fun selectJdkAndPath(
+  project: Project?,
+  parentComponent: JComponent?,
+  items: List<JdkItem>,
+  sdkTypeId: SdkTypeId,
+  extension: JdkDownloaderDialogHostExtension?,
+  text: @Nls String?,
+  okActionText: @NlsContexts.Button String,
+): Pair<JdkItem, Path>? {
+  val extension = extension ?: object : JdkDownloaderDialogHostExtension {}
+  val eelApi = extension.getEel()
+  val model = buildJdkDownloaderModel(items, eelApi) { extension.shouldIncludeItem(sdkTypeId, it) }
+
+  if (project?.isDisposed == true) return null
+
+  return JdkDownloadDialog(project, parentComponent, sdkTypeId, eelApi, model, okActionText, text).selectJdkAndPath()
+}
+
+@Internal
+class JdkDownloadTask(
+  @JvmField val jdkItem: JdkItem,
+  @JvmField val request: JdkInstallRequest,
+  @JvmField val project: Project?,
+) : SdkDownloadTask {
+  override fun getSuggestedSdkName() = request.item.suggestedSdkName
+  override fun getPlannedHomeDir() = request.javaHome.toString()
+  override fun getPlannedVersion() = request.item.versionString
+  override fun getProductName(): String = request.item.fullPresentationWithVendorText
+
+  @Throws(IOException::class)
+  override fun doDownload(indicator: ProgressIndicator) {
+    JdkInstaller.getInstance().installJdk(request, indicator, project)
+  }
+
+  override fun toString() = "DownloadTask{${request.item.fullPresentationText}, dir=${request.installDir}}"
+}

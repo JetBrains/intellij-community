@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.snakeyaml.engine` start
+content_module_jar(
+    libraries = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+    module = ":snakeyaml-engine",
+)
+### auto-generated section `dev intellij.libraries.snakeyaml.engine` end
+
+### auto-generated section `build intellij.libraries.snakeyaml.engine` start
+jvm_library(
+    name = "snakeyaml-engine",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.snakeyaml.engine",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+    runtime_deps = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+)
+
+jvm_library(
+    name = "snakeyaml-engine_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.snakeyaml.engine",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-snakeyaml-engine-snakeyaml-engine"],
+    runtime_deps = [":snakeyaml-engine"],
+)
+### auto-generated section `build intellij.libraries.snakeyaml.engine` end
+
+### auto-generated section `iml intellij.libraries.snakeyaml.engine` start
+exports_files(
+    [
+        "intellij.libraries.snakeyaml.engine.iml",
+        "resources/intellij.libraries.snakeyaml.engine.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.snakeyaml.engine` end

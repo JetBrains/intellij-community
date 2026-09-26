@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+import java.util.Objects;
+
 public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProperties> {
   private final String myVersion;
 
@@ -16,8 +14,7 @@ public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProp
     myVersion = version;
   }
 
-  @Nullable
-  public String getVersion() {
+  public @Nullable String getVersion() {
     return myVersion;
   }
 
@@ -32,7 +29,7 @@ public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProp
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof GroovyLibraryProperties && Comparing.equal(myVersion, ((GroovyLibraryProperties)obj).myVersion);
+    return obj instanceof GroovyLibraryProperties && Objects.equals(myVersion, ((GroovyLibraryProperties)obj).myVersion);
   }
 
   @Override

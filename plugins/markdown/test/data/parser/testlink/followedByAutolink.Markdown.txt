@@ -1,0 +1,9 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    MarkdownShortReferenceLink(Markdown:Markdown:SHORT_REFERENCE_LINK)
+      MarkdownLinkLabel(Markdown:Markdown:LINK_LABEL)
+        PsiElement(Markdown:Markdown:[)('[')
+        PsiElement(Markdown:Markdown:TEXT)('@test')
+        PsiElement(Markdown:Markdown:])(']')
+    PsiWhiteSpace(' ')
+    MarkdownAutoLink(Markdown:Markdown:GFM_AUTOLINK)('https://google.com')

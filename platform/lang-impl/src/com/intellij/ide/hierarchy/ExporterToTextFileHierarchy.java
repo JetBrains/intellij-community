@@ -1,39 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SystemProperties;
+import com.intellij.ui.tree.StructureTreeModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
-class ExporterToTextFileHierarchy implements ExporterToTextFile {
+final class ExporterToTextFileHierarchy implements ExporterToTextFile {
   private static final Logger LOG = Logger.getInstance(ExporterToTextFileHierarchy.class);
   private final HierarchyBrowserBase myHierarchyBrowserBase;
 
-  public ExporterToTextFileHierarchy(@NotNull HierarchyBrowserBase hierarchyBrowserBase) {
+  ExporterToTextFileHierarchy(@NotNull HierarchyBrowserBase hierarchyBrowserBase) {
     myHierarchyBrowserBase = hierarchyBrowserBase;
   }
 
-  @NotNull
   @Override
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuilder buf = new StringBuilder();
-    HierarchyTreeBuilder currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
+    StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
-    appendNode(buf, currentBuilder.getRootNode(), SystemProperties.getLineSeparator(), "");
+    appendNode(buf, currentBuilder.getRootImmediately(), System.lineSeparator(), "");
     return buf.toString();
   }
 
-  private void appendNode(StringBuilder buf, DefaultMutableTreeNode node, String lineSeparator, String indent) {
-    final String childIndent;
+  private static void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
+    String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
-      final HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor(node);
+      HierarchyNodeDescriptor descriptor = HierarchyBrowserBase.getDescriptor((DefaultMutableTreeNode)node);
       if (descriptor != null) {
         buf.append(indent).append(descriptor.getHighlightedText().getText()).append(lineSeparator);
       }
@@ -49,16 +47,15 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     }
   }
   
-  @NotNull
   @Override
-  public String getDefaultFilePath() {
-    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
+  public @NotNull String getDefaultFilePath() {
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     return state != null && state.EXPORT_FILE_PATH != null ? state.EXPORT_FILE_PATH : "";
   }
 
   @Override
   public void exportedTo(@NotNull String filePath) {
-    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     if (state != null) {
       state.EXPORT_FILE_PATH = filePath;
     }

@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.NonExtendable
 public interface HighlighterLayer {
   int SYNTAX = 1000;
   int CARET_ROW = 2000;
@@ -27,7 +30,7 @@ public interface HighlighterLayer {
   
   /** 
    * The default layer for console filters highlighters
-   * Ref: com.intellij.execution.filters.Filter
+   * Ref: {@link com.intellij.execution.filters.Filter}
    * */
   int CONSOLE_FILTER = 5800;
   

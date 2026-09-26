@@ -1,19 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
@@ -23,23 +20,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
-public class PropertiesFindUsagesTest extends CodeInsightTestCase {
+public class PropertiesFindUsagesTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "testData/findUsages/";
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/";
   }
 
-  private void initProperties() {
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
-  }
   public void testFindUsages() throws Exception {
     configureByFile(BASE_PATH+"xx.properties", BASE_PATH);
-    initProperties();
 
     PsiReference[] references = findReferences();
     assertEquals(1, references.length);
@@ -47,7 +42,6 @@ public class PropertiesFindUsagesTest extends CodeInsightTestCase {
   }
   public void testFindUsagesInPropValue() throws Exception {
     configureByFile(BASE_PATH+"Y.java", BASE_PATH);
-    initProperties();
 
     UsageInfo[] usages = findUsages();
     assertEquals(1, usages.length);
@@ -57,7 +51,6 @@ public class PropertiesFindUsagesTest extends CodeInsightTestCase {
 
   public void testFindUsagesInConditionalExpression() {
     configureByFiles(BASE_PATH, BASE_PATH + "conditional.properties", BASE_PATH + "Conditional.java");
-    initProperties();
 
     PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     Property prop = PsiTreeUtil.getNonStrictParentOfType(element, Property.class);
@@ -67,7 +60,7 @@ public class PropertiesFindUsagesTest extends CodeInsightTestCase {
 
   private static void processUsages(final PsiElement element,
                                     final FindUsagesOptions options,
-                                    final Processor<UsageInfo> processor) {
+                                    final Processor<? super UsageInfo> processor) {
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
     assertNotNull(handler);
@@ -96,8 +89,7 @@ public class PropertiesFindUsagesTest extends CodeInsightTestCase {
   private PsiNamedElement getElementAtCaret() {
     PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     PsiNamedElement namedElement = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(namedElement.getLanguage());
-    assertTrue("Cannot find element in caret",provider.canFindUsagesFor(namedElement));
+    assertTrue("Cannot find element in caret", LanguageFindUsages.canFindUsagesFor(namedElement));
     return namedElement;
   }
 }

@@ -1,0 +1,7 @@
+JsonFile: y_number_after_space.json
+  JsonArray
+    PsiElement([)('[')
+    PsiWhiteSpace(' ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('4')
+    PsiElement(])(']')

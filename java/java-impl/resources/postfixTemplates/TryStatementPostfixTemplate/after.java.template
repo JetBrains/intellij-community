@@ -1,0 +1,9 @@
+public void m2() {
+  try {
+    m();
+  } catch(CheckedException e) {
+    throw new RuntimeException(e);
+  }
+}
+
+public void m() throws CheckedException { }

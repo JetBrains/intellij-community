@@ -1,0 +1,10 @@
+// WITH_STDLIB
+// HIGHLIGHT: INFORMATION
+
+data class Name(val value: String)
+
+fun test(names: List<Name>) {
+    for ((value) in names) {
+        println(value)
+    }
+}

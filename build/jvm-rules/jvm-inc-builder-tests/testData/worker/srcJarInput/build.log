@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  GeneratedClass.class
+  META-INF/worker_srcJarInput-a.kotlin_module
+End of files
+Compiling files:
+  bazel-out/jvm-fastbuild/bin/worker/srcJarInput/a-srcjars/Generated.kt
+End of files
+Cleaning output files:
+  META-INF/worker_srcJarInput-a.kotlin_module
+  Main.class
+End of files
+Compiling files:
+  worker/srcJarInput/Main.kt
+End of files
+------------------------------------------
+Exit code: ERROR

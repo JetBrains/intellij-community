@@ -1,0 +1,6 @@
+class X {
+    val s0 = ""
+    val substring = s0.substring(0)
+    val s1 = substring
+    val s2 = substring
+}

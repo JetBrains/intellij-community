@@ -1,34 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
+import com.intellij.find.FindBundle;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
@@ -37,26 +33,33 @@ import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class RenameDialog extends RefactoringDialog {
-
-  private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-
+public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
@@ -69,7 +72,9 @@ public class RenameDialog extends RefactoringDialog {
   private final Editor myEditor;
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutoRenamerFactories = new HashMap<>();
-  private String myOldName;
+
+  private ScopeChooserCombo myScopeCombo;
+  private final LinkedHashSet<String> myPredefinedSuggestedNames = new LinkedHashSet<>();
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext, Editor editor) {
     super(project, true);
@@ -79,16 +84,16 @@ public class RenameDialog extends RefactoringDialog {
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
     myEditor = editor;
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     createNewNameComponent();
     init();
 
-    myNameLabel.setText(XmlStringUtil.wrapInHtml(XmlTagUtilBase.escapeString(getLabelText(), false)));
+    myNameLabel.setText(XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(getLabelText(), false)));
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       boolean toSearchForTextOccurrences = isToSearchForTextOccurrencesForRename();
       myCbSearchTextOccurrences.setSelected(toSearchForTextOccurrences);
     }
@@ -108,13 +113,11 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
-  @NotNull
-  protected String getLabelText() {
+  protected @NotNull @NlsContexts.Label String getLabelText() {
     return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
   }
 
-  @NotNull
-  public PsiElement getPsiElement() {
+  public @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
@@ -129,14 +132,7 @@ public class RenameDialog extends RefactoringDialog {
     super.dispose();
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isToSearchForTextOccurrencesForRename() {
-    return isToSearchForTextOccurencesForRename();
-  }
-
-  /** @deprecated use/override {@link #isToSearchForTextOccurrencesForRename()} instead (to be deleted in IDEA 2018) */
-  @SuppressWarnings({"SpellCheckingInspection", "DeprecatedIsStillUsed"})
-  protected boolean isToSearchForTextOccurencesForRename() {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchForTextOccurrences(myPsiElement);
   }
 
@@ -152,14 +148,18 @@ public class RenameDialog extends RefactoringDialog {
 
   protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myOldName = UsageViewUtil.getShortName(myPsiElement);
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
+      @Override
+      protected boolean forceCombobox() {
+        return true;
+      }
+
       @Override
       protected boolean shouldSelectAll() {
         return myEditor == null || myEditor.getSettings().isPreselectRename();
       }
     };
-    if (myPsiElement instanceof PsiFile && myEditor == null) {
+    if (myPsiElement instanceof PsiFile) {
       myNameSuggestionsField.selectNameWithoutExtension();
     }
     myNameChangedListener = () -> processNewNameChanged();
@@ -174,26 +174,39 @@ public class RenameDialog extends RefactoringDialog {
     validateButtons();
   }
 
+  @Override
+  public void addSuggestedNames(@NotNull Collection<@NotNull String> names) {
+    if (names.isEmpty()) return;
+    myPredefinedSuggestedNames.addAll(names);
+    if (myNameSuggestionsField != null) {
+      myNameSuggestionsField.setSuggestions(getSuggestedNames());
+    }
+  }
+
+  @Override
   public String[] getSuggestedNames() {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     final String initialName = VariableInplaceRenameHandler.getInitialName();
     if (initialName != null) {
       result.add(initialName);
     }
-    result.add(UsageViewUtil.getShortName(myPsiElement));
-    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    for(NameSuggestionProvider provider: providers) {
-      SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
-      if (info != null) {
-        mySuggestedNameInfo = info;
-        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
-      }
-    }
-    return ArrayUtil.toStringArray(result);
+    mySuggestedNameInfo = ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.collecting.suggested.names"),
+                                                        () -> {
+                                                          result.addAll(myPredefinedSuggestedNames);
+                                                          result.add(UsageViewUtil.getShortName(myPsiElement));
+                                                          return NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext,
+                                                                                                     result);
+                                                        });
+    return ArrayUtilRt.toStringArray(result);
   }
 
-  public String getNewName() {
+  public @NotNull String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
+  }
+
+  public @NotNull SearchScope getRefactoringScope() {
+    SearchScope scope = myScopeCombo.getSelectedScope();
+    return scope != null ? scope : GlobalSearchScope.projectScope(myProject);
   }
 
   public boolean isSearchInComments() {
@@ -244,7 +257,15 @@ public class RenameDialog extends RefactoringDialog {
     panel.add(myNameSuggestionsField.getComponent(), gbConstraints);
 
     createCheckboxes(panel, gbConstraints);
-
+    JComponent scopePanel = createSearchScopePanel();
+    if (scopePanel != null) {
+      gbConstraints.insets = JBUI.insetsBottom(8);
+      gbConstraints.gridx = 0;
+      gbConstraints.gridy = GridBagConstraints.RELATIVE;
+      gbConstraints.gridwidth = 2;
+      gbConstraints.fill = GridBagConstraints.BOTH;
+      panel.add(scopePanel, gbConstraints);
+    }
     return panel;
   }
 
@@ -269,45 +290,91 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchTextOccurrences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     myCbSearchTextOccurrences.setSelected(true);
     panel.add(myCbSearchTextOccurrences, gbConstraints);
-    if (!TextOccurrencesUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
+    if (!TextOccurrencesUtil.isSearchTextOccurrencesEnabled(myPsiElement)) {
       myCbSearchTextOccurrences.setEnabled(false);
       myCbSearchTextOccurrences.setSelected(false);
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
-        gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
-        gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
-        gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
-        gbConstraints.weightx = 1;
-        gbConstraints.fill = GridBagConstraints.BOTH;
+    @Unmodifiable List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
+      myProject,
+      RefactoringBundle.message("rename.finding.auto.rename.options.modal.title"),
+      () -> {
+        ProgressManager.checkCanceled();
+        return ContainerUtil.filter(
+          AutomaticRenamerFactory.EP_NAME.getExtensionList(),
+          renamerFactory -> DumbService.getInstance(myProject).isUsableInCurrentContext(renamerFactory) &&
+                            renamerFactory.isApplicable(myPsiElement) &&
+                            renamerFactory.getOptionName() != null
+        );
+      }
+    );
 
-        JCheckBox checkBox = new NonFocusableCheckBox();
-        checkBox.setText(factory.getOptionName());
+    gbConstraints.weightx = 1;
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    Map<String, JCheckBox> existingOptions = new HashMap<>();
+    for (AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
+      gbConstraints.gridwidth = existingOptions.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
+      gbConstraints.gridx = existingOptions.size() % 2;
+      gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
+
+      myAutoRenamerFactories.put(factory, existingOptions.computeIfAbsent(factory.getOptionName(), name -> {
+        JCheckBox checkBox = new NonFocusableCheckBox(name); //NON-NLS
         checkBox.setSelected(factory.isEnabled());
         panel.add(checkBox, gbConstraints);
-        myAutoRenamerFactories.put(factory, checkBox);
-      }
+        return checkBox;
+      }));
     }
   }
 
+  protected @Nullable JComponent createSearchScopePanel() {
+    var scopeService = RenameScopeService.getInstance(myProject);
+    var preselectedScopeName = scopeService.load();
+    myScopeCombo = new ScopeChooserCombo();
+    myScopeCombo.initialize(myProject, false, true, preselectedScopeName, null)
+      .onSuccess(_ -> {
+        var selectedScopeName = myScopeCombo.getSelectedScopeName();
+        if (!Objects.equals(selectedScopeName, preselectedScopeName)) { // saved scope not found, fall back to default
+          myScopeCombo.selectItem(scopeService.defaultValue());
+        }
+      });
+    myScopeCombo.getComboBox().addItemListener(_ -> scopeService.save(myScopeCombo.getSelectedScopeName()));
+    Disposer.register(myDisposable, myScopeCombo);
+
+    // do not show scope chooser for local variables
+    SearchScope useScope = PsiSearchHelper.getInstance(myProject).getUseScope(myPsiElement);
+    if (useScope instanceof LocalSearchScope) return null;
+
+    JPanel optionsPanel = new JPanel(new BorderLayout());
+    optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
+    JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
+    optionsPanel.add(separator, BorderLayout.NORTH);
+    return optionsPanel;
+  }
+
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpID);
+  protected String getHelpId() {
+    return myHelpID;
   }
 
   @Override
   protected void doAction() {
     PsiUtilCore.ensureValid(myPsiElement);
     String newName = getNewName();
-    performRename(newName);
+    String oldName = UsageViewUtil.getShortName(myPsiElement);
+    if (oldName.equals(newName)) {
+      close(OK_EXIT_CODE);
+    }
+    else {
+      performRename(newName);
+    }
   }
 
-  public void performRename(final String newName) {
+  @Override
+  public void performRename(@NotNull String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
-    if (myCbSearchTextOccurrences.isEnabled()) {
+    if (isSearchForTextOccurrencesEnabled()) {
       elementProcessor.setToSearchForTextOccurrences(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {
@@ -316,9 +383,9 @@ public class RenameDialog extends RefactoringDialog {
 
     final RenameProcessor processor = createRenameProcessor(newName);
 
-    for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutoRenamerFactories.entrySet()) {
-      e.getKey().setEnabled(e.getValue().isSelected());
+    for (Map.Entry<AutomaticRenamerFactory, JCheckBox> e : myAutoRenamerFactories.entrySet()) {
       if (e.getValue().isSelected()) {
+        e.getKey().setEnabled(true);
         processor.addRenamerFactory(e.getKey());
       }
     }
@@ -326,17 +393,24 @@ public class RenameDialog extends RefactoringDialog {
     invokeRefactoring(processor);
   }
 
-  protected RenameProcessor createRenameProcessor(String newName) {
-    return new RenameProcessor(getProject(), myPsiElement, newName, isSearchInComments(), isSearchInNonJavaFiles());
+  protected boolean isSearchForTextOccurrencesEnabled() {
+    return myCbSearchTextOccurrences.isEnabled();
+  }
+
+  public RenameProcessor createRenameProcessorEx(@NotNull String newName) {
+    return createRenameProcessor(newName);
+  }
+
+  protected RenameProcessor createRenameProcessor(@NotNull String newName) {
+    return new RenameProcessor(getProject(), myPsiElement, newName, getRefactoringScope(), isSearchInComments(), isSearchInNonJavaFiles());
   }
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (Comparing.strEqual(getNewName(), myOldName)) throw new ConfigurationException(null);
     if (!areButtonsValid()) {
-      throw new ConfigurationException("\'" + getNewName() + "\' is not a valid identifier");
+      throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
     }
-    final Function<String, String> inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(myPsiElement);
+    final Function<String, @DialogMessage String> inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(myPsiElement);
     if (inputValidator != null) {
       setErrorText(inputValidator.fun(getNewName()));
     }
@@ -354,5 +428,14 @@ public class RenameDialog extends RefactoringDialog {
 
   public JCheckBox getCbSearchInComments() {
     return myCbSearchInComments;
+  }
+
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
+    return RefactoringBundle.message("rename.title");
+  }
+
+  @Override
+  public void close() {
+    close(CANCEL_EXIT_CODE);
   }
 }

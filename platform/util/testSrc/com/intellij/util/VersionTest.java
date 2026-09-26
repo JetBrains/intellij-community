@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Version;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class VersionTest {
-  @Test
-  public void testParseVersion() {
+class VersionTest {
+  @Test void testParseVersion() {
     assertParsed("0", 0, 0, 0);
     assertParsed("0.0", 0, 0, 0);
     assertParsed("0.0.0", 0, 0, 0);
@@ -50,6 +38,29 @@ public class VersionTest {
     assertNotParsed("");
     assertNotParsed("beta1");
     assertNotParsed("beta.beta.beta");
+  }
+
+  @Test void testVersion() {
+    var v = new Version(3, 2, 1);
+
+    assertTrue(v.is(3));
+    assertFalse(v.is(4));
+
+    assertTrue(v.is(3, 2));
+    assertFalse(v.is(3, 3));
+
+    assertTrue(v.is(3, 2, 1));
+    assertFalse(v.is(3, 2, 2));
+
+    assertEquals(0, v.compareTo(3));
+    assertTrue(v.compareTo(4) < 0);
+    assertTrue(v.compareTo(2) > 0);
+    assertEquals(0, v.compareTo(3, 2));
+    assertTrue(v.compareTo(3, 3) < 0);
+    assertTrue(v.compareTo(3, 1) > 0);
+    assertEquals(0, v.compareTo(3, 2, 1));
+    assertTrue(v.compareTo(3, 2, 2) < 0);
+    assertTrue(v.compareTo(3, 2, 0) > 0);
   }
 
   private static void assertParsed(String text, int major, int minor, int patch) {

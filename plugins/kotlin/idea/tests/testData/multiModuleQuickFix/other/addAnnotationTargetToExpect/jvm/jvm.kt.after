@@ -1,0 +1,2 @@
+@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
+actual annotation class Ann actual constructor()

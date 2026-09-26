@@ -1,0 +1,7 @@
+package test
+
+import dependency.WithInvokeAlias
+
+fun test() {
+    WithInvokeAlias()
+}

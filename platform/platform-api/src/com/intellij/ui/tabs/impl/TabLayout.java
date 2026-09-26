@@ -1,24 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ui.JBUI;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.SwingConstants;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public abstract class TabLayout {
 
@@ -31,10 +25,30 @@ public abstract class TabLayout {
   }
 
   public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
-    return Math.abs(deltaY) > tabLabel.getSize().height * getDragOutMultiplier();
+    return Math.abs(deltaY) > tabLabel.getHeight() * getDragOutMultiplier()
+           || Math.abs(deltaX) > tabLabel.getWidth() * getDragOutMultiplier();
   }
 
   public boolean isSideComponentOnTabs() {
+    return false;
+  }
+
+  public boolean isScrollable() {
+    return false;
+  }
+
+  public boolean isWithScrollBar() {
+    return false;
+  }
+
+  public int getScrollOffset() {
+    return 0;
+  }
+
+  public void scroll(int units) {
+  }
+
+  public boolean isTabHidden(@NotNull TabInfo info) {
     return false;
   }
 
@@ -42,5 +56,24 @@ public abstract class TabLayout {
     return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
   }
 
-  public abstract int getDropIndexFor(Point point);
+  public abstract int getDropIndexFor(@NotNull Point point);
+
+  public static int getMaxPinnedTabWidth() {
+    return JBUI.scale(Registry.intValue("ide.editor.max.pinned.tab.width", 2000));
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public abstract int getDropSideFor(@NotNull Point point);
+
+  protected static int getMinTabWidth() {
+    return JBUI.scale(50);
+  }
+
+
+  public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
+
+  public static boolean showPinnedTabsSeparately() {
+    return UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow() &&
+           AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left");
+  }
 }

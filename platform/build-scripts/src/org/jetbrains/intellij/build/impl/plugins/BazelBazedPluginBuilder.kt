@@ -1,0 +1,201 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl.plugins
+
+import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsEntry
+import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsInjection
+import com.intellij.platform.buildScripts.searchableOptionsInjector.injectSearchableOptions
+import io.opentelemetry.api.common.AttributeKey
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.generateInclusionReasonForContentModule
+import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.bazel.runBazelBuild
+import org.jetbrains.intellij.build.impl.isIncludePluginsInBuiltinCustomRepository
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.readEntryFromZip
+import org.jetbrains.intellij.build.mapConcurrent
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.name
+
+internal data class PluginsSplitByBuildingMethod(
+  val inProcess: Collection<PluginLayout>,
+  val byBazel: List<PluginBuiltByBazelDescriptor>,
+)
+
+internal data class PluginBuiltByBazelDescriptor(
+  val mainModule: String,
+  val bazelTarget: String,
+  val pluginDistributionDirectory: Path,
+)
+
+internal fun partitionPluginsByBuildingMethod(pluginLayouts: Collection<PluginLayout>, buildContext: BuildContext): PluginsSplitByBuildingMethod {
+  if (!buildContext.options.buildPluginsByBazel) return PluginsSplitByBuildingMethod(pluginLayouts, emptyList())
+  if (buildContext.outputProvider !is BazelModuleOutputProvider) {
+    buildContext.messages.logErrorAndThrow("Cannot build plugins by Bazel because output provider is not BazelModuleOutputProvider: ${buildContext.outputProvider}")
+  }
+  val outputProvider = buildContext.outputProvider as BazelModuleOutputProvider
+  val pluginsToBuildByScripts = ArrayList<PluginLayout>()
+  val pluginsToBuildByBazel = ArrayList<PluginBuiltByBazelDescriptor>()
+  for (layout in pluginLayouts) {
+    val bazelTargetDescription = outputProvider.findPluginDistributionTargetDescription(layout.mainModule)
+    // An entry with no `target` is one that only records the plugin's dev-distribution content target, which says
+    // nothing about whether Bazel can package the plugin - `ij_plugin` is what does, and it is opt-in per descriptor.
+    if (bazelTargetDescription != null && bazelTargetDescription.target.isNotEmpty()) {
+      pluginsToBuildByBazel.add(PluginBuiltByBazelDescriptor(layout.mainModule, bazelTargetDescription.target, buildContext.paths.projectHome.resolve(bazelTargetDescription.distributionDirectory)))
+    }
+    else {
+      pluginsToBuildByScripts.add(layout)
+    }
+  }
+  return PluginsSplitByBuildingMethod(pluginsToBuildByScripts, pluginsToBuildByBazel)
+}
+
+internal fun buildPluginsByBazel(
+  plugins: List<PluginBuiltByBazelDescriptor>,
+  targetDir: Path,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  buildContext: BuildContext,
+  pluginBuilt: ((PluginBuildResult, layout: PluginLayout?, pluginDirOrFile: Path) -> List<DistributionFileEntry>)?
+): List<PluginBuildResult> {
+  if (plugins.isEmpty()) return emptyList()
+  val pluginsTargets = plugins.map { it.bazelTarget }
+  spanBuilder("build plugins by Bazel")
+    .setAttribute(AttributeKey.stringArrayKey("targets"), pluginsTargets)
+    .use {
+      val explicitBuildNumber = buildContext.options.buildNumber
+      val additionalArguments = buildList {
+        if (explicitBuildNumber != null) {
+          add("--ide_build_number=$explicitBuildNumber")
+          // --ij_plugin_version should be passed explicitly only if it cannot be computed automatically to avoid discarding Bazel analysis cache
+          add("--ij_plugin_version=${buildContext.pluginBuildNumber}")
+        }
+        add("--ide_stability_level=${computeIdeStabilityLevel(buildContext)}")
+        if (isIncludePluginsInBuiltinCustomRepository(buildContext)) {
+          add("--ij_plugin_force_exact_build_compatibility")
+        }
+      }
+      runBazelBuild(pluginsTargets, additionalArguments, buildContext)
+    }
+
+  val buildResults = spanBuilder("copy plugins built by Bazel").use {
+    plugins.mapConcurrent { plugin ->
+      if (!plugin.pluginDistributionDirectory.exists()) {
+        buildContext.messages.logErrorAndThrow("Cannot copy the plugin distribution for '${plugin.mainModule}' because '${plugin.pluginDistributionDirectory}' does not exist")
+      }
+      val pluginTargetDir = targetDir.resolve(plugin.pluginDistributionDirectory.name)
+      copyDir(plugin.pluginDistributionDirectory, pluginTargetDir)
+      val packedModulesPath = plugin.pluginDistributionDirectory.parent.resolve("packed-modules.yaml")
+      if (!packedModulesPath.exists()) {
+        buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${packedModulesPath}' does not exist")
+      }
+      val distributionFileEntries = readPackedModules(packedModulesPath, plugin.mainModule, pluginTargetDir)
+      if (searchableOptionSet != null) {
+        // `ij_plugin` never packs searchable options: the index is produced by running the IDE assembled from
+        // index-free plugin distributions, so it can only be added to the distribution afterwards
+        spanBuilder("inject searchable options")
+          .setAttribute("plugin", plugin.mainModule)
+          .use {
+            val pluginId = getPluginId(plugin.mainModule, buildContext)
+            val injections = computeSearchableOptionsInjections(
+              distributionFileEntries = distributionFileEntries,
+              mainModule = plugin.mainModule,
+              pluginId = pluginId,
+              searchableOptionSet = searchableOptionSet,
+            )
+            injectSearchableOptions(injections)
+          }
+      }
+      storeXmlDescriptorsInCache(descriptorCacheContainer.forPlugin(pluginTargetDir), plugin.mainModule, distributionFileEntries)
+      val pluginBuildResult = PluginBuildResult(plugin.mainModule, pluginTargetDir, os = null, arch = null, distributionFileEntries)
+      if (pluginBuilt != null) {
+        val additionalEntries = pluginBuilt(pluginBuildResult, null, pluginTargetDir)
+        pluginBuildResult.copy(distribution = distributionFileEntries + additionalEntries)
+      }
+      else {
+        pluginBuildResult
+      }
+    }
+  }
+  return buildResults
+}
+
+
+/**
+ * Maps the searchable options index to the JARs of a plugin distribution built by the `ij_plugin` rule, following the same
+ * rules as [org.jetbrains.intellij.build.impl.JarPackager.addSearchableOptionSources] does for plugins built in-process:
+ * options of the main module are stored under the plugin ID, options of a content module under the module name.
+ *
+ * Modules without searchable options are the common case, so a missing key is not an error.
+ */
+internal fun computeSearchableOptionsInjections(
+  distributionFileEntries: List<DistributionFileEntry>,
+  mainModule: String,
+  pluginId: String,
+  searchableOptionSet: SearchableOptionSetDescriptor,
+): List<SearchableOptionsInjection> {
+  val entriesByJar = LinkedHashMap<Path, MutableList<SearchableOptionsEntry>>()
+  for (entry in distributionFileEntries) {
+    if (entry !is ModuleOutputEntry) {
+      continue
+    }
+    val sources = if (entry.reason == null && entry.owner.moduleName == mainModule) {
+      searchableOptionSet.createSourceByPlugin(pluginId)
+    }
+    else {
+      searchableOptionSet.createSourceByModule(entry.owner.moduleName)
+    }
+    for (source in sources) {
+      entriesByJar.computeIfAbsent(entry.path) { ArrayList() }.add(SearchableOptionsEntry(source.relativePath, source.file))
+    }
+  }
+  return entriesByJar.map { SearchableOptionsInjection(it.key, it.value) }
+}
+
+private fun getPluginId(mainModule: String, buildContext: BuildContext): String {
+  val module = buildContext.outputProvider.findRequiredModule(mainModule)
+  return (buildContext as BuildContextImpl).jarPackagerDependencyHelper.getPluginIdByModule(module)
+}
+
+private fun computeIdeStabilityLevel(buildContext: BuildContext): String {
+  return when {
+    !buildContext.applicationInfo.isEAP -> "release"
+    buildContext.options.buildNumber == null -> "snapshot"
+    buildContext.isNightlyBuild -> "nightly"
+    else -> "EAP"
+  }
+}
+
+/**
+ * Stores content of plugin and module descriptors in the cache so [org.jetbrains.intellij.build.classPath.generatePluginClassPath] and `fetchPluginDescriptorDataForHeader` can
+ * find them there.
+ */
+private fun storeXmlDescriptorsInCache(
+  descriptorCacheContainer: ScopedCachedDescriptorContainer, mainModule: String, entries: Collection<DistributionFileEntry>
+) {
+  //todo optimize this either by exporting files as separate outputs from the rule or by migrating usages to use a different way to get the necessary information
+  entries.asSequence().filterIsInstance<ModuleOutputEntry>().forEach { entry ->
+    if (entry.owner.moduleName == mainModule) {
+      val pluginXmlContent = readEntryFromZip(entry.path, PLUGIN_XML_RELATIVE_PATH) ?: error("Cannot find $PLUGIN_XML_RELATIVE_PATH in ${entry.path}")
+      descriptorCacheContainer.put(PLUGIN_XML_RELATIVE_PATH, pluginXmlContent)
+    }
+    if (entry.reason == generateInclusionReasonForContentModule(mainModule)) {
+      val moduleDescriptorPath = "${entry.owner.moduleName}.xml"
+      val moduleDescriptorContent = readEntryFromZip(entry.path, moduleDescriptorPath)
+      if (moduleDescriptorContent != null) {
+        descriptorCacheContainer.put(moduleDescriptorPath, moduleDescriptorContent)
+      }
+    }
+  }
+}

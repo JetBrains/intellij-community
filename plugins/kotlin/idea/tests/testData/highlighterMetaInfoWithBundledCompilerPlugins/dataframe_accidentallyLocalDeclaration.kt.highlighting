@@ -1,0 +1,21 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/dataframe_fake_plugin.jar
+// FILE: main.kt
+// CHECK_SYMBOL_NAMES
+// ALLOW_ERRORS
+// HIGHLIGHTER_ATTRIBUTES_KEY
+package test
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.annotations.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>DataSchema<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.api.cast
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.api.dataFrameOf
+
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>testCast<!>() {
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df<!> = <!HIGHLIGHTING("descr='[FUNCTION_CALL_SCHEMA]'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!><!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>dataFrameOf<!>("firstName")<!>(
+        "Alice"
+    ).<!HIGHLIGHTING("severity='ERROR'; descr='[NONE_APPLICABLE]'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>cast<!><<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE]'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'")!>Person<!>>()
+// } // commented on purpose to make Person class "accidentally" local
+
+<!HIGHLIGHTING("severity='ERROR'; descr='[DATA_SCHEMA_LOCAL_DECLARATION]'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='ERROR'; descr='[LOCAL_INTERFACE_NOT_ALLOWED]'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!><!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@DataSchema<!>
+interface <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>Person<!><!> {
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>firstName<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!>
+}<!HIGHLIGHTING("severity='ERROR'; descr='Expecting '}''; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!><!>

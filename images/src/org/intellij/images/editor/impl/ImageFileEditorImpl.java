@@ -15,9 +15,6 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -28,10 +25,15 @@ import com.intellij.util.EventDispatcher;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.options.*;
+import org.intellij.images.options.EditorOptions;
+import org.intellij.images.options.GridOptions;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.TransparencyChessboardOptions;
+import org.intellij.images.options.ZoomOptions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -61,22 +63,23 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     ((ImageEditorImpl)imageEditor).getComponent().getImageComponent().addPropertyChangeListener(this);
   }
 
-  @NotNull
-  public JComponent getComponent() {
+  @Override
+  public @NotNull JComponent getComponent() {
     return imageEditor.getComponent();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return imageEditor.getContentComponent();
   }
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return NAME;
   }
 
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  @Override
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     ImageZoomModel zoomModel = imageEditor.getZoomModel();
     return new ImageFileEditorState(
       imageEditor.isTransparencyChessboardVisible(),
@@ -85,12 +88,12 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
       zoomModel.isZoomLevelChanged());
   }
 
+  @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof ImageFileEditorState) {
+    if (state instanceof ImageFileEditorState editorState) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());
@@ -101,24 +104,22 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     }
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
-  public void selectNotify() {
-  }
-
-  public void deselectNotify() {
-  }
-
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -129,23 +130,17 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     myDispatcher.getMulticaster().propertyChange(editorEvent);
   }
 
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
-  }
-
+  @Override
   public void dispose() {
   }
 
-  @NotNull
-  public ImageEditor getImageEditor() {
+  @Override
+  public @NotNull ImageEditor getImageEditor() {
     return imageEditor;
+  }
+
+  @Override
+  public @NotNull VirtualFile getFile() {
+    return imageEditor.getFile();
   }
 }

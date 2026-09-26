@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun String.foo(): Boolean {
+    return isNotBlank()
+}

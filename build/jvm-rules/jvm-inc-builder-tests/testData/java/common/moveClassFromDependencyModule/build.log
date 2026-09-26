@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/C.class
+End of files
+Cleaning output files:
+  qqq/Use.class
+End of files
+Compiling files:
+  java/common/moveClassFromDependencyModule/b/ppp/C.java
+  java/common/moveClassFromDependencyModule/b/qqq/Use.java
+End of files
+------------------------------------------
+Exit code: OK

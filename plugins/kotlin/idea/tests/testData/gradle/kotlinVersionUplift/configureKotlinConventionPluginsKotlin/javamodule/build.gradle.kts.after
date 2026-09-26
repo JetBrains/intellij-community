@@ -1,0 +1,16 @@
+plugins {
+    id("java")
+    kotlin("jvm") version "2.3.20"
+}
+
+java {
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(kotlin("test"))
+}
+kotlin {
+    jvmToolchain(11)
+}

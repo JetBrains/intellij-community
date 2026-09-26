@@ -15,33 +15,35 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.DependencyData;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/11/2015
  */
 public interface IdeModelsProvider {
-  @NotNull
-  Module[] getModules();
+  Module @NotNull [] getModules();
 
-  @NotNull
-  Module[] getModules(@NotNull ProjectData projectData);
+  Module @NotNull [] getModules(@NotNull ProjectData projectData);
 
-  @NotNull
-  OrderEntry[] getOrderEntries(@NotNull Module module);
+  OrderEntry @NotNull [] getOrderEntries(@NotNull Module module);
 
   @Nullable
   Module findIdeModule(@NotNull ModuleData module);
@@ -49,7 +51,6 @@ public interface IdeModelsProvider {
   @Nullable
   Module findIdeModule(@NotNull String ideModuleName);
 
-  @ApiStatus.Experimental
   @Nullable
   UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData);
 
@@ -63,22 +64,21 @@ public interface IdeModelsProvider {
   OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data);
 
   @NotNull
-  VirtualFile[] getContentRoots(Module module);
+  Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                 @NotNull List<LibraryDependencyData> libraryDependencyDataList);
 
-  @NotNull
-  VirtualFile[] getSourceRoots(Module module);
+  VirtualFile @NotNull [] getContentRoots(Module module);
 
-  @NotNull
-  VirtualFile[] getSourceRoots(Module module, boolean includingTests);
+  VirtualFile @NotNull [] getSourceRoots(Module module);
 
-  @NotNull
-  Library[] getAllLibraries();
+  VirtualFile @NotNull [] getSourceRoots(Module module, boolean includingTests);
+
+  Library @NotNull [] getAllLibraries();
 
   @Nullable
   Library getLibraryByName(String name);
 
-  @NotNull
-  String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
+  String @NotNull [] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
 
   @NotNull
   List<Module> getAllDependentModules(@NotNull Module module);

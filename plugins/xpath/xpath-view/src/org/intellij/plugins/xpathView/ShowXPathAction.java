@@ -17,13 +17,19 @@ package org.intellij.plugins.xpathView;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,15 +43,25 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 public class ShowXPathAction extends XPathAction {
-    public void update(AnActionEvent event) {
+    @Override
+    public void update(@NotNull AnActionEvent event) {
         super.update(event);
 
         final Presentation presentation = event.getPresentation();
@@ -56,6 +72,7 @@ public class ShowXPathAction extends XPathAction {
         }
     }
 
+    @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
         final PsiElement element = xmlFile.findElementAt(offset);
         if (!(element instanceof XmlElement || element instanceof PsiWhiteSpace)) {
@@ -66,8 +83,9 @@ public class ShowXPathAction extends XPathAction {
         return node != null;
     }
 
-    public void actionPerformed(AnActionEvent e) {
-        final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+        final Editor editor = e.getData(CommonDataKeys.EDITOR);
         if (editor == null) {
             return;
         }
@@ -86,22 +104,23 @@ public class ShowXPathAction extends XPathAction {
 
         final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
         if (!(element instanceof XmlElement || element instanceof PsiWhiteSpace)) {
-            XPathAppComponent.showEditorHint("No suitable context for an XPath-expression selected.", editor);
+            XPathAppComponent.showEditorHint(XPathBundle.message("hint.text.no.suitable.context.for.xpath.expression.selected"), editor);
             return;
         }
 
         final PsiElement node = XPathExpressionGenerator.transformToValidShowPathNode(element);
         if (node == null) {
-            XPathAppComponent.showEditorHint("No suitable context for an XPath-expression selected.", editor);
+            XPathAppComponent.showEditorHint(XPathBundle.message("hint.text.no.suitable.context.for.xpath.expression.selected"), editor);
             return;
         }
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         final RangeHighlighter h = HighlighterUtil.highlightNode(editor, node, cfg.getContextAttributes(), cfg);
 
-        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null);
+        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null); //NON-NLS
 
         final JTextField label = new JTextField(path);
+        //noinspection HardCodedStringLiteral
         label.setPreferredSize(new Dimension(label.getPreferredSize().width + new JLabel("M").getPreferredSize().width, label.getPreferredSize().height));
         label.setOpaque(false);
         label.setEditable(false);
@@ -110,7 +129,7 @@ public class ShowXPathAction extends XPathAction {
         label.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
         final JPanel p = new NonOpaquePanel(new BorderLayout());
-        final JLabel l = new JLabel("XPath:");
+        final JLabel l = new JLabel(XPathBundle.message("label.xpath"));
         p.add(l, BorderLayout.WEST);
         p.add(label, BorderLayout.CENTER);
 
@@ -119,16 +138,28 @@ public class ShowXPathAction extends XPathAction {
           @Override
           public void actionPerformed(ActionEvent e) {
             CopyPasteManager.getInstance().setContents(new StringSelection(path));
+              Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(p);
+              if (balloon != null) {
+                  balloon.hide(true);
+              }
           }
         });
 
         p.add(copy, BorderLayout.EAST);
 
       final LightweightHint hint = new LightweightHint(p) {
+            @Override
             public void hide() {
                 super.hide();
                 HighlighterUtil.removeHighlighter(editor, h);
             }
+
+
+          @Override
+          protected boolean canAutoHideOn(TooltipEvent event) {
+              InputEvent inputEvent = event.getInputEvent();
+              return ((inputEvent instanceof MouseEvent)) && ((MouseEvent)inputEvent).getButton() != 0;
+          }
         };
 
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());

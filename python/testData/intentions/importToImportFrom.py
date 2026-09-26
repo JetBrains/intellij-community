@@ -1,4 +1,4 @@
-import __builtin<caret>__ as b
+import buil<caret>tins as b
 
 quotient, rem = b.divmod(42, 3)
 

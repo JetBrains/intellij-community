@@ -1,102 +1,152 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.ui.JBCheckboxMenuItem;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
 
-public class DaemonEditorPopup extends PopupHandler {
-  private final PsiFile myPsiFile;
+import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
-  DaemonEditorPopup(final PsiFile psiFile) {
-    myPsiFile = psiFile;
+@ApiStatus.Internal
+public final class DaemonEditorPopup extends PopupHandler {
+  private final Project myProject;
+  private final Editor myEditor;
+
+  DaemonEditorPopup(@NotNull Project project, @NotNull Editor editor) {
+    myProject = project;
+    myEditor = editor;
   }
 
   @Override
-  public void invokePopup(final Component comp, final int x, final int y) {
+  public void invokePopup(Component comp, int x, int y) {
     if (ApplicationManager.getApplication() == null) return;
-    final JRadioButtonMenuItem errorsFirst = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
-    errorsFirst.addActionListener(
-      __ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected());
-    final JPopupMenu popupMenu = new JBPopupMenu();
-    popupMenu.add(errorsFirst);
+    PsiFile psiFile = EditorContextManager.getPsiFileForEditor(myEditor, myProject);
+    if (psiFile == null) return;
 
-    final JRadioButtonMenuItem next = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
-    next.addActionListener(__ -> DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected());
-    popupMenu.add(next);
-
-    ButtonGroup group = new ButtonGroup();
-    group.add(errorsFirst);
-    group.add(next);
-
-    popupMenu.addSeparator();
-    final JMenuItem hLevel = new JBMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
-    popupMenu.add(hLevel);
-
-    final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
-    errorsFirst.setSelected(isErrorsFirst);
-    next.setSelected(!isErrorsFirst);
-    hLevel.addActionListener(__ -> {
-      final PsiFile psiFile = myPsiFile;
-      if (psiFile == null) return;
-      final HectorComponent component = new HectorComponent(psiFile);
-      final Dimension dimension = component.getPreferredSize();
-      Point point = new Point(x, y);
-      component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    DefaultActionGroup gotoGroup = createGotoGroup();
+    actionGroup.add(gotoGroup);
+    actionGroup.addSeparator();
+    actionGroup.add(new DumbAwareAction(EditorBundle.messagePointer("customize.highlighting.level.menu.item")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        JBPopup popup = getConfigureHighlightingLevelPopup(e.getDataContext());
+        if (popup != null) popup.show(new RelativePoint(comp, new Point(x, y)));
+      }
     });
+    if (!UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty()) {
+      actionGroup.addSeparator();
+      actionGroup.add(new ToggleAction(IdeBundle.message("checkbox.show.editor.preview.popup")) {
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return UISettings.getInstance().getShowEditorToolTip();
+        }
 
-    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getShowEditorToolTip());
-    popupMenu.addSeparator();
-    popupMenu.add(previewCheckbox);
-    previewCheckbox.addActionListener(__ -> {
-      UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
-      UISettings.getInstance().fireUISettingsChanged();
-    });
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setVisible(e.getPresentation().isVisible() &&
+                                         !Boolean.TRUE.equals(myEditor.getUserData(EditorMarkupModelImpl.DISABLE_CODE_LENS)));
+        }
 
-    PsiFile file = myPsiFile;
-    if (file != null && DaemonCodeAnalyzer.getInstance(myPsiFile.getProject()).isHighlightingAvailable(file)) {
-      popupMenu.show(comp, x, y);
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          UISettings.getInstance().setShowEditorToolTip(state);
+          UISettings.getInstance().fireUISettingsChanged();
+        }
+      });
+    }
+    ActionPopupMenu editorPopup = actionManager.createActionPopupMenu(ActionPlaces.RIGHT_EDITOR_GUTTER_POPUP, actionGroup);
+    if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(psiFile)) {
+      UIEventLogger.DaemonEditorPopupInvoked.log(myProject);
+      editorPopup.getComponent().show(comp, x, y);
     }
   }
 
-  private static JRadioButtonMenuItem createRadioButtonMenuItem(final String message) {
-    return new JRadioButtonMenuItem(message) {
-      @Override
-      public void paint(Graphics g) {
-        GraphicsUtil.setupAntialiasing(g);
-        super.paint(g);
-      }
-    };
+  static @NotNull DefaultActionGroup createGotoGroup() {
+    Shortcut shortcut = KeymapUtil.getPrimaryShortcut("GotoNextError");
+    String shortcutText = shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "";
+    DefaultActionGroup gotoGroup = DefaultActionGroup.createPopupGroup(() -> CodeInsightBundle.message("popup.title.next.error.action.0.goes.through", shortcutText));
+    gotoGroup.add(new ToggleAction(EditorBundle.message("errors.panel.go.to.errors.first.radio")) {
+                    @Override
+                    public boolean isSelected(@NotNull AnActionEvent e) {
+                      return DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
+                    }
+
+                    @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
+                    }
+
+                    @Override
+                    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+                      DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(state);
+                    }
+
+                    @Override
+                    public boolean isDumbAware() {
+                      return true;
+                    }
+                  }
+    );
+    gotoGroup.add(new ToggleAction(EditorBundle.message("errors.panel.go.to.next.error.warning.radio")) {
+                    @Override
+                    public boolean isSelected(@NotNull AnActionEvent e) {
+                      return !DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
+                    }
+
+                    @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
+                    }
+
+                    @Override
+                    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+                      DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(!state);
+                    }
+
+                    @Override
+                    public boolean isDumbAware() {
+                      return true;
+                    }
+                  }
+    );
+    return gotoGroup;
   }
 }

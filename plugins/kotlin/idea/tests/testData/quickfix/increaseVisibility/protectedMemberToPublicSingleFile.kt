@@ -1,0 +1,10 @@
+// "Make 'x' public" "true"
+// PRIORITY: HIGH
+// K2_ERROR: INVISIBLE_REFERENCE
+class First(protected val x: Int)
+
+class Second(f: First) {
+    val y = f.<caret>x
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

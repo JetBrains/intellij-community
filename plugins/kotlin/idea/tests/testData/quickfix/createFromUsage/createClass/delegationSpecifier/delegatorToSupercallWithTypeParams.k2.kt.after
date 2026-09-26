@@ -1,0 +1,13 @@
+// "Create class 'A'" "true"
+// K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
+// K2_ERROR: UNRESOLVED_REFERENCE
+package p
+
+class Foo: A<Int, String>(1, "2") {
+
+}
+
+open class A(i: Int, string: String) {
+
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

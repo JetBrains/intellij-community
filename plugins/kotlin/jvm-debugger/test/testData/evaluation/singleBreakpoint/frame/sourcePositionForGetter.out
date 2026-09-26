@@ -1,0 +1,14 @@
+LineBreakpoint created at sourcePositionForGetter.kt:18
+Run Java
+Connected to the target VM
+sourcePositionForGetter.kt:18
+KotlinStackFrame (sourcePositionForGetter.kt:18)
+    JavaValue[local] instance: sourcePositionForGetter.TestClass = sourcePositionForGetter.TestClass@hashCode (sourcePositionForGetter.kt:16)
+        DummyMessageValueNode = No fields to display
+        JavaValue[getter sourcePositionForGetter.TestClass.getMyInt()] myInt: int (sourcePositionForGetter.kt:12)
+        JavaValue[getter sourcePositionForGetter.TestClass.getIInt()] iInt: int (sourcePositionForGetter.kt:4)
+        JavaValue[getter sourcePositionForGetter.AbstractClass.getAInt()] aInt: int (sourcePositionForGetter.kt:8)
+Disconnected from the target VM
+
+Process finished with exit code 0
+

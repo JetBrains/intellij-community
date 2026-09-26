@@ -1,0 +1,12 @@
+// FILE: buildSrc/build.gradle.kts
+// "EXPECTED-SUGGESTION": "create"
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations.create<caret>
+

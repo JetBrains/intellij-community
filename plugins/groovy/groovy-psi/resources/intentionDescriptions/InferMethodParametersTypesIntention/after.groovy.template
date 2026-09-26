@@ -1,0 +1,6 @@
+<spot>def <T></spot> void append(<spot>List<T></spot> a, <spot>T</spot> b) {
+  a.add(b)
+}
+
+append([], 1)
+append([], 'q')

@@ -18,10 +18,6 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessor
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public interface EnterProcessor {
   boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified);
 }

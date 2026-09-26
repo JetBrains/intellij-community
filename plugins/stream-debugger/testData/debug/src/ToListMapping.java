@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public class ToListMapping {
   public static void main(String[] args) {
-    // Breakpoint!
-    final List<Object> objects = Stream.of(new Object(), new Object(), new Object()).collect(Collectors.toList());
+    // Breakpoint! lambdaOrdinal(-1)
+    final List<Object> objects = Stream.of(new Object(), new Object(), new Object()).toList();
   }
 }

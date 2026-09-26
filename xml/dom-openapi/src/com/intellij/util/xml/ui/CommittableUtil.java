@@ -18,9 +18,6 @@ package com.intellij.util.xml.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class CommittableUtil {
 
   public void commit(@NotNull Committable committable) {

@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * Enables showing diff between revisions and comparing file or directory state between a revision and a local version in log-based file history.
  * Methods of this class could be called from EDT, so it should deal with it appropriately by starting a background task for long operations,
- * eg for loading revisions content.
+ * e.g. for loading revisions content.
  */
 public interface VcsLogDiffHandler {
 
@@ -51,4 +40,25 @@ public interface VcsLogDiffHandler {
   void showDiffWithLocal(@NotNull VirtualFile root,
                          @Nullable FilePath revisionPath,
                          @NotNull Hash hash, @NotNull FilePath localPath);
+
+  /**
+   * Show diff between two revisions or between a revision and a local version for the specified set of paths.
+   *
+   * @param root          repository root.
+   * @param affectedPaths paths for which to show diff, null means to show all changes between revisions.
+   * @param leftRevision  hash of the revision on the left.
+   * @param rightRevision hash of the revision on the right or null if local revision is required.
+   */
+  void showDiffForPaths(@NotNull VirtualFile root, @Nullable Collection<FilePath> affectedPaths,
+                        @NotNull Hash leftRevision, @Nullable Hash rightRevision);
+
+  /**
+   * Create a ContentRevision for specified path and commit.
+   *
+   * @param filePath file path to create content revision for.
+   * @param hash     hash of the revision.
+   * @return content revision.
+   */
+  @NotNull
+  ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash);
 }

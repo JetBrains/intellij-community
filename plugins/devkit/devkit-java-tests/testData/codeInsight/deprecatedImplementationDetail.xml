@@ -1,0 +1,6 @@
+<idea-plugin <error descr="It's not recommended to mark a plugin as \"implementation-detail\": use a regular plugin visible to users">implementation-detail="true"</error>>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+</idea-plugin>

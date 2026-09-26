@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorNavigateActionBase;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.packaging.ui.TreeNodePresentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemNavigateAction extends ArtifactEditorNavigateActionBase {
   private final SourceItemsTree mySourceItemsTree;
 
@@ -40,5 +39,10 @@ public class SourceItemNavigateAction extends ArtifactEditorNavigateActionBase {
       return nodes.get(0).getElementPresentation();
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

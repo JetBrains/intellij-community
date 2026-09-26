@@ -15,16 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -32,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,13 +44,19 @@ public class CreateVariableFix extends AbstractFix {
         myReference = reference;
     }
 
-    @NotNull
-    public String getText() {
-        return "Create Variable '" + myReference.getReferencedName() + "'";
+    @Override
+    public @NotNull String getText() {
+        return XPathBundle.message("intention.name.create.variable", myReference.getReferencedName());
     }
 
-    public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.create.variable");
+    }
+
+    @Override
+    public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+        editor = editor == null ? null : InjectedLanguageEditorUtil.getTopLevelEditor(editor);
 
         XmlTag tag = PsiTreeUtil.getContextOfType(myReference, XmlTag.class, true);
         if (tag == null) return;
@@ -80,21 +88,28 @@ public class CreateVariableFix extends AbstractFix {
         return XsltCodeInsightUtil.findVariableInsertionPoint(currentUsageTag, getUsageBlock(), myReference.getReferencedName());
     }
 
-    @Nullable
-    public PsiElement getUsageBlock() {
+    public @Nullable PsiElement getUsageBlock() {
         return XsltCodeInsightUtil.getUsageBlock(myReference);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!myReference.isValid()) {
-            return false;
-        }
-        final PsiFile psiFile = myReference.getContainingFile();
-        assert psiFile != null;
-        return myReference.isValid() && psiFile.isValid();
+      if (!myReference.isValid()) {
+        return false;
+      }
+      final PsiFile psiFile = myReference.getContainingFile();
+      assert psiFile != null;
+      //noinspection ConstantValue -- rechecking of isValid is intended
+      return myReference.isValid() && psiFile.isValid();
     }
 
+    @Override
     protected boolean requiresEditor() {
         return true;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new CreateVariableFix(PsiTreeUtil.findSameElementInCopy(myReference, target));
     }
 }

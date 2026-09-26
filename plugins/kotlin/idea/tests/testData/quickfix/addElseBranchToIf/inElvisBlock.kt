@@ -1,0 +1,8 @@
+// "Add else branch" "true"
+// K2_ERROR: INVALID_IF_AS_EXPRESSION
+fun foo(x: String?) {
+    x ?: i<caret>f (x == null) {
+        return
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix

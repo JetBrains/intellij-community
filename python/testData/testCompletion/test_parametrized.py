@@ -28,3 +28,28 @@ def test_int_foo(y):
 
 
 @pytest.mark.parame<caret>
+
+
+@pytest.fixture()
+def my_spam_fix(request) -> str:
+    return 'x' * request.param
+
+
+@pytest.mark.parametrize('my_spam_fix', (1, 2, 3), indirect=True)
+def test_indirect(my_spam_fix):
+    assert my_spam_fix.fin<caret>#
+
+
+@pytest.mark.parametrize('my_spam_fix', (1, 2, 3))
+def test_no_indirect(my_spam_fix):
+    assert my_spam_fix.__xor<caret>#
+
+
+@pytest.fixture()
+def my_eggs_fixture(request) -> str:
+    return 'x' * request.param
+
+@pytest.mark.parametrize('my_spam_fix, my_eggs_fixture', (1, 2), indirect=["my_spam_fix"])
+def test_indirect_two(my_spam_fix, my_eggs_fixture):
+    assert my_spam_fix.fin<caret>#
+    assert my_eggs_fixture.__xor<caret>#

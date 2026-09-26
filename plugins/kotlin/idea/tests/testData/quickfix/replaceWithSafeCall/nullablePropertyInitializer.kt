@@ -1,0 +1,8 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_CALL
+fun test(name: String?) {
+    val length: Int? = name.<caret>length
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix

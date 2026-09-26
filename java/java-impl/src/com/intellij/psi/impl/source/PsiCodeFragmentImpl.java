@@ -1,30 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.IntentionFilterOwner;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -37,6 +37,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +45,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
+@ApiStatus.Internal
 public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment, IntentionFilterOwner {
   private final PsiElement myContext;
+  private final String myPackageName;
   private boolean myPhysical;
   private PsiType myThisType;
   private PsiType mySuperType;
@@ -67,13 +70,30 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
             new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
     );
     myContext = context;
+    myPackageName = context instanceof PsiPackage aPackage ? aPackage.getQualifiedName() : null;
+    ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
+    myPhysical = isPhysical;
+  }
+
+  PsiCodeFragmentImpl(Project project,
+                      IElementType contentElementType,
+                      boolean isPhysical,
+                      @NonNls String name,
+                      CharSequence text,
+                      @Nullable String packageName) {
+    super(TokenType.CODE_FRAGMENT,
+          contentElementType,
+          PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
+            new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
+    );
+    myPackageName = packageName;
+    myContext = null;
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getContentElementType().getLanguage();
   }
 
@@ -84,10 +104,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<>(myPseudoImports);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
-    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
-      getName(),
-      getLanguage(),
-      getText()), false);
+    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)
+      fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
     cloneViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = cloneViewProvider;
     return clone;
@@ -96,16 +114,14 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   private FileViewProvider myViewProvider;
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
-    return StdFileTypes.JAVA;
+  public @NotNull FileType getFileType() {
+    return JavaFileType.INSTANCE;
   }
 
   @Override
@@ -129,8 +145,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   @Override
-  public void setSuperType(final PsiType superType) {
+  public void setSuperType(PsiType superType) {
     mySuperType = superType;
+  }
+
+  @Override
+  public @Nullable String getPackageName() {
+    return myPackageName;
   }
 
   @Override
@@ -165,8 +186,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitCodeFragment(this);
+    if (visitor instanceof JavaElementVisitor v) {
+      v.visitCodeFragment(this);
     }
     else {
       visitor.visitFile(this);
@@ -224,6 +245,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCodeFragment:" + getName();
   }
@@ -253,10 +275,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     private final String myQName;
     private final LinkedHashMap<String, String> myPseudoImports;
 
-    public ImportClassUndoableAction(final String className,
-                                     final String qName,
-                                     final Document document,
-                                     final LinkedHashMap<String, String> pseudoImportsMap) {
+    ImportClassUndoableAction(String className, String qName, Document document, LinkedHashMap<String, String> pseudoImportsMap) {
       super(document);
       myClassName = className;
       myQName = qName;
@@ -280,7 +299,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   @Override
-  public void setIntentionActionsFilter(@NotNull final IntentionActionsFilter filter) {
+  public void setIntentionActionsFilter(@NotNull IntentionActionsFilter filter) {
     myIntentionActionsFilter = filter;
   }
 
@@ -300,14 +319,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     if (myResolveScope != null) return myResolveScope;
     return super.getResolveScope();
   }
 
   @Override
-  public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
+  public void setExceptionHandler(ExceptionHandler exceptionHandler) {
     myExceptionHandler = exceptionHandler;
   }
 }

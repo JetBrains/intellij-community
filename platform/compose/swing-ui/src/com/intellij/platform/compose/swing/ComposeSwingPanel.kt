@@ -1,0 +1,72 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.compose.swing
+
+import androidx.compose.runtime.Composable
+import com.intellij.internal.inspector.UiInspectorUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.DisposableHandle
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.setContent
+import java.awt.BorderLayout
+import javax.swing.JComponent
+
+/**
+ * Creates a Swing [JComponent] hosting the given Compose [content].
+ *
+ * The content joins the composition the host's own place in the Swing hierarchy resolves to: an enclosing
+ * composition when the host is nested under one, otherwise the one its window shares. Every island in a
+ * window then recomposes on that window's single recomposer and frame clock, and the clock is paced to the
+ * display the window is on. The content is mounted once the host reaches a window, and a host disposed before
+ * that mounts nothing.
+ *
+ * The composition belongs to [parentDisposable] and to nothing else. It is torn down when that is
+ * disposed, and never by the host leaving the Swing hierarchy, so a host that is taken out of one
+ * container and put into another - a tool window whose tab is switched away and back - keeps the state it
+ * remembered and the effects it had running. A host whose disposable is never disposed keeps its
+ * composition for the lifetime of the process.
+ *
+ * Composable code and effects run on the EDT with no read or write lock held and `ModalityState.any()`
+ * semantics. They may read and write Swing and snapshot state freely, and must not touch PSI, VFS,
+ * documents or the project model directly: reach the model from a `LaunchedEffect` through `readAction`, a
+ * suspending service, or a flow collected into snapshot state.
+ *
+ * Must be called on the EDT, and [parentDisposable] must be disposed on the EDT.
+ *
+ * This is the Swing-Compose analogue of the Jewel `JewelComposePanel`.
+ *
+ * @see org.jetbrains.jewel.bridge.JewelComposePanel
+ */
+@ApiStatus.Experimental
+public fun composeSwingPanel(
+  parentDisposable: Disposable,
+  content: @Composable () -> Unit,
+): JComponent {
+  val panel = ComposeSwingPanel()
+  val handle = panel.setContent(content = content)
+  Disposer.register(parentDisposable, Disposable { handle.dispose() })
+  return panel
+}
+
+@ApiStatus.Internal
+public class ComposeSwingPanel : BorderLayoutPanel() {
+  init {
+    registerCreationStacktrace()
+  }
+
+  private fun registerCreationStacktrace() {
+    if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
+      ClientProperty.put(this, CREATION_STACKTRACE, Throwable())
+    }
+  }
+
+  @ApiStatus.Internal
+  public companion object {
+    @JvmStatic
+    public val CREATION_STACKTRACE: Key<Throwable> = Key.create("compose.swing.panel.creation.stacktrace")
+  }
+}

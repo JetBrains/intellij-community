@@ -1,84 +1,74 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce.inplace;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
 // from reusing it, use simpleChooser instead.
 public abstract class OccurrencesChooser<T> {
-  public static final String DEFAULT_CHOOSER_TITLE = "Multiple occurrences found";
-
   public interface BaseReplaceChoice {
-    boolean isMultiple();
-
+    /**
+     * @return true if more than one element is selected
+     */
     boolean isAll();
 
-    String formatDescription(int occurrencesCount);
+    /**
+     * @param occurrencesCount number of occurrences
+     * @return user-readable description of given choice
+     */
+    @Nls String formatDescription(int occurrencesCount);
   }
 
   public enum ReplaceChoice implements BaseReplaceChoice {
-    NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
-
-    private final String myDescription;
-
-    ReplaceChoice(String description) {
-      myDescription = description;
-    }
-
-    public String getDescription() {
-      return myDescription;
-    }
-
-    @Override
-    public boolean isMultiple() {
-      return this == NO_WRITE || this == ALL;
-    }
+    NO, NO_WRITE, ALL;
 
     @Override
     public boolean isAll() {
-      return this == ALL;
+      return this != NO;
     }
 
     @Override
-    public String formatDescription(int occurrencesCount) {
-      return MessageFormat.format(getDescription(), occurrencesCount);
+    public @Nls String formatDescription(int occurrencesCount) {
+      return switch (this) {
+        case NO -> RefactoringBundle.message("replace.this.occurrence.only");
+        case NO_WRITE -> RefactoringBundle.message("replace.all.occurrences.but.write");
+        case ALL -> RefactoringBundle.message("replace.all.occurrences", occurrencesCount);
+        default -> throw new IllegalStateException("Unexpected value: " + this);
+      };
     }
   }
 
   public static <T extends PsiElement> OccurrencesChooser<T> simpleChooser(Editor editor) {
-    return new OccurrencesChooser<T>(editor) {
+    return new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(T occurrence) {
         return occurrence.getTextRange();
@@ -88,56 +78,54 @@ public abstract class OccurrencesChooser<T> {
 
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
-  private final TextAttributes myAttributes;
 
   public OccurrencesChooser(Editor editor) {
     myEditor = editor;
-    myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 
-  public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<ReplaceChoice> callback) {
+  public void showChooser(final T selectedOccurrence, final List<T> allOccurrences, final Pass<? super ReplaceChoice> callback) {
     if (allOccurrences.size() == 1) {
-      callback.pass(ReplaceChoice.ALL);
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        callback.accept(ReplaceChoice.ALL);
+      }
     }
     else {
-      Map<ReplaceChoice, List<T>> occurrencesMap = ContainerUtil.newLinkedHashMap();
+      Map<ReplaceChoice, List<T>> occurrencesMap = new LinkedHashMap<>();
       occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
       occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
-      showChooser(callback, occurrencesMap);
+      showChooser(occurrencesMap, callback);
     }
   }
 
-  public void showChooser(final Pass<ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
-    showChooser(callback, occurrencesMap, DEFAULT_CHOOSER_TITLE);
+  /**
+   * use {@link #showChooser(Map, String, Consumer)}
+   */
+  @Deprecated
+  public void showChooser(final Pass<? super ReplaceChoice> callback, final Map<ReplaceChoice, List<T>> occurrencesMap) {
+    showChooser(occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"), callback);
+  }
+  public void showChooser(final Map<ReplaceChoice, List<T>> occurrencesMap, @NotNull Consumer<? super ReplaceChoice> callback) {
+    showChooser(occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"), callback);
   }
 
-  public <C extends BaseReplaceChoice> void showChooser(final Pass<C> callback,
-                          final Map<C, List<T>> occurrencesMap,
-                          String title) {
+  public <C extends BaseReplaceChoice> void showChooser(final Map<C, List<T>> occurrencesMap,
+                                                        @Nls String title,
+                                                        Consumer<? super C> callback) {
     if (occurrencesMap.size() == 1) {
-      callback.pass(occurrencesMap.keySet().iterator().next());
+      callback.accept(occurrencesMap.keySet().iterator().next());
       return;
     }
-    List<C> model = occurrencesMap.keySet().stream().collect(Collectors.toList());
+    List<C> model = new ArrayList<>(occurrencesMap.keySet());
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-      .setRenderer(new DefaultListCellRenderer() {
+      .setRenderer(new GroupedItemsListRenderer<C>(new ListItemDescriptorAdapter<C>() {
         @Override
-        public Component getListCellRendererComponent(final JList list,
-                                                      final Object value,
-                                                      final int index,
-                                                      final boolean isSelected,
-                                                      final boolean cellHasFocus) {
-          final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          @SuppressWarnings("unchecked") final C choices = (C)value;
-
-          if (choices != null) {
-            setText(choices.formatDescription(occurrencesMap.get(choices).size()));
-          }
-          return rendererComponent;
+        public @Nullable String getTextFor(C value) {
+          if (value == null) return "";
+          return value.formatDescription(occurrencesMap.get(value).size());
         }
-      })
+      }))
       .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();
@@ -146,7 +134,7 @@ public abstract class OccurrencesChooser<T> {
         for (T occurrence : occurrenceList) {
           final TextRange textRange = getOccurrenceRange(occurrence);
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
-            textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
+            EditorColors.SEARCH_RESULT_ATTRIBUTES, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
             HighlighterTargetArea.EXACT_RANGE);
           myRangeHighlighters.add(rangeHighlighter);
         }
@@ -155,10 +143,10 @@ public abstract class OccurrencesChooser<T> {
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback(callback::pass)
-      .addListener(new JBPopupAdapter() {
+      .setItemChosenCallback(t -> callback.accept(t))
+      .addListener(new JBPopupListener() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters();
         }
       })

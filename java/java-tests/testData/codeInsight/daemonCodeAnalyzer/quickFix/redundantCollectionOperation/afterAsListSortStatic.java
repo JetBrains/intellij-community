@@ -1,4 +1,4 @@
-// "Replace with 'Arrays.sort()'" "true"
+// "Replace with 'Arrays.sort()'" "true-preview"
 import java.util.Arrays;
 import java.util.Collections;
 

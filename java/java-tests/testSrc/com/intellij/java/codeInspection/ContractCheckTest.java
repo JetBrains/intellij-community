@@ -4,13 +4,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.ContractInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
+public class ContractCheckTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -37,6 +34,7 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testDelegationWithUnknownArgument() { doTest(); }
   public void testEqualsUnknownValue() { doTest(); }
   public void testMissingFail() { doTest(); }
+  public void testInheritedContract() { doTest(); }
   public void testExceptionWhenDeclaredNotNull() { doTest(); }
   public void testCheckSuperContract() { doTest(); }
   public void testNestedCallsMayThrow() { doTest(); }
@@ -53,4 +51,9 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testMutationSignatureProblems() { doTest(); }
   public void testNewThisParam() { doTest(); }
   public void testConditionsConflict() { doTest(); }
+  public void testWrongFailSuggestion() { doTest(); }
+  public void testIsInstance() { doTest(); }
+  public void testObjectBoolean() { doTest(); }
+  public void testParamUncheckedCast() { doTest(); }
+  public void testInferredNotNull() { doTest(); }
 }

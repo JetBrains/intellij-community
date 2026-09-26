@@ -15,17 +15,15 @@
  */
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author nik
- */
 public class ProjectDescriptor {
   private List<ModuleDescriptor> myModules = Collections.emptyList();
   private List<LibraryDescriptor> myLibraries = Collections.emptyList();

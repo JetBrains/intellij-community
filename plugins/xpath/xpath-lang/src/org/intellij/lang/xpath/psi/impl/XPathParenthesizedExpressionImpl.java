@@ -29,18 +29,19 @@ public class XPathParenthesizedExpressionImpl extends XPathElementImpl implement
         super(node);
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
-    @Nullable
-    public XPathExpression getExpression() {
+    @Override
+    public @Nullable XPathExpression getExpression() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathParenthesizedExpression(this);
   }

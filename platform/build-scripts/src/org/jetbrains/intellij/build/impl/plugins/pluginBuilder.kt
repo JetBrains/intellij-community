@@ -1,0 +1,279 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.impl.plugins
+
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.buildScripts.concurrency.taskScope
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginScrambleRequest
+import org.jetbrains.intellij.build.ScrambleTool
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.antToRegex
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.hasModuleOutputPath
+import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
+import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.DistributionBuilderState
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.layoutDistribution
+import org.jetbrains.intellij.build.impl.patchPluginXml
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.mapConcurrent
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import java.nio.file.Path
+
+private class ScrambleTask(@JvmField val descriptor: PluginBuildDescriptor)
+
+internal fun buildPlugins(
+  plugins: Collection<PluginLayout>,
+  os: OsFamily?,
+  arch: JvmArchitecture?,
+  targetDir: Path,
+  state: DistributionBuilderState,
+  platformEntriesProvider: (() -> List<DistributionFileEntry>)?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
+  copyFiles: Boolean = true,
+  layoutOnly: Boolean = false,
+  additionalScrambleDescriptorsProvider: (() -> Collection<PluginBuildResult>)? = null,
+  /** The function to be called after the plugin is built that may add additional entries to its distribution; `layout` parameter is `null` for plugins built by Bazel. */
+  pluginBuilt: ((PluginBuildResult, layout: PluginLayout?, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
+): List<PluginBuildResult> {
+  val scrambleTool = context.proprietaryBuildTools.scrambleTool
+  val isScramblingSkipped = layoutOnly || context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
+
+  val (pluginsBuildInProcess, pluginsBuildByBazel) = partitionPluginsByBuildingMethod(plugins, context)
+
+  val resultsForPluginsBuiltInProcess = pluginsBuildInProcess.mapConcurrent { pluginLayout ->
+    buildPlugin(
+      pluginLayout = pluginLayout,
+      targetDir = targetDir,
+      state = state,
+      descriptorCacheContainer = descriptorCacheContainer,
+      searchableOptionSet = searchableOptionSet,
+      scrambleTool = scrambleTool,
+      isScramblingSkipped = isScramblingSkipped,
+      os = os,
+      arch = arch,
+      context = context,
+      copyFiles = copyFiles,
+      pluginBuilt = pluginBuilt,
+    )
+  }
+
+  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, descriptorCacheContainer, searchableOptionSet, context, pluginBuilt = pluginBuilt)
+  val results = (resultsForPluginsBuiltInProcess + resultsForPluginsBuiltByBazel.map { it to null }).sortedBy { it.first.mainModule }
+
+  val scrambleTasks = results.mapNotNull { it.second }
+  if (scrambleTasks.isNotEmpty()) {
+    checkNotNull(scrambleTool)
+
+    // scrambling can require classes from the platform
+    val platformEntries = platformEntriesProvider?.let { provider ->
+      spanBuilder("wait for platform lib for scrambling").use { provider() }
+    } ?: emptyList()
+    val descriptors = results.map { it.first }
+    val laidOutDescriptors = additionalScrambleDescriptorsProvider?.let { provider ->
+      provider() + descriptors
+    } ?: descriptors
+    taskScope {
+      for (scrambleTask in scrambleTasks) {
+        fork("scramble plugin ${scrambleTask.descriptor.buildResult.mainModule}") {
+          scrambleTool.scramblePlugin(
+            request = PluginScrambleRequest(
+              currentDescriptor = scrambleTask.descriptor,
+              laidOutPlugins = laidOutDescriptors,
+              platformLayout = state.platformLayout,
+              platformContent = platformEntries,
+            ),
+            context = context,
+          )
+        }
+      }
+      join()
+    }
+  }
+  return results.map { it.first }
+}
+
+/**
+ * Run per-plugin scramble for the given already-laid-out plugin descriptors. Co-scramble plugins
+ * (those with [PluginLayout.scrambleWithPlatform]) are skipped. Used by the orchestrator after
+ * the platform ZKM run, since regular plugins that were laid out early still need their per-plugin
+ * scramble to happen.
+ */
+internal fun scrambleAlreadyLaidOutPlugins(
+  descriptors: Collection<PluginBuildResult>,
+  state: DistributionBuilderState,
+  platformEntries: List<DistributionFileEntry>,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
+  context: BuildContext,
+) {
+  val scrambleTool = context.proprietaryBuildTools.scrambleTool ?: return
+  if (context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)) return
+  val toScramble = descriptors.mapNotNull { plugin ->
+    val layout = layoutsOfPluginsToScramble[plugin.mainModule]
+    if (layout == null || layout.scrambleWithPlatform || layout.pathsToScramble.isEmpty()) return@mapNotNull null
+    PluginBuildDescriptor(layout, plugin)
+  }
+  if (toScramble.isEmpty()) return
+  taskScope {
+    for (descriptor in toScramble) {
+      fork("scramble plugin ${descriptor.buildResult.mainModule}") {
+        scrambleTool.scramblePlugin(
+          request = PluginScrambleRequest(
+            currentDescriptor = descriptor,
+            laidOutPlugins = descriptors,
+            platformLayout = state.platformLayout,
+            platformContent = platformEntries,
+          ),
+          context = context,
+        )
+      }
+    }
+    join()
+  }
+}
+
+private fun buildPlugin(
+  pluginLayout: PluginLayout,
+  targetDir: Path,
+  state: DistributionBuilderState,
+  descriptorCacheContainer: DescriptorCacheContainer,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  scrambleTool: ScrambleTool?,
+  isScramblingSkipped: Boolean,
+  os: OsFamily?,
+  arch: JvmArchitecture?,
+  context: BuildContext,
+  copyFiles: Boolean,
+  pluginBuilt: ((PluginBuildResult, PluginLayout?, Path) -> List<DistributionFileEntry>)?,
+): Pair<PluginBuildResult, ScrambleTask?> = taskScope {
+  val directoryName = pluginLayout.directoryName
+  val pluginDir = targetDir.resolve(directoryName)
+  val moduleOutputPatcher = ModuleOutputPatcher()
+
+  if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
+    if (context.options.checkOutputOfPluginModules) {
+      fork("check output of plugin modules for ${pluginLayout.mainModule}") {
+        checkOutputOfPluginModules(
+          mainPluginModule = pluginLayout.mainModule,
+          includedModules = pluginLayout.includedModules,
+          moduleExcludes = pluginLayout.moduleExcludes,
+          outputProvider = context.outputProvider,
+        )
+      }
+    }
+
+    patchPluginXml(
+      moduleOutputPatcher = moduleOutputPatcher,
+      pluginLayout = pluginLayout,
+      releaseDate = context.applicationInfo.majorReleaseDate,
+      releaseVersion = context.applicationInfo.releaseVersionForLicensing,
+      pluginsToPublish = state.pluginsToPublish,
+      platformDescriptorCache = descriptorCacheContainer.forPlatform(state.platformLayout),
+      pluginDescriptorCache = descriptorCacheContainer.forPlugin(pluginDir),
+      platformLayout = state.platformLayout,
+      context = context,
+    )
+  }
+
+  val buildResult = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
+    val (entries, file) = layoutDistribution(
+      layout = pluginLayout,
+      platformLayout = state.platformLayout,
+      targetDir = pluginDir,
+      copyFiles = copyFiles,
+      moduleOutputPatcher = moduleOutputPatcher,
+      includedModules = pluginLayout.includedModules,
+      searchableOptionSet = searchableOptionSet,
+      cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
+      context = context,
+    )
+
+    val buildResult = PluginBuildResult(
+      mainModule = pluginLayout.mainModule,
+      dir = pluginDir,
+      os = os,
+      arch = arch,
+      distribution = entries,
+    )
+    if (pluginBuilt == null) {
+      buildResult
+    }
+    else {
+      val additionalEntries = pluginBuilt(buildResult, pluginLayout, file)
+      buildResult.copy(distribution = entries + additionalEntries)
+    }
+  }
+
+  var scrambleTask: ScrambleTask? = null
+  if (!pluginLayout.pathsToScramble.isEmpty()) {
+    val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
+    if (scrambleTool == null) {
+      Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
+    }
+    else if (isScramblingSkipped) {
+      Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
+    }
+    else {
+      // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
+      scrambleTask = ScrambleTask(PluginBuildDescriptor(layout = pluginLayout, buildResult = buildResult))
+    }
+  }
+
+  join { buildResult to scrambleTask }
+}
+
+private fun checkOutputOfPluginModules(
+  mainPluginModule: String,
+  includedModules: Collection<ModuleItem>,
+  moduleExcludes: Map<String, List<String>>,
+  outputProvider: ModuleOutputProvider,
+) {
+  for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
+    if (module != "intellij.java.guiForms.rt" ||
+        !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), outputProvider)) {
+      continue
+    }
+
+    error(
+      "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
+      "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
+      "to the output directory' is disabled in Settings | Editor | GUI Designer."
+    )
+  }
+}
+
+private fun containsFileInOutput(
+  moduleName: String,
+  @Suppress("SameParameterValue") filePath: String,
+  excludes: Collection<String>,
+  outputProvider: ModuleOutputProvider,
+): Boolean {
+  val exists = hasModuleOutputPath(module = outputProvider.findRequiredModule(moduleName), relativePath = filePath, outputProvider = outputProvider)
+  if (!exists) {
+    return false
+  }
+
+  for (exclude in excludes) {
+    if (antToRegex(exclude).matches(FileUtilRt.toSystemIndependentName(filePath))) {
+      return false
+    }
+  }
+
+  return true
+}

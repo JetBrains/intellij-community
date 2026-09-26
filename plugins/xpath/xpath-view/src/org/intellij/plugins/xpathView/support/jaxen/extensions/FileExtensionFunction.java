@@ -15,20 +15,19 @@
  */
 package org.intellij.plugins.xpathView.support.jaxen.extensions;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.Nullable;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-
 class FileExtensionFunction extends BasicFileInfoFunction {
-    public FileExtensionFunction() {
+    FileExtensionFunction() {
         super("file-ext", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 
-    @Nullable
-    protected Object extractInfo(PsiFile psiFile) {
+    @Override
+    protected @Nullable Object extractInfo(PsiFile psiFile) {
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         return virtualFile != null ? virtualFile.getExtension() : null;
     }

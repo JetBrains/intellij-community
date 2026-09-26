@@ -1,44 +1,48 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.FileContentUtilCore;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
-public class VFilePropertyChangeEvent extends VFileEvent {
+import java.nio.charset.Charset;
+import java.util.Objects;
+
+public final class VFilePropertyChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
-  private final String myPropertyName;
+  private final @VirtualFile.PropName String myPropertyName;
   private final Object myOldValue;
   private final Object myNewValue;
 
-  public VFilePropertyChangeEvent(Object requestor,
-                                  @NotNull VirtualFile file,
-                                  @VirtualFile.PropName @NotNull String propertyName,
-                                  @Nullable Object oldValue,
-                                  @Nullable Object newValue,
-                                  boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  /** @deprecated use {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFilePropertyChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @VirtualFile.PropName @NotNull String propertyName,
+    @Nullable Object oldValue,
+    @Nullable Object newValue,
+    boolean isFromRefresh
+  ) {
+    this(requestor, file, propertyName, oldValue, newValue);
+  }
+
+  @ApiStatus.Internal
+  public VFilePropertyChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @VirtualFile.PropName @NotNull String propertyName,
+    @Nullable Object oldValue,
+    @Nullable Object newValue
+  ) {
+    super(requestor);
     myFile = file;
     myPropertyName = propertyName;
     myOldValue = oldValue;
@@ -53,10 +57,13 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     switch (propertyName) {
       case VirtualFile.PROP_NAME:
         if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
+        if (!(oldValue instanceof String)) throw new IllegalArgumentException("oldName must be String, got " + oldValue);
         if (newValue == null) throw new IllegalArgumentException("newName must not be null");
+        if (!(newValue instanceof String)) throw new IllegalArgumentException("newName must be String, got " + newValue);
         break;
       case VirtualFile.PROP_ENCODING:
         if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
+        if (!(oldValue instanceof Charset)) throw new IllegalArgumentException("oldValue must be Charset, got "+oldValue);
         break;
       case VirtualFile.PROP_WRITABLE:
         if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got " + oldValue);
@@ -74,14 +81,30 @@ public class VFilePropertyChangeEvent extends VFileEvent {
           throw new IllegalArgumentException("newSymTarget must be String, got " + newValue);
         }
         break;
+      case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY:
+        if (!(oldValue instanceof FileAttributes.CaseSensitivity)) {
+          throw new IllegalArgumentException("oldValue must be FileAttributes.CaseSensitivity but got " + oldValue);
+        }
+        if (!(newValue instanceof FileAttributes.CaseSensitivity)) {
+          throw new IllegalArgumentException("newValue must be FileAttributes.CaseSensitivity but got " + newValue);
+        }
+        if (oldValue.equals(newValue)) {
+          throw new IllegalArgumentException("newValue must be different from the oldValue but got " + newValue);
+        }
+        break;
       default:
-        throw new IllegalArgumentException("Unknown property name: '"+propertyName+"'. Must be one of: VirtualFile.PROP_NAME, VirtualFile.PROP_ENCODING, VirtualFile.PROP_WRITABLE, VirtualFile.PROP_HIDDEN, VirtualFile.PROP_SYMLINK_TARGET");
+        throw new IllegalArgumentException(
+          "Unknown property name '" + propertyName + "'. " +
+          "Must be one of VirtualFile.{PROP_NAME|PROP_ENCODING|PROP_WRITABLE|PROP_HIDDEN|PROP_SYMLINK_TARGET}");
     }
   }
 
-  @NotNull
+  public boolean isRename() {
+    return VirtualFile.PROP_NAME.equals(myPropertyName) && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
+  }
+
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -93,27 +116,22 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myOldValue;
   }
 
-  @NotNull
-  @VirtualFile.PropName
-  public String getPropertyName() {
+  public @NotNull @VirtualFile.PropName String getPropertyName() {
     return myPropertyName;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return computePath();
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -130,8 +148,8 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     VFilePropertyChangeEvent event = (VFilePropertyChangeEvent)o;
 
     if (!myFile.equals(event.myFile)) return false;
-    if (myNewValue != null ? !myNewValue.equals(event.myNewValue) : event.myNewValue != null) return false;
-    if (myOldValue != null ? !myOldValue.equals(event.myOldValue) : event.myOldValue != null) return false;
+    if (!Objects.equals(myNewValue, event.myNewValue)) return false;
+    if (!Objects.equals(myOldValue, event.myOldValue)) return false;
     if (!myPropertyName.equals(event.myPropertyName)) return false;
 
     return true;
@@ -147,21 +165,28 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String toString() {
-    return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "':" +
-           " oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
+  public @NotNull String toString() {
+    return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "': " + myOldValue + " -> " + myNewValue + ']';
   }
 
-  @NotNull
-  public String getOldPath() {
-    String path = getPath();
-    if (VirtualFile.PROP_NAME.equals(myPropertyName) && myNewValue instanceof String && myOldValue instanceof String) {
-      String newName = (String)myNewValue;
-      int i = path.lastIndexOf(newName);
-      if (i != -1) path = new StringBuilder(path).replace(i, i + newName.length(), (String)myOldValue).toString();
+  public @NotNull String getOldPath() {
+    return getPathWithFileName(myOldValue);
+  }
+
+  public @NotNull String getNewPath() {
+    return getPathWithFileName(myNewValue);
+  }
+
+  /** Replaces file name in {@code myFile} path with {@code fileName}, if an event is a rename event; leaves the path as is otherwise */
+  private @NotNull String getPathWithFileName(Object fileName) {
+    if (VirtualFile.PROP_NAME.equals(myPropertyName)) {
+      // fileName must be String, according to `checkPropertyValuesCorrect` implementation
+      VirtualFile parent = myFile.getParent();
+      if (parent == null) {
+        return (String)fileName;
+      }
+      return parent.getPath() + "/" + fileName;
     }
-    return path;
+    return getPath();
   }
 }

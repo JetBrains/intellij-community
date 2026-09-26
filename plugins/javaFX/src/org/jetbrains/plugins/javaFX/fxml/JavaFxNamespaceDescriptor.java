@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -11,7 +11,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -21,12 +20,11 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 
 import java.util.ArrayList;
 
-public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
+public final class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag != null) {
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
@@ -40,9 +38,8 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
     return new JavaFxClassTagDescriptor(name, tag);
   }
 
-  @NotNull
   @Override
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable XmlDocument document) {
     if (document != null) {
       final Project project = document.getProject();
       final PsiClass paneClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_LAYOUT_PANE, GlobalSearchScope.allScope(project));
@@ -58,11 +55,12 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public XmlFile getDescriptorFile() {
+  @Override
+  public @Nullable XmlFile getDescriptorFile() {
      return myFile;
    }
 
+  @Override
   public PsiElement getDeclaration() {
      return myFile;
    }
@@ -81,12 +79,6 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
   public void init(PsiElement element) {
     XmlDocument document = (XmlDocument) element;
     myFile = ((XmlFile)document.getContainingFile());
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

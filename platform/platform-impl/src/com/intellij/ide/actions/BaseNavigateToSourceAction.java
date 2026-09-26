@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.pom.PomTargetPsiElement;
@@ -24,7 +13,7 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends AnAction implements DumbAware {
+public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {
@@ -32,14 +21,21 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
     setInjectedContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     OpenSourceUtil.navigate(myFocusEditor, getNavigatables(dataContext));
   }
 
 
-  public void update(AnActionEvent e) {
-    boolean inPopup = ActionPlaces.isPopupPlace(e.getPlace());
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean inPopup = e.isFromContextMenu();
     Navigatable target = findTargetForUpdate(e.getDataContext());
     boolean enabled = target != null;
     if (inPopup && !(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(e)) {
@@ -51,13 +47,17 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
                                    (myFocusEditor || !(target instanceof NavigatableWithText)));
     e.getPresentation().setEnabled(enabled);
 
-    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
+    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText ?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    e.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
+    if (navigateActionText != null) {
+      e.getPresentation().setText(navigateActionText);
+    }
+    else {
+      e.getPresentation().setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
+    }
   }
 
-  @Nullable
-  private Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
+  private @Nullable Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables == null) return null;
 
@@ -69,8 +69,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
     return null;
   }
 
-  @Nullable
-  protected Navigatable[] getNavigatables(final DataContext dataContext) {
+  protected Navigatable @Nullable [] getNavigatables(final DataContext dataContext) {
     return CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
   }
 }

@@ -1,66 +1,171 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionClassMetaData;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.AnActionResult;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExperimentalIcons;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
+import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.icons.AllIconDescriptors;
+import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
+import com.intellij.ui.popup.ActionPopupOptions;
+import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.popup.WizardPopup;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.*;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleAction;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleIcon;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
+import javax.accessibility.AccessibleValue;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
+import javax.swing.UIManager;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import static java.awt.event.KeyEvent.VK_SPACE;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
+  private static final Logger LOG = Logger.getInstance(ActionButton.class);
+
+  // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
+  private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
+
+  /** @deprecated Use {@link ActionUtil#HIDE_DROPDOWN_ICON} instead */
+  @Deprecated(forRemoval = true)
+  public static final Key<Boolean> HIDE_DROPDOWN_ICON = ActionUtil.HIDE_DROPDOWN_ICON;
+
+  public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
+
   private JBDimension myMinimumButtonSize;
-  private PropertyChangeListener myPresentationListener;
+  private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private Icon myDisabledIcon;
   private Icon myIcon;
+  // experimental icons pipeline: createSwingIcon is expensive, so cache the bridge per descriptor
+  private IconDescriptor myIconDescriptor;
+  private Icon myDescriptorSwingIcon;
+  private Icon myDescriptorDisabledSwingIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
+  protected final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
   private ActionButtonLook myLook = ActionButtonLook.SYSTEM_LOOK;
   private boolean myMouseDown;
-  private boolean myRollover;
-  private static boolean ourGlobalMouseDown = false;
+  protected boolean myRollover;
 
-  private boolean myNoIconsInPopup = false;
+  private static boolean ourGlobalMouseDown;
+
+  private boolean myNoIconsInPopup;
   private Insets myInsets;
+  private boolean myUpdateThreadOnDirectUpdateChecked;
 
-  public ActionButton(AnAction action,
-                      Presentation presentation,
-                      String place,
+  public ActionButton(@NotNull AnAction action,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
                       @NotNull Dimension minimumSize) {
-    setMinimumButtonSize(minimumSize);
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButton(@NotNull AnAction action,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
+                      @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
+    boolean isTemplatePresentation = presentation == action.getTemplatePresentation();
+    if (isTemplatePresentation) {
+      LOG.warn(new Throwable("Template presentations must not be used directly"));
+    }
+    this.myMinimumButtonSizeFunction = minimumSize;
+    updateMinimumSize();
     setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
     myAction = action;
-    myPresentation = presentation;
+    myPresentation = presentation != null && !isTemplatePresentation ?
+                     presentation : action.getTemplatePresentation().clone();
+    myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        Boolean newValue = evt.getNewValue() instanceof Boolean ? (Boolean)evt.getNewValue() : null;
+        if (Objects.equals(evt.getPropertyName(), "selected") && newValue != null) {
+          if (newValue) {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, null, AccessibleState.CHECKED);
+          }
+          else {
+            ActionButton.this.getAccessibleContext()
+              .firePropertyChange(AccessibleContext.ACCESSIBLE_STATE_PROPERTY, AccessibleState.CHECKED, null);
+          }
+        }
+
+        presentationPropertyChanged(evt);
+      }
+    });
     myPlace = place;
     // Button should be focusable if screen reader is active
     setFocusable(ScreenReader.isActive());
@@ -69,7 +174,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
-        if (e.getModifiers() == 0 && e.getKeyCode() == VK_SPACE) {
+        if (e.getModifiersEx() == 0 &&
+            (e.getKeyCode() == KeyEvent.VK_SPACE ||
+             (e.getKeyCode() == KeyEvent.VK_DOWN && shallPaintDownArrow()))) {
           click();
         }
       }
@@ -87,36 +194,68 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     });
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
+
+    // Re-applied on every construction on purpose: a toolbar rebuild replaces this button with a new one built
+    // from the same action, and a name that did not come along would leave the control unaddressable exactly
+    // when the toolbar changed. See ActionUtil.COMPONENT_NAME.
+    String componentName = ActionUtil.getComponentName(myAction, myPresentation);
+    if (componentName != null) {
+      setName(componentName);
+    }
+  }
+
+  private void updateMinimumSize() {
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get());
   }
 
   public void setNoIconsInPopup(boolean noIconsInPopup) {
     myNoIconsInPopup = noIconsInPopup;
   }
 
-  public void setMinimumButtonSize(@NotNull Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size);
+  public void setMinimumButtonSize(Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeFunction = size;
+    updateMinimumSize();
   }
 
+  // used in Rider, please don't change visibility
+  public void setMinimumButtonSize(@NotNull Dimension size) {
+    myMinimumButtonSizeFunction = () -> size;
+    updateMinimumSize();
+  }
+
+  @Override
   public void paintChildren(Graphics g) {}
 
+  @Override
   public int getPopState() {
-    if (myAction instanceof Toggleable) {
-      Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
-      boolean flag1 = selected != null && selected.booleanValue();
-      return getPopState(flag1);
-    }
-    else {
-      return getPopState(false);
-    }
+    return getPopState(isSelected());
+  }
+
+  public @NotNull Presentation getPresentation() {
+    return myPresentation;
+  }
+
+  public final boolean isRollover() {
+    return myRollover;
+  }
+
+  public final boolean isMouseDown() {
+    return myMouseDown;
+  }
+
+  public final boolean isSelected() {
+    Boolean isSelectedComponent = Toggleable.isSelected(this);
+    if (isSelectedComponent != null) return isSelectedComponent;
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override
   public boolean isEnabled() {
-    return super.isEnabled() && myPresentation.isEnabled();
+    return isEnabled(super.isEnabled());
   }
 
-  protected boolean isButtonEnabled() {
-    return isEnabled();
+  protected boolean isEnabled(boolean componentEnabled) {
+    return componentEnabled && myPresentation.isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
@@ -124,217 +263,319 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void click() {
-    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false));
+    performAction(makeClickMouseEvent());
   }
 
-  private void performAction(MouseEvent e) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
-    if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
-      return;
-    }
+  private @NotNull MouseEvent makeClickMouseEvent() {
+    return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+  }
 
-    if (isButtonEnabled()) {
-      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-      final DataContext dataContext = event.getDataContext();
-      manager.fireBeforeActionPerformed(myAction, dataContext, event);
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && !component.isShowing()) {
-        return;
-      }
-      JBPopup prevLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
-      actionPerformed(event);
-      JBPopup curLast = StackingPopupDispatcher.getInstance().getPopupStream().reduce((a, b) -> b).orElse(null);
-      if (curLast != null && curLast != prevLast) {
-        ((ActionManagerImpl)manager).addActionPopup(curLast);
-        curLast.addListener(new JBPopupAdapter() {
-          @Override
-          public void onClosed(LightweightWindowEvent event) {
-            ((ActionManagerImpl)manager).removeActionPopup(curLast);
-          }
-        });
-      }
-      manager.queueActionPerformedEvent(myAction, dataContext, event);
+  protected void performAction(MouseEvent e) {
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent event = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, e);
+    if (!isEnabled()) return;
+    ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+    AnActionResult result = actionManager.performWithActionCallbacks(myAction, event, () -> actionPerformed(event));
+    if (result.isPerformed()) {
       if (event.getInputEvent() instanceof MouseEvent) {
-        ToolbarClicksCollector.record(myAction, myPlace);
+        ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
+      }
+      if (toolbar != null) {
+        toolbar.updateActionsAsync();
       }
     }
   }
 
   protected DataContext getDataContext() {
-    ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, this);
-    return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext();
+    return ActionToolbar.getDataContextFor(this);
   }
 
-  private void actionPerformed(final AnActionEvent event) {
+  protected void actionPerformed(@NotNull AnActionEvent event) {
     HelpTooltip.hide(this);
-
-    if (myAction instanceof ActionGroup &&
-        !(myAction instanceof CustomComponentAction) &&
-        ((ActionGroup)myAction).isPopup() &&
-        !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
-      final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
-      ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
-        @Override
-        protected void processPresentation(Presentation presentation) {
-          if (myNoIconsInPopup) {
-            presentation.setIcon(null);
-            presentation.setHoveredIcon(null);
-          }
-        }
-      });
-      popupMenu.setDataContextProvider(() -> this.getDataContext());
-
-      if (event.isFromActionToolbar()) {
-        popupMenu.getComponent().show(this, 0, getHeight());
-      }
-      else {
-        popupMenu.getComponent().show(this, getWidth(), 0);
-      }
-
-    } else {
-      ActionUtil.performActionDumbAware(myAction, event);
+    if (isPopupMenuAction(event)) {
+      showActionGroupPopup((ActionGroup)myAction, event);
+    }
+    else {
+      myAction.actionPerformed(event);
     }
   }
 
+  private static @Nullable WizardPopup getPopupContainer(Component c) {
+    JBPopup popup = PopupUtil.getPopupContainerFor(c);
+    return (popup instanceof WizardPopup) ? (WizardPopup)popup : null;
+  }
+
+  protected void showActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
+    createAndShowActionGroupPopup(actionGroup, event);
+  }
+
+  protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
+    PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+      null, null, actionGroup, event.getDataContext(),
+      ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
+      createPresentationFactory(), ActionPopupOptions.showDisabled(), null);
+    popup.setShowSubmenuOnHover(true);
+    popup.setAlignByParentBounds(false);
+    popup.setActiveRoot(getPopupContainer(this) == null);
+    if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (floatingToolbar != null) {
+        floatingToolbar.attachPopupToButton(this, popup);
+      }
+    }
+    popup.showUnderneathOf(this);
+    return popup;
+  }
+
+  private @NotNull MenuItemPresentationFactory createPresentationFactory() {
+    return new MenuItemPresentationFactory() {
+      @Override
+      protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
+        super.processPresentation(action, presentation);
+        if (myNoIconsInPopup) {
+          presentation.setIcon(null);
+          presentation.setHoveredIcon(null);
+        }
+      }
+    };
+  }
+
+  private boolean isPopupMenuAction(@NotNull AnActionEvent event) {
+    if (!(myAction instanceof ActionGroup)) return false;
+    if (!event.getPresentation().isPopupGroup()) return false;
+    if (event.getPresentation().isPerformGroup()) return false;
+    return true;
+  }
+
+  @Override
   public void removeNotify() {
     if (myRollover) {
       onMousePresenceChanged(false);
     }
-    if (myPresentationListener != null) {
-      myPresentation.removePropertyChangeListener(myPresentationListener);
-      myPresentationListener = null;
+    if (myMouseDown) {
+      ourGlobalMouseDown = false;
     }
     myRollover = false;
     myMouseDown = false;
+    HelpTooltip.dispose(this);
     super.removeNotify();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
-    if (myPresentationListener == null) {
-      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
+    if (ActionToolbar.findToolbarBy(this) == null) {
+      ActionManagerEx.withLazyActionManager(null, _ -> { update(); return Unit.INSTANCE; });
     }
-    AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
-    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
+    else {
+      updateToolTipText();
+      updateIcon();
+    }
+  }
+
+  public void update() {
+    if (!myUpdateThreadOnDirectUpdateChecked) {
+      myUpdateThreadOnDirectUpdateChecked = true;
+      if (myAction.getActionUpdateThread() == ActionUpdateThread.BGT &&
+          !ActionClassMetaData.isDefaultUpdate(myAction)) {
+        ActionManager actionManager = ActionManager.getInstance();
+        LOG.error(PluginException.createByClass(
+          "BGT operation " + Utils.operationName(
+            myAction, "update", myPlace, o -> o instanceof AnAction a ? actionManager.getId(a) : null) +
+          " is not allowed on EDT", null, myAction.getClass()));
+      }
+    }
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent e = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, null);
+    ActionUtil.updateAction(myAction, e);
     updateToolTipText();
     updateIcon();
   }
 
-  public void setToolTipText(String s) {
-    if (!Registry.is("ide.helptooltip.enabled")) {
-      String tooltipText = KeymapUtil.createTooltipText(s, myAction);
-      super.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+  @Override
+  public void setToolTipText(@NlsContexts.Tooltip String toolTipText) {
+    if (!UISettings.isIdeHelpTooltipEnabled()) {
+      while (StringUtil.endsWithChar(toolTipText, '.')) {
+        toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
+      }
+
+      String shortcutsText = getShortcutText();
+      if (Strings.isNotEmpty(shortcutsText)) {
+        toolTipText += " (" + shortcutsText + ")";
+      }
+      super.setToolTipText(Strings.isNotEmpty(toolTipText) ? toolTipText : null);
     }
   }
 
-  @Override public Insets getInsets() {
-    ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
-    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
+  protected void setCustomToolTipText(@NlsContexts.Tooltip String toolTipText) {
+    super.setToolTipText(Strings.isNotEmpty(toolTipText) ? toolTipText : null);
   }
 
-  @Override public void updateUI() {
+  @Override
+  public void updateUI() {
     if (myLook != null) {
       myLook.updateUI();
     }
     updateToolTipText();
+    updateMinimumSize();
   }
 
-  @Override public Dimension getPreferredSize() {
+  @Override
+  public Dimension getPreferredSize() {
     if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
-    if (icon.getIconWidth() < myMinimumButtonSize.width &&
-        icon.getIconHeight() < myMinimumButtonSize.height) {
+    Dimension size = icon.getIconWidth() < myMinimumButtonSize.width && icon.getIconHeight() < myMinimumButtonSize.height ?
+            new Dimension(myMinimumButtonSize) :
+            new Dimension(Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
+                          Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
 
-      Dimension size = new Dimension(myMinimumButtonSize);
-      JBInsets.addTo(size, getInsets());
-      return size;
-    }
-    else {
-      Dimension size = new Dimension(
-        Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
-        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom));
+    JBInsets.addTo(size, getInsets());
+    return size;
+  }
 
-      JBInsets.addTo(size, getInsets());
-      return size;
-    }
+  public @NotNull Insets getIconInsets() {
+    return myInsets;
   }
 
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
+    myInsets = insets != null ? JBInsets.create(insets) : JBInsets.emptyInsets();
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
 
   /**
-   * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
+   * @return button's icon. Icon depends on action's state and button's state. It means that the method returns
+   *         disabled icon if action is disabled.
+   *         In case of rollover (POPPED) or pressed (PUSHED) button's state hovered icon is used (if presented)
+   *         If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {
-    boolean enabled = isButtonEnabled();
-    Icon icon = enabled ? myIcon : myDisabledIcon;
+    boolean enabled = isEnabled();
+    int popState = getPopState();
+    Icon hoveredIcon = !ExperimentalIcons.isEnabled() && (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
+    Icon icon = enabled ? (hoveredIcon == null ? myIcon : hoveredIcon) : myDisabledIcon;
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
 
-  protected Icon getFallbackIcon(boolean enabled) {
-    return EmptyIcon.ICON_18;
+  public void setIcon(Icon icon) {
+    myIcon = icon;
+  }
+
+  protected @NotNull Icon getFallbackIcon(boolean enabled) {
+    Presentation p = getAction().getTemplatePresentation();
+    Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
+    if (enabled) return icon;
+    if (p.getDisabledIcon() != null) return p.getDisabledIcon();
+    return IconLoader.getDisabledIcon(icon);
   }
 
   public void updateIcon() {
+    if (ExperimentalIcons.isEnabled()) {
+      updateDescriptorIcons();
+      return;
+    }
     myIcon = myPresentation.getIcon();
-    if (myPresentation.getDisabledIcon() != null) { // set disabled icon if it is specified
+    // set disabled icon if it is specified
+    if (myPresentation.getDisabledIcon() != null) {
       myDisabledIcon = myPresentation.getDisabledIcon();
     }
-    else if (myIcon == null || IconLoader.isGoodSize(myIcon)) {
-      myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+    else if (myIcon == null) {
+      myDisabledIcon = null;
+    }
+    else if (IconLoader.isGoodSize(myIcon)) {
+      myDisabledIcon = myLook.getDisabledIcon(myIcon);
     }
     else {
       myDisabledIcon = null;
-      Logger.getInstance(ActionButton.class).error("invalid icon for action " + myAction);
+      Logger.getInstance(ActionButton.class).error("invalid icon (" + myIcon + ") for action " + myAction.getClass());
     }
+  }
+
+  private void updateDescriptorIcons() {
+    IconDescriptor descriptor = myPresentation.getIconDescriptor();
+    IconDescriptor effective = descriptor != null ? descriptor : AllIconDescriptors.Toolbar.getUnknown();
+    if (!Objects.equals(effective, myIconDescriptor) || myDescriptorSwingIcon == null) {
+      myIconDescriptor = effective;
+      myDescriptorSwingIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
+      myDescriptorDisabledSwingIcon = myLook.getDisabledIcon(myDescriptorSwingIcon);
+    }
+    myIcon = myDescriptorSwingIcon;
+    myDisabledIcon = myDescriptorDisabledSwingIcon;
   }
 
   protected void updateToolTipText() {
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
-    if (Registry.is("ide.helptooltip.enabled")) {
-      HelpTooltip.dispose(this);
-      String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
-      if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
-        if (!StringUtil.equals(text, description)) {
-          ht.setDescription(description);
+    if (UISettings.isIdeHelpTooltipEnabled()) {
+      HelpTooltip ht = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if ((Strings.isNotEmpty(text) || Strings.isNotEmpty(description)) && ht == null) {
+        ht = new HelpTooltip().setPlainTextTitle(text).setShortcut(getShortcutText());
+        if (myAction instanceof TooltipLinkProvider) {
+          TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
+          if (link != null) {
+            ht.setLink(link.tooltip, link.action);
+          }
         }
+        String id = ActionManager.getInstance().getId(myAction);
+        if (description != null && !Objects.equals(text, description) && ((id != null && WHITE_LIST.contains(id)) || myAction instanceof TooltipDescriptionProvider)) {
+          ht.setDescription(HtmlChunk.raw(description));
+        }
+      }
+      if (ht != null) {
         ht.installOn(this);
       }
-    } else {
+    }
+    else {
+      HelpTooltip.dispose(this);
       setToolTipText(text == null ? description : text);
     }
   }
 
-  protected HelpTooltip.Alignment getTooltipLocation() {
-    return HelpTooltip.Alignment.BOTTOM;
+  protected @Nullable @NlsSafe String getShortcutText() {
+    return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
+  @Override
   public void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
+    jComponentPaint(g);
     paintButtonLook(g);
+  }
 
-    if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(6));
-    }
+  @ApiStatus.Internal
+  protected void jComponentPaint(Graphics g) {
+    super.paintComponent(g);
+  }
+
+  protected boolean shallPaintDownArrow() {
+    if (!(myAction instanceof ActionGroup)) return false;
+    if (!myPresentation.isPopupGroup()) return false;
+    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    return true;
+  }
+
+  protected final @NotNull Icon getEnableOrDisable(@NotNull Icon icon) {
+    return isEnabled() ? icon : myLook.getDisabledIcon(icon);
   }
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    if (isEnabled() || !UIUtil.isUnderDarcula()) {
+    if (isEnabled() || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
       look.paintBackground(g, this);
     }
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
+    if (shallPaintDownArrow()) {
+      Icon arrowIcon = getEnableOrDisable(AllIcons.General.Dropdown);
+      look.paintDownArrow(g, this, getIcon(), arrowIcon);
+    }
   }
 
   protected ActionButtonLook getButtonLook() {
@@ -342,62 +583,76 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void setLook(ActionButtonLook look) {
-    if (look != null) {
-      myLook = look;
-    }
-    else {
-      myLook = ActionButtonLook.SYSTEM_LOOK;
-    }
+    myLook = look == null ? ActionButtonLook.SYSTEM_LOOK : look;
     repaint();
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
+    if (isRequestFocusEnabled()) {
+      IdeMouseEventDispatcher.requestFocusInNonFocusedWindow(e);
+    }
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
     boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
-        if (skipPress || !isButtonEnabled()) return;
+      case MouseEvent.MOUSE_PRESSED -> {
+        if (skipPress || !isEnabled()) return;
         myMouseDown = true;
+        myRollover = true;
+        onMousePressed(e);
         ourGlobalMouseDown = true;
         repaint();
-        break;
-
-      case MouseEvent.MOUSE_RELEASED:
-        if (skipPress || !isButtonEnabled()) return;
-        myMouseDown = false;
-        ourGlobalMouseDown = false;
+      }
+      case MouseEvent.MOUSE_RELEASED -> {
+        if (skipPress || !isEnabled()) return;
+        onMouseReleased(e);
         if (myRollover) {
           performAction(e);
         }
         repaint();
-        break;
-
-      case MouseEvent.MOUSE_ENTERED:
+      }
+      case MouseEvent.MOUSE_ENTERED -> {
         if (!myMouseDown && ourGlobalMouseDown) break;
         myRollover = true;
         repaint();
         onMousePresenceChanged(true);
-        break;
-
-      case MouseEvent.MOUSE_EXITED:
+      }
+      case MouseEvent.MOUSE_EXITED -> {
         myRollover = false;
         if (!myMouseDown && ourGlobalMouseDown) break;
         repaint();
         onMousePresenceChanged(false);
-        break;
+      }
     }
   }
 
+  @ApiStatus.Internal
+  protected void resetMouseState() {
+    myMouseDown = false;
+    ourGlobalMouseDown = false;
+  }
+
+  protected void onMouseReleased(@NotNull MouseEvent e) {
+    resetMouseState();
+    // Extension point
+  }
+
+  protected void onMousePressed(@NotNull MouseEvent e) {
+    // Extension point
+  }
+
+
+  @ApiStatus.Internal
   protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
     return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }
 
   private int getPopState(boolean isPushed) {
-    if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
+    if (isPushed || myRollover && myMouseDown && isEnabled()) {
       return PUSHED;
     }
-    else if (myRollover && isButtonEnabled()) {
+    else if (myRollover && isEnabled()) {
       return POPPED;
     }
     else if (isFocusOwner()) {
@@ -408,42 +663,54 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  public AnAction getAction() {
+  @Override
+  public @NotNull AnAction getAction() {
     return myAction;
   }
 
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
-    String propertyName = e.getPropertyName();
-    if (Presentation.PROP_TEXT.equals(propertyName)) {
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+    @NonNls String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
-    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {
+    else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)
+             || Presentation.PROP_ICON_DESCRIPTOR.equals(propertyName)) {
       updateIcon();
       repaint();
     }
     else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-      myDisabledIcon = myPresentation.getDisabledIcon();
+      if (!ExperimentalIcons.isEnabled()) {
+        myDisabledIcon = myPresentation.getDisabledIcon();
+      }
       repaint();
     }
     else if ("selected".equals(propertyName)) {
       repaint();
+    }
+    else if (HIDE_DROPDOWN_ICON.toString().equals(propertyName)) {
+      repaint();
+    }
+    else if (CUSTOM_HELP_TOOLTIP.toString().equals(propertyName)) {
+      updateToolTipText();
+    }
+    else if (ActionUtil.COMPONENT_PROVIDER.toString().equals(propertyName)) {
+      LOG.debug("existing button was replaced with a CustomComponentAction: " + e.getNewValue());
     }
   }
 
   // Accessibility
 
   @Override
-  public AccessibleContext getAccessibleContext() {
-    if(this.accessibleContext == null) {
-      this.accessibleContext = new AccessibleActionButton();
+  public @NotNull AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleActionButton();
     }
 
-    return this.accessibleContext;
+    return accessibleContext;
   }
 
-
-  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    public AccessibleActionButton() {
+  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction, AccessibleValue {
+    protected AccessibleActionButton() {
     }
 
     @Override
@@ -455,11 +722,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     public String getAccessibleName() {
       String name = accessibleName;
       if (name == null) {
-        name = (String)ActionButton.this.getClientProperty(ACCESSIBLE_NAME_PROPERTY);
+        name = (String)getClientProperty(ACCESSIBLE_NAME_PROPERTY);
         if (name == null) {
           name = ActionButton.this.getToolTipText();
           if (name == null) {
-            name = ActionButton.this.myPresentation.getText();
+            name = myPresentation.getText();
             if (name == null) {
               name = super.getAccessibleName();
             }
@@ -477,7 +744,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
     @Override
     public AccessibleIcon[] getAccessibleIcon() {
-      Icon icon = ActionButton.this.getIcon();
+      Icon icon = getIcon();
       if (icon instanceof Accessible) {
         AccessibleContext context = ((Accessible)icon).getAccessibleContext();
         if (context instanceof AccessibleIcon) {
@@ -491,25 +758,32 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     @Override
     public AccessibleStateSet getAccessibleStateSet() {
       AccessibleStateSet var1 = super.getAccessibleStateSet();
-      int state = ActionButton.this.getPopState();
+      setCustomAccessibleStateSet(var1);
+      return var1;
+    }
+
+    private void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
+      int state = getPopState();
 
       // TODO: Not sure what the "POPPED" state represents
       //if (state == POPPED) {
       //  var1.add(AccessibleState.?);
       //}
 
-      if (state == ActionButtonComponent.PUSHED) {
-        var1.add(AccessibleState.PRESSED);
+      if (state == PUSHED) {
+        accessibleStateSet.add(AccessibleState.PRESSED);
       }
-      if (state == ActionButtonComponent.SELECTED) {
-        var1.add(AccessibleState.CHECKED);
-      }
-
-      if (ActionButton.this.isFocusOwner()) {
-        var1.add(AccessibleState.FOCUSED);
+      if (isSelected()) {
+        accessibleStateSet.add(AccessibleState.CHECKED);
       }
 
-      return var1;
+      if (isFocusOwner()) {
+        accessibleStateSet.add(AccessibleState.FOCUSED);
+      }
+
+      if (shallPaintDownArrow()) {
+        accessibleStateSet.add(AccessibleState.EXPANDABLE);
+      }
     }
 
     @Override
@@ -531,13 +805,53 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
     @Override
     public boolean doAccessibleAction(int index) {
-      if (index == 0) { //
-        ActionButton.this.click();
+      if (index == 0) {
+        click();
         return true;
       }
+      return false;
+    }
+
+    // Implements AccessibleValue
+
+    @Override
+    public AccessibleValue getAccessibleValue() {
+      return this;
+    }
+
+    @Override
+    public Number getCurrentAccessibleValue() {
+      if (isSelected()) {
+        return Integer.valueOf(1);
+      }
       else {
+        return Integer.valueOf(0);
+      }
+    }
+
+    @Override
+    public boolean setCurrentAccessibleValue(Number n) {
+      if (n == null) {
         return false;
       }
+      int i = n.intValue();
+      if (i == 0) {
+        Toggleable.setSelected(ActionButton.this, false);
+      }
+      else {
+        Toggleable.setSelected(ActionButton.this, true);
+      }
+      return true;
+    }
+
+    @Override
+    public Number getMinimumAccessibleValue() {
+      return Integer.valueOf(0);
+    }
+
+    @Override
+    public Number getMaximumAccessibleValue() {
+      return Integer.valueOf(1);
     }
   }
 }

@@ -1,96 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.ErrorLogger;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.io.MappingFailedException;
+import com.intellij.openapi.diagnostic.ProblematicPluginInfo;
+import com.intellij.openapi.diagnostic.UnhandledException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.List;
 
-/**
- * @author kir
- */
-@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-public class DefaultIdeaErrorLogger implements ErrorLogger {
-  private static boolean ourOomOccurred = false;
-  private static boolean ourLoggerBroken = false;
-  private static boolean ourMappingFailedNotificationPosted = false;
+import static com.intellij.diagnostic.ErrorMessageClusteringKt.toProblematicPluginInfo;
 
-  private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
-  private static final String DISABLED_VALUE = "disabled";
-  private static final String ENABLED_VALUE = "enabled";
-
-  @Override
-  public boolean canHandle(IdeaLoggingEvent event) {
-    if (ourLoggerBroken) return false;
-
-    try {
-      UpdateChecker.checkForUpdate(event);
-
-      boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
-
-      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
-      boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
-
-      return notificationEnabled ||
-             showPluginError ||
-             ApplicationManagerEx.getApplicationEx().isInternal() ||
-             getOOMErrorKind(event.getThrowable()) != null ||
-             event.getThrowable() instanceof MappingFailedException;
-    }
-    catch (LinkageError e) {
-      if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
-        ourLoggerBroken = true;
-      }
-      throw e;
-    }
-  }
-
-  @Override
-  public void handle(IdeaLoggingEvent event) {
-    if (ourLoggerBroken) return;
-
-    try {
-      Throwable throwable = event.getThrowable();
-      MemoryKind kind = getOOMErrorKind(throwable);
-      if (kind != null) {
-        ourOomOccurred = true;
-        SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
-      }
-      else if (throwable instanceof MappingFailedException) {
-        processMappingFailed(event);
-      }
-      else if (!ourOomOccurred) {
-        MessagePool.getInstance().addIdeFatalMessage(event);
-      }
-    }
-    catch (Throwable e) {
-      String message = e.getMessage();
-      //noinspection InstanceofCatchParameter
-      if (message != null && message.contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
-          e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
-        ourLoggerBroken = true;
-      }
-    }
-  }
-
-  @Nullable
-  private static MemoryKind getOOMErrorKind(Throwable t) {
-    String message = t.getMessage();
+@ApiStatus.Internal
+public final class DefaultIdeaErrorLogger {
+  public static @Nullable MemoryKind getOOMErrorKind(@NotNull Throwable t) {
+    t = UnhandledException.unwrapIfUnhandled(t).getRealCause(); // See IJPL-254578.
+    var message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {
-      if (message != null && message.contains("unable to create new native thread")) return null;
-      if (message != null && message.contains("Metaspace")) return MemoryKind.METASPACE;
+      if (message != null) {
+        if (message.contains("unable to create") && message.contains("native thread")) return null;
+        if (message.contains("Metaspace")) return MemoryKind.METASPACE;
+        if (message.contains("direct buffer memory")) return MemoryKind.DIRECT_BUFFERS;
+      }
       return MemoryKind.HEAP;
     }
 
@@ -101,14 +37,41 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     return null;
   }
 
-  private static void processMappingFailed(IdeaLoggingEvent event) {
-    if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
-      ourMappingFailedNotificationPosted = true;
-      String exceptionMessage = event.getThrowable().getMessage();
-      String text = exceptionMessage +
-        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
-        "Reducing JVM maximum heap size (-Xmx) may help.";
-      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), null);
+  public static @Nullable ErrorReportSubmitter findSubmitter(@NotNull Throwable t, @Nullable IdeaPluginDescriptor plugin) {
+    return findSubmitterByPluginInfo(t, plugin != null ? toProblematicPluginInfo(plugin) : null);
+  }
+
+  public static @Nullable ErrorReportSubmitter findSubmitterByPluginInfo(@NotNull Throwable t, @Nullable ProblematicPluginInfo plugin) {
+    if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError && plugin == null) {
+      return null;
     }
+
+    List<ErrorReportSubmitter> reporters;
+    try {
+      reporters = ErrorReportSubmitter.EP_NAME.getExtensionList();
+    }
+    catch (Throwable ignored) {
+      return null;
+    }
+
+    if (plugin != null) {
+      for (var reporter : reporters) {
+        var descriptor = reporter.getPluginDescriptor();
+        if (descriptor != null && plugin.getPluginId().equals(descriptor.getPluginId())) {
+          return reporter;
+        }
+      }
+    }
+
+    if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin.getPluginId(), plugin.getVendor(), plugin.getOrganization())) {
+      for (var reporter : reporters) {
+        var descriptor = reporter.getPluginDescriptor();
+        if (descriptor == null || PluginManagerCore.CORE_ID.equals(descriptor.getPluginId())) {
+          return reporter;
+        }
+      }
+    }
+
+    return null;
   }
 }

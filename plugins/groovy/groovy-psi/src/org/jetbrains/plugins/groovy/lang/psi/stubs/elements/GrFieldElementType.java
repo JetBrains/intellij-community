@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -6,10 +6,10 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> {
 
   public GrFieldElementType(String debugName) {
@@ -35,9 +32,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     return new GrFieldImpl(stub);
   }
 
-  @NotNull
   @Override
-  public GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
+  public @NotNull GrFieldStub createStub(@NotNull GrField psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
     Set<String> namedParameters = Collections.emptySet();
@@ -46,8 +42,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     }
 
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames,
-                           namedParameters.toArray(ArrayUtil.EMPTY_STRING_ARRAY),
-                           GroovyElementTypes.FIELD, GrFieldStub.buildFlags(psi),
+                           ArrayUtilRt.toStringArray(namedParameters),
+                           GroovyStubElementTypes.FIELD, GrFieldStub.buildFlags(psi),
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
@@ -57,8 +53,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   @Override
-  @NotNull
-  public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return deserializeFieldStub(dataStream, parentStub);
   }
 
@@ -85,8 +80,8 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     final String[] namedParameters = GrStubUtils.readStringArray(dataStream);
     byte flags = dataStream.readByte();
     final String typeText = GrStubUtils.readNullableString(dataStream);
-    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? GroovyElementTypes.ENUM_CONSTANT
-                                                                                                         : GroovyElementTypes.FIELD,
+    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? GroovyStubElementTypes.ENUM_CONSTANT
+                                                                                                         : GroovyStubElementTypes.FIELD,
                                flags, typeText);
   }
 

@@ -1,78 +1,193 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.UnorderedPair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.Stack
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.containers.MultiMap
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.data.index.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
-import com.intellij.vcs.log.graph.impl.facade.*
-import com.intellij.vcs.log.graph.utils.BfsUtil
-import com.intellij.vcs.log.graph.utils.DfsUtil
+import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
+import com.intellij.vcs.log.graph.impl.facade.connectRows
+import com.intellij.vcs.log.graph.impl.facade.hideCommits
+import com.intellij.vcs.log.graph.impl.facade.hideRow
+import com.intellij.vcs.log.graph.impl.facade.modify
+import com.intellij.vcs.log.graph.impl.facade.modifyGraph
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import gnu.trove.TIntObjectHashMap
-import java.util.*
+import com.intellij.vcs.log.graph.utils.isAncestor
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
-internal class FileHistoryBuilder(private val startCommit: Int?,
+class FileHistory internal constructor(internal val commitToFileStateMap: Map<VcsLogCommitStorageIndex, CommitFileState>,
+                                       internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
+                                       internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
+                                       internal val commitToRename: MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename> = MultiMap.empty()) {
+  companion object {
+    internal val EMPTY = FileHistory(emptyMap())
+  }
+}
+
+internal class FileHistoryBuilder(private val startCommit: VcsLogCommitStorageIndex?,
                                   private val startPath: FilePath,
-                                  private val fileNamesData: FileNamesData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  val pathsMap = mutableMapOf<Int, FilePath>()
+                                  private val fileHistoryData: FileHistoryData,
+                                  private val oldFileHistory: FileHistory,
+                                  private val commitsToHide: Set<VcsLogCommitStorageIndex> = emptySet(),
+                                  private val removeTrivialMerges: Boolean = true,
+                                  private val refine: Boolean = true) : BiConsumer<LinearGraphController, PermanentGraphInfo<VcsLogCommitStorageIndex>> {
+  private val fileStateMap = mutableMapOf<VcsLogCommitStorageIndex, CommitFileState>()
+  private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
+  private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
+  private val commitToRename = MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>()
 
-  override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
-    pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
+  val fileHistory: FileHistory
+    get() = FileHistory(fileStateMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
-    val trivialCandidates = mutableSetOf<Int>()
-    pathsMap.forEach { c, p ->
-      if (fileNamesData.isTrivialMerge(c, p)) {
-        trivialCandidates.add(c)
-      }
+  override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<VcsLogCommitStorageIndex>) {
+    val needToRepeat = removeTrivialMerges &&
+                       removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
+
+    fileStateMap.putAll(refine(controller, startCommit, permanentGraphInfo))
+
+    if (needToRepeat) {
+      LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
+      removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
     }
 
-    modifyGraph(controller) { collapsedGraph ->
-      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
-        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
+    collectAdditionsDeletions(controller, permanentGraphInfo)
+    commitToRename.putAllValues(fileHistoryData.commitToRename)
+
+    if (commitsToHide.isNotEmpty()) hideCommits(controller, permanentGraphInfo, commitsToHide)
+  }
+
+  private fun collectAdditionsDeletions(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<VcsLogCommitStorageIndex>) {
+    processedAdditionsDeletions.addAll(oldFileHistory.processedAdditionsDeletions)
+    processedAdditionsDeletions.addAll(oldFileHistory.unmatchedAdditionsDeletions)
+
+    val additionsDeletions = mutableSetOf<AdditionDeletion>()
+    fileHistoryData.iterateUnmatchedAdditionsDeletions { ad ->
+      if (!processedAdditionsDeletions.contains(ad)) {
+        additionsDeletions.add(ad)
       }
-      trivialMerges.forEach { pathsMap.remove(permanentGraphInfo.permanentCommitsInfo.getCommitId(it)) }
+    }
+    if (additionsDeletions.isNotEmpty()) {
+      val grouped = additionsDeletions.groupBy { it.child }
+      for (row in 0 until controller.compiledGraph.nodesCount()) {
+        val commitId = permanentGraphInfo.permanentCommitsInfo.getCommitId(controller.compiledGraph.getNodeId(row))
+        grouped[commitId]?.let { unmatchedAdditionsDeletions.addAll(it) }
+      }
     }
   }
 
-  private fun refine(controller: LinearGraphController,
-                     startCommit: Int?,
-                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath> {
-    if (fileNamesData.hasRenames) {
-      val visibleLinearGraph = controller.compiledGraph
+  private fun reportTrivialMerges(trivialMerges: Set<VcsLogCommitStorageIndex>) {
+    LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
+  }
 
-      val row = startCommit?.let {
-        findAncestorRowAffectingFile(startCommit, startPath, visibleLinearGraph, permanentGraphInfo, fileNamesData)
-      } ?: 0
+  private fun refine(controller: LinearGraphController,
+                     startCommit: VcsLogCommitStorageIndex?,
+                     permanentGraphInfo: PermanentGraphInfo<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, CommitFileState> {
+    val visibleLinearGraph = controller.compiledGraph
+    if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && refine) {
+
+      val (row, fileState) = startCommit?.let {
+        findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
+      } ?: Pair(0, CommitFileState(startPath))
       if (row >= 0) {
-        val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
-        val (paths, excluded) = refiner.refine(row, startPath)
-        if (!excluded.isEmpty()) {
+        val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileHistoryData)
+        val (fileStates, excluded) = refiner.refine(row, fileState)
+        if (excluded.isNotEmpty()) {
+          LOG.info("Excluding ${excluded.size} commits from history for ${startPath.path}")
           val hidden = hideCommits(controller, permanentGraphInfo, excluded)
-          if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
+          if (!hidden) LOG.error("Could not hide excluded commits from history for ${startPath.path}")
         }
-        return paths
+        return fileStates
       }
     }
-    return fileNamesData.buildPathsMap()
+    return fileHistoryData.buildFileStatesMap()
+  }
+
+  private fun findAncestorRowAffectingFile(commitId: VcsLogCommitStorageIndex,
+                                           visibleLinearGraph: LinearGraph,
+                                           permanentGraphInfo: PermanentGraphInfo<VcsLogCommitStorageIndex>): Pair<Int, CommitFileState> {
+    val existing = CommitFileState(startPath)
+    val deleted = CommitFileState(startPath, true)
+    val isDeleted: Ref<Boolean> = Ref.create(false)
+    val row = findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
+      val id = permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId)
+      when {
+        fileHistoryData.affects(id, existing) -> true
+        fileHistoryData.affects(id, deleted) -> {
+          isDeleted.set(true)
+          true
+        }
+        else -> false
+      }
+    } ?: -1
+    return Pair(row, if (isDeleted.get()) deleted else existing)
   }
 
   companion object {
     private val LOG = Logger.getInstance(FileHistoryBuilder::class.java)
+
+    @JvmField
+    internal val removeTrivialMergesValue = Registry.get("vcs.history.remove.trivial.merges")
+    @JvmField
+    internal val refineValue = Registry.get("vcs.history.refine")
+
+    internal val isRemoveTrivialMerges get() = removeTrivialMergesValue.asBoolean()
+    internal val isRefine get() = refineValue.asBoolean()
   }
 }
 
-fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
-                      isCandidateNodeId: (Int) -> Boolean): Set<Int> {
+@ApiStatus.Internal
+fun removeTrivialMerges(controller: LinearGraphController,
+                        permanentGraphInfo: PermanentGraphInfo<VcsLogCommitStorageIndex>,
+                        fileHistoryData: FileHistoryData,
+                        report: (Set<VcsLogCommitStorageIndex>) -> Unit): Boolean {
+  val trivialCandidates = IntOpenHashSet()
+  val nonTrivialMerges = IntOpenHashSet()
+  fileHistoryData.forEach { _, commit, changes ->
+    if (changes.size > 1) {
+      if (changes.containsValue(ChangeKind.NOT_CHANGED)) {
+        trivialCandidates.add(commit)
+      }
+      else {
+        nonTrivialMerges.add(commit)
+      }
+    }
+  }
+  // since this code can be executed before refine, there can be commits with several files changed in them
+  // if several files are changed in the merge commit, it can be trivial for one file, but not trivial for the other
+  // in this case we may need to repeat the process after refine
+  val needToRepeat = trivialCandidates.removeAll(nonTrivialMerges)
+
+  if (!trivialCandidates.isEmpty()) {
+    modifyGraph(controller) { collapsedGraph ->
+      val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
+        trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
+      }
+      if (trivialMerges.isNotEmpty()) report(trivialMerges)
+      fileHistoryData.removeAll(trivialMerges.map { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) })
+    }
+  }
+
+  return needToRepeat
+}
+
+internal fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
+                               isCandidateNodeId: (Int) -> Boolean): Set<Int> {
   val result = mutableSetOf<Int>()
   val graph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph)
 
@@ -89,7 +204,7 @@ fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
         var currentParent = sortedParentsIt.next()
         while (sortedParentsIt.hasNext()) {
           val nextParent = sortedParentsIt.next()
-          if (!DfsUtil.isAncestor(graph, currentParent, nextParent)) continue@outer
+          if (!graph.isAncestor(currentParent, nextParent)) continue@outer
           currentParent = nextParent
         }
         result.add(nodeId)
@@ -110,231 +225,286 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
   }
 }
 
-internal fun findAncestorRowAffectingFile(commitId: Int,
-                                          filePath: FilePath,
-                                          visibleLinearGraph: LinearGraph,
-                                          permanentGraphInfo: PermanentGraphInfo<Int>,
-                                          fileNamesData: FileNamesData): Int {
-  val resultNodeId = Ref<Int>()
+@ApiStatus.Internal
+abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
+  // file -> (commitId -> (parent commitId -> change kind))
+  private val affectedCommits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+  internal val commitToRename = MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>()
 
-  val commitsInfo = permanentGraphInfo.permanentCommitsInfo
-  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph))
-  reachableNodes.walk(setOf(commitsInfo.getNodeId(commitId)), true) { currentNode ->
-    val id = commitsInfo.getCommitId(currentNode)
-    if (fileNamesData.affects(id, filePath)) {
-      resultNodeId.set(currentNode)
-      false // stop walk, we have found it
-    }
-    else {
-      true // continue walk
-    }
-  }
+  val isEmpty: Boolean
+    get() = affectedCommits.isEmpty()
+  val hasRenames: Boolean
+    get() = !commitToRename.isEmpty
+  val files: Set<FilePath>
+    get() = affectedCommits.keys
 
-  if (!resultNodeId.isNull) {
-    return visibleLinearGraph.getNodeIndex(resultNodeId.get())!!
-  }
+  constructor(startPath: FilePath) : this(listOf(startPath))
 
-  return -1
-}
+  internal fun build(oldRenames: MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>): FileHistoryData {
+    val newPaths = CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)
+    newPaths.addAll(startPaths)
 
-internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
-                                  permanentGraphInfo: PermanentGraphInfo<Int>,
-                                  private val namesData: FileNamesData) : DfsUtil.NodeVisitor {
-  private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
-  private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
+    while (newPaths.isNotEmpty()) {
+      val commits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+      newPaths.associateWithTo(commits) { getAffectedCommits(it) }
+      affectedCommits.putAll(commits)
+      newPaths.clear()
 
-  private val paths = Stack<FilePath>()
-  private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath>()
-  private val excluded = ContainerUtil.newHashSet<Int>()
-
-  fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath>, HashSet<Int>> {
-    paths.push(startPath)
-    DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
-
-    pathsForCommits.forEach { commit, path ->
-      if (path != null && !namesData.affects(commit, path)) {
-        excluded.add(commit)
-      }
-    }
-
-    excluded.forEach { pathsForCommits.remove(it) }
-    return Pair(pathsForCommits, excluded)
-  }
-
-  override fun enterNode(currentNode: Int, previousNode: Int, down: Boolean) {
-    val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
-    val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
-
-    val previousPath = paths.findLast { it != null }!!
-    var currentPath: FilePath? = previousPath
-
-    if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
-      val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
-      val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
-
-      if (down) {
-        val pathGetter = { parentIndex: Int ->
-          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
-        }
-        currentPath = findPathWithoutConflict(previousNodeId, pathGetter)
-        if (currentPath == null) {
-          val parentIndex = BfsUtil.getCorrespondingParent(permanentLinearGraph, previousNodeId, currentNodeId, visibilityBuffer)
-          currentPath = pathGetter(parentIndex)
-        }
-      }
-      else {
-        val pathGetter = { parentIndex: Int ->
-          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
-        }
-        currentPath = findPathWithoutConflict(currentNodeId, pathGetter)
-        if (currentPath == null) {
-          // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-          val parentIndex = BfsUtil.getCorrespondingParent(permanentLinearGraph, currentNodeId, previousNodeId, visibilityBuffer)
-          currentPath = pathGetter(parentIndex)
+      iterateUnmatchedAdditionsDeletions(commits) { ad ->
+        val rename = oldRenames.get(ad.commits).find { ad.matches(it) } ?: findRename(ad)
+        if (rename != null) {
+          commitToRename.putValue(ad.commits, rename)
+          val otherPath = rename.getOtherPath(ad)!!
+          if (!affectedCommits.containsKey(otherPath)) {
+            newPaths.add(otherPath)
+          }
         }
       }
     }
-
-    pathsForCommits[currentCommit] = currentPath
-    paths.push(currentPath)
+    return this
   }
 
-  private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> FilePath?): FilePath? {
-    val parents = permanentLinearGraph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
-    val path = pathGetter(parents.first())
-    if (parents.size == 1) return path
-
-    if (parents.subList(1, parents.size).find { pathGetter(it) != path } != null) return null
-    return path
+  private fun findRename(ad: AdditionDeletion): Rename? {
+    return findRename(ad.parent, ad.child, ad.filePath, ad.isAddition)?.let { files ->
+      Rename(files.parent, files.child, ad.parent, ad.child)
+    }
   }
 
-  override fun exitNode(node: Int) {
-    paths.pop()
+  fun build(): FileHistoryData = build(MultiMap.empty())
+
+  private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>,
+                                                 action: (AdditionDeletion) -> Unit) {
+    forEach(commits) { path, commit, changes ->
+      changes.int2ObjectEntrySet().forEach { entry ->
+        val parent = entry.intKey
+        val change = entry.value
+        if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
+          val ad = AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+          if (!commitToRename[ad.commits].any { rename -> ad.matches(rename) }) {
+            action(ad)
+          }
+        }
+      }
+      ProgressManager.checkCanceled()
+    }
   }
-}
 
-abstract class FileNamesData {
-  private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>>()
-  var hasRenames = false
-    private set
+  internal fun iterateUnmatchedAdditionsDeletions(action: (AdditionDeletion) -> Unit) {
+    iterateUnmatchedAdditionsDeletions(affectedCommits) {
+      action(it)
+    }
+  }
 
-  val commits: Set<Int>
+  fun getFileStateInParentRevision(commit: VcsLogCommitStorageIndex, parent: VcsLogCommitStorageIndex, childState: CommitFileState): CommitFileState {
+    val childFilePath = childState.filePath
+    val changeKind = affectedCommits[childFilePath]?.get(commit)?.get(parent) ?: return childState
+    if (changeKind == ChangeKind.NOT_CHANGED) return childState
+
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!childState.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(commit, childFilePath) }
+      if (otherPath != null) return CommitFileState(otherPath)
+      return CommitFileState(childFilePath, changeKind == ChangeKind.ADDED)
+    }
+
+    if (changeKind == ChangeKind.REMOVED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(parent, childFilePath) } != null) return childState
+    }
+    return CommitFileState(childFilePath, changeKind != ChangeKind.REMOVED)
+  }
+
+  fun getFileStateInChildRevision(commit: VcsLogCommitStorageIndex, parent: VcsLogCommitStorageIndex, parentState: CommitFileState): CommitFileState {
+    val parentFilePath = parentState.filePath
+    val changeKind = affectedCommits[parentFilePath]?.get(commit)?.get(parent) ?: return parentState
+    if (changeKind == ChangeKind.NOT_CHANGED) return parentState
+
+    val renames = commitToRename.get(UnorderedPair(commit, parent))
+    if (!parentState.deleted) {
+      val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(parent, parentFilePath) }
+      if (otherPath != null) return CommitFileState(otherPath)
+      return CommitFileState(parentFilePath, changeKind == ChangeKind.REMOVED)
+    }
+
+    if (changeKind == ChangeKind.ADDED) {
+      // checking if this is actually an unrelated rename
+      if (renames.firstNotNull { rename -> rename.getOtherPath(commit, parentFilePath) } != null) return parentState
+    }
+    return CommitFileState(parentFilePath, changeKind != ChangeKind.ADDED)
+  }
+
+  fun affects(commit: VcsLogCommitStorageIndex, path: CommitFileState, verify: Boolean = false): Boolean {
+    val changes = affectedCommits[path.filePath]?.get(commit) ?: return false
+    if (path.deleted) {
+      if (!changes.containsValue(ChangeKind.REMOVED)) return false
+      if (!verify) return true
+      for (entry in changes.int2ObjectEntrySet()) {
+        val parent = entry.intKey
+        if (commitToRename.get(UnorderedPair(commit, parent)).firstNotNull { rename ->
+            rename.getOtherPath(parent, path.filePath)
+          } != null) {
+          // this is a rename from path to something else, we should not match this commit
+          return false
+        }
+      }
+      return true
+    }
+    return !changes.containsValue(ChangeKind.REMOVED)
+  }
+
+  val commits: IntSet
     get() {
-      val result = ContainerUtil.newHashSet<Int>()
-      commitToPathAndChanges.forEach { result.add(it) }
+      val result = IntOpenHashSet()
+      forEach(affectedCommits) { _, commit, _ ->
+        result.add(commit)
+      }
       return result
     }
 
-  protected abstract fun getPathById(pathId: Int): FilePath
-
-  fun add(commit: Int,
-          path: FilePath,
-          changes: List<VcsLogPathsIndex.ChangeData>,
-          parents: List<Int>) {
-    var pathToChanges: MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>? = commitToPathAndChanges.get(commit)
-    if (pathToChanges == null) {
-      pathToChanges = ContainerUtil.newHashMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>()
-      commitToPathAndChanges.put(commit, pathToChanges)
-    }
-
-    hasRenames = hasRenames || changes.find { it.isRename } != null
-
-    val parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeData> = pathToChanges[path]
-                                                                           ?: ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeData>()
-    if (!parents.isEmpty()) {
-      LOG.assertTrue(parents.size == changes.size)
-      for (i in changes.indices) {
-        val existing = parentToChangesMap[parents[i]]
-        if (existing != null) {
-          // since we occasionally reindex commits with different rename limit
-          // it can happen that we have several change data for a file in a commit
-          // one with rename, other without
-          // we want to keep a renamed-one, so throwing the other one out
-          if (existing.isRename) continue
-        }
-        parentToChangesMap[parents[i]] = changes[i]
-      }
-    }
-    else {
-      // initial commit
-      LOG.assertTrue(changes.size == 1)
-      parentToChangesMap[-1] = changes[0]
-    }
-    pathToChanges[path] = parentToChangesMap
+  fun getCommitsWithRenames(): Set<VcsLogCommitStorageIndex> {
+    return commitToRename.values().mapTo(mutableSetOf()) { rename -> rename.childCommit }
   }
 
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): FilePath? {
-    val filesToChangesMap = commitToPathAndChanges.get(commit)
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
-    val changes = filesToChangesMap!![childPath] ?: return childPath
-
-    val change = changes[parent]
-    return when (change?.kind) {
-      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> null
-      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> getPathById(change.otherPath)
-      null -> {
-        LOG.assertTrue(changes.size > 1)
-        childPath
-      }
-      else -> childPath
+  fun buildFileStatesMap(): Map<VcsLogCommitStorageIndex, CommitFileState> {
+    val result = mutableMapOf<VcsLogCommitStorageIndex, CommitFileState>()
+    forEach(affectedCommits) { filePath, commit, changes ->
+      result[commit] = CommitFileState(filePath, changes.containsValue(ChangeKind.REMOVED))
     }
-  }
-
-  fun getPathInChildRevision(commit: Int, parentIndex: Int, parentPath: FilePath): FilePath? {
-    val filesToChangesMap = commitToPathAndChanges.get(commit)
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
-    val changes = filesToChangesMap!![parentPath] ?: return parentPath
-
-    val change = changes[parentIndex]
-    return when (change?.kind) {
-      VcsLogPathsIndex.ChangeKind.RENAMED_TO -> null
-      VcsLogPathsIndex.ChangeKind.RENAMED_FROM -> getPathById(change.otherPath)
-      else -> parentPath
-    }
-  }
-
-  fun affects(id: Int, path: FilePath): Boolean {
-    return commitToPathAndChanges.containsKey(id) && commitToPathAndChanges.get(id).containsKey(path)
-  }
-
-  fun buildPathsMap(): Map<Int, FilePath> {
-    val result = ContainerUtil.newHashMap<Int, FilePath>()
-
-    commitToPathAndChanges.forEachEntry { commit, filesToChanges ->
-      if (filesToChanges.size == 1) {
-        result[commit] = filesToChanges.keys.first()
-      }
-      else {
-        for ((key, value) in filesToChanges) {
-          val changeData = value.values.find { ch ->
-            ch != VcsLogPathsIndex.ChangeData.NOT_CHANGED &&
-            ch.kind != VcsLogPathsIndex.ChangeKind.RENAMED_FROM
-          }
-          if (changeData != null) {
-            result[commit] = key
-            break
-          }
-        }
-      }
-
-      true
-    }
-
     return result
   }
 
-  fun isTrivialMerge(commit: Int, path: FilePath): Boolean {
-    if (!commitToPathAndChanges.containsKey(commit)) return false
-    val data = commitToPathAndChanges.get(commit)[path]
-    // strictly speaking, the criteria for merge triviality is a little bit more tricky than this:
-    // some merges have just reverted changes in one of the branches
-    // they need to be displayed
-    // but we skip them instead
-    return data != null && data.size > 1 && data.containsValue(VcsLogPathsIndex.ChangeData.NOT_CHANGED)
+  fun forEach(action: (FilePath, Int, Int2ObjectMap<ChangeKind>) -> Unit) = forEach(affectedCommits, action)
+
+  fun removeAll(commits: List<VcsLogCommitStorageIndex>) {
+    affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(FileNamesData::class.java)
+  abstract fun findRename(parent: VcsLogCommitStorageIndex, child: VcsLogCommitStorageIndex, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
+  abstract fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<ChangeKind>>
+}
+
+internal class AdditionDeletion(val filePath: FilePath, val child: VcsLogCommitStorageIndex, val parent: VcsLogCommitStorageIndex, val isAddition: Boolean) {
+  val commits
+    get() = UnorderedPair(parent, child)
+
+  fun matches(rename: Rename): Boolean {
+    if (rename.parentCommit == parent && rename.childCommit == child) {
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.childPath, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.parentPath, filePath)
+    }
+    else if (rename.childCommit == parent && rename.parentCommit == child) {
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.parentPath, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.childPath, filePath)
+    }
+    return false
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as AdditionDeletion
+
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    if (child != other.child) return false
+    if (parent != other.parent) return false
+    return isAddition == other.isAddition
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(filePath)
+    result = 31 * result + child
+    result = 31 * result + parent
+    result = 31 * result + isAddition.hashCode()
+    return result
   }
 }
+
+internal class Rename(val parentPath: FilePath, val childPath: FilePath, val parentCommit: VcsLogCommitStorageIndex, val childCommit: VcsLogCommitStorageIndex) {
+  val commits
+    get() = UnorderedPair(parentCommit, childCommit)
+
+  fun getOtherPath(commit: VcsLogCommitStorageIndex, filePath: FilePath): FilePath? {
+    if (commit == parentCommit && FILE_PATH_HASHING_STRATEGY.equals(filePath, parentPath)) return childPath
+    if (commit == childCommit && FILE_PATH_HASHING_STRATEGY.equals(filePath, childPath)) return parentPath
+    return null
+  }
+
+  fun getOtherPath(ad: AdditionDeletion): FilePath? {
+    return getOtherPath(if (ad.isAddition) ad.child else ad.parent, ad.filePath)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Rename
+
+    if (!FILE_PATH_HASHING_STRATEGY.equals(parentPath, other.parentPath)) return false
+    if (!FILE_PATH_HASHING_STRATEGY.equals(childPath, other.childPath)) return false
+    if (parentCommit != other.parentCommit) return false
+    return childCommit == other.childCommit
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(parentPath)
+    result = 31 * result + FILE_PATH_HASHING_STRATEGY.hashCode(childPath)
+    result = 31 * result + parentCommit
+    result = 31 * result + childCommit
+    return result
+  }
+}
+
+@ApiStatus.Internal
+class CommitFileState(val filePath: FilePath, val deleted: Boolean) {
+  constructor(filePath: FilePath) : this(filePath, false)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CommitFileState
+
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    return deleted == other.deleted
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.hashCode(filePath)
+    result = 31 * result + deleted.hashCode()
+    return result
+  }
+
+  override fun toString(): String {
+    return "MaybeDeletedFilePath(filePath=$filePath, deleted=$deleted)"
+  }
+}
+
+internal fun forEach(map: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>,
+                     action: (FilePath, Int, Int2ObjectMap<ChangeKind>) -> Unit) {
+  for ((filePath, affectedCommits) in map) {
+    affectedCommits.int2ObjectEntrySet().forEach { entry ->
+      val commit = entry.intKey
+      val changesMap = entry.value
+      action(filePath, commit, changesMap)
+    }
+  }
+}
+
+internal fun Int2ObjectMap<*>.removeAll(keys: List<Int>) {
+  keys.forEach(this::remove)
+}
+
+private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
+  for (e in this) {
+    val value = mapping(e)
+    if (value != null) return value
+  }
+  return null
+}
+
+@JvmField
+internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+
+@ApiStatus.Internal
+data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

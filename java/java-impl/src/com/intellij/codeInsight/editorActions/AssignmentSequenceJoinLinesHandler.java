@@ -1,8 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,16 +30,15 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * =>
  * x = (...).a().b().c();}</pre>
  */
-public class AssignmentSequenceJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class AssignmentSequenceJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(final @NotNull Document document, final @NotNull PsiFile psiFile, final int start, final int end) {
     PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start), PsiJavaToken.class);
     if (elementAtStartLineEnd == null || !elementAtStartLineEnd.getTokenType().equals(JavaTokenType.SEMICOLON)) return CANNOT_JOIN;
     PsiElement firstElement = elementAtStartLineEnd.getParent();
     PsiExpression firstValue = null;
     PsiVariable variable = null;
-    if (firstElement instanceof PsiExpressionStatement) {
-      PsiExpressionStatement firstStatement = (PsiExpressionStatement)firstElement;
+    if (firstElement instanceof PsiExpressionStatement firstStatement) {
       PsiAssignmentExpression firstAssignment = ExpressionUtils.getAssignment(firstStatement);
       if (firstAssignment == null) return CANNOT_JOIN;
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(firstAssignment.getLExpression()), PsiReferenceExpression.class);

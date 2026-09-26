@@ -1,0 +1,69 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.tools.ide.starter.product.pycharm.community` start
+create_kotlinc_options(
+    name = "custom_ide-starter-product-pycharm-community",
+    opt_in = ["kotlin.time.ExperimentalTime"],
+)
+
+jvm_provided_library(
+    name = "libraries_kodein-di-jvm_provided",
+    lib = "//libraries/kodein-di-jvm",
+)
+
+jvm_library(
+    name = "ide-starter-product-pycharm-community",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-product-pycharm-community",
+    module_name = "intellij.tools.ide.starter.product.pycharm.community",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//libraries/junit5-launcher",
+        ":libraries_kodein-di-jvm_provided",
+    ],
+)
+
+jvm_library(
+    name = "ide-starter-product-pycharm-community_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-starter-product-pycharm-community",
+    module_name = "intellij.tools.ide.starter.product.pycharm.community",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-starter-product-pycharm-community",
+        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
+        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/kodein-di-jvm",
+        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
+    ],
+)
+### auto-generated section `build intellij.tools.ide.starter.product.pycharm.community` end
+
+### auto-generated section `iml intellij.tools.ide.starter.product.pycharm.community` start
+exports_files(
+    [
+        "intellij.tools.ide.starter.product.pycharm.community.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tools.ide.starter.product.pycharm.community` end

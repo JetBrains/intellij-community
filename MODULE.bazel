@@ -1,0 +1,349 @@
+module(name = "community")
+
+bazel_dep(name = "bazel_features", version = "1.47.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+archive_override(
+    module_name = "rules_kotlin",
+    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
+    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+)
+
+bazel_dep(name = "rules_java", version = "9.6.1")
+bazel_dep(name = "rules_jvm", version = "0.0.1")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "protobuf", version = "33.4")
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = [
+        "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
+        "//:build/jvm-rules/protobuf-33.4-fail-on-java-core-source-build.patch",
+    ],
+    version = "33.4",
+)
+
+# Root registration outranks the dependency order, so the prebuilt protobuf-java
+# toolchain always wins over the source toolchain of @protobuf.
+# Do not remove: without it @protobuf//java/core compiles from source.
+register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
+
+register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+
+single_version_override(
+    module_name = "rules_jvm_external",
+    patches = [
+        "//:build/jvm-rules/rules-jvm-external-6.10-make-coursier-repo-targets-shell-free-and-hermetic.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-optional-source-jars.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-coursier-optional-file-field.patch",
+        "//:build/jvm-rules/rules-jvm-external-6.10-fix-multi-repo-hash.patch",
+    ],
+    version = "6.10",
+)
+
+single_version_override(
+    module_name = "rules_android",
+    patches = [
+        "//:build/jvm-rules/rules-android-0.7.1-pin-maven-installs.patch",
+    ],
+    version = "0.7.1",
+)
+
+single_version_override(
+    module_name = "bazel_worker_java",
+    patches = [
+        "//:build/jvm-rules/worker-java-0.0.9-pin-bazel-worker-maven.patch",
+    ],
+    version = "0.0.10",
+)
+
+bazel_dep(name = "xml.bzl", version = "0.2.3")
+bazel_dep(name = "lib")
+local_path_override(
+    module_name = "lib",
+    path = "lib",
+)
+
+bazel_dep(name = "jps_to_bazel")
+local_path_override(
+    module_name = "jps_to_bazel",
+    path = "platform/build-scripts/bazel",
+)
+
+local_path_override(
+    module_name = "rules_jvm",
+    path = "build/jvm-rules",
+)
+
+bazel_dep(name = "windows_support", version = "0.2.1")
+bazel_dep(name = "llvm", version = "0.8.9")
+single_version_override(
+    module_name = "llvm",
+    patch_strip = 1,
+    patches = [
+        "//:build/llvm_msvc.patch",  # TODO: remove that once merged to upstream
+    ],
+    # Kept in sync with the `ultimate` root, which has to hold `llvm` at 0.8.9 because `llvm_msvc.patch` does not
+    # apply to the 0.8.18 that `rules_rs` asks for. `BazelProjectStructureTest` requires identical overrides.
+    version = "0.8.9",
+)
+
+register_toolchains(
+    "@llvm//toolchain:all",
+    dev_dependency = True,
+)  # `dev_dependency = True` to avoid registering toolchains in modules using that module, see https://github.com/bazel-contrib/toolchains_llvm/issues/569
+
+bazel_dep(name = "rules_python", version = "1.7.0")
+
+kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
+
+kotlin_test_deps(name = "kotlin_test_deps")
+
+include("//platform/jewel:jewel_deps.MODULE.bazel")
+
+jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
+
+REMOTE_JBR25_REPOS = ["remotejbr25_" + platform for platform in [
+    "linux",
+    "linux_aarch64",
+    "macos",
+    "macos_aarch64",
+    "win",
+    "win_arm64",
+]]
+
+[use_repo(
+    jbr_toolchains,
+    repo + "_toolchain_config_repo",
+) for repo in REMOTE_JBR25_REPOS]
+
+[register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR25_REPOS]
+
+# The build dependencies a dev-mode assembly - and IDE Starter - downloads at launch time are Bazel
+# inputs, so a sandboxed or read-only-checkout run never downloads. The extension derives their URLs
+# from the pinned versions the checkout already owns; one repository per version key, and per platform
+# only where the artifact is, so a bump refetches only what it changed. MODULE files cannot load(), so
+# the platform list is repeated here - Bazel reports any drift from HOST_PLATFORMS.
+DEV_LAUNCH_HOST_PLATFORMS = [
+    "darwin_aarch64",
+    "darwin_x64",
+    "linux_aarch64",
+    "linux_x64",
+    "windows_aarch64",
+    "windows_x64",
+]
+
+dev_launch_deps_community = use_extension("@community//build:dev_launch_dependencies.bzl", "dev_launch_deps_community")
+use_repo(
+    dev_launch_deps_community,
+    "dev_launch_jserialcomm",
+    "dev_launch_libghostty",
+    "dev_launch_libwebp",
+    "dev_launch_maven",
+    "dev_launch_maven3_libraries",
+    "dev_launch_maven_telemetry_libraries",
+    "dev_launch_restarter",
+    "dev_launch_restarter_extracted",
+)
+
+[use_repo(
+    dev_launch_deps_community,
+    "dev_launch_%s_%s" % (platform, group),
+) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
+    "jbr",
+    "jcef",
+]]
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "82203dfae9f75a268e5e0e643ce5696a7c035ce9626938601fb410ee11849b1b",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist.zip",
+)
+
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
+)
+
+# Register the extension that runs jps-to-bazel converter and provides target lists for dev-build.
+# This creates the @jps_dynamic_deps_community repository.
+use_repo(
+    use_extension("//build:jps_dynamic_deps_community.bzl", "jps_dynamic_deps_community_extension"),
+    "jps_dynamic_deps_community",
+)
+
+# OpenedPackages.txt as Starlark. This creates the @intellij_add_opens repository.
+use_repo(
+    use_extension("//build:intellij_add_opens.bzl", "intellij_add_opens_extension"),
+    "intellij_add_opens",
+)
+
+# Hermetic node/npm used by the KMP resolver (//fleet/build/rules:kmp.bzl) to resolve
+# the NPM dependencies declared by the `package.json` embedded in KMP klibs.
+bazel_dep(name = "rules_nodejs", version = "6.7.4")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+use_repo(
+    node,
+    "nodejs_darwin_amd64",
+    "nodejs_darwin_arm64",
+    "nodejs_linux_amd64",
+    "nodejs_linux_arm64",
+    "nodejs_windows_amd64",
+    "nodejs_windows_arm64",
+)
+
+# Go, for //build/content-module-packer - the tool behind `content_module_jar`, one static binary that Bazel runs as a
+# multiplex worker. It is the only Go in this module, and the SDK version tracks the `go` directive of its `go.mod`.
+bazel_dep(name = "rules_go", version = "0.63.0")
+bazel_dep(name = "gazelle", version = "0.53.0")
+
+# No `name` on the download: `rules_go` rejects one from a non-root module, and this module is not the root when the
+# ultimate repository builds it. Nothing here names the SDK repo, so it does not need one.
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.27.0")
+
+# XXH3-64 keys the `__index__` of every jar the packer writes, and it has to be the reference algorithm bit for bit or
+# those jars differ from the ones `JarPackager` produces - which is what the 2 050 reference vectors in
+# //build/content-module-packer/internal/xxh3 hold it to. cpuid is its only dependency, for runtime CPU dispatch.
+# klauspost/compress supplies the zstd decoder of the `.zip.zst` layout reader in
+# //build/content-module-packer/internal/pluginpack and its test. It is pure Go. plugin-remainder-packer and
+# dev-dist-collector link it through pluginpack. content-module-packer does not, so the frozen packer binary is
+# unchanged. Every version comes from the packer's `go.mod`, which is also what the IDE and a plain `go build` read.
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//build/content-module-packer:go.mod")
+
+# The pins below mirror //build/treehouse:go.mod, the Go module of the treehouse wrapper. They are explicit because
+# gazelle accepts one `go_deps.from_file` tag per Bazel module, and content-module-packer above already holds it.
+# Keep this list in step with //build/treehouse:go.mod, which is what the IDE and a plain `go build` read.
+# If the list becomes a burden, add a `go.work` file and change to `from_file(go_work = ...)`. We do not do that now,
+# because it would rewrite the working dependency wiring of content-module-packer, and the packer is a Bazel worker on
+# the critical path of every `content_module_jar`.
+# `golang.org/x/sys` is in both modules, and gazelle resolves it to the higher version.
+# The pin below and the `golang.org/x/sys` line in //build/treehouse:go.mod must always move together.
+# If they differ, Bazel and a plain `go build` compile treehouse against different sources.
+# v0.46.0 is also the version that `idecli/go.mod` asks for. So a community-only checkout and the ultimate checkout
+# resolve the same version. The packer compiles against v0.46.0 too.
+# The version of `github.com/kunchenguid/treehouse` is a pseudo-version, because the upstream module path has no /v2
+# suffix. It points to the exact commit of the v2.3.0 tag.
+# A tag carries `indirect = True` when //build/treehouse:go.mod marks that line `// indirect`. Gazelle counts every
+# other `go_deps.module` tag of the root module as a direct dependency, so without the mark `bazel mod tidy` demands
+# all 17 names in the `use_repo` call below. `github.com/kunchenguid/treehouse` is the one direct requirement, and
+# //build/treehouse/cli names it in `deps`.
+go_deps.module(
+    indirect = True,
+    path = "github.com/BurntSushi/toml",
+    sum = "h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=",
+    version = "v1.6.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/ebitengine/purego",
+    sum = "h1:QIw4xfpWT6GWTzaW5XEKy3HXoqrJGx1ijYHzTF0/ISU=",
+    version = "v0.10.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/fatih/color",
+    sum = "h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=",
+    version = "v1.18.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/go-ole/go-ole",
+    sum = "h1:/Fpf6oFPoeFik9ty7siob0G6Ke8QvQEuVcuChpwXzpY=",
+    version = "v1.2.6",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/inconshreveable/mousetrap",
+    sum = "h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=",
+    version = "v1.1.0",
+)
+go_deps.module(
+    path = "github.com/kunchenguid/treehouse",
+    sum = "h1:Dh/Wbr6Ge6gqe6yh201KQtR5Kh7rVV20omIZsNOzvUY=",
+    version = "v0.0.0-20260822132253-35b8a41d8b0f",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/lufia/plan9stats",
+    sum = "h1:6E+4a0GO5zZEnZ81pIr0yLvtUWk2if982qA3F3QD6H4=",
+    version = "v0.0.0-20211012122336-39d0f177ccd0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/mattn/go-colorable",
+    sum = "h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=",
+    version = "v0.1.13",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/mattn/go-isatty",
+    sum = "h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=",
+    version = "v0.0.20",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/power-devops/perfstat",
+    sum = "h1:o4JXh1EVt9k/+g42oCprj/FisM4qX9L3sZB3upGN2ZU=",
+    version = "v0.0.0-20240221224432-82ca36839d55",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/shirou/gopsutil/v4",
+    sum = "h1:X8i6sicvUFih4BmYIGT1m2wwgw2VG9YgrDTi7cIRGUI=",
+    version = "v4.26.2",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/spf13/cobra",
+    sum = "h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=",
+    version = "v1.10.2",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/spf13/pflag",
+    sum = "h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=",
+    version = "v1.0.9",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/tklauser/go-sysconf",
+    sum = "h1:frioLaCQSsF5Cy1jgRBrzr6t502KIIwQ0MArYICU0nA=",
+    version = "v0.3.16",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/tklauser/numcpus",
+    sum = "h1:nSTwhKH5e1dMNsCdVBukSZrURJRoHbSEQjdEbY+9RXw=",
+    version = "v0.11.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/yusufpapurcu/wmi",
+    sum = "h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=",
+    version = "v1.2.4",
+)
+go_deps.module(
+    indirect = True,
+    path = "golang.org/x/sys",
+    sum = "h1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+    version = "v0.46.0",
+)
+use_repo(
+    go_deps,
+    "com_github_klauspost_compress",
+    "com_github_kunchenguid_treehouse",
+    "com_github_zeebo_xxh3",
+    "org_golang_x_text",
+)
+
+include("//:fleet/kmp.MODULE.bazel")

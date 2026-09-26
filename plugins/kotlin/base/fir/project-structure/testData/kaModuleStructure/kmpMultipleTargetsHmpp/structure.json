@@ -1,0 +1,9 @@
+{
+    "modules": [
+        { "name": "common", "platform": "common" },
+        { "name": "jvmCommon", "platform": "jvm", "refinement_dependencies": ["common"] },
+        { "name": "jvm1", "platform": "jvm", "refinement_dependencies": ["jvmCommon"] },
+        { "name": "jvm2", "platform": "jvm", "refinement_dependencies": ["jvmCommon"] },
+        { "name": "js", "platform": "js", "refinement_dependencies": ["common"] }
+    ]
+}

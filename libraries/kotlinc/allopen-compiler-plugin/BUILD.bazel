@@ -1,0 +1,52 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.allopen.compiler.plugin` start
+jvm_library(
+    name = "libraries-kotlinc-allopen-compiler-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.allopen.compiler.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-allopen-compiler-plugin-kotlinc-allopen-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-allopen-compiler-plugin-kotlinc-allopen-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+    ],
+)
+
+jvm_library(
+    name = "libraries-kotlinc-allopen-compiler-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.allopen.compiler.plugin",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-allopen-compiler-plugin-kotlinc-allopen-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-allopen-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.allopen.compiler.plugin` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.allopen.compiler.plugin` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.allopen.compiler.plugin.iml",
+        "resources/intellij.libraries.kotlinc.allopen.compiler.plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.allopen.compiler.plugin` end

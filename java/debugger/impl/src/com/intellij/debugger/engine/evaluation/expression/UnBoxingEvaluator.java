@@ -1,33 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import java.util.HashMap;
-import com.sun.jdi.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,53 +31,51 @@ public class UnBoxingEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(UnBoxingEvaluator.class);
 
   private final Evaluator myOperand;
-  private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<>();
-  static {
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BOOLEAN, Couple.of("booleanValue", "()Z"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BYTE, Couple.of("byteValue", "()B"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_CHARACTER, Couple.of("charValue", "()C"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_SHORT, Couple.of("shortValue", "()S"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_INTEGER, Couple.of("intValue", "()I"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_LONG, Couple.of("longValue", "()J"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_FLOAT, Couple.of("floatValue", "()F"));
-    TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_DOUBLE, Couple.of("doubleValue", "()D"));
-  }
 
   public static boolean isTypeUnboxable(String typeName) {
-    return TYPES_TO_CONVERSION_METHOD_MAP.containsKey(typeName);
+    return getUnboxableType(typeName) != null;
   }
 
   public UnBoxingEvaluator(@NotNull Evaluator operand) {
     myOperand = DisableGC.create(operand);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     return unbox(myOperand.evaluate(context), context);
   }
 
-  public static Object unbox(@Nullable Object value, EvaluationContextImpl context) throws EvaluateException {
+  public static Object unbox(@Nullable Object value, EvaluationContext context) throws EvaluateException {
     if (value == null) {
       throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
     }
-    if (value instanceof ObjectReference) {
-      final String valueTypeName = ((ObjectReference)value).type().name();
-      final Couple<String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);
-      if (pair != null) {
-        return convertToPrimitive(context, (ObjectReference)value, pair.getFirst(), pair.getSecond());
+    if (value instanceof ObjectReference reference) {
+      final String valueTypeName = reference.type().name();
+      JvmPrimitiveTypeKind primitiveType = getUnboxableType(valueTypeName);
+      if (primitiveType != null) {
+        return convertToPrimitive(context,
+                                  reference,
+                                  primitiveType.getName() + "Value",
+                                  "()" + primitiveType.getBinaryName());
       }
     }
     return value;
   }
-                                          
-  private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
+
+  private static @Nullable JvmPrimitiveTypeKind getUnboxableType(String typeName) {
+    JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByFqn(typeName);
+    return primitiveType != JvmPrimitiveTypeKind.VOID ? primitiveType : null;
+  }
+
+  private static Value convertToPrimitive(EvaluationContext context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field
-    Value primitiveValue = getInnerPrimitiveValue(value);
+    Value primitiveValue = getInnerPrimitiveValue(value, true).join();
     if (primitiveValue != null) {
       return primitiveValue;
     }
 
-    Method method = ((ClassType)value.referenceType()).concreteMethodByName(conversionMethodName, conversionMethodSignature);
+    Method method = DebuggerUtils.findMethod(value.referenceType(), conversionMethodName, conversionMethodSignature);
     if (method == null) {
       throw new EvaluateException("Cannot convert to primitive value of type " + value.type() + ": Unable to find method " +
                                   conversionMethodName + conversionMethodSignature);
@@ -91,19 +84,41 @@ public class UnBoxingEvaluator implements Evaluator {
     return context.getDebugProcess().invokeMethod(context, value, method, Collections.emptyList());
   }
 
-  @Nullable
-  public static PrimitiveValue getInnerPrimitiveValue(@Nullable ObjectReference value) {
+  public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value, boolean now) {
     if (value != null) {
       ReferenceType type = value.referenceType();
-      Field valueField = type.fieldByName("value");
-      if (valueField != null) {
-        Value primitiveValue = value.getValue(valueField);
-        if (primitiveValue instanceof PrimitiveValue) {
-          LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
-          return (PrimitiveValue)primitiveValue;
-        }
-      }
+      return fields(type, now)
+        .thenCompose(fields -> {
+          Field valueField = ContainerUtil.find(fields, f -> "value".equals(f.name()));
+          if (valueField != null) {
+            return getValue(value, valueField, now)
+              .thenApply(primitiveValue -> {
+                if (primitiveValue instanceof PrimitiveValue value1) {
+                  JvmPrimitiveTypeKind primitiveType = JvmPrimitiveTypeKind.getKindByName(primitiveValue.type().name());
+                  String expected = primitiveType != null ? primitiveType.getBoxedFqn() : null;
+                  String actual = type.name();
+                  LOG.assertTrue(actual.equals(expected),
+                                 "Unexpected unboxable value type" +
+                                 "\nType: " + actual +
+                                 "\nPrimitive value type: " + primitiveValue.type() +
+                                 "\nBoxed type: " + expected);
+                  return value1;
+                }
+                return null;
+              });
+          }
+          return completedFuture(null);
+        });
     }
-    return null;
+    return completedFuture(null);
+  }
+
+  // TODO: need to make normal async join
+  private static CompletableFuture<List<Field>> fields(ReferenceType type, boolean now) {
+    return now ? completedFuture(type.fields()) : DebuggerUtilsAsync.fields(type);
+  }
+
+  private static CompletableFuture<Value> getValue(ObjectReference ref, Field field, boolean now) {
+    return now ? completedFuture(ref.getValue(field)) : DebuggerUtilsAsync.getValue(ref, field);
   }
 }

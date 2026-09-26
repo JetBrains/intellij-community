@@ -1,7 +1,9 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -10,10 +12,8 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -21,55 +21,62 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- * @since 2/15/12 11:32 AM
- */
+import static kotlin.comparisons.ComparisonsKt.compareBy;
+
+
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
-public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
+public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
 
-  @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
+  public static final ExtensionPointName<LibraryDataServiceExtension> EP_NAME =
+    ExtensionPointName.create("com.intellij.libraryDataServiceExtension");
 
-  public LibraryDataService(@NotNull ExternalLibraryPathTypeMapper mapper) {
-    myLibraryPathTypeMapper = mapper;
-  }
-
-  @NotNull
   @Override
-  public Key<LibraryData> getTargetDataKey() {
+  public @NotNull Key<LibraryData> getTargetDataKey() {
     return ProjectKeys.LIBRARY;
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
-                         @Nullable final ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    Map<String, LibraryData> processedLibraries = ContainerUtil.newHashMap();
+  public void importData(final @NotNull Collection<? extends DataNode<LibraryData>> toImport,
+                         final @Nullable ProjectData projectData,
+                         final @NotNull Project project,
+                         final @NotNull IdeModifiableModelsProvider modelsProvider) {
+    Map<String, LibraryData> processedLibraries = new HashMap<>();
     for (DataNode<LibraryData> dataNode: toImport) {
       LibraryData libraryData = dataNode.getData();
       String libraryName = libraryData.getInternalName();
       LibraryData importedLibrary = processedLibraries.putIfAbsent(libraryName, libraryData);
       if (importedLibrary == null) {
-        importLibrary(libraryData, modelsProvider);
+        importLibrary(modelsProvider, libraryData);
       }
       else {
         LOG.warn("Multiple project level libraries found with the same name '" + libraryName + "'");
@@ -81,40 +88,69 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
   }
 
-  private void importLibrary(@NotNull final LibraryData toImport, @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
-
-    final String libraryName = toImport.getInternalName();
-    Library library = modelsProvider.getLibraryByName(libraryName);
-    if (library != null) {
-      syncPaths(toImport, library, modelsProvider);
-      return;
+  private static void importLibrary(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull LibraryData libraryData) {
+    var libraryName = libraryData.getInternalName();
+    var libraryKind = getLibraryKind(libraryData);
+    var librarySource = ExternalSystemApiUtil.toExternalSource(libraryData.getOwner());
+    var existingLibrary = modelsProvider.getLibraryByName(libraryName);
+    var library = ObjectUtils.notNull(existingLibrary, () -> {
+      var librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+      return librariesModel.createLibrary(libraryName, libraryKind, librarySource);
+    });
+    var libraryModel = modelsProvider.getModifiableLibraryModel(library);
+    if (existingLibrary != null) {
+      if (library.getExternalSource() == null) {
+        ((LibraryEx.ModifiableModelEx)libraryModel).setExternalSource(librarySource);
+      }
+      syncPaths(libraryModel, libraryData);
     }
-    library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
-    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    registerPaths(toImport.isUnresolved(), libraryFiles, libraryModel, libraryName);
+    else {
+      registerPaths(libraryModel, libraryData);
+    }
+    EP_NAME.forEachExtensionSafe(extension -> extension.prepareLibrary(modelsProvider, library, libraryData));
   }
 
-  @NotNull
-  public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
-    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
+  private static PersistentLibraryKind<?> getLibraryKind(LibraryData anImport) {
+    for (LibraryDataServiceExtension extension : EP_NAME.getExtensionList()) {
+      PersistentLibraryKind<?> kind = extension.getLibraryKind(anImport);
+      if (kind != null) {
+        return kind;
+      }
+    }
+    return null;
+  }
+
+  static @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
+    Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
+      OrderRootType orderRootType = ExternalLibraryPathTypeMapper.getInstance().map(pathType);
+      if (orderRootType == null) {
+        continue;
+      }
       Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
       }
-      result.put(myLibraryPathTypeMapper.map(pathType), ContainerUtil.map(paths, PATH_TO_FILE));
+      List<File> files = ContainerUtil.map(paths, File::new);
+      result.put(orderRootType, files);
     }
     return result;
   }
 
   static void registerPaths(boolean unresolved,
                             @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
+                            @NotNull Set<String> excludedPaths,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName) {
-    for (Map.Entry<OrderRootType, Collection<File>> entry: libraryFiles.entrySet()) {
-      for (File file: entry.getValue()) {
-        VirtualFile virtualFile = unresolved ? null : ExternalSystemUtil.refreshAndFindFileByIoFile(file);
+    // sort root types the same way as they are serialized into xml in JpsLibraryEntitiesSerializer.saveLibrary
+    List<Map.Entry<OrderRootType, Collection<File>>> sortedEntries = ContainerUtil.sorted(libraryFiles.entrySet(), compareBy(it -> it.getKey().name()));
+    for (Map.Entry<OrderRootType, Collection<File>> entry: sortedEntries) {
+      List<File> sortedRoots = ContainerUtil.sorted(entry.getValue(), (file1, file2) -> {
+        return String.CASE_INSENSITIVE_ORDER.compare(VfsUtil.getUrlForLibraryRoot(file1),
+                                                     VfsUtil.getUrlForLibraryRoot(file2));
+      });
+      for (File file : sortedRoots) {
+        VirtualFile virtualFile = unresolved ? null : VirtualFileManager.getInstance().findFileByNioPath(file.toPath().toAbsolutePath());
         if (virtualFile == null) {
           if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
@@ -153,13 +189,23 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
         }
       }
     }
+
+    if (model instanceof LibraryEx.ModifiableModelEx modelEx) {
+      for (String excludedPath : excludedPaths) {
+        String url = VfsUtil.getUrlForLibraryRoot(new File(excludedPath));
+        String[] urls = modelEx.getExcludedRootUrls();
+        if (!ArrayUtil.contains(url, urls)) {
+          modelEx.addExcludedRoot(url);
+        }
+      }
+    }
   }
 
   /**
    * Remove orphan project libraries during postprocess phase (after execution of LibraryDependencyDataService#import)
    */
   @Override
-  public void postProcess(@NotNull Collection<DataNode<LibraryData>> toImport,
+  public void postProcess(@NotNull Collection<? extends DataNode<LibraryData>> toImport,
                           @Nullable ProjectData projectData,
                           @NotNull Project project,
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -169,13 +215,13 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     // do not cleanup orphan project libraries if import runs from Project Structure Dialog
     // since libraries order entries cannot be imported for modules in that case
     // and hence orphans will be detected incorrectly
-    if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
+    if (modelsProvider instanceof ProjectStructureUIModifiableModelsProvider) return;
 
-    final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
+    final List<Library> orphanIdeLibraries = new SmartList<>();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
-    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
-    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
+    final Map<String, Library> namesToLibs = new HashMap<>();
+    final Set<Library> potentialOrphans = new HashSet<>();
+    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<>() {
       @Override
       public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
         if (ideDependency.isModuleLevel()) {
@@ -204,8 +250,8 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       }
     }
 
-    for (Library lib: potentialOrphans) {
-      if (!modelsProvider.isSubstituted(lib.getName())) {
+    for (Library lib : potentialOrphans) {
+      if (!modelsProvider.isLibrarySubstituted(lib)) {
         orphanIdeLibraries.add(lib);
       }
     }
@@ -221,26 +267,36 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
   }
 
-  private void syncPaths(@NotNull final LibraryData externalLibrary,
-                         @NotNull final Library ideLibrary,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    if (externalLibrary.isUnresolved()) {
+  static void registerPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+    var libraryFiles = prepareLibraryFiles(libraryData);
+    var excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
+    registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryData.getInternalName());
+  }
+
+  static void syncPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+    if (libraryData.isUnresolved()) {
       return;
     }
-    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
-    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    final Map<OrderRootType, Set<String>> toRemove = new HashMap<>();
+    final Map<OrderRootType, Set<String>> toAdd = new HashMap<>();
+    ExternalLibraryPathTypeMapper externalLibraryPathTypeMapper = ExternalLibraryPathTypeMapper.getInstance();
     for (LibraryPathType pathType: LibraryPathType.values()) {
-      OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
-      HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
+      OrderRootType ideType = externalLibraryPathTypeMapper.map(pathType);
+      if (ideType == null) continue;
+      HashSet<String> toAddPerType = new HashSet<>(libraryData.getPaths(pathType));
       toAdd.put(ideType, toAddPerType);
 
-      HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
+      // do not remove attached or manually added sources/javadocs if nothing to add
+      if(pathType != LibraryPathType.BINARY && toAddPerType.isEmpty()) {
+        continue;
+      }
+      HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
-      for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
-        String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
+      for (String url : libraryModel.getUrls(ideType)) {
+        String idePath = getLocalPath(url);
         if (!toAddPerType.remove(idePath)) {
-          toRemovePerType.add(ideFile.getUrl());
+          toRemovePerType.add(url);
         }
       }
     }
@@ -248,17 +304,24 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       return;
     }
 
-    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(ideLibrary);
     for (Map.Entry<OrderRootType, Set<String>> entry: toRemove.entrySet()) {
       for (String path: entry.getValue()) {
         libraryModel.removeRoot(path, entry.getKey());
       }
     }
 
+    Set<String> excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
-      Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
-      roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-      registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
+      Map<OrderRootType, Collection<File>> roots = new HashMap<>();
+      roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), File::new));
+      registerPaths(false, roots, excludedPaths, libraryModel, libraryData.getInternalName());
     }
+  }
+
+  private static @NotNull String getLocalPath(@NotNull String url) {
+    if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
+      url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
+    }
+    return VfsUtilCore.urlToPath(url);
   }
 }

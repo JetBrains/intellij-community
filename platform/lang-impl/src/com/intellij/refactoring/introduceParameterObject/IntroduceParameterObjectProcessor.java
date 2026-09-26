@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -28,6 +15,7 @@ import com.intellij.refactoring.changeSignature.OverriderMethodUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -39,7 +27,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
+public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(IntroduceParameterObjectProcessor.class);
   private final C myClassDescriptor;
@@ -83,7 +73,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   }
 
   @Override
-  protected void findUsages(@NotNull List<FixableUsageInfo> usages) {
+  protected void findUsages(@NotNull List<? super FixableUsageInfo> usages) {
     if (myClassDescriptor.isUseExistingClass()) {
       myClassDescriptor.setExistingClassCompatibleConstructor(myClassDescriptor.findCompatibleConstructorInExistingClass(myMethod));
     }
@@ -91,18 +81,18 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     methodHierarchy.add(myMethod);
     for (UsageInfo info : ChangeSignatureProcessorBase.findUsages(myChangeInfo)) {
       if (info instanceof OverriderMethodUsageInfo) {
-        methodHierarchy.add(((OverriderMethodUsageInfo)info).getOverridingMethod());
+        methodHierarchy.add(((OverriderMethodUsageInfo<?>)info).getOverridingMethod());
       }
       usages.add(new ChangeSignatureUsageWrapper(info));
     }
 
     final P[] paramsToMerge = myClassDescriptor.getParamsToMerge();
-    for (PsiElement element : methodHierarchy) {
-      final IntroduceParameterObjectDelegate delegate = IntroduceParameterObjectDelegate.findDelegate(element);
+    for (PsiNamedElement element : methodHierarchy) {
+      final var delegate = IntroduceParameterObjectDelegate.findDelegate(element);
       if (delegate != null) {
         for (int i = 0; i < paramsToMerge.length; i++) {
           ReadWriteAccessDetector.Access access =
-            delegate.collectInternalUsages(usages, (PsiNamedElement)element, myClassDescriptor, paramsToMerge[i],
+            delegate.collectInternalUsages(usages, element, myClassDescriptor, paramsToMerge[i],
                                            myMergedParameterInfo.getName());
           if (myAccessors[i] == null || access == ReadWriteAccessDetector.Access.Write) {
             myAccessors[i] = access;
@@ -120,7 +110,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usageInfos = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.collectConflicts(conflicts, usageInfos, myMethod, myClassDescriptor);
 
     List<UsageInfo> changeSignatureUsages = new ArrayList<>();
@@ -132,7 +122,10 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
         if (element != null && IntroduceParameterObjectDelegate.findDelegate(element) == null) {
           final PsiFile containingFile = element.getContainingFile();
           if (filesWithUsages.add(containingFile)) {
-            conflicts.putValue(element, "Method is overridden in a language that doesn't support this refactoring: " + containingFile.getName());
+            String message =
+              RefactoringBundle.message("dialog.message.method.overridden.in.language.that.doesn.t.support.this.refactoring",
+                                        RefactoringUIUtil.getDescription(myMethod, false), element.getLanguage().getDisplayName());
+            conflicts.putValue(element, StringUtil.capitalize(message));
           }
         }
         changeSignatureUsages.add(info);
@@ -145,21 +138,19 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       }
     }
 
-    ChangeSignatureProcessorBase
-      .collectConflictsFromExtensions(new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts,
-                                      myChangeInfo);
+    ChangeSignatureProcessorBase.collectConflictsFromExtensions(
+      new Ref<>(changeSignatureUsages.toArray(UsageInfo.EMPTY_ARRAY)), conflicts, myChangeInfo);
 
     return showConflicts(conflicts, usageInfos);
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new IntroduceParameterObjectUsageViewDescriptor(myMethod);
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
     final PsiElement aClass = myClassDescriptor.createClass(myMethod, myAccessors);
     if (aClass != null) {
       myClassDescriptor.setExistingClass(aClass);
@@ -175,13 +166,13 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     }
   }
 
-  @NotNull
-  protected String getCommandName() {
+  @Override
+  protected @NotNull String getCommandName() {
     return RefactoringBundle
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());
   }
 
-  public static class ChangeSignatureUsageWrapper extends FixableUsageInfo {
+  public static final class ChangeSignatureUsageWrapper extends FixableUsageInfo {
     private final UsageInfo myInfo;
 
     public ChangeSignatureUsageWrapper(UsageInfo info) {

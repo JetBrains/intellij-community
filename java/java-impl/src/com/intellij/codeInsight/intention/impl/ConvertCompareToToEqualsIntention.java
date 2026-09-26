@@ -1,27 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +22,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntentionAction {
+public final class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
+  public ConvertCompareToToEqualsIntention() {
+    super(PsiBinaryExpression.class);
+  }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiBinaryExpression element, @NotNull ModPsiUpdater updater) {
     final CompareToResult compareToResult = CompareToResult.findCompareTo(element);
     assert compareToResult != null;
     final PsiExpression qualifier = compareToResult.getQualifier();
@@ -46,18 +41,18 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
       text.append(qualifier.getText()).append('.');
     }
     text.append("equals(").append(argument.getText()).append(')');
-    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text.toString(), null);
+    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(text.toString(), null);
     final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
-
-    editor.getCaretModel().moveToOffset(result.getTextOffset() + result.getTextLength());
+    updater.moveCaretTo(result.getTextOffset() + result.getTextLength());
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    return CompareToResult.findCompareTo(element) != null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiBinaryExpression element) {
+    if (CompareToResult.findCompareTo(element) == null) return null;
+    return Presentation.of(JavaBundle.message("convert.compareto.expression.to.equals.call.may.change.semantics"));
   }
 
-  private static class CompareToResult {
+  private static final class CompareToResult {
 
     private final PsiBinaryExpression myBinaryExpression;
     private final PsiMethodCallExpression myCompareToCall;
@@ -83,9 +78,7 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
       return myCompareToCall.getMethodExpression().getQualifierExpression();
     }
 
-    @Nullable
-    static CompareToResult findCompareTo(PsiElement element) {
-      final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
+    static @Nullable CompareToResult findCompareTo(PsiBinaryExpression binaryExpression) {
       if (binaryExpression == null) {
         return null;
       }
@@ -94,8 +87,8 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
         return null;
       }
       PsiMethodCallExpression compareToExpression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       if (lhs instanceof PsiMethodCallExpression) {
         compareToExpression = (PsiMethodCallExpression)lhs;
         if (!MethodCallUtils.isCompareToCall(compareToExpression) || !ExpressionUtils.isZero(rhs)) {
@@ -113,15 +106,8 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return "Convert 'compareTo()' expression to 'equals()' call";
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return "Convert 'compareTo()' expression to 'equals()' call (may change semantics)";
+  public @NotNull String getFamilyName() {
+    return JavaBundle.message("convert.compareto.expression.to.equals.call");
   }
 }

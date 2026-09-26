@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -9,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +19,11 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaPsiFacade#getResolveHelper()
  */
 public interface PsiResolveHelper {
-  RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
-  RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
+  RecursionGuard<PsiExpression> ourGuard = RecursionManager.createGuard("typeArgInference");
+  RecursionGuard<PsiElement> ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
-  class SERVICE {
-    private SERVICE() { }
-    public static PsiResolveHelper getInstance(Project project) {
-      return ServiceManager.getService(project, PsiResolveHelper.class);
-    }
+  static PsiResolveHelper getInstance(Project project) {
+    return project.getService(PsiResolveHelper.class);
   }
 
   /**
@@ -51,8 +49,7 @@ public interface PsiResolveHelper {
    * @param place             place where constructor is invoked (used for checking access)
    * @return the result of the resolve, or {@link JavaResolveResult#EMPTY} if the resolve failed.
    */
-  @NotNull
-  JavaResolveResult[] multiResolveConstructor(@NotNull PsiClassType type, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place);
+  JavaResolveResult @NotNull [] multiResolveConstructor(@NotNull PsiClassType type, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place);
 
   /**
    * Resolves a call expression and returns an array of possible resolve results.
@@ -62,8 +59,7 @@ public interface PsiResolveHelper {
    * can be returned as a candidate for the resolve.
    * @return the array of resolve results.
    */
-  @NotNull
-  CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor);
+  CandidateInfo @NotNull [] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor);
 
   /**
    * Resolves a call expression and returns an array of possible resolve results.
@@ -74,8 +70,15 @@ public interface PsiResolveHelper {
    * @param checkVarargs true if varargs method should lead to 2 candidates in the result array
    * @return the array of resolve results.
    */
-  @NotNull
-  CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
+  CandidateInfo @NotNull [] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
+
+  /**
+   * Checks if there are method (or constructor) overloads.
+   *
+   * E.g. when no overloads exist, it's possible to cache types during inference even when they depend on top method call.
+   */
+  @ApiStatus.Experimental
+  boolean hasOverloads(@NotNull PsiCallExpression call);
 
   /**
    * Resolves a reference to a class, given the text of the reference and the context
@@ -130,43 +133,42 @@ public interface PsiResolveHelper {
   boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place);
 
   /**
-   * Returns {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise.
+   * Returns {@link PsiTypes#nullType()} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise.
    */
   PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
-                                          @NotNull PsiParameter[] parameters,
-                                          @NotNull PsiExpression[] arguments,
+                                          PsiParameter @NotNull [] parameters,
+                                          PsiExpression @NotNull [] arguments,
                                           @NotNull PsiSubstitutor partialSubstitutor,
                                           @Nullable PsiElement parent,
                                           @NotNull ParameterTypeInferencePolicy policy);
 
   @NotNull
-  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                    @NotNull PsiParameter[] parameters,
-                                    @NotNull PsiExpression[] arguments,
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                    PsiParameter @NotNull [] parameters,
+                                    PsiExpression @NotNull [] arguments,
                                     @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
                                     @NotNull ParameterTypeInferencePolicy policy);
   @NotNull
-  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                    @NotNull PsiParameter[] parameters,
-                                    @NotNull PsiExpression[] arguments,
-                                    @NotNull PsiSubstitutor partialSubstitutor,
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                    PsiParameter @NotNull [] parameters,
+                                    PsiExpression @NotNull [] arguments,
+                                    @NotNull MethodCandidateInfo info,
                                     @NotNull PsiElement parent,
                                     @NotNull ParameterTypeInferencePolicy policy,
                                     @NotNull LanguageLevel languageLevel);
 
   @NotNull
-  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                    @NotNull PsiType[] leftTypes,
-                                    @NotNull PsiType[] rightTypes,
+  PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                    PsiType @NotNull [] leftTypes,
+                                    PsiType @NotNull [] rightTypes,
                                     @NotNull LanguageLevel languageLevel);
 
-  @NotNull
-  default PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
-                                            @NotNull PsiType[] leftTypes,
-                                            @NotNull PsiType[] rightTypes,
-                                            @NotNull PsiSubstitutor partialSubstitutor,
-                                            @NotNull LanguageLevel languageLevel) {
+  default @NotNull PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                                     PsiType @NotNull [] leftTypes,
+                                                     PsiType @NotNull [] rightTypes,
+                                                     @NotNull PsiSubstitutor partialSubstitutor,
+                                                     @NotNull LanguageLevel languageLevel) {
     return inferTypeArguments(typeParameters, leftTypes, rightTypes, languageLevel);
   }
 

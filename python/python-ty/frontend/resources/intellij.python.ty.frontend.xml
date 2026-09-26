@@ -1,0 +1,29 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.lsp.core.frontend"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.ty.common"/>
+    <module name="intellij.python.typeEngine.common"/>
+    <module name="intellij.python.typeEngine.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <python.pytools.pyToolFrontend implementation="com.intellij.python.ty.frontend.TyPyToolFrontend"/>
+    <python.typeEngine.frontend implementation="com.intellij.python.ty.frontend.TyTypeEngineFrontend"/>
+  </extensions>
+</idea-plugin>

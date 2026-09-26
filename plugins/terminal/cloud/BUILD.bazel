@@ -1,0 +1,70 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.terminal.cloud` start
+content_module_jar(module = ":cloud")
+### auto-generated section `dev intellij.terminal.cloud` end
+
+### auto-generated section `build intellij.terminal.cloud` start
+jvm_library(
+    name = "cloud",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.cloud",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/remote-servers/agent-rt:remoteServers-agent-rt",
+        "//platform/execution-impl",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//plugins/terminal",
+        "//platform/remote-servers/impl",
+        "//libraries/jediterm-core",
+        "//platform/remote-servers/api:remoteServers",
+    ],
+)
+
+jvm_library(
+    name = "cloud_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.cloud",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":cloud",
+        "//platform/remote-servers/agent-rt:remoteServers-agent-rt_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//platform/remote-servers/impl:impl_test_lib",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//platform/remote-servers/api:remoteServers_test_lib",
+    ],
+)
+### auto-generated section `build intellij.terminal.cloud` end
+
+### auto-generated section `iml intellij.terminal.cloud` start
+exports_files(
+    [
+        "intellij.terminal.cloud.iml",
+        "resources/intellij.terminal.cloud.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.terminal.cloud` end

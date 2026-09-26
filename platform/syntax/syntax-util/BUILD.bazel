@@ -1,0 +1,142 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "util-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":util-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.syntax.util.tests`
+
+### auto-generated section `dev intellij.platform.syntax.util` start
+content_module_jar(module = ":util")
+### auto-generated section `dev intellij.platform.syntax.util` end
+
+### auto-generated section `build intellij.platform.syntax.util` start
+create_kotlinc_options(
+    name = "custom_util",
+    jvm_target = "8",
+    x_no_call_assertions = True,
+    x_no_param_assertions = True,
+)
+
+jvm_library(
+    name = "util",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+            "gen/**/*.kt",
+            "gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util",
+    module_name = "intellij.platform.syntax.util",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/syntax/syntax-api:syntax",
+        "//libraries/jetbrains/annotations",
+        "//platform/util/base/multiplatform",
+        "//platform/util/multiplatform",
+        "//platform/syntax/syntax-i18n:i18n",
+        "//platform/syntax/syntax-extensions:extensions",
+    ],
+)
+
+jvm_library(
+    name = "util_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util",
+    module_name = "intellij.platform.syntax.util",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":util",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/syntax/syntax-i18n:i18n_test_lib",
+        "//platform/syntax/syntax-extensions:extensions_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.syntax.util` end
+
+### auto-generated section `iml intellij.platform.syntax.util` start
+exports_files(
+    [
+        "intellij.platform.syntax.util.iml",
+        "resources/intellij.platform.syntax.util.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.syntax.util` end
+
+### auto-generated section `build intellij.platform.syntax.util.tests` start
+jvm_library(
+    name = "util-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.syntax.util.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "util-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//platform/syntax/syntax-util:util",
+        "//platform/syntax/syntax-util:util_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":util-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/multiplatformSupport",
+        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//platform/syntax/syntax-api:syntax",
+        "//platform/syntax/syntax-api:syntax_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.syntax.util.tests` end
+
+### auto-generated section `iml intellij.platform.syntax.util.tests` start
+exports_files(
+    [
+        "intellij.platform.syntax.util.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.syntax.util.tests` end

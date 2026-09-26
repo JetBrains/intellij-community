@@ -1,0 +1,11 @@
+// "Use inherited visibility" "true"
+// K2_ERROR: CANNOT_CHANGE_ACCESS_PRIVILEGE
+open class A {
+    protected open fun run() {}
+}
+
+class B : A() {
+    <caret>internal override fun run() {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UseInheritedVisibilityFix

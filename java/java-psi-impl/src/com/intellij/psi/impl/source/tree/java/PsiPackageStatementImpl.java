@@ -1,91 +1,64 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPackageStatementImpl");
+public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
+  public PsiPackageStatementImpl(PsiPackageStatementStub stub) {
+    super(stub, JavaStubElementTypes.PACKAGE_STATEMENT);
+  }
 
-  public PsiPackageStatementImpl() {
-    super(JavaElementType.PACKAGE_STATEMENT);
+  public PsiPackageStatementImpl(ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  public @NotNull CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
   }
 
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
-    return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.PACKAGE_REFERENCE);
+    return (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.PACKAGE_REFERENCE);
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
+    PsiPackageStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getPackageName();
+    }
     PsiJavaCodeReferenceElement ref = getPackageReference();
-    return ref == null ? null : JavaSourceUtil.getReferenceText(ref);
+    return ref == null ? "" : JavaSourceUtil.getReferenceText(ref);
   }
 
   @Override
   public PsiModifierList getAnnotationList() {
-    return (PsiModifierList)findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
-  public ASTNode findChildByRole(int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
-      default:
-        return null;
-
-      case ChildRole.PACKAGE_KEYWORD:
-        return findChildByType(JavaTokenType.PACKAGE_KEYWORD);
-
-      case ChildRole.PACKAGE_REFERENCE:
-        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
-
-      case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
-
-      case ChildRole.MODIFIER_LIST:
-        return findChildByType(JavaElementType.MODIFIER_LIST);
-    }
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == JavaTokenType.PACKAGE_KEYWORD) {
-      return ChildRole.PACKAGE_KEYWORD;
-    }
-    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
-      return ChildRole.PACKAGE_REFERENCE;
-    }
-    else if (i == JavaTokenType.SEMICOLON) {
-      return ChildRole.CLOSING_SEMICOLON;
-    }
-    else if (i == JavaElementType.MODIFIER_LIST) {
-      return ChildRole.MODIFIER_LIST;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
+  public @Nullable PsiDocComment getDocComment() {
+    if (!PsiPackage.PACKAGE_INFO_FILE.equals(getContainingFile().getName())) return null;
+    PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(this);
+    return sibling instanceof PsiDocComment ? (PsiDocComment)sibling : null;
   }
 
   @Override
@@ -98,6 +71,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPackageStatement:" + getPackageName();
   }

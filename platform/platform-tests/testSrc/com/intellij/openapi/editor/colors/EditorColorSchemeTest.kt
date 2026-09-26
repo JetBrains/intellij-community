@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors
 
-import com.intellij.configurationStore.SchemeManagerFactoryBase
+import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
+import com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.readText
 
 class EditorColorSchemeTest {
   companion object {
@@ -38,9 +28,14 @@ class EditorColorSchemeTest {
 
   @JvmField
   @Rule
+  val disposableRule = DisposableRule()
+
+  @JvmField
+  @Rule
   val fsRule = InMemoryFsRule()
 
-  @Test fun loadSchemes() {
+  @Test
+  fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
     <scheme name="Foo" version="142" parent_scheme="Default">
@@ -50,22 +45,24 @@ class EditorColorSchemeTest {
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val manager = EditorColorsManagerImpl(DefaultColorSchemesManager.getInstance(), schemeManagerFactory)
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
-    val scheme = manager.getScheme("Foo")
+    val scheme = manager.getScheme("Foo")!!
     assertThat(scheme.name).isEqualTo("Foo")
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
-    schemeManagerFactory.save()
+    runBlocking {
+      schemeManagerFactory.save()
+    }
 
     // JAVA_NUMBER is removed - see isParentOverwritingInheritance
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
     <scheme name="Foo" version="142" parent_scheme="Default">
       <option name="FONT_SCALE" value="${UISettings.defFontScale}" />
-      <option name="LINE_SPACING" value="1.0" />
+      <option name="LINE_SPACING" value="1.2" />
       <option name="EDITOR_FONT_SIZE" value="12" />
-      <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
+      <option name="EDITOR_FONT_NAME" value="Menlo" />
     </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
 
@@ -75,6 +72,79 @@ class EditorColorSchemeTest {
       it.reload()
     }
 
-    assertThat(manager.schemeManager.allSchemes.map { it.name }).isEqualTo(schemeNamesBeforeReload)
+    assertThat(manager.schemeManager.allSchemes
+      .map { it.name })
+      .isEqualTo(schemeNamesBeforeReload)
+  }
+
+  @Test
+  fun optimizeBundledSchemes() {
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
+    val schemeData = """
+    <scheme name="Foo" version="142" parent_scheme="Darcula">
+      <metaInfo>
+        <property name="forceOptimize">true</property>
+      </metaInfo>
+      <attributes>
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+      </attributes>
+    </scheme>""".trimIndent()
+    schemeFile.write(schemeData)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
+
+    val scheme = manager.getScheme("Foo")!!
+    assertThat(scheme.name).isEqualTo("Foo")
+
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
+
+    runBlocking {
+      schemeManagerFactory.save()
+    }
+
+    // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in a parent scheme
+    assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
+      <scheme name="Foo" version="142" parent_scheme="Darcula">
+      </scheme>""".trimIndent())
+  }
+
+  @Test
+  fun loadAdditionalAttributesBeforeOptimization() {
+    val ep = AdditionalTextAttributesEP(DefaultPluginDescriptor(PluginId.getId("loadAdditionalAttributesBeforeOptimization"),
+                                                                EditorColorSchemeTest::class.java.classLoader))
+    ep.scheme = "Darcula"
+    ep.file = "com/intellij/openapi/editor/colors/foregroundForGoBuiltinTypeReference.xml"
+    EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.point.registerExtension(ep, disposableRule.disposable)
+
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
+    val schemeData = """
+    <scheme name="Foo" version="142" parent_scheme="Darcula">
+      <metaInfo>
+        <property name="forceOptimize">true</property>
+      </metaInfo>
+      <attributes>
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+      </attributes>
+    </scheme>""".trimIndent()
+    schemeFile.write(schemeData)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
+
+    val scheme = manager.getScheme("Foo")!!
+    assertThat(scheme.name).isEqualTo("Foo")
+
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
+
+    runBlocking {
+      schemeManagerFactory.save()
+    }
+
+    // GO_BUILTIN_TYPE_REFERENCE should not be removed as it's not the same as defined in foregroundForGoBuiltinTypeReference
+    assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
+      <scheme name="Foo" version="142" parent_scheme="Darcula">
+        <attributes>
+          <option name="GO_BUILTIN_TYPE_REFERENCE" baseAttributes="" />
+        </attributes>
+      </scheme>""".trimIndent())
   }
 }

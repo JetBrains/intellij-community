@@ -1,0 +1,11 @@
+// FILE: test/Test.kt
+// BIND_TO test.bar.Bar.FOO
+package test
+
+import test.bar.Bar
+import test.foo.Foo.FOO
+
+fun test() {
+    println(<caret>Bar.FOO)
+}
+

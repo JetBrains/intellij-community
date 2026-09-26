@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -24,16 +10,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.awt.Point;
 
-/**
- * @author egor
- */
 public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFullValueEvaluator {
-  public CustomPopupFullValueEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
+  public CustomPopupFullValueEvaluator(@NotNull @Nls String linkText, @NotNull EvaluationContextImpl evaluationContext) {
     super(linkText, evaluationContext);
     setShowValuePopup(false);
   }
@@ -43,7 +29,7 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
   protected abstract JComponent createComponent(T data);
 
   @Override
-  public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
+  public void evaluate(final @NotNull XFullValueEvaluationCallback callback) {
     final T data = getData();
     DebuggerUIUtil.invokeLater(() -> {
       if (callback.isObsolete()) return;
@@ -54,8 +40,8 @@ public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFul
       Dimension frameSize = frame.getSize();
       Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
       popup.setSize(size);
-      if (comp instanceof Disposable) {
-        Disposer.register(popup, (Disposable)comp);
+      if (comp instanceof Disposable disposable) {
+        Disposer.register(popup, disposable);
       }
       callback.evaluated("");
       popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));

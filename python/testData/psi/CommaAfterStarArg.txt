@@ -9,7 +9,7 @@ PyFile:CommaAfterStarArg.py
         PsiElement(Py:MULT)('*')
         PsiElement(Py:IDENTIFIER)('args')
       PsiElement(Py:COMMA)(',')
-      PsiErrorElement:expression expected
+      PsiErrorElement:Expression expected
         <empty list>
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')
@@ -30,7 +30,7 @@ PyFile:CommaAfterStarArg.py
         PsiElement(Py:EXP)('**')
         PsiElement(Py:IDENTIFIER)('kwargs')
       PsiElement(Py:COMMA)(',')
-      PsiErrorElement:expression expected
+      PsiErrorElement:Expression expected
         <empty list>
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')

@@ -1,49 +1,34 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectStructureProblemDescription {
   public enum ProblemLevel {PROJECT, GLOBAL}
-  private final String myMessage;
-  private final String myDescription;
+  private final @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
+  private final HtmlChunk myDescription;
   private final PlaceInProjectStructure myPlace;
   private final List<? extends ConfigurationErrorQuickFix> myFixes;
   private final ProjectStructureProblemType myProblemType;
   private final ProblemLevel myProblemLevel;
   private final boolean myCanShowPlace;
 
-  public ProjectStructureProblemDescription(@NotNull String message,
-                                            @Nullable String description,
+  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                            @NotNull HtmlChunk description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
     this(message, description, place, problemType, ProblemLevel.PROJECT, fixes, true);
   }
 
-  public ProjectStructureProblemDescription(@NotNull String message,
-                                            @Nullable String description,
+  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                            @NotNull HtmlChunk description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull ProblemLevel level,
@@ -61,19 +46,22 @@ public class ProjectStructureProblemDescription {
     return myProblemLevel;
   }
 
-  public String getMessage(final boolean includePlace) {
-    if (includePlace && myCanShowPlace) {
-      return myPlace.getContainingElement().getPresentableText() + ": " + StringUtil.decapitalize(myMessage);
-    }
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getMessage() {
     return myMessage;
+  }
+
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getMessage(final boolean includePlace) {
+    if (!includePlace || !myCanShowPlace) return myMessage;
+
+    final @NlsSafe String result = myPlace.getContainingElement().getPresentableText() + ": " + StringUtil.decapitalize(myMessage);
+    return result;
   }
 
   public boolean canShowPlace() {
     return myCanShowPlace;
   }
 
-  @Nullable
-  public String getDescription() {
+  public @NotNull HtmlChunk getDescription() {
     return myDescription;
   }
 
@@ -85,8 +73,7 @@ public class ProjectStructureProblemDescription {
     return myProblemType.getSeverity();
   }
 
-  @NotNull
-  public PlaceInProjectStructure getPlace() {
+  public @NotNull PlaceInProjectStructure getPlace() {
     return myPlace;
   }
 

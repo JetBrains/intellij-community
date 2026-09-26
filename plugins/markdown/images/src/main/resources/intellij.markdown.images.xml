@@ -1,0 +1,59 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.platform.backend"/>
+    <plugin id="com.intellij.platform.images"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.MarkdownImagesBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <customPasteProvider id="MarkdownImagePasteProvider"
+                         implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownImagePasteProvider"/>
+    <customPasteProvider id="MarkdownFileLinkPasteProvider"
+                         order="after MarkdownImagePasteProvider"
+                         implementation="org.intellij.plugins.markdown.images.editor.paste.FileLinkPasteProvider"/>
+    <fileDropHandler id="MarkdownEditorFileDropHandler"
+                     implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler"/>
+
+    <completion.contributor language="Markdown"
+                            implementationClass="org.intellij.plugins.markdown.images.editor.completion.MarkdownImageTagCompletionContributor"/>
+    <codeInsight.lineMarkerProvider language="HTML"
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureHtmlImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureMarkdownImageLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureTextHtmlImageLineMarkerProvider"/>
+    <intentionAction>
+      <language>Markdown</language>
+      <className>org.intellij.plugins.markdown.images.editor.MarkdownConfigureImageIntention</className>
+      <bundleName>messages.MarkdownImagesBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
+    </intentionAction>
+  </extensions>
+  <actions>
+    <action class="org.intellij.plugins.markdown.images.editor.actions.InsertImageAction"
+            id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+            icon="AllIcons.General.LayoutPreviewOnly">
+      <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+      <add-to-group group-id="Markdown.InsertGroup" anchor="after" relative-to-action="Markdown.InsertEmptyTable"/>
+    </action>
+  </actions>
+</idea-plugin>

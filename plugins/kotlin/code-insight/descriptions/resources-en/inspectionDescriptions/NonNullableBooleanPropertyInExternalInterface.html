@@ -1,0 +1,21 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+<p>
+  Reports non-nullable <code>Boolean</code> properties in external interfaces in Kotlin/JS projects.
+</p>
+<p>
+  Boolean properties in external interfaces should be nullable to handle cases where the JavaScript value might be <code>undefined</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code>external interface MyInterface {
+    var enabled: Boolean // Warning: should be Boolean?
+    var visible: Boolean // Warning: should be Boolean?
+}</code></pre>
+<p><b>After the quick-fix is applied:</b></p>
+<pre><code>external interface MyInterface {
+    var enabled: Boolean?
+    var visible: Boolean?
+}</code></pre>
+</body>
+</html>

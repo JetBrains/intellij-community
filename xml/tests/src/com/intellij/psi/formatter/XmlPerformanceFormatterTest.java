@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.codeHighlighting.Pass;
@@ -31,19 +17,19 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
+@PerformanceUnitTest
 public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   private static final String BASE_PATH = "psi/formatter/xml";
-  private final Set<String> ourTestsWithDocumentUpdate = new HashSet<>(Arrays.asList("Performance3", "Performance4"));
+  private static final Set<String> ourTestsWithDocumentUpdate = Set.of("Performance3", "Performance4");
 
   @Override
   protected boolean doCheckDocumentUpdate() {
@@ -58,38 +44,32 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testReformatCodeFragment() {
-    PlatformTestUtil.startPerformanceTest("reformat code fragment", 6300,
-                                          () -> checkFormattingDoesNotProduceException("performance")).useLegacyScaling().assertTiming();
+    Benchmark.newBenchmark("reformat code fragment",
+                           () -> checkFormattingDoesNotProduceException("performance")).start();
   }
 
   public void testPerformance3() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", 6800, createTestRunnable()).useLegacyScaling().assertTiming();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
 
       highlight();
 
-      long start = System.currentTimeMillis();
       final UndoManager undoManager = UndoManager.getInstance(getProject());
       final FileEditor selectedEditor = editorManager.getSelectedEditor(myFile.getVirtualFile());
 
       assertTrue(undoManager.isUndoAvailable(selectedEditor));
-      undoManager.undo(selectedEditor);
-      long end = System.currentTimeMillis();
-
-      PlatformTestUtil.assertTiming("Fix xml formatter undo performance problem", 3400, end - start);
+      Benchmark.newBenchmark("xml formatter undo", () -> undoManager.undo(selectedEditor))
+        .warmupIterations(0).attempts(1).start();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
       highlight();
 
-      start = System.currentTimeMillis();
-      undoManager.redo(selectedEditor);
-      end = System.currentTimeMillis();
-
-      PlatformTestUtil.assertTiming("Fix xml formatter redo performance problem", 3400, end - start);
+      Benchmark.newBenchmark("xml formatter redo", () -> undoManager.redo(selectedEditor))
+        .warmupIterations(0).attempts(1).start();
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
       if (selectedFiles.length > 0) editorManager.closeFile(selectedFiles[0]);
     }
@@ -102,7 +82,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance4() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       editorManager.closeFile(editorManager.getSelectedFiles()[0]);
@@ -115,7 +95,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
         doTest();
       }
       finally {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
   };
   }
@@ -123,7 +103,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance5() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", 10000, createTestRunnable()).useLegacyScaling().assertTiming();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -136,12 +116,16 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance6() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
       if (selectedFiles.length > 0) editorManager.closeFile(selectedFiles[0]);
     }
+  }
+
+  public void testPerformance7() {
+    Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
   }
 
   public void testPerformance() throws Exception {
@@ -155,11 +139,11 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformanceIdea148943() throws Exception {
     final String textBefore = loadFile(getTestName(true) + ".xml", null);
     final PsiFile file = createFileFromText(textBefore, "before.xml", PsiFileFactory.getInstance(getProject()));
-    PlatformTestUtil.startPerformanceTest("IDEA-148943", 20000, createAdjustLineIndentInRangeRunnable(file))
-      .assertTiming();
+    Benchmark.newBenchmark("IDEA-148943", createAdjustLineIndentInRangeRunnable(file))
+      .start();
   }
   
-  private static ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {
+  private ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {
     return () -> {
       final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
       assertNotNull(document);
@@ -179,7 +163,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
       doTest(resultNumber);
     }
     finally {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       xmlSettings.XML_KEEP_WHITESPACES = oldValue;
     }
   }

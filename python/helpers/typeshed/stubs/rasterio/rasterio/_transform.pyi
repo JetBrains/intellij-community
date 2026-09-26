@@ -1,0 +1,16 @@
+from collections.abc import Sequence
+
+from rasterio._typing import _GDALOption
+from rasterio.control import GroundControlPoint
+from rasterio.errors import TransformWarning as TransformWarning
+from rasterio.rpc import RPC
+
+class GCPTransformerBase:
+    def __init__(self, gcps: Sequence[GroundControlPoint]) -> None: ...
+    def close(self) -> None: ...
+
+class RPCTransformerBase:
+    def __init__(self, rpcs: RPC, **kwargs: _GDALOption) -> None: ...
+    def close(self) -> None: ...
+
+def _transform_from_gcps(gcps: Sequence[GroundControlPoint]) -> tuple[float, ...]: ...

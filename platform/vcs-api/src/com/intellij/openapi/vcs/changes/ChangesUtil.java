@@ -1,197 +1,144 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.TObjectHashingStrategy;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import static java.util.Objects.hash;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-
-/**
- * @author max
- */
-public class ChangesUtil {
+public final class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
-  public static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
-    @Override
-    public int computeHashCode(@Nullable FilePath path) {
-      return path != null ? hash(path.getPath(), path.isDirectory()) : 0;
-    }
-
-    @Override
-    public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
-      if (path1 == path2) return true;
-      if (path1 == null || path2 == null) return false;
-
-      return path1.isDirectory() == path2.isDirectory() && path1.getPath().equals(path2.getPath());
-    }
-  };
+  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = com.intellij.platform.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 
   public static final Comparator<LocalChangeList> CHANGELIST_COMPARATOR =
     Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
       .thenComparing(list -> list.getName(), String::compareToIgnoreCase);
 
-  private ChangesUtil() {}
+  private ChangesUtil() { }
 
-  @NotNull
-  public static FilePath getFilePath(@NotNull Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (revision == null) {
-      revision = change.getBeforeRevision();
-      assert revision != null;
+  public static @NotNull FilePath getFilePath(@NotNull Change change) {
+    return com.intellij.platform.vcs.changes.ChangesUtil.getFilePath(change);
+  }
+
+  public static @Nullable FilePath getBeforePath(@NotNull Change change) {
+    return com.intellij.platform.vcs.changes.ChangesUtil.getBeforePath(change);
+  }
+
+  public static @Nullable FilePath getAfterPath(@NotNull Change change) {
+    return com.intellij.platform.vcs.changes.ChangesUtil.getAfterPath(change);
+  }
+
+  public static @Nullable AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+  }
+
+  public static @Unmodifiable @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (Change change : changes) {
+        AbstractVcs vcs = vcsManager.getVcsFor(getFilePath(change));
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
     }
 
-    return revision.getFile();
+    return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
-  @Nullable
-  public static FilePath getBeforePath(@NotNull Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    return revision == null ? null : revision.getFile();
+  public static @Unmodifiable @NotNull Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files,
+                                                                                     @NotNull Project project) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcsManager.getAllActiveVcss().length == 1) {
+      for (FilePath file : files) {
+        AbstractVcs vcs = vcsManager.getVcsFor(file);
+        if (vcs != null) return Collections.singleton(vcs);
+      }
+      return Collections.emptySet();
+    }
+
+    return ContainerUtil.map2SetNotNull(files, file -> vcsManager.getVcsFor(file));
   }
 
-  @Nullable
-  public static FilePath getAfterPath(@NotNull Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    return revision == null ? null : revision.getFile();
-  }
-
-  @Nullable
-  public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
-    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
-
-    return result != null ? result : ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
-  }
-
-  @NotNull
-  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<Change> changes, @NotNull Project project) {
-    return ContainerUtil.map2SetNotNull(changes, change -> getVcsForChange(change, project));
-  }
-
-  @NotNull
-  public static Set<AbstractVcs> getAffectedVcsesForFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
-    return ContainerUtil.map2SetNotNull(files, file -> getVcsForFile(file, project));
-  }
-
-  @Nullable
-  public static AbstractVcs getVcsForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable AbstractVcs getVcsForFile(@NotNull VirtualFile file, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
   }
 
-  @Nullable
-  public static AbstractVcs getVcsForFile(@NotNull File file, @NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
+  public static @Unmodifiable @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
+    return iteratePaths(changes).toList();
   }
 
-  @NotNull
-  public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
-    return getPaths(changes.stream()).collect(toList());
-  }
-
-  @NotNull
-  public static List<File> getIoFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getPaths(changes.stream())
+  public static @Unmodifiable @NotNull List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
+    return iteratePaths(changes)
       .map(FilePath::getIOFile)
-      .distinct()
-      .collect(toList());
+      .unique()
+      .toList();
   }
 
-  @NotNull
-  public static Stream<FilePath> getPaths(@NotNull Stream<Change> changes) {
-    return changes.flatMap(ChangesUtil::getPathsCaseSensitive);
+  public static @NotNull JBIterable<FilePath> iteratePaths(@NotNull Iterable<? extends Change> changes) {
+    return JBIterable.from(changes).flatMap(com.intellij.platform.vcs.changes.ChangesUtil::iteratePathsCaseSensitive);
   }
 
-  @NotNull
-  public static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
-    FilePath beforePath = getBeforePath(change);
-    FilePath afterPath = getAfterPath(change);
-
-    return Stream.of(beforePath, !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) ? afterPath : null)
-      .filter(Objects::nonNull);
+  public static boolean equalsCaseSensitive(@Nullable FilePath path1, @Nullable FilePath path2) {
+    return com.intellij.platform.vcs.changes.ChangesUtil.equalsCaseSensitive(path1, path2);
   }
 
-  @NotNull
-  public static Stream<VirtualFile> getFiles(@NotNull Stream<Change> changes) {
-    return getPaths(changes)
+  public static @NotNull JBIterable<VirtualFile> iterateFiles(@NotNull Iterable<? extends Change> changes) {
+    return iteratePaths(changes)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
-    return changes
+  public static @NotNull JBIterable<VirtualFile> iterateAfterRevisionFiles(@NotNull Iterable<? extends Change> changes) {
+    return JBIterable.from(changes)
       .map(ChangesUtil::getAfterPath)
       .filter(Objects::nonNull)
       .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
-  /**
-   * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
-   */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated
-  @NotNull
-  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getFiles(changes.stream()).toArray(VirtualFile[]::new);
+  public static VirtualFile @NotNull [] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
+    return iterateFiles(changes).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull VirtualFile[] files) {
-    return getNavigatableArray(project, Stream.of(files));
+  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Iterable<? extends VirtualFile> files) {
+    return com.intellij.platform.vcs.changes.ChangesUtil.getNavigatableArray(project, files);
   }
 
-  @NotNull
-  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<VirtualFile> files) {
-    return files
-      .filter(file -> !file.isDirectory())
-      .map(file -> new OpenFileDescriptor(project, file))
-      .toArray(Navigatable[]::new);
-  }
-
-  @Nullable
-  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static @Nullable LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, Change @Nullable [] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 
@@ -214,7 +161,7 @@ public class ChangesUtil {
 
   public static FilePath getLocalPath(@NotNull Project project, FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ReadAction.compute(() -> {
+    Change change = ReadAction.computeBlocking(() -> {
       if (project.isDisposed()) throw new ProcessCanceledException();
       return ChangeListManager.getInstance(project).getChange(filePath);
     });
@@ -229,18 +176,16 @@ public class ChangesUtil {
     return filePath;
   }
 
-  @Nullable
-  public static VirtualFile findValidParentUnderReadAction(@NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    return file != null ? file : getValidParentUnderReadAction(path);
-  }
-
-  @Nullable
-  public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
+  /**
+   * @deprecated Prefer using {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately(FilePath)}
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public static @Nullable VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();
 
     if (result == null && !ApplicationManager.getApplication().isReadAccessAllowed()) {
-      result = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
+      result = StandardFileSystems.local().refreshAndFindFileByPath(filePath.getPath());
     }
     if (result == null) {
       result = getValidParentUnderReadAction(filePath);
@@ -249,12 +194,15 @@ public class ChangesUtil {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
-    return ReadAction.compute(() -> {
+  /**
+   * @deprecated Prefer using {@link NewVirtualFileSystem#findCachedFileByPath(NewVirtualFileSystem, String)}
+   */
+  @Deprecated
+  private static @Nullable VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
+    return ReadAction.computeBlocking(() -> {
       VirtualFile result = null;
       FilePath parent = filePath;
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
+      VirtualFileSystem lfs = StandardFileSystems.local();
 
       while (result == null && parent != null) {
         result = lfs.findFileByPath(parent.getPath());
@@ -265,22 +213,18 @@ public class ChangesUtil {
     });
   }
 
-  @Nullable
-  public static String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
-    if (fileName == null) return null;
-    VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return fileName.toString();
-    String relativePath = FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(baseDir), fileName);
-    if (relativePath != null) return relativePath;
-    return fileName.toString();
-  }
+  public static @Nullable @NlsSafe String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
+    if (fileName == null) {
+      return null;
+    }
 
-  public static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {
-    return revision instanceof BinaryContentRevision && !revision.getFile().isDirectory();
-  }
+    String baseDir = project.getBasePath();
+    if (baseDir == null) {
+      return fileName.toString();
+    }
 
-  public static boolean isBinaryChange(@NotNull Change change) {
-    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
+    String relativePath = FileUtil.getRelativePath(new File(baseDir), fileName);
+    return relativePath == null ? fileName.toString() : relativePath;
   }
 
   public static boolean isTextConflictingChange(@NotNull Change change) {
@@ -299,51 +243,61 @@ public class ChangesUtil {
     AbstractVcs getVcsFor(@NotNull T item);
   }
 
-  public static <T> void processItemsByVcs(@NotNull Collection<T> items,
-                                           @NotNull VcsSeparator<T> separator,
+  public static <T> void processItemsByVcs(@NotNull Collection<? extends T> items,
+                                           @NotNull VcsSeparator<? super T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
-      () -> StreamEx.of(items)
-        .mapToEntry(separator::getVcsFor, identity())
-        .nonNullKeys()
-        .grouping()
-    );
+    Map<AbstractVcs, List<T>> changesByVcs = new HashMap<>();
+    ReadAction.runBlocking(() -> {
+      for (T item : items) {
+        AbstractVcs vcs = separator.getVcsFor(item);
+        if (vcs != null) {
+          changesByVcs.computeIfAbsent(vcs, _ -> new ArrayList<>()).add(item);
+        }
+      }
+    });
 
     changesByVcs.forEach(processor::process);
   }
 
   public static void processChangesByVcs(@NotNull Project project,
-                                         @NotNull Collection<Change> changes,
+                                         @NotNull Collection<? extends Change> changes,
                                          @NotNull PerVcsProcessor<Change> processor) {
     processItemsByVcs(changes, change -> getVcsForChange(change, project), processor);
   }
 
   public static void processVirtualFilesByVcs(@NotNull Project project,
-                                              @NotNull Collection<VirtualFile> files,
+                                              @NotNull Collection<? extends VirtualFile> files,
                                               @NotNull PerVcsProcessor<VirtualFile> processor) {
-    processItemsByVcs(files, file -> getVcsForFile(file, project), processor);
+    if (files.isEmpty()) {
+      return;
+    }
+
+    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
+    processItemsByVcs(files, file -> projectLevelVcsManager.getVcsFor(file), processor);
   }
 
   public static void processFilePathsByVcs(@NotNull Project project,
-                                           @NotNull Collection<FilePath> files,
+                                           @NotNull Collection<? extends FilePath> files,
                                            @NotNull PerVcsProcessor<FilePath> processor) {
-    processItemsByVcs(files, filePath -> getVcsForFile(filePath.getIOFile(), project), processor);
+    ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
+    processItemsByVcs(files, filePath -> projectLevelVcsManager.getVcsFor(filePath), processor);
   }
 
-  @NotNull
-  public static List<File> filePathsToFiles(@NotNull Collection<FilePath> filePaths) {
-    return filePaths.stream()
-      .map(FilePath::getIOFile)
-      .collect(toList());
+  public static @Unmodifiable @NotNull List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
+    return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }
 
-  public static boolean hasFileChanges(@NotNull Collection<Change> changes) {
-    return changes.stream()
-      .map(ChangesUtil::getFilePath)
-      .anyMatch(path -> !path.isDirectory());
+  public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {
+    for (Change change : changes) {
+      FilePath path = getFilePath(change);
+      if (!path.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  public static void markInternalOperation(@NotNull Iterable<Change> changes, boolean set) {
+  public static void markInternalOperation(@NotNull Iterable<? extends Change> changes, boolean set) {
     for (Change change : changes) {
       VirtualFile file = change.getVirtualFile();
       if (file != null) {
@@ -353,7 +307,7 @@ public class ChangesUtil {
   }
 
   public static void markInternalOperation(@NotNull VirtualFile file, boolean set) {
-    file.putUserData(INTERNAL_OPERATION_KEY, set);
+    file.putUserData(INTERNAL_OPERATION_KEY, set ? Boolean.TRUE : null);
   }
 
   public static boolean isInternalOperation(@NotNull VirtualFile file) {
@@ -361,10 +315,9 @@ public class ChangesUtil {
   }
 
   /**
-   * Find common ancestor for changes (included both before and after files)
+   * Find common ancestor for changes (including both before and after files)
    */
-  @Nullable
-  public static File findCommonAncestor(@NotNull Collection<Change> changes) {
+  public static @Nullable File findCommonAncestor(@NotNull Collection<? extends Change> changes) {
     File ancestor = null;
     for (Change change : changes) {
       File currentChangeAncestor = getCommonBeforeAfterAncestor(change);
@@ -380,12 +333,38 @@ public class ChangesUtil {
     return ancestor;
   }
 
-  @Nullable
-  private static File getCommonBeforeAfterAncestor(@NotNull Change change) {
+  private static @Nullable File getCommonBeforeAfterAncestor(@NotNull Change change) {
     FilePath before = getBeforePath(change);
     FilePath after = getAfterPath(change);
     return before == null
-           ? ObjectUtils.assertNotNull(after).getIOFile()
+           ? Objects.requireNonNull(after).getIOFile()
            : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
+  }
+
+  public static byte @NotNull [] loadContentRevision(@NotNull ContentRevision revision) throws VcsException {
+    if (revision instanceof ByteBackedContentRevision) {
+      byte[] bytes = ((ByteBackedContentRevision)revision).getContentAsBytes();
+      if (bytes == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
+      return bytes;
+    }
+    else {
+      String content = revision.getContent();
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
+      return content.getBytes(revision.getFile().getCharset());
+    }
+  }
+
+  public static boolean hasMeaningfulChangelists(@NotNull Project project) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (!changeListManager.areChangeListsEnabled()) {
+      return false;
+    }
+
+    if (VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
+      return true;
+    }
+
+    List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+    return changeLists.size() != 1 || !changeLists.get(0).isBlank();
   }
 }

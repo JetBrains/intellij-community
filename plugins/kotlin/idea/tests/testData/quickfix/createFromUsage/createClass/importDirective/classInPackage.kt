@@ -1,0 +1,6 @@
+// "Create class 'A'" "true"
+// K2_ERROR: UNRESOLVED_IMPORT
+package p
+
+import p.<caret>A
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

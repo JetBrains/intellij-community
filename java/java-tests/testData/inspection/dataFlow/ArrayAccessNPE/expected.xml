@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-<problem>
-  <file>Test.java</file>
-  <line>5</line>
-  <description>Array access &lt;code&gt;path[0]&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
-</problem>
-</problems>

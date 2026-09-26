@@ -1,0 +1,40 @@
+// FILE: test.before.kt
+// "Change 'arrayOf()' to '*arrayOf()'" "true"
+// ACTION: Add 'toString()' call
+// ACTION: Add full qualifier
+// ACTION: Create member function 'Test.foo'
+// ACTION: Introduce import alias
+// ACTION: Introduce local variable
+// ACTION: Put arguments on separate lines
+// ACTION: Add names in comment to call arguments
+// ERROR: Type mismatch: inferred type is Array<???> but String! was expected
+// COMPILER_ARGUMENTS: -XXLanguage:+ProhibitVarargAsArrayAfterSamArgument
+// WITH_STDLIB
+
+fun main() {
+    Test.foo({}, <caret>arrayOf())
+}
+
+// FILE: Test.java
+public class Test {
+    public static String foo(Runnable r, String... strs) {
+        return null;
+    }
+}
+
+// FILE: test.after.kt
+// "Change 'arrayOf()' to '*arrayOf()'" "true"
+// ACTION: Add 'toString()' call
+// ACTION: Add full qualifier
+// ACTION: Create member function 'Test.foo'
+// ACTION: Introduce import alias
+// ACTION: Introduce local variable
+// ACTION: Put arguments on separate lines
+// ACTION: Add names in comment to call arguments
+// ERROR: Type mismatch: inferred type is Array<???> but String! was expected
+// COMPILER_ARGUMENTS: -XXLanguage:+ProhibitVarargAsArrayAfterSamArgument
+// WITH_STDLIB
+
+fun main() {
+    Test.foo({}, <caret>*arrayOf())
+}

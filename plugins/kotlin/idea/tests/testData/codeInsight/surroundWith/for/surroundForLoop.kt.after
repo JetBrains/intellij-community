@@ -1,0 +1,7 @@
+fun foo() {
+    for (item in <selection><caret>items</selection>) {
+        for (i in 1..10) {
+            println(i)
+        }
+    }
+}

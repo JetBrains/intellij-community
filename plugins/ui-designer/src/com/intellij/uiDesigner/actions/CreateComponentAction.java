@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -22,23 +8,27 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.GridDropLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertLocation;
+import com.intellij.uiDesigner.designSurface.GridInsertMode;
+import com.intellij.uiDesigner.designSurface.GridInsertProcessor;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Processor;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CreateComponentAction extends AbstractGuiEditorAction {
   private ComponentItem myLastCreatedComponent = null;
 
-  protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+  @Override
+  protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
     Processor<ComponentItem> processor = selectedValue -> {
       if (selectedValue != null) {
         myLastCreatedComponent = selectedValue;
@@ -51,7 +41,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
                                                          UIDesignerBundle.message("create.component.title"));
     final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
 
-    if (selection.size() > 0) {
+    if (!selection.isEmpty()) {
       FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));
     }
     else {
@@ -59,9 +49,9 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
     }
   }
 
-  private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<RadComponent> selection) {
+  private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<? extends RadComponent> selection) {
     ComponentDropLocation dropLocation = null;
-    if (selection.size() > 0) {
+    if (!selection.isEmpty()) {
       RadComponent component = selection.get(0);
       final RadContainer container = component.getParent();
       if (container.getLayoutManager().isGrid()) {
@@ -92,8 +82,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
           container = editor.getRootContainer();
         }
         if (container instanceof RadRootContainer && container.getComponentCount() == 1 &&
-          container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+            container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {
@@ -102,8 +91,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
       }
       else {
         final RadRootContainer container = editor.getRootContainer();
-        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer) {
-          RadContainer childContainer = (RadContainer)container.getComponent(0);
+        if (container.getComponentCount() == 1 && container.getComponent(0) instanceof RadContainer childContainer) {
           dropLocation = childContainer.getDropLocation(null);
         }
         else {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -20,19 +6,24 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.intellij.lang.annotations.Language;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
+import org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection;
+import org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("Annotator")
-public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDuplicateNamedGroup() {
     doTest("(?<name>abc)(?<<error descr=\"Group with name 'name' already defined\">name</error>>xyz)");
+  }
+
+  public void testBranchResetGroup() {
+    doTest("<error descr=\"Branch reset groups are not supported in this regex dialect\">(?|(a)|(b))</error>");
   }
 
   public void testAnonymousCapturingGroupInspection() {
@@ -40,8 +31,12 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("<warning descr=\"Anonymous capturing group\">(</warning>moo)<warning descr=\"Numeric back reference\">\\1</warning>");
   }
 
-  public void testSingleRepetition() {
-    doTest("a<weak_warning descr=\"Single repetition\">{1}</weak_warning>");
+  public void testWhiteSpaceProperty() {
+    // needs only partial escaping
+    @NonNls String code = "<weak_warning descr=\"'\\\\P{IsBlank}' can be simplified to '[^ \\\\t]'\">\\\\P{IsBlank}</weak_warning>";
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(code));
+    myFixture.testHighlighting();
   }
 
   public void testRedundantEscape1() {
@@ -54,24 +49,8 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("\\b \\b{g} \\B \\A \\z \\Z \\G");
   }
 
-  public void testSimplifiableRange1() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '?'\">{0,1}</weak_warning>");
-  }
-
-  public void testSimplifiableRange2() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '+'\">{1,}</weak_warning>");
-  }
-
-  public void testSimplifiableRange3() {
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{0,}</weak_warning>");
-  }
-
-  public void testFixedRepetitionRange() {
-    doTest("a<weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning>");
-  }
-
-  public void testDuplicateCharacterClass() {
-    doTest("[\\w-<warning descr=\"Duplicate predefined character class '\\w' inside character class\">\\w</warning>]");
+  public void testNotDuplicateControlCharacter() {
+    doTest("[\\ca\\cb]");
   }
 
   public void testNoRange() {
@@ -124,10 +103,6 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("(?<importantValue1>\\d\\d)");
   }
 
-  public void testRedundantCharacterRange() {
-    doTest("[<warning descr=\"Redundant character range\">a-a</warning>]");
-  }
-
   public void testIllegalCharacterRange1() {
     doTest("[<error descr=\"Illegal character range (to < from)\">\\x4a-\\x3f</error>]");
   }
@@ -137,7 +112,9 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testIllegalCharacterRange3() {
-    doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]");
+    doTest("[<error descr=\"Illegal character range (to < from)\">z-a</error>]",
+           "Swap ",
+           "[a-z]");
   }
 
   public void testIllegalCharacterRange4() {
@@ -152,7 +129,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testQuoted() {
-    doTest("[\\Qabc?*+.)<warning descr=\"Duplicate character ')' inside character class\">)</warning>]<warning descr=\"Duplicate character ']' inside character class\">]</warning>[<warning descr=\"Duplicate character ']' inside character class\">]</warning>\\E]");
+    doTest("[\\Qabc?*+.))]][]</warning>\\E]");
   }
 
   public void testValidDanglingMetacharacters() {
@@ -197,7 +174,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testPosixCharacterClass() {
     // posix character classes are not available in java regex patterns
-    doTest("[:xdig<warning descr=\"Duplicate character 'i' inside character class\">i</warning>t<warning descr=\"Duplicate character ':' inside character class\">:</warning>]+");
+    doTest("[:xdigit:]+");
   }
 
   public void testNestedBackReference() {
@@ -205,7 +182,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNoNPE() {
-    doTest("<warning descr=\"Empty group\">(</warning><error descr=\"Unclosed group\">\"</error>);}}//");
+    doTest("(<error descr=\"')' expected\">\"</error>);}}//");
   }
 
   public void testBadInlineOption() {
@@ -223,14 +200,15 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testCountedQuantifier() {
     doTest("a{2147483647}");
     doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
-    doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
-    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{<error descr=\"Number expected\">,</error>}</weak_warning>");
+    doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}",
+           "Swap ",
+           "a{0,1}");
   }
 
   public void testOptions() {
-    doTest("(?i)<error descr=\"Dangling metacharacter\">+</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">*</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '+'\">+</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '*'\">*</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '{5,6}'\">{5,6}</error>");
   }
 
   public void testLookbehind() {
@@ -241,10 +219,86 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("(one)(?<!<error descr=\"Group reference not allowed inside lookbehind\">\\1</error>)");
   }
 
-  private void doTest(@Language("RegExp") String code) {
+  public void testNamedProperties() {
+    doTest("\\p{<error descr=\"Unknown character category\">Block</error>}+");
+    doTest("\\p{Block=<error descr=\"Property value expected\">}</error>+");
+    doTest("\\p{Block=CombiningDiacriticalMarks}+");
+    doTest("\\p{blk=CombiningDiacriticalMarks}+");
+    doTest("\\p{blk=<error descr=\"Unknown property value\">XXX</error>}+");
+    doTest("\\p{script=Cyrillic}+");
+    doTest("\\p{SC=Cyrillic}+");
+    doTest("\\p{Sc=<error descr=\"Unknown property value\">YYY</error>}+");
+    doTest("\\p{general_Category=javaWhitespace}+");
+    doTest("\\p{GC=LD}+");
+    doTest("\\p{gc=<error descr=\"Unknown property value\">ZZZ</error>}+");
+  }
+
+  public void testConditionalExprNegative1() {
+    doTestUnexpectedAnchor("c ? \"^Hello$\" : \"^World$\"");
+  }
+
+  public void testBinaryExprPositive1() {
+    doTestUnexpectedAnchor("\"^good" + warningMarker('$') + "\" + \"" + warningMarker('^') + "luck$\"");
+  }
+
+  public void testConditionalExprPositive1() {
+    doTestUnexpectedAnchor("c ? \" " + warningMarker('^') + "Hello" + warningMarker('$') + " \" " +
+                           ": \" " + warningMarker('^') + "World" + warningMarker('$') + " \"");
+  }
+
+  public void testConditionalExprPositive2() {
+    doTestUnexpectedAnchor("c ? \" " + warningMarker('^') + "Hello$\" " +
+                           ": \"^Have" + warningMarker('$') + "\" + \"" + warningMarker('^') + "Fun$\"");
+  }
+
+  public void testConditionalExprPositive3() {
+    doTestUnexpectedAnchor("c ? (c ? (c ? \"^go$\" : \"^od" + warningMarker('$') + "\" + \"" + warningMarker('^') + "lu$\") : \"^ck$\") " +
+                           ": (c ? \"^and" + warningMarker('$') + "\" + \"" + warningMarker('^') +
+                           "ha" + warningMarker('$') + "\" + \"" + warningMarker('^') + "ve$\" : \"^fun$\")");
+  }
+
+  public void testConditionalExprPositive4() {
+    doTestUnexpectedAnchor("c ? \"^hello" + warningMarker('$') + "\" + getStr() + \"" + warningMarker('^') + "world$\" " +
+                           ": getStr() + \"" + warningMarker('^') + "yeah" + warningMarker('$') + " \"");
+  }
+
+  public void testConcatenationWithEmptyStrings() {
+    // "" + " ^" + "" + "$ "
+    doTestUnexpectedAnchor("\"\" +" + "\" " + warningMarker('^') + "\" + " + "\"\" + " + "\"" + warningMarker('$') + " \"");
+  }
+
+  private void doTest(@NonNls String code) {
     code = StringUtil.escapeBackSlashes(code);
-    myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(code));
     myFixture.testHighlighting();
+  }
+  
+  private void doTest(@NonNls String code, @NonNls String fixPrefix, @NonNls String result) {
+    myFixture.configureByText(JavaFileType.INSTANCE, wrap(StringUtil.escapeBackSlashes(code)));
+    myFixture.testHighlighting();
+    myFixture.launchAction(myFixture.findSingleIntention(fixPrefix));
+    myFixture.checkResult(wrap(result));
+  }
+
+  private static @NonNls @NotNull String wrap(@NonNls String code) {
+    return "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}";
+  }
+
+  private void doTestUnexpectedAnchor(@NonNls String code) {
+    myFixture.enableInspections(new UnexpectedAnchorInspection());
+    myFixture.configureByText(JavaFileType.INSTANCE, "class X {" +
+                                                     " void test(boolean c) {" +
+                                                     "   java.util.regex.Pattern.compile(" + code + ");" +
+                                                     " }" +
+                                                     " String getStr() {" +
+                                                     "   return \"\";" +
+                                                     " }" +
+                                                     "}");
+    myFixture.testHighlighting();
+  }
+
+  private static String warningMarker(char symbol) {
+    return String.format("<warning descr=\"Anchor '%s' in unexpected position\">%s</warning>", symbol, symbol);
   }
 
   @NotNull

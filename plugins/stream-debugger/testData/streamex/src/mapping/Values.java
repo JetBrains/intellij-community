@@ -4,7 +4,7 @@ import one.util.streamex.EntryStream;
 
 public class Values {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     final long sum = EntryStream.of(1, 1, 2, 4, 3, 9)
         .values()
         .mapToInt(Integer::intValue)

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="fleet:io.ktor.utils" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-utils-jvm:3.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.6.0/ktor-utils-jvm-3.6.0.jar">
+          <sha256sum>05698e23c0539c7042676a98557e3358e77e19efa9fa4fc2145f20ad8721aefc</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.6.0/ktor-utils-jvm-3.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.6.0/ktor-utils-jvm-3.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

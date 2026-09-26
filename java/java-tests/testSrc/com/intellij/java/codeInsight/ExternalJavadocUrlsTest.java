@@ -1,63 +1,130 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
+public class ExternalJavadocUrlsTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String DOC_URL = "https://docs.oracle.com/en/java/javase/14/docs/api/";
+  private static final ProjectDescriptor DESCRIPTOR = new ProjectDescriptor(LanguageLevel.JDK_14) {
+    @Override
+    public Sdk getSdk() {
+       Sdk sdk = IdeaTestUtil.getMockJdk21();
+       SdkModificator modificator = sdk.getSdkModificator();
+       modificator.addRoot(DOC_URL, new JavadocOrderRootType());
+       ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
+
+       return sdk;
+    }
+
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      setMockJavadocUrl(model);
+    }
+  };
+
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return DESCRIPTOR;
+  }
+
+  protected static void setMockJavadocUrl(@NotNull ModifiableRootModel model) {
+    model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(new String[]{"http://doc"});
   }
 
   public void testVarargs() {
-    doTest("class Test {\n" +
-           "  void <caret>foo(Class<?>... cl) { }\n" +
-           "}",
+    doTestMethod("""
+             class Test {
+               void <caret>foo(Class<?>... cl) { }
+             }""",
 
-           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-", "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
+           "foo(java.lang.Class...)", "foo-java.lang.Class...-");
 
   }
 
   public void testTypeParams() {
-    doTest("class Test {\n" +
-           "  <T> void <caret>sort(T[] a, Comparator<? super T> c) { }\n" +
-           "}\n" +
-           "class Comparator<X>{}",
+    doTestMethod("""
+             class Test {
+               <T> void <caret>sort(T[] a, Comparator<? super T> c) { }
+             }
+             class Comparator<X>{}""",
 
-           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-", "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
+           "sort(T[],Comparator)", "sort-T:A-Comparator-", "sort(T[], Comparator)");
   }
 
-  protected void doTest(String text, String... expected) {
+  public void testConstructor() {
+    doTestMethod("""
+             class Test {
+               Test<caret>() { }
+             }""",
+           "<init>()", "Test--", "Test()");
+  }
+  
+  public void testImplicitClass() {
+    doTestMethod("""
+             void <caret>main() {}
+             """, "main()", "main--");
+  }
+  
+  public void testImplicitClassWithPackage() {
+    doTestMethod("""
+             package foo.bar;
+             
+             void <caret>main() {}
+             """);
+  }
+
+  /// See IDEA-366031
+  public void testDocumentationPath() {
+    doTestElement("""
+      void function() {
+        Str<caret>ing toto = null;
+      }
+      """,
+       "https://docs.oracle.com/en/java/javase/14/docs/api/java.base/java/lang/String.html", 
+      "https://docs.oracle.com/en/java/javase/14/docs/api/java/lang/String.html");
+  }
+
+  protected void doTestElement(String text, String... expected) {
+    myFixture.configureByText("Test.java", text);
+    doTest(myFixture.getElementAtCaret(), expected);
+  }
+
+  protected void doTestMethod(String text, String... expected) {
     myFixture.configureByText("Test.java", text);
     PsiElement elementAtCaret = myFixture.getElementAtCaret();
-    PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
-    assertNotNull(member);
-    List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(member);
-    assertNotNull(urls);
-    List<String> actual = ContainerUtil.map(urls, url -> url.substring(url.indexOf('#') + 1));
-    assertOrderedEquals(actual, expected);
+    doTest(PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false), expected);
+  }
+
+  private static void doTest(PsiElement element, String... expected) {
+    assertNotNull(element);
+    List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(element);
+    if (expected.length == 0) {
+      assertNull(urls);
+    } else {
+      assertNotNull(urls);
+      List<String> actual = ContainerUtil.map(urls, url -> url.substring(url.indexOf('#') + 1));
+      assertOrderedEquals(actual, expected);
+    }
   }
 }

@@ -1,0 +1,29 @@
+for (;a instanceof b
+ c;) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Traditional FOR clause
+      PsiElement(;)(';')
+      Instanceof expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(instanceof)('instanceof')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('b')
+        PsiElement(new line)('\n ')
+        GrPatternVariableImpl(PATTERN_VARIABLE)
+          PsiElement(identifier)('c')
+      PsiElement(;)(';')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

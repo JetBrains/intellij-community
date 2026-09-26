@@ -1,61 +1,51 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("MethodMayBeStatic")
-public abstract class AutoScrollFromSourceHandler implements Disposable {
+public abstract class AutoScrollFromSourceHandler {
   protected final Project myProject;
   protected final Alarm myAlarm;
+  private final Disposable myParentDisposable;
   private final JComponent myComponent;
 
-  public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view) {
-    this(project, view, null);
+  public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view, @NotNull Disposable parentDisposable) {
+    myProject = project;
+    myComponent = view;
+    myAlarm = new Alarm(parentDisposable);
+    myParentDisposable = parentDisposable;
   }
 
-  public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view, @Nullable Disposable parentDisposable) {
-    myProject = project;
+  protected @NlsActions.ActionText String getActionName() {
+    return UIBundle.message("autoscroll.from.source.action.name");
+  }
 
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, this);
-    }
-    myComponent = view;
-    myAlarm = new Alarm(this);
+  protected @NlsActions.ActionDescription String getActionDescription() {
+    return UIBundle.message("autoscroll.from.source.action.description");
   }
 
   protected abstract boolean isAutoScrollEnabled();
@@ -73,43 +63,56 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
   }
 
   public void install() {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    final MessageBusConnection connection = myProject.getMessageBus().connect(myParentDisposable);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        final FileEditor editor = event.getNewEditor();
-        if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
-        }
+        selectInAlarm(event.getNewEditor());
       }
     });
+    updateCurrentSelection();
   }
 
-  @Override
-  public void dispose() {
-    if (!myAlarm.isDisposed()) {
+  protected void selectInAlarm(final FileEditor editor) {
+    // Code WithMe: do not process changes from remote (client) editor switching
+    if (!ClientId.isCurrentlyUnderLocalId()) return;
+
+    if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
       myAlarm.cancelAllRequests();
+      myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
+    }
+  }
+
+  private void updateCurrentSelection() {
+    FileEditor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
+    if (selectedEditor != null) {
+      ApplicationManager.getApplication().invokeLater(() -> selectInAlarm(selectedEditor), ModalityState.nonModal(), myProject.getDisposed());
     }
   }
 
   public ToggleAction createToggleAction() {
-    return new AutoScrollFromSourceAction();
+    return new AutoScrollFromSourceAction(getActionName(), getActionDescription());
   }
 
   private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
-    public AutoScrollFromSourceAction() {
-      super(UIBundle.message("autoscroll.from.source.action.name"),
-            UIBundle.message("autoscroll.from.source.action.description"),
-            AllIcons.General.AutoscrollFromSource);
+    AutoScrollFromSourceAction(@NlsActions.ActionText String actionName, @NlsActions.ActionDescription String actionDescription) {
+      super(actionName, actionDescription, AllIcons.General.AutoscrollFromSource);
     }
 
-    public boolean isSelected(final AnActionEvent event) {
+    @Override
+    public boolean isSelected(final @NotNull AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(final @NotNull AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
+      updateCurrentSelection();
     }
   }
 }

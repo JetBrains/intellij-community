@@ -1,0 +1,10 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.collaborationTools.shared"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.vcs.gitlab.shared"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

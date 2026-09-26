@@ -24,8 +24,7 @@ import com.intellij.testIntegration.createTest.CreateTestAction;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaTestCreator implements TestCreator {
-  private static final Logger LOG = Logger.getInstance("com.intellij.testIntegration.JavaTestCreator");
-
+  private static final Logger LOG = Logger.getInstance(JavaTestCreator.class);
 
   @Override
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -34,6 +33,7 @@ public class JavaTestCreator implements TestCreator {
     return CreateTestAction.isAvailableForElement(element);
   }
 
+  @Override
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
       CreateTestAction action = new CreateTestAction();

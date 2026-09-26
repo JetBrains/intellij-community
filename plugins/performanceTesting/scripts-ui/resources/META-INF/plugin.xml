@@ -1,0 +1,58 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin>
+  <id>com.jetbrains.performanceScripts</id>
+  <name>Performance Scripts UI</name>
+  <vendor>JetBrains</vendor>
+
+  <description>
+    Provides UI to execute performance scripts written in IJPerf language.
+    Run scripts from Help | Diagnostic Tools | Execute Performance Script…
+  </description>
+
+  <resource-bundle>messages.PerformanceScriptsBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <content namespace="jetbrains"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="IntegrationPerformanceTest"
+              implementationClass="com.jetbrains.performanceScripts.lang.IJPerfFileType"
+              fieldName="INSTANCE" language="IntegrationPerformanceTest" extensions="ijperf"/>
+
+    <lang.parserDefinition language="IntegrationPerformanceTest"
+                           implementationClass="com.jetbrains.performanceScripts.lang.IJPerfParserDefinition"/>
+
+    <lang.syntaxHighlighterFactory language="IntegrationPerformanceTest"
+                                   implementationClass="com.jetbrains.performanceScripts.lang.IJPerfSyntaxHighlighterFactory"/>
+
+    <completion.contributor language="IntegrationPerformanceTest"
+                            implementationClass="com.jetbrains.performanceScripts.lang.completion.IJPerfCompletionContributor"/>
+
+    <annotator language="IntegrationPerformanceTest"
+               implementationClass="com.jetbrains.performanceScripts.lang.inspections.IJPerfStartStopProfileInspection"/>
+  </extensions>
+
+  <actions>
+    <action id="performancePlugin.ExecuteScriptAction" class="com.jetbrains.performanceScripts.ui.ExecuteScriptAction">
+      <add-to-group group-id="DiagnosticGroup" anchor="after" relative-to-action="CaptureMemorySnapShot"/>
+    </action>
+  </actions>
+</idea-plugin>

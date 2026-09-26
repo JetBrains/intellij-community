@@ -1,0 +1,10 @@
+<problems>
+    <problem>
+        <file>varCapturingBaseTest.kt</file>
+        <line>4</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="varCapturingBaseTest.kt" />
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Escaped captured variable</problem_class>
+        <description>Variable 'unstable' is captured and might be modified by another execution context</description>
+    </problem>
+</problems>

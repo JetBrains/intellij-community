@@ -1,0 +1,102 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    FUNCTION_DEFINITION
+      PsiElement(word)('foo')
+      PsiElement(()('(')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      BLOCK
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          PIPELINE_COMMAND_LIST
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('foo')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                VARIABLE
+                  PsiElement(var)('$1')
+                PsiElement(CLOSE_QUOTE)('"')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('shift')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            WHILE_COMMAND
+              PsiElement(while)('while')
+              PsiWhiteSpace(' ')
+              COMPOUND_LIST
+                CONDITIONAL_COMMAND
+                  PsiElement([)('[')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    VARIABLE
+                      PsiElement(var)('$#')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-gt')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    NUMBER
+                      PsiElement(int)('0')
+                  PsiWhiteSpace(' ')
+                  PsiElement(])(']')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              DO_BLOCK
+                PsiElement(do)('do')
+                PsiWhiteSpace(' ')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND_LIST
+                    CASE_COMMAND
+                      PsiElement(case)('case')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$1')
+                        PsiElement(CLOSE_QUOTE)('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(in)('in')
+                      PsiWhiteSpace(' ')
+                      CASE_CLAUSE
+                        PATTERN
+                          PsiElement(()('(')
+                          VARIABLE
+                            PsiElement(var)('$foo')
+                        PsiElement())(')')
+                      PsiWhiteSpace(' ')
+                      PsiElement(;;)(';;')
+                      PsiWhiteSpace(' ')
+                      CASE_CLAUSE
+                        PATTERN
+                          PsiElement(()('(')
+                          PsiElement(word)('*')
+                        PsiElement())(')')
+                        PsiWhiteSpace(' ')
+                        COMPOUND_LIST
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('return')
+                            PsiWhiteSpace(' ')
+                            NUMBER
+                              PsiElement(int)('1')
+                      PsiElement(;;)(';;')
+                      PsiWhiteSpace(' ')
+                      PsiElement(esac)('esac')
+                    PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('shift')
+                  PsiElement(;)(';')
+                PsiWhiteSpace(' ')
+                PsiElement(done)('done')
+          PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')

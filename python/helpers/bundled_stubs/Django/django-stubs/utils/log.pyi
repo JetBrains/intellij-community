@@ -1,0 +1,76 @@
+import logging.config
+from collections.abc import Callable
+from logging import Logger, LogRecord
+from typing import Any, overload
+
+from django.core.management.color import Style
+from django.http import HttpRequest, HttpResponse
+from django.utils.functional import _StrOrPromise
+from typing_extensions import deprecated, override
+
+request_logger: Logger
+DEFAULT_LOGGING: Any
+
+def configure_logging(logging_config: str, logging_settings: dict[str, Any]) -> None: ...
+
+class AdminEmailHandler(logging.Handler):
+    include_html: bool
+    email_backend: str | None
+    reporter_class: type[Any]
+    @overload
+    def __init__(
+        self,
+        include_html: bool = False,
+        reporter_class: str | None = None,
+        using: str | None = None,
+    ) -> None: ...
+    @overload
+    @deprecated("The 'email_backend' argument is deprecated. Use 'using' instead.")
+    def __init__(
+        self,
+        include_html: bool = False,
+        email_backend: str | None = None,
+        reporter_class: str | None = None,
+    ) -> None: ...
+    def send_mail(self, subject: _StrOrPromise, message: _StrOrPromise, *args: Any, **kwargs: Any) -> None: ...
+    def format_subject(self, subject: str) -> str: ...
+
+class CallbackFilter(logging.Filter):
+    callback: Callable[[str | LogRecord], bool]
+    def __init__(self, callback: Callable[[str | LogRecord], bool]) -> None: ...
+    @override
+    def filter(self, record: str | LogRecord) -> bool: ...
+
+class RequireDebugFalse(logging.Filter):
+    @override
+    def filter(self, record: str | LogRecord) -> bool: ...
+
+class RequireDebugTrue(logging.Filter):
+    @override
+    def filter(self, record: str | LogRecord) -> bool: ...
+
+class ServerFormatter(logging.Formatter):
+    default_time_format: str
+    style: Style
+    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def uses_server_time(self) -> bool: ...
+
+def log_message(
+    logger: Logger,
+    message: str,
+    *args: object,
+    level: str | None = None,
+    status_code: int | None = None,
+    request: HttpRequest | None = None,
+    exception: BaseException | None = None,
+    **extra: object,
+) -> None: ...
+def log_response(
+    message: str,
+    *args: object,
+    response: HttpResponse | None = None,
+    request: HttpRequest | None = None,
+    logger: Logger = ...,
+    level: str | None = None,
+    exception: BaseException | None = None,
+) -> None: ...

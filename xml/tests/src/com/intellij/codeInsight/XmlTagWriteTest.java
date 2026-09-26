@@ -20,14 +20,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 
 /**
  * @author lesya, dsl
  */
-public class XmlTagWriteTest extends LightCodeInsightTestCase{
+public class XmlTagWriteTest extends LightJavaCodeInsightTestCase {
   public void test1() throws IncorrectOperationException {
     XmlElementFactory elementFactory = XmlElementFactory.getInstance(getProject());
     final XmlTag xmlTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<tag1/>");

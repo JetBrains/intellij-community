@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,16 +9,17 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.ValidatableSdkAdditionalData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.WatchRoots;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class Sandbox implements ValidatableSdkAdditionalData {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
+  private static final Logger LOG = Logger.getInstance(Sandbox.class);
 
   @SuppressWarnings("WeakerAccess")
   public String mySandboxHome;
@@ -41,14 +28,14 @@ public class Sandbox implements ValidatableSdkAdditionalData {
   private String myJavaSdkName;
   private Sdk myJavaSdk;
 
-  private LocalFileSystem.WatchRequest mySandboxRoot;
-  @NonNls private static final String SDK = "sdk";
+  private WatchRoots.Token mySandboxRoot;
+  private static final @NonNls String SDK = "sdk";
 
   public Sandbox(String sandboxHome, Sdk javaSdk, Sdk currentJdk) {
     mySandboxHome = sandboxHome;
     myCurrentJdk = currentJdk;
     if (mySandboxHome != null) {
-      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+      mySandboxRoot = WatchRoots.getInstance().watch(mySandboxHome, true);
     }
     myJavaSdk = javaSdk;
   }
@@ -58,7 +45,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     myCurrentJdk = currentSdk;
   }
 
-  public String getSandboxHome() {
+  public @NlsSafe String getSandboxHome() {
     return mySandboxHome;
   }
 
@@ -68,7 +55,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
     if (getJavaSdk() == null) {
-      throw new ConfigurationException(DevKitBundle.message("jdk.specification"));
+      throw new ConfigurationException(DevKitBundle.message("sandbox.no.sdk"));
     }
   }
 
@@ -77,7 +64,7 @@ public class Sandbox implements ValidatableSdkAdditionalData {
     LOG.assertTrue(mySandboxRoot == null);
     myJavaSdkName = element.getAttributeValue(SDK);
     if (mySandboxHome != null) {
-      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+      mySandboxRoot = WatchRoots.getInstance().watch(mySandboxHome, true);
     }
   }
 
@@ -91,12 +78,11 @@ public class Sandbox implements ValidatableSdkAdditionalData {
 
   void cleanupWatchedRoots() {
     if (mySandboxRoot != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(mySandboxRoot);
+      mySandboxRoot.close();
     }
   }
 
-  @Nullable
-  public Sdk getJavaSdk() {
+  public @Nullable Sdk getJavaSdk() {
     final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
     if (myJavaSdk == null) {
       if (myJavaSdkName != null) {

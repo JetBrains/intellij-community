@@ -1,43 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
+import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiElement
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.StringReader
 
 
 class MockInlayProvider(private val defaultBlackList: Set<String>): InlayParameterHintsProvider {
-  override fun getParameterHints(element: PsiElement) = emptyList<InlayInfo>()
-  override fun getHintInfo(element: PsiElement) = null
-  override fun getDefaultBlackList() = defaultBlackList
+  override fun getParameterHints(element: PsiElement): List<InlayInfo> = emptyList()
+  override fun getHintInfo(element: PsiElement): Nothing? = null
+  override fun getDefaultBlackList(): Set<String> = defaultBlackList
 }
 
 
-class ParameterNameSettingsTest : TestCase() {
+@TestApplication
+class ParameterNameSettingsTest {
 
   lateinit var settings: ParameterNameHintsSettings
   lateinit var inlayProvider: InlayParameterHintsProvider
   
-  override fun setUp() {
+  @BeforeEach
+  fun setUp() {
     settings = ParameterNameHintsSettings()
     inlayProvider = MockInlayProvider(setOf())
   }
@@ -54,14 +46,15 @@ class ParameterNameSettingsTest : TestCase() {
     val base = inlayProvider.defaultBlackList
     val diff = Diff.build(base, setOf(*newPatternSet))
     
-    settings.setBlackListDiff(PlainTextLanguage.INSTANCE, diff)
+    settings.setExcludeListDiff(PlainTextLanguage.INSTANCE, diff)
   }
   
   fun getIgnoreSet(): Set<String> {
-    val diff = settings.getBlackListDiff(PlainTextLanguage.INSTANCE)
+    val diff = settings.getExcludeListDiff(PlainTextLanguage.INSTANCE)
     return diff.applyOn(inlayProvider.defaultBlackList)
   }
 
+  @Test
   fun `test ignore pattern is added`() {
     defaultSettingsUpdated("xxx")
     
@@ -76,6 +69,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("xxx"))
   }
 
+  @Test
   fun `test if empty element is passed settings are dropped`() {
     addIgnorePattern("new_ignore_pattern")
 
@@ -88,6 +82,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.isEmpty())
   }
 
+  @Test
   fun `test removed pattern is removed when defaults are updated`() {
     defaultSettingsUpdated("aaa", "bbb")
 
@@ -105,6 +100,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("ccc"))
   }
 
+  @Test
   fun `test added items remain added on defaults update`() {
     defaultSettingsUpdated("aaa")
     var ignoreSet = getIgnoreSet()
@@ -122,16 +118,17 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("xxx"))
   }
 
+  @Test
   fun `test state is preserved between restarts`() {
     val added = setOf("added")
     val removed = setOf("removed")
     
-    settings.setBlackListDiff(PlainTextLanguage.INSTANCE, Diff(added, removed))
+    settings.setExcludeListDiff(PlainTextLanguage.INSTANCE, Diff(added, removed))
     
     val state = settings.state
     settings.loadState(state)
 
-    val diff = settings.getBlackListDiff(PlainTextLanguage.INSTANCE)
+    val diff = settings.getExcludeListDiff(PlainTextLanguage.INSTANCE)
     assert(diff.added.contains("added"))
     assert(diff.added.size == 1)
     
@@ -139,6 +136,19 @@ class ParameterNameSettingsTest : TestCase() {
     assert(diff.removed.size == 1)
   }
 
+  @Test
+  fun `test disabled languages preserved between restarts`() {
+    val settings = ParameterNameHintsSettings()
+    val language = object : Language("testLanguage") {}
+    settings.setIsEnabledForLanguage(false, language)
+    val state = settings.state
+
+    val newSettings = ParameterNameHintsSettings()
+    newSettings.loadState(state)
+    assertFalse(newSettings.isEnabledForLanguage(language))
+  }
+
+  @Test
   fun `test state is correctly loaded from incorrect model`() {
     val text = """
 <settings>
@@ -156,7 +166,7 @@ class ParameterNameSettingsTest : TestCase() {
     val root = SAXBuilder().build(StringReader(text)).rootElement
     settings.loadState(root)
     
-    val diff = settings.getBlackListDiff(PlainTextLanguage.INSTANCE)
+    val diff = settings.getExcludeListDiff(PlainTextLanguage.INSTANCE)
     assert(diff.added.contains("added"))
     assert(diff.added.size == 1)
     

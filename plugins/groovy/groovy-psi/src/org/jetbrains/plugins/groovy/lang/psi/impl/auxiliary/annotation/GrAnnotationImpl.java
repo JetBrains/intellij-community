@@ -1,19 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
-import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -32,9 +41,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getAliasedFullyQualifiedNames;
+
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
 
@@ -46,7 +56,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   public GrAnnotationImpl(GrAnnotationStub stub) {
-    super(stub, GroovyElementTypes.ANNOTATION);
+    super(stub, GroovyStubElementTypes.ANNOTATION);
   }
 
   @Override
@@ -54,20 +64,18 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     visitor.visitAnnotation(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation";
   }
 
   @Override
-  @NotNull
-  public GrAnnotationArgumentList getParameterList() {
-    return getRequiredStubOrPsiChild(GroovyElementTypes.ANNOTATION_ARGUMENTS);
+  public @NotNull GrAnnotationArgumentList getParameterList() {
+    return getRequiredStubOrPsiChild(GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST);
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getQualifiedName() {
+  public @Nullable @NonNls String getQualifiedName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       return stub.getPsiElement().getQualifiedName();
@@ -80,8 +88,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  @Nullable
-  public PsiJavaCodeReferenceElement getNameReferenceElement() {
+  public @Nullable PsiJavaCodeReferenceElement getNameReferenceElement() {
     final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
 
     final PsiElement resolved = resolveResult.getElement();
@@ -91,14 +98,12 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
+  public @Nullable PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {
     return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+  public @Nullable PsiAnnotationMemberValue findDeclaredAttributeValue(final @NonNls String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
@@ -109,14 +114,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public GrCodeReferenceElement getClassReference() {
+  public @NotNull GrCodeReferenceElement getClassReference() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       return stub.getPsiElement().getClassReference();
@@ -126,11 +124,10 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
-      return stub.getPsiElement().getShortName();
+      return PsiAnnotationImpl.getAnnotationShortName(stub.getText());
     }
 
     final String referenceName = getClassReference().getReferenceName();
@@ -139,32 +136,40 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @Override
-  @Nullable
-  public PsiAnnotationOwner getOwner() {
+  public @Nullable PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
     return parent instanceof PsiAnnotationOwner ? (PsiAnnotationOwner)parent : null;
   }
 
-  @NotNull
-  public static TargetType[] getApplicableElementTypeFields(PsiElement owner) {
-    if (owner instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)owner;
+  @Override
+  public boolean hasQualifiedName(@NotNull String qualifiedName) {
+    return mayHaveQualifiedName(qualifiedName) && qualifiedName.equals(getQualifiedName());
+  }
+
+  private boolean mayHaveQualifiedName(@NotNull String qualifiedName) {
+    String shortName = getShortName();
+    return shortName.equals(StringUtil.getShortName(qualifiedName)) ||
+           getAliasedFullyQualifiedNames(this, shortName).contains(qualifiedName);
+  }
+
+  public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
+    if (owner instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
-        return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
+        return addTypeUseIfApplicable(owner, TargetType.ANNOTATION_TYPE, TargetType.TYPE);
       }
       else if (aClass instanceof GrTypeParameter) {
-        return new TargetType[]{TargetType.TYPE_PARAMETER};
+        return addTypeUseIfApplicable(owner, TargetType.TYPE_PARAMETER);
       }
       else {
-        return new TargetType[]{TargetType.TYPE};
+        return addTypeUseIfApplicable(owner, TargetType.TYPE);
       }
     }
     if (owner instanceof GrMethod) {
       if (((PsiMethod)owner).isConstructor()) {
-        return new TargetType[]{TargetType.CONSTRUCTOR};
+        return addTypeUseIfApplicable(owner, TargetType.CONSTRUCTOR);
       }
       else {
-        return new TargetType[]{TargetType.METHOD};
+        return addTypeUseIfApplicable(owner, TargetType.METHOD);
       }
     }
     if (owner instanceof GrVariableDeclaration) {
@@ -173,14 +178,14 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return TargetType.EMPTY_ARRAY;
       }
       if (variables[0] instanceof GrField || ResolveUtil.isScriptField(variables[0])) {
-        return new TargetType[]{TargetType.FIELD};
+        return addTypeUseIfApplicable(owner, TargetType.FIELD);
       }
       else {
-        return new TargetType[]{TargetType.LOCAL_VARIABLE};
+        return addTypeUseIfApplicable(owner, TargetType.LOCAL_VARIABLE);
       }
     }
     if (owner instanceof GrParameter) {
-      return new TargetType[]{TargetType.PARAMETER};
+      return addTypeUseIfApplicable(owner, TargetType.PARAMETER);
     }
     if (owner instanceof GrPackageDefinition) {
       return new TargetType[]{TargetType.PACKAGE};
@@ -188,11 +193,27 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     if (owner instanceof GrTypeElement) {
       return new TargetType[]{TargetType.TYPE_USE};
     }
+    if (owner instanceof GrCodeReferenceElement) {
+      return new TargetType[]{TargetType.TYPE_USE};
+    }
+
 
     return TargetType.EMPTY_ARRAY;
   }
 
-  public static boolean isAnnotationApplicableTo(GrAnnotation annotation, @NotNull TargetType... elementTypeFields) {
+  private static TargetType[] addTypeUseIfApplicable(@NotNull PsiElement element, TargetType @NotNull ... baseTargetTypeArray) {
+    if (GroovyConfigUtils.isAtLeastGroovy40(element)) {
+      int length = baseTargetTypeArray.length;
+      TargetType[] newTargetTypeArray = new TargetType[length + 1];
+      System.arraycopy(baseTargetTypeArray, 0, newTargetTypeArray, 0, length);
+      newTargetTypeArray[length] = TargetType.TYPE_USE;
+      return newTargetTypeArray;
+    } else {
+      return baseTargetTypeArray;
+    }
+  }
+
+  public static boolean isAnnotationApplicableTo(GrAnnotation annotation, TargetType @NotNull ... elementTypeFields) {
     return elementTypeFields.length == 0 || AnnotationTargetUtil.findAnnotationTarget(annotation, elementTypeFields) != null;
   }
 }

@@ -1,0 +1,2 @@
+version = "1.0.*"
+upstream-repository = "https://github.com/bfrascher/passpy"

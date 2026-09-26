@@ -1,0 +1,49 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.python.sdk.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!--
+      The two Python widgets sit together at the right end of the bar: this one, then `pythonDependencyFileWidget`,
+      after the VCS and schema widgets. That pairing is stated from both sides — see the dependency-file widget's own
+      `after EvoPySdkStatusBarWidget`.
+
+      Every `after` here has to name something this process can resolve, which is what went wrong before (PY-92487).
+      The order used to read `after pythonInterpreterWidget, before pythonDependencyFileWidget`, and on the frontend
+      neither `after` survived: `pythonInterpreterWidget` is the classic widget, which disables itself whenever this one
+      is on (`PySdkStatusBarWidgetFactory.isAvailable`), so it is never registered at all. `LoadingOrder` drops an
+      anchor it cannot resolve, leaving only a `before` — and a widget with no `after` may be placed anywhere ahead of
+      it, which put this one at the far left of the bar.
+
+      `CodeStyleStatusBarWidget` leads the list because it is the one anchor that is always there: it is an EP of
+      `intellij.platform.lang.impl`, a shared module, so it is registered in both processes. `git`, `hg` and
+      `JSONSchemaSelector` are backend EPs that reach the frontend over RPC
+      (`BackendStatusBarHost` → `FrontendStatusBarModelListener`); they do resolve once they arrive, since a forwarded
+      widget joins the same registry the sort reads, but a project with no VCS has none of them. The code-style anchor
+      is what holds the position then.
+    -->
+    <statusBarWidgetFactory id="EvoPySdkStatusBarWidget"
+                            implementation="com.intellij.python.sdk.frontend.evolution.PySdkStatusBarWidgetFactory"
+                            order="after CodeStyleStatusBarWidget, after git, after hg, after JSONSchemaSelector, before pythonDependencyFileWidget, before ReadOnlyAttribute"/>
+    <!-- Evo widget registry keys live in intellij.python.sdk.common.xml (registered in both frontend and backend). -->
+  </extensions>
+</idea-plugin>

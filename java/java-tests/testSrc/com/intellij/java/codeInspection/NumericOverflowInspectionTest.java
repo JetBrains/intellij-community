@@ -18,9 +18,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.NumericOverflowInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class NumericOverflowInspectionTest extends LightCodeInsightFixtureTestCase {
+public class NumericOverflowInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/numericOverflow";
@@ -39,11 +39,11 @@ public class NumericOverflowInspectionTest extends LightCodeInsightFixtureTestCa
   }
 
   public void testUpdatesOnTyping() {
-    String text = "class My {\n" +
-                  "void d(long lower) {\n" +
-                  "        long upper =  lower + 1000<caret> * 31536000;\n" +
-                  "    }" +
-                  "}";
+    String text = """
+      class My {
+      void d(long lower) {
+              long upper =  lower + 1000<caret> * 31536000;
+          }}""";
     myFixture.configureByText("My.java", text);
     assertOneElement(myFixture.doHighlighting(HighlightSeverity.WARNING));
     myFixture.type('L');

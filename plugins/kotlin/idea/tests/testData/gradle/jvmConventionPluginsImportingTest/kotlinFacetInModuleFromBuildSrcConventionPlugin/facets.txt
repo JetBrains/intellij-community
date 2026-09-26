@@ -1,0 +1,36 @@
+MODULES
+project
+
+project.buildSrc
+
+project.buildSrc.main
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    targetPlatform = JVM (17)
+
+project.buildSrc.test
+    externalProjectId =
+    languageLevel = 1.8
+    apiLevel = 1.8
+    additionalVisibleModuleNames = :buildSrc:main
+    targetPlatform = JVM (17)
+
+project.sub-kotlin
+
+project.sub-kotlin.main
+    externalProjectId =
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    targetPlatform = JVM (11)
+
+project.sub-kotlin.test
+    externalProjectId =
+    languageLevel = {{MINIMAL_SUPPORTED}}
+    apiLevel = {{MINIMAL_SUPPORTED}}
+    additionalVisibleModuleNames = :sub-kotlin:main
+    targetPlatform = JVM (11)
+
+
+Test configuration:
+- excluding following facet fields: compilerSettings

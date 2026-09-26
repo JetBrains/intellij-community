@@ -1,0 +1,103 @@
+load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+fleet_wasmjs_module(
+    name = "wasmjs_module",
+    kotlinc_opts = ":custom_lsp.protocol",
+    module_name = "fleet.lsp.protocol",
+    plugins = ["@lib//:kotlin-serialization-plugin"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@community//fleet/util/core:wasmjs_module_lib",
+        "@kmp_deps//:org_jetbrains_annotations",
+        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
+)
+
+### auto-generated section `dev fleet.lsp.protocol` start
+content_module_jar(module = ":lsp.protocol")
+### auto-generated section `dev fleet.lsp.protocol` end
+
+### auto-generated section `build fleet.lsp.protocol` start
+create_kotlinc_options(
+    name = "custom_lsp.protocol",
+    opt_in = [
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.serialization.ExperimentalSerializationApi",
+        "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    ],
+    x_consistent_data_class_copy_visibility = True,
+    x_context_parameters = True,
+    x_lambdas = "class",
+)
+
+jvm_library(
+    name = "lsp.protocol",
+    srcs = glob(
+        [
+            "srcCommonMain/**/*.kt",
+            "srcCommonMain/**/*.java",
+            "srcCommonMain/**/*.form",
+            "srcJvmMain/**/*.kt",
+            "srcJvmMain/**/*.java",
+            "srcJvmMain/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_lsp.protocol",
+    module_name = "fleet.lsp.protocol",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//fleet/util/core",
+        "//libraries/jetbrains/annotations",
+        "//libraries/io",
+    ],
+)
+
+jvm_library(
+    name = "lsp.protocol_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_lsp.protocol",
+    module_name = "fleet.lsp.protocol",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":lsp.protocol",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//fleet/util/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/io:io_test_lib",
+    ],
+)
+### auto-generated section `build fleet.lsp.protocol` end
+
+### auto-generated section `iml fleet.lsp.protocol` start
+exports_files(
+    [
+        "fleet.lsp.protocol.iml",
+        "resources/fleet.lsp.protocol.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml fleet.lsp.protocol` end

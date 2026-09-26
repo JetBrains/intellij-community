@@ -1,0 +1,11 @@
+// PRIORITY: HIGH
+// INTENTION_TEXT: "Add import for 'dep.MyClass'"
+// WITH_STDLIB
+package test
+
+import dep.MyClass
+
+fun foo() {
+    MyClass<caret>.fromCompanion()
+}
+

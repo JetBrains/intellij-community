@@ -1,0 +1,867 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "GrazieInspection")
+
+package org.jetbrains.intellij.build.productLayout.model.error
+
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
+import com.intellij.platform.pluginGraph.PluginModuleId
+import com.intellij.platform.pluginGraph.TargetName
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
+import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
+import org.jetbrains.intellij.build.productLayout.traversal.ContentModuleCopyConflict
+
+/**
+ * Error when content module IML dependencies on main plugin modules are not declared in XML.
+ *
+ * This catches the case where a content module has a compile dependency on a main plugin module
+ * (e.g., intellij.python.community.plugin) but the generated XML doesn't have the corresponding
+ * `<plugin id="..."/>` dependency, which would cause NoClassDefFoundError at runtime.
+ */
+enum class MissingContentModulePluginDependencySuppressionKind {
+  /**
+   * Standard path: temporary suppression via suppressions.json.
+   */
+  SUPPRESSIONS_JSON,
+
+  /**
+   * Pure DSL-defined test-plugin content module: suppress in code via module-level allowedMissingPluginIds.
+   */
+  DSL_MODULE_ALLOWED_MISSING,
+}
+
+data class MissingContentModulePluginDependencyError(
+  override val context: String,
+  /** Content module with missing plugin dependencies */
+  val contentModuleName: ContentModuleName,
+  /** Plugin IDs that are depended on in IML but not declared in XML */
+  @JvmField val missingPluginIds: Set<PluginId>,
+  @JvmField val suppressionKind: MissingContentModulePluginDependencySuppressionKind = MissingContentModulePluginDependencySuppressionKind.SUPPRESSIONS_JSON,
+  /** Proposed patches for quick fixes (descriptor update and suppression update). */
+  @JvmField val proposedPatches: List<ProposedPatch> = emptyList(),
+  override val ruleName: String = "PluginValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_PLUGIN_DEP_MISSING
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Content module '${context}' has IML dependencies on plugin modules but missing XML plugin declarations${s.reset}")
+    appendLine()
+    appendLine("  ${s.yellow}The module has compile dependencies on plugin main modules, but the generated XML descriptor")
+    appendLine("  doesn't declare the corresponding <plugin id=\"...\"/> dependencies.${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}Missing plugin IDs:${s.reset}")
+    for (pluginId in missingPluginIds.sortedBy { it.value }) {
+      appendLine("    ${s.red}*${s.reset} ${s.bold}${pluginId.value}${s.reset}")
+    }
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset} Add to the content module descriptor XML:")
+    for (pluginId in missingPluginIds.sortedBy { it.value }) {
+      appendLine("       ${s.gray}<depends><plugin id=\"${pluginId.value}\"/></depends>${s.reset}")
+    }
+    appendLine()
+    when (suppressionKind) {
+      MissingContentModulePluginDependencySuppressionKind.DSL_MODULE_ALLOWED_MISSING -> {
+        val suppressionCode = "module(\"${contentModuleName.value}\", allowedMissingPluginIds = listOf(${missingPluginIds.sortedBy { it.value }.joinToString { "\"${it.value}\"" }}))"
+        appendLine("${s.blue}Or suppress temporarily:${s.reset} Add module-level allowedMissingPluginIds in the DSL:")
+        appendLine("       ${s.gray}$suppressionCode${s.reset}")
+        appendLine("       ${s.gray}(for example inside testPlugin { ... })${s.reset}")
+      }
+
+      MissingContentModulePluginDependencySuppressionKind.SUPPRESSIONS_JSON -> {
+        val suppressionCode = "\"${contentModuleName.value}\": { \"suppressPlugins\": [${missingPluginIds.sortedBy { it.value }.joinToString { "\"${it.value}\"" }}] }"
+        appendLine("${s.blue}Or suppress temporarily:${s.reset} Add suppressPlugins in suppressions.json for this content module:")
+        appendLine("       ${s.gray}$suppressionCode${s.reset}")
+      }
+    }
+    if (proposedPatches.isNotEmpty()) {
+      appendLine()
+      appendLine("${s.blue}Proposed patch:${s.reset}")
+      for (patch in proposedPatches) {
+        appendLine("Patch (${patch.title}):")
+        for (line in patch.patch.lineSequence()) {
+          appendLine(line)
+        }
+        appendLine()
+      }
+    }
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} Without the plugin dependency declaration, classes from the plugin")
+    appendLine("will not be available at runtime, causing NoClassDefFoundError.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when a content module is declared in multiple bundled plugins for the same product.
+ */
+data class DuplicatePluginContentModulesError(
+  override val context: String,
+  @JvmField val duplicates: LinkedHashMap<PluginModuleId, List<PluginOwner>>,
+  override val ruleName: String = "PluginContentDuplicatesValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_CONTENT_DUPLICATE
+
+  data class PluginOwner(val pluginName: TargetName, val isTestPlugin: Boolean)
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '${context}' has content modules declared by multiple bundled plugins${s.reset}")
+    appendLine()
+    for ((moduleId, owners) in duplicates.entries.sortedBy { it.key }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${moduleId}${s.reset}")
+      for (owner in owners) {
+        val typeSuffix = if (owner.isTestPlugin) " (test)" else ""
+        appendLine("      - ${owner.pluginName.value}$typeSuffix")
+      }
+    }
+    appendLine()
+    appendLine("${s.blue}This causes runtime error: \"Plugin has duplicated content modules declarations\"${s.reset}")
+    appendLine("${s.blue}Fix: ensure each content module is declared by only one bundled plugin for the product.${s.reset}")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when a content module reaches two embedded copies of one content module name.
+ *
+ * One error covers one duplicated name in one product, so [suppressionKey] can grandfather that name.
+ */
+internal data class ContentModuleCopyConflictError(
+  override val context: String,
+  /** The content module name that two or more bundled plugins declare as embedded content. */
+  val duplicatedModule: ContentModuleName,
+  @JvmField val conflicts: List<ContentModuleCopyConflict>,
+  override val ruleName: String = "ContentModuleCopyConflictValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_COPY_CONFLICT
+
+  override val suppressionKey: String get() = suppressionKeyFor(duplicatedModule)
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '${context}' reaches two embedded copies of '${duplicatedModule.value}'${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Two bundled plugins declare this content module name as embedded content.${s.reset}")
+    appendLine("${s.yellow}Each copy joins the main classloader of its own plugin and holds its own classes.${s.reset}")
+    appendLine("${s.yellow}Each module below reaches both copies, so it loads the same class from two classloaders.${s.reset}")
+    appendLine()
+
+    for (conflict in conflicts.sortedBy { it.module.value }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${conflict.module.value}${s.reset} reaches:")
+      for (owner in conflict.owners) {
+        appendLine("      - copy of ${owner.plugin.value}, runtime ID ${owner.moduleId}")
+        appendLine("        ${s.gray}${owner.path.joinToString(separator = " -> ")}${s.reset}")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} the same class arrives from two classloaders, which raises a LinkageError")
+    appendLine("and drops every feature that passes such a class across the boundary.")
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset}")
+    appendLine("1. Let the plugin that owns the API hold the one copy, and let each dependent plugin reuse it.")
+    appendLine("2. Or break the dependency path so no module reaches two copies.")
+    appendLine("3. Or, as a last resort, declare the module once as shared content of a module set.")
+    appendLine("   Read build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.")
+    appendLine()
+    appendLine("${s.blue}Or grandfather temporarily:${s.reset} add to contentModuleCopyConflicts in suppressions.json:")
+    appendLine("       ${s.gray}\"${duplicatedModule.value}\": { \"reason\": \"owners: ...\" }${s.reset}")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+
+  companion object {
+    /**
+     * The suppression key of one duplicated name.
+     *
+     * The spelling follows `suppressedErrors`, whose only producer is `"nonStandardRoot:$moduleName"`:
+     * a camelCase prefix, a colon, then the content module name.
+     * The camelCase prefix also keeps this key apart from the kebab-case ID that [errorId] builds.
+     */
+    fun suppressionKeyFor(duplicatedModule: ContentModuleName): String {
+      return "contentModuleCopyConflict:${duplicatedModule.value}"
+    }
+  }
+}
+
+/**
+ * Error when production and test plugins declare the same descriptor ID.
+ */
+data class PluginDescriptorIdConflictError(
+  override val context: String,
+  @JvmField val duplicates: Map<PluginId, List<DescriptorOwner>>,
+  override val ruleName: String = "PluginDescriptorIdConflictValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_DESCRIPTOR_ID_CONFLICT
+
+  data class DescriptorOwner(
+    val pluginName: TargetName,
+    val contentModule: ContentModuleName?,
+    val isTestPlugin: Boolean,
+  )
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '${context}' has descriptor IDs declared by both production and test plugins${s.reset}")
+    appendLine()
+    for ((descriptorId, owners) in duplicates.entries.sortedBy { it.key.value }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${descriptorId.value}${s.reset}")
+      for (owner in owners) {
+        val typeSuffix = if (owner.isTestPlugin) " (test)" else ""
+        val moduleSuffix = owner.contentModule?.let { ", content module ${it.value}" } ?: ""
+        appendLine("      - ${owner.pluginName.value}$typeSuffix$moduleSuffix")
+      }
+    }
+    appendLine()
+    appendLine("${s.blue}This causes runtime error: \"Plugin declares id ... which conflicts with the same id from another plugin\"${s.reset}")
+    appendLine("${s.blue}Fix: remove the conflicting descriptor from the test plugin, or adjust bundling so IDs are unique.${s.reset}")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Proposed patch snippet for fixing validation errors.
+ */
+data class ProposedPatch(
+  @JvmField val title: String,
+  @JvmField val patch: String,
+)
+
+/**
+ * Error when a plugin has dependencies that cannot be resolved in any product that bundles it.
+ */
+data class PluginDependencyError(
+  override val context: String,
+  /** The plugin target name */
+  val pluginName: TargetName,
+  /** Missing dependencies -> modules needing them */
+  @JvmField val missingDependencies: Map<ContentModuleName, Set<ContentModuleName>>,
+  /** Module source info for rich error formatting (plugin, products, etc.) */
+  @JvmField val moduleSourceInfo: Map<ContentModuleName, ModuleSourceInfo> = emptyMap(),
+  /** Per-product breakdown: product name -> unresolved deps in that product */
+  @JvmField val unresolvedByProduct: Map<String, Set<ContentModuleName>> = emptyMap(),
+  /** Dependencies filtered out from XML generation (auto-inferred JPS deps), per content module */
+  @JvmField val filteredDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
+  /** Structural violations: content module -> deps with violation (e.g., REQUIRED depending on OPTIONAL sibling) */
+  @JvmField val structuralViolations: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
+  /** Proposed patches for quick fixes (e.g., allowMissingDependencies in product specs) */
+  @JvmField val proposedPatches: List<ProposedPatch> = emptyList(),
+  override val ruleName: String = "PluginValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_DEPENDENCY_UNRESOLVED
+
+  override fun format(s: AnsiStyle): String = buildString {
+    val isTestPluginContent = context.startsWith("Test plugin content dependencies:")
+    val hasOnlyStructural = structuralViolations.isNotEmpty() &&
+                            missingDependencies.isEmpty() &&
+                            unresolvedByProduct.isEmpty() &&
+                            filteredDependencies.isEmpty()
+
+    val pluginNameStr = pluginName.value
+    val header = when {
+      hasOnlyStructural && isTestPluginContent -> "Test plugin '$pluginNameStr' has structural violations"
+      hasOnlyStructural -> "Plugin '$pluginNameStr' has structural violations"
+      isTestPluginContent -> "Test plugin '$pluginNameStr' has unresolvable content module dependencies"
+      else -> "Plugin '$pluginNameStr' has unresolvable content module dependencies"
+    }
+    appendLine("${s.red}${s.bold}$header${s.reset}")
+    appendLine()
+
+    // Report structural violations FIRST - these should be fixed before availability errors
+    if (structuralViolations.isNotEmpty()) {
+      appendLine("  ${s.yellow}${s.bold}STRUCTURAL VIOLATIONS (fix these first):${s.reset}")
+      appendLine()
+      for ((module, deps) in structuralViolations.entries.sortedBy { it.key.value }) {
+        val modInfo = moduleSourceInfo.get(module)
+        val modLoading = modInfo?.loadingMode?.name?.lowercase() ?: "unspecified"
+        appendLine("  ${s.red}*${s.reset} ${s.bold}'${module.value}'${s.reset} ($modLoading) depends on:")
+        for (dep in deps.sortedBy { it.value }) {
+          val depInfo = moduleSourceInfo.get(dep)
+          val depLoading = depInfo?.loadingMode?.name?.lowercase() ?: "unspecified"
+          // Check if this dep is auto-inferred (filtered out from XML generation)
+          val isInferred = filteredDependencies.get(module)?.contains(dep) == true
+          val inferredNote = if (isInferred) ", auto-inferred JPS dependency" else ""
+          appendLine("      └─ ${s.bold}'${dep.value}'${s.reset} ($depLoading$inferredNote) ← $modLoading cannot depend on $depLoading sibling")
+        }
+      }
+      appendLine()
+      appendLine("  ${s.blue}Fix:${s.reset} Either:")
+      appendLine("    1. Change the depending module's loading to OPTIONAL/ON_DEMAND")
+      appendLine("    2. Or change the dependency's loading to REQUIRED/EMBEDDED")
+      appendLine("    3. Or move the dependency to a different plugin")
+      appendLine()
+    }
+
+    if (hasOnlyStructural) {
+      if (proposedPatches.isNotEmpty()) {
+        appendLine("${s.blue}Proposed patch:${s.reset} Set loading=\"required\" for the offending dependency modules.")
+        for (patch in proposedPatches) {
+          appendLine("Patch (${patch.title}):")
+          for (line in patch.patch.lineSequence()) {
+            appendLine(line)
+          }
+          appendLine()
+        }
+      }
+      appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+      appendLine()
+      return@buildString
+    }
+
+    var hasFilteredDeps = false
+
+    for ((missingDep, needingModules) in missingDependencies.entries.sortedByDescending { it.value.size }) {
+      val missingDepInfo = moduleSourceInfo.get(missingDep)
+
+      // Check if this dep was filtered out during generation for any of the needing modules
+      val isFiltered = needingModules.any { moduleName ->
+        filteredDependencies.get(moduleName)?.contains(missingDep) == true
+      }
+      if (isFiltered) {
+        hasFilteredDeps = true
+      }
+
+      val depSource = if (isFiltered) {
+        " (auto-inferred JPS dependency, filtered by config)"
+      }
+      else {
+        formatMissingDepSource(missingDepInfo)
+      }
+      appendLine("  ${s.red}*${s.reset} Missing: ${s.bold}'${missingDep.value}'${s.reset}$depSource")
+
+      appendLine("    Needed by:")
+      val sortedModules = needingModules.sortedBy { it.value }
+      for ((modIdx, mod) in sortedModules.withIndex()) {
+        val isLast = modIdx == sortedModules.lastIndex
+        val modPrefix = if (isLast) "└─" else "├─"
+        val info = moduleSourceInfo.get(mod)
+        val modStr = mod.value
+        val moduleType = when {
+          info?.sourcePlugin != null -> {
+            val loading = info.loadingMode
+            if (loading != null && loading != ModuleLoadingRuleValue.OPTIONAL) {
+              "content module, loading=${loading.name.lowercase()}"
+            }
+            else {
+              "content module"
+            }
+          }
+          else -> "module"
+        }
+        appendLine("      $modPrefix ${s.bold}$modStr${s.reset} ($moduleType)")
+
+        val childPrefix = if (isLast) "   " else "│  "
+        if (info?.sourcePlugin != null) {
+          appendLine("      $childPrefix └─ in plugin: ${info.sourcePlugin.value}")
+          if (info.bundledInProducts.isNotEmpty()) {
+            appendLine("      $childPrefix     └─ bundled in: ${info.bundledInProducts.sorted().joinToString(", ")}")
+          }
+        }
+      }
+      appendLine()
+    }
+
+    // Fix suggestion
+    // Note: Check hasFilteredDeps BEFORE isNonBundledPlugin because if the only unresolved deps
+    // are filtered ones, unresolvedByProduct will be empty but plugin IS bundled
+    // Non-bundled plugins have "(non-bundled)" key in unresolvedByProduct
+    val isNonBundledPlugin = unresolvedByProduct.containsKey("(non-bundled)") && !hasFilteredDeps
+    when {
+      isTestPluginContent -> {
+        appendLine("${s.blue}Fix:${s.reset} Register the missing module as <content><module> in a test plugin,")
+        appendLine("     or add to a module set if it should be generally available.")
+      }
+      hasFilteredDeps -> {
+        val missingDeps = missingDependencies.keys.sortedBy { it.value }
+        val kotlinCode = "\"$pluginNameStr\" to setOf(${missingDeps.joinToString { "\"${it.value}\"" }}),"
+
+        appendLine("${s.blue}Fix:${s.reset} Add to pluginAllowedMissingDependencies in ModuleSetGenerationConfig:")
+        appendLine("       ${s.gray}$kotlinCode${s.reset}")
+        appendLine("     or add to content module descriptor <dependencies>:")
+        for (dep in missingDeps) {
+          appendLine("       ${s.gray}<module name=\"${dep.value}\"/>${s.reset}")
+        }
+      }
+      isNonBundledPlugin -> {
+        appendLine("${s.blue}Fix:${s.reset} The plugin is not bundled in any product.")
+        appendLine("     If the dependency should be available, declare it as <content> in a plugin,")
+        appendLine("     or add to a module set if it should be generally available.")
+      }
+      else -> {
+        appendLine("${s.blue}Fix:${s.reset} Add the missing modules to module sets used by these products,")
+        appendLine("     or add them to 'allowedMissingDependencies' in the product spec if intentional.")
+      }
+    }
+    appendLine()
+
+    if (proposedPatches.isNotEmpty()) {
+      val proposedPatchHint = if (isTestPluginContent) {
+        "Add missing modules to the test plugin content in product specs."
+      }
+      else {
+        "Add allowMissingDependencies to product specs."
+      }
+      appendLine("${s.blue}Proposed patch:${s.reset} $proposedPatchHint")
+      for (patch in proposedPatches) {
+        appendLine("Patch (${patch.title}):")
+        for (line in patch.patch.lineSequence()) {
+          appendLine(line)
+        }
+        appendLine()
+      }
+    }
+
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+
+  private fun formatMissingDepSource(info: ModuleSourceInfo?): String {
+    return when {
+      info == null -> " (not in any known plugin or module set)"
+      info.sourcePlugin != null && info.isTestPlugin -> " (only available in test plugin: ${info.sourcePlugin.value})"
+      info.sourcePlugin != null -> ""
+      info.sourceModuleSet != null -> " (from module set: ${info.sourceModuleSet})"
+      else -> " (not in any known plugin or module set)"
+    }
+  }
+}
+
+/**
+ * Error when a plugin depends on another plugin that isn't bundled in the same products.
+ */
+data class PluginDependencyNotBundledError(
+  override val context: String,
+  /** The plugin target name */
+  val pluginName: TargetName,
+  /** Missing dependencies per product */
+  @JvmField val missingByProduct: Map<String, Set<PluginId>>,
+  /** Dependencies that don't resolve to any plugin node */
+  @JvmField val unresolvedDependencies: Set<PluginId> = emptySet(),
+  override val ruleName: String = "PluginDependencyValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_PLUGIN_DEP_MISSING
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Plugin '${pluginName.value}' has unresolvable plugin dependencies${s.reset}")
+    appendLine()
+
+    if (unresolvedDependencies.isNotEmpty()) {
+      appendLine("  ${s.red}Unresolved plugin IDs:${s.reset}")
+      for (pluginId in unresolvedDependencies.sortedBy { it.value }) {
+        appendLine("    ${s.red}*${s.reset} ${s.bold}${pluginId.value}${s.reset}")
+      }
+      appendLine()
+    }
+
+    if (missingByProduct.isNotEmpty()) {
+      appendLine("  ${s.red}Missing in products:${s.reset}")
+      for ((product, deps) in missingByProduct.entries.sortedBy { it.key }) {
+        val depsList = deps.sortedBy { it.value }.joinToString { it.value }
+        appendLine("    ${s.red}*${s.reset} ${s.bold}$product${s.reset}: $depsList")
+      }
+      appendLine()
+    }
+
+    appendLine("${s.blue}Fix:${s.reset} Bundle the missing plugins in the same products as '${pluginName.value}',")
+    appendLine("     or remove the dependency if it's no longer required.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+enum class DslTestPluginDependencyKind {
+  PLUGIN,
+  CONTENT_MODULE,
+}
+
+data class DslTestPluginOwner(
+  val targetName: TargetName,
+  val pluginId: PluginId,
+)
+
+data class DslTestPluginDependencySource(
+  val fromModule: ContentModuleName,
+  val scope: String?,
+  val isDeclaredInSpec: Boolean,
+  val declaredRootModule: ContentModuleName? = null,
+)
+
+/**
+ * Error when a DSL-defined test plugin depends on a plugin that is not resolvable
+ * in the test plugin scope and is not explicitly allowed.
+ */
+data class DslTestPluginDependencyError(
+  override val context: String,
+  val testPluginId: PluginId,
+  @JvmField val productName: String,
+  @JvmField val dependencyKind: DslTestPluginDependencyKind,
+  val pluginDependencyId: PluginId? = null,
+  val contentModuleDependencyId: ContentModuleName? = null,
+  @JvmField val dependencyTargetNames: Set<TargetName> = emptySet(),
+  @JvmField val owningPlugins: Set<DslTestPluginOwner> = emptySet(),
+  val dependencySource: DslTestPluginDependencySource? = null,
+  override val ruleName: String = "DslTestPluginDependencyGeneration",
+) : ValidationError {
+  init {
+    when (dependencyKind) {
+      DslTestPluginDependencyKind.PLUGIN -> require(pluginDependencyId != null) {
+        "pluginDependencyId must be provided for PLUGIN dependency kind"
+      }
+      DslTestPluginDependencyKind.CONTENT_MODULE -> require(contentModuleDependencyId != null) {
+        "contentModuleDependencyId must be provided for CONTENT_MODULE dependency kind"
+      }
+    }
+  }
+
+  override val category: ErrorCategory get() = ErrorCategory.DSL_TEST_PLUGIN_DEPENDENCY_UNRESOLVED
+
+  override fun format(s: AnsiStyle): String = buildString {
+    val header = when (dependencyKind) {
+      DslTestPluginDependencyKind.PLUGIN -> "DSL test plugin '${testPluginId.value}' has an unresolvable plugin dependency"
+      DslTestPluginDependencyKind.CONTENT_MODULE -> "DSL test plugin '${testPluginId.value}' depends on plugin-owned content that is not resolvable"
+    }
+    appendLine("${s.red}${s.bold}$header${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} Product: ${s.bold}$productName${s.reset}")
+    when (dependencyKind) {
+      DslTestPluginDependencyKind.PLUGIN -> {
+        val pluginId = requireNotNull(pluginDependencyId)
+        appendLine("  ${s.red}*${s.reset} Plugin: ${s.bold}${pluginId.value}${s.reset}")
+        if (dependencyTargetNames.isNotEmpty()) {
+          val targets = dependencyTargetNames.map { it.value }.sorted().joinToString(", ")
+          appendLine("    Target name(s): $targets")
+        }
+      }
+      DslTestPluginDependencyKind.CONTENT_MODULE -> {
+        val moduleName = requireNotNull(contentModuleDependencyId)
+        appendLine("  ${s.red}*${s.reset} Content module: ${s.bold}${moduleName.value}${s.reset}")
+        if (owningPlugins.isNotEmpty()) {
+          appendLine("    Owned by plugin(s):")
+          for (owner in owningPlugins.sortedBy { it.pluginId.value }) {
+            appendLine("      - ${owner.targetName.value} (id: ${owner.pluginId.value})")
+          }
+        }
+        if (dependencySource != null) {
+          val origin = if (dependencySource.isDeclaredInSpec) {
+            "declared in test plugin spec"
+          }
+          else {
+            "auto-added during dependency traversal"
+          }
+          val scopeSuffix = dependencySource.scope?.let { ", scope: $it" } ?: ""
+          appendLine("    Needed by module: ${dependencySource.fromModule} ($origin$scopeSuffix)")
+          val rootModule = dependencySource.declaredRootModule
+          if (rootModule != null && rootModule != dependencySource.fromModule) {
+            appendLine("    Declared module: ${rootModule.value}")
+          }
+        }
+      }
+    }
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset} Add the owning plugin target name to additionalBundledPluginTargetNames for this test plugin,")
+    val moduleHint = if (dependencyKind == DslTestPluginDependencyKind.CONTENT_MODULE) {
+      dependencySource?.declaredRootModule ?: dependencySource?.fromModule
+    }
+    else {
+      null
+    }
+    if (moduleHint != null) {
+      appendLine("     or add its plugin ID to allowedMissingPluginIds on module/requiredModule(\"${moduleHint.value}\").")
+      appendLine("     (Use testPlugin.allowedMissingPluginIds for a global suppression.)")
+    }
+    else {
+      appendLine("     or list its plugin ID in allowedMissingPluginIds to suppress this error.")
+    }
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when a DSL-defined test plugin is missing plugin dependencies required by its content modules.
+ */
+data class MissingTestPluginPluginDependencyError(
+  override val context: String,
+  val testPluginId: PluginId,
+  @JvmField val productName: String,
+  /** Plugin IDs required by content module deps but missing in test plugin XML */
+  @JvmField val missingPluginIds: Set<PluginId>,
+  /** Map of missing plugin IDs to modules that require them */
+  @JvmField val requiredByModules: Map<PluginId, Set<ContentModuleName>>,
+  override val ruleName: String = "TestPluginPluginDependencyValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.TEST_PLUGIN_PLUGIN_DEP_MISSING
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Test plugin '${testPluginId.value}' is missing plugin dependencies required by its content modules${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}*${s.reset} Product: ${s.bold}$productName${s.reset}")
+    appendLine("  ${s.red}Missing plugin IDs:${s.reset}")
+    for (pluginId in missingPluginIds.sortedBy { it.value }) {
+      appendLine("    ${s.red}*${s.reset} ${s.bold}${pluginId.value}${s.reset}")
+      val requiredBy = requiredByModules[pluginId].orEmpty().sortedBy { it.value }
+      if (requiredBy.isNotEmpty()) {
+        appendLine("      Needed by: ${requiredBy.joinToString { it.value }}")
+      }
+    }
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset} Ensure the test plugin declares these dependencies in its generated plugin.xml")
+    appendLine("     (e.g., update test plugin dependency generation or its JPS dependencies),")
+    appendLine("     or list the plugin IDs in allowedMissingPluginIds if the dependency is intentionally omitted.")
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} Missing plugin dependencies can drop classes from the test classpath")
+    appendLine("and cause NoClassDefFoundError in tests.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when a plugin declares the same dependency in both legacy <depends>
+ * and modern <dependencies><plugin/> formats.
+ */
+data class DuplicatePluginDependencyDeclarationError(
+  override val context: String,
+  /** The plugin target name */
+  val pluginName: TargetName,
+  /** Duplicated plugin IDs */
+  @JvmField val duplicatePluginIds: Set<PluginId>,
+  override val ruleName: String = "PluginDependencyValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_PLUGIN_DEP_DUPLICATE
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Plugin '${pluginName.value}' declares duplicate plugin dependencies${s.reset}")
+    appendLine()
+    appendLine("  ${s.red}Duplicates declared in both legacy <depends> and modern <dependencies>:${s.reset}")
+    for (dep in duplicatePluginIds.sortedBy { it.value }) {
+      appendLine("    ${s.red}*${s.reset} ${s.bold}${dep.value}${s.reset}")
+    }
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset} Remove the legacy <depends> entry or migrate fully to <dependencies>.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when two variants of one plugin are both candidates for one target platform.
+ *
+ * A plugin is declared once for each supported `(os, arch)`, and a distribution holds one of those variants. Every
+ * variant carries the same plugin directory, so a second candidate for one target has nothing of its own to write to.
+ * `org.jetbrains.intellij.build.dev.devModePluginCandidates` selects the variant of the target, and it fails on a pair.
+ *
+ * The producer of this error lives above this module, because a plugin variant and its bundling restrictions are
+ * build-script types. So the error carries the text of a restriction rather than the restriction itself.
+ */
+data class PluginVariantOverlapError(
+  override val context: String,
+  @JvmField val overlaps: List<PluginVariantOverlap>,
+  override val ruleName: String = "PluginVariantOverlapValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_VARIANT_OVERLAP
+
+  /**
+   * @param mainModule the main module every variant of the pair declares
+   * @param targetPlatform the target both variants are candidates for, as `os arch`
+   * @param restrictions the bundling restrictions of each variant, in declaration order
+   */
+  data class PluginVariantOverlap(
+    @JvmField val mainModule: String,
+    @JvmField val targetPlatform: String,
+    @JvmField val restrictions: List<String>,
+  )
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '$context' declares two variants of one plugin for one target platform${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}A distribution holds one variant of a plugin, and every variant carries the same plugin")
+    appendLine("directory. So the second variant has no destination, and one overwrites the other.${s.reset}")
+    appendLine()
+
+    for ((mainModule, targetPlatform, restrictions) in overlaps.sortedWith(compareBy({ it.mainModule }, { it.targetPlatform }))) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}$mainModule${s.reset} on $targetPlatform")
+      for (restriction in restrictions) {
+        appendLine("      - [$restriction]")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Narrow the restrictions of one variant, so that one candidate remains for each target platform.")
+    appendLine("2. Or delete the variant the product does not need.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Error when one JPS module goes into the main jar directory of two plugins.
+ *
+ * A plugin that packs a module holds its own copy of the classes. The copies grow the distribution. A third plugin
+ * that depends on both plugins then loads one class from two classloaders, which raises a `LinkageError`.
+ *
+ * The subject is a static layout entry, which a plugin declares through `spec.withModule`. That mechanism is on the
+ * way out, so the rule is a ratchet on a dying mechanism. A content module that two plugins declare with no namespace
+ * is a different shape, and that shape is legal. Read
+ * `docs/IntelliJ-Platform/4_man/Plugin-Model/Including-content-module-in-multiple-plugins.md`, which is IJPL-A-1893.
+ *
+ * The producer of this error lives above this module, because a plugin layout is a build-script type. So the error
+ * carries plain names rather than the layout itself.
+ *
+ * One instance holds either the duplicated modules or the stale allowlist entries. Many products share one plugin
+ * layout registry, so neither report carries a product name.
+ */
+data class ModuleInMultiplePluginsError(
+  override val context: String,
+  @JvmField val duplicates: List<ModuleOwners> = emptyList(),
+  @JvmField val staleAllowlistEntries: List<String> = emptyList(),
+  override val ruleName: String = "ModuleInMultiplePluginsValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_IN_MULTIPLE_PLUGINS
+
+  /**
+   * @param moduleName the JPS module that two or more plugins pack
+   * @param owners the main module of each plugin that packs it
+   */
+  data class ModuleOwners(
+    @JvmField val moduleName: String,
+    @JvmField val owners: List<String>,
+  )
+
+  override fun format(s: AnsiStyle): String = buildString {
+    if (duplicates.isEmpty()) {
+      appendLine("${s.red}${s.bold}The allowlist of modules in multiple plugins holds a stale entry${s.reset}")
+      appendLine()
+      for (moduleName in staleAllowlistEntries.sorted()) {
+        appendLine("  ${s.red}*${s.reset} ${s.bold}$moduleName${s.reset}")
+      }
+      appendLine()
+      appendLine("${s.blue}No plugin layout registry duplicates a name above.${s.reset}")
+      appendLine("${s.blue}Fix:${s.reset} remove the name from $ALLOWLIST_NAME in $ALLOWLIST_FILE.")
+      appendLine()
+      appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+      appendLine()
+      return@buildString
+    }
+
+    appendLine("${s.red}${s.bold}Two plugin layouts pack one module${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Each plugin holds its own copy of the classes, so the copies grow the distribution.${s.reset}")
+    appendLine("${s.yellow}A third plugin that depends on both plugins loads one class from two classloaders.${s.reset}")
+    appendLine("${s.yellow}Many products share one plugin layout registry, so the report names no product.${s.reset}")
+    appendLine()
+
+    for ((moduleName, owners) in duplicates.sortedBy { it.moduleName }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}$moduleName${s.reset}")
+      for (owner in owners.sorted()) {
+        appendLine("      - $owner")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset}")
+    appendLine("1. Move the module to the platform, so that every plugin reads the one copy.")
+    appendLine("2. Or extract a new plugin that holds the module, and let each plugin depend on it.")
+    appendLine("3. Or grandfather the name: add it to $ALLOWLIST_NAME in $ALLOWLIST_FILE.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+
+  companion object {
+    /** The context of the duplicate report. Many products share one plugin layout registry, so it names no product. */
+    const val LAYOUT_REGISTRY_CONTEXT: String = "plugin-layouts"
+
+    /** The context of the stale report. The report reads every registry at once, so it names no product. */
+    const val ALLOWLIST_CONTEXT: String = "allowlist"
+
+    private const val ALLOWLIST_NAME = "KNOWN_MODULES_IN_MULTIPLE_PLUGINS"
+    private const val ALLOWLIST_FILE = "platform/buildScripts/src/productLayout/ultimateGenerator.kt"
+  }
+}
+
+/**
+ * The kind of a wrong dependency declaration in a content module descriptor.
+ *
+ * Read `docs/validators/content-module-dependency-declaration.md` for the rule of each kind.
+ */
+enum class ContentModuleDependencyProblemKind {
+  /** `com.intellij.modules.java` names the Java plugin. Use `com.intellij.java`. */
+  JAVA_MODULE_ALIAS,
+
+  /** `com.intellij.modules.platform` is redundant next to another module dependency. */
+  REDUNDANT_PLATFORM_DEPENDENCY,
+
+  /** No plugin and no alias in the monorepo defines the plugin id. */
+  UNRESOLVED_PLUGIN,
+
+  /** The descriptor declares one plugin id two times. */
+  DUPLICATE_PLUGIN,
+
+  /** A `<module name="...">` element names the main module of a plugin. Use `<plugin id="...">`. */
+  PLUGIN_AS_MODULE,
+
+  /** An `internal` content module is used from another namespace. */
+  INTERNAL_FROM_OTHER_NAMESPACE,
+}
+
+/**
+ * One wrong dependency declaration in a content module descriptor.
+ */
+data class ContentModuleDependencyProblem(
+  @JvmField val kind: ContentModuleDependencyProblemKind,
+  /** What is wrong. One sentence. */
+  @JvmField val message: String,
+  /** How to fix it, or null when the message holds the fix. */
+  @JvmField val fix: String? = null,
+)
+
+/**
+ * Error when a content module descriptor declares a dependency in a wrong form.
+ *
+ * The subject is the text of the descriptor, and not the module graph. So the error names the descriptor of one
+ * content module, and it holds every problem of that descriptor.
+ */
+data class ContentModuleDependencyDeclarationError(
+  override val context: String,
+  /** The content module whose descriptor holds the problems. */
+  val contentModuleName: ContentModuleName,
+  /** The descriptor path, for the report. */
+  @JvmField val descriptorPath: String,
+  @JvmField val problems: List<ContentModuleDependencyProblem>,
+  override val ruleName: String = "ContentModuleDependencyDeclaration",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_DEPENDENCY_DECLARATION
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Content module '${contentModuleName.value}' declares a dependency in a wrong form${s.reset}")
+    appendLine()
+    appendLine("  ${s.gray}$descriptorPath${s.reset}")
+    appendLine()
+    for (problem in problems) {
+      appendLine("  ${s.red}*${s.reset} ${problem.message}")
+      if (problem.fix != null) {
+        for (line in problem.fix.lineSequence()) {
+          appendLine("      ${s.blue}$line${s.reset}")
+        }
+      }
+    }
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} the runtime drops a content module that declares an unknown dependency.")
+    appendLine("So the plugin loses the feature of that module without a message.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}

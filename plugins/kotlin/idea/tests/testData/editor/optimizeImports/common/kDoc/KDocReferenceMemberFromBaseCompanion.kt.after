@@ -1,0 +1,17 @@
+
+package pack
+
+open class BaseClass {
+    companion object {
+        fun objectFunction() {}
+    }
+}
+
+class MyClass : BaseClass() {
+    /**
+     * [objectFunction]
+     */
+    fun usage() {
+
+    }
+}

@@ -1,39 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
-import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.NlsContexts.SystemNotificationText;
+import com.intellij.openapi.util.NlsContexts.SystemNotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
+
 /**
- * Intended to run tasks, both modal and non-modal (backgroundable)
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link ProgressIndicator} notice.
+ * Use one of the following functions to run tasks:
+ * <ul>
+ *   <li>{@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}</li>
+ *   <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}</li>
+ *   <li>{@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
+ * </ul>
+ * </p>
+ * <hr>
+ *
+ * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
  * <pre>
  * new Task.Backgroundable(project, "Synchronizing data", true) {
  *  public void run(ProgressIndicator indicator) {
  *    indicator.setText("Loading changes");
+ *    indicator.setIndeterminate(false);
  *    indicator.setFraction(0.0);
  *    // some code
  *    indicator.setFraction(1.0);
@@ -43,86 +51,78 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see ProgressManager#run(Task)
  */
+@Obsolete
 public abstract class Task implements TaskInfo, Progressive {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
+  private static final Logger LOG = Logger.getInstance(Task.class);
 
-  protected final Project myProject;
-  protected String myTitle;
+  protected final @Nullable Project myProject;
+  protected final @Nullable JComponent myParentComponent;
+  private @ProgressTitle @NotNull String myTitle;
+
   private final boolean myCanBeCancelled;
+  private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");
+  private @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
-  private String myCancelText = CommonBundle.getCancelButtonText();
-  private String myCancelTooltipText = CommonBundle.getCancelButtonText();
-
-  public Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nullable JComponent parentComponent, @ProgressTitle @NotNull String title, boolean canBeCancelled) {
     myProject = project;
+    myParentComponent = parentComponent;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
   }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
-   *
+   * <p>
    * Callback executed when run() throws {@link ProcessCanceledException} or if its {@link ProgressIndicator} was canceled.
    */
-  public void onCancel() {
-  }
+  public void onCancel() { }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
    */
-  public void onSuccess() {
-  }
+  public void onSuccess() { }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
    * <p>
-   * Callback executed when run() throws an exception (except PCE).
-   *
-   * @deprecated use {@link #onThrowable(Throwable)} instead
+   * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
    */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public void onError(@NotNull Exception error) {
+  public void onThrowable(@NotNull Throwable error) {
     LOG.error(error);
   }
 
   /**
-   * This callback will be invoked on AWT dispatch thread.
-   * <p>
-   * Callback executed when run() throws an exception (except PCE).
+   * This callback will be invoked on AWT dispatch thread, after other specific handlers.
    */
-  public void onThrowable(@NotNull Throwable error) {
-    if (error instanceof Exception) {
-      //noinspection deprecation
-      onError((Exception)error);
-    }
-    else {
-      LOG.error(error);
-    }
-  }
+  public void onFinished() { }
 
   /**
-   * This callback will be invoked on AWT dispatch thread, after other specific handlers
+   * Specifies the thread to run callbacks on. See {@link EdtReplacementThread} documentation for more info.
    */
-  public void onFinished() {
+  public @NotNull EdtReplacementThread whereToRunCallbacks() {
+    return EdtReplacementThread.EDT_WITH_IW;
   }
 
+  @SuppressWarnings("NullableProblems")
   public final Project getProject() {
     return myProject;
   }
 
+  public final @Nullable JComponent getParentComponent() {
+    return myParentComponent;
+  }
+
+  @RequiresBlockingContext
   public final void queue() {
     ProgressManager.getInstance().run(this);
   }
 
   @Override
-  @NotNull
-  public final String getTitle() {
+  public final @ProgressTitle @NotNull String getTitle() {
     return myTitle;
   }
 
-  @NotNull
-  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+  public final @NotNull Task setTitle(@ProgressTitle @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -132,19 +132,24 @@ public abstract class Task implements TaskInfo, Progressive {
     return myCancelText;
   }
 
-  @NotNull
-  public final Task setCancelText(String cancelText) {
+  public final @NotNull Task setCancelText(@NlsContexts.Button String cancelText) {
     myCancelText = cancelText;
     return this;
   }
 
-  @Nullable
-  public NotificationInfo getNotificationInfo() {
+  /**
+   * Optional; may be used to distinguish this task among others.
+   */
+  @ApiStatus.Experimental
+  public @Nullable Object getId() {
     return null;
   }
 
-  @Nullable
-  public NotificationInfo notifyFinished() {
+  public @Nullable NotificationInfo getNotificationInfo() {
+    return null;
+  }
+
+  public @Nullable NotificationInfo notifyFinished() {
     return getNotificationInfo();
   }
 
@@ -152,8 +157,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  @NotNull
-  public final Task setCancelTooltipText(String cancelTooltipText) {
+  public final @NotNull Task setCancelTooltipText(@NlsContexts.Tooltip String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
     return this;
   }
@@ -170,39 +174,53 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract boolean isModal();
 
-  @NotNull
-  public final Modal asModal() {
+  public final @NotNull Modal asModal() {
     if (isModal()) {
       return (Modal)this;
     }
     throw new IllegalStateException("Not a modal task");
   }
 
-  @NotNull
-  public final Backgroundable asBackgroundable() {
+  public final @NotNull Backgroundable asBackgroundable() {
     if (!isModal()) {
       return (Backgroundable)this;
     }
     throw new IllegalStateException("Not a backgroundable task");
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+   * </p>
+   */
+  @Obsolete
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
-    protected final PerformInBackgroundOption myBackgroundOption;
+    private final @NotNull PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+    public Backgroundable(@Nullable Project project, @ProgressTitle @NotNull String title) {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
-      this(project, title, canBeCancelled, null);
+    public Backgroundable(@Nullable Project project, @ProgressTitle @NotNull String title, boolean canBeCancelled) {
+      this(project, title, canBeCancelled, ALWAYS_BACKGROUND);
     }
 
     public Backgroundable(@Nullable Project project,
-                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                          @ProgressTitle @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
-      super(project, title, canBeCancelled);
-      myBackgroundOption = backgroundOption;
+      this(project, null, title, canBeCancelled, backgroundOption);
+    }
+
+    public Backgroundable(@Nullable Project project,
+                          @Nullable JComponent parentComponent,
+                          @ProgressTitle @NotNull String title,
+                          boolean canBeCancelled,
+                          @Nullable PerformInBackgroundOption backgroundOption) {
+      super(project, parentComponent, title, canBeCancelled);
+      myBackgroundOption = ObjectUtils.notNull(backgroundOption, ALWAYS_BACKGROUND);
       if (StringUtil.isEmptyOrSpaces(title)) {
         LOG.warn("Empty title for backgroundable task.", new Throwable());
       }
@@ -210,14 +228,12 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @Override
     public boolean shouldStartInBackground() {
-      return myBackgroundOption == null || myBackgroundOption.shouldStartInBackground();
+      return myBackgroundOption.shouldStartInBackground();
     }
 
     @Override
     public void processSentToBackground() {
-      if (myBackgroundOption != null) {
-        myBackgroundOption.processSentToBackground();
-      }
+      //myBackgroundOption.processSentToBackground();
     }
 
     @Override
@@ -230,19 +246,90 @@ public abstract class Task implements TaskInfo, Progressive {
     }
 
     /**
-     * to remove in IDEA 16
+     * When you need either modal or backgroundable task, depending on some dynamic flag,
+     * you can create {@link Backgroundable} instance and call this method.
+     * If {@code modal}==true, this method will create new {@link Task.Modal}, and delegate all methods to the old instance.
      */
-    @Deprecated
-    public DumbModeAction getDumbModeAction() {
-      return DumbModeAction.NOTHING;
-    }
-  }
+    @ApiStatus.Internal
+    public Task toModalIfNeeded(boolean isModal) {
+      if (!isModal) {
+        return this;
+      }
+      return new Modal(getProject(), getTitle(), isCancellable()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          Backgroundable.this.run(indicator);
+        }
 
+        @Override
+        public void onCancel() {
+          Backgroundable.this.onCancel();
+        }
+
+        @Override
+        public void onSuccess() {
+          Backgroundable.this.onSuccess();
+        }
+
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
+          Backgroundable.this.onThrowable(error);
+        }
+
+        @Override
+        public void onFinished() {
+          Backgroundable.this.onFinished();
+        }
+
+        @Override
+        public @NotNull EdtReplacementThread whereToRunCallbacks() {
+          return Backgroundable.this.whereToRunCallbacks();
+        }
+
+        @Override
+        public @Nullable Object getId() {
+          return Backgroundable.this.getId();
+        }
+
+        @Override
+        public @Nullable NotificationInfo getNotificationInfo() {
+          return Backgroundable.this.getNotificationInfo();
+        }
+
+        @Override
+        public @Nullable NotificationInfo notifyFinished() {
+          return Backgroundable.this.notifyFinished();
+        }
+
+        @Override
+        public boolean isHeadless() {
+          return Backgroundable.this.isHeadless();
+        }
+      };
+    }
+
+ }
+
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
+   * </ul>
+   * </p>
+   */
+  @Obsolete
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
-      super(project, title, canBeCancelled);
+    public Modal(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
+      this(project, null, title, canBeCancelled);
     }
 
+    public Modal(@Nullable Project project, @Nullable JComponent parentComponent, @DialogTitle @NotNull String title, boolean canBeCancelled) {
+      //noinspection DialogTitleCapitalization
+      super(project, parentComponent, title, canBeCancelled);
+    }
 
     @Override
     public final boolean isModal() {
@@ -250,12 +337,32 @@ public abstract class Task implements TaskInfo, Progressive {
     }
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress},</li>
+   * <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
+   * </ul>
+   * </p>
+   */
+  @Obsolete
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
-                            @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                            @ProgressTitle @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
-      super(project, title, canBeCancelled, backgroundOption);
+      this(project, null, title, canBeCancelled, backgroundOption);
+    }
+
+    public ConditionalModal(@Nullable Project project,
+                            @Nullable JComponent parentComponent,
+                            @ProgressTitle @NotNull String title,
+                            boolean canBeCancelled,
+                            @NotNull PerformInBackgroundOption backgroundOption) {
+      super(project, parentComponent, title, canBeCancelled, backgroundOption);
     }
 
     @Override
@@ -266,19 +373,19 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public static class NotificationInfo {
     private final String myNotificationName;
-    private final String myNotificationTitle;
-    private final String myNotificationText;
+    private final @SystemNotificationTitle String myNotificationTitle;
+    private final @SystemNotificationText String myNotificationText;
     private final boolean myShowWhenFocused;
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText) {
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @SystemNotificationTitle String notificationTitle,
+                            @NotNull @SystemNotificationText String notificationText) {
       this(notificationName, notificationTitle, notificationText, false);
     }
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText,
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @SystemNotificationTitle String notificationTitle,
+                            @NotNull @SystemNotificationText String notificationText,
                             final boolean showWhenFocused) {
       myNotificationName = notificationName;
       myNotificationTitle = notificationTitle;
@@ -286,18 +393,15 @@ public abstract class Task implements TaskInfo, Progressive {
       myShowWhenFocused = showWhenFocused;
     }
 
-    @NotNull
-    public String getNotificationName() {
+    public @NotNull String getNotificationName() {
       return myNotificationName;
     }
 
-    @NotNull
-    public String getNotificationTitle() {
+    public @NotNull @SystemNotificationTitle String getNotificationTitle() {
       return myNotificationTitle;
     }
 
-    @NotNull
-    public String getNotificationText() {
+    public @NotNull @SystemNotificationText String getNotificationText() {
       return myNotificationText;
     }
 
@@ -306,21 +410,36 @@ public abstract class Task implements TaskInfo, Progressive {
     }
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.</li>
+   * </ul>
+   * </p>
+   */
+  @Obsolete
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
-    private final Ref<T> myResult = Ref.create();
-    private final Ref<Throwable> myError = Ref.create();
+    private volatile T myResult;
+    private volatile Throwable myError;
 
-    public WithResult(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
-      super(project, title, canBeCancelled);
+    public WithResult(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
+      this(project, null, title, canBeCancelled);
+    }
+
+    public WithResult(@Nullable Project project, @Nullable JComponent component, @DialogTitle @NotNull String title, boolean canBeCancelled) {
+      super(project, component, title, canBeCancelled);
     }
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       try {
-        myResult.set(compute(indicator));
+        myResult = compute(indicator);
       }
       catch (Throwable t) {
-        myError.set(t);
+        myError = t;
       }
     }
 
@@ -328,10 +447,14 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @SuppressWarnings("unchecked")
     public T getResult() throws E {
-      Throwable t = myError.get();
-      ExceptionUtil.rethrowUnchecked(t);
-      if (t != null) throw (E)t;
-      return myResult.get();
+      Throwable t = myError;
+      if (t != null) {
+        ExceptionUtil.rethrowUnchecked(t);
+        throw (E)t;
+      }
+      else {
+        return myResult;
+      }
     }
   }
 }

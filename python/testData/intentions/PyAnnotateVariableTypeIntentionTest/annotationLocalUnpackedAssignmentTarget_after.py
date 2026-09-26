@@ -1,4 +1,7 @@
+from typing import Literal
+
+
 def func():
-    var: [str]
+    var: [Literal['spam']]
     var, _ = 'spam', 42
     var

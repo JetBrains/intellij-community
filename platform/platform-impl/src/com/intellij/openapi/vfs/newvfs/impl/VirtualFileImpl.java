@@ -1,45 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LargeFileWriteRequestor;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,52 +29,64 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
-public class VirtualFileImpl extends VirtualFileSystemEntry {
-  VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+@ApiStatus.Internal
+public final class VirtualFileImpl extends VirtualFileSystemEntry {
+  VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
+    //TODO RC: why we call it in ctor -- every time we create this wrapper? The wrapper could be created multiple
+    //         times, depending on how often GC collects soft-refed cached instances, so this code is executed
+    //         multiple times, and costs significant fraction of the overall instance construction cost, while
+    //         symlinks are rare
+    registerLink(getFileSystem());
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChild(@NotNull @NonNls final String name) {
+  public @Nullable NewVirtualFile findChild(@NotNull @NonNls String name) {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getCachedChildren() {
+  public boolean allChildrenLoaded() {
+    return true;
+  }
+
+  @Override
+  public boolean allChildrenCached() {
+    return true;
+  }
+
+  @Override
+  public @NotNull Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Iterable<VirtualFile> iterInDbChildren() {
-    return ContainerUtil.emptyIterable();
+  public @NotNull Iterable<VirtualFile> iterInDbChildren() {
+    return Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public NewVirtualFileSystem getFileSystem() {
-    final VirtualFileSystemEntry parent = getParent();
+  public @NotNull NewVirtualFileSystem getFileSystem() {
+    VirtualFileSystemEntry parent = getParent();
     assert parent != null;
     return parent.getFileSystem();
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
+  public @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name) {
     return null;
   }
 
   @Override
-  @Nullable
-  public NewVirtualFile findChildIfCached(@NotNull final String name) {
+  public @Nullable NewVirtualFile findChildIfCached(@NotNull String name) {
     return null;
   }
 
   @Override
   public VirtualFile[] getChildren() {
+    //TODO RC: why we return empty array here, if VirtualFile.getChildren() contract says !directory -> null?
     return EMPTY_ARRAY;
   }
 
@@ -107,75 +98,86 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   private static final Key<byte[]> ourPreloadedContentKey = Key.create("preloaded.content.key");
 
   @Override
-  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+  public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
     putUserData(ourPreloadedContentKey, preloadedContentHint);
+    try {
+      return computable.get();
+    }
+    finally {
+      putUserData(ourPreloadedContentKey, null);
+    }
   }
 
   @Override
-  @NotNull
-  public InputStream getInputStream() throws IOException {
-    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+  public @NotNull InputStream getInputStream() throws IOException {
+    byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(
       preloadedContent == null ?
-        ourPersistence.getInputStream(this):
-        new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
+      owningPersistentFS().getInputStream(this) :
+      new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
       this
     );
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return contentsToByteArray(true);
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(boolean cacheContent) throws IOException {
     checkNotTooLarge(null);
-    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
-    if (preloadedContent != null) return preloadedContent;
-    byte[] bytes = ourPersistence.contentsToByteArray(this, cacheContent);
-    if (!isCharsetSet()) {
-      // optimisation: take the opportunity to not load bytes again in getCharset()
-      // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
-      FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
+    byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+    if (preloadedContent != null) {
+      return preloadedContent;
+    }
 
+    byte[] bytes = owningPersistentFS().contentsToByteArray(this, cacheContent);
+    if (isCharsetSet()) {
+      return bytes;
+    }
+
+    // optimization: take the opportunity to not load bytes again in getCharset()
+    // use getFileTypeByFile(..., bytes) to not fall into a recursive trap from vfile.getFileType()
+    // which would try to load contents again to detect charset
+    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByFile(this, bytes);
+
+    if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary() && bytes.length != 0) {
       try {
-        // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
-        // and that other thread asks JspManager for encoding which requires read action for PSI
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
+        // execute in impatient mode
+        // to not deadlock when the indexing process waits under a write action for the queue to load contents in other threads
+        // and that another thread asks JspManager for encoding which requires read action for PSI
+        ApplicationManagerEx.getApplicationEx().executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
       }
-      catch (ProcessCanceledException ignored) {
+      catch (ProcessCanceledException _) {
       }
     }
     return bytes;
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long modStamp, long timeStamp) throws IOException {
     checkNotTooLarge(requestor);
-    return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp), this);
+    return VfsUtilCore.outputStreamAddingBOM(owningPersistentFS().getOutputStream(this, requestor, modStamp, timeStamp), this);
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     checkNotTooLarge(requestor);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
+    // NB not using VirtualFile.getOutputStream() to avoid unneeded BOM skipping/writing
+    try (OutputStream outputStream = owningPersistentFS().getOutputStream(this, requestor, newModificationStamp, newTimeStamp)) {
+      outputStream.write(content);
+    }
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
-    checkNotTooLarge(null);
-    super.setBinaryContent(content, newModificationStamp, newTimeStamp);
-  }
-
-  @Nullable
-  @Override
-  public String getDetectedLineSeparator() {
-    if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+  public @Nullable String getDetectedLineSeparator() {
+    if (isDirectory()) {
+      throw new IllegalArgumentException("getDetectedLineSeparator() must not be called for a directory");
+    }
+    if (getFlagInt(VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED)) {
+      // optimization: do not waste space in user data for system line separator
       return LineSeparator.getSystemLineSeparator().getSeparatorString();
     }
     return super.getDetectedLineSeparator();
@@ -183,33 +185,39 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   public void setDetectedLineSeparator(String separator) {
+    if (isDirectory()) {
+      throw new IllegalArgumentException("setDetectedLineSeparator() must not be called for a directory");
+    }
+    // optimization: do not waste space in user data for system line separator
     boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
-    setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+    setFlagInt(VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+
     super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
 
   @Override
   protected void setUserMap(@NotNull KeyFMap map) {
-    mySegment.setUserMap(myId, map);
+    getSegment().setUserMap(getId(), map);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  protected KeyFMap getUserMap() {
-    return mySegment.getUserMap(this, myId);
+  public @NotNull KeyFMap getUserMap() {
+    return getSegment().getUserMap(this, getId());
   }
 
   @Override
-  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+  protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
     VirtualDirectoryImpl.checkLeaks(newMap);
-    return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
+    return getSegment().changeUserMap(getId(), oldMap, UserDataInterner.internUserData(newMap));
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
-    if (!(requestor instanceof LargeFileWriteRequestor) && isTooLarge()) throw new FileTooBigException(getPath());
+    if (!(requestor instanceof LargeFileWriteRequestor) && VirtualFileUtil.isTooLarge(this)) throw new FileTooBigException(getPath());
   }
 
-  private boolean isTooLarge() {
-    return FileUtilRt.isTooLarge(getLength());
+  @Override
+  public boolean isCaseSensitive() {
+    return getParent().isCaseSensitive();
   }
 }

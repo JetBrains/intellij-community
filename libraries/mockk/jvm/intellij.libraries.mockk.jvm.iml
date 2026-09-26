@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="io.mockk.jvm" type="repository">
+        <properties maven-id="io.mockk:mockk-jvm:1.14.11">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1.14.11/mockk-jvm-1.14.11.jar">
+              <sha256sum>f16462fbfe0596d84af976c0d401e3ed252336c75e14b971ba8b08af2aa172a9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1.14.11/mockk-dsl-jvm-1.14.11.jar">
+              <sha256sum>486179b645632a041edc1ecd1913983cefbfce58e7eec3f43c5c62c7aa80c77c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.14.11/mockk-agent-jvm-1.14.11.jar">
+              <sha256sum>bb3af4f281c8d5d50141cad9d1a1f8dde9d2bd695b68054777830957708ea0b4</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.14.11/mockk-agent-api-jvm-1.14.11.jar">
+              <sha256sum>9459d7eb7694b6e0039e19f7d1a89dfc7ae1fa782ff8d38f2952bda1ffa39242</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.14.11/mockk-core-jvm-1.14.11.jar">
+              <sha256sum>53a0ab8742aac4d1a6538cc77c6067de7e1a9c1a35358a873faa9c5ed2d58e51</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.objenesis:objenesis" />
+            <dependency maven-id="net.bytebuddy:byte-buddy" />
+            <dependency maven-id="net.bytebuddy:byte-buddy-agent" />
+            <dependency maven-id="junit:junit" />
+            <dependency maven-id="org.junit.jupiter:junit-jupiter" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1.14.11/mockk-jvm-1.14.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1.14.11/mockk-dsl-jvm-1.14.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.14.11/mockk-agent-jvm-1.14.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.14.11/mockk-agent-api-jvm-1.14.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.14.11/mockk-core-jvm-1.14.11.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1.14.11/mockk-jvm-1.14.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1.14.11/mockk-dsl-jvm-1.14.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.14.11/mockk-agent-jvm-1.14.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.14.11/mockk-agent-api-jvm-1.14.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.14.11/mockk-core-jvm-1.14.11-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.objenesis" scope="RUNTIME" />
+  </component>
+</module>

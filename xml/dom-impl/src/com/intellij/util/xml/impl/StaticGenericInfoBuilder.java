@@ -1,31 +1,32 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.*;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.CustomChildren;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.PropertyAccessor;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.SubTagsList;
+import com.intellij.util.xml.XmlName;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,17 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
-public class StaticGenericInfoBuilder {
-  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = new THashSet<>(Arrays.asList(Class.class, int.class));
+public final class StaticGenericInfoBuilder {
+  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = Set.of(Class.class, int.class);
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<>();
@@ -49,12 +53,11 @@ public class StaticGenericInfoBuilder {
   final MultiValuesMap<XmlName, JavaMethod> collectionIndexAdders = new MultiValuesMap<>();
   final MultiValuesMap<XmlName, JavaMethod> collectionIndexClassAdders = new MultiValuesMap<>();
   final MultiValuesMap<XmlName, JavaMethod> collectionClassIndexAdders = new MultiValuesMap<>();
-  private final Map<XmlName, Type> myCollectionChildrenTypes = new THashMap<>();
-  private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<>();
-  private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<>();
-  private final Map<XmlName, TIntObjectHashMap<Collection<JavaMethod>>> myFixedChildrenGetters =
-    FactoryMap.create(key -> new TIntObjectHashMap<>());
-  private final Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributes = new THashMap<>();
+  private final Map<XmlName, Type> myCollectionChildrenTypes = new HashMap<>();
+  private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new HashMap<>();
+  private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new HashMap<>();
+  private final Map<XmlName, Int2ObjectMap<Collection<JavaMethod>>> myFixedChildrenGetters = FactoryMap.create(key -> new Int2ObjectOpenHashMap<>());
+  private final Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributes = new HashMap<>();
 
   private boolean myValueElement;
   private JavaMethod myNameValueGetter;
@@ -76,7 +79,7 @@ public class StaticGenericInfoBuilder {
     }
 
     {
-      final Class implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
+      final Class<?> implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
       if (implClass != null) {
         for (Method method : ReflectionUtil.getClassPublicMethods(implClass)) {
           final int modifiers = method.getModifiers();
@@ -126,7 +129,7 @@ public class StaticGenericInfoBuilder {
       }
     }
 
-    //noinspection ConstantIfStatement,ConstantConditions
+    // noinspection ConstantConditions
     if (false) {
       if (!methods.isEmpty()) {
         assert false : methods.stream().map(method -> "\n  " + method)
@@ -135,21 +138,22 @@ public class StaticGenericInfoBuilder {
     }
   }
 
-  @Nullable
-  private MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
+  private @Nullable MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
-    switch (parameterTypes.length) {
-      case 0:
-        return collectionAdders;
-      case 1:
-        if (Class.class.equals(parameterTypes[0])) return collectionClassAdders;
-        if (isInt(parameterTypes[0])) return collectionIndexAdders;
-        break;
-      case 2:
-        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) return collectionIndexClassAdders;
-        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) return collectionClassIndexAdders;
-    }
-    return null;
+    return switch (parameterTypes.length) {
+      case 0 -> collectionAdders;
+      case 1 -> {
+        if (Class.class.equals(parameterTypes[0])) yield collectionClassAdders;
+        if (isInt(parameterTypes[0])) yield collectionIndexAdders;
+        yield null;
+      }
+      case 2 -> {
+        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) yield collectionIndexClassAdders;
+        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) yield collectionClassIndexAdders;
+        yield null;
+      }
+      default -> null;
+    };
   }
 
   private static boolean isIndexClassAdder(final Class<?> first, final Class<?> second) {
@@ -165,13 +169,14 @@ public class StaticGenericInfoBuilder {
     if (tagName == null) return false;
 
     final Type type = myCollectionChildrenTypes.get(tagName);
-    if (type == null || !ReflectionUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
+    if (type == null || !ClassUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
+
+    if (method.getParameterCount() == 0) return true;
 
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 
-  @Nullable
-  private XmlName extractTagName(JavaMethod method, @NonNls String prefix) {
+  private @Nullable XmlName extractTagName(JavaMethod method, @NonNls String prefix) {
     final String name = method.getName();
     if (!name.startsWith(prefix)) return null;
 
@@ -185,7 +190,7 @@ public class StaticGenericInfoBuilder {
   }
 
   private static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(ReflectionUtil.getRawType(type));
+    return type != null && DomElement.class.isAssignableFrom(ClassUtil.getRawType(type));
   }
 
   private boolean processGetterMethod(final JavaMethod method) {
@@ -226,7 +231,7 @@ public class StaticGenericInfoBuilder {
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
           index = subTagAnnotation.index();
         }
-        final TIntObjectHashMap<Collection<JavaMethod>> map = myFixedChildrenGetters.get(xmlName);
+        Int2ObjectMap<Collection<JavaMethod>> map = myFixedChildrenGetters.get(xmlName);
         Collection<JavaMethod> methods = map.get(index);
         if (methods == null) {
           map.put(index, methods = new SmartList<>());
@@ -263,15 +268,18 @@ public class StaticGenericInfoBuilder {
     return false;
   }
 
+
+  private static final Set<JavaMethodSignature> ourDomElementMethods =
+    ContainerUtil.map2Set(DomElement.class.getMethods(), method -> new JavaMethodSignature(method));
+
   private static boolean isCoreMethod(final JavaMethod method) {
-    if (method.getSignature().findMethod(DomElement.class) != null) return true;
+    if (ourDomElementMethods.contains(method.getSignature())) return true;
 
     final Class<?> aClass = method.getDeclaringClass();
     return aClass.equals(GenericAttributeValue.class) || aClass.equals(GenericDomValue.class) && "getConverter".equals(method.getName());
   }
 
-  @Nullable
-  private String getSubTagName(final JavaMethod method) {
+  private @Nullable String getSubTagName(final JavaMethod method) {
     final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
       return getNameFromMethod(method, false);
@@ -279,8 +287,7 @@ public class StaticGenericInfoBuilder {
     return subTagAnnotation.value();
   }
 
-  @Nullable
-  private String getSubTagNameForCollection(final JavaMethod method) {
+  private @Nullable String getSubTagNameForCollection(final JavaMethod method) {
     final SubTagList subTagList = method.getAnnotation(SubTagList.class);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
@@ -296,38 +303,35 @@ public class StaticGenericInfoBuilder {
     return subTagList.value();
   }
 
-  @Nullable
-  private String getNameFromMethod(final JavaMethod method, boolean isAttribute) {
+  private @Nullable String getNameFromMethod(final JavaMethod method, boolean isAttribute) {
     final String propertyName = getPropertyName(method);
     return propertyName == null ? null : getNameStrategy(isAttribute).convertName(propertyName);
   }
 
-  @Nullable
-  private static String getPropertyName(JavaMethod method) {
+  private static @Nullable String getPropertyName(JavaMethod method) {
     return StringUtil.getPropertyName(method.getMethodName());
   }
 
-  @NotNull
-  private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myClass), isAttribute);
+  private @NotNull DomNameStrategy getNameStrategy(boolean isAttribute) {
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
-  final JavaMethod getCustomChildrenGetter() {
+  JavaMethod getCustomChildrenGetter() {
     return myCustomChildrenGetter;
   }
 
-  final Map<JavaMethodSignature, AttributeChildDescriptionImpl> getAttributes() {
+  Map<JavaMethodSignature, AttributeChildDescriptionImpl> getAttributes() {
     return myAttributes;
   }
 
-  final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> getFixedGetters() {
-    final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> map = new THashMap<>();
+  Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> getFixedGetters() {
+    final Map<JavaMethodSignature, Pair<FixedChildDescriptionImpl, Integer>> map = new HashMap<>();
     final Set<XmlName> names = myFixedChildrenGetters.keySet();
     for (final XmlName name : names) {
-      final TIntObjectHashMap<Collection<JavaMethod>> map1 = myFixedChildrenGetters.get(name);
+      Int2ObjectMap<Collection<JavaMethod>> map1 = myFixedChildrenGetters.get(name);
       int max = 0;
-      final int[] ints = map1.keys();
+      int[] ints = map1.keySet().toIntArray();
       for (final int i : ints) {
         max = Math.max(max, i);
       }
@@ -347,8 +351,8 @@ public class StaticGenericInfoBuilder {
     return map;
   }
 
-  final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getCollectionGetters() {
-    final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getters = new THashMap<>();
+  Map<JavaMethodSignature, CollectionChildDescriptionImpl> getCollectionGetters() {
+    final Map<JavaMethodSignature, CollectionChildDescriptionImpl> getters = new HashMap<>();
     for (final XmlName xmlName : myCollectionGetters.keySet()) {
       final Collection<JavaMethod> collGetters = myCollectionGetters.get(xmlName);
       final JavaMethod method = collGetters.iterator().next();
@@ -365,11 +369,11 @@ public class StaticGenericInfoBuilder {
     return getters;
   }
 
-  final Map<JavaMethodSignature, Pair<String, String[]>> getCompositeCollectionAdders() {
+  Map<JavaMethodSignature, Pair<String, String[]>> getCompositeCollectionAdders() {
     return myCompositeCollectionAdders;
   }
 
-  final Map<JavaMethodSignature, String[]> getCompositeCollectionGetters() {
+  Map<JavaMethodSignature, String[]> getCompositeCollectionGetters() {
     return myCompositeCollectionGetters;
   }
 

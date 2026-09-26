@@ -22,7 +22,7 @@ public class EditorModificationUtilTest extends LightPlatformCodeInsightTestCase
   public void testInsertStringAtCaretNotMovingCaret() {
     configureFromFileText(getTestName(false) + ".txt", "text <caret>");
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      EditorModificationUtil.insertStringAtCaret(myEditor, " ", false, false);
+      EditorModificationUtil.insertStringAtCaret(getEditor(), " ", false, false);
     });
 
     checkResultByText("text <caret> ");

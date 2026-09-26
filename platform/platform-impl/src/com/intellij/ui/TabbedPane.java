@@ -1,41 +1,37 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import javax.swing.*;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.MouseListener;
-import java.awt.*;
 
 public interface TabbedPane {
   JComponent getComponent();
 
-  void putClientProperty(Object key, Object value);
+  void putClientProperty(@NotNull Object key, Object value);
 
-  void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation);
+  void setKeyboardNavigation(@NotNull PrevNextActionsDescriptor installKeyboardNavigation);
 
-  void addChangeListener(ChangeListener listener);
+  void addChangeListener(@NotNull ChangeListener listener);
 
   int getTabCount();
 
-  void insertTab(String title, Icon icon, Component c, String tip, int index);
+  void insertTab(@NlsContexts.TabTitle @NotNull String title,
+                 Icon icon,
+                 @NotNull Component c,
+                 @NlsContexts.Tooltip String tip,
+                 int index);
 
   void setTabPlacement(int tabPlacement);
 
-  void addMouseListener(MouseListener listener);
+  void addMouseListener(@NotNull MouseListener listener);
 
   int getSelectedIndex();
 
@@ -55,9 +51,9 @@ public interface TabbedPane {
 
   Component getTabComponentAt(int index);
 
-  void setTitleAt(int index, String title);
+  void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String title);
 
-  void setToolTipTextAt(int index, String toolTipText);
+  void setToolTipTextAt(int index, @NlsContexts.Tooltip String toolTipText);
 
   void setComponentAt(int index, Component c);
 
@@ -71,13 +67,11 @@ public interface TabbedPane {
 
   void scrollTabToVisible(int index);
 
-  String getTitleAt(int i);
+  @Nls String getTitleAt(int i);
 
   void removeAll();
 
   void updateUI();
 
   void removeChangeListener(ChangeListener listener);
-
-  boolean isDisposed();
 }

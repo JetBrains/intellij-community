@@ -1,0 +1,10 @@
+// "Create secondary constructor" "true"
+// K2_ACTION: "Add primary constructor to 'Creation'" "true"
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+open class Base()
+
+class Creation {
+    constructor(f: Int)
+}
+val v = Creation(<caret>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.AddConstructorFix

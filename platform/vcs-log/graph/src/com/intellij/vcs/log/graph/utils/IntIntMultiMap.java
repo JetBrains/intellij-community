@@ -1,47 +1,34 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.utils;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
 import java.util.Collection;
 
-public class IntIntMultiMap {
-
-  private final static int[] EMPTY = new int[0];
-  private final TIntObjectHashMap<int[]> myKeyToArrayMap = new TIntObjectHashMap<>();
-
+@ApiStatus.Internal
+public final class IntIntMultiMap {
+  private static final int[] EMPTY = new int[0];
+  private final Int2ObjectMap<int[]> myKeyToArrayMap = new Int2ObjectOpenHashMap<>();
 
   public void putValue(int key, int value) {
     int[] values = myKeyToArrayMap.get(key);
+    int[] newValues;
     if (values == null) {
-      int[] newValues = {value};
-      myKeyToArrayMap.put(key, newValues);
+      newValues = new int[]{value};
     }
     else {
-      int[] newValues = new int[values.length + 1];
+      newValues = new int[values.length + 1];
       for (int i = 0; i < values.length; i++) {
         if (values[i] == value) return;
         newValues[i] = values[i];
       }
       newValues[newValues.length - 1] = value;
-      myKeyToArrayMap.put(key, newValues);
     }
+    myKeyToArrayMap.put(key, newValues);
   }
 
   public void remove(int key, int value) {
@@ -73,13 +60,11 @@ public class IntIntMultiMap {
     myKeyToArrayMap.put(key, newValues);
   }
 
-  @NotNull
-  public Collection<Integer> get(int key) {
+  public @NotNull Collection<Integer> get(int key) {
     final int[] asArray = getAsArray(key);
-    return new AbstractList<Integer>() {
-      @NotNull
+    return new AbstractList<>() {
       @Override
-      public Integer get(int index) {
+      public @NotNull Integer get(int index) {
         return asArray[index];
       }
 
@@ -90,8 +75,7 @@ public class IntIntMultiMap {
     };
   }
 
-  @NotNull
-  public int[] getAsArray(int key) {
+  public int @NotNull [] getAsArray(int key) {
     int[] result = myKeyToArrayMap.get(key);
     if (result == null) {
       return EMPTY;
@@ -109,9 +93,8 @@ public class IntIntMultiMap {
     return myKeyToArrayMap.containsKey(key);
   }
 
-  @NotNull
-  public int[] keys() {
-    return myKeyToArrayMap.keys();
+  public int @NotNull [] keys() {
+    return myKeyToArrayMap.keySet().toIntArray();
   }
 
   public void clear() {

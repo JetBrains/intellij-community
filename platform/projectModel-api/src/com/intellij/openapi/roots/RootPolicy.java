@@ -16,11 +16,10 @@
 package com.intellij.openapi.roots;
 
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
+@ApiStatus.OverrideOnly
 public class RootPolicy<R> {
   public R visitOrderEntry(@NotNull OrderEntry orderEntry, R value) {
     return value;

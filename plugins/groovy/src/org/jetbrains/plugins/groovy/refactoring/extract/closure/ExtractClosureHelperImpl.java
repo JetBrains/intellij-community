@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -36,12 +23,12 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroducePar
  * @author Max Medvedev
  */
 public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements GrIntroduceParameterSettings {
-  private final GrParametersOwner myOwner;
+  private final GrParameterListOwner myOwner;
   private final PsiElement myToSearchFor;
 
   private final String myName;
   private final boolean myFinal;
-  private final TIntArrayList myToRemove;
+  private final IntList myToRemove;
   private final boolean myGenerateDelegate;
   @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
   private final int myReplaceFieldsWithGetters;
@@ -54,7 +41,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
                                   boolean declareFinal,
-                                  TIntArrayList toRemove,
+                                  IntList toRemove,
                                   boolean generateDelegate,
                                   @MagicConstant(valuesFromClass = IntroduceParameterRefactoring.class)
                                   int replaceFieldsWithGetters,
@@ -75,8 +62,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   }
 
   @Override
-  @NotNull
-  public GrParametersOwner getToReplaceIn() {
+  public @NotNull GrParameterListOwner getToReplaceIn() {
     return myOwner;
   }
 
@@ -96,7 +82,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   }
 
   @Override
-  public TIntArrayList parametersToRemove() {
+  public IntList parametersToRemove() {
     return myToRemove;
   }
 
@@ -125,7 +111,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
       if (type instanceof PsiClassType) {
         final PsiType[] parameters = ((PsiClassType)type).getParameters();
         if (parameters.length == 1 && parameters[0] != null) {
-          if (parameters[0].equalsToText(PsiType.VOID.getBoxedTypeName())) {
+          if (parameters[0].equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
             type = ((PsiClassType)type).rawType();
           }
         }
@@ -146,9 +132,8 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     return myForceReturn;
   }
 
-  @Nullable
   @Override
-  public GrVariable getVar() {
+  public @Nullable GrVariable getVar() {
     return null;
   }
 

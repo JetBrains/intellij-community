@@ -1,16 +1,16 @@
-/* It's an automatically generated code. Do not modify it. */
+/* This is automatically generated code. Do not modify it. */
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-
 import com.intellij.util.containers.IntArrayList;
+
 import java.util.EnumSet;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.intellij.lang.regexp.RegExpCapability.*;
-
-@SuppressWarnings("ALL")
 %%
 
 %class _RegExLexer
@@ -42,14 +42,18 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowExtendedUnicodeCharacter;
     private boolean allowOneHexCharEscape;
     private boolean allowMysqlBracketExpressions;
+    private boolean allowPcreBackReferences;
+    private boolean allowPcreConditions;
+    private boolean allowPcreNumberedGroupRef;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
+    private boolean whitespaceInClass;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
       this.xmlSchemaMode = capabilities.contains(XML_SCHEMA_MODE);
-      if (capabilities.contains(DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.TRUE;
-      if (capabilities.contains(NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.FALSE;
+      if (capabilities.contains(DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = TRUE;
+      if (capabilities.contains(NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = FALSE;
       this.allowOmitNumbersInQuantifiers = capabilities.contains(OMIT_NUMBERS_IN_QUANTIFIERS);
       this.allowOmitBothNumbersInQuantifiers = capabilities.contains(OMIT_BOTH_NUMBERS_IN_QUANTIFIERS);
       this.allowNestedCharacterClasses = capabilities.contains(NESTED_CHARACTER_CLASSES);
@@ -61,6 +65,9 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowPosixBracketExpressions = capabilities.contains(POSIX_BRACKET_EXPRESSIONS);
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
       this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
+      this.allowPcreBackReferences = capabilities.contains(PCRE_BACK_REFERENCES);
+      this.allowPcreNumberedGroupRef = capabilities.contains(PCRE_NUMBERED_GROUP_REF);
+      this.allowPcreConditions = capabilities.contains(PCRE_CONDITIONS);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
@@ -75,6 +82,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       }
       this.allowExtendedUnicodeCharacter = capabilities.contains(EXTENDED_UNICODE_CHARACTER);
       this.allowOneHexCharEscape = capabilities.contains(ONE_HEX_CHAR_ESCAPE);
+      this.whitespaceInClass = capabilities.contains(WHITESPACE_IN_CLASS);
     }
 
     private void yypushstate(int state) {
@@ -102,22 +110,26 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate QUOTED
 %xstate EMBRACED
 %xstate QUANTIFIER
+%xstate NON_QUANTIFIER
 %xstate NEGATED_CLASS
-%xstate QUOTED_CLASS1
+%xstate QUOTED_CLASS
 %xstate CLASS1
-%state CLASS2
-%state PROP
-%state NAMED
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
 %xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
-%xstate PY_COND_REF
+%xstate PCRE_NUMBERED_GROUP
 %xstate BRACKET_EXPRESSION
 %xstate MYSQL_CHAR_EXPRESSION
 %xstate MYSQL_CHAR_EQ_EXPRESSION
 %xstate EMBRACED_HEX
+
+%state CONDITIONAL1
+%state CONDITIONAL2
+%state CLASS2
+%state PROP
+%state NAMED
 
 DOT="."
 LPAREN="("
@@ -136,10 +148,10 @@ MYSQL_CHAR_NAME=[:letter:](-|[:letter:])*[:digit:]?
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET}
-META2= {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
+META2 = {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
 
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
-BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G"
+BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G" | "K"
 
 CLASS="w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "X"
 XML_CLASS="c" | "C" | "i" | "I"
@@ -147,6 +159,12 @@ PROP="p" | "P"
 TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
+
+PCRE_DEFINE=DEFINE
+PCRE_VERSION=VERSION>?=\d*[.]?\d{0,2}
+
+/* 999 back references should be enough for everybody */
+BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 
 %%
 
@@ -170,7 +188,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE} "u" ({HEX_CHAR}{4})  { return RegExpTT.UNICODE_CHAR; }
 {ESCAPE} "u" / {LBRACE}       {  if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;  }
 {ESCAPE} "u"                  { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
-{ESCAPE} "u" {HEX_CHAR}{1,3}  { yypushback(yylength() - 2); return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "u" {HEX_CHAR}{1,3}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 
 <EMBRACED_HEX> {
   {LBRACE}{HEX_CHAR}+{RBRACE}  {  yypopstate(); return (yycharat(-1) == 'u') ? RegExpTT.UNICODE_CHAR : RegExpTT.HEX_CHAR;  }
@@ -189,9 +207,10 @@ HEX_CHAR=[0-9a-fA-F]
 
 {ESCAPE} {XML_CLASS}         { if (xmlSchemaMode) return RegExpTT.CHAR_CLASS; else return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
+{ESCAPE} "g" {LBRACE} "-"{0,1} {BACK_REFERENCES_GROUP} {RBRACE} { return allowPcreBackReferences ? RegExpTT.BACKREF : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE} "g" {BACK_REFERENCES_GROUP} { return allowPcreBackReferences ? RegExpTT.BACKREF : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
-/* 999 back references should be enough for everybody */
-{ESCAPE} [1-9][0-9]{0,2}      { String text = yytext().toString().substring(1);
+{ESCAPE} {BACK_REFERENCES_GROUP}      { String text = yytext().toString().substring(1);
                                 if (allowOctalNoLeadingZero) {
                                   if (Integer.parseInt(text) <= capturingGroupCount && yystate() != CLASS2) return RegExpTT.BACKREF;
                                   int i = 0;
@@ -241,8 +260,9 @@ HEX_CHAR=[0-9a-fA-F]
   {ESCAPE}  {LBRACE} / "," [:digit:]+ {RBRACE}            { return allowOmitNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {LBRACE} / "," {RBRACE}                       { return allowOmitBothNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
-  {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != Boolean.TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
-  {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == Boolean.FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACKET}          { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {META2}             { return RegExpTT.ESC_CHARACTER; }
 }
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
@@ -253,7 +273,6 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  [hH]                 { return (allowHexDigitClass || allowHorizontalWhitespaceClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  "N"                  { yypushstate(NAMED); return RegExpTT.NAMED_CHARACTER; }
 {ESCAPE}  {TRANSFORMATION}     { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  [\n\b\t\r\f ]        { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 
 <CLASS2> {
   {ESCAPE}  {RBRACKET}        { return RegExpTT.ESC_CHARACTER; }
@@ -261,18 +280,14 @@ HEX_CHAR=[0-9a-fA-F]
 }
 
 <YYINITIAL> {
+  {ESCAPE}  [\n\b\t\r\f ]        { return commentMode ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  "k<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_REF; }
   {ESCAPE}  "k'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF; }
   {ESCAPE}  "g<"                 { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP_CALL; }
   {ESCAPE}  "g'"                 { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL; }
   {ESCAPE}  "R"                  { return RegExpTT.CHAR_CLASS; }
-  {ESCAPE}  {BOUNDARY}          { return RegExpTT.BOUNDARY; }
+  {ESCAPE}  {BOUNDARY}           { return RegExpTT.BOUNDARY; }
 }
-
-{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
-{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
-
-{ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <PROP> {
   {LBRACE}                    { yypopstate(); yypushstate(EMBRACED); return RegExpTT.LBRACE; }
@@ -290,9 +305,19 @@ HEX_CHAR=[0-9a-fA-F]
   /* "}" outside counted quantifier is treated as regular character */
   {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
   {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-  {LBRACE} / "," [:digit:]+ {RBRACE}            { if (allowOmitNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
-  {LBRACE} / "," {RBRACE}                       { if (allowOmitBothNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
-  {LBRACE}  { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+  {LBRACE} / "," [:digit:]+ {RBRACE}            { if (allowOmitNumbersInQuantifiers || allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
+  {LBRACE} / "," [:digit:]+ {ESCAPE} {RBRACE}   { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else if (allowOmitNumbersInQuantifiers) yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; }
+  {LBRACE} / "," {RBRACE}                       { if (allowOmitBothNumbersInQuantifiers || allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
+  {LBRACE} / "," {ESCAPE} {RBRACE}              { if (allowDanglingMetacharacters == TRUE) { if (allowOmitBothNumbersInQuantifiers) yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; } else { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }}
+  {LBRACE} / {ESCAPE} {RBRACE}                  { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.LBRACE : RegExpTT.CHARACTER; }
+  {LBRACE} / [:digit:]* ","? [:digit:]* {ESCAPE} {RBRACE}  { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else { yypushstate(NON_QUANTIFIER); return RegExpTT.CHARACTER; }}
+  {LBRACE}  { if (allowDanglingMetacharacters != TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
+}
+
+<NON_QUANTIFIER> {
+  [:digit:]         { return RegExpTT.CHARACTER; }
+  ","               { return RegExpTT.CHARACTER; }
+  {ESCAPE} {RBRACE} { yypopstate(); return RegExpTT.ESC_CHARACTER; }
 }
 
 <QUANTIFIER> {
@@ -304,6 +329,7 @@ HEX_CHAR=[0-9a-fA-F]
 <EMBRACED> {
   "^"                 { return RegExpTT.CARET;  }
   {NAME}              { return RegExpTT.NAME;   }
+  "="                 { return RegExpTT.EQ; }
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
   {ANY}               { yypopstate(); yypushback(1); }
 }
@@ -318,21 +344,21 @@ HEX_CHAR=[0-9a-fA-F]
   "^"  { yybegin(CLASS1); return RegExpTT.CARET; }
 }
 
-<QUOTED_CLASS1> {
+<QUOTED_CLASS> {
   "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
   {ANY}              { states.set(states.size() - 1, CLASS2); return RegExpTT.CHARACTER; }
 }
 
 <CLASS1> {
   {ESCAPE} "^"               { yybegin(CLASS2); return RegExpTT.ESC_CHARACTER; }
-  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN; }
+  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS); return RegExpTT.QUOTE_BEGIN; }
   {ESCAPE} {RBRACKET}        { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {RBRACKET}                 { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER; }
   {LBRACKET} / ":"           { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
   {LBRACKET} / [.=]          { yybegin(CLASS2); if (allowMysqlBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
   {LBRACKET} / "^"           { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
   {LBRACKET}                 { yybegin(CLASS2); if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
-  [\n\b\t\r\f ]              { if (commentMode) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
+  [\n\b\t\r\f ]              { if (commentMode && whitespaceInClass) return com.intellij.psi.TokenType.WHITE_SPACE; yypushback(1); yybegin(CLASS2); }
   {ANY}                      { yypushback(1); yybegin(CLASS2); }
 }
 
@@ -349,7 +375,12 @@ HEX_CHAR=[0-9a-fA-F]
                             return RegExpTT.MYSQL_CHAR_BEGIN;
                           } else {
                             yypushback(1);
-                            return allowNestedCharacterClasses ? RegExpTT.CLASS_BEGIN : RegExpTT.CHARACTER;
+                            if (allowNestedCharacterClasses) {
+                              yypushstate(CLASS1);
+                              return RegExpTT.CLASS_BEGIN;
+                            } else {
+                              return RegExpTT.CHARACTER;
+                            }
                           }
                         }
   {LBRACKET} / "^"      { if (allowNestedCharacterClasses) { yypushstate(NEGATED_CLASS); return RegExpTT.CLASS_BEGIN; } return RegExpTT.CHARACTER; }
@@ -357,10 +388,17 @@ HEX_CHAR=[0-9a-fA-F]
   {RBRACKET}            { yypopstate(); return RegExpTT.CLASS_END; }
   "&&"                  { if (allowNestedCharacterClasses) return RegExpTT.ANDAND; else yypushback(1); return RegExpTT.CHARACTER; }
   "-"                   { return RegExpTT.MINUS; }
-  " "                   { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
-  [\n\b\t\r\f]          { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
-  {ANY}                 { return RegExpTT.CHARACTER; }
+  " "                   { return (commentMode && whitespaceInClass) ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }
+  [\n\b\t\r\f]          { return (commentMode && whitespaceInClass) ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CTRL_CHARACTER; }
+  "#"                   { if (commentMode && whitespaceInClass) yypushstate(COMMENT); else return RegExpTT.CHARACTER; }
+  "^"                   { return RegExpTT.CHARACTER; }
+  {ESCAPE}[\n\b\t\r\f ] { return (commentMode && whitespaceInClass) ? RegExpTT.ESC_CTRL_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 }
+
+{ESCAPE}  [A-Za-z]            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE} "#"                  { return commentMode ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}  {ANY}               { return RegExpTT.REDUNDANT_ESCAPE; }
+{ESCAPE}                      { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
 <BRACKET_EXPRESSION> {
   "^"                                     { return RegExpTT.CARET; }
@@ -387,7 +425,7 @@ HEX_CHAR=[0-9a-fA-F]
 <YYINITIAL> {
   {LPAREN}      { capturingGroupCount++; return RegExpTT.GROUP_BEGIN; }
   {RPAREN}      { return RegExpTT.GROUP_END;   }
-  {RBRACE}      { return (allowDanglingMetacharacters != Boolean.FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;  }
+  {RBRACE}      { return (allowDanglingMetacharacters != FALSE) ? RegExpTT.CHARACTER : RegExpTT.RBRACE;  }
 
   "|"           { return RegExpTT.UNION;  }
   "?"           { return RegExpTT.QUEST;  }
@@ -405,10 +443,19 @@ HEX_CHAR=[0-9a-fA-F]
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
   "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
-  "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
+  "(?" / "("  { yybegin(CONDITIONAL1); return RegExpTT.CONDITIONAL; }
+  "(?&"  { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?P>" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?|"  {  return RegExpTT.PCRE_BRANCH_RESET; }
 
   "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
   "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
+
+  "(?"[+-]?{BACK_REFERENCES_GROUP}")" { if (allowPcreNumberedGroupRef) {
+                                          yybegin(PCRE_NUMBERED_GROUP);
+                                          return RegExpTT.PCRE_NUMBERED_GROUP_REF;
+                                        }
+                                        else { yypushback(yylength() - 2); yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }}
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
@@ -420,44 +467,63 @@ HEX_CHAR=[0-9a-fA-F]
   ":"               { yybegin(YYINITIAL); return RegExpTT.COLON;  }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
 
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <NAMED_GROUP> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   ">"               { yybegin(YYINITIAL); return RegExpTT.GT; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <QUOTED_NAMED_GROUP> {
   {GROUP_NAME}      { return RegExpTT.NAME; }
   "'"               { yybegin(YYINITIAL); return RegExpTT.QUOTE; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 <PY_NAMED_GROUP_REF> {
   {GROUP_NAME}      { return RegExpTT.NAME;   }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
-<PY_COND_REF> {
+<PCRE_NUMBERED_GROUP> {
+  [:digit:]+              { return RegExpTT.NUMBER; }
+  {ANY}                   { yybegin(YYINITIAL); yypushback(1); }
+}
+
+<CONDITIONAL1> {
+  "(?="             { yybegin(YYINITIAL); return RegExpTT.POS_LOOKAHEAD; }
+  "(?!"             { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKAHEAD; }
+  "(?<="            { yybegin(YYINITIAL); return RegExpTT.POS_LOOKBEHIND; }
+  "(?<!"            { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKBEHIND; }
+  "('"              { yybegin(CONDITIONAL2); return RegExpTT.QUOTED_CONDITION_BEGIN; }
+  "(<"              { yybegin(CONDITIONAL2); return RegExpTT.ANGLE_BRACKET_CONDITION_BEGIN; }
+  "("               { yybegin(CONDITIONAL2); return RegExpTT.GROUP_BEGIN; }
+}
+
+<CONDITIONAL2> {
+  {PCRE_DEFINE}     { return allowPcreConditions ? RegExpTT.PCRE_DEFINE : RegExpTT.NAME; }
+  {PCRE_VERSION}    { return allowPcreConditions ? RegExpTT.PCRE_VERSION : RegExpTT.NAME; }
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
+  "')"              { yybegin(YYINITIAL); return RegExpTT.QUOTED_CONDITION_END; }
+  ">)"              { yybegin(YYINITIAL); return RegExpTT.ANGLE_BRACKET_CONDITION_END; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
-  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+  {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
 "^"                   { return RegExpTT.CARET; }
 "-"                   { return RegExpTT.CHARACTER; }
 
 /* "dangling ]" */
-<YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == Boolean.FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
+<YYINITIAL> {RBRACKET}    { return allowDanglingMetacharacters == FALSE ? RegExpTT.CLASS_END : RegExpTT.CHARACTER; }
 
 
-"#"           { if (commentMode) { yypushstate(COMMENT); return RegExpTT.COMMENT; } else return RegExpTT.CHARACTER; }
+"#"           { if (commentMode) { yypushstate(COMMENT); } else return RegExpTT.CHARACTER; }
 <COMMENT> {
-  [^\r\n]*[\r\n]?  { yypopstate(); return RegExpTT.COMMENT; }
+  [^\r\n]*  { yypopstate(); return RegExpTT.COMMENT; }
 }
 
 " "            { return commentMode ? com.intellij.psi.TokenType.WHITE_SPACE : RegExpTT.CHARACTER; }

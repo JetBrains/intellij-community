@@ -1,0 +1,442 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.unscramble
+
+import com.intellij.icons.AllIcons
+import com.intellij.java.frontback.impl.JavaFrontbackBundle
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.threadDumpParser.ThreadOperation
+import com.intellij.threadDumpParser.ThreadState
+import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.Color
+import java.util.Objects
+import javax.swing.Icon
+
+@ApiStatus.Internal
+interface DumpItem {
+  val name: @NlsSafe String
+
+  val stateDesc: @NlsSafe String
+
+  val stackTrace: @NlsSafe String
+
+  val interestLevel: Int
+
+  val icon: Icon
+
+  val iconToolTip: @Nls String?
+
+  val attributes: SimpleTextAttributes
+
+  val isDeadLocked: Boolean
+
+  /**
+   * When having a list of [DumpItem]s, it is expected that contents of this set are instances from the list.
+   * @see toDumpItems
+   */
+  val awaitingDumpItems: Set<DumpItem>
+
+  /**
+   * Unique identifier of the dump item used to represent hierarchy of [DumpItem]s as a tree.
+   */
+  val treeId: Long?
+
+  /**
+   * [treeId] of the parent [DumpItem].
+   */
+  val parentTreeId: Long?
+
+  /**
+   * True if the given dump item can be a parent to some other dump item.
+   */
+  val isContainer: Boolean
+
+  /**
+   * May be used in the UI to hide some items from the dump.
+   */
+  val canBeHidden: Boolean
+
+  /**
+   * Serialized representation used when exporting the [DumpItem].
+   * It may differ from [stackTrace] when export requires additional inline metadata.
+   */
+  fun serialize(): @NlsSafe String
+
+  companion object {
+    @JvmField
+    val SLEEPING_ATTRIBUTES: SimpleTextAttributes = SimpleTextAttributes.GRAY_ATTRIBUTES
+
+    @JvmField
+    val RUNNING_ATTRIBUTES: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
+
+    @JvmField
+    val UNINTERESTING_ATTRIBUTES: SimpleTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter())
+
+    @JvmField
+    val BY_NAME: Comparator<DumpItem> = Comparator<DumpItem> { o1, o2 ->
+      o1.name.compareTo(o2.name, true)
+    }
+
+    @JvmField
+    val BY_INTEREST: Comparator<DumpItem> = Comparator<DumpItem> { o1, o2 ->
+      o2.interestLevel compareTo o1.interestLevel
+    }
+  }
+}
+
+@ApiStatus.Internal
+interface MergeableDumpItem : DumpItem {
+  val mergeableToken: MergeableToken
+}
+
+@ApiStatus.Internal
+object IconsCache {
+  private val virtualIcons: MutableMap<Icon, IconWithVirtualOverlay> = mutableMapOf()
+  private val daemonIcons: MutableMap<Icon, IconWithDaemonOverlay> = mutableMapOf()
+
+  fun getIconWithVirtualOverlay(baseIcon: Icon): Icon =
+    virtualIcons.computeIfAbsent(baseIcon) { IconWithVirtualOverlay(it) }
+
+  fun getIconWithDaemonOverlay(baseIcon: Icon): Icon =
+    daemonIcons.computeIfAbsent(baseIcon) { IconWithDaemonOverlay(it) }
+}
+
+
+@ApiStatus.Internal
+interface MergeableToken {
+  override fun equals(other: Any?): Boolean
+  override fun hashCode(): Int
+
+  val item: DumpItem
+
+  /** This token corresponds to a unique item which cannot be merged with others. */
+  class Unique(override val item: DumpItem) : MergeableToken {
+    override fun equals(other: Any?): Boolean = super.equals(other)
+    override fun hashCode(): Int = super.hashCode()
+  }
+}
+
+@ApiStatus.Internal
+class CompoundDumpItem<T : DumpItem>(
+  val originalItem: T,
+  val counter: Int,
+  override val parentTreeId: Long? = originalItem.parentTreeId
+) : DumpItem by originalItem {
+
+  override val name: String = originalItem.name + (if (counter == 1) "" else " [and ${counter - 1} similar]")
+
+  companion object {
+    @JvmStatic
+    fun mergeThreadDumpItems(originalItems: List<DumpItem>): List<DumpItem> {
+      val groups = originalItems.groupBy { if (it is MergeableDumpItem) it.mergeableToken else MergeableToken.Unique(it) }
+      // Map every original treeId to the treeId of the representative of the merge group
+      val idToCompoundId = hashMapOf<Long, Long?>()
+      for ((token, items) in groups) {
+        val compoundId = token.item.treeId
+        for (item in items) {
+          item.treeId?.let { idToCompoundId[it] = compoundId }
+        }
+      }
+      return groups.map { (token, items) ->
+        val item = token.item
+        val parentId = item.parentTreeId?.let { idToCompoundId.getOrDefault(it, it) }
+        CompoundDumpItem(item, items.size, parentId)
+      }
+    }
+  }
+}
+
+@ApiStatus.Internal
+fun toDumpItems(threadStates: List<ThreadState>): List<DumpItem> =
+  toDumpItems(threadStates, emptyList())
+
+@ApiStatus.Internal
+fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: List<JavaThreadContainerDesc>): List<DumpItem> {
+  val threadDumpItems = threadStates.map { ThreadDumpItemFactory.createDumpItem(it) }
+
+  val statesToItems = threadStates.zip(threadDumpItems).toMap()
+
+  for ((threadState, dumpItem) in statesToItems) {
+    val awaitingItems = threadState.awaitingThreads.mapNotNull { statesToItems[it] }.toSet()
+    // TODO: JavaThreadDumpItem should be created in ThreadDumpItemFactory as well
+    if (dumpItem is JavaThreadDumpItem) {
+      dumpItem.setAwaitingItems(awaitingItems)
+    }
+  }
+
+  val threadContainerDumpItems = threadContainerDescriptors.map {
+    JavaThreadContainerItem(it.name, it.containerId, it.parentId)
+  }
+  return threadDumpItems + threadContainerDumpItems
+}
+
+/**
+ * Descriptor of a Java thread container.
+ *
+ * @param name display name of the container
+ * @param containerId unique identifier of the container
+ * @param parentId unique identifier of the owning thread or parent container, or `null` if it's parent is the top-level root container
+ */
+@ApiStatus.Internal
+data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentId: Long?)
+
+internal fun createJavaThreadDumpItem(threadState: ThreadState): DumpItem {
+  val item = JavaThreadDumpItem(threadState)
+  val count = threadState.similarThreadsCount
+  return if (count > 1) {
+    CompoundDumpItem(item, count)
+  } else {
+    item
+  }
+}
+
+private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
+  override val name: String = threadState.name
+
+  override val isContainer: Boolean
+    get() = false
+
+  override val treeId: Long?
+    get() = threadState.uniqueId
+
+  override val parentTreeId: Long?
+    get() = threadState.threadContainerUniqueId
+
+  override val canBeHidden: Boolean
+    get() = threadState.isVirtual
+
+  override val stateDesc: String
+    get() {
+      val trimmedState = (threadState.threadStateDetail ?: threadState.state).let {
+        if (it.length > 30) {
+          it.take(30) + "..."
+        }
+        else it
+      }
+      val extraState = threadState.extraState
+      return buildString {
+        if (trimmedState.isNotEmpty() && trimmedState != "unknown" && trimmedState != "undefined") {
+          append(" ($trimmedState)")
+        }
+        if (extraState != null) {
+          append(" [$extraState]")
+        }
+      }
+    }
+
+  override val stackTrace: String = threadState.stackTrace ?: ""
+
+  private val isServiceThread: Boolean =
+    name.startsWith("Coroutines Debugger Cleaner") ||
+    // obsolete
+    name.startsWith("IntelliJ Suspend Helper") ||
+    name.startsWith("IntelliJ Debugger Helper Thread")
+
+  override val interestLevel: Int = when {
+    threadState.isEmptyStackTrace -> -10
+    this.isServiceThread || threadState.isKnownJDKThread -> -5
+    threadState.isSleeping -> -2
+    threadState.operation == ThreadOperation.SOCKET -> -1
+    else -> stackTrace.count { it == '\n' }
+  }
+
+  override val icon: Icon
+    get() {
+      val baseIcon = when {
+        threadState.isSleeping -> AllIcons.Debugger.MuteBreakpoints
+        // Should be checked before checking isWaiting().
+        threadState.operation == ThreadOperation.CARRYING_VTHREAD -> AllIcons.Debugger.ThreadGroup
+        threadState.isWaiting -> AllIcons.Debugger.ThreadFrozen
+        threadState.operation == ThreadOperation.SOCKET -> AllIcons.Debugger.ThreadStates.Socket
+        threadState.operation == ThreadOperation.IO -> AllIcons.Actions.MenuSaveall
+        threadState.isEDT ->
+          if (threadState.isIdle) {
+            AllIcons.Debugger.ThreadStates.Idle
+          }
+          else {
+            AllIcons.Actions.ProfileCPU
+          }
+        else -> AllIcons.Actions.Resume
+      }
+      return when {
+        threadState.isVirtual -> IconsCache.getIconWithVirtualOverlay(baseIcon)
+        threadState.isDaemon -> IconsCache.getIconWithDaemonOverlay(baseIcon)
+        else -> baseIcon
+      }
+    }
+
+  override val iconToolTip: @Nls String?
+    get() = when {
+      threadState.isVirtual -> JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.virtual")
+      threadState.isDaemon -> JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.daemon")
+      else -> null
+    }
+
+  override val attributes: SimpleTextAttributes = when {
+    threadState.isSleeping -> DumpItem.SLEEPING_ATTRIBUTES
+    threadState.isEmptyStackTrace || this.isServiceThread || threadState.isKnownJDKThread() -> DumpItem.UNINTERESTING_ATTRIBUTES
+    threadState.isEDT() -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+    else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
+  }
+
+  override val isDeadLocked: Boolean
+    get() = threadState.isDeadlocked
+
+  private var internalAwaitingItems = emptySet<DumpItem>()
+
+  override val awaitingDumpItems: Set<DumpItem>
+    get() = internalAwaitingItems
+
+  fun setAwaitingItems(awaitingItems: Set<DumpItem>) {
+    internalAwaitingItems = awaitingItems
+  }
+
+  override val mergeableToken: MergeableToken get() = JavaMergeableToken()
+
+  override fun serialize(): @NlsSafe String {
+    val separatedText = splitFirstLineAndBody(stackTrace)
+    return serializeThreadDumpItem(
+      itemHeader = separatedText.firstLine,
+      stackTraceBody = separatedText.body,
+      id = treeId,
+      parentId = parentTreeId,
+      type = threadState.type,
+      additionalMetadata = threadState.metadata,
+    )
+  }
+
+  private inner class JavaMergeableToken : MergeableToken {
+    private val comparableStackTrace: String =
+      stackTrace.substringAfter("\n")
+        .replace(platformThreadVirtualThreadLineRegex, "")
+        .replace("<0x\\d+>\\s".toRegex(), "<merged>")
+
+    override val item: JavaThreadDumpItem get() = this@JavaThreadDumpItem
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is JavaMergeableToken) return false
+      val otherThreadState = other.item.threadState
+      if (threadState.isEDT()) return false
+      if (threadState.state != otherThreadState.state) return false
+      if (threadState.isEmptyStackTrace != otherThreadState.isEmptyStackTrace) return false
+      if (threadState.isDaemon != otherThreadState.isDaemon) return false
+      if (threadState.javaThreadState != otherThreadState.javaThreadState) return false
+      if (threadState.threadStateDetail != otherThreadState.threadStateDetail) return false
+      if (threadState.extraState != otherThreadState.extraState) return false
+      if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
+      if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
+      if (this.comparableStackTrace != other.comparableStackTrace) return false
+      if (parentTreeId != other.item.parentTreeId) return false
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hash(
+        threadState.state,
+        threadState.isEmptyStackTrace,
+        threadState.isDaemon,
+        threadState.javaThreadState,
+        threadState.threadStateDetail,
+        threadState.extraState,
+        threadState.awaitingThreads,
+        threadState.deadlockedThreads,
+        comparableStackTrace,
+        parentTreeId
+      )
+    }
+  }
+}
+
+private class JavaThreadContainerItem(private val containerName: String, override val treeId: Long, override val parentTreeId: Long?) : MergeableDumpItem {
+  override val name: @NlsSafe String
+    get() = formatThreadContainerName(containerName)
+
+  override val isContainer: Boolean
+    get() = true
+
+  override val canBeHidden: Boolean
+    get() = true
+
+  override val stateDesc: @NlsSafe String
+    get() = "" // todo we can add threadsCount to the state
+
+  override val attributes: SimpleTextAttributes
+    get() = SimpleTextAttributes.REGULAR_ATTRIBUTES
+
+  override val stackTrace: @NlsSafe String
+    get() = name
+  override val interestLevel: Int
+    get() = Int.MAX_VALUE // todo dependent on the number of children, for now kept on top
+  override val icon: Icon
+    get() = AllIcons.Debugger.ThreadGroup
+  override val iconToolTip: @Nls String
+    get() = JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.container")
+  override val isDeadLocked: Boolean
+    get() = false
+  override val awaitingDumpItems: Set<DumpItem>
+    get() = emptySet()
+
+  override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+  override fun serialize(): @NlsSafe String =
+    serializeThreadDumpItem(
+      itemHeader = "\"$containerName\" tid=0x0 nid=NA container",
+      // add "Carrying virtual thread" so old ThreadDumpParser will parse it as thread group, not as a runnable thread.
+      stackTraceBody = "   Carrying virtual thread #0",
+      id = treeId,
+      parentId = parentTreeId,
+      type = IntelliJThreadDumpMetadata.CONTAINER_TYPE,
+    )
+
+  companion object {
+    // see jdk.internal.vm.ThreadContainers.RootContainer.name
+    const val ROOT = "<root>"
+    const val THREADS_ROOT_CONTAINER = "Root Container"
+    const val JUC_PACKAGE = "java.util.concurrent."
+
+    fun formatThreadContainerName(name: String) = when {
+      name == ROOT -> THREADS_ROOT_CONTAINER
+      name.startsWith(JUC_PACKAGE) -> name.removePrefix(JUC_PACKAGE)
+      else -> name
+    }
+  }
+}
+
+private val platformThreadVirtualThreadLineRegex = Regex("""(?m)^[ \t]*(?:Carrying|Mounted) virtual thread #\d+[ \t]*(?:\r?\n|$)""")
+
+class InfoDumpItem(private val title: @Nls String, private val details: @NlsSafe String) : MergeableDumpItem {
+  override val name: @NlsSafe String
+    get() = title
+  override val stateDesc: @NlsSafe String
+    get() = ""
+  override val stackTrace: @NlsSafe String
+    get() = details
+  override val interestLevel: Int
+    get() = Int.MIN_VALUE
+  override val icon: Icon
+    get() = AllIcons.General.Information
+  override val iconToolTip: @Nls String?
+    get() = null
+  override val attributes: SimpleTextAttributes
+    get() = SimpleTextAttributes.REGULAR_ATTRIBUTES
+  override val isDeadLocked: Boolean
+    get() = false
+  override val awaitingDumpItems: Set<DumpItem>
+    get() = emptySet()
+  override val isContainer: Boolean
+    get() = false
+
+  override val canBeHidden: Boolean
+    get() = false
+
+  override val treeId: Long?
+    get() = null
+
+  override val parentTreeId: Long?
+    get() = null
+
+  override val mergeableToken: MergeableToken = MergeableToken.Unique(this)
+
+  override fun serialize(): @NlsSafe String = details
+}

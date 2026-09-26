@@ -1,0 +1,35 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "pythonproject",
+    "sub-project-a",
+    "sub-project-b",
+]
+
+[[package]]
+name = "pythonproject"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "sub-project-a" },
+    { name = "sub-project-b" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "sub-project-a", editable = "sub-projects/sub-project-a" },
+    { name = "sub-project-b", editable = "sub-projects/sub-project-b" },
+]
+
+[[package]]
+name = "sub-project-a"
+version = "0.1.0"
+source = { editable = "sub-projects/sub-project-a" }
+
+[[package]]
+name = "sub-project-b"
+version = "0.1.0"
+source = { editable = "sub-projects/sub-project-b" }

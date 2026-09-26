@@ -1,68 +1,45 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
-public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> {
+public final class JavaFxIdsIndex extends ScalarIndexExtension<String> {
 
-  @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.id.name");
+  public static final @NonNls ID<String, Void> KEY = ID.create("javafx.id.name");
 
-  private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
-  private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer();
-  private final FxmlDataExternalizer myDataExternalizer = new FxmlDataExternalizer();
-
-  @NotNull
   @Override
-  public DataIndexer<String, Set<String>, FileContent> getIndexer() {
-    return myDataIndexer;
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
+    return new FxmlDataIndexer();
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Set<String>> getValueExternalizer() {
-    return myDataExternalizer;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return new JavaFxControllerClassIndex.MyInputFilter();
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
-  }
-
-  @NotNull
-  @Override
-  public ID<String, Set<String>> getName() {
+  public @NotNull ID<String, Void> getName() {
     return KEY;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -73,31 +50,24 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
-  @NotNull
-  public static Collection<String> getAllRegisteredIds(Project project) {
+  public static @NotNull Collection<String> getAllRegisteredIds(Project project) {
     CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<>();
     FileBasedIndex.getInstance().processAllKeys(KEY, processor, project);
     final Collection<String> results = new ArrayList<>(processor.getResults());
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     for (Iterator<String> iterator = results.iterator(); iterator.hasNext(); ) {
       final String id = iterator.next();
-      final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, searchScope);
-      if (!values.isEmpty()) {
-        final Set<String> pathSet = values.get(0);
-        if (pathSet != null) {
-          continue;
-        }
+      if (FileBasedIndex.getInstance().processValues(KEY, id, null, (file, value) -> false, searchScope)) {
+        iterator.remove();
       }
-      iterator.remove();
     }
     return results;
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getContainingFiles(Project project, String id) {
+  public static @NotNull Collection<VirtualFile> getContainingFiles(Project project, String id) {
     return FileBasedIndex.getInstance().getContainingFiles(KEY, id, GlobalSearchScope.projectScope(project));
   }
 }

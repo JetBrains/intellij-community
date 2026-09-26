@@ -36,11 +36,12 @@ public final class XPathFile extends PsiFileBase implements XPathElement {
     myType = type;
   }
 
-  @NotNull
-  public FileType getFileType() {
+  @Override
+  public @NotNull FileType getFileType() {
     return myType;
   }
 
+  @Override
   public String toString() {
     return "XPathFile:" + getName();
   }
@@ -50,8 +51,7 @@ public final class XPathFile extends PsiFileBase implements XPathElement {
     return ContextProvider.getContextProvider(this);
   }
 
-  @Nullable
-  public XPathExpression getExpression() {
+  public @Nullable XPathExpression getExpression() {
     return findChildByClass(XPathExpression.class);
   }
 
@@ -66,7 +66,7 @@ public final class XPathFile extends PsiFileBase implements XPathElement {
   }
 
   @Override
-  public final void accept(@NotNull PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XPathElementVisitor) {
       accept((XPathElementVisitor)visitor);
     } else {

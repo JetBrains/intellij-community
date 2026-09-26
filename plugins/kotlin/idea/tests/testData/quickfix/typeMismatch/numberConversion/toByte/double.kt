@@ -1,0 +1,8 @@
+// "Convert expression to 'Byte'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+fun byte(x: Byte) {}
+
+fun test(d: Double) {
+    byte(<caret>d)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

@@ -9,16 +9,12 @@ import com.intellij.navigation.ItemPresentation;
 
 public interface JsonProperty extends JsonElement, PsiNamedElement {
 
-  @NotNull
-  String getName();
+  @NotNull String getName();
 
-  @NotNull
-  JsonValue getNameElement();
+  @NotNull JsonValue getNameElement();
 
-  @Nullable
-  JsonValue getValue();
+  @Nullable JsonValue getValue();
 
-  @Nullable
-  ItemPresentation getPresentation();
+  @Nullable ItemPresentation getPresentation();
 
 }

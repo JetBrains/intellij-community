@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,34 +17,48 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class IntroducePropertyAction extends BaseRefactoringAction {
+final class IntroducePropertyAction extends BaseRefactoringAction {
   private static final String PREFIX = "${";
   private static final String SUFFIX = "}";
 
-  public IntroducePropertyAction() {
+  IntroducePropertyAction() {
     setInjectedContext(true);
   }
 
@@ -70,13 +68,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
+  protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
   }
 
   @Override
@@ -98,8 +91,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return getSelectedElementAndTextRange(editor, file) != null;
   }
 
-  @Nullable
-  static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
+  static @Nullable Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
     final int startOffset = editor.getSelectionModel().getSelectionStart();
     final int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -122,7 +114,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
-    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+    public void invoke(final @NotNull Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.INTRODUCE_PROPERTY);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);
@@ -172,7 +165,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
 
-    private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
+    private static @NotNull List<VirtualFile> getFiles(PsiFile file, MavenDomProjectModel model) {
       Set<VirtualFile> virtualFiles = new HashSet<>();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
@@ -185,7 +178,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         if (vf != null) virtualFiles.add(vf);
       }
 
-      return VfsUtilCore.toVirtualFileArray(virtualFiles);
+      return new ArrayList<>(virtualFiles);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -213,7 +206,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       FindModel findModel = createFindModel(findManager, selectedString, replaceWith);
 
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModel);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(project, true, presentation);
+      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(true, presentation);
 
       findManager.getFindInProjectModel().copyFrom(findModel);
       final FindModel findModelCopy = findModel.clone();
@@ -226,7 +219,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
     //IDEA-54113
     private static void assureFindToolWindowRegistered(@NotNull Project project) {
-      com.intellij.usageView.UsageViewManager uvm = com.intellij.usageView.UsageViewManager.getInstance(project);
+      UsageViewContentManager uvm = UsageViewContentManager.getInstance(project);
     }
 
     private static FindModel createFindModel(FindManager findManager, String selectedString, String replaceWith) {
@@ -243,7 +236,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     }
 
     private static class MyUsageSearcherFactory implements Factory<UsageSearcher> {
@@ -260,11 +253,11 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       @Override
       public UsageSearcher create() {
         return new UsageSearcher() {
-          Set<UsageInfo> usages = new HashSet<>();
+          final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
-            ApplicationManager.getApplication().runReadAction(() -> {
+          public void generate(final @NotNull Processor<? super Usage> processor) {
+            ReadAction.runBlocking(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                 collectUsages(model);
@@ -283,7 +276,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 root.acceptChildren(new XmlElementVisitor() {
 
                   @Override
-                  public void visitXmlText(XmlText text) {
+                  public void visitXmlText(@NotNull XmlText text) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
                     if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
                       usages.addAll(getUsages(text));
@@ -291,7 +284,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlAttributeValue(XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
                     if (xmlTag != null && !xmlTag.equals(root)) {
                       usages.addAll(getUsages(value));
@@ -299,7 +292,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlElement(XmlElement element) {
+                  public void visitXmlElement(@NotNull XmlElement element) {
                     element.acceptChildren(this);
                   }
                 });
@@ -307,8 +300,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             }
           }
 
-          @NotNull
-          private Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
+          private @NotNull Set<UsageInfo> getUsages(@NotNull XmlElement xmlElement) {
             String s = xmlElement.getText();
             if (StringUtil.isEmptyOrSpaces(s)) return Collections.emptySet();
 

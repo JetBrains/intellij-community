@@ -20,11 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author dsl
- */
 public class SafeDeleteReferenceSimpleDeleteUsageInfo extends SafeDeleteReferenceUsageInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo");
+  private static final Logger LOG = Logger.getInstance(SafeDeleteReferenceSimpleDeleteUsageInfo.class);
   public SafeDeleteReferenceSimpleDeleteUsageInfo(PsiElement element, PsiElement referencedElement, boolean isSafeDelete) {
     super(element, referencedElement, isSafeDelete);
   }

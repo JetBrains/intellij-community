@@ -1,54 +1,47 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+
+import java.util.List;
+import java.util.Objects;
+
+import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromResult;
 
 public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction<GrOperatorExpression, PsiType> {
   public static final GrNumericBinaryExpressionTypeCalculator INSTANCE = new GrNumericBinaryExpressionTypeCalculator();
 
-  @Nullable
   @Override
-  public PsiType fun(GrOperatorExpression e) {
-
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(e.multiResolve(false));
-    if (resolveResult.isApplicable() && !PsiUtil.isDGMMethod(resolveResult.getElement())) {
-      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e, new PsiType[]{e.getRightType()});
-    }
-
-    PsiType lType = e.getLeftType();
-    PsiType rType = e.getRightType();
-    if (TypesUtil.isNumericType(lType) && TypesUtil.isNumericType(rType)) {
-      return inferNumericType(lType, rType, e);
-    }
-
-    return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e, new PsiType[]{rType});
+  public @Nullable PsiType fun(GrOperatorExpression e) {
+    final GroovyCallReference operatorReference = Objects.requireNonNull(e.getReference());
+    final GroovyResolveResult resolveResult = operatorReference.advancedResolve();
+    return getTypeByResult(e.getLeftType(), e.getRightType(), operatorReference.getArguments(), resolveResult, e);
   }
 
-  @Nullable
-  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrOperatorExpression e) {
+  public @Nullable PsiType getTypeByResult(PsiType leftType, PsiType rightType, List<Argument> arguments, GroovyResolveResult resolveResult, GrExpression context) {
+    if (resolveResult.isApplicable() && !PsiUtil.isDGMMethod(resolveResult.getElement())) {
+      return getTypeFromResult(resolveResult, arguments, context);
+    }
+
+    if (TypesUtil.isNumericType(leftType) && TypesUtil.isNumericType(rightType)) {
+      return inferNumericType(leftType, rightType, context);
+    }
+
+    return getTypeFromResult(resolveResult, arguments, context);
+  }
+
+  protected @Nullable PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, PsiElement e) {
     return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
   }
 }

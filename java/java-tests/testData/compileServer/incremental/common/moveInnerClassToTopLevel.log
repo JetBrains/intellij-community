@@ -1,0 +1,19 @@
+Cleaning output files:
+out/production/MoveInnerClassToTopLevel/ppp/A$Inner.class
+out/production/MoveInnerClassToTopLevel/ppp/A.class
+out/production/MoveInnerClassToTopLevel/ppp/B.class
+End of files
+Compiling files:
+src/ppp/A.java
+src/ppp/B.java
+src/ppp/Inner.java
+End of files
+Cleaning output files:
+out/production/MoveInnerClassToTopLevel/ppp/C.class
+End of files
+Compiling files:
+src/ppp/A.java
+src/ppp/B.java
+src/ppp/C.java
+src/ppp/Inner.java
+End of files

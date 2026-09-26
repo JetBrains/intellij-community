@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.kotlin.metadata` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
+    module = ":metadata",
+)
+### auto-generated section `dev intellij.libraries.kotlin.metadata` end
+
+### auto-generated section `build intellij.libraries.kotlin.metadata` start
+jvm_library(
+    name = "metadata",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlin.metadata",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
+    runtime_deps = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
+)
+
+jvm_library(
+    name = "metadata_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlin.metadata",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
+    runtime_deps = [":metadata"],
+)
+### auto-generated section `build intellij.libraries.kotlin.metadata` end
+
+### auto-generated section `iml intellij.libraries.kotlin.metadata` start
+exports_files(
+    [
+        "intellij.libraries.kotlin.metadata.iml",
+        "resources/intellij.libraries.kotlin.metadata.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlin.metadata` end

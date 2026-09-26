@@ -1,0 +1,63 @@
+View root() {
+  rooot() {
+    rooot() {
+      Tasks() {
+        build setup() {
+          init()
+          updateDaemonJvm()
+          wrapper()
+        }
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+        other() {
+          prepareKotlinBuildScriptModel()
+        }
+      }
+    }
+    child1() {
+      Tasks() {
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+      }
+    }
+    child2() {
+      Tasks() {
+        help() {
+          artifactTransforms()
+          buildEnvironment()
+          dependencies()
+          dependencyInsight()
+          help()
+          javaToolchains()
+          outgoingVariants()
+          projects()
+          properties()
+          resolvableConfigurations()
+          tasks()
+        }
+      }
+    }
+  }
+}

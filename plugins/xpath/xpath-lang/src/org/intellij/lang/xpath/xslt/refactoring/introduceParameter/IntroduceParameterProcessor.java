@@ -37,9 +37,14 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private final XPathExpression myExpression;
@@ -48,7 +53,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     private final XsltTemplate myTemplate;
 
-    public IntroduceParameterProcessor(Project project, XPathExpression expression, Set<XPathExpression> otherExpressions, IntroduceParameterOptions settings) {
+    IntroduceParameterProcessor(Project project, XPathExpression expression, Set<XPathExpression> otherExpressions, IntroduceParameterOptions settings) {
         super(project);
         mySettings = settings;
         myExpression = expression;
@@ -61,13 +66,13 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
 
-    @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+    @Override
+    protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
-    @NotNull
-    protected UsageInfo[] findUsages() {
+    @Override
+    protected UsageInfo @NotNull [] findUsages() {
         int usageCount = myOtherExpressions.size() + 1;
 
         final List<PsiElement> callsToUpdate;
@@ -85,8 +90,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             }
             usageCount += callsToUpdate.size();
         } else {
-            //noinspection unchecked
-            callsToUpdate = Collections.emptyList();
+          callsToUpdate = Collections.emptyList();
         }
 
         final UsageInfo[] usageInfos = new UsageInfo[usageCount];
@@ -102,7 +106,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  @Override
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
         XmlTag tag;
         if (myTemplate != null) {
             tag = myTemplate.getTag();
@@ -123,9 +128,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
             XmlTag anchorParam = null;
             for (UsageInfo info : usageInfos) {
-                if (info instanceof XPathUsageInfo) {
-                    final XPathUsageInfo x = (XPathUsageInfo)info;
-                    final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
+                if (info instanceof XPathUsageInfo x) {
+                  final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
                     final XmlAttribute attribute = x.getAttribute();
                     assert attribute != null;
 
@@ -159,20 +163,21 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
     }
 
-    @NotNull
-    protected String getCommandName() {
-        return XsltIntroduceParameterAction.COMMAND_NAME;
+    @Override
+    protected @NotNull String getCommandName() {
+        return XPathBundle.message("command.name.introduce.xslt.parameter");
     }
 
     private class MyUsageViewDescriptorAdapter extends UsageViewDescriptorAdapter {
 
-        @NotNull
-        public PsiElement[] getElements() {
+        @Override
+        public PsiElement @NotNull [] getElements() {
             return new PsiElement[]{ myTemplate };
         }
 
+        @Override
         public String getProcessedElementsHeader() {
-            return "Adding parameter to template";
+            return XPathBundle.message("header.adding.parameter.to.template");
         }
     }
 }

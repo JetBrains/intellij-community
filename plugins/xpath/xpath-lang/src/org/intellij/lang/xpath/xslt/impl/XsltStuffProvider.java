@@ -16,16 +16,18 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.PsiElementUsageTarget;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
@@ -37,21 +39,23 @@ import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationIns
 import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.xml.namespace.QName;
 
-public class XsltStuffProvider implements UsageGroupingRuleProvider {
+public final class XsltStuffProvider implements UsageGroupingRuleProvider {
 
-    @SuppressWarnings({"unchecked"})
-    public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
-            UnusedElementInspection.class,
-            TemplateInvocationInspection.class,
-            XsltDeclarationInspection.class,
-            VariableShadowingInspection.class
-    };
+  @SuppressWarnings({"unchecked"})
+  public static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
+    UnusedElementInspection.class,
+    TemplateInvocationInspection.class,
+    XsltDeclarationInspection.class,
+    VariableShadowingInspection.class,
+    XmlUnresolvedReferenceInspection.class
+  };
 
     private final UsageGroupingRule[] myUsageGroupingRules;
 
@@ -60,30 +64,24 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  @NotNull
-    public UsageGroupingRule[] getActiveRules(Project project) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
-    }
-
-    @Override
-    @NotNull
-    public AnAction[] createGroupingActions(UsageView view) {
-        return AnAction.EMPTY_ARRAY;
     }
 
     private static class TemplateUsageGroup implements UsageGroup {
         private final XsltTemplate myTemplate;
 
-        public TemplateUsageGroup(@NotNull XsltTemplate template) {
+        TemplateUsageGroup(@NotNull XsltTemplate template) {
             myTemplate = template;
         }
 
-        public Icon getIcon(boolean isOpen) {
+        @Override
+        public Icon getIcon() {
             return myTemplate.getIcon(0);
         }
 
-        @NotNull
-        public String getText(UsageView view) {
+        @Override
+        public @NotNull String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -91,42 +89,39 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             final QName mode = myTemplate.getMode();
 
             if (mode != null) {
-                if (sb.length() > 0) sb.append(", ");
+                if (!sb.isEmpty()) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
-            return "Template (" + sb.toString() + ")";
+            return XPathBundle.message("list.item.template", sb);
         }
 
         @Override
-        @Nullable
-        public FileStatus getFileStatus() {
-            return null;
-        }
-
         public boolean isValid() {
             return myTemplate.isValid();
         }
 
-        public void update() {
-        }
-
+        @Override
         public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }
 
+        @Override
         public void navigate(boolean requestFocus) {
             ((Navigatable)myTemplate.getTag()).navigate(requestFocus);
         }
 
+        @Override
         public boolean canNavigate() {
             return ((Navigatable)myTemplate.getTag()).canNavigate();
         }
 
+        @Override
         public boolean canNavigateToSource() {
             return canNavigate();
         }
 
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -139,38 +134,34 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return true;
         }
 
+        @Override
         public int hashCode() {
             return myTemplate.hashCode();
         }
     }
 
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
-        @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
-            if (usage instanceof UsageInfo2UsageAdapter) {
-                final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
-                final UsageInfo usageInfo = u.getUsageInfo();
-                if (usageInfo instanceof MoveRenameUsageInfo) {
-                    final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
-                    return buildGroup(info.getReferencedElement(), usageInfo, true);
+        protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+            if (usage instanceof UsageInfo2UsageAdapter u) {
+              final UsageInfo usageInfo = u.getUsageInfo();
+                if (usageInfo instanceof MoveRenameUsageInfo info) {
+                  return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
-                    final PsiReference[] references = u.getElement().getReferences();
-                    for (PsiReference reference : references) {
-                        if (reference.getRangeInElement().equals(usageInfo.getRangeInElement())) {
-                            return buildGroup(reference.resolve(), usageInfo, false);
-                        }
+                    for (UsageTarget target : targets) {
+                        UsageGroup group = target instanceof PsiElementUsageTarget ?
+                                           buildGroup(((PsiElementUsageTarget)target).getElement(), usageInfo, false) :
+                                           null;
+                        if (group != null) return group;
                     }
                 }
             }
             return null;
         }
 
-        @Nullable
-        private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
-            if (referencedElement instanceof XsltParameter) {
-                final XsltParameter parameter = (XsltParameter)referencedElement;
-                final PsiElement element = u.getElement();
+        private static @Nullable UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+            if (referencedElement instanceof XsltParameter parameter) {
+              final PsiElement element = u.getElement();
                 if (element == null) return null;
                 final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
                 if (template == null) return null;

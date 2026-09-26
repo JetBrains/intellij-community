@@ -1,0 +1,20 @@
+package com.intellij.mcpserver.impl
+
+import com.intellij.mcpserver.McpToolFilterProvider
+import com.intellij.mcpserver.McpToolFilterProvider.McpToolFilterContext
+import com.intellij.mcpserver.McpToolInvocationMode
+import com.intellij.mcpserver.applyMaskFilter
+import com.intellij.openapi.util.registry.Registry
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+
+internal class RegistryKeyMcpToolFilterProvider : McpToolFilterProvider {
+  override fun applyFilters(context: McpToolFilterContext, clientInfo: Implementation?, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode) {
+    applyMaskFilter(context, Registry.stringValue("mcp.server.tools.filter"))
+  }
+
+  override fun getUpdates(clientInfo: Implementation?, scope: CoroutineScope, sessionOptions: McpServerService.McpSessionOptions?, invocationMode: McpToolInvocationMode): Flow<Unit> {
+    return Registry.get("mcp.server.tools.filter").asChangeEventsFlow()
+  }
+}

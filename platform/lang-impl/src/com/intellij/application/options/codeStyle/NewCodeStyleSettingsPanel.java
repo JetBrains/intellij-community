@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -28,15 +13,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collections;
-import java.util.Set;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Container;
 
-/**
- * @author max
- */
-public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+  private static final OptionsContainingConfigurable EMPTY_OPTIONS_CONTAINING_CONFIGURABLE = new OptionsContainingConfigurable() {};
+
   private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
@@ -44,6 +28,7 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
 
   public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());
+
     myTab = tab;
     myModel = model;
     JComponent component = myTab.createComponent();
@@ -71,12 +56,17 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     }
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return myTab.getHelpTopic();
   }
 
   public void dispose() {
+    if (isValid()) {
+      Container parent = getParent();
+      if (parent != null && parent.isValid()) {
+        parent.remove(this);
+      }
+    }
     myTab.disposeUIResources();
   }
 
@@ -105,7 +95,7 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     return myTab.getDisplayName();
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       ((CodeStyleAbstractConfigurable)myTab).setModel(model);
     }
@@ -117,16 +107,11 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     }
   }
 
-  public Set<String> processListOptions() {
-    if (myTab instanceof OptionsContainingConfigurable) {
-      return ((OptionsContainingConfigurable) myTab).processListOptions();
-    }
-    return Collections.emptySet();
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+    return myTab instanceof OptionsContainingConfigurable ? (OptionsContainingConfigurable)myTab : EMPTY_OPTIONS_CONTAINING_CONFIGURABLE;
   }
 
-
-  @Nullable
-  public CodeStyleAbstractPanel getSelectedPanel() {
+  public @Nullable CodeStyleAbstractPanel getSelectedPanel() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }
@@ -138,6 +123,12 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     CodeStyleAbstractPanel panel = getSelectedPanel();
     if (panel instanceof TabbedLanguageCodeStylePanel && panel != source) {
       ((TabbedLanguageCodeStylePanel)panel).changeTab(tabTitle);
+    }
+  }
+
+  void highlightOptions(@NotNull String searchString) {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      ((CodeStyleAbstractConfigurable)myTab).highlightOptions(searchString);
     }
   }
 }

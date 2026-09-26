@@ -1,19 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel
 import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@JvmField
-internal val LOG = Logger.getInstance(BaseInspectionProfileManager::class.java)
-
-abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  InspectionProjectProfileManager() {
+abstract class BaseInspectionProfileManager(messageBus: MessageBus) : InspectionProjectProfileManager() {
   protected abstract val schemeManager: SchemeManager<InspectionProfileImpl>
 
   private val severityRegistrar = SeverityRegistrar(messageBus)
@@ -24,6 +22,21 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     for (profile in schemeManager.allSchemes) {
       profile.cleanup(project)
     }
+  }
+
+  @Internal
+  fun normalizeRemovedSeverities(removedSeverityNames: Set<String>): List<InspectionProfileImpl> {
+    if (removedSeverityNames.isEmpty()) {
+      return emptyList()
+    }
+
+    val changedProfiles = ArrayList<InspectionProfileImpl>()
+    for (profile in schemeManager.allSchemes) {
+      if (profile.normalizeRemovedSeverities(removedSeverityNames)) {
+        changedProfiles.add(profile)
+      }
+    }
+    return changedProfiles
   }
 
   fun addProfile(profile: InspectionProfileImpl) {
@@ -37,12 +50,11 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
   }
 
   fun deleteProfile(profile: InspectionProfileImpl) {
-    if (schemeManager.removeScheme(profile)) {
-      schemeRemoved(profile)
-    }
+    if (profile is InspectionProfileModifiableModel) deleteProfile(profile.source.name) else deleteProfile(profile.name)
   }
 
-  open protected fun schemeRemoved(scheme: InspectionProfileImpl) {
+  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {
+    scheme.cleanup(null)
   }
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)

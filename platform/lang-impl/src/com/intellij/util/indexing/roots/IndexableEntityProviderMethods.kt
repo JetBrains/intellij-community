@@ -1,0 +1,89 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.indexing.roots
+
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.util.indexing.IndexingIteratorsProvider
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+object IndexableEntityProviderMethods {
+  fun createModuleContentIterators(module: Module): Collection<IndexableFilesIterator> {
+    return ModuleIndexableFilesIteratorImpl.createIterators(module)
+  }
+
+  fun createModuleContentIterators(module: Module, root: VirtualFile, recursive: Boolean): Collection<IndexableFilesIterator> {
+    return listOf(ModuleFilesIteratorImpl(module, root, recursive, true))
+  }
+
+  fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
+    return IndexingIteratorsProvider.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
+  }
+
+  fun createIterators(sdk: Sdk): List<IndexableFilesIterator> {
+    return listOf(SdkIndexableFilesIteratorImpl.createIterator(sdk))
+  }
+
+  private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
+    libraryTable.getLibraryByName(name)?.run { LibraryIndexableFilesIteratorImpl.createIteratorList(this) }
+
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadActionBlocking {
+    val registrar = LibraryTablesRegistrar.getInstance()
+    getLibIteratorsByName(registrar.getGlobalLibraryTable(project), name)?.also { return@runReadActionBlocking it }
+    for (customLibraryTable in registrar.customLibraryTables) {
+      getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadActionBlocking it }
+    }
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    return@runReadActionBlocking storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let {
+      storage.libraryMap.getDataByEntity(it)
+    }?.run {
+      LibraryIndexableFilesIteratorImpl.createIteratorList(this)
+    } ?: emptyList()
+  }
+
+  fun getExcludedFiles(entity: ContentRootEntity): List<VirtualFile> {
+    return entity.excludedUrls.mapNotNull { param -> param.url.virtualFile }
+  }
+
+  fun createExternalEntityIterators(pointer: EntityPointer<*>,
+                                    urlRoots: IndexingUrlSourceRootHolder): Collection<IndexableFilesIterator> {
+    val roots = urlRoots.toSourceRootHolder()
+    if (roots.isEmpty()) return emptyList()
+    return listOf(ExternalEntityIndexableIteratorImpl(pointer, roots))
+  }
+
+  fun createExternalEntityIterators(pointer: EntityPointer<*>,
+                                    roots: IndexingSourceRootHolder): IndexableFilesIterator {
+    return ExternalEntityIndexableIteratorImpl(pointer, roots)
+  }
+
+  fun createCustomKindEntityIterators(pointer: EntityPointer<*>,
+                                      urlRootHolder: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
+    val rootHolder = urlRootHolder.toRootHolder()
+    if (rootHolder.isEmpty()) return emptyList()
+    return listOf(CustomKindEntityIteratorImpl(pointer, rootHolder))
+  }
+
+  fun createGenericContentEntityIterators(pointer: EntityPointer<*>,
+                                          urlRootHolder: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
+    val rootHolder = urlRootHolder.toRootHolder()
+    if (rootHolder.isEmpty()) return emptyList()
+    return listOf(GenericContentEntityIteratorImpl(pointer, rootHolder))
+  }
+}

@@ -16,16 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 
 /**
  * @author Evgeny Gerashchenko
- * @since 2/1/12
  */
 public interface TemplateParameterTraversalPolicy {
-  ExtensionPointName<TemplateParameterTraversalPolicy> EP_NAME = new ExtensionPointName<>("com.intellij.templateParameterTraversalPolicy");
-
   boolean isValidForFile(Editor editor, PsiFile file);
   void invoke(Editor editor, PsiFile file, boolean next);
 }

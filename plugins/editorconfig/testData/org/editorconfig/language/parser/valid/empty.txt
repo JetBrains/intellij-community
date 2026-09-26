@@ -1,0 +1,2 @@
+EditorConfig file
+  <empty list>

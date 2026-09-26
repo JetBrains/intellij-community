@@ -15,10 +15,10 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * Represents a Java binary expression (addition, multiplication and so on).

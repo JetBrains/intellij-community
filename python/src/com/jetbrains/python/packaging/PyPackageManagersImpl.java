@@ -1,67 +1,101 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.packaging.ui.PyCondaManagementService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.packaging.management.PythonPackageManagerService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+@ApiStatus.Internal
 
-/**
- * @author yole
- */
 public class PyPackageManagersImpl extends PyPackageManagers {
-  private final Map<String, PyPackageManagerImpl> myInstances = new HashMap<>();
+  private static final Logger LOG = Logger.getInstance(PyPackageManagersImpl.class);
 
-  @NotNull
-  public synchronized PyPackageManager forSdk(@NotNull final Sdk sdk) {
-    final String key = PythonSdkType.getSdkKey(sdk);
-    PyPackageManagerImpl manager = myInstances.get(key);
-    if (manager == null) {
-      if (PythonSdkType.isRemote(sdk)) {
-        manager = new PyRemotePackageManagerImpl(sdk);
+  private final Map<String, PyPackageManager> myStandardManagers = new HashMap<>();
+  private final Map<String, PyPackageManager> myProvidedManagers = new HashMap<>();
+
+  public PyPackageManagersImpl() {
+    PyPackageManagerProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull PyPackageManagerProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        clearProvidedManagersCache();
       }
-      else if (PyCondaPackageManagerImpl.isConda(sdk) && PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory()) != null) {
-        manager = new PyCondaPackageManagerImpl(sdk);
+    }, this);
+  }
+
+  @Override
+  public synchronized @NotNull PyPackageManager forSdk(final @NotNull Sdk sdk) {
+    if (sdk instanceof Disposable) {
+      LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
+                     "Requesting a package manager for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
+    }
+    final String key = PythonSdkType.getSdkKey(sdk);
+    PyPackageManager manager = myStandardManagers.get(key);
+    if (manager == null) {
+      manager = myProvidedManagers.get(key);
+    }
+    if (manager == null) {
+      final Map<String, PyPackageManager> cache;
+      PyPackageManager customPackageManager = PyCustomPackageManagers.tryCreateCustomPackageManager(sdk);
+      if (customPackageManager != null) {
+        cache = myProvidedManagers;
+        manager = customPackageManager;
       }
       else {
-        manager = new PyPackageManagerImpl(sdk);
+        cache = myStandardManagers;
+        manager = new PyPackageManagerBridge(sdk);
       }
-      myInstances.put(key, manager);
+      cache.put(key, manager);
+      if (sdk instanceof Disposable) {
+        Disposer.register((Disposable)sdk, () -> clearCache(sdk));
+      }
+      var parentDisposable = (sdk instanceof Disposable ? (Disposable)sdk : this);
+      Disposer.register(parentDisposable, manager);
+
+      if (PyPackageManager.shouldSubscribeToLocalChanges(manager)) {
+        PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, manager, () -> PythonSdkType.getInstance().setupSdkPaths(sdk));
+      }
     }
     return manager;
   }
 
+  @Override
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
-    if (PyCondaPackageManagerImpl.isConda(sdk)) {
-      return new PyCondaManagementService(project, sdk);
+    if (sdk instanceof Disposable) {
+      LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
+                     "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    return new PyPackageManagementService(project, sdk);
+    return project.getService(PythonPackageManagerService.class).bridgeForSdk(project, sdk);
   }
 
   @Override
-  public void clearCache(@NotNull Sdk sdk) {
-    final String key = PythonSdkType.getSdkKey(sdk);
-    if (myInstances.containsKey(key)) {
-      myInstances.remove(key);
+  public synchronized void clearCache(@NotNull Sdk sdk) {
+    String sdkKey = PythonSdkType.getSdkKey(sdk);
+    removeCachedManager(myStandardManagers, sdkKey);
+    removeCachedManager(myProvidedManagers, sdkKey);
+  }
+
+  private synchronized void clearProvidedManagersCache() {
+    for (String key : ArrayUtil.toStringArray(myProvidedManagers.keySet())) {
+      removeCachedManager(myProvidedManagers, key);
+    }
+  }
+
+  private static void removeCachedManager(@NotNull Map<String, PyPackageManager> cache, @NotNull String key) {
+    PyPackageManager removed = cache.remove(key);
+    if (removed != null) {
+      Disposer.dispose(removed);
     }
   }
 }

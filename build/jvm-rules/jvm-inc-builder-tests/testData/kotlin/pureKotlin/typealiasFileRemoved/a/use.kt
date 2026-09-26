@@ -1,0 +1,1 @@
+fun u(s: Str): Int = s.length

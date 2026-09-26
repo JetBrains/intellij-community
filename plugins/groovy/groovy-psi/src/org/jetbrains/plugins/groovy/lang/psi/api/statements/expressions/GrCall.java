@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiMethod;
@@ -12,44 +12,38 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * @author ven
- */
 public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();
 
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
+  GrNamedArgument @NotNull [] getNamedArguments();
 
-  @NotNull
-  GrExpression[] getExpressionArguments();
+  GrExpression @NotNull [] getExpressionArguments();
 
   default boolean hasClosureArguments() {
     return getClosureArguments().length > 0;
   }
 
-  @NotNull
-  default GrClosableBlock[] getClosureArguments() {
+  default GrClosableBlock @NotNull [] getClosureArguments() {
     return GrClosableBlock.EMPTY_ARRAY;
   }
 
   @Nullable
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
 
-  @NotNull
-  GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument);
+  GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument);
 
-  @Nullable
-  default PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
+  default GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument, boolean incompleteCode){
+    return getCallVariants(upToArgument);
   }
 
-  @NotNull
-  default GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
+  default @Nullable PsiMethod resolveMethod() {
+    return PsiImplUtil.extractUniqueElement(multiResolveGroovy(false));
   }
 
-  @NotNull
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
+  default @NotNull GroovyResolveResult advancedResolve() {
+    return PsiImplUtil.extractUniqueResult(multiResolveGroovy(false));
+  }
+
+  GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode);
 }

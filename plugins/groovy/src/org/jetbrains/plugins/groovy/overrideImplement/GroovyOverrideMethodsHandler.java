@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -29,21 +16,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementExploreUtil;
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
-public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+public final class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass instanceof GrTypeDefinition) {
-      GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, true);
+    if (aClass instanceof GrTypeDefinition typeDefinition) {
 
       if (GroovyOverrideImplementExploreUtil.getMethodSignaturesToOverride(typeDefinition).isEmpty()) {
-        HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
+        HintManager.getInstance().showErrorHint(editor, JavaBundle.message("override.methods.error.no.methods"));
         return;
       }
 

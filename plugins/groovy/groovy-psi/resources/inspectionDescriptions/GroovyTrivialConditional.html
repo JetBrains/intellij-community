@@ -1,9 +1,17 @@
 <html>
 <body>
-
-This inspection reports any instances of Groovy ternary conditional operators of the form <b><font color="#000080">x?true:false</font></b>
+Reports ternary conditional operators of the form <code>x ? true : false</code>
 or similar, which can be trivially simplified.
-<br>
-<small>Powered by InspectorGroovy</small>
+
+<p><b>Example:</b></p>
+<pre><code>
+  foo() ? true : false
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+foo()
+</code></pre>
+
 </body>
 </html>

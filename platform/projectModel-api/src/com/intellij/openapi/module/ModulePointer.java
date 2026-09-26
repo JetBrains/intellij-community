@@ -15,9 +15,17 @@
  */
 package com.intellij.openapi.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a reliable and efficient reference to (probably non-existing) module by its name. If you have a part of a project configuration
+ * which refers to a module by name, you can store an instance returned by {@link ModulePointerManager#create(String)} instead of storing the module name.
+ * This allows you to get a Module instance via {@link #getModule()} which is more efficient than {@link ModuleManager#findModuleByName}, and
+ * {@link #getModuleName() module name} encapsulated inside the instance will be properly updated if the module it refers to is renamed.
+ */
+@ApiStatus.NonExtendable
 public interface ModulePointer {
   @Nullable 
   Module getModule();

@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg fill="none" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#57965C" stroke-width="1.11">
+    <circle transform="scale(1,-1)" cx="3.97" cy="-12.4" r="2.22"/>
+    <circle transform="scale(1,-1)" cx="3.91" cy="-3.58" r="2.22"/>
+    <path d="m8.07 3.62h1.8c1.23 0 2.22 0.995 2.22 2.22v4.32"/>
+    <path d="m3.97 9.64v-3.73" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle transform="scale(1,-1)" cx="12.1" cy="-12.4" r="2.22"/>
+    <path d="m10.1 5.87-2.22-2.22 2.22-2.22" stroke-linecap="round"/>
+  </g>
+</svg>

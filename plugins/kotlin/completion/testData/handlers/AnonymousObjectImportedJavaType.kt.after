@@ -1,0 +1,10 @@
+import java.util.Comparator
+
+val a: Comparator<Int> = object : Comparator<Int> {
+    override fun compare(p0: Int?, p1: Int?): Int {
+        TODO("Not yet implemented")
+    }
+}
+
+// ELEMENT: object
+// TAIL_TEXT: " (java.util)"

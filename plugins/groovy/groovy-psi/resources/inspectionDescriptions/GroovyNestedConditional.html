@@ -1,10 +1,13 @@
 <html>
 <body>
-
-This inspection reports any ternary conditional expressions in Groovy script file that are nested inside other
-conditional expressions.  Such nested conditionals may be very confusing.  "Elvis" expressions are counted as conditionals
+Reports ternary conditional expressions that are nested inside other conditional expressions.
+Such nested conditionals may be very confusing. "Elvis" expressions are counted as conditionals
 for purpose of this inspection.
-<br>
-<small>Powered by InspectorGroovy</small>
+<p><b>Example:</b></p>
+<pre>
+<code>
+return (condition ? "result" : null) ?: "fail"
+</code>
+</pre>
 </body>
 </html>

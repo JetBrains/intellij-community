@@ -1,59 +1,47 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
+import java.util.List;
+
+public final class JavaFoldingBuilder extends IdeJavaFoldingBuilderBase {
+
   @Override
-  protected boolean isBelowRightMargin(@NotNull PsiFile file, int lineLength) {
-    final CodeStyleSettings settings = CodeStyle.getSettings(file);
-    return lineLength <= settings.getRightMargin(JavaLanguage.INSTANCE);
+  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
+                                          @NotNull PsiElement root,
+                                          @NotNull Document document,
+                                          boolean quick) {
+    if (!(root instanceof PsiJavaFile file)) return;
+    if (Registry.is("java.folding.split.frontend.backend")) {
+      // New behavior: only backend foldings (frontend builder handles the rest)
+      JavaBackendFoldings.buildBackendFoldRegions(this, descriptors, file, document, quick);
+    }
+    else {
+      // Old behavior: all foldings, skip on JBC
+      if (PlatformUtils.isJetBrainsClient()) return;
+      JavaFrontendFoldings.buildFrontendFoldRegions(descriptors, file, document);
+      JavaBackendFoldings.buildBackendFoldRegions(this, descriptors, file, document, quick);
+    }
   }
 
   @Override
   protected boolean shouldShowExplicitLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression) {
-    PsiElement parent = expression.getParent();
-    if (parent instanceof PsiReferenceExpression || parent instanceof PsiAssignmentExpression) {
+    if (super.shouldShowExplicitLambdaType(anonymousClass, expression)) {
       return true;
     }
-
     ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
     return types.length != 1 || !types[0].getType().equals(anonymousClass.getBaseClassType());
-  }
-
-  @Override
-  @NotNull
-  protected String rightArrow() {
-    return getRightArrow();
-  }
-
-  @NotNull
-  public static String getRightArrow() {
-    return EditorUtil.displayCharInEditor('\u2192', EditorColors.FOLDED_TEXT_ATTRIBUTES, "->");
   }
 }
 

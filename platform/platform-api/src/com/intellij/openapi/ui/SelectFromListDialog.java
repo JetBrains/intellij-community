@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2026 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,36 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
+import com.intellij.util.ui.JdkConstants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 
 public class SelectFromListDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(SelectFromListDialog.class);
+
   private final ToStringAspect myToStringAspect;
-  private final DefaultListModel myModel = new DefaultListModel();
-  private final JList myList = new JBList(myModel);
+  private final DefaultListModel<Object> myModel = new DefaultListModel<>();
+  private final JList<Object> myList = new JBList<>(myModel);
   private final JPanel myMainPanel = new JPanel(new BorderLayout());
-  
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.SelectFromListDialog");
+
 
   public SelectFromListDialog(Project project,
                               Object[] objects,
                               ToStringAspect toStringAspect,
-                              String title,
+                              @NlsContexts.DialogTitle String title,
                               @JdkConstants.ListSelectionMode int selectionMode) {
     super(project, true);
     myToStringAspect = toStringAspect;
@@ -53,6 +58,7 @@ public class SelectFromListDialog extends DialogWrapper {
     }
 
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         setOKActionEnabled(myList.getSelectedValues().length > 0);
       }
@@ -60,23 +66,19 @@ public class SelectFromListDialog extends DialogWrapper {
 
     myList.setSelectedIndex(0);
 
-    myList.setCellRenderer(new ColoredListCellRenderer(){
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append(myToStringAspect.getToStirng(value),
-               new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
-      }
-    });
+    myList.setCellRenderer(BuilderKt.textListCellRenderer("", myToStringAspect::getToStirng));
 
 
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     return myMainPanel;
   }
-  
-  public void addToDialog(JComponent userComponent, @NotNull String borderLayoutConstraints) {
+
+  public void addToDialog(JComponent userComponent, @NonNls @NotNull String borderLayoutConstraints) {
     LOG.assertTrue(!borderLayoutConstraints.equals(BorderLayout.CENTER), "Can't add any component to center");
     myMainPanel.add(userComponent, borderLayoutConstraints);
   }
@@ -97,6 +99,7 @@ public class SelectFromListDialog extends DialogWrapper {
     return myList.getSelectedValues();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
   }

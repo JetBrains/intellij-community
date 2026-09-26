@@ -36,8 +36,8 @@
   </target>
 
   <target name="javascript">
-    <flex destdir="plugins/JavaScriptLanguage/src/com/intellij/lang/javascript"
-          flexfile="${idea.project.home}/plugins/JavaScriptLanguage/src/com/intellij/lang/javascript/JavaScript.flex"/>
+    <flex destdir="plugins/JavaScriptLanguage/javascript-backend/src/com/intellij/lang/javascript"
+          flexfile="${idea.project.home}/plugins/JavaScriptLanguage/javascript-backend/src/com/intellij/lang/javascript/JavaScript.flex"/>
   </target>
 
   <target name="properties">

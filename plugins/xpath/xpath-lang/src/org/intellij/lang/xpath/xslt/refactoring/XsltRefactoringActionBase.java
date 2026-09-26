@@ -18,17 +18,20 @@ package org.intellij.lang.xpath.xslt.refactoring;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class XsltRefactoringActionBase implements RefactoringActionHandler {
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
         final int offset = editor.getCaretModel().getOffset();
 
@@ -40,20 +43,23 @@ public abstract class XsltRefactoringActionBase implements RefactoringActionHand
         }
 
         final String message = getErrorMessage(editor, file, context);
-        CommonRefactoringUtil.showErrorHint(editor.getProject(), editor, "Cannot perform refactoring.\n" +
-                (message != null ? message : getRefactoringName() + " is not available in the current context."), "XSLT - " + getRefactoringName(), null);
+        final String nonNullMessage =
+          message != null ? message : XPathBundle.message("dialog.message.not.available.in.current.context", getRefactoringName());
+        CommonRefactoringUtil.showErrorHint(editor.getProject(), editor,
+                                            XPathBundle.message("dialog.message.cannot.perform.refactoring", nonNullMessage),
+                                            XPathBundle.message("dialog.title.xslt", getRefactoringName()), null);
     }
 
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    @Override
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
         throw new UnsupportedOperationException();
     }
 
-    @Nullable
-    public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
+    public @Nullable @NlsContexts.NotificationContent String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         return null;
     }
 
-    public abstract String getRefactoringName();
+    public abstract @NlsContexts.DialogTitle String getRefactoringName();
 
     protected abstract boolean actionPerformedImpl(PsiFile file, Editor editor, XmlAttribute context, int offset);
 }

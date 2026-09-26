@@ -1,0 +1,9 @@
+================ Step #1 =================
+Cleaning output files:
+  Foo.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/rawErrorTypeDuringSerialization/a/Foo.java
+End of files
+------------------------------------------
+Exit code: OK

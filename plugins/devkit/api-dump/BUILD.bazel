@@ -1,0 +1,75 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.devkit.apiDump` start
+content_module_jar(module = ":api-dump")
+### auto-generated section `dev intellij.devkit.apiDump` end
+
+### auto-generated section `build intellij.devkit.apiDump` start
+jvm_library(
+    name = "api-dump",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.apiDump",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/workspace/jps",
+        "//libraries/jetbrains/annotations",
+        "@lib//:kotlin-stdlib",
+        "//platform/ide-core",
+        "//platform/analysis-api:analysis",
+        "//platform/util",
+        "//platform/util/multiplatform",
+        "//platform/workspace/storage",
+        "//platform/projectModel-impl",
+    ],
+)
+
+jvm_library(
+    name = "api-dump_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.apiDump",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":api-dump",
+        "//platform/core-api:core_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.devkit.apiDump` end
+
+### auto-generated section `iml intellij.devkit.apiDump` start
+exports_files(
+    [
+        "intellij.devkit.apiDump.iml",
+        "resources/intellij.devkit.apiDump.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.apiDump` end

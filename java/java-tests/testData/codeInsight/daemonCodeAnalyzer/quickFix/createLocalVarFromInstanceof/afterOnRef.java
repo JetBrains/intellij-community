@@ -1,8 +1,8 @@
-// "Insert '(Runnable)o' declaration" "true"
+// "Insert '(Runnable)o' declaration" "true-preview"
 class C {
   void f(Object o) {
     if (o instanceof Runnable) {
-        Runnable o1 = (Runnable) o;
+        Runnable runnable = (Runnable) o;
         <caret>
     }
   }

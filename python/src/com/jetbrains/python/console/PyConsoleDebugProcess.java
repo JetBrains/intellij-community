@@ -1,46 +1,33 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.project.Project;
-import com.intellij.remote.RemoteProcessControl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.remote.RemoteProcessControl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ServerSocket;
 import java.util.Map;
 
-/**
- * @author traff
- */
-public class PyConsoleDebugProcess extends PyDebugProcess {
+@ApiStatus.Internal
+class PyConsoleDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
   private final PyConsoleDebugProcessHandler myConsoleDebugProcessHandler;
 
-  public PyConsoleDebugProcess(@NotNull XDebugSession session,
-                               @NotNull final ServerSocket serverSocket,
-                               @NotNull final ExecutionConsole executionConsole,
-                               @NotNull final PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
+  PyConsoleDebugProcess(@NotNull XDebugSession session,
+                        final @NotNull ServerSocket serverSocket,
+                        final @NotNull ExecutionConsole executionConsole,
+                        final @NotNull PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
     super(session, serverSocket, executionConsole, consoleDebugProcessHandler, false);
     myLocalPort = serverSocket.getLocalPort();
     myConsoleDebugProcessHandler = consoleDebugProcessHandler;
@@ -53,12 +40,12 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
 
   @Override
   protected String getConnectionMessage() {
-    return "Connecting to console...";
+    return PyBundle.message("progress.text.connecting.to.console");
   }
 
   @Override
   protected String getConnectionTitle() {
-    return "Debugger connection";
+    return PyBundle.message("progress.title.debugger.connection");
   }
 
   @Override
@@ -71,10 +58,6 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     printToConsole(getCurrentStateMessage() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  @Override
-  protected void afterConnect() {
-  }
-
 
   @Override
   public int getConnectTimeout() {
@@ -82,26 +65,26 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
   }
 
   public void connect(PydevConsoleCommunication consoleCommunication) throws Exception {
-    int portToConnect;
+    Pair<String, Integer> portToConnect;
     if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessControl) {
-      portToConnect = getRemoteTunneledPort(myLocalPort,
-                                            ((RemoteProcessControl)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
+      portToConnect = getRemoteHostPortForDebuggerConnection(myLocalPort,
+                                                             ((RemoteProcessControl)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
     }
     else {
-      portToConnect = myLocalPort;
+      portToConnect = Pair.create("localhost", myLocalPort);
     }
     Map<String, Boolean> optionsMap = makeDebugOptionsMap(getSession());
     Map<String, String> envs = getDebuggerEnvs(getSession());
-    consoleCommunication.connectToDebugger(portToConnect, optionsMap, envs);
+    consoleCommunication.connectToDebugger(portToConnect.getSecond(), portToConnect.getFirst(), optionsMap, envs);
   }
 
-  private static Map<String, String> getDebuggerEnvs(XDebugSession session) {
+  public static Map<String, String> getDebuggerEnvs(XDebugSession session) {
     Map<String, String> env = Maps.newHashMap();
     PyDebugRunner.configureDebugEnvironment(session.getProject(), env, session.getRunProfile());
     return env;
   }
 
-  private static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
+  public static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
     Project project = session.getProject();
     PyDebuggerOptionsProvider userOpts = PyDebuggerOptionsProvider.getInstance(project);
     Map<String, Boolean> dbgOpts = Maps.newHashMap();

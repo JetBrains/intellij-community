@@ -1,0 +1,6 @@
+from django.urls import _AnyURL
+
+def i18n_patterns(*urls: _AnyURL, prefix_default_language: bool = ...) -> list[_AnyURL]: ...
+def is_language_prefix_patterns_used(urlconf: str) -> tuple[bool, bool]: ...
+
+urlpatterns: list[_AnyURL]

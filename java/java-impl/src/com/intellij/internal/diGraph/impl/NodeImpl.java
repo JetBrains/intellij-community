@@ -53,26 +53,32 @@ public class NodeImpl implements MarkedNode {
     for (EdgeImpl aMyOut : myOut) aMyOut.myBeg = this;
   }
 
+  @Override
   public Iterator<EdgeImpl> inIterator() {
     return myIn.iterator();
   }
 
+  @Override
   public Iterator<EdgeImpl> outIterator() {
     return myOut.iterator();
   }
 
+  @Override
   public int inDeg() {
     return myIn.size();
   }
 
+  @Override
   public int outDeg() {
     return myOut.size();
   }
 
+  @Override
   public Mark getMark() {
     return null;
   }
 
+  @Override
   public void setMark(Mark x) {
 
   }

@@ -1,4 +1,4 @@
-// "Use 'assertEquals' method without lambda" "true"
+// "Use 'assertEquals' method without lambda" "true-preview"
 package org.junit.jupiter.api;
 
 interface Supplier<T> {

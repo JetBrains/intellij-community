@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class ContentChange extends StructuralChange {
+public final class ContentChange extends StructuralChange {
   private final Content myOldContent;
   private final long myOldTimestamp;
 

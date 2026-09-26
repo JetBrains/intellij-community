@@ -1,0 +1,20 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
+// PRIORITY: LOW
+// INTENTION_TEXT: "Add 'y =' to argument"
+// AFTER-WARNING: Parameter 'x' is never used
+// AFTER-WARNING: Parameter 'y' is never used
+// AFTER-WARNING: Parameter 'a' is never used
+// K2_AFTER_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: ARGUMENT_PASSED_TWICE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: TOO_MANY_ARGUMENTS
+
+
+context(x: String, y: Int)
+fun foo(a: String): String = x + y + a
+
+fun main() {
+    with("context") {
+        foo("Hello", <caret>42, a = "World")
+    }
+}

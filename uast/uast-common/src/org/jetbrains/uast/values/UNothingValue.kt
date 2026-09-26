@@ -1,24 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.values
 
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBreakExpression
+import org.jetbrains.uast.UContinueExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UJumpExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.USwitchExpression
+import org.jetbrains.uast.UYieldExpression
 
 // Something that never can be reached / created
-internal class UNothingValue private constructor(
+internal open class UNothingValue private constructor(
   val containingLoopOrSwitch: UExpression?,
   val kind: JumpKind
 ) : UValueBase() {
@@ -36,6 +29,7 @@ internal class UNothingValue private constructor(
   override val reachable = false
 
   override fun merge(other: UValue) = when (other) {
+    is UYieldResult -> other
     is UNothingValue -> {
       val mergedLoopOrSwitch =
         if (containingLoopOrSwitch == other.containingLoopOrSwitch) containingLoopOrSwitch
@@ -43,7 +37,7 @@ internal class UNothingValue private constructor(
       val mergedKind = if (mergedLoopOrSwitch == null || kind != other.kind) JumpKind.OTHER else kind
       UNothingValue(mergedLoopOrSwitch, mergedKind)
     }
-    else -> super.merge(other)
+    else -> other
   }
 
   override fun toString() = "Nothing" + when (kind) {
@@ -57,6 +51,9 @@ internal class UNothingValue private constructor(
       var containingElement = uastParent
       while (containingElement != null) {
         if (this is UBreakExpression && label == null && containingElement is USwitchExpression) {
+          return containingElement
+        }
+        if (this is UYieldExpression && containingElement is USwitchExpression) {
           return containingElement
         }
         if (containingElement is ULoopExpression) {
@@ -75,5 +72,15 @@ internal class UNothingValue private constructor(
       is UContinueExpression -> JumpKind.CONTINUE
       else -> JumpKind.OTHER
     }
+  }
+}
+
+internal class UYieldResult(val value: UValue, jump: UYieldExpression) : UNothingValue(jump) {
+  override fun toString(): String = "UYieldResult($value)"
+
+  override fun merge(other: UValue): UValue = when (other) {
+    is UYieldResult -> UPhiValue.create(this, other)
+    is UNothingValue -> this
+    else -> other.merge(this)
   }
 }

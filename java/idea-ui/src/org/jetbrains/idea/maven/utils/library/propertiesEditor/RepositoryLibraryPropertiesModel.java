@@ -16,18 +16,27 @@
 package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.aether.ArtifactKind;
 
+import javax.swing.ComboBoxModel;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
-  private boolean downloadSources;
-  private boolean downloadJavaDocs;
+  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.noneOf(ArtifactKind.class);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
+  private final List<RemoteRepositoryDescription> myAvailableRemoteRepositories;
+  private final CollectionComboBoxModel<RemoteRepositoryDescription> myRemoteRepositoryModel;
+
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs) {
     this(version, downloadSources, downloadJavaDocs, true, ContainerUtil.emptyList());
@@ -35,16 +44,38 @@ public class RepositoryLibraryPropertiesModel {
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
-    this.version = version;
-    this.downloadSources = downloadSources;
-    this.downloadJavaDocs = downloadJavaDocs;
-    this.includeTransitiveDependencies = includeTransitiveDependencies;
-    myExcludedDependencies = new ArrayList<>(excludedDependencies);
+    this(version, ArtifactKind.kindsOf(downloadSources, downloadJavaDocs), includeTransitiveDependencies, excludedDependencies);
   }
 
+  public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
+                                          boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(version, artifactKinds, includeTransitiveDependencies, excludedDependencies, Collections.emptyList(), null);
+  }
+
+  public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
+                                          boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                          List<RemoteRepositoryDescription> availableRemoteRepositories, String remoteRepositoryId) {
+    this.version = version;
+    this.myArtifactKinds.addAll(artifactKinds);
+    this.includeTransitiveDependencies = includeTransitiveDependencies;
+    myExcludedDependencies = new ArrayList<>(excludedDependencies);
+    myAvailableRemoteRepositories = availableRemoteRepositories;
+
+    List<RemoteRepositoryDescription> displayedRepositories = new ArrayList<>();
+    displayedRepositories.add(null);
+    displayedRepositories.addAll(availableRemoteRepositories);
+
+    RemoteRepositoryDescription selectedRepository =
+      remoteRepositoryId == null ? null : ContainerUtil.find(availableRemoteRepositories,
+                                                             it -> Objects.equals(it.getId(), remoteRepositoryId));
+    myRemoteRepositoryModel = new CollectionComboBoxModel<>(displayedRepositories, selectedRepository);
+  }
+
+  @Override
   public RepositoryLibraryPropertiesModel clone() {
-    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs, includeTransitiveDependencies,
-                                                new ArrayList<>(myExcludedDependencies));
+    return new RepositoryLibraryPropertiesModel(version, myArtifactKinds, includeTransitiveDependencies,
+                                                new ArrayList<>(myExcludedDependencies),
+                                                myAvailableRemoteRepositories, getRemoteRepositoryId());
   }
 
   public boolean isValid() {
@@ -68,19 +99,43 @@ public class RepositoryLibraryPropertiesModel {
   }
 
   public boolean isDownloadSources() {
-    return downloadSources;
+    return myArtifactKinds.contains(ArtifactKind.SOURCES);
   }
 
   public void setDownloadSources(boolean downloadSources) {
-    this.downloadSources = downloadSources;
+    if (downloadSources) {
+      myArtifactKinds.add(ArtifactKind.SOURCES);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.SOURCES);
+    }
   }
 
   public boolean isDownloadJavaDocs() {
-    return downloadJavaDocs;
+    return myArtifactKinds.contains(ArtifactKind.JAVADOC);
   }
 
   public void setDownloadJavaDocs(boolean downloadJavaDocs) {
-    this.downloadJavaDocs = downloadJavaDocs;
+    if (downloadJavaDocs) {
+      myArtifactKinds.add(ArtifactKind.JAVADOC);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.JAVADOC);
+    }
+  }
+
+  public boolean isDownloadAnnotations() {
+    return myArtifactKinds.contains(ArtifactKind.ANNOTATIONS);
+  }
+
+  public void setDownloadAnnotations(boolean downloadAnnotations) {
+    if (downloadAnnotations) {
+      myArtifactKinds.add(ArtifactKind.ANNOTATIONS);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.ANNOTATIONS);
+    }
+  }
+
+  public EnumSet<ArtifactKind> getArtifactKinds() {
+    return EnumSet.copyOf(myArtifactKinds);
   }
 
   public String getVersion() {
@@ -91,6 +146,19 @@ public class RepositoryLibraryPropertiesModel {
     this.version = version;
   }
 
+  public RemoteRepositoryDescription getRemoteRepository() {
+    return myRemoteRepositoryModel.getSelected();
+  }
+
+  public String getRemoteRepositoryId() {
+    RemoteRepositoryDescription repo = myRemoteRepositoryModel.getSelected();
+    return repo == null ? null : repo.getId();
+  }
+
+  public ComboBoxModel<RemoteRepositoryDescription> getRemoteRepositoryModel() {
+    return myRemoteRepositoryModel;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -98,21 +166,21 @@ public class RepositoryLibraryPropertiesModel {
 
     RepositoryLibraryPropertiesModel model = (RepositoryLibraryPropertiesModel)o;
 
-    if (downloadSources != model.downloadSources) return false;
-    if (downloadJavaDocs != model.downloadJavaDocs) return false;
+    if (!myArtifactKinds.equals(model.myArtifactKinds)) return false;
     if (includeTransitiveDependencies != model.includeTransitiveDependencies) return false;
     if (version != null ? !version.equals(model.version) : model.version != null) return false;
     if (!myExcludedDependencies.equals(model.myExcludedDependencies)) return false;
+    if (!Objects.equals(getRemoteRepositoryId(), model.getRemoteRepositoryId())) return false;
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = (downloadSources ? 1 : 0);
-    result = 31 * result + (downloadJavaDocs ? 1 : 0);
+    int result = myArtifactKinds.hashCode();
     result = 31 * result + (includeTransitiveDependencies ? 1 : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + myExcludedDependencies.hashCode();
+    result = 31 * result + (getRemoteRepositoryId() != null ? getRemoteRepositoryId().hashCode() : 0);
     return result;
   }
 }

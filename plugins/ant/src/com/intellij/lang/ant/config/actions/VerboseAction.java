@@ -17,9 +17,11 @@ package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import icons.AntIcons;
+import org.jetbrains.annotations.NotNull;
 
 public final class VerboseAction extends ToggleAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -30,11 +32,18 @@ public final class VerboseAction extends ToggleAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
-  public boolean isSelected(AnActionEvent event) {
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return myAntBuildMessageView.isVerboseMode();
   }
 
-  public void setSelected(AnActionEvent event,boolean flag) {
+  @Override
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     myAntBuildMessageView.setVerboseMode(flag);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

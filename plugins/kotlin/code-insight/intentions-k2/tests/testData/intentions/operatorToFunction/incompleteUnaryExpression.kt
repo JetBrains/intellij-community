@@ -1,0 +1,4 @@
+// IS_APPLICABLE: false
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+val x = <caret>+

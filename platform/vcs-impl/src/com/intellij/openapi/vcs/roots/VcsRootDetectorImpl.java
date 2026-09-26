@@ -1,192 +1,298 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
 
-public class VcsRootDetectorImpl implements VcsRootDetector {
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
+
+final class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final ProjectRootManager myProjectManager;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final VcsRootChecker[] myCheckers;
+  private final @NotNull Project myProject;
+  private final @NotNull Object LOCK = new Object();
+  private @Nullable Collection<DetectedVcsRoot> myDetectedRoots;
 
-  @Nullable private Collection<VcsRoot> myDetectedRoots;
-  @NotNull private final Object LOCK = new Object();
-
-  public VcsRootDetectorImpl(@NotNull Project project,
-                             @NotNull ProjectRootManager projectRootManager,
-                             @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
+  VcsRootDetectorImpl(@NotNull Project project) {
     myProject = project;
-    myProjectManager = projectRootManager;
-    myVcsManager = projectLevelVcsManager;
-    myCheckers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
   }
 
   @Override
-  @NotNull
-  public Collection<VcsRoot> detect() {
+  public @NotNull Collection<VcsRoot> detect() {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.detect");
     synchronized (LOCK) {
-      myDetectedRoots = detect(myProject.getBaseDir());
-      return myDetectedRoots;
+      Activity activity = StartUpMeasurer.startActivity("VcsRootDetector.detect");
+      Collection<VcsRoot> roots = scanForRootsInContentRoots();
+      activity.end();
+
+      myDetectedRoots = ContainerUtil.map(roots, DetectedVcsRoot::new);
+      return roots;
     }
   }
 
   @Override
-  @NotNull
-  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
-    return doDetect(startDir);
+  public @NotNull Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.detect root", startDir);
+    if (startDir == null || !startDir.isInLocalFileSystem()) return Collections.emptyList();
+    return Collections.unmodifiableSet(scanForDirectory(startDir));
   }
 
-  @NotNull
-  private Collection<VcsRoot> doDetect(@Nullable VirtualFile startDir) {
-    if (startDir == null || myCheckers.length == 0) {
+  @Override
+  public @NotNull @Unmodifiable Collection<VcsRoot> getOrDetect() {
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.getOrDetect");
+    synchronized (LOCK) {
+      if (myDetectedRoots != null) {
+        return ContainerUtil.mapNotNull(myDetectedRoots, it -> it.toVcsRoot(myProject));
+      }
+      return detect();
+    }
+  }
+
+  private @NotNull Set<VcsRoot> scanForDirectory(@NotNull VirtualFile dirToScan) {
+    if (!VcsRootChecker.EXTENSION_POINT_NAME.hasAnyExtensions()) {
+      return Collections.emptySet();
+    }
+
+    Set<VcsRoot> detectedRoots = new HashSet<>();
+    Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
+
+    detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
+    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
+    return deduplicate(detectedRoots);
+  }
+
+  private @NotNull Collection<VcsRoot> scanForRootsInContentRoots() {
+    if (myProject.isDisposed() || !VcsRootChecker.EXTENSION_POINT_NAME.hasAnyExtensions()) {
       return Collections.emptyList();
     }
 
-    Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
-    if (shouldScanAbove(startDir, roots)) {
-      VcsRoot rootAbove = scanForSingleRootAboveDir(startDir);
-      if (rootAbove != null) roots.add(rootAbove);
+    List<VirtualFile> contentRoots = ContainerUtil.sorted(DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(),
+                                                          Comparator.comparing(root -> root.getPath().length()));
+    MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.scanForRootsInContentRoots - contentRoots", contentRoots);
+
+    Set<VcsRoot> detectedRoots = new HashSet<>();
+    Set<VirtualFile> skipDirs = new HashSet<>();
+    Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
+
+    // process the inner content roots first
+    for (VirtualFile dir : ContainerUtil.reverse(contentRoots)) {
+      detectedRoots.addAll(scanForRootsInsideDir(myProject, dir, skipDirs, scannedDirs));
+      skipDirs.add(dir);
     }
-    roots.addAll(scanForRootsInContentRoots());
-    return Collections.unmodifiableSet(roots);
+
+    // process the outer content roots first
+    detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
+
+    Set<VcsRoot> detectedAndKnownRoots = new HashSet<>(detectedRoots);
+    detectedAndKnownRoots.addAll(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()));
+    detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedAndKnownRoots));
+
+    return deduplicate(detectedRoots);
   }
 
-  @Override
-  @NotNull
-  public Collection<VcsRoot> getOrDetect() {
-    synchronized (LOCK) {
-      if (myDetectedRoots == null) {
-        detect();
+  /**
+   * @return a deduplicated set of {@code detectedRoots} with removed links pointing to the same canonical file.
+   */
+  private static @NotNull Set<VcsRoot> deduplicate(@NotNull Set<VcsRoot> detectedRoots) {
+    if (detectedRoots.size() <= 1) return detectedRoots;
+
+    Set<VcsRoot> result = new HashSet<>();
+
+    Set<VirtualFile> processedCanonicalRoots = new HashSet<>();
+    Set<VcsRoot> rootsUnderSymlink = new HashSet<>();
+    for (VcsRoot root : detectedRoots) {
+      VirtualFile path = root.getPath();
+      VirtualFile canonicalPath = path.getCanonicalFile();
+      if (canonicalPath != null && !path.equals(canonicalPath)) {
+        rootsUnderSymlink.add(root);
+      } else {
+        processedCanonicalRoots.add(path);
+        result.add(root);
       }
-      return myDetectedRoots;
+    }
+
+    if (rootsUnderSymlink.isEmpty()) return detectedRoots;
+
+    for (VcsRoot root : ContainerUtil.sorted(rootsUnderSymlink, Comparator.comparing(root -> root.getPath().toNioPath()))) {
+      VirtualFile canonicalFile = root.getPath().getCanonicalFile();
+      if (processedCanonicalRoots.contains(canonicalFile)) {
+        LOG.debug("Skipping duplicate VCS root %s: root for canonical file '%s' is already detected".formatted(root, canonicalFile));
+      } else {
+        processedCanonicalRoots.add(canonicalFile);
+        result.add(root);
+      }
+    }
+
+    return result;
+  }
+
+  private @NotNull Set<VcsRoot> scanForRootsInsideDir(@NotNull Project project,
+                                                      @NotNull VirtualFile root,
+                                                      @Nullable Set<? extends VirtualFile> skipDirs,
+                                                      @NotNull Map<VirtualFile, Boolean> scannedDirs) {
+    Set<VcsRoot> result = new HashSet<>();
+    VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, root, false, dir -> {
+      if (skipDirs != null && skipDirs.contains(dir)) {
+        return SKIP_CHILDREN;
+      }
+
+      if (scannedDirs.containsKey(dir)) return CONTINUE;
+
+      VcsRoot vcsRoot = getVcsRootFor(dir, null);
+      scannedDirs.put(dir, vcsRoot != null);
+
+      if (vcsRoot != null) {
+        LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " under ", root);
+        result.add(vcsRoot);
+      }
+      return CONTINUE;
+    });
+    return result;
+  }
+
+  private @NotNull Collection<VcsRoot> scanForRootsAboveDirs(@NotNull Collection<? extends VirtualFile> dirsToScan,
+                                                             @NotNull Map<VirtualFile, Boolean> scannedDirs,
+                                                             @NotNull Collection<VcsRoot> detectedRoots) {
+    Set<VirtualFile> skipDirs = new HashSet<>();
+    for (VcsRoot root : detectedRoots) {
+      skipDirs.add(root.getPath());
+    }
+
+    // ignore mappings in ~/ and above
+    ContainerUtil.addIfNotNull(skipDirs, VfsUtil.getUserHomeDir());
+
+    Set<VcsRoot> result = new HashSet<>();
+    for (VirtualFile dir : dirsToScan) {
+      scanForRootsAboveDir(dir, scannedDirs, skipDirs, result);
+    }
+    return result;
+  }
+
+  private void scanForRootsAboveDir(@NotNull VirtualFile root,
+                                    @NotNull Map<VirtualFile, Boolean> scannedDirs,
+                                    @NotNull Set<? super VirtualFile> skipDirs,
+                                    @NotNull Set<? super VcsRoot> result) {
+    Pattern ignorePattern = VcsRootScanner.parseDirIgnorePattern();
+    if (VcsRootScanner.isUnderIgnoredDirectory(myProject, ignorePattern, root)) {
+      return;
+    }
+
+    VirtualFile parent = root.isDirectory() ? root : root.getParent();
+    while (parent != null) {
+      // do not check same directory twice.
+      // NB: we ignore differences in 'dirToCheckForIgnore' here and might miss some roots, that ignore one content root but not the other.
+      if (!skipDirs.add(parent)) return;
+      if (scannedDirs.get(parent) == Boolean.TRUE) return;
+
+      if (!scannedDirs.containsKey(parent)) {
+        VcsRoot vcsRoot = getVcsRootFor(parent, root);
+        scannedDirs.put(parent, vcsRoot != null);
+
+        if (vcsRoot != null) {
+          LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), " above ", root);
+          result.add(vcsRoot);
+          return;
+        }
+      }
+
+      parent = parent.getParent();
     }
   }
 
-  @NotNull
-  private Set<VcsRoot> scanForRootsInContentRoots() {
-    Set<VcsRoot> vcsRoots = new HashSet<>();
-    if (myProject.isDisposed()) return vcsRoots;
+  private @NotNull Collection<VcsRoot> scanDependentRoots(@NotNull Map<VirtualFile, Boolean> scannedDirs,
+                                                          @NotNull Collection<VcsRoot> detectedRoots) {
+    Set<VcsRoot> result = new HashSet<>();
+    for (VcsRoot root : detectedRoots) {
+      VcsRootChecker rootChecker = VcsRootChecker.EXTENSION_POINT_NAME.findFirstSafe(checker -> {
+        return root.getVcs() != null && Objects.equals(checker.getSupportedVcs(), root.getVcs().getKeyInstanceMethod());
+      });
+      if (rootChecker == null) continue;
 
-    for (VirtualFile contentRoot : myProjectManager.getContentRoots()) {
-      if (myProject.getBaseDir() != null && VfsUtilCore.isAncestor(myProject.getBaseDir(), contentRoot, false)) {
-        continue;
-      }
+      List<VirtualFile> dependentRoots = rootChecker.suggestDependentRoots(root.getPath());
+      for (VirtualFile dependentRoot : dependentRoots) {
+        if (scannedDirs.containsKey(dependentRoot)) continue;
 
-      Set<VcsRoot> vcsRootsInContentRoot = scanForRootsInsideDir(contentRoot);
-      if (shouldScanAbove(contentRoot, vcsRootsInContentRoot)) {
-        VcsRoot rootAbove = scanForSingleRootAboveDir(contentRoot);
-        if (rootAbove != null) vcsRootsInContentRoot.add(rootAbove);
+        VcsRoot vcsRoot = detectVcsRootBy(dependentRoot, null, rootChecker);
+        scannedDirs.put(dependentRoot, vcsRoot != null);
+
+        if (vcsRoot != null) {
+          LOG.debug("Found VCS ", vcsRoot.getVcs(), " in ", vcsRoot.getPath(), "dependent on", root);
+          result.add(vcsRoot);
+        }
       }
-      vcsRoots.addAll(vcsRootsInContentRoot);
     }
-    return vcsRoots;
+
+    if (!result.isEmpty()) {
+      // handle recursive dependencies
+      result.addAll(scanDependentRoots(scannedDirs, result));
+    }
+
+    return result;
   }
 
-  @NotNull
-  private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+  private @Nullable VcsRoot getVcsRootFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
     ProgressManager.checkCanceled();
-    LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
-    final Set<VcsRoot> roots = new HashSet<>();
-    if (depthLimitExceeded(depth)) {
-      return roots;
-    }
-
-    if (ReadAction.compute(() -> myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir))) {
-      return roots;
-    }
-    AbstractVcs vcs = getVcsFor(dir);
-    if (vcs != null) {
-      LOG.debug("Found VCS " + vcs + " in " + dir);
-      roots.add(new VcsRoot(vcs, dir));
-    }
-    for (VirtualFile child : dir.getChildren()) {
-      roots.addAll(scanForRootsInsideDir(child, depth + 1));
-    }
-    return roots;
+    return VcsRootChecker.EXTENSION_POINT_NAME.computeSafeIfAny(checker -> {
+      return detectVcsRootBy(maybeRoot, dirToCheckForIgnore, checker);
+    });
   }
 
-  private static boolean shouldScanAbove(@NotNull VirtualFile startDir, @NotNull Set<VcsRoot> rootsInsideDir) {
-    return rootsInsideDir.stream().noneMatch(it -> startDir.equals(it.getPath()));
+  private @Nullable VcsRoot detectVcsRootBy(@NotNull VirtualFile maybeRoot,
+                                            @Nullable VirtualFile dirToCheckForIgnore,
+                                            @NotNull VcsRootChecker checker) {
+    if (!maybeRoot.isInLocalFileSystem()) return null;
+    if (!checker.isRoot(maybeRoot)) return null;
+    if (dirToCheckForIgnore != null && checker.isIgnored(myProject, maybeRoot, dirToCheckForIgnore)) return null;
+
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(checker.getSupportedVcs().getName());
+    if (vcs == null) return null;
+
+    return new VcsRoot(vcs, maybeRoot);
   }
 
-  private static boolean depthLimitExceeded(int depth) {
-    int maxDepth = Registry.intValue("vcs.root.detector.folder.depth");
-    return maxDepth >= 0 && maxDepth < depth;
-  }
+  private static final class DetectedVcsRoot {
+    private final @Nullable String myVcsName;
+    private final @NotNull VirtualFile myPath;
 
-  @NotNull
-  private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile dir) {
-    return scanForRootsInsideDir(dir, 0);
-  }
-
-  @Nullable
-  private VcsRoot scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
-    if (myProject.isDisposed()) {
-      return null;
+    private DetectedVcsRoot(@NotNull VcsRoot root) {
+      AbstractVcs vcs = root.getVcs();
+      myVcsName = vcs != null ? vcs.getName() : null;
+      myPath = root.getPath();
     }
 
-    ProgressManager.checkCanceled();
-    VirtualFile par = dir.getParent();
-    while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
-      AbstractVcs vcs = getVcsFor(par, dir);
-      if (vcs != null) return new VcsRoot(vcs, par);
-      par = par.getParent();
+    public @Nullable VcsRoot toVcsRoot(@NotNull Project project) {
+      if (myVcsName == null) return null;
+      AbstractVcs vcs = AllVcses.getInstance(project).getByName(myVcsName);
+      return vcs != null ? new VcsRoot(vcs, myPath) : null;
     }
-    return null;
-  }
-
-  @Nullable
-  private AbstractVcs getVcsFor(@NotNull VirtualFile dir) {
-    return getVcsFor(dir, null);
-  }
-
-  @Nullable
-  private AbstractVcs getVcsFor(@NotNull VirtualFile maybeRoot, @Nullable VirtualFile dirToCheckForIgnore) {
-    List<AbstractVcs> vcss = StreamEx.of(myCheckers).
-      filter(it -> it.isRoot(maybeRoot.getPath()) && (dirToCheckForIgnore == null || !it.isIgnored(maybeRoot, dirToCheckForIgnore))).
-      map(it -> myVcsManager.findVcsByName(it.getSupportedVcs().getName())).
-      toList();
-
-    if (vcss.size() == 1) {
-      return vcss.get(0);
-    }
-    else if (vcss.size() > 1) {
-      LOG.info("Dir " + maybeRoot + " is under several VCSs: " + vcss);
-    }
-    return null;
   }
 }

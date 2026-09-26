@@ -21,10 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Roman.Shein
- * @since 04.08.2015.
- */
 public interface ValuesExtractionResult {
 
   @NotNull
@@ -32,7 +28,7 @@ public interface ValuesExtractionResult {
 
   void applySelected();
 
-  void applyConditioned(Condition<Value> c, Map<Value, Object> backup);
+  void applyConditioned(Condition<? super Value> c, Map<Value, Object> backup);
 
   ValuesExtractionResult apply(boolean retPrevValue);
 }

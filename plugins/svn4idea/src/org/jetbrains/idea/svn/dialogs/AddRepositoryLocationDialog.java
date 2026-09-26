@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -7,24 +7,36 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.ui.JBUI.*;
-import static java.awt.GridBagConstraints.*;
+import static com.intellij.util.ui.JBUI.insets;
+import static com.intellij.util.ui.JBUI.size;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHWEST;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class AddRepositoryLocationDialog extends DialogWrapper {
-  @NotNull private final List<String> myPreviousLocations;
-  private JComboBox myCombo;
+  private final @Unmodifiable @NotNull List<String> myPreviousLocations;
+  private JComboBox<String> myCombo;
   private Url mySelected;
   private JTextField myComboField;
 
@@ -32,18 +44,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     super(project, true);
     myPreviousLocations = sorted(values);
 
-    setTitle(getTitle());
     init();
-    myComboField.setText(initText());
-  }
-
-  @Override
-  public String getTitle() {
-    return message("repository.browser.add.location.title");
-  }
-
-  protected String initText() {
-    return "http://";
   }
 
   @Override
@@ -51,6 +52,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     return myCombo;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JLabel selectText = new JLabel(message("repository.browser.add.location.prompt"));
     selectText.setUI(new MultiLineLabelUI());
@@ -62,7 +64,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
     ++gb.gridy;
 
-    myCombo = new ComboBox<>(new CollectionComboBoxModel<>(myPreviousLocations));
+    myCombo = new ComboBox<>(new CollectionComboBoxModel<>(new ArrayList<>(myPreviousLocations)));
     myCombo.setEditable(true);
     myCombo.setMinimumSize(size(250, 20));
     gb.fill = HORIZONTAL;
@@ -72,31 +74,32 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     myComboField = (JTextField)myCombo.getEditor().getEditorComponent();
 
     JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, HORIZONTAL, emptyInsets(), 0, 0));
+    wrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     wrapper.setPreferredSize(size(400, 70));
     return wrapper;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     try {
       mySelected = createUrl(myComboField.getText().trim(), false);
       return null;
     }
     catch (SvnBindException e) {
-      return new ValidationInfo("Could not parse url", myCombo);
+      return new ValidationInfo(message("dialog.message.could.not.parse.url"), myCombo);
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
-  @Nullable
-  public Url getSelected() {
+  public @Nullable Url getSelected() {
     return mySelected;
+  }
+
+  public void setSelected(@NotNull Url url) {
+    myComboField.setText(url.toDecodedString());
   }
 }

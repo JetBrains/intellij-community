@@ -1,44 +1,34 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.SorterUtil;
+import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.PlatformEditorBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.PlaceHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 
-class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder<String> {
-
-  private final Collection<NodeProvider> myNodeProviders;
+final class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder {
+  private final Collection<NodeProvider<?>> myNodeProviders;
   private String myStructureViewPlace;
 
   private static final Sorter HTML_ALPHA_SORTER = new Sorter() {
-    @NotNull
     @Override
-    public Comparator getComparator() {
+    public @NotNull Comparator getComparator() {
       return new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -51,9 +41,9 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
           return s1.compareToIgnoreCase(s2);
         }
 
-        private boolean isTagPresentation(final String presentation, final String tagName) {
+        private static boolean isTagPresentation(final String presentation, final String tagName) {
           // "head", "head#id", "head.cls"
-          final String lowerCased = presentation.toLowerCase();
+          final String lowerCased = StringUtil.toLowerCase(presentation);
           return lowerCased.startsWith(tagName) &&
                  (lowerCased.length() == tagName.length() || !Character.isLetter(lowerCased.charAt(tagName.length())));
         }
@@ -65,35 +55,34 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
       return true;
     }
 
+    @Override
     public String toString() {
       return getName();
     }
 
     @Override
-    @NotNull
-    public ActionPresentation getPresentation() {
-      return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
-                                        IdeBundle.message("action.sort.alphabetically"),
+    public @NotNull ActionPresentation getPresentation() {
+      return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
+                                        PlatformEditorBundle.message("action.sort.alphabetically"),
                                         AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
-    @NotNull
-    public String getName() {
-      return ALPHA_SORTER_ID;
+    public @NotNull String getName() {
+      return Sorter.getAlphaSorterId();
     }
   };
 
   private static final Sorter[] ourSorters = {HTML_ALPHA_SORTER};
 
-  public HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
+  HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
     super(file, editor);
 
-    myNodeProviders = Arrays.asList(new Html5SectionsNodeProvider());
+    myNodeProviders = Collections.singletonList(new Html5SectionsNodeProvider());
   }
 
   @Override
-  public void setPlace(@NotNull final String place) {
+  public void setPlace(final @NotNull String place) {
     myStructureViewPlace = place;
   }
 
@@ -103,8 +92,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  @NotNull
-  public Sorter[] getSorters() {
+  public Sorter @NotNull [] getSorters() {
     if (TreeStructureUtil.isInStructureViewPopup(this)) {
       return Sorter.EMPTY_ARRAY;  // because in popup there's no option to disable sorter
     }
@@ -113,14 +101,12 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   }
 
   @Override
-  @NotNull
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
     return myNodeProviders;
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement getRoot() {
-    return new HtmlFileTreeElement(TreeStructureUtil.isInStructureViewPopup(this), (XmlFile)getPsiFile());
+  public @NotNull StructureViewTreeElement getRoot() {
+    return new HtmlFileTreeElement(TreeStructureUtil.isInStructureViewPopup(this), getPsiFile());
   }
 }

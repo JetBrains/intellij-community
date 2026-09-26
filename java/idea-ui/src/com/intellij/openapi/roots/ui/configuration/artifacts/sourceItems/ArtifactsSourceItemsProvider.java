@@ -1,26 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.PackagingSourceItemsProvider;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,15 +21,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
+public final class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
   @Override
-  @NotNull
-  public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
-                                                                  @NotNull Artifact artifact,
-                                                                  @Nullable PackagingSourceItem parent) {
+  public @NotNull Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext,
+                                                                           @NotNull Artifact artifact,
+                                                                           @Nullable PackagingSourceItem parent) {
     if (parent == null) {
       if (!ArtifactElementType.getAvailableArtifacts(editorContext, artifact, true).isEmpty()) {
         return Collections.singletonList(new ArtifactsGroupSourceItem());
@@ -54,28 +41,28 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
     return Collections.emptyList();
   }
 
-  private static class ArtifactsGroupSourceItem extends PackagingSourceItem {
+  private static final class ArtifactsGroupSourceItem extends PackagingSourceItem {
     private ArtifactsGroupSourceItem() {
       super(false);
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj instanceof ArtifactsGroupSourceItem;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
 
-    @NotNull
     @Override
-    public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+    public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new ArtifactsGroupPresentation();
     }
 
     @Override
-    @NotNull
-    public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+    public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
       return Collections.emptyList();
     }
 
@@ -89,7 +76,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
         presentationData.setIcon(AllIcons.Nodes.Artifact);
-        presentationData.addText("Artifacts", mainAttributes);
+        presentationData.addText(JavaUiBundle.message("display.name.artifacts"), mainAttributes);
       }
 
       @Override

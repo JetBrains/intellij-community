@@ -19,10 +19,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- * @since 5/14/13 12:49 PM
- */
 public interface ExternalSystemConfigurableAware {
 
   @NotNull

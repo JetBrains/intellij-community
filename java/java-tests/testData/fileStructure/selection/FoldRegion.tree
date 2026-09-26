@@ -1,0 +1,7 @@
+-FoldRegion.java
+ -FoldRegion
+  num1: int
+  num2: int
+  -[My Region]
+   FoldRegion()
+   foo(): void

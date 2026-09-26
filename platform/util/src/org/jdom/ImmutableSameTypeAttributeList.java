@@ -1,31 +1,26 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
-class ImmutableSameTypeAttributeList implements List<Attribute> {
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+final class ImmutableSameTypeAttributeList implements List<Attribute> {
+  private static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private final String[] myNameValues;
   private final AttributeType myType;
   private final Namespace myNs;
 
-  ImmutableSameTypeAttributeList(@NotNull String[] nameValues, AttributeType type, @NotNull Namespace ns) {
+  ImmutableSameTypeAttributeList(String @NotNull [] nameValues, AttributeType type, @NotNull Namespace ns) {
     myNameValues = nameValues.length == 0 ? EMPTY_STRING_ARRAY : nameValues;
     myType = type;
     myNs = ns;
@@ -33,15 +28,15 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
 
   @Override
   public Attribute get(int index) {
-    return new ImmutableAttribute(myNameValues[index*2], myNameValues[index*2+1], myType, myNs);
+    return new ImmutableAttribute(myNameValues[index * 2], myNameValues[index * 2 + 1], myType, myNs);
   }
 
   Attribute get(String name, Namespace namespace) {
     if (!myNs.equals(namespace)) return null;
-    for (int i = 0; i < myNameValues.length; i+=2) {
+    for (int i = 0; i < myNameValues.length; i += 2) {
       String aname = myNameValues[i];
       if (aname.equals(name)) {
-        return get(i/2);
+        return get(i / 2);
       }
     }
     return null;
@@ -49,7 +44,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
 
   String getValue(String name, Namespace namespace, String def) {
     if (!myNs.equals(namespace)) return def;
-    for (int i = 0; i < myNameValues.length; i+=2) {
+    for (int i = 0; i < myNameValues.length; i += 2) {
       String aname = myNameValues[i];
       if (aname.equals(name)) {
         return myNameValues[i + 1];
@@ -57,10 +52,10 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     }
     return def;
   }
-  
+
   @Override
   public int size() {
-    return myNameValues.length/2;
+    return myNameValues.length / 2;
   }
 
   @Override
@@ -71,7 +66,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   @Override
   public int indexOf(Object o) {
     for (int i = 0; i < size(); i++) {
-      if (Comparing.equal(0,get(i))) return i;
+      if (Comparing.equal(0, get(i))) return i;
     }
     return -1;
   }
@@ -79,17 +74,17 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   @Override
   public int lastIndexOf(Object o) {
     for (int i = size() - 1; i >= 0; i--) {
-      if (Comparing.equal(0,get(i))) return i;
+      if (Comparing.equal(0, get(i))) return i;
     }
     return -1;
   }
 
-  @NotNull
   @Override
-  public Iterator<Attribute> iterator() {
-    if (isEmpty()) return EmptyIterator.getInstance();
+  public @NotNull Iterator<Attribute> iterator() {
+    if (isEmpty()) return Collections.emptyIterator();
     return new Iterator<Attribute>() {
       int i;
+
       @Override
       public boolean hasNext() {
         return i < size();
@@ -107,17 +102,17 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     };
   }
 
-  @NotNull
   @Override
-  public List<Attribute> subList(int fromIndex, int toIndex) {
+  public @NotNull List<Attribute> subList(int fromIndex, int toIndex) {
     return toList().subList(fromIndex, toIndex);
   }
 
   private List<Attribute> toList() {
-    List<Attribute> list = new ArrayList<Attribute>(size());
+    List<Attribute> list = new ArrayList<>(size());
     for (int i = 0; i < size(); i++) {
+      //noinspection UseBulkOperation -- ArrayList.addAll() will delegate to toArray(), but toArray() delegates to this method
       list.add(get(i));
-    }                  
+    }
     return list;
   }
 
@@ -127,7 +122,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof List) || size() != ((List)o).size()) {
+    if (!(o instanceof List) || size() != ((List<?>)o).size()) {
       return false;
     }
     if (size() == 0) {
@@ -139,17 +134,19 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     }
 
     List<Attribute> l = (List<Attribute>)o;
-    for (int i=0; i<myNameValues.length; i+=2) {
+    for (int i = 0; i < myNameValues.length; i += 2) {
       String name = myNameValues[i];
-      String value = myNameValues[i+1];
+      String value = myNameValues[i + 1];
 
-      Attribute a2 = l.get(i/2);
+      Attribute a2 = l.get(i / 2);
 
-      if (!Comparing.equal(name, a2.getName()) ||
-          !Comparing.equal(value, a2.getValue()) ||
+      if (!Objects.equals(name, a2.getName()) ||
+          !Objects.equals(value, a2.getValue()) ||
           !Comparing.equal(myType, a2.getAttributeType()) ||
           !Comparing.equal(myNs, a2.getNamespace())
-        ) return false;
+      ) {
+        return false;
+      }
     }
     return true;
   }
@@ -157,7 +154,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   @Override
   public int hashCode() {
     int result = 1;
-    for (int i=0; i<myNameValues.length; i+=2) {
+    for (int i = 0; i < myNameValues.length; i += 2) {
       String name = myNameValues[i];
       String value = myNameValues[i + 1];
       result = result * 31 + JDOMInterner.computeAttributeHashCode(name, value);
@@ -175,15 +172,13 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     return indexOf(o) != -1;
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return toList().toArray(new Attribute[0]);
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     return (T[])toArray();
   }
 
@@ -231,15 +226,13 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
     throw ImmutableElement.immutableError(this);
   }
 
-  @NotNull
   @Override
-  public ListIterator<Attribute> listIterator() {
+  public @NotNull ListIterator<Attribute> listIterator() {
     throw ImmutableElement.immutableError(this);
   }
 
-  @NotNull
   @Override
-  public ListIterator<Attribute> listIterator(int index) {
+  public @NotNull ListIterator<Attribute> listIterator(int index) {
     throw ImmutableElement.immutableError(this);
   }
 
@@ -257,5 +250,4 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   public boolean retainAll(@NotNull Collection<?> c) {
     throw ImmutableElement.immutableError(this);
   }
-
 }

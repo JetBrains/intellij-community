@@ -1,0 +1,32 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.mlapi.catboost"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.ml.logs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.psi.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.ml.features.imports.PyCharmImportsRankingLogs"/>
+    <registryKey
+      key="quickfix.ranking.ml"
+      defaultValue="[IN_EXPERIMENT|ENABLED*|DISABLED]"
+      description="Enable ML ranking in quick fix for missing imports"/>
+    <postStartupActivity implementation="com.intellij.python.ml.features.imports.QuickfixRankingModelLoading"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"
+                        serviceImplementation="com.intellij.python.ml.features.imports.PyMLImportChooser" overrides="true"/>
+  </extensions>
+</idea-plugin>

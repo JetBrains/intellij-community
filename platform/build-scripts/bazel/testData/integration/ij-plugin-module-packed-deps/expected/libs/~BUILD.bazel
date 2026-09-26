@@ -1,0 +1,43 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
+### auto-generated section `local-libs` start
+java_import(
+    name = "libraries-example-first",
+    jars = ["first.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "libraries-example-second",
+    jars = ["second.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "libraries-example-testonly",
+    jars = ["testonly.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "libraries-example-third",
+    jars = ["third.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "libraries-refused-testonly",
+    jars = ["testonly.jar"],
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    [
+        "first.jar",
+        "second.jar",
+        "testonly.jar",
+        "third.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `local-libs` end

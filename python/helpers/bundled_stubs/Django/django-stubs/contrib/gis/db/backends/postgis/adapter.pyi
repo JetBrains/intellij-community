@@ -1,0 +1,16 @@
+from typing import Any
+
+from typing_extensions import override
+
+class PostGISAdapter:
+    is_geometry: Any
+    ewkb: Any
+    srid: Any
+    geography: Any
+    def __init__(self, obj: Any, geography: bool = ...) -> None: ...
+    def __conform__(self, proto: Any) -> Any: ...
+    @override
+    def __eq__(self, other: object) -> bool: ...
+    @override
+    def __hash__(self) -> int: ...
+    def getquoted(self) -> Any: ...

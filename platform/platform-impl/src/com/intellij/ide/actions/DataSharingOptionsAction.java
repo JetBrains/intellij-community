@@ -1,35 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.ide.gdpr.Consent;
-import com.intellij.ide.gdpr.ConsentOptions;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.AppUIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
+import static com.intellij.ide.gdpr.ConsentsUiLoadingKt.showDataSharingOptionsDialog;
 
-public class DataSharingOptionsAction extends DumbAwareAction {
-  public DataSharingOptionsAction() {
-    super("Data Sharing Options...", "Data Sharing Options", null);
+final class DataSharingOptionsAction extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-    try {
-      final Collection<Consent> result = AppUIUtil.confirmConsentOptions(consentsToShow.first);
-      if (result != null) {
-        ConsentOptions.getInstance().setConsents(result);
-      }
-    }
-    catch (Exception ex) {
-      Logger.getInstance(DataSharingOptionsAction.class).warn(ex);
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    showDataSharingOptionsDialog();
   }
 }

@@ -1,0 +1,6 @@
+public class C implements IA, IB {
+  @Override
+  public int f() {
+    return 3;
+  }
+}

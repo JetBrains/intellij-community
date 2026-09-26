@@ -1,0 +1,6 @@
+// WITH_STDLIB
+fun foo() {
+    repeat(3) {
+        repeat(2) { return@repeat }
+    }
+}

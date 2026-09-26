@@ -1,0 +1,12 @@
+// "Suppress 'WrapUnaryOperator' for initializer " "true"
+
+data class InitializerSuppressedAux(val first: Int, val second: Int)
+
+fun initializerSuppressedOnInitializer(dc: InitializerSuppressedAux) {
+    val (a, b) = @Suppress("WrapUnaryOperator")
+    InitializerSuppressedAux(-1, -1.inc())
+}
+
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.WrapUnaryOperatorInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.WrapUnaryOperatorInspection
+// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

@@ -1,51 +1,34 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
-public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExtension {
-  @NotNull
+@ApiStatus.Internal
+public final class JpsEncodingModelSerializerExtension extends JpsModelSerializerExtension {
   @Override
-  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
-    return Arrays.asList(new JpsEncodingConfigurationSerializer());
+  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Collections.singletonList(new JpsEncodingConfigurationSerializer());
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
-    return Arrays.asList(new JpsGlobalEncodingSerializer());
+  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+    return Collections.singletonList(new JpsGlobalEncodingSerializer());
   }
 
-  private static class JpsEncodingConfigurationSerializer extends JpsProjectExtensionSerializer {
+  private static final class JpsEncodingConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsEncodingConfigurationSerializer() {
       super("encodings.xml", "Encoding");
     }
@@ -66,15 +49,11 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
       }
       JpsEncodingConfigurationService.getInstance().setEncodingConfiguration(project, projectEncoding, urlToEncoding);
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    }
   }
 
-  private static class JpsGlobalEncodingSerializer extends JpsGlobalExtensionSerializer {
+  private static final class JpsGlobalEncodingSerializer extends JpsGlobalExtensionSerializer {
     public static final String ENCODING_ATTRIBUTE = "default_encoding";
-    
+
     private JpsGlobalEncodingSerializer() {
       super("encoding.xml", "Encoding");
     }
@@ -88,11 +67,6 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     @Override
     public void loadExtensionWithDefaultSettings(@NotNull JpsGlobal global) {
       JpsEncodingConfigurationService.getInstance().setGlobalEncoding(global, CharsetToolkit.UTF8);
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      componentTag.setAttribute(ENCODING_ATTRIBUTE, JpsEncodingConfigurationService.getInstance().getGlobalEncoding(global));
     }
   }
 }

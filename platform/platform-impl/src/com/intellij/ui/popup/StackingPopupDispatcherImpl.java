@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.popup;
 
@@ -20,20 +6,35 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.MenuSelectionManager;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputEvent;
+import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.Stack;
 import java.util.stream.Stream;
 
-public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
+@ApiStatus.Internal
+public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private final Stack<JBPopup> myStack = new Stack<>();
   private final Collection<JBPopup> myPersistentPopups = new WeakList<>();
@@ -111,17 +112,30 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     Point point = (Point) mouseEvent.getPoint().clone();
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
+    boolean needStopFurtherEventProcessing = false;
     while (true) {
       if (popup != null && !popup.isDisposed()) {
+        Window window = ComponentUtil.getWindow(mouseEvent.getComponent());
+        if (window != null && window != popup.getPopupWindow() && SwingUtilities.isDescendingFrom(window, popup.getPopupWindow())) {
+          return false;
+        }
         final Component content = popup.getContent();
         if (!content.isShowing()) {
           popup.cancel();
           return false;
         }
 
-        final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
-        if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
-          return false;
+        if (!StartupUiUtil.isWaylandToolkit()) {
+          final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
+          if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
+            return false;
+          }
+        } else {
+          // In Wayland "location on screen" is not available, so do close unless the event came
+          // directly from the popup itself.
+          if (window == popup.getPopupWindow() || !popup.isCancelOnClickOutside()) {
+            return false;
+          }
         }
 
         if (!popup.canClose()){
@@ -133,11 +147,14 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
           return false;
         }
 
+        if (needStopFurtherEventProcessing(popup, mouseEvent)) {
+          needStopFurtherEventProcessing = true;
+        }
         popup.cancel(mouseEvent);
       }
 
-      if (myStack.isEmpty()) {
-        return false;
+      if (myStack.isEmpty() || needStopFurtherEventProcessing) {
+        return needStopFurtherEventProcessing;
       }
 
       popup = (AbstractPopup)myStack.peek();
@@ -147,16 +164,14 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
-  @Nullable
-  private JBPopup findPopup() {
-    while(true) {
-      if (myStack.isEmpty()) break;
+  @ApiStatus.Internal
+  public @Nullable JBPopup findPopup() {
+    while (!myStack.isEmpty()) {
       final AbstractPopup each = (AbstractPopup)myStack.peek();
-      if (each == null || each.isDisposed()) {
-        myStack.pop();
-      } else {
+      if (each != null && !each.isDisposed()) {
         return each;
       }
+      myStack.pop();
     }
 
     return null;
@@ -167,19 +182,37 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     final boolean closeRequest = AbstractPopup.isCloseRequest(e);
 
     JBPopup popup = closeRequest ? findPopup() : getFocusedPopup();
-    return popup != null && popup.dispatchKeyEvent(e);
+    if (popup == null) return false;
+
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window instanceof Dialog && ((Dialog)window).isModal()) {
+      if (!SwingUtilities.isDescendingFrom(popup.getContent(), window)) return false;
+    }
+
+    return popup.dispatchKeyEvent(e);
   }
 
+  public boolean dispatchInputMethodEvent(InputMethodEvent e) {
+    JBPopup popup = getFocusedPopup();
+    if (popup == null) {
+      return false;
+    }
 
-  @Override
-  @Nullable
-  public Component getComponent() {
-    return myStack.isEmpty() ? null : myStack.peek().getContent();
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window instanceof Dialog && ((Dialog)window).isModal()) {
+      if (!SwingUtilities.isDescendingFrom(popup.getContent(), window)) return false;
+    }
+
+    return popup.dispatchInputMethodEvent(e);
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @Nullable Component getComponent() {
+    return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
+  }
+
+  @Override
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return myStack.stream();
   }
 
@@ -188,7 +221,16 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
    if (event instanceof KeyEvent) {
       return dispatchKeyEvent((KeyEvent) event);
    }
-    return event instanceof MouseEvent && dispatchMouseEvent(event);
+
+   if (event instanceof MouseEvent) {
+     return dispatchMouseEvent(event);
+   }
+
+   if (event instanceof InputMethodEvent) {
+     return dispatchInputMethodEvent((InputMethodEvent) event);
+   }
+
+   return false;
   }
 
   @Override
@@ -202,15 +244,21 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   @Override
   public boolean close() {
     if (!closeActivePopup()) return false;
-    // try to close other popups in the stack
+
+    int size = myStack.size();
     while (closeActivePopup()) {
-      // close all popups one by one
+      int next = myStack.size();
+      if (size == next) {
+        // no popup was actually closed, break
+        break;
+      }
+      size = next;
     }
     return true; // at least one popup was closed
   }
 
   @Override
-  public void setRestoreFocusSilentely() {
+  public void setRestoreFocusSilently() {
     if (myStack.isEmpty()) return;
 
     for (JBPopup each : myAllPopups) {
@@ -228,7 +276,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     final AbstractPopup popup = (AbstractPopup)myStack.peek();
     if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation() && popup.canClose()) {
       popup.cancel();
-      return true;
+      // setCancelCallback(..) can override cancel()
+      return !popup.isVisible();
     }
     return false;
   }
@@ -238,10 +287,31 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return getFocusedPopup() != null;
   }
 
-  private JBPopup getFocusedPopup() {
+  @Override
+  public @Nullable JBPopup getFocusedPopup() {
     for (JBPopup each : myAllPopups) {
       if (each != null && each.isFocused()) return each;
     }
     return null;
+  }
+
+  private static boolean needStopFurtherEventProcessing(@NotNull AbstractPopup popup, @NotNull MouseEvent mouseEvent) {
+    if (popup.isDisposed()) {
+      return false;
+    }
+    int modifiers = mouseEvent.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK |
+                                                   InputEvent.CTRL_DOWN_MASK |
+                                                   InputEvent.ALT_DOWN_MASK |
+                                                   InputEvent.META_DOWN_MASK);
+    if (mouseEvent.getButton() != MouseEvent.BUTTON1 || modifiers != 0) { // on right mouse in most cases we can customize corresponding toolbar
+      return false;
+    }
+    Component toggleButton = PopupUtil.getPopupToggleComponent(popup);
+    Component c = mouseEvent.getComponent();
+    if (toggleButton == null || c == null) {
+      return false;
+    }
+    Point pointRelativeToButton = SwingUtilities.convertPoint(c, mouseEvent.getX(), mouseEvent.getY(), toggleButton);
+    return toggleButton.contains(pointRelativeToButton);
   }
 }

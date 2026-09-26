@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +21,17 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   protected void startEventPropagation() {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.getMessageBus().connect().subscribe(
+      ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> extensionPoint = app.getExtensionArea().getExtensionPointIfRegistered(VirtualFileSystem.EP_NAME.getName());
+      MessageBusConnection connection;
+      if (extensionPoint != null) {
+        Disposable extensionDisposable = ExtensionPointUtil.createExtensionDisposable(this, extensionPoint, ep -> ep.getKey().equals(getProtocol()));
+        connection = app.getMessageBus().connect(extensionDisposable);
+      }
+      else {
+        connection = app.getMessageBus().connect();
+      }
+
+      connection.subscribe(
         VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myEventDispatcher.getMulticaster(), this));
     }
   }
@@ -67,13 +64,13 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   protected void fireFileCreated(@Nullable Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), 0, 0);
     myEventDispatcher.getMulticaster().fileCreated(event);
   }
 
   protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, parent, 0, 0);
     myEventDispatcher.getMulticaster().fileDeleted(event);
   }
 
@@ -101,13 +98,13 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), 0, 0);
     myEventDispatcher.getMulticaster().beforeContentsChange(event);
   }
 
   protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
-    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
+    VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), 0, 0);
     myEventDispatcher.getMulticaster().beforeFileDeletion(event);
   }
 
@@ -141,21 +138,18 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     throw unsupported("renameFile", vFile);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw unsupported("createChildFile", vDir);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw unsupported("createChildDirectory", vDir);
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw unsupported("copyFile", vFile);
   }
 

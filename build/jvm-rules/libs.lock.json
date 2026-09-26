@@ -1,0 +1,194 @@
+{
+  "androidx.collection:collection-jvm:1.5.0": [
+    "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
+    "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3"
+  ],
+  "com.dynatrace.hash4j:hash4j:0.22.0": [
+    "23028a3fd006e530bf495f551083208187cafd8f80624d048eba56442f16a50e",
+    "eae47daa9a783fdb4e811e03d62f841ad2272ba08e2df972da4bca95cdac8847"
+  ],
+  "com.fasterxml.jackson.core:jackson-annotations:2.17.2": [
+    "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
+    "c647697c578c4126e0ccae72924b641a824dddfce6db9935e4a4daefd59d06f2"
+  ],
+  "com.fasterxml.jackson.core:jackson-core:2.17.0": [
+    "55be130f6a68038088a261856c4e383ce79957a0fc1a29ecb213a9efd6ef4389",
+    "97f4f4a85bf4da59174dde187130bddb927ac31320b385ed8ef1439c00df00f2"
+  ],
+  "com.fasterxml.jackson.core:jackson-databind:2.17.2": [
+    "c04993f33c0f845342653784f14f38373d005280e6359db5f808701cfae73c0c",
+    "09fb0d67d3c9fc3c03adef0ca87df3dee7e7a7db8ffd331dcdf09f62b6b66342"
+  ],
+  "com.github.ben-manes.caffeine:caffeine:3.2.0": [
+    "ec411dfdf0c03f25218648ce89861630b71680e5858a9a7278ebac8e55cab3d7",
+    "67e14ef5c04c193a7fcafa788b55b89a079fd584b202469721ce6d2d6c753090"
+  ],
+  "com.google.flatbuffers:flatbuffers-java:25.2.10": [
+    "587bd6c31cda747587493a113bec8602d3a0b0ca579b2b1b838ef71b19e6525d",
+    "202bfdb62bff2f27bf3932a909fa5e45b3070aad3db3bb5a11900ee471a5546b"
+  ],
+  "com.google.protobuf:protobuf-java:4.30.2": [
+    "0f3a4e9264db07cec429f2a68a66030e9b7487277b76863cdd0e9238cece249b",
+    "250fca364649ed76febb83baedf565e3f8e3060356d62ff35b09d8b190597e4c"
+  ],
+  "com.h2database:h2-mvstore:2.3.232": [
+    "2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04",
+    "48642b96b9fcb08f22326e10edad49fde210ae5884febeb06a0b107bba3f9478"
+  ],
+  "com.intellij.platform:kotlinx-coroutines-core-jvm:1.10.1-intellij-4": [
+    "e4861dd9812c08a8f82b597dc04110d81ecd0dd952e3f3f12a053f388bdeaea2",
+    "3a4f4c13f6b7ea5175786fe07a4712def5fef4a8eb8505ace6f7f9ba364e1830"
+  ],
+  "com.thoughtworks.qdox:qdox:2.2.0": [
+    "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
+    "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8"
+  ],
+  "io.netty:netty-buffer:4.2.2.Final-20250508.062804-10": [
+    "35bc0d116ea829e028380a3b3722ad6d4bb852d62fcd30506ed3f39cc8be9396",
+    "fa21f27635dabbfe9b1019056683398ac363ba231a609ddedc72a46204ae0424"
+  ],
+  "io.netty:netty-common:4.2.2.Final-20250508.062804-10": [
+    "6223a40b144cbfd8e89d9f957d1d36a72abb4f71a25e52c037bfab18a2face45",
+    "b2e1649e4513fc00d042d3d4ef6c9dda7429cfca25968975889af1b606fb18c5"
+  ],
+  "io.opentelemetry.semconv:opentelemetry-semconv:1.32.0": [
+    "d55c19372d3af757136de763514c0a1a0d80cea0eb185afc4751081a28c42ba0",
+    "bf46ed1a8210c3d90f33e88b49fed158d69897cc48a3005d3bd418ea576ec8d4"
+  ],
+  "io.opentelemetry:opentelemetry-api:1.49.0": [
+    "a813c9a92b82a4ffa3a62e88216a9e9ef9a407fcd41614fe596b2895167ed638",
+    "45ce4df9b8157e57e07dbd68784d3877474bd2fc2291954ef32b5666845d5c7f"
+  ],
+  "io.opentelemetry:opentelemetry-context:1.49.0": [
+    "17de3c85b341240b3b216c43adbd244c9fbd39c9e5448306d56460f80599a76b",
+    "d51f02535781654be13ca245bc09d1ddddf54c19788be8b3f8d833701c292a8b"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-common:1.49.0": [
+    "06d08af00b9fec8e99b6a4fda2eb201facbe2fe38a89eb11cbbfbe4183b73141",
+    "fc6b8455e51702a007008b05eb3570a13aaefb5775704bf1c101044297b85444"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.49.0": [
+    "032a9e66f767fa1b978222c794de4c6d2c98313606e707d3eef01b80a95bc186",
+    "a09e34dd625268d3e3123b5a18e89e4444dbacc954d6556701f6dfef810a8bc0"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-otlp-common:1.49.0": [
+    "be16d6802be0eb2d08389fc9af1e801fc98f96061fe6bcda2562dcb7e2e0dd5b",
+    "6de2fa295ad8c362d40b6590888a7ee35d59fc8e82dd094b92e2d5cec45376c5"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-otlp:1.49.0": [
+    "b69c1664dbd75e7a4c5ab2e187766e7e4fcdb208c94dc569f1453c388d595812",
+    "6d32e29962e51677931393b668ba7972572a48dd802854d13900d8337f81a4ca"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-sender-jdk:1.49.0": [
+    "e1753890e33406de0d4d100f43ceba1666db0b0f82f440fa2b42a6d132614aa0",
+    "a2bdb8901e2b6f8b2a27e03f65e04bd194b3558cce940a3ee08c1016e8ac9ceb"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-common:1.49.0": [
+    "b06214ccf3cda749edcd426c1492483e201e1fcfadb9f9cba8ecb439ff5c5d0f",
+    "dec98f91b60152b5c17c46aa30f0d763ee78fc672e3f006ce731077c7ba563bb"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.49.0": [
+    "b3091033e5b4b4b49334709707858d993afb92fe5c32d4a0b27e02d2e956c5b7",
+    "7dd3b2e3ed4d2e91839c3f957b3a57d727284f2f1cfb6d51fbeb5e4e4db1aed0"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-logs:1.49.0": [
+    "edf7f2411d5180099efebc5a5e2f01378f647897671aa9819f2064e24b6f7e9f",
+    "0d6d296d7380257727935c9235a5619dc9c981700d6f18e840cc0b72ca12d906"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-metrics:1.49.0": [
+    "cf28ea29fcfd4577a4a3bda388ac08cbbb86e4b1b534822848ea5c5554bfd603",
+    "08868596a4e0cce486df12b09dcfd5dd13a7582f98bee75bdecbf7432df20f3e"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-trace:1.49.0": [
+    "483bf21dde1df1a2c9875ba7dff1e3c8c1a63789cd45ad58223ec64b5951318e",
+    "f370df177c08982ca20e0525adc94f995503e74d611c1240cd2cc616624277be"
+  ],
+  "io.opentelemetry:opentelemetry-sdk:1.49.0": [
+    "d6fdaf0f04724d5c9362db2f809fd21f36e95c9c039d22fe695692d606107bff",
+    "dd827c172d20f046d5bf6a9df772290b0eaafb59589b6b98fd742c6bc78c2d37"
+  ],
+  "org.apache.arrow:arrow-format:18.2.0": [
+    "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
+    "6b0e19b1d0270a5fd51182d815738e7b2aba4f00b6cf9a3a41d13aebb4e12d0a"
+  ],
+  "org.apache.arrow:arrow-memory-core:18.2.0": [
+    "f2867e5267d0ae4eb97ea5cac47bba90ca73522c53aa702a23258f9754ca8b8e",
+    "badccb602f0184e27e55f58f1c4c5cd8a4eb5f5a257ae4d21a444ce57091ce38"
+  ],
+  "org.apache.arrow:arrow-memory-netty-buffer-patch:18.2.0": [
+    "9c5f242b6484ebfadc7d17f19554bd725afa1658d9cf824e59f1678618d263c2",
+    "9feb87fdbcb00d99ede9bc648c88ffbd4fd5858a879f60f405c583786660f1fa"
+  ],
+  "org.apache.arrow:arrow-memory-netty:18.2.0": [
+    "ff6c4900356e594411269ebc511ce3a98d881d67adc61e9b620f8ba9184694b7",
+    "2788604690613113ddcdd15b9d1d86f6ea00c260d5f2368236209d4595969782"
+  ],
+  "org.apache.arrow:arrow-vector:18.2.0": [
+    "29fe15fac68e30fdd59364bcd8b5058490cc85269fd47fb460abaff1fb61243d",
+    "90709044e442c5998d68ce146e487ba89d1eb859c4ddf67defa2d8131390e10e"
+  ],
+  "org.assertj:assertj-core:3.27.3": [
+    "5b8a26205f6d5ea60ad9ce65ce4a40a2afe4c48abeec61bd0740a088c24e89f5",
+    "1851ae5e28dee185df2fe27ee5c663ebe9700b8a228c790d3863521d2f0a6607"
+  ],
+  "org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.15-jb1": [
+    "5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148",
+    "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211"
+  ],
+  "org.jetbrains.intellij.deps:asm-all:9.6.1": [
+    "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
+    "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b"
+  ],
+  "org.jetbrains.kotlin:kotlin-build-tools-api:2.2.0-RC": [
+    "ef8635d435cc160907b1af190ce56e8b16e8df39ebc266b12ffa06a0b22518e8",
+    "85285b6f552109951fd77bab98758a29177cddcc904e81a1ef743e8abcd7cc65"
+  ],
+  "org.jetbrains.kotlin:kotlin-build-tools-impl:2.2.0-RC": [
+    "d54f3dbb89667ef0a1f504bfa1f239dde8d0bf96d170f5005fe99f709df461b3",
+    "879c8e8612dbaa49b96175e301274f6ea2034b194c4001b8171d62416cf8a07b"
+  ],
+  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.2.0-RC": [
+    "2c8356701353889587ee513e5e2d08f8149beec0381d41e40cd18704f900badd",
+    "87554a12766e3af0520ed23cc2c6863add4739aa41d56bbab2d8dbb532c66d2d"
+  ],
+  "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0-RC": [
+    "9ba351a6efc5a6053c049962342dabbf77069f00f946eec99fc36e083575722b",
+    "c1616254db3b65cd8099ebe65df9884df5f1fa55d200e6a54c547460bac8243c"
+  ],
+  "org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0-RC": [
+    "20f43af25341c67cc402af4339bab0a7581a17eb1eeafcd360fffa80caa438cd",
+    "2ab97ab16e203e715633593c480bcf0ac1cc151e54cd2adaaa7dca1085835ede"
+  ],
+  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.2.0-RC": [
+    "3a8e5dc06a9ba623ad6ea4ad8df1e5bf577f1df9f4629cd70cb79e0986afca90",
+    "0cdc70f2dc6129c8aaab9b535885951a609242d380761e6196894a8e7d18a132"
+  ],
+  "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-RC": [
+    "43d196129527ff0e1e14ba711a2b9d3dac0e611934425c05b1b75929d733e8d9",
+    "967ad9599254e3a60d96d6c789547cc35c22d770d9c8fb1e3f15fac3b4c3b65d"
+  ],
+  "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.2.0-RC": [
+    "c6114ff285c36175b04a949b1440fd33a83c938dd41c6603e35f02313dd2cc68",
+    "7fb2756ce37b1d81f2d7805815789868af3eb37ff118e5a8bc43f7b49db6796a"
+  ],
+  "org.jetbrains.kotlin:kotlin-util-klib:2.2.0-RC": [
+    "e02a74c99249da4a248e8c33bc1c5723884557ceff7fef7c3ad542edc0c80b52",
+    "df56c1cc07a9dc739ed7cf2b1156189de84a0aad025fb418032746fd36e4132b"
+  ],
+  "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8": [
+    "72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77",
+    "80219b91c78709f696305970895d27481c78bda7cae0c180c7c8202240f47d34"
+  ],
+  "org.jetbrains:annotations:26.0.2": [
+    "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297",
+    "a3bea3ada0af186437f8f3a089e6b0f52ac5aa068c1cb829058fb8a5069f6b0f"
+  ],
+  "org.slf4j:log4j-over-slf4j:1.7.36": [
+    "0a7e032bf5bcdd5b2bf8bf2e5cf02c5646f2aa6fee66933b8150dbe84e651e8a",
+    "10ab6331a4802934a02b4d22e81d5006c67d5923c1c88d4f63077e4f02b6ed7c"
+  ],
+  "org.slf4j:slf4j-api:2.0.17": [
+    "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832",
+    "db0d08d8efa05ad19d174d747bd9d8e68dbb02b596812fe7b3a681656e346694"
+  ]
+}

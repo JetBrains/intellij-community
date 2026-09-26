@@ -24,21 +24,22 @@
  */
 package org.jetbrains.lang.manifest.header.impl;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.header.HeaderParser;
 import org.jetbrains.lang.manifest.header.HeaderParserProvider;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class StandardManifestHeaderParsers implements HeaderParserProvider {
+public final class StandardManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public StandardManifestHeaderParsers() {
-    myParsers = ContainerUtil.newHashMap();
+    myParsers = new HashMap<>();
     myParsers.put("Manifest-Version", StandardHeaderParser.INSTANCE);
     myParsers.put("Created-By", StandardHeaderParser.INSTANCE);
     myParsers.put("Signature-Version", StandardHeaderParser.INSTANCE);
@@ -66,13 +67,12 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("Can-Redefine-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Retransform-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Set-Native-Method-Prefix", StandardHeaderParser.INSTANCE);
-    myParsers.put("Automatic-Module-Name", StandardHeaderParser.INSTANCE);
+    myParsers.put(PsiJavaModule.AUTO_MODULE_NAME, StandardHeaderParser.INSTANCE);
     myParsers.put("Multi-Release", StandardHeaderParser.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public Map<String, HeaderParser> getHeaderParsers() {
+  public @NotNull Map<String, HeaderParser> getHeaderParsers() {
     return myParsers;
   }
 }

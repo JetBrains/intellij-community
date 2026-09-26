@@ -1,8 +1,8 @@
-// "Add Javadoc" "true"
+// "Add Javadoc" "true-preview"
 
 class A {
     /**
-     * @param s
+     * @param s <caret>
      * @return
      * @throws Exception
      */

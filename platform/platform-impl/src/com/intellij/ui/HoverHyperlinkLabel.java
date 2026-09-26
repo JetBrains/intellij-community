@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -33,15 +23,15 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public class HoverHyperlinkLabel extends JLabel {
-  private String myOriginalText;
+public final class HoverHyperlinkLabel extends JLabel {
+  private @NlsContexts.LinkLabel String myOriginalText;
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public HoverHyperlinkLabel(String text) {
+  public HoverHyperlinkLabel(@NlsContexts.LinkLabel String text) {
     this(text, PlatformColors.BLUE);
   }
 
-  public HoverHyperlinkLabel(String text, Color color) {
+  public HoverHyperlinkLabel(@NlsContexts.LinkLabel String text, Color color) {
     super(text);
     myOriginalText = text;
     setForeground(color);
@@ -50,14 +40,16 @@ public class HoverHyperlinkLabel extends JLabel {
 
   private void setupListener() {
     addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
         HoverHyperlinkLabel.super.setText(underlineTextInHtml(myOriginalText));
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
         HoverHyperlinkLabel.super.setText(myOriginalText);
-        setCursor(Cursor.getDefaultCursor());
+        setCursor(null);
       }
     });
 
@@ -73,7 +65,8 @@ public class HoverHyperlinkLabel extends JLabel {
     }.installOn(this);
   }
 
-  public void setText(String text) {
+  @Override
+  public void setText(@NlsContexts.LinkLabel String text) {
     if (BasicHTML.isHTMLString(getText())) { // if is currently showing string as html
       super.setText(underlineTextInHtml(text));
     }
@@ -83,8 +76,9 @@ public class HoverHyperlinkLabel extends JLabel {
     myOriginalText = text;
   }
 
-  @NonNls private static String underlineTextInHtml(final String text) {
-    return "<html><u>" + StringUtil.escapeXml(text) + "</u></html>";
+  @Contract(pure = true)
+  private static @Nls String underlineTextInHtml(@NlsContexts.LinkLabel String text) {
+    return HtmlChunk.text(StringUtil.escapeXmlEntities(text)).wrapWith("u").wrapWith(HtmlChunk.html()).toString();
   }
 
   public String getOriginalText() {

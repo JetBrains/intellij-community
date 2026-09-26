@@ -1,0 +1,40 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
+
+import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
+import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
+
+@PyDefaultTestApplication
+@TestClassInfo(contentRootPath = "python-pyproject/test")
+@TestDataPath($$"$CONTENT_ROOT/../testData/monorepo/monorepo_source_root_check")
+internal class MonorepoSourceRootCheckTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  private val f by pyProjectTomlSyncFixture(projectFixture)
+
+  /**
+   * PY-88898: `poetryone` uses the standard `src`, while `poetrytwo` and `poetrythree` name their own directory
+   * in `[tool.poetry] packages`. `uvone` has a flat layout and therefore no source root.
+   */
+  @Test
+  fun sanity(): Unit = timeoutRunBlocking {
+    f.reloadProject()
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("poetryone", contentRoot = "poetryone", sourceRoots = listOf("poetryone" / "src")),
+      ExpectedModule("poetrytwo", contentRoot = "poetrytwo", sourceRoots = listOf("poetrytwo" / "srctwo")),
+      ExpectedModule("poetrythree", contentRoot = "poetrythree", sourceRoots = listOf("poetrythree" / "srcthree")),
+      ExpectedModule("uvone", contentRoot = "uvone"),
+    )
+  }
+}

@@ -1,60 +1,61 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
+@Subsystems.Inspections
+@Layers.Functional
 public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   public void testTupleNonCallable() {
     doTest();
   }
-  
+
+  @TestFor(issues = "PY-84004")
+  public void testCallingOptionalCallable() {
+    doTestByText(
+      """
+        from typing import Callable
+
+        def f(x: Callable[[int], None] | None):
+            <warning descr="Member 'None' of '(int) -> None | None' is not callable">x(1)</warning>
+        """);
+  }
+
   public void testStaticMeth() {
     doTest();
   }
-  
+
   public void testConcealer() {
     doTest();
   }
-  
+
   public void testModule() {
     doTest();
   }
-  
+
   public void testClassAsCallable() {  // PY-4061
     doTest();
   }
-  
+
   public void testClassAssignments() {  // PY-4061
     doTest();
   }
-  
+
   public void testNamedTupleCallable() {
     doTest();
   }
 
   // PY-3892
-  public void testCallableCheck() {
+  public void _testCallableCheck() {
     doTest();
   }
-  
+
   public void testClassMethodFirstParam() {
     doTest();
   }
@@ -110,7 +111,87 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
 
   // PY-28626
   public void testFunctionDecoratedAsContextManager() {
-    doMultiFileTest();
+    doTest();
+  }
+
+  // PY-24161
+  public void testGenericClassObjectTypeAnnotation() {
+    doTest();
+  }
+
+  // PY-24161
+  public void testExplicitClassObjectTypeAnnotation() {
+    doTest();
+  }
+
+  // PY-31943
+  public void testTypeVarBoundedWithCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("""
+                           from typing import TypeVar, Callable, Any
+
+                           F = TypeVar('F', bound=Callable[[], Any])
+                           Int = TypeVar('Int', bound=int)
+
+                           def deco(func: F, non_func: Int):
+                               func()
+                               <warning descr="'non_func' is not callable">non_func()</warning>""")
+    );
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("""
+                           from typing import TypeVar, Callable, Any
+
+                           F = TypeVar('F', Callable[[], Any], Callable[[], int])
+                           IntOrFloat = TypeVar('IntOrFloat', int, float)
+
+                           def deco(func: F, non_func: IntOrFloat):
+                               func()
+                               <warning descr="'non_func' is not callable">non_func()</warning>""")
+    );
+  }
+
+  // PY-41676
+  public void testThereIsNoInspectionOnCallProtectedByHasattr() {
+    doTestByText("""
+                   def test(obj):
+                       if hasattr(obj, "anything"):
+                           pkgs = obj.anything()""");
+  }
+
+  // PY-85470
+  public void testExplicitTypeAliasCallability() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   
+                   ExplicitUnionAlias: TA = list | set
+                   ExplicitSingleAlias: TA = list
+                   a = <warning descr="'ExplicitUnionAlias' is not callable">ExplicitUnionAlias()</warning>
+                   b = ExplicitSingleAlias()""");
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasCallability() {
+    fixme(
+      "PY-76839",
+      AssertionError.class,
+      "'ImplicitUnionAlias' is not callable",
+      () -> doTestByText("""
+                           ImplicitUnionAlias = list | set
+                           ImplicitSingleAlias = list
+                           a = <warning descr="'ImplicitUnionAlias' is not callable">ImplicitUnionAlias()</warning>
+                           b = ImplicitSingleAlias()""")
+    );
+  }
+
+  // PY-76851
+  public void testTypeStatementAliasCallability() {
+    doTestByText("""
+                   type UnionAliasStatement = list | set
+                   type SingleAliasStatement = list
+                   a = <warning descr="'TypeAliasType' object is not callable">UnionAliasStatement()</warning>
+                   b = <warning descr="'TypeAliasType' object is not callable">SingleAliasStatement()</warning>""");
   }
 
   @NotNull

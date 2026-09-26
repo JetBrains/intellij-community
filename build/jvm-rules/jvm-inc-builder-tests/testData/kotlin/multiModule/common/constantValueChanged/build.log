@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_constantValueChanged-module1.kotlin_module
+  test/ConstKt.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/constantValueChanged/module1/const.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_multiModule_common_constantValueChanged-module2.kotlin_module
+  usage/Usage.class
+End of files
+Compiling files:
+  kotlin/multiModule/common/constantValueChanged/module2/usage.kt
+End of files
+------------------------------------------
+Exit code: OK

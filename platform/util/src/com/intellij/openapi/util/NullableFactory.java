@@ -16,12 +16,15 @@
 
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author peter
+ * Obsolete, use {@link java.util.function.Supplier} with {@code @Nullable} annotation on the type parameter instead.
  */
-public interface NullableFactory<T> extends Factory<T>{
+@ApiStatus.Obsolete
+@FunctionalInterface
+public interface NullableFactory<T> extends Factory<@Nullable T> {
   @Override
   @Nullable
   T create();

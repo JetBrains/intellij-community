@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,6 +38,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testClsCapturedReturnTypes() { doTest(); }
   public void testOverloadChooserOfReturnType() { doTest(); }
   public void testIDEA98866() { doTest(); }
+  public void testDiamondWithConditionalInside() { doTest(); }
   public void testIncompleteSubstitution() { doTest(); }
   public void testJDK8028774() { doTest(); }
   public void testErasedByReturnConstraint() { doTest(); }
@@ -60,6 +48,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testGrandParentTypeParams() { doTest(); }
   public void testDeepCallsChain() { doTest(); }
   public void testArrayPassedToVarargsMethod() { doTest(); }
+  public void testWrongNumberOfParametersWithLambdaOnUnexpectedPlace() { doTest(); }
   public void testIDEA121055() { doTest(); }
   public void testTargetTypeByAnonymousClass() { doTest(); }
   public void testStaticInheritorsAmbiguity() { doTest(); }
@@ -166,6 +155,9 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     }
   }
 
+  public void testNameConflictBetweenFreshVariables() { doTest(); }
+  public void testOrderOfGenericsParameterizations() { doTest(); }
+  public void testLowerBoundAssignability() { doTest(); }
   public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() { doTest(); }
   public void testCapturedConversionDuringDirectSuperCheck() { doTest(); }
   //public void _testResolutionOrderForVariableCycles() { doTest(); }
@@ -192,14 +184,21 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testSameNamedFreshVariables() { doTest(); }
   public void testEnsureOrderOfFreshVariablesWhenCaptureNonProperTypes() { doTest(); }
   public void testFreshVariablesBounds() { doTest(); }
+  public void testRawInIntersection() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();
   }
   public void testNotInferredVarShouldNotBeUsedForInferenceJava10() { doTest(); }
-  public void testTopLevelParentNoParameters() {
-    doTest();
-  }
+  public void testJavac8UnCaptureBug() { doTest(); }
+  public void testLambdaInConditional() { doTest(); }
+  public void testTopLevelParentNoParameters() { doTest(); }
+  public void testRawTypeOnTheRight() { doTest(); }
+  public void testMutualBoundPromotion() { doTest(); }
+  public void testIntersectionWithCapturedSuperWildcard() { doTest(); }
+  @TestFor(issues = "IDEA-153641")
+  public void testCapturedWildcardAsStandaloneArgument() { doTest(); }
+  public void testComparatorInsideDiamondInsideLambda() { doTest(); }
 
   private void doTest() {
     doTest(false);

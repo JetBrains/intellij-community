@@ -1,38 +1,49 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * @author Dmitry Avdeev
- * @since 31.10.2011
+ *
+ * @see VfsUtilCore#visitChildrenRecursively
+ * @see VfsUtilCore#iterateChildrenRecursively
+ * @see VfsUtilCore#processFilesRecursively
  */
 public abstract class VirtualFileVisitor<T> {
+  private boolean myFollowSymLinks = true;
+  private boolean mySkipRoot;
+  private int myDepthLimit = -1;
+  private boolean childrenMayBeUnsorted = false;
+
+  private int myLevel;
+  private Stack<T> myValueStack;
+  private T myValue;
+
+  protected VirtualFileVisitor(Option @NotNull ... options) {
+    for (Option option : options) {
+      if (option == NO_FOLLOW_SYMLINKS) {
+        myFollowSymLinks = false;
+      }
+      else if (option == SKIP_ROOT) {
+        mySkipRoot = true;
+      }
+      else if (option instanceof Option.LimitOption) {
+        myDepthLimit = ((Option.LimitOption)option).limit;
+      }
+      else if (option == CHILDREN_MAY_BE_UNSORTED) {
+        childrenMayBeUnsorted = true;
+      }
+    }
+  }
+
   public static class Option {
     private Option() { }
 
-    private static class LimitOption extends Option {
+    private static final class LimitOption extends Option {
       private final int limit;
 
       private LimitOption(int limit) {
@@ -44,13 +55,14 @@ public abstract class VirtualFileVisitor<T> {
   public static final Option NO_FOLLOW_SYMLINKS = new Option();
   public static final Option SKIP_ROOT = new Option();
   public static final Option ONE_LEVEL_DEEP = limit(1);
+  @ApiStatus.Internal
+  public static final Option CHILDREN_MAY_BE_UNSORTED = new Option();
 
-  public static Option limit(int maxDepth) {
+  public static @NotNull Option limit(int maxDepth) {
     return new Option.LimitOption(maxDepth);
   }
 
-
-  public static class Result {
+  public static final class Result {
     public final boolean skipChildren;
     public final VirtualFile skipToParent;
 
@@ -59,7 +71,6 @@ public abstract class VirtualFileVisitor<T> {
       this.skipToParent = skipToParent;
     }
 
-    @NonNls
     @Override
     public String toString() {
       return "(" + (skipChildren ? "skip," + skipToParent : "continue") + ")";
@@ -73,40 +84,11 @@ public abstract class VirtualFileVisitor<T> {
     return new Result(true, parentToSkipTo);
   }
 
-
-  protected static class VisitorException extends RuntimeException {
-    public VisitorException(Throwable cause) {
+  public static class VisitorException extends RuntimeException {
+    public VisitorException(@NotNull Throwable cause) {
       super(cause);
     }
   }
-
-
-  private boolean myFollowSymLinks = true;
-  private boolean mySkipRoot;
-  private int myDepthLimit = -1;
-
-  private Map<VirtualFile, List<VirtualFile>> myVisitedTargets;
-  private int myLevel;
-  private Stack<T> myValueStack;
-  private T myValue;
-
-  protected VirtualFileVisitor(@NotNull Option... options) {
-    for (Option option : options) {
-      if (option == NO_FOLLOW_SYMLINKS) {
-        myFollowSymLinks = false;
-      }
-      else if (option == SKIP_ROOT) {
-        mySkipRoot = true;
-      }
-      else if (option instanceof Option.LimitOption) {
-        myDepthLimit = ((Option.LimitOption)option).limit;
-      }
-    }
-    if (myFollowSymLinks) {
-      myVisitedTargets = ContainerUtil.newHashMap();
-    }
-  }
-
 
   /**
    * Simple visiting method.
@@ -127,13 +109,12 @@ public abstract class VirtualFileVisitor<T> {
    *         {@linkplain #SKIP_CHILDREN} to skip to file's next sibling,<br/>
    *         result of {@linkplain #skipTo(VirtualFile)} to skip to given file's next sibling.
    */
-  @NotNull
-  public Result visitFileEx(@NotNull VirtualFile file) {
+  public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
     return visitFile(file) ? CONTINUE : SKIP_CHILDREN;
   }
 
   /**
-   * This method is only called if visiting wasn't interrupted (by returning skip-requesting result
+   * This method is only called if visiting wasn't interrupted (by returning a skip-requesting result
    * from {@linkplain #visitFile(VirtualFile)} or {@linkplain #visitFileEx(VirtualFile)} methods).
    *
    * @param file a file whose children were successfully visited.
@@ -141,23 +122,22 @@ public abstract class VirtualFileVisitor<T> {
   public void afterChildrenVisited(@NotNull VirtualFile file) { }
 
   /**
-   * By default, visitor uses ({@linkplain VirtualFile#getChildren()}) to iterate over file's children.
+   * By default, a visitor uses ({@linkplain VirtualFile#getChildren()}) to iterate over file's children.
    * You can override this method to implement another mechanism.
    *
    * @param file a virtual file to get children from.
    * @return children iterable, or null to use {@linkplain VirtualFile#getChildren()}.
    */
-  @Nullable
-  public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+  public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
     return null;
   }
 
   /**
    * Stores the {@code value} to this visitor. The stored value can be retrieved later by calling the {@link #getCurrentValue()}.
    * The visitor maintains the stack of stored values. I.e:
-   * This value is held here only during the visiting the current file and all its children. As soon as the visitor finished with
+   * This value is held here only during visiting the current file and all its children. As soon as the visitor finished with
    * the current file and all its subtree and returns to the level up, the value is cleared
-   * and the {@link #getCurrentValue()} returns the previous value which was stored here before the {@link #setValueForChildren} call.
+   * and the {@link #getCurrentValue()} returns the previous value, which was stored here before this method call.
    */
   public final void setValueForChildren(@Nullable T value) {
     myValue = value;
@@ -170,7 +150,6 @@ public abstract class VirtualFileVisitor<T> {
     return myValue;
   }
 
-
   final boolean allowVisitFile(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {
     return myLevel > 0 || !mySkipRoot;
   }
@@ -180,30 +159,20 @@ public abstract class VirtualFileVisitor<T> {
       return true;
     }
 
-    if (!myFollowSymLinks || VfsUtilCore.isInvalidLink(file)) {
+    if (!myFollowSymLinks) {
       return false;
     }
 
-    VirtualFile target = file.getCanonicalFile();
-    List<VirtualFile> links = myVisitedTargets.get(target);
-    if (links == null) {
-      myVisitedTargets.put(target, ContainerUtil.newSmartList(file));
-      return true;
-    }
-
-    boolean hasLoop = false;
-    for (VirtualFile link : links) {
-      if (VfsUtilCore.isAncestor(link, file, true)) {
-        hasLoop = true;
-        break;
-      }
-    }
-    links.add(file);
-    return !hasLoop;
+    // ignoring invalid and recursive symbolic links - to avoid visiting files twice
+    return !file.isRecursiveOrCircularSymlink();
   }
 
   final boolean depthLimitReached() {
     return myDepthLimit >= 0 && myLevel >= myDepthLimit;
+  }
+
+  final boolean childrenMayBeUnsorted(){
+    return childrenMayBeUnsorted;
   }
 
   final void saveValue() {

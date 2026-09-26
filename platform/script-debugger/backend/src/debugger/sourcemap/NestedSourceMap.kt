@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NestedSourceMap(private val childMap: SourceMap, private val parentMap: SourceMap) : SourceMap {
   override val sourceResolver: SourceResolver
     get() = parentMap.sourceResolver
@@ -28,7 +16,7 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
 
   private val sourceIndexToSourceMappings = arrayOfNulls<Mappings>(parentMap.sources.size)
 
-  private val childMappingToTransformed = THashMap<MappingEntry, MappingEntry>()
+  private val childMappingToTransformed = CollectionFactory.createSmallMemoryFootprintMap<MappingEntry, MappingEntry>()
 
   override val outFile: String?
     get() = childMap.outFile
@@ -49,30 +37,34 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
     return result
   }
 
+  override fun isInIgnoreList(sourceIndex: Int): Boolean = parentMap.isInIgnoreList(sourceIndex)
+
   override fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceFile, localFileUrlOnly)
 
-  override fun findSourceIndex(sourceUrls: List<Url>,
+  override fun findSourceIndex(sourceUrl: Url,
                                sourceFile: VirtualFile?,
                                resolver: Lazy<SourceFileResolver?>?,
-                               localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceUrls, sourceFile, resolver, localFileUrlOnly)
+                               localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceUrl, sourceFile, resolver, localFileUrlOnly)
 
-  override fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean {
+  override fun getSourceMappingsInLine(sourceIndex: Int, sourceLine: Int): Iterable<MappingEntry> {
     val childSourceMappings = childMap.findSourceMappings(sourceIndex)
-    return (parentMap.findSourceMappings(sourceIndex) as MappingList).processMappingsInLine(sourceLine, object: MappingsProcessorInLine {
-      override fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean {
-        val childIndex = childSourceMappings.indexOf(entry.generatedLine, entry.generatedColumn)
-        if (childIndex == -1) {
-          return true
-        }
-
-        val childEntry = childSourceMappings.getByIndex(childIndex)
-        // todo not clear - should we resolve next child entry by current child index or by provided parent nextEntry?
-        val nextChildEntry = if (nextEntry == null) null else childSourceMappings.getNextOnTheSameLine(childIndex)
-        return mappingProcessor.process(childMappingToTransformed.getOrPut(childEntry) { NestedMappingEntry(childEntry, entry) },
-                                        nextChildEntry?.let { childMappingToTransformed.getOrPut(it) { NestedMappingEntry(it, entry) } })
+    return (parentMap.findSourceMappings(sourceIndex) as MappingList).getMappingsInLine(sourceLine).flatMap { entry ->
+      val childIndex = childSourceMappings.indexOf(entry.generatedLine, entry.generatedColumn)
+      if (childIndex == -1) {
+        return emptyList()
       }
-    })
+
+      val childEntry = childSourceMappings.getByIndex(childIndex)
+      return listOf(childMappingToTransformed.getOrPut(childEntry) { NestedMappingEntry(childEntry, entry) })
+      // todo not clear - should we resolve next child entry by current child index or by provided parent nextEntry?
+    }
   }
+
+  override fun getRawSource(entry: MappingEntry): String? = parentMap.getRawSource(entry)
+
+  override fun getSourceContent(entry: MappingEntry): String? = parentMap.getSourceContent(entry)
+
+  override fun getSourceContent(sourceIndex: Int): String? = parentMap.getSourceContent(sourceIndex)
 }
 
 private class NestedMappings(private val child: Mappings, private val parent: Mappings, private val isSourceMappings: Boolean) : Mappings {
@@ -114,6 +106,6 @@ private data class NestedMappingEntry(private val child: MappingEntry, private v
   override val name: String?
     get() = parent.name
 
-  override val nextGenerated: MappingEntry
+  override val nextGenerated: MappingEntry?
     get() = child.nextGenerated
 }

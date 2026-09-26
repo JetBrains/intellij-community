@@ -48,7 +48,7 @@ public class TestId {
     return Objects.hash(myClassId, myMethodId, myFrameworkId);
   }
 
-  static final KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
+  static final KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<>() {
     @Override
     public int getHashCode(TestId id) {
       return id.hashCode();

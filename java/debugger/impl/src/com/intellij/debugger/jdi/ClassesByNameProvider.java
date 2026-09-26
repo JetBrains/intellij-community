@@ -1,16 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.util.containers.MultiMap;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author egor
- */
 public interface ClassesByNameProvider {
   List<ReferenceType> get(@NotNull String s);
 
@@ -23,15 +21,18 @@ public interface ClassesByNameProvider {
 
     public Cache(List<ReferenceType> classes) {
       myCache = new MultiMap<>();
-      classes.forEach(t -> myCache.putValue(t.signature(), t));
+      for (ReferenceType t : classes) {
+        try {
+          myCache.putValue(t.signature(), t);
+        }
+        catch (ObjectCollectedException ignored) { // skip already collected
+        }
+      }
     }
 
+    @Override
     public List<ReferenceType> get(@NotNull String s) {
-      String signature = VirtualMachineProxyImpl.JNITypeParserReflect.typeNameToSignature(s);
-      if (signature != null) {
-        return (List<ReferenceType>)myCache.get(signature);
-      }
-      return Collections.emptyList();
+      return (List<ReferenceType>)myCache.get(DebuggerUtilsEx.typeNameToSignature(s));
     }
   }
 }

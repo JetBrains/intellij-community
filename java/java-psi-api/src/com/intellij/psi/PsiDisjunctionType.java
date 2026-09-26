@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -25,7 +11,13 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Composite type resulting from Project Coin's multi-catch statements, i.e. {@code FileNotFoundException | EOFException}.
@@ -51,46 +43,39 @@ public class PsiDisjunctionType extends PsiType.Stub {
           break;
         }
       }
-      return CachedValueProvider.Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(lub, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 
-  @NotNull
-  public static PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
+  public static @NotNull PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
     assert !types.isEmpty();
     return types.size() == 1 ? types.get(0) : new PsiDisjunctionType(types, psiManager);
   }
 
-  @NotNull
-  public PsiType getLeastUpperBound() {
+  public @NotNull PsiType getLeastUpperBound() {
     return myLubCache.getValue();
   }
 
-  @NotNull
-  public List<PsiType> getDisjunctions() {
+  public @NotNull List<PsiType> getDisjunctions() {
     return myTypes;
   }
 
-  @NotNull
-  public PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
+  public @NotNull PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
     return new PsiDisjunctionType(types, myManager);
   }
 
-  @NotNull
   @Override
-  public String getPresentableText(final boolean annotated) {
+  public @NotNull String getPresentableText(final boolean annotated) {
     return StringUtil.join(myTypes, psiType -> psiType.getPresentableText(annotated), " | ");
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(final boolean annotated) {
+  public @NotNull String getCanonicalText(final boolean annotated) {
     return StringUtil.join(myTypes, psiType -> psiType.getCanonicalText(annotated), " | ");
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return StringUtil.join(myTypes, psiType -> psiType.getInternalCanonicalText(), " | ");
   }
 
@@ -103,12 +88,17 @@ public class PsiDisjunctionType extends PsiType.Stub {
   }
 
   @Override
-  public boolean equalsToText(@NotNull @NonNls final String text) {
-    return Comparing.equal(text, getCanonicalText());
+  public @NotNull TypeNullability getNullability() {
+    return TypeNullability.NOT_NULL_MANDATED;
   }
 
   @Override
-  public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
+  public boolean equalsToText(final @NotNull @NonNls String text) {
+    return Objects.equals(text, getCanonicalText());
+  }
+
+  @Override
+  public <A> A accept(final @NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitDisjunctionType(this);
   }
 
@@ -117,9 +107,8 @@ public class PsiDisjunctionType extends PsiType.Stub {
     return getLeastUpperBound().getResolveScope();
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     final PsiType lub = getLeastUpperBound();
     if (lub instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)lub).getConjuncts();
@@ -149,7 +138,7 @@ public class PsiDisjunctionType extends PsiType.Stub {
     return true;
   }
 
-  public static List<PsiType> flattenAndRemoveDuplicates(@NotNull List<PsiType> types) {
+  public static List<PsiType> flattenAndRemoveDuplicates(@NotNull List<? extends PsiType> types) {
     Set<PsiType> disjunctionSet = new LinkedHashSet<>();
     for (PsiType type : types) {
       flatten(disjunctionSet, type);
@@ -167,7 +156,7 @@ public class PsiDisjunctionType extends PsiType.Stub {
     return disjunctions;
   }
 
-  private static void flatten(Set<PsiType> disjunctions, PsiType type) {
+  private static void flatten(Set<? super PsiType> disjunctions, PsiType type) {
     if (type instanceof PsiDisjunctionType) {
       for (PsiType child : ((PsiDisjunctionType)type).getDisjunctions()) {
         flatten(disjunctions, child);

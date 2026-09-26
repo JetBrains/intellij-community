@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,23 +19,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
-public class SelectionManagerTest extends PlatformTestCase {
+public class SelectionManagerTest extends HeavyPlatformTestCase {
   private FileStructure myFs;
   private SelectionManager myCm;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
-      @Override
-      public Void compute() throws IOException {
-        myFs = new FileStructure(getProject());
-        return null;
-      }
-    });
+    myFs = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<FileStructure, IOException>)() -> new FileStructure(getProject()));
     myCm = new SelectionManager(2, 10, MyConvertor.getInstance());
   }
 
@@ -152,7 +129,7 @@ public class SelectionManagerTest extends PlatformTestCase {
   }
 
   public void testTwoTrees() {
-    final Map<VirtualFile, DefaultMutableTreeNode> middle1map = myFs.createNodeMap(myFs.myMiddle1);
+    final Map<VirtualFile, DefaultMutableTreeNode> middle1map = FileStructure.createNodeMap(myFs.myMiddle1);
     assertClear();
     myCm.toggleSelection(middle1map.get(myFs.myInner11));
     afterInner11(); // though selected in smaller subtree
@@ -167,8 +144,8 @@ public class SelectionManagerTest extends PlatformTestCase {
 
 
   private void assertNodeState(@NotNull final VirtualFile vf, final TreeNodeState state, final boolean recursively) {
-    Assert.assertNotNull(myFs.getNode(vf));
-    Assert.assertEquals(state, myCm.getState(myFs.getNode(vf)));
+    assertNotNull(myFs.getNode(vf));
+    assertEquals(state, myCm.getState(myFs.getNode(vf)));
     // not deep, ok recursion
     if (recursively) {
       for (VirtualFile child : vf.getChildren()) {
@@ -177,23 +154,20 @@ public class SelectionManagerTest extends PlatformTestCase {
     }
   }
 
-  private static class FileStructure {
+  private static final class FileStructure {
     private final VirtualFile myParent;
     private final VirtualFile myMiddle1;
     private final VirtualFile myMiddle2;
     private final VirtualFile myInner11;
     private final VirtualFile myInner12;
     private final VirtualFile myInner21;
-    private final VirtualFile myInner22;
     private final VirtualFile myLeaf1;
     private final VirtualFile myLeaf2;
 
     private final Map<VirtualFile, DefaultMutableTreeNode> myMap;
-    private final Project myProject;
 
-    private FileStructure(final Project project) throws IOException {
-      myProject = project;
-      final VirtualFile baseDir = project.getBaseDir();
+    private FileStructure(Project project) throws IOException {
+      final VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(project);
 
       myParent = baseDir.createChildDirectory(this, "parent");
       myMiddle1 = myParent.createChildDirectory(this, "middle1");
@@ -202,7 +176,6 @@ public class SelectionManagerTest extends PlatformTestCase {
       myInner11 = myMiddle1.createChildDirectory(this, "inner11");
       myInner12 = myMiddle1.createChildDirectory(this, "inner12");
       myInner21 = myMiddle2.createChildDirectory(this, "inner21");
-      myInner22 = myMiddle2.createChildDirectory(this, "inner22");
 
       myLeaf1 = myInner11.createChildDirectory(this, "leaf1");
       myLeaf2 = myInner11.createChildDirectory(this, "leaf2");
@@ -214,7 +187,7 @@ public class SelectionManagerTest extends PlatformTestCase {
       return myMap.get(vf);
     }
 
-    Map<VirtualFile, DefaultMutableTreeNode> createNodeMap(final VirtualFile parentFile) {
+    static Map<VirtualFile, DefaultMutableTreeNode> createNodeMap(final VirtualFile parentFile) {
       Map<VirtualFile, DefaultMutableTreeNode> result = new HashMap<>();
       final LinkedList<VirtualFile> queue = new LinkedList<>();
       queue.add(parentFile);
@@ -233,7 +206,7 @@ public class SelectionManagerTest extends PlatformTestCase {
       return result;
     }
 
-    private void parentChild(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
+    private static void parentChild(final DefaultMutableTreeNode parent, final DefaultMutableTreeNode child) {
       parent.add(child);
       child.setParent(parent);
     }

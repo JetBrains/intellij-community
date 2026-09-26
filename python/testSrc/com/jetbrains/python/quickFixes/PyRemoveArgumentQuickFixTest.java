@@ -16,31 +16,42 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyArgumentListInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveArgumentQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveArgumentQuickFixTest extends PyQuickFixTestCase {
 
   public void testDuplicate() {
-    doQuickFixTest(PyArgumentListInspection.class, PyBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class, PyPsiBundle.message("QFIX.NAME.remove.argument"));
   }
 
   public void testDuplicateArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testDuplicateKWArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testPostKwArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testUnexpected() {
-    doQuickFixTest(PyArgumentListInspection.class, PyBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class, PyPsiBundle.message("QFIX.NAME.remove.argument"));
   }
 
 }

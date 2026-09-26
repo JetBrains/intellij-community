@@ -1,0 +1,11 @@
+// "Specify remaining required arguments by name" "true"
+// WITH_STDLIB
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_ERROR: NO_VALUE_FOR_PARAMETER
+fun foo(a: Int = 5, b: Int, c: Int = 5, d: Int) {}
+
+fun test() {
+    foo(<caret>)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyRemainingRequiredArgumentsByNameFix

@@ -1,48 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-enum CompilerHierarchySearchType {
+public enum CompilerHierarchySearchType {
   DIRECT_INHERITOR {
     @Override
     PsiElement[] performSearchInFile(SearchId[] definitions,
                                      PsiNamedElement baseElement,
                                      PsiFileWithStubSupport file,
-                                     LanguageLightRefAdapter adapter) {
+                                     LanguageCompilerRefAdapter adapter) {
       return adapter.findDirectInheritorCandidatesInFile(definitions, file);
     }
 
     @Override
-    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter) {
+    Class<? extends CompilerRef> getRequiredClass(LanguageCompilerRefAdapter adapter) {
       return adapter.getHierarchyObjectClass();
     }
 
     @Override
-    SearchId[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator) {
-      return lightRef.stream().map(r -> r instanceof LightRef.JavaLightAnonymousClassRef
-             ? new SearchId(((LightRef.JavaLightAnonymousClassRef)r).getName())
-             : new SearchId(nameEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName()))).toArray(SearchId[]::new);
+    @NotNull SearchId convertToId(@NotNull CompilerRef compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException {
+      return compilerRef instanceof CompilerRef.JavaCompilerAnonymousClassRef
+                    ? new SearchId(((CompilerRef.JavaCompilerAnonymousClassRef)compilerRef).getName())
+                    : new SearchId(nameEnumerator.valueOf(((CompilerRef.CompilerClassHierarchyElementDef)compilerRef).getName()));
     }
   },
   FUNCTIONAL_EXPRESSION {
@@ -50,28 +40,36 @@ enum CompilerHierarchySearchType {
     PsiElement[] performSearchInFile(SearchId[] definitions,
                                      PsiNamedElement baseElement,
                                      PsiFileWithStubSupport file,
-                                     LanguageLightRefAdapter adapter) {
+                                     LanguageCompilerRefAdapter adapter) {
       return adapter.findFunExpressionsInFile(definitions, file);
     }
 
     @Override
-    Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter  adapter) {
+    Class<? extends CompilerRef> getRequiredClass(LanguageCompilerRefAdapter adapter) {
       return adapter.getFunExprClass();
     }
 
     @Override
-    SearchId[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator) {
-      return lightRef.stream().map(r -> ((LightRef.LightFunExprDef) r).getId()).map(SearchId::new).toArray(SearchId[]::new);
+    @NotNull SearchId convertToId(@NotNull CompilerRef compilerRef, PersistentStringEnumerator nameEnumerator) {
+      return new SearchId(((CompilerRef.CompilerFunExprDef) compilerRef).getId());
     }
   };
 
   abstract PsiElement[] performSearchInFile(SearchId[] definitions,
                                             PsiNamedElement baseElement,
                                             PsiFileWithStubSupport file,
-                                            LanguageLightRefAdapter adapter);
+                                            LanguageCompilerRefAdapter adapter);
 
-  abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter);
+  abstract Class<? extends CompilerRef> getRequiredClass(LanguageCompilerRefAdapter adapter);
 
-  abstract SearchId[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator);
+  abstract @NotNull SearchId convertToId(@NotNull CompilerRef compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException;
 
+  @NotNull SearchId @NotNull[] convertToIds(Collection<? extends CompilerRef> compilerRef, PersistentStringEnumerator nameEnumerator) throws IOException {
+    List<SearchId> list = new ArrayList<>(compilerRef.size());
+    for (CompilerRef r : compilerRef) {
+      list.add(convertToId(r, nameEnumerator));
+    }
+
+    return list.toArray(new SearchId[0]);
+  }
 }

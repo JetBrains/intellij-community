@@ -1,0 +1,12 @@
+// WITH_STDLIB
+
+
+class MoveToTopLevelB {
+    var prop = 0
+}
+
+fun moveToTopLevelContextB() {
+    function(MoveToTopLevelB())
+}
+
+fun function(moveToTopLevelB: MoveToTopLevelB, param: Int = moveToTopLevelB.prop) {}

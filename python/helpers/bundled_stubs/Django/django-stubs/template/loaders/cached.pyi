@@ -1,0 +1,17 @@
+from collections.abc import Iterator, Sequence
+from pathlib import Path
+from typing import Any
+
+from django.template.base import Origin
+from django.template.engine import Engine
+
+from .base import Loader as BaseLoader
+
+class Loader(BaseLoader):
+    get_template_cache: dict[str, Any]
+    loaders: list[BaseLoader]
+    def __init__(self, engine: Engine, loaders: Sequence[Any]) -> None: ...
+    def get_dirs(self) -> Iterator[str | Path]: ...
+    def get_contents(self, origin: Origin) -> str: ...
+    def cache_key(self, template_name: str, skip: list[Origin] | None = None) -> str: ...
+    def generate_hash(self, values: list[str]) -> str: ...

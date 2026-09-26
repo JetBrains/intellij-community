@@ -1,0 +1,152 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "java-guiForms-compiler-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-guiForms-compiler-tests_test_lib"],
+)
+### skip generation section `test intellij.java.guiForms.compiler.tests`
+
+### auto-generated section `dev intellij.java.guiForms.compiler` start
+content_module_jar(module = ":java-guiForms-compiler")
+### auto-generated section `dev intellij.java.guiForms.compiler` end
+
+### auto-generated section `build intellij.java.guiForms.compiler` start
+jvm_library(
+    name = "java-guiForms-compiler",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.guiForms.compiler",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//java/compiler/instrumentation-util"],
+    deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/asm",
+        "//libraries/jgoodies/forms",
+        "//java/compiler/instrumentation-util",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "java-guiForms-compiler_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.java.guiForms.compiler",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//java/compiler/instrumentation-util",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":java-guiForms-compiler",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/asm:asm_test_lib",
+        "//libraries/jgoodies/forms:forms_test_lib",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.guiForms.compiler` end
+
+### auto-generated section `iml intellij.java.guiForms.compiler` start
+exports_files(
+    [
+        "intellij.java.guiForms.compiler.iml",
+        "resources/intellij.java.guiForms.compiler.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.guiForms.compiler` end
+
+### auto-generated section `build intellij.java.guiForms.compiler.tests` start
+jvm_library(
+    name = "java-guiForms-compiler-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.guiForms.compiler.tests",
+    visibility = ["//visibility:public"],
+    exports = ["//java/compiler/instrumentation-util"],
+)
+
+jvm_library(
+    name = "java-guiForms-compiler-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//java/compiler/forms-compiler:java-guiForms-compiler",
+        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//java/compiler/instrumentation-util",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+    ],
+    runtime_deps = [":java-guiForms-compiler-tests"],
+    deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//libraries/asm",
+        "//libraries/asm:asm_test_lib",
+        "//libraries/jgoodies/forms",
+        "//libraries/jgoodies/forms:forms_test_lib",
+        "//java/compiler/instrumentation-util",
+        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util/multiplatform",
+        "//platform/util/multiplatform:multiplatform_test_lib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.guiForms.compiler.tests` end
+
+### auto-generated section `iml intellij.java.guiForms.compiler.tests` start
+exports_files(
+    [
+        "intellij.java.guiForms.compiler.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.guiForms.compiler.tests` end

@@ -1,0 +1,7 @@
+// "Make 'i' 'abstract'" "true"
+// K2_ERROR: NON_ABSTRACT_FUNCTION_WITH_NO_BODY
+sealed class A() {
+    fun <caret>i() : Int
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp

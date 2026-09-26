@@ -1,0 +1,37 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.serialization.cbor"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.objectSerializer"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.settings"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.platform.settings.SettingsController"
+      serviceImplementation="com.intellij.platform.settings.local.SettingsControllerMediator"
+    />
+    <settingsController id="local" implementation="com.intellij.platform.settings.local.LocalSettingsController" order="last"/>
+    <settingsController id="jsonMirror" implementation="com.intellij.platform.settings.local.JsonMirrorController"/>
+
+    <cachesInvalidator implementation="com.intellij.platform.settings.local.CacheStateStorageInvalidator"/>
+  </extensions>
+  <extensionPoints>
+    <!-- Settings controllers cannot be loaded/unloaded dynamically, but we delegate this problem to implementations to deal with -->
+    <extensionPoint name="settingsController" interface="com.intellij.platform.settings.DelegatedSettingsController" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

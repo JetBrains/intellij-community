@@ -1,0 +1,120 @@
+MODULES
+project
+
+project.consumer
+
+project.consumer.androidHostTest
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :consumer:commonTest
+    additionalVisibleModuleNames = :consumer:androidMain, :consumer:commonMain, :consumer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.consumer.androidMain
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.consumer.commonMain
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
+project.consumer.commonTest
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    additionalVisibleModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.consumer.jvmAndAndroidMain
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :consumer:commonMain
+    targetPlatform = JVM (17)
+
+project.consumer.jvmMain
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.consumer.jvmTest
+    externalProjectId = :consumer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :consumer:commonTest
+    additionalVisibleModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain, :consumer:jvmMain
+    targetPlatform = JVM (17)
+
+project.producer
+
+project.producer.androidHostTest
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :producer:commonTest
+    additionalVisibleModuleNames = :producer:androidMain, :producer:commonMain, :producer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.producer.androidMain
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.producer.commonMain
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
+project.producer.commonTest
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    additionalVisibleModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.producer.jvmAndAndroidMain
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :producer:commonMain
+    targetPlatform = JVM (17)
+
+project.producer.jvmMain
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain
+    targetPlatform = JVM (17)
+
+project.producer.jvmTest
+    externalProjectId = :producer
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = :producer:commonTest
+    additionalVisibleModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain, :producer:jvmMain
+    targetPlatform = JVM (17)

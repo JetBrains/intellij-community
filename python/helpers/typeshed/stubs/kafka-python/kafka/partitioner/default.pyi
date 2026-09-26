@@ -1,0 +1,6 @@
+from .abc import Partitioner
+
+class DefaultPartitioner(Partitioner):
+    def partition(self, topic, key, serialized_key, value, serialized_value, cluster) -> int: ...
+
+def murmur2(data: bytes) -> int: ...

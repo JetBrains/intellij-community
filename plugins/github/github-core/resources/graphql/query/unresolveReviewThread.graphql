@@ -1,0 +1,7 @@
+mutation ($threadId: ID!) {
+    unresolveReviewThread(input: {threadId: $threadId}) {
+        thread {
+            ...pullRequestReviewThread
+        }
+    }
+}

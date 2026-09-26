@@ -1,0 +1,10 @@
+// "Create class 'Nested'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+class A {
+    // TARGET_PARENT:
+    inner class B {
+        val a: <caret>Nested = Nested()
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

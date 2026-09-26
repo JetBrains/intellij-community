@@ -1,0 +1,3 @@
+java/lang/foreign/Arena
+java/lang/foreign/MemorySegment
+kotlin/jvm/internal/DefaultConstructorMarker

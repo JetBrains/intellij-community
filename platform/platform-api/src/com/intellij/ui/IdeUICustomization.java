@@ -1,43 +1,93 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
+
+import java.util.function.Supplier;
 
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
  */
 public class IdeUICustomization {
   public static IdeUICustomization getInstance() {
-    return ServiceManager.getService(IdeUICustomization.class);
+    return ApplicationManager.getApplication().getService(IdeUICustomization.class);
   }
 
   /**
-   * Returns the name to be displayed in the UI for the "project" concept (Rider changes this to "solution").
+   * Returns a message which mentions 'project' concept.
    */
-  public String getProjectConceptName() {
-    return "project";
+  public @NotNull @Nls String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectConceptBundle.message(key, params);
   }
 
   /**
-   * Returns the name of the "Close Project" action (with mnenonic if needed).
+   * Returns a message which mentions 'project' concept.
    */
-  public String getCloseProjectActionText() {
-    return IdeBundle.message("action.close.project");
+  public @NotNull Supplier<@Nls String> projectMessagePointer(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectConceptBundle.messagePointer(key, params);
   }
 
   /**
    * Returns the title of the Project view toolwindow.
    */
-  public String getProjectViewTitle() {
-    return StringUtil.capitalize(getProjectConceptName());
+  public @Nls String getProjectViewTitle(@NotNull Project project) {
+    return projectMessage("toolwindow.title.project.view");
+  }
+
+  public @Nls String getSelectAutopopupByCharsText() {
+    return IdeBundle.message("ui.customization.select.auto.popup.by.chars.text");
   }
 
   /**
-   * Returns the title of the "Non-Project Files" scope.
+   * Allows to replace the text of the given action (only for the actions/groups that support this mechanism)
    */
-  public String getNonProjectFilesScopeTitle() {
-    return "Non-" + StringUtil.capitalize(getProjectConceptName()) + " Files";
+  public @Nullable @Nls String getActionText(@NotNull String actionId) {
+    return null;
+  }
+
+  /**
+   * Allows to replace the description of the given action (only for the actions/groups that support this mechanism)
+   */
+  public @Nullable @Nls String getActionDescription(@SuppressWarnings("unused") @NotNull String actionId) {
+    return null;
+  }
+
+  public @Nullable String getUiThemeEditorSchemeId(@SuppressWarnings("unused") @NotNull String themeId, @Nullable String editorSchemeId) {
+    return editorSchemeId;
+  }
+
+  /**
+   * Returns the name of the Version Control tool window
+   */
+  public @NotNull String getVcsToolWindowName() {
+    return UIBundle.message("tool.window.name.version.control");
+  }
+}
+
+/**
+ * This message bundle contains strings which somehow mention 'project' concept. Other IDEs may use a different term for that (e.g. Rider
+ * use 'solution'). Don't use this class directly, use {@link IdeUICustomization#projectMessage} instead.
+ */
+final class ProjectConceptBundle {
+  public static final @NonNls String BUNDLE = "messages.ProjectConceptBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ProjectConceptBundle.class, BUNDLE);
+
+  private ProjectConceptBundle() {
+  }
+
+  static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
+  }
+
+  static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }

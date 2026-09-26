@@ -1,30 +1,22 @@
-
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public abstract class IdeDocumentHistory {
   public static IdeDocumentHistory getInstance(Project project) {
-    return project.getComponent(IdeDocumentHistory.class);
+    return project.getService(IdeDocumentHistory.class);
   }
 
   public abstract void includeCurrentCommandAsNavigation();
+  public abstract void setCurrentCommandHasMoves();
   public abstract void includeCurrentPlaceAsChangePlace();
   public abstract void clearHistory();
 
@@ -39,5 +31,63 @@ public abstract class IdeDocumentHistory {
   public abstract boolean isNavigatePreviousChangeAvailable();
   public abstract boolean isNavigateNextChangeAvailable();
 
-  public abstract VirtualFile[] getChangedFiles();
+  public abstract @NotNull List<VirtualFile> getChangedFiles();
+
+  /**
+   * Captures the navigation origin before a delayed (asynchronous) navigation starts.
+   * <p>Every prepared snapshot <b>must</b> be committed via {@link NavigationHistorySnapshot#commitIfChanged()},
+   * even when the navigation fails or is canceled. Prefer
+   * {@link com.intellij.platform.ide.navigation.impl.IdeNavigationServiceExecutorKt#performNavigationHistoryAware},
+   * which enforces this contract and suppresses command-based history only while executing the corresponding
+   * navigation coroutine.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public abstract @NotNull NavigationHistorySnapshot prepareHistorySnapshot();
+
+  /**
+   * A snapshot of the navigation origin captured before delayed navigation starts.
+   * Idea behind is to separate the command from its side effects, which might be executed later on.
+   * Once the navigation completes, {@link #commitIfChanged()} closes the delayed navigation scope,
+   * applying origin as a back-history place if the current navigation place has changed.
+   */
+  @ApiStatus.Internal
+  @FunctionalInterface
+  public interface NavigationHistorySnapshot {
+    @RequiresEdt
+    void commitIfChanged();
+  }
+
+  @ApiStatus.Internal
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
+  @ApiStatus.Internal
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
+  @ApiStatus.Internal
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getForwardPlaces();
+
+  @ApiStatus.Internal
+  public abstract void removeChangePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+  @ApiStatus.Internal
+  public abstract void removeBackPlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
+
+  @ApiStatus.Internal
+  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info);
+
+  @ApiStatus.Internal
+  public abstract void gotoPlaceInfo(@NotNull IdeDocumentHistoryImpl.PlaceInfo info, boolean focusEditor);
+
+  @ApiStatus.Internal
+  public abstract void onSelectionChanged();
+
+  /**
+   * IdeDocumentHistory#onSelectionChanged can add the current command to the navigation history,
+   * even if IdeDocumentHistory#includeCurrentCommandAsNavigation was not called.
+   * This method ensures that the current command is excluded from the navigation history,
+   * even if there were attempts to add it to the navigation history by other methods.
+   */
+  @ApiStatus.Experimental
+  public abstract void reallyExcludeCurrentCommandAsNavigation();
+
+  @ApiStatus.Internal
+  public abstract boolean isSame(@NotNull IdeDocumentHistoryImpl.PlaceInfo first, @NotNull IdeDocumentHistoryImpl.PlaceInfo second);
 }

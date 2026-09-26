@@ -1,0 +1,33 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+# A binary of its own, not a subcommand of the collector: the collector is a tool of every collection action, and a
+# launcher change must not re-key them. The launcher runs the collector's `local-home` as a child instead.
+go_binary(
+    name = "dev-launcher",
+    srcs = [
+        "devdata.go",
+        "main.go",
+        "properties.go",
+        "runfiles.go",
+    ],
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/content-module-packer/dev-launcher",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "dev-launcher_test",
+    srcs = [
+        "devdata.go",
+        "devdata_test.go",
+        "main.go",
+        "main_test.go",
+        "properties.go",
+        "runfiles.go",
+    ],
+    pure = "on",
+)

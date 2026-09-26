@@ -1,36 +1,28 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.table.TableView;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventObject;
 
+@ApiStatus.Internal
 public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   private Disposable myEditorListenerDisposable;
@@ -77,14 +69,14 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   public static Object getValue(Component component) {
     if (component instanceof CellEditorComponentWithBrowseButton) {
-      final JTextField textField = (JTextField)((CellEditorComponentWithBrowseButton)component).getChildComponent();
+      final JTextField textField = (JTextField)((CellEditorComponentWithBrowseButton<?>)component).getChildComponent();
       return textField.getText();
     }
     else if (component instanceof JTextField) {
       return ((JTextField)component).getText();
     }
     else if (component instanceof JComboBox) {
-      return ((JComboBox)component).getSelectedItem();
+      return ((JComboBox<?>)component).getSelectedItem();
     }
     else if (component instanceof JCheckBox) {
       return Boolean.valueOf(((JCheckBox)component).isSelected());
@@ -94,12 +86,12 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
 
   private static void addChangeListener(final Component component, final ChangeListener listener, Disposable parentDisposable) {
     if (component instanceof CellEditorComponentWithBrowseButton) {
-      addChangeListener(((CellEditorComponentWithBrowseButton)component).getChildComponent(), listener, parentDisposable);
+      addChangeListener(((CellEditorComponentWithBrowseButton<?>)component).getChildComponent(), listener, parentDisposable);
     }
     else if (component instanceof JTextField) {
       final DocumentAdapter documentListener = new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           listener.stateChanged(new ChangeEvent(component));
         }
       };
@@ -119,11 +111,11 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
           listener.stateChanged(new ChangeEvent(component));
         }
       };
-      ((JComboBox)component).addActionListener(comboListener);
+      ((JComboBox<?>)component).addActionListener(comboListener);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
-          ((JComboBox)component).removeActionListener(comboListener);
+          ((JComboBox<?>)component).removeActionListener(comboListener);
         }
       });
     }

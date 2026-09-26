@@ -1,0 +1,186 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.java.workspace.entities.impl
+
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.instrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCopyPackagingElementEntityData) :
+  FileCopyPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+  private companion object {
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
+                                                                                true)
+    private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
+  }
+
+  override val parentEntity: CompositePackagingElementEntity?
+    get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? CompositePackagingElementEntity
+  override val filePath: VirtualFileUrl
+    get() {
+      readField("filePath")
+      return dataSource.filePath
+    }
+  override val renamedOutputFileName: String?
+    get() {
+      readField("renamedOutputFileName")
+      return dataSource.renamedOutputFileName
+    }
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return connections
+  }
+
+  internal class Builder(result: FileCopyPackagingElementEntityData?) :
+    ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(result),
+    FileCopyPackagingElementEntity.Builder {
+    internal constructor() : this(FileCopyPackagingElementEntityData())
+
+    override fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isFilePathInitialized()) {
+        error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FileCopyPackagingElementEntity
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.renamedOutputFileName != dataSource.renamedOutputFileName) this.renamedOutputFileName = dataSource.renamedOutputFileName
+      updateChildToParentReferences(parents)
+    }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+      }
+    override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
+      get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+              ?: error("parentEntity is null for PackagingElementEntity")
+      set(value) {
+        changeParentOfMany(value, PARENTENTITY_CONNECTION_ID)
+        changedProperty.add("parentEntity")
+      }
+    override var filePath: VirtualFileUrl
+      get() = getEntityData().filePath
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).filePath = value
+        changedProperty.add("filePath")
+        val _diff = diff
+        if (_diff != null) index(this, "filePath", value)
+      }
+    override var renamedOutputFileName: String?
+      get() = getEntityData().renamedOutputFileName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).renamedOutputFileName = value
+        changedProperty.add("renamedOutputFileName")
+      }
+
+    override fun getEntityClass(): Class<FileCopyPackagingElementEntity> = FileCopyPackagingElementEntity::class.java
+  }
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackagingElementEntity>() {
+  lateinit var filePath: VirtualFileUrl
+  var renamedOutputFileName: String? = null
+  internal fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
+  override fun newInstance(): FileCopyPackagingElementEntity = FileCopyPackagingElementEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, *> =
+    FileCopyPackagingElementEntityImpl.Builder(null)
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.FileCopyPackagingElementEntity") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return FileCopyPackagingElementEntity::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return FileCopyPackagingElementEntity(filePath, entitySource) {
+      this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
+      this.parentEntity =
+        parents.filterIsInstance<CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as FileCopyPackagingElementEntityData
+    if (this.entitySource != other.entitySource) return false
+    if (this.filePath != other.filePath) return false
+    if (this.renamedOutputFileName != other.renamedOutputFileName) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as FileCopyPackagingElementEntityData
+    if (this.filePath != other.filePath) return false
+    if (this.renamedOutputFileName != other.renamedOutputFileName) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + renamedOutputFileName.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + renamedOutputFileName.hashCode()
+    return result
+  }
+}

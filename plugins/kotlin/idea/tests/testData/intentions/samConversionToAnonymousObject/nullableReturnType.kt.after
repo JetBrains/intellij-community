@@ -1,0 +1,7 @@
+// WITH_STDLIB
+val a = object : A<Int, String> {
+    override fun foo(it: Int): String? {
+        return "".takeIf { it.isNotBlank() }
+    }
+}
+

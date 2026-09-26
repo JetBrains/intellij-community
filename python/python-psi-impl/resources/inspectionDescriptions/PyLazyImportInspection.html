@@ -1,0 +1,24 @@
+<html>
+<body>
+<p>Reports invalid uses of <code>lazy</code> imports introduced by
+  <a href="https://peps.python.org/pep-0810/">PEP 810</a>.</p>
+<p>The following uses are flagged:</p>
+<ul>
+  <li>a <code>lazy</code> import placed inside a function, class, or
+    <code>try</code> body &mdash; <code>lazy</code> imports must appear at
+    the module level;
+  </li>
+  <li><code>lazy from ... import *</code> &mdash; star imports cannot be
+    lazy;
+  </li>
+  <li><code>lazy from __future__ import ...</code> &mdash;
+    <code>__future__</code> imports cannot be lazy.
+  </li>
+</ul>
+<p><b>Example:</b></p>
+<pre><code>
+def f():
+    lazy import os  # lazy imports must appear at module level
+</code></pre>
+</body>
+</html>

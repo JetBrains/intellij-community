@@ -1,61 +1,42 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
-public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements IntentionAction {
-  private String myId;
+@ApiStatus.Internal
+public final class EditInspectionToolsSettingsInSuppressedPlaceIntention implements IntentionAction {
   private String myDisplayName;
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return InspectionsBundle.message("edit.inspection.options", myDisplayName);
   }
 
-  @Nullable
-  private static String getSuppressedId(Editor editor, PsiFile file) {
+  private static @Nullable String getSuppressedId(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     while (element != null && !(element instanceof PsiFile)) {
-      for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
-        final String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
+      for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
+        String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
         if (suppressedIds != null) {
           for (String id : StringUtil.split(suppressedIds, ",")) {
             if (isCaretOnSuppressedId(file, offset, id)) {
@@ -77,34 +58,39 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myId = getSuppressedId(editor, file);
-    if (myId != null) {
-      InspectionToolWrapper toolWrapper = getTool(project, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    String suppressedId = getSuppressedId(editor, psiFile);
+    if (suppressedId != null) {
+      InspectionToolWrapper toolWrapper = getTool(project, psiFile, suppressedId);
       if (toolWrapper == null) return false;
       myDisplayName = toolWrapper.getDisplayName();
     }
-    return myId != null;
+    return suppressedId != null;
   }
 
-  @Nullable
-  private InspectionToolWrapper getTool(final Project project, final PsiFile file) {
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
-    return inspectionProfile.getToolById(myId, file);
+  private static @Nullable InspectionToolWrapper getTool(Project project, PsiFile file, String suppressId) {
+    if (suppressId == null) return null;
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    return inspectionProfile.getToolById(suppressId, file);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionToolWrapper toolWrapper = getTool(project, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    InspectionToolWrapper toolWrapper = getTool(project, psiFile, getSuppressedId(editor, psiFile));
     if (toolWrapper == null) return;
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, toolWrapper.getShortName());
   }
 
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return new IntentionPreviewInfo.Html(InspectionsBundle.message("edit.inspection.options.preview", myDisplayName));
   }
 }

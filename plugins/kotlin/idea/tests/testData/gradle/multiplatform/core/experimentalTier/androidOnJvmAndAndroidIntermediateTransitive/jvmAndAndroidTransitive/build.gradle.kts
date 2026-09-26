@@ -1,0 +1,26 @@
+plugins {
+    kotlin("multiplatform")
+    {{android_library_plugin_id}}
+}
+
+{{default_android_block}}
+
+kotlin {
+    {{androidTargetPlaceholder}}
+    jvm()
+    sourceSets {
+        val commonMain = getByName("commonMain")
+
+        val jvmAndAndroidMain = create("jvmAndAndroidMain") {
+            dependsOn(commonMain)
+        }
+
+        getByName("jvmMain") {
+            dependsOn(jvmAndAndroidMain)
+        }
+
+        getByName("androidMain") {
+            dependsOn(jvmAndAndroidMain)
+        }
+    }
+}

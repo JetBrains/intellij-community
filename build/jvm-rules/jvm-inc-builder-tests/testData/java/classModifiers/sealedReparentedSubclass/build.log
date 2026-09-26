@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  C.class
+End of files
+Compiling files:
+  java/classModifiers/sealedReparentedSubclass/a/A.java
+  java/classModifiers/sealedReparentedSubclass/a/C.java
+End of files
+Cleaning output files:
+  Switcher.class
+End of files
+Compiling files:
+  java/classModifiers/sealedReparentedSubclass/a/Switcher.java
+End of files
+------------------------------------------
+Exit code: ERROR

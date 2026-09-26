@@ -1,0 +1,8 @@
+def process():
+    step1 = init()
+    step2 = validate(step1)
+    step3 = transform(step2)
+    step4 = filter(step3)
+    step5 = aggregate(step4)
+    step6 = format(step5)
+    return step6

@@ -47,11 +47,13 @@ public class PsiElementNavigatable implements Navigatable {
         new Task.Modal(element.getProject(), EditorBundle.message("editor.open.file.progress", file.getName()), true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            int offset = ReadAction.compute(() -> element.isValid() ? element.getTextOffset() : -1);  // may trigger decompilation
+            int offset = ReadAction.computeBlocking(() -> element.isValid() ? element.getTextOffset() : -1);  // may trigger decompilation
             indicator.checkCanceled();
             if (offset >= 0) {
               Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
-              Condition<?> expired = or(myProject.getDisposed(), o -> !file.isValid());
+              Condition isValid = _ -> !file.isValid();
+              Condition isDisposed = myProject.getDisposed();
+              Condition<?> expired = or(isDisposed, isValid);
               ApplicationManager.getApplication().invokeLater(() -> descriptor.navigate(requestFocus), expired);
             }
           }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -20,37 +6,34 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Nadya Zabrodina
- */
 public abstract class RepositoryImpl implements Repository {
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRootDir;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myRootDir;
 
+  private boolean myDisposed;
 
-  @NotNull protected volatile State myState;
-  @Nullable protected volatile String myCurrentRevision;
+  protected RepositoryImpl(@NotNull Project project,
+                           @NotNull VirtualFile dir) {
+    myProject = project;
+    myRootDir = dir;
+  }
 
   protected RepositoryImpl(@NotNull Project project,
                            @NotNull VirtualFile dir,
                            @NotNull Disposable parentDisposable) {
-    myProject = project;
-    myRootDir = dir;
+    this(project, dir);
     Disposer.register(parentDisposable, this);
   }
 
   @Override
-  @NotNull
-  public VirtualFile getRoot() {
+  public @NotNull VirtualFile getRoot() {
     return myRootDir;
   }
 
   @Override
-  @NotNull
-  public String getPresentableUrl() {
+  public @NotNull String getPresentableUrl() {
     return getRoot().getPresentableUrl();
   }
 
@@ -60,26 +43,23 @@ public abstract class RepositoryImpl implements Repository {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public State getState() {
-    return myState;
+  public boolean isFresh() {
+    return getCurrentRevision() == null;
   }
 
-
   @Override
-  @Nullable
-  public String getCurrentRevision() {
-    return myCurrentRevision;
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   @Override

@@ -1,0 +1,2 @@
+f:com.intellij.platform.feedback.csat.CsatFeedbackSurveyKt
+- sf:showCsatFeedbackDialog(com.intellij.openapi.project.Project):V

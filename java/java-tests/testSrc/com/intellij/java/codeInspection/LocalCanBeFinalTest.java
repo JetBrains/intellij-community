@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
+public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
   private LocalCanBeFinal myTool;
 
   @Override
@@ -36,6 +24,13 @@ public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
     myTool = new LocalCanBeFinal();
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    // has to have JFrame and sources
+    return JAVA_LATEST_WITH_LATEST_JDK;
+  }
+
   private void doTest() {
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
@@ -46,14 +41,30 @@ public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
+  public void testUnreachableModification() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
   public void testIfTest() {
     myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSwitchBranches() {
+    myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
   public void testIncompleteAssignment() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  
+  public void testLambdaParameters() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = false;
     doTest();
   }
 
@@ -124,6 +135,11 @@ public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testLambdaBody2() {
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+
   public void testForeachNotReported() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = false;
@@ -150,13 +166,28 @@ public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+
+  public void testRecord() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+
   public void testResource() {
     doTest();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+  public void testPatternVariables() {
+    myTool.REPORT_PATTERN_VARIABLES = true;
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
+  
+  public void testUnnamedVariables() {
+    myTool.REPORT_PATTERN_VARIABLES = true;
+    myTool.REPORT_VARIABLES = true;
+    myTool.REPORT_FOREACH_PARAMETERS = true;
+    myTool.REPORT_IMPLICIT_FINALS = true;
+    myTool.REPORT_CATCH_PARAMETERS = true;
+    doTest();
   }
 }

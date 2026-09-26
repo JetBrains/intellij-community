@@ -1,0 +1,85 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.maven.delegation.testng` start
+content_module_jar(module = ":testng")
+### auto-generated section `dev intellij.maven.delegation.testng` end
+
+### auto-generated section `build intellij.maven.delegation.testng` start
+jvm_library(
+    name = "testng",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.maven.delegation.testng",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/maven",
+        "//plugins/testng",
+        "//java/debugger/impl",
+        "//java/debugger/shared",
+        "//platform/smRunner",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/lang-api:lang",
+        "//platform/ide-core",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testRunner",
+        "//platform/lang-core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/util/jdom",
+    ],
+)
+
+jvm_library(
+    name = "testng_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.maven.delegation.testng",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":testng",
+        "//plugins/maven:maven_test_lib",
+        "//plugins/testng:testng_test_lib",
+        "//java/debugger/impl:impl_test_lib",
+        "//java/debugger/shared:shared_test_lib",
+        "//platform/smRunner:smRunner_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+    ],
+)
+### auto-generated section `build intellij.maven.delegation.testng` end
+
+### auto-generated section `iml intellij.maven.delegation.testng` start
+exports_files(
+    [
+        "intellij.maven.delegation.testng.iml",
+        "resources/intellij.maven.delegation.testng.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.maven.delegation.testng` end

@@ -1,98 +1,84 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.LaterInvocator.*
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ModalityStateListener
+import com.intellij.openapi.application.impl.LaterInvocator.enterModal
+import com.intellij.openapi.application.impl.LaterInvocator.invokeLater
+import com.intellij.openapi.application.impl.LaterInvocator.leaveModal
+import com.intellij.openapi.util.Conditions
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.SkipInHeadlessEnvironment
-import junit.framework.TestCase
-import org.junit.Test
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.concurrency.ThreadingAssertions
 import java.awt.Dialog
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
 
-/**
- * @author Denis Fokin
- */
-
-private class NumberedRunnable private constructor(private val myNumber: Int, private val myConsumer: (Int) -> Unit = {}) : Runnable {
-  override fun run() {
-    myConsumer.invoke(myNumber)
-  }
-
-  companion object {
-    internal fun withNumber(number: Int): NumberedRunnable {
-      return NumberedRunnable(number)
-    }
-
-    internal fun withNumber(number: Int, consumer: (Int) -> Unit): NumberedRunnable {
-      return NumberedRunnable(number, consumer)
-    }
-  }
+private class NumberedRunnable (private val myNumber: Int, private val myConsumer: (Int) -> Unit = {}) : Runnable {
+  override fun run() = myConsumer.invoke(myNumber)
 }
 
 @SkipInHeadlessEnvironment
-class RunnableActionsTest : PlatformTestCase() {
+class RunnableActionsTest : HeavyPlatformTestCase() {
+  // a real java.awt.Window cannot be instantiated in a headless environment, and doing that in a field initializer
+  // breaks the very discovery of this class (before @SkipInHeadlessEnvironment has a chance to skip it), so the dialogs are created lazily
+  private val myPerProjectModalDialog by lazy { Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL) }
+  private val myApplicationModalDialog by lazy { Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL) }
 
+  fun testModalityStateChangedListener() {
+    LaterInvocator.addModalityStateListener(createModalityStateListener(), testRootDisposable)
 
-  private val myPerProjectModalDialog = Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL)
-  private val myApplicationModalDialog = Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL)
+    assertModalityStateNotifications()
+  }
 
-  fun _testModalityStateChangedListener () {
+  fun testModalityStateChangedTopicListener() {
+    ApplicationManager.getApplication().messageBus.connect(testRootDisposable).subscribe(ModalityStateListener.TOPIC, createModalityStateListener())
+
+    assertModalityStateNotifications()
+  }
+
+  private fun createModalityStateListener(): ModalityStateListener {
     val enteringOrder = booleanArrayOf(true, true, false, false)
-
     val enteringIndex = AtomicInteger(-1)
 
-    val modalityStateListener = ModalityStateListener { entering ->
-      if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
-        throw RuntimeException(
+    return object : ModalityStateListener {
+      override fun beforeModalityStateChanged(entering: Boolean, modalEntity: Any) {
+        if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
+          throw RuntimeException(
             "Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()])
+        }
       }
     }
+  }
 
-    val emptyDisposal = Disposable { }
-
-    LaterInvocator.addModalityStateListener(modalityStateListener, emptyDisposal)
-
-    val removeModalityListener = { LaterInvocator.removeModalityStateListener(modalityStateListener) }
-
+  private fun assertModalityStateNotifications() {
+    ThreadingAssertions.assertEventDispatchThread()
+    val project = getProject()
+    assertTrue(
     Testable()
-        .suspendEDT()
-        .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
-        .flushEDT()
-        .execute { enterModal(myApplicationModalDialog) }
-        .flushEDT()
-        .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
-        .flushEDT()
-        .execute { enterModal(myProject, myPerProjectModalDialog) }
-        .flushEDT()
-        .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
-        .flushEDT()
-        .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
-        .flushEDT()
-        .execute { leaveModal(myProject, myPerProjectModalDialog) }
-        .flushEDT()
-        .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
-        .flushEDT()
-        .execute { leaveModal(myApplicationModalDialog) }
-        .flushEDT()
-        .continueEDT()
-        .execute(removeModalityListener)
-        .ifExceptions{ exception -> TestCase.fail(exception.toString()) }
+      .suspendEDT()
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(1)) }
+      .flushEDT()
+      .execute { enterModal(myApplicationModalDialog) }
+      .flushEDT()
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable(2)) }
+      .flushEDT()
+      .execute { enterModal(project, myPerProjectModalDialog) }
+      .flushEDT()
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(3)) }
+      .flushEDT()
+      .execute { invokeLater(ModalityState.current(), Conditions.alwaysFalse<Any>(), NumberedRunnable(4)) }
+      .flushEDT()
+      .execute { leaveModal(project, myPerProjectModalDialog) }
+      .flushEDT()
+      .execute { invokeLater(ModalityState.nonModal(), Conditions.alwaysFalse<Any>(), NumberedRunnable(5)) }
+      .flushEDT()
+      .execute { leaveModal(myApplicationModalDialog) }
+      .flushEDT()
+      .continueEDT()
+      .ifExceptions { exception -> fail(exception.toString()) }
+      .completed()
+      .waitCompletion(100_000))
   }
 }

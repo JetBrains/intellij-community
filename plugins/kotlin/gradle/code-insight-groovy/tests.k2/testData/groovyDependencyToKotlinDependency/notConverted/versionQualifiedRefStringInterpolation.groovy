@@ -1,0 +1,1 @@
+testImplementation "org.hibernate:hibernate:${a.b}"

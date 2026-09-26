@@ -1,0 +1,10 @@
+// "Change parameter 'y' type of function 'foo' to 'Any?'" "true"
+// LANGUAGE_VERSION: 1.8
+class Foo<T>(val x: T) {
+    fun foo(y: T & Any) {}
+}
+
+fun <T> Foo<T>.bar(x: T) {
+    foo(<caret>this.x)
+}
+

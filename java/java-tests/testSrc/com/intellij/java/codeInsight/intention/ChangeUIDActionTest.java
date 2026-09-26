@@ -4,9 +4,6 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 public class ChangeUIDActionTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return true;

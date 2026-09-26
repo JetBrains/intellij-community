@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -20,24 +19,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
-public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+public final class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final AllOverridingMethodsSearch.SearchParameters p, @NotNull final Processor<? super Pair<PsiMethod, PsiMethod>> consumer) {
+  public boolean execute(final @NotNull AllOverridingMethodsSearch.SearchParameters p, final @NotNull Processor<? super Pair<PsiMethod, PsiMethod>> consumer) {
     final PsiClass psiClass = p.getPsiClass();
 
-    final List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
+    List<PsiMethod> potentials = ReadAction.compute(() -> ContainerUtil.filter(psiClass.getMethods(), PsiUtil::canBeOverridden));
+    if (potentials.isEmpty()) return true;
 
     final SearchScope scope = p.getScope();
+    JavaPsiFacade psiFacade = ReadAction.compute(()->JavaPsiFacade.getInstance(psiClass.getProject()));
 
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
-      Project project = psiClass.getProject();
       for (PsiMethod superMethod : potentials) {
         ProgressManager.checkCanceled();
         if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-            !JavaPsiFacade.getInstance(project).arePackagesTheSame(psiClass, inheritor)) continue;
+            !psiFacade.arePackagesTheSame(psiClass, inheritor)) continue;
 
         PsiMethod inInheritor = JavaOverridingMethodsSearcher.findOverridingMethod(inheritor, superMethod, psiClass);
         if (inInheritor != null && !consumer.process(Pair.create(superMethod, inInheritor))) return false;
@@ -46,6 +43,6 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
       return true;
     };
 
-    return ClassInheritorsSearch.search(psiClass, scope, true).forEach(inheritorsProcessor);
+    return ClassInheritorsSearch.search(psiClass, scope, true).allowParallelProcessing().forEach(inheritorsProcessor);
   }
 }

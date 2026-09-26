@@ -1,0 +1,12 @@
+// "Use withIndex() instead of manual index increment" "true"
+
+fun foo(list: List<String>) {
+    var i = 0
+    <caret>for (s in list) {
+        println(i)
+        val x = s.length * i
+        ++i
+        if (x > 1000) break
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.UseWithIndexInspection$createQuickFix$1

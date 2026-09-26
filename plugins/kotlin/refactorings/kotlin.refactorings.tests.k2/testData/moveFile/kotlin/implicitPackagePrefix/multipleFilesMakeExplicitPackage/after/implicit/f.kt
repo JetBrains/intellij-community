@@ -1,0 +1,3 @@
+package implicit
+
+fun f() {}

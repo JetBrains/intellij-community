@@ -1,49 +1,31 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.util.diff.Diff;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.DocumentLineDiff;
+import com.intellij.openapi.editor.impl.LineSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class DocumentEventImpl extends DocumentEvent {
   private final int myOffset;
-  private final CharSequence myOldString;
+  private final @NotNull CharSequence myOldString;
   private final int myOldLength;
-  private final CharSequence myNewString;
+  private final @NotNull CharSequence myNewString;
   private final int myNewLength;
 
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
-  private Diff.Change myChange;
-  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null);
+  private final @NotNull DocumentLineDiff myLineDiff;
 
   private final int myInitialStartOffset;
   private final int myInitialOldLength;
+  private final int myMoveOffset;
 
-  public DocumentEventImpl(@NotNull Document document,
-                           int offset,
-                           @NotNull CharSequence oldString,
-                           @NotNull CharSequence newString,
-                           long oldTimeStamp,
-                           boolean wholeTextReplaced) {
-    this(document, offset, oldString, newString, oldTimeStamp, wholeTextReplaced, offset, oldString.length());
-  }
+  @ApiStatus.Internal
   public DocumentEventImpl(@NotNull Document document,
                            int offset,
                            @NotNull CharSequence oldString,
@@ -51,7 +33,9 @@ public class DocumentEventImpl extends DocumentEvent {
                            long oldTimeStamp,
                            boolean wholeTextReplaced,
                            int initialStartOffset,
-                           int initialOldLength) {
+                           int initialOldLength,
+                           int moveOffset,
+                           int textLength) {
     super(document);
     myOffset = offset;
 
@@ -63,12 +47,17 @@ public class DocumentEventImpl extends DocumentEvent {
 
     myInitialStartOffset = initialStartOffset;
     myInitialOldLength = initialOldLength;
+    myMoveOffset = moveOffset;
 
     myOldTimeStamp = oldTimeStamp;
 
-    myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
+    myIsWholeDocReplaced = textLength != 0 && wholeTextReplaced;
+    myLineDiff = new DocumentLineDiff(offset, oldString, newString);
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
+    assert moveOffset == offset || myOldLength == 0 || myNewLength == 0 : this;
+    assert getOldFragment().length() ==  getOldLength() : "event.getOldFragment().length() = " + getOldFragment().length()+"; event.getOldLength() = " + getOldLength();
+    assert getNewFragment().length() ==  getNewLength() : "event.getNewFragment().length() = " + getNewFragment().length()+"; event.getNewLength() = " + getNewLength();
   }
 
   @Override
@@ -86,22 +75,14 @@ public class DocumentEventImpl extends DocumentEvent {
     return myNewLength;
   }
 
-  @NotNull
   @Override
-  public CharSequence getOldFragment() {
+  public @NotNull CharSequence getOldFragment() {
     return myOldString;
   }
 
-  @NotNull
   @Override
-  public CharSequence getNewFragment() {
+  public @NotNull CharSequence getNewFragment() {
     return myNewString;
-  }
-
-  @Override
-  @NotNull
-  public Document getDocument() {
-    return (Document)getSource();
   }
 
   /**
@@ -121,14 +102,19 @@ public class DocumentEventImpl extends DocumentEvent {
   }
 
   @Override
+  public int getMoveOffset() {
+    return myMoveOffset;
+  }
+
+  @Override
   public long getOldTimeStamp() {
     return myOldTimeStamp;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
   public String toString() {
     return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +
-           ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']" + (isWholeTextReplaced() ? " Whole." : ".");
+           "]" + (isWholeTextReplaced() ? " Whole" : "");
   }
 
   @Override
@@ -136,54 +122,46 @@ public class DocumentEventImpl extends DocumentEvent {
     return myIsWholeDocReplaced;
   }
 
+  @ApiStatus.Internal
+  public @NotNull DocumentLineDiff getLineDiff() {
+    return myLineDiff;
+  }
+
   public int translateLineViaDiff(int line) throws FilesTooBigForDiffException {
-    Diff.Change change = reBuildDiffIfNeeded();
-    if (change == null) return line;
-
-    int startLine = getDocument().getLineNumber(getOffset());
-    line -= startLine;
-    int newLine = line;
-
-    while (change != null) {
-      if (line < change.line0) break;
-      if (line >= change.line0 + change.deleted) {
-        newLine += change.inserted - change.deleted;
-      }
-      else {
-        int delta = Math.min(change.inserted, line - change.line0);
-        newLine = change.line1 + delta;
-        break;
-      }
-
-      change = change.link;
-    }
-
-    return newLine + startLine;
+    Document document = getDocument();
+    int startLine = document.getLineNumber(myLineDiff.getChangeStartOffset());
+    return myLineDiff.translateLine(line, startLine, document.getImmutableCharSequence());
   }
 
   public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
-    Diff.Change change = reBuildDiffIfNeeded();
-    if (change == null) return line;
-    int startLine = getDocument().getLineNumber(getOffset());
-    if (line < startLine) return line;
-    int translatedRelative = Diff.translateLine(change, line - startLine);
-    return translatedRelative < 0 ? -1 : translatedRelative + startLine;
+    Document document = getDocument();
+    int startLine = document.getLineNumber(myLineDiff.getChangeStartOffset());
+    return myLineDiff.translateLineStrict(line, startLine, document.getImmutableCharSequence());
   }
 
-  // line numbers in Diff.Change are relative to change start
-  private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
-    if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException();
-    if (myChange == null) {
-      try {
-        myChange = Diff.buildChanges(myOldString, myNewString);
-      }
-      catch (FilesTooBigForDiffException e) {
-        myChange = TOO_BIG_FILE;
-        throw e;
-      }
+
+  /**
+   * This method is supposed to be called right after the document change, represented by this event instance (e.g. from
+   * {@link DocumentListener#documentChanged(DocumentEvent)} callback).
+   * Given an offset ({@code offsetBeforeUpdate}), it calculates the line number that would be returned by
+   * {@link Document#getLineNumber(int)}, if that call would be performed before the document change.
+   */
+  public int getLineNumberBeforeUpdate(int offsetBeforeUpdate) {
+    Document document = getDocument();
+    CharSequence afterText = document.getImmutableCharSequence();
+    LineSet oldFragmentLineSet = myLineDiff.getOldFragmentLineSet(afterText);
+    int oldFragmentLineSetStart = myLineDiff.getOldFragmentLineSetStart(afterText);
+    if (offsetBeforeUpdate <= oldFragmentLineSetStart) {
+      return document.getLineNumber(offsetBeforeUpdate);
     }
-    return myChange;
+    int oldFragmentLineSetEnd = oldFragmentLineSetStart + oldFragmentLineSet.getLength();
+    if (offsetBeforeUpdate <= oldFragmentLineSetEnd) {
+      return document.getLineNumber(oldFragmentLineSetStart) +
+             oldFragmentLineSet.findLineIndex(offsetBeforeUpdate - oldFragmentLineSetStart);
+    }
+    int shift = getNewLength() - getOldLength();
+    return document.getLineNumber(oldFragmentLineSetStart) +
+           (oldFragmentLineSetStart == oldFragmentLineSetEnd ? 0 : oldFragmentLineSet.getLineCount() - 1) +
+           document.getLineNumber(offsetBeforeUpdate + shift) - document.getLineNumber(oldFragmentLineSetEnd + shift);
   }
-
-
 }

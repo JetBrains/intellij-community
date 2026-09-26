@@ -1,0 +1,15 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.inspectionSuppressor language="TOML"
+                               implementationClass="com.intellij.gradle.codeInsight.toml.inspections.suppressions.GradleTomlInspectionSuppressor"/>
+  </extensions>
+</idea-plugin>

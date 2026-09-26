@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// FILE: settings.gradle.kts
+// PATH: settings.gradle.kts
+// SHOW_MEMBERS: TRUE
+"".length + 1
+
+include()

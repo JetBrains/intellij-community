@@ -1,0 +1,117 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.navigation.actions
+
+import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.impl.GTDActionData
+import com.intellij.codeInsight.navigation.impl.LazyTargetWithPresentation
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.fromGTDProviders
+import com.intellij.codeInsight.navigation.impl.gotoDeclaration
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.psi.PsiFile
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.components.JBList
+import com.intellij.ui.list.buildTargetPopup
+
+internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
+
+  companion object {
+
+    private fun gotoDeclaration(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDActionData? {
+      return fromGTDProviders(project, editor, offset)
+             ?: gotoDeclaration(file, offset)
+    }
+
+    fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
+      return gotoDeclaration(file.project, editor, file, offset)?.ctrlMouseData()
+    }
+
+    internal fun gotoDeclaration(
+      project: Project,
+      editor: Editor,
+      actionResult: NavigationActionResult,
+      reporter: GotoDeclarationReporter?,
+      navigationOptions: NavigationOptions,
+    ) {
+      // obtain event data before showing the popup,
+      // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
+      val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
+      when (actionResult) {
+        is SingleTarget -> {
+          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.SINGLE)
+          actionResult.navigationProvider?.let {
+            GTDUCollector.recordNavigated(eventData, it.javaClass)
+          }
+          navigateRequestLazy(project, actionResult.requestor, editor, navigationOptions)
+          reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.AUTO, actionResult.navigationProvider)
+        }
+        is MultipleTargets -> {
+          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.MULTIPLE)
+          val builder = buildTargetPopup(
+            actionResult.targets, LazyTargetWithPresentation::presentation
+          ) { (requestor, _, navigationProvider) ->
+            navigationProvider?.let {
+              GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
+            }
+            navigateRequestLazy(project, requestor, editor, navigationOptions)
+            reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
+          }
+          builder.setTitle(CodeInsightBundle.message("declaration.navigation.title"))
+
+          if (builder is PopupChooserBuilder<*>) {
+            ClientProperty.put<Boolean?>(builder.chooserComponent, JBList.IMMUTABLE_MODEL_AND_RENDERER, true)
+          }
+
+          builder.createPopup().showInBestPositionFor(editor)
+          reporter?.reportLookupElementsShown()
+        }
+      }
+    }
+  }
+
+  override fun startInWriteAction(): Boolean = false
+
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
+    if (navigateToLookupItem(project, editor)) {
+      return
+    }
+    if (EditorUtil.isCaretInVirtualSpace(editor)) {
+      return
+    }
+
+    val offset = editor.caretModel.offset
+    val actionResult: NavigationActionResult? = try {
+      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+        gotoDeclaration(project, editor, psiFile, offset)?.result()
+      }
+    }
+    catch (_: IndexNotReadyException) {
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("popup.content.navigation.not.available.during.index.update"),
+        DumbModeBlockedFunctionality.GotoDeclarationOnly)
+      return
+    }
+
+    if (actionResult == null) {
+      reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
+      notifyNowhereToGo(project, editor, psiFile, offset)
+    }
+    else {
+      // `Go To Declaration Only` is never invoked with custom options, unlike `Go To Declaration`, see GotoDeclarationAction
+      gotoDeclaration(project, editor, actionResult, reporter, NavigationOptions.requestFocus())
+    }
+  }
+}

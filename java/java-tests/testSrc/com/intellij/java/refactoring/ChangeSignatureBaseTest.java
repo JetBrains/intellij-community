@@ -1,35 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
+public abstract class ChangeSignatureBaseTest extends LightJavaCodeInsightTestCase {
   protected PsiElementFactory myFactory;
 
   @NotNull
@@ -41,7 +34,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(getProject());
   }
 
   @Override
@@ -50,15 +43,12 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     super.tearDown();
   }
 
-  protected void doTest(@Nullable String returnType,
-                        @Nullable final String[] parameters,
-                        @Nullable final String[] exceptions,
-                        boolean delegate) {
+  protected void doTest(@Nullable String returnType, String @Nullable [] parameters, String @Nullable [] exceptions, boolean delegate) {
     GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
       ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
         PsiType type = myFactory.createTypeFromText(parameters[i], method);
-        parameterInfos[i] = new ParameterInfoImpl(-1, "p" + (i + 1), type);
+        parameterInfos[i] = ParameterInfoImpl.createNew().withName("p" + (i + 1)).withType(type);
       }
       return parameterInfos;
     };
@@ -116,7 +106,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         boolean skipConflict) {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement targetElement = getTargetElement();
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();
@@ -137,6 +127,10 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
       }
     }.run();
     checkResultByFile(basePath + "_after.java");
+  }
+
+  protected @Nullable PsiElement getTargetElement() {
+    return TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
   }
 
   protected String getRelativePath() {
@@ -165,7 +159,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
       if (myInfos == null) {
         myInfos = new ParameterInfoImpl[method.getParameterList().getParametersCount()];
         for (int i = 0; i < myInfos.length; i++) {
-          myInfos[i] = new ParameterInfoImpl(i);
+          myInfos[i] = ParameterInfoImpl.create(i);
         }
       }
       for (ParameterInfoImpl info : myInfos) {

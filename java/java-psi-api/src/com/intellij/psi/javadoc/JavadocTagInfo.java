@@ -1,35 +1,34 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.javadoc;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author mike
+ *  Specification for JavaDoc tag. Allow to suggest it in completion and check its validity.
  */
 public interface JavadocTagInfo {
   ExtensionPointName<JavadocTagInfo> EP_NAME = ExtensionPointName.create("com.intellij.javadocTagInfo");
 
+  /**
+   * @return name of the tag that will be shown in completion.
+   */
   String getName();
 
+  /**
+   * Is inline tag
+   */
   boolean isInline();
 
+  /**
+   * Checks if given tag is valid in the context. In this context tag will be suggested in completion.
+   * If it is invalid in given context then it will be highlighted.
+   *
+   * @param element element which owns JavaDoc (for example {@link com.intellij.psi.PsiMethod})
+   */
   boolean isValidInContext(PsiElement element);
 
   /**
@@ -38,9 +37,13 @@ public interface JavadocTagInfo {
    * @param value Doc tag to check.
    * @return Returns null if correct, error message otherwise.
    */
-  @Nullable
+  @Nullable @Nls
   String checkTagValue(PsiDocTagValue value);
 
+  /**
+   * Provides reference for the tag.
+   * @param value Doc tag which may hold reference
+   */
   @Nullable
   PsiReference getReference(PsiDocTagValue value);
 }

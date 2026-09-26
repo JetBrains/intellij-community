@@ -1,0 +1,359 @@
+*f:com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
+- sf:INSTANCE:com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
+- f:copy(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:cut(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:delete(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:paste(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+*c:com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
+- com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- <init>(com.intellij.openapi.project.Project):V
+- extractLibraryGroups(java.util.List):java.util.List
+- extractModuleGroups(java.util.List):java.util.List
+- extractModules(java.util.List):java.util.List
+- extractNamedLibraryElements(java.util.List):java.util.List
+- extractProject(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.project.Project
+- extractPsiDirectories(java.util.List):java.util.List
+- p:extractPsiElements(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):java.util.List
+- extractPsiElements(java.util.List):java.util.List
+- extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
+- extractUnloadedModules(java.util.List):java.util.List
+- p:extractValueFromLegacyUserObject(java.lang.Object):java.lang.Object
+*:com.intellij.platform.projectView.impl.ProjectViewNodeUpdateOptionsBuilder
+- a:getDeep():Z
+- a:setDeep(Z):V
+*c:com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- com.intellij.ide.projectView.ProjectViewSettings
+- <init>(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
+- getSortKey():com.intellij.ide.projectView.NodeSortKey
+- isAbbreviatePackageNames():Z
+- isCompactDirectories():Z
+- isFlattenModules():Z
+- isFlattenPackages():Z
+- isFoldersAlwaysOnTop():Z
+- isHideEmptyMiddlePackages():Z
+- isShowExcludedFiles():Z
+- isShowLibraryContents():Z
+- isShowMembers():Z
+- isShowModules():Z
+- isShowScratchesAndConsoles():Z
+- isShowURL():Z
+- isShowVisibilityIcons():Z
+- isStructureView():Z
+- isUseFileNestingRules():Z
+*:com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- a:extractLibraryGroups(java.util.List):java.util.List
+- a:extractModuleGroups(java.util.List):java.util.List
+- a:extractModules(java.util.List):java.util.List
+- a:extractNamedLibraryElements(java.util.List):java.util.List
+- a:extractProject(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.project.Project
+- a:extractPsiDirectories(java.util.List):java.util.List
+- a:extractPsiElements(java.util.List):java.util.List
+- a:extractSingleModule(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):com.intellij.openapi.module.Module
+- a:extractUnloadedModules(java.util.List):java.util.List
+*a:com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
+- <init>(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):V
+- pf:getElementPointer():com.intellij.psi.SmartPsiElementPointer
+- pf:getFile():com.intellij.openapi.vfs.VirtualFile
+- a:visitNodeForSelect(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
+- a:createSelectNodeVisitor(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
+*:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
+- a:getChildren(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodeModelFlow(J,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.impl.ProjectViewUpdater
+- a:continuouslyUpdatePane(com.intellij.platform.projectView.pane.ProjectViewPaneModel,com.intellij.platform.projectView.impl.ProjectViewUpdaterProgressReporter,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.impl.ProjectViewUpdaterProgressReporter
+- a:eventSubmitted():V
+- a:eventsProcessed(I):V
+*a:com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
+- com.intellij.platform.projectView.pane.ProjectViewPaneModel
+- <init>(com.intellij.openapi.project.Project):V
+- pa:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
+- pa:createSelectNodeVisitorProvider():com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
+- pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
+- describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- p:describeSelectInTargets(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- p:flushExternalUpdates(kotlin.coroutines.Continuation):java.lang.Object
+- getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
+- getDataContext(java.util.List):com.intellij.openapi.actionSystem.DataContext
+- getDndHandler():com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
+- getProject():com.intellij.openapi.project.Project
+- pa:getPsi():com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+- f:getState():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+- f:getSuspendingState():com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
+- pa:id(kotlin.coroutines.Continuation):java.lang.Object
+- p:isDefault(kotlin.coroutines.Continuation):java.lang.Object
+- loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
+- manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- p:onStateChanged(com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor,kotlin.coroutines.Continuation):java.lang.Object
+- pa:order(kotlin.coroutines.Continuation):java.lang.Object
+- pa:presentableName(kotlin.coroutines.Continuation):java.lang.Object
+- refreshSettings(kotlin.coroutines.Continuation):java.lang.Object
+- setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
+- setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
+- setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
+- setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
+- p:supportedSortKeys():java.util.List
+- p:supportsFileNesting():Z
+- p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+- p:uiDataSnapshotForSelection(java.util.List,com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+- f:updateNode(J,kotlin.jvm.functions.Function1):V
+- bs:updateNode$default(com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel,J,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- pf:updateSettings():V
+- f:visitTree(Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*a:com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
+- com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
+- <init>(com.intellij.openapi.project.Project):V
+- p:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
+- p:createSelectNodeVisitorProvider():com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
+- pa:createTreeStructure(com.intellij.ide.projectView.ViewSettings):com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
+- p:createTreeStructureViewSettings(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
+- p:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
+- navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
+- p:supportsOption(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+*f:com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModelKt
+- *sf:navigateToTreeStructureNode(com.intellij.openapi.project.Project,com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
+- a:getElementDescriptor():com.intellij.ide.util.treeView.NodeDescriptor
+*f:com.intellij.platform.projectView.impl.TreeStructureProjectViewNodeProvider
+- com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.projectView.impl.AbstractProjectTreeStructure,com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor):V
+- getChildren(com.intellij.platform.projectView.impl.TreeStructureProjectViewNode,kotlin.coroutines.Continuation):java.lang.Object
+- getNodeModelFlow(J,com.intellij.platform.projectView.impl.TreeStructureProjectViewNode,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+- com.intellij.platform.projectView.pane.ProjectViewNodeModel
+- a:getUserObject():java.lang.Object
+*:com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+- a:getNodeById(J):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+- a:getParentByChildId(J):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+*:com.intellij.platform.projectView.pane.ProjectViewDnDOptions
+- a:getAction():com.intellij.ide.dnd.DnDAction
+*:com.intellij.platform.projectView.pane.ProjectViewNodeModel
+- com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
+- com.intellij.ui.treeStructure.TreeNodeWithPresentation
+- a:canNavigate():Z
+- a:canNavigateToSource():Z
+- a:getId():J
+- a:isDirectory():Z
+- a:isIncludedInExpandAll():Z
+- a:shouldBeInitiallyExpanded():Z
+*:com.intellij.platform.projectView.pane.ProjectViewNodeModelBuilder
+- a:buildPresentation(kotlin.jvm.functions.Function1):V
+- a:setCanNavigate(Z):V
+- a:setCanNavigateToSource(Z):V
+- a:setExpandOnDoubleClick(Z):V
+- a:setIncludedInExpandAll(Z):V
+- a:setIsDirectory(Z):V
+- a:setModel(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel):V
+- a:setPathElementId(java.lang.String):V
+- a:setPathElementType(java.lang.String):V
+- a:setShouldBeInitiallyExpanded(Z):V
+*f:com.intellij.platform.projectView.pane.ProjectViewNodeModelKt
+- *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
+*:com.intellij.platform.projectView.pane.ProjectViewNodePath
+- a:getNodeIds():java.util.List
+- a:getPaneId():com.intellij.platform.projectView.pane.ProjectViewPaneId
+*:com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
+- a:performCopy(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performCut(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performDelete(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performPaste(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+*:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
+- a:addSelectInTarget(java.lang.String,java.lang.String,F):V
+- a:build(com.intellij.platform.projectView.pane.ProjectViewPaneId,java.lang.String,I):com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+- a:setDefault(Z):V
+- a:setIcon(javax.swing.Icon):V
+*f:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorKt
+- *sf:projectViewPaneId(java.lang.String):com.intellij.platform.projectView.pane.ProjectViewPaneId
+*:com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
+- a:performInternalDnD(java.util.List,J,com.intellij.platform.projectView.pane.ProjectViewDnDOptions,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.pane.ProjectViewPaneId
+- java.lang.Comparable
+- *sf:Companion:com.intellij.platform.projectView.pane.ProjectViewPaneId$Companion
+- compareTo(com.intellij.platform.projectView.pane.ProjectViewPaneId):I
+- a:getIdString():java.lang.String
+*f:com.intellij.platform.projectView.pane.ProjectViewPaneId$Companion
+- f:getDATA_KEY():com.intellij.openapi.actionSystem.DataKey
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
+*:com.intellij.platform.projectView.pane.ProjectViewPaneModel
+- a:describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- a:findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- a:getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
+- a:getDataContext(java.util.List):com.intellij.openapi.actionSystem.DataContext
+- a:getDndHandler():com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
+- a:getProject():com.intellij.openapi.project.Project
+- a:loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
+- a:manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- a:navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object
+- refreshSettings(kotlin.coroutines.Continuation):java.lang.Object
+- a:setFileNesting(com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue,kotlin.coroutines.Continuation):java.lang.Object
+- a:setOptionValue(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:setPaneSelected(Z,com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions,kotlin.coroutines.Continuation):java.lang.Object
+- a:setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey,kotlin.coroutines.Continuation):java.lang.Object
+- a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+*:com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
+- a:getRequestFocus():Z
+*:com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
+*:com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
+- a:addNode(J,I,com.intellij.platform.projectView.pane.ProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+- a:asBackendStateAccessor():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
+- a:asSettingsAccessor():com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+- a:asSuspendingBackendStateAccessor():com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
+- a:clear(kotlin.coroutines.Continuation):java.lang.Object
+- a:moveNodeChild(J,com.intellij.platform.projectView.pane.ProjectViewNodeModel,I,kotlin.coroutines.Continuation):java.lang.Object
+- a:removeNodeChild(J,I,kotlin.coroutines.Continuation):java.lang.Object
+- a:removeNodeChildren(J,kotlin.coroutines.Continuation):java.lang.Object
+- a:selectNode(com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:selectNode$default(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,com.intellij.platform.projectView.pane.ProjectViewNodePath,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:setNodeChildren(J,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:updateNode(com.intellij.platform.projectView.pane.ProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+- a:updateSettingsState(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.pane.SelectByContext
+- com.intellij.platform.projectView.pane.SelectInRequest
+- a:getContext():com.intellij.ide.SelectInContext
+- a:getTargetId():java.lang.String
+*:com.intellij.platform.projectView.pane.SelectByEditor
+- com.intellij.platform.projectView.pane.SelectInRequest
+- a:getConsiderOnlyLastFocusedEditor():Z
+- a:isInvokedManually():Z
+*:com.intellij.platform.projectView.pane.SelectInProjectViewRequestBuilder
+- a:getRequestFocus():Z
+- a:setRequestFocus(Z):V
+*:com.intellij.platform.projectView.pane.SelectInRequest
+*:com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
+- a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodeById(J,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodeByUserObject(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+- a:getNodePathById(J,kotlin.coroutines.Continuation):java.lang.Object
+- a:getParentByChildId(J,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+- a:getNestingRules():java.util.List
+- a:isFileNestingOn():Z
+*:com.intellij.platform.projectView.settings.ProjectViewPaneOption
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AbbreviatePackageNames
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AbbreviatePackageNames
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollFromSource
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollFromSource
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollToSource
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$AutoscrollToSource
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$CompactDirectories
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$CompactDirectories
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenModules
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenModules
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenPackages
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FlattenPackages
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FoldersAlwaysOnTop
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$FoldersAlwaysOnTop
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$HideEmptyMiddlePackages
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$HideEmptyMiddlePackages
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ManualOrder
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ManualOrder
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenDirectoriesWithSingleClick
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenDirectoriesWithSingleClick
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenInPreviewTab
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$OpenInPreviewTab
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowExcludedFiles
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowExcludedFiles
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowLibraryContents
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowLibraryContents
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowMembers
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowMembers
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowModules
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowModules
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowScratchesAndConsoles
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowScratchesAndConsoles
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowVisibilityIcons
+- com.intellij.platform.projectView.settings.ProjectViewPaneOption
+- sf:INSTANCE:com.intellij.platform.projectView.settings.ProjectViewPaneOption$ShowVisibilityIcons
+- equals(java.lang.Object):Z
+- hashCode():I
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+- a:getFileNesting():com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+- a:getSortKey():com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+- a:isOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsKt
+- *sf:allProjectViewPaneOptions():java.util.List
+- *sf:allProjectViewPaneSortKeys():java.util.List
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
+- *sf:Companion:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService$Companion
+- <init>(com.intellij.openapi.project.Project):V
+- f:getFileNesting():com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
+- *sf:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
+- f:getSortKey():com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+- f:isOptionAlwaysVisible(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- f:isOptionEnabled(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- f:isOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption):Z
+- f:setOptionSelected(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z):V
+- f:setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey):V
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
+- a:setAvailableSortKeys(java.util.List):V
+- a:setFileNesting(Z,Z,java.util.List,java.util.List):V
+- a:setOptionState(com.intellij.platform.projectView.settings.ProjectViewPaneOption,Z,Z,Z):V
+- a:setSortKey(com.intellij.platform.projectView.settings.ProjectViewPaneSortKey):V
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSortByName
+- com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSortByTime
+- com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+- a:isAscending():Z
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSortByType
+- com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+*:com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+- *sf:Companion:com.intellij.platform.projectView.settings.ProjectViewPaneSortKey$Companion
+*f:com.intellij.platform.projectView.settings.ProjectViewPaneSortKey$Companion
+- f:byName():com.intellij.platform.projectView.settings.ProjectViewPaneSortByName
+- f:byTime(Z):com.intellij.platform.projectView.settings.ProjectViewPaneSortByTime
+- f:byType():com.intellij.platform.projectView.settings.ProjectViewPaneSortByType

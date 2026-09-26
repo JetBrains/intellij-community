@@ -1,0 +1,190 @@
+<idea-plugin allow-bundled-update="true">
+  <id>com.jetbrains.performancePlugin</id>
+  <name>Performance Diagnostics</name>
+  <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
+  <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
+
+  <description><![CDATA[
+    <p>Finds the cause of a slow IDE, and gives you the data to report it.</p>
+
+    <ul>
+      <li>Detects a UI freeze, and names the plugin that caused it.</li>
+      <li>Captures a memory snapshot from <b>Help | Diagnostic Tools</b>.</li>
+      <li>Shows the indexing diagnostics for the current project.</li>
+      <li>Adds performance and hardware data to a support request.</li>
+    </ul>
+
+    <p>Want to report a performance problem? — <a href="https://intellij-support.jetbrains.com/hc/en-us/articles/207241235-Reporting-performance-problems">
+    Read More</a></p>
+  ]]></description>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jbr"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.startUpPerformanceReporter"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.impl"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.internal"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.serviceContainer"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.welcomeScreen"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains">
+    <module name="intellij.performanceTesting.remoteDriver"/>
+    <module name="intellij.performanceTesting.remoteDriver.jcef"/>
+    <module name="intellij.performanceTesting.remoteDriver.compose"/>
+    <module name="intellij.performanceTesting.vcs"/>
+    <module name="intellij.performanceTesting.debugger"/>
+    <module name="intellij.performanceTesting.frontend"/>
+    <module name="intellij.performanceTesting.frontend.base"/>
+    <module name="intellij.performanceTesting.problemsView"/>
+    <module name="intellij.performanceTesting.structureView"/>
+    <module name="intellij.performanceTesting.backend"/>
+    <module name="intellij.performanceTesting.frontend.split"/>
+    <module name="intellij.performanceTesting.backend.split"/>
+    <module name="intellij.performanceTesting.rdct"/>
+    <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
+    <module name="intellij.driver.model" loading="embedded"/>
+    <module name="intellij.driver.impl" loading="embedded"/>
+    <module name="intellij.driver.client" loading="embedded"/>
+    <module name="intellij.driver.frontend.split"/>
+    <module name="intellij.driver.backend.split"/>
+    <module name="intellij.performanceTesting.async.core"/>
+    <module name="intellij.performanceTesting.freezes"/>
+    <!-- oshi backs HardwareCollector. The platform no longer ships it, so this plugin owns it in a product.
+         It stays in the 'jetbrains' namespace because the test tooling content modules of other plugins depend on it -->
+    <module name="intellij.libraries.oshi.core" loading="embedded"/>
+  </content>
+  <content>
+    <module name="intellij.libraries.assertj.core" loading="embedded"/>
+    <!-- assertj-swing is a private library of this plugin. The unnamed content tag registers the wrapper in the
+         implicit per-plugin namespace, and 'embedded' publishes the classes to the plugins that depend on this one -->
+    <module name="intellij.libraries.assertj.swing" loading="embedded"/>
+  </content>
+
+  <actions>
+    <group id="StartProfileGroup">
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </group>
+    <group id="DiagnosticGroup">
+      <separator/>
+      <action id="CaptureMemorySnapShot" class="com.jetbrains.performancePlugin.actions.CaptureMemorySnapshotAction" icon="AllIcons.Actions.ProfileMemory"/>
+      <separator/>
+      <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
+    </group>
+
+    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"/>
+    <action id="SimulateRWFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateRWFreeze"/>
+
+    <reference ref="CaptureMemorySnapShot">
+      <add-to-group group-id="HelpMenu" relative-to-action="CollectZippedLogs" anchor="after"/>
+    </reference>
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.jetbrains.performancePlugin.CommandProvider" name="commandProvider" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.PerformancePlaybackRunner" name="playbackRunnerProvider" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler" dynamic="false"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.profilers.SnapshotOpener" name="snapshotOpener" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.profilers.Profiler" name="profiler" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <troubleInfoCollector implementation="com.jetbrains.performancePlugin.PerformanceTroubleInfoCollector"/>
+    <troubleInfoCollector implementation="com.jetbrains.performancePlugin.utils.HardwareCollector"/>
+
+    <initProjectActivity implementation="com.jetbrains.performancePlugin.PerformancePluginInitProjectActivity"/>
+    <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
+    <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
+
+    <notificationGroup id="PerformancePlugin" displayType="STICKY_BALLOON"
+                       bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"
+                       notificationIds="promo.notification.automatic.error.report"/>
+    <registryKey key="performance.plugin.playback.runner.useDirectActionCall" defaultValue="false"
+                 description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework"
+                 restartRequired="false"/>
+
+    <internal.performanceTests.projectInitializationDiagnosticHandler
+      implementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticHandlerImpl"/>
+
+    <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
+    <applicationLoadHandler implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
+
+    <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter" internal="true"/>
+
+    <toolWindow id="EventQueue Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
+                factoryClass="com.jetbrains.performancePlugin.ui.EventWatcherToolWindowFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.snapshotOpener implementation="com.jetbrains.performancePlugin.profilers.LocalFileManagerSnapshotOpener"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.jetbrains.performancePlugin.ProjectLoaded$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisFileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.BeforeFileOpenLoggerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.FileOpenLoggerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.jetbrains.performancePlugin.BaseCommandProvider"/>
+    <runCallbackHandler implementation="com.jetbrains.performancePlugin.BaseRunCallbackHandler"/>
+    <playbackRunnerProvider implementation="com.jetbrains.performancePlugin.LocalPlaybackRunner" />
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,82 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint name="xdebugger.imageEditorUIProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.frame.ImageEditorUIProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.frontendLineBreakpointAttachmentProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.FrontendXLineBreakpointAttachmentProvider" dynamic="true"/>
+  </extensionPoints>
+  <actions resource-bundle="messages.FrontendDebuggerImplBundle">
+    <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
+
+    <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
+      <add-to-group group-id="DebugReloadGroup" anchor="first"/>
+      <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
+    </action>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false"
+                 description="Disable the HotSwap floating toolbar button when the changed sources are not compatible with HotSwap. Alternatively suggest restart."
+                 key="debugger.hotswap.disable.button.for.incompatible.changes"/>
+
+    <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
+    <gutterMarkPreprocessor implementation="com.intellij.platform.debugger.impl.frontend.breakpoints.BreakpointGutterIconMerge"/>
+    <editorAudioCueDetector implementation="com.intellij.platform.debugger.impl.frontend.BreakpointLineAudioCueDetector"/>
+    <audioCueProvider implementation="com.intellij.platform.debugger.impl.frontend.DebuggerAudioCueProvider"/>
+    <notificationSound group="Breakpoint hit" sound="sounds/breakpoint.wav"/>
+    <projectService serviceInterface="com.intellij.platform.debugger.impl.shared.CustomDescriptorStateManager"
+                    serviceImplementation="com.intellij.platform.debugger.impl.frontend.FrontendCustomDescriptorStateManager"/>
+    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
+    <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"
+                                             topicId="xdebugger.show.breakpoint.dialog"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.UpdateExecutionPositionRemoteTopicListener"
+                                             topicId="xdebugger.update.execution.position"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"
+                                             topicId="xdebugger.show.image.popup"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"
+                                             topicId="xdebugger.show.frame.notification"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"
+                                             topicId="xdebugger.show.session.tab"/>
+
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.platform.debugger.impl.frontend.ExecutionPointManagerChangeListener"
+              topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>
+  </projectListeners>
+</idea-plugin>

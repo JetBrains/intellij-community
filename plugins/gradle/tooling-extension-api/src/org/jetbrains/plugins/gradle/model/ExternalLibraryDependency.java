@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import org.gradle.api.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalLibraryDependency extends ExternalDependency {
   /**

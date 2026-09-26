@@ -1,76 +1,79 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class XDebuggerEditorsProvider {
-  @NotNull
-  public abstract FileType getFileType();
+  public abstract @NotNull FileType getFileType();
 
-  /**
-   * @deprecated Use {@link #createDocument(com.intellij.openapi.project.Project, com.intellij.xdebugger.XExpression,
-   * com.intellij.xdebugger.XSourcePosition, com.intellij.xdebugger.evaluation.EvaluationMode)} instead
-   */
-  @NotNull
+  /** @deprecated Use {@link #createDocument(Project, XExpression, XSourcePosition, EvaluationMode)} instead */
   @Deprecated
-  public Document createDocument(@NotNull Project project,
+  public @NotNull Document createDocument(@NotNull Project project,
                                  @NotNull String text,
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
-    throw new AbstractMethodError();
+    throw new AbstractMethodError("createDocument must be implemented in " + getClass());
   }
 
-  @NotNull
-  public Document createDocument(@NotNull Project project,
+  public @NotNull Document createDocument(@NotNull Project project,
                                           @NotNull XExpression expression,
                                           @Nullable XSourcePosition sourcePosition,
-                                          @NotNull EvaluationMode mode) {
-    //noinspection deprecation
+                                          @NotNull EvaluationMode mode,
+                                          @Nullable String purpose) {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
 
-  @NotNull
-  public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
-    FileType type = getFileType();
-    if (type instanceof LanguageFileType) {
-      return Collections.singleton(((LanguageFileType)type).getLanguage());
-    }
-    return Collections.emptyList();
+  public @NotNull Document createDocument(@NotNull Project project,
+                                          @NotNull XExpression expression,
+                                          @Nullable XSourcePosition sourcePosition,
+                                          @NotNull EvaluationMode mode) {
+    return createDocument(project, expression, sourcePosition, mode, null);
   }
 
-  @NotNull
-  public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
+  public void afterEditorCreated(@Nullable Editor editor) {}
+
+  public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
+    FileType type = getFileType();
+    return type instanceof LanguageFileType fileType ? Collections.singleton(fileType.getLanguage()) : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@NotNull @Unmodifiable Collection<Language>> getSupportedLanguagesAsync(
+    @NotNull Project project,
+    @Nullable XSourcePosition sourcePosition
+  ) {
+    return CompletableFuture.completedFuture(getSupportedLanguages(project, sourcePosition));
+  }
+
+  public @NotNull XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
     return XDebuggerUtil.getInstance().createExpression(document.getText(), language, null, mode);
   }
 
-  @NotNull
-  public InlineDebuggerHelper getInlineDebuggerHelper() {
+  public @NotNull InlineDebuggerHelper getInlineDebuggerHelper() {
     return InlineDebuggerHelper.DEFAULT;
+  }
+
+  /**
+   * Return false to disable evaluate expression field in the debugger tree.
+   */
+  @ApiStatus.Experimental
+  public boolean isEvaluateExpressionFieldEnabled() {
+    return true;
   }
 }

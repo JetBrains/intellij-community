@@ -19,7 +19,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/17/2014
  */
 public interface IExternalSystemSourceType extends Serializable {
   boolean isTest();

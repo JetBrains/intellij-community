@@ -1,0 +1,6 @@
+// "Convert left-hand side to 'Int'" "true"
+// K2_ERROR: EQUALITY_NOT_APPLICABLE
+fun test(b: Byte, i: Int): Boolean {
+    return <caret>b == i
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

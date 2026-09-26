@@ -1,0 +1,12 @@
+// "Let the anonymous object implement interface 'Runnable'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: SYNTAX
+
+fun foo(r: Runnable) {}
+
+fun bar() {
+    foo(<caret>object: {})
+}
+
+interface Runnable
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.LetImplementInterfaceFixFactories$LetImplementInterfaceFix

@@ -17,7 +17,7 @@ public class Cycle1{
         void foo(int ggg){}
         
         void foo1(){
-            <ref>foo();
+            <caret>foo();
         }
     }
 }

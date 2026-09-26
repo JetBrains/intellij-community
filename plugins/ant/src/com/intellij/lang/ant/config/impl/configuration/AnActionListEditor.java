@@ -15,21 +15,25 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,10 +48,11 @@ public class AnActionListEditor<T> extends JPanel {
     add(myForm.myWholePanel, BorderLayout.CENTER);
   }
 
-  public void addAddAction(final Factory<T> newItemFactory) {
+  public void addAddAction(final Factory<? extends T> newItemFactory) {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
-    description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
+      @Override
       public void afterActionPerformed(T value) {
         myAdded.add(value);
       }
@@ -55,9 +60,10 @@ public class AnActionListEditor<T> extends JPanel {
     description.setShowText(true);
   }
 
-  public void addRemoveButtonForAnt(final Condition<T> removeCondition, String actionName) {
+  public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, @NlsActions.ActionText String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
-    description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
+      @Override
       public void afterActionPerformed(List<T> list) {
         for (T item : list) {
           if (myAdded.contains(item)) {
@@ -74,12 +80,12 @@ public class AnActionListEditor<T> extends JPanel {
       if (list.size() == 1) {
         return Messages.showOkCancelDialog(description.getList(),
                                            AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
-                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           AntBundle.message("delete.confirmation.dialog.title"),
                                            Messages.getQuestionIcon()) == Messages.OK;
       } else {
         return Messages.showOkCancelDialog(description.getList(),
                                            AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
-                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           AntBundle.message("delete.confirmation.dialog.title"),
                                            Messages.getQuestionIcon()) == Messages.OK;
       }
     });
@@ -88,14 +94,14 @@ public class AnActionListEditor<T> extends JPanel {
   }
 
   public T getSelectedItem() {
-    return (T)myForm.myList.getSelectedValue();
+    return myForm.myList.getSelectedValue();
   }
 
   public void setSelection(T item) {
     myForm.select(item);
   }
 
-  public JList getList() {
+  public JList<T> getList() {
     return myForm.myList;
   }
 
@@ -107,8 +113,8 @@ public class AnActionListEditor<T> extends JPanel {
     return myRemoved;
   }
 
-  public void setItems(Collection<T> items) {
-    DefaultListModel model = myForm.getListModel();
+  public void setItems(Collection<? extends T> items) {
+    DefaultListModel<T> model = myForm.getListModel();
     model.removeAllElements();
     for (T item : items) {
       model.addElement(item);
@@ -125,20 +131,39 @@ public class AnActionListEditor<T> extends JPanel {
     myForm.createToolbar();
   }
 
-  private static class Form <T> {
-    private JComponent myWholePanel;
-    private JPanel myActionsPlace;
-    private JList myList;
+  private static class Form<T> {
+    private final JComponent myWholePanel;
+    private final JPanel myActionsPlace;
+    private final JList<T> myList;
     private final ReorderableListToolbar<T> myListController;
 
-    public Form() {
-      myList.setModel(new DefaultListModel());
-      if (ApplicationManager.getApplication() == null) {
-        myListController = new ReorderableListToolbar<>(myList);
-        return;  // Preview mode
+    Form() {
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myWholePanel = new JPanel();
+        myWholePanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myActionsPlace = new JPanel();
+        myWholePanel.add(myActionsPlace, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+        final JBScrollPane jBScrollPane1 = new JBScrollPane();
+        myWholePanel.add(jBScrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                            null, null, null, 0, false));
+        myList = new JBList();
+        myList.setSelectionMode(0);
+        jBScrollPane1.setViewportView(myList);
       }
+      myList.setModel(new DefaultListModel<>());
       myListController = new ReorderableListToolbar<>(myList);
     }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myWholePanel; }
 
     public void createToolbar() {
       myActionsPlace.removeAll();
@@ -150,8 +175,8 @@ public class AnActionListEditor<T> extends JPanel {
       return myListController;
     }
 
-    private DefaultListModel getListModel() {
-      return (DefaultListModel)myList.getModel();
+    private DefaultListModel<T> getListModel() {
+      return (DefaultListModel<T>)myList.getModel();
     }
 
     public void select(T item) {
@@ -164,7 +189,7 @@ public class AnActionListEditor<T> extends JPanel {
     }
 
     public void updateItem(T item) {
-      DefaultListModel model = getListModel();
+      DefaultListModel<T> model = getListModel();
       model.setElementAt(item, model.indexOf(item));
     }
   }

@@ -1,0 +1,31 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PySubscriptionExpression
+    PyReferenceExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiElement(Py:LBRACKET)('[')
+    PyTupleExpression
+      PyFunctionTypeRepresentation
+        PyParameterListRepresentation
+          PsiElement(Py:LPAR)('(')
+          PyReferenceExpression: int
+            PsiElement(Py:IDENTIFIER)('int')
+          PsiElement(Py:RPAR)(')')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:RARROW)('->')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: int
+          PsiElement(Py:IDENTIFIER)('int')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyFunctionTypeRepresentation
+        PyParameterListRepresentation
+          PsiElement(Py:LPAR)('(')
+          PyReferenceExpression: str
+            PsiElement(Py:IDENTIFIER)('str')
+          PsiElement(Py:RPAR)(')')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:RARROW)('->')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+    PsiElement(Py:RBRACKET)(']')

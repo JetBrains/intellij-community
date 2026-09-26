@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2026 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,74 +15,97 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.debugger.NodeTypes;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyXDebugValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.tree.TreePath;
 
 /**
  * @author amarch
  */
 
-public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
+public class PyViewNumericContainerAction extends XDebuggerTreeBackendOnlyActionBase {
 
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValue value, @NlsSafe @NotNull String nodeName, @NotNull AnActionEvent e) {
     Project p = e.getProject();
-    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-      PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+    if (p != null && value instanceof PyXDebugValue debugValue) {
       showNumericViewer(p, debugValue);
     }
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
-    PyDataView.getInstance(project).show(debugValue);
+    PyDataView.Companion.getInstance(project).show(debugValue);
   }
 
-  @Nullable
-  private static TreePath[] getSelectedPaths(DataContext dataContext) {
-    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
-    return tree == null ? null : tree.getSelectionPaths();
+  private static void showNumericViewer(Project project, PyXDebugValue debugValue) {
+    showNumericViewer(project, debugValue.toPyDebugValue());
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(false);
-    TreePath[] paths = getSelectedPaths(e.getDataContext());
-    if (paths != null) {
-      if (paths.length > 1) {
-        e.getPresentation().setVisible(false);
-        return;
-      }
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
-      XValueNodeImpl node = getSelectedNode(e.getDataContext());
-      if (node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-        PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
-
-        String nodeType = debugValue.getType();
-        if ("ndarray".equals(nodeType)) {
-          e.getPresentation().setText("View as Array");
-          e.getPresentation().setVisible(true);
-        }
-        else if (("DataFrame".equals(nodeType))) {
-          e.getPresentation().setText("View as DataFrame");
-          e.getPresentation().setVisible(true);
-        }
-        else {
-          e.getPresentation().setVisible(false);
-        }
-      }
-      else
-      {
-        e.getPresentation().setVisible(false);
-      }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    XValue value = getSelectedValue(e.getDataContext());
+    if (!(value instanceof PyXDebugValue debugValue)) {
+      e.getPresentation().setVisible(false);
+      return;
     }
+
+    if (!isViewNumericContainerSupported(debugValue)) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
+
+    String nodeType = debugValue.getType();
+    if (isArrayNodeType(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
+      e.getPresentation().setVisible(true);
+    }
+    else if (isDataFrameNodeType(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
+      e.getPresentation().setVisible(true);
+    }
+    else if (isSeriesNodeType(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
+      e.getPresentation().setVisible(true);
+    }
+    else {
+      e.getPresentation().setVisible(false);
+    }
+  }
+
+  public static boolean isViewNumericContainerSupported(@NotNull PyXDebugValue debugValue) {
+    String nodeType = debugValue.getType();
+    return isArrayNodeType(nodeType) || isDataFrameNodeType(nodeType) || isSeriesNodeType(nodeType);
+  }
+
+  private static boolean isArrayNodeType(String nodeType) {
+    return NodeTypes.NDARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RECARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.EAGER_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RESOURCE_VARIABLE_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.SPARSE_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.TENSOR_NODE_TYPE.equals(nodeType);
+  }
+
+  private static boolean isDataFrameNodeType(String nodeType) {
+    return NodeTypes.DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+           NodeTypes.GEO_DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+           NodeTypes.DATASET_NODE_TYPE.equals(nodeType);
+  }
+
+  private static boolean isSeriesNodeType(String nodeType) {
+    return NodeTypes.SERIES_NODE_TYPE.equals(nodeType) || NodeTypes.GEO_SERIES_NODE_TYPE.equals(nodeType);
   }
 }

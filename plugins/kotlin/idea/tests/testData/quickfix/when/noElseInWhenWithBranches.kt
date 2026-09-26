@@ -1,0 +1,10 @@
+// "Add else branch" "true"
+// K2_ERROR: NO_ELSE_IN_WHEN
+fun test() {
+    val a = 12
+    val x = wh<caret>en (a) {
+        in 0..11 -> { /* some code */ }
+        12, 13, 14 -> { /* some code */ }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix

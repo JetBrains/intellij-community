@@ -1,7 +1,0 @@
-public java.lang.String toString() {
-return com.google.common.base.MoreObjects.toStringHelper(this)
-#foreach ($member in $members)
-.add("$member.name", $member.accessor)
-#end
-.toString();
-}

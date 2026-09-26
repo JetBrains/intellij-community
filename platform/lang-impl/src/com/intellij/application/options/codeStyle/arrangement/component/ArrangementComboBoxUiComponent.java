@@ -1,54 +1,34 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- * @since 3/11/13 11:56 AM
- */
-public class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
+public final class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
   
-  @NotNull private final JComboBox myComboBox;
+  private final JComboBox<ArrangementSettingsToken> myComboBox;
 
-  @SuppressWarnings("unchecked")
-  public ArrangementComboBoxUiComponent(@NotNull List<ArrangementSettingsToken> tokens) {
+  public ArrangementComboBoxUiComponent(@NotNull List<? extends ArrangementSettingsToken> tokens) {
     super(tokens);
     ArrangementSettingsToken[] tokensArray = tokens.toArray(new ArrangementSettingsToken[0]);
-    Arrays.sort(tokensArray, (t1, t2) -> t1.getRepresentationValue().compareTo(t2.getRepresentationValue()));
-    myComboBox = new JComboBox(tokensArray);
-    myComboBox.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        setText(((ArrangementSettingsToken)value).getRepresentationValue());
-      }
-    });
+    Arrays.sort(tokensArray, Comparator.comparing(ArrangementSettingsToken::getRepresentationValue));
+    myComboBox = new ComboBox<>(tokensArray);
+    myComboBox.setRenderer(BuilderKt.textListCellRenderer("", ArrangementSettingsToken::getRepresentationValue));
     myComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -58,18 +38,17 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
       }
     });
     int minWidth = 0;
-    ListCellRenderer renderer = myComboBox.getRenderer();
-    JBList dummyList = new JBList();
+    JBList<ArrangementSettingsToken> dummyList = new JBList<>();
     for (int i = 0, max = myComboBox.getItemCount(); i < max; i++) {
-      Component rendererComponent = renderer.getListCellRendererComponent(dummyList, myComboBox.getItemAt(i), i, false, true);
+      Component rendererComponent = myComboBox.getRenderer().getListCellRendererComponent(
+        dummyList, myComboBox.getItemAt(i), i, false, true);
       minWidth = Math.max(minWidth, rendererComponent.getPreferredSize().width);
     }
     myComboBox.setPreferredSize(new Dimension(minWidth * 5 / 3, myComboBox.getPreferredSize().height));
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return (ArrangementSettingsToken)myComboBox.getSelectedItem();
   }
 
@@ -78,9 +57,8 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
     myComboBox.setSelectedItem(data); 
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     ArrangementSettingsToken token = getToken();
     return new ArrangementAtomMatchCondition(token, token);
   }

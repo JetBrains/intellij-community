@@ -1,0 +1,80 @@
+PyFile:LazyImport.py
+  PyImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:os
+      PyReferenceExpression: os
+        PsiElement(Py:IDENTIFIER)('os')
+  PsiWhiteSpace('\n')
+  PyImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:os.path
+      PyReferenceExpression: path
+        PyReferenceExpression: os
+          PsiElement(Py:IDENTIFIER)('os')
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:IDENTIFIER)('path')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:AS_KEYWORD)('as')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: p
+        PsiElement(Py:IDENTIFIER)('p')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: path
+      PyReferenceExpression: os
+        PsiElement(Py:IDENTIFIER)('os')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('path')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:join
+      PyReferenceExpression: join
+        PsiElement(Py:IDENTIFIER)('join')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: path
+      PyReferenceExpression: os
+        PsiElement(Py:IDENTIFIER)('os')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('path')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:LPAR)('(')
+    PyImportElement:join
+      PyReferenceExpression: join
+        PsiElement(Py:IDENTIFIER)('join')
+    PsiElement(Py:COMMA)(',')
+    PsiWhiteSpace(' ')
+    PyImportElement:isfile
+      PyReferenceExpression: isfile
+        PsiElement(Py:IDENTIFIER)('isfile')
+    PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:LAZY_KEYWORD)('lazy')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:DOT)('.')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement:sibling
+      PyReferenceExpression: sibling
+        PsiElement(Py:IDENTIFIER)('sibling')

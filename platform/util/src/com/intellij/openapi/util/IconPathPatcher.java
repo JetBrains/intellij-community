@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -8,42 +10,42 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class IconPathPatcher {
   /**
-   * @deprecated
-   * @see #patchPath(String, Class)
+   * @deprecated use {@link #patchPath(String, ClassLoader)}
    */
-  @Nullable
-  public String patchPath(String path) {
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public @Nullable String patchPath(@NotNull String path) {
     return patchPath(path, null);
   }
 
   /**
-   * Patches the path or returns null if nothing has patched
-   * @param path path to the icon
+   * Patches the path or returns {@code null} if nothing has patched.
+   *
+   * @param path        path to the icon
    * @param classLoader ClassLoader of the icon is requested from
-   * @return patched path or null
+   * @return patched path or {@code null}
    */
-  @Nullable
-  public String patchPath(String path, ClassLoader classLoader) {
+  public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
     return null;
   }
 
   /**
-   * @deprecated
-   * @see #getContextClass(String, Class)
+   * @deprecated use {@link #getContextClassLoader(String, ClassLoader)}
    */
   @Deprecated
-  public Class getContextClass(String path) {
+  @ApiStatus.ScheduledForRemoval
+  public Class<?> getContextClass(@NotNull String path) {
     return null;
   }
 
   /**
-   * Return ClassLoader for icon path or returns null if nothing has patched
-   * @param path path to the icon
+   * Return ClassLoader for icon path or {@code null} if nothing has patched.
+   *
+   * @param path                path to the icon
    * @param originalClassLoader ClassLoader of the icon is requested from
-   * @return patched icon ClassLoader or null
+   * @return patched icon ClassLoader or {@code null}
    */
-  @Nullable
-  public ClassLoader getContextClassLoader(String path, ClassLoader originalClassLoader) {
+  public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
     return null;
   }
 }

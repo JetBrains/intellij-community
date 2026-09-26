@@ -19,19 +19,17 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
 
-/**
- *  @author dsl
- */
-public class FindClassInDeepPackagesTest extends PsiTestCase {
+public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
   @Override
   protected void setUpJdk() {
   }
@@ -41,10 +39,11 @@ public class FindClassInDeepPackagesTest extends PsiTestCase {
     VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
       String path = testRoot + "/" + s;
       path = path.replace(File.separatorChar, '/');
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      return StandardFileSystems.local().refreshAndFindFileByPath(path);
     });
     assertNotNull(classesRoot);
     ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   public void testSRC() {

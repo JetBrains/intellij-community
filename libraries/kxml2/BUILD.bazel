@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kxml2` start
+jvm_library(
+    name = "kxml2",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kxml2",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kxml2-kxml2"],
+    runtime_deps = ["@lib//:libraries-kxml2-kxml2"],
+)
+
+jvm_library(
+    name = "kxml2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kxml2",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kxml2-kxml2"],
+    runtime_deps = [":kxml2"],
+)
+### auto-generated section `build intellij.libraries.kxml2` end
+
+### auto-generated section `iml intellij.libraries.kxml2` start
+exports_files(
+    [
+        "intellij.libraries.kxml2.iml",
+        "resources/intellij.libraries.kxml2.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kxml2` end

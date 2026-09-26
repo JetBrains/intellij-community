@@ -1,0 +1,7 @@
+package ppp;
+public class A {
+  public static class Helper { }
+  public Object make() {
+    return new Helper();
+  }
+}

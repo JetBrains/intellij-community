@@ -15,10 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyOverloadsInspectionTest extends PyInspectionTestCase {
 
   // PY-22971
@@ -41,14 +45,46 @@ public class PyOverloadsInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testSingleOverload() {
+    doTest();
+  }
+
+  public void testStaticOrClassMethods() {
+    doTest();
+  }
+
+  public void testOverriddenMethods() {
+    doTest();
+  }
+
+  public void testFinalMethods() {
+    doTest();
+  }
+
+  // PY-86525
+  public void testOverlappingOverloads() {
+    doTest();
+  }
+
+  // PY-86525
+  public void testOverlappingOverloadsDifferentReturnType() {
+    doTest();
+  }
+
+  // PY-86525
+  // See https://github.com/python/typing/issues/253#issuecomment-389262904
+  public void testDunderGetNotReported() {
+    doTest();
+  }
+
+  // PY-86525
+  public void testIncompatibleSelfType() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyOverloadsInspection.class;
-  }
-
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> super.doTest());
   }
 }

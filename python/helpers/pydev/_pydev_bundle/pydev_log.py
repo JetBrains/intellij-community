@@ -1,7 +1,7 @@
 import sys
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder
 from _pydev_imps._pydev_saved_modules import threading
-currentThread = threading.currentThread
+currentThread = threading.current_thread
 
 
 import traceback

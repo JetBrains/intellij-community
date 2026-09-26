@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,38 +12,46 @@ import java.util.List;
  */
 public abstract class PsiReferenceService {
 
-  public static final Key<Hints> HINTS = Key.create("HINTS");
-
   public static PsiReferenceService getService() {
-    return ServiceManager.getService(PsiReferenceService.class);
+    return ApplicationManager.getApplication().getService(PsiReferenceService.class);
   }
 
   /**
-   * By default, return the same as {@link com.intellij.psi.PsiElement#getReferences()}.
-   * For elements implementing {@link com.intellij.psi.ContributedReferenceHost} also run
-   * the reference providers registered in {@link com.intellij.psi.PsiReferenceContributor}
+   * By default, return the same as {@link PsiElement#getReferences()}.
+   * For elements implementing {@link ContributedReferenceHost} also run
+   * the reference providers registered in {@link PsiReferenceContributor}
    * extensions.
    * @param element PSI element to which the references will be bound
-   * @param hints optional hints which are passed to {@link com.intellij.psi.PsiReferenceProvider#acceptsHints(PsiElement, com.intellij.psi.PsiReferenceService.Hints)} and
-   * {@link com.intellij.psi.PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
-   * fail-fast checks in case the pattern takes long to match.
+   * @param hints optional hints which are passed to {@link PsiReferenceProvider#acceptsHints(PsiElement, PsiReferenceService.Hints)} and
+   * {@link PsiReferenceProvider#acceptsTarget(PsiElement)} before the {@link com.intellij.patterns.ElementPattern} is matched, for performing
+   * fail-fast checks in case the pattern takes a long time to match.
    * @return the references
    */
-  @NotNull
-  public abstract List<PsiReference> getReferences(@NotNull final PsiElement element, @NotNull final Hints hints);
+  public abstract @NotNull List<PsiReference> getReferences(final @NotNull PsiElement element, final @NotNull Hints hints);
 
-  @NotNull
-  public PsiReference[] getContributedReferences(@NotNull final PsiElement element) {
+  public PsiReference @NotNull [] getContributedReferences(final @NotNull PsiElement element) {
     final List<PsiReference> list = getReferences(element, Hints.NO_HINTS);
     return list.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-
+  /**
+   * Hints to be passed to PSI when searching for usages, allowing to avoid creating all references when none of them would be suitable.
+   * @see PsiReferenceProvider#acceptsHints
+   * @see ContributedReferenceHost
+   * @see HintedReferenceHost
+   */
   public static class Hints {
     public static final Hints NO_HINTS = new Hints();
 
-    @Nullable public final PsiElement target;
-    @Nullable public final Integer offsetInElement;
+    /**
+     * Passed during highlighting to query only reference providers that may provide references that should be underlined.
+     *
+     * @see com.intellij.codeInsight.highlighting.HighlightedReference
+     */
+    public static final Hints HIGHLIGHTED_REFERENCES = new Hints();
+
+    public final @Nullable PsiElement target;
+    public final @Nullable Integer offsetInElement;
 
     public Hints() {
       target = null;

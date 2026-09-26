@@ -1,0 +1,16 @@
+// "Create member function 'A.foo'" "true"
+// KEEP_ACTIONS_LIST_ORDER
+// K2_ACTIONS_LIST: Create member function 'A.foo'
+// K2_ACTIONS_LIST: Create parameter 'foo'
+// K2_ACTIONS_LIST: Rename reference
+// K2_ACTIONS_LIST: Create annotation 'foo'
+// K2_ACTIONS_LIST: Create extension function 'A<U>.foo'
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+
+class A<T>(val n: T)
+
+fun <U> A<U>.test(): A<Int> {
+    return this.<caret>foo(2, "2")
+}

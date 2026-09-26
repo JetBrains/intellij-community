@@ -22,12 +22,17 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.VariableContext;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
+import org.intellij.lang.xpath.psi.XPathVariableHolder;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,13 +43,13 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         super(node);
     }
 
-    @NotNull
-    public String getReferencedName() {
+    @Override
+    public @NotNull String getReferencedName() {
         return getText().substring(1);
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
         final XPathVariable xPathVariable = resolve();
         if (xPathVariable != null) {
             return xPathVariable.getType();
@@ -52,26 +57,28 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return XPathType.UNKNOWN;
     }
 
+    @Override
     public PsiReference getReference() {
         return this;
     }
 
-    @NotNull
-    public PsiElement getElement() {
+    @Override
+    public @NotNull PsiElement getElement() {
         return this;
     }
 
+    @Override
     public int getTextOffset() {
         return getTextRange().getStartOffset() + 1;
     }
 
-    @NotNull
-    public TextRange getRangeInElement() {
+    @Override
+    public @NotNull TextRange getRangeInElement() {
         return TextRange.from(1, getTextLength() - 1);
     }
 
-    @Nullable
-    public XPathVariable resolve() {
+    @Override
+    public @Nullable XPathVariable resolve() {
       if (getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
         XPathVariableHolder f = PsiTreeUtil.getParentOfType(this, XPathVariableHolder.class, true);
         while (f != null) {
@@ -89,8 +96,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
       return context.resolve(this);
     }
 
-  @Nullable
-  private static XPathVariable findVariable(XPathVariableDeclaration[] declarations, String referencedName) {
+  private static @Nullable XPathVariable findVariable(XPathVariableDeclaration[] declarations, String referencedName) {
     for (XPathVariableDeclaration decl : declarations) {
       final XPathVariable v = decl.getVariable();
       if (v != null) {
@@ -102,16 +108,18 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
     return null;
   }
 
-  @NotNull
-    public String getCanonicalText() {
+  @Override
+  public @NotNull String getCanonicalText() {
         return getText();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    @Override
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         renameTo(newElementName);
         return this;
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         renameTo(((PsiNamedElement)element).getName());
         return this;
@@ -129,7 +137,8 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         getNode().replaceChild(oldName.getLocalNode(), localNode);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    @Override
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (element instanceof XPathVariable) {
             final XPathVariable resolved = resolve();
             if (getReferencedName().equals(((XPathVariable)element).getName())) {
@@ -145,17 +154,13 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return false;
     }
 
-    @NotNull
-    public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
+    @Override
     public boolean isSoft() {
         return true;
     }
 
-    @Nullable
-    public PrefixedName getQName() {
+    @Override
+    public @Nullable PrefixedName getQName() {
         final ASTNode[] nodes = getNode().getChildren(QNAME_FILTER);
         if (nodes.length == 1) {
             return new PrefixedNameImpl(nodes[0]);
@@ -165,16 +170,12 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return null;
     }
 
+    @Override
     public int hashCode() {
         return getReferencedName().hashCode();
     }
 
-    @Override
-    @SuppressWarnings({ "EqualsWhichDoesntCheckParameterClass" })
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathVariableReference(this);
   }

@@ -1,0 +1,32 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.references
+
+import com.intellij.psi.MultiRangeReference
+import org.jetbrains.kotlin.lexer.KtToken
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtImplementationDetail
+import org.jetbrains.kotlin.util.OperatorNameConventions
+
+@SubclassOptInRequired(KtImplementationDetail::class)
+abstract class KtArrayAccessReference(
+    expression: KtArrayAccessExpression
+) : KtSimpleReference<KtArrayAccessExpression>(expression), MultiRangeReference {
+    override val resolvesByNames: Collection<Name>
+        get() = NAMES
+
+    override fun getRangeInElement() = element.textRange.shiftRight(-element.textOffset)
+
+    private fun getBracketRange(bracketToken: KtToken) =
+        expression.indicesNode.node.findChildByType(bracketToken)?.textRange?.shiftRight(-expression.textOffset)
+
+    override fun getRanges() = listOfNotNull(getBracketRange(KtTokens.LBRACKET), getBracketRange(KtTokens.RBRACKET))
+
+    override fun canRename() = true
+
+    companion object {
+        private val NAMES = listOf(OperatorNameConventions.GET, OperatorNameConventions.SET)
+    }
+}

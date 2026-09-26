@@ -1,0 +1,263 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.pyproject.statistics
+
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.ProjectScope
+import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
+import com.intellij.python.pyproject.PY_PROJECT_TOML_DEPENDENCY_GROUPS
+import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.jetbrains.python.packaging.PyPackageName
+import com.intellij.python.requirements.parser.PyRequirementParser
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import org.jetbrains.annotations.ApiStatus
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTable
+import java.util.concurrent.atomic.AtomicInteger
+
+internal val PYTHON_TOOL_MARKERS: Map<String, Set<String>> = mapOf(
+  "bandit" to setOf(".bandit"),
+  "black" to setOf("black.toml"),
+  "codespell" to setOf(".codespellrc"),
+  "coverage" to setOf(".coveragerc"),
+  "flit" to setOf("flit.ini"),
+  "flake8" to setOf(".flake8"),
+  "great-expectations" to setOf("great_expectations.yml"),
+  "hatch" to setOf("hatch.toml", "hatch.lock"),
+  "hypothesis" to setOf(".hypothesis"),
+  "isort" to setOf(".isort.cfg"),
+  "mypy" to setOf("mypy.ini", ".mypy.ini"),
+  "nox" to setOf("noxfile.py"),
+  "pdm" to setOf("pdm.lock"),
+  "pixi" to setOf("pixi.toml", "pixi.lock"),
+  "poetry" to setOf("poetry.lock"),
+  "prefect" to setOf("prefect.yaml"),
+  "pyright" to setOf("pyrightconfig.json"),
+  "pytest" to setOf("pytest.toml", ".pytest.toml", "pytest.ini", ".pytest.ini"),
+  "ruff" to setOf("ruff.toml", ".ruff.toml"),
+  "setuptools" to setOf("setup.py", "setup.cfg"),
+  "tox" to setOf("tox.ini", "tox.toml"),
+  "uv" to setOf("uv.lock"),
+  "yapf" to setOf(".style.yapf")
+)
+
+internal val TRACKED_DEPENDENCY_GROUPS = listOf(
+  "all", "async", "bench", "build", "ci",
+  "cli", "coverage", "db", "debug", "deploy",
+  "dev", "docs", "examples", "extras", "extras-all",
+  "format", "gpu", "lint", "optional", "profile",
+  "security", "test", "tooling", "typing", "viz"
+)
+internal const val DEPENDENCY_GROUP_OTHER = "other"
+
+private val GROUP = EventLogGroup("python.toml.stats", 8)
+private val PACKAGE_NAME_FIELD = EventFields.StringValidatedByDictionary("name", "python_packages.ndjson")
+private val TOOL_ID_FIELD = EventFields.String("toolId", PyProjectSdkConfigurationExtension.toolIds.map { it.id })
+private val CHECKBOX_VALUE = EventFields.Boolean("checked")
+
+internal val PYTHON_PYPROJECT_TOOLS = GROUP.registerEvent("python.pyproject.tools", PACKAGE_NAME_FIELD)
+
+// https://peps.python.org/pep-0518/
+internal val PYTHON_PYPROJECT_BUILDSYSTEM = GROUP.registerEvent("python.pyproject.buildsystem", PACKAGE_NAME_FIELD)
+
+internal val PYTHON_TOOL_MARKERS_DETECTED = GROUP.registerEvent("python.tool.markers.detected", PACKAGE_NAME_FIELD)
+
+internal val PYTHON_PYPROJECT_DEPENDENCY_GROUP = GROUP.registerEvent(
+  "python.pyproject.dependency.group",
+  EventFields.String("name", TRACKED_DEPENDENCY_GROUPS + DEPENDENCY_GROUP_OTHER)
+)
+
+internal val PYTHON_PYPROJECT_COUNT = GROUP.registerEvent("python.pyproject.count", EventFields.Int("count"))
+
+/**
+ * Buckets for the two structure counts. Exact up to five, because "one project, or a handful" is the question they
+ * answer, and coarse above, because an exact per-project count is a fingerprint of that project (see
+ * `.agents/skills/fus/REFERENCE.md`).
+ */
+private val STRUCTURE_BOUNDS = intArrayOf(0, 1, 2, 3, 4, 5, 10, 20, 50, 100, 500)
+
+internal val PYTHON_PYPROJECT_MODEL_STRUCTURE = GROUP.registerEvent(
+  "python.pyproject.model.structure",
+  EventFields.BoundedInt("py_projects", STRUCTURE_BOUNDS),
+  EventFields.BoundedInt("workspaces", STRUCTURE_BOUNDS),
+)
+
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_SHOWN = GROUP.registerVarargEvent("python.workspace.setup.notification.shown")
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.notification.configure.clicked")
+internal val PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.notification.dismiss.clicked")
+internal val PYTHON_PYPROJECT_BASED_MODEL_CHANGED: VarargEventId =
+  GROUP.registerVarargEvent("python.pyproject.based.model.changed", CHECKBOX_VALUE)
+internal val PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED =
+  GROUP.registerVarargEvent("python.workspace.setup.preview.enable.clicked")
+
+internal val PYTHON_SDK_SETUP_AUTOMATICALLY: VarargEventId =
+  GROUP.registerVarargEvent("python.sdk.setup.automatically", TOOL_ID_FIELD)
+internal val PYTHON_SDK_SETUP_FROM_NOTIFICATION: VarargEventId =
+  GROUP.registerVarargEvent("python.sdk.setup.from.notification", TOOL_ID_FIELD)
+
+internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+
+  override suspend fun collect(project: Project): Set<MetricEvent> = super.collect(project) + modelStructureMetrics(project)
+
+  override fun requiresReadAccess() = true
+
+  override fun requiresSmartMode() = true
+
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    val scope = ProjectScope.getContentScope(project)
+
+    val pyProjectTomlCounter = AtomicInteger(0)
+    val tools = mutableSetOf<String>()
+    val buildSystems = mutableSetOf<String>()
+    val dependencyGroups = mutableSetOf<String>()
+
+    FilenameIndex.processFilesByName(PY_PROJECT_TOML, true, scope) { virtualFile ->
+      virtualFile.findPsiFile(project)?.takeIf { it.isValid }?.let { psiFile ->
+        pyProjectTomlCounter.incrementAndGet()
+        tools.addAll(PyProjectTomlCollector.findDeclaredTools(psiFile))
+        buildSystems.addAll(PyProjectTomlCollector.findBuildSystemRequiresTools(psiFile))
+        dependencyGroups.addAll(PyProjectTomlCollector.findDependencyGroups(psiFile))
+      }
+      true
+    }
+
+    val toolsDetectedByMarkers = PYTHON_TOOL_MARKERS.entries.filterNot { (_, markerFileNames)  ->
+      FilenameIndex.processFilesByNames(markerFileNames, true, scope, null) { false }
+    }.map { it.key }
+
+    val metrics = mutableSetOf<MetricEvent>()
+
+    metrics.add(PYTHON_PYPROJECT_COUNT.metric(pyProjectTomlCounter.get()))
+    tools.mapTo(metrics) { PYTHON_PYPROJECT_TOOLS.metric(it) }
+    buildSystems.mapTo(metrics) { PYTHON_PYPROJECT_BUILDSYSTEM.metric(it) }
+    dependencyGroups.mapTo(metrics) { PYTHON_PYPROJECT_DEPENDENCY_GROUP.metric(it) }
+    toolsDetectedByMarkers.mapTo(metrics) { PYTHON_TOOL_MARKERS_DETECTED.metric(it) }
+
+    return metrics
+  }
+
+  /**
+   * The structure [EvoPyProjectModel] holds: how many Python projects it detected, and how many workspaces they form.
+   *
+   * [EvoPyProjectModel.snapshot] answers the current generation, because the state behind it is a `StateFlow` and a
+   * collector of one reads the value it holds at once. It waits only when there is no generation yet, and that is the
+   * case this collector must cover: it can be what creates the service, and [EvoPyProjectModel.snapshotOrNull] would
+   * then answer `null` and lose the metric until the next project pass 12 hours later, which most sessions never reach.
+   *
+   * The number is the resolved one in both cases. The platform runs the first project pass 5 minutes after smart mode,
+   * so the `pyproject.toml` sync has already run: a model that was already there has republished on it, and a model
+   * created here computes its generation from a workspace model that already holds the result.
+   *
+   * The wait is not bounded. It ends when the model publishes, and the only thing that stops it from publishing is
+   * [EvoPyProjectModel.computeSnapshot] hanging — on the project model, or on the interpreter detection it runs. The
+   * interpreter widget, the packages tool window and the console target all read the same model, so that state breaks
+   * them first and is not one a statistics collector has to survive.
+   */
+  private suspend fun modelStructureMetrics(project: Project): Set<MetricEvent> {
+    val snapshot = project.service<EvoPyProjectModel>().snapshot()
+    return setOf(PYTHON_PYPROJECT_MODEL_STRUCTURE.metric(snapshot.pyProjects.count(), snapshot.workspaces.size))
+  }
+}
+
+@ApiStatus.Internal
+object PyProjectTomlCollector {
+  fun findDeclaredTools(file: PsiFile): Set<String> {
+    val declaredTools = file.children.mapNotNullTo(mutableSetOf()) { element ->
+      val toolTomlKey = (element as? TomlTable)?.header?.key?.takeIf {
+        it.segments.firstOrNull()?.text == PY_PROJECT_TOML_TOOL_PREFIX
+      } ?: return@mapNotNullTo null
+
+      val toolNormalizedName = toolTomlKey.segments.getOrNull(1)?.text?.let {
+        PyPackageName.normalizePackageName(it)
+      }
+
+      toolNormalizedName
+    }
+
+    return declaredTools
+  }
+
+  fun findBuildSystemRequiresTools(file: PsiFile): Set<String> {
+    val buildSystemTables = file.children.mapNotNull { psiElement ->
+      (psiElement as? TomlTable)?.takeIf { it.header.key?.text == PY_PROJECT_TOML_BUILD_SYSTEM }
+    }
+
+    val requiresValues = buildSystemTables.flatMap { tomlTable ->
+      tomlTable.children.mapNotNull { line ->
+        (line as? TomlKeyValue)?.takeIf { kv -> kv.key.text == "requires" }?.value
+      }
+    }
+
+    val literals = requiresValues.flatMap { tomlValue ->
+      (tomlValue as? TomlArray)?.elements?.mapNotNull { (it as? TomlLiteral)?.text } ?: emptyList()
+    }
+
+    val buildTools = literals.mapNotNullTo(mutableSetOf()) {
+      val requirement = PyRequirementParser.fromLine(it.removeSurrounding("\""))
+      requirement?.name
+    }
+
+    return buildTools
+  }
+
+  fun findDependencyGroups(file: PsiFile): List<String> {
+    val dependencyGroupTables = file.children.mapNotNull { psiElement ->
+      (psiElement as? TomlTable)?.takeIf { it.header.key?.text == PY_PROJECT_TOML_DEPENDENCY_GROUPS }
+    }
+    val dependencyGroups = dependencyGroupTables.flatMap { tomlTable ->
+      tomlTable.children.mapNotNull { (it as? TomlKeyValue)?.key?.text }
+    }.distinct().map { it.takeIf { it in TRACKED_DEPENDENCY_GROUPS } ?: DEPENDENCY_GROUP_OTHER }.sorted()
+
+    return dependencyGroups
+  }
+
+  fun setupNotificationShown() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_SHOWN.log()
+  }
+
+  fun setupNotificationConfigureClicked() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_CONFIGURE_CLICKED.log()
+  }
+
+  fun setupNotificationDismissClicked() {
+    PYTHON_WORKSPACE_SETUP_NOTIFICATION_DISMISS_CLICKED.log()
+  }
+
+  fun previewEnableClicked() {
+    PYTHON_WORKSPACE_SETUP_PREVIEW_ENABLE_CLICKED.log()
+  }
+
+  fun pyProjectBasedModelModeChanged(value: Boolean) {
+    PYTHON_PYPROJECT_BASED_MODEL_CHANGED.log(
+      CHECKBOX_VALUE.with(value)
+    )
+  }
+
+  fun sdkCreatedAutomatically(toolId: ToolId) {
+    PYTHON_SDK_SETUP_AUTOMATICALLY.log(
+      TOOL_ID_FIELD.with(toolId.id)
+    )
+  }
+
+  fun sdkCreatedFromNotification(toolId: ToolId) {
+    PYTHON_SDK_SETUP_FROM_NOTIFICATION.log(
+      TOOL_ID_FIELD.with(toolId.id)
+    )
+  }
+}

@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_withJava_other_mainRedeclaration-a.kotlin_module
+  foo/AKt.class
+End of files
+Compiling files:
+  kotlin/withJava/other/mainRedeclaration/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

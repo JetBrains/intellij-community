@@ -1,0 +1,22 @@
+---
+config:
+  logLevel: 'debug'
+  theme: 'default'
+  themeVariables:
+    tagLabelColor: '#ff0000'
+    tagLabelBackground: '#00ff00'
+    tagLabelBorder: '#0000ff'
+---
+       gitGraph
+       commit
+       branch develop
+       commit tag:"v1.0.0"
+       commit
+       checkout main
+       commit type: HIGHLIGHT
+       commit
+       merge develop
+       commit
+       branch featureA
+       commit
+

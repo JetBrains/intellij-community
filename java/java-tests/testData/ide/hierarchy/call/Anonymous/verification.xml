@@ -1,0 +1,5 @@
+<node text="A(int) (A)" base="true">
+  <node text="Anonymous class (A.f())">
+    <node text="h() (A)"/>
+  </node>
+</node>

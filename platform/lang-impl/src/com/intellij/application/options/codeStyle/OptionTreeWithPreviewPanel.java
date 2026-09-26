@@ -1,64 +1,74 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author max
- */
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
+  private static final Logger LOG = Logger.getInstance(OptionTreeWithPreviewPanel.class);
   protected JTree myOptionsTree;
   protected final ArrayList<BooleanOptionKey> myKeys = new ArrayList<>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
   private final Set<String> myAllowedOptions = new HashSet<>();
-  protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
+  protected MultiMap<@Nls String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<>();
-  private final Map<String, String> myRemappedGroups = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new HashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRemappedGroups = new HashMap<>();
 
+  private SpeedSearchHelper mySearchHelper;
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
@@ -71,24 +81,23 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     initTables();
 
     myOptionsTree = createOptionsTree();
-    myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
-    myOptionsTree.setBackground(UIUtil.getPanelBackground());
-    myOptionsTree.setBorder(JBUI.Borders.emptyRight(10));
+
     JScrollPane scrollPane = new JBScrollPane(myOptionsTree) {
       @Override
       public Dimension getMinimumSize() {
         return super.getPreferredSize();
       }
     };
+    scrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
@@ -111,20 +120,21 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               String groupName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
+                               Object... options) {
     showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               @Nullable String groupName,
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
                                @Nullable OptionAnchor anchor,
-                               @Nullable String anchorFieldName,
+                               @NonNls @Nullable String anchorFieldName,
                                Object... options) {
     if (isFirstUpdate) {
       myCustomOptions.putValue(groupName, new CustomBooleanOptionInfo(settingsClass, fieldName, title, groupName, anchor, anchorFieldName));
@@ -133,7 +143,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
+  public void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
     if (isFirstUpdate) {
       myRenamedFields.put(fieldName, newTitle);
     }
@@ -190,10 +200,18 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
     final Tree optionsTree = new Tree(model);
-    new TreeSpeedSearch(optionsTree).setComparator(new SpeedSearchComparator(false));
+    TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(
+      optionsTree,
+      true,
+      path -> {
+        final Object lastPathComponent = path.getLastPathComponent();
+        return lastPathComponent instanceof MyToggleTreeNode ? ((MyToggleTreeNode)lastPathComponent).getText() :
+               lastPathComponent.toString();
+      });
+    mySearchHelper = new SpeedSearchHelper(speedSearch);
+    speedSearch.setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
-    UIUtil.setLineStyleAngled(optionsTree);
     optionsTree.setShowsRootHandles(true);
 
 
@@ -225,14 +243,18 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       row++;
     }
 
+    optionsTree.setCellRenderer(new MyTreeCellRenderer(mySearchHelper));
+    optionsTree.setBackground(UIUtil.getPanelBackground());
+    optionsTree.setBorder(JBUI.Borders.emptyRight(10));
+
     return optionsTree;
   }
 
-  private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
+  private List<BooleanOptionKey> orderByGroup(final List<? extends BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
     List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
-    Collections.sort(result, (key1, key2) -> {
+    result.sort((key1, key2) -> {
       String group1 = key1.groupName;
       String group2 = key2.groupName;
       if (group1 == null) {
@@ -241,15 +263,15 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       if (group2 == null) {
         return -1;
       }
-      Integer index1 = groupOrder.indexOf(group1);
-      Integer index2 = groupOrder.indexOf(group2);
+      int index1 = groupOrder.indexOf(group1);
+      int index2 = groupOrder.indexOf(group2);
       if (index1 == -1 || index2 == -1) return group1.compareToIgnoreCase(group2);
-      return index1.compareTo(index2);
+      return Integer.compare(index1, index2);
     });
     return result;
   }
 
-  protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
+  protected List<String> getGroupOrder(List<? extends BooleanOptionKey> options) {
     List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {
@@ -264,8 +286,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       return;
     }
     Object o = treePath.getLastPathComponent();
-    if (o instanceof MyToggleTreeNode) {
-      MyToggleTreeNode node = (MyToggleTreeNode)o;
+    if (o instanceof MyToggleTreeNode node) {
       if (!node.isEnabled()) return;
       node.setSelected(!node.isSelected());
       int row = myOptionsTree.getRowForPath(treePath);
@@ -278,7 +299,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected abstract void initTables();
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
@@ -308,7 +329,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
@@ -366,19 +387,19 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return false;
   }
 
-  protected void initBooleanField(@NonNls String fieldName, String title, String groupName) {
+  protected void initBooleanField(@NonNls String fieldName, @NlsContexts.Label String title, @NlsContexts.Label String groupName) {
     if (myShowAllStandardOptions || myAllowedOptions.contains(fieldName)) {
       doInitBooleanField(fieldName, title, groupName);
     }
   }
 
-  private void doInitBooleanField(@NonNls String fieldName, String title, String groupName) {
+  private void doInitBooleanField(@NonNls String fieldName, @NlsContexts.Label String title, @NlsContexts.Label String groupName) {
     try {
-      Class styleSettingsClass = CommonCodeStyleSettings.class;
+      Class<?> styleSettingsClass = CommonCodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
       String actualGroupName = getRemappedGroup(fieldName, groupName);
 
-      BooleanOptionKey key = new BooleanOptionKey(fieldName, 
+      BooleanOptionKey key = new BooleanOptionKey(fieldName,
                                                   getRenamedTitle(actualGroupName, actualGroupName),
                                                   getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
@@ -388,15 +409,15 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  protected void initCustomOptions(String groupName) {
+  protected void initCustomOptions(@NlsContexts.Label String groupName) {
     for (CustomBooleanOptionInfo option : myCustomOptions.get(groupName)) {
       try {
         Field field = option.settingClass.getField(option.fieldName);
-        myKeys.add(new CustomBooleanOptionKey(option.fieldName,
-                                              getRenamedTitle(groupName, groupName),
-                                              getRenamedTitle(option.fieldName, option.title),
-                                              option.anchor, option.anchorFieldName,
-                                              option.settingClass, field));
+        myKeys.add(new CustomBooleanOptionKey<>(option.fieldName,
+                                                getRenamedTitle(groupName, groupName),
+                                                getRenamedTitle(option.fieldName, option.title),
+                                                option.anchor, option.anchorFieldName,
+                                                option.settingClass, field));
       }
       catch (NoSuchFieldException | SecurityException e) {
         LOG.error(e);
@@ -404,79 +425,80 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private String getRenamedTitle(String fieldName, String defaultTitle) {
+  private @NlsContexts.Label String getRenamedTitle(String fieldName, @NlsContexts.Label String defaultTitle) {
     String renamed = myRenamedFields.get(fieldName);
     return renamed == null ? defaultTitle : renamed;
   }
 
-  protected static class MyTreeCellRenderer implements TreeCellRenderer {
-    private final JLabel myLabel;
-    private final JCheckBox myCheckBox;
+  @ApiStatus.Internal
+  protected static final class MyTreeCellRenderer implements TreeCellRenderer {
+    private final SimpleColoredComponent myLabel;
+    private final JCheckBox              myCheckBox;
+    private final JPanel                 myCheckBoxPanel;
+    private final SpeedSearchHelper      mySearchStringProvider;
 
     public MyTreeCellRenderer() {
-      myLabel = new JLabel();
+      this(new SpeedSearchHelper());
+    }
+
+    public MyTreeCellRenderer(@NotNull SpeedSearchHelper searchStringProvider) {
       myCheckBox = new JCheckBox();
-      myCheckBox.setMargin(JBUI.emptyInsets());
+      myCheckBox.setMargin(JBInsets.emptyInsets());
+      myLabel = new SimpleColoredComponent();
+      myCheckBoxPanel = new JPanel();
+      myCheckBoxPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      myCheckBoxPanel.add(myCheckBox);
+      myCheckBoxPanel.add(myLabel);
+      mySearchStringProvider = searchStringProvider;
     }
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof MyToggleTreeNode) {
-        MyToggleTreeNode treeNode = (MyToggleTreeNode)value;
-        JToggleButton button = myCheckBox;
-        button.setText(treeNode.getText());
-        button.setSelected(treeNode.isSelected);
-        if (isSelected) {
-          button.setForeground(UIUtil.getTreeSelectionForeground());
-          button.setBackground(UIUtil.getTreeSelectionBackground());
-        }
-        else {
-          button.setForeground(UIUtil.getTreeTextForeground());
-          button.setBackground(tree.getBackground());
-        }
+      Color background = RenderingUtil.getBackground(tree, isSelected);
+      Color foreground = RenderingUtil.getForeground(tree, isSelected);
+      if (value instanceof MyToggleTreeNode treeNode) {
 
+        JToggleButton button = myCheckBox;
+        button.setSelected(treeNode.isSelected);
+        button.setForeground(foreground);
+        button.setBackground(background);
+        button.setVisible(true);
         button.setEnabled(tree.isEnabled() && treeNode.isEnabled());
 
-        return button;
+        mySearchStringProvider.setLabelText(myLabel, treeNode.getText(), SimpleTextAttributes.STYLE_PLAIN, foreground, background);
       }
       else {
-        myLabel.setText(value.toString());
-        myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
-        myLabel.setOpaque(true);
-
-        if (isSelected) {
-          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
-          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
-        }
-        else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
-          myLabel.setBackground(tree.getBackground());
-        }
+        myCheckBox.setVisible(false);
+        mySearchStringProvider.setLabelText(myLabel, value.toString(), SimpleTextAttributes.STYLE_BOLD, foreground, background);
 
         myLabel.setEnabled(tree.isEnabled());
-
-        return myLabel;
       }
+      myCheckBoxPanel.setForeground(foreground);
+      myCheckBoxPanel.setBackground(background);
+      myLabel.setOpaque(true);
+      return myCheckBoxPanel;
     }
+
+
   }
 
   private class BooleanOptionKey extends OrderedOption {
-    final String groupName;
-    String title;
+    final @NlsContexts.Label String groupName;
+    @NlsContexts.Label String title;
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, @NlsContexts.Label String groupName, @NlsContexts.Label String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
-    public BooleanOptionKey(String fieldName,
-                            String groupName,
-                            String title,
-                            @Nullable OptionAnchor anchor,
-                            @Nullable String anchorFiledName,
-                            Field field) {
+    BooleanOptionKey(String fieldName,
+                     @NlsContexts.Label String groupName,
+                     @NlsContexts.Label String title,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorFiledName,
+                     Field field) {
       super(fieldName, anchor, anchorFiledName);
       this.groupName = groupName;
       this.title = title;
@@ -507,39 +529,24 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static class CustomBooleanOptionInfo {
-    @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
-    @NotNull final String fieldName;
-    @NotNull final String title;
-    @Nullable final String groupName;
-    @Nullable final OptionAnchor anchor;
-    @Nullable final String anchorFieldName;
-
-    private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
+  private record CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
-                                    @NotNull String title,
-                                    @Nullable String groupName,
+                                    @NotNull @NlsContexts.Label String title,
+                                    @Nullable @NlsContexts.Label String groupName,
                                     @Nullable OptionAnchor anchor,
                                     @Nullable String anchorFieldName) {
-      this.settingClass = settingClass;
-      this.fieldName = fieldName;
-      this.title = title;
-      this.groupName = groupName;
-      this.anchor = anchor;
-      this.anchorFieldName = anchorFieldName;
-    }
   }
 
-  private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
+  private final class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String fieldName,
-                                  String groupName,
-                                  String title,
-                                  OptionAnchor anchor,
-                                  String anchorFieldName,
-                                  Class<T> settingsClass,
-                                  Field field) {
+    CustomBooleanOptionKey(String fieldName,
+                           @NlsContexts.Label String groupName,
+                           @NlsContexts.Label String title,
+                           OptionAnchor anchor,
+                           String anchorFieldName,
+                           Class<T> settingsClass,
+                           Field field) {
       super(fieldName, groupName, title, anchor, anchorFieldName, field);
       mySettingsClass = settingsClass;
     }
@@ -562,13 +569,13 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static class MyToggleTreeNode extends DefaultMutableTreeNode {
+  private static final class MyToggleTreeNode extends DefaultMutableTreeNode {
     private final Object myKey;
-    private final String myText;
+    private final @NlsContexts.Label String myText;
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    public MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, @NlsContexts.Label String text) {
       myKey = key;
       myText = text;
     }
@@ -577,7 +584,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       return myKey;
     }
 
-    public String getText() {
+    public @NlsContexts.Label String getText() {
       return myText;
     }
 
@@ -604,7 +611,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public Set<String> processListOptions() {
+  public @NotNull Set<@NlsContexts.Label String> processListOptions() {
     Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
@@ -613,7 +620,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       }
     }
     result.addAll(myRenamedFields.values());
-    for (String groupName : myCustomOptions.keySet()) {
+    for (@Nls String groupName : myCustomOptions.keySet()) {
       result.add(groupName);
       for (CustomBooleanOptionInfo trinity : myCustomOptions.get(groupName)) {
         result.add(trinity.title);
@@ -626,7 +633,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return false;
   }
 
-
   private boolean isOptionVisible(BooleanOptionKey key) {
     if (!shouldHideOptions()) return true;
     if (myShowAllStandardOptions || myAllowedOptions.contains(key.getOptionName())) return true;
@@ -637,11 +643,17 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void moveStandardOption(String fieldName, String newGroup) {
+  public void moveStandardOption(@NonNls @NotNull String fieldName, @NotNull @NlsContexts.Label String newGroup) {
     myRemappedGroups.put(fieldName, newGroup);
   }
 
-  private String getRemappedGroup(String fieldName, String defaultName) {
+  private @NlsContexts.Label String getRemappedGroup(String fieldName, @NlsContexts.Label String defaultName) {
     return myRemappedGroups.getOrDefault(fieldName, defaultName);
   }
+
+  @Override
+  public void highlightOptions(@NotNull String searchString) {
+    mySearchHelper.find(searchString);
+  }
+
 }

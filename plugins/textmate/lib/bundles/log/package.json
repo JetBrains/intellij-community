@@ -1,0 +1,1 @@
+{"name":"log","displayName":"Log","version":"10.0.0","description":"Provides syntax highlighting for files with .log extension.","license":"MIT","contributes":{"languages":[{"id":"log","extensions":[".log","*.log.?"],"aliases":["Log"]}],"grammars":[{"language":"log","scopeName":"text.log","path":"./syntaxes/log.tmLanguage.json"}]}}

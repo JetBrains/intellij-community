@@ -29,10 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgumentProvider {
+public final class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
                                 @NotNull GroovyResolveResult resolveResult,

@@ -15,16 +15,27 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import com.intellij.util.CurrentJavaVersion;
+import org.junit.jupiter.api.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import java.awt.Dimension;
+import java.awt.Insets;
 
-public final class TextAreasTest extends TestCase {
+import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+public final class TextAreasTest {
   /**
    * label   |    label
    * text area (span 2)
    */
+  @Test
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 
@@ -45,12 +56,16 @@ public final class TextAreasTest extends TestCase {
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0));
 
-    assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
+    panel.doLayout();
+
+    int textAreaWidth = CurrentJavaVersion.currentJavaVersion().feature >= 9 ? 101 : 100;
+
+    assertNotEquals("Windows", UIManager.getLookAndFeel().getName());
     // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.
-    assertEquals(100, textArea.getPreferredSize().width);
+    assertEquals(textAreaWidth, textArea.getPreferredSize().width);
 
     final Dimension initialPreferredSize = panel.getPreferredSize();
-    assertEquals(new Dimension(100,20 + textArea.getPreferredSize().height), initialPreferredSize);
+    assertEquals(new Dimension(textAreaWidth, 20 + textArea.getPreferredSize().height), initialPreferredSize);
 
     panel.setSize(initialPreferredSize);
     panel.invalidate();
@@ -65,14 +80,18 @@ public final class TextAreasTest extends TestCase {
    *
    * important: hspan should be greater than 0
    */
+  @Test
   public void test2() {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 11, 0));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(15,20));
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
     field2.setPreferredSize(new Dimension(15,20));
     final JTextField field3 = new JTextField();
+    setDefaults(field3);
     field3.setPreferredSize(new Dimension(100,20));
 
     panel.add(field1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_HORIZONTAL,
@@ -84,7 +103,9 @@ public final class TextAreasTest extends TestCase {
     panel.add(field3, new GridConstraints(1,0,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     assertEquals(100, panel.getPreferredSize().width);
   }
-  
+
 }

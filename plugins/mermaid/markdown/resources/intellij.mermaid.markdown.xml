@@ -1,0 +1,73 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.mermaid"/>
+    <module name="intellij.libraries.jcef"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.markdown.utils"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.ui.jcef"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <browserPreviewExtensionProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension$Provider"
+                                     order="first"/>
+
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="com.intellij.mermaid.markdown.jcef.MermaidCodeGeneratingProviderExtension"
+                             order="first"/>
+    <fenceLanguageProvider implementation="com.intellij.mermaid.markdown.jcef.AdditionalMermaidInfoStringValuesContributor"
+                           order="after DefaultMermaidCodeFenceLanguageProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <mermaid.syntaxValidator implementation="com.intellij.mermaid.markdown.preview.PreviewSyntaxValidator"/>
+
+    <editorNotificationProvider implementation="com.intellij.mermaid.markdown.preview.ExportedDiagramEditorNotificationProvider"/>
+
+    <completion.contributor language="Markdown"
+                            implementationClass="com.intellij.mermaid.markdown.editor.MarkdownCodeFenceCompletionContributor"/>
+
+    <typedHandler implementation="com.intellij.mermaid.markdown.editor.MarkdownCodeFenceTypedHandlerDelegate"/>
+
+    <httpRequestHandler implementation="com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer"/>
+
+    <!--suppress PluginXmlValidity -->
+    <advancedSetting default=""
+                     bundle="messages.MermaidBundle"
+                     titleKey="mermaid.additional.code.fence.pattern.regex"
+                     groupKey="mermaid.advanced.settings.group"
+                     id="mermaid.additional.code.fence.pattern.regex"/>
+  </extensions>
+
+  <actions resource-bundle="messages.MermaidBundle">
+    <action id="Mermaid.ExportDiagram"
+            icon="AllIcons.ToolbarDecorator.Export"
+            class="com.intellij.mermaid.markdown.preview.ExportDiagramAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Github.PullRequest.Changed.MarkViewed.Toggle"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="Github.Create.Gist"/>
+    </action>
+  </actions>
+</idea-plugin>

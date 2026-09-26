@@ -1,0 +1,75 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.lang.impl.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.platform.lang.impl.backend` end
+
+### auto-generated section `build intellij.platform.lang.impl.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lang.impl.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/lang-core",
+        "//platform/lang-impl",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/kernel/backend",
+        "//platform/kernel/rpc.backend",
+        "//jps/model-api:model",
+        "//platform/ide-core",
+        "//fleet/rhizomedb",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.lang.impl.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//jps/model-api:model_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.lang.impl.backend` end
+
+### auto-generated section `iml intellij.platform.lang.impl.backend` start
+exports_files(
+    [
+        "intellij.platform.lang.impl.backend.iml",
+        "resources/intellij.platform.lang.impl.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.lang.impl.backend` end

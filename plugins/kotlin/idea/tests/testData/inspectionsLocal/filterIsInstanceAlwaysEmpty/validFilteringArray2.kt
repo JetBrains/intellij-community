@@ -1,0 +1,12 @@
+// WITH_STDLIB
+// PROBLEM: none
+
+
+open class A
+
+class B: A()
+
+fun foo() {
+    val array = arrayOf(A())
+    val filteredArray = array.filterI<caret>sInstance(B::class.java)
+}

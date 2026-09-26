@@ -16,25 +16,21 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.impl.LaterInvocatorTest.flushSwingQueue
-import java.util.*
+import com.intellij.util.ui.UIUtil
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
 
-/**
- * @author Denis Fokin
- *
- */
-
 internal class Testable {
 
   private val isRun = AtomicBoolean(false)
   private var myExceptionConsumer: (Exception) -> Unit = {}
   private val tasksToExecute = Collections.synchronizedList(ArrayList<() -> Unit>())
-  private val completenessLock = ReentrantLock()
-  private val completenessCondition = completenessLock.newCondition()
+  private val completed: CountDownLatch = CountDownLatch(1)
 
   private val edtLock = ReentrantLock()
   private val edtCondition = edtLock.newCondition()
@@ -60,10 +56,11 @@ internal class Testable {
   }
 
   fun execute(lambda: () -> Unit): Testable {
-    if (!waitSuspendedEDT) {
-      SwingUtilities.invokeLater(lambda)
-    } else {
+    if (waitSuspendedEDT) {
       tasksToExecute.add(lambda)
+    }
+    else {
+      SwingUtilities.invokeLater(lambda)
     }
     return this
   }
@@ -82,7 +79,7 @@ internal class Testable {
       SwingUtilities.invokeLater(blockEDT)
       SwingUtilities.invokeLater {
         try {
-          tasksToExecute.forEach({ it.invoke() })
+          tasksToExecute.forEach { it.invoke() }
         }
         catch (e: Exception) {
           myExceptionConsumer.invoke(e)
@@ -107,14 +104,9 @@ internal class Testable {
 
   fun completed (): Testable {
     SwingUtilities.invokeLater {
-      completenessLock.lock()
-      try {
-        completenessCondition.signalAll()
-      }  finally {
-        completenessLock.unlock()
-      }
+      completed.countDown()
     }
-    return this;
+    return this
   }
 
   fun waitCompletion(condition: Condition, lock: ReentrantLock, timout: Long = 0) {
@@ -127,12 +119,15 @@ internal class Testable {
   }
 
 
-  fun waitCompletion(millis: Long) {
-    completenessLock.lock()
-    try {
-      completenessCondition.await(millis, TimeUnit.MILLISECONDS)
-    } finally {
-      completenessLock.unlock()
+  fun waitCompletion(millis: Long): Boolean {
+    val deadline = System.currentTimeMillis() + millis
+
+    while (System.currentTimeMillis() < deadline) {
+      UIUtil.dispatchAllInvocationEvents()
+      if (completed.await(10, TimeUnit.MILLISECONDS)) {
+        return true
+      }
     }
+    return false
   }
 }

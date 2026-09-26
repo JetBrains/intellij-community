@@ -18,16 +18,13 @@ package com.intellij.openapi.editor;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * @author Denis Zhdanov
- * @since Aug 25, 2010 3:20:41 PM
- */
 public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositionStrategyTest {
   private LineWrapPositionStrategy myStrategy;
 
+  @Override
   @Before
-  public void setUp() {
-    super.setUp();
+  public void prepare() {
+    super.prepare();
     myStrategy = new DefaultLineWrapPositionStrategy();
   }
 
@@ -54,7 +51,7 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
 
   @Test
   public void longStringWithoutWrapPositionIsNotWrapped() {
-    String document = 
+    String document =
       "-----------------<EDGE>---------------------------------------------------------";
     doTest(myStrategy, document);
   }
@@ -64,5 +61,13 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
     String document =
       "queueing the JSON for later submission, we retain the <WRAP>SimpleRequestDa<EDGE>ta";
     doTest(myStrategy, document, false);
+  }
+
+  //uD852 and uDF62 are surrogate pair - 2 characters that made 1 "𤭢"; soft wrap shouldn't be made between them
+  //the current case shouldn't apply soft wrap
+  @Test
+  public void preventWrapInsideOfSurrogatePairs() {
+    String text = "abc\uD852\uDF62";
+    doTestDefaultWrap(myStrategy, text, -1);
   }
 }

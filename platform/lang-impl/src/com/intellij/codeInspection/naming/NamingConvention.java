@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
   /**
@@ -15,14 +16,14 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
   /**
    * @return Text presentation which will be shown in check box UI
    */
-  public abstract String getElementDescription();
+  public abstract @NlsContexts.Checkbox String getElementDescription();
 
   /**
    * @return unique short name;
    *         if tool was already present and merging of settings is required ({@link AbstractNamingConventionMerger}),
    *         short name should be equal to the old tool name
    */
-  public abstract String getShortName();
+  public abstract @NonNls String getShortName();
 
   /**
    * @return default settings for the convention
@@ -37,8 +38,8 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
     return false;
   }
 
-  public String createErrorMessage(String name, NamingConventionBean bean) {
-    final int length = name.length();
+  public @InspectionMessage String createErrorMessage(String name, NamingConventionBean bean) {
+    int length = name.length();
     if (length < bean.m_minLength) {
       return InspectionsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
                                              Integer.valueOf(length), Integer.valueOf(bean.m_minLength));

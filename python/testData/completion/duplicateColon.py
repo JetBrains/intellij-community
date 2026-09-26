@@ -1,2 +1,2 @@
 class C:
-    def __ini<caret>:
+    def __add<caret>:

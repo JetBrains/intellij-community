@@ -1,57 +1,45 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
-import javax.swing.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.sorted;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 class RepositoryLoader extends Loader {
   // may be several requests if: several same-level nodes are expanded simultaneosly; or browser can be opening into some expanded state
-  @NotNull private final Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
+  private final @NotNull Queue<Pair<RepositoryTreeNode, Expander>> myLoadQueue;
   private boolean myQueueProcessorActive;
 
   RepositoryLoader(@NotNull SvnRepositoryCache cache) {
     super(cache);
 
-    myLoadQueue = ContainerUtil.newLinkedList();
+    myLoadQueue = new LinkedList<>();
     myQueueProcessorActive = false;
   }
 
+  @Override
   public void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final Pair<RepositoryTreeNode, Expander> data = Pair.create(node, afterRefreshExpander);
     if (! myQueueProcessorActive) {
@@ -63,17 +51,17 @@ class RepositoryLoader extends Loader {
   }
 
   private void setResults(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull List<DirectoryEntry> children) {
-    myCache.put(data.first.getURL().toString(), children);
+    myCache.put(data.first.getURL(), children);
     refreshNode(data.first, children, data.second);
   }
 
-  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull String message) {
-    myCache.put(data.first.getURL().toString(), message);
-    refreshNodeError(data.first, message);
+  private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull VcsException error) {
+    myCache.put(data.first.getURL(), error);
+    refreshNodeError(data.first, error);
   }
 
   private void startNext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final Pair<RepositoryTreeNode, Expander> data = myLoadQueue.poll();
     if (data == null) {
@@ -88,49 +76,48 @@ class RepositoryLoader extends Loader {
     }
   }
 
-  private void startLoadTask(@NotNull final Pair<RepositoryTreeNode, Expander> data) {
-    final ModalityState state = ModalityState.current();
-    ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator(state)));
+  private void startLoadTask(final @NotNull Pair<RepositoryTreeNode, Expander> data) {
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new LoadTask(data), new EmptyProgressIndicator());
   }
 
-  @NotNull
-  protected NodeLoadState getNodeLoadState() {
+  @Override
+  protected @NotNull NodeLoadState getNodeLoadState() {
     return NodeLoadState.REFRESHED;
   }
 
-  private class LoadTask implements Runnable {
-
-    @NotNull private final Pair<RepositoryTreeNode, Expander> myData;
+  private final class LoadTask extends Task.Backgroundable {
+    private final @NotNull Pair<RepositoryTreeNode, Expander> myData;
+    private final @NotNull List<DirectoryEntry> entries = new ArrayList<>();
+    private @Nullable VcsException error;
 
     private LoadTask(@NotNull Pair<RepositoryTreeNode, Expander> data) {
+      super(data.first.getVcs().getProject(), message("progress.title.loading.child.entries"));
       myData = data;
     }
 
-    public void run() {
-      List<DirectoryEntry> entries = newArrayList();
-      final RepositoryTreeNode node = myData.first;
-      final SvnVcs vcs = node.getVcs();
-      SvnAuthenticationProvider.forceInteractive();
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      RepositoryTreeNode node = myData.first;
+      SvnVcs vcs = node.getVcs();
+      Target target = Target.on(node.getURL());
 
       try {
-        Target target = Target.on(node.getURL());
         vcs.getFactoryFromSettings().createBrowseClient().list(target, Revision.HEAD, Depth.IMMEDIATES, entries::add);
       }
-      catch (final VcsException e) {
-        SwingUtilities.invokeLater(() -> {
-          setError(myData, e.getMessage());
-          startNext();
-        });
-        return;
-      } finally {
-        SvnAuthenticationProvider.clearInteractive();
+      catch (VcsException e) {
+        error = e;
       }
+    }
 
-      SwingUtilities.invokeLater(() -> {
+    @Override
+    public void onSuccess() {
+      if (error != null) {
+        setError(myData, error);
+      }
+      else {
         setResults(myData, sorted(entries, DirectoryEntry.CASE_INSENSITIVE_ORDER));
-        startNext();
-      });
+      }
+      startNext();
     }
   }
 }

@@ -1,145 +1,87 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.AnonymousClassMethodFilter;
+import com.intellij.debugger.engine.BasicStepMethodFilter;
+import com.intellij.debugger.engine.ClassInstanceMethodFilter;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.LambdaAsyncMethodFilter;
+import com.intellij.debugger.engine.LambdaMethodFilter;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.event.KeyEvent;
-import java.util.Collections;
 import java.util.List;
 
+/**
+ * Allows to support smart step into in non-java languages
+ */
 public abstract class JvmSmartStepIntoHandler {
   public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
-  @NotNull
-  public abstract List<SmartStepTarget> findSmartStepTargets(SourcePosition position);
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+    throw new AbstractMethodError();
+  }
+
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+    return Promises.resolvedPromise(findSmartStepTargets(position));
+  }
+
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+    return Promises.rejectedPromise();
+  }
 
   public abstract boolean isAvailable(SourcePosition position);
 
   /**
-   * Override this if you haven't PsiMethod, like in Kotlin.
-   * @param position
-   * @param session
-   * @param fileEditor
-   * @return false to continue for another handler or for default action (step into)
-   */
-  public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
-    return handleTargets(position, session, fileEditor, findSmartStepTargets(position));
-  }
-
-  protected final boolean handleTargets(SourcePosition position,
-                                        DebuggerSession session,
-                                        TextEditor fileEditor,
-                                        List<SmartStepTarget> targets) {
-    if (!targets.isEmpty()) {
-      SmartStepTarget firstTarget = targets.get(0);
-      if (targets.size() == 1) {
-        doStepInto(session, Registry.is("debugger.single.smart.step.force"), firstTarget);
-      }
-      else {
-        Editor editor = fileEditor.getEditor();
-        PsiMethodListPopupStep popupStep =
-          new PsiMethodListPopupStep(editor, targets, chosenTarget -> doStepInto(session, true, chosenTarget));
-        ListPopupImpl popup = new ListPopupImpl(popupStep);
-        DebuggerUIUtil.registerExtraHandleShortcuts(popup, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
-        popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO));
-
-        UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
-                            "selectNextRow",
-                            KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
-
-        popup.addListSelectionListener(new ListSelectionListener() {
-          public void valueChanged(ListSelectionEvent e) {
-            popupStep.getScopeHighlighter().dropHighlight();
-            if (!e.getValueIsAdjusting()) {
-              final SmartStepTarget selectedTarget = (SmartStepTarget)((JBList)e.getSource()).getSelectedValue();
-              if (selectedTarget != null) {
-                highlightTarget(popupStep, selectedTarget);
-              }
-            }
-          }
-        });
-        highlightTarget(popupStep, firstTarget);
-        DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
-      }
-      return true;
-    }
-    return false;
-  }
-
-  protected void doStepInto(DebuggerSession session, boolean force, SmartStepTarget target) {
-    JvmSmartStepIntoActionHandler.doStepInto(session, force, createMethodFilter(target));
-  }
-
-  private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target) {
-    final PsiElement highlightElement = target.getHighlightElement();
-    if (highlightElement != null) {
-      popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
-    }
-  }
-
-  /**
    * Override in case if your JVMNames slightly different then it can be provided by getJvmSignature method.
    *
-   * @param stepTarget
    * @return SmartStepFilter
    */
-  @Nullable
-  protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
-    if (stepTarget instanceof MethodSmartStepTarget) {
-      final PsiMethod method = ((MethodSmartStepTarget)stepTarget).getMethod();
+  protected @Nullable MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
+    return ReadAction.compute(() -> createMethodFilterInReadAction(stepTarget));
+  }
+
+  private static @Nullable MethodFilter createMethodFilterInReadAction(SmartStepTarget stepTarget) {
+    if (stepTarget instanceof MethodSmartStepTarget methodSmartStepTarget) {
+      final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {
         return Registry.is("debugger.async.smart.step.into") && method.getContainingClass() instanceof PsiAnonymousClass
                ? new ClassInstanceMethodFilter(method, stepTarget.getCallingExpressionLines())
                : new AnonymousClassMethodFilter(method, stepTarget.getCallingExpressionLines());
       }
       else {
-        return new BasicStepMethodFilter(method, stepTarget.getCallingExpressionLines());
+        return new BasicStepMethodFilter(method, methodSmartStepTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
       }
     }
-    if (stepTarget instanceof LambdaSmartStepTarget) {
-      LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;
+    if (stepTarget instanceof LambdaSmartStepTarget lambdaTarget) {
       LambdaMethodFilter lambdaMethodFilter =
         new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal(), stepTarget.getCallingExpressionLines());
 
       if (Registry.is("debugger.async.smart.step.into") && lambdaTarget.isAsync()) {
-        PsiLambdaExpression lambda = ((LambdaSmartStepTarget)stepTarget).getLambda();
+        PsiLambdaExpression lambda = lambdaTarget.getLambda();
         PsiElement expressionList = lambda.getParent();
-        if (expressionList instanceof PsiExpressionList) {
+        if (expressionList instanceof PsiExpressionList list) {
           PsiElement method = expressionList.getParent();
-          if (method instanceof PsiMethodCallExpression) {
-            return new LambdaAsyncMethodFilter(((PsiMethodCallExpression)method).resolveMethod(),
-                                               LambdaUtil.getLambdaIdx((PsiExpressionList)expressionList, lambda),
+          if (method instanceof PsiMethodCallExpression expression) {
+            return new LambdaAsyncMethodFilter(expression.resolveMethod(),
+                                               LambdaUtil.getLambdaIdx(list, lambda),
                                                lambdaMethodFilter);
           }
         }
@@ -148,5 +90,21 @@ public abstract class JvmSmartStepIntoHandler {
       return lambdaMethodFilter;
     }
     return null;
+  }
+
+  protected static List<SmartStepTarget> reorderWithSteppingFilters(List<SmartStepTarget> targets) {
+    if (targets.size() > 1) {
+      // deprioritize filtered items in stepping filters
+      int firstGood = ContainerUtil.indexOf(targets, elem -> !DebugProcessImpl.isClassFiltered(elem.getClassName()));
+      if (firstGood > 0) {
+        targets = ContainerUtil.concat(targets.subList(firstGood, targets.size()), targets.subList(0, firstGood));
+      }
+    }
+    return targets;
+  }
+
+  @ApiStatus.Internal
+  public enum SmartStepIntoDetectionStatus {
+    SUCCESS, NO_TARGETS, TARGETS_MISMATCH, INTERNAL_ERROR, INVALID_POSITION, BYTECODE_NOT_AVAILABLE
   }
 }

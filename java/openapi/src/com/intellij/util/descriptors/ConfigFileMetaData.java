@@ -1,43 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.descriptors;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Arrays;
 
-/**
- * @author nik
- */
-public class ConfigFileMetaData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.ConfigFileMetaData");
-  private final String myTitle;
+public final class ConfigFileMetaData {
+  private static final Logger LOG = Logger.getInstance(ConfigFileMetaData.class);
+  private final @Nls String myTitle;
   private final String myId;
   private final String myFileName;
   private final String myDirectoryPath;
-  private final ConfigFileVersion[] myVersions;
-  private final ConfigFileVersion myDefaultVersion;
-  private final boolean myOptional;
+  private final ConfigFileVersion[] versions;
+  private final ConfigFileVersion defaultVersion;
+  private final boolean isOptional;
   private final boolean myFileNameFixed;
   private final boolean myUnique;
 
-  public ConfigFileMetaData(final String title,
+  public ConfigFileMetaData(final @Nls String title,
                             final @NonNls String id,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
@@ -53,13 +37,13 @@ public class ConfigFileMetaData {
     myFileNameFixed = fileNameFixed;
     myUnique = unique;
     LOG.assertTrue(versions.length > 0, "No versions specified for '" + id + "' descriptor");
-    myVersions = versions;
-    myOptional = optional;
-    myDefaultVersion = defaultVersion != null ? defaultVersion : myVersions[myVersions.length - 1];
-    LOG.assertTrue(Arrays.asList(myVersions).contains(myDefaultVersion));
+    this.versions = versions;
+    isOptional = optional;
+    this.defaultVersion = defaultVersion == null ? versions[versions.length - 1] : defaultVersion;
+    LOG.assertTrue(Arrays.asList(versions).contains(this.defaultVersion));
   }
 
-  public ConfigFileMetaData(final String title,
+  public ConfigFileMetaData(final @Nls String title,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
                             final ConfigFileVersion[] versions,
@@ -70,7 +54,7 @@ public class ConfigFileMetaData {
     this(title, fileName, fileName, directoryPath, versions, defaultVersion, optional, fileNameFixed, unique);
   }
 
-  public String getTitle() {
+  public @Nls String getTitle() {
     return myTitle;
   }
 
@@ -78,7 +62,7 @@ public class ConfigFileMetaData {
     return myId;
   }
 
-  public String getFileName() {
+  public @NlsSafe String getFileName() {
     return myFileName;
   }
 
@@ -87,20 +71,20 @@ public class ConfigFileMetaData {
   }
 
   public boolean isOptional() {
-    return myOptional;
+    return isOptional;
   }
 
   public ConfigFileVersion[] getVersions() {
-    return myVersions;
+    return versions;
   }
 
-
+  @Override
   public String toString() {
     return myTitle;
   }
 
   public ConfigFileVersion getDefaultVersion() {
-    return myDefaultVersion;
+    return defaultVersion;
   }
 
   public boolean isFileNameFixed() {

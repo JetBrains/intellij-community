@@ -1,29 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.testFramework.ParsingTestCase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
-import com.jetbrains.python.inspections.PythonVisitorFilter;
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PythonVisitorFilter;
+import com.jetbrains.python.psi.impl.PythonASTFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +25,9 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
   public PyFunctionTypeAnnotationParsingTest() {
     super("functionTypeComment/parsing", "functionTypeComment", new PyFunctionTypeAnnotationParserDefinition(), new PythonParserDefinition());
@@ -41,20 +36,29 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
-    PythonDialectsTokenSetProvider.reset();
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDoctestTokenSetContributor());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
   }
 
   @Override
   protected void tearDown() throws Exception {
     // clear cached extensions
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
-    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyFunctionTypeAnnotationDialect.INSTANCE, (visitorClass, file) -> false);
-    super.tearDown();
+    try {
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+      PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyFunctionTypeAnnotationDialect.INSTANCE, (visitorClass, file) -> false);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
+  @Override
   protected void doCodeTest(@NotNull String typeAnnotation) {
     try {
       super.doCodeTest(typeAnnotation);
@@ -94,7 +98,7 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
     final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
     assertSize(1, paramTypes);
-    assertInstanceOf(paramTypes.get(0), PyNoneLiteralExpression.class);
+    assertInstanceOf(paramTypes.get(0), PyEllipsisLiteralExpression.class);
     final PyExpression returnType = annotation.getReturnType();
     assertNotNull(returnType);
   }

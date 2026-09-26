@@ -1,0 +1,55 @@
+package org.jetbrains.plugins.textmate.language.syntax.lexer
+
+import kotlin.jvm.JvmField
+
+class TextMateScope(
+  val scopeName: CharSequence?,
+  val parent: TextMateScope?,
+) {
+  companion object {
+    @JvmField
+    val EMPTY: TextMateScope = TextMateScope(null, null)
+    @JvmField
+    val WHITESPACE: TextMateScope = EMPTY.add("token.whitespace")
+  }
+
+  val level: Int = parent?.level?.inc() ?: 0
+  val dotsCount: Int = (scopeName?.count { it == '.' } ?: 0) + (parent?.dotsCount ?: 0)
+  val isEmpty: Boolean = (parent == null || parent.isEmpty) && scopeName.isNullOrEmpty()
+
+  private val hashCode: Int = 31 * scopeName.hashCode() + parent.hashCode()
+
+  fun add(scopeName: CharSequence?): TextMateScope {
+    return TextMateScope(scopeName, this)
+  }
+
+  override fun toString(): String {
+    return buildString {
+      if (scopeName != null) {
+        append(scopeName)
+      }
+      generateSequence(parent, TextMateScope::parent)
+        .mapNotNull(TextMateScope::scopeName)
+        .forEach { parentScopeName ->
+          insert(0, "$parentScopeName ")
+        }
+    }.trim()
+  }
+
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is TextMateScope) return false
+    if (level != other.level || hashCode != other.hashCode || scopeName != other.scopeName) {
+      return false
+    }
+    // equal hashes don't guarantee that the parent chains are equal, compare them for real
+    val parent = parent
+    val otherParent = other.parent
+    return parent === otherParent || (parent != null && parent == otherParent)
+  }
+
+  override fun hashCode(): Int {
+    return hashCode
+  }
+}

@@ -1,0 +1,16 @@
+public class TestString {
+  public static void main(String[] args) {<caret>
+    String a =
+      """
+      a
+      
+      """;
+
+
+    String b =
+      """
+      a
+      
+      """;
+  }
+}

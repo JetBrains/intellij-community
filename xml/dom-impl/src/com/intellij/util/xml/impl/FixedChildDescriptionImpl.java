@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
@@ -34,16 +21,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implements DomFixedChildDescription {
   private final Collection<JavaMethod>[] myGetterMethods;
   private final int myCount;
 
   public FixedChildDescriptionImpl(final XmlName tagName, final Type type, final int count, final Collection<JavaMethod>[] getterMethods) {
     super(tagName, type);
-    assert getterMethods.length == count || getterMethods == ArrayUtil.EMPTY_COLLECTION_ARRAY;
+    assert getterMethods.length == count || getterMethods == ArrayUtilRt.EMPTY_COLLECTION_ARRAY;
     myCount = count;
     myGetterMethods = getterMethods;
   }
@@ -57,8 +41,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
     final JavaMethod method = getGetterMethod(index);
     if (method != null) {
       final T annotation = method.getAnnotation(annotationClass);
@@ -80,8 +63,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
+  public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
     final List<DomElement> result = new SmartList<>();
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
@@ -92,7 +74,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     else {
       for (Collection<JavaMethod> methods : myGetterMethods) {
         if (methods != null && !methods.isEmpty()) {
-          result.add((DomElement)methods.iterator().next().invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY));
+          result.add((DomElement)methods.iterator().next().invoke(element, ArrayUtilRt.EMPTY_OBJECT_ARRAY));
         }
       }
     }
@@ -100,17 +82,16 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   @Override
-  @NotNull
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+  public @NotNull @NlsSafe String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     return StringUtil.capitalizeWords(strategy.splitIntoWords(getXmlElementName()), true);
   }
 
   @Override
-  @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public final @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return getAnnotation(0, annotationClass);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -124,10 +105,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return true;
   }
 
+  @Override
   public String toString() {
     return getXmlElementName() + " " + getGetterMethod(0) + " " + getType();
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + myCount;

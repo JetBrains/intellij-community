@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class BoolUtils {
+public final class BoolUtils {
   private BoolUtils() {
     super();
   }
@@ -21,9 +21,7 @@ public class BoolUtils {
     while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
-    if (ancestor.getParent() instanceof GrUnaryExpression) {
-      final GrUnaryExpression prefixAncestor =
-          (GrUnaryExpression) ancestor.getParent();
+    if (ancestor.getParent() instanceof GrUnaryExpression prefixAncestor) {
       final IElementType sign = prefixAncestor.getOperationTokenType();
       if (GroovyTokenTypes.mLNOT.equals(sign)) {
         return true;
@@ -32,15 +30,12 @@ public class BoolUtils {
     return false;
   }
 
-  @Nullable
-  public static GrExpression findNegation(GrExpression exp) {
+  public static @Nullable GrExpression findNegation(GrExpression exp) {
     GrExpression ancestor = exp;
     while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
-    if (ancestor.getParent() instanceof GrUnaryExpression) {
-      final GrUnaryExpression prefixAncestor =
-          (GrUnaryExpression) ancestor.getParent();
+    if (ancestor.getParent() instanceof GrUnaryExpression prefixAncestor) {
       final IElementType sign = prefixAncestor.getOperationTokenType();
       if (GroovyTokenTypes.mLNOT.equals(sign)) {
         return prefixAncestor;
@@ -50,10 +45,9 @@ public class BoolUtils {
   }
 
   public static boolean isNegation(@Nullable PsiElement exp) {
-    if (!(exp instanceof GrUnaryExpression)) {
+    if (!(exp instanceof GrUnaryExpression prefixExp)) {
       return false;
     }
-    final GrUnaryExpression prefixExp = (GrUnaryExpression) exp;
     final IElementType sign = prefixExp.getOperationTokenType();
     return GroovyTokenTypes.mLNOT.equals(sign);
   }

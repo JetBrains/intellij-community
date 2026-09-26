@@ -1,0 +1,11 @@
+// "Add context parameter to function" "false"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_AFTER_ERROR: NO_CONTEXT_ARGUMENT
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+context(i: Int) fun bar() {}
+
+val action = {
+    <caret>bar()
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForEnclosingFunction

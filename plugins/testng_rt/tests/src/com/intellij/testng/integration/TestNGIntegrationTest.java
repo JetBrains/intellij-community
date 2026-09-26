@@ -6,42 +6,37 @@ import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunsInEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
-@RunsInEdt
 @RunWith(Parameterized.class)
 public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
-  @Rule public final EdtRule edtRule = new EdtRule();
-  @Rule public final TestName myNameRule = new TestName();
-
   @Parameterized.Parameter
   public String myTestNGVersion;
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
+      //createParams("5.14.10"), // the last version of 5.x branch (Feb 15, 2011), still used in some projects
       createParams("6.8"),
+      createParams("6.9.10"), // the popular version
       createParams("6.11"),
       createParams("6.10"),
       createParams("6.13.1"),
-      createParams("6.14.2")
+      createParams("6.14.3"), // the last version of 6.x branch (Apr 09, 2018), still used in some projects
+      createParams("7.12.0")
     );
   }
 
@@ -52,7 +47,7 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
     assertNotNull("Test annotation not found", 
                   JavaPsiFacade.getInstance(getProject())
                                .findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
@@ -60,36 +55,32 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   @Override
   protected String getTestContentRoot() {
-    String methodName = myNameRule.getMethodName();
-    methodName = methodName.substring(0, methodName.indexOf("["));
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/testng_rt/tests/testData/integration/" + methodName);
-  }
-
- @Before
-  public void before() throws Exception {
-    setUp();
-  }
-
-  @After
-  public void after() throws Exception {
-    tearDown();
-  }
-
-  @Override
-  public String getName() {
-    return myNameRule.getMethodName();
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/testng_rt/tests/testData/integration/" + getName());
   }
 
   @Test
   public void simpleStart() throws ExecutionException {
     PsiClass psiClass = findClass(myModule, "a.Test1");
     assertNotNull(psiClass);
-    PsiMethod testMethod = psiClass.findMethodsByName("simple", false)[0];
-    TestNGConfiguration configuration = createConfiguration(testMethod);
+    TestNGConfiguration configuration = createConfiguration(psiClass);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     String testOutput = processOutput.out.toString();
-    assertEmpty(processOutput.err);
+    assertEmpty(ContainerUtil.filter(processOutput.err, s -> !s.startsWith("SLF4J(W): ")));
     assertTrue(testOutput, testOutput.contains("sample output"));
-  }
 
+    boolean supportedDisplayName = !myTestNGVersion.startsWith("5");
+    String testName = supportedDisplayName ? "Test1.myName" : "Test1.simple";
+
+    String messages = processOutput.messages.stream()
+      .filter(m -> m instanceof BaseTestMessage)
+      .map(m -> m.asString())
+      .map(s -> s.replaceAll(" duration='(.*?)'", ""))
+      .collect(Collectors.joining("\n"));
+
+    assertEquals("""
+                   ##teamcity[testStarted name='%s' nodeId='a.Test1/simple' parentNodeId='a.Test1' locationHint='java:test://a.Test1/simple']
+                   ##teamcity[testFinished name='%s' nodeId='a.Test1/simple']
+                   ##teamcity[testStarted name='Test1.simple2' nodeId='a.Test1/simple2' parentNodeId='a.Test1' locationHint='java:test://a.Test1/simple2']
+                   ##teamcity[testFinished name='Test1.simple2' nodeId='a.Test1/simple2']""".formatted(testName, testName), messages);
+  }
 }

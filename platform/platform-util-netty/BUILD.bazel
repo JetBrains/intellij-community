@@ -1,0 +1,73 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.util.netty` start
+content_module_jar(module = ":ide-util-netty")
+### auto-generated section `dev intellij.platform.ide.util.netty` end
+
+### auto-generated section `build intellij.platform.ide.util.netty` start
+jvm_library(
+    name = "ide-util-netty",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.util.netty",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//libraries/guava",
+        "//libraries/fastutil",
+        "//libraries/netty/buffer",
+        "//platform/util",
+        "//platform/util/base",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//platform/platform-util-io:ide-util-io",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "ide-util-netty_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.util.netty",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-util-netty",
+        "//platform/core-api:core_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/netty/buffer:buffer_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/base:base_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.util.netty` end
+
+### auto-generated section `iml intellij.platform.ide.util.netty` start
+exports_files(
+    [
+        "intellij.platform.ide.util.netty.iml",
+        "resources/intellij.platform.ide.util.netty.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.util.netty` end

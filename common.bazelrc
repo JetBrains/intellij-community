@@ -1,0 +1,304 @@
+# Common bazel settings between open source community repository and the monorepo
+
+### Profiles ###
+
+# ci — configuration tailored for CI
+
+### --- ###
+
+# Limit the server memory usage as per:
+# https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
+# https://youtrack.jetbrains.com/issue/MRI-4425/Check-Bazel-9.1.0-server-memory-consumption#focus=Comments-27-13796597.0-0
+startup --host_jvm_args=-Xmx12g
+
+# Disable implicit imports, remove when migrated to Bazel 9
+# see https://blog.bazel.build/2026/01/20/bazel-9.html
+common --incompatible_autoload_externally=
+
+# Cache repository rules like JPS project model reading, http_file downloading, toolbox POMs analysis etc
+# Also see MRI-3683
+# https://github.com/bazelbuild/bazel/discussions/27509
+startup --experimental_remote_repo_contents_cache
+
+# IJI-2767 Bazel: move bazel output root to a standard location
+startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
+startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
+# MRI-4120: On Windows, we use a short `output_user_root` to mitigate long path issues
+# When using a custom disk drive setup (different disk label, etc.), configure in `%USERPROFILE%\.bazelrc`:
+# ```
+# startup --output_user_root=<YOUR PATH HERE WITH / SLASHES>
+# startup:windows --output_user_root=<YOUR PATH HERE WITH / SLASHES>
+# ```
+# (both lines matter to match various Bazel configurations out there)
+# USE '/' slashes in your path, like W:/bazel
+#
+# See https://bazel.build/run/bazelrc for more details
+startup:windows --output_user_root=C:/ProgramData/_bazel
+
+# Use low-latency ZGC to prevent overflow when watching local filesystem for changes on Windows
+#
+# G1GC pauses the sun.nio.fs.WindowsWatchService.Poller's thread, delaying asynchronous callback processing long enough
+# that ReadDirectoryChangesW returns zero bytes transferred (aka StandardWatchEventKinds.OVERFLOW):
+# https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L630
+startup:windows --host_jvm_args=-XX:+UseZGC
+
+# Increase file watch service queue maximum size to prevent overflow when watching local filesystem for changes on Windows
+# https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/share/classes/sun/nio/fs/AbstractWatchKey.java#L39
+startup:windows --host_jvm_args=-Djdk.nio.file.WatchService.maxEventsPerPoll=1000000  # 1M
+
+# Increase size of per-directory buffer for events to prevent overflow when watching local filesystem for changes on Windows
+# https://github.com/JetBrains/JetBrainsRuntime/blob/d7e087876fa0326af082e705483a079b919242bc/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L290
+startup:windows --host_jvm_args=-Djdk.nio.file.WatchService.bufferSizeToRetrieveEventsPerDirectory=524288  # 512K
+
+# Disk cache
+common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
+common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
+common:linux --disk_cache=~/.cache/JetBrains/monorepo-bazel-cache
+common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
+
+### NOTE on --experimental_sibling_repository_layout
+### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
+### One experimental option less and also it looks like it won't enabled by default in the future
+
+common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
+common --@rules_jvm//:default-kotlinc-opts=@community//:k25
+
+# rules_jvm / rules_kotlin compilation backend switch (see rules_jvm backend_config.bzl). Default = JPS / rules_jvm.
+# Use --config=bta to compile with the rules_kotlin (BTA) backend instead.
+common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1 --extra_toolchains=@rules_jvm//:kotlin_toolchain
+
+# kup — Kotlin User Project (KQA-3473): render the internal diagnostic names and report all warnings even when errors are found.
+common:kup --@community//build/kotlinc-opts-override:x_render_internal_diagnostic_names=true
+common:kup --@community//build/kotlinc-opts-override:x_report_all_warnings=true
+
+# configure resources
+common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
+common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JvmCompile=HOST_CPUS*2
+common --worker_max_multiplex_instances=HavenCli=HOST_CPUS*2
+
+# Force all workers to quit after the build to prevent excessive memory usage when idle
+common --worker_quit_after_build
+
+# hide Java 8 deprecation warnings
+common --javacopt=-Xlint:-options
+
+# https://bazel.build/docs/bazel-and-java#hermetic-testing
+# The code is compiled for, executed, and tested on this JVM.
+common --java_language_version=25
+common --java_runtime_version=remotejbr_25
+
+# see https://bazel.build/external/lockfile
+# use `bazel mod deps --lockfile_mode=refresh` to update lock file
+common --lockfile_mode=error
+
+common --noenable_workspace
+
+common --nolegacy_external_runfiles
+# rules_kotlin Compiling Kotlin on Windows appears to require --legacy_external_runfiles https://github.com/bazelbuild/rules_kotlin/issues/1309
+# Otherwise it fails with
+# LAUNCHER ERROR: Rlocation failed on _main/external/rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+common:windows --legacy_external_runfiles
+
+# Without it it fails in Windows Sandbox with:
+# ERROR: C:/users/wdagutilityaccount/desktop/bazel/BUILD.bazel:24:15: JdepsMerge //:jps_to_bazel-lib { jdeps: 1 } failed: Worker process did not return a WorkResponse:
+# ---8<---8<--- Start of log, file at C:/users/wdagutilityaccount/_bazel_wdagutilityaccount/ilgdy3ge/bazel-workers/worker-7-JdepsMerge.log ---8<---8<---
+# LAUNCHER ERROR: Rlocation failed on rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file
+# ---8<---8<--- End of log ---8<---8<---
+# also see
+# https://github.com/bazelbuild/rules_kotlin/issues/1309
+# https://github.com/bazelbuild/rules_kotlin/issues/1300
+#
+# jdeps is used to check that there are no unused dependencies for target
+# which is we don't need for generator
+build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
+
+# Prune transitive deps to match jvm_library behavior and avoid classpath conflicts
+common --@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps=True
+
+# Force ijar ABIs instead of turbine source-level header jars, effective when compiling with upstream rules_kotlin
+# Turbine omits synthetic bridge methods, while ijar (of the full javac output) keeps the bridges
+build --nojava_header_compilation
+
+# https://bazel.build/docs/bazel-and-java#config-build-tools-java
+# A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
+# That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
+common --tool_java_language_version=25
+# Java runtime the tools should use
+common --tool_java_runtime_version=remotejbr_25
+
+# make sure you don't need to open file to read compilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
+common --experimental_ui_max_stdouterr_bytes=-1
+
+# IDEA do not handle symlinks efficiently (freeze due to modal non-cancellable dialog) and no way to exclude directories by pattern bazel-
+common --symlink_prefix=out/bazel-
+
+# FS Watch
+common --watchfs
+common --experimental_windows_watchfs
+common:linux --nowatchfs
+common:ci --nowatchfs
+
+common --enable_platform_specific_config
+common --incompatible_strict_action_env=true
+
+# Use target platform short name (not CPU) in the output directory
+common --experimental_platform_in_output_dir
+
+# Do not depend on external environment
+common --repo_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+startup --noautodetect_server_javabase
+
+# Clear PATH environment variable to enable remote cache hits on Windows
+#
+# rules_java uses use_default_shell_env=True leading to different PATH values in actions:
+# C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32;C:\\Windows\\System32\\WindowsPowerShell\\v1.0
+# C:\\Users\\Ilia.Kirianovskii\\AppData\\Local\\Microsoft\\WindowsApps;C:\\WINDOWS;C:\\WINDOWS\\System32;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0
+# https://github.com/bazelbuild/bazel/blob/93cde47ab3236b3b7124b41824f843f3659064de/src/main/java/com/google/devtools/build/lib/bazel/rules/BazelRuleClassProvider.java#L162
+common:windows --action_env=PATH=C:\\do-not-use-PATH
+
+# Enable compact *.repo_mapping manifest
+build --incompatible_compact_repo_mapping_manifest
+
+# Generally good remote cache tweaks
+# on CI, set remote_cache_async to false! set to false for local runs also, to investigate https://github.com/bazelbuild/bazel/issues/19273
+common --remote_cache_async=false --remote_cache_compression=true
+common:ci --remote_cache_async=false
+
+# https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
+# check if `--remote_download_outputs=minimal` makes sense for CI or some local builds
+build --remote_build_event_upload=minimal
+build --nolegacy_important_outputs
+
+# Avoid
+# Exception in thread "main" java.io.IOException: Error getting terminal size: GetConsoleScreenBufferInfo error 6
+# 	at coursier.jniutils.WindowsAnsiTerminal.terminalSize(WindowsAnsiTerminal.java:10)
+common:windows --repo_env=COURSIER_NO_TERM=true
+common:windows --repo_env=COURSIER_PROGRESS=false
+# Enable on Bazel 9
+# common --experimental_strict_repo_env
+
+# More debug on CI
+common:ci --announce_rc
+common:ci --show_progress_rate_limit=30
+
+# avoid creating a runfiles tree for binaries or tests until it is needed
+build --nobuild_runfile_links
+
+# detailed tests output by default
+# https://bazel.build/reference/command-line-reference#build-flag--test_summary
+test --test_summary=detailed
+
+# streamed tests output by default
+# https://bazel.build/reference/command-line-reference#build-flag--test_output
+test --test_output=streamed
+
+# https://bazel.build/reference/test-encyclopedia
+# https://bazel.build/reference/command-line-reference#flag--test_timeout
+test --test_timeout=60,300,900,14400
+
+# https://bazel.build/reference/command-line-reference#flag--cache_test_results
+test --cache_test_results=auto
+
+# Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
+test:ci --local_test_jobs=1
+
+# Build only the test targets to skip compiling what no test needs on CI
+# Bazel ignores other targets specified on the command line, and builds only what is necessary to run the *_test and test_suite rules not filtered by their tags, timeout etc.
+test:ci --build_tests_only
+
+# Aliases for flags used by ij_plugin rule
+build --flag_alias=ide_build_number=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_build_number
+build --flag_alias=ide_stability_level=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_stability_level
+build --flag_alias=ij_plugin_version=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_version
+build --flag_alias=ij_plugin_force_exact_build_compatibility=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_force_exact_build_compatibility
+
+# A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
+common --repo_env=ANDROID_HOME=
+
+# Forward NETRC so both Bazel's downloader and Coursier (maven_install use_credentials_from_home_netrc_file)
+# can authenticate to packages.jetbrains.team, e.g. on CI where NETRC points to a file outside $HOME.
+common --repo_env=NETRC
+
+# Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
+common --incompatible_enable_proto_toolchain_resolution
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
+
+# need to use Python from rules_python in rules_pkg in pkg_zip target
+common --@rules_python//python/config_settings:bootstrap_impl=script
+
+# Retry downloads up to 5 times.
+# Please note that this is not applicable to Coursier which requires its own configuration.
+common --experimental_repository_downloader_retries=5
+
+# rules_jvm_external 6.10 bundles Coursier v2.1.24, which does NOT retry HTTP 5xx (only SSL/AccessDenied),
+# so transient 502s from Space Packages during the resolve fail immediately. Pin a newer Coursier that
+# retries 5xx (Coursier PR #3515, first in v2.1.25-M20); combined with the per-install
+# additional_coursier_options=["--retry-count","5"] this retries 502s. Requires the rules_jvm_external
+# coursier-optional-file-field patch (newer Coursier omits the "file" key for pom-only entries).
+common --repo_env=COURSIER_URL=https://github.com/coursier/coursier/releases/download/v2.1.25-M26/coursier.jar
+common --repo_env=COURSIER_SHA256=97647d0378b877db2552a29caec075de1bae86375f0343ba82cf52d69193eb5e
+
+# Coursier's default retry backoff is 10ms x 2^n over 5 attempts (~150ms total) - far too short to outlast a
+# transient Space Packages 502. Stretch the initial delay (via a JVM system property forwarded through COURSIER_OPTS).
+# Keep this to a single -D: bazelrc splits the flag value on spaces, so multiple -D tokens would not parse.
+common --repo_env=COURSIER_OPTS=-Dcoursier.exception-retry-backoff-initial-delay=5s
+
+# Scale HTTP timeouts by 2x
+common --http_timeout_scaling=2.0
+
+common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+
+# `--worker_max_multiplex_instances` is how many WorkRequests a multiplex worker may be given *in parallel*, and its
+# fallback is far below `--jobs=HOST_CPUS*2`. Left unset, the packer would be a worker pool of a handful while 2 524
+# actions queue behind it - which is what the JVM worker this replaced was doing.
+common --worker_max_multiplex_instances=PackContentModuleJar=HOST_CPUS*2
+
+# The same for the plugin jars, which the `dev_plugin` rule packs under a mnemonic of its own. The figure is the
+# sibling's, and it is inherited rather than re-measured: nothing has measured a pool size over the plugin jars, whose
+# median is larger. `no-cache` is deliberately **not** inherited. Only a measurement over this population can settle
+# it, and nothing has measured it yet.
+common --worker_max_multiplex_instances=PackDevPluginJar=HOST_CPUS*2
+
+
+# Do not cache a packing action. Measured over all 2 524 jars on one laptop, warm tree, one genuine packer change per
+# row so that every row is a real cold pack and no row pays for an analysis-cache discard:
+#
+#   | what the action is allowed to do        | wall clock |
+#   | nothing cached, packs every jar         |     6.7 s  |
+#   | disk cache only                         |     9.3 s  |
+#   | disk cache and the remote cache         |    26.0 s  |
+#   | served from the disk cache, packs none  |     5.3 s  |
+#
+# The remote leg is 16.7 s of that, for an action that does about a millisecond of work: `--remote_cache_async=false`
+# (above) makes the lookup block a jobs slot, and the cache is a WAN host. This is why the scrubbing
+# route was not taken - making the key platform-independent would have turned those misses into *hits*, and the hit path
+# is a round trip plus the download of a 0.25-1 MB jar, which cannot beat merging one locally.
+#
+# The disk leg is the closer call, and it is a loss too: populating it costs 2.6 s and writes 3.3 GB into a 32 GB shared
+# cache on every cold pack, to save the 1.4 s that a hit is worth. It only ever wins on a fresh output base holding this
+# exact packer and these exact module jars, because every other case is already answered - for free - by Bazel's own
+# action cache, which `no-cache` does not touch: verified, the second identical build packs nothing. And 3.3 GB of jars
+# per cold pack evicts entries for actions that do pay a cache back, such as compilation.
+#
+# It also stops CI uploading those 3.3 GB per build for results nobody should take.
+#
+# Revisit if `--remote_download_outputs=minimal` is ever adopted (see the note above): with outputs
+# left remote, a hit costs no download and the arithmetic changes.
+common --modify_execution_info=PackContentModuleJar=+no-cache
+
+# C/C++ warnings are errors. Each external dependency disables exactly the diagnostics it emits.
+build --copt=-Werror
+build --per_file_copt=external/[+]http_archive[+]dmg_hfsplus/@-Wno-alloc-size,-Wno-sometimes-uninitialized,-Wno-uninitialized,-Wno-unused-but-set-variable,-Wno-unused-variable
+build --per_file_copt=external/[+]http_archive[+]msix_packaging/@-Wno-c++20-compat,-Wno-c++98-compat,-Wno-c++98-compat-extra-semi,-Wno-c++98-compat-local-type-template-args,-Wno-c++98-compat-pedantic,-Wno-cast-align,-Wno-cast-qual,-Wno-char-subscripts,-Wno-conditional-uninitialized,-Wno-deprecated-declarations,-Wno-exit-time-destructors,-Wno-extra-semi,-Wno-extra-semi-stmt,-Wno-global-constructors,-Wno-ignored-qualifiers,-Wno-implicit-int-conversion,-Wno-inconsistent-missing-destructor-override,-Wno-language-extension-token,-Wno-macro-redefined,-Wno-memset-transposed-args,-Wno-misleading-indentation,-Wno-missing-braces,-Wno-missing-field-initializers,-Wno-missing-prototypes,-Wno-missing-variable-declarations,-Wno-newline-eof,-Wno-non-virtual-dtor,-Wno-nonportable-system-include-path,-Wno-old-style-cast,-Wno-padded,-Wno-pessimizing-move,-Wno-pre-c++14-compat,-Wno-reorder-ctor,-Wno-reserved-macro-identifier,-Wno-self-move,-Wno-shadow,-Wno-shadow-header,-Wno-shadow-uncaptured-local,-Wno-sign-compare,-Wno-sign-conversion,-Wno-suggest-destructor-override,-Wno-suggest-override,-Wno-switch-default,-Wno-switch-enum,-Wno-tautological-value-range-compare,-Wno-thread-safety-analysis,-Wno-undef,-Wno-unique-object-duplication,-Wno-unreachable-code,-Wno-unreachable-code-break,-Wno-unsafe-buffer-usage,-Wno-unsafe-buffer-usage-in-libc-call,-Wno-unused-but-set-variable,-Wno-unused-function,-Wno-unused-parameter,-Wno-unused-template,-Wno-unused-variable,-Wno-zero-as-null-pointer-constant
+build --per_file_copt=external/jemalloc[+]/@-Wno-non-literal-null-conversion,-Wno-undef
+build --per_file_copt=external/libwebp[+]/@-Wno-bad-function-cast,-Wno-cast-align,-Wno-cast-qual,-Wno-conditional-uninitialized,-Wno-covered-switch-default,-Wno-disabled-macro-expansion,-Wno-double-promotion,-Wno-float-equal,-Wno-implicit-fallthrough,-Wno-implicit-int-conversion,-Wno-implicit-int-conversion-on-negation,-Wno-implicit-int-enum-cast,-Wno-implicit-int-float-conversion,-Wno-padded,-Wno-reserved-identifier,-Wno-sign-compare,-Wno-sign-conversion,-Wno-switch-default,-Wno-switch-enum,-Wno-undef,-Wno-unsafe-buffer-usage,-Wno-unused-macros
+build --per_file_copt=external/libx11[+]/@-Wno-constant-conversion,-Wno-logical-not-parentheses,-Wno-macro-redefined,-Wno-parentheses-equality,-Wno-unused-but-set-variable
+build --per_file_copt=external/libxcb[+]/@-Wno-alloc-size,-Wno-unused-but-set-variable
+build --per_file_copt=external/xz[+]/@-Wno-c++-keyword,-Wno-cast-function-type-strict,-Wno-cast-qual,-Wno-covered-switch-default,-Wno-declaration-after-statement,-Wno-disabled-macro-expansion,-Wno-extra-semi-stmt,-Wno-implicit-fallthrough,-Wno-implicit-int-conversion,-Wno-implicit-int-enum-cast,-Wno-implicit-void-ptr-cast,-Wno-microsoft-include,-Wno-missing-noreturn,-Wno-nonportable-system-include-path,-Wno-padded,-Wno-reserved-macro-identifier,-Wno-shadow-header,-Wno-shorten-64-to-32,-Wno-sign-conversion,-Wno-switch-default,-Wno-switch-enum,-Wno-unsafe-buffer-usage,-Wno-unused-function,-Wno-unused-parameter
+build --per_file_copt=external/zlib[+]/@-Wno-c++-keyword,-Wno-c++98-compat-pedantic,-Wno-cast-align,-Wno-cast-qual,-Wno-comma,-Wno-covered-switch-default,-Wno-extra-semi-stmt,-Wno-format-nonliteral,-Wno-implicit-fallthrough,-Wno-implicit-void-ptr-cast,-Wno-missing-format-attribute,-Wno-padded,-Wno-reserved-identifier,-Wno-reserved-macro-identifier,-Wno-shadow-header,-Wno-shorten-64-to-32,-Wno-sign-conversion,-Wno-switch-default,-Wno-switch-enum,-Wno-undef,-Wno-unsafe-buffer-usage
+build --per_file_copt=external/zstd[+]/@-Wno-bad-function-cast,-Wno-comma,-Wno-covered-switch-default,-Wno-disabled-macro-expansion,-Wno-documentation-unknown-command,-Wno-extra-semi-stmt,-Wno-format-signedness,-Wno-missing-variable-declarations,-Wno-nonportable-system-include-path,-Wno-nrvo,-Wno-padded,-Wno-pre-c11-compat,-Wno-reserved-identifier,-Wno-reserved-macro-identifier,-Wno-sign-conversion,-Wno-switch-default,-Wno-unreachable-code,-Wno-unreachable-code-return,-Wno-unsafe-buffer-usage,-Wno-unused-function,-Wno-unused-macros,-Wno-used-but-marked-unused

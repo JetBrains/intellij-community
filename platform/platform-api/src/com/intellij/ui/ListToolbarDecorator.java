@@ -1,81 +1,74 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 /**
  * @author Konstantin Bulenkov
  */
-class ListToolbarDecorator extends ToolbarDecorator {
-  private final JList myList;
+class ListToolbarDecorator<T> extends ToolbarDecorator {
+  private final JList<T> myList;
   private final EditableModel myEditableModel;
 
-  ListToolbarDecorator(JList list, @Nullable EditableModel editableModel) {
+  ListToolbarDecorator(@NotNull JList<T> list, @Nullable EditableModel editableModel) {
     myList = list;
     myEditableModel = editableModel;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = true;
     createActions();
-    myList.addListSelectionListener(new ListSelectionListener() {
+    myList.addListSelectionListener(_ -> updateButtons());
+    ListDataListener modelListener = new ListDataListener() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void intervalAdded(ListDataEvent e) {
         updateButtons();
       }
-    });
-    myList.addPropertyChangeListener("enabled", new PropertyChangeListener() {
+
       @Override
-      public void propertyChange(PropertyChangeEvent evt) {
+      public void intervalRemoved(ListDataEvent e) {
         updateButtons();
       }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        updateButtons();
+      }
+    };
+    myList.getModel().addListDataListener(modelListener);
+    myList.addPropertyChangeListener("model", evt -> {
+      if (evt.getOldValue() != null) {
+        ((ListModel<T>)evt.getOldValue()).removeListDataListener(modelListener);
+      }
+      if (evt.getNewValue() != null) {
+        ((ListModel<T>)evt.getNewValue()).addListDataListener(modelListener);
+      }
     });
+    myList.addPropertyChangeListener("enabled", _ -> updateButtons());
   }
 
   private void createActions() {
-    myRemoveAction = new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        ListUtil.removeSelectedItems(myList);
-        updateButtons();
-      }
+    myRemoveAction = _ -> {
+      ListUtil.removeSelectedItems(myList);
+      updateButtons();
     };
-    myUpAction = new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        ListUtil.moveSelectedItemsUp(myList);
-        updateButtons();
-      }
+    myUpAction = _ -> {
+      ListUtil.moveSelectedItemsUp(myList);
+      updateButtons();
     };
-    myDownAction = new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        ListUtil.moveSelectedItemsDown(myList);
-        updateButtons();
-      }
+    myDownAction = _ -> {
+      ListUtil.moveSelectedItemsDown(myList);
+      updateButtons();
     };
   }
 
   @Override
-  protected JComponent getComponent() {
+  protected @NotNull JComponent getComponent() {
     return myList;
   }
 
@@ -115,7 +108,7 @@ class ListToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
     myList.setVisibleRowCount(rowCount);
     return this;
   }

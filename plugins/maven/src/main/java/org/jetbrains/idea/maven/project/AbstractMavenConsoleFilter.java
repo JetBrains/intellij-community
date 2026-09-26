@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.filters.Filter;
@@ -8,18 +9,16 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class AbstractMavenConsoleFilter implements Filter {
 
   private final Pattern myPattern;
@@ -33,9 +32,8 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
   protected abstract boolean lightCheck(String line);
 
-  @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     if (!lightCheck(line)) return null;
 
     Matcher matcher = myPattern.matcher(line);
@@ -43,10 +41,10 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
     String path = matcher.group(1);
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = StandardFileSystems.local().findFileByPath(path);
     if (file == null) {
       if (SystemInfo.isWindows && path.matches("/[A-Z]:/.+")) {
-        file = LocalFileSystem.getInstance().findFileByPath(path.substring(1));
+        file = StandardFileSystems.local().findFileByPath(path.substring(1));
       }
       if (file == null) return null;
     }

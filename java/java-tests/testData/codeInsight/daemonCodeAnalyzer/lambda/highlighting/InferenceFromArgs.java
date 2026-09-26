@@ -18,11 +18,11 @@ class InferenceFromArgs {
          bar(null, (k, v) -> v);
          bar(null, null);
          bar(b, (k, v) ->  {return v;});
-         bar(b, (k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">String i = k;</error> return v;});
+         bar(b, (k, v) -> {String i = <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">k</error>; return v;});
          bar(b, (k, v) -> {Integer  i = k; return v;});
 
          bazz((k, v) -> v);
-         bazz((k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">int i = k;</error> return v;});
+         bazz((k, v) -> {int i = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">k</error>; return v;});
     }
 
     public static <T> SameArgsI<T> max() {

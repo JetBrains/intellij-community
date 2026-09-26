@@ -1,0 +1,92 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.jetbrains.java.decompiler</id>
+  <name>Java Bytecode Decompiler</name>
+  <category>JVM Tools</category>
+  <description>
+    <![CDATA[
+      Extends the standard <code>.class</code> file viewer with the Fernflower Java decompiler.
+    ]]>
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains"/>
+
+  <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last, before clsStubBuilder"/>
+    <editorFactoryListener implementation="org.jetbrains.java.decompiler.DecompilerInEditorListener"/>
+    <applicationService serviceImplementation="org.jetbrains.java.decompiler.IdeaDecompilerSettings"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.java.decompiler.DecompilerPresetChangedCollector"/>
+
+    <!--approximately - 50_000 lines of code -->
+    <advancedSetting
+      id="decompiler.max.direct.nodes.count"
+      default="20000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
+    <!--probably, obfuscated -->
+    <advancedSetting
+      id="decompiler.max.variable.nodes.count"
+      default="30000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
+    <registryKey
+      key="decompiler.assert.thread"
+      defaultValue="true"
+      description="Assert that the decompiler is not called on EDT or under write lock"/>
+    <registryKey
+      key="decompiler.use.line.mapping"
+      defaultValue="true"
+      description="Maps original and decompiled line numbers when stepping in the debugger."/>
+    <registryKey
+      key="decompiler.dump.original.lines"
+      defaultValue="false"
+      description="Show original line numbers as comments in decompiled text"/>
+
+    <applicationSettings service="org.jetbrains.java.decompiler.IdeaDecompilerSettings"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener
+      class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
+      topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"
+      activeInHeadlessMode="false"
+      activeInTestMode="false"
+    />
+  </applicationListeners>
+
+  <actions>
+    <group id="idea.java.decompiler.action.group">
+      <action
+        id="ByteCodeDecompiler"
+        class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"
+        icon="AllIcons.FileTypes.JavaClass"
+      />
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+</idea-plugin>

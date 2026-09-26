@@ -1,0 +1,58 @@
+<!-- BUILD_USING_BAZEL_MARKER: this plugin is also packaged by the `ij_plugin` Bazel rule, and IjPluginDistributionEquivalenceTest
+     checks that the result matches the distribution produced by the build scripts. See IJPL-251444. -->
+<idea-plugin package="com.intellij.byteCodeViewer" allow-bundled-update="true">
+  <name>Bytecode Viewer</name>
+  <id>ByteCodeViewer</id>
+  <category>JVM Tools</category>
+  <description>
+    <![CDATA[
+      Shows the bytecode of a compiled Java class file in the ASM format.
+      <br>
+      To view the bytecode, select a <code>.java</code> or <code>.class</code> file and open <b>View | Show Bytecode</b>.
+      <br>
+      If you select a <code>.java</code> file, make sure that you've compiled it before triggering "Show Bytecode" action.
+     ]]>
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.frontback.psi.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <content namespace="jetbrains"/>
+
+  <extensionPoints>
+    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
+    <extensionPoint name="classFileFinder" interface="com.intellij.byteCodeViewer.BytecodeViewerClassFileFinder" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Bytecode Viewer Errors" displayType="BALLOON" key="notification.group.error.report"/>
+    <applicationSettings service="com.intellij.byteCodeViewer.BytecodeViewerSettings"/>
+  </extensions>
+
+  <actions>
+    <group id="ByeCodeViewerGroup">
+      <action id="BytecodeViewer" class="com.intellij.byteCodeViewer.ShowBytecodeAction"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+
+  <resource-bundle>messages.BytecodeViewerBundle</resource-bundle>
+</idea-plugin>

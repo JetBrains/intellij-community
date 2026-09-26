@@ -1,0 +1,262 @@
+MODULES
+includedApp
+
+includedApp.commonMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+
+includedApp.commonTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+
+includedApp.jvmMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.jvmMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+    includedLibrary.utils.jvmMain (COMPILE)
+
+includedApp.jvmTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.jvmMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+    includedLibrary.utils.jvmMain (TEST)
+
+includedApp.linuxArm64Main
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxArm64Main (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+    includedLibrary.utils.linuxArm64Main (COMPILE)
+    includedLibrary.utils.linuxMain (COMPILE)
+    includedLibrary.utils.nativeMain (COMPILE)
+
+includedApp.linuxArm64Test
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxArm64Main (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+    includedLibrary.utils.linuxArm64Main (TEST)
+    includedLibrary.utils.linuxMain (TEST)
+    includedLibrary.utils.nativeMain (TEST)
+
+includedApp.linuxMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+    includedLibrary.utils.linuxMain (COMPILE)
+    includedLibrary.utils.nativeMain (COMPILE)
+
+includedApp.linuxTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+    includedLibrary.utils.linuxMain (TEST)
+    includedLibrary.utils.nativeMain (TEST)
+
+includedApp.linuxX64Main
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.linuxX64Main (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+    includedLibrary.utils.linuxMain (COMPILE)
+    includedLibrary.utils.linuxX64Main (COMPILE)
+    includedLibrary.utils.nativeMain (COMPILE)
+
+includedApp.linuxX64Test
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.linuxX64Main (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+    includedLibrary.utils.linuxMain (TEST)
+    includedLibrary.utils.linuxX64Main (TEST)
+    includedLibrary.utils.nativeMain (TEST)
+
+includedApp.nativeMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (COMPILE)
+    includedLibrary.utils.linuxMain (COMPILE)
+    includedLibrary.utils.nativeMain (COMPILE)
+
+includedApp.nativeTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (TEST)
+    includedLibrary.utils.linuxMain (TEST)
+    includedLibrary.utils.nativeMain (TEST)
+
+includedLibrary
+
+includedLibrary.commonMain
+
+includedLibrary.commonTest
+    includedLibrary.commonMain (friend, TEST)
+
+includedLibrary.jvmMain
+    includedLibrary.commonMain (refines, COMPILE)
+
+includedLibrary.jvmTest
+    includedLibrary.commonMain (friend, TEST)
+    includedLibrary.commonTest (refines, TEST)
+    includedLibrary.jvmMain (friend, TEST)
+
+includedLibrary.linuxArm64Main
+    includedLibrary.commonMain (refines, COMPILE)
+    includedLibrary.linuxMain (refines, COMPILE)
+    includedLibrary.nativeMain (refines, COMPILE)
+
+includedLibrary.linuxArm64Test
+    includedLibrary.commonMain (friend, TEST)
+    includedLibrary.commonTest (refines, TEST)
+    includedLibrary.linuxArm64Main (friend, TEST)
+    includedLibrary.linuxMain (friend, TEST)
+    includedLibrary.linuxTest (refines, TEST)
+    includedLibrary.nativeMain (friend, TEST)
+    includedLibrary.nativeTest (refines, TEST)
+
+includedLibrary.linuxMain
+    includedLibrary.commonMain (refines, COMPILE)
+    includedLibrary.nativeMain (refines, COMPILE)
+
+includedLibrary.linuxTest
+    includedLibrary.commonMain (friend, TEST)
+    includedLibrary.commonTest (refines, TEST)
+    includedLibrary.linuxMain (friend, TEST)
+    includedLibrary.nativeMain (friend, TEST)
+    includedLibrary.nativeTest (refines, TEST)
+
+includedLibrary.linuxX64Main
+    includedLibrary.commonMain (refines, COMPILE)
+    includedLibrary.linuxMain (refines, COMPILE)
+    includedLibrary.nativeMain (refines, COMPILE)
+
+includedLibrary.linuxX64Test
+    includedLibrary.commonMain (friend, TEST)
+    includedLibrary.commonTest (refines, TEST)
+    includedLibrary.linuxMain (friend, TEST)
+    includedLibrary.linuxTest (refines, TEST)
+    includedLibrary.linuxX64Main (friend, TEST)
+    includedLibrary.nativeMain (friend, TEST)
+    includedLibrary.nativeTest (refines, TEST)
+
+includedLibrary.nativeMain
+    includedLibrary.commonMain (refines, COMPILE)
+
+includedLibrary.nativeTest
+    includedLibrary.commonMain (friend, TEST)
+    includedLibrary.commonTest (refines, TEST)
+    includedLibrary.linuxMain (friend, TEST)
+    includedLibrary.nativeMain (friend, TEST)
+
+includedLibrary.utils
+
+includedLibrary.utils.commonMain
+    includedLibrary.commonMain (COMPILE)
+
+includedLibrary.utils.commonTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+
+includedLibrary.utils.jvmMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.jvmMain (COMPILE)
+    includedLibrary.utils.commonMain (refines, COMPILE)
+
+includedLibrary.utils.jvmTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.jvmMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+    includedLibrary.utils.commonTest (refines, TEST)
+    includedLibrary.utils.jvmMain (friend, TEST)
+
+includedLibrary.utils.linuxArm64Main
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxArm64Main (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (refines, COMPILE)
+    includedLibrary.utils.linuxMain (refines, COMPILE)
+    includedLibrary.utils.nativeMain (refines, COMPILE)
+
+includedLibrary.utils.linuxArm64Test
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxArm64Main (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+    includedLibrary.utils.commonTest (refines, TEST)
+    includedLibrary.utils.linuxArm64Main (friend, TEST)
+    includedLibrary.utils.linuxMain (friend, TEST)
+    includedLibrary.utils.linuxTest (refines, TEST)
+    includedLibrary.utils.nativeMain (friend, TEST)
+    includedLibrary.utils.nativeTest (refines, TEST)
+
+includedLibrary.utils.linuxMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (refines, COMPILE)
+    includedLibrary.utils.nativeMain (refines, COMPILE)
+
+includedLibrary.utils.linuxTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+    includedLibrary.utils.commonTest (refines, TEST)
+    includedLibrary.utils.linuxMain (friend, TEST)
+    includedLibrary.utils.nativeMain (friend, TEST)
+    includedLibrary.utils.nativeTest (refines, TEST)
+
+includedLibrary.utils.linuxX64Main
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.linuxX64Main (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (refines, COMPILE)
+    includedLibrary.utils.linuxMain (refines, COMPILE)
+    includedLibrary.utils.nativeMain (refines, COMPILE)
+
+includedLibrary.utils.linuxX64Test
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.linuxX64Main (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+    includedLibrary.utils.commonTest (refines, TEST)
+    includedLibrary.utils.linuxMain (friend, TEST)
+    includedLibrary.utils.linuxTest (refines, TEST)
+    includedLibrary.utils.linuxX64Main (friend, TEST)
+    includedLibrary.utils.nativeMain (friend, TEST)
+    includedLibrary.utils.nativeTest (refines, TEST)
+
+includedLibrary.utils.nativeMain
+    includedLibrary.commonMain (COMPILE)
+    includedLibrary.linuxMain (COMPILE)
+    includedLibrary.nativeMain (COMPILE)
+    includedLibrary.utils.commonMain (refines, COMPILE)
+
+includedLibrary.utils.nativeTest
+    includedLibrary.commonMain (TEST)
+    includedLibrary.linuxMain (TEST)
+    includedLibrary.nativeMain (TEST)
+    includedLibrary.utils.commonMain (friend, TEST)
+    includedLibrary.utils.commonTest (refines, TEST)
+    includedLibrary.utils.linuxMain (friend, TEST)
+    includedLibrary.utils.nativeMain (friend, TEST)
+
+project
+
+
+Test configuration:
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- hiding dependencies matching .*includedApp.*
+- dependencies order is not checked

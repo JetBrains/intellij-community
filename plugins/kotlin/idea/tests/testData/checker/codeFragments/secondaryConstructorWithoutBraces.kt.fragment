@@ -1,0 +1,1 @@
+<error descr="[UNRESOLVED_REFERENCE]">a</error> + b + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL]">c</error> + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL]">a1</error>

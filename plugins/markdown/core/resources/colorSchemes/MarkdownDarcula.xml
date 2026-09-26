@@ -1,0 +1,45 @@
+<?xml version='1.0'?>
+<list>
+  <option baseAttributes="MARKDOWN_TEXT" name="MARKDOWN_BOLD">
+    <value>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+  <option baseAttributes="MARKDOWN_TEXT" name="MARKDOWN_ITALIC">
+    <value>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_CODE_BLOCK">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_CODE_FENCE">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_CODE_SPAN">
+    <value>
+      <option name="FOREGROUND" value="A9B7C6"/>
+      <option name="BACKGROUND" value="3C3D3D"/>
+      <option name="FONT_TYPE" value="0"/>
+    </value>
+  </option>
+  <option name="MARKDOWN_HEADER">
+    <value>
+      <option name="FOREGROUND" value="bbbbbb"/>
+      <option name="BACKGROUND" value="3c3f41"/>
+    </value>
+  </option>
+  <option baseAttributes="MARKDOWN_HEADER" name="MARKDOWN_HEADER_BOLD">
+    <value>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+</list>

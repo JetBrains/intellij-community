@@ -1,0 +1,112 @@
+package org.jetbrains.jewel.window
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.window.macos.LocalMacPlatformServices
+import org.jetbrains.jewel.window.styling.TitleBarStyle
+import org.jetbrains.jewel.window.utils.WindowMouseEventEffect
+
+/**
+ * Enables or disables the macOS "new fullscreen controls" (the three colored circles displayed in the upper-left corner
+ * of a window in fullscreen mode). When enabled, the background color of the controls is taken from
+ * [org.jetbrains.jewel.window.styling.TitleBarColors.fullscreenControlButtonsBackground].
+ *
+ * @param newControls Whether to use the new fullscreen controls. Defaults to `true`.
+ */
+public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier =
+    this then
+        NewFullscreenControlsElement(
+            newControls,
+            debugInspectorInfo {
+                name = "newFullscreenControls"
+                value = newControls
+            },
+        )
+
+private class NewFullscreenControlsElement(val newControls: Boolean, val inspectorInfo: InspectorInfo.() -> Unit) :
+    ModifierNodeElement<NewFullscreenControlsNode>() {
+    override fun create(): NewFullscreenControlsNode = NewFullscreenControlsNode(newControls)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        val otherModifier = other as? NewFullscreenControlsElement ?: return false
+        return newControls == otherModifier.newControls
+    }
+
+    override fun hashCode(): Int = newControls.hashCode()
+
+    override fun InspectorInfo.inspectableProperties() {
+        inspectorInfo()
+    }
+
+    override fun update(node: NewFullscreenControlsNode) {
+        node.newControls = newControls
+    }
+}
+
+private class NewFullscreenControlsNode(var newControls: Boolean) : Modifier.Node()
+
+@Composable
+internal fun DecoratedWindowScope.TitleBarOnMacOs(
+    modifier: Modifier = Modifier,
+    gradientStartColor: Color = Color.Unspecified,
+    style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
+    content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
+) {
+    val macPlatformServices = LocalMacPlatformServices.current
+
+    val newFullscreenControls =
+        modifier.foldOut(false) { e, r ->
+            if (e is NewFullscreenControlsElement) {
+                e.newControls
+            } else {
+                r
+            }
+        }
+
+    if (newFullscreenControls) {
+        System.setProperty("apple.awt.newFullScreenControls", true.toString())
+        System.setProperty(
+            "apple.awt.newFullScreenControls.background",
+            "${style.colors.fullscreenControlButtonsBackground.toArgb()}",
+        )
+        macPlatformServices.updateColors(window)
+    } else {
+        System.clearProperty("apple.awt.newFullScreenControls")
+        System.clearProperty("apple.awt.newFullScreenControls.background")
+    }
+
+    val decorations = LocalWindowDecorations.current
+    val titleBar = remember { decorations.createCustomTitleBar() }
+
+    WindowMouseEventEffect(titleBar)
+
+    TitleBarImpl(
+        modifier = modifier,
+        gradientStartColor = gradientStartColor,
+        style = style,
+        applyTitleBar = { height, state ->
+            if (state.isFullscreen) {
+                macPlatformServices.updateFullScreenButtons(window)
+            }
+            titleBar.height = height.value
+            decorations.setCustomTitleBar(window, titleBar)
+
+            if (state.isFullscreen && newFullscreenControls) {
+                PaddingValues(start = 80.dp)
+            } else {
+                PaddingValues(start = titleBar.leftInset.dp, end = titleBar.rightInset.dp)
+            }
+        },
+        content = content,
+    )
+}

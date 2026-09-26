@@ -1,12 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
@@ -25,9 +29,6 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   @Override
@@ -47,14 +48,14 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
     Info info = myFactory.createInfoClient().doInfo(target, revision);
 
-    parseOutput(target.getUrl(), command, handler, info != null ? info.getRepositoryRootURL() : null);
+    parseOutput(target.getUrl(), command, handler, info != null ? info.getRepositoryRootUrl() : null);
   }
 
   @Override
   public long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException {
     assertUrl(target);
 
-    List<String> parameters = ContainerUtil.newArrayList();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, makeParents, "--parents");
@@ -120,8 +121,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
     public Lock.Builder lock;
 
-    @NotNull
-    public DirectoryEntry toDirectoryEntry(@NotNull Url url, @Nullable Url repositoryUrl) throws SvnBindException {
+    public @NotNull DirectoryEntry toDirectoryEntry(@NotNull Url url, @Nullable Url repositoryUrl) throws SvnBindException {
       return new DirectoryEntry(append(url, name), repositoryUrl, PathUtil.getFileName(name), kind, commit != null ? commit.build() : null,
                                 name);
     }

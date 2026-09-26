@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports method parameters that are redundant and can be replaced with a local variable.
+<p>If all usages of a parameter are preceded by an assignment to that parameter, the
+parameter can be replaced with a local variable.
+Such a parameter is unnecessary, as values that are passed to it are overwritten.
+  Usually, the problem appears as a result of refactoring.</p>
+<p>Example:</p>
+<pre><code>
+  void test(int p) {
+    p = 1;
+    System.out.print(p);
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  void test() {
+    int p = 1;
+    System.out.print(p);
+  }
+</code></pre>
+</body>
+</html>

@@ -14,4 +14,4 @@ int bar(i = 8, k = i + 1, j = k) {
 
 def q = 6
 print 8 + 1
-def t = 8 + 8 + 1 + 8 + 1 + q + q + q
+def t = 8 + (8 + 1) + (8 + 1) + q + q + q

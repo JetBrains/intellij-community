@@ -1,0 +1,18 @@
+plugins {
+    java
+    kotlin("jvm")
+    kotlin("kapt")
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.mapstruct:mapstruct:1.6.3")
+    implementation("org.mapstruct:mapstruct-processor:1.6.3")
+    testImplementation("com.google.dagger:dagger-compiler:2.57")
+    kapt("org.mapstruct:mapstruct-processor:1.6.3")
+    kaptTest("com.google.dagger:dagger-compiler:2.57")
+    testImplementation(kotlin("test"))
+}

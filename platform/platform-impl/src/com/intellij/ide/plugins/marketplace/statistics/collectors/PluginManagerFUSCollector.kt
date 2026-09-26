@@ -1,0 +1,294 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.marketplace.statistics.collectors
+
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
+import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.PluginsGroupType
+import com.intellij.ide.plugins.marketplace.statistics.UnifiedPluginSearchStatistics
+import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerManageAction
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerTab
+import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchFilterKind
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchQueryShape
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSection
+import com.intellij.ide.plugins.marketplace.statistics.enums.UnifiedPluginSearchSourceKind
+import com.intellij.ide.plugins.marketplace.statistics.fields.PluginVersionEventField
+import com.intellij.ide.plugins.newui.PluginsGroup
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BaseEventId
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+
+internal const val PM_FUS_GROUP_ID = "plugin.manager"
+internal const val PM_FUS_GROUP_VERSION = 13
+private val EVENT_GROUP = EventLogGroup(PM_FUS_GROUP_ID, PM_FUS_GROUP_VERSION)
+
+@ApiStatus.Internal
+open class PluginManagerFUSCollector : CounterUsagesCollector() {
+  override fun getGroup() = EVENT_GROUP
+
+  @Suppress("PropertyName")
+  protected val PLUGIN_MANAGER_SESSION_ID = IntEventField("sessionId")
+
+  @Suppress("PropertyName")
+  protected val PLUGIN_MANAGER_SEARCH_SESSION_ID: IntEventField = IntEventField("searchSessionId")
+
+  @Suppress("PropertyName")
+  protected val PLUGIN_MANAGER_SEARCH_INDEX = IntEventField("searchIndex")
+
+  private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
+  private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
+  private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
+  private val PLUGIN_SOURCE = EventFields.Enum<InstallationSourceEnum>("source")
+  private val OPEN_SOURCE = EventFields.Enum<PluginManagerOpenSourceEnum>("source")
+  private val PLUGIN_MANAGER_BUTTON_TYPE = EventFields.Enum<PluginManagerButtonType>("button_type")
+  private val PLUGIN_MANAGER_SIDE = EventFields.Enum<PluginManagerSide>("side")
+  private val PLUGIN_MANAGER_TAB = EventFields.Enum<PluginManagerTab>("tab")
+  private val MANAGE_ACTION = EventFields.Enum<PluginManagerManageAction>("action")
+  private val PREVIOUS_VERSION = PluginVersionEventField("previous_version")
+  private val SIGNATURE_CHECK_RESULT = EventFields.Enum<SignatureVerificationResult>("signature_check_result")
+  private val PLUGIN_LIST_INDEX = EventFields.Int("index")
+  private val IS_UNIFIED_PAGE = EventFields.Boolean("isUnifiedPage")
+  private val UNIFIED_QUERY_SHAPE = EventFields.Enum<UnifiedPluginSearchQueryShape>("query_shape")
+  private val UNIFIED_FILTER_KINDS = EventFields.StringList(
+    "filter_kinds", UnifiedPluginSearchFilterKind.entries.map(Enum<*>::name)
+  )
+  private val UNIFIED_SOURCE_KINDS = EventFields.StringList(
+    "source_kinds", UnifiedPluginSearchSourceKind.entries.map(Enum<*>::name)
+  )
+  private val UNIFIED_SORT = EventFields.Enum<MarketplaceTabSearchSortByOptions>("sort")
+  private val UNIFIED_RESULT_SECTION = EventFields.Enum<UnifiedPluginSearchSection>("section")
+  private val UNIFIED_RESULT_COUNT = EventFields.RoundedInt("result_count")
+  private val UNIFIED_RESULTS = ObjectListEventField("results", UNIFIED_RESULT_SECTION, UNIFIED_RESULT_COUNT)
+
+  private val PLUGIN_CARD_OPENED = group.registerVarargEvent(
+    "plugin.search.card.opened", EventFields.PluginInfo, PLUGINS_GROUP_TYPE,
+    PLUGIN_LIST_INDEX, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val THIRD_PARTY_ACCEPTANCE_CHECK = group.registerEvent("plugin.install.third.party.check",
+                                                                 ACCEPTANCE_RESULT, PLUGIN_MANAGER_SESSION_ID,
+                                                                 PLUGIN_MANAGER_SEARCH_SESSION_ID)
+  private val PLUGIN_SIGNATURE_WARNING = group.registerVarargEvent(
+    "plugin.signature.warning.shown", EventFields.PluginInfo, ACCEPTANCE_RESULT,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_SIGNATURE_CHECK_RESULT = group.registerVarargEvent(
+    "plugin.signature.check.result", EventFields.PluginInfo, SIGNATURE_CHECK_RESULT,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_STATE_CHANGED = group.registerVarargEvent(
+    "plugin.state.changed", EventFields.PluginInfo, ENABLE_DISABLE_ACTION,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_INSTALLATION_STARTED = group.registerVarargEvent(
+    "plugin.installation.started", PLUGIN_SOURCE, EventFields.PluginInfo, PREVIOUS_VERSION,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_INSTALLATION_FINISHED = group.registerEvent(
+    "plugin.installation.finished", EventFields.PluginInfo, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_REMOVED = group.registerEvent(
+    "plugin.was.removed", EventFields.PluginInfo, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_INSTALL_BUTTON_CLICKED = group.registerVarargEvent(
+    "plugin.install.button.clicked", EventFields.PluginInfo, PLUGIN_MANAGER_SIDE, PLUGIN_MANAGER_BUTTON_TYPE,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val PLUGIN_UNINSTALL_BUTTON_CLICKED = group.registerVarargEvent(
+    "plugin.uninstall.button.clicked", EventFields.PluginInfo, PLUGIN_MANAGER_SIDE, PLUGIN_MANAGER_BUTTON_TYPE,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val SESSION_STARTED = group.registerVarargEvent(
+    "session.started", OPEN_SOURCE, IS_UNIFIED_PAGE, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val TAB_SELECTED = group.registerEvent(
+    "tab.selected", PLUGIN_MANAGER_TAB, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val MANAGE_ACTION_INVOKED = group.registerEvent(
+    "manage.action.invoked", MANAGE_ACTION, PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID
+  )
+  private val UNIFIED_SEARCH_PERFORMED = group.registerVarargEvent(
+    "unified.search", UNIFIED_QUERY_SHAPE, UNIFIED_FILTER_KINDS, UNIFIED_SOURCE_KINDS, UNIFIED_SORT, UNIFIED_RESULTS,
+    PLUGIN_MANAGER_SESSION_ID, PLUGIN_MANAGER_SEARCH_SESSION_ID, PLUGIN_MANAGER_SEARCH_INDEX,
+  )
+
+  fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?, sessionId: Int, searchSessionId: Int): Unit? = group?.let {
+    PLUGIN_CARD_OPENED.log(
+      EventFields.PluginInfo.with(getPluginInfoByDescriptor(descriptor)),
+      PLUGINS_GROUP_TYPE.with(it.type),
+      EventFields.Int("index").with(it.getPluginIndex(descriptor.pluginId)),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+      PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId)
+    )
+  }
+
+  fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum, sessionId: Int, searchSessionId: Int) {
+    THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result, sessionId, searchSessionId)
+  }
+
+  fun pluginsStateChanged(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    enable: Boolean,
+    project: Project? = null,
+    sessionId: Int,
+    searchSessionId: Int,
+  ) {
+    PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.let { event ->
+      descriptors.forEach { descriptor ->
+        event.log(
+          project,
+          EventFields.PluginInfo.with(getPluginInfoByDescriptor(descriptor)),
+          ENABLE_DISABLE_ACTION.with(PluginEnabledState.getState(enable)),
+          PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+          PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+        )
+      }
+    }
+  }
+
+  fun pluginRemoved(pluginId: PluginId, sessionId: Int, searchSessionId: Int): Unit? = PLUGIN_REMOVED.getIfInitializedOrNull()
+    ?.log(getPluginInfoById(pluginId), sessionId, searchSessionId)
+
+  fun pluginInstallButtonClicked(
+    pluginId: PluginId,
+    side: PluginManagerSide,
+    buttonType: PluginManagerButtonType,
+    sessionId: Int,
+    searchSessionId: Int,
+  ) {
+    PLUGIN_INSTALL_BUTTON_CLICKED.getIfInitializedOrNull()?.log(
+      EventFields.PluginInfo.with(getPluginInfoById(pluginId)),
+      PLUGIN_MANAGER_SIDE.with(side),
+      PLUGIN_MANAGER_BUTTON_TYPE.with(buttonType),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+      PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+    )
+  }
+
+  fun pluginUninstallButtonClicked(
+    pluginId: PluginId,
+    side: PluginManagerSide,
+    buttonType: PluginManagerButtonType,
+    sessionId: Int,
+    searchSessionId: Int,
+  ) {
+    PLUGIN_UNINSTALL_BUTTON_CLICKED.getIfInitializedOrNull()?.log(
+      EventFields.PluginInfo.with(getPluginInfoById(pluginId)),
+      PLUGIN_MANAGER_SIDE.with(side),
+      PLUGIN_MANAGER_BUTTON_TYPE.with(buttonType),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+      PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+    )
+  }
+
+  fun sessionStarted(source: PluginManagerOpenSourceEnum, sessionId: Int, searchSessionId: Int) {
+    sessionStarted(source, sessionId, searchSessionId, isUnifiedPage = false)
+  }
+
+  internal fun sessionStarted(
+    source: PluginManagerOpenSourceEnum,
+    sessionId: Int,
+    searchSessionId: Int,
+    isUnifiedPage: Boolean,
+  ) {
+    SESSION_STARTED.getIfInitializedOrNull()?.log(
+      OPEN_SOURCE.with(source),
+      IS_UNIFIED_PAGE.with(isUnifiedPage),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+      PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+    )
+  }
+
+  internal fun performUnifiedSearch(
+    project: Project?,
+    statistics: UnifiedPluginSearchStatistics,
+    searchIndex: Int,
+    sessionId: Int,
+    searchSessionId: Int,
+  ) {
+    UNIFIED_SEARCH_PERFORMED.getIfInitializedOrNull()?.log(project) {
+      add(UNIFIED_QUERY_SHAPE.with(statistics.queryShape))
+      add(UNIFIED_FILTER_KINDS.with(statistics.filterKinds.map(Enum<*>::name)))
+      add(UNIFIED_SOURCE_KINDS.with(statistics.sourceKinds.map(Enum<*>::name)))
+      add(UNIFIED_SORT.with(statistics.sort))
+      add(UNIFIED_RESULTS.with(UnifiedPluginSearchSection.entries.map { section ->
+        ObjectEventData(
+          UNIFIED_RESULT_SECTION.with(section),
+          UNIFIED_RESULT_COUNT.with(statistics.resultCounts[section] ?: 0),
+        )
+      }))
+      add(PLUGIN_MANAGER_SESSION_ID.with(sessionId))
+      add(PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId))
+      add(PLUGIN_MANAGER_SEARCH_INDEX.with(searchIndex))
+    }
+  }
+
+  fun tabSelected(tab: PluginManagerTab, sessionId: Int, searchSessionId: Int) {
+    TAB_SELECTED.getIfInitializedOrNull()?.log(tab, sessionId, searchSessionId)
+  }
+
+  fun manageActionInvoked(action: PluginManagerManageAction, sessionId: Int, searchSessionId: Int) {
+    MANAGE_ACTION_INVOKED.getIfInitializedOrNull()?.log(action, sessionId, searchSessionId)
+  }
+
+  fun pluginInstallationStarted(
+    descriptor: IdeaPluginDescriptor,
+    source: InstallationSourceEnum,
+    sessionId: Int,
+    searchSessionId: Int,
+    previousVersion: String? = null,
+  ) {
+    val pluginInfo = getPluginInfoByDescriptor(descriptor)
+    PLUGIN_INSTALLATION_STARTED.getIfInitializedOrNull()?.log(
+      PLUGIN_SOURCE.with(source), EventFields.PluginInfo.with(pluginInfo),
+      PREVIOUS_VERSION.with(pluginInfo to previousVersion),
+      PLUGIN_MANAGER_SESSION_ID.with(sessionId), PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId))
+  }
+
+  fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor, sessionId: Int, searchSessionId: Int): Unit? =
+    getPluginInfoByDescriptor(descriptor).let {
+      PLUGIN_INSTALLATION_FINISHED.getIfInitializedOrNull()?.log(it, sessionId, searchSessionId)
+    }
+
+  fun signatureCheckResult(
+    descriptor: IdeaPluginDescriptor,
+    result: SignatureVerificationResult,
+    sessionId: Int,
+    searchSessionId: Int,
+  ): Unit? = PLUGIN_SIGNATURE_CHECK_RESULT.getIfInitializedOrNull()?.log(
+    EventFields.PluginInfo.with(getPluginInfoByDescriptor(descriptor)),
+    SIGNATURE_CHECK_RESULT.with(result),
+    PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+    PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+  )
+
+  fun signatureWarningShown(
+    descriptor: IdeaPluginDescriptor,
+    result: DialogAcceptanceResultEnum,
+    sessionId: Int,
+    searchSessionId: Int,
+  ): Unit? = PLUGIN_SIGNATURE_WARNING.getIfInitializedOrNull()?.log(
+    EventFields.PluginInfo.with(getPluginInfoByDescriptor(descriptor)),
+    ACCEPTANCE_RESULT.with(result),
+    PLUGIN_MANAGER_SESSION_ID.with(sessionId),
+    PLUGIN_MANAGER_SEARCH_SESSION_ID.with(searchSessionId),
+  )
+
+  // We don't want to log actions when app did not initialize yet (e.g. migration process)
+  protected fun <T : BaseEventId> T.getIfInitializedOrNull(): T? = if (ApplicationManager.getApplication() == null) null else this
+}

@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.List;
 
 public interface FileSystemTree extends Disposable {
@@ -34,14 +34,13 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getSelectedFile();
 
-  @NotNull
-  VirtualFile[] getSelectedFiles();
+  VirtualFile @NotNull [] getSelectedFiles();
 
   @Nullable
   VirtualFile getNewFileParent();
 
   @Nullable
-  <T> T getData(DataKey<T> key);
+  <T> T getData(@NotNull DataKey<T> key);
 
   void select(VirtualFile file, @Nullable Runnable onDone);
   void select(VirtualFile[] files, @Nullable Runnable onDone);
@@ -59,6 +58,6 @@ public interface FileSystemTree extends Disposable {
   void showHiddens(boolean showHidden);
 
   interface Listener {
-    void selectionChanged(List<VirtualFile> selection);
+    void selectionChanged(@NotNull List<? extends VirtualFile> selection);
   }
 }

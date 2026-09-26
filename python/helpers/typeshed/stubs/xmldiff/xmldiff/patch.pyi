@@ -1,0 +1,16 @@
+from _typeshed import Incomplete
+from collections.abc import Generator
+from re import Pattern
+from typing import Final
+
+DIFF_SPLIT: Final[Pattern[str]]
+
+class Patcher:
+    @property
+    def nsmap(self): ...
+    def patch(self, actions, tree): ...
+    def handle_action(self, action, tree) -> None: ...
+
+class DiffParser:
+    def parse(self, diff) -> Generator[Incomplete]: ...
+    def make_action(self, line): ...

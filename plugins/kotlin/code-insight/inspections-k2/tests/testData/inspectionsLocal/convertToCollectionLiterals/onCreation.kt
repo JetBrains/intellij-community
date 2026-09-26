@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+
+class A(x: Set<String>) {}
+
+fun main() {
+    val a = A(setOf<caret>())
+}

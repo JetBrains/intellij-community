@@ -1,15 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -20,50 +39,47 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
   public boolean myDetectNonVoidReturnType;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final PsiElement valueParent = xmlAttributeValue.getParent();
-        if (!(valueParent instanceof XmlAttribute)) return;
-        final XmlAttribute attribute = (XmlAttribute)valueParent;
+        if (!(valueParent instanceof XmlAttribute attribute)) return;
 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
-        if (eventHandlerMethods.size() == 0) return;
+        if (eventHandlerMethods.isEmpty()) return;
         if (eventHandlerMethods.size() != 1) {
-          holder.registerProblem(xmlAttributeValue, "Ambiguous event handler name: more than one matching method found");
+          holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.ambiguous.problem"));
         }
 
         if (myDetectNonVoidReturnType) {
           eventHandlerMethods.stream()
             .map(PsiMethod::getReturnType)
-            .filter(returnType -> !PsiType.VOID.equals(returnType))
+            .filter(returnType -> !PsiTypes.voidType().equals(returnType))
             .findAny()
-            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, "Return type of event handler should be void"));
+            .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }
 
         final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
@@ -83,14 +99,14 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
                   quickFixes.add(parameterTypeFix);
                   collectFieldTypeFixes(attribute, (PsiClassType)actualType, quickFixes);
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible generic parameter of event handler argument: " + actualType.getCanonicalText() +
-                                         " is not assignable from " + declaredType.getCanonicalText(),
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.generic.parameter.problem",
+                                                                   actualType.getCanonicalText(), declaredType.getCanonicalText()),
                                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 }
                 else {
                   holder.registerProblem(xmlAttributeValue,
-                                         "Incompatible event handler argument: " + actualRawType.getCanonicalText() +
-                                         " is not assignable from " + expectedRawType.getCanonicalText(),
+                                         JavaFXBundle.message("inspection.javafx.event.handler.incompatible.handler.argument",
+                                                                   actualRawType.getCanonicalText(), expectedRawType.getCanonicalText()),
                                          parameterTypeFix);
                 }
               }
@@ -101,8 +117,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     };
   }
 
-  @NotNull
-  private static List<PsiMethod> getEventHandlerMethods(@NotNull XmlAttribute attribute) {
+  private static @NotNull List<PsiMethod> getEventHandlerMethods(@NotNull XmlAttribute attribute) {
     final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
     if (controllerClass == null) return Collections.emptyList();
 
@@ -122,10 +137,10 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
            parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_EVENT);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Detect event handler method having non-void return type", this, "myDetectNonVoidReturnType");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myDetectNonVoidReturnType", JavaFXBundle.message("inspection.javafx.event.handler.create.options.panel")));
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -140,8 +155,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     final PsiReference reference = idValue.getReference();
     if (reference == null) return;
     final PsiElement element = reference.resolve();
-    if (!(element instanceof PsiField)) return;
-    final PsiField tagField = (PsiField)element;
+    if (!(element instanceof PsiField tagField)) return;
     if (tagField.hasModifierProperty(PsiModifier.STATIC) || !JavaFxPsiUtil.isVisibleInFxml(tagField)) return;
 
     final PsiType tagFieldType = tagField.getType();
@@ -168,14 +182,13 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
-    final String myText;
+  private static final class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
+    final @IntentionName String myText;
 
-    public ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
+    ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
                                        @NotNull PsiType suggestedParameterType) {
       super(attribute);
-      myText = "Change parameter type of '" + JavaHighlightUtil.formatMethod(method) +
-               "' to " + suggestedParameterType.getPresentableText();
+      myText = JavaFXBundle.message("intention.name.change.parameter.type.to", JavaHighlightUtil.formatMethod(method), suggestedParameterType.getPresentableText());
     }
 
     @Override
@@ -183,32 +196,28 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       return false;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return myText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return "Change parameter type of event handler method";
+    public @Nls @NotNull String getFamilyName() {
+      return JavaFXBundle.message("inspection.javafx.event.handler.change.parameter.type");
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
+                               @NotNull PsiFile psiFile,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
       return startElement instanceof XmlAttribute;
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      if (!(startElement instanceof XmlAttribute)) return;
-      final XmlAttribute attribute = (XmlAttribute)startElement;
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
+      if (!(startElement instanceof XmlAttribute attribute)) return;
 
       final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
       if (eventHandlerMethods.size() != 1) return;
@@ -219,7 +228,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       final PsiClassType declaredType = JavaFxPsiUtil.getDeclaredEventType(attribute);
       if (declaredType == null) return;
 
-      final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(0, parameterName, declaredType);
+      final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(0).withName(parameterName).withType(declaredType);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         final ChangeSignatureProcessor processor =
           new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),

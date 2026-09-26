@@ -1,0 +1,27 @@
+================ Step #1 =================
+Cleaning output files:
+  Enum.class
+  EnumKt.class
+  META-INF/kotlin_classHierarchyAffected_enumMemberChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumMemberChanged/a/Enum.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_enumMemberChanged-a.kotlin_module
+  UseBecameNullableKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumMemberChanged/a/useBecameNullable.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_enumMemberChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/enumMemberChanged/a/useBecameNullable.kt
+End of files
+------------------------------------------
+Exit code: OK

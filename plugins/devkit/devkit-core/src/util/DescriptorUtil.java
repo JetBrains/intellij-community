@@ -1,38 +1,42 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.XmlFileHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.IdeaVersion;
+import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
+import org.jetbrains.idea.devkit.dom.templates.TemplateSet;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public final class DescriptorUtil {
   private DescriptorUtil() {
@@ -41,7 +45,6 @@ public final class DescriptorUtil {
   public interface Patcher {
     void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException;
   }
-
 
   public static void processComponents(XmlTag root, ComponentType.Processor processor) {
     final ComponentType[] types = ComponentType.values();
@@ -66,35 +69,78 @@ public final class DescriptorUtil {
     VirtualFile file = pluginXml.getVirtualFile();
 
     final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(file);
+    final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(Collections.singletonList(file));
     if (status.hasReadonlyFiles()) {
       throw new IncorrectOperationException(DevKitBundle.message("error.plugin.xml.readonly", status.getReadonlyFiles()[0]));
     }
   }
 
-  @Nullable
-  public static String getPluginId(Module plugin) {
-    assert PluginModuleType.isOfType(plugin);
-
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
-    if (pluginXml == null) {
-      return null;
+  public static List<String> getPluginAndOptionalDependenciesIds(Module module) {
+    XmlFile xml = PluginModuleType.getPluginXml(module);
+    if (xml == null) return Collections.emptyList();
+    IdeaPlugin plugin = getIdeaPlugin(xml);
+    if (plugin == null) return Collections.emptyList();
+    List<String> result = new ArrayList<>();
+    ContainerUtil.addIfNotNull(result, plugin.getPluginId());
+    for (Dependency dependency : plugin.getDepends()) {
+      if (Boolean.TRUE.equals(dependency.getOptional().getValue())) {
+        ContainerUtil.addIfNotNull(result, dependency.getRawText());
+      }
     }
-    final DomFileElement<IdeaPlugin> ideaPlugin = getIdeaPlugin(pluginXml);
-    if (ideaPlugin == null) {
-      return null;
-    }
-
-    return ideaPlugin.getRootElement().getPluginId();
+    return result;
   }
 
   public static boolean isPluginXml(@Nullable PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-    return getIdeaPlugin((XmlFile)file) != null;
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
+    return IdeaPlugin.TAG_NAME.equals(header.getRootTagLocalName());
   }
 
-  @Nullable
-  public static DomFileElement<IdeaPlugin> getIdeaPlugin(@NotNull XmlFile file) {
+  public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
+  }
+
+  public static @Nullable IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
+    final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
+    return plugin != null ? plugin.getRootElement() : null;
+  }
+
+  public static @Nullable BuildNumber getActualUntilBuild(@NotNull IdeaVersion ideaVersion) {
+    BuildNumber strictUntilBuild = ideaVersion.getStrictUntilBuild().getValue();
+    if (strictUntilBuild != null) {
+      return strictUntilBuild;
+    }
+    return ideaVersion.getUntilBuild().getValue();
+  }
+
+  public static boolean isProductModulesXml(@Nullable PsiFile file) {
+    return isDomXml(file, ProductModulesElement.class);
+  }
+
+  public static boolean isTemplatesXml(@Nullable PsiFile file) {
+    return isDomXml(file, TemplateSet.class);
+  }
+
+  private static boolean isDomXml(PsiFile file, Class<? extends DomElement> domElementClass) {
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, domElementClass) != null;
+  }
+
+  public static @NotNull @Unmodifiable Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
+    if (DumbService.isDumb(project)) return Collections.emptyList();
+
+    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
+    return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
+  }
+
+  public static boolean isPluginModuleFile(@NotNull XmlFile xmlFile) {
+    DomFileElement<IdeaPlugin> domFileElement = DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, IdeaPlugin.class);
+    if (domFileElement == null) return false;
+    IdeaPlugin ideaPlugin = domFileElement.getRootElement();
+    if (ideaPlugin.getId().getValue() != null) return false;
+    PsiDirectory parent = xmlFile.getParent();
+    if (parent == null) return false;
+    String parentDirName = parent.getName();
+    return !parentDirName.equals("META-INF");
   }
 }

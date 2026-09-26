@@ -1,0 +1,7 @@
+// "Convert expression to 'Byte'" "true"
+// K2_ERROR: ASSIGNMENT_TYPE_MISMATCH
+fun test(f: Float) {
+    var x: Byte
+    x = f<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

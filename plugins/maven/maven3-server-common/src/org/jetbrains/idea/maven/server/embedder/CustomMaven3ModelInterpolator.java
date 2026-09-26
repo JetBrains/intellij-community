@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.ProjectBuilderConfiguration;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -30,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.*;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.CHANGELIST_PROPERTY;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.REVISION_PROPERTY;
+import static org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2.SHA1_PROPERTY;
 
 public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator {
   public CustomMaven3ModelInterpolator() {
@@ -43,7 +43,7 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   @Override
   public Model interpolate(Model model, File projectDir, ProjectBuilderConfiguration config, boolean debugEnabled)
       throws ModelInterpolationException {
-    this.interpolateObject(ContainerUtil.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
+    this.interpolateObject(new Object[]{model.getParent(), model}, model, projectDir, config, debugEnabled);
     return model;
   }
 
@@ -51,12 +51,13 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   protected List<ValueSource> createValueSources(Model model, File projectDir, ProjectBuilderConfiguration config) {
     List<ValueSource> sources = super.createValueSources(model, projectDir, config);
 
-    int firstMapIndex = ContainerUtil.indexOf(sources, new Condition<ValueSource>() {
-      @Override
-      public boolean value(ValueSource source) {
-        return source instanceof MapBasedValueSource;
+    int firstMapIndex = -1;
+    for (int i = 0; i < sources.size(); i++) {
+      if (sources.get(i) instanceof MapBasedValueSource) {
+        firstMapIndex = i;
+        break;
       }
-    });
+    }
 
     Map<String, Object> rightOrderProperties = new HashMap<String, Object>(3);
     if (config.getExecutionProperties().containsKey(REVISION_PROPERTY)) {

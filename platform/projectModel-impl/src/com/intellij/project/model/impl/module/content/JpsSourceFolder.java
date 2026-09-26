@@ -1,60 +1,40 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project.model.impl.module.content;
 
 import com.intellij.openapi.roots.SourceFolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-/**
- * @author nik
- */
 public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolder {
-  private final JpsModuleSourceRoot mySourceRoot;
+  private @NotNull JpsModuleSourceRoot mySourceRoot;
 
-  public JpsSourceFolder(JpsModuleSourceRoot sourceRoot, JpsContentEntry contentEntry) {
+  public JpsSourceFolder(@NotNull JpsModuleSourceRoot sourceRoot, JpsContentEntry contentEntry) {
     super(sourceRoot.getUrl(), contentEntry);
     mySourceRoot = sourceRoot;
   }
 
-  public JpsModuleSourceRoot getSourceRoot() {
+  public @NotNull JpsModuleSourceRoot getSourceRoot() {
     return mySourceRoot;
   }
 
   @Override
   public boolean isTestSource() {
-    return mySourceRoot.getRootType() == JavaSourceRootType.TEST_SOURCE ||
-           mySourceRoot.getRootType() == JavaResourceRootType.TEST_RESOURCE;
+    return mySourceRoot.getRootType().isForTests();
   }
 
-  @NotNull
   @Override
-  public String getPackagePrefix() {
-    final JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
-    return properties != null ? properties.getData().getPackagePrefix() : "";
+  public @NotNull String getPackagePrefix() {
+    final @Nullable JavaSourceRootProperties properties = getJavaProperties();
+    return properties != null ? properties.getPackagePrefix() : "";
   }
 
-  @Nullable
-  private JavaSourceRootProperties getJavaProperties() {
+  private @Nullable JavaSourceRootProperties getJavaProperties() {
     if (mySourceRoot.getRootType() == JavaSourceRootType.SOURCE) {
       return mySourceRoot.getProperties(JavaSourceRootType.SOURCE);
     }
@@ -72,15 +52,18 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
     }
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceRootType<?> getRootType() {
+  public @NotNull JpsModuleSourceRootType<?> getRootType() {
     return mySourceRoot.getRootType();
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceRoot getJpsElement() {
+  public @NotNull JpsModuleSourceRoot getJpsElement() {
     return mySourceRoot;
+  }
+
+  @Override
+  public <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties) {
+    mySourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(mySourceRoot.getUrl(), newType, properties);
   }
 }

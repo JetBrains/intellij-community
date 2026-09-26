@@ -1,28 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface TextEditorHighlightingPassFactory extends ProjectComponent{
+/**
+ * Register via {@link TextEditorHighlightingPassFactoryRegistrar}.
+ * <p>
+ * Implement {@link com.intellij.openapi.project.DumbAware} to allow creating {@link HighlightingPass} during index updates.
+ */
+public interface TextEditorHighlightingPassFactory extends PossiblyDumbAware {
+  /**
+   * Create the {@link HighlightingPass} this factory is responsible for.
+   * Can return {@code null} if the {@link HighlightingPass} should not be run this time (for example, the factory doesn't like the file passed to it).
+   * There's no guarantees about the thread this method is called in, so the necessary precautions should be taken in case of background thread.
+   * For example, read action should be acquired before accessing PSI.
+   */
   @Nullable
-  TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor);
+  @RequiresBackgroundThread
+  TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor);
 }

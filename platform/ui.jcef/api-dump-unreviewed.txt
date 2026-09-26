@@ -1,0 +1,176 @@
+f:com.intellij.ui.jcef.JBCefApp
+- s:getForceDeviceScaleFactor():D
+- s:getNotificationGroup():com.intellij.notification.NotificationGroup
+- getRemoteDebuggingPort(java.util.function.Consumer):V
+com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
+- org.cef.callback.CefSchemeHandlerFactory
+- a:getDomainName():java.lang.String
+- a:getSchemeName():java.lang.String
+- a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
+com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
+- sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
+- a:getOptions():java.util.List
+- s:getProviders():java.util.List
+f:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+- f:getProviders():java.util.List
+- f:setEP(com.intellij.openapi.extensions.ExtensionPointName):V
+f:com.intellij.ui.jcef.JBCefAppUtilsKt
+- sf:getRemoteDebugPortSuspendable(com.intellij.ui.jcef.JBCefApp,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ui.jcef.JBCefBrowser
+- <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
+- <init>(org.cef.browser.CefBrowser,com.intellij.ui.jcef.JBCefClient):V
+- s:addOnBrowserMoveResizeCallback(java.util.function.Consumer):V
+- p:getBackgroundColor():java.awt.Color
+- s:removeOnBrowserMoveResizeCallback(java.util.function.Consumer):V
+pc:com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
+- <init>(com.intellij.ui.jcef.JBCefBrowser,Z):V
+c:com.intellij.ui.jcef.JBCefBrowser$MyPanel
+- getPreferredSize():java.awt.Dimension
+- p:processFocusEvent(java.awt.event.FocusEvent):V
+- removeNotify():V
+- setBackground(java.awt.Color):V
+c:com.intellij.ui.jcef.JBCefBrowser$Properties
+- com.intellij.ui.jcef.JBCefBrowserBase$Properties
+- sf:FOCUS_ON_NAVIGATION:java.lang.String
+- sf:FOCUS_ON_SHOW:java.lang.String
+- <init>():V
+a:com.intellij.ui.jcef.JBCefBrowserBase
+- psf:BLANK_URI:java.lang.String
+- sf:JBCEFBROWSER_INSTANCE_PROP:java.lang.String
+- pf:myCefBrowser:org.cef.browser.CefBrowser
+- pf:myCefClient:com.intellij.ui.jcef.JBCefClient
+- p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
+- p:createDefaultContextMenuHandler():com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
+- createImmediately():V
+- disableNavigation():V
+- p:dispose(java.lang.Runnable):V
+- getBrowserComponent():java.awt.Component
+- s:getJBCefBrowser(org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefBrowser
+- getProperty(java.lang.String):java.lang.Object
+- f:isDisposed():Z
+- isOffScreenRendering():Z
+- isProperty(java.lang.String):Z
+- f:loadHTML(java.lang.String,java.lang.String):V
+- f:setJBCefCookieManager(com.intellij.ui.jcef.JBCefCookieManager):V
+- setOpenLinksInExternalBrowser(Z):V
+- setPageBackgroundColor(java.lang.String):V
+- setProperty(java.lang.String,java.lang.Object):V
+pc:com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
+- psf:DEBUG_COMMAND_ID:I
+- <init>(com.intellij.ui.jcef.JBCefBrowserBase):V
+- <init>(com.intellij.ui.jcef.JBCefBrowserBase,Z):V
+- onBeforeContextMenu(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,org.cef.callback.CefMenuModel):V
+- onContextMenuCommand(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,I,I):Z
+c:com.intellij.ui.jcef.JBCefBrowserBase$Properties
+- sf:NO_CONTEXT_MENU:java.lang.String
+- sf:NO_DEFAULT_AUTH_CREDENTIALS:java.lang.String
+- <init>():V
+c:com.intellij.ui.jcef.JBCefBrowserBuilder
+- setWindowlessFramerate(I):com.intellij.ui.jcef.JBCefBrowserBuilder
+c:com.intellij.ui.jcef.JBCefBrowserJsCall
+- sf:Companion:com.intellij.ui.jcef.JBCefBrowserJsCall$Companion
+- <init>(java.lang.String,com.intellij.ui.jcef.JBCefBrowser,I):V
+- f:await(kotlin.coroutines.Continuation):java.lang.Object
+- f:invoke():org.jetbrains.concurrency.Promise
+f:com.intellij.ui.jcef.JBCefBrowserJsCall$Companion
+f:com.intellij.ui.jcef.JBCefBrowserJsCallError
+- <init>(java.lang.String):V
+f:com.intellij.ui.jcef.JBCefBrowserJsCallKt
+- sf:executeJavaScript(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation):java.lang.Object
+- bs:executeJavaScript$default(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:executeJavaScriptAsync(com.intellij.ui.jcef.JBCefBrowser,java.lang.String):org.jetbrains.concurrency.Promise
+f:com.intellij.ui.jcef.JBCefClient
+- addContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addDownloadHandler(org.cef.handler.CefDownloadHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addDragHandler(org.cef.handler.CefDragHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addFocusHandler(org.cef.handler.CefFocusHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addJSDialogHandler(org.cef.handler.CefJSDialogHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addKeyboardHandler(org.cef.handler.CefKeyboardHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addLifeSpanHandler(org.cef.handler.CefLifeSpanHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addLoadHandler(org.cef.handler.CefLoadHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addPermissionHandler(org.cef.handler.CefPermissionHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- addRequestHandler(org.cef.handler.CefRequestHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
+- getProperty(java.lang.String):java.lang.Object
+- isDisposed():Z
+- removeContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):V
+- removeDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):V
+- removeDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):V
+- removeDownloadHandle(org.cef.handler.CefDownloadHandler,org.cef.browser.CefBrowser):V
+- removeDragHandler(org.cef.handler.CefDragHandler,org.cef.browser.CefBrowser):V
+- removeFocusHandler(org.cef.handler.CefFocusHandler,org.cef.browser.CefBrowser):V
+- removeJSDialogHandler(org.cef.handler.CefJSDialogHandler,org.cef.browser.CefBrowser):V
+- removeKeyboardHandler(org.cef.handler.CefKeyboardHandler,org.cef.browser.CefBrowser):V
+- removeLifeSpanHandler(org.cef.handler.CefLifeSpanHandler,org.cef.browser.CefBrowser):V
+- removeLoadHandler(org.cef.handler.CefLoadHandler,org.cef.browser.CefBrowser):V
+- removeRequestHandler(org.cef.handler.CefRequestHandler,org.cef.browser.CefBrowser):V
+- setProperty(java.lang.String,java.lang.Object):V
+f:com.intellij.ui.jcef.JBCefClient$Properties
+- sf:JS_QUERY_POOL_SIZE:java.lang.String
+- <init>():V
+f:com.intellij.ui.jcef.JBCefCookie
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,Z):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,Z,java.util.Date,java.util.Date,Z,java.util.Date):V
+- <init>(org.cef.network.CefCookie):V
+- equals(java.lang.Object):Z
+- getCefCookie():org.cef.network.CefCookie
+- getCreation():java.util.Date
+- getExpires():java.util.Date
+- getLastAccess():java.util.Date
+- hasExpires():Z
+- hashCode():I
+f:com.intellij.ui.jcef.JBCefCookieManager
+- deleteCookies(java.lang.String,java.lang.String):java.util.concurrent.Future
+- deleteCookies(java.lang.String,Z):Z
+- getCookies(java.lang.String,java.lang.Boolean):java.util.concurrent.Future
+- setCookie(java.lang.String,com.intellij.ui.jcef.JBCefCookie):java.util.concurrent.Future
+- setCookie(java.lang.String,com.intellij.ui.jcef.JBCefCookie,Z):Z
+com.intellij.ui.jcef.JBCefDisposable
+- com.intellij.openapi.Disposable
+- a:isDisposed():Z
+f:com.intellij.ui.jcef.JBCefJSQuery
+- inject(java.lang.String,java.lang.String,java.lang.String):java.lang.String
+c:com.intellij.ui.jcef.JBCefJSQuery$Response
+- sf:ERR_CODE_SUCCESS:I
+- <init>(java.lang.String,I,java.lang.String):V
+- hasResponse():Z
+- isSuccess():Z
+f:com.intellij.ui.jcef.JBCefNotifications
+- <init>():V
+- s:createEditorNotificationPanel(com.intellij.openapi.editor.Editor,com.intellij.ui.jcef.JBCefHealthMonitor$Status):com.intellij.ui.EditorNotificationPanel
+a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
+- com.intellij.ui.jcef.JBCefBrowserBase
+- p:<init>(com.intellij.ui.jcef.JBCefClient,java.lang.String,org.cef.handler.CefRenderHandler,Z):V
+- s:create(java.lang.String,org.cef.handler.CefRenderHandler):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
+- s:create(java.lang.String,org.cef.handler.CefRenderHandler,com.intellij.ui.jcef.JBCefClient):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
+- s:create(java.lang.String,org.cef.handler.CefRenderHandler,com.intellij.ui.jcef.JBCefClient,Z):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
+- s:create(java.lang.String,org.cef.handler.CefRenderHandler,Z):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
+f:com.intellij.ui.jcef.JBCefPsiNavigationUtils
+- sf:INSTANCE:com.intellij.ui.jcef.JBCefPsiNavigationUtils
+- f:navigateTo(java.lang.String,com.intellij.openapi.util.text.LineColumn):Z
+f:com.intellij.ui.jcef.JBCefScrollbarsHelper
+- <init>():V
+c:com.intellij.ui.jcef.JCEFHtmlPanel
+- <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
+- <init>(Z,com.intellij.ui.jcef.JBCefClient,java.lang.String):V
+- <init>(Z,java.lang.String):V
+- p:prepareHtml(java.lang.String):java.lang.String
+f:com.intellij.ui.jcef.JcefShortcutProvider
+- <init>():V
+- s:getActions():java.util.List
+- s:registerShortcuts(javax.swing.JComponent,com.intellij.ui.jcef.JBCefBrowser):V
+c:com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
+- <init>(java.lang.String,java.lang.String):V
+- f:addResource(java.lang.String,kotlin.jvm.functions.Function0):V
+- f:createResource(java.lang.String,kotlin.jvm.functions.Function0):java.lang.String
+- getResourceRequestHandler(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.network.CefRequest,Z,Z,java.lang.String,org.cef.misc.BoolRef):org.cef.handler.CefResourceRequestHandler
+c:com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
+- <init>(java.io.InputStream,java.lang.String,com.intellij.openapi.Disposable,java.util.Map):V
+- b:<init>(java.io.InputStream,java.lang.String,com.intellij.openapi.Disposable,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- cancel():V
+- dispose():V
+- getResponseHeaders(org.cef.network.CefResponse,org.cef.misc.IntRef,org.cef.misc.StringRef):V
+- processRequest(org.cef.network.CefRequest,org.cef.callback.CefCallback):Z
+- readResponse(B[],I,org.cef.misc.IntRef,org.cef.callback.CefCallback):Z

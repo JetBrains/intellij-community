@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -25,26 +10,42 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class ProjectFileIndexFacade extends FileIndexFacade {
-  private final DirectoryIndex myDirectoryIndex;
   private final ProjectFileIndex myFileIndex;
+  private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
-  public ProjectFileIndexFacade(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
+  @NonInjectable
+  @ApiStatus.Internal
+  public ProjectFileIndexFacade(Project project, ProjectFileIndex projectFileIndex, WorkspaceFileIndexEx workspaceFileIndex) {
     super(project);
-    myDirectoryIndex = directoryIndex;
-    myFileIndex = rootManager.getFileIndex();
+    myFileIndex = projectFileIndex;
+    myWorkspaceFileIndex = workspaceFileIndex;
+  }
+
+  @ApiStatus.Internal
+  public ProjectFileIndexFacade(@NotNull Project project) {
+    super(project);
+
+    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
   }
 
   @Override
-  public boolean isInContent(@NotNull final VirtualFile file) {
+  public boolean isInContent(final @NotNull VirtualFile file) {
     return myFileIndex.isInContent(file);
   }
 
@@ -59,6 +60,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isInLibrary(@NotNull VirtualFile file) {
+    return myFileIndex.isInLibrary(file);
+  }
+
+  @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     return myFileIndex.isInLibraryClasses(file);
   }
@@ -69,8 +75,14 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isExcludedFile(@NotNull final VirtualFile file) {
+  public boolean isExcludedFile(final @NotNull VirtualFile file) {
     return myFileIndex.isExcluded(file);
+  }
+  
+  @ApiStatus.Internal
+  @Override
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
+    return myFileIndex.isUnderSourceRootOfType(file, (Set<? extends JpsModuleSourceRootType<?>>)rootTypes);
   }
 
   @Override
@@ -78,34 +90,49 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isUnderIgnored(file);
   }
 
-  @Nullable
+  @ApiStatus.Experimental
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file) {
+  public boolean isIndexable(@NotNull VirtualFile file) { return myWorkspaceFileIndex.isIndexable(file); }
+
+  @Override
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
     return myFileIndex.getModuleForFile(file);
   }
 
   @Override
-  public boolean isValidAncestor(@NotNull final VirtualFile baseDir, @NotNull VirtualFile childDir) {
+  public boolean isValidAncestor(final @NotNull VirtualFile baseDir, @NotNull VirtualFile childDir) {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!myDirectoryIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!fileIndex.isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
 
-  @NotNull
   @Override
-  public ModificationTracker getRootModificationTracker() {
+  public @NotNull ModificationTracker getRootModificationTracker() {
     return ProjectRootManager.getInstance(myProject);
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions();
+  }
+
+  @Override
+  public boolean isInProjectScope(@NotNull VirtualFile file) {
+    // optimization: equivalent to the super method but has fewer getInfoForFile() calls
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, false, true, false);
+    if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
+      return false;
+    }
+    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL || it.getKind() == WorkspaceFileKind.EXTERNAL_NON_INDEXABLE) != null && !myFileIndex.isInSourceContent(file)) {
+      return false;
+    }
+    return true;
   }
 }

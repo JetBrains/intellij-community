@@ -1,0 +1,280 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.diagnostic.hprof.action
+
+import com.intellij.diagnostic.DiagnosticBundle
+import com.intellij.diagnostic.DiagnosticDispatchers
+import com.intellij.diagnostic.ExceptionAutoReportUtil
+import com.intellij.diagnostic.HeapDumpAnalysisSupport
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.diagnostic.hprof.analysis.analyzeGraph
+import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
+import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
+import com.intellij.diagnostic.report.HeapReportProperties
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.actions.ShowLogAction
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.awt.BorderLayout
+import java.nio.channels.FileChannel
+import java.nio.file.Files
+import java.nio.file.OpenOption
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.concurrent.CompletableFuture
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextArea
+import javax.swing.event.HyperlinkEvent
+
+internal class AnalysisRunnable(
+  val hprofPath: Path,
+  val heapProperties: HeapReportProperties,
+  private val deleteAfterAnalysis: Boolean,
+) : Runnable {
+  override fun run() {
+    AnalysisTask().queue()
+  }
+
+  inner class AnalysisTask : Task.Backgroundable(null, DiagnosticBundle.message("heap.dump.analysis.task.title"), false) {
+
+    override fun onThrowable(error: Throwable) {
+      thisLogger().error(error)
+
+      HeapDumpAnalysisSupport.getInstance().analysisFailed(heapProperties)
+
+      val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(DiagnosticBundle.message("heap.dump.analysis.exception"),
+                                                                                    NotificationType.INFORMATION)
+      if (ShowLogAction.isSupported()) {
+        notification.addAction(ShowLogAction.notificationAction())
+      }
+      notification.notify(null)
+      if (deleteAfterAnalysis) {
+        deleteHprofFileAsync()
+      }
+    }
+
+    private fun deleteHprofFileAsync() {
+      CompletableFuture.runAsync { Files.deleteIfExists(hprofPath) }
+    }
+
+    override fun run(indicator: ProgressIndicator) {
+      indicator.isIndeterminate = false
+      indicator.text = DiagnosticBundle.message("heap.dump.analysis.indicator.title")
+      indicator.fraction = 0.0
+
+      val openOptions: Set<OpenOption>
+      if (deleteAfterAnalysis) {
+        openOptions = setOf(StandardOpenOption.READ, StandardOpenOption.DELETE_ON_CLOSE)
+      }
+      else {
+        openOptions = setOf(StandardOpenOption.READ)
+      }
+      val reportText = FileChannel.open(hprofPath, openOptions).use { channel ->
+        HProfAnalysis(channel, SystemTempFilenameSupplier(), ::analyzeGraph).analyze(indicator)
+      }
+      if (deleteAfterAnalysis) {
+        deleteHprofFileAsync()
+      }
+
+      HeapDumpAnalysisSupport.getInstance().analysisComplete(heapProperties)
+
+      val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
+        title = DiagnosticBundle.message("heap.dump.analysis.notification.title"),
+        content = DiagnosticBundle.message("heap.dump.analysis.notification.ready.content"),
+        type = NotificationType.INFORMATION)
+      notification.setDisplayId("memory.analysis.complete")
+      notification.isImportant = true
+      notification.setSuggestionType(true)
+      notification.addAction(ReviewReportAction(reportText, heapProperties))
+      notification.notify(null)
+
+      val guessProject = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project
+                         ?: ProjectManager.getInstance().openProjects.firstOrNull()
+
+      val parentComponent = WindowManager.getInstance().getFrame(guessProject)
+      if (parentComponent != null) {
+        // even if users forget to report explicitly, we still report it based on consent
+        service<SubmitHeapAnalysisService>().submit(reportText, heapProperties, parentComponent)
+      }
+    }
+  }
+
+  class ReviewReportAction(private val reportText: String, private val heapProperties: HeapReportProperties) :
+    NotificationAction(DiagnosticBundle.message("heap.dump.analysis.notification.action.title")) {
+    private var reportShown = false
+
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      val parentComponent = WindowManager.getInstance().getFrame(e.project) ?: return
+      if (reportShown) {
+        return
+      }
+
+      LifecycleUsageTriggerCollector.onMemoryReportReview()
+
+      reportShown = true
+      UIUtil.invokeLaterIfNeeded {
+        notification.expire()
+
+        val reportDialog = ShowReportDialog(reportText, heapProperties)
+        val userAgreedToSendReport = reportDialog.showAndGet()
+
+        if (userAgreedToSendReport) {
+          HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent)
+        }
+      }
+    }
+  }
+}
+
+internal fun getHeapDumpReportText(reportText: String, heapProperties: HeapReportProperties): String {
+  val heapStats = buildString {
+    if (heapProperties.heapStats.isNotEmpty()) {
+      append("\n\n")
+      appendLine(sectionHeader("Heap Statistics"))
+      appendLine(heapProperties.heapStats.trimEnd())
+      append("Report reason: ${heapProperties.reason}")
+    }
+  }
+  val liveStats = buildString {
+    if (heapProperties.liveStats.isNotEmpty()) {
+      append("\n\n")
+      appendLine(sectionHeader("Platform Statistics"))
+      append(heapProperties.liveStats.trimEnd())
+    }
+  }
+  return "${reportText.trimEnd()}${heapStats}${liveStats}"
+}
+
+internal class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties) : DialogWrapper(false) {
+  private val textArea: JTextArea = JTextArea(25, 130)
+  private val suspectReport: String?
+
+  init {
+    textArea.text = getHeapDumpReportText(reportText, heapProperties)
+    textArea.isEditable = false
+    textArea.caretPosition = 0
+    suspectReport = createSuspectReport(reportText, heapProperties)
+    init()
+    title = DiagnosticBundle.message("heap.dump.analysis.report.dialog.title")
+    isModal = true
+  }
+
+  override fun createCenterPanel(): JComponent {
+    val pane = JPanel(BorderLayout(0, 5))
+    val productName = ApplicationNamesInfo.getInstance().fullProductName
+    val vendorName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
+
+    val header = JLabel(DiagnosticBundle.message("heap.dump.analysis.report.dialog.header", productName, suspectReport ?: "", vendorName))
+
+    pane.add(header, BorderLayout.PAGE_START)
+    pane.add(JBScrollPane(textArea), BorderLayout.CENTER)
+    with(SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK)) {
+      isOpaque = false
+      isFocusable = false
+      addHyperlinkListener {
+        if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          it.url?.let(BrowserUtil::browse)
+        }
+      }
+      text = DiagnosticBundle.message("heap.dump.analysis.report.dialog.footer",
+                                      ApplicationInfo.getInstance().shortCompanyName, HeapDumpAnalysisSupport.getInstance().getPrivacyPolicyUrl())
+      pane.add(this, BorderLayout.PAGE_END)
+    }
+
+    return pane
+  }
+
+  override fun createActions(): Array<Action> {
+    return arrayOf(okAction, cancelAction)
+  }
+
+  override fun createDefaultActions() {
+    super.createDefaultActions()
+    okAction.putValue(Action.NAME, DiagnosticBundle.message("heap.dump.analysis.report.dialog.action.send"))
+    cancelAction.putValue(Action.NAME, DiagnosticBundle.message("heap.dump.analysis.report.dialog.action.dont.send"))
+  }
+
+  private fun createSuspectReport(reportText: String, heapProperties: HeapReportProperties): String? {
+    if (!LargestObjectWithOwner.isOomReport(reportText)) return null
+
+    val suspect = LargestObjectWithOwner.find(reportText)
+    if (suspect == null || !suspect.isWorthReportingToUser()) return null
+
+    val heapSize = heapProperties.heapStats.lines().firstOrNull()?.substringAfter("Maximum heap size:", "")?.trim()
+    return buildString {
+      append("<br>")
+      append(DiagnosticBundle.message("heap.dump.analysis.report.dialog.header.dominating.object", suspect.largestObject.className))
+      append(DiagnosticBundle.message("heap.dump.analysis.report.dialog.header.deep.size", toShortStringAsSize(suspect.largestObject.sizeInBytes)))
+      if (heapSize?.isNotBlank() ?: false) {
+        append(DiagnosticBundle.message("heap.dump.analysis.report.dialog.header.of.max.heap", heapSize))
+      }
+      if (suspect.descriptor != null) {
+        append(DiagnosticBundle.message("heap.dump.analysis.report.dialog.header.responsible.plugin", suspect.descriptor.name,suspect.descriptor.pluginId.idString))
+      }
+      append("<br><br>")
+    }
+  }
+}
+
+class SystemTempFilenameSupplier : HProfAnalysis.TempFilenameSupplier {
+  override fun getTempFilePath(type: String): Path {
+    return Files.createTempFile("heap-dump-analysis-", "-$type.tmp")
+  }
+}
+
+@Service
+internal class SubmitHeapAnalysisService(val coroutineScope: CoroutineScope) {
+  fun submit(reportText: String, heapProperties: HeapReportProperties, parentComponent: JFrame) {
+    coroutineScope.launch(DiagnosticDispatchers.Default) {
+      if (ExceptionAutoReportUtil.isAutoReportEnabled()) {
+        thisLogger().info("Reporting memory leak report automatically")
+
+        withContext(Dispatchers.EDT) {
+          HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent, automaticReport = true)
+        }
+      }
+    }
+  }
+}

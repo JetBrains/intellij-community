@@ -1,234 +1,963 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CustomWrap;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.editor.ex.ElfCandidate;
+import com.intellij.openapi.editor.ex.InlayModelEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.RangeMarkers;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
+import com.intellij.openapi.editor.impl.view.EditorView;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public class InlayModelImpl implements InlayModel, Disposable {
+import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
+
+//@ApiStatus.Internal
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
+@ElfCandidate
+public final class InlayModelImpl implements InlayModel, InlayModelEx, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
+
+  private static final Comparator<InlineInlay<?>> INLINE_ELEMENTS_COMPARATOR = Comparator
+    .comparingInt((InlineInlay<?> i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText())
-    .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
+    .thenComparing(i -> -i.getPriority());
+  private static final Comparator<BlockInlay<?>> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
+    .comparingInt(i -> -i.getPriority());
+  private static final Comparator<BlockInlay<?>> BLOCK_ELEMENTS_COMPARATOR = Comparator
+    .comparing((BlockInlay<?> i) -> i.getPlacement())
+    .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.getPriority() : -i.getPriority());
+  private static final Comparator<AfterLineEndInlay<?>> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
+    .comparingInt((AfterLineEndInlay<?> i) -> i.getOffset())
+    .thenComparing(i -> !i.isSoftWrappable())
+    .thenComparingInt(i -> -i.getPriority())
+    .thenComparingInt(AfterLineEndInlay::getOrder);
+  private static final Comparator<AfterLineEndInlay<?>> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
+    .comparing((AfterLineEndInlay<?> i) -> !i.isSoftWrappable())
+    .thenComparingInt(i -> -i.getPriority())
+    .thenComparingInt(AfterLineEndInlay::getOrder);
+
+  private static final Processor<InlayImpl<?,?>> UPDATE_PROCESSOR = inlay -> {
+    inlay.update();
+    return true;
+  };
+
+  private static final Processor<InlayImpl<?, ?>> DISPOSE_PROCESSOR = inlay -> {
+    Disposer.dispose(inlay);
+    return true;
+  };
 
   private final EditorImpl myEditor;
+  private final DocumentEx myDocument;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  
-  final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
-  final RangeMarkerTree<InlayImpl> myInlayTree;
-  
+
+  private final List<EditorInlay<?>> myInlaysInvalidatedOnMove = new ArrayList<>();
+  private final @Nullable SnapshotInlayStorage mySnapshotMarkerStorage;
+  private final @Nullable RangeMarkerTree<InlineInlayImpl<?>> myInlineElementsTree;
+  private final @Nullable MarkerTreeWithPartialSums<BlockInlayImpl<?>> myBlockElementsTree;
+  private final @Nullable RangeMarkerTree<AfterLineEndInlayImpl<?>> myAfterLineEndElementsTree;
+
   boolean myMoveInProgress;
-  private List<Inlay> myInlaysAtCaret;
+  boolean myPutMergedIntervalsAtBeginning;
+  private boolean myConsiderCaretPositionOnDocumentUpdates = true;
+  private List<Inlay<?>> myInlaysAtCaret;
+  private boolean myInBatchMode;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
-    myInlayTree = new RangeMarkerTree<InlayImpl>(editor.getDocument()) {
-      @NotNull
-      @Override
-      protected RMNode<InlayImpl> createNewNode(@NotNull InlayImpl key, int start, int end,
-                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
-          @Override
-          protected Getter<InlayImpl> createGetter(@NotNull InlayImpl interval) {
-            return interval;
-          }
-        };
-      }
+    myDocument = editor.getElfDocument();
+    mySnapshotMarkerStorage = myDocument instanceof DocumentImpl document && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION
+                              ? new SnapshotInlayStorage(this, editor, document)
+                              : null;
+    myInlineElementsTree = mySnapshotMarkerStorage == null ? new InlineElementsTree(myDocument) : null;
+    myBlockElementsTree = mySnapshotMarkerStorage == null ? new BlockElementsTree(myDocument) : null;
+    myAfterLineEndElementsTree = mySnapshotMarkerStorage == null ? new AfterLineEndElementTree(myDocument) : null;
+    myDocument.addDocumentListener(this, this);
+  }
 
-      @Override
-      void fireBeforeRemoved(@NotNull InlayImpl markerEx, @NotNull @NonNls Object reason) {
-        if (markerEx.myOffsetBeforeDisposal == -1) {
-          if (myMoveInProgress) {
-            // delay notification about invalidated inlay - folding model is not consistent at this point
-            // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
-            myInlaysInvalidatedOnMove.add(markerEx);
-          }
-          else {
-            notifyRemoved(markerEx);
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.INLAY_MODEL;
+  }
+
+  @Override
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    if (mySnapshotMarkerStorage != null) {
+      mySnapshotMarkerStorage.beforeDocumentChange(event);
+    }
+    if (myDocument.isInBulkUpdate()) return;
+    if (myInBatchMode) LOG.error("Document shouldn't be changed during batch inlay operation");
+    int offset = event.getOffset();
+    if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+      List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
+      int inlayCount = inlays.size();
+      if (inlayCount > 0) {
+        VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+        VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+        List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+        if (customWraps.isEmpty()) {
+          if (inlaysStartPosition.line == caretPosition.line &&
+              caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+            myInlaysAtCaret = inlays;
+            for (int i = 0; i < inlayCount; i++) {
+              ((EditorInlay<?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
+            }
           }
         }
-      }
-    };
-    myEditor.getDocument().addDocumentListener(new PrioritizedInternalDocumentListener() {
-      @Override
-      public int getPriority() {
-        return EditorDocumentPriorities.INLAY_MODEL;
-      }
-
-      @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-        if (myEditor.getDocument().isInBulkUpdate()) return;
-        int offset = event.getOffset();
-        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
-          List<Inlay> inlays = getInlineElementsInRange(offset, offset);
-          int inlayCount = inlays.size();
-          if (inlayCount > 0) {
-            VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-            VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
-            if (inlaysStartPosition.line == caretPosition.line && 
-                caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
+        else {
+          // inlays at the same offset are sorted by their relatesToPrecedingText
+          int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+          firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+          if (inlaysStartPosition.line == caretPosition.line &&
+              caretPosition.column >= inlaysStartPosition.column &&
+              caretPosition.column <= inlaysStartPosition.column + firstRelatedToPrecedingIndex) {
+            myInlaysAtCaret = inlays;
+            for (int i = 0; i < firstRelatedToPrecedingIndex; i++) {
+              ((EditorInlay<?>)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
+            }
+            for (int i = firstRelatedToPrecedingIndex; i < inlayCount; i++) {
+              ((EditorInlay<?>)inlays.get(i)).setStickingToRight(false);
+            }
+          }
+          else if (inlaysStartPosition.line - 1 == caretPosition.line) {
+            inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, true);
+            if (caretPosition.column >= inlaysStartPosition.column &&
+                caretPosition.column <= inlaysStartPosition.column + inlayCount - firstRelatedToPrecedingIndex) {
               myInlaysAtCaret = inlays;
-              for (int i = 0; i < inlayCount; i++) {
-                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= (caretPosition.column - inlaysStartPosition.column));
+              for (int i = 0; i < firstRelatedToPrecedingIndex; i++) {
+                ((EditorInlay<?>)inlays.get(i)).setStickingToRight(true);
+              }
+              for (int i = firstRelatedToPrecedingIndex; i < inlayCount; i++) {
+                ((EditorInlay<?>)inlays.get(i)).setStickingToRight(
+                  i - firstRelatedToPrecedingIndex >= caretPosition.column - inlaysStartPosition.column);
               }
             }
           }
         }
       }
+    }
+  }
 
-      @Override
-      public void documentChanged(DocumentEvent event) {
-        if (myInlaysAtCaret != null) {
-          for (Inlay inlay : myInlaysAtCaret) {
-            ((InlayImpl)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
-          }
-          myInlaysAtCaret = null;
-        }
+  @Override
+  public void documentChanged(@NotNull DocumentEvent event) {
+    if (myInlaysAtCaret != null) {
+      for (Inlay<?> inlay : myInlaysAtCaret) {
+        ((EditorInlay<?>)inlay).setStickingToRight(inlay.isRelatedToPrecedingText());
       }
-
-      @Override
-      public void moveTextHappened(int start, int end, int base) {
-        for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
-          notifyRemoved(inlay);
-        }
-        myInlaysInvalidatedOnMove.clear();
+      myInlaysAtCaret = null;
+    }
+    if (DocumentEventUtil.isMoveInsertion(event)) {
+      for (EditorInlay<?> inlay : myInlaysInvalidatedOnMove) {
+        notifyRemoved(inlay);
       }
-    }, this);
+      myInlaysInvalidatedOnMove.clear();
+    }
   }
 
   void reinitSettings() {
-    myInlayTree.processAll(inlay -> {
-      inlay.updateSize();
-      return true;
-    });
+    if (mySnapshotMarkerStorage == null) {
+      getInlineElementsTree().processAll(UPDATE_PROCESSOR);
+      getBlockElementsTree().processAll(UPDATE_PROCESSOR);
+      getAfterLineEndElementsTree().processAll(UPDATE_PROCESSOR);
+    }
+    else {
+      for (EditorInlay<?> inlay : mySnapshotMarkerStorage.allInlays()) {
+        inlay.update();
+      }
+    }
   }
 
   @Override
   public void dispose() {
-    myInlayTree.dispose(myEditor.getDocument());
+    // the tree will not remove nodes on disposal, we have to dispose remaining inlays manually
+    if (mySnapshotMarkerStorage == null) {
+      getInlineElementsTree().processAll(DISPOSE_PROCESSOR);
+      getBlockElementsTree().processAll(DISPOSE_PROCESSOR);
+      getAfterLineEndElementsTree().processAll(DISPOSE_PROCESSOR);
+      getInlineElementsTree().dispose(myDocument);
+      getBlockElementsTree().dispose(myDocument);
+      getAfterLineEndElementsTree().dispose(myDocument);
+    }
+    else {
+      mySnapshotMarkerStorage.dispose();
+    }
   }
 
-  @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    DocumentEx document = myEditor.getDocument();
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     @NotNull T renderer) {
+    return addInlineElement(offset, relatesToPrecedingText, 0, renderer);
+  }
+
+  @Override
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     int priority,
+                                                                                     @NotNull T renderer) {
+    EditorImpl.assertIsDispatchThread();
+    Document document = myDocument;
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
-    offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlayImpl(myEditor, offset, relatesToPrecedingText, renderer);
+    offset = Math.clamp(offset, 0, document.getTextLength());
+    InlineInlay<T> inlay = mySnapshotMarkerStorage == null
+                           ? new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, priority, renderer)
+                           : mySnapshotMarkerStorage.createInline(offset, relatesToPrecedingText, priority, renderer);
     notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
     return inlay;
   }
 
-  @NotNull
   @Override
-  public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<Inlay> result = new ArrayList<>();
-    myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      result.add(inlay);
-      return true;
-    });
-    Collections.sort(result, INLAY_COMPARATOR);
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     @NotNull InlayProperties properties,
+                                                                                     @NotNull T renderer) {
+    return addInlineElement(offset, properties.isRelatedToPrecedingText(), properties.getPriority(), renderer);
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addBlockElement(int offset,
+                                                                                   boolean relatesToPrecedingText,
+                                                                                   boolean showAbove,
+                                                                                   int priority,
+                                                                                   @NotNull T renderer) {
+    return addBlockElement(offset, relatesToPrecedingText, showAbove, false, priority, renderer);
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          @NotNull InlayProperties properties,
+                                                                          @NotNull T renderer) {
+    return addBlockElement(offset,
+                           properties.isRelatedToPrecedingText(),
+                           properties.isShownAbove(),
+                           properties.isShownWhenFolded(),
+                           properties.getPriority(),
+                           renderer);
+  }
+
+  private <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           boolean showAbove,
+                                                                           boolean showWhenFolded,
+                                                                           int priority,
+                                                                           @NotNull T renderer) {
+    EditorImpl.assertIsDispatchThread();
+    offset = Math.clamp(offset, 0, myDocument.getTextLength());
+    BlockInlay<T> inlay = mySnapshotMarkerStorage == null
+                          ? new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority,
+                                                 renderer)
+                          : mySnapshotMarkerStorage.createBlock(offset, relatesToPrecedingText, showAbove, showWhenFolded, priority,
+                                                                renderer);
+    notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
+    return inlay;
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> @NotNull Inlay<@NotNull T> addAfterLineEndElement(int offset,
+                                                                                                   boolean relatesToPrecedingText,
+                                                                                                   @NotNull T renderer) {
+    return addAfterLineEndElement(offset, relatesToPrecedingText, true, 0, renderer);
+  }
+
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 @NotNull InlayProperties properties,
+                                                                                 @NotNull T renderer) {
+    return addAfterLineEndElement(offset, properties.isRelatedToPrecedingText(), !properties.isSoftWrappingDisabled(),
+                                  properties.getPriority(), renderer);
+  }
+
+
+  private @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                           boolean relatesToPrecedingText,
+                                                                                           boolean softWrappable,
+                                                                                           int priority,
+                                                                                           @NotNull T renderer) {
+    EditorImpl.assertIsDispatchThread();
+    offset = Math.clamp(offset, 0, myDocument.getTextLength());
+    AfterLineEndInlay<T> inlay = mySnapshotMarkerStorage == null
+                                 ? new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority, renderer)
+                                 : mySnapshotMarkerStorage.createAfterLineEnd(offset, relatesToPrecedingText,
+                                                                              softWrappable, priority, renderer);
+    notifyAdded(inlay);
+    if (myEditor.isDisposed()) {
+      Disposer.dispose(inlay);
+    }
+    return inlay;
+  }
+
+  @Override
+  public @NotNull List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
+    List<InlineInlay<?>> range = getInlineElementsInRange(startOffset, endOffset, Predicates.alwaysTrue());
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  @Override
+  public @NotNull <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+    List<InlineInlay<?>> range = getInlineElementsInRange(startOffset, endOffset, inlay -> type.isInstance(inlay.getRenderer()));
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  private @NotNull List<InlineInlay<?>> getInlineElementsInRange(int startOffset,
+                                                                 int endOffset,
+                                                                 @NotNull Predicate<? super InlineInlay<?>> predicate) {
+    if (mySnapshotMarkerStorage == null) {
+      return new ArrayList<>(getElementsInRange(getInlineElementsTree(), startOffset, endOffset, predicate, INLINE_ELEMENTS_COMPARATOR));
+    }
+    List<InlineInlay<?>> result = new ArrayList<>(mySnapshotMarkerStorage.collectInline(startOffset, endOffset));
+    result.removeIf(predicate.negate());
+    result.sort(INLINE_ELEMENTS_COMPARATOR);
     return result;
   }
 
   @Override
+  public @NotNull List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
+    List<BlockInlay<?>> range = getBlockElementsInRange(startOffset, endOffset, Predicates.alwaysTrue());
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  @Override
+  public @NotNull <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+    List<BlockInlay<?>> range = getBlockElementsInRange(startOffset, endOffset, inlay -> type.isInstance(inlay.getRenderer()));
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  private @NotNull List<BlockInlay<?>> getBlockElementsInRange(int startOffset,
+                                                                int endOffset,
+                                                                @NotNull Predicate<? super BlockInlay<?>> predicate) {
+    List<BlockInlay<?>> result = collectBlockElements(startOffset, endOffset);
+    result.removeIf(predicate.negate());
+    result.sort(BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    return result;
+  }
+
+  private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTree<? extends T> tree,
+                                                                 int startOffset,
+                                                                 int endOffset,
+                                                                 @NotNull Predicate<? super T> predicate,
+                                                                 @NotNull Comparator<? super T> comparator) {
+    List<T> result = new ArrayList<>();
+    tree.processOverlappingWith(startOffset, endOffset, inlay -> {
+      if (predicate.test(inlay)) result.add(inlay);
+      return true;
+    });
+    result.sort(comparator);
+    return result;
+  }
+
+  private @NotNull List<BlockInlay<?>> collectBlockElements(int startOffset, int endOffset) {
+    if (mySnapshotMarkerStorage != null) {
+      return new ArrayList<>(mySnapshotMarkerStorage.collectBlock(startOffset, endOffset));
+    }
+    List<BlockInlay<?>> result = new ArrayList<>();
+    getBlockElementsTree().processOverlappingWith(startOffset, endOffset, inlay -> {
+      result.add(inlay);
+      return true;
+    });
+    return result;
+  }
+
+  private boolean processBlockElements(int startOffset,
+                                       int endOffset,
+                                       @NotNull Processor<? super BlockInlay<?>> processor) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().processOverlappingWith(startOffset, endOffset, processor)
+           : mySnapshotMarkerStorage.processBlock(startOffset, endOffset, processor);
+  }
+
+  private boolean processAllBlockElements(@NotNull Processor<? super BlockInlay<?>> processor) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().processAll(processor)
+           : mySnapshotMarkerStorage.processBlock(0, myDocument.getTextLength(), processor);
+  }
+
+  private int getBlockHeightUpToOffset(int offset) {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().getSumOfValuesUpToOffset(offset)
+           : mySnapshotMarkerStorage.getBlockHeightUpToOffset(offset);
+  }
+
+  @Override
+  public @NotNull List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
+    int visibleLineCount = myEditor.getVisibleLineCount();
+    if (visualLine < 0 || visualLine >= visibleLineCount || !hasBlockElements()) return Collections.emptyList();
+    int startOffset = myEditor.visualLineStartOffset(visualLine);
+    int endOffset = visualLine == visibleLineCount - 1 ? myDocument.getTextLength()
+                                                       : myEditor.visualLineStartOffset(visualLine + 1) - 1;
+    List<BlockInlay<?>> result = collectBlockElements(startOffset, endOffset);
+    result.removeIf(inlay -> inlay.isShownAbove() != above || EditorUtil.isInlayFolded(inlay));
+    if (above) {
+      // matters for inlays with equal priority
+      Collections.reverse(result);
+    }
+    result.sort(BLOCK_ELEMENTS_COMPARATOR);
+    //noinspection unchecked,rawtypes
+    return (List)result;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public int getHeightOfBlockElementsBeforeVisualLine(int visualLine, int startOffset, int prevFoldRegionIndex) {
+    if (visualLine < 0 || !hasBlockElements()) return 0;
+    int visibleLineCount = myEditor.getVisibleLineCount();
+    if (visualLine >= visibleLineCount) {
+      return getBlockHeightUpToOffset(Integer.MAX_VALUE) -
+             myEditor.getFoldingModel().getTotalHeightOfFoldedBlockInlays();
+    }
+    int[] result = {0};
+    int endOffset = visualLine >= visibleLineCount - 1 ? myDocument.getTextLength()
+                                                       : myEditor.visualLineStartOffset(visualLine + 1) - 1;
+    if (visualLine > 0) {
+      result[0] += getBlockHeightUpToOffset(startOffset - 1) -
+                   myEditor.getFoldingModel().getHeightOfFoldedBlockInlaysBefore(prevFoldRegionIndex);
+    }
+    processBlockElements(startOffset, endOffset, inlay -> {
+      if (inlay.isShownAbove() && !EditorUtil.isInlayFolded(inlay)) {
+        result[0] += inlay.getHeightInPixels();
+      }
+      return true;
+    });
+    return result[0];
+  }
+
+  /**
+   * Optimized method making {@link EditorView#getPreferredSize()} faster.
+   * Unlike {@link #getElementsInRange}, this method does not allocate and sort an array
+   */
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Inlay<?> getWidestVisibleBlockInlay() {
+    AtomicInteger maxWidth = new AtomicInteger(-1);
+    Ref<Inlay<?>> inlayRef = new Ref<>(null);
+    processAllBlockElements(inlay -> {
+      int width = inlay.getWidthInPixels();
+      if (width > maxWidth.get() && !EditorUtil.isInlayFolded(inlay)) {
+        maxWidth.set(width);
+        inlayRef.set(inlay);
+      }
+      return true;
+    });
+    return inlayRef.get();
+  }
+
+  @Override
+  public boolean hasBlockElements() {
+    return mySnapshotMarkerStorage == null
+           ? getBlockElementsTree().size() > 0
+           : mySnapshotMarkerStorage.hasBlock();
+  }
+
+  @Override
   public boolean hasInlineElementsInRange(int startOffset, int endOffset) {
-    return !myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> false);
+    return mySnapshotMarkerStorage == null
+           ? !getInlineElementsTree().processOverlappingWith(startOffset, endOffset, _ -> false)
+           : mySnapshotMarkerStorage.hasInline(startOffset, endOffset);
   }
 
   @Override
   public boolean hasInlineElements() {
-    return myInlayTree.size() > 0;
+    return mySnapshotMarkerStorage == null
+           ? getInlineElementsTree().size() > 0
+           : mySnapshotMarkerStorage.hasInline(0, myDocument.getTextLength());
   }
 
   @Override
   public boolean hasInlineElementAt(int offset) {
-    return !myInlayTree.processOverlappingWith(offset, offset, inlay -> false);
+    return mySnapshotMarkerStorage == null
+           ? !getInlineElementsTree().processOverlappingWith(offset, offset, _ -> false)
+           : mySnapshotMarkerStorage.hasInline(offset, offset);
   }
 
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
-    int inlayCount = getInlineElementsInRange(offset, offset).size();
-    if (inlayCount == 0) return false;
-    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.line == inlayStartPosition.line && 
-           visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
+    return getInlineElementAt(visualPosition) != null;
   }
 
-  @Nullable
   @Override
-  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
-    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+  public @Nullable Inlay<?> getInlineElementAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.visualPositionToOffset(visualPosition);
+    List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    if (visualPosition.line != inlayStartPosition.line) return null;
-    int inlayIndex = visualPosition.column - inlayStartPosition.column;
-    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+    List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+    if (customWraps.isEmpty()) {
+      if (visualPosition.line != inlayStartPosition.line) return null;
+      int inlayIndex = visualPosition.column - inlayStartPosition.column;
+      return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+    }
+    else {
+      // inlays at the same offset are sorted by their relatesToPrecedingText
+      int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+      firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+      if (inlayStartPosition.line == visualPosition.line) {
+        // visualPosition is after wrap
+        int inlayIndex = visualPosition.column - inlayStartPosition.column;
+        return inlayIndex >= 0 && inlayIndex < firstRelatedToPrecedingIndex ? inlays.get(inlayIndex) : null;
+      }
+      else if (inlayStartPosition.line - 1 == visualPosition.line) {
+        // visualPosition is before wrap
+        VisualPosition beforeWrapPosition = myEditor.offsetToVisualPosition(offset, false, true);
+        int inlayIndex = visualPosition.column - beforeWrapPosition.column + firstRelatedToPrecedingIndex;
+        return inlayIndex >= firstRelatedToPrecedingIndex && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
+      }
+      else {
+        return null;
+      }
+    }
   }
 
-  @Nullable
   @Override
-  public Inlay getElementAt(@NotNull Point point) {
-    if (myInlayTree.size() == 0) return null;
+  public @Nullable Inlay<?> getElementAt(@NotNull Point point) {
+    return getElementAt(new EditorLocation(myEditor, point), false);
+  }
 
-    int offset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(point));
-    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
-    if (inlays.isEmpty()) return null;
+  Inlay<?> getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
+    return EditorThreading.compute(() -> {
+      Insets insets = myEditor.getContentComponent().getInsets();
+      Point point = location.getPoint();
+      if (point.y < insets.top) return null; // can happen for mouse drag events
+      int relX = point.x - insets.left;
+      if (relX < 0) return null;
 
-    VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
-    int x = myEditor.visualPositionToXY(startVisualPosition).x;
-    for (Inlay inlay : inlays) {
-      int endX = x + inlay.getWidthInPixels();
-      if (point.x >= x && point.x < endX) return inlay;
-      x = endX;
+      boolean hasInlineElements = hasInlineElements();
+      boolean hasBlockElements = hasBlockElements();
+      boolean hasAfterLineEndElements = hasAfterLineEndElements();
+      if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
+
+      VisualPosition visualPosition = location.getVisualPosition();
+      if (hasBlockElements) {
+        int visualLine = visualPosition.line;
+        int baseY = location.getVisualLineStartY();
+        if (point.y < baseY) {
+          List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
+          int yDiff = baseY - point.y;
+          for (int i = inlays.size() - 1; i >= 0; i--) {
+            Inlay<?> inlay = inlays.get(i);
+            yDiff -= inlay.getHeightInPixels();
+            if (yDiff <= 0) {
+              return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
+            }
+          }
+          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
+                    new Attachment("editorState.txt", myEditor.dumpState()));
+          return null;
+        }
+        else {
+          int lineBottom = location.getVisualLineEndY();
+          if (point.y >= lineBottom) {
+            List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
+            int yDiff = point.y - lineBottom;
+            for (Inlay<?> inlay : inlays) {
+              yDiff -= inlay.getHeightInPixels();
+              if (yDiff < 0) {
+                return relX < inlay.getWidthInPixels() ? inlay : null;
+              }
+            }
+            LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+                      new Attachment("editorState.txt", myEditor.dumpState()));
+            return null;
+          }
+        }
+      }
+      if (hasInlineElements) {
+        if (location.getCollapsedRegion() == null) {
+          int offset = location.getOffset();
+          List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
+          if (!inlays.isEmpty()) {
+            VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset, false, false);
+            Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+            List<CustomWrap> customWraps = myEditor.getCustomWrapModel().getWrapsAtOffset(offset);
+            if (customWraps.isEmpty()) {
+              if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+              Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
+              if (inlay != null) return inlay;
+            }
+            else {
+              // inlays at the same offset are sorted by their relatesToPrecedingText
+              int firstRelatedToPrecedingIndex = ContainerUtil.indexOf(inlays, inlay -> inlay.isRelatedToPrecedingText());
+              firstRelatedToPrecedingIndex = firstRelatedToPrecedingIndex >= 0 ? firstRelatedToPrecedingIndex : inlays.size();
+              if (point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+              if (point.y >= inlayPoint.y) {
+                // points after wrap
+                Inlay<?> inlay = findInlay(inlays, 0, firstRelatedToPrecedingIndex, point.x, inlayPoint.x);
+                if (inlay != null) return inlay;
+              }
+              else {
+                // points before wrap
+                startVisualPosition = myEditor.offsetToVisualPosition(offset, false, true);
+                inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
+                if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
+                Inlay<?> inlay = findInlay(inlays, firstRelatedToPrecedingIndex, inlays.size(), point.x, inlayPoint.x);
+                if (inlay != null) return inlay;
+              }
+            }
+          }
+        }
+      }
+      if (hasAfterLineEndElements) {
+        int offset = location.getOffset();
+        int logicalLine = myDocument.getLineNumber(offset);
+        if (offset == myDocument.getLineEndOffset(logicalLine) && location.getCollapsedRegion() == null) {
+          List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+          if (!inlays.isEmpty()) {
+            Rectangle bounds = inlays.getFirst().getBounds();
+            assert bounds != null;
+            if (point.y >= bounds.y && point.y < bounds.y + bounds.height) {
+              return findInlay(inlays, point.x, bounds.x);
+            }
+          }
+        }
+      }
+      return null;
+    });
+  }
+
+  private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
+    return findInlay(inlays, 0, inlays.size(), x, startX);
+  }
+
+  private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int startIndex, int endIndex, int x, int startX) {
+    for (; startIndex < endIndex; startIndex++) {
+      Inlay<?> inlay = inlays.get(startIndex);
+      int endX = startX + inlay.getWidthInPixels();
+      if (x >= startX && x < endX) return inlay;
+      startX = endX;
     }
     return null;
   }
 
   @Override
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+    if (!hasAfterLineEndElements()) {
+      return List.of();
+    }
+    List<AfterLineEndInlay<?>> range = getAfterLineEndElementsInRange(startOffset, endOffset, Predicates.alwaysTrue());
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  @Override
+  public @NotNull <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+    if (!hasAfterLineEndElements()) {
+      return List.of();
+    }
+
+    List<AfterLineEndInlay<?>> range =
+      getAfterLineEndElementsInRange(startOffset, endOffset, inlay -> type.isInstance(inlay.getRenderer()));
+    //noinspection unchecked,rawtypes
+    return (List)range;
+  }
+
+  private @NotNull List<AfterLineEndInlay<?>> getAfterLineEndElementsInRange(int startOffset,
+                                                                             int endOffset,
+                                                                             @NotNull Predicate<? super AfterLineEndInlay<?>> predicate) {
+    if (mySnapshotMarkerStorage == null) {
+      return new ArrayList<>(getElementsInRange(getAfterLineEndElementsTree(), startOffset, endOffset, predicate,
+                                                AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR));
+    }
+    List<AfterLineEndInlay<?>> result = new ArrayList<>(mySnapshotMarkerStorage.collectAfterLineEnd(startOffset, endOffset));
+    result.removeIf(predicate.negate());
+    result.sort(AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
+    return result;
+  }
+
+  @Override
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+    DocumentEx document = myDocument;
+    if (!hasAfterLineEndElements() || logicalLine < 0 || logicalLine > 0 && logicalLine >= document.getLineCount()) {
+      return Collections.emptyList();
+    }
+    List<AfterLineEndInlay<?>> result = new ArrayList<>();
+    int startOffset = document.getLineStartOffset(logicalLine);
+    int endOffset = document.getLineEndOffset(logicalLine);
+    if (mySnapshotMarkerStorage == null) {
+      getAfterLineEndElementsTree().processOverlappingWith(startOffset, endOffset, inlay -> {
+        result.add(inlay);
+        return true;
+      });
+    }
+    else {
+      result.addAll(mySnapshotMarkerStorage.collectAfterLineEnd(startOffset, endOffset));
+    }
+    result.sort(AFTER_LINE_END_ELEMENTS_COMPARATOR);
+    //noinspection unchecked,rawtypes
+    return (List)result;
+  }
+
+  @Override
+  public boolean hasAfterLineEndElements() {
+    return mySnapshotMarkerStorage == null
+           ? getAfterLineEndElementsTree().size() > 0
+           : mySnapshotMarkerStorage.hasAfterLineEnd();
+  }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {
+    myConsiderCaretPositionOnDocumentUpdates = enabled;
+  }
+
+  @Override
+  public void execute(boolean batchMode, @NotNull Runnable operation) {
+    EditorImpl.assertIsDispatchThread();
+    if (myInBatchMode || !batchMode) {
+      operation.run();
+    }
+    else {
+      try {
+        notifyBatchModeStarting();
+        myInBatchMode = true;
+        operation.run();
+      }
+      finally {
+        myInBatchMode = false;
+        notifyBatchModeFinished();
+      }
+    }
+  }
+
+  @Override
+  public boolean isInBatchMode() {
+    return myInBatchMode;
+  }
+
+  @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+    EditorImpl.assertIsDispatchThread();
     myDispatcher.addListener(listener, disposable);
   }
 
-  private void notifyAdded(InlayImpl inlay) {
+  private void notifyAdded(EditorInlay<?> inlay) {
     myDispatcher.getMulticaster().onAdded(inlay);
   }
 
-  void notifyChanged(InlayImpl inlay) {
-    myDispatcher.getMulticaster().onUpdated(inlay);
+  void notifyChanged(EditorInlay<?> inlay, @MagicConstant(flagsFromClass = ChangeFlags.class) int changeFlags) {
+    myDispatcher.getMulticaster().onUpdated(inlay, changeFlags);
   }
 
-  void notifyRemoved(InlayImpl inlay) {
+  void notifyRemoved(EditorInlay<?> inlay) {
     myDispatcher.getMulticaster().onRemoved(inlay);
+  }
+
+  void snapshotInlayInvalidated(@NotNull EditorInlay<?> inlay, boolean delayNotification) {
+    if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
+      if (delayNotification) {
+        myInlaysInvalidatedOnMove.add(inlay);
+      }
+      else {
+        notifyRemoved(inlay);
+      }
+    }
+    Disposer.dispose(inlay);
+  }
+
+  @NotNull RangeMarkerTree<InlineInlayImpl<?>> getInlineElementsTree() {
+    return Objects.requireNonNull(myInlineElementsTree);
+  }
+
+  @NotNull RangeMarkerTree<AfterLineEndInlayImpl<?>> getAfterLineEndElementsTree() {
+    return Objects.requireNonNull(myAfterLineEndElementsTree);
+  }
+
+  @NotNull MarkerTreeWithPartialSums<BlockInlayImpl<?>> getBlockElementsTree() {
+    return Objects.requireNonNull(myBlockElementsTree);
+  }
+
+  @TestOnly
+  boolean isUsingSnapshotInlayStorage() {
+    return mySnapshotMarkerStorage != null;
+  }
+
+  @TestOnly
+  @NotNull SnapshotMarkerRootStore rootStore() {
+    return Objects.requireNonNull(mySnapshotMarkerStorage).getRootStore();
+  }
+
+  private void notifyBatchModeStarting() {
+    List<Listener> listeners = myDispatcher.getListeners();
+    for (int i = listeners.size() - 1; i >= 0; i--) {
+      listeners.get(i).onBatchModeStart(myEditor);
+    }
+  }
+
+  private void notifyBatchModeFinished() {
+    myDispatcher.getMulticaster().onBatchModeFinish(myEditor);
   }
 
   @TestOnly
   public void validateState() {
-    for (Inlay inlay : getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
-      LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
+    for (Inlay<?> inlay : getInlineElementsInRange(0, myDocument.getTextLength())) {
+      LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, inlay.getOffset()));
+    }
+  }
+
+  @Override
+  public @NotNull String dumpState() {
+    String inlineInlays = mySnapshotMarkerStorage == null
+                          ? dumpInlays(getInlineElementsTree())
+                          : dumpInlays(mySnapshotMarkerStorage.collectInline(0, myDocument.getTextLength()));
+    String afterLineEndInlays = mySnapshotMarkerStorage == null
+                                ? dumpInlays(getAfterLineEndElementsTree())
+                                : dumpInlays(mySnapshotMarkerStorage.collectAfterLineEnd(0, myDocument.getTextLength()));
+    String blockInlays = mySnapshotMarkerStorage == null
+                         ? dumpInlays(getBlockElementsTree())
+                         : dumpInlays(mySnapshotMarkerStorage.collectBlock(0, myDocument.getTextLength()));
+    return "Inline elements: " + inlineInlays
+           + ", after-line-end elements: " + afterLineEndInlays
+           + ", block elements: " + blockInlays;
+  }
+
+
+  private static String dumpInlays(RangeMarkerTree<? extends InlayImpl<?,?>> tree) {
+    StringJoiner joiner = new StringJoiner(",", "[", "]");
+    tree.processAll(o -> {
+      joiner.add(Integer.toString(o.getOffset()));
+      return true;
+    });
+    return joiner.toString();
+  }
+
+  private static String dumpInlays(List<? extends EditorInlay<?>> inlays) {
+    StringJoiner joiner = new StringJoiner(",", "[", "]");
+    for (EditorInlay<?> inlay : inlays) {
+      joiner.add(Integer.toString(inlay.getOffset()));
+    }
+    return joiner.toString();
+  }
+
+  public static boolean showWhenFolded(@NotNull Inlay<?> inlay) {
+    return inlay instanceof BlockInlay<?> blockInlay && blockInlay.isShownWhenFolded();
+  }
+
+  private final class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
+    InlineElementsTree(@NotNull Document document) {
+      super(document);
+    }
+
+    @Override
+    protected @NotNull RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl<?> key, int start, int end,
+                                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+      return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+        @Override
+        protected void addIntervalsFrom(@NotNull IntervalNode<? extends InlineInlayImpl<?>> otherNode) {
+          super.addIntervalsFrom(otherNode);
+          if (myPutMergedIntervalsAtBeginning) {
+            List<Supplier<? extends InlineInlayImpl<?>>> added =
+              ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+            List<Supplier<? extends InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
+            added.clear();
+            intervals.addAll(0, addedCopy);
+          }
+        }
+      };
+    }
+
+    @Override
+    protected void fireBeforeRemoved(@NotNull InlineInlayImpl<?> inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
+        if (myMoveInProgress) {
+          // delay notification about invalidated inlay - folding model is not consistent at this point
+          // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
+          myInlaysInvalidatedOnMove.add(inlay);
+        }
+        else {
+          notifyRemoved(inlay);
+        }
+      }
+    }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull InlineInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
+    }
+  }
+
+  private final class BlockElementsTree extends MarkerTreeWithPartialSums<BlockInlayImpl<?>> {
+    BlockElementsTree(@NotNull Document document) {
+      super(document);
+    }
+
+    @Override
+    protected void fireBeforeRemoved(@NotNull BlockInlayImpl<?> inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
+        notifyRemoved(inlay);
+      }
+    }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull BlockInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
+    }
+  }
+
+  private final class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
+    AfterLineEndElementTree(@NotNull Document document) {
+      super(document);
+    }
+
+    @Override
+    protected void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl<?> inlay) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
+        notifyRemoved(inlay);
+      }
+    }
+
+    @Override
+    protected void fireAfterRemoved(@NotNull AfterLineEndInlayImpl<?> marker) {
+      super.fireAfterRemoved(marker);
+
+      Disposer.dispose(marker);
     }
   }
 }

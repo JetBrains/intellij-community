@@ -1,70 +1,87 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author dsl
- */
 public class SafeDeleteDialog extends DialogWrapper {
   private final Project myProject;
   private final PsiElement[] myElements;
   private final Callback myCallback;
+  private final @Nullable @NlsContexts.DialogMessage String myMessage;
+  private final SafeDeleteProcessorDelegate myDelegate;
 
   private StateRestoringCheckBox myCbSearchInComments;
   private StateRestoringCheckBox myCbSearchTextOccurrences;
-
   private JCheckBox myCbSafeDelete;
-
-  private final SafeDeleteProcessorDelegate myDelegate;
 
   public interface Callback {
     void run(SafeDeleteDialog dialog);
   }
 
-  public SafeDeleteDialog(Project project, PsiElement[] elements, Callback callback) {
+  /**
+   * Constructs a safe delete confirmation dialog.
+   *
+   * @param project the project
+   * @param elements the elements to delete
+   * @param callback the callback to invoke if the user agrees to delete
+   * @deprecated prefer the other overload
+   */
+  @Deprecated
+  public SafeDeleteDialog(
+    @NotNull Project project,
+    @NotNull PsiElement @NotNull [] elements,
+    @Nullable Callback callback) {
+    this(project, elements, null, callback);
+  }
+
+  /**
+   * Constructs a safe delete confirmation dialog.
+   *
+   * @param project the project
+   * @param elements the elements to delete
+   * @param message the message to show, computed using {@link DeleteUtil#generateSafeDeleteWarningMessageWithModalProgress(Project, boolean, PsiElement[])}
+   * @param callback  the callback to invoke if the user agrees to delete
+   */
+  public SafeDeleteDialog(
+    @NotNull Project project,
+    @NotNull PsiElement @NotNull [] elements,
+    @Nullable @NlsContexts.DialogMessage String message,
+    @Nullable Callback callback
+  ) {
     super(project, true);
     myProject = project;
     myElements = elements;
     myCallback = callback;
+    myMessage = message;
     myDelegate = getDelegate();
-    setTitle(SafeDeleteHandler.REFACTORING_NAME);
+    setTitle(SafeDeleteHandler.getRefactoringName());
     init();
   }
 
@@ -80,14 +97,8 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
+  protected String getHelpId() {
+    return "refactoring.safeDelete";
   }
 
   @Override
@@ -95,10 +106,15 @@ public class SafeDeleteDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
 
-    final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
-    final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message(promptKey), myElements);
+    final String warningMessage;
+    if (myMessage != null) {
+      warningMessage = myMessage;
+    }
+    else {
+      warningMessage = DeleteUtil.generateSafeDeleteWarningMessage(isDelete(), myElements);
+    }
 
-    gbc.insets = JBUI.insets(4, 8);
+    gbc.insets = JBInsets.create(4, 8);
     gbc.weighty = 1;
     gbc.weightx = 1;
     gbc.gridx = 0;
@@ -167,10 +183,9 @@ public class SafeDeleteDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
-  private SafeDeleteProcessorDelegate getDelegate() {
+  private @Nullable SafeDeleteProcessorDelegate getDelegate() {
     if (myElements.length == 1) {
-      for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(myElements[0])) {
           return delegate;
         }
@@ -186,7 +201,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   private boolean needSearchForTextOccurrences() {
     for (PsiElement element : myElements) {
-      if (TextOccurrencesUtil.isSearchTextOccurencesEnabled(element)) {
+      if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(element)) {
         return true;
       }
     }
@@ -198,7 +213,9 @@ public class SafeDeleteDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     if (DumbService.isDumb(myProject)) {
-      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in progress", "Indexing", null);
+      DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SafeDeleteDialog);
+      Messages.showMessageDialog(myProject, RefactoringBundle.message("safe.delete.not.available.indexing"),
+                                 RefactoringBundle.message("refactoring.indexing.warning.title"), null);
       return;
     }
 
@@ -220,7 +237,7 @@ public class SafeDeleteDialog extends DialogWrapper {
         }
       } else {
         myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
-  
+
         if (myCbSearchTextOccurrences != null) {
           myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
         }

@@ -1,104 +1,108 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
-/**
- * @author yole
- */
 public abstract class TestFrameworks {
   public static TestFrameworks getInstance() {
-    return ServiceManager.getService(TestFrameworks.class);
+    return ApplicationManager.getApplication().getService(TestFrameworks.class);
   }
 
-  public abstract boolean isTestClass(PsiClass psiClass);
-  public abstract boolean isPotentialTestClass(PsiClass psiClass);
+  public abstract boolean isTestClass(@NotNull PsiClass psiClass);
+  public abstract boolean isPotentialTestClass(@NotNull PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findSetUpMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findSetUpMethod(PsiClass psiClass);
 
-  @Nullable
-  public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
+  public abstract @Nullable PsiMethod findTearDownMethod(PsiClass psiClass);
 
   protected abstract boolean hasConfigMethods(PsiClass psiClass);
-  
+
   public abstract boolean isTestMethod(PsiMethod method);
+
+  /**
+   * Checks method on the possibility to run as a test
+   *
+   * @param method        method element to check
+   * @param checkAbstract the fact that an abstract class is a test or not, if false then is test
+   * @return the result of checking
+   */
+  public boolean isTestMethod(PsiMethod method, boolean checkAbstract) {
+    return isTestMethod(method);
+  }
 
   public boolean isTestOrConfig(PsiClass psiClass) {
     return isTestClass(psiClass) || hasConfigMethods(psiClass);
   }
-  
-  @Nullable
-  public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFramework(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+
+  public static @Nullable TestFramework detectFramework(final @NotNull PsiClass psiClass) {
+    return ContainerUtil.getFirstItem(detectApplicableFrameworks(psiClass));
   }
 
-  @NotNull
-  public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
-    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFrameworks(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  public static @NotNull Set<TestFramework> detectApplicableFrameworks(final @NotNull PsiClass psiClass) {
+    PsiModifierListOwner normalized = AnnotationCacheOwnerNormalizer.normalize(psiClass);
+    return CachedValuesManager.getCachedValue(normalized, () -> CachedValueProvider.Result
+      .create(computeFrameworks(normalized), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private static Set<TestFramework> computeFrameworks(PsiClass psiClass) {
+  private static Set<TestFramework> computeFrameworks(PsiElement psiClass) {
     Set<TestFramework> frameworks = new LinkedHashSet<>();
-    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
-      if (framework.isTestClass(psiClass)) {
-        frameworks.add(framework);
-      }
-    }
 
-    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
-      if (frameworks.contains(framework)) continue;;
-      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
+    Language classLanguage = psiClass.getLanguage();
+    Map<String, Language> checkedFrameworksByName = new HashMap<>();
+
+    for (TestFramework framework : DumbService.getDumbAwareExtensions(psiClass.getProject(), TestFramework.EXTENSION_NAME)) {
+      String frameworkName = framework.getName();
+      Language frameworkLanguage = framework.getLanguage();
+
+      Language checkedFrameworkLanguage = checkedFrameworksByName.get(frameworkName);
+      // if we've checked framework for more specific language - no reasons to check it again for more general language
+      if (checkedFrameworkLanguage != null && isSubLanguage(checkedFrameworkLanguage, frameworkLanguage)) continue;
+
+      if (!isSubLanguage(classLanguage, frameworkLanguage))
+        continue;
+
+      if (framework.isTestClass(psiClass) ||
+          framework.findSetUpMethod(psiClass) != null ||
+          framework.findTearDownMethod(psiClass) != null ||
+          framework.findBeforeClassMethod(psiClass) != null ||
+          framework.findAfterClassMethod(psiClass) != null ||
+          framework.findBeforeSuiteMethod(psiClass) != null ||
+          framework.findAfterSuiteMethod(psiClass) != null) {
         frameworks.add(framework);
       }
+      checkedFrameworksByName.put(frameworkName, frameworkLanguage);
     }
     return frameworks;
   }
 
-  @Nullable
-  private static TestFramework computeFramework(PsiClass psiClass) {
-    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
-      if (framework.isTestClass(psiClass)) {
-        return framework;
-      }
-    }
+  /**
+   * @return <code>true</code> if <code>framework</code> could handle element by its language
+   */
+  public static boolean isSuitableByLanguage(PsiElement element, TestFramework framework) {
+    return element.getContainingFile() != null && isSubLanguage(element.getLanguage(), framework.getLanguage());
+  }
 
-    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
-      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
-        return framework;
-      }
-    }
-    return null;
+  private static boolean isSubLanguage(@NotNull Language language, @NotNull Language parentLanguage) {
+    return parentLanguage == Language.ANY || language.isKindOf(parentLanguage);
   }
 }

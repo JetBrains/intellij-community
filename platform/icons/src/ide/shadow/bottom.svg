@@ -1,0 +1,16 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="4" height="14" viewBox="0 0 4 14">
+  <defs>
+    <rect id="bottom-b" width="20" height="21" y=".01"/>
+    <filter id="bottom-a" width="270%" height="261.9%" x="-85%" y="-61.9%" filterUnits="objectBoundingBox">
+      <feOffset dy="4" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation="5"/>
+      <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.3 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(-8 -21)">
+    <use fill="#000" filter="url(#bottom-a)" xlink:href="#bottom-b"/>
+    <use fill="#FFF" fill-opacity="0" xlink:href="#bottom-b"/>
+  </g>
+</svg>

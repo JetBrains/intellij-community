@@ -1,0 +1,520 @@
+"HttpClient-19-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-2-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-360-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-377-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-398-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-6-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"HttpClient-7-SelectorManager" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+	at java.base@25.0.3/sun.nio.ch.KQueue.poll(Native Method)
+	at java.base@25.0.3/sun.nio.ch.KQueueSelectorImpl.doSelect(KQueueSelectorImpl.java:121)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.lockAndDoSelect(SelectorImpl.java:130)
+	at java.base@25.0.3/sun.nio.ch.SelectorImpl.select(SelectorImpl.java:142)
+	at platform/java.net.http@25.0.3/jdk.internal.net.http.HttpClientImpl$SelectorManager.run(HttpClientImpl.java:1338)
+
+"Reference Handler" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+
+	at java.base@25.0.3/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+	at java.base@25.0.3/java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+	at java.base@25.0.3/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+
+"AWT-AppKit" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+ (in native)
+
+"Notification Thread" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+
+
+"Signal Dispatcher" prio=0 tid=0x0 nid=0x0 runnable
+     java.lang.Thread.State: RUNNABLE
+
+
+"DebuggerManagerThread" prio=0 tid=0x0 nid=0x0 waiting on condition
+     java.lang.Thread.State: WAITING
+ on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@6baf4eba
+	at java.base@25.0.3/jdk.internal.misc.Unsafe.park(Native Method)
+	at java.base@25.0.3/java.util.concurrent.locks.LockSupport.park(LockSupport.java:369)
+	at java.base@25.0.3/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:520)
+	at java.base@25.0.3/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:4364)
+	at java.base@25.0.3/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:4310)
+	at java.base@25.0.3/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitUninterruptibly(AbstractQueuedSynchronizer.java:1705)
+	at com.intellij.debugger.impl.EventQueue.getEvent(EventQueue.java:107)
+	at com.intellij.debugger.impl.EventQueue.get(EventQueue.java:117)
+	at com.intellij.debugger.impl.InvokeThread.lambda$run$1(InvokeThread.java:185)
+	at com.intellij.debugger.impl.InvokeThread$$Lambda/0x00000fe008885800.run(Unknown Source)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.lambda$runProcess$0(CoreProgressManager.java:285)
+	at com.intellij.openapi.progress.impl.CoreProgressManager$$Lambda/0x00000fe002b07c00.run(Unknown Source)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.lambda$executeProcessUnderProgress$0(CoreProgressManager.java:754)
+	at com.intellij.openapi.progress.impl.CoreProgressManager$$Lambda/0x00000fe002b0e800.compute(Unknown Source)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.registerIndicatorAndRun(CoreProgressManager.java:830)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.computeUnderProgress(CoreProgressManager.java:786)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.executeProcessUnderProgress(CoreProgressManager.java:753)
+	at com.intellij.openapi.progress.impl.ProgressManagerImpl.executeProcessUnderProgress(ProgressManagerImpl.java:87)
+	at com.intellij.openapi.progress.impl.CoreProgressManager.runProcess(CoreProgressManager.java:269)
+	at com.intellij.debugger.impl.InvokeThread.lambda$run$0(InvokeThread.java:174)
+	at com.intellij.debugger.impl.InvokeThread$$Lambda/0x00000fe008885400.run(Unknown Source)
+	at com.intellij.util.indexing.FileBasedIndex.lambda$ignoreDumbMode$0(FileBasedIndex.java:261)
+	at com.intellij.util.indexing.FileBasedIndex$$Lambda/0x00000fe005d20600.compute(Unknown Source)
+	at com.intellij.openapi.util.RecursionManager$1.computePreventingRecursion(RecursionManager.java:124)
+	at com.intellij.util.indexing.FileBasedIndexEx.ignoreDumbMode(FileBasedIndexEx.java:732)
+	at com.intellij.util.indexing.FileBasedIndex.ignoreDumbMode(FileBasedIndex.java:260)
+	at com.intellij.util.indexing.DumbModeAccessType.ignoreDumbMode(DumbModeAccessType.java:41)
+	at com.intellij.debugger.impl.InvokeThread.run(InvokeThread.java:174)
+	at com.intellij.debugger.impl.InvokeThread$WorkerThreadRequest.lambda$run$0(InvokeThread.java:57)
+	at com.intellij.debugger.impl.InvokeThread$WorkerThreadRequest$$Lambda/0x00000fe008884c00.run(Unknown Source)
+	at com.intellij.util.ConcurrencyUtil.runUnderThreadName(ConcurrencyUtil.java:265)
+	at com.intellij.debugger.impl.InvokeThread$WorkerThreadRequest.run(InvokeThread.java:56)
+	at com.intellij.openapi.application.impl.ApplicationImpl$4.run(ApplicationImpl.java:378)
+	at java.base@25.0.3/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at com.intellij.util.concurrency.ContextCallable.lambda$call$2(ContextCallable.java:86)
+	at com.intellij.util.concurrency.ContextCallable$$Lambda/0x00000fe000c35800.invoke(Unknown Source)
+	at com.intellij.concurrency.ThreadContext.installThreadContext(threadContext.kt:307)
+	at com.intellij.util.concurrency.ContextCallable.lambda$call$1(ContextCallable.java:83)
+	at com.intellij.util.concurrency.ContextCallable$$Lambda/0x00000fe000c36800.get(Unknown Source)
+	at com.intellij.util.concurrency.ContextCallable.call(ContextCallable.java:96)
+	at java.base@25.0.3/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at com.intellij.util.concurrency.ChildContext$runInChildContext$1.invoke(propagation.kt:193)
+	at com.intellij.util.concurrency.ChildContext$runInChildContext$1.invoke(propagation.kt:193)
+	at com.intellij.util.concurrency.ChildContext.runInChildContext(propagation.kt:199)
+	at com.intellij.util.concurrency.ChildContext.runInChildContext(propagation.kt:193)
+	at com.intellij.util.concurrency.ContextRunnable.lambda$run$0(ContextRunnable.java:26)
+	at com.intellij.util.concurrency.ContextRunnable$$Lambda/0x00000fe0006c2000.invoke(Unknown Source)
+	at com.intellij.concurrency.ThreadContext.resetThreadContext(threadContext.kt:295)
+	at com.intellij.util.concurrency.ContextRunnable.run(ContextRunnable.java:25)
+	at java.base@25.0.3/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base@25.0.3/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base@25.0.3/java.util.concurrent.Executors$PrivilegedThreadFactory$1.run(Executors.java:649)
+	at java.base@25.0.3/java.lang.Thread.runWith(Thread.java:1487)
+	at java.base@25.0.3/java.lang.Thread.run(Thread.java:1474)
+
+
+"ForkJoinPool.commonPool-delayScheduler" prio=0 tid=0x0 nid=0x0 waiting on condition
+     java.lang.Thread.State: WAITING
+
+	at java.base@25.0.3/jdk.internal.misc.Unsafe.park(Native Method)
+	at java.base@25.0.3/java.util.concurrent.DelayScheduler.loop(DelayScheduler.java:253)
+	at java.base@25.0.3/java.util.concurrent.DelayScheduler.run(DelayScheduler.java:221)
+
+
+---------- Coroutine dump ----------
+
+- BlockingCoroutine{Active}@2c9a4996 [BlockingEventLoop]
+	- StandaloneCoroutine{Active} [BlockingEventLoop]
+		- "Transactor loop Kernel@h8q0ivt7115gkj7eqdv0":StandaloneCoroutine{Active} [ThreadLocal(value=fleet.tracing.runtime.Span$Noop@4210c0fb, threadLocal = fleet.multiplatform.shims.ThreadLocal_jvmKt$threadLocal$1@1f76dab7), kotlinx.coroutines.UndispatchedMarker, java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService]
+		- "transactor log collector":StandaloneCoroutine{Active} [kotlinx.coroutines.UndispatchedMarker, Kernel@h8q0ivt7115gkj7eqdv0, DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ThreadLocal(value=fleet.tracing.runtime.Span$Noop@4210c0fb, threadLocal = fleet.multiplatform.shims.ThreadLocal_jvmKt$threadLocal$1@1f76dab7), Dispatchers.Unconfined]
+		- "rete event loop":StandaloneCoroutine{Active} [kotlinx.coroutines.UndispatchedMarker, Kernel@h8q0ivt7115gkj7eqdv0, DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ThreadLocal(value=fleet.tracing.runtime.Span$Noop@4210c0fb, threadLocal = fleet.multiplatform.shims.ThreadLocal_jvmKt$threadLocal$1@1f76dab7), BlockingEventLoop]
+			- "rete event loop":ProducerCoroutine{Active} [kotlinx.coroutines.UndispatchedMarker, Kernel@h8q0ivt7115gkj7eqdv0, DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ThreadLocal(value=fleet.tracing.runtime.Span$Noop@4210c0fb, threadLocal = fleet.multiplatform.shims.ThreadLocal_jvmKt$threadLocal$1@1f76dab7), BlockingEventLoop]
+				- "rete event loop":ProducerCoroutine{Active} [kotlinx.coroutines.UndispatchedMarker, Kernel@h8q0ivt7115gkj7eqdv0, DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ThreadLocal(value=fleet.tracing.runtime.Span$Noop@4210c0fb, threadLocal = fleet.multiplatform.shims.ThreadLocal_jvmKt$threadLocal$1@1f76dab7), BlockingEventLoop]
+	- "Application":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0)]
+		- "ApplicationImpl@2013013843 container":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x org.jetbrains.plugins.yaml)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x org.jetbrains.plugins.textmate)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "org.jetbrains.plugins.textmate.TextMateServiceImpl":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x org.jetbrains.plugins.terminal)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@165022960 x (ApplicationImpl@2013013843 x org.jetbrains.plugins.terminal))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@165022960), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "org.jetbrains.plugins.terminal.TerminalOptionsProvider":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@884232594 x (ApplicationImpl@2013013843 x org.jetbrains.plugins.terminal))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@884232594), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "org.jetbrains.plugins.terminal.TerminalFontSettingsService":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@1342778193 x (ApplicationImpl@2013013843 x org.jetbrains.plugins.terminal))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@1342778193), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x org.jetbrains.plugins.terminal)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x com.intellij.properties)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij.platform.images)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij.platform.acp)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x com.intellij.modules.json)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x7 of] "(ApplicationImpl@2013013843 x JavaScript)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x10 of] "(ApplicationImpl@2013013843 x com.intellij.java)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x com.intellij.dfa.analysis)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij.copyright)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x25 of] "(ApplicationImpl@2013013843 x com.intellij)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x org.jetbrains.idea.reposearch)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x com.intellij.moduleSet.grid.core)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij.database)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.database.dataSource.DataSourceModelStorageImpl$App":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.database.settings.QueryFileAppSettings":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@165022960 x (ApplicationImpl@2013013843 x com.intellij.database))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@165022960), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.database.dataSource.history.DataSourcesHistory$HistoryInitialization":ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@165022960), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.database.dataSource.DatabaseConnectionManager":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@884232594 x (ApplicationImpl@2013013843 x com.intellij.database))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@884232594), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.database.dataSource.history.DataSourcesHistory$HistoryInitialization":ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@884232594), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "(ProjectImpl@1342778193 x (ApplicationImpl@2013013843 x com.intellij.database))":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@1342778193), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.database.dataSource.history.DataSourcesHistory$HistoryInitialization":ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ProjectImpl@1342778193), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x3 of] "(ApplicationImpl@2013013843 x com.intellij.database)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			-[x2 of] "(ApplicationImpl@2013013843 x com.jetbrains.gateway)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry":StandaloneCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+						at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+						at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+						at com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry$1$1.invokeSuspend(FrontendRemoteTopicListenersRegistry.kt:36)
+						at fleet.rpc.client.DurableKt$durable$2.invokeSuspend(Durable.kt:36)
+						at fleet.rpc.client.DurableKt.durable(Durable.kt:36)
+						at com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry$1.invokeSuspend(FrontendRemoteTopicListenersRegistry.kt:35)
+						- "com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry":ProducerCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+	at com.intellij.platform.rpc.topics.backend.BackendRemoteTopicApi$subscribe$2.invokeSuspend(BackendRemoteTopicApi.kt:21)
+	at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+			-[x2 of] "(ApplicationImpl@2013013843 x com.jetbrains.sh)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.ide.RecentProjectsManagerBase":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.ide.RecentProjectsManagerBase":StandaloneCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+						at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+						at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+						at com.intellij.ide.RecentProjectsManagerBase$1.invokeSuspend(RecentProjectsManagerBase.kt:137)
+						- "com.intellij.ide.RecentProjectsManagerBase":ProducerCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+							at kotlinx.coroutines.selects.SelectImplementation.doSelectSuspend(Select.kt:455)
+							at kotlinx.coroutines.flow.FlowKt__DelayKt$debounceInternal$1.invokeSuspend(Delay.kt:414)
+							at kotlinx.coroutines.flow.internal.FlowCoroutineKt$scopedFlow$1$1.invokeSuspend(FlowCoroutine.kt:47)
+							at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+							at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							- "com.intellij.ide.RecentProjectsManagerBase":ProducerCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+								at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+								at kotlinx.coroutines.flow.FlowKt__DelayKt$debounceInternal$1$values$1.invokeSuspend(Delay.kt:204)
+					- "com.intellij.ide.RecentProjectsManagerBase":StandaloneCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), ClientId(value=Host), Dispatchers.Default]
+						at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+						at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+						at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+						at com.intellij.ide.RecentProjectsSystemDockMenuUpdater$start$1.invokeSuspend(RecentProjectsSystemDockMenuUpdater.kt:45)
+						- "com.intellij.ide.RecentProjectsManagerBase":ProducerCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), ClientId(value=Host), Dispatchers.Default]
+							at kotlinx.coroutines.selects.SelectImplementation.doSelectSuspend(Select.kt:455)
+							at kotlinx.coroutines.flow.FlowKt__DelayKt$debounceInternal$1.invokeSuspend(Delay.kt:414)
+							at kotlinx.coroutines.flow.internal.FlowCoroutineKt$scopedFlow$1$1.invokeSuspend(FlowCoroutine.kt:47)
+							at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+							at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							- "com.intellij.ide.RecentProjectsManagerBase":ProducerCoroutine{Active}, state: SUSPENDED [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), ClientId(value=Host), Dispatchers.Default]
+								at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+								at kotlinx.coroutines.flow.FlowKt__DelayKt$debounceInternal$1$values$1.invokeSuspend(Delay.kt:204)
+			- "(ApplicationImpl@2013013843 x com.intellij)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.platform.rpc.backend.impl.RemoteApiRegistry":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+			- "(ApplicationImpl@2013013843 x com.intellij)":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+				- "com.intellij.platform.kernel.backend.BackendKernelService":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor]
+					- "com.intellij.platform.kernel.backend.BackendKernelService":StandaloneCoroutine{Completing} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+						- "KernelCoroutineScope":supervisor:ChildScope{Active} [Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Dispatchers.Default]
+							- "RemoteKernelScope":supervisor:ChildScope{Active} [ComponentManager(ApplicationImpl@2013013843), com.intellij.codeWithMe.ClientIdContextElementPrecursor, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), Dispatchers.Default]
+							-[x3 of] "IdeFrameImpl.restoreBoundsRequests":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+								at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+								at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+								at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+								at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+								- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+									at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:160)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$handleVm$2.invokeSuspend(StaticNavBarPanel.kt:85)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel.handleVm(StaticNavBarPanel.kt:81)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$1$1.invokeSuspend(StaticNavBarPanel.kt:75)
+									at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+									- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+										at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+										at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+										at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$2.invokeSuspend(NewNavBarPanel.kt:93)
+										- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+											at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+											at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+											at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+											- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+												at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+												at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2$1.invokeSuspend(NewNavBarPanel.kt:104)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2.invokeSuspend(NewNavBarPanel.kt:100)
+												at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+												at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+												-[x7 of] "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.EDT]
+													at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+													at com.intellij.platform.navbar.frontend.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:86)
+												- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+													at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+													at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+													at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							-[x3 of] "static nav bar window":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+								at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+								at com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl$1.invokeSuspend(NavBarVmImpl.kt:50)
+								- "static nav bar window":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+									at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+									at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+									at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+									at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+									at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+									at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+									- "static nav bar window":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+										at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+										at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+										at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							-[x3 of] "static nav bar window":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+								at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+								at com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl$2.invokeSuspend(NavBarVmImpl.kt:60)
+								- "static nav bar window":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+									at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+									at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+									- "static nav bar window":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+										at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+										at com.intellij.platform.util.coroutines.flow.FlowKt$zipWithNext$1.invokeSuspend(flow.kt:190)
+										at kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)
+										at com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl$handleSelectionChange$2.invokeSuspend(NavBarVmImpl.kt:135)
+										at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+										at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+							-[x3 of] "static nav bar window":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+								at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+								at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+								at com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl$3.invokeSuspend(NavBarVmImpl.kt:63)
+								- "static nav bar window":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+									at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+									at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							-[x3 of] "static nav bar window":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.Default]
+								at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+								at kotlinx.coroutines.flow.FlowKt__CollectKt$launchIn$1.invokeSuspend(Collect.kt:46)
+							- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+								at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+								at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+								- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+									at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:160)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$handleVm$2.invokeSuspend(StaticNavBarPanel.kt:85)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel.handleVm(StaticNavBarPanel.kt:81)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$1$1.invokeSuspend(StaticNavBarPanel.kt:75)
+									at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+									- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+										at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+										at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+										at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$2.invokeSuspend(NewNavBarPanel.kt:93)
+										- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+											at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+											at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+											at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+											- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+												at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+												at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2$1.invokeSuspend(NewNavBarPanel.kt:104)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2.invokeSuspend(NewNavBarPanel.kt:100)
+												at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+												at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+												-[x11 of] "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.EDT]
+													at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+													at com.intellij.platform.navbar.frontend.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:86)
+												- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+													at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+													at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+													at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+							- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+								at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+								at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+								at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+								- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+									at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:160)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$handleVm$2.invokeSuspend(StaticNavBarPanel.kt:85)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel.handleVm(StaticNavBarPanel.kt:81)
+									at com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel$1$1.invokeSuspend(StaticNavBarPanel.kt:75)
+									at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+									at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+									- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+										at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+										at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+										at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+										at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$2.invokeSuspend(NewNavBarPanel.kt:93)
+										- "static nav bar vm":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+											at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+											at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+											at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+											- "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.UI]
+												at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+												at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+												at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2$1.invokeSuspend(NewNavBarPanel.kt:104)
+												at com.intellij.platform.navbar.frontend.ui.NewNavBarPanel$handleItems$2.invokeSuspend(NewNavBarPanel.kt:100)
+												at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:213)
+												at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+												-[x15 of] "static nav bar vm":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.NON_MODAL, Kernel@h8q0ivt7115gkj7eqdv0, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@7ea37dbf)), DbSourceContextElement(kernel Kernel@h8q0ivt7115gkj7eqdv0), kotlinx.coroutines.UndispatchedMarker, Dispatchers.EDT]
+													at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+													at com.intellij.platform.navbar.frontend.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:86)
+
+- SupervisorJobImpl{Active}
+	- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+		at kotlinx.coroutines.channels.BufferedChannel.receiveCatchingOnNoWaiterSuspend-GKJJFZk(BufferedChannel.kt:3137)
+		at kotlinx.coroutines.channels.BufferedChannel.receiveCatching-JP2dKIU$suspendImpl(BufferedChannel.kt:761)
+		at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2.invokeSuspend(Combine.kt:51)
+		at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:210)
+		-[x2 of] StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+			at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+			at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2$1.invokeSuspend(Combine.kt:28)
+	- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+		at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+		at com.intellij.collaboration.async.CoroutineUtilKt$mapState$$inlined$map$1.collect(CoroutineUtil.kt:109)
+		at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:210)
+	- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+		at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+		at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+		at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:210)
+		- ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+			at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+			at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+			at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+			- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+				at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+				at com.intellij.space.vcs.review.SpaceBranchPresenter$getPresentation$lambda$1$$inlined$flatMapLatest$1.invokeSuspend(SpaceBranchPresenter.kt:189)
+				at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:30)
+	- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+		at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+		at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+		at com.intellij.space.vcs.review.SpaceBranchPresenter$getPresentation$vmFlow$1$2$1.invokeSuspend(SpaceBranchPresenter.kt:49)
+		- ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+			at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+			at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+			at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+	- StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, runtime.CoroutineExceptionLogger$create$$inlined$CoroutineExceptionHandler$1, Dispatchers.EDT]
+		at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:160)
+		at com.intellij.util.CoroutinesKt$awaitCancellationAndInvoke$1.invokeSuspend(coroutines.kt:35)
+
+- "Terminal Session start":StandaloneCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, Dispatchers.ui(RELAX)]
+	at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+	at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+	at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+	at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+	at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+	at com.intellij.util.ui.UiScopeKt$launchUsingIsShowingFlow$1.invokeSuspend(uiScope.kt:296)
+	- "Terminal Session start":ProducerCoroutine{Active}, state: SUSPENDED [ModalityState.ANY, Dispatchers.ui(RELAX)]
+		at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+		at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+		at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+
+- SupervisorJobImpl{Active}
+	- "PackageChecker.VulnerableApiService.intellij.database.core.impl":StandaloneCoroutine{Active}, state: SUSPENDED [Dispatchers.Default]
+		at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:47)
+		at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+		at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:119)
+		at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:215)
+		- "PackageChecker.VulnerableApiService.intellij.database.core.impl":ProducerCoroutine{Active}, state: SUSPENDED [Dispatchers.Default]
+			at kotlinx.coroutines.channels.BufferedChannel.emitAllInternal$kotlinx_coroutines_core(BufferedChannel.kt:1580)
+			at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllInternal(Channels.kt:44)
+			at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:32)
+			at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:23)
+			at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:56)
+	- "PackageChecker.VulnerableApiService.intellij.database.core.impl":StandaloneCoroutine{Active}, state: SUSPENDED [Dispatchers.Default]
+		at kotlinx.coroutines.channels.BufferedChannel.receiveCatchingOnNoWaiterSuspend-GKJJFZk(BufferedChannel.kt:3137)
+		at kotlinx.coroutines.channels.BufferedChannel.receiveCatching-JP2dKIU$suspendImpl(BufferedChannel.kt:761)
+		at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2.invokeSuspend(Combine.kt:51)
+		at kotlinx.coroutines.flow.FlowKt__ErrorsKt.catchImpl(Errors.kt:152)
+		at kotlinx.coroutines.flow.FlowKt__ErrorsKt$retryWhen$$inlined$unsafeFlow$1.collect(Errors.kt:113)
+		at kotlinx.coroutines.flow.FlowKt__ErrorsKt.catchImpl(Errors.kt:152)
+		at kotlinx.coroutines.flow.FlowKt__ErrorsKt$catch$$inlined$unsafeFlow$1.collect(Errors.kt:109)
+		at com.intellij.packageChecker.service.VulnerableApiService$createLibrariesFqnVulnerabilitiesFlow$$inlined$map$1.collect(VulnerableApiService.kt:109)
+		at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:210)
+		- "PackageChecker.VulnerableApiService.intellij.database.core.impl":StandaloneCoroutine{Active}, state: SUSPENDED [Dispatchers.Default]
+			at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:394)
+			at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2$1.invokeSuspend(Combine.kt:28)
+		- "PackageChecker.VulnerableApiService.intellij.database.core.impl":StandaloneCoroutine{Active}, state: RUNNING [Dispatchers.Default]
+			at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:411)
+			at com.intellij.packageChecker.service.VulnerableApiService$createLibrariesFqnVulnerabilitiesFlow$vulnerabilitiesUpdatedFlow$1$invokeSuspend$$inlined$map$1.collect(VulnerableApiService.kt:109)
+			at com.intellij.packageChecker.service.VulnerableApiService$createLibrariesFqnVulnerabilitiesFlow$vulnerabilitiesUpdatedFlow$1.invokeSuspend(VulnerableApiService.kt:136)
+			at kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)
+			at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2$1.invokeSuspend(Combine.kt:28)
+
+- "indicator watcher":StandaloneCoroutine{Active}, state: SUSPENDED [Dispatchers.IO.limitedParallelism(1)]
+	at com.intellij.openapi.progress.ContextKt$cancelWithIndicator$1.invokeSuspend(context.kt:154)
+
+---------- ProgressIndicator dump ----------
+Indicator JobDependentIndicator(JobImpl{Active}@4bb2aaed) (canceled: false, running:true) corresponds to the following threads:
+ - Thread[#5333,ApplicationImpl pooled thread 617,4,main];
+Indicator com.intellij.openapi.progress.EmptyProgressIndicator@752c9d61 (canceled: false, running:true) corresponds to the following threads:
+ - Thread[#5333,ApplicationImpl pooled thread 617,4,main];
+Indicator com.intellij.openapi.progress.EmptyProgressIndicator@3e1a4a78 (canceled: false, running:true) corresponds to the following threads:
+ - Thread[#3856,DebuggerManagerThread,4,main];
+

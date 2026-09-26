@@ -1,24 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.reference.SoftReference;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchUtil;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NoMatchFoundException;
+import com.intellij.structuralsearch.PatternContextInfo;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchScriptEngine;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -26,19 +34,29 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.predicates.*;
+import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.ContainsPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.ReferencePredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.impl.matcher.predicates.WithinPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -47,128 +65,85 @@ import java.util.regex.Pattern;
 /**
  * Compiles the handlers for usability
  */
-public class PatternCompiler {
-  private static final Object LOCK = new Object();
-  private static SoftReference<CompiledPattern> ourLastCompiledPattern;
-  private static MatchOptions ourLastMatchOptions;
-  private static boolean ourLastCompileSuccessful = true;
-  private static CompileContext lastTestingContext;
+public final class PatternCompiler {
+  private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project,MatchOptions options, boolean checkForErrors)
+  /**
+   * @return the compiled pattern, or null when there is no structural search profile found for the file type in the match options.
+   */
+  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
-    if (!checkForErrors) {
-      synchronized (LOCK) {
-        if (options.equals(ourLastMatchOptions) &&
-            (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == ourLastMatchOptions.getScope())) {
-          if (!ourLastCompileSuccessful) return null;
-          assert ourLastCompiledPattern != null;
-          final CompiledPattern lastCompiledPattern = ourLastCompiledPattern.get();
-          if (lastCompiledPattern != null) {
-            return lastCompiledPattern;
-          }
-        }
-      }
-    }
-    return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors))
-           : doCompilePattern(project, options, checkForErrors);
+    return ReadAction.computeBlocking(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
-  @NotNull
-  private static CompiledPattern doCompilePattern(Project project, MatchOptions options, boolean checkForErrors)
+  private static @Nullable CompiledPattern doCompilePattern(@NotNull Project project, @NotNull MatchOptions options,
+                                                            boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null : "no profile found for " + options.getFileType().getDescription();
+    if (profile == null) {
+      return null;
+    }
     final CompiledPattern result = profile.createCompiledPattern();
 
     final String[] prefixes = result.getTypedVarPrefixes();
     assert prefixes.length > 0;
 
     final CompileContext context = new CompileContext(result, options, project);
-    if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
     try {
-      final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
-      final CompiledPattern pattern = context.getPattern();
-      try {
-        checkForUnknownVariables(pattern, elements);
-        pattern.setNodes(elements);
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = new SoftReference<>(result);
-          ourLastCompileSuccessful = true;
-        }
-      } catch (MalformedPatternException e) {
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = null;
-          ourLastCompileSuccessful = false;
-        }
-        throw e;
+      final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
+      if (elements.isEmpty()) {
+        return null;
       }
+      final CompiledPattern pattern = context.getPattern();
+      collectVariableNodes(pattern, elements, checkForErrors);
+      pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
-        optimizeScope(options, result, context);
+      }
+      if (optimizeScope) {
+        optimizeScope(options, checkForErrors, context, result);
       }
       return result;
-    } finally {
+    }
+    finally {
       context.clear();
     }
   }
 
-  private static void optimizeScope(MatchOptions options, CompiledPattern result, CompileContext context)
+  private static void optimizeScope(MatchOptions options, boolean checkForErrors, CompileContext context, CompiledPattern result)
     throws NoMatchFoundException {
 
     final OptimizingSearchHelper searchHelper = context.getSearchHelper();
     if (searchHelper.doOptimizing() && searchHelper.isScannedSomething()) {
-      final List<PsiFile> filesToScan = new SmartList<>();
-      final SearchScope scope = options.getScope();
-      for (final PsiFile file : searchHelper.getFilesSetToScan()) {
-        if (scope.contains(file.getVirtualFile())) filesToScan.add(file);
-      }
+      final Set<VirtualFile> filesToScan = searchHelper.getFilesSetToScan();
 
-      if (filesToScan.isEmpty()) {
+      final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
+      assert scope != null;
+      if (checkForErrors && filesToScan.isEmpty()) {
         throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
       }
-      result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
+      result.setScope(scope.isSearchInLibraries()
+                      ? GlobalSearchScope.filesWithLibrariesScope(context.getProject(), filesToScan)
+                      : GlobalSearchScope.filesWithoutLibrariesScope(context.getProject(), filesToScan));
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourLastSearchPlan = ((TestModeOptimizingSearchHelper)searchHelper).getSearchPlan();
     }
   }
 
-  private static void checkForUnknownVariables(final CompiledPattern pattern, List<PsiElement> elements)
+  private static void collectVariableNodes(final CompiledPattern pattern, List<? extends PsiElement> elements, boolean checkForErrors)
     throws MalformedPatternException {
 
     for (PsiElement element : elements) {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
+      if (checkForErrors) {
+        checkForUnknownVariables(pattern, element);
+      }
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
-          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
-            return;
-          }
-          super.visitElement(element);
-
-          if (!(element instanceof LeafElement)) {
-            return;
-          }
-          final String text = element.getText();
-          if (!pattern.isTypedVar(text)) {
-            for (String prefix : pattern.getTypedVarPrefixes()) {
-              if (text.contains(prefix)) {
-                throw new MalformedPatternException();
-              }
-            }
-            return;
-          }
-          final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
-          if (handler == null) {
-            throw new MalformedPatternException();
-          }
-        }
-      });
-      element.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
           super.visitElement(element);
 
@@ -177,7 +152,7 @@ public class PatternCompiler {
           }
         }
 
-        private void collectNode(PsiElement element, Object handler) {
+        private void collectNode(PsiElement element, MatchingHandler handler) {
           if (handler instanceof DelegatingHandler) {
             handler = ((DelegatingHandler)handler).getDelegate();
           }
@@ -189,22 +164,52 @@ public class PatternCompiler {
     }
   }
 
-  @TestOnly
-  public static String getLastFindPlan() {
-    return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
+  private static void checkForUnknownVariables(CompiledPattern pattern, PsiElement element) {
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
+          return;
+        }
+        super.visitElement(element);
+
+        if (!(element instanceof LeafElement)) {
+          return;
+        }
+        final String text = element.getText();
+        if (!pattern.isTypedVar(text)) {
+          for (String prefix : pattern.getTypedVarPrefixes()) {
+            if (text.contains(prefix)) {
+              throw new MalformedPatternException();
+            }
+          }
+          return;
+        }
+        final MatchingHandler handler = pattern.getHandler(pattern.getTypedVarString(element));
+        if (handler == null) {
+          throw new MalformedPatternException();
+        }
+      }
+    });
   }
 
-  @NotNull
-  private static List<PsiElement> compileByAllPrefixes(Project project,
-                                                       MatchOptions options,
-                                                       CompiledPattern pattern,
-                                                       CompileContext context,
-                                                       String[] applicablePrefixes) throws MalformedPatternException {
+  @TestOnly
+  public static String getLastSearchPlan() {
+    return ourLastSearchPlan;
+  }
+
+  private static @NotNull List<PsiElement> compileByAllPrefixes(@NotNull Project project,
+                                                                @NotNull MatchOptions options,
+                                                                @NotNull CompiledPattern pattern,
+                                                                @NotNull CompileContext context,
+                                                                String @NotNull [] applicablePrefixes,
+                                                                boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
     }
 
-    List<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+    final List<PsiElement> elements =
+      doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context, checkForErrors);
     if (elements.isEmpty()) {
       return elements;
     }
@@ -218,7 +223,7 @@ public class PatternCompiler {
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
-      patterns[i] = Pattern.compile(StructuralSearchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
+      patterns[i] = Pattern.compile(MatchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
     }
 
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
@@ -231,28 +236,27 @@ public class PatternCompiler {
     final int varCount = varEndOffsets.length;
     final String[] prefixSequence = new String[varCount];
 
-    for (int i = 0; i < varCount; i++) {
-      prefixSequence[i] = applicablePrefixes[0];
-    }
+    Arrays.fill(prefixSequence, applicablePrefixes[0]);
 
     final List<PsiElement> finalElements =
-      compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0);
+      compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0, checkForErrors);
     return finalElements != null
            ? finalElements
-           : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+           : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context, checkForErrors);
   }
 
-  @Nullable
-  private static List<PsiElement> compileByPrefixes(Project project,
-                                                    MatchOptions options,
-                                                    CompiledPattern pattern,
-                                                    CompileContext context,
-                                                    String[] applicablePrefixes,
-                                                    Pattern[] substitutionPatterns,
-                                                    String[] prefixSequence,
-                                                    int index) throws MalformedPatternException {
+  private static @Nullable List<PsiElement> compileByPrefixes(Project project,
+                                                              MatchOptions options,
+                                                              CompiledPattern pattern,
+                                                              CompileContext context,
+                                                              String[] applicablePrefixes,
+                                                              Pattern[] substitutionPatterns,
+                                                              String[] prefixSequence,
+                                                              int index,
+                                                              boolean checkForErrors) throws MalformedPatternException {
     if (index >= prefixSequence.length) {
-      final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      final List<PsiElement> elements =
+        doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context, checkForErrors);
       if (elements.isEmpty()) {
         return elements;
       }
@@ -271,7 +275,8 @@ public class PatternCompiler {
     for (String applicablePrefix : applicablePrefixes) {
       prefixSequence[index] = applicablePrefix;
 
-      List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      final List<PsiElement> elements =
+        doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context, checkForErrors);
       if (elements.isEmpty()) {
         return elements;
       }
@@ -291,31 +296,29 @@ public class PatternCompiler {
         continue;
       }
 
-      if (result == Boolean.FALSE || (result == null && alternativeVariant == null)) {
+      if (result == Boolean.FALSE || result == null && alternativeVariant == null) {
         final List<PsiElement> finalElements =
-          compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1);
+          compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1, checkForErrors);
         if (finalElements != null) {
           if (result == Boolean.FALSE) {
             return finalElements;
           }
-          alternativeVariant = new String[prefixSequence.length];
-          System.arraycopy(prefixSequence, 0, alternativeVariant, 0, prefixSequence.length);
+          alternativeVariant = prefixSequence.clone();
         }
       }
     }
 
     return alternativeVariant != null ?
-           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, alternativeVariant, index + 1) :
+           compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, alternativeVariant, index + 1, checkForErrors) :
            null;
   }
 
-  @NotNull
-  private static int[] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
-    final TIntHashSet result = new TIntHashSet();
+  private static int @NotNull [] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
+    final IntSet result = new IntOpenHashSet();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
 
         if (element instanceof LeafElement) {
@@ -332,7 +335,7 @@ public class PatternCompiler {
       }
     });
 
-    final int[] resultArray = result.toArray();
+    final int[] resultArray = result.toIntArray();
     Arrays.sort(resultArray);
     return resultArray;
   }
@@ -343,19 +346,18 @@ public class PatternCompiler {
    * Null: there are only error elements located exactly after template variables or at the end of the pattern
    * True: otherwise
    */
-  @Nullable
-  private static Boolean checkErrorElements(PsiElement element,
+  private static @Nullable Boolean checkErrorElements(PsiElement element,
                                             final int offset,
                                             final int patternEndOffset,
                                             final int[] varEndOffsets,
                                             final boolean strict) {
-    final TIntArrayList errorOffsets = new TIntArrayList();
+    final IntList errorOffsets = new IntArrayList();
     final boolean[] containsErrorTail = {false};
-    final TIntHashSet varEndOffsetsSet = new TIntHashSet(varEndOffsets);
+    final IntSet varEndOffsetsSet = new IntOpenHashSet(varEndOffsets);
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitErrorElement(PsiErrorElement element) {
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
         super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();
@@ -371,7 +373,7 @@ public class PatternCompiler {
     });
 
     for (int i = 0; i < errorOffsets.size(); i++) {
-      final int errorOffset = errorOffsets.get(i);
+      final int errorOffset = errorOffsets.getInt(i);
       if (errorOffset <= offset) {
         return true;
       }
@@ -386,12 +388,12 @@ public class PatternCompiler {
   private static class ConstantPrefixProvider implements PrefixProvider {
     private final String myPrefix;
 
-    ConstantPrefixProvider(String prefix) {
+    ConstantPrefixProvider(@NotNull String prefix) {
       myPrefix = prefix;
     }
 
     @Override
-    public String getPrefix(int varIndex) {
+    public @NotNull String getPrefix(int varIndex) {
       return myPrefix;
     }
   }
@@ -399,7 +401,7 @@ public class PatternCompiler {
   private static class ArrayPrefixProvider implements PrefixProvider {
     private final String[] myPrefixes;
 
-    ArrayPrefixProvider(String[] prefixes) {
+    ArrayPrefixProvider(String @NotNull [] prefixes) {
       myPrefixes = prefixes;
     }
 
@@ -410,11 +412,12 @@ public class PatternCompiler {
     }
   }
 
-  private static List<PsiElement> doCompile(Project project,
-                                            MatchOptions options,
-                                            CompiledPattern result,
-                                            PrefixProvider prefixProvider,
-                                            CompileContext context) throws MalformedPatternException {
+  private static @NotNull List<PsiElement> doCompile(@NotNull Project project,
+                                                     @NotNull MatchOptions options,
+                                                     @NotNull CompiledPattern result,
+                                                     @NotNull PrefixProvider prefixProvider,
+                                                     @NotNull CompileContext context,
+                                                     boolean checkForErrors) throws MalformedPatternException {
     result.clearHandlers();
 
     final StringBuilder buf = new StringBuilder();
@@ -424,95 +427,102 @@ public class PatternCompiler {
     final int segmentsCount = template.getSegmentsCount();
     final String text = template.getTemplateText();
     int prevOffset = 0;
-    final Set<String> seen = ContainerUtil.newTroveSet();
-    final Set<String> variableNames = ContainerUtil.newTroveSet();
+    final Set<String> variableNames = new HashSet<>();
 
+    final LanguageFileType fileType = options.getFileType();
+    assert fileType != null;
     for(int i = 0; i < segmentsCount; i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
 
       final String prefix = prefixProvider.getPrefix(i);
       if (prefix == null) {
-        throw new MalformedPatternException();
+        if (checkForErrors) throw new MalformedPatternException();
+        return Collections.emptyList();
       }
 
       final String compiledName = prefix + name;
       buf.append(text, prevOffset, offset).append(compiledName);
 
-      variableNames.add(name);
-      if (seen.add(compiledName)) {
+      final boolean repeated = !variableNames.add(name);
+      final SubstitutionHandler existing = (SubstitutionHandler)result.getHandler(compiledName);
+      if (existing != null) {
+        existing.setRepeatedVar(repeated);
+      }
+      else {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
+        try {
+          MatchVariableConstraint constraint = options.getVariableConstraint(name);
+          if (constraint == null) {
+            // we do not edit the constraints
+            constraint = options.addNewVariableConstraint(name);
+          }
 
-        MatchVariableConstraint constraint = options.getVariableConstraint(name);
-        if (constraint == null) {
-          // we do not edited the constraints
-          constraint = new MatchVariableConstraint();
-          constraint.setName(name);
-          options.addVariableConstraint(constraint);
-        }
-
-        SubstitutionHandler handler = result.createSubstitutionHandler(
-          name,
-          compiledName,
-          constraint.isPartOfSearchResults(),
-          constraint.getMinCount(),
-          constraint.getMaxCount(),
-          constraint.isGreedy()
-        );
-
-        if (constraint.isWithinHierarchy()) {
-          handler.setSubtype(true);
-        }
-
-        if (constraint.isStrictlyWithinHierarchy()) {
-          handler.setStrictSubtype(true);
-        }
-
-        if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
-          MatchPredicate predicate = new RegExpPredicate(
-            constraint.getRegExp(),
-            options.isCaseSensitiveMatch(),
+          final SubstitutionHandler handler = result.createSubstitutionHandler(
             name,
-            constraint.isWholeWordsOnly(),
-            constraint.isPartOfSearchResults()
+            compiledName,
+            constraint.isPartOfSearchResults(),
+            constraint.getMinCount(),
+            constraint.getMaxCount(),
+            constraint.isGreedy()
           );
-          if (constraint.isInvertRegExp()) {
-            predicate = new NotPredicate(predicate);
+          handler.setRepeatedVar(repeated);
+
+          if (constraint.isWithinHierarchy()) {
+            handler.setSubtype(true);
           }
-          addPredicate(handler, predicate);
-        }
 
-        if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-          MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
-
-          if (constraint.isInvertReference()) {
-            predicate = new NotPredicate(predicate);
+          if (constraint.isStrictlyWithinHierarchy()) {
+            handler.setStrictSubtype(true);
           }
-          addPredicate(handler, predicate);
-        }
 
-        addExtensionPredicates(options, constraint, handler);
-        addScriptConstraint(project, name, constraint, handler, variableNames);
-
-        if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
-          MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
-          if (constraint.isInvertContainsConstraint()) {
-            predicate = new NotPredicate(predicate);
+          if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
+            MatchPredicate predicate = new RegExpPredicate(
+              constraint.getRegExp(),
+              options.isCaseSensitiveMatch(),
+              name,
+              constraint.isWholeWordsOnly(),
+              constraint.isPartOfSearchResults()
+            );
+            if (constraint.isInvertRegExp()) {
+              predicate = new NotPredicate(predicate);
+            }
+            addPredicate(handler, predicate);
           }
-          addPredicate(handler, predicate);
-        }
 
-        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-          assert false;
+          if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
+            MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), fileType, project);
+            if (constraint.isInvertReference()) {
+              predicate = new NotPredicate(predicate);
+            }
+            addPredicate(handler, predicate);
+          }
+
+          addExtensionPredicates(options, constraint, handler);
+          addScriptConstraint(project, name, constraint, handler, variableNames, options, checkForErrors);
+
+          if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
+            MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
+            if (constraint.isInvertContainsConstraint()) {
+              predicate = new NotPredicate(predicate);
+            }
+            addPredicate(handler, predicate);
+          }
+
+          if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+            assert false;
+          }
+        } catch (MalformedPatternException e) {
+          if (checkForErrors) throw e;
         }
       }
       prevOffset = offset;
     }
 
-    MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    final MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     if (constraint != null) {
-      SubstitutionHandler handler = result.createSubstitutionHandler(
+      final SubstitutionHandler handler = result.createSubstitutionHandler(
         Configuration.CONTEXT_VAR_NAME,
         Configuration.CONTEXT_VAR_NAME,
         constraint.isPartOfSearchResults(),
@@ -521,31 +531,42 @@ public class PatternCompiler {
         constraint.isGreedy()
       );
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), options.getFileType(), project);
-        if (constraint.isInvertWithinConstraint()) {
-          predicate = new NotPredicate(predicate);
+      try {
+        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+          MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), fileType, project);
+          if (constraint.isInvertWithinConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
         }
-        addPredicate(handler, predicate);
-      }
 
-      addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames);
+        addExtensionPredicates(options, constraint, handler);
+        addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options, checkForErrors);
+      }
+      catch (MalformedPatternException e) {
+        if (checkForErrors) throw e;
+      }
     }
 
     buf.append(text.substring(prevOffset));
 
-    PsiElement[] patternElements;
+    final PsiElement[] patternElements;
     try {
-      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
-                                                           options.getDialect(), options.getPatternContext(), project, false);
-      if (patternElements.length == 0) throw new MalformedPatternException();
-    } catch (IncorrectOperationException e) {
-      throw new MalformedPatternException(e.getMessage());
+      final PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
+                                                                    options.getPatternContext(),
+                                                                    constraint != null ? constraint.getContextConstraint() : null);
+      final Language dialect = options.getDialect();
+      assert dialect != null;
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, fileType, dialect, project, false);
+      if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
+    }
+    catch (IncorrectOperationException e) {
+      if (checkForErrors) throw new MalformedPatternException(e.getMessage());
+      return Collections.emptyList();
     }
 
-    NodeFilter filter = LexicalNodesFilter.getInstance();
-    List<PsiElement> elements = new SmartList<>();
+    final NodeFilter filter = LexicalNodesFilter.getInstance();
+    final List<PsiElement> elements = new SmartList<>();
     for (PsiElement element : patternElements) {
       if (!filter.accepts(element)) {
         elements.add(element);
@@ -553,12 +574,17 @@ public class PatternCompiler {
     }
 
     final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    try {
+      compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    }
+    catch (MalformedPatternException e) {
+      if (checkForErrors) throw e;
+    }
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }
 
-  private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+  private static void addExtensionPredicates(@NotNull MatchOptions options, @NotNull MatchVariableConstraint constraint, @NotNull SubstitutionHandler handler) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
     for (MatchPredicate matchPredicate : profile.getCustomPredicates(constraint, handler.getName(), options)) {
@@ -567,19 +593,26 @@ public class PatternCompiler {
   }
 
   private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint,
-                                          SubstitutionHandler handler, Set<String> variableNames)
+                                          SubstitutionHandler handler, Set<String> variableNames, MatchOptions matchOptions,
+                                          boolean checkForErrors)
     throws MalformedPatternException {
-    if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
-      final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
-      final String problem = ScriptSupport.checkValidScript(script);
-      if (problem != null) {
-        throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
+    final String scriptCodeConstraint = constraint.getScriptCodeConstraint();
+    if (scriptCodeConstraint.length() > 2) {
+      final String scriptText = StringUtil.unquoteString(scriptCodeConstraint);
+      try {
+        final StructuralSearchScriptEngine.CompiledScript script = ScriptSupport.buildScript(project, name, scriptText, matchOptions);
+        addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
+      } catch (MalformedPatternException e) {
+        if (checkForErrors) {
+          throw new MalformedPatternException(
+            SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), e.getLocalizedMessage())
+          );
+        }
       }
-      addPredicate(handler, new ScriptPredicate(project, name, script, variableNames));
     }
   }
 
-  private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
-    handler.setPredicate((handler.getPredicate() == null) ? predicate : new AndPredicate(handler.getPredicate(), predicate));
+  private static void addPredicate(SubstitutionHandler handler, @NotNull MatchPredicate predicate) {
+    handler.setPredicate(handler.getPredicate() == null ? predicate : new AndPredicate(handler.getPredicate(), predicate));
   }
 }

@@ -27,6 +27,7 @@ package org.jetbrains.lang.manifest.psi;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -51,5 +52,6 @@ public interface Header extends PsiNamedElement {
    * Returns a list of all header value elements.
    */
   @NotNull
+  @Unmodifiable
   List<HeaderValue> getHeaderValues();
 }

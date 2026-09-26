@@ -1,0 +1,6 @@
+JsonFile: y_array_false.json
+  JsonArray
+    PsiElement([)('[')
+    JsonBooleanLiteral
+      PsiElement(false)('false')
+    PsiElement(])(']')

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -9,51 +10,53 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class HgBookmarkDialog extends DialogWrapper {
-  @NotNull private final HgRepository myRepository;
-  @NotNull private JBTextField myBookmarkName;
-  @NotNull private JBCheckBox myActiveCheckbox;
+  private final @NotNull HgRepository myRepository;
+  private @NotNull JBTextField myBookmarkName;
+  private @NotNull JBCheckBox myActiveCheckbox;
 
   public HgBookmarkDialog(@NotNull HgRepository repository) {
     super(repository.getProject(), false);
     myRepository = repository;
-    setTitle("Create Bookmark");
+    setTitle(HgBundle.message("hg4idea.bookmark.create.title"));
     setResizable(false);
     init();
   }
 
   @Override
-  @Nullable
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.mercurial.create.bookmark";
   }
 
   @Override
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myBookmarkName;
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return HgBookmarkDialog.class.getName();
   }
 
   @Override
-  @NotNull
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
 
     JPanel contentPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag()
@@ -65,15 +68,15 @@ public class HgBookmarkDialog extends DialogWrapper {
     myBookmarkName = new JBTextField(13);
     myBookmarkName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent e) {
+      public void textChanged(@NotNull DocumentEvent e) {
         validateFields();
       }
     });
 
-    JBLabel bookmarkLabel = new JBLabel("Bookmark name:");
+    JBLabel bookmarkLabel = new JBLabel(HgBundle.message("hg4idea.bookmark.name"));
     bookmarkLabel.setLabelFor(myBookmarkName);
 
-    myActiveCheckbox = new JBCheckBox("Inactive", false);
+    myActiveCheckbox = new JBCheckBox(HgBundle.message("hg4idea.bookmark.inactive"), false);
 
     contentPanel.add(icon, g.nextLine().next().coverColumn(3).pady(DEFAULT_HGAP));
     contentPanel.add(bookmarkLabel, g.next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
@@ -87,7 +90,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     String name = getName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);
-      setErrorText(message == null ? "You have to specify bookmark name." : message, myBookmarkName);
+      setErrorText(message == null ? HgBundle.message("hg4idea.bookmark.specify.name") : message, myBookmarkName);
       setOKActionEnabled(false);
       return;
     }
@@ -99,8 +102,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     return !myActiveCheckbox.isSelected();
   }
 
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myBookmarkName.getText();
   }
 }

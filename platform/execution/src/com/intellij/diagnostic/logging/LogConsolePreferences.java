@@ -1,0 +1,224 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic.logging;
+
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+@Service(Service.Level.PROJECT)
+@State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class LogConsolePreferences extends LogFilterRegistrar {
+  private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<>((o1, o2) -> -1);
+  private static final @NonNls String FILTER = "filter";
+  private static final @NonNls String IS_ACTIVE = "is_active";
+
+  public boolean FILTER_ERRORS = false;
+  public boolean FILTER_WARNINGS = false;
+  public boolean FILTER_INFO = true;
+  public boolean FILTER_DEBUG = true;
+
+  public String CUSTOM_FILTER = null;
+  public static final @NonNls String ERROR = "ERROR";
+  public static final @NonNls String WARNING = "WARNING";
+  public static final @NonNls String INFO = "INFO";
+  public static final @NonNls String DEBUG = "DEBUG";
+  public static final @NonNls String CUSTOM = "CUSTOM";
+
+  private static final Map<String, String> levelPatterns = Map.of(
+    "error", ERROR,
+    "fatal", ERROR,
+    "warn", WARNING,
+    "info", INFO,
+    "debug", DEBUG
+  );
+
+
+  private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Logger LOG = Logger.getInstance(LogConsolePreferences.class);
+
+  public static LogConsolePreferences getInstance(Project project) {
+    return project.getService(LogConsolePreferences.class);
+  }
+
+  public void updateCustomFilter(String customFilter) {
+    CUSTOM_FILTER = customFilter;
+    fireStateChanged();
+  }
+
+  public boolean isApplicable(@NotNull String text, String prevType, boolean checkStandardFilters) {
+    for (LogFilter filter : myRegisteredLogFilters.keySet()) {
+      if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
+    }
+    if (checkStandardFilters) {
+      final String type = getType(text);
+      boolean selfTyped = false;
+      if (type != null) {
+        if (!isApplicable(type)) return false;
+        selfTyped = true;
+      }
+      return selfTyped || prevType == null || isApplicable(prevType);
+    }
+    return true;
+  }
+
+  private boolean isApplicable(final String type) {
+    if (type.equals(ERROR)) {
+      return !FILTER_ERRORS;
+    }
+    if (type.equals(WARNING)) {
+      return !FILTER_WARNINGS;
+    }
+    if (type.equals(INFO)) {
+      return !FILTER_INFO;
+    }
+    if (type.equals(DEBUG)) {
+      return !FILTER_DEBUG;
+    }
+    return true;
+  }
+
+  public static ConsoleViewContentType getContentType(String type) {
+    if (type.equals(ERROR)) return ConsoleViewContentType.ERROR_OUTPUT;
+    return ConsoleViewContentType.NORMAL_OUTPUT;
+  }
+
+  public static @Nullable String getType(@NotNull String text) {
+    final String lowercasedText = text.toLowerCase(Locale.ROOT);
+    int bestStart = text.length();
+    String bestMatchType = null;
+    for (String pattern : levelPatterns.keySet()) {
+      final int patternIndex = lowercasedText.indexOf(pattern, 0, bestStart);
+      if (patternIndex >= 0) {
+        bestMatchType = levelPatterns.get(pattern);
+        bestStart = patternIndex;
+      }
+    }
+
+    return bestMatchType;
+  }
+
+  public static Key getProcessOutputTypes(String type) {
+    if (type.equals(ERROR)) return ProcessOutputTypes.STDERR;
+    if (type.equals(WARNING) || type.equals(INFO) || type.equals(DEBUG)) return ProcessOutputTypes.STDOUT;
+    return null;
+  }
+
+  @Override
+  public Element getState() {
+    @NonNls Element element = new Element("LogFilters");
+    try {
+      for (LogFilter filter : myRegisteredLogFilters.keySet()) {
+        Element filterElement = new Element(FILTER);
+        filterElement.setAttribute(IS_ACTIVE, myRegisteredLogFilters.get(filter).toString());
+        filter.writeExternal(filterElement);
+        element.addContent(filterElement);
+      }
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return element;
+  }
+
+  @Override
+  public void loadState(final @NotNull Element object) {
+    try {
+      final List children = object.getChildren(FILTER);
+      for (Object child : children) {
+        Element filterElement = (Element)child;
+        final LogFilter filter = new LogFilter();
+        filter.readExternal(filterElement);
+        setFilterSelected(filter, Boolean.parseBoolean(filterElement.getAttributeValue(IS_ACTIVE)));
+      }
+      DefaultJDOMExternalizer.readExternal(this, object);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
+  @Override
+  public void registerFilter(LogFilter filter) {
+    myRegisteredLogFilters.put(filter, Boolean.FALSE);
+  }
+
+  @Override
+  public List<LogFilter> getRegisteredLogFilters() {
+    return new ArrayList<>(myRegisteredLogFilters.keySet());
+  }
+
+  @Override
+  public boolean isFilterSelected(LogFilter filter) {
+    final Boolean isSelected = myRegisteredLogFilters.get(filter);
+    if (isSelected != null) {
+      return isSelected.booleanValue();
+    }
+    if (filter instanceof IndependentLogFilter) {
+      return ((IndependentLogFilter)filter).isSelected();
+    }
+    return false;
+  }
+
+  @Override
+  public void setFilterSelected(@NotNull LogFilter filter, boolean state) {
+    if (filter instanceof IndependentLogFilter) {
+      ((IndependentLogFilter)filter).selectFilter();
+    }
+    else if (myRegisteredLogFilters.containsKey(filter)) {
+      myRegisteredLogFilters.put(filter, state);
+    }
+    fireStateChanged(filter);
+  }
+
+  public void selectOnlyFilter(LogFilter filter) {
+    for (LogFilter logFilter : myRegisteredLogFilters.keySet()) {
+      myRegisteredLogFilters.put(logFilter, false);
+    }
+    if (filter != null) {
+      setFilterSelected(filter, true);
+    }
+  }
+
+  private void fireStateChanged(@NotNull LogFilter filter) {
+    for (LogFilterListener listener : myListeners) {
+      listener.onFilterStateChange(filter);
+    }
+  }
+
+  private void fireStateChanged() {
+    for (LogFilterListener listener : myListeners) {
+      listener.onTextFilterChange();
+    }
+  }
+
+  public void addFilterListener(LogFilterListener l) {
+    myListeners.add(l);
+  }
+
+  public void removeFilterListener(LogFilterListener l) {
+    myListeners.remove(l);
+  }
+
+}

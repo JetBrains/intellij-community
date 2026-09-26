@@ -15,13 +15,13 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.NodeType;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathNodeTypeTest;
 import org.intellij.lang.xpath.psi.XPathType;
-
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,25 +30,27 @@ public class XPathNodeTypeTestImpl extends XPathFunctionCallImpl implements XPat
         super(node);
     }
 
-    @NotNull
-    public XPathType getType() {
+    @Override
+    public @NotNull XPathType getType() {
         return XPathType.NODESET;
     }
 
+    @Override
     public NodeType getNodeType() {
-        return NodeType.valueOf(getFunctionName().replace('-', '_').toUpperCase());
+        return NodeType.valueOf(StringUtil.toUpperCase(getFunctionName().replace('-', '_')));
     }
 
-    @Nullable
-    protected ASTNode getPrefixNode() {
+    @Override
+    protected @Nullable ASTNode getPrefixNode() {
         return null;
     }
 
-    @Nullable
-    protected ASTNode getNameNode() {
+    @Override
+    protected @Nullable ASTNode getNameNode() {
         return getNode().findChildByType(XPathTokenTypes.NODE_TYPE);
     }
 
+  @Override
   public void accept(final XPathElementVisitor visitor) {
     visitor.visitXPathNodeTypeTest(this);
   }

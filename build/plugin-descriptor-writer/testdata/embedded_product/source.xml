@@ -1,0 +1,17 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>embedded.product</id>
+  <version>unchanged</version>
+  <idea-version since-build="1" until-build="2"/>
+  <product-descriptor code="TEST" release-date="20260101" release-version="2026000"/>
+  <description><![CDATA[<b>Product & client</b>]]></description>
+  <content>
+    <module name="intellij.embedded.existing"><![CDATA[<idea-plugin package="keep"/>]]></module>
+    <module name="intellij.embedded.noPackage"/>
+  </content>
+  <xi:include href="content.xml"/>
+  <content>
+    <module name="intellij.embedded/fragment"/>
+    <module name="intellij.embedded.notSeparate"/>
+    <module name="intellij.embedded.file"/>
+  </content>
+</idea-plugin>

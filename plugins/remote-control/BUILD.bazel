@@ -1,0 +1,183 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "remoteControl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":remoteControl-tests_test_lib"],
+)
+### skip generation section `test intellij.remoteControl.tests`
+
+### auto-generated section `build intellij.remoteControl` start
+jvm_library(
+    name = "remote-control",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.remoteControl",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/built-in-server-api:builtInServer",
+        "//platform/built-in-server:builtInServer-impl",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//libraries/netty/buffer",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/gson",
+        "//platform/analysis-api:analysis",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lang-api:lang",
+    ],
+)
+
+jvm_library(
+    name = "remote-control_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.remoteControl",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":remote-control",
+        "//platform/built-in-server-api:builtInServer_test_lib",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-util-netty:ide-util-netty_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//libraries/netty/buffer:buffer_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//libraries/gson:gson_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/lang-api:lang_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "remote-control_plugin",
+    descriptor_module = ":remote-control",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.remoteControl` end
+
+### auto-generated section `iml intellij.remoteControl` start
+exports_files(
+    [
+        "intellij.remoteControl.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.remoteControl` end
+
+### auto-generated section `build intellij.remoteControl.tests` start
+jvm_library(
+    name = "remoteControl-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.remoteControl.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "remoteControl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/remote-control",
+        "//plugins/remote-control:remote-control_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":remoteControl-tests",
+        "//platform/platform-util-netty:ide-util-netty_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/built-in-server-api:builtInServer",
+        "//platform/built-in-server-api:builtInServer_test_lib",
+        "//platform/built-in-server:builtInServer-impl",
+        "//platform/built-in-server:builtInServer-impl_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/platform-impl:ide-impl",
+        "//libraries/netty/buffer",
+        "//libraries/netty/buffer:buffer_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//libraries/gson",
+        "//libraries/gson:gson_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/vcs-api:vcs",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/built-in-server:builtInServer-tests",
+        "//platform/built-in-server:builtInServer-tests_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/lang-api:lang",
+        "//platform/lang-api:lang_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.remoteControl.tests` end
+
+### auto-generated section `iml intellij.remoteControl.tests` start
+exports_files(
+    [
+        "intellij.remoteControl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.remoteControl.tests` end

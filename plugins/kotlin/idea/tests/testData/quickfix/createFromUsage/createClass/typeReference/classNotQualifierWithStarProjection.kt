@@ -1,0 +1,8 @@
+// "Create class 'A'" "true"
+// K2 TODO: improve generated class type arguments when "expected type" is fixed
+// K2_AFTER_ERROR: WRONG_NUMBER_OF_TYPE_ARGUMENTS
+// K2_ERROR: UNRESOLVED_REFERENCE
+package p
+
+fun foo(): <caret>A<*, String> = throw Throwable("")
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction

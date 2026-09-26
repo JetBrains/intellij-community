@@ -1,0 +1,2 @@
+f:com.intellij.platform.lsp.impl.LspInitializationOptionsKt
+- *sf:createInitializationOptions(com.intellij.platform.lsp.api.LspPluginServerConfiguration):java.lang.Object

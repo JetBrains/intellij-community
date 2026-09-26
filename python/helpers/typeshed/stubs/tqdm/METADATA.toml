@@ -1,0 +1,7 @@
+version = "4.70.*"
+upstream-repository = "https://github.com/tqdm/tqdm"
+optional-dependencies = ["types-requests", "types-tensorflow"]
+
+[tool.stubtest]
+extras = ["slack", "telegram"]
+stubtest-dependencies = ["dask", "pandas", "rich", "tensorflow"]

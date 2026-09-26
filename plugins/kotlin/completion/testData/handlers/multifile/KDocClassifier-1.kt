@@ -1,0 +1,11 @@
+
+package foo
+
+fun test() = when (42) {
+    /**
+     * [Ba<caret>]
+     */
+    is Any -> {}
+}
+
+// ELEMENT: Bar

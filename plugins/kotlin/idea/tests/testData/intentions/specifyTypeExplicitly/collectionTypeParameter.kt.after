@@ -1,0 +1,1 @@
+private fun foo(): HashSet<Int> = listOf(1).toCollection(HashSet())

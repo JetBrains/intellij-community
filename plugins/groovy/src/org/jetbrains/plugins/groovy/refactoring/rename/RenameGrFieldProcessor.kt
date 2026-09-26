@@ -1,9 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiQualifiedReference
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PropertyUtilBase
@@ -26,32 +33,28 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message
-import java.util.*
-import kotlin.collections.HashMap
 
-/**
- * @author ilyas
- */
 open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean = element is GrField
 
-  override fun findReferences(element: PsiElement): Collection<PsiReference> {
+  override fun findReferences(element: PsiElement,
+                              searchScope: SearchScope,
+                              searchInCommentsAndStrings: Boolean): MutableCollection<PsiReference> {
     assert(element is GrField)
 
     val refs = ArrayList<PsiReference>()
 
     val field = element as GrField
-    val projectScope = GlobalSearchScope.projectScope(element.getProject())
     val setter = field.setter
     if (setter != null) {
-      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(setter, projectScope, true).findAll(), setter))
+      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(setter, searchScope, true).findAll(), setter))
     }
     val getters = field.getters
     for (getter in getters) {
-      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, projectScope, true).findAll(), getter))
+      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, searchScope, true).findAll(), getter))
     }
-    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, projectScope, false).findAll(), field))
+    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, searchScope, false).findAll(), field))
     return refs
   }
 
@@ -151,7 +154,7 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
       collisions.add(object : UnresolvableCollisionUsageInfo(resolved, refExpr) {
         override fun getDescription(): String = message(
-          "usage.will.be.overriden.by.method",
+          "usage.will.be.overridden.by.method",
           refExpr.parent.text,
           PsiFormatUtil.formatMethod(resolved, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_TYPE)
         )
@@ -171,14 +174,14 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
     if (getter is GrAccessorMethod) {
       val newGetter = PropertyUtilBase.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true)
       if (newGetter != null && newGetter !is GrAccessorMethod) {
-        conflicts.putValue(newGetter, message("implicit.getter.will.by.overriden.by.method", field.name, newGetter.name))
+        conflicts.putValue(newGetter, message("implicit.getter.will.by.overridden.by.method", field.name, newGetter.name))
       }
     }
     val setter = GroovyPropertyUtils.findSetterForField(field)
     if (setter is GrAccessorMethod) {
       val newSetter = PropertyUtilBase.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true)
       if (newSetter != null && newSetter !is GrAccessorMethod) {
-        conflicts.putValue(newSetter, message("implicit.setter.will.by.overriden.by.method", field.name, newSetter.name))
+        conflicts.putValue(newSetter, message("implicit.setter.will.by.overridden.by.method", field.name, newSetter.name))
       }
     }
   }

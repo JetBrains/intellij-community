@@ -24,15 +24,12 @@ public class IntObjectCacheTest extends TestCase {
   public void testResize() {
     final int SIZE = 4;
     final IntObjectCache<String> cache = new IntObjectCache<>(SIZE);
-    cache.addDeletedPairsListener(new IntObjectCache.DeletedPairsListener() {
-      @Override
-      public void objectRemoved(int key, Object value) {
-        if (cache.count() >= cache.size() ) {
-          final int newSize = cache.size() * 2;
-          cache.resize(newSize);
-          assertEquals(newSize, cache.size());
-          cache.cacheObject(key, (String)value);
-        }
+    cache.addDeletedPairsListener((key, value) -> {
+      if (cache.count() >= cache.size() ) {
+        final int newSize = cache.size() * 2;
+        cache.resize(newSize);
+        assertEquals(newSize, cache.size());
+        cache.cacheObject(key, value);
       }
     });
 

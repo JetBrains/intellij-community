@@ -1,0 +1,2 @@
+listOf<<caret>String>("hello")
+

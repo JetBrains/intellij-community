@@ -1,0 +1,79 @@
+package com.jetbrains.python.inspections
+
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeKind
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.impl.PyClassImpl
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.TypeEvalContext
+
+class PyEnumInspection : PyInspection() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    return object : PyInspectionVisitor(holder, getContext(session)) {
+      override fun visitPyClass(node: PyClass) {
+        validateSuperClasses(node)
+        validateEnumMembers(node)
+      }
+
+      private fun validateSuperClasses(node: PyClass) {
+        for (superClassExpression in PyClassImpl.getUnfoldedSuperClassExpressions(node)) {
+          val superClassType = myTypeEvalContext.getType(superClassExpression)
+          if (superClassType is PyClassType) {
+            val superClass = superClassType.pyClass
+            if (PyStdlibTypeProvider.isFinalEnum(superClass, myTypeEvalContext)) {
+              registerProblem(superClassExpression,
+                              PyPsiBundle.problemMessage("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", CodifiedParam.ofReference(superClass)),
+                              ProblemHighlightType.GENERIC_ERROR)
+            }
+          }
+        }
+      }
+
+      private fun validateEnumMembers(pyClass: PyClass) {
+        if (!PyStdlibTypeProvider.isCustomEnum(pyClass, myTypeEvalContext)) return
+
+        val declaredType = getDeclaredEnumMemberType(pyClass, myTypeEvalContext)
+
+        for (attribute in pyClass.classAttributes) {
+          val info = PyStdlibTypeProvider.getEnumAttributeInfo(pyClass, attribute, myTypeEvalContext)
+          if (info == null || info.attributeKind == EnumAttributeKind.NONMEMBER) continue
+
+          if (declaredType != null && info.attributeKind == EnumAttributeKind.MEMBER) {
+            val value = attribute.findAssignedValue()
+            if (PyPsiUtils.flattenParens(value) is PyTupleExpression) {
+              // TODO: > Type checkers may validate consistency between assigned tuple values and the constructor signature
+            }
+            else if (!PyTypeChecker.match(declaredType, info.assignedValueType, myTypeEvalContext)) {
+              registerProblem(value, PyPsiBundle.problemMessage("INSP.enum.type.is.not.assignable.to.declared.type",
+                                                                CodifiedParam.ofType(info.assignedValueType, attribute, myTypeEvalContext),
+                                                                CodifiedParam.ofType(declaredType, attribute, myTypeEvalContext, verbose = true)))
+            }
+          }
+
+          val typeHint = PyTypingTypeProvider.getAnnotationValue(attribute, myTypeEvalContext)
+          if (typeHint != null) {
+            registerProblem(typeHint, PyPsiBundle.message("INSP.enum.type.annotations.are.not.allowed.for.enum.members"))
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun getDeclaredEnumMemberType(enumClass: PyClass, context: TypeEvalContext): PyType? {
+  val targetExpression = enumClass.findClassAttribute("_value_", true, context) ?: return null
+  val annotationValue = PyTypingTypeProvider.getAnnotationValue(targetExpression, context) ?: return null
+  return Ref.deref(PyTypingTypeProvider.getType(annotationValue, context))
+}

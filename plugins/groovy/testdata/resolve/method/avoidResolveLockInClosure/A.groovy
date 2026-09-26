@@ -4,7 +4,7 @@ class C {
 
 enum E {
   val({C c ->
-    c.wit<ref>h {
+    c.wit<caret>h {
     }
   })
 }

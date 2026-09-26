@@ -1,4 +1,4 @@
-// "Annotate overridden methods as '@NotNull'" "true"
+// "Annotate overriding methods as '@NotNull'" "true"
 
 import org.jetbrains.annotations.*;
 
@@ -9,8 +9,7 @@ import org.jetbrains.annotations.*;
      }
  }
  class XC extends XEM {
-     @NotNull
-     String f() {
+     @NotNull String f() {
          return "";
      }
  }

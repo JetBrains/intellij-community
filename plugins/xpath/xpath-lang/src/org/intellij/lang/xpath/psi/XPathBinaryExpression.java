@@ -16,8 +16,8 @@
 package org.intellij.lang.xpath.psi;
 
 import org.intellij.lang.xpath.XPathElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface XPathBinaryExpression extends XPathExpression {
     @Nullable

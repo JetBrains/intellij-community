@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+context(s: String)
+fun foo(x: Int) {
+    __dummyTestFun__(x)
+    __dummyTestFun__(x)
+}
+
+context(s: String)
+private fun __dummyTestFun__(x: Int) {
+    x.toString() == s
+}

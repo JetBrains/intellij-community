@@ -1,32 +1,58 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
+import com.intellij.psi.impl.compiled.ClsAnonymousClass;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
+import com.intellij.psi.impl.compiled.ClsFieldImpl;
+import com.intellij.psi.impl.compiled.ClsJavaModuleImpl;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.compiled.ClsModifierListImpl;
+import com.intellij.psi.impl.compiled.ClsPackageAccessibilityStatementImpl;
+import com.intellij.psi.impl.compiled.ClsPackageStatementImpl;
+import com.intellij.psi.impl.compiled.ClsParameterImpl;
+import com.intellij.psi.impl.compiled.ClsParameterListImpl;
+import com.intellij.psi.impl.compiled.ClsProvidesStatementImpl;
+import com.intellij.psi.impl.compiled.ClsRecordComponentImpl;
+import com.intellij.psi.impl.compiled.ClsRecordHeaderImpl;
+import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
+import com.intellij.psi.impl.compiled.ClsRequiresStatementImpl;
+import com.intellij.psi.impl.compiled.ClsTypeParameterImpl;
+import com.intellij.psi.impl.compiled.ClsTypeParametersListImpl;
+import com.intellij.psi.impl.compiled.ClsUsesStatementImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 
-/**
- * @author max
- */
 public class ClsStubPsiFactory extends StubPsiFactory {
   public static final ClsStubPsiFactory INSTANCE = new ClsStubPsiFactory();
 
   @Override
   public PsiClass createClass(PsiClassStub stub) {
-    return new ClsClassImpl(stub);
+    boolean anonymous = stub instanceof PsiClassStubImpl && ((PsiClassStubImpl<?>)stub).isAnonymousInner();
+    return anonymous ? new ClsAnonymousClass(stub) : new ClsClassImpl(stub);
   }
 
   @Override
@@ -115,6 +141,11 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   }
 
   @Override
+  public PsiPackageStatement createPackageStatement(PsiPackageStatementStub stub) {
+    return new ClsPackageStatementImpl(stub);
+  }
+  
+  @Override
   public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
     return new ClsUsesStatementImpl(stub);
   }
@@ -122,5 +153,15 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   @Override
   public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
     return new ClsProvidesStatementImpl(stub);
+  }
+
+  @Override
+  public PsiRecordComponent createRecordComponent(PsiRecordComponentStub stub) {
+    return new ClsRecordComponentImpl(stub);
+  }
+
+  @Override
+  public PsiRecordHeader createRecordHeader(PsiRecordHeaderStub stub) {
+    return new ClsRecordHeaderImpl(stub);
   }
 }

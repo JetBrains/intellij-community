@@ -1,10 +1,11 @@
 import java.lang.String;
+import java.util.Arrays;
 import java.util.List;
 
 public class LiveTemplateTest {
 
-  void usage(int num, boolean someBoolean, List<String> args){
-      System.out.println("num = [" + num + "], someBoolean = [" + someBoolean + "], args = [" + args + "]");<caret>
+  void usage(boolean b, int[] ints, int[][] deepInts, Object[][] deepObjects) {
+      System.out.println("b = " + b + ", ints = " + Arrays.toString(ints) + ", deepInts = " + Arrays.deepToString(deepInts) + ", deepObjects = " + Arrays.deepToString(deepObjects));<caret>
   }
 
 }

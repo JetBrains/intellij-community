@@ -1,37 +1,33 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiVersioningService;
+import com.intellij.util.Processor;
 import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public abstract class PsiWalkingState extends WalkingState<PsiElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiWalkingState");
+  private static final Logger LOG = Logger.getInstance(PsiWalkingState.class);
   private final PsiElementVisitor myVisitor;
 
+
+  public static boolean processAll(@NotNull PsiElement root, final @NotNull Processor<? super PsiElement> processor) {
+    return processAll(root, new PsiWalkingState.PsiTreeGuide(), processor);
+  }
+
   private static class PsiTreeGuide implements TreeGuide<PsiElement> {
+    private final @Nullable PsiVersioningService service = ApplicationManager.getApplication().getService(PsiVersioningService.class);
+    private final long version = service == null ? -1 : service.getCurrentVersion();
+
     @Override
     public PsiElement getNextSibling(@NotNull PsiElement element) {
-      return checkSanity(element, element.getNextSibling());
+      PsiElement nextSibling = service == null ? element.getNextSibling() : service.getNextSibling(element, version);
+      return checkSanity(element, nextSibling);
     }
 
     private static PsiElement checkSanity(PsiElement element, PsiElement sibling) {
@@ -41,25 +37,25 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
 
     @Override
     public PsiElement getPrevSibling(@NotNull PsiElement element) {
-      return checkSanity(element, element.getPrevSibling());
+      PsiElement prevSibling = service == null ? element.getPrevSibling() : service.getPrevSibling(element, version);
+      return checkSanity(element, prevSibling);
     }
 
     @Override
     public PsiElement getFirstChild(@NotNull PsiElement element) {
-      return element.getFirstChild();
+      return service == null ? element.getFirstChild() : service.getFirstChild(element, version);
     }
 
     @Override
     public PsiElement getParent(@NotNull PsiElement element) {
-      return element.getParent();
+      return service == null ? element.getParent() : service.getParent(element, version);
     }
-
-    private static final PsiTreeGuide instance = new PsiTreeGuide();
   }
 
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate) {
-    this(delegate, PsiTreeGuide.instance);
+    this(delegate, new PsiTreeGuide());
   }
+
   protected PsiWalkingState(@NotNull PsiElementVisitor delegate, @NotNull TreeGuide<PsiElement> guide) {
     super(guide);
     myVisitor = delegate;
@@ -73,7 +69,7 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   @Override
   public void elementStarted(@NotNull PsiElement element) {
     if (!startedWalking && element instanceof PsiCompiledElement) {
-      LOG.error(element+"; Do not use walking visitor inside compiled PSI since getNextSibling() is too slow there");
+      LOG.error(element + "; of class:" + element.getClass() + "; Do not use walking visitor inside compiled PSI since getNextSibling() is too slow there");
     }
 
     super.elementStarted(element);

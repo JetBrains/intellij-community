@@ -1,46 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.psi.*;
+import com.intellij.java.JavaBundle;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
-  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+
+public final class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
+  @Override
+  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
     if (location instanceof DeleteTypeDescriptionLocation && ((DeleteTypeDescriptionLocation) location).isPlural()) {
       if (element instanceof PsiMethod) {
-        return IdeBundle.message("prompt.delete.method", 2);
+        return JavaBundle.message("prompt.delete.method", 2);
       }
       else if (element instanceof PsiField) {
-        return IdeBundle.message("prompt.delete.field", 2);
+        return JavaBundle.message("prompt.delete.field", 2);
       }
       else if (element instanceof PsiClass) {
         if (((PsiClass)element).isInterface()) {
-          return IdeBundle.message("prompt.delete.interface", 2);
+          return JavaBundle.message("prompt.delete.interface", 2);
         }
         return element instanceof PsiTypeParameter
-               ? IdeBundle.message("prompt.delete.type.parameter", 2)
-               : IdeBundle.message("prompt.delete.class", 2);
+               ? JavaBundle.message("prompt.delete.type.parameter", 2)
+               : JavaBundle.message("prompt.delete.class", 2);
       }
       else if (element instanceof PsiPackage) {
-        return IdeBundle.message("prompt.delete.package", 2); 
+        return JavaBundle.message("prompt.delete.package", 2);
       }
     }
     return null;

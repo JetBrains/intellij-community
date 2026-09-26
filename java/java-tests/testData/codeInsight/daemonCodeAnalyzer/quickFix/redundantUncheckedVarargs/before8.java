@@ -1,8 +1,8 @@
 // "Remove 'unchecked' suppression" "false"
 import java.util.*;
 
-@SuppressWarnings("ALL")
-public class Te<caret>st {
+@SuppressWarnings("A<caret>LL")
+public class Test {
   @SafeVarargs
   static <T> List<T> foo(T... t){
     return null;

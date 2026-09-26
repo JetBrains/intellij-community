@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,17 +6,37 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/** @deprecated API no longer supported, use {@link com.intellij.psi.compiled.ClassFileDecompilers} instead (to remove in IDEA 14) */
-@SuppressWarnings({"UnusedDeclaration"})
+/**
+ * Allow adjusting navigation element of a compiled file. Can be used to go to a source files instead.
+ */
 public interface ClsCustomNavigationPolicy {
   ExtensionPointName<ClsCustomNavigationPolicy> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsCustomNavigationPolicy");
 
-  @Nullable
-  PsiElement getNavigationElement(@NotNull ClsClassImpl clsClass);
+  /**
+   * Searches for a navigation element for a given file
+   * @param clsFile file for which navigation element should be found
+   * @return navigation element to use instead
+   */
+  default @Nullable PsiElement getNavigationElement(@NotNull ClsFileImpl clsFile) { return null; }
 
-  @Nullable
-  PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod);
+  /**
+   * Searches for a navigation element for a given class
+   * @param clsClass class for which navigation element should be found
+   * @return navigation element to use instead
+   */
+  default @Nullable PsiElement getNavigationElement(@NotNull ClsClassImpl clsClass) { return null; }
 
-  @Nullable
-  PsiElement getNavigationElement(@NotNull ClsFieldImpl clsField);
+  /**
+   * Searches for a navigation element for a given method
+   * @param clsMethod method for which navigation element should be found
+   * @return navigation element to use instead
+   */
+  default @Nullable PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) { return null; }
+
+  /**
+   * Searches for a navigation element for a given file
+   * @param clsField field for which navigation element should be found
+   * @return navigation element to use instead
+   */
+  default @Nullable PsiElement getNavigationElement(@NotNull ClsFieldImpl clsField) { return null; }
 }

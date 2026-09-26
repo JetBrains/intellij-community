@@ -1,0 +1,29 @@
+<html>
+<body>
+<p>Reports invalid usages of a class with <code>__slots__</code> definitions.</p>
+<p><b>Example when accessing undefined attributes:</b></p>
+<pre><code>
+class Foo:
+    __slots__ = ['foo', 'bar']
+
+    def __init__(self):
+        self.x = 3  # error: 'x' is not defined in __slots__
+</code></pre>
+
+<p><b>Example of conflicting attributes:</b></p>
+<pre><code>
+class A:
+    __slots__ = ("x",)
+    x = 42  # error: conflict with "x" listed in __slots__
+</code></pre>
+
+<p><b>Example <code>slots=True</code>:</b></p>
+<pre><code>
+from dataclasses import dataclass
+
+@dataclass(slots=True)  # error: __slots__ is also defined in Foo
+class Foo:
+    __slots__ = ['a']
+</code></pre>
+</body>
+</html>

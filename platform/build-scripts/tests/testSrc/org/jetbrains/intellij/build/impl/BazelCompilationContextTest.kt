@@ -1,0 +1,234 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl
+
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.BuildLifetime
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JpsCompilationData
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.module.JpsModule
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
+
+internal class BazelCompilationContextTest {
+  @Test
+  fun `createCopy reuses Bazel targets metadata across providers`(@TempDir tempDir: Path) {
+    val moduleName = "intellij.test.module"
+    val module = mock(JpsModule::class.java)
+    `when`(module.name).thenReturn(moduleName)
+    val productionOnlyModule = mock(JpsModule::class.java)
+    `when`(productionOnlyModule.name).thenReturn("intellij.production.only")
+
+    val project = mock(JpsProject::class.java)
+    `when`(project.modules).thenReturn(listOf(module))
+
+    val loadCounter = AtomicInteger()
+    val state = BazelModuleOutputProviderState(
+      modules = project.modules,
+      projectHome = tempDir,
+      bazelOutputRootResolver = { tempDir },
+      bazelTargetsLoader = {
+        loadCounter.incrementAndGet()
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            moduleName to BazelTargetsInfo.TargetsFileModuleDescription(
+              productionTargets = emptyList(),
+              productionJars = emptyList(),
+              testTargets = emptyList(),
+              testJars = emptyList(),
+              exports = emptyList(),
+              moduleLibraries = emptyMap(),
+            ),
+          ),
+          projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
+        )
+      },
+    )
+
+    val baseContext = BazelCompilationContext(
+      delegate = testCompilationContext(project = project, tempDir = tempDir, options = BuildOptions()),
+      lifetime = null,
+      outputProviderState = state,
+    )
+    val productionCopy = baseContext.createCopy(
+      messages = mock(BuildMessages::class.java),
+      options = BuildOptions(),
+      paths = buildPaths(tempDir.resolve("copy-out-production"), tempDir.resolve("copy-project-production")),
+    ) as BazelCompilationContext
+    val testCopy = baseContext.createCopy(
+      messages = mock(BuildMessages::class.java),
+      options = BuildOptions(useTestCompilationOutput = true),
+      paths = buildPaths(tempDir.resolve("copy-out-tests"), tempDir.resolve("copy-project-tests")),
+    ) as BazelCompilationContext
+    val selectiveTestCopy = baseContext.createCopy(
+      messages = mock(BuildMessages::class.java),
+      options = BuildOptions(testCompilationOutputModules = setOf(moduleName)),
+      paths = buildPaths(tempDir.resolve("copy-out-selective-tests"), tempDir.resolve("copy-project-selective-tests")),
+    ) as BazelCompilationContext
+
+    val baseProvider = baseContext.outputProvider
+    val productionProvider = productionCopy.outputProvider
+    val testProvider = testCopy.outputProvider
+    val selectiveTestProvider = selectiveTestCopy.outputProvider
+
+    assertThat(baseProvider).isNotSameAs(productionProvider)
+    assertThat(baseProvider).isNotSameAs(testProvider)
+    assertThat(baseContext.outputProviderState).isSameAs(productionCopy.outputProviderState)
+    assertThat(baseContext.outputProviderState).isSameAs(testCopy.outputProviderState)
+    assertThat(baseContext.outputProviderState).isSameAs(selectiveTestCopy.outputProviderState)
+
+    baseContext.outputProviderState.bazelTargetsMap
+    productionCopy.outputProviderState.bazelTargetsMap
+    testCopy.outputProviderState.bazelTargetsMap
+    selectiveTestCopy.outputProviderState.bazelTargetsMap
+
+    assertThat(loadCounter.get()).isEqualTo(1)
+    assertThat(baseProvider.useTestCompilationOutput).isFalse()
+    assertThat(productionProvider.useTestCompilationOutput).isFalse()
+    assertThat(testProvider.useTestCompilationOutput).isTrue()
+    assertThat(selectiveTestProvider.useTestCompilationOutput).isFalse()
+    assertThat(selectiveTestProvider.isTestCompilationOutputEnabled(module)).isTrue()
+    assertThat(selectiveTestProvider.isTestCompilationOutputEnabled(productionOnlyModule)).isFalse()
+  }
+
+  @Test
+  fun `Bazel output root is resolved only when a library path is needed`(@TempDir tempDir: Path) {
+    val moduleName = "intellij.test.module"
+    val module = mock(JpsModule::class.java)
+    `when`(module.name).thenReturn(moduleName)
+
+    val resolveCounter = AtomicInteger()
+    val state = BazelModuleOutputProviderState(
+      modules = listOf(module),
+      projectHome = tempDir,
+      bazelOutputRootResolver = {
+        resolveCounter.incrementAndGet()
+        tempDir.resolve("output-base")
+      },
+      bazelTargetsLoader = {
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            moduleName to BazelTargetsInfo.TargetsFileModuleDescription(
+              productionTargets = emptyList(),
+              productionJars = emptyList(),
+              testTargets = emptyList(),
+              testJars = emptyList(),
+              exports = emptyList(),
+              moduleLibraries = emptyMap(),
+            ),
+          ),
+          projectLibraries = emptyMap(),
+          pluginDistributionTargets = emptyMap(),
+        )
+      },
+    )
+
+    // everything a dev build touches to lay out module outputs must work without an output base: under a copied
+    // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
+    state.bazelTargetsMap
+    state.findRequiredModule(moduleName)
+    assertThat(BazelModuleOutputProvider(state, lifetime = null, useTestCompilationOutput = false).toString())
+      .contains("bazelOutputRoot=<not resolved>")
+    assertThat(resolveCounter.get()).isEqualTo(0)
+
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
+    assertThat(resolveCounter.get()).isEqualTo(1)
+  }
+
+  private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {
+    val paths = buildPaths(tempDir.resolve("out"), tempDir.resolve("project"))
+    val stableJavaExecutable = tempDir.resolve("jdk/bin/java")
+    Files.createDirectories(stableJavaExecutable.parent)
+    val compilationData = JpsCompilationData(
+      dataStorageRoot = tempDir.resolve("data-storage"),
+      classesOutputDirectory = tempDir.resolve("classes"),
+      buildLogFile = tempDir.resolve("compilation.log"),
+      categoriesWithDebugLevel = "",
+    )
+    return TestCompilationContext(
+      messages = mock(BuildMessages::class.java),
+      options = options,
+      paths = paths,
+      project = project,
+      projectModel = mock(JpsModel::class.java),
+      dependenciesProperties = DependenciesProperties(BuildPaths.COMMUNITY_ROOT),
+      bundledRuntime = mock(BundledRuntime::class.java),
+      compilationData = compilationData,
+      stableJavaExecutable = stableJavaExecutable,
+      classesOutputDirectory = tempDir.resolve("classes"),
+    )
+  }
+
+  private fun buildPaths(buildOutputDir: Path, projectHome: Path): BuildPaths {
+    val tempDir = buildOutputDir.resolve("temp")
+    Files.createDirectories(tempDir)
+    return BuildPaths(
+      communityHomeDirRoot = BuildPaths.COMMUNITY_ROOT,
+      buildOutputDir = buildOutputDir,
+      logDir = buildOutputDir.resolve("log"),
+      projectHome = projectHome,
+      artifactDir = buildOutputDir.resolve("artifacts"),
+      tempDir = tempDir,
+    )
+  }
+
+  private class TestCompilationContext(
+    override val messages: BuildMessages,
+    override val options: BuildOptions,
+    override val paths: BuildPaths,
+    override val project: JpsProject,
+    override val projectModel: JpsModel,
+    override val dependenciesProperties: DependenciesProperties,
+    override val bundledRuntime: BundledRuntime,
+    override val compilationData: JpsCompilationData,
+    override val stableJavaExecutable: Path,
+    override val classesOutputDirectory: Path,
+  ) : CompilationContext {
+    override val outputProvider: ModuleOutputProvider
+      get() = error("Test delegate output provider should not be used")
+
+    override fun getStableJdkHome(): Path = stableJavaExecutable.parent.parent
+
+      override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> = emptyList()
+
+    override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = null
+
+    override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = null
+
+    override fun notifyArtifactBuilt(artifactPath: Path) = Unit
+
+    override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths, lifetime: BuildLifetime?): CompilationContext {
+      return TestCompilationContext(
+        messages = messages,
+        options = options,
+        paths = paths,
+        project = project,
+        projectModel = projectModel,
+        dependenciesProperties = dependenciesProperties,
+        bundledRuntime = bundledRuntime,
+        compilationData = compilationData,
+        stableJavaExecutable = stableJavaExecutable,
+        classesOutputDirectory = classesOutputDirectory,
+      )
+    }
+
+    override fun prepareForBuild() = Unit
+
+    override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) = Unit
+
+    override fun withCompilationLock(block: () -> Unit) = block()
+  }
+}

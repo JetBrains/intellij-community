@@ -1,39 +1,82 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
-*/
+import javax.swing.Icon;
+
 public enum CreateClassKind implements ClassKind {
-  CLASS     (QuickFixBundle.message("create.class")),
-  INTERFACE (QuickFixBundle.message("create.interface")),
-  ENUM      (QuickFixBundle.message("create.enum")),
-  ANNOTATION("annotation");
+  CLASS(JavaElementKind.CLASS),
+  INTERFACE(JavaElementKind.INTERFACE),
+  ENUM(JavaElementKind.ENUM),
+  ANNOTATION(JavaElementKind.ANNOTATION),
+  RECORD(JavaElementKind.RECORD);
+  
+  private final JavaElementKind myKind;
 
-  private final String myDescription;
-
-  CreateClassKind(final String description) {
-    myDescription = description;
+  CreateClassKind(JavaElementKind kind) {
+    myKind = kind;
   }
 
   @Override
-  public String getDescription() {
-    return myDescription;
+  public @Nls String getDescription() {
+    return myKind.subject();
+  }
+
+  @Override
+  public String getDescriptionAccusative() {
+    return myKind.object();
+  }
+
+  public @NotNull Icon getKindIcon() {
+    IconManager iconManager = IconManager.getInstance();
+    return switch (this) {
+      case CLASS -> iconManager.getPlatformIcon(PlatformIcons.Class);
+      case INTERFACE -> iconManager.getPlatformIcon(PlatformIcons.Interface);
+      case ENUM -> iconManager.getPlatformIcon(PlatformIcons.Enum);
+      case ANNOTATION -> iconManager.getPlatformIcon(PlatformIcons.Annotation);
+      case RECORD -> iconManager.getPlatformIcon(PlatformIcons.Record);
+    };
+  }
+
+  /**
+   * Creates a non-physical class
+   * @param factory factory to use
+   * @param name name of the new class
+   * @return newly created class
+   */
+  public @NotNull PsiClass create(PsiElementFactory factory, String name) {
+    return switch (this) {
+      case CLASS -> factory.createClass(name);
+      case INTERFACE -> factory.createInterface(name);
+      case ENUM -> factory.createEnum(name);
+      case ANNOTATION -> factory.createAnnotationType(name);
+      case RECORD -> factory.createRecord(name);
+    };
+  }
+
+  /**
+   * Creates a new physical class in directory
+   * @param directory directory to create the class at
+   * @param name name of the new class
+   * @return newly created class
+   */
+  public @NotNull PsiClass createInDirectory(PsiDirectory directory, String name) {
+    JavaDirectoryService service = JavaDirectoryService.getInstance();
+    return switch (this) {
+      case INTERFACE -> service.createInterface(directory, name);
+      case CLASS -> service.createClass(directory, name);
+      case ENUM -> service.createEnum(directory, name);
+      case RECORD -> service.createRecord(directory, name);
+      case ANNOTATION -> service.createAnnotationType(directory, name);
+    };
   }
 }

@@ -1,66 +1,56 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-/**
- * @author Vladislav.Soroka
- * @since 9/22/2014
- */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;
+  private final Tree myTree;
   private ExternalProjectsView myExternalProjectsView;
-  private final SimpleTreeBuilder myTreeBuilder;
-  private RootNode myRoot;
+  private StructureTreeModel<ExternalProjectsStructure> myTreeModel;
+  private RootNode<?> myRoot;
 
-  private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<>();
+  private final Map<String, ExternalSystemNode<?>> myNodeMapping = new HashMap<>();
+  private AsyncTreeModel myAsyncTreeModel;
 
-  public ExternalProjectsStructure(Project project, SimpleTree tree) {
+  public ExternalProjectsStructure(Project project, Tree tree) {
     myProject = project;
-
+    myTree = tree;
     configureTree(tree);
-
-    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
-    Disposer.register(myProject, myTreeBuilder);
   }
 
   public void init(ExternalProjectsView externalProjectsView) {
     myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
-    myTreeBuilder.initRoot();
-    myTreeBuilder.expand(myRoot, null);
+    myTreeModel = new StructureTreeModel<>(this, this);
+    myAsyncTreeModel = new AsyncTreeModel(myTreeModel, this);
+    myTree.setModel(myAsyncTreeModel);
+    TreeUtil.expand(myTree, 1);
   }
 
   public Project getProject() {
@@ -68,60 +58,66 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   public void updateFrom(SimpleNode node) {
-    myTreeBuilder.addSubtreeToUpdateByElement(node);
+    if (node != null) {
+      myTreeModel.invalidate(node, true);
+    }
   }
 
   public void updateUpTo(SimpleNode node) {
     SimpleNode each = node;
     while (each != null) {
-      updateFrom(each);
+      myTreeModel.invalidate(each, false);
       each = each.getParent();
     }
   }
 
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRoot;
   }
 
-  private static void configureTree(final SimpleTree tree) {
+  public void cleanupCache() {
+    myRoot.cleanUpCache();
+    myNodeMapping.clear();
+    myTreeModel.invalidateAsync();
+  }
+
+  private static void configureTree(final Tree tree) {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
   }
 
-  public void accept(@NotNull SimpleNodeVisitor visitor) {
-    if (myTreeBuilder.getTree() instanceof SimpleTree) {
-      ((SimpleTree)myTreeBuilder.getTree()).accept(myTreeBuilder, visitor);
-    }
+  public void select(@NotNull SimpleNode node) {
+    myTreeModel.select(node, myTree, path -> {});
   }
 
-  public void select(SimpleNode node) {
-    myTreeBuilder.select(node, null);
+  public void expand(@NotNull SimpleNode node) {
+    myTreeModel.expand(node, myTree, path -> {});
   }
 
   protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
     return null;
   }
 
-  public void updateProjects(Collection<DataNode<ProjectData>> toImport) {
-    List<String> orphanProjects = ContainerUtil.mapNotNull(
-      myNodeMapping.entrySet(), entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null);
+  public void updateProjects(Collection<? extends DataNode<ProjectData>> toImport) {
+    List<String> toImportPaths = ContainerUtil.map(toImport, pd -> pd.getData().getLinkedExternalProjectPath());
+    Collection<String> orphanProjects = ContainerUtil.subtract(ContainerUtil.mapNotNull(myNodeMapping.entrySet(),
+         entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null), toImportPaths);
     for (DataNode<ProjectData> each : toImport) {
       final ProjectData projectData = each.getData();
       final String projectPath = projectData.getLinkedExternalProjectPath();
-      orphanProjects.remove(projectPath);
 
-      ExternalSystemNode projectNode = findNodeFor(projectPath);
+      ExternalSystemNode<?> projectNode = findNodeFor(projectPath);
 
       if (projectNode instanceof ProjectNode) {
-        doMergeChildrenChanges(projectNode, each, new ProjectNode(myExternalProjectsView, each));
+        doMergeChildrenChanges(projectNode, new ProjectNode(myExternalProjectsView, each));
       }
       else {
-        ExternalSystemNode node = myNodeMapping.remove(projectPath);
+        ExternalSystemNode<?> node = myNodeMapping.remove(projectPath);
         if (node != null) {
           SimpleNode parent = node.getParent();
           if (parent instanceof ExternalSystemNode) {
-            ((ExternalSystemNode)parent).remove(projectNode);
+            ((ExternalSystemNode<?>)parent).remove(projectNode);
           }
         }
 
@@ -129,73 +125,77 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         myNodeMapping.put(projectPath, projectNode);
       }
       if (toImport.size() == 1) {
-        myTreeBuilder.expand(projectNode, null);
+        TreeUtil.expand(myTree, 1);
       }
       doUpdateProject((ProjectNode)projectNode);
     }
 
     //remove orphan projects from view
     for (String orphanProjectPath : orphanProjects) {
-      ExternalSystemNode projectNode = myNodeMapping.remove(orphanProjectPath);
+      ExternalSystemNode<?> projectNode = myNodeMapping.remove(orphanProjectPath);
       if (projectNode instanceof ProjectNode) {
         SimpleNode parent = projectNode.getParent();
         if (parent instanceof ExternalSystemNode) {
-          ((ExternalSystemNode)parent).remove(projectNode);
+          ((ExternalSystemNode<?>)parent).remove(projectNode);
           updateUpTo(projectNode);
         }
       }
     }
   }
 
-  private void doMergeChildrenChanges(ExternalSystemNode currentNode, DataNode<?> newDataNode, ExternalSystemNode newNode) {
-    final ExternalSystemNode[] cached = currentNode.getCached();
-    if (cached != null) {
-
-      final List<Object> duplicates = ContainerUtil.newArrayList();
-      final Map<Object, ExternalSystemNode> oldDataMap = ContainerUtil.newLinkedHashMap();
-      for (ExternalSystemNode node : cached) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final Object systemNode = oldDataMap.put(key, node);
-        if(systemNode != null) {
-          duplicates.add(key);
-        }
-      }
-
-      Map<Object, ExternalSystemNode> newDataMap = ContainerUtil.newLinkedHashMap();
-      Map<Object, ExternalSystemNode> unchangedNewDataMap = ContainerUtil.newLinkedHashMap();
-      for (ExternalSystemNode node : newNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        if (oldDataMap.remove(key) == null) {
-          newDataMap.put(key, node);
-        }
-        else {
-          unchangedNewDataMap.put(key, node);
-        }
-      }
-
-      for (Object duplicate : duplicates) {
-        newDataMap.remove(duplicate);
-      }
-
-      currentNode.removeAll(oldDataMap.values());
-
-      for (ExternalSystemNode node : currentNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final ExternalSystemNode unchangedNewNode = unchangedNewDataMap.get(key);
-        if (unchangedNewNode != null) {
-          doMergeChildrenChanges(node, unchangedNewNode.myDataNode, unchangedNewNode);
-        }
-      }
-
-      updateFrom(currentNode);
-      currentNode.addAll(newDataMap.values());
+  private void doMergeChildrenChanges(ExternalSystemNode<?> currentNode, ExternalSystemNode newNode) {
+    final ExternalSystemNode<?>[] cached = currentNode.getCached();
+    if (cached == null) {
+      //noinspection unchecked
+      currentNode.mergeWith(newNode);
+      return;
     }
+    final List<Object> duplicates = new ArrayList<>();
+    final Map<Object, ExternalSystemNode<?>> oldDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : cached) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final Object systemNode = oldDataMap.put(key, node);
+      if (systemNode != null) {
+        duplicates.add(key);
+      }
+    }
+
+    // new data comparing to old node
+    Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
+    // old nodes that exist in the old node as well as in the new node
+    Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : newNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      if (oldDataMap.remove(key) == null) {
+        newDataMap.put(key, node);
+      }
+      else {
+        unchangedNewDataMap.put(key, node);
+      }
+    }
+
+    for (Object duplicate : duplicates) {
+      newDataMap.remove(duplicate);
+    }
+
+    currentNode.removeAll(oldDataMap.values());
+
+    for (ExternalSystemNode<?> node : currentNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final ExternalSystemNode<?> unchangedNewNode = unchangedNewDataMap.get(key);
+      if (unchangedNewNode != null) {
+        doMergeChildrenChanges(node, unchangedNewNode);
+      }
+    }
+
+    updateFrom(currentNode);
     //noinspection unchecked
-    currentNode.setDataNode(newDataNode);
+    currentNode.mergeWith(newNode);
+    currentNode.addAll(newDataMap.values());
   }
 
   private void doUpdateProject(ProjectNode node) {
-    ExternalSystemNode newParentNode = myRoot;
+    ExternalSystemNode<?> newParentNode = myRoot;
     if (!node.isVisible()) {
       newParentNode.remove(node);
     }
@@ -205,8 +205,8 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  private static void reconnectNode(ProjectNode node, ExternalSystemNode newParentNode) {
-    ExternalSystemNode oldParentNode = node.getGroup();
+  private static void reconnectNode(ProjectNode node, ExternalSystemNode<?> newParentNode) {
+    ExternalSystemNode<?> oldParentNode = node.getGroup();
     if (oldParentNode == null || !oldParentNode.equals(newParentNode)) {
       if (oldParentNode != null) {
         oldParentNode.remove(node);
@@ -215,19 +215,39 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   private ExternalSystemNode findNodeFor(String projectPath) {
     return myNodeMapping.get(projectPath);
   }
 
-  public <T extends ExternalSystemNode> void updateNodes(@NotNull Class<T> nodeClass) {
+
+  public <T extends ExternalSystemNode> void updateNodesAsync(@NotNull Collection<Class<? extends T>> nodeClasses) {
+    updateNodesAsync(nodeClasses, false);
+  }
+  public <T extends ExternalSystemNode> void updateNodesAsync(@NotNull Collection<Class<? extends T>> nodeClasses, boolean structure) {
+    final List<TreePath> nodes = new LinkedList<>();
+    myAsyncTreeModel
+      .accept(new CollectingVisitor<>(nodes, nodeClasses), false)
+      .onSuccess(p -> {
+          invalidatePaths(nodes, structure);
+      });
+  }
+
+  private void invalidatePaths(@NotNull Collection<TreePath> paths, boolean structure) {
+    if (paths.isEmpty()) {
+      return;
+    }
+    paths.forEach(p -> myTreeModel.invalidate(p, structure));
+  }
+
+  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<? extends T> nodeClass, @NotNull Consumer<? super T> consumer) {
     for (T node : getNodes(nodeClass)) {
-      updateFrom(node);
+      consumer.consume(node);
     }
   }
 
-  public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<T> nodeClass, @NotNull Consumer<T> consumer) {
-    for (T node : getNodes(nodeClass)) {
+  public <T extends ExternalSystemNode> void visitExistingNodes(@NotNull Class<? extends T> nodeClass,
+                                                                @NotNull Consumer<? super T> consumer) {
+    for (T node : getExistingNodes(nodeClass)) {
       consumer.consume(node);
     }
   }
@@ -237,6 +257,34 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     this.myExternalProjectsView = null;
     this.myNodeMapping.clear();
     this.myRoot = null;
+  }
+
+  private static final class CollectingVisitor<T extends ExternalSystemNode> implements TreeVisitor {
+    private final List<? super TreePath> myCollector;
+    private final Collection<Class<? extends T>> myNodeClasses;
+
+    private CollectingVisitor(List<? super TreePath> nodeCollector, Collection<Class<? extends T>> nodeClasses) {
+      myCollector = nodeCollector;
+      myNodeClasses = nodeClasses;
+    }
+
+    @Override
+    public @NotNull Action visit(@NotNull TreePath path) {
+      Object object = TreeUtil.getLastUserObject(path);
+      if (object != null && anyAssignableFrom(object.getClass())) {
+        myCollector.add(path);
+      }
+      return Action.CONTINUE;
+    }
+
+    boolean anyAssignableFrom(Class<?> classParam) {
+      for (Class<? extends T> aClass : myNodeClasses) {
+        if (aClass.isAssignableFrom(classParam)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   public class RootNode<T> extends ExternalSystemNode<T> {
@@ -258,15 +306,24 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     ALWAYS, NEVER, NORMAL
   }
 
-  @NotNull
-  public <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
-    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>());
+  public @NotNull <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> true);
   }
 
-  @NotNull
-  private static <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
-                                                                   SimpleNode[] nodes,
-                                                                   @NotNull List<T> result) {
+  public @NotNull <T extends ExternalSystemNode> List<T> getExistingNodes(@NotNull Class<T> nodeClass) {
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> {
+      if (node instanceof ExternalSystemNode<?> esNode) {
+        ExternalSystemNode<?>[] cachedNodes = esNode.getCached();
+        return cachedNodes != null && cachedNodes.length > 0;
+      }
+      return true;
+    });
+  }
+
+  private static @NotNull <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
+                                                                            SimpleNode[] nodes,
+                                                                            @NotNull List<T> result,
+                                                                            @NotNull Predicate<SimpleNode> shouldDive) {
     if (nodes == null) return result;
 
     for (SimpleNode node : nodes) {
@@ -274,33 +331,14 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         //noinspection unchecked
         result.add((T)node);
       }
-      doGetNodes(nodeClass, node.getChildren(), result);
+      if (shouldDive.test(node)) {
+        doGetNodes(nodeClass, node.getChildren(), result, shouldDive);
+      }
     }
     return result;
   }
 
-  @NotNull
-  public <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
-    final List<T> filtered = new ArrayList<>();
-    for (SimpleNode node : getSelectedNodes(tree)) {
-      if ((nodeClass != null) && (!nodeClass.isInstance(node))) {
-        filtered.clear();
-        break;
-      }
-      //noinspection unchecked
-      filtered.add((T)node);
-    }
-    return filtered;
-  }
-
-  private static List<SimpleNode> getSelectedNodes(SimpleTree tree) {
-    List<SimpleNode> nodes = new ArrayList<>();
-    TreePath[] treePaths = tree.getSelectionPaths();
-    if (treePaths != null) {
-      for (TreePath treePath : treePaths) {
-        nodes.add(tree.getNodeFor(treePath));
-      }
-    }
-    return nodes;
+  public @NotNull <T extends ExternalSystemNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
+    return TreeUtil.collectSelectedObjectsOfType(tree, nodeClass);
   }
 }

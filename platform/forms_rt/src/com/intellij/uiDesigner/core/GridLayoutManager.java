@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.Arrays;
 
 public final class GridLayoutManager extends AbstractLayout {
@@ -56,10 +45,8 @@ public final class GridLayoutManager extends AbstractLayout {
   private final int[] myWidths;
 
   private LayoutState myLayoutState;
-  /**
-   * package-private because is used in tests
-   */
-  DimensionInfo myHorizontalInfo;
+
+  private DimensionInfo myHorizontalInfo;
   /**
    * package-private because is used in tests
    */
@@ -72,7 +59,7 @@ public final class GridLayoutManager extends AbstractLayout {
    * Key for accessing client property which is set on the root Swing component of the design-time component
    * hierarchy and specifies the value of extra insets added to all components.
    */
-  public static Object DESIGN_TIME_INSETS = new Object();
+  public static final Object DESIGN_TIME_INSETS = new Object();
 
   private static final int SKIP_ROW = 1;
   private static final int SKIP_COL = 2;
@@ -99,6 +86,11 @@ public final class GridLayoutManager extends AbstractLayout {
 
     myYs = new int[rowCount];
     myHeights = new int[rowCount];
+  }
+
+  //@VisibleForTesting
+  public DimensionInfo getHorizontalInfo() {
+    return myHorizontalInfo;
   }
 
   /**
@@ -129,6 +121,7 @@ public final class GridLayoutManager extends AbstractLayout {
     mySameSizeVertically = sameSizeVertically;
   }
 
+  @Override
   public void addLayoutComponent(final Component comp, final Object constraints) {
     final GridConstraints c = (GridConstraints)constraints;
     final int row = c.getRow();
@@ -205,10 +198,12 @@ public final class GridLayoutManager extends AbstractLayout {
     myColumnStretches[columnIndex] = stretch;
   }
 
+  @Override
   public Dimension maximumLayoutSize(final Container target) {
     return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }
 
+  @Override
   public Dimension minimumLayoutSize(final Container container) {
     validateInfos(container);
     
@@ -235,14 +230,11 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private static void makeSameSizes(int[] widths) {
     int max = widths[0];
-    for (int i = 0; i < widths.length; i++) {
-      int width = widths[i];
+    for (int width : widths) {
       max = Math.max(width, max);
     }
 
-    for (int i = 0; i < widths.length; i++) {
-      widths[i] = max;
-    }
+    Arrays.fill(widths, max);
   }
 
   private static int[] getSameSizes(DimensionInfo info, int totalWidth) {
@@ -262,6 +254,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return widths;
   }
 
+  @Override
   public Dimension preferredLayoutSize(final Container container) {
     validateInfos(container);
 
@@ -388,6 +381,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return true;
   }
 
+  @Override
   public void layoutContainer(final Container container) {
     validateInfos(container);
 
@@ -571,6 +565,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return skipLayout;
   }
 
+  @Override
   public void invalidateLayout(final Container container) {
     myLayoutState = null;
     myHorizontalInfo = null;
@@ -632,9 +627,7 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private int[] getMinOrPrefSizes(final DimensionInfo info, final boolean min) {
     final int[] widths = new int[info.getCellCount()];
-    for (int i = 0; i < widths.length; i++) {
-      widths[i] = myMinCellSize;
-    }
+    Arrays.fill(widths, myMinCellSize);
 
     // single spaned components
     for (int i = info.getComponentCount() - 1; i >= 0; i--) {
@@ -907,22 +900,20 @@ public final class GridLayoutManager extends AbstractLayout {
   }
 
   public int[] getHorizontalGridLines() {
-    int[] result = new int [myYs.length+1];
-    result [0] = myYs [0];
-    for(int i=0; i<myYs.length-1; i++) {
-      result [i+1] = (myYs[i] + myHeights[i] + myYs[i + 1]) / 2;
-    }
-    result [myYs.length] = myYs [myYs.length-1] + myHeights [myYs.length-1];
-    return result;
+    return getGridLines(myYs, myHeights);
   }
 
   public int[] getVerticalGridLines() {
-    int[] result = new int [myXs.length+1];
-    result [0] = myXs [0];
-    for(int i=0; i<myXs.length-1; i++) {
-      result [i+1] = (myXs[i] + myWidths[i] + myXs[i + 1]) / 2;
+    return getGridLines(myXs, myWidths);
+  }
+
+  private static int[] getGridLines(int[] pos, int[] heights) {
+    int[] result = new int [pos.length + 1];
+    result [0] = pos[0];
+    for(int i = 0; i < pos.length - 1; i++) {
+      result [i+1] = (pos[i] + heights[i] + pos[i + 1]) / 2;
     }
-    result [myXs.length] = myXs [myXs.length-1] + myWidths [myXs.length-1];
+    result [pos.length] = pos[pos.length - 1] + heights[pos.length - 1];
     return result;
   }
 

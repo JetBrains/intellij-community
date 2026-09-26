@@ -28,11 +28,9 @@ public class ImportStatementElement extends ImportStatementBaseElement {
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
     if (result != null) return result;
-    switch (role) {
-      default:
-        return null;
-      case ChildRole.IMPORT_REFERENCE:
-        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
+    if (role == ChildRole.IMPORT_REFERENCE) {
+      return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
     }
+    return null;
   }
 }

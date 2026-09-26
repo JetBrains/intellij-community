@@ -1,0 +1,10 @@
+-Simple.kt icon=org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+ foo(): String icon=Function, Local
+ Simple icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Local
+ -Test icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public
+  constructor Test(String, Integer) icon=org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public
+  foo(): Int icon=Method, Protected
+  number: Integer icon=Parameter, Private
+  other(): Unit icon=Method, Public
+  some: Int icon=org/jetbrains/kotlin/idea/icons/field_value.svg, Private
+  str: String icon=Parameter, Public

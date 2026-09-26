@@ -21,6 +21,5 @@ import org.jetbrains.annotations.NotNull;
  * @author Max Medvedev
  */
 public interface GrDisjunctionTypeElement extends GrTypeElement {
-  @NotNull
-  GrTypeElement[] getTypeElements();
+  GrTypeElement @NotNull [] getTypeElements();
 }

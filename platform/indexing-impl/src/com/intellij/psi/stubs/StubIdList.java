@@ -1,23 +1,19 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Debug;
+import org.jetbrains.annotations.NotNull;
 
-// List of nonnegative ints, monotonically increasing, optimized for one int case (90% of our lists one element)
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
+/**
+ * List of non-negative ints, monotonically increasing, optimized for one int case (90% of our lists are one-element)
+ */
+@ApiStatus.Internal
+@Debug.Renderer(text = "myArray == null ? \"[\" + myData + \"]\" : java.util.Arrays.toString(myArray)")
 public final class StubIdList {
   private final int myData;
   private final int[] myArray;
@@ -33,7 +29,7 @@ public final class StubIdList {
     myArray = null;
   }
 
-  public StubIdList(int[] array, int size) {
+  public StubIdList(int @NotNull [] array, int size) {
     myArray = array;
     myData = size;
   }
@@ -51,17 +47,15 @@ public final class StubIdList {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof StubIdList)) return false;
-    StubIdList other = (StubIdList)obj;
+    if (!(obj instanceof StubIdList other)) return false;
     if (myArray == null) {
       return other.myArray == null && other.myData == myData;
-    } else {
-      if (other.myArray == null || myData != other.myData) return false;
-      for(int i = 0; i < myData; ++i) {
-        if (myArray[i] != other.myArray[i]) return false;
-      }
-      return true;
     }
+    if (other.myArray == null || myData != other.myData) return false;
+    for(int i = 0; i < myData; ++i) {
+      if (myArray[i] != other.myArray[i]) return false;
+    }
+    return true;
   }
 
   public int size() {
@@ -73,9 +67,13 @@ public final class StubIdList {
       assert myData >= 0;
       if (i == 0) return myData;
       throw new IncorrectOperationException();
-    } else {
-      if (i >= myData) throw new IncorrectOperationException();
-      return myArray[i];
     }
+    if (i >= myData) throw new IncorrectOperationException();
+    return myArray[i];
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(IntStream.range(0, size()).map(this::get).toArray());
   }
 }

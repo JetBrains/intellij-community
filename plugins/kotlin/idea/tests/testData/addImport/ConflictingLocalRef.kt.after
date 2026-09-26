@@ -1,0 +1,9 @@
+// IGNORE_K2
+// IMPORT: test.a7
+import test.*
+
+fun test() {
+    val kotlinType = ""
+    kotlinType
+    a7()
+}

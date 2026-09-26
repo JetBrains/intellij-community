@@ -34,8 +34,7 @@ public class HgRevertCommand {
   }
 
   //all files should be already chunked
-  @Nullable
-  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull Collection<String> files, @Nullable HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
+  public @Nullable HgCommandResult execute(@NotNull VirtualFile repo, @NotNull Collection<String> files, @Nullable HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
     final List<String> options = new LinkedList<>();
     if (vcsRevisionNumber != null && !HgRevisionNumber.NULL_REVISION_NUMBER.equals(vcsRevisionNumber)) {
       options.add("--rev");

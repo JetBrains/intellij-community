@@ -1,54 +1,72 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2016 the Pockets team, see AUTHORS.
+# Copyright (c) 2018 the Pockets team, see AUTHORS.
 # Licensed under the BSD License, see LICENSE for details.
 
-"""A pocket full of useful string manipulation functions!"""
+"""A pocket full of useful string manipulation tools!"""
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
 import re
+
 import six
-import sys
 
-from pockets.collections import listify
+from pockets.collections import is_listy, listify
 
-__all__ = ["camel", "uncamel", "splitcaps"]
+
+__all__ = [
+    "camel",
+    "uncamel",
+    "fieldify",
+    "unfieldify",
+    "sluggify",
+    "splitcaps",
+    "splitify",
+    "UnicodeMixin",
+]
+
 
 # Default regular expression flags
 if six.PY2:
-    _re_flags = re.L | re.M | re.U
+    RE_FLAGS = re.L | re.M | re.U
 else:
-    _re_flags = re.M | re.U
+    RE_FLAGS = re.M | re.U
 
-_whitespace_group_re = re.compile("(\s+)", _re_flags)
+RE_NONWORD = re.compile(r"[\W_]+")
 
-_uncamel_re = re.compile(
-    "("  # The whole expression is in a single group
+RE_SPLITCAPS = re.compile(
     # Clause 1
-    "(?<=[^\sA-Z])"  # Preceded by neither a space nor a capital letter
-    "[A-Z]+[^a-z\s]*"  # All non-lowercase beginning with a capital letter
-    "(?=[A-Z][^A-Z\s]*?[a-z]|\s|$)"  # Followed by a capitalized word
-    "|"
+    r"[A-Z]+[^a-z]*"  # All non-lowercase beginning with a capital letter
+    r"(?=[A-Z][^A-Z]*?[a-z]|$)"  # Followed by a capitalized word
+    r"|"
     # Clause 2
-    "(?<=[^\s])"  # Preceded by a character that is not a space
-    "[A-Z][^A-Z\s]*?[a-z]+[^A-Z\s]*"  # Capitalized word
-    ")", _re_flags)
-
-_splitcaps_re = re.compile(
-    # Clause 1
-    "[A-Z]+[^a-z]*"  # All non-lowercase beginning with a capital letter
-    "(?=[A-Z][^A-Z]*?[a-z]|$)"  # Followed by a capitalized word
-    "|"
-    # Clause 2
-    "[A-Z][^A-Z]*?[a-z]+[^A-Z]*"  # Capitalized word
-    "|"
+    r"[A-Z][^A-Z]*?[a-z]+[^A-Z]*" r"|"  # Capitalized word
     # Clause 3
-    "[^A-Z]+",  # All non-uppercase
-    _re_flags)
+    r"[^A-Z]+",  # All non-uppercase
+    RE_FLAGS,
+)
+
+RE_UNCAMEL = re.compile(
+    r"("  # The whole expression is in a single group
+    # Clause 1
+    r"(?<=[^\sA-Z])"  # Preceded by neither a space nor a capital letter
+    r"[A-Z]+[^a-z\s]*"  # All non-lowercase beginning with a capital letter
+    r"(?=[A-Z][^A-Z\s]*?[a-z]|\s|$)"  # Followed by a capitalized word
+    r"|"
+    # Clause 2
+    r"(?<=[^\s])"  # Preceded by a character that is not a space
+    r"[A-Z][^A-Z\s]*?[a-z]+[^A-Z\s]*"  # Capitalized word
+    r")",
+    RE_FLAGS,
+)
+
+RE_WHITESPACE_GROUP = re.compile(r"(\s+)", RE_FLAGS)
 
 
-def camel(s, sep="_", lower_initial=False, upper_segments=None,
-          preserve_upper=False):
-    """Convert underscore_separated string (aka snake_case) to CamelCase.
+def camel(
+    s, sep="_", lower_initial=False, upper_segments=None, preserve_upper=False
+):
+    """
+    Convert underscore_separated string (aka snake_case) to CamelCase.
 
     Works on full sentences as well as individual words:
 
@@ -123,7 +141,7 @@ def camel(s, sep="_", lower_initial=False, upper_segments=None,
         lower_initial = listify(lower_initial)
     upper_segments = listify(upper_segments)
     result = []
-    for word in _whitespace_group_re.split(s):
+    for word in RE_WHITESPACE_GROUP.split(s):
         segments = [segment for segment in word.split(sep) if segment]
         count = len(segments)
         for i, segment in enumerate(segments):
@@ -149,7 +167,8 @@ def camel(s, sep="_", lower_initial=False, upper_segments=None,
 
 
 def uncamel(s, sep="_"):
-    """Convert CamelCase string to underscore_separated (aka snake_case).
+    """
+    Convert CamelCase string to underscore_separated (aka snake_case).
 
     A CamelCase word is considered to be any uppercase letter followed by zero
     or more lowercase letters. Contiguous groups of uppercase letters – like
@@ -184,11 +203,88 @@ def uncamel(s, sep="_"):
         str: uncamel_cased version of `s`.
 
     """
-    return _uncamel_re.sub(r'{0}\1'.format(sep), s).lower()
+    return RE_UNCAMEL.sub(r"{0}\1".format(sep), s).lower()
+
+
+def fieldify(s, sep="_"):
+    """
+    Convert a string into a valid "field-like" variable name.
+
+    Converts `s` from camel case to underscores, and replaces all spaces and
+    non-word characters with `sep`:
+
+    >>> fieldify('The XmlHTTPRequest Contained, "DATA..."')
+    'the_xml_http_request_contained_data'
+
+    Args:
+        s (str): The string to fieldify.
+
+        sep (str): The string to use as a word separator in the returned field.
+            Defaults to '_'.
+
+    Returns:
+        str: The field version of `s`.
+
+    """
+    if not s:
+        return ""
+    return RE_NONWORD.sub(sep, uncamel(s)).strip(sep)
+
+
+def unfieldify(s, sep="_"):
+    """
+    Makes a best effort to reverse the algorithm from `fieldify`.
+
+    Replaces instances of `sep` in `s` with a space and converts the result to
+    title case:
+
+    >>> unfieldify('the_xml_http_request_contained_data')
+    'The Xml Http Request Contained Data'
+
+    Args:
+        s (str): The string to fieldify.
+
+        sep (str): The string to consider a word separator in `s`.
+            Defaults to '_'.
+
+    Returns:
+        str: The unfieldified version of `s`.
+
+    """
+    if not s:
+        return ""
+    s = s.strip(r"{0} ".format(sep))
+    return (" ".join([w for w in s.split(sep) if w])).title()
+
+
+def sluggify(s, sep="-"):
+    """
+    Convert a string into a "slug" suitable for use in a URL.
+
+    Converts `s` to lower case, and replaces all spaces and non-word
+    characters with `sep`:
+
+    >>> sluggify('The ANGRY Wizard Shouted, "HEY..."')
+    'the-angry-wizard-shouted-hey'
+
+    Args:
+        s (str): The string to convert into a slug.
+
+        sep (str): The string to use as a word separator in the slug.
+            Defaults to '-'.
+
+    Returns:
+        str: The sluggify version of `s`.
+
+    """
+    if not s:
+        return ""
+    return RE_NONWORD.sub(sep, s).lower().strip(sep)
 
 
 def splitcaps(s, pattern=None, maxsplit=None, flags=0):
-    """Intelligently split a string on capitalized words.
+    """
+    Intelligently split a string on capitalized words.
 
     A capitalized word is considered to be any uppercase letter followed by
     zero or more lowercase letters. Contiguous groups of uppercase letters –
@@ -215,13 +311,13 @@ def splitcaps(s, pattern=None, maxsplit=None, flags=0):
     ['lower case words']
 
     Does not split on whitespace by default. To also split
-    on whitespace, pass "\\\s+" for `pattern`:
+    on whitespace, pass "\\\\s+" for `pattern`:
 
     >>> splitcaps("Without whiteSpace pattern")
     ['Without white', 'Space pattern']
-    >>> splitcaps("With whiteSpace pattern", pattern="\s+")
+    >>> splitcaps("With whiteSpace pattern", pattern=r"\\s+")
     ['With', 'white', 'Space', 'pattern']
-    >>> splitcaps("With whiteSpace group", pattern="(\s+)")
+    >>> splitcaps("With whiteSpace group", pattern=r"(\\s+)")
     ['With', ' ', 'white', 'Space', ' ', 'group']
 
     Args:
@@ -254,13 +350,13 @@ def splitcaps(s, pattern=None, maxsplit=None, flags=0):
             maxsplit = -1
 
     if pattern:
-        pattern_re = re.compile(pattern, flags or _re_flags)
+        pattern_re = re.compile(pattern, flags or RE_FLAGS)
     else:
         pattern_re = None
 
     result = []
     post_maxsplit = []
-    for m in _splitcaps_re.finditer(s):
+    for m in RE_SPLITCAPS.finditer(s):
         if pattern_re:
             for segment in pattern_re.split(m.group()):
                 if segment:
@@ -273,8 +369,8 @@ def splitcaps(s, pattern=None, maxsplit=None, flags=0):
 
         if maxsplit > 0 and len(result) >= maxsplit:
             if m.end() < len(s):
-                post_maxsplit.append(s[m.end():])
-            post_maxsplit = ''.join(post_maxsplit)
+                post_maxsplit.append(s[m.end() :])
+            post_maxsplit = "".join(post_maxsplit)
             if post_maxsplit:
                 result.append(post_maxsplit)
             break
@@ -282,9 +378,53 @@ def splitcaps(s, pattern=None, maxsplit=None, flags=0):
     return result if len(result) > 0 else [s]
 
 
+def splitify(value, separator=",", strip=True, include_empty=False):
+    """
+    Convert a value to a list using a supercharged `split()`.
+
+    If `value` is a string, it is split by `separator`. If `separator` is
+    `None` or empty, no attempt to split is made, and `value` is returned as
+    the only item in a list.
+
+    If `strip` is `True`, then the split strings will be stripped of
+    whitespace. If `strip` is a string, then the split strings will be
+    stripped of the given string.
+
+    If `include_empty` is `False`, then empty split strings will not be
+    included in the returned list.
+
+    If `value` is `None` an empty list is returned.
+
+    If `value` is already "listy", it is returned as-is.
+
+    If `value` is any other type, it is returned as the only item in a list.
+
+    >>> splitify("first item, second item")
+    ['first item', 'second item']
+    >>> splitify("first path: second path: :skipped empty path", ":")
+    ['first path', 'second path', 'skipped empty path']
+    >>> splitify(["already", "split"])
+    ['already', 'split']
+    >>> splitify(None)
+    []
+    >>> splitify(1969)
+    [1969]
+    """
+    if is_listy(value):
+        return value
+
+    if isinstance(value, str) and separator:
+        parts = value.split(separator)
+        if strip:
+            strip = None if strip is True else strip
+            parts = [s.strip(strip) for s in parts]
+        return [s for s in parts if include_empty or s]
+    return listify(value)
+
+
 class UnicodeMixin(object):
-    """Mixin class to define the proper __str__/__unicode__ methods in
-    Python 2 or 3.
+    """
+    Mixin class to define proper __str__/__unicode__ methods in Python 2 or 3.
 
     Originally found on the `Porting Python 2 Code to Python 3 HOWTO`_.
 
@@ -293,9 +433,12 @@ class UnicodeMixin(object):
 
     """
 
-    if sys.version_info[0] >= 3:  # Python 3
+    if six.PY2:
+
+        def __str__(self):
+            return self.__unicode__().encode("utf8")
+
+    else:
+
         def __str__(self):
             return self.__unicode__()
-    else:  # Python 2
-        def __str__(self):
-            return self.__unicode__().encode('utf8')

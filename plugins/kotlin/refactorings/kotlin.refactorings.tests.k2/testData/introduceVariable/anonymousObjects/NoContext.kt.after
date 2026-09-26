@@ -1,0 +1,7 @@
+
+interface A
+interface B
+
+fun foo() {
+    val a = object : A, B {}
+}

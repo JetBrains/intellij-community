@@ -1,0 +1,35 @@
+<html>
+<body>
+Reports runBlocking builders that can be reached from coroutines. 
+<p>Coroutines share threads for execution. When a runBlocking builder is called from a coroutine it blocks the underlying thread and prevents other coroutines from using this resource. This can result in performance issues and in bad cases thread starvation.</p>
+<p>It provides a potential callstack from coroutine primitive (suspend function or builder) to runBlocking builder.</p>
+<p>Example: </p>
+<pre><code>
+  suspend fun main() {
+      foo() 
+   }
+
+  fun foo() {
+      runBlocking { suspendFunction() }
+  }
+</code></pre>
+<p>Potential solution: </p>
+<pre><code>
+  suspend fun main() {
+      foo() 
+   }
+
+  suspend fun foo() {
+      suspendFunction()
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>Use the <b>explore functions with overrides</b> option to configure analysis for virtual functions:</p>
+<ul>
+    <li>Use the <b>No</b> option to skip analysis for a function with overrides.</li>
+    <li>Use the <b>Yes, excluding overrides</b> option to only explore the function in the defined callee type.</li>
+    <li>Use the <b>Yes, including overrides</b> option to explore the function and all overrides.</li>
+</ul>
+
+</body>
+</html>

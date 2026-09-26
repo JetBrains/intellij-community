@@ -1,0 +1,12 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.frontend"/>
+    <module name="intellij.python.uv.common"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij"><python.pytools.pyToolFrontend implementation="com.intellij.python.uv.frontend.UvPyToolFrontend"/></extensions>
+</idea-plugin>

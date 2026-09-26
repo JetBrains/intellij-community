@@ -1,0 +1,17 @@
+// "Import class 'Language'" "true"
+// ERROR: No value passed for parameter 'value'
+// ERROR: Property must be initialized
+// ERROR: Unresolved reference: Language33
+// K2_AFTER_ERROR: MUST_BE_INITIALIZED
+// K2_AFTER_ERROR: NO_VALUE_FOR_PARAMETER
+// K2_AFTER_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: MUST_BE_INITIALIZED
+// K2_ERROR: UNRESOLVED_REFERENCE
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+import org.intellij.lang.annotations.JdkConstants
+
+@Language<caret>
+@Language33
+val v: JdkConstants
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix

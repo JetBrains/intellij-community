@@ -1,0 +1,43 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.gradle.tooling.impl"/>
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.projectConfiguration"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinx.datetime"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.feedback"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="kotlin.gradle.gradle-java"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.GradleFeedbackBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
+    <applicationSettings service="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore"/>
+  </extensions>
+  <actions>
+    <group id="BuildProcessSatisfaction" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction"
+              class="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

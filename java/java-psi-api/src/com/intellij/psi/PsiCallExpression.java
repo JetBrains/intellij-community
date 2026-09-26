@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the call of a Java method or constructor.
  *
- * @author dsl
  * @see PsiResolveHelper#getReferencedMethodCandidates(PsiCallExpression, boolean) 
  */
 public interface PsiCallExpression extends PsiExpression, PsiCall {
@@ -37,6 +36,5 @@ public interface PsiCallExpression extends PsiExpression, PsiCall {
    *
    * @return the array of type arguments, or an empty array if no type arguments are specified.
    */
-  @NotNull
-  PsiType[] getTypeArguments();
+  PsiType @NotNull [] getTypeArguments();
 }

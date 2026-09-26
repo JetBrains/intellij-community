@@ -1,0 +1,17 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.modules.pty4j</id>
+  <name>Pseudo Terminal (PTY4J)</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Runs a local process in a pseudo terminal with pty4j. The JNA copy that pty4j uses comes from the JNA plugin.
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.jna"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.pty4j" loading="required"/>
+  </content>
+</idea-plugin>

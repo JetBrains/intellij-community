@@ -17,16 +17,16 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
@@ -35,12 +35,12 @@ public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("sdk.configure.annotations.tab");
+    return JavaUiBundle.message("sdk.configure.annotations.tab");
   }
 
   @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
-    return new SdkPathEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
+    return new SdkPathEditor(JavaUiBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
                              new FileChooserDescriptor(false, true, true, false, true, false));
   }
 }

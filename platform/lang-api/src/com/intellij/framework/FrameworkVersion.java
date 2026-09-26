@@ -17,9 +17,6 @@ package com.intellij.framework;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface FrameworkVersion extends PresentableVersion {
   @NotNull
   String getId();

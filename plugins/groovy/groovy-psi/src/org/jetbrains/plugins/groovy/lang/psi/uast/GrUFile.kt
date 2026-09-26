@@ -1,29 +1,33 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.uast.*
-import java.util.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UastLanguagePlugin
 
-class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
+class GrUFile(override val sourcePsi: GroovyFile, override val languagePlugin: UastLanguagePlugin) : UFile {
+  override val psi: PsiFile
+    get() = sourcePsi
   override val packageName: String
-    get() = psi.packageName
+    get() = sourcePsi.packageName
 
-  override val imports: List<UImportStatement> = emptyList<UImportStatement>() // not implemented
+  override val imports: List<UImportStatement> = emptyList() // not implemented
 
-  override val annotations: List<UAnnotation>
-    get() = psi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()
+  override val uAnnotations: List<UAnnotation>
+    get() = sourcePsi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()
 
-  override val classes: List<GrUClass> by lazy { psi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }
+  override val classes: List<GrUClass> by lazy { sourcePsi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }
 
   override val allCommentsInFile: ArrayList<UComment> by lazy {
     val comments = ArrayList<UComment>(0)
-    psi.accept(object : PsiRecursiveElementWalkingVisitor() {
+    sourcePsi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {
         comments += UComment(comment, this@GrUFile)
       }
@@ -31,5 +35,6 @@ class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLan
     comments
   }
 
-  override fun equals(other: Any?): Boolean = (other as? GrUFile)?.psi == psi
+  override fun equals(other: Any?): Boolean = (other as? GrUFile)?.sourcePsi == sourcePsi
+  override fun hashCode(): Int = sourcePsi.hashCode()
 }

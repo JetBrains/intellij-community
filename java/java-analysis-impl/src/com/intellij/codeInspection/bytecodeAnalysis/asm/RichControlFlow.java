@@ -1,29 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
-
-/**
- * @author lambdamix
- */
 public final class RichControlFlow {
   public final ControlFlowGraph controlFlow;
   public final DFSTree dfsTree;
@@ -36,51 +18,47 @@ public final class RichControlFlow {
   // Tarjan. Testing flow graph reducibility.
   // Journal of Computer and System Sciences 9.3 (1974): 355-365.
   public boolean reducible() {
-    if (dfsTree.back.isEmpty()) {
+    if (dfsTree.isBackEmpty()) {
       return true;
     }
     int size = controlFlow.transitions.length;
     boolean[] loopEnters = dfsTree.loopEnters;
-    TIntHashSet[] cycleIncomings = new TIntHashSet[size];
+    IntOpenHashSet[] cycleIncoming = new IntOpenHashSet[size];
     // really this may be array, since dfs already ensures no duplicates
-    TIntArrayList[] nonCycleIncomings = new TIntArrayList[size];
+    IntArrayList[] nonCycleIncoming = new IntArrayList[size];
     int[] collapsedTo = new int[size];
     int[] queue = new int[size];
     int top;
     for (int i = 0; i < size; i++) {
       if (loopEnters[i]) {
-        cycleIncomings[i] = new TIntHashSet();
+        cycleIncoming[i] = new IntOpenHashSet();
       }
-      nonCycleIncomings[i] = new TIntArrayList();
+      nonCycleIncoming[i] = new IntArrayList();
       collapsedTo[i] = i;
     }
 
     // from whom back connections
-    for (Edge edge : dfsTree.back) {
-      cycleIncomings[edge.to].add(edge.from);
-    }
+    dfsTree.iterateBack((from, to) -> cycleIncoming[to].add(from));
     // from whom ordinary connections
-    for (Edge edge : dfsTree.nonBack) {
-      nonCycleIncomings[edge.to].add(edge.from);
-    }
+    dfsTree.iterateNonBack((from, to) -> nonCycleIncoming[to].add(from));
 
     for (int w = size - 1; w >= 0 ; w--) {
       top = 0;
       // NB - it is modified later!
-      TIntHashSet p = cycleIncomings[w];
+      IntOpenHashSet p = cycleIncoming[w];
       if (p == null) {
         continue;
       }
-      TIntIterator iter = p.iterator();
-      while (iter.hasNext()) {
-        queue[top++] = iter.next();
+      IntIterator it = p.iterator();
+      while (it.hasNext()) {
+        queue[top++] = it.nextInt();
       }
 
       while (top > 0) {
         int x = queue[--top];
-        TIntArrayList incoming = nonCycleIncomings[x];
+        IntList incoming = nonCycleIncoming[x];
         for (int i = 0; i < incoming.size(); i++) {
-          int y1 = collapsedTo[incoming.getQuick(i)];
+          int y1 = collapsedTo[incoming.getInt(i)];
           if (!dfsTree.isDescendant(y1, w)) {
             return false;
           }
@@ -90,9 +68,9 @@ public final class RichControlFlow {
         }
       }
 
-      iter = p.iterator();
-      while (iter.hasNext()) {
-        collapsedTo[iter.next()] = w;
+      it = p.iterator();
+      while (it.hasNext()) {
+        collapsedTo[it.next()] = w;
       }
     }
 

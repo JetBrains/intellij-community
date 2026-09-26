@@ -21,7 +21,8 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.LayoutManager;
 
 public final class GridChangeUtilTest extends TestCase {
 
@@ -193,7 +194,6 @@ public final class GridChangeUtilTest extends TestCase {
     assertComponentCellAndSpan(grid, 5, 0, 1);
   }
 
-  @SuppressWarnings({"PointlessArithmeticExpression"})
   public void test_insert_first() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.insertRowOrColumn(grid, 0, false, true);

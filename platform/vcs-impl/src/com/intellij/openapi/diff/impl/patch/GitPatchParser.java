@@ -1,24 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,16 +21,20 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.PatchContentParser.stripPatchNameIfNeeded;
 
-public class GitPatchParser {
-  @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
-  @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
-  @NonNls private static final Pattern ourIndexHeaderLinePattern =
+@ApiStatus.Internal
+public final class GitPatchParser {
+  private static final @NonNls String DIFF_GIT_HEADER_LINE = "diff --git";
+  private static final @NonNls Pattern SIMPLE_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*"); // NB: can't handle whitespaces in file names
+  private static final @NonNls Pattern AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " a/(.+) b/(.+)");
+  private static final @NonNls Pattern QUOTED_AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " \"a/(.+)\" \"b/(.+)\"\\s*");
+  private static final @NonNls Pattern ourIndexHeaderLinePattern =
     Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
-  // need to extend with rename/copy
-  @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
-  @NonNls private static final Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
+  private static final @NonNls Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s(.*)");
+  private static final @NonNls Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s(.*)");
+  private static final @NonNls Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
+  private static final @NonNls Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
 
-  @NonNls private static final String ourGitBinaryContentStart = "GIT binary patch";
+  private static final @NonNls String ourGitBinaryContentStart = "GIT binary patch";
   private static final Logger LOG = Logger.getInstance(GitPatchParser.class);
 
 
@@ -59,12 +54,12 @@ public class GitPatchParser {
         iterator.previous();
       }
       else if (contentParser.testIsStart(next)) {
-        patch = contentParser.readTextPatch(next, iterator, true);
+        patch = contentParser.readTextPatch(next, iterator);
       }
     }
     if (patch == null) {
       patch = new TextFilePatch(null);
-      //maybe an exception should be thrown!  
+      //maybe an exception should be thrown!
     }
     applyPatchInfo(patch, patchInfo);
     return patch;
@@ -79,13 +74,16 @@ public class GitPatchParser {
     int newFileMode = -1;
     Couple<String> sha1Indexes = null;
     if (beforeAfterName == null) {
-      throw new PatchSyntaxException(iterator.previousIndex(), "Can't detect file names from git format header line");
+      throw new PatchSyntaxException(iterator.previousIndex(),
+                                     VcsBundle.message("patch.can.t.detect.file.names.from.git.format.header.line"));
     }
+    boolean preferPatchInfoPaths = false;
     while (iterator.hasNext()) {
       String next = iterator.next();
       Matcher indexMatcher = ourIndexHeaderLinePattern.matcher(next);
       Matcher fileStatusMatcher = ourFileStatusPattern.matcher(next);
       Matcher fileModeMatcher = ourNewFileModePattern.matcher(next);
+      Matcher fileRenameFromMatcher = ourRenameFromPattern.matcher(next);
       try {
         if (fileStatusMatcher.matches()) {
           parsedStatus = parseFileStatus(fileStatusMatcher.group(1));
@@ -100,6 +98,17 @@ public class GitPatchParser {
         else if (indexMatcher.matches()) {
           sha1Indexes = Couple.of(indexMatcher.group(1), indexMatcher.group(2));
         }
+        else if (fileRenameFromMatcher.matches() && iterator.hasNext()) {
+          Matcher fileRenameToMatcher = ourRenameToPattern.matcher(iterator.next());
+          if (fileRenameToMatcher.matches()) {
+            beforeAfterName = Couple.of(VcsFileUtil.unescapeGitPath(fileRenameFromMatcher.group(1).trim()),
+                                        VcsFileUtil.unescapeGitPath(fileRenameToMatcher.group(1).trim()));
+            preferPatchInfoPaths = true; // this form has non-ambiguous parsing, prefer it to other sources
+          }
+          else {
+            iterator.previous();
+          }
+        }
         else if (contentParser.testIsStart(next) || next.startsWith(ourGitBinaryContentStart)) {
           iterator.previous();
           break;
@@ -109,54 +118,83 @@ public class GitPatchParser {
         LOG.debug("Can't parse file mode from " + next);
       }
     }
-    return new PatchInfo(beforeAfterName, sha1Indexes, parsedStatus, newFileMode);
+    return new PatchInfo(beforeAfterName, preferPatchInfoPaths, sha1Indexes, parsedStatus, newFileMode);
   }
 
   private static void applyPatchInfo(@NotNull FilePatch patch, @NotNull GitPatchParser.PatchInfo patchInfo) {
-    patch.setBeforeName(patchInfo.myBeforeName);
-    patch.setAfterName(patchInfo.myAfterName);
-    //remember sha-1 as version ids or set null if no info
-    patch.setBeforeVersionId(patchInfo.myBeforeIndex);
-    patch.setAfterVersionId(patchInfo.myAfterIndex);
+    if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
+
+    // 'patch.getBeforeName() | getAfterName()' values pre-filled from '--- a/1.txt | +++ b/1.txt' lines
+    if (patch.getBeforeName() == null || patchInfo.myPreferPatchInfoPaths) patch.setBeforeName(patchInfo.myBeforeName);
+    if (patch.getAfterName() == null || patchInfo.myPreferPatchInfoPaths) patch.setAfterName(patchInfo.myAfterName);
+    //remember sha-1 as version ids, but keep '(revision <hash>)' suffixes from TextPatchBuilder.REVISION_NAME_TEMPLATE
+    if (patchInfo.myBeforeIndex != null || patchInfo.myAfterIndex != null) {
+      patch.setBeforeVersionId(patchInfo.myBeforeIndex);
+      patch.setAfterVersionId(patchInfo.myAfterIndex);
+    }
     //set new file mode
     patch.setNewFileMode(patchInfo.myNewFileMode);
   }
 
 
-  @Nullable
-  private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
-    Matcher m = ourGitHeaderLinePattern.matcher(start);
-    return m.matches()
-           ? Couple.of(stripPatchNameIfNeeded(m.group(1), true, true), stripPatchNameIfNeeded(m.group(2), true, false))
-           : null;
+  private static @Nullable Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
+    Matcher m = AB_PREFIX_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    m = QUOTED_AB_PREFIX_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    m = SIMPLE_HEADER_PATTERN.matcher(start);
+    if (m.matches()) {
+      return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
+    }
+
+    return null;
   }
 
-  @NotNull
-  private static FileStatus parseFileStatus(@NotNull String status) {
-    if (status.startsWith("new")) {
+  private static @NotNull Couple<String> getFileNamesFromGitHeaderLine(@NotNull String path1, @NotNull String path2) {
+    return Couple.of(getFileNameFromGitHeaderLine(path1, true),
+                     getFileNameFromGitHeaderLine(path2, false));
+  }
+
+  private static @Nullable String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
+    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), before);
+  }
+
+  private static @NotNull FileStatus parseFileStatus(@NotNull String status) {
+    if (status.startsWith("new")) { //NON-NLS
       return FileStatus.ADDED;
     }
-    else if (status.startsWith("deleted")) return FileStatus.DELETED;
+    else if (status.startsWith("deleted")) return FileStatus.DELETED; //NON-NLS
     return FileStatus.MODIFIED;
   }
 
-  private static class PatchInfo {
-    @Nullable private final String myBeforeName;
-    @Nullable private final String myAfterName;
+  private static final class PatchInfo {
+    private final @Nullable String myBeforeName;
+    private final @Nullable String myAfterName;
+    private final boolean myPreferPatchInfoPaths;
 
-    @Nullable private final String myBeforeIndex;
-    @Nullable private final String myAfterIndex;
+    private final @Nullable @Nls String myBeforeIndex;
+    private final @Nullable @Nls String myAfterIndex;
 
     private final int myNewFileMode;
 
-    @NotNull private final FileStatus myFileStatus;
+    private final @NotNull FileStatus myFileStatus;
 
     private PatchInfo(@NotNull Couple<String> beforeAfterName,
-                      @Nullable Couple<String> indexes, @NotNull FileStatus status, int newFileMode) {
+                      boolean preferPatchInfoPaths,
+                      @Nullable Couple<@Nls String> indexes,
+                      @NotNull FileStatus status,
+                      int newFileMode) {
       myBeforeName = beforeAfterName.first;
       myAfterName = beforeAfterName.second;
-      myBeforeIndex = indexes != null ? indexes.first : null;
-      myAfterIndex = indexes != null ? indexes.second : null;
+      myPreferPatchInfoPaths = preferPatchInfoPaths;
+      myBeforeIndex = Pair.getFirst(indexes);
+      myAfterIndex = Pair.getSecond(indexes);
       myNewFileMode = newFileMode;
       myFileStatus = status;
     }

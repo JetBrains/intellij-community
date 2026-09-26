@@ -1,10 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaGlobalMemberLookupElement;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
-class StaticImportInsertHandler implements InsertHandler<JavaGlobalMemberLookupElement> {
+final class StaticImportInsertHandler implements InsertHandler<JavaGlobalMemberLookupElement> {
   public static final InsertHandler<JavaGlobalMemberLookupElement> INSTANCE = new StaticImportInsertHandler();
 
   private StaticImportInsertHandler() {
@@ -38,7 +43,7 @@ class StaticImportInsertHandler implements InsertHandler<JavaGlobalMemberLookupE
   }
 
   @Override
-  public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull JavaGlobalMemberLookupElement item) {
     GroovyInsertHandler.INSTANCE.handleInsert(context, item);
     final PsiMember member = item.getObject();
     PsiDocumentManager.getInstance(member.getProject()).commitDocument(context.getDocument());

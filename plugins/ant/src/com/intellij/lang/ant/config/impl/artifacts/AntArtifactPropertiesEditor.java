@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.artifacts;
 
 import com.intellij.lang.ant.AntBundle;
@@ -22,72 +8,87 @@ import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
 import com.intellij.lang.ant.config.impl.configuration.UIPropertyBinding;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.config.ListProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.TitledBorder;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
-/**
- * @author nik
- */
 public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("ant-properties");
   private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN =
-    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.name.column.name")) {
+    new ColumnInfo<>(AntBundle.message("edit.ant.properties.name.column.name")) {
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyName();
       }
 
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return USER_PROPERTY_CONDITION.value(buildFileProperty);
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String name) {
         buildFileProperty.setPropertyName(name);
       }
     };
   private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN =
-    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.value.column.name")) {
+    new ColumnInfo<>(AntBundle.message("edit.ant.properties.value.column.name")) {
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return USER_PROPERTY_CONDITION.value(buildFileProperty);
       }
 
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyValue();
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String value) {
         buildFileProperty.setPropertyValue(value);
       }
     };
-  private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
+  private static final ColumnInfo<BuildFileProperty, String>[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
   private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION =
     property -> !AntArtifactProperties.isPredefinedProperty(property.getPropertyName());
   private final AntArtifactProperties myProperties;
   private final ArtifactEditorContext myContext;
   private final AntConfigurationListener myAntConfigurationListener;
-  private JPanel myMainPanel;
-  private JCheckBox myRunTargetCheckBox;
-  private FixedSizeButton mySelectTargetButton;
+  private final JPanel myMainPanel;
+  private final JCheckBox myRunTargetCheckBox;
+  private final FixedSizeButton mySelectTargetButton;
   private final JBTable myPropertiesTable;
-  private JPanel myPropertiesPanel;
+  private final JPanel myPropertiesPanel;
   private AntBuildTarget myTarget;
   private final boolean myPostProcessing;
   private final UIPropertyBinding.TableListBinding<BuildFileProperty> myBinding;
@@ -97,19 +98,53 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties = properties;
     myContext = context;
     myPostProcessing = postProcessing;
-    mySelectTargetButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myMainPanel = new JPanel();
+      myMainPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myMainPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                  null, 0, false));
+      myRunTargetCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myRunTargetCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/AntBundle", "checkbox.ant.artifact.properties.run"));
+      panel1.add(myRunTargetCheckBox, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      mySelectTargetButton = new FixedSizeButton();
+      panel1.add(mySelectTargetButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                           null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      myMainPanel.add(spacer2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                   GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myPropertiesPanel = new JPanel();
+      myPropertiesPanel.setLayout(new BorderLayout(0, 0));
+      myPropertiesPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+      myMainPanel.add(myPropertiesPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, new Dimension(-1, 250), null, 1, false));
+      myPropertiesPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
+                                                                                                "messages/AntBundle", "table.title.ant.artifact.properties.editor"), TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                              TitledBorder.DEFAULT_POSITION, null, null));
+    }
+    mySelectTargetButton.addActionListener(e -> selectTarget());
+    myRunTargetCheckBox.addActionListener(e -> {
+      mySelectTargetButton.setEnabled(myRunTargetCheckBox.isSelected());
+      if (myRunTargetCheckBox.isSelected() && myTarget == null) {
         selectTarget();
       }
-    });
-    myRunTargetCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        mySelectTargetButton.setEnabled(myRunTargetCheckBox.isSelected());
-        if (myRunTargetCheckBox.isSelected() && myTarget == null) {
-          selectTarget();
-        }
-        updatePanel();
-      }
+      updatePanel();
     });
 
     myPropertiesTable = new JBTable();
@@ -117,39 +152,29 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myBinding = binding.bindList(myPropertiesTable, PROPERTY_COLUMNS, ANT_PROPERTIES);
     myPropertiesPanel.add(
       ToolbarDecorator.createDecorator(myPropertiesTable)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
-            if (myPropertiesTable.isEditing() && !myPropertiesTable.getCellEditor().stopCellEditing()) {
-              return;
-            }
-            BuildFileProperty item = new BuildFileProperty();
-            ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
-            items.add(item);
-            model.setItems(items);
-            int newIndex = model.indexOf(item);
-            ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
-            selectionModel.clearSelection();
-            selectionModel.setSelectionInterval(newIndex, newIndex);
-            ColumnInfo[] columns = model.getColumnInfos();
-            for (int i = 0; i < columns.length; i++) {
-              ColumnInfo column = columns[i];
-              if (column.isCellEditable(item)) {
-                myPropertiesTable.requestFocusInWindow();
-                myPropertiesTable.editCellAt(newIndex, i);
-                break;
-              }
+        .setAddAction(button -> {
+          ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
+          if (myPropertiesTable.isEditing() && !myPropertiesTable.getCellEditor().stopCellEditing()) {
+            return;
+          }
+          BuildFileProperty item = new BuildFileProperty();
+          ArrayList<BuildFileProperty> items = new ArrayList<>(model.getItems());
+          items.add(item);
+          model.setItems(items);
+          int newIndex = model.indexOf(item);
+          ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
+          selectionModel.clearSelection();
+          selectionModel.setSelectionInterval(newIndex, newIndex);
+          ColumnInfo[] columns = model.getColumnInfos();
+          for (int i = 0; i < columns.length; i++) {
+            ColumnInfo column = columns[i];
+            if (column.isCellEditable(item)) {
+              myPropertiesTable.requestFocusInWindow();
+              myPropertiesTable.editCellAt(newIndex, i);
+              break;
             }
           }
-        }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(myPropertiesTable);
-        }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
+        }).setRemoveAction(button -> TableUtil.removeSelectedItems(myPropertiesTable)).setRemoveActionUpdater(e -> {
           final ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
           ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
           boolean enable = false;
@@ -163,8 +188,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
             }
           }
           return enable;
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+        }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(context.getProject());
     myAntConfigurationListener = new AntConfigurationListener() {
       @Override
@@ -178,6 +202,53 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     antConfiguration.addAntConfigurationListener(myAntConfigurationListener);
   }
 
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myMainPanel; }
+
   private void selectTarget() {
     final TargetChooserDialog dialog = new TargetChooserDialog(myContext.getProject(), myTarget);
     if (dialog.showAndGet()) {
@@ -188,19 +259,21 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private void updatePanel() {
     if (myTarget != null) {
-      myRunTargetCheckBox.setText("Run Ant target '" + myTarget.getName() + "'");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.named.ant.target", myTarget.getDisplayName()));
     }
     else {
-      myRunTargetCheckBox.setText("Run Ant target <none>");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.unknown.ant.target"));
     }
     final boolean enabled = myTarget != null && myRunTargetCheckBox.isSelected();
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);
   }
 
-  public String getTabName() {
-    return myPostProcessing ? POST_PROCESSING_TAB : PRE_PROCESSING_TAB;
+  @Override
+  public @Nls String getTabName() {
+    return myPostProcessing ? POST_PROCESSING_TAB_POINTER.get() : PRE_PROCESSING_TAB_POINTER.get();
   }
 
+  @Override
   public void apply() {
     myProperties.setEnabled(myRunTargetCheckBox.isSelected());
     if (myTarget != null) {
@@ -224,23 +297,26 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return ContainerUtil.filter(allProperties, USER_PROPERTY_CONDITION);
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     if (myProperties.isEnabled() != myRunTargetCheckBox.isSelected()) return true;
     if (myTarget == null) {
       return myProperties.getFileUrl() != null;
     }
-    if (!Comparing.equal(myTarget.getName(), myProperties.getTargetName())) return true;
+    if (!Objects.equals(myTarget.getName(), myProperties.getTargetName())) return true;
 
     final VirtualFile file = myTarget.getModel().getBuildFile().getVirtualFile();
-    if (file != null && !Comparing.equal(file.getUrl(), myProperties.getFileUrl())) return true;
+    if (file != null && !Objects.equals(file.getUrl(), myProperties.getFileUrl())) return true;
 
     return !getUserProperties().equals(myProperties.getUserProperties());
   }
 
+  @Override
   public void reset() {
     myRunTargetCheckBox.setSelected(myProperties.isEnabled());
     myTarget = myProperties.findTarget(AntConfiguration.getInstance(myContext.getProject()));
@@ -253,6 +329,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     updatePanel();
   }
 
+  @Override
   public void disposeUIResources() {
     AntConfiguration.getInstance(myContext.getProject()).removeAntConfigurationListener(myAntConfigurationListener);
   }

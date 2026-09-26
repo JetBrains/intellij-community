@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,12 +12,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Component;
 
-/**
-* @author nik
-*/
 public abstract class LibraryEditorDialogBase extends DialogWrapper {
   protected JTextField myNameField;
   private final LibraryRootsComponent myLibraryRootsComponent;
@@ -40,7 +24,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     super(parent, true);
     myLibraryRootsComponent = libraryRootsComponent;
     libraryRootsComponent.resetProperties();
-    setTitle(ProjectBundle.message("library.configure.title"));
+    setTitle(JavaUiBundle.message("library.configure.title"));
     Disposer.register(getDisposable(), myLibraryRootsComponent);
   }
 
@@ -68,18 +52,18 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
 
   protected boolean validateAndApply() {
     String newName = myNameField.getText().trim();
-    if (newName.length() == 0) {
+    if (newName.isEmpty()) {
       newName = null;
     }
     if (shouldCheckName(newName)) {
       final LibraryTable.ModifiableModel tableModifiableModel = getTableModifiableModel();
-      if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTable)) {
+      if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTableBase)) {
         if (newName == null) {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.not.specified.error", newName), ProjectBundle.message("library.name.not.specified.title"));
+          Messages.showErrorDialog(JavaUiBundle.message("library.name.not.specified.error"), JavaUiBundle.message("library.name.not.specified.title"));
           return false;
         }
         if (LibraryEditingUtil.libraryAlreadyExists(tableModifiableModel, newName)) {
-          Messages.showErrorDialog(ProjectBundle.message("library.name.already.exists.error", newName), ProjectBundle.message("library.name.already.exists.title"));
+          Messages.showErrorDialog(JavaUiBundle.message("library.name.already.exists.error", newName), JavaUiBundle.message("library.name.already.exists.title"));
           return false;
         }
       }
@@ -91,8 +75,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
 
   protected abstract boolean shouldCheckName(String newName);
 
-  @Nullable
-  protected LibraryTable.ModifiableModel getTableModifiableModel() {
+  protected @Nullable LibraryTable.ModifiableModel getTableModifiableModel() {
     return null;
   }
 
@@ -106,7 +89,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     myNameField = new JTextField(currentName);
     myNameField.selectAll();
 
-    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent("&Name:", myNameField);
+    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(JavaUiBundle.message("label.library.name"), myNameField);
     addNorthComponents(formBuilder);
     return formBuilder.addVerticalGap(10).getPanel();
   }

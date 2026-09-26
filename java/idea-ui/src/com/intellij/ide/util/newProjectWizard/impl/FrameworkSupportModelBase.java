@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
@@ -32,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -41,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportModelBase extends UserDataHolderBase implements FrameworkSupportModel {
   private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
@@ -62,10 +46,9 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myLibrariesContainer = librariesContainer;
   }
 
-  @NotNull
-  public abstract String getBaseDirectoryForLibrariesPath();
+  public abstract @NotNull String getBaseDirectoryForLibrariesPath();
 
-  public void registerComponent(@NotNull final FrameworkSupportInModuleProvider provider, @NotNull final FrameworkSupportNode node) {
+  public void registerComponent(final @NotNull FrameworkSupportInModuleProvider provider, final @NotNull FrameworkSupportNode node) {
     mySettingsMap.put(provider.getFrameworkType().getId(), node);
   }
 
@@ -73,25 +56,29 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myOptionsComponentsMap.put(provider.getFrameworkType().getId(), component);
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
   }
 
-  public boolean isFrameworkSelected(@NotNull @NonNls final String providerId) {
+  @Override
+  public boolean isFrameworkSelected(final @NotNull @NonNls String providerId) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     return node != null && node.isChecked();
   }
 
-  public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
+  @Override
+  public void addFrameworkListener(final @NotNull FrameworkSupportModelListener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable) {
+  public void addFrameworkListener(final @NotNull FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
@@ -99,11 +86,13 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myVersionEventDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void removeFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
+  @Override
+  public void removeFrameworkListener(final @NotNull FrameworkSupportModelListener listener) {
     myDispatcher.removeListener(listener);
   }
 
-  public void setFrameworkComponentEnabled(@NotNull @NonNls final String providerId, final boolean enable) {
+  @Override
+  public void setFrameworkComponentEnabled(final @NotNull @NonNls String providerId, final boolean enable) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node != null && enable != node.isChecked()) {
       node.setChecked(enable);
@@ -127,6 +116,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     }
   }
 
+  @Override
   public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
     FrameworkSupportConfigurable configurable = findFrameworkConfigurable(providerId);
     if (configurable == null) {
@@ -135,9 +125,8 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     return configurable;
   }
 
-  @Nullable
   @Override
-  public FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId) {
+  public @Nullable FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node == null) {
       return null;
@@ -164,7 +153,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   private static boolean hasParentWithId(final FrameworkSupportNode node, @NotNull String frameworkOrGroupId) {
-    FrameworkSupportNodeBase current = node;
+    FrameworkSupportNodeBase<?> current = node;
     while (current != null) {
       if (current.getId().equals(frameworkOrGroupId)) return true;
       current = current.getParentNode();
@@ -183,14 +172,13 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     }
   }
 
-  @Nullable
-  public <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
+  @SuppressWarnings("unchecked")
+  public @Nullable <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
     return (V)mySelectedVersions.get(frameworkOrGroupId);
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
     final FrameworkSupportInModuleProvider provider = node.getUserObject();
-    //todo[nik]
     boolean checked = node.isChecked();
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();
@@ -218,8 +206,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myDispatcher.getMulticaster().wizardStepUpdated();
   }
 
-  @NotNull
-  public LibrariesContainer getLibrariesContainer() {
+  public @NotNull LibrariesContainer getLibrariesContainer() {
     return myLibrariesContainer;
   }
 
@@ -228,7 +215,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myVersionEventDispatcher.getMulticaster().versionChanged(getSelectedVersion(id));
   }
 
-  public String getFrameworkVersion(String id) {
+  public @NlsSafe String getFrameworkVersion(String id) {
     FrameworkVersion version = mySelectedVersions.get(id);
     return version == null ? myFrameworkVersions.get(id) : version.getVersionNumber();
   }

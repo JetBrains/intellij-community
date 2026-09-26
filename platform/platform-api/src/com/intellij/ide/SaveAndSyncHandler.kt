@@ -1,0 +1,119 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide
+
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+
+abstract class SaveAndSyncHandler {
+  companion object {
+    @JvmStatic
+    fun getInstance(): SaveAndSyncHandler = service()
+  }
+
+  protected val externalChangesModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
+
+  /**
+   * If a project is specified - only project settings will be saved.
+   * If a project is not specified - app and all project settings will be saved.
+   */
+  data class SaveTask @JvmOverloads constructor(val project: Project? = null, val forceSavingAllSettings: Boolean = false)
+
+  @ApiStatus.Internal
+  abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean)
+
+  fun scheduleSave(task: SaveTask) {
+    scheduleSave(task, forceExecuteImmediately = false)
+  }
+
+  @JvmOverloads
+  fun scheduleProjectSave(project: Project, forceSavingAllSettings: Boolean = false) {
+    scheduleSave(SaveTask(project, forceSavingAllSettings = forceSavingAllSettings))
+  }
+
+  abstract fun scheduleRefresh()
+
+  @ApiStatus.Internal
+  open fun scheduleRefresh(paths: Collection<Path>) {
+    if (paths.isNotEmpty()) {
+      scheduleRefresh()
+    }
+  }
+
+  abstract fun refreshOpenFiles()
+
+  open fun <T> withDisabledAutoSaveBlocking(action: () -> T): T {
+    return action()
+  }
+
+  open suspend fun <T> withDisabledAutoSave(action: suspend CoroutineScope.() -> T): T {
+    return coroutineScope { action() }
+  }
+
+  abstract fun blockSaveOnFrameDeactivation()
+
+  abstract fun unblockSaveOnFrameDeactivation()
+
+  abstract fun blockSyncOnFrameActivation()
+
+  abstract fun unblockSyncOnFrameActivation()
+
+  /**
+   * Suppresses ONLY the periodic background VFS refresh (the loop that runs while the user is idle
+   * or the IDE frame is unfocused).
+   *
+   * Unlike [blockSyncOnFrameActivation], refresh-on-frame-activation, scheduled refreshes and
+   * [maybeRefresh] keep working while suppressed, so the IDE still picks up external file changes.
+   * Close the returned token to resume periodic refresh. Reentrant (counted).
+   *
+   * @param reason human-readable cause
+   */
+  @ApiStatus.Internal
+  open fun suppressPeriodicRefresh(reason: String): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
+  @ApiStatus.Internal
+  abstract fun maybeRefresh(modalityState: ModalityState)
+
+  /**
+   * Saves only the settings of [componentManager] under modal progress on the EDT.
+   */
+  @ApiStatus.Internal
+  abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
+
+  /**
+   * Saves the specified stores on the EDT. Returns `true` if every save succeeds.
+   */
+  @ApiStatus.Internal
+  open fun saveSettingsUnderModalProgress(componentManagers: List<ComponentManager>): Boolean {
+    var saved = true
+    for (componentManager in componentManagers) {
+      saved = saveSettingsUnderModalProgress(componentManager) && saved
+    }
+    return saved
+  }
+
+  /**
+   * @return a modification tracker incrementing when external commands are likely run.
+   *         Currently, it happens on IDE frame deactivation and/or [scheduleRefresh] invocation.
+   */
+  @ApiStatus.Experimental
+  fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+interface SaveAndSyncHandlerListener {
+  suspend fun beforeRefresh() {
+  }
+
+  suspend fun beforeSave(task: SaveAndSyncHandler.SaveTask, forceExecuteImmediately: Boolean) {
+  }
+}

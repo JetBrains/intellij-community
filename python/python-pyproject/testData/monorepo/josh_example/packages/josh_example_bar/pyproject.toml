@@ -1,0 +1,16 @@
+[project]
+name = "josh_example_bar"
+version = "0.1.0"
+description = "example multi-project"
+authors = [
+    { name = "Josh Taylor", email = "joshuataylorx@gmail.com" },
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = { text = "OpenSource" }
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

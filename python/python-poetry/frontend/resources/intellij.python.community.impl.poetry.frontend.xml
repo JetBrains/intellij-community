@@ -1,0 +1,12 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij"><python.pytools.pyToolFrontend implementation="com.intellij.python.community.impl.poetry.frontend.PoetryPyToolFrontend"/></extensions>
+</idea-plugin>

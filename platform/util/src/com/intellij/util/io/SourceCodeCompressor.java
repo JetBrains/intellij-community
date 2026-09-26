@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NonNls;
@@ -24,12 +6,13 @@ import org.jetbrains.annotations.NonNls;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class SourceCodeCompressor {
+public final class SourceCodeCompressor {
   private static final VaultOutputStream OUTPUT;
   private static final byte[] PRESET_BUF;
   private static final Deflater DEFLATER;
@@ -40,7 +23,7 @@ public class SourceCodeCompressor {
   }
 
   static {
-    @NonNls final String preset_buf_string =
+    final @NonNls String preset_buf_string =
       "                   ;\r\n\r\n\r\n\r\n\n\n\n { {\r\n }\r\n = == != < > >= <= ? : ++ += -- -= [] [i] () ()) ())) (); ()); ())); () {" +
       "// /* /** */ * opyright (c)package com.import java.utilimport javax.swingimport java.awt" +
       "import com.intellijimport org.import gnu.*;new super(this(public interface extends implements " +
@@ -53,7 +36,7 @@ public class SourceCodeCompressor {
       "<html>/>\r\n<head</head><body bgcolor=</body>table<?xml version=\"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML" +
       "titleframecaret<a href=\"http://</a><div </div><td </td><tr </tr><p </p><hscripttext/css<img src=" +
       "<!--><link rel=width=height=align=span=centerrightleftstyle=celljsp:rootxmlns:avascript";
-    PRESET_BUF = preset_buf_string.getBytes();
+    PRESET_BUF = preset_buf_string.getBytes(StandardCharsets.UTF_8);
     OUTPUT = new VaultOutputStream();
     DEFLATER = new Deflater(Deflater.BEST_COMPRESSION);
     INFLATER = new Inflater();
@@ -65,15 +48,8 @@ public class SourceCodeCompressor {
       DEFLATER.reset();
       DEFLATER.setDictionary(PRESET_BUF);
       try {
-        DeflaterOutputStream output = null;
-        try {
-          output = new DeflaterOutputStream(OUTPUT, DEFLATER);
+        try (DeflaterOutputStream output = new DeflaterOutputStream(OUTPUT, DEFLATER)) {
           output.write(source, off, len);
-        }
-        finally {
-          if (output != null) {
-            output.close();
-          }
         }
       }
       catch (IOException e) {
@@ -99,9 +75,7 @@ public class SourceCodeCompressor {
 
   public static byte[] decompress(final byte[] compressed, final int len, final int off) throws IOException {
     INFLATER.reset();
-    InflaterInputStream input = null;
-    try {
-      input = new InflaterInputStream(new ByteArrayInputStream(compressed, off, len), INFLATER);
+    try (InflaterInputStream input = new InflaterInputStream(new ByteArrayInputStream(compressed, off, len), INFLATER)) {
       final int b = input.read();
       if (b == -1) {
         INFLATER.setDictionary(PRESET_BUF);
@@ -116,19 +90,16 @@ public class SourceCodeCompressor {
       return OUTPUT.toByteArray();
     }
     finally {
-      if (input != null) {
-        input.close();
-      }
       OUTPUT.reset();
     }
   }
 
-  private static class VaultOutputStream extends ByteArrayOutputStream {
+  private static final class VaultOutputStream extends ByteArrayOutputStream {
 
     private static final int MIN_BUF_SIZE = 0x10000;
     private final byte[] MIN_BUFFER;
 
-    public VaultOutputStream() {
+    VaultOutputStream() {
       super(MIN_BUF_SIZE);
       MIN_BUFFER = buf;
     }

@@ -1,0 +1,6 @@
+// "Add '<*>'" "true"
+// K2_ERROR: NO_TYPE_ARGUMENTS_ON_RHS
+public fun foo(a: Any) {
+    a is List<caret>
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddStarProjectionsFix

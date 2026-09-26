@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.model.Model;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +14,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalProject extends Model, Serializable {
 
@@ -36,6 +22,22 @@ public interface ExternalProject extends Model, Serializable {
 
   @NotNull
   String getId();
+
+  /**
+   * @return The Gradle path of the project as evaluated by org.gradle.api.Project.path
+   * Note, that for tooling purposes you might almost always want to use getIdentityPath() instead.
+   */
+  @NotNull
+  String getPath();
+
+  /**
+   * @return The Gradle path of the project in the current build context.
+   * This might not be the same as .getPath() e.g. for composite builds
+   * However, this path has to be used to construct proper paths for tasks to execute.
+   * Contrary to .getPath() this path is expected to be unique
+   */
+  @NotNull
+  String getIdentityPath();
 
   @NotNull
   String getName();
@@ -52,8 +54,16 @@ public interface ExternalProject extends Model, Serializable {
   @NotNull
   String getVersion();
 
+  @ApiStatus.Experimental
+  @Nullable
+  String getSourceCompatibility();
+
+  @ApiStatus.Experimental
+  @Nullable
+  String getTargetCompatibility();
+
   @NotNull
-  Map<String, ExternalProject> getChildProjects();
+  Map<String, ? extends ExternalProject> getChildProjects();
 
   @NotNull
   File getProjectDir();
@@ -65,33 +75,13 @@ public interface ExternalProject extends Model, Serializable {
   File getBuildFile();
 
   @NotNull
-  Map<String, ExternalTask> getTasks();
-
-  //@NotNull
-  //Map<String, ExternalConfiguration> getConfigurations();
-
-  //@NotNull
-  //List<ExternalRepository> getRepositories();
+  Map<String, ? extends ExternalTask> getTasks();
 
   @NotNull
-  Map<String, ExternalPlugin> getPlugins();
-
-  //@NotNull
-  //ExternalProjectBuild getBuild();
-
-  @NotNull
-  Map<String, ?> getProperties();
-
-  @Nullable
-  Object getProperty(String name);
-
-  @NotNull
-  Map<String, ExternalSourceSet> getSourceSets();
+  Map<String, ? extends ExternalSourceSet> getSourceSets();
 
   /**
    * The paths where the artifacts is constructed
-   *
-   * @return
    */
   @NotNull
   List<File> getArtifacts();
@@ -103,4 +93,10 @@ public interface ExternalProject extends Model, Serializable {
    */
   @NotNull
   Map<String, Set<File>> getArtifactsByConfiguration();
+
+  @ApiStatus.Internal
+  @NotNull GradleSourceSetModel getSourceSetModel();
+
+  @ApiStatus.Internal
+  @NotNull GradleTaskModel getTaskModel();
 }

@@ -1,37 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.compiler.ant.Generator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.AntCopyInstructionCreator;
-import com.intellij.packaging.elements.ArtifactAntGenerationContext;
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public ArtifactRootElementImpl() {
     super(PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE);
   }
 
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  @Override
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new PackagingElementPresentation() {
       @Override
-      public String getPresentableName() {
-        return CompilerBundle.message("packaging.element.text.output.root");
+      public @NlsContexts.Label String getPresentableName() {
+        return JavaCompilerBundle.message("packaging.element.text.output.root");
       }
 
       @Override
@@ -48,11 +48,13 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     };
   }
 
+  @Override
   public Object getState() {
     return null;
   }
 
-  public void loadState(@Nullable Object state) {
+  @Override
+  public void loadState(@NotNull Object state) {
   }
 
   @Override
@@ -60,16 +62,11 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     return false;
   }
 
+  @Override
   public void rename(@NotNull String newName) {
   }
 
-  @NotNull
-  public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
-                                                          @NotNull ArtifactAntGenerationContext generationContext,
-                                                          @NotNull ArtifactType artifactType) {
-    return computeChildrenGenerators(resolvingContext, creator, generationContext, artifactType);
-  }
-
+  @Override
   public String getName() {
     return "";
   }
@@ -77,5 +74,24 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   @Override
   public String toString() {
     return "<root>";
+  }
+
+  @Override
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
+
+    List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> children = ContainerUtil.map(this.getChildren(), o -> {
+      return o.getOrAddEntityBuilder(diff, source, project);
+    });
+
+    ArtifactRootElementEntity entity = diff.addEntity(ArtifactRootElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setChildren(children);
+      return Unit.INSTANCE;
+    }));
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 }

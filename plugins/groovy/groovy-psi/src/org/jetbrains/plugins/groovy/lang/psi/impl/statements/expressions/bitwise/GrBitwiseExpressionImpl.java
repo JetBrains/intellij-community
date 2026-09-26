@@ -20,14 +20,12 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
-/**
- * @author ilyas
- */
 public class GrBitwiseExpressionImpl extends GrBinaryExpressionImpl {
   public GrBitwiseExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Bitwise expression";
   }

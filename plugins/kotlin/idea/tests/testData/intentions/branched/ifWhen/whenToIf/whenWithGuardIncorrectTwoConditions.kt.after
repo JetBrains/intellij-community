@@ -1,0 +1,10 @@
+// WITH_STDLIB
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: COMMA_IN_WHEN_CONDITION_WITH_WHEN_GUARD
+
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+private fun test(s: Any) {
+    if (s is String || s is Int && s > 5) { println("1") }
+    else { println("2") }
+}

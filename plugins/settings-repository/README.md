@@ -2,8 +2,6 @@
 
 Available for all IntelliJ Platform based products (build number greater than 139.69/140.2). Settings | Plugins | Browse repositories -> type in Settings Repository.
 
-Since version 0.2.11 Java 8 is required (IntelliJ IDEA 15 EAP bundled with Java 8). Use IDE builds \*-custom-jdk-bundled.*.
-
 Don't try to install plugin from disk — otherwise you have to be aware of compatibility.
 
 # Configuration
@@ -11,7 +9,7 @@ Don't try to install plugin from disk — otherwise you have to be aware of comp
 Use File -> Settings Repository… to configure.
 
 Specify URL of upstream Git repository. File URL is supported, you will be prompted to init repository if specified path is not exists or repository is not created.
-[GitHub](www.github.com) could be used to store settings.
+[GitHub](https://www.github.com) could be used to store settings.
 
 Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using "VCS -> Sync Settings". The idea is do not disturb you. If you invoke such actions, so, you are ready to solve possible problems.
 

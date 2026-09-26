@@ -1,30 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
 
-class MoreInfoMessageDialog extends MessageDialog {
-  @Nullable private final String myInfoText;
+final class MoreInfoMessageDialog extends MessageDialog {
+  private final @Nullable @Nls String myInfoText;
 
-  public MoreInfoMessageDialog(Project project,
-                               String message,
-                               @Nls(capitalization = Nls.Capitalization.Title) String title,
-                               @Nullable String moreInfo,
-                               @NotNull String[] options,
-                               int defaultOptionIndex,
-                               int focusedOptionIndex,
-                               Icon icon) {
+  MoreInfoMessageDialog(Project project,
+                        @NlsContexts.DialogMessage String message,
+                        @Nls(capitalization = Nls.Capitalization.Title) String title,
+                        @Nullable @Nls String moreInfo,
+                        String @NotNull [] options,
+                        int defaultOptionIndex,
+                        int focusedOptionIndex,
+                        Icon icon) {
     super(project);
     myInfoText = moreInfo;
-    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, null);
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
   }
 
   @Override

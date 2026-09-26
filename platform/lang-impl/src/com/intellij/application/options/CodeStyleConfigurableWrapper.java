@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -6,32 +6,38 @@ import com.intellij.application.options.codeStyle.CodeStyleSettingsPanelFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class CodeStyleConfigurableWrapper
-  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
-  private boolean myInitialResetInvoked;
-  protected CodeStyleMainPanel myPanel;
+  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable, Configurable.InnerWithModifiableParent {
+
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesConfigurable myOwner;
 
-  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider, @NotNull CodeStyleSettingsPanelFactory factory, CodeStyleSchemesConfigurable owner) {
+  private @Nullable CodeStyleMainPanel myPanel;
+  private boolean myInitialResetInvoked = false;
+
+  @ApiStatus.Internal
+  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider,
+                                      @NotNull CodeStyleSettingsPanelFactory factory,
+                                      @NotNull CodeStyleSchemesConfigurable owner) {
     myProvider = provider;
     myFactory = factory;
     myOwner = owner;
-    myInitialResetInvoked = false;
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     String displayName = myProvider.getConfigurableDisplayName();
     if (displayName != null) return displayName;
 
@@ -46,9 +52,13 @@ public class CodeStyleConfigurableWrapper
   @Override
   public JComponent createComponent() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel;
+  }
+
+  public void setSchemesPanelVisible(boolean isVisible) {
+    if (myPanel != null) myPanel.setSchemesPanelVisible(isVisible);
   }
 
   protected boolean canBeShared() {
@@ -99,9 +109,13 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  @NotNull
-  public String getId() {
-    return getConfigurableId(getDisplayName());
+  public @NotNull String getId() {
+    return myProvider.getConfigurableId();
+  }
+
+  @Override
+  public @NotNull Class<?> getOriginalClass() {
+    return myProvider.getClass();
   }
 
   @Override
@@ -109,10 +123,8 @@ public class CodeStyleConfigurableWrapper
     if (myPanel != null) {
       myPanel.disposeUIResources();
     }
-  }
-
-  public boolean isPanelModified(CodeStyleScheme scheme) {
-    return myPanel != null && myPanel.isModified(scheme);
+    myPanel = null;
+    myInitialResetInvoked = false;
   }
 
   public boolean isPanelModified() {
@@ -126,11 +138,25 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public Set<String> processListOptions() {
+  public @NotNull Set<String> processListOptions() {
+    return getOptionIndexer().processListOptions();
+  }
+
+  @Override
+  public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
+    return getOptionIndexer().processListOptionsWithPaths();
+  }
+
+  private @NotNull OptionsContainingConfigurable getOptionIndexer() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
-    return myPanel.processListOptions();
+    return myPanel.getOptionIndexer();
+  }
+
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    selectTab(label);
   }
 
   public void selectTab(@NotNull String tab) {
@@ -138,8 +164,18 @@ public class CodeStyleConfigurableWrapper
     myPanel.showTabOnCurrentPanel(tab);
   }
 
-  @NotNull
-  public static String getConfigurableId(String configurableDisplayName) {
-    return "preferences.sourceCode." + configurableDisplayName;
+  @Override
+  public @NotNull List<Configurable> getModifiableParents() {
+    return List.of(myOwner);
+  }
+
+  @Override
+  public @Nullable Runnable enableSearch(String option) {
+    return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
+  }
+
+  @ApiStatus.Internal
+  public CodeStyleSettingsProvider getSettingsProvider() {
+    return myProvider;
   }
 }

@@ -1,0 +1,343 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util;
+
+import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.system.LowLevelLocalMachineAccess;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+/// A utility class for reading shell environment.
+/// Use in two steps: first, call one of `*command` methods to prepare a command,
+/// then run it with [#readEnvironment(ProcessBuilder, long)].
+///
+/// @since 2025.3
+/// @see com.intellij.platform.eel.EelExecApiHelpersKt#environmentVariables
+@ApiStatus.Experimental
+@LowLevelLocalMachineAccess
+public final class ShellEnvironmentReader {
+  private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
+
+  private static final Logger LOG = Logger.getInstance(ShellEnvironmentReader.class);
+
+  private static final String OUTPUT_PLACEHOLDER = "__OUTPUT_PLACEHOLDER__";
+  private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
+  private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  private static final long DEFAULT_TIMEOUT_MILLIS = 20_000L;
+
+  private ShellEnvironmentReader() { }
+
+  /// Prepares a command for reading the environment from the given shell (or from the user's shell if `null`);
+  /// optionally runs the given script with given parameters before reading.
+  public static @NotNull ProcessBuilder shellCommand(@Nullable String shell, @Nullable Path shFile, @Nullable List<@NotNull String> args) {
+    return shellCommand(shell, shFile, true, args);
+  }
+
+  /// Prepares a command for reading the environment from the given shell (or from the user's shell if `null`);
+  /// optionally runs the given script with given parameters before reading.
+  public static @NotNull ProcessBuilder shellCommand(
+    @Nullable String shell,
+    @Nullable Path shFile,
+    boolean interactive,
+    @Nullable List<@NotNull String> args
+  ) {
+    if (shell == null) {
+      shell = System.getenv("SHELL");
+      if (shell == null || shell.isBlank()) throw new IllegalStateException("'SHELL' environment variable is not set");
+    }
+
+    if (shFile != null && !Files.exists(shFile)) throw new IllegalArgumentException("Missing: " + shFile);
+
+    var command = new ArrayList<String>();
+
+    command.add(shell);
+
+    var name = Path.of(shell).getFileName().toString();
+
+    if (!("csh".equals(name) || "tcsh".equals(name))) {
+      // Csh/Tcsh does not allow using `-l` with any other options
+      command.add("-l");
+    }
+
+    if (interactive && !"fish".equals(name)) {
+      // Fish uses a single config file with conditions
+      command.add("-i");
+    }
+
+    var useBinEnv = OS.CURRENT != OS.macOS || OS.CURRENT.isAtLeast(13, 0);
+    var reader = useBinEnv ? "/usr/bin/env -0" : "'" + PathManager.findBinFileWithException("printenv") + "'";
+    if (shFile != null) {
+      if ("nu".equals(name) || "pwsh".equals(name) || "xonsh".equals(name))
+        throw new UnsupportedOperationException("Sourcing external scripts is not supported for '" + name + "'");
+      reader = ". '" + shFile + "' && " + reader;
+    }
+    command.add("-c");
+    if ("nu".equals(name)) {
+      command.add((reader.charAt(0) == '\'' ? "^" : "") + reader + " out> '" + OUTPUT_PLACEHOLDER + "'");
+    }
+    else if ("pwsh".equals(name) && reader.charAt(0) == '\'') {
+      command.add("&" + reader + " > '" + OUTPUT_PLACEHOLDER + "'");
+    }
+    else if ("xonsh".equals(name) && reader.charAt(0) == '\'') {
+      command.add("$[" + reader + " > '" + OUTPUT_PLACEHOLDER + "']");
+    }
+    else {
+      command.add(reader + " > '" + OUTPUT_PLACEHOLDER + "'");
+    }
+    // positional parameters for the '-c' script ($0, etc.)
+    if (shFile != null && args != null) {
+      command.add(shell);
+      command.addAll(args);
+    }
+
+    var processBuilder = new ProcessBuilder(command);
+    setWorkingDir(shFile, processBuilder);
+
+    if ("zsh".equals(name)) {
+      processBuilder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+    }
+
+    return processBuilder;
+  }
+
+  /// Prepares a command for reading the environment from the Windows shell;
+  /// optionally runs the given script with given parameters before reading.
+  public static @NotNull ProcessBuilder winShellCommand(@Nullable Path batFile, @Nullable List<@NotNull String> args) {
+    if (batFile != null && !Files.exists(batFile)) throw new IllegalArgumentException("Missing: " + batFile);
+
+    var callArgs = new ArrayList<String>();
+    if (batFile != null) {
+      callArgs.add("call");
+      callArgs.add(batFile.toString());
+      if (args != null) {
+        callArgs.addAll(args);
+      }
+      callArgs.add("&&");
+    }
+    callArgs.add(javaExePath());
+    callArgs.add("-cp");
+    callArgs.add(readEnvClasspath());
+    callArgs.add(ReadEnv.class.getName());
+    callArgs.add(OUTPUT_PLACEHOLDER);
+    callArgs.add("||");
+    callArgs.add("exit");
+    callArgs.add("/B");
+    callArgs.add("%ERRORLEVEL%");
+
+    var processBuilder = new ProcessBuilder(CommandLineUtil.getWinShellName(), "/c", prepareCallArgs(callArgs));
+    setWorkingDir(batFile, processBuilder);
+    return processBuilder;
+  }
+
+  @SuppressWarnings("GrazieInspection")
+  private static String prepareCallArgs(List<String> callArgs) {
+    var preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
+    var firstArg = preparedCallArgs.removeFirst();
+    preparedCallArgs.addFirst(CommandLineUtil.escapeParameterOnWindows(firstArg, false));
+    // for `cmd.exe`, we need to add extra double quotes for the actual command in call
+    // to mitigate possible JVM issue when argument contains spaces and the first word
+    // starts with double quote and the last ends with double quote and JVM does not
+    // wrap the argument with double quotes
+    // Example: callArgs = ["\"C:\\New Folder\aa\"", "\"C:\\New Folder\aa\""]
+    return '\"' + String.join(" ", preparedCallArgs) + "\"";
+  }
+
+  /// Prepares a command for reading the environment from PowerShell;
+  /// optionally runs the given script with given parameters before reading.
+  @SuppressWarnings("SpellCheckingInspection")
+  public static @NotNull ProcessBuilder powerShellCommand(@Nullable Path psFile, @Nullable List<@NotNull String> args) {
+    if (psFile != null && !Files.exists(psFile)) throw new IllegalArgumentException("Missing: " + psFile);
+
+    var innerScriptlet = "";
+    if (psFile != null) {
+      var argsStr = args == null ? "" : String.join(" ", args);
+      innerScriptlet = String.format(Locale.ROOT, "& '%s' %s ; if (-not $?) { exit $LASTEXITCODE }; ", psFile, argsStr);
+    }
+
+    @SuppressWarnings("GrazieInspection")
+    var scriptlet = String.format(
+      Locale.ROOT,
+      "& { %s & '%s' -cp '%s' %s '%s' ; exit $LASTEXITCODE }",
+      innerScriptlet, javaExePath(), readEnvClasspath(), ReadEnv.class.getName(), OUTPUT_PLACEHOLDER
+    );
+
+    var ps7 = PathEnvironmentVariableUtil.findFirst("pwsh");
+    var ps7or5 = ps7 != null ? ps7.toString() : "powershell.exe";
+    var processBuilder = new ProcessBuilder(ps7or5, "-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", scriptlet);
+    setWorkingDir(psFile, processBuilder);
+    return processBuilder;
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  private static void setWorkingDir(@Nullable Path file, ProcessBuilder processBuilder) {
+    if (file != null) {
+      processBuilder.directory(file.getParent().toFile());
+    }
+  }
+
+  private static String javaExePath() {
+    return Path.of(System.getProperty("java.home"), "bin\\java.exe").toString();
+  }
+
+  private static String readEnvClasspath() {
+    var cp = PathManager.getJarPathForClass(ReadEnv.class);
+    if (cp == null) throw new IllegalStateException("Cannot find the '" +  ReadEnv.class.getName() + "' class path");
+    return cp;
+  }
+
+  /// Runs the given command.
+  /// Returns the loaded environment and the command output (stdout/stderr combined).
+  @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresReadLockAbsence(generateAssertion = false)
+  public static @NotNull Pair<@NotNull Map<String, String>, @NotNull String> readEnvironment(
+    @NotNull ProcessBuilder command,
+    long timeoutMillis
+  ) throws IOException {
+    if (timeoutMillis > ALLOWED_TIMEOUT_THRESHOLD) { // same as OSProcessHandler.ALLOWED_TIMEOUT_THRESHOLD
+      SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+    }
+
+    if (timeoutMillis <= 0) timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
+
+    var tmpDir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir")));
+    var mark = ProcessHandle.current().pid() + "." + System.nanoTime();
+    var dataFile = tmpDir.resolve("ij-shell-env-data." + mark + ".tmp");
+    var logFile = tmpDir.resolve("ij-shell-env-log." + mark + ".tmp");
+
+    try {
+      var args = command.command();
+      var substituted = false;
+      for (var i = 0; i < args.size(); i++) {
+        var arg = args.get(i);
+        if (arg.contains(OUTPUT_PLACEHOLDER)) {
+          args.set(i, arg.replace(OUTPUT_PLACEHOLDER, dataFile.toString()));
+          substituted = true;
+          break;
+        }
+      }
+      if (!substituted) throw new IllegalArgumentException("The output file placeholder is missing: " + command.command());
+
+      command.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
+
+      @SuppressWarnings("IO_FILE_USAGE")
+      var process = command
+        .redirectErrorStream(true)
+        .redirectOutput(logFile.toFile())
+        .start();
+      process.getOutputStream().close();
+      var exitCode = waitAndTerminateAfter(process, timeoutMillis);
+
+      var envData = Files.exists(dataFile) ? Files.readString(dataFile) : "";
+      var log = Files.exists(logFile) ? readLogFile(logFile) : "(no log file)";
+      if (exitCode != 0 || envData.isEmpty()) {
+        if (!log.isEmpty()) {
+          LOG.info("stdout/stderr: " + log);
+        }
+        throw new EnvironmentReaderException(command.command() + ", " + (exitCode == 0 ? "no data" : "ec=" + exitCode), envData, log);
+      }
+
+      var env = EnvironmentUtil.parseEnv(envData.split("\0"));
+      env.remove(INTELLIJ_ENVIRONMENT_READER);
+      if ("zsh".equals(Path.of(command.command().getFirst()).getFileName().toString())) {
+        env.remove(DISABLE_OMZ_AUTO_UPDATE);
+      }
+      LOG.info("shell environment loaded (" + command.command().getFirst() + ", " + env.size() + " vars)");
+      return new Pair<>(env, log);
+    }
+    finally {
+      deleteTempFile(logFile);
+      deleteTempFile(dataFile);
+    }
+  }
+
+  @SuppressWarnings("ReadWriteStringCanBeUsed")
+  private static String readLogFile(Path path) {
+    try {
+      // `new String(...)` better survives malformed UTF-8 input than `Files.readString(...)`
+      return new String(Files.readAllBytes(path), Charset.defaultCharset());
+    }
+    catch (IOException e) {
+      return "(error: " + e.getClass().getName() + ": " + e.getMessage() + ")";
+    }
+  }
+
+  private static int waitAndTerminateAfter(Process process, long timeoutMillis) {
+    var exitCode = waitFor(process, timeoutMillis);
+    if (exitCode != null) return exitCode;
+
+    LOG.warn("shell env loader is timed out");
+
+    try(var _ = Cancellation.withNonCancelableSection()) {
+      try {
+        OSProcessUtil.terminateProcessGracefully(process);
+        exitCode = waitFor(process, 1000L);
+        if (exitCode != null) return exitCode;
+      }
+      catch (UnsupportedOperationException _) {
+        // ignore, try force-kill if graceful shutdown is not supported
+      }
+      OSProcessUtil.killProcessTree(process);
+      exitCode = waitFor(process, 1000L);
+      if (exitCode != null) return exitCode;
+      LOG.warn("failed to kill shell env loader");
+
+      return -1;
+    }
+  }
+
+  private static @Nullable Integer waitFor(Process process, long timeoutMillis) {
+    try {
+      if (process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
+        return process.exitValue();
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.info("Interrupted while waiting for the process", e);
+    }
+    return null;
+  }
+
+  private static void deleteTempFile(Path file) {
+    try {
+      Files.deleteIfExists(file);
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot delete a temporary file", e);
+    }
+  }
+
+  private static final class EnvironmentReaderException extends IOException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private EnvironmentReaderException(String message, String data, String log) {
+      super(message);
+      myAttachments = new Attachment[]{new Attachment("EnvReaderData.txt", data), new Attachment("EnvReaderLog.txt", log)};
+    }
+
+    @Override
+    public Attachment @NotNull [] getAttachments() {
+      return myAttachments;
+    }
+  }
+}

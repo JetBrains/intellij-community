@@ -19,14 +19,12 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 
-public class BinaryFileStubBuilders extends FileTypeExtension<BinaryFileStubBuilder>{
+public class BinaryFileStubBuilders extends FileTypeExtension<BinaryFileStubBuilder> {
   public static final BinaryFileStubBuilders INSTANCE = new BinaryFileStubBuilders();
-  public static final String EP_NAME = "com.intellij.filetype.stubBuilder";
-  public static final ExtensionPointName<BinaryFileStubBuilder> EXTENSION_POINT_NAME = ExtensionPointName.create(EP_NAME);
+
   public BinaryFileStubBuilders() {
-    super(EP_NAME);
+    super("com.intellij.filetype.stubBuilder");
   }
 }

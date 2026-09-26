@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,9 +27,11 @@ public interface EmptyResolveMessageProvider {
   /**
    * Returns custom unresolved message pattern. First, returned value is used as pattern in {@code MessageFormat.format()} call.
    * If the call fails, returned value is used as is.
+   * Resulting text should have Sentence capitalization.
+   *
    * @return pattern or message
-   * @see XmlHighlightVisitor#getErrorDescription()
    */
+  @InspectionMessage
   @NotNull
   String getUnresolvedMessagePattern();
 }

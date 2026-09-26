@@ -1,61 +1,60 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
-import com.google.common.base.Function
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.intellij.ProjectTopics
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.SmartList
-import com.intellij.util.containers.computeIfAny
-import com.intellij.util.io.exists
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
-private val cacheSize: Long = 4096 * 4
+private const val cacheSize: Long = 4096 * 4
 
 /**
  * Implement [WebServerRootsProvider] to add your provider
  */
-class WebServerPathToFileManager(application: Application, private val project: Project) {
-  val pathToInfoCache: Cache<String, PathInfo> = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
+@Service(Service.Level.PROJECT)
+class WebServerPathToFileManager(private val project: Project) {
+  internal val pathToInfoCache = Caffeine.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()
+  internal val pathToExistShortTermCache = Caffeine.newBuilder().maximumSize(cacheSize).expireAfterAccess(5, TimeUnit.SECONDS).build<String, Boolean>()
+
   // time to expire should be greater than pathToFileCache
-  private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
-  
-  internal val pathToExistShortTermCache = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(5, TimeUnit.SECONDS).build<String, Boolean>()!!
+  private val virtualFileToPathInfo = Caffeine.newBuilder().maximumSize(cacheSize).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
 
   /**
-   * https://youtrack.jetbrains.com/issue/WEB-25900
-   * 
-   * Compute suitable roots for oldest parent (web/foo/my/file.dart -> oldest is web and we compute all suitable roots for it in advance) to avoid linear search
-   * (i.e. to avoid two queries for root if files web/foo and web/bar requested if root doesn't have web dir)
+   * Compute suitable roots for the topmost parent (like `web` in `web/foo/my/file.dart`) to avoid linear search -
+   * i.e., to avoid two queries for root when `web/foo` and `web/bar` requested and root doesn't have `web` dir (WEB-25900).
    */
-  internal val parentToSuitableRoot = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, List<SuitableRoot>>(
-    CacheLoader.from(Function { path ->
+  internal val parentToSuitableRoot = Caffeine
+    .newBuilder()
+    .maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES)
+    .build<String, List<SuitableRoot>>(CacheLoader { path ->
       val suitableRoots = SmartList<SuitableRoot>()
       var moduleQualifier: String? = null
-      val modules = runReadAction { ModuleManager.getInstance(project).modules }
-      for (rootProvider in RootProvider.values()) {
+      val modules = runReadActionBlocking { ModuleManager.getInstance(project).modules }
+      for (rootProvider in RootProvider.entries) {
         for (module in modules) {
           if (module.isDisposed) {
             continue
           }
-
           for (root in rootProvider.getRoots(module.rootManager)) {
-            if (root.findChild(path!!) != null) {
+            if (root.findChild(path) != null) {
               if (moduleQualifier == null) {
                 moduleQualifier = getModuleNameQualifier(project, module)
               }
@@ -65,15 +64,15 @@ class WebServerPathToFileManager(application: Application, private val project: 
         }
       }
       suitableRoots
-    }))!!
-  
+    })
+
   init {
-    application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    ApplicationManager.getApplication().messageBus.connect (project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFileContentChangeEvent) {
             val file = event.file
-            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensions) {
+            for (rootsProvider in WebServerRootsProvider.EP_NAME.extensionList) {
               if (rootsProvider.isClearCacheOnFileContentChanged(file)) {
                 clearCache()
                 break
@@ -87,15 +86,19 @@ class WebServerPathToFileManager(application: Application, private val project: 
         }
       }
     })
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    project.messageBus.connect().subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         clearCache()
       }
     })
+    project.messageBus.connect().subscribe(AdditionalLibraryRootsListener.TOPIC, AdditionalLibraryRootsListener { _, _, _, _ ->
+      clearCache()
+    })
   }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project): WebServerPathToFileManager = ServiceManager.getService(project, WebServerPathToFileManager::class.java)!!
+    @JvmStatic
+    fun getInstance(project: Project): WebServerPathToFileManager = project.service<WebServerPathToFileManager>()
   }
 
   private fun clearCache() {
@@ -105,19 +108,21 @@ class WebServerPathToFileManager(application: Application, private val project: 
     parentToSuitableRoot.invalidateAll()
   }
 
-  @JvmOverloads fun findVirtualFile(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): VirtualFile? {
+  @JvmOverloads
+  fun findVirtualFile(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): VirtualFile? {
     return getPathInfo(path, cacheResult, pathQuery)?.getOrResolveVirtualFile()
   }
 
-  @JvmOverloads fun getPathInfo(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): PathInfo? {
+  @JvmOverloads
+  fun getPathInfo(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): PathInfo? {
     var pathInfo = pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       if (pathToExistShortTermCache.getIfPresent(path) == false) {
         return null
       }
-      
+
       pathInfo = doFindByRelativePath(path, pathQuery)
-      if (cacheResult) { 
+      if (cacheResult) {
         if (pathInfo != null && pathInfo.isValid) {
           pathToInfoCache.put(path, pathInfo)
         }
@@ -134,7 +139,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
-      result = WebServerRootsProvider.EP_NAME.extensions.computeIfAny { it.getPathInfo(child, project) }
+      result = WebServerRootsProvider.EP_NAME.extensionList.asSequence().map { it.getPathInfo(child, project) }.find { it != null }
       if (result != null) {
         virtualFileToPathInfo.put(child, result)
       }
@@ -143,7 +148,9 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   internal fun doFindByRelativePath(path: String, pathQuery: PathQuery): PathInfo? {
-    val result = WebServerRootsProvider.EP_NAME.extensions.computeIfAny { it.resolve(path, project, pathQuery) } ?: return null
+    val result = WebServerRootsProvider.EP_NAME.extensionList.asSequence()
+      .map { it.resolve(path, project, pathQuery) }
+      .find { it != null } ?: return null
     result.file?.let {
       virtualFileToPathInfo.put(it, result)
     }
@@ -161,7 +168,7 @@ private val RELATIVE_PATH_RESOLVER = object : FileResolver {
   override fun resolve(path: String, root: VirtualFile, moduleName: String?, isLibrary: Boolean, pathQuery: PathQuery): PathInfo? {
     // WEB-17691 built-in server doesn't serve files it doesn't have in the project tree
     // temp:// reports isInLocalFileSystem == true, but it is not true
-    if (pathQuery.useVfs || root.fileSystem != LocalFileSystem.getInstance() || path == ".htaccess" || path == "config.json") {
+    if (pathQuery.useVfs || root.fileSystem.protocol != StandardFileSystems.FILE_PROTOCOL || path == ".htaccess" || path == "config.json") {
       return root.findFileByRelativePath(path)?.let { PathInfo(null, it, root, moduleName, isLibrary) }
     }
 

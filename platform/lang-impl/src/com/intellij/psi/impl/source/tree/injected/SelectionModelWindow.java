@@ -1,21 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SelectionModelWindow implements SelectionModel {
+final class SelectionModelWindow implements SelectionModel {
   private final SelectionModel myHostModel;
   private final DocumentWindow myDocument;
   private final EditorWindow myInjectedEditor;
@@ -27,52 +26,18 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public int getSelectionStart() {
-    return myDocument.hostToInjected(myHostModel.getSelectionStart());
+  public @NotNull Editor getEditor() {
+    return myInjectedEditor;
   }
 
-  @Nullable
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @Nullable VisualPosition getSelectionStartPosition() {
     return myInjectedEditor.offsetToVisualPosition(getSelectionStart());
   }
 
   @Override
-  public int getSelectionEnd() {
-    return myDocument.hostToInjected(myHostModel.getSelectionEnd());
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @Nullable VisualPosition getSelectionEndPosition() {
     return myInjectedEditor.offsetToVisualPosition(getSelectionEnd());
-  }
-
-  @Override
-  public String getSelectedText() {
-    return myHostModel.getSelectedText();
-  }
-
-  @Nullable
-  @Override
-  public String getSelectedText(boolean allCarets) {
-    return myHostModel.getSelectedText(allCarets);
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    return myDocument.hostToInjected(myHostModel.getLeadSelectionOffset());
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getLeadSelectionPosition() {
-    return myHostModel.getLeadSelectionPosition();
-  }
-
-  @Override
-  public boolean hasSelection() {
-    return myHostModel.hasSelection();
   }
 
   @Override
@@ -81,51 +46,13 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void setSelection(final int startOffset, final int endOffset) {
-    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
-    myHostModel.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());
-  }
-
-  @Override
-  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
-    myHostModel.setSelection(hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
-  }
-
-  @Override
-  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
-    myHostModel.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
-  }
-
-  @Override
-  public void removeSelection() {
-    myHostModel.removeSelection();
-  }
-
-  @Override
-  public void removeSelection(boolean allCarets) {
-    myHostModel.removeSelection(allCarets);
-  }
-
-  @Override
-  public void addSelectionListener(final SelectionListener listener) {
+  public void addSelectionListener(final @NotNull SelectionListener listener) {
     myHostModel.addSelectionListener(listener);
   }
 
   @Override
-  public void removeSelectionListener(final SelectionListener listener) {
+  public void removeSelectionListener(final @NotNull SelectionListener listener) {
     myHostModel.removeSelectionListener(listener);
-  }
-
-  @Override
-  public void selectLineAtCaret() {
-    myHostModel.selectLineAtCaret();
-  }
-
-  @Override
-  public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
-    myHostModel.selectWordAtCaret(honorCamelWordsSettings);
   }
 
   @Override
@@ -134,13 +61,12 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void setBlockSelection(@NotNull final LogicalPosition blockStart, @NotNull final LogicalPosition blockEnd) {
+  public void setBlockSelection(final @NotNull LogicalPosition blockStart, final @NotNull LogicalPosition blockEnd) {
     myHostModel.setBlockSelection(myInjectedEditor.injectedToHost(blockStart), myInjectedEditor.injectedToHost(blockEnd));
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionStarts() {
+  public int @NotNull [] getBlockSelectionStarts() {
     int[] result = myHostModel.getBlockSelectionStarts();
     for (int i = 0; i < result.length; i++) {
       result[i] = myDocument.hostToInjected(result[i]);
@@ -149,8 +75,7 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionEnds() {
+  public int @NotNull [] getBlockSelectionEnds() {
     int[] result = myHostModel.getBlockSelectionEnds();
     for (int i = 0; i < result.length; i++) {
       result[i] = myDocument.hostToInjected(result[i]);

@@ -1,42 +1,27 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.socketConnection;
 
 import com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl;
 import com.intellij.util.io.socketConnection.impl.SocketConnectionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 
-/**
- * @author nik
- */
-public class SocketConnectionFactory {
+@ApiStatus.Internal
+public final class SocketConnectionFactory {
   private SocketConnectionFactory() {
   }
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
-    SocketConnection<Request, Response> createServerConnection(int defaultPort, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<>(defaultPort, attempts, factory);
+    SocketConnection<Request, Response> createServerConnection(int defaultPort, @Nullable InetAddress bindAddress, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<>(defaultPort, bindAddress, attempts, factory);
   }
 
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
-    SocketConnection<Request, Response> createServerConnection(int defaultPort, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<>(defaultPort, 1, factory);
+    SocketConnection<Request, Response> createServerConnection(int defaultPort, @Nullable InetAddress bindAddress, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<>(defaultPort, bindAddress, 1, factory);
   }
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>

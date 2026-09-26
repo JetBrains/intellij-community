@@ -1,0 +1,14 @@
+LineBreakpoint created at captureExtensionReceiver.kt:11
+LineBreakpoint created at captureExtensionReceiver.kt:18
+LineBreakpoint created at captureExtensionReceiver.kt:25
+Run Java
+Connected to the target VM
+captureExtensionReceiver.kt:11
+Compile bytecode for block()
+captureExtensionReceiver.kt:18
+Compile bytecode for block()
+captureExtensionReceiver.kt:25
+Compile bytecode for block()
+Disconnected from the target VM
+
+Process finished with exit code 0

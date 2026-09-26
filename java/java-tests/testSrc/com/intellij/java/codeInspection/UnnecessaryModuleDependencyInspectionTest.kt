@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ui.InspectionToolPresentation
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -16,6 +15,7 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.junit.Assert
@@ -32,6 +32,35 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     assertInspectionProducesZeroResults()
   }
 
+  fun testDependencyThrough2Paths() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(module, mod1, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(module, mod2, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+
+
+    myFixture.addClass("public class Class0 {}")
+    myFixture.addFileToProject("mod1/I2.java", "interface I2 extends I1 {}")
+    myFixture.addFileToProject("mod2/I1.java", "public interface I1 {}")
+    myFixture.addClass("public class Class1 extends Class0 implements I1 {}")
+
+    assertReportedProblems("Module '${module.name}' sources do not depend on module 'mod1' sources")
+  }
+
+  fun testUsageInXml() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+    
+
+    myFixture.addClass("package a; public class Class0 {}")
+    myFixture.addFileToProject("mod1/classes.xml", "<root><class name='a.Class0'/></root>")
+    myFixture.addFileToProject("mod2/Class2.java", "public class Class2 {{Runnable r = new Runnable() {};}}")
+    assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
+  }
+
   fun testRequireSuperClassInUnusedReturnTypeOfFactory() {
     addModuleDependencies()
 
@@ -42,12 +71,24 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
     assertInspectionProducesZeroResults()
   }
+  
+  fun testUnnecessaryDependencyWhenTwoModulesUseTheSameLibrary() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, mod2, DependencyScope.COMPILE, false)
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
+    ModuleRootModificationUtil.addModuleLibrary(mod1, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addModuleLibrary(mod2, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
+    myFixture.addFileToProject("mod1/MyTest1.java", "public class MyTest1 {@org.junit.Test public void test() {}}")
+
+    assertReportedProblems("Module 'mod1' sources do not depend on module 'mod2' sources")
+  }
 
   fun testExportedLibraryThroughModuleDependency() {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
-    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(mod1, myModule)
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module)
 
     myFixture.addFileToProject("mod1/MyTest1.java", "public class MyTest1 {@org.junit.Test public void test() {}}")
     assertInspectionProducesZeroResults()
@@ -56,9 +97,9 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   fun testDeepExportedLibraryThroughModuleDependency() {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    val lib = IntelliJProjectConfiguration.getProjectLibrary("JUnit4")
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+    val lib = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4")
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", lib.classesUrls, lib.sourcesUrls, emptyList(), DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
     ModuleRootModificationUtil.addDependency(mod2, mod1)
 
     myFixture.addFileToProject("mod2/MyTest2.java", "public class MyTest2 {@org.junit.Test public void test() {}}")
@@ -70,8 +111,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     val apiMod = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "apiMod", myFixture.tempDirFixture.findOrCreateDir("apiMod"))
 
-    ModuleRootModificationUtil.addDependency(myModule, apiMod, DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(module, apiMod, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
 
     ModuleRootModificationUtil.addDependency(mod2, mod1)
     ModuleRootModificationUtil.addDependency(mod2, apiMod)
@@ -88,7 +129,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod2, mod1)
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
 
     myFixture.addClass("public class Class0 {}")
     myFixture.addFileToProject("mod2/Class2.java", "public class Class2 extends Class0 {}")
@@ -97,17 +138,8 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
   fun testDeepExportedDependenciesWithDirectDependency() {
     val topModule = deepDepends()
-    ModuleRootModificationUtil.addDependency(topModule, myModule)
-    val toolWrapper: InspectionToolWrapper<*, *> = GlobalInspectionToolWrapper(UnnecessaryModuleDependencyInspection())
-    val scope = AnalysisScope(project)
-    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    val presentation = globalContext.getPresentation(toolWrapper)
-    presentation.updateContent()
-    Assert.assertTrue(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                      presentation.hasReportedProblems())
-    Assert.assertEquals("Module 'mod3' sources do not depend on module 'mod2' sources",
-                        presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+    ModuleRootModificationUtil.addDependency(topModule, module)
+    assertReportedProblems("Module 'mod3' sources do not depend on module 'mod2' sources")
   }
 
   fun testDuplicatedDependencies() {
@@ -123,7 +155,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
     }
 
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
 
     ModuleRootModificationUtil.addDependency(mod3, mod1)
     ModuleRootModificationUtil.addDependency(mod3, mod2)
@@ -145,7 +177,7 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
 
     ModuleRootModificationUtil.addDependency(mod3, mod2)
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, true)
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, module, DependencyScope.COMPILE, true)
 
     myFixture.addClass("public class Class0 {}")
     myFixture.addFileToProject("mod3/Class3.java", "public class Class3 extends Class0 {}")
@@ -153,22 +185,33 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
   }
 
   private fun assertInspectionProducesZeroResults() {
+    val presentation = getReportedProblems()
+    Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
+                       presentation.hasReportedProblems().toBoolean())
+  }
+
+  private fun assertReportedProblems(expectedProblems: String) {
+    val presentation = getReportedProblems()
+    Assert.assertTrue("No problems were reported. Expected: ${expectedProblems}" , presentation.hasReportedProblems().toBoolean())
+    Assert.assertEquals(expectedProblems, presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+  }
+
+  private fun getReportedProblems(): @NotNull InspectionToolPresentation {
     val toolWrapper: InspectionToolWrapper<*, *> = GlobalInspectionToolWrapper(UnnecessaryModuleDependencyInspection())
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     val presentation = globalContext.getPresentation(toolWrapper)
     presentation.updateContent()
-    Assert.assertFalse(presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate },
-                       presentation.hasReportedProblems())
+    return presentation
   }
 
   private fun addModuleDependencies(): Module {
     val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
     ModuleRootModificationUtil.addDependency(mod2, mod1)
-    ModuleRootModificationUtil.addDependency(mod1, myModule)
-    ModuleRootModificationUtil.addDependency(mod2, myModule)
+    ModuleRootModificationUtil.addDependency(mod1, module)
+    ModuleRootModificationUtil.addDependency(mod2, module)
     return mod2
   }
 }

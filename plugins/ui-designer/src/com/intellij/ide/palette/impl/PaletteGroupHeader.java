@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.ide.dnd.DnDEvent;
@@ -20,23 +6,40 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JCheckBox;
+import javax.swing.KeyStroke;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 
-/**
- * @author yole
- */
-public class PaletteGroupHeader extends JCheckBox implements DataProvider {
+
+public class PaletteGroupHeader extends JCheckBox implements UiDataProvider {
   private final PaletteWindow myPaletteWindow;
   private PaletteComponentList myComponentList;
   private final PaletteGroup myGroup;
@@ -52,6 +55,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     }
     setSelected(true);
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myComponentList != null) {
           myComponentList.setVisible(isSelected());
@@ -60,6 +64,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     });
 
     addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         myPaletteWindow.setLastFocusedGroup(PaletteGroupHeader.this);
         showGroupPopupMenu(comp, x, y);
@@ -79,12 +84,14 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     }
 
     DnDManager.getInstance().registerTarget(new DnDTarget() {
+      @Override
       public boolean update(DnDEvent aEvent) {
         setBorderPainted(true);
         aEvent.setDropPossible(aEvent.getAttachedObject() instanceof PaletteItem);
         return true;
       }
 
+      @Override
       public void drop(DnDEvent aEvent) {
         setBorderPainted(false);
         if (aEvent.getAttachedObject() instanceof PaletteItem) {
@@ -92,11 +99,9 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
         }
       }
 
+      @Override
       public void cleanUpOnLeave() {
         setBorderPainted(false);
-      }
-
-      public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
       }
     }, this);
 
@@ -112,7 +117,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   public void showGroupPopupMenu(final Component comp, final int x, final int y) {
     ActionGroup group = myGroup.getPopupActionGroup();
     if (group != null) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PaletteGroupHeader", group);
       popupMenu.getComponent().show(comp, x, y);
     }
   }
@@ -133,14 +138,14 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
 
   @Override public Color getBackground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionBackground();
+      return UIUtil.getListSelectionBackground(true);
     }
     return super.getBackground();
   }
 
   @Override public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground();
+      return NamedColorUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }
@@ -157,20 +162,20 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     return myGroup;
   }
 
-  @Nullable public Object getData(String dataId) {
-    Object data = myPaletteWindow.getData(dataId);
-    if (data != null) return data;
-    Project project = CommonDataKeys.PROJECT.getData(myPaletteWindow);
-    return myGroup.getData(project, dataId);
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, myPaletteWindow);
+    myGroup.uiDataSnapshot(sink, myPaletteWindow.getProject());
   }
 
   private class MoveFocusAction extends AbstractAction {
     private final boolean moveDown;
 
-    public MoveFocusAction(boolean moveDown) {
+    MoveFocusAction(boolean moveDown) {
       this.moveDown = moveDown;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       Container container = kfm.getCurrentFocusCycleRoot();
@@ -179,8 +184,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
         if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
         Component next =
           moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
-        if (next instanceof PaletteComponentList) {
-          final PaletteComponentList list = (PaletteComponentList)next;
+        if (next instanceof PaletteComponentList list) {
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
             return;
@@ -200,10 +204,11 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private class ExpandAction extends AbstractAction {
     private final boolean expand;
 
-    public ExpandAction(boolean expand) {
+    ExpandAction(boolean expand) {
       this.expand = expand;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       if (expand == isSelected()) return;
       setSelected(expand);

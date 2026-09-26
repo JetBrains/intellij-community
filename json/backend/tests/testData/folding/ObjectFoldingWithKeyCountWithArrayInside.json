@@ -1,0 +1,7 @@
+<fold text='{ 4 keys }'>{
+  "id": 3,
+  "value": 3,
+  "array": <fold text='[ 2 elements ]'>[1,
+  2]</fold>,
+  "order": 10
+}</fold>

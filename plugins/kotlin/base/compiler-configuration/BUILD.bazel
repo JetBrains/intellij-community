@@ -1,0 +1,89 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.base.compilerConfiguration` start
+content_module_jar(module = ":compiler-configuration")
+### auto-generated section `dev intellij.kotlin.base.compilerConfiguration` end
+
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` start
+create_kotlinc_options(
+    name = "custom_compiler-configuration",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "compiler-configuration",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_compiler-configuration",
+    module_name = "intellij.kotlin.base.compilerConfiguration",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util/jdom",
+        "//platform/core-api:core",
+        "//platform/projectModel-impl",
+    ],
+)
+
+jvm_library(
+    name = "compiler-configuration_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_compiler-configuration",
+    module_name = "intellij.kotlin.base.compilerConfiguration",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":compiler-configuration",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.base.compilerConfiguration` end
+
+### auto-generated section `iml intellij.kotlin.base.compilerConfiguration` start
+exports_files(
+    [
+        "intellij.kotlin.base.compilerConfiguration.iml",
+        "resources/intellij.kotlin.base.compilerConfiguration.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.base.compilerConfiguration` end

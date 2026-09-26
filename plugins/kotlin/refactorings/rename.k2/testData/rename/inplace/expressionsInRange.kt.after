@@ -1,0 +1,16 @@
+// NEW_NAME: isMarkedNullable2
+// RENAME: member
+
+class ConeType
+
+val ConeType.isMar<caret>kedNullable2: Boolean get() = TODO()
+
+class FirRef(val coneType: ConeType)
+
+fun test1(firRef: FirRef) {
+    firRef.coneType.isMarkedNullable2
+}
+
+fun FirRef.test2() {
+    coneType
+}

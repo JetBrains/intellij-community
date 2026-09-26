@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -25,12 +11,20 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import javax.swing.JTree;
+import javax.swing.ListCellRenderer;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -39,27 +33,24 @@ import java.util.List;
 public class TreeComboBox extends ComboBoxWithWidePopup {
   private static final int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
-  private final String myDefaultText;
   private final boolean myShowRootNode;
 
-  public TreeComboBox(@NotNull final TreeModel model) {
+  public TreeComboBox(final @NotNull TreeModel model) {
     this(model, true);
   }
 
-  public TreeComboBox(@NotNull final TreeModel model, final boolean showRootNode) {
+  public TreeComboBox(final @NotNull TreeModel model, final boolean showRootNode) {
     this(model, showRootNode, null);
   }
 
-  public TreeComboBox(@NotNull final TreeModel model, final boolean showRootNode, final String defaultText) {
+  public TreeComboBox(final @NotNull TreeModel model, final boolean showRootNode, final String defaultText) {
     myTreeModel = model;
-    myDefaultText = defaultText;
     myShowRootNode = showRootNode;
     setModel(new TreeModelWrapper(myTreeModel, showRootNode));
     setRenderer(new TreeListCellRenderer(this, showRootNode, defaultText));
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
-  public void setTreeModel(@NotNull final TreeModel model, final boolean showRootNode) {
+  public void setTreeModel(final @NotNull TreeModel model, final boolean showRootNode) {
     myTreeModel = model;
     setModel(new TreeModelWrapper(model, showRootNode));
   }
@@ -74,7 +65,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     return tree;
   }
 
-  private static class TreeListCellRenderer extends SimpleColoredRenderer implements ListCellRenderer {
+  private static final class TreeListCellRenderer extends SimpleColoredRenderer implements ListCellRenderer {
     private static final Border SELECTION_PAINTER = (Border)UIManager.get("MenuItem.selectedBackgroundPainter");
 
     private boolean mySelected;
@@ -82,16 +73,14 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final JComboBox myComboBox;
     private boolean myChecked;
     private boolean myEditable;
-    private final boolean myUnderAquaLookAndFeel;
     private final boolean myShowRootNode;
-    private final String myDefaultText;
+    private final @NlsContexts.Label String myDefaultText;
 
-    private TreeListCellRenderer(@NotNull final JComboBox comboBox, final boolean showRootNode, @Nullable final String defaultText) {
+    private TreeListCellRenderer(final @NotNull JComboBox comboBox, final boolean showRootNode, @Nullable @NlsContexts.Label String defaultText) {
       myComboBox = comboBox;
       myShowRootNode = showRootNode;
       myDefaultText = defaultText;
-      myUnderAquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
-      setOpaque(!myUnderAquaLookAndFeel);
+      setOpaque(true);
     }
 
     private static Icon getValueIcon(final Object value, final int index) {
@@ -129,19 +118,18 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       int indent = 0;
       if (myInList) {
         final TreePath path = getTreeModelWrapper().getPathForRow(index);
-        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) *
-                                    (UIUtil.isUnderAquaLookAndFeel() ? 2 : 1) * INDENT;
+        indent = (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * INDENT;
       }
 
-      setIpad(new Insets(1, !myInList || myEditable ? myUnderAquaLookAndFeel ? 0 : 5 : (myUnderAquaLookAndFeel ? 23 : 5) + indent, 1, 5));
+      setIpad(new Insets(1, !myInList || myEditable ? 5 : 5 + indent, 1, 5));
 
       setIcon(getValueIcon(value, index));
-      setIconOpaque(!myUnderAquaLookAndFeel);
+      setIconOpaque(true);
 
       myEditable = myComboBox.isEditable();
 
       setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-      if (!myUnderAquaLookAndFeel) setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+      setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
 
       if (value instanceof CustomPresentation) {
         ((CustomPresentation)value).append(this, index);
@@ -153,6 +141,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
             append("");
           }
         } else {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       }
@@ -167,37 +156,15 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private void setSelected(final boolean selected) {
       mySelected = selected;
     }
-
-    @Override
-    protected boolean shouldPaintBackground() {
-      return !myUnderAquaLookAndFeel;
-    }
-
-    @Override
-    protected void paintComponent(final Graphics g) {
-      if (myUnderAquaLookAndFeel) {
-        if (mySelected) {
-          SELECTION_PAINTER.paintBorder(this, g, 0, 0, getWidth(), getHeight());
-        }
-
-        if (SystemInfo.isMac && myChecked && !myEditable) {
-          int i = getHeight() - 4;
-          g.setColor(getForeground());
-          g.drawString("\u2713", 6, i);
-        }
-      }
-
-      super.paintComponent(g);
-    }
   }
 
-  private static class TreeModelWrapper extends AbstractListModel implements ComboBoxModel {
+  private static final class TreeModelWrapper extends AbstractListModel implements ComboBoxModel {
     private final TreeModel myTreeModel;
     private Object mySelectedItem;
     private final boolean myShowRootNode;
     private final List<TreeNode> myTreeModelAsList = new ArrayList<>();
 
-    private TreeModelWrapper(@NotNull final TreeModel treeModel, final boolean showRootNode) {
+    private TreeModelWrapper(final @NotNull TreeModel treeModel, final boolean showRootNode) {
       myTreeModel = treeModel;
       myShowRootNode = showRootNode;
       accumulateChildren((TreeNode) treeModel.getRoot(), myTreeModelAsList, showRootNode);
@@ -215,7 +182,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       }
     }
 
-    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<TreeNode> list, final boolean showRoot) {
+    private static void accumulateChildren(final @NotNull TreeNode node, final @NotNull List<? super TreeNode> list, final boolean showRoot) {
       if (showRoot || node.getParent() != null) list.add(node);
 
       final int count = node.getChildCount();
@@ -240,6 +207,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       return mySelectedItem;
     }
 
+    @Override
     public int getSize() {
       int count = 0;
       Enumeration e = new PreorderEnumeration(myTreeModel);
@@ -251,6 +219,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
       return count - (myShowRootNode ? 0 : 1);
     }
 
+    @Override
     public Object getElementAt(int index) {
       Enumeration e = new PreorderEnumeration(myTreeModel);
       if (!myShowRootNode) index++;
@@ -267,15 +236,17 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final Object myNode;
     private int myIndex = -1;
 
-    public ChildrenEnumeration(@NotNull final TreeModel treeModel, @NotNull final Object node) {
+    ChildrenEnumeration(final @NotNull TreeModel treeModel, final @NotNull Object node) {
       myTreeModel = treeModel;
       myNode = node;
     }
 
+    @Override
     public boolean hasMoreElements() {
       return myIndex < myTreeModel.getChildCount(myNode) - 1;
     }
 
+    @Override
     public Object nextElement() {
       return myTreeModel.getChild(myNode, ++myIndex);
     }
@@ -285,17 +256,19 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private final TreeModel myTreeModel;
     private final Stack<Enumeration> myStack;
 
-    public PreorderEnumeration(@NotNull final TreeModel treeModel) {
+    PreorderEnumeration(final @NotNull TreeModel treeModel) {
       myTreeModel = treeModel;
       myStack = new Stack<>();
       myStack.push(Collections.enumeration(Collections.singleton(treeModel.getRoot())));
     }
 
+    @Override
     public boolean hasMoreElements() {
       return !myStack.empty() &&
               myStack.peek().hasMoreElements();
     }
 
+    @Override
     public Object nextElement() {
       Enumeration e = myStack.peek();
       Object node = e.nextElement();

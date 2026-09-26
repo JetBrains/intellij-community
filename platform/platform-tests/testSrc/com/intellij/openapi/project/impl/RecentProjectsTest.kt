@@ -1,0 +1,336 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package com.intellij.openapi.project.impl
+
+import com.intellij.configurationStore.FileStorageAnnotation
+import com.intellij.configurationStore.ProjectStoreDescriptor
+import com.intellij.configurationStore.ProjectStorePathCustomizer
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.ProjectGroupActionGroup
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.project.stateStore
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectoryExtension
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.ui.DeferredIconImpl
+import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.AvatarUtils
+import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.awt.Color
+import java.nio.file.Files
+import java.nio.file.Path
+import javax.swing.Icon
+import kotlin.test.assertEquals
+
+@TestApplication
+class RecentProjectsTest {
+  private var connection: SimpleMessageBusConnection? = null
+  private var wasDarkTheme = false
+
+  @JvmField
+  @RegisterExtension
+  val tempDir = TemporaryDirectoryExtension()
+
+  @BeforeEach
+  fun setUp() {
+    // JBColor.setDark affects the whole JVM, so the original value must be restored in tearDown,
+    // otherwise other tests running later in the same JVM would resolve colors for a wrong theme
+    wasDarkTheme = !JBColor.isBright()
+    connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
+  }
+
+  @AfterEach
+  fun tearDown() {
+    JBColor.setDark(wasDarkTheme)
+    connection?.disconnect()
+    connection = null
+  }
+
+  @Test
+  fun mostRecentOnTop() = timeoutRunBlocking {
+    val p1 = createAndOpenProject("p1")
+    val p2 = createAndOpenProject("p2")
+    val p3 = createAndOpenProject("p3")
+
+    checkRecents("p3", "p2", "p1")
+
+    doReopenCloseAndCheck(p2, "p2", "p3", "p1")
+    doReopenCloseAndCheck(p1, "p1", "p2", "p3")
+    doReopenCloseAndCheck(p3, "p3", "p1", "p2")
+  }
+
+  @Test
+  fun groupOrder() = timeoutRunBlocking {
+    val p1 = createAndOpenProject("p1")
+    val p2 = createAndOpenProject("p2")
+    val p3 = createAndOpenProject("p3")
+    val p4 = createAndOpenProject("p4")
+
+    val manager = RecentProjectsManager.getInstance()
+    val g1 = ProjectGroup("g1")
+    val g2 = ProjectGroup("g2")
+    val g3 = ProjectGroup("g3")
+    manager.addGroup(g1)
+    manager.addGroup(g2)
+    manager.addGroup(g3)
+
+    g1.addProject(p1.toString())
+    g1.addProject(p2.toString())
+    g2.addProject(p3.toString())
+    g3.addProject("/project/that/is/not/in/recents")
+
+    checkGroups(listOf("g2", "g1", "g3"))
+
+    doReopenCloseAndCheckGroups(p4, listOf("g2", "g1", "g3"))
+    doReopenCloseAndCheckGroups(p1, listOf("g1", "g2", "g3"))
+    doReopenCloseAndCheckGroups(p3, listOf("g2", "g1", "g3"))
+  }
+
+  @Test
+  fun timestampForOpenProjectUpdatesWhenGetStateCalled(): Unit = timeoutRunBlocking {
+    val z1 = tempDir.newPath("z1")
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+    try {
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.projectOpened(project)
+
+      val timestamp = getProjectOpenTimestamp("z1")
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.projectOpened(project)
+      recentProjectManager.updateLastProjectPath()
+      // "Timestamp for an opened project has not been updated"
+      assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
+    }
+    finally {
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+
+  @Test
+  fun solutionLikeProjectIcon() {
+    doSolutionLikeProjectIcon()
+  }
+
+  @Test
+  fun solutionLikeProjectIconForDarkTheme() {
+    JBColor.setDark(true)
+    doSolutionLikeProjectIcon()
+  }
+
+  private fun doSolutionLikeProjectIcon() = timeoutRunBlocking {
+    // For Rider
+    val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
+
+    val projectDir = Path.of("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
+    val slnFile = projectDir.resolve("Povysh.sln")
+
+    val icon = (rpm.getProjectIcon(slnFile.toString(), isProjectValid = true) as DeferredIconImpl<*>).evaluateAsync()
+    assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
+
+    assertSingleColorIcon(icon, if (JBColor.isBright()) Color.BLUE else Color.RED)
+  }
+
+  @Test
+  fun projectIconForRegularFileProjectIdentity(@TestDisposable disposable: Disposable) = timeoutRunBlocking {
+    JBColor.setDark(false)
+    ExtensionTestUtil.maskExtensions(
+      pointName = PROJECT_STORE_PATH_CUSTOMIZER_EP,
+      newExtensions = listOf(CustomDotIdeaProjectStorePathCustomizer()),
+      parentDisposable = disposable,
+      fireEvents = false,
+    )
+    val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
+    val projectDir = Path.of("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/regularFileIdentityProject")
+    val identityFile = projectDir.resolve(".projectidentity")
+    val icon = (rpm.getProjectIcon(identityFile.toString(), isProjectValid = true) as DeferredIconImpl<*>).evaluateAsync()
+    assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
+    assertSingleColorIcon(icon, Color.BLUE)
+  }
+
+  @Test
+  fun projectInitialsMakeSense() {
+     val cases = mapOf("John Smith" to "JS",
+                       "John Smith-Harris" to "JS",
+                       "John-Smith-Harris" to "JH",
+                       "John-Smith Harris" to "JH",
+                       "MyProject" to "MP",
+                       "My-Project" to "MP",
+                       "My-Project_Strong" to "MP",
+                       "My_Project_Strong" to "MS",
+                       "One,Two-Four" to "OT",
+                       "One.Two.Four" to "OF",
+                       "Project_" to "P",
+                       "_internal-project" to "IP",
+                       ".internal-project" to "IP",
+                       ".internalProject" to "IP",
+                       "proj_[ver1]" to "PV",
+                       "myProject-0" to "MP")
+
+    for ((name, expected) in cases) {
+      assertEquals(expected, AvatarUtils.initials(name))
+    }
+  }
+
+  private suspend fun assertSingleColorIcon(icon: Icon, expectedColor: Color) = withContext(Dispatchers.EDT) {
+    // For custom icons we add a 2px empty border
+    val emptyBorderWidth = 2
+    val iconSize = 20
+    // Check that image is loaded from file, and not generated by IDE
+    val iconImage = IconUtil.toBufferedImage(icon)
+    for (x in 0 until iconImage.width) {
+      for (y in 0 until iconImage.height) {
+        val color = iconImage.getRGB(x, y)
+
+        if (x >= emptyBorderWidth && x < (iconSize - emptyBorderWidth) &&
+            y >= emptyBorderWidth && y < (iconSize - emptyBorderWidth)) {
+          assertThat(color).isEqualTo(expectedColor.rgb)
+        }
+        else {
+          assertThat(color).isEqualTo(0)
+        }
+      }
+    }
+  }
+
+  private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
+    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state.additionalInfo
+    for (s in additionalInfo.keys) {
+      if (s.endsWith(projectName) || s.substringBeforeLast('_').endsWith(projectName)) {
+        return additionalInfo.get(s)!!.projectOpenTimestamp
+      }
+    }
+    return -1
+  }
+
+  private suspend fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
+    openProjectAndClose(projectPath)
+    checkRecents(*results)
+  }
+
+  private suspend fun openProjectAndClose(projectPath: Path) {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = projectManager.openProjectAsync(projectPath, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+    try {
+      RecentProjectsManagerBase.getInstanceEx().projectOpened(project)
+    }
+    finally {
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+
+  private suspend fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
+    openProjectAndClose(projectPath)
+    checkGroups(results)
+  }
+
+  private fun checkRecents(vararg recents: String) {
+    val recentProjects = listOf(*recents)
+    val state = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).state
+    val projects = state.additionalInfo.keys.asSequence()
+      .map { s -> PathUtil.getFileName(s).substringAfter('_').substringBeforeLast('_') }
+      .filter { recentProjects.contains(it) }
+      .toList()
+    assertThat(projects.reversed()).isEqualTo(recentProjects)
+  }
+
+  private fun checkGroups(groups: List<String>) {
+    val recentGroups = RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false, useGroups = true).asSequence()
+      .filter { a -> a is ProjectGroupActionGroup }
+      .map { a -> (a as ProjectGroupActionGroup).group.name }
+      .toList()
+    assertThat(recentGroups).isEqualTo(groups)
+  }
+
+  private suspend fun createAndOpenProject(name: String): Path {
+    val path = tempDir.newPath(name)
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+    try {
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.projectOpened(project)
+      project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.projectOpened(project)
+      return path
+    }
+    finally {
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+}
+
+private val PROJECT_STORE_PATH_CUSTOMIZER_EP = ExtensionPointName.create<ProjectStorePathCustomizer>("com.intellij.projectStorePathCustomizer")
+
+private class CustomDotIdeaProjectStorePathCustomizer : ProjectStorePathCustomizer {
+  override fun getStoreDirectoryPath(projectRoot: Path): ProjectStoreDescriptor? {
+    if (projectRoot.fileName?.toString() != ".projectidentity") return null
+    val projectDir = projectRoot.parent
+    return CustomDotIdeaProjectStoreDescriptor(
+      projectIdentityFile = projectRoot,
+      dotIdea = projectDir.resolve(".idea.custom"),
+      historicalProjectBasePath = projectDir,
+    )
+  }
+}
+
+private class CustomDotIdeaProjectStoreDescriptor(
+  override val projectIdentityFile: Path,
+  override val dotIdea: Path,
+  override val historicalProjectBasePath: Path,
+) : ProjectStoreDescriptor {
+
+  override fun testStoreDirectoryExistsForProjectRoot(): Boolean = Files.isRegularFile(projectIdentityFile)
+
+  override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage =
+    FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION
+
+  override fun getModuleStorageSpecs(
+    component: PersistentStateComponent<*>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+    project: Project,
+  ): List<Storage> = listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
+
+  override fun <T : Any> getStorageSpecs(
+    component: PersistentStateComponent<T>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+  ): List<Storage> = listOf(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
+}

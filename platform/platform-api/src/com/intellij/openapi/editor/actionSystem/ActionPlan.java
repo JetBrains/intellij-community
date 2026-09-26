@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +38,7 @@ public interface ActionPlan {
    * @return text content.
    */
   @NotNull
-  ImmutableCharSequence getText();
+  CharSequence getText();
 
   /**
    * Replaces the specified range of text with the specified string.

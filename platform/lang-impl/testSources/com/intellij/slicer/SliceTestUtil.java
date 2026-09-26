@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,14 +11,22 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
-import gnu.trove.THashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
-public class SliceTestUtil {
+public final class SliceTestUtil {
 
   private SliceTestUtil() {
   }
@@ -72,8 +66,8 @@ public class SliceTestUtil {
     return extractSliceOffsetsFromDocuments(Collections.singletonList(document));
   }
 
-  public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<Document> documents) {
-    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
+  public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<? extends Document> documents) {
+    Map<String, RangeMarker> sliceUsageName2Offset = new HashMap<>();
 
     extract(documents, sliceUsageName2Offset, "");
 
@@ -88,7 +82,7 @@ public class SliceTestUtil {
     return sliceUsageName2Offset;
   }
 
-  private static void extract(final List<Document> documents, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
+  private static void extract(final List<? extends Document> documents, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
     WriteCommandAction.runWriteCommandAction(null, () -> {
       for (int i = 1; i < 9; i++) {
         String newName = name + i;
@@ -125,7 +119,7 @@ public class SliceTestUtil {
 
     int size = expectedChildren.size();
     assertEquals(message(startOffset, usage), size, children.size());
-    children.sort(Comparator.naturalOrder());
+    children.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
     for (int i = 0; i < children.size(); i++) {
       checkUsages(children.get(i), expectedChildren.get(i));

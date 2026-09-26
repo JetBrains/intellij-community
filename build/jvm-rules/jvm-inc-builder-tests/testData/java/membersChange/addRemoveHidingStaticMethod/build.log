@@ -1,0 +1,24 @@
+================ Step #1 =================
+Cleaning output files:
+  Sub.class
+End of files
+Compiling files:
+  java/membersChange/addRemoveHidingStaticMethod/a/Sub.java
+End of files
+Cleaning output files:
+  Use.class
+End of files
+Compiling files:
+  java/membersChange/addRemoveHidingStaticMethod/a/Use.java
+End of files
+------------------------------------------
+Exit code: OK
+================ Step #2 =================
+Cleaning output files:
+  Sub.class
+End of files
+Compiling files:
+  java/membersChange/addRemoveHidingStaticMethod/a/Sub.java
+End of files
+------------------------------------------
+Exit code: OK

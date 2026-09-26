@@ -1,25 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
@@ -41,11 +48,10 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class FluentIterableConversionUtil {
-  private final static Logger LOG = Logger.getInstance(FluentIterableConversionUtil.class);
+public final class FluentIterableConversionUtil {
+  private static final Logger LOG = Logger.getInstance(FluentIterableConversionUtil.class);
 
-  @Nullable
-  static TypeConversionDescriptor getToArrayDescriptor(PsiType initialType, PsiExpression expression) {
+  static @Nullable TypeConversionDescriptor getToArrayDescriptor(PsiType initialType, PsiExpression expression) {
     if (!(initialType instanceof PsiClassType)) {
       return null;
     }
@@ -73,12 +79,12 @@ public class FluentIterableConversionUtil {
     }
     if (PsiTypesUtil.compareTypes(parameters[0], targetParameters[0], false)) {
       return new TypeConversionDescriptor("$q$.toArray($type$)", null) {
-        PsiType myType = parameters[0];
+        final PsiType myType = parameters[0];
 
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
-            final String chosenName = chooseName(expression, PsiType.INT);
+            final String chosenName = chooseName(expression, PsiTypes.intType());
             final PsiType arrayType;
             if (myType instanceof PsiClassType) {
               final PsiClass resolvedClass = ((PsiClassType)myType).resolve();
@@ -111,8 +117,7 @@ public class FluentIterableConversionUtil {
     return nameGenerator.generateUniqueName(name);
   }
 
-  @Nullable
-  static TypeConversionDescriptor getFilterDescriptor(@NotNull PsiMethod method, @Nullable PsiExpression context) {
+  static @Nullable TypeConversionDescriptor getFilterDescriptor(@NotNull PsiMethod method, @Nullable PsiExpression context) {
     LOG.assertTrue("filter".equals(method.getName()));
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) return null;
@@ -145,8 +150,7 @@ public class FluentIterableConversionUtil {
     return null;
   }
 
-  @Nullable
-  private static String getFilterClassText(PsiType type) {
+  private static @Nullable String getFilterClassText(PsiType type) {
     final PsiClass filterClass = PsiUtil.resolveClassInType(type);
     if (filterClass != null) return filterClass.getQualifiedName();
     if (type instanceof PsiCapturedWildcardType) {
@@ -157,7 +161,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class TransformAndConcatConversionRule extends GuavaTypeConversionDescriptor {
-    public TransformAndConcatConversionRule(PsiExpression context) {
+    TransformAndConcatConversionRule(PsiExpression context) {
       super("$q$.transformAndConcat($params$)", "$q$.flatMap($params$)", context);
     }
 
@@ -212,12 +216,12 @@ public class FluentIterableConversionUtil {
     }
 
     private static boolean determineType(PsiExpression retValue,
-                                         List<Pair<PsiExpression, Boolean>> iterableReturnValues,
+                                         List<? super Pair<PsiExpression, Boolean>> iterableReturnValues,
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;
       PsiType type = retValue.getType();
-      if (PsiType.NULL.equals(type)) {
+      if (PsiTypes.nullType().equals(type)) {
         return true;
       }
       if (type instanceof PsiCapturedWildcardType) {
@@ -255,7 +259,7 @@ public class FluentIterableConversionUtil {
   }
 
   private static class GuavaFilterInstanceOfConversionDescriptor extends TypeConversionDescriptor {
-    public GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
+    GuavaFilterInstanceOfConversionDescriptor(String filterClassQName) {
       super("$it$.filter($p$)", "$it$." + StreamApiConstants.FILTER + "(" + filterClassQName + ".class::isInstance)." + StreamApiConstants.MAP + "(" + filterClassQName + ".class::cast)");
     }
   }
@@ -297,7 +301,7 @@ public class FluentIterableConversionUtil {
   }
 
   static class CopyIntoConversionDescriptor extends TypeConversionDescriptor {
-    public CopyIntoConversionDescriptor() {
+    CopyIntoConversionDescriptor() {
       super("$it$.copyInto($c$)", null);
     }
 
@@ -322,8 +326,7 @@ public class FluentIterableConversionUtil {
       return super.replace(expression, evaluator);
     }
 
-    @Nullable
-    private static PsiType getQualifierElementType(PsiMethodCallExpression expression) {
+    private static @Nullable PsiType getQualifierElementType(PsiMethodCallExpression expression) {
       final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return null;
       final PsiType type = qualifier.getType();

@@ -1,0 +1,51 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInSameClassChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/A.kt
+End of files
+Cleaning output files:
+  B.class
+  BKt.class
+  GetAKt.class
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInSameClassChanged-a.kotlin_module
+  UseAKt.class
+  UseBKt.class
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/B.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/getA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useB.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  A.class
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInSameClassChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/A.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/B.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/getA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useB.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #3 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_flagsAndMemberInSameClassChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/A.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/B.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/getA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useA.kt
+  kotlin/classHierarchyAffected/flagsAndMemberInSameClassChanged/a/useB.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,44 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
@@ -46,56 +25,69 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.settings.*;
+import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.function.Predicate;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.excludeOutDir;
+import static org.jetbrains.plugins.gradle.util.GradleUtil.unexcludeOutDir;
 
-/**
- * @author Denis Zhdanov
- * @since 4/10/13 1:19 PM
- */
-public class GradleManager
+public final class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
@@ -105,117 +97,87 @@ public class GradleManager
 
   private static final Logger LOG = Logger.getInstance(GradleManager.class);
 
-  @NotNull private final ExternalSystemAutoImportAware myAutoImportDelegate =
-    new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());
+  private final @NotNull ExternalSystemAutoImportAware myAutoImportDelegate = new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());
 
-  @NotNull
-  private final GradleInstallationManager myInstallationManager;
-
-  @NotNull private static final NotNullLazyValue<List<GradleProjectResolverExtension>> RESOLVER_EXTENSIONS =
-    new AtomicNotNullLazyValue<List<GradleProjectResolverExtension>>() {
-      @NotNull
-      @Override
-      protected List<GradleProjectResolverExtension> compute() {
-        List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
-
-        // It's possible usecase when 'java' subsystem dependent plugins bundled with the non-java IDE using fat plugin distribution.
-        // This approach can lead to unwanted/incompatible extensions to be loaded.
-        // The workaround extensionsFilter should be removed when the IntelliJ java subsystem will become a regular plugin
-        // or those plugins will be fixed using the optional plugin dependency on 'org.jetbrains.plugins.gradle.java'
-        boolean isJavaIde = ExternalSystemApiUtil.isJavaCompatibleIde();
-        if(!isJavaIde) {
-          ExtensionPoint<GradleProjectResolverExtension> point =
-            Extensions.getRootArea().getExtensionPoint(GradleProjectResolverExtension.EP_NAME);
-          if(point instanceof ExtensionPointImpl) {
-            ((ExtensionPointImpl<GradleProjectResolverExtension>)point).removeUnloadableExtensions();
-          }
-        }
-        Set<String> javaIdeDependentExtensions = ContainerUtil.set(
-          "org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectResolverExtension",
-          "org.jetbrains.kotlin.kapt.idea.KaptProjectResolverExtension",
-          "org.jetbrains.kotlin.allopen.ide.AllOpenProjectResolverExtension",
-          "org.jetbrains.kotlin.noarg.ide.NoArgProjectResolverExtension",
-          "org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverProjectResolverExtension"
-        );
-        Predicate<GradleProjectResolverExtension> extensionsFilter = ext ->
-          isJavaIde || !javaIdeDependentExtensions.contains(ext.getClass().getName());
-
-        Arrays.stream(GradleProjectResolverExtension.EP_NAME.getExtensions())
-              .filter(extensionsFilter)
-              .forEach(result::add);
-
-        ExternalSystemApiUtil.orderAwareSort(result);
-        return result;
-      }
-    };
-
-  public GradleManager(@NotNull GradleInstallationManager manager) {
-    myInstallationManager = manager;
-  }
-
-  @NotNull
   @Override
-  public ProjectSystemId getSystemId() {
+  public @NotNull ProjectSystemId getSystemId() {
     return GradleConstants.SYSTEM_ID;
   }
 
-  @NotNull
   @Override
-  public Function<Project, GradleSettings> getSettingsProvider() {
+  public @NotNull Function<Project, GradleSettings> getSettingsProvider() {
     return project -> GradleSettings.getInstance(project);
   }
 
-  @NotNull
   @Override
-  public Function<Project, GradleLocalSettings> getLocalSettingsProvider() {
+  public @NotNull Function<Project, GradleLocalSettings> getLocalSettingsProvider() {
     return project -> GradleLocalSettings.getInstance(project);
   }
 
-  @NotNull
   @Override
-  public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
+  public @NotNull Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
     return pair -> {
-      final Project project = pair.first;
+      Project project = pair.first;
+      String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
+      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(projectPath);
+      String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
+
+      GradleInstallationManager gradleInstallationManager = GradleInstallationManager.getInstance();
+      Path gradleHome = gradleInstallationManager.getGradleHomePath(project, rootProjectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
           // Try to resolve symbolic links as there were problems with them at the gradle side.
-          localGradlePath = gradleHome.getCanonicalPath();
+          localGradlePath = gradleHome.toRealPath().toString();
         }
         catch (IOException e) {
-          localGradlePath = gradleHome.getAbsolutePath();
+          localGradlePath = gradleHome.toAbsolutePath().toString();
         }
       }
 
-      GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
       final DistributionType distributionType;
       if (projectLevelSettings == null) {
         distributionType =
-          GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
+          GradleUtil.isGradleDefaultWrapperFilesExist(rootProjectPath) ? DistributionType.DEFAULT_WRAPPED : DistributionType.BUNDLED;
       }
       else {
         distributionType =
           projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
       }
 
-      GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
-                                                                   settings.getServiceDirectoryPath(),
-                                                                   distributionType,
-                                                                   settings.getGradleVmOptions(),
-                                                                   settings.isOfflineWork());
-      for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-        result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
-      }
+      String daemonVmOptions = settings.getGradleVmOptions();
 
-      final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : pair.second;
-      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
-      final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
-      if (!StringUtil.isEmpty(javaHome)) {
-        LOG.info("Instructing gradle to use java from " + javaHome);
+      GradleExecutionSettings result = new GradleExecutionSettings();
+      result.setGradleHome(localGradlePath);
+      result.setServiceDirectory(settings.getServiceDirectoryPath());
+      result.setDistributionType(distributionType);
+      if (daemonVmOptions != null) {
+        result.withVmOptions(ParametersListUtil.parse(daemonVmOptions));
       }
-      result.setJavaHome(javaHome);
+      result.setOfflineWork(settings.isOfflineWork());
+      if (projectLevelSettings == null || !GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectLevelSettings)) {
+        String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
+        if (!StringUtil.isEmpty(javaHome)) {
+          LOG.info("Instructing gradle to use java from " + javaHome);
+        }
+        result.setJavaHome(javaHome);
+      }
+      GradleSystemSettings systemSettings = GradleSystemSettings.getInstance();
+      String vmOptions = Objects.requireNonNullElse(daemonVmOptions, "");
+      if (PlatformUtils.isQodana()) {
+        result.withVmOptions(List.of(
+          "-Didea.gradle.download.sources.force=false",
+          "-Didea.gradle.download.javadocs.force=false"
+        ));
+        result.setDownloadSources(false);
+      }
+      else if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {
+        result.setDownloadSources(false);
+      } else {
+        result.setDownloadSources(systemSettings.isDownloadSources());
+      }
+      result.setParallelModelFetch(settings.isParallelModelFetch());
       String ideProjectPath;
       if (project.getBasePath() == null ||
           (project.getProjectFilePath() != null && StringUtil.endsWith(project.getProjectFilePath(), ".ipr"))) {
@@ -229,8 +191,10 @@ public class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
+      boolean delegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath);
+      result.setDelegatedBuild(delegatedBuildEnabled);
 
-      configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
       return result;
     };
   }
@@ -251,6 +215,7 @@ public class GradleManager
 
       for (BuildParticipant buildParticipant : compositeBuild.getCompositeParticipants()) {
         if (pathsEqual(buildParticipant.getRootPath(), projectPath)) continue;
+        if (Path.of(buildParticipant.getRootPath()).endsWith(GradleConstants.BUILD_SRC_NAME)) continue;
         if (buildParticipant.getProjects().stream().anyMatch(path -> pathsEqual(path, projectPath))) {
           continue;
         }
@@ -273,12 +238,11 @@ public class GradleManager
 
       if (projectData == null || projectData.getExternalProjectStructure() == null) continue;
 
-      Collection<DataNode<ModuleData>> moduleNodes =
-        ExternalSystemApiUtil.findAll(projectData.getExternalProjectStructure(), ProjectKeys.MODULE);
+      Collection<DataNode<ModuleData>> moduleNodes = findAll(projectData.getExternalProjectStructure(), ProjectKeys.MODULE);
       for (DataNode<ModuleData> moduleNode : moduleNodes) {
         ModuleData moduleData = moduleNode.getData();
         if (moduleData.getArtifacts().isEmpty()) {
-          Collection<DataNode<GradleSourceSetData>> sourceSetNodes = ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY);
+          Collection<DataNode<GradleSourceSetData>> sourceSetNodes = findAll(moduleNode, GradleSourceSetData.KEY);
           for (DataNode<GradleSourceSetData> sourceSetNode : sourceSetNodes) {
             buildParticipant.addModule(sourceSetNode.getData());
           }
@@ -292,72 +256,50 @@ public class GradleManager
   }
 
   @Override
-  public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
-    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
-    for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-      ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
-      for (Class aClass : extension.getExtraProjectModelClasses()) {
-        ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(aClass));
-      }
-      extension.enhanceRemoteProcessing(parameters);
-    }
-
-    final PathsList classPath = parameters.getClassPath();
-    for (String entry : additionalEntries) {
-      classPath.add(entry);
-    }
-
-    parameters.getVMParametersList().addProperty(
-      ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
+  public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) {
+    throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public Class<? extends ExternalSystemProjectResolver<GradleExecutionSettings>> getProjectResolverClass() {
+  public @NotNull Class<? extends ExternalSystemProjectResolver<GradleExecutionSettings>> getProjectResolverClass() {
     return GradleProjectResolver.class;
   }
 
   @Override
-  public Class<? extends ExternalSystemTaskManager<GradleExecutionSettings>> getTaskManagerClass() {
+  public @NotNull Class<? extends ExternalSystemTaskManager<GradleExecutionSettings>> getTaskManagerClass() {
     return GradleTaskManager.class;
   }
 
-  @NotNull
   @Override
-  public Configurable getConfigurable(@NotNull Project project) {
+  public @NotNull Configurable getConfigurable(@NotNull Project project) {
     return new GradleConfigurable(project);
   }
 
-  @Nullable
   @Override
-  public FileChooserDescriptor getExternalProjectConfigDescriptor() {
+  public @Nullable FileChooserDescriptor getExternalProjectConfigDescriptor() {
     // project *.gradle script can be absent for gradle subproject
     return FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
-  @Nullable
   @Override
-  public Icon getProjectIcon() {
-    return GradleIcons.Gradle;
+  public @Nullable Icon getProjectIcon() {
+    return GradleIcons.GradleFile;
   }
 
-  @Nullable
   @Override
-  public Icon getTaskIcon() {
+  public @Nullable Icon getTaskIcon() {
     return DefaultExternalSystemUiAware.INSTANCE.getTaskIcon();
   }
 
-  @NotNull
   @Override
-  public String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+  public @NotNull String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 
-  @NotNull
   @Override
-  public String getProjectRepresentationName(@NotNull Project project,
-                                             @NotNull String targetProjectPath,
-                                             @Nullable String rootProjectPath) {
+  public @NotNull String getProjectRepresentationName(@NotNull Project project,
+                                                      @NotNull String targetProjectPath,
+                                                      @Nullable String rootProjectPath) {
     GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(targetProjectPath);
     if (projectSettings != null && projectSettings.getCompositeBuild() != null) {
       for (BuildParticipant buildParticipant : projectSettings.getCompositeBuild().getCompositeParticipants()) {
@@ -369,26 +311,33 @@ public class GradleManager
     return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 
-  @Nullable
   @Override
-  public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
+  public @Nullable String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
     return myAutoImportDelegate.getAffectedExternalProjectPath(changedFileOrDirPath, project);
   }
 
   @Override
-  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+  public @NotNull List<Path> getAffectedExternalProjectFilePaths(String projectPath, @NotNull Project project) {
+    return myAutoImportDelegate.getAffectedExternalProjectFilePaths(projectPath, project);
+  }
+
+  @Override
+  public @NotNull List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
     return myAutoImportDelegate.getAffectedExternalProjectFiles(projectPath, project);
   }
 
-  @NotNull
   @Override
-  public FileChooserDescriptor getExternalProjectDescriptor() {
+  public boolean isApplicable(@Nullable ProjectResolverPolicy resolverPolicy) {
+    return myAutoImportDelegate.isApplicable(resolverPolicy);
+  }
+
+  @Override
+  public @NotNull FileChooserDescriptor getExternalProjectDescriptor() {
     return GradleUtil.getGradleProjectFileChooserDescriptor();
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+  public @Nullable GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
     String projectPath = taskExecutionSettings.getExternalProjectPath();
     if (StringUtil.isEmpty(projectPath)) return null;
 
@@ -400,26 +349,23 @@ public class GradleManager
       return null;
     }
     else {
-      Module[] modules = Arrays.stream(ModuleManager.getInstance(project).getModules())
+      List<Module> modules = JBIterable.of(ModuleManager.getInstance(project).getModules())
         .filter(module -> StringUtil.equals(projectPath, ExternalSystemApiUtil.getExternalProjectPath(module)))
-        .toArray(Module[]::new);
-      return modules.length > 0 ? SearchScopeProvider.createSearchScope(modules) : null;
+        .toList();
+      return modules.isEmpty() ? null : ExecutionSearchScopes.executionScope(modules);
     }
   }
 
-  @Nullable
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Project project,
-                                                                @NotNull Executor executor,
-                                                                @NotNull RunConfiguration runConfiguration) {
-    return GradleIdeManager.getInstance().createTestConsoleProperties(project, executor, runConfiguration);
+  public @NotNull List<ExtensionPointName<?>> getExtensionPointsForResolver() {
+    return List.of(GradleProjectResolverExtension.EP_NAME);
   }
 
   @Override
-  public void runActivity(@NotNull final Project project) {
+  public void runActivity(final @NotNull Project project) {
     // We want to automatically refresh linked projects on gradle service directory change.
-    MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListener() {
 
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
@@ -437,6 +383,44 @@ public class GradleManager
       public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
         ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
       }
+
+      @Override
+      public void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+        if (!updateOutputRoots(delegatedBuild, linkedProjectPath)) {
+          ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(linkedProjectPath);
+        }
+      }
+
+      private boolean updateOutputRoots(boolean delegatedBuild, @NotNull String linkedProjectPath) {
+        ExternalProjectInfo projectInfo =
+          ProjectDataManager.getInstance().getExternalProjectData(project, GradleConstants.SYSTEM_ID, linkedProjectPath);
+        if (projectInfo == null) return false;
+
+        String buildNumber = projectInfo.getBuildNumber();
+        if (buildNumber == null) return false;
+
+        final DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
+        if (projectStructure == null) return false;
+
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectStructure.getData().getExternalName(),
+                                                    projectInfo.getProjectSystemId().getReadableName());
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            UnindexedFilesScannerExecutor.getInstance(project).suspendScanningAndIndexingThenRun(title, () -> {
+              for (DataNode<ModuleData> moduleDataNode : findAll(projectStructure, ProjectKeys.MODULE)) {
+                moduleDataNode.getData().useExternalCompilerOutput(delegatedBuild);
+                for (DataNode<GradleSourceSetData> sourceSetDataNode : findAll(moduleDataNode, GradleSourceSetData.KEY)) {
+                  sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
+                }
+                configureExcludeOutDir(moduleDataNode, delegatedBuild);
+              }
+              ProjectDataManager.getInstance().importData(projectStructure, project);
+            });
+          }
+        });
+        return true;
+      }
     });
 
     // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
@@ -451,14 +435,23 @@ public class GradleManager
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
     patchRecentTasks(adjustedPaths, localSettings);
     patchAvailableProjects(adjustedPaths, localSettings);
-    patchAvailableTasks(adjustedPaths, localSettings);
   }
 
-  @Nullable
-  private static Map<String, String> patchLinkedProjects(@NotNull Project project) {
+  private static void configureExcludeOutDir(DataNode<ModuleData> moduleDataNode, boolean delegatedBuild) {
+    ModuleData module = moduleDataNode.getData();
+    File ideaOutDir = new File(module.getLinkedExternalProjectPath(), "out");
+    module.useExternalCompilerOutput(delegatedBuild);
+    if (!delegatedBuild) {
+      excludeOutDir(moduleDataNode, ideaOutDir);
+    } else {
+      unexcludeOutDir(moduleDataNode, ideaOutDir);
+    }
+  }
+
+  private static @Nullable Map<String, String> patchLinkedProjects(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
-    Collection<GradleProjectSettings> correctedSettings = ContainerUtilRt.newArrayList();
-    Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
+    Collection<GradleProjectSettings> correctedSettings = new ArrayList<>();
+    Map<String/* old path */, String/* new path */> adjustedPaths = new HashMap<>();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
       if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
@@ -484,28 +477,9 @@ public class GradleManager
     return adjustedPaths;
   }
 
-  private static void patchAvailableTasks(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
-    Map<String, Collection<ExternalTaskPojo>> adjustedAvailableTasks = ContainerUtilRt.newHashMap();
-    for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : localSettings.getAvailableTasks().entrySet()) {
-      String newPath = adjustedPaths.get(entry.getKey());
-      if (newPath == null) {
-        adjustedAvailableTasks.put(entry.getKey(), entry.getValue());
-      }
-      else {
-        for (ExternalTaskPojo task : entry.getValue()) {
-          String newTaskPath = adjustedPaths.get(task.getLinkedExternalProjectPath());
-          if (newTaskPath != null) {
-            task.setLinkedExternalProjectPath(newTaskPath);
-          }
-        }
-        adjustedAvailableTasks.put(newPath, entry.getValue());
-      }
-    }
-    localSettings.setAvailableTasks(adjustedAvailableTasks);
-  }
-
   private static void patchAvailableProjects(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
-    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects =
+      new HashMap<>();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
       String newPath = adjustedPaths.get(entry.getKey().getPath());
       if (newPath == null) {

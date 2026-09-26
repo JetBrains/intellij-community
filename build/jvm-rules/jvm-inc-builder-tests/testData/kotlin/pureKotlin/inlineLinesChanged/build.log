@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineLinesChanged-a.kotlin_module
+  inline/InlineKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineLinesChanged/a/inline.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_inlineLinesChanged-a.kotlin_module
+  usage/UseGKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/inlineLinesChanged/a/useG.kt
+End of files
+------------------------------------------
+Exit code: OK

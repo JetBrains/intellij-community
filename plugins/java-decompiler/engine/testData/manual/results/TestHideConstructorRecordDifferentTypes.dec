@@ -1,0 +1,22 @@
+package records;
+
+public record TestHideConstructorRecordDifferentTypes(String a, int... l) {
+   public TestHideConstructorRecordDifferentTypes(String a, int l) {
+      this(a, l);// 5
+   }// 6
+}
+
+class 'records/TestHideConstructorRecordDifferentTypes' {
+   method '<init> (Ljava/lang/String;I)V' {
+      1      4
+      7      4
+      9      4
+      a      4
+      b      4
+      c      5
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6

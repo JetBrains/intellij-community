@@ -43,7 +43,7 @@ class C {
   void m2() throws Exception {
     try (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.AutoCloseable'">Object r = new MyResource()</error>) { }
 
-    try (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">AutoCloseable r = "resource"</error>) { }
+    try (AutoCloseable r = <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">"resource"</error>) { }
   }
 
   void m3(int p) throws Exception {

@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -74,7 +64,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
   }
 
 
-  private static class FxIdAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+  private static final class FxIdAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
     private FxIdAttributeDescriptor(PsiClass psiClass) {
       super(FxmlConstants.FX_ID, psiClass);
     }
@@ -88,16 +78,15 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return true;
     }
 
-    @Nullable
     @Override
-    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+    protected @Nullable String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
       final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(xmlAttributeValue.getContainingFile());
       if (controllerClass != null) {
         final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
         if (tagClass != null) {
           final PsiField field = controllerClass.findFieldByName(value, true);
           if (field != null && !InheritanceUtil.isInheritorOrSelf(tagClass, PsiUtil.resolveClassInType(field.getType()), true)) {
-            return "Cannot set " + tagClass.getQualifiedName() + " to field \'" + field.getName() + "\'";
+            return JavaFXBundle.message("cannot.class.name.to.field.name", tagClass.getQualifiedName(), field.getName());
           }
         }
       }
@@ -105,7 +94,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
     }
   }
 
-  private static class FxValueAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+  private static final class FxValueAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
     private FxValueAttributeDescriptor(PsiClass psiClass) {
       super(FxmlConstants.FX_VALUE, psiClass);
     }
@@ -126,13 +115,8 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return psiClass.isEnum() ? psiClass : null;
     }
 
-    protected boolean isConstant(PsiField field) {
-      return field instanceof PsiEnumConstant;
-    }
-
-    @Nullable
     @Override
-    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+    protected @Nullable String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
       final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
       if (tagClass != null) {
         if (tagClass.isEnum()) {
@@ -140,14 +124,14 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
         }
         final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
         if (method == null) {
-          return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
+          return JavaFXBundle.message("unable.to.coerce.error",value, tagClass.getQualifiedName());
         }
       }
       return validateLiteral(xmlAttributeValue, value);
     }
   }
 
-  private static class FxConstantAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
+  private static final class FxConstantAttributeDescriptor extends JavaFxBuiltInAttributeDescriptor {
     private FxConstantAttributeDescriptor(PsiClass psiClass) {
       super(FxmlConstants.FX_CONSTANT, psiClass);
     }
@@ -166,20 +150,20 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       return getPsiClass();
     }
 
+    @Override
     protected boolean isConstant(PsiField field) {
       return field.hasModifierProperty(PsiModifier.STATIC) &&
              field.hasModifierProperty(PsiModifier.FINAL) &&
              field.hasModifierProperty(PsiModifier.PUBLIC);
     }
 
-    @Nullable
     @Override
-    protected String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
+    protected @Nullable String validateAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue, @NotNull String value) {
       final PsiClass tagClass = JavaFxPsiUtil.getTagClass(xmlAttributeValue);
       if (tagClass != null) {
         final PsiField constField = tagClass.findFieldByName(value, true);
         if (constField == null || !isConstant(constField)) {
-          return "Constant '" + value + "' is not found";
+          return JavaFXBundle.message("constant.not.found", value);
         }
       }
       return null;

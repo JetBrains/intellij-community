@@ -1,0 +1,17 @@
+// "EXPECTED-SUGGESTION": my.plugin.aaa, my.plugin.bbb
+// "SUGGESTION-INDEX-TO-APPLY": 1
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+// FILE: build.gradle.kts
+plugins {
+    alias(libs.plugins.m<caret>y.plug)
+}
+
+// FILE: build.gradle.after.kts
+plugins {
+    alias(libs.plugins.my.plugin.bbb<caret>)
+}
+
+// FILE: gradle/libs.versions.toml
+[plugins]
+my-plugin-aaa = "my.plugin.aaa:1.0.0"
+my-plugin-bbb = "my.plugin.bbb:1.0.0"

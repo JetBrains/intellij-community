@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -22,15 +8,18 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
@@ -41,12 +30,12 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   public static final PrevNextActionsDescriptor DEFAULT_PREV_NEXT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB,
                                                                                                             IdeActions.ACTION_PREVIOUS_TAB);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneImpl");
+  private static final Logger LOG = Logger.getInstance(TabbedPaneImpl.class);
 
   private ScrollableTabSupport myScrollableTabSupport;
-  private AnAction myNextTabAction = null;
-  private AnAction myPreviousTabAction = null;
-  public PrevNextActionsDescriptor myInstallKeyboardNavigation = null;
+  private AnAction myNextTabAction;
+  private AnAction myPreviousTabAction;
+  private PrevNextActionsDescriptor myInstallKeyboardNavigation;
 
   public TabbedPaneImpl(@JdkConstants.TabPlacement int tabPlacement) {
     super(tabPlacement);
@@ -62,7 +51,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   }
 
   @Override
-  public void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation) {
+  public void setKeyboardNavigation(@NotNull PrevNextActionsDescriptor installKeyboardNavigation) {
     myInstallKeyboardNavigation = installKeyboardNavigation;
   }
 
@@ -87,7 +76,6 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     }
   }
 
-  @SuppressWarnings({"NonStaticInitializer"})
   private void installKeyboardNavigation(final PrevNextActionsDescriptor installKeyboardNavigation){
     myNextTabAction = new AnAction() {
       {
@@ -95,7 +83,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         int index = getSelectedIndex() + 1;
         if (index >= getTabCount()) {
           index = 0;
@@ -113,7 +101,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         int index = getSelectedIndex() - 1;
         if (index < 0) {
           index = getTabCount() - 1;
@@ -141,11 +129,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   @Override
   public void setUI(final TabbedPaneUI ui){
     super.setUI(ui);
-    if(ui instanceof BasicTabbedPaneUI){
-      myScrollableTabSupport=new ScrollableTabSupport((BasicTabbedPaneUI)ui);
-    }else{
-      myScrollableTabSupport=null;
-    }
+    myScrollableTabSupport = ui instanceof BasicTabbedPaneUI ? new ScrollableTabSupport((BasicTabbedPaneUI)ui) : null;
   }
 
   /**
@@ -281,18 +265,18 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
    */
   private final class ScrollableTabSupport{
     private final BasicTabbedPaneUI myUI;
-    @NonNls public static final String TAB_SCROLLER_NAME = "tabScroller";
-    @NonNls public static final String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
-    @NonNls public static final String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
+    static final @NonNls String TAB_SCROLLER_NAME = "tabScroller";
+    static final @NonNls String LEADING_TAB_INDEX_NAME = "leadingTabIndex";
+    static final @NonNls String SET_LEADING_TAB_INDEX_METHOD = "setLeadingTabIndex";
 
-    public ScrollableTabSupport(final BasicTabbedPaneUI ui){
+    ScrollableTabSupport(final BasicTabbedPaneUI ui){
       myUI=ui;
     }
 
     /**
      * @return value of {@code leadingTabIndex} field of BasicTabbedPaneUI.ScrollableTabSupport class.
      */
-    public int getLeadingTabIndex() {
+    int getLeadingTabIndex() {
       try {
         final Field tabScrollerField = BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
         tabScrollerField.setAccessible(true);
@@ -308,7 +292,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
     }
 
-    public void setLeadingTabIndex(final int leadingIndex) {
+    void setLeadingTabIndex(final int leadingIndex) {
       try {
         final Field tabScrollerField = BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
         tabScrollerField.setAccessible(true);
@@ -326,17 +310,12 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
           throw new IllegalStateException("method setLeadingTabIndex not found");
         }
         setLeadingIndexMethod.setAccessible(true);
-        setLeadingIndexMethod.invoke(tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
+        setLeadingIndexMethod.invoke(tabScrollerValue, getTabPlacement(), leadingIndex);
       }
       catch (Exception exc) {
         final String writer = StringUtil.getThrowableText(exc);
         throw new IllegalStateException("myUI=" + myUI + "; cause=" + writer);
       }
     }
-  }
-
-  @Override
-  public boolean isDisposed() {
-    return false;
   }
 }

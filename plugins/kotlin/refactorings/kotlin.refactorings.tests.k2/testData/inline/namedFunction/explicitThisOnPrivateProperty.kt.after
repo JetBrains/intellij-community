@@ -1,0 +1,9 @@
+class ClassName {
+    private val labelProperty = "Outer property"
+
+}
+
+fun main() {
+    println(ClassName().labelProperty)
+}
+

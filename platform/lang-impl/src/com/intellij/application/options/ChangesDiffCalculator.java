@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -24,8 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +20,8 @@ import java.util.List;
 /**
  * Allows to calculate difference between two versions of document (before and after code style setting value change).
  */
-public class ChangesDiffCalculator {
+@ApiStatus.Internal
+public final class ChangesDiffCalculator {
   private static final Logger LOG = Logger.getInstance(ChangesDiffCalculator.class);
 
   public static List<TextRange> calculateDiff(@NotNull Document beforeDocument, @NotNull Document currentDocument) {
@@ -80,8 +66,7 @@ public class ChangesDiffCalculator {
    * Thus, when comparing whitespace sequences of different length, we always highlight rightmost whitespaces
    * (while general algorithm gives no warranty on this case, and usually highlights leftmost whitespaces).
    */
-  @NotNull
-  private static TextRange calculateChangeHighlightRange(@NotNull CharSequence text, int startOffset, int endOffset) {
+  private static @NotNull TextRange calculateChangeHighlightRange(@NotNull CharSequence text, int startOffset, int endOffset) {
     if (startOffset == endOffset) {
       while (startOffset < text.length() && text.charAt(startOffset) == ' ') {
         startOffset++;
@@ -100,7 +85,7 @@ public class ChangesDiffCalculator {
 
     return new TextRange(startOffset, endOffset);
   }
-  
+
   private static boolean rangesEqual(@NotNull CharSequence text, int start1, int end1, int start2, int end2) {
     if (end1 - start1 != end2 - start2) return false;
     for (int i = start1; i < end1; i++) {

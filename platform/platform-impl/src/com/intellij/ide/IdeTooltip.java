@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
@@ -22,9 +23,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Point;
 
 public class IdeTooltip extends ComparableObject.Impl {
   public static final Object TOOLTIP_DISMISS_DELAY_KEY = "TOOLTIP_DISMISS_DELAY_KEY";
@@ -49,6 +55,7 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private int myCalloutShift = 4;
   private boolean myExplicitClose;
+  private boolean isCalloutEnabled = true;
 
   private int myPositionChangeX;
   private int myPositionChangeY;
@@ -58,6 +65,8 @@ public class IdeTooltip extends ComparableObject.Impl {
   private boolean myHint = false;
   private Border myComponentBorder = JBUI.Borders.empty(1, 3, 2, 3);
 
+  private Dimension myPointerSize;
+  private boolean myPointerShiftedToStart;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -131,7 +140,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   }
 
   public int getShowDelay() {
-    return myHighlighter ? Registry.intValue("ide.tooltip.initialDelay.highlighter") : Registry.intValue("ide.tooltip.initialDelay");
+    return myHighlighter ? EditorSettingsExternalizable.getInstance().getTooltipsDelay() : Registry.intValue("ide.tooltip.initialDelay");
   }
 
   public int getInitialReshowDelay() {
@@ -153,7 +162,7 @@ public class IdeTooltip extends ComparableObject.Impl {
     return this;
   }
 
-  void setTipComponent(JComponent tipComponent) {
+  protected void setTipComponent(JComponent tipComponent) {
     myTipComponent = tipComponent;
   }
 
@@ -176,6 +185,23 @@ public class IdeTooltip extends ComparableObject.Impl {
     return this;
   }
 
+  public Dimension getPointerSize() {
+    return myPointerSize;
+  }
+
+  public IdeTooltip setPointerSize(Dimension pointerSize) {
+    myPointerSize = pointerSize;
+    return this;
+  }
+
+  public boolean isPointerShiftedToStart() {
+    return myPointerShiftedToStart;
+  }
+
+  public IdeTooltip setPointerShiftedToStart(boolean pointerShiftedToStart) {
+    myPointerShiftedToStart = pointerShiftedToStart;
+    return this;
+  }
 
   public Color getTextBackground() {
     return myTextBackground;
@@ -218,6 +244,15 @@ public class IdeTooltip extends ComparableObject.Impl {
   public IdeTooltip setCalloutShift(int calloutShift) {
     myCalloutShift = calloutShift;
     return this;
+  }
+
+  public IdeTooltip setShowCallout(boolean showCallout) {
+    isCalloutEnabled = showCallout;
+    return this;
+  }
+
+  public boolean isCalloutEnabled() {
+    return isCalloutEnabled;
   }
 
   public void setComponent(Component component) {

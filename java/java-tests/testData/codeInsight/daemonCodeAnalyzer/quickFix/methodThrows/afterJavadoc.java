@@ -1,4 +1,4 @@
-// "Remove 'IOException' from 'foo' throws list" "true"
+// "Fix all 'Redundant 'throws' clause' problems in file" "true"
 import java.io.*;
 
 class A {

@@ -1,0 +1,4 @@
+// "Convert to unicode escape" "true"
+// K2_ERROR: ILLEGAL_ESCAPE
+val s = "abc <caret>\f xyz"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertIllegalEscapeToUnicodeEscapeFix

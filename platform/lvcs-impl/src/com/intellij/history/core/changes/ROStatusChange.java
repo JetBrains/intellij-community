@@ -23,7 +23,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class ROStatusChange extends StructuralChange {
+public final class ROStatusChange extends StructuralChange {
   private final boolean myOldStatus;
 
   public ROStatusChange(long id, String path, boolean oldStatus) {

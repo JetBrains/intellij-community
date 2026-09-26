@@ -1,0 +1,197 @@
+package com.intellij.ide.starter.report
+
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.ci.teamcity.TeamCityClient
+import com.intellij.ide.starter.process.KILL_THREAD_DUMP_FILE_PREFIX
+import com.intellij.ide.starter.process.THREAD_DUMP_FILE_PREFIX
+import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.utils.beforeKillScreenshotName
+import com.intellij.ide.starter.utils.threadDumpParser.ThreadDumpParser
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter
+import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+
+object TimeoutAnalyzer {
+
+  private val ROLLED_LOG_NAME: Regex = Regex("""idea\.(\d+)\.log""")
+
+  private val dialogMethodCalls: List<String> = listOf(
+    "com.intellij.openapi.ui.DialogWrapper.doShow",
+    "java.awt.Dialog.show"
+  )
+
+  fun analyzeTimeout(runContext: IDERunContext): Error? {
+    postLastScreenshots(runContext)
+    return detectIdeNotStarted(runContext)
+           ?: detectDialog(runContext)
+           ?: detectIndicatorsNotFinished(runContext)
+  }
+
+  private fun detectDialog(runContext: IDERunContext): Error? {
+    val threadDump = getLastThreadDump(runContext) ?: return null
+    val threadDumpParsed = ThreadDumpParser.parse(threadDump)
+    val edtThread = threadDumpParsed.firstOrNull { it.isEDT() } ?: return null
+
+    if (dialogMethodCalls.any { call -> edtThread.getStackTrace().contains(call) }) {
+      val lastCommandNote = getLastCommand(runContext)?.let { System.lineSeparator() + "Last executed command was: $it" } ?: ""
+      val errorMessage = "Timeout of IDE run '${runContext.contextName}' for ${runContext.runTimeout} due to a dialog being shown.$lastCommandNote"
+      val error = Error(errorMessage, edtThread.getStackTrace(), threadDump, ErrorType.TIMEOUT)
+      return error
+    }
+    else return null
+  }
+
+  private fun detectIdeNotStarted(runContext: IDERunContext): Error? {
+    if (getLogsFromNewToOld(runContext).isEmpty()) {
+      return Error(
+        "Timeout of IDE run '${runContext.contextName}' for ${runContext.runTimeout}. No idea.log file present in log directory",
+        "",
+        "",
+        ErrorType.TIMEOUT
+      )
+    }
+    else return null
+  }
+
+  private fun detectIndicatorsNotFinished(runContext: IDERunContext): Error? {
+    val logsFromNewToOld = getLogsFromNewToOld(runContext)
+    val runningIndicators = mutableMapOf<String, Int>()
+    val indicatorMessagePattern = Regex("- Progress indicator:(started|finished):(.+)$")
+    logsFromNewToOld.reversed().forEach { logFile ->
+      Files.readString(logFile)
+        .lineSequence()
+        .mapNotNull { line -> indicatorMessagePattern.find(line)?.destructured }
+        .forEach { (indicatorState, indicatorName) ->
+          when (indicatorState) {
+            "started" -> runningIndicators[indicatorName] = (runningIndicators[indicatorName] ?: 0) + 1
+            "finished" -> runningIndicators[indicatorName] = (runningIndicators[indicatorName] ?: 0) - 1
+          }
+        }
+    }
+    val remainingIndicators = runningIndicators.filter { it.value != 0 }
+    if (remainingIndicators.isNotEmpty()) {
+      val lastCommandNote = getLastCommand(runContext)?.let { System.lineSeparator() + " during `%$it` execution" } ?: ""
+      return Error(
+        "Timeout of IDE run '${runContext.contextName}' for ${runContext.runTimeout}${lastCommandNote} because some indicators haven't finished:",
+        remainingIndicators.keys.joinToString(separator = System.lineSeparator()),
+        "",
+        ErrorType.TIMEOUT
+      )
+    }
+    return null
+  }
+
+  private fun postLastScreenshots(runContext: IDERunContext) {
+    if (!CIServer.instance.isBuildRunningOnCI) return
+
+    // under the name of the run, which is the only artifact path IJ Perf and issue creation can rebuild — see IDERunContext.contextName
+    val screenshotsArtifactPath = runContext.contextName.replaceSpecialCharactersWithHyphens() + "/timeout-screenshots"
+
+    getLastScreenshots(runContext).forEach { screenshot ->
+      logOutput("Adding screenshot to metadata: ${screenshot.pathString}")
+
+      TeamCityClient.publishTeamCityArtifacts(
+        screenshot,
+        screenshotsArtifactPath,
+        screenshot.name,
+        false
+      )
+
+      TeamCityReporter.reportTestMetadata(
+        testName = null,
+        type = TeamCityReporter.MetadataType.IMAGE,
+        flowId = null,
+        name = null,
+        value = "$screenshotsArtifactPath/${screenshot.name}"
+      )
+    }
+  }
+
+  private fun getLastScreenshots(runContext: IDERunContext): List<Path> {
+    val logs = runContext.lastIdeReportingData.logsDir
+    logOutput("Try to find the latest screenshot at ${logs.pathString}")
+
+    val beforeKillScreenshot = Files.find(logs, 10, { path, _ -> path.name == beforeKillScreenshotName }).findFirst().orElse(null)
+    if (beforeKillScreenshot != null) {
+      return listOf(beforeKillScreenshot)
+    }
+
+    val beforeIdeClosedScreenshotDir = Files.find(logs, 10, { path, _ -> path.name == "beforeIdeClosed" }).findFirst().orElse(null)
+    beforeIdeClosedScreenshotDir?.let {
+      it.listDirectoryEntries("*").maxByOrNull { it.name }?.let {
+        return listOf(it)
+      }
+    }
+
+    logOutput("Try to find latest screenshot from heartbit")
+    val screenshotsFolder = logs.resolve("screenshots").takeIf { it.exists() }
+                            ?: return emptyList()
+
+    val lastHeartbeat = screenshotsFolder.listDirectoryEntries("heartbeat*").sortedBy { it.name }.lastOrNull { it.listDirectoryEntries().isNotEmpty() }
+                        ?: return emptyList()
+
+    return lastHeartbeat.listDirectoryEntries()
+  }
+
+  private fun getLastThreadDump(runContext: IDERunContext): String? {
+    val logs = runContext.lastIdeReportingData.logsDir
+    val killThreadDump = latestDump(logs.listDirectoryEntries("$KILL_THREAD_DUMP_FILE_PREFIX*.txt"))
+
+    val threadDumpsDirectory = logs.resolve("thread-dumps-ide")
+    val lastThreadDump = threadDumpsDirectory
+      .takeIf { it.exists() }
+      ?.let { latestDump(it.listDirectoryEntries("$THREAD_DUMP_FILE_PREFIX*.txt")) }
+
+    return (killThreadDump ?: lastThreadDump)?.let(Files::readString)
+  }
+
+  /**
+   * The last of [entries] to be written: the greatest modification time, and the greatest name where two of them share one. A dump name
+   * carries a hash once it has been shortened to fit a path, so the name alone no longer orders the dumps by the time they were taken.
+   *
+   * Each time is read once, and a file the file system will not report on is treated as the oldest: naming the last dump is worth no
+   * exception, this being called while a run is already reporting a timeout.
+   */
+  private fun latestDump(entries: List<Path>): Path? =
+    entries
+      .map { it to lastModifiedMillis(it) }
+      .maxWithOrNull(compareBy<Pair<Path, Long>> { it.second }.thenBy { it.first.name })
+      ?.first
+
+  private fun lastModifiedMillis(path: Path): Long =
+    runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(Long.MIN_VALUE)
+
+  private fun getLastCommand(runContext: IDERunContext): String? {
+    return getLogsFromNewToOld(runContext).firstNotNullOfOrNull { logFile ->
+      Files.readString(logFile)
+        .lineSequence()
+        .filter { "CommandLogger - %" in it }
+        .lastOrNull()
+        ?.substringAfterLast("CommandLogger - %")
+    }
+  }
+
+  private fun getLogsFromNewToOld(runContext: IDERunContext): List<Path> {
+    return runContext.ideReportingDataFromCurrentToOldest().flatMap {
+      val lastLogInReporting = it.logsDir.resolve("idea.log")
+      if (!lastLogInReporting.exists()) return@flatMap listOf()
+      listOf(lastLogInReporting) + it.logsDir.listDirectoryEntries("idea.*.log")
+        .sortedBy(::rolledLogIndex)
+    }
+  }
+
+  /**
+   * `idea.log` rolls into `idea.1.log`, `idea.2.log` and so on, so the greater the index, the older the file. The index has to be
+   * compared as a number: sorted as a string, `idea.10.log` would come right after `idea.1.log` instead of after `idea.9.log`.
+   *
+   * Files that don't follow the convention go last, keeping their relative order.
+   */
+  private fun rolledLogIndex(logFile: Path): Int =
+    ROLLED_LOG_NAME.matchEntire(logFile.name)?.groupValues?.get(1)?.toIntOrNull() ?: Int.MAX_VALUE
+}

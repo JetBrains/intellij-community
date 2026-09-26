@@ -1,92 +1,135 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.*;
+import com.intellij.build.events.BuildEventPresentationData;
+import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.MessageEventResult;
+import com.intellij.build.events.SkippedResult;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.CachingSimpleNode;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ExecutionNode extends CachingSimpleNode {
-  private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
-  private long startTime;
-  private long endTime;
-  @Nullable
-  private String myTitle;
-  @Nullable
-  private String myTooltip;
-  @Nullable
-  private String myHint;
-  @Nullable
-  private EventResult myResult;
-  private boolean myAutoExpandNode;
-  @Nullable
-  private Navigatable myNavigatable;
-  @Nullable
-  private NullableLazyValue<Icon> myPreferredIconValue;
+public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
+  private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
+  private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
+  private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
+  private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
+  private static final Icon NODE_ICON_SKIPPED = AllIcons.RunConfigurations.TestIgnored;
+  private static final Icon NODE_ICON_STATISTICS = ICON_16;
+  private static final Icon NODE_ICON_SIMPLE = ICON_16;
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
+
+  private @NotNull Object myId = new Object();
+
+  private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
+  private final AtomicInteger myInfos = new AtomicInteger();
+  private final ExecutionNode myParentNode;
+  private volatile long startTime;
+  private volatile long endTime;
+  private @Nullable @BuildEventsNls.Title String myTitle;
+  private @Nullable @BuildEventsNls.Hint String myHint;
+  private final @NotNull HintData myHintData;
+  private volatile @Nullable EventResult myResult;
+  private final boolean myAutoExpandNode;
+  private final Supplier<Boolean> myIsCorrectThread;
+  private volatile @Nullable Navigatable myNavigatable;
+  private volatile @Nullable NullableLazyValue<Icon> myPreferredIconValue;
+  private boolean myAlwaysLeaf;
+  private boolean myAlwaysVisible;
 
-  public ExecutionNode(Project aProject, ExecutionNode parentNode) {
+  public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
     super(aProject, parentNode);
+    myName = "";
+    myParentNode = parentNode;
+    myAutoExpandNode = isAutoExpandNode;
+    myIsCorrectThread = isCorrectThread;
+    myHintData = new HintData();
+
+    if (parentNode != null) {
+      parentNode.add(this);
+    }
+  }
+
+  boolean isAlwaysVisible() {
+    return myAlwaysVisible;
   }
 
   @Override
-  protected SimpleNode[] buildChildren() {
-    return myChildrenList.size() == 0 ? NO_CHILDREN : ContainerUtil.toArray(myChildrenList, new ExecutionNode[myChildrenList.size()]);
-  }
-
-  @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
+    assert myIsCorrectThread.get();
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
-    if (myTitle != null) {
+    if (StringUtil.isNotEmpty(myTitle)) {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     String hint = getCurrentHint();
-    if (myTitle != null || hint != null) {
+    boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
+    if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    if (hint != null) {
-      presentation.addText("  " + hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (StringUtil.isNotEmpty(hint)) {
+      if (isNotEmptyName) {
+        hint = " " + hint;
+      }
+      presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
-    if (myTooltip != null) {
-      presentation.setTooltip(myTooltip);
-    }
+  }
+
+  @BuildEventsNls.Hint
+  String getCurrentHint() {
+    return myHintData.getCurrentHint(this);
+  }
+
+  @ApiStatus.Internal
+  void applyFrom(@NotNull BuildEventPresentationData buildEventPresentationData) {
+    myAlwaysVisible = true;
+    setIconProvider(() -> buildEventPresentationData.getNodeIcon());
+  }
+
+  public @NotNull Object getId() {
+    return myId;
+  }
+
+  public void setId(@NotNull Object id) {
+    assert myIsCorrectThread.get();
+    myId = id;
   }
 
   @Override
@@ -95,209 +138,297 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public void setName(String name) {
+    assert myIsCorrectThread.get();
     myName = name;
   }
 
-  @Nullable
-  public String getTitle() {
+  public @Nullable String getTitle() {
+    assert myIsCorrectThread.get();
     return myTitle;
   }
 
-  public void setTitle(@Nullable String title) {
+  public void setTitle(@BuildEventsNls.Title @Nullable String title) {
+    assert myIsCorrectThread.get();
     myTitle = title;
   }
 
-  @Nullable
-  public String getTooltip() {
-    return myTooltip;
-  }
-
-  public void setTooltip(@Nullable String tooltip) {
-    myTooltip = tooltip;
-  }
-
-  @Nullable
-  public String getHint() {
+  public @BuildEventsNls.Hint @Nullable String getHint() {
+    assert myIsCorrectThread.get();
     return myHint;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
+    assert myIsCorrectThread.get();
     myHint = hint;
   }
 
-  public void add(ExecutionNode node) {
+  public void add(@NotNull ExecutionNode node) {
+    assert myIsCorrectThread.get();
     myChildrenList.add(node);
-    cleanUpCache();
-  }
-
-  public void add(int index, ExecutionNode node) {
-    myChildrenList.add(index, node);
-    cleanUpCache();
   }
 
   void removeChildren() {
+    assert myIsCorrectThread.get();
     myChildrenList.clear();
-    cleanUpCache();
+    myErrors.set(0);
+    myWarnings.set(0);
+    myInfos.set(0);
+    myResult = null;
   }
 
-  @Nullable
-  public String getDuration() {
+  // Note: invoked from the EDT.
+  public @Nullable @Nls String getDuration() {
     if (startTime == endTime) return null;
     if (isRunning()) {
-      final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
-      String durationText = StringUtil.formatDuration(duration);
-      int index = durationText.indexOf("s ");
-      if (index != -1) {
-        durationText = durationText.substring(0, index + 1);
+      long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
+      if (duration > 1000) {
+        duration -= duration % 1000;
       }
-      return "Running for " + durationText;
+      return NlsMessages.formatDurationApproximate(duration);
     }
     else {
-      return isSkipped() ? null : StringUtil.formatDuration(endTime - startTime);
+      return isSkipped(myResult) ? null : NlsMessages.formatDuration(endTime - startTime);
     }
   }
 
   public long getStartTime() {
+    assert myIsCorrectThread.get();
     return startTime;
   }
 
   public void setStartTime(long startTime) {
+    assert myIsCorrectThread.get();
     this.startTime = startTime;
   }
 
   public long getEndTime() {
+    assert myIsCorrectThread.get();
     return endTime;
   }
 
-  public void setEndTime(long endTime) {
+  public ExecutionNode setEndTime(long endTime) {
+    assert myIsCorrectThread.get();
     this.endTime = endTime;
+    return null;
   }
 
-  public boolean isFailed() {
-    return myResult instanceof FailureResult;
+  public @NotNull List<ExecutionNode> getChildList() {
+    assert myIsCorrectThread.get();
+    return myChildrenList;
   }
 
-  public boolean isSkipped() {
-    return myResult instanceof SkippedResult;
-  }
-
-  public boolean isRunning() {
-    return endTime <= 0 && !isSkipped() && !isFailed();
-  }
-
-  public void setResult(@Nullable EventResult result) {
-    myResult = result;
-  }
-
-  @Nullable
-  public EventResult getResult() {
-    return myResult;
+  public @Nullable ExecutionNode getParent() {
+    return myParentNode;
   }
 
   @Override
+  public ExecutionNode getElement() {
+    return this;
+  }
+
+  public boolean isRunning() {
+    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
+  }
+
+  public boolean hasWarnings() {
+    return myWarnings.get() > 0 ||
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.WARNING);
+  }
+
+  public boolean hasInfos() {
+    return myInfos.get() > 0 ||
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.INFO);
+  }
+
+  public boolean isFailed() {
+    return isFailed(myResult) ||
+           myErrors.get() > 0 ||
+           (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.ERROR);
+  }
+
+  public @Nullable EventResult getResult() {
+    return myResult;
+  }
+
+  public ExecutionNode setResult(@Nullable EventResult result) {
+    assert myIsCorrectThread.get();
+    myResult = result;
+    return null;
+  }
+
   public boolean isAutoExpandNode() {
     return myAutoExpandNode;
   }
 
-  public void setAutoExpandNode(boolean autoExpandNode) {
-    myAutoExpandNode = autoExpandNode;
+  @ApiStatus.Experimental
+  public boolean isAlwaysLeaf() {
+    return myAlwaysLeaf;
+  }
+
+  @ApiStatus.Experimental
+  public void setAlwaysLeaf(boolean alwaysLeaf) {
+    myAlwaysLeaf = alwaysLeaf;
   }
 
   public void setNavigatable(@Nullable Navigatable navigatable) {
+    assert myIsCorrectThread.get();
     myNavigatable = navigatable;
   }
 
-  @NotNull
-  public List<Navigatable> getNavigatables() {
-    if (myNavigatable != null) {
+  public @Nullable Navigatable getNavigatable() {
+    List<Navigatable> navigatables = getNavigatables();
+    return navigatables.size() == 1 ? navigatables.getFirst() : null;
+  }
+
+  public @NotNull List<Navigatable> getNavigatables() {
+    if (myNavigatable != null && myNavigatable != NonNavigatable.INSTANCE) {
       return Collections.singletonList(myNavigatable);
     }
     if (myResult == null) return Collections.emptyList();
 
-    if (myResult instanceof FailureResult) {
-      List<Navigatable> result = new SmartList<>();
-      for (Failure failure : ((FailureResult)myResult).getFailures()) {
-        ContainerUtil.addIfNotNull(result, failure.getNavigatable());
+    if (myResult instanceof FailureResult result) {
+      List<Navigatable> navigatables = new SmartList<>();
+      for (Failure failure : result.getFailures()) {
+        ContainerUtil.addIfNotNull(navigatables, failure.getNavigatable());
       }
-      return result;
+      return navigatables;
     }
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<Icon> iconProvider) {
-    myPreferredIconValue = new NullableLazyValue<Icon>() {
-      @Nullable
+  public void setIconProvider(@NotNull Supplier<? extends Icon> iconProvider) {
+    myPreferredIconValue = new NullableLazyValue<>() {
       @Override
-      protected Icon compute() {
+      protected @Nullable Icon compute() {
         return iconProvider.get();
       }
     };
   }
 
-  public void reportChildMessageKind(MessageEvent.Kind kind) {
+  public @Nullable ExecutionNode reportChildMessageKind(MessageEvent.Kind kind) {
+    assert myIsCorrectThread.get();
     if (kind == MessageEvent.Kind.ERROR) {
       myErrors.incrementAndGet();
     }
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
+    else if (kind == MessageEvent.Kind.INFO) {
+      myInfos.incrementAndGet();
+    }
+    return null;
   }
 
-  private String getCurrentHint() {
-    String hint = myHint;
-    int warnings = myWarnings.get();
-    int errors = myErrors.get();
-    if (warnings > 0 || errors > 0) {
-      if (hint == null) {
-        hint = "";
-      }
-      hint += (getParent() == null ? isRunning() ? "   " : "   with " : " (");
-      if (errors > 0) {
-        hint += (errors + " " + StringUtil.pluralize("error", errors));
-        if (warnings > 0) {
-          hint += ", ";
-        }
-      }
-      if (warnings > 0) {
-        hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
-      }
-      if (getParent() != null) {
-        hint += ")";
-      }
-    }
-    return hint;
+  @Nullable
+  @ApiStatus.Experimental
+  ExecutionNode findFirstChild(@NotNull Predicate<? super ExecutionNode> filter) {
+    assert myIsCorrectThread.get();
+    //noinspection SSBasedInspection
+    return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private Icon getCurrentIcon() {
-    if (myPreferredIconValue != null) {
-      return myPreferredIconValue.getValue();
+  Icon getCurrentIcon() {
+    var preferredIconValue = myPreferredIconValue;
+    if (preferredIconValue != null) {
+      return preferredIconValue.getValue();
     }
-    else if (myResult instanceof MessageEventResult) {
-      return getIcon(((MessageEventResult)myResult).getKind());
+    else if (myResult instanceof MessageEventResult result) {
+      return getIcon(result.getKind());
     }
     else {
-      return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-             isFailed() ? AllIcons.General.Error :
-             isSkipped() ? AllIcons.Process.State.YellowStr :
-             myErrors.get() > 0 ? AllIcons.General.Error :
-             myWarnings.get() > 0 ? AllIcons.General.Warning :
-             AllIcons.Process.State.GreenOK;
+      return isRunning() ? NODE_ICON_RUNNING :
+             isFailed(myResult) ? NODE_ICON_ERROR :
+             isSkipped(myResult) ? NODE_ICON_SKIPPED :
+             myErrors.get() > 0 ? NODE_ICON_ERROR :
+             myWarnings.get() > 0 ? NODE_ICON_WARNING :
+             NODE_ICON_OK;
     }
+  }
+
+  public static boolean isFailed(@Nullable EventResult result) {
+    return result instanceof FailureResult;
+  }
+
+  public static boolean isSkipped(@Nullable EventResult result) {
+    return result instanceof SkippedResult;
+  }
+
+  public static Icon getEventResultIcon(@Nullable EventResult result) {
+    if (result == null) {
+      return NODE_ICON_RUNNING;
+    }
+
+    if (result instanceof MessageEventResult) {
+      return getIcon(((MessageEventResult) result).getKind());
+    }
+
+    if (isFailed(result)) {
+      return NODE_ICON_ERROR;
+    }
+    if (isSkipped(result)) {
+      return NODE_ICON_SKIPPED;
+    }
+    return NODE_ICON_OK;
   }
 
   private static Icon getIcon(MessageEvent.Kind kind) {
-    switch (kind) {
-      case ERROR:
-        return AllIcons.General.Error;
-      case WARNING:
-        return AllIcons.General.Warning;
-      case INFO:
-        return AllIcons.General.Information;
-      case STATISTICS:
-        return AllIcons.General.Mdot_empty;
-      case SIMPLE:
-        return AllIcons.General.Mdot_empty;
+    return switch (kind) {
+      case ERROR -> NODE_ICON_ERROR;
+      case WARNING -> NODE_ICON_WARNING;
+      case INFO -> NODE_ICON_INFO;
+      case STATISTICS -> NODE_ICON_STATISTICS;
+      case SIMPLE -> NODE_ICON_SIMPLE;
+    };
+  }
+
+  private static final class HintData {
+    private int myErrors;
+    private int myWarnings;
+    private boolean isRunning;
+    private @Nullable @BuildEventsNls.Hint String myHint;
+    private @Nullable @BuildEventsNls.Hint String myCurrentHint;
+
+    private @BuildEventsNls.Hint String getCurrentHint(@NotNull ExecutionNode node) {
+      if (!idUpToDate(node)) {
+        myHint = node.myHint;
+        myErrors = node.myErrors.get();
+        myWarnings = node.myWarnings.get();
+        isRunning = node.isRunning();
+        myCurrentHint = calculateCurrentHint(node);
+      }
+      return myCurrentHint;
     }
-    return AllIcons.General.Mdot_empty;
+
+    private boolean idUpToDate(@NotNull ExecutionNode node) {
+      if (!Objects.equals(myHint, node.myHint)) return false;
+      if (myErrors != node.myErrors.get()) return false;
+      if (myWarnings != node.myWarnings.get()) return false;
+      if (isRunning != node.isRunning()) return false;
+      return true;
+    }
+
+    private @BuildEventsNls.Hint String calculateCurrentHint(@NotNull ExecutionNode node) {
+      assert node.myIsCorrectThread.get();
+      if (myWarnings > 0 || myErrors > 0) {
+        String errorHint = myErrors > 0 ? LangBundle.message("build.event.message.errors", myErrors) : "";
+        String warningHint = myWarnings > 0 ? LangBundle.message("build.event.message.warnings", myWarnings) : "";
+        String issuesHint = !errorHint.isEmpty() && !warningHint.isEmpty() ? errorHint + ", " + warningHint : errorHint + warningHint;
+        ExecutionNode parent = node.getParent();
+        if (parent == null || parent.getParent() == null) {
+          if (node.isRunning()) {
+            return StringUtil.notNullize(myHint) + "  " + issuesHint;
+          }
+          else {
+            return LangBundle.message("build.event.message.with", StringUtil.notNullize(myHint), issuesHint);
+          }
+        }
+        else {
+          return StringUtil.notNullize(myHint) + " " + issuesHint;
+        }
+      }
+      else {
+        return myHint;
+      }
+    }
   }
 }

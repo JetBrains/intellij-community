@@ -16,8 +16,5 @@
 
 package com.intellij.util.xml.ui;
 
-/**
- * @author peter
- */
 public class PsiClassPanel extends EditorContainerPanel {
 }

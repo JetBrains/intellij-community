@@ -1,34 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.Lists;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author vlan
- */
-public class PyPackage extends InstalledPackage {
-  private final String myLocation;
-  private final List<PyRequirement> myRequirements;
+public final class PyPackage extends InstalledPackage {
+  private final @Nullable String myLocation;
+  private final @NotNull List<PyRequirement> myRequirements;
 
   public PyPackage(@NotNull String name, @NotNull String version, @Nullable String location, @NotNull List<PyRequirement> requirements) {
     super(name, version);
@@ -36,11 +20,22 @@ public class PyPackage extends InstalledPackage {
     myRequirements = requirements;
   }
 
-  @NotNull
-  public List<PyRequirement> getRequirements() {
-    return myRequirements;
+  public PyPackage(@NotNull String name, @NotNull String version, @Nullable String location) {
+    this(name, version, location, List.of());
   }
 
+  public PyPackage(@NotNull String name, @NotNull String version) {
+    this(name, version, null);
+  }
+
+  @Override
+  public @NlsSafe @NotNull String getVersion() {
+    return Objects.requireNonNull(super.getVersion());
+  }
+
+  public @NotNull List<PyRequirement> getRequirements() {
+    return myRequirements;
+  }
 
   /**
    * Checks if package meets requirement, described in [PEP-0386] format using {@link PyRequirement}
@@ -48,22 +43,16 @@ public class PyPackage extends InstalledPackage {
    * @param requirement to check if package matches
    * @return true if matches.
    */
-  public boolean matches(@NotNull final PyRequirement requirement) {
-    return requirement.match(Lists.newArrayList(this)) != null;
+  public boolean matches(@NotNull PyRequirement requirement) {
+    return requirement.match(List.of(this)) != null;
   }
 
-  @Nullable
-  public String getLocation() {
+  public @Nullable String getLocation() {
     return myLocation;
   }
 
-  public boolean isInstalled() {
-    return myLocation != null;
-  }
-
-  @Nullable
   @Override
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return FileUtil.getLocationRelativeToUserHome(myLocation);
   }
 }

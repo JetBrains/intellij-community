@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.javadoc;
 
 import com.intellij.psi.PsiClass;
@@ -22,14 +8,13 @@ import com.intellij.psi.javadoc.CustomJavadocTagProvider;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MojoClassAnnotationTagProvider implements CustomJavadocTagProvider {
+public final class MojoClassAnnotationTagProvider implements CustomJavadocTagProvider {
   private static final String[] ANNOTATION_NAMES = {
       "goal",
       "requiresDependencyResolution",
@@ -53,7 +38,7 @@ class MojoAnnotationInfo implements JavadocTagInfo {
 
   private final String myName;
 
-  public MojoAnnotationInfo(@NotNull String name) {
+  MojoAnnotationInfo(@NotNull String name) {
     myName = name;
   }
 
@@ -69,22 +54,19 @@ class MojoAnnotationInfo implements JavadocTagInfo {
 
   @Override
   public boolean isValidInContext(PsiElement element) {
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       return InheritanceUtil.isInheritor(psiClass, BASE_CLASS);
     }
     return false;
   }
 
-  @Nullable
   @Override
-  public String checkTagValue(PsiDocTagValue value) {
+  public @Nullable String checkTagValue(PsiDocTagValue value) {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiReference getReference(PsiDocTagValue value) {
+  public @Nullable PsiReference getReference(PsiDocTagValue value) {
     return null;
   }
 }

@@ -1,0 +1,65 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.extendedToolWindowsUi` start
+dev_dist_plugin(
+    content_modules = ["intellij.extendedToolWindowsUi.frontend"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.extendedToolWindowsUi.frontend"],
+    jars = {
+        "lib/extendedToolWindowsUi.jar": ["intellij.extendedToolWindowsUi"],
+    },
+    main_module = "intellij.extendedToolWindowsUi",
+)
+### auto-generated section `dev intellij.extendedToolWindowsUi` end
+
+### auto-generated section `build intellij.extendedToolWindowsUi` start
+jvm_library(
+    name = "extendedToolWindowsUi",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.extendedToolWindowsUi",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
+)
+
+jvm_library(
+    name = "extendedToolWindowsUi_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.extendedToolWindowsUi",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":extendedToolWindowsUi",
+        "//platform/platform-frontend:frontend_test_lib",
+    ],
+)
+
+ij_plugin(
+    name = "extendedToolWindowsUi_plugin",
+    descriptor_module = ":extendedToolWindowsUi",
+    content_modules = ["//plugins/extended-toolwindows-ui/frontend"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.extendedToolWindowsUi` end
+
+### auto-generated section `iml intellij.extendedToolWindowsUi` start
+exports_files(
+    [
+        "intellij.extendedToolWindowsUi.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.extendedToolWindowsUi` end

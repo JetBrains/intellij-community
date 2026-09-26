@@ -1,26 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})
-class StorageGuard {
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+final class StorageGuard {
+  private final Lock myLock = new ReentrantLock();
+  private final Condition myCondition = myLock.newCondition();
+
   private int myHolds;
-  private int myWaiters;
 
   public interface StorageModeExitHandler {
     void leave();
@@ -39,40 +32,51 @@ class StorageGuard {
     }
   };
 
+  @SuppressWarnings("WhileLoopSpinsOnField")
   @NotNull
-  synchronized StorageModeExitHandler enter(boolean mode) {
-    if (mode) {
-      while (myHolds < 0) {
-        doWait();
-      }
-      myHolds++;
-      return myTrueStorageModeExitHandler;
-    }
-    else {
-      while (myHolds > 0) {
-        doWait();
-      }
-      myHolds--;
-      return myFalseStorageModeExitHandler;
-    }
-  }
-
-  private void doWait() {
+  StorageModeExitHandler enter(boolean mode) {
+    boolean nonCancelableSection = ProgressManager.getInstance().isInNonCancelableSection();
+    myLock.lock();
     try {
-      ++myWaiters;
-      wait();
-    }
-    catch (InterruptedException ignored) {
+      if (mode) {
+        while (myHolds < 0) {
+          await(nonCancelableSection);
+        }
+        myHolds++;
+        return myTrueStorageModeExitHandler;
+      }
+      else {
+        while (myHolds > 0) {
+          await(nonCancelableSection);
+        }
+        myHolds--;
+        return myFalseStorageModeExitHandler;
+      }
     }
     finally {
-      --myWaiters;
+      myLock.unlock();
     }
   }
 
-  private synchronized void leave(boolean mode) {
-    myHolds += mode ? -1 : 1;
-    if (myHolds == 0 && myWaiters > 0) {
-      notifyAll();
+  private void await(boolean nonCancelableSection) {
+    if (nonCancelableSection) {
+      myCondition.awaitUninterruptibly();
+    }
+    else {
+      ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
+    }
+  }
+
+  private void leave(boolean mode) {
+    myLock.lock();
+    try {
+      myHolds += mode ? -1 : 1;
+      if (myHolds == 0) {
+        myCondition.signalAll();
+      }
+    }
+    finally {
+      myLock.unlock();
     }
   }
 }

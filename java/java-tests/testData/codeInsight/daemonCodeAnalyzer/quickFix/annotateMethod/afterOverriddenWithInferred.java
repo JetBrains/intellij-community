@@ -1,4 +1,4 @@
-// "Annotate overridden methods as '@NotNull'" "true"
+// "Add missing nullability annotations to overriding methods" "true"
 
 import org.jetbrains.annotations.NotNull;
 
@@ -9,8 +9,8 @@ abstract class P2 {
   }
 
   Object o = new P2() {
-    @NotNull
     @Override
+    @NotNull
     String foo(String p) {
       return "";
     }

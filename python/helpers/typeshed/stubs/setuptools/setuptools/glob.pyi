@@ -1,0 +1,9 @@
+from collections.abc import Iterator
+from typing import TypeVar
+
+_StrOrBytesT = TypeVar("_StrOrBytesT", str, bytes)
+__all__ = ["glob", "iglob", "escape"]
+
+def glob(pathname: _StrOrBytesT, recursive: bool = False) -> list[_StrOrBytesT]: ...
+def iglob(pathname: _StrOrBytesT, recursive: bool = False) -> Iterator[_StrOrBytesT]: ...
+def escape(pathname): ...

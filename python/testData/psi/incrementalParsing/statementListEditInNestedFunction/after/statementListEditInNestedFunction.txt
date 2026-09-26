@@ -1,0 +1,16 @@
+Original text:
+---------------
+def outer():
+    def inner():
+        print(1)
+        print(2)
+    return inner
+---------------
+Subtree: Language: Python
+---------------
+def outer():
+    def inner():
+        <reparse>print(1)
+        print(3)</reparse>
+    return inner
+---------------

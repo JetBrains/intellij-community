@@ -1,79 +1,109 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class ProgressSuspender {
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+@ApiStatus.Internal
+public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
-  public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
+
+  @Topic.AppLevel
+  public static final Topic<SuspenderListener> TOPIC = new Topic<>("ProgressSuspender", SuspenderListener.class, Topic.BroadcastDirection.NONE);
 
   private final Object myLock = new Object();
-  private final Thread myThread;
   private static final Application ourApp = ApplicationManager.getApplication();
-  @NotNull private final String mySuspendedText;
-  @Nullable private String myTempReason;
+  private final @NotNull @NlsContexts.ProgressText String mySuspendedText;
+  private @Nullable @NlsContexts.ProgressText String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
+  private final Set<ProgressIndicator> myProgresses = ConcurrentCollectionFactory.createConcurrentSet();
+  private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
+  private boolean myClosed;
 
-  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
+  private static final Map<ProgressIndicator, ProgressSuspender> ourProgressToSuspenderMap = new ConcurrentHashMap<>();
+
+  private ProgressSuspender(@NotNull ProgressIndicator progress, @NotNull @NlsContexts.ProgressText String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
-    myThread = Thread.currentThread();
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
 
-    ((UserDataHolder) progress).putUserData(PROGRESS_SUSPENDER, this);
-    
-    new ProgressIndicatorListenerAdapter() {
-      @Override
-      public void cancelled() {
-        resumeProcess();
-      }
-    }.installToProgress(progress);
+    attachToProgress(progress);
+
+    if (progress instanceof ProgressIndicatorEx indicatorEx) {
+      new ProgressIndicatorListener() {
+        @Override
+        public void cancelled() {
+          resumeProcess();
+        }
+      }.installToProgress(indicatorEx);
+    }
 
     myPublisher.suspendableProgressAppeared(this);
   }
 
-  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
-    return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  @Override
+  public void close() {
+    synchronized (myLock) {
+      myClosed = true;
+      mySuspended = false;
+      ((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(myHook);
+    }
+    for (ProgressIndicator progress : myProgresses) {
+      ourProgressToSuspenderMap.remove(progress);
+      myPublisher.suspendableProgressRemoved(this, progress);
+    }
   }
 
-  @Nullable
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    return new ProgressSuspender(indicator, suspendedText);
+  }
+
+  public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
+    myProgressesInNonSuspendableSections.compute(indicator, (_, number) -> (number == null ? 0 : number) + 1);
+    try {
+      runnable.run();
+    }
+    finally {
+      myProgressesInNonSuspendableSections.compute(indicator, (_, number) -> number == null || number <= 1 ? null : number - 1);
+    }
+  }
+
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
-    return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
+    return ourProgressToSuspenderMap.get(indicator);
   }
 
-  @NotNull
-  public String getSuspendedText() {
+  /**
+   * Associates an additional progress indicator with this suspender, so that its {@code #checkCanceled} can later block the calling thread.
+   */
+  public void attachToProgress(@NotNull ProgressIndicator progress) {
+    myProgresses.add(progress);
+    ourProgressToSuspenderMap.put(progress, this);
+    myPublisher.suspendableProgressAppeared(this, progress);
+  }
+
+  public @NotNull @NlsContexts.ProgressText String getSuspendedText() {
     synchronized (myLock) {
       return myTempReason != null ? myTempReason : mySuspendedText;
     }
@@ -83,12 +113,16 @@ public class ProgressSuspender {
     return mySuspended;
   }
 
+  public boolean isClosed() {
+    return myClosed;
+  }
+
   /**
    * @param reason if provided, is displayed in the UI instead of suspended text passed into constructor until the progress is resumed
    */
-  public void suspendProcess(@Nullable String reason) {
+  public void suspendProcess(@NlsContexts.ProgressText @Nullable String reason) {
     synchronized (myLock) {
-      if (mySuspended) return;
+      if (mySuspended || myClosed) return;
 
       mySuspended = true;
       myTempReason = reason;
@@ -97,6 +131,9 @@ public class ProgressSuspender {
     }
 
     myPublisher.suspendedStatusChanged(this);
+
+    // Give running NonBlockingReadActions a chance to suspend
+    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {}));
   }
 
   public void resumeProcess() {
@@ -110,12 +147,23 @@ public class ProgressSuspender {
 
       myLock.notifyAll();
     }
-    
+
     myPublisher.suspendedStatusChanged(this);
   }
 
-  private boolean freezeIfNeeded(@Nullable ProgressIndicator current) {
-    if (current == null || ourApp.isReadAccessAllowed() || !CoreProgressManager.isThreadUnderIndicator(current, myThread)) {
+  private boolean freezeIfNeeded(ProgressIndicator current) {
+    if (current == null) {
+      current = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    }
+    if (current == null || !myProgresses.contains(current)) {
+      return false;
+    }
+
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
+      return false;
+    }
+
+    if (isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 
@@ -131,11 +179,26 @@ public class ProgressSuspender {
       return true;
     }
   }
-  
+
+  private static boolean isCurrentThreadHoldingKnownLocks() {
+    if (ourApp.isReadAccessAllowed()) {
+      return true;
+    }
+
+    ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
+    return infos.length > 0 && infos[0].getLockedMonitors().length > 0;
+  }
+
   public interface SuspenderListener {
-    /** Called (on any thread) when a new progress is created with suspension capability */
+    /** Called (on any thread) when a new suspender is created */
     default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {}
-    
+
+    /** Called (on any thread) when a suspender (might already exist) is attached to a new progress */
+    default void suspendableProgressAppeared(@NotNull ProgressSuspender suspender, @NotNull ProgressIndicator progressIndicator) {}
+
+    /** Called (on any thread) when a suspender is destroyed */
+    default void suspendableProgressRemoved(@NotNull ProgressSuspender suspender, @NotNull ProgressIndicator progressIndicator) {}
+
     /** Called (on any thread) when a progress is suspended or resumed */
     default void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {}
   }

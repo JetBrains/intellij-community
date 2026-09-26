@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  Base.class
+End of files
+Compiling files:
+  java/fieldModifiers/setStatic/a/Base.java
+End of files
+Cleaning output files:
+  Client1.class
+  Client2.class
+End of files
+Compiling files:
+  java/fieldModifiers/setStatic/a/Client1.java
+  java/fieldModifiers/setStatic/a/Client2.java
+End of files
+------------------------------------------
+Exit code: OK

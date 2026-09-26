@@ -1,0 +1,12 @@
+MarkdownFile
+  MarkdownParagraph(Markdown:PARAGRAPH)
+    MarkdownShortReferenceLink(Markdown:Markdown:SHORT_REFERENCE_LINK)
+      MarkdownLinkLabel(Markdown:Markdown:LINK_LABEL)
+        PsiElement(Markdown:Markdown:[)('[')
+        PsiElement(Markdown:Markdown:TEXT)('@test')
+        PsiElement(Markdown:Markdown:])(']')
+    PsiWhiteSpace(' ')
+    MarkdownCodeSpan(Markdown:Markdown:CODE_SPAN)
+      PsiElement(Markdown:Markdown:BACKTICK)('`')
+      PsiElement(Markdown:Markdown:TEXT)('backtick')
+      PsiElement(Markdown:Markdown:BACKTICK)('`')

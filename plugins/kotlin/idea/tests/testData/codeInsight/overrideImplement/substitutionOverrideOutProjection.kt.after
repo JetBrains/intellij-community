@@ -1,0 +1,13 @@
+// FIR_IDENTICAL
+// DISABLE_ERRORS
+interface Serializer {
+    fun getSerializer(kind: String): KSerializer<out XDescriptor>?
+}
+
+class MyImpl : Serializer {
+    override fun getSerializer(kind: String): KSerializer<out XDescriptor>? {
+        TODO("Not yet implemented")
+    }
+}
+
+// MEMBER: "getSerializer(kind: String): KSerializer<out XDescriptor>?"

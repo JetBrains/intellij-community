@@ -15,30 +15,30 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AddParamBase extends AbstractFix {
 
     protected abstract String getParamName();
 
-    @Nullable
-    protected abstract XmlTag findTemplateTag();
+    protected abstract @Nullable XmlTag findTemplateTag();
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final XmlTag templateTag = findTemplateTag();
         assert templateTag != null;
 
@@ -47,6 +47,6 @@ public abstract class AddParamBase extends AbstractFix {
 
         RefactoringUtil.addParameter(templateTag, paramTag);
 
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzer.getInstance(project).restart(this);
     }
 }

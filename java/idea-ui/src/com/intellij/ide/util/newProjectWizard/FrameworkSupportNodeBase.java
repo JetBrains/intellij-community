@@ -1,37 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> extends CheckedTreeNode {
-  private final FrameworkSupportNodeBase myParentNode;
+  private static final Logger LOG = Logger.getInstance(FrameworkSupportNodeBase.class);
+  private final FrameworkSupportNodeBase<?> myParentNode;
 
-  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase parentNode) {
+  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase<?> parentNode) {
     super(userObject);
     setChecked(false);
     myParentNode = parentNode;
@@ -40,15 +29,17 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T getUserObject() {
     return (T)super.getUserObject();
   }
 
-  public static void sortByName(@Nullable List<FrameworkSupportNodeBase> nodes, @Nullable final Comparator<FrameworkSupportNodeBase> comparator) {
+  @Contract(mutates = "param1")
+  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, final @Nullable Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
     if (nodes == null) return;
 
-    Collections.sort(nodes, (o1, o2) -> {
+    nodes.sort((o1, o2) -> {
       if (comparator != null) {
         int compare = comparator.compare(o1, o2);
         if (compare != 0) return compare;
@@ -59,32 +50,38 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
       if (o1.getChildCount() > o2.getChildCount()) return -1;
       return o1.getTitle().compareToIgnoreCase(o2.getTitle());
     });
-    for (FrameworkSupportNodeBase node : nodes) {
-      sortByName((List)node.children, null);
+    for (FrameworkSupportNodeBase<?> node : nodes) {
+      @SuppressWarnings("unchecked") 
+      List<FrameworkSupportNodeBase<?>> children = (List<FrameworkSupportNodeBase<?>>)(List<?>)node.children;
+      sortByName(children, null);
     }
   }
 
-  @NotNull
-  protected final String getTitle() {
+  protected final @NotNull @NlsContexts.Label String getTitle() {
     return getUserObject().getPresentableName();
   }
 
-  @NotNull
-  public final Icon getIcon() {
-    return getUserObject().getIcon();
+  public final @NotNull Icon getIcon() {
+    Icon icon = getUserObject().getIcon();
+    //noinspection ConstantConditions
+    if (icon == null) {
+      Class<?> aClass = getUserObject().getClass();
+      PluginException.logPluginError(LOG, "FrameworkOrGroup::getIcon returns null for " + aClass, null, aClass);
+      return EmptyIcon.ICON_16;
+    }
+    return icon;
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return getUserObject().getId();
   }
 
-  @NotNull
-  public List<FrameworkSupportNodeBase> getChildren() {
-    return children != null ? (List)children : Collections.emptyList();
+  @SuppressWarnings("unchecked")
+  public @NotNull List<FrameworkSupportNodeBase<?>> getChildren() {
+    return children != null ? (List<FrameworkSupportNodeBase<?>>)(List<?>)children : Collections.emptyList();
   }
 
-  public FrameworkSupportNodeBase getParentNode() {
+  public FrameworkSupportNodeBase<?> getParentNode() {
     return myParentNode;
   }
 }

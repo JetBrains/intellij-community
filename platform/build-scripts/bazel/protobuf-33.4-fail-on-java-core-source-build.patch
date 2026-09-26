@@ -1,0 +1,12 @@
+--- a/java/core/BUILD.bazel
++++ b/java/core/BUILD.bazel
+@@ -1,3 +1,9 @@
++# JetBrains monorepo patch. The build must use the prebuilt protobuf-java jar.
++# If you see this error, the registration of the prebuilt Java proto toolchain
++# @rules_jvm//:protoc_java_toolchain_toolchain was lost, and java_proto_library
++# fell back to a source build. Restore the registration. See IJI-3440, MRI-3564.
++fail("@protobuf//java/core must not be built from source in this monorepo")
++
+ load("@bazel_skylib//rules:build_test.bzl", "build_test")
+ load("@rules_java//java:java_library.bzl", "java_library")
+ load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")

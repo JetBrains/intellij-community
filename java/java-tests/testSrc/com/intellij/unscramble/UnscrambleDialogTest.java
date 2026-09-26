@@ -1,14 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * @author Dmitry Avdeev
@@ -17,9 +20,18 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private RunContentDescriptor myContent;
 
   @Override
+  protected boolean isIconRequired() {
+    return true;
+  }
+
+  @Override
   protected void tearDown() throws Exception {
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     try {
       Disposer.dispose(myContent);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myContent = null;
@@ -36,11 +48,12 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testException() {
-    showText("java.lang.NullPointerException\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
-    assertIcon("exception.png", myContent.getIcon());
+    showText("""
+               java.lang.NullPointerException
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)""");
+    assertIcon("lightning.svg", myContent.getIcon());
     assertEquals("NPE", myContent.getDisplayName());
   }
 
@@ -48,7 +61,43 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
     File file = new File(getTestDataPath() + "threaddump.txt");
     String s = FileUtil.loadFile(file);
     showText(s);
-    assertIcon("threaddump.png", myContent.getIcon());
+    assertIcon("dump.svg", myContent.getIcon());
+    assertEquals("<Threads>", myContent.getDisplayName());
+  }
+
+  public void testJcmdJsonNumericIdentifiersThreadDump() {
+    showText("""
+               {
+                 "threadDump": {
+                   "formatVersion": 2,
+                   "processId": 79302,
+                   "threadContainers": [
+                     {
+                       "container": "<root>",
+                       "threads": [
+                         {
+                           "tid": 157,
+                           "name": "main",
+                           "state": "RUNNABLE",
+                           "stack": [
+                             "example.Main.run(Main.java:1)"
+                           ]
+                         },
+                         {
+                           "tid": 158,
+                           "name": "worker",
+                           "state": "WAITING",
+                           "stack": [
+                             "example.Worker.await(Worker.java:1)"
+                           ]
+                         }
+                       ],
+                       "threadCount": 2
+                     }
+                   ]
+                 }
+               }""");
+    assertIcon("dump.svg", myContent.getIcon());
     assertEquals("<Threads>", myContent.getDisplayName());
   }
 
@@ -68,7 +117,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static void assertIcon(String s, Icon icon) {
-    assertTrue(icon.toString().contains(s));
+    assertThat(icon.toString()).contains(s);
   }
 
   @Override

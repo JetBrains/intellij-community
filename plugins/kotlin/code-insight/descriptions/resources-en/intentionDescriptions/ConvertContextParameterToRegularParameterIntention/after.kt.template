@@ -1,0 +1,7 @@
+fun foo(c: String) {
+}
+
+context(c: String)
+fun bar() {
+    foo(c)
+}

@@ -1,0 +1,13 @@
+pip
+tox
+
+cachetools
+chardet
+colorama
+distlib
+filelock
+packaging
+platformdirs
+pluggy
+pyproject-api
+virtualenv

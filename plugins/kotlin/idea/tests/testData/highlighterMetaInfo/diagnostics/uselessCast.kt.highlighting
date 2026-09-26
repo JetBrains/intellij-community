@@ -1,0 +1,8 @@
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHT_WARNINGS
+// HIGHLIGHT_SEVERITY: SYMBOL_TYPE_SEVERITY
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>castSpecial<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>p<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!>) {
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'"), HIGHLIGHTING("severity='WARNING'; descr='[UNUSED_VARIABLE] Variable 'v' is never used'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>v<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>p<!> <!HIGHLIGHTING("severity='WARNING'; descr='[USELESS_CAST] No cast needed'; highlightingTextAttributesKey='NOT_USED_ELEMENT_ATTRIBUTES'")!>as <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!><!>
+}

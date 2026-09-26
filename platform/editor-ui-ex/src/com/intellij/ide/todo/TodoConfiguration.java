@@ -1,19 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.psi.search.*;
-import com.intellij.util.EventDispatcher;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoAttributesUtil;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.SmartList;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,29 +26,32 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 
-@State(
-  name = "TodoConfiguration",
-  storages = {
-    @Storage("editor.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "TodoConfiguration", storages = {
+  @Storage("editor.xml"),
+  // Rider kept TodoConfiguration in the non-roamable other.xml before 2016. Read-only migration.
+  // Could as well be removed, but I keep it for total backwards-compatibility
+  @Storage(value = "other.xml", deprecated = true),
+}, category = SettingsCategory.CODE)
 public class TodoConfiguration implements PersistentStateComponent<Element> {
+
+  public static TodoConfiguration getInstance() {
+    return ApplicationManager.getApplication().getService(TodoConfiguration.class);
+  }
+
+  @ApiStatus.Internal public static final @NonNls String PROP_MULTILINE = "multiLine";
+  @ApiStatus.Internal public static final @NonNls String PROP_TODO_PATTERNS = "todoPatterns";
+  @ApiStatus.Internal public static final @NonNls String PROP_TODO_FILTERS = "todoFilters";
+  private                    static final @NonNls String ELEMENT_MULTILINE = "multiLine";
+  private                    static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private                    static final @NonNls String ELEMENT_FILTER = "filter";
+
+  private boolean myMultiLine = true;
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
-  private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
-
-  @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
-  @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
-  @NonNls private static final String ELEMENT_PATTERN = "pattern";
-  @NonNls private static final String ELEMENT_FILTER = "filter";
-  private final MessageBus myMessageBus;
-
-  public TodoConfiguration(@NotNull MessageBus messageBus) {
-    myMessageBus = messageBus;
-    messageBus.connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+  public TodoConfiguration() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorSettingsChanged();
@@ -53,11 +60,6 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     resetToDefaultTodoPatterns();
   }
 
-  public static TodoConfiguration getInstance() {
-    return ServiceManager.getService(TodoConfiguration.class);
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
   public void resetToDefaultTodoPatterns() {
     myTodoPatterns = getDefaultPatterns();
     myTodoFilters = new TodoFilter[]{};
@@ -67,13 +69,8 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   /**
    * Returns the list of default TO_DO patterns. Can be customized in other IDEs (and is customized in Rider).
    */
-  @NotNull
-  protected TodoPattern[] getDefaultPatterns() {
-    //noinspection SpellCheckingInspection
-    return new TodoPattern[]{
-      new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
-      new TodoPattern("\\bfixme\\b.*", TodoAttributesUtil.createDefault(), false),
-    };
+  protected TodoPattern @NotNull [] getDefaultPatterns() {
+    return TodoDefaultPatternProvider.getInstance().getDefaultPatterns();
   }
 
   private void buildIndexPatterns() {
@@ -83,21 +80,19 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  @NotNull
-  public TodoPattern[] getTodoPatterns() {
+  public TodoPattern @NotNull [] getTodoPatterns() {
     return myTodoPatterns;
   }
 
-  @NotNull
-  public IndexPattern[] getIndexPatterns() {
+  public IndexPattern @NotNull [] getIndexPatterns() {
     return myIndexPatterns;
   }
 
-  public void setTodoPatterns(@NotNull TodoPattern[] todoPatterns) {
+  public void setTodoPatterns(TodoPattern @NotNull [] todoPatterns) {
     doSetTodoPatterns(todoPatterns, true);
   }
 
-  private void doSetTodoPatterns(@NotNull TodoPattern[] todoPatterns, final boolean shouldNotifyIndices) {
+  private void doSetTodoPatterns(@NotNull TodoPattern @NotNull [] todoPatterns, boolean shouldNotifyIndices) {
     TodoPattern[] oldTodoPatterns = myTodoPatterns;
     IndexPattern[] oldIndexPatterns = myIndexPatterns;
 
@@ -107,14 +102,17 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     // only trigger index refresh actual index patterns have changed
     if (shouldNotifyIndices && !Arrays.deepEquals(myIndexPatterns, oldIndexPatterns)) {
       PropertyChangeEvent event = new PropertyChangeEvent(this, IndexPatternProvider.PROP_INDEX_PATTERNS, oldTodoPatterns, todoPatterns);
-      myMessageBus.syncPublisher(IndexPatternProvider.INDEX_PATTERNS_CHANGED).propertyChange(event);
+      getPublisher(IndexPatternProvider.INDEX_PATTERNS_CHANGED).propertyChange(event);
     }
 
     // only trigger gui and code daemon refresh when either the index patterns or presentation attributes have changed
     if (!Arrays.deepEquals(myTodoPatterns, oldTodoPatterns)) {
-      PropertyChangeListener multicaster = myPropertyChangeMulticaster.getMulticaster();
-      multicaster.propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldTodoPatterns, todoPatterns));
+      getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldTodoPatterns, todoPatterns));
     }
+  }
+
+  private static @NotNull PropertyChangeListener getPublisher(@NotNull Topic<? extends PropertyChangeListener> topic) {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
   }
 
   /**
@@ -133,23 +131,32 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   /**
    * @return all {@code TodoFilter}s.
    */
-  @NotNull
-  public TodoFilter[] getTodoFilters() {
+  public TodoFilter @NotNull [] getTodoFilters() {
     return myTodoFilters;
   }
 
-  public void setTodoFilters(@NotNull TodoFilter[] filters) {
-    TodoFilter[] oldFilters = myTodoFilters;
-    myTodoFilters = filters;
-    myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
+  public boolean isMultiLine() {
+    return myMultiLine;
   }
 
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
-    myPropertyChangeMulticaster.addListener(listener, parentDisposable);
+  public void setMultiLine(boolean multiLine) {
+    if (multiLine != myMultiLine) {
+      myMultiLine = multiLine;
+      getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_MULTILINE, !multiLine, multiLine));
+    }
+  }
+
+  public void setTodoFilters(TodoFilter @NotNull [] filters) {
+    TodoFilter[] oldFilters = myTodoFilters;
+    myTodoFilters = filters;
+    getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
   }
 
   @Override
   public void loadState(@NotNull Element element) {
+    String multiLineText = element.getChildText(ELEMENT_MULTILINE);
+    myMultiLine = multiLineText == null || Boolean.parseBoolean(multiLineText);
+
     List<TodoPattern> patternsList = new SmartList<>();
     for (Element child : element.getChildren(ELEMENT_PATTERN)) {
       patternsList.add(new TodoPattern(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes()));
@@ -171,6 +178,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   @Override
   public Element getState() {
     Element element = new Element("state");
+    if (!myMultiLine) {
+      Element m = new Element(ELEMENT_MULTILINE);
+      m.setText(Boolean.FALSE.toString());
+      element.addContent(m);
+    }
     TodoPattern[] todoPatterns = myTodoPatterns;
     if (!Arrays.equals(myTodoPatterns, getDefaultPatterns())) {
       for (TodoPattern pattern : todoPatterns) {
@@ -186,6 +198,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
       element.addContent(child);
     }
     return element;
+  }
+
+  @Override
+  public void noStateLoaded() {
+    resetToDefaultTodoPatterns();
   }
 
   public void colorSettingsChanged() {

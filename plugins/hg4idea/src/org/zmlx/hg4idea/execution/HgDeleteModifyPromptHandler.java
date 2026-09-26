@@ -1,36 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler");
+  private static final Logger LOG = Logger.getInstance(HgDeleteModifyPromptHandler.class);
 
   private static final Pattern LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN = Pattern.compile(
     "remote\\schanged(.+)which\\slocal\\sdeleted\\s.+");
@@ -38,9 +22,10 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     "\\slocal\\schanged(.+)which\\sremote\\sdeleted\\s.+");
 
 
-  public HgPromptChoice promptUser(@NotNull final String message,
-                                   @NotNull final HgPromptChoice[] choices,
-                                   @NotNull final HgPromptChoice defaultChoice) {
+  @Override
+  public HgPromptChoice promptUser(final @NotNull String message,
+                                   final HgPromptChoice @NotNull [] choices,
+                                   final @NotNull HgPromptChoice defaultChoice) {
 
     Matcher localDelMatcher = LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);
     Matcher localModifyMatcher = REMOTE_DELETE_LOCAL_MODIFIED_CONFLICT_MESSAGE_PATTERN.matcher(message);
@@ -48,13 +33,11 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     final String modifiedMessage;
     if (localDelMatcher.matches()) {
       filename = localDelMatcher.group(1);
-      modifiedMessage =
-        "File " + filename + " is deleted locally, but modified remotely. Do you want to keep the modified version or remove the file?";
+      modifiedMessage = HgBundle.message("hg4idea.delete.modify.file.deleted.locally", filename);
     }
     else if (localModifyMatcher.matches()) {
       filename = localModifyMatcher.group(1);
-      modifiedMessage =
-        "File " + filename + " is deleted remotely, but modified locally. Do you want to keep the modified version or remove the file?";
+      modifiedMessage = HgBundle.message("hg4idea.delete.modify.file.deleted.remotely", filename);
     }
     else {
       modifiedMessage = message;
@@ -68,7 +51,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
             choicePresentationArray[i] = choices[i].toString();
           }
           chosen[0] = Messages
-            .showDialog(modifiedMessage, "Delete-Modify Conflict",
+            .showDialog(modifiedMessage, HgBundle.message("hg4idea.delete.modify.conflict.title"),
                         choicePresentationArray, defaultChoice.getChosenIndex(),
                         Messages.getQuestionIcon());
         });
@@ -80,6 +63,7 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     return chosen[0] >= 0 ? choices[chosen[0]] : HgPromptChoice.ABORT;
   }
 
+  @Override
   public boolean shouldHandle(@Nullable String message) {
     if (message == null) {
       return false;

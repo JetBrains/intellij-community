@@ -1,52 +1,41 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class DependentSdkType extends SdkType {
 
-  public DependentSdkType(@NonNls String name) {
+  public DependentSdkType(@NonNls @NotNull String name) {
     super(name);
   }
 
   /**
    * Checks if dependencies satisfied.
    */
-  protected boolean checkDependency(SdkModel sdkModel) {
+  protected boolean checkDependency(@NotNull SdkModel sdkModel) {
     return ContainerUtil.find(sdkModel.getSdks(), sdk -> isValidDependency(sdk)) != null;
   }
 
-  protected abstract boolean isValidDependency(Sdk sdk);
+  protected abstract boolean isValidDependency(@NotNull Sdk sdk);
 
-  public abstract String getUnsatisfiedDependencyMessage();
+  public abstract @NotNull @NlsContexts.DialogMessage String getUnsatisfiedDependencyMessage();
 
   @Override
   public boolean supportsCustomCreateUI() {
@@ -54,9 +43,11 @@ public abstract class DependentSdkType extends SdkType {
   }
 
   @Override
-  public void showCustomCreateUI(@NotNull final SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @Nullable Sdk selectedSdk,
+                                 @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     if (!checkDependency(sdkModel)) {
-      if (Messages.showOkCancelDialog(parentComponent, getUnsatisfiedDependencyMessage(), "Cannot Create SDK", Messages.getWarningIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(parentComponent, getUnsatisfiedDependencyMessage(),
+                                      ProjectBundle.message("dialog.title.cannot.create.sdk"), Messages.getWarningIcon()) != Messages.OK) {
         return;
       }
       if (fixDependency(sdkModel, sdkCreatedCallback) == null) {
@@ -67,23 +58,22 @@ public abstract class DependentSdkType extends SdkType {
     createSdkOfType(sdkModel, this, sdkCreatedCallback);
   }
 
-  public abstract SdkType getDependencyType();
+  @Override
+  public abstract @NotNull SdkType getDependencyType();
 
-  protected Sdk fixDependency(SdkModel sdkModel, Consumer<Sdk> sdkCreatedCallback) {
+  protected Sdk fixDependency(@NotNull SdkModel sdkModel, @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     return createSdkOfType(sdkModel, getDependencyType(), sdkCreatedCallback);
   }
-  
-  protected static Sdk createSdkOfType(final SdkModel sdkModel,
-                                  final SdkType sdkType,
-                                  final Consumer<Sdk> sdkCreatedCallback) {
+
+  protected static Sdk createSdkOfType(@NotNull SdkModel sdkModel,
+                                       @NotNull SdkType sdkType,
+                                       @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     final Ref<Sdk> result = new Ref<>(null);
     SdkConfigurationUtil.selectSdkHome(sdkType, home -> {
-      String newSdkName = SdkConfigurationUtil.createUniqueSdkName(sdkType, home, Arrays.asList(sdkModel.getSdks()));
-      final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, sdkType);
-      newJdk.setHomePath(home);
+      final Sdk newSdk = SdkConfigurationUtil.createSdk(Arrays.asList(sdkModel.getSdks()), home, sdkType, null, null);
 
-      sdkCreatedCallback.consume(newJdk);
-      result.set(newJdk);
+      sdkCreatedCallback.accept(newSdk);
+      result.set(newSdk);
     });
     return result.get();
   }

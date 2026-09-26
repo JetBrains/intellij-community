@@ -23,20 +23,26 @@ import org.jetbrains.annotations.NotNull;
 public interface RegExpChar extends RegExpAtom, RegExpClassElement {
     /** Character type */
     enum Type {
-        /** a plain character ("a") */
+        /** A plain character, e.g.: a */
         CHAR,
 
-        /** a hex encoded character value ("\x61") */
+        /** A hex encoded character value, e.g.: \x61 */
         HEX,
 
-        /** an octal encoded character value ("\0141") */
+        /** An octal encoded character value, e.g.: \0141 */
         OCT,
 
-        /** a unicode escape character ("\u0061") */
+        /** A Unicode escape character, e.g.: \uFFFD */
         UNICODE,
 
-        /** a named character (\N{LATIN SMALL LETTER A}) */
+        /** A named character, e.g.: \N{LATIN SMALL LETTER A} */
         NAMED,
+
+        /** A control character, e.g.: \c@ */
+        CONTROL,
+
+        /** An escape character e.g. \n */
+        ESCAPE,
     }
 
     /**
@@ -46,6 +52,6 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement {
     @NotNull
     Type getType();
 
-    /** Returns unescaped character code point value, -1 if escape sequence is invalid. */
+    /** Returns the character code point value, -1 if the escape sequence is invalid. */
     int getValue();
 }

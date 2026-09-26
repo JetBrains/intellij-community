@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 
 /**
  * This is "synthetic" property of the RadContainer.
@@ -29,30 +15,29 @@ import java.awt.*;
  * this property exists only in RadContainer</b>.
  *
  * @see com.intellij.uiDesigner.core.GridLayoutManager#getMargin
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
+@Service(Service.Level.PROJECT)
 public final class MarginProperty extends AbstractInsetsProperty<RadContainer> {
   private static final Insets DEFAULT_INSETS = new Insets(0, 0, 0, 0);
 
   public static MarginProperty getInstance(Project project) {
-    return ServiceManager.getService(project, MarginProperty.class);
+    return project.getService(MarginProperty.class);
   }
 
   public MarginProperty(){
     super("margins");
   }
 
+  @Override
   public Insets getValue(final RadContainer component) {
-    if (component.getLayout() instanceof AbstractLayout) {
-      final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
+    if (component.getLayout() instanceof AbstractLayout layoutManager) {
       return layoutManager.getMargin();
     }
     return DEFAULT_INSETS;
   }
 
-  protected void setValueImpl(final RadContainer component, @NotNull final Insets value) throws Exception{
+  @Override
+  protected void setValueImpl(final RadContainer component, final @NotNull Insets value) throws Exception{
     final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
     layoutManager.setMargin(value);
   }

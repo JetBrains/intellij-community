@@ -1,0 +1,10 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <warning descr="Specified description directory matches the default directory name"><descriptionDirectoryName>MyIntentionAction</descriptionDirectoryName></warning>
+      <className>MyIntentionAction</className>
+      <language/>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

@@ -16,12 +16,12 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 
 public class JavaWithTryCatchFinallySurrounder extends JavaWithTryCatchSurrounder{
   @Override
   public String getTemplateDescription() {
-    return CodeInsightBundle.message("surround.with.try.catch.finally.template");
+    return JavaBundle.message("surround.with.try.catch.finally.template");
   }
 
   public JavaWithTryCatchFinallySurrounder() {

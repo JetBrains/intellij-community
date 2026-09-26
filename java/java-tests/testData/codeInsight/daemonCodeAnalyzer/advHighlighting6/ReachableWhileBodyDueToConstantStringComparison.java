@@ -10,14 +10,14 @@ class Bar {
   }
 
   void m() {
-    while (T == "a") {
-      <error descr="Unreachable statement">f();</error>
+    while (<error descr="Loop condition is always false making the loop body unreachable">T == "a"</error>) {
+      f();
     }
   }
 
   void m01() {
-    while (T != "") {
-      <error descr="Unreachable statement">f();</error>
+    while (<error descr="Loop condition is always false making the loop body unreachable">T != ""</error>) {
+      f();
     }
   }
 
@@ -29,8 +29,8 @@ class Bar {
   }
 
   void m2() {
-    while (T != T) {
-      <error descr="Unreachable statement">f();</error>
+    while (<error descr="Loop condition is always false making the loop body unreachable">T != T</error>) {
+      f();
     }
   }
 

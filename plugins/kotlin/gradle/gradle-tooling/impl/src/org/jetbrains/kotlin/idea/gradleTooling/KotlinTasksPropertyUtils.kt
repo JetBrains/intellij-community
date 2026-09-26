@@ -1,0 +1,105 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.gradleTooling
+
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.ConventionJavaPluginAccessor
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.internal.FactoryNamedDomainObjectContainer
+import org.gradle.api.plugins.JavaPluginExtension
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.getSourceSetName
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.KOTLIN_PLUGIN_WRAPPER_CLASS
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.KOTLIN_PROJECT_EXTENSION_CLASS
+import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.KOTLIN_SOURCE_SET_CLASS
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
+import java.io.File
+
+data class KotlinTaskPropertiesImpl(
+    override val incremental: Boolean?,
+    override val packagePrefix: String?,
+    override val pureKotlinSourceFolders: List<File>?,
+    override val pluginVersion: String?
+) : KotlinTaskProperties {
+    constructor(kotlinTaskProperties: KotlinTaskProperties) : this(
+        kotlinTaskProperties.incremental,
+        kotlinTaskProperties.packagePrefix,
+        kotlinTaskProperties.pureKotlinSourceFolders?.map { it }?.toList(),
+        kotlinTaskProperties.pluginVersion
+    )
+}
+
+typealias KotlinTaskPropertiesBySourceSet = MutableMap<String, KotlinTaskProperties>
+
+private fun Task.getPackagePrefix(): String? {
+    try {
+        val getJavaPackagePrefix = this.javaClass.getMethod("getJavaPackagePrefix")
+      return (getJavaPackagePrefix.invoke(this) as? String)
+    } catch (e: Exception) {
+    }
+    return null
+}
+
+private fun Task.getIsIncremental(): Boolean? {
+    try {
+        val abstractKotlinCompileClass = javaClass.classLoader.loadClass(AbstractKotlinGradleModelBuilder.ABSTRACT_KOTLIN_COMPILE_CLASS)
+        val getIncremental = abstractKotlinCompileClass.getDeclaredMethod("getIncremental")
+      return (getIncremental.invoke(this) as? Boolean)
+    } catch (e: Exception) {
+    }
+    return null
+}
+
+private fun Task.getPureKotlinSourceRoots(sourceSet: String, disambiguationClassifier: String? = null): List<File>? {
+    try {
+        val kotlinExtensionClass = project.extensions.findByType(javaClass.classLoader.loadClass(KOTLIN_PROJECT_EXTENSION_CLASS))
+        val getKotlinMethod = javaClass.classLoader.loadClass(KOTLIN_SOURCE_SET_CLASS).getMethod("getKotlin")
+        val classifier = if (disambiguationClassifier == "metadata") "common" else disambiguationClassifier
+        val compilationFullName = compilationFullName(sourceSet, classifier)
+        val kotlinSourceSet = (kotlinExtensionClass?.javaClass?.getMethod("getSourceSets")?.invoke(kotlinExtensionClass)
+                as? FactoryNamedDomainObjectContainer<Any>)?.asMap?.get(compilationFullName) ?: return null
+        val javaSourceRoots = getJavaSourceRoots(project)
+        return (getKotlinMethod.invoke(kotlinSourceSet) as? SourceDirectorySet)?.srcDirs?.filter {
+            it !in javaSourceRoots
+        }?.toList()
+    } catch (e: Exception) {
+    }
+    return null
+}
+
+private fun getJavaSourceRoots(project: Project): Set<File> {
+    val javaSourceSets = if (GradleVersionUtil.isGradleAtLeast(project.gradle.gradleVersion, "8.2")) {
+        project.extensions.findByType(JavaPluginExtension::class.java)?.sourceSets
+    } else {
+        ConventionJavaPluginAccessor(project).sourceSetContainer
+    }
+    return javaSourceSets?.flatMapTo(HashSet()) { it.java.srcDirs } ?: emptySet()
+}
+
+internal fun Project.getKotlinPluginVersion(): String? {
+    try {
+        // Ensuring that the proper Gradle classpath with KGP is used by getting KGP/Kotlin extension
+        // otherwise we may get the parent classpath without any 3rd party plugins applied in the project
+        val kotlinExtension = extensions.findByName("kotlin") ?: return null
+        val pluginWrapperClass = kotlinExtension::class.java.classLoader.loadClass(KOTLIN_PLUGIN_WRAPPER_CLASS)
+        val getVersionMethod =
+            pluginWrapperClass.getMethod("getKotlinPluginVersion", javaClass.classLoader.loadClass("org.gradle.api.Project"))
+        return getVersionMethod.invoke(null, this.project) as String
+    } catch (_: Exception) {}
+    return null
+}
+
+fun KotlinTaskPropertiesBySourceSet.acknowledgeTask(compileTask: Task, classifier: String?) {
+    this[compileTask.getSourceSetName()] =
+        getKotlinTaskProperties(compileTask, classifier)
+}
+
+fun getKotlinTaskProperties(compileTask: Task, classifier: String?): KotlinTaskPropertiesImpl {
+    return KotlinTaskPropertiesImpl(
+        compileTask.getIsIncremental(),
+        compileTask.getPackagePrefix(),
+        compileTask.getPureKotlinSourceRoots(compileTask.getSourceSetName(), classifier),
+        compileTask.project.getKotlinPluginVersion()
+    )
+}

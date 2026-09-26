@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
@@ -23,8 +24,11 @@ import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.utils.Cursors;
 import com.intellij.openapi.application.ApplicationManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -151,7 +155,7 @@ public class MarqueeTracker extends InputTool {
     myFeedback.setBounds(getSelectionRectangle());
     if (ApplicationManager.getApplication().isInternal()) {
       Dimension size = myFeedback.getSize();
-      myArea.setDescription("Size [" + size.width + " : " + size.height + "]");
+      myArea.setDescription(DesignerBundle.message("marquee.tracker.size.0.1", size.width, size.height));
     }
     layer.repaint();
   }

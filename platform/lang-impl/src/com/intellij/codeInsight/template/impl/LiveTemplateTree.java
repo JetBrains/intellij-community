@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.TextRange;
@@ -28,24 +18,18 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.JdomKt;
-import com.intellij.util.SystemProperties;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvider, PasteProvider {
+class LiveTemplateTree extends CheckboxTree implements UiDataProvider, CopyProvider, PasteProvider, DeleteProvider {
   private final TemplateListPanel myConfigurable;
 
   LiveTemplateTree(final CheckboxTreeCellRenderer renderer, final CheckedTreeNode root, TemplateListPanel configurable) {
@@ -66,29 +50,31 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, o -> {
+    TreeSpeedSearch.installOn(this, true, o -> {
       Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (object instanceof TemplateGroup) {
         return ((TemplateGroup)object).getName();
       }
-      if (object instanceof TemplateImpl) {
-        TemplateImpl template = (TemplateImpl)object;
+      if (object instanceof TemplateImpl template) {
         return StringUtil.notNullize(template.getGroupName()) + " " +
                StringUtil.notNullize(template.getKey()) + " " +
                StringUtil.notNullize(template.getDescription()) + " " +
                template.getTemplateText();
       }
       return "";
-    }, true).setComparator(new SubstringSpeedSearchComparator());
+    }).setComparator(new SubstringSpeedSearchComparator());
   }
 
-  @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, this);
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, this);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -100,8 +86,8 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
       new StringSelection(StringUtil.join(templates,
                                           template -> JDOMUtil.writeElement(
                                             TemplateSettings.serializeTemplate(template, templateSettings.getDefaultTemplate(template), TemplateContext.getIdToType())),
-                                          SystemProperties.getLineSeparator())));
-    
+                                          System.lineSeparator())));
+
   }
 
   @Override
@@ -116,8 +102,8 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
-    if (myConfigurable.getSingleSelectedGroup() == null) return false;
-    
+    if (myConfigurable.getSingleContextGroup() == null) return false;
+
     String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return s != null && s.trim().startsWith("<template ");
   }
@@ -129,15 +115,17 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
-    TemplateGroup group = myConfigurable.getSingleSelectedGroup();
+    TemplateGroup group = myConfigurable.getSingleContextGroup();
     assert group != null;
 
     String buffer = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     assert buffer != null;
 
     try {
-      for (Element templateElement : JdomKt.loadElement("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
-        TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader());
+      LiveTemplateContextService ltContextService = LiveTemplateContextService.getInstance();
+      for (Element templateElement : JDOMUtil.load("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
+        TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader(),
+                                                                         ltContextService);
         while (group.containsTemplate(template.getKey(), template.getId())) {
           template.setKey(template.getKey() + "1");
           if (template.getId() != null) {
@@ -151,15 +139,24 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     }
   }
 
-  private static class SubstringSpeedSearchComparator extends SpeedSearchComparator {
+  @Override
+  public void deleteElement(@NotNull DataContext dataContext) {
+    myConfigurable.removeRows();
+  }
+
+  @Override
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
+    return !myConfigurable.getSelectedTemplates().isEmpty();
+  }
+
+  private static final class SubstringSpeedSearchComparator extends SpeedSearchComparator {
     @Override
     public int matchingDegree(String pattern, String text) {
       return matchingFragments(pattern, text) != null ? 1 : 0;
     }
 
-    @Nullable
     @Override
-    public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+    public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
       int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
       return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
     }

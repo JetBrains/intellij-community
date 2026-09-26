@@ -1,28 +1,21 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -30,10 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-/**
-* @author sergey.evdokimov
-*/
 public class GrLightVariable extends GrImplicitVariableImpl implements NavigatablePsiElement {
 
   private final List<PsiElement> myDeclarations;
@@ -41,29 +32,29 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
   private Object myCreatorKey;
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
-                         @NonNls @NotNull String type,
+                         @NlsSafe String name,
+                         @NlsSafe @NotNull String type,
                          @NotNull PsiElement navigationElement) {
     this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
-                         @NonNls @NotNull String type,
+                         @NlsSafe String name,
+                         @NlsSafe @NotNull String type,
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {
     this(manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations, scope);
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
+                         @NlsSafe String name,
                          @NotNull PsiType type,
                          @NotNull PsiElement navigationElement) {
     this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
+                         @NlsSafe String name,
                          @NotNull PsiType type,
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {
@@ -103,9 +94,8 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     return true;
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
   }
 
@@ -159,5 +149,20 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
 
   public List<PsiElement> getDeclarations() {
     return myDeclarations;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightVariable variable = (GrLightVariable)o;
+    return Objects.equals(getName(), variable.getName()) &&
+           Objects.equals(myDeclarations, variable.myDeclarations) &&
+           Objects.equals(myCreatorKey, variable.myCreatorKey);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getName(), myDeclarations, myCreatorKey);
   }
 }

@@ -1,0 +1,130 @@
+package com.jetbrains.python.psi.types;
+
+import com.intellij.openapi.util.Ref;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
+/**
+ * Represents a type parameter substituted with a parameter list of a callable as described in
+ * <a href="https://peps.python.org/pep-0612/">PEP 612 – Parameter Specification Variables</a>.
+ * <p>
+ * Declared with either {@code typing.ParamSpec} instantiation or {@code **P} syntax.
+ * Concrete instantiations of such a parameter are either {@link PyCallableParameterListType} or {@link PyConcatenateType}.
+ *
+ * @see PyCallableParameterListType
+ * @see PyConcatenateType
+ */
+public final class PyParamSpecType implements PyTypeParameterType, PyCallableParameterVariadicType {
+  private final @NotNull String myName;
+  private final @Nullable PyQualifiedNameOwner myDeclarationElement;
+  private final @Nullable PyType myBound;
+  private final @Nullable Ref<PyCallableParameterVariadicType> myDefaultType;
+  private final @NotNull PyVariance myVariance;
+  private final @Nullable PyQualifiedNameOwner myScopeOwner;
+
+  public PyParamSpecType(@NotNull String name) {
+    this(name, null, null, null, PyVariance.INVARIANT, null);
+  }
+
+  private PyParamSpecType(@NotNull String name,
+                          @Nullable PyQualifiedNameOwner declarationElement,
+                          @Nullable PyType bound,
+                          @Nullable Ref<PyCallableParameterVariadicType> defaultType,
+                          @NotNull PyVariance variance,
+                          @Nullable PyQualifiedNameOwner scopeOwner) {
+    myName = name;
+    myDeclarationElement = declarationElement;
+    myBound = bound;
+    myDefaultType = defaultType;
+    myVariance = variance;
+    myScopeOwner = scopeOwner;
+  }
+
+  public @NotNull PyParamSpecType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
+    return new PyParamSpecType(myName, declarationElement, myBound, myDefaultType, myVariance, myScopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, myDefaultType, myVariance, scopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withBound(@Nullable PyType bound) {
+    return new PyParamSpecType(myName, myDeclarationElement, bound, myDefaultType, myVariance, myScopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withDefaultType(@Nullable Ref<PyCallableParameterVariadicType> defaultType) {
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, defaultType, myVariance, myScopeOwner);
+  }
+
+  public @NotNull PyParamSpecType withVariance(@NotNull PyVariance variance) {
+    return new PyParamSpecType(myName, myDeclarationElement, myBound, myDefaultType, variance, myScopeOwner);
+  }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return myDeclarationElement;
+  }
+
+  @Override
+  public @NotNull String getName() {
+    return "**" + myName;
+  }
+
+  @Override
+  public @Nullable PyType getBound() {
+    return myBound;
+  }
+
+  @Override
+  public @NotNull PyVariance getVariance() {
+    return myVariance;
+  }
+
+  @Override
+  public String toString() {
+    String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
+    return "PyParamSpecType: " + (scopeName != null ? scopeName + ":" : "") + myName;
+  }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getScopeOwner() {
+    return myScopeOwner;
+  }
+
+  @Override
+  public @Nullable Ref<PyCallableParameterVariadicType> getDefaultType() {
+    return myDefaultType;
+  }
+
+  public @NotNull String getVariableName() {
+    return myName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final PyParamSpecType type = (PyParamSpecType)o;
+    return myName.equals(type.myName) && Objects.equals(myScopeOwner, type.myScopeOwner);
+  }
+
+  @Override
+  public int hashCode() {
+    return myName.hashCode();
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyParamSpecType(this);
+    }
+    return visitor.visitPyTypeParameterType(this);
+  }
+}

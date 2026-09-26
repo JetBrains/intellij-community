@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.frameworkSupport;
 
@@ -21,25 +7,25 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Extend {@link FrameworkSupportProviderBase} for general and {@link com.intellij.facet.ui.FacetBasedFrameworkSupportProvider} for
  * {@link com.intellij.facet.Facet}-based framework support in your plugin.
- *
- * @author nik
  */
 public abstract class FrameworkSupportProvider {
   public static final ExtensionPointName<FrameworkSupportProvider> EXTENSION_POINT = ExtensionPointName.create("com.intellij.frameworkSupport");
   private final String myId;
-  private final String myTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myTitle;
 
-  protected FrameworkSupportProvider(@NotNull @NonNls final String id, @NotNull final String title) {
+  protected FrameworkSupportProvider(final @NotNull @NonNls String id,
+                                     final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myId = id;
     myTitle = title;
   }
@@ -50,40 +36,33 @@ public abstract class FrameworkSupportProvider {
    * @param model Model.
    * @return Configurable.
    */
-  @NotNull
-  public abstract FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
+  public abstract @NotNull FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 
-  @NonNls
-  @Nullable
-  public String getUnderlyingFrameworkId() {
+  public @NonNls @Nullable String getUnderlyingFrameworkId() {
     return null;
   }
 
-  @NonNls
-  public String[] getPrecedingFrameworkProviderIds() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public @NonNls String[] getPrecedingFrameworkProviderIds() {
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  public String getTitle() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getTitle() {
     return myTitle;
   }
 
-  @Nullable @NonNls
-  public String getGroupId() {
+  public @Nullable @NonNls String getGroupId() {
     return null;
   }
 
-  @NotNull
-  public String[] getProjectCategories() {
-    return getGroupId() == null ? ArrayUtil.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
+  public String @NotNull [] getProjectCategories() {
+    return getGroupId() == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
   }
 
   public FrameworkRole[] getRoles() {
     return getGroupId() == null ? FrameworkRole.UNKNOWN : new FrameworkRole[] { new FrameworkRole(getGroupId()) };
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -101,8 +80,7 @@ public abstract class FrameworkSupportProvider {
     return isSupportAlreadyAdded(module);
   }
 
-  @NotNull @NonNls
-  public final String getId() {
+  public final @NotNull @NonNls String getId() {
     return myId;
   }
 }

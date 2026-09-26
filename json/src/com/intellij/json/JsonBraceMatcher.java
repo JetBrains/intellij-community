@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.lang.BracePair;
@@ -16,9 +17,8 @@ public class JsonBraceMatcher implements PairedBraceMatcher {
     new BracePair(JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY, true)
   };
 
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return PAIRS;
   }
 

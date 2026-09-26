@@ -17,10 +17,7 @@ package com.intellij.pom;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public interface PomRenameableTarget<T> extends PomNamedTarget{
+public interface PomRenameableTarget<T> extends PomNamedTarget {
 
   boolean isWritable();
 
@@ -29,5 +26,4 @@ public interface PomRenameableTarget<T> extends PomNamedTarget{
    * @return will be ignored unless you use it yourself
    */
   T setName(@NotNull String newName);
-  
 }

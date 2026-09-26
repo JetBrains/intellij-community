@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -10,10 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
-/**
- * @author egor
- */
-public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> {
+public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> implements SyntheticBreakpoint {
   private String mySuspendPolicy;
   private final JavaLineBreakpointProperties myProperties = new JavaLineBreakpointProperties();
 
@@ -26,14 +21,17 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return mySuspendPolicy;
   }
 
+  @Override
   public void setSuspendPolicy(String policy) {
     mySuspendPolicy = policy;
   }
 
+  @Override
   protected boolean isLogEnabled() {
     return false;
   }
 
+  @Override
   protected boolean isLogStack() {
     return false;
   }
@@ -48,10 +46,16 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return true;
   }
 
+  @Override
+  public void setEnabled(boolean enabled) {
+  }
+
+  @Override
   public boolean isCountFilterEnabled() {
     return false;
   }
 
+  @Override
   public boolean isClassFiltersEnabled() {
     return false;
   }
@@ -66,6 +70,10 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   }
 
   @Override
+  void scheduleReload() {
+  }
+
+  @Override
   protected boolean isVisible() {
     return false;
   }
@@ -75,9 +83,8 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
     return true;
   }
 
-  @NotNull
   @Override
-  protected JavaLineBreakpointProperties getProperties() {
+  protected @NotNull JavaLineBreakpointProperties getProperties() {
     return myProperties;
   }
 
@@ -85,14 +92,13 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   protected void fireBreakpointChanged() {
   }
 
-  @Nullable
   @Override
-  protected JavaLineBreakpointType getXBreakpointType() {
+  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     return XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType.class);
   }
 
   @Override
-  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
+  protected boolean isMuted(final @NotNull DebugProcessImpl debugProcess) {
     return false;  // always enabled
   }
 }

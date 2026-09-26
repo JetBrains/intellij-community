@@ -25,12 +25,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * Represents a state of 'Add Support for Frameworks' UI which may be shown inside 'New Project/Module' wizards and 'Add Framework Support' action
  */
 public interface FrameworkSupportModel extends UserDataHolder {
+  /**
+   * Returns a project instance if support for a framework is being added to an existing project, or {@code null} if it's invoked from
+   * 'New Project' wizard
+   */
   @Nullable
   Project getProject();
 
+  /**
+   * Returns a {@link ModuleBuilder} instance if support for a framework is being configured inside 'New Module' wizard or {@code null} if
+   * it's invoked for an existing module
+   */
   @Nullable
   ModuleBuilder getModuleBuilder();
 

@@ -1,21 +1,51 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
+@Service(Service.Level.PROJECT)
 @State(name = "CodeInsightWorkspaceSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class CodeInsightWorkspaceSettings implements PersistentStateComponent<CodeInsightWorkspaceSettings> {
-  public boolean optimizeImportsOnTheFly = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
+public final class CodeInsightWorkspaceSettings extends SimpleModificationTracker
+  implements PersistentStateComponent<CodeInsightWorkspaceSettings>, OptionContainer {
+  private boolean optimizeImportsOnTheFly;
+
+  public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {
+    return project.getService(CodeInsightWorkspaceSettings.class);
+  }
+
+  @OptionTag
+  public boolean isOptimizeImportsOnTheFly() {
+    return optimizeImportsOnTheFly;
+  }
+
+  public void setOptimizeImportsOnTheFly(boolean value) {
+    if (optimizeImportsOnTheFly != value) {
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
+      optimizeImportsOnTheFly = value;
+      incModificationCount();
+    }
+  }
 
   @TestOnly
   public void setOptimizeImportsOnTheFly(boolean optimizeImportsOnTheFly, Disposable parentDisposable) {
@@ -26,19 +56,48 @@ public class CodeInsightWorkspaceSettings implements PersistentStateComponent<Co
     });
   }
 
-  public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CodeInsightWorkspaceSettings.class);
+  @Override
+  public void noStateLoaded() {
+    //noinspection deprecation
+    optimizeImportsOnTheFly = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
+    incModificationCount();
   }
-
 
   @Override
   public void loadState(@NotNull CodeInsightWorkspaceSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+    optimizeImportsOnTheFly = state.optimizeImportsOnTheFly;
   }
 
-  @Nullable
   @Override
-  public CodeInsightWorkspaceSettings getState() {
+  public @NotNull CodeInsightWorkspaceSettings getState() {
     return this;
   }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(OptPane.checkbox(
+      "optimizeImportsOnTheFly",
+      ApplicationBundle.message("checkbox.optimize.imports.on.the.fly")));
+  }
+
+  /**
+   * Provides bindId = "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly" to control whether imports are optimized on the fly
+   */
+  @ApiStatus.Internal
+  public static final class Provider implements OptionControllerProvider {
+    @Override
+    public @NotNull OptionController forContext(@NotNull PsiElement context) {
+      Project project = context.getProject();
+      return getInstance(project).getOptionController()
+        .onValueSet((bindId, value) -> {
+          SaveAndSyncHandler.getInstance().scheduleProjectSave(project, true);
+          DaemonCodeAnalyzerEx.getInstanceEx(project).restart("CodeInsightWorkspaceSettings.Provider.forContext");
+        });
+    }
+
+    @Override
+    public @NotNull String name() {
+      return "CodeInsightWorkspaceSettings";
+    }
+  } 
 }

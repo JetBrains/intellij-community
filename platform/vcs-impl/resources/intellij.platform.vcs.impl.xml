@@ -1,0 +1,128 @@
+<!--suppress PluginXmlDynamicPlugin -->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.vcs"/>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.vcs.shared"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.microba"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.opentelemetry.semconv"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.core.plugins"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
+
+  <xi:include href="/META-INF/VcsExtensions.xml"/>
+  <xi:include href="/META-INF/VcsActions.xml"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorAudioCueDetector implementation="com.intellij.openapi.vcs.ex.LineStatusTrackerAudioCueDetector"/>
+    <audioCueProvider implementation="com.intellij.openapi.vcs.ex.VcsAudioCueProvider"/>
+
+    <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
+              implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType"/>
+    <psi.referenceContributor language="IgnoreLang"
+                              implementation="com.intellij.openapi.vcs.changes.ignore.reference.IgnoreReferenceContributor"/>
+
+    <lang.elementManipulator
+        forClass="com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntryManipulator"/>
+
+    <lang.parserDefinition language="IgnoreLang"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <completion.contributor
+        language="IgnoreLang"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.SyntaxCompletionContributor"/>
+    <completion.contributor
+        language="IgnoreLang"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributor"/>
+
+    <lang.syntaxHighlighterFactory language="IgnoreLang"
+                                   implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
+
+    <localInspection
+        language="IgnoreLang"
+        bundle="messages.VcsBundle"
+        enabledByDefault="true"
+        groupKey="ignore.codeInspection.group"
+        implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInspection.IgnoreFileDuplicateEntryInspection"
+        key="ignore.codeInspection.duplicateEntry"
+        level="WARNING"/>
+
+    <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl"/>
+    <intentionAction>
+      <language/>
+      <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
+    </intentionAction>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.ide.impl.statistic.ToolWindowStateListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+  </projectListeners>
+</idea-plugin>

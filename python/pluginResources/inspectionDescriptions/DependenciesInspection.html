@@ -1,0 +1,20 @@
+<html>
+<body>
+<p>
+  Reports packages declared in dependency files (for example, <code>requirements.txt</code> or
+  the <code>[project].dependencies</code> section of <code>pyproject.toml</code>) that are
+  either not installed or out-of-date in the active interpreter.
+</p>
+<p>
+  Quick fixes are offered to install or update the affected package, and to install or update
+  every flagged package at once.
+</p>
+<p>
+  Other dependency-bearing TOML sections &mdash; <code>[build-system]</code>,
+  <code>[project.optional-dependencies]</code>, <code>[dependency-groups]</code>, and
+  <code>[tool.uv.dev-dependencies]</code> / <code>[tool.hatch.envs.*]</code> &mdash; are
+  intentionally ignored, since their entries may legitimately not be installed in the active
+  interpreter.
+</p>
+</body>
+</html>

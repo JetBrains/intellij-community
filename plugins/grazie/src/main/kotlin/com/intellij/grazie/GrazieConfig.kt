@@ -1,0 +1,313 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.grazie
+
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.rules.settings.TextStyle
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.grazie.config.CheckingContext
+import com.intellij.grazie.config.DetectionContext
+import com.intellij.grazie.config.SuppressingContext
+import com.intellij.grazie.config.migration.VersionedState
+import com.intellij.grazie.grammar.grammarRules
+import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
+import com.intellij.grazie.ide.msg.GrazieInitializerManager
+import com.intellij.grazie.ide.msg.GrazieStateLifecycle
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.remote.GrazieRemote.isAvailableLocally
+import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.util.application
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.Collections
+import java.util.TreeMap
+import java.util.concurrent.atomic.AtomicLong
+
+@State(
+  name = "GraziConfig",
+  presentableName = GrazieConfig.PresentableNameGetter::class,
+  storages = [
+    Storage("grazie_global.xml"),
+    Storage(value = "grazi_global.xml", deprecated = true)
+  ],
+  category = SettingsCategory.CODE,
+)
+class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
+  enum class Version : VersionedState.Version<State> {
+    INITIAL,
+
+    //Since commit abc7e5f5
+    OLD_UI {
+      @Suppress("DEPRECATION")
+      override fun migrate(state: State) = state.copy(
+        checkingContext = CheckingContext(
+          isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
+        )
+      )
+    },
+
+    //Since commit cc47dd17
+    NEW_UI;
+
+    override fun next(): Version? = entries.getOrNull(ordinal + 1)
+    override fun toString(): String = ordinal.toString()
+
+    companion object {
+      val CURRENT: Version = NEW_UI
+    }
+  }
+
+  /**
+   * State of Grazie plugin
+   *
+   * Note, that all serialized values should be MUTABLE.
+   * Immutable values (like emptySet()) as default may lead to deserialization failure
+   */
+  data class State(
+    @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Deprecated("Moved to checkingContext in version 2") @ApiStatus.ScheduledForRemoval @Property val enabledCommitIntegration: Boolean = false,
+    @Property val userDisabledRules: Set<String> = HashSet(),
+    @Property val userEnabledRules: Set<String> = HashSet(),
+    @Property val domainDisabledRules: Map<TextStyleDomain, Set<String>> = TreeMap(),
+    @Property val domainEnabledRules: Map<TextStyleDomain, Set<String>> = TreeMap(),
+    //Formerly suppressionContext -- name changed due to compatibility issues
+    @Property val suppressingContext: SuppressingContext = SuppressingContext(),
+    @Property val detectionContext: DetectionContext.State = DetectionContext.State(),
+    @Property val checkingContext: CheckingContext = CheckingContext(),
+    @Property override val version: Version = Version.CURRENT,
+    //Ex. Grazie pro properties
+    @Property val useOxfordSpelling: Boolean = false,
+    @Property val autoFix: Boolean = false,
+    @Property val autoUpdateLanguages: Boolean = false,
+    @Property val specificationAnalysisEnabled: Boolean = false,
+    // Ex. Grazie Cloud
+    @Deprecated("Cloud processing is deprecated") @Property val explicitlyChosenProcessing: Processing? = null,
+    @Deprecated("Cloud processing is deprecated") @Property val styleProfile: String? = TextStyle.Unspecified.id,
+    @Deprecated("Cloud processing is deprecated") @Property val parameters: Map<Language, Map<String, String>> = TreeMap(),
+    @Deprecated("Cloud processing is deprecated") @Property val parametersPerDomain: Map<TextStyleDomain, Map<Language, Map<String, String>>> = TreeMap(),
+  ) : VersionedState<Version, State> {
+    /**
+     * The available language set depends on currently loaded LanguageTool modules.
+     *
+     * Note that after loading of a new module, this field will not change. It will
+     * remain equal to the moment the field was accessed first time.
+     *
+     * Lazy is used, because deserialized properties are updated during initial deserialization
+     *
+     * NOTE: By default, availableLanguages are not included into [equals]. Check for it manually.
+     */
+    val availableLanguages: Set<Lang> by lazy {
+      enabledLanguages.asSequence().filter { it.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+    }
+
+    val missedLanguages: Set<Lang>
+      get() = enabledLanguages.asSequence().filter { isMissingLanguage(it) }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+
+    val dictionaries: List<HunspellDictionary>
+      get() = enabledLanguages
+        .filter { it.iso != LanguageISO.EN }
+        .mapNotNull {
+          ProgressManager.checkCanceled()
+          it.dictionary
+        }
+
+    override fun increment(): State = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
+
+    fun hasMissedLanguages(): Boolean {
+      return enabledLanguages.any { isMissingLanguage(it) }
+    }
+
+    fun isMissingLanguage(lang: Lang): Boolean {
+      return !isAvailableLocally(lang) && lang.jLanguage == null
+    }
+
+    fun isRuleEnabled(ruleId: String, domain: TextStyleDomain): Boolean {
+      return ruleId in if (domain == TextStyleDomain.Other) userEnabledRules else domainEnabledRules[domain] ?: emptySet()
+    }
+
+    fun isRuleDisabled(ruleId: String, domain: TextStyleDomain): Boolean {
+      return ruleId in if (domain == TextStyleDomain.Other) userDisabledRules else domainDisabledRules[domain] ?: emptySet()
+    }
+
+    fun withLanguages(langs: Set<Lang>): State = copy(enabledLanguages = langs)
+    fun withCheckingContext(context: CheckingContext): State = copy(checkingContext = context)
+    fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
+    fun withOxfordSpelling(useOxfordSpelling: Boolean): State {
+      fun updateOxfordSpellingRules(useOxfordSpelling: Boolean, rules: Set<String>) = if (useOxfordSpelling) rules + ltOxfordRules else rules - ltOxfordRules
+
+      val newState = TextStyleDomain.entries.fold(this) { acc, domain ->
+        if (domain == TextStyleDomain.Other) {
+          acc.copy(userEnabledRules = updateOxfordSpellingRules(useOxfordSpelling, acc.userEnabledRules))
+        } else {
+          acc.withDomainEnabledRules(domain, updateOxfordSpellingRules(useOxfordSpelling, acc.domainEnabledRules[domain].orEmpty()))
+        }
+      }
+      return newState.copy(useOxfordSpelling = useOxfordSpelling)
+    }
+
+    fun getUserChangedRules(domain: TextStyleDomain): UserChangedRules {
+      val userEnabledRules = HashSet<String>()
+      val userDisabledRules = HashSet<String>()
+      val isOtherDomain = domain == TextStyleDomain.Other
+      if (isOtherDomain) {
+        userEnabledRules.addAll(this.userEnabledRules)
+        userDisabledRules.addAll(this.userDisabledRules)
+      }
+      else {
+        userEnabledRules.addAll(getDomainEnabledRules(domain))
+        userDisabledRules.addAll(getDomainDisabledRules(domain))
+      }
+      return UserChangedRules(userEnabledRules, userDisabledRules)
+    }
+
+    fun updateUserRules(domain: TextStyleDomain, userEnabledRules: Set<String>, userDisabledRules: Set<String>): State {
+      val userRules = getUserChangedRules(domain)
+      if (userEnabledRules == userRules.enabled && userDisabledRules == userRules.disabled) {
+        return this
+      }
+      return if (domain == TextStyleDomain.Other) this.copy(userEnabledRules = userEnabledRules, userDisabledRules = userDisabledRules)
+      else this.withDomainEnabledRules(domain, userEnabledRules).withDomainDisabledRules(domain, userDisabledRules)
+    }
+
+    internal fun getDomainEnabledRules(domain: TextStyleDomain) = domainEnabledRules[domain] ?: emptySet()
+
+    internal fun getDomainDisabledRules(domain: TextStyleDomain) = domainDisabledRules[domain] ?: emptySet()
+
+    fun withDomainEnabledRules(domain: TextStyleDomain, rules: Set<String>): State {
+      val newRules = TreeMap(domainEnabledRules)
+      newRules[domain] = rules
+      return copy(domainEnabledRules = newRules)
+    }
+
+    fun withDomainDisabledRules(domain: TextStyleDomain, rules: Set<String>): State {
+      val newRules = TreeMap(domainDisabledRules)
+      newRules[domain] = rules
+      return copy(domainDisabledRules = newRules)
+    }
+
+    enum class Processing {
+      Local,
+      Cloud
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    val ltOxfordRules: Set<String> = setOf("LanguageTool.EN.OXFORD_SPELLING_Z_NOT_S", "LanguageTool.EN.OXFORD_SPELLING_GRAM")
+
+    private val defaultEnabledStrategies =
+      Collections.unmodifiableSet(hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc"))
+
+    @VisibleForTesting
+    fun migrateLTRuleIds(state: State): State {
+      val ltRules: List<Rule> by lazy {
+        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { grammarRules(LangTool.createTool(it, state, TextStyleDomain.Other), it) }
+      }
+
+      fun convert(ids: Set<String>): Set<String> =
+        ids.flatMap { id ->
+          if (id.contains(".")) listOf(id)
+          else ltRules.asSequence().map { it.globalId }.filter { it.startsWith("LanguageTool.") && it.endsWith(".$id") }.toList()
+        }.toSet()
+
+      return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
+    }
+
+    @VisibleForTesting
+    fun migrateOxfordRuleIds(state: GrazieConfig.State): State {
+      fun findOxfordRulesToEnable(domain: TextStyleDomain): Set<String> {
+        fun getDisabledRules(domain: TextStyleDomain): Set<String> =
+          if (domain == TextStyleDomain.Other) state.userDisabledRules else state.getDomainDisabledRules(domain)
+        fun getEnabledRules(domain: TextStyleDomain): Set<String> =
+          if (domain == TextStyleDomain.Other) state.userEnabledRules else state.getDomainEnabledRules(domain)
+
+        val enabledOxfordRules = mutableSetOf<String>()
+        ltOxfordRules.forEach { rule ->
+          if (state.useOxfordSpelling && rule !in getDisabledRules(domain) && rule !in getEnabledRules(domain)) {
+            enabledOxfordRules.add(rule)
+          }
+        }
+        return enabledOxfordRules
+      }
+
+      return TextStyleDomain.entries.fold(state) { acc, domain ->
+        val rulesToEnable = findOxfordRulesToEnable(domain)
+        if (domain == TextStyleDomain.Other) {
+          acc.copy(userDisabledRules = acc.userDisabledRules - ltOxfordRules, userEnabledRules = acc.userEnabledRules + rulesToEnable)
+        } else {
+          acc.withDomainDisabledRules(domain, acc.domainDisabledRules[domain].orEmpty() - ltOxfordRules)
+            .withDomainEnabledRules(domain, acc.domainEnabledRules[domain].orEmpty() + rulesToEnable)
+        }
+      }
+    }
+
+    fun subscribe(parent: Disposable, subscription: (State) -> Unit) {
+      application.messageBus.connect(parent)
+        .subscribe(CONFIG_STATE_TOPIC, object : GrazieStateLifecycle {
+          override fun update(prevState: State, newState: State) = subscription(newState)
+        })
+    }
+
+    /**
+     * Get copy of Grazie config state
+     *
+     * Should never be called in GrazieStateLifecycle actions
+     */
+    fun get(): State = service<GrazieConfig>().state
+
+    /** Update Grazie config state */
+    @Synchronized
+    fun update(change: (State) -> State): Unit = service<GrazieConfig>().loadState(change(get()))
+
+    fun stateChanged(prevState: State, newState: State) {
+      service<GrazieInitializerManager>().publisher.update(prevState, newState)
+
+      ProjectManager.getInstance().openProjects.forEach {
+        DaemonCodeAnalyzer.getInstance(it).restart("GrazieConfig")
+      }
+    }
+  }
+
+  data class UserChangedRules(val enabled: Set<String>, val disabled: Set<String>)
+
+  class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
+    override fun get(): String = GrazieBundle.message("grazie.config.name")
+  }
+
+  private var myState = State()
+  private var myModCount = AtomicLong()
+
+  override fun getModificationCount(): Long = myModCount.get()
+
+  override fun getState(): State = myState
+
+  override fun loadState(state: State) {
+    myModCount.incrementAndGet()
+    val prevState = myState
+    myState = migrateLTRuleIds(VersionedState.migrate(state))
+    myState = migrateOxfordRuleIds(myState)
+    if (myState.enabledLanguages.none { it.isEnglish() }) {
+      myState = myState.copy(enabledLanguages = myState.enabledLanguages + Lang.AMERICAN_ENGLISH)
+    }
+
+    if (prevState != myState) {
+      stateChanged(prevState, myState)
+    }
+  }
+}

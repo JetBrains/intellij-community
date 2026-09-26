@@ -16,6 +16,7 @@
 package com.intellij.lang.cacheBuilder;
 
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implemented by a custom language plugin to define how texts in the language are
@@ -30,9 +31,8 @@ public interface WordsScanner {
   /**
    * Processes the specified text fragment and passes every word in the text to the
    * specified processor.
-   *
-   * @param fileText  the text to break into words.
+   *  @param fileText  the text to break into words.
    * @param processor the processor which accepts the words in the text.
    */
-  void processWords(CharSequence fileText, Processor<WordOccurrence> processor);
+  void processWords(@NotNull CharSequence fileText, @NotNull Processor<? super WordOccurrence> processor);
 }

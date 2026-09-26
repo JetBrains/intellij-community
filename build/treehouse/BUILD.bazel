@@ -1,0 +1,52 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+#
+# The module is `//build/treehouse:go.mod`. The wrapper uses the standard library only. The upstream Treehouse module
+# is reached through the separate binary `//build/treehouse/cli`, never through an import.
+#
+# A private `go_library` with the public binary embedding it, rather than `srcs` on the binary directly: a `go_test`
+# cannot embed a `go_binary`. `//build/dev-dist` and `//plugins/air/tests/integration/vm-lane/cmd/bt` make the same
+# split for the same reason.
+
+go_library(
+    name = "treehouse_lib",
+    srcs = [
+        "acquire.go",
+        "git.go",
+        "main.go",
+        "receipt.go",
+        "returncmd.go",
+        "runtime.go",
+        "status.go",
+    ],
+    importpath = "jetbrains.com/treehouse",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "treehouse",
+    # The CLI binary must be in the runfiles, or the rlocation path below resolves to nothing.
+    data = ["//build/treehouse/cli"],
+    embed = [":treehouse_lib"],
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+    visibility = ["//visibility:public"],
+    # A runfiles-root-relative path, which `runtime.go` joins onto RUNFILES_DIR or onto the `.runfiles` directory
+    # beside the executable. The alternative is a hard-coded repository directory name, and `community+` is Bazel's
+    # mangling rather than anything this repository states.
+    x_defs = {"treehouseCLIRlocation": "$(rlocationpath //build/treehouse/cli)"},
+)
+
+go_test(
+    name = "treehouse_test",
+    srcs = [
+        "fakeruntime_test.go",
+        "treehouse_test.go",
+    ],
+    embed = [":treehouse_lib"],
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+)

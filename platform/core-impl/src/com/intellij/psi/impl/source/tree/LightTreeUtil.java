@@ -1,40 +1,28 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTSyntaxTreeBuilderBackedNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings("ForLoopReplaceableByForEach")
-public class LightTreeUtil {
+public final class LightTreeUtil {
 
-  @Nullable
-  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull IElementType type) {
+  public static @Nullable LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull IElementType type) {
     if (node == null) return null;
 
     List<LighterASTNode> children = tree.getChildren(node);
@@ -45,8 +33,7 @@ public class LightTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull TokenSet types) {
+  public static @Nullable LighterASTNode firstChildOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node, @NotNull TokenSet types) {
     if (node == null) return null;
 
     List<LighterASTNode> children = tree.getChildren(node);
@@ -58,22 +45,19 @@ public class LightTreeUtil {
     return null;
   }
 
-  @NotNull
-  public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
+  public static @NotNull LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
     LighterASTNode child = firstChildOfType(tree, node, type);
     assert child != null : "Required child " + type + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
     return child;
   }
 
-  @NotNull
-  public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+  public static @NotNull LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
     LighterASTNode child = firstChildOfType(tree, node, types);
     assert child != null : "Required child " + types + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
     return child;
   }
 
-  @NotNull
-  public static List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
+  public static @NotNull List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
     List<LighterASTNode> result = null;
 
     List<LighterASTNode> children = tree.getChildren(node);
@@ -88,8 +72,7 @@ public class LightTreeUtil {
     return result != null ? result: Collections.emptyList();
   }
 
-  @NotNull
-  public static List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+  public static @NotNull List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
     List<LighterASTNode> children = tree.getChildren(node);
     List<LighterASTNode> result = null;
 
@@ -104,8 +87,12 @@ public class LightTreeUtil {
     return result != null ? result: Collections.emptyList();
   }
 
-  @NotNull
-  public static String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+  public static @NotNull String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+    CharSequence text = getTextFromNode(node, skipTypes);
+    if (text != null) {
+      return text.toString();
+    }
+
     int length = node.getEndOffset() - node.getStartOffset();
     if (length < 0) {
       length = 0;
@@ -116,18 +103,14 @@ public class LightTreeUtil {
     return buffer.toString();
   }
 
-  public static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
+  static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
     if (skipTypes != null && skipTypes.contains(node.getTokenType())) {
       return;
     }
 
-    if (node instanceof LighterASTTokenNode) {
-      buffer.append(((LighterASTTokenNode)node).getText());
-      return;
-    }
-
-    if (node instanceof LighterLazyParseableNode) {
-      buffer.append(((LighterLazyParseableNode)node).getText());
+    CharSequence text = getTextFromNode(node, skipTypes);
+    if (text != null) {
+      buffer.append(text);
       return;
     }
 
@@ -137,13 +120,28 @@ public class LightTreeUtil {
     }
   }
 
-  @Nullable
-  public static LighterASTNode getParentOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node,
-                                                @NotNull TokenSet types, @NotNull TokenSet stopAt) {
+  private static @Nullable CharSequence getTextFromNode(@NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+    if (node instanceof LighterASTTokenNode) {
+      return ((LighterASTTokenNode)node).getText();
+    }
+    if (node instanceof LighterLazyParseableNode) {
+      return ((LighterLazyParseableNode)node).getText();
+    }
+    // LighterASTSyntaxTreeBuilderBackedNode instances can be composite nodes. Therefore, when there
+    // are tokens that should be filtered, we should not return the text directly.
+    boolean filterTokens = skipTypes != null && skipTypes != TokenSet.EMPTY;
+    if (!filterTokens && node instanceof LighterASTSyntaxTreeBuilderBackedNode) {
+      return ((LighterASTSyntaxTreeBuilderBackedNode)node).getText();
+    }
+    return null;
+  }
+
+  public static @Nullable LighterASTNode getParentOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node,
+                                                         @NotNull TokenSet types, @NotNull TokenSet stopAt) {
     if (node == null) return null;
     node = tree.getParent(node);
     while (node != null) {
-      final IElementType type = node.getTokenType();
+      IElementType type = node.getTokenType();
       if (types.contains(type)) return node;
       if (stopAt.contains(type)) return null;
       node = tree.getParent(node);
@@ -151,25 +149,43 @@ public class LightTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static LighterASTNode findLeafElementAt(@NotNull LighterAST tree, final int offset) {
-    LighterASTNode eachNode = tree.getRoot();
-    if (!containsOffset(eachNode, offset)) return null;
+  public static void processLeavesAtOffsets(int[] offsets, @NotNull LighterAST tree, @NotNull BiConsumer<? super LighterASTTokenNode, ? super Integer> consumer) {
+    if (offsets.length == 0) return;
 
-    while (eachNode != null) {
-      List<LighterASTNode> children = tree.getChildren(eachNode);
-      if (children.isEmpty()) return eachNode;
+    int[] sortedOffsets = offsets.clone();
+    Arrays.sort(sortedOffsets);
+    new RecursiveLighterASTNodeWalkingVisitor(tree) {
+      int nextIndex = 0;
+      int nextOffset = sortedOffsets[0];
 
-      eachNode = findChildAtOffset(offset, children);
-    }
-    return null;
-  }
+      @Override
+      public void visitNode(@NotNull LighterASTNode element) {
+        if (containsNextOffset(element)) {
+          super.visitNode(element);
+        }
+      }
 
-  private static LighterASTNode findChildAtOffset(final int offset, List<LighterASTNode> children) {
-    return ContainerUtil.find(children, node -> containsOffset(node, offset));
-  }
+      @Override
+      public void visitTokenNode(@NotNull LighterASTTokenNode node) {
+        if (containsNextOffset(node)) {
+          consumer.accept(node, nextOffset);
+          while (containsNextOffset(node)) {
+            advanceOffset();
+          }
+        }
+      }
 
-  private static boolean containsOffset(LighterASTNode node, int offset) {
-    return node.getStartOffset() <= offset && node.getEndOffset() > offset;
+      private boolean containsNextOffset(@NotNull LighterASTNode element) {
+        ProgressManager.checkCanceled();
+        return nextIndex < sortedOffsets.length && element.getStartOffset() <= nextOffset && nextOffset < element.getEndOffset();
+      }
+
+      private void advanceOffset() {
+        nextIndex++;
+        if (nextIndex < sortedOffsets.length) {
+          nextOffset = sortedOffsets[nextIndex];
+        }
+      }
+    }.visitNode(tree.getRoot());
   }
 }

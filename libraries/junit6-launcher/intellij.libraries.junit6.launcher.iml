@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="JUnit6Launcher" type="repository">
+        <properties maven-id="org.junit.platform:junit-platform-launcher:6.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0.jar">
+              <sha256sum>5f097b00c6714bb71ecfb5dec62b59bb4c2f789763fafd1ece96c4ef0e6c280f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0.jar">
+              <sha256sum>6f81842e9c13e997cac66b44614522f3639419e2388ae2d000c4bc0a6b92d93f</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.apiguardian:apiguardian-api" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
+            <dependency maven-id="org.junit.platform:junit-platform-commons" />
+            <dependency maven-id="org.jspecify:jspecify" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/6.0.0/junit-platform-launcher-6.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/6.0.0/junit-platform-engine-6.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="RUNTIME" />
+  </component>
+</module>

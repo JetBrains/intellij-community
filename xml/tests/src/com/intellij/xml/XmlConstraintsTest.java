@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.actions.validate.TestErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -48,7 +49,7 @@ import java.util.Vector;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
-public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
+public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testXercesGrammar() {
     XSModel xsModel = getXSModel("test.xml", "test.xsd");
@@ -138,7 +139,7 @@ public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(descriptor);
     XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
     Map<String, XmlElementDescriptor> map =
-      ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName());
+      new HashMap<>(ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName()));
     map.put(tag.getName(), tag.getDescriptor());
     return map;
   }

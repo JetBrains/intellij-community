@@ -1,66 +1,62 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
-/**
- * @author ven
- */
-public class GrClassReferenceType extends PsiClassType {
-  private final GrReferenceElement myReferenceElement;
+public final class GrClassReferenceType extends PsiClassType {
 
-  public GrClassReferenceType(GrReferenceElement referenceElement) {
-    super(LanguageLevel.JDK_1_5);
-    myReferenceElement = referenceElement;
+  private final @NotNull GrCodeReferenceElement myReferenceElement;
+
+  public GrClassReferenceType(@NotNull GrCodeReferenceElement referenceElement) {
+    this(referenceElement, LanguageLevel.JDK_1_5);
   }
-  public GrClassReferenceType(GrReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
+
+  private GrClassReferenceType(@NotNull GrCodeReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
     super(languageLevel);
     myReferenceElement = referenceElement;
   }
 
   @Override
-  @Nullable
-  public PsiClass resolve() {
+  public @Nullable PsiClass resolve() {
     return resolveGenerics().getElement();
   }
 
   @Override
-  @Nullable
-  public String getClassName() {
+  public @Nullable String getClassName() {
     final PsiClass resolved = resolve();
     if (resolved != null) return resolved.getName();
     return myReferenceElement.getReferenceName();
   }
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public int getParameterCount() {
+    GrTypeArgumentList typeArgumentList = myReferenceElement.getTypeArgumentList();
+    return typeArgumentList == null ? 0 : typeArgumentList.getTypeArgumentCount();
+  }
+
+  @Override
+  public PsiType @NotNull [] getParameters() {
     return myReferenceElement.getTypeArguments();
   }
 
   @Override
-  @NotNull
-  public ClassResolveResult resolveGenerics() {
+  public @NotNull ClassResolveResult resolveGenerics() {
     final GroovyResolveResult resolveResult = myReferenceElement.advancedResolve();
     return new ClassResolveResult() {
       @Override
@@ -70,8 +66,7 @@ public class GrClassReferenceType extends PsiClassType {
       }
 
       @Override
-      @NotNull
-      public PsiSubstitutor getSubstitutor() {
+      public @NotNull PsiSubstitutor getSubstitutor() {
         return resolveResult.getSubstitutor();
       }
 
@@ -91,8 +86,7 @@ public class GrClassReferenceType extends PsiClassType {
       }
 
       @Override
-      @Nullable
-      public PsiElement getCurrentFileResolveScope() {
+      public @Nullable PsiElement getCurrentFileResolveScope() {
         return resolveResult.getCurrentFileResolveContext();
       }
 
@@ -104,8 +98,7 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public PsiClassType rawType() {
+  public @NotNull PsiClassType rawType() {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myReferenceElement.getProject());
 
     final PsiClass clazz = resolve();
@@ -113,20 +106,19 @@ public class GrClassReferenceType extends PsiClassType {
       return factory.createType(clazz, factory.createRawSubstitutor(clazz), getLanguageLevel());
     }
     else {
-      String qName = myReferenceElement.getClassNameText();
+      String qName = StringUtil.notNullize(myReferenceElement.getQualifiedReferenceName());
       return factory.createTypeByFQClassName(qName, myReferenceElement.getResolveScope());
     }
   }
 
-  @NotNull
   @Override
-  public String getPresentableText() {
-    return PsiNameHelper.getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
+  public @NotNull String getPresentableText() {
+    return PsiNameHelper
+      .getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myReferenceElement.getCanonicalText();
   }
 
@@ -141,24 +133,38 @@ public class GrClassReferenceType extends PsiClassType {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myReferenceElement.getResolveScope();
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
   @Override
-  @NotNull
-  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
-    return new GrClassReferenceType(myReferenceElement,languageLevel);
+  public @NotNull PsiClassType setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
+    return new GrClassReferenceType(myReferenceElement, languageLevel);
   }
 
-  public GrReferenceElement getReference() {
+  public @NotNull GrCodeReferenceElement getReference() {
     return myReferenceElement;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj instanceof GrClassReferenceType) {
+      if (myReferenceElement.equals(((GrClassReferenceType)obj).myReferenceElement)) {
+        return true;
+      }
+    }
+    return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    String name = myReferenceElement.getReferenceName();
+    return name == null ? 0 : name.hashCode();
   }
 }

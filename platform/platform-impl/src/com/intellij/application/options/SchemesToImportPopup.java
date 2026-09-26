@@ -1,32 +1,29 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class SchemesToImportPopup<T> {
   private final Component myParent;
 
@@ -36,7 +33,8 @@ public abstract class SchemesToImportPopup<T> {
 
   public void show(Collection<T> schemes) {
     if (schemes.isEmpty()) {
-      Messages.showMessageDialog("There are no available schemes to import", "Import", Messages.getWarningIcon());
+      Messages.showMessageDialog(IdeBundle.message("message.there.are.no.available.schemes.to.import"),
+                                 IdeBundle.message("dialog.title.import"), Messages.getWarningIcon());
       return;
     }
 
@@ -51,32 +49,32 @@ public abstract class SchemesToImportPopup<T> {
 
   private void showList(JList list, Runnable selectAction) {
     JBPopupFactory.getInstance().createListPopupBuilder(list).
-      setTitle("Import Scheme").
-      setItemChoosenCallback(selectAction).
+      setTitle(IdeBundle.message("popup.title.import.scheme")).
+      setItemChosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);
   }
 
-  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
+  private static final class SchemesToImportListCellRenderer implements ListCellRenderer {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 
-    public SchemesToImportListCellRenderer() {
+    SchemesToImportListCellRenderer() {
       myPanel.add(myNameLabel, BorderLayout.CENTER);
     }
 
     @Override
     public Component getListCellRendererComponent(@NotNull JList list, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       Scheme c = (Scheme)val;
-      myNameLabel.setText(c.getName());
+      myNameLabel.setText(c.getDisplayName());
 
       updateColors(isSelected);
       return myPanel;
     }
 
     private void updateColors(boolean isSelected) {
-      Color bg = isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground();
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color bg = isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myNameLabel);
     }
@@ -89,5 +87,5 @@ public abstract class SchemesToImportPopup<T> {
     }
   }
 
-  abstract protected void onSchemeSelected(T scheme);
+  protected abstract void onSchemeSelected(T scheme);
 }

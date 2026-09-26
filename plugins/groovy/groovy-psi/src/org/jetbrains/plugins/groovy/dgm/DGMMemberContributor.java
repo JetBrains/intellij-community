@@ -1,12 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -15,9 +25,12 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -27,15 +40,13 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * Provides members from extension classes referenced in {@code META-INF/services/org.codehaus.groovy.runtime.ExtensionModule}.
  */
-public class DGMMemberContributor extends NonCodeMembersContributor {
+public final class DGMMemberContributor {
 
-  @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
-                                     @NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiElement place,
-                                     @NotNull ResolveState state) {
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
+  public static boolean processDgmMethods(@NotNull PsiType qualifierType,
+                                          @NotNull PsiScopeProcessor processor,
+                                          @NotNull PsiElement place,
+                                          @NotNull ResolveState state) {
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true;
 
     final Project project = place.getProject();
 
@@ -53,14 +64,36 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
 
     for (GdkMethodHolder holder : gdkMethods) {
       if (!holder.processMethods(processor, state, qualifierType, project)) {
-        return;
+        return false;
       }
     }
+
+    if (!resolvesToMacro(processor, state, place, project)) {
+      return false;
+    }
+
+    return true;
   }
 
-  @NotNull
-  private static List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
-    List<GdkMethodHolder> gdkMethods = ContainerUtil.newArrayList();
+  private static boolean resolvesToMacro(PsiScopeProcessor processor, ResolveState state, @NotNull PsiElement place, Project project) {
+    GroovyMacroRegistryService macroService = project.getService(GroovyMacroRegistryService.class);
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint == null ? null : nameHint.getName(state);
+    if (name == null) {
+      return true;
+    }
+
+    Collection<PsiMethod> macros = macroService.getAllKnownMacros(place);
+    for (PsiMethod macro : macros) {
+      if (!processor.execute(GdkMethodUtil.createMacroMethod(macro), state)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static @NotNull List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
+    List<GdkMethodHolder> gdkMethods = new ArrayList<>();
 
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     Couple<List<String>> extensions = collectExtensions(project, resolveScope);
@@ -79,25 +112,26 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     return gdkMethods;
   }
 
-  @NotNull
-  private static Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
-    List<String> instanceClasses = ContainerUtil.newArrayList(DEFAULT_INSTANCE_EXTENSIONS);
-    List<String> staticClasses = ContainerUtil.newArrayList(DEFAULT_STATIC_EXTENSIONS);
-    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses);
+  private static @NotNull Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
+    List<String> instanceClasses = new ArrayList<>(DEFAULT_INSTANCE_EXTENSIONS);
+    List<String> staticClasses = new ArrayList<>(DEFAULT_STATIC_EXTENSIONS);
+    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.groovy");
+    doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.services");
     return Couple.of(instanceClasses, staticClasses);
   }
 
   private static void doCollectExtensions(@NotNull Project project,
                                           @NotNull GlobalSearchScope resolveScope,
-                                          List<String> instanceClasses,
-                                          List<String> staticClasses) {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage("META-INF.services");
+                                          @NotNull List<? super String> instanceClasses,
+                                          @NotNull List<? super String> staticClasses,
+                                          @NlsSafe @NotNull String packageName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
     if (aPackage == null) return;
 
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
       PsiFile file = directory.findFile(DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
       if (!(file instanceof PropertiesFile)) continue;
-      AstLoadingFilter.forceEnableTreeLoading(file, () -> {
+      AstLoadingFilter.forceAllowTreeLoading(file, () -> {
         IProperty inst = ((PropertiesFile)file).findPropertyByKey("extensionClasses");
         IProperty stat = ((PropertiesFile)file).findPropertyByKey("staticExtensionClasses");
 
@@ -107,7 +141,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     }
   }
 
-  private static void collectClasses(IProperty pr, List<String> classes) {
+  private static void collectClasses(@NotNull IProperty pr, @NotNull List<? super String> classes) {
     String value = pr.getUnescapedValue();
     if (value == null) return;
     value = value.trim();

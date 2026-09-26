@@ -1,0 +1,295 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
+
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.impl.createBuildContext
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
+import java.nio.file.Path
+
+val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
+  "intellij.tools.jps.build.standalone",
+  "intellij.devkit.jps",
+  "intellij.idea.community.build.tasks",
+  "intellij.platform.debugger.testFramework",
+  "intellij.platform.vcs.testFramework",
+  "intellij.platform.externalSystem.testFramework",
+  "intellij.platform.uast.testFramework",
+  "intellij.maven.testFramework",
+  "intellij.tools.reproducibleBuilds.diff",
+  "intellij.space.java.jps",
+) + JewelMavenArtifacts.STANDALONE.keys
+
+internal fun createCommunityBuildContext(
+  options: BuildOptions,
+  projectHome: Path = COMMUNITY_ROOT.communityRoot, lifetime: BuildLifetime,
+): BuildContext {
+  return createBuildContext(
+    projectHome = projectHome,
+    productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+    setupTracer = true,
+    options = options,
+    lifetime = lifetime,
+  )
+}
+
+open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrainsProductProperties() {
+  init {
+    configurePropertiesForAllEditionsOfIntelliJIdea(this)
+    platformPrefix = "Idea"
+    applicationInfoModule = "intellij.idea.community.customization"
+    scrambleMainJar = false
+    useSplash = true
+    buildCrossPlatformDistribution = true
+    buildSourcesArchive = true
+
+    imagesDirectoryPath = communityHomeDir.resolve("build/idea-community-images")
+
+    productLayout.productImplementationModules = listOf(
+      "intellij.platform.starter",
+      "intellij.idea.community.customization",
+    )
+
+    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
+      "intellij.idea.customization.plugin",
+      "intellij.javaFX.community"
+    )
+
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.buildAllCompatiblePlugins = true
+    productLayout.pluginLayouts = lazy {
+      getCommunityRepositoryPlugins() + persistentListOf(
+        JavaPluginLayout.javaPlugin(),
+        groovyPlugin()
+      ) + androidPlugin()
+    }
+
+    productLayout.skipUnresolvedContentModules = true
+
+    mavenArtifacts.forIdeModules = true
+    mavenArtifacts.additionalModules += MAVEN_ARTIFACTS_ADDITIONAL_MODULES
+    mavenArtifacts.squashedModules += persistentListOf(
+      "intellij.platform.util.base",
+      "intellij.platform.util.base.multiplatform",
+      "intellij.platform.util.zip",
+    )
+    mavenArtifacts.validateForMavenCentralPublication = { module ->
+      JewelMavenArtifacts.isPublishedJewelModule(module) || JewelMavenArtifacts.isPublishedPlatformDependency(module)
+    }
+    mavenArtifacts.patchCoordinates = { module, coordinates ->
+      when {
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
+        else -> coordinates
+      }
+    }
+    mavenArtifacts.patchDependencies = { module, dependencies ->
+      when {
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchDependencies(module, dependencies)
+        else -> dependencies
+      }
+    }
+    mavenArtifacts.inlineModuleDependency = { module, dependency ->
+      JewelMavenArtifacts.isPublishedJewelModule(module) && JewelMavenArtifacts.isInlinedLibraryModule(dependency)
+    }
+    mavenArtifacts.addPomMetadata = { module, model ->
+      when {
+        JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+        JewelMavenArtifacts.isPublishedPlatformDependency(module) -> JewelMavenArtifacts.addPlatformPomMetadata(module, model)
+      }
+    }
+    mavenArtifacts.isJavadocJarRequired = {
+      JewelMavenArtifacts.isPublishedPlatformDependency(it) ||
+      (JewelMavenArtifacts.isPublishedJewelModule(it) && it.name != "intellij.platform.jewel.intUi.decoratedWindow")
+    }
+    mavenArtifacts.validate = { context, artifacts ->
+      JewelMavenArtifacts.validate(context, artifacts)
+    }
+
+    versionCheckerConfig = CE_CLASS_VERSIONS
+    baseDownloadUrl = "https://download.jetbrains.com/idea/"
+    buildDocAuthoringAssets = true
+
+    @Suppress("SpellCheckingInspection")
+    qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
+  }
+
+  override val baseFileName: String
+    get() = "idea"
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+    include(intellijCommunityBaseFragment(platformPrefix))
+  }
+
+  override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+    super.copyAdditionalFiles(targetDir, context)
+
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
+
+    copyDir(
+      sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
+      targetDir = targetDir.resolve("bin"),
+    )
+
+    bundleExternalPlugins(context, targetDir)
+  }
+
+  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
+
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = ideaCommunityWindowsCustomizer(communityHomeDir)
+
+  override fun createLinuxCustomizer(projectHome: Path): LinuxDistributionCustomizer = ideaCommunityLinuxCustomizer(communityHomeDir)
+
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = ideaCommunityMacCustomizer(communityHomeDir)
+
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
+
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
+
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
+}
+
+@Suppress("unused")
+open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProperties(communityHomeDir) {
+  init {
+    platformPrefix = "AndroidStudio"
+    applicationInfoModule = "intellij.idea.android.customization"
+
+    productLayout.productImplementationModules += "intellij.idea.android.customization"
+
+    val defaultBundledPlugins = IDEA_BUNDLED_PLUGINS
+      .removing("intellij.mcpserver.plugin")
+      .removing("intellij.featuresTrainer")
+
+    productLayout.bundledPluginModules = defaultBundledPlugins + persistentListOf(
+      "intellij.android.compose-ide-plugin",
+      "intellij.android.design-plugin.descriptor",
+      "intellij.android.plugin.descriptor",
+      "intellij.android.smali",
+    )
+  }
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+    include(intellijCommunityBaseFragment(platformPrefix))
+    // no community extensions
+  }
+}
+
+/**
+ * Base IntelliJ Community content fragment.
+ * This fragment is composable - subclasses can include this and optionally add community extensions.
+ */
+fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModulesContentSpec = productModules {
+  if (platformPrefix == "AndroidStudio") {
+    alias("com.intellij.modules.androidstudio")
+  }
+  else {
+    alias("com.intellij.modules.idea")
+    alias("com.intellij.modules.idea.community")
+  }
+
+  alias("com.intellij.modules.java-capable")
+  alias("com.intellij.modules.python-core-capable")
+  alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
+
+  if (platformPrefix != "AndroidStudio") {
+    alias("com.intellij.platform.ide.provisioner")
+  }
+
+  include(CommunityProductFragments.javaIdeBaseFragment())
+
+  module("intellij.platform.coverage")
+  module("intellij.platform.coverage.agent")
+  module("intellij.xml.xmlbeans")
+  module("intellij.libraries.log4j.to.slf4j")
+  module("intellij.libraries.xmlbeans")
+  module("intellij.platform.ide.newUiOnboarding")
+  module("intellij.platform.ide.newUsersOnboarding")
+  module("intellij.ide.startup.importSettings")
+  // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
+  privateModule("intellij.libraries.sqlite")
+  // Load-bearing product defaults stay core-time.
+  // The com.intellij.idea.customization plugin holds only additive rows.
+  module("intellij.platform.customization.min")
+  module("intellij.idea.customization.base")
+  if (platformPrefix == "AndroidStudio") {
+    // Android Studio's bundled plugin set is managed externally, so this module stays in its core
+    module("intellij.idea.customization.backend")
+  }
+
+  if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
+    module("intellij.idea.android.customization")
+  }
+
+  moduleSet(CommunityModuleSets.ideCommon())
+  moduleSet(CommunityModuleSets.platformResourceDefaults())
+  moduleSet(CommunityModuleSets.rdCommon())
+
+  embeddedModule("intellij.idea.community.ide.customization")
+
+  module("intellij.platform.ide.nonModalWelcomeScreen")
+  module("intellij.platform.ide.nonModalWelcomeScreen.frontend")
+  module("intellij.platform.ide.nonModalWelcomeScreen.backend")
+  module("intellij.platform.ide.nonModalWelcomeScreen.terminal")
+}
+
+inline fun ideaCommunityWindowsCustomizer(
+  projectHome: Path,
+  configure: WindowsCustomizerBuilder.() -> Unit = {},
+): WindowsDistributionCustomizer = windowsCustomizer(projectHome) {
+  fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
+
+  fullName { "IntelliJ IDEA Open Source" }
+  installDirNameHandler { "IntelliJ IDEA OSS" }
+
+  uninstallFeedbackUrl { appInfo ->
+    "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
+  }
+
+  configure()
+}
+
+inline fun ideaCommunityMacCustomizer(
+  projectHome: Path,
+  configure: MacCustomizerBuilder.() -> Unit = {},
+): MacDistributionCustomizer = macCustomizer(projectHome) {
+  urlSchemes = listOf("idea")
+  associateIpr = true
+  fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
+  bundleIdentifier = "com.jetbrains.intellij.ce"
+
+  rootDirectoryName { _, _ -> "IntelliJ IDEA OSS.app" }
+
+  executableFilePatterns { base, _, _, _ ->
+    val kotlinExecutables = KotlinBinaries.kotlinCompilerExecutables
+    (base + kotlinExecutables).filterNot { it == "plugins/**/*.sh" }
+  }
+
+  configure()
+}
+
+inline fun ideaCommunityLinuxCustomizer(
+  projectHome: Path,
+  configure: LinuxCustomizerBuilder.() -> Unit = {},
+): LinuxDistributionCustomizer = linuxCustomizer(projectHome) {
+
+  rootDirectoryName { _, _ -> "idea-oss" }
+
+  executableFilePatterns { base, _, _, _, _ ->
+    base.plus(KotlinBinaries.kotlinCompilerExecutables).filterNot { it == "plugins/**/*.sh" }
+  }
+
+  configure()
+}

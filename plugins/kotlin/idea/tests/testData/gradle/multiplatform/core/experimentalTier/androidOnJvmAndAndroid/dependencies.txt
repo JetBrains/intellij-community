@@ -1,0 +1,25 @@
+MODULES
+project.androidOnly
+
+project.androidOnly.androidHostTest
+    jvmAndAndroid.androidMain (TEST)
+    jvmAndAndroid.commonMain (TEST)
+
+project.androidOnly.androidMain
+    jvmAndAndroid.androidMain (COMPILE)
+    jvmAndAndroid.commonMain (COMPILE)
+
+project.androidOnly.commonMain
+    jvmAndAndroid.androidMain (COMPILE)
+    jvmAndAndroid.commonMain (COMPILE)
+
+project.androidOnly.commonTest
+    jvmAndAndroid.androidMain (TEST)
+    jvmAndAndroid.commonMain (TEST)
+
+
+Test configuration:
+- showing only modules matching .*androidOnly.*
+- hiding following standard dependencies: sdk, self
+- showing only dependencies matching .*jvmAndAndroid.*
+- dependencies order is not checked

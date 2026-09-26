@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  DeclKt.class
+  META-INF/kotlin_jvmAnnotations_requiresOptInAdded-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/jvmAnnotations/requiresOptInAdded/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_jvmAnnotations_requiresOptInAdded-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/jvmAnnotations/requiresOptInAdded/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

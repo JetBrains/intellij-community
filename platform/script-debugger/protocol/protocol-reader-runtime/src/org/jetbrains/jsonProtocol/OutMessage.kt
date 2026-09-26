@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.io.writeUtf8
-import gnu.trove.TIntArrayList
-import gnu.trove.TIntHashSet
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
+import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.io.JsonUtil
 
-open class OutMessage() {
-  val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
+open class OutMessage {
+  val buffer: ByteBuf = ByteBufAllocator.DEFAULT.buffer()
   val writer: JsonWriter = JsonWriter(ByteBufUtf8Writer(buffer))
 
   private var finalized: Boolean = false
@@ -85,23 +68,23 @@ open class OutMessage() {
     writer.endArray()
   }
 
-  fun writeIntSet(name: String, value: TIntHashSet) {
+  fun writeIntSet(name: String, value: IntSet) {
     beginArguments()
     writer.name(name)
     writer.beginArray()
-    value.forEach { value ->
-      writer.value(value.toLong())
-      true
+    val iterator = value.iterator()
+    while (iterator.hasNext()) {
+      writer.value(iterator.nextInt().toLong())
     }
     writer.endArray()
   }
 
-  fun writeIntList(name: String, value: TIntArrayList) {
+  fun writeIntList(name: String, value: IntList) {
       beginArguments()
       writer.name(name)
       writer.beginArray()
-      for (i in 0..value.size() - 1) {
-        writer.value(value.getQuick(i).toLong())
+      for (i in 0 until value.size) {
+        writer.value(value.getInt(i).toLong())
       }
       writer.endArray()
   }
@@ -123,31 +106,36 @@ open class OutMessage() {
     writer.name(name)
     writer.beginArray()
     var isNotFirst = false
-    for (item in value!!) {
-      if (isNotFirst) {
-        buffer.writeByte(','.toInt()).writeByte(' '.toInt())
-      }
-      else {
-        isNotFirst = true
-      }
-
-      if (!item.finalized) {
-        item.finalized = true
-        try {
-          item.writer.endObject()
+    for (item in value) {
+      try {
+        if (isNotFirst) {
+          buffer.writeByte(','.code).writeByte(' '.code)
         }
-        catch (e: IllegalStateException) {
-          if ("Nesting problem." == e.message) {
-            throw RuntimeException(item.buffer.toString(CharsetToolkit.UTF8_CHARSET) + "\nparent:\n" + buffer.toString(CharsetToolkit.UTF8_CHARSET), e)
-          }
-          else {
-            throw e
-          }
+        else {
+          isNotFirst = true
         }
 
-      }
+        if (!item.finalized) {
+          item.finalized = true
+          try {
+            item.writer.endObject()
+          }
+          catch (e: IllegalStateException) {
+            if ("Nesting problem." == e.message) {
+              throw RuntimeException(item.buffer.toString(Charsets.UTF_8) + "\nparent:\n" + buffer.toString(Charsets.UTF_8), e)
+            }
+            else {
+              throw e
+            }
+          }
+        }
 
-      buffer.writeBytes(item.buffer)
+        buffer.writeBytes(item.buffer)
+      } finally {
+        if (item.buffer.refCnt() > 0) {
+          item.buffer.release()
+        }
+      }
     }
     writer.endArray()
   }
@@ -171,14 +159,20 @@ open class OutMessage() {
     if (value == null) {
       return
     }
+    try {
+      beginArguments()
+      prepareWriteRaw(this, name)
 
-    beginArguments()
-    prepareWriteRaw(this, name)
-
-    if (!value.finalized) {
-      value.close()
+      if (!value.finalized) {
+        value.close()
+      }
+      buffer.writeBytes(value.buffer)
     }
-    buffer.writeBytes(value.buffer)
+    finally {
+      if (value.buffer.refCnt() > 0) {
+        value.buffer.release()
+      }
+    }
   }
 
   fun close() {
@@ -211,10 +205,6 @@ fun prepareWriteRaw(message: OutMessage, name: String) {
   itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length)
 }
 
-fun doWriteRaw(message: OutMessage, rawValue: String) {
-  message.buffer.writeUtf8(rawValue)
-}
-
 fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) {
   if (value != null && value != defaultValue) {
     writeEnum(name, value)
@@ -244,9 +234,11 @@ fun OutMessage.writeInt(name: String, value: Int, defaultValue: Int) {
   }
 }
 
-fun OutMessage.writeInt(name: String, value: Int) {
-  beginArguments()
-  writer.name(name).value(value.toLong())
+fun OutMessage.writeInt(name: String, value: Int?) {
+  if (value != null) {
+    beginArguments()
+    writer.name(name).value(value.toLong())
+  }
 }
 
 fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean) {
@@ -255,13 +247,15 @@ fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean)
   }
 }
 
-fun OutMessage.writeBoolean(name: String, value: Boolean) {
-  beginArguments()
-  writer.name(name).value(value)
+fun OutMessage.writeBoolean(name: String, value: Boolean?) {
+  if (value != null) {
+    beginArguments()
+    writer.name(name).value(value)
+  }
 }
 
-fun OutMessage.writeDouble(name: String, value: Double, defaultValue: Double) {
-  if (value != defaultValue) {
+fun OutMessage.writeDouble(name: String, value: Double?, defaultValue: Double?) {
+  if (value != null && value != defaultValue) {
     writeDouble(name, value)
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -36,6 +21,8 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -44,32 +31,35 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
 
   private static final Logger LOG = Logger.getInstance(GatheringChangelistBuilder.class);
 
-  @NotNull private final Set<VirtualFile> myCheckSet;
-  @NotNull private final List<Change> myChanges;
-  @NotNull private final UpdatedFilesReverseSide myFiles;
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull Set<VirtualFile> myCheckSet;
+  private final @NotNull List<Change> myChanges;
+  private final @NotNull UpdatedFilesReverseSide myFiles;
+  private final @NotNull SvnVcs myVcs;
 
   public GatheringChangelistBuilder(@NotNull SvnVcs vcs, @NotNull UpdatedFilesReverseSide files) {
     myVcs = vcs;
     myFiles = files;
-    myChanges = ContainerUtil.newArrayList();
-    myCheckSet = ContainerUtil.newHashSet();
+    myChanges = new ArrayList<>();
+    myCheckSet = new HashSet<>();
   }
 
-  public void processChange(final Change change, VcsKey vcsKey) {
-    addChange(change);
-  }
-
-  public void processChangeInList(final Change change, @Nullable final ChangeList changeList, VcsKey vcsKey) {
-    addChange(change);
-  }
-
-  public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
+  @Override
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     addChange(change);
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+    addChange(change);
+  }
+
+  @Override
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
+    addChange(change);
+  }
+
+  @Override
+  public void removeRegisteredChangeFor(@NotNull FilePath path) {
     // not sure
     for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();
@@ -112,12 +102,12 @@ public class GatheringChangelistBuilder extends EmptyChangelistBuilder {
     return false;
   }
 
+  @Override
   public boolean reportChangesOutsideProject() {
     return true;
   }
 
-  @NotNull
-  public List<Change> getChanges() {
+  public @NotNull List<Change> getChanges() {
     return myChanges;
   }
 }

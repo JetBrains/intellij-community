@@ -1,0 +1,22 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.testFramework.pluginModel
+
+/**
+ * List of compile-only dependencies in intellij-community project that should be ignored by [PluginDependenciesValidator], see
+ * [PluginDependenciesValidationOptions.compileOnlyDependencies].
+ */
+val compileOnlyDependenciesInCommunity: List<Pair<String, String>> = listOf(
+  "*" to "intellij.platform.multiplatformSupport", // references are replaced by expects-compiler-plugin
+  "*" to "fleet.util.multiplatform", // references are replaced by expects-compiler-plugin
+  "*" to "intellij.platform.compose.compilerPlugin", // dependency is needed for compose compiler plugin
+  "*" to "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin", // dependency is needed for serialization compiler plugin
+  "intellij.kotlin.jvm.debugger.coroutines" to "intellij.java.rt", // module is used to compile debugger helper classes for external processes
+  "intellij.java.rt" to "intellij.libraries.junit4", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.junit.v5.rt" to "intellij.libraries.junit5", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.junit.v5.rt" to "intellij.libraries.junit5.launcher", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.junit.v6.rt" to "intellij.libraries.junit6", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.junit.v6.rt" to "intellij.libraries.junit6.launcher", // module is used in external processes where the library from user's project is added to the classpath
+  "intellij.platform.util" to "intellij.platform.util.troveCompileOnly", //used only for compilation of deprecated FileUtil.FILE_HASHING_STRATEGY left for compatibility
+  "intellij.groovy.spock.rt" to "intellij.junit.rt", //the classes are loaded in an external process at runtime and have a proper dependency there; can be removed after extracting spock.rt to a content module (IDEA-391267)
+  "intellij.platform.buildScripts.downloader" to "intellij.libraries.zstd.jni", //zstd-jni is a private library of the Big Data Tools plugin and must not be packed into the platform, see IJPL-125; the library is needed at runtime, so the published Maven artifact declares it anyway, see COMPILE_ONLY_DEPENDENCIES_TO_PUBLISH in MavenArtifactsBuilder
+)

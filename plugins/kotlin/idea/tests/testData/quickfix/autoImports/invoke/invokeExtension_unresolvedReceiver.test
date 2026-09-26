@@ -1,0 +1,17 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: unresolved
+
+package b
+
+fun main() {
+    unresolved<caret>()
+}
+//-----------------------
+
+
+// FILE: second.kt
+package a
+
+operator fun Any?.invoke() = 42
+//-----------------------

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem><!--TODO false positive, or at least incorrect message because there are references -->
+    <file>Test.kt</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="A" />
+    <description>Class is never used.</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>2</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Method has usages, but the usages are not reachable from the entry points.</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>7</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Method has one usage, but the usage is not reachable from the entry points.</description>
+  </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>12</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class has one instantiation, but the instantiation is not reachable from the entry points.</description>
+  </problem>
+</problems>
+

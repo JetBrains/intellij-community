@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
 
 public interface DebuggerTreeNode {
   DebuggerTreeNode getParent();
@@ -24,6 +23,4 @@ public interface DebuggerTreeNode {
   NodeDescriptor getDescriptor();
 
   Project getProject();
-
-  void setRenderer(NodeRenderer renderer);
 }

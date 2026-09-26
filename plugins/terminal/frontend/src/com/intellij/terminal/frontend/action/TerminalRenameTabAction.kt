@@ -1,0 +1,58 @@
+package com.intellij.terminal.frontend.action
+
+import com.intellij.ide.actions.ToolWindowTabRenameActionBase
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
+import com.intellij.ui.content.Content
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
+
+internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
+  TerminalToolWindowFactory.TOOL_WINDOW_ID,
+  TerminalBundle.message("action.RenameSession.newSessionName.label")
+), DumbAware {
+  override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
+    return getTerminalContentDisplayNameToEdit(content)
+  }
+
+  override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
+    applyTerminalContentDisplayName(content, newContentName)
+  }
+}
+
+@Nls
+private fun getReworkedTerminalTitle(content: Content): String? {
+  val view = content.getTerminalTab()?.view ?: return null
+  return view.getFullTitleText()
+}
+
+private fun getClassicTerminalTitle(content: Content): String? {
+  val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return null
+  return widget.terminalTitle.buildSettingsAwareFullTitle()
+}
+
+internal fun findTerminalTitle(content: Content): TerminalTitle? {
+  val terminalView = content.getTerminalTab()?.view
+  val terminalWidget = TerminalToolWindowManager.findWidgetByContent(content)
+  return terminalView?.title ?: terminalWidget?.terminalTitle
+}
+
+internal fun applyTerminalContentDisplayName(content: Content, @Nls newContentName: String) {
+  val title = findTerminalTitle(content) ?: return
+  title.change {
+    userDefinedTitle = newContentName
+  }
+}
+
+@Nls
+internal fun getTerminalContentDisplayNameToEdit(content: Content): String {
+  return getReworkedTerminalTitle(content)
+         ?: getClassicTerminalTitle(content)
+         ?: content.displayName
+}

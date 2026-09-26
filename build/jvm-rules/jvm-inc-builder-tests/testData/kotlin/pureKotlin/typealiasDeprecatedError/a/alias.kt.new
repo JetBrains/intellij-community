@@ -1,0 +1,2 @@
+@Deprecated("gone", level = DeprecationLevel.ERROR)
+typealias Str = String

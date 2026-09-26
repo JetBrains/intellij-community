@@ -1,0 +1,2 @@
+version = "2.15.*"
+upstream-repository = "https://github.com/aws/aws-xray-sdk-python"

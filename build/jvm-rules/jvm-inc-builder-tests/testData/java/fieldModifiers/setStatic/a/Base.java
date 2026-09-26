@@ -1,0 +1,3 @@
+class Base {
+  char s;
+}

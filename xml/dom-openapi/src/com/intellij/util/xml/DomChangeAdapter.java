@@ -15,17 +15,15 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.xml.events.*;
+import com.intellij.util.xml.events.DomEvent;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class DomChangeAdapter implements DomEventListener {
 
   protected abstract void elementChanged(DomElement element);
 
   @Override
-  public void eventOccured(DomEvent event) {
+  public void eventOccured(@NotNull DomEvent event) {
     elementChanged(event.getElement());
   }
 

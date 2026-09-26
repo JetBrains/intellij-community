@@ -18,11 +18,11 @@ package com.intellij.util;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-public class PsiErrorElementUtilTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PsiErrorElementUtilTest extends BasePlatformTestCase {
 
   @NotNull
   @Override

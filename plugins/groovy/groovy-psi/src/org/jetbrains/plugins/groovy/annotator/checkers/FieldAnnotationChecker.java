@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiElement;
@@ -36,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class FieldAnnotationChecker extends CustomAnnotationChecker {
+public final class FieldAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
@@ -47,11 +35,10 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     PsiElement annoParent = annotation.getParent();
     PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
-    if (!(ownerToUse instanceof GrVariableDeclaration)) {
+    if (!(ownerToUse instanceof GrVariableDeclaration declaration)) {
       return false;
     }
     else {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)ownerToUse;
       if (declaration.getVariables().length != 1 || !PsiUtil.isLocalVariable(declaration.getVariables()[0])) {
         return false;
       }
@@ -59,9 +46,9 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, PsiAnnotation.TargetType.LOCAL_VARIABLE)) {
       GrCodeReferenceElement ref = annotation.getClassReference();
-      String target = JavaErrorMessages.message("annotation.target.LOCAL_VARIABLE");
-      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), target);
-      holder.createErrorAnnotation(ref, description);
+      String target = JavaPsiBundle.message("annotation.target.LOCAL_VARIABLE");
+      String description = JavaErrorBundle.message("annotation.not.applicable", ref.getText(), target);
+      holder.newAnnotation(HighlightSeverity.ERROR, description).range(ref).create();
     }
 
     return true;
@@ -71,12 +58,14 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
     final PsiAnnotationOwner owner = annotation.getOwner();
     final GrMember container = PsiTreeUtil.getParentOfType(((PsiElement)owner), GrMember.class);
     if (container != null) {
+      String message;
       if (container.getContainingClass() instanceof GroovyScriptClass) {
-        holder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body"));
+        message = GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body");
       }
       else {
-        holder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script"));
+        message = GroovyBundle.message("annotation.field.can.only.be.used.within.a.script");
       }
+      holder.newAnnotation(HighlightSeverity.ERROR, message).range(annotation).create();
     }
   }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.IdeView;
@@ -12,13 +10,18 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -27,33 +30,48 @@ public abstract class ScratchFileCreationHelper {
   public static final LanguageExtension<ScratchFileCreationHelper> EXTENSION = new LanguageExtension<>(
     "com.intellij.scratch.creationHelper", new ScratchFileCreationHelper() {
   });
-  
-  
+
+  /**
+   * Override to change the default initial text for a scratch file stored in {@link Context#text} field.
+   * Return true if the text is set up as needed and no further considerations are necessary.
+   */
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {
     return false;
   }
   
   public void beforeCreate(@NotNull Project project, @NotNull Context context) {
-  } 
-  
-  public static class Context {
-    @NotNull
-    public String text = "";
+  }
+
+  public void afterCreate(@NotNull Project project, @NotNull Context context, PsiFile scratchFile) {
+  }
+
+  @ApiStatus.Internal
+  public void afterLanguageChange(@NotNull Project project, @NotNull Set<VirtualFile> files) {
+  }
+
+  public static final class Context {
+    public @NotNull String text = "";
+    public @Nullable PsiFile sourceFile;
+    public @Nullable TextRange selectionRange;
+
     public Language language;
     public int caretOffset;
+
+    @ApiStatus.Internal
+    public boolean prepareText = true;
     
     public String filePrefix;
     public Factory<Integer> fileCounter;
     public String fileExtension;
+    public @NotNull RootType defaultRootType = ScratchRootType.getInstance();
     
     public ScratchFileService.Option createOption = ScratchFileService.Option.create_new_always;
     public IdeView ideView;
   }
 
-  @Nullable
-  public static PsiFile parseHeader(@NotNull Project project,
-                                    @NotNull Language language,
-                                    @NotNull String text) {
+  public static @Nullable PsiFile parseHeader(@NotNull Project project,
+                                              @NotNull Language language,
+                                              @NotNull String text) {
     LanguageFileType fileType = language.getAssociatedFileType();
     CharSequence fileSnippet = StringUtil.first(text, 10 * 1024, false);
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(project);
@@ -62,10 +80,9 @@ public abstract class ScratchFileCreationHelper {
       language, fileSnippet);
   }
 
-  @NotNull
-  public static String reformat(@NotNull Project project,
-                                @NotNull Language language,
-                                @NotNull String text) {
+  public static @NotNull String reformat(@NotNull Project project,
+                                         @NotNull Language language,
+                                         @NotNull String text) {
     return WriteCommandAction.runWriteCommandAction(project, (Computable<String>)() -> {
       PsiFile psi = parseHeader(project, language, text);
       if (psi != null) CodeStyleManager.getInstance(project).reformat(psi);

@@ -1,76 +1,58 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Override some of 'create*Converter' methods to perform conversion. If none of these methods suits the needs,
- * override {@link #isConversionNeeded()}, {@link #getAdditionalAffectedFiles()} and one of '*processingFinished' methods
- *
- * @author nik
+ * Override some of 'create*Converter' methods and return instance of this class from {@link ConverterProvider#createConverter} to perform
+ * conversion. If none of these methods suits the needs, override {@link #isConversionNeeded()},
+ * {@link #getAdditionalAffectedFiles()} and one of '*processingFinished' methods.
+ * <p>Conversion is performed in 4 phases. Firstly, it's determined whether conversion {@link ConversionProcessor#isConversionNeeded is needed}.
+ * Then {@link ConversionProcessor#preProcess pre-processing} is invoked for each affected converter, after that {@link ConversionProcessor#process} processing}
+ * is invoked for all these converters, and finally {@link ConversionProcessor#postProcess} post-processing} is performed.
+ * </p>
  */
 public abstract class ProjectConverter {
-
-  @Nullable
-  public ConversionProcessor<ProjectSettings> createProjectFileConverter() {
+  public @Nullable ConversionProcessor<ComponentManagerSettings> createProjectFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
+  public @Nullable ConversionProcessor<ModuleSettings> createModuleFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
+  public @Nullable ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
+  public @Nullable ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ProjectLibrariesSettings> createProjectLibrariesConverter() {
+  public @Nullable ConversionProcessor<ProjectLibrariesSettings> createProjectLibrariesConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ArtifactsSettings> createArtifactsConverter() {
+  public @Nullable ConversionProcessor<ArtifactsSettings> createArtifactsConverter() {
     return null;
   }
 
   /**
    * Override this method if conversion affects some configuration files not covered by provided {@link ConversionProcessor}s
    */
-  public Collection<File> getAdditionalAffectedFiles() {
+  public @NotNull Collection<Path> getAdditionalAffectedFiles() {
     return Collections.emptyList();
   }
 
   /**
    * @return files created during conversion process
    */
-  public Collection<File> getCreatedFiles() {
+  public @NotNull Collection<Path> getCreatedFiles() {
     return Collections.emptyList();
   }
 

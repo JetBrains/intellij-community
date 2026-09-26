@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * For lattice, equations and solver description, see http://pat.keldysh.ru/~ilya/faba.pdf (in Russian)
@@ -33,14 +26,14 @@ final class ELattice<T extends Enum<T>> {
     this.top = top;
   }
 
-  final T join(T x, T y) {
+  T join(T x, T y) {
     if (x == bot) return y;
     if (y == bot) return x;
     if (x == y) return x;
     return top;
   }
 
-  final T meet(T x, T y) {
+  T meet(T x, T y) {
     if (x == top) return y;
     if (y == top) return x;
     if (x == y) return x;
@@ -50,7 +43,7 @@ final class ELattice<T extends Enum<T>> {
 
 
 class ResultUtil {
-  private static final EKey[] EMPTY_PRODUCT = new EKey[0];
+  private static final EKey[] EMPTY_PRODUCT = EKey.EMPTY_ARRAY;
   private final ELattice<Value> lattice;
   final Value top;
   final Value bottom;
@@ -67,7 +60,7 @@ class ResultUtil {
     result = checkFinal(r1, r2);
     if (result != null) return result;
     if (r1 instanceof Value && r2 instanceof Value) {
-      return lattice.join((Value) r1, (Value) r2);
+      return lattice.join((Value)r1, (Value)r2);
     }
     if (r1 instanceof Value && r2 instanceof Pending) {
       return addSingle((Pending)r2, (Value)r1);
@@ -76,32 +69,36 @@ class ResultUtil {
       return addSingle((Pending)r1, (Value)r2);
     }
     assert r1 instanceof Pending && r2 instanceof Pending;
-    Pending pending1 = (Pending) r1;
-    Pending pending2 = (Pending) r2;
+    Pending pending1 = (Pending)r1;
+    Pending pending2 = (Pending)r2;
+    List<Component> left = Arrays.asList(pending1.delta);
+    List<Component> right = Arrays.asList(pending2.delta);
+    if (left.containsAll(right)) return pending1;
+    if (right.containsAll(left)) return pending2;
     Set<Component> sum = new HashSet<>();
-    sum.addAll(Arrays.asList(pending1.delta));
-    sum.addAll(Arrays.asList(pending2.delta));
-    return new Pending(sum);
+    sum.addAll(left);
+    sum.addAll(right);
+    return new Pending(DfaUtil.upwardsAntichain(sum, (l, r) -> r.isSuperStateOf(l)));
   }
 
-  @Nullable
-  private Result checkFinal(Result r1, Result r2) {
+  private @Nullable Result checkFinal(Result r1, Result r2) {
     if (r1 == top) return r1;
     if (r1 == bottom) return r2;
     return null;
   }
 
-  @NotNull
-  private Result addSingle(Pending pending, Value value) {
+  private @NotNull Result addSingle(Pending pending, Value value) {
     for (int i = 0; i < pending.delta.length; i++) {
       Component component = pending.delta[i];
-      if(component.ids.length == 0) {
+      if (component.ids.length == 0) {
         Value join = lattice.join(component.value, value);
-        if(join == top) {
+        if (join == top) {
           return top;
-        } else if(join == component.value) {
+        }
+        else if (join == component.value) {
           return pending;
-        } else {
+        }
+        else {
           Component[] components = pending.delta.clone();
           components[i] = new Component(join, EMPTY_PRODUCT);
           return new Pending(components);
@@ -113,8 +110,7 @@ class ResultUtil {
 }
 
 final class CoreHKey {
-  @NotNull
-  final MemberDescriptor myMethod;
+  final @NotNull MemberDescriptor myMethod;
   final int dirKey;
 
   CoreHKey(@NotNull MemberDescriptor method, int dirKey) {
@@ -143,7 +139,6 @@ final class CoreHKey {
 }
 
 final class Solver {
-
   private final ELattice<Value> lattice;
   private final HashMap<EKey, HashSet<EKey>> dependencies = new HashMap<>();
   private final HashMap<EKey, Pending> pending = new HashMap<>();
@@ -171,7 +166,8 @@ final class Solver {
     Equation previousEquation = equations.get(coreKey);
     if (previousEquation == null) {
       equations.put(coreKey, equation);
-    } else {
+    }
+    else {
       EKey joinKey = new EKey(coreKey.myMethod, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, false);
       Result joinResult = resultUtil.join(equation.result, previousEquation.result);
       Equation joinEquation = new Equation(joinKey, joinResult);
@@ -182,13 +178,14 @@ final class Solver {
   void queueEquation(Equation equation) {
     Result rhs = equation.result;
     if (rhs instanceof Value) {
-      solved.put(equation.key, (Value) rhs);
+      solved.put(equation.key, (Value)rhs);
       moving.push(equation.key);
-    } else if (rhs instanceof Pending) {
+    }
+    else if (rhs instanceof Pending) {
       Pending pendResult = ((Pending)rhs).copy();
       Result norm = normalize(pendResult.delta);
       if (norm instanceof Value) {
-        solved.put(equation.key, (Value) norm);
+        solved.put(equation.key, (Value)norm);
         moving.push(equation.key);
       }
       else {
@@ -209,14 +206,11 @@ final class Solver {
   }
 
   Value negate(Value value) {
-    switch (value) {
-      case True:
-        return Value.False;
-      case False:
-        return Value.True;
-      default:
-        return value;
-    }
+    return switch (value) {
+      case True -> Value.False;
+      case False -> Value.True;
+      default -> value;
+    };
   }
 
   Map<EKey, Value> solve() {
@@ -227,7 +221,7 @@ final class Solver {
       EKey id = moving.pop();
       Value value = solved.get(id);
 
-      EKey[] initialPIds  = id.stable ? new EKey[]{id, id.invertStability()} : new EKey[]{id.invertStability(), id};
+      EKey[] initialPIds = id.stable ? new EKey[]{id, id.invertStability()} : new EKey[]{id.invertStability(), id};
       Value[] initialPVals = id.stable ? new Value[]{value, value} : new Value[]{value, unstableValue};
 
       EKey[] pIds = new EKey[]{initialPIds[0], initialPIds[1], initialPIds[0].negate(), initialPIds[1].negate()};
@@ -270,17 +264,18 @@ final class Solver {
     return normalize(sum);
   }
 
-  @NotNull Result normalize(@NotNull Component[] sum) {
+  @NotNull
+  Result normalize(Component @NotNull [] sum) {
     Value acc = lattice.bot;
     boolean computableNow = true;
     for (Component prod : sum) {
       if (prod.isEmpty() || prod.value == lattice.bot) {
         acc = lattice.join(acc, prod.value);
-      } else {
+      }
+      else {
         computableNow = false;
       }
     }
     return (acc == lattice.top || computableNow) ? acc : new Pending(sum);
   }
-
 }

@@ -16,19 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 
-/**
- * @author ilyas
- */
 public class GrDocTagValueTokenImpl extends GroovyDocPsiElementImpl implements GrDocTagValueToken {
 
   public GrDocTagValueTokenImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocTagValueToken";
   }

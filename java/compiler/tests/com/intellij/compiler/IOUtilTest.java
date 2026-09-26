@@ -7,14 +7,20 @@ package com.intellij.compiler;
 import com.intellij.util.io.IOUtil;
 import junit.framework.TestCase;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class IOUtilTest extends TestCase {
 
-  private static interface IO {
+  private interface IO {
     void save(String str, DataOutput out) throws IOException;
     String load(DataInput in) throws IOException;
   }
@@ -60,25 +66,16 @@ public class IOUtilTest extends TestCase {
 
 
   private static byte[] save(String str, IO io) throws IOException {
-    final ByteArrayOutputStream os = new ByteArrayOutputStream();
-    final DataOutputStream out = new DataOutputStream(os);
-    try {
+
+    try (final ByteArrayOutputStream os = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(os)) {
       io.save(str, out);
+      return os.toByteArray();
     }
-    finally {
-      out.close();
-    }
-    return os.toByteArray();
   }
 
   private static String load(byte[] bytes, IO io) throws IOException {
-    final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
-    try {
-      final String str = io.load(in);
-      return str;
-    }
-    finally {
-      in.close();
+    try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
+      return io.load(in);
     }
 
   }

@@ -1,0 +1,2 @@
+JsonFile: n_structure_no_data.json
+  <empty list>

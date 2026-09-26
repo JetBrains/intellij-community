@@ -1,0 +1,6 @@
+// IGNORE_K2
+// IMPORT: dependency.Date
+import dependency.*
+import java.util as Date
+
+val d: Date.Date = Date.Date()

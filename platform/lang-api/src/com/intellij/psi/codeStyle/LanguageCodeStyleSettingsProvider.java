@@ -1,46 +1,80 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.lang.IdeLanguageCustomization;
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 /**
  * Base class and extension point for common code style settings for a specific language.
  */
-public abstract class LanguageCodeStyleSettingsProvider {
+public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider implements LanguageCodeStyleProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
+    new ExtensionPointName<>("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC
   }
 
-  @NotNull
-  public abstract Language getLanguage();
+  @TestOnly
+  @ApiStatus.Internal
+  public static void mockLanguageCodeStyleSettingsProviderService(BiConsumer<Class<?>, Object> registrar) {
+    registrar.accept(LanguageCodeStyleSettingsProviderService.class, new LanguageCodeStyleSettingsProviderService(true));
+  }
 
-  @Nullable
-  public abstract String getCodeSample(@NotNull SettingsType settingsType);
+  public static @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {
+    return LanguageCodeStyleSettingsProviderService.getInstance().getAllProviders();
+  }
+
+  public abstract @Nullable String getCodeSample(@NotNull SettingsType settingsType);
 
   public int getRightMargin(@NotNull SettingsType settingsType) {
     return settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS ? 30 : -1;
   }
 
+  /**
+   * Customize settings in the given consumer. The consumer is, for example, a UI panel or a supported settings collector. Even if the
+   * settings are not exposed to the UI via standard Spaces, Wrapping and Braces etc. panels, the method is still important for the platform
+   * to collect settings from {@link CommonCodeStyleSettings} and {@link CommonCodeStyleSettings.IndentOptions} which the plug-in
+   * supports. This information is used, for example, to generate language-specific {@code .editorconfig} properties.
+   *
+   * @param consumer Customized settings consumer.
+   * @param settingsType The settings type.
+   */
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer, @NotNull SettingsType settingsType) {
+  }
+
+  public static @Nullable CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
+    LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
+    return provider != null ? provider.getDefaultCommonSettings() : null;
   }
 
   /**
@@ -48,8 +82,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    *
    * @return The file extension for samples (null by default).
    */
-  @Nullable
-  public String getFileExt() {
+  public @Nullable String getFileExt() {
     return null;
   }
 
@@ -58,9 +91,32 @@ public abstract class LanguageCodeStyleSettingsProvider {
    *
    * @return The language name to show in preview tab (null by default).
    */
-  @Nullable
-  public String getLanguageName() {
+  public @Nullable @NlsContexts.Label String getLanguageName() {
     return null;
+  }
+
+  /**
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case {@code 'a'...'z'} and
+   * '-' characters. Base implementation uses {@link Language#getID()}, converts it to lower case letters and replaces any non-latin
+   * characters with '-'.
+   */
+  public @NotNull String getExternalLanguageId() {
+    return sanitizeLanguageId(StringUtil.toLowerCase(getLanguage().getID()));
+  }
+
+  private static String sanitizeLanguageId(@NotNull String id) {
+    StringBuilder sb = new StringBuilder(id.length());
+    id.chars().forEach(
+      c-> {
+        if (c >= 'a' && c <= 'z') {
+          sb.appendCodePoint(c);
+        }
+        else {
+          sb.append('-');
+        }
+      }
+    );
+    return sb.toString();
   }
 
   /**
@@ -74,8 +130,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    * @param text    code sample to demonstrate formatting settings (see {@link #getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType)}
    * @return a PSI file instance with given text, or null for default implementation using provider's language.
    */
-  @Nullable
-  public PsiFile createFileFromText(final Project project, final String text) {
+  public @Nullable PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     return null;
   }
 
@@ -85,37 +140,60 @@ public abstract class LanguageCodeStyleSettingsProvider {
    *
    * @return Created instance of {@code CommonCodeStyleSettings} or null if associated language doesn't
    *         use its own language-specific common settings (the settings are shared with other languages).
+   * @deprecated Override {@link #customizeDefaults(CommonCodeStyleSettings, IndentOptions)} method instead.
    */
-  @Nullable
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return new CommonCodeStyleSettings(getLanguage());
+  @Override
+  @Deprecated
+  public @NotNull CommonCodeStyleSettings getDefaultCommonSettings() {
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
+    defaultSettings.initIndentOptions();
+    //noinspection ConstantConditions
+    customizeDefaults(defaultSettings, defaultSettings.getIndentOptions());
+    return defaultSettings;
   }
 
   /**
-   * @deprecated use PredefinedCodeStyle extension point instead
+   * Customize default settings: set values which are different from the ones after {@code CommonCodeStyleSettings} initialization.
+   *
+   * @param commonSettings Customizable instance of  common settings for the language.
+   * @param indentOptions  Customizable instance of indent options for the language.
    */
-  @NotNull
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings, @NotNull IndentOptions indentOptions) {
+  }
+
+  /**
+   * @deprecated use {@link #getPriority()}
+   */
   @Deprecated
-  public PredefinedCodeStyle[] getPredefinedCodeStyles() {
-    return PredefinedCodeStyle.EMPTY_ARRAY;
-  }
-
   public DisplayPriority getDisplayPriority() {
-    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
-    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
+    return getPriority();
   }
 
-  @NotNull
-  public static Language[] getLanguagesWithCodeStyleSettings() {
+  /**
+   * @return A list of languages from which code style settings can be copied to this provider's language settings. By default, all languages
+   *         with code style settings are returned. In UI the languages are shown in the same order they are in the list.
+   * @see #getLanguagesWithCodeStyleSettings()
+   */
+  public List<Language> getApplicableLanguages() {
+    return getLanguagesWithCodeStyleSettings();
+  }
+
+  /**
+   * @return A list of languages with code style settings, namely for which {@code LanguageCodeStyleSettingsProvider} exists.
+   *         The list is ordered by language names as returned by {@link #getLanguageName(Language)} method.
+   */
+  public static @NotNull List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      languages.add(provider.getLanguage());
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
+      if (provider.hasSettingsPage()) {
+        languages.add(provider.getLanguage());
+      }
     }
-    return languages.toArray(new Language[0]);
+    languages.sort((l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
+    return languages;
   }
 
-  @Nullable
-  public static String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
+  public static @Nullable String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getCodeSample(settingsType) : null;
   }
@@ -125,10 +203,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return provider != null ? provider.getRightMargin(settingsType) : -1;
   }
 
+  @Override
+  public abstract @NotNull Language getLanguage();
 
-  @Nullable
-  public static Language getLanguage(String langName) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+  public static @Nullable Language getLanguage(String langName) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       String name = provider.getLanguageName();
       if (name == null) name = provider.getLanguage().getDisplayName();
       if (langName.equals(name)) {
@@ -138,14 +217,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
-  @Nullable
-  public static CommonCodeStyleSettings getDefaultCommonSettings(Language lang) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
-    return provider != null ? provider.getDefaultCommonSettings() : null;
-  }
-
-  @Nullable
-  public static String getFileExt(Language lang) {
+  public static @Nullable String getFileExt(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getFileExt() : null;
   }
@@ -158,22 +230,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
    * @return Alternative UI name defined by provider.getLanguageName() method or (if the method returns null)
    *         language's own display name.
    */
-  @Nullable
-  public static String getLanguageName(Language lang) {
+  public static @NotNull @NlsSafe String getLanguageName(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
     return providerLangName != null ? providerLangName : lang.getDisplayName();
   }
 
-  @Nullable
-  public static PsiFile createFileFromText(final Language language, final Project project, final String text) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(language);
-    return provider != null ? provider.createFileFromText(project, text) : null;
-  }
-
-  @Nullable
-  public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
-    for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
+  public static @Nullable LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       if (provider.getLanguage().equals(language)) {
         return provider;
       }
@@ -181,18 +245,29 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
-  @SuppressWarnings("unused")
-  public static DisplayPriority getDisplayPriority(Language language) {
-    LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);
-    if (langProvider == null) return DisplayPriority.LANGUAGE_SETTINGS;
-    return langProvider.getDisplayPriority();
-  }
-
-  @Nullable
-  public IndentOptionsEditor getIndentOptionsEditor() {
+  /**
+   * Searches a provider for a specific language or its base language.
+   *
+   * @param language The original language.
+   * @return Found provider or {@code null} if it doesn't exist neither for the language itself nor for any of its base languages.
+   */
+  public static @Nullable LanguageCodeStyleSettingsProvider findUsingBaseLanguage(final @NotNull Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleSettingsProvider curr = forLanguage(currLang);
+      if (curr != null) return curr;
+    }
     return null;
   }
 
+  public static @Nullable LanguageCodeStyleSettingsProvider findByExternalLanguageId(@NotNull String languageId) {
+    return ContainerUtil.find(getAllProviders(), provider -> provider.getExternalLanguageId().equals(languageId));
+  }
+
+  public @Nullable IndentOptionsEditor getIndentOptionsEditor() {
+    return null;
+  }
+
+  @Override
   public Set<String> getSupportedFields() {
     return new SupportedFieldCollector().collectFields();
   }
@@ -202,10 +277,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
-    private final Set<String> myCollectedFields = new THashSet<>();
+    private final Set<String> myCollectedFields = new HashSet<>();
     private SettingsType myCurrSettingsType;
 
-    public Set<String> collectFields() {
+    Set<String> collectFields() {
       for (SettingsType settingsType : SettingsType.values()) {
         myCurrSettingsType = settingsType;
         customizeSettings(this, settingsType);
@@ -213,7 +288,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
       return myCollectedFields;
     }
 
-    public Set<String> collectFields(SettingsType type) {
+    Set<String> collectFields(SettingsType type) {
       myCurrSettingsType = type;
       customizeSettings(this, type);
       return myCollectedFields;
@@ -242,6 +317,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
             myCollectedFields.add(commenterOption.name());
           }
           break;
+        case INDENT_SETTINGS:
+          for (IndentOption indentOption : IndentOption.values()) {
+            myCollectedFields.add(indentOption.name());
+          }
         default:
           // ignore
       }
@@ -253,40 +332,125 @@ public abstract class LanguageCodeStyleSettingsProvider {
     }
 
     @Override
-    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                 String fieldName,
-                                 String title,
-                                 @Nullable String groupName,
+    public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 @NonNls @NotNull String fieldName,
+                                 @NlsContexts.Label @NotNull String title,
+                                 @Nls @Nullable String groupName,
                                  Object... options) {
       myCollectedFields.add(fieldName);
     }
 
     @Override
-    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                 String fieldName,
-                                 String title,
-                                 @Nullable String groupName,
+    public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 @NonNls @NotNull String fieldName,
+                                 @NlsContexts.Label @NotNull String title,
+                                 @Nls @Nullable String groupName,
                                  @Nullable OptionAnchor anchor,
-                                 @Nullable String anchorFieldName,
+                                 @NonNls @Nullable String anchorFieldName,
                                  Object... options) {
       myCollectedFields.add(fieldName);
     }
   }
 
   /**
-   * Returns code documentation comment settings for the PSI file.
-   * @param file The file to return current document settings for.
-   * @return Documentation comment settings.
+   * Returns a wrapper around language's own code documentation comment settings from the given {@code rootSettings}.
+   * @param rootSettings Root code style setting to retrieve doc comment settings from.
+   * @return {@code DocCommentSettings} wrapper object which allows to retrieve and modify language's own
+   *         settings related to doc comment. The object is used then by common platform doc comment handling algorithms.
    */
-  @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+  @Override
+  public @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return DocCommentSettings.DEFAULTS;
   }
 
-  @Nullable
+  /**
+   * Create a code style configurable for the given base settings and model settings.
+   *
+   * @param baseSettings  The base (initial) settings before changes.
+   * @param modelSettings The settings to which UI changes are applied.
+   * @return The code style configurable.
+   *
+   * @see CodeStyleConfigurable
+   */
+  @Override
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
+    throw new RuntimeException(
+      this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
+  }
+
+  private static final AtomicReference<Set<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
+
+  /**
+   * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
+   */
+  public static Set<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+    return ourSettingsPagesProviders.updateAndGet(providers -> providers != null ? providers : calcSettingPagesProviders());
+  }
+
+  static void cleanSettingsPagesProvidersCache() {
+    ourSettingsPagesProviders.set(null);
+  }
+
+  private static @NotNull Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
+    Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new HashSet<>();
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
+      registerSettingsPageProvider(settingsPagesProviders, provider);
+    }
+    return settingsPagesProviders;
+  }
+
+  @ApiStatus.Internal
+  public static void registerSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    registerSettingsPageProvider(getSettingsPagesProviders(), provider);
+  }
+
+  @ApiStatus.Internal
+  public static void unregisterSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    getSettingsPagesProviders().remove(provider);
+  }
+
+  private static void registerSettingsPageProvider(@NotNull Set<? super LanguageCodeStyleSettingsProvider> settingsPagesProviders,
+                                                   @NotNull LanguageCodeStyleSettingsProvider provider) {
+    try {
+      Method
+        configMethod = provider.getClass().getMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
+      Class<?> declaringClass = configMethod.getDeclaringClass();
+      if (!declaringClass.equals(LanguageCodeStyleSettingsProvider.class)) {
+        settingsPagesProviders.add(provider);
+      }
+    }
+    catch (NoSuchMethodException e) {
+      // Do not add the provider.
+    }
+  }
+
   @ApiStatus.Experimental
-  public CodeStyleBean createBean() {
+  public final @NotNull AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
+  }
+
+  @SuppressWarnings("rawtypes")
+  @ApiStatus.Experimental
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return null;
   }
 
+  @SuppressWarnings("rawtypes")
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Tells is the provider supports external formats such as Json and .editorconfig. By default, it is assumed that language
+   * code style settings use a standard way to define settings, namely via public fields which have a straightforward mapping
+   * between the fields and human-readable stored values without extra transformation. If not, the provider must implement
+   * {@code getAccessor()} method for fields using magic constants, specially encoded strings etc., and
+   * {@code getAdditionalAccessors()} method for non-standard properties using their own {@code writer/readExternal() methods}
+   * for serialization.
+   * @return True (default) if standard properties are supported, false to disable language settings to avoid export
+   * partial, non-readable etc. data till proper accessors are implemented.
+   */
+  public boolean supportsExternalFormats() {
+    return true;
+  }
 }

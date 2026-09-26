@@ -1,289 +1,282 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.ResolveTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.LightResolveTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class ResolveMethodTest extends ResolveTestCase {
+public class ResolveMethodTest extends LightResolveTestCase {
+  
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_4;
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk14();
+  private PsiElement resolve() {
+    return findReferenceAtCaret("method/" + getTestName(false) + ".java").resolve();
   }
 
-  private PsiElement resolve() throws Exception {
-    PsiReference ref = configureByFile("method/" + getTestName(false) + ".java");
-    return ref.resolve();
-  }
-
-  private JavaResolveResult advancedResolve() throws Exception {
-    PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)configureByFile("method/" + getTestName(false) + ".java");
+  private JavaResolveResult advancedResolve() {
+    PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)findReferenceAtCaret("method/" + getTestName(false) + ".java");
     return ref.advancedResolve(true);
   }
 
-  public void testShortVsInt() throws Exception {
+  public void testShortVsInt() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertEquals(PsiType.INT, parm.getType());
+    assertEquals(PsiTypes.intType(), parm.getType());
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     assertEquals("method", ((PsiMethod) target).getName());
   }
 
-  public void testIndexOf() throws Exception{
+  public void testIndexOf() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertEquals(PsiType.INT, parm.getType());
+    assertEquals(PsiTypes.intType(), parm.getType());
   }
 
-  public void testSuper1() throws Exception{
+  public void testSuper1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
   }
 
-  public void testInherit1() throws Exception{
+  public void testInherit1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("B", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testNextMethod() throws Exception{
+  public void testNextMethod() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertEquals(PsiType.BOOLEAN, ((PsiMethod)target).getParameterList().getParameters()[1].getType());
+    assertInstanceOf(target, PsiMethod.class);
+    assertEquals(PsiTypes.booleanType(), ((PsiMethod)target).getParameterList().getParameters()[1].getType());
   }
 
-  public void testMethodConflict1() throws Exception{
+  public void testMethodConflict1() {
     PsiElement target = resolve();
     assertNull(target);
   }
 
-  public void testValueOf() throws Exception{
+  public void testValueOf() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertEquals(PsiType.INT, ((PsiMethod)target).getParameterList().getParameters()[0].getType());
+    assertInstanceOf(target, PsiMethod.class);
+    assertEquals(PsiTypes.intType(), ((PsiMethod)target).getParameterList().getParameters()[0].getType());
   }
 
-  public void testMethodFromAnonBase() throws Exception{
+  public void testMethodFromAnonBase() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
   }
 
-  public void testSCR5859() throws Exception{
+  public void testSCR5859() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiParameter[] parms = ((PsiMethod)target).getParameterList().getParameters();
     assertEquals("Derived", parms[0].getType().getPresentableText());
     assertEquals("Derived", parms[1].getType().getPresentableText());
   }
 
-  public void testPreferPublic() throws Exception{
+  public void testPreferPublic() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     assertTrue(((PsiMethod)target).hasModifierProperty(PsiModifier.PUBLIC));
   }
 
-  public void testRemove1() throws Exception{
+  public void testRemove1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("Remove1.A", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testRemove2() throws Exception{
+  public void testRemove2() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("java.util.AbstractCollection", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testArray1() throws Exception{
+  public void testArray1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
   }
 
-  public void testCycle1() throws Exception{
+  public void testCycle1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("Cycle1.C", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testAnonymousSuper1() throws Exception{
+  public void testAnonymousSuper1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("Test1.A", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testBug7968() throws Exception{
+  public void testBug7968() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("Bug7968.Bar", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testInheranceWithExtendsConflict() throws Exception{
+  public void testInheranceWithExtendsConflict() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("B", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testSout() throws Exception {
+  public void testSout() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     assertEquals("println", ((PsiMethod)target).getName());
   }
 
-  /*
-  public void testSCR5134() throws Exception{
-    PsiReference ref = configureByFile("method/SCR5134.java");
-    PsiElement target = ref.resolve();
-    assertTrue(target instanceof PsiMethod);
-    PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
-    assertTrue(parm.getType().getText().equals("Integer"));
-  }
-  */
-
-  public void testPartlyImplement1() throws Exception{
+  public void testSCR5134() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    PsiParameter parm = ((PsiMethod)target).getParameterList().getParameters()[0];
+    assertEquals("Integer", parm.getType().getPresentableText());
+  }
+
+  public void testPartlyImplement1() {
+    PsiElement target = resolve();
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("A.Predicate", ((PsiClass)target.getParent()).getQualifiedName());
   }
 
-  public void testTestOverloading1() throws Exception{
+  public void testTestOverloading1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertTrue(target.getParent() instanceof PsiClass);
+    assertInstanceOf(target, PsiMethod.class);
+    assertInstanceOf(target.getParent(), PsiClass.class);
     assertEquals("B", ((PsiClass) target.getParent()).getName());
   }
 
 
-  public void testSuperOfObject() throws Exception {
+  public void testSuperOfObject() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     final PsiMethod method = (PsiMethod)target;
     assertEquals("clone", method.getName());
     assertEquals(CommonClassNames.JAVA_LANG_OBJECT, method.getContainingClass().getQualifiedName());
   }
 
 
-  public void testStaticVSNonStatic() throws Exception{
+  public void testStaticVSNonStatic() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiMethod method = (PsiMethod) target;
     assertEquals(0, method.getParameterList().getParametersCount());
   }
 
-  public void testClone() throws Exception{
+  public void testClone() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
   }
 
-  public void testThrowWithoutNew() throws Exception{
+  public void testThrowWithoutNew() {
     PsiElement target = resolve();
     assertNull(target);
   }
 
-  public void testThrowWithoutNew2() throws Exception {
+  public void testThrowWithoutNew2() {
     PsiElement target = advancedResolve().getElement();
-    assertTrue(target instanceof PsiClass);
+    assertInstanceOf(target, PsiClass.class);
   }
 
-  public void testNotAccessibleAccessClass() throws Exception{
+  public void testNotAccessibleAccessClass() {
     JavaResolveResult result = advancedResolve();
     assertFalse(result.isAccessible());
   }
 
-  public void testInnerClass() throws Exception{
+  public void testInnerClass() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertTrue(result instanceof MethodCandidateInfo);
-    assertTrue(!result.isValidResult());
-    assertTrue(!((MethodCandidateInfo)result).isApplicable());
+    assertInstanceOf(result,  MethodCandidateInfo.class);
+    assertFalse(result.isValidResult());
+    assertFalse(((MethodCandidateInfo)result).isApplicable());
     final PsiClass aClass = ((PsiMethod)result.getElement()).getContainingClass();
     assertNotNull(aClass.getContainingClass());
   }
 
-  public void testPrivateInSuperInner() throws Exception{
+  public void testPrivateInSuperInner() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertTrue(result instanceof MethodCandidateInfo);
-    assertTrue(!result.isValidResult());
-    assertTrue(!result.isStaticsScopeCorrect());
+    assertInstanceOf(result,  MethodCandidateInfo.class);
+    assertFalse(result.isValidResult());
+    assertFalse(result.isStaticsScopeCorrect());
   }
 
-  public void testPrivateInSuperInner1() throws Exception{
+  public void testPrivateInSuperInner1() {
     JavaResolveResult result = advancedResolve();
     assertNotNull(result.getElement());
-    assertTrue(result instanceof MethodCandidateInfo);
+    assertInstanceOf(result,  MethodCandidateInfo.class);
     assertTrue(result.isValidResult());
   }
 
-  public void testProtectedM() throws Exception {
+  public void testProtectedM() {
     JavaResolveResult result = advancedResolve();
     assertTrue(result.getElement() instanceof PsiMethod);
     assertFalse(result.isAccessible());
   }
 
-  // This test complile but it seems to be a bug.
-  //public void testDependingParams1() throws Exception{
-  //  PsiJavaReference ref = (PsiJavaReference) configureByFile("method/generics/DependingParams.java");
-  //  final JavaResolveResult result = ref.advancedResolve(true);
-  //  assertTrue(result.isValidResult());
-  //}
-
-  public void testImplementOrder() throws Exception {
+  public void testImplementOrder() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiMethod method = (PsiMethod) target;
     assertEquals("II", method.getContainingClass().getName());
   }
 
-  public void testObjectVsInterface() throws Exception {
+  public void testObjectVsInterface() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PsiMethod);
+    assertInstanceOf(target, PsiMethod.class);
     PsiMethod method = (PsiMethod) target;
     assertEquals("PublicCloneable", method.getContainingClass().getName());
   }
 
-  public void testMultipleInheritancePathsToMethod() throws Exception {
-    PsiReference ref = configureByFile("method/" + getTestName(false) + ".java");
+  public void testSwitchExpressionType() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+      PsiMethod target = (PsiMethod)resolve();
+      assertEquals(PsiTypes.intType(), target.getParameterList().getParameters()[0].getType());
+    });
+  }
+
+  public void testMultipleJavadocReference() {
+    PsiJavaReference ref = (PsiJavaReference)findReferenceAtCaret("method/" + getTestName(false) + ".java");
+    assertSize(3, ref.multiResolve(false));
+  }
+
+  public void testMultipleInheritancePathsToMethod() {
+    PsiReference ref = findReferenceAtCaret("method/" + getTestName(false) + ".java");
 
     // just assume this is called by some highlighting inspection/intention/pass before the resolve
-    getJavaFacade().findClass("NN").getAllMethods();
+    myFixture.findClass("NN").getAllMethods();
 
     PsiElement target = ref.resolve();
     assertInstanceOf(target, PsiMethod.class);

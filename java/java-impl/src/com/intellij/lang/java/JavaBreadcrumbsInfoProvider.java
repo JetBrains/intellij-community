@@ -1,24 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
@@ -27,16 +25,15 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-
-import static com.intellij.openapi.util.Iconable.*;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.htmlEmphasize;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
 
 /**
  * @author gregsh
  */
-public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
+public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   private static final Language[] ourLanguages = {JavaLanguage.INSTANCE};
   @Override
   public Language[] getLanguages() {
@@ -48,9 +45,8 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return e instanceof PsiMember || e instanceof PsiLambdaExpression;
   }
 
-  @NotNull
   @Override
-  public String getElementInfo(@NotNull PsiElement e) {
+  public @NotNull String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
       return PsiExpressionTrimRenderer.render((PsiExpression)e);
     }
@@ -63,24 +59,14 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return suffix != null ? description + suffix : description;
   }
 
-  @Nullable
   @Override
-  public Icon getElementIcon(@NotNull PsiElement element) {
-    return Registry.is("editor.breadcrumbs.java.icon")
-           ? element.getIcon(0)
-           : null;
-  }
-
-  @Nullable
-  @Override
-  public String getElementTooltip(@NotNull PsiElement e) {
+  public @Nullable String getElementTooltip(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) return getLambdaDescription((PsiLambdaExpression)e);
     if (e instanceof PsiMethod) return getMethodPresentableText((PsiMethod)e);
     return ElementDescriptionUtil.getElementDescription(e, RefactoringDescriptionLocation.WITH_PARENT);
   }
 
-  @NotNull
-  private static String getMethodPresentableText(PsiMethod e) {
+  private static @NotNull String getMethodPresentableText(PsiMethod e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder(e.isConstructor() ? "constructor" : "method");
     PsiType type = e.getReturnType();
@@ -92,8 +78,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return sb.toString();
   }
 
-  @NotNull
-  private static String getLambdaDescription(@NotNull PsiLambdaExpression e) {
+  private static @NotNull String getLambdaDescription(@NotNull PsiLambdaExpression e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder("lambda");
     PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();
@@ -119,14 +104,13 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
       else {
         typeStr = getTypeText(parameters[i].getType(), false);
       }
-      String str = isEmpty(typeStr)? notNullize(parameters[i].getName()) : getShortClassName(typeStr);
+      String str = isEmpty(typeStr)? parameters[i].getName() : getShortClassName(typeStr);
       sb.append(htmlEmphasize(str));
     }
     sb.append(")");
   }
 
-  @NotNull
-  private static String getTypeText(@Nullable PsiType type, boolean isDumb) {
+  private static @NotNull @NlsSafe String getTypeText(@Nullable PsiType type, boolean isDumb) {
     // todo PsiTypeVisitor ?
     String result;
     if (type == null) result = "";
@@ -134,5 +118,10 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     else if (type instanceof PsiClassReferenceType) result = ((PsiClassReferenceType)type).getReference().getReferenceName();
     else result = "";
     return getShortClassName(notNullize(result));
+  }
+
+  @Override
+  public boolean isShownByDefault() {
+    return !UISettings.getInstance().getShowMembersInNavigationBar();
   }
 }

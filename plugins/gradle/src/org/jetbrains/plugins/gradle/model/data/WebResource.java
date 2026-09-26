@@ -1,58 +1,58 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public class WebResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final WarDirectory myWarDirectory;
-  @NotNull
-  private final String warRelativePath;
-  @NotNull
-  private final File file;
+  private final @NotNull WarDirectory warDirectory;
+  private final @NotNull String warRelativePath;
+  private final @NotNull Path filePath;
 
+  /**
+   * @deprecated use {@link #WebResource(WarDirectory, String, Path)} instead.
+   */
+  @Deprecated
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
-    myWarDirectory = warDirectory;
+    this(warDirectory, warRelativePath, file.toPath());
+  }
+
+  @PropertyMapping({"warDirectory", "warRelativePath", "filePath"})
+  public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull Path filePath) {
+    this.warDirectory = warDirectory;
     this.warRelativePath = getAdjustedPath(warRelativePath);
-    this.file = file;
+    this.filePath = filePath;
   }
 
-  @NotNull
-  public WarDirectory getWarDirectory() {
-    return myWarDirectory;
+  public @NotNull WarDirectory getWarDirectory() {
+    return warDirectory;
   }
 
-  @NotNull
-  public String getWarRelativePath() {
+  public @NotNull String getWarRelativePath() {
     return warRelativePath;
   }
 
-  @NotNull
-  public File getFile() {
-    return file;
+  /**
+   * @deprecated use {@link #getFilePath()} instead.
+   */
+  @Deprecated
+  public @NotNull File getFile() {
+    return filePath.toFile();
+  }
+
+  public @NotNull Path getFilePath() {
+    return filePath;
   }
 
   private static String getAdjustedPath(final @NotNull String path) {
@@ -61,31 +61,24 @@ public class WebResource implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof WebResource)) return false;
-
+    if (o == null || getClass() != o.getClass()) return false;
     WebResource resource = (WebResource)o;
-    if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (myWarDirectory != resource.myWarDirectory) return false;
-    if (!warRelativePath.equals(resource.warRelativePath)) return false;
-
-    return true;
+    return Objects.equals(warDirectory, resource.warDirectory) &&
+           Objects.equals(warRelativePath, resource.warRelativePath) &&
+           Objects.equals(filePath, resource.filePath);
   }
 
   @Override
   public int hashCode() {
-    int result = myWarDirectory.hashCode();
-    result = 31 * result + warRelativePath.hashCode();
-    result = 31 * result + file.getPath().hashCode();
-    return result;
+    return Objects.hash(warDirectory, warRelativePath, filePath);
   }
 
   @Override
   public String toString() {
     return "WebResource{" +
-           "myWarDirectory=" + myWarDirectory +
+           "warDirectory=" + warDirectory +
            ", warRelativePath='" + warRelativePath + '\'' +
-           ", file=" + file +
+           ", filePath=" + filePath +
            '}';
   }
 }

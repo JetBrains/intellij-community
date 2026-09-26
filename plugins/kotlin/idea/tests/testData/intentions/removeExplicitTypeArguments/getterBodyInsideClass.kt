@@ -1,0 +1,7 @@
+// FIX: Remove explicit type arguments
+// WITH_STDLIB
+
+class Main {
+    val x: List<Main>
+        get() = listOf<caret><Main>()
+}

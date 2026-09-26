@@ -21,13 +21,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Consider implementing {@link ChooseByNameInScopeItemProvider}
+ */
 public interface ChooseByNameItemProvider {
-  @NotNull
-  List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern);
 
-  boolean filterElements(@NotNull ChooseByNameBase base,
-                         @NotNull String pattern,
-                         boolean everywhere,
-                         @NotNull ProgressIndicator cancelled,
-                         @NotNull Processor<Object> consumer);
+  @NotNull
+  List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern);
+
+  boolean filterElements(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere,
+                         @NotNull ProgressIndicator cancelled, @NotNull Processor<Object> consumer);
 }

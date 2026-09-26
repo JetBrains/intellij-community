@@ -1,274 +1,628 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.serviceContainer.NonInjectable
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.NewUiValue
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
-import com.intellij.util.PlatformUtils
-import com.intellij.util.SystemProperties
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.UIUtil.isValidFont
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
-import com.intellij.util.xmlb.XmlSerializerUtil
-import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Property
-import com.intellij.util.xmlb.annotations.Transient
-import java.awt.Font
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))])
-class UISettings : BaseState(), PersistentStateComponent<UISettings> {
-  // These font properties should not be set in the default ctor,
-  // so that to make the serialization logic judge if a property
-  // should be stored or shouldn't by the provided filter only.
-  @get:Property(filter = FontFilter::class)
-  @get:OptionTag("FONT_FACE")
-  var fontFace: String? by string()
+private val LOG = logger<UISettings>()
 
-  @get:Property(filter = FontFilter::class)
-  @get:OptionTag("FONT_SIZE")
-  var fontSize: Int by property(defFontSize)
+@State(
+  name = "UISettings",
+  storages = [(Storage("ui.lnf.xml", usePathMacroManager = false))],
+  useLoadedStateAsExisting = false,
+  category = SettingsCategory.UI,
+)
+class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
+  constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>())
 
-  @get:Property(filter = FontFilter::class)
-  @get:OptionTag("FONT_SCALE")
-  var fontScale: Float by property(0f)
+  private var state = UISettingsState()
 
-  @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit: Int by property(50)
-  @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT") var consoleCommandHistoryLimit: Int by property(300)
-  @get:OptionTag("OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE") var overrideConsoleCycleBufferSize: Boolean by property(false)
-  @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB") var consoleCycleBufferSizeKb: Int by property(1024)
-  @get:OptionTag("EDITOR_TAB_LIMIT") var editorTabLimit: Int by property(10)
+  private val treeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
-  @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs: Boolean by property(false)
-  @get:OptionTag("ANIMATE_WINDOWS") var animateWindows: Boolean by property(true)
-  @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS") var showToolWindowsNumbers: Boolean by property(true)
-  @get:OptionTag("HIDE_TOOL_STRIPES") var hideToolStripes: Boolean by property(false)
-  @get:OptionTag("WIDESCREEN_SUPPORT") var wideScreenSupport: Boolean by property(false)
-  @get:OptionTag("LEFT_HORIZONTAL_SPLIT") var leftHorizontalSplit: Boolean by property(false)
-  @get:OptionTag("RIGHT_HORIZONTAL_SPLIT") var rightHorizontalSplit: Boolean by property(false)
-  @get:OptionTag("SHOW_EDITOR_TOOLTIP") var showEditorToolTip: Boolean by property(true)
-  @get:OptionTag("SHOW_MEMORY_INDICATOR") var showMemoryIndicator: Boolean by property(false)
-  @get:OptionTag("ALLOW_MERGE_BUTTONS") var allowMergeButtons: Boolean by property(true)
-  @get:OptionTag("SHOW_MAIN_TOOLBAR") var showMainToolbar: Boolean by property(false)
-  @get:OptionTag("SHOW_STATUS_BAR") var showStatusBar: Boolean by property(true)
-  @get:OptionTag("SHOW_NAVIGATION_BAR") var showNavigationBar: Boolean by property(true)
-  @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS") var alwaysShowWindowsButton: Boolean by property(false)
-  @get:OptionTag("CYCLE_SCROLLING") var cycleScrolling: Boolean by property(true)
-  @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR") var scrollTabLayoutInEditor: Boolean by property(true)
-  @get:OptionTag("HIDE_TABS_IF_NEED") var hideTabsIfNeed: Boolean by property(true)
-  @get:OptionTag("SHOW_CLOSE_BUTTON") var showCloseButton: Boolean by property(true)
-  @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT") var closeTabButtonOnTheRight: Boolean by property(true)
-  @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement: Int by property(SwingConstants.TOP)
-  @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hideKnownExtensionInTabs: Boolean by property(false)
-  @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation: Boolean by property(true)
-
-  @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST") var closeNonModifiedFilesFirst: Boolean by property(false)
-  @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE") var activeMruEditorOnClose: Boolean by property(false)
-  // TODO[anton] consider making all IDEs use the same settings
-  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRightEditorOnClose: Boolean by property(PlatformUtils.isAppCode())
-
-  @get:OptionTag("IDE_AA_TYPE") var ideAAType: AntialiasingType by property(AntialiasingType.SUBPIXEL)
-  @get:OptionTag("EDITOR_AA_TYPE") var editorAAType: AntialiasingType by property(AntialiasingType.SUBPIXEL)
-  @get:OptionTag("COLOR_BLINDNESS") var colorBlindness: ColorBlindness? by property<ColorBlindness?>()
-  @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton: Boolean by property(false)
-  @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode: Boolean by property(false)
-  @get:OptionTag("ALPHA_MODE_DELAY") var alphaModeDelay: Int by property(1500)
-  @get:OptionTag("ALPHA_MODE_RATIO") var alphaModeRatio: Float by property(0.5f)
-  @get:OptionTag("MAX_CLIPBOARD_CONTENTS") var maxClipboardContents: Int by property(5)
-  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS") var overrideLafFonts: Boolean by property(false)
-  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus: Boolean by property(!PlatformUtils.isAppCode())
-  // IDEADEV-33409, should be disabled by default on MacOS
-  @get:OptionTag("DISABLE_MNEMONICS") var disableMnemonics: Boolean by property(SystemInfo.isMac)
-  @get:OptionTag("DISABLE_MNEMONICS_IN_CONTROLS") var disableMnemonicsInControls: Boolean by property(false)
-  @get:OptionTag("USE_SMALL_LABELS_ON_TABS") var useSmallLabelsOnTabs: Boolean by property(SystemInfo.isMac)
-  @get:OptionTag("MAX_LOOKUP_WIDTH2") var maxLookupWidth: Int by property(500)
-  @get:OptionTag("MAX_LOOKUP_LIST_HEIGHT") var maxLookupListHeight: Int by property(11)
-  @get:OptionTag("HIDE_NAVIGATION_ON_FOCUS_LOSS") var hideNavigationOnFocusLoss: Boolean by property(true)
-  @get:OptionTag("DND_WITH_PRESSED_ALT_ONLY") var dndWithPressedAltOnly: Boolean by property(false)
-  @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE") var defaultAutoScrollToSource: Boolean by property(false)
-  @Transient var presentationMode: Boolean = false
-  @get:OptionTag("PRESENTATION_MODE_FONT_SIZE") var presentationModeFontSize: Int by property(24)
-  @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk: Boolean by property(false)
-  @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips: Boolean by property(true)
-  @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames: Boolean by property(true)
-  var smoothScrolling: Boolean by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
-  @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview: Boolean by property(false)
-
-  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically: Boolean by property(false)
-  @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces: Boolean by property(true)
-  @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks: Boolean by property(false)
-  @get:OptionTag("PIN_FIND_IN_PATH_POPUP") var pinFindInPath: Boolean by property(false)
-
-  private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
-
-  private fun withDefFont(): UISettings {
-    initDefFont()
-    return this
-  }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Please use {@link UISettingsListener#TOPIC}")
-  fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
-    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
-  }
-
-  /**
-   * Notifies all registered listeners that UI settings has been changed.
-   */
-  fun fireUISettingsChanged() {
-    updateDeprecatedProperties()
-
-    // todo remove when all old properties will be converted
-    incrementModificationCount()
-
-    IconLoader.setFilter(ColorBlindnessSupport.get(colorBlindness)?.filter)
-
-    // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
-    if (this === _instance) {
-      myTreeDispatcher.multicaster.uiSettingsChanged(this)
-      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
+  var ideAAType: AntialiasingType
+    get() = notRoamableOptions.ideAAType
+    set(value) {
+      notRoamableOptions.ideAAType = value
     }
-  }
 
-  @Suppress("DEPRECATION")
-  private fun updateDeprecatedProperties() {
-    HIDE_TOOL_STRIPES = hideToolStripes
-    SHOW_MAIN_TOOLBAR = showMainToolbar
-    CYCLE_SCROLLING = cycleScrolling
-    SHOW_CLOSE_BUTTON = showCloseButton
-    EDITOR_AA_TYPE = editorAAType
-    PRESENTATION_MODE = presentationMode
-    OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
-    PRESENTATION_MODE_FONT_SIZE = presentationModeFontSize
-    CONSOLE_COMMAND_HISTORY_LIMIT = consoleCommandHistoryLimit
-    FONT_SIZE = fontSize
-    FONT_FACE = fontFace
-    EDITOR_TAB_LIMIT = editorTabLimit
-    OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = overrideConsoleCycleBufferSize
-    CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
-  }
+  var editorAAType: AntialiasingType
+    get() = notRoamableOptions.editorAAType
+    set(value) {
+      notRoamableOptions.editorAAType = value
+    }
 
-  private fun initDefFont() {
-    val fontData = systemFontFaceAndSize
-    if (fontFace == null) fontFace = fontData.first
-    if (fontSize <= 0) fontSize = fontData.second
-    if (fontScale <= 0) fontScale = defFontScale
-  }
+  val allowMergeButtons: Boolean
+    get() = Registry.`is`("ide.allow.merge.buttons", true)
 
-  class FontFilter : SerializationFilter {
-    override fun accepts(accessor: Accessor, bean: Any): Boolean {
-      val settings = bean as UISettings
-      val fontData = systemFontFaceAndSize
-      if ("fontFace" == accessor.name) {
-        return fontData.first != settings.fontFace
+  val animateWindows: Boolean
+    get() = Registry.`is`("ide.animate.toolwindows", false)
+
+  var colorBlindness: ColorBlindness?
+    get() = state.colorBlindness
+    set(value) {
+      state.colorBlindness = value
+    }
+
+  var useContrastScrollbars: Boolean
+    get() = state.useContrastScrollBars
+    set(value) {
+      state.useContrastScrollBars = value
+    }
+
+  var hideToolStripes: Boolean
+    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
+    set(value) {
+      state.hideToolStripes = value
+      if (!value) notRoamableOptions.experimentalSingleStripe = false
+    }
+
+  val hideNavigationOnFocusLoss: Boolean
+    get() = Registry.`is`("ide.hide.navigation.on.focus.loss", false)
+
+  var reuseNotModifiedTabs: Boolean
+    get() = state.reuseNotModifiedTabs
+    set(value) {
+      state.reuseNotModifiedTabs = value
+    }
+
+  var openTabsInMainWindow: Boolean
+    get() = state.openTabsInMainWindow
+    set(value) {
+      state.openTabsInMainWindow = value
+    }
+
+  var openInPreviewTabIfPossible: Boolean
+    get() = state.openInPreviewTabIfPossible
+    set(value) {
+      state.openInPreviewTabIfPossible = value
+    }
+
+  var disableMnemonics: Boolean
+    get() = state.disableMnemonics
+    set(value) {
+      state.disableMnemonics = value
+    }
+
+  var disableMnemonicsInControls: Boolean
+    get() = state.disableMnemonicsInControls
+    set(value) {
+      state.disableMnemonicsInControls = value
+    }
+
+  var dndWithPressedAltOnly: Boolean
+    get() = state.dndWithPressedAltOnly
+    set(value) {
+      state.dndWithPressedAltOnly = value
+    }
+
+  @get:Internal
+  @set:Internal
+  var mainMenuDisplayMode: MainMenuDisplayMode
+    get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
+    set(value) {
+      mainMenuDisplayModePrev = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
+      state.mainMenuDisplayMode = value.name
+    }
+
+  @Internal
+  var mainMenuDisplayModePrev: MainMenuDisplayMode = mainMenuDisplayMode
+
+  var useSmallLabelsOnTabs: Boolean
+    get() = state.useSmallLabelsOnTabs
+    set(value) {
+      state.useSmallLabelsOnTabs = value
+    }
+
+  var smoothScrolling: Boolean
+    get() = state.smoothScrolling
+    set(value) {
+      state.smoothScrolling = value
+    }
+
+  val animatedScrolling: Boolean
+    get() = state.animatedScrolling
+
+  val animatedScrollingDuration: Int
+    get() = state.animatedScrollingDuration
+
+  val animatedScrollingCurvePoints: Int
+    get() = state.animatedScrollingCurvePoints
+
+  val closeTabButtonOnTheRight: Boolean
+    get() = state.closeTabButtonOnTheRight
+
+  val cycleScrolling: Boolean
+    get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
+
+  val scrollTabLayoutInEditor: Boolean
+    get() = state.scrollTabLayoutInEditor
+
+  var showToolWindowsNumbers: Boolean
+    get() = state.showToolWindowsNumbers
+    set(value) {
+      state.showToolWindowsNumbers = value
+    }
+
+  var differentToolwindowBackground: Boolean
+    get() = state.differentToolwindowBackground
+    set(value) {
+      state.differentToolwindowBackground = value
+    }
+
+  var showToolWindowsNames: Boolean
+    get() = state.showToolWindowsNames
+    set(value) {
+      state.showToolWindowsNames = value
+    }
+
+  var toolWindowLeftSideCustomWidth: Int
+    get() = state.toolWindowLeftSideCustomWidth
+    set(value) {
+      state.toolWindowLeftSideCustomWidth = value
+    }
+
+  var toolWindowRightSideCustomWidth: Int
+    get() = state.toolWindowRightSideCustomWidth
+    set(value) {
+      state.toolWindowRightSideCustomWidth = value
+    }
+
+  var showEditorToolTip: Boolean
+    get() = state.showEditorToolTip
+    set(value) {
+      state.showEditorToolTip = value
+    }
+
+  var showNavigationBar: Boolean
+    get() = state.showNavigationBar
+    set(value) {
+      state.showNavigationBar = value
+    }
+
+  var navBarLocation: NavBarLocation
+    get() = state.navigationBarLocation
+    set(value) {
+      state.navigationBarLocation = value
+    }
+
+  val showNavigationBarInBottom: Boolean
+    get() = showNavigationBar && navBarLocation == NavBarLocation.BOTTOM
+
+  var showMembersInNavigationBar: Boolean
+    get() = state.showMembersInNavigationBar
+    set(value) {
+      state.showMembersInNavigationBar = value
+    }
+
+  var showStatusBar: Boolean
+    get() = state.showStatusBar
+    set(value) {
+      state.showStatusBar = value
+    }
+
+  var showMainMenu: Boolean
+    get() = state.showMainMenu
+    set(value) {
+      state.showMainMenu = value
+    }
+
+  val showIconInQuickNavigation: Boolean
+    get() = Registry.`is`("ide.show.icons.in.quick.navigation", false)
+
+  var showTreeIndentGuides: Boolean
+    get() = state.showTreeIndentGuides
+    set(value) {
+      state.showTreeIndentGuides = value
+    }
+
+  var compactTreeIndents: Boolean
+    get() = state.compactTreeIndents
+    set(value) {
+      state.compactTreeIndents = value
+    }
+
+  var expandNodesWithSingleClick: Boolean
+    get() = state.expandNodesWithSingleClick
+    set(value) {
+      state.expandNodesWithSingleClick = value
+    }
+
+  var compactMode: Boolean
+    get() = uiDensity == UIDensity.COMPACT
+    set(value) {
+      uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
+    }
+
+  var differentiateProjects: Boolean
+    get() = state.differentiateProjects
+    set(value) {
+      state.differentiateProjects = value
+    }
+
+  var uiDensity: UIDensity
+    get() = state.uiDensity
+    set(value) {
+      state.uiDensity = value
+    }
+
+  var showMainToolbar: Boolean
+    get() = if (NewUiValue.isEnabled()) mainMenuDisplayMode == MainMenuDisplayMode.SEPARATE_TOOLBAR else state.showMainToolbar
+    set(value) {
+      state.showMainToolbar = value
+
+      val toolbarSettingsState = ToolbarSettings.getInstance().state!!
+      toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
+    }
+
+  var showNewMainToolbar: Boolean
+    get() = state.showNewMainToolbar
+    set(value) {
+      state.showNewMainToolbar = value
+    }
+
+  var showIconsInMenus: Boolean
+    get() = state.showIconsInMenus
+    set(value) {
+      state.showIconsInMenus = value
+    }
+
+  var keepPopupsForToggles: Boolean
+    get() = state.keepPopupsForToggles
+    set(value) {
+      state.keepPopupsForToggles = value
+    }
+
+  var sortLookupElementsLexicographically: Boolean
+    get() = state.sortLookupElementsLexicographically
+    set(value) {
+      state.sortLookupElementsLexicographically = value
+    }
+
+  val hideTabsIfNeeded: Boolean
+    get() = state.hideTabsIfNeeded || editorTabPlacement == SwingConstants.LEFT || editorTabPlacement == SwingConstants.RIGHT
+  var showFileIconInTabs: Boolean
+    get() = state.showFileIconInTabs
+    set(value) {
+      state.showFileIconInTabs = value
+    }
+  var hideKnownExtensionInTabs: Boolean
+    get() = state.hideKnownExtensionInTabs
+    set(value) {
+      state.hideKnownExtensionInTabs = value
+    }
+
+  var leftHorizontalSplit: Boolean
+    get() = state.leftHorizontalSplit
+    set(value) {
+      state.leftHorizontalSplit = value
+    }
+
+  var rightHorizontalSplit: Boolean
+    get() = state.rightHorizontalSplit
+    set(value) {
+      state.rightHorizontalSplit = value
+    }
+
+  var wideScreenSupport: Boolean
+    get() = state.wideScreenSupport
+            set(value) {
+      state.wideScreenSupport = value
+    }
+
+  var rememberSizeForEachToolWindowOldUI: Boolean
+    get() = state.rememberSizeForEachToolWindowOldUI
+    set(value) {
+      state.rememberSizeForEachToolWindowOldUI = value
+    }
+
+  var rememberSizeForEachToolWindowNewUI: Boolean
+    get() = state.rememberSizeForEachToolWindowNewUI
+    set(value) {
+      state.rememberSizeForEachToolWindowNewUI = value
+    }
+
+  var sortBookmarks: Boolean
+    get() = state.sortBookmarks
+    set(value) {
+      state.sortBookmarks = value
+    }
+
+  val showCloseButton: Boolean
+    get() = state.showCloseButton
+
+  var presentationMode: Boolean
+    get() = state.presentationMode
+    set(value) {
+      state.presentationMode = value
+    }
+
+  var presentationModeFontSize: Int
+    get() = UISettingsUtils.with(this).presentationModeFontSize.toInt()
+    set(value) {
+      UISettingsUtils.with(this).presentationModeFontSize = value.toFloat()
+    }
+
+  var presentationModeIdeScale: Float
+    get() = notRoamableOptions.presentationModeIdeScale
+    set(value) {
+      notRoamableOptions.presentationModeIdeScale = value
+    }
+
+  var editorTabPlacement: Int
+    get() = state.editorTabPlacement
+    set(value) {
+      state.editorTabPlacement = value
+    }
+
+  var editorTabLimit: Int
+    get() = state.editorTabLimit
+    set(value) {
+      state.editorTabLimit = value
+    }
+
+  var recentFilesLimit: Int
+    get() = state.recentFilesLimit
+    set(value) {
+      state.recentFilesLimit = value
+    }
+
+  var recentLocationsLimit: Int
+    get() = state.recentLocationsLimit
+    set(value) {
+      state.recentLocationsLimit = value
+    }
+
+  var maxLookupWidth: Int
+    get() = state.maxLookupWidth
+    set(value) {
+      state.maxLookupWidth = value
+    }
+
+  var maxLookupListHeight: Int
+    get() = state.maxLookupListHeight
+    set(value) {
+      state.maxLookupListHeight = value
+    }
+
+  var overrideLafFonts: Boolean
+    get() = notRoamableOptions.state.overrideLafFonts
+    set(value) {
+      notRoamableOptions.overrideLafFonts = value
+    }
+
+  var fontFace: @NlsSafe String?
+    get() {
+      return notRoamableOptions.fontFace
+    }
+    set(value) {
+      notRoamableOptions.fontFace = value
+    }
+
+  var fontSize: Int
+    get() {
+      return (notRoamableOptions.fontSize + 0.5).toInt()
+    }
+    set(value) {
+      notRoamableOptions.fontSize = value.toFloat()
+    }
+
+  var fontSize2D: Float
+    get() = notRoamableOptions.fontSize
+    set(value) {
+      notRoamableOptions.fontSize = value
+    }
+
+  var fontScale: Float
+    get() = notRoamableOptions.fontScale
+    set(value) {
+      notRoamableOptions.fontScale = value
+    }
+
+  var ideScale: Float
+    get() = notRoamableOptions.ideScale
+    set(value) {
+      notRoamableOptions.ideScale = value
+    }
+
+  var showDirectoryForNonUniqueFilenames: Boolean
+    get() = state.showDirectoryForNonUniqueFilenames
+    set(value) {
+      state.showDirectoryForNonUniqueFilenames = value
+    }
+
+  var pinFindInPath: Boolean
+    get() = state.pinFindInPath
+    set(value) {
+      state.pinFindInPath = value
+    }
+
+  var activeRightEditorOnClose: Boolean
+    get() = state.activeRightEditorOnClose
+    set(value) {
+      state.activeRightEditorOnClose = value
+    }
+
+  var showTabsTooltips: Boolean
+    get() = state.showTabsTooltips
+    set(value) {
+      state.showTabsTooltips = value
+    }
+
+  var markModifiedTabsWithAsterisk: Boolean
+    get() = state.markModifiedTabsWithAsterisk
+    set(value) {
+      state.markModifiedTabsWithAsterisk = value
+    }
+
+  var overrideConsoleCycleBufferSize: Boolean
+    get() = state.overrideConsoleCycleBufferSize
+    set(value) {
+      state.overrideConsoleCycleBufferSize = value
+    }
+
+  var consoleCycleBufferSizeKb: Int
+    get() = state.consoleCycleBufferSizeKb
+    set(value) {
+      state.consoleCycleBufferSizeKb = value
+    }
+
+  var consoleCommandHistoryLimit: Int
+    get() = state.consoleCommandHistoryLimit
+    set(value) {
+      state.consoleCommandHistoryLimit = value
+    }
+
+  var sortTabsAlphabetically: Boolean
+    get() = state.sortTabsAlphabetically
+    set(value) {
+      state.sortTabsAlphabetically = value
+    }
+
+  var alwaysKeepTabsAlphabeticallySorted: Boolean
+    get() = state.alwaysKeepTabsAlphabeticallySorted
+    set(value) {
+      state.alwaysKeepTabsAlphabeticallySorted = value
+    }
+
+  var openTabsAtTheEnd: Boolean
+    get() = state.openTabsAtTheEnd
+    set(value) {
+      state.openTabsAtTheEnd = value
+    }
+
+  var showInplaceComments: Boolean
+    get() = state.showInplaceComments
+    set(value) {
+      state.showInplaceComments = value
+    }
+
+  @get:Internal
+  @set:Internal
+  var showInplaceCommentsInternal: Boolean
+    get() = state.showInplaceCommentsInternal && ApplicationManager.getApplication()?.isInternal ?: false
+    set(value) {
+      state.showInplaceCommentsInternal = value
+    }
+
+  var fullPathsInWindowHeader: Boolean
+    get() = state.fullPathsInWindowHeader
+    set(value) {
+      state.fullPathsInWindowHeader = value
+    }
+
+  var mergeMainMenuWithWindowTitle: Boolean
+    get() = state.mergeMainMenuWithWindowTitle
+    set(value) {
+      state.mergeMainMenuWithWindowTitle = value
+    }
+
+  var showVisualFormattingLayer: Boolean
+    get() = state.showVisualFormattingLayer
+    set(value) {
+      state.showVisualFormattingLayer = value
+    }
+
+  var showBreakpointsOverLineNumbers: Boolean
+    get() = state.showBreakpointsOverLineNumbers
+    set(value) {
+      state.showBreakpointsOverLineNumbers = value
+    }
+
+  var currentIdeScale: Float
+    get() = if (presentationMode) presentationModeIdeScale else ideScale
+    set(scale) {
+      when {
+        scale.percentValue == currentIdeScale.percentValue -> return
+        presentationMode -> presentationModeIdeScale = scale
+        else -> ideScale = scale
       }
-      // fontSize/fontScale should either be stored in pair or not stored at all
-      // otherwise the fontSize restore logic gets broken (see loadState)
-      return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
-    }
-  }
-
-  override fun getState(): UISettings = this
-
-  override fun loadState(state: UISettings) {
-    XmlSerializerUtil.copyBean(state, this)
-    resetModificationCount()
-    updateDeprecatedProperties()
-
-    // Check tab placement in editor
-    if (editorTabPlacement != TABS_NONE &&
-        editorTabPlacement != SwingConstants.TOP &&
-        editorTabPlacement != SwingConstants.LEFT &&
-        editorTabPlacement != SwingConstants.BOTTOM &&
-        editorTabPlacement != SwingConstants.RIGHT) {
-      editorTabPlacement = SwingConstants.TOP
     }
 
-    // Check that alpha delay and ratio are valid
-    if (alphaModeDelay < 0) {
-      alphaModeDelay = 1500
-    }
-    if (alphaModeRatio < 0.0f || alphaModeRatio > 1.0f) {
-      alphaModeRatio = 0.5f
+  var showPreviewInSearchEverywhere: Boolean
+    get() = state.showPreviewInSearchEverywhere
+    set(value) {
+      state.showPreviewInSearchEverywhere = value
     }
 
-    fontSize = restoreFontSize(fontSize, fontScale)
-    fontScale = defFontScale
-    initDefFont()
-
-    // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
-    // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = isValidFont(Font(fontFace, Font.PLAIN, fontSize))
-    if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (isValidFont(Font(preferredFont, Font.PLAIN, fontSize))) {
-          fontFace = preferredFont
-          fontIsValid = true
-          break
-        }
-      }
-
-      // 2. If all preferred fonts are not valid in current environment
-      // we have to find first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = UIUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          fontFace = fontNames[0]
-        }
-      }
+  @get:Internal
+  @set:Internal
+  var useSimplifiedSplashImage: Boolean
+    get() = state.useSimplifiedSplashImage
+    set(value) {
+      state.useSimplifiedSplashImage = value
     }
-
-    if (maxClipboardContents <= 0) {
-      maxClipboardContents = 5
-    }
-
-    fireUISettingsChanged()
-  }
 
   companion object {
-    private val LOG = Logger.getInstance(UISettings::class.java)
-
     init {
-      verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
+      if (JBUIScale.SCALE_VERBOSE) {
+        LOG.info(String.format("defFontSize=%.1f, defFontScale=%.2f", getDefFontSize(), defFontScale))
+      }
     }
 
+    @Suppress("SpellCheckingInspection")
+    // enables new style help context tooltips
+    private val isHelpTooltipEnabled = System.getProperty("ide.helptooltip.enabled", "true").toBoolean()
+
+    @Internal
     @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+    fun isIdeHelpTooltipEnabled(): Boolean = isHelpTooltipEnabled
 
     const val ANIMATION_DURATION: Int = 300 // Milliseconds
 
     /** Not tabbed pane.  */
     const val TABS_NONE: Int = 0
 
-    private @Volatile var _instance: UISettings? = null
+    @Volatile
+    private var cachedInstance: UISettings? = null
 
     @JvmStatic
-    val instance: UISettings
-      get() = instanceOrNull!!
+    fun getInstance(): UISettings {
+      var result = cachedInstance
+      if (result == null) {
+        LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
+        result = ApplicationManager.getApplication().service<UISettings>()
+        cachedInstance = result
+      }
+      return result
+    }
 
     @JvmStatic
     val instanceOrNull: UISettings?
       get() {
-        var result = _instance
-        if (result == null) {
-          if (ApplicationManager.getApplication() == null) {
-            return null
-          }
-
-          result = ServiceManager.getService(UISettings::class.java)
-          _instance = result
+        val result = cachedInstance
+        if (result == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+          return getInstance()
         }
         return result
       }
@@ -279,29 +633,53 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     val shadowInstance: UISettings
-      get() {
-        val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
-      }
+      get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    private val systemFontFaceAndSize: Pair<String, Int>
-      get() {
-        val fontData = UIUtil.getSystemFontData()
-        if (fontData != null) {
-          return fontData
+    private fun calcFractionalMetricsHint(registryKey: String, defaultValue: Boolean): Any {
+      val hint: Boolean
+      if (LoadingState.APP_STARTED.isOccurred) {
+        val registryValue = Registry.get(registryKey)
+        if (registryValue.isMultiValue) {
+          val option = registryValue.selectedOption
+          when {
+            option.equals("Enabled") -> hint = true
+            option.equals("Disabled") -> hint = false
+            else -> hint = defaultValue
+          }
         }
-
-        return Pair.create("Dialog", 12)
+        else {
+          hint = if (registryValue.isBoolean && registryValue.asBoolean()) true else defaultValue
+        }
       }
+      else {
+        hint = defaultValue
+      }
+      return if (hint) RenderingHints.VALUE_FRACTIONALMETRICS_ON else RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+    }
 
-    @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS: Boolean = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    fun getPreferredFractionalMetricsValue(): Any {
+      val enableByDefault = SystemInfo.isMacOSCatalina ||
+                            (FontSubpixelResolution.ENABLED
+                             && AntialiasingType.getKeyForCurrentScope(false) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+      return calcFractionalMetricsHint("ide.text.fractional.metrics", enableByDefault)
+    }
+
+    @JvmStatic
+    val editorFractionalMetricsHint: Any
+      get() {
+        val enableByDefault = FontSubpixelResolution.ENABLED
+                              && AntialiasingType.getKeyForCurrentScope(true) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+        return calcFractionalMetricsHint("editor.text.fractional.metrics", enableByDefault)
+      }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      if (FORCE_USE_FRACTIONAL_METRICS) {
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      }
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
+    }
+
+    @JvmStatic
+    fun setupFractionalMetrics(component: JComponent) {
+      component.putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, getPreferredFractionalMetricsValue())
     }
 
     /**
@@ -311,43 +689,32 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     fun setupAntialiasing(g: Graphics) {
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+      g as Graphics2D
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        // We cannot use services while Application has not been loaded yet
-        // So let's apply the default hints.
-        UIUtil.applyRenderingHints(g)
+      if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+        // cannot use services while Application has not been loaded yet, so let's apply the default hints
+        GraphicsUtil.applyRenderingHints(g)
         return
       }
 
-      val uiSettings = ServiceManager.getService(UISettings::class.java)
-      if (uiSettings != null) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
-      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-      setupFractionalMetrics(g2d)
+      setupFractionalMetrics(g)
     }
 
-    /**
-     * @see #setupAntialiasing(Graphics)
-     */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAATextInfoForSwingComponent())
     }
 
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
-      GraphicsUtil.setAntialiasingType(component, instance.editorAAType.textInfo)
+      GraphicsUtil.setAntialiasingType(component, getInstance().editorAAType.textInfo)
     }
 
     /**
-     * Returns the default font scale, which depends on the HiDPI mode (see JBUI#ScaleType).
+     * Returns the default font scale, which depends on the HiDPI mode (see [com.intellij.ui.scale.ScaleType]).
      * <p>
      * The font is represented:
      * - in relative (dpi-independent) points in the JRE-managed HiDPI mode, so the method returns 1.0f
@@ -357,7 +724,10 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+      get() = when {
+        JreHiDpiUtil.isJreHiDPIEnabled() -> 1f
+        else -> JBUIScale.sysScale()
+      }
 
     /**
      * Returns the default font size scaled by #defFontScale
@@ -365,118 +735,180 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      * @return the default scaled font size
      */
     @JvmStatic
-    val defFontSize: Int
-      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * defFontScale)
+    fun getDefFontSize(): Float = getDefaultFontSize()
 
     @JvmStatic
-    fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+    fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize
       if (readScale == null || readScale <= 0) {
-        verbose("Reset font to default")
-        // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
-      }
-      else {
-        var oldDefFontScale = defFontScale
-        if (SystemInfo.isLinux) {
-          val fdata = UIUtil.getSystemFontData()
-          if (fdata != null) {
-            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-            // not converting fonts stored with scale equal to the old calculation
-            oldDefFontScale = fdata.second / 12f
-            verbose("oldDefFontScale=%.2f", oldDefFontScale)
-          }
+        if (JBUIScale.SCALE_VERBOSE) {
+          LOG.info("Reset font to default")
         }
-        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
+        if (!SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPIEnabled()) {
+          size = getDefaultFontSize()
+        }
       }
-      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      else if (readScale != defFontScale) {
+        size = (readSize / readScale) * defFontScale
+      }
+      if (JBUIScale.SCALE_VERBOSE) {
+        LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      }
       return size
     }
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  @Suppress("unused")
-  @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
-  @JvmField
-  @Transient
-  var FONT_FACE: String? = null
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Please use {@link UISettingsListener#TOPIC}")
+  @ScheduledForRemoval
+  fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
+    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener)
+  }
 
-  @Suppress("unused")
-  @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
-  @JvmField
-  @Transient
-  var FONT_SIZE: Int? = 0
+  /**
+   * Notifies all registered listeners that UI settings have been changed.
+   */
+  fun fireUISettingsChanged() {
+    if (!EDT.isCurrentThreadEdt()) {
+      LOG.error(Throwable("UISettings should only be changed on the EDT"))
+      // Fall back to invokeLater. It doesn't matter which invokeLater we use here, as this is something that shouldn't happen either way.
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
+      return
+    }
 
-  @Suppress("unused")
-  @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
-  @JvmField
-  @Transient
-  var HIDE_TOOL_STRIPES: Boolean = true
+    // todo remove when all old properties will be converted
+    state._incrementModificationCount()
 
-  @Suppress("unused")
-  @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
-  @JvmField
-  @Transient
-  var CONSOLE_COMMAND_HISTORY_LIMIT: Int = 300
+    ColorBlindnessSupport.get(state.colorBlindness)?.filter?.let {
+      IconLoader.setFilter(it)
+    }
 
-  @Suppress("unused")
-  @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
-  @JvmField
-  @Transient
-  var CYCLE_SCROLLING: Boolean = true
+    // if this is the main UISettings instance (and not on first call to getInstance), push event to bus and to all current components
+    if (this === cachedInstance) {
+      runCatching {
+        treeDispatcher.multicaster.uiSettingsChanged(this)
+      }.getOrLogException(LOG)
 
-  @Suppress("unused")
-  @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
-  @JvmField
-  @Transient
-  var SHOW_MAIN_TOOLBAR: Boolean = false
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
+    }
+  }
 
-  @Suppress("unused")
-  @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
-  @JvmField
-  @Transient
-  var SHOW_CLOSE_BUTTON: Boolean = true
+  @Internal
+  override fun getState(): UISettingsState = state
 
-  @Suppress("unused")
-  @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
-  @JvmField
-  @Transient
-  var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
+  @Internal
+  override fun noStateLoaded() {
+    migrateFontParameters()
+    migrateSearchEverywherePreview()
+  }
 
-  @Suppress("unused")
-  @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE: Boolean = false
+  @Internal
+  override fun loadState(state: UISettingsState) {
+    this.state = state
 
-  @Suppress("unused")
-  @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
-  @JvmField
-  @Transient
-  var OVERRIDE_NONIDEA_LAF_FONTS: Boolean = false
+    migrateOldSettings()
+    if (migrateOldFontSettings()) {
+      notRoamableOptions.fixFontSettings()
+    }
+    migrateFontParameters()
+    migrateSearchEverywherePreview()
 
-  @Suppress("unused")
-  @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE_FONT_SIZE: Int = 24
+    // check tab placement in the editor
+    val editorTabPlacement = state.editorTabPlacement
+    if (editorTabPlacement != TABS_NONE &&
+        editorTabPlacement != SwingConstants.TOP &&
+        editorTabPlacement != SwingConstants.LEFT &&
+        editorTabPlacement != SwingConstants.BOTTOM &&
+        editorTabPlacement != SwingConstants.RIGHT) {
+      state.editorTabPlacement = SwingConstants.TOP
+    }
 
-  @Suppress("unused")
-  @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
-  @JvmField
-  @Transient
-  var EDITOR_TAB_LIMIT: Int = editorTabLimit
+    // Check that alpha delay and ratio are valid
+    if (state.alphaModeDelay < 0) {
+      state.alphaModeDelay = 1500
+    }
+    if (state.alphaModeRatio < 0.0f || state.alphaModeRatio > 1.0f) {
+      state.alphaModeRatio = 0.5f
+    }
 
-  @Suppress("unused")
-  @Deprecated("Use overrideConsoleCycleBufferSize", replaceWith = ReplaceWith("overrideConsoleCycleBufferSize"))
-  @JvmField
-  @Transient
-  var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE: Boolean = false
+    if (LoadingState.APP_READY.isOccurred) {
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
+    }
+  }
 
-  @Suppress("unused")
-  @Deprecated("Use consoleCycleBufferSizeKb", replaceWith = ReplaceWith("consoleCycleBufferSizeKb"))
-  @JvmField
-  @Transient
-  var CONSOLE_CYCLE_BUFFER_SIZE_KB: Int = consoleCycleBufferSizeKb
-  //</editor-fold>
+  override fun getStateModificationCount(): Long {
+    return state.modificationCount
+  }
+
+  @Suppress("DEPRECATION")
+  private fun migrateOldSettings() {
+    if (state.ideAAType != AntialiasingType.SUBPIXEL) {
+      ideAAType = state.ideAAType
+      state.ideAAType = AntialiasingType.SUBPIXEL
+    }
+    if (state.editorAAType != AntialiasingType.SUBPIXEL) {
+      editorAAType = state.editorAAType
+      state.editorAAType = AntialiasingType.SUBPIXEL
+    }
+    if (!state.allowMergeButtons) {
+      Registry.get("ide.allow.merge.buttons").setValue(false)
+      state.allowMergeButtons = true
+    }
+    if (state.separateMainMenu) {
+      state.mainMenuDisplayMode = MainMenuDisplayMode.SEPARATE_TOOLBAR.name
+      state.separateMainMenu = false
+    }
+  }
+
+  private fun migrateSearchEverywherePreview() {
+    if (PropertiesComponent.getInstance().isTrueValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)) {
+      state.showPreviewInSearchEverywhere = true
+      state._incrementModificationCount()
+      PropertiesComponent.getInstance().unsetValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)
+    }
+  }
+
+  @Suppress("DEPRECATION")
+  private fun migrateOldFontSettings(): Boolean {
+    var migrated = false
+    if (state.fontSize != 0) {
+      fontSize2D = restoreFontSize(state.fontSize.toFloat(), state.fontScale)
+      state.fontSize = 0
+      migrated = true
+    }
+    if (state.fontScale != 0f) {
+      fontScale = state.fontScale
+      state.fontScale = 0f
+      migrated = true
+    }
+    if (state.fontFace != null) {
+      fontFace = state.fontFace
+      state.fontFace = null
+      migrated = true
+    }
+    return migrated
+  }
+
+  private fun migrateFontParameters() {
+    val presentationModeFontSize = state.presentationModeFontSize
+    val notRoamableOptions = notRoamableOptions
+    if (notRoamableOptions.presentationModeIdeScale != 0f) {
+      return
+    }
+
+    notRoamableOptions.presentationModeIdeScale = if (presentationModeFontSize == 24 || notRoamableOptions.fontSize == 0f) {
+      UISettingsUtils.defaultScale(isPresentation = true)
+    }
+    else {
+      presentationModeFontSize.toFloat() / notRoamableOptions.fontSize
+    }
+  }
+
 }
+
+private const val SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY = "SearchEverywhere.previewPropertyKey"

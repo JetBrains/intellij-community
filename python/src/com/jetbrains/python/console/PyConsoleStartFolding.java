@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableList;
@@ -23,19 +9,22 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.util.DocumentUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
+@ApiStatus.Internal
+class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
   private final PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
   private int myNumberOfCommandToStop = 2;
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private final boolean myAddOnce;
-  private static final String DEFAULT_FOLDING_MESSAGE = "Python Console";
+  private static final String PYTHON_PREFIX = "Python";
   private int myStartLineOffset = 0;
   private final List<String> firstLinePrefix = ImmutableList.of("Python", "PyDev console");
   private final List<String> lastLinePrefix = ImmutableList.of("IPython", "[", "PyDev console");
@@ -59,7 +48,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     addFolding();
   }
 
@@ -78,7 +67,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       int startLine = 0;
       int finish = start;
       int finishLine = 0;
-      String placeholderText = DEFAULT_FOLDING_MESSAGE;
+      String placeholderText = PyBundle.message("python.console");
       int firstLine = document.getLineNumber(myStartLineOffset);
       for (int line = firstLine; line < document.getLineCount(); line++) {
         String lineText = document.getText(DocumentUtil.getLineTextRange(document, line));
@@ -91,7 +80,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
             if (lineText.startsWith(prefix)) {
               start = document.getLineStartOffset(line);
               startLine = line;
-              if (prefix.equals("Python")) {
+              if (prefix.equals(PYTHON_PREFIX)) {
                 placeholderText = lineText;
               }
               break;
@@ -101,7 +90,8 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
 
         if (!doNotAddFoldingAgain) {
           for (String prefix : lastLinePrefix) {
-            if (lineText.startsWith(prefix) && (!prefix.equals("[") || (prefix.equals("[") && prevLineText.startsWith("Python")))) {
+            if (lineText.startsWith(prefix) && (!prefix.equals("[")) ||
+                (prefix.equals("[") && prevLineText != null && prevLineText.startsWith(PYTHON_PREFIX))) {
               finish = document.getLineEndOffset(line);
               finishLine = line;
               doNotAddFoldingAgain = myAddOnce;
@@ -139,10 +129,5 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       myConsoleView.getEditor().getComponent().updateUI();
       doNotAddFoldingAgain = true;
     }
-  }
-
-  @Override
-  public void onFoldProcessingEnd() {
-
   }
 }

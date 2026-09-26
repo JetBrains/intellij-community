@@ -13,9 +13,8 @@ import org.jetbrains.annotations.Nullable;
 public class JqlBraceMatcher implements PairedBraceMatcher {
   private static final BracePair[] PAIRS = {new BracePair(JqlTokenTypes.LPAR, JqlTokenTypes.RPAR, false)};
 
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return PAIRS;
   }
 

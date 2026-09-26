@@ -38,16 +38,19 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
     }
   }
 
+  @Override
   public synchronized void write(int b) throws IOException {
     if (b == SegmentedStream.SPECIAL_SYMBOL && myStarted) writeNext(b);
     writeNext(b);
     flush();
   }
 
+  @Override
   public synchronized void flush() throws IOException {
     myPrintStream.flush();
   }
 
+  @Override
   public synchronized void close() throws IOException {
     myPrintStream.close();
   }
@@ -56,12 +59,13 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
     myPrintStream.write(b);
   }
 
+  @Override
   public synchronized void processPacket(String packet) {
     if (!myStarted)
       sendStart();
     writeNext(SegmentedStream.MARKER_PREFIX);
     String encodedPacket = Packet.encode(packet);
-    writeNext(String.valueOf(encodedPacket.length())+SegmentedStream.LENGTH_DELIMITER+encodedPacket);
+    writeNext(encodedPacket.length() + SegmentedStream.LENGTH_DELIMITER + encodedPacket);
   }
 
   private void writeNext(String string) {

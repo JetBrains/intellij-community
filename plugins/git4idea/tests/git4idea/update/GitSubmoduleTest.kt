@@ -1,238 +1,215 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
-import com.intellij.dvcs.DvcsUtil.getPushSupport
-import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtil.getRelativePath
-import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.UpdatedFiles
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
-import git4idea.config.GitVersion
-import git4idea.config.UpdateMethod
-import git4idea.push.GitPushOperation
-import git4idea.push.GitPushSupport
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitSubmoduleInfo
-import git4idea.test.*
-import org.junit.Assume.assumeTrue
-import java.io.File
-import java.util.*
+import com.intellij.testFramework.junit5.TestApplication
+import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.UpdateMethod.MERGE
+import git4idea.config.UpdateMethod.REBASE
+import git4idea.test.addCommit
+import git4idea.test.assertChanges
+import git4idea.test.assertChangesWithRefresh
+import git4idea.test.assertCommitted
+import git4idea.test.assertNoChanges
+import git4idea.test.cd
+import git4idea.test.commit
+import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
+import git4idea.test.last
+import git4idea.test.runUnderProgress
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.util.Locale
 
-/**
- * Main project with 3 submodules, one of which is a submodule of another.
- * ```
- * project
- *   |.git/
- *   |alib/
- *   |  |younger/
- *   |  | |.git
- *   |elder/
- *   |  |.git
- *   |  |grandchild/
- *   |  | |.git
- * ```
- */
-class GitSubmoduleTest : GitPlatformTest() {
-  private lateinit var mainRepo: GitRepository
-  private lateinit var elderRepo: GitRepository
-  private lateinit var youngerRepo: GitRepository
-  private lateinit var grandchildRepo: GitRepository
+private val LOG = logger<GitSubmoduleTest>()
 
-  private lateinit var grandchild: Repos
-  private lateinit var elder: Repos
-  private lateinit var younger: Repos
-  private lateinit var main: Repos
+@TestApplication
+internal class GitSubmoduleTest {
+  private val contextFixture = gitPlatformContextFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH).gitSubmoduleProjectFixture()
+  private val context: GitSubmoduleProjectContext get() = contextFixture.get()
 
-  override fun setUp() {
-    super.setUp()
+  private val dirtyScopeManager: VcsDirtyScopeManager get() = VcsDirtyScopeManager.getInstance(context.project)
 
-    setUpRepositoryStructure()
-    repositoryManager.updateAllRepositories()
-  }
+  @Test
+  fun `test submodule in detached HEAD state is updated via 'git submodule update'`(): Unit = with(context) {
+    // push from second clone
+    cd(sub2)
+    echo("a", "content\n")
+    val submoduleHash = addCommit("in submodule")
+    git("push")
+    cd(main2.local)
+    val mainHash = addCommit("Advance the submodule")
+    git("push")
 
-  fun `test submodules are properly detected`() {
-    assertNoSubmodules(grandchildRepo)
-    assertNoSubmodules(youngerRepo)
-    assertSubmodules(elderRepo, listOf(grandchildRepo))
-    assertSubmodules(mainRepo, listOf(elderRepo, youngerRepo))
-  }
-
-  fun `test submodules are updated before superprojects`() {
-    assumeTrue("Not testing: no --recurse-submodules flag in ${vcs.version}", vcs.version.isLaterOrEqual(GitVersion(1, 7, 4, 0)))
-
-    val bro = prepareSecondClone()
-    commitAndPushFromSecondClone(bro) // remote commit to overcome "nothing to do"
-
-    // hook the merge to watch the order
-    val reposInActualOrder = mutableListOf<GitRepository>()
-    git.mergeListener = {
-      reposInActualOrder.add(it)
+    insertLogMarker("update process")
+    val result = runUnderProgress { indicator ->
+      GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
     }
 
-    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), allRepositories(), UpdatedFiles.create(), false, true)
-    val result = updateProcess.update(UpdateMethod.MERGE)
-    assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
-    assertOrder(reposInActualOrder)
+    assertThat(result).describedAs("Update result is incorrect").isEqualTo(GitUpdateResult.SUCCESS)
+    assertThat(sub.last()).describedAs("Last commit in submodule is incorrect").isEqualTo(submoduleHash)
+    assertThat(main.last()).describedAs("Last commit in main repository is incorrect").isEqualTo(mainHash)
+    assertThat(sub.state).describedAs("Submodule should be in detached HEAD").isEqualTo(Repository.State.DETACHED)
   }
 
-  fun `test dependency comparator`() {
-    val comparator = GitRepositoryManager.DEPENDENCY_COMPARATOR
-    infix operator fun GitRepository.compareTo(other: GitRepository) = comparator.compare(this, other)
+  @Test
+  fun `test submodule in detached HEAD state doesn't fail in case of sync control`(): Unit = with(context) {
+    settings.syncSetting = DvcsSyncSettings.Value.SYNC
+    try {
+      // push from second clone
+      cd(sub2)
+      echo("a", "content\n")
+      val submoduleHash = addCommit("in submodule")
+      git("push")
+      cd(main2.local)
+      val mainHash = addCommit("Advance the submodule")
+      git("push")
 
-    //Expected: grandchild <- younger <- elder <- main
+      insertLogMarker("update process")
+      val result = runUnderProgress { indicator ->
+        GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
+      }
 
-    assertTrue(grandchildRepo < elderRepo)
-    assertTrue(grandchildRepo < mainRepo)
-    assertTrue("grandchild must be < youngerRepo to conform transitivity", grandchildRepo < youngerRepo)
-
-    assertTrue(elderRepo < mainRepo)
-    assertTrue("repos of the same level of submodularity must be compared by path", elderRepo > youngerRepo)
-    assertTrue(mainRepo > youngerRepo)
-
-    assertOrderedEquals(allRepositories().sortedWith(comparator), orderedRepositories())
-  }
-
-  fun `test submodules are pushed before superprojects`() {
-    allRepositories().forEach {
-      cd(it)
-      tac("f.txt")
+      assertThat(result).describedAs("Update result is incorrect").isEqualTo(GitUpdateResult.SUCCESS)
+      assertThat(sub.last()).describedAs("Last commit in submodule is incorrect").isEqualTo(submoduleHash)
+      assertThat(main.last()).describedAs("Last commit in main repository is incorrect").isEqualTo(mainHash)
+      assertThat(sub.state).describedAs("Submodule should be in detached HEAD").isEqualTo(Repository.State.DETACHED)
     }
-
-    val pushSpecs = allRepositories().map {
-      it to makePushSpec(it, "master", "origin/master")
-    }.toMap()
-
-    val reposInActualOrder = mutableListOf<GitRepository>()
-    git.pushListener = {
-      reposInActualOrder.add(it)
-    }
-
-    GitPushOperation(project, getPushSupport(vcs) as GitPushSupport, pushSpecs, null, false, false).execute()
-    assertOrder(reposInActualOrder)
-  }
-
-  private fun setUpRepositoryStructure() {
-    grandchild = createPlainRepo("grandchild")
-    younger = createPlainRepo("younger")
-    elder = createPlainRepo("elder")
-    addSubmodule(elder.local, grandchild.remote)
-
-    // setup project
-    mainRepo = createRepository(projectPath)
-    val parent = prepareRemoteRepo(mainRepo)
-    git("push -u origin master")
-    main = Repos("parent", File(projectPath), parent)
-
-    elderRepo = addSubmoduleInProject(elder.remote, elder.name)
-    youngerRepo = addSubmoduleInProject(younger.remote, younger.name, "alib/younger")
-    mainRepo.git("submodule update --init --recursive") // this initializes the grandchild submodule
-    grandchildRepo = registerRepo(project, "${projectPath}/elder/grandchild")
-    cd(grandchildRepo)
-    setupDefaultUsername()
-    grandchildRepo.git("checkout master") // git submodule is initialized in detached HEAD state by default
-  }
-
-  private fun addSubmodule(superProject: File, submoduleUrl: File, relativePath: String? = null) {
-    cd(superProject)
-    git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
-    git("commit -m 'Added submodule lib'")
-    git("push origin master")
-  }
-
-  /**
-   * Adds the submodule to the given repository, pushes this change to the upstream,
-   * and registers the repository as a VCS mapping.
-   */
-  private fun addSubmoduleInProject(submoduleUrl: File, moduleName: String, relativePath: String? = null): GitRepository {
-    addSubmodule(File(projectPath), submoduleUrl, relativePath)
-    val rootPath = "${projectPath}/${relativePath ?: moduleName}"
-    cd(rootPath)
-    refresh(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!)
-    setupDefaultUsername()
-    return registerRepo(project, rootPath)
-  }
-
-  private fun createPlainRepo(moduleName: String): Repos {
-    cd(testRoot)
-    git("init $moduleName")
-    val child = File(testRoot, moduleName)
-    cd(child)
-    setupDefaultUsername()
-    tac("initial.txt", "initial")
-    val parent = "$moduleName.git"
-    git("remote add origin ${testRoot}/$parent")
-
-    cd(testRoot)
-    git("init --bare $parent")
-    cd(child)
-    git("push -u origin master")
-    return Repos(moduleName, child, File(testRoot, parent))
-  }
-
-  // second clone of the whole project with submodules
-  private fun prepareSecondClone(): File {
-    cd(testRoot)
-    git("clone --recurse-submodules parent.git bro")
-    val broDir = File(testRoot, "bro")
-    cd(broDir)
-    setupDefaultUsername()
-    return broDir
-  }
-
-  private fun commitAndPushFromSecondClone(bro: File) {
-    listOf(grandchild.local, elder.local, younger.local, bro).forEach {
-      cd(it)
-      tacp("g.txt")
+    finally {
+      settings.syncSetting = DvcsSyncSettings.Value.NOT_DECIDED
     }
   }
 
-  private fun assertSubmodules(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
-    assertSubmodulesInfo(repo, expectedSubmodules)
-    assertSameElements("Submodules identified incorrectly for ${getShortRepositoryName(repo)}",
-                       repositoryManager.getDirectSubmodules(repo), expectedSubmodules)
-  }
+  @Test
+  fun `test submodule on branch is updated as a normal repository`(): Unit = with(context) {
+    // push from second clone
+    cd(sub2)
+    echo("a", "content\n")
+    val submoduleHash = addCommit("in submodule")
+    git("push")
 
-  private fun assertSubmodulesInfo(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
-    val expectedInfos = expectedSubmodules.map {
-      val url = it.remotes.first().firstUrl!!
-      GitSubmoduleInfo(FileUtil.toSystemIndependentName(getRelativePath(virtualToIoFile(repo.root), virtualToIoFile(it.root))!!), url)
+    // prepare commit in first sub clone
+    cd(sub)
+    git("checkout master")
+    echo("b", "content\n")
+    addCommit("msg")
+
+    insertLogMarker("update process")
+    val result = runUnderProgress { indicator ->
+      GitUpdateProcess(project, indicator, listOf(main, sub), UpdatedFiles.create(), null, false, true).update(REBASE)
     }
-    assertSameElements("Submodules were read incorrectly for ${getShortRepositoryName(repo)}", repo.submodules, expectedInfos)
+
+    assertThat(result).describedAs("Update result is incorrect").isEqualTo(GitUpdateResult.SUCCESS)
+    assertThat(sub.currentBranchName).describedAs("Submodule should be on branch").isEqualTo("master")
+    assertThat(sub.git("rev-parse HEAD^")).describedAs("Commit from 2nd clone not found in submodule").isEqualTo(submoduleHash)
   }
 
-  private fun assertNoSubmodules(repo: GitRepository) {
-    assertTrue("No submodules expected, but found: ${repo.submodules}", repo.submodules.isEmpty())
+  // IDEA-234159
+  @Test
+  fun `test modified submodule is visible in local changes`(): Unit = with(context) {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    echo("a", "content\n")
+    addCommit("in submodule")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    cd(projectPath)
+    assertChanges {
+      modified("sub")
+    }
   }
 
-  private fun assertOrder(reposInActualOrder: List<GitRepository>) {
-    assertOrderedEquals("Repositories were processed in incorrect order", reposInActualOrder, orderedRepositories())
+  @Test
+  fun `test modified submodule marks parent as dirty`(): Unit = with(context) {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    touch("a", "content\n")
+    addCommit("initial in submodule")
+
+    cd(projectPath)
+    addCommit("initial")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    overwrite("a", "new content\n")
+    dirtyScopeManager.fileDirty(childPath("a"))
+    changeListManager.waitUntilRefreshed()
+
+    cd(projectPath)
+    assertChanges {
+      modified("sub")
+      modified("sub/a")
+    }
+
+    cd(sub)
+    overwrite("a", "content\n")
+    dirtyScopeManager.fileDirty(childPath("a"))
+    changeListManager.waitUntilRefreshed()
+    changeListManager.waitUntilRefreshed() // two refreshes needed
+
+    cd(projectPath)
+    assertNoChanges()
   }
 
-  private fun allRepositories(): List<GitRepository> {
-    val list = mutableListOf(grandchildRepo, elderRepo, youngerRepo, mainRepo)
-    Collections.shuffle(list)
-    return list
+  @Test
+  fun `test commit into submodule and parent at once`(): Unit = with(context) {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    touch("a", "content\n")
+    addCommit("initial in submodule")
+
+    cd(projectPath)
+    touch("b", "content\n")
+    addCommit("initial")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    overwrite("a", "new content\n")
+
+    cd(projectPath)
+    overwrite("b", "new content\n")
+
+    val changes = assertChangesWithRefresh {
+      modified("b")
+      modified("sub")
+      modified("sub/a")
+    }
+
+    commit(changes)
+    assertNoChanges()
+
+    sub.assertCommitted {
+      modified("sub/a")
+    }
+    main.assertCommitted {
+      modified("b")
+      modified("sub")
+    }
   }
 
-  private fun orderedRepositories() = listOf(grandchildRepo, youngerRepo, elderRepo, mainRepo)
-
-  private data class Repos(val name: String, val local: File, val remote: File)
+  private fun insertLogMarker(title: String) {
+    LOG.info("")
+    LOG.info("--------- STARTING ${title.uppercase(Locale.getDefault())} -----------")
+    LOG.info("")
+  }
 }

@@ -1,0 +1,9 @@
+<component xmlns:app="http://jetbrains.org/intellij/schema/application-info" xmlns:other="urn:other">
+  <names fullname="Unqualified" />
+  <other:names fullname="Foreign" />
+  <app:names fullname="Prefixed product" motto="__BUILD__" />
+  <app:version eap="true" major="264" minor="1" />
+  <app:build majorReleaseDate="20260918" />
+  <version major="Ignored" />
+  <build majorReleaseDate="Ignored" />
+</component>

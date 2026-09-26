@@ -15,15 +15,19 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UpDownHandler;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.ChangeEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -38,13 +42,12 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   protected final JComboBox myComboBox;
   private final Map<V, String> myNamesMap = new HashMap<>();
 
-  public ComboBoxVisibilityPanel(String name, V[] options, String[] presentableNames) {
+  public ComboBoxVisibilityPanel(@NlsContexts.Label String name, V[] options, @NlsContexts.ListItem String[] presentableNames) {
     setLayout(new BorderLayout(0,2));
     myLabel = new JLabel(name);
     add(myLabel, BorderLayout.NORTH);
     myComboBox = new JComboBox(options);
     myComboBox.setRenderer(getRenderer());
-    IJSwingUtilities.adjustComponentsOnMac(myLabel, myComboBox);
     add(myComboBox, BorderLayout.SOUTH);
     for (int i = 0; i < options.length; i++) {
       myNamesMap.put(options[i], presentableNames[i]);
@@ -65,16 +68,11 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     DialogUtil.registerMnemonic(myLabel, myComboBox);
   }
 
-  protected ListCellRendererWrapper getRenderer() {
-    return new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        setText(myNamesMap.get(value));
-      }
-    };
+  protected ListCellRenderer<?> getRenderer() {
+    return BuilderKt.textListCellRenderer("", myNamesMap::get);
   }
 
-  public ComboBoxVisibilityPanel(String name, V[] options) {
+  public ComboBoxVisibilityPanel(@NlsContexts.Label String name, V[] options) {
     this(name, options, getObjectNames(options));
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,17 @@
 package com.intellij.openapi.compiler;
 
 /**
- * A tag interface indicating that the compiler will instrument java sources.
- * This affects the order of compiler calls:
- * The sequence in which compilers are called:
- * SourceGeneratingCompiler -> SourceInstrumentingCompiler -> TranslatingCompiler ->  ClassInstrumentingCompiler -> ClassPostProcessingCompiler -> Validator
+ * An interface for compilers which instrument some sources before the compilation starts. Note that it's better to perform compilation-related
+ * tasks inside inside a separate (external) build process, see
+ * <a href="https://plugins.jetbrains.com/docs/intellij/external-builder-api.html">this guide</a>
+ * for details. If you really need to perform the instrumentation inside the IDE process (e.g. because it operates on PSI structures),
+ * implement this interface and register the implementation in plugin.xml:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;compiler implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ * </p>
  */
 public interface SourceInstrumentingCompiler extends FileProcessingCompiler {
 }

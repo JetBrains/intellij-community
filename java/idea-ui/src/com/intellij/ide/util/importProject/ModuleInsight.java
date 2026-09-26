@@ -1,44 +1,45 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
-import com.intellij.util.text.StringFactory;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.text.UniqueNameGenerator;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleInsight {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
-  @NotNull protected final ProgressIndicatorWrapper myProgress;
+  private static final Logger LOG = Logger.getInstance(ModuleInsight.class);
+  protected final @NotNull ProgressIndicatorWrapper myProgress;
 
   private final Set<File> myEntryPointRoots = new HashSet<>();
   private final List<DetectedSourceRoot> mySourceRoots = new ArrayList<>();
@@ -47,21 +48,21 @@ public abstract class ModuleInsight {
   private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> mySourceRootToPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<>();
-  private final StringInterner myInterner = new StringInterner();
+  private final Interner<String> myInterner = Interner.createStringInterner();
 
   private List<ModuleDescriptor> myModules;
   private List<LibraryDescriptor> myLibraries;
   private final Set<String> myExistingModuleNames;
   private final Set<String> myExistingProjectLibraryNames;
 
-  public ModuleInsight(@Nullable final ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
+  public ModuleInsight(final @Nullable ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
     myExistingModuleNames = existingModuleNames;
     myExistingProjectLibraryNames = existingProjectLibraryNames;
     myProgress = new ProgressIndicatorWrapper(progress);
     setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
-  public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
+  public final void setRoots(final List<? extends File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
     myModules = null;
     myLibraries = null;
 
@@ -78,13 +79,11 @@ public abstract class ModuleInsight {
     myInterner.clear();
   }
 
-  @Nullable
-  public List<LibraryDescriptor> getSuggestedLibraries() {
+  public @Nullable List<LibraryDescriptor> getSuggestedLibraries() {
     return myLibraries;
   }
 
-  @Nullable
-  public List<ModuleDescriptor> getSuggestedModules() {
+  public @Nullable List<ModuleDescriptor> getSuggestedModules() {
     return myModules;
   }
 
@@ -101,7 +100,7 @@ public abstract class ModuleInsight {
         if (isIgnoredName(sourceRoot)) {
           continue;
         }
-        myProgress.setText("Scanning " + sourceRoot.getPath());
+        myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.scanning", sourceRoot.getPath()));
 
         final HashSet<String> usedPackages = new HashSet<>();
         mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
@@ -116,18 +115,19 @@ public abstract class ModuleInsight {
       myProgress.popState();
 
       myProgress.pushState();
-      myProgress.setText("Building modules layout...");
+      myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.building.modules.layout"));
+      Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
         final File moduleContentRoot = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
-        ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
-        if (moduleDescriptor != null) {
-          moduleDescriptor.addSourceRoot(moduleContentRoot, sourceRoot);
-        }
-        else {
-          moduleDescriptor = createModuleDescriptor(moduleContentRoot, Collections.singletonList(sourceRoot));
-          contentRootToModules.put(moduleContentRoot, moduleDescriptor);
-        }
+        rootToModule.computeIfAbsent(moduleContentRoot, file -> new ModuleCandidate(moduleContentRoot)).myRoots.add(sourceRoot);
+      }
+      maximizeModuleFolders(rootToModule.values());
+      for (Map.Entry<File, ModuleCandidate> entry : rootToModule.entrySet()) {
+        File root = entry.getKey();
+        ModuleCandidate module = entry.getValue();
+        ModuleDescriptor moduleDescriptor = createModuleDescriptor(module.myFolder, module.myRoots);
+        contentRootToModules.put(root, moduleDescriptor);
       }
 
       buildModuleDependencies(contentRootToModules);
@@ -138,6 +138,44 @@ public abstract class ModuleInsight {
     }
 
     addModules(contentRootToModules.values());
+  }
+
+  private static final class ModuleCandidate {
+    final List<DetectedSourceRoot> myRoots = new ArrayList<>();
+    @NotNull File myFolder;
+
+    private ModuleCandidate(@NotNull File folder) {
+      myFolder = folder;
+    }
+  }
+
+  private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
+    Object2IntMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
+    for (ModuleCandidate module : modules) {
+      walkParents(module.myFolder, this::isEntryPointRoot, file -> {
+        dirToChildRootCount.mergeInt(file, 1, Math::addExact);
+      });
+    }
+    for (ModuleCandidate module : modules) {
+      File moduleRoot = module.myFolder;
+      Ref<File> adjustedRootRef = new Ref<>(module.myFolder);
+      File current = moduleRoot;
+      while (dirToChildRootCount.getInt(current) == 1) {
+        adjustedRootRef.set(current);
+        if (isEntryPointRoot(current)) break;
+        current = current.getParentFile();
+      }
+      module.myFolder = adjustedRootRef.get();
+    }
+  }
+
+  private static void walkParents(@NotNull File file, Predicate<? super File> stopCondition, @NotNull Consumer<? super File> fileConsumer) {
+    File current = file;
+    while (true) {
+      fileConsumer.consume(current);
+      if (stopCondition.test(current)) break;
+      current = current.getParentFile();
+    }
   }
 
   protected void addExportedPackages(File sourceRoot, Set<String> packages) {
@@ -157,14 +195,21 @@ public abstract class ModuleInsight {
     }
     final Set<String> moduleNames = new HashSet<>(myExistingModuleNames);
     for (ModuleDescriptor module : newModules) {
-      final String suggested = suggestUniqueName(moduleNames, module.getName());
+      final String suggested = UniqueNameGenerator.generateUniqueName(module.getName(), moduleNames);
       module.setName(suggested);
       moduleNames.add(suggested);
     }
   }
 
-  @NotNull
-  protected List<DetectedSourceRoot> getSourceRootsToScan() {
+  Set<String> getExistingModuleNames() {
+    return Collections.unmodifiableSet(myExistingModuleNames);
+  }
+
+  Set<String> getExistingProjectLibraryNames() {
+    return Collections.unmodifiableSet(myExistingProjectLibraryNames);
+  }
+
+  protected @NotNull @Unmodifiable List<DetectedSourceRoot> getSourceRootsToScan() {
     return Collections.unmodifiableList(mySourceRoots);
   }
 
@@ -179,10 +224,10 @@ public abstract class ModuleInsight {
 
     for (File contentRoot : moduleContentRoots) {
       final ModuleDescriptor checkedModule = contentRootToModules.get(contentRoot);
-      myProgress.setText2("Building library dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.library.dependencies.for.module", checkedModule.getName()));
       buildJarDependencies(checkedModule);
 
-      myProgress.setText2("Building module dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.module.dependencies.for.module", checkedModule.getName()));
       for (File aContentRoot : moduleContentRoots) {
         final ModuleDescriptor aModule = contentRootToModules.get(aContentRoot);
         if (checkedModule.equals(aModule)) {
@@ -221,19 +266,20 @@ public abstract class ModuleInsight {
     try {
       try {
         for (File root : myEntryPointRoots) {
-          myProgress.setText("Scanning for libraries " + root.getPath());
+          myProgress.setText(JavaUiBundle.message("progress.text.scanning.for.libraries", root.getPath()));
           scanRootForLibraries(root);
         }
       }
       catch (ProcessCanceledException ignored) {
       }
-      myProgress.setText("Building initial libraries layout...");
+      myProgress.setText(JavaUiBundle.message("progress.text.building.initial.libraries.layout"));
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
       // correct library names so that there are no duplicates
       final Set<String> libNames = new HashSet<>(myExistingProjectLibraryNames);
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
-        final String newName = suggestUniqueName(libNames, libJars.size() == 1? FileUtil.getNameWithoutExtension(libJars.iterator().next()) : library.getName());
+        String baseName = libJars.size() == 1 ? FileUtilRt.getNameWithoutExtension(libJars.iterator().next().getName()) : library.getName();
+        final String newName = UniqueNameGenerator.generateUniqueName(baseName, libNames);
         library.setName(newName);
         libNames.add(newName);
       }
@@ -245,15 +291,6 @@ public abstract class ModuleInsight {
   }
 
   public abstract boolean isApplicableRoot(final DetectedProjectRoot root);
-
-  private static String suggestUniqueName(Set<String> existingNames, String baseName) {
-    String name = baseName;
-    int index = 1;
-    while (existingNames.contains(name)) {
-      name = baseName + (index++);
-    }
-    return name;
-  }
 
   public void merge(final ModuleDescriptor mainModule, final ModuleDescriptor module) {
     for (File contentRoot : module.getContentRoots()) {
@@ -285,18 +322,17 @@ public abstract class ModuleInsight {
     }
   }
 
-  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<File> jarsToExtract) {
-    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, jarsToExtract);
+  public LibraryDescriptor splitLibrary(LibraryDescriptor library, String newLibraryName, final Collection<? extends File> jarsToExtract) {
+    final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, new ArrayList<>(jarsToExtract));
     myLibraries.add(newLibrary);
     library.removeJars(jarsToExtract);
-    if (library.getJars().size() == 0) {
+    if (library.getJars().isEmpty()) {
       removeLibrary(library);
     }
     return newLibrary;
   }
 
-  @Nullable
-  public ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<File> contentsToExtract) {
+  public @Nullable ModuleDescriptor splitModule(final ModuleDescriptor descriptor, String newModuleName, final Collection<? extends File> contentsToExtract) {
     ModuleDescriptor newModule = null;
     for (File root : contentsToExtract) {
       final Collection<DetectedSourceRoot> sources = descriptor.removeContentRoot(root);
@@ -304,7 +340,7 @@ public abstract class ModuleInsight {
         newModule = createModuleDescriptor(root, sources != null ? sources : new HashSet<>());
       }
       else {
-        if (sources != null && sources.size() > 0) {
+        if (sources != null && !sources.isEmpty()) {
           for (DetectedSourceRoot source : sources) {
             newModule.addSourceRoot(root, source);
           }
@@ -341,11 +377,11 @@ public abstract class ModuleInsight {
     myLibraries.remove(lib);
   }
 
-  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<File> files, LibraryDescriptor to) {
+  public void moveJarsToLibrary(final LibraryDescriptor from, Collection<? extends File> files, LibraryDescriptor to) {
     to.addJars(files);
     from.removeJars(files);
     // remove the library if it became empty
-    if (from.getJars().size() == 0) {
+    if (from.getJars().isEmpty()) {
       removeLibrary(from);
     }
   }
@@ -355,7 +391,7 @@ public abstract class ModuleInsight {
   }
 
   public static Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module,
-                                                                     @Nullable List<LibraryDescriptor> allLibraries) {
+                                                                     @Nullable List<? extends LibraryDescriptor> allLibraries) {
     final Set<LibraryDescriptor> libs = new HashSet<>();
     if (allLibraries != null) {
       for (LibraryDescriptor library : allLibraries) {
@@ -388,21 +424,17 @@ public abstract class ModuleInsight {
   }
 
 
-  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<File> jars) {
+  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<? extends File> jars) {
     final Map<File, LibraryDescriptor> rootToLibraryMap = new HashMap<>();
     for (File jar : jars) {
       final File parent = jar.getParentFile();
-      LibraryDescriptor lib = rootToLibraryMap.get(parent);
-      if (lib == null) {
-        lib = new LibraryDescriptor(parent.getName(), new HashSet<>());
-        rootToLibraryMap.put(parent, lib);
-      }
+      LibraryDescriptor lib = rootToLibraryMap.computeIfAbsent(parent, p -> new LibraryDescriptor(p.getName(), new HashSet<>()));
       lib.addJars(Collections.singleton(jar));
     }
     return new ArrayList<>(rootToLibraryMap.values());
   }
 
-  private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
+  private void scanSources(final File fromRoot, final String parentPackageName, final Set<? super String> usedPackages, final Set<? super String> selfPackages) {
     if (isIgnoredName(fromRoot)) {
       return;
     }
@@ -430,18 +462,19 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isSourceFile(final File file);
 
-  private void scanSourceFile(File file, final Set<String> usedPackages) {
-    myProgress.setText2(file.getName());
+  private void scanSourceFile(File file, final Set<? super String> usedPackages) {
+    final @NlsSafe String name = file.getName();
+    myProgress.setText2(name);
     try {
-      final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
+      String chars = FileUtil.loadFile(file, (String)null);
+      scanSourceFileForImportedPackages(chars, s -> usedPackages.add(myInterner.intern(s)));
     }
     catch (IOException e) {
       LOG.info(e);
     }
   }
 
-  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<String> result);
+  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<? super String> result);
 
   private void scanRootForLibraries(File fromRoot) {
     if (isIgnoredName(fromRoot)) {
@@ -455,14 +488,14 @@ public abstract class ModuleInsight {
           scanRootForLibraries(file);
         }
         else {
-          final String fileName = file.getName();
+          final @NlsSafe String fileName = file.getName();
           if (isLibraryFile(fileName)) {
             if (!myJarToPackagesMap.containsKey(file)) {
               final HashSet<String> libraryPackages = new HashSet<>();
               myJarToPackagesMap.put(file, libraryPackages);
 
               myProgress.pushState();
-              myProgress.setText2(file.getName());
+              myProgress.setText2(fileName);
               try {
                 scanLibraryForDeclaredPackages(file, s -> {
                   if (!libraryPackages.contains(s)) {
@@ -491,6 +524,6 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isLibraryFile(final String fileName);
 
-  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException;
+  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException;
 
 }

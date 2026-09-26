@@ -1,0 +1,44 @@
+<idea-plugin visibility="internal" package="com.intellij.codeInsight.inline.completion">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.codeinsight.inline"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <inline.completion.handlerInitializer
+      order="last"
+      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializerImpl"/>
+    <inline.completion.editorInsertHandler
+      order="last"
+      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandlerImpl"/>
+
+    <registryKey key="inline.completion.rem.dev.use.rhizome"
+                 description="Use Rhizome DB for inline completion implementation in RemDev"
+                 restartRequired="true"
+                 defaultValue="true"/>
+
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.inline.completion.InlineCompletionTypedHandler"
+                        id="inline.completion" order="after lookup"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.inline.completion.shortcutHintListener"
+      interface="com.intellij.codeInsight.inline.completion.shortcut.InlineCompletionShortcutHintListener"
+      dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

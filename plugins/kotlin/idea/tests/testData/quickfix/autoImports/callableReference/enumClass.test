@@ -1,0 +1,20 @@
+// FILE: main.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: Some
+
+
+package test
+
+fun test() = ::Some<caret>
+
+// FILE: dependency.before.kt
+package dependency
+
+enum class Some
+
+// FILE: dependencyJava/Some.java
+package dependencyJava;
+
+public enum Some {
+
+}

@@ -4,3 +4,11 @@ class Spam:
 
     def eggs_and_ham(self):
         pass
+
+
+
+def test_foo():
+    pass
+
+class SpamSpamSpamBakedBeans:
+    pass

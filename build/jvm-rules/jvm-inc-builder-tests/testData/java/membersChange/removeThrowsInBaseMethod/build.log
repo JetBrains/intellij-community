@@ -1,0 +1,15 @@
+================ Step #1 =================
+Cleaning output files:
+  ThrowingTop.class
+End of files
+Compiling files:
+  java/membersChange/removeThrowsInBaseMethod/a/ThrowingTop.java
+End of files
+Cleaning output files:
+  ThrowingBottom.class
+End of files
+Compiling files:
+  java/membersChange/removeThrowsInBaseMethod/a/ThrowingBottom.java
+End of files
+------------------------------------------
+Exit code: ERROR

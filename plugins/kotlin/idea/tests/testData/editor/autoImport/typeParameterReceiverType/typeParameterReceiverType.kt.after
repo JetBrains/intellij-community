@@ -1,0 +1,7 @@
+package main
+
+import dependency.anyExtension
+
+fun <T> test(a: T) {
+    a.anyExtension()
+}

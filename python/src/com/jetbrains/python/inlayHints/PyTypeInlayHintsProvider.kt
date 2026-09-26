@@ -1,0 +1,265 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.inlayHints
+
+import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
+import com.intellij.codeInsight.hints.declarative.HintFontSize
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.HintMarginPadding
+import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
+import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl.Companion.MAX_SEGMENT_TEXT_LENGTH
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyCallableArgument
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
+import com.jetbrains.python.psi.types.PyTypeParameterType
+import com.jetbrains.python.psi.types.PyVariance
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
+
+class PyTypeInlayHintsProvider : InlayHintsProvider {
+  companion object {
+    const val REVEAL_TYPE_OPTION_ID: String = "python.type.inlays.reveal_type"
+    const val FUNCTION_RETURN_TYPE_OPTION_ID: String = "python.type.inlays.function.return"
+    const val VARIANCE_OPTION_ID: String = "python.type.inlays.variance"
+    const val PARAMETER_TYPE_ANNOTATION: String = "python.type.inlays.parameter.annotation"
+    const val SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID: String = "python.type.inlays.solved.type.parameters.class"
+    const val SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID: String = "python.type.inlays.solved.type.parameters.function"
+  }
+
+  override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector = Collector()
+
+  private class Collector : SharedBypassCollector {
+    val returnTypeHintFormat = HintFormat.default.withFontSize(HintFontSize.ABitSmallerThanInEditor)
+    val revealTypeHintFormat = returnTypeHintFormat.withHorizontalMargin(HintMarginPadding.MarginAndSmallerPadding)
+    val varianceHintFormat = returnTypeHintFormat.withHorizontalMargin(HintMarginPadding.MarginAndSmallerPadding)
+    val typeArgumentHintFormat = HintFormat.default
+
+    override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+      val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
+
+      sink.whenOptionEnabled(REVEAL_TYPE_OPTION_ID) {
+        getInlaysForRevealType(element, sink, resolveContext)
+      }
+
+      sink.whenOptionEnabled(FUNCTION_RETURN_TYPE_OPTION_ID) {
+        getInlaysForReturnType(element, sink, resolveContext)
+      }
+
+      sink.whenOptionEnabled(VARIANCE_OPTION_ID) {
+        getInlaysForTypeVariableVariance(element, sink, resolveContext)
+        getInlaysForTypeParameterVariance(element, sink, resolveContext)
+      }
+
+      sink.whenOptionEnabled(PARAMETER_TYPE_ANNOTATION) {
+        getInlaysForParameterAnnotations(element, sink, resolveContext)
+      }
+
+      sink.whenOptionEnabled(SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID) {
+        getInlaysForSolvedTypeParameters(element, sink, resolveContext, ::solveClassTypeArguments)
+      }
+
+      sink.whenOptionEnabled(SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID) {
+        getInlaysForSolvedTypeParameters(element, sink, resolveContext, ::solveFunctionTypeArguments)
+      }
+    }
+
+    private fun getInlaysForRevealType(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      if (element !is PyCallExpression) return
+      val callable = element.multiResolveCalleeFunction(resolveContext).singleOrNull()
+      val typeEvalContext = resolveContext.typeEvalContext
+
+      if (callable is PyFunction && callable.qualifiedName in listOf(PyTypingTypeProvider.REVEAL_TYPE,
+                                                                     PyTypingTypeProvider.REVEAL_TYPE_EXT)) {
+        val args = element.getArguments()
+
+        if (args.size != 1) return
+        val type = typeEvalContext.getType(args[0])
+
+        val document = element.containingFile.fileDocument
+        val lineNumber = document.getLineNumber(element.textRange.endOffset)
+        sink.addPresentation(position = EndOfLinePosition(lineNumber), hintFormat = revealTypeHintFormat) {
+          // use geTypeName here, because reveal_type should show the same as "Type Info" action
+          text(PythonDocumentationProvider.getTypeName(type, typeEvalContext))
+        }
+      }
+    }
+
+    private fun getInlaysForReturnType(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      val typeEvalContext = resolveContext.typeEvalContext
+      val function = element.parent as? PyFunction ?: return
+      if (element == function.nameIdentifier && function.annotationValue == null && function.typeCommentAnnotation == null) {
+        @Suppress("USELESS_IS_CHECK")  // When guard
+        val type = when (val type = typeEvalContext.getReturnType(function)) {
+          is Any? if function.isAsync -> (type as? PyClassType)?.typeArguments?.getOrNull(2)
+          else -> type
+        }
+
+        sink.addPresentation(position = InlineInlayPosition(function.parameterList.textRange.endOffset, true),
+                             hintFormat = returnTypeHintFormat) {
+          text("-> ")
+          printPyTypeHint(type, typeEvalContext)
+        }
+      }
+    }
+
+    private fun getInlaysForTypeVariableVariance(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      val refExpr = element as? PyReferenceExpression ?: return
+      val tupleExpr = refExpr.parent as? PyTupleExpression
+      val subscriptionExpr = refExpr.parent as? PySubscriptionExpression ?: tupleExpr?.parent as? PySubscriptionExpression ?: return
+      if (subscriptionExpr.indexExpression != refExpr && subscriptionExpr.indexExpression != tupleExpr) return
+      val qualifier = subscriptionExpr.qualifier as? PyReferenceExpression ?: return
+      val qualifierType = resolveContext.typeEvalContext.getType(qualifier) as? PyClassLikeType ?: return
+      if (PyTypingTypeProvider.GENERIC != qualifierType.classQName) return
+      val typeVarType = PyTypingTypeProvider.getType(refExpr, resolveContext.typeEvalContext)?.get() as? PyTypeParameterType ?: return
+      if (typeVarType.variance == PyVariance.INVARIANT) return
+
+      val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeVarType, resolveContext.typeEvalContext)
+      sink.addPresentation(inferredVariance, element)
+    }
+
+    private fun getInlaysForTypeParameterVariance(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      if (element !is PyTypeParameter) return
+
+      val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(element, resolveContext.typeEvalContext)
+      sink.addPresentation(inferredVariance, element)
+    }
+
+    fun InlayTreeSink.addPresentation(inferredVariance: PyVariance?, element: PsiElement) {
+      val position = InlineInlayPosition(element.textRange.startOffset, false)
+      if (inferredVariance == PyVariance.COVARIANT) {
+        this.addPresentation(position, tooltip = "covariant: <code>${element.text}</code> only appears in output positions", hintFormat = varianceHintFormat) { text("out") }
+      }
+      if (inferredVariance == PyVariance.CONTRAVARIANT) {
+        this.addPresentation(position, tooltip = "contravariant: <code>${element.text}</code> only appears in input positions", hintFormat = varianceHintFormat) { text("in") }
+      }
+    }
+
+    private fun getInlaysForParameterAnnotations(element: PsiElement, sink: InlayTreeSink, resolveContext: PyResolveContext) {
+      val parameter = element as? PyNamedParameter ?: return
+
+      if (parameter.isSelf) return
+
+      if (parameter.annotationValue != null || parameter.typeCommentAnnotation != null) return
+
+      val typeEvalContext = resolveContext.typeEvalContext
+
+      val rawParameterType = typeEvalContext.getType(parameter)
+
+      // Unwrap the type of *args and **kwargs parameters to show the element type
+      val parameterType = when {
+                            parameter.isPositionalContainer -> (rawParameterType as? PyClassType)?.getIteratedItemType()
+                            parameter.isKeywordContainer -> (rawParameterType as? PyClassType)?.typeArguments?.getOrNull(1)
+                            else -> rawParameterType
+                          }?.takeUnless { it.isUnknown } ?: return
+
+      val offset = parameter.nameIdentifier?.textRange?.endOffset ?: parameter.textRange.endOffset
+
+      sink.addPresentation(
+        position = InlineInlayPosition(offset, true),
+        hintFormat = HintFormat.default
+      ) {
+        text(": ")
+        printPyTypeHint(parameterType, typeEvalContext)
+      }
+    }
+
+    private fun getInlaysForSolvedTypeParameters(
+      element: PsiElement,
+      sink: InlayTreeSink,
+      resolveContext: PyResolveContext,
+      solve: (PyCallExpression, PyReferenceExpression, PyResolveContext) -> List<PyType?>?,
+    ) {
+      val call = element as? PyCallExpression ?: return
+      // Skip explicitly parameterized calls like `A[int](1)`, where the callee is a subscription expression.
+      val callee = call.callee as? PyReferenceExpression ?: return
+
+      val typeArguments = solve(call, callee, resolveContext) ?: return
+      if (typeArguments.all { it.isUnknown }) return
+
+      val typeEvalContext = resolveContext.typeEvalContext
+      sink.addPresentation(position = InlineInlayPosition(callee.textRange.endOffset, true),
+                           hintFormat = typeArgumentHintFormat) {
+        text("[")
+        typeArguments.forEachIndexed { index, typeArgument ->
+          if (index > 0) text(", ")
+          // Use getTypeName (the same renderer as the "Type Info" tooltip), not getTypeHint: the PEP-484
+          // annotation format cannot express a ParamSpec's keyword-only/named parameters, so a solved
+          // `**P` would degrade from `[*, a: int]` to a misleading `[Any, int]`.
+          appendTypeHint(PythonDocumentationProvider.getTypeName(typeArgument, typeEvalContext))
+        }
+        text("]")
+      }
+    }
+
+    private fun solveClassTypeArguments(
+      call: PyCallExpression,
+      callee: PyReferenceExpression,
+      resolveContext: PyResolveContext,
+    ): List<PyType?>? {
+      val typeEvalContext = resolveContext.typeEvalContext
+      val calleeType = typeEvalContext.getType(callee)
+      if (calleeType !is PyClassType || !calleeType.isDefinition) return null
+      val callType = typeEvalContext.getType(call)
+      if (callType !is PyClassType || !callType.isParameterized) return null
+      return callType.typeArguments
+    }
+
+    // Call of a generic function declaring its own type parameters, e.g. `f(1)` for `def f[T](t: T) -> T`.
+    private fun solveFunctionTypeArguments(
+      call: PyCallExpression,
+      callee: PyReferenceExpression,
+      resolveContext: PyResolveContext,
+    ): List<PyType?>? {
+      val typeEvalContext = resolveContext.typeEvalContext
+      // Generic class instantiations are handled by solveClassTypeArguments.
+      val calleeType = typeEvalContext.getType(callee)
+      if (calleeType is PyClassType && calleeType.isDefinition) return null
+
+      val mapping = PyCallExpressionHelper.mapArguments(call, resolveContext).singleOrNull() ?: return null
+      val callableType = mapping.callableType ?: return null
+      val typeParameters = callableType.getTypeParameters(typeEvalContext)?.takeIf { it.isNotEmpty() } ?: return null
+
+      val mappedParameters = mapping.mappedParameters.mapKeys { PyCallableArgument(it.key) }
+      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, callableType, mappedParameters, typeEvalContext)
+                          ?: return null
+      return typeParameters.map { PyTypeChecker.substitute(it, substitutions, typeEvalContext) }
+    }
+
+    private fun PresentationTreeBuilder.appendTypeHint(typeHint: String) {
+      // A single text node longer than MAX_SEGMENT_TEXT_LENGTH is truncated by the platform with an ellipsis.
+      // Split into at most two segments so a moderately long type stays readable without producing an
+      // excessively long inlay.
+      if (typeHint.length > MAX_SEGMENT_TEXT_LENGTH) {
+        text(typeHint.substring(0, MAX_SEGMENT_TEXT_LENGTH))
+        text(typeHint.substring(MAX_SEGMENT_TEXT_LENGTH))
+      }
+      else {
+        text(typeHint)
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.jvm.debugger.base.util` start
+content_module_jar(module = ":util")
+### auto-generated section `dev intellij.kotlin.jvm.debugger.base.util` end
+
+### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` start
+create_kotlinc_options(
+    name = "custom_util",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "util",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util",
+    module_name = "intellij.kotlin.jvm.debugger.base.util",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/asm",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/platform-api:ide",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/psi",
+        "//java/debugger/openapi:java-debugger",
+        "//plugins/kotlin/base/indices",
+        "//plugins/kotlin/base/platforms",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/project-structure",
+        "//platform/core-impl",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//java/compiler/openapi:java-compiler",
+        "//java/java-psi-api:psi",
+        "//java/debugger/impl",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "util_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_util",
+    module_name = "intellij.kotlin.jvm.debugger.base.util",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":util",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/asm:asm_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/psi:psi_test_lib",
+        "//java/debugger/openapi:java-debugger_test_lib",
+        "//plugins/kotlin/base/indices:indices_test_lib",
+        "//plugins/kotlin/base/platforms:platforms_test_lib",
+        "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/xdebugger-impl:debugger-impl_test_lib",
+        "//java/compiler/openapi:java-compiler_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//java/debugger/impl:impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` end
+
+### auto-generated section `iml intellij.kotlin.jvm.debugger.base.util` start
+exports_files(
+    [
+        "intellij.kotlin.jvm.debugger.base.util.iml",
+        "resources/intellij.kotlin.jvm.debugger.base.util.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.jvm.debugger.base.util` end

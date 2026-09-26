@@ -1,50 +1,35 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 /**
- * @author Dmitry Avdeev
+ * {@link com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet} uses the providers if
+ * {@link com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet#useIncludingFileAsContext()} is true
+ *
+ * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
  */
 public abstract class FileContextProvider {
-
   public static final ExtensionPointName<FileContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileContextProvider");
 
-  @Nullable
-  public static FileContextProvider getProvider(@NotNull final PsiFile file) {
-    for (FileContextProvider provider: Extensions.getExtensions(EP_NAME, file.getProject())) {
-      if (provider.isAvailable(file)) {
+  public static @Nullable FileContextProvider getProvider(final @NotNull PsiFile hostFile) {
+    for (FileContextProvider provider : EP_NAME.getExtensionList(hostFile.getProject())) {
+      if (provider.isAvailable(hostFile)) {
         return provider;
       }
     }
     return null;
   }
 
-  protected abstract boolean isAvailable(final PsiFile file);
+  protected abstract boolean isAvailable(final PsiFile hostFile);
 
-  @NotNull
-  public abstract Collection<PsiFileSystemItem> getContextFolders(final PsiFile file);
+  public abstract @NotNull @Unmodifiable Collection<PsiFileSystemItem> getContextFolders(final PsiFile hostFile);
 
-  @Nullable
-  public abstract PsiFile getContextFile(final PsiFile file);
+  public abstract @Nullable PsiFile getContextFile(final PsiFile hostFile);
 }

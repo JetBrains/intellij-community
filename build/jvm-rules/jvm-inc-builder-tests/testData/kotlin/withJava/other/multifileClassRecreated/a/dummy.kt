@@ -1,0 +1,1 @@
+// this class is there to guarantee the target is not rebuilt from scratch because 100% of sources are affected

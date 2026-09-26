@@ -1,23 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
-class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
+final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
+
   private final Object myRoot = ObjectUtils.NULL;
 
   private final List<Node.Clazz> myTestClasses = new SmartList<>();
@@ -27,14 +47,13 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node.Clazz) {
-      //noinspection unchecked
-      return ContainerUtil.newArrayList(myTests.get((Node.Clazz)parent));
+      return new ArrayList<>(myTests.get((Node.Clazz)parent));
     }
     return Collections.emptyList();
   }
 
   synchronized List<Node<PsiClass>> getTestClasses() {
-    return ContainerUtil.newArrayList(myTestClasses);
+    return new ArrayList<>(myTestClasses);
   }
 
   @Override
@@ -48,9 +67,11 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myRoot != object && super.isLeaf(object);
   }
 
-  synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod, @Nullable String parameter) {
+  synchronized void addTest(@NotNull PsiClass testClass, @Nullable PsiMethod testMethod, @Nullable String parameter) {
     Node.Clazz classNode = ReadAction.compute(() -> new Node.Clazz(testClass));
-    Node.Method methodNode = ReadAction.compute(() -> new Node.Method(testMethod));
+    Node.Method methodNode = testMethod == null
+                             ? null
+                             : ReadAction.compute(() -> new Node.Method(testMethod));
 
     int idx = ReadAction.compute(() -> Collections.binarySearch(myTestClasses,
                                                                 classNode,
@@ -58,37 +79,54 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     if (idx < 0) {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, classNode);
-      List<Node.Method> methods = new SmartList<>();
-      methods.add(methodNode);
-      myTests.put(classNode, methods);
+      myTests.put(classNode, methodNode == null
+                             ? new SmartList<>()
+                             : new SmartList<>(methodNode));
 
       treeStructureChanged(null, null, null);
       return;
     }
 
     List<Node.Method> testMethods = myTests.get(myTestClasses.get(idx));
-    int methodIdx = ReadAction.compute(() -> Collections.binarySearch(testMethods,
-                                                                      methodNode,
-                                                                      (o1, o2) -> Comparing.compare(o1.getName(), o2.getName())));
+    int methodIdx = methodNode != null ? ReadAction.compute(() -> Collections.binarySearch(testMethods, methodNode, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName())))
+                                       : -1;
 
     Node.Method actualMethodNode;
     if (methodIdx < 0) {
       methodIdx = -methodIdx - 1;
-      testMethods.add(methodIdx, methodNode);
+      if (methodNode != null) {
+        testMethods.add(methodIdx, methodNode);
+      }
       actualMethodNode = methodNode;
-    } else {
+    }
+    else {
       actualMethodNode = testMethods.get(methodIdx);
     }
-    if (parameter != null) {
+
+    if (actualMethodNode != null && parameter != null) {
       actualMethodNode.addParameter(parameter);
     }
 
     treeStructureChanged(null, null, null);
   }
 
-  @NotNull
-  synchronized TestMethodUsage[] getTestMethods() {
-    //noinspection unchecked
+  @Override
+  public @NotNull Invoker getInvoker() {
+    return myInvoker;
+  }
+
+  // TODO: this method can be replaced with ClassUtil.getBinaryClassName so it handles local classes.
+  public static @Nullable String getClassName(@NotNull PsiClass c) {
+    if (c instanceof PsiAnonymousClass) {
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
+      if (containingClass != null) {
+        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
+      }
+    }
+    return ClassUtil.getJVMClassName(c);
+  }
+
+  synchronized TestMethodUsage @NotNull [] getTestMethods() {
     return myTests
       .entrySet()
       .stream()
@@ -104,27 +142,26 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myTests.size();
   }
 
-  public static abstract class Node<Psi extends PsiMember> {
-    @NotNull
-    private final SmartPsiElementPointer<Psi> myPointer;
+  public abstract static class Node<Psi extends PsiMember> {
+    private final @NotNull SmartPsiElementPointer<Psi> myPointer;
     private final String myName;
     private final Icon myIcon;
 
     static class Clazz extends Node<PsiClass> {
       private final String myPackageName;
 
-      Clazz(@NotNull PsiClass aClass) {
-        super(aClass);
-        myPackageName = PsiUtil.getPackageName(aClass);
+      Clazz(@NotNull PsiClass psi) {
+        super(psi, o -> StringUtil.notNullize(o.getName(), StringUtil.notNullize(getClassName(o), "<null>")));
+        myPackageName = PsiUtil.getPackageName(psi);
       }
 
-      String getPackageName() {
+      @NlsSafe String getPackageName() {
         return myPackageName;
       }
     }
 
-    static class Method extends Node<PsiMethod> {
-      private final Collection<String> myParameters = new THashSet<>();
+    static final class Method extends Node<PsiMethod> {
+      private final Collection<String> myParameters = new HashSet<>();
 
       private Method(@NotNull PsiMethod method) {
         super(method);
@@ -134,23 +171,27 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
         myParameters.add(parameter);
       }
 
-      @NotNull Collection<String> getParameters() {
+      @NotNull
+      Collection<String> getParameters() {
         return myParameters;
       }
     }
 
     private Node(@NotNull Psi psi) {
+      this(psi, o -> o.getName());
+    }
+
+    public Node(@NotNull Psi psi, Function<? super Psi, String> calcName) {
       myPointer = SmartPointerManager.createPointer(psi);
-      myName = psi.getName();
+      myName = calcName.fun(psi);
       myIcon = psi.getIcon(Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @NotNull
-    public SmartPsiElementPointer<Psi> getPointer() {
+    public @NotNull SmartPsiElementPointer<Psi> getPointer() {
       return myPointer;
     }
 
-    String getName() {
+    @NlsSafe String getName() {
       return myName;
     }
 

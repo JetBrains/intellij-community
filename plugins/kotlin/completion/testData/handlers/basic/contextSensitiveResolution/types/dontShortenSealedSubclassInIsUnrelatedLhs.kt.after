@@ -1,0 +1,16 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+package test
+
+sealed class MyResult {
+    class Ok(val v: String) : MyResult()
+    class Err(val m: String) : MyResult()
+}
+
+// The lhs has type `Any`, not `MyResult` — CSR must not offer the short name.
+fun handle(x: Any) {
+    if (x is MyResult.Ok<caret>) {}
+}
+
+// ELEMENT: Ok
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution

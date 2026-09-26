@@ -15,11 +15,21 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.eventBuilders.StartEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface StartEvent extends BuildEvent {
+
+  @CheckReturnValue
+  static @NotNull StartEventBuilder builder(
+    @NotNull Object id,
+    @NotNull @Message String message
+  ) {
+    return BuildEvents.getInstance().start(id, message);
+  }
 }

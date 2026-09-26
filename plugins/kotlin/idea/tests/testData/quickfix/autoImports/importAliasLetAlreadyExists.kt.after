@@ -1,0 +1,12 @@
+// "Import extension function 'let'" "true"
+// WITH_STDLIB
+
+import kotlin.let
+import kotlin.let as let1
+
+fun main() {
+    1.let {
+        println(it)
+    }
+}
+// IGNORE_K2

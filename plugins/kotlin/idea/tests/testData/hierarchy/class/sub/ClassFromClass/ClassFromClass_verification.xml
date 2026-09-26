@@ -1,0 +1,14 @@
+<node text="A ()" base="true">
+  <node text="B ()"/>
+  <node text="X (MyClass.MyClass())"/>
+  <node text="Anonymous class (MyClass.MyClass())"/>
+  <node text="G (MyClass)"/>
+  <node text="C (MyClass)"/>
+  <node text="X (MyClass.foo())"/>
+  <node text="Anonymous class (MyClass.foo())"/>
+  <node text="F (MyClass.foo())"/>
+  <node text="D (MyClass.foo())"/>
+  <node text="X (MyClass2.MyClass2())"/>
+  <node text="Anonymous class (MyClass2.MyClass2())"/>
+  <node text="E (main.kt.getBar())"/>
+</node>

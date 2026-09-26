@@ -1,0 +1,11 @@
+// "Create property 'address' as constructor parameter" "true"
+// K2_ERROR: COMPONENT_FUNCTION_MISSING
+data class Person(val name: String, val age: Int)
+
+fun person(): Person = TODO()
+
+fun main(args: Array<String>) {
+    val (name, age, address) = <caret>person()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
+// TEST_PREVIEW: val address: kotlin.Any

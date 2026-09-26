@@ -1,0 +1,9 @@
+// "Add non-null asserted (length!!) call" "true"
+// WITH_STDLIB
+// K2_ERROR: UNSAFE_CALL
+fun test(s: String?) {
+    s.run {
+        <caret>length
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

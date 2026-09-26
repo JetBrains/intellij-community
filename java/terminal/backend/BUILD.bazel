@@ -1,0 +1,96 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.terminal.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.java.terminal.backend` end
+
+### auto-generated section `build intellij.java.terminal.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.terminal.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib-provided",
+        "//plugins/terminal",
+        "//plugins/terminal/completion",
+        "//java/execution/impl",
+        "//java/java-impl:impl",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/execution-impl",
+        "//platform/lang-impl",
+        "//platform/util:util-ui",
+        "//platform/projectModel-api:projectModel",
+        "//platform/execution",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
+        "//platform/workspace/jps",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//libraries/kotlinx/serialization/core",
+        "//java/terminal/shared",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.terminal.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "@lib//:kotlin-stdlib-provided",
+        "//plugins/terminal:terminal_test_lib",
+        "//plugins/terminal/completion:completion_test_lib",
+        "//java/execution/impl:impl_test_lib",
+        "//java/java-impl:impl_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
+        "//platform/remote-topics/shared:rpc-topics_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//java/terminal/shared:shared_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.terminal.backend` end
+
+### auto-generated section `iml intellij.java.terminal.backend` start
+exports_files(
+    [
+        "intellij.java.terminal.backend.iml",
+        "resources/intellij.java.terminal.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.terminal.backend` end

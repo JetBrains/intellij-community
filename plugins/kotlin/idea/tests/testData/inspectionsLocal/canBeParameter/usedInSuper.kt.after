@@ -1,0 +1,4 @@
+// FIX: Remove 'val' from parameter
+open class Base1(s: String)
+
+class UsedInSuper(bar123: String) : Base1(bar123)

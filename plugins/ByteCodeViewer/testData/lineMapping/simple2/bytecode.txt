@@ -1,0 +1,64 @@
+// class version 67.0 (67)
+// access flags 0x21
+public class simple2/Main {
+
+  // compiled from: Main.java
+  // access flags 0x19
+  public final static INNERCLASS java/lang/invoke/MethodHandles$Lookup java/lang/invoke/MethodHandles Lookup
+
+  // access flags 0x9
+  public static Ljava/lang/String; name
+
+  // access flags 0x9
+  public static Ljava/lang/Object; obj
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x9
+  public static main([Ljava/lang/String;)V
+   L0
+    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+    LDC "hello world"
+    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
+   L1
+    ALOAD 0
+    ARRAYLENGTH
+    ISTORE 1
+   L2
+    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+    ILOAD 1
+    INVOKEDYNAMIC makeConcatWithConstants(I)Ljava/lang/String; [
+      // handle kind 0x6 : INVOKESTATIC
+      java/lang/invoke/StringConcatFactory.makeConcatWithConstants(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;
+      // arguments:
+      "there are \u0001 args"
+    ]
+    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
+   L3
+    RETURN
+   L4
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x8
+  static <clinit>()V
+   L0
+    LDC "Charlie"
+    PUTSTATIC simple2/Main.name : Ljava/lang/String;
+   L1
+    NEW java/lang/Object
+    DUP
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    PUTSTATIC simple2/Main.obj : Ljava/lang/Object;
+    RETURN
+    MAXSTACK = 2
+    MAXLOCALS = 0
+}

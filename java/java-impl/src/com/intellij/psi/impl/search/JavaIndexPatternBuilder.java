@@ -1,52 +1,37 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class JavaIndexPatternBuilder implements IndexPatternBuilder {
+
+public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
   public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS);
 
   @Override
-  @Nullable
-  public Lexer getIndexingLexer(@NotNull final PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
+  public @Nullable Lexer getIndexingLexer(final @NotNull PsiFile file) {
+    if (file instanceof PsiJavaFile && JavaTemplateCodeInsightSupport.isIndexingLexerAllowed(file)) {
       return JavaParserDefinition.createLexer(((PsiJavaFile)file).getLanguageLevel());
     }
     return null;
   }
 
   @Override
-  @Nullable
-  public TokenSet getCommentTokenSet(@NotNull final PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
+  public @Nullable TokenSet getCommentTokenSet(final @NotNull PsiFile file) {
+    if (file instanceof PsiJavaFile && JavaTemplateCodeInsightSupport.isCommentIndexingAllowed(file)) {
       return TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
     }
     return null;
@@ -54,11 +39,17 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public int getCommentStartDelta(final IElementType tokenType) {
-    return 0;
+    return tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT
+           ? 2 : JavaDocElementType.DOC_COMMENT_TOKENS.contains(tokenType) ? 3 : 0;
   }
 
   @Override
   public int getCommentEndDelta(final IElementType tokenType) {
-    return tokenType == JavaTokenType.C_STYLE_COMMENT ? "*/".length() : 0;
+    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? 2 : 0;
+  }
+
+  @Override
+  public @NotNull String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
+    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? "*" : tokenType == JavaDocElementType.DOC_MARKDOWN_COMMENT ? "///" : "";
   }
 }

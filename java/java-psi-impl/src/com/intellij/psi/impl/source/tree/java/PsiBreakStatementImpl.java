@@ -1,91 +1,60 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBreakStatementImpl");
+public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
+  private static final Logger LOG = Logger.getInstance(PsiBreakStatementImpl.class);
 
   public PsiBreakStatementImpl() {
-    super(BREAK_STATEMENT);
+    super(JavaElementType.BREAK_STATEMENT);
   }
 
   @Override
   public PsiIdentifier getLabelIdentifier() {
-    return (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.LABEL);
+    return (PsiIdentifier)findPsiChildByType(JavaTokenType.IDENTIFIER);
   }
 
   @Override
-  public PsiStatement findExitedStatement() {
+  public @Nullable PsiStatement findExitedStatement() {
     PsiIdentifier label = getLabelIdentifier();
-    if (label == null){
-      for(ASTNode parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
-        IElementType i = parent.getElementType();
-        if (i == FOR_STATEMENT || i == WHILE_STATEMENT || i == DO_WHILE_STATEMENT || i == SWITCH_STATEMENT || i == FOREACH_STATEMENT) {
-          return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(parent);
-        }
-        else if (i == METHOD || i == CLASS_INITIALIZER) {
-          return null; // do not pass through anonymous/local class
-        }
-      }
+    if (label != null) {
+      PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());
+      return labeled != null ? labeled.getStatement() : null;
     }
-    else{
-      String labelName = label.getText();
-      for(CompositeElement parent = getTreeParent(); parent != null; parent = parent.getTreeParent()){
-        if (parent.getElementType() == LABELED_STATEMENT){
-          ASTNode statementLabel = parent.findChildByRole(ChildRole.LABEL_NAME);
-          if (statementLabel.getText().equals(labelName)){
-            return ((PsiLabeledStatement)SourceTreeToPsiMap.treeElementToPsi(parent)).getStatement();
-          }
-        }
-
-        if (parent.getElementType() == METHOD || parent.getElementType() == CLASS_INITIALIZER || parent.getElementType() == LAMBDA_EXPRESSION) return null; // do not pass through anonymous/local class
-      }
+    else {
+      return PsiImplUtil.findEnclosingSwitchOrLoop(this);
     }
-    return null;
   }
 
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
-      default:
-        return null;
-
-      case ChildRole.BREAK_KEYWORD:
-        return findChildByType(BREAK_KEYWORD);
-
-      case ChildRole.LABEL:
-        return findChildByType(IDENTIFIER);
-
-      case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChildBackward(this, SEMICOLON);
+    switch (role) {
+      case ChildRole.BREAK_KEYWORD: return findChildByType(JavaTokenType.BREAK_KEYWORD);
+      case ChildRole.LABEL: return findChildByType(ElementType.EXPRESSION_BIT_SET);
+      case ChildRole.CLOSING_SEMICOLON: return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+      default: return null;
     }
   }
 
@@ -93,18 +62,10 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == BREAK_KEYWORD) {
-      return ChildRole.BREAK_KEYWORD;
-    }
-    else if (i == IDENTIFIER) {
-      return ChildRole.LABEL;
-    }
-    else if (i == SEMICOLON) {
-      return ChildRole.CLOSING_SEMICOLON;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
+    if (i == JavaTokenType.BREAK_KEYWORD) return ChildRole.BREAK_KEYWORD;
+    if (ElementType.EXPRESSION_BIT_SET.contains(i)) return ChildRole.LABEL;
+    if (i == JavaTokenType.SEMICOLON) return ChildRole.CLOSING_SEMICOLON;
+    return ChildRoleBase.NONE;
   }
 
   @Override
@@ -119,20 +80,11 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
 
   @Override
   public PsiReference getReference() {
-    final PsiReference[] references = getReferences();
-    if (references != null && references.length > 0)
-      return references[0];
-    return null;
+    PsiIdentifier label = getLabelIdentifier();
+    return label != null ? new PsiLabelReference(this, label) : null;
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
-    if (getLabelIdentifier() == null)
-      return PsiReference.EMPTY_ARRAY;
-    return new PsiReference[]{new PsiLabelReference(this, getLabelIdentifier())};
-  }
-
   public String toString() {
     return "PsiBreakStatement";
   }

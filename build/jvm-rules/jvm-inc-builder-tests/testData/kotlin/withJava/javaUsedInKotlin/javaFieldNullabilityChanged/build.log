@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/a/A.java
+End of files
+Cleaning output files:
+  META-INF/kotlin_withJava_javaUsedInKotlin_javaFieldNullabilityChanged-a.kotlin_module
+  UseAKt.class
+End of files
+Compiling files:
+  kotlin/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

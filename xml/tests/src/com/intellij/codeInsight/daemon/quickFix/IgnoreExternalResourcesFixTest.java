@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/quickFix/ignoreExternalResources";
@@ -30,7 +29,7 @@ public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTe
 
   // just check for action availability
   @Override
-  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) {
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
     findActionAndCheck(actionHint, testFullPath);
   }
 
@@ -38,5 +37,11 @@ public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTe
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new XmlUnresolvedReferenceInspection());
   }
 }

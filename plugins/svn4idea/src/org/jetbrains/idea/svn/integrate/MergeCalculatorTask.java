@@ -1,38 +1,40 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.lang.Math.min;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
 public class MergeCalculatorTask extends BaseMergeTask {
+  private static final Logger LOG = Logger.getInstance(MergeCalculatorTask.class);
 
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
-  private final static int BUNCH_SIZE = 100;
+  private static final int BUNCH_SIZE = 100;
 
-  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
-  @NotNull private final OneShotMergeInfoHelper myMergeChecker;
-  @NotNull private final List<SvnChangeList> myChangeLists;
-  @NotNull private final Consumer<MergeCalculatorTask> myCallback;
+  private final @Nullable SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  private final @NotNull OneShotMergeInfoHelper myMergeChecker;
+  private final @NotNull List<SvnChangeList> myChangeLists;
+  private final @NotNull Consumer<MergeCalculatorTask> myCallback;
   private boolean myAllListsLoaded;
 
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
@@ -41,7 +43,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     super(mergeProcess);
     myCopyPoint = copyPoint;
     myCallback = callback;
-    myChangeLists = newArrayList();
+    myChangeLists = new ArrayList<>();
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
@@ -52,19 +54,17 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return myAllListsLoaded;
   }
 
-  @NotNull
-  public MergeChecker getMergeChecker() {
+  public @NotNull MergeChecker getMergeChecker() {
     return myMergeChecker;
   }
 
-  @NotNull
-  public List<SvnChangeList> getChangeLists() {
+  public @NotNull List<SvnChangeList> getChangeLists() {
     return myChangeLists;
   }
 
   @Override
   public void run() throws VcsException {
-    progress("Collecting merge information");
+    progress(message("progress.text.collecting.merge.information"));
     myMergeChecker.prepare();
 
     if (myCopyPoint != null) {
@@ -82,12 +82,13 @@ public class MergeCalculatorTask extends BaseMergeTask {
       myCallback.consume(this);
     }
     else {
-      myMergeProcess.end("Everything is up-to-date", false);
+      LOG.info("Info: Everything is up-to-date");
+
+      myMergeProcess.end(message("notification.content.everything.is.up.to.date"), false);
     }
   }
 
-  @NotNull
-  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(long revision) throws VcsException {
+  private @NotNull List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(long revision) throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.CHANGE_AFTER = Long.toString(revision);
     settings.USE_CHANGE_AFTER_FILTER = true;
@@ -95,11 +96,10 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return getChangeLists(myMergeContext, settings, revision, -1, Pair::create);
   }
 
-  @NotNull
-  private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
-    List<SvnChangeList> result = newArrayList();
+  private @NotNull List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+    List<SvnChangeList> result = new ArrayList<>();
 
-    progress("Collecting not merged revisions");
+    progress(message("progress.text.collecting.not.merged.revisions"));
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       SvnChangeList changeList = pair.getFirst();
 
@@ -112,8 +112,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return result;
   }
 
-  @NotNull
-  public static Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
+  public static @NotNull Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
     throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     if (beforeRevision > 0) {
@@ -123,7 +122,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
     List<SvnChangeList> changeLists = getChangeLists(mergeContext, settings, beforeRevision, size, (changeList, tree) -> changeList);
     return Pair.create(
-      changeLists.subList(0, min(size, changeLists.size())),
+      ContainerUtil.getFirstItems(changeLists, size),
       changeLists.size() < size + 1);
   }
 
@@ -133,13 +132,12 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return configuredSize != null ? configuredSize : size > 0 ? size : BUNCH_SIZE;
   }
 
-  @NotNull
-  private static <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
-                                            @NotNull ChangeBrowserSettings settings,
-                                            long revisionToExclude,
-                                            int size,
-                                            @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
-    List<T> result = newArrayList();
+  private static @NotNull <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
+                                                     @NotNull ChangeBrowserSettings settings,
+                                                     long revisionToExclude,
+                                                     int size,
+                                                     @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
+    List<T> result = new ArrayList<>();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
       .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),

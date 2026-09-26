@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -9,9 +10,6 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeploymentTaskImpl<D extends DeploymentConfiguration> implements DeploymentTask<D> {
   private final DeploymentSource mySource;
   private final D myConfiguration;
@@ -28,18 +26,18 @@ public class DeploymentTaskImpl<D extends DeploymentConfiguration> implements De
     myExecutionEnvironment = environment;
   }
 
-  @NotNull
-  public DeploymentSource getSource() {
+  @Override
+  public @NotNull DeploymentSource getSource() {
     return mySource;
   }
 
-  @NotNull
-  public D getConfiguration() {
+  @Override
+  public @NotNull D getConfiguration() {
     return myConfiguration;
   }
 
-  @NotNull
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -48,13 +46,12 @@ public class DeploymentTaskImpl<D extends DeploymentConfiguration> implements De
     return myDebugConnector != null;
   }
 
-  @Nullable
-  public DebugConnector<?, ?> getDebugConnector() {
+  public @Nullable DebugConnector<?, ?> getDebugConnector() {
     return myDebugConnector;
   }
 
-  @NotNull
-  public ExecutionEnvironment getExecutionEnvironment() {
+  @Override
+  public @NotNull ExecutionEnvironment getExecutionEnvironment() {
     return myExecutionEnvironment;
   }
 }

@@ -1,5 +1,5 @@
 class Foo {
   void test(Object o) {
-    o <caret>
+    o <caret>x
   }
 }

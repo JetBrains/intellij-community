@@ -1,63 +1,109 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.TargetProcessHandlers;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
-public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase&CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
-  protected final T myConfiguration;
+import java.io.File;
+import java.util.Map;
 
-  public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
+public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
+  extends JavaCommandLineState {
+
+  protected final @NotNull T myConfiguration;
+
+  public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, final @NotNull T configuration) {
     super(environment);
     myConfiguration = configuration;
   }
 
-  protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
-    JavaParametersUtil.configureConfiguration(params, myConfiguration);
-
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensions()) {
-      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings());
-    }
+  protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
+    JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
   }
 
-  @NotNull
   @Override
-  protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine());
+  public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                              @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    if (myConfiguration.getProjectPathOnTarget() != null) {
+      request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
+    }
+    super.prepareTargetEnvironmentRequest(request, targetProgressIndicator);
+  }
+
+  @Override
+  protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+    throws ExecutionException {
+    TargetedCommandLineBuilder line = super.createTargetedCommandLine(request);
+    File inputFile = InputRedirectAware.getInputFile(myConfiguration);
+    if (inputFile != null) {
+      line.setInputFile(request.getDefaultVolume().createUpload(inputFile.getAbsolutePath()));
+    }
+    return line;
+  }
+
+  @Override
+  protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+    ConsoleView console = super.createConsole(executor);
+    if (console == null) {
+      return null;
+    }
+    return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(getConfiguration(), getRunnerSettings(), console, executor);
+  }
+
+  @Override
+  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
+    //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
+
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
+    TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
+    TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
+
+    Map<String, String> content = targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    if (content != null) {
+      content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
+    }
+    OSProcessHandler handler = createProcessHandler(remoteEnvironment, targetedCommandLineBuilder, targetedCommandLine, process);
+    TargetProcessHandlers.setTargetEnvironment(handler, remoteEnvironment);
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
   }
 
-  protected T getConfiguration() {
+  protected @NotNull OSProcessHandler createProcessHandler(TargetEnvironment remoteEnvironment,
+                                                           TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                           TargetedCommandLine targetedCommandLine,
+                                                           Process process) throws ExecutionException {
+    return new KillableColoredProcessHandler.Silent(process,
+                                                    targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                    targetedCommandLine.getCharset(),
+                                                    targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+  }
+
+  protected @NotNull T getConfiguration() {
     return myConfiguration;
   }
 }

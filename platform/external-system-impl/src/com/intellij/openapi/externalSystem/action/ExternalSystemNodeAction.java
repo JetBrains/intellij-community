@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,17 +7,19 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
 public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
 
@@ -42,7 +30,8 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     myExternalDataClazz = externalDataClazz;
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getSystemId(e) != null && getExternalData(e, myExternalDataClazz) != null;
   }
 
@@ -62,31 +51,31 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     final T data = getExternalData(e, myExternalDataClazz);
     if (data == null) return;
 
-    perform(project, projectSystemId, data, e);
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
+
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Perform Action " + getClass().getSimpleName(), _ -> {
+      perform(project, projectSystemId, data, e);
+    });
   }
 
-  @Nullable
-  protected ExternalSystemUiAware getExternalSystemUiAware(AnActionEvent e) {
-    return ExternalSystemDataKeys.UI_AWARE.getData(e.getDataContext());
+  protected @Nullable ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
+    return e.getData(ExternalSystemDataKeys.UI_AWARE);
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  protected <T> T getExternalData(AnActionEvent e, Class<T> dataClass) {
-    ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
+  protected @Nullable <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
+    ExternalSystemNode node = ContainerUtil.getFirstItem(e.getData(ExternalSystemDataKeys.SELECTED_NODES));
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
 
-  @SuppressWarnings("unchecked")
-  protected boolean isIgnoredNode(AnActionEvent e) {
-    ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
+  protected boolean isIgnoredNode(@NotNull AnActionEvent e) {
+    ExternalSystemNode node = ContainerUtil.getFirstItem(e.getData(ExternalSystemDataKeys.SELECTED_NODES));
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();
   }
 
-  @Nullable
-  protected VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
+  protected @Nullable VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
     String path = data.getLinkedExternalProjectPath();
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     VirtualFile externalSystemConfigPath = fileSystem.refreshAndFindFileByPath(path);
     if (externalSystemConfigPath == null) {
       return null;

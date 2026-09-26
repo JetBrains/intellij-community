@@ -1,0 +1,48 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser
+
+class PatternVariableInstanceofParsingTest : GroovyParsingTestCase() {
+  override fun getBasePath() = super.getBasePath() + "expressions/instanceof"
+
+  fun testNoPatternVariable() = doTest()
+
+  fun testSimple() = doTest()
+
+  fun testNewLine() = doTest()
+
+  fun testNewLineRespectDotCall() = doTest()
+
+  fun testNewLineRespectMemberAccess() = doTest()
+
+  fun testNewLineRespectKeyword() = doTest()
+
+  fun testNewLineRespectSafeMemberAccess() = doTest()
+
+  fun testNewLineRespectBinaryExpression() = doTest()
+
+  fun testNewLineRespectAssignmentStatement() = doTest()
+
+  fun testNewLineInsideParentheses() = doTest()
+
+  fun testNewLineInsideIfStatement() = doTest()
+
+  fun testNewLineInsideWhileStatement() = doTest()
+
+  fun testNewLineInsideForStatement() = doTest()
+
+  fun testNewLineInsideSwitchStatement() = doTest()
+
+  fun testNewLineInsideDoWhileStatement() = doTest()
+
+  fun testNewLineInsideSynchronizedStatement() = doTest()
+
+  fun testNewLineInsideTryWithResources() = doTest()
+
+  fun testAfterDot() = doTest()
+
+  fun testAfterSafeDot() = doTest()
+
+  fun testAfterParentheses() = doTest()
+
+  fun testAfterComments() = doTest()
+}

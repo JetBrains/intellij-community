@@ -1,0 +1,120 @@
+package com.intellij.workspaceModel.codegen.impl.writer
+
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
+import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
+import com.intellij.workspaceModel.codegen.impl.writer.entityImplementation.getFirstMatch
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
+
+internal val ObjClass<*>.symbolicIdField: OwnProperty<*, *>?
+  get() {
+    return getAllProperties(this).singleOrNull { it.name == symbolicIdFieldName }
+  }
+
+fun GeneratorContext.referencesInSymbolicId(objClass: ObjClass<*>): Set<OwnProperty<*, *>>? {
+  val regexForSymbolicIdExpression = Regex("=? ?[A-z]+\\((.*)\\)")
+  val regexForSymbolicIdReference = Regex("([A-z_0-9]*)\\.symbolicId")
+
+  val symbolicIdField = objClass.symbolicIdField ?: return null
+  val expression = (symbolicIdField.valueKind as? ObjProperty.ValueKind.Computable)?.expression
+  if (expression == null || expression == "null") return null
+  val parts = regexForSymbolicIdExpression.getFirstMatch(expression)?.split(",")?.map { it.trim() } ?: return null
+  val references = parts.mapNotNull { regexForSymbolicIdReference.getFirstMatch(it) }.toSet()
+  if (references.isEmpty()) return null
+
+  val referencesInUse = mutableSetOf<OwnProperty<*, *>>()
+  for (reference in references) {
+    val referenceField = getAllProperties(objClass).singleOrNull { it.name == reference }
+    if (referenceField == null) {
+      reportPropertyError("Cannot find property $reference referenced in symbolicId", symbolicIdField)
+      return null
+    }
+    referencesInUse.add(referenceField)
+  }
+
+  return referencesInUse
+}
+
+fun referenceNameToSyntheticSymbolicIdFieldName(referenceName: String): String {
+  return "${referenceName}SymbolicId_Synthetic"
+}
+
+private data class SymbolicIdRepresentation(val javaType: QualifiedName, val args: List<String>) {
+  fun constructorUsingReceiver(receiver: String, transform: (String) -> String = { it }): String {
+    val argsList = args.joinToString(prefix = "(", postfix = ")", separator = ", ") { "$receiver.${transform(it)}" }
+    return "$javaType$argsList"
+  }
+}
+
+private fun isModuleEntitySymbolicId(property: ObjProperty<*, *>): Boolean {
+  return property.receiver.name == "ModuleEntity" && property.receiver.module.name == "com.intellij.platform.workspace.jps.entities"
+}
+
+private fun GeneratorContext.symbolicIdPropertyToRepresentation(property: OwnProperty<*, *>): SymbolicIdRepresentation? {
+  val symbolicIdType = getJavaType(property)
+  if (isModuleEntitySymbolicId(property)) {
+    return SymbolicIdRepresentation(javaType = symbolicIdType, args = listOf("name"))
+  }
+  val propertyAsComputable = property.valueKind as? ObjProperty.ValueKind.Computable ?: run {
+    val errorMessage = "${property.receiver.name}#${property.name} is expected to be a computable symbolicId"
+    reportPropertyError(errorMessage, property)
+    return null
+  }
+  val expression = propertyAsComputable.expression.trim()
+  val args = expression.dropWhile { it != '(' }.drop(1).dropLast(1)
+    .split(",").map { it.trim() }
+  return SymbolicIdRepresentation(javaType = symbolicIdType, args = args)
+}
+
+fun CodeContext.symbolicIdReferenceCode(referencesInSymbolicId: Set<OwnProperty<*, *>>, changedReferenceProperty: ObjProperty<*, *>) {
+  val referenceInSymbolicId = referencesInSymbolicId.find { it.name == changedReferenceProperty.name } ?: run {
+    reportPropertyError("${changedReferenceProperty.name} was expected to be referenced in symbolicId", changedReferenceProperty)
+    return
+  }
+  val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(changedReferenceProperty.name)
+  val referencedSymbolicId = unwrapReferenceType(referenceInSymbolicId.valueType)?.target?.symbolicIdField
+  if (referencedSymbolicId == null) {
+    reportPropertyError("Cannot find reference ${changedReferenceProperty.name} or the referenced entity symbolic id",
+                        changedReferenceProperty)
+    return
+  }
+  val argNameInUpdateSymbolicId = "parent"
+  val parentBuilderType = getJavaBuilderTypeWithGeneric(changedReferenceProperty)
+  val newRefSymbolicIdValue = symbolicIdPropertyToRepresentation(referencedSymbolicId)?.constructorUsingReceiver(argNameInUpdateSymbolicId) ?: return
+  +"$argNameInUpdateSymbolicId as $parentBuilderType"
+  +"getEntityData(true).${syntheticName} = $newRefSymbolicIdValue"
+  +"changedProperty.add(\"${syntheticName}\")"
+
+}
+
+// TODO: return no string
+fun CodeContext.symbolicIdImplCode(objClass: ObjClass<*>): String {
+  val theProperty = objClass.symbolicIdField ?: return ""
+  val referencesInSymbolicId = referencesInSymbolicId(objClass)
+  if (referencesInSymbolicId.isNullOrEmpty()) {
+    return "override val symbolicId: ${getJavaType(theProperty)} = super.symbolicId\n"
+  }
+  val referencesNamesInSymbolicId = referencesInSymbolicId.map { it.name }.toSet()
+  val symbolicIdImpl = symbolicIdPropertyToRepresentation(theProperty)?.constructorUsingReceiver("dataSource") {
+    val receiver = it.split(".").firstOrNull()
+    if (receiver == null || receiver !in referencesNamesInSymbolicId) it
+    else referenceNameToSyntheticSymbolicIdFieldName(receiver)
+  } ?: return ""
+  return "override val symbolicId: ${getJavaType(theProperty)} = $symbolicIdImpl\n"
+}
+
+fun CodeContext.symbolicIdIsInitializedCode(objClass: ObjClass<*>) {
+  val referencesInSymbolicId = referencesInSymbolicId(objClass)
+  if (referencesInSymbolicId.isNullOrEmpty()) {
+    return
+  }
+  for (reference in referencesInSymbolicId) {
+    val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+    val capitalizedSyntheticName = syntheticName.replaceFirstChar { it.titlecaseChar() }
+    section("if (!getEntityData().is${capitalizedSyntheticName}Initialized())") {
+      line("error(\"Field ${objClass.name}#${reference.name} should be initialized\")")
+    }
+  }
+}

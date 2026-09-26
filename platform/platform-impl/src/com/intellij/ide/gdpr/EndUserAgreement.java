@@ -1,35 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.l10n.LocalizationUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: 09-Mar-16
- */
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class EndUserAgreement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
+  private static final Logger LOG = Logger.getInstance(EndUserAgreement.class);
   private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
 
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";
+  private static final String PRIVACY_POLICY_EAP_DOCUMENT_NAME = PRIVACY_POLICY_DOCUMENT_NAME + "Eap";
+  private static final String CWM_GUEST_EULA_NAME = "cwmGuestEua";
   private static final String EULA_DOCUMENT_NAME = "eua";
+  private static final String EULA_COMMUNITY_DOCUMENT_NAME = "euaCommunity";
+  private static final String EULA_MPS_DOCUMENT_NAME = "euaMps";
+  private static final String EULA_MPS_CUSTOM_DOCUMENT_KEY = "mps.eua.document.name";
+  private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
 
   private static final String DEFAULT_DOC_NAME = EULA_DOCUMENT_NAME;
-  private static final String DEFAULT_DOC_EAP_NAME = DEFAULT_DOC_NAME + "Eap";
+  private static final String DEFAULT_DOC_EAP_NAME = EULA_EAP_DOCUMENT_NAME;
+
   private static final String ACTIVE_DOC_FILE_NAME = "documentName";
   private static final String ACTIVE_DOC_EAP_FILE_NAME = "documentName.eap";
 
@@ -39,72 +51,114 @@ public final class EndUserAgreement {
   private static final String VERSION_COMMENT_END = "-->";
   private static final Version MAGIC_VERSION = new Version(999, 999);
 
-  public static File getDocumentContentFile() {
+  public static Path getDocumentContentFile() {
     return getDocumentContentFile(getDocumentName());
   }
 
-  @NotNull
-  private static File getDocumentContentFile(String docName) {
-    return new File(getDataRoot(), PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? PRIVACY_POLICY_CONTENT_FILE_NAME : docName + ".cached");
+  public static @NotNull Path getDocumentContentFile(@NotNull String docName) {
+    return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? PRIVACY_POLICY_CONTENT_FILE_NAME : (docName + ".cached"));
   }
 
-  @NotNull
-  private static File getDocumentNameFile() {
-    return new File(getDataRoot(), ApplicationInfoImpl.getShadowInstance().isEAP() ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+  private static @NotNull Path getDocumentNameFile() {
+    return getDataRoot().resolve(shouldUseEAPAgreement()? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
   }
 
-  private static File getDataRoot() {
-    return new File(Locations.getDataRoot(), "PrivacyPolicy");
+  private static boolean shouldUseEAPAgreement() {
+    return ApplicationInfoImpl.getShadowInstance().isEAP() && !Agreements.isReleaseAgreementsEnabled();
   }
 
+  private static @NotNull Path getDataRoot() {
+    return PathManager.getCommonDataPath().resolve(RELATIVE_RESOURCE_PATH);
+  }
+
+  // path for classloader - without leading slash
   private static String getBundledResourcePath(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "/PrivacyPolicy.html" : "/"+docName+".html";
+    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "PrivacyPolicy.html" : docName + ".html";
   }
 
   public static void setAccepted(@NotNull Document doc) {
-    final Version version = doc.getVersion();
+    setAcceptedVersion(doc.getName(), doc.getVersion());
+  }
+
+  public static void setAcceptedVersion(@NotNull String docName, @NotNull Version version) {
+    var versionKey = getAcceptedVersionKey(docName);
     if (version.isUnknown()) {
-      Prefs.remove(getAcceptedVersionKey(doc.getName()));
+      Prefs.remove(versionKey);
     }
     else {
-      Prefs.put(getAcceptedVersionKey(doc.getName()), version.toString());
+      Prefs.put(versionKey, version.toString());
     }
   }
 
-  @NotNull
-  private static Version getAcceptedVersion(String docName) {
-    return Version.fromString(Prefs.get(getAcceptedVersionKey(docName), null));
+  public static @NotNull Version getAcceptedVersion(@NotNull String docName) {
+    var versionKey = getAcceptedVersionKey(docName);
+    return Version.fromString(Prefs.get(versionKey, null));
   }
 
-  @NotNull
-  public static Document getLatestDocument() {
+  public static @NotNull Document getLatestDocument() {
     // needed for testing
-    final String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+    var text = System.getProperty(POLICY_TEXT_PROPERTY, null);
     if (text != null) {
-      final Document fromProperty = loadContent(PRIVACY_POLICY_DOCUMENT_NAME, new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+      var fromProperty = new Document(PRIVACY_POLICY_DOCUMENT_NAME, text);
       if (!fromProperty.getVersion().isUnknown()) {
         return fromProperty;
       }
     }
 
-    final String docName = getDocumentName();
-    try {
-      final Document fromFile = loadContent(docName, new FileInputStream(getDocumentContentFile(docName)));
-      if (!fromFile.getVersion().isUnknown()) {
-        return fromFile;
+    var docName = getDocumentName();
+    var defaultDocument = loadDocument(docName);
+    var locale = Locale.getDefault();
+    var localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
+
+    for (var localizedDocName : localizedDocsNames) {
+      var document = loadDocument(localizedDocName);
+      if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) {
+        return document;
       }
     }
-    catch (IOException ignored) {
-    }
-    return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+    return defaultDocument;
   }
 
-  public static void update(String docName, String text) {
-    try {
-      FileUtil.writeToFile(getDocumentContentFile(docName), text);
-      FileUtil.writeToFile(getDocumentNameFile(), docName);
+  private static @NotNull Document loadDocument(String docName) {
+    var fromFile = loadContent(docName, getDocumentContentFile(docName));
+    if (fromFile != null && !fromFile.getVersion().isUnknown()) {
+      return fromFile;
     }
-    catch (FileNotFoundException e) {
+    return loadContent(docName, getBundledResourcePath(docName));
+  }
+
+  public static void updateCachedContentToLatestBundledVersion() {
+    var docName = getDocumentName();
+    var locale = Locale.getDefault();
+    var localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
+    for (var localizedDocName : localizedDocsNames) {
+      updateCachedContentToLatestBundledVersion(localizedDocName);
+    }
+    updateCachedContentToLatestBundledVersion(docName);
+  }
+
+  private static void updateCachedContentToLatestBundledVersion(@NotNull String docName) {
+    try {
+      var cached = loadContent(docName, getDocumentContentFile(docName));
+      if (cached == null || cached.getVersion().isUnknown()) {
+        return;
+      }
+
+      var bundled = loadContent(docName, getBundledResourcePath(docName));
+      if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
+        // update content only and not the active document name (the latter can only be changed by JBA)
+        writeToFile(getDocumentContentFile(docName), bundled.getText());
+      }
+    }
+    catch (Throwable ignored) { }
+  }
+
+  private static void writeToFile(@NotNull Path file, @NotNull String text) {
+    try {
+      Files.createDirectories(file.getParent());
+      Files.writeString(file, text);
+    }
+    catch (NoSuchFileException e) {
       LOG.info(e.getMessage());
     }
     catch (IOException e) {
@@ -112,48 +166,93 @@ public final class EndUserAgreement {
     }
   }
 
-  @NotNull
-  private static Document loadContent(final String docName, InputStream stream) {
+  public static void updateContent(@NotNull String docName, @NotNull String text) {
+    writeToFile(getDocumentContentFile(docName), text);
+  }
+
+  public static void updateActiveDocumentName(@NotNull String docName) {
+    writeToFile(getDocumentNameFile(), docName);
+  }
+
+  private static @NotNull Document loadContent(String docName, String resourcePath) {
     try {
-      if (stream != null) {
-        final Reader reader = new InputStreamReader(stream instanceof ByteArrayInputStream? stream : new BufferedInputStream(stream), StandardCharsets.UTF_8);
-        try {
-          return new Document(docName, new String(FileUtil.adaptiveLoadText(reader)));
-        }
-        finally {
-          reader.close();
-        }
+      var data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
+      if (data != null) {
+        return new Document(docName, new String(data, StandardCharsets.UTF_8));
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
     }
     return new Document(docName, "");
   }
 
-  @NotNull
-  private static String getDocumentName() {
-    if (!PlatformUtils.isCommercialEdition()) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
-    }
+  public static @Nullable Document loadContent(String docName, Path file) {
     try {
-      final String docName = new String(FileUtilRt.loadFileText(getDocumentNameFile(), StandardCharsets.UTF_8));
-      if (!StringUtil.isEmptyOrSpaces(docName)) {
+      return new Document(docName, Files.readString(file));
+    }
+    catch (NoSuchFileException ignored) {
+      return null;
+    }
+    catch (IOException e) {
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
+    }
+    return new Document(docName, "");
+  }
+
+  private static @NotNull String getDocumentName() {
+    if (!PlatformUtils.isCommercialEdition()) {
+      if (PlatformUtils.isCommunityEdition()) {
+        return EULA_COMMUNITY_DOCUMENT_NAME;
+      }
+      if (PlatformUtils.isMPS()) {
+        if (isValidFileName(System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY))) {
+          return System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY);
+        }
+        return shouldUseEAPAgreement() ? DEFAULT_DOC_EAP_NAME : EULA_MPS_DOCUMENT_NAME;
+      }
+      if (PlatformUtils.isJetBrainsClient()) {
+        return CWM_GUEST_EULA_NAME;
+      }
+      if (PlatformUtils.isGateway()) {
+        return shouldUseEAPAgreement() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+      }
+      return shouldUseEAPAgreement() ? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
+    }
+
+    try {
+      var docName = Files.readString(getDocumentNameFile());
+      if (isValidFileName(docName)) {
         return docName;
       }
     }
-    catch (IOException ignored) {
-    }
-    //noinspection ConstantConditions
-    if (DEFAULT_DOC_NAME.equals(PRIVACY_POLICY_DOCUMENT_NAME)) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
-    }
-    return ApplicationInfoImpl.getShadowInstance().isEAP() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+    catch (IOException ignored) { }
+    return shouldUseEAPAgreement() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
-  @NotNull
-  private static String getAcceptedVersionKey(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "JetBrains.privacy_policy.accepted_version" : "JetBrains.privacy_policy." + docName + "_accepted_version";
+  private static boolean isValidFileName(String docName) {
+    if (docName != null && !docName.isBlank()) {
+      try {
+        Paths.get(docName);
+        return true;
+      }
+      catch (InvalidPathException ignored) { }
+    }
+    return false;
+  }
+
+  private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {
+    if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
+      return "JetBrains.privacy_policy.accepted_version";
+    }
+    var keyName = docName;
+    if (EULA_EAP_DOCUMENT_NAME.equals(docName)) {
+      // for commercial EAP releases accepted version attribute should be separate from the one Resharper uses (IDEA-212020)
+      keyName = "ij_" + keyName;
+    }
+    return "JetBrains.privacy_policy." + keyName + "_accepted_version";
   }
 
   public static final class Document {
@@ -168,15 +267,15 @@ public final class EndUserAgreement {
     }
 
     public boolean isPrivacyPolicy() {
-      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName);
+      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName) || PRIVACY_POLICY_EAP_DOCUMENT_NAME.equals(myName);
     }
 
     public boolean isAccepted() {
-      final Version thisVersion = getVersion();
+      var thisVersion = getVersion();
       if (thisVersion.isUnknown() || MAGIC_VERSION.equals(thisVersion)) {
         return true;
       }
-      final Version acceptedByUser = getAcceptedVersion(getName());
+      var acceptedByUser = getAcceptedVersion(getName());
       return !acceptedByUser.isUnknown() && acceptedByUser.getMajor() >= thisVersion.getMajor();
     }
 
@@ -192,34 +291,36 @@ public final class EndUserAgreement {
       return myText;
     }
 
-    @NotNull
-    private static Version parseVersion(String text) {
-      if (!StringUtil.isEmptyOrSpaces(text)) {
-        try {
-          final BufferedReader reader = new BufferedReader(new StringReader(text));
-          try {
-            final String line = reader.readLine();
-            if (line != null) {
-              final int startComment = line.indexOf(VERSION_COMMENT_START);
-              if (startComment >= 0 ) {
-                final int endComment = line.indexOf(VERSION_COMMENT_END);
-                if (endComment > startComment) {
-                  return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
-                }
-              }
-            }
+    private static @NotNull Version parseVersion(String text) {
+      if (text == null || text.isBlank()) {
+        return Version.UNKNOWN;
+      }
+
+      var iterator = text.lines().iterator();
+      while (iterator.hasNext()) {
+        var line = iterator.next();
+        var startComment = line.indexOf(VERSION_COMMENT_START);
+        if (startComment >= 0) {
+          var endComment = line.indexOf(VERSION_COMMENT_END);
+          if (endComment > startComment) {
+            return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
           }
-          finally {
-            reader.close();
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
         }
       }
       return Version.UNKNOWN;
     }
-
   }
 
+  public static final class PluginAgreementUpdateDescriptor {
+    private static final ExtensionPointName<PluginAgreementUpdateDescriptor> EP_NAME = ExtensionPointName.create("com.intellij.endUserAgreementUpdater");
+
+    @Attribute("productCode")
+    public String productCode;
+    @Attribute("documentName")
+    public String documentName;
+
+    public static @NotNull List<PluginAgreementUpdateDescriptor> getDescriptors() {
+      return EP_NAME.getExtensionList();
+    }
+  }
 }

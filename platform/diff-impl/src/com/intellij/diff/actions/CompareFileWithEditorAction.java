@@ -1,28 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
-import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.actions.impl.MutableDiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class CompareFileWithEditorAction extends BaseShowDiffAction {
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
@@ -43,8 +42,12 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return true;
   }
 
-  @Nullable
-  private static VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static @Nullable VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
     VirtualFile[] array = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (array == null || array.length != 1 || array[0].isDirectory()) {
       return null;
@@ -53,41 +56,34 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return array[0];
   }
 
-  @Nullable
-  private static VirtualFile getEditingFile(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return null;
-
-    EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
-    if (window == null) return null;
-    EditorWithProviderComposite editor = window.getSelectedEditor(true);
-    return editor == null ? null : editor.getFile();
+  private static @Nullable VirtualFile getEditingFile(@NotNull AnActionEvent e) {
+    FileEditor fileEditor = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+    return fileEditor != null ? fileEditor.getFile() : null;
   }
 
   private static boolean canCompare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return !file1.equals(file2) && hasContent(file1) && hasContent(file2);
   }
 
-  @Nullable
   @Override
-  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+  protected @NotNull DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
 
     VirtualFile selectedFile = getSelectedFile(e);
     VirtualFile currentFile = getEditingFile(e);
-
     assert selectedFile != null && currentFile != null;
 
-    ContentDiffRequest request = DiffRequestFactory.getInstance().createFromFiles(project, selectedFile, currentFile);
+    MutableDiffRequestChain chain = createMutableChainFromFiles(project, selectedFile, currentFile);
 
-    DiffContent editorContent = request.getContents().get(1);
+    DiffContent editorContent = chain.getContent2();
     if (editorContent instanceof DocumentContent) {
-      Editor[] editors = EditorFactory.getInstance().getEditors(((DocumentContent)editorContent).getDocument());
-      if (editors.length != 0) {
-        request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editors[0].getCaretModel().getLogicalPosition().line));
+      Editor editor = EditorFactory.getInstance().editors(((DocumentContent)editorContent).getDocument()).findFirst().orElse(null);
+      if (editor != null) {
+        int currentLine = editor.getCaretModel().getLogicalPosition().line;
+        chain.putRequestUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentLine));
       }
     }
 
-    return request;
+    return chain;
   }
 }

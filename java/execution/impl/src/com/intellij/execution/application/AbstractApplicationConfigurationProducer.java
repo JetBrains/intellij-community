@@ -1,37 +1,45 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public abstract class AbstractApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
-
-  public AbstractApplicationConfigurationProducer(final ApplicationConfigurationType configurationType) {
-    super(configurationType);
+  public AbstractApplicationConfigurationProducer() {
+    super();
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
-    final Location contextLocation = context.getLocation();
+  protected boolean setupConfigurationFromContext(@NotNull T configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
+    final Location<?> contextLocation = context.getLocation();
     if (contextLocation == null) {
       return false;
     }
-    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    // IDEA doesn't run compiled elements
+    if (contextLocation.getPsiElement() instanceof PsiCompiledElement) {
+      return false;
+    }
+    final Location<?> location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) {
       return false;
     }
@@ -39,48 +47,51 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     if (!element.isPhysical()) {
       return false;
     }
-    PsiElement currentElement = element;
-    PsiMethod method;
-    while ((method = findMain(currentElement)) != null) {
-      final PsiClass aClass = method.getContainingClass();
-      if (ConfigurationUtil.MAIN_CLASS.value(aClass)) {
-        sourceElement.set(method);
-        setupConfiguration(configuration, aClass, context);
-        return true;
-      }
-      currentElement = method.getParent();
-    }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
     if (aClass == null) {
       return false;
     }
-    sourceElement.set(aClass);
+    PsiFile containingFile = aClass.getContainingFile();
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(containingFile)) {
+      return false;
+    }
+    PsiMethod method = PsiMethodUtil.findMainInClass(aClass);
+    if (method != null && PsiTreeUtil.isAncestor(method, element, false)) {
+      sourceElement.set(method);
+    }
+    else {
+      sourceElement.set(aClass);
+    }
+
     setupConfiguration(configuration, aClass, context);
     return true;
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
+    if (aClass instanceof PsiImplicitClass) {
+      configuration.setImplicitClassConfiguration(true);
+    }
+    configuration.setMainClassName(aClass.getQualifiedName());
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }
 
-  @Nullable
-  private static PsiMethod findMain(PsiElement element) {
-    PsiMethod method;
-    while ((method = PsiTreeUtil.getParentOfType(element, PsiMethod.class)) != null) {
-      if (PsiMethodUtil.isMainMethod(method)) return method;
-      else element = method.getParent();
-    }
-    return null;
-  }
-
   @Override
-  public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
-    final PsiElement location = context.getPsiLocation();
-    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
-    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
+  public boolean isConfigurationFromContext(@NotNull T appConfiguration, @NotNull ConfigurationContext context) {
+    Location<?> location = context.getLocation();
+    if (location == null) {
+      return false;
+    }
+    if (location.getPsiElement() instanceof PsiCompiledElement compiledElement && compiledElement.getCachedMirror() == null) {
+      return false;
+    }
+    Location<?> singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
+    final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
+    if (aClass != null) {
+      final String className = aClass.getQualifiedName();
+      if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
+
+      final PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;
       }
@@ -88,12 +99,12 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
-      ApplicationConfiguration template =
-        (ApplicationConfiguration)context.getRunManager().getConfigurationTemplate(getConfigurationFactory()).getConfiguration();
+      ApplicationConfiguration template = (ApplicationConfiguration)context
+        .getRunManager()
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration();
       final Module predefinedModule = template.getConfigurationModule().getModule();
-      if (Comparing.equal(predefinedModule, configurationModule)) {
-        return true;
-      }
+      return Comparing.equal(predefinedModule, configurationModule);
     }
     return false;
   }

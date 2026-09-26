@@ -2,38 +2,33 @@
 package com.intellij.testDiscovery;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
+import com.intellij.execution.testDiscovery.actions.TestDiscoveryMethodUtil;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.EdtRule;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunsInEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -41,12 +36,8 @@ import java.util.stream.Collectors;
 
 // TODO parametrize by TD protocol
 // TODO get agent from sources
-@RunsInEdt
 @RunWith(Parameterized.class)
 public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
-  @Rule public final EdtRule edtRule = new EdtRule();
-  @Rule public final TestName myNameRule = new TestName();
-
   @Parameterized.Parameter
   public String myJUnitVersion;
 
@@ -69,20 +60,12 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
                                              entry.addSourceFolder(getTestContentRoot() + "/src", false);
                                              entry.addSourceFolder(getTestContentRoot() + "/test", true);
                                            });
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
   }
 
   @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() {
     Registry.get(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY).setValue(true, myProject);
-  }
-
-  @After
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
   }
 
   @Test
@@ -115,10 +98,16 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
     assertTestDiscoveryIndex("Person", "<init>", t("PersonTest", "testPerson"));
   }
 
-  private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) throws IOException {
+  private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) {
+    PsiClass aClass = myJavaFacade.findClass(className);
+    PsiMethod method = "<init>".equals(methodName)
+                       ? assertOneElement(aClass.getConstructors())
+                       : assertOneElement(aClass.findMethodsByName(methodName, false));
+    Couple<String> methodKey = TestDiscoveryMethodUtil.getMethodKey(method);
+
     TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(myProject);
     MultiMap<String, String> rawActualTests1 =
-      testDiscoveryIndex.getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
+      testDiscoveryIndex.getTestsByMethodName(methodKey.getFirst(), methodKey.getSecond(), JUnitConfiguration.FRAMEWORK_ID);
     MultiMap<String, String> rawActualTests2 = testDiscoveryIndex.getTestsByClassName(className, JUnitConfiguration.FRAMEWORK_ID);
 
     Set<Pair<String, String>> actualTests1 =
@@ -137,6 +126,12 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
       .collect(Collectors.toSet());
     String module = assertOneElement(modules);
     assertEquals(myModule.getName(), module);
+
+    for (Pair<String, String> test : expectedTests) {
+      assertTrue(testDiscoveryIndex.hasTestTrace(test.getFirst(), test.getSecond(), JUnitConfiguration.FRAMEWORK_ID));
+    }
+    assertFalse(testDiscoveryIndex.hasTestTrace("dummy test name", "123", JUnitConfiguration.FRAMEWORK_ID));
+
   }
 
   private static Pair<String, String> t(String testClassName, String testMethodName) {
@@ -145,25 +140,19 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
 
   private void runTestConfiguration(@NotNull PsiElement psiElement) throws ExecutionException {
     MapDataContext context = new MapDataContext();
-    context.put(LangDataKeys.MODULE, myModule);
-    RunConfiguration configuration = createConfiguration(psiElement, context);
+    context.put(PlatformCoreDataKeys.MODULE, myModule);
+    JUnitConfiguration configuration = createConfiguration(psiElement, context);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     TestDiscoveryDataSocketListener socketListener =
-      ((RunConfigurationBase)configuration).getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
+      configuration.getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
     socketListener.awaitTermination();
-    ((RunConfigurationBase)configuration).putUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY, null);
+    configuration.putUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY, null);
     assertEmpty(processOutput.err);
   }
 
   @Override
-  public String getName() {
-    return myNameRule.getMethodName();
-  }
-  
   protected String getTestContentRoot() {
-    String methodName = myNameRule.getMethodName();
-    methodName = methodName.substring(0, methodName.indexOf("["));
-    methodName = StringUtil.decapitalize(StringUtil.trimStart(methodName, "test"));
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/testDiscovery/" + methodName);
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/testDiscovery/" +
+                                 getTestName(true));
   }
 }

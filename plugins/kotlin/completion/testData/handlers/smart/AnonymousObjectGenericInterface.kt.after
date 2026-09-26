@@ -1,0 +1,13 @@
+interface GenericInterface<T> {
+    fun transform(input: T): T
+}
+
+fun test(): GenericInterface<String> {
+    return object : GenericInterface<String> {
+        override fun transform(input: String): String {
+            TODO("Not yet implemented")
+        }
+    }
+}
+
+// ELEMENT: object

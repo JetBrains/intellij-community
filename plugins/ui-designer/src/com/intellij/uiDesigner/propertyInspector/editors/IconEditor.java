@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -32,14 +18,12 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author yole
- */
-public class IconEditor extends PropertyEditor<IconDescriptor> {
+public final class IconEditor extends PropertyEditor<IconDescriptor> {
   private final TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private IconDescriptor myValue;
   private RadComponent myComponent;
@@ -47,8 +31,9 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
   public IconEditor() {
     myTextField.getTextField().setBorder(null);
     myTextField.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(getModule().getProject());
+        final TreeFileChooserFactory factory = TreeFileChooserFactory.getInstance(getModule().getProject());
         PsiFile iconFile = null;
         if (myValue != null) {
           VirtualFile iconVFile = ResourceFileUtil.findResourceFileInScope(myValue.getIconPath(), getModule().getProject(),
@@ -79,8 +64,9 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     return myComponent.getModule();
   }
 
+  @Override
   public IconDescriptor getValue() throws Exception {
-    if (myTextField.getText().length() == 0) {
+    if (myTextField.getText().isEmpty()) {
       return null;
     }
     final IconDescriptor descriptor = new IconDescriptor(myTextField.getText());
@@ -88,6 +74,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     return descriptor;
   }
 
+  @Override
   public JComponent getComponent(RadComponent component, IconDescriptor value, InplaceContext inplaceContext) {
     myValue = value;
     myComponent = component;
@@ -100,6 +87,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     return myTextField;
   }
 
+  @Override
   public void updateUI() {
     SwingUtilities.updateComponentTreeUI(myTextField);
   }

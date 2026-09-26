@@ -1,0 +1,1359 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.ui.component
+
+import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.HoverInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.thenIf
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
+import org.jetbrains.jewel.foundation.state.FocusableComponentState
+import org.jetbrains.jewel.foundation.state.SelectableComponentState
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
+import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
+import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
+import org.jetbrains.jewel.ui.component.styling.MenuItemColors
+import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
+import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
+import org.jetbrains.jewel.ui.disabledAppearance
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.painter.hints.Stateful
+import org.jetbrains.jewel.ui.theme.menuStyle
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
+import org.jetbrains.skiko.hostOs
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * When a maxHeight is specified, the menu becomes scrollable and displays a vertical scrollbar.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param maxHeight The maximum height of the menu, beyond which the content becomes scrollable.
+ * @param menuStyle The visual styling configuration for the menu items
+ * @param popupContainerStyle The visual styling configuration for the popup container
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display at the bottom of the menu, typically used for hints or tips
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val popupPositionProvider =
+        remember(
+            popupContainerStyle.metrics.offset,
+            popupContainerStyle.metrics.menuMargin,
+            horizontalAlignment,
+            density,
+        ) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = popupContainerStyle.metrics.offset,
+                contentMargin = popupContainerStyle.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
+
+    PopupMenu(
+        onDismissRequest,
+        popupPositionProvider,
+        modifier,
+        maxHeight,
+        menuStyle,
+        popupContainerStyle,
+        popupProperties,
+        adContent,
+        content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display ad content at the bottom
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+@Deprecated(
+    message = "Use the variant with maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val popupContainerStyle = LocalPopupContainerStyle.current
+
+    val popupPositionProvider =
+        remember(
+            popupContainerStyle.metrics.offset,
+            popupContainerStyle.metrics.menuMargin,
+            horizontalAlignment,
+            density,
+        ) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = popupContainerStyle.metrics.offset,
+                contentMargin = popupContainerStyle.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
+
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        menuStyle = style,
+        popupProperties = popupProperties,
+        adContent = adContent,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+@Deprecated(
+    message = "Use the variant with adContent, maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val popupContainerStyle = LocalPopupContainerStyle.current
+
+    val popupPositionProvider =
+        remember(
+            popupContainerStyle.metrics.offset,
+            popupContainerStyle.metrics.menuMargin,
+            horizontalAlignment,
+            density,
+        ) {
+            AnchorVerticalMenuPositionProvider(
+                contentOffset = popupContainerStyle.metrics.offset,
+                contentMargin = popupContainerStyle.metrics.menuMargin,
+                alignment = horizontalAlignment,
+                density = density,
+            )
+        }
+
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        menuStyle = style,
+        popupProperties = popupProperties,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * When a maxHeight is specified, the menu becomes scrollable and displays a vertical scrollbar.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param maxHeight The maximum height of the menu, beyond which the content becomes scrollable.
+ * @param menuStyle The visual styling configuration for the menu items
+ * @param popupContainerStyle The visual styling configuration for the popup container
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display at the bottom of the menu, typically used for hints or tips
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        maxHeight = maxHeight,
+        menuStyle = menuStyle,
+        popupContainerStyle = popupContainerStyle,
+        popupProperties = popupProperties,
+        adContent = adContent,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param adContent Optional composable content to display ad content at the bottom
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+@Deprecated(
+    message = "Use the variant with maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        maxHeight = Dp.Unspecified,
+        menuStyle = style,
+        popupProperties = popupProperties,
+        adContent = adContent,
+        content = content,
+    )
+}
+
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param popupPositionProvider Determines the position of the popup menu on the screen.
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
+@Composable
+@Deprecated(
+    message = "Use the variant with adContent, maxHeight, menuStyle and popupContainerStyle.",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun PopupMenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    content: MenuScope.() -> Unit,
+) {
+    PopupMenuImpl(
+        onDismissRequest = onDismissRequest,
+        popupPositionProvider = popupPositionProvider,
+        modifier = modifier,
+        menuStyle = style,
+        popupProperties = popupProperties,
+        content = content,
+    )
+}
+
+@Composable
+private fun PopupMenuImpl(
+    onDismissRequest: (InputMode) -> Boolean,
+    popupPositionProvider: PopupPositionProvider,
+    modifier: Modifier = Modifier,
+    maxHeight: Dp = Dp.Unspecified,
+    menuStyle: MenuStyle = JewelTheme.menuStyle,
+    popupContainerStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
+    adContent: (@Composable () -> Unit)? = null,
+    content: MenuScope.() -> Unit,
+) {
+    var focusManager: FocusManager? by remember { mutableStateOf(null) }
+    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
+    val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
+
+    PopupContainer(
+        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier,
+        maxHeight = maxHeight,
+        useIntrinsicWidth = true,
+        style = popupContainerStyle,
+        popupProperties = popupProperties,
+        popupPositionProvider = popupPositionProvider,
+        onPreviewKeyEvent = { false },
+        onKeyEvent = {
+            val currentFocusManager = focusManager ?: return@PopupContainer false
+            val currentInputModeManager = inputModeManager ?: return@PopupContainer false
+
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
+        },
+        adContent = adContent,
+    ) {
+        focusManager = LocalFocusManager.current
+        inputModeManager = LocalInputModeManager.current
+
+        CompositionLocalProvider(
+            LocalMenuController provides menuController,
+            LocalMenuStyle provides menuStyle,
+            LocalPopupContainerStyle provides popupContainerStyle,
+        ) {
+            MenuContent(content = content)
+        }
+    }
+}
+
+@VisibleForTesting
+@ApiStatus.Internal
+@InternalJewelApi
+@Composable
+public fun MenuContent(
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: MenuScope.() -> Unit,
+) {
+    MenuContentImpl(modifier = modifier, style = style, content = content)
+}
+
+@Composable
+private fun MenuContentImpl(
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: MenuScope.() -> Unit,
+) {
+    val items by remember(content) { derivedStateOf { content.asList() } }
+
+    val selectableItems = remember(items) { items.filterIsInstance<MenuSelectableItem>() }
+
+    val anyItemHasIcon = remember(selectableItems) { selectableItems.any { it.iconKey != null } }
+    val anyItemHasKeybinding =
+        remember(selectableItems) {
+            selectableItems.any { it.keybinding?.isNotEmpty() == true || it.itemOptionAction != null }
+        }
+
+    val localMenuController = LocalMenuController.current
+    val localInputModeManager = LocalInputModeManager.current
+    val localMenuItemShortcutProvider = LocalMenuItemShortcutProvider.current
+    val focusManager = LocalFocusManager.current
+
+    DisposableEffect(selectableItems, localMenuController, localMenuItemShortcutProvider, localInputModeManager) {
+        selectableItems.forEach { item ->
+            if (item.isEnabled && item.itemOptionAction != null) {
+                localMenuItemShortcutProvider.getShortcutKeyStroke(item.itemOptionAction)?.let { keyStroke ->
+                    localMenuController.registerShortcutAction(keyStroke) {
+                        item.onClick()
+                        localMenuController.closeAll(localInputModeManager.inputMode, true)
+                    }
+                }
+            }
+        }
+
+        onDispose { localMenuController.clearShortcutActions() }
+    }
+
+    var selectedSubMenu by remember { mutableStateOf<SubmenuItem?>(null) }
+
+    Column(
+        modifier =
+            modifier.padding(style.metrics.contentPadding).onHover { hovered ->
+                localMenuController.onHoveredChange(hovered)
+
+                // Items arm themselves by taking focus, so moving between them needs no bookkeeping here. Only
+                // leaving the menu has to disarm it, and not while one of its items is holding a submenu open:
+                // Swing keeps that item armed because the selection path continues through it.
+                if (!hovered && selectedSubMenu == null) focusManager.clearFocus(force = true)
+            }
+    ) {
+        items.forEach { item ->
+            MenuItem(
+                item = item,
+                style = style,
+                showIcons = anyItemHasIcon,
+                showKeybindings = anyItemHasKeybinding,
+                selectedSubMenu = selectedSubMenu,
+                setSelectedSubMenu = { selectedSubMenu = it },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MenuItem(
+    item: MenuItem,
+    style: MenuStyle,
+    showIcons: Boolean,
+    showKeybindings: Boolean,
+    selectedSubMenu: SubmenuItem?,
+    setSelectedSubMenu: (SubmenuItem?) -> Unit,
+) {
+    val currentSetSelectedSubMenu by rememberUpdatedState(setSelectedSubMenu)
+
+    fun deselectSubmenu() {
+        currentSetSelectedSubMenu(null)
+    }
+
+    fun selectSubmenu(submenuItem: SubmenuItem) {
+        currentSetSelectedSubMenu(submenuItem)
+    }
+
+    when (item) {
+        is MenuSelectableItem ->
+            if (item.itemOptionAction != null) {
+                MenuItem(
+                    selected = item.isSelected,
+                    onClick = item.onClick,
+                    iconKey = item.iconKey,
+                    actionType = item.itemOptionAction,
+                    canShowIcon = showIcons,
+                    canShowKeybinding = showKeybindings,
+                    enabled = item.isEnabled,
+                    style = style,
+                    content = {
+                        LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
+                        item.content()
+                    },
+                )
+            } else {
+                MenuItem(
+                    selected = item.isSelected,
+                    onClick = item.onClick,
+                    iconKey = item.iconKey,
+                    keybinding = item.keybinding,
+                    canShowIcon = showIcons,
+                    canShowKeybinding = showKeybindings,
+                    enabled = item.isEnabled,
+                    style = style,
+                    content = {
+                        LaunchedEffect(it.isHovered) { if (it.isHovered) deselectSubmenu() }
+                        item.content()
+                    },
+                )
+            }
+
+        is SubmenuItem ->
+            MenuSubmenuItem(
+                showIcons,
+                selected = item == selectedSubMenu,
+                onSelectedChange = { if (it) selectSubmenu(item) else deselectSubmenu() },
+                enabled = item.isEnabled,
+                submenu = item.submenu,
+                iconKey = item.iconKey,
+                style = style,
+                content = {
+                    LaunchedEffect(it.isHovered) { if (it.isHovered) selectSubmenu(item) }
+                    item.content()
+                },
+            )
+
+        else -> item.content()
+    }
+}
+
+/**
+ * Scope interface for building menu content using a DSL-style API.
+ *
+ * This interface provides methods for adding various types of menu items:
+ * - Selectable items with optional icons and keybindings
+ * - Submenus for nested menu structures
+ * - Passive items for custom content
+ * - Separators for visual grouping
+ *
+ * **Usage example:**
+ *
+ * ```kotlin
+ * PopupMenu {
+ *     selectableItem(selected = false, onClick = { /* handle click */ }) {
+ *         Text("Menu Item")
+ *     }
+ *     separator()
+ *     submenu(content = { Text("Submenu") }) {
+ *         selectableItem(selected = true, onClick = { /* handle click */ }) {
+ *             Text("Submenu Item")
+ *         }
+ *     }
+ * }
+ * ```
+ */
+public interface MenuScope {
+    /**
+     * Adds a selectable menu item with optional icon and keybinding.
+     *
+     * Creates a menu item that can be selected and clicked. The item supports an optional icon and keybinding display,
+     * and can be enabled or disabled. When clicked, the provided onClick handler is called.
+     *
+     * @param selected Whether this item is currently selected
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param keybinding Optional set of strings representing the keybinding (e.g., ["Ctrl", "C"])
+     * @param onClick Called when the item is clicked
+     * @param enabled Controls whether the item can be interacted with
+     * @param content The content to be displayed in the menu item
+     */
+    public fun selectableItem(
+        selected: Boolean,
+        iconKey: IconKey? = null,
+        keybinding: Set<String>? = null,
+        onClick: () -> Unit,
+        enabled: Boolean = true,
+        content: @Composable () -> Unit,
+    )
+
+    /**
+     * Adds a selectable menu item with optional icon and keybinding.
+     *
+     * Creates a menu item that can be selected and clicked. The item supports an optional icon and keybinding display,
+     * and can be enabled or disabled. When clicked, the provided onClick handler is called.
+     *
+     * @param selected Whether this item is currently selected
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param actionType Optional action type that will used to display the correct shortcut hint and handle shortcut
+     *   key presses
+     * @param onClick Called when the item is clicked
+     * @param enabled Controls whether the item can be interacted with
+     * @param content The content to be displayed in the menu item
+     */
+    public fun selectableItemWithActionType(
+        selected: Boolean,
+        iconKey: IconKey? = null,
+        actionType: ContextMenuItemOptionAction? = null,
+        onClick: () -> Unit,
+        enabled: Boolean = true,
+        content: @Composable () -> Unit,
+    )
+
+    /**
+     * Adds a submenu item that opens a nested menu when hovered or clicked.
+     *
+     * Creates a menu item that displays a nested menu when the user interacts with it. The submenu can have its own
+     * items and supports the same features as the parent menu. Submenus can be nested to create hierarchical menu
+     * structures.
+     *
+     * @param enabled Controls whether the submenu can be interacted with
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param submenu Builder for the submenu content using the same [MenuScope] DSL
+     * @param content The content to be displayed in the submenu item
+     */
+    public fun submenu(
+        enabled: Boolean = true,
+        iconKey: IconKey? = null,
+        submenu: MenuScope.() -> Unit,
+        content: @Composable () -> Unit,
+    )
+
+    /**
+     * Adds a non-interactive item with custom content to the menu.
+     *
+     * Creates a menu item that displays custom content but does not respond to user interaction. This is useful for
+     * displaying informational content, headers, or other non-interactive elements within the menu.
+     *
+     * @param content The custom content to be displayed in the menu item
+     */
+    public fun passiveItem(content: @Composable () -> Unit)
+}
+
+/**
+ * Adds a visual separator line between menu items.
+ *
+ * Creates a horizontal line that helps visually group related menu items. This is commonly used to separate different
+ * sections of a menu, making it easier for users to understand the menu's structure.
+ */
+public fun MenuScope.separator() {
+    passiveItem { MenuSeparator(JewelTheme.menuStyle.colors.itemColors, JewelTheme.menuStyle.metrics.itemMetrics) }
+}
+
+/**
+ * Adds [count] selectable items to the menu, using index-based selection and click callbacks.
+ *
+ * @param count The number of items to add
+ * @param isSelected Returns whether the item at the given index is currently selected
+ * @param onItemClick Called with the index of the item when it is clicked
+ * @param content The composable content for the item at the given index
+ */
+public fun MenuScope.items(
+    count: Int,
+    isSelected: (Int) -> Boolean,
+    onItemClick: (Int) -> Unit,
+    content: @Composable (Int) -> Unit,
+) {
+    repeat(count) { selectableItem(isSelected(it), onClick = { onItemClick(it) }) { content(it) } }
+}
+
+/**
+ * Adds a selectable item for each element in [items], using element-based selection and click callbacks.
+ *
+ * @param T The type of items in the list.
+ * @param items The list of items to render.
+ * @param isSelected Returns whether the given item is currently selected.
+ * @param onItemClick Called with the item when it is clicked.
+ * @param content The composable content for the given item.
+ */
+public fun <T> MenuScope.items(
+    items: List<T>,
+    isSelected: (T) -> Boolean,
+    onItemClick: (T) -> Unit,
+    content: @Composable (T) -> Unit,
+) {
+    repeat(items.count()) {
+        selectableItem(isSelected(items[it]), onClick = { onItemClick(items[it]) }) { content(items[it]) }
+    }
+}
+
+private fun (MenuScope.() -> Unit).asList() = buildList {
+    this@asList(
+        object : MenuScope {
+            override fun selectableItem(
+                selected: Boolean,
+                iconKey: IconKey?,
+                keybinding: Set<String>?,
+                onClick: () -> Unit,
+                enabled: Boolean,
+                content: @Composable () -> Unit,
+            ) {
+                add(
+                    MenuSelectableItem(
+                        isSelected = selected,
+                        isEnabled = enabled,
+                        iconKey = iconKey,
+                        keybinding = keybinding,
+                        onClick = onClick,
+                        content = content,
+                    )
+                )
+            }
+
+            override fun selectableItemWithActionType(
+                selected: Boolean,
+                iconKey: IconKey?,
+                actionType: ContextMenuItemOptionAction?,
+                onClick: () -> Unit,
+                enabled: Boolean,
+                content: @Composable () -> Unit,
+            ) {
+                add(
+                    MenuSelectableItem(
+                        isSelected = selected,
+                        isEnabled = enabled,
+                        iconKey = iconKey,
+                        itemOptionAction = actionType,
+                        onClick = onClick,
+                        content = content,
+                    )
+                )
+            }
+
+            override fun passiveItem(content: @Composable () -> Unit) {
+                add(MenuPassiveItem(content))
+            }
+
+            override fun submenu(
+                enabled: Boolean,
+                iconKey: IconKey?,
+                submenu: MenuScope.() -> Unit,
+                content: @Composable () -> Unit,
+            ) {
+                add(SubmenuItem(enabled, iconKey, submenu, content))
+            }
+        }
+    )
+}
+
+private interface MenuItem {
+    val content: @Composable () -> Unit
+}
+
+@ApiStatus.Internal
+@InternalJewelApi
+@VisibleForTesting
+@GenerateDataFunctions
+public class MenuSelectableItem(
+    /** Whether this item is currently selected. */
+    public val isSelected: Boolean,
+    /** Whether this item is enabled and can be interacted with. */
+    public val isEnabled: Boolean,
+    /** Optional icon key for displaying an icon before the item content. */
+    public val iconKey: IconKey?,
+    /** Optional action type used to resolve and handle the shortcut hint. */
+    public val itemOptionAction: ContextMenuItemOptionAction? = null,
+    /** Optional set of keybinding strings to display alongside the item. */
+    public val keybinding: Set<String>? = emptySet(),
+    /** Called when the item is clicked. */
+    public val onClick: () -> Unit = {},
+    /** The composable content displayed inside this menu item. */
+    override val content: @Composable () -> Unit,
+) : MenuItem {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MenuSelectableItem
+
+        if (isSelected != other.isSelected) return false
+        if (isEnabled != other.isEnabled) return false
+        if (iconKey != other.iconKey) return false
+        if (itemOptionAction != other.itemOptionAction) return false
+        if (keybinding != other.keybinding) return false
+        if (onClick != other.onClick) return false
+        if (content != other.content) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = isSelected.hashCode()
+        result = 31 * result + isEnabled.hashCode()
+        result = 31 * result + iconKey.hashCode()
+        result = 31 * result + itemOptionAction.hashCode()
+        result = 31 * result + keybinding.hashCode()
+        result = 31 * result + onClick.hashCode()
+        result = 31 * result + content.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MenuSelectableItem(" +
+            "isSelected=$isSelected, " +
+            "isEnabled=$isEnabled, " +
+            "iconKey=$iconKey, " +
+            "itemOptionAction=$itemOptionAction, " +
+            "keybinding=$keybinding, " +
+            "onClick=$onClick, " +
+            "content=$content" +
+            ")"
+    }
+}
+
+private data class MenuPassiveItem(override val content: @Composable () -> Unit) : MenuItem
+
+private data class SubmenuItem(
+    val isEnabled: Boolean = true,
+    val iconKey: IconKey?,
+    val submenu: MenuScope.() -> Unit,
+    override val content: @Composable () -> Unit,
+) : MenuItem
+
+@Composable
+private fun MenuSeparator(colors: MenuItemColors, metrics: MenuItemMetrics, modifier: Modifier = Modifier) {
+    Box(modifier.height(metrics.separatorHeight)) {
+        Divider(
+            orientation = Orientation.Horizontal,
+            modifier = Modifier.fillMaxWidth().padding(metrics.separatorPadding),
+            color = colors.separator,
+            thickness = metrics.separatorThickness,
+        )
+    }
+}
+
+@Composable
+private fun MenuItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    iconKey: IconKey?,
+    actionType: ContextMenuItemOptionAction,
+    canShowIcon: Boolean,
+    canShowKeybinding: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable (itemState: MenuItemState) -> Unit,
+) {
+    val shortcutHintProvider = LocalMenuItemShortcutHintProvider.current
+
+    MenuItemBase(
+        selected = selected,
+        onClick = onClick,
+        iconKey = iconKey,
+        canShowIcon = canShowIcon,
+        canShowKeybinding = canShowKeybinding,
+        keybindingHint = if (canShowKeybinding) shortcutHintProvider.getShortcutHint(actionType) else "",
+        modifier = modifier,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        style = style,
+        content = content,
+    )
+}
+
+@Composable
+private fun MenuItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    iconKey: IconKey?,
+    keybinding: Set<String>?,
+    canShowIcon: Boolean,
+    canShowKeybinding: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable (itemState: MenuItemState) -> Unit,
+) {
+    MenuItemBase(
+        selected = selected,
+        onClick = onClick,
+        iconKey = iconKey,
+        canShowIcon = canShowIcon,
+        canShowKeybinding = canShowKeybinding,
+        keybindingHint =
+            if (hostOs.isMacOS) {
+                keybinding?.joinToString("") { it }.orEmpty()
+            } else {
+                keybinding?.joinToString("+") { it }.orEmpty()
+            },
+        modifier = modifier,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        style = style,
+        content = content,
+    )
+}
+
+@ApiStatus.Internal
+@InternalJewelApi
+@VisibleForTesting
+public val IsHoveredKey: SemanticsPropertyKey<Boolean> = SemanticsPropertyKey("IsHovered")
+internal var SemanticsPropertyReceiver.isHovered by IsHoveredKey
+
+@Composable
+internal fun MenuItemBase(
+    selected: Boolean,
+    onClick: () -> Unit,
+    iconKey: IconKey?,
+    canShowIcon: Boolean,
+    canShowKeybinding: Boolean,
+    keybindingHint: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable (itemState: MenuItemState) -> Unit,
+) {
+    val itemState by rememberMenuItemState(selected, enabled, interactionSource)
+
+    val focusRequester = remember { FocusRequester() }
+    val menuController = LocalMenuController.current
+    val localInputModeManager = LocalInputModeManager.current
+
+    LaunchedEffect(itemState.isHovered) {
+        if (itemState.isHovered) {
+            focusRequester.requestFocus()
+        }
+    }
+
+    Box(
+        modifier =
+            modifier
+                .focusRequester(focusRequester)
+                .selectable(
+                    selected = selected,
+                    onClick = {
+                        onClick()
+                        menuController.closeAll(localInputModeManager.inputMode, true)
+                    },
+                    enabled = enabled,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .semantics { isHovered = itemState.isHovered } // For testing purposes
+                .fillMaxWidth()
+    ) {
+        DisposableEffect(Unit) {
+            if (selected) focusRequester.requestFocus()
+            onDispose {}
+        }
+
+        MenuItemLayout(
+            itemState = itemState,
+            style = style,
+            iconKey = iconKey,
+            canShowIcon = canShowIcon,
+            enabled = enabled,
+            trailingContent =
+                if (canShowKeybinding) {
+                    {
+                        Text(
+                            modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
+                            text = keybindingHint,
+                            color = style.colors.itemColors.keybindingTintFor(itemState).value,
+                        )
+                    }
+                } else null,
+            content = { content(itemState) },
+        )
+    }
+}
+
+/**
+ * Low-level submenu menu item implementation, exposed for testing.
+ *
+ * Renders a menu item that opens a nested [submenu] popup when selected. Unlike the public overload, this function
+ * accepts explicit [showIcon] and [selected] arguments and provides the [MenuItemState] to [content], allowing tests to
+ * drive the item's state directly.
+ */
+@VisibleForTesting
+@ApiStatus.Internal
+@InternalJewelApi
+@Composable
+public fun MenuSubmenuItem(
+    showIcon: Boolean,
+    selected: Boolean,
+    onSelectedChange: (Boolean) -> Unit,
+    submenu: MenuScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    iconKey: IconKey? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable (itemState: MenuItemState) -> Unit,
+) {
+    val itemState by rememberMenuItemState(selected, enabled, interactionSource)
+    // When the item becomes disabled, close any open submenu
+    val currentOnSelectedChange by rememberUpdatedState(onSelectedChange)
+    remember(enabled) { if (!enabled && selected) currentOnSelectedChange(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(selected) { if (selected) focusRequester.requestFocus() }
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+                .clickable(
+                    onClick = { currentOnSelectedChange(!selected) },
+                    enabled = enabled,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .onKeyEvent {
+                    if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
+                        currentOnSelectedChange(true)
+                        true
+                    } else {
+                        false
+                    }
+                }
+    ) {
+        MenuItemLayout(
+            itemState = itemState,
+            style = style,
+            iconKey = iconKey,
+            canShowIcon = showIcon,
+            trailingContent = {
+                Icon(
+                    key = style.icons.submenuChevron,
+                    contentDescription = null,
+                    modifier = Modifier.size(style.metrics.itemMetrics.iconSize),
+                    tint = style.colors.itemColors.iconTintFor(itemState).value,
+                    hint = Stateful(itemState),
+                )
+            },
+            content = { content(itemState) },
+        )
+
+        if (selected) {
+            Submenu(
+                onDismissRequest = {
+                    if (it == InputMode.Touch && itemState.isHovered) {
+                        false
+                    } else {
+                        currentOnSelectedChange(false)
+                        true
+                    }
+                },
+                style = style,
+                content = submenu,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun MenuItemLayout(
+    itemState: MenuItemState,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    iconKey: IconKey? = null,
+    canShowIcon: Boolean = true,
+    enabled: Boolean = true,
+    trailingContent: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val itemColors = style.colors.itemColors
+    val itemMetrics = style.metrics.itemMetrics
+
+    val contentColor = itemColors.contentFor(itemState).value
+    val backgroundColor by itemColors.backgroundFor(itemState)
+
+    CompositionLocalProvider(
+        LocalContentColor provides contentColor,
+        LocalTextStyle provides LocalTextStyle.current.copy(color = contentColor),
+    ) {
+        Row(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = itemMetrics.minHeight)
+                    .drawItemBackground(itemMetrics, backgroundColor)
+                    .padding(itemMetrics.contentPadding),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (canShowIcon) {
+                val iconModifier = Modifier.size(itemMetrics.iconSize)
+                if (iconKey != null) {
+                    Icon(
+                        key = iconKey,
+                        contentDescription = null,
+                        modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
+                    )
+                } else {
+                    Box(modifier = iconModifier)
+                }
+            }
+
+            Box(modifier = Modifier.weight(1f)) { content() }
+
+            if (trailingContent != null) {
+                trailingContent()
+            }
+        }
+    }
+}
+
+private fun Modifier.drawItemBackground(itemMetrics: MenuItemMetrics, backgroundColor: Color) = drawBehind {
+    val cornerSizePx = itemMetrics.selectionCornerSize.toPx(size, density = this)
+    val cornerRadius = CornerRadius(cornerSizePx, cornerSizePx)
+
+    val outerPadding = itemMetrics.outerPadding
+    val offset =
+        Offset(
+            x = outerPadding.calculateLeftPadding(layoutDirection).toPx(),
+            y = outerPadding.calculateTopPadding().toPx(),
+        )
+    drawRoundRect(
+        color = backgroundColor,
+        cornerRadius = cornerRadius,
+        topLeft = offset,
+        size = size.subtract(outerPadding, density = this, layoutDirection),
+    )
+}
+
+private fun Size.subtract(paddingValues: PaddingValues, density: Density, layoutDirection: LayoutDirection): Size =
+    with(density) {
+        Size(
+            width -
+                paddingValues.calculateLeftPadding(layoutDirection).toPx() -
+                paddingValues.calculateRightPadding(layoutDirection).toPx(),
+            height - paddingValues.calculateTopPadding().toPx() - paddingValues.calculateBottomPadding().toPx(),
+        )
+    }
+
+@Composable
+internal fun Submenu(
+    onDismissRequest: (InputMode) -> Boolean,
+    modifier: Modifier = Modifier,
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: MenuScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val popupContainerStyle = LocalPopupContainerStyle.current
+
+    val popupPositionProvider =
+        AnchorHorizontalMenuPositionProvider(
+            contentOffset = style.metrics.submenuMetrics.offset,
+            contentMargin = popupContainerStyle.metrics.menuMargin,
+            alignment = Alignment.Top,
+            density = density,
+        )
+
+    var focusManager: FocusManager? by remember { mutableStateOf(null) }
+    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
+    val parentMenuController = LocalMenuController.current
+    val menuController =
+        remember(parentMenuController, onDismissRequest) { parentMenuController.submenuController(onDismissRequest) }
+
+    PopupContainer(
+        onDismissRequest = { menuController.closeAll(InputMode.Touch, false) },
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier,
+        useIntrinsicWidth = true,
+        popupProperties = PopupProperties(focusable = true, consumePointerInputOutside = false),
+        popupPositionProvider = popupPositionProvider,
+        onPreviewKeyEvent = { false },
+        onKeyEvent = {
+            val currentFocusManager = focusManager ?: return@PopupContainer false
+            val currentInputModeManager = inputModeManager ?: return@PopupContainer false
+            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuController)
+        },
+    ) {
+        focusManager = LocalFocusManager.current
+        inputModeManager = LocalInputModeManager.current
+
+        CompositionLocalProvider(LocalMenuController provides menuController) { MenuContent(content = content) }
+    }
+}
+
+/**
+ * State holder for menu items that tracks various interaction states.
+ *
+ * This class maintains the state of a menu item, including selection, enabled/disabled state, focus, hover, and press
+ * states. It implements both [SelectableComponentState] and [FocusableComponentState] for consistent behavior with
+ * other interactive components.
+ *
+ * The state is stored efficiently using a bit-masked value, where each bit represents a different state flag.
+ *
+ * @property state The raw bit-masked state value
+ * @see SelectableComponentState
+ * @see FocusableComponentState
+ */
+@ApiStatus.Internal
+@InternalJewelApi
+@Immutable
+@JvmInline
+public value class MenuItemState(
+    /** The raw bit-masked state value encoding all interaction flags. */
+    public val state: ULong
+) : SelectableComponentState, FocusableComponentState {
+    override val isActive: Boolean
+        get() = state and Selected != 0UL
+
+    override val isSelected: Boolean
+        get() = state and Selected != 0UL
+
+    override val isEnabled: Boolean
+        get() = state and Enabled != 0UL
+
+    override val isFocused: Boolean
+        get() = state and Focused != 0UL
+
+    override val isHovered: Boolean
+        get() = state and Hovered != 0UL
+
+    override val isPressed: Boolean
+        get() = state and Pressed != 0UL
+
+    /** Returns a copy of this [MenuItemState] with the given fields replaced by their new values. */
+    public fun copy(
+        selected: Boolean = isSelected,
+        enabled: Boolean = isEnabled,
+        focused: Boolean = isFocused,
+        hovered: Boolean = isHovered,
+        pressed: Boolean = isPressed,
+        active: Boolean = isActive,
+    ): MenuItemState =
+        of(
+            selected = selected,
+            enabled = enabled,
+            focused = focused,
+            hovered = hovered,
+            pressed = pressed,
+            active = active,
+        )
+
+    override fun toString(): String =
+        "MenuItemState(state=$state, isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
+            "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
+
+    internal companion object {
+        internal fun of(
+            selected: Boolean,
+            enabled: Boolean,
+            focused: Boolean = false,
+            hovered: Boolean = false,
+            pressed: Boolean = false,
+            active: Boolean = false,
+        ): MenuItemState {
+            var state = 0UL
+            if (selected) state = state or Selected
+            if (enabled) state = state or Enabled
+            if (focused) state = state or Focused
+            if (hovered) state = state or Hovered
+            if (pressed) state = state or Pressed
+            if (active) state = state or Active
+            return MenuItemState(state)
+        }
+    }
+}
+
+@Composable
+internal fun rememberMenuItemState(
+    selected: Boolean,
+    enabled: Boolean,
+    interactionSource: MutableInteractionSource,
+): MutableState<MenuItemState> {
+    val itemState =
+        remember(interactionSource) { mutableStateOf(MenuItemState.of(selected = selected, enabled = enabled)) }
+
+    remember(enabled, selected) { itemState.value = itemState.value.copy(selected = selected, enabled = enabled) }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> itemState.value = itemState.value.copy(pressed = true)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> itemState.value = itemState.value.copy(pressed = false)
+                is HoverInteraction.Enter -> itemState.value = itemState.value.copy(hovered = true)
+                is HoverInteraction.Exit -> itemState.value = itemState.value.copy(hovered = false)
+                is FocusInteraction.Focus -> itemState.value = itemState.value.copy(focused = true)
+                is FocusInteraction.Unfocus -> itemState.value = itemState.value.copy(focused = false)
+            }
+        }
+    }
+
+    return itemState
+}

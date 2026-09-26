@@ -37,7 +37,7 @@ PsiJavaFile:ExprList3.java
                 <empty list>
               PsiExpression(empty)
                 <empty list>
-              PsiErrorElement:')' expected
+              PsiErrorElement:',' or ')' expected
                 <empty list>
               PsiWhiteSpace('\n  ')
           PsiErrorElement:';' expected

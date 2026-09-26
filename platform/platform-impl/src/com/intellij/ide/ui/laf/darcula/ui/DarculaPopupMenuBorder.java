@@ -1,39 +1,77 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import javax.swing.plaf.basic.BasicComboPopup;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Path2D;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource {
+  private static final JBInsets DEFAULT_INSETS = new JBInsets(1);
+
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    g.setColor(UIManager.getDefaults().getColor("Separator.foreground"));
-    g.drawRect(0,0,width-1,height-1);
+    if (IdeaPopupMenuUI.isRoundBorder()) {
+      return; // the border is painted by the JBR or OS, there's no reliable way to paint a rounded border in the platform
+    }
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
+      g2.fill(getBorderShape(c, new Rectangle(x, y, width, height)));
+    }
+    finally {
+      g2.dispose();
+    }
+  }
+
+  private static Shape getBorderShape(Component c, Rectangle rect) {
+    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    if (isComboPopup(c) && ((BasicComboPopup)c).getClientProperty("JComboBox.isCellEditor") == Boolean.TRUE) {
+      JBInsets.removeFrom(rect, JBInsets.create(0, 1));
+    }
+
+    border.append(rect, false);
+
+    Rectangle innerRect = new Rectangle(rect);
+    JBInsets.removeFrom(innerRect, JBUI.insets(JBUI.getInt("PopupMenu.borderWidth", 1)));
+    border.append(innerRect, false);
+
+    return border;
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(1).asUIResource();
+    JBInsets result;
+    if (isComboPopup(c)) {
+      result = JBInsets.create(1, 2);
+    }
+    else if (IdeaPopupMenuUI.isUnderPopup(c)) {
+      result = JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS);
+    }
+    else {
+      result = JBUI.insets("Menu.borderInsets", ExperimentalUI.isNewUI() ? JBUI.insets(6, 1) : DEFAULT_INSETS);
+    }
+    return result.asUIResource();
+  }
+
+  protected static boolean isComboPopup(Component c) {
+    return "ComboPopup.popup".equals(c.getName()) && c instanceof BasicComboPopup;
   }
 }

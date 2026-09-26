@@ -1,0 +1,16 @@
+<idea-plugin>
+  <id>com.example.test</id>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+    <extensionPoint qualifiedName="com.intellij.applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.example.MyService"
+                    serviceImplementation="com.example.MyServiceImpl"
+                    open="true"/>
+    <applicationService serviceInterface="com.example.AppService"
+                        serviceImplementation="com.example.AppServiceImpl"
+                        open="true"/>
+  </extensions>
+</idea-plugin>

@@ -17,17 +17,22 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.XmlFile;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.testng.xml.Parser;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -47,31 +52,45 @@ public class TestNGTestSuite extends TestNGTestObject {
 
   @Override
   public String getActionName() {
-    return myConfig.getPersistantData().getSuiteName();
+    String suiteName = myConfig.getPersistantData().getSuiteName();
+    if (!suiteName.isEmpty()) {
+      VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(suiteName);
+      if (virtualFile != null) {
+        return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myConfig.getProject(), true, false);
+      }
+    }
+    return suiteName;
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final TestData data = myConfig.getPersistantData();
+    String suiteName = myConfig.getPersistantData().getSuiteName();
+    VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(suiteName);
+    Document document = virtualFile != null ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+    if (document == null) {
+      throw new RuntimeConfigurationException(TestngBundle.message("dialog.message.file.not.found", suiteName));
+    }
     try {
-      final Parser parser = new Parser(data.getSuiteName());
+      final Parser parser = new Parser(new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8)));
       parser.setLoadClasses(false);
       synchronized (PARSE_LOCK) {
         parser.parse();//try to parse suite.xml
       }
     }
-    catch (Exception e) {
-      throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
+    catch (Throwable e) {
+      //there is no appropriate snakeyaml in the classpath (one compatible with bundled testng version),
+      // but yaml parser tries to load classes despite loadClasses = false here and thus it will fail anyway
+      //no validation for yaml suites possible
+      if (!suiteName.endsWith(".yaml")) { 
+        throw new RuntimeConfigurationException(
+          TestngBundle.message("testng.dialog.message.unable.to.parse.specified.exception", suiteName));
+      }
     }
   }
 
   @Override
   public boolean isConfiguredByElement(PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof XmlFile) {
-      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(containingFile);
-      return virtualFile != null && Comparing.strEqual(myConfig.getPersistantData().getSuiteName(), virtualFile.getPath());
-    }
-    return false;
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+    return virtualFile != null && Comparing.strEqual(myConfig.getPersistantData().getSuiteName(), virtualFile.getPath());
   }
 }

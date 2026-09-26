@@ -1,0 +1,19 @@
+================ Step #1 =================
+Cleaning output files:
+  Sub2.class
+End of files
+Compiling files:
+  java/generics/argumentContainment/a/Sub2.java
+End of files
+Cleaning output files:
+  CaptureCreator.class
+  CaptureCreator2.class
+  GenericBound.class
+End of files
+Compiling files:
+  java/generics/argumentContainment/a/CaptureCreator.java
+  java/generics/argumentContainment/a/CaptureCreator2.java
+  java/generics/argumentContainment/a/GenericBound.java
+End of files
+------------------------------------------
+Exit code: ERROR

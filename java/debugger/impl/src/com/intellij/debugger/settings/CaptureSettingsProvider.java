@@ -1,151 +1,91 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
-/**
- * @author egor
- */
-public class CaptureSettingsProvider {
+public final class CaptureSettingsProvider {
   private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
 
-  private static final List<AgentCapturePoint> CAPTURE_POINTS = new ArrayList<>();
-  private static final List<AgentInsertPoint> INSERT_POINTS = new ArrayList<>();
-  private static final List<CapturePoint> IDE_INSERT_POINTS;
-
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
-  private static final KeyProvider FIRST_PARAM = param(0);
   private static final String ANY = "*";
 
-  static {
-    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY);
-    addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY);
-
-    addCapture("java/lang/Thread", "start", THIS_KEY);
-    addInsert("java/lang/Thread", "run", THIS_KEY);
-
-    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY);
-    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
-    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY);
-
-    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", "<init>", THIS_KEY);
-    addInsert("java/util/concurrent/CompletableFuture$AsyncSupply", "run", THIS_KEY);
-
-    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", "<init>", THIS_KEY);
-    addInsert("java/util/concurrent/CompletableFuture$AsyncRun", "run", THIS_KEY);
-
-    addCapture("java/util/concurrent/CompletableFuture$UniAccept", "<init>", THIS_KEY);
-    addInsert("java/util/concurrent/CompletableFuture$UniAccept", "tryFire", THIS_KEY);
-
-    addCapture("java/util/concurrent/CompletableFuture$UniRun", "<init>", THIS_KEY);
-    addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY);
-
-    // netty
-    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
-    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
-
-    // scala
-    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY);
-    addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY);
-
-    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY);
-    addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY);
-
-    // akka-scala
-    addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
-    addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
-    addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
-    addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
-
-    IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
-  }
-
-  public static List<AgentPoint> getPoints() {
-    List<AgentPoint> res = ContainerUtil.concat(CAPTURE_POINTS, INSERT_POINTS);
+  public static @NotNull Properties getPointsProperties(@Nullable Project project) {
+    Properties res = new Properties();
     if (Registry.is("debugger.capture.points.agent.annotations")) {
-      res = ContainerUtil.concat(res, getAnnotationPoints());
+      int idx = 0;
+      for (CaptureSettingsProvider.AgentPoint point : getAnnotationPoints(project)) {
+        res.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
+                        point.myClassName + AgentPoint.SEPARATOR +
+                        point.myMethodName + AgentPoint.SEPARATOR +
+                        point.myMethodDesc + AgentPoint.SEPARATOR +
+                        point.myKey.asString());
+      }
     }
     return res;
   }
 
-  public static List<CapturePoint> getIdeInsertPoints() {
-    List<CapturePoint> res = Collections.unmodifiableList(IDE_INSERT_POINTS);
-    if (Registry.is("debugger.capture.points.agent.annotations")) {
-      res = ContainerUtil.concat(
-        res, StreamEx.of(getAnnotationPoints()).select(AgentInsertPoint.class).map(p -> p.myInsertPoint).nonNull().toList());
-    }
-    return res;
-  }
+  private static List<AgentPoint> getAnnotationPoints(@Nullable Project project) {
+    return CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
+      PsiMethod method;
+      KeyProvider keyProvider;
+      if (e instanceof PsiMethod psiMethod) {
+        method = psiMethod;
+        keyProvider = THIS_KEY;
+      }
+      else if (e instanceof PsiParameter psiParameter) {
+        method = (PsiMethod)psiParameter.getDeclarationScope();
+        keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
+      }
+      else {
+        return null;
+      }
+      String classVMName = JVMNameUtil.getClassVMName(method.getContainingClass());
+      if (classVMName == null) {
+        LOG.warn("Unable to find VM class name for annotated method: " + method.getName());
+        return null;
+      }
+      String className = classVMName.replaceAll("\\.", "/");
+      String methodName = JVMNameUtil.getJVMMethodName(method);
+      String methodDesc = ANY;
+      try {
+        methodDesc = JVMNameUtil.getJVMSignature(method).getName(null);
+      }
+      catch (EvaluateException ex) {
+        LOG.error(ex);
+      }
 
-  private static List<AgentPoint> getAnnotationPoints() {
-    return ReadAction.compute(() -> {
-      List<AgentPoint> annotationPoints = new ArrayList<>();
-      CaptureConfigurable.processCaptureAnnotations((capture, e) -> {
-        PsiMethod method;
-        KeyProvider keyProvider;
-        if (e instanceof PsiMethod) {
-          method = (PsiMethod)e;
-          keyProvider = THIS_KEY;
-        }
-        else if (e instanceof PsiParameter) {
-          PsiParameter psiParameter = (PsiParameter)e;
-          method = (PsiMethod)psiParameter.getDeclarationScope();
-          keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
-        }
-        else {
-          return;
-        }
-        String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
-        String methodName = JVMNameUtil.getJVMMethodName(method);
-        String methodDesc = ANY;
-        try {
-          methodDesc = JVMNameUtil.getJVMSignature(method).getName(null);
-        }
-        catch (EvaluateException ex) {
-          LOG.error(ex);
-        }
-
-        PsiModifierList modifierList = e.getModifierList();
-        if (modifierList != null) {
-          PsiAnnotation annotation = modifierList.findAnnotation(CaptureConfigurable.getAnnotationName(capture));
-          if (annotation != null) {
-            PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
-            if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
-              keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
-            }
-          }
-        }
-        AgentPoint point = capture ?
-                           new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
-                           new AgentInsertPoint(className, methodName, methodDesc, keyProvider);
-        annotationPoints.add(point);
-      });
-      return annotationPoints;
+      PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+      if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
+        keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
+      }
+      return capture ?
+             new AgentCapturePoint(className, methodName, methodDesc, keyProvider) :
+             new AgentInsertPoint(className, methodName, methodDesc, keyProvider);
     });
   }
 
-  public static abstract class AgentPoint {
+  private abstract static class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
     public final String myMethodDesc;
     public final KeyProvider myKey;
 
-    public static final String SEPARATOR = " ";
+    private static final String SEPARATOR = " ";
 
-    public AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
+    AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       assert !className.contains(".") : "Classname should not contain . here";
       myClassName = className;
       myMethodName = methodName;
@@ -161,8 +101,8 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public static class AgentCapturePoint extends AgentPoint {
-    public AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
+  private static class AgentCapturePoint extends AgentPoint {
+    AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
     }
 
@@ -172,26 +112,9 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public static class AgentInsertPoint extends AgentPoint {
-    public final CapturePoint myInsertPoint; // for IDE
-
-    public AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
+  private static class AgentInsertPoint extends AgentPoint {
+    AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
-      this.myInsertPoint = new CapturePoint();
-      myInsertPoint.myInsertClassName = className.replaceAll("/", ".");
-      myInsertPoint.myInsertMethodName = methodName;
-      if (myKey instanceof FieldKeyProvider) {
-        myInsertPoint.myInsertKeyExpression = ((FieldKeyProvider)myKey).myFieldName;
-      }
-      else {
-        String keyStr = key.asString();
-        try {
-          myInsertPoint.myInsertKeyExpression = DecompiledLocalVariable.PARAM_PREFIX + Integer.parseInt(keyStr);
-        }
-        catch (NumberFormatException ignored) {
-          myInsertPoint.myInsertKeyExpression = keyStr;
-        }
-      }
     }
 
     @Override
@@ -200,10 +123,10 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public interface KeyProvider {
+  private interface KeyProvider {
     String asString();
   }
- 
+
   private static KeyProvider param(int idx) {
     return new StringKeyProvider(Integer.toString(idx));
   }
@@ -211,7 +134,7 @@ public class CaptureSettingsProvider {
   private static class StringKeyProvider implements KeyProvider {
     private final String myValue;
 
-    public StringKeyProvider(String value) {
+    StringKeyProvider(String value) {
       myValue = value;
     }
 
@@ -225,7 +148,7 @@ public class CaptureSettingsProvider {
     private final String myClassName;
     private final String myFieldName;
 
-    public FieldKeyProvider(String className, String fieldName) {
+    FieldKeyProvider(String className, String fieldName) {
       myClassName = className;
       myFieldName = fieldName;
     }
@@ -234,13 +157,5 @@ public class CaptureSettingsProvider {
     public String asString() {
       return myClassName + AgentPoint.SEPARATOR + myFieldName;
     }
-  }
-
-  private static void addCapture(String className, String methodName, KeyProvider key) {
-    CAPTURE_POINTS.add(new AgentCapturePoint(className, methodName, ANY, key));
-  }
-
-  private static void addInsert(String className, String methodName, KeyProvider key) {
-    INSERT_POINTS.add(new AgentInsertPoint(className, methodName, ANY, key));
   }
 }

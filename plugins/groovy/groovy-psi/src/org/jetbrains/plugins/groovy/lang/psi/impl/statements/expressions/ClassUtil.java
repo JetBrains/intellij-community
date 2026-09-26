@@ -1,34 +1,35 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
-import gnu.trove.THashSet;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ClassUtil {
-  private static final LightCacheKey<Map<String, PsiClass>> PARENT_CACHE_KEY = LightCacheKey.create();
+public final class ClassUtil {
 
   public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
-    Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
-    if (superClassNames == null) {
-      Set<PsiClass> superClasses = new THashSet<>();
-      superClasses.add(aClass);
-      InheritanceUtil.getSuperClasses(aClass, superClasses, true);
+    return CachedValuesManager.getCachedValue(aClass, () -> Result.create(
+      doGetSuperClassesWithCache(aClass), PsiModificationTracker.MODIFICATION_COUNT
+    ));
+  }
 
-      superClassNames = new LinkedHashMap<>();
-      for (PsiClass superClass : superClasses) {
-        superClassNames.put(superClass.getQualifiedName(), superClass);
-      }
+  private static Map<String, PsiClass> doGetSuperClassesWithCache(@NotNull PsiClass aClass) {
+    Set<PsiClass> superClasses = new LinkedHashSet<>();
+    superClasses.add(aClass);
+    InheritanceUtil.getSuperClasses(aClass, superClasses, true);
 
-      superClassNames = PARENT_CACHE_KEY.putCachedValue(aClass, superClassNames);
+    Map<String, PsiClass> superClassNames = new LinkedHashMap<>();
+    for (PsiClass superClass : superClasses) {
+      superClassNames.put(superClass.getQualifiedName(), superClass);
     }
-
     return superClassNames;
   }
 }

@@ -1,40 +1,44 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
+public class InstanceofExpressionPostfixTemplate extends PostfixTemplate implements DumbAware {
 
   public InstanceofExpressionPostfixTemplate() {
     this("instanceof");
@@ -46,7 +50,33 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
+    if (PsiUtil.isJavaToken(context, JavaTokenType.STRING_LITERAL)) {
+      // Do not suggest inside String literals as it could be confusing if literal is interpreted as the reference
+      return false;
+    }
     return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(JavaPostfixTemplatesUtils.getTopmostExpression(context));
+  }
+
+  @Override
+  public boolean isApplicableForModCommand() {
+    return true;
+  }
+
+  @Override
+  public PostfixModExpander createModExpander() {
+    return (ActionContext actionContext, PostfixTemplateProvider _, TextRange keyRange) ->
+      PostfixModExpander.psiUpdateRemovingTemplateKey(actionContext, keyRange, updater -> {
+        PsiElement context =
+          CustomTemplateCallback.getContext(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset() - 1));
+        PsiExpression expr = JavaPostfixTemplatesUtils.getTopmostExpression(context);
+        if (!JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(expr)) return;
+        Template template = getTemplate(updater.getProject(), expr);
+        if (!(template instanceof TemplateImpl templateImpl)) return;
+        TextRange range = expr.getTextRange();
+        updater.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+        updater.moveCaretTo(range.getStartOffset());
+        TemplateManagerImpl.updateTemplate(templateImpl, updater);
+      });
   }
 
   @Override
@@ -59,12 +89,7 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
   private static void surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PsiExpression expr)
     throws IncorrectOperationException {
     assert expr.isValid();
-    PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
-    final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
-                                      expr instanceof PsiConditionalExpression ||
-                                      expr instanceof PsiAssignmentExpression;
-    String exprText = parenthesesNeeded ? "(" + expr.getText() + ")" : expr.getText();
-    Template template = generateTemplate(project, exprText, types);
+    Template template = getTemplate(project, expr);
     TextRange range;
     if (expr.isPhysical()) {
       range = expr.getTextRange();
@@ -75,12 +100,22 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
         PostfixTemplatesUtils.showErrorHint(project, editor);
         return;
       }
-      range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+      range = rangeMarker.getTextRange();
     }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     TemplateManager.getInstance(project).startTemplate(editor, template);
+  }
+
+  private static @NotNull Template getTemplate(@NotNull Project project, @NotNull PsiExpression expr) {
+    PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
+    final boolean parenthesesNeeded = expr instanceof PsiPolyadicExpression ||
+                                      expr instanceof PsiConditionalExpression ||
+                                      expr instanceof PsiAssignmentExpression;
+    String exprText = parenthesesNeeded ? "(" + expr.getText() + ")" : expr.getText();
+    Template template = generateTemplate(project, exprText, types);
+    return template;
   }
 
   private static Template generateTemplate(Project project, String exprText, PsiType[] suggestedTypes) {
@@ -92,25 +127,9 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate {
     for (PsiType type : suggestedTypes) {
       itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
     }
-    final LookupElement[] lookupItems = itemSet.toArray(LookupElement.EMPTY_ARRAY);
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 
-    Expression expr = new Expression() {
-      @Override
-      public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        return lookupItems.length > 1 ? lookupItems : null;
-      }
-
-      @Override
-      public Result calculateResult(ExpressionContext context) {
-        return result;
-      }
-
-      @Override
-      public Result calculateQuickResult(ExpressionContext context) {
-        return null;
-      }
-    };
+    Expression expr = new ConstantNode(result).withLookupItems(itemSet.size() > 1 ? itemSet : Collections.emptySet());
 
     template.addTextSegment(exprText);
     template.addTextSegment(" instanceof ");

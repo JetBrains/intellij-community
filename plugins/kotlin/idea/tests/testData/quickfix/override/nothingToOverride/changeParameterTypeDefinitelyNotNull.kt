@@ -1,0 +1,11 @@
+// "Change function signature to 'fun <T> f(a: (T & Any).() -> Unit)'" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+open class A {
+    open fun <T> f(a: (T & Any).() -> Unit) {}
+}
+
+class B : A() {
+    <caret>override fun f(a: String) {}
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

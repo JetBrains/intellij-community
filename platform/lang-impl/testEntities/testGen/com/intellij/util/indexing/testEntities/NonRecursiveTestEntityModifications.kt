@@ -1,0 +1,47 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("NonRecursiveTestEntityModifications")
+
+package com.intellij.util.indexing.testEntities
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.indexing.testEntities.impl.NonRecursiveTestEntityImpl
+
+@GeneratedCodeApiVersion(3)
+interface NonRecursiveTestEntityBuilder : WorkspaceEntityBuilder<NonRecursiveTestEntity> {
+  override var entitySource: EntitySource
+  var root: VirtualFileUrl
+}
+
+internal object NonRecursiveTestEntityType : EntityType<NonRecursiveTestEntity, NonRecursiveTestEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = NonRecursiveTestEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = NonRecursiveTestEntityImpl.Builder::class.java
+  operator fun invoke(
+    root: VirtualFileUrl,
+    entitySource: EntitySource,
+    init: (NonRecursiveTestEntityBuilder.() -> Unit)? = null,
+  ): NonRecursiveTestEntityBuilder {
+    val builder = builder()
+    builder.root = root
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifyNonRecursiveTestEntity(
+  entity: NonRecursiveTestEntity,
+  modification: NonRecursiveTestEntityBuilder.() -> Unit,
+): NonRecursiveTestEntity = modifyEntity(NonRecursiveTestEntityBuilder::class.java, entity, modification)
+
+@JvmOverloads
+@JvmName("createNonRecursiveTestEntity")
+fun NonRecursiveTestEntity(
+  root: VirtualFileUrl,
+  entitySource: EntitySource,
+  init: (NonRecursiveTestEntityBuilder.() -> Unit)? = null,
+): NonRecursiveTestEntityBuilder = NonRecursiveTestEntityType(root, entitySource, init)

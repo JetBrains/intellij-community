@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 
 import java.util.function.Function;
 
@@ -7,7 +7,7 @@ class Test<T>  {
 
   class Bar {
     void f( ){
-      Function<Test<T>.Bar, String> r = (Test<T>.Bar t) -> t.fo<caret>o();
+      Function<Test<T>.Bar, String> r = (Test<T>.Bar t) -> (t).fo<caret>o();
     }
 
     private String foo() {}

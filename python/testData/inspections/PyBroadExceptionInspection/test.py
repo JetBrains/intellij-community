@@ -42,3 +42,12 @@ try:
   function_throws_exception()
 except Exception, e:
   result.append(e)
+
+def get_exception_class():
+    return Exception
+
+## PY-77988
+try:
+    function_throws_exception()
+except get_exception_class():
+    pass

@@ -1,0 +1,8 @@
+// IGNORE_K2
+// IMPORT: java.util.Calendar
+package p
+
+import java.sql.*
+import java.sql.Date
+
+val d: Date? = null

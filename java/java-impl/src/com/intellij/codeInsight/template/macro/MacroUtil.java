@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
@@ -21,39 +7,48 @@ import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MacroUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
+public final class MacroUtil {
+  private static final Logger LOG = Logger.getInstance(MacroUtil.class);
 
-  @Nullable public static PsiType resultToPsiType(Result result, ExpressionContext context){
-    if (result instanceof PsiTypeResult) {
-      return ((PsiTypeResult) result).getType();
+  public static @Nullable PsiType resultToPsiType(Result result, ExpressionContext context){
+    if (result instanceof PsiTypeResult typeResult) {
+      return typeResult.getType();
     }
-    Project project = context.getProject();
     String text = result.toString();
     if (text == null) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     //-1: Hack to deal with stupid resolve
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
     PsiDeclarationStatement decl = file != null ? PsiTreeUtil.getParentOfType(place, PsiDeclarationStatement.class) : null;
     if (decl != null) {
       place = file.findElementAt(decl.getTextOffset() -1);
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     try{
       return factory.createTypeFromText(text, place);
     }
@@ -62,18 +57,16 @@ public class MacroUtil {
     }
   }
 
-  @Nullable public static PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
+  public static @Nullable PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
     if (result instanceof PsiElementResult){
       PsiElement element = ((PsiElementResult)result).getElement();
       if (element instanceof PsiExpression){
         return (PsiExpression)element;
       }
     }
-    Project project = context.getProject();
     String text = result.toString();
     if (text == null) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+    PsiFile file = context.getPsiFile();
     //-1: Hack to deal with resolve algorithm
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
     if (place != null) {
@@ -85,7 +78,7 @@ public class MacroUtil {
         }
       }
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     try{
       return factory.createExpressionFromText(text, place);
     }
@@ -94,9 +87,9 @@ public class MacroUtil {
     }
   }
 
-  @NotNull private static PsiExpression[] getStandardExpressions(PsiElement place) {
+  private static PsiExpression @NotNull [] getStandardExpressions(PsiElement place) {
     ArrayList<PsiExpression> array = new ArrayList<>();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     try {
       array.add(factory.createExpressionFromText("true", null));
       array.add(factory.createExpressionFromText("false", null));
@@ -104,8 +97,7 @@ public class MacroUtil {
       PsiElement scope = place;
       boolean innermostClass = true;
       while (scope != null) {
-        if (scope instanceof PsiClass) {
-          PsiClass aClass = (PsiClass)scope;
+        if (scope instanceof PsiClass aClass) {
           String name = aClass.getName();
           if (innermostClass) {
             array.add(factory.createExpressionFromText("this", place));
@@ -129,7 +121,7 @@ public class MacroUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
+  public static PsiExpression @NotNull [] getStandardExpressionsOfType(PsiElement place, PsiType type) {
     List<PsiExpression> array = new ArrayList<>();
     PsiExpression[] expressions = getStandardExpressions(place);
     for (PsiExpression expr : expressions) {
@@ -141,28 +133,37 @@ public class MacroUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  @NotNull public static PsiVariable[] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
+  public static PsiVariable @NotNull [] getVariablesVisibleAt(final @Nullable PsiElement place, String prefix) {
     if (place == null) {
       return new PsiVariable[0];
     }
 
-    final Set<String> usedNames = ContainerUtil.newHashSet();
     final List<PsiVariable> list = new ArrayList<>();
-    VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
-      @Override
-      public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
-        if (pe instanceof PsiVariable) {
-          if (!usedNames.add(((PsiVariable)pe).getName())) {
-            return false;
-          }
-          //exclude variables that are initialized in 'place'
-          final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
-          if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;
-        }
-        return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, place, null) || super.execute(pe, state);
-      }
-    };
+    VariablesProcessor varproc = new VisibleVariablesProcessor(place, prefix, list);
     PsiScopesUtil.treeWalkUp(varproc, place, null);
     return varproc.getResultsAsArray();
+  }
+
+  public static class VisibleVariablesProcessor extends VariablesProcessor {
+    private final Set<String> usedNames = new HashSet<>();
+    private final PsiElement myPlace;
+
+    public VisibleVariablesProcessor(PsiElement place, String _prefix, List<? super PsiVariable> lst) {
+      super(_prefix, true, lst);
+      myPlace = place;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
+      if (pe instanceof PsiVariable) {
+        if (!usedNames.add(((PsiVariable)pe).getName())) {
+          return false;
+        }
+        //exclude variables that are initialized in 'place'
+        final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
+        if (initializer != null && PsiTreeUtil.isAncestor(initializer, myPlace, false)) return true;
+      }
+      return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, myPlace, null) || super.execute(pe, state);
+    }
   }
 }

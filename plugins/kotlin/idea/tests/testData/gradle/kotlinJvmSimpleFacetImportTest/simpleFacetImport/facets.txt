@@ -1,0 +1,15 @@
+MODULES
+project
+
+project.main
+    externalProjectId =
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    targetPlatform = JVM (17)
+
+project.test
+    externalProjectId =
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    additionalVisibleModuleNames = project:main
+    targetPlatform = JVM (17)

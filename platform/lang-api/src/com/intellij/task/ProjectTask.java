@@ -15,15 +15,16 @@
  */
 package com.intellij.task;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * An {@link ProjectTask} represents a single atomic piece of work for IDE workflow, such as 'Make Project' or run configurations.
  *
  * @author Vladislav.Soroka
- * @since 7/13/2016
  */
 public interface ProjectTask {
   @NotNull
+  @Nls
   String getPresentableName();
 }

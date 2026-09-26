@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -24,9 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
 
-public class IdeBorderFactory {
+import static com.intellij.openapi.util.registry.Registry.intValue;
+
+public final class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
   public static final int TITLED_BORDER_TOP_INSET = TitledSeparator.TOP_INSET;
   public static final int TITLED_BORDER_LEFT_INSET = 0;
@@ -53,18 +44,15 @@ public class IdeBorderFactory {
     return new SideBorder(color, borders);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder() {
+  public static @NotNull RoundedLineBorder createRoundedBorder() {
     return createRoundedBorder(BORDER_ROUNDNESS);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize) {
     return new RoundedLineBorder(getBorderColor(), arcSize);
   }
 
-  @NotNull
-  public static RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
+  public static @NotNull RoundedLineBorder createRoundedBorder(int arcSize, final int thickness) {
     return new RoundedLineBorder(getBorderColor(), arcSize, thickness);
   }
 
@@ -73,57 +61,38 @@ public class IdeBorderFactory {
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty()
+   * @deprecated use {@link JBUI.Borders#empty()}
    */
+  @Deprecated
   public static Border createEmptyBorder() {
     return JBUI.Borders.empty();
   }
 
   /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int)
+   * @deprecated use {@link JBUI.Borders#empty(int, int, int, int)}
    */
-  public static Border createEmptyBorder(int thickness) {
-    return JBUI.Borders.empty(thickness);
-  }
-
-  /**
-   * @deprecated
-   * @see JBUI.Borders#empty(int, int, int, int)
-   */
+  @Deprecated
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
     return JBUI.Borders.empty(top, left, bottom, right);
   }
 
-  public static TitledBorder createTitledBorder(String s) {
+  public static TitledBorder createTitledBorder(@NlsContexts.BorderTitle String s) {
     return createTitledBorder(s, true);
   }
 
-  @Deprecated
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    return createTitledBorder(title, hasIndent);
-  }
-
-  @Deprecated
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
+  public static IdeaTitledBorder createTitledBorder(@NlsContexts.BorderTitle String title, boolean hasIndent) {
+    int top = Math.max(0, intValue("ide.titled.border.top", TITLED_BORDER_TOP_INSET));
+    int left = Math.max(0, intValue("ide.titled.border.left", TITLED_BORDER_LEFT_INSET));
+    int right = Math.max(0, intValue("ide.titled.border.right", TITLED_BORDER_RIGHT_INSET));
+    int bottom = Math.max(0, intValue("ide.titled.border.bottom", TITLED_BORDER_BOTTOM_INSET));
+    @SuppressWarnings("UseDPIAwareInsets")
+    Insets insets = new Insets(top, left, bottom, right);
     return createTitledBorder(title, hasIndent, insets);
   }
 
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
-    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
-    return createTitledBorder(title, hasIndent, insets);
-  }
-
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent, Insets insets) {
-    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
+  public static IdeaTitledBorder createTitledBorder(@NlsContexts.BorderTitle String title, boolean hasIndent, Insets insets) {
+    int indent = hasIndent ? Math.max(0, intValue("ide.titled.border.indent", TITLED_BORDER_INDENT)) : 0;
     return new IdeaTitledBorder(title, indent, insets);
-  }
-
-  @Deprecated
-  // Don't remove, used in TeamCity plugin.
-  public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, 10, new Insets(5, 0, 10, 0));
   }
 
   private static Color getBorderColor() {
@@ -131,26 +100,26 @@ public class IdeBorderFactory {
   }
 
 
-  public static class PlainSmallWithIndent {
+  public static final class PlainSmallWithIndent {
     private PlainSmallWithIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsContexts.BorderTitle String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true);
+      return IdeBorderFactory.createTitledBorder(title);
     }
   }
 
-  public static class PlainSmallWithoutIndent {
+  public static final class PlainSmallWithoutIndent {
     private PlainSmallWithoutIndent() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsContexts.BorderTitle String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
@@ -159,12 +128,12 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class PlainSmallWithoutIndentWithoutInsets {
+  public static final class PlainSmallWithoutIndentWithoutInsets {
     private PlainSmallWithoutIndentWithoutInsets() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsContexts.BorderTitle String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,
@@ -173,12 +142,12 @@ public class IdeBorderFactory {
     }
   }
 
-  public static class PlainSmallWithIndentWithoutInsets {
+  public static final class PlainSmallWithIndentWithoutInsets {
     private PlainSmallWithIndentWithoutInsets() {
     }
 
     public static TitledBorder createTitledBorder(Border border,
-                                                  String title,
+                                                  @NlsContexts.BorderTitle String title,
                                                   int titleJustification,
                                                   int titlePosition,
                                                   Font titleFont,

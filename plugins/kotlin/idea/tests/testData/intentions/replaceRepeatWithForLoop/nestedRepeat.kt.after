@@ -1,0 +1,9 @@
+// WITH_STDLIB
+fun foo() {
+    val i = 0
+    for (j in 0..<2) {
+        repeat(3) { k ->
+            println("Nested loop iteration: $j, $k")
+        }
+    }
+}

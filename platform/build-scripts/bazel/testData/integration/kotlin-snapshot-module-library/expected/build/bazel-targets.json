@@ -1,0 +1,36 @@
+{
+  "modules": {
+    "intellij.libraries.kotlinc.analysis.api": {
+      "productionTargets": [
+        "@community//content:libraries-kotlinc-analysis-api.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/content/libraries-kotlinc-analysis-api.jar"
+      ],
+      "testTargets": [
+        "@community//content:libraries-kotlinc-analysis-api_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/content/libraries-kotlinc-analysis-api_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {
+        "kotlinc.analysis-api": {
+          "target": "@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api",
+          "jars": [
+            "external/lib+/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"
+          ],
+          "jarTargets": [
+            "@lib//:kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"
+          ],
+          "sourceJars": []
+        }
+      }
+    }
+  },
+  "imlTargets": [
+    "@community//content:intellij.libraries.kotlinc.analysis.api.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
+}

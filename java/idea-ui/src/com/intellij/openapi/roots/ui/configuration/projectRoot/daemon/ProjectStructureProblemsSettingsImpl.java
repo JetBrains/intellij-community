@@ -19,12 +19,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 
-/**
- * @author nik
- */
 @State(
   name = "ProjectStructureProblems",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
+public final class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
 }

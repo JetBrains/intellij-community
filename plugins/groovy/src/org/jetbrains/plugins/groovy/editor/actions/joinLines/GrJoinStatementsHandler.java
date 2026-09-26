@@ -26,21 +26,21 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 /**
  * @author Max Medvedev
  */
-public class GrJoinStatementsHandler extends GrJoinLinesHandlerBase {
+public final class GrJoinStatementsHandler extends GrJoinLinesHandlerBase {
   @Override
   public int tryJoinStatements(@NotNull GrStatement first, @NotNull GrStatement second) {
     final PsiElement semi = PsiImplUtil.findTailingSemicolon(first);
 
     final Document document = PsiDocumentManager.getInstance(first.getProject()).getDocument(first.getContainingFile());
     if (document == null) return CANNOT_JOIN;
-    final Integer endOffset = second.getTextRange().getStartOffset();
+    final int endOffset = second.getTextRange().getStartOffset();
     if (semi != null) {
-      final Integer offset = semi.getTextRange().getEndOffset();
+      final int offset = semi.getTextRange().getEndOffset();
       document.replaceString(offset, endOffset, " ");
       return offset + 1;
     }
     else {
-      final Integer offset = first.getTextRange().getEndOffset();
+      final int offset = first.getTextRange().getEndOffset();
       document.replaceString(offset, endOffset, "; ");
       return offset + 2;
     }

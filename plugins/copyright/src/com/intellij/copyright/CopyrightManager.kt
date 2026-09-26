@@ -1,42 +1,59 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
-import com.intellij.configurationStore.*
-import com.intellij.openapi.Disposable
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.configurationStore.InitializedSchemeWrapper
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.LazySchemeWrapper
+import com.intellij.configurationStore.OLD_NAME_CONVERTER
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.SchemeManagerIprProvider
+import com.intellij.configurationStore.SchemeWrapper
+import com.intellij.configurationStore.deserializeInto
+import com.intellij.configurationStore.unwrapState
+import com.intellij.configurationStore.wrapState
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.attribute
-import com.intellij.util.element
+import com.intellij.serviceContainer.NonInjectable
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
 import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
-import com.maddyhome.idea.copyright.util.NewFileTracker
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 private const val DEFAULT = "default"
@@ -45,42 +62,105 @@ private const val COPYRIGHT = "copyright"
 private const val ELEMENT = "element"
 private const val MODULE = "module"
 
-private val LOG = Logger.getInstance(CopyrightManager::class.java)
+private val LOG = logger<CopyrightManager>()
 
-@State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
-class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
+abstract class AbstractCopyrightManager {
+
+  internal abstract val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>>
+
+  protected abstract val wrapScheme: Boolean
+
+  protected val schemeWriter = { scheme: CopyrightProfile ->
+    val element = scheme.writeScheme()
+    if (wrapScheme) wrapScheme(element) else element
+  }
+
+  private fun addCopyright(profile: CopyrightProfile) {
+    schemeManager.addScheme(InitializedSchemeWrapper(profile, schemeWriter))
+  }
+
+  fun getCopyrights(): Collection<CopyrightProfile> = schemeManager.allSchemes.map { it.scheme }
+
+  open fun removeCopyright(copyrightProfile: CopyrightProfile) {
+    schemeManager.removeScheme(copyrightProfile.name)
+  }
+
+  fun replaceCopyright(name: String, profile: CopyrightProfile) {
+    val existingScheme = schemeManager.findSchemeByName(name)
+    if (existingScheme == null) {
+      addCopyright(profile)
+    }
+    else {
+      existingScheme.scheme.copyFrom(profile)
+    }
+  }
+}
+
+private val CopyrightProfilesPresentableName = CopyrightBundle.messagePointer("configurable.CopyrightProfilesPanel.display.name")
+
+@Service(Service.Level.APP)
+class IdeCopyrightManager @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : AbstractCopyrightManager() {
+  constructor() : this(SchemeManagerFactory.getInstance())
+
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
+    fun getInstance() = ApplicationManager.getApplication().service<IdeCopyrightManager>()
   }
+
+  override val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>> =
+    schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
+      override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
+
+      override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
+                                name: String,
+                                attributeProvider: (String) -> String?,
+                                isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
+        return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
+      }
+
+    }, settingsCategory = SettingsCategory.CODE, presentableName = CopyrightProfilesPresentableName.get())
+
+  init {
+    schemeManager.loadSchemes()
+  }
+
+  override val wrapScheme: Boolean = true
+}
+
+@State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
+class CopyrightManager @NonInjectable constructor(private val project: Project,
+                                                  schemeManagerFactory: SchemeManagerFactory,
+                                                  private val ideManager: IdeCopyrightManager,
+                                                  isSupportIprProjects: Boolean = true) : AbstractCopyrightManager(), PersistentStateComponent<Element> {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<CopyrightManager>()
+  }
+
+  constructor(project: Project) : this(project, SchemeManagerFactory.getInstance(project), IdeCopyrightManager.getInstance())
 
   private var defaultCopyrightName: String? = null
 
   var defaultCopyright: CopyrightProfile?
-    get() = defaultCopyrightName?.let { schemeManager.findSchemeByName(it)?.scheme }
+    get() = defaultCopyrightName?.let { schemeManager.findSchemeByName(it)?.scheme ?: ideManager.schemeManager.findSchemeByName(it)?.scheme }
     set(value) {
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
-  val options: Options = Options()
-
-  private val schemeWriter = { scheme: CopyrightProfile ->
-    val element = scheme.writeScheme()
-    if (project.isDirectoryBased) wrapScheme(element) else element
-  }
+  val scopeToCopyright = LinkedHashMap<String, String>()
+  val options = Options()
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased || !isSupportIprProjects) null else SchemeManagerIprProvider("copyright")
 
-  private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
+  override val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>> = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
 
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+    override fun isSchemeFile(name: CharSequence): Boolean = !StringUtil.equals(name, "profiles_settings.xml")
 
     override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
       val schemeKey = super.getSchemeKey(attributeProvider, fileNameWithoutExtension)
@@ -90,7 +170,10 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       LOG.warn("Name is not specified for scheme $fileNameWithoutExtension, file name will be used instead")
       return fileNameWithoutExtension
     }
-  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
+  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider, presentableName = CopyrightProfilesPresentableName.get())
+
+  override val wrapScheme: Boolean
+    get() = project.isDirectoryBased
 
   init {
     val app = ApplicationManager.getApplication()
@@ -117,6 +200,16 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
     return defaultCopyrightName != null || !scopeToCopyright.isEmpty()
   }
 
+  override fun removeCopyright(copyrightProfile: CopyrightProfile) {
+    super.removeCopyright(copyrightProfile)
+    val it = scopeToCopyright.keys.iterator()
+    while (it.hasNext()) {
+      if (scopeToCopyright.get(it.next()) == copyrightProfile.name) {
+        it.remove()
+      }
+    }
+  }
+
   override fun getState(): Element? {
     val result = Element("settings")
     try {
@@ -125,9 +218,11 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       if (!scopeToCopyright.isEmpty()) {
         val map = Element(MODULE_TO_COPYRIGHT)
         for ((scopeName, profileName) in scopeToCopyright) {
-          map.element(ELEMENT)
-              .attribute(MODULE, scopeName)
-              .attribute(COPYRIGHT, profileName)
+          val e = Element(ELEMENT)
+          e
+            .setAttribute(MODULE, scopeName)
+            .setAttribute(COPYRIGHT, profileName)
+          map.addContent(e)
         }
         result.addContent(map)
       }
@@ -163,35 +258,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
     }
   }
 
-  private fun addCopyright(profile: CopyrightProfile) {
-    schemeManager.addScheme(InitializedSchemeWrapper(profile, schemeWriter))
-  }
-
-  fun getCopyrights(): Collection<CopyrightProfile> = schemeManager.allSchemes.map { it.scheme }
-
   fun clearMappings() {
     scopeToCopyright.clear()
-  }
-
-  fun removeCopyright(copyrightProfile: CopyrightProfile) {
-    schemeManager.removeScheme(copyrightProfile.name)
-
-    val it = scopeToCopyright.keys.iterator()
-    while (it.hasNext()) {
-      if (scopeToCopyright.get(it.next()) == copyrightProfile.name) {
-        it.remove()
-      }
-    }
-  }
-
-  fun replaceCopyright(name: String, profile: CopyrightProfile) {
-    val existingScheme = schemeManager.findSchemeByName(name)
-    if (existingScheme == null) {
-      addCopyright(profile)
-    }
-    else {
-      existingScheme.scheme.copyFrom(profile)
-    }
   }
 
   fun getCopyrightOptions(file: PsiFile): CopyrightProfile? {
@@ -200,53 +268,104 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       return null
     }
 
-    val validationManager = DependencyValidationManager.getInstance(project)
+    val validationManager = DependencyValidationManager.getInstance(file.project)
     for (scopeName in scopeToCopyright.keys) {
       val packageSet = validationManager.getScope(scopeName)?.value ?: continue
       if (packageSet.contains(file, validationManager)) {
-        scopeToCopyright.get(scopeName)?.let { schemeManager.findSchemeByName(it) }?.let { return it.scheme }
+        scopeToCopyright.get(scopeName)?.let { schemeManager.findSchemeByName(it) ?: ideManager.schemeManager.findSchemeByName(it)} ?.let { return it.scheme }
       }
     }
     return defaultCopyright
   }
 }
 
-private class CopyrightManagerPostStartupActivity : StartupActivity {
-  val newFileTracker = NewFileTracker()
+private val copyrightUpdateDisabled = mutableSetOf<Project>()
 
-  override fun runActivity(project: Project) {
-    Disposer.register(project, Disposable { newFileTracker.clear() })
+@ApiStatus.Internal
+suspend fun withCopyrightUpdateDisabled(project: Project, action: suspend () -> Unit) {
+  copyrightUpdateDisabled.add(project)
+  try {
+    action()
+  }
+  finally {
+    copyrightUpdateDisabled.remove(project)
+  }
+}
 
+private class CopyrightManagerDocumentListener : BulkFileListenerBackgroundable {
+  private val newFilePaths = ConcurrentCollectionFactory.createConcurrentSet<String>()
+
+  private val isDocumentListenerAdded = AtomicBoolean()
+
+  override fun after(events: List<VFileEvent>) {
+    for (event in events) {
+      if (event.isFromRefresh) {
+        continue
+      }
+
+      if (event is VFileCreateEvent || event is VFileMoveEvent) {
+        newFilePaths.add(event.path)
+        if (isDocumentListenerAdded.compareAndSet(false, true)) {
+          addDocumentListener()
+        }
+      }
+    }
+  }
+
+  private fun addDocumentListener() {
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
-        val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
-        val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-        if (!newFileTracker.poll(virtualFile) ||
-            !FileTypeUtil.getInstance().isSupportedFile(virtualFile) ||
-            PsiManager.getInstance(project).findFile(virtualFile) == null) {
+        if (newFilePaths.isEmpty()) {
           return
         }
 
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          if (!virtualFile.isValid) {
-            return@Runnable
+        val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
+        if (!newFilePaths.remove(virtualFile.path)) {
+          return
+        }
+
+        val projectManager = serviceIfCreated<ProjectManager>() ?: return
+        for (project in projectManager.openProjects) {
+          if (project.isDisposed || copyrightUpdateDisabled.contains(project)) {
+            continue
           }
 
-          val file = PsiManager.getInstance(project).findFile(virtualFile)
-          if (file != null && file.isWritable) {
-            CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
-              UpdateCopyrightProcessor(project, module, file).run()
-            }
-          }
-        }, ModalityState.NON_MODAL, project.disposed)
+          handleEvent(virtualFile, project)
+        }
       }
-    }, project)
+    }, FileTypeUtil.getInstance())
+  }
+
+  private fun handleEvent(virtualFile: VirtualFile, project: Project) {
+    val copyrightManager = CopyrightManager.getInstance(project)
+    if (!copyrightManager.hasAnyCopyrights()) return
+
+    val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
+    if (!FileTypeUtil.isSupportedFile(virtualFile)) {
+      return
+    }
+
+    val file = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+
+    if (!file.isWritable) {
+      return
+    }
+
+    copyrightManager.getCopyrightOptions(file) ?: return
+
+    AppUIExecutor.onUiThread(ModalityState.nonModal()).later().withDocumentsCommitted(project).execute {
+      if (project.isDisposed || !file.isValid) {
+        return@execute
+      }
+
+      UpdateCopyrightProcessor(project, module, file).run()
+    }
   }
 }
 
 private fun wrapScheme(element: Element): Element {
   val wrapper = Element("component")
-      .attribute("name", "CopyrightManager")
+      .setAttribute("name", "CopyrightManager")
   wrapper.addContent(element)
   return wrapper
 }

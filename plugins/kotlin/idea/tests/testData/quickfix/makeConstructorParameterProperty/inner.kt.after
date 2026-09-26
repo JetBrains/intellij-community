@@ -1,0 +1,12 @@
+// "Make constructor parameter a property in class 'B'" "true"
+// K2_ERROR: UNRESOLVED_REFERENCE
+
+class B(<selection>private<caret></selection> val bar: String) {
+
+    inner class A {
+        fun foo() {
+            val a = bar
+        }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeConstructorParameterPropertyFix

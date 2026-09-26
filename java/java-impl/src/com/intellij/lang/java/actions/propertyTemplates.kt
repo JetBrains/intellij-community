@@ -1,10 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiTypeElement
 
-internal const val FIELD_VARIABLE = "FIELD_NAME_VARIABLE"
-internal const val SETTER_PARAM_NAME = "SETTER_PARAM_NAME"
+internal const val FIELD_VARIABLE: String = "FIELD_NAME_VARIABLE"
+internal const val SETTER_PARAM_NAME: String = "SETTER_PARAM_NAME"
 
 internal interface AccessorTemplateData {
   val fieldRef: PsiElement

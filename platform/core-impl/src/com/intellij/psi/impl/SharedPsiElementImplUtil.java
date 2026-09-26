@@ -1,27 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,14 +22,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class SharedPsiElementImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.SharedPsiElementImplUtil");
+public final class SharedPsiElementImplUtil {
+  private static final Logger LOG = Logger.getInstance(SharedPsiElementImplUtil.class);
 
-  private SharedPsiElementImplUtil() {
-  }
+  private SharedPsiElementImplUtil() { }
 
-  @Nullable
-  public static PsiReference findReferenceAt(PsiElement thisElement, int offset, @Nullable Language lang) {
+  public static @Nullable PsiReference findReferenceAt(PsiElement thisElement, int offset, @Nullable Language lang) {
     if (thisElement == null) return null;
     PsiElement element = lang != null ? thisElement.getContainingFile().getViewProvider().findElementAt(offset, lang) :
                          thisElement.findElementAt(offset);
@@ -62,19 +52,18 @@ public class SharedPsiElementImplUtil {
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 
-  @Nullable
-  public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
+  public static @Nullable PsiReference findReferenceAt(PsiElement thisElement, int offset) {
     return findReferenceAt(thisElement, offset, null);
   }
 
-  private static void addReferences(int offset, PsiElement element, final Collection<? super PsiReference> outReferences) {
+  private static void addReferences(int offset, PsiElement element, Collection<? super PsiReference> outReferences) {
     PsiReference[] references;
     if (element instanceof HintedReferenceHost) {
       references = ((HintedReferenceHost)element).getReferences(new PsiReferenceService.Hints(null, offset));
     } else {
       references = element.getReferences();
     }
-    for (final PsiReference reference : references) {
+    for (PsiReference reference : references) {
       if (reference == null) {
         LOG.error("Null reference returned from " + element + " of " + element.getClass());
         continue;
@@ -88,54 +77,49 @@ public class SharedPsiElementImplUtil {
     }
   }
 
-  @NotNull
-  public static PsiReference[] getReferences(PsiElement thisElement) {
+  public static PsiReference @NotNull [] getReferences(PsiElement thisElement) {
     PsiReference ref = thisElement.getReference();
-    if (ref == null) return PsiReference.EMPTY_ARRAY;
-    return new PsiReference[]{ref};
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static PsiElement getNextSibling(PsiElement element) {
+  public static @Nullable PsiElement getNextSibling(PsiElement element) {
     if (element instanceof PsiFile) {
-      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());
     }
     if (element == null) return null;
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
     if (parent == null) return null;
 
-    final PsiElement[] children = parent.getChildren();
-    final int index = getChildIndex(children, element);
+    PsiElement[] children = parent.getChildren();
+    int index = getChildIndex(children, element);
     return 0 <= index && index < children.length - 1 ? children[index + 1] : null;
   }
 
-  @Nullable
-  public static PsiElement getPrevSibling(PsiElement element) {
+  public static @Nullable PsiElement getPrevSibling(PsiElement element) {
     if (element instanceof PsiFile) {
-      final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
+      FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());
     }
     if (element == null) return null;
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
     if (parent == null) return null;
 
-    final PsiElement[] children = parent.getChildren();
-    final int index = getChildIndex(children, element);
+    PsiElement[] children = parent.getChildren();
+    int index = getChildIndex(children, element);
     return index > 0 ? children[index - 1] : null;
   }
 
-  private static int getChildIndex(final PsiElement[] children, final PsiElement child) {
-    for (int i = 0; i < children.length; i++) {
-      PsiElement candidate = children[i];
-      // do not use equals() since some smart-heads are used to override it (e.g. JspxImportStatementImpl)
-      if (candidate == child) {
-        return i;
-      }
+  private static int getChildIndex(PsiElement[] children, PsiElement child) {
+    // do not use equals() since some smart-heads are used to override it (e.g. JspxImportStatementImpl)
+    int i = ArrayUtil.indexOfIdentity(children, child);
+    if (i != -1) {
+      return i;
     }
+    PsiElement parent = child.getParent();
     LOG.error("Cannot find element among its parent' children." +
-              " element: '" + child + "';" +
-              " parent: '" + child.getParent() + "';" +
+              " element: '" + child + "'" + " isPhysical=" + child.isPhysical() + " isValid=" + child.isValid() + ";" +
+              " parent: '" + parent + "'" + " isPhysical=" + parent.isPhysical() + " isValid=" + parent.isValid() + ";" +
               " children: " + Arrays.asList(children) + "; " +
               " file:" + child.getContainingFile());
     return -1;

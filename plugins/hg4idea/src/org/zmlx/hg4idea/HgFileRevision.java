@@ -29,8 +29,8 @@ import java.util.Set;
 public class HgFileRevision implements VcsFileRevision {
 
   private final Project myProject;
-  @NotNull private final HgFile myFile;
-  @NotNull private final HgRevisionNumber myRevisionNumber;
+  private final @NotNull HgFile myFile;
+  private final @NotNull HgRevisionNumber myRevisionNumber;
   private final String myBranchName;
   private final Date myRevisionDate;
   private final String myAuthor;
@@ -56,61 +56,59 @@ public class HgFileRevision implements VcsFileRevision {
     myFilesMoved = filesMoved;
   }
 
-  @NotNull
-  public HgRevisionNumber getRevisionNumber() {
+  @Override
+  public @NotNull HgRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return myBranchName;
   }
 
-  @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public @Nullable RepositoryLocation getChangedRepositoryPath() {
     return null;
   }
 
+  @Override
   public Date getRevisionDate() {
     return myRevisionDate;
   }
 
-  @Nullable
-  public String getAuthor() {
+  @Override
+  public @Nullable String getAuthor() {
     return myAuthor;
   }
 
-  @Nullable
-  public String getCommitMessage() {
+  @Override
+  public @Nullable String getCommitMessage() {
     return myCommitMessage;
   }
 
-  @NotNull
-  public Set<String> getModifiedFiles() {
+  public @NotNull Set<String> getModifiedFiles() {
     return myFilesModified;
   }
 
-  @NotNull
-  public Set<String> getAddedFiles() {
+  public @NotNull Set<String> getAddedFiles() {
     return myFilesAdded;
   }
 
-  @NotNull
-  public Set<String> getDeletedFiles() {
+  public @NotNull Set<String> getDeletedFiles() {
     return myFilesDeleted;
   }
 
-  @NotNull
-  public Map<String, String> getMovedFiles() {
+  public @NotNull Map<String, String> getMovedFiles() {
     return myFilesMoved;
   }
 
-  @NotNull
-  public byte[] loadContent() {
+  @Override
+  public byte @NotNull [] loadContent() {
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
     return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
+  @Override
   public byte[] getContent() throws IOException, VcsException {
     return loadContent();
   }

@@ -1,0 +1,51 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.console;
+
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.actions.PyExecuteInConsole;
+import com.jetbrains.python.icons.PythonIcons;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+@ApiStatus.Internal
+public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware {
+
+  public RunPythonOrDebugConsoleAction() {
+    super();
+    getTemplatePresentation().setIcon(PythonIcons.Python.PythonConsole);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(false);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project != null) {
+      // Blocking is allowed here: getActionUpdateThread names BGT, and choosing the interpreter waits for the
+      // project model rather than answering null while the SDK table still loads.
+      boolean hasInterpreter = PythonConsoleStarter.hasPythonConsoleInterpreter(project, e.getData(PlatformCoreDataKeys.MODULE));
+      PythonConsoleStarter.setConsoleInterpreterState(
+        e.getPresentation(), hasInterpreter,
+        PyBundle.message("python.console.no.interpreter.project"), getTemplatePresentation().getDescription());
+    }
+  }
+
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+    PyExecuteInConsole.executeCodeInConsole(project, (String)null, null, true, true, true, null);
+  }
+}

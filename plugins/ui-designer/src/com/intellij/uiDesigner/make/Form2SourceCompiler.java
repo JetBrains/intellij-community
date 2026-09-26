@@ -1,42 +1,42 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
-import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.SourceInstrumentingCompiler;
+import com.intellij.openapi.compiler.TimestampValidityState;
+import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.DataInput;
 import java.io.File;
@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
@@ -66,36 +68,42 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return containingFile.getVirtualFile();
   }
 
-  @NotNull
-  public String getDescription() {
+  @Override
+  public @NotNull String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
 
-  public boolean validateConfiguration(CompileScope scope) {
-    return true;
-  }
-
-  @NotNull
-  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+  @Override
+  public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
-    if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
+    GuiDesignerConfiguration designerConfiguration = GuiDesignerConfiguration.getInstance(project);
+
+    if (designerConfiguration.INSTRUMENT_CLASSES || designerConfiguration.GENERATE_SOURCES_ON_SAVE) {
       return ProcessingItem.EMPTY_ARRAY;
     }
+
+    final boolean generateFinalFields = designerConfiguration.GENERATE_SOURCES_FINAL_FIELDS;
 
     final ArrayList<ProcessingItem> items = new ArrayList<>();
     DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       final CompileScope scope = context.getCompileScope();
       final CompileScope projectScope = context.getProjectCompileScope();
 
-      final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+      final VirtualFile[] formFiles = projectScope.getFiles(GuiFormFileType.INSTANCE, true);
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       final BindingsCache bindingsCache = new BindingsCache(project);
+
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(context.getProject());
 
       try {
         final HashMap<String, VirtualFile> class2form = new HashMap<>();
 
         for (final VirtualFile formFile : formFiles) {
           if (compilerManager.isExcludedFromCompilation(formFile)) {
+            continue;
+          }
+
+          if (!fileIndex.isUnderSourceRootOfType(formFile, Set.of(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
             continue;
           }
 
@@ -113,6 +121,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
 
           if (classToBind == null) {
+            addError(context, new FormErrorInfo(null, "Form is unbound"), formFile);
             continue;
           }
 
@@ -121,6 +130,11 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             if (scope.belongs(formFile.getUrl())) {
               addError(context, new FormErrorInfo(null, UIDesignerBundle.message("error.class.to.bind.does.not.exist", classToBind)), formFile);
             }
+            continue;
+          }
+
+          if (!FileTypeManager.getInstance().isFileOfType(sourceFile, JavaFileType.INSTANCE)) {
+            addError(context, new FormErrorInfo(null, "Source file '" + sourceFile + "'must be JAVA"), formFile);
             continue;
           }
 
@@ -139,7 +153,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
             continue;
           }
 
-          items.add(new MyInstrumentationItem(sourceFile, formFile));
+          items.add(new MyInstrumentationItem(sourceFile, formFile, generateFinalFields));
         }
       }
       finally {
@@ -150,7 +164,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     return items.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
+  @Override
+  public ProcessingItem[] process(final @NotNull CompileContext context, final ProcessingItem @NotNull [] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
@@ -158,7 +173,6 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     int formsProcessed = 0;
 
     final Project project = context.getProject();
-    final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project);
 
     final HashSet<Module> processedModules = new HashSet<>();
 
@@ -171,7 +185,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final VirtualFile formFile = item.getFormFile();
 
       if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
-        ApplicationManager.getApplication().runReadAction(() -> {
+        ReadAction.runBlocking(() -> {
           final Module module = ModuleUtilCore.findModuleForFile(formFile, project);
           if (module != null && !processedModules.contains(module)) {
             processedModules.add(module);
@@ -189,7 +203,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               addError(
                 context,
                 new FormErrorInfo(null, UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime",
-                                         module.getName(), e.toString())),
+                                                                 module.getName(), e.toString())),
                 null
               );
             }
@@ -200,9 +214,11 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       ApplicationManager.getApplication().invokeAndWait(() -> {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+          final FormSourceCodeGenerator generator = new FormSourceCodeGenerator(project, item.generateFinalFields());
           generator.generate(formFile);
           final ArrayList<FormErrorInfo> errors = generator.getErrors();
-          if (errors.size() == 0) {
+          if (errors.isEmpty()) {
             compiledItems.add(item);
           }
           else {
@@ -212,42 +228,55 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
         }), "", null);
         FileDocumentManager.getInstance().saveAllDocuments();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
-    CompilerUtil.refreshIOFiles(filesToRefresh);
+    if (!filesToRefresh.isEmpty()) {
+      RefreshQueue.getInstance().refreshPaths(false, false, null, ContainerUtil.map(filesToRefresh, File::toPath));
+    }
+
     return compiledItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   private static void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {
+    @NlsSafe String message = e.getErrorMessage();
     if (formFile != null) {
       FormElementNavigatable navigatable = new FormElementNavigatable(context.getProject(), formFile, e.getComponentId());
       context.addMessage(CompilerMessageCategory.ERROR,
-                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(), 
+                         formFile.getPresentableUrl() + ": " + message,
                          formFile.getUrl(), -1, -1, navigatable);
     }
     else {
-      context.addMessage(CompilerMessageCategory.ERROR, e.getErrorMessage(), null, -1, -1);
+      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
     }
   }
 
+  @Override
   public ValidityState createValidityState(final DataInput in) throws IOException {
     return TimestampValidityState.load(in);
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {
-    @NotNull private final VirtualFile mySourceFile;
+    // increment it every time you want files to be regenerated
+    // i.e. on generation logic change
+    private static final long TIMESTAMP_BASE = 3;
+
+    private final @NotNull VirtualFile mySourceFile;
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
+    private final boolean myGenerateFinalFields;
 
-    public MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
+    MyInstrumentationItem(final @NotNull VirtualFile sourceFile, final VirtualFile formFile, boolean generateFinalFields) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
-      myState = new TimestampValidityState(formFile.getTimeStamp());
+      myGenerateFinalFields = generateFinalFields;
+
+      long hash = Objects.hash(formFile.getTimeStamp(), sourceFile.getTimeStamp(), myGenerateFinalFields, TIMESTAMP_BASE);
+      myState = new TimestampValidityState(hash);
     }
 
-    @NotNull
-    public VirtualFile getFile() {
+    @Override
+    public @NotNull VirtualFile getFile() {
       return mySourceFile;
     }
 
@@ -255,9 +284,13 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       return myFormFile;
     }
 
+    @Override
     public ValidityState getValidityState() {
       return myState;
     }
-  }
 
+    public boolean generateFinalFields() {
+      return myGenerateFinalFields;
+    }
+  }
 }

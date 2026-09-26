@@ -1,0 +1,9 @@
+// "Remove 'out' modifier" "true"
+// K2_ERROR: PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
+fun <T> foo(x : T) {}
+
+fun bar() {
+    foo<<caret>out Int>(44)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

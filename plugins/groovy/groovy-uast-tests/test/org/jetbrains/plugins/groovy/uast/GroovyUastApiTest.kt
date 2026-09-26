@@ -3,10 +3,15 @@
  */
 package org.jetbrains.plugins.groovy.uast
 
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import junit.framework.TestCase
-import org.jetbrains.uast.*
-import org.jetbrains.uast.test.env.findElementByText
-import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.getValueIfStringLiteral
+import org.jetbrains.uast.isStringLiteral
 import org.junit.Test
 
 class GroovyUastApiTest : AbstractGroovyUastTest() {

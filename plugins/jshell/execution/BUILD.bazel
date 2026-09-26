@@ -1,0 +1,57 @@
+load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `local-libs` start
+java_import(
+    name = "java-jshell-execution-jshell-frontend",
+    jars = ["jshell-frontend.jar"],
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    [
+        "jshell-frontend.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `local-libs` end
+
+### auto-generated section `build intellij.java.jshell.execution` start
+jvm_library(
+    name = "execution",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.execution",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
+)
+
+jvm_library(
+    name = "execution_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.execution",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":execution"],
+)
+### auto-generated section `build intellij.java.jshell.execution` end
+
+### auto-generated section `iml intellij.java.jshell.execution` start
+exports_files(
+    [
+        "intellij.java.jshell.execution.iml",
+        "resources/intellij.java.jshell.execution.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jshell.execution` end

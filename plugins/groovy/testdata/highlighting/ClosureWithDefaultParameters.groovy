@@ -49,8 +49,4 @@ bar('aa', null, 'cc', 'dd', 'ee')
 bar('aa', null, 1, 'cc', 'dd', 'ee', 'f', 'g')
 
 bar('a', 'cc', 'dd', 'ee')
-bar<warning descr="'bar' cannot be applied to '(java.lang.String, java.lang.Integer, java.lang.String, java.lang.String, java.lang.String)'">('a', - 1, 'cc', 'dd', 'ee')</warning>
-
-def go(String a, String b = 'b', String c, int ... i) {}
-
-go('a', 'c', 1, 2, 3);
+bar<warning descr="'call' cannot be applied to '(java.lang.String, java.lang.Integer, java.lang.String, java.lang.String, java.lang.String)'">('a', - 1, 'cc', 'dd', 'ee')</warning>

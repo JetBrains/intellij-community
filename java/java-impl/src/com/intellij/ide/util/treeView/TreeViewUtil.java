@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
@@ -21,18 +7,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
 /**
  * @author Eugene Zhuravlev
  */
-public class TreeViewUtil {
+public final class TreeViewUtil {
   private static final int SUBPACKAGE_LIMIT = 2;
   private static final Key<ConcurrentMap<PsiPackage,Boolean>> SHOULD_ABBREV_PACK_KEY = Key.create("PACK_ABBREV_CACHE");
 
@@ -43,7 +35,12 @@ public class TreeViewUtil {
       final ConcurrentMap<PsiPackage, Boolean> newMap = ContainerUtil.createConcurrentWeakMap();
       map = ((UserDataHolderEx)project).putUserDataIfAbsent(SHOULD_ABBREV_PACK_KEY, newMap);
       if (map == newMap) {
-        PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnChange(() -> newMap.clear());
+        project.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+          @Override
+          public void beforePsiChanged(boolean isPhysical) {
+            if (isPhysical) newMap.clear();
+          }
+        });
       }
     }
 
@@ -68,8 +65,7 @@ public class TreeViewUtil {
     return false;
   }
 
-  @NotNull
-  public static String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
+  public static @NotNull String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
     final StringBuilder name = new StringBuilder(aPackage.getName());
     for (PsiPackage parentPackage = aPackage.getParentPackage(); parentPackage != null; parentPackage = parentPackage.getParentPackage()) {
       final String packageName = parentPackage.getName();
@@ -78,7 +74,7 @@ public class TreeViewUtil {
       }
       name.insert(0, ".");
       if (packageName.length() > 2 && shouldAbbreviateName(parentPackage)) {
-        name.insert(0, packageName.substring(0, 1));
+        name.insert(0, packageName.charAt(0));
       }
       else {
         name.insert(0, packageName);

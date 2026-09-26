@@ -1,0 +1,13 @@
+com/intellij/platform/icons/rendering/BitmapImageResource
+com/intellij/platform/icons/rendering/DrawMode
+com/intellij/platform/icons/rendering/LayerPaintingContext
+com/intellij/platform/icons/rendering/MutableIconUpdateFlow
+com/intellij/platform/icons/rendering/ScalingContext
+com/intellij/ui/icons/CachedImageIcon
+com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlinx/serialization/descriptors/SerialDescriptor
+kotlinx/serialization/encoding/Decoder
+kotlinx/serialization/encoding/Encoder
+kotlinx/serialization/internal/GeneratedSerializer
+kotlinx/serialization/modules/SerializersModuleBuilder

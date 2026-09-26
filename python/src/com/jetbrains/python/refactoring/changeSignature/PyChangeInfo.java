@@ -85,9 +85,8 @@ public class PyChangeInfo implements ChangeInfo {
   public PyFunction getMethod() {
     return myFunction;
   }
-  @NotNull
   @Override
-  public PyParameterInfo[] getNewParameters() {
+  public PyParameterInfo @NotNull [] getNewParameters() {
     return myNewParameterInfo;
   }
 

@@ -3,4 +3,4 @@ bar
 -----
 Groovy script
   Literal
-    PsiElement(string)(''''foo''\nbar')
+    PsiElement(triple single quoted string)(''''foo''\nbar')

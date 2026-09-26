@@ -1,0 +1,11 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_incrementalJvmCompilerOnly_inlineFunctionRegeneratedObjectStability-a.kotlin_module
+  inline1/BKt$h$$inlined$root$1.class
+  inline1/BKt.class
+End of files
+Compiling files:
+  kotlin/incrementalJvmCompilerOnly/inlineFunctionRegeneratedObjectStability/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

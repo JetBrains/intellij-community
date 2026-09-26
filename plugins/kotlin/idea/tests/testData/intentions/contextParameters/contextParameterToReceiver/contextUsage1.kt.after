@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+
+fun String.foo() {
+}
+
+context(c1: String)
+fun bar() {
+    c1.foo()
+}

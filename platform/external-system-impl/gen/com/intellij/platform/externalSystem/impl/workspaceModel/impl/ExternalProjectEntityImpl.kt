@@ -1,0 +1,142 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
+package com.intellij.platform.externalSystem.impl.workspaceModel.impl
+
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import org.jetbrains.annotations.ApiStatus.Internal
+
+@Internal
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(7)
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ExternalProjectEntityImpl(private val dataSource: ExternalProjectEntityData) : ExternalProjectEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
+  override val symbolicId: ExternalProjectEntityId = super.symbolicId
+
+  override val externalProjectPath: String
+    get() {
+      readField("externalProjectPath")
+      return dataSource.externalProjectPath
+    }
+  override val entitySource: EntitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
+
+  override fun connectionIdList(): List<ConnectionId> {
+    return emptyList()
+  }
+
+  internal class Builder(result: ExternalProjectEntityData?) :
+    ModifiableWorkspaceEntityBase<ExternalProjectEntity, ExternalProjectEntityData>(result), ExternalProjectEntityBuilder {
+    internal constructor() : this(ExternalProjectEntityData())
+
+    override fun checkInitialization() {
+      val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
+      if (!getEntityData().isExternalProjectPathInitialized()) {
+        error("Field ExternalProjectEntity#externalProjectPath should be initialized")
+      }
+    }
+
+    override fun connectionIdList(): List<ConnectionId> {
+      return emptyList()
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ExternalProjectEntity
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalProjectPath != dataSource.externalProjectPath) this.externalProjectPath = dataSource.externalProjectPath
+      updateChildToParentReferences(parents)
+    }
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).entitySource = value
+        changedProperty.add("entitySource")
+      }
+    override var externalProjectPath: String
+      get() = getEntityData().externalProjectPath
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).externalProjectPath = value
+        changedProperty.add("externalProjectPath")
+      }
+
+    override fun getEntityClass(): Class<ExternalProjectEntity> = ExternalProjectEntity::class.java
+  }
+}
+
+@OptIn(WorkspaceEntityInternalApi::class)
+internal class ExternalProjectEntityData : WorkspaceEntityData<ExternalProjectEntity>() {
+  lateinit var externalProjectPath: String
+  internal fun isExternalProjectPathInitialized(): Boolean = ::externalProjectPath.isInitialized
+  override fun newInstance(): ExternalProjectEntity = ExternalProjectEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ExternalProjectEntity, *> = ExternalProjectEntityImpl.Builder(null)
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity") as EntityMetadata
+  }
+
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return ExternalProjectEntity::class.java
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
+    return ExternalProjectEntity(externalProjectPath, entitySource)
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ExternalProjectEntityData
+    if (this.entitySource != other.entitySource) return false
+    if (this.externalProjectPath != other.externalProjectPath) return false
+    return true
+  }
+
+  override fun equalsIgnoringEntitySource(other: Any?): Boolean {
+    if (other == null) return false
+    if (this.javaClass != other.javaClass) return false
+    other as ExternalProjectEntityData
+    if (this.externalProjectPath != other.externalProjectPath) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = entitySource.hashCode()
+    result = 31 * result + externalProjectPath.hashCode()
+    return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + externalProjectPath.hashCode()
+    return result
+  }
+}

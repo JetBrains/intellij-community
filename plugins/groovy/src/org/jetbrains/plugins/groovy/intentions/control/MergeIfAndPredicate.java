@@ -27,10 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 class MergeIfAndPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrIfStatement)) {
+    if (!(element instanceof GrIfStatement ifStatement)) {
       return false;
     }
-    final GrIfStatement ifStatement = (GrIfStatement) element;
     if (ErrorUtil.containsError(ifStatement)) {
       return false;
     }
@@ -39,7 +38,7 @@ class MergeIfAndPredicate implements PsiElementPredicate {
       return false;
     }
     thenBranch = ConditionalUtils.stripBraces(thenBranch);
-    if (!(thenBranch instanceof GrIfStatement)) {
+    if (!(thenBranch instanceof GrIfStatement childIfStatement)) {
       return false;
     }
     GrStatement elseBranch = ifStatement.getElseBranch();
@@ -49,8 +48,6 @@ class MergeIfAndPredicate implements PsiElementPredicate {
         return false;
       }
     }
-
-    final GrIfStatement childIfStatement = (GrIfStatement) thenBranch;
 
     return childIfStatement.getElseBranch() == null;
   }

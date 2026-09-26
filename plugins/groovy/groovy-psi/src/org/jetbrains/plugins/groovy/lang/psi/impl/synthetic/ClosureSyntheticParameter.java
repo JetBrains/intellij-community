@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +22,10 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 
-/**
- * @author ven
- */
-public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
+import java.util.Objects;
+import java.util.function.Function;
+
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement, SyntheticElement {
   private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
     if (typeGroovy instanceof PsiIntersectionType) {
@@ -44,34 +34,50 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
     return typeGroovy;
   };
 
-  private final GrClosableBlock myClosure;
+  private final SmartPsiElementPointer<GrClosableBlock> myClosure;
 
-  public ClosureSyntheticParameter(GrClosableBlock closure, boolean isOptional) {
+  public ClosureSyntheticParameter(@NotNull GrClosableBlock closure, boolean isOptional) {
     super(GrClosableBlock.IT_PARAMETER_NAME, TypesUtil.getJavaLangObject(closure), closure);
     setOptional(isOptional);
-    myClosure = closure;
+    myClosure = SmartPointerManager.createPointer(closure);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return myClosure.getElement();
+  }
+
+  @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    GrClosableBlock block = myClosure.getElement();
+    if (block == null) {
+      throw new IllegalStateException("No parent closure");
+    }
+    return new ClosureSyntheticParameter(PsiTreeUtil.findSameElementInCopy(block, copy), isOptional());
   }
 
   @Override
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
       GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);
-      myClosure.addParameter(parameter);
+      GrClosableBlock closure = myClosure.getElement();
+      if (closure == null) {
+        throw new IncorrectOperationException("Invalidated element pointer");
+      }
+      closure.addParameter(parameter);
     }
     return this;
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     assert isValid();
 
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   @Override
-  @Nullable
-  public PsiType getDeclaredType() {
+  public @Nullable PsiType getDeclaredType() {
     return null;
   }
 
@@ -81,12 +87,42 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
-    return new LocalSearchScope(myClosure);
+  public @NotNull SearchScope getUseScope() {
+    GrClosableBlock closure = myClosure.getElement();
+    if (closure == null) {
+      throw new IncorrectOperationException("Pointer is invalidated");
+    }
+    return new LocalSearchScope(closure);
+  }
+
+  public boolean isStillValid() {
+    return myClosure.getElement() != null;
   }
 
   public GrClosableBlock getClosure() {
-    return myClosure;
+    GrClosableBlock closure = myClosure.getElement();
+    if (closure == null) {
+      throw new IncorrectOperationException("Pointer is invalidated");
+    }
+    return closure;
+  }
+
+  @Override
+  public @NotNull PsiElement getDeclarationScope() {
+    GrClosableBlock smartClosure = myClosure.getElement();
+    return smartClosure != null ? smartClosure : super.getDeclarationScope();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ClosureSyntheticParameter parameter)) return false;
+    // Closure parameter is uniquely identified by the closure itself
+    return Objects.equals(myClosure, parameter.myClosure);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), myClosure);
   }
 }

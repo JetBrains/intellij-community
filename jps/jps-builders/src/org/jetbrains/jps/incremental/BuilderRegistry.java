@@ -1,44 +1,40 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtilRt;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.io.File;
 import java.io.FileFilter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class BuilderRegistry {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.BuilderRegistry");
-  private static class Holder {
+public final class BuilderRegistry {
+  private static final Logger LOG = Logger.getInstance(BuilderRegistry.class);
+  private static final class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<>();
+  private final List<JvmClassFileInstrumenter> myClassFileInstrumenters = new ArrayList<>();
+  private final Object2LongMap<BuildTargetType<?>> myExpectedBuildTime = new Object2LongOpenHashMap<>();
   private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<>();
   private final FileFilter myModuleBuilderFileFilter;
 
-  public static BuilderRegistry getInstance() {
+  public static @NotNull BuilderRegistry getInstance() {
     return Holder.ourInstance;
   }
 
@@ -47,33 +43,57 @@ public class BuilderRegistry {
       myModuleLevelBuilders.put(category, new ArrayList<>());
     }
 
-    Set<String> compilableFileExtensions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> compilableFileExtensions = CollectionFactory.createFilePathSet();
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       myTargetBuilders.addAll(service.createBuilders());
-      final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
-      for (ModuleLevelBuilder builder : moduleLevelBuilders) {
-        List<String> extensions = builder.getCompilableFileExtensions();
-        if (extensions == null) {
-          LOG.info(builder.getClass().getName() + " builder returns 'null' from 'getCompilableFileExtensions' method so files for module-level builders won't be filtered");
+      for (ModuleLevelBuilder builder : service.createModuleLevelBuilders()) {
+        try {
+          List<String> extensions = builder.getCompilableFileExtensions();
+          if (compilableFileExtensions != null) {
+            compilableFileExtensions.addAll(extensions);
+          }
+        }
+        catch (AbstractMethodError e) {
+          LOG.info(builder.getClass().getName() + " builder doesn't implement 'getCompilableFileExtensions' method so ModuleBuildTarget will process all files under source roots.");
           compilableFileExtensions = null;
         }
-        else if (compilableFileExtensions != null) {
-          compilableFileExtensions.addAll(extensions);
-        }
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
+        if (builder instanceof JvmClassFileInstrumenter) {
+          myClassFileInstrumenters.add((JvmClassFileInstrumenter)builder);
+        }
       }
     }
+    Collections.sort(myClassFileInstrumenters, Comparator.comparing(JvmClassFileInstrumenter::getId));
+    // ensure predictable order in which instrumentation changes are applied
+    Collections.sort(
+      myModuleLevelBuilders.get(BuilderCategory.CLASS_INSTRUMENTER), Comparator.comparing(builder -> builder instanceof JvmClassFileInstrumenter? ((JvmClassFileInstrumenter)builder).getId() : builder.getPresentableName())
+    );
+
     if (compilableFileExtensions == null) {
-      myModuleBuilderFileFilter = FileUtilRt.ALL_FILES;
+      myModuleBuilderFileFilter = FileFilters.EVERYTHING;
     }
     else {
-      final Set<String> finalCompilableFileExtensions = compilableFileExtensions;
+      Set<String> finalCompilableFileExtensions = compilableFileExtensions;
       myModuleBuilderFileFilter = file -> finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
+    }
+
+    long moduleTargetBuildTime = 0;
+    for (ModuleLevelBuilder builder : getModuleLevelBuilders()) {
+      moduleTargetBuildTime += builder.getExpectedBuildTime();
+    }
+    myExpectedBuildTime.put(JavaModuleBuildTargetType.PRODUCTION, moduleTargetBuildTime);
+    myExpectedBuildTime.put(JavaModuleBuildTargetType.TEST, moduleTargetBuildTime);
+
+    for (TargetBuilder<?, ?> targetBuilder : myTargetBuilders) {
+      long buildTime = targetBuilder.getExpectedBuildTime();
+      for (BuildTargetType<?> type : targetBuilder.getTargetTypes()) {
+        long total = myExpectedBuildTime.getLong(type);
+        myExpectedBuildTime.put(type, total + buildTime);
+      }
     }
   }
 
-  @NotNull
-  public FileFilter getModuleBuilderFileFilter() {
+  public @NotNull FileFilter getModuleBuilderFileFilter() {
     return myModuleBuilderFileFilter;
   }
 
@@ -85,19 +105,27 @@ public class BuilderRegistry {
     return count;
   }
 
-  public List<BuildTask> getBeforeTasks(){
-    return Collections.emptyList(); // todo
+  /**
+   * Returns the list of all available class-file instrumenters in the sorted order. 
+   */
+  @ApiStatus.Internal
+  public @NotNull List<JvmClassFileInstrumenter> getClassFileInstrumenters() {
+    return myClassFileInstrumenters;
   }
 
-  public List<BuildTask> getAfterTasks(){
-    return Collections.emptyList(); // todo
+  public @NotNull @Unmodifiable List<BuildTask> getBeforeTasks(){
+    return List.of(); // todo
   }
 
-  public List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
+  public @NotNull @Unmodifiable List<BuildTask> getAfterTasks(){
+    return List.of(); // todo
+  }
+
+  public @NotNull @Unmodifiable List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
     return Collections.unmodifiableList(myModuleLevelBuilders.get(category));
   }
 
-  public List<ModuleLevelBuilder> getModuleLevelBuilders() {
+  public @NotNull @Unmodifiable List<ModuleLevelBuilder> getModuleLevelBuilders() {
     List<ModuleLevelBuilder> result = new ArrayList<>();
     for (BuilderCategory category : BuilderCategory.values()) {
       result.addAll(getBuilders(category));
@@ -105,7 +133,16 @@ public class BuilderRegistry {
     return result;
   }
 
-  public List<TargetBuilder<?,?>> getTargetBuilders() {
+  public @NotNull @Unmodifiable List<TargetBuilder<?,?>> getTargetBuilders() {
     return myTargetBuilders;
+  }
+
+  /**
+   * Returns default expected build time for targets of the given {@code targetType}.
+   * @see Builder#getExpectedBuildTime()
+   */
+  public long getExpectedBuildTimeForTarget(BuildTargetType<?> targetType) {
+    // it may happen that there are no builders registered for a given type, so it won't be built at all
+    return myExpectedBuildTime.getLong(targetType);
   }
 }

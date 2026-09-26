@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.bintray;
 
 import com.google.gson.Gson;
@@ -7,7 +7,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.HttpRequests;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -27,13 +29,18 @@ import java.util.function.DoubleConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.split;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 /**
- * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class BintrayEndpoint {
 
   public static final String BINTRAY_API_URL = "https://bintray.com/api/v1/";
@@ -46,8 +53,7 @@ public class BintrayEndpoint {
   private final Gson gson = new Gson();
 
 
-  @Nullable
-  public RemoteRepositoryDescription getRepository(@NotNull String subject, @NotNull String repo) throws IOException {
+  public @Nullable RemoteRepositoryDescription getRepository(@NotNull String subject, @NotNull String repo) throws IOException {
     // workaround, API requires authorization
     String url = BintrayModel.Repository.getUrl(subject, repo);
     return HttpRequests.request(url).accept("application/xml").connect(request -> {
@@ -55,7 +61,7 @@ public class BintrayEndpoint {
         request.getConnection();
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
           return null;
         }
         throw e;
@@ -64,8 +70,7 @@ public class BintrayEndpoint {
     });
   }
 
-  @NotNull
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String subject) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String subject) throws IOException {
     // workaround, API requires authorization
     String url = BintrayModel.Repository.getUrl(subject, null);
     return HttpRequests.request(url).accept("application/xml").connect(request -> {
@@ -82,7 +87,7 @@ public class BintrayEndpoint {
         return result;
       }
       catch (HttpRequests.HttpStatusException e) {
-        if (e.getStatusCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+        if (e.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
           return emptyList();
         }
         throw e;
@@ -138,7 +143,7 @@ public class BintrayEndpoint {
 
   public <Data, E extends Throwable>
   void executeRequest(@NotNull String url, @NotNull Class<Data> responseDataClass,
-                      @NotNull ThrowableConsumer<Data, IOException> responseHandler,
+                      @NotNull ThrowableConsumer<? super Data, ? extends IOException> responseHandler,
                       @NotNull ExceptionHandler<E> exceptionHandler,
                       @Nullable DoubleConsumer progressHandler) throws IOException, E {
     AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -201,7 +206,7 @@ public class BintrayEndpoint {
         if (useThreadPool) {
           ExecutorService executorService = Executors.newFixedThreadPool(threadsCount);
           for (int i = 0; i < threadsCount; i++) {
-            executorService.submit(task);
+            executorService.execute(task);
           }
           try {
             cdl.await();
@@ -223,9 +228,9 @@ public class BintrayEndpoint {
   }
 
   private <Data> void handleRequest(HttpRequests.Request request, Class<Data> responseDataClass,
-                                    ThrowableConsumer<Data, IOException> responseHandler) throws IOException {
+                                    ThrowableConsumer<? super Data, ? extends IOException> responseHandler) throws IOException {
     try (InputStream in = request.getInputStream();
-         Reader reader = new InputStreamReader(in)) {
+         Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
       Data data = gson.fromJson(reader, responseDataClass);
       responseHandler.consume(data);
     }
